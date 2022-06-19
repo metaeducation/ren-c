@@ -315,8 +315,107 @@ bool Match_For_Compose(noquote(const Cell*) group, const REBVAL *label) {
 }
 
 
+// This is a helper common to the Composer_Executor() and the COMPOSE native
+// which will push a frame that does composing to the trampoline stack.
 //
-//  Compose_To_Stack_Core: C
+/////////////////////////////////////////////////////////////////////////////
+//
+// 1. COMPOSE relies on frame enumeration...and frames are only willing to
+//    enumerate arrays.  Paths and tuples may be in a more compressed form.
+//    While this is being rethought, we just reuse the logic of AS so it's in
+//    one place and gets tested more, to turn sequences into arrays.
+//
+// 2. The easiest way to pass along options to the composing subframes is by
+//    passing the frame of the COMPOSE to it.  Though Composer_Executor() has
+//    no varlist of its own, it can read the frame variables of the native
+//    so long as it is passed in the `main_frame` member of Frame.
+//
+static void Push_Composer_Frame(
+    Value *out,
+    REBFRM *main_frame,
+    const Cell *arraylike,
+    REBSPC *specifier
+){
+    const Value* adjusted = nullptr;
+    if (ANY_PATH(arraylike)) {  // allow sequences, see [1]
+        Derelativize(out, arraylike, specifier);
+        adjusted = rebValue(Lib(AS), Lib(BLOCK_X), rebQ(out));
+    }
+
+    DECLARE_FRAME_AT_CORE (
+        subframe,
+        adjusted ? adjusted : arraylike,
+        adjusted ? SPECIFIED : specifier,
+        EVAL_MASK_DEFAULT |
+            EVAL_FLAG_TRAMPOLINE_KEEPALIVE  // allows stack accumulation
+    );
+    Push_Frame(out, subframe);  // writes TRUE to OUT if modified, FALSE if not
+
+    if (adjusted)
+        rebRelease(adjusted);
+
+    subframe->executor = &Composer_Executor;
+
+    subframe->u.compose.main_frame = main_frame;   // pass options, see [2]
+    subframe->u.compose.changed = false;
+}
+
+
+// Another helper common to the Composer_Executor() and the COMPOSE native
+// itself, which pops the processed array depending on the output type.
+//
+//////////////////////////////////////////////////////////////////////////////
+//
+// 1. If you write something like `compose '(void)/3:`, it would try to leave
+//    behind something like the "SET-INTEGER!" of `3:`.  Currently that is
+//    not allowed, though it could be a WORD! (like |3|:) ?
+//
+// 2. See Try_Pop_Sequence_Or_Element_Or_Nulled() for how reduced cases like
+//    `(void).1` will turn into just INTEGER!, not `.1` -- this is in contrast
+//    to `(blank).1` which does turn into `.1`
+//
+// 3. There are N instances of the NEWLINE_BEFORE flags on the pushed items,
+//    and we need N + 1 flags.  Borrow the tail flag from the input REBARR.
+//
+static Value* Finalize_Composer_Frame(
+    Value *out,
+    REBFRM *composer_frame,
+    const Cell *composee  // special handling if the output kind is a sequence
+){
+    enum Reb_Kind heart = CELL_HEART(composee);
+    REBLEN quotes = VAL_NUM_QUOTES(composee);
+
+    if (ANY_SEQUENCE_KIND(heart)) {
+        if (not Try_Pop_Sequence_Or_Element_Or_Nulled(
+            out,
+            CELL_HEART(composee),
+            composer_frame->baseline.dsp
+        )){
+            if (Is_Valid_Sequence_Element(heart, out))
+                fail (Error_Cant_Decorate_Type_Raw(out));  // no `3:`, see [1]
+
+            fail (Error_Bad_Sequence_Init(out));
+        }
+
+        return Quotify(out, quotes);  // may not be sequence, see [2]
+    }
+
+    REBFLGS flags = NODE_FLAG_MANAGED | ARRAY_MASK_HAS_FILE_LINE;
+    if (GET_SUBCLASS_FLAG(ARRAY, VAL_ARRAY(composee), NEWLINE_AT_TAIL))
+        flags |= ARRAY_FLAG_NEWLINE_AT_TAIL;  // proxy newline flag, see [3]
+
+    Init_Any_Array(
+        out,
+        heart,
+        Pop_Stack_Values_Core(composer_frame->baseline.dsp, flags)
+    );
+
+    return Quotify(out, quotes);
+}
+
+
+//
+//  Composer_Executor: C
 //
 // Use rules of composition to do template substitutions on values matching
 // `pattern` by evaluating those slots, leaving all other slots as is.
@@ -327,352 +426,346 @@ bool Match_For_Compose(noquote(const Cell*) group, const REBVAL *label) {
 // an array also offers more options for avoiding that intermediate if the
 // caller wants to add part or all of the popped data to an existing array.
 //
-// Returns R_UNHANDLED if the composed series is identical to the input, or
-// nullptr if there were compositions.  R_THROWN if there was a throw.  It
-// leaves the accumulated values for the current stack level, so the caller
-// can decide if it wants them or not, regardless of if any composes happened.
+// At the end of the process, `f->u.compose.changed` will be false if the
+// composed series is identical to the input, true if there were compositions.
 //
-REB_R Compose_To_Stack_Core(
-    REBVAL *out, // if return result is R_THROWN, will hold the thrown value
-    const Cell *composee, // the template
-    REBSPC *specifier, // specifier for relative any_array value
-    const REBVAL *label, // e.g. if <*>, only match `(<*> ...)`
-    bool deep, // recurse into sub-blocks
-    const REBVAL *predicate,  // function to run on each spliced slot
-    bool only  // do not exempt (( )) from splicing
-){
-    assert(predicate == nullptr or IS_ACTION(predicate));
+//////////////////////////////////////////////////////////////////////////////
+//
+// 1. label -> e.g. if <*>, only match `(<*> ...)`
+//    deep -> recurse into sub-blocks
+//    predicate -> function to run on each spliced slot
+//
+// 2. HEART byte is used as a GROUP! matches regardless of quoting, so:
+//
+//        >> compose [a ''(1 + 2) b]
+//        == [a ''3 b]
+//
+// 3. We use splicing semantics if the result was produced by a predicate
+//    application, or if (( )) was used.  Splicing semantics match the rules
+//    for APPEND/etc.
+//
+// 4. Only proxy newline flag from the template on *first* value spliced in,
+//    where it may have its own newline flag.  Not necessarily obvious; e.g.
+//    would you want the composed block below to all fit on one line?
+//
+//        >> block-of-things: [
+//               thing2  ; newline flag on thing1
+//               thing3
+//           ]
+//
+//        >> compose [thing1 ((block-of-things))]  ; no newline flag on (( ))
+//        == [thing1
+//               thing2  ; we proxy the flag, but is this what you wanted?
+//               thing3
+//           ]
+//
+// 5. At the end of the composer, we do not DS_DROP_TO() and the frame will
+//    still be alive for the caller.  This lets them have access to this
+//    frame's BASELINE->dsp, so it knows how many items were pushed...and it
+//    also means the caller can decide if they want the accrued items or not
+//    depending on the `changed` field in the frame.
+//
+REB_R Composer_Executor(REBFRM *f)
+{
+    REBFRM *frame_ = f;
 
-    REBDSP dsp_orig = DSP;
+    if (THROWING)
+        return THROWN;  // no state to cleanup (just data stack, auto-cleaned)
 
-    bool changed = false;
+    PARAM(1, return);
+    PARAM(2, label);
+    PARAM(3, value);
+    PARAM(4, deep);
+    PARAM(5, predicate);
 
-    // !!! At the moment, COMPOSE is written to use frame enumeration...and
-    // frames are only willing to enumerate arrays.  But the path may be in
-    // a more compressed form.  While this is being rethought, we just reuse
-    // the logic of AS so it's in one place and gets tested more.
-    //
-    const Cell *any_array;
-    if (ANY_PATH(composee)) {
-        DECLARE_LOCAL (temp);
-        Derelativize(temp, composee, specifier);
-        PUSH_GC_GUARD(temp);
-        any_array = rebValue("as block! @", temp);
-        DROP_GC_GUARD(temp);
+    REBFRM *main_frame = f->u.compose.main_frame;  // the invoked COMPOSE native
+
+    UNUSED(FRM_ARG(main_frame, p_return_));
+    Value *label = FRM_ARG(main_frame, p_label_);
+    UNUSED(FRM_ARG(main_frame, p_value_));
+    bool deep = not IS_NULLED(FRM_ARG(main_frame, p_deep_));
+    Value *predicate = FRM_ARG(main_frame, p_predicate_);
+
+    assert(IS_NULLED(predicate) or IS_ACTION(predicate));
+
+    Value *processed;  // will point to either OUT or SPARE
+
+    enum {
+        ST_COMPOSER_INITIAL_ENTRY = 0,
+        ST_COMPOSER_EVAL_GROUP,
+        ST_COMPOSER_EVAL_DOUBLED_GROUP,
+        ST_COMPOSER_RUNNING_PREDICATE,
+        ST_COMPOSER_RECURSING_DEEP
+    };
+
+    switch (STATE) {
+      case ST_COMPOSER_INITIAL_ENTRY : goto handle_current_item;
+      case ST_COMPOSER_EVAL_GROUP : goto group_result_in_out;
+      case ST_COMPOSER_EVAL_DOUBLED_GROUP : goto doubled_group_result_in_out;
+      case ST_COMPOSER_RUNNING_PREDICATE : goto predicate_result_in_spare;
+      case ST_COMPOSER_RECURSING_DEEP : goto composer_finished_recursion;
+      default : assert(false);
     }
-    else
-        any_array = composee;
 
-    DECLARE_FEED_AT_CORE (feed, any_array, specifier);
+  handle_current_item: {  ////////////////////////////////////////////////////
 
-    if (ANY_PATH(composee))
-        rebRelease(cast(REBVAL*, m_cast(Cell*, any_array)));
+    if (IS_END(f_value))
+        goto finished;
 
-    DECLARE_FRAME (f, feed, EVAL_MASK_DEFAULT | EVAL_FLAG_ALLOCATED_FEED);
+    if (not ANY_ARRAYLIKE(f_value)) {  // won't substitute/recurse
+        Derelativize(DS_PUSH(), f_value, f_specifier);  // keep newline flag
+        goto handle_next_item;
+    }
 
-    Push_Frame(nullptr, f);
+    enum Reb_Kind heart = CELL_HEART(f_value);  // quoted groups match, see [1]
 
-    for (; NOT_END(f_value); Fetch_Next_Forget_Lookback(f)) {
+    REBSPC *match_specifier = nullptr;
+    noquote(const Cell*) match = nullptr;
 
-        if (not ANY_ARRAYLIKE(f_value)) {  // won't substitute/recurse
-            Derelativize(DS_PUSH(), f_value, specifier);  // keep newline flag
-            continue;
-        }
-
-        // We look for GROUP! regardless of how quoted it is, so:
+    if (not ANY_GROUP_KIND(heart)) {
         //
-        //    >> compose [a ''(1 + 2) b]
-        //    == [a 3 b]
-        //
-        enum Reb_Kind heart = CELL_HEART(f_value);  // heart is type w/o quotes
-
-        REBLEN quotes = VAL_NUM_QUOTES(f_value);
-
-        bool doubled_group = false;  // override predicate with ((...))
-
-        REBSPC *match_specifier = nullptr;
-        noquote(const Cell*) match = nullptr;
-
-        if (not ANY_GROUP_KIND(heart)) {
-            //
-            // Don't compose at this level, but may need to walk deeply to
-            // find compositions inside it if /DEEP and it's an array
+        // Don't compose at this level, but may need to walk deeply to
+        // find compositions inside it if /DEEP and it's an array
+    }
+    else if (Is_Any_Doubled_Group(f_value)) {
+        const Cell *inner = VAL_ARRAY_ITEM_AT(f_value);  // 1 item
+        assert(IS_GROUP(inner));
+        if (Match_For_Compose(inner, label)) {
+            STATE = ST_COMPOSER_EVAL_DOUBLED_GROUP;
+            match = inner;
+            match_specifier = Derive_Specifier(f_specifier, inner);
         }
-        else if (not only and Is_Any_Doubled_Group(f_value)) {
-            const Cell *inner = VAL_ARRAY_ITEM_AT(f_value);  // 1 item
-            assert(IS_GROUP(inner));
-            if (Match_For_Compose(inner, label)) {
-                doubled_group = true;
-                match = inner;
-                match_specifier = Derive_Specifier(specifier, inner);
-            }
+    }
+    else {  // plain compose, if match
+        if (Match_For_Compose(f_value, label)) {
+            STATE = ST_COMPOSER_EVAL_GROUP;
+            match = f_value;
+            match_specifier = f_specifier;
         }
-        else {  // plain compose, if match
-            if (Match_For_Compose(f_value, label)) {
-                match = f_value;
-                match_specifier = specifier;
-            }
-        }
+    }
 
-        if (match) {
-            //
-            // If <*> is the label and (<*> 1 + 2) is found, run just (1 + 2).
-            // Using feed interface vs plain Do_XXX to skip cheaply.
-            //
-            DECLARE_FEED_AT_CORE (subfeed, match, match_specifier);
-            if (not IS_NULLED(label))
-                Fetch_Next_In_Feed(subfeed);  // wasn't possibly at END
-
-            if (Do_Feed_To_End_Throws(
-                RESET(out),  // want empty `()` or `(comment "hi")` to vanish
-                subfeed,
-                EVAL_MASK_DEFAULT | EVAL_FLAG_ALLOCATED_FEED
-            )){
-                DS_DROP_TO(dsp_orig);
-                Abort_Frame(f);
-                return R_THROWN;
-            }
-
-            if (predicate and not doubled_group) {
-                REBVAL *processed;
-                if (Is_Void(out))
-                    processed = rebMeta(predicate, Init_Meta_Of_Void(out));
-                else if (Is_Isotope(out))
-                    processed = rebMeta(predicate, Meta_Quotify(out));
-                else if (IS_NULLED(out))
-                    processed = rebMeta(predicate, Init_Meta_Of_Null_Isotope(out));
-                else
-                    processed = rebMeta(predicate, rebQ(out));
-
-                if (processed == nullptr)
-                    Init_Nulled(out);
-                else if (Is_Meta_Of_Void(processed)) {
-                    RESET(out);
-                    rebRelease(processed);
-                }
-                else {
-                    Meta_Unquotify(Move_Cell(out, processed));
-                    rebRelease(processed);
-                }
-            }
-
-            if (Is_Void(out)) {
-                //
-                // compose [(void)] => []
-                //
-                if (heart == REB_GROUP and quotes == 0)
-                    continue;
-
-                Init_Nulled(out);
-            }
-            else
-                Decay_If_Isotope(out);
-
-            if (Is_Isotope(out))
-                fail (Error_Bad_Isotope(out));
-
-            if (
-                IS_NULLED(out)
-                and (heart != REB_GROUP or quotes == 0)  // [''(null)] => ['']
-            ){
-                // With voids, NULL is no longer tolerated in COMPOSE.  You
-                // have to use MAYBE.  Set as isotope to trigger error below.
-                //
-                fail (Error_Need_Non_Null_Raw());
-            }
-
-            if (predicate or doubled_group) {
-                //
-                // We use splicing semantics if the result was produced by a
-                // predicate application, or if (( )) was used.  Splicing
-                // semantics match the rules for APPEND/etc.  (The difference
-                // here is that the (( )) has shown that a "one or many"
-                // intent is understood; APPEND lacks that, so it's best to
-                // err on the side of caution regarding NULL.  COMPOSE errs
-                // on that side by splicing ~null~ in the ( ) splices.
-
-                // compose [(([a b])) merges] => [a b merges]
-
-                if (quotes != 0 or heart != REB_GROUP)
-                    fail ("Currently can only splice plain unquoted GROUP!s");
-
-                if (IS_BLANK(out)) {
-                    //
-                    // BLANK! does nothing in APPEND so do nothing.
-                    //
-                }
-                else if (IS_QUOTED(out)) {
-                    //
-                    // Quoted items lose a quote level and get pushed.
-                    //
-                    Unquotify(Copy_Cell(DS_PUSH(), out), 1);
-                }
-                else if (IS_BLOCK(out)) {
-                    //
-                    // The only splice type is BLOCK!...
-
-                    const Cell *push_tail;
-                    const Cell *push = VAL_ARRAY_AT(&push_tail, out);
-                    if (push != push_tail) {
-                        //
-                        // Only proxy newline flag from the template on *first*
-                        // value spliced in (it may have its own newline flag)
-                        //
-                        // !!! These rules aren't necessarily obvious.  If you
-                        // say `compose [thing ((block-of-things))]` did you
-                        // want that block to fit on one line?
-                        //
-                        Derelativize(DS_PUSH(), push, VAL_SPECIFIER(out));
-                        if (GET_CELL_FLAG(f_value, NEWLINE_BEFORE))
-                            SET_CELL_FLAG(DS_TOP, NEWLINE_BEFORE);
-                        else
-                            CLEAR_CELL_FLAG(DS_TOP, NEWLINE_BEFORE);
-
-                        while (++push, push != push_tail)
-                            Derelativize(DS_PUSH(), push, VAL_SPECIFIER(out));
-                    }
-                }
-                else if (ANY_THE_KIND(VAL_TYPE(out))) {
-                    //
-                    // the @ types splice as is without the @
-                    //
-                    Plainify(Copy_Cell(DS_PUSH(), out));
-                }
-                else if (not ANY_INERT(out)) {
-                    fail ("COMPOSE slots that are (( )) can't be evaluative");
-                }
-                else {
-                    assert(not ANY_ARRAY(out));
-                    Copy_Cell(DS_PUSH(), out);
-                }
-            }
-            else {
-                // compose [(1 + 2) inserts as-is] => [3 inserts as-is]
-                // compose [([a b c]) unmerged] => [[a b c] unmerged]
-
-                if (IS_NULLED(out)) {
-                    assert(quotes != 0);  // handled above
-                    Init_Nulled(DS_PUSH());
-                }
-                else
-                    Copy_Cell(DS_PUSH(), out);  // can't stack eval direct
-
-                if (heart == REB_SET_GROUP)
-                    Setify(DS_TOP);
-                else if (heart == REB_GET_GROUP)
-                    Getify(DS_TOP);
-                else if (heart == REB_META_GROUP)
-                    Metafy(DS_TOP);
-                else if (heart == REB_THE_GROUP)
-                    Theify(DS_TOP);
-                else
-                    assert(heart == REB_GROUP);
-
-                Quotify(DS_TOP, quotes);  // match original quotes
-
-                // Use newline intent from the GROUP! in the compose pattern
-                //
-                if (GET_CELL_FLAG(f_value, NEWLINE_BEFORE))
-                    SET_CELL_FLAG(DS_TOP, NEWLINE_BEFORE);
-                else
-                    CLEAR_CELL_FLAG(DS_TOP, NEWLINE_BEFORE);
-            }
-
-            RESET(out);  // shouldn't leak temp eval to caller
-
-            changed = true;
-        }
-        else if (deep) {
+    if (not match) {
+        if (deep) {
             // compose/deep [does [(1 + 2)] nested] => [does [3] nested]
 
-            REBDSP dsp_deep = DSP;
-            REB_R r = Compose_To_Stack_Core(
-                out,
-                f_value,  // unescaped array (w/no QUOTEs)
-                specifier,
-                label,
-                true,  // deep (guaranteed true if we get here)
-                predicate,
-                only
-            );
-
-            if (r == R_THROWN) {
-                DS_DROP_TO(dsp_orig);  // drop to outer DSP (@ function start)
-                Abort_Frame(f);
-                return R_THROWN;
-            }
-
-            if (r == R_UNHANDLED) {
-                //
-                // To save on memory usage, Ren-C does not make copies of
-                // arrays that don't have some substitution under them.  This
-                // may be controlled by a switch if it turns out to be needed.
-                //
-                DS_DROP_TO(dsp_deep);
-                Derelativize(DS_PUSH(), f_value, specifier);
-                continue;
-            }
-
-            if (ANY_SEQUENCE_KIND(heart)) {
-                DECLARE_LOCAL (temp);
-                if (not Try_Pop_Sequence_Or_Element_Or_Nulled(
-                    temp,
-                    heart,
-                    dsp_deep
-                )){
-                    if (Is_Valid_Sequence_Element(heart, temp)) {
-                        //
-                        // `compose '(null)/1:` would leave beind 1:
-                        //
-                        fail (Error_Cant_Decorate_Type_Raw(temp));
-                    }
-
-                    fail (Error_Bad_Sequence_Init(DS_TOP));
-                }
-                Copy_Cell(DS_PUSH(), temp);
-            }
-            else {
-                REBFLGS pop_flags
-                    = NODE_FLAG_MANAGED
-                    | ARRAY_MASK_HAS_FILE_LINE;
-
-                if (GET_SUBCLASS_FLAG(
-                    ARRAY,
-                    VAL_ARRAY(f_value),
-                    NEWLINE_AT_TAIL
-                )){
-                    pop_flags |= ARRAY_FLAG_NEWLINE_AT_TAIL;
-                }
-
-                REBARR *popped = Pop_Stack_Values_Core(dsp_deep, pop_flags);
-                Init_Any_Array(
-                    DS_PUSH(),
-                    heart,
-                    popped  // can't push and pop in same step, need variable
-                );
-            }
-
-            Quotify(DS_TOP, quotes);  // match original quoting
-
-            if (GET_CELL_FLAG(f_value, NEWLINE_BEFORE))
-                SET_CELL_FLAG(DS_TOP, NEWLINE_BEFORE);
-
-            changed = true;
+            Push_Composer_Frame(OUT, main_frame, f_value, f_specifier);
+            STATE = ST_COMPOSER_RECURSING_DEEP;
+            continue_subframe (SUBFRAME);
         }
-        else {
-            // compose [[(1 + 2)] (3 + 4)] => [[(1 + 2)] 7]  ; non-deep
-            //
-            Derelativize(DS_PUSH(), f_value, specifier);  // keep newline flag
-        }
+
+        // compose [[(1 + 2)] (3 + 4)] => [[(1 + 2)] 7]  ; non-deep
+        //
+        Derelativize(DS_PUSH(), f_value, f_specifier);  // keep newline flag
+        goto handle_next_item;
     }
 
-    Drop_Frame_Unbalanced(f);  // Drop_Frame() asserts on stack accumulation
+    // If <*> is the label and (<*> 1 + 2) is found, run just (1 + 2).
+    //
+    DECLARE_FEED_AT_CORE (subfeed, match, match_specifier);
+    if (not IS_NULLED(label))
+        Fetch_Next_In_Feed(subfeed);  // wasn't possibly at END
 
-    if (changed)
-        return nullptr;
+    DECLARE_FRAME (
+        subframe,
+        subfeed,  // used subfeed so we could skip the label if there was one
+        EVAL_MASK_DEFAULT | EVAL_FLAG_ALLOCATED_FEED | EVAL_FLAG_TO_END
+    );
 
-    return R_UNHANDLED;
-}
+    RESET(OUT);  // want empty `()` or `(comment "hi")` to vanish
+    Push_Frame(OUT, subframe);
+
+    assert(  // STATE is assigned above accordingly
+        STATE == ST_COMPOSER_EVAL_GROUP
+        or STATE == ST_COMPOSER_EVAL_DOUBLED_GROUP
+    );
+    continue_subframe (subframe);
+
+} group_result_in_out: {  ////////////////////////////////////////////////////
+
+    if (IS_NULLED(predicate)) {
+        processed = OUT;
+        goto push_processed_result;
+    }
+
+    STATE = ST_COMPOSER_RUNNING_PREDICATE;
+    continue_core (SPARE, EVAL_MASK_DEFAULT, predicate, SPECIFIED, OUT);
+
+} predicate_result_in_spare: {  //////////////////////////////////////////////
+
+    processed = SPARE;
+    goto push_processed_result;
+
+} doubled_group_result_in_out: {  ////////////////////////////////////////////
+
+    processed = OUT;
+    goto push_processed_result;
+
+} push_processed_result: {  //////////////////////////////////////////////////
+
+    assert(  // processing depends on state we came from, don't overwrite
+        STATE == ST_COMPOSER_EVAL_GROUP
+        or STATE == ST_COMPOSER_EVAL_DOUBLED_GROUP
+        or STATE == ST_COMPOSER_RUNNING_PREDICATE
+    );
+
+    enum Reb_Kind group_heart = CELL_HEART(f_value);
+    REBLEN group_quotes = VAL_NUM_QUOTES(f_value);
+
+    if (Is_Void(processed)) {
+        //
+        // compose [(void)] => []
+        //
+        if (group_heart == REB_GROUP and group_quotes == 0)
+            goto handle_next_item;
+
+        Init_Nulled(processed);
+    }
+    else
+        Decay_If_Isotope(processed);
+
+    if (Is_Isotope(processed))
+        fail (Error_Bad_Isotope(processed));
+
+    if (
+        IS_NULLED(processed)
+        and (
+            group_heart != REB_GROUP
+            or group_quotes == 0
+        )  // [''(null)] => ['']
+    ){
+        fail (Error_Need_Non_Null_Raw());
+    }
+
+    if (not IS_NULLED(predicate) or STATE == ST_COMPOSER_EVAL_DOUBLED_GROUP)
+        goto push_processed_spliced;
+
+    goto push_processed_as_is;
+
+  push_processed_as_is:  ////////////////////////////////////////////////////
+
+    // compose [(1 + 2) inserts as-is] => [3 inserts as-is]
+    // compose [([a b c]) unmerged] => [[a b c] unmerged]
+
+    if (IS_NULLED(processed)) {
+        assert(group_quotes != 0);  // handled above
+        Init_Nulled(DS_PUSH());
+    }
+    else
+        Copy_Cell(DS_PUSH(), processed);  // can't stack eval direct
+
+    if (group_heart == REB_SET_GROUP)
+        Setify(DS_TOP);
+    else if (group_heart == REB_GET_GROUP)
+        Getify(DS_TOP);
+    else if (group_heart == REB_META_GROUP)
+        Metafy(DS_TOP);
+    else if (group_heart == REB_THE_GROUP)
+        Theify(DS_TOP);
+    else
+        assert(group_heart == REB_GROUP);
+
+    Quotify(DS_TOP, group_quotes);  // match original quotes
+
+    // Use newline intent from the GROUP! in the compose pattern
+    //
+    if (GET_CELL_FLAG(f_value, NEWLINE_BEFORE))
+        SET_CELL_FLAG(DS_TOP, NEWLINE_BEFORE);
+    else
+        CLEAR_CELL_FLAG(DS_TOP, NEWLINE_BEFORE);
+
+    f->u.compose.changed = true;
+    goto handle_next_item;
+
+  push_processed_spliced:  //////////////////////////////////////////////////
+
+    // compose [(([a b])) merges] => [a b merges]... see [3]
+
+    if (group_quotes != 0 or group_heart != REB_GROUP)
+        fail ("Currently can only splice plain unquoted GROUP!s");
+
+    if (IS_BLANK(processed)) {
+        //
+        // BLANK! does nothing in APPEND so do nothing here
+    }
+    else if (IS_QUOTED(processed)) {
+        //
+        // Quoted items lose a quote level and get pushed.
+        //
+        Unquotify(Copy_Cell(DS_PUSH(), processed), 1);
+    }
+    else if (IS_BLOCK(processed)) {
+        //
+        // The only splice type is BLOCK!...
+
+        const Cell *push_tail;
+        const Cell *push = VAL_ARRAY_AT(&push_tail, processed);
+        if (push != push_tail) {
+            Derelativize(DS_PUSH(), push, VAL_SPECIFIER(processed));
+            if (GET_CELL_FLAG(f_value, NEWLINE_BEFORE))
+                SET_CELL_FLAG(DS_TOP, NEWLINE_BEFORE);  // first, see [4]
+            else
+                CLEAR_CELL_FLAG(DS_TOP, NEWLINE_BEFORE);
+
+            while (++push, push != push_tail)
+                Derelativize(DS_PUSH(), push, VAL_SPECIFIER(processed));
+        }
+    }
+    else if (ANY_THE_KIND(VAL_TYPE(processed))) {
+        //
+        // the @ types splice as is without the @
+        //
+        Plainify(Copy_Cell(DS_PUSH(), processed));
+    }
+    else if (not ANY_INERT(processed)) {
+        fail ("COMPOSE slots that are (( )) can't be evaluative");
+    }
+    else {
+        assert(not ANY_ARRAY(processed));
+        Copy_Cell(DS_PUSH(), processed);
+    }
+
+    f->u.compose.changed = true;
+    goto handle_next_item;
+
+} composer_finished_recursion: {  ////////////////////////////////////////////
+
+    // The compose stack of the nested compose is relative to *its* baseline.
+
+    if (not SUBFRAME->u.compose.changed) {
+        //
+        // To save on memory usage, Ren-C does not make copies of
+        // arrays that don't have some substitution under them.  This
+        // may be controlled by a switch if it turns out to be needed.
+        //
+        DS_DROP_TO(SUBFRAME->baseline.dsp);
+        Drop_Frame(SUBFRAME);
+
+        Derelativize(DS_PUSH(), f_value, f_specifier);
+        // Constify(DS_TOP);
+        goto handle_next_item;
+    }
+
+    Finalize_Composer_Frame(OUT, SUBFRAME, f_value);
+    Drop_Frame(SUBFRAME);
+    Move_Cell(DS_PUSH(), OUT);
+
+    if (GET_CELL_FLAG(f_value, NEWLINE_BEFORE))
+        SET_CELL_FLAG(DS_TOP, NEWLINE_BEFORE);
+
+    f->u.compose.changed = true;
+    goto handle_next_item;
+
+} handle_next_item: {  //////////////////////////////////////////////////////
+
+   Fetch_Next_Forget_Lookback(f);
+   goto handle_current_item;
+
+} finished: {  ///////////////////////////////////////////////////////////////
+
+    assert(Get_Eval_Flag(f, TRAMPOLINE_KEEPALIVE));  // caller needs, see [5]
+
+    return RESET(OUT);  // signal finished, but avoid leaking temp evaluations
+}}
 
 
 //
@@ -686,7 +779,6 @@ REB_R Compose_To_Stack_Core(
 //      value "The template to fill in (no-op if WORD!, ACTION! or SPACE!)"
 //          [blackhole! any-array! any-sequence! any-word! action!]
 //      /deep "Compose deeply into nested arrays"
-//      /only "Do not exempt ((...)) from predicate application"
 //      /predicate "Function to run on composed slots (default: META)"
 //          [action!]
 //  ]
@@ -701,65 +793,39 @@ REBNATIVE(compose)
 {
     INCLUDE_PARAMS_OF_COMPOSE;
 
-    if (Is_Blackhole(ARG(value)))
-        return_value (ARG(value));  // sink locations composed to avoid double eval
+    Value *v = ARG(value);
 
-    if (ANY_WORD(ARG(value)) or IS_ACTION(ARG(value)))
-        return_value (ARG(value));  // makes it easier to `set/hard compose target`
+    enum {
+        ST_COMPOSE_INITIAL_ENTRY = 0,
+        ST_COMPOSE_COMPOSING
+    };
 
-    REBDSP dsp_orig = DSP;
-
-    REB_R r = Compose_To_Stack_Core(
-        OUT,
-        ARG(value),
-        VAL_SPECIFIER(ARG(value)),
-        ARG(label),
-        did REF(deep),
-        REF(predicate),
-        did REF(only)
-    );
-
-    if (r == R_THROWN)
-        return THROWN;
-
-    if (r == R_UNHANDLED) {
-        //
-        // This is the signal that stack levels use to say nothing under them
-        // needed compose, so you can just use a copy (if you want).  COMPOSE
-        // always copies at least the outermost array, though.
-    }
-    else
-        assert(r == nullptr); // normal result, changed
-
-    if (ANY_SEQUENCE(ARG(value))) {
-        if (not Try_Pop_Sequence_Or_Element_Or_Nulled(
-            OUT,
-            VAL_TYPE(ARG(value)),
-            dsp_orig
-        )){
-            if (Is_Valid_Sequence_Element(VAL_TYPE(ARG(value)), OUT)) {
-                //
-                // `compose '(null)/1:` would leave behind 1:
-                //
-                fail (Error_Cant_Decorate_Type_Raw(OUT));
-            }
-
-            fail (Error_Bad_Sequence_Init(OUT));
-        }
-        return OUT;  // note: may not be an ANY-PATH!  See Try_Pop_Path...
+    switch (STATE) {
+      case ST_COMPOSE_INITIAL_ENTRY: goto initial_entry;
+      case ST_COMPOSE_COMPOSING: goto composer_finished;
+      default: assert(false);
     }
 
-    // The stack values contain N NEWLINE_BEFORE flags, and we need N + 1
-    // flags.  Borrow the one for the tail directly from the input REBARR.
-    //
-    REBFLGS flags = NODE_FLAG_MANAGED | ARRAY_MASK_HAS_FILE_LINE;
-    if (GET_SUBCLASS_FLAG(ARRAY, VAL_ARRAY(ARG(value)), NEWLINE_AT_TAIL))
-        flags |= ARRAY_FLAG_NEWLINE_AT_TAIL;
+  initial_entry: {  //////////////////////////////////////////////////////////
 
-    REBARR *popped = Pop_Stack_Values_Core(dsp_orig, flags);
+    if (Is_Blackhole(v))
+        return_value (v);  // sink locations composed to avoid double eval
 
-    return Init_Any_Array(OUT, VAL_TYPE(ARG(value)), popped);
-}
+    if (ANY_WORD(v) or IS_ACTION(v))
+        return_value (v);  // makes it easier to `set compose target`
+
+    Push_Composer_Frame(OUT, frame_, v, VAL_SPECIFIER(v));
+
+    STATE = ST_COMPOSE_COMPOSING;
+    continue_uncatchable_subframe (SUBFRAME);
+
+} composer_finished: {  //////////////////////////////////////////////////////
+
+    Finalize_Composer_Frame(OUT, SUBFRAME, v);
+    Drop_Frame(SUBFRAME);
+
+    return OUT;
+}}
 
 
 enum FLATTEN_LEVEL {

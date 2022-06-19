@@ -625,6 +625,11 @@ typedef Executor Dispatcher;  // sub-dispatched in Action_Executor()
         const Cell *current;
         option(const REBVAL*) current_gotten;
     } eval;
+
+    struct {
+        REBFRM *main_frame;
+        bool changed;
+    } compose;
   } u;
 
     // The "baseline" is a digest of the state of global variables at the
