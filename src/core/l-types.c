@@ -122,8 +122,8 @@ REBNATIVE(make)
     // So if the MAKE is evaluative (as OBJECT! is) this stops the "wave" of
     // evaluativeness of a frame (e.g. body of DOES) from applying.
     //
-    if (NOT_CELL_FLAG(arg, CONST))
-        SET_CELL_FLAG(arg, EXPLICITLY_MUTABLE);
+    if (Not_Cell_Flag(arg, CONST))
+        Set_Cell_Flag(arg, EXPLICITLY_MUTABLE);
 
     MAKE_HOOK *hook;
 

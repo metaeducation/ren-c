@@ -66,8 +66,8 @@ inline static REBVAL *Init_Builtin_Datatype(
     assert(kind > REB_0 and kind < REB_MAX);
     Copy_Cell(out, Datatype_From_Kind(kind));
     assert(VAL_TYPE_KIND(out) == kind);
-    assert(GET_CELL_FLAG(out, FIRST_IS_NODE));
-    assert(NOT_CELL_FLAG(out, SECOND_IS_NODE));  // only custom types have
+    assert(Get_Cell_Flag(out, FIRST_IS_NODE));
+    assert(Not_Cell_Flag(out, SECOND_IS_NODE));  // only custom types have
     return cast(REBVAL*, out);
 }
 

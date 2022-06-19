@@ -42,8 +42,8 @@ REBNATIVE(const) {
     if (IS_NULLED(v))
         return nullptr;
 
-    CLEAR_CELL_FLAG(v, EXPLICITLY_MUTABLE);
-    SET_CELL_FLAG(v, CONST);
+    Clear_Cell_Flag(v, EXPLICITLY_MUTABLE);
+    Set_Cell_Flag(v, CONST);
 
     return_value (v);
 }
@@ -65,7 +65,7 @@ REBNATIVE(const_q) {
     // besides just if the value is *const*, specifically?  Knowing the flag
     // is helpful for debugging at least.
 
-    return Init_Logic(OUT, GET_CELL_FLAG(ARG(value), CONST));
+    return Init_Logic(OUT, Get_Cell_Flag(ARG(value), CONST));
 }
 
 
@@ -95,8 +95,8 @@ REBNATIVE(mutable)
     // errored here, that would make the calling code more complex.  Better
     // to just error when they realize the thing is locked.
 
-    CLEAR_CELL_FLAG(v, CONST);
-    SET_CELL_FLAG(v, EXPLICITLY_MUTABLE);
+    Clear_Cell_Flag(v, CONST);
+    Set_Cell_Flag(v, EXPLICITLY_MUTABLE);
 
     return_value (v);
 }
@@ -118,7 +118,7 @@ REBNATIVE(mutable_q) {
     // besides just if the value is *const*, specifically?  Knowing the flag
     // is helpful for debugging at least.
 
-    return Init_Logic(OUT, NOT_CELL_FLAG(ARG(value), CONST));
+    return Init_Logic(OUT, Not_Cell_Flag(ARG(value), CONST));
 }
 
 
@@ -143,7 +143,7 @@ static void Protect_Var(REBVAL *var, REBFLGS flags)
         if (flags & PROT_SET)
             var->header.bits |= CELL_FLAG_PROTECTED;
         else
-            var->header.bits &= ~CELL_FLAG_PROTECTED; // can't CLEAR_CELL_FLAG
+            var->header.bits &= ~CELL_FLAG_PROTECTED; // can't Clear_Cell_Flag
     }
 
     if (flags & PROT_HIDE) {
@@ -460,7 +460,7 @@ bool Is_Value_Frozen_Deep(const Cell *v) {
     noquote(const Cell*) cell = VAL_UNESCAPED(v);
     UNUSED(v); // debug build trashes, to avoid accidental usage below
 
-    if (NOT_CELL_FLAG(cell, FIRST_IS_NODE))
+    if (Not_Cell_Flag(cell, FIRST_IS_NODE))
         return true;  // payloads that live in cell are immutable
 
     REBNOD *node = VAL_NODE1(cell);

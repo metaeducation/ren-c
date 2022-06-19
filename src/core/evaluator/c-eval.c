@@ -155,7 +155,7 @@ inline static REBFRM *Maybe_Rightward_Continuation_Needed(REBFRM *f)
 {
     if (GET_FEED_FLAG(f->feed, NEXT_ARG_FROM_OUT))  {  // e.g. `10 -> x:`
         CLEAR_FEED_FLAG(f->feed, NEXT_ARG_FROM_OUT);
-        CLEAR_CELL_FLAG(f->out, UNEVALUATED);  // this helper counts as eval
+        Clear_Cell_Flag(f->out, UNEVALUATED);  // this helper counts as eval
         return nullptr;
     }
 
@@ -207,7 +207,7 @@ REB_R Evaluator_Executor(REBFRM *f)
         if (IS_END(f->feed->value))
             return OUT;
         Derelativize(OUT, f->feed->value, FEED_SPECIFIER(f->feed));
-        SET_CELL_FLAG(OUT, UNEVALUATED);
+        Set_Cell_Flag(OUT, UNEVALUATED);
         Fetch_Next_Forget_Lookback(f);
         return OUT;
     }
@@ -308,7 +308,7 @@ REB_R Evaluator_Executor(REBFRM *f)
     assert(NOT_FEED_FLAG(f->feed, NEXT_ARG_FROM_OUT));
 
     // OUT might be merely "prepped" in which case the header is all 0 bits.
-    // This is considered INITABLE() but not WRITABLE(), so the SET_CELL_FLAG()
+    // This is considered INITABLE() but not WRITABLE(), so the Set_Cell_Flag()
     // routines will reject it.  While we are already doing a flag masking
     // operation to add CELL_FLAG_STALE, ensure the cell carries the NODE and
     // CELL flags (we already checked that it was INITABLE()).  This promotes
@@ -409,7 +409,7 @@ REB_R Evaluator_Executor(REBFRM *f)
     // Put the backwards quoted value into OUT.
     //
     Derelativize(OUT, f_current, f_specifier);  // for NEXT_ARG_FROM_OUT
-    SET_CELL_FLAG(OUT, UNEVALUATED);  // so lookback knows it was quoted
+    Set_Cell_Flag(OUT, UNEVALUATED);  // so lookback knows it was quoted
 
     // We skip over the word that invoked the action (e.g. ->-, OF, =>).
     // v will then hold a pointer to that word (possibly now resident in the
@@ -437,7 +437,7 @@ REB_R Evaluator_Executor(REBFRM *f)
 
         Move_Cell(&f->feed->lookback, OUT);
         Derelativize(OUT, f_current, f_specifier);
-        SET_CELL_FLAG(OUT, UNEVALUATED);
+        Set_Cell_Flag(OUT, UNEVALUATED);
 
         // leave *next at END
         f_current = &f->feed->lookback;
@@ -734,7 +734,7 @@ REB_R Evaluator_Executor(REBFRM *f)
             f_current_gotten = Lookup_Word_May_Fail(f_current, f_specifier);
 
         Copy_Cell(OUT, unwrap(f_current_gotten));
-        assert(NOT_CELL_FLAG(OUT, UNEVALUATED));
+        assert(Not_Cell_Flag(OUT, UNEVALUATED));
 
         // !!! All isotopic decay should have already happened.
         // Lookup_Word() should be asserting this!
@@ -1155,8 +1155,8 @@ REB_R Evaluator_Executor(REBFRM *f)
         // !!! This didn't appear to be true for `-- "hi" "hi"`, processing
         // GET-PATH! of a variadic.  Review if it should be true.
         //
-        /* assert(NOT_CELL_FLAG(OUT, CELL_FLAG_UNEVALUATED)); */
-        CLEAR_CELL_FLAG(OUT, UNEVALUATED);
+        /* assert(Not_Cell_Flag(OUT, CELL_FLAG_UNEVALUATED)); */
+        Clear_Cell_Flag(OUT, UNEVALUATED);
 
         if (STATE == ST_EVALUATOR_META_PATH_OR_META_TUPLE)
             Meta_Quotify(OUT);
@@ -1292,7 +1292,7 @@ REB_R Evaluator_Executor(REBFRM *f)
             //
             if (IS_META(check)) {
                 Init_Blackhole(DS_PUSH());
-                SET_CELL_FLAG(DS_TOP, STACK_NOTE_METARETURN);
+                Set_Cell_Flag(DS_TOP, STACK_NOTE_METARETURN);
                 continue;
             }
             if (
@@ -1302,7 +1302,7 @@ REB_R Evaluator_Executor(REBFRM *f)
             ){
                 Derelativize(DS_PUSH(), check, check_specifier);
                 Plainify(DS_TOP);
-                SET_CELL_FLAG(DS_TOP, STACK_NOTE_METARETURN);
+                Set_Cell_Flag(DS_TOP, STACK_NOTE_METARETURN);
                 continue;
             }
 
@@ -1356,7 +1356,7 @@ REB_R Evaluator_Executor(REBFRM *f)
             if (IS_THE_GROUP(check))
                 dsp_circled = DSP;
             else if (IS_META_GROUP(check))
-                SET_CELL_FLAG(DS_TOP, STACK_NOTE_METARETURN);
+                Set_Cell_Flag(DS_TOP, STACK_NOTE_METARETURN);
         }
 
         // By default, the ordinary return result will be returned.  Indicate
@@ -1485,7 +1485,7 @@ REB_R Evaluator_Executor(REBFRM *f)
         if (IS_BLANK(SPARE))
             Init_Isotope(OUT, Canon(BLANK));
         else {
-            if (GET_CELL_FLAG(
+            if (Get_Cell_Flag(
                 DS_AT(f->baseline.dsp + 1),
                 STACK_NOTE_METARETURN)
             ){
@@ -1515,7 +1515,7 @@ REB_R Evaluator_Executor(REBFRM *f)
         REBDSP dsp = DSP;
         for (; dsp != f->baseline.dsp + 1; --dsp) {
             if (
-                GET_CELL_FLAG(DS_AT(dsp), STACK_NOTE_METARETURN)
+                Get_Cell_Flag(DS_AT(dsp), STACK_NOTE_METARETURN)
                 or dsp_circled == dsp
             ){
                 DECLARE_LOCAL (temp);
@@ -1527,7 +1527,7 @@ REB_R Evaluator_Executor(REBFRM *f)
                     SPECIFIED,
                     true  // any
                 );
-                if (GET_CELL_FLAG(DS_AT(dsp), STACK_NOTE_METARETURN))
+                if (Get_Cell_Flag(DS_AT(dsp), STACK_NOTE_METARETURN))
                     Meta_Quotify(temp);
                 Set_Var_May_Fail(
                     SPARE, SPECIFIED,
@@ -1691,9 +1691,9 @@ REB_R Evaluator_Executor(REBFRM *f)
     // Is it worth it to do so?
     //
     /*if (ANY_INERT_KIND(kind_current)) {  // if() to check which part failed
-        assert(GET_CELL_FLAG(OUT, UNEVALUATED));
+        assert(Get_Cell_Flag(OUT, UNEVALUATED));
     }
-    else if (GET_CELL_FLAG(OUT, UNEVALUATED)) {
+    else if (Get_Cell_Flag(OUT, UNEVALUATED)) {
         //
         // !!! Should ONLY happen if we processed a WORD! that looked up to
         // an invisible function, and left something behind that was not

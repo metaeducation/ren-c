@@ -307,8 +307,8 @@ REBACT *Make_Interpreted_Action_May_Fail(
     // means compatibility would be with the behavior of R3-Alpha CLOSURE,
     // not with R3-Alpha FUNCTION.
     //
-    if (GET_CELL_FLAG(body, CONST))
-        SET_CELL_FLAG(rebound, CONST);  // Inherit_Const() would need REBVAL*
+    if (Get_Cell_Flag(body, CONST))
+        Set_Cell_Flag(rebound, CONST);  // Inherit_Const() would need REBVAL*
 
     return a;
 }

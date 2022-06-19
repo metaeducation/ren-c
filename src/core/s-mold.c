@@ -263,7 +263,7 @@ void Mold_Array_At(
     const Cell *item_tail = ARR_TAIL(a);
     const Cell *item = ARR_AT(a, index);
     while (item != item_tail) {
-        if (GET_CELL_FLAG(item, NEWLINE_BEFORE)) {
+        if (Get_Cell_Flag(item, NEWLINE_BEFORE)) {
            if (not indented and (sep[1] != '\0')) {
                 ++mo->indent;
                 indented = true;
@@ -285,7 +285,7 @@ void Mold_Array_At(
         if (item == item_tail)
             break;
 
-        if (NOT_CELL_FLAG(item, NEWLINE_BEFORE))
+        if (Not_Cell_Flag(item, NEWLINE_BEFORE))
             Append_Codepoint(mo->series, ' ');
     }
 

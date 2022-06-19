@@ -612,7 +612,7 @@ REBARR *Pop_Paramlist_With_Meta_May_Fail(
         // local called `x` with a new parameter called `x`, and that's legal.)
         //
         bool hidden;
-        if (GET_CELL_FLAG(slot, STACK_NOTE_SEALED)) {
+        if (Get_Cell_Flag(slot, STACK_NOTE_SEALED)) {
             assert(Is_Specialized(cast(REBPAR*, cast(REBVAL*, slot))));
 
             // !!! This flag was being set on an uninitialized param, with the
@@ -640,10 +640,10 @@ REBARR *Pop_Paramlist_With_Meta_May_Fail(
         );
 
         if (hidden)
-            SET_CELL_FLAG(param, VAR_MARKED_HIDDEN);
+            Set_Cell_Flag(param, VAR_MARKED_HIDDEN);
 
       #if !defined(NDEBUG)
-        SET_CELL_FLAG(param, PROTECTED);
+        Set_Cell_Flag(param, PROTECTED);
       #endif
 
         ++key;
@@ -670,7 +670,7 @@ REBARR *Pop_Paramlist_With_Meta_May_Fail(
         // See notes in AUGMENT on why we don't do binder indices on "sealed"
         // arguments (we can add `x` to the interface of a func with local `x`)
         //
-        if (GET_CELL_FLAG(param, VAR_MARKED_HIDDEN)) {
+        if (Get_Cell_Flag(param, VAR_MARKED_HIDDEN)) {
             assert(Is_Specialized(param));
         }
         else {
@@ -964,7 +964,7 @@ REBACT *Make_Action(
     INIT_VAL_ACTION_PARTIALS_OR_LABEL(archetype, partials);
 
   #if !defined(NDEBUG)  // notice attempted mutation of the archetype cell
-    SET_CELL_FLAG(archetype, PROTECTED);
+    Set_Cell_Flag(archetype, PROTECTED);
   #endif
 
     // Leave rest of the cells in the capacity uninitialized (caller fills in)

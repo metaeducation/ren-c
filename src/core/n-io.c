@@ -201,9 +201,9 @@ REBNATIVE(new_line)
             continue;
 
         if (mark)
-            SET_CELL_FLAG(item, NEWLINE_BEFORE);
+            Set_Cell_Flag(item, NEWLINE_BEFORE);
         else
-            CLEAR_CELL_FLAG(item, NEWLINE_BEFORE);
+            Clear_Cell_Flag(item, NEWLINE_BEFORE);
 
         if (skip == 0)
             break;
@@ -268,7 +268,7 @@ REBNATIVE(new_line_q)
     }
 
     if (item != tail and NOT_END(item))  // !!! Review if END should be here
-        return Init_Logic(OUT, GET_CELL_FLAG(item, NEWLINE_BEFORE));
+        return Init_Logic(OUT, Get_Cell_Flag(item, NEWLINE_BEFORE));
 
     return Init_Logic(OUT, GET_SUBCLASS_FLAG(ARRAY, arr, NEWLINE_AT_TAIL));
 }

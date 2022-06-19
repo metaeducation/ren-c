@@ -63,14 +63,14 @@ REBNATIVE(test_librebol)
   // an assert since argument order can vary across compilers.
 
   blockscope {
-    SET_CELL_FLAG(Init_Integer(DS_PUSH(), 1), NEWLINE_BEFORE);
+    Set_Cell_Flag(Init_Integer(DS_PUSH(), 1), NEWLINE_BEFORE);
     int i = rebUnboxInteger("1 +", rebI(2));
 
     Init_Logic(DS_PUSH(), i == 3);  // ^-- see NOTICE
   }
 
   blockscope {
-    SET_CELL_FLAG(Init_Integer(DS_PUSH(), 2), NEWLINE_BEFORE);
+    Set_Cell_Flag(Init_Integer(DS_PUSH(), 2), NEWLINE_BEFORE);
     intptr_t getter = rebUnboxInteger("api-transient {Hello}");
     Recycle();  // transient should survive a recycle
     REBNOD *getter_node = cast(REBNOD*, cast(void*, getter));
@@ -80,13 +80,13 @@ REBNATIVE(test_librebol)
   }
 
   blockscope {
-    SET_CELL_FLAG(Init_Integer(DS_PUSH(), 3), NEWLINE_BEFORE);
+    Set_Cell_Flag(Init_Integer(DS_PUSH(), 3), NEWLINE_BEFORE);
     REBVAL *macro = rebValue("macro [x] [[append x ^ first]]");
     REBVAL *mtest1 = rebValue(macro, "[1 2 3]", "[d e f]");
     Copy_Cell(DS_PUSH(), mtest1);  // ^-- see NOTICE
     rebRelease(mtest1);
 
-    SET_CELL_FLAG(Init_Integer(DS_PUSH(), 4), NEWLINE_BEFORE);
+    Set_Cell_Flag(Init_Integer(DS_PUSH(), 4), NEWLINE_BEFORE);
     REBVAL *numbers = rebValue("[1 2 3]");
     REBVAL *letters = rebValue("[d e f]");
     REBVAL *mtest2 = rebValue(macro, rebR(numbers), rebR(letters));
@@ -97,7 +97,7 @@ REBNATIVE(test_librebol)
   }
 
   blockscope {
-    SET_CELL_FLAG(Init_Integer(DS_PUSH(), 5), NEWLINE_BEFORE);
+    Set_Cell_Flag(Init_Integer(DS_PUSH(), 5), NEWLINE_BEFORE);
     bool is_null = rebUnboxLogic("null? @", nullptr);
 
     Init_Logic(DS_PUSH(), is_null);

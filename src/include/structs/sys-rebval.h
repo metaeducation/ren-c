@@ -71,7 +71,7 @@
 #define CELL_MASK_PREP 0  // considered WRITABLE()
 
 
-// The GET_CELL_FLAG()/etc. macros splice together CELL_FLAG_ with the text
+// The Get_Cell_Flag()/etc. macros splice together CELL_FLAG_ with the text
 // you pass in (token pasting).  Since it does this, alias NODE_FLAG_XXX to
 // CELL_FLAG_XXX so they can be used with those macros.  MARKED is kept in
 // the name to stress you can't have more than one use in effect at a time...

@@ -560,7 +560,7 @@ inline static option(REBSER*) Get_Word_Container(
             // general questions of hiding which is the same bit.  Don't
             // count it as a hit.
             //
-            if (GET_CELL_FLAG(CTX_VAR(overload, index), BIND_NOTE_REUSE))
+            if (Get_Cell_Flag(CTX_VAR(overload, index), BIND_NOTE_REUSE))
                 break;
 
             *index_out = index;
@@ -821,7 +821,7 @@ inline static REBVAL *Lookup_Mutable_Word_May_Fail(
     // The PROTECT command has a finer-grained granularity for marking
     // not just contexts, but individual fields as protected.
     //
-    if (GET_CELL_FLAG(var, PROTECTED)) {
+    if (Get_Cell_Flag(var, PROTECTED)) {
         DECLARE_LOCAL (unwritable);
         Init_Word(unwritable, VAL_WORD_SYMBOL(any_word));
         fail (Error_Protected_Word_Raw(unwritable));

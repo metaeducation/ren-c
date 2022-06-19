@@ -920,10 +920,10 @@ inline static void FAIL_IF_READ_ONLY_SER(REBSER *s) {
     #define KNOWN_MUTABLE(v) v
 #else
     inline static const Cell* KNOWN_MUTABLE(const Cell* v) {
-        assert(GET_CELL_FLAG(v, FIRST_IS_NODE));
+        assert(Get_Cell_Flag(v, FIRST_IS_NODE));
         REBSER *s = SER(VAL_NODE1(v));  // can be pairlist, varlist, etc.
         assert(not Is_Series_Read_Only(s));
-        assert(NOT_CELL_FLAG(v, CONST));
+        assert(Not_Cell_Flag(v, CONST));
         return v;
     }
 #endif
@@ -932,12 +932,12 @@ inline static void FAIL_IF_READ_ONLY_SER(REBSER *s) {
 inline static REBVAL* Unrelativize(Cell* out, const Cell* v);
 
 inline static const Cell *ENSURE_MUTABLE(const Cell *v) {
-    assert(GET_CELL_FLAG(v, FIRST_IS_NODE));
+    assert(Get_Cell_Flag(v, FIRST_IS_NODE));
     REBSER *s = SER(VAL_NODE1(v));  // can be pairlist, varlist, etc.
 
     FAIL_IF_READ_ONLY_SER(s);
 
-    if (NOT_CELL_FLAG(v, CONST))
+    if (Not_Cell_Flag(v, CONST))
         return v;
 
     DECLARE_LOCAL (specific);
@@ -1041,7 +1041,7 @@ inline static const REBSER *VAL_SERIES(noquote(const Cell*) v) {
             or k == REB_ISSUE or k == REB_URL
             or ANY_ARRAYLIKE(v)
         );
-        assert(GET_CELL_FLAG(v, FIRST_IS_NODE));
+        assert(Get_Cell_Flag(v, FIRST_IS_NODE));
         return VAL_INDEX_RAW(v);
     }
     inline static REBIDX & VAL_INDEX_UNBOUNDED(Cell *v) {
@@ -1051,7 +1051,7 @@ inline static const REBSER *VAL_SERIES(noquote(const Cell*) v) {
             or k == REB_ISSUE or k == REB_URL
             or ANY_ARRAYLIKE(v)
         );
-        assert(GET_CELL_FLAG(v, FIRST_IS_NODE));
+        assert(Get_Cell_Flag(v, FIRST_IS_NODE));
         return VAL_INDEX_RAW(v);  // returns a C++ reference
     }
 #endif
@@ -1071,7 +1071,7 @@ inline static REBLEN VAL_INDEX(noquote(const Cell*) v) {
         or ANY_ARRAYLIKE(v)
     );
     UNUSED(k);
-    assert(GET_CELL_FLAG(v, FIRST_IS_NODE));
+    assert(Get_Cell_Flag(v, FIRST_IS_NODE));
     REBIDX i = VAL_INDEX_RAW(v);
     if (i < 0 or i > cast(REBIDX, VAL_LEN_HEAD(v)))
         fail (Error_Index_Out_Of_Range_Raw());

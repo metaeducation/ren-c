@@ -124,7 +124,7 @@ static void Append_To_Context(REBVAL *context, REBVAL *arg)
             var = CTX_VAR(c, i);
         }
 
-        if (GET_CELL_FLAG(var, PROTECTED)) {
+        if (Get_Cell_Flag(var, PROTECTED)) {
             error = Error_Protected_Key(&symbol);
             goto collect_end;
         }
@@ -138,7 +138,7 @@ static void Append_To_Context(REBVAL *context, REBVAL *arg)
         // addition of public parameters that overlap the names of private
         // fields on the black box internals...perhaps contexts should too?
         //
-        if (GET_CELL_FLAG(var, VAR_MARKED_HIDDEN)) {
+        if (Get_Cell_Flag(var, VAR_MARKED_HIDDEN)) {
             error = Error_Hidden_Raw();
             goto collect_end;
         }
@@ -344,7 +344,7 @@ bool Did_Advance_Evars(EVARS *e) {
     if (e->word) {
         while (++e->word != e->word_tail) {
             e->var = MOD_VAR(e->ctx, VAL_WORD_SYMBOL(e->word), true);
-            if (GET_CELL_FLAG(e->var, VAR_MARKED_HIDDEN))
+            if (Get_Cell_Flag(e->var, VAR_MARKED_HIDDEN))
                 continue;
             e->keybuf = VAL_WORD_SYMBOL(e->word);
             e->key = &e->keybuf;
@@ -368,7 +368,7 @@ bool Did_Advance_Evars(EVARS *e) {
             e->var ? ++e->var : cast(REBVAR*, nullptr)
         )
     ){
-        if (e->var and GET_CELL_FLAG(e->var, VAR_MARKED_HIDDEN))
+        if (e->var and Get_Cell_Flag(e->var, VAR_MARKED_HIDDEN))
             continue;  // user-specified hidden bit, on the variable itself
 
         // A simple specialization of a function would provide a value that
@@ -383,7 +383,7 @@ bool Did_Advance_Evars(EVARS *e) {
         // that copy to honor this property.)
         //
         if (e->param) {  // v-- system-level hidden bit on *exemplar*
-            if (GET_CELL_FLAG(e->param, VAR_MARKED_HIDDEN)) {
+            if (Get_Cell_Flag(e->param, VAR_MARKED_HIDDEN)) {
                 assert(Is_Specialized(e->param));  // don't hide param typesets
                 continue;
             }
@@ -1149,7 +1149,7 @@ REBTYPE(Context)
         if (not var)
             fail (Error_Bad_Pick_Raw(picker));
 
-        assert(NOT_CELL_FLAG(var, PROTECTED));
+        assert(Not_Cell_Flag(var, PROTECTED));
         Copy_Cell(var, setval);
         return nullptr; }  // caller's REBCTX* is not stale, no update needed
 
@@ -1173,9 +1173,9 @@ REBTYPE(Context)
             fail ("PROTECT* currently takes just logic");
 
         if (VAL_LOGIC(setval))
-            SET_CELL_FLAG(var, PROTECTED);
+            Set_Cell_Flag(var, PROTECTED);
         else
-            CLEAR_CELL_FLAG(var, PROTECTED);
+            Clear_Cell_Flag(var, PROTECTED);
 
         return nullptr; }  // caller's REBCTX* is not stale, no update needed
 

@@ -1025,7 +1025,7 @@ static enum Reb_Token Locate_Token_May_Push_Mold(
 
             if (level->newline_pending) {
                 level->newline_pending = false;
-                SET_CELL_FLAG(DS_TOP, NEWLINE_BEFORE);
+                Set_Cell_Flag(DS_TOP, NEWLINE_BEFORE);
             }
         }
         else {  // It's UTF-8, so have to scan it ordinarily.
@@ -2686,7 +2686,7 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
         // Can only store file and line information if it has an array
         //
         if (
-            GET_CELL_FLAG(DS_TOP, FIRST_IS_NODE)
+            Get_Cell_Flag(DS_TOP, FIRST_IS_NODE)
             and VAL_NODE1(DS_TOP) != nullptr  // null legal in node slots ATM
             and IS_SER_ARRAY(SER(VAL_NODE1(DS_TOP)))
         ){
@@ -2797,7 +2797,7 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
     //
     if (level->newline_pending) {
         level->newline_pending = false;
-        SET_CELL_FLAG(DS_TOP, NEWLINE_BEFORE);
+        Set_Cell_Flag(DS_TOP, NEWLINE_BEFORE);
     }
 
     // Added for TRANSCODE/NEXT (LOAD/NEXT is deprecated, see #1703)

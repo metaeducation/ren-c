@@ -226,7 +226,7 @@ void Clonify(
         // We're not copying the value, so inherit the const bit from the
         // original value's point of view, if applicable.
         //
-        if (NOT_CELL_FLAG(v, EXPLICITLY_MUTABLE))
+        if (Not_Cell_Flag(v, EXPLICITLY_MUTABLE))
             v->header.bits |= (flags & ARRAY_FLAG_CONST_SHALLOW);
     }
 }

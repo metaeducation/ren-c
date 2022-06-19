@@ -362,20 +362,20 @@ REB_R Action_Executor(REBFRM *f)
                     Init_Void_Isotope(ARG);
                 else {
                     Copy_Cell(ARG, OUT);
-                    if (GET_CELL_FLAG(OUT, UNEVALUATED))
-                        SET_CELL_FLAG(ARG, UNEVALUATED);
+                    if (Get_Cell_Flag(OUT, UNEVALUATED))
+                        Set_Cell_Flag(ARG, UNEVALUATED);
                 }
                 break;
 
               case PARAM_CLASS_META: {
                 Reify_Eval_Out_Meta(OUT);
                 Copy_Cell(ARG, OUT);
-                if (GET_CELL_FLAG(OUT, UNEVALUATED))
-                    SET_CELL_FLAG(ARG, UNEVALUATED);
+                if (Get_Cell_Flag(OUT, UNEVALUATED))
+                    Set_Cell_Flag(ARG, UNEVALUATED);
                 break; }
 
               case PARAM_CLASS_HARD:
-                if (NOT_CELL_FLAG(OUT, UNEVALUATED)) {
+                if (Not_Cell_Flag(OUT, UNEVALUATED)) {
                     //
                     // This can happen e.g. with `x: 10 | x >- lit`.  We
                     // raise an error in this case, while still allowing
@@ -389,7 +389,7 @@ REB_R Action_Executor(REBFRM *f)
                 // PARAM_FLAG_SKIPPABLE accounted for in pre-lookback
 
                 Copy_Cell(ARG, OUT);
-                SET_CELL_FLAG(ARG, UNEVALUATED);
+                Set_Cell_Flag(ARG, UNEVALUATED);
                 break;
 
               case PARAM_CLASS_SOFT:
@@ -408,7 +408,7 @@ REB_R Action_Executor(REBFRM *f)
                 // of one unit.  Thus when reaching this point, it must carry
                 // the UENEVALUATED FLAG.
                 //
-                assert(GET_CELL_FLAG(OUT, UNEVALUATED));
+                assert(Get_Cell_Flag(OUT, UNEVALUATED));
                 goto escapable;
 
               escapable:
@@ -418,7 +418,7 @@ REB_R Action_Executor(REBFRM *f)
                 }
                 else {
                     Copy_Cell(ARG, OUT);
-                    SET_CELL_FLAG(ARG, UNEVALUATED);
+                    Set_Cell_Flag(ARG, UNEVALUATED);
                 }
                 break;
 
@@ -557,7 +557,7 @@ REB_R Action_Executor(REBFRM *f)
                     goto continue_fulfilling;
                 }
                 Literal_Next_In_Frame(ARG, f);
-                SET_CELL_FLAG(ARG, UNEVALUATED);
+                Set_Cell_Flag(ARG, UNEVALUATED);
             }
 
             // Have to account for enfix deferrals in cases like:
@@ -895,7 +895,7 @@ REB_R Action_Executor(REBFRM *f)
         // contract of the function hasn't been "tweaked" with reskinning.
         //
         if (GET_PARAM_FLAG(PARAM, CONST))
-            SET_CELL_FLAG(ARG, CONST);
+            Set_Cell_Flag(ARG, CONST);
 
         // !!! Review when # is used here
         if (GET_PARAM_FLAG(PARAM, REFINEMENT)) {
@@ -1002,7 +1002,7 @@ REB_R Action_Executor(REBFRM *f)
         //
         assert(not Is_Stale(OUT));
 
-        CLEAR_CELL_FLAG(OUT, UNEVALUATED);
+        Clear_Cell_Flag(OUT, UNEVALUATED);
     }
     else if (not r) {  // API and internal code can both return `nullptr`
         Init_Nulled(OUT);

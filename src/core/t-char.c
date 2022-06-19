@@ -197,7 +197,7 @@ static REBINT Math_Arg_For_Char(REBVAL *arg, const Symbol *verb)
 void MF_Issue(REB_MOLD *mo, noquote(const Cell*) v, bool form)
 {
     REBLEN len;
-    if (GET_CELL_FLAG(v, ISSUE_HAS_NODE))
+    if (Get_Cell_Flag(v, ISSUE_HAS_NODE))
         len = VAL_LEN_AT(v);
     else
         len = EXTRA(Bytes, v).exactly_4[IDX_EXTRA_LEN];
@@ -240,7 +240,7 @@ void MF_Issue(REB_MOLD *mo, noquote(const Cell*) v, bool form)
         }
     }
 
-    if (no_quotes or NOT_CELL_FLAG(v, ISSUE_HAS_NODE)) {  // !!! hack
+    if (no_quotes or Not_Cell_Flag(v, ISSUE_HAS_NODE)) {  // !!! hack
         if (len == 1 and not no_quotes) {  // use historical CHAR! path
             bool parened = GET_MOLD_FLAG(mo, MOLD_FLAG_ALL);
 

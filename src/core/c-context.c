@@ -785,7 +785,7 @@ REBARR *Context_To_Array(const Cell *context, REBINT mode)
             );
 
             if (mode & 2)
-                SET_CELL_FLAG(DS_TOP, NEWLINE_BEFORE);
+                Set_Cell_Flag(DS_TOP, NEWLINE_BEFORE);
         }
 
         if (mode & 2) {

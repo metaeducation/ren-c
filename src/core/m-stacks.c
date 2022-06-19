@@ -43,7 +43,7 @@ void Startup_Data_Stack(REBLEN capacity)
         FLAG_FLAVOR(DATASTACK) | SERIES_FLAGS_NONE
       );
     Init_Trash(ARR_HEAD(DS_Array));
-    SET_CELL_FLAG(ARR_HEAD(DS_Array), PROTECTED);
+    Set_Cell_Flag(ARR_HEAD(DS_Array), PROTECTED);
 
     // The tail marker will signal DS_PUSH() that it has run out of space,
     // and it will perform the allocation at that time.

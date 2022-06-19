@@ -169,8 +169,8 @@ REBINT CT_Handle(noquote(const Cell*) a, noquote(const Cell*) b, bool strict)
     // sense to have other ideas of equality, e.g. if two nodes incidentally
     // point to the same thing?)
     //
-    if (GET_CELL_FLAG(a, FIRST_IS_NODE)) {
-        if (NOT_CELL_FLAG(b, FIRST_IS_NODE))
+    if (Get_Cell_Flag(a, FIRST_IS_NODE)) {
+        if (Not_Cell_Flag(b, FIRST_IS_NODE))
             return 1;
 
         if (VAL_NODE1(a) == VAL_NODE1(b))
@@ -178,7 +178,7 @@ REBINT CT_Handle(noquote(const Cell*) a, noquote(const Cell*) b, bool strict)
 
         return VAL_NODE1(a) > VAL_NODE1(b) ? 1 : -1;
     }
-    else if (GET_CELL_FLAG(b, FIRST_IS_NODE))
+    else if (Get_Cell_Flag(b, FIRST_IS_NODE))
         return -1;
 
     // There is no "identity" when it comes to a non-shared handles, so we

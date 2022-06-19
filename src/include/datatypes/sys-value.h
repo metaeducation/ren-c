@@ -362,17 +362,18 @@ inline static enum Reb_Kind VAL_TYPE_UNCHECKED(const Cell *v) {
 // has to use an additional allocation and point to that.)
 //
 
-#define SET_CELL_FLAG(v,name) \
-    (WRITABLE(v)->header.bits |= CELL_FLAG_##name)
-
-#define GET_CELL_FLAG(v,name) \
+#define Get_Cell_Flag(v,name) \
     ((READABLE(v)->header.bits & CELL_FLAG_##name) != 0)
 
-#define CLEAR_CELL_FLAG(v,name) \
+#define Not_Cell_Flag(v,name) \
+    ((READABLE(v)->header.bits & CELL_FLAG_##name) == 0)
+
+#define Set_Cell_Flag(v,name) \
+    (WRITABLE(v)->header.bits |= CELL_FLAG_##name)
+
+#define Clear_Cell_Flag(v,name) \
     (WRITABLE(v)->header.bits &= ~CELL_FLAG_##name)
 
-#define NOT_CELL_FLAG(v,name) \
-    ((READABLE(v)->header.bits & CELL_FLAG_##name) == 0)
 
 // CELL_FLAG_STALE is special; we use it for things like debug build indicating
 // array termination.  It doesn't make an empty/prepped cell non-empty.  We
@@ -584,7 +585,7 @@ inline static bool ANY_ARRAYLIKE(noquote(const Cell*) v) {
         return true;
     if (not ANY_SEQUENCE_KIND(CELL_HEART(v)))
         return false;
-    if (NOT_CELL_FLAG(v, FIRST_IS_NODE))
+    if (Not_Cell_Flag(v, FIRST_IS_NODE))
         return false;
     const REBNOD *node1 = VAL_NODE1(v);
     if (NODE_BYTE(node1) & NODE_BYTEMASK_0x01_CELL)
@@ -597,7 +598,7 @@ inline static bool ANY_WORDLIKE(noquote(const Cell*) v) {
         return true;
     if (not ANY_SEQUENCE_KIND(CELL_HEART(v)))
         return false;
-    if (NOT_CELL_FLAG(v, FIRST_IS_NODE))
+    if (Not_Cell_Flag(v, FIRST_IS_NODE))
         return false;
     const REBNOD *node1 = VAL_NODE1(v);
     if (NODE_BYTE(node1) & NODE_BYTEMASK_0x01_CELL)
@@ -612,7 +613,7 @@ inline static bool ANY_STRINGLIKE(noquote(const Cell*) v) {
         return true;
     if (CELL_HEART(v) != REB_ISSUE)
         return false;
-    return GET_CELL_FLAG(v, ISSUE_HAS_NODE);
+    return Get_Cell_Flag(v, ISSUE_HAS_NODE);
 }
 
 
@@ -760,7 +761,7 @@ inline static REBVAL *Inherit_Const(REBVAL *out, const Cell *influencer) {
     (value) // just a marking to say the const is accounted for already
 
 inline static REBVAL *Constify(REBVAL *v) {
-    SET_CELL_FLAG(v, CONST);
+    Set_Cell_Flag(v, CONST);
     return v;
 }
 

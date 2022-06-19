@@ -740,7 +740,7 @@ static void Clonify_And_Bind_Relative(
         // We're not copying the value, so inherit the const bit from the
         // original value's point of view, if applicable.
         //
-        if (NOT_CELL_FLAG(v, EXPLICITLY_MUTABLE))
+        if (Not_Cell_Flag(v, EXPLICITLY_MUTABLE))
             v->header.bits |= (flags & ARRAY_FLAG_CONST_SHALLOW);
     }
 
@@ -1042,8 +1042,8 @@ REBCTX *Virtual_Bind_Deep_To_New_Context(
 
             REBVAL *var = Append_Context(c, nullptr, symbol);
             Init_Blank(var);
-            SET_CELL_FLAG(var, BIND_NOTE_REUSE);
-            SET_CELL_FLAG(var, PROTECTED);
+            Set_Cell_Flag(var, BIND_NOTE_REUSE);
+            Set_Cell_Flag(var, PROTECTED);
 
             goto add_binding_for_check;
         }
@@ -1090,8 +1090,8 @@ REBCTX *Virtual_Bind_Deep_To_New_Context(
           blockscope {
             REBVAL *var = Append_Context(c, nullptr, symbol);
             Derelativize(var, item, specifier);
-            SET_CELL_FLAG(var, BIND_NOTE_REUSE);
-            SET_CELL_FLAG(var, PROTECTED);
+            Set_Cell_Flag(var, BIND_NOTE_REUSE);
+            Set_Cell_Flag(var, PROTECTED);
           }
 
           add_binding_for_check:
@@ -1185,9 +1185,9 @@ REBCTX *Virtual_Bind_Deep_To_New_Context(
         if (stored == 0)
             assert(duplicate);
         else if (stored > 0)
-            assert(NOT_CELL_FLAG(var, BIND_NOTE_REUSE));
+            assert(Not_Cell_Flag(var, BIND_NOTE_REUSE));
         else
-            assert(GET_CELL_FLAG(var, BIND_NOTE_REUSE));
+            assert(Get_Cell_Flag(var, BIND_NOTE_REUSE));
     }
   }
 

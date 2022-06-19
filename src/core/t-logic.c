@@ -169,7 +169,7 @@ REBNATIVE(and_1)  // see TO-C-NAME
     REBVAL *left = ARG(left);
     REBVAL *right = ARG(right);
 
-    if (GET_CELL_FLAG(left, UNEVALUATED))
+    if (Get_Cell_Flag(left, UNEVALUATED))
         fail (Error_Unintended_Literal_Raw(left));
 
     if (Is_Falsey(left))
@@ -200,7 +200,7 @@ REBNATIVE(or_1)  // see TO-C-NAME
     REBVAL *left = ARG(left);
     REBVAL *right = ARG(right);
 
-    if (GET_CELL_FLAG(left, UNEVALUATED))
+    if (Get_Cell_Flag(left, UNEVALUATED))
         fail (Error_Unintended_Literal_Raw(left));
 
     if (Is_Truthy(left))
@@ -231,7 +231,7 @@ REBNATIVE(xor_1)  // see TO-C-NAME
     REBVAL *left = ARG(left);
     REBVAL *right = ARG(right);
 
-    if (GET_CELL_FLAG(left, UNEVALUATED))
+    if (Get_Cell_Flag(left, UNEVALUATED))
         fail (Error_Unintended_Literal_Raw(left));
 
     if (Do_Logic_Right_Side_Throws(SPARE, right))

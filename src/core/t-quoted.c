@@ -170,7 +170,7 @@ REBNATIVE(the)
 
     Copy_Cell(OUT, v);
 
-    SET_CELL_FLAG(OUT, UNEVALUATED);
+    Set_Cell_Flag(OUT, UNEVALUATED);
     return OUT;
 }
 
@@ -220,7 +220,7 @@ REBNATIVE(the_p)
     else
         Copy_Cell(OUT, v);
 
-    SET_CELL_FLAG(OUT, UNEVALUATED);
+    Set_Cell_Flag(OUT, UNEVALUATED);
     return OUT;
 }
 
@@ -254,7 +254,7 @@ REBNATIVE(just)
     }
 
     Copy_Cell(OUT, v);
-    SET_CELL_FLAG(OUT, UNEVALUATED);  // !!! should this bit be set?
+    Set_Cell_Flag(OUT, UNEVALUATED);  // !!! should this bit be set?
     return Quotify(OUT, 1);
 }
 

@@ -104,7 +104,7 @@ REBLEN Modify_Array(
             else {
                 const Cell *tail_cell
                     = VAL_ARRAY_ITEM_AT(src_val) + ilen;
-                tail_newline = GET_CELL_FLAG(tail_cell, NEWLINE_BEFORE);
+                tail_newline = Get_Cell_Flag(tail_cell, NEWLINE_BEFORE);
             }
         }
 
@@ -169,7 +169,7 @@ REBLEN Modify_Array(
             );
 
             if (dup_index == 0 and index == 0 and head_newline) {
-                SET_CELL_FLAG(ARR_HEAD(dst_arr) + dst_idx, NEWLINE_BEFORE);
+                Set_Cell_Flag(ARR_HEAD(dst_arr) + dst_idx, NEWLINE_BEFORE);
 
                 // The array flag is not cleared until the loop actually
                 // makes a value that will carry on the bit.
@@ -179,7 +179,7 @@ REBLEN Modify_Array(
             }
 
             if (dup_index > 0 and index == 0 and tail_newline) {
-                SET_CELL_FLAG(ARR_HEAD(dst_arr) + dst_idx, NEWLINE_BEFORE);
+                Set_Cell_Flag(ARR_HEAD(dst_arr) + dst_idx, NEWLINE_BEFORE);
             }
         }
     }
@@ -191,7 +191,7 @@ REBLEN Modify_Array(
         if (dst_idx == ARR_LEN(dst_arr))
             SET_SUBCLASS_FLAG(ARRAY, dst_arr, NEWLINE_AT_TAIL);
         else
-            SET_CELL_FLAG(ARR_AT(dst_arr, dst_idx), NEWLINE_BEFORE);
+            Set_Cell_Flag(ARR_AT(dst_arr, dst_idx), NEWLINE_BEFORE);
     }
 
     if (flags & AM_LINE) {
@@ -201,7 +201,7 @@ REBLEN Modify_Array(
         // newline.  This allows `x: copy [] | append/line x [a b c]` to give
         // a more common result.  The head line can be removed easily.
         //
-        SET_CELL_FLAG(ARR_HEAD(dst_arr), NEWLINE_BEFORE);
+        Set_Cell_Flag(ARR_HEAD(dst_arr), NEWLINE_BEFORE);
     }
 
   #if DEBUG_TERM_ARRAYS

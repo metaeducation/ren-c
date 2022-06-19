@@ -604,7 +604,7 @@ bool Get_Var_Push_Refinements_Throws(
     REBDSP dsp_orig = DSP;
 
     if (ANY_SEQUENCE(var)) {
-        if (NOT_CELL_FLAG(var, SEQUENCE_HAS_NODE))  // byte compressed
+        if (Not_Cell_Flag(var, SEQUENCE_HAS_NODE))  // byte compressed
             fail (var);
 
         const REBNOD *node1 = VAL_NODE1(var);
@@ -615,7 +615,7 @@ bool Get_Var_Push_Refinements_Throws(
 
         switch (SER_FLAVOR(SER(node1))) {
           case FLAVOR_SYMBOL:
-            if (GET_CELL_FLAG(var, REFINEMENT_LIKE))  // `/a` or `.a`
+            if (Get_Cell_Flag(var, REFINEMENT_LIKE))  // `/a` or `.a`
                 goto get_source;
 
             // `a/` or `a.`
@@ -786,7 +786,7 @@ bool Get_Path_Push_Refinements_Throws(
     const Cell *path,
     REBSPC *path_specifier
 ){
-    if (NOT_CELL_FLAG(path, SEQUENCE_HAS_NODE)) {  // byte compressed, inert
+    if (Not_Cell_Flag(path, SEQUENCE_HAS_NODE)) {  // byte compressed, inert
         Derelativize(out, path, path_specifier);  // inert
         return false;
     }
@@ -799,7 +799,7 @@ bool Get_Path_Push_Refinements_Throws(
 
     switch (SER_FLAVOR(SER(node1))) {
       case FLAVOR_SYMBOL : {
-        if (GET_CELL_FLAG(path, REFINEMENT_LIKE)) {  // `/a` - should these GET?
+        if (Get_Cell_Flag(path, REFINEMENT_LIKE)) {  // `/a` - should these GET?
             Get_Word_May_Fail(out, path, path_specifier);
             return false;
         }
@@ -1099,7 +1099,7 @@ bool Set_Var_Core_Updater_Throws(
     // caller has asked us to return steps.
 
     if (ANY_SEQUENCE(var)) {
-        if (NOT_CELL_FLAG(var, SEQUENCE_HAS_NODE))  // compressed byte form
+        if (Not_Cell_Flag(var, SEQUENCE_HAS_NODE))  // compressed byte form
             fail (var);
 
         const REBNOD* node1 = VAL_NODE1(var);
@@ -1110,7 +1110,7 @@ bool Set_Var_Core_Updater_Throws(
 
         switch (SER_FLAVOR(SER(node1))) {
           case FLAVOR_SYMBOL: {
-            if (GET_CELL_FLAG(var, REFINEMENT_LIKE))  // `/a` or `.a`
+            if (Get_Cell_Flag(var, REFINEMENT_LIKE))  // `/a` or `.a`
                goto set_target;
 
             // `a/` or `a.`
@@ -1559,7 +1559,7 @@ REBNATIVE(semiquoted_q)
 
     const REBVAL *var = Lookup_Word_May_Fail(ARG(parameter), SPECIFIED);
 
-    return Init_Logic(OUT, GET_CELL_FLAG(var, UNEVALUATED));
+    return Init_Logic(OUT, Get_Cell_Flag(var, UNEVALUATED));
 }
 
 
@@ -1630,7 +1630,7 @@ REBNATIVE(free_q)
 
     // All freeable values put their freeable series in the payload's "first".
     //
-    if (NOT_CELL_FLAG(v, FIRST_IS_NODE))
+    if (Not_Cell_Flag(v, FIRST_IS_NODE))
         return Init_False(OUT);
 
     REBNOD *n = VAL_NODE1(v);
@@ -1698,7 +1698,7 @@ bool Try_As_String(
             // a valid UTF-8 string may have been edited to include CRs.
             //
             if (not Is_Series_Frozen(bin))
-                if (GET_CELL_FLAG(v, CONST))
+                if (Get_Cell_Flag(v, CONST))
                     fail (Error_Alias_Constrains_Raw());
 
             bool all_ascii = true;
@@ -1759,7 +1759,7 @@ bool Try_As_String(
         Inherit_Const(Quotify(out, quotes), v);
     }
     else if (IS_ISSUE(v)) {
-        if (GET_CELL_FLAG(v, ISSUE_HAS_NODE)) {
+        if (Get_Cell_Flag(v, ISSUE_HAS_NODE)) {
             assert(Is_Series_Frozen(VAL_STRING(v)));
             goto any_string;  // ISSUE! series must be immutable
         }
@@ -1833,7 +1833,7 @@ REBNATIVE(as)
       case REB_BLOCK:
       case REB_GROUP:
         if (ANY_SEQUENCE(v)) {  // internals vary based on optimization
-            if (NOT_CELL_FLAG(v, SEQUENCE_HAS_NODE))
+            if (Not_Cell_Flag(v, SEQUENCE_HAS_NODE))
                 fail ("Array Conversions of byte-oriented sequences TBD");
 
             const REBNOD *node1 = VAL_NODE1(v);
@@ -1842,7 +1842,7 @@ REBNATIVE(as)
             switch (SER_FLAVOR(SER(node1))) {
               case FLAVOR_SYMBOL: {
                 REBARR *a = Make_Array_Core(2, NODE_FLAG_MANAGED);
-                if (GET_CELL_FLAG(v, REFINEMENT_LIKE)) {
+                if (Get_Cell_Flag(v, REFINEMENT_LIKE)) {
                     Init_Blank(ARR_AT(a, 0));
                     Copy_Cell(ARR_AT(a, 1), v);
                     mutable_HEART_BYTE(ARR_AT(a, 1)) = REB_WORD;
@@ -1976,7 +1976,7 @@ REBNATIVE(as)
       case REB_META_WORD:
       case REB_THE_WORD: {
         if (IS_ISSUE(v)) {
-            if (GET_CELL_FLAG(v, ISSUE_HAS_NODE)) {
+            if (Get_Cell_Flag(v, ISSUE_HAS_NODE)) {
                 //
                 // Handle the same way we'd handle any other read-only text
                 // with a series allocation...e.g. reuse it if it's already
@@ -2016,7 +2016,7 @@ REBNATIVE(as)
                 // effect of freezing doesn't appear to mystically happen just
                 // in those cases where the efficient reuse works out.
 
-                if (GET_CELL_FLAG(v, CONST))
+                if (Get_Cell_Flag(v, CONST))
                     fail (Error_Alias_Constrains_Raw());
 
                 Freeze_Series(VAL_SERIES(v));
@@ -2053,7 +2053,7 @@ REBNATIVE(as)
             //
             const REBBIN *bin = VAL_BINARY(v);
             if (not Is_Series_Frozen(bin))
-                if (GET_CELL_FLAG(v, CONST))  // can't freeze or add IS_STRING
+                if (Get_Cell_Flag(v, CONST))  // can't freeze or add IS_STRING
                     fail (Error_Alias_Constrains_Raw());
 
             const REBSTR *str;
@@ -2089,7 +2089,7 @@ REBNATIVE(as)
 
       case REB_BINARY: {
         if (IS_ISSUE(v)) {
-            if (GET_CELL_FLAG(v, ISSUE_HAS_NODE))
+            if (Get_Cell_Flag(v, ISSUE_HAS_NODE))
                 goto any_string_as_binary;  // had a series allocation
 
             // Data lives in payload--make new frozen series for BINARY!

@@ -40,7 +40,7 @@ inline static bool IS_CHAR_CELL(noquote(const Cell*) v) {
     if (CELL_HEART(v) != REB_ISSUE)
         return false;
 
-    if (GET_CELL_FLAG(v, ISSUE_HAS_NODE))
+    if (Get_Cell_Flag(v, ISSUE_HAS_NODE))
         return false;  // allocated form, too long to be a character
 
     return EXTRA(Bytes, v).exactly_4[IDX_EXTRA_LEN] <= 1;  // codepoint
@@ -53,7 +53,7 @@ inline static bool IS_CHAR(const Cell *v) {
 }
 
 inline static REBUNI VAL_CHAR(noquote(const Cell*) v) {
-    assert(NOT_CELL_FLAG(v, ISSUE_HAS_NODE));
+    assert(Not_Cell_Flag(v, ISSUE_HAS_NODE));
 
     if (EXTRA(Bytes, v).exactly_4[IDX_EXTRA_LEN] == 0)
         return 0;  // no '\0` bytes internal to series w/REB_TEXT "heart"
@@ -74,7 +74,7 @@ inline static REBYTE VAL_CHAR_ENCODED_SIZE(noquote(const Cell*) v)
   { return Encoded_Size_For_Codepoint(VAL_CHAR(v)); }
 
 inline static const REBYTE *VAL_CHAR_ENCODED(noquote(const Cell*) v) {
-    assert(CELL_HEART(v) == REB_ISSUE and NOT_CELL_FLAG(v, ISSUE_HAS_NODE));
+    assert(CELL_HEART(v) == REB_ISSUE and Not_Cell_Flag(v, ISSUE_HAS_NODE));
     assert(EXTRA(Bytes, v).exactly_4[IDX_EXTRA_LEN] <= 1);  // e.g. codepoint
     return PAYLOAD(Bytes, v).at_least_8;  // !!! '\0' terminated or not?
 }
@@ -274,7 +274,7 @@ inline static REBCHR(const*) VAL_UTF8_LEN_SIZE_AT_LIMIT(
         size_out = &dummy_size;  // force size calculation for debug check
   #endif
 
-    if (CELL_HEART(v) == REB_ISSUE and NOT_CELL_FLAG(v, ISSUE_HAS_NODE)) {
+    if (CELL_HEART(v) == REB_ISSUE and Not_Cell_Flag(v, ISSUE_HAS_NODE)) {
         REBLEN len;
         REBSIZ size;
         //

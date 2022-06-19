@@ -96,13 +96,13 @@ inline static option(const Symbol*) VAL_BAD_WORD_LABEL(
     noquote(const Cell*) v
 ){
     assert(CELL_HEART(v) == REB_BAD_WORD);
-    assert(GET_CELL_FLAG(v, FIRST_IS_NODE));
+    assert(Get_Cell_Flag(v, FIRST_IS_NODE));
     return cast(const Symbol*, VAL_NODE1(v));
 }
 
 inline static OPT_SYMID VAL_BAD_WORD_ID(const Cell *v) {
     assert(IS_BAD_WORD(v));
-    assert(GET_CELL_FLAG(v, FIRST_IS_NODE));
+    assert(Get_Cell_Flag(v, FIRST_IS_NODE));
     if (not VAL_NODE1(v))
         return cast(OPT_SYMID, SYM_0);
 

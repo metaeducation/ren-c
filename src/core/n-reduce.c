@@ -117,10 +117,10 @@ REBNATIVE(reduce)
     if (IS_END(SUBFRAME->feed->value))
         goto finished;
 
-    if (GET_CELL_FLAG(SUBFRAME->feed->value, NEWLINE_BEFORE))
-        SET_CELL_FLAG(v, NEWLINE_BEFORE);  // cache newline flag, see [2]
+    if (Get_Cell_Flag(SUBFRAME->feed->value, NEWLINE_BEFORE))
+        Set_Cell_Flag(v, NEWLINE_BEFORE);  // cache newline flag, see [2]
     else
-        CLEAR_CELL_FLAG(v, NEWLINE_BEFORE);
+        Clear_Cell_Flag(v, NEWLINE_BEFORE);
 
     RESET(OUT);
     SUBFRAME->executor = &Evaluator_Executor;
@@ -162,8 +162,8 @@ REBNATIVE(reduce)
     Move_Cell(DS_PUSH(), processed);
     SUBFRAME->baseline.dsp += 1;  // subframe must be adjusted, see [3]
 
-    if (GET_CELL_FLAG(v, NEWLINE_BEFORE))  // propagate cached newline, see [2]
-        SET_CELL_FLAG(DS_TOP, NEWLINE_BEFORE);
+    if (Get_Cell_Flag(v, NEWLINE_BEFORE))  // propagate cached newline, see [2]
+        Set_Cell_Flag(DS_TOP, NEWLINE_BEFORE);
 
     goto next_reduce_step;
 
@@ -668,10 +668,10 @@ REB_R Composer_Executor(REBFRM *f)
 
     // Use newline intent from the GROUP! in the compose pattern
     //
-    if (GET_CELL_FLAG(f_value, NEWLINE_BEFORE))
-        SET_CELL_FLAG(DS_TOP, NEWLINE_BEFORE);
+    if (Get_Cell_Flag(f_value, NEWLINE_BEFORE))
+        Set_Cell_Flag(DS_TOP, NEWLINE_BEFORE);
     else
-        CLEAR_CELL_FLAG(DS_TOP, NEWLINE_BEFORE);
+        Clear_Cell_Flag(DS_TOP, NEWLINE_BEFORE);
 
     f->u.compose.changed = true;
     goto handle_next_item;
@@ -701,10 +701,10 @@ REB_R Composer_Executor(REBFRM *f)
         const Cell *push = VAL_ARRAY_AT(&push_tail, processed);
         if (push != push_tail) {
             Derelativize(DS_PUSH(), push, VAL_SPECIFIER(processed));
-            if (GET_CELL_FLAG(f_value, NEWLINE_BEFORE))
-                SET_CELL_FLAG(DS_TOP, NEWLINE_BEFORE);  // first, see [4]
+            if (Get_Cell_Flag(f_value, NEWLINE_BEFORE))
+                Set_Cell_Flag(DS_TOP, NEWLINE_BEFORE);  // first, see [4]
             else
-                CLEAR_CELL_FLAG(DS_TOP, NEWLINE_BEFORE);
+                Clear_Cell_Flag(DS_TOP, NEWLINE_BEFORE);
 
             while (++push, push != push_tail)
                 Derelativize(DS_PUSH(), push, VAL_SPECIFIER(processed));
@@ -749,8 +749,8 @@ REB_R Composer_Executor(REBFRM *f)
     Drop_Frame(SUBFRAME);
     Move_Cell(DS_PUSH(), OUT);
 
-    if (GET_CELL_FLAG(f_value, NEWLINE_BEFORE))
-        SET_CELL_FLAG(DS_TOP, NEWLINE_BEFORE);
+    if (Get_Cell_Flag(f_value, NEWLINE_BEFORE))
+        Set_Cell_Flag(DS_TOP, NEWLINE_BEFORE);
 
     f->u.compose.changed = true;
     goto handle_next_item;

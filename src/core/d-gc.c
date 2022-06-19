@@ -100,7 +100,7 @@ void Assert_Cell_Marked_Correctly(const Cell *v)
         break;
 
       case REB_ISSUE: {
-        if (GET_CELL_FLAG(v, ISSUE_HAS_NODE)) {
+        if (Get_Cell_Flag(v, ISSUE_HAS_NODE)) {
             const REBSER *s = VAL_STRING(v);
             assert(Is_Series_Frozen(s));
 
@@ -138,7 +138,7 @@ void Assert_Cell_Marked_Correctly(const Cell *v)
         break; }
 
       case REB_BITSET: {
-        assert(GET_CELL_FLAG(v, FIRST_IS_NODE));
+        assert(Get_Cell_Flag(v, FIRST_IS_NODE));
         REBSER *s = SER(VAL_NODE1(v));
         Assert_Series_Term_Core(s);
         if (GET_SERIES_FLAG(s, INACCESSIBLE))
@@ -148,14 +148,14 @@ void Assert_Cell_Marked_Correctly(const Cell *v)
         break; }
 
       case REB_MAP: {
-        assert(GET_CELL_FLAG(v, FIRST_IS_NODE));
+        assert(Get_Cell_Flag(v, FIRST_IS_NODE));
         const REBMAP* map = VAL_MAP(v);
         assert(Is_Marked(map));
         assert(IS_SER_ARRAY(MAP_PAIRLIST(map)));
         break; }
 
       case REB_HANDLE: { // See %sys-handle.h
-        if (NOT_CELL_FLAG(v, FIRST_IS_NODE)) {
+        if (Not_Cell_Flag(v, FIRST_IS_NODE)) {
             // simple handle, no GC interaction
         }
         else {
@@ -188,13 +188,13 @@ void Assert_Cell_Marked_Correctly(const Cell *v)
         break; }
 
       case REB_EVENT: {  // packed cell structure with one GC-able slot
-        assert(GET_CELL_FLAG(v, FIRST_IS_NODE));
+        assert(Get_Cell_Flag(v, FIRST_IS_NODE));
         REBNOD *n = VAL_NODE1(v);  // REBGOB*, REBCTX*, etc.
         assert(n == nullptr or Is_Marked(n));
         break; }
 
       case REB_BINARY: {
-        assert(GET_CELL_FLAG(v, FIRST_IS_NODE));
+        assert(Get_Cell_Flag(v, FIRST_IS_NODE));
         REBBIN *s = BIN(VAL_NODE1(v));
         if (GET_SERIES_FLAG(s, INACCESSIBLE))
             break;
@@ -209,11 +209,11 @@ void Assert_Cell_Marked_Correctly(const Cell *v)
       case REB_EMAIL:
       case REB_URL:
       case REB_TAG: {
-        assert(GET_CELL_FLAG(v, FIRST_IS_NODE));
+        assert(Get_Cell_Flag(v, FIRST_IS_NODE));
         if (GET_SERIES_FLAG(STR(VAL_NODE1(v)), INACCESSIBLE))
             break;
 
-        assert(GET_CELL_FLAG(v, FIRST_IS_NODE));
+        assert(Get_Cell_Flag(v, FIRST_IS_NODE));
         const REBSER *s = VAL_SERIES(v);
         ASSERT_SERIES_TERM_IF_NEEDED(s);
 
@@ -311,7 +311,7 @@ void Assert_Cell_Marked_Correctly(const Cell *v)
 
         ASSERT_SERIES_TERM_IF_NEEDED(a);
 
-        assert(GET_CELL_FLAG(v, FIRST_IS_NODE));
+        assert(Get_Cell_Flag(v, FIRST_IS_NODE));
         assert(Is_Marked(a));
         break; }
 
@@ -330,7 +330,7 @@ void Assert_Cell_Marked_Correctly(const Cell *v)
         goto any_sequence;
 
       any_sequence: {
-        if (NOT_CELL_FLAG(v, SEQUENCE_HAS_NODE))
+        if (Not_Cell_Flag(v, SEQUENCE_HAS_NODE))
             break;  // should be just bytes
 
         const REBNOD *node1 = VAL_NODE1(v);
@@ -372,7 +372,7 @@ void Assert_Cell_Marked_Correctly(const Cell *v)
       case REB_SET_WORD:
       case REB_GET_WORD:
       case REB_META_WORD: {
-        assert(GET_CELL_FLAG(v, FIRST_IS_NODE));
+        assert(Get_Cell_Flag(v, FIRST_IS_NODE));
 
         const REBSTR *spelling = VAL_WORD_SYMBOL(v);
         assert(Is_Series_Frozen(spelling));

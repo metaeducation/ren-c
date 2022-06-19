@@ -183,7 +183,7 @@ REBTYPE(Url)
         //
         return_value (url);
     }
-    else if (GET_CELL_FLAG(url, UNEVALUATED)) {
+    else if (Get_Cell_Flag(url, UNEVALUATED)) {
         //
         // There are risks associated when common terms like APPEND can too
         // carelessly be interpreted as IO.  Because what was intended as a

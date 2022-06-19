@@ -89,7 +89,7 @@ inline static bool Is_Conditional_True(const REBVAL *v) {
     if (Is_Falsey(v))
         return false;
     if (IS_BLOCK(v))
-        if (GET_CELL_FLAG(v, UNEVALUATED))
+        if (Get_Cell_Flag(v, UNEVALUATED))
             fail (Error_Block_Conditional_Raw(v));  // !!! Unintended_Literal?
     return true;
 }

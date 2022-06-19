@@ -63,9 +63,9 @@ REBNOD *Dump_Value_Debug(const Cell *v)
     printf("cell_heart=%s\n", type);
     fflush(stdout);
 
-    if (GET_CELL_FLAG(v, FIRST_IS_NODE))
+    if (Get_Cell_Flag(v, FIRST_IS_NODE))
         printf("has first node: %p\n", cast(void*, VAL_NODE1(v)));
-    if (GET_CELL_FLAG(v, SECOND_IS_NODE))
+    if (Get_Cell_Flag(v, SECOND_IS_NODE))
         printf("has second node: %p\n", cast(void*, VAL_NODE2(v)));
 
     if (not containing)

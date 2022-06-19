@@ -929,7 +929,7 @@ REBNATIVE(switch)
     Push_Frame(nullptr, f);
 
     REBVAL *left = ARG(value);
-    if (IS_BLOCK(left) and GET_CELL_FLAG(left, UNEVALUATED))
+    if (IS_BLOCK(left) and Get_Cell_Flag(left, UNEVALUATED))
         fail (Error_Block_Switch_Raw(left));  // `switch [x] [...]` safeguard
 
     assert(Is_Void(SPARE));

@@ -137,7 +137,7 @@ inline static REBVAL *Alloc_Value(void)
     REBVAL *v = SPECIFIC(ARR_SINGLE(a));
 
     assert(Is_Stale_Void(v));  // see above, trash could trip up Recycle()
-    v->header.bits |= NODE_FLAG_ROOT;  // it's stale (can't use SET_CELL_FLAGS)
+    v->header.bits |= NODE_FLAG_ROOT;  // it's stale (can't use Set_Cell_FlagS)
 
     // We link the API handle into a doubly linked list maintained by the
     // topmost frame at the time the allocation happens.  This frame will
@@ -187,11 +187,11 @@ inline static REBVAL *rebSpecific(const Cell *v, REBSPC *specifier)
 // hold thrown returns, and these API handles are elsewhere.
 //
 inline static void Release_Api_Value_If_Unmanaged(const REBVAL* r) {
-    assert(GET_CELL_FLAG(r, ROOT));
+    assert(Get_Cell_Flag(r, ROOT));
 
     if (VAL_TYPE_UNCHECKED(r) == REB_NULL)  // tolerate isotopes
         assert(!"Dispatcher returned nulled cell, not C nullptr for API use");
 
-    if (NOT_CELL_FLAG(r, MANAGED))
+    if (Not_Cell_Flag(r, MANAGED))
         rebRelease(r);
 }

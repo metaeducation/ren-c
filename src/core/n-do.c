@@ -196,7 +196,7 @@ REBNATIVE(shove)
             fail ("Left hand side must be SET-WORD! or SET-PATH!");
     }
     else if (
-        GET_CELL_FLAG(left, UNEVALUATED)
+        Get_Cell_Flag(left, UNEVALUATED)
         and not (
             IS_ACTION(shovee)
             and GET_ACTION_FLAG(VAL_ACTION(shovee), QUOTES_FIRST)
@@ -207,8 +207,8 @@ REBNATIVE(shove)
     }
     else {
         Copy_Cell(OUT, left);
-        if (GET_CELL_FLAG(left, UNEVALUATED))
-            SET_CELL_FLAG(OUT, UNEVALUATED);
+        if (Get_Cell_Flag(left, UNEVALUATED))
+            Set_Cell_Flag(OUT, UNEVALUATED);
     }
 
     REBFLGS flags = EVAL_MASK_DEFAULT | EVAL_FLAG_MAYBE_STALE;
@@ -345,11 +345,11 @@ REBNATIVE(do)
     // bias to having to do this or Do_XXX() versions explode into passing
     // mutability parameters all over the place.  This is better.)
     //
-    if (NOT_CELL_FLAG(source, CONST))
-        SET_CELL_FLAG(source, EXPLICITLY_MUTABLE);
+    if (Not_Cell_Flag(source, CONST))
+        Set_Cell_Flag(source, EXPLICITLY_MUTABLE);
 
   #if !defined(NDEBUG)
-    SET_CELL_FLAG(source, PROTECTED);  // maybe only GC reference, keep!
+    Set_Cell_Flag(source, PROTECTED);  // maybe only GC reference, keep!
   #endif
 
     switch (VAL_TYPE(source)) {
@@ -520,11 +520,11 @@ REBNATIVE(evaluate)
     // bias to having to do this or Do_XXX() versions explode into passing
     // mutability parameters all over the place.  This is better.)
     //
-    if (NOT_CELL_FLAG(source, CONST))
-        SET_CELL_FLAG(source, EXPLICITLY_MUTABLE);
+    if (Not_Cell_Flag(source, CONST))
+        Set_Cell_Flag(source, EXPLICITLY_MUTABLE);
 
   #if !defined(NDEBUG)
-    SET_CELL_FLAG(ARG(source), PROTECTED);
+    Set_Cell_Flag(ARG(source), PROTECTED);
   #endif
 
     REBVAL *next = ARG(next);

@@ -104,7 +104,7 @@ inline static bool Vararg_Op_If_No_Advance_Handled(
             fail (Error_Varargs_No_Look_Raw()); // hard quote only
 
         Derelativize(out, opt_look, specifier);
-        SET_CELL_FLAG(out, UNEVALUATED);
+        Set_Cell_Flag(out, UNEVALUATED);
 
         return true; // only a lookahead, no need to advance
     }
@@ -223,7 +223,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
                 VAL_ARRAY_ITEM_AT(shared),
                 VAL_SPECIFIER(shared)
             );
-            SET_CELL_FLAG(out, UNEVALUATED);
+            Set_Cell_Flag(out, UNEVALUATED);
             VAL_INDEX_UNBOUNDED(shared) += 1;
             break;
 
@@ -244,7 +244,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
                     VAL_ARRAY_ITEM_AT(shared),
                     VAL_SPECIFIER(shared)
                 );
-                SET_CELL_FLAG(out, UNEVALUATED);
+                Set_Cell_Flag(out, UNEVALUATED);
             }
             VAL_INDEX_UNBOUNDED(shared) += 1;
             break;
@@ -357,10 +357,10 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
     }
 
     if (arg) {
-        if (GET_CELL_FLAG(out, UNEVALUATED))
-            SET_CELL_FLAG(arg, UNEVALUATED);
+        if (Get_Cell_Flag(out, UNEVALUATED))
+            Set_Cell_Flag(arg, UNEVALUATED);
         else
-            CLEAR_CELL_FLAG(arg, UNEVALUATED);
+            Clear_Cell_Flag(arg, UNEVALUATED);
     }
 
     // Note: may be at end now, but reflect that at *next* call

@@ -67,8 +67,8 @@ REBNATIVE(trap)
     }
 
   initial_entry: {
-    if (NOT_CELL_FLAG(code, CONST))
-        SET_CELL_FLAG(code, EXPLICITLY_MUTABLE);  // see REBNATIVE(do) for why
+    if (Not_Cell_Flag(code, CONST))
+        Set_Cell_Flag(code, EXPLICITLY_MUTABLE);  // see REBNATIVE(do) for why
 
     STATE = ST_TRAP_EVALUATING;
     continue_catchable (OUT, code, END);

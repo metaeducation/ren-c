@@ -114,7 +114,7 @@ REBNATIVE(augment_p)  // see extended definition AUGMENT in %base-defs.r
         // not suddenly subvert the access.
         //
         if (Is_Specialized(param))
-            SET_CELL_FLAG(DS_TOP, STACK_NOTE_SEALED);
+            Set_Cell_Flag(DS_TOP, STACK_NOTE_SEALED);
 
         Init_Nulled(DS_PUSH());  // types (inherits via INHERIT-META)
         Init_Nulled(DS_PUSH());  // notes (inherits via INHERIT-META)

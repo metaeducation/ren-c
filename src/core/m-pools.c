@@ -593,7 +593,7 @@ REBVAL *Alloc_Pairing(void) {
 // paired value) REBVAL header.  API handle REBVALs are all managed.
 //
 void Manage_Pairing(REBVAL *paired) {
-    SET_CELL_FLAG(paired, MANAGED);
+    Set_Cell_Flag(paired, MANAGED);
 }
 
 
@@ -607,8 +607,8 @@ void Manage_Pairing(REBVAL *paired) {
 // their lifetime.
 //
 void Unmanage_Pairing(REBVAL *paired) {
-    assert(GET_CELL_FLAG(paired, MANAGED));
-    CLEAR_CELL_FLAG(paired, MANAGED);
+    assert(Get_Cell_Flag(paired, MANAGED));
+    Clear_Cell_Flag(paired, MANAGED);
 }
 
 
@@ -616,7 +616,7 @@ void Unmanage_Pairing(REBVAL *paired) {
 //  Free_Pairing: C
 //
 void Free_Pairing(REBVAL *paired) {
-    assert(NOT_CELL_FLAG(paired, MANAGED));
+    assert(Not_Cell_Flag(paired, MANAGED));
     Free_Node(SER_POOL, paired);
 
   #if DEBUG_COUNT_TICKS

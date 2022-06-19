@@ -205,7 +205,7 @@ uint32_t Hash_Value(const Cell *cell)
       case REB_SET_PATH:
       case REB_GET_PATH:
       case REB_META_PATH: {
-        if (NOT_CELL_FLAG(cell, SEQUENCE_HAS_NODE)) {
+        if (Not_Cell_Flag(cell, SEQUENCE_HAS_NODE)) {
             hash = Hash_Bytes(
                 PAYLOAD(Bytes, cell).at_least_8 + 1,
                 PAYLOAD(Bytes, cell).at_least_8[IDX_SEQUENCE_USED]

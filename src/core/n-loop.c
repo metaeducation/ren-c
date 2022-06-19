@@ -375,7 +375,7 @@ static REB_R Loop_Number_Common(
 // a flag to indicate a dereference is necessary.
 //
 REBVAL *Real_Var_From_Pseudo(REBVAL *pseudo_var) {
-    if (NOT_CELL_FLAG(pseudo_var, BIND_NOTE_REUSE))
+    if (Not_Cell_Flag(pseudo_var, BIND_NOTE_REUSE))
         return pseudo_var;
     if (IS_BLANK(pseudo_var))  // e.g. `for-each _ [1 2 3] [...]`
         return nullptr;  // signal to throw generated quantity away
@@ -1385,7 +1385,7 @@ REBNATIVE(remove_each)
 
             do {
                 assert(start <= len);
-                SET_CELL_FLAG(  // v-- okay to mark despite read only
+                Set_Cell_Flag(  // v-- okay to mark despite read only
                     m_cast(Cell*, ARR_AT(VAL_ARRAY(data), start)),
                     NOTE_REMOVE
                 );
@@ -1435,8 +1435,8 @@ REBNATIVE(remove_each)
             const Cell *tail;
             Cell *temp = VAL_ARRAY_KNOWN_MUTABLE_AT(&tail, data);
             for (; temp != tail; ++temp) {
-                if (GET_CELL_FLAG(temp, NOTE_REMOVE))
-                    CLEAR_CELL_FLAG(temp, NOTE_REMOVE);
+                if (Get_Cell_Flag(temp, NOTE_REMOVE))
+                    Clear_Cell_Flag(temp, NOTE_REMOVE);
             }
             goto done_finalizing;
         }
@@ -1448,7 +1448,7 @@ REBNATIVE(remove_each)
         // avoid blitting cells onto themselves by making the first thing we
         // do is to pass up all the unmarked (kept) cells.
         //
-        while (src != tail and NOT_CELL_FLAG(src, NOTE_REMOVE)) {
+        while (src != tail and Not_Cell_Flag(src, NOTE_REMOVE)) {
             ++src;
             ++dest;
         }
@@ -1457,7 +1457,7 @@ REBNATIVE(remove_each)
         // on are going to be moving to somewhere besides the original spot
         //
         for (; dest != tail; ++dest, ++src) {
-            while (src != tail and GET_CELL_FLAG(src, NOTE_REMOVE)) {
+            while (src != tail and Get_Cell_Flag(src, NOTE_REMOVE)) {
                 ++src;
                 --len;
                 ++removals;

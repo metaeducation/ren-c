@@ -191,7 +191,7 @@ inline static REBVAL *Try_Leading_Blank_Pathify(
     //
     enum Reb_Kind inner_kind = VAL_TYPE(v);
     if (inner_kind == REB_WORD) {
-        SET_CELL_FLAG(v, REFINEMENT_LIKE);
+        Set_Cell_Flag(v, REFINEMENT_LIKE);
         mutable_HEART_BYTE(v) = kind;
         return v;
     }
@@ -463,8 +463,8 @@ inline static REBVAL *Try_Pop_Sequence_Or_Element_Or_Nulled(
 inline static REBLEN VAL_SEQUENCE_LEN(noquote(const Cell*) sequence) {
     assert(ANY_SEQUENCE_KIND(CELL_HEART(sequence)));
 
-    if (NOT_CELL_FLAG(sequence, SEQUENCE_HAS_NODE)) {  // compressed bytes
-        assert(NOT_CELL_FLAG(sequence, SECOND_IS_NODE));
+    if (Not_Cell_Flag(sequence, SEQUENCE_HAS_NODE)) {  // compressed bytes
+        assert(Not_Cell_Flag(sequence, SECOND_IS_NODE));
         return PAYLOAD(Bytes, sequence).at_least_8[IDX_SEQUENCE_USED];
     }
 
@@ -508,7 +508,7 @@ inline static const Cell *VAL_SEQUENCE_AT(
     assert(store != sequence);
     assert(ANY_SEQUENCE_KIND(CELL_HEART(sequence)));
 
-    if (NOT_CELL_FLAG(sequence, SEQUENCE_HAS_NODE)) {  // compressed bytes
+    if (Not_Cell_Flag(sequence, SEQUENCE_HAS_NODE)) {  // compressed bytes
         assert(n < PAYLOAD(Bytes, sequence).at_least_8[IDX_SEQUENCE_USED]);
         return Init_Integer(store, PAYLOAD(Bytes, sequence).at_least_8[n + 1]);
     }
@@ -522,7 +522,7 @@ inline static const Cell *VAL_SEQUENCE_AT(
     switch (SER_FLAVOR(SER(node1))) {
       case FLAVOR_SYMBOL : {  // compressed single WORD! sequence
         assert(n < 2);
-        if (GET_CELL_FLAG(sequence, REFINEMENT_LIKE) ? n == 0 : n != 0)
+        if (Get_Cell_Flag(sequence, REFINEMENT_LIKE) ? n == 0 : n != 0)
             return Lib(BLANK);
 
         // Because the cell is being viewed as a PATH!, we cannot view it as
@@ -567,7 +567,7 @@ inline static REBSPC *VAL_SEQUENCE_SPECIFIER(
     // does not provide a layer of communication connecting the insides
     // to a frame instance (because there is no actual layer).
 
-    if (NOT_CELL_FLAG(sequence, SEQUENCE_HAS_NODE))  // compressed bytes
+    if (Not_Cell_Flag(sequence, SEQUENCE_HAS_NODE))  // compressed bytes
         return SPECIFIED;
 
     const REBNOD *node1 = VAL_NODE1(sequence);
@@ -648,7 +648,7 @@ inline static REBVAL *Refinify(REBVAL *v) {
 
 inline static bool IS_REFINEMENT_CELL(noquote(const Cell*) v) {
     assert(ANY_PATH_KIND(CELL_HEART(v)));
-    if (NOT_CELL_FLAG(v, SEQUENCE_HAS_NODE))
+    if (Not_Cell_Flag(v, SEQUENCE_HAS_NODE))
         return false;
 
     const REBNOD *node1 = VAL_NODE1(v);
@@ -658,7 +658,7 @@ inline static bool IS_REFINEMENT_CELL(noquote(const Cell*) v) {
     if (SER_FLAVOR(SER(node1)) != FLAVOR_SYMBOL)
         return false;
 
-    return GET_CELL_FLAG(v, REFINEMENT_LIKE);  // !!! Review: test this first?
+    return Get_Cell_Flag(v, REFINEMENT_LIKE);  // !!! Review: test this first?
 }
 
 inline static bool IS_REFINEMENT(const Cell *v) {
@@ -670,7 +670,7 @@ inline static bool IS_PREDICATE1_CELL(noquote(const Cell*) v) {
     if (CELL_HEART(v) != REB_TUPLE)
         return false;
 
-    if (NOT_CELL_FLAG(v, SEQUENCE_HAS_NODE))
+    if (Not_Cell_Flag(v, SEQUENCE_HAS_NODE))
         return false;
 
     const REBNOD *node1 = VAL_NODE1(v);
@@ -680,7 +680,7 @@ inline static bool IS_PREDICATE1_CELL(noquote(const Cell*) v) {
     if (SER_FLAVOR(SER(node1)) != FLAVOR_SYMBOL)
         return false;
 
-    return GET_CELL_FLAG(v, REFINEMENT_LIKE);  // !!! Review: test this first?
+    return Get_Cell_Flag(v, REFINEMENT_LIKE);  // !!! Review: test this first?
 }
 
 inline static const Symbol *VAL_PREDICATE1_SYMBOL(

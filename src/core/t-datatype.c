@@ -273,7 +273,7 @@ REBARR *Startup_Datatypes(REBARR *boot_types, REBARR *boot_typespecs)
 
         if (kind == REB_BYTES) {
             Init_None(value);
-            SET_CELL_FLAG(value, PROTECTED);
+            Set_Cell_Flag(value, PROTECTED);
             continue;
         }
         if (kind == REB_CUSTOM) {
@@ -285,7 +285,7 @@ REBARR *Startup_Datatypes(REBARR *boot_types, REBARR *boot_typespecs)
             // if it had to account for it.)
             //
             Init_None(value);
-            SET_CELL_FLAG(value, PROTECTED);
+            Set_Cell_Flag(value, PROTECTED);
             continue;
         }
 
@@ -306,7 +306,7 @@ REBARR *Startup_Datatypes(REBARR *boot_types, REBARR *boot_typespecs)
         // a limited sense.)
         //
         assert(value == Datatype_From_Kind(kind));
-        SET_CELL_FLAG(value, PROTECTED);
+        Set_Cell_Flag(value, PROTECTED);
 
         Append_Value(catalog, SPECIFIC(word));
     }

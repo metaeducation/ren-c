@@ -464,9 +464,9 @@ inline static void Inertly_Derelativize_Inheriting_Const(
     assert(not Is_Isotope(v));  // Source should not have isotopes
 
     Derelativize(out, v, FEED_SPECIFIER(feed));
-    SET_CELL_FLAG(out, UNEVALUATED);
+    Set_Cell_Flag(out, UNEVALUATED);
 
-    if (NOT_CELL_FLAG(v, EXPLICITLY_MUTABLE))
+    if (Not_Cell_Flag(v, EXPLICITLY_MUTABLE))
         out->header.bits |= (feed->flags.bits & FEED_FLAG_CONST);
 }
 
@@ -647,7 +647,7 @@ inline static void Prep_Any_Array_Feed(
     // Note that `CELL_FLAG_CONST == FEED_FLAG_CONST`
     //
     REBFLGS flags;
-    if (GET_CELL_FLAG(any_array, EXPLICITLY_MUTABLE))
+    if (Get_Cell_Flag(any_array, EXPLICITLY_MUTABLE))
         flags = FEED_MASK_DEFAULT;  // override const from parent frame
     else
         flags = FEED_MASK_DEFAULT

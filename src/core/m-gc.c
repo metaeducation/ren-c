@@ -181,7 +181,7 @@ static void Queue_Mark_Node_Deep(const REBNOD **pp) {
 
     if (first & NODE_BYTEMASK_0x01_CELL) {  // e.g. a pairing
         REBVAL *v = VAL(m_cast(REBNOD*, *pp));
-        if (GET_CELL_FLAG(v, MANAGED))
+        if (Get_Cell_Flag(v, MANAGED))
             Queue_Mark_Pairing_Deep(v);
         else {
             // !!! It's a frame?  API handle?  Skip frame case (keysource)
@@ -362,7 +362,7 @@ static void Queue_Mark_Opt_Value_Deep(const Cell *cv)
                 Queue_Mark_Node_Deep(&v->extra.Binding);
     }
 
-    // We don't use GET_CELL_FLAG() here because we assume caller checked
+    // We don't use Get_Cell_Flag() here because we assume caller checked
     // using READABLE() if they knew the cell didn't have CELL_FLAG_STALE set.
 
     if ((v->header.bits & CELL_FLAG_FIRST_IS_NODE) and VAL_NODE1(v))

@@ -292,7 +292,7 @@ inline static bool Is_Specialized(const REBPAR *param) {
         and VAL_PARAM_CLASS(param) != PARAM_CLASS_0  // non-parameter typeset
     ){
         assert(QUOTE_BYTE(param) == 0);  // no quoted parameters
-        if (GET_CELL_FLAG(param, VAR_MARKED_HIDDEN))
+        if (Get_Cell_Flag(param, VAR_MARKED_HIDDEN))
             assert(!"Unspecialized parameter is marked hidden!");
         return false;
     }
@@ -328,7 +328,7 @@ inline static REBPAR *Init_Param_Core(
     REBPAR *param = cast(REBPAR*, cast(REBVAL*, out));
     assert(VAL_PARAM_CLASS(param) != PARAM_CLASS_0);  // must set
 
-    assert(NOT_CELL_FLAG(param, VAR_MARKED_HIDDEN));
+    assert(Not_Cell_Flag(param, VAR_MARKED_HIDDEN));
     return param;
 }
 
