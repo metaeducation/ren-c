@@ -370,9 +370,9 @@
 ; infinite recursion
 (
     n: 0
-    blk: [all [either 10000 = n: n + 1 [throw <finished>] [true]]]
+    blk: [all [either 5000 = n: n + 1 [throw <deep-enough>] [true]]]
     append blk.2 quote as group! blk
-    <finished> = catch blk
+    <deep-enough> = catch blk
 )
 
 ; PREDICATES

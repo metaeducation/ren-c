@@ -93,8 +93,9 @@
 )
 ; infinite recursion
 (
-    blk: [(compose blk)]
-    error? trap blk
+    x: 0
+    blk: [(x: x + 1, if x = 5000 [throw <deep-enough>]) (compose blk)]
+    <deep-enough> = catch blk
 )
 
 ; #1906

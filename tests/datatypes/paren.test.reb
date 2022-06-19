@@ -32,7 +32,7 @@
 ;
 [#859 #1665 (
     n: 0
-    fact: to group! [n: n + 1 if n = 10000 [throw <done>]]
+    fact: to group! [n: n + 1 if n = 5000 [throw <deep-enough>]]
     append/only fact fact
-    <done> = catch [eval fact]
+    <deep-enough> = catch [eval fact]
 )]

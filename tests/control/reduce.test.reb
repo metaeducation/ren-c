@@ -21,7 +21,7 @@
 ; infinite recursion
 (
     x: 0
-    blk: [x: x + 1, if x = 10000 [throw <deep-enough>] reduce blk]
+    blk: [x: x + 1, if x = 5000 [throw <deep-enough>] reduce blk]
     <deep-enough> = catch blk
 )
 
