@@ -587,6 +587,9 @@ REB_R Composer_Executor(REBFRM *f)
         goto push_processed_result;
     }
 
+    if (Is_Void(OUT))
+        goto handle_next_item;  // voids not offered to predicates, by design
+
     STATE = ST_COMPOSER_RUNNING_PREDICATE;
     continue_core (SPARE, EVAL_MASK_DEFAULT, predicate, SPECIFIED, OUT);
 
@@ -794,6 +797,10 @@ REBNATIVE(compose)
     INCLUDE_PARAMS_OF_COMPOSE;
 
     Value *v = ARG(value);
+
+    UNUSED(ARG(label));  // options used by Composer_Executor() via main_frame
+    UNUSED(ARG(deep));
+    UNUSED(ARG(predicate));
 
     enum {
         ST_COMPOSE_INITIAL_ENTRY = 0,

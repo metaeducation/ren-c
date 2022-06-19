@@ -242,3 +242,14 @@
 [
     (['''''''] = compose ['''''''(if false [<a>])])
 ]
+
+; Void slots are not offered to predicates
+[
+    ([] = compose/predicate [()] x -> [fail "Not called"])
+
+    ; !!! should this be reconsidered for predicates which say they are willing
+    ; to take <void>?  This would possibly break intents like REIFY unless
+    ; REIFY had a version that did not take voids.
+    ;
+    ([] = compose/predicate [()] [^x [<void>]] -> [fail "Call?"])
+]
