@@ -413,11 +413,11 @@ void* Probe_Core_Debug(
       case FLAVOR_TRASH:
         Probe_Print_Helper(p, expr, "!!! TRASH Series !!!", file, line);
         break;
+    #endif
 
       default:
         Probe_Print_Helper(p, expr, "!!! Unknown SER_FLAVOR() !!!", file, line);
         break;
-    #endif
     }
   }
 
