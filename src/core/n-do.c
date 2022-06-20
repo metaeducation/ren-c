@@ -330,23 +330,10 @@ bool Do_Frame_Throws(REBVAL *out, REBVAL *frame) {
 REBNATIVE(do)
 {
     INCLUDE_PARAMS_OF_DO;
-    assert(ACT_HAS_RETURN(FRM_PHASE(frame_)));
 
     REBVAL *source = ARG(source);
 
-    // Note: See also, EVALUATE
-    //
-    // If `source` is not const, tweak it to be explicitly mutable--because
-    // otherwise, it would wind up inheriting the FEED_MASK_CONST of our
-    // currently executing frame.  That's no good for `repeat 2 [do block]`,
-    // because we want whatever constness is on block...
-    //
-    // (Note we *can't* tweak values that are Cell in source.  So we either
-    // bias to having to do this or Do_XXX() versions explode into passing
-    // mutability parameters all over the place.  This is better.)
-    //
-    if (Not_Cell_Flag(source, CONST))
-        Set_Cell_Flag(source, EXPLICITLY_MUTABLE);
+    Tweak_Non_Const_To_Explicitly_Mutable(source);
 
   #if !defined(NDEBUG)
     Set_Cell_Flag(source, PROTECTED);  // maybe only GC reference, keep!
@@ -509,19 +496,7 @@ REBNATIVE(evaluate)
 
     REBVAL *source = ARG(source);  // may be only GC reference, don't lose it!
 
-    // Note: See also, DO
-    //
-    // If `source` is not const, tweak it to be explicitly mutable--because
-    // otherwise, it would wind up inheriting the FEED_MASK_CONST of our
-    // currently executing frame.  That's no good for `repeat 2 [do block]`,
-    // because we want whatever constness is on block...
-    //
-    // (Note we *can't* tweak values that are Cell in source.  So we either
-    // bias to having to do this or Do_XXX() versions explode into passing
-    // mutability parameters all over the place.  This is better.)
-    //
-    if (Not_Cell_Flag(source, CONST))
-        Set_Cell_Flag(source, EXPLICITLY_MUTABLE);
+    Tweak_Non_Const_To_Explicitly_Mutable(source);
 
   #if !defined(NDEBUG)
     Set_Cell_Flag(ARG(source), PROTECTED);

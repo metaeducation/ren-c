@@ -60,6 +60,23 @@
         __VA_ARGS__)
 
 
+// (Used by DO and EVALUATE)
+//
+// If `source` is not const, tweak it to be explicitly mutable--because
+// otherwise, it would wind up inheriting the FEED_MASK_CONST of our
+// currently executing frame.  That's no good for `repeat 2 [do block]`,
+// because we want whatever constness is on block...
+//
+// (Note we *can't* tweak values that are Cell in source.  So we either
+// bias to having to do this or Do_XXX() versions explode into passing
+// mutability parameters all over the place.  This is better.)
+//
+inline static void Tweak_Non_Const_To_Explicitly_Mutable(Value *source) {
+    if (Not_Cell_Flag(source, CONST))
+        Set_Cell_Flag(source, EXPLICITLY_MUTABLE);
+}
+
+
 // This helper routine is able to take an arbitrary input cell to start with
 // that may not be END.  It is code that DO shares with GROUP! evaluation
 // in Eval_Core()--where being able to know if a group "completely vaporized"
