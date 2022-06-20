@@ -58,7 +58,10 @@ REBNATIVE(reeval)
 
     bool enfix = IS_ACTION(v) and GET_ACTION_FLAG(VAL_ACTION(v), ENFIXED);
 
-    REBFLGS flags = EVAL_MASK_DEFAULT | EVAL_FLAG_MAYBE_STALE;
+    REBFLGS flags = EVAL_MASK_DEFAULT
+        | EVAL_FLAG_SINGLE_STEP
+        | EVAL_FLAG_MAYBE_STALE;
+
     if (Reevaluate_In_Subframe_Throws(
         OUT,  // reeval :comment "this should leave old input"
         frame_,
@@ -211,7 +214,10 @@ REBNATIVE(shove)
             Set_Cell_Flag(OUT, UNEVALUATED);
     }
 
-    REBFLGS flags = EVAL_MASK_DEFAULT | EVAL_FLAG_MAYBE_STALE;
+    REBFLGS flags = EVAL_MASK_DEFAULT
+        | EVAL_FLAG_SINGLE_STEP
+        | EVAL_FLAG_MAYBE_STALE;
+
     SET_FEED_FLAG(frame_->feed, NEXT_ARG_FROM_OUT);
 
     if (Reevaluate_In_Subframe_Throws(
@@ -391,7 +397,10 @@ REBNATIVE(do)
             return OUT;
         }
 
-        REBFLGS flags = EVAL_MASK_DEFAULT | EVAL_FLAG_MAYBE_STALE;
+        REBFLGS flags = EVAL_MASK_DEFAULT
+            | EVAL_FLAG_SINGLE_STEP
+            | EVAL_FLAG_MAYBE_STALE;
+
         DECLARE_FRAME (subframe, f->feed, flags);
 
         Push_Frame(RESET(OUT), subframe);
@@ -518,7 +527,9 @@ REBNATIVE(evaluate)
                 DECLARE_FRAME (
                     f,
                     feed,
-                    EVAL_MASK_DEFAULT | EVAL_FLAG_ALLOCATED_FEED
+                    EVAL_MASK_DEFAULT
+                        | EVAL_FLAG_SINGLE_STEP
+                        | EVAL_FLAG_ALLOCATED_FEED
                 );
                 Push_Frame(SPARE, f);
 
@@ -637,7 +648,7 @@ REBNATIVE(evaluate)
             if (IS_END(f->feed->value))
                 return nullptr;
 
-            REBFLGS flags = EVAL_MASK_DEFAULT;
+            REBFLGS flags = EVAL_MASK_DEFAULT | EVAL_FLAG_SINGLE_STEP;
             if (Eval_Step_In_Subframe_Throws(SPARE, f, flags))
                 return THROWN;
         }
@@ -902,7 +913,7 @@ REBNATIVE(apply)
     Init_Frame(frame, exemplar, ANONYMOUS);  // Note: GC guards the exemplar
 
   blockscope {
-    DECLARE_FRAME_AT (f, args, EVAL_MASK_DEFAULT);
+    DECLARE_FRAME_AT (f, args, EVAL_MASK_DEFAULT | EVAL_FLAG_SINGLE_STEP);
     Push_Frame(nullptr, f);
 
     EVARS e;

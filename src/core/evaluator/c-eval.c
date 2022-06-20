@@ -167,7 +167,8 @@ inline static REBFRM *Maybe_Rightward_Continuation_Needed(REBFRM *f)
     RESET(OUT);  // all SET-XXX! overwrite out, see [2]
 
     REBFLGS flags = EVAL_MASK_DEFAULT
-            | (f->flags.bits & EVAL_FLAG_FULFILLING_ARG);  // if f was, we are
+        | EVAL_FLAG_SINGLE_STEP
+        | (f->flags.bits & EVAL_FLAG_FULFILLING_ARG);  // if f was, we are
 
     if (Did_Init_Inert_Optimize_Complete(OUT, f->feed, &flags))
         return nullptr;  // If eval not hooked, ANY-INERT! may not need a frame
@@ -238,6 +239,9 @@ REB_R Evaluator_Executor(REBFRM *f)
         TRASH_POINTER_IF_DEBUG(f_current);
         /*TRASH_POINTER_IF_DEBUG(f_current_gotten);*/  // trash option() ptrs?
         break;
+
+      case ST_EVALUATOR_STEPPING_AGAIN:  // when Not(EVAL_FLAG_SINGLE_STEP)
+        goto new_expression;
 
       case ST_EVALUATOR_LOOKING_AHEAD:
         goto lookahead;
@@ -790,7 +794,7 @@ REB_R Evaluator_Executor(REBFRM *f)
             subframe,
             f_current,
             f_specifier,
-            EVAL_MASK_DEFAULT | EVAL_FLAG_TO_END
+            EVAL_MASK_DEFAULT
         );
         Push_Frame(RESET(SPARE), subframe);
 
@@ -821,7 +825,7 @@ REB_R Evaluator_Executor(REBFRM *f)
             subframe,
             f_current,
             f_specifier,
-            EVAL_MASK_DEFAULT | EVAL_FLAG_TO_END | EVAL_FLAG_META_RESULT
+            EVAL_MASK_DEFAULT | EVAL_FLAG_META_RESULT
         );
         Push_Frame(RESET(OUT), subframe);
 
@@ -1080,7 +1084,7 @@ REB_R Evaluator_Executor(REBFRM *f)
             subframe,
             f_current,
             f_specifier,
-            EVAL_MASK_DEFAULT | EVAL_FLAG_TO_END
+            EVAL_MASK_DEFAULT
         );
         Push_Frame(RESET(SPARE), subframe);
 
@@ -1450,6 +1454,7 @@ REB_R Evaluator_Executor(REBFRM *f)
         //
         if (VAL_TYPE_UNCHECKED(f_next) == REB_WORD) {  // tolerate REB_0_END
             REBFLGS flags = EVAL_MASK_DEFAULT
+                | EVAL_FLAG_SINGLE_STEP
                 | FLAG_STATE_BYTE(ST_EVALUATOR_LOOKING_AHEAD)
                 | EVAL_FLAG_INERT_OPTIMIZATION;  // don't error on enfix late
 
@@ -1958,8 +1963,10 @@ REB_R Evaluator_Executor(REBFRM *f)
     Evaluator_Exit_Checks_Debug(f);
   #endif
 
-    if (Get_Eval_Flag(f, TO_END) and NOT_END(f_next))
-        goto new_expression;
+    if (Not_Eval_Flag(f, SINGLE_STEP) and NOT_END(f_next)) {
+        STATE = ST_EVALUATOR_STEPPING_AGAIN;
+        return R_CONTINUATION;  // go through trampoline, for debug hooking
+    }
 
     // Note: There may be some optimization possible here if the flag for
     // controlling whether you wanted to keep the stale flag was also using

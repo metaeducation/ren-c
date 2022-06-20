@@ -552,6 +552,7 @@ REBNATIVE(all)
         return VOID;
 
     REBFLGS flags = EVAL_MASK_DEFAULT
+        | EVAL_FLAG_SINGLE_STEP
         | EVAL_FLAG_MAYBE_STALE
         | EVAL_FLAG_TRAMPOLINE_KEEPALIVE;
 
@@ -675,6 +676,7 @@ REBNATIVE(any)
         return VOID;
 
     REBFLGS flags = EVAL_MASK_DEFAULT
+        | EVAL_FLAG_SINGLE_STEP
         | EVAL_FLAG_MAYBE_STALE
         | EVAL_FLAG_TRAMPOLINE_KEEPALIVE;
 
@@ -797,7 +799,7 @@ REBNATIVE(case)
 
     REBVAL *predicate = ARG(predicate);
 
-    DECLARE_FRAME_AT (f, ARG(cases), EVAL_MASK_DEFAULT);
+    DECLARE_FRAME_AT (f, ARG(cases), EVAL_MASK_DEFAULT | EVAL_FLAG_SINGLE_STEP);
 
     Push_Frame(nullptr, f);
 
@@ -924,7 +926,7 @@ REBNATIVE(switch)
 
     REBVAL *predicate = ARG(predicate);
 
-    DECLARE_FRAME_AT (f, ARG(cases), EVAL_MASK_DEFAULT);
+    DECLARE_FRAME_AT (f, ARG(cases), EVAL_MASK_DEFAULT | EVAL_FLAG_SINGLE_STEP);
 
     Push_Frame(nullptr, f);
 

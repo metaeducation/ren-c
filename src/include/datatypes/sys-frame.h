@@ -709,7 +709,7 @@ inline static bool Push_Continuation_Throws(
             f,
             branch,
             branch_specifier,
-            flags | EVAL_MASK_DEFAULT | EVAL_FLAG_TO_END
+            flags | EVAL_MASK_DEFAULT
         );
         if (kind == REB_META_BLOCK)
             Set_Eval_Flag(f, META_RESULT);

@@ -533,6 +533,7 @@ REB_R Action_Executor(REBFRM *f)
             }
 
             REBFLGS flags = EVAL_MASK_DEFAULT
+                | EVAL_FLAG_SINGLE_STEP
                 | EVAL_FLAG_FULFILLING_ARG;
             if (pclass == PARAM_CLASS_META)
                 flags |= EVAL_FLAG_META_RESULT;
@@ -622,6 +623,7 @@ REB_R Action_Executor(REBFRM *f)
                 // and it knows to get the arg from there.
 
                 REBFLGS flags = EVAL_MASK_DEFAULT
+                    | EVAL_FLAG_SINGLE_STEP
                     | EVAL_FLAG_FULFILLING_ARG
                     | FLAG_STATE_BYTE(ST_EVALUATOR_LOOKING_AHEAD)
                     | EVAL_FLAG_INERT_OPTIMIZATION;

@@ -106,6 +106,7 @@ REBNATIVE(reduce)
         subframe,
         v,  // REB_BLOCK or REB_GROUP
         EVAL_MASK_DEFAULT
+            | EVAL_FLAG_SINGLE_STEP
             | EVAL_FLAG_ALLOCATED_FEED
             | EVAL_FLAG_TRAMPOLINE_KEEPALIVE  // reused for each step
     );
@@ -231,7 +232,10 @@ REBNATIVE(reduce_each)
     );
     Init_Object(ARG(vars), context);  // keep GC safe
 
-    REBFLGS flags = EVAL_MASK_DEFAULT | EVAL_FLAG_TRAMPOLINE_KEEPALIVE;
+    REBFLGS flags = EVAL_MASK_DEFAULT
+        | EVAL_FLAG_SINGLE_STEP
+        | EVAL_FLAG_TRAMPOLINE_KEEPALIVE;
+
     if (IS_THE_BLOCK(block))
         flags |= EVAL_FLAG_NO_EVALUATIONS;
 
@@ -346,8 +350,9 @@ static void Push_Composer_Frame(
         subframe,
         adjusted ? adjusted : arraylike,
         adjusted ? SPECIFIED : specifier,
-        EVAL_MASK_DEFAULT |
-            EVAL_FLAG_TRAMPOLINE_KEEPALIVE  // allows stack accumulation
+        EVAL_MASK_DEFAULT
+            | EVAL_FLAG_NO_EVALUATIONS
+            | EVAL_FLAG_TRAMPOLINE_KEEPALIVE  // allows stack accumulation
     );
     Push_Frame(out, subframe);  // writes TRUE to OUT if modified, FALSE if not
 
@@ -568,7 +573,7 @@ REB_R Composer_Executor(REBFRM *f)
     DECLARE_FRAME (
         subframe,
         subfeed,  // used subfeed so we could skip the label if there was one
-        EVAL_MASK_DEFAULT | EVAL_FLAG_ALLOCATED_FEED | EVAL_FLAG_TO_END
+        EVAL_MASK_DEFAULT | EVAL_FLAG_ALLOCATED_FEED
     );
 
     RESET(OUT);  // want empty `()` or `(comment "hi")` to vanish

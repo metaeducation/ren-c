@@ -56,8 +56,11 @@
 
 
 #define rebRunThrows(out,...) \
-    rebRunCoreThrows(RESET(out), EVAL_MASK_DEFAULT | EVAL_FLAG_NO_RESIDUE, \
-        __VA_ARGS__)
+    rebRunCoreThrows( \
+        RESET(out), \
+        EVAL_MASK_DEFAULT | EVAL_FLAG_NO_RESIDUE | EVAL_FLAG_SINGLE_STEP, \
+        __VA_ARGS__ \
+    )
 
 
 // (Used by DO and EVALUATE)
@@ -96,12 +99,13 @@ inline static bool Do_Feed_To_End_Throws(
     if (not (flags & EVAL_FLAG_MAYBE_STALE))
         assert(Is_Fresh(out));
 
+    assert(not (flags & EVAL_FLAG_SINGLE_STEP));
+
     DECLARE_FRAME (
         f,
         feed,
         (flags
             | EVAL_FLAG_MAYBE_STALE
-            | EVAL_FLAG_TO_END
         ) & (~ EVAL_FLAG_BRANCH)
     );
 

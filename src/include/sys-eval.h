@@ -99,6 +99,9 @@
 //
 enum {
     ST_EVALUATOR_INITIAL_ENTRY = 0,
+
+    ST_EVALUATOR_STEPPING_AGAIN,
+
     ST_EVALUATOR_LOOKING_AHEAD,
     ST_EVALUATOR_REEVALUATING,
     ST_EVALUATOR_GET_WORD,
@@ -247,6 +250,7 @@ inline static bool Eval_Step_Throws(
 ){
     assert(f == FS_TOP);
     assert(NOT_FEED_FLAG(f->feed, NO_LOOKAHEAD));
+    assert(Get_Eval_Flag(f, SINGLE_STEP));
 
     assert(f->executor == &Evaluator_Executor);
 
@@ -268,6 +272,8 @@ inline static bool Eval_Step_In_Subframe_Throws(
 ){
     if (not (flags & EVAL_FLAG_MAYBE_STALE))
         assert(Is_Fresh(out));
+
+    assert(flags & EVAL_FLAG_SINGLE_STEP);
 
     if (Did_Init_Inert_Optimize_Complete(out, f->feed, &flags))
         return false;  // If eval not hooked, ANY-INERT! may not need a frame
@@ -324,6 +330,7 @@ inline static bool Eval_Step_In_Any_Array_At_Throws(
 ){
     assert(Is_Fresh(out));
 
+    assert(not (flags & EVAL_FLAG_SINGLE_STEP));  // added here
     DECLARE_FEED_AT_CORE (feed, any_array, specifier);
 
     if (IS_END(feed->value)) {
@@ -331,7 +338,11 @@ inline static bool Eval_Step_In_Any_Array_At_Throws(
         return false;
     }
 
-    DECLARE_FRAME (f, feed, flags | EVAL_FLAG_ALLOCATED_FEED);
+    DECLARE_FRAME (
+        f,
+        feed,
+        flags | EVAL_FLAG_ALLOCATED_FEED | EVAL_FLAG_SINGLE_STEP
+    );
     Push_Frame(out, f);
 
     if (Trampoline_Throws(f)) {
@@ -372,6 +383,8 @@ inline static bool Eval_Step_In_Va_Throws(
     REBFLGS eval_flags
 ){
     DECLARE_VA_FEED (feed, p, vaptr, feed_flags);
+
+    assert(eval_flags & EVAL_FLAG_SINGLE_STEP);
 
     DECLARE_FRAME (
         f,

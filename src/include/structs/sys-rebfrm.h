@@ -364,15 +364,15 @@ STATIC_ASSERT(EVAL_FLAG_28 == CELL_FLAG_NOTE);
 //
 // This is a flag that can be used specific to the executor that is running.
 //
-// * EVAL_FLAG_TO_END: Evaluator_Executor()
+// * EVAL_FLAG_SINGLE_STEP: Evaluator_Executor()
 //
 // !!! This is a revival of an old idea that a frame flag would hold the state
 // of whether to do to the end or not.  The reason that idea was scrapped was
 // because if the Eval() routine was hooked (e.g. by a stepwise debugger)
 // then the hook would be unable to see successive calls to Eval() if it
 // didn't return and make another call.  That no longer applies, since it
-// always has to return in stackless to the Trampoline, so TO_END is really
-// just a convenience with no real different effect in evaluator returns.
+// always has to return in stackless to the Trampoline, so running to end by
+// default is a convenience with no real different effect in evaluator returns.
 //
 // * EVAL_FLAG_FULFILL_ONLY: Action_Executor()
 //
@@ -388,7 +388,7 @@ STATIC_ASSERT(EVAL_FLAG_28 == CELL_FLAG_NOTE);
 #define EVAL_FLAG_EXECUTOR_30 \
     FLAG_LEFT_BIT(30)
 
-#define EVAL_FLAG_TO_END EVAL_FLAG_EXECUTOR_30
+#define EVAL_FLAG_SINGLE_STEP EVAL_FLAG_EXECUTOR_30
 #define EVAL_FLAG_FULFILL_ONLY EVAL_FLAG_EXECUTOR_30
 
 

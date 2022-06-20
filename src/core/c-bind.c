@@ -532,6 +532,7 @@ REBNATIVE(let)
         assert(IS_SET_WORD(SPARE) or IS_SET_BLOCK(SPARE));
 
         REBFLGS flags = EVAL_MASK_DEFAULT
+            | EVAL_FLAG_SINGLE_STEP
             | (f->flags.bits & EVAL_FLAG_FULFILLING_ARG);
 
         bool enfix = false;  // !!! Detect this?
