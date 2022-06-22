@@ -596,7 +596,7 @@ REB_R Composer_Executor(REBFRM *f)
         goto handle_next_item;  // voids not offered to predicates, by design
 
     STATE = ST_COMPOSER_RUNNING_PREDICATE;
-    continue_core (SPARE, EVAL_MASK_DEFAULT, predicate, SPECIFIED, OUT);
+    continue_uncatchable (SPARE, predicate, OUT);
 
 } predicate_result_in_spare: {  //////////////////////////////////////////////
 

@@ -141,6 +141,7 @@ REB_R Func_Dispatcher(REBFRM *f)
 
     STATE = ST_FUNC_BODY_EXECUTING;
 
+    assert(Is_Void(SPARE));
     continue_core(
         SPARE,  // body evaluative result discarded, see [1]
         EVAL_MASK_DEFAULT,  // no DISPATCHER_CATCHES, so RETURN skips, see [2]

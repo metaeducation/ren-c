@@ -794,7 +794,7 @@ inline static bool Push_Continuation_Throws(
 #define continue_core(o,flags,branch,specifier,with) \
     do { \
         if (Push_Continuation_Throws( \
-                RESET(o), \
+                (o), \
                 frame_, \
                 (flags), \
                 (branch), \
@@ -810,7 +810,7 @@ inline static bool Push_Continuation_Throws(
     do { \
         Set_Eval_Flag(frame_, DELEGATE_CONTROL); \
         FRM_STATE_BYTE(frame_) = 1; \
-        continue_core((o), (flags), (branch), (specifier), (with)); \
+        continue_core(RESET(o), (flags), (branch), (specifier), (with)); \
     } while (0)
 
 
@@ -825,7 +825,7 @@ inline static bool Push_Continuation_Throws(
         FRM_STATE_BYTE(frame_) = 255; /* 0 reserved for initial entry */ \
         Set_Eval_Flag(frame_, DELEGATE_CONTROL); \
         continue_core( \
-            frame_->out, EVAL_MASK_DEFAULT, (value), SPECIFIED, (with) \
+            RESET(frame_->out), EVAL_MASK_DEFAULT, (value), SPECIFIED, (with) \
         ); \
     } while (0)
 
@@ -835,33 +835,48 @@ inline static bool Push_Continuation_Throws(
         FRM_STATE_BYTE(frame_) = 255; /* 0 reserved for initial entry */ \
         Set_Eval_Flag(frame_, DELEGATE_CONTROL); \
         continue_core( \
-            frame_->out, EVAL_FLAG_BRANCH, (branch), SPECIFIED, (with) \
+            RESET(frame_->out), EVAL_FLAG_BRANCH, (branch), SPECIFIED, (with) \
         ); \
     } while (0)
+
+#define delegate_maybe_stale(o,branch,with) \
+    do { \
+        assert((o) == frame_->out); \
+        FRM_STATE_BYTE(frame_) = 255; /* 0 reserved for initial entry */ \
+        Set_Eval_Flag(frame_, DELEGATE_CONTROL); \
+        continue_core( \
+            frame_->out, EVAL_FLAG_MAYBE_STALE, (branch), SPECIFIED, (with) \
+        ); /* ^-- note not RESET()! */ \
+    } while (0)
+
 
 // Normal continuations come in catching and non-catching forms; they evaluate
 // without tampering with the result.
 
 #define continue_uncatchable(o,value,with) \
-    continue_core((o), EVAL_MASK_DEFAULT, (value), SPECIFIED, (with))
+    continue_core(RESET(o), EVAL_MASK_DEFAULT, (value), SPECIFIED, (with))
 
 #define continue_catchable(o,value,with) \
     do { \
         assert(Is_Action_Frame(frame_)); \
         Set_Eval_Flag(frame_, DISPATCHER_CATCHES); \
-        continue_core((o), EVAL_MASK_DEFAULT, (value), SPECIFIED, (with)); \
+        continue_core( \
+            RESET(o), EVAL_MASK_DEFAULT, (value), SPECIFIED, (with) \
+        ); \
     } while (0)
 
 // Branch continuations enforce the result not being pure null or void
 
 #define continue_uncatchable_branch(o,branch,with) \
-    continue_core((o), EVAL_FLAG_BRANCH, (branch), SPECIFIED, (with))
+    continue_core(RESET(o), EVAL_FLAG_BRANCH, (branch), SPECIFIED, (with))
 
 #define continue_catchable_branch(o,branch,with) \
     do { \
         assert(Is_Action_Frame(frame_)); \
         Set_Eval_Flag(frame_, DISPATCHER_CATCHES); \
-        continue_core((o), EVAL_FLAG_BRANCH, (branch), SPECIFIED, (with)); \
+        continue_core( \
+            RESET(o), EVAL_FLAG_BRANCH, (branch), SPECIFIED, (with) \
+        ); \
     } while (0)
 
 

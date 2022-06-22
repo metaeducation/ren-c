@@ -98,6 +98,7 @@ REB_R Adapter_Dispatcher(REBFRM *f)
     );
 
     STATE = ST_ADAPTER_RUNNING_PRELUDE;
+    assert(Is_Void(SPARE));
     continue_core(
         SPARE,  // Evaluate prelude into SPARE cell (result discarded, see [1])
         EVAL_MASK_DEFAULT,  // don't catch throws or errors
