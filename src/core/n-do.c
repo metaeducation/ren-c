@@ -252,67 +252,11 @@ REBNATIVE(shove)
 
 
 //
-//  Do_Frame_Ctx_Throws: C
-//
-bool Do_Frame_Ctx_Throws(
-    REBVAL *out,
-    REBCTX *c,
-    REBCTX *binding,
-    option(const Symbol*) label
-){
-    REBFLGS flags = EVAL_MASK_DEFAULT
-        | FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING);
-
-    DECLARE_END_FRAME (f, flags);
-    Push_Frame(out, f);
-
-    REBARR *varlist = CTX_VARLIST(c);
-    f->varlist = varlist;
-    f->rootvar = CTX_ROOTVAR(c);
-    INIT_BONUS_KEYSOURCE(varlist, f);
-
-    assert(FRM_PHASE(f) == CTX_FRAME_ACTION(c));
-    INIT_FRM_BINDING(f, binding);
-
-    Begin_Prefix_Action(f, label);
-
-    if (Trampoline_Throws(f)) {
-        Abort_Frame(f);
-        return true;
-    }
-
-    Drop_Frame(f);
-    return false;
-}
-
-
-//
-//  Do_Frame_Throws: C
-//
-bool Do_Frame_Throws(REBVAL *out, REBVAL *frame) {
-    if (IS_FRAME_PHASED(frame))  // see REDO for tail-call recursion
-        fail ("Use REDO to restart a running FRAME! (not DO)");
-
-    REBCTX *c = VAL_CONTEXT(frame);  // checks for INACCESSIBLE
-
-    if (Get_Subclass_Flag(VARLIST, CTX_VARLIST(c), FRAME_HAS_BEEN_INVOKED))
-        fail (Error_Stale_Frame_Raw());
-
-    return Do_Frame_Ctx_Throws(
-        out,
-        c,
-        VAL_FRAME_BINDING(frame),
-        VAL_FRAME_LABEL(frame)
-    );
-}
-
-
-//
 //  do: native [
 //
 //  {Evaluates source code (see also EVAL for stepwise or invisible evaluation)}
 //
-//      return: [<opt> any-value!]
+//      return: [<opt> <void> any-value!]
 //      source "Block of code, or indirect specification to find/make it" [
 //          <blank>  ; opts out of the DO, returns null
 //          block!  ; source code in block form (see EVALUATE for other kinds)
@@ -334,6 +278,16 @@ bool Do_Frame_Throws(REBVAL *out, REBVAL *frame) {
 //  ]
 //
 REBNATIVE(do)
+// 2. FAIL is the preferred operation for triggering errors, as it has a
+//    natural behavior for blocks passed to construct readable messages and
+//    "FAIL X" more clearly communicates a failure than "DO X".  But DO of an
+//    ERROR! would have to raise an error anyway, so it might as well raise the
+//    one it is given.
+//
+// 3. There's an error given if you try to run a continuation of an ACTION!
+//    and it takes a parameter, but you specify END as the WITH.  But giving
+//    a special error here--that can point people to "did you mean REEVALUATE"
+//    is something that is probably helpful enough to add.
 {
     INCLUDE_PARAMS_OF_DO;
 
@@ -346,17 +300,8 @@ REBNATIVE(do)
   #endif
 
     switch (VAL_TYPE(source)) {
-      //
-      // DO only takes BLOCK! as input.  The reason is that it might be
-      // considered deceptive if DO of a block like ^[1 + 2] didn't return
-      // a QUOTED! 3.  It also doesn't provide accommodation for invisible
-      // products; a DO of a script that's empty is void.  This makes the
-      // code here simpler.
-      //
-      case REB_BLOCK : {
-        if (Do_Any_Array_At_Throws(OUT, source, SPECIFIED))
-            return THROWN;
-        break; }
+      case REB_BLOCK :  // no REB_GROUP, etc...EVAL does that.  see [1]
+        delegate (OUT, source, END);
 
       case REB_VARARGS : {
         REBVAL *position;
@@ -440,37 +385,20 @@ REBNATIVE(do)
       }
 
       case REB_ERROR :
-        //
-        // FAIL is the preferred operation for triggering errors, as it has
-        // a natural behavior for blocks passed to construct readable messages
-        // and "FAIL X" more clearly communicates a failure than "DO X"
-        // does.  However DO of an ERROR! would have to raise an error
-        // anyway, so it might as well raise the one it is given...and this
-        // allows the more complex logic of FAIL to be written in Rebol code.
-        //
-        fail (VAL_CONTEXT(source));
+        fail (VAL_CONTEXT(source));  // would fail anyway, see [2]
 
       case REB_ACTION :
-        //
-        // Ren-C will only run arity 0 functions from DO, otherwise REEVAL
-        // must be used.  Look for the first non-local parameter to tell.
-        //
         if (First_Unspecialized_Param(nullptr, VAL_ACTION(source)))
-            fail (Error_Do_Arity_Non_Zero_Raw());
+            fail (Error_Do_Arity_Non_Zero_Raw());  // specific error?  see [3]
 
-        if (Eval_Value_Throws(OUT, source, SPECIFIED))
-            return THROWN;
-        break;
+        delegate (OUT, source, END);
 
       case REB_FRAME :
-        if (Do_Frame_Throws(RESET(OUT), source))
-            return THROWN; // prohibits recovery from exits
-        Reify_Eval_Out_Plain(OUT);
-        break;
+        delegate (OUT, source, END);
 
       case REB_QUOTED :
         Copy_Cell(OUT, ARG(source));
-        return Unquotify(OUT, 1);
+        return Unquotify(OUT, 1);  // !!! delegate to offer a debug step?
 
       default :
         fail (Error_Do_Arity_Non_Zero_Raw());  // https://trello.com/c/YMAb89dv
@@ -500,10 +428,45 @@ REBNATIVE(do)
 //  ]
 //
 REBNATIVE(evaluate)
+//
+// 1. We want EVALUATE to treat all ANY-ARRAY! the same.  (e.g. a ^[1 + 2] just
+//    does the same thing as [1 + 2] and gives 3, not '3)  Rather than mutate
+//    the cell to plain BLOCK! and pass it to continue_core(), we initialize
+//    a feed from the array directly.
+//
+// 6. There may have been a LET statement in the code.  If there was, we have
+//    to incorporate the binding it added into the reported state *somehow*.
+//    Right now we add it to the block we give back...this gives rise to
+//    questionable properties, such as if the user goes backward in the block
+//    and were to evaluate it again:
+//
+//      https://forum.rebol.info/t/1496
+//
+//    Right now we can politely ask "don't do that", but better would probably
+//    be to make EVALUATE return something with more limited privileges... more
+//    like a FRAME!/VARARGS!.
 {
     INCLUDE_PARAMS_OF_EVALUATE;
 
+    REBVAL *next = ARG(next);
     REBVAL *source = ARG(source);  // may be only GC reference, don't lose it!
+
+    enum {
+        ST_EVALUATE_INITIAL_ENTRY = 0,
+        ST_EVALUATE_SINGLE_STEPPING
+    };
+
+    switch (STATE) {
+      case ST_EVALUATE_INITIAL_ENTRY :
+        goto initial_entry;
+
+      case ST_EVALUATE_SINGLE_STEPPING :
+        goto single_step_result_in_out;
+
+      default: assert(false);
+    }
+
+  initial_entry: {  //////////////////////////////////////////////////////////
 
     Tweak_Non_Const_To_Explicitly_Mutable(source);
 
@@ -511,69 +474,32 @@ REBNATIVE(evaluate)
     Set_Cell_Flag(ARG(source), PROTECTED);
   #endif
 
-    REBVAL *next = ARG(next);
-
     if (ANY_ARRAY(source)) {
         if (VAL_LEN_AT(source) == 0) {  // `evaluate []` is invisible intent
-            // leave OUT as is
-            Init_Nulled(source);
-            assert(Is_Void(SPARE));
+            if (REF(next))
+                rebElide(Lib(SET), rebQ(next), nullptr);
+
+            return VOID;
         }
-        else {
-            DECLARE_FEED_AT_CORE (feed, source, SPECIFIED);
-            assert(NOT_END(feed->value));  // checked for VAL_LEN_AT() == 0
 
-            if (REF(next)) {  // only one step, want the output position
-                DECLARE_FRAME (
-                    f,
-                    feed,
-                    EVAL_MASK_DEFAULT
-                        | EVAL_FLAG_SINGLE_STEP
-                        | EVAL_FLAG_ALLOCATED_FEED
-                );
-                Push_Frame(SPARE, f);
+        DECLARE_FEED_AT_CORE (feed, source, SPECIFIED);  // use feed, see [1]
+        assert(NOT_END(feed->value));
 
-                if (Trampoline_Throws(f)) {
-                    Abort_Frame(f);
-                    return THROWN;
-                }
+        REBFLGS flags = EVAL_MASK_DEFAULT
+            | EVAL_FLAG_ALLOCATED_FEED
+            | EVAL_FLAG_MAYBE_STALE;
 
-                VAL_INDEX_UNBOUNDED(source) = FRM_INDEX(f);  // new index
+        DECLARE_FRAME (subframe, feed, flags);
+        Push_Frame(OUT, subframe);
 
-                // <ay have been a LET statement in the code.  If there
-                // was, we have to incorporate the binding it added into
-                // the reported state *somehow*.  Right now we add it to the
-                // block we give back...this gives rise to questionable
-                // properties, such as if the user goes backward in the
-                // block and were to evaluate it again:
-                //
-                // https://forum.rebol.info/t/1496
-                //
-                // Right now we can politely ask "don't do that", but better
-                // would probably be to make EVALUATE return something with
-                // more limited privileges... more like a FRAME!/VARARGS!.
-                //
-                INIT_BINDING_MAY_MANAGE(source, f_specifier);
+        if (not REF(next))  // plain evaluation to end, maybe invisible
+            delegate_subframe (subframe);
 
-                Drop_Frame(f);
+        Set_Eval_Flag(subframe, TRAMPOLINE_KEEPALIVE);  // to ask how far it got
+        Set_Eval_Flag(subframe, SINGLE_STEP);
 
-                if (REF(next))
-                    rebElide(Lib(SET), rebQ(next), source);
-            }
-            else {  // assume next position not requested means run-to-end
-                if (Do_Feed_To_End_Throws(
-                    SPARE,
-                    feed,
-                    EVAL_MASK_DEFAULT | EVAL_FLAG_ALLOCATED_FEED
-                )){
-                    return THROWN;
-                }
-
-                if (REF(next))
-                    rebElide(Lib(SET), rebQ(next), rebQ(Lib(NULL)));
-            }
-        }
-        // update variable
+        STATE = ST_EVALUATE_SINGLE_STEPPING;
+        continue_uncatchable_subframe (subframe);
     }
     else switch (VAL_TYPE(source)) {
 
@@ -587,22 +513,13 @@ REBNATIVE(evaluate)
         if (REF(next))
             fail ("/NEXT Behavior not implemented for FRAME! in EVALUATE");
 
-        if (Do_Frame_Throws(SPARE, source))
-            return THROWN;  // prohibits recovery from exits
-        break;
+        delegate_maybe_stale (OUT, source, END);
 
       case REB_ACTION: {
-        //
-        // Ren-C will only run arity 0 functions from DO, otherwise REEVAL
-        // must be used.  Look for the first non-local parameter to tell.
-        //
         if (First_Unspecialized_Param(nullptr, VAL_ACTION(source)))
-            fail (Error_Do_Arity_Non_Zero_Raw());
+            fail (Error_Do_Arity_Non_Zero_Raw());  // see notes in DO on error
 
-        if (Eval_Value_Throws(SPARE, source, SPECIFIED))
-            return THROWN;
-
-        break; }
+        delegate (OUT, source, END); }
 
       case REB_VARARGS : {
         assert(IS_VARARGS(source));
@@ -664,8 +581,24 @@ REBNATIVE(evaluate)
     if (Is_Void(SPARE))
         return VOID;
 
-    return_value (SPARE);
-}
+    return SPARE;
+
+} single_step_result_in_out: {  //////////////////////////////////////////////
+
+    VAL_INDEX_UNBOUNDED(source) = FRM_INDEX(SUBFRAME);  // new index
+    if (REF(next))
+        rebElide(Lib(SET), rebQ(next), source);
+
+    REBSPC *specifier = FRM_SPECIFIER(SUBFRAME);
+    INIT_BINDING_MAY_MANAGE(source, specifier);  // integrate LETs, see [6]
+
+    Drop_Frame(SUBFRAME);
+
+    if (Is_Stale(OUT))
+        return VOID;
+
+    return OUT;
+}}
 
 
 //

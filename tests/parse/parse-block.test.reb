@@ -131,9 +131,10 @@
 ]
 
 
-[#1672 (  ; Self invoking rule, stack overflow
-    a: [a]
-    error? trap [uparse [] a]
+[#1672 (  ; infinite recursion
+    x: 0
+    a: [(x: x + 1, if x = 200 [throw <deep-enough>]) a]
+    <deep-enough> = catch [uparse [] a]
 )]
 
 

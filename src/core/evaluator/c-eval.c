@@ -297,6 +297,14 @@ REB_R Evaluator_Executor(REBFRM *f)
         STATE = ST_EVALUATOR_INITIAL_ENTRY;
         goto lookahead;
 
+      case ST_EVALUATOR_SET_BLOCK_RIGHTSIDE:
+        STATE = ST_EVALUATOR_INITIAL_ENTRY;
+        goto set_block_rightside_result_in_out;
+
+      case ST_EVALUATOR_SET_BLOCK_LOOKAHEAD:
+        STATE = ST_EVALUATOR_INITIAL_ENTRY;
+        goto set_block_lookahead_result_in_out;
+
       default:
         assert(false);
     }
@@ -1422,10 +1430,11 @@ REB_R Evaluator_Executor(REBFRM *f)
         // Now run the frame...no need to preserve OUT (always overwritten on
         // an assignment)
         //
-        if (Do_Frame_Throws(RESET(OUT), SPARE)) {
-            DS_DROP_TO(f->baseline.dsp);
-            goto return_thrown;
-        }
+        STATE = ST_EVALUATOR_SET_BLOCK_RIGHTSIDE;
+        frame_->u.multi.dsp_circled = dsp_circled;
+        continue_uncatchable (OUT, SPARE, END);
+
+    } set_block_rightside_result_in_out: {  //////////////////////////////////
 
         // We called arbitrary code, so we have to toss the cache (in case
         // e.g. ELSE comes next and it got redefined to 3 or something)
@@ -1462,14 +1471,13 @@ REB_R Evaluator_Executor(REBFRM *f)
             assert(not Is_Stale(OUT));
             Push_Frame(OUT, subframe);  // offer potential enfix previous OUT
 
-            if (Trampoline_Throws(subframe)) {
-                Abort_Frame(subframe);
-                DS_DROP_TO(f->baseline.dsp);
-                goto return_thrown;
-            }
-
-            Drop_Frame(subframe);
+            STATE = ST_EVALUATOR_SET_BLOCK_LOOKAHEAD;
+            continue_subframe (subframe);
         }
+
+    } set_block_lookahead_result_in_out: {  //////////////////////////////////
+
+        REBDSP dsp_circled = frame_->u.multi.dsp_circled;
 
         // Take care of the SET for the main result.  For the moment, if you
         // asked to opt out of the main result this will give you a ~blank~

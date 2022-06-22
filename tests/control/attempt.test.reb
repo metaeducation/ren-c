@@ -17,8 +17,10 @@
 ; recursion
 (1 = attempt [attempt [1]])
 ('~null~ = ^ attempt [attempt [1 / 0]])
-; infinite recursion
+
+; infinite recursion, no more stack overflow error...
 (
-    blk: [attempt blk]  ; first attempt returns null
-    '~null~ = ^ attempt blk
+    x: 0
+    blk: [x: x + 1, if x = 2000 [throw <deep-enough>] attempt blk]
+    <deep-enough> = catch [attempt blk]
 )

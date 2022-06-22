@@ -4,11 +4,11 @@
 ; of ~void~ isotope to help remind you that you are not seeing the whole
 ; picture.  Returning NULL might seem "friendlier" but it is misleading.
 [
-    ('~ = ^(do []))
+    (@void = ^(do []))
     (@void = ^ (eval []))
     (@void = ^ (maybe eval []))
 
-    (none? do [])
+    (void? do [])
     (void? (eval []))
     (void? maybe eval [])
     (3 = (1 + 2 eval []))
@@ -21,7 +21,7 @@
 
     (didn't do [null])
     ('~null~ = ^ do [if true [null]])
-    ('~ = ^ do [if false [<a>]])
+    (@void = ^ do [if false [<a>]])
     (''30 = ^ do [10 + 20 if false [<a>]])
 
     (did all [
@@ -32,7 +32,7 @@
 
     (did all [
         x: <overwritten>
-        '~ = (x: ^(comment "HI") ^ do [comment "HI"])
+        @void = (x: ^(comment "HI") ^ do [comment "HI"])
         @void = x
     ])
 
@@ -53,7 +53,7 @@
     (@void = ^ eval [])
     (@void = ^ eval [comment "hi"])
     (@void = ^ eval make frame! :void)
-    ('~ = ^ do :void)
+    (@void = ^ do :void)
 
     (didn't ^ eval [null])
     (didn't ^(eval [null]))
@@ -187,7 +187,7 @@
 )
 (0:00 == do [0:00])
 (0.0.0 == do [0.0.0])
-('~ = ^ do [()])
+(@void = ^ do [()])
 ('a == do ['a])
 (error? trap [do trap [1 / 0] 1])
 (
@@ -263,8 +263,9 @@
 (3 = reeval :reeval :add 1 2)
 ; infinite recursion for block
 (
-    blk: [do blk]
-    error? trap blk
+    x: 0
+    blk: [x: x + 1, if x = 2000 [throw <deep-enough>] do blk]
+    <deep-enough> = catch blk
 )
 ; infinite recursion for string
 [#1896 (
@@ -273,8 +274,9 @@
 )]
 ; infinite recursion for evaluate
 (
-    blk: [b: evaluate blk]
-    error? trap blk
+    x: 0
+    blk: [x: x + 1, if x = 2000 [throw <deep-enough>] b: evaluate blk]
+    <deep-enough> = catch blk
 )
 
 ; evaluating quoted argument

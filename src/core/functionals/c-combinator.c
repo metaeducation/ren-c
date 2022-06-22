@@ -307,8 +307,9 @@ REBNATIVE(combinator)
 // COMBINATOR or NATIVE-COMBINATOR.  Because it expects the parameters to be
 // in the right order in the frame.
 //
-bool Call_Parser_Throws(
+void Push_Parser_Subframe(
     REBVAL *out,
+    REBFRM *frame_,
     const REBVAL *remainder,
     const REBVAL *parser,
     const REBVAL *input
@@ -324,18 +325,25 @@ bool Call_Parser_Throws(
         KEY_SYM(remainder_key) != SYM_REMAINDER
         or KEY_SYM(input_key) != SYM_INPUT
     ){
-        fail ("Call_Parser_Throws() only works for unadulterated combinators");
+        fail ("Push_Parser_Subframe() only works on unadulterated combinators");
     }
 
     Copy_Cell(CTX_VAR(ctx, IDX_COMBINATOR_PARAM_REMAINDER), remainder);
     Copy_Cell(CTX_VAR(ctx, IDX_COMBINATOR_PARAM_INPUT), input);
 
-    return Do_Frame_Ctx_Throws(
+    DECLARE_LOCAL (temp);  // can't overwrite spare
+    Init_Frame(temp, ctx, ANONYMOUS);
+
+    if (Push_Continuation_Throws(
         out,
-        ctx,
-        VAL_ACTION_BINDING(parser),
-        VAL_ACTION_LABEL(parser)
-    );
+        frame_,
+        EVAL_MASK_DEFAULT,
+        temp,
+        SPECIFIED,
+        END
+    )){
+        fail (Error_No_Catch_For_Throw(frame_));
+    }
 }
 
 
@@ -353,17 +361,42 @@ REBNATIVE(opt_combinator)
 {
     INCLUDE_PARAMS_OF_OPT_COMBINATOR;
 
-    UNUSED(ARG(state));
+    Value *remainder = ARG(remainder);  // output (combinator implicit)
 
-    if (Call_Parser_Throws(OUT, ARG(remainder), ARG(parser), ARG(input)))
-        return THROWN;
+    Value *input = ARG(input);  // combinator implicit
+    Value *parser = ARG(parser);
+    UNUSED(ARG(state));  // combinator implicit
+
+    enum {
+        ST_OPT_COMBINATOR_INITIAL_ENTRY = 0,
+        ST_OPT_COMBINATOR_RUNNING_PARSER
+    };
+
+    switch (STATE) {
+      case ST_OPT_COMBINATOR_INITIAL_ENTRY :
+        goto initial_entry;
+
+      case ST_OPT_COMBINATOR_RUNNING_PARSER :
+        goto parser_result_in_out;
+
+      default : assert(false);
+    }
+
+  initial_entry: {  //////////////////////////////////////////////////////////
+
+    Push_Parser_Subframe(OUT, frame_, remainder, parser, input);
+
+    STATE = ST_OPT_COMBINATOR_RUNNING_PARSER;
+    continue_subframe (SUBFRAME);
+
+} parser_result_in_out: {  ///////////////////////////////////////////////////
 
     if (not Is_Nulled(OUT))  // parser succeeded...
         return OUT;  // so return its result (note: may be null *isotope*)
 
-    Set_Var_May_Fail(ARG(remainder), SPECIFIED, ARG(input));
-    return Init_Null_Isotope(OUT);  // success, but convey nothingness
-}
+    Set_Var_May_Fail(remainder, SPECIFIED, input);  // convey no progress made
+    return Init_Null_Isotope(OUT);  // ...but still, non-NULL for success
+}}
 
 
 //
@@ -383,8 +416,8 @@ REBNATIVE(text_x_combinator)
     REBCTX *state = VAL_CONTEXT(ARG(state));
     bool cased = Is_Truthy(CTX_VAR(state, IDX_UPARSE_PARAM_CASE));
 
-    REBVAL *v = ARG(value);
-    REBVAL *input = ARG(input);
+    Value *v = ARG(value);
+    Value *input = ARG(input);
 
     if (ANY_ARRAY(input)) {
         const Cell *tail;
@@ -437,70 +470,93 @@ REBNATIVE(text_x_combinator)
 //  ]
 //
 REBNATIVE(some_combinator)
+//
+// 1. If we don't put a phase on this, then it will pay attention to the
+//    FRAME_HAS_BEEN_INVOKED flag and prohibit things like STOP from advancing
+//    the input because `f.input` assignment will raise an error.  Review.
+//
+// 2. Currently the usermode parser has no support for intercepting throws
+//    removing frames from the loops list in usermode.  Mirror that limitation
+//    here in the native implementation for now.
+//
+// 3. There's no guarantee that a parser that fails leaves the remainder as-is
+//    (in fact multi-returns have historically unset variables to hide their
+//    previous values from acting as input).  So we have to put the remainder
+//    back to the input we just tried but didn't work.
 {
     INCLUDE_PARAMS_OF_SOME_COMBINATOR;
 
-    REBVAL *remainder = ARG(remainder);
-    REBVAL *parser = ARG(parser);
-    REBVAL *input = ARG(input);
+    Value *remainder = ARG(remainder);
+    Value *parser = ARG(parser);
+    Value *input = ARG(input);
 
-    REBVAL *state = ARG(state);
+    Value *state = ARG(state);
     REBARR *loops = VAL_ARRAY_ENSURE_MUTABLE(
         CTX_VAR(VAL_CONTEXT(state), IDX_UPARSE_PARAM_LOOPS)
     );
 
-    // !!! If we don't put a phase on this, then it will pay attention to the
-    // FRAME_HAS_BEEN_INVOKED flag and prohibit things like STOP from advancing
-    // the input because `f.input` assignment will raise an error.  Review.
-    //
+    enum {
+        ST_SOME_COMBINATOR_INITIAL_ENTRY = 0,
+        ST_SOME_COMBINATOR_FIRST_PARSER_RUN,
+        ST_SOME_COMBINATOR_LATER_PARSER_RUN
+    };
+
+    switch (STATE) {
+      case ST_SOME_COMBINATOR_INITIAL_ENTRY :
+        goto initial_entry;
+
+      case ST_SOME_COMBINATOR_FIRST_PARSER_RUN :
+        goto first_parse_result_in_out;
+
+      case ST_SOME_COMBINATOR_LATER_PARSER_RUN :
+        goto later_parse_result_in_spare;
+
+      default : assert(false);
+    }
+
+  initial_entry: {  //////////////////////////////////////////////////////////
+
     Cell *loop_last = Alloc_Tail_Array(loops);
     Init_Frame(loop_last, CTX(frame_->varlist), Canon(SOME));
-    INIT_VAL_FRAME_PHASE(loop_last, FRM_PHASE(frame_));
+    INIT_VAL_FRAME_PHASE(loop_last, FRM_PHASE(frame_));  // need phase, see [1]
 
-    if (Call_Parser_Throws(OUT, remainder, parser, input)) {
-        //
-        // !!! Currently there's no support for intercepting throws removing
-        // frames from the loops list in usermode.  Mirror that limitation here
-        // for now.
-        //
-        return THROWN;
-    }
+    Push_Parser_Subframe(OUT, frame_, remainder, parser, input);
 
-    if (Is_Nulled(OUT)) {
+    STATE = ST_SOME_COMBINATOR_FIRST_PARSER_RUN;
+    continue_uncatchable_subframe (SUBFRAME);  // mirror usermode, see [2]
+
+} first_parse_result_in_out: {  //////////////////////////////////////////////
+
+    if (Is_Nulled(OUT)) {  // didn't match even once, so not enough
         Remove_Series_Units(loops, ARR_LEN(loops) - 1, 1);  // drop loop
-        return nullptr;  // didn't match even once, so not enough.
+        return nullptr;
     }
 
-    assert(Is_Void(SPARE));
+} call_parser_again: {  //////////////////////////////////////////////////////
 
-    for (; ; RESET(SPARE)) {
-        //
-        // Make the remainder from previous call the new input
-        //
-        Get_Var_May_Fail(input, remainder, SPECIFIED, true);
+    Get_Var_May_Fail(
+        input,
+        remainder, // remainder from previous call becomes new input
+        SPECIFIED,
+        true
+    );
 
-        // Don't overwrite the last output (if it's null we want the previous
-        // iteration's successful output value)
-        //
-        if (Call_Parser_Throws(SPARE, remainder, parser, input))
-            return THROWN;  // see notes above about not removing loop
+    Push_Parser_Subframe(SPARE, frame_, remainder, parser, input);
 
-        if (Is_Nulled(SPARE)) {
-            //
-            // There's no guarantee that a parser that fails leaves the
-            // remainder as-is (in fact multi-returns have historically unset
-            // variables to hide their previous values from acting as input).
-            // So we have to put the remainder back to the input we just tried
-            // but didn't work.
-            //
-            Set_Var_May_Fail(remainder, SPECIFIED, input);
-            Remove_Series_Units(loops, ARR_LEN(loops) - 1, 1);  // drop loop
-            return OUT;  // return previous successful parser result
-        }
+    STATE = ST_SOME_COMBINATOR_LATER_PARSER_RUN;
+    continue_uncatchable_subframe (SUBFRAME);
 
-        Move_Cell(OUT, SPARE);  // update last successful result
+} later_parse_result_in_spare: {  ////////////////////////////////////////////
+
+    if (Is_Nulled(SPARE)) {  // first still succeeded, so we're okay.
+        Set_Var_May_Fail(remainder, SPECIFIED, input);  // put back, see [3]
+        Remove_Series_Units(loops, ARR_LEN(loops) - 1, 1);  // drop loop
+        return OUT;  // return previous successful parser result
     }
-}
+
+    Move_Cell(OUT, SPARE);  // update last successful result
+    goto call_parser_again;
+}}
 
 
 //
@@ -522,22 +578,43 @@ REBNATIVE(further_combinator)
     REBVAL *parser = ARG(parser);
     UNUSED(ARG(state));
 
-    if (Call_Parser_Throws(OUT, remainder, parser, input))
-        return THROWN;
+    enum {
+        ST_FURTHER_COMBINATOR_INITIAL_ENTRY = 0,
+        ST_FURTHER_COMBINATOR_RUNNING_PARSER
+    };
+
+    switch (STATE) {
+      case ST_FURTHER_COMBINATOR_INITIAL_ENTRY :
+        goto initial_entry;
+
+      case ST_FURTHER_COMBINATOR_RUNNING_PARSER :
+        goto parser_result_in_out;
+
+      default: assert(false);
+    }
+
+  initial_entry: {  //////////////////////////////////////////////////////////
+
+    Push_Parser_Subframe(OUT, frame_, remainder, parser, input);
+
+    STATE = ST_FURTHER_COMBINATOR_RUNNING_PARSER;
+    continue_subframe (SUBFRAME);
+
+} parser_result_in_out: {  ///////////////////////////////////////////////////
 
     if (Is_Nulled(OUT))
         return nullptr;  // the parse rule did not match
-
-    if (Is_Stale(OUT))
-        fail ("Rule passed to FURTHER must synthesize a product");
 
     Get_Var_May_Fail(SPARE, remainder, SPECIFIED, true);
 
     if (VAL_INDEX(SPARE) <= VAL_INDEX(input))
         return nullptr;  // the rule matched but did not advance the input
 
+    if (Is_Stale(OUT))
+        return VOID;
+
     return OUT;
-}
+}}
 
 
 struct Combinator_Param_State {

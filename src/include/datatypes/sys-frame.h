@@ -776,6 +776,34 @@ inline static bool Push_Continuation_Throws(
 
         return false; }
 
+      case REB_FRAME: {
+        if (IS_FRAME_PHASED(branch))  // see REDO for tail-call recursion
+            fail ("Use REDO to restart a running FRAME! (not DO)");
+
+        REBCTX *c = VAL_CONTEXT(branch);  // checks for INACCESSIBLE
+
+        if (Get_Subclass_Flag(VARLIST, CTX_VARLIST(c), FRAME_HAS_BEEN_INVOKED))
+            fail (Error_Stale_Frame_Raw());
+
+        DECLARE_END_FRAME (
+            f,
+            EVAL_MASK_DEFAULT
+                | FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING)
+                | flags
+        );
+        Push_Frame(out, f);
+
+        REBARR *varlist = CTX_VARLIST(c);
+        f->varlist = varlist;
+        f->rootvar = CTX_ROOTVAR(c);
+        INIT_BONUS_KEYSOURCE(varlist, f);
+
+        assert(FRM_PHASE(f) == CTX_FRAME_ACTION(c));
+        INIT_FRM_BINDING(f, VAL_FRAME_BINDING(branch));
+
+        Begin_Prefix_Action(f, VAL_FRAME_LABEL(branch));
+        return false; }
+
       default:
         //
         // !!! Things like CASE currently ask for a branch-based continuation

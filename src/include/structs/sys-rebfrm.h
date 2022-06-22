@@ -630,6 +630,10 @@ typedef Executor Dispatcher;  // sub-dispatched in Action_Executor()
         REBFRM *main_frame;
         bool changed;
     } compose;
+
+    struct {
+        REBDSP dsp_circled;
+    } multi;
   } u;
 
     // The "baseline" is a digest of the state of global variables at the

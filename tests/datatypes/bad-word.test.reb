@@ -58,11 +58,13 @@
 ; they are in a ^META context.
 ; https://forum.rebol.info/t/what-should-do-do/1426
 ;
-(none? do [])
+(void? do [])
 (
     x: <overwritten>
-    '~ = ^ x: do []
-    '~ = ^x  ; DO doesn't mess around with void isotopes--use EVAL instead
+    did all [
+        '~ = ^ x: do []
+        '~ = ^x
+    ]
 )
 (
     x: 10
@@ -90,7 +92,7 @@
     (@void = ^ eval :foo)
     (void? eval :foo)
 
-    ('~ = ^ do :foo)
+    (void? do :foo)
 ]
 
 [
