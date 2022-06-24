@@ -75,7 +75,7 @@
 ; by APPLY, because the fundamental frame mechanics do not intervene.
 [
     (
-        non-detector: func [arg] [arg]
+        non-detector: lambda [arg] [arg]
         did all [
             e: trap [apply :non-detector [~baddie~]]
             e.id = 'isotope-arg
@@ -85,7 +85,7 @@
         ]
     )
     (
-        detector: func [^arg] [arg]
+        detector: lambda [^arg] [arg]
         '~baddie~ = apply :detector [~baddie~]
     )
 ]
@@ -95,7 +95,7 @@
 ; convert true to # and false to NULL.
 [
     (
-        testme: func [/refine] [refine]
+        testme: func [/refine] [return refine]
         true
     )
 

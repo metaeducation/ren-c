@@ -753,234 +753,249 @@ REBNATIVE(applique)
 //      action [action!]
 //      args "Arguments and Refinements, e.g. [arg1 arg2 /ref refine1]"
 //          [block!]
-//      <local> frame
+//      <local> frame index
 //  ]
 //
 REBNATIVE(apply)
+//
+// 1. Binders cannot be held across evaluations at this time.  Do slow
+//    lookups for refinements, but this is something that needs rethinking.
+//
+// 2. Make a FRAME! for the ACTION!, weaving in the ordered refinements
+//    collected on the stack (if any).  Any refinements that are used in any
+//    specialization level will be pushed as well, which makes them
+//    out-prioritize (e.g. higher-ordered) than any used in a PATH! that were
+//    pushed during the Get of the ACTION!.
+//
+// 3. Two argument-name labels in a row is not legal...treat it like the next
+//    refinement is reaching a comma or end of block.  (Though this could be
+//    treated as an <end> case?)
+//
+// 4. We treat <skip> parameters as if they can only be requested by name,
+//    like a refinement.  This is because the evaluative nature of APPLY is
+//    not compatible with the quoting requirement of skippability.
+//
+// 5. Low-level frame mechanics require that no-argument refinements be either
+//    # or null.  As a higher-level utility, APPLY can throw in some assistance
+//    so it converts (true => #) and (false => null)
+//
+// 6. We need to remove the binder indices, whether we are raising an error
+//    or not.  But we also want any fields not assigned to be set to `~`.
+//    (We wanted to avoid the situation where someone purposefully set a
+//    meta-parameter to `~` being interpreted as never setting a field).
 {
     INCLUDE_PARAMS_OF_APPLY;
 
-    REBVAL *action = ARG(action);
-    REBVAL *args = ARG(args);
+    Value *action = ARG(action);
+    Value *args = ARG(args);
 
-    REBVAL *frame = ARG(frame);
+    Value *frame = ARG(frame);  // local variable for holding GC-safe frame
+    Value *iterator = ARG(return);  // reuse to hold Evars iterator
 
-    REBDSP lowest_ordered_dsp = DSP;  // could push refinements here
+    REBVAR *var;  // may come from evars iterator or found by index
+    REBPAR *param;  // (same)
 
-    // Make a FRAME! for the ACTION!, weaving in the ordered refinements
-    // collected on the stack (if any).  Any refinements that are used in
-    // any specialization level will be pushed as well, which makes them
-    // out-prioritize (e.g. higher-ordered) than any used in a PATH! that
-    // were pushed during the Get of the ACTION!.
-    //
-    // !!! Binders cannot be held across evaluations at this time.  Do slow
-    // lookups for refinements, but this is something that needs rethinking.
-    //
-    /*struct Reb_Binder binder;
+    enum {
+        ST_APPLY_INITIAL_ENTRY = 0,
+        ST_APPLY_LABELED_EVAL_STEP,
+        ST_APPLY_UNLABELED_EVAL_STEP
+    };
+
+    if (Get_Eval_Flag(frame_, ABRUPT_FAILURE))  // a fail() in this dispatcher
+        goto finalize_apply;
+
+    switch (STATE) {
+      case ST_APPLY_INITIAL_ENTRY :
+        goto initial_entry;
+
+      case ST_APPLY_LABELED_EVAL_STEP :
+        goto labeled_step_result_in_spare;
+
+      case ST_APPLY_UNLABELED_EVAL_STEP :
+        goto unlabeled_step_result_in_spare;
+
+      default : assert(false);
+    }
+
+  initial_entry: {  //////////////////////////////////////////////////////////
+
+    /*struct Reb_Binder binder;  // see [1]
     INIT_BINDER(&binder);*/
-    REBCTX *exemplar = Make_Context_For_Action_Push_Partials(
+    REBCTX *exemplar = Make_Context_For_Action_Push_Partials(  // see [2]
         action,
-        lowest_ordered_dsp, // lowest_ordered_dsp of refinements to weave in
+        BASELINE->dsp, // lowest_ordered_dsp of refinements to weave in
         nullptr /* &binder */,
         Root_Unspecialized_Tag  // is checked for by *identity*, not value!
     );
-    REBARR *varlist = CTX_VARLIST(exemplar);
-    Manage_Series(varlist); // Putting into a frame
+    Manage_Series(CTX_VARLIST(exemplar)); // Putting into a frame
+    Init_Frame(frame, exemplar, VAL_ACTION_LABEL(action));  // GC guarded
 
-    DS_DROP_TO(lowest_ordered_dsp);  // !!! don't care about partials?
+    DS_DROP_TO(BASELINE->dsp);  // not interested in partials ordering
 
-    Init_Frame(frame, exemplar, ANONYMOUS);  // Note: GC guards the exemplar
+    DECLARE_FRAME_AT (
+        f,
+        args,
+        EVAL_MASK_DEFAULT
+            | EVAL_FLAG_SINGLE_STEP
+            | EVAL_FLAG_TRAMPOLINE_KEEPALIVE
+    );
+    Push_Frame(SPARE, f);
 
-  blockscope {
-    DECLARE_FRAME_AT (f, args, EVAL_MASK_DEFAULT | EVAL_FLAG_SINGLE_STEP);
-    Push_Frame(nullptr, f);
+    EVARS *e = TRY_ALLOC(EVARS);
+    Init_Evars(e, frame);  // CTX_ARCHETYPE(exemplar) is phased, sees locals
+    Init_Handle_Cdata(iterator, e, sizeof(EVARS));
 
-    EVARS e;
-    Init_Evars(&e, frame);  // CTX_ARCHETYPE(exemplar) is phased, sees locals
+    Set_Eval_Flag(frame_, NOTIFY_ON_ABRUPT_FAILURE);  // to clean up iterator
+    goto handle_next_item;
 
-    REBCTX *error = nullptr;
-    bool arg_threw = false;
+} handle_next_item: {  ///////////////////////////////////////////////////////
 
-    while (NOT_END(f_value)) {
-        //
-        // We do special handling if we see a /REFINEMENT ... that is taken
-        // to mean we are naming the next argument.
+    REBFRM *f = SUBFRAME;
+    EVARS *e = VAL_HANDLE_POINTER(EVARS, iterator);
 
-        const Symbol *name = nullptr;
-        if (IS_PATH(f_value) and IS_REFINEMENT(f_value)) {
-            name = VAL_REFINEMENT_SYMBOL(f_value);
-            Fetch_Next_Forget_Lookback(f);
+    if (IS_END(f_value))
+        goto finalize_apply;
 
-            // Two refinement labels in a row, not legal...treat it like the
-            // next refinement is reaching a comma or end of block.
-            //
-            if (IS_PATH(f_value) and IS_REFINEMENT(f_value)) {
-                Refinify(Init_Word(DS_PUSH(), name));
-                error = Error_Need_Non_End_Raw(DS_TOP);
-                DS_DROP();
-                goto end_loop;
-            }
+    if (IS_COMMA(f_value)) {
+        Fetch_Next_Forget_Lookback(f);
+        goto handle_next_item;
+    }
+
+    // We do special handling if we see a /REFINEMENT ... that is taken
+    // to mean we are naming the next argument.
+
+    if (IS_PATH(f_value) and IS_REFINEMENT(f_value)) {
+        const Symbol *symbol = VAL_REFINEMENT_SYMBOL(f_value);
+
+        REBLEN index = Find_Symbol_In_Context(frame, symbol, false);
+        if (index == 0)
+            fail (Error_Bad_Parameter_Raw(rebUnrelativize(f_value)));
+
+        var = CTX_VAR(VAL_CONTEXT(frame), index);
+
+        if (not (
+            IS_TAG(var)  // we asked all unspecialized slots to hold this tag
+            and VAL_SERIES(var) == VAL_SERIES(Root_Unspecialized_Tag)
+        )){
+            fail (Error_Bad_Parameter_Raw(rebUnrelativize(f_value)));
         }
 
-        if (Eval_Step_Throws(RESET(SPARE), f)) {
-            arg_threw = true;
-            goto end_loop;
+        const Cell *lookback = Lookback_While_Fetching_Next(f);  // for error
+
+        if (IS_END(f_value) or IS_COMMA(f_value))
+            fail (Error_Need_Non_End_Raw(rebUnrelativize(lookback)));
+
+        if (IS_PATH(f_value) and IS_REFINEMENT(f_value))  // two label, see [3]
+            fail (Error_Need_Non_End_Raw(rebUnrelativize(lookback)));
+
+        Init_Integer(ARG(index), index);
+
+        STATE = ST_APPLY_LABELED_EVAL_STEP;
+        continue_catchable_subframe (SUBFRAME);
+    }
+
+    while (true) {
+        if (not Did_Advance_Evars(e))
+            fail (Error_Apply_Too_Many_Raw());
+
+        if (
+            VAL_PARAM_CLASS(e->param) == PARAM_CLASS_RETURN
+            or VAL_PARAM_CLASS(e->param) == PARAM_CLASS_OUTPUT
+            or GET_PARAM_FLAG(e->param, REFINEMENT)
+            or GET_PARAM_FLAG(e->param, SKIPPABLE)
+        ){
+            continue;  // skippable only requested by name, see [4]
         }
-
-        if (Is_Void(SPARE)) {  // no output
-            //
-            // We let the frame logic inside the evaluator decide if we've
-            // built a valid frame or not.  But the error we do check for is
-            // if we were trying to fulfill a labeled refinement and didn't
-            // get any value for it.
-            //
-            if (name) {
-                Refinify(Init_Word(DS_PUSH(), name));
-                error = Error_Need_Non_End_Raw(DS_TOP);
-                DS_DROP();
-                goto end_loop;
-            }
-
-            if (not IS_END(f_value))  // more input in feed so it was invisible
-                continue;  // ...was a COMMA! or COMMENT, just keep going
-
-            goto end_loop;
+        if (
+            IS_TAG(e->var)
+            and VAL_SERIES(e->var) == VAL_SERIES(Root_Unspecialized_Tag)
+        ){
+            break;
         }
+    }
 
-        REBVAL *var;
-        REBPAR *param;
-        if (name) {
-            /* REBLEN index = Get_Binder_Index_Else_0(&binder, name); */
+    STATE = ST_APPLY_UNLABELED_EVAL_STEP;
+    continue_catchable_subframe (SUBFRAME);
 
-            REBLEN index = Find_Symbol_In_Context(frame, name, false);
-            if (index == 0) {
-                Refinify(Init_Word(DS_PUSH(), name));
-                error = Error_Bad_Parameter_Raw(DS_TOP);
-                DS_DROP();
-                goto end_loop;
-            }
-            var = CTX_VAR(exemplar, index);
-            param = ACT_PARAM(VAL_ACTION(action), index);
-            if (not (
-                IS_TAG(var)
-                and VAL_SERIES(var) == VAL_SERIES(Root_Unspecialized_Tag)
-            )) {
-                Refinify(Init_Word(DS_PUSH(), name));
-                error = Error_Bad_Parameter_Raw(DS_TOP);
-                DS_DROP();
-                goto end_loop;
-            }
+} labeled_step_result_in_spare: {  ///////////////////////////////////////////
 
-            // Helpful service: convert LOGIC! to # or null for refinements
-            // that take no argument.
-            //
-            if (
-                IS_LOGIC(SPARE)
-                and GET_PARAM_FLAG(param, REFINEMENT)
-                and Is_Typeset_Empty(param)
-            ){
-                if (VAL_LOGIC(SPARE))
-                    Init_Blackhole(SPARE);
-                else
-                    Init_Nulled(SPARE);
-            }
-        }
-        else {
-            while (true) {
-                if (not Did_Advance_Evars(&e)) {
-                    error = Error_Apply_Too_Many_Raw();
-                    goto end_loop;
-                }
-                if (
-                    VAL_PARAM_CLASS(e.param) == PARAM_CLASS_RETURN
-                    or VAL_PARAM_CLASS(e.param) == PARAM_CLASS_OUTPUT
-                    or GET_PARAM_FLAG(e.param, REFINEMENT)
-                    or GET_PARAM_FLAG(e.param, SKIPPABLE)
-                ){
-                    // We treat <skip> parameters as if they can only be
-                    // requested by name, like a refinement.  This is because
-                    // the evaluative nature of APPLY is not compatible with
-                    // the quoting requirement of skippability.
-                    //
-                    continue;
-                }
-                if (
-                    IS_TAG(e.var)
-                    and VAL_SERIES(e.var) == VAL_SERIES(Root_Unspecialized_Tag)
-                ){
-                    break;
-                }
-            }
-            var = e.var;
-            param = e.param;
-        }
+    if (THROWING)
+        goto finalize_apply;
 
-        Move_Cell(var, SPARE);
+    REBLEN index = VAL_UINT32(ARG(index));
+
+    var = CTX_VAR(VAL_CONTEXT(frame), index);
+    param = ACT_PARAM(VAL_ACTION(action), index);
+
+    goto copy_spare_to_var_in_frame;
+
+} unlabeled_step_result_in_spare: {  /////////////////////////////////////////
+
+    if (THROWING)
+        goto finalize_apply;
+
+    EVARS *e = VAL_HANDLE_POINTER(EVARS, iterator);
+
+    var = e->var;
+    param = e->param;
+
+    goto copy_spare_to_var_in_frame;
+
+} copy_spare_to_var_in_frame: {  /////////////////////////////////////////////
+
+    if (Is_Void(SPARE)) {
+        if (VAL_PARAM_CLASS(param) == PARAM_CLASS_META)
+            Init_Meta_Of_Void(var);
+        else
+            Init_Void_Isotope(var);
+    }
+    else if (  // help convert logic for no-arg refinement, see [5]
+        VAL_TYPE_UNCHECKED(SPARE) == REB_LOGIC  // let isotopes pass
+        and GET_PARAM_FLAG(param, REFINEMENT)
+        and Is_Typeset_Empty(param)
+    ){
+        if (VAL_LOGIC(SPARE))
+            Init_Blackhole(var);
+        else
+            Init_Nulled(var);
+    }
+    else {
+        Copy_Cell(var, SPARE);
         if (VAL_PARAM_CLASS(param) == PARAM_CLASS_META)
             Meta_Quotify(var);
     }
 
-  end_loop:
+    RESET(SPARE);
+    goto handle_next_item;
 
-    // We need to remove the binder indices, whether we are raising an error
-    // or not.  But we also want any fields not assigned to be set to `~`.
-    // (We wanted to avoid the situation where someone purposefully set a
-    // meta-parameter to `~` being interpreted as never setting a field).
-    //
-    Shutdown_Evars(&e);
+} finalize_apply: {  /////////////////////////////////////////////////////////
 
-    if (arg_threw)
-        Abort_Frame(f);
-    else
-        Drop_Frame(f);
+    EVARS *e = VAL_HANDLE_POINTER(EVARS, iterator);
+    Shutdown_Evars(e);
 
-    Init_Evars(&e, frame);
-    while (Did_Advance_Evars(&e)) {
-        if (not arg_threw and not error and IS_TAG(e.var))
-            if (VAL_SERIES(e.var) == VAL_SERIES(Root_Unspecialized_Tag))
-                Init_None(e.var);
+    if (THROWING) {  // assume Abort_Frame() called on SUBFRAME?
+        FREE(EVARS, e);
+        Init_Trash(iterator);
+        return THROWN;
+    }
+
+    Drop_Frame(SUBFRAME);
+
+    Init_Evars(e, frame);
+    while (Did_Advance_Evars(e)) {  // convert unspecialized to none, see [6]
+        if (VAL_TYPE_UNCHECKED(e->var) == REB_TAG)  // skip over isotopes
+            if (VAL_SERIES(e->var) == VAL_SERIES(Root_Unspecialized_Tag))
+                Init_None(e->var);
 
         /* Remove_Binder_Index(&binder, KEY_SYMBOL(e.key)); */
     }
     /* SHUTDOWN_BINDER(&binder); */
-    Shutdown_Evars(&e);
+    Shutdown_Evars(e);
 
-    if (error)
-        fail (error);  // only safe to fail *AFTER* we have cleared binder
+    FREE(EVARS, e);
+    Init_Trash(iterator);
 
-    if (arg_threw)
-        return THROWN;
-  }
+    Clear_Eval_Flag(frame_, NOTIFY_ON_ABRUPT_FAILURE);  // necessary?
 
-    // Need to do this up front, because it captures f->dsp.
-    //
-    DECLARE_END_FRAME (
-        f,
-        EVAL_MASK_DEFAULT
-            | EVAL_FLAG_MAYBE_STALE
-            | FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING)  // skips fulfillment
-    );
-
-    Push_Frame(OUT, f);
-
-    f->varlist = varlist;
-    f->rootvar = CTX_ROOTVAR(exemplar);
-    INIT_BONUS_KEYSOURCE(varlist, f);
-
-    INIT_FRM_PHASE(f, VAL_ACTION(action));
-    INIT_FRM_BINDING(f, VAL_ACTION_BINDING(action));
-
-    Begin_Prefix_Action(f, VAL_ACTION_LABEL(action));
-
-    if (Trampoline_Throws(f)) {
-        Abort_Frame(f);
-        return THROWN;
-    }
-
-    Drop_Frame(f);
-
-    if (Is_Stale(OUT))
-        return VOID;
-
-    return OUT;
-}
+    delegate_maybe_stale (OUT, frame, END);
+}}
