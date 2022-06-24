@@ -935,7 +935,7 @@ inline static REB_R Continue_Subframe_Helper(
 
 #define continue_catchable_subframe(sub) \
     return Continue_Subframe_Helper( \
-        _frame, true, EVAL_FLAG_DISPATCHER_CATCHES, (sub))
+        frame_, true, EVAL_FLAG_DISPATCHER_CATCHES, (sub))
 
 #define continue_uncatchable_subframe(sub) \
     return Continue_Subframe_Helper(frame_, true, 0, (sub))
