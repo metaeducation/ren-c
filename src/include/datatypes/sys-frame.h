@@ -644,6 +644,19 @@ inline static bool Eval_Value_Core_Throws(
 // intact and in the Rebol stack trace.  It will be resumed when the
 // continuation finishes.
 //
+//////////////////////////////////////////////////////////////////////////////
+//
+// 1. We don't want to force frames like IF that only do a delegation to muck
+//    with the STATE byte.  But 0 means "initial entry", and there are places
+//    to leverage this.  EVAL_FLAG_DELEGATE_CONTROL should be used with the
+//    state byte set to a non-zero value.
+//
+// 2. GET-GROUP! is handled here although it isn't in the ANY-BRANCH! typeset.
+//    This is because some instances (like CASE) don't have this handled
+//    automatically by a parameter convention, the way IF does.  To make it
+//    easier for them, the GET-GROUP! type is allowed to act like GROUP!, to
+//    save on having to transform the cell in hand to a plain GROUP!.
+//
 inline static bool Push_Continuation_Throws(
     REBVAL *out,
     REBFRM *frame_,
@@ -655,26 +668,11 @@ inline static bool Push_Continuation_Throws(
     assert(out == &frame_->spare or out == frame_->out);  // anywhere else?
     assert(branch != out);  // it's legal for `with` to be the same as out
 
-    // We don't want to force frames like IF that only do a delegation to
-    // muck with the state byte.  But 0 means "initial entry", and there are
-    // places to leverage this.  EVAL_FLAG_DELEGATE_CONTROL should be used with
-    // setting the state byte to something nonzero.
-    //
-    assert(FRM_STATE_BYTE(frame_) != 0);
+    assert(FRM_STATE_BYTE(frame_) != 0);  // useful invariant, see [1]
     UNUSED(frame_);
 
-    // !!! This code came from Do_Branch_XXX_Throws() which was not
-    // continuation-based, and hence holds some reusable logic for
-    // branch types that do not require evaluation...like REB_QUOTED.
-    // It's the easiest way to reuse the logic for the time being,
-    // though some performance gain could be achieved for instance
-    // if it were reused in a way that allowed something like IF to
-    // not bother running again (like if `CONTINUE()` would do a plain
-    // return in those cases).  But more complex scenarios may have
-    // broken control flow if such shortcuts were taken.  Review.
-
     DECLARE_LOCAL (temp);
-    if (IS_GROUP(branch)) {
+    if (IS_GROUP(branch) or IS_GET_GROUP(branch)) {  // see [2] for GET-GROUP!
         REBFLGS group_flags = EVAL_MASK_DEFAULT;
         if (Eval_Value_Core_Throws(temp, group_flags, branch, branch_specifier))
             return true;
@@ -811,7 +809,7 @@ inline static bool Push_Continuation_Throws(
         // Hence we FAIL here instead of panic()...but that suggests this
         // should be narrowed to the kinds of types branching permits.
         //
-        fail ("Bad branch type");
+        fail (Error_Bad_Branch_Type_Raw());
     }
 
   just_use_out:
