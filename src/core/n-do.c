@@ -686,116 +686,62 @@ REBNATIVE(redo)
 //  ]
 //
 REBNATIVE(applique)
+//
+// 1. Make a FRAME! for the ACTION!, weaving in the ordered refinements
+//    collected on the stack (if any).  Any refinements that are used in any
+//    specialization level will be pushed as well, which makes them out
+//    prioritize (e.g. higher-ordered) than any used in a PATH! that were
+//    pushed during the Get of the ACTION!.
 {
     INCLUDE_PARAMS_OF_APPLIQUE;
 
-    REBVAL *action = ARG(action);
+    Value *action = ARG(action);
+    Value *def = ARG(def);
 
-    // Need to do this up front, because it captures f->dsp.
-    //
-    DECLARE_END_FRAME (
-        f,
-        EVAL_MASK_DEFAULT
-            | EVAL_FLAG_MAYBE_STALE
-            | FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING)  // skips fulfillment
-    );
+    Value *frame = ARG(return);  // reuse as GC-safe cell for FRAME!
 
-    REBDSP lowest_ordered_dsp = DSP;  // could push refinements here
+    enum {
+        ST_APPLIQUE_INITIAL_ENTRY = 0,
+        ST_APPLIQUE_RUNNING_DEF_BLOCK
+    };
 
-    // Make a FRAME! for the ACTION!, weaving in the ordered refinements
-    // collected on the stack (if any).  Any refinements that are used in
-    // any specialization level will be pushed as well, which makes them
-    // out-prioritize (e.g. higher-ordered) than any used in a PATH! that
-    // were pushed during the Get of the ACTION!.
-    //
-    struct Reb_Binder binder;
-    INIT_BINDER(&binder);
-    REBCTX *exemplar = Make_Context_For_Action_Push_Partials(
+    switch (STATE) {
+      case ST_APPLIQUE_INITIAL_ENTRY :
+        goto initial_entry;
+
+      case ST_APPLIQUE_RUNNING_DEF_BLOCK :
+        goto definition_result_in_spare;
+
+      default: assert(false);
+    }
+
+  initial_entry: {  //////////////////////////////////////////////////////////
+
+    REBCTX *exemplar = Make_Context_For_Action_Push_Partials(  // see [1]
         action,
-        f->baseline.dsp,  // lowest_ordered_dsp of refinements to weave in
-        &binder,
-        NONE_ISOTOPE
+        BASELINE->dsp,  // lowest_ordered_dsp of refinements to weave in
+        nullptr,  // no binder needed
+        NONE_ISOTOPE  // seen as unspecialized by ST_ACTION_TYPECHECKING
     );
-    REBARR *varlist = CTX_VARLIST(exemplar);
-    Manage_Series(varlist); // binding code into it
+    Manage_Series(CTX_VARLIST(exemplar));
+    Init_Frame(frame, exemplar, VAL_ACTION_LABEL(action));
+
+    DS_DROP_TO(BASELINE->dsp);  // refinement order not important here
 
     Virtual_Bind_Deep_To_Existing_Context(
-        ARG(def),
+        def,
         exemplar,
-        &binder,
+        nullptr,  // !!! Unused binder parameter
         REB_SET_WORD
     );
 
-    // Reset all the binder indices to zero, balancing out what was added.
-    //
-  blockscope {
-    Init_Frame(SPARE, exemplar, ANONYMOUS);
+    STATE = ST_APPLIQUE_RUNNING_DEF_BLOCK;
+    continue_uncatchable (SPARE, def, END);  // first run block bound to frame
 
-    EVARS e;
-    Init_Evars(&e, SPARE);  // CTX_ARCHETYPE(exemplar) is phased, sees locals
+} definition_result_in_spare: {  /////////////////////////////////////////////
 
-    while (Did_Advance_Evars(&e)) {
-        //
-        // !!! Is it necessary to do the `~` to null conversion here, or will
-        // the frame invocation do it automatically?
-        //
-        if (Is_None(e.var))
-            Init_Nulled(e.var);
-
-        Remove_Binder_Index(&binder, KEY_SYMBOL(e.key));
-    }
-    SHUTDOWN_BINDER(&binder); // must do before running code that might BIND
-
-    Shutdown_Evars(&e);
-  }
-
-    // !!! We have to push the frame here, because it won't be cleaned up if
-    // there are failures in the code otherwise.  Review.
-    //
-    Push_Frame(OUT, f);
-
-    // Run the bound code, ignore evaluative result (unless thrown)
-    //
-    PUSH_GC_GUARD(exemplar);
-    DECLARE_LOCAL (temp);
-    bool def_threw = Do_Any_Array_At_Throws(temp, ARG(def), SPECIFIED);
-    DROP_GC_GUARD(exemplar);
-
-    if (def_threw) {
-        Abort_Frame(f);
-        return_value (temp);
-    }
-
-    DS_DROP_TO(lowest_ordered_dsp); // zero refinements on stack, now
-
-    f->varlist = varlist;
-    f->rootvar = CTX_ROOTVAR(exemplar);
-    INIT_BONUS_KEYSOURCE(varlist, f);
-
-    INIT_FRM_PHASE(f, VAL_ACTION(action));
-    INIT_FRM_BINDING(f, VAL_ACTION_BINDING(action));
-
-    Begin_Prefix_Action(f, VAL_ACTION_LABEL(action));
-
-    if (Trampoline_Throws(f)) {
-        Abort_Frame(f);
-        return THROWN;
-    }
-
-    Drop_Frame(f);
-
-    // The input may have been stale coming in, or the application of the frame
-    // may have been stale.  We don't make any decisions either way when it
-    // comes to the evaluation stream.  If a SET-WORD! or ^META operation
-    // needs to know, it does its evaluation into an empty cell and then
-    // checks for emptiness.  So be agnostic here about where the stale bit
-    // actually came from.
-    //
-    if (Is_Stale(OUT))
-        return VOID;
-
-    return OUT;
-}
+    delegate_maybe_stale (OUT, frame, END);  // now run the frame
+}}
 
 
 //

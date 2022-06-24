@@ -123,10 +123,9 @@
 ;
 ; Theoretically it could also take care of META parameterization, it does
 ; not currently.
-;
 (
     s: applique :append [
-        series: [a b c]
+        series: copy [a b c]
         value: [d e]
         dup: 2
     ]
