@@ -191,6 +191,13 @@ static void Append_To_Context(REBVAL *context, REBVAL *arg)
 // The init initializes to one behind the enumeration, so you have to call
 // Did_Advance_Evars() on even the first.
 //
+//////////////////////////////////////////////////////////////////////////////
+//
+// 1. We allocate a wordlist just to notice leaks when there are no shutdowns,
+//    but there is a problem with using an unmanaged array in the case of an
+//    EVAL_FLAG_ABRUPT_FAILURE.  So we make them "fake unmanaged" so they
+//    are "untracked" by saying they're managed, and taking that flag off.
+//
 void Init_Evars(EVARS *e, noquote(const Cell*) v) {
     enum Reb_Kind kind = CELL_HEART(v);
 
@@ -213,7 +220,11 @@ void Init_Evars(EVARS *e, noquote(const Cell*) v) {
         //
         e->locals_visible = false;
 
-        e->wordlist = Make_Array(1);  // dummy to catch missing shutdown
+      #if !defined(NDEBUG)
+        e->wordlist = Make_Array_Core(1, SERIES_FLAG_MANAGED);
+        CLEAR_SERIES_FLAG(e->wordlist, MANAGED);  // dummy series, see [1]
+      #endif
+
         e->word = nullptr;
         TRASH_POINTER_IF_DEBUG(e->word_tail);
     }
@@ -258,7 +269,9 @@ void Init_Evars(EVARS *e, noquote(const Cell*) v) {
             }
         }
 
-        e->wordlist = Pop_Stack_Values(dsp_orig);
+        e->wordlist = Pop_Stack_Values_Core(dsp_orig, SERIES_FLAG_MANAGED);
+        CLEAR_SERIES_FLAG(e->wordlist, MANAGED);  // see [1]
+
         e->word = cast(REBVAL*, ARR_HEAD(e->wordlist)) - 1;
         e->word_tail = cast(REBVAL*, ARR_TAIL(e->wordlist));
 
@@ -321,7 +334,8 @@ void Init_Evars(EVARS *e, noquote(const Cell*) v) {
         }
 
       #if !defined(NDEBUG)
-        e->wordlist = Make_Array(1);  // dummy to catch missing Shutdown
+        e->wordlist = Make_Array_Core(1, SERIES_FLAG_MANAGED);
+        CLEAR_SERIES_FLAG(e->wordlist, MANAGED);  // see [1]
       #endif
         e->word = nullptr;
         UNUSED(e->word_tail);
@@ -415,10 +429,10 @@ bool Did_Advance_Evars(EVARS *e) {
 void Shutdown_Evars(EVARS *e)
 {
     if (e->word)
-        Free_Unmanaged_Series(e->wordlist);
+        GC_Kill_Series(e->wordlist);
     else {
       #if !defined(NDEBUG)
-        Free_Unmanaged_Series(e->wordlist);  // dummy to catch missing shutdown
+        GC_Kill_Series(e->wordlist);  // dummy to catch missing shutdown
       #endif
     }
 }
