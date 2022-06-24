@@ -374,7 +374,7 @@
 ; infinite recursion
 (
     counter: 0
-    blk: [counter: me + 1, if counter = 10000 [throw <deep-enough>], all blk]
+    blk: [counter: me + 1, if counter = 5000 [throw <deep-enough>], all blk]
     <deep-enough> = catch [do blk]
 )
 

@@ -755,14 +755,17 @@ REBNATIVE(any)
 //      cases "Conditions followed by branches"
 //          [block!]
 //      /all "Do not stop after finding first logically true case"
-//      <local> branch  ; temp GC-safe holding location (can't eval into)
 //      /predicate "Unary case-processing action (default is DID)"
 //          [action!]
 //  ]
 //
 REBNATIVE(case)
 //
-// 1. Expressions that are between branches are allowed to vaporize.  This is
+// 1. It may seem tempting to run PREDICATE from on `f` directly, allowing it
+//    to take arity > 2.  Don't do this.  We have to get a true/false answer
+//    *and* know what the right hand argument was, for fallout to work.
+//
+// 2. Expressions that are between branches are allowed to vaporize.  This is
 //    powerful, but people should be conscious of what can produce voids and
 //    not try to use them as conditions:
 //
@@ -773,12 +776,12 @@ REBNATIVE(case)
 //
 //   Those who dislike this can use variations of CASE that require `=>`.
 //
-// 2. Maintain symmetry with IF on non-taken branches:
+// 3. Maintain symmetry with IF on non-taken branches:
 //
 //        >> if false <some-tag>
 //        ** Script Error: if does not allow tag! for its branch...
 //
-// 3. Last evaluation will "fall out" if there is no branch:
+// 4. Last evaluation will "fall out" if there is no branch:
 //
 //        >> case [false [<a>] false [<b>]]
 //        == ~void~  ; isotope
@@ -797,96 +800,158 @@ REBNATIVE(case)
 {
     INCLUDE_PARAMS_OF_CASE;
 
+    REBVAL *cases = ARG(cases);
     REBVAL *predicate = ARG(predicate);
 
-    DECLARE_FRAME_AT (f, ARG(cases), EVAL_MASK_DEFAULT | EVAL_FLAG_SINGLE_STEP);
+    REBVAL *spare_backup = ARG(return);
 
-    Push_Frame(nullptr, f);
+    enum {
+        ST_CASE_INITIAL_ENTRY = 0,
+        ST_CASE_CONDITION_EVAL_STEP,
+        ST_CASE_RUNNING_PREDICATE,
+        ST_CASE_DISCARDING_GET_GROUP,
+        ST_CASE_RUNNING_BRANCH
+    };
 
-    // We potentially want to return the previous result to act "translucent"
-    // if no cases run.  So condition evaluation must be done into the spare.
+    switch (STATE) {
+      case ST_CASE_INITIAL_ENTRY :
+        goto initial_entry;
+
+      case ST_CASE_CONDITION_EVAL_STEP :
+        goto condition_result_in_spare;
+
+      case ST_CASE_RUNNING_PREDICATE :
+        goto predicate_result_in_spare;
+
+      case ST_CASE_DISCARDING_GET_GROUP :
+        goto restore_spare_from_backup;
+
+      case ST_CASE_RUNNING_BRANCH :
+        goto branch_result_in_out;
+
+      default: assert(false);
+    }
+
+  initial_entry: {  //////////////////////////////////////////////////////////
+
+    DECLARE_FRAME_AT (
+        f,
+        cases,
+        EVAL_MASK_DEFAULT
+            | EVAL_FLAG_SINGLE_STEP
+            | EVAL_FLAG_TRAMPOLINE_KEEPALIVE
+    );
+
+    Push_Frame(SPARE, f);
 
     assert(Is_Void(SPARE));  // spare starts out as void
 
-    for (; NOT_END(f_value); RESET(SPARE)) {
+} handle_next_clause: {  /////////////////////////////////////////////////////
 
-        // Feed the frame forward one step for predicate argument.
-        //
-        // NOTE: It may seem tempting to run PREDICATE from on `f` directly,
-        // allowing it to take arity > 2.  Don't do this.  We have to get a
-        // true/false answer *and* know what the right hand argument was, for
-        // full case coverage and for DEFAULT to work.
+    REBFRM *f = SUBFRAME;
 
-        if (Eval_Step_Throws(SPARE, f))
-            goto threw;
+    RESET(SPARE);  // must do before goto reached_end
 
-        if (Is_Void(SPARE))  // skip void expressions, see [1]
-            continue;
+    if (IS_END(f_value))
+        goto reached_end;
 
-        if (IS_END(f_value))
-            goto reached_end;  // we tolerate "fallout" from a condition
+    STATE = ST_CASE_CONDITION_EVAL_STEP;
+    f->executor = &Evaluator_Executor;
+    continue_uncatchable_subframe (f);  // one step to pass predicate, see [1]
 
-        bool matched;
-        if (Is_Nulled(predicate)) {
-            if (Is_Isotope(SPARE))
-                fail (Error_Bad_Isotope(SPARE));
+} condition_result_in_spare: {  //////////////////////////////////////////////
 
-            matched = Is_Truthy(SPARE);
-        }
+    REBFRM *f = SUBFRAME;
+
+    if (Is_Void(SPARE))  // skip void expressions, see [2]
+        goto handle_next_clause;
+
+    if (IS_END(f_value))
+        goto reached_end;  // we tolerate "fallout" from a condition
+
+    if (Is_Nulled(predicate))
+        goto processed_result_in_spare;
+
+    DECLARE_LOCAL (temp);
+    Move_Cell(temp, SPARE);
+
+    STATE = ST_CASE_RUNNING_PREDICATE;
+    f->executor = &Just_Use_Out_Executor;
+    continue_uncatchable (SPARE, predicate, temp);
+
+} predicate_result_in_spare: {  //////////////////////////////////////////////
+
+    if (Is_Void(SPARE))  // error on void predicate results (not same as [2])
+        fail (Error_Bad_Void());
+
+    goto processed_result_in_spare;
+
+} processed_result_in_spare: {  //////////////////////////////////////////////
+
+    REBFRM *f = SUBFRAME;
+
+    if (Is_Isotope(SPARE))
+        fail (Error_Bad_Isotope(SPARE));
+
+    bool matched = Is_Truthy(SPARE);
+
+    const Cell *branch = Lookback_While_Fetching_Next(f);
+
+    if (not matched) {
+        if (not IS_GET_GROUP(branch))
+            goto handle_next_clause;
         else {
-            DECLARE_LOCAL (temp);
-            if (rebRunThrows(
-                temp,  // target of rebRun() is kept GC-safe by evaluator
-                predicate, rebQ(SPARE)
-            )){
-                goto threw;
-            }
-            matched = Is_Truthy(temp);
+            // GET-GROUP! run even on no-match (see IF), but result discarded
         }
 
-        if (IS_GET_GROUP(f_value)) {
-            //
-            // IF evaluates branches that are GET-GROUP! even if it does
-            // not run them.  This implies CASE should too.
-            //
-            // Note: Can't evaluate directly into ARG(branch)...frame cell.
-            //
-            DECLARE_LOCAL (temp);  // target of Eval_Value() kept save by eval
-            if (Eval_Value_Throws(temp, f_value, f_specifier))
-                goto threw;
-            Move_Cell(ARG(branch), temp);
-        }
-        else
-            Derelativize(ARG(branch), f_value, f_specifier);
+        DECLARE_FRAME_AT_CORE (  // turns into array feed, :(...) not special
+            discarder,
+            branch,
+            f_specifier,
+            EVAL_MASK_DEFAULT
+        );
+        Move_Cell(spare_backup, SPARE);  // need to save SPARE for fallout
+        Push_Frame(SPARE, discarder);
 
-        Fetch_Next_Forget_Lookback(f);  // branch now in ARG(branch), so skip
-
-        if (not matched) {
-            if (not (FLAGIT_KIND(VAL_TYPE(ARG(branch))) & TS_BRANCH))
-                fail (Error_Bad_Value_Raw(ARG(branch)));  // like IF, see [2]
-
-            continue;
-        }
-
-        // Once we run a branch, translucency is no longer an option, so go
-        // ahead and write OUT.
-
-        if (Do_Branch_Throws(OUT, ARG(branch), SPARE))
-            goto threw;
-
-        if (not REF(all)) {
-            Drop_Frame(f);
-            return_branched (OUT);
-        }
+        STATE = ST_CASE_DISCARDING_GET_GROUP;
+        f->executor = &Just_Use_Out_Executor;
+        continue_uncatchable_subframe (discarder);
     }
 
-  reached_end:
+    STATE = ST_CASE_RUNNING_BRANCH;
+    f->executor = &Just_Use_Out_Executor;
+    continue_core (
+        RESET(OUT),  // reset (branching means stale=>void no longer an option)
+        EVAL_MASK_DEFAULT | EVAL_FLAG_BRANCH,
+        branch,
+        f_specifier,
+        SPARE
+    );
 
-    assert(REF(all) or Is_Stale(OUT));
+} restore_spare_from_backup: {  //////////////////////////////////////////////
 
-    Drop_Frame(f);
+    if (not (FLAGIT_KIND(VAL_TYPE(SPARE)) & TS_BRANCH))
+        fail (Error_Bad_Value_Raw(SPARE));  // like IF, see [3]
 
-    if (not Is_Void(SPARE)) {  // prioritize fallout result, see [3]
+    Move_Cell(SPARE, spare_backup);
+    goto handle_next_clause;
+
+} branch_result_in_out: {  ///////////////////////////////////////////////////
+
+    if (not REF(all)) {
+        Abort_Frame(SUBFRAME);
+        return_branched (OUT);
+    }
+
+    goto handle_next_clause;
+
+} reached_end: {  ////////////////////////////////////////////////////////////
+
+    assert(REF(all) or Is_Stale(OUT));  // never ran a branch, or running /ALL
+
+    Drop_Frame(SUBFRAME);
+
+    if (not Is_Void(SPARE)) {  // prioritize fallout result, see [4]
         Isotopify_If_Nulled(SPARE);
         Move_Cell(OUT, SPARE);
         return_branched (OUT);  // asserts no ~void~ or pure null
@@ -896,12 +961,7 @@ REBNATIVE(case)
         return VOID;
 
     return_branched (OUT);  // asserts no ~void~ or pure null
-
-  threw:
-
-    Abort_Frame(f);
-    return THROWN;
-}
+}}
 
 
 //

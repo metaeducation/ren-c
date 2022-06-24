@@ -118,8 +118,9 @@
 
 ; infinite recursion
 (
-    blk: [case blk]
-    error? trap blk
+    x: 0
+    blk: [elide (x: x + 1, if x = 5000 [throw <deep-enough>]) case blk]
+    <deep-enough> = catch blk
 )
 
 
@@ -142,3 +143,22 @@
     e: trap [case [~isotope~ [print "Causes error"]]]
     e.id = 'bad-isotope
 )
+
+; GET-GROUP! branches will be evaluated unconditionally, but their branches
+; are not run if the condition was false.
+[
+    (
+        called: false
+        did all [
+            3 = case [true :(called: true, [1 + 2])]
+            called
+        ]
+    )
+    (
+        called: false
+        did all [
+            void? case [false :(called: true, [1 + 2])]
+            called
+        ]
+    )
+]
