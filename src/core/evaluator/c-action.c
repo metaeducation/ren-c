@@ -783,11 +783,10 @@ REB_R Action_Executor(REBFRM *f)
         // as special signals for actual void and end intent.
         //
         if (Is_Isotope(ARG)) {
-            switch (VAL_ISOTOPE_ID(ARG)) {
-              case SYM_0:  // e.g. (~) isotope, unspecialized
-                  Init_Nulled(ARG);
-                  break;
-
+            if (Is_None(ARG)) {  // e.g. (~) isotope, unspecialized
+                Init_Nulled(ARG);
+            }
+            else switch (VAL_ISOTOPE_ID(ARG)) {
               case SYM_END: {
                 if (NOT_PARAM_FLAG(PARAM, ENDABLE))
                     fail (Error_No_Arg(f->label, KEY_SYMBOL(KEY)));

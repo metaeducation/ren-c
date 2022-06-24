@@ -167,6 +167,8 @@ inline static bool Is_Isotope_With_Id(
     const Cell *v,
     enum Reb_Symbol_Id id  // want to take ID instead of canon, faster check!
 ){
+    assert(id != SYM_0);  // SYM_0 means unknown, not e.g. Is_None()
+
     if (not Is_Isotope(v))
         return false;
 
@@ -202,11 +204,13 @@ inline static bool Is_Isotope_With_Id(
 #define NONE_ISOTOPE                c_cast(const REBVAL*, &PG_None_Isotope)
 
 #define Init_None(out)              Init_Isotope((out), nullptr)
-#define Is_None(v)                  Is_Isotope_With_Id((v), SYM_0)
 #define Init_Meta_Of_None(out)      Init_Bad_Word((out), nullptr)
 
+inline static bool Is_None(const Cell *v)
+  { return Is_Isotope(v) and VAL_BAD_WORD_LABEL(v) == nullptr; }
+
 inline static bool Is_Meta_Of_None(const Cell *v)
-  { return IS_BAD_WORD(v) and VAL_BAD_WORD_ID(v) == SYM_0; }
+  { return IS_BAD_WORD(v) and VAL_BAD_WORD_LABEL(v) == nullptr; }
 
 
 //=//// VOID ISOTOPES AND VOID META STATE (@void) /////////////////////////=//
