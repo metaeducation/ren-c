@@ -265,10 +265,9 @@ bool Trampoline_Throws(REBFRM *root)
             assert(FRAME != FS_TOP);  // sanity check (*not* the top of stack)
         }
         else {
-            REBFRM *prior = FRAME->prior;
-            Drop_Frame(FRAME);
-            FRAME = prior;
             assert(FRAME == FS_TOP);  // sanity check (is the top of the stack)
+            Drop_Frame(FRAME);
+            FRAME = FS_TOP;
         }
 
         goto bounce_on_the_trampoline;  // some pending frame now has a result

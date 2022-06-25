@@ -309,7 +309,6 @@ REBNATIVE(combinator)
 //
 void Push_Parser_Subframe(
     REBVAL *out,
-    REBFRM *frame_,
     const REBVAL *remainder,
     const REBVAL *parser,
     const REBVAL *input
@@ -336,7 +335,6 @@ void Push_Parser_Subframe(
 
     bool pushed = Pushed_Continuation(
         out,
-        frame_,
         EVAL_MASK_DEFAULT,
         temp,
         SPECIFIED,
@@ -384,7 +382,7 @@ REBNATIVE(opt_combinator)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    Push_Parser_Subframe(OUT, frame_, remainder, parser, input);
+    Push_Parser_Subframe(OUT, remainder, parser, input);
 
     STATE = ST_OPT_COMBINATOR_RUNNING_PARSER;
     continue_subframe (SUBFRAME);
@@ -520,7 +518,7 @@ REBNATIVE(some_combinator)
     Init_Frame(loop_last, CTX(frame_->varlist), Canon(SOME));
     INIT_VAL_FRAME_PHASE(loop_last, FRM_PHASE(frame_));  // need phase, see [1]
 
-    Push_Parser_Subframe(OUT, frame_, remainder, parser, input);
+    Push_Parser_Subframe(OUT, remainder, parser, input);
 
     STATE = ST_SOME_COMBINATOR_FIRST_PARSER_RUN;
     continue_uncatchable_subframe (SUBFRAME);  // mirror usermode, see [2]
@@ -541,7 +539,7 @@ REBNATIVE(some_combinator)
         true
     );
 
-    Push_Parser_Subframe(SPARE, frame_, remainder, parser, input);
+    Push_Parser_Subframe(SPARE, remainder, parser, input);
 
     STATE = ST_SOME_COMBINATOR_LATER_PARSER_RUN;
     continue_uncatchable_subframe (SUBFRAME);
@@ -595,7 +593,7 @@ REBNATIVE(further_combinator)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    Push_Parser_Subframe(OUT, frame_, remainder, parser, input);
+    Push_Parser_Subframe(OUT, remainder, parser, input);
 
     STATE = ST_FURTHER_COMBINATOR_RUNNING_PARSER;
     continue_subframe (SUBFRAME);

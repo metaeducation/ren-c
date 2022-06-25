@@ -644,6 +644,15 @@ inline static bool Eval_Value_Core_Throws(
 // intact and in the Rebol stack trace.  It will be resumed when the
 // continuation finishes.
 //
+// Conditional constructs allow branches that are either BLOCK!s or ACTION!s.
+// If an action, the triggering condition is passed to it as an argument:
+// https://trello.com/c/ay9rnjIe
+//
+// Allowing other values was deemed to do more harm than good:
+// https://forum.rebol.info/t/backpedaling-on-non-block-branches/476
+//
+// !!! Review if @word, @pa/th, @tu.p.le would make good branch types.  :-/
+//
 //////////////////////////////////////////////////////////////////////////////
 //
 // 2. GET-GROUP! is handled here although it isn't in the ANY-BRANCH! typeset.
@@ -657,18 +666,29 @@ inline static bool Eval_Value_Core_Throws(
 //    instead of panic()...but that suggests this should be narrowed to the
 //    kinds of types branching permits.
 //
+// 4. If branch function argument isn't "meta" then we decay any isotopes.
+//    Do the decay test first to avoid needing to scan parameters unless it's
+//    one of those cases.
+//
+//    (The theory here is that we're not throwing away any safety, as the
+//     isotopification process was usually just for the purposes of making the
+//     branch trigger or not.  With that addressed, it's just inconvenient to
+//     force functions to be meta to get things like NULL.)
+//
+//         if true [null] then x -> [
+//             ;
+//             ; Why would we want to have to make it ^x, when we know any
+//             ; nulls that triggered the branch would have been isotopic?
+//         ]
+//
 inline static bool Pushed_Continuation(
     REBVAL *out,
-    REBFRM *frame_,
     REBFLGS flags,  // EVAL_FLAG_BRANCH, etc. for pushed frames
     const Cell *branch,
     REBSPC *branch_specifier,
     const REBVAL *with  // can be same as out or not GC-safe, copied if needed
 ){
-    assert(out == &frame_->spare or out == frame_->out);  // anywhere else?
     assert(branch != out);  // it's legal for `with` to be the same as out
-
-    UNUSED(frame_);
 
     if (IS_GROUP(branch) or IS_GET_GROUP(branch)) {  // see [2] for GET-GROUP!
         DECLARE_FRAME_AT_CORE (
@@ -775,6 +795,8 @@ inline static bool Pushed_Continuation(
             if (VAL_PARAM_CLASS(param) == PARAM_CLASS_META)
               { Meta_Quotify(arg); break; }
 
+            Decay_If_Isotope(arg);  // decay when normal parameter, see [4]
+
             if (Is_Isotope(arg))
                 fail ("Can't pass isotope to non-META parameter");
         } while (0);
@@ -834,14 +856,8 @@ inline static bool Pushed_Continuation(
 
 #define continue_core(o,flags,branch,specifier,with) \
     do { \
-        Pushed_Continuation( \
-                (o), \
-                frame_, \
-                (flags), \
-                (branch), \
-                (specifier), \
-                (with) \
-        ); /* don't heed result, because callback needed frame or not */ \
+        Pushed_Continuation((o), (flags), (branch), (specifier), (with)); \
+        /* don't heed result, because callback needed frame or not */ \
         return R_CONTINUATION; \
     } while (0)
 
@@ -914,7 +930,6 @@ inline static REB_R Continue_Subframe_Helper(
         assert((o) == frame_->out); \
         if (Pushed_Continuation( \
             frame_->out, \
-            frame_, \
             (flags), \
             (branch), \
             (specifier), \
@@ -927,19 +942,15 @@ inline static REB_R Continue_Subframe_Helper(
 
 
 #define delegate(o,value,with) \
-    delegate_core( \
-        frame_->out, EVAL_MASK_DEFAULT, (value), SPECIFIED, (with) \
-    )
+    delegate_core(frame_->out, EVAL_MASK_DEFAULT, (value), SPECIFIED, (with))
 
 #define delegate_branch(o,branch,with) \
-    delegate_core( \
-        frame_->out, EVAL_FLAG_BRANCH, (branch), SPECIFIED, (with) \
-    )
+    delegate_core(frame_->out, EVAL_FLAG_BRANCH, (branch), SPECIFIED, (with))
 
 #define delegate_maybe_stale(o,branch,with) \
     delegate_core( \
         frame_->out, EVAL_FLAG_MAYBE_STALE, (branch), SPECIFIED, (with) \
-    ) /* ^-- note not RESET()! */
+    )
 
 
 #define delegate_subframe(sub) \

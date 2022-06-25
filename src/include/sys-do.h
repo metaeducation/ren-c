@@ -185,157 +185,21 @@ inline static bool Do_At_Mutable_Maybe_Stale_Throws(
 }
 
 
-// Conditional constructs allow branches that are either BLOCK!s or ACTION!s.
-// If an action, the triggering condition is passed to it as an argument:
-// https://trello.com/c/ay9rnjIe
-//
-// Allowing other values was deemed to do more harm than good:
-// https://forum.rebol.info/t/backpedaling-on-non-block-branches/476
-//
-// Review if @word, @pa/th, @tu.p.le would make good branch types.  :-/
-//
-inline static bool Do_Core_Throws(
+inline static bool Do_Branch_Throws(
     REBVAL *out,
-    REBFLGS flags,
     const REBVAL *branch,
-    const REBVAL *condition  // can be END
+    const REBVAL *with
 ){
-    assert(branch != out and condition != out);
+    if (not Pushed_Continuation(out, EVAL_FLAG_BRANCH, branch, SPECIFIED, with))
+        return false;
 
-    DECLARE_LOCAL (cell);
-
-    enum Reb_Kind kind = VAL_TYPE(branch);
-
-  redo:
-
-    switch (kind) {
-      case REB_BLANK:
-        if (flags & EVAL_FLAG_BRANCH)
-            Init_Null_Isotope(out);
-        else
-            Init_Nulled(out);
-        break;
-
-      case REB_QUOTED:
-        Unquotify(Copy_Cell(out, branch), 1);
-        if (flags & EVAL_FLAG_BRANCH)
-            if (Is_Nulled(out))
-                Init_Null_Isotope(out);
-        break;
-
-      case REB_BLOCK:
-        if (Do_Any_Array_At_Core_Throws(out, flags, branch, SPECIFIED))
-            return true;
-        break;
-
-      case REB_GET_BLOCK: {
-        if (Eval_Value_Core_Throws(
-            out,
-            flags & (~ EVAL_FLAG_BRANCH),
-            branch,
-            SPECIFIED
-        )){
-            return true;
-        }
-        assert(IS_BLOCK(out));
-        break; }
-
-      case REB_ACTION: {
-        PUSH_GC_GUARD(branch);  // may be stored in `cell`, needs protection
-
-        // If branch function argument isn't "meta" then we decay any isotopes.
-        // Do the decay test first to avoid needing to scan parameters unless
-        // it's one of those cases.
-        //
-        // !!! The theory here is that we're not throwing away any safety, as
-        // the isotopification process was usually just for the purposes of
-        // making the branch trigger or not.  With that addressed, it's just
-        // inconvenient to force functions to be meta to get things like NULL.
-        //
-        //     if true [null] then x -> [
-        //         ;
-        //         ; Why would we want to have to make it ^x, when we know any
-        //         ; nulls that triggered the branch would have been isotopic?
-        //     ]
-        //
-        if (NOT_END(condition)) {
-            const REBVAL *decayed = Pointer_To_Decayed(condition);
-            if (decayed != condition) {
-                const REBKEY *key;
-                const REBPAR *param = First_Unspecialized_Param(
-                    &key,
-                    VAL_ACTION(branch)
-                );
-                if (
-                    param != nullptr
-                    and VAL_PARAM_CLASS(param) != PARAM_CLASS_META
-                ){
-                    condition = decayed;
-                }
-            }
-        }
-        assert(not (flags & EVAL_FLAG_NO_RESIDUE));
-        bool threw = rebRunCoreThrows(
-            out,  // <-- output cell
-            flags,
-            branch,
-            IS_END(condition)
-                ? rebEND
-                : (VAL_TYPE_UNCHECKED(condition) == REB_NULL)
-                    ? nullptr
-                    : rebQ(condition)
-        );
-        DROP_GC_GUARD(branch);
-        if (threw)
-            return true;
-        break; }
-
-      case REB_GROUP:
-        if (Do_Any_Array_At_Core_Throws(cell, flags, branch, SPECIFIED))
-            return true;
-        if (ANY_GROUP(cell))
-            fail ("Branch evaluation cannot produce GROUP!");
-        branch = cell;
-        kind = VAL_TYPE(branch);
-        goto redo;
-
-      case REB_META_BLOCK:
-        if (Do_Any_Array_At_Core_Throws(
-            RESET(out),
-            flags & (~ EVAL_FLAG_BRANCH),  // need to sense voids
-            branch,
-            SPECIFIED
-        )){
-            return true;
-        }
-        if (Is_Void(out))
-            Init_Meta_Of_Void(out);
-        else if (Is_Nulled(out)) {
-            if (flags & EVAL_FLAG_BRANCH)
-                Init_Null_Isotope(out);
-        }
-        else
-            Meta_Quotify(out);
-        break;
-
-      default:
-        fail (Error_Bad_Branch_Type_Raw());
+    if (Trampoline_Throws(FS_TOP)) {
+        Abort_Frame(FS_TOP);
+        return true;
     }
-
-    // Note: At one time, this code ensured the result could not be null and
-    // could not be void.  It makes a more homogenous model to put that
-    // decision in the hands of the caller, where this "Do Branch" is actually
-    // a more generic handler which may or may not want branch conventions.
-    // So it is `return_branched` which does the null => null isotope and the
-    // void => none conversion.  So perhaps it's more like "Do Clause" which
-    // could be used on loop conditions as well as bodies.
-
+    Drop_Frame(FS_TOP);
     return false;
 }
-
-#define Do_Branch_Throws(out,branch,condition) \
-    Do_Core_Throws(RESET(out), EVAL_MASK_DEFAULT | EVAL_FLAG_BRANCH, \
-        (branch), (condition))
 
 
 inline static REB_R Run_Generic_Dispatch_Core(
