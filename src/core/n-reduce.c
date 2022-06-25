@@ -61,8 +61,6 @@ REBNATIVE(reduce)
     Value *v = ARG(value);  // newline flag on `v` cell is leveraged, see [2]
     Value *predicate = ARG(predicate);
 
-    Value *processed;  // will be set to either OUT or SPARE
-
     enum {
         ST_REDUCE_INITIAL_ENTRY = 0,
         ST_REDUCE_EVAL_STEP,
@@ -79,7 +77,7 @@ REBNATIVE(reduce)
         goto reduce_step_result_in_out;
 
       case ST_REDUCE_RUNNING_PREDICATE:
-        goto predicate_result_in_spare;
+        goto process_out;
 
       default: assert(false);
     }
@@ -130,37 +128,30 @@ REBNATIVE(reduce)
 
 } reduce_step_result_in_out: {  //////////////////////////////////////////////
 
+    if (Is_Nulled(predicate))  // default is no processing
+        goto process_out;
+
     if (Is_Void(OUT))  // voids aren't offered to predicates, by design
         goto next_reduce_step;  // reduce skips over voids
 
-    if (Is_Nulled(predicate)) {  // default is no processing
-        processed = OUT;
-        goto push_processed;
-    }
-
     SUBFRAME->executor = &Just_Use_Out_Executor;
     STATE = ST_REDUCE_RUNNING_PREDICATE;
-    continue_uncatchable (SPARE, predicate, OUT);  // predicate processing
+    continue_uncatchable (OUT, predicate, OUT);  // arg can be same as output
 
-} predicate_result_in_spare: {  //////////////////////////////////////////////
+} process_out: {  ////////////////////////////////////////////////////////////
 
-    if (Is_Void(SPARE))
-        goto next_reduce_step;  // void products of predicates are skipped
+    if (Is_Void(OUT))
+        goto next_reduce_step;  // void results are skipped by reduce
 
-    processed = SPARE;
-    goto push_processed;
+    Decay_If_Isotope(OUT);
 
-} push_processed: {  /////////////////////////////////////////////////////////
-
-    Decay_If_Isotope(processed);
-
-    if (Is_Nulled(processed))
+    if (Is_Nulled(OUT))
         fail (Error_Need_Non_Null_Raw());  // error enables e.g. CURTAIL
 
-    if (Is_Isotope(processed))
-        fail (Error_Bad_Isotope(processed));
+    if (Is_Isotope(OUT))
+        fail (Error_Bad_Isotope(OUT));
 
-    Move_Cell(DS_PUSH(), processed);
+    Move_Cell(DS_PUSH(), OUT);
     SUBFRAME->baseline.dsp += 1;  // subframe must be adjusted, see [3]
 
     if (Get_Cell_Flag(v, NEWLINE_BEFORE))  // propagate cached newline, see [2]
@@ -493,8 +484,6 @@ REB_R Composer_Executor(REBFRM *f)
 
     assert(Is_Nulled(predicate) or IS_ACTION(predicate));
 
-    Value *processed;  // will point to either OUT or SPARE
-
     enum {
         ST_COMPOSER_INITIAL_ENTRY = 0,
         ST_COMPOSER_EVAL_GROUP,
@@ -504,15 +493,28 @@ REB_R Composer_Executor(REBFRM *f)
     };
 
     switch (STATE) {
-      case ST_COMPOSER_INITIAL_ENTRY : goto handle_current_item;
-      case ST_COMPOSER_EVAL_GROUP : goto group_result_in_out;
-      case ST_COMPOSER_EVAL_DOUBLED_GROUP : goto doubled_group_result_in_out;
-      case ST_COMPOSER_RUNNING_PREDICATE : goto predicate_result_in_spare;
-      case ST_COMPOSER_RECURSING_DEEP : goto composer_finished_recursion;
+      case ST_COMPOSER_INITIAL_ENTRY :
+        goto handle_current_item;
+
+      case ST_COMPOSER_EVAL_GROUP :
+        goto group_result_in_out;
+
+      case ST_COMPOSER_EVAL_DOUBLED_GROUP :
+      case ST_COMPOSER_RUNNING_PREDICATE :
+        goto process_out;
+
+      case ST_COMPOSER_RECURSING_DEEP :
+        goto composer_finished_recursion;
+
       default : assert(false);
     }
 
-  handle_current_item: {  ////////////////////////////////////////////////////
+  handle_next_item: {  ///////////////////////////////////////////////////////
+
+   Fetch_Next_Forget_Lookback(f);
+   goto handle_current_item;
+
+} handle_current_item: {  ////////////////////////////////////////////////////
 
     if (Is_End(f_value))
         goto finished;
@@ -587,28 +589,16 @@ REB_R Composer_Executor(REBFRM *f)
 
 } group_result_in_out: {  ////////////////////////////////////////////////////
 
-    if (Is_Nulled(predicate)) {
-        processed = OUT;
-        goto push_processed_result;
-    }
+    if (Is_Nulled(predicate))
+        goto process_out;
 
     if (Is_Void(OUT))
         goto handle_next_item;  // voids not offered to predicates, by design
 
     STATE = ST_COMPOSER_RUNNING_PREDICATE;
-    continue_uncatchable (SPARE, predicate, OUT);
+    continue_uncatchable (OUT, predicate, OUT);
 
-} predicate_result_in_spare: {  //////////////////////////////////////////////
-
-    processed = SPARE;
-    goto push_processed_result;
-
-} doubled_group_result_in_out: {  ////////////////////////////////////////////
-
-    processed = OUT;
-    goto push_processed_result;
-
-} push_processed_result: {  //////////////////////////////////////////////////
+} process_out: {  ////////////////////////////////////////////////////////////
 
     assert(  // processing depends on state we came from, don't overwrite
         STATE == ST_COMPOSER_EVAL_GROUP
@@ -619,23 +609,23 @@ REB_R Composer_Executor(REBFRM *f)
     enum Reb_Kind group_heart = CELL_HEART(f_value);
     REBLEN group_quotes = VAL_NUM_QUOTES(f_value);
 
-    if (Is_Void(processed)) {
+    if (Is_Void(OUT)) {
         //
         // compose [(void)] => []
         //
         if (group_heart == REB_GROUP and group_quotes == 0)
             goto handle_next_item;
 
-        Init_Nulled(processed);
+        Init_Nulled(OUT);
     }
     else
-        Decay_If_Isotope(processed);
+        Decay_If_Isotope(OUT);
 
-    if (Is_Isotope(processed))
-        fail (Error_Bad_Isotope(processed));
+    if (Is_Isotope(OUT))
+        fail (Error_Bad_Isotope(OUT));
 
     if (
-        Is_Nulled(processed)
+        Is_Nulled(OUT)
         and (
             group_heart != REB_GROUP
             or group_quotes == 0
@@ -645,21 +635,21 @@ REB_R Composer_Executor(REBFRM *f)
     }
 
     if (not Is_Nulled(predicate) or STATE == ST_COMPOSER_EVAL_DOUBLED_GROUP)
-        goto push_processed_spliced;
+        goto push_out_spliced;
 
-    goto push_processed_as_is;
+    goto push_out_as_is;
 
-  push_processed_as_is:  ////////////////////////////////////////////////////
+  push_out_as_is:  ///////////////////////////////////////////////////////////
 
     // compose [(1 + 2) inserts as-is] => [3 inserts as-is]
     // compose [([a b c]) unmerged] => [[a b c] unmerged]
 
-    if (Is_Nulled(processed)) {
+    if (Is_Nulled(OUT)) {
         assert(group_quotes != 0);  // handled above
         Init_Nulled(DS_PUSH());
     }
     else
-        Copy_Cell(DS_PUSH(), processed);  // can't stack eval direct
+        Copy_Cell(DS_PUSH(), OUT);  // can't stack eval direct
 
     if (group_heart == REB_SET_GROUP)
         Setify(DS_TOP);
@@ -684,52 +674,52 @@ REB_R Composer_Executor(REBFRM *f)
     f->u.compose.changed = true;
     goto handle_next_item;
 
-  push_processed_spliced:  //////////////////////////////////////////////////
+  push_out_spliced:  /////////////////////////////////////////////////////////
 
     // compose [(([a b])) merges] => [a b merges]... see [3]
 
     if (group_quotes != 0 or group_heart != REB_GROUP)
         fail ("Currently can only splice plain unquoted GROUP!s");
 
-    if (IS_BLANK(processed)) {
+    if (IS_BLANK(OUT)) {
         //
         // BLANK! does nothing in APPEND so do nothing here
     }
-    else if (IS_QUOTED(processed)) {
+    else if (IS_QUOTED(OUT)) {
         //
         // Quoted items lose a quote level and get pushed.
         //
-        Unquotify(Copy_Cell(DS_PUSH(), processed), 1);
+        Unquotify(Copy_Cell(DS_PUSH(), OUT), 1);
     }
-    else if (IS_BLOCK(processed)) {
+    else if (IS_BLOCK(OUT)) {
         //
         // The only splice type is BLOCK!...
 
         const Cell *push_tail;
-        const Cell *push = VAL_ARRAY_AT(&push_tail, processed);
+        const Cell *push = VAL_ARRAY_AT(&push_tail, OUT);
         if (push != push_tail) {
-            Derelativize(DS_PUSH(), push, VAL_SPECIFIER(processed));
+            Derelativize(DS_PUSH(), push, VAL_SPECIFIER(OUT));
             if (Get_Cell_Flag(f_value, NEWLINE_BEFORE))
                 Set_Cell_Flag(DS_TOP, NEWLINE_BEFORE);  // first, see [4]
             else
                 Clear_Cell_Flag(DS_TOP, NEWLINE_BEFORE);
 
             while (++push, push != push_tail)
-                Derelativize(DS_PUSH(), push, VAL_SPECIFIER(processed));
+                Derelativize(DS_PUSH(), push, VAL_SPECIFIER(OUT));
         }
     }
-    else if (ANY_THE_KIND(VAL_TYPE(processed))) {
+    else if (ANY_THE_KIND(VAL_TYPE(OUT))) {
         //
         // the @ types splice as is without the @
         //
-        Plainify(Copy_Cell(DS_PUSH(), processed));
+        Plainify(Copy_Cell(DS_PUSH(), OUT));
     }
-    else if (not ANY_INERT(processed)) {
+    else if (not ANY_INERT(OUT)) {
         fail ("COMPOSE slots that are (( )) can't be evaluative");
     }
     else {
-        assert(not ANY_ARRAY(processed));
-        Copy_Cell(DS_PUSH(), processed);
+        assert(not ANY_ARRAY(OUT));
+        Copy_Cell(DS_PUSH(), OUT);
     }
 
     f->u.compose.changed = true;
@@ -762,11 +752,6 @@ REB_R Composer_Executor(REBFRM *f)
 
     f->u.compose.changed = true;
     goto handle_next_item;
-
-} handle_next_item: {  //////////////////////////////////////////////////////
-
-   Fetch_Next_Forget_Lookback(f);
-   goto handle_current_item;
 
 } finished: {  ///////////////////////////////////////////////////////////////
 
