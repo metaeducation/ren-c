@@ -609,7 +609,7 @@ typedef Executor Dispatcher;  // sub-dispatched in Action_Executor()
     // However, in PATH! frames, `special` is non-NULL if this is a SET-PATH!,
     // and it is the value to ultimately set the path to.  The set should only
     // occur at the end of the path, so most setters should check
-    // `IS_END(pvs->value + 1)` before setting.
+    // `Is_End(pvs->value + 1)` before setting.
     //
     // !!! See notes at top of %c-path.c about why the path dispatch is more
     // complicated than simply being able to only pass the setval to the last

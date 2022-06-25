@@ -802,7 +802,7 @@ REBCTX *Make_Error_Managed_Core(
                     assert(!"nullptr passed to Make_Error_Managed_Core()");
                     Init_Nulled(var);
                 }
-                else if (IS_END(p)) {
+                else if (Is_End(p)) {
                     assert(!"Not enough arguments in Make_Error_Managed()");
                     Init_None(var);
                 }

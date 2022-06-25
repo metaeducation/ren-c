@@ -159,7 +159,7 @@ inline static REBFRM *Maybe_Rightward_Continuation_Needed(REBFRM *f)
         return nullptr;
     }
 
-    if (IS_END(f_next))  // `do [x:]`, `do [o.x:]`, etc. are illegal
+    if (Is_End(f_next))  // `do [x:]`, `do [o.x:]`, etc. are illegal
         fail (Error_Need_Non_End(f_current));
 
     CLEAR_FEED_FLAG(f->feed, NO_LOOKAHEAD);  // always >= 2 elements, see [1]
@@ -205,7 +205,7 @@ REB_R Evaluator_Executor(REBFRM *f)
     assert(OUT != SPARE);  // overwritten by temporary calculations
 
     if (Get_Eval_Flag(f, NO_EVALUATIONS)) {  // see flag for why this exists
-        if (IS_END(f->feed->value))
+        if (Is_End(f->feed->value))
             return OUT;
         Derelativize(OUT, f->feed->value, FEED_SPECIFIER(f->feed));
         Set_Cell_Flag(OUT, UNEVALUATED);
@@ -338,7 +338,7 @@ REB_R Evaluator_Executor(REBFRM *f)
     // If asked to evaluate `[]` then we have now done all the work the
     // evaluator needs to do--including marking the output stale.
     //
-    if (IS_END(f_next))
+    if (Is_End(f_next))
         goto finished;
 
     f_current = Lookback_While_Fetching_Next(f);
@@ -431,7 +431,7 @@ REB_R Evaluator_Executor(REBFRM *f)
     f_current = Lookback_While_Fetching_Next(f);
 
     if (
-        IS_END(f_next)  // v-- out is what used to be on left
+        Is_End(f_next)  // v-- out is what used to be on left
         and (
             VAL_TYPE_UNCHECKED(OUT) == REB_WORD
             or VAL_TYPE_UNCHECKED(OUT) == REB_PATH
@@ -501,7 +501,7 @@ REB_R Evaluator_Executor(REBFRM *f)
     else switch (CELL_HEART_UNCHECKED(f_current)) {  // unchecked to see REB_0
 
       case REB_0_END:
-        assert(IS_END(f_current));  // should be END, not void
+        assert(Is_End(f_current));  // should be END, not void
         goto finished;
 
 
@@ -1773,7 +1773,7 @@ REB_R Evaluator_Executor(REBFRM *f)
 
     switch (VAL_TYPE_UNCHECKED(f_next)) {
       case REB_0_END:
-        assert(IS_END(f_next));  // should be END, not void
+        assert(Is_End(f_next));  // should be END, not void
         CLEAR_FEED_FLAG(f->feed, NO_LOOKAHEAD);
         goto finished;  // hitting end is common, avoid do_next's switch()
 
@@ -1971,7 +1971,7 @@ REB_R Evaluator_Executor(REBFRM *f)
     Evaluator_Exit_Checks_Debug(f);
   #endif
 
-    if (Not_Eval_Flag(f, SINGLE_STEP) and NOT_END(f_next)) {
+    if (Not_Eval_Flag(f, SINGLE_STEP) and Not_End(f_next)) {
         STATE = ST_EVALUATOR_STEPPING_AGAIN;
         return R_CONTINUATION;  // go through trampoline, for debug hooking
     }

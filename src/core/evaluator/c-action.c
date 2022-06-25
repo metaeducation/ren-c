@@ -515,7 +515,7 @@ REB_R Action_Executor(REBFRM *f)
 
   //=//// ERROR ON END MARKER, BAR! IF APPLICABLE /////////////////////////=//
 
-        if (IS_END(f_next)) {
+        if (Is_End(f_next)) {
             Init_End_Isotope(ARG);
             goto continue_fulfilling;
         }
@@ -527,7 +527,7 @@ REB_R Action_Executor(REBFRM *f)
           case PARAM_CLASS_NORMAL:
           case PARAM_CLASS_OUTPUT:
           case PARAM_CLASS_META: {
-            if (GET_FEED_FLAG(f->feed, BARRIER_HIT) or IS_END(f_next)) {
+            if (GET_FEED_FLAG(f->feed, BARRIER_HIT) or Is_End(f_next)) {
                 Init_End_Isotope(ARG);
                 goto continue_fulfilling;
             }
@@ -935,7 +935,7 @@ REB_R Action_Executor(REBFRM *f)
 
     assert(not Is_Action_Frame_Fulfilling(f));
     assert(
-        IS_END(f_next)
+        Is_End(f_next)
         or FRM_IS_VARIADIC(f)
         or IS_VALUE_IN_ARRAY_DEBUG(FEED_ARRAY(f->feed), f_next)
     );

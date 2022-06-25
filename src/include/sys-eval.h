@@ -154,7 +154,7 @@ inline static bool Did_Init_Inert_Optimize_Complete(
     REBFLGS *flags
 ){
     assert(SECOND_BYTE(*flags) == 0);  // we might set the STATE byte
-    assert(not IS_END(feed->value));  // would be wasting time to call
+    assert(not Is_End(feed->value));  // would be wasting time to call
     assert(not (*flags & EVAL_FLAG_BRANCH));  // it's a single step
 
     if (not ANY_INERT(feed->value))
@@ -336,7 +336,7 @@ inline static bool Eval_Step_In_Any_Array_At_Throws(
     assert(not (flags & EVAL_FLAG_SINGLE_STEP));  // added here
     DECLARE_FEED_AT_CORE (feed, any_array, specifier);
 
-    if (IS_END(feed->value)) {
+    if (Is_End(feed->value)) {
         *index_out = 0xDECAFBAD;  // avoid compiler warning
         return false;
     }
@@ -402,7 +402,7 @@ inline static bool Eval_Step_In_Va_Throws(
     }
 
     bool too_many = (eval_flags & EVAL_FLAG_NO_RESIDUE)
-        and NOT_END(feed->value);  // feed will be freed in Drop_Frame()
+        and Not_End(feed->value);  // feed will be freed in Drop_Frame()
 
     Drop_Frame(f); // will va_end() if not reified during evaluation
 

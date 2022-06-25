@@ -58,7 +58,7 @@ void Splice_Block_Into_Feed(REBFED *feed, const REBVAL *splice) {
     // is moved into a dynamically allocated splice which is then linked to
     // be used once the splice runs out.
     //
-    if (FEED_IS_VARIADIC(feed) or NOT_END(feed->value)) {
+    if (FEED_IS_VARIADIC(feed) or Not_End(feed->value)) {
         REBARR *saved = Alloc_Singular(
             FLAG_FLAVOR(FEED) | SERIES_FLAG_MANAGED  // no tracking
         );
@@ -83,7 +83,7 @@ void Splice_Block_Into_Feed(REBFED *feed, const REBVAL *splice) {
     // !!! See remarks above about this per-feed hold logic that should be
     // per-splice hold logic.  Pending whole system review of iteration.
     //
-    if (NOT_END(feed->value) and NOT_SERIES_INFO(FEED_ARRAY(feed), HOLD)) {
+    if (Not_End(feed->value) and NOT_SERIES_INFO(FEED_ARRAY(feed), HOLD)) {
         SET_SERIES_INFO(m_cast(REBARR*, FEED_ARRAY(feed)), HOLD);
         SET_FEED_FLAG(feed, TOOK_HOLD);
     }

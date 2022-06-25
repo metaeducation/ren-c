@@ -28,7 +28,7 @@
 ///
 // * R3-Alpha terminated all arrays with an END! cell--much the way that
 //   C strings are terminated by '\0'.  This provided a convenient way to
-//   loop over arrays as `for (; NOT_END(value); ++value)`.  But it was
+//   loop over arrays as `for (; Not_End(value); ++value)`.  But it was
 //   redundant with the length and had cost to keep in sync...plus it also
 //   meant memory for the arrays had to be rounded up.  1 cell arrays had
 //   to go in the 2 pool, 2-cell arrays had to go in the 4 pool, etc.  Ren-C
@@ -36,7 +36,7 @@
 //
 // * Some places (like the feed value) would be more efficient if it were
 //   to use nullptr instead of needing to go through an indirection to test
-//   for IS_END().  Though this does run greater risk of confusing with the API
+//   for Is_End().  Though this does run greater risk of confusing with the API
 //   usage of nullptr, and for now it's clearer to read by emphasizing END.
 //
 
@@ -50,10 +50,10 @@
 // IMPORTANT: Notice that END markers may be as short as 2 bytes long.
 //
 #if (! DEBUG_CHECK_ENDS)
-    #define IS_END(p) \
+    #define Is_End(p) \
         (((const REBYTE*)(p))[0] == END_SIGNAL_BYTE)  // Note: needs (p) parens!
 #else
-    inline static bool IS_END(const void *p) {
+    inline static bool Is_End(const void *p) {
         const REBYTE* bp = cast(const REBYTE*, p);
 
         if (*bp != END_SIGNAL_BYTE) {
@@ -69,5 +69,5 @@
     }
 #endif
 
-#define NOT_END(v) \
-    (not IS_END(v))
+#define Not_End(v) \
+    (not Is_End(v))

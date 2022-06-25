@@ -371,7 +371,7 @@ EXTERN_C intptr_t RL_rebPromise(void *p, va_list *vaptr)
     DECLARE_VA_FEED (feed, p, vaptr, FEED_MASK_DEFAULT);
 
     REBDSP dsp_orig = DSP;
-    while (NOT_END(feed->value)) {
+    while (Not_End(feed->value)) {
         Derelativize(DS_PUSH(), feed->value, FEED_SPECIFIER(feed));
         Set_Cell_Flag(DS_TOP, UNEVALUATED);
         Fetch_Next_In_Feed(feed);

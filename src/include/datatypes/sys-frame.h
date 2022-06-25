@@ -84,7 +84,7 @@ inline static bool FRM_IS_VARIADIC(REBFRM *f) {
 }
 
 inline static const REBARR *FRM_ARRAY(REBFRM *f) {
-    assert(IS_END(f->feed->value) or not FRM_IS_VARIADIC(f));
+    assert(Is_End(f->feed->value) or not FRM_IS_VARIADIC(f));
     return FEED_ARRAY(f->feed);
 }
 
@@ -100,7 +100,7 @@ inline static REBSPC *FRM_SPECIFIER(REBFRM *f) {
 // to accurately present any errors.
 //
 inline static REBLEN FRM_INDEX(REBFRM *f) {
-    if (IS_END(f->feed->value))
+    if (Is_End(f->feed->value))
         return ARR_LEN(FRM_ARRAY(f));
 
     assert(not FRM_IS_VARIADIC(f));
@@ -412,7 +412,7 @@ inline static void Abort_Frame(REBFRM *f) {
     // Abort_Frame() handles any work that wouldn't be done done naturally by
     // feeding a frame to its natural end.
     //
-    if (IS_END(f->feed->value))
+    if (Is_End(f->feed->value))
         goto pop;
 
   pop:
@@ -699,7 +699,7 @@ inline static bool Pushed_Continuation(
         );
         grouper->executor = &Group_Branch_Executor;  // evaluates to get branch
         assert(not (flags & EVAL_FLAG_MAYBE_STALE));  // OUT used as WITH
-        if (IS_END(with))
+        if (Is_End(with))
             Mark_Eval_Out_Stale(out);
         else if (Is_Void(with))
             RESET(out);
@@ -782,7 +782,7 @@ inline static bool Pushed_Continuation(
                 Init_None(arg);
         }
 
-        if (NOT_END(with)) do {
+        if (Not_End(with)) do {
             arg = First_Unspecialized_Arg(&param, f);
             if (not arg)
                 break;

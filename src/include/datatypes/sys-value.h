@@ -270,7 +270,7 @@ inline static const Cell* CELL_TO_VAL(noquote(const Cell*) cell)
 // pointer you pass in is carrying a word payload.  It disregards the quotes.)
 //
 // This has additional checks as well, that you're not using "pseudotypes"
-// or garbage, or REB_0_END (which should be checked separately with IS_END())
+// or garbage, or REB_0_END (which should be checked separately with Is_End())
 //
 
 inline static enum Reb_Kind VAL_TYPE_UNCHECKED(const Cell *v) {
@@ -641,7 +641,7 @@ inline static void Copy_Cell_Header(
     const Cell *v
 ){
     assert(out != v);  // usually a sign of a mistake; not worth supporting
-    assert(VAL_TYPE_UNCHECKED(v) != REB_0_END);  // faster than NOT_END()
+    assert(VAL_TYPE_UNCHECKED(v) != REB_0_END);  // faster than Not_End()
 
     ASSERT_CELL_INITABLE_EVIL_MACRO(out);  // may be CELL_MASK_PREP, all 0
 
@@ -671,7 +671,7 @@ inline static Cell *Copy_Cell_Untracked(
     REBFLGS copy_mask  // typically you don't copy UNEVALUATED, PROTECTED, etc
 ){
     assert(out != v);  // usually a sign of a mistake; not worth supporting
-    assert(VAL_TYPE_UNCHECKED(v) != REB_0_END);  // faster than NOT_END()
+    assert(VAL_TYPE_UNCHECKED(v) != REB_0_END);  // faster than Not_End()
 
     RESET_Untracked(out);
 

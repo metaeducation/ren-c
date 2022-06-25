@@ -165,7 +165,7 @@
 
 
 #define FETCH_TO_BAR_OR_END(f) \
-    while (NOT_END(P_RULE) and not ( \
+    while (Not_End(P_RULE) and not ( \
         VAL_TYPE_UNCHECKED(P_RULE) == REB_WORD \
         and VAL_WORD_SYMBOL(P_RULE) == Canon(BAR_1) \
     )){ \
@@ -398,7 +398,7 @@ static void Print_Parse_Index(REBFRM *frame_) {
     // !!! Or does PARSE adjust to ensure it never is past the end, e.g.
     // when seeking a position given in a variable or modifying?
     //
-    if (IS_END(P_RULE)) {
+    if (Is_End(P_RULE)) {
         if (P_POS >= cast(REBIDX, P_INPUT_LEN))
             rebElide("print {[]: ** END **}");
         else
@@ -1323,7 +1323,7 @@ REBNATIVE(subparse)
 
     //=//// FIRST THINGS FIRST: CHECK FOR END /////////////////////////////=//
 
-    if (IS_END(rule))
+    if (Is_End(rule))
         goto do_signals;
 
     //=//// HANDLE BAR! (BEFORE GROUP!) ///////////////////////////////////=//
@@ -1419,7 +1419,7 @@ REBNATIVE(subparse)
     //
     const Cell *subrule = nullptr;
 
-    if (IS_END(rule))
+    if (Is_End(rule))
         goto return_position;  // done all needed to do for end position
 
     //=//// ANY-WORD!/ANY-PATH! PROCESSING ////////////////////////////////=//
@@ -1778,7 +1778,7 @@ REBNATIVE(subparse)
                 //
               case SYM_IF: {
                 FETCH_NEXT_RULE(f);
-                if (IS_END(P_RULE))
+                if (Is_End(P_RULE))
                     fail (Error_Parse_End());
 
                 if (not IS_GROUP(P_RULE))
@@ -2021,7 +2021,7 @@ REBNATIVE(subparse)
         mincount = maxcount = Int32s(rule, 0);
 
         FETCH_NEXT_RULE(f);
-        if (IS_END(P_RULE))
+        if (Is_End(P_RULE))
             fail (Error_Parse_End());
 
         rule = Get_Parse_Value(P_SAVE, P_RULE, P_RULE_SPECIFIER);
@@ -2100,7 +2100,7 @@ REBNATIVE(subparse)
 
               case SYM_TO:
               case SYM_THRU: {
-                if (IS_END(P_RULE))
+                if (Is_End(P_RULE))
                     fail (Error_Parse_End());
 
                 if (!subrule) {  // capture only on iteration #1
@@ -2123,7 +2123,7 @@ REBNATIVE(subparse)
                 if (not IS_SER_ARRAY(P_INPUT))
                     fail (Error_Parse_Rule());  // see #2253
 
-                if (IS_END(P_RULE))
+                if (Is_End(P_RULE))
                     fail (Error_Parse_End());
 
                 if (not subrule)  // capture only on iteration #1
@@ -2166,7 +2166,7 @@ REBNATIVE(subparse)
                 break; }
 
               case SYM_INTO: {
-                if (IS_END(P_RULE))
+                if (Is_End(P_RULE))
                     fail (Error_Parse_End());
 
                 if (!subrule) {
@@ -2535,7 +2535,7 @@ REBNATIVE(subparse)
 
             if (P_FLAGS & (PF_INSERT | PF_CHANGE)) {
                 count = (P_FLAGS & PF_INSERT) ? 0 : count;
-                if (IS_END(P_RULE))
+                if (Is_End(P_RULE))
                     fail (Error_Parse_End());
 
                 // new value...comment said "CHECK FOR QUOTE!!"
@@ -2640,7 +2640,7 @@ REBNATIVE(subparse)
             SET_SERIES_LEN(P_COLLECTION, collection_tail);
 
         FETCH_TO_BAR_OR_END(f);
-        if (IS_END(P_RULE))  // no alternate rule
+        if (Is_End(P_RULE))  // no alternate rule
             goto return_null;
 
         // Jump to the alternate rule and reset input

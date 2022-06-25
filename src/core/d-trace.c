@@ -71,7 +71,7 @@ void Trace_Value(
 //
 void Trace_Parse_Input(const REBVAL *str)
 {
-    if (IS_END(str)) {
+    if (Is_End(str)) {
         rebElide("print {Parse Input: ** END **}");
         return;
     }

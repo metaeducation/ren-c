@@ -102,7 +102,7 @@ REB_R Combinator_Dispatcher(REBFRM *f)
     if (r == R_THROWN)
         return r;
 
-    if (r == nullptr or (not IS_END(r) and Is_Nulled(r)))
+    if (r == nullptr or (not Is_End(r) and Is_Nulled(r)))
         return r;  // did not advance, don't update furthest
 
     // This particular parse succeeded, but did the furthest point exceed the

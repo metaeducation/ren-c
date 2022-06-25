@@ -64,7 +64,7 @@ void Dump_Frame_Location(const Cell *v, REBFRM *f)
         PROBE(dump);
     }
 
-    if (IS_END(f_next)) {
+    if (Is_End(f_next)) {
         printf("...then Dump_Frame_Location() is at end of array\n");
         if (not v and not f_next) { // well, that wasn't informative
             if (not f->prior)
@@ -153,7 +153,7 @@ static void Evaluator_Shared_Checks_Debug(REBFRM *f)
 
     //=//// ^-- ABOVE CHECKS *ALWAYS* APPLY ///////////////////////////////=//
 
-    if (IS_END(f_next))
+    if (Is_End(f_next))
         return;
 
     if (Is_Throwing(f))
@@ -161,7 +161,7 @@ static void Evaluator_Shared_Checks_Debug(REBFRM *f)
 
     //=//// v-- BELOW CHECKS ONLY APPLY IN EXITS CASE WITH MORE CODE //////=//
 
-    assert(NOT_END(f_next));
+    assert(Not_End(f_next));
     assert(f_next != f->out);
 
     //=//// ^-- ADD CHECKS EARLIER THAN HERE IF THEY SHOULD ALWAYS RUN ////=//
@@ -291,7 +291,7 @@ void Do_After_Action_Checks_Debug(REBFRM *f) {
 void Evaluator_Exit_Checks_Debug(REBFRM *f) {
     Evaluator_Shared_Checks_Debug(f);
 
-    if (NOT_END(f_next) and not FRM_IS_VARIADIC(f)) {
+    if (Not_End(f_next) and not FRM_IS_VARIADIC(f)) {
         if (f_index > ARR_LEN(f_array)) {
             assert(Is_Throwing(f));
             assert(f_index == ARR_LEN(f_array) + 1);

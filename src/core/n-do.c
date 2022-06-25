@@ -121,7 +121,7 @@ REBNATIVE(shove)
 
     REBVAL *left = ARG(left);
 
-    if (IS_END(f_value))  // ...shouldn't happen for WORD!/PATH! unless APPLY
+    if (Is_End(f_value))  // ...shouldn't happen for WORD!/PATH! unless APPLY
         return_value (ARG(left));  // ...because evaluator wants `help <-` to work
 
     // It's best for SHOVE to do type checking here, as opposed to setting
@@ -337,7 +337,7 @@ REBNATIVE(do)
         // the varargs came from.  It's still on the stack, and we don't want
         // to disrupt its state.  Use a subframe.
 
-        if (IS_END(f->feed->value)) {
+        if (Is_End(f->feed->value)) {
             Init_None(OUT);
             return OUT;
         }
@@ -354,7 +354,7 @@ REBNATIVE(do)
                 Abort_Frame(subframe);
                 return THROWN;
             }
-        } while (NOT_END(f->feed->value));
+        } while (Not_End(f->feed->value));
 
         Drop_Frame(subframe);
 
@@ -483,7 +483,7 @@ REBNATIVE(evaluate)
         }
 
         DECLARE_FEED_AT_CORE (feed, source, SPECIFIED);  // use feed, see [1]
-        assert(NOT_END(feed->value));
+        assert(Not_End(feed->value));
 
         REBFLGS flags = EVAL_MASK_DEFAULT
             | EVAL_FLAG_ALLOCATED_FEED
@@ -562,7 +562,7 @@ REBNATIVE(evaluate)
             // the varargs came from.  It's still on the stack--we don't want
             // to disrupt its state (beyond feed advancing).  Use a subframe.
 
-            if (IS_END(f->feed->value))
+            if (Is_End(f->feed->value))
                 return nullptr;
 
             REBFLGS flags = EVAL_MASK_DEFAULT | EVAL_FLAG_SINGLE_STEP;
@@ -853,7 +853,7 @@ REBNATIVE(apply)
     REBFRM *f = SUBFRAME;
     EVARS *e = VAL_HANDLE_POINTER(EVARS, iterator);
 
-    if (IS_END(f_value))
+    if (Is_End(f_value))
         goto finalize_apply;
 
     if (IS_COMMA(f_value)) {
@@ -882,7 +882,7 @@ REBNATIVE(apply)
 
         const Cell *lookback = Lookback_While_Fetching_Next(f);  // for error
 
-        if (IS_END(f_value) or IS_COMMA(f_value))
+        if (Is_End(f_value) or IS_COMMA(f_value))
             fail (Error_Need_Non_End_Raw(rebUnrelativize(lookback)));
 
         if (IS_PATH(f_value) and IS_REFINEMENT(f_value))  // two label, see [3]

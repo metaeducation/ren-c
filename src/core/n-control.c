@@ -121,7 +121,7 @@ REB_R Group_Branch_Executor(REBFRM *frame_)
 
     const Value *with = Is_Stale(OUT) ? END : OUT;  // with is here, see [1]
 
-    assert(IS_END(FRAME->feed->value));
+    assert(Is_End(FRAME->feed->value));
     delegate_branch (OUT, SPARE, with);
 }}
 
@@ -633,7 +633,7 @@ REBNATIVE(all)
 } eval_step_finished: {  /////////////////////////////////////////////////////
 
     if (Is_Stale(OUT)) {  // void steps, e.g. (comment "hi") (if false [<a>])
-        if (IS_END(SUBFRAME->feed->value))
+        if (Is_End(SUBFRAME->feed->value))
             goto reached_end;
 
         assert(STATE == ST_ALL_EVAL_STEP);
@@ -675,7 +675,7 @@ REBNATIVE(all)
 
     Init_True(any_matches);
 
-    if (IS_END(SUBFRAME->feed->value))
+    if (Is_End(SUBFRAME->feed->value))
         goto reached_end;
 
     assert(STATE == ST_ALL_EVAL_STEP);
@@ -757,7 +757,7 @@ REBNATIVE(any)
 } eval_step_finished: {  /////////////////////////////////////////////////////
 
     if (Is_Stale(OUT)) {  // void steps, e.g. (comment "hi") (if false [<a>])
-        if (IS_END(SUBFRAME->feed->value))
+        if (Is_End(SUBFRAME->feed->value))
             goto reached_end;
 
         assert(STATE == ST_ANY_EVAL_STEP);
@@ -797,7 +797,7 @@ REBNATIVE(any)
         return_branched (OUT);  // successful ANY returns the value
     }
 
-    if (IS_END(SUBFRAME->feed->value))
+    if (Is_End(SUBFRAME->feed->value))
         goto reached_end;
 
     assert(STATE == ST_ANY_EVAL_STEP);
@@ -917,7 +917,7 @@ REBNATIVE(case)
 
     RESET(SPARE);  // must do before goto reached_end
 
-    if (IS_END(f_value))
+    if (Is_End(f_value))
         goto reached_end;
 
     STATE = ST_CASE_CONDITION_EVAL_STEP;
@@ -931,7 +931,7 @@ REBNATIVE(case)
     if (Is_Void(SPARE))  // skip void expressions, see [2]
         goto handle_next_clause;
 
-    if (IS_END(f_value))
+    if (Is_End(f_value))
         goto reached_end;  // we tolerate "fallout" from a condition
 
     if (Is_Nulled(predicate))
@@ -1061,7 +1061,7 @@ REBNATIVE(switch)
 
     assert(Is_Void(SPARE));
 
-    for (; NOT_END(f_value); RESET(SPARE)) {  // clears fallout each `continue`
+    for (; Not_End(f_value); RESET(SPARE)) {  // clears fallout each `continue`
 
         if (IS_BLOCK(f_value) or IS_ACTION(f_value)) {
             Fetch_Next_Forget_Lookback(f);
@@ -1084,7 +1084,7 @@ REBNATIVE(switch)
         if (Is_Void(SPARE))  // skip comments or failed conditionals
             continue;  // see note [2] in comments for CASE
 
-        if (IS_END(f_value))
+        if (Is_End(f_value))
             goto reached_end;  // nothing left, so drop frame and return
 
         if (Is_Nulled(predicate)) {
@@ -1134,7 +1134,7 @@ REBNATIVE(switch)
         // Skip ahead to try and find BLOCK!/ACTION! branch to take the match
         //
         while (true) {
-            if (IS_END(f_value))
+            if (Is_End(f_value))
                 goto reached_end;
 
             if (IS_BLOCK(f_value) or IS_META_BLOCK(f_value)) {

@@ -87,7 +87,7 @@ bool Make_Invokable_From_Feed_Throws(
 ){
     assert(NOT_FEED_FLAG(feed, NEXT_ARG_FROM_OUT));  // not supported?
 
-    const Cell *v = IS_END(first) ? feed->value : first;
+    const Cell *v = Is_End(first) ? feed->value : first;
 
     // !!! The case of `([x]: @)` wants to make something which when it
     // evaluates becomes invisible.  There's no QUOTED! value that can do
@@ -96,7 +96,7 @@ bool Make_Invokable_From_Feed_Throws(
     // Not all callers necessarily want to tolerate an end condition, so this
     // needs review.
     //
-    if (IS_END(v)) {
+    if (Is_End(v)) {
         Mark_Eval_Out_Voided(out);
         return false;
     }
@@ -131,13 +131,13 @@ bool Make_Invokable_From_Feed_Throws(
     if (not IS_ACTION(out)) {
         Quotify(out, 1);
 
-        if (IS_END(first))
+        if (Is_End(first))
             Fetch_Next_Forget_Lookback(f);  // we've seen it now
         Drop_Frame(f);
         return false;
     }
 
-    if (IS_END(first))
+    if (Is_End(first))
         Fetch_Next_Forget_Lookback(f);  // now, onto the arguments...
 
     option(const REBSTR*) label = VAL_ACTION_LABEL(f->out);

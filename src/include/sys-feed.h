@@ -51,7 +51,7 @@
 #define FEED_SPLICE(feed) \
     LINK(Splice, &(feed)->singular)
 
-// This contains an IS_END() marker if the next fetch should be an attempt
+// This contains an Is_End() marker if the next fetch should be an attempt
 // to consult the va_list (if any).  That end marker may be resident in
 // an array, or if it's a plain va_list source it may be the global END.
 //
@@ -307,7 +307,7 @@ inline static void Detect_Feed_Pointer_Maybe_Fetch(
 //
 inline static void Fetch_Next_In_Feed(REBFED *feed) {
     //
-    // !!! This used to assert that feed->value wasn't "IS_END()".  Things have
+    // !!! This used to assert that feed->value wasn't "Is_End()".  Things have
     // gotten more complex, because feed->fetched may have been Move_Cell()'d
     // from, which triggers a RESET() and that's indistinguishable from END.
     // To the extent the original assert provided safety, revisit it.
@@ -331,7 +331,7 @@ inline static void Fetch_Next_In_Feed(REBFED *feed) {
 
   retry_splice:
     if (FEED_PENDING(feed)) {
-        assert(NOT_END(FEED_PENDING(feed)));
+        assert(Not_End(FEED_PENDING(feed)));
 
         feed->value = FEED_PENDING(feed);
         mutable_MISC(Pending, &feed->singular) = nullptr;
@@ -516,10 +516,10 @@ inline static void Free_Feed(REBFED *feed) {
     // any faster...they're usually reified into an array anyway, so
     // the frame processing the array will take the other branch.
 
-    while (NOT_END(feed->value))
+    while (Not_End(feed->value))
         Fetch_Next_In_Feed(feed);
 
-    assert(IS_END(feed->value));
+    assert(Is_End(feed->value));
     assert(FEED_PENDING(feed) == nullptr);
 
     // !!! See notes in Fetch_Next regarding the somewhat imperfect way in
@@ -561,12 +561,12 @@ inline static void Prep_Array_Feed(
 
     if (first) {
         feed->value = unwrap(first);
-        assert(NOT_END(feed->value));
+        assert(Not_End(feed->value));
         Init_Any_Array_At_Core(
             FEED_SINGLE(feed), REB_BLOCK, array, index, specifier
         );
         assert(VAL_TYPE_UNCHECKED(feed->value) != REB_0_END);
-            // ^-- faster than NOT_END()
+            // ^-- faster than Not_End()
     }
     else {
         feed->value = ARR_AT(array, index);
@@ -583,7 +583,7 @@ inline static void Prep_Array_Feed(
     // their time to run comes up to not be END anymore.  But if we put a
     // hold on conservatively, it won't be dropped by Free_Feed() time.
     //
-    if (IS_END(feed->value) or GET_SERIES_INFO(array, HOLD))
+    if (Is_End(feed->value) or GET_SERIES_INFO(array, HOLD))
         NOOP;  // already temp-locked
     else {
         SET_SERIES_INFO(m_cast(REBARR*, array), HOLD);
@@ -591,7 +591,7 @@ inline static void Prep_Array_Feed(
     }
 
     feed->gotten = nullptr;
-    if (IS_END(feed->value))
+    if (Is_End(feed->value))
         assert(FEED_PENDING(feed) == nullptr);
     else
         assert(READABLE(feed->value));
@@ -627,7 +627,7 @@ inline static void Prep_Va_Feed(
     Detect_Feed_Pointer_Maybe_Fetch(feed, p);
 
     feed->gotten = nullptr;
-    assert(IS_END(feed->value) or READABLE(feed->value));
+    assert(Is_End(feed->value) or READABLE(feed->value));
 }
 
 // The flags is passed in by the macro here by default, because it does a

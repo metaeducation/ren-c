@@ -344,7 +344,7 @@ static void Shutdown_Action_Spec_Tags(void)
 static void Startup_End_Node(void)
 {
     PG_End_Cell.header.bits = NODE_FLAG_NODE | NODE_FLAG_STALE;
-    assert(IS_END(END));  // sanity check
+    assert(Is_End(END));  // sanity check
 
     assert(Is_Void(VOID_CELL));  // default all zero bits for C globals
     Reset_Cell_Header_Untracked(
@@ -356,7 +356,7 @@ static void Startup_End_Node(void)
 }
 
 static void Shutdown_End_Node(void) {
-    assert(IS_END(END));  // sanity check
+    assert(Is_End(END));  // sanity check
     PG_End_Cell.header.bits = 0;
 
     assert(Is_Void(VOID_CELL));

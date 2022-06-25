@@ -267,7 +267,7 @@ REBNATIVE(new_line_q)
         item = VAL_ARRAY_AT(&tail, pos);
     }
 
-    if (item != tail and NOT_END(item))  // !!! Review if END should be here
+    if (item != tail and Not_End(item))  // !!! Review if END should be here
         return Init_Logic(OUT, Get_Cell_Flag(item, NEWLINE_BEFORE));
 
     return Init_Logic(OUT, Get_Subclass_Flag(ARRAY, arr, NEWLINE_AT_TAIL));

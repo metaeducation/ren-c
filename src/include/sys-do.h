@@ -116,7 +116,7 @@ inline static bool Do_Feed_To_End_Throws(
             Abort_Frame(f);
             return true;
         }
-    } while (NOT_END(feed->value));
+    } while (Not_End(feed->value));
 
     Drop_Frame(f);
 

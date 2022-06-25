@@ -164,7 +164,7 @@ void Probe_Cell_Print_Helper(
   #endif
 
     Probe_Print_Helper(p, expr, "Value", file, line);
-    if (IS_END(v)) {
+    if (Is_End(v)) {
         Append_Ascii(mo->series, "; end");
     }
     else if (Is_Void(v)) {

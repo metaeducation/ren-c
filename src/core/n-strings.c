@@ -104,7 +104,7 @@ REBNATIVE(delimit)
     bool pending = false;  // pending delimiter output, *if* more non-nulls
     bool nothing = true;  // any elements seen so far have been null or blank
 
-    while (NOT_END(f_value)) {
+    while (Not_End(f_value)) {
         // See philosophy on handling blanks differently from nulls, but only
         // at dialect "source level".
         // https://forum.rebol.info/t/1348
@@ -213,7 +213,7 @@ REBNATIVE(delimit)
 
             pending = true;
         }
-    } while (NOT_END(f_value));
+    } while (Not_End(f_value));
 
     if (nothing) {
         Drop_Mold(mo);

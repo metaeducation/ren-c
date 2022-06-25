@@ -115,7 +115,7 @@ REBNATIVE(reduce)
 
 } next_reduce_step: {  ///////////////////////////////////////////////////////
 
-    if (IS_END(SUBFRAME->feed->value))
+    if (Is_End(SUBFRAME->feed->value))
         goto finished;
 
     if (Get_Cell_Flag(SUBFRAME->feed->value, NEWLINE_BEFORE))
@@ -245,7 +245,7 @@ REBNATIVE(reduce_each)
 
 } reduce_next: {  ////////////////////////////////////////////////////////////
 
-    if (IS_END(SUBFRAME->feed->value))
+    if (Is_End(SUBFRAME->feed->value))
         goto finished;
 
     SUBFRAME->executor = &Evaluator_Executor;  // restore from pass through
@@ -514,7 +514,7 @@ REB_R Composer_Executor(REBFRM *f)
 
   handle_current_item: {  ////////////////////////////////////////////////////
 
-    if (IS_END(f_value))
+    if (Is_End(f_value))
         goto finished;
 
     if (not ANY_ARRAYLIKE(f_value)) {  // won't substitute/recurse

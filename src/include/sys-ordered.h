@@ -100,7 +100,7 @@ inline static bool ANY_INERT_KIND(REBYTE k) {
 // There are many cases where end/void/null all have special handling or need
 // to raise errors.  Rather than saying:
 //
-//     if (IS_END(v)) { fail ("end"); }
+//     if (Is_End(v)) { fail ("end"); }
 //     if (IS_BAD_WORD(v)) { fail ("void"); }
 //     if (IS_NULL(v)) { fail ("null"); }
 //     CommonCaseStuff(v);
@@ -108,7 +108,7 @@ inline static bool ANY_INERT_KIND(REBYTE k) {
 // This can be collapsed down to one test in the common case, with:
 //
 //     if (IS_NULLED_OR_VOID_OR_END(v)) {
-//        if (IS_END(v)) { fail ("end"); }
+//        if (Is_End(v)) { fail ("end"); }
 //        if (IS_BAD_WORD(v)) { fail {"void"); }
 //        fail ("null");
 //     }

@@ -1018,7 +1018,7 @@ static enum Reb_Token Locate_Token_May_Push_Mold(
             //
             Detect_Feed_Pointer_Maybe_Fetch(ss->feed, p);
 
-            if (IS_END(ss->feed->value))
+            if (Is_End(ss->feed->value))
                 return TOKEN_END;
 
             Derelativize(DS_PUSH(), ss->feed->value, FEED_SPECIFIER(ss->feed));

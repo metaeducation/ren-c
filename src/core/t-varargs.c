@@ -50,7 +50,7 @@ inline static bool Vararg_Op_If_No_Advance_Handled(
     REBSPC *specifier,
     enum Reb_Param_Class pclass
 ){
-    if (IS_END(opt_look)) {
+    if (Is_End(opt_look)) {
         Init_For_Vararg_End(out, op); // exhausted
         return true;
     }
@@ -72,7 +72,7 @@ inline static bool Vararg_Op_If_No_Advance_Handled(
         //
         // Look ahead, and if actively bound see if it's to an enfix function
         // and the rules apply.  Note the raw check is faster, no need to
-        // separately test for IS_END()
+        // separately test for Is_End()
 
         const REBVAL *child_gotten = try_unwrap(
             Lookup_Word(opt_look, specifier)
@@ -202,7 +202,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
             Reify_Eval_Out_Plain(out);
 
             if (
-                IS_END(f_temp->feed->value)
+                Is_End(f_temp->feed->value)
                 or GET_FEED_FLAG(f_temp->feed, BARRIER_HIT)
             ){
                 Init_Stale_Void(shared);
@@ -634,7 +634,7 @@ void MF_Varargs(REB_MOLD *mo, noquote(const Cell*) v, bool form) {
     REBFRM *f;
     REBVAL *shared;
     if (Is_Block_Style_Varargs(&shared, v)) {
-        if (IS_END(shared))
+        if (Is_End(shared))
             Append_Ascii(mo->series, "[]");
         else if (pclass == PARAM_CLASS_HARD)
             Mold_Value(mo, shared); // full feed can be shown if hard quoted
@@ -645,7 +645,7 @@ void MF_Varargs(REB_MOLD *mo, noquote(const Cell*) v, bool form) {
         if (f == NULL)
             Append_Ascii(mo->series, "!!!");
         else if (
-            IS_END(f->feed->value)
+            Is_End(f->feed->value)
             or GET_FEED_FLAG(f->feed, BARRIER_HIT)
         ){
             Append_Ascii(mo->series, "[]");

@@ -480,12 +480,12 @@ void Reify_Va_To_Array_In_Feed(
 
     REBLEN index;
 
-    if (NOT_END(feed->value)) {
+    if (Not_End(feed->value)) {
         do {
             Derelativize(DS_PUSH(), feed->value, FEED_SPECIFIER(feed));
             assert(not Is_Nulled(DS_TOP));
             Fetch_Next_In_Feed(feed);
-        } while (NOT_END(feed->value));
+        } while (Not_End(feed->value));
 
         if (truncated)
             index = 2;  // skip the --optimized-out--
@@ -520,7 +520,7 @@ void Reify_Va_To_Array_In_Feed(
     // The array just popped into existence, and it's tied to a running
     // frame...so safe to say we're holding it (if not at the end).
     //
-    if (IS_END(feed->value))
+    if (Is_End(feed->value))
         assert(FEED_PENDING(feed) == nullptr);
     else {
         assert(NOT_FEED_FLAG(feed, TOOK_HOLD));
@@ -674,7 +674,7 @@ static void Mark_Root_Series(void)
 // stack knows when it needs to grow.
 //
 // But every drop of the stack doesn't overwrite the dropped value.  Since the
-// values are not END markers, they are considered fine as far as a NOT_END()
+// values are not END markers, they are considered fine as far as a Not_End()
 // test is concerned to indicate unused capacity.  So the values are good
 // for the testing purpose, yet the GC doesn't want to consider those to be
 // "live" references.  So rather than to a full Queue_Mark_Array_Deep() on
@@ -779,7 +779,7 @@ static void Mark_Frame_Stack_Deep(void)
         // will stay on the stack while the zero-arity function is running.
         // The array still might be used in an error, so can't GC it.
         //
-        if (NOT_END(f->feed->value))
+        if (Not_End(f->feed->value))
             Queue_Mark_Opt_Value_Deep(f->feed->value);
 
         // If ->gotten is set, it usually shouldn't need markeding because

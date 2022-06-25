@@ -88,7 +88,7 @@ inline static REBVAL *Init_Varargs_Untyped_Enfix(
     const REBVAL *left
 ){
     REBARR *feed;
-    if (IS_END(left))
+    if (Is_End(left))
         feed = EMPTY_ARRAY;
     else {
         REBARR *singular = Alloc_Singular(NODE_FLAG_MANAGED);
