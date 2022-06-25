@@ -313,12 +313,13 @@ REB_R Reflect_Core(REBFRM *frame_)
         return nullptr; // only TYPE OF works on blank, otherwise it's null
 
     Dequotify(ARG(value));
-    return Run_Generic_Dispatch_Core(ARG(value), frame_, Canon(REFLECT));
+    INIT_FRM_PHASE(frame_, VAL_ACTION(Lib(REFLECT)));  // switch to generic
+    return R_CONTINUATION;
 }
 
 
 //
-//  reflect: native [
+//  reflect-native: native [
 //
 //  {Returns specific details about a datatype.}
 //
@@ -329,7 +330,7 @@ REB_R Reflect_Core(REBFRM *frame_)
 //          "Such as: type, length, spec, body, words, values, title"
 //  ]
 //
-REBNATIVE(reflect)
+REBNATIVE(reflect_native)
 //
 // Although REFLECT goes through dispatch to the REBTYPE(), it was needing
 // a null check in Type_Action_Dispatcher--which no other type needs.  So

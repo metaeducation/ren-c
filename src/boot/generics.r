@@ -45,6 +45,15 @@ REBOL [
     }
 ]
 
+reflect: generic [
+    {Returns specific details about a value (used by OF, e.g. LENGTH OF)}
+    return: [<opt> any-value!]
+    value [any-value!]
+    property "Such as: type, length, spec, body, words, values, title"
+        [word!]
+]
+
+
 ; Binary Math & Logic
 
 add: generic [
