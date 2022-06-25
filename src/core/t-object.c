@@ -1099,6 +1099,8 @@ REBTYPE(Context)
 
           case SYM_BODY:
             return Init_Block(OUT, Context_To_Array(context, 3));
+
+          default: break;
         }
 
         // Noticeably not handled by average objects: SYM_OPEN_Q (`open?`)
