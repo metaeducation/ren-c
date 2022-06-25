@@ -283,6 +283,19 @@ bool Trampoline_Throws(REBFRM *root)
         goto bounce_on_the_trampoline;
     }
 
+    if (r == R_DELEGATION) {
+        //
+        // We could unhook the frame from the stack here, but leaving it in
+        // provides clarity in the stack.   Hence this should not be used in
+        // tail call situations.
+        //
+        STATE = 255;  // maintain non-zero invariant
+        FRAME->executor = &Just_Use_Out_Executor;  // whatever frames make
+
+        FRAME = FS_TOP;
+        goto bounce_on_the_trampoline;
+    }
+
   //=//// HANDLE THROWS, INCLUDING (NON-ABRUPT) ERRORS ////////////////////=//
 
     // 1. Having handling of UNWIND be in the trampoline means that any frame
@@ -345,8 +358,8 @@ bool Trampoline_Throws(REBFRM *root)
         FRAME = FS_TOP;
 
         if (FRAME->executor == &Just_Use_Out_Executor) {
-            assert(Get_Eval_Flag(FRAME, TRAMPOLINE_KEEPALIVE));
-            FRAME = FRAME->prior;  // hack, don't let it be aborted, see [3]
+            if (Get_Eval_Flag(FRAME, TRAMPOLINE_KEEPALIVE))
+                FRAME = FRAME->prior;  // hack, don't let it be aborted, see [3]
         }
 
         goto bounce_on_the_trampoline;  // executor will see the throw

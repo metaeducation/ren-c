@@ -224,6 +224,14 @@ inline static bool Is_Throwing(REBFRM *frame_) {
     cast(REBVAL*, &PG_R_Continuation)
 
 
+// A dispatcher may want to run a "continuation" but not be called back.
+// This is referred to as delegation.
+//
+#define C_DELEGATION 'D'
+#define R_DELEGATION \
+    cast(REBVAL*, &PG_R_Delegation)
+
+
 #define CELL_MASK_ACTION \
     (CELL_FLAG_FIRST_IS_NODE | CELL_FLAG_SECOND_IS_NODE)
 

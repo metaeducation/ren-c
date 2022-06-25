@@ -1029,6 +1029,23 @@ REB_R Action_Executor(REBFRM *f)
       case C_CONTINUATION:
         return R_CONTINUATION;
 
+      case C_DELEGATION:
+        //
+        // Action dispatchers don't really want to delegate control, because
+        // the action wants to appear to be on the stack.  For some it's even
+        // more technically important--because the varlist must stay alive to
+        // be a specifier, so you can't Drop_Action() etc.  Something like a
+        // FUNC or LAMBDA cannot delegate to the body block if there is a
+        // variadic, because it will look like the function isn't running.
+        //
+        // Note however, that using delegation has an optimization that does
+        // not return R_DELEGATION, if something like a branch can be evaluated
+        // to a constant value!
+        //
+        Set_Eval_Flag(FRAME, DELEGATE_CONTROL);
+        STATE = 255;
+        return R_CONTINUATION;
+
       case C_THROWN:
         //
         // Stay THROWN and let stack levels above try and catch

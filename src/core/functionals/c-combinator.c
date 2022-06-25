@@ -334,16 +334,16 @@ void Push_Parser_Subframe(
     DECLARE_LOCAL (temp);  // can't overwrite spare
     Init_Frame(temp, ctx, ANONYMOUS);
 
-    if (Push_Continuation_Throws(
+    bool pushed = Pushed_Continuation(
         out,
         frame_,
         EVAL_MASK_DEFAULT,
         temp,
         SPECIFIED,
         END
-    )){
-        fail (Error_No_Catch_For_Throw(frame_));
-    }
+    );
+    assert(pushed);  // always needs to push, it's a frame
+    UNUSED(pushed);
 }
 
 

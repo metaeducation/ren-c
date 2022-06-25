@@ -115,6 +115,8 @@ PVAR REBVAL PG_R_Redo_Checked;
 PVAR REBVAL PG_R_Thrown;
 PVAR REBVAL PG_R_Unhandled;
 PVAR REBVAL PG_R_Continuation;
+PVAR REBVAL PG_R_Delegation;
+
 
 // These are root variables which used to be described in %root.r and kept
 // alive by keeping that array alive.  Now they are API handles, kept alive

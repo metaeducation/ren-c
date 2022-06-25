@@ -62,6 +62,71 @@
 
 
 //
+//  Group_Branch_Executor: C
+//
+// To make it easier for anything that runs a branch, the double-evaluation in
+// a GROUP! branch has its own executor.  This means something like IF can
+// push a frame with the branch executor which can complete and then run the
+// evaluated-to branch.
+//
+// So the group branch executor is pushed with the feed of the GROUP! to run.
+// It gives this feed to an Evaluator_Executor(), and then delegates to the
+// branch returned as a result.
+//
+//////////////////////////////////////////////////////////////////////////////
+//
+// 1. The `with` parameter in continuations isn't required to be GC safe or
+//    even distinct from the output cell (see continue_core()).  So whoever
+//    dispatched to the group branch executor could have passed a fleeting
+//    value pointer...hence it needs to be stored somewhere.  So the group
+//    executor expects it to be preloaded into `out`...or that out be marked
+//    stale if it was END.  It can then take advantage of the same flexibility
+//    to pass OUT as the with as well as the target when branch is in SPARE.
+//
+REB_R Group_Branch_Executor(REBFRM *frame_)
+{
+    if (THROWING)
+        return THROWN;
+
+    enum {
+        ST_GROUP_BRANCH_INITIAL_ENTRY = 0,
+        ST_GROUP_BRANCH_RUNNING_GROUP
+    };
+
+    switch (STATE) {
+      case ST_GROUP_BRANCH_INITIAL_ENTRY :
+        goto initial_entry;
+
+      case ST_GROUP_BRANCH_RUNNING_GROUP :
+        goto group_result_in_spare;
+
+      default : assert(false);
+    }
+
+  initial_entry: {  //////////////////////////////////////////////////////////
+
+    DECLARE_FRAME(evaluator, FRAME->feed, FRAME->flags.bits);  // state byte 0!
+    Push_Frame(SPARE, evaluator);
+
+    Clear_Eval_Flag(FRAME, ALLOCATED_FEED);
+    FRAME->feed = TG_End_Feed;  // feed consumed by subframe
+
+    STATE = ST_GROUP_BRANCH_RUNNING_GROUP;
+    continue_subframe (evaluator);
+
+} group_result_in_spare: {  //////////////////////////////////////////////////
+
+    if (ANY_GROUP(SPARE))
+        fail (Error_Bad_Branch_Type_Raw());  // stop infinite recursion (good?)
+
+    const Value *with = Is_Stale(OUT) ? END : OUT;  // with is here, see [1]
+
+    assert(IS_END(FRAME->feed->value));
+    delegate_branch (OUT, SPARE, with);
+}}
+
+
+//
 //  if: native [
 //
 //  {When TO LOGIC! CONDITION is true, execute branch}
