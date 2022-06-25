@@ -1840,7 +1840,26 @@ REBNATIVE(for)
 {
     INCLUDE_PARAMS_OF_FOR;
 
+    REBVAL *vars = ARG(vars);
+    REBVAL *value = ARG(value);
     REBVAL *body = ARG(body);
+
+    enum {
+        ST_FOR_INITIAL_ENTRY = 0,
+        ST_FOR_RUNNING_BODY
+    };
+
+    switch (STATE) {
+      case ST_FOR_INITIAL_ENTRY :
+        goto initial_entry;
+
+      case ST_FOR_RUNNING_BODY :
+        goto body_result_in_out;
+
+      default : break;
+    }
+
+  initial_entry: {  //////////////////////////////////////////////////////////
 
     if (IS_GROUP(body)) {
         if (Eval_Value_Throws(SPARE, body, SPECIFIED))
@@ -1851,8 +1870,6 @@ REBNATIVE(for)
     if (not IS_BLOCK(body))
         fail ("FOR has a new syntax, use CFOR for old arity-5 behavior.");
 
-    REBVAL *value = ARG(value);
-
     if (IS_QUOTED(value)) {
         Unquotify(value, 1);
 
@@ -1862,36 +1879,59 @@ REBNATIVE(for)
         // Delegate to FOR-EACH (note: in the future this will be the other
         // way around, with FOR-EACH delegating to FOR).
         //
-        if (rebRunThrows(
+        rebPushContinuation(
             OUT,  // <-- output cell
+            EVAL_MASK_DEFAULT | EVAL_FLAG_MAYBE_STALE,
             Lib(FOR_EACH), ARG(vars), rebQ(value), body
-        )){
-            return THROWN;
-        }
-        return OUT;
+        );
+        return R_DELEGATION;
     }
 
     if (IS_DECIMAL(value) or IS_PERCENT(value))
         Init_Integer(value, Int64(value));
 
-    REBCTX *context = Virtual_Bind_Deep_To_New_Context(
-        body,
-        ARG(vars)
-    );
-    Init_Object(ARG(vars), context);  // keep GC safe
-
-    assert(CTX_LEN(context) == 1);
-
-    REBVAL *var = CTX_VAR(context, 1);  // not movable, see #2274
-
     REBI64 n = VAL_INT64(value);
     if (n < 1)  // Loop_Integer from 1 to 0 with bump of 1 is infinite
         return VOID;
 
-    return Loop_Integer_Common(
-        frame_, var, body, 1, VAL_INT64(value), 1
-    );
-}
+    REBCTX *context = Virtual_Bind_Deep_To_New_Context(body, vars);
+    Init_Object(ARG(vars), context);  // keep GC safe
+
+    assert(CTX_LEN(context) == 1);
+
+    REBVAL *var = CTX_VAR(VAL_CONTEXT(vars), 1);  // not movable, see #2274
+    Init_Integer(var, 1);
+
+    STATE = ST_FOR_RUNNING_BODY;
+    continue_catchable_branch (OUT, body, var);
+
+} body_result_in_out: {  /////////////////////////////////////////////////////
+
+    if (THROWING) {
+        if (not Try_Catch_Break_Or_Continue(OUT, FRAME))
+            return THROWN;
+
+        if (Is_Breaking_Null(OUT))
+            return nullptr;
+
+        if (Is_Void(OUT))  // CONTINUE w/no argument
+            Init_None(OUT);
+    }
+
+    REBVAL *var = CTX_VAR(VAL_CONTEXT(vars), 1);  // not movable, see #2274
+
+    if (not IS_INTEGER(var))
+        fail (Error_Invalid_Type(VAL_TYPE(var)));
+
+    if (VAL_INT64(var) == VAL_INT64(value))
+        return_branched (OUT);
+
+    if (REB_I64_ADD_OF(VAL_INT64(var), 1, &VAL_INT64(var)))
+        fail (Error_Overflow_Raw());
+
+    STATE = ST_FOR_RUNNING_BODY;
+    continue_catchable_branch (OUT, body, var);
+}}
 
 
 //
