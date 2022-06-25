@@ -1042,67 +1042,6 @@ void MF_Context(REB_MOLD *mo, noquote(const Cell*) v, bool form)
 }
 
 
-//
-//  Context_Common_Action_Maybe_Unhandled: C
-//
-// Similar to Series_Common_Action_Maybe_Unhandled().  Introduced because
-// PORT! wants to act like a context for some things, but if you ask an
-// ordinary object if it's OPEN? it doesn't know how to do that.
-//
-REB_R Context_Common_Action_Maybe_Unhandled(
-    REBFRM *frame_,
-    const Symbol *verb
-){
-    REBVAL *v = D_ARG(1);
-    REBCTX *c = VAL_CONTEXT(v);
-
-    // !!! The PORT! datatype wants things like LENGTH OF to give answers
-    // based on the content of the port, not the number of fields in the
-    // PORT! object.  This ties into a number of other questions:
-    //
-    // https://forum.rebol.info/t/1689
-    //
-    if (CTX_TYPE(c) == REB_PORT)
-        return R_UNHANDLED;
-
-    switch (ID_OF_SYMBOL(verb)) {
-      case SYM_REFLECT: {
-        INCLUDE_PARAMS_OF_REFLECT;
-        UNUSED(ARG(value));  // covered by `v`
-
-        REBVAL *property = ARG(property);
-        switch (VAL_WORD_ID(property)) {
-          case SYM_LENGTH: // !!! Should this be legal?
-            return Init_Integer(OUT, CTX_LEN(c));
-
-          case SYM_TAIL_Q: // !!! Should this be legal?
-            return Init_Logic(OUT, CTX_LEN(c) == 0);
-
-          case SYM_WORDS:
-            return Init_Block(OUT, Context_To_Array(v, 1));
-
-          case SYM_VALUES:
-            return Init_Block(OUT, Context_To_Array(v, 2));
-
-          case SYM_BODY:
-            return Init_Block(OUT, Context_To_Array(v, 3));
-
-        // Noticeably not handled by average objects: SYM_OPEN_Q (`open?`)
-
-          default:
-            break;
-        }
-
-        return R_UNHANDLED; }
-
-      default:
-        break;
-    }
-
-    return R_UNHANDLED;
-}
-
-
 const Symbol *Symbol_From_Picker(const REBVAL *context, const Cell *picker)
 {
     UNUSED(context);  // Might the picker be context-sensitive?
@@ -1121,16 +1060,50 @@ const Symbol *Symbol_From_Picker(const REBVAL *context, const Cell *picker)
 //
 REBTYPE(Context)
 {
-  blockscope {
-    REB_R r = Context_Common_Action_Maybe_Unhandled(frame_, verb);
-    if (r != R_UNHANDLED)
-        return r;
-  }
-
     REBVAL *context = D_ARG(1);
     REBCTX *c = VAL_CONTEXT(context);
 
-    switch (ID_OF_SYMBOL(verb)) {
+    OPT_SYMID symid = ID_OF_SYMBOL(verb);
+
+    // !!! The PORT! datatype wants things like LENGTH OF to give answers
+    // based on the content of the port, not the number of fields in the
+    // PORT! object.  This ties into a number of other questions:
+    //
+    // https://forum.rebol.info/t/1689
+    //
+    // At the moment only PICK* and POKE* are routed here.
+    //
+    if (IS_PORT(context))
+        assert(symid == SYM_PICK_P or symid == SYM_POKE_P);
+
+    switch (symid) {
+      case SYM_REFLECT: {
+        INCLUDE_PARAMS_OF_REFLECT;
+        UNUSED(ARG(value));  // covered by `v`
+
+        REBVAL *property = ARG(property);
+        SYMID prop = VAL_WORD_ID(property);
+
+        switch (prop) {
+          case SYM_LENGTH: // !!! Should this be legal?
+            return Init_Integer(OUT, CTX_LEN(c));
+
+          case SYM_TAIL_Q: // !!! Should this be legal?
+            return Init_Logic(OUT, CTX_LEN(c) == 0);
+
+          case SYM_WORDS:
+            return Init_Block(OUT, Context_To_Array(context, 1));
+
+          case SYM_VALUES:
+            return Init_Block(OUT, Context_To_Array(context, 2));
+
+          case SYM_BODY:
+            return Init_Block(OUT, Context_To_Array(context, 3));
+        }
+
+        // Noticeably not handled by average objects: SYM_OPEN_Q (`open?`)
+
+        fail (Error_Cannot_Reflect(VAL_TYPE(context), property)); }
 
     //=//// PICK* (see %sys-pick.h for explanation) ////////////////////////=//
 
@@ -1192,91 +1165,6 @@ REBTYPE(Context)
             Clear_Cell_Flag(var, PROTECTED);
 
         return nullptr; }  // caller's REBCTX* is not stale, no update needed
-
-
-      case SYM_REFLECT: {
-        INCLUDE_PARAMS_OF_REFLECT;
-        UNUSED(ARG(value));  // covered by `v`
-
-        if (VAL_TYPE(context) != REB_FRAME)
-            break;
-
-        REBVAL *property = ARG(property);
-        SYMID sym = VAL_WORD_ID(property);
-
-        if (sym == SYM_LABEL) {
-            //
-            // Can be answered for frames that have no execution phase, if
-            // they were initialized with a label.
-            //
-            option(const Symbol*) label = VAL_FRAME_LABEL(context);
-            if (label)
-                return Init_Word(OUT, unwrap(label));
-
-            // If the frame is executing, we can look at the label in the
-            // REBFRM*, which will tell us what the overall execution label
-            // would be.  This might be confusing, however...if the phase
-            // is drastically different.  Review.
-        }
-
-        if (sym == SYM_ACTION) {
-            //
-            // Currently this can be answered for any frame, even if it is
-            // expired...though it probably shouldn't do this unless it's
-            // an indefinite lifetime object, so that paramlists could be
-            // GC'd if all the frames pointing to them were expired but still
-            // referenced somewhere.
-            //
-            return Init_Action(
-                OUT,
-                VAL_FRAME_PHASE(context),  // just a REBACT*, no binding
-                VAL_FRAME_LABEL(context),
-                VAL_FRAME_BINDING(context)  // e.g. where RETURN returns to
-            );
-        }
-
-        REBFRM *f = CTX_FRAME_MAY_FAIL(c);
-
-        switch (sym) {
-          case SYM_FILE: {
-            const REBSTR *file = FRM_FILE(f);
-            if (not file)
-                return nullptr;
-            return Init_File(OUT, file); }
-
-          case SYM_LINE: {
-            REBLIN line = FRM_LINE(f);
-            if (line == 0)
-                return nullptr;
-            return Init_Integer(OUT, line); }
-
-          case SYM_LABEL: {
-            if (not f->label)
-                return nullptr;
-            return Init_Word(OUT, unwrap(f->label)); }
-
-          case SYM_NEAR:
-            return Init_Near_For_Frame(OUT, f);
-
-          case SYM_PARENT: {
-            //
-            // Only want action frames (though `pending? = true` ones count).
-            //
-            REBFRM *parent = f;
-            while ((parent = parent->prior) != FS_BOTTOM) {
-                if (not Is_Action_Frame(parent))
-                    continue;
-
-                REBCTX* ctx_parent = Context_For_Frame_May_Manage(parent);
-                return_value (CTX_ARCHETYPE(ctx_parent));
-            }
-            return nullptr; }
-
-          default:
-            break;
-        }
-        fail (Error_Cannot_Reflect(VAL_TYPE(context), property)); }
-
 
       case SYM_APPEND: {
         REBVAL *arg = D_ARG(2);
@@ -1361,6 +1249,118 @@ REBTYPE(Context)
 
     return R_UNHANDLED;
 }
+
+
+//
+//  REBTYPE: C
+//
+// FRAME! adds some additional reflectors to the usual things you can do with
+// an object, but falls through to REBTYPE(Context) for most things.
+//
+REBTYPE(Frame)
+{
+    REBVAL *frame = D_ARG(1);
+    REBCTX *c = VAL_CONTEXT(frame);
+
+    OPT_SYMID symid = ID_OF_SYMBOL(verb);
+
+    switch (symid) {
+      case SYM_REFLECT : {
+        INCLUDE_PARAMS_OF_REFLECT;
+        UNUSED(ARG(value));  // covered by `frame`
+
+        SYMID prop = VAL_WORD_ID(ARG(property));
+
+        if (prop == SYM_LABEL) {
+            //
+            // Can be answered for frames that have no execution phase, if
+            // they were initialized with a label.
+            //
+            option(const Symbol*) label = VAL_FRAME_LABEL(frame);
+            if (label)
+                return Init_Word(OUT, unwrap(label));
+
+            // If the frame is executing, we can look at the label in the
+            // REBFRM*, which will tell us what the overall execution label
+            // would be.  This might be confusing, however...if the phase
+            // is drastically different.  Review.
+        }
+
+        if (prop == SYM_ACTION) {
+            //
+            // Currently this can be answered for any frame, even if it is
+            // expired...though it probably shouldn't do this unless it's
+            // an indefinite lifetime object, so that paramlists could be
+            // GC'd if all the frames pointing to them were expired but still
+            // referenced somewhere.
+            //
+            return Init_Action(
+                OUT,
+                VAL_FRAME_PHASE(frame),  // just a REBACT*, no binding
+                VAL_FRAME_LABEL(frame),
+                VAL_FRAME_BINDING(frame)  // e.g. where RETURN returns to
+            );
+        }
+
+        REBFRM *f = CTX_FRAME_MAY_FAIL(c);
+
+        switch (prop) {
+          case SYM_FILE: {
+            const REBSTR *file = FRM_FILE(f);
+            if (not file)
+                return nullptr;
+            return Init_File(OUT, file); }
+
+          case SYM_LINE: {
+            REBLIN line = FRM_LINE(f);
+            if (line == 0)
+                return nullptr;
+            return Init_Integer(OUT, line); }
+
+          case SYM_LABEL: {
+            if (not f->label)
+                return nullptr;
+            return Init_Word(OUT, unwrap(f->label)); }
+
+          case SYM_NEAR:
+            return Init_Near_For_Frame(OUT, f);
+
+          case SYM_PARENT: {
+            //
+            // Only want action frames (though `pending? = true` ones count).
+            //
+            REBFRM *parent = f;
+            while ((parent = parent->prior) != FS_BOTTOM) {
+                if (not Is_Action_Frame(parent))
+                    continue;
+
+                REBCTX* ctx_parent = Context_For_Frame_May_Manage(parent);
+                return_value (CTX_ARCHETYPE(ctx_parent));
+            }
+            return nullptr; }
+
+          default:
+            break;
+        }
+      }
+    }
+
+    return T_Context(frame_, verb);
+}
+
+
+//
+//  CT_Frame: C
+//
+REBINT CT_Frame(noquote(const Cell*) a, noquote(const Cell*) b, bool strict)
+  { return CT_Context(a, b, strict); }
+
+
+//
+//  MF_Frame: C
+//
+void MF_Frame(REB_MOLD *mo, noquote(const Cell*) v, bool form)
+  { return MF_Context(mo, v, form); }
 
 
 //

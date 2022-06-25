@@ -101,58 +101,106 @@ REB_R TO_Port(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 //
 REBTYPE(Port)
 {
+    REBVAL *port = D_ARG(1);
+    assert(IS_PORT(port));
+
     SYMID id = ID_OF_SYMBOL(verb);
 
-    // !!! The ability to transform some BLOCK!s into PORT!s for some actions
-    // was hardcoded in a fairly ad-hoc way in R3-Alpha, which was based on
-    // an integer range of action numbers.  Ren-C turned these numbers into
-    // symbols, where order no longer applied.  The mechanism needs to be
-    // rethought, see:
+    // See Context_Common_Action_Maybe_Unhandled() for why general delegation
+    // to T_Context() is not performed.
     //
-    // https://github.com/metaeducation/ren-c/issues/311
-    //
-    if (not IS_PORT(D_ARG(1))) {
-        switch (id) {
-
-        case SYM_READ:
-        case SYM_WRITE:
-        case SYM_QUERY:
-        case SYM_OPEN:
-        case SYM_CREATE:
-        case SYM_DELETE:
-        case SYM_RENAME: {
-            //
-            // !!! We are going to "re-apply" the call frame with routines we
-            // are going to read the D_ARG(1) slot *implicitly* regardless of
-            // what value points to.
-            //
-            const REBVAL *made = rebValue("make port! @", D_ARG(1));
-            assert(IS_PORT(made));
-            Copy_Cell(D_ARG(1), made);
-            rebRelease(made);
-            break; }
-
-        // Once handled SYM_REFLECT here by delegating to T_Context(), but
-        // common reflectors now in Context_Common_Action_Or_End()
-
-        default:
-            break;
-        }
-    }
-
-    if (not IS_PORT(D_ARG(1)))
-        fail (D_ARG(1));
-
-    REBVAL *port = D_ARG(1);
-
     if (id == SYM_PICK_P or id == SYM_POKE_P)
         return T_Context(frame_, verb);
 
-    REB_R r = Context_Common_Action_Maybe_Unhandled(frame_, verb);
-    if (r != R_UNHANDLED)
-        return r;
+    REBCTX *ctx = VAL_CONTEXT(port);
+    REBVAL *actor = CTX_VAR(ctx, STD_PORT_ACTOR);
 
-    return Do_Port_Action(frame_, port, verb);
+    REB_R r;
+
+    // If actor is a HANDLE!, it should be a PAF
+    //
+    // !!! Review how user-defined types could make this better/safer, as if
+    // it's some other kind of handle value this could crash.
+    //
+    if (Is_Native_Port_Actor(actor)) {
+        r = cast(PORT_HOOK*, VAL_HANDLE_CFUNC(actor))(frame_, port, verb);
+        goto post_process_output;
+    }
+
+    if (not IS_OBJECT(actor))
+        fail (Error_Invalid_Actor_Raw());
+
+    // Dispatch object function:
+
+  blockscope {
+    const bool strict = false;
+    REBLEN n = Find_Symbol_In_Context(actor, verb, strict);
+
+    REBVAL *action = (n == 0)
+        ? cast(REBVAL*, nullptr)  // C++98 ambiguous w/o cast
+        : CTX_VAR(VAL_CONTEXT(actor), n);
+
+    if (not action or not IS_ACTION(action)) {
+        DECLARE_LOCAL (verb_cell);
+        Init_Word(verb_cell, verb);
+        fail (Error_No_Port_Action_Raw(verb_cell));
+    }
+
+    if (Redo_Action_Maybe_Stale_Throws(OUT, frame_, VAL_ACTION(action)))
+        return THROWN;
+
+    Clear_Stale_Flag(OUT);
+
+    r = OUT; // result should be in frame_->out
+  }
+
+    // !!! READ's /LINES and /STRING refinements are something that should
+    // work regardless of data source.  But R3-Alpha only implemented it in
+    // %p-file.c, so it got ignored.  Ren-C caught that it was being ignored,
+    // so the code was moved to here as a quick fix.
+    //
+    // !!! Note this code is incorrect for files read in chunks!!!
+
+  post_process_output:
+
+    if (ID_OF_SYMBOL(verb) == SYM_READ) {
+        INCLUDE_PARAMS_OF_READ;
+
+        UNUSED(PAR(source));
+        UNUSED(PAR(part));
+        UNUSED(PAR(seek));
+
+        if (not r)
+            return nullptr;  // !!! `read dns://` returns nullptr on failure
+
+        if (r != OUT) {
+            assert(not IS_RETURN_SIGNAL(r));  // R_THROWN etc. unsupported
+            assert(Is_Api_Value(r));
+            Copy_Cell(OUT, r);
+            Release_Api_Value_If_Unmanaged(r);
+        }
+
+        if ((REF(string) or REF(lines)) and not IS_TEXT(OUT)) {
+            if (not IS_BINARY(OUT))
+                fail ("/STRING or /LINES used on a non-BINARY!/STRING! read");
+
+            REBSIZ size;
+            const REBYTE *data = VAL_BINARY_SIZE_AT(&size, OUT);
+            REBSTR *decoded = Make_Sized_String_UTF8(cs_cast(data), size);
+            Init_Text(OUT, decoded);
+        }
+
+        if (REF(lines)) { // caller wants a BLOCK! of STRING!s, not one string
+            assert(IS_TEXT(OUT));
+
+            DECLARE_LOCAL (temp);
+            Move_Cell(temp, OUT);
+            Init_Block(OUT, Split_Lines(temp));
+        }
+        return OUT;
+    }
+
+    return r;
 }
 
 
@@ -226,5 +274,5 @@ REBTYPE(Url)
     Move_Cell(D_ARG(1), port);
     rebRelease(port);
 
-    return Do_Port_Action(frame_, D_ARG(1), verb);
+    return R_CONTINUATION;
 }

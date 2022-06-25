@@ -206,7 +206,7 @@ error       "error context with id, arguments, and stack origin"
             context     +       +       [context]
 
 frame       "arguments and locals of a specific action invocation"
-            context     +       *       [context]
+            frame       +       *       [context]
 
 port        "external series, an I/O channel"
             port        +       context [context]

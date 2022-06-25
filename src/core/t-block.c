@@ -1337,19 +1337,38 @@ REBTYPE(Array)
         Shuffle_Array(arr, VAL_INDEX(array), did REF(secure));
         return_value (array); }
 
+    // !!! The ability to transform some BLOCK!s into PORT!s for some actions
+    // was hardcoded in a fairly ad-hoc way in R3-Alpha, which was based on
+    // an integer range of action numbers.  Ren-C turned these numbers into
+    // symbols, where order no longer applied.  The mechanism needs to be
+    // rethought, see:
+    //
+    // https://github.com/metaeducation/ren-c/issues/311
+    //
+
+      case SYM_READ:
+      case SYM_WRITE:
+      case SYM_QUERY:
+      case SYM_OPEN:
+      case SYM_CREATE:
+      case SYM_DELETE:
+      case SYM_RENAME: {
+        //
+        // !!! We are going to "re-apply" the call frame with routines we
+        // are going to read the D_ARG(1) slot *implicitly* regardless of
+        // what value points to.
+        //
+        const REBVAL *made = rebValue("make port! @", D_ARG(1));
+        assert(IS_PORT(made));
+        Copy_Cell(D_ARG(1), made);
+        rebRelease(made);
+        return R_CONTINUATION; }  // should dispatch to the PORT!
+
       default:
         break; // fallthrough to error
     }
 
-    // If it wasn't one of the block actions, fall through and let the port
-    // system try.  OPEN [scheme: ...], READ [ ], etc.
-    //
-    // !!! This used to be done by sensing explicitly what a "port action"
-    // was, but that involved checking if the action was in a numeric range.
-    // The symbol-based action dispatch is more open-ended.  Trying this
-    // to see how it works.
-
-    return T_Port(frame_, verb);
+    return R_UNHANDLED;
 }
 
 

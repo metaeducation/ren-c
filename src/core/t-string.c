@@ -1188,8 +1188,13 @@ REBTYPE(String)
       default:
         // Let the port system try the action, e.g. OPEN %foo.txt
         //
-        if ((IS_FILE(v) or IS_URL(v)))
-            return T_Port(frame_, verb);
+        if ((IS_FILE(v) or IS_URL(v))) {
+            const REBVAL *made = rebValue("make port! @", D_ARG(1));
+            assert(IS_PORT(made));
+            Copy_Cell(D_ARG(1), made);
+            rebRelease(made);
+            return R_CONTINUATION;
+        }
     }
 
     return R_UNHANDLED;
