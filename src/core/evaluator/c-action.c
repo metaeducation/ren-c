@@ -1046,6 +1046,9 @@ REB_R Action_Executor(REBFRM *f)
         STATE = 255;
         return R_CONTINUATION;
 
+      case C_SUSPEND:
+        return R_SUSPEND;
+
       case C_THROWN:
         //
         // Stay THROWN and let stack levels above try and catch

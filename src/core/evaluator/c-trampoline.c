@@ -105,17 +105,11 @@ REB_R Just_Use_Out_Executor(REBFRM *f)
 
 
 //
-//  Trampoline_Throws: C
+//  Trampoline_Core: C
 //
-bool Trampoline_Throws(REBFRM *root)
+REB_R Trampoline_Core(void)
 {
     struct Reb_Jump jump;  // only one setjmp() point per trampoline invocation
-
-    // !!! More efficient if caller sets this, but set it ourselves for now.
-    //
-    Set_Eval_Flag(root, ROOT_FRAME);  // can't unwind across, see [1]
-
-    assert(root == FS_TOP);  // this could be relaxed, see [2]
 
   push_trap_for_longjmp: {  //////////////////////////////////////////////////
 
@@ -174,7 +168,7 @@ bool Trampoline_Throws(REBFRM *root)
 
         if (abrupt_is_root_frame) {
             Clear_Eval_Flag(FS_TOP, ROOT_FRAME);
-            return true;  // say the frame threw
+            return R_THROWN;  // say the frame threw
         }
 
         goto push_trap_for_longjmp;  // have to push again to trap again
@@ -252,7 +246,7 @@ bool Trampoline_Throws(REBFRM *root)
             STATE = 0;  // !!! Frame gets reused, review
             DROP_TRAP_SAME_STACKLEVEL_AS_PUSH(&jump);
             Clear_Eval_Flag(FS_TOP, ROOT_FRAME);
-            return false;
+            return FS_TOP->out;
         }
 
         // Some natives and executors want to be able to leave a pushed frame
@@ -294,6 +288,10 @@ bool Trampoline_Throws(REBFRM *root)
         FRAME = FS_TOP;
         goto bounce_on_the_trampoline;
     }
+
+    if (r == R_SUSPEND)  // just to get emscripten started w/o Asyncify
+        return R_SUSPEND;
+
 
   //=//// HANDLE THROWS, INCLUDING (NON-ABRUPT) ERRORS ////////////////////=//
 
@@ -350,7 +348,7 @@ bool Trampoline_Throws(REBFRM *root)
             assert(Not_Eval_Flag(FS_TOP, TRAMPOLINE_KEEPALIVE));
             DROP_TRAP_SAME_STACKLEVEL_AS_PUSH(&jump);
             Clear_Eval_Flag(FS_TOP, ROOT_FRAME);
-            return true;
+            return R_THROWN;
         }
 
         Abort_Frame(FRAME);  // restores to baseline
@@ -367,3 +365,28 @@ bool Trampoline_Throws(REBFRM *root)
     assert(!"executor(f) not OUT, R_THROWN, or R_CONTINUATION");
     panic (r);
 }}
+
+
+//
+//  Trampoline_Throws: C
+//
+bool Trampoline_Throws(REBFRM *root)
+{
+    // !!! More efficient if caller sets this, but set it ourselves for now.
+    //
+    Set_Eval_Flag(root, ROOT_FRAME);  // can't unwind across, see [1]
+
+    assert(root == FS_TOP);  // this could be relaxed, see [2]
+
+    REB_R r = Trampoline_Core();
+    if (r == R_THROWN)
+        return true;
+    if (r == root->out)
+        return false;
+
+  #if DEBUG_FANCY_PANIC
+    Dump_Stack(root);
+  #endif
+
+    fail ("Cannot interpret Trampoline result");
+}

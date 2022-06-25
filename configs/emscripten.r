@@ -29,7 +29,8 @@ use-wasm: default [true]
 ;
 ; https://forum.rebol.info/t/pros-and-cons-of-the-pthread-web-build/1425
 ;
-use-asyncify: true
+use-asyncify: false
+use-pthreads: false
 
 ; Making an actual debug build of the interpreter core is prohibitive for
 ; emscripten in general usage--even on a developer machine.  This enables a
@@ -67,7 +68,7 @@ extensions: make map! [
     Clipboard -
     Crypt -
     Console +
-    Debugger +
+    Debugger -
     DNS -
     Event -
     Filesystem -
@@ -316,8 +317,9 @@ ldflags: compose2 [
         ; whitelist needs true function names
         ;
         {--profiling-funcs}
-    ]]
-    else [[
+    ]]))
+
+    ((if use-pthreads [[
         {-s USE_PTHREADS=1}  ; must be in both cflags and ldflags if used
 
         ; If you don't specify a thread pool size as a linker flag, the first

@@ -402,10 +402,27 @@ EXTERN_C intptr_t RL_rebPromise(void *p, va_list *vaptr)
 }
 
 
+// 1. Cooperative suspension is when there are no "stackful" invocations of
+//    the trampoline.  This is the preferred method.  Pre-emptive suspension
+//    is when the stack is not able to be unwound, and tricky code in
+//    emscripten has to be used.
+//
 void RunPromise(void)
 {
     struct Reb_Promise_Info *info = PG_Promises;
-    assert(info->state == PROMISE_STATE_QUEUEING);
+
+    switch (info->state) {
+      case PROMISE_STATE_QUEUEING :
+        goto queue_promise;
+
+      case PROMISE_STATE_RUNNING :
+        goto run_promise;
+
+      default : assert(false);
+    }
+
+  queue_promise: {  //////////////////////////////////////////////////////////
+
     info->state = PROMISE_STATE_RUNNING;
 
     REBARR *a = ARR(Pointer_From_Heapaddr(info->promise_id));
@@ -413,15 +430,39 @@ void RunPromise(void)
     SET_SERIES_FLAG(a, MANAGED);  // but need it back on to execute it
 
     DECLARE_LOCAL (code);
-    Init_Group(code, a);
-    PUSH_GC_GUARD(code);
+    Init_Block(code, a);
+
+    DECLARE_FRAME_AT (f, code, EVAL_MASK_DEFAULT | EVAL_FLAG_ROOT_FRAME);
+    Push_Frame (Alloc_Value(), f);
+    goto run_promise;
+
+} run_promise: {  ////////////////////////////////////////////////////////////
+
+    REB_R r = Trampoline_Core();
+
+    if (r == R_SUSPEND) {  // cooperative suspension, see [1]
+        return;  // the setTimeout() on resolve/reject will queue us back
+    }
+
+    REBVAL *metaresult = FS_TOP->out;
+    if (r == R_THROWN) {
+        REBCTX *error = Error_No_Catch_For_Throw(FS_TOP);
+        Abort_Frame(FS_TOP);
+        Init_Error(metaresult, error);
+    }
+    else {
+        if (Is_Void(metaresult))
+            Init_Meta_Of_Void(metaresult);
+        else
+            Meta_Quotify(metaresult);
+
+        Drop_Frame(FS_TOP);
+    }
 
     // Note: The difference between `throw()` and `reject()` in JS is subtle.
     //
     // https://stackoverflow.com/q/33445415/
 
-    REBVAL *metaresult = rebEntrap(code);
-    DROP_GC_GUARD(code);
     TRACE("RunPromise() finished Running Array");
 
     if (info->state == PROMISE_STATE_RUNNING) {
@@ -482,7 +523,7 @@ void RunPromise(void)
     assert(PG_Promises == info);
     PG_Promises = info->next;
     FREE(struct Reb_Promise_Info, info);
-}
+}}
 
 
 //
@@ -524,6 +565,10 @@ EXTERN_C void RL_rebSignalResolveNative_internal(intptr_t frame_id) {
 
     assert(PG_Native_State == NATIVE_STATE_RUNNING);
     PG_Native_State = NATIVE_STATE_RESOLVED;
+
+    EM_ASM(
+        { setTimeout(function() { reb.m._RL_rebIdle_internal(); }, 50); }
+    );  // note `_RL` (leading underscore means no cwrap)
 }
 
 
@@ -534,6 +579,10 @@ EXTERN_C void RL_rebSignalRejectNative_internal(intptr_t frame_id) {
 
     assert(PG_Native_State == NATIVE_STATE_RUNNING);
     PG_Native_State = NATIVE_STATE_REJECTED;
+
+    EM_ASM(
+        { setTimeout(function() { reb.m._RL_rebIdle_internal(); }, 50); }
+    );  // note `_RL` (leading underscore means no cwrap)
 }
 
 
@@ -547,12 +596,56 @@ EXTERN_C void RL_rebSignalRejectNative_internal(intptr_t frame_id) {
 //
 // An AWAITER can only be called inside a rebPromise().
 //
+//////////////////////////////////////////////////////////////////////////////
+//
+// 1. Whether it's an awaiter or not (e.g. whether it has an `async` JS
+//    function as the body), the same interface is used to call the function.
+//    It will communicate whether an error happened or not through the
+//    `rebSignalResolveNative()` or `rebSignalRejectNative()` either way,
+//    and the results are fetched with the same mechanic.  But by the time
+//    the JavaScript is finished running for a non-awaiter, a resolve or
+//    reject must have happened...awaiters probably need more time.
+//
+// 2. We don't know exactly what JS event is going to trigger and cause a
+//    resolve() to happen.  It could be a timer, it could be a fetch(), it
+//    could be anything.  Whether you're using a cooperative stackless yield
+//    from Ren-C or emscripten's (fattening, slower) Asyncify capability, you
+//    pretty much have to use polling.
+//
+//    (Note: This may make pthreads sound appealing to get pthread_wait(), but
+//     that route was tried and fraught with overall complexity.  The cost was
+//     likely greater overall than the cost of polling--especially since it
+//     often used setTimeout() to accomplish the threading illusions in the
+//     first place!)
+//
+// 3. The GetNativeError_internal() code calls libRebol to build the error,
+//    via `reb.Value("make error!", ...)`.  But this means that if the
+//    evaluator has had a halt signaled, that would be the code that would
+//    convert it to a throw.  For now, the halt signal is communicated
+//    uniquely back to us as 0.
+//
 REB_R JavaScript_Dispatcher(REBFRM *frame_)
 {
     REBFRM *f = frame_;
 
-    heapaddr_t native_id = Native_Id_For_Action(FRM_PHASE(f));
     heapaddr_t frame_id = Frame_Id_For_Frame_May_Outlive_Call(f);
+
+    enum {
+        ST_JAVASCRIPT_INITIAL_ENTRY = 0,
+        ST_JAVASCRIPT_RUNNING
+    };
+
+    switch (STATE) {
+      case ST_JAVASCRIPT_INITIAL_ENTRY :
+        goto initial_entry;
+
+      case ST_JAVASCRIPT_RUNNING :
+        goto poll_for_resolve_or_reject;
+
+      default : assert(false);
+    }
+
+  initial_entry: {  //////////////////////////////////////////////////////////
 
     REBARR *details = ACT_DETAILS(FRM_PHASE(f));
     bool is_awaiter = VAL_LOGIC(ARR_AT(details, IDX_JS_NATIVE_IS_AWAITER));
@@ -572,13 +665,10 @@ REB_R JavaScript_Dispatcher(REBFRM *frame_)
     if (PG_Native_State != NATIVE_STATE_NONE)
         assert(!"Cannot call JS-NATIVE during JS-NATIVE at this time");
 
+    STATE = ST_JAVASCRIPT_RUNNING;  // !!! Can the states be unified?
     PG_Native_State = NATIVE_STATE_RUNNING;
 
-    // Whether it's an awaiter or not (e.g. whether it has an `async` JS
-    // function as the body), the same interface is used to call the function.
-    // It will communicate whether an error happened or not through the
-    // `rebSignalResolveNative()` or `rebSignalRejectNative()` either way,
-    // and the results are fetched with the same mechanic.
+    heapaddr_t native_id = Native_Id_For_Action(FRM_PHASE(f));
 
     EM_ASM(
         { reb.RunNative_internal($0, $1) },
@@ -586,19 +676,13 @@ REB_R JavaScript_Dispatcher(REBFRM *frame_)
         frame_id  // => $1
     );
 
-    // We don't know exactly what JS event is going to trigger and cause a
-    // resolve() to happen.  It could be a timer, it could be a fetch(),
-    // it could be anything.  The Asyncify build doesn't really have a choice
-    // other than to poll...there's no pthread wait conditions available.
-    //
-    // (Note: While this may make pthreads sound appealing, that route was
-    // tried and fraught with overall complexity.  The cost was likely greater
-    // overall than the cost of polling--especially since it often used
-    // setTimeout() to accomplish the threading illusions in the first place!)
-    //
-    // We wait at least 50msec (probably more, as we don't control how long
-    // the JS will be running whatever it does).
-    //
+    if (not is_awaiter)  // same tactic for non-awaiter, see [1]
+        assert(PG_Native_State != NATIVE_STATE_RUNNING);
+
+    goto poll_for_resolve_or_reject;  // polling is the best we got, see [2]
+
+} poll_for_resolve_or_reject: {  /////////////////////////////////////////////
+
     TRACE("JavaScript_Dispatcher() => begin emscripten_sleep() loop");
     while (PG_Native_State == NATIVE_STATE_RUNNING) {  // !!! volatile?
         //
@@ -606,61 +690,19 @@ REB_R JavaScript_Dispatcher(REBFRM *frame_)
         // triggering of a cancellation signal.  See implementation notes for
         // `reb.CancelAllCancelables_internal()`.
         //
-        emscripten_sleep(50);
+        /* emscripten_sleep(50); */
+
+        return R_SUSPEND; // signals trampoline to leave stack
     }
     TRACE("JavaScript_Dispatcher() => end emscripten_sleep() loop");
 
-    // The protocol for JavaScript returning Ren-C API values to Ren-C is to
-    // do so with functions that either "resolve" (succeed) or "reject"
-    // (e.g. fail).  Even non-async functions use the callbacks, so that they
-    // can signal a failure bubbling up out of them as distinct from success.
-
-    if (PG_Native_State == NATIVE_STATE_REJECTED) {
-        //
-        // !!! Ultimately we'd like to make it so JavaScript code catches the
-        // unmodified error that was throw()'n out of the JavaScript, or if
-        // Rebol code calls javascript that calls Rebol that errors...it would
-        // "tunnel" the error through and preserve the identity as best it
-        // could.  But for starters, the transformations are lossy.
-
-        PG_Native_State = NATIVE_STATE_NONE;
-
-        // !!! The GetNativeError_internal() code calls libRebol to build the
-        // error, via `reb.Value("make error!", ...)`.  But this means that
-        // if the evaluator has had a halt signaled, that would be the code
-        // that would convert it to a throw.  For now, the halt signal is
-        // communicated uniquely back to us as 0.
-        //
-        heapaddr_t error_addr = EM_ASM_INT(
-            { return reb.GetNativeError_internal($0) },
-            frame_id  // => $0
-        );
-
-        if (error_addr == 0) { // !!! signals a halt...not a normal error
-            TRACE("JavaScript_Dispatcher() => throwing a halt");
-
-            // We clear the signal now that we've reacted to it.  (If we did
-            // not, then when the console tried to continue running to handle
-            // the throw it would have problems.)
-            //
-            // !!! Is there a good time to do this where we might be able to
-            // call GetNativeError_internal()?  Or is this a good moment to
-            // know it's "handled"?
-            //
-            CLR_SIGNAL(SIG_HALT);
-
-            return Init_Thrown_With_Label(FRAME, Lib(NULL), Lib(HALT));
-        }
-
-        REBVAL *error = VAL(Pointer_From_Heapaddr(error_addr));
-        REBCTX *ctx = VAL_CONTEXT(error);
-        rebRelease(error);  // !!! failing, so not actually needed (?)
-
-        TRACE("Calling fail() with error context");
-        fail (ctx);
-    }
+    if (PG_Native_State == NATIVE_STATE_REJECTED)
+        goto handle_rejected;
 
     assert(PG_Native_State == NATIVE_STATE_RESOLVED);
+    goto handle_resolved;
+
+} handle_resolved: {  ////////////////////////////////////////////////////////
 
     heapaddr_t result_addr = EM_ASM_INT(
         { return reb.GetNativeResult_internal($0) },
@@ -681,7 +723,45 @@ REB_R JavaScript_Dispatcher(REBFRM *frame_)
 
     FAIL_IF_BAD_RETURN_TYPE(f);
     return OUT;
-}
+
+} handle_rejected: {  ////////////////////////////////////////////////////////
+
+    // !!! Ultimately we'd like to make it so JavaScript code catches the
+    // unmodified error that was throw()'n out of the JavaScript, or if
+    // Rebol code calls javascript that calls Rebol that errors...it would
+    // "tunnel" the error through and preserve the identity as best it
+    // could.  But for starters, the transformations are lossy.
+
+    PG_Native_State = NATIVE_STATE_NONE;
+
+    heapaddr_t error_addr = EM_ASM_INT(
+        { return reb.GetNativeError_internal($0) },
+        frame_id  // => $0
+    );
+
+    if (error_addr == 0) { // Signals halt...not normal error, see [3]
+        TRACE("JavaScript_Dispatcher() => throwing a halt");
+
+        // We clear the signal now that we've reacted to it.  (If we did
+        // not, then when the console tried to continue running to handle
+        // the throw it would have problems.)
+        //
+        // !!! Is there a good time to do this where we might be able to
+        // call GetNativeError_internal()?  Or is this a good moment to
+        // know it's "handled"?
+        //
+        CLR_SIGNAL(SIG_HALT);
+
+        return Init_Thrown_With_Label(FRAME, Lib(NULL), Lib(HALT));
+    }
+
+    REBVAL *error = VAL(Pointer_From_Heapaddr(error_addr));
+    REBCTX *ctx = VAL_CONTEXT(error);
+    rebRelease(error);  // !!! failing, so not actually needed (?)
+
+    TRACE("Calling fail() with error context");
+    fail (ctx);
+}}
 
 
 //

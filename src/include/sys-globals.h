@@ -116,6 +116,7 @@ PVAR REBVAL PG_R_Thrown;
 PVAR REBVAL PG_R_Unhandled;
 PVAR REBVAL PG_R_Continuation;
 PVAR REBVAL PG_R_Delegation;
+PVAR REBVAL PG_R_Suspend;
 
 
 // These are root variables which used to be described in %root.r and kept

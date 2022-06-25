@@ -232,6 +232,14 @@ inline static bool Is_Throwing(REBFRM *frame_) {
     cast(REBVAL*, &PG_R_Delegation)
 
 
+// For starters, a simple signal for suspending stacks in order to be able to
+// try not using Asyncify (or at least not relying on it so heavily)
+//
+#define C_SUSPEND 'S'
+#define R_SUSPEND \
+    cast(REBVAL*, &PG_R_Suspend)
+
+
 #define CELL_MASK_ACTION \
     (CELL_FLAG_FIRST_IS_NODE | CELL_FLAG_SECOND_IS_NODE)
 
