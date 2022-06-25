@@ -1499,6 +1499,7 @@ void Drop_Action(REBFRM *f) {
   #endif
 
     TRASH_POINTER_IF_DEBUG(f->original); // action is no longer running
+    f->executor = nullptr;  // so GC won't see this frame as Action GC
 
     TRASH_OPTION_IF_DEBUG(f->label);
   #if DEBUG_FRAME_LABELS
