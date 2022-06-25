@@ -946,6 +946,38 @@ REBVAL *RL_rebValue(const void *p, va_list *vaptr)
 
 
 //
+//  rebPushContinuation: RL_API
+//
+// Helper for when variadic code wants to run as its own stack frame.
+//
+void RL_rebPushContinuation(
+    REBVAL *out,
+    uintptr_t flags,
+    const void *p, va_list *vaptr
+){
+    ENTER_API;
+
+    DECLARE_VA_FEED (feed, p, vaptr, FEED_MASK_DEFAULT);
+
+    REBDSP dsp_orig = DSP;
+    while (Not_End(feed->value)) {
+        Derelativize(DS_PUSH(), feed->value, FEED_SPECIFIER(feed));
+        Set_Cell_Flag(DS_TOP, UNEVALUATED);
+        Fetch_Next_In_Feed(feed);
+    }
+    // Note: exhausting feed should take care of the va_end()
+    Free_Feed(feed);
+
+    REBARR *code = Pop_Stack_Values_Core(dsp_orig, SERIES_FLAG_MANAGED);
+
+    DECLARE_LOCAL (block);
+    Init_Block(block, code);
+    DECLARE_FRAME_AT(f, block, flags);
+    Push_Frame(out, f);
+}
+
+
+//
 //  rebMeta: RL_API
 //
 // Builds in a ^META operation to rebValue; shorthand that's more efficient.

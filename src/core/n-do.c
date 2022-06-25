@@ -372,17 +372,15 @@ REBNATIVE(do)
       do_string : {
         UNUSED(REF(args)); // detected via `value? :arg`
 
-        if (rebRunThrows(
+        rebPushContinuation(
             OUT,  // <-- output cell
+            EVAL_MASK_DEFAULT | EVAL_FLAG_MAYBE_STALE,
             Sys(SYM_DO_P),
                 source,
                 rebQ(REF(args)),
                 REF(only) ? Lib(TRUE) : Lib(FALSE)
-        )){
-            return THROWN;
-        }
-        return_non_void (OUT);
-      }
+        );
+        return R_DELEGATION; }
 
       case REB_ERROR :
         fail (VAL_CONTEXT(source));  // would fail anyway, see [2]
