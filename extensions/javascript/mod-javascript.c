@@ -378,6 +378,8 @@ EXTERN_C intptr_t RL_rebPromise(void *p, va_list *vaptr)
     }
     // Note: exhausting feed should take care of the va_end()
 
+    Free_Feed(feed);  // feeds are dynamically allocated and must be freed
+
     REBARR *code = Pop_Stack_Values(dsp_orig);
     assert(NOT_SERIES_FLAG(code, MANAGED));  // using array as ID, don't GC it
 
