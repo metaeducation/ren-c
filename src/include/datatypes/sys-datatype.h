@@ -156,9 +156,6 @@ inline static CFUNC** HOOKS_FOR_TYPE_OF(noquote(const Cell*) v) {
 #define Generic_Hook_For_Type_Of(v) \
     cast(GENERIC_HOOK*, HOOKS_FOR_TYPE_OF(v)[IDX_GENERIC_HOOK])
 
-#define Path_Hook_For_Type_Of(v) \
-    cast(PATH_HOOK*, HOOKS_FOR_TYPE_OF(v)[IDX_PATH_HOOK])
-
 #define Compare_Hook_For_Type_Of(v) \
     cast(COMPARE_HOOK*, HOOKS_FOR_TYPE_OF(v)[IDX_COMPARE_HOOK])
 
