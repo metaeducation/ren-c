@@ -1097,17 +1097,6 @@ REB_R Action_Executor(REBFRM *f)
 
   skip_output_check:
 
-    Drop_Action(f);
-
-    // Want to keep this flag between an operation and an ensuing enfix in
-    // the same frame, so can't clear in Drop_Action(), e.g. due to:
-    //
-    //     left-the: enfix :the
-    //     o: make object! [f: does [1]]
-    //     o.f left-the  ; want error suggesting -> here, need flag for that
-    //
-    Clear_Eval_Flag(f, DIDNT_LEFT_QUOTE_PATH);
-
     if (GET_FEED_FLAG(f->feed, NEXT_ARG_FROM_OUT)) {
         //
         // !!! This used to assert that there was no NEXT_ARG_FROM_OUT flag
@@ -1133,6 +1122,17 @@ REB_R Action_Executor(REBFRM *f)
         //
         fail ("Left lookback toward thing that took no args, look at later");
     }
+
+    Drop_Action(f);  // must fail before Drop_Action()
+
+    // Want to keep this flag between an operation and an ensuing enfix in
+    // the same frame, so can't clear in Drop_Action(), e.g. due to:
+    //
+    //     left-the: enfix :the
+    //     o: make object! [f: does [1]]
+    //     o.f left-the  ; want error suggesting -> here, need flag for that
+    //
+    Clear_Eval_Flag(f, DIDNT_LEFT_QUOTE_PATH);
 
     if (Not_Eval_Flag(f, MAYBE_STALE))
         Clear_Stale_Flag(f->out);
