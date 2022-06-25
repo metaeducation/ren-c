@@ -386,6 +386,26 @@ REBNATIVE(let)
     UNUSED(ARG(expression));
     REBFRM *f = frame_;  // fake variadic, see [1]
 
+    REBVAL *bindings_holder = ARG(return);
+
+    enum {
+        ST_LET_INITIAL_ENTRY = 0,
+        ST_LET_EVAL_STEP
+    };
+
+    switch (STATE) {
+      case ST_LET_INITIAL_ENTRY :
+        Init_Block(bindings_holder, EMPTY_ARRAY);
+        goto initial_entry;
+
+      case ST_LET_EVAL_STEP :
+        goto integrate_eval_bindings;
+
+      default : assert (false);
+    }
+
+  initial_entry: {  ///////////////////////////////////////////////////////////
+
     //=//// HANDLE LET (GROUP): VARIANTS ///////////////////////////////////=//
 
     // A first level of indirection is permitted since LET allows the syntax
@@ -429,17 +449,21 @@ REBNATIVE(let)
     // just writes the rebound copy into the OUT cell.
 
     REBSPC *bindings = f_specifier;  // specifier chain we may be adding to
+
     if (bindings and NOT_SERIES_FLAG(bindings, MANAGED))
         SET_SERIES_FLAG(bindings, MANAGED);  // natives don't always manage
-
-    bool need_eval_step;
 
     if (IS_WORD(vars) or IS_SET_WORD(vars)) {
         const Symbol *symbol = VAL_WORD_SYMBOL(vars);
         bindings = Make_Let_Patch(symbol, bindings);
 
-        need_eval_step = IS_SET_WORD(vars);
-        REBVAL *where = need_eval_step ? SPARE : OUT;
+        REBVAL *where;
+        if (IS_SET_WORD(vars)) {
+            STATE = ST_LET_EVAL_STEP;
+            where = SPARE;
+        }
+        else
+            where = OUT;
 
         Init_Any_Word(where, VAL_TYPE(vars), symbol);
         INIT_VAL_WORD_BINDING(where, bindings);
@@ -497,8 +521,13 @@ REBNATIVE(let)
             }
         }
 
-        need_eval_step = IS_SET_BLOCK(vars);
-        REBVAL *where = need_eval_step ? SPARE : OUT;
+        REBVAL *where;
+        if (IS_SET_BLOCK(vars)) {
+            STATE = ST_LET_EVAL_STEP;
+            where = SPARE;
+        }
+        else
+            where = OUT;
 
         if (altered) {  // elements altered, can't reuse input block rebound
             Init_Any_Array(
@@ -528,45 +557,56 @@ REBNATIVE(let)
     // Leverage same mechanism as REEVAL to preload the next execution step
     // with the rebound SET-WORD! or SET-BLOCK!
 
-    if (need_eval_step) {
-        assert(IS_SET_WORD(SPARE) or IS_SET_BLOCK(SPARE));
+    mutable_BINDING(bindings_holder) = bindings;
+    TRASH_POINTER_IF_DEBUG(bindings);  // catch uses after this point in scope
 
-        REBFLGS flags = EVAL_MASK_DEFAULT
-            | EVAL_FLAG_SINGLE_STEP
-            | (f->flags.bits & EVAL_FLAG_FULFILLING_ARG);
-
-        bool enfix = false;  // !!! Detect this?
-
-        if (Reevaluate_In_Subframe_Throws(
-            RESET(OUT),  // !!! this eval won't be invisible, right?
-            frame_,
-            SPARE,
-            flags,
-            enfix
-        )){
-            return THROWN;
-        }
-
-        if (f_specifier and IS_PATCH(f_specifier))  // add bindings, see [7]
-            bindings = Merge_Patches_May_Reuse(f_specifier, bindings);
-
-        f->feed->gotten = nullptr;  // invalidate next word's cache, see [8]
-    }
-    else {
+    if (STATE != ST_LET_EVAL_STEP) {
         assert(IS_WORD(OUT) or IS_BLOCK(OUT));  // should have written output
+        goto update_feed_binding;
     }
 
-    //=//// NOW UPDATE FEED SO FUTURE STEPS WILL USE NEW BINDINGS //////////=//
+    assert(IS_SET_WORD(SPARE) or IS_SET_BLOCK(SPARE));
+
+    REBFLGS flags = EVAL_MASK_DEFAULT
+        | EVAL_FLAG_SINGLE_STEP
+        | FLAG_STATE_BYTE(ST_EVALUATOR_REEVALUATING)
+        | (f->flags.bits & EVAL_FLAG_FULFILLING_ARG);
+
+    bool enfix = false;  // !!! Detect this?
+    if (enfix)
+        flags |= EVAL_FLAG_RUNNING_ENFIX;
+
+    DECLARE_FRAME (subframe, FRAME->feed, flags);
+    subframe->u.eval.current = SPARE;
+    Push_Frame(RESET(OUT), subframe);
+
+    assert(STATE == ST_LET_EVAL_STEP);  // checked above
+    continue_uncatchable_subframe (subframe);
+
+} integrate_eval_bindings: {  ////////////////////////////////////////////////
+
+    REBSPC *bindings = VAL_SPECIFIER(bindings_holder);
+
+    if (f_specifier and IS_PATCH(f_specifier)) { // add bindings, see [7]
+        bindings = Merge_Patches_May_Reuse(f_specifier, bindings);
+        mutable_BINDING(bindings_holder) = bindings;
+    }
+
+    f->feed->gotten = nullptr;  // invalidate next word's cache, see [8]
+    goto update_feed_binding;
+
+} update_feed_binding: {  /////////////////////////////////////////////////////
 
     // Going forward we want the feed's binding to include the LETs.  Note
     // that this can create the problem of applying the binding twice; this
     // needs systemic review.
 
+    REBSPC *bindings = VAL_SPECIFIER(bindings_holder);
     mutable_BINDING(FEED_SINGLE(f->feed)) = bindings;
 
     assert(not Is_Stale(OUT));
     return OUT;
-}
+}}
 
 
 //
