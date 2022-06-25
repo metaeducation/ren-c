@@ -106,6 +106,23 @@ REBTYPE(Port)
 
     SYMID id = ID_OF_SYMBOL(verb);
 
+    enum {
+        ST_TYPE_PORT_INITIAL_ENTRY = 0,
+        ST_TYPE_PORT_RUNNING_ACTOR
+    };
+
+    switch (STATE) {
+      case ST_TYPE_PORT_INITIAL_ENTRY :
+        goto initial_entry;
+
+      case ST_TYPE_PORT_RUNNING_ACTOR :
+        goto post_process_output;
+
+      default : assert(false);
+    }
+
+  initial_entry: {  //////////////////////////////////////////////////////////
+
     // See Context_Common_Action_Maybe_Unhandled() for why general delegation
     // to T_Context() is not performed.
     //
@@ -115,15 +132,23 @@ REBTYPE(Port)
     REBCTX *ctx = VAL_CONTEXT(port);
     REBVAL *actor = CTX_VAR(ctx, STD_PORT_ACTOR);
 
-    REB_R r;
-
     // If actor is a HANDLE!, it should be a PAF
     //
     // !!! Review how user-defined types could make this better/safer, as if
     // it's some other kind of handle value this could crash.
     //
     if (Is_Native_Port_Actor(actor)) {
-        r = cast(PORT_HOOK*, VAL_HANDLE_CFUNC(actor))(frame_, port, verb);
+        REB_R r = cast(PORT_HOOK*, VAL_HANDLE_CFUNC(actor))(frame_, port, verb);
+
+        if (not r)
+           Init_Nulled(OUT);
+        else if (r != OUT) {
+            assert(not IS_RETURN_SIGNAL(r));  // R_THROWN etc. unsupported
+            assert(Is_Api_Value(r));
+            Copy_Cell(OUT, r);
+            Release_Api_Value_If_Unmanaged(r);
+        }
+
         goto post_process_output;
     }
 
@@ -132,7 +157,6 @@ REBTYPE(Port)
 
     // Dispatch object function:
 
-  blockscope {
     const bool strict = false;
     REBLEN n = Find_Symbol_In_Context(actor, verb, strict);
 
@@ -147,16 +171,11 @@ REBTYPE(Port)
     }
 
     Push_Redo_Action_Frame(OUT, frame_, action);
-    if (Trampoline_Throws(FS_TOP)) {
-        Abort_Frame(FS_TOP);
-        return THROWN;
-    }
-    Drop_Frame(FS_TOP);
 
-    Clear_Stale_Flag(OUT);
+    STATE = ST_TYPE_PORT_RUNNING_ACTOR;
+    continue_uncatchable_subframe (FS_TOP);
 
-    r = OUT; // result should be in frame_->out
-  }
+} post_process_output: {  ////////////////////////////////////////////////////
 
     // !!! READ's /LINES and /STRING refinements are something that should
     // work regardless of data source.  But R3-Alpha only implemented it in
@@ -165,24 +184,15 @@ REBTYPE(Port)
     //
     // !!! Note this code is incorrect for files read in chunks!!!
 
-  post_process_output:
-
-    if (ID_OF_SYMBOL(verb) == SYM_READ) {
+    if (id == SYM_READ) {
         INCLUDE_PARAMS_OF_READ;
 
         UNUSED(PAR(source));
         UNUSED(PAR(part));
         UNUSED(PAR(seek));
 
-        if (not r)
+        if (Is_Nulled(OUT))
             return nullptr;  // !!! `read dns://` returns nullptr on failure
-
-        if (r != OUT) {
-            assert(not IS_RETURN_SIGNAL(r));  // R_THROWN etc. unsupported
-            assert(Is_Api_Value(r));
-            Copy_Cell(OUT, r);
-            Release_Api_Value_If_Unmanaged(r);
-        }
 
         if ((REF(string) or REF(lines)) and not IS_TEXT(OUT)) {
             if (not IS_BINARY(OUT))
@@ -201,11 +211,10 @@ REBTYPE(Port)
             Move_Cell(temp, OUT);
             Init_Block(OUT, Split_Lines(temp));
         }
-        return OUT;
     }
 
-    return r;
-}
+    return OUT;
+}}
 
 
 //
