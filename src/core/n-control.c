@@ -1322,19 +1322,41 @@ REBNATIVE(catch)
 {
     INCLUDE_PARAMS_OF_CATCH;
 
+    enum {
+        ST_CATCH_INITIAL_ENTRY = 0,
+        ST_CATCH_RUNNING_CODE
+    };
+
+    switch (STATE) {
+      case ST_CATCH_INITIAL_ENTRY:
+        goto initial_entry;
+
+      case ST_CATCH_RUNNING_CODE:
+        goto code_result_in_out;
+
+      default: assert(false);
+    }
+
+  initial_entry: {  //////////////////////////////////////////////////////////
+
     // /ANY would override /NAME, so point out the potential confusion
     //
     if (REF(any) and REF(name))
         fail (Error_Bad_Refines_Raw());
 
-    if (not Do_Any_Array_At_Throws(OUT, ARG(block), SPECIFIED)) {
+    STATE = ST_CATCH_RUNNING_CODE;
+    continue_catchable (OUT, ARG(block), END);
+
+} code_result_in_out: {  //////////////////////////////////////////////////////
+
+    if (not THROWING) {
         if (REF(result))
             rebElide(Lib(SET), rebQ(REF(result)), rebQ(OUT));
 
         return nullptr;  // no throw means just return null
     }
 
-    const REBVAL *label = VAL_THROWN_LABEL(frame_);
+    const REBVAL *label = VAL_THROWN_LABEL(FRAME);
 
     if (REF(any) and not (
         IS_ACTION(label)
@@ -1401,7 +1423,7 @@ REBNATIVE(catch)
 
     return THROWN; // throw label and value are held task local
 
-  was_caught:
+  was_caught:  ///////////////////////////////////////////////////////////////
 
     if (REF(name) or REF(any)) {
         REBARR *a = Make_Array(2);
@@ -1422,7 +1444,7 @@ REBNATIVE(catch)
 
     Isotopify_If_Nulled(OUT);  // a caught NULL triggers THEN, not ELSE
     return_branched (OUT);
-}
+}}
 
 
 //
