@@ -79,68 +79,46 @@
 
 
 //
-//  Redo_Action_Throws: C
+//  Push_Redo_Action_Frame: C
 //
 // This code takes a running call frame that has been built for one action
 // and then tries to map its parameters to invoke another action.  The new
 // action may have different orders and names of parameters.
 //
 // R3-Alpha had a rather brittle implementation, that had no error checking
-// and repetition of logic in Eval_Core.  Ren-C more simply builds a PATH! of
-// the target function and refinements.
-//
-// !!! This could be done more efficiently now by pushing the refinements to
-// the stack and using an APPLY-like technique.
-//
-// !!! This still isn't perfect and needs reworking, as it won't stand up in
-// the face of targets that are "adversarial" to the archetype:
+// and repetition of logic in Eval_Core.  Because R3-Alpha refinements took
+// multiple arguments, it could also fail with "adversarial" prototypes:
 //
 //     foo: func [a /b c] [...]  =>  bar: func [/b d e] [...]
 //                    foo/b 1 2  =>  bar/b 1 2
 //
-bool Redo_Action_Maybe_Stale_Throws(REBVAL *out, REBFRM *f, REBACT *run)
+void Push_Redo_Action_Frame(REBVAL *out, REBFRM *f1, const REBVAL *run)
 {
-    REBARR *code_arr = Make_Array(FRM_NUM_ARGS(f)); // max, e.g. no refines
-    Cell *code = ARR_HEAD(code_arr);
+    REBARR *normals = Make_Array(FRM_NUM_ARGS(f1));  // max, e.g. no refines
 
-    // !!! For the moment, if refinements are needed we generate a PATH! with
-    // the ACTION! at the head, and have the evaluator rediscover the stack
-    // of refinements.  This would be better if we left them on the stack
-    // and called into the evaluator with Begin_Action() already in progress
-    // on a new frame.  Improve when time permits.
-    //
-    REBDSP dsp_orig = DSP; // we push refinements as we find them
+    REBDSP dsp_orig = DSP;  // we push refinements as we find them
 
-    // !!! Is_Valid_Sequence_Element() requires action to be in a GROUP!
-    //
-    REBARR *group = Alloc_Singular(NODE_FLAG_MANAGED);
-    Copy_Cell(ARR_SINGLE(group), ACT_ARCHETYPE(run));  // Review: binding?
-    Quotify(ARR_SINGLE(group), 1);  // suppress evaluation until pathing
-    Init_Group(DS_PUSH(), group);
+    EVARS e;  // use EVARS to get parameter reordering right (in theory?)
+    Init_Evars(&e, CTX_ARCHETYPE(Context_For_Frame_May_Manage(f1)));
 
-    assert(not Is_Action_Frame_Fulfilling(f));  // okay to reuse
-    f->key = ACT_KEYS(&f->key_tail, FRM_PHASE(f));
-    f->arg = FRM_ARGS_HEAD(f);
-    f->param = ACT_PARAMS_HEAD(FRM_PHASE(f));
-
-    for (; f->key != f->key_tail; ++f->key, ++f->arg, ++f->param) {
-        if (Is_Specialized(f->param))  // specialized or local
+    while (Did_Advance_Evars(&e)) {
+        if (Is_Specialized(e.param))  // specialized or local
             continue;
 
-        if (VAL_PARAM_CLASS(f->param) == PARAM_CLASS_RETURN)
+        if (VAL_PARAM_CLASS(e.param) == PARAM_CLASS_RETURN)
             continue;  // !!! hack, has PARAM_FLAG_REFINEMENT, don't stack it
 
-        if (GET_PARAM_FLAG(f->param, SKIPPABLE) and Is_Nulled(f->arg))
+        if (GET_PARAM_FLAG(e.param, SKIPPABLE) and Is_Nulled(e.var))
             continue;  // don't throw in skippable args that are nulled out
 
-        if (GET_PARAM_FLAG(f->param, REFINEMENT)) {
-            if (Is_Nulled(f->arg))  // don't add to PATH!
+        if (GET_PARAM_FLAG(e.param, REFINEMENT)) {
+            if (Is_Nulled(e.var))  // don't add to PATH!
                 continue;
 
-            Init_Word(DS_PUSH(), KEY_SYMBOL(f->key));
+            Init_Word(DS_PUSH(), KEY_SYMBOL(e.key));
 
-            if (Is_Typeset_Empty(f->param)) {
-                assert(Is_Blackhole(f->arg));  // used but argless refinement
+            if (Is_Typeset_Empty(e.param)) {
+                assert(Is_Blackhole(e.var));  // used but argless refinement
                 continue;
             }
         }
@@ -152,34 +130,19 @@ bool Redo_Action_Maybe_Stale_Throws(REBVAL *out, REBFRM *f, REBACT *run)
         // another good reason this should probably be done another way.  It
         // also loses information about the const bit.
         //
-        Quotify(Copy_Cell(code, f->arg), 1);
-        ++code;
+        Quotify(Append_Value(normals, e.var), 1);
     }
 
-    SET_SERIES_LEN(code_arr, code - ARR_HEAD(code_arr));
-    Manage_Series(code_arr);
+    Shutdown_Evars(&e);
 
-    DECLARE_LOCAL (first);
-    if (DSP == dsp_orig + 1) {  // no refinements, just use ACTION!
-        DS_DROP_TO(dsp_orig);
-        Copy_Cell(first, ACT_ARCHETYPE(run));
-    }
-    else {
-        REBARR *a = Freeze_Array_Shallow(Pop_Stack_Values(dsp_orig));
-        Force_Series_Managed(a);
-        REBVAL *p = Try_Init_Path_Arraylike(first, a);
-        assert(p);
-        UNUSED(p);
-    }
+    DECLARE_LOCAL (block);
+    Init_Block(block, normals);
+    DECLARE_FRAME_AT (f2, block, EVAL_MASK_DEFAULT | EVAL_FLAG_MAYBE_STALE);
+    f2->baseline.dsp = dsp_orig;
 
-    bool threw = Do_At_Mutable_Maybe_Stale_Throws(
-        out,  // invisibles allow for out to not be Init_None()'d
-        first,  // path not in array, will be "virtual" first element
-        code_arr,
-        0,  // index
-        SPECIFIED  // reusing existing REBVAL arguments, no relative values
-    );
-    return threw;
+    Push_Frame(out, f2);
+    Push_Action(f2, VAL_ACTION(run), VAL_ACTION_BINDING(run));
+    Begin_Prefix_Action(f2, VAL_ACTION_LABEL(run));
 }
 
 
@@ -225,13 +188,8 @@ REB_R Hijacker_Dispatcher(REBFRM *f)
     // Otherwise, we assume the frame was built for the function prior to
     // the hijacking...and has to be remapped.
     //
-    if (Redo_Action_Maybe_Stale_Throws(OUT, f, hijacker))
-        return THROWN;
-
-    if (Is_Stale(OUT))
-        return VOID;
-
-    return OUT;
+    Push_Redo_Action_Frame(OUT, f, ACT_ARCHETYPE(phase));
+    delegate_subframe (FS_TOP);
 }
 
 

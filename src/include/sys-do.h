@@ -151,40 +151,6 @@ inline static bool Do_Any_Array_At_Core_Throws(
         (specifier))
 
 
-// !!! When working with an array outside of the context of a REBVAL it was
-// extracted from, then that means automatic determination of the CONST rules
-// isn't possible.  This primitive is currently used in a few places where
-// the desire is not to inherit any "wave of constness" from the parent's
-// frame, or from a value.  The cases need review--in particular the use for
-// the kind of shady frame translations used by HIJACK and ports.
-//
-inline static bool Do_At_Mutable_Maybe_Stale_Throws(
-    REBVAL *out,
-    option(const Cell*) first,  // element to inject *before* the array
-    REBARR *array,
-    REBLEN index,
-    REBSPC *specifier  // must match array, but also first if relative
-){
-    // need to pass `first` parameter, so can't use DECLARE_ARRAY_FEED
-    REBFED *feed = Alloc_Feed();  // need `first`
-    Prep_Array_Feed(
-        feed,
-        first,
-        array,
-        index,
-        specifier,
-        FEED_MASK_DEFAULT  // different: does not
-    );
-
-    return Do_Feed_To_End_Throws(
-        out,
-        feed,
-        EVAL_MASK_DEFAULT | EVAL_FLAG_ALLOCATED_FEED
-            | EVAL_FLAG_MAYBE_STALE  // !!! Used for HIJACK, but always?
-    );
-}
-
-
 inline static bool Do_Branch_Throws(
     REBVAL *out,
     const REBVAL *branch,

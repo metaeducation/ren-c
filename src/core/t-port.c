@@ -146,8 +146,12 @@ REBTYPE(Port)
         fail (Error_No_Port_Action_Raw(verb_cell));
     }
 
-    if (Redo_Action_Maybe_Stale_Throws(OUT, frame_, VAL_ACTION(action)))
+    Push_Redo_Action_Frame(OUT, frame_, action);
+    if (Trampoline_Throws(FS_TOP)) {
+        Abort_Frame(FS_TOP);
         return THROWN;
+    }
+    Drop_Frame(FS_TOP);
 
     Clear_Stale_Flag(OUT);
 
