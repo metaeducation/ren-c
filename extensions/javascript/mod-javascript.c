@@ -438,15 +438,18 @@ void RunPromise(void)
             info->state = PROMISE_STATE_RESOLVED;
             TRACE("RunPromise() => promise is resolving");
 
+            // !!! The Promise expects to receive this result and process it.
+            // But what if it doesn't pay attention to it and release it?
+            // It could cause leaks.
+            //
             REBVAL *result = rebValue("unmeta @", rebR(metaresult));
+            rebUnmanage(result);
 
             EM_ASM(
                 { reb.ResolvePromise_internal($0, $1); },
                 info->promise_id,  // => $0 (table entry will be freed)
                 result  // => $1 (recipient takes over handle)
             );
-
-            rebRelease(result);
         }
     }
     else {
