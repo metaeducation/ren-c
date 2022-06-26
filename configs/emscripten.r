@@ -2,32 +2,20 @@ REBOL [
     File: %emscripten.r
 ]
 
-; Right now, either #web or #node
-;
-javascript-environment: default [#web]
+javascript-environment: #web  ; or #node (which is not recently tested)
 
-; If WebAssembly is not used, then `asm.js` will be produced instead.  It is
-; usable in more browsers, but is slower to load.  Given the features that
-; are expected to work in %load-r3.js (e.g. `fetch()` and Promises), we tend
-; to assume WebAssembly as a lowest common denominator.  Note also that
-; WASM2JS does not support pthreads at time of writing.
+; When browsers run code, it's required that you yield control and return
+; from all your stack levels to perform certain operations (like GUI updates
+; or network IO).  Ren-C is now "stackless" and can accomplish this without
+; special measures:
 ;
-use-wasm: default [true]
-
-; The inability to have synchronous effects on the GUI while Rebol's WASM
-; code still has state on the stack creates problems.  "Asyncify" is a special
-; build setting which permits escaping to JavaScript for things like DOM
-; manipulations with a synchronous-seeming effect (for implementing things
-; like PRINT or INPUT):
+; https://forum.rebol.info/t/stackless-is-here-today-now/1844
+;
+; But previously it has used Emsterpreter, Pthreads, and Asyncify to work
+; around those problems.  The build settings are kept in case there are some
+; integration scenarios that may require these methods again:
 ;
 ; https://emscripten.org/docs/porting/asyncify.html
-;
-; This is an interim approach, that doubles the size of the build products.
-; It should not be necessary when "stackless" support is implemented inside
-; the interpreter.  See this post for details of why the alternative of
-; using two threads is no longer supported:
-;
-; https://forum.rebol.info/t/pros-and-cons-of-the-pthread-web-build/1425
 ;
 use-asyncify: false
 use-pthreads: false
@@ -117,6 +105,12 @@ cflags: compose2 [
 ]
 
 ldflags: compose2 [
+    ;
+    ; We no longer test any configurations with asm.js (wasm is supported by
+    ; all browsers of interest now).  But you'd set this to 0 for that.
+    ;
+    {-s WASM=1}
+
     (unspaced ["-O" optimize])
 
     ; Emscripten tries to do a lot of automatic linking "magic" for you, and
@@ -168,18 +162,12 @@ ldflags: compose2 [
         {-s ASSERTIONS=0}
     ]))
 
-    ; The recursive interpreter loop can easily exceed the available stack in
-    ; the browser and in asyncify itself.  The long term plan to mitigate this
-    ; is to go "stackless":
-    ;
-    ; https://forum.rebol.info/t/switching-to-stackless-why-this-why-now/1247
-    ;
-    ; !!! Even as a workaround, this may be excessive...or not enough?  There's
-    ; not any guidance on what the default is.  It's enough to allow you to
-    ; run `do <chess>` which then runs `do <popupdemo>` inside of it.
+    ; Prior to Ren-C becoming stackless, it was necessary to use a fairly
+    ; large value for the asyncify stack.  If Asyncify is to be used again, it
+    ; would probably not need a very large stack.
     ;
     ((if use-asyncify [
-        {-s ASYNCIFY_STACK_SIZE=128000}
+        {-s ASYNCIFY_STACK_SIZE=64000}
     ]))
 
     ((if false [[
@@ -237,7 +225,7 @@ ldflags: compose2 [
     ; The EXPORTED_"RUNTIME"_METHODS are referring to JavaScript helper
     ; functions that Emscripten provides that make it easier to call C code.
     ; You don't need them to call C functions with integer arguments.  But
-    ; you'll proably want them if you're going to do things like transform
+    ; you'll probably want them if you're going to do things like transform
     ; from JavaScript strings into an allocated UTF-8 string on the heap
     ; that is visible to C (allocateUTF8).  See:
     ;
@@ -263,20 +251,10 @@ ldflags: compose2 [
     {-s "EXPORTED_RUNTIME_METHODS=['ENV']"}
     ; {-s "EXPORTED_RUNTIME_METHODS=['ccall', 'cwrap', 'allocateUTF8']"}
 
-    ; WASM does not have source maps, so disabling it can aid in debugging
-    ; But emcc WASM=0 does not work in VirtualBox shared folders by default
-    ; https://github.com/kripken/emscripten/issues/6813
-    ;
-    ; SAFE_HEAP=1 does not work with WASM
+    ; SAFE_HEAP=1 once didn't work with WASM; does now, but may not be useful:
     ; https://github.com/kripken/emscripten/issues/4474
     ;
-    ((if use-wasm [[
-        {-s WASM=1}
-        {-s SAFE_HEAP=0}
-    ]] else [[
-        {-s WASM=0}
-        {-s SAFE_HEAP=1}
-    ]]))
+    ;{-s SAFE_HEAP=1}
 
     ; This allows memory growth but disables asm.js optimizations (little to
     ; no effect on WASM).  Disable until it becomes an issue.

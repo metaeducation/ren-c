@@ -280,10 +280,10 @@ systems: [
 
     Emscripten: 16
     ;-------------------------------------------------------------------------
-    0.16.1 asyncify/emscripten "asyncify"
+    0.16.1 web/emscripten "emscripten"
         #SG? #LEN
 
-    0.16.2 pthread/emscripten "emscripten"
+    0.16.2 pthread/emscripten "emscripten-pthread"
         #SG? #LEN
 
     0.16.3 node/emscripten "nodejs"
