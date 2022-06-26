@@ -242,9 +242,12 @@ static void cleanup_js_object(const REBVAL *v) {
 // JavaScript code may only be caught by JavaScript code.
 //
 
-inline static heapaddr_t Frame_Id_For_Frame_May_Outlive_Call(REBFRM* f) {
-    REBCTX *frame_ctx = Context_For_Frame_May_Manage(f);
-    return Heapaddr_From_Pointer(frame_ctx);
+inline static heapaddr_t Frame_Id_For_Frame(REBFRM* f) {
+    return Heapaddr_From_Pointer(f);
+}
+
+inline static REBFRM *Frame_From_Frame_Id(heapaddr_t id) {
+    return cast(REBFRM*, Pointer_From_Heapaddr(id));
 }
 
 
@@ -309,17 +312,12 @@ static struct Reb_Promise_Info *PG_Promises;  // Singly-linked list
 
 
 enum Reb_Native_State {
-    NATIVE_STATE_NONE,
-    NATIVE_STATE_RUNNING,
-    NATIVE_STATE_RESOLVED,
-    NATIVE_STATE_REJECTED
+    ST_JS_NATIVE_INITIAL_ENTRY = 0,
+    ST_JS_NATIVE_RUNNING,
+    ST_JS_NATIVE_SUSPENDED,
+    ST_JS_NATIVE_RESOLVED,
+    ST_JS_NATIVE_REJECTED
 };
-
-// Information cannot be exchanged between the worker thread and the main
-// thread via JavaScript values, so they are proxied between threads as
-// heap pointers via these globals.
-//
-static enum Reb_Native_State PG_Native_State;
 
 
 // <review>  ;-- Review in light of asyncify
@@ -561,28 +559,50 @@ EXTERN_C void RL_rebIdle_internal(void)  // NO user JS code on stack!
 // in emscripten_sleep().
 //
 EXTERN_C void RL_rebSignalResolveNative_internal(intptr_t frame_id) {
-    TRACE("reb.SignalResolveNative_internal()");
+    REBFRM *frame_ = Frame_From_Frame_Id(frame_id);
 
-    assert(PG_Native_State == NATIVE_STATE_RUNNING);
-    PG_Native_State = NATIVE_STATE_RESOLVED;
+    TRACE(
+        "reb.SignalResolveNative_internal(%s)",
+        Frame_Label_Or_Anonymous_UTF8(FRAME)
+    );
 
-    EM_ASM(
-        { setTimeout(function() { reb.m._RL_rebIdle_internal(); }, 50); }
-    );  // note `_RL` (leading underscore means no cwrap)
+    if (STATE == ST_JS_NATIVE_RUNNING) {
+        //
+        // is in EM_ASM() code executing right now, will see the update
+    }
+    else {
+        assert(STATE == ST_JS_NATIVE_SUSPENDED);  // needs wakeup
+        EM_ASM(
+            { setTimeout(function() { reb.m._RL_rebIdle_internal(); }, 0); }
+        );  // note `_RL` (leading underscore means no cwrap)
+    }
+
+    STATE = ST_JS_NATIVE_RESOLVED;
 }
 
 
 // See notes on rebSignalResolveNative()
 //
 EXTERN_C void RL_rebSignalRejectNative_internal(intptr_t frame_id) {
-    TRACE("reb.SignalRejectNative_internal()");
+    REBFRM *frame_ = Frame_From_Frame_Id(frame_id);
 
-    assert(PG_Native_State == NATIVE_STATE_RUNNING);
-    PG_Native_State = NATIVE_STATE_REJECTED;
+    TRACE(
+        "reb.SignalRejectNative_internal(%s)",
+        Frame_Label_Or_Anonymous_UTF8(FRAME)
+    );
 
-    EM_ASM(
-        { setTimeout(function() { reb.m._RL_rebIdle_internal(); }, 50); }
-    );  // note `_RL` (leading underscore means no cwrap)
+    if (STATE == ST_JS_NATIVE_RUNNING) {
+        //
+        // is in EM_ASM() code executing right now, will see the update
+    }
+    else {
+        assert(STATE == ST_JS_NATIVE_SUSPENDED);  // needs wakeup
+        EM_ASM(
+            { setTimeout(function() { reb.m._RL_rebIdle_internal(); }, 0); }
+        );  // note `_RL` (leading underscore means no cwrap)
+    }
+
+    STATE = ST_JS_NATIVE_REJECTED;
 }
 
 
@@ -628,19 +648,28 @@ REB_R JavaScript_Dispatcher(REBFRM *frame_)
 {
     REBFRM *f = frame_;
 
-    heapaddr_t frame_id = Frame_Id_For_Frame_May_Outlive_Call(f);
+    heapaddr_t frame_id = Frame_Id_For_Frame(f);
 
-    enum {
-        ST_JAVASCRIPT_INITIAL_ENTRY = 0,
-        ST_JAVASCRIPT_RUNNING
-    };
+    TRACE(
+        "JavaScript_Dispatcher(%s, %d)",
+        Frame_Label_Or_Anonymous_UTF8(f), STATE
+    );
 
     switch (STATE) {
-      case ST_JAVASCRIPT_INITIAL_ENTRY :
+      case ST_JS_NATIVE_INITIAL_ENTRY :
         goto initial_entry;
 
-      case ST_JAVASCRIPT_RUNNING :
-        goto poll_for_resolve_or_reject;
+      case ST_JS_NATIVE_RUNNING :
+        fail ("JavaScript_Dispatcher reentry while running, shouldn't happen");
+
+      case ST_JS_NATIVE_SUSPENDED :
+        fail ("JavaScript_Dispatcher when suspended, needed resolve/reject");
+
+      case ST_JS_NATIVE_RESOLVED :
+        goto handle_resolved;
+
+      case ST_JS_NATIVE_REJECTED :
+        goto handle_rejected;
 
       default : assert(false);
     }
@@ -649,8 +678,6 @@ REB_R JavaScript_Dispatcher(REBFRM *frame_)
 
     REBARR *details = ACT_DETAILS(FRM_PHASE(f));
     bool is_awaiter = VAL_LOGIC(ARR_AT(details, IDX_JS_NATIVE_IS_AWAITER));
-
-    TRACE("JavaScript_Dispatcher(%s)", Frame_Label_Or_Anonymous_UTF8(f));
 
     struct Reb_Promise_Info *info = PG_Promises;
     if (is_awaiter) {
@@ -662,45 +689,43 @@ REB_R JavaScript_Dispatcher(REBFRM *frame_)
     else
         assert(not info or info->state == PROMISE_STATE_RUNNING);
 
-    if (PG_Native_State != NATIVE_STATE_NONE)
-        assert(!"Cannot call JS-NATIVE during JS-NATIVE at this time");
-
-    STATE = ST_JAVASCRIPT_RUNNING;  // !!! Can the states be unified?
-    PG_Native_State = NATIVE_STATE_RUNNING;
-
     heapaddr_t native_id = Native_Id_For_Action(FRM_PHASE(f));
+
+    STATE = ST_JS_NATIVE_RUNNING;  // resolve/reject change this STATE byte
 
     EM_ASM(
         { reb.RunNative_internal($0, $1) },
-        native_id,  // => $0
-        frame_id  // => $1
+        native_id,  // => $0, how it finds the javascript code to run
+        frame_id  // => $1, how it knows to find this frame to update STATE
     );
 
     if (not is_awaiter)  // same tactic for non-awaiter, see [1]
-        assert(PG_Native_State != NATIVE_STATE_RUNNING);
+        assert(STATE != ST_JS_NATIVE_RUNNING);
+    else {
+        if (STATE == ST_JS_NATIVE_RUNNING) {
+            TRACE(
+                "JavaScript_Dispatcher(%s) => suspending incomplete awaiter",
+                Frame_Label_Or_Anonymous_UTF8(f)
+            );
 
-    goto poll_for_resolve_or_reject;  // polling is the best we got, see [2]
+            // Note that reb.Halt() can force promise rejection, by way of the
+            // triggering of a cancellation signal.  See implementation notes
+            // for `reb.CancelAllCancelables_internal()`.
+            //
+            /* emscripten_sleep(50); */
 
-} poll_for_resolve_or_reject: {  /////////////////////////////////////////////
-
-    TRACE("JavaScript_Dispatcher() => begin emscripten_sleep() loop");
-    while (PG_Native_State == NATIVE_STATE_RUNNING) {  // !!! volatile?
-        //
-        // Note that reb.Halt() can force promise rejection, by way of the
-        // triggering of a cancellation signal.  See implementation notes for
-        // `reb.CancelAllCancelables_internal()`.
-        //
-        /* emscripten_sleep(50); */
-
-        return R_SUSPEND; // signals trampoline to leave stack
+            STATE = ST_JS_NATIVE_SUSPENDED;
+            return R_SUSPEND;  // signals trampoline to leave stack
+        }
     }
-    TRACE("JavaScript_Dispatcher() => end emscripten_sleep() loop");
 
-    if (PG_Native_State == NATIVE_STATE_REJECTED)
+    if (STATE == ST_JS_NATIVE_RESOLVED)
+        goto handle_resolved;
+
+    if (STATE == ST_JS_NATIVE_REJECTED)
         goto handle_rejected;
 
-    assert(PG_Native_State == NATIVE_STATE_RESOLVED);
-    goto handle_resolved;
+    fail ("Unknown frame STATE value after reb.RunNative_internal()");
 
 } handle_resolved: {  ////////////////////////////////////////////////////////
 
@@ -719,8 +744,6 @@ REB_R JavaScript_Dispatcher(REBFRM *frame_)
         rebRelease(native_result);
     }
 
-    PG_Native_State = NATIVE_STATE_NONE;
-
     FAIL_IF_BAD_RETURN_TYPE(f);
     return OUT;
 
@@ -731,8 +754,6 @@ REB_R JavaScript_Dispatcher(REBFRM *frame_)
     // Rebol code calls javascript that calls Rebol that errors...it would
     // "tunnel" the error through and preserve the identity as best it
     // could.  But for starters, the transformations are lossy.
-
-    PG_Native_State = NATIVE_STATE_NONE;
 
     heapaddr_t error_addr = EM_ASM_INT(
         { return reb.GetNativeError_internal($0) },
@@ -1033,8 +1054,6 @@ REBNATIVE(startup_p)
   #endif
 
     TRACE("INIT-JAVASCRIPT-EXTENSION called");
-
-    PG_Native_State = NATIVE_STATE_NONE;
 
     return NONE;
 }
