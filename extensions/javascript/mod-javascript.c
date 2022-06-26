@@ -247,7 +247,16 @@ inline static heapaddr_t Frame_Id_For_Frame(REBFRM* f) {
 }
 
 inline static REBFRM *Frame_From_Frame_Id(heapaddr_t id) {
-    return cast(REBFRM*, Pointer_From_Heapaddr(id));
+    return FRM(Pointer_From_Heapaddr(id));
+}
+
+inline static REBVAL *Value_From_Value_Id(heapaddr_t id) {
+    if (id == 0)
+        return nullptr;
+
+    REBVAL *v = VAL(Pointer_From_Heapaddr(id));
+    assert(not Is_Nulled(v));  // API speaks in nullptr only
+    return v;
 }
 
 
@@ -552,19 +561,31 @@ EXTERN_C void RL_rebIdle_internal(void)  // NO user JS code on stack!
 }
 
 
-// This is rebSignalResolveNative() and not rebResolveNative() which passes in
-// a value to resolve with, because the emterpreter build can't really pass a
-// REBVAL*.   All the APIs it would need to make REBVAL* are unavailable.  So
-// it instead pokes a JavaScript function where it can be found when no longer
-// in emscripten_sleep().
+// Note: Initially this was rebSignalResolveNative() and not rebResolveNative()
+// The reason was that the empterpreter build had the Ren-C interpreter
+// suspended, and there was no way to build a REBVAL* to pass through to it.
+// So the result was stored as a function in a table to generate the value.
+// Now it pokes the result directly into the frame's output slot.
 //
-EXTERN_C void RL_rebSignalResolveNative_internal(intptr_t frame_id) {
+EXTERN_C void RL_rebResolveNative_internal(
+    intptr_t frame_id,
+    intptr_t result_id
+){
     REBFRM *frame_ = Frame_From_Frame_Id(frame_id);
 
     TRACE(
-        "reb.SignalResolveNative_internal(%s)",
+        "reb.ResolveNative_internal(%s)",
         Frame_Label_Or_Anonymous_UTF8(FRAME)
     );
+
+    REBVAL *result = Value_From_Value_Id(result_id);
+
+    if (result == nullptr)
+        Init_Nulled(OUT);
+    else {
+        Copy_Cell(OUT, result);
+        rebRelease(result);
+    }
 
     if (STATE == ST_JS_NATIVE_RUNNING) {
         //
@@ -581,15 +602,31 @@ EXTERN_C void RL_rebSignalResolveNative_internal(intptr_t frame_id) {
 }
 
 
-// See notes on rebSignalResolveNative()
+// See notes on rebResolveNative()
 //
-EXTERN_C void RL_rebSignalRejectNative_internal(intptr_t frame_id) {
+EXTERN_C void RL_rebRejectNative_internal(
+    intptr_t frame_id,
+    intptr_t error_id
+){
     REBFRM *frame_ = Frame_From_Frame_Id(frame_id);
 
     TRACE(
-        "reb.SignalRejectNative_internal(%s)",
+        "reb.RejectNative_internal(%s)",
         Frame_Label_Or_Anonymous_UTF8(FRAME)
     );
+
+    REBVAL *error = Value_From_Value_Id(error_id);
+
+    if (error == nullptr) {  // Signals halt...not normal error, see [3]
+        TRACE("JavaScript_Dispatcher() => throwing a halt");
+
+        Init_Nulled(OUT);
+    }
+    else {
+        assert(IS_ERROR(error));
+        Copy_Cell(OUT, error);
+        rebRelease(error);
+    }
 
     if (STATE == ST_JS_NATIVE_RUNNING) {
         //
@@ -621,10 +658,9 @@ EXTERN_C void RL_rebSignalRejectNative_internal(intptr_t frame_id) {
 // 1. Whether it's an awaiter or not (e.g. whether it has an `async` JS
 //    function as the body), the same interface is used to call the function.
 //    It will communicate whether an error happened or not through the
-//    `rebSignalResolveNative()` or `rebSignalRejectNative()` either way,
-//    and the results are fetched with the same mechanic.  But by the time
+//    `rebResolveNative()` or `rebRejectNative()` either way.  But by the time
 //    the JavaScript is finished running for a non-awaiter, a resolve or
-//    reject must have happened...awaiters probably need more time.
+//    reject must have happened...awaiters *probably* need more time.
 //
 // 2. We don't know exactly what JS event is going to trigger and cause a
 //    resolve() to happen.  It could be a timer, it could be a fetch(), it
@@ -729,21 +765,6 @@ REB_R JavaScript_Dispatcher(REBFRM *frame_)
 
 } handle_resolved: {  ////////////////////////////////////////////////////////
 
-    heapaddr_t result_addr = EM_ASM_INT(
-        { return reb.GetNativeResult_internal($0) },
-        frame_id  // => $0
-    );
-
-    REBVAL *native_result = VAL(Pointer_From_Heapaddr(result_addr));
-
-    if (native_result == nullptr)
-        Init_Nulled(OUT);
-    else {
-        assert(not Is_Nulled(native_result));  // API uses nullptr only
-        Copy_Cell(OUT, native_result);
-        rebRelease(native_result);
-    }
-
     FAIL_IF_BAD_RETURN_TYPE(f);
     return OUT;
 
@@ -755,14 +776,8 @@ REB_R JavaScript_Dispatcher(REBFRM *frame_)
     // "tunnel" the error through and preserve the identity as best it
     // could.  But for starters, the transformations are lossy.
 
-    heapaddr_t error_addr = EM_ASM_INT(
-        { return reb.GetNativeError_internal($0) },
-        frame_id  // => $0
-    );
-
-    if (error_addr == 0) { // Signals halt...not normal error, see [3]
-        TRACE("JavaScript_Dispatcher() => throwing a halt");
-
+    if (Is_Nulled(OUT)) {  // special HALT signal
+        //
         // We clear the signal now that we've reacted to it.  (If we did
         // not, then when the console tried to continue running to handle
         // the throw it would have problems.)
@@ -776,12 +791,8 @@ REB_R JavaScript_Dispatcher(REBFRM *frame_)
         return Init_Thrown_With_Label(FRAME, Lib(NULL), Lib(HALT));
     }
 
-    REBVAL *error = VAL(Pointer_From_Heapaddr(error_addr));
-    REBCTX *ctx = VAL_CONTEXT(error);
-    rebRelease(error);  // !!! failing, so not actually needed (?)
-
     TRACE("Calling fail() with error context");
-    fail (ctx);
+    return Init_Thrown_With_Label(FRAME, Lib(NULL), OUT);
 }}
 
 

@@ -309,22 +309,22 @@ append api-objects make object! [
 
 append api-objects make object! [
     spec: _  ; e.g. `name: RL_API [...this is the spec, if any...]`
-    name: "rebSignalResolveNative_internal"  ; !!! see %mod-javascript.c
+    name: "rebResolveNative_internal"  ; !!! see %mod-javascript.c
     returns: "void"
-    paramlist: ["intptr_t" frame_id]
+    paramlist: ["intptr_t" frame_id "intptr_t" value_id]
     proto: unspaced [
-        "void rebSignalResolveNative_internal(intptr_t frame_id)"
+        "void rebResolveNative_internal(intptr_t frame_id, intptr_t value_id)"
     ]
     is-variadic: false
 ]
 
 append api-objects make object! [
     spec: _  ; e.g. `name: RL_API [...this is the spec, if any...]`
-    name: "rebSignalRejectNative_internal"  ; !!! see %mod-javascript.c
+    name: "rebRejectNative_internal"  ; !!! see %mod-javascript.c
     returns: "void"
-    paramlist: ["intptr_t" frame_id]
+    paramlist: ["intptr_t" frame_id "intptr_t" error_id]
     proto: unspaced [
-        "void rebSignalRejectNative_internal(intptr_t frame_id)"
+        "void rebRejectNative_internal(intptr_t frame_id, intptr_t error_id)"
     ]
     is-variadic: false
 ]
@@ -708,19 +708,15 @@ e-cwrap/emit {
              * undefined...such auto-conversions may expand in scope.
              */
 
+            let result_id
             if (res === undefined)  /* `resolve()`, `resolve(undefined)` */
-                {}  /* allow it */
+                result_id = reb.None()  /* allow it */
             else if (res === null)  /* explicitly, e.g. `resolve(null)` */
-                {}  /* allow it */
-            else if (typeof res == "function") {
-                 throw Error(
-                    "JS-NATIVE resolve no longer needs to take JS functions!"
-                    + " Asyncify resolved the Emterpreter issues!"
-                    + " Please update your code to what is natural!"
-                    + " https://github.com/hostilefork/replpad-js/commit/2797e3c006aa4046a488939a4270bb7ebadee70f"
-                 )
+                result_id = 0  /* allow it */
+            else if (typeof res == "number") { /* hope it's API heap handle */
+                result_id = res
             }
-            else if (typeof res !== "number") {
+            else {
                 console.log("typeof " + typeof res)
                 console.log(res)
                 throw Error(
@@ -728,8 +724,7 @@ e-cwrap/emit {
                 )
             }
 
-            reb.JS_NATIVES[frame_id] = res  /* stow result */
-            reb.m._RL_rebSignalResolveNative_internal(frame_id)
+            reb.m._RL_rebResolveNative_internal(frame_id, result_id)
         }
 
         let rejecter = function(rej) {
@@ -749,8 +744,13 @@ e-cwrap/emit {
             if (typeof rej == "number")
                 console.log("Suspicious numeric throw() in JS-AWAITER");
 
-            reb.JS_NATIVES[frame_id] = rej  /* stow result */
-            reb.m._RL_rebSignalRejectNative_internal(frame_id)
+            let error_id;
+            if (rej == reb.JS_ERROR_HALTED)
+                error_id = 0  /* in halt state, can't run more code! */
+            else
+                error_id = reb.Value("make error!", reb.T(String(rej)))
+
+            reb.m._RL_rebRejectNative_internal(frame_id, error_id)
         }
 
         let native = reb.JS_NATIVES[id]
@@ -782,30 +782,6 @@ e-cwrap/emit {
 
             /* resolve() or reject() guaranteed to be signaled in this case */
         }
-    }
-
-    reb.GetNativeResult_internal = function(frame_id) {
-        var result = reb.JS_NATIVES[frame_id]  /* resolution or rejection */
-        reb.UnregisterId_internal(frame_id);
-
-        if (typeof result == "function")  /* needed to empower emterpreter */
-            result = result()  /* ...had to wait to synthesize REBVAL */
-
-        if (result === null)
-            return 0
-        if (result === undefined)
-            return reb.None()  /* could be `reb.Value("~undefined~") isotope */
-
-        return result
-    }
-
-    reb.GetNativeError_internal = function(frame_id) {
-        var result = reb.JS_NATIVES[frame_id]  /* resolution or rejection */
-        reb.UnregisterId_internal(frame_id)
-        if (result == reb.JS_ERROR_HALTED)
-            return 0  /* in halt state, can't run more code, will throw! */
-
-        return reb.Value("make error!", reb.T(String(result)))
     }
 
     reb.ResolvePromise_internal = function(promise_id, rebval) {
