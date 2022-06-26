@@ -1004,11 +1004,8 @@ REBNATIVE(js_eval_p)
             EM_ASM(
                 { eval(UTF8ToString($0)) },
                 utf8
-            );  // !!! ...should be an else clause here...
-        // !!! However, there's an emscripten bug, so use two `if`s instead
-        // https://github.com/emscripten-core/emscripten/issues/11539
-        //
-        if (not REF(local))
+            );
+        else
             EM_ASM(
                 { (1,eval)(UTF8ToString($0)) },
                 utf8
