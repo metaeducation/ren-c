@@ -679,6 +679,14 @@ e-cwrap/emit {
         })
     }
 
+    reb.JavaScriptError = function(e, source_id) {
+        let source = source_id ? reb.Value(source_id) : reb.Blank()
+        return reb.Value("make error! [",
+            "id: 'javascript-error",
+            "message:", reb.T(String(e)),
+            "arg1:", reb.R(source),
+        "]")
+    }
 
     reb.RegisterId_internal = function(id, fn) {
         if (id in reb.JS_NATIVES)
@@ -748,7 +756,7 @@ e-cwrap/emit {
             if (rej == reb.JS_ERROR_HALTED)
                 error_id = 0  /* in halt state, can't run more code! */
             else
-                error_id = reb.Value("make error!", reb.T(String(rej)))
+                error_id = reb.JavaScriptError(rej)
 
             reb.m._RL_rebRejectNative_internal(frame_id, error_id)
         }

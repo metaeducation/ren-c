@@ -792,7 +792,8 @@ REB_R JavaScript_Dispatcher(REBFRM *frame_)
     }
 
     TRACE("Calling fail() with error context");
-    return Init_Thrown_With_Label(FRAME, Lib(NULL), OUT);
+    REBCTX *ctx = VAL_CONTEXT(OUT);
+    fail (ctx);  // better than Init_Thrown_With_Label(), gives location
 }}
 
 
@@ -935,10 +936,11 @@ REBNATIVE(js_native)
                 return null;
             }
             catch (e) {
-                return reb.Value("make error!", reb.T(e.toString()));
+                return reb.JavaScriptError(e, $1);
             }
         },
-        js  /* JS code registering the function body (the `$0` parameter) */
+        js,  /* JS code registering the function body (the `$0` parameter) */
+        source
     );
     REBVAL *error = cast(REBVAL*, Pointer_From_Heapaddr(error_addr));
     if (error) {
@@ -991,7 +993,10 @@ REBNATIVE(js_eval_p)
 {
     JAVASCRIPT_INCLUDE_PARAMS_OF_JS_EVAL_P;
 
-    const char *utf8 = s_cast(VAL_UTF8_AT(ARG(source)));
+    REBVAL *source = ARG(source);
+
+    const char *utf8 = s_cast(VAL_UTF8_AT(source));
+    heapaddr_t addr;
 
     // Methods for global evaluation:
     // http://perfectionkills.com/global-eval-what-are-the-options/
@@ -999,40 +1004,69 @@ REBNATIVE(js_eval_p)
     // !!! Note that if `eval()` is redefined, then all invocations will be
     // "indirect" and there will hence be no local evaluations.
     //
-    if (not REF(value)) {
-        if (REF(local))
-            EM_ASM(
-                { eval(UTF8ToString($0)) },
-                utf8
-            );
-        else
-            EM_ASM(
-                { (1,eval)(UTF8ToString($0)) },
-                utf8
-            );
+    if (REF(value))
+        goto want_result;
 
+    if (REF(local))
+        addr = EM_ASM_INT(
+            { try { eval(UTF8ToString($0)); return 0 }
+                catch(e) { return reb.JavaScriptError(e, $1) }
+            },
+            utf8,
+            Heapaddr_From_Pointer(source)
+        );
+    else
+        addr = EM_ASM_INT(
+            { try { (1,eval)(UTF8ToString($0)); return 0 }
+                catch(e) { return reb.JavaScriptError(e, $1) }
+            },
+            utf8,
+            Heapaddr_From_Pointer(source)
+        );
+
+    if (addr == 0)
         return NONE;
-    }
+
+    goto handle_error;
+
+  want_result: {  ////////////////////////////////////////////////////////////
 
     // Currently, reb.Box() only translates to INTEGER!, TEXT!, BAD-WORD!, NULL
     //
     // !!! All other types come back as BAD-WORD!.  Should they error?
     //
-    heapaddr_t addr;
     if (REF(local)) {
         addr = EM_ASM_INT(
-            { return reb.Box(eval(UTF8ToString($0))) },  // direct (local)
-            utf8
+            { try { return reb.Box(eval(UTF8ToString($0))) }  // direct (local)
+              catch(e) { return reb.JavaScriptError(e, $1) }
+            },
+            utf8,
+            Heapaddr_From_Pointer(source)
         );
     }
     else {
         heapaddr_t addr = EM_ASM_INT(
-            { return reb.Box((1,eval)(UTF8ToString($0))) },  // indirect
-            utf8
+            { try { return reb.Box((1,eval)(UTF8ToString($0))) }  // indirect
+              catch(e) { return reb.JavaScriptError(e, $1) }
+            },
+            utf8,
+            Heapaddr_From_Pointer(source)
         );
     }
-    return cast(REBVAL*, addr);  // evaluator takes ownership of handle
-}
+    REBVAL *value = Value_From_Value_Id(addr);
+    if (not value or not IS_ERROR(value))
+        return value;  // evaluator takes ownership of handle
+
+    goto handle_error;
+
+} handle_error: {  ///////////////////////////////////////////////////////////
+
+    REBVAL *error = Value_From_Value_Id(addr);
+    assert(IS_ERROR(error));
+    REBCTX *ctx = VAL_CONTEXT(error);
+    rebRelease(error);
+    fail (ctx);  // better than Init_Thrown_With_Label(), identifies source
+}}
 
 
 //
