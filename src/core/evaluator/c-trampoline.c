@@ -143,34 +143,46 @@ REB_R Trampoline_Core(void)
             Abort_Frame(FS_TOP);  // will call va_end() if variadic frame
         }
 
-        bool abrupt_is_root_frame = Get_Eval_Flag(FRAME, ROOT_FRAME);
-        if (
-            Not_Eval_Flag(FRAME, NOTIFY_ON_ABRUPT_FAILURE)
-            and not abrupt_is_root_frame
-        ){
-            Abort_Frame(FRAME);  // restores to baseline
+        // A frame that asked to be notified about abrupt failures will get
+        // the failure thrown.  The default behavior of staying in the thrown
+        // state will be to convert it to a definitional failure on return.
+        // (ABRUPT_FAILURE + NOTIFIY_ON_ABRUPT_FAILURE + return R_THROWN will
+        // act as if there had never been a NOTIFY_ON_ABRUPT_FAILURE)
+        //
+        if (Get_Eval_Flag(FRAME, NOTIFY_ON_ABRUPT_FAILURE)) {
+            Init_Thrown_With_Label(
+                FS_TOP,
+                Lib(NULL),  // no "thrown value"
+                CTX_ARCHETYPE(jump.error)  // only the ERROR! as a label
+            );
+            goto restore_trap_and_continue_fs_top;
         }
 
-        TRASH_POINTER_IF_DEBUG(FRAME);  // go by FS_TOP until FRAME reset
+        // === THIS IS WHERE WE WOULD HANDLE DEFINITIONAL ERRORS ===
 
-        // The mechanisms for THROW-ing and FAIL-ing are somewhat unified in
-        // stackless...(a TRAPpable failure is just any "thrown" value with
-        // a VAL_THROWN_LABEL() which is an ERROR!).  So the trampoline just
-        // converts the longjmp into a throw.
+        // If the caller doesn't want to be passed a definitional error, then
+        // there's no way to tell the difference between the failure having
+        // originated from this frame or any others underneath it, so the
+        // throw convention is used.
 
         Init_Thrown_With_Label(
-            FS_TOP,
+            FRAME,
             Lib(NULL),  // no "thrown value"
             CTX_ARCHETYPE(jump.error)  // only the ERROR! as a label
         );
 
-        TG_Jump_List = jump.last_jump;  // ** Note: this changes FRAME **
-
-        if (abrupt_is_root_frame) {
-            Clear_Eval_Flag(FS_TOP, ROOT_FRAME);
-            return R_THROWN;  // say the frame threw
+        if (Get_Eval_Flag(FRAME, ROOT_FRAME)) {
+            Clear_Eval_Flag(FRAME, ROOT_FRAME);
+            TG_Jump_List = jump.last_jump;  // ** Note: this changes FRAME **
+            return R_THROWN;
         }
 
+        Abort_Frame(FRAME);
+
+      restore_trap_and_continue_fs_top:
+
+        TG_Jump_List = jump.last_jump;  // ** Note: this changes FRAME **
+        // (FS_TOP will become FRAME again after push_trap)
         goto push_trap_for_longjmp;  // have to push again to trap again
     }
 
@@ -243,6 +255,12 @@ REB_R Trampoline_Core(void)
 
 } //=//// HANDLE FINISHED RESULTS /////////////////////////////////////////=//
 
+    if (Get_Eval_Flag(FRAME, ABRUPT_FAILURE)) {
+        assert(Get_Eval_Flag(FRAME, NOTIFY_ON_ABRUPT_FAILURE));
+        assert(r == R_THROWN);
+        assert(IS_ERROR(VAL_THROWN_LABEL(FRAME)));
+    }
+
   // 1. There may be some optimization possible here if the flag controlling
   //    whether you wanted to keep the stale flag was also using the same
   //    EVAL_FLAG bit as the CELL_FLAG for stale.  It's tricky since for
@@ -258,6 +276,7 @@ REB_R Trampoline_Core(void)
         }
         else {
             Clear_Stale_Flag(OUT);  // also see [1]
+
             if (Get_Eval_Flag(FRAME, BRANCH))
                 Reify_Branch_Out(OUT);
             else if (Get_Eval_Flag(FRAME, META_RESULT))
@@ -366,6 +385,20 @@ REB_R Trampoline_Core(void)
 
         while (FS_TOP != FRAME)
             Abort_Frame(FS_TOP);  // !!! Should all inert frames be aborted?
+
+        if (Get_Eval_Flag(FRAME, ABRUPT_FAILURE)) {
+            //
+            // They had their chance to clean up.
+            // Fail again as definitional error, but this time don't notify.
+            //
+            assert(Get_Eval_Flag(FRAME, NOTIFY_ON_ABRUPT_FAILURE));
+            Clear_Eval_Flag(FRAME, NOTIFY_ON_ABRUPT_FAILURE);
+            Clear_Eval_Flag(FRAME, ABRUPT_FAILURE);
+            assert(IS_ERROR(VAL_THROWN_LABEL(FRAME)));
+            REBCTX *ctx = VAL_CONTEXT(VAL_THROWN_LABEL(FRAME));
+            CATCH_THROWN(SPARE, FRAME);
+            fail (ctx);
+        }
 
         const REBVAL *label = VAL_THROWN_LABEL(FRAME);  // unwind, see [1]
         if (
