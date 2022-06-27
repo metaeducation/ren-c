@@ -83,6 +83,12 @@
 //    stale if it was END.  It can then take advantage of the same flexibility
 //    to pass OUT as the with as well as the target when branch is in SPARE.
 //
+// 2. The Trampoline has some sanity checking asserts that try to stop you
+//    from making mistakes.  Because this does something weird to use the
+//    OUT cell as `with` the EVAL_FLAG_BRANCH was taken off at the callsite
+//    and the EVAL_FLAG_MAYBE_STALE added.  Reverse that here, passing through
+//    any other flags.
+//
 REB_R Group_Branch_Executor(REBFRM *frame_)
 {
     if (THROWING)
@@ -105,7 +111,13 @@ REB_R Group_Branch_Executor(REBFRM *frame_)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    DECLARE_FRAME(evaluator, FRAME->feed, FRAME->flags.bits);  // state byte 0!
+    DECLARE_FRAME(
+        evaluator,
+        FRAME->feed,
+        (FRAME->flags.bits  // still state byte 0
+            | EVAL_FLAG_BRANCH)
+            & (~ EVAL_FLAG_MAYBE_STALE)  // undo tricks, see [2]
+    );
     Push_Frame(SPARE, evaluator);
 
     Clear_Eval_Flag(FRAME, ALLOCATED_FEED);

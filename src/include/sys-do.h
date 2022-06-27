@@ -79,71 +79,20 @@ inline static void Tweak_Non_Const_To_Explicitly_Mutable(Value *source) {
         Set_Cell_Flag(source, EXPLICITLY_MUTABLE);
 }
 
-
-// This helper routine is able to take an arbitrary input cell to start with
-// that may not be END.  It is code that DO shares with GROUP! evaluation
-// in Eval_Core()--where being able to know if a group "completely vaporized"
-// is important as distinct from an expression evaluating to void.
-//
-inline static bool Do_Feed_To_End_Throws(
-    REBVAL *out,  // must be initialized, unchanged if all empty/invisible
-    REBFED *feed,  // feed mechanics always call va_end() if va_list
-    REBFLGS flags
-){
-    // You can feed in something other than END here (and GROUP! handling in
-    // the evaluator does do that).  But if you give it something stale then
-    // that suggests you might be thinking you can infer some information
-    // about the staleness after the run.  See comments at top of file for
-    // why that's not the case--this assert helps avoid misunderstandings.
-    //
-    if (not (flags & EVAL_FLAG_MAYBE_STALE))
-        assert(Is_Fresh(out));
-
-    assert(not (flags & EVAL_FLAG_SINGLE_STEP));
-
-    DECLARE_FRAME (
-        f,
-        feed,
-        (flags
-            | EVAL_FLAG_MAYBE_STALE
-        ) & (~ EVAL_FLAG_BRANCH)
-    );
-
-    Push_Frame(out, f);
-
-    do {
-        if (Trampoline_Throws(f)) {
-            Abort_Frame(f);
-            return true;
-        }
-    } while (Not_End(feed->value));
-
-    Drop_Frame(f);
-
-    if (not (flags & EVAL_FLAG_MAYBE_STALE))
-        Clear_Stale_Flag(out);
-
-    if (flags & EVAL_FLAG_BRANCH)
-        Reify_Branch_Out(out);
-
-    return false;
-}
-
 inline static bool Do_Any_Array_At_Core_Throws(
     REBVAL *out,
     REBFLGS flags,
     const Cell *any_array,
     REBSPC *specifier
 ){
-    DECLARE_FEED_AT_CORE (feed, any_array, specifier);
-
-    bool threw = Do_Feed_To_End_Throws(
-        out,
-        feed,
-        flags | EVAL_FLAG_ALLOCATED_FEED
-    );
-
-    return threw;
+    DECLARE_FRAME_AT_CORE (f, any_array, specifier, flags);
+    Push_Frame(out, f);
+    if (Trampoline_Throws(f)) {
+        Abort_Frame(f);
+        return true;
+    }
+    Drop_Frame(f);
+    return false;
 }
 
 #define Do_Any_Array_At_Throws(out,any_array,specifier) \

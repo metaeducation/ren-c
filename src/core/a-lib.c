@@ -823,8 +823,6 @@ static bool Run_Va_Translucent_Throws(
     const void *p,  // first pointer (may be END, nullptr means NULLED)
     va_list *vaptr  // va_end() handled by feed for all cases (throws, fails)
 ){
-    REBFLGS flags = EVAL_MASK_DEFAULT;
-
     // !!! Some kind of policy is needed to decide how to disable halting in
     // the API.  It uses the longjmp() mechanism as a "no catch for throw",
     // meaning that an error could be introduced at any moment in the code.
@@ -839,18 +837,21 @@ static bool Run_Va_Translucent_Throws(
     else
         Eval_Sigmask &= ~SIG_HALT;  // disable
 
-    DECLARE_VA_FEED (feed, p, vaptr, flags);
+    DECLARE_VA_FEED (feed, p, vaptr, FEED_MASK_DEFAULT);
+    DECLARE_FRAME (f, feed, EVAL_MASK_DEFAULT | EVAL_FLAG_ALLOCATED_FEED);
+    Push_Frame(out, f);
 
-    bool threw = Do_Feed_To_End_Throws(
-        out,
-        feed,
-        EVAL_MASK_DEFAULT | EVAL_FLAG_ALLOCATED_FEED
-    );
+    if (Trampoline_Throws(f)) {
+        Abort_Frame(f);
+        return true;
+    }
+
+    Drop_Frame(f);
 
     // (see also Reb_State->saved_sigmask RE: if a longjmp happens)
     Eval_Sigmask = saved_sigmask;
 
-    return threw;
+    return false;
 }
 
 inline static void Run_Va_May_Fail(

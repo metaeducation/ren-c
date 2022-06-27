@@ -234,8 +234,6 @@ REB_R Evaluator_Executor(REBFRM *f)
     //
     switch (STATE) {
       case ST_EVALUATOR_INITIAL_ENTRY:
-        if (Not_Eval_Flag(f, MAYBE_STALE))
-            assert(Is_Void(OUT));
         TRASH_POINTER_IF_DEBUG(f_current);
         /*TRASH_POINTER_IF_DEBUG(f_current_gotten);*/  // trash option() ptrs?
         break;
@@ -1975,14 +1973,6 @@ REB_R Evaluator_Executor(REBFRM *f)
         STATE = ST_EVALUATOR_STEPPING_AGAIN;
         return R_CONTINUATION;  // go through trampoline, for debug hooking
     }
-
-    // Note: There may be some optimization possible here if the flag for
-    // controlling whether you wanted to keep the stale flag was also using
-    // the same EVAL_FLAG bit as the CELL_FLAG for stale.  It's tricky since
-    // for series nodes that's the bit for being free.  Review.
-    //
-    if (Not_Eval_Flag(f, MAYBE_STALE))
-        Clear_Stale_Flag(OUT);
 
     return OUT;
 

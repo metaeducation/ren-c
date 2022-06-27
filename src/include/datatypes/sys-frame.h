@@ -691,14 +691,16 @@ inline static bool Pushed_Continuation(
     assert(branch != out);  // it's legal for `with` to be the same as out
 
     if (IS_GROUP(branch) or IS_GET_GROUP(branch)) {  // see [2] for GET-GROUP!
+        assert(flags & EVAL_FLAG_BRANCH);  // needed for trick
+        assert(not (flags & EVAL_FLAG_MAYBE_STALE));  // OUT used as WITH
         DECLARE_FRAME_AT_CORE (
             grouper,
             branch,
             branch_specifier,
-            EVAL_MASK_DEFAULT | flags
+            EVAL_MASK_DEFAULT | flags & (~ EVAL_FLAG_BRANCH)
+                | EVAL_FLAG_MAYBE_STALE
         );
         grouper->executor = &Group_Branch_Executor;  // evaluates to get branch
-        assert(not (flags & EVAL_FLAG_MAYBE_STALE));  // OUT used as WITH
         if (Is_End(with))
             Mark_Eval_Out_Stale(out);
         else if (Is_Void(with))

@@ -178,6 +178,16 @@ REB_R Trampoline_Core(void)
 
 } bounce_on_the_trampoline: {  ///////////////////////////////////////////////
 
+  // 1. The Just_Use_Out_Executor() exists vs. using something like nullptr
+  //    for the executor just to make it more obvously intentional that a
+  //    passthru is intended.  Having it maintain a state byte would be
+  //    additional overhead.  (Review in light of use of nonzero for GC
+  //    and bookkeeping purposes; e.g. could STATE of 255 mean Just_Use_Out?)
+  //
+  // 2. Stale voids are allowed because they are used by Alloc_Value() and
+  //    DECLARE_LOCAL, in order to help signal an uninitialized value should
+  //    not be read from (beyond the usual taboo of looking at voids)
+
     ASSERT_NO_DATA_STACK_POINTERS_EXTANT();
 
     REB_R r;
@@ -204,6 +214,13 @@ REB_R Trampoline_Core(void)
         assert(Get_Eval_Flag(FRAME, NOTIFY_ON_ABRUPT_FAILURE));
         assert(Is_Throwing(FRAME));
     }
+    else if (
+        STATE == 0  // can't read STATE when ABRUPT_FAILURE flag is set
+        and Not_Eval_Flag(FRAME, MAYBE_STALE)
+    ){
+        if (FRAME->executor != &Just_Use_Out_Executor)  // exempt, see [1]
+            assert(VAL_TYPE_UNCHECKED(OUT) == REB_0);  // stale voids, see [2]
+    }
 
 { //=//// CALL THE EXECUTOR ///////////////////////////////////////////////=//
 
@@ -226,16 +243,21 @@ REB_R Trampoline_Core(void)
 
 } //=//// HANDLE FINISHED RESULTS /////////////////////////////////////////=//
 
+  // 1. There may be some optimization possible here if the flag controlling
+  //    whether you wanted to keep the stale flag was also using the same
+  //    EVAL_FLAG bit as the CELL_FLAG for stale.  It's tricky since for
+  //    series nodes that's the bit for being free.
+
     if (r == OUT) {
       result_in_out:
         assert(IS_SPECIFIC(cast(Cell*, OUT)));
 
-        if (Get_Eval_Flag(FRAME, MAYBE_STALE)) {
+        if (Get_Eval_Flag(FRAME, MAYBE_STALE)) {  // see [1]
             assert(Not_Eval_Flag(FRAME, BRANCH));
             assert(Not_Eval_Flag(FRAME, META_RESULT));
         }
         else {
-            Clear_Stale_Flag(OUT);
+            Clear_Stale_Flag(OUT);  // also see [1]
             if (Get_Eval_Flag(FRAME, BRANCH))
                 Reify_Branch_Out(OUT);
             else if (Get_Eval_Flag(FRAME, META_RESULT))
@@ -268,9 +290,24 @@ REB_R Trampoline_Core(void)
     }
 
   //=//// HANDLE CONTINUATIONS ////////////////////////////////////////////=//
+  //
+  // 1. It's legal for a frame to implement itself in terms of another frame
+  //    that is compatible.  This could have a separate signal, but for now
+  //    it's done as R_CONTINUATION.  Since that delegation may be to an
+  //    INITIAL_ENTRY state, 0 needs to be legal.
+  //
+  // 2. If a frame besides the one that we ran is above on the stack, then
+  //    the frame is using that continuation to get a result it is interested
+  //    in.  It needs to know it did a push, so the state must be nonzero.
+  //
+  //    (Technically there could be some other frame field modified to let it
+  //    know there was an effect, but we enforce the nonzero rule because it
+  //    also helps with bookkeeping and GC features, allowing the zero value
+  //    to be reserved to mean something else.)
 
     if (r == R_CONTINUATION) {
-        assert(FRAME == FS_TOP or STATE != 0);
+        if (FRAME != FS_TOP)  // continuing self ok, see [1]
+            assert(STATE != 0);  // otherwise state enforced nonzero, see [2]
 
         FRAME = FS_TOP;
         goto bounce_on_the_trampoline;

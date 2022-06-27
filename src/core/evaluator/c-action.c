@@ -173,9 +173,6 @@ REB_R Action_Executor(REBFRM *f)
 
   fulfill:
 
-    if (Not_Eval_Flag(f, MAYBE_STALE))
-        assert(Is_Void(OUT));
-
     assert(not IS_POINTER_TRASH_DEBUG(f->original));  // set by Begin_Action()
 
     assert(DSP >= f->baseline.dsp);  // path processing may push REFINEMENT!s
