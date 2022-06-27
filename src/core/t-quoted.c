@@ -412,8 +412,10 @@ REBNATIVE(unmeta)
     if (Is_Meta_Of_Void(v))
         return VOID;  // ^-- see explanation
 
-    if (IS_BAD_WORD(v))
+    if (IS_BAD_WORD(v)) {
+        Isotopify(v);
         fail (Error_Bad_Isotope(v));  // no other isotopes valid for the trick
+    }
 
     assert(IS_QUOTED(v));  // handling the invisibility detour is done now...
     Unquotify(v, 1);  // drop quote level caused by ^META parameter convention

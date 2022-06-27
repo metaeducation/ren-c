@@ -254,3 +254,12 @@
     (10 = reify 10)
     ((the '''a) = reify the '''a)
 ]
+
+; UNMETA works on void, but not other "isotopic" forms as a trick
+[
+    (void? unmeta void)
+    (
+        e: trap [unmeta ~foo~]
+        e.id = 'bad-isotope
+    )
+]
