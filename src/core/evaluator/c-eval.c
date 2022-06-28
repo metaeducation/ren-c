@@ -107,7 +107,7 @@
     DECLARE_FRAME (f, (parent)->feed, \
         EVAL_FLAG_MAYBE_STALE | EVAL_FLAG_FAILURE_RESULT_OK \
         | ((parent)->flags.bits \
-            & (EVAL_FLAG_FULFILLING_ARG | EVAL_FLAG_RUNNING_ENFIX \
+            & (EVAL_FLAG_FULFILLING_ARG \
                 | EVAL_FLAG_DIDNT_LEFT_QUOTE_PATH)))
 
 
@@ -253,10 +253,13 @@ REB_R Evaluator_Executor(REBFRM *f)
 
         // The re-evaluate functionality may not want to heed the enfix state
         // in the action itself.  See REBNATIVE(shove)'s /ENFIX for instance.
-        // So we go by the state of EVAL_FLAG_RUNNING_ENFIX on entry.
+        // So we go by the state of a flag on entry.
         //
-        if (Get_Eval_Flag(f, RUNNING_ENFIX)) {
-            Clear_Eval_Flag(f, RUNNING_ENFIX);  // for assertion
+        if (f->u.eval.enfix_reevaluate == 'N') {
+            // either not enfix or not an action
+        }
+        else {
+            assert(f->u.eval.enfix_reevaluate == 'Y');
 
             DECLARE_ACTION_SUBFRAME (subframe, f);
             Push_Frame(OUT, subframe);

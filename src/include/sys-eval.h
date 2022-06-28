@@ -288,11 +288,11 @@ inline static bool Reevaluate_In_Subframe_Throws(
 ){
     assert(SECOND_BYTE(flags) == 0);
     flags |= FLAG_STATE_BYTE(ST_EVALUATOR_REEVALUATING);
-    if (enfix)
-        flags |= EVAL_FLAG_RUNNING_ENFIX;
 
     DECLARE_FRAME (subframe, f->feed, flags);
     subframe->u.eval.current = reval;
+    subframe->u.eval.current_gotten = nullptr;
+    subframe->u.eval.enfix_reevaluate = enfix ? 'Y' : 'N';
 
     return Trampoline_Throws(out, subframe);
 }

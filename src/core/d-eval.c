@@ -273,7 +273,7 @@ void Do_After_Action_Checks_Debug(REBFRM *f) {
             not Typecheck_Including_Constraints(param, f->out)
             and not (
                 GET_PARAM_FLAG(param, VANISHABLE)
-                and Get_Eval_Flag(f, RUNNING_ENFIX)
+                and Get_Executor_Flag(ACTION, f, RUNNING_ENFIX)
             )  // exemption, e.g. `1 comment "hi" + 2` infix non-stale
         ){
             assert(!"Native code violated return type contract!\n");

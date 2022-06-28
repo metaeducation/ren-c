@@ -433,7 +433,7 @@ REB_R Action_Executor(REBFRM *f)
             //
             // This effectively puts the enfix into a *single step defer*.
             //
-            if (Get_Eval_Flag(f, RUNNING_ENFIX)) {
+            if (Get_Executor_Flag(ACTION, f, RUNNING_ENFIX)) {
                 assert(NOT_FEED_FLAG(f->feed, NO_LOOKAHEAD));
                 if (
                     NOT_ACTION_FLAG(FRM_PHASE(f), POSTPONES_ENTIRELY)
@@ -492,7 +492,7 @@ REB_R Action_Executor(REBFRM *f)
         //      >> 1 + 2 * 3
         //      == 9
         //
-        if (Not_Eval_Flag(f, RUNNING_ENFIX))
+        if (Not_Executor_Flag(ACTION, f, RUNNING_ENFIX))
             CLEAR_FEED_FLAG(f->feed, NO_LOOKAHEAD);
 
         // Once a deferred flag is set, it must be cleared during the
@@ -930,7 +930,7 @@ REB_R Action_Executor(REBFRM *f)
     // hand side.  This is how expression work (see `|:`)
     //
     if (GET_FEED_FLAG(f->feed, NEXT_ARG_FROM_OUT)) {
-        assert(Get_Eval_Flag(f, RUNNING_ENFIX));
+        assert(Get_Executor_Flag(ACTION, f, RUNNING_ENFIX));
         CLEAR_FEED_FLAG(f->feed, NEXT_ARG_FROM_OUT);
         Mark_Eval_Out_Stale(OUT);
     }
@@ -1233,7 +1233,7 @@ void Push_Action(
     f->executor = &Action_Executor;
 
     assert(Not_Executor_Flag(ACTION, f, FULFILL_ONLY));
-    assert(Not_Eval_Flag(f, RUNNING_ENFIX));
+    assert(Not_Executor_Flag(ACTION, f, RUNNING_ENFIX));
 
     STATIC_ASSERT(EVAL_FLAG_FULFILLING_ARG == DETAILS_FLAG_IS_BARRIER);
     REBARR *identity = ACT_IDENTITY(act);
@@ -1327,7 +1327,7 @@ void Begin_Action_Core(
     option(const Symbol*) label,
     bool enfix
 ){
-    assert(Not_Eval_Flag(f, RUNNING_ENFIX));
+    assert(Not_Executor_Flag(ACTION, f, RUNNING_ENFIX));
     assert(NOT_FEED_FLAG(f->feed, DEFERRING_ENFIX));
 
     assert(Not_Subclass_Flag(VARLIST, f->varlist, FRAME_HAS_BEEN_INVOKED));
@@ -1356,7 +1356,7 @@ void Begin_Action_Core(
     if (enfix) {
         //
         // While FEED_FLAG_NEXT_ARG_FROM_OUT is set only during the first
-        // argument of an enfix function call, EVAL_FLAG_RUNNING_ENFIX is
+        // argument of an enfix call, ACTION_EXECUTOR_FLAG_RUNNING_ENFIX is
         // set for the whole duration.
         //
         // Note: We do not set NEXT_ARG_FROM_OUT here, because that flag is
@@ -1367,7 +1367,7 @@ void Begin_Action_Core(
         // and intends to call Fetch_Next_In_Feed() as the next step.  So
         // the caller must set it.
         //
-        Set_Eval_Flag(f, RUNNING_ENFIX);
+        Set_Executor_Flag(ACTION, f, RUNNING_ENFIX);
 
         // All the enfix call sites cleared this flag on the feed, so it was
         // moved into the Begin_Enfix_Action() case.  Note this has to be done
@@ -1402,7 +1402,7 @@ void Drop_Action(REBFRM *f) {
     }
     Clear_Eval_Flag(f, CACHE_NO_LOOKAHEAD);
 
-    Clear_Eval_Flag(f, RUNNING_ENFIX);
+    Clear_Executor_Flag(ACTION, f, RUNNING_ENFIX);
     Clear_Executor_Flag(ACTION, f, FULFILL_ONLY);
 
     assert(

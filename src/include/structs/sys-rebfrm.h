@@ -161,20 +161,19 @@ STATIC_ASSERT(EVAL_FLAG_7_IS_TRUE == NODE_FLAG_CELL);
 #undef EVAL_FLAG_15
 
 
-//=//// EVAL_FLAG_RUNNING_ENFIX ///////////////////////////////////////////=//
+//=//// EVAL_FLAG_FAILURE_RESULT_OK ///////////////////////////////////////=//
 //
-// Due to the unusual influences of partial refinement specialization, a frame
-// may wind up with its enfix parameter as being something like the last cell
-// in the argument list...when it has to then go back and fill earlier args
-// as normal.  There's no good place to hold the memory that one is doing an
-// enfix fulfillment besides a bit on the frame itself.
+// The special FAILURE_255 quotelevel will trip up code that isn't expecting
+// it, so most frames do not want to receive these "isotopic forms of error!"
+// This flag can be used with EVAL_FLAG_META_RESULT or without it, to say
+// that the caller is planning on dealing with the special case.
 //
-// It is also used to indicate to a ST_EVALUATOR_REEVALUATING frame whether
-// to run an ACTION! cell as enfix or not.  The reason this may be overridden
-// on what's in the action can be seen in the REBNATIVE(shove) code.
+// Note: This bit is the same as CELL_FLAG_NOTE, which may be something that
+// could be exploited for some optimization.
 //
-#define EVAL_FLAG_RUNNING_ENFIX \
+#define EVAL_FLAG_FAILURE_RESULT_OK \
     FLAG_LEFT_BIT(16)
+
 
 
 //=//// EVAL_FLAG_DIDNT_LEFT_QUOTE_PATH ///////////////////////////////////=//
@@ -333,20 +332,26 @@ STATIC_ASSERT(DETAILS_FLAG_IS_BARRIER == EVAL_FLAG_FULFILLING_ARG);
     FLAG_LEFT_BIT(27)
 
 
-//=//// EVAL_FLAG_FAILURE_RESULT_OK ///////////////////////////////////////=//
+//=//// EVAL_FLAG_EXECUTOR_28 /////////////////////////////////////////////=//
 //
-// The special FAILURE_255 quotelevel will trip up code that isn't expecting
-// it, so most frames do not want to receive these "isotopic forms of error!"
-// This flag can be used with EVAL_FLAG_META_RESULT or without it, to say
-// that the caller is planning on dealing with the special case.
+// * ACTION_EXECUTOR_FLAG_RUNNING_ENFIX
 //
-// Note: This bit is the same as CELL_FLAG_NOTE, which may be something that
-// could be exploited for some optimization.
+// Due to the unusual influences of partial refinement specialization, a frame
+// may wind up with its enfix parameter as being something like the last cell
+// in the argument list...when it has to then go back and fill earlier args
+// as normal.  There's no good place to hold the memory that one is doing an
+// enfix fulfillment besides a bit on the frame itself.
 //
-#define EVAL_FLAG_FAILURE_RESULT_OK \
+// It is also used to indicate to a ST_EVALUATOR_REEVALUATING frame whether
+// to run an ACTION! cell as enfix or not.  The reason this may be overridden
+// on what's in the action can be seen in the REBNATIVE(shove) code.
+//
+#define EVAL_FLAG_EXECUTOR_28 \
     FLAG_LEFT_BIT(28)
 
-STATIC_ASSERT(EVAL_FLAG_FAILURE_RESULT_OK == CELL_FLAG_NOTE);
+STATIC_ASSERT(EVAL_FLAG_EXECUTOR_28 == CELL_FLAG_NOTE);
+
+#define ACTION_EXECUTOR_FLAG_RUNNING_ENFIX EVAL_FLAG_EXECUTOR_28
 
 
 //=//// EVAL_FLAG_EXECUTOR_29 //////////////////////////////////////////////=//
@@ -638,6 +643,7 @@ struct Reb_Frame_Action_State {
     struct {
         const Cell *current;
         option(const REBVAL*) current_gotten;
+        char enfix_reevaluate;  // either 'Y' or 'N' (catches bugs)
     } eval;
 
     struct Reb_Frame_Action_State action;

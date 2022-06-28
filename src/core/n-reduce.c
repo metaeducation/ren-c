@@ -95,6 +95,7 @@ REBNATIVE(reduce)
 
     subframe->u.eval.current = v;
     subframe->u.eval.current_gotten = nullptr;
+    subframe->u.eval.enfix_reevaluate = 'N';  // detect?
 
     delegate_subframe (subframe);
 

@@ -572,12 +572,11 @@ REBNATIVE(let)
         | FLAG_STATE_BYTE(ST_EVALUATOR_REEVALUATING)
         | (f->flags.bits & EVAL_FLAG_FULFILLING_ARG);
 
-    bool enfix = false;  // !!! Detect this?
-    if (enfix)
-        flags |= EVAL_FLAG_RUNNING_ENFIX;
-
     DECLARE_FRAME (subframe, FRAME->feed, flags);
     subframe->u.eval.current = SPARE;
+    subframe->u.eval.current_gotten = nullptr;
+    subframe->u.eval.enfix_reevaluate = 'N';  // detect?
+
     Push_Frame(OUT, subframe);
 
     assert(STATE == ST_LET_EVAL_STEP);  // checked above
