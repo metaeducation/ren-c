@@ -978,8 +978,9 @@ static LEXFLAGS Prescan_Token(SCAN_STATE *ss)
 //
 static enum Reb_Token Locate_Token_May_Push_Mold(
     REB_MOLD *mo,
-    SCAN_LEVEL *level
+    REBFRM *f
 ){
+    SCAN_LEVEL *level = &f->u.scan;
     SCAN_STATE *ss = level->ss;
     TRASH_POINTER_IF_DEBUG(ss->end);  // this routine should set ss->end
 
@@ -1023,8 +1024,8 @@ static enum Reb_Token Locate_Token_May_Push_Mold(
 
             Derelativize(DS_PUSH(), ss->feed->value, FEED_SPECIFIER(ss->feed));
 
-            if (level->newline_pending) {
-                level->newline_pending = false;
+            if (Get_Executor_Flag(SCAN, f, NEWLINE_PENDING)) {
+                Clear_Executor_Flag(SCAN, f, NEWLINE_PENDING);
                 Set_Cell_Flag(DS_TOP, NEWLINE_BEFORE);
             }
         }
@@ -1761,7 +1762,6 @@ void Init_Va_Scan_Level_Core(
     level->start_line_head = ss->line_head = nullptr;
     level->start_line = ss->line = line;
     level->mode = '\0';
-    level->newline_pending = false;
     level->opts = 0;
 }
 
@@ -1796,7 +1796,6 @@ void Init_Scan_Level(
     out->mode = '\0';
     out->start_line_head = ss->line_head = utf8;
     out->start_line = ss->line = line;
-    out->newline_pending = false;
     out->opts = 0;
 }
 
@@ -1877,9 +1876,10 @@ static REBINT Scan_Head(SCAN_STATE *ss)
     DEAD_END;
 }
 
-static REBARR *Scan_Child_Array(SCAN_LEVEL *level, REBYTE mode);
 
-
+//
+//  Scanner_Executor: C
+//
 // BLOCK! and GROUP! use fairly ordinary recursions of this routine to make
 // arrays.  PATH! scanning is a bit trickier...it starts after an element was
 // scanned and is immediately followed by a `/`.  The stack pointer is marked
@@ -1890,7 +1890,9 @@ static REBARR *Scan_Child_Array(SCAN_LEVEL *level, REBYTE mode);
 // prior element was a GET-WORD!, the scan becomes a GET-PATH!...if the final
 // element is a SET-WORD!, the scan becomes a SET-PATH!)
 //
-REB_R Scanner_Executor(REBFRM *frame_) {
+REB_R Scanner_Executor(REBFRM *f) {
+    REBFRM *frame_ = f;  // to use macros like OUT, SUBFRAME, etc.
+
     SCAN_LEVEL *level = &frame_->u.scan;
     SCAN_STATE *ss = level->ss;
 
@@ -1908,7 +1910,8 @@ REB_R Scanner_Executor(REBFRM *frame_) {
 
     enum {
         ST_SCANNER_INITIAL_ENTRY = 0,
-        ST_SCANNER_SCANNING_CHILD_ARRAY
+        ST_SCANNER_SCANNING_CHILD_ARRAY,
+        ST_SCANNER_SCANNING_CONSTRUCT
     };
 
     switch (STATE) {
@@ -1916,16 +1919,16 @@ REB_R Scanner_Executor(REBFRM *frame_) {
         goto initial_entry;
 
       case ST_SCANNER_SCANNING_CHILD_ARRAY :
-        if (THROWING) {
-            assert(IS_ERROR(VAL_THROWN_LABEL(FRAME)));
-            assert(FS_TOP->prior == frame_);
-            Drop_Frame(FS_TOP);
-            return R_THROWN;
-        }
         bp = ss->begin;
         ep = ss->end;
         len = cast(REBLEN, ep - bp);
         goto child_array_scanned;
+
+      case ST_SCANNER_SCANNING_CONSTRUCT:
+        bp = ss->begin;
+        ep = ss->end;
+        len = cast(REBLEN, ep - bp);
+        goto construct_scan_to_stack_finished;
 
       default : assert(false);
     }
@@ -1942,7 +1945,7 @@ REB_R Scanner_Executor(REBFRM *frame_) {
 } loop: {  //////////////////////////////////////////////////////////////////
 
     Drop_Mold_If_Pushed(mo);
-    level->token = Locate_Token_May_Push_Mold(mo, level);
+    level->token = Locate_Token_May_Push_Mold(mo, f);
 
     if (level->token == TOKEN_END) {  // reached '\0'
         //
@@ -1966,7 +1969,7 @@ REB_R Scanner_Executor(REBFRM *frame_) {
 
     switch (level->token) {
       case TOKEN_NEWLINE:
-        level->newline_pending = true;
+        Set_Executor_Flag(SCAN, f, NEWLINE_PENDING);
         ss->line_head = ep;
         goto loop;
 
@@ -2126,7 +2129,6 @@ REB_R Scanner_Executor(REBFRM *frame_) {
         //
         subframe->u.scan.start_line = ss->line;
         subframe->u.scan.start_line_head = ss->line_head;
-        subframe->u.scan.newline_pending = false;
         subframe->u.scan.opts = level->opts
             &= ~(SCAN_FLAG_NULLEDS_LEGAL | SCAN_FLAG_NEXT);
 
@@ -2137,14 +2139,12 @@ REB_R Scanner_Executor(REBFRM *frame_) {
 
  child_array_scanned: {  /////////////////////////////////////////////////////
 
-        assert(FS_TOP->prior == frame_);
+        REBFLGS flags = NODE_FLAG_MANAGED;
+        if (Get_Executor_Flag(SCAN, SUBFRAME, NEWLINE_PENDING))
+            flags |= ARRAY_FLAG_NEWLINE_AT_TAIL;
 
-        REBARR *a = Pop_Stack_Values_Core(
-            FS_TOP->baseline.dsp,
-            NODE_FLAG_MANAGED
-                | (FS_TOP->u.scan.newline_pending ? ARRAY_FLAG_NEWLINE_AT_TAIL : 0)
-        );
-        Drop_Frame(FS_TOP);
+        REBARR *a = Pop_Stack_Values_Core(SUBFRAME->baseline.dsp, flags);
+        Drop_Frame(SUBFRAME);
 
         // Tag array with line where the beginning bracket/group/etc. was found
         //
@@ -2393,7 +2393,43 @@ REB_R Scanner_Executor(REBFRM *frame_) {
         break;
 
       case TOKEN_CONSTRUCT: {
-        REBARR *array = Scan_Child_Array(level, ']');
+        DECLARE_END_FRAME (
+            subframe,
+            EVAL_FLAG_TRAMPOLINE_KEEPALIVE  // we want accrued stack
+        );
+        subframe->executor = &Scanner_Executor;
+
+        ++ss->depth;
+        subframe->u.scan.ss = ss;
+
+        // Capture current line and head of line into the starting points.
+        // (Some errors wish to report the start of the array's location.)
+        //
+        subframe->u.scan.start_line = ss->line;
+        subframe->u.scan.start_line_head = ss->line_head;
+        subframe->u.scan.opts = level->opts
+            &= ~(SCAN_FLAG_NULLEDS_LEGAL | SCAN_FLAG_NEXT);
+
+        subframe->u.scan.mode = ']';
+        STATE = ST_SCANNER_SCANNING_CONSTRUCT;
+        Push_Frame(OUT, subframe); }
+
+  construct_scan_to_stack_finished: {  ///////////////////////////////////////
+
+        REBFLGS flags = NODE_FLAG_MANAGED;
+        if (Get_Executor_Flag(SCAN, f, NEWLINE_PENDING))
+            flags |= ARRAY_FLAG_NEWLINE_AT_TAIL;
+
+        REBARR *array = Pop_Stack_Values_Core(SUBFRAME->baseline.dsp, flags);
+
+        // Tag array with line where the beginning bracket/group/etc. was found
+        //
+        array->misc.line = ss->line;
+        mutable_LINK(Filename, array) = ss->file;
+        Set_Subclass_Flag(ARRAY, array, HAS_FILE_LINE_UNMASKED);
+        SET_SERIES_FLAG(array, LINK_NODE_NEEDS_MARK);
+
+        --ss->depth;
 
         // !!! Should the scanner be doing binding at all, and if so why
         // just Lib_Context?  Not binding would break functions entirely,
@@ -2612,7 +2648,6 @@ REB_R Scanner_Executor(REBFRM *frame_) {
                 child.mode = '.';
             else
                 child.mode = '/';
-            child.newline_pending = false;
 
             Scan_To_Stack(&child);
         }
@@ -2761,7 +2796,7 @@ REB_R Scanner_Executor(REBFRM *frame_) {
             // had it, but it was exploratory and predates the ideas that
             // are currently being used to solidify paths.
             //
-            if (level->newline_pending)
+            if (Get_Executor_Flag(SCAN, f, NEWLINE_PENDING))
                 Set_Subclass_Flag(ARRAY, a, NEWLINE_AT_TAIL);
         }
 
@@ -2856,8 +2891,8 @@ REB_R Scanner_Executor(REBFRM *frame_) {
     // process paths or other arrays...because the newline belongs on the
     // whole array...not the first element of it).
     //
-    if (level->newline_pending) {
-        level->newline_pending = false;
+    if (Get_Executor_Flag(SCAN, f, NEWLINE_PENDING)) {
+        Clear_Executor_Flag(SCAN, f, NEWLINE_PENDING);
         Set_Cell_Flag(DS_TOP, NEWLINE_BEFORE);
     }
 
@@ -2917,123 +2952,6 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
 
 
 //
-//  Scan_To_Stack_Relaxed_Failed: C
-//
-// If the scan failed, the error will be on the top of the stack.  (This is
-// done to avoid passing in a potentially volatile memory location, e.g.
-// the result of getting a variable location.)
-//
-bool Scan_To_Stack_Relaxed_Failed(SCAN_LEVEL *level) {
-    SCAN_STATE *ss = level->ss;
-    SCAN_LEVEL before = *level;
-    SCAN_STATE ss_before = *level->ss;
-
-    REBVAL *error = rebRescue(cast(REBDNG*, &Scan_To_Stack), level);
-    if (not error)
-        return false;  // scan went fine, hopefully the common case...
-
-    // !!! See notes on ->depth regarding TRANSCODE/RELAX and the problems
-    // with trying to do recoverable transcoding.  It was a half-baked feature
-    // in R3-Alpha that we try to keep in some form, but we only attempt to
-    // actually recover the parse if we're not in a nested block.  Otherwise
-    // we fail since you cannot recover without more scanner state exposure.
-    //
-    if (ss->depth != 0)
-        fail (VAL_CONTEXT(error));
-
-    before.ss = &ss_before;
-
-    // Because rebRescue() restores the data stack, the in-progress scan
-    // contents were lost.  But the `ss` state tells us where the token was
-    // that caused the problem.  Assuming a deterministic scanner, we can
-    // re-run the process...just stopping before the bad token.  Assuming
-    // errors aren't rampant, this is likely more efficient than rebRescue()
-    // on each individual token parse, and less invasive than trying to come
-    // up with a form of rescueing that leaves the data stack as-is.
-    //
-    if (ss->begin == ss_before.begin) {
-        //
-        // Couldn't consume *any* UTF-8 input...so don't bother re-running.
-    }
-    else {
-        // !!! The ss->limit feature was not implemented in R3-Alpha, it would
-        // stop on `\0` only.  May have immutable const data, so poking a `\0`
-        // into it may be unsafe.  Make a copy of the UTF-8 input that managed
-        // to get consumed, terminate it, and use that.  Hope errors are rare,
-        // and if this becomes a problem, implement ss->limit.
-        //
-        REBLEN limit = ss->begin - ss_before.begin;
-        REBBIN *bin = Make_Binary(limit);
-        memcpy(BIN_HEAD(bin), ss_before.begin, limit);
-        TERM_BIN_LEN(bin, limit);
-
-        SET_SERIES_FLAG(bin, DONT_RELOCATE);  // BIN_HEAD() is cached
-        ss_before.begin = BIN_HEAD(bin);
-        TRASH_POINTER_IF_DEBUG(ss_before.end);
-
-        Scan_To_Stack(&before);  // !!! Shouldn't error...check that?
-
-        Free_Unmanaged_Series(bin);
-    }
-
-    ss->begin = ss->end;  // skip malformed token
-
-    Copy_Cell(DS_PUSH(), error);
-    rebRelease(error);
-    return true;
-}
-
-
-//
-//  Scan_Child_Array: C
-//
-// This routine would create a new structure on the scanning stack.  Putting
-// what would be local variables for each level into a structure helps with
-// reflection, allowing for better introspection and error messages.  (This
-// is similar to the benefits of Reb_Frame.)
-//
-static REBARR *Scan_Child_Array(SCAN_LEVEL *parent, REBYTE mode)
-{
-    assert(mode == ')' or mode == ']');
-
-    SCAN_STATE *ss = parent->ss;
-    ++ss->depth;
-
-    SCAN_LEVEL child;
-    child.ss = ss;
-
-    // Capture current line and head of line into the starting points, because
-    // some errors wish to report the start of the array's location.
-    //
-    child.start_line = ss->line;
-    child.start_line_head = ss->line_head;
-    child.newline_pending = false;
-    child.opts = parent->opts &= ~(SCAN_FLAG_NULLEDS_LEGAL | SCAN_FLAG_NEXT);
-
-    REBDSP dsp_orig = DSP;
-
-    child.mode = mode;
-    Scan_To_Stack(&child);
-
-    REBARR *a = Pop_Stack_Values_Core(
-        dsp_orig,
-        NODE_FLAG_MANAGED
-            | (child.newline_pending ? ARRAY_FLAG_NEWLINE_AT_TAIL : 0)
-    );
-
-    // Tag array with line where the beginning bracket/group/etc. was found
-    //
-    a->misc.line = ss->line;
-    mutable_LINK(Filename, a) = ss->file;
-    Set_Subclass_Flag(ARRAY, a, HAS_FILE_LINE_UNMASKED);
-    SET_SERIES_FLAG(a, LINK_NODE_NEEDS_MARK);
-
-    --ss->depth;
-    return a;
-}
-
-
-//
 //  Scan_UTF8_Managed: C
 //
 // Scan source code. Scan state initialized. No header required.
@@ -3044,19 +2962,25 @@ REBARR *Scan_UTF8_Managed(
     REBSIZ size,
     option(REBCTX*) context
 ){
+    DECLARE_END_FRAME (f, EVAL_MASK_NONE);
+    f->executor = &Scanner_Executor;
+
     SCAN_STATE ss;
-    SCAN_LEVEL level;
     const REBLIN start_line = 1;
-    Init_Scan_Level(&level, &ss, file, start_line, utf8, size, context);
+    Init_Scan_Level(&f->u.scan, &ss, file, start_line, utf8, size, context);
 
-    REBDSP dsp_orig = DSP;
-    Scan_To_Stack(&level);
+    DECLARE_LOCAL (temp);
+    Push_Frame(temp, f);
+    if (Trampoline_With_Top_As_Root_Throws())
+        fail (Error_No_Catch_For_Throw(f));
 
-    REBARR *a = Pop_Stack_Values_Core(
-        dsp_orig,
-        NODE_FLAG_MANAGED
-            | (level.newline_pending ? ARRAY_FLAG_NEWLINE_AT_TAIL : 0)
-    );
+    REBFLGS flags = NODE_FLAG_MANAGED;
+    if (Get_Executor_Flag(SCAN, f, NEWLINE_PENDING))
+        flags |= ARRAY_FLAG_NEWLINE_AT_TAIL;
+
+    REBARR *a = Pop_Stack_Values_Core(f->baseline.dsp, flags);
+
+    Drop_Frame(f);  // after pop, stack should have balanced
 
     a->misc.line = ss.line;
     mutable_LINK(Filename, a) = ss.file;
@@ -3161,21 +3085,42 @@ REBNATIVE(transcode)
 
     REBVAL *source = ARG(source);
 
+    REBSIZ size;
+    const REBYTE *bp = VAL_BYTES_AT(&size, source);
+
+    SCAN_STATE *ss;
+    REBVAL *ss_buffer = ARG(return);  // kept as a BINARY!, gets GC'd
+
+    enum {
+        ST_TRANSCODE_INITIAL_ENTRY = 0,
+        ST_TRANSCODE_SCANNING
+    };
+
+    switch (STATE) {
+      case ST_TRANSCODE_INITIAL_ENTRY :
+        goto initial_entry;
+
+      case ST_TRANSCODE_SCANNING :
+        ss = cast(SCAN_STATE*, BIN_HEAD(VAL_BINARY_KNOWN_MUTABLE(ss_buffer)));
+        goto scan_to_stack_maybe_failed;
+    }
+
+  initial_entry: {  //////////////////////////////////////////////////////////
+
+  // 1. Originally, interning was used on the file to avoid redundancy.  But
+  //    that meant the interning mechanic was being given strings that were
+  //    not necessarily valid WORD! symbols.  There's probably not *that* much
+  //    redundancy of files being scanned, and plain old freezing can keep the
+  //    user from changing the passed in filename after-the-fact (making a
+  //    copy would likely be wasteful, so let them copy if they care to change
+  //    the string later).
+  //
+  //    !!! Should the base name and extension be stored, or whole path?
+
     const REBSTR *file;
     if (REF(file)) {
-        //
-        // Originally, interning was used on the file to avoid redundancy.
-        // However, that meant the interning mechanic was being given strings
-        // that were not necessarily valid WORD! symbols.  There's probably
-        // not *that* much redundancy of files being scanned, and plain old
-        // freezing can keep the user from changing the passed in filename
-        // after-the-fact (making a copy would likely be wasteful, so let
-        // them copy if they care to change the string later).
-        //
-        // !!! Should the base name and extension be stored, or whole path?
-        //
         file = VAL_STRING(ARG(file));
-        Freeze_Series(file);
+        Freeze_Series(file);  // freezes vs. interning, see [1]
     }
     else
         file = ANONYMOUS;
@@ -3198,68 +3143,75 @@ REBNATIVE(transcode)
     else
         fail ("/LINE must be an INTEGER! or an ANY-WORD! integer variable");
 
-    REBSIZ size;
-    const REBYTE *bp = VAL_BYTES_AT(&size, source);
-
     REBCTX *context = REF(where)
         ? VAL_CONTEXT(ARG(where))
         : cast(REBCTX*, nullptr);  // C++98 ambiguous w/o cast
 
-    SCAN_LEVEL level;
-    SCAN_STATE ss;
-    Init_Scan_Level(&level, &ss, file, start_line, bp, size, context);
+    DECLARE_END_FRAME (
+        subframe,
+        EVAL_FLAG_TRAMPOLINE_KEEPALIVE  // want info about pending newline, etc
+    );
+    subframe->executor = &Scanner_Executor;
+    SCAN_LEVEL *level = &subframe->u.scan;
+
+    Init_Binary(ss_buffer, Make_Binary(sizeof(SCAN_STATE)));
+    ss = cast(SCAN_STATE*, VAL_BINARY_AT(ss_buffer));
+
+    Init_Scan_Level(level, ss, file, start_line, bp, size, context);
 
     if (REF(next))
-        level.opts |= SCAN_FLAG_NEXT;
+        level->opts |= SCAN_FLAG_NEXT;
+
+    Push_Frame(OUT, subframe);
+    STATE = ST_TRANSCODE_SCANNING;
+    continue_uncatchable_subframe (subframe);
+
+} scan_to_stack_maybe_failed: {  /////////////////////////////////////////////
 
     // If the source data bytes are "1" then the scanner will push INTEGER! 1
     // if the source data is "[1]" then the scanner will push BLOCK! [1]
     //
     // Return a block of the results, so [1] and [[1]] in those cases.
-    //
-    REBDSP dsp_orig = DSP;
-    if (REF(relax)) {
-        bool failed = Scan_To_Stack_Relaxed_Failed(&level);
 
+    if (REF(relax)) {
+        //
+        // !!! Currently the /RELAX feature is broken, waiting on a new and
+        // better implementation empowered by stackless.  Say it succeeded by
+        // returning NULL, but if there's an error it will not be intercepted.
+        //
         if (not Is_Blackhole(REF(relax))) {
             REBVAL *var = Sink_Word_May_Fail(ARG(relax), SPECIFIED);
-            if (failed)
-                Move_Cell(var, DS_TOP);
-            else
-                Init_Nulled(var);
+            Init_Nulled(var);
         }
-
-        if (failed)
-            DS_DROP();
     }
-    else
-        Scan_To_Stack(&level);
 
     if (REF(next)) {
-        if (DSP == dsp_orig)
+        if (DSP == BASELINE->dsp)
             Init_Nulled(OUT);
         else {
             Move_Cell(OUT, DS_TOP);
             DS_DROP();
         }
-        assert(DSP == dsp_orig);
     }
     else {
-        REBARR *a = Pop_Stack_Values_Core(
-            dsp_orig,
-            NODE_FLAG_MANAGED
-                | (level.newline_pending ? ARRAY_FLAG_NEWLINE_AT_TAIL : 0)
-        );
-        a->misc.line = ss.line;
-        mutable_LINK(Filename, a) = ss.file;
+        REBFLGS flags = NODE_FLAG_MANAGED;
+        if (Get_Executor_Flag(SCAN, SUBFRAME, NEWLINE_PENDING))
+            flags |= ARRAY_FLAG_NEWLINE_AT_TAIL;
+
+        REBARR *a = Pop_Stack_Values_Core(BASELINE->dsp, flags);
+
+        a->misc.line = ss->line;
+        mutable_LINK(Filename, a) = ss->file;
         a->leader.bits |= ARRAY_MASK_HAS_FILE_LINE;
 
         Init_Block(OUT, a);
     }
 
+    Drop_Frame(SUBFRAME);
+
     if (REF(line) and IS_WORD(ARG(line))) {  // wanted the line number updated
         REBVAL *line_int = ARG(return);  // use return as scratch slot
-        Init_Integer(line_int, ss.line);
+        Init_Integer(line_int, ss->line);
         if (Set_Var_Core_Throws(SPARE, nullptr, ARG(line), SPECIFIED, line_int))
             return THROWN;
     }
@@ -3273,8 +3225,8 @@ REBNATIVE(transcode)
 
         if (IS_BINARY(source)) {
             const REBBIN *bin = VAL_BINARY(source);
-            if (ss.begin)
-                VAL_INDEX_UNBOUNDED(rest) = ss.begin - BIN_HEAD(bin);
+            if (ss->begin)
+                VAL_INDEX_UNBOUNDED(rest) = ss->begin - BIN_HEAD(bin);
             else
                 VAL_INDEX_UNBOUNDED(rest) = BIN_LEN(bin);
         }
@@ -3291,8 +3243,8 @@ REBNATIVE(transcode)
             // (It would probably be better if the scanner kept count, though
             // maybe that would make it slower when this isn't needed?)
             //
-            if (ss.begin)
-                VAL_INDEX_RAW(rest) += Num_Codepoints_For_Bytes(bp, ss.begin);
+            if (ss->begin)
+                VAL_INDEX_RAW(rest) += Num_Codepoints_For_Bytes(bp, ss->begin);
             else
                 VAL_INDEX_RAW(rest) += BIN_TAIL(VAL_STRING(source)) - bp;
         }
@@ -3302,7 +3254,7 @@ REBNATIVE(transcode)
     }
 
     return OUT;
-}
+}}
 
 
 //
@@ -3318,20 +3270,22 @@ const REBYTE *Scan_Any_Word(
     const REBYTE *utf8,
     REBSIZ size
 ) {
-    SCAN_LEVEL level;
     SCAN_STATE ss;
     const REBSTR *file = ANONYMOUS;
     const REBLIN start_line = 1;
+
+    DECLARE_END_FRAME (f, EVAL_MASK_NONE);
+    SCAN_LEVEL *level = &f->u.scan;
 
     // !!! We use UNLIMITED here instead of `size` because the R3-Alpha
     // scanner did not implement scan limits; it always expected the input
     // to end at '\0'.  We crop the word based on the size after the scan.
     //
-    Init_Scan_Level(&level, &ss, file, start_line, utf8, UNLIMITED, nullptr);
+    Init_Scan_Level(level, &ss, file, start_line, utf8, UNLIMITED, nullptr);
 
     DECLARE_MOLD (mo);
 
-    enum Reb_Token token = Locate_Token_May_Push_Mold(mo, &level);
+    enum Reb_Token token = Locate_Token_May_Push_Mold(mo, f);
     if (token != TOKEN_WORD)
         return nullptr;
 
@@ -3341,6 +3295,7 @@ const REBYTE *Scan_Any_Word(
 
     Init_Any_Word(out, kind, Intern_UTF8_Managed(utf8, size));
     Drop_Mold_If_Pushed(mo);
+    Free_Frame_Internal(f);
     return ss.begin;
 }
 

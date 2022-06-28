@@ -28,6 +28,68 @@
 //
 #include "sys-scan.h"
 
+
+#define EXECUTOR_SCAN &Scanner_Executor  // shorthand in Xxx_Executor_Flag()
+
+
+//=//// SCAN_EXECUTOR_FLAG_NEWLINE_PENDING ////////////////////////////////=//
+//
+// CELL_FLAG_LINE appearing on a value means that there is a line break
+// *before* that value.  Hence when a newline is seen, it means the *next*
+// value to be scanned will receive the flag.
+//
+#define SCAN_EXECUTOR_FLAG_NEWLINE_PENDING \
+    EVAL_FLAG_24
+
+
+//=//// SCAN_EXECUTOR_FLAG_25 /////////////////////////////////////////////=//
+//
+#define SCAN_EXECUTOR_FLAG_25 \
+    EVAL_FLAG_25
+
+
+//=//// SCAN_EXECUTOR_FLAG_26 /////////////////////////////////////////////=//
+//
+#define SCAN_EXECUTOR_FLAG_26 \
+    EVAL_FLAG_26
+
+
+//=//// SCAN_EXECUTOR_FLAG_27 /////////////////////////////////////////////=//
+//
+#define SCAN_EXECUTOR_FLAG_27 \
+    EVAL_FLAG_27
+
+
+//=//// SCAN_EXECUTOR_FLAG_27 /////////////////////////////////////////////=//
+//
+#define SCAN_EXECUTOR_FLAG_27 \
+    EVAL_FLAG_27
+
+
+//=//// SCAN_EXECUTOR_FLAG_24 /////////////////////////////////////////////=//
+//
+#define SCAN_EXECUTOR_FLAG_28 \
+    EVAL_FLAG_28
+
+
+//=//// SCAN_EXECUTOR_FLAG_29 /////////////////////////////////////////////=//
+//
+#define SCAN_EXECUTOR_FLAG_29 \
+    EVAL_FLAG_29
+
+
+//=//// SCAN_EXECUTOR_FLAG_30 /////////////////////////////////////////////=//
+//
+#define SCAN_EXECUTOR_FLAG_30 \
+    EVAL_FLAG_30
+
+
+//=//// SCAN_EXECUTOR_FLAG_31 /////////////////////////////////////////////=//
+//
+#define SCAN_EXECUTOR_FLAG_31 \
+    EVAL_FLAG_31
+
+
 typedef struct rebol_scan_state {  // shared across all levels of a scan
     //
     // Beginning and end positions of currently processed token.
@@ -86,12 +148,6 @@ typedef struct rebol_scan_level {  // each array scan corresponds to a level
 
     REBLEN start_line;
     const REBYTE *start_line_head;
-
-    // CELL_FLAG_LINE appearing on a value means that there is a line break
-    // *before* that value.  Hence when a newline is seen, it means the *next*
-    // value to be scanned will receive the flag.
-    //
-    bool newline_pending;
 
     REBFLGS opts;
 
