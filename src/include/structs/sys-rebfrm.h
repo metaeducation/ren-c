@@ -100,23 +100,9 @@ STATIC_ASSERT(EVAL_FLAG_ALLOCATED_FEED == NODE_FLAG_MANAGED);  // should be ok
 STATIC_ASSERT(EVAL_FLAG_CACHE_NO_LOOKAHEAD == FEED_FLAG_NO_LOOKAHEAD);
 
 
-//=//// EVAL_FLAG_NO_EVALUATIONS //////////////////////////////////////////=//
+//=//// EVAL_FLAG_5 ///////////////////////////////////////////////////////=//
 //
-// It might seem strange to have an evaluator mode in which no evaluations are
-// performed.  However, this simplifies the implementation of operators such
-// as ANY and ALL, which wish to run in an "inert" mode:
-//
-//     >> any [1 + 2]
-//     == 3
-//
-//     >> any @[1 + 2]
-//     == 1
-//
-// Inert operations wind up costing a bit more because they're pushing a frame
-// when it seems "they don't need to"; but pushing a frame also locks the
-// series in question against enumeration.
-//
-#define EVAL_FLAG_NO_EVALUATIONS \
+#define EVAL_FLAG_5 \
     FLAG_LEFT_BIT(5)
 
 
@@ -334,6 +320,22 @@ STATIC_ASSERT(DETAILS_FLAG_IS_BARRIER == EVAL_FLAG_FULFILLING_ARG);
 
 //=//// EVAL_FLAG_EXECUTOR_28 /////////////////////////////////////////////=//
 //
+// * EVAL_EXECUTOR_FLAG_NO_EVALUATIONS
+//
+// It might seem strange to have an evaluator mode in which no evaluations are
+// performed.  However, this simplifies the implementation of operators such
+// as ANY and ALL, which wish to run in an "inert" mode:
+//
+//     >> any [1 + 2]
+//     == 3
+//
+//     >> any @[1 + 2]
+//     == 1
+//
+// Inert operations wind up costing a bit more because they're pushing a frame
+// when it seems "they don't need to"; but pushing a frame also locks the
+// series in question against enumeration.
+//
 // * ACTION_EXECUTOR_FLAG_RUNNING_ENFIX
 //
 // Due to the unusual influences of partial refinement specialization, a frame
@@ -351,6 +353,7 @@ STATIC_ASSERT(DETAILS_FLAG_IS_BARRIER == EVAL_FLAG_FULFILLING_ARG);
 
 STATIC_ASSERT(EVAL_FLAG_EXECUTOR_28 == CELL_FLAG_NOTE);
 
+#define EVAL_EXECUTOR_FLAG_NO_EVALUATIONS EVAL_FLAG_EXECUTOR_28
 #define ACTION_EXECUTOR_FLAG_RUNNING_ENFIX EVAL_FLAG_EXECUTOR_28
 
 

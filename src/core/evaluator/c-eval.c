@@ -205,7 +205,7 @@ REB_R Evaluator_Executor(REBFRM *f)
     assert(INITABLE(OUT));  // all invisible will preserve output
     assert(OUT != SPARE);  // overwritten by temporary calculations
 
-    if (Get_Eval_Flag(f, NO_EVALUATIONS)) {  // see flag for why this exists
+    if (Get_Executor_Flag(EVAL, f, NO_EVALUATIONS)) {  // see flag for rationale
         if (Is_End(f->feed->value))
             return OUT;
         Derelativize(OUT, f->feed->value, FEED_SPECIFIER(f->feed));

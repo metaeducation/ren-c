@@ -232,7 +232,7 @@ REBNATIVE(reduce_each)
     Init_Object(ARG(vars), context);  // keep GC safe
 
     if (IS_THE_BLOCK(block))
-        flags |= EVAL_FLAG_NO_EVALUATIONS;
+        flags |= EVAL_EXECUTOR_FLAG_NO_EVALUATIONS;
 
     DECLARE_FRAME_AT (subframe, block, flags);
     Push_Frame(SPARE, subframe);
@@ -347,7 +347,7 @@ static void Push_Composer_Frame(
         subframe,
         adjusted ? adjusted : arraylike,
         adjusted ? SPECIFIED : specifier,
-        EVAL_FLAG_NO_EVALUATIONS
+        EVAL_EXECUTOR_FLAG_NO_EVALUATIONS
             | EVAL_FLAG_TRAMPOLINE_KEEPALIVE  // allows stack accumulation
             | EVAL_FLAG_FAILURE_RESULT_OK  // bubbles up definitional errors
     );

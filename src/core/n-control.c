@@ -649,7 +649,7 @@ REBNATIVE(all)
         | EVAL_FLAG_TRAMPOLINE_KEEPALIVE;
 
     if (IS_THE_BLOCK(block))
-        flags |= EVAL_FLAG_NO_EVALUATIONS;
+        flags |= EVAL_EXECUTOR_FLAG_NO_EVALUATIONS;
 
     DECLARE_FRAME_AT (subframe, block, flags);
     Push_Frame(OUT, subframe);
@@ -773,7 +773,7 @@ REBNATIVE(any)
         | EVAL_FLAG_TRAMPOLINE_KEEPALIVE;
 
     if (IS_THE_BLOCK(block))
-        flags |= EVAL_FLAG_NO_EVALUATIONS;
+        flags |= EVAL_EXECUTOR_FLAG_NO_EVALUATIONS;
 
     DECLARE_FRAME_AT (subframe, block, flags);
     Push_Frame(OUT, subframe);

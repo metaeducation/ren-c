@@ -85,7 +85,7 @@ REBNATIVE(delimit)
 
     REBFLGS flags = EVAL_EXECUTOR_FLAG_SINGLE_STEP;
     if (IS_THE_BLOCK(ARG(line)))
-        flags |= EVAL_FLAG_NO_EVALUATIONS;
+        flags |= EVAL_EXECUTOR_FLAG_NO_EVALUATIONS;
     else
         assert(IS_BLOCK(line));
 
