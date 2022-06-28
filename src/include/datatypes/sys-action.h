@@ -81,6 +81,120 @@
 //   HIJACKed--or otherwise hooked to affect all instances of a function.
 //
 
+
+//=//// ACTION_EXECUTOR_FLAG_24 ///////////////////////////////////////////=//
+//
+#define ACTION_EXECUTOR_FLAG_24 \
+    EVAL_FLAG_24
+
+
+//=//// ACTION_EXECUTOR_FLAG_FULFILLING_ARG ///////////////////////////////=//
+//
+// Lined up with EVAL_EXECUTOR_FLAG_FULFILLING_ARG so they can inherit via
+// a simple bitmask.
+//
+#define ACTION_EXECUTOR_FLAG_FULFILLING_ARG \
+    EVAL_FLAG_25
+
+
+//=//// ACTION_EXECUTOR_FLAG_ERROR_ON_DEFERRED_ENFIX //////////////////////=//
+//
+// There are advanced features that "abuse" the evaluator, e.g. by making it
+// create a specialization exemplar by example from a stream of code.  These
+// cases are designed to operate in isolation, and are incompatible with the
+// idea of enfix operations that stay pending in the evaluation queue, e.g.
+//
+//     match+ parse "aab" [some "a"] else [print "what should this do?"]
+//
+// MATCH+ is variadic, and in one step asks to make a frame from the right
+// hand side.  But it's 99% likely intent of this was to attach the ELSE to
+// the MATCH and not the PARSE.  That looks inconsistent, since the user
+// imagines it's the evaluator running PARSE as a parameter to MATCH (vs.
+// MATCH becoming the evaluator and running it).
+//
+// It would be technically possible to allow ELSE to bind to the MATCH in
+// this case.  It might even be technically possible to give MATCH back a
+// frame for a CHAIN of actions that starts with PARSE but includes the ELSE
+// (which sounds interesting but crazy, considering that's not what people
+// would want here, but maybe sometimes they would).
+//
+// The best answer for right now is just to raise an error.
+//
+#define ACTION_EXECUTOR_FLAG_ERROR_ON_DEFERRED_ENFIX \
+    EVAL_FLAG_26
+
+
+//=//// ACTION_EXECUTOR_FLAG_DELEGATE_CONTROL /////////////////////////////=//
+//
+// Action dispatchers don't really want to delegate control with R_DELEGATE,
+// because the action wants to appear to be on the stack.  For some it's even
+// more technically important--because the varlist must stay alive to be a
+// specifier, so you can't Drop_Action() etc.  Something like a FUNC or LAMBDA
+// cannot delegate to the body block if there is a variadic, because it will
+// look like the function isn't running.
+//
+// So when a dipatcher tells Action_Executor() it wants R_DELEGATION, it does
+// not propagate that to the trampoline...it just sets this flag and returns
+// a continuation.  (Note however, that using delegation has an optimization
+// that does not return R_DELEGATION, if something like a branch can be
+// evaluated to a constant value!  This won't leave the frame on the stack).
+//
+#define ACTION_EXECUTOR_FLAG_DELEGATE_CONTROL \
+    EVAL_FLAG_27
+
+
+//=//// ACTION_EXECUTOR_FLAG_RUNNING_ENFIX ////////////////////////////////=//
+//
+// Due to the unusual influences of partial refinement specialization, a frame
+// may wind up with its enfix parameter as being something like the last cell
+// in the argument list...when it has to then go back and fill earlier args
+// as normal.  There's no good place to hold the memory that one is doing an
+// enfix fulfillment besides a bit on the frame itself.
+//
+// It is also used to indicate to a ST_EVALUATOR_REEVALUATING frame whether
+// to run an ACTION! cell as enfix or not.  The reason this may be overridden
+// on what's in the action can be seen in the REBNATIVE(shove) code.
+//
+#define ACTION_EXECUTOR_FLAG_RUNNING_ENFIX \
+    EVAL_FLAG_28
+
+
+//=//// ACTION_EXECUTOR_FLAG_DISPATCHER_CATCHES ///////////////////////////=//
+//
+// Every Executor() gets called with the chance to cleanup in the THROWING
+// state.  But in the specific case of the Action_Executor(), it uses this
+// flag to keep track of whether the dispatcher it is calling (a kind of
+// "sub-executor") wants to be told about the thrown state.  This would be
+// something like a WHILE loop wanting to catch a BREAK.
+//
+#define ACTION_EXECUTOR_FLAG_DISPATCHER_CATCHES \
+    EVAL_FLAG_29
+
+
+//=//// ACTION_EXECUTOR_FLAG_FULFILL_ONLY /////////////////////////////////=//
+//
+// In some scenarios, the desire is to fill up the frame but not actually run
+// an action.  At one point this was done with a special "dummy" action to
+// dodge having to check the flag on every dispatch.  But in the scheme of
+// things, checking the flag is negligible...and it's better to do it with
+// a flag so that one does not lose the paramlist information one was working
+// with (overwriting with a dummy action on FRM_PHASE() led to an inconsistent
+// case that had to be accounted for, since the dummy's arguments did not
+// line up with the frame being filled).
+//
+#define ACTION_EXECUTOR_FLAG_FULFILL_ONLY \
+    EVAL_FLAG_30
+
+
+//=//// ACTION_EXECUTOR_FLAG_TYPECHECK_ONLY ///////////////////////////////=//
+//
+// This is used by <blank> to indicate that once the frame is fulfilled, the
+// only thing that should be done is typechecking...don't run the action.
+//
+#define ACTION_EXECUTOR_FLAG_TYPECHECK_ONLY \
+    EVAL_FLAG_31
+
+
 // REBCTX types use this field of their varlist (which is the identity of
 // an ANY-CONTEXT!) to find their "keylist".  It is stored in the REBSER
 // node of the varlist REBARR vs. in the REBVAL of the ANY-CONTEXT! so

@@ -143,7 +143,6 @@ STATIC_ASSERT(EVAL_FLAG_7_IS_TRUE == NODE_FLAG_CELL);
     FLAG_LEFT_BIT(16)
 
 
-
 //=//// EVAL_FLAG_DIDNT_LEFT_QUOTE_PATH ///////////////////////////////////=//
 //
 // There is a contention between operators that want to quote their left hand
@@ -162,12 +161,6 @@ STATIC_ASSERT(EVAL_FLAG_7_IS_TRUE == NODE_FLAG_CELL);
     FLAG_LEFT_BIT(17)
 
 
-//=//// EVAL_FLAG_18 //////////////////////////////////////////////////////=//
-//
-#define EVAL_FLAG_18 \
-    FLAG_LEFT_BIT(18)
-
-
 //=//// EVAL_FLAG_ABRUPT_FAILURE ///////////////////////////////////////////=//
 //
 // !!! This is a current guess for how to handle the case of re-entering an
@@ -175,6 +168,21 @@ STATIC_ASSERT(EVAL_FLAG_7_IS_TRUE == NODE_FLAG_CELL);
 // for this in case the status of that state byte is important for cleanup.
 //
 #define EVAL_FLAG_ABRUPT_FAILURE \
+    FLAG_LEFT_BIT(18)
+
+
+//=//// EVAL_FLAG_NOTIFY_ON_ABRUPT_FAILURE ////////////////////////////////=//
+//
+// Most frames don't want to be told about the errors that they themselves...
+// and if they have cleanup to do, they could do that cleanup before calling
+// the fail().  However, some code calls nested C stacks which use fail() and
+// it's hard to hook all the cases.  So this flag can be used to tell the
+// trampoline to give a callback even if the frame itself caused the problem.
+//
+// To help avoid misunderstandings, trying to read the STATE byte when in the
+// abrupt failure case causes an assert() in the C++ build.
+//
+#define EVAL_FLAG_NOTIFY_ON_ABRUPT_FAILURE \
     FLAG_LEFT_BIT(19)
 
 
@@ -217,213 +225,23 @@ STATIC_ASSERT(EVAL_FLAG_7_IS_TRUE == NODE_FLAG_CELL);
     FLAG_LEFT_BIT(23)
 
 
-//=//// EVAL_FLAG_NOTIFY_ON_ABRUPT_FAILURE ////////////////////////////////=//
+//=//// BITS 24-31: EXECUTOR FLAGS ////////////////////////////////////////=//
 //
-// Most frames don't want to be told about the errors that they themselves...
-// and if they have cleanup to do, they could do that cleanup before calling
-// the fail().  However, some code calls nested C stacks which use fail() and
-// it's hard to hook all the cases.  So this flag can be used to tell the
-// trampoline to give a callback even if the frame itself caused the problem.
+// These flags are those that differ based on which executor is in use.
 //
-// To help avoid misunderstandings, trying to read the STATE byte when in the
-// abrupt failure case causes an assert() in the C++ build.
+// Use the Get_Executor_Flag()/Set_Executor_Flag()/Clear_Executor_Flag()
+// functions to access these.
 //
-#define EVAL_FLAG_NOTIFY_ON_ABRUPT_FAILURE \
-    FLAG_LEFT_BIT(24)
 
-
-//=//// EVAL_FLAG_FULFILLING_ARG //////////////////////////////////////////=//
-//
-// Deferred lookback operations need to know when they are dealing with an
-// argument fulfillment for a function, e.g. `summation 1 2 3 |> 100` should
-// be `(summation 1 2 3) |> 100` and not `summation 1 2 (3 |> 100)`.  This
-// also means that `add 1 <| 2` will act as an error.
-//
-#define EVAL_FLAG_FULFILLING_ARG \
-    FLAG_LEFT_BIT(25)
-
-STATIC_ASSERT(DETAILS_FLAG_IS_BARRIER == EVAL_FLAG_FULFILLING_ARG);
-
-
-//=//// EVAL_FLAG_EXECUTOR_26 /////////////////////////////////////////////=//
-//
-#define EVAL_FLAG_EXECUTOR_26 \
-    FLAG_LEFT_BIT(26)
-
-
-//=//// EVAL_FLAG_EXECUTOR_27 /////////////////////////////////////////////=//
-//
-// * EVAL_EXECUTOR_FLAG_ERROR_ON_DEFERRED_ENFIX
-//
-// There are advanced features that "abuse" the evaluator, e.g. by making it
-// create a specialization exemplar by example from a stream of code.  These
-// cases are designed to operate in isolation, and are incompatible with the
-// idea of enfix operations that stay pending in the evaluation queue, e.g.
-//
-//     match+ parse "aab" [some "a"] else [print "what should this do?"]
-//
-// MATCH+ is variadic, and in one step asks to make a frame from the right
-// hand side.  But it's 99% likely intent of this was to attach the ELSE to
-// the MATCH and not the PARSE.  That looks inconsistent, since the user
-// imagines it's the evaluator running PARSE as a parameter to MATCH (vs.
-// MATCH becoming the evaluator and running it).
-//
-// It would be technically possible to allow ELSE to bind to the MATCH in
-// this case.  It might even be technically possible to give MATCH back a
-// frame for a CHAIN of actions that starts with PARSE but includes the ELSE
-// (which sounds interesting but crazy, considering that's not what people
-// would want here, but maybe sometimes they would).
-//
-// The best answer for right now is just to raise an error.
-//
-// * ACTION_EXECUTOR_FLAG_DELEGATE_CONTROL
-//
-// Action dispatchers don't really want to delegate control with R_DELEGATE,
-// because the action wants to appear to be on the stack.  For some it's even
-// more technically important--because the varlist must stay alive to be a
-// specifier, so you can't Drop_Action() etc.  Something like a FUNC or LAMBDA
-// cannot delegate to the body block if there is a variadic, because it will
-// look like the function isn't running.
-//
-// So when a dipatcher tells Action_Executor() it wants R_DELEGATION, it does
-// not propagate that to the trampoline...it just sets this flag and returns
-// a continuation.  (Note however, that using delegation has an optimization
-// that does not return R_DELEGATION, if something like a branch can be
-// evaluated to a constant value!  This won't leave the frame on the stack).
-//
-#define EVAL_FLAG_EXECUTOR_27 \
-    FLAG_LEFT_BIT(27)
-
-#define ACTION_EXECUTOR_FLAG_DELEGATE_CONTROL EVAL_FLAG_EXECUTOR_27
-#define EVAL_EXECUTOR_FLAG_ERROR_ON_DEFERRED_ENFIX EVAL_FLAG_EXECUTOR_27
-
-
-//=//// EVAL_FLAG_EXECUTOR_28 /////////////////////////////////////////////=//
-//
-// * EVAL_EXECUTOR_FLAG_NO_EVALUATIONS
-//
-// It might seem strange to have an evaluator mode in which no evaluations are
-// performed.  However, this simplifies the implementation of operators such
-// as ANY and ALL, which wish to run in an "inert" mode:
-//
-//     >> any [1 + 2]
-//     == 3
-//
-//     >> any @[1 + 2]
-//     == 1
-//
-// Inert operations wind up costing a bit more because they're pushing a frame
-// when it seems "they don't need to"; but pushing a frame also locks the
-// series in question against enumeration.
-//
-// * ACTION_EXECUTOR_FLAG_RUNNING_ENFIX
-//
-// Due to the unusual influences of partial refinement specialization, a frame
-// may wind up with its enfix parameter as being something like the last cell
-// in the argument list...when it has to then go back and fill earlier args
-// as normal.  There's no good place to hold the memory that one is doing an
-// enfix fulfillment besides a bit on the frame itself.
-//
-// It is also used to indicate to a ST_EVALUATOR_REEVALUATING frame whether
-// to run an ACTION! cell as enfix or not.  The reason this may be overridden
-// on what's in the action can be seen in the REBNATIVE(shove) code.
-//
-#define EVAL_FLAG_EXECUTOR_28 \
-    FLAG_LEFT_BIT(28)
-
-STATIC_ASSERT(EVAL_FLAG_EXECUTOR_28 == CELL_FLAG_NOTE);
-
-#define EVAL_EXECUTOR_FLAG_NO_EVALUATIONS EVAL_FLAG_EXECUTOR_28
-#define ACTION_EXECUTOR_FLAG_RUNNING_ENFIX EVAL_FLAG_EXECUTOR_28
-
-
-//=//// EVAL_FLAG_EXECUTOR_29 //////////////////////////////////////////////=//
-//
-// * EVAL_EXECUTOR_FLAG_NO_RESIDUE
-//
-// Sometimes a single step evaluation is done in which it would be considered
-// an error if all of the arguments are not used.  This requests an error if
-// the frame does not reach the end.
-//
-// !!! Interactions with ELIDE won't currently work with this, so evaluation
-// would have to take this into account to greedily run ELIDEs if the flag
-// is set.  However, it's only used in variadic apply at the moment with
-// calls from the system that do not use ELIDE.  These calls may someday
-// turn into rebValue(), in which case the mechanism would need rethinking.
-//
-// !!! A userspace tool for doing this was once conceived as `||`, which
-// was variadic and would only allow one evaluation step after it, after
-// which it would need to reach either an END or another `||`.
-//
-// * ACTION_EXECUTOR_FLAG_DISPATCHER_CATCHES
-//
-// Every Executor() gets called with the chance to cleanup in the THROWING
-// state.  But in the specific case of the Action_Executor(), it uses this
-// flag to keep track of whether the dispatcher it is calling (a kind of
-// "sub-executor") wants to be told about the thrown state.  This would be
-// something like a WHILE loop wanting to catch a BREAK.
-//
-#define EVAL_FLAG_EXECUTOR_29 \
-    FLAG_LEFT_BIT(29)
-
-#define EVAL_EXECUTOR_FLAG_NO_RESIDUE EVAL_FLAG_EXECUTOR_29
-#define ACTION_EXECUTOR_FLAG_DISPATCHER_CATCHES EVAL_FLAG_EXECUTOR_29
-
-
-//=//// EVAL_FLAG_EXECUTOR_30 /////////////////////////////////////////////=//
-//
-// This is a flag that can be used specific to the executor that is running.
-//
-// * EVAL_EXECUTOR_FLAG_SINGLE_STEP: Evaluator_Executor()
-//
-// !!! This is a revival of an old idea that a frame flag would hold the state
-// of whether to do to the end or not.  The reason that idea was scrapped was
-// because if the Eval() routine was hooked (e.g. by a stepwise debugger)
-// then the hook would be unable to see successive calls to Eval() if it
-// didn't return and make another call.  That no longer applies, since it
-// always has to return in stackless to the Trampoline, so running to end by
-// default is a convenience with no real different effect in evaluator returns.
-//
-// * ACTION_EXECUTOR_FLAG_FULFILL_ONLY
-//
-// In some scenarios, the desire is to fill up the frame but not actually run
-// an action.  At one point this was done with a special "dummy" action to
-// dodge having to check the flag on every dispatch.  But in the scheme of
-// things, checking the flag is negligible...and it's better to do it with
-// a flag so that one does not lose the paramlist information one was working
-// with (overwriting with a dummy action on FRM_PHASE() led to an inconsistent
-// case that had to be accounted for, since the dummy's arguments did not
-// line up with the frame being filled).
-//
-#define EVAL_FLAG_EXECUTOR_30 \
-    FLAG_LEFT_BIT(30)
-
-#define EVAL_EXECUTOR_FLAG_SINGLE_STEP EVAL_FLAG_EXECUTOR_30
-#define ACTION_EXECUTOR_FLAG_FULFILL_ONLY EVAL_FLAG_EXECUTOR_30
-
-
-
-//=//// EVAL_FLAG_EXECUTOR_31 /////////////////////////////////////////////=//
-//
-// Another flag that can be picked specific to the running executor.
-//
-// * EVAL_EXECUTOR_FLAG_INERT_OPTIMIZATION
-//
-// If ST_EVALUATOR_LOOKING_AHEAD is being used due to an inert optimization,
-// this flag is set, so that the quoting machinery can realize the lookback
-// quote is not actually too late.
-//
-// *  ACTION_EXECUTOR_FLAG_TYPECHECK_ONLY
-//
-// This is used by <blank> to indicate that once the frame is fulfilled, the
-// only thing that should be done is typechecking...don't run the action.
-//
-#define EVAL_FLAG_EXECUTOR_31 \
-    FLAG_LEFT_BIT(31)
-
-#define EVAL_EXECUTOR_FLAG_INERT_OPTIMIZATION EVAL_FLAG_EXECUTOR_31
-#define ACTION_EXECUTOR_FLAG_TYPECHECK_ONLY EVAL_FLAG_EXECUTOR_31
-
+#define EVAL_FLAG_24    FLAG_LEFT_BIT(24)
+#define EVAL_FLAG_25    FLAG_LEFT_BIT(25)
+#define EVAL_FLAG_26    FLAG_LEFT_BIT(26)
+#define EVAL_FLAG_27    FLAG_LEFT_BIT(27)
+#define EVAL_FLAG_28    FLAG_LEFT_BIT(28)
+STATIC_ASSERT(EVAL_FLAG_28 == CELL_FLAG_NOTE);  // useful for optimization?
+#define EVAL_FLAG_29    FLAG_LEFT_BIT(29)
+#define EVAL_FLAG_30    FLAG_LEFT_BIT(30)
+#define EVAL_FLAG_31    FLAG_LEFT_BIT(31)
 
 STATIC_ASSERT(31 < 32);  // otherwise EVAL_FLAG_XXX too high
 

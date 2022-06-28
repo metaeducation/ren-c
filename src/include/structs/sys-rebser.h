@@ -309,14 +309,14 @@ inline static REBYTE FLAVOR_BYTE(uintptr_t flags)
 // ability to be more thought out after the basics of flavors are solved.
 //
 
-#define SERIES_FLAG_24 FLAG_LEFT_BIT(24)
-#define SERIES_FLAG_25 FLAG_LEFT_BIT(25)
-#define SERIES_FLAG_26 FLAG_LEFT_BIT(26)
-#define SERIES_FLAG_27 FLAG_LEFT_BIT(27)
-#define SERIES_FLAG_28 FLAG_LEFT_BIT(28)
-#define SERIES_FLAG_29 FLAG_LEFT_BIT(29)
-#define SERIES_FLAG_30 FLAG_LEFT_BIT(30)
-#define SERIES_FLAG_31 FLAG_LEFT_BIT(31)
+#define SERIES_FLAG_24    FLAG_LEFT_BIT(24)
+#define SERIES_FLAG_25    FLAG_LEFT_BIT(25)
+#define SERIES_FLAG_26    FLAG_LEFT_BIT(26)
+#define SERIES_FLAG_27    FLAG_LEFT_BIT(27)
+#define SERIES_FLAG_28    FLAG_LEFT_BIT(28)
+#define SERIES_FLAG_29    FLAG_LEFT_BIT(29)
+#define SERIES_FLAG_30    FLAG_LEFT_BIT(30)
+#define SERIES_FLAG_31    FLAG_LEFT_BIT(31)
 
 
 

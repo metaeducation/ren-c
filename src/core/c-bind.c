@@ -570,7 +570,7 @@ REBNATIVE(let)
     REBFLGS flags =
         EVAL_EXECUTOR_FLAG_SINGLE_STEP
         | FLAG_STATE_BYTE(ST_EVALUATOR_REEVALUATING)
-        | (f->flags.bits & EVAL_FLAG_FULFILLING_ARG);
+        | (f->flags.bits & EVAL_EXECUTOR_FLAG_FULFILLING_ARG);
 
     DECLARE_FRAME (subframe, FRAME->feed, flags);
     subframe->u.eval.current = SPARE;

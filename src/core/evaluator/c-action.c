@@ -534,7 +534,7 @@ REB_R Action_Executor(REBFRM *f)
 
             REBFLGS flags =
                 EVAL_EXECUTOR_FLAG_SINGLE_STEP
-                | EVAL_FLAG_FULFILLING_ARG;
+                | EVAL_EXECUTOR_FLAG_FULFILLING_ARG;
             if (pclass == PARAM_CLASS_META)
                 flags |= EVAL_FLAG_META_RESULT | EVAL_FLAG_FAILURE_RESULT_OK;
 
@@ -624,7 +624,7 @@ REB_R Action_Executor(REBFRM *f)
 
                 REBFLGS flags =
                     EVAL_EXECUTOR_FLAG_SINGLE_STEP
-                    | EVAL_FLAG_FULFILLING_ARG
+                    | EVAL_EXECUTOR_FLAG_FULFILLING_ARG
                     | FLAG_STATE_BYTE(ST_EVALUATOR_LOOKING_AHEAD)
                     | EVAL_EXECUTOR_FLAG_INERT_OPTIMIZATION
                     | EVAL_FLAG_MAYBE_STALE;  // won't be, but avoids RESET()
@@ -1221,7 +1221,9 @@ void Push_Action(
     assert(Not_Executor_Flag(ACTION, f, FULFILL_ONLY));
     assert(Not_Executor_Flag(ACTION, f, RUNNING_ENFIX));
 
-    STATIC_ASSERT(EVAL_FLAG_FULFILLING_ARG == DETAILS_FLAG_IS_BARRIER);
+    STATIC_ASSERT(
+        ACTION_EXECUTOR_FLAG_FULFILLING_ARG == DETAILS_FLAG_IS_BARRIER
+    );
     REBARR *identity = ACT_IDENTITY(act);
     if (f->flags.bits & identity->leader.bits & DETAILS_FLAG_IS_BARRIER)
         fail (Error_Expression_Barrier_Raw());
@@ -1363,7 +1365,7 @@ void Begin_Action_Core(
 void Drop_Action(REBFRM *f) {
     assert(not f->label or IS_SYMBOL(unwrap(f->label)));
 
-    if (Not_Eval_Flag(f, FULFILLING_ARG))
+    if (Not_Executor_Flag(ACTION, f, FULFILLING_ARG))
         CLEAR_FEED_FLAG(f->feed, BARRIER_HIT);
 
     Clear_Executor_Flag(ACTION, f, RUNNING_ENFIX);

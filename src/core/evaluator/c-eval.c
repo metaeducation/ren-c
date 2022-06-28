@@ -103,11 +103,15 @@
 //
 // !!! Evil Macro, repeats parent!
 //
+STATIC_ASSERT(
+    EVAL_EXECUTOR_FLAG_FULFILLING_ARG == ACTION_EXECUTOR_FLAG_FULFILLING_ARG
+);
+
 #define DECLARE_ACTION_SUBFRAME(f,parent) \
     DECLARE_FRAME (f, (parent)->feed, \
         EVAL_FLAG_MAYBE_STALE | EVAL_FLAG_FAILURE_RESULT_OK \
         | ((parent)->flags.bits \
-            & (EVAL_FLAG_FULFILLING_ARG \
+            & (EVAL_EXECUTOR_FLAG_FULFILLING_ARG \
                 | EVAL_FLAG_DIDNT_LEFT_QUOTE_PATH)))
 
 
@@ -168,8 +172,8 @@ inline static REBFRM *Maybe_Rightward_Continuation_Needed(REBFRM *f)
     RESET(OUT);  // all SET-XXX! overwrite out, see [2]
 
     REBFLGS flags =
-        EVAL_EXECUTOR_FLAG_SINGLE_STEP
-        | (f->flags.bits & EVAL_FLAG_FULFILLING_ARG);  // if f was, we are
+        EVAL_EXECUTOR_FLAG_SINGLE_STEP  // v-- if f was fulfilling, we are
+        | (f->flags.bits & EVAL_EXECUTOR_FLAG_FULFILLING_ARG);
 
     if (Did_Init_Inert_Optimize_Complete(OUT, f->feed, &flags))
         return nullptr;  // If eval not hooked, ANY-INERT! may not need a frame
@@ -219,7 +223,7 @@ REB_R Evaluator_Executor(REBFRM *f)
     // run, but it may error if that's not acceptable.
     //
     if (GET_FEED_FLAG(f->feed, BARRIER_HIT)) {
-        if (Get_Eval_Flag(f, FULFILLING_ARG)) {
+        if (Get_Executor_Flag(EVAL, f, FULFILLING_ARG)) {
             if (Get_Eval_Flag(f, MAYBE_STALE))
                 Mark_Eval_Out_Stale(OUT);
             else
@@ -541,7 +545,7 @@ REB_R Evaluator_Executor(REBFRM *f)
     // A comma is a lightweight looking expression barrier.
 
        case REB_COMMA:
-        if (Get_Eval_Flag(f, FULFILLING_ARG)) {
+        if (Get_Executor_Flag(EVAL, f, FULFILLING_ARG)) {
             CLEAR_FEED_FLAG(f->feed, NO_LOOKAHEAD);
             SET_FEED_FLAG(f->feed, BARRIER_HIT);
             goto finished;
@@ -621,7 +625,7 @@ REB_R Evaluator_Executor(REBFRM *f)
                     GET_ACTION_FLAG(action, POSTPONES_ENTIRELY)
                     or GET_ACTION_FLAG(action, DEFERS_LOOKBACK)
                 ){
-                    if (Get_Eval_Flag(f, FULFILLING_ARG)) {
+                    if (Get_Executor_Flag(EVAL, f, FULFILLING_ARG)) {
                         CLEAR_FEED_FLAG(f->feed, NO_LOOKAHEAD);
                         SET_FEED_FLAG(f->feed, DEFERRING_ENFIX);
                         RESET(OUT);
@@ -1857,7 +1861,7 @@ REB_R Evaluator_Executor(REBFRM *f)
     Clear_Executor_Flag(EVAL, f, INERT_OPTIMIZATION);  // served purpose if set
 
     if (
-        Get_Eval_Flag(f, FULFILLING_ARG)
+        Get_Executor_Flag(EVAL, f, FULFILLING_ARG)
         and not (GET_ACTION_FLAG(enfixed, DEFERS_LOOKBACK)
                                        // ^-- `1 + if false [2] else [3]` => 4
         )
@@ -1886,7 +1890,7 @@ REB_R Evaluator_Executor(REBFRM *f)
     // to know not to do the deferral more than once.
     //
     if (
-        Get_Eval_Flag(f, FULFILLING_ARG)
+        Get_Executor_Flag(EVAL, f, FULFILLING_ARG)
         and (
             GET_ACTION_FLAG(enfixed, POSTPONES_ENTIRELY)
             or (
@@ -1895,8 +1899,10 @@ REB_R Evaluator_Executor(REBFRM *f)
             )
         )
     ){
-        if (Get_Executor_Flag(EVAL, f->prior, ERROR_ON_DEFERRED_ENFIX)) {
-            //
+        if (
+            Is_Action_Frame(f->prior)
+            and Get_Executor_Flag(ACTION, f->prior, ERROR_ON_DEFERRED_ENFIX)
+        ){
             // Operations that inline functions by proxy (such as MATCH and
             // ENSURE) cannot directly interoperate with THEN or ELSE...they
             // are building a frame with PG_Dummy_Action as the function, so
