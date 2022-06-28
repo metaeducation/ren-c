@@ -167,8 +167,8 @@ REB_R Action_Executor(REBFRM *f)
         }
     }
 
-    if (Get_Eval_Flag(f, DELEGATE_CONTROL)) {
-        Clear_Eval_Flag(f, DELEGATE_CONTROL);
+    if (Get_Executor_Flag(ACTION, f, DELEGATE_CONTROL)) {
+        Clear_Executor_Flag(ACTION, f, DELEGATE_CONTROL);
         goto dispatch_completed;  // the dispatcher didn't want a callback
     }
 
@@ -964,17 +964,15 @@ REB_R Action_Executor(REBFRM *f)
     // which are used to process the return result after the switch.
     //
   dispatch_phase: {
+    assert(Not_Executor_Flag(ACTION, FRAME, DELEGATE_CONTROL));  // finished!
+
+    // Each time a continuation happens, the dispatcher gets a new chance to
+    // decide if it wants to catch throws.
     //
-    // These flags are optionally set by the dispatcher for use with
-    // REB_R_CONTINUATION.  They are EVAL_FLAGs instead of part of the
-    // REB_R signal because they apply after the `r` has been processed
-    // and forgotten, and the continuation is resuming.  They are cleared
-    // by Drop_Action() but must be cleared on each dispatcher re-entry.
+    // !!! Should this be done in the continuations themselves, so that an
+    // action that doesn't use any continuations won't pay for this clearing?
     //
-    f->flags.bits &= ~(
-        EVAL_FLAG_DELEGATE_CONTROL
-        | ACTION_EXECUTOR_FLAG_DISPATCHER_CATCHES
-    );
+    Clear_Executor_Flag(ACTION, FRAME, DISPATCHER_CATCHES);
 
     REBACT *phase = FRM_PHASE(f);
 
@@ -1032,20 +1030,8 @@ REB_R Action_Executor(REBFRM *f)
         return R_CONTINUATION;
 
       case C_DELEGATION:
-        //
-        // Action dispatchers don't really want to delegate control, because
-        // the action wants to appear to be on the stack.  For some it's even
-        // more technically important--because the varlist must stay alive to
-        // be a specifier, so you can't Drop_Action() etc.  Something like a
-        // FUNC or LAMBDA cannot delegate to the body block if there is a
-        // variadic, because it will look like the function isn't running.
-        //
-        // Note however, that using delegation has an optimization that does
-        // not return R_DELEGATION, if something like a branch can be evaluated
-        // to a constant value!
-        //
-        Set_Eval_Flag(FRAME, DELEGATE_CONTROL);
-        STATE = 255;
+        Set_Executor_Flag(ACTION, FRAME, DELEGATE_CONTROL);
+        STATE = DELEGATE_255;  // the trampoline does this when delegating
         return R_CONTINUATION;
 
       case C_SUSPEND:

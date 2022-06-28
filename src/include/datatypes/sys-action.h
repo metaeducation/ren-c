@@ -231,6 +231,7 @@ inline static bool Is_Throwing(REBFRM *frame_) {
 #define R_DELEGATION \
     cast(REBVAL*, &PG_R_Delegation)
 
+#define DELEGATE_255 255
 
 // For starters, a simple signal for suspending stacks in order to be able to
 // try not using Asyncify (or at least not relying on it so heavily)

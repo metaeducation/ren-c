@@ -71,9 +71,14 @@ STATIC_ASSERT(EVAL_FLAG_ALLOCATED_FEED == NODE_FLAG_MANAGED);  // should be ok
     FLAG_LEFT_BIT(3)
 
 
-//=//// EVAL_FLAG_4 //////////////////////////////////////////////////////=//
+//=//// EVAL_FLAG_META_RESULT ////////////////////////////////////////////=//
 //
-#define EVAL_FLAG_4 \
+// When this is applied, the Trampoline is asked to return an evaluator result
+// in its ^META form.  Doing so saves on needing separate callback entry
+// points for things like meta-vs-non-meta arguments, and is a useful
+// general facility.
+//
+#define EVAL_FLAG_META_RESULT \
     FLAG_LEFT_BIT(4)
 
 
@@ -157,12 +162,9 @@ STATIC_ASSERT(EVAL_FLAG_7_IS_TRUE == NODE_FLAG_CELL);
     FLAG_LEFT_BIT(17)
 
 
-//=//// EVAL_FLAG_DELEGATE_CONTROL ////////////////////////////////////////=//
+//=//// EVAL_FLAG_18 //////////////////////////////////////////////////////=//
 //
-// A dispatcher may want to run a "continuation" but not be called back.
-// This is referred to as delegation.
-//
-#define EVAL_FLAG_DELEGATE_CONTROL \
+#define EVAL_FLAG_18 \
     FLAG_LEFT_BIT(18)
 
 
@@ -270,15 +272,27 @@ STATIC_ASSERT(DETAILS_FLAG_IS_BARRIER == EVAL_FLAG_FULFILLING_ARG);
     FLAG_LEFT_BIT(26)
 
 
-//=//// EVAL_FLAG_META_RESULT ////////////////////////////////////////////=//
+//=//// EVAL_FLAG_EXECUTOR_27 /////////////////////////////////////////////=//
 //
-// When this is applied, the Trampoline is asked to return an evaluator result
-// in its ^META form.  Doing so saves on needing separate callback entry
-// points for things like meta-vs-non-meta arguments, and is a useful
-// general facility.
+// * ACTION_EXECUTOR_FLAG_DELEGATE_CONTROL
 //
-#define EVAL_FLAG_META_RESULT \
+// Action dispatchers don't really want to delegate control with R_DELEGATE,
+// because the action wants to appear to be on the stack.  For some it's even
+// more technically important--because the varlist must stay alive to be a
+// specifier, so you can't Drop_Action() etc.  Something like a FUNC or LAMBDA
+// cannot delegate to the body block if there is a variadic, because it will
+// look like the function isn't running.
+//
+// So when a dipatcher tells Action_Executor() it wants R_DELEGATION, it does
+// not propagate that to the trampoline...it just sets this flag and returns
+// a continuation.  (Note however, that using delegation has an optimization
+// that does not return R_DELEGATION, if something like a branch can be
+// evaluated to a constant value!  This won't leave the frame on the stack).
+//
+#define EVAL_FLAG_EXECUTOR_27 \
     FLAG_LEFT_BIT(27)
+
+#define ACTION_EXECUTOR_FLAG_DELEGATE_CONTROL EVAL_FLAG_EXECUTOR_27
 
 
 //=//// EVAL_FLAG_EXECUTOR_28 /////////////////////////////////////////////=//

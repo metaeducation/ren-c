@@ -361,7 +361,7 @@ REB_R Trampoline_From_Top_Maybe_Root(void)
         // provides clarity in the stack.   Hence this should not be used in
         // tail call situations.
         //
-        STATE = 255;  // maintain non-zero invariant
+        STATE = DELEGATE_255;  // maintain non-zero invariant
         FRAME->executor = &Just_Use_Out_Executor;  // whatever frames make
 
         FRAME = FS_TOP;
