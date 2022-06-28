@@ -690,21 +690,18 @@ find-last: redescribe [
     ]
 )
 
-attempt: func [
-    {Tries to evaluate a block and returns result or NULL on error}
+attempt: lambda [
+    {Evaluate a block and returns result or NULL if an expression fails}
 
-    return: "NULL on error"
-        [<opt> any-value!]
-    code [block! action!]
+    code [block!]
 ][
-    trap [
-        return heavy do code  ; want ~null~ isotope if was NULL
+    reduce-each ^result' code [
+        if error? result' [break]  ; BREAK will mean overall result is NULL
+        unmeta result'
     ]
-    ; !!! This just throws away the error, which is an extremely dodgy form of
-    ; error handling...as it could cover up syntax errors or any other kind
-    ; of problem with the code.  Preserved for historical reasons only.
-    ;
-    return null
+    ; attempt [] is void, and conflates `attempt [] else [...]` with failure
+    ; That's like ANY/ALL, but they say `any [void void]` is void as well
+    ; It would be more coherent if attempt could do cumulative invisibility
 ]
 
 entrap: func [
