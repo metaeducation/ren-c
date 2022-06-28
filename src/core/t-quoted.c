@@ -420,15 +420,9 @@ REBNATIVE(unmeta)
     assert(IS_QUOTED(v));  // handling the invisibility detour is done now...
     Unquotify(v, 1);  // drop quote level caused by ^META parameter convention
 
-    if (Is_Meta_Of_End(v))
-        fail ("END not processed by UNMETA at this time");
-
-    if (Is_Meta_Of_Void(v))
-        return VOID;
-
     // Now remove the level of meta the user was asking for.
     //
-    return Meta_Unquotify(Move_Cell(OUT, v));
+    return UNMETA(v);
 }
 
 

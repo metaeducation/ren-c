@@ -146,3 +146,12 @@ inline static REBVAL *Reify_Eval_Out_Meta(REBVAL *out) {
 
     return Meta_Quotify(out);
 }
+
+inline static REB_R Native_Unmeta_Result(REBFRM *frame_, const REBVAL *v) {
+    assert(Is_Stale_Void(&TG_Thrown_Arg));
+    if (Is_Meta_Of_Void(v))
+        return R_VOID;
+    if (Is_Meta_Of_End(v))
+        fail ("END not processed by UNMETA at this time");
+    return Meta_Unquotify(Copy_Cell(frame_->out, v));
+}

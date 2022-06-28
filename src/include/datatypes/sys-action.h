@@ -697,11 +697,13 @@ inline static REBVAL *Mark_Eval_Out_Voided(REBVAL *out) {
 }
 
 inline static REB_R Native_Void_Result(REBFRM *frame_) {
+    assert(Is_Stale_Void(&TG_Thrown_Arg));
     Mark_Eval_Out_Voided(frame_->out);
     return R_VOID;
 }
 
 inline static REB_R Native_None_Result(REBFRM *frame_) {
+    assert(Is_Stale_Void(&TG_Thrown_Arg));
     return Init_None(frame_->out);
 }
 

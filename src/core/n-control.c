@@ -301,6 +301,11 @@ REBNATIVE(then)  // see `tweak :then 'defer on` in %base-defs.r
     Value *in = ARG(optional);
     Value *branch = ARG(branch);
 
+    if (IS_ERROR(in)) {  // ^META error represents definitional failure, skip
+        Copy_Cell(OUT, in);
+        return Failurize(OUT);
+    }
+
     if (
         Is_Nulled(in)  // soft failure signal
         or Is_Meta_Of_Void(in)  // meta parameter, e.g. input was true void
@@ -346,6 +351,11 @@ REBNATIVE(also)  // see `tweak :also 'defer on` in %base-defs.r
     }
 
   initial_entry: {  //////////////////////////////////////////////////////////
+
+    if (IS_ERROR(in)) {  // ^META error represents definitional failure, skip
+        Copy_Cell(OUT, in);
+        return Failurize(OUT);
+    }
 
     if (Is_Nulled(in))
         return nullptr;  // telegraph pure null
@@ -407,6 +417,11 @@ REBNATIVE(else)  // see `tweak :else 'defer on` in %base-defs.r
 
     Value *in = ARG(optional);
     Value *branch = ARG(branch);
+
+    if (IS_ERROR(in)) {  // ^META error represents definitional failure, skip
+        Copy_Cell(OUT, in);
+        return Failurize(OUT);
+    }
 
     if (Is_Nulled(in)) {
         Init_Nulled(SPARE);

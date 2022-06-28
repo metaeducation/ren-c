@@ -96,6 +96,33 @@ REBNATIVE(trap)
 
 
 //
+//  except: enfix native [
+//
+//  {Analogue to something like a THEN which traps definitional errors}
+//
+//      return: "Non-failure input, or product of processing failure"
+//          [<opt> any-value!]
+//      ^optional "<deferred argument> Run branch if this is definitional fail"
+//          [<opt> <void> any-value!]
+//      :branch "If arity-1 ACTION!, receives value that triggered branch"
+//          [any-branch!]
+//  ]
+//
+REBNATIVE(except)
+{
+    INCLUDE_PARAMS_OF_EXCEPT;
+
+    Value *v = ARG(optional);
+    Value *branch = ARG(branch);
+
+    if (not IS_ERROR(v))
+        return UNMETA(v);
+
+    delegate_branch (OUT, branch, v);
+}
+
+
+//
 //  set-location-of-error: native [
 //
 //  {Sets the WHERE, NEAR, FILE, and LINE fields of an error}

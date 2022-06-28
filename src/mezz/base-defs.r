@@ -91,6 +91,7 @@ didn't*: :didn't/decay
 tweak :then 'defer on
 tweak :also 'defer on
 tweak :else 'defer on
+tweak :except 'defer on
 tweak :*then 'defer on
 tweak :*also 'defer on
 tweak :*else 'defer on

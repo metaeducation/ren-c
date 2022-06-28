@@ -596,6 +596,8 @@ inline static void Prep_Frame_Core(
     #define NONE        Native_None_Result(frame_)
     #define THROWN      Native_Thrown_Result(frame_)
     #define FAIL(p)     Native_Failure_Result(frame_, (p))
+    #define UNMETA(v)   Native_Unmeta_Result(frame_, (v))
+
     #define BASELINE   (&frame_->baseline)
 #endif
 
