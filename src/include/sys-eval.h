@@ -123,26 +123,6 @@ enum {
 };
 
 
-// In conditionals, branches that run are not allowed to be void or pure null.
-// Both of these states trigger ELSE.  It's also the case that loop bodies
-// are not allowed to return void or pure null either (void is reserved for
-// the state of never having run the body, and null for BREAK).
-//
-// This function helps locate the cases that change the branch's actual result
-// to either a none (~) isotope for void, or a null isotope for null.  In
-// general this is triggered by EVAL_FLAG_BRANCH.
-//
-inline static REBVAL *Reify_Branch_Out(REBVAL *out) {
-    if (Is_Void(out))
-        return Init_None(out);
-
-    if (VAL_TYPE_UNCHECKED(out) == REB_NULL)
-        return Init_Null_Isotope(out);
-
-    return out;
-}
-
-
 // Even though ANY_INERT() is a quick test, you can't skip the cost of frame
 // processing--due to enfix.  But a feed only looks ahead one unit at a time,
 // so advancing the frame past an inert item to find an enfix function means
@@ -381,7 +361,7 @@ inline static bool Eval_Step_In_Va_Throws(
     DECLARE_FRAME (
         f,
         feed,
-        (eval_flags | EVAL_FLAG_ALLOCATED_FEED) & (~ EVAL_FLAG_BRANCH)
+        eval_flags | EVAL_FLAG_ALLOCATED_FEED
     );
 
     Push_Frame(out, f);
@@ -398,9 +378,6 @@ inline static bool Eval_Step_In_Va_Throws(
 
     if (too_many)
         fail (Error_Apply_Too_Many_Raw());
-
-    if (eval_flags & EVAL_FLAG_BRANCH)
-        Reify_Branch_Out(out);
 
     // A va_list-based feed has a lookahead, and also may be spooled due to
     // the GC being triggered.  So the va_list had ownership taken, and it's

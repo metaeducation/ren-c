@@ -817,9 +817,10 @@ REBVAL *RL_rebArg(const void *p, va_list *vaptr)
 //
 //=////////////////////////////////////////////////////////////////////////=//
 
-static bool Run_Va_Translucent_Throws(
+static bool Run_Va_Throws(
     REBVAL *out,
     bool interruptible,  // whether a HALT can cause a longjmp/throw
+    REBFLGS flags,
     const void *p,  // first pointer (may be END, nullptr means NULLED)
     va_list *vaptr  // va_end() handled by feed for all cases (throws, fails)
 ){
@@ -838,7 +839,11 @@ static bool Run_Va_Translucent_Throws(
         Eval_Sigmask &= ~SIG_HALT;  // disable
 
     DECLARE_VA_FEED (feed, p, vaptr, FEED_MASK_DEFAULT);
-    DECLARE_FRAME (f, feed, EVAL_MASK_DEFAULT | EVAL_FLAG_ALLOCATED_FEED);
+    DECLARE_FRAME (
+        f,
+        feed,
+        EVAL_MASK_DEFAULT | EVAL_FLAG_ALLOCATED_FEED | flags
+    );
 
     bool threw = Trampoline_Throws(out, f);
 
@@ -853,7 +858,8 @@ inline static void Run_Va_May_Fail(
     const void *p,  // first pointer (may be END, nullptr means NULLED)
     va_list *vaptr  // va_end() handled by feed for all cases (throws, fails)
 ){
-    if (Run_Va_Translucent_Throws(out, false, p, vaptr)) {
+    bool interruptible = false;
+    if (Run_Va_Throws(out, interruptible, EVAL_MASK_DEFAULT, p, vaptr)) {
         //
         // !!! Being able to THROW across C stacks is necessary in the general
         // case (consider implementing QUIT or HALT).  Probably need to be
@@ -984,15 +990,16 @@ REBVAL *RL_rebMeta(const void *p, va_list *vaptr)
     ENTER_API;
 
     REBVAL *v = Alloc_Value();
-    if (Run_Va_Translucent_Throws(v, false, p, vaptr))  // calls va_end()
+    bool interruptible = false;
+    if (Run_Va_Throws(v, interruptible, EVAL_FLAG_META_RESULT, p, vaptr))
         fail (Error_No_Catch_For_Throw(FS_TOP));  // panic?
 
-    if (VAL_TYPE_UNCHECKED(v) == REB_NULL) {  // tolerate isotopes
+    if (Is_Nulled(v)) {
         rebRelease(v);
         return nullptr;  // No NULLED API cells, see notes on NULLIFY_NULLED()
     }
 
-    return Reify_Eval_Out_Meta(v);  // caller must rebRelease()
+    return v;  // caller must rebRelease()
 }
 
 
@@ -1008,17 +1015,18 @@ REBVAL *RL_rebEntrap(const void *p, va_list *vaptr)
     ENTER_API;
 
     REBVAL *v = Alloc_Value();
-    if (Run_Va_Translucent_Throws(v, false, p, vaptr)) {  // calls va_end()
+    bool interruptible = false;
+    if (Run_Va_Throws(v, interruptible, EVAL_FLAG_META_RESULT, p, vaptr)) {
         Init_Error(v, Error_No_Catch_For_Throw(FS_TOP));
         return v;
     }
 
-    if (VAL_TYPE_UNCHECKED(v) == REB_NULL) {  // tolerate isotopes
+    if (Is_Nulled(v)) {  // tolerate isotopes
         rebRelease(v);
         return nullptr;  // No NULLED API cells, see notes on NULLIFY_NULLED()
     }
 
-    return Reify_Eval_Out_Meta(v);  // caller must rebRelease()
+    return v;  // caller must rebRelease()
 }
 
 
@@ -1036,17 +1044,18 @@ REBVAL *RL_rebEntrapInterruptible(
     ENTER_API;
 
     REBVAL *v = Alloc_Value();
-    if (Run_Va_Translucent_Throws(v, true, p, vaptr)) {  // calls va_end()
+    bool interruptible = true;
+    if (Run_Va_Throws(v, interruptible, EVAL_FLAG_META_RESULT, p, vaptr)) {
         Init_Error(v, Error_No_Catch_For_Throw(FS_TOP));
         return v;
     }
 
-    if (VAL_TYPE_UNCHECKED(v) == REB_NULL) {  // tolerate isotopes
+    if (Init_Nulled(v)) {  // tolerate isotopes
         rebRelease(v);
         return nullptr;  // No NULLED API cells, see notes on NULLIFY_NULLED()
     }
 
-    return Reify_Eval_Out_Meta(v);  // caller must rebRelease()
+    return v;  // caller must rebRelease()
 }
 
 

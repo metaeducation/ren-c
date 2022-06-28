@@ -300,8 +300,12 @@ REB_R Trampoline_From_Top_Maybe_Root(void)
         else {
             Clear_Stale_Flag(OUT);  // also see [1]
 
-            if (Get_Eval_Flag(FRAME, BRANCH))
-                Reify_Branch_Out(OUT);
+            if (Get_Eval_Flag(FRAME, BRANCH)) {
+                if (Is_Void(OUT))
+                    Init_None(OUT);
+                else if (VAL_TYPE_UNCHECKED(OUT) == REB_NULL)
+                    Init_Null_Isotope(OUT);
+            }
             else if (Get_Eval_Flag(FRAME, META_RESULT))
                 Reify_Eval_Out_Meta(OUT);
         }

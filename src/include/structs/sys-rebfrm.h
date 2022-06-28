@@ -63,6 +63,10 @@ STATIC_ASSERT(EVAL_FLAG_ALLOCATED_FEED == NODE_FLAG_MANAGED);  // should be ok
 // either a pure NULL or a void result.  So nulls must be turned into null
 // isotopes and voids are turned into none (~) isotopes.
 //
+// This is done as a general service of the Trampoline...because if it did
+// not, this would require a separate continuation callback to do it.  So
+// routines like IF would not be able to just delegate to another frame.
+//
 #define EVAL_FLAG_BRANCH \
     FLAG_LEFT_BIT(3)
 
