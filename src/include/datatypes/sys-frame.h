@@ -353,12 +353,6 @@ inline static void Push_Frame(
     }
   #endif
 
-    TRASH_POINTER_IF_DEBUG(f->original);
-    TRASH_OPTION_IF_DEBUG(f->label);
-  #if DEBUG_FRAME_LABELS
-    TRASH_POINTER_IF_DEBUG(f->label_utf8);
-  #endif
-
   #if !defined(NDEBUG)
     //
     // !!! TBD: the relevant file/line update when f->feed->array changes
@@ -379,8 +373,6 @@ inline static void Push_Frame(
     ){
         assert(f->out == f->prior->out);
     }
-
-    assert(f->varlist == nullptr);  // Prep_Frame_Core() set to nullptr
 
     assert(IS_POINTER_TRASH_DEBUG(f->alloc_value_list));
     f->alloc_value_list = f;  // doubly link list, terminates in `f`
@@ -488,6 +480,12 @@ inline static void Prep_Frame_Core(
     f->executor = &Evaluator_Executor;  // compatible default (for now)
 
     TRASH_POINTER_IF_DEBUG(f->alloc_value_list);
+
+    TRASH_POINTER_IF_DEBUG(f->original);
+    TRASH_OPTION_IF_DEBUG(f->label);
+  #if DEBUG_FRAME_LABELS
+    TRASH_POINTER_IF_DEBUG(f->label_utf8);
+  #endif
 
     // !!! Previously only the DSP was captured in f->baseline.dsp, but then
     // redundantly captured via a SNAP_STATE() in Push_Frame().  The
@@ -736,7 +734,6 @@ inline static bool Pushed_Continuation(
 
       case REB_GET_BLOCK: {  // effectively REDUCE
         DECLARE_END_FRAME (f, FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING));
-        Push_Frame(out, f);
 
         const REBVAL *action = Lib(REDUCE);
         Push_Action(f, VAL_ACTION(action), VAL_ACTION_BINDING(action));
@@ -755,11 +752,12 @@ inline static bool Pushed_Continuation(
         arg = First_Unspecialized_Arg(&param, f);
         Derelativize(arg, branch, branch_specifier);
         mutable_HEART_BYTE(arg) = REB_BLOCK;  // :[1 + 2] => [3], not :[3]
+
+        Push_Frame(out, f);
         goto pushed_continuation; }
 
       case REB_ACTION : {
         DECLARE_END_FRAME (f, FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING));
-        Push_Frame(out, f);
         Push_Action(f, VAL_ACTION(branch), VAL_ACTION_BINDING(branch));
         Begin_Prefix_Action(f, VAL_ACTION_LABEL(branch));
 
@@ -792,6 +790,7 @@ inline static bool Pushed_Continuation(
                 fail ("Can't pass isotope to non-META parameter");
         } while (0);
 
+        Push_Frame(out, f);
         goto pushed_continuation; }
 
       case REB_FRAME: {
@@ -804,7 +803,6 @@ inline static bool Pushed_Continuation(
             fail (Error_Stale_Frame_Raw());
 
         DECLARE_END_FRAME (f, FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING) | flags);
-        Push_Frame(out, f);
 
         REBARR *varlist = CTX_VARLIST(c);
         f->varlist = varlist;
@@ -815,6 +813,8 @@ inline static bool Pushed_Continuation(
         INIT_FRM_BINDING(f, VAL_FRAME_BINDING(branch));
 
         Begin_Prefix_Action(f, VAL_FRAME_LABEL(branch));
+
+        Push_Frame(out, f);
         goto pushed_continuation; }
 
       default:
@@ -824,8 +824,6 @@ inline static bool Pushed_Continuation(
     fail (Error_Bad_Branch_Type_Raw());  // narrow input types? see [3]
 
   pushed_continuation:
-    if (not (flags & EVAL_FLAG_MAYBE_STALE))
-        RESET(out);  // do after frame push, so `out` can equal `with`
     return true;
 
   just_use_out:
