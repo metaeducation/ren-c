@@ -130,8 +130,11 @@ inline static bool Is_Isotope(const Cell *v) {
     if (QUOTE_BYTE(v) != ISOTOPE_255)
         return false;
 
-    assert(HEART_BYTE(v) == REB_BAD_WORD);
-    return true;
+    if (HEART_BYTE(v) == REB_BAD_WORD)
+        return true;
+
+    assert(HEART_BYTE(v) == REB_ERROR);
+    return false;
 }
 
 inline static bool Reify_Isotope(Cell *v) {

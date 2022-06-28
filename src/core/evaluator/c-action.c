@@ -533,7 +533,7 @@ REB_R Action_Executor(REBFRM *f)
                 | EVAL_FLAG_SINGLE_STEP
                 | EVAL_FLAG_FULFILLING_ARG;
             if (pclass == PARAM_CLASS_META)
-                flags |= EVAL_FLAG_META_RESULT;
+                flags |= EVAL_FLAG_META_RESULT | EVAL_FLAG_FAILURE_RESULT_OK;
 
             if (Did_Init_Inert_Optimize_Complete(ARG, f->feed, &flags))
                 break;  // no frame needed
@@ -879,6 +879,7 @@ REB_R Action_Executor(REBFRM *f)
                 and kind != REB_BLANK
                 and kind != REB_THE_WORD  // @end or @void
                 and kind != REB_QUOTED
+                and kind != REB_ERROR  // special annotation to allow?
             ){
                 fail (
                     "^META arguments only [<null> bad-word! the-word! quoted!]"

@@ -294,7 +294,7 @@ REBNATIVE(quote)
 //  {Turns BAD-WORD! isotopes into plain BAD-WORD!, ignores NULL, quotes rest}
 //
 //      return: "Will be invisible if input is purely invisible (see META*)"
-//          [<void> <opt> quoted! bad-word!]
+//          [<void> <opt> quoted! bad-word! error!]
 //      ^optional [<void> <opt> any-value!]
 //  ]
 //
@@ -316,7 +316,7 @@ REBNATIVE(meta)
 //
 //  {Behavior of ^^ symbol, gives ~void~ BAD-WORD! vs. passing through voids}
 //
-//      return: [<opt> quoted! bad-word! the-word!]
+//      return: [<opt> quoted! bad-word! the-word! error!]
 //      ^optional [<opt> <void> any-value!]
 //  ]
 //
@@ -369,7 +369,7 @@ REBNATIVE(unquote)
 //
 //      return: [<opt> <void> any-value!]
 //      ^value "Taken as ^META for passthru tolerance of pure and isotope void"
-//          [<opt> <void> quoted! the-word! bad-word!]
+//          [<opt> <void> quoted! the-word! bad-word! error!]
 //  ]
 //
 REBNATIVE(unmeta)

@@ -158,8 +158,11 @@
 #define QUOTE_BYTE(v)               THIRD_BYTE(READABLE(v)->header)
 #define mutable_QUOTE_BYTE(v)       mutable_THIRD_BYTE(WRITABLE(v)->header)
 
-#define ISOTOPE_255                 255  // special quoted value for isotopes
-#define MAX_QUOTE_DEPTH             254  // highest legal quoting level
+#define QUOTE_255           255
+#define FAILURE_255         QUOTE_255  // special value for failure ERROR!
+#define ISOTOPE_255         QUOTE_255  // special value for isotope BAD-WORD!
+
+#define MAX_QUOTE_DEPTH     254  // highest legal quoting level
 
 
 //=//// BITS 24-31: CELL FLAGS ////////////////////////////////////////////=//

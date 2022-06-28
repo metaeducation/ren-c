@@ -639,6 +639,12 @@ inline static void Deep_Freeze_Context(REBCTX *c) {
 #define Init_Error(v,c) \
     Init_Any_Context((v), REB_ERROR, (c))
 
+inline static void Force_Location_Of_Error(REBCTX *error, REBFRM *where) {
+    ERROR_VARS *vars = ERR_VARS(error);
+    if (IS_NULLED_OR_BLANK(&vars->where))
+        Set_Location_Of_Error(error, where);
+}
+
 
 // Ports are unusual hybrids of user-mode code dispatched with native code, so
 // some things the user can do to the internals of a port might cause the

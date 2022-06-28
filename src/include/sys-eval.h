@@ -460,3 +460,32 @@ inline static bool Eval_Value_Core_Throws(
 
 #define Eval_Value_Throws(out,value,specifier) \
     Eval_Value_Core_Throws(RESET(out), EVAL_MASK_DEFAULT, (value), (specifier))
+
+
+inline static REB_R Native_Failure_Result(REBFRM *frame_, const void *p) {
+    assert(Is_Stale_Void(&TG_Thrown_Arg));
+
+    REBCTX *error;
+    switch (Detect_Rebol_Pointer(p)) {
+      case DETECTED_AS_UTF8:
+        error = Error_User(cast(const char*, p));
+        break;
+      case DETECTED_AS_SERIES: {
+        error = CTX(p);
+        break; }
+      case DETECTED_AS_CELL: {
+        error = VAL_CONTEXT(VAL(p));
+        break; }
+      default:
+        assert(false);
+        error = nullptr;  // avoid uninitialized variable warning
+    }
+
+    assert(CTX_TYPE(error) == REB_ERROR);
+    Force_Location_Of_Error(error, frame_);
+
+    while (FS_TOP != frame_)  // cancel subframes as default behavior
+        Abort_Frame(FS_TOP);
+
+    return Failurize(Init_Error(frame_->out, error));
+}

@@ -563,6 +563,8 @@ inline static REBVAR *Force_Lib_Var(SYMID id) {
 #include "datatypes/sys-typeset.h"  // needed for keys in contexts
 #include "datatypes/sys-context.h"  // needs actions for FRAME! contexts
 
+#include "sys-meta.h"  // needs context for ERROR!, BAD-WORD!, QUOTED!
+
 #include "datatypes/sys-word.h"  // needs to know about QUOTED! for binding
 
 #include "datatypes/sys-bitset.h"

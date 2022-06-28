@@ -301,7 +301,7 @@ inline static enum Reb_Kind VAL_TYPE_UNCHECKED(const Cell *v) {
             )
             and heart_byte != REB_0
             and heart_byte < REB_MAX
-            and quote_byte != ISOTOPE_255
+            and quote_byte != QUOTE_255
         ){
             if (quote_byte != 0)
                 return REB_QUOTED;
@@ -310,8 +310,8 @@ inline static enum Reb_Kind VAL_TYPE_UNCHECKED(const Cell *v) {
 
         // Give more granular errors based on specific failure
 
-        if (quote_byte == ISOTOPE_255) {
-            printf("VAL_TYPE() called on isotope cell (quotelevel 255)");
+        if (quote_byte == QUOTE_255) {
+            printf("VAL_TYPE() called on isotope or failure (quotelevel 255)");
             panic_at (v, file, line);
         }
 

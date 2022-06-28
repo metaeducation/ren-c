@@ -158,12 +158,18 @@ REB_R Trampoline_Core(void)
             goto restore_trap_and_continue_fs_top;
         }
 
-        // === THIS IS WHERE WE WOULD HANDLE DEFINITIONAL ERRORS ===
-
-        // If the caller doesn't want to be passed a definitional error, then
-        // there's no way to tell the difference between the failure having
-        // originated from this frame or any others underneath it, so the
-        // throw convention is used.
+        // fail() is not treated as a efinitional error.  There is no way to
+        // tell the difference between the failure having originated from this
+        // frame or any others underneath it, so the throw convention is used.
+        //
+        // !!! It was at first wondered if since we know what FRAME was "in
+        // control" when a fail() occurred, if that should be a definitional
+        // error (the way that `return FAIL(xxx)` would be).  But this would
+        // promote every incidental error in a function to the interface
+        // contract of that function...which is not something we want (a
+        // function does not automatically have "out of memory" in its contract
+        // just because it uses memory...so all fail() errors are treated as
+        // thrown errors that can't be ^META'd or EXCEPT'd...only TRAPped.
 
         Init_Thrown_With_Label(
             FRAME,
@@ -270,7 +276,25 @@ REB_R Trampoline_Core(void)
       result_in_out:
         assert(IS_SPECIFIC(cast(Cell*, OUT)));
 
-        if (Get_Eval_Flag(FRAME, MAYBE_STALE)) {  // see [1]
+        if (Is_Failure(OUT)) {
+            if (Not_Eval_Flag(FRAME, FAILURE_RESULT_OK)) {
+                //
+                // treat any failure as if it could have been thrown from
+                // anywhere, so it is bubbled up as a throw.
+                //
+                Reify_Failure(OUT);
+                Init_Thrown_With_Label(
+                    FRAME,
+                    Lib(NULL),  // no "thrown value"
+                    OUT  // only the ERROR! as a label
+                );
+                goto thrown;
+            }
+
+            if (Get_Eval_Flag(FRAME, META_RESULT))
+                Reify_Failure(OUT);
+        }
+        else if (Get_Eval_Flag(FRAME, MAYBE_STALE)) {  // see [1]
             assert(Not_Eval_Flag(FRAME, BRANCH));
             assert(Not_Eval_Flag(FRAME, META_RESULT));
         }

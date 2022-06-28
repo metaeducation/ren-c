@@ -329,15 +329,20 @@ STATIC_ASSERT(DETAILS_FLAG_IS_BARRIER == EVAL_FLAG_FULFILLING_ARG);
     FLAG_LEFT_BIT(27)
 
 
-//=//// EVAL_FLAG_28 //////////////////////////////////////////////////////=//
+//=//// EVAL_FLAG_FAILURE_RESULT_OK ///////////////////////////////////////=//
+//
+// The special FAILURE_255 quotelevel will trip up code that isn't expecting
+// it, so most frames do not want to receive these "isotopic forms of error!"
+// This flag can be used with EVAL_FLAG_META_RESULT or without it, to say
+// that the caller is planning on dealing with the special case.
 //
 // Note: This bit is the same as CELL_FLAG_NOTE, which may be something that
 // could be exploited for some optimization.
 //
-#define EVAL_FLAG_28 \
+#define EVAL_FLAG_FAILURE_RESULT_OK \
     FLAG_LEFT_BIT(28)
 
-STATIC_ASSERT(EVAL_FLAG_28 == CELL_FLAG_NOTE);
+STATIC_ASSERT(EVAL_FLAG_FAILURE_RESULT_OK == CELL_FLAG_NOTE);
 
 
 //=//// EVAL_FLAG_EXECUTOR_29 //////////////////////////////////////////////=//

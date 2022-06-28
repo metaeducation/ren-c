@@ -455,6 +455,11 @@ inline static void Drop_Frame(REBFRM *f)
 {
     assert(not Is_Throwing(f));  // !!! We could decide to abort or not on this
 
+    if (Is_Failure(f->out)) {  // !!! Another case we might fold together
+        Abort_Frame(f);
+        return;
+    }
+
   #if DEBUG_BALANCE_STATE
     //
     // To avoid slowing down the debug build a lot, Eval_Core() doesn't
@@ -587,9 +592,10 @@ inline static void Prep_Frame_Core(
 
     #define SUBFRAME    (assert(FS_TOP->prior == frame_), FS_TOP)
 
-    #define VOID    Native_Void_Result(frame_)
-    #define NONE    Native_None_Result(frame_)
-    #define THROWN  Native_Thrown_Result(frame_)
+    #define VOID        Native_Void_Result(frame_)
+    #define NONE        Native_None_Result(frame_)
+    #define THROWN      Native_Thrown_Result(frame_)
+    #define FAIL(p)     Native_Failure_Result(frame_, (p))
     #define BASELINE   (&frame_->baseline)
 #endif
 
@@ -733,8 +739,10 @@ inline static bool Pushed_Continuation(
             branch_specifier,
             flags | EVAL_MASK_DEFAULT
         );
-        if (CELL_HEART_UNCHECKED(branch) == REB_META_BLOCK)
+        if (CELL_HEART_UNCHECKED(branch) == REB_META_BLOCK) {
             Set_Eval_Flag(f, META_RESULT);
+            Set_Eval_Flag(f, FAILURE_RESULT_OK);
+        }
 
         Push_Frame(out, f);
         goto pushed_continuation; }  // trampoline manages EVAL_FLAG_BRANCH atm.
@@ -927,12 +935,12 @@ inline static REB_R Continue_Subframe_Helper(
 // if the delegating frame were freed before running what's underneath it...
 // at least it could be collapsed into a more primordial state.  Review.
 
-#define delegate_core(o,flags,branch,specifier,with) \
+#define delegate_core(o,fs,branch,specifier,with) \
     do { \
         assert((o) == frame_->out); \
         if (Pushed_Continuation( \
             frame_->out, \
-            (flags), \
+            (fs) | (frame_->flags.bits & EVAL_FLAG_FAILURE_RESULT_OK), \
             (branch), \
             (specifier), \
             (with) \

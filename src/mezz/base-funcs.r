@@ -982,7 +982,14 @@ fail: func [
         set-location-of-error error where  ; !!! why is this native?
     ]
 
-    do ensure error! error  ; raise to nearest TRAP up the stack (if any)
+    ; Initially this would call DO in order to raise the error, to the nearest
+    ; trap up the stack (if any).  However, Ren-C rethought errors as being
+    ; "definitional", which means you would say RETURN FAIL and it would be
+    ; a special kind of "error isotope" that was a unique return result.  Then
+    ; you typically can only trap/catch errors that come from a function you
+    ; directly called.
+    ;
+    return unmeta ensure error! error
 ]
 
 

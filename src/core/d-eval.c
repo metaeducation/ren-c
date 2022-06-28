@@ -243,7 +243,11 @@ void Do_After_Action_Checks_Debug(REBFRM *f) {
     // !!! PG_Dispatcher() should do this, so every phase gets checked.
     //
   #if DEBUG_NATIVE_RETURNS
-    if (ACT_HAS_RETURN(phase)) {
+    if (Is_Failure(f->out)) {
+        //
+        // Trampoline handles this, see EVAL_FLAG_FAILURE_RESULT_OK
+    }
+    else if (ACT_HAS_RETURN(phase)) {
         const REBKEY *key = ACT_KEYS_HEAD(phase);
         const REBPAR *param = ACT_PARAMS_HEAD(phase);
         assert(KEY_SYM(key) == SYM_RETURN);
@@ -318,6 +322,7 @@ void Evaluator_Exit_Checks_Debug(REBFRM *f) {
             EVAL_FLAG_MAYBE_STALE
             | EVAL_FLAG_BRANCH
             | EVAL_FLAG_META_RESULT
+            | EVAL_FLAG_FAILURE_RESULT_OK
             | EVAL_FLAG_FULFILLING_ARG
             | EVAL_FLAG_NO_RESIDUE
             | EVAL_FLAG_SINGLE_STEP

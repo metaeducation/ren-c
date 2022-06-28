@@ -105,7 +105,8 @@
 //
 #define DECLARE_ACTION_SUBFRAME(f,parent) \
     DECLARE_FRAME (f, (parent)->feed, \
-        EVAL_MASK_DEFAULT | EVAL_FLAG_MAYBE_STALE | ((parent)->flags.bits \
+        EVAL_MASK_DEFAULT | EVAL_FLAG_MAYBE_STALE | EVAL_FLAG_FAILURE_RESULT_OK \
+        | ((parent)->flags.bits \
             & (EVAL_FLAG_FULFILLING_ARG | EVAL_FLAG_RUNNING_ENFIX \
                 | EVAL_FLAG_DIDNT_LEFT_QUOTE_PATH)))
 
@@ -831,7 +832,9 @@ REB_R Evaluator_Executor(REBFRM *f)
             subframe,
             f_current,
             f_specifier,
-            EVAL_MASK_DEFAULT | EVAL_FLAG_META_RESULT
+            EVAL_MASK_DEFAULT
+                | EVAL_FLAG_META_RESULT
+                | EVAL_FLAG_FAILURE_RESULT_OK
         );
         Push_Frame(RESET(OUT), subframe);
 
@@ -1970,6 +1973,9 @@ REB_R Evaluator_Executor(REBFRM *f)
   #endif
 
     if (Not_Eval_Flag(f, SINGLE_STEP) and Not_End(f_next)) {
+        if (Is_Failure(OUT))
+            fail (VAL_CONTEXT(OUT));
+
         STATE = ST_EVALUATOR_STEPPING_AGAIN;
         return R_CONTINUATION;  // go through trampoline, for debug hooking
     }

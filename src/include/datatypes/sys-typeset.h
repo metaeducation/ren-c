@@ -399,6 +399,9 @@ inline static bool Typecheck_Including_Constraints(
         else if (IS_THE_WORD(v)) {
             return true;  // for @void and @end
         }
+        else if (IS_ERROR(v)) {
+            return true;  // new definitional error concept
+        }
         else {
             assert(IS_QUOTED(v));  // must be quoted otherwise
             if (VAL_NUM_QUOTES(v) > 1)
@@ -443,6 +446,7 @@ inline static bool Is_Typeset_Empty(noquote(const Cell*) param) {
     return (bits & TS_OPT_VALUE) == 0;  // e.g. `[/refine]`
 }
 
+inline static bool Is_Blackhole(const Cell *v);  // forward decl
 
 // During the process of specialization, a NULL refinement means that it has
 // not been specified one way or the other (MAKE FRAME! creates a frame with

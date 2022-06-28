@@ -735,11 +735,3 @@ inline static REBVAL *Reify_Eval_Out_Plain(REBVAL *out) {
 
 #define Reify_Stale_Plain_Branch(out) \
     Isotopify_If_Nulled(Reify_Eval_Out_Plain(out))
-
-
-inline static REBVAL *Reify_Eval_Out_Meta(REBVAL *out) {
-    if (Is_Void(out))
-        return Init_Meta_Of_Void(out);
-
-    return Meta_Quotify(out);
-}
