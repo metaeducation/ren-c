@@ -285,67 +285,8 @@ typedef REB_R (Executor)(REBFRM *frame_);
 typedef Executor Dispatcher;  // sub-dispatched in Action_Executor()
 
 
-
-struct Reb_Frame_Action_State {
-    //
-    // If a function call is currently in effect, FRM_PHASE() is how you get
-    // at the current function being run.  This is the action that started
-    // the process.
-    //
-    // Compositions of functions (adaptations, specializations, hijacks, etc)
-    // update the FRAME!'s payload in the f->varlist archetype to say what
-    // the current "phase" is.  The reason it is updated there instead of
-    // as a REBFRM field is because specifiers use it.  Similarly, that is
-    // where the binding is stored.
-    //
-    REBACT *original;
-
-    // We use the convention that "param" refers to the TYPESET! (plus symbol)
-    // from the spec of the function--a.k.a. the "formal argument".  This
-    // pointer is moved in step with `arg` during argument fulfillment.
-    //
-    // (Note: It is const because we don't want to be changing the params,
-    // but also because it is used as a temporary to store value if it is
-    // advanced but we'd like to hold the old one...this makes it important
-    // to protect it from GC if we have advanced beyond as well!)
-    //
-    const REBKEY *key;
-    const REBKEY *key_tail;
-
-    // `arg is the "actual argument"...which holds the pointer to the
-    // REBVAL slot in the `arglist` for that corresponding `param`.  These
-    // are moved in sync.  This movement can be done for typechecking or
-    // fulfillment, see In_Typecheck_Mode()
-    //
-    // If arguments are actually being fulfilled into the slots, those
-    // slots start out as trash.  Yet the GC has access to the frame list,
-    // so it can examine `arg` and avoid trying to protect the random
-    // bits that haven't been fulfilled yet.
-    //
-    REBVAL *arg;
-
-    // `special` may be the same as `param` (if fulfilling an unspecialized
-    // function) or it may be the same as `arg` (if doing a typecheck pass).
-    // Otherwise it points into values of a specialization or APPLY, where
-    // non-null values are being written vs. acquiring callsite parameters.
-    //
-    // It is assumed that special, param, and arg may all be incremented
-    // together at the same time...reducing conditionality (this is why it
-    // is `param` and not nullptr when processing unspecialized).
-    //
-    // However, in PATH! frames, `special` is non-NULL if this is a SET-PATH!,
-    // and it is the value to ultimately set the path to.  The set should only
-    // occur at the end of the path, so most setters should check
-    // `Is_End(pvs->value + 1)` before setting.
-    //
-    // !!! See notes at top of %c-path.c about why the path dispatch is more
-    // complicated than simply being able to only pass the setval to the last
-    // item being dispatched (which would be cleaner, but some cases must
-    // look ahead with alternate handling).
-    //
-    const REBPAR *param;
-};
-
+#include "executors/exec-eval.h"
+#include "executors/exec-action.h"
 
 
 // NOTE: The ordering of the fields in `Reb_Frame` are specifically done so
@@ -452,15 +393,9 @@ struct Reb_Frame_Action_State {
     REBVAL *rootvar; // cache of CTX_ARCHETYPE(varlist) if varlist is not null
 
   union {
-    // Used to slip cell to re-evaluate into Eval_Core()
-    //
-    struct {
-        const Cell *current;
-        option(const REBVAL*) current_gotten;
-        char enfix_reevaluate;  // either 'Y' or 'N' (catches bugs)
-    } eval;
+    struct Reb_Eval_Executor_State eval;
 
-    struct Reb_Frame_Action_State action;
+    struct Reb_Action_Executor_State action;
 
     struct {
         REBFRM *main_frame;
@@ -561,8 +496,6 @@ inline static bool FRM_IS_VARIADIC(REBFRM *f);
     }
 #endif
 
-#define EXECUTOR_ACTION &Action_Executor
-#define EXECUTOR_EVAL &Evaluator_Executor
 
 #define Get_Executor_Flag(executor,f,name) \
     ((ensure_executor(EXECUTOR_##executor, (f))->flags.bits \
