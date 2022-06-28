@@ -482,6 +482,18 @@ set?: func [
 ]
 
 
+curtail: reframer func [
+    {Voids an expression if it raises any NEED-NON-NULL failures}
+    return: [<void> <opt> any-value!]
+    frame [frame!]
+][
+    return do frame except e -> [
+        if e.id == 'need-non-null [return void]
+        fail e
+    ]
+]
+
+
 ; >- is the SHOVE operator.  It uses the item immediately to its left for
 ; the first argument to whatever operation is on its right hand side.
 ; Parameter conventions of that first argument apply when processing the
