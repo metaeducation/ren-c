@@ -108,4 +108,19 @@
     ([3 7] = collect [reduce-each x [1 + 2 3 + 4] [keep x]])
 
     ([1 + 2] = collect [reduce-each x @[1 + 2] [keep ^x]])
+
+    (
+        e: trap [reduce-each x [1 + 2] [fail "foo"]]
+        e.message = "foo"
+    )
+]
+
+; REDUCE-EACH can do ^META processing, this is the basis of ATTEMPT
+[
+    ((the '3) = reduce-each ^x [1 + 2] [x])
+
+    (
+        e: reduce-each ^x [fail "foo"] [x]
+        e.message = "foo"
+    )
 ]

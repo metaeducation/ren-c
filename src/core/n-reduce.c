@@ -183,7 +183,7 @@ REBNATIVE(reduce)
 //      return: "Last body result"
 //          [<opt> <void> any-value!]
 //      :vars "Variable to receive each reduced value (multiple TBD)"
-//          [word!]
+//          [word! meta-word!]
 //      block "Input block of expressions (@[block] acts like FOR-EACH)"
 //          [block! the-block!]
 //      body "Code to run on each step"
@@ -217,15 +217,20 @@ REBNATIVE(reduce_each)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
+    REBFLGS flags = EVAL_MASK_DEFAULT
+        | EVAL_FLAG_SINGLE_STEP
+        | EVAL_FLAG_TRAMPOLINE_KEEPALIVE;
+
+    if (IS_META_WORD(vars)) {  // Note: gets converted to object in next step
+        flags |= EVAL_FLAG_META_RESULT | EVAL_FLAG_FAILURE_RESULT_OK;
+        mutable_HEART_BYTE(vars) = REB_WORD;
+    }
+
     REBCTX *context = Virtual_Bind_Deep_To_New_Context(
         ARG(body),  // may be updated, will still be GC safe
         ARG(vars)
     );
     Init_Object(ARG(vars), context);  // keep GC safe
-
-    REBFLGS flags = EVAL_MASK_DEFAULT
-        | EVAL_FLAG_SINGLE_STEP
-        | EVAL_FLAG_TRAMPOLINE_KEEPALIVE;
 
     if (IS_THE_BLOCK(block))
         flags |= EVAL_FLAG_NO_EVALUATIONS;
@@ -240,6 +245,8 @@ REBNATIVE(reduce_each)
         goto finished;
 
     SUBFRAME->executor = &Evaluator_Executor;  // restore from pass through
+
+    RESET(SPARE);
 
     STATE = ST_REDUCE_EACH_REDUCING_STEP;
     continue_uncatchable_subframe (SUBFRAME);
@@ -276,10 +283,10 @@ REBNATIVE(reduce_each)
 
 } finished: {  ///////////////////////////////////////////////////////////////
 
-    Drop_Frame(SUBFRAME);
-
-    if (THROWING)
+    if (THROWING)  // subframe has already been dropped if thrown
         return THROWN;
+
+    Drop_Frame(SUBFRAME);
 
     if (Is_Stale(OUT))  // body never ran
         return VOID;
