@@ -211,30 +211,9 @@ STATIC_ASSERT(EVAL_FLAG_7_IS_TRUE == NODE_FLAG_CELL);
     FLAG_LEFT_BIT(22)
 
 
-//=//// EVAL_FLAG_ERROR_ON_DEFERRED_ENFIX /////////////////////////////////=//
+//=//// EVAL_FLAG_23 //////////////////////////////////////////////////////=//
 //
-// There are advanced features that "abuse" the evaluator, e.g. by making it
-// create a specialization exemplar by example from a stream of code.  These
-// cases are designed to operate in isolation, and are incompatible with the
-// idea of enfix operations that stay pending in the evaluation queue, e.g.
-//
-//     match+ parse "aab" [some "a"] else [print "what should this do?"]
-//
-// MATCH+ is variadic, and in one step asks to make a frame from the right
-// hand side.  But it's 99% likely intent of this was to attach the ELSE to
-// the MATCH and not the PARSE.  That looks inconsistent, since the user
-// imagines it's the evaluator running PARSE as a parameter to MATCH (vs.
-// MATCH becoming the evaluator and running it).
-//
-// It would be technically possible to allow ELSE to bind to the MATCH in
-// this case.  It might even be technically possible to give MATCH back a
-// frame for a CHAIN of actions that starts with PARSE but includes the ELSE
-// (which sounds interesting but crazy, considering that's not what people
-// would want here, but maybe sometimes they would).
-//
-// The best answer for right now is just to raise an error.
-//
-#define EVAL_FLAG_ERROR_ON_DEFERRED_ENFIX \
+#define EVAL_FLAG_23 \
     FLAG_LEFT_BIT(23)
 
 
@@ -266,13 +245,36 @@ STATIC_ASSERT(EVAL_FLAG_7_IS_TRUE == NODE_FLAG_CELL);
 STATIC_ASSERT(DETAILS_FLAG_IS_BARRIER == EVAL_FLAG_FULFILLING_ARG);
 
 
-//=//// EVAL_FLAG_26 //////////////////////////////////////////////////////=//
+//=//// EVAL_FLAG_EXECUTOR_26 /////////////////////////////////////////////=//
 //
-#define EVAL_FLAG_26 \
+#define EVAL_FLAG_EXECUTOR_26 \
     FLAG_LEFT_BIT(26)
 
 
 //=//// EVAL_FLAG_EXECUTOR_27 /////////////////////////////////////////////=//
+//
+// * EVAL_EXECUTOR_FLAG_ERROR_ON_DEFERRED_ENFIX
+//
+// There are advanced features that "abuse" the evaluator, e.g. by making it
+// create a specialization exemplar by example from a stream of code.  These
+// cases are designed to operate in isolation, and are incompatible with the
+// idea of enfix operations that stay pending in the evaluation queue, e.g.
+//
+//     match+ parse "aab" [some "a"] else [print "what should this do?"]
+//
+// MATCH+ is variadic, and in one step asks to make a frame from the right
+// hand side.  But it's 99% likely intent of this was to attach the ELSE to
+// the MATCH and not the PARSE.  That looks inconsistent, since the user
+// imagines it's the evaluator running PARSE as a parameter to MATCH (vs.
+// MATCH becoming the evaluator and running it).
+//
+// It would be technically possible to allow ELSE to bind to the MATCH in
+// this case.  It might even be technically possible to give MATCH back a
+// frame for a CHAIN of actions that starts with PARSE but includes the ELSE
+// (which sounds interesting but crazy, considering that's not what people
+// would want here, but maybe sometimes they would).
+//
+// The best answer for right now is just to raise an error.
 //
 // * ACTION_EXECUTOR_FLAG_DELEGATE_CONTROL
 //
@@ -293,6 +295,7 @@ STATIC_ASSERT(DETAILS_FLAG_IS_BARRIER == EVAL_FLAG_FULFILLING_ARG);
     FLAG_LEFT_BIT(27)
 
 #define ACTION_EXECUTOR_FLAG_DELEGATE_CONTROL EVAL_FLAG_EXECUTOR_27
+#define EVAL_EXECUTOR_FLAG_ERROR_ON_DEFERRED_ENFIX EVAL_FLAG_EXECUTOR_27
 
 
 //=//// EVAL_FLAG_EXECUTOR_28 /////////////////////////////////////////////=//

@@ -159,9 +159,8 @@ bool Make_Invokable_From_Feed_Throws(
     // concept, but for now we just try to get multiple returns to work which
     // are part of the evaluator and hence can do trickier things.
     //
-    if (error_on_deferred)
-        f->flags.bits |=
-            EVAL_FLAG_ERROR_ON_DEFERRED_ENFIX;  // can't deal with ELSE/THEN
+    if (error_on_deferred)  // can't deal with ELSE/THEN
+        f->flags.bits |= EVAL_EXECUTOR_FLAG_ERROR_ON_DEFERRED_ENFIX;
 
     Push_Action(f, VAL_ACTION(action), VAL_ACTION_BINDING(action));
     Begin_Prefix_Action(f, VAL_ACTION_LABEL(action));

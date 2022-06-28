@@ -1895,7 +1895,7 @@ REB_R Evaluator_Executor(REBFRM *f)
             )
         )
     ){
-        if (Get_Eval_Flag(f->prior, ERROR_ON_DEFERRED_ENFIX)) {
+        if (Get_Executor_Flag(EVAL, f->prior, ERROR_ON_DEFERRED_ENFIX)) {
             //
             // Operations that inline functions by proxy (such as MATCH and
             // ENSURE) cannot directly interoperate with THEN or ELSE...they
