@@ -897,7 +897,7 @@ inline static void Run_Va_May_Fail(
 // thrown values or invisibles.  They also run more than one step.
 //
 // This function runs one evaluation step, and allows you to say whether the
-// step must consume all input or not (see EVAL_FLAG_NO_RESIDUE).
+// step must consume all input or not (see EVAL_EXECUTOR_FLAG_NO_RESIDUE).
 //
 // The output is written into a cell that is provided--which is not something
 // the API should do--especially considering that this can evaluate to a void
@@ -905,7 +905,7 @@ inline static void Run_Va_May_Fail(
 // that handles the variadics to be applied here.
 //
 // There is a rebRunThrows() macro that passes in the flags EVAL_MASK_NONE
-// and EVAL_FLAG_NO_RESIDUE defined in %sys-do.h
+// and EVAL_EXECUTOR_FLAG_NO_RESIDUE defined in %sys-do.h
 //
 bool RL_rebRunCoreThrows(
     REBVAL *out,

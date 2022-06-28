@@ -287,23 +287,9 @@ STATIC_ASSERT(EVAL_FLAG_7_IS_TRUE == NODE_FLAG_CELL);
 STATIC_ASSERT(DETAILS_FLAG_IS_BARRIER == EVAL_FLAG_FULFILLING_ARG);
 
 
-//=//// EVAL_FLAG_NO_RESIDUE //////////////////////////////////////////////=//
+//=//// EVAL_FLAG_26 //////////////////////////////////////////////////////=//
 //
-// Sometimes a single step evaluation is done in which it would be considered
-// an error if all of the arguments are not used.  This requests an error if
-// the frame does not reach the end.
-//
-// !!! Interactions with ELIDE won't currently work with this, so evaluation
-// would have to take this into account to greedily run ELIDEs if the flag
-// is set.  However, it's only used in variadic apply at the moment with
-// calls from the system that do not use ELIDE.  These calls may someday
-// turn into rebValue(), in which case the mechanism would need rethinking.
-//
-// !!! A userspace tool for doing this was once conceived as `||`, which
-// was variadic and would only allow one evaluation step after it, after
-// which it would need to reach either an END or another `||`.
-//
-#define EVAL_FLAG_NO_RESIDUE \
+#define EVAL_FLAG_26 \
     FLAG_LEFT_BIT(26)
 
 
@@ -359,9 +345,21 @@ STATIC_ASSERT(EVAL_FLAG_EXECUTOR_28 == CELL_FLAG_NOTE);
 
 //=//// EVAL_FLAG_EXECUTOR_29 //////////////////////////////////////////////=//
 //
-// * EVAL_EXECUTOR_FLAG_XXX
+// * EVAL_EXECUTOR_FLAG_NO_RESIDUE
 //
-// None defined yet.
+// Sometimes a single step evaluation is done in which it would be considered
+// an error if all of the arguments are not used.  This requests an error if
+// the frame does not reach the end.
+//
+// !!! Interactions with ELIDE won't currently work with this, so evaluation
+// would have to take this into account to greedily run ELIDEs if the flag
+// is set.  However, it's only used in variadic apply at the moment with
+// calls from the system that do not use ELIDE.  These calls may someday
+// turn into rebValue(), in which case the mechanism would need rethinking.
+//
+// !!! A userspace tool for doing this was once conceived as `||`, which
+// was variadic and would only allow one evaluation step after it, after
+// which it would need to reach either an END or another `||`.
 //
 // * ACTION_EXECUTOR_FLAG_DISPATCHER_CATCHES
 //
@@ -374,6 +372,7 @@ STATIC_ASSERT(EVAL_FLAG_EXECUTOR_28 == CELL_FLAG_NOTE);
 #define EVAL_FLAG_EXECUTOR_29 \
     FLAG_LEFT_BIT(29)
 
+#define EVAL_EXECUTOR_FLAG_NO_RESIDUE EVAL_FLAG_EXECUTOR_29
 #define ACTION_EXECUTOR_FLAG_DISPATCHER_CATCHES EVAL_FLAG_EXECUTOR_29
 
 

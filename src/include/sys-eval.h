@@ -377,7 +377,7 @@ inline static bool Eval_Step_In_Va_Throws(
         return true;
     }
 
-    bool too_many = (eval_flags & EVAL_FLAG_NO_RESIDUE)
+    bool too_many = (eval_flags & EVAL_EXECUTOR_FLAG_NO_RESIDUE)
         and Not_End(feed->value);  // feed will be freed in Drop_Frame()
 
     Drop_Frame(f); // will va_end() if not reified during evaluation
