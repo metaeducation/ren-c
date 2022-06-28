@@ -131,7 +131,7 @@ REB_R Block_Dispatcher(REBFRM *f)
     assert(IS_RELATIVE(block));
 
     RESET(OUT);  // Note: DOES will not evaluate invisibly (see LAMBDA)
-    delegate_core (OUT, EVAL_MASK_DEFAULT, block, SPC(f->varlist), END);
+    delegate_core (OUT, EVAL_MASK_NONE, block, SPC(f->varlist), END);
 }
 
 

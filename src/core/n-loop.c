@@ -1881,7 +1881,7 @@ REBNATIVE(for)
         //
         rebPushContinuation(
             OUT,  // <-- output cell
-            EVAL_MASK_DEFAULT | EVAL_FLAG_MAYBE_STALE,
+            EVAL_FLAG_MAYBE_STALE,
             Lib(FOR_EACH), ARG(vars), rebQ(value), body
         );
         return R_DELEGATION;

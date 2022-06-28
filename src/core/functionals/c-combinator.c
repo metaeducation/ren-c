@@ -335,7 +335,7 @@ void Push_Parser_Subframe(
 
     bool pushed = Pushed_Continuation(
         out,
-        EVAL_MASK_DEFAULT,
+        EVAL_MASK_NONE,
         temp,
         SPECIFIED,
         END

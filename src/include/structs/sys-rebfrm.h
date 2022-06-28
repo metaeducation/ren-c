@@ -427,15 +427,13 @@ STATIC_ASSERT(EVAL_FLAG_FAILURE_RESULT_OK == CELL_FLAG_NOTE);
 STATIC_ASSERT(31 < 32);  // otherwise EVAL_FLAG_XXX too high
 
 
-// All frames must include EVAL_MASK_DEFAULT in their flags.  This is not
-// done automatically for two reasons: one is to make the calls more clear
-// with `DECLARE_END_FRAME (f, EVAL_MASK_DEFAULT)` vs just saying 0.  Also,
-// it would permit there to be negative-default flags if some efficiency
-// trick favored the flag being truthy for its "unused" state, where you'd
-// say `DECLARE_END_FRAME (f, EVAL_MASK_DEFAULT & ~EVAL_FLAG_SOME_SETTING)`.
+// Note: It was considered to force clients to include an EVAL_MASK_DEFAULT
+// when OR'ing together flags, to allow certain flag states to be favored
+// as truthy for the "unused" state, in case that helped some efficiency
+// trick.  This made the callsites much more noisy, so EVAL_MASK_NONE is used
+// solely to help call out places that don't have other flags.
 //
-#define EVAL_MASK_DEFAULT \
-    (EVAL_FLAG_0_IS_TRUE | EVAL_FLAG_7_IS_TRUE)
+#define EVAL_MASK_NONE 0
 
 
 #define Set_Eval_Flag(f,name) \

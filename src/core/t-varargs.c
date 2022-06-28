@@ -184,11 +184,11 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
             fail ("Variadic literal parameters not yet implemented");
 
         case PARAM_CLASS_NORMAL: {
-            REBFLGS flags = EVAL_MASK_DEFAULT
-                | EVAL_FLAG_SINGLE_STEP
-                | EVAL_FLAG_FULFILLING_ARG;
-
-            DECLARE_FRAME_AT (f_temp, shared, flags);
+            DECLARE_FRAME_AT (
+                f_temp,
+                shared,
+                EVAL_FLAG_SINGLE_STEP | EVAL_FLAG_FULFILLING_ARG
+            );
             Push_Frame(nullptr, f_temp);
 
             // Note: Eval_Step_In_Subframe() is not needed here because
@@ -301,8 +301,8 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
         //
         switch (pclass) {
         case PARAM_CLASS_NORMAL: {
-            REBFLGS flags = EVAL_MASK_DEFAULT
-                | EVAL_FLAG_SINGLE_STEP
+            REBFLGS flags =
+                EVAL_FLAG_SINGLE_STEP
                 | EVAL_FLAG_FULFILLING_ARG;
             RESET(out);
             if (Eval_Step_In_Subframe_Throws(out, f, flags))

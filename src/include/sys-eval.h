@@ -419,7 +419,7 @@ inline static bool Eval_Value_Core_Throws(
 }
 
 #define Eval_Value_Throws(out,value,specifier) \
-    Eval_Value_Core_Throws(RESET(out), EVAL_MASK_DEFAULT, (value), (specifier))
+    Eval_Value_Core_Throws(RESET(out), EVAL_MASK_NONE, (value), (specifier))
 
 
 inline static REB_R Native_Failure_Result(REBFRM *frame_, const void *p) {

@@ -590,7 +590,7 @@ static REB_R Parse_One_Rule(
         DECLARE_FRAME_AT_CORE (
             subframe,
             rule, rule_specifier(),
-            EVAL_MASK_DEFAULT
+            EVAL_MASK_NONE
         );
 
         DECLARE_LOCAL (subresult);
@@ -1653,7 +1653,7 @@ REBNATIVE(subparse)
                 }
                 else {  // Ordinary rule (may be block, may not be)
 
-                    DECLARE_FRAME (subframe, f->feed, EVAL_MASK_DEFAULT);
+                    DECLARE_FRAME (subframe, f->feed, EVAL_MASK_NONE);
 
                     // Want the subframe to see the BLOCK!, not ^[...]
                     //
@@ -1929,7 +1929,7 @@ REBNATIVE(subparse)
             );
             PUSH_GC_GUARD(collection);
 
-            DECLARE_FRAME (subframe, f->feed, EVAL_MASK_DEFAULT);
+            DECLARE_FRAME (subframe, f->feed, EVAL_MASK_NONE);
 
             bool interrupted;
             assert(Is_Void(OUT));  // invariant until finished
@@ -2212,7 +2212,7 @@ REBNATIVE(subparse)
                 DECLARE_FRAME_AT_CORE (
                     subframe,
                     subrule, P_RULE_SPECIFIER,
-                    EVAL_MASK_DEFAULT
+                    EVAL_MASK_NONE
                 );
 
                 bool interrupted;
@@ -2256,7 +2256,7 @@ REBNATIVE(subparse)
             DECLARE_FRAME_AT_CORE (
                 subframe,
                 rule, rule_specifier(),
-                EVAL_MASK_DEFAULT
+                EVAL_MASK_NONE
             );
 
             bool interrupted;
@@ -2753,7 +2753,7 @@ REBNATIVE(parse_p)
     if (not ANY_SERIES_KIND(CELL_HEART(input)))
         fail ("PARSE input must be an ANY-SERIES! (use AS BLOCK! for PATH!)");
 
-    DECLARE_FRAME_AT (subframe, rules, EVAL_MASK_DEFAULT);
+    DECLARE_FRAME_AT (subframe, rules, EVAL_MASK_NONE);
 
     bool interrupted;
     if (Subparse_Throws(

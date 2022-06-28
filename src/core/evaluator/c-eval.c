@@ -105,7 +105,7 @@
 //
 #define DECLARE_ACTION_SUBFRAME(f,parent) \
     DECLARE_FRAME (f, (parent)->feed, \
-        EVAL_MASK_DEFAULT | EVAL_FLAG_MAYBE_STALE | EVAL_FLAG_FAILURE_RESULT_OK \
+        EVAL_FLAG_MAYBE_STALE | EVAL_FLAG_FAILURE_RESULT_OK \
         | ((parent)->flags.bits \
             & (EVAL_FLAG_FULFILLING_ARG | EVAL_FLAG_RUNNING_ENFIX \
                 | EVAL_FLAG_DIDNT_LEFT_QUOTE_PATH)))
@@ -167,8 +167,8 @@ inline static REBFRM *Maybe_Rightward_Continuation_Needed(REBFRM *f)
 
     RESET(OUT);  // all SET-XXX! overwrite out, see [2]
 
-    REBFLGS flags = EVAL_MASK_DEFAULT
-        | EVAL_FLAG_SINGLE_STEP
+    REBFLGS flags =
+        EVAL_FLAG_SINGLE_STEP
         | (f->flags.bits & EVAL_FLAG_FULFILLING_ARG);  // if f was, we are
 
     if (Did_Init_Inert_Optimize_Complete(OUT, f->feed, &flags))
@@ -801,7 +801,7 @@ REB_R Evaluator_Executor(REBFRM *f)
             subframe,
             f_current,
             f_specifier,
-            EVAL_MASK_DEFAULT
+            EVAL_MASK_NONE
         );
         Push_Frame(RESET(SPARE), subframe);
 
@@ -832,9 +832,7 @@ REB_R Evaluator_Executor(REBFRM *f)
             subframe,
             f_current,
             f_specifier,
-            EVAL_MASK_DEFAULT
-                | EVAL_FLAG_META_RESULT
-                | EVAL_FLAG_FAILURE_RESULT_OK
+            EVAL_FLAG_META_RESULT | EVAL_FLAG_FAILURE_RESULT_OK
         );
         Push_Frame(RESET(OUT), subframe);
 
@@ -1093,7 +1091,7 @@ REB_R Evaluator_Executor(REBFRM *f)
             subframe,
             f_current,
             f_specifier,
-            EVAL_MASK_DEFAULT
+            EVAL_MASK_NONE
         );
         Push_Frame(RESET(SPARE), subframe);
 
@@ -1463,8 +1461,8 @@ REB_R Evaluator_Executor(REBFRM *f)
         // jumping into the evaluator at the ST_EVALUATOR_LOOKING_AHEAD state.
         //
         if (VAL_TYPE_UNCHECKED(f_next) == REB_WORD) {  // tolerate REB_0_END
-            REBFLGS flags = EVAL_MASK_DEFAULT
-                | EVAL_FLAG_SINGLE_STEP
+            REBFLGS flags =
+                EVAL_FLAG_SINGLE_STEP
                 | FLAG_STATE_BYTE(ST_EVALUATOR_LOOKING_AHEAD)
                 | EVAL_FLAG_INERT_OPTIMIZATION;  // don't error on enfix late
 

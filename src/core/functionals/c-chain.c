@@ -57,12 +57,7 @@ enum {
 // entry to Process_Action().  The ability is also used by RESKINNED.
 //
 REBFRM *Push_Downshifted_Frame(REBVAL *out, REBFRM *f) {
-    DECLARE_FRAME (
-        sub,
-        f->feed,
-        EVAL_MASK_DEFAULT
-            | EVAL_FLAG_MAYBE_STALE
-    );
+    DECLARE_FRAME (sub, f->feed, EVAL_FLAG_MAYBE_STALE);
     Push_Frame(out, sub);
     assert(sub->varlist == nullptr);
     sub->varlist = f->varlist;

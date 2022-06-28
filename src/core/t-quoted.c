@@ -481,7 +481,8 @@ REBNATIVE(maybe_a)
     if (Eval_Step_In_Subframe_Throws(
         OUT,
         frame_,
-        EVAL_MASK_DEFAULT | EVAL_FLAG_MAYBE_STALE | EVAL_FLAG_SINGLE_STEP
+        EVAL_FLAG_MAYBE_STALE
+            | EVAL_FLAG_SINGLE_STEP
     )){
         return THROWN;
     }

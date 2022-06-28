@@ -58,7 +58,7 @@
 #define rebRunThrows(out,...) \
     rebRunCoreThrows( \
         RESET(out), \
-        EVAL_MASK_DEFAULT | EVAL_FLAG_NO_RESIDUE | EVAL_FLAG_SINGLE_STEP, \
+        EVAL_FLAG_NO_RESIDUE | EVAL_FLAG_SINGLE_STEP, \
         __VA_ARGS__ \
     )
 
@@ -91,7 +91,7 @@ inline static bool Do_Any_Array_At_Core_Throws(
 }
 
 #define Do_Any_Array_At_Throws(out,any_array,specifier) \
-    Do_Any_Array_At_Core_Throws(RESET(out), EVAL_MASK_DEFAULT, (any_array), \
+    Do_Any_Array_At_Core_Throws(RESET(out), EVAL_MASK_NONE, (any_array), \
         (specifier))
 
 

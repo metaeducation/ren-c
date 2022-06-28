@@ -89,7 +89,7 @@ REBNATIVE(reduce)
 
     DECLARE_END_FRAME (
         subframe,
-        EVAL_MASK_DEFAULT | FLAG_STATE_BYTE(ST_EVALUATOR_REEVALUATING)
+        FLAG_STATE_BYTE(ST_EVALUATOR_REEVALUATING)
     );
     Push_Frame(OUT, subframe);
 
@@ -103,8 +103,7 @@ REBNATIVE(reduce)
     DECLARE_FRAME_AT (
         subframe,
         v,  // REB_BLOCK or REB_GROUP
-        EVAL_MASK_DEFAULT
-            | EVAL_FLAG_SINGLE_STEP
+        EVAL_FLAG_SINGLE_STEP
             | EVAL_FLAG_ALLOCATED_FEED
             | EVAL_FLAG_TRAMPOLINE_KEEPALIVE  // reused for each step
     );
@@ -217,8 +216,8 @@ REBNATIVE(reduce_each)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    REBFLGS flags = EVAL_MASK_DEFAULT
-        | EVAL_FLAG_SINGLE_STEP
+    REBFLGS flags =
+        EVAL_FLAG_SINGLE_STEP
         | EVAL_FLAG_TRAMPOLINE_KEEPALIVE;
 
     if (IS_META_WORD(vars)) {  // Note: gets converted to object in next step
@@ -349,8 +348,7 @@ static void Push_Composer_Frame(
         subframe,
         adjusted ? adjusted : arraylike,
         adjusted ? SPECIFIED : specifier,
-        EVAL_MASK_DEFAULT
-            | EVAL_FLAG_NO_EVALUATIONS
+        EVAL_FLAG_NO_EVALUATIONS
             | EVAL_FLAG_TRAMPOLINE_KEEPALIVE  // allows stack accumulation
             | EVAL_FLAG_FAILURE_RESULT_OK  // bubbles up definitional errors
     );
@@ -589,7 +587,7 @@ REB_R Composer_Executor(REBFRM *f)
     DECLARE_FRAME (
         subframe,
         subfeed,  // used subfeed so we could skip the label if there was one
-        EVAL_MASK_DEFAULT | EVAL_FLAG_ALLOCATED_FEED
+        EVAL_FLAG_ALLOCATED_FEED
     );
 
     RESET(OUT);  // want empty `()` or `(comment "hi")` to vanish

@@ -216,7 +216,7 @@ REB_R MAKE_Path(
     if (not IS_BLOCK(arg))
         fail (Error_Bad_Make(kind, arg)); // "make path! 0" has no meaning
 
-    DECLARE_FRAME_AT (f, arg, EVAL_MASK_DEFAULT | EVAL_FLAG_SINGLE_STEP);
+    DECLARE_FRAME_AT (f, arg, EVAL_FLAG_SINGLE_STEP);
 
     Push_Frame(nullptr, f);
 

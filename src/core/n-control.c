@@ -643,8 +643,8 @@ REBNATIVE(all)
     if (VAL_LEN_AT(block) == 0)
         return VOID;
 
-    REBFLGS flags = EVAL_MASK_DEFAULT
-        | EVAL_FLAG_SINGLE_STEP
+    REBFLGS flags =
+        EVAL_FLAG_SINGLE_STEP
         | EVAL_FLAG_MAYBE_STALE
         | EVAL_FLAG_TRAMPOLINE_KEEPALIVE;
 
@@ -767,8 +767,8 @@ REBNATIVE(any)
     if (VAL_LEN_AT(block) == 0)
         return VOID;
 
-    REBFLGS flags = EVAL_MASK_DEFAULT
-        | EVAL_FLAG_SINGLE_STEP
+    REBFLGS flags =
+        EVAL_FLAG_SINGLE_STEP
         | EVAL_FLAG_MAYBE_STALE
         | EVAL_FLAG_TRAMPOLINE_KEEPALIVE;
 
@@ -929,9 +929,7 @@ REBNATIVE(case)
     DECLARE_FRAME_AT (
         f,
         cases,
-        EVAL_MASK_DEFAULT
-            | EVAL_FLAG_SINGLE_STEP
-            | EVAL_FLAG_TRAMPOLINE_KEEPALIVE
+        EVAL_FLAG_SINGLE_STEP | EVAL_FLAG_TRAMPOLINE_KEEPALIVE
     );
 
     Push_Frame(SPARE, f);
@@ -1000,7 +998,7 @@ REBNATIVE(case)
             discarder,
             branch,
             f_specifier,
-            EVAL_MASK_DEFAULT
+            EVAL_MASK_NONE
         );
         Move_Cell(spare_backup, SPARE);  // need to save SPARE for fallout
         Push_Frame(SPARE, discarder);
@@ -1014,7 +1012,7 @@ REBNATIVE(case)
     f->executor = &Just_Use_Out_Executor;
     continue_core (
         RESET(OUT),  // reset (branching means stale=>void no longer an option)
-        EVAL_MASK_DEFAULT | EVAL_FLAG_BRANCH,
+        EVAL_FLAG_BRANCH,
         branch,
         f_specifier,
         SPARE
@@ -1078,7 +1076,7 @@ REBNATIVE(switch)
 
     REBVAL *predicate = ARG(predicate);
 
-    DECLARE_FRAME_AT (f, ARG(cases), EVAL_MASK_DEFAULT | EVAL_FLAG_SINGLE_STEP);
+    DECLARE_FRAME_AT (f, ARG(cases), EVAL_FLAG_SINGLE_STEP);
 
     Push_Frame(nullptr, f);
 
@@ -1170,7 +1168,7 @@ REBNATIVE(switch)
                 //
                 if (Do_Any_Array_At_Core_Throws(
                     RESET(OUT),
-                    EVAL_MASK_DEFAULT | EVAL_FLAG_BRANCH,
+                    EVAL_FLAG_BRANCH,
                     f_value,
                     f_specifier
                 )){

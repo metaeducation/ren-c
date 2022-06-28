@@ -58,8 +58,8 @@ REBNATIVE(reeval)
 
     bool enfix = IS_ACTION(v) and GET_ACTION_FLAG(VAL_ACTION(v), ENFIXED);
 
-    REBFLGS flags = EVAL_MASK_DEFAULT
-        | EVAL_FLAG_SINGLE_STEP
+    REBFLGS flags =
+        EVAL_FLAG_SINGLE_STEP
         | EVAL_FLAG_MAYBE_STALE;
 
     if (Reevaluate_In_Subframe_Throws(
@@ -214,17 +214,13 @@ REBNATIVE(shove)
             Set_Cell_Flag(OUT, UNEVALUATED);
     }
 
-    REBFLGS flags = EVAL_MASK_DEFAULT
-        | EVAL_FLAG_SINGLE_STEP
-        | EVAL_FLAG_MAYBE_STALE;
-
     SET_FEED_FLAG(frame_->feed, NEXT_ARG_FROM_OUT);
 
     if (Reevaluate_In_Subframe_Throws(
         OUT,
         frame_,
         shovee,
-        flags,
+        EVAL_FLAG_SINGLE_STEP | EVAL_FLAG_MAYBE_STALE,
         enfix
     )){
         rebRelease(composed_set_path);  // ok if nullptr
@@ -342,8 +338,8 @@ REBNATIVE(do)
             return OUT;
         }
 
-        REBFLGS flags = EVAL_MASK_DEFAULT
-            | EVAL_FLAG_SINGLE_STEP
+        REBFLGS flags =
+            EVAL_FLAG_SINGLE_STEP
             | EVAL_FLAG_MAYBE_STALE;
 
         DECLARE_FRAME (subframe, f->feed, flags);
@@ -374,7 +370,7 @@ REBNATIVE(do)
 
         rebPushContinuation(
             OUT,  // <-- output cell
-            EVAL_MASK_DEFAULT | EVAL_FLAG_MAYBE_STALE,
+            EVAL_FLAG_MAYBE_STALE,
             Sys(SYM_DO_P),
                 source,
                 rebQ(REF(args)),
@@ -483,11 +479,11 @@ REBNATIVE(evaluate)
         DECLARE_FEED_AT_CORE (feed, source, SPECIFIED);  // use feed, see [1]
         assert(Not_End(feed->value));
 
-        REBFLGS flags = EVAL_MASK_DEFAULT
-            | EVAL_FLAG_ALLOCATED_FEED
-            | EVAL_FLAG_MAYBE_STALE;
-
-        DECLARE_FRAME (subframe, feed, flags);
+        DECLARE_FRAME (
+            subframe,
+            feed,
+            EVAL_FLAG_ALLOCATED_FEED | EVAL_FLAG_MAYBE_STALE
+        );
         Push_Frame(OUT, subframe);
 
         if (not REF(next))  // plain evaluation to end, maybe invisible
@@ -538,7 +534,7 @@ REBNATIVE(evaluate)
                 &index,
                 position,
                 SPECIFIED,
-                EVAL_MASK_DEFAULT
+                EVAL_MASK_NONE
             )){
                 // !!! A BLOCK! varargs doesn't technically need to "go bad"
                 // on a throw, since the block is still around.  But a FRAME!
@@ -563,7 +559,7 @@ REBNATIVE(evaluate)
             if (Is_End(f->feed->value))
                 return nullptr;
 
-            REBFLGS flags = EVAL_MASK_DEFAULT | EVAL_FLAG_SINGLE_STEP;
+            REBFLGS flags = EVAL_FLAG_SINGLE_STEP;
             if (Eval_Step_In_Subframe_Throws(SPARE, f, flags))
                 return THROWN;
         }
@@ -833,9 +829,7 @@ REBNATIVE(apply)
     DECLARE_FRAME_AT (
         f,
         args,
-        EVAL_MASK_DEFAULT
-            | EVAL_FLAG_SINGLE_STEP
-            | EVAL_FLAG_TRAMPOLINE_KEEPALIVE
+        EVAL_FLAG_SINGLE_STEP | EVAL_FLAG_TRAMPOLINE_KEEPALIVE
     );
     Push_Frame(SPARE, f);
 

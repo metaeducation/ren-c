@@ -478,11 +478,7 @@ inline static void Prep_Frame_Core(
    if (f == nullptr)  // e.g. a failed allocation
        fail (Error_No_Memory(sizeof(REBFRM)));
 
-    assert(
-        (flags & EVAL_MASK_DEFAULT) ==
-            (EVAL_FLAG_0_IS_TRUE | EVAL_FLAG_7_IS_TRUE)
-    );
-    f->flags.bits = flags;
+    f->flags.bits = flags | EVAL_FLAG_0_IS_TRUE | EVAL_FLAG_7_IS_TRUE;
 
     f->feed = feed;
     Prep_Void(&f->spare);
@@ -700,8 +696,7 @@ inline static bool Pushed_Continuation(
             grouper,
             branch,
             branch_specifier,
-            EVAL_MASK_DEFAULT | flags & (~ EVAL_FLAG_BRANCH)
-                | EVAL_FLAG_MAYBE_STALE
+            EVAL_FLAG_MAYBE_STALE | (flags & (~ EVAL_FLAG_BRANCH))
         );
         grouper->executor = &Group_Branch_Executor;  // evaluates to get branch
         if (Is_End(with))
@@ -730,12 +725,7 @@ inline static bool Pushed_Continuation(
 
       case REB_META_BLOCK:
       case REB_BLOCK: {
-        DECLARE_FRAME_AT_CORE (
-            f,
-            branch,
-            branch_specifier,
-            flags | EVAL_MASK_DEFAULT
-        );
+        DECLARE_FRAME_AT_CORE (f, branch, branch_specifier, flags);
         if (CELL_HEART_UNCHECKED(branch) == REB_META_BLOCK) {
             Set_Eval_Flag(f, META_RESULT);
             Set_Eval_Flag(f, FAILURE_RESULT_OK);
@@ -745,10 +735,7 @@ inline static bool Pushed_Continuation(
         goto pushed_continuation; }  // trampoline manages EVAL_FLAG_BRANCH atm.
 
       case REB_GET_BLOCK: {  // effectively REDUCE
-        DECLARE_END_FRAME (
-            f,
-            EVAL_MASK_DEFAULT | FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING)
-        );
+        DECLARE_END_FRAME (f, FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING));
         Push_Frame(out, f);
 
         const REBVAL *action = Lib(REDUCE);
@@ -771,10 +758,7 @@ inline static bool Pushed_Continuation(
         goto pushed_continuation; }
 
       case REB_ACTION : {
-        DECLARE_END_FRAME (
-            f,
-            EVAL_MASK_DEFAULT | FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING)
-        );
+        DECLARE_END_FRAME (f, FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING));
         Push_Frame(out, f);
         Push_Action(f, VAL_ACTION(branch), VAL_ACTION_BINDING(branch));
         Begin_Prefix_Action(f, VAL_ACTION_LABEL(branch));
@@ -819,12 +803,7 @@ inline static bool Pushed_Continuation(
         if (Get_Subclass_Flag(VARLIST, CTX_VARLIST(c), FRAME_HAS_BEEN_INVOKED))
             fail (Error_Stale_Frame_Raw());
 
-        DECLARE_END_FRAME (
-            f,
-            EVAL_MASK_DEFAULT
-                | FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING)
-                | flags
-        );
+        DECLARE_END_FRAME (f, FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING) | flags);
         Push_Frame(out, f);
 
         REBARR *varlist = CTX_VARLIST(c);
@@ -869,13 +848,13 @@ inline static bool Pushed_Continuation(
     } while (0)
 
 #define continue_uncatchable(o,value,with) \
-    continue_core((o), EVAL_MASK_DEFAULT, (value), SPECIFIED, (with))
+    continue_core((o), EVAL_MASK_NONE, (value), SPECIFIED, (with))
 
 #define continue_catchable(o,value,with) \
     do { \
         assert(Is_Action_Frame(frame_)); \
         Set_Eval_Flag(frame_, DISPATCHER_CATCHES); \
-        continue_core((o), EVAL_MASK_DEFAULT, (value), SPECIFIED, (with)); \
+        continue_core((o), EVAL_MASK_NONE, (value), SPECIFIED, (with)); \
     } while (0)
 
 #define continue_uncatchable_branch(o,branch,with) \
@@ -949,7 +928,7 @@ inline static REB_R Continue_Subframe_Helper(
 
 
 #define delegate(o,value,with) \
-    delegate_core(frame_->out, EVAL_MASK_DEFAULT, (value), SPECIFIED, (with))
+    delegate_core(frame_->out, EVAL_MASK_NONE, (value), SPECIFIED, (with))
 
 #define delegate_branch(o,branch,with) \
     delegate_core(frame_->out, EVAL_FLAG_BRANCH, (branch), SPECIFIED, (with))

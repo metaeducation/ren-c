@@ -97,7 +97,7 @@ void Startup_Frame_Stack(void)
     DECLARE_ARRAY_FEED (end_feed, EMPTY_ARRAY, 0, SPECIFIED);
     TG_End_Feed = end_feed;  // used by DECLARE_END_FRAME
 
-    DECLARE_END_FRAME (f, EVAL_MASK_DEFAULT);
+    DECLARE_END_FRAME (f, EVAL_MASK_NONE);
 
     Push_Frame(nullptr, f);
 

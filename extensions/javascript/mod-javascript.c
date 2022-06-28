@@ -439,7 +439,7 @@ void RunPromise(void)
     DECLARE_LOCAL (code);
     Init_Block(code, a);
 
-    DECLARE_FRAME_AT (f, code, EVAL_MASK_DEFAULT | EVAL_FLAG_ROOT_FRAME);
+    DECLARE_FRAME_AT (f, code, EVAL_FLAG_ROOT_FRAME);
     Push_Frame (Alloc_Value(), f);
     goto run_promise;
 

@@ -842,7 +842,7 @@ static bool Run_Va_Throws(
     DECLARE_FRAME (
         f,
         feed,
-        EVAL_MASK_DEFAULT | EVAL_FLAG_ALLOCATED_FEED | flags
+        EVAL_FLAG_ALLOCATED_FEED | flags
     );
 
     bool threw = Trampoline_Throws(out, f);
@@ -859,7 +859,7 @@ inline static void Run_Va_May_Fail(
     va_list *vaptr  // va_end() handled by feed for all cases (throws, fails)
 ){
     bool interruptible = false;
-    if (Run_Va_Throws(out, interruptible, EVAL_MASK_DEFAULT, p, vaptr)) {
+    if (Run_Va_Throws(out, interruptible, EVAL_MASK_NONE, p, vaptr)) {
         //
         // !!! Being able to THROW across C stacks is necessary in the general
         // case (consider implementing QUIT or HALT).  Probably need to be
@@ -904,7 +904,7 @@ inline static void Run_Va_May_Fail(
 // cell.  But it's in the API file because we want the wrapping machinery
 // that handles the variadics to be applied here.
 //
-// There is a rebRunThrows() macro that passes in the flags EVAL_MASK_DEFAULT
+// There is a rebRunThrows() macro that passes in the flags EVAL_MASK_NONE
 // and EVAL_FLAG_NO_RESIDUE defined in %sys-do.h
 //
 bool RL_rebRunCoreThrows(
@@ -1722,7 +1722,7 @@ REBVAL *RL_rebRescueWith(
     // body of the C function for the rebRescue() to be automatically cleaned
     // up in the case of an error.  There must be a frame to attach them to.
     //
-    DECLARE_END_FRAME (dummy, EVAL_MASK_DEFAULT);
+    DECLARE_END_FRAME (dummy, EVAL_MASK_NONE);
     Push_Frame(nullptr, dummy);
 
     struct Reb_Jump jump;
