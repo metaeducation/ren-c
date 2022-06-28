@@ -287,6 +287,7 @@ typedef Executor Dispatcher;  // sub-dispatched in Action_Executor()
 
 #include "executors/exec-eval.h"
 #include "executors/exec-action.h"
+#include "executors/exec-scan.h"
 
 
 // NOTE: The ordering of the fields in `Reb_Frame` are specifically done so
@@ -401,6 +402,8 @@ typedef Executor Dispatcher;  // sub-dispatched in Action_Executor()
         REBFRM *main_frame;
         bool changed;
     } compose;
+
+    struct rebol_scan_level scan;
   } u;
 
     // The "baseline" is a digest of the state of global variables at the

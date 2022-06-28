@@ -204,12 +204,6 @@
 #include "structs/sys-rebfrm.h"  // C struct for running frame, uses REBFED
 
 
-// (Note: %sys-do.h needs to call into the scanner if Fetch_Next_In_Frame() is
-// to be inlined at all--at its many time-critical callsites--so the scanner
-// has to be in the internal API)
-//
-#include "sys-scan.h"
-
 #include "sys-hooks.h"  // function pointer definitions
 
 
