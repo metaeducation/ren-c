@@ -42,21 +42,32 @@
     EVAL_FLAG_24
 
 
-//=//// SCAN_EXECUTOR_FLAG_25 /////////////////////////////////////////////=//
+//=//// SCAN_EXECUTOR_FLAG_JUST_ONCE //////////////////////////////////////=//
 //
-#define SCAN_EXECUTOR_FLAG_25 \
+// Supporting flag for TRANSCODE/NEXT
+//
+#define SCAN_EXECUTOR_FLAG_JUST_ONCE \
     EVAL_FLAG_25
 
 
-//=//// SCAN_EXECUTOR_FLAG_26 /////////////////////////////////////////////=//
+//=//// SCAN_EXECUTOR_FLAG_NULLEDS_LEGAL //////////////////////////////////=//
 //
-#define SCAN_EXECUTOR_FLAG_26 \
+// NULL splice in top level of rebValue()
+//
+// !!! Appears no longer used; pure NULL now always splices as ~null~ BAD-WORD!
+// That's probably a bad idea.
+//
+#define SCAN_EXECUTOR_FLAG_NULLEDS_LEGAL \
     EVAL_FLAG_26
 
 
-//=//// SCAN_EXECUTOR_FLAG_27 /////////////////////////////////////////////=//
+//=//// SCAN_EXECUTOR_FLAG_LOCK_SCANNED ///////////////////////////////////=//
 //
-#define SCAN_EXECUTOR_FLAG_27 \
+// Lock series as they are loaded
+//
+// !!! This also does not seem to be used, likely supplanted by CONST.
+//
+#define SCAN_EXECUTOR_FLAG_LOCK_SCANNED \
     EVAL_FLAG_27
 
 
@@ -88,6 +99,13 @@
 //
 #define SCAN_EXECUTOR_FLAG_31 \
     EVAL_FLAG_31
+
+
+// Flags that should be preserved when recursing the scanner
+//
+#define SCAN_EXECUTOR_MASK_RECURSE \
+    (SCAN_EXECUTOR_FLAG_NULLEDS_LEGAL \
+        | SCAN_EXECUTOR_FLAG_LOCK_SCANNED)
 
 
 typedef struct rebol_scan_state {  // shared across all levels of a scan
@@ -149,11 +167,8 @@ typedef struct rebol_scan_level {  // each array scan corresponds to a level
     REBLEN start_line;
     const REBYTE *start_line_head;
 
-    REBFLGS opts;
-
     // !!! Before stackless, these were locals in Scan_To_Stack()
     //
-    bool just_once;
     REBLEN quotes_pending;
     enum Reb_Token token;
     enum Reb_Token prefix_pending;

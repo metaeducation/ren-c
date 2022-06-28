@@ -239,12 +239,6 @@ enum rebol_esc_codes {
 
 #define ANY_CR_LF_END(c) ((c) == '\0' or (c) == CR or (c) == LF)
 
-enum {
-    SCAN_FLAG_NEXT = 1 << 0, // load/next feature
-    SCAN_FLAG_NULLEDS_LEGAL = 1 << 2, // NULL splice in top level of rebValue()
-    SCAN_FLAG_LOCK_SCANNED = 1 << 3  // lock series as they are loaded
-};
-
 
 //
 // MAXIMUM LENGTHS

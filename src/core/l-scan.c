@@ -1762,7 +1762,6 @@ void Init_Va_Scan_Level_Core(
     level->start_line_head = ss->line_head = nullptr;
     level->start_line = ss->line = line;
     level->mode = '\0';
-    level->opts = 0;
 }
 
 
@@ -1796,7 +1795,6 @@ void Init_Scan_Level(
     out->mode = '\0';
     out->start_line_head = ss->line_head = utf8;
     out->start_line = ss->line = line;
-    out->opts = 0;
 }
 
 
@@ -1934,10 +1932,6 @@ REB_R Scanner_Executor(REBFRM *f) {
     }
 
   initial_entry: {  //////////////////////////////////////////////////////////
-
-    level->just_once = did (level->opts & SCAN_FLAG_NEXT);
-    if (level->just_once)
-        level->opts &= ~SCAN_FLAG_NEXT;  // recursion loads an entire BLOCK!
 
     level->quotes_pending = 0;
     level->prefix_pending = TOKEN_END;
@@ -2118,6 +2112,7 @@ REB_R Scanner_Executor(REBFRM *f) {
         DECLARE_END_FRAME (
             subframe,
             EVAL_FLAG_TRAMPOLINE_KEEPALIVE  // we want accrued stack
+                | (f->flags.bits & SCAN_EXECUTOR_MASK_RECURSE)
         );
         subframe->executor = &Scanner_Executor;
 
@@ -2129,8 +2124,6 @@ REB_R Scanner_Executor(REBFRM *f) {
         //
         subframe->u.scan.start_line = ss->line;
         subframe->u.scan.start_line_head = ss->line_head;
-        subframe->u.scan.opts = level->opts
-            &= ~(SCAN_FLAG_NULLEDS_LEGAL | SCAN_FLAG_NEXT);
 
         subframe->u.scan.mode = (level->token == TOKEN_BLOCK_BEGIN ? ']' : ')');
         STATE = ST_SCANNER_SCANNING_CHILD_ARRAY;
@@ -2396,6 +2389,7 @@ REB_R Scanner_Executor(REBFRM *f) {
         DECLARE_END_FRAME (
             subframe,
             EVAL_FLAG_TRAMPOLINE_KEEPALIVE  // we want accrued stack
+                | (f->flags.bits & SCAN_EXECUTOR_MASK_RECURSE)
         );
         subframe->executor = &Scanner_Executor;
 
@@ -2407,8 +2401,6 @@ REB_R Scanner_Executor(REBFRM *f) {
         //
         subframe->u.scan.start_line = ss->line;
         subframe->u.scan.start_line_head = ss->line_head;
-        subframe->u.scan.opts = level->opts
-            &= ~(SCAN_FLAG_NULLEDS_LEGAL | SCAN_FLAG_NEXT);
 
         subframe->u.scan.mode = ']';
         STATE = ST_SCANNER_SCANNING_CONSTRUCT;
@@ -2643,7 +2635,6 @@ REB_R Scanner_Executor(REBFRM *f) {
             child.ss = ss;
             child.start_line = level->start_line;
             child.start_line_head = level->start_line_head;
-            child.opts = level->opts;
             if (level->token == TOKEN_TUPLE)
                 child.mode = '.';
             else
@@ -2898,7 +2889,7 @@ REB_R Scanner_Executor(REBFRM *f) {
 
     // Added for TRANSCODE/NEXT (LOAD/NEXT is deprecated, see #1703)
     //
-    if (level->just_once)
+    if (Get_Executor_Flag(SCAN, f, JUST_ONCE))
         goto done;
 
     goto loop;
@@ -3147,10 +3138,11 @@ REBNATIVE(transcode)
         ? VAL_CONTEXT(ARG(where))
         : cast(REBCTX*, nullptr);  // C++98 ambiguous w/o cast
 
-    DECLARE_END_FRAME (
-        subframe,
-        EVAL_FLAG_TRAMPOLINE_KEEPALIVE  // want info about pending newline, etc
-    );
+    REBFLGS flags = EVAL_FLAG_TRAMPOLINE_KEEPALIVE;  // query pending newline
+    if (REF(next))
+        flags |= SCAN_EXECUTOR_FLAG_JUST_ONCE;
+
+    DECLARE_END_FRAME (subframe, flags);
     subframe->executor = &Scanner_Executor;
     SCAN_LEVEL *level = &subframe->u.scan;
 
@@ -3158,9 +3150,6 @@ REBNATIVE(transcode)
     ss = cast(SCAN_STATE*, VAL_BINARY_AT(ss_buffer));
 
     Init_Scan_Level(level, ss, file, start_line, bp, size, context);
-
-    if (REF(next))
-        level->opts |= SCAN_FLAG_NEXT;
 
     Push_Frame(OUT, subframe);
     STATE = ST_TRANSCODE_SCANNING;
