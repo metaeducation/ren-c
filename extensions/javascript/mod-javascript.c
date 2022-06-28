@@ -445,7 +445,7 @@ void RunPromise(void)
 
 } run_promise: {  ////////////////////////////////////////////////////////////
 
-    REB_R r = Trampoline_Core();
+    REB_R r = Trampoline_From_Top_Maybe_Root();
 
     if (r == R_SUSPEND) {  // cooperative suspension, see [1]
         return;  // the setTimeout() on resolve/reject will queue us back

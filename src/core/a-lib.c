@@ -840,9 +840,7 @@ static bool Run_Va_Translucent_Throws(
     DECLARE_VA_FEED (feed, p, vaptr, FEED_MASK_DEFAULT);
     DECLARE_FRAME (f, feed, EVAL_MASK_DEFAULT | EVAL_FLAG_ALLOCATED_FEED);
 
-    Push_Frame(out, f);
-    bool threw = Trampoline_Throws(f);
-    Drop_Frame(f);
+    bool threw = Trampoline_Throws(out, f);
 
     // (see also Reb_State->saved_sigmask RE: if a longjmp happens)
     Eval_Sigmask = saved_sigmask;

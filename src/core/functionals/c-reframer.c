@@ -175,11 +175,13 @@ bool Make_Invokable_From_Feed_Throws(
     assert(FRM_BINDING(f) == VAL_ACTION_BINDING(action));  // no invocation
 
     assert(Is_Fresh(f->out));
-    if (Trampoline_Throws(f)) {
+
+    if (Trampoline_With_Top_As_Root_Throws()) {
         DROP_GC_GUARD(action);
         Drop_Frame(f);
         return true;
     }
+
     assert(Is_Fresh(f->out));  // should only have gathered arguments
 
     // At the moment, Begin_Prefix_Action() marks the frame as having been

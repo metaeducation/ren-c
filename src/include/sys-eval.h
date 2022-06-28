@@ -251,7 +251,6 @@ inline static bool Eval_Step_Throws(
     REBVAL *out,
     REBFRM *f
 ){
-    assert(f == FS_TOP);
     assert(NOT_FEED_FLAG(f->feed, NO_LOOKAHEAD));
     assert(Get_Eval_Flag(f, SINGLE_STEP));
 
@@ -259,7 +258,10 @@ inline static bool Eval_Step_Throws(
 
     f->out = out;
     assert(f->baseline.dsp == DSP);
-    return Trampoline_Throws(f);  // should already be pushed;
+
+    assert(f == FS_TOP);  // should already be pushed, use core trampoline
+
+    return Trampoline_With_Top_As_Root_Throws();
 }
 
 
@@ -286,11 +288,8 @@ inline static bool Eval_Step_In_Subframe_Throws(
     // the caller didn't actually want stale data.
 
     DECLARE_FRAME (subframe, f->feed, flags);
-    Push_Frame(out, subframe);
 
-    bool threw = Trampoline_Throws(subframe);
-    Drop_Frame(subframe);
-    return threw;
+    return Trampoline_Throws(out, subframe);
 }
 
 
@@ -309,11 +308,7 @@ inline static bool Reevaluate_In_Subframe_Throws(
     DECLARE_FRAME (subframe, f->feed, flags);
     subframe->u.eval.current = reval;
 
-    Push_Frame(out, subframe);
-    bool threw = Trampoline_Throws(subframe);
-    Drop_Frame(subframe);
-
-    return threw;
+    return Trampoline_Throws(out, subframe);
 }
 
 
@@ -341,12 +336,16 @@ inline static bool Eval_Step_In_Any_Array_At_Throws(
     );
 
     Push_Frame(out, f);
-    bool threw = Trampoline_Throws(f);
+
+    if (Trampoline_With_Top_As_Root_Throws()) {
+        *index_out = TRASHED_INDEX;
+        Drop_Frame(f);
+        return true;
+    }
+
+    *index_out = FRM_INDEX(f);
     Drop_Frame(f);
-
-    *index_out = threw ? TRASHED_INDEX : FRM_INDEX(f);
-
-    return threw;
+    return false;
 }
 
 
@@ -386,8 +385,8 @@ inline static bool Eval_Step_In_Va_Throws(
     );
 
     Push_Frame(out, f);
-    bool threw = Trampoline_Throws(f);
-    if (threw) {
+
+    if (Trampoline_With_Top_As_Root_Throws()) {
         Drop_Frame(f);
         return true;
     }
@@ -439,11 +438,7 @@ inline static bool Eval_Value_Core_Throws(
 
     DECLARE_FRAME (f, feed, flags | EVAL_FLAG_ALLOCATED_FEED);
 
-    Push_Frame(out, f);
-    bool threw = Trampoline_Throws(f);
-    Drop_Frame(f);
-
-    return threw;
+    return Trampoline_Throws(out, f);
 }
 
 #define Eval_Value_Throws(out,value,specifier) \

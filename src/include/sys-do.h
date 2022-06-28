@@ -86,10 +86,8 @@ inline static bool Do_Any_Array_At_Core_Throws(
     REBSPC *specifier
 ){
     DECLARE_FRAME_AT_CORE (f, any_array, specifier, flags);
-    Push_Frame(out, f);
-    bool threw = Trampoline_Throws(f);
-    Drop_Frame(f);
-    return threw;
+
+    return Trampoline_Throws(out, f);
 }
 
 #define Do_Any_Array_At_Throws(out,any_array,specifier) \
@@ -105,7 +103,7 @@ inline static bool Do_Branch_Throws(
     if (not Pushed_Continuation(out, EVAL_FLAG_BRANCH, branch, SPECIFIED, with))
         return false;
 
-    bool threw = Trampoline_Throws(FS_TOP);
+    bool threw = Trampoline_With_Top_As_Root_Throws();
     Drop_Frame(FS_TOP);
     return threw;
 }

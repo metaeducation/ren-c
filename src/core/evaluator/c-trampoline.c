@@ -105,9 +105,9 @@ REB_R Just_Use_Out_Executor(REBFRM *f)
 
 
 //
-//  Trampoline_Core: C
+//  Trampoline_From_Top_Maybe_Root: C
 //
-REB_R Trampoline_Core(void)
+REB_R Trampoline_From_Top_Maybe_Root(void)
 {
     struct Reb_Jump jump;  // only one setjmp() point per trampoline invocation
 
@@ -178,7 +178,6 @@ REB_R Trampoline_Core(void)
         );
 
         if (Get_Eval_Flag(FRAME, ROOT_FRAME)) {
-            Clear_Eval_Flag(FRAME, ROOT_FRAME);
             TG_Jump_List = jump.last_jump;  // ** Note: this changes FRAME **
             return R_THROWN;
         }
@@ -310,7 +309,6 @@ REB_R Trampoline_Core(void)
         if (Get_Eval_Flag(FRAME, ROOT_FRAME)) {
             STATE = 0;  // !!! Frame gets reused, review
             DROP_TRAP_SAME_STACKLEVEL_AS_PUSH(&jump);
-            Clear_Eval_Flag(FS_TOP, ROOT_FRAME);
             return FS_TOP->out;
         }
 
@@ -441,7 +439,6 @@ REB_R Trampoline_Core(void)
         if (Get_Eval_Flag(FRAME, ROOT_FRAME)) {  // don't abort top
             assert(Not_Eval_Flag(FS_TOP, TRAMPOLINE_KEEPALIVE));
             DROP_TRAP_SAME_STACKLEVEL_AS_PUSH(&jump);
-            Clear_Eval_Flag(FS_TOP, ROOT_FRAME);
             return R_THROWN;
         }
 
@@ -462,17 +459,24 @@ REB_R Trampoline_Core(void)
 
 
 //
-//  Trampoline_Throws: C
+//  Trampoline_With_Top_As_Root_Throws: C
 //
-bool Trampoline_Throws(REBFRM *root)
+bool Trampoline_With_Top_As_Root_Throws(void)
 {
+    REBFRM *root = FS_TOP;
+
     // !!! More efficient if caller sets this, but set it ourselves for now.
     //
+    assert(Not_Eval_Flag(root, ROOT_FRAME));
     Set_Eval_Flag(root, ROOT_FRAME);  // can't unwind across, see [1]
 
-    assert(root == FS_TOP);  // this could be relaxed, see [2]
+    REB_R r = Trampoline_From_Top_Maybe_Root();
 
-    REB_R r = Trampoline_Core();
+    assert(FS_TOP == root);
+
+    assert(Get_Eval_Flag(root, ROOT_FRAME));
+    Clear_Eval_Flag(root, ROOT_FRAME);
+
     if (r == R_THROWN)
         return true;
     if (r == root->out)
@@ -483,4 +487,16 @@ bool Trampoline_Throws(REBFRM *root)
   #endif
 
     fail ("Cannot interpret Trampoline result");
+}
+
+
+//
+//  Trampoline_Throws: C
+//
+bool Trampoline_Throws(REBVAL *out, REBFRM *root)
+{
+    Push_Frame(out, root);
+    bool threw = Trampoline_With_Top_As_Root_Throws();
+    Drop_Frame(root);
+    return threw;
 }
