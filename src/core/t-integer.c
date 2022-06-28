@@ -337,26 +337,26 @@ REBTYPE(Integer)
     case SYM_ADD: {
         REBI64 anum;
         if (REB_I64_ADD_OF(num, arg, &anum))
-            fail (Error_Overflow_Raw());
+            return FAIL(Error_Overflow_Raw());
         return Init_Integer(OUT, anum); }
 
     case SYM_SUBTRACT: {
         REBI64 anum;
         if (REB_I64_SUB_OF(num, arg, &anum))
-            fail (Error_Overflow_Raw());
+            return FAIL(Error_Overflow_Raw());
         return Init_Integer(OUT, anum); }
 
     case SYM_MULTIPLY: {
         REBI64 p;
         if (REB_I64_MUL_OF(num, arg, &p))
-            fail (Error_Overflow_Raw());
+            return FAIL(Error_Overflow_Raw());
         return Init_Integer(OUT, p); }
 
     case SYM_DIVIDE:
         if (arg == 0)
-            fail (Error_Zero_Divide_Raw());
+            return FAIL(Error_Zero_Divide_Raw());
         if (num == INT64_MIN && arg == -1)
-            fail (Error_Overflow_Raw());
+            return FAIL(Error_Overflow_Raw());
         if (num % arg == 0)
             return Init_Integer(OUT, num / arg);
         // Fall thru
@@ -367,7 +367,7 @@ REBTYPE(Integer)
 
     case SYM_REMAINDER:
         if (arg == 0)
-            fail (Error_Zero_Divide_Raw());
+            return FAIL(Error_Zero_Divide_Raw());
         return Init_Integer(OUT, (arg != -1) ? (num % arg) : 0);
 
     case SYM_BITWISE_AND:
@@ -384,7 +384,7 @@ REBTYPE(Integer)
 
     case SYM_NEGATE:
         if (num == INT64_MIN)
-            fail (Error_Overflow_Raw());
+            return FAIL(Error_Overflow_Raw());
         return Init_Integer(OUT, -num);
 
     case SYM_BITWISE_NOT:
@@ -392,7 +392,7 @@ REBTYPE(Integer)
 
     case SYM_ABSOLUTE:
         if (num == INT64_MIN)
-            fail (Error_Overflow_Raw());
+            return FAIL(Error_Overflow_Raw());
         return Init_Integer(OUT, num < 0 ? -num : num);
 
     case SYM_EVEN_Q:
