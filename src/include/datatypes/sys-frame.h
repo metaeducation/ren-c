@@ -455,7 +455,7 @@ inline static void Drop_Frame(REBFRM *f)
 {
     assert(not Is_Throwing(f));  // !!! We could decide to abort or not on this
 
-    if (Is_Failure(f->out)) {  // !!! Another case we might fold together
+    if (f->out and Is_Failure(f->out)) {  // !!! Another case we might fold in
         Abort_Frame(f);
         return;
     }

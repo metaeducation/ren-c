@@ -137,7 +137,7 @@ REBNATIVE(delimit)
             //
             // It is better to error on isotopes or to reify them to BAD-WORD!
             //
-            fail (Error_Bad_Isotope(OUT));
+            return FAIL(Error_Bad_Isotope(OUT));
         }
 
         if (Is_Nulled(OUT)) {
@@ -148,7 +148,7 @@ REBNATIVE(delimit)
             //    >> spaced [reify null "a" if true [null]]
             //    == "~null~ a"
             //
-            fail (Error_Need_Non_Null_Raw());
+            return FAIL(Error_Need_Non_Null_Raw());
         }
 
         if (IS_BLANK(OUT))  // see note above on BLANK!

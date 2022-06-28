@@ -146,10 +146,10 @@ REBNATIVE(reduce)
     Decay_If_Isotope(OUT);
 
     if (Is_Nulled(OUT))
-        fail (Error_Need_Non_Null_Raw());  // error enables e.g. CURTAIL
+        return FAIL(Error_Need_Non_Null_Raw());  // error enables e.g. CURTAIL
 
     if (Is_Isotope(OUT))
-        fail (Error_Bad_Isotope(OUT));
+        return FAIL(Error_Bad_Isotope(OUT));
 
     Move_Cell(DS_PUSH(), OUT);
     SUBFRAME->baseline.dsp += 1;  // subframe must be adjusted, see [3]
@@ -345,6 +345,7 @@ static void Push_Composer_Frame(
         EVAL_MASK_DEFAULT
             | EVAL_FLAG_NO_EVALUATIONS
             | EVAL_FLAG_TRAMPOLINE_KEEPALIVE  // allows stack accumulation
+            | EVAL_FLAG_FAILURE_RESULT_OK  // bubbles up definitional errors
     );
     Push_Frame(out, subframe);  // writes TRUE to OUT if modified, FALSE if not
 
@@ -379,6 +380,11 @@ static Value* Finalize_Composer_Frame(
     REBFRM *composer_frame,
     const Cell *composee  // special handling if the output kind is a sequence
 ){
+    if (Is_Failure(out)) {
+        DS_DROP_TO(composer_frame->baseline.dsp);
+        return out;
+    }
+
     enum Reb_Kind heart = CELL_HEART(composee);
     REBLEN quotes = VAL_NUM_QUOTES(composee);
 
@@ -623,7 +629,7 @@ REB_R Composer_Executor(REBFRM *f)
         Decay_If_Isotope(OUT);
 
     if (Is_Isotope(OUT))
-        fail (Error_Bad_Isotope(OUT));
+        return FAIL(Error_Bad_Isotope(OUT));
 
     if (
         Is_Nulled(OUT)
@@ -632,7 +638,7 @@ REB_R Composer_Executor(REBFRM *f)
             or group_quotes == 0
         )  // [''(null)] => ['']
     ){
-        fail (Error_Need_Non_Null_Raw());
+        return FAIL(Error_Need_Non_Null_Raw());
     }
 
     if (not Is_Nulled(predicate) or STATE == ST_COMPOSER_EVAL_DOUBLED_GROUP)
@@ -680,7 +686,7 @@ REB_R Composer_Executor(REBFRM *f)
     // compose [(([a b])) merges] => [a b merges]... see [3]
 
     if (group_quotes != 0 or group_heart != REB_GROUP)
-        fail ("Currently can only splice plain unquoted GROUP!s");
+        return FAIL("Currently can only splice plain unquoted GROUP!s");
 
     if (IS_BLANK(OUT)) {
         //
@@ -716,7 +722,7 @@ REB_R Composer_Executor(REBFRM *f)
         Plainify(Copy_Cell(DS_PUSH(), OUT));
     }
     else if (not ANY_INERT(OUT)) {
-        fail ("COMPOSE slots that are (( )) can't be evaluative");
+        return FAIL("COMPOSE slots that are (( )) can't be evaluative");
     }
     else {
         assert(not ANY_ARRAY(OUT));
@@ -729,6 +735,14 @@ REB_R Composer_Executor(REBFRM *f)
 } composer_finished_recursion: {  ////////////////////////////////////////////
 
     // The compose stack of the nested compose is relative to *its* baseline.
+
+    if (Is_Failure(OUT)) {
+        DS_DROP_TO(SUBFRAME->baseline.dsp);
+        Drop_Frame(SUBFRAME);
+        return OUT;
+    }
+
+    assert(Is_Void(OUT));
 
     if (not SUBFRAME->u.compose.changed) {
         //
@@ -821,6 +835,9 @@ REBNATIVE(compose)
 
     Finalize_Composer_Frame(OUT, SUBFRAME, v);
     Drop_Frame(SUBFRAME);
+
+    if (Is_Failure(OUT))  // subframe was killed
+        return OUT;
 
     return OUT;
 }}
