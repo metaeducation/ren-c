@@ -151,16 +151,16 @@ STATIC_ASSERT(FEED_FLAG_CONST == CELL_FLAG_CONST);
     #define FEED(f) static_cast<REBFED*>(f)
 #endif
 
-#define SET_FEED_FLAG(f,name) \
+#define Set_Feed_Flag(f,name) \
     (FEED(f)->flags.bits |= FEED_FLAG_##name)
 
-#define GET_FEED_FLAG(f,name) \
+#define Get_Feed_Flag(f,name) \
     ((FEED(f)->flags.bits & FEED_FLAG_##name) != 0)
 
-#define CLEAR_FEED_FLAG(f,name) \
+#define Clear_Feed_Flag(f,name) \
     (FEED(f)->flags.bits &= ~FEED_FLAG_##name)
 
-#define NOT_FEED_FLAG(f,name) \
+#define Not_Feed_Flag(f,name) \
     ((FEED(f)->flags.bits & FEED_FLAG_##name) == 0)
 
 

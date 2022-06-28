@@ -371,7 +371,7 @@ inline static void Push_Frame(
     // means the feed needs to keep the same output cell in a subframe to
     // reuse that feed.
     if (
-        GET_FEED_FLAG(f->feed, NEXT_ARG_FROM_OUT)
+        Get_Feed_Flag(f->feed, NEXT_ARG_FROM_OUT)
         and f->prior->feed == f->feed
     ){
         assert(f->out == f->prior->out);

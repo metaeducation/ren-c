@@ -523,9 +523,9 @@ void Reify_Va_To_Array_In_Feed(
     if (Is_End(feed->value))
         assert(FEED_PENDING(feed) == nullptr);
     else {
-        assert(NOT_FEED_FLAG(feed, TOOK_HOLD));
+        assert(Not_Feed_Flag(feed, TOOK_HOLD));
         SET_SERIES_INFO(m_cast(REBARR*, FEED_ARRAY(feed)), HOLD);
-        SET_FEED_FLAG(feed, TOOK_HOLD);
+        Set_Feed_Flag(feed, TOOK_HOLD);
     }
 }
 

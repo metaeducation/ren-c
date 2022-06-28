@@ -158,8 +158,8 @@ STATIC_ASSERT(
 //
 inline static REBFRM *Maybe_Rightward_Continuation_Needed(REBFRM *f)
 {
-    if (GET_FEED_FLAG(f->feed, NEXT_ARG_FROM_OUT))  {  // e.g. `10 -> x:`
-        CLEAR_FEED_FLAG(f->feed, NEXT_ARG_FROM_OUT);
+    if (Get_Feed_Flag(f->feed, NEXT_ARG_FROM_OUT))  {  // e.g. `10 -> x:`
+        Clear_Feed_Flag(f->feed, NEXT_ARG_FROM_OUT);
         Clear_Cell_Flag(f->out, UNEVALUATED);  // this helper counts as eval
         return nullptr;
     }
@@ -167,7 +167,7 @@ inline static REBFRM *Maybe_Rightward_Continuation_Needed(REBFRM *f)
     if (Is_End(f_next))  // `do [x:]`, `do [o.x:]`, etc. are illegal
         fail (Error_Need_Non_End(f_current));
 
-    CLEAR_FEED_FLAG(f->feed, NO_LOOKAHEAD);  // always >= 2 elements, see [1]
+    Clear_Feed_Flag(f->feed, NO_LOOKAHEAD);  // always >= 2 elements, see [1]
 
     RESET(OUT);  // all SET-XXX! overwrite out, see [2]
 
@@ -222,7 +222,7 @@ REB_R Evaluator_Executor(REBFRM *f)
     // willing to accept an <end>.  So we allow argument gathering to try to
     // run, but it may error if that's not acceptable.
     //
-    if (GET_FEED_FLAG(f->feed, BARRIER_HIT)) {
+    if (Get_Feed_Flag(f->feed, BARRIER_HIT)) {
         if (Get_Executor_Flag(EVAL, f, FULFILLING_ARG)) {
             if (Get_Eval_Flag(f, MAYBE_STALE))
                 Mark_Eval_Out_Stale(OUT);
@@ -230,7 +230,7 @@ REB_R Evaluator_Executor(REBFRM *f)
                 assert(Is_Void(OUT));
             return OUT;
         }
-        CLEAR_FEED_FLAG(f->feed, BARRIER_HIT);  // not an argument, clear flag
+        Clear_Feed_Flag(f->feed, BARRIER_HIT);  // not an argument, clear flag
     }
 
     // Given how the evaluator is written, it's inevitable that there will
@@ -275,13 +275,13 @@ REB_R Evaluator_Executor(REBFRM *f)
             Begin_Enfix_Action(subframe, VAL_ACTION_LABEL(f_current));
                 // ^-- invisibles cache NO_LOOKAHEAD
 
-            SET_FEED_FLAG(f->feed, NEXT_ARG_FROM_OUT);
+            Set_Feed_Flag(f->feed, NEXT_ARG_FROM_OUT);
 
             assert(Is_Fresh(SPARE));
             goto process_action;
         }
 
-        if (NOT_FEED_FLAG(f->feed, NEXT_ARG_FROM_OUT))
+        if (Not_Feed_Flag(f->feed, NEXT_ARG_FROM_OUT))
             Mark_Eval_Out_Stale(OUT);
 
         f_current_gotten = nullptr;  // !!! allow/require to be passe in?
@@ -323,7 +323,7 @@ REB_R Evaluator_Executor(REBFRM *f)
 
   //=//// START NEW EXPRESSION ////////////////////////////////////////////=//
 
-    assert(NOT_FEED_FLAG(f->feed, NEXT_ARG_FROM_OUT));
+    assert(Not_Feed_Flag(f->feed, NEXT_ARG_FROM_OUT));
 
     // OUT might be merely "prepped" in which case the header is all 0 bits.
     // This is considered INITABLE() but not WRITABLE(), so the Set_Cell_Flag()
@@ -377,7 +377,7 @@ REB_R Evaluator_Executor(REBFRM *f)
         // not be required to run the barrier in the same evaluative step
         // as the left hand side.  (It can be enfix, or it can not be.)
         //
-        SET_FEED_FLAG(f->feed, BARRIER_HIT);
+        Set_Feed_Flag(f->feed, BARRIER_HIT);
         goto give_up_backward_quote_priority;
     }
 
@@ -397,7 +397,7 @@ REB_R Evaluator_Executor(REBFRM *f)
     if (
         Get_Action_Flag(enfixed, POSTPONES_ENTIRELY)
         or (
-            GET_FEED_FLAG(f->feed, NO_LOOKAHEAD)
+            Get_Feed_Flag(f->feed, NO_LOOKAHEAD)
             and not ANY_SET_KIND(kind_current)  // not SET-WORD!, SET-PATH!...
         )
     ){
@@ -462,7 +462,7 @@ REB_R Evaluator_Executor(REBFRM *f)
         f_current_gotten = nullptr;
 
         Set_Eval_Flag(f, DIDNT_LEFT_QUOTE_PATH);  // for better error message
-        SET_FEED_FLAG(f->feed, NEXT_ARG_FROM_OUT);  // literal right op is arg
+        Set_Feed_Flag(f->feed, NEXT_ARG_FROM_OUT);  // literal right op is arg
 
         goto give_up_backward_quote_priority;  // run PATH!/WORD! normal
     }
@@ -480,7 +480,7 @@ REB_R Evaluator_Executor(REBFRM *f)
     );
     Begin_Enfix_Action(subframe, VAL_WORD_SYMBOL(f_current));
 
-    SET_FEED_FLAG(f->feed, NEXT_ARG_FROM_OUT);
+    Set_Feed_Flag(f->feed, NEXT_ARG_FROM_OUT);
 
     goto process_action; }
 
@@ -546,8 +546,8 @@ REB_R Evaluator_Executor(REBFRM *f)
 
        case REB_COMMA:
         if (Get_Executor_Flag(EVAL, f, FULFILLING_ARG)) {
-            CLEAR_FEED_FLAG(f->feed, NO_LOOKAHEAD);
-            SET_FEED_FLAG(f->feed, BARRIER_HIT);
+            Clear_Feed_Flag(f->feed, NO_LOOKAHEAD);
+            Set_Feed_Flag(f->feed, BARRIER_HIT);
             goto finished;
         }
         break;
@@ -575,7 +575,7 @@ REB_R Evaluator_Executor(REBFRM *f)
         // a new frame, but has to run the `=` as "getting its next arg from
         // the output slot, but not being run in an enfix mode".
         //
-        if (NOT_FEED_FLAG(subframe->feed, NEXT_ARG_FROM_OUT))
+        if (Not_Feed_Flag(subframe->feed, NEXT_ARG_FROM_OUT))
             Mark_Eval_Out_Stale(subframe->out);
 
         goto process_action; }
@@ -626,8 +626,8 @@ REB_R Evaluator_Executor(REBFRM *f)
                     or Get_Action_Flag(action, DEFERS_LOOKBACK)
                 ){
                     if (Get_Executor_Flag(EVAL, f, FULFILLING_ARG)) {
-                        CLEAR_FEED_FLAG(f->feed, NO_LOOKAHEAD);
-                        SET_FEED_FLAG(f->feed, DEFERRING_ENFIX);
+                        Clear_Feed_Flag(f->feed, NO_LOOKAHEAD);
+                        Set_Feed_Flag(f->feed, DEFERRING_ENFIX);
                         RESET(OUT);
                         goto finished;
                     }
@@ -644,7 +644,7 @@ REB_R Evaluator_Executor(REBFRM *f)
             Begin_Action_Core(subframe, label, enfixed);
 
             if (enfixed)
-                SET_FEED_FLAG(f->feed, NEXT_ARG_FROM_OUT);
+                Set_Feed_Flag(f->feed, NEXT_ARG_FROM_OUT);
 
             goto process_action;
         }
@@ -1238,7 +1238,7 @@ REB_R Evaluator_Executor(REBFRM *f)
     set_block_common: ////////////////////////////////////////////////////////
 
       case REB_SET_BLOCK: {
-        assert(NOT_FEED_FLAG(f->feed, NEXT_ARG_FROM_OUT));
+        assert(Not_Feed_Flag(f->feed, NEXT_ARG_FROM_OUT));
 
         // As with the other SET-XXX! variations, we don't want to be able to
         // see what's to the left of the assignment in the case of the right
@@ -1765,7 +1765,7 @@ REB_R Evaluator_Executor(REBFRM *f)
     // opportunity to quote left because it has no argument...and instead
     // retriggers and lets x run.
 
-    if (GET_FEED_FLAG(f->feed, NEXT_ARG_FROM_OUT)) {
+    if (Get_Feed_Flag(f->feed, NEXT_ARG_FROM_OUT)) {
         if (Get_Eval_Flag(f, DIDNT_LEFT_QUOTE_PATH))
             fail (Error_Literal_Left_Path_Raw());
 
@@ -1781,14 +1781,14 @@ REB_R Evaluator_Executor(REBFRM *f)
     switch (VAL_TYPE_UNCHECKED(f_next)) {
       case REB_0_END:
         assert(Is_End(f_next));  // should be END, not void
-        CLEAR_FEED_FLAG(f->feed, NO_LOOKAHEAD);
+        Clear_Feed_Flag(f->feed, NO_LOOKAHEAD);
         goto finished;  // hitting end is common, avoid do_next's switch()
 
       case REB_WORD:
         break;  // need to check for lookahead
 
       default:
-        CLEAR_FEED_FLAG(f->feed, NO_LOOKAHEAD);
+        Clear_Feed_Flag(f->feed, NO_LOOKAHEAD);
         goto finished;
     }
 
@@ -1816,7 +1816,7 @@ REB_R Evaluator_Executor(REBFRM *f)
     ){
       lookback_quote_too_late: // run as if starting new expression
 
-        CLEAR_FEED_FLAG(f->feed, NO_LOOKAHEAD);
+        Clear_Feed_Flag(f->feed, NO_LOOKAHEAD);
         Clear_Executor_Flag(EVAL, f, INERT_OPTIMIZATION);
 
         // Since it's a new expression, EVALUATE doesn't want to run it
@@ -1848,8 +1848,8 @@ REB_R Evaluator_Executor(REBFRM *f)
 
         const REBPAR *first = First_Unspecialized_Param(nullptr, enfixed);
         if (VAL_PARAM_CLASS(first) == PARAM_CLASS_SOFT) {
-            if (GET_FEED_FLAG(f->feed, NO_LOOKAHEAD)) {
-                CLEAR_FEED_FLAG(f->feed, NO_LOOKAHEAD);
+            if (Get_Feed_Flag(f->feed, NO_LOOKAHEAD)) {
+                Clear_Feed_Flag(f->feed, NO_LOOKAHEAD);
                 Clear_Executor_Flag(EVAL, f, INERT_OPTIMIZATION);
                 goto finished;
             }
@@ -1866,18 +1866,18 @@ REB_R Evaluator_Executor(REBFRM *f)
                                        // ^-- `1 + if false [2] else [3]` => 4
         )
     ){
-        if (GET_FEED_FLAG(f->feed, NO_LOOKAHEAD)) {
+        if (Get_Feed_Flag(f->feed, NO_LOOKAHEAD)) {
             // Don't do enfix lookahead if asked *not* to look.
 
-            CLEAR_FEED_FLAG(f->feed, NO_LOOKAHEAD);
+            Clear_Feed_Flag(f->feed, NO_LOOKAHEAD);
 
-            assert(NOT_FEED_FLAG(f->feed, DEFERRING_ENFIX));
-            SET_FEED_FLAG(f->feed, DEFERRING_ENFIX);
+            assert(Not_Feed_Flag(f->feed, DEFERRING_ENFIX));
+            Set_Feed_Flag(f->feed, DEFERRING_ENFIX);
 
             goto finished;
         }
 
-        CLEAR_FEED_FLAG(f->feed, NO_LOOKAHEAD);
+        Clear_Feed_Flag(f->feed, NO_LOOKAHEAD);
     }
 
     // A deferral occurs, e.g. with:
@@ -1895,7 +1895,7 @@ REB_R Evaluator_Executor(REBFRM *f)
             Get_Action_Flag(enfixed, POSTPONES_ENTIRELY)
             or (
                 Get_Action_Flag(enfixed, DEFERS_LOOKBACK)
-                and NOT_FEED_FLAG(f->feed, DEFERRING_ENFIX)
+                and Not_Feed_Flag(f->feed, DEFERRING_ENFIX)
             )
         )
     ){
@@ -1912,7 +1912,7 @@ REB_R Evaluator_Executor(REBFRM *f)
             fail (Error_Ambiguous_Infix_Raw());
         }
 
-        CLEAR_FEED_FLAG(f->feed, NO_LOOKAHEAD);
+        Clear_Feed_Flag(f->feed, NO_LOOKAHEAD);
 
         if (
             Is_Action_Frame(f->prior)
@@ -1931,11 +1931,11 @@ REB_R Evaluator_Executor(REBFRM *f)
             //
             // We want to treat this like a barrier.
             //
-            SET_FEED_FLAG(f->feed, BARRIER_HIT);
+            Set_Feed_Flag(f->feed, BARRIER_HIT);
             goto finished;
         }
 
-        SET_FEED_FLAG(f->feed, DEFERRING_ENFIX);
+        Set_Feed_Flag(f->feed, DEFERRING_ENFIX);
 
         // Leave enfix operator pending in the frame.  It's up to the parent
         // frame to decide whether to ST_EVALUATOR_LOOKING_AHEAD to jump
@@ -1946,7 +1946,7 @@ REB_R Evaluator_Executor(REBFRM *f)
         goto finished;
     }
 
-    CLEAR_FEED_FLAG(f->feed, DEFERRING_ENFIX);
+    Clear_Feed_Flag(f->feed, DEFERRING_ENFIX);
 
     // An evaluative lookback argument we don't want to defer, e.g. a normal
     // argument or a deferable one which is not being requested in the context
@@ -1960,7 +1960,7 @@ REB_R Evaluator_Executor(REBFRM *f)
 
     Fetch_Next_Forget_Lookback(f);  // advances next
 
-    SET_FEED_FLAG(f->feed, NEXT_ARG_FROM_OUT);
+    Set_Feed_Flag(f->feed, NEXT_ARG_FROM_OUT);
 
     goto process_action; }
 
@@ -1974,7 +1974,7 @@ REB_R Evaluator_Executor(REBFRM *f)
     //     o.f left-the  ; want error suggesting >- here, need flag for that
     //
     Clear_Eval_Flag(f, DIDNT_LEFT_QUOTE_PATH);
-    assert(NOT_FEED_FLAG(f->feed, NEXT_ARG_FROM_OUT));  // must be consumed
+    assert(Not_Feed_Flag(f->feed, NEXT_ARG_FROM_OUT));  // must be consumed
 
   #if !defined(NDEBUG)
     Evaluator_Exit_Checks_Debug(f);

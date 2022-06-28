@@ -128,7 +128,7 @@ REB_R Trampoline_From_Top_Maybe_Root(void)
 
         Set_Eval_Flag(FRAME, ABRUPT_FAILURE);
 
-        CLEAR_FEED_FLAG(FRAME->feed, NEXT_ARG_FROM_OUT);  // !!! stops asserts
+        Clear_Feed_Flag(FRAME->feed, NEXT_ARG_FROM_OUT);  // !!! stops asserts
 
         while (FS_TOP != FRAME) {  // drop idle frames above the fail, see [4]
             assert(Not_Eval_Flag(FS_TOP, NOTIFY_ON_ABRUPT_FAILURE));

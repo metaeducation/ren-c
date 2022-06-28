@@ -147,7 +147,7 @@ static void Evaluator_Shared_Checks_Debug(REBFRM *f)
         assert(NOT_SERIES_FLAG(f->varlist, INACCESSIBLE));
     }
 
-    assert(NOT_FEED_FLAG(f->feed, NEXT_ARG_FROM_OUT));  // new expression
+    assert(Not_Feed_Flag(f->feed, NEXT_ARG_FROM_OUT));  // new expression
 
     //=//// ^-- ABOVE CHECKS *ALWAYS* APPLY ///////////////////////////////=//
 
@@ -197,8 +197,8 @@ void Evaluator_Expression_Checks_Debug(REBFRM *f)
 
     assert(Not_Eval_Flag(f, DIDNT_LEFT_QUOTE_PATH));
     if (Not_Executor_Flag(EVAL, f, FULFILLING_ARG))
-        assert(NOT_FEED_FLAG(f->feed, NO_LOOKAHEAD));
-    assert(NOT_FEED_FLAG(f->feed, DEFERRING_ENFIX));
+        assert(Not_Feed_Flag(f->feed, NO_LOOKAHEAD));
+    assert(Not_Feed_Flag(f->feed, DEFERRING_ENFIX));
 
     Evaluator_Shared_Checks_Debug(f);
 

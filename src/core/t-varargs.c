@@ -204,7 +204,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
 
             if (
                 Is_End(f_temp->feed->value)
-                or GET_FEED_FLAG(f_temp->feed, BARRIER_HIT)
+                or Get_Feed_Flag(f_temp->feed, BARRIER_HIT)
             ){
                 Init_Stale_Void(shared);
             }
@@ -279,7 +279,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
         else
             arg = FRM_ARG(f, VAL_VARARGS_SIGNED_PARAM_INDEX(vararg));
 
-        bool hit_barrier = GET_FEED_FLAG(f->feed, BARRIER_HIT)
+        bool hit_barrier = Get_Feed_Flag(f->feed, BARRIER_HIT)
             and (pclass != PARAM_CLASS_SOFT)
             and (pclass != PARAM_CLASS_MEDIUM)
             and (pclass != PARAM_CLASS_HARD);
@@ -647,7 +647,7 @@ void MF_Varargs(REB_MOLD *mo, noquote(const Cell*) v, bool form) {
             Append_Ascii(mo->series, "!!!");
         else if (
             Is_End(f->feed->value)
-            or GET_FEED_FLAG(f->feed, BARRIER_HIT)
+            or Get_Feed_Flag(f->feed, BARRIER_HIT)
         ){
             Append_Ascii(mo->series, "[]");
         }

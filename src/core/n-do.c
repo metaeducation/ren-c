@@ -214,7 +214,7 @@ REBNATIVE(shove)
             Set_Cell_Flag(OUT, UNEVALUATED);
     }
 
-    SET_FEED_FLAG(frame_->feed, NEXT_ARG_FROM_OUT);
+    Set_Feed_Flag(frame_->feed, NEXT_ARG_FROM_OUT);
 
     if (Reevaluate_In_Subframe_Throws(
         OUT,

@@ -317,7 +317,7 @@ inline static void Fetch_Next_In_Feed(REBFED *feed) {
     // and not the frame in order to catch cases where it slips by, so this
     // assert is important.
     //
-    if (GET_FEED_FLAG(feed, NEXT_ARG_FROM_OUT))
+    if (Get_Feed_Flag(feed, NEXT_ARG_FROM_OUT))
         assert(!"Fetch_Next_In_Feed() called but NEXT_ARG_FROM_OUT set");
 
     // We are changing ->value, and thus by definition any ->gotten value
@@ -372,10 +372,10 @@ inline static void Fetch_Next_In_Feed(REBFED *feed) {
             // happen here.  It's not perfect, but holds need systemic review.
 
             if (FEED_SPLICE(feed)) {  // one or more additional splices to go
-                if (GET_FEED_FLAG(feed, TOOK_HOLD)) {  // see note above
+                if (Get_Feed_Flag(feed, TOOK_HOLD)) {  // see note above
                     assert(GET_SERIES_INFO(FEED_ARRAY(feed), HOLD));
                     CLEAR_SERIES_INFO(m_cast(REBARR*, FEED_ARRAY(feed)), HOLD);
-                    CLEAR_FEED_FLAG(feed, TOOK_HOLD);
+                    Clear_Feed_Flag(feed, TOOK_HOLD);
                 }
 
                 REBARR *splice = FEED_SPLICE(feed);
@@ -527,10 +527,10 @@ inline static void Free_Feed(REBFED *feed) {
     // `do code: [clear code]` doesn't drop the hold until the block frame
     // is actually fully dropped.)
     //
-    if (GET_FEED_FLAG(feed, TOOK_HOLD)) {
+    if (Get_Feed_Flag(feed, TOOK_HOLD)) {
         assert(GET_SERIES_INFO(FEED_ARRAY(feed), HOLD));
         CLEAR_SERIES_INFO(m_cast(REBARR*, FEED_ARRAY(feed)), HOLD);
-        CLEAR_FEED_FLAG(feed, TOOK_HOLD);
+        Clear_Feed_Flag(feed, TOOK_HOLD);
     }
 
     Free_Node(FED_POOL, cast(REBNOD*, feed));
@@ -587,7 +587,7 @@ inline static void Prep_Array_Feed(
         NOOP;  // already temp-locked
     else {
         SET_SERIES_INFO(m_cast(REBARR*, array), HOLD);
-        SET_FEED_FLAG(feed, TOOK_HOLD);
+        Set_Feed_Flag(feed, TOOK_HOLD);
     }
 
     feed->gotten = nullptr;

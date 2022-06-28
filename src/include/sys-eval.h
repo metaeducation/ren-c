@@ -249,18 +249,18 @@ inline static bool Did_Init_Inert_Optimize_Complete(
             not feed->gotten
             or REB_ACTION != VAL_TYPE_UNCHECKED(unwrap(feed->gotten))
         ){
-            CLEAR_FEED_FLAG(feed, NO_LOOKAHEAD);
+            Clear_Feed_Flag(feed, NO_LOOKAHEAD);
             goto optimized;  // not action
         }
 
         if (Get_Action_Flag(VAL_ACTION(unwrap(feed->gotten)), IS_BARRIER)) {
-            SET_FEED_FLAG(feed, BARRIER_HIT);
-            CLEAR_FEED_FLAG(feed, NO_LOOKAHEAD);
+            Set_Feed_Flag(feed, BARRIER_HIT);
+            Clear_Feed_Flag(feed, NO_LOOKAHEAD);
             goto optimized;  // is barrier
         }
 
         if (Not_Action_Flag(VAL_ACTION(unwrap(feed->gotten)), ENFIXED)) {
-            CLEAR_FEED_FLAG(feed, NO_LOOKAHEAD);
+            Clear_Feed_Flag(feed, NO_LOOKAHEAD);
             goto optimized;  // not enfixed
         }
 
@@ -269,7 +269,7 @@ inline static bool Did_Init_Inert_Optimize_Complete(
             //
             // Quoting defeats NO_LOOKAHEAD but only on soft quotes.
             //
-            if (NOT_FEED_FLAG(feed, NO_LOOKAHEAD)) {
+            if (Not_Feed_Flag(feed, NO_LOOKAHEAD)) {
                 *flags |=
                     EVAL_FLAG_MAYBE_STALE  // won't be, but avoids RESET()
                     | FLAG_STATE_BYTE(ST_EVALUATOR_LOOKING_AHEAD)
@@ -277,7 +277,7 @@ inline static bool Did_Init_Inert_Optimize_Complete(
                 return false;
             }
 
-            CLEAR_FEED_FLAG(feed, NO_LOOKAHEAD);
+            Clear_Feed_Flag(feed, NO_LOOKAHEAD);
 
             // !!! Cache this test?
             //
@@ -292,8 +292,8 @@ inline static bool Did_Init_Inert_Optimize_Complete(
             return false;
         }
 
-        if (GET_FEED_FLAG(feed, NO_LOOKAHEAD)) {
-            CLEAR_FEED_FLAG(feed, NO_LOOKAHEAD);
+        if (Get_Feed_Flag(feed, NO_LOOKAHEAD)) {
+            Clear_Feed_Flag(feed, NO_LOOKAHEAD);
             goto optimized;   // we're done!
         }
 
@@ -314,8 +314,8 @@ inline static bool Did_Init_Inert_Optimize_Complete(
         return false;  // do normal enfix handling
     }
 
-    if (GET_FEED_FLAG(feed, NO_LOOKAHEAD)) {
-        CLEAR_FEED_FLAG(feed, NO_LOOKAHEAD);
+    if (Get_Feed_Flag(feed, NO_LOOKAHEAD)) {
+        Clear_Feed_Flag(feed, NO_LOOKAHEAD);
         goto optimized;   // we're done!
     }
 
@@ -335,7 +335,7 @@ inline static bool Eval_Step_Throws(
     REBVAL *out,
     REBFRM *f
 ){
-    assert(NOT_FEED_FLAG(f->feed, NO_LOOKAHEAD));
+    assert(Not_Feed_Flag(f->feed, NO_LOOKAHEAD));
     assert(Get_Executor_Flag(EVAL, f, SINGLE_STEP));
 
     if (Not_Eval_Flag(f, MAYBE_STALE))

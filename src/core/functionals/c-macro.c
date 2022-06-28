@@ -47,10 +47,10 @@ void Splice_Block_Into_Feed(REBFED *feed, const REBVAL *splice) {
     // splice is running.  It does so because the holding flag is currently
     // on a feed-by-feed basis.  It should be on a splice-by-splice basis.
     //
-    if (GET_FEED_FLAG(feed, TOOK_HOLD)) {
+    if (Get_Feed_Flag(feed, TOOK_HOLD)) {
         assert(GET_SERIES_INFO(FEED_ARRAY(feed), HOLD));
         CLEAR_SERIES_INFO(m_cast(REBARR*, FEED_ARRAY(feed)), HOLD);
-        CLEAR_FEED_FLAG(feed, TOOK_HOLD);
+        Clear_Feed_Flag(feed, TOOK_HOLD);
     }
 
     // Each feed has a static allocation of a REBSER-sized entity for managing
@@ -85,7 +85,7 @@ void Splice_Block_Into_Feed(REBFED *feed, const REBVAL *splice) {
     //
     if (Not_End(feed->value) and NOT_SERIES_INFO(FEED_ARRAY(feed), HOLD)) {
         SET_SERIES_INFO(m_cast(REBARR*, FEED_ARRAY(feed)), HOLD);
-        SET_FEED_FLAG(feed, TOOK_HOLD);
+        Set_Feed_Flag(feed, TOOK_HOLD);
     }
 }
 

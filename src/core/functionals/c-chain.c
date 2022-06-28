@@ -203,8 +203,8 @@ REB_R Chainer_Dispatcher(REBFRM *f)
     Push_Action(sub, VAL_ACTION(chained), VAL_ACTION_BINDING(chained));
 
     Begin_Prefix_Action(sub, VAL_ACTION_LABEL(chained));
-    assert(NOT_FEED_FLAG(sub->feed, NEXT_ARG_FROM_OUT));
-    SET_FEED_FLAG(sub->feed, NEXT_ARG_FROM_OUT);  // act like infix, see [4]
+    assert(Not_Feed_Flag(sub->feed, NEXT_ARG_FROM_OUT));
+    Set_Feed_Flag(sub->feed, NEXT_ARG_FROM_OUT);  // act like infix, see [4]
 
     FRM_STATE_BYTE(sub) = ST_ACTION_INITIAL_ENTRY;  // maybe zeroed (or not)?
     Clear_Executor_Flag(ACTION, sub, DISPATCHER_CATCHES);

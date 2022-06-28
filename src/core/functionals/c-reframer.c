@@ -85,7 +85,7 @@ bool Make_Invokable_From_Feed_Throws(
     REBFED *feed,
     bool error_on_deferred  // if not planning to keep running, can't ELSE/THEN
 ){
-    assert(NOT_FEED_FLAG(feed, NEXT_ARG_FROM_OUT));  // not supported?
+    assert(Not_Feed_Flag(feed, NEXT_ARG_FROM_OUT));  // not supported?
 
     const Cell *v = Is_End(first) ? feed->value : first;
 

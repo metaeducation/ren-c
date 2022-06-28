@@ -96,10 +96,10 @@
 // Returns TRUE if it set the flag.
 //
 bool Lookahead_To_Sync_Enfix_Defer_Flag(struct Reb_Feed *feed) {
-    assert(NOT_FEED_FLAG(feed, DEFERRING_ENFIX));
+    assert(Not_Feed_Flag(feed, DEFERRING_ENFIX));
     assert(not feed->gotten);
 
-    CLEAR_FEED_FLAG(feed, NO_LOOKAHEAD);
+    Clear_Feed_Flag(feed, NO_LOOKAHEAD);
 
     if (VAL_TYPE_UNCHECKED(feed->value) != REB_WORD)  // REB_0 is END
         return false;
@@ -117,7 +117,7 @@ bool Lookahead_To_Sync_Enfix_Defer_Flag(struct Reb_Feed *feed) {
         return false;
 
     if (Get_Action_Flag(VAL_ACTION(unwrap(feed->gotten)), DEFERS_LOOKBACK))
-        SET_FEED_FLAG(feed, DEFERRING_ENFIX);
+        Set_Feed_Flag(feed, DEFERRING_ENFIX);
     return true;
 }
 
@@ -300,8 +300,8 @@ REB_R Action_Executor(REBFRM *f)
 
   //=//// HANDLE IF NEXT ARG IS IN OUT SLOT (e.g. ENFIX, CHAIN) ///////////=//
 
-        if (GET_FEED_FLAG(f->feed, NEXT_ARG_FROM_OUT)) {
-            CLEAR_FEED_FLAG(f->feed, NEXT_ARG_FROM_OUT);
+        if (Get_Feed_Flag(f->feed, NEXT_ARG_FROM_OUT)) {
+            Clear_Feed_Flag(f->feed, NEXT_ARG_FROM_OUT);
 
             if (Was_Eval_Step_Void(OUT)) {
                 Init_Void_Isotope(ARG);
@@ -434,13 +434,13 @@ REB_R Action_Executor(REBFRM *f)
             // This effectively puts the enfix into a *single step defer*.
             //
             if (Get_Executor_Flag(ACTION, f, RUNNING_ENFIX)) {
-                assert(NOT_FEED_FLAG(f->feed, NO_LOOKAHEAD));
+                assert(Not_Feed_Flag(f->feed, NO_LOOKAHEAD));
                 if (
                     Not_Action_Flag(FRM_PHASE(f), POSTPONES_ENTIRELY)
                     and
                     Not_Action_Flag(FRM_PHASE(f), DEFERS_LOOKBACK)
                 ){
-                    SET_FEED_FLAG(f->feed, NO_LOOKAHEAD);
+                    Set_Feed_Flag(f->feed, NO_LOOKAHEAD);
                 }
             }
 
@@ -493,7 +493,7 @@ REB_R Action_Executor(REBFRM *f)
         //      == 9
         //
         if (Not_Executor_Flag(ACTION, f, RUNNING_ENFIX))
-            CLEAR_FEED_FLAG(f->feed, NO_LOOKAHEAD);
+            Clear_Feed_Flag(f->feed, NO_LOOKAHEAD);
 
         // Once a deferred flag is set, it must be cleared during the
         // evaluation of the argument it was set for... OR the function
@@ -510,7 +510,7 @@ REB_R Action_Executor(REBFRM *f)
         //     1 arity-3-op 2 + 3 <ambiguous>
         //     1 arity-3-op (2 + 3) <unambiguous>
         //
-        if (GET_FEED_FLAG(f->feed, DEFERRING_ENFIX))
+        if (Get_Feed_Flag(f->feed, DEFERRING_ENFIX))
             fail (Error_Ambiguous_Infix_Raw());
 
   //=//// ERROR ON END MARKER, BAR! IF APPLICABLE /////////////////////////=//
@@ -527,7 +527,7 @@ REB_R Action_Executor(REBFRM *f)
           case PARAM_CLASS_NORMAL:
           case PARAM_CLASS_OUTPUT:
           case PARAM_CLASS_META: {
-            if (GET_FEED_FLAG(f->feed, BARRIER_HIT) or Is_End(f_next)) {
+            if (Get_Feed_Flag(f->feed, BARRIER_HIT) or Is_End(f_next)) {
                 Init_End_Isotope(ARG);
                 goto continue_fulfilling;
             }
@@ -667,8 +667,8 @@ REB_R Action_Executor(REBFRM *f)
         // Is breaking this.  Review when there is time, and put the assert
         // back if it makes sense.
         //
-        /* assert(NOT_FEED_FLAG(f->feed, NO_LOOKAHEAD)); */
-        CLEAR_FEED_FLAG(f->feed, NO_LOOKAHEAD);
+        /* assert(Not_Feed_Flag(f->feed, NO_LOOKAHEAD)); */
+        Clear_Feed_Flag(f->feed, NO_LOOKAHEAD);
 
         goto continue_fulfilling;
     }
@@ -918,7 +918,7 @@ REB_R Action_Executor(REBFRM *f)
 
   dispatch:
 
-    if (GET_FEED_FLAG(f->feed, NEXT_ARG_FROM_OUT)) {
+    if (Get_Feed_Flag(f->feed, NEXT_ARG_FROM_OUT)) {
         if (Get_Eval_Flag(f, DIDNT_LEFT_QUOTE_PATH))  // see notes on flag
             fail (Error_Literal_Left_Path_Raw());
     }
@@ -929,9 +929,9 @@ REB_R Action_Executor(REBFRM *f)
     // a 0-arity function to run in the same evaluation step as the left
     // hand side.  This is how expression work (see `|:`)
     //
-    if (GET_FEED_FLAG(f->feed, NEXT_ARG_FROM_OUT)) {
+    if (Get_Feed_Flag(f->feed, NEXT_ARG_FROM_OUT)) {
         assert(Get_Executor_Flag(ACTION, f, RUNNING_ENFIX));
-        CLEAR_FEED_FLAG(f->feed, NEXT_ARG_FROM_OUT);
+        Clear_Feed_Flag(f->feed, NEXT_ARG_FROM_OUT);
         Mark_Eval_Out_Stale(OUT);
     }
 
@@ -1088,7 +1088,7 @@ REB_R Action_Executor(REBFRM *f)
 
   skip_output_check:
 
-    if (GET_FEED_FLAG(f->feed, NEXT_ARG_FROM_OUT)) {
+    if (Get_Feed_Flag(f->feed, NEXT_ARG_FROM_OUT)) {
         //
         // !!! This used to assert that there was no NEXT_ARG_FROM_OUT flag
         // set, but this can happen, e.g.:
@@ -1316,7 +1316,7 @@ void Begin_Action_Core(
     bool enfix
 ){
     assert(Not_Executor_Flag(ACTION, f, RUNNING_ENFIX));
-    assert(NOT_FEED_FLAG(f->feed, DEFERRING_ENFIX));
+    assert(Not_Feed_Flag(f->feed, DEFERRING_ENFIX));
 
     assert(Not_Subclass_Flag(VARLIST, f->varlist, FRAME_HAS_BEEN_INVOKED));
     Set_Subclass_Flag(VARLIST, f->varlist, FRAME_HAS_BEEN_INVOKED);
@@ -1354,7 +1354,7 @@ void Begin_Action_Core(
         // moved into the Begin_Enfix_Action() case.  Note this has to be done
         // *after* the existing flag state has been captured for invisibles.
         //
-        CLEAR_FEED_FLAG(f->feed, NO_LOOKAHEAD);
+        Clear_Feed_Flag(f->feed, NO_LOOKAHEAD);
     }
 }
 
@@ -1366,7 +1366,7 @@ void Drop_Action(REBFRM *f) {
     assert(not f->label or IS_SYMBOL(unwrap(f->label)));
 
     if (Not_Executor_Flag(ACTION, f, FULFILLING_ARG))
-        CLEAR_FEED_FLAG(f->feed, BARRIER_HIT);
+        Clear_Feed_Flag(f->feed, BARRIER_HIT);
 
     Clear_Executor_Flag(ACTION, f, RUNNING_ENFIX);
     Clear_Executor_Flag(ACTION, f, FULFILL_ONLY);
