@@ -87,12 +87,9 @@ inline static bool Do_Any_Array_At_Core_Throws(
 ){
     DECLARE_FRAME_AT_CORE (f, any_array, specifier, flags);
     Push_Frame(out, f);
-    if (Trampoline_Throws(f)) {
-        Abort_Frame(f);
-        return true;
-    }
+    bool threw = Trampoline_Throws(f);
     Drop_Frame(f);
-    return false;
+    return threw;
 }
 
 #define Do_Any_Array_At_Throws(out,any_array,specifier) \
@@ -108,12 +105,9 @@ inline static bool Do_Branch_Throws(
     if (not Pushed_Continuation(out, EVAL_FLAG_BRANCH, branch, SPECIFIED, with))
         return false;
 
-    if (Trampoline_Throws(FS_TOP)) {
-        Abort_Frame(FS_TOP);
-        return true;
-    }
+    bool threw = Trampoline_Throws(FS_TOP);
     Drop_Frame(FS_TOP);
-    return false;
+    return threw;
 }
 
 

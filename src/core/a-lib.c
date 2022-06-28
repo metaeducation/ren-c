@@ -839,19 +839,15 @@ static bool Run_Va_Translucent_Throws(
 
     DECLARE_VA_FEED (feed, p, vaptr, FEED_MASK_DEFAULT);
     DECLARE_FRAME (f, feed, EVAL_MASK_DEFAULT | EVAL_FLAG_ALLOCATED_FEED);
+
     Push_Frame(out, f);
-
-    if (Trampoline_Throws(f)) {
-        Abort_Frame(f);
-        return true;
-    }
-
+    bool threw = Trampoline_Throws(f);
     Drop_Frame(f);
 
     // (see also Reb_State->saved_sigmask RE: if a longjmp happens)
     Eval_Sigmask = saved_sigmask;
 
-    return false;
+    return threw;
 }
 
 inline static void Run_Va_May_Fail(
@@ -1729,7 +1725,7 @@ REBVAL *RL_rebRescueWith(
     // `fail` can longjmp here, so 'error' won't be null *if* that happens!
     //
     if (jump.error) {
-        Abort_Frame(dummy);
+        Drop_Frame(dummy);
 
         REBVAL *error = Init_Error(Alloc_Value(), jump.error);
 
@@ -1790,8 +1786,6 @@ REBVAL *RL_rebRescueWith(
     // rebRescue() routine started being used in lieu of PUSH_TRAP/DROP_TRAP
     // internally to the system.  Some of these system routines accumulate
     // stack state, so Drop_Frame_Unbalanced() must be used.
-    //
-    // !!! Note that Abort_Frame() cannot be used here as written.
     //
     Drop_Frame_Unbalanced(dummy);
 

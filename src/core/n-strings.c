@@ -119,7 +119,7 @@ REBNATIVE(delimit)
 
         if (Eval_Step_Throws(RESET(OUT), f)) {
             Drop_Mold(mo);
-            Abort_Frame(f);
+            Drop_Frame(f);
             return THROWN;
         }
 
@@ -183,7 +183,7 @@ REBNATIVE(delimit)
                     Lib(APPEND), Lib(COPY), EMPTY_TEXT, rebQ(SPARE)
                 )){
                     Drop_Mold(mo);
-                    Abort_Frame(f);
+                    Drop_Frame(f);
                     return THROWN;
                 }
                 Form_Value(mo, OUT);

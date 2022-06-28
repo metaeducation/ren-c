@@ -937,7 +937,7 @@ REB_R Evaluator_Executor(REBFRM *f)
             f_current,
             f_specifier
         )){
-            Abort_Frame(subframe);
+            Drop_Frame(subframe);
             goto return_thrown;
         }
 

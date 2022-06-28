@@ -696,7 +696,7 @@ REBNATIVE(all)
         fail (Error_Bad_Isotope(condition));
 
     if (Is_Falsey(condition)) {
-        Abort_Frame(SUBFRAME);
+        Drop_Frame(SUBFRAME);
         return nullptr;
     }
 
@@ -820,7 +820,7 @@ REBNATIVE(any)
         fail (Error_Bad_Isotope(condition));
 
     if (Is_Truthy(condition)) {
-        Abort_Frame(SUBFRAME);
+        Drop_Frame(SUBFRAME);
         return_branched (OUT);  // successful ANY returns the value
     }
 
@@ -1031,7 +1031,7 @@ REBNATIVE(case)
 } branch_result_in_out: {  ///////////////////////////////////////////////////
 
     if (not REF(all)) {
-        Abort_Frame(SUBFRAME);
+        Drop_Frame(SUBFRAME);
         return_branched (OUT);
     }
 
@@ -1226,7 +1226,7 @@ REBNATIVE(switch)
 
   threw:
 
-    Abort_Frame(f);
+    Drop_Frame(f);
     return THROWN;
 }
 

@@ -396,34 +396,6 @@ inline static void UPDATE_EXPRESSION_START(REBFRM *f) {
 #define Literal_Next_In_Frame(out,f) \
     Literal_Next_In_Feed((out), (f)->feed)
 
-inline static void Abort_Frame(REBFRM *f) {
-    //
-    // If a frame is aborted, then we allow its API handles to leak.
-    //
-    REBNOD *n = f->alloc_value_list;
-    while (n != f) {
-        REBARR *a = ARR(n);
-        n = LINK(ApiNext, a);
-        RESET(ARR_SINGLE(a));
-        GC_Kill_Series(a);
-    }
-    TRASH_POINTER_IF_DEBUG(f->alloc_value_list);
-
-    // Abort_Frame() handles any work that wouldn't be done done naturally by
-    // feeding a frame to its natural end.
-    //
-    if (Is_End(f->feed->value))
-        goto pop;
-
-  pop:
-    Rollback_Globals_To_State(&f->baseline);
-
-    assert(TG_Top_Frame == f);
-    TG_Top_Frame = f->prior;
-
-    Free_Frame_Internal(f);
-}
-
 
 inline static void Drop_Frame_Core(REBFRM *f) {
   #if DEBUG_EXPIRED_LOOKBACK
@@ -432,17 +404,42 @@ inline static void Drop_Frame_Core(REBFRM *f) {
 
     assert(TG_Top_Frame == f);
 
-    REBNOD *n = f->alloc_value_list;
-    while (n != f) {
-        REBARR *a = ARR(n);
-      #if !defined(NDEBUG)
-        printf("API handle was allocated but not freed, panic'ing leak\n");
-      #endif
-        panic (a);
+    if (Is_Throwing(f) or (f->out and Is_Failure(f->out))) {
+        //
+        // On normal completion with a return result, we do not allow API
+        // handles attached to a frame to leak--you are expected to release
+        // everything.  But definitional failure and throw cases are exempt.
+        //
+        REBNOD *n = f->alloc_value_list;
+        while (n != f) {
+            REBARR *a = ARR(n);
+            n = LINK(ApiNext, a);
+            RESET(ARR_SINGLE(a));
+            GC_Kill_Series(a);
+        }
+        TRASH_POINTER_IF_DEBUG(f->alloc_value_list);
+
+        // There could be outstanding values on the data stack, or data in the
+        // mold buffer...we clean it up automatically in these cases.
+        //
+        Rollback_Globals_To_State(&f->baseline);
     }
-    TRASH_POINTER_IF_DEBUG(f->alloc_value_list);
+    else {
+      #if !defined(NDEBUG)
+        REBNOD *n = f->alloc_value_list;
+        while (n != f) {
+            REBARR *a = ARR(n);
+            printf("API handle was allocated but not freed, panic'ing leak\n");
+            panic (a);
+        }
+        TRASH_POINTER_IF_DEBUG(f->alloc_value_list);
+      #endif
+    }
 
     TG_Top_Frame = f->prior;
+
+    // Note: Free_Feed() will handle feeding a frame through to its end (which
+    // may release handles/etc), so no requirement f->feed->value be at END.
 
     Free_Frame_Internal(f);
 }
@@ -453,23 +450,21 @@ inline static void Drop_Frame_Unbalanced(REBFRM *f) {
 
 inline static void Drop_Frame(REBFRM *f)
 {
-    assert(not Is_Throwing(f));  // !!! We could decide to abort or not on this
-
-    if (f->out and Is_Failure(f->out)) {  // !!! Another case we might fold in
-        Abort_Frame(f);
-        return;
+    if (
+        not Is_Throwing(f)
+        and not (f->out and Is_Failure(f->out))
+    ){
+      #if DEBUG_BALANCE_STATE
+        //
+        // To avoid slowing down the debug build a lot, Eval_Core() doesn't
+        // check this every cycle, just on drop.  But if it's hard to find which
+        // exact cycle caused the problem, see BALANCE_CHECK_EVERY_EVALUATION_STEP
+        //
+        ASSERT_STATE_BALANCED(&f->baseline);
+      #else
+        assert(DSP == f->baseline.dsp);  // Cheaper check
+      #endif
     }
-
-  #if DEBUG_BALANCE_STATE
-    //
-    // To avoid slowing down the debug build a lot, Eval_Core() doesn't
-    // check this every cycle, just on drop.  But if it's hard to find which
-    // exact cycle caused the problem, see BALANCE_CHECK_EVERY_EVALUATION_STEP
-    //
-    ASSERT_STATE_BALANCED(&f->baseline);
-  #else
-    assert(DSP == f->baseline.dsp);  // Cheaper check
-  #endif
 
     Drop_Frame_Unbalanced(f);
 }

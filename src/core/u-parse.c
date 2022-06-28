@@ -316,7 +316,7 @@ static bool Subparse_Throws(
         SET_SERIES_LEN(unwrap(collection), collect_tail);  // abort rollback
 
     if (r == R_THROWN) {
-        Abort_Frame(f);
+        Drop_Frame(f);
 
         // ACCEPT and REJECT are special cases that can happen at nested parse
         // levels and bubble up through the throw mechanism to break a looping

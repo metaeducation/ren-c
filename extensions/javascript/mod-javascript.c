@@ -453,8 +453,8 @@ void RunPromise(void)
 
     REBVAL *metaresult = FS_TOP->out;
     if (r == R_THROWN) {
+        assert(Is_Throwing(FS_TOP));
         REBCTX *error = Error_No_Catch_For_Throw(FS_TOP);
-        Abort_Frame(FS_TOP);
         Init_Error(metaresult, error);
     }
     else {
@@ -462,9 +462,9 @@ void RunPromise(void)
             Init_Meta_Of_Void(metaresult);
         else
             Meta_Quotify(metaresult);
-
-        Drop_Frame(FS_TOP);
     }
+
+    Drop_Frame(FS_TOP);
 
     // Note: The difference between `throw()` and `reject()` in JS is subtle.
     //

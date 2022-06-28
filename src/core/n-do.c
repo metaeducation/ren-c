@@ -351,7 +351,7 @@ REBNATIVE(do)
         Push_Frame(RESET(OUT), subframe);
         do {
             if (Eval_Step_Throws(OUT, subframe)) {
-                Abort_Frame(subframe);
+                Drop_Frame(subframe);
                 return THROWN;
             }
         } while (Not_End(f->feed->value));
@@ -971,7 +971,7 @@ REBNATIVE(apply)
     EVARS *e = VAL_HANDLE_POINTER(EVARS, iterator);
     Shutdown_Evars(e);
 
-    if (THROWING) {  // assume Abort_Frame() called on SUBFRAME?
+    if (THROWING) {  // assume Drop_Frame() called on SUBFRAME?
         FREE(EVARS, e);
         Init_Trash(iterator);
         return THROWN;

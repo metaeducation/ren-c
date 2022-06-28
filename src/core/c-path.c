@@ -224,7 +224,7 @@ REB_R MAKE_Path(
 
     while (Not_End(f->feed->value)) {
         if (Eval_Step_Throws(out, f)) {
-            Abort_Frame(f);
+            Drop_Frame(f);
             return R_THROWN;
         }
 

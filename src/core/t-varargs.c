@@ -195,7 +195,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
             // this is a single use frame, whose state can be overwritten.
             //
             if (Eval_Step_Throws(RESET(out), f_temp)) {
-                Abort_Frame(f_temp);
+                Drop_Frame(f_temp);
                 return true;
             }
 

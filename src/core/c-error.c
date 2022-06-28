@@ -50,7 +50,7 @@ void Snap_State_Core(struct Reb_State *s)
 //
 //  Rollback_Globals_To_State: C
 //
-// This routine is used by things like Abort_Frame() when a fail occurs, to
+// This routine is used by things like Drop_Frame() when a fail occurs, to
 // automatically restore the state of globals to how they were at the time
 // the passed-in state was SNAP_STATE()'d.
 //

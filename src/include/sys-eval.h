@@ -288,13 +288,9 @@ inline static bool Eval_Step_In_Subframe_Throws(
     DECLARE_FRAME (subframe, f->feed, flags);
     Push_Frame(out, subframe);
 
-    if (Trampoline_Throws(subframe)) {
-        Abort_Frame(subframe);
-        return true;
-    }
-
+    bool threw = Trampoline_Throws(subframe);
     Drop_Frame(subframe);
-    return false;
+    return threw;
 }
 
 
@@ -312,15 +308,12 @@ inline static bool Reevaluate_In_Subframe_Throws(
 
     DECLARE_FRAME (subframe, f->feed, flags);
     subframe->u.eval.current = reval;
+
     Push_Frame(out, subframe);
-
-    if (Trampoline_Throws(subframe)) {
-        Abort_Frame(subframe);
-        return true;
-    }
-
+    bool threw = Trampoline_Throws(subframe);
     Drop_Frame(subframe);
-    return false;
+
+    return threw;
 }
 
 
@@ -346,17 +339,14 @@ inline static bool Eval_Step_In_Any_Array_At_Throws(
         feed,
         flags | EVAL_FLAG_ALLOCATED_FEED | EVAL_FLAG_SINGLE_STEP
     );
+
     Push_Frame(out, f);
-
-    if (Trampoline_Throws(f)) {
-        Abort_Frame(f);
-        *index_out = TRASHED_INDEX;
-        return true;
-    }
-
+    bool threw = Trampoline_Throws(f);
     Drop_Frame(f);
-    *index_out = FRM_INDEX(f);
-    return false;
+
+    *index_out = threw ? TRASHED_INDEX : FRM_INDEX(f);
+
+    return threw;
 }
 
 
@@ -394,10 +384,11 @@ inline static bool Eval_Step_In_Va_Throws(
         feed,
         (eval_flags | EVAL_FLAG_ALLOCATED_FEED) & (~ EVAL_FLAG_BRANCH)
     );
-    Push_Frame(out, f);
 
-    if (Trampoline_Throws(f)) {
-        Abort_Frame(f);
+    Push_Frame(out, f);
+    bool threw = Trampoline_Throws(f);
+    if (threw) {
+        Drop_Frame(f);
         return true;
     }
 
@@ -447,15 +438,12 @@ inline static bool Eval_Value_Core_Throws(
     );
 
     DECLARE_FRAME (f, feed, flags | EVAL_FLAG_ALLOCATED_FEED);
+
     Push_Frame(out, f);
-
-    if (Trampoline_Throws(f)) {
-        Abort_Frame(f);
-        return true;
-    }
-
+    bool threw = Trampoline_Throws(f);
     Drop_Frame(f);
-    return false;
+
+    return threw;
 }
 
 #define Eval_Value_Throws(out,value,specifier) \
@@ -485,7 +473,7 @@ inline static REB_R Native_Failure_Result(REBFRM *frame_, const void *p) {
     Force_Location_Of_Error(error, frame_);
 
     while (FS_TOP != frame_)  // cancel subframes as default behavior
-        Abort_Frame(FS_TOP);
+        Drop_Frame_Unbalanced(FS_TOP);  // Note: won't seem like THROW/Fail
 
     return Failurize(Init_Error(frame_->out, error));
 }

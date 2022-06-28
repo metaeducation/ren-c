@@ -140,7 +140,7 @@ REB_R Trampoline_Core(void)
                 Drop_Action(FS_TOP);
             }
 
-            Abort_Frame(FS_TOP);  // will call va_end() if variadic frame
+            Drop_Frame(FS_TOP);  // will call va_end() if variadic frame
         }
 
         // A frame that asked to be notified about abrupt failures will get
@@ -183,7 +183,7 @@ REB_R Trampoline_Core(void)
             return R_THROWN;
         }
 
-        Abort_Frame(FRAME);
+        Drop_Frame(FRAME);
 
       restore_trap_and_continue_fs_top:
 
@@ -408,7 +408,7 @@ REB_R Trampoline_Core(void)
         TRASH_CFUNC_IF_DEBUG(Executor*, FRAME->executor);
 
         while (FS_TOP != FRAME)
-            Abort_Frame(FS_TOP);  // !!! Should all inert frames be aborted?
+            Drop_Frame(FS_TOP);  // !!! Should all inert frames be aborted?
 
         if (Get_Eval_Flag(FRAME, ABRUPT_FAILURE)) {
             //
@@ -445,7 +445,7 @@ REB_R Trampoline_Core(void)
             return R_THROWN;
         }
 
-        Abort_Frame(FRAME);  // restores to baseline
+        Drop_Frame(FRAME);  // restores to baseline
         FRAME = FS_TOP;
 
         if (FRAME->executor == &Just_Use_Out_Executor) {
