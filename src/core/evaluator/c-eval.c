@@ -1437,7 +1437,7 @@ REB_R Evaluator_Executor(REBFRM *f)
         // an assignment)
         //
         STATE = ST_EVALUATOR_SET_BLOCK_RIGHTSIDE;
-        frame_->u.multi.dsp_circled = dsp_circled;
+        frame_->u.eval.dsp_circled = dsp_circled;
         continue_uncatchable (OUT, SPARE, END);
 
     } set_block_rightside_result_in_out: {  //////////////////////////////////
@@ -1484,7 +1484,7 @@ REB_R Evaluator_Executor(REBFRM *f)
 
     } set_block_lookahead_result_in_out: {  //////////////////////////////////
 
-        REBDSP dsp_circled = frame_->u.multi.dsp_circled;
+        REBDSP dsp_circled = frame_->u.eval.dsp_circled;
 
         // Take care of the SET for the main result.  For the moment, if you
         // asked to opt out of the main result this will give you a ~blank~
