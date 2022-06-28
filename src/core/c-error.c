@@ -1272,7 +1272,7 @@ REBCTX *Error_Arg_Type(
     DECLARE_LOCAL (label);
     Get_Frame_Label_Or_Nulled(label, f);
 
-    if (FRM_PHASE(f) != f->original) {
+    if (FRM_PHASE(f) != f->u.action.original) {
         //
         // When RESKIN has been used, or if an ADAPT messes up a type and
         // it isn't allowed by an inner phase, then it causes an error.  But

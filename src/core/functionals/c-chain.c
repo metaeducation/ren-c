@@ -74,13 +74,14 @@ REBFRM *Push_Downshifted_Frame(REBVAL *out, REBFRM *f) {
     f->varlist = &PG_Inaccessible_Series;  // trash?  nullptr?
     f->rootvar = nullptr;
     TRASH_POINTER_IF_DEBUG(f->executor);  // caller must set
-    TRASH_POINTER_IF_DEBUG(f->original);  // not an action frame anymore
     TRASH_OPTION_IF_DEBUG(f->label);
 
-    sub->key = nullptr;
-    sub->key_tail = nullptr;
-    sub->arg = sub->rootvar + 1;  // !!! enforced by entering Process_Action()
-    sub->param = cast_PAR(END);
+    TRASH_IF_DEBUG(f->u);  // not an action anymore; fills with garbage bytes
+
+    sub->u.action.key = nullptr;
+    sub->u.action.key_tail = nullptr;
+    sub->u.action.arg = sub->rootvar + 1;  // !!! enforced by Action_Executor()
+    sub->u.action.param = cast_PAR(END);
 
     sub->executor = &Action_Executor;
 
@@ -169,7 +170,7 @@ REB_R Chainer_Dispatcher(REBFRM *f)
     INIT_FRM_PHASE(sub, VAL_ACTION(chained));  // has varlist already, see [3]
     INIT_FRM_BINDING(sub, VAL_ACTION_BINDING(chained));
 
-    sub->original = VAL_ACTION(chained);
+    sub->u.action.original = VAL_ACTION(chained);
     sub->label = VAL_ACTION_LABEL(chained);
   #if !defined(NDEBUG)
     sub->label_utf8 = sub->label

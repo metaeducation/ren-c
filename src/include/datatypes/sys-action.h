@@ -560,7 +560,7 @@ enum {
     // arguments at the callsite can't be gathered in sequence.  Revisiting
     // will be necessary.  This flag is set while they are revisited, which is
     // important for Action_Executor() to know -and- the GC...since it
-    // means it must protect *all* of the arguments--not just up thru f->key.
+    // means it must protect *all* of the arguments--not just up thru `key`.
     //
     ST_ACTION_DOING_PICKUPS,
 
@@ -568,7 +568,7 @@ enum {
 
     // Note: There is no ST_ACTION_DISPATCHING, because if an action is
     // dispatching, the STATE byte belongs to the dispatcher.  Detecting the
-    // state of being in dispatch is (f->key == f->key_tail), which tells you
+    // state of being in dispatch is (`key` == `key_tail`), which tells you
     // that argument enumeration is finished.
 };
 

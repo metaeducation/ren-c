@@ -1057,9 +1057,16 @@
     ((void)(x))
 
 #if defined(NDEBUG) || (! CPLUSPLUS_11)
+    #include <string.h>
+
+    #define TRASH_IF_DEBUG(x) \
+        memset(&(x), 0xBD, sizeof(x));
+
     #define UNUSED(x) \
         ((void)(x))
 #else
+    #define UNUSED TRASH_IF_DEBUG
+
     #include <cstring>  // for memset
 
     // Can't trash the variable if it's not an lvalue.  So for the basic
@@ -1079,7 +1086,7 @@
             )
         >::type* = nullptr
     >
-    void UNUSED(T && v) {
+    void TRASH_IF_DEBUG(T && v) {
         ((void)(v));
     }
 
@@ -1096,7 +1103,7 @@
             && std::is_pointer<TRR>::value
         >::type* = nullptr
     >
-    void UNUSED(T && v) {
+    void TRASH_IF_DEBUG(T && v) {
         static bool zero = false;
         if (zero)
             v = nullptr; // do null half the time, deterministic
@@ -1117,7 +1124,7 @@
             && !std::is_pointer<TRR>::value
         >::type* = nullptr
     >
-    void UNUSED(T && v) {
+    void TRASH_IF_DEBUG(T && v) {
         static bool zero = false;
         if (zero)
             v = false; // false/0 half the time, deterministic
@@ -1150,7 +1157,7 @@
             )
         >::type* = nullptr
     >
-    void UNUSED(T && v) {
+    void TRASH_IF_DEBUG(T && v) {
         memset(&v, 123, sizeof(TRR));
     }
 #endif

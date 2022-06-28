@@ -465,6 +465,70 @@ typedef const REBVAL *REB_R;
 typedef REB_R (Executor)(REBFRM *frame_);
 typedef Executor Dispatcher;  // sub-dispatched in Action_Executor()
 
+
+
+struct Reb_Frame_Action_State {
+    //
+    // If a function call is currently in effect, FRM_PHASE() is how you get
+    // at the current function being run.  This is the action that started
+    // the process.
+    //
+    // Compositions of functions (adaptations, specializations, hijacks, etc)
+    // update the FRAME!'s payload in the f->varlist archetype to say what
+    // the current "phase" is.  The reason it is updated there instead of
+    // as a REBFRM field is because specifiers use it.  Similarly, that is
+    // where the binding is stored.
+    //
+    REBACT *original;
+
+    // We use the convention that "param" refers to the TYPESET! (plus symbol)
+    // from the spec of the function--a.k.a. the "formal argument".  This
+    // pointer is moved in step with `arg` during argument fulfillment.
+    //
+    // (Note: It is const because we don't want to be changing the params,
+    // but also because it is used as a temporary to store value if it is
+    // advanced but we'd like to hold the old one...this makes it important
+    // to protect it from GC if we have advanced beyond as well!)
+    //
+    const REBKEY *key;
+    const REBKEY *key_tail;
+
+    // `arg is the "actual argument"...which holds the pointer to the
+    // REBVAL slot in the `arglist` for that corresponding `param`.  These
+    // are moved in sync.  This movement can be done for typechecking or
+    // fulfillment, see In_Typecheck_Mode()
+    //
+    // If arguments are actually being fulfilled into the slots, those
+    // slots start out as trash.  Yet the GC has access to the frame list,
+    // so it can examine `arg` and avoid trying to protect the random
+    // bits that haven't been fulfilled yet.
+    //
+    REBVAL *arg;
+
+    // `special` may be the same as `param` (if fulfilling an unspecialized
+    // function) or it may be the same as `arg` (if doing a typecheck pass).
+    // Otherwise it points into values of a specialization or APPLY, where
+    // non-null values are being written vs. acquiring callsite parameters.
+    //
+    // It is assumed that special, param, and arg may all be incremented
+    // together at the same time...reducing conditionality (this is why it
+    // is `param` and not nullptr when processing unspecialized).
+    //
+    // However, in PATH! frames, `special` is non-NULL if this is a SET-PATH!,
+    // and it is the value to ultimately set the path to.  The set should only
+    // occur at the end of the path, so most setters should check
+    // `Is_End(pvs->value + 1)` before setting.
+    //
+    // !!! See notes at top of %c-path.c about why the path dispatch is more
+    // complicated than simply being able to only pass the setval to the last
+    // item being dispatched (which would be cleaner, but some cases must
+    // look ahead with alternate handling).
+    //
+    const REBPAR *param;
+};
+
+
+
 // NOTE: The ordering of the fields in `Reb_Frame` are specifically done so
 // as to accomplish correct 64-bit alignment of pointers on 64-bit systems.
 //
@@ -542,18 +606,6 @@ typedef Executor Dispatcher;  // sub-dispatched in Action_Executor()
     //
     uintptr_t expr_index;
 
-    // If a function call is currently in effect, FRM_PHASE() is how you get
-    // at the current function being run.  This is the action that started
-    // the process.
-    //
-    // Compositions of functions (adaptations, specializations, hijacks, etc)
-    // update the FRAME!'s payload in the f->varlist archetype to say what
-    // the current "phase" is.  The reason it is updated there instead of
-    // as a REBFRM field is because specifiers use it.  Similarly, that is
-    // where the binding is stored.
-    //
-    REBACT *original;
-
     // Functions don't have "names", though they can be assigned to words.
     // However, not all function invocations are through words or paths, so
     // the label may not be known.  Mechanics with labeling try to make sure
@@ -570,7 +622,7 @@ typedef Executor Dispatcher;  // sub-dispatched in Action_Executor()
     // ultimately usable as an ordinary CTX_VARLIST() for a FRAME! value, it
     // is different because it is built progressively, with random bits in
     // its pending capacity that are specifically accounted for by the GC...
-    // which limits its marking up to the progress point of `f->key`.
+    // which limits its marking up to the progress point of `key`.
     //
     // It starts out unmanaged, so that if no usages by the user specifically
     // ask for a FRAME! value, and the REBCTX* isn't needed to store in a
@@ -580,51 +632,6 @@ typedef Executor Dispatcher;  // sub-dispatched in Action_Executor()
     REBARR *varlist;
     REBVAL *rootvar; // cache of CTX_ARCHETYPE(varlist) if varlist is not null
 
-    // We use the convention that "param" refers to the TYPESET! (plus symbol)
-    // from the spec of the function--a.k.a. the "formal argument".  This
-    // pointer is moved in step with `arg` during argument fulfillment.
-    //
-    // (Note: It is const because we don't want to be changing the params,
-    // but also because it is used as a temporary to store value if it is
-    // advanced but we'd like to hold the old one...this makes it important
-    // to protect it from GC if we have advanced beyond as well!)
-    //
-    const REBKEY *key;
-    const REBKEY *key_tail;
-
-    // `arg is the "actual argument"...which holds the pointer to the
-    // REBVAL slot in the `arglist` for that corresponding `param`.  These
-    // are moved in sync.  This movement can be done for typechecking or
-    // fulfillment, see In_Typecheck_Mode()
-    //
-    // If arguments are actually being fulfilled into the slots, those
-    // slots start out as trash.  Yet the GC has access to the frame list,
-    // so it can examine f->arg and avoid trying to protect the random
-    // bits that haven't been fulfilled yet.
-    //
-    REBVAL *arg;
-
-    // `special` may be the same as `param` (if fulfilling an unspecialized
-    // function) or it may be the same as `arg` (if doing a typecheck pass).
-    // Otherwise it points into values of a specialization or APPLY, where
-    // non-null values are being written vs. acquiring callsite parameters.
-    //
-    // It is assumed that special, param, and arg may all be incremented
-    // together at the same time...reducing conditionality (this is why it
-    // is `param` and not nullptr when processing unspecialized).
-    //
-    // However, in PATH! frames, `special` is non-NULL if this is a SET-PATH!,
-    // and it is the value to ultimately set the path to.  The set should only
-    // occur at the end of the path, so most setters should check
-    // `Is_End(pvs->value + 1)` before setting.
-    //
-    // !!! See notes at top of %c-path.c about why the path dispatch is more
-    // complicated than simply being able to only pass the setval to the last
-    // item being dispatched (which would be cleaner, but some cases must
-    // look ahead with alternate handling).
-    //
-    const REBPAR *param;
-
   union {
     // Used to slip cell to re-evaluate into Eval_Core()
     //
@@ -632,6 +639,8 @@ typedef Executor Dispatcher;  // sub-dispatched in Action_Executor()
         const Cell *current;
         option(const REBVAL*) current_gotten;
     } eval;
+
+    struct Reb_Frame_Action_State action;
 
     struct {
         REBFRM *main_frame;

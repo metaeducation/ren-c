@@ -51,13 +51,16 @@
 #define f_next f->feed->value
 #define f_next_gotten f->feed->gotten
 
-#undef ARG              // undefine the ARG(x) macro that natives use
-#define ARG f->arg      // ...and redefine to mean currently fulfilling arg
+#undef ARG                       // undefine the ARG(x) macro that natives use
+#define ARG f->u.action.arg      // ...aredefine as currently fulfilling arg
 
 #undef PARAM
-#define PARAM f->param
+#define PARAM f->u.action.param
 
-#define KEY f->key
+#define KEY f->u.action.key
+#define KEY_TAIL f->u.action.key_tail
+
+#define ORIGINAL f->u.action.original
 
 #define frame_ f  // for OUT, SPARE, STATE macros
 
@@ -173,14 +176,14 @@ REB_R Action_Executor(REBFRM *f)
 
   fulfill:
 
-    assert(not IS_POINTER_TRASH_DEBUG(f->original));  // set by Begin_Action()
+    assert(not IS_POINTER_TRASH_DEBUG(ORIGINAL));  // set by Begin_Action()
 
     assert(DSP >= f->baseline.dsp);  // path processing may push REFINEMENT!s
 
     assert(STATE != ST_ACTION_DOING_PICKUPS);
     STATE = ST_ACTION_FULFILLING_ARGS;
 
-    for (; f->key != f->key_tail; ++f->key, ++f->arg, ++f->param) {
+    for (; KEY != KEY_TAIL; ++KEY, ++ARG, ++PARAM) {
 
   //=//// CONTINUES (AT TOP SO GOTOS DO NOT CROSS INITIALIZATIONS /////////=//
 
@@ -192,13 +195,13 @@ REB_R Action_Executor(REBFRM *f)
             if (DSP != f->baseline.dsp)
                 goto next_pickup;
 
-            f->key = nullptr;  // don't need f->key
-            f->key_tail = nullptr;
+            f->u.action.key = nullptr;  // don't need key
+            f->u.action.key_tail = nullptr;
             goto fulfill_and_any_pickups_done;
         }
         continue;
 
-      skip_fulfilling_arg_for_now:  // the GC marks args up through f->arg...
+      skip_fulfilling_arg_for_now:  // the GC marks args up through ARG...
         assert(Is_Void(ARG));
         continue;
 
@@ -339,7 +342,7 @@ REB_R Action_Executor(REBFRM *f)
                 goto continue_fulfilling;
             }
 
-            if (GET_PARAM_FLAG(f->param, VARIADIC)) {
+            if (GET_PARAM_FLAG(PARAM, VARIADIC)) {
                 //
                 // Stow unevaluated cell into an array-form variadic, so
                 // the user can do 0 or 1 TAKEs of it.
@@ -458,7 +461,7 @@ REB_R Action_Executor(REBFRM *f)
         // back to this call through a reified FRAME!, and are able to
         // consume additional arguments during the function run.
         //
-        if (GET_PARAM_FLAG(f->param, VARIADIC)) {
+        if (GET_PARAM_FLAG(PARAM, VARIADIC)) {
             Init_Varargs_Untyped_Normal(ARG, f);
             goto continue_fulfilling;
         }
@@ -614,7 +617,7 @@ REB_R Action_Executor(REBFRM *f)
             ){
                 // We need to defer and let the right hand quote that is
                 // quoting leftward win.  We use ST_EVALUATOR_LOOKING_AHEAD
-                // to jump into a subframe where subframe->out is the f->arg,
+                // to jump into a subframe where subframe->out is the ARG,
                 // and it knows to get the arg from there.
 
                 REBFLGS flags =
@@ -697,9 +700,9 @@ REB_R Action_Executor(REBFRM *f)
         //
         REBINT offset =
             VAL_WORD_INDEX(DS_TOP) - (ARG - FRM_ARGS_HEAD(f)) - 1;
-        f->key += offset;
-        f->arg += offset;
-        f->param += offset;
+        KEY += offset;
+        ARG += offset;
+        PARAM += offset;
 
         assert(VAL_WORD_SYMBOL(DS_TOP) == KEY_SYMBOL(KEY));
         DS_DROP();
@@ -708,8 +711,8 @@ REB_R Action_Executor(REBFRM *f)
             if (DSP != f->baseline.dsp)
                 goto next_pickup;
 
-            f->key = nullptr;  // don't need f->key
-            f->key_tail = nullptr;
+            f->u.action.key = nullptr;  // don't need key
+            f->u.action.key_tail = nullptr;
             goto fulfill_and_any_pickups_done;
         }
 
@@ -724,8 +727,8 @@ REB_R Action_Executor(REBFRM *f)
 
   fulfill_and_any_pickups_done:
 
-    f->key = nullptr;  // signals !Is_Action_Frame_Fulfilling()
-    f->key_tail = nullptr;
+    f->u.action.key = nullptr;  // signals !Is_Action_Frame_Fulfilling()
+    f->u.action.key_tail = nullptr;
 
     if (Get_Eval_Flag(f, FULFILL_ONLY)) {  // only fulfillment, no typecheck
         assert(Is_Fresh(OUT));  // didn't touch out
@@ -751,11 +754,11 @@ REB_R Action_Executor(REBFRM *f)
 
     Mark_Eval_Out_Stale(OUT);
 
-    f->key = ACT_KEYS(&f->key_tail, FRM_PHASE(f));
-    f->arg = FRM_ARGS_HEAD(f);
-    f->param = ACT_PARAMS_HEAD(FRM_PHASE(f));
+    KEY = ACT_KEYS(&KEY_TAIL, FRM_PHASE(f));
+    ARG = FRM_ARGS_HEAD(f);
+    PARAM = ACT_PARAMS_HEAD(FRM_PHASE(f));
 
-    for (; f->key != f->key_tail; ++f->key, ++f->arg, ++f->param) {
+    for (; KEY != KEY_TAIL; ++KEY, ++ARG, ++PARAM) {
         assert(not Is_Void(ARG));
 
         // We assume typecheck was done when the parameter was specialized.
@@ -1174,10 +1177,10 @@ REB_R Action_Executor(REBFRM *f)
             assert(IS_FRAME(OUT));
 
             REBACT *redo_phase = VAL_FRAME_PHASE(OUT);  // earlier?  see [2]
-            f->key = ACT_KEYS(&f->key_tail, redo_phase);
-            f->param = ACT_PARAMS_HEAD(redo_phase);
-            f->arg = FRM_ARGS_HEAD(f);
-            for (; f->key != f->key_tail; ++f->key, ++f->arg, ++f->param) {
+            KEY = ACT_KEYS(&KEY_TAIL, redo_phase);
+            PARAM = ACT_PARAMS_HEAD(redo_phase);
+            ARG = FRM_ARGS_HEAD(f);
+            for (; KEY != KEY_TAIL; ++KEY, ++ARG, ++PARAM) {
                 if (Is_Specialized(PARAM))
                     Copy_Cell(ARG, PARAM);  // must reset, see [3]
             }
@@ -1205,7 +1208,7 @@ REB_R Action_Executor(REBFRM *f)
 // values behind ARG(name), REF(name), D_ARG(3),  etc.)
 //
 // This only allocates space for the arguments, it does not initialize.
-// Eval_Core initializes as it goes, and updates f->key so the GC knows how
+// Eval_Core initializes as it goes, and updates KEY so the GC knows how
 // far it has gotten so as not to see garbage.  APPLY has different handling
 // when it has to build the frame for the user to write to before running;
 // so Eval_Core only checks the arguments, and does not fulfill them.
@@ -1299,12 +1302,6 @@ void Push_Action(
     // specialization together.  This means only the outermost specialization
     // is needed to fill the specialized slots contributed by later phases.
     //
-    // f->param here will either equal f->key (to indicate normal argument
-    // fulfillment) or the head of the "exemplar".
-    //
-    // !!! It is planned that exemplars will be unified with paramlist, making
-    // the context keys something different entirely.
-    //
     REBARR *partials = try_unwrap(ACT_PARTIALS(act));
     if (partials) {
         const Cell *word_tail = ARR_TAIL(partials);
@@ -1334,13 +1331,11 @@ void Begin_Action_Core(
 
     f->executor = &Action_Executor;
 
-    assert(IS_POINTER_TRASH_DEBUG(f->original));
-    f->original = FRM_PHASE(f);
+    ORIGINAL = FRM_PHASE(f);
 
-    // f->key_tail = v-- set here
-    f->key = ACT_KEYS(&f->key_tail, f->original);
-    f->param = ACT_PARAMS_HEAD(f->original);
-    f->arg = f->rootvar + 1;
+    KEY = ACT_KEYS(&KEY_TAIL, ORIGINAL);
+    PARAM = ACT_PARAMS_HEAD(ORIGINAL);
+    ARG = f->rootvar + 1;
 
     assert(IS_OPTION_TRASH_DEBUG(f->label));  // ACTION! makes valid
     assert(not label or IS_SYMBOL(unwrap(label)));
@@ -1459,14 +1454,14 @@ void Drop_Action(REBFRM *f) {
         f->varlist = CTX_VARLIST(
             Steal_Context_Vars(
                 CTX(f->varlist),
-                f->original  // degrade keysource from f
+                ORIGINAL  // degrade keysource from f
             )
         );
         assert(NOT_SERIES_FLAG(f->varlist, MANAGED));
         INIT_BONUS_KEYSOURCE(f->varlist, f);
       #endif
 
-        INIT_BONUS_KEYSOURCE(f->varlist, ACT_KEYLIST(f->original));
+        INIT_BONUS_KEYSOURCE(f->varlist, ACT_KEYLIST(ORIGINAL));
         f->varlist = nullptr;
     }
     else {
@@ -1498,7 +1493,7 @@ void Drop_Action(REBFRM *f) {
     }
   #endif
 
-    TRASH_POINTER_IF_DEBUG(f->original); // action is no longer running
+    TRASH_POINTER_IF_DEBUG(ORIGINAL); // action is no longer running
     f->executor = nullptr;  // so GC won't see this frame as Action GC
 
     TRASH_OPTION_IF_DEBUG(f->label);

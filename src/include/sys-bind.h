@@ -327,7 +327,7 @@ inline static void INIT_BINDING_MAY_MANAGE(
         return;  // unbound or managed already (frame OR object context)
 
     REBFRM *f = FRM(BONUS(KeySource, binding));  // unmanaged only frame
-    assert(f->key == f->key_tail);  // cannot manage varlist in mid fulfill!
+    assert(f->u.action.key == f->u.action.key_tail);  // mid-fulfillment!
     UNUSED(f);
 
     m_cast(REBSER*, binding)->leader.bits |= NODE_FLAG_MANAGED;  // GC sees...
@@ -416,8 +416,8 @@ inline static REBCTX *VAL_WORD_CONTEXT(const REBVAL *v) {
         binding = CTX_VARLIST(INODE(PatchContext, binding));
     assert(
         GET_SERIES_FLAG(binding, MANAGED) or
-        FRM(BONUS(KeySource, binding))->key
-            == FRM(BONUS(KeySource, binding))->key_tail  // not fulfilling
+        FRM(BONUS(KeySource, binding))->u.action.key_tail
+            == FRM(BONUS(KeySource, binding))->u.action.key  // not fulfilling
     );
     binding->leader.bits |= NODE_FLAG_MANAGED;  // !!! review managing needs
     REBCTX *c = CTX(binding);

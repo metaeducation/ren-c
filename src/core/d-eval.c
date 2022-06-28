@@ -138,10 +138,8 @@ static void Evaluator_Shared_Checks_Debug(REBFRM *f)
     //
     assert(TG_Num_Black_Series == 0);
 
-    // We only have a label if we are in the middle of running a function,
-    // and if we're not running a function then f->original should be null.
+    // We only have a label if we are in the middle of running a function.
     //
-    assert(IS_POINTER_TRASH_DEBUG(f->original));
     assert(IS_POINTER_TRASH_DEBUG(unwrap(f->label)));
 
     if (f->varlist) {
@@ -208,9 +206,9 @@ void Evaluator_Expression_Checks_Debug(REBFRM *f)
 
     // Trash fields that GC won't be seeing unless Is_Action_Frame()
     //
-    TRASH_POINTER_IF_DEBUG(f->key);
-    TRASH_POINTER_IF_DEBUG(f->arg);
-    TRASH_POINTER_IF_DEBUG(f->param);
+    TRASH_POINTER_IF_DEBUG(f->u.action.key);
+    TRASH_POINTER_IF_DEBUG(f->u.action.arg);
+    TRASH_POINTER_IF_DEBUG(f->u.action.param);
 
     assert(not f->varlist or NOT_SERIES_FLAG(f->varlist, INACCESSIBLE));
 

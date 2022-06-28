@@ -149,7 +149,7 @@ REB_R Encloser_Dispatcher(REBFRM *f)
     // should not be this frame any longer.
     //
     assert(BONUS(KeySource, varlist) == f);
-    INIT_BONUS_KEYSOURCE(varlist, ACT_KEYLIST(f->original));
+    INIT_BONUS_KEYSOURCE(varlist, ACT_KEYLIST(f->u.action.original));
     //-------------------------------------------------------------end-new-code
 
     // We're passing the built context to the `outer` function as a FRAME!,

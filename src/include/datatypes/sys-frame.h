@@ -65,17 +65,12 @@ inline static bool ANY_ESCAPABLE_GET(const Cell *v) {
     ((f)->executor == &Action_Executor)
 
 
-// While a function frame is fulfilling its arguments, the `f->key` will
-// be pointing to a typeset.  The invariant that is maintained is that
-// `f->key` will *not* be a typeset when the function is actually in the
-// process of running.  (So no need to set/clear/test another "mode".)
+// Some cases in debug code call this all the way up the call stack; it may
+// be helpful to inline this test some of those places.
 //
-// Some cases in debug code call this all the way up the call stack, and when
-// the debug build doesn't inline functions it's best to use as a macro.
-
 inline static bool Is_Action_Frame_Fulfilling(REBFRM *f) {
     assert(Is_Action_Frame(f));
-    return f->key != f->key_tail;
+    return f->u.action.key != f->u.action.key_tail;
 }
 
 
@@ -489,7 +484,8 @@ inline static void Prep_Frame_Core(
 
     TRASH_POINTER_IF_DEBUG(f->alloc_value_list);
 
-    TRASH_POINTER_IF_DEBUG(f->original);
+    TRASH_IF_DEBUG(f->u);  // fills with garbage bytes in debug build
+
     TRASH_OPTION_IF_DEBUG(f->label);
   #if DEBUG_FRAME_LABELS
     TRASH_POINTER_IF_DEBUG(f->label_utf8);
@@ -747,10 +743,10 @@ inline static bool Pushed_Continuation(
         Push_Action(f, VAL_ACTION(action), VAL_ACTION_BINDING(action));
         Begin_Prefix_Action(f, VAL_ACTION_LABEL(action));
 
-        const REBKEY *key = f->key;
-        const REBPAR *param = f->param;
-        REBVAL *arg = f->arg;
-        for (; key != f->key_tail; ++key, ++param, ++arg) {
+        const REBKEY *key = f->u.action.key;
+        const REBPAR *param = f->u.action.param;
+        REBVAL *arg = f->u.action.arg;
+        for (; key != f->u.action.key_tail; ++key, ++param, ++arg) {
             if (Is_Specialized(param))
                 Copy_Cell(arg, param);
             else
@@ -769,10 +765,10 @@ inline static bool Pushed_Continuation(
         Push_Action(f, VAL_ACTION(branch), VAL_ACTION_BINDING(branch));
         Begin_Prefix_Action(f, VAL_ACTION_LABEL(branch));
 
-        const REBKEY *key = f->key;
-        const REBPAR *param = f->param;
-        REBVAL *arg = f->arg;
-        for (; key != f->key_tail; ++key, ++param, ++arg) {
+        const REBKEY *key = f->u.action.key;
+        const REBPAR *param = f->u.action.param;
+        REBVAL *arg = f->u.action.arg;
+        for (; key != f->u.action.key_tail; ++key, ++param, ++arg) {
             if (Is_Specialized(param))
                 Copy_Cell(arg, param);
             else

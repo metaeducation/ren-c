@@ -828,8 +828,8 @@ static void Mark_Frame_Stack_Deep(void)
             goto propagate_and_continue;
         }
 
-        Queue_Mark_Node_Deep(  // f->original is never nullptr
-            cast(const REBNOD**, m_cast(const REBACT**, &f->original))
+        Queue_Mark_Node_Deep(  // f->u.action.original is never nullptr
+            cast(const REBNOD**, m_cast(const REBACT**, &f->u.action.original))
         );
 
         if (f->label) { // nullptr if anonymous
@@ -840,12 +840,12 @@ static void Mark_Frame_Stack_Deep(void)
             }
         }
 
-        // param can be used to GC protect an arbitrary value while a
-        // function is running, currently.  nullptr is permitted as well
-        // (e.g. path frames use nullptr to indicate no set value on a path)
+        // !!! A feature was allowing `param` to GC protect an arbitrary
+        // value while a function was running.  This is not currently being
+        // used, but other frames could do this with their spare state.
         //
-        if (f->key != f->key_tail and f->param)
-            Queue_Mark_Opt_Void_Cell_Deep(f->param);
+        if (f->u.action.key != f->u.action.key_tail and f->u.action.param)
+            Queue_Mark_Opt_Void_Cell_Deep(f->u.action.param);
 
         if (f->varlist and GET_SERIES_FLAG(f->varlist, MANAGED)) {
             //
@@ -897,14 +897,14 @@ static void Mark_Frame_Stack_Deep(void)
             // Once the frame is fulfilled, it may be exposed to usermode code
             // as a FRAME!...and there can be no END/prep cells.
             //
-            // (Note that when key == f->key, that means that arg is the
-            // output slot for some other frame's f->out...which is a case
-            // where transient RESET() can also leave END in slots.)
+            // (Note that when key == f->u.action.key, that means that arg is
+            // the output slot for some other frame's f->out...which is a case
+            // where transient RESET() can also leave voids in slots.)
             //
             if (Is_Fresh(arg))
-                assert(f->key != tail);
+                assert(f->u.action.key != tail);
             else {
-                if (key == f->key)
+                if (key == f->u.action.key)
                     Queue_Mark_Maybe_Stale_Cell_Deep(arg);
                 else
                     Queue_Mark_Opt_Void_Cell_Deep(arg);

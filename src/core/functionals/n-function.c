@@ -474,7 +474,7 @@ REB_R Init_Thrown_Unwind_Value(
             if (Is_Action_Frame_Fulfilling(f))
                 continue; // not ready to exit
 
-            if (VAL_ACTION(level) == f->original) {
+            if (VAL_ACTION(level) == f->u.action.original) {
                 TG_Unwind_Frame = f;
                 break;
             }
@@ -582,7 +582,7 @@ REBNATIVE(definitional_return)
     // that an ENCLOSE'd function can't return any types the original function
     // could not.  :-(
     //
-    REBACT *target_fun = target_frame->original;
+    REBACT *target_fun = target_frame->u.action.original;
 
     // Defininitional returns are "locals"--there's no argument type check.
     // So TYPESET! bits in the RETURN param are used for legal return types.

@@ -646,8 +646,12 @@ REBNATIVE(redo)
     //
     if (REF(other)) {
         REBVAL *sibling = ARG(other);
-        if (ACT_KEYLIST(f->original) != ACT_KEYLIST(VAL_ACTION(sibling)))
+        if (
+            ACT_KEYLIST(f->u.action.original)
+            != ACT_KEYLIST(VAL_ACTION(sibling))
+        ){
             fail ("/OTHER function passed to REDO has incompatible FRAME!");
+        }
 
         INIT_VAL_FRAME_PHASE(restartee, VAL_ACTION(sibling));
         INIT_VAL_FRAME_BINDING(restartee, VAL_ACTION_BINDING(sibling));

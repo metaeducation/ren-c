@@ -2036,7 +2036,7 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
 
       token_prefixable_sigil:
         if (prefix_pending != TOKEN_END)
-            fail (Error_Syntax(ss, token));  // can't make a GET-GET-WORD!
+            fail (Error_Syntax(ss, token));  // can't make GET-GET-WORD!
 
         // !!! This is a hack to support plain colon.  It should support more
         // than one colon, but this gets a little further for now.  :-/

@@ -264,10 +264,10 @@ static bool Subparse_Throws(
 
     Begin_Prefix_Action(f, Canon(SUBPARSE));
 
-    f->key = nullptr;  // informs infix lookahead
-    f->key_tail = nullptr;
-    f->arg = m_cast(REBVAL*, END);
-    f->param = cast_PAR(END);
+    f->u.action.key = nullptr;  // informs infix lookahead
+    f->u.action.key_tail = nullptr;
+    f->u.action.arg = m_cast(REBVAL*, END);
+    f->u.action.param = cast_PAR(END);
 
     // This needs to be set before INCLUDE_PARAMS_OF_SUBPARSE; it is what
     // ensures that usermode accesses to the frame won't be able to fiddle
