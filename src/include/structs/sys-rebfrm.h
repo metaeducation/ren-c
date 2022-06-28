@@ -71,33 +71,10 @@ STATIC_ASSERT(EVAL_FLAG_ALLOCATED_FEED == NODE_FLAG_MANAGED);  // should be ok
     FLAG_LEFT_BIT(3)
 
 
-//=//// EVAL_FLAG_CACHE_NO_LOOKAHEAD //////////////////////////////////////=//
+//=//// EVAL_FLAG_4 //////////////////////////////////////////////////////=//
 //
-// Without intervention, running an invisible will consume the state of the
-// FEED_FLAG_NO_LOOKAHEAD.  That creates a problem for things like:
-//
-//     >> 1 + comment "a" comment "b" 2 * 3
-//     == 7  ; you'll get 7 and not 9 if FEED_FLAG_NO_LOOKAHEAD is erased
-//
-// Originally invisible functions were pre-announced as purely invisible, and
-// would un-set the flag while the invisible ran...then restore it to the
-// previous state.  But this has changed to were it's not known until after
-// a function has executed if it was invisible.
-//
-// The current logic is to cache the *feed* flag in this *frame* flag before
-// each function runs, and then restore it in the event the execution turns
-// out to be invisible.
-//
-// Note: This is the same flag value as FEED_FLAG_NO_LOOKAHEAD.
-//
-// !!! This could lead to "multiplying" the influences of the flag across
-// several invisible evaluations; this should be reviewed to see if it makes
-// any actual problems in practice.
-//
-#define EVAL_FLAG_CACHE_NO_LOOKAHEAD \
+#define EVAL_FLAG_4 \
     FLAG_LEFT_BIT(4)
-
-STATIC_ASSERT(EVAL_FLAG_CACHE_NO_LOOKAHEAD == FEED_FLAG_NO_LOOKAHEAD);
 
 
 //=//// EVAL_FLAG_5 ///////////////////////////////////////////////////////=//

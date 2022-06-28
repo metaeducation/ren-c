@@ -1346,13 +1346,6 @@ void Begin_Action_Core(
     f->label_utf8 = cast(const char*, Frame_Label_Or_Anonymous_UTF8(f));
   #endif
 
-    // Cache the feed lookahead state so it can be restored in the event that
-    // the evaluation turns out to be invisible.
-    //
-    STATIC_ASSERT(FEED_FLAG_NO_LOOKAHEAD == EVAL_FLAG_CACHE_NO_LOOKAHEAD);
-    assert(Not_Eval_Flag(f, CACHE_NO_LOOKAHEAD));
-    f->flags.bits |= f->feed->flags.bits & FEED_FLAG_NO_LOOKAHEAD;
-
     if (enfix) {
         //
         // While FEED_FLAG_NEXT_ARG_FROM_OUT is set only during the first
@@ -1386,21 +1379,6 @@ void Drop_Action(REBFRM *f) {
 
     if (Not_Eval_Flag(f, FULFILLING_ARG))
         CLEAR_FEED_FLAG(f->feed, BARRIER_HIT);
-
-    if (
-        not Is_Throwing(f)
-        and (Is_Stale(f->out) and VAL_TYPE_UNCHECKED(f->out) != REB_0)
-    ){
-        //
-        // If the whole evaluation of the action turned out to be invisible,
-        // then refresh the feed's NO_LOOKAHEAD state to whatever it was
-        // before that invisible evaluation ran.
-        //
-        STATIC_ASSERT(FEED_FLAG_NO_LOOKAHEAD == EVAL_FLAG_CACHE_NO_LOOKAHEAD);
-        f->feed->flags.bits &= ~FEED_FLAG_NO_LOOKAHEAD;
-        f->feed->flags.bits |= f->flags.bits & EVAL_FLAG_CACHE_NO_LOOKAHEAD;
-    }
-    Clear_Eval_Flag(f, CACHE_NO_LOOKAHEAD);
 
     Clear_Executor_Flag(ACTION, f, RUNNING_ENFIX);
     Clear_Executor_Flag(ACTION, f, FULFILL_ONLY);
