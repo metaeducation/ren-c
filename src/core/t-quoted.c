@@ -482,7 +482,7 @@ REBNATIVE(maybe_a)
         OUT,
         frame_,
         EVAL_FLAG_MAYBE_STALE
-            | EVAL_FLAG_SINGLE_STEP
+            | EVAL_EXECUTOR_FLAG_SINGLE_STEP
     )){
         return THROWN;
     }

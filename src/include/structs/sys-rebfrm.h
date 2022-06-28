@@ -351,11 +351,11 @@ STATIC_ASSERT(EVAL_FLAG_FAILURE_RESULT_OK == CELL_FLAG_NOTE);
 
 //=//// EVAL_FLAG_EXECUTOR_29 //////////////////////////////////////////////=//
 //
-// * EVAL_FLAG_XXX: Evaluator_Executor()
+// * EVAL_EXECUTOR_FLAG_XXX
 //
 // None defined yet.
 //
-// * EVAL_FLAG_DISPATCHER_CATCHES: Action_Executor()
+// * ACTION_EXECUTOR_FLAG_DISPATCHER_CATCHES
 //
 // Every Executor() gets called with the chance to cleanup in the THROWING
 // state.  But in the specific case of the Action_Executor(), it uses this
@@ -366,14 +366,14 @@ STATIC_ASSERT(EVAL_FLAG_FAILURE_RESULT_OK == CELL_FLAG_NOTE);
 #define EVAL_FLAG_EXECUTOR_29 \
     FLAG_LEFT_BIT(29)
 
-#define EVAL_FLAG_DISPATCHER_CATCHES EVAL_FLAG_EXECUTOR_29
+#define ACTION_EXECUTOR_FLAG_DISPATCHER_CATCHES EVAL_FLAG_EXECUTOR_29
 
 
 //=//// EVAL_FLAG_EXECUTOR_30 /////////////////////////////////////////////=//
 //
 // This is a flag that can be used specific to the executor that is running.
 //
-// * EVAL_FLAG_SINGLE_STEP: Evaluator_Executor()
+// * EVAL_EXECUTOR_FLAG_SINGLE_STEP: Evaluator_Executor()
 //
 // !!! This is a revival of an old idea that a frame flag would hold the state
 // of whether to do to the end or not.  The reason that idea was scrapped was
@@ -383,7 +383,7 @@ STATIC_ASSERT(EVAL_FLAG_FAILURE_RESULT_OK == CELL_FLAG_NOTE);
 // always has to return in stackless to the Trampoline, so running to end by
 // default is a convenience with no real different effect in evaluator returns.
 //
-// * EVAL_FLAG_FULFILL_ONLY: Action_Executor()
+// * ACTION_EXECUTOR_FLAG_FULFILL_ONLY
 //
 // In some scenarios, the desire is to fill up the frame but not actually run
 // an action.  At one point this was done with a special "dummy" action to
@@ -397,8 +397,8 @@ STATIC_ASSERT(EVAL_FLAG_FAILURE_RESULT_OK == CELL_FLAG_NOTE);
 #define EVAL_FLAG_EXECUTOR_30 \
     FLAG_LEFT_BIT(30)
 
-#define EVAL_FLAG_SINGLE_STEP EVAL_FLAG_EXECUTOR_30
-#define EVAL_FLAG_FULFILL_ONLY EVAL_FLAG_EXECUTOR_30
+#define EVAL_EXECUTOR_FLAG_SINGLE_STEP EVAL_FLAG_EXECUTOR_30
+#define ACTION_EXECUTOR_FLAG_FULFILL_ONLY EVAL_FLAG_EXECUTOR_30
 
 
 
@@ -406,13 +406,13 @@ STATIC_ASSERT(EVAL_FLAG_FAILURE_RESULT_OK == CELL_FLAG_NOTE);
 //
 // Another flag that can be picked specific to the running executor.
 //
-// * EVAL_FLAG_INERT_OPTIMIZATION: Evaluator_Executor()
+// * EVAL_EXECUTOR_FLAG_INERT_OPTIMIZATION
 //
 // If ST_EVALUATOR_LOOKING_AHEAD is being used due to an inert optimization,
 // this flag is set, so that the quoting machinery can realize the lookback
 // quote is not actually too late.
 //
-// *  EVAL_FLAG_TYPECHECK_ONLY: Action_Executor()
+// *  ACTION_EXECUTOR_FLAG_TYPECHECK_ONLY
 //
 // This is used by <blank> to indicate that once the frame is fulfilled, the
 // only thing that should be done is typechecking...don't run the action.
@@ -420,8 +420,8 @@ STATIC_ASSERT(EVAL_FLAG_FAILURE_RESULT_OK == CELL_FLAG_NOTE);
 #define EVAL_FLAG_EXECUTOR_31 \
     FLAG_LEFT_BIT(31)
 
-#define EVAL_FLAG_INERT_OPTIMIZATION EVAL_FLAG_EXECUTOR_31
-#define EVAL_FLAG_TYPECHECK_ONLY EVAL_FLAG_EXECUTOR_31
+#define EVAL_EXECUTOR_FLAG_INERT_OPTIMIZATION EVAL_FLAG_EXECUTOR_31
+#define ACTION_EXECUTOR_FLAG_TYPECHECK_ONLY EVAL_FLAG_EXECUTOR_31
 
 
 STATIC_ASSERT(31 < 32);  // otherwise EVAL_FLAG_XXX too high
@@ -729,3 +729,33 @@ inline static bool FRM_IS_VARIADIC(REBFRM *f);
 
 #define FS_TOP (TG_Top_Frame + 0) // avoid assign to FS_TOP via + 0
 #define FS_BOTTOM (TG_Bottom_Frame + 0) // avoid assign to FS_BOTTOM via + 0
+
+
+#if defined(NDEBUG)
+    #define ensure_executor(executor,f) (f)  // no-op in release build
+#else
+    inline static REBFRM *ensure_executor(Executor *executor, REBFRM *f) {
+        if (f->executor != executor)
+            assert(!"Wrong executor for flag tested");
+        return f;
+    }
+#endif
+
+#define EXECUTOR_ACTION &Action_Executor
+#define EXECUTOR_EVAL &Evaluator_Executor
+
+#define Get_Executor_Flag(executor,f,name) \
+    ((ensure_executor(EXECUTOR_##executor, (f))->flags.bits \
+        & executor##_EXECUTOR_FLAG_##name) != 0)
+
+#define Not_Executor_Flag(executor,f,name) \
+    ((ensure_executor(EXECUTOR_##executor, (f))->flags.bits \
+        & executor##_EXECUTOR_FLAG_##name) == 0)
+
+#define Set_Executor_Flag(executor,f,name) \
+    (ensure_executor(EXECUTOR_##executor, (f))->flags.bits \
+        |= executor##_EXECUTOR_FLAG_##name)
+
+#define Clear_Executor_Flag(executor,f,name) \
+    (ensure_executor(EXECUTOR_##executor, (f))->flags.bits \
+        &= ~executor##_EXECUTOR_FLAG_##name)

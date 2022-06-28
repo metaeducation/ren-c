@@ -172,7 +172,7 @@ inline static bool Did_Init_Inert_Optimize_Complete(
                 *flags |=
                     EVAL_FLAG_MAYBE_STALE  // won't be, but avoids RESET()
                     | FLAG_STATE_BYTE(ST_EVALUATOR_LOOKING_AHEAD)
-                    | EVAL_FLAG_INERT_OPTIMIZATION;
+                    | EVAL_EXECUTOR_FLAG_INERT_OPTIMIZATION;
                 return false;
             }
 
@@ -186,7 +186,7 @@ inline static bool Did_Init_Inert_Optimize_Complete(
 
             *flags |=
                 FLAG_STATE_BYTE(ST_EVALUATOR_LOOKING_AHEAD)
-                | EVAL_FLAG_INERT_OPTIMIZATION
+                | EVAL_EXECUTOR_FLAG_INERT_OPTIMIZATION
                 | EVAL_FLAG_MAYBE_STALE;  // won't be, but avoids RESET()
             return false;
         }
@@ -209,7 +209,7 @@ inline static bool Did_Init_Inert_Optimize_Complete(
         *flags |=
             EVAL_FLAG_MAYBE_STALE  // won't be, but avoids RESET()
             | FLAG_STATE_BYTE(ST_EVALUATOR_LOOKING_AHEAD)
-            | EVAL_FLAG_INERT_OPTIMIZATION;
+            | EVAL_EXECUTOR_FLAG_INERT_OPTIMIZATION;
         return false;  // do normal enfix handling
     }
 
@@ -235,7 +235,7 @@ inline static bool Eval_Step_Throws(
     REBFRM *f
 ){
     assert(NOT_FEED_FLAG(f->feed, NO_LOOKAHEAD));
-    assert(Get_Eval_Flag(f, SINGLE_STEP));
+    assert(Get_Executor_Flag(EVAL, f, SINGLE_STEP));
 
     if (Not_Eval_Flag(f, MAYBE_STALE))
         RESET(out);
@@ -264,7 +264,7 @@ inline static bool Eval_Step_In_Subframe_Throws(
     if (not (flags & EVAL_FLAG_MAYBE_STALE))
         assert(Is_Fresh(out));
 
-    assert(flags & EVAL_FLAG_SINGLE_STEP);
+    assert(flags & EVAL_EXECUTOR_FLAG_SINGLE_STEP);
 
     if (Did_Init_Inert_Optimize_Complete(out, f->feed, &flags))
         return false;  // If eval not hooked, ANY-INERT! may not need a frame
@@ -307,7 +307,7 @@ inline static bool Eval_Step_In_Any_Array_At_Throws(
 ){
     assert(Is_Fresh(out));
 
-    assert(not (flags & EVAL_FLAG_SINGLE_STEP));  // added here
+    assert(not (flags & EVAL_EXECUTOR_FLAG_SINGLE_STEP));  // added here
     DECLARE_FEED_AT_CORE (feed, any_array, specifier);
 
     if (Is_End(feed->value)) {
@@ -318,7 +318,7 @@ inline static bool Eval_Step_In_Any_Array_At_Throws(
     DECLARE_FRAME (
         f,
         feed,
-        flags | EVAL_FLAG_ALLOCATED_FEED | EVAL_FLAG_SINGLE_STEP
+        flags | EVAL_FLAG_ALLOCATED_FEED | EVAL_EXECUTOR_FLAG_SINGLE_STEP
     );
 
     Push_Frame(out, f);
@@ -362,7 +362,7 @@ inline static bool Eval_Step_In_Va_Throws(
 ){
     DECLARE_VA_FEED (feed, p, vaptr, feed_flags);
 
-    assert(eval_flags & EVAL_FLAG_SINGLE_STEP);
+    assert(eval_flags & EVAL_EXECUTOR_FLAG_SINGLE_STEP);
 
     DECLARE_FRAME (
         f,

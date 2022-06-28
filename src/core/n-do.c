@@ -59,7 +59,7 @@ REBNATIVE(reeval)
     bool enfix = IS_ACTION(v) and GET_ACTION_FLAG(VAL_ACTION(v), ENFIXED);
 
     REBFLGS flags =
-        EVAL_FLAG_SINGLE_STEP
+        EVAL_EXECUTOR_FLAG_SINGLE_STEP
         | EVAL_FLAG_MAYBE_STALE;
 
     if (Reevaluate_In_Subframe_Throws(
@@ -220,7 +220,7 @@ REBNATIVE(shove)
         OUT,
         frame_,
         shovee,
-        EVAL_FLAG_SINGLE_STEP | EVAL_FLAG_MAYBE_STALE,
+        EVAL_EXECUTOR_FLAG_SINGLE_STEP | EVAL_FLAG_MAYBE_STALE,
         enfix
     )){
         rebRelease(composed_set_path);  // ok if nullptr
@@ -341,7 +341,7 @@ REBNATIVE(do)
         DECLARE_FRAME (
             subframe,
             f->feed,
-            EVAL_FLAG_SINGLE_STEP | EVAL_FLAG_MAYBE_STALE
+            EVAL_EXECUTOR_FLAG_SINGLE_STEP | EVAL_FLAG_MAYBE_STALE
         );
 
         Push_Frame(OUT, subframe);
@@ -490,7 +490,7 @@ REBNATIVE(evaluate)
             delegate_subframe (subframe);
 
         Set_Eval_Flag(subframe, TRAMPOLINE_KEEPALIVE);  // to ask how far it got
-        Set_Eval_Flag(subframe, SINGLE_STEP);
+        Set_Executor_Flag(EVAL, subframe, SINGLE_STEP);
 
         STATE = ST_EVALUATE_SINGLE_STEPPING;
         continue_uncatchable_subframe (subframe);
@@ -559,7 +559,7 @@ REBNATIVE(evaluate)
             if (Is_End(f->feed->value))
                 return nullptr;
 
-            REBFLGS flags = EVAL_FLAG_SINGLE_STEP;
+            REBFLGS flags = EVAL_EXECUTOR_FLAG_SINGLE_STEP;
             if (Eval_Step_In_Subframe_Throws(SPARE, f, flags))
                 return THROWN;
         }
@@ -833,7 +833,7 @@ REBNATIVE(apply)
     DECLARE_FRAME_AT (
         f,
         args,
-        EVAL_FLAG_SINGLE_STEP | EVAL_FLAG_TRAMPOLINE_KEEPALIVE
+        EVAL_EXECUTOR_FLAG_SINGLE_STEP | EVAL_FLAG_TRAMPOLINE_KEEPALIVE
     );
     Push_Frame(SPARE, f);
 

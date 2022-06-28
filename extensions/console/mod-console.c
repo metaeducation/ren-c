@@ -385,7 +385,7 @@ REBNATIVE(console)
     // Meta lets us catch errors, as well as discern if the value vaporizes
     // completely or not.
     //
-    Set_Eval_Flag(frame_, DISPATCHER_CATCHES);
+    Set_Executor_Flag(ACTION, frame_, DISPATCHER_CATCHES);
 
     rebPushContinuation(
         RESET(metaresult),  // aka SPARE

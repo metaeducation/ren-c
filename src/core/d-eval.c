@@ -323,7 +323,7 @@ void Evaluator_Exit_Checks_Debug(REBFRM *f) {
             | EVAL_FLAG_FAILURE_RESULT_OK
             | EVAL_FLAG_FULFILLING_ARG
             | EVAL_FLAG_NO_RESIDUE
-            | EVAL_FLAG_SINGLE_STEP
+            | EVAL_EXECUTOR_FLAG_SINGLE_STEP
         );
 
         if (filtered != 0) {

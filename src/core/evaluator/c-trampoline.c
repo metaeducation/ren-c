@@ -132,10 +132,10 @@ REB_R Trampoline_From_Top_Maybe_Root(void)
 
         while (FS_TOP != FRAME) {  // drop idle frames above the fail, see [4]
             assert(Not_Eval_Flag(FS_TOP, NOTIFY_ON_ABRUPT_FAILURE));
-            assert(Not_Eval_Flag(FS_TOP, DISPATCHER_CATCHES));
             assert(Not_Eval_Flag(FS_TOP, ROOT_FRAME));
 
             if (Is_Action_Frame(FS_TOP)) {
+                assert(Not_Executor_Flag(ACTION, FS_TOP, DISPATCHER_CATCHES));
                 assert(not Is_Action_Frame_Fulfilling(FS_TOP));
                 Drop_Action(FS_TOP);
             }

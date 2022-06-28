@@ -83,7 +83,7 @@ REBNATIVE(delimit)
         return Init_Text(OUT, Pop_Molded_String(mo));
     }
 
-    REBFLGS flags = EVAL_FLAG_SINGLE_STEP;
+    REBFLGS flags = EVAL_EXECUTOR_FLAG_SINGLE_STEP;
     if (IS_THE_BLOCK(ARG(line)))
         flags |= EVAL_FLAG_NO_EVALUATIONS;
     else

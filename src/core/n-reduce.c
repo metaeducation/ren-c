@@ -103,7 +103,7 @@ REBNATIVE(reduce)
     DECLARE_FRAME_AT (
         subframe,
         v,  // REB_BLOCK or REB_GROUP
-        EVAL_FLAG_SINGLE_STEP
+        EVAL_EXECUTOR_FLAG_SINGLE_STEP
             | EVAL_FLAG_ALLOCATED_FEED
             | EVAL_FLAG_TRAMPOLINE_KEEPALIVE  // reused for each step
     );
@@ -216,7 +216,7 @@ REBNATIVE(reduce_each)
   initial_entry: {  //////////////////////////////////////////////////////////
 
     REBFLGS flags =
-        EVAL_FLAG_SINGLE_STEP
+        EVAL_EXECUTOR_FLAG_SINGLE_STEP
         | EVAL_FLAG_TRAMPOLINE_KEEPALIVE;
 
     if (IS_META_WORD(vars)) {  // Note: gets converted to object in next step

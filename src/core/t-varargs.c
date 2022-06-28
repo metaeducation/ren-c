@@ -187,7 +187,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
             DECLARE_FRAME_AT (
                 f_temp,
                 shared,
-                EVAL_FLAG_SINGLE_STEP | EVAL_FLAG_FULFILLING_ARG
+                EVAL_EXECUTOR_FLAG_SINGLE_STEP | EVAL_FLAG_FULFILLING_ARG
             );
             Push_Frame(out, f_temp);
 
@@ -301,7 +301,10 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
         //
         switch (pclass) {
         case PARAM_CLASS_NORMAL: {
-            REBFLGS flags = EVAL_FLAG_SINGLE_STEP | EVAL_FLAG_FULFILLING_ARG;
+            REBFLGS flags =
+                EVAL_EXECUTOR_FLAG_SINGLE_STEP
+                | EVAL_FLAG_FULFILLING_ARG;
+
             if (Eval_Step_In_Subframe_Throws(out, f, flags))
                 return true;
             break; }

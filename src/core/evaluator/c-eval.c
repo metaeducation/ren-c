@@ -168,7 +168,7 @@ inline static REBFRM *Maybe_Rightward_Continuation_Needed(REBFRM *f)
     RESET(OUT);  // all SET-XXX! overwrite out, see [2]
 
     REBFLGS flags =
-        EVAL_FLAG_SINGLE_STEP
+        EVAL_EXECUTOR_FLAG_SINGLE_STEP
         | (f->flags.bits & EVAL_FLAG_FULFILLING_ARG);  // if f was, we are
 
     if (Did_Init_Inert_Optimize_Complete(OUT, f->feed, &flags))
@@ -239,7 +239,7 @@ REB_R Evaluator_Executor(REBFRM *f)
         /*TRASH_POINTER_IF_DEBUG(f_current_gotten);*/  // trash option() ptrs?
         break;
 
-      case ST_EVALUATOR_STEPPING_AGAIN:  // when Not(EVAL_FLAG_SINGLE_STEP)
+      case ST_EVALUATOR_STEPPING_AGAIN:  // when not single stepping
         goto new_expression;
 
       case ST_EVALUATOR_LOOKING_AHEAD:
@@ -1462,9 +1462,9 @@ REB_R Evaluator_Executor(REBFRM *f)
         //
         if (VAL_TYPE_UNCHECKED(f_next) == REB_WORD) {  // tolerate REB_0_END
             REBFLGS flags =
-                EVAL_FLAG_SINGLE_STEP
+                EVAL_EXECUTOR_FLAG_SINGLE_STEP
                 | FLAG_STATE_BYTE(ST_EVALUATOR_LOOKING_AHEAD)
-                | EVAL_FLAG_INERT_OPTIMIZATION  // don't error on enfix late
+                | EVAL_EXECUTOR_FLAG_INERT_OPTIMIZATION  // tolerate enfix late
                 | EVAL_FLAG_MAYBE_STALE;  // won't be, but avoids RESET()
 
             DECLARE_FRAME (subframe, f->feed, flags);
@@ -1810,7 +1810,7 @@ REB_R Evaluator_Executor(REBFRM *f)
       lookback_quote_too_late: // run as if starting new expression
 
         CLEAR_FEED_FLAG(f->feed, NO_LOOKAHEAD);
-        Clear_Eval_Flag(f, INERT_OPTIMIZATION);
+        Clear_Executor_Flag(EVAL, f, INERT_OPTIMIZATION);
 
         // Since it's a new expression, EVALUATE doesn't want to run it
         // even if invisible, as it's not completely invisible (enfixed)
@@ -1843,15 +1843,15 @@ REB_R Evaluator_Executor(REBFRM *f)
         if (VAL_PARAM_CLASS(first) == PARAM_CLASS_SOFT) {
             if (GET_FEED_FLAG(f->feed, NO_LOOKAHEAD)) {
                 CLEAR_FEED_FLAG(f->feed, NO_LOOKAHEAD);
-                Clear_Eval_Flag(f, INERT_OPTIMIZATION);
+                Clear_Executor_Flag(EVAL, f, INERT_OPTIMIZATION);
                 goto finished;
             }
         }
-        else if (Not_Eval_Flag(f, INERT_OPTIMIZATION))
+        else if (Not_Executor_Flag(EVAL, f, INERT_OPTIMIZATION))
             goto lookback_quote_too_late;
     }
 
-    Clear_Eval_Flag(f, INERT_OPTIMIZATION);  // if set, it served its purpose
+    Clear_Executor_Flag(EVAL, f, INERT_OPTIMIZATION);  // served purpose if set
 
     if (
         Get_Eval_Flag(f, FULFILLING_ARG)
@@ -1971,7 +1971,7 @@ REB_R Evaluator_Executor(REBFRM *f)
     Evaluator_Exit_Checks_Debug(f);
   #endif
 
-    if (Not_Eval_Flag(f, SINGLE_STEP) and Not_End(f_next)) {
+    if (Not_Executor_Flag(EVAL, f, SINGLE_STEP) and Not_End(f_next)) {
         if (Is_Failure(OUT))
             fail (VAL_CONTEXT(OUT));
 

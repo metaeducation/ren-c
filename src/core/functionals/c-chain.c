@@ -207,7 +207,7 @@ REB_R Chainer_Dispatcher(REBFRM *f)
     SET_FEED_FLAG(sub->feed, NEXT_ARG_FROM_OUT);  // act like infix, see [4]
 
     FRM_STATE_BYTE(sub) = ST_ACTION_INITIAL_ENTRY;  // maybe zeroed (or not)?
-    Clear_Eval_Flag(sub, DISPATCHER_CATCHES);
+    Clear_Executor_Flag(ACTION, sub, DISPATCHER_CATCHES);
     Clear_Eval_Flag(sub, NOTIFY_ON_ABRUPT_FAILURE);
 
     assert(STATE == ST_CHAINER_RUNNING_SUBFUNCTION);

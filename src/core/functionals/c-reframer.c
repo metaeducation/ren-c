@@ -170,7 +170,7 @@ bool Make_Invokable_From_Feed_Throws(
     // gather the args.  Push_Action() checks that it's not set, so we don't
     // set it until after that.
     //
-    Set_Eval_Flag(f, FULFILL_ONLY);
+    Set_Executor_Flag(ACTION, f, FULFILL_ONLY);
 
     assert(FRM_BINDING(f) == VAL_ACTION_BINDING(action));  // no invocation
 
@@ -193,10 +193,10 @@ bool Make_Invokable_From_Feed_Throws(
     //
     assert(Not_Subclass_Flag(VARLIST, f->varlist, FRAME_HAS_BEEN_INVOKED));
 
-    assert(Not_Eval_Flag(f, FULFILL_ONLY));  // cleared by the evaluator
+    assert(not (f->flags.bits & ACTION_EXECUTOR_FLAG_FULFILL_ONLY));
 
     // Drop_Action() clears out the phase and binding.  Put them back.
-    // !!! Should it check EVAL_FLAG_FULFILL_ONLY?
+    // !!! Should it check EVAL_EXECUTOR_FLAG_FULFILL_ONLY?
 
     INIT_FRM_PHASE(f, VAL_ACTION(action));
     INIT_FRM_BINDING(f, VAL_ACTION_BINDING(action));

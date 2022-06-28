@@ -128,8 +128,8 @@ bool Lookahead_To_Sync_Enfix_Defer_Flag(struct Reb_Feed *feed) {
 REB_R Action_Executor(REBFRM *f)
 {
     if (THROWING) {
-        if (Get_Eval_Flag(f, DISPATCHER_CATCHES))  // wants to see the throw
-            goto dispatch_phase;
+        if (Get_Executor_Flag(ACTION, f, DISPATCHER_CATCHES))
+            goto dispatch_phase;  // wants to see the throw
 
         if (Get_Eval_Flag(f, ABRUPT_FAILURE)) {
             assert(Get_Eval_Flag(f, NOTIFY_ON_ABRUPT_FAILURE));
@@ -140,7 +140,7 @@ REB_R Action_Executor(REBFRM *f)
     }
 
     if (Is_Action_Frame_Fulfilling(f)) {
-        assert(Not_Eval_Flag(f, DISPATCHER_CATCHES));  // trampoline cleans up
+        assert(Not_Executor_Flag(ACTION, f, DISPATCHER_CATCHES));
         assert(Not_Eval_Flag(f, NOTIFY_ON_ABRUPT_FAILURE));
 
         switch (STATE) {
@@ -532,7 +532,9 @@ REB_R Action_Executor(REBFRM *f)
                 goto continue_fulfilling;
             }
 
-            REBFLGS flags = EVAL_FLAG_SINGLE_STEP | EVAL_FLAG_FULFILLING_ARG;
+            REBFLGS flags =
+                EVAL_EXECUTOR_FLAG_SINGLE_STEP
+                | EVAL_FLAG_FULFILLING_ARG;
             if (pclass == PARAM_CLASS_META)
                 flags |= EVAL_FLAG_META_RESULT | EVAL_FLAG_FAILURE_RESULT_OK;
 
@@ -621,10 +623,10 @@ REB_R Action_Executor(REBFRM *f)
                 // and it knows to get the arg from there.
 
                 REBFLGS flags =
-                    EVAL_FLAG_SINGLE_STEP
+                    EVAL_EXECUTOR_FLAG_SINGLE_STEP
                     | EVAL_FLAG_FULFILLING_ARG
                     | FLAG_STATE_BYTE(ST_EVALUATOR_LOOKING_AHEAD)
-                    | EVAL_FLAG_INERT_OPTIMIZATION
+                    | EVAL_EXECUTOR_FLAG_INERT_OPTIMIZATION
                     | EVAL_FLAG_MAYBE_STALE;  // won't be, but avoids RESET()
 
                 DECLARE_FRAME (subframe, f->feed, flags);
@@ -730,7 +732,7 @@ REB_R Action_Executor(REBFRM *f)
     f->u.action.key = nullptr;  // signals !Is_Action_Frame_Fulfilling()
     f->u.action.key_tail = nullptr;
 
-    if (Get_Eval_Flag(f, FULFILL_ONLY)) {  // only fulfillment, no typecheck
+    if (Get_Executor_Flag(ACTION, f, FULFILL_ONLY)) {  // no typecheck
         assert(Is_Fresh(OUT));  // didn't touch out
         goto skip_output_check;
     }
@@ -860,7 +862,7 @@ REB_R Action_Executor(REBFRM *f)
             kind == REB_BLANK  // v-- e.g. <blank> param
             and GET_PARAM_FLAG(PARAM, NOOP_IF_BLANK)
         ){
-            Set_Eval_Flag(f, TYPECHECK_ONLY);
+            Set_Executor_Flag(ACTION, f, TYPECHECK_ONLY);
             Init_Nulled(OUT);
             continue;
         }
@@ -869,7 +871,7 @@ REB_R Action_Executor(REBFRM *f)
             GET_PARAM_FLAG(PARAM, NOOP_IF_BLACKHOLE)
             and Is_Blackhole(ARG)  // v-- e.g. <blackhole> param
         ){
-            Set_Eval_Flag(f, TYPECHECK_ONLY);
+            Set_Executor_Flag(ACTION, f, TYPECHECK_ONLY);
             Init_Isotope(OUT, Canon(BLACKHOLE));
             continue;
         }
@@ -940,7 +942,7 @@ REB_R Action_Executor(REBFRM *f)
         or IS_VALUE_IN_ARRAY_DEBUG(FEED_ARRAY(f->feed), f_next)
     );
 
-    if (Get_Eval_Flag(f, TYPECHECK_ONLY)) {  // <blank> and <blackhole> use
+    if (Get_Executor_Flag(ACTION, f, TYPECHECK_ONLY)) {  // <blank>, <blackhole>
         assert(
             Is_Isotope_With_Id(OUT, SYM_BLACKHOLE)
             or Is_Nulled(OUT)
@@ -971,7 +973,7 @@ REB_R Action_Executor(REBFRM *f)
     //
     f->flags.bits &= ~(
         EVAL_FLAG_DELEGATE_CONTROL
-        | EVAL_FLAG_DISPATCHER_CATCHES
+        | ACTION_EXECUTOR_FLAG_DISPATCHER_CATCHES
     );
 
     REBACT *phase = FRM_PHASE(f);
@@ -1188,7 +1190,7 @@ REB_R Action_Executor(REBFRM *f)
             INIT_FRM_PHASE(f, redo_phase);
             INIT_FRM_BINDING(f, VAL_FRAME_BINDING(OUT));
             STATE = ST_ACTION_TYPECHECKING;
-            Clear_Eval_Flag(f, DISPATCHER_CATCHES);  // else asserts
+            Clear_Executor_Flag(ACTION, f, DISPATCHER_CATCHES);  // else asserts
             Clear_Eval_Flag(f, NOTIFY_ON_ABRUPT_FAILURE);
             goto typecheck_then_dispatch;
         }
@@ -1228,7 +1230,9 @@ void Push_Action(
     REBACT *act,
     REBCTX *binding  // actions may only be bound to contexts ATM
 ){
-    assert(Not_Eval_Flag(f, FULFILL_ONLY));
+    f->executor = &Action_Executor;
+
+    assert(Not_Executor_Flag(ACTION, f, FULFILL_ONLY));
     assert(Not_Eval_Flag(f, RUNNING_ENFIX));
 
     STATIC_ASSERT(EVAL_FLAG_FULFILLING_ARG == DETAILS_FLAG_IS_BARRIER);
@@ -1329,8 +1333,6 @@ void Begin_Action_Core(
     assert(Not_Subclass_Flag(VARLIST, f->varlist, FRAME_HAS_BEEN_INVOKED));
     Set_Subclass_Flag(VARLIST, f->varlist, FRAME_HAS_BEEN_INVOKED);
 
-    f->executor = &Action_Executor;
-
     ORIGINAL = FRM_PHASE(f);
 
     KEY = ACT_KEYS(&KEY_TAIL, ORIGINAL);
@@ -1401,7 +1403,7 @@ void Drop_Action(REBFRM *f) {
     Clear_Eval_Flag(f, CACHE_NO_LOOKAHEAD);
 
     Clear_Eval_Flag(f, RUNNING_ENFIX);
-    Clear_Eval_Flag(f, FULFILL_ONLY);
+    Clear_Executor_Flag(ACTION, f, FULFILL_ONLY);
 
     assert(
         GET_SERIES_FLAG(f->varlist, INACCESSIBLE)

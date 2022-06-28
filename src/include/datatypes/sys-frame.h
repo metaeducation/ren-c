@@ -807,6 +807,7 @@ inline static bool Pushed_Continuation(
             fail (Error_Stale_Frame_Raw());
 
         DECLARE_END_FRAME (f, FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING) | flags);
+        f->executor = &Action_Executor;  // usually done by Push_Action()s
 
         REBARR *varlist = CTX_VARLIST(c);
         f->varlist = varlist;
@@ -854,8 +855,7 @@ inline static bool Pushed_Continuation(
 
 #define continue_catchable(o,value,with) \
     do { \
-        assert(Is_Action_Frame(frame_)); \
-        Set_Eval_Flag(frame_, DISPATCHER_CATCHES); \
+        Set_Executor_Flag(ACTION, frame_, DISPATCHER_CATCHES); \
         continue_core((o), EVAL_MASK_NONE, (value), SPECIFIED, (with)); \
     } while (0)
 
@@ -864,8 +864,7 @@ inline static bool Pushed_Continuation(
 
 #define continue_catchable_branch(o,branch,with) \
     do { \
-        assert(Is_Action_Frame(frame_)); \
-        Set_Eval_Flag(frame_, DISPATCHER_CATCHES); \
+        Set_Executor_Flag(ACTION, frame_, DISPATCHER_CATCHES); \
         continue_core((o), EVAL_FLAG_BRANCH, (branch), SPECIFIED, (with)); \
     } while (0)
 
@@ -882,7 +881,7 @@ inline static REB_R Continue_Subframe_Helper(
         assert(not Is_Action_Frame(f) or Is_Action_Frame_Fulfilling(f));
 
     if (catches_flag != 0) {
-        assert(catches_flag == EVAL_FLAG_DISPATCHER_CATCHES);
+        assert(catches_flag == ACTION_EXECUTOR_FLAG_DISPATCHER_CATCHES);
         f->flags.bits |= catches_flag;
     }
 
@@ -895,7 +894,7 @@ inline static REB_R Continue_Subframe_Helper(
 
 #define continue_catchable_subframe(sub) \
     return Continue_Subframe_Helper( \
-        frame_, true, EVAL_FLAG_DISPATCHER_CATCHES, (sub))
+        frame_, true, ACTION_EXECUTOR_FLAG_DISPATCHER_CATCHES, (sub))
 
 #define continue_uncatchable_subframe(sub) \
     return Continue_Subframe_Helper(frame_, true, 0, (sub))
