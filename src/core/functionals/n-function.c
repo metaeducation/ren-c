@@ -604,6 +604,11 @@ REBNATIVE(definitional_return)
         goto skip_type_check;
     }
 
+    if (IS_ERROR(v)) {
+        Failurize(v);  // Meta_Unquotify won't do this, it fail()'s
+        goto skip_type_check;
+    }
+
     // Safe to unquotify for type checking
 
     Meta_Unquotify(v);

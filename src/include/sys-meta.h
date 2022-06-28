@@ -129,6 +129,8 @@ inline static Cell *Meta_Quotify(Cell *v) {
 inline static Cell *Meta_Unquotify(Cell *v) {
     if (Is_Nulled(v))
         return v;  // do nothing
+    if (IS_ERROR(v))
+        fail (VAL_CONTEXT(v));  // too dangerous to create failure easily
     return Isotopic_Unquote(v);
 }
 
@@ -153,5 +155,7 @@ inline static REB_R Native_Unmeta_Result(REBFRM *frame_, const REBVAL *v) {
         return R_VOID;
     if (Is_Meta_Of_End(v))
         fail ("END not processed by UNMETA at this time");
+    if (IS_ERROR(v))
+        return Failurize(Copy_Cell(frame_->out, v));
     return Meta_Unquotify(Copy_Cell(frame_->out, v));
 }
