@@ -434,7 +434,7 @@ inline static REB_R Native_Failure_Result(REBFRM *frame_, const void *p) {
         error = Error_User(cast(const char*, p));
         break;
       case DETECTED_AS_SERIES: {
-        error = CTX(p);
+        error = CTX(m_cast(void*, p));
         break; }
       case DETECTED_AS_CELL: {
         error = VAL_CONTEXT(VAL(p));
