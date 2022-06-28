@@ -1503,7 +1503,7 @@ REBNATIVE(enfixed_q)
 
     return Init_Logic(
         OUT,
-        GET_ACTION_FLAG(VAL_ACTION(ARG(action)), ENFIXED)
+        Get_Action_Flag(VAL_ACTION(ARG(action)), ENFIXED)
     );
 }
 
@@ -1523,13 +1523,13 @@ REBNATIVE(enfix)
 
     REBVAL *action = ARG(action);
 
-    if (GET_ACTION_FLAG(VAL_ACTION(action), ENFIXED))
+    if (Get_Action_Flag(VAL_ACTION(action), ENFIXED))
         fail (
             "ACTION! is already enfixed (review callsite, enfix changed"
             " https://forum.rebol.info/t/1156"
         );
 
-    SET_ACTION_FLAG(VAL_ACTION(action), ENFIXED);
+    Set_Action_Flag(VAL_ACTION(action), ENFIXED);
 
     return_value (action);
 }

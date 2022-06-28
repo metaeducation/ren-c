@@ -92,7 +92,7 @@ REBACT *Make_Native(
         dispatcher,  // "dispatcher" is unique to this "native"
         IDX_NATIVE_MAX  // details array capacity
     );
-    SET_ACTION_FLAG(native, IS_NATIVE);
+    Set_Action_Flag(native, IS_NATIVE);
 
     REBARR *details = ACT_DETAILS(native);
     Init_Blank(ARR_AT(details, IDX_NATIVE_BODY));

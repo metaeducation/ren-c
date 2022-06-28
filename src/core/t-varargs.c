@@ -79,10 +79,10 @@ inline static bool Vararg_Op_If_No_Advance_Handled(
         );
 
         if (child_gotten and VAL_TYPE(child_gotten) == REB_ACTION) {
-            if (GET_ACTION_FLAG(VAL_ACTION(child_gotten), ENFIXED)) {
+            if (Get_Action_Flag(VAL_ACTION(child_gotten), ENFIXED)) {
                 if (
                     pclass == PARAM_CLASS_NORMAL or
-                    GET_ACTION_FLAG(VAL_ACTION(child_gotten), DEFERS_LOOKBACK)
+                    Get_Action_Flag(VAL_ACTION(child_gotten), DEFERS_LOOKBACK)
                 ){
                     Init_For_Vararg_End(out, op);
                     return true;

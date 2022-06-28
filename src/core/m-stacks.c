@@ -233,7 +233,7 @@ REBCTX *Get_Context_From_Stack(void)
     // eval hook, or a Func_Dispatcher().  For now, just assume that means
     // you want the code to bind into the lib context.
     //
-    if (NOT_ACTION_FLAG(phase, IS_NATIVE))
+    if (Not_Action_Flag(phase, IS_NATIVE))
         return Lib_Context;
 
     REBARR *details = ACT_DETAILS(phase);

@@ -304,8 +304,8 @@ REBTYPE(Action)
         assert(ACT_META(proxy) == nullptr);
         mutable_ACT_META(proxy) = meta;  // !!! Note: not a copy of meta
 
-        if (GET_ACTION_FLAG(act, IS_NATIVE))
-            SET_ACTION_FLAG(proxy, IS_NATIVE);
+        if (Get_Action_Flag(act, IS_NATIVE))
+            Set_Action_Flag(proxy, IS_NATIVE);
 
         Copy_Cell(ACT_ARCHETYPE(proxy), ACT_ARCHETYPE(act));
 

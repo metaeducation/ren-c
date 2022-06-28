@@ -113,10 +113,10 @@ bool Lookahead_To_Sync_Enfix_Defer_Flag(struct Reb_Feed *feed) {
         return false;
     }
 
-    if (NOT_ACTION_FLAG(VAL_ACTION(unwrap(feed->gotten)), ENFIXED))
+    if (Not_Action_Flag(VAL_ACTION(unwrap(feed->gotten)), ENFIXED))
         return false;
 
-    if (GET_ACTION_FLAG(VAL_ACTION(unwrap(feed->gotten)), DEFERS_LOOKBACK))
+    if (Get_Action_Flag(VAL_ACTION(unwrap(feed->gotten)), DEFERS_LOOKBACK))
         SET_FEED_FLAG(feed, DEFERRING_ENFIX);
     return true;
 }
@@ -436,9 +436,9 @@ REB_R Action_Executor(REBFRM *f)
             if (Get_Executor_Flag(ACTION, f, RUNNING_ENFIX)) {
                 assert(NOT_FEED_FLAG(f->feed, NO_LOOKAHEAD));
                 if (
-                    NOT_ACTION_FLAG(FRM_PHASE(f), POSTPONES_ENTIRELY)
+                    Not_Action_Flag(FRM_PHASE(f), POSTPONES_ENTIRELY)
                     and
-                    NOT_ACTION_FLAG(FRM_PHASE(f), DEFERS_LOOKBACK)
+                    Not_Action_Flag(FRM_PHASE(f), DEFERS_LOOKBACK)
                 ){
                     SET_FEED_FLAG(f->feed, NO_LOOKAHEAD);
                 }
@@ -612,7 +612,7 @@ REB_R Action_Executor(REBFRM *f)
             //
             if (
                 Lookahead_To_Sync_Enfix_Defer_Flag(f->feed) and  // ensure got
-                (pclass == PARAM_CLASS_SOFT and GET_ACTION_FLAG(
+                (pclass == PARAM_CLASS_SOFT and Get_Action_Flag(
                     VAL_ACTION(unwrap(f->feed->gotten)),  // ensured
                     QUOTES_FIRST
                 ))
@@ -986,7 +986,7 @@ REB_R Action_Executor(REBFRM *f)
     // trick got shaken up with flag reordering.  Review.
     //
     /*STATIC_ASSERT(DETAILS_FLAG_IS_NATIVE == SERIES_INFO_HOLD);*/
-    if (GET_ACTION_FLAG(phase, IS_NATIVE))
+    if (Get_Action_Flag(phase, IS_NATIVE))
         SER_INFO(f->varlist) |= SERIES_INFO_HOLD;
 
     Dispatcher* dispatcher = ACT_DISPATCHER(phase);

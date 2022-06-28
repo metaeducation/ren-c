@@ -253,19 +253,19 @@ inline static bool Did_Init_Inert_Optimize_Complete(
             goto optimized;  // not action
         }
 
-        if (GET_ACTION_FLAG(VAL_ACTION(unwrap(feed->gotten)), IS_BARRIER)) {
+        if (Get_Action_Flag(VAL_ACTION(unwrap(feed->gotten)), IS_BARRIER)) {
             SET_FEED_FLAG(feed, BARRIER_HIT);
             CLEAR_FEED_FLAG(feed, NO_LOOKAHEAD);
             goto optimized;  // is barrier
         }
 
-        if (NOT_ACTION_FLAG(VAL_ACTION(unwrap(feed->gotten)), ENFIXED)) {
+        if (Not_Action_Flag(VAL_ACTION(unwrap(feed->gotten)), ENFIXED)) {
             CLEAR_FEED_FLAG(feed, NO_LOOKAHEAD);
             goto optimized;  // not enfixed
         }
 
         REBACT *action = VAL_ACTION(unwrap(feed->gotten));
-        if (GET_ACTION_FLAG(action, QUOTES_FIRST)) {
+        if (Get_Action_Flag(action, QUOTES_FIRST)) {
             //
             // Quoting defeats NO_LOOKAHEAD but only on soft quotes.
             //
@@ -301,7 +301,7 @@ inline static bool Did_Init_Inert_Optimize_Complete(
         // quoted and skippable, that the skip check has already been done.
         // So we have to do that check here.
         //
-        if (GET_ACTION_FLAG(action, SKIPPABLE_FIRST)) {
+        if (Get_Action_Flag(action, SKIPPABLE_FIRST)) {
             const REBPAR *first = First_Unspecialized_Param(nullptr, action);
             if (not TYPE_CHECK(first, VAL_TYPE(out)))
                 goto optimized;  // didn't actually want this parameter type

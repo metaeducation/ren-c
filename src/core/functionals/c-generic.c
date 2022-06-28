@@ -127,7 +127,7 @@ REBNATIVE(generic)
     }
     TYPE_SET(param, REB_CUSTOM);
 
-    SET_ACTION_FLAG(generic, IS_NATIVE);
+    Set_Action_Flag(generic, IS_NATIVE);
 
     REBARR *details = ACT_DETAILS(generic);
     Init_Word(ARR_AT(details, IDX_NATIVE_BODY), VAL_WORD_SYMBOL(verb));

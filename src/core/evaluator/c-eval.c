@@ -370,7 +370,7 @@ REB_R Evaluator_Executor(REBFRM *f)
         goto give_up_backward_quote_priority;  // note only ACTION! is ENFIXED
     }
 
-    if (GET_ACTION_FLAG(VAL_ACTION(unwrap(f_next_gotten)), IS_BARRIER)) {
+    if (Get_Action_Flag(VAL_ACTION(unwrap(f_next_gotten)), IS_BARRIER)) {
         //
         // In a situation like `foo |`, we want FOO to be able to run...it
         // may take 0 args or it may be able to tolerate END.  But we should
@@ -381,13 +381,13 @@ REB_R Evaluator_Executor(REBFRM *f)
         goto give_up_backward_quote_priority;
     }
 
-    if (NOT_ACTION_FLAG(VAL_ACTION(unwrap(f_next_gotten)), ENFIXED))
+    if (Not_Action_Flag(VAL_ACTION(unwrap(f_next_gotten)), ENFIXED))
         goto give_up_backward_quote_priority;
 
   blockscope {
     REBACT *enfixed = VAL_ACTION(unwrap(f_next_gotten));
 
-    if (NOT_ACTION_FLAG(enfixed, QUOTES_FIRST))
+    if (Not_Action_Flag(enfixed, QUOTES_FIRST))
         goto give_up_backward_quote_priority;
 
     // If the action soft quotes its left, that means it's aware that its
@@ -395,7 +395,7 @@ REB_R Evaluator_Executor(REBFRM *f)
     // material on the left, treat it like it's in a group.
     //
     if (
-        GET_ACTION_FLAG(enfixed, POSTPONES_ENTIRELY)
+        Get_Action_Flag(enfixed, POSTPONES_ENTIRELY)
         or (
             GET_FEED_FLAG(f->feed, NO_LOOKAHEAD)
             and not ANY_SET_KIND(kind_current)  // not SET-WORD!, SET-PATH!...
@@ -417,7 +417,7 @@ REB_R Evaluator_Executor(REBFRM *f)
     // such that `case [condition [...] default [...]]` does not interfere
     // with the BLOCK! on the left, but `x: default [...]` gets the SET-WORD!
     //
-    if (GET_ACTION_FLAG(enfixed, SKIPPABLE_FIRST)) {
+    if (Get_Action_Flag(enfixed, SKIPPABLE_FIRST)) {
         const REBPAR *first = First_Unspecialized_Param(nullptr, enfixed);
         if (not TYPE_CHECK(first, kind_current))  // left's kind
             goto give_up_backward_quote_priority;
@@ -620,10 +620,10 @@ REB_R Evaluator_Executor(REBFRM *f)
         if (VAL_TYPE_UNCHECKED(unwrap(f_current_gotten)) == REB_ACTION) {
             REBACT *action = VAL_ACTION(unwrap(f_current_gotten));
 
-            if (GET_ACTION_FLAG(action, ENFIXED)) {
+            if (Get_Action_Flag(action, ENFIXED)) {
                 if (
-                    GET_ACTION_FLAG(action, POSTPONES_ENTIRELY)
-                    or GET_ACTION_FLAG(action, DEFERS_LOOKBACK)
+                    Get_Action_Flag(action, POSTPONES_ENTIRELY)
+                    or Get_Action_Flag(action, DEFERS_LOOKBACK)
                 ){
                     if (Get_Executor_Flag(EVAL, f, FULFILLING_ARG)) {
                         CLEAR_FEED_FLAG(f->feed, NO_LOOKAHEAD);
@@ -636,7 +636,7 @@ REB_R Evaluator_Executor(REBFRM *f)
 
             REBCTX *binding = VAL_ACTION_BINDING(unwrap(f_current_gotten));
             const Symbol *label = VAL_WORD_SYMBOL(f_current);  // use WORD!
-            bool enfixed = GET_ACTION_FLAG(action, ENFIXED);
+            bool enfixed = Get_Action_Flag(action, ENFIXED);
 
             DECLARE_ACTION_SUBFRAME (subframe, f);
             Push_Frame(OUT, subframe);
@@ -882,7 +882,7 @@ REB_R Evaluator_Executor(REBFRM *f)
             //
             // Plus with GROUP!s in a path, their evaluations can't be undone.
             //
-            if (GET_ACTION_FLAG(act, ENFIXED))
+            if (Get_Action_Flag(act, ENFIXED))
                 fail ("Use `>-` to shove left enfix operands into PATH!s");
 
             DECLARE_ACTION_SUBFRAME (subframe, f);
@@ -964,7 +964,7 @@ REB_R Evaluator_Executor(REBFRM *f)
         //
         // Plus with GROUP!s in a path, their evaluations can't be undone.
         //
-        if (GET_ACTION_FLAG(VAL_ACTION(SPARE), ENFIXED))
+        if (Get_Action_Flag(VAL_ACTION(SPARE), ENFIXED))
             fail ("Use `>-` to shove left enfix operands into PATH!s");
 
         Push_Action(subframe, VAL_ACTION(SPARE), VAL_ACTION_BINDING(SPARE));
@@ -1812,7 +1812,7 @@ REB_R Evaluator_Executor(REBFRM *f)
     if (
         not f_next_gotten
         or REB_ACTION != VAL_TYPE_UNCHECKED(unwrap(f_next_gotten))
-        or NOT_ACTION_FLAG(VAL_ACTION(unwrap(f_next_gotten)), ENFIXED)
+        or Not_Action_Flag(VAL_ACTION(unwrap(f_next_gotten)), ENFIXED)
     ){
       lookback_quote_too_late: // run as if starting new expression
 
@@ -1830,7 +1830,7 @@ REB_R Evaluator_Executor(REBFRM *f)
   blockscope {
     REBACT *enfixed = VAL_ACTION(unwrap(f_next_gotten));
 
-    if (GET_ACTION_FLAG(enfixed, QUOTES_FIRST)) {
+    if (Get_Action_Flag(enfixed, QUOTES_FIRST)) {
         //
         // Left-quoting by enfix needs to be done in the lookahead before an
         // evaluation, not this one that's after.  This happens in cases like:
@@ -1862,7 +1862,7 @@ REB_R Evaluator_Executor(REBFRM *f)
 
     if (
         Get_Executor_Flag(EVAL, f, FULFILLING_ARG)
-        and not (GET_ACTION_FLAG(enfixed, DEFERS_LOOKBACK)
+        and not (Get_Action_Flag(enfixed, DEFERS_LOOKBACK)
                                        // ^-- `1 + if false [2] else [3]` => 4
         )
     ){
@@ -1892,9 +1892,9 @@ REB_R Evaluator_Executor(REBFRM *f)
     if (
         Get_Executor_Flag(EVAL, f, FULFILLING_ARG)
         and (
-            GET_ACTION_FLAG(enfixed, POSTPONES_ENTIRELY)
+            Get_Action_Flag(enfixed, POSTPONES_ENTIRELY)
             or (
-                GET_ACTION_FLAG(enfixed, DEFERS_LOOKBACK)
+                Get_Action_Flag(enfixed, DEFERS_LOOKBACK)
                 and NOT_FEED_FLAG(f->feed, DEFERRING_ENFIX)
             )
         )

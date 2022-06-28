@@ -106,7 +106,7 @@ int tcc_set_lib_path_i(TCCState *s, const char *path)
 // for the moment just assume if the source is text it's a user native.
 //
 bool Is_User_Native(REBACT *act) {
-    if (NOT_ACTION_FLAG(act, IS_NATIVE))
+    if (Not_Action_Flag(act, IS_NATIVE))
         return false;
 
     REBARR *details = ACT_DETAILS(act);
@@ -357,7 +357,7 @@ REBNATIVE(make_native)
 
     Init_Blank(ARR_AT(details, IDX_TCC_NATIVE_STATE)); // no TCC_State, yet...
 
-    SET_ACTION_FLAG(native, IS_NATIVE);
+    Set_Action_Flag(native, IS_NATIVE);
     return Init_Action(OUT, native, ANONYMOUS, UNBOUND);
 }
 

@@ -1010,7 +1010,7 @@ REBACT *Make_Action(
           case PARAM_CLASS_SOFT:
           case PARAM_CLASS_MEDIUM:
           case PARAM_CLASS_HARD:
-            SET_ACTION_FLAG(act, QUOTES_FIRST);
+            Set_Action_Flag(act, QUOTES_FIRST);
             break;
 
           default:
@@ -1018,7 +1018,7 @@ REBACT *Make_Action(
         }
 
         if (GET_PARAM_FLAG(first, SKIPPABLE))
-            SET_ACTION_FLAG(act, SKIPPABLE_FIRST);
+            Set_Action_Flag(act, SKIPPABLE_FIRST);
     }
 
     return act;

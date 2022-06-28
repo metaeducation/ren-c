@@ -158,16 +158,16 @@
     (DETAILS_FLAG_DEFERS_LOOKBACK | DETAILS_FLAG_POSTPONES_ENTIRELY)
 
 
-#define SET_ACTION_FLAG(act,name) \
+#define Set_Action_Flag(act,name) \
     Set_Subclass_Flag(DETAILS, ACT_IDENTITY(act), name)
 
-#define GET_ACTION_FLAG(act,name) \
+#define Get_Action_Flag(act,name) \
     Get_Subclass_Flag(DETAILS, ACT_IDENTITY(act), name)
 
-#define CLEAR_ACTION_FLAG(act,name) \
+#define Clear_Action_Flag(act,name) \
     Clear_Subclass_Flag(DETAILS, ACT_IDENTITY(act), name)
 
-#define NOT_ACTION_FLAG(act,name) \
+#define Not_Action_Flag(act,name) \
     Not_Subclass_Flag(DETAILS, ACT_IDENTITY(act), name)
 
 

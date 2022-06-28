@@ -56,7 +56,7 @@ REBNATIVE(reeval)
 
     REBVAL *v = ARG(value);
 
-    bool enfix = IS_ACTION(v) and GET_ACTION_FLAG(VAL_ACTION(v), ENFIXED);
+    bool enfix = IS_ACTION(v) and Get_Action_Flag(VAL_ACTION(v), ENFIXED);
 
     REBFLGS flags =
         EVAL_EXECUTOR_FLAG_SINGLE_STEP
@@ -165,7 +165,7 @@ REBNATIVE(shove)
     if (REF(prefix))
         enfix = not VAL_LOGIC(ARG(prefix));
     else if (IS_ACTION(shovee))
-        enfix = GET_ACTION_FLAG(VAL_ACTION(shovee), ENFIXED);
+        enfix = Get_Action_Flag(VAL_ACTION(shovee), ENFIXED);
     else
         enfix = false;
 
@@ -202,7 +202,7 @@ REBNATIVE(shove)
         Get_Cell_Flag(left, UNEVALUATED)
         and not (
             IS_ACTION(shovee)
-            and GET_ACTION_FLAG(VAL_ACTION(shovee), QUOTES_FIRST)
+            and Get_Action_Flag(VAL_ACTION(shovee), QUOTES_FIRST)
         )
     ){
         if (Eval_Value_Throws(OUT, left, SPECIFIED))
