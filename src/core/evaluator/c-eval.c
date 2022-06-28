@@ -834,7 +834,7 @@ REB_R Evaluator_Executor(REBFRM *f)
             f_specifier,
             EVAL_FLAG_META_RESULT | EVAL_FLAG_FAILURE_RESULT_OK
         );
-        Push_Frame(RESET(OUT), subframe);
+        Push_Frame(OUT, subframe);
 
         STATE = ST_EVALUATOR_RUNNING_META_GROUP;
         continue_subframe (subframe); }
@@ -1464,7 +1464,8 @@ REB_R Evaluator_Executor(REBFRM *f)
             REBFLGS flags =
                 EVAL_FLAG_SINGLE_STEP
                 | FLAG_STATE_BYTE(ST_EVALUATOR_LOOKING_AHEAD)
-                | EVAL_FLAG_INERT_OPTIMIZATION;  // don't error on enfix late
+                | EVAL_FLAG_INERT_OPTIMIZATION  // don't error on enfix late
+                | EVAL_FLAG_MAYBE_STALE;  // won't be, but avoids RESET()
 
             DECLARE_FRAME (subframe, f->feed, flags);
             assert(not Is_Stale(OUT));

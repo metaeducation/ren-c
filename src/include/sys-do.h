@@ -91,8 +91,7 @@ inline static bool Do_Any_Array_At_Core_Throws(
 }
 
 #define Do_Any_Array_At_Throws(out,any_array,specifier) \
-    Do_Any_Array_At_Core_Throws(RESET(out), EVAL_MASK_NONE, (any_array), \
-        (specifier))
+    Do_Any_Array_At_Core_Throws(out, EVAL_MASK_NONE, (any_array), (specifier))
 
 
 inline static bool Do_Branch_Throws(

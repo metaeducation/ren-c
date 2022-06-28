@@ -90,7 +90,7 @@ REBNATIVE(delimit)
         assert(IS_BLOCK(line));
 
     DECLARE_FRAME_AT (f, line, flags);
-    Push_Frame(nullptr, f);
+    Push_Frame(OUT, f);
 
     DECLARE_MOLD (mo);
     Push_Mold(mo);
@@ -117,7 +117,7 @@ REBNATIVE(delimit)
             continue;
         }
 
-        if (Eval_Step_Throws(RESET(OUT), f)) {
+        if (Eval_Step_Throws(OUT, f)) {
             Drop_Mold(mo);
             Drop_Frame(f);
             return THROWN;

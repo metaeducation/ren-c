@@ -1010,13 +1010,7 @@ REBNATIVE(case)
 
     STATE = ST_CASE_RUNNING_BRANCH;
     f->executor = &Just_Use_Out_Executor;
-    continue_core (
-        RESET(OUT),  // reset (branching means stale=>void no longer an option)
-        EVAL_FLAG_BRANCH,
-        branch,
-        f_specifier,
-        SPARE
-    );
+    continue_core (OUT, EVAL_FLAG_BRANCH, branch, f_specifier, SPARE);
 
 } restore_spare_from_backup: {  //////////////////////////////////////////////
 
@@ -1078,7 +1072,7 @@ REBNATIVE(switch)
 
     DECLARE_FRAME_AT (f, ARG(cases), EVAL_FLAG_SINGLE_STEP);
 
-    Push_Frame(nullptr, f);
+    Push_Frame(SPARE, f);
 
     REBVAL *left = ARG(value);
     if (IS_BLOCK(left) and Get_Cell_Flag(left, UNEVALUATED))
@@ -1167,7 +1161,7 @@ REBNATIVE(switch)
                 // f_value is Cell, can't Do_Branch
                 //
                 if (Do_Any_Array_At_Core_Throws(
-                    RESET(OUT),
+                    OUT,
                     EVAL_FLAG_BRANCH,
                     f_value,
                     f_specifier

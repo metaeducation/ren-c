@@ -170,7 +170,8 @@ inline static bool Did_Init_Inert_Optimize_Complete(
             //
             if (NOT_FEED_FLAG(feed, NO_LOOKAHEAD)) {
                 *flags |=
-                    FLAG_STATE_BYTE(ST_EVALUATOR_LOOKING_AHEAD)
+                    EVAL_FLAG_MAYBE_STALE  // won't be, but avoids RESET()
+                    | FLAG_STATE_BYTE(ST_EVALUATOR_LOOKING_AHEAD)
                     | EVAL_FLAG_INERT_OPTIMIZATION;
                 return false;
             }
@@ -185,7 +186,8 @@ inline static bool Did_Init_Inert_Optimize_Complete(
 
             *flags |=
                 FLAG_STATE_BYTE(ST_EVALUATOR_LOOKING_AHEAD)
-                | EVAL_FLAG_INERT_OPTIMIZATION;
+                | EVAL_FLAG_INERT_OPTIMIZATION
+                | EVAL_FLAG_MAYBE_STALE;  // won't be, but avoids RESET()
             return false;
         }
 
@@ -205,7 +207,8 @@ inline static bool Did_Init_Inert_Optimize_Complete(
         }
 
         *flags |=
-            FLAG_STATE_BYTE(ST_EVALUATOR_LOOKING_AHEAD)
+            EVAL_FLAG_MAYBE_STALE  // won't be, but avoids RESET()
+            | FLAG_STATE_BYTE(ST_EVALUATOR_LOOKING_AHEAD)
             | EVAL_FLAG_INERT_OPTIMIZATION;
         return false;  // do normal enfix handling
     }
@@ -233,6 +236,9 @@ inline static bool Eval_Step_Throws(
 ){
     assert(NOT_FEED_FLAG(f->feed, NO_LOOKAHEAD));
     assert(Get_Eval_Flag(f, SINGLE_STEP));
+
+    if (Not_Eval_Flag(f, MAYBE_STALE))
+        RESET(out);
 
     assert(f->executor == &Evaluator_Executor);
 
@@ -394,9 +400,6 @@ inline static bool Eval_Value_Core_Throws(
     const Cell *value,  // e.g. a BLOCK! here would just evaluate to itself!
     REBSPC *specifier
 ){
-    assert(out != value);
-    assert(Is_Fresh(out));
-
     if (ANY_INERT(value)) {
         Derelativize(out, value, specifier);
         return false;  // fast things that don't need frames (should inline)
@@ -419,7 +422,7 @@ inline static bool Eval_Value_Core_Throws(
 }
 
 #define Eval_Value_Throws(out,value,specifier) \
-    Eval_Value_Core_Throws(RESET(out), EVAL_MASK_NONE, (value), (specifier))
+    Eval_Value_Core_Throws(out, EVAL_MASK_NONE, (value), (specifier))
 
 
 inline static REB_R Native_Failure_Result(REBFRM *frame_, const void *p) {

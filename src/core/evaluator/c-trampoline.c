@@ -293,22 +293,19 @@ REB_R Trampoline_From_Top_Maybe_Root(void)
             if (Get_Eval_Flag(FRAME, META_RESULT))
                 Reify_Failure(OUT);
         }
-        else if (Get_Eval_Flag(FRAME, MAYBE_STALE)) {  // see [1]
-            assert(Not_Eval_Flag(FRAME, BRANCH));
-            assert(Not_Eval_Flag(FRAME, META_RESULT));
+        else if (Get_Eval_Flag(FRAME, META_RESULT)) {
+            Clear_Stale_Flag(OUT);  // see [1]
+            Reify_Eval_Out_Meta(OUT);
         }
-        else {
-            Clear_Stale_Flag(OUT);  // also see [1]
-
-            if (Get_Eval_Flag(FRAME, BRANCH)) {
-                if (Is_Void(OUT))
-                    Init_None(OUT);
-                else if (VAL_TYPE_UNCHECKED(OUT) == REB_NULL)
-                    Init_Null_Isotope(OUT);
-            }
-            else if (Get_Eval_Flag(FRAME, META_RESULT))
-                Reify_Eval_Out_Meta(OUT);
+        else if (Get_Eval_Flag(FRAME, BRANCH)) {
+            Clear_Stale_Flag(OUT);  // also, see [1]
+            if (Is_Void(OUT))
+                Init_None(OUT);
+            else if (VAL_TYPE_UNCHECKED(OUT) == REB_NULL)
+                Init_Null_Isotope(OUT);
         }
+        else if (Not_Eval_Flag(FRAME, MAYBE_STALE))
+            Clear_Stale_Flag(OUT);  // again, see [1]
 
         if (Get_Eval_Flag(FRAME, ROOT_FRAME)) {
             STATE = 0;  // !!! Frame gets reused, review

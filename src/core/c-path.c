@@ -218,7 +218,7 @@ REB_R MAKE_Path(
 
     DECLARE_FRAME_AT (f, arg, EVAL_FLAG_SINGLE_STEP);
 
-    Push_Frame(nullptr, f);
+    Push_Frame(out, f);
 
     REBDSP dsp_orig = DSP;
 

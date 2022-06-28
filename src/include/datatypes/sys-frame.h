@@ -324,6 +324,14 @@ inline static void Push_Frame(
     //
     f->out = out;
 
+    // For convenience, the frame output is always reset to a void if stale
+    // values are not wanted.  The operation is very fast (just clears bits
+    // out of the header) and this keeps callers from needing to worry about
+    // it--or dealing with asserts that they hadn't done it.
+    //
+    if (Not_Eval_Flag(f, MAYBE_STALE))
+        RESET(out);
+
   #if DEBUG_EXPIRED_LOOKBACK
     f->stress = nullptr;
   #endif

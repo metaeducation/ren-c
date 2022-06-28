@@ -120,7 +120,6 @@ REBNATIVE(reduce)
     else
         Clear_Cell_Flag(v, NEWLINE_BEFORE);
 
-    RESET(OUT);
     SUBFRAME->executor = &Evaluator_Executor;
     STATE = ST_REDUCE_EVAL_STEP;
     continue_uncatchable_subframe (SUBFRAME);
@@ -341,7 +340,6 @@ static void Push_Composer_Frame(
     if (ANY_PATH(arraylike)) {  // allow sequences, see [1]
         Derelativize(out, arraylike, specifier);
         adjusted = rebValue(Lib(AS), Lib(BLOCK_X), rebQ(out));
-        RESET(out);
     }
 
     DECLARE_FRAME_AT_CORE (
@@ -352,7 +350,7 @@ static void Push_Composer_Frame(
             | EVAL_FLAG_TRAMPOLINE_KEEPALIVE  // allows stack accumulation
             | EVAL_FLAG_FAILURE_RESULT_OK  // bubbles up definitional errors
     );
-    Push_Frame(out, subframe);  // writes TRUE to OUT if modified, FALSE if not
+    Push_Frame(out, subframe);  // subframe may raise definitional failure
 
     if (adjusted)
         rebRelease(adjusted);
@@ -567,7 +565,7 @@ REB_R Composer_Executor(REBFRM *f)
         if (deep) {
             // compose/deep [does [(1 + 2)] nested] => [does [3] nested]
 
-            Push_Composer_Frame(RESET(OUT), main_frame, f_value, f_specifier);
+            Push_Composer_Frame(OUT, main_frame, f_value, f_specifier);
             STATE = ST_COMPOSER_RECURSING_DEEP;
             continue_subframe (SUBFRAME);
         }
@@ -590,7 +588,6 @@ REB_R Composer_Executor(REBFRM *f)
         EVAL_FLAG_ALLOCATED_FEED
     );
 
-    RESET(OUT);  // want empty `()` or `(comment "hi")` to vanish
     Push_Frame(OUT, subframe);
 
     assert(  // STATE is assigned above accordingly
@@ -831,7 +828,7 @@ REBNATIVE(compose)
     if (ANY_WORD(v) or IS_ACTION(v))
         return_value (v);  // makes it easier to `set compose target`
 
-    Push_Composer_Frame(RESET(OUT), frame_, v, VAL_SPECIFIER(v));
+    Push_Composer_Frame(OUT, frame_, v, VAL_SPECIFIER(v));
 
     STATE = ST_COMPOSE_COMPOSING;
     continue_uncatchable_subframe (SUBFRAME);

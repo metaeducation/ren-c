@@ -1722,7 +1722,12 @@ REBVAL *RL_rebRescueWith(
     // body of the C function for the rebRescue() to be automatically cleaned
     // up in the case of an error.  There must be a frame to attach them to.
     //
-    DECLARE_END_FRAME (dummy, EVAL_MASK_NONE);
+    DECLARE_END_FRAME (
+        dummy,
+        EVAL_MASK_NONE
+            | EVAL_FLAG_MAYBE_STALE  // avoids RESET(dummy->out), as it's null
+    );
+
     Push_Frame(nullptr, dummy);
 
     struct Reb_Jump jump;

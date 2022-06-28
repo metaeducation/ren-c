@@ -621,7 +621,8 @@ REB_R Action_Executor(REBFRM *f)
                     EVAL_FLAG_SINGLE_STEP
                     | EVAL_FLAG_FULFILLING_ARG
                     | FLAG_STATE_BYTE(ST_EVALUATOR_LOOKING_AHEAD)
-                    | EVAL_FLAG_INERT_OPTIMIZATION;
+                    | EVAL_FLAG_INERT_OPTIMIZATION
+                    | EVAL_FLAG_MAYBE_STALE;  // won't be, but avoids RESET()
 
                 DECLARE_FRAME (subframe, f->feed, flags);
                 Push_Frame(ARG, subframe);

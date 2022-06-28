@@ -578,7 +578,7 @@ REBNATIVE(let)
 
     DECLARE_FRAME (subframe, FRAME->feed, flags);
     subframe->u.eval.current = SPARE;
-    Push_Frame(RESET(OUT), subframe);
+    Push_Frame(OUT, subframe);
 
     assert(STATE == ST_LET_EVAL_STEP);  // checked above
     continue_uncatchable_subframe (subframe);

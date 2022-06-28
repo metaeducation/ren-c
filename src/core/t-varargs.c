@@ -189,12 +189,12 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
                 shared,
                 EVAL_FLAG_SINGLE_STEP | EVAL_FLAG_FULFILLING_ARG
             );
-            Push_Frame(nullptr, f_temp);
+            Push_Frame(out, f_temp);
 
             // Note: Eval_Step_In_Subframe() is not needed here because
             // this is a single use frame, whose state can be overwritten.
             //
-            if (Eval_Step_Throws(RESET(out), f_temp)) {
+            if (Eval_Step_Throws(out, f_temp)) {
                 Drop_Frame(f_temp);
                 return true;
             }
@@ -301,10 +301,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
         //
         switch (pclass) {
         case PARAM_CLASS_NORMAL: {
-            REBFLGS flags =
-                EVAL_FLAG_SINGLE_STEP
-                | EVAL_FLAG_FULFILLING_ARG;
-            RESET(out);
+            REBFLGS flags = EVAL_FLAG_SINGLE_STEP | EVAL_FLAG_FULFILLING_ARG;
             if (Eval_Step_In_Subframe_Throws(out, f, flags))
                 return true;
             break; }

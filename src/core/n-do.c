@@ -338,13 +338,13 @@ REBNATIVE(do)
             return OUT;
         }
 
-        REBFLGS flags =
-            EVAL_FLAG_SINGLE_STEP
-            | EVAL_FLAG_MAYBE_STALE;
+        DECLARE_FRAME (
+            subframe,
+            f->feed,
+            EVAL_FLAG_SINGLE_STEP | EVAL_FLAG_MAYBE_STALE
+        );
 
-        DECLARE_FRAME (subframe, f->feed, flags);
-
-        Push_Frame(RESET(OUT), subframe);
+        Push_Frame(OUT, subframe);
         do {
             if (Eval_Step_Throws(OUT, subframe)) {
                 Drop_Frame(subframe);
