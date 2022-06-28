@@ -204,11 +204,15 @@ REBARR *Expanded_Combinator_Spec(const REBVAL *original)
         "state [frame!]\n"
         "input [any-series!]\n";
 
+    DECLARE_END_FRAME(f, EVAL_MASK_NONE);
+    f->executor = &Scanner_Executor;
+
+    SCAN_LEVEL *level = &f->u.scan;
+
     SCAN_STATE ss;
-    SCAN_LEVEL level;
     const REBLIN start_line = 1;
     Init_Scan_Level(
-        &level,
+        level,
         &ss,
         ANONYMOUS,
         start_line,
@@ -217,7 +221,13 @@ REBARR *Expanded_Combinator_Spec(const REBVAL *original)
         nullptr
     );
 
-    Scan_To_Stack(&level);  // Note: Unbound code, won't find FRAME! etc.
+    DECLARE_LOCAL (temp);
+    Push_Frame(temp, f);
+    if (Trampoline_With_Top_As_Root_Throws())
+        fail (Error_No_Catch_For_Throw(f));
+
+    Drop_Frame_Unbalanced(f);
+    // Note: We pushed unbound code, won't find FRAME! etc.
   }
 
     for (; item != tail; ++item) {

@@ -1740,7 +1740,7 @@ void Init_Va_Scan_Level_Core(
     REBLIN line,
     const REBYTE *opt_begin,  // preload the scanner outside the va_list
     REBFED *feed,
-    REBCTX *context
+    option(REBCTX*) context
 ){
     level->ss = ss;
     ss->feed = feed;
@@ -1877,6 +1877,12 @@ static REBINT Scan_Head(SCAN_STATE *ss)
 
 //
 //  Scanner_Executor: C
+//
+// Scans values to the data stack, based on a mode.  This mode can be
+// ']', ')', '/' or '.' to indicate the processing type...or '\0'.
+//
+// If the source bytes are "1" then it will push the INTEGER! 1
+// If the source bytes are "[1]" then it will push the BLOCK! [1]
 //
 // BLOCK! and GROUP! use fairly ordinary recursions of this routine to make
 // arrays.  PATH! scanning is a bit trickier...it starts after an element was
@@ -2631,16 +2637,27 @@ REB_R Scanner_Executor(REBFRM *f) {
             // Note we still might come up empty (e.g. `foo/)`)
         }
         else {
-            SCAN_LEVEL child;
-            child.ss = ss;
-            child.start_line = level->start_line;
-            child.start_line_head = level->start_line_head;
-            if (level->token == TOKEN_TUPLE)
-                child.mode = '.';
-            else
-                child.mode = '/';
+            DECLARE_END_FRAME (subframe, EVAL_MASK_NONE);
+            subframe->executor = &Scanner_Executor;
 
-            Scan_To_Stack(&child);
+            SCAN_LEVEL *child = &subframe->u.scan;
+            child->ss = ss;
+            child->start_line = level->start_line;
+            child->start_line_head = level->start_line_head;
+            if (level->token == TOKEN_TUPLE)
+                child->mode = '.';
+            else
+                child->mode = '/';
+
+            DECLARE_LOCAL (temp);
+            Push_Frame(temp, subframe);
+
+            bool threw = Trampoline_With_Top_As_Root_Throws();
+
+            Drop_Frame_Unbalanced(subframe);  // allow stack accrual
+
+            if (threw)  // drop failing stack before throwing
+                fail (Error_No_Catch_For_Throw(f));
         }
 
         // The scanning process for something like `.` or `a/` will not have
@@ -2905,40 +2922,6 @@ REB_R Scanner_Executor(REBFRM *f) {
 
     return NONE;
   }
-}
-
-
-//
-//  Scan_To_Stack: C
-//
-// Scans values to the data stack, based on a mode.  This mode can be
-// ']', ')', '/' or '.' to indicate the processing type...or '\0'.
-//
-// If the source bytes are "1" then it will be the array [1]
-// If the source bytes are "[1]" then it will be the array [[1]]
-//
-// Note: This is a "stackful" entry point to scanning.  Because the scanner
-// doesn't run arbitrary code (or shouldn't!), you cannot YIELD from the
-// scanner itself.  So unlike with natives, it's not so bad to add a stack
-// level for this routine.
-//
-REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
-    DECLARE_END_FRAME (f, EVAL_MASK_NONE);
-    f->executor = &Scanner_Executor;
-
-    f->u.scan = *level;
-
-    DECLARE_LOCAL (temp);
-    Push_Frame(temp, f);
-
-    bool threw = Trampoline_With_Top_As_Root_Throws();
-
-    Drop_Frame_Unbalanced(f);  // allow stack accrual
-
-    if (threw)  // make sure failing stack has been dropped before re-failing
-        fail (Error_No_Catch_For_Throw(f));
-
-    return nullptr;
 }
 
 
@@ -3351,4 +3334,45 @@ const REBYTE *Scan_Issue(Cell *out, const REBYTE *cp, REBSIZ size)
     Init_Issue_Utf8(out, cast(REBCHR(const*), cp), size, len);
 
     return bp;
+}
+
+
+//
+//  Try_Scan_Utf8_For_Detect_Feed_Pointer_Manged: C
+//
+option(REBARR*) Try_Scan_Utf8_For_Detect_Feed_Pointer_Managed(
+    const REBYTE* utf8,
+    REBFED *feed,
+    option(REBCTX*) context
+){
+    DECLARE_END_FRAME(f, EVAL_MASK_NONE);
+    f->executor = &Scanner_Executor;
+
+    SCAN_LEVEL *level = &f->u.scan;
+    SCAN_STATE ss;
+    const REBLIN start_line = 1;
+    Init_Va_Scan_Level_Core(
+        level,
+        &ss,
+        Intern_Unsized_Managed("-variadic-"),
+        start_line,
+        utf8,
+        feed,
+        context
+    );
+
+    DECLARE_LOCAL (temp);
+    Push_Frame(temp, f);
+    if (Trampoline_With_Top_As_Root_Throws())
+        fail (Error_No_Catch_For_Throw(f));
+
+    if (DSP == f->baseline.dsp) {
+        Drop_Frame(f);
+        return nullptr;
+    }
+
+    REBFLGS flags = SERIES_FLAG_MANAGED;
+    REBARR *reified = Pop_Stack_Values_Core(f->baseline.dsp, flags);
+    Drop_Frame(f);
+    return reified;
 }

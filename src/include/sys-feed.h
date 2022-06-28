@@ -125,36 +125,28 @@ inline static void Detect_Feed_Pointer_Maybe_Fetch(
     } else switch (Detect_Rebol_Pointer(p)) {
 
       case DETECTED_AS_UTF8: {
-        REBDSP dsp_orig = DSP;
-
+        //
         // Note that the context is only used on loaded text from C string
         // data.  The scanner leaves all spliced values with whatever bindings
         // they have (even if that is none).
         //
         // !!! Some kind of "binding instruction" might allow other uses?
         //
-        SCAN_LEVEL level;
-        SCAN_STATE ss;
-        const REBLIN start_line = 1;
-        Init_Va_Scan_Level_Core(
-            &level,
-            &ss,
-            Intern_Unsized_Managed("-variadic-"),
-            start_line,
+        // !!! We really should be able to free this array without managing it
+        // when we're done with it, though that can get a bit complicated if
+        // there's an error or need to reify into a value.  For now, do the
+        // inefficient thing and manage it.
+        //
+        // !!! Scans that produce only one value (which are likely very
+        // common) can go into feed->fetched and not make an array at all.
+        //
+        REBARR* reified = unwrap(Try_Scan_Utf8_For_Detect_Feed_Pointer_Managed(
             cast(const REBYTE*, p),
             feed,
             Get_Context_From_Stack()
-        );
+        ));
 
-        REBVAL *error = rebRescue(cast(REBDNG*, &Scan_To_Stack), &level);
-
-        if (error) {
-            REBCTX *error_ctx = VAL_CONTEXT(error);
-            rebRelease(error);
-            fail (error_ctx);
-        }
-
-        if (DSP == dsp_orig) {
+        if (not reified) {
             //
             // This happens when somone says rebValue(..., "", ...) or similar,
             // and gets an empty array from a string scan.  It's not legal
@@ -173,18 +165,6 @@ inline static void Detect_Feed_Pointer_Maybe_Fetch(
         // to pass the feed in as a parameter for partial scans
         //
         assert(not FEED_IS_VARIADIC(feed));
-
-        REBARR *reified = Pop_Stack_Values(dsp_orig);
-
-        // !!! We really should be able to free this array without managing it
-        // when we're done with it, though that can get a bit complicated if
-        // there's an error or need to reify into a value.  For now, do the
-        // inefficient thing and manage it.
-        //
-        // !!! Scans that produce only one value (which are likely very
-        // common) can go into feed->fetched and not make an array at all.
-        //
-        Manage_Series(reified);
 
         feed->value = ARR_HEAD(reified);
         Init_Any_Array_At(FEED_SINGLE(feed), REB_BLOCK, reified, 1);
