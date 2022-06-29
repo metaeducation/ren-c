@@ -1897,6 +1897,9 @@ static REBINT Scan_Head(SCAN_STATE *ss)
 REB_R Scanner_Executor(REBFRM *f) {
     REBFRM *frame_ = f;  // to use macros like OUT, SUBFRAME, etc.
 
+    if (THROWING)
+        return THROWN;  // no state to cleanup (just data stack, auto-cleaned)
+
     SCAN_LEVEL *level = &frame_->u.scan;
     SCAN_STATE *ss = level->ss;
 
@@ -1954,7 +1957,7 @@ REB_R Scanner_Executor(REBFRM *f) {
         // hit first, there was never a proper closing.
         //
         if (level->mode == ']' or level->mode == ')')
-            fail (Error_Missing(level, level->mode));
+            return FAIL(Error_Missing(level, level->mode));
 
         goto done;
       }
@@ -2054,7 +2057,7 @@ REB_R Scanner_Executor(REBFRM *f) {
             ss->begin = ss->end = ep;
             break;
           #else
-            fail (Error_Syntax(ss, token));
+            return FAIL(Error_Syntax(ss, token));
           #endif
         }
 
@@ -2062,7 +2065,7 @@ REB_R Scanner_Executor(REBFRM *f) {
 
       token_prefixable_sigil:
         if (level->prefix_pending != TOKEN_END)
-            fail (Error_Syntax(ss, level->token));  // can't make GET-GET-WORD!
+            return FAIL(Error_Syntax(ss, level->token));  // no "GET-GET-WORD!"
 
         // !!! This is a hack to support plain colon.  It should support more
         // than one colon, but this gets a little further for now.  :-/
@@ -2084,21 +2087,21 @@ REB_R Scanner_Executor(REBFRM *f) {
     scan_word:
       case TOKEN_WORD:
         if (len == 0)
-            fail (Error_Syntax(ss, level->token));
+            return FAIL(Error_Syntax(ss, level->token));
 
         Init_Word(DS_PUSH(), Intern_UTF8_Managed(bp, len));
         break;
 
       case TOKEN_ISSUE:
         if (ep != Scan_Issue(DS_PUSH(), bp + 1, len - 1))
-            fail (Error_Syntax(ss, level->token));
+            return FAIL(Error_Syntax(ss, level->token));
         break;
 
       case TOKEN_APOSTROPHE: {
         assert(*bp == '\'');  // should be `len` sequential apostrophes
 
         if (level->prefix_pending != TOKEN_END)  // can't do @'foo: or :'foo
-            fail (Error_Syntax(ss, level->token));
+            return FAIL(Error_Syntax(ss, level->token));
 
         if (IS_LEX_ANY_SPACE(*ep) or *ep == ']' or *ep == ')' or *ep == ';') {
             //
@@ -2119,6 +2122,7 @@ REB_R Scanner_Executor(REBFRM *f) {
             subframe,
             EVAL_FLAG_TRAMPOLINE_KEEPALIVE  // we want accrued stack
                 | (f->flags.bits & SCAN_EXECUTOR_MASK_RECURSE)
+                | EVAL_FLAG_FAILURE_RESULT_OK
         );
         subframe->executor = &Scanner_Executor;
 
@@ -2137,6 +2141,9 @@ REB_R Scanner_Executor(REBFRM *f) {
         continue_subframe (subframe); }
 
  child_array_scanned: {  /////////////////////////////////////////////////////
+
+        if (Is_Failure(OUT))
+            return FAIL(OUT);
 
         REBFLGS flags = NODE_FLAG_MANAGED;
         if (Get_Executor_Flag(SCAN, SUBFRAME, NEWLINE_PENDING))
@@ -2209,11 +2216,11 @@ REB_R Scanner_Executor(REBFRM *f) {
         }
 
         if (level->mode != '\0')  // expected e.g. `)` before the `]`
-            fail (Error_Mismatch(level, level->mode, ']'));
+            return FAIL(Error_Mismatch(level, level->mode, ']'));
 
         // just a stray unexpected ']'
         //
-        fail (Error_Extra(ss, ']')); }
+        return FAIL(Error_Extra(ss, ']')); }
 
       case TOKEN_GROUP_END: {
         if (level->mode == ')')
@@ -2227,11 +2234,11 @@ REB_R Scanner_Executor(REBFRM *f) {
         }
 
         if (level->mode != '\0')  // expected e.g. ']' before the ')'
-            fail (Error_Mismatch(level, level->mode, ')'));
+            return FAIL(Error_Mismatch(level, level->mode, ')'));
 
         // just a stray unexpected ')'
         //
-        fail (Error_Extra(ss, ')')); }
+        return FAIL(Error_Extra(ss, ')')); }
 
       case TOKEN_INTEGER:
         //
@@ -2276,17 +2283,17 @@ REB_R Scanner_Executor(REBFRM *f) {
         // Wasn't beginning of a DECIMAL!, so scan as a normal INTEGER!
         //
         if (ep != Scan_Integer(DS_PUSH(), bp, len))
-            fail (Error_Syntax(ss, level->token));
+            return FAIL(Error_Syntax(ss, level->token));
         break;
 
       case TOKEN_DECIMAL:
       case TOKEN_PERCENT:
       scan_decimal:
         if (Is_Dot_Or_Slash(*ep))
-            fail (Error_Syntax(ss, level->token));  // Do not allow 1.2/abc
+            return FAIL(Error_Syntax(ss, level->token));  // No `1.2/abc`
 
         if (ep != Scan_Decimal(DS_PUSH(), bp, len, false))
-            fail (Error_Syntax(ss, level->token));
+            return FAIL(Error_Syntax(ss, level->token));
 
         if (bp[len - 1] == '%') {
             mutable_HEART_BYTE(DS_TOP) = REB_PERCENT;
@@ -2302,10 +2309,10 @@ REB_R Scanner_Executor(REBFRM *f) {
       case TOKEN_MONEY:
         if (Is_Dot_Or_Slash(*ep)) {  // Do not allow $1/$2
             ++ep;
-            fail (Error_Syntax(ss, level->token));
+            return FAIL(Error_Syntax(ss, level->token));
         }
         if (ep != Scan_Money(DS_PUSH(), bp, len))
-            fail (Error_Syntax(ss, level->token));
+            return FAIL(Error_Syntax(ss, level->token));
         break;
 
       case TOKEN_TIME:
@@ -2314,12 +2321,12 @@ REB_R Scanner_Executor(REBFRM *f) {
             and Is_Dot_Or_Slash(level->mode)  // could be path/10: set
         ){
             if (ep - 1 != Scan_Integer(DS_PUSH(), bp, len - 1))
-                fail (Error_Syntax(ss, level->token));
+                return FAIL(Error_Syntax(ss, level->token));
             ss->end--;  // put ':' back on end but not beginning
             break;
         }
         if (ep != Scan_Time(DS_PUSH(), bp, len))
-            fail (Error_Syntax(ss, level->token));
+            return FAIL(Error_Syntax(ss, level->token));
         break;
 
       case TOKEN_DATE:
@@ -2335,14 +2342,14 @@ REB_R Scanner_Executor(REBFRM *f) {
             ss->begin = ep;  // End point extended to cover time
         }
         if (ep != Scan_Date(DS_PUSH(), bp, len))
-            fail (Error_Syntax(ss, level->token));
+            return FAIL(Error_Syntax(ss, level->token));
         break;
 
       case TOKEN_CHAR: {
         REBUNI uni;
         bp += 2;  // skip #", and subtract 1 from ep for "
         if (ep - 1 != Scan_UTF8_Char_Escapable(&uni, bp))
-            fail (Error_Syntax(ss, level->token));
+            return FAIL(Error_Syntax(ss, level->token));
         Init_Char_May_Fail(DS_PUSH(), uni);
         break; }
 
@@ -2352,27 +2359,27 @@ REB_R Scanner_Executor(REBFRM *f) {
 
       case TOKEN_BINARY:
         if (ep != Scan_Binary(DS_PUSH(), bp, len))
-            fail (Error_Syntax(ss, level->token));
+            return FAIL(Error_Syntax(ss, level->token));
         break;
 
       case TOKEN_PAIR:
         if (ep != Scan_Pair(DS_PUSH(), bp, len))
-            fail (Error_Syntax(ss, level->token));
+            return FAIL(Error_Syntax(ss, level->token));
         break;
 
       case TOKEN_FILE:
         if (ep != Scan_File(DS_PUSH(), bp, len))
-            fail (Error_Syntax(ss, level->token));
+            return FAIL(Error_Syntax(ss, level->token));
         break;
 
       case TOKEN_EMAIL:
         if (ep != Scan_Email(DS_PUSH(), bp, len))
-            fail (Error_Syntax(ss, level->token));
+            return FAIL(Error_Syntax(ss, level->token));
         break;
 
       case TOKEN_URL:
         if (ep != Scan_URL(DS_PUSH(), bp, len))
-            fail (Error_Syntax(ss, level->token));
+            return FAIL(Error_Syntax(ss, level->token));
         break;
 
       case TOKEN_TAG:
@@ -2387,7 +2394,7 @@ REB_R Scanner_Executor(REBFRM *f) {
             REB_TAG,
             STRMODE_NO_CR
         )){
-            fail (Error_Syntax(ss, level->token));
+            return FAIL(Error_Syntax(ss, level->token));
         }
         break;
 
@@ -2396,6 +2403,7 @@ REB_R Scanner_Executor(REBFRM *f) {
             subframe,
             EVAL_FLAG_TRAMPOLINE_KEEPALIVE  // we want accrued stack
                 | (f->flags.bits & SCAN_EXECUTOR_MASK_RECURSE)
+                | EVAL_FLAG_FAILURE_RESULT_OK
         );
         subframe->executor = &Scanner_Executor;
 
@@ -2410,15 +2418,21 @@ REB_R Scanner_Executor(REBFRM *f) {
 
         subframe->u.scan.mode = ']';
         STATE = ST_SCANNER_SCANNING_CONSTRUCT;
-        Push_Frame(OUT, subframe); }
+        Push_Frame(OUT, subframe);
+        continue_subframe (subframe); }
 
   construct_scan_to_stack_finished: {  ///////////////////////////////////////
+
+        if (Is_Failure(OUT))
+            return FAIL(OUT);
 
         REBFLGS flags = NODE_FLAG_MANAGED;
         if (Get_Executor_Flag(SCAN, f, NEWLINE_PENDING))
             flags |= ARRAY_FLAG_NEWLINE_AT_TAIL;
 
         REBARR *array = Pop_Stack_Values_Core(SUBFRAME->baseline.dsp, flags);
+
+        Drop_Frame(SUBFRAME);
 
         // Tag array with line where the beginning bracket/group/etc. was found
         //
@@ -2442,7 +2456,7 @@ REB_R Scanner_Executor(REBFRM *f) {
         if (ARR_LEN(array) == 0 or not IS_WORD(ARR_HEAD(array))) {
             DECLARE_LOCAL (temp);
             Init_Block(temp, array);
-            fail (Error_Malconstruct_Raw(temp));
+            return FAIL(Error_Malconstruct_Raw(temp));
         }
 
         SYMID sym = VAL_WORD_ID(ARR_HEAD(array));
@@ -2453,7 +2467,7 @@ REB_R Scanner_Executor(REBFRM *f) {
             if (ARR_LEN(array) != 2) {
                 DECLARE_LOCAL (temp);
                 Init_Block(temp, array);
-                fail (Error_Malconstruct_Raw(temp));
+                return FAIL(Error_Malconstruct_Raw(temp));
             }
 
             // !!! Having an "extensible scanner" is something that has
@@ -2493,11 +2507,11 @@ REB_R Scanner_Executor(REBFRM *f) {
             );
             if (r == R_THROWN) {  // !!! good argument for not using MAKE
                 assert(false);
-                fail ("MAKE during construction syntax threw--illegal");
+                panic ("MAKE during construction syntax threw--illegal");
             }
             if (r != cell) {  // !!! not yet supported
                 assert(false);
-                fail ("MAKE during construction syntax not out cell");
+                panic ("MAKE during construction syntax not out cell");
             }
             DROP_GC_GUARD(array);
 
@@ -2508,7 +2522,7 @@ REB_R Scanner_Executor(REBFRM *f) {
             if (ARR_LEN(array) != 1) {
                 DECLARE_LOCAL (temp);
                 Init_Block(temp, array);
-                fail (Error_Malconstruct_Raw(temp));
+                return FAIL(Error_Malconstruct_Raw(temp));
             }
 
             // !!! Construction syntax allows the "type" slot to be one of
@@ -2539,7 +2553,7 @@ REB_R Scanner_Executor(REBFRM *f) {
               default: {
                 DECLARE_LOCAL (temp);
                 Init_Block(temp, array);
-                fail (Error_Malconstruct_Raw(temp)); }
+                return FAIL(Error_Malconstruct_Raw(temp)); }
             }
         }
         break; }  // case TOKEN_CONSTRUCT
@@ -2637,7 +2651,7 @@ REB_R Scanner_Executor(REBFRM *f) {
             // Note we still might come up empty (e.g. `foo/)`)
         }
         else {
-            DECLARE_END_FRAME (subframe, EVAL_MASK_NONE);
+            DECLARE_END_FRAME (subframe, EVAL_FLAG_FAILURE_RESULT_OK);
             subframe->executor = &Scanner_Executor;
 
             SCAN_LEVEL *child = &subframe->u.scan;
@@ -2649,12 +2663,14 @@ REB_R Scanner_Executor(REBFRM *f) {
             else
                 child->mode = '/';
 
-            DECLARE_LOCAL (temp);
-            Push_Frame(temp, subframe);
+            Push_Frame(OUT, subframe);
 
             bool threw = Trampoline_With_Top_As_Root_Throws();
 
             Drop_Frame_Unbalanced(subframe);  // allow stack accrual
+
+            if (Is_Failure(OUT))
+                return FAIL(OUT);
 
             if (threw)  // drop failing stack before throwing
                 fail (Error_No_Catch_For_Throw(f));
@@ -2712,7 +2728,7 @@ REB_R Scanner_Executor(REBFRM *f) {
             for (; dsp != dsp_path_head - 1; --dsp) {
                 if (IS_EMAIL(DS_AT(dsp))) {
                     if (any_email)
-                        fail (Error_Syntax(ss, level->token));
+                        return FAIL(Error_Syntax(ss, level->token));
                     any_email = true;
                 }
             }
@@ -2745,7 +2761,7 @@ REB_R Scanner_Executor(REBFRM *f) {
             dsp_path_head - 1
         );
         if (not check)
-            fail (Error_Syntax(ss, level->token));
+            return FAIL(Error_Syntax(ss, level->token));
       }
 
         assert(IS_WORD(temp) or ANY_SEQUENCE(temp));  // `/` and `...` decay
@@ -2777,13 +2793,13 @@ REB_R Scanner_Executor(REBFRM *f) {
                 IS_INTEGER(VAL_SEQUENCE_AT(temp, DS_TOP, 0))
                 and IS_BLANK(VAL_SEQUENCE_AT(temp, DS_TOP, 1))
             ){
-                fail ("Notation of `5.` currently reserved, please use 5.0");
+                return FAIL("`5.` currently reserved, please use 5.0");
             }
             if (
                 IS_BLANK(VAL_SEQUENCE_AT(temp, DS_TOP, 0))
                 and IS_INTEGER(VAL_SEQUENCE_AT(temp, DS_TOP, 1))
             ){
-                fail ("Notation of `.5` currently reserved, please use 0.5");
+                return FAIL("`.5` currently reserved, please use 0.5");
             }
         }
 
@@ -2850,11 +2866,11 @@ REB_R Scanner_Executor(REBFRM *f) {
 
     if (ss->begin and *ss->begin == ':') {  // no whitespace, interpret as SET
         if (level->prefix_pending)
-            fail (Error_Syntax(ss, level->token));
+            return FAIL(Error_Syntax(ss, level->token));
 
         enum Reb_Kind kind = VAL_TYPE(DS_TOP);
         if (not ANY_PLAIN_KIND(kind))
-            fail (Error_Syntax(ss, level->token));
+            return FAIL(Error_Syntax(ss, level->token));
 
         mutable_HEART_BYTE(DS_TOP) = SETIFY_ANY_PLAIN_KIND(kind);
 
@@ -2863,7 +2879,7 @@ REB_R Scanner_Executor(REBFRM *f) {
     else if (level->prefix_pending != TOKEN_END) {
         enum Reb_Kind kind = VAL_TYPE(DS_TOP);
         if (not ANY_PLAIN_KIND(kind))
-            fail (Error_Syntax(ss, level->token));
+            return FAIL(Error_Syntax(ss, level->token));
 
         switch (level->prefix_pending) {
           case TOKEN_COLON:
@@ -2880,7 +2896,7 @@ REB_R Scanner_Executor(REBFRM *f) {
 
           default:
             level->token = level->prefix_pending;
-            fail (Error_Syntax(ss, level->token));
+            return FAIL(Error_Syntax(ss, level->token));
         }
         level->prefix_pending = TOKEN_END;
     }
@@ -3121,7 +3137,9 @@ REBNATIVE(transcode)
         ? VAL_CONTEXT(ARG(where))
         : cast(REBCTX*, nullptr);  // C++98 ambiguous w/o cast
 
-    REBFLGS flags = EVAL_FLAG_TRAMPOLINE_KEEPALIVE;  // query pending newline
+    REBFLGS flags =
+        EVAL_FLAG_TRAMPOLINE_KEEPALIVE  // query pending newline
+        | EVAL_FLAG_FAILURE_RESULT_OK;  // want to pass on definitional error
     if (REF(next))
         flags |= SCAN_EXECUTOR_FLAG_JUST_ONCE;
 
@@ -3129,16 +3147,22 @@ REBNATIVE(transcode)
     subframe->executor = &Scanner_Executor;
     SCAN_LEVEL *level = &subframe->u.scan;
 
-    Init_Binary(ss_buffer, Make_Binary(sizeof(SCAN_STATE)));
-    ss = cast(SCAN_STATE*, VAL_BINARY_AT(ss_buffer));
+    REBBIN *bin = Make_Binary(sizeof(SCAN_STATE));
+    ss = cast(SCAN_STATE*, BIN_HEAD(bin));
 
     Init_Scan_Level(level, ss, file, start_line, bp, size, context);
+    TERM_BIN_LEN(bin, sizeof(SCAN_STATE));
+
+    Init_Binary(ss_buffer, bin);
 
     Push_Frame(OUT, subframe);
     STATE = ST_TRANSCODE_SCANNING;
     continue_uncatchable_subframe (subframe);
 
 } scan_to_stack_maybe_failed: {  /////////////////////////////////////////////
+
+    if (Is_Failure(OUT))
+        return FAIL(OUT);
 
     // If the source data bytes are "1" then the scanner will push INTEGER! 1
     // if the source data is "[1]" then the scanner will push BLOCK! [1]
