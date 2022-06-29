@@ -575,7 +575,7 @@ const REBYTE *Scan_Dec_Buf(
 // Scan and convert a decimal value.  Return zero if error.
 //
 const REBYTE *Scan_Decimal(
-    Cell *out,
+    Cell(*) out,
     const REBYTE *cp,
     REBLEN len,
     bool dec_only
@@ -667,7 +667,7 @@ const REBYTE *Scan_Decimal(
 // Allow preceding + - and any combination of ' marks.
 //
 const REBYTE *Scan_Integer(
-    Cell *out,
+    Cell(*) out,
     const REBYTE *cp,
     REBLEN len
 ){
@@ -760,7 +760,7 @@ const REBYTE *Scan_Integer(
 // Scan and convert a date. Also can include a time and zone.
 //
 const REBYTE *Scan_Date(
-    Cell *out,
+    Cell(*) out,
     const REBYTE *cp,
     REBLEN len
 ) {
@@ -1001,7 +1001,7 @@ const REBYTE *Scan_Date(
 // Scan and convert a file name.
 //
 const REBYTE *Scan_File(
-    Cell *out,
+    Cell(*) out,
     const REBYTE *cp,
     REBLEN len
 ){
@@ -1042,7 +1042,7 @@ const REBYTE *Scan_File(
 // Scan and convert email.
 //
 const REBYTE *Scan_Email(
-    Cell *out,
+    Cell(*) out,
     const REBYTE *cp,
     REBLEN len
 ){
@@ -1112,7 +1112,7 @@ const REBYTE *Scan_Email(
 // on Windows, are expressed as TEXT!.)
 //
 const REBYTE *Scan_URL(
-    Cell *out,
+    Cell(*) out,
     const REBYTE *cp,
     REBLEN len
 ){
@@ -1126,7 +1126,7 @@ const REBYTE *Scan_URL(
 // Scan and convert a pair
 //
 const REBYTE *Scan_Pair(
-    Cell *out,
+    Cell(*) out,
     const REBYTE *cp,
     REBLEN len
 ) {
@@ -1180,7 +1180,7 @@ const REBYTE *Scan_Pair(
 // Scan and convert binary strings.
 //
 const REBYTE *Scan_Binary(
-    Cell *out,
+    Cell(*) out,
     const REBYTE *cp,
     REBLEN len
 ) {
@@ -1218,7 +1218,7 @@ const REBYTE *Scan_Binary(
 // Scan any string that does not require special decoding.
 //
 const REBYTE *Scan_Any(
-    Cell *out,
+    Cell(*) out,
     const REBYTE *cp,
     REBLEN num_bytes,
     enum Reb_Kind type,
@@ -1303,15 +1303,15 @@ REBNATIVE(scan_net_header)
         if (*cp != ':')
             break;
 
-        Cell *val = nullptr;  // suppress maybe uninitialized warning
+        Cell(*) val = nullptr;  // suppress maybe uninitialized warning
 
         Symbol(const*) name = Intern_UTF8_Managed(start, cp - start);
 
         cp++;
         // Search if word already present:
 
-        const Cell *item_tail = ARR_TAIL(result);
-        Cell *item = ARR_HEAD(result);
+        Cell(const*) item_tail = ARR_TAIL(result);
+        Cell(*) item = ARR_HEAD(result);
 
         for (; item != item_tail; item += 2) {
             assert(IS_TEXT(item + 1) || IS_BLOCK(item + 1));

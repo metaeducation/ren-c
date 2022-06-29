@@ -43,8 +43,8 @@
 #define LINK_Splice_CAST        ARR
 #define HAS_LINK_Splice         FLAVOR_FEED
 
-#define MISC_Pending_TYPE       const Cell*
-#define MISC_Pending_CAST       (const Cell*)
+#define MISC_Pending_TYPE       Cell(const*)
+#define MISC_Pending_CAST       (Cell(const*))
 #define HAS_MISC_Pending        FLAVOR_FEED
 
 
@@ -243,7 +243,7 @@ inline static void Detect_Feed_Pointer_Maybe_Fetch(
 
       case DETECTED_AS_CELL: {
         const REBVAL *cell = cast(const REBVAL*, p);
-        assert(not IS_RELATIVE(cast(const Cell*, cell)));
+        assert(not IS_RELATIVE(cast(Cell(const*), cell)));
 
         assert(FEED_SPECIFIER(feed) == SPECIFIED);
 
@@ -374,7 +374,7 @@ inline static void Fetch_Next_In_Feed(REBFED *feed) {
 // taken when one is interested in that data, because it may have to be
 // moved.  So current can be returned from Fetch_Next_In_Frame_Core().
 
-inline static const Cell *Lookback_While_Fetching_Next(REBFRM *f) {
+inline static Cell(const*) Lookback_While_Fetching_Next(REBFRM *f) {
   #if DEBUG_EXPIRED_LOOKBACK
     if (feed->stress) {
         RESET(feed->stress);
@@ -396,7 +396,7 @@ inline static const Cell *Lookback_While_Fetching_Next(REBFRM *f) {
     // this is currently kind of an unknown, but in the scheme of things it
     // seems like it must be something favorable to optimization.)
     //
-    const Cell *lookback;
+    Cell(const*) lookback;
     if (f->feed->value == &f->feed->fetched) {
         Move_Cell_Core(
             &f->feed->lookback,
@@ -412,7 +412,7 @@ inline static const Cell *Lookback_While_Fetching_Next(REBFRM *f) {
 
   #if DEBUG_EXPIRED_LOOKBACK
     if (preserve) {
-        f->stress = cast(Cell*, malloc(sizeof(Cell)));
+        f->stress = cast(Cell(*), malloc(sizeof(Cell)));
         memcpy(f->stress, *opt_lookback, sizeof(Cell));
         lookback = f->stress;
     }
@@ -438,7 +438,7 @@ inline static const Cell *Lookback_While_Fetching_Next(REBFRM *f) {
 //
 inline static void Inertly_Derelativize_Inheriting_Const(
     REBVAL *out,
-    const Cell *v,
+    Cell(const*) v,
     REBFED *feed
 ){
     assert(not Is_Isotope(v));  // Source should not have isotopes
@@ -531,7 +531,7 @@ inline static void Free_Feed(REBFED *feed) {
 
 inline static void Prep_Array_Feed(
     REBFED *feed,
-    option(const Cell*) first,
+    option(Cell(const*)) first,
     const REBARR *array,
     REBLEN index,
     REBSPC *specifier,
@@ -620,7 +620,7 @@ inline static void Prep_Va_Feed(
 
 inline static void Prep_Any_Array_Feed(
     REBFED *feed,
-    noquote(const Cell*) any_array,  // array is extracted and HOLD put on
+    noquote(Cell(const*)) any_array,  // array is extracted and HOLD put on
     REBSPC *specifier,
     REBFLGS parent_flags  // only reads FEED_FLAG_CONST out of this
 ){

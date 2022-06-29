@@ -262,10 +262,10 @@ REBINT Compare_Arrays_At_Indexes(
     if (s_array == t_array and s_index == t_index)
          return 0;
 
-    const Cell *s_tail = ARR_TAIL(s_array);
-    const Cell *t_tail = ARR_TAIL(t_array);
-    const Cell *s = ARR_AT(s_array, s_index);
-    const Cell *t = ARR_AT(t_array, t_index);
+    Cell(const*) s_tail = ARR_TAIL(s_array);
+    Cell(const*) t_tail = ARR_TAIL(t_array);
+    Cell(const*) s = ARR_AT(s_array, s_index);
+    Cell(const*) t = ARR_AT(t_array, t_index);
 
     if (s == s_tail or t == t_tail)
         goto diff_of_ends;
@@ -308,15 +308,15 @@ REBINT Compare_Arrays_At_Indexes(
 //
 // is_case should be true for case sensitive compare
 //
-REBINT Cmp_Value(const Cell *sval, const Cell *tval, bool strict)
+REBINT Cmp_Value(Cell(const*) sval, Cell(const*) tval, bool strict)
 {
     REBLEN squotes = VAL_NUM_QUOTES(sval);
     REBLEN tquotes = VAL_NUM_QUOTES(tval);
     if (squotes != tquotes)
         return squotes > tquotes ? 1 : -1;
 
-    noquote(const Cell*) s = VAL_UNESCAPED(sval);
-    noquote(const Cell*) t = VAL_UNESCAPED(tval);
+    noquote(Cell(const*)) s = VAL_UNESCAPED(sval);
+    noquote(Cell(const*)) t = VAL_UNESCAPED(tval);
     enum Reb_Kind s_kind = CELL_HEART(s);
     enum Reb_Kind t_kind = CELL_HEART(t);
 
@@ -485,9 +485,9 @@ REBINT Cmp_Value(const Cell *sval, const Cell *tval, bool strict)
 REBLEN Find_In_Array_Simple(
     const REBARR *array,
     REBLEN index,
-    const Cell *target
+    Cell(const*) target
 ){
-    const Cell *value = ARR_HEAD(array);
+    Cell(const*) value = ARR_HEAD(array);
 
     for (; index < ARR_LEN(array); index++) {
         if (0 == Cmp_Value(value + index, target, false))

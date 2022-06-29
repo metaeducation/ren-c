@@ -869,7 +869,7 @@ REB_R Evaluator_Executor(REBFRM *f)
     // fetching isotopes is what you actually intended.
 
       case REB_TUPLE: {
-        const Cell *head = VAL_SEQUENCE_AT(SPARE, f_current, 0);
+        Cell(const*) head = VAL_SEQUENCE_AT(SPARE, f_current, 0);
         if (ANY_INERT(head)) {
             Derelativize(OUT, f_current, f_specifier);
             break;
@@ -929,7 +929,7 @@ REB_R Evaluator_Executor(REBFRM *f)
     // blank at its head, and it evaluates to itself.
 
       case REB_PATH: {
-        const Cell *temp = VAL_SEQUENCE_AT(SPARE, f_current, 0);
+        Cell(const*) temp = VAL_SEQUENCE_AT(SPARE, f_current, 0);
         if (ANY_INERT(temp)) {
             Derelativize(OUT, f_current, f_specifier);
             break;
@@ -1270,8 +1270,8 @@ REB_R Evaluator_Executor(REBFRM *f)
         REBDSP dsp_circled = 0;  // which pushed address is main return
 
       blockscope {
-        const Cell *tail;
-        const Cell *check = VAL_ARRAY_AT(&tail, f_current);
+        Cell(const*) tail;
+        Cell(const*) check = VAL_ARRAY_AT(&tail, f_current);
         REBSPC *check_specifier = Derive_Specifier(f_specifier, f_current);
 
         TRASH_POINTER_IF_DEBUG(f_current);  // might be SPARE, we use it now
@@ -1330,7 +1330,7 @@ REB_R Evaluator_Executor(REBFRM *f)
                 continue;
             }
 
-            const Cell *item;
+            Cell(const*) item;
             REBSPC *item_specifier;
             if (
                 IS_GROUP(check)

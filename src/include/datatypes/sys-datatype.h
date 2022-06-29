@@ -36,12 +36,12 @@
 #define VAL_TYPE_KIND_ENUM(v) \
     EXTRA(Datatype, (v)).kind
 
-inline static enum Reb_Kind VAL_TYPE_KIND_OR_CUSTOM(noquote(const Cell*) v) {
+inline static enum Reb_Kind VAL_TYPE_KIND_OR_CUSTOM(noquote(Cell(const*)) v) {
     assert(CELL_HEART(v) == REB_DATATYPE);
     return VAL_TYPE_KIND_ENUM(v);
 }
 
-inline static enum Reb_Kind VAL_TYPE_KIND(noquote(const Cell*) v) {
+inline static enum Reb_Kind VAL_TYPE_KIND(noquote(Cell(const*)) v) {
     assert(CELL_HEART(v) == REB_DATATYPE);
     enum Reb_Kind k = VAL_TYPE_KIND_ENUM(v);
     assert(k != REB_CUSTOM);
@@ -60,7 +60,7 @@ inline static enum Reb_Kind VAL_TYPE_KIND(noquote(const Cell*) v) {
 // the early 64-ish symbol IDs in lib, so just use kind as an index.
 //
 inline static REBVAL *Init_Builtin_Datatype(
-    Cell *out,
+    Cell(*) out,
     enum Reb_Kind kind
 ){
     assert(kind > REB_0 and kind < REB_MAX);
@@ -76,7 +76,7 @@ inline static REBVAL *Init_Builtin_Datatype(
 // a URL, so that there is a way of MAKE-ing them.
 //
 inline static REBVAL *Init_Custom_Datatype(
-    Cell *out,
+    Cell(*) out,
     const REBTYP *type
 ){
     Reset_Cell_Header_Untracked(
@@ -138,7 +138,7 @@ enum Reb_Type_Hook_Index {
 extern CFUNC* Builtin_Type_Hooks[REB_MAX][IDX_HOOKS_MAX];
 
 
-inline static CFUNC** VAL_TYPE_HOOKS(noquote(const Cell*) type) {
+inline static CFUNC** VAL_TYPE_HOOKS(noquote(Cell(const*)) type) {
     assert(CELL_HEART(type) == REB_DATATYPE);
     enum Reb_Kind k = VAL_TYPE_KIND_OR_CUSTOM(type);
     if (k != REB_CUSTOM)
@@ -146,7 +146,7 @@ inline static CFUNC** VAL_TYPE_HOOKS(noquote(const Cell*) type) {
     return cast(CFUNC**, m_cast(REBYTE*, SER_DATA(VAL_TYPE_CUSTOM(type))));
 }
 
-inline static CFUNC** HOOKS_FOR_TYPE_OF(noquote(const Cell*) v) {
+inline static CFUNC** HOOKS_FOR_TYPE_OF(noquote(Cell(const*)) v) {
     enum Reb_Kind k = CELL_HEART(v);
     if (k != REB_CUSTOM)
         return Builtin_Type_Hooks[k];

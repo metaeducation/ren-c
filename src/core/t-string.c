@@ -51,7 +51,7 @@ enum {
 //
 //  CT_String: C
 //
-REBINT CT_String(noquote(const Cell*) a, noquote(const Cell*) b, bool strict)
+REBINT CT_String(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
 {
     assert(
         ANY_STRING_KIND(CELL_HEART(a))
@@ -229,7 +229,7 @@ REB_R MAKE_String(
         // to produce #{abcd2}.  That behavior is not available in Ren-C.
 
         REBLEN len;
-        const Cell *first = VAL_ARRAY_LEN_AT(&len, def);
+        Cell(const*) first = VAL_ARRAY_LEN_AT(&len, def);
 
         if (len != 2)
             goto bad_make;
@@ -237,7 +237,7 @@ REB_R MAKE_String(
         if (not ANY_STRING(first))
             goto bad_make;
 
-        const Cell *index = first + 1;
+        Cell(const*) index = first + 1;
         if (!IS_INTEGER(index))
             goto bad_make;
 
@@ -613,13 +613,13 @@ void Mold_Text_Series_At(REB_MOLD *mo, const REBSTR *s, REBLEN index) {
 // wishes to preserve round-trip copy-and-paste from URL bars in browsers
 // to source and back.  Encoding concerns are handled elsewhere.
 //
-static void Mold_Url(REB_MOLD *mo, noquote(const Cell*) v)
+static void Mold_Url(REB_MOLD *mo, noquote(Cell(const*)) v)
 {
     Append_String(mo->series, v);
 }
 
 
-static void Mold_File(REB_MOLD *mo, noquote(const Cell*) v)
+static void Mold_File(REB_MOLD *mo, noquote(Cell(const*)) v)
 {
 
     Append_Codepoint(mo->series, '%');
@@ -640,7 +640,7 @@ static void Mold_File(REB_MOLD *mo, noquote(const Cell*) v)
 }
 
 
-static void Mold_Tag(REB_MOLD *mo, noquote(const Cell*) v)
+static void Mold_Tag(REB_MOLD *mo, noquote(Cell(const*)) v)
 {
     Append_Codepoint(mo->series, '<');
     Append_String(mo->series, v);
@@ -651,7 +651,7 @@ static void Mold_Tag(REB_MOLD *mo, noquote(const Cell*) v)
 //
 //  MF_String: C
 //
-void MF_String(REB_MOLD *mo, noquote(const Cell*) v, bool form)
+void MF_String(REB_MOLD *mo, noquote(Cell(const*)) v, bool form)
 {
     REBSTR *buf = mo->series;
 
@@ -713,7 +713,7 @@ void MF_String(REB_MOLD *mo, noquote(const Cell*) v, bool form)
 bool Did_Get_Series_Index_From_Picker(
     REBINT *out,
     const REBVAL *v,
-    const Cell *picker
+    Cell(const*) picker
 ){
     if (not IS_INTEGER(picker))
         fail (Error_Bad_Pick_Raw(picker));
@@ -758,7 +758,7 @@ REBTYPE(String)
         INCLUDE_PARAMS_OF_PICK_P;
         UNUSED(ARG(location));
 
-        const Cell *picker = ARG(picker);
+        Cell(const*) picker = ARG(picker);
         REBINT n;
         if (not Did_Get_Series_Index_From_Picker(&n, v, picker))
             return nullptr;
@@ -774,7 +774,7 @@ REBTYPE(String)
         INCLUDE_PARAMS_OF_POKE_P;
         UNUSED(ARG(location));
 
-        const Cell *picker = ARG(picker);
+        Cell(const*) picker = ARG(picker);
         REBINT n;
         if (not Did_Get_Series_Index_From_Picker(&n, v, picker))
             fail (Error_Out_Of_Range(picker));

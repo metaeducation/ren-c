@@ -328,7 +328,7 @@ typedef Executor Dispatcher;  // sub-dispatched in Action_Executor()
     // legal evaluation targets, although they can be used as GC safe scratch
     // space for things other than evaluation.)
     //
-    Cell spare;
+    Reb_Cell spare;
 
     // !!! The "executor" is an experimental new concept in the frame world,
     // for who runs the continuation.  This was controlled with flags before,

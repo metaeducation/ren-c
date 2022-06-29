@@ -43,7 +43,7 @@
 // Be sure to re-run the MinGW CI Builds if you rearrange this...
 //
 inline static REBVAL *Init_Bad_Word_Untracked(
-    Cell *out,
+    Cell(*) out,
     option(Symbol(const*) ) label,
     REBFLGS flags
 ){
@@ -75,7 +75,7 @@ inline static REBVAL *Init_Bad_Word_Untracked(
     #define Init_Trash_Untracked(out) \
         Init_Bad_Word_Untracked((out), nullptr, CELL_FLAG_STALE)
 
-    inline static bool IS_TRASH(const Cell *v) {
+    inline static bool IS_TRASH(Cell(const*) v) {
         if (CELL_HEART_UNCHECKED(v) != REB_BAD_WORD)
             return false;
         return did (v->header.bits & CELL_FLAG_STALE);

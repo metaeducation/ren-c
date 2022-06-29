@@ -273,7 +273,7 @@ REB_R Trampoline_From_Top_Maybe_Root(void)
 
     if (r == OUT) {
       result_in_out:
-        assert(IS_SPECIFIC(cast(Cell*, OUT)));
+        assert(IS_SPECIFIC(cast(Cell(*), OUT)));
 
         if (Is_Failure(OUT)) {
             if (Not_Frame_Flag(FRAME, FAILURE_RESULT_OK)) {

@@ -41,8 +41,8 @@
 //
 void Collapsify_Array(REBARR *array, REBSPC *specifier, REBLEN limit)
 {
-    const Cell *tail = ARR_TAIL(array);
-    Cell *item = ARR_HEAD(array);
+    Cell(const*) tail = ARR_TAIL(array);
+    Cell(*) item = ARR_HEAD(array);
     for (; item != tail; ++item) {
         if (ANY_ARRAY(item) and VAL_LEN_AT(item) > limit) {
             REBSPC *derived = Derive_Specifier(specifier, item);
@@ -91,7 +91,7 @@ void Collapsify_Array(REBARR *array, REBSPC *specifier, REBLEN limit)
 // onto these values for the purposes of better error messages (at the cost
 // of performance).
 //
-REBVAL *Init_Near_For_Frame(Cell *out, REBFRM *f)
+REBVAL *Init_Near_For_Frame(Cell(*) out, REBFRM *f)
 {
     REBLEN dsp_start = DSP;
 
@@ -119,8 +119,8 @@ REBVAL *Init_Near_For_Frame(Cell *out, REBFRM *f)
         start = 0;
 
     REBLEN count = 0;
-    const Cell *tail = ARR_TAIL(FRM_ARRAY(f));
-    const Cell *item = ARR_AT(FRM_ARRAY(f), start);
+    Cell(const*) tail = ARR_TAIL(FRM_ARRAY(f));
+    Cell(const*) item = ARR_AT(FRM_ARRAY(f), start);
     for (; item != tail and count < 6; ++item, ++count) {
         assert(not Is_Nulled(item));  // can't be in arrays, API won't splice
         Derelativize(PUSH(), item, f_specifier);

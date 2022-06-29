@@ -77,7 +77,7 @@ REBNATIVE(only)  // https://forum.rebol.info/t/1182/11
 // !!! Should CT_Path() delegate to this when it detects it has two arrays
 // to compare?  That requires canonization assurance.
 //
-REBINT CT_Array(noquote(const Cell*) a, noquote(const Cell*) b, bool strict)
+REBINT CT_Array(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
 {
     if (C_STACK_OVERFLOWING(&strict))
         Fail_Stack_Overflow();
@@ -167,12 +167,12 @@ REB_R MAKE_Array(
         // instead of just [a b c] as the construction spec.
         //
         REBLEN len;
-        const Cell *at = VAL_ARRAY_LEN_AT(&len, arg);
+        Cell(const*) at = VAL_ARRAY_LEN_AT(&len, arg);
 
         if (len != 2 or not ANY_ARRAY(at) or not IS_INTEGER(at + 1))
             goto bad_make;
 
-        const Cell *any_array = at;
+        Cell(const*) any_array = at;
         REBINT index = VAL_INDEX(any_array) + Int32(at + 1) - 1;
 
         if (index < 0 or index > cast(REBINT, VAL_LEN_HEAD(any_array)))
@@ -208,7 +208,7 @@ REB_R MAKE_Array(
         // data, but aliases it under a new kind.)
         //
         REBLEN len;
-        const Cell *at = VAL_ARRAY_LEN_AT(&len, arg);
+        Cell(const*) at = VAL_ARRAY_LEN_AT(&len, arg);
         return Init_Any_Array(
             out,
             kind,
@@ -352,7 +352,7 @@ REB_R TO_Array(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
     }
     else if (ANY_ARRAY(arg)) {
         REBLEN len;
-        const Cell *at = VAL_ARRAY_LEN_AT(&len, arg);
+        Cell(const*) at = VAL_ARRAY_LEN_AT(&len, arg);
         return Init_Any_Array(
             out,
             kind,
@@ -379,7 +379,7 @@ REBINT Find_In_Array(
     const REBARR *array,
     REBLEN index_unsigned, // index to start search
     REBLEN end_unsigned, // ending position
-    const Cell *target,
+    Cell(const*) target,
     REBLEN len, // length of target
     REBFLGS flags, // see AM_FIND_XXX
     REBINT skip // skip factor
@@ -407,7 +407,7 @@ REBINT Find_In_Array(
     //
     if (ANY_WORD(target)) {
         for (; index >= start and index < end; index += skip) {
-            const Cell *item = ARR_AT(array, index);
+            Cell(const*) item = ARR_AT(array, index);
             Symbol(const*) target_symbol = VAL_WORD_SYMBOL(target);
             if (ANY_WORD(item)) {
                 if (flags & AM_FIND_CASE) { // Must be same type and spelling
@@ -433,12 +433,12 @@ REBINT Find_In_Array(
     //
     if (ANY_ARRAY(target) and not (flags & AM_FIND_ONLY)) {
         for (; index >= start and index < end; index += skip) {
-            const Cell *item_tail = ARR_TAIL(array);
-            const Cell *item = ARR_AT(array, index);
+            Cell(const*) item_tail = ARR_TAIL(array);
+            Cell(const*) item = ARR_AT(array, index);
 
             REBLEN count = 0;
-            const Cell *other_tail;
-            const Cell *other = VAL_ARRAY_AT(&other_tail, target);
+            Cell(const*) other_tail;
+            Cell(const*) other = VAL_ARRAY_AT(&other_tail, target);
             for (; other != other_tail; ++other, ++item) {
                 if (
                     item == item_tail or
@@ -463,7 +463,7 @@ REBINT Find_In_Array(
     //
     if (IS_DATATYPE(target) or IS_TYPESET(target)) {
         for (; index >= start and index < end; index += skip) {
-            const Cell *item = ARR_AT(array, index);
+            Cell(const*) item = ARR_AT(array, index);
 
             if (IS_DATATYPE(target)) {
                 if (VAL_TYPE(item) == VAL_TYPE_KIND(target))
@@ -496,7 +496,7 @@ REBINT Find_In_Array(
     // All other cases
 
     for (; index >= start and index < end; index += skip) {
-        const Cell *item = ARR_AT(array, index);
+        Cell(const*) item = ARR_AT(array, index);
         if (0 == Cmp_Value(
             item,
             target,
@@ -532,14 +532,14 @@ static int Compare_Val(void *arg, const void *v1, const void *v2)
 
     if (flags->reverse)
         return Cmp_Value(
-            cast(const Cell*, v2) + flags->offset,
-            cast(const Cell*, v1) + flags->offset,
+            cast(Cell(const*), v2) + flags->offset,
+            cast(Cell(const*), v1) + flags->offset,
             flags->cased
         );
     else
         return Cmp_Value(
-            cast(const Cell*, v1) + flags->offset,
-            cast(const Cell*, v2) + flags->offset,
+            cast(Cell(const*), v1) + flags->offset,
+            cast(Cell(const*), v2) + flags->offset,
             flags->cased
         );
 }
@@ -594,12 +594,12 @@ void Shuffle_Array(REBARR *arr, REBLEN idx, bool secure)
 {
     REBLEN n;
     REBLEN k;
-    Cell *data = ARR_HEAD(arr);
+    Cell(*) data = ARR_HEAD(arr);
 
     // Rare case where Cell bit copying is okay...between spots in the
     // same array.
     //
-    Cell swap;
+    Reb_Cell swap;
 
     for (n = ARR_LEN(arr) - idx; n > 1;) {
         k = idx + (REBLEN)Random_Int(secure) % n;
@@ -622,7 +622,7 @@ void Shuffle_Array(REBARR *arr, REBLEN idx, bool secure)
 
 static REBINT Try_Get_Array_Index_From_Picker(
     const REBVAL *v,
-    const Cell *picker
+    Cell(const*) picker
 ){
     REBINT n;
 
@@ -642,8 +642,8 @@ static REBINT Try_Get_Array_Index_From_Picker(
         n = -1;
 
         Symbol(const*) symbol = VAL_WORD_SYMBOL(picker);
-        const Cell *tail;
-        const Cell *item = VAL_ARRAY_AT(&tail, v);
+        Cell(const*) tail;
+        Cell(const*) item = VAL_ARRAY_AT(&tail, v);
         REBLEN index = VAL_INDEX(v);
         for (; item != tail; ++item, ++index) {
             if (ANY_WORD(item) and Are_Synonyms(symbol, VAL_WORD_SYMBOL(item))) {
@@ -685,7 +685,7 @@ static REBINT Try_Get_Array_Index_From_Picker(
 //
 // Fills out with void if no pick.
 //
-Cell *Pick_Block(REBVAL *out, const REBVAL *block, const Cell *picker)
+Cell(*) Pick_Block(REBVAL *out, const REBVAL *block, Cell(const*) picker)
 {
     REBINT n = Get_Num_From_Arg(picker);
     n += VAL_INDEX(block) - 1;
@@ -694,7 +694,7 @@ Cell *Pick_Block(REBVAL *out, const REBVAL *block, const Cell *picker)
         return NULL;
     }
 
-    const Cell *slot = VAL_ARRAY_AT_HEAD(block, n);
+    Cell(const*) slot = VAL_ARRAY_AT_HEAD(block, n);
     Derelativize(out, slot, VAL_SPECIFIER(block));
     return out;
 }
@@ -703,7 +703,7 @@ Cell *Pick_Block(REBVAL *out, const REBVAL *block, const Cell *picker)
 //
 //  MF_Array: C
 //
-void MF_Array(REB_MOLD *mo, noquote(const Cell*) v, bool form)
+void MF_Array(REB_MOLD *mo, noquote(Cell(const*)) v, bool form)
 {
     // Routine may be called on value that reports REB_QUOTED, even if it
     // has no additional payload and is aliasing the cell itself.  Checking
@@ -817,12 +817,12 @@ REBTYPE(Array)
         INCLUDE_PARAMS_OF_PICK_P;
         UNUSED(ARG(location));
 
-        const Cell *picker = ARG(picker);
+        Cell(const*) picker = ARG(picker);
         REBINT n = Try_Get_Array_Index_From_Picker(array, picker);
         if (n < 0 or n >= cast(REBINT, VAL_LEN_HEAD(array)))
             return nullptr;
 
-        const Cell *at = ARR_AT(VAL_ARRAY(array), n);
+        Cell(const*) at = ARR_AT(VAL_ARRAY(array), n);
 
         Derelativize(OUT, at, VAL_SPECIFIER(array));
         Inherit_Const(OUT, array);
@@ -835,7 +835,7 @@ REBTYPE(Array)
         INCLUDE_PARAMS_OF_POKE_P;
         UNUSED(ARG(location));
 
-        const Cell *picker = ARG(picker);
+        Cell(const*) picker = ARG(picker);
 
         REBVAL *setval = Meta_Unquotify(ARG(value));
 
@@ -852,7 +852,7 @@ REBTYPE(Array)
             fail (Error_Out_Of_Range(picker));
 
         REBARR *mut_arr = VAL_ARRAY_ENSURE_MUTABLE(array);
-        Cell *at = ARR_AT(mut_arr, n);
+        Cell(*) at = ARR_AT(mut_arr, n);
         Move_Cell(at, setval);
         Init_None(setval);  // can't leave ARG slots RESET()
 
@@ -1164,9 +1164,9 @@ REBTYPE(Array)
         ){
             // Cell bits can be copied within the same array
             //
-            Cell *a = VAL_ARRAY_AT_ENSURE_MUTABLE(nullptr, array);
-            Cell *b = VAL_ARRAY_AT_ENSURE_MUTABLE(nullptr, arg);
-            Cell temp;
+            Cell(*) a = VAL_ARRAY_AT_ENSURE_MUTABLE(nullptr, array);
+            Cell(*) b = VAL_ARRAY_AT_ENSURE_MUTABLE(nullptr, arg);
+            Reb_Cell temp;
             temp.header = a->header;
             temp.payload = a->payload;
             temp.extra = a->extra;
@@ -1186,8 +1186,8 @@ REBTYPE(Array)
         if (len == 0)
             return_value (array); // !!! do 1-element reversals update newlines?
 
-        Cell *front = ARR_AT(arr, index);
-        Cell *back = front + len - 1;
+        Cell(*) front = ARR_AT(arr, index);
+        Cell(*) back = front + len - 1;
 
         // We must reverse the sense of the newline markers as well, #2326
         // Elements that used to be the *end* of lines now *start* lines.
@@ -1203,7 +1203,7 @@ REBTYPE(Array)
         for (len /= 2; len > 0; --len, ++front, --back) {
             bool line_front = Get_Cell_Flag(front + 1, NEWLINE_BEFORE);
 
-            Cell temp;
+            Reb_Cell temp;
             temp.header = front->header;
             temp.extra = front->extra;
             temp.payload = front->payload;
@@ -1324,7 +1324,7 @@ REBTYPE(Array)
                     % (VAL_LEN_HEAD(array) - index))
             );
 
-            Cell *slot = Pick_Block(OUT, array, ARG(seed));
+            Cell(*) slot = Pick_Block(OUT, array, ARG(seed));
             if (Is_Nulled(OUT)) {
                 assert(slot);
                 UNUSED(slot);
@@ -1585,8 +1585,8 @@ REBNATIVE(glom)
         REBLEN a_len = ARR_LEN(a);
         REBLEN r_len = ARR_LEN(r);
         EXPAND_SERIES_TAIL(a, r_len);  // can move memory, get `at` after
-        Cell *dst = ARR_AT(a, a_len);  // old tail position
-        Cell *src = ARR_HEAD(r);
+        Cell(*) dst = ARR_AT(a, a_len);  // old tail position
+        Cell(*) src = ARR_HEAD(r);
 
         REBLEN index;
         for (index = 0; index < r_len; ++index, ++src, ++dst)
@@ -1626,7 +1626,7 @@ void Assert_Array_Core(const REBARR *a)
     if (not IS_SER_ARRAY(a))
         panic (a);
 
-    const Cell *item = ARR_HEAD(a);
+    Cell(const*) item = ARR_HEAD(a);
     REBLEN i;
     REBLEN len = ARR_LEN(a);
     for (i = 0; i < len; ++i, ++item) {

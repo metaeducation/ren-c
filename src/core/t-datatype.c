@@ -28,7 +28,7 @@
 //
 //  CT_Datatype: C
 //
-REBINT CT_Datatype(noquote(const Cell*) a, noquote(const Cell*) b, bool strict)
+REBINT CT_Datatype(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
 {
     UNUSED(strict);
 
@@ -88,7 +88,7 @@ REB_R TO_Datatype(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
 //
 //  MF_Datatype: C
 //
-void MF_Datatype(REB_MOLD *mo, noquote(const Cell*) v, bool form)
+void MF_Datatype(REB_MOLD *mo, noquote(Cell(const*)) v, bool form)
 {
     if (not form)
         Pre_Mold_All(mo, v);  // e.g. `#[datatype!`
@@ -132,8 +132,8 @@ REBTYPE(Datatype)
 
             REBVAR *var = CTX_VARS_HEAD(context);
 
-            const Cell *item_tail = ARR_TAIL(VAL_TYPE_SPEC(type));
-            Cell *item = ARR_HEAD(VAL_TYPE_SPEC(type));
+            Cell(const*) item_tail = ARR_TAIL(VAL_TYPE_SPEC(type));
+            Cell(*) item = ARR_HEAD(VAL_TYPE_SPEC(type));
 
             for (; key != key_tail; ++key, ++var) {
                 if (item == item_tail)
@@ -216,7 +216,7 @@ static void Startup_Fake_Type_Constraint(SYMID sym)
 //
 // Called on META-WORD!s by PARSE and MATCH.
 //
-bool Matches_Fake_Type_Constraint(const Cell *v, enum Reb_Symbol_Id sym) {
+bool Matches_Fake_Type_Constraint(Cell(const*) v, enum Reb_Symbol_Id sym) {
     switch (sym) {
       case SYM_CHAR_X:
         return IS_CHAR(v);
@@ -254,8 +254,8 @@ REBARR *Startup_Datatypes(REBARR *boot_types, REBARR *boot_typespecs)
     if (ARR_LEN(boot_types) != REB_MAX - 1)  // exclude REB_0_VOID
         panic (boot_types);  // other types/internals should have a WORD!
 
-    const Cell *word_tail = ARR_TAIL(boot_types);
-    Cell *word = ARR_HEAD(boot_types);
+    Cell(const*) word_tail = ARR_TAIL(boot_types);
+    Cell(*) word = ARR_HEAD(boot_types);
 
     if (VAL_WORD_ID(word) != SYM_NULL)
         panic (word);  // First internal byte type is NULL at 1

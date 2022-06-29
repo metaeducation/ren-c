@@ -277,8 +277,8 @@ export proto-parser: context [
             "option(" opt [identifier "(" thru ")"] thru ")"
             | "(*)" | "(const*)"
             | "(const *)" (fail "use (const*) not (const *)")
-            | "(const Cell*)"
-            | "(const Cell *)" (fail "use (const Cell*) not (const Cell *)")
+            | "(Cell(const*))"
+            | "(Cell(const*) )" (fail "use (Cell(const*)) not (Cell(const*) )")
         ]
 
         function-proto: [

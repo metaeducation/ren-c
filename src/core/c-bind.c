@@ -37,16 +37,16 @@
 //
 void Bind_Values_Inner_Loop(
     struct Reb_Binder *binder,
-    Cell *head,
-    const Cell *tail,
+    Cell(*) head,
+    Cell(const*) tail,
     REBCTX *context,
     REBU64 bind_types, // !!! REVIEW: force word types low enough for 32-bit?
     REBU64 add_midstream_types,
     REBFLGS flags
 ){
-    Cell *v = head;
+    Cell(*) v = head;
     for (; v != tail; ++v) {
-        noquote(const Cell*) cell = VAL_UNESCAPED(v);
+        noquote(Cell(const*)) cell = VAL_UNESCAPED(v);
         enum Reb_Kind heart = CELL_HEART(cell);
 
         // !!! Review use of `heart` bit here, e.g. when a REB_PATH has an
@@ -97,8 +97,8 @@ void Bind_Values_Inner_Loop(
         }
         else if (flags & BIND_DEEP) {
             if (ANY_ARRAYLIKE(v)) {
-                const Cell *sub_tail;
-                Cell *sub_at = VAL_ARRAY_AT_MUTABLE_HACK(
+                Cell(const*) sub_tail;
+                Cell(*) sub_at = VAL_ARRAY_AT_MUTABLE_HACK(
                     &sub_tail,
                     VAL_UNESCAPED(v)
                 );
@@ -128,9 +128,9 @@ void Bind_Values_Inner_Loop(
 // bindings that come after the added value is seen will be bound.
 //
 void Bind_Values_Core(
-    Cell *head,
-    const Cell *tail,
-    const Cell *context,
+    Cell(*) head,
+    Cell(const*) tail,
+    Cell(const*) context,
     REBU64 bind_types,
     REBU64 add_midstream_types,
     REBFLGS flags // see %sys-core.h for BIND_DEEP, etc.
@@ -183,12 +183,12 @@ void Bind_Values_Core(
 // words will be unbound regardless of their VAL_WORD_CONTEXT).
 //
 void Unbind_Values_Core(
-    Cell *head,
-    const Cell *tail,
+    Cell(*) head,
+    Cell(const*) tail,
     option(REBCTX*) context,
     bool deep
 ){
-    Cell *v = head;
+    Cell(*) v = head;
     for (; v != tail; ++v) {
         if (
             ANY_WORDLIKE(v)
@@ -197,8 +197,8 @@ void Unbind_Values_Core(
             Unbind_Any_Word(v);
         }
         else if (ANY_ARRAYLIKE(v) and deep) {
-            const Cell *sub_tail;
-            Cell *sub_at = VAL_ARRAY_AT_MUTABLE_HACK(&sub_tail, v);
+            Cell(const*) sub_tail;
+            Cell(*) sub_at = VAL_ARRAY_AT_MUTABLE_HACK(&sub_tail, v);
             Unbind_Values_Core(sub_at, sub_tail, context, true);
         }
     }
@@ -211,7 +211,7 @@ void Unbind_Values_Core(
 // Returns 0 if word is not part of the context, otherwise the index of the
 // word in the context.
 //
-REBLEN Try_Bind_Word(const Cell *context, REBVAL *word)
+REBLEN Try_Bind_Word(Cell(const*) context, REBVAL *word)
 {
     const bool strict = true;
     REBLEN n = Find_Symbol_In_Context(
@@ -474,8 +474,8 @@ REBNATIVE(let)
     else {
         assert(IS_BLOCK(vars) or IS_SET_BLOCK(vars));
 
-        const Cell *tail;
-        const Cell *item = VAL_ARRAY_AT(&tail, vars);
+        Cell(const*) tail;
+        Cell(const*) item = VAL_ARRAY_AT(&tail, vars);
         REBSPC *item_specifier = VAL_SPECIFIER(vars);
 
         REBDSP dsp_orig = DSP;
@@ -483,7 +483,7 @@ REBNATIVE(let)
         bool altered = false;
 
         for (; item != tail; ++item) {
-            const Cell *temp = item;
+            Cell(const*) temp = item;
             REBSPC *temp_specifier = item_specifier;
 
             if (IS_QUOTED(temp)) {
@@ -764,8 +764,8 @@ static void Clonify_And_Bind_Relative(
         // copied series and "clonify" the values in it.
         //
         if (would_need_deep and (deep_types & FLAGIT_KIND(heart))) {
-            Cell *sub = ARR_HEAD(ARR(series));
-            Cell *sub_tail = ARR_TAIL(ARR(series));
+            Cell(*) sub = ARR_HEAD(ARR(series));
+            Cell(*) sub_tail = ARR_TAIL(ARR(series));
             for (; sub != sub_tail; ++sub)
                 Clonify_And_Bind_Relative(
                     SPECIFIC(sub),
@@ -863,8 +863,8 @@ REBARR *Copy_And_Bind_Relative_Deep_Managed(
 
     copy = Make_Array_For_Copy(len, flags, original);
 
-    const Cell *src = ARR_AT(original, index);
-    Cell *dest = ARR_HEAD(copy);
+    Cell(const*) src = ARR_AT(original, index);
+    Cell(*) dest = ARR_HEAD(copy);
     REBLEN count = 0;
     for (; count < len; ++count, ++dest, ++src) {
         Clonify_And_Bind_Relative(
@@ -900,20 +900,20 @@ REBARR *Copy_And_Bind_Relative_Deep_Managed(
 // Rebind is always deep.
 //
 void Rebind_Values_Deep(
-    Cell *head,
-    const Cell *tail,
+    Cell(*) head,
+    Cell(const*) tail,
     REBCTX *from,
     REBCTX *to,
     option(struct Reb_Binder*) binder
 ) {
-    Cell *v = head;
+    Cell(*) v = head;
     for (; v != tail; ++v) {
         if (Is_Isotope(v))
             continue;
 
         if (ANY_ARRAY_OR_SEQUENCE(v)) {
-            const Cell *sub_tail;
-            Cell *sub_at = VAL_ARRAY_AT_MUTABLE_HACK(&sub_tail, v);
+            Cell(const*) sub_tail;
+            Cell(*) sub_at = VAL_ARRAY_AT_MUTABLE_HACK(&sub_tail, v);
             Rebind_Values_Deep(sub_at, sub_tail, from, to, binder);
         }
         else if (ANY_WORD(v) and BINDING(v) == from) {
@@ -1015,8 +1015,8 @@ REBCTX *Virtual_Bind_Deep_To_New_Context(
     if (num_vars == 0)
         fail (spec);  // !!! should fail() take unstable?
 
-    const Cell *tail;
-    const Cell *item;
+    Cell(const*) tail;
+    Cell(const*) item;
 
     REBSPC *specifier;
     bool rebinding;
@@ -1024,7 +1024,7 @@ REBCTX *Virtual_Bind_Deep_To_New_Context(
         specifier = VAL_SPECIFIER(spec);
         item = VAL_ARRAY_AT(&tail, spec);
 
-        const Cell *check = item;
+        Cell(const*) check = item;
 
         rebinding = false;
         for (; check != tail; ++check) {
@@ -1285,13 +1285,13 @@ void Virtual_Bind_Deep_To_Existing_Context(
 }
 
 
-void Bind_Nonspecifically(Cell *head, const Cell *tail, REBCTX *context)
+void Bind_Nonspecifically(Cell(*) head, Cell(const*) tail, REBCTX *context)
 {
-    Cell *v = head;
+    Cell(*) v = head;
     for (; v != tail; ++v) {
         if (ANY_ARRAYLIKE(v)) {
-            const Cell *sub_tail;
-            Cell *sub_head = VAL_ARRAY_AT_MUTABLE_HACK(&sub_tail, v);
+            Cell(const*) sub_tail;
+            Cell(*) sub_head = VAL_ARRAY_AT_MUTABLE_HACK(&sub_tail, v);
             Bind_Nonspecifically(sub_head, sub_tail, context);
         }
         else if (ANY_WORDLIKE(v)) {
@@ -1320,8 +1320,8 @@ REBNATIVE(intern_p)
 
     assert(IS_BLOCK(ARG(data)));
 
-    const Cell *tail;
-    Cell *head = VAL_ARRAY_AT_MUTABLE_HACK(&tail, ARG(data));
+    Cell(const*) tail;
+    Cell(*) head = VAL_ARRAY_AT_MUTABLE_HACK(&tail, ARG(data));
     Bind_Nonspecifically(head, tail, VAL_CONTEXT(ARG(where)));
 
     return_value (ARG(data));

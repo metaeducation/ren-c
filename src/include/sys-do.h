@@ -82,7 +82,7 @@ inline static void Tweak_Non_Const_To_Explicitly_Mutable(Value *source) {
 inline static bool Do_Any_Array_At_Core_Throws(
     REBVAL *out,
     REBFLGS flags,
-    const Cell *any_array,
+    Cell(const*) any_array,
     REBSPC *specifier
 ){
     DECLARE_FRAME_AT_CORE (f, any_array, specifier, flags);

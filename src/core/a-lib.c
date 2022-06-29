@@ -1900,7 +1900,7 @@ const REBINS *RL_rebQUOTING(const void *p)
         fail ("Unknown pointer");
     }
 
-    Cell *v = ARR_SINGLE(a);
+    Cell(*) v = ARR_SINGLE(a);
     Isotopic_Quote(v);
     return a;
 }
@@ -1940,7 +1940,7 @@ const REBINS *RL_rebUNQUOTING(const void *p)
         fail ("Unknown pointer");
     }
 
-    Cell *v = ARR_SINGLE(a);
+    Cell(*) v = ARR_SINGLE(a);
     if (Is_Nulled(v))
         fail ("Cannot unquote NULL");
 

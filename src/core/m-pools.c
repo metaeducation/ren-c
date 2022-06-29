@@ -567,7 +567,7 @@ REBNOD *Try_Find_Containing_Node_Debug(const void *p)
 //
 //  Alloc_Pairing: C
 //
-// Allocate a paired set of values.  The "key" is in the cell *before* the
+// Allocate a paired set of values.  The "key" is in the Cell(*) before* the
 // returned pointer.
 //
 // Because pairings are created in large numbers and left outstanding, they
@@ -1117,7 +1117,7 @@ void Decay_Series(REBSER *s)
         break; }
 
       case FLAVOR_HANDLE: {
-        Cell *v = ARR_SINGLE(ARR(s));
+        Cell(*) v = ARR_SINGLE(ARR(s));
         assert(CELL_HEART_UNCHECKED(v) == REB_HANDLE);
 
         // Some handles use the managed form just because they want changes to

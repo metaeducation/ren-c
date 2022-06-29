@@ -205,8 +205,8 @@ REBARR *Startup_Natives(const REBVAL *boot_natives)
     Init_Action_Meta_Shim();
 
     assert(VAL_INDEX(boot_natives) == 0); // should be at head, sanity check
-    const Cell *tail;
-    Cell *item = VAL_ARRAY_KNOWN_MUTABLE_AT(&tail, boot_natives);
+    Cell(const*) tail;
+    Cell(*) item = VAL_ARRAY_KNOWN_MUTABLE_AT(&tail, boot_natives);
     assert(VAL_SPECIFIER(boot_natives) == SPECIFIED);
 
     // !!! We could avoid this by making NATIVE a specialization of a NATIVE*

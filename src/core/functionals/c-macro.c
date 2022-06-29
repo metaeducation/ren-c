@@ -99,7 +99,7 @@ REB_R Macro_Dispatcher(REBFRM *f)
 
     REBACT *phase = FRM_PHASE(f);
     REBARR *details = ACT_DETAILS(phase);
-    Cell *body = ARR_AT(details, IDX_DETAILS_1);  // code to run
+    Cell(*) body = ARR_AT(details, IDX_DETAILS_1);  // code to run
     assert(IS_BLOCK(body) and IS_RELATIVE(body) and VAL_INDEX(body) == 0);
 
     assert(ACT_HAS_RETURN(phase));

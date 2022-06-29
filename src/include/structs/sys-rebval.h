@@ -150,7 +150,7 @@
 // it will answer in the VAL_TYPE() that it is REB_QUOTED.  This has the
 // potential to cause confusion in the internals.  But the type system is used
 // to check at compile-time so that different views of the same cell don't
-// get conflated.  See `noquote(const Cell*)` for some of that mechanic.
+// get conflated.  See `noquote(Cell(const*))` for some of that mechanic.
 //
 
 #define FLAG_QUOTE_BYTE(b)          FLAG_THIRD_BYTE(b)

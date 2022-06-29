@@ -985,7 +985,7 @@ REBNATIVE(case)
 
     bool matched = Is_Truthy(SPARE);
 
-    const Cell *branch = Lookback_While_Fetching_Next(f);
+    Cell(const*) branch = Lookback_While_Fetching_Next(f);
 
     if (not matched) {
         if (not IS_GET_GROUP(branch))
@@ -1403,8 +1403,8 @@ REBNATIVE(catch)
             //
             // Test all the words in the block for a match to catch
 
-            const Cell *tail;
-            const Cell *candidate = VAL_ARRAY_AT(&tail, ARG(name));
+            Cell(const*) tail;
+            Cell(const*) candidate = VAL_ARRAY_AT(&tail, ARG(name));
             for (; candidate != tail; candidate++) {
                 //
                 // !!! Should we test a typeset for illegal name types?

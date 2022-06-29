@@ -31,7 +31,7 @@
 //
 //  CT_Pair: C
 //
-REBINT CT_Pair(noquote(const Cell*) a, noquote(const Cell*) b, bool strict)
+REBINT CT_Pair(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
 {
     UNUSED(strict);  // !!! Should this be heeded for the decimal?
 
@@ -73,16 +73,16 @@ REB_R MAKE_Pair(
         return out;
     }
 
-    const Cell *x;
-    const Cell *y;
+    Cell(const*) x;
+    Cell(const*) y;
 
     if (ANY_NUMBER(arg)) {
         x = arg;
         y = arg;
     }
     else if (IS_BLOCK(arg)) {
-        const Cell *tail;
-        const Cell *item = VAL_ARRAY_AT(&tail, arg);
+        Cell(const*) tail;
+        Cell(const*) item = VAL_ARRAY_AT(&tail, arg);
 
         if (ANY_NUMBER(item))
             x = item;
@@ -149,7 +149,7 @@ void Min_Max_Pair(REBVAL *out, const REBVAL *a, const REBVAL *b, bool maxed)
 //
 //  MF_Pair: C
 //
-void MF_Pair(REB_MOLD *mo, noquote(const Cell*) v, bool form)
+void MF_Pair(REB_MOLD *mo, noquote(Cell(const*)) v, bool form)
 {
     Mold_Or_Form_Value(mo, VAL_PAIR_X(v), form);
 
@@ -161,7 +161,7 @@ void MF_Pair(REB_MOLD *mo, noquote(const Cell*) v, bool form)
 
 REBINT Index_From_Picker_For_Pair(
     const REBVAL *pair,
-    const Cell *picker
+    Cell(const*) picker
 ){
     UNUSED(pair); // Might the picker be pair-sensitive?
 
@@ -219,7 +219,7 @@ REBTYPE(Pair)
         INCLUDE_PARAMS_OF_PICK_P;
         UNUSED(ARG(location));
 
-        const Cell *picker = ARG(picker);
+        Cell(const*) picker = ARG(picker);
         REBINT n = Index_From_Picker_For_Pair(v, picker);
         const REBVAL *which = (n == 1) ? VAL_PAIR_X(v) : VAL_PAIR_Y(v);
 
@@ -232,7 +232,7 @@ REBTYPE(Pair)
         INCLUDE_PARAMS_OF_POKE_P;
         UNUSED(ARG(location));
 
-        const Cell *picker = ARG(picker);
+        Cell(const*) picker = ARG(picker);
         REBINT n = Index_From_Picker_For_Pair(v, picker);
 
         REBVAL *setval = Meta_Unquotify(ARG(value));

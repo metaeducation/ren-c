@@ -37,7 +37,7 @@
 // It doesn't check key codes, doesn't check if EVF_HAS_XY but still compares
 // the x and y coordinates anyway...
 //
-REBINT Cmp_Event(noquote(const Cell*) t1, noquote(const Cell*) t2)
+REBINT Cmp_Event(noquote(Cell(const*)) t1, noquote(Cell(const*)) t2)
 {
     REBINT  diff;
 
@@ -55,7 +55,7 @@ REBINT Cmp_Event(noquote(const Cell*) t1, noquote(const Cell*) t2)
 //
 //  CT_Event: C
 //
-REBINT CT_Event(noquote(const Cell*) a, noquote(const Cell*) b, bool strict)
+REBINT CT_Event(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
 {
     UNUSED(strict);
     return Cmp_Event(a, b);
@@ -66,7 +66,7 @@ REBINT CT_Event(noquote(const Cell*) a, noquote(const Cell*) b, bool strict)
 //
 //  Set_Event_Var: C
 //
-static bool Set_Event_Var(REBVAL *event, const Cell *word, const REBVAL *val)
+static bool Set_Event_Var(REBVAL *event, Cell(const*) word, const REBVAL *val)
 {
     switch (VAL_WORD_ID(word)) {
       case SYM_TYPE: {
@@ -162,8 +162,8 @@ static bool Set_Event_Var(REBVAL *event, const Cell *word, const REBVAL *val)
         mutable_VAL_EVENT_FLAGS(event)
             &= ~(EVF_DOUBLE | EVF_CONTROL | EVF_SHIFT);
 
-        const Cell *tail;
-        const Cell *item = VAL_ARRAY_AT(&tail, val);
+        Cell(const*) tail;
+        Cell(const*) item = VAL_ARRAY_AT(&tail, val);
         for (; item != tail; ++item) {
             if (not IS_WORD(item))
                 continue;
@@ -209,14 +209,14 @@ static bool Set_Event_Var(REBVAL *event, const Cell *word, const REBVAL *val)
 //
 void Set_Event_Vars(
     REBVAL *evt,
-    const Cell *block,
+    Cell(const*) block,
     REBSPC *specifier
 ){
     DECLARE_LOCAL (var);
     DECLARE_LOCAL (val);
 
-    const Cell *tail;
-    const Cell *item = VAL_ARRAY_AT(&tail, block);
+    Cell(const*) tail;
+    Cell(const*) item = VAL_ARRAY_AT(&tail, block);
     while (item != tail) {
         if (IS_COMMA(item)) {
             ++item;
@@ -263,8 +263,8 @@ void Set_Event_Vars(
 // Will return BLANK! if the variable is not available.
 //
 static REBVAL *Get_Event_Var(
-    Cell *out,
-    noquote(const Cell*) v,
+    Cell(*) out,
+    noquote(Cell(const*)) v,
     Symbol(const*) symbol
 ){
     switch (ID_OF_SYMBOL(symbol)) {
@@ -429,7 +429,7 @@ REBTYPE(Event)
         INCLUDE_PARAMS_OF_PICK_P;
         UNUSED(ARG(location));
 
-        const Cell *picker = ARG(picker);
+        Cell(const*) picker = ARG(picker);
         if (not IS_WORD(picker))
             return R_UNHANDLED;
 
@@ -443,7 +443,7 @@ REBTYPE(Event)
         INCLUDE_PARAMS_OF_POKE_P;
         UNUSED(ARG(location));
 
-        const Cell *picker = Meta_Unquotify(ARG(picker));
+        Cell(const*) picker = Meta_Unquotify(ARG(picker));
         if (not IS_WORD(picker))
             return R_UNHANDLED;
 
@@ -464,7 +464,7 @@ REBTYPE(Event)
 //
 //  MF_Event: C
 //
-void MF_Event(REB_MOLD *mo, noquote(const Cell*) v, bool form)
+void MF_Event(REB_MOLD *mo, noquote(Cell(const*)) v, bool form)
 {
     UNUSED(form);
 

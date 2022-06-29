@@ -39,7 +39,7 @@
 //
 //  CT_Binary: C
 //
-REBINT CT_Binary(noquote(const Cell*) a, noquote(const Cell*) b, bool strict)
+REBINT CT_Binary(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
 {
     UNUSED(strict);  // no lax form of comparison
 
@@ -209,15 +209,15 @@ REB_R MAKE_Binary(
         // to produce #{000102}.  That behavior is not available in Ren-C.
 
         REBLEN len;
-        const Cell *at = VAL_ARRAY_LEN_AT(&len, def);
+        Cell(const*) at = VAL_ARRAY_LEN_AT(&len, def);
         if (len != 2)
             goto bad_make;
 
-        const Cell *first = at;
+        Cell(const*) first = at;
         if (not IS_BINARY(first))
             goto bad_make;
 
-        const Cell *index = at + 1;
+        Cell(const*) index = at + 1;
         if (not IS_INTEGER(index))
             goto bad_make;
 
@@ -281,7 +281,7 @@ static int Compare_Byte(void *thunk, const void *v1, const void *v2)
 //
 //  MF_Binary: C
 //
-void MF_Binary(REB_MOLD *mo, noquote(const Cell*) v, bool form)
+void MF_Binary(REB_MOLD *mo, noquote(Cell(const*)) v, bool form)
 {
     UNUSED(form);
 
@@ -345,7 +345,7 @@ REBTYPE(Binary)
         INCLUDE_PARAMS_OF_PICK_P;
         UNUSED(ARG(location));
 
-        const Cell *picker = ARG(picker);
+        Cell(const*) picker = ARG(picker);
         REBINT n;
         if (not Did_Get_Series_Index_From_Picker(&n, v, picker))
             return nullptr;
@@ -361,7 +361,7 @@ REBTYPE(Binary)
         INCLUDE_PARAMS_OF_POKE_P;
         UNUSED(ARG(location));
 
-        const Cell *picker = ARG(picker);
+        Cell(const*) picker = ARG(picker);
         REBINT n;
         if (not Did_Get_Series_Index_From_Picker(&n, v, picker))
             fail (Error_Out_Of_Range(picker));
@@ -911,7 +911,7 @@ REBNATIVE(enbin)
             "fail {Second element of ENBIN settings must be + or +/-}",
         "]"
     );
-    const Cell *third = VAL_ARRAY_AT_HEAD(settings, index + 2);
+    Cell(const*) third = VAL_ARRAY_AT_HEAD(settings, index + 2);
     if (not IS_INTEGER(third))
         fail ("Third element of ENBIN settings must be an integer}");
     REBINT num_bytes = VAL_INT32(third);
@@ -1024,7 +1024,7 @@ REBNATIVE(debin)
     if (arity == 2)
         num_bytes = bin_size;
     else {
-        const Cell *third = VAL_ARRAY_AT_HEAD(settings, index + 2);
+        Cell(const*) third = VAL_ARRAY_AT_HEAD(settings, index + 2);
         if (not IS_INTEGER(third))
             fail ("Third element of DEBIN settings must be an integer}");
         num_bytes = VAL_INT32(third);

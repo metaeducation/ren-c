@@ -46,7 +46,7 @@ inline static void Init_For_Vararg_End(REBVAL *out, enum Reb_Vararg_Op op) {
 inline static bool Vararg_Op_If_No_Advance_Handled(
     REBVAL *out,
     enum Reb_Vararg_Op op,
-    const Cell *opt_look, // the first value in the varargs input
+    Cell(const*) opt_look, // the first value in the varargs input
     REBSPC *specifier,
     enum Reb_Param_Class pclass
 ){
@@ -137,7 +137,7 @@ inline static bool Vararg_Op_If_No_Advance_Handled(
 bool Do_Vararg_Op_Maybe_End_Throws_Core(
     REBVAL *out,
     enum Reb_Vararg_Op op,
-    const Cell *vararg,
+    Cell(const*) vararg,
     enum Reb_Param_Class pclass  // PARAM_CLASS_0 to use vararg's class
 ){
     const REBKEY *key;
@@ -289,7 +289,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
             op,
             hit_barrier
                 ? END
-                : cast(const Cell *, f->feed->value), // might be END
+                : cast(Cell(const*) , f->feed->value), // might be END
             f_specifier,
             pclass
         )){
@@ -476,7 +476,7 @@ REBTYPE(Varargs)
         INCLUDE_PARAMS_OF_PICK_P;
         UNUSED(ARG(location));
 
-        const Cell *picker = ARG(picker);
+        Cell(const*) picker = ARG(picker);
         if (not IS_INTEGER(picker))
             fail (picker);
 
@@ -559,7 +559,7 @@ REBTYPE(Varargs)
 // Simple comparison function stub (required for every type--rules TBD for
 // levels of "exactness" in equality checking, or sort-stable comparison.)
 //
-REBINT CT_Varargs(noquote(const Cell*) a, noquote(const Cell*) b, bool strict)
+REBINT CT_Varargs(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
 {
     UNUSED(strict);
 
@@ -583,7 +583,7 @@ REBINT CT_Varargs(noquote(const Cell*) a, noquote(const Cell*) b, bool strict)
 // has reached its end, or if the frame the varargs is attached to is no
 // longer on the stack.
 //
-void MF_Varargs(REB_MOLD *mo, noquote(const Cell*) v, bool form) {
+void MF_Varargs(REB_MOLD *mo, noquote(Cell(const*)) v, bool form) {
     UNUSED(form);
 
     Pre_Mold(mo, v);  // #[varargs! or make varargs!

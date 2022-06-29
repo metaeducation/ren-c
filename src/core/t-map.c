@@ -32,7 +32,7 @@
 // !!! Was never implemented in R3-Alpha; called into raw array comparison,
 // which is clearly incorrect.  Needs to be written.
 //
-REBINT CT_Map(noquote(const Cell*) a, noquote(const Cell*) b, bool strict)
+REBINT CT_Map(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
 {
     UNUSED(a);
     UNUSED(b);
@@ -58,7 +58,7 @@ REBMAP *Make_Map(REBLEN capacity)
 
 
 static REBCTX *Error_Conflicting_Key(
-    const Cell *key,
+    Cell(const*) key,
     REBSPC *specifier
 ){
     DECLARE_LOCAL (specific);
@@ -83,7 +83,7 @@ static REBCTX *Error_Conflicting_Key(
 REBINT Find_Key_Hashed(
     REBARR *array,
     REBSER *hashlist,
-    const Cell *key,  // !!! assumes ++key finds the values
+    Cell(const*) key,  // !!! assumes ++key finds the values
     REBSPC *specifier,
     REBLEN wide,
     bool strict,
@@ -121,7 +121,7 @@ REBINT Find_Key_Hashed(
 
     REBLEN n;
     while ((n = indexes[slot]) != 0) {
-        Cell *k = ARR_AT(array, (n - 1) * wide); // stored key
+        Cell(*) k = ARR_AT(array, (n - 1) * wide); // stored key
         if (0 == Cmp_Value(k, key, true)) {
             if (strict)
                 return slot; // don't need to check synonyms, stop looking
@@ -163,7 +163,7 @@ REBINT Find_Key_Hashed(
     }
 
     if (mode > 1) { // append new value to the target series
-        const Cell *src = key;
+        Cell(const*) src = key;
         indexes[slot] = (ARR_LEN(array) / wide) + 1;
 
         REBLEN index;
@@ -253,9 +253,9 @@ void Expand_Hash(REBSER *ser)
 //
 REBLEN Find_Map_Entry(
     REBMAP *map,
-    const Cell *key,
+    Cell(const*) key,
     REBSPC *key_specifier,
-    const Cell *val,
+    Cell(const*) val,
     REBSPC *val_specifier,
     bool strict
 ) {
@@ -320,12 +320,12 @@ REBLEN Find_Map_Entry(
 //
 static void Append_Map(
     REBMAP *map,
-    const Cell *head,
-    const Cell *tail,
+    Cell(const*) head,
+    Cell(const*) tail,
     REBSPC *specifier,
     REBLEN len
 ){
-    const Cell *item = head;
+    Cell(const*) item = head;
     REBLEN n = 0;
 
     while (n < len and item != tail) {
@@ -403,7 +403,7 @@ inline static REBMAP *Copy_Map(const REBMAP *map, REBU64 types) {
     //
     assert(ARR_LEN(copy) % 2 == 0); // should be [key value key value]...
 
-    const Cell *tail = ARR_TAIL(copy);
+    Cell(const*) tail = ARR_TAIL(copy);
     REBVAL *key = SPECIFIC(ARR_HEAD(copy));  // keys/vals specified
     for (; key != tail; key += 2) {
         assert(Is_Value_Frozen_Deep(key));  // immutable key
@@ -434,8 +434,8 @@ REB_R TO_Map(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
         // make map! [word val word val]
         //
         REBLEN len = VAL_LEN_AT(arg);
-        const Cell *tail;
-        const Cell *at = VAL_ARRAY_AT(&tail, arg);
+        Cell(const*) tail;
+        Cell(const*) at = VAL_ARRAY_AT(&tail, arg);
         REBSPC *specifier = VAL_SPECIFIER(arg);
 
         REBMAP *map = Make_Map(len / 2); // [key value key value...] + END
@@ -469,9 +469,9 @@ REBARR *Map_To_Array(const REBMAP *map, REBINT what)
     REBLEN count = Length_Map(map);
     REBARR *a = Make_Array(count * ((what == 0) ? 2 : 1));
 
-    Cell *dest = ARR_HEAD(a);
-    const Cell *val_tail = ARR_TAIL(MAP_PAIRLIST(map));
-    const Cell *val = ARR_HEAD(MAP_PAIRLIST(map));
+    Cell(*) dest = ARR_HEAD(a);
+    Cell(const*) val_tail = ARR_TAIL(MAP_PAIRLIST(map));
+    Cell(const*) val = ARR_HEAD(MAP_PAIRLIST(map));
     for (; val != val_tail; val += 2) {
         if (not Is_Nulled(val + 1)) {  // can't be END
             if (what <= 0) {
@@ -504,8 +504,8 @@ REBCTX *Alloc_Context_From_Map(const REBMAP *map)
     REBLEN count = 0;
 
   blockscope {
-    const Cell *mval_tail = ARR_TAIL(MAP_PAIRLIST(map));
-    const Cell *mval = ARR_HEAD(MAP_PAIRLIST(map));
+    Cell(const*) mval_tail = ARR_TAIL(MAP_PAIRLIST(map));
+    Cell(const*) mval = ARR_HEAD(MAP_PAIRLIST(map));
     for (; mval != mval_tail; mval += 2) {  // note mval must not be END
         if (ANY_WORD(mval) and not Is_Nulled(mval + 1))
             ++count;
@@ -516,8 +516,8 @@ REBCTX *Alloc_Context_From_Map(const REBMAP *map)
 
     REBCTX *c = Alloc_Context(REB_OBJECT, count);
 
-    const Cell *mval_tail = ARR_TAIL(MAP_PAIRLIST(map));
-    const Cell *mval = ARR_HEAD(MAP_PAIRLIST(map));
+    Cell(const*) mval_tail = ARR_TAIL(MAP_PAIRLIST(map));
+    Cell(const*) mval = ARR_HEAD(MAP_PAIRLIST(map));
 
     for (; mval != mval_tail; mval += 2) {  // note mval must not be END
         if (ANY_WORD(mval) and not Is_Nulled(mval + 1)) {
@@ -533,7 +533,7 @@ REBCTX *Alloc_Context_From_Map(const REBMAP *map)
 //
 //  MF_Map: C
 //
-void MF_Map(REB_MOLD *mo, noquote(const Cell*) v, bool form)
+void MF_Map(REB_MOLD *mo, noquote(Cell(const*)) v, bool form)
 {
     const REBMAP *m = VAL_MAP(v);
 
@@ -555,8 +555,8 @@ void MF_Map(REB_MOLD *mo, noquote(const Cell*) v, bool form)
     //
     mo->indent++;
 
-    const Cell *tail = ARR_TAIL(MAP_PAIRLIST(m));
-    const Cell *key = ARR_HEAD(MAP_PAIRLIST(m));
+    Cell(const*) tail = ARR_TAIL(MAP_PAIRLIST(m));
+    Cell(const*) key = ARR_HEAD(MAP_PAIRLIST(m));
     for (; key != tail; key += 2) {  // note value slot must not be END
         assert(key + 1 != tail);
         if (Is_Nulled(key + 1))
@@ -691,8 +691,8 @@ REBTYPE(Map)
             fail (PAR(value));
 
         REBLEN len = Part_Len_May_Modify_Index(value, ARG(part));
-        const Cell *tail;
-        const Cell *at = VAL_ARRAY_AT(&tail, value);  // w/modified index
+        Cell(const*) tail;
+        Cell(const*) at = VAL_ARRAY_AT(&tail, value);  // w/modified index
 
         Append_Map(m, at, tail, VAL_SPECIFIER(value), len);
 
@@ -739,7 +739,7 @@ REBTYPE(Map)
         INCLUDE_PARAMS_OF_PICK_P;
         UNUSED(ARG(location));
 
-        const Cell *picker = ARG(picker);
+        Cell(const*) picker = ARG(picker);
 
         bool strict = false;
 
@@ -769,7 +769,7 @@ REBTYPE(Map)
         INCLUDE_PARAMS_OF_POKE_P;
         UNUSED(ARG(location));
 
-        const Cell *picker = ARG(picker);
+        Cell(const*) picker = ARG(picker);
 
         // Fetching and setting with path-based access is case-preserving for
         // initial insertions.  However, the case-insensitivity means that all

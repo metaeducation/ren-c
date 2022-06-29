@@ -287,7 +287,7 @@ REB_R Call_Core(REBFRM *frame_) {
 
         int i;
         for (i = 0; i < argc; i ++) {
-            const Cell *param = VAL_ARRAY_AT_HEAD(block, i);
+            Cell(const*) param = VAL_ARRAY_AT_HEAD(block, i);
             if (not IS_TEXT(param))  // usermode layer ensures FILE! converted
                 fail (PAR(command));
             argv[i] = rebSpell(SPECIFIC(param));

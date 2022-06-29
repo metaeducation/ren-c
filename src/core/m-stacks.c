@@ -265,7 +265,7 @@ void Expand_Data_Stack_May_Fail(REBLEN amount)
     assert(len_old == DS_Index);
     assert(DS_Movable_Top == ARR_TAIL(DS_Array));
     assert(
-        cast(Cell*, DS_Movable_Top) - ARR_HEAD(DS_Array)
+        cast(Cell(*), DS_Movable_Top) - ARR_HEAD(DS_Array)
         == cast(int, len_old)
     );
 
@@ -330,7 +330,7 @@ REBARR *Pop_Stack_Values_Core(REBDSP dsp_start, REBFLGS flags)
 
     REBLEN count = 0;
     REBVAL *src = Data_Stack_At(dsp_start + 1);  // not const, will be RESET()
-    Cell *dest = ARR_HEAD(a);
+    Cell(*) dest = ARR_HEAD(a);
     for (; count < len; ++count, ++src, ++dest) {
         if (
             Is_Isotope(src)

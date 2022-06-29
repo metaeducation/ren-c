@@ -514,7 +514,7 @@ STATIC_ASSERT(SERIES_INFO_0_IS_FALSE == NODE_FLAG_NODE);
 //
 // `info` is not the start of a "Rebol Node" (REBNODE, e.g. either a REBSER or
 // a REBVAL cell).  But in the singular case it is positioned right where
-// the next cell after the embedded cell *would* be.  To lower the risk of
+// the next cell after the embedded Cell(*) would* be.  To lower the risk of
 // stepping into that location and thinking it is a cell, it has the bit for
 // NODE_FLAG_CELL as clear.
 //
@@ -608,17 +608,17 @@ union Reb_Series_Content {
         RawCell cells[1];
 
       #if DEBUG_USE_UNION_PUNS
-        char utf8_pun[sizeof(Cell)];  // debug watchlist insight into UTF-8
-        REBWCHAR ucs2_pun[sizeof(Cell)/sizeof(REBUNI)];  // wchar_t insight
+        char utf8_pun[sizeof(Reb_Cell)];  // debug watchlist insight into UTF-8
+        REBWCHAR ucs2_pun[sizeof(Reb_Cell)/sizeof(REBUNI)];  // wchar_t insight
       #endif
     } fixed;
 };
 
 #define SER_CELL(s) \
-    cast(const Cell*, &(s)->content.fixed.cells[0])  // unchecked ARR_SINGLE()
+    cast(Cell(const*), &(s)->content.fixed.cells[0])  // unchecked ARR_SINGLE()
 
 #define mutable_SER_CELL(s) \
-    cast(Cell*, &(s)->content.fixed.cells[0])  // unchecked ARR_SINGLE()
+    cast(Cell(*), &(s)->content.fixed.cells[0])  // unchecked ARR_SINGLE()
 
 
 union Reb_Series_Link {

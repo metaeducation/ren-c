@@ -43,7 +43,7 @@
 //
 void Trace_Value(
     const char* label, // currently "match" or "input"
-    const Cell *value
+    Cell(const*) value
 ){
     // !!! The way the parse code is currently organized, the value passed
     // in is a relative value.  It would take some changing to get a specific

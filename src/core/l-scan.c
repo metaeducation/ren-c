@@ -2299,7 +2299,7 @@ REB_R Scanner_Executor(REBFRM *f) {
             mutable_HEART_BYTE(TOP) = REB_PERCENT;
 
             // !!! DEBUG_EXTANT_STACK_POINTERS can't resolve if this is
-            // a noquote(const Cell*) or REBVAL* overload with DEBUG_CHECK_CASTS.
+            // a noquote(Cell(const*)) or REBVAL* overload with DEBUG_CHECK_CASTS.
             // Have to cast explicitly, use VAL()
             //
             VAL_DECIMAL(VAL(TOP)) /= 100.0;
@@ -3308,7 +3308,7 @@ const REBYTE *Scan_Any_Word(
 // !!! Since this follows the same rules as FILE!, the code should merge,
 // though FILE! will make mutable strings and not have in-cell optimization.
 //
-const REBYTE *Scan_Issue(Cell *out, const REBYTE *cp, REBSIZ size)
+const REBYTE *Scan_Issue(Cell(*) out, const REBYTE *cp, REBSIZ size)
 {
     const REBYTE *bp = cp;
 

@@ -110,7 +110,7 @@ bool almost_equal(REBDEC a, REBDEC b, REBLEN max_diff) {
 //
 //  Init_Decimal_Bits: C
 //
-REBVAL *Init_Decimal_Bits(Cell *out, const REBYTE *bp)
+REBVAL *Init_Decimal_Bits(Cell(*) out, const REBYTE *bp)
 {
     Reset_Cell_Header_Untracked(TRACK(out), REB_DECIMAL, CELL_MASK_NONE);
 
@@ -198,8 +198,8 @@ REB_R MAKE_Decimal(
 
         DECLARE_LOCAL (temp1);  // decompress path from cell into values
         DECLARE_LOCAL (temp2);
-        const Cell *num = VAL_SEQUENCE_AT(temp1, arg, 0);
-        const Cell *den = VAL_SEQUENCE_AT(temp2, arg, 1);
+        Cell(const*) num = VAL_SEQUENCE_AT(temp1, arg, 0);
+        Cell(const*) den = VAL_SEQUENCE_AT(temp2, arg, 1);
 
         DECLARE_LOCAL (numerator);
         DECLARE_LOCAL (denominator);
@@ -226,7 +226,7 @@ REB_R MAKE_Decimal(
 
       case REB_BLOCK: {
         REBLEN len;
-        const Cell *item = VAL_ARRAY_LEN_AT(&len, arg);
+        Cell(const*) item = VAL_ARRAY_LEN_AT(&len, arg);
 
         if (len != 2)
             fail (Error_Bad_Make(kind, arg));
@@ -333,8 +333,8 @@ REB_R TO_Decimal(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 
         DECLARE_LOCAL (temp1);  // decompress path from cell into values
         DECLARE_LOCAL (temp2);
-        const Cell *numerator = VAL_SEQUENCE_AT(temp1, arg, 0);
-        const Cell *denominator = VAL_SEQUENCE_AT(temp2, arg, 1);
+        Cell(const*) numerator = VAL_SEQUENCE_AT(temp1, arg, 0);
+        Cell(const*) denominator = VAL_SEQUENCE_AT(temp2, arg, 1);
 
         if (not IS_INTEGER(numerator))
             goto bad_to;
@@ -400,7 +400,7 @@ bool Eq_Decimal2(REBDEC a, REBDEC b)
 //
 //  CT_Decimal: C
 //
-REBINT CT_Decimal(noquote(const Cell*) a, noquote(const Cell*) b, bool strict)
+REBINT CT_Decimal(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
 {
     if (strict) {
         if (almost_equal(VAL_DECIMAL(a), VAL_DECIMAL(b), 0))
@@ -420,7 +420,7 @@ REBINT CT_Decimal(noquote(const Cell*) a, noquote(const Cell*) b, bool strict)
 //
 // Code mostly duplicated in MF_Percent.
 //
-void MF_Decimal(REB_MOLD *mo, noquote(const Cell*) v, bool form)
+void MF_Decimal(REB_MOLD *mo, noquote(Cell(const*)) v, bool form)
 {
     UNUSED(form);
 
@@ -441,7 +441,7 @@ void MF_Decimal(REB_MOLD *mo, noquote(const Cell*) v, bool form)
 //
 // Code mostly duplicated in MF_Decimal.
 //
-void MF_Percent(REB_MOLD *mo, noquote(const Cell*) v, bool form)
+void MF_Percent(REB_MOLD *mo, noquote(Cell(const*)) v, bool form)
 {
     UNUSED(form);
 

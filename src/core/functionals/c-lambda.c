@@ -105,7 +105,7 @@ REB_R Lambda_Unoptimized_Dispatcher(REBFRM *frame_)
 {
     REBACT *phase = FRM_PHASE(FRAME);
     REBARR *details = ACT_DETAILS(phase);
-    Cell *body = ARR_AT(details, IDX_DETAILS_1);  // code to run
+    Cell(*) body = ARR_AT(details, IDX_DETAILS_1);  // code to run
     assert(IS_BLOCK(body) and IS_RELATIVE(body) and VAL_INDEX(body) == 0);
 
     delegate_core (OUT, FRAME_FLAG_MAYBE_STALE, body, SPC(FRAME->varlist), END);
@@ -138,8 +138,8 @@ REBNATIVE(lambda)
     bool optimizable = true;
 
     REBSPC *item_specifier;
-    const Cell *item_tail;
-    const Cell *item;
+    Cell(const*) item_tail;
+    Cell(const*) item;
     if (IS_BLOCK(spec)) {
         item = VAL_ARRAY_AT(&item_tail, spec);
         item_specifier = VAL_SPECIFIER(spec);

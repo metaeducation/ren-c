@@ -69,7 +69,7 @@ REBI64 Join_Time(REB_TIMEF *tf, bool neg)
 //
 // Scan string and convert to time.  Return zero if error.
 //
-const REBYTE *Scan_Time(Cell *out, const REBYTE *cp, REBLEN len)
+const REBYTE *Scan_Time(Cell(*) out, const REBYTE *cp, REBLEN len)
 {
     cast(void, len); // !!! should len be paid attention to?
 
@@ -178,7 +178,7 @@ const REBYTE *Scan_Time(Cell *out, const REBYTE *cp, REBLEN len)
 //
 //  MF_Time: C
 //
-void MF_Time(REB_MOLD *mo, noquote(const Cell*) v, bool form)
+void MF_Time(REB_MOLD *mo, noquote(Cell(const*)) v, bool form)
 {
     UNUSED(form);  // no difference between MOLD and FORM at this time
 
@@ -215,7 +215,7 @@ void MF_Time(REB_MOLD *mo, noquote(const Cell*) v, bool form)
 //
 //  CT_Time: C
 //
-REBINT CT_Time(noquote(const Cell*) a, noquote(const Cell*) b, bool strict)
+REBINT CT_Time(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
 {
     UNUSED(strict);
 
@@ -272,8 +272,8 @@ REB_R MAKE_Time(
         return Init_Time_Nanoseconds(out, DEC_TO_SECS(VAL_DECIMAL(arg)));
 
     case REB_BLOCK: { // [hh mm ss]
-        const Cell *tail;
-        const Cell *item = VAL_ARRAY_AT(&tail, arg);
+        Cell(const*) tail;
+        Cell(const*) item = VAL_ARRAY_AT(&tail, arg);
 
         if (item == tail)
             goto no_time;  // must have at least hours
@@ -367,7 +367,7 @@ REB_R TO_Time(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 //
 //  Pick_Time: C
 //
-void Pick_Time(REBVAL *out, const Cell *value, const Cell *picker)
+void Pick_Time(REBVAL *out, Cell(const*) value, Cell(const*) picker)
 {
     REBINT i;
     if (IS_WORD(picker)) {
@@ -411,7 +411,7 @@ void Pick_Time(REBVAL *out, const Cell *value, const Cell *picker)
 //
 void Poke_Time_Immediate(
     REBVAL *value,
-    const Cell *picker,
+    Cell(const*) picker,
     const REBVAL *poke
 ) {
     REBINT i;
@@ -488,7 +488,7 @@ REBTYPE(Time)
         INCLUDE_PARAMS_OF_PICK_P;
         UNUSED(ARG(location));
 
-        const Cell *picker = ARG(picker);
+        Cell(const*) picker = ARG(picker);
 
         Pick_Time(OUT, time, picker);
         return OUT;
@@ -500,7 +500,7 @@ REBTYPE(Time)
         INCLUDE_PARAMS_OF_POKE_P;
         UNUSED(ARG(location));
 
-        const Cell *picker = ARG(picker);
+        Cell(const*) picker = ARG(picker);
 
         REBVAL *setval = Meta_Unquotify(ARG(value));
 

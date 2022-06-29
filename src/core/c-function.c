@@ -134,11 +134,11 @@ void Push_Paramlist_Triads_May_Fail(
 
     bool refinement_seen = false;
 
-    const Cell *tail;
-    const Cell *value = VAL_ARRAY_AT(&tail, spec);
+    Cell(const*) tail;
+    Cell(const*) value = VAL_ARRAY_AT(&tail, spec);
 
     while (value != tail) {
-        const Cell* item = value;  // "faked"
+        Cell(const*) item = value;  // "faked"
         ++value;  // go ahead and consume next
 
     //=//// STRING! FOR FUNCTION DESCRIPTION OR PARAMETER NOTE ////////////=//
@@ -263,8 +263,8 @@ void Push_Paramlist_Triads_May_Fail(
             VAL_TYPESET_LOW_BITS(param) = 0;
             VAL_TYPESET_HIGH_BITS(param) = 0;
 
-            const Cell *types_tail;
-            const Cell *types_at = VAL_ARRAY_AT(&types_tail, item);
+            Cell(const*) types_tail;
+            Cell(const*) types_at = VAL_ARRAY_AT(&types_tail, item);
             Add_Typeset_Bits_Core(
                 cast_PAR(param),
                 types_at,
@@ -724,11 +724,11 @@ REBARR *Pop_Paramlist_With_Meta_May_Fail(
         mutable_LINK(Patches, types_varlist) = nullptr;
         INIT_CTX_KEYLIST_SHARED(CTX(types_varlist), keylist);
 
-        Cell *rootvar = ARR_HEAD(types_varlist);
+        Cell(*) rootvar = ARR_HEAD(types_varlist);
         INIT_VAL_CONTEXT_ROOTVAR(rootvar, REB_OBJECT, types_varlist);
 
         REBVAL *dest = SPECIFIC(rootvar) + 1;
-        const Cell *param = ARR_AT(paramlist, 1);
+        Cell(const*) param = ARR_AT(paramlist, 1);
 
         if (definitional_return_dsp != 0) {
             assert(flags & MKF_RETURN);
@@ -771,10 +771,10 @@ REBARR *Pop_Paramlist_With_Meta_May_Fail(
         mutable_LINK(Patches, notes_varlist) = nullptr;
         INIT_CTX_KEYLIST_SHARED(CTX(notes_varlist), keylist);
 
-        Cell *rootvar = ARR_HEAD(notes_varlist);
+        Cell(*) rootvar = ARR_HEAD(notes_varlist);
         INIT_VAL_CONTEXT_ROOTVAR(rootvar, REB_OBJECT, notes_varlist);
 
-        const Cell *param = ARR_AT(paramlist, 1);
+        Cell(const*) param = ARR_AT(paramlist, 1);
         REBVAL *dest = SPECIFIC(rootvar) + 1;
 
         if (definitional_return_dsp != 0) {
@@ -957,7 +957,7 @@ REBACT *Make_Action(
         details_capacity,  // leave room for archetype
         SERIES_MASK_DETAILS | NODE_FLAG_MANAGED
     );
-    Cell *archetype = ARR_HEAD(details);
+    Cell(*) archetype = ARR_HEAD(details);
     Reset_Cell_Header_Untracked(TRACK(archetype), REB_ACTION, CELL_MASK_ACTION);
     INIT_VAL_ACTION_DETAILS(archetype, details);
     mutable_BINDING(archetype) = UNBOUND;
@@ -1064,7 +1064,7 @@ void Get_Maybe_Fake_Action_Body(REBVAL *out, const REBVAL *action)
         // to the action.
 
         REBARR *details = ACT_DETAILS(a);
-        Cell *body = ARR_AT(details, IDX_DETAILS_1);
+        Cell(*) body = ARR_AT(details, IDX_DETAILS_1);
 
         // The PARAMLIST_HAS_RETURN tricks for definitional return make it
         // seem like a generator authored more code in the action's body...but
@@ -1104,7 +1104,7 @@ void Get_Maybe_Fake_Action_Body(REBVAL *out, const REBVAL *action)
             // To give it the appearance of executing code in place, we use
             // a GROUP!.
 
-            Cell *slot = ARR_AT(fake, real_body_index);  // #BODY
+            Cell(*) slot = ARR_AT(fake, real_body_index);  // #BODY
             assert(IS_ISSUE(slot));
 
             // Note: clears VAL_FLAG_LINE

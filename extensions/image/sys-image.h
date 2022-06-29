@@ -43,7 +43,7 @@
 
 extern REBTYP* EG_Image_Type;
 
-inline static REBVAL *VAL_IMAGE_BIN(noquote(const Cell*) v) {
+inline static REBVAL *VAL_IMAGE_BIN(noquote(Cell(const*)) v) {
     assert(CELL_CUSTOM_TYPE(v) == EG_Image_Type);
     return cast(REBVAL*, ARR_SINGLE(ARR(VAL_NODE1(v))));
 }
@@ -54,12 +54,12 @@ inline static REBVAL *VAL_IMAGE_BIN(noquote(const Cell*) v) {
 #define VAL_IMAGE_HEIGHT(v) \
     ARR(VAL_NODE1(v))->misc.any.i
 
-inline static REBYTE *VAL_IMAGE_HEAD(noquote(const Cell*) v) {
+inline static REBYTE *VAL_IMAGE_HEAD(noquote(Cell(const*)) v) {
     assert(CELL_CUSTOM_TYPE(v) == EG_Image_Type);
     return SER_DATA(VAL_BINARY_ENSURE_MUTABLE(VAL_IMAGE_BIN(v)));
 }
 
-inline static REBYTE *VAL_IMAGE_AT_HEAD(noquote(const Cell*) v, REBLEN pos) {
+inline static REBYTE *VAL_IMAGE_AT_HEAD(noquote(Cell(const*)) v, REBLEN pos) {
     return VAL_IMAGE_HEAD(v) + (pos * 4);
 }
 
@@ -73,21 +73,21 @@ inline static REBYTE *VAL_IMAGE_AT_HEAD(noquote(const Cell*) v, REBLEN pos) {
 #define VAL_IMAGE_POS(v) \
     PAYLOAD(Any, (v)).second.i
 
-inline static REBYTE *VAL_IMAGE_AT(noquote(const Cell*) v) {
+inline static REBYTE *VAL_IMAGE_AT(noquote(Cell(const*)) v) {
     return VAL_IMAGE_AT_HEAD(v, VAL_IMAGE_POS(v));
 }
 
-inline static REBLEN VAL_IMAGE_LEN_HEAD(noquote(const Cell*) v) {
+inline static REBLEN VAL_IMAGE_LEN_HEAD(noquote(Cell(const*)) v) {
     return VAL_IMAGE_HEIGHT(v) * VAL_IMAGE_WIDTH(v);
 }
 
-inline static REBLEN VAL_IMAGE_LEN_AT(noquote(const Cell*) v) {
+inline static REBLEN VAL_IMAGE_LEN_AT(noquote(Cell(const*)) v) {
     if (VAL_IMAGE_POS(v) >= cast(REBIDX, VAL_IMAGE_LEN_HEAD(v)))
         return 0;  // avoid negative position
     return VAL_IMAGE_LEN_HEAD(v) - VAL_IMAGE_POS(v);
 }
 
-inline static bool IS_IMAGE(const Cell *v) {
+inline static bool IS_IMAGE(Cell(const*) v) {
     //
     // Note that for this test, if there's a quote level it doesn't count...
     // that would be QUOTED! (IS_QUOTED()).  To test for quoted images, you
@@ -97,7 +97,7 @@ inline static bool IS_IMAGE(const Cell *v) {
 }
 
 inline static REBVAL *Init_Image(
-    Cell *out,
+    Cell(*) out,
     const REBSER *bin,
     REBLEN width,
     REBLEN height
@@ -131,7 +131,7 @@ inline static void RESET_IMAGE(REBYTE *p, REBLEN num_pixels) {
 
 // Creates WxH image, black pixels, all opaque.
 //
-inline static REBVAL *Init_Image_Black_Opaque(Cell *out, REBLEN w, REBLEN h)
+inline static REBVAL *Init_Image_Black_Opaque(Cell(*) out, REBLEN w, REBLEN h)
 {
     REBSIZ size = (w * h) * 4;  // RGBA pixels, 4 bytes each
     REBBIN *bin = Make_Binary(size);
@@ -147,8 +147,8 @@ inline static REBVAL *Init_Image_Black_Opaque(Cell *out, REBLEN w, REBLEN h)
 // !!! These hooks allow the REB_IMAGE cell type to dispatch to code in the
 // IMAGE! extension if it is loaded.
 //
-extern REBINT CT_Image(noquote(const Cell*) a, noquote(const Cell*) b, bool strict);
+extern REBINT CT_Image(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict);
 extern REB_R MAKE_Image(REBVAL *out, enum Reb_Kind kind, option(const REBVAL*) parent, const REBVAL *arg);
 extern REB_R TO_Image(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg);
-extern void MF_Image(REB_MOLD *mo, noquote(const Cell*) v, bool form);
+extern void MF_Image(REB_MOLD *mo, noquote(Cell(const*)) v, bool form);
 extern REBTYPE(Image);

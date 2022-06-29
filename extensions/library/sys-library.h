@@ -32,7 +32,7 @@ typedef REBARR REBLIB;
 
 extern REBTYP *EG_Library_Type;
 
-inline static bool IS_LIBRARY(const Cell *v) {  // Note: QUOTED! doesn't count
+inline static bool IS_LIBRARY(Cell(const*) v) {  // Note: QUOTED! doesn't count
     return IS_CUSTOM(v) and CELL_CUSTOM_TYPE(v) == EG_Library_Type;
 }
 
@@ -42,13 +42,13 @@ inline static void *LIB_FD(REBLIB *lib)
 inline static bool IS_LIB_CLOSED(REBLIB *lib)
   { return lib->link.fd == nullptr; }
 
-inline static REBLIB *VAL_LIBRARY(noquote(const Cell*) v) {
+inline static REBLIB *VAL_LIBRARY(noquote(Cell(const*)) v) {
     assert(CELL_CUSTOM_TYPE(v) == EG_Library_Type);
     return ARR(VAL_NODE1(v));
 }
 
 
-inline static void *VAL_LIBRARY_FD(noquote(const Cell*) v) {
+inline static void *VAL_LIBRARY_FD(noquote(Cell(const*)) v) {
     assert(CELL_CUSTOM_TYPE(v) == EG_Library_Type);
     return LIB_FD(VAL_LIBRARY(v));
 }

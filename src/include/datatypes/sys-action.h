@@ -130,7 +130,7 @@ inline static void INIT_BONUS_KEYSOURCE(REBARR *varlist, REBNOD *keysource) {
 // evaluator.
 //
 
-inline static REBVAL *Init_Return_Signal_Untracked(Cell *out, char ch) {
+inline static REBVAL *Init_Return_Signal_Untracked(Cell(*) out, char ch) {
     Reset_Cell_Header_Untracked(out, REB_T_RETURN_SIGNAL, CELL_MASK_NONE);
     mutable_BINDING(out) = nullptr;
 
@@ -147,7 +147,7 @@ inline static REBVAL *Init_Return_Signal_Untracked(Cell *out, char ch) {
 #define IS_RETURN_SIGNAL(v) \
     (HEART_BYTE(v) == REB_T_RETURN_SIGNAL)
 
-inline static char VAL_RETURN_SIGNAL(const Cell *v) {
+inline static char VAL_RETURN_SIGNAL(Cell(const*) v) {
     assert(IS_RETURN_SIGNAL(v));
     return PAYLOAD(Any, v).first.u;
 }
@@ -268,13 +268,13 @@ inline static REBARR *ACT_IDENTITY(REBACT *a)
   { return x_cast(REBARR*, a); }
 
 
-inline static REBCTX *VAL_ACTION_BINDING(noquote(const Cell*) v) {
+inline static REBCTX *VAL_ACTION_BINDING(noquote(Cell(const*)) v) {
     assert(CELL_HEART(v) == REB_ACTION);
     return CTX(BINDING(v));
 }
 
 inline static void INIT_VAL_ACTION_BINDING(
-    Cell *v,
+    Cell(*) v,
     REBCTX *binding
 ){
     assert(IS_ACTION(v));
@@ -391,7 +391,7 @@ inline static void Init_Key(REBKEY *dest, Symbol(const*) symbol)
 #define ACT_META(a)             MISC(DetailsMeta, ACT_IDENTITY(a))
 
 
-inline static REBACT *VAL_ACTION(noquote(const Cell*) v) {
+inline static REBACT *VAL_ACTION(noquote(Cell(const*)) v) {
     assert(CELL_HEART(v) == REB_ACTION);
     REBSER *s = SER(VAL_NODE1(v));
     if (GET_SERIES_FLAG(s, INACCESSIBLE))
@@ -414,7 +414,7 @@ inline static REBACT *VAL_ACTION(noquote(const Cell*) v) {
 // the words, you get the currently executing label instead...which may
 // actually make more sense.
 
-inline static option(Symbol(const*)) VAL_ACTION_LABEL(noquote(const Cell*) v) {
+inline static option(Symbol(const*)) VAL_ACTION_LABEL(noquote(Cell(const*)) v) {
     assert(CELL_HEART(v) == REB_ACTION);
     REBSER *s = VAL_ACTION_PARTIALS_OR_LABEL(v);
     if (not s)
@@ -425,7 +425,7 @@ inline static option(Symbol(const*)) VAL_ACTION_LABEL(noquote(const Cell*) v) {
 }
 
 inline static void INIT_VAL_ACTION_LABEL(
-    Cell *v,
+    Cell(*) v,
     option(Symbol(const*)) label
 ){
     ASSERT_CELL_WRITABLE_EVIL_MACRO(v);  // archetype R/O
@@ -530,7 +530,7 @@ inline static bool Action_Is_Base_Of(REBACT *base, REBACT *derived) {
 // no label.
 //
 inline static REBVAL *Init_Action_Core(
-    Cell *out,
+    Cell(*) out,
     REBACT *a,
     option(Symbol(const*)) label,  // allowed to be ANONYMOUS
     REBCTX *binding  // allowed to be UNBOUND

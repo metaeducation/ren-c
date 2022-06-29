@@ -1266,8 +1266,8 @@ void Push_Action(
     // notion of being able to just memset() to 0 or calloc().  The debug
     // build still wants to initialize the cells with file/line info though.
     //
-    Cell *tail = ARR_TAIL(f->varlist);
-    Cell *prep = f->rootvar + 1;
+    Cell(*) tail = ARR_TAIL(f->varlist);
+    Cell(*) prep = f->rootvar + 1;
     for (; prep < tail; ++prep)
         USED(Prep_Cell(prep));
 
@@ -1293,7 +1293,7 @@ void Push_Action(
     //
     REBARR *partials = try_unwrap(ACT_PARTIALS(act));
     if (partials) {
-        const Cell *word_tail = ARR_TAIL(partials);
+        Cell(const*) word_tail = ARR_TAIL(partials);
         const REBVAL *word = SPECIFIC(ARR_HEAD(partials));
         for (; word != word_tail; ++word)
             Copy_Cell(PUSH(), word);
@@ -1451,7 +1451,7 @@ void Drop_Action(REBFRM *f) {
         assert(NOT_SERIES_FLAG(f->varlist, INACCESSIBLE));
         assert(NOT_SERIES_FLAG(f->varlist, MANAGED));
 
-        Cell *rootvar = ARR_HEAD(f->varlist);
+        Cell(*) rootvar = ARR_HEAD(f->varlist);
         assert(CTX_VARLIST(VAL_CONTEXT(rootvar)) == f->varlist);
         INIT_VAL_FRAME_PHASE_OR_LABEL(rootvar, nullptr);  // can't trash ptr
         TRASH_POINTER_IF_DEBUG(mutable_BINDING(rootvar));

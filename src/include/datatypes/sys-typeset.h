@@ -52,7 +52,7 @@ inline static enum Reb_Kind KIND_FROM_SYM(SYMID s) {
 #define SYM_FROM_KIND(k) \
     cast(SYMID, cast(enum Reb_Kind, (k)))
 
-inline static SYMID VAL_TYPE_SYM(noquote(const Cell*) v) {
+inline static SYMID VAL_TYPE_SYM(noquote(Cell(const*)) v) {
     //
     // !!! The extension type list is limited to a finite set as a first step
     // of generalizing the approach.  Bridge compatibility for things like
@@ -62,7 +62,7 @@ inline static SYMID VAL_TYPE_SYM(noquote(const Cell*) v) {
     if (k != REB_CUSTOM)
         return SYM_FROM_KIND(k);
 
-    Cell *ext = ARR_HEAD(PG_Extension_Types);
+    Cell(*) ext = ARR_HEAD(PG_Extension_Types);
     REBTYP *t = VAL_TYPE_CUSTOM(v);
     if (t == VAL_TYPE_CUSTOM(ext + 0))
         return SYM_LIBRARY_X;
@@ -94,7 +94,7 @@ inline static SYMID VAL_TYPE_SYM(noquote(const Cell*) v) {
 #define VAL_TYPESET_HIGH_BITS(v) \
     EXTRA(Typeset, (v)).high_bits
 
-inline static bool TYPE_CHECK(noquote(const Cell*) v, REBYTE n) {
+inline static bool TYPE_CHECK(noquote(Cell(const*)) v, REBYTE n) {
     assert(CELL_HEART(v) == REB_TYPESET);
 
     if (n < 32)
@@ -104,7 +104,7 @@ inline static bool TYPE_CHECK(noquote(const Cell*) v, REBYTE n) {
     return did (VAL_TYPESET_HIGH_BITS(v) & FLAGIT_KIND(n - 32));
 }
 
-inline static bool TYPE_CHECK_BITS(noquote(const Cell*) v, REBU64 bits) {
+inline static bool TYPE_CHECK_BITS(noquote(Cell(const*)) v, REBU64 bits) {
     assert(CELL_HEART(v) == REB_TYPESET);
 
     uint_fast32_t low = bits & cast(uint32_t, 0xFFFFFFFF);
@@ -119,7 +119,7 @@ inline static bool TYPE_CHECK_BITS(noquote(const Cell*) v, REBU64 bits) {
 }
 
 inline static bool TYPE_CHECK_EXACT_BITS(
-    noquote(const Cell*) v,
+    noquote(Cell(const*)) v,
     REBU64 bits
 ){
     assert(CELL_HEART(v) == REB_TYPESET);
@@ -135,7 +135,7 @@ inline static bool TYPE_CHECK_EXACT_BITS(
     return true;
 }
 
-inline static void TYPE_SET(Cell *v, REBYTE n) {
+inline static void TYPE_SET(Cell(*) v, REBYTE n) {
     assert(IS_TYPESET(v));
 
     if (n < 32) {
@@ -146,7 +146,7 @@ inline static void TYPE_SET(Cell *v, REBYTE n) {
     VAL_TYPESET_HIGH_BITS(v) |= FLAGIT_KIND(n - 32);
 }
 
-inline static void TYPE_CLEAR(Cell *v, REBYTE n) {
+inline static void TYPE_CLEAR(Cell(*) v, REBYTE n) {
     assert(IS_TYPESET(v));
 
     if (n < 32) {
@@ -158,8 +158,8 @@ inline static void TYPE_CLEAR(Cell *v, REBYTE n) {
 }
 
 inline static bool EQUAL_TYPESET(
-    noquote(const Cell*) v1,
-    noquote(const Cell*) v2
+    noquote(Cell(const*)) v1,
+    noquote(Cell(const*)) v2
 ){
     assert(CELL_HEART(v1) == REB_TYPESET);
     assert(CELL_HEART(v2) == REB_TYPESET);
@@ -171,7 +171,7 @@ inline static bool EQUAL_TYPESET(
     return true;
 }
 
-inline static void CLEAR_ALL_TYPESET_BITS(Cell *v) {
+inline static void CLEAR_ALL_TYPESET_BITS(Cell(*) v) {
     assert(VAL_TYPE(v) == REB_TYPESET);
 
     VAL_TYPESET_HIGH_BITS(v) = 0;
@@ -301,7 +301,7 @@ inline static bool Is_Specialized(const REBPAR *param) {
 
 // Parameter class should be PARAM_CLASS_0 unless typeset in func paramlist.
 
-inline static REBVAL *Init_Typeset_Core(Cell *out, REBU64 bits)
+inline static REBVAL *Init_Typeset_Core(Cell(*) out, REBU64 bits)
 {
     Reset_Cell_Header_Untracked(out, REB_TYPESET, CELL_MASK_NONE);
     VAL_PARAM_FLAGS(out) = FLAG_PARAM_CLASS_BYTE(PARAM_CLASS_0);
@@ -315,7 +315,7 @@ inline static REBVAL *Init_Typeset_Core(Cell *out, REBU64 bits)
 
 
 inline static REBPAR *Init_Param_Core(
-    Cell *out,
+    Cell(*) out,
     REBFLGS param_flags,
     REBU64 bits
 ){
@@ -337,8 +337,8 @@ inline static REBPAR *Init_Param_Core(
 
 
 inline static REBVAL *Refinify(REBVAL *v);  // forward declaration
-inline static bool IS_REFINEMENT(const Cell *v);  // forward decl
-inline static bool IS_PREDICATE(const Cell *v);  // forward decl
+inline static bool IS_REFINEMENT(Cell(const*) v);  // forward decl
+inline static bool IS_PREDICATE(Cell(const*) v);  // forward decl
 
 // This is an interim workaround for the need to be able check constrained
 // data types (e.g. PATH!-with-BLANK!-at-head being REFINEMENT!).  See
@@ -351,7 +351,7 @@ inline static bool IS_PREDICATE(const Cell *v);  // forward decl
 //
 inline static bool Typecheck_Including_Constraints(
     const REBPAR *param,
-    const Cell *v
+    Cell(const*) v
 ){
     if (VAL_PARAM_CLASS(param) == PARAM_CLASS_RETURN) {
         if (Is_Isotope(v)) {
@@ -439,14 +439,14 @@ inline static bool Typecheck_Including_Constraints(
 }
 
 
-inline static bool Is_Typeset_Empty(noquote(const Cell*) param) {
+inline static bool Is_Typeset_Empty(noquote(Cell(const*)) param) {
     assert(CELL_HEART(param) == REB_TYPESET);
     REBU64 bits = VAL_TYPESET_LOW_BITS(param);
     bits |= cast(REBU64, VAL_TYPESET_HIGH_BITS(param)) << 32;
     return (bits & TS_OPT_VALUE) == 0;  // e.g. `[/refine]`
 }
 
-inline static bool Is_Blackhole(const Cell *v);  // forward decl
+inline static bool Is_Blackhole(Cell(const*) v);  // forward decl
 
 // During the process of specialization, a NULL refinement means that it has
 // not been specified one way or the other (MAKE FRAME! creates a frame with

@@ -318,7 +318,7 @@ inline static REBSER *SPC_BINDING(REBSPC *specifier)
 // Payload and header should be valid prior to making this call.
 //
 inline static void INIT_BINDING_MAY_MANAGE(
-    Cell *out,
+    Cell(*) out,
     const REBSER* binding
 ){
     mutable_BINDING(out) = binding;
@@ -339,7 +339,7 @@ inline static void INIT_BINDING_MAY_MANAGE(
 // bound directly to a context) or into the paramlist (if relative to an
 // action, requiring a frame specifier to fully resolve).
 //
-inline static bool IS_WORD_UNBOUND(const Cell *v) {
+inline static bool IS_WORD_UNBOUND(Cell(const*) v) {
     assert(ANY_WORDLIKE(v));
     return BINDING(v) == UNBOUND;
 }
@@ -348,19 +348,19 @@ inline static bool IS_WORD_UNBOUND(const Cell *v) {
     (not IS_WORD_UNBOUND(v))
 
 
-inline static REBLEN VAL_WORD_INDEX(const Cell *v) {
+inline static REBLEN VAL_WORD_INDEX(Cell(const*) v) {
     assert(IS_WORD_BOUND(v));
     uint32_t i = VAL_WORD_INDEX_U32(v);
     assert(i > 0);
     return cast(REBLEN, i);
 }
 
-inline static REBARR *VAL_WORD_BINDING(const Cell *v) {
+inline static REBARR *VAL_WORD_BINDING(Cell(const*) v) {
     assert(ANY_WORDLIKE(v));
     return ARR(BINDING(v));  // could be nullptr / UNBOUND
 }
 
-inline static void INIT_VAL_WORD_BINDING(Cell *v, const REBSER *binding) {
+inline static void INIT_VAL_WORD_BINDING(Cell(*) v, const REBSER *binding) {
     assert(ANY_WORDLIKE(v));
 
     mutable_BINDING(v) = binding;
@@ -387,7 +387,7 @@ inline static void INIT_VAL_WORD_BINDING(Cell *v, const REBSER *binding) {
 // can overcomplicate code.  We'd break too many invariants to just say a
 // relativized value is "unbound", so make an expired frame if necessary.
 //
-inline static REBVAL* Unrelativize(Cell* out, const Cell* v) {
+inline static REBVAL* Unrelativize(Cell(*) out, Cell(const*) v) {
     if (not Is_Bindable(v) or IS_SPECIFIC(v))
         Copy_Cell(out, SPECIFIC(v));
     else {
@@ -404,7 +404,7 @@ inline static REBVAL* Unrelativize(Cell* out, const Cell* v) {
 #define rebUnrelativize(v) \
     Unrelativize(Alloc_Value(), (v))
 
-inline static void Unbind_Any_Word(Cell *v) {
+inline static void Unbind_Any_Word(Cell(*) v) {
     INIT_VAL_WORD_INDEX(v, 0);
     INIT_VAL_WORD_BINDING(v, nullptr);
 }
@@ -478,7 +478,7 @@ enum Reb_Attach_Mode {
 //
 inline static option(REBSER*) Get_Word_Container(
     REBLEN *index_out,
-    const Cell* any_word,
+    Cell(const*) any_word,
     REBSPC *specifier,
     enum Reb_Attach_Mode mode
 ){
@@ -618,8 +618,8 @@ inline static option(REBSER*) Get_Word_Container(
                 // inherited variable we'd not see an override if it came
                 // into existence in the actual context.
                 //
-                INIT_VAL_WORD_BINDING(m_cast(Cell*, any_word), patch);
-                INIT_VAL_WORD_INDEX(m_cast(Cell*, any_word), 1);
+                INIT_VAL_WORD_BINDING(m_cast(Cell(*), any_word), patch);
+                INIT_VAL_WORD_INDEX(m_cast(Cell(*), any_word), 1);
 
                 *index_out = 1;
                 return patch;
@@ -737,7 +737,7 @@ inline static option(REBSER*) Get_Word_Container(
 
 
 inline static const REBVAL *Lookup_Word_May_Fail(
-    const Cell *any_word,
+    Cell(const*) any_word,
     REBSPC *specifier
 ){
     REBLEN index;
@@ -759,7 +759,7 @@ inline static const REBVAL *Lookup_Word_May_Fail(
 }
 
 inline static option(const REBVAL*) Lookup_Word(
-    const Cell *any_word,
+    Cell(const*) any_word,
     REBSPC *specifier
 ){
     REBLEN index;
@@ -778,8 +778,8 @@ inline static option(const REBVAL*) Lookup_Word(
 }
 
 inline static const REBVAL *Get_Word_May_Fail(
-    Cell *out,
-    const Cell* any_word,
+    Cell(*) out,
+    Cell(const*) any_word,
     REBSPC *specifier
 ){
     const REBVAL *var = Lookup_Word_May_Fail(any_word, specifier);
@@ -790,7 +790,7 @@ inline static const REBVAL *Get_Word_May_Fail(
 }
 
 inline static REBVAL *Lookup_Mutable_Word_May_Fail(
-    const Cell* any_word,
+    Cell(const*) any_word,
     REBSPC *specifier
 ){
     REBLEN index;
@@ -831,7 +831,7 @@ inline static REBVAL *Lookup_Mutable_Word_May_Fail(
 }
 
 inline static REBVAL *Sink_Word_May_Fail(
-    const Cell* any_word,
+    Cell(const*) any_word,
     REBSPC *specifier
 ){
     REBVAL *var = Lookup_Mutable_Word_May_Fail(any_word, specifier);
@@ -866,7 +866,7 @@ inline static REBVAL *Sink_Word_May_Fail(
 
 inline static REBSPC *Derive_Specifier(
     REBSPC *parent,
-    noquote(const Cell*) any_array
+    noquote(Cell(const*)) any_array
 );
 
 #if CPLUSPLUS_11
@@ -877,8 +877,8 @@ inline static REBSPC *Derive_Specifier(
 #endif
 
 inline static REBVAL *Derelativize_Untracked(
-    Cell *out,  // relative dest overwritten w/specific value
-    const Cell *v,
+    Cell(*) out,  // relative dest overwritten w/specific value
+    Cell(const*) v,
     REBSPC *specifier
 ){
     Copy_Cell_Header(out, v);
@@ -937,12 +937,12 @@ inline static REBVAL *Derelativize_Untracked(
 
 
 // In the C++ build, defining this overload that takes a REBVAL* instead of
-// a Cell*, and then not defining it...will tell you that you do not need
+// a Cell(*), and then not defining it...will tell you that you do not need
 // to use Derelativize.  Juse Copy_Cell() if your source is a REBVAL!
 //
 #if CPLUSPLUS_11
     REBVAL *Derelativize_Untracked(
-        Cell *dest, const REBVAL *v, REBSPC *specifier
+        Cell(*) dest, const REBVAL *v, REBSPC *specifier
     );
 #endif
 
@@ -1105,7 +1105,7 @@ inline static REBARR *Merge_Patches_May_Reuse(
 //
 inline static REBSPC *Derive_Specifier_Core(
     REBSPC *specifier,  // merge this specifier...
-    noquote(const Cell*) any_array  // ...onto the one in this array
+    noquote(Cell(const*)) any_array  // ...onto the one in this array
 ){
     REBARR *old = ARR(BINDING(any_array));
 
@@ -1243,14 +1243,14 @@ inline static REBSPC *Derive_Specifier_Core(
 #if (! DEBUG_VIRTUAL_BINDING)
     inline static REBSPC *Derive_Specifier(
         REBSPC *specifier,
-        noquote(const Cell*) any_array
+        noquote(Cell(const*)) any_array
     ){
         return Derive_Specifier_Core(specifier, any_array);
     }
 #else
     inline static REBSPC *Derive_Specifier(
         REBSPC *specifier,
-        noquote(const Cell*) any_array
+        noquote(Cell(const*)) any_array
     ){
         REBSPC *derived = Derive_Specifier_Core(specifier, any_array);
         REBARR *old = ARR(BINDING(any_array));

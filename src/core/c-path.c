@@ -31,7 +31,7 @@
 //  Try_Init_Any_Sequence_At_Arraylike_Core: C
 //
 REBVAL *Try_Init_Any_Sequence_At_Arraylike_Core(
-    Cell *out,  // NULL if array is too short, violating value otherwise
+    Cell(*) out,  // NULL if array is too short, violating value otherwise
     enum Reb_Kind kind,
     const REBARR *a,
     REBSPC *specifier,
@@ -82,8 +82,8 @@ REBVAL *Try_Init_Any_Sequence_At_Arraylike_Core(
         return cast(REBVAL*, out);
     }
 
-    const Cell *tail = ARR_TAIL(a);
-    const Cell *v = ARR_HEAD(a);
+    Cell(const*) tail = ARR_TAIL(a);
+    Cell(const*) v = ARR_HEAD(a);
     for (; v != tail; ++v) {
         if (not Is_Valid_Sequence_Element(kind, v)) {
             Derelativize(out, v, specifier);
@@ -327,7 +327,7 @@ REB_R TO_Sequence(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
 
     if (arg_kind != REB_BLOCK) {
         Copy_Cell(out, arg);  // move value so we can modify it
-        Dequotify(out);  // remove quotes (should TO take a noquote(Cell*)?)
+        Dequotify(out);  // remove quotes (should TO take a noquote(Cell(*))?)
         Plainify(out);  // remove any decorations like @ or :
         if (not Try_Leading_Blank_Pathify(out, kind))
             fail (Error_Bad_Sequence_Init(out));
@@ -343,7 +343,7 @@ REB_R TO_Sequence(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
         fail (Error_Sequence_Too_Short_Raw());
 
     if (len == 2) {
-        const Cell *at = VAL_ARRAY_ITEM_AT(arg);
+        Cell(const*) at = VAL_ARRAY_ITEM_AT(arg);
         if (not Try_Init_Any_Sequence_Pairlike_Core(
             out,
             kind,
@@ -392,7 +392,7 @@ REB_R TO_Sequence(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
 // This behavior is not preserved in Ren-C, so `same-color?` or something
 // else would be needed to get that intent.
 //
-REBINT CT_Sequence(noquote(const Cell*) a, noquote(const Cell*) b, bool strict)
+REBINT CT_Sequence(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
 {
     REBLEN len_a = VAL_SEQUENCE_LEN(a);
     REBLEN len_b = VAL_SEQUENCE_LEN(b);

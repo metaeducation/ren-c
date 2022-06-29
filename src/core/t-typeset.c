@@ -73,7 +73,7 @@ const struct {
 //
 //  CT_Typeset: C
 //
-REBINT CT_Typeset(noquote(const Cell*) a, noquote(const Cell*) b, bool strict)
+REBINT CT_Typeset(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
 {
     UNUSED(strict);
     if (EQUAL_TYPESET(a, b))
@@ -132,15 +132,15 @@ void Shutdown_Typesets(void)
 //
 bool Add_Typeset_Bits_Core(
     REBPAR *typeset,
-    const Cell *head,
-    const Cell *tail,
+    Cell(const*) head,
+    Cell(const*) tail,
     REBSPC *specifier
 ) {
     assert(IS_TYPESET(typeset));
 
-    const Cell *maybe_word = head;
+    Cell(const*) maybe_word = head;
     for (; maybe_word != tail; ++maybe_word) {
-        const Cell *item;
+        Cell(const*) item;
         if (IS_WORD(maybe_word))
             item = Lookup_Word_May_Fail(maybe_word, specifier);
         else
@@ -275,8 +275,8 @@ REB_R MAKE_Typeset(
     if (!IS_BLOCK(arg)) goto bad_make;
 
   blockscope {
-    const Cell *tail;
-    const Cell *at = VAL_ARRAY_AT(&tail, arg);
+    Cell(const*) tail;
+    Cell(const*) at = VAL_ARRAY_AT(&tail, arg);
     Init_Typeset(out, 0);
     Add_Typeset_Bits_Core(
         cast_PAR(out),
@@ -346,7 +346,7 @@ REBARR *Typeset_To_Array(const REBVAL *tset)
 //
 //  MF_Typeset: C
 //
-void MF_Typeset(REB_MOLD *mo, noquote(const Cell*) v, bool form)
+void MF_Typeset(REB_MOLD *mo, noquote(Cell(const*)) v, bool form)
 {
     REBINT n;
 

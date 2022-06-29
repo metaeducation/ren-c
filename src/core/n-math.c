@@ -423,7 +423,7 @@ REBNATIVE(shift)
 
 //  CT_Fail: C
 //
-REBINT CT_Fail(noquote(const Cell*) a, noquote(const Cell*) b, bool strict)
+REBINT CT_Fail(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
 {
     UNUSED(a);
     UNUSED(b);
@@ -435,7 +435,7 @@ REBINT CT_Fail(noquote(const Cell*) a, noquote(const Cell*) b, bool strict)
 
 //  CT_Unhooked: C
 //
-REBINT CT_Unhooked(noquote(const Cell*) a, noquote(const Cell*) b, bool strict)
+REBINT CT_Unhooked(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
 {
     UNUSED(a);
     UNUSED(b);
@@ -455,7 +455,7 @@ REBINT CT_Unhooked(noquote(const Cell*) a, noquote(const Cell*) b, bool strict)
 // in native code that can overwrite its argument values without
 // that being a problem, so it doesn't matter.
 //
-REBINT Compare_Modify_Values(Cell *a, Cell *b, bool strict)
+REBINT Compare_Modify_Values(Cell(*) a, Cell(*) b, bool strict)
 {
     // Note: `(first ['a]) = (first [a])` was true in historical Rebol, due
     // the rules of "lax equality".  This is a harmful choice, and has been
@@ -909,7 +909,7 @@ REBNATIVE(minimum)
 }
 
 
-inline static REBVAL *Init_Zeroed_Hack(Cell *out, enum Reb_Kind kind) {
+inline static REBVAL *Init_Zeroed_Hack(Cell(*) out, enum Reb_Kind kind) {
     //
     // !!! This captures of a dodgy behavior of R3-Alpha, which was to assume
     // that clearing the payload of a value and then setting the header made
@@ -997,7 +997,7 @@ REBNATIVE(zero_q)
         REBLEN len = VAL_SEQUENCE_LEN(v);
         REBLEN i;
         for (i = 0; i < len; ++i) {
-            const Cell *item = VAL_SEQUENCE_AT(SPARE, v, i);
+            Cell(const*) item = VAL_SEQUENCE_AT(SPARE, v, i);
             if (not IS_INTEGER(item) or VAL_INT64(item) != 0)
                 return Init_False(OUT);
         }

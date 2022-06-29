@@ -297,7 +297,7 @@ REBNATIVE(reduce_each)
 }}
 
 
-bool Match_For_Compose(noquote(const Cell*) group, const REBVAL *label) {
+bool Match_For_Compose(noquote(Cell(const*)) group, const REBVAL *label) {
     assert(ANY_GROUP_KIND(CELL_HEART(group)));
 
     if (Is_Nulled(label))
@@ -308,7 +308,7 @@ bool Match_For_Compose(noquote(const Cell*) group, const REBVAL *label) {
     if (VAL_LEN_AT(group) == 0) // you have a pattern, so leave `()` as-is
         return false;
 
-    const Cell *first = VAL_ARRAY_ITEM_AT(group);
+    Cell(const*) first = VAL_ARRAY_ITEM_AT(group);
     if (VAL_TYPE(first) != VAL_TYPE(label))
         return false;
 
@@ -334,7 +334,7 @@ bool Match_For_Compose(noquote(const Cell*) group, const REBVAL *label) {
 static void Push_Composer_Frame(
     Value *out,
     REBFRM *main_frame,
-    const Cell *arraylike,
+    Cell(const*) arraylike,
     REBSPC *specifier
 ){
     const Value* adjusted = nullptr;
@@ -382,7 +382,7 @@ static void Push_Composer_Frame(
 static Value* Finalize_Composer_Frame(
     Value *out,
     REBFRM *composer_frame,
-    const Cell *composee  // special handling if the output kind is a sequence
+    Cell(const*) composee  // special handling if the output kind is a sequence
 ){
     if (Is_Failure(out)) {
         Drop_Data_Stack_To(composer_frame->baseline.dsp);
@@ -538,7 +538,7 @@ REB_R Composer_Executor(REBFRM *f)
     enum Reb_Kind heart = CELL_HEART(f_value);  // quoted groups match, see [1]
 
     REBSPC *match_specifier = nullptr;
-    noquote(const Cell*) match = nullptr;
+    noquote(Cell(const*)) match = nullptr;
 
     if (not ANY_GROUP_KIND(heart)) {
         //
@@ -546,7 +546,7 @@ REB_R Composer_Executor(REBFRM *f)
         // find compositions inside it if /DEEP and it's an array
     }
     else if (Is_Any_Doubled_Group(f_value)) {
-        const Cell *inner = VAL_ARRAY_ITEM_AT(f_value);  // 1 item
+        Cell(const*) inner = VAL_ARRAY_ITEM_AT(f_value);  // 1 item
         assert(IS_GROUP(inner));
         if (Match_For_Compose(inner, label)) {
             STATE = ST_COMPOSER_EVAL_DOUBLED_GROUP;
@@ -705,8 +705,8 @@ REB_R Composer_Executor(REBFRM *f)
         //
         // The only splice type is BLOCK!...
 
-        const Cell *push_tail;
-        const Cell *push = VAL_ARRAY_AT(&push_tail, OUT);
+        Cell(const*) push_tail;
+        Cell(const*) push = VAL_ARRAY_AT(&push_tail, OUT);
         if (push != push_tail) {
             Derelativize(PUSH(), push, VAL_SPECIFIER(OUT));
             if (Get_Cell_Flag(f_value, NEWLINE_BEFORE))
@@ -854,18 +854,18 @@ enum FLATTEN_LEVEL {
 
 
 static void Flatten_Core(
-    Cell *head,
-    const Cell *tail,
+    Cell(*) head,
+    Cell(const*) tail,
     REBSPC *specifier,
     enum FLATTEN_LEVEL level
 ) {
-    Cell *item = head;
+    Cell(*) item = head;
     for (; item != tail; ++item) {
         if (IS_BLOCK(item) and level != FLATTEN_NOT) {
             REBSPC *derived = Derive_Specifier(specifier, item);
 
-            const Cell *sub_tail;
-            Cell *sub = VAL_ARRAY_AT_ENSURE_MUTABLE(&sub_tail, item);
+            Cell(const*) sub_tail;
+            Cell(*) sub = VAL_ARRAY_AT_ENSURE_MUTABLE(&sub_tail, item);
             Flatten_Core(
                 sub,
                 sub_tail,
@@ -897,8 +897,8 @@ REBNATIVE(flatten)
 
     REBDSP dsp_orig = DSP;
 
-    const Cell *tail;
-    Cell *at = VAL_ARRAY_AT_ENSURE_MUTABLE(&tail, ARG(block));
+    Cell(const*) tail;
+    Cell(*) at = VAL_ARRAY_AT_ENSURE_MUTABLE(&tail, ARG(block));
     Flatten_Core(
         at,
         tail,

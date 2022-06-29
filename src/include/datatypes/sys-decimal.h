@@ -37,17 +37,17 @@
 #else
     // allows an assert, but also lvalue: `VAL_DECIMAL(v) = xxx`
     //
-    inline static REBDEC VAL_DECIMAL(noquote(const Cell*) v) {
+    inline static REBDEC VAL_DECIMAL(noquote(Cell(const*)) v) {
         assert(CELL_HEART(v) == REB_DECIMAL or CELL_HEART(v) == REB_PERCENT);
         return PAYLOAD(Decimal, v).dec;
     }
-    inline static REBDEC & VAL_DECIMAL(Cell *v) {
+    inline static REBDEC & VAL_DECIMAL(Cell(*) v) {
         assert(VAL_TYPE(v) == REB_DECIMAL or VAL_TYPE(v) == REB_PERCENT);
         return PAYLOAD(Decimal, v).dec;
     }
 #endif
 
-inline static REBVAL *Init_Decimal_Untracked(Cell *out, REBDEC dec) {
+inline static REBVAL *Init_Decimal_Untracked(Cell(*) out, REBDEC dec) {
     Reset_Cell_Header_Untracked(out, REB_DECIMAL, CELL_MASK_NONE);
     PAYLOAD(Decimal, out).dec = dec;
     return cast(REBVAL*, out);
@@ -56,7 +56,7 @@ inline static REBVAL *Init_Decimal_Untracked(Cell *out, REBDEC dec) {
 #define Init_Decimal(out,dec) \
     Init_Decimal_Untracked(TRACK(out), (dec))
 
-inline static REBVAL *Init_Percent(Cell *out, REBDEC dec) {
+inline static REBVAL *Init_Percent(Cell(*) out, REBDEC dec) {
     Reset_Cell_Header_Untracked(out, REB_PERCENT, CELL_MASK_NONE);
     PAYLOAD(Decimal, out).dec = dec;
     return cast(REBVAL*, out);

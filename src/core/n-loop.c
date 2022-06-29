@@ -1386,7 +1386,7 @@ REBNATIVE(remove_each)
             do {
                 assert(start <= len);
                 Set_Cell_Flag(  // v-- okay to mark despite read only
-                    m_cast(Cell*, ARR_AT(VAL_ARRAY(data), start)),
+                    m_cast(Cell(*), ARR_AT(VAL_ARRAY(data), start)),
                     NOTE_REMOVE
                 );
                 ++start;
@@ -1432,8 +1432,8 @@ REBNATIVE(remove_each)
 
     if (ANY_ARRAY(data)) {
         if (Is_Breaking_Null(OUT)) {  // clean markers, don't do removals
-            const Cell *tail;
-            Cell *temp = VAL_ARRAY_KNOWN_MUTABLE_AT(&tail, data);
+            Cell(const*) tail;
+            Cell(*) temp = VAL_ARRAY_KNOWN_MUTABLE_AT(&tail, data);
             for (; temp != tail; ++temp) {
                 if (Get_Cell_Flag(temp, NOTE_REMOVE))
                     Clear_Cell_Flag(temp, NOTE_REMOVE);
@@ -1441,9 +1441,9 @@ REBNATIVE(remove_each)
             goto done_finalizing;
         }
 
-        const Cell *tail;
-        Cell *dest = VAL_ARRAY_KNOWN_MUTABLE_AT(&tail, data);
-        Cell *src = dest;
+        Cell(const*) tail;
+        Cell(*) dest = VAL_ARRAY_KNOWN_MUTABLE_AT(&tail, data);
+        Cell(*) src = dest;
 
         // avoid blitting cells onto themselves by making the first thing we
         // do is to pass up all the unmarked (kept) cells.
@@ -1699,8 +1699,8 @@ REBNATIVE(map)
         Plainify(Copy_Cell(PUSH(), SPARE));
     }
     else if (IS_BLOCK(SPARE)) {
-        const Cell *tail;
-        const Cell *v = VAL_ARRAY_AT(&tail, SPARE);
+        Cell(const*) tail;
+        Cell(const*) v = VAL_ARRAY_AT(&tail, SPARE);
         for (; v != tail; ++v)
             Derelativize(PUSH(), v, VAL_SPECIFIER(SPARE));
     }

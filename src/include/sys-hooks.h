@@ -34,8 +34,8 @@
 // their class).
 //
 typedef REBINT (COMPARE_HOOK)(
-    noquote(const Cell*) a,
-    noquote(const Cell*) b,
+    noquote(Cell(const*)) a,
+    noquote(Cell(const*)) b,
     bool strict
 );
 
@@ -81,7 +81,7 @@ typedef REB_R (TO_HOOK)(REBVAL*, enum Reb_Kind, const REBVAL*);
 // has a different handler than strings.  So not all molds are driven by
 // their class entirely.
 //
-typedef void (MOLD_HOOK)(REB_MOLD *mo, noquote(const Cell*) v, bool form);
+typedef void (MOLD_HOOK)(REB_MOLD *mo, noquote(Cell(const*)) v, bool form);
 
 
 //

@@ -164,7 +164,7 @@ REB_R Chainer_Dispatcher(REBFRM *f)
     REBFRM *sub = Push_Downshifted_Frame(OUT, f);  // steals varlist, see [1]
     f->executor = &Chainer_Dispatcher;  // so trampoline calls us, see [2]
 
-    const Cell *chained = VAL_ARRAY_ITEM_AT(pipeline_at);
+    Cell(const*) chained = VAL_ARRAY_ITEM_AT(pipeline_at);
     ++VAL_INDEX_RAW(pipeline_at);
 
     INIT_FRM_PHASE(sub, VAL_ACTION(chained));  // has varlist already, see [3]
@@ -192,8 +192,8 @@ REB_R Chainer_Dispatcher(REBFRM *f)
     sub->varlist = nullptr;
 
     Value *pipeline_at = SPARE;
-    const Cell *chained_tail;
-    const Cell *chained = VAL_ARRAY_AT(&chained_tail, pipeline_at);
+    Cell(const*) chained_tail;
+    Cell(const*) chained = VAL_ARRAY_AT(&chained_tail, pipeline_at);
 
     if (chained == chained_tail)
         goto finished;
@@ -241,14 +241,14 @@ REBNATIVE(chain_p)  // see extended definition CHAIN in %base-defs.r
     REBVAL *out = OUT;  // plan ahead for factoring into Chain_Action(out..
 
     REBVAL *pipeline = ARG(pipeline);
-    const Cell *tail;
-    const Cell *first = VAL_ARRAY_AT(&tail, pipeline);
+    Cell(const*) tail;
+    Cell(const*) first = VAL_ARRAY_AT(&tail, pipeline);
 
     // !!! Current validation is that all are actions.  Should there be other
     // checks?  (That inputs match outputs in the chain?)  Should it be
     // a dialect and allow things other than functions?
     //
-    const Cell *check = first;
+    Cell(const*) check = first;
     for (; check != tail; ++check) {
         if (not IS_ACTION(check)) {
             DECLARE_LOCAL (specific);

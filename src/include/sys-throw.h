@@ -88,7 +88,7 @@ inline static REB_R Init_Thrown_With_Label(  // assumes `arg` in TG_Thrown_Arg
 }
 
 inline static void CATCH_THROWN(
-    Cell *arg_out,
+    Cell(*) arg_out,
     REBFRM *frame_
 ){
     UNUSED(frame_);

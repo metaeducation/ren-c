@@ -45,7 +45,7 @@
     c_cast(const REBVAL*, &PG_Void_Cell)
 
 
-inline static Cell *Prep_Cell_Untracked(Cell *c) {
+inline static Cell(*) Prep_Cell_Untracked(Cell(*) c) {
     ALIGN_CHECK_CELL_EVIL_MACRO(c);
     c->header.bits = CELL_MASK_PREP;
     return c;
@@ -57,7 +57,7 @@ inline static Cell *Prep_Cell_Untracked(Cell *c) {
 
 // Optimized Prep, with no guarantee about the prior condition of the bits.
 //
-inline static REBVAL *Prep_Stale_Void_Untracked(Cell *out) {
+inline static REBVAL *Prep_Stale_Void_Untracked(Cell(*) out) {
     out->header.bits = NODE_FLAG_NODE | NODE_FLAG_CELL | CELL_FLAG_STALE;
     return cast(REBVAL*, out);
 }
@@ -66,7 +66,7 @@ inline static REBVAL *Prep_Stale_Void_Untracked(Cell *out) {
     TRACK(Prep_Stale_Void_Untracked(out))  // TRACK() expects REB_0, call after
 
 
-inline static REBVAL *Prep_Void_Untracked(Cell *out) {
+inline static REBVAL *Prep_Void_Untracked(Cell(*) out) {
     out->header.bits = NODE_FLAG_NODE | NODE_FLAG_CELL;
     return cast(REBVAL*, out);
 }
@@ -80,13 +80,13 @@ inline static bool Is_Void(const REBVAL *out) {
     return VAL_TYPE_UNCHECKED(out) == REB_0;
 }
 
-inline static bool Is_Stale_Void(const Cell *out) {
+inline static bool Is_Stale_Void(Cell(const*) out) {
     if (not (out->header.bits & CELL_FLAG_STALE))
         return false;
     return VAL_TYPE_UNCHECKED(out) == REB_0;
 }
 
-inline static REBVAL *Init_Stale_Void_Untracked(Cell *out) {
+inline static REBVAL *Init_Stale_Void_Untracked(Cell(*) out) {
     Reset_Cell_Header_Untracked(out, REB_0, CELL_FLAG_STALE);
 
   #ifdef ZERO_UNUSED_CELL_FIELDS

@@ -29,7 +29,7 @@
 #include "sys-core.h"
 
 
-static REBCTX *Error_Bad_Date_Compare(noquote(const Cell*) a, noquote(const Cell*) b)
+static REBCTX *Error_Bad_Date_Compare(noquote(Cell(const*)) a, noquote(Cell(const*)) b)
 {
     return Error_Invalid_Compare_Raw(
         cast(const REBVAL*, a),
@@ -41,7 +41,7 @@ static REBCTX *Error_Bad_Date_Compare(noquote(const Cell*) a, noquote(const Cell
 //
 //  CT_Date: C
 //
-REBINT CT_Date(noquote(const Cell*) a, noquote(const Cell*) b, bool strict)
+REBINT CT_Date(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
 {
     // Dates which lack times or time zones cannot be compared directly with
     // dates that do have times or time zones.  Error on those.
@@ -112,7 +112,7 @@ REBINT CT_Date(noquote(const Cell*) a, noquote(const Cell*) b, bool strict)
 //
 //  MF_Date: C
 //
-void MF_Date(REB_MOLD *mo, noquote(const Cell*) v_orig, bool form)
+void MF_Date(REB_MOLD *mo, noquote(Cell(const*)) v_orig, bool form)
 {
     // We can't/shouldn't modify the incoming date value we are molding, so we
     // make a copy that we can tweak during the emit process
@@ -394,7 +394,7 @@ static REBYMD Normalize_Date(REBINT day, REBINT month, REBINT year, REBINT tz)
 // values would be for the current time zone, then adjust those bits for if
 // the given zone were stored in the date.
 //
-void Adjust_Date_Zone_Core(Cell *d, int zone)
+void Adjust_Date_Zone_Core(Cell(*) d, int zone)
 {
     assert(not Does_Date_Have_Zone(d));
 
@@ -436,7 +436,7 @@ void Adjust_Date_Zone_Core(Cell *d, int zone)
 // e.g. it considers itself a "local" time to whatever the time zone had been.
 // The zone should be captured if it was needed.
 //
-void Fold_Zone_Into_Date(Cell *d)
+void Fold_Zone_Into_Date(Cell(*) d)
 {
     if (Does_Date_Have_Zone(d)) {
         int zone = VAL_ZONE(d);
@@ -460,7 +460,7 @@ void Fold_Zone_Into_Date(Cell *d)
 // caller and not assumed by the system.  Review this as it is a new concept
 // enabled by differentiating the 0:00 UTC status from "no time zone".
 //
-void Adjust_Date_UTC(Cell *d)
+void Adjust_Date_UTC(Cell(*) d)
 {
     if (not Does_Date_Have_Time(d)) {
         PAYLOAD(Time, d).nanoseconds = 0;
@@ -549,8 +549,8 @@ REB_R MAKE_Date(
         goto bad_make;
 
   blockscope {
-    const Cell *tail;
-    const Cell *item = VAL_ARRAY_AT(&tail, arg);
+    Cell(const*) tail;
+    Cell(const*) item = VAL_ARRAY_AT(&tail, arg);
 
     if (item == tail or not IS_INTEGER(item))
         goto bad_make;
@@ -664,7 +664,7 @@ static REBINT Int_From_Date_Arg(const REBVAL *poke) {
 void Pick_Or_Poke_Date(
     option(REBVAL*) opt_out,
     REBVAL *v,
-    const Cell *picker,
+    Cell(const*) picker,
     option(const REBVAL*) opt_poke
 ){
     SYMID sym;
@@ -1007,7 +1007,7 @@ REBTYPE(Date)
         INCLUDE_PARAMS_OF_PICK_P;
         UNUSED(ARG(location));
 
-        const Cell *picker = ARG(picker);
+        Cell(const*) picker = ARG(picker);
 
         Pick_Or_Poke_Date(OUT, v, picker, nullptr);
         return OUT;
@@ -1019,7 +1019,7 @@ REBTYPE(Date)
         INCLUDE_PARAMS_OF_POKE_P;
         UNUSED(ARG(location));
 
-        const Cell *picker = ARG(picker);
+        Cell(const*) picker = ARG(picker);
 
         REBVAL *setval = Meta_Unquotify(ARG(value));
 

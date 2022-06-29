@@ -137,7 +137,7 @@ STATIC_ASSERT(EVAL_EXECUTOR_FLAG_FULFILLING_ARG == DETAILS_FLAG_IS_BARRIER);
 
 
 struct Reb_Eval_Executor_State {
-    const Cell *current;
+    Cell(const*) current;
     option(const REBVAL*) current_gotten;
 
     char enfix_reevaluate;  // either 'Y' or 'N' (catches bugs)

@@ -61,13 +61,13 @@
 #define INIT_VAL_VARARGS_PHASE          INIT_VAL_NODE2
 #define VAL_VARARGS_PHASE(v)            ACT(VAL_NODE2(v))
 
-inline static REBARR *VAL_VARARGS_BINDING(noquote(const Cell*) v) {
+inline static REBARR *VAL_VARARGS_BINDING(noquote(Cell(const*)) v) {
     assert(CELL_HEART(v) == REB_VARARGS);
     return ARR(BINDING(v));  // may be varlist or plain array
 }
 
 inline static void INIT_VAL_VARARGS_BINDING(
-    Cell *v,
+    Cell(*) v,
     REBARR *binding  // either an array or a frame varlist
 ){
     assert(IS_VARARGS(v));
@@ -75,7 +75,7 @@ inline static void INIT_VAL_VARARGS_BINDING(
 }
 
 
-inline static REBVAL *Init_Varargs_Untyped_Normal(Cell *out, REBFRM *f) {
+inline static REBVAL *Init_Varargs_Untyped_Normal(Cell(*) out, REBFRM *f) {
     Reset_Cell_Header_Untracked(out, REB_VARARGS, CELL_MASK_VARARGS);
     mutable_BINDING(out) = f->varlist;  // frame-based VARARGS!
     UNUSED(VAL_VARARGS_SIGNED_PARAM_INDEX(out));
@@ -84,7 +84,7 @@ inline static REBVAL *Init_Varargs_Untyped_Normal(Cell *out, REBFRM *f) {
 }
 
 inline static REBVAL *Init_Varargs_Untyped_Enfix(
-    Cell *out,
+    Cell(*) out,
     const REBVAL *left
 ){
     REBARR *feed;
@@ -108,7 +108,7 @@ inline static REBVAL *Init_Varargs_Untyped_Enfix(
 
 inline static bool Is_Block_Style_Varargs(
     REBVAL **shared_out,
-    noquote(const Cell*) vararg
+    noquote(Cell(const*)) vararg
 ){
     assert(CELL_HEART(vararg) == REB_VARARGS);
 
@@ -126,7 +126,7 @@ inline static bool Is_Block_Style_Varargs(
     *shared_out = cast(REBVAL*, ARR_SINGLE(array1));
     assert(
         Is_Stale_Void(*shared_out)
-        or (IS_SPECIFIC(cast(Cell*, *shared_out)) and IS_BLOCK(*shared_out))
+        or (IS_SPECIFIC(cast(Cell(*), *shared_out)) and IS_BLOCK(*shared_out))
     );
 
     return true;
@@ -135,7 +135,7 @@ inline static bool Is_Block_Style_Varargs(
 
 inline static bool Is_Frame_Style_Varargs_Maybe_Null(
     REBFRM **f_out,
-    noquote(const Cell*) vararg
+    noquote(Cell(const*)) vararg
 ){
     assert(CELL_HEART(vararg) == REB_VARARGS);
 
@@ -155,7 +155,7 @@ inline static bool Is_Frame_Style_Varargs_Maybe_Null(
 
 inline static bool Is_Frame_Style_Varargs_May_Fail(
     REBFRM **f_out,
-    const Cell *vararg
+    Cell(const*) vararg
 ){
     if (not Is_Frame_Style_Varargs_Maybe_Null(f_out, vararg))
         return false;
@@ -187,7 +187,7 @@ inline static bool Is_Frame_Style_Varargs_May_Fail(
 
 inline static const REBPAR *Param_For_Varargs_Maybe_Null(
     const REBKEY **key,
-    noquote(const Cell*) v
+    noquote(Cell(const*)) v
 ){
     assert(CELL_HEART(v) == REB_VARARGS);
 

@@ -165,7 +165,7 @@ static void Protect_Var(REBVAL *var, REBFLGS flags)
 //
 // Anything that calls this must call Uncolor() when done.
 //
-void Protect_Value(const Cell *v, REBFLGS flags)
+void Protect_Value(Cell(const*) v, REBFLGS flags)
 {
     if (Is_Isotope(v))
         return;
@@ -210,8 +210,8 @@ void Protect_Series(const REBSER *s_const, REBLEN index, REBFLGS flags)
 
     Flip_Series_To_Black(s); // recursion protection
 
-    const Cell *val_tail = ARR_TAIL(ARR(s));
-    const Cell *val = ARR_AT(ARR(s), index);
+    Cell(const*) val_tail = ARR_TAIL(ARR(s));
+    Cell(const*) val = ARR_AT(ARR(s), index);
     for (; val != val_tail; val++)
         Protect_Value(val, flags);
 }
@@ -309,8 +309,8 @@ static REB_R Protect_Unprotect_Core(REBFRM *frame_, REBFLGS flags)
 
     if (IS_BLOCK(value)) {
         if (REF(words)) {
-            const Cell *tail;
-            const Cell *item = VAL_ARRAY_AT(&tail, value);
+            Cell(const*) tail;
+            Cell(const*) item = VAL_ARRAY_AT(&tail, value);
             for (; item != tail; ++item) {
                 DECLARE_LOCAL (word); // need binding, can't pass Cell
                 Derelativize(word, item, VAL_SPECIFIER(value));
@@ -320,8 +320,8 @@ static REB_R Protect_Unprotect_Core(REBFRM *frame_, REBFLGS flags)
         }
         if (REF(values)) {
             REBVAL *var;
-            const Cell *tail;
-            const Cell *item = VAL_ARRAY_AT(&tail, value);
+            Cell(const*) tail;
+            Cell(const*) item = VAL_ARRAY_AT(&tail, value);
 
             DECLARE_LOCAL (safe);
 
@@ -456,8 +456,8 @@ REBNATIVE(unprotect)
 // series will never change in the future.  The frozen requirement is needed
 // in order to do things like use blocks as map keys, etc.
 //
-bool Is_Value_Frozen_Deep(const Cell *v) {
-    noquote(const Cell*) cell = VAL_UNESCAPED(v);
+bool Is_Value_Frozen_Deep(Cell(const*) v) {
+    noquote(Cell(const*)) cell = VAL_UNESCAPED(v);
     UNUSED(v); // debug build trashes, to avoid accidental usage below
 
     if (Not_Cell_Flag(cell, FIRST_IS_NODE))
@@ -506,7 +506,7 @@ REBNATIVE(locked_q)
 // that would prevent *them* from later mutating it.
 //
 void Force_Value_Frozen_Core(
-    const Cell *v,
+    Cell(const*) v,
     bool deep,
     option(REBSER*) locker
 ){

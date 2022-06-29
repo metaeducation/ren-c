@@ -32,7 +32,7 @@
 // Scan and convert money.  Return zero if error.
 //
 const REBYTE *Scan_Money(
-    Cell *out,
+    Cell(*) out,
     const REBYTE *cp,
     REBLEN len
 ){
@@ -56,7 +56,7 @@ const REBYTE *Scan_Money(
 //
 //  CT_Money: C
 //
-REBINT CT_Money(noquote(const Cell*) a, noquote(const Cell*) b, bool strict)
+REBINT CT_Money(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
 {
     UNUSED(strict);
 
@@ -137,7 +137,7 @@ REB_R TO_Money(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 //
 //  MF_Money: C
 //
-void MF_Money(REB_MOLD *mo, noquote(const Cell*) v, bool form)
+void MF_Money(REB_MOLD *mo, noquote(Cell(const*)) v, bool form)
 {
     UNUSED(form);
 

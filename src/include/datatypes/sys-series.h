@@ -559,7 +559,7 @@ inline static void SET_SERIES_USED(REBSER *s, REBLEN used) {
         //
       #if DEBUG_TERM_ARRAYS
         if (IS_SER_ARRAY(s))
-            SET_CELL_FREE(SER_AT(Cell, s, used));
+            SET_CELL_FREE(SER_AT(Reb_Cell, s, used));
       #endif
     }
     else {
@@ -696,7 +696,7 @@ inline static void TERM_SERIES_IF_NECESSARY(REBSER *s)
     }
     else if (GET_SERIES_FLAG(s, DYNAMIC) and IS_SER_ARRAY(s)) {
       #if DEBUG_TERM_ARRAYS
-        SET_CELL_FREE(SER_TAIL(Cell, s));
+        SET_CELL_FREE(SER_TAIL(Reb_Cell, s));
       #endif
     }
 }
@@ -919,7 +919,7 @@ inline static void FAIL_IF_READ_ONLY_SER(REBSER *s) {
 #if defined(NDEBUG)
     #define KNOWN_MUTABLE(v) v
 #else
-    inline static const Cell* KNOWN_MUTABLE(const Cell* v) {
+    inline static Cell(const*) KNOWN_MUTABLE(Cell(const*) v) {
         assert(Get_Cell_Flag(v, FIRST_IS_NODE));
         REBSER *s = SER(VAL_NODE1(v));  // can be pairlist, varlist, etc.
         assert(not Is_Series_Read_Only(s));
@@ -929,9 +929,9 @@ inline static void FAIL_IF_READ_ONLY_SER(REBSER *s) {
 #endif
 
 // Forward declaration needed
-inline static REBVAL* Unrelativize(Cell* out, const Cell* v);
+inline static REBVAL* Unrelativize(Cell(*) out, Cell(const*) v);
 
-inline static const Cell *ENSURE_MUTABLE(const Cell *v) {
+inline static Cell(const*) ENSURE_MUTABLE(Cell(const*) v) {
     assert(Get_Cell_Flag(v, FIRST_IS_NODE));
     REBSER *s = SER(VAL_NODE1(v));  // can be pairlist, varlist, etc.
 
@@ -997,7 +997,7 @@ inline static void DROP_GC_GUARD(const REBNOD *node) {
 // Uses "evil macro" variations because it is called so frequently, that in
 // the debug build (which doesn't inline functions) there's a notable cost.
 //
-inline static const REBSER *VAL_SERIES(noquote(const Cell*) v) {
+inline static const REBSER *VAL_SERIES(noquote(Cell(const*)) v) {
   #if !defined(NDEBUG)
     enum Reb_Kind k = CELL_HEART(v);
     assert(
@@ -1034,7 +1034,7 @@ inline static const REBSER *VAL_SERIES(noquote(const Cell*) v) {
     // becomes prohibitive when the functions aren't inlined and checks wind
     // up getting done
     //
-    inline static REBIDX VAL_INDEX_UNBOUNDED(noquote(const Cell*) v) {
+    inline static REBIDX VAL_INDEX_UNBOUNDED(noquote(Cell(const*)) v) {
         enum Reb_Kind k = CELL_HEART(v);  // only const access if heart!
         assert(
             ANY_SERIES_KIND_EVIL_MACRO
@@ -1044,7 +1044,7 @@ inline static const REBSER *VAL_SERIES(noquote(const Cell*) v) {
         assert(Get_Cell_Flag(v, FIRST_IS_NODE));
         return VAL_INDEX_RAW(v);
     }
-    inline static REBIDX & VAL_INDEX_UNBOUNDED(Cell *v) {
+    inline static REBIDX & VAL_INDEX_UNBOUNDED(Cell(*) v) {
         enum Reb_Kind k = VAL_TYPE(v);  // mutable allowed if nonquoted
         assert(
             ANY_SERIES_KIND_EVIL_MACRO
@@ -1057,13 +1057,13 @@ inline static const REBSER *VAL_SERIES(noquote(const Cell*) v) {
 #endif
 
 
-inline static REBLEN VAL_LEN_HEAD(noquote(const Cell*) v);  // forward decl
+inline static REBLEN VAL_LEN_HEAD(noquote(Cell(const*)) v);  // forward decl
 
 // Unlike VAL_INDEX_UNBOUNDED() that may give a negative number or past the
 // end of series, VAL_INDEX() does bounds checking and always returns an
 // unsigned REBLEN.
 //
-inline static REBLEN VAL_INDEX(noquote(const Cell*) v) {
+inline static REBLEN VAL_INDEX(noquote(Cell(const*)) v) {
     enum Reb_Kind k = CELL_HEART(v);  // only const access if heart!
     assert(
         ANY_SERIES_KIND_EVIL_MACRO
@@ -1079,12 +1079,12 @@ inline static REBLEN VAL_INDEX(noquote(const Cell*) v) {
 }
 
 
-inline static const REBYTE *VAL_DATA_AT(noquote(const Cell*) v) {
+inline static const REBYTE *VAL_DATA_AT(noquote(Cell(const*)) v) {
     return SER_DATA_AT(SER_WIDE(VAL_SERIES(v)), VAL_SERIES(v), VAL_INDEX(v));
 }
 
 
-inline static void INIT_SPECIFIER(Cell *v, const void *p) {
+inline static void INIT_SPECIFIER(Cell(*) v, const void *p) {
     //
     // can be called on non-bindable series, but p must be nullptr
 
@@ -1115,7 +1115,7 @@ inline static void INIT_SPECIFIER(Cell *v, const void *p) {
 
 
 inline static REBVAL *Init_Any_Series_At_Core(
-    Cell *out,
+    Cell(*) out,
     enum Reb_Kind type,
     const REBSER *s,  // ensured managed by calling macro
     REBLEN index,

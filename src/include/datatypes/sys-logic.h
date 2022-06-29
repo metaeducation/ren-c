@@ -29,7 +29,7 @@
 //   notation...but render them ambiguously as the words `true` and `false`.
 //
 
-inline static REBVAL *Init_Logic_Core(Cell *out, bool flag) {
+inline static REBVAL *Init_Logic_Core(Cell(*) out, bool flag) {
     Reset_Cell_Header_Untracked(out, REB_LOGIC, CELL_MASK_NONE);
     PAYLOAD(Logic, out).flag = flag;
   #ifdef ZERO_UNUSED_CELL_FIELDS
@@ -44,7 +44,7 @@ inline static REBVAL *Init_Logic_Core(Cell *out, bool flag) {
 #define Init_True(out)      Init_Logic((out), true)
 #define Init_False(out)     Init_Logic((out), false)
 
-inline static bool VAL_LOGIC(noquote(const Cell*) v) {
+inline static bool VAL_LOGIC(noquote(Cell(const*)) v) {
     assert(CELL_HEART(v) == REB_LOGIC);
     return PAYLOAD(Logic, v).flag;
 }
@@ -66,7 +66,7 @@ inline static bool VAL_LOGIC(noquote(const Cell*) v) {
 //
 // Despite Rebol's C heritage, the INTEGER! 0 is purposefully not "falsey".
 
-inline static bool Is_Truthy(const Cell *v) {
+inline static bool Is_Truthy(Cell(const*) v) {
     assert(QUOTE_BYTE(v) != ISOTOPE_255);  // should never be passed isotopes!
     if (VAL_TYPE(v) > REB_LOGIC)
         return true;  // includes QUOTED! `if first ['_] [-- "this is truthy"]`

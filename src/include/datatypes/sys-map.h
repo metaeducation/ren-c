@@ -64,7 +64,7 @@ inline static REBARR *MAP_PAIRLIST(const_if_c REBMAP *map)
     SER_HEAD(MAP_HASHLIST(m))
 
 
-inline static const REBMAP *VAL_MAP(noquote(const Cell*) v) {
+inline static const REBMAP *VAL_MAP(noquote(Cell(const*)) v) {
     assert(CELL_HEART(v) == REB_MAP);
 
     REBARR *a = ARR(VAL_NODE1(v));
@@ -82,7 +82,7 @@ inline static const REBMAP *VAL_MAP(noquote(const Cell*) v) {
 
 inline static REBLEN Length_Map(const REBMAP *map)
 {
-    const Cell *tail = ARR_TAIL(MAP_PAIRLIST(map));
+    Cell(const*) tail = ARR_TAIL(MAP_PAIRLIST(map));
     const REBVAL *v = SPECIFIC(ARR_HEAD(MAP_PAIRLIST(map)));
 
     REBLEN count = 0;

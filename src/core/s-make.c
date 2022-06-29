@@ -73,7 +73,7 @@ REBBIN *Copy_Bytes(const REBYTE *src, REBINT len)
 // other series due to the length being counted in characters and not
 // units of the series width.
 //
-REBSTR *Copy_String_At_Limit(const Cell *src, REBINT limit)
+REBSTR *Copy_String_At_Limit(Cell(const*) src, REBINT limit)
 {
     REBSIZ limited_size;
     REBLEN limited_length;
@@ -221,7 +221,7 @@ void Append_Spelling(REBSTR *dst, const REBSTR *spelling)
 //
 // Append a partial string to a REBSTR*.
 //
-void Append_String_Limit(REBSTR *dst, noquote(const Cell*) src, REBLEN limit)
+void Append_String_Limit(REBSTR *dst, noquote(Cell(const*)) src, REBLEN limit)
 {
     assert(not IS_SYMBOL(dst));
     assert(ANY_UTF8_KIND(CELL_HEART(src)));
@@ -383,7 +383,7 @@ void Join_Binary_In_Byte_Buf(const REBVAL *blk, REBINT limit)
 
     SET_SERIES_LEN(buf, 0);
 
-    const Cell *val = VAL_ARRAY_ITEM_AT(blk);
+    Cell(const*) val = VAL_ARRAY_ITEM_AT(blk);
     for (; limit > 0; val++, limit--) {
         switch (VAL_TYPE(val)) {
           case REB_BLANK:

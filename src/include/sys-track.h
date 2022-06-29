@@ -44,8 +44,8 @@
     #define TOUCH_CELL(c) \
         ((c)->touch = TG_Tick)
 
-    inline static Cell *Track_Cell_Debug(
-        Cell *v,
+    inline static Cell(*) Track_Cell_Debug(
+        Cell(*) v,
         const char *file,
         int line
     ){
@@ -75,7 +75,7 @@
     //
     //    #define Init_Logic(out,flag)  Init_Logic_Core(TRACK(out), (flag))
     //
-    // The tracking information may be put in the cell *before* or *after*
+    // The tracking information may be put in the Cell(*) before* or *after*
     // the right hand side is evaluated.  So imagine something like:
     //
     //     Init_Logic(OUT, not VAL_LOGIC(OUT));

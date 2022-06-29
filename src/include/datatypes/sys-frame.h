@@ -39,7 +39,7 @@
 
 // !!! Find a better place for this!
 //
-inline static bool ANY_ESCAPABLE_GET(const Cell *v) {
+inline static bool ANY_ESCAPABLE_GET(Cell(const*) v) {
     //
     // !!! Note: GET-BLOCK! is used to mean reduce, e.g.
     //
@@ -238,7 +238,7 @@ inline static REBCTX *Context_For_Frame_May_Manage(REBFRM *f) {
 
 //=//// FRAME LABELING ////////////////////////////////////////////////////=//
 
-inline static void Get_Frame_Label_Or_Nulled(Cell *out, REBFRM *f) {
+inline static void Get_Frame_Label_Or_Nulled(Cell(*) out, REBFRM *f) {
     assert(Is_Action_Frame(f));
     if (f->label)
         Init_Word(out, unwrap(f->label));  // WORD!, PATH!, or stored invoke
@@ -635,7 +635,7 @@ inline static void FAIL_IF_BAD_RETURN_TYPE(REBFRM *f) {
 inline static bool Eval_Value_Core_Throws(
     REBVAL *out,
     REBFLGS flags,
-    const Cell *value,  // e.g. a BLOCK! here would just evaluate to itself!
+    Cell(const*) value,  // e.g. a BLOCK! here would just evaluate to itself!
     REBSPC *specifier
 );
 
@@ -685,7 +685,7 @@ inline static bool Eval_Value_Core_Throws(
 inline static bool Pushed_Continuation(
     REBVAL *out,
     REBFLGS flags,  // FRAME_FLAG_BRANCH, etc. for pushed frames
-    const Cell *branch,
+    Cell(const*) branch,
     REBSPC *branch_specifier,
     const REBVAL *with  // can be same as out or not GC-safe, copied if needed
 ){

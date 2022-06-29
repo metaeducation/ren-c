@@ -43,7 +43,7 @@ REBLEN Modify_Array(
 
     REBLEN tail_idx = ARR_LEN(dst_arr);
 
-    const Cell *src_rel;
+    Cell(const*) src_rel;
     REBSPC *specifier;
 
     if (sym == SYM_CHANGE and Is_Nulled(src_val)) {
@@ -102,7 +102,7 @@ REBLEN Modify_Array(
             else if (ilen == 0)
                 tail_newline = false;
             else {
-                const Cell *tail_cell
+                Cell(const*) tail_cell
                     = VAL_ARRAY_ITEM_AT(src_val) + ilen;
                 tail_newline = Get_Cell_Flag(tail_cell, NEWLINE_BEFORE);
             }
@@ -476,8 +476,8 @@ REBLEN Modify_String_Or_Binary(
             // between.  There is some rationale to this, though implications
             // for operations like TO TEXT! of a BLOCK! are unclear...
             //
-            const Cell *item_tail;
-            const Cell *item = VAL_ARRAY_AT(&item_tail, src);
+            Cell(const*) item_tail;
+            Cell(const*) item = VAL_ARRAY_AT(&item_tail, src);
             for (; item != item_tail; ++item)
                 Form_Value(mo, item);
             goto use_mold_buffer;

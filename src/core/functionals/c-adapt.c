@@ -90,7 +90,7 @@ REB_R Adapter_Dispatcher(REBFRM *f)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    Cell *prelude = ARR_AT(details, IDX_ADAPTER_PRELUDE);  // code to run
+    Cell(*) prelude = ARR_AT(details, IDX_ADAPTER_PRELUDE);  // code to run
     assert(
         IS_BLOCK(prelude)
         and IS_RELATIVE(prelude)
@@ -160,7 +160,7 @@ REBNATIVE(adapt_p)  // see extended definition ADAPT in %base-defs.r
     );
 
     // We can't use a simple Init_Block() here, because the prelude has been
-    // relativized.  It is thus not a REBVAL*, but a Cell*...so the
+    // relativized.  It is thus not a REBVAL*, but a Cell(*)...so the
     // Adapter_Dispatcher() must combine it with the FRAME! instance before
     // it can be executed (e.g. the `REBFRM *f` it is dispatching).
     //

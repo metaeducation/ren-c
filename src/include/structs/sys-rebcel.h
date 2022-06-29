@@ -61,24 +61,30 @@
 // then #defines REBVAL to that.
 //
 #if (! CPLUSPLUS_11)
-    typedef struct Reb_Value Cell;  // no special checking in C builds
+    typedef struct Reb_Value Reb_Cell;
+
+    #define Cell(star_maybe_const) \
+        struct Reb_Value star_maybe_const;
 #else
     struct Reb_Relative_Value; // won't implicitly downcast to REBVAL
-    typedef struct Reb_Relative_Value Cell;
+    typedef struct Reb_Relative_Value Reb_Cell;
+
+    #define Cell(star_maybe_const) \
+        Reb_Cell star_maybe_const
 #endif
 
 
 //=//// EXTANT STACK POINTERS /////////////////////////////////////////////=//
 //
 // See %sys-stack.h for a deeper explanation.  This has to be declared in
-// order to put in one of noquote(const Cell*)s implicit constructors.  Because
+// order to put in one of noquote(Cell(const*))s implicit constructors.  Because
 // having the StackValue(*) have a user-defined conversion to REBVAL* won't
-// get that...and you can't convert to both REBVAL* and noquote(const Cell*) as
+// get that...and you can't convert to both REBVAL* and noquote(Cell(const*)) as
 // that would be ambiguous.
 //
 // Even with this definition, the intersecting needs of DEBUG_CHECK_CASTS and
 // DEBUG_EXTANT_STACK_POINTERS means there will be some cases where distinct
-// overloads of REBVAL* vs. noquote(const Cell*) will wind up being ambiguous.
+// overloads of REBVAL* vs. noquote(Cell(const*)) will wind up being ambiguous.
 // For instance, VAL_DECIMAL(StackValue(*)) can't tell which checked overload
 // to use.  In such cases, you have to cast, e.g. VAL_DECIMAL(VAL(stackval)).
 //
@@ -134,8 +140,8 @@
     struct NoquotePtr {
         const Reb_Raw *p;
         static_assert(
-            std::is_same<const Cell*, T>::value,
-            "Instantiations of `noquote()` only work as noquote(const Cell*)"
+            std::is_same<Cell(const*), T>::value,
+            "Instantiations of `noquote()` only work as noquote(Cell(const*))"
         );
 
         NoquotePtr () { }

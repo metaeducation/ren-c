@@ -147,10 +147,10 @@ inline static void SET_VAL_EVENT_Y(REBVAL *v, uint16_t y) {
 // !!! These hooks allow the REB_GOB cell type to dispatch to code in the
 // EVENT! extension if it is loaded.
 //
-extern REBINT CT_Event(noquote(const Cell*) a, noquote(const Cell*) b, bool strict);
+extern REBINT CT_Event(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict);
 extern REB_R MAKE_Event(REBVAL *out, enum Reb_Kind kind, option(const REBVAL*) parent, const REBVAL *arg);
 extern REB_R TO_Event(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg);
-extern void MF_Event(REB_MOLD *mo, noquote(const Cell*) v, bool form);
+extern void MF_Event(REB_MOLD *mo, noquote(Cell(const*)) v, bool form);
 extern REBTYPE(Event);
 
 // !!! The port scheme is also being included in the extension.
@@ -180,7 +180,7 @@ extern void Shutdown_Event_Scheme(void);
 #define VAL_GOB_INDEX(v) \
     PAYLOAD(Any, v).second.u
 
-inline static REBVAL *Init_Gob(Cell *out, REBGOB *g) {
+inline static REBVAL *Init_Gob(Cell(*) out, REBGOB *g) {
     assert(GET_SERIES_FLAG(g, MANAGED));
 
     // !!! HACK... way of getting EG_Gob_Type.

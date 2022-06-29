@@ -51,7 +51,7 @@ REBCTX *Alloc_Context_Core(enum Reb_Kind kind, REBLEN capacity, REBFLGS flags)
     mutable_LINK(Patches, varlist) = nullptr;
     INIT_CTX_KEYLIST_UNIQUE(CTX(varlist), keylist);  // starts out unique
 
-    Cell *rootvar = Alloc_Tail_Array(varlist);
+    Cell(*) rootvar = Alloc_Tail_Array(varlist);
     INIT_VAL_CONTEXT_ROOTVAR(rootvar, kind, varlist);
 
     return CTX(varlist);  // varlist pointer is context handle
@@ -146,7 +146,7 @@ void Expand_Context(REBCTX *context, REBLEN delta)
 //
 REBVAR *Append_Context(
     REBCTX *context,
-    option(Cell*) any_word,  // binding modified (Note: quoted words allowed)
+    option(Cell(*)) any_word,  // binding modified (Note: quoted words allowed)
     option(Symbol(const*)) symbol
 ) {
     if (CTX_TYPE(context) == REB_MODULE) {
@@ -255,7 +255,7 @@ REBVAR *Append_Context(
     //
     EXPAND_SERIES_TAIL(CTX_VARLIST(context), 1);
 
-    Cell *value = Prep_Cell(ARR_LAST(CTX_VARLIST(context)));
+    Cell(*) value = Prep_Cell(ARR_LAST(CTX_VARLIST(context)));
 
     if (not any_word)
         assert(symbol);
@@ -349,10 +349,10 @@ void Collect_Context_Keys(
 //
 static void Collect_Inner_Loop(
     struct Reb_Collector *cl,
-    const Cell *head,
-    const Cell *tail
+    Cell(const*) head,
+    Cell(const*) tail
 ){
-    const Cell *v = head;
+    Cell(const*) v = head;
     for (; v != tail; ++v) {
         enum Reb_Kind kind = CELL_HEART(v);
 
@@ -390,8 +390,8 @@ static void Collect_Inner_Loop(
         // https://github.com/rebol/rebol-issues/issues/2276
         //
         if (ANY_ARRAY_KIND(kind)) {
-            const Cell *sub_tail;
-            const Cell *sub_at = VAL_ARRAY_AT(&sub_tail, v);
+            Cell(const*) sub_tail;
+            Cell(const*) sub_at = VAL_ARRAY_AT(&sub_tail, v);
             Collect_Inner_Loop(cl, sub_at, sub_tail);
         }
     }
@@ -412,8 +412,8 @@ static void Collect_Inner_Loop(
 // always pre-managed, because it may not be legal to free prior's keylist.
 //
 REBSER *Collect_Keylist_Managed(
-    const Cell *head,
-    const Cell *tail,
+    Cell(const*) head,
+    Cell(const*) tail,
     option(REBCTX*) prior,
     REBFLGS flags  // see %sys-core.h for COLLECT_ANY_WORD, etc.
 ) {
@@ -464,8 +464,8 @@ REBSER *Collect_Keylist_Managed(
 // Collect unique words from a block, possibly deeply...maybe just SET-WORD!s.
 //
 REBARR *Collect_Unique_Words_Managed(
-    const Cell *head,
-    const Cell *tail,
+    Cell(const*) head,
+    Cell(const*) tail,
     REBFLGS flags,  // See COLLECT_XXX
     const REBVAL *ignorables  // BLOCK!, ANY-CONTEXT!, or BLANK! for none
 ){
@@ -476,8 +476,8 @@ REBARR *Collect_Unique_Words_Managed(
     // any non-words in a block the user passed in.
     //
     if (not Is_Nulled(ignorables)) {
-        const Cell *check_tail;
-        const Cell *check = VAL_ARRAY_AT(&check_tail, ignorables);
+        Cell(const*) check_tail;
+        Cell(const*) check = VAL_ARRAY_AT(&check_tail, ignorables);
         for (; check != check_tail; ++check) {
             if (not ANY_WORD_KIND(CELL_HEART(check)))
                 fail (Error_Bad_Value(check));
@@ -495,10 +495,10 @@ REBARR *Collect_Unique_Words_Managed(
     // an error...so they will just be skipped when encountered.
     //
     if (IS_BLOCK(ignorables)) {
-        const Cell *ignore_tail;
-        const Cell *ignore = VAL_ARRAY_AT(&ignore_tail, ignorables);
+        Cell(const*) ignore_tail;
+        Cell(const*) ignore = VAL_ARRAY_AT(&ignore_tail, ignorables);
         for (; ignore != ignore_tail; ++ignore) {
-            noquote(const Cell*) cell = VAL_UNESCAPED(ignore);
+            noquote(Cell(const*)) cell = VAL_UNESCAPED(ignore);
             Symbol(const*) symbol = VAL_WORD_SYMBOL(cell);
 
             // A block may have duplicate words in it (this situation could
@@ -543,10 +543,10 @@ REBARR *Collect_Unique_Words_Managed(
     );
 
     if (IS_BLOCK(ignorables)) {
-        const Cell *ignore_tail;
-        const Cell *ignore = VAL_ARRAY_AT(&ignore_tail, ignorables);
+        Cell(const*) ignore_tail;
+        Cell(const*) ignore = VAL_ARRAY_AT(&ignore_tail, ignorables);
         for (; ignore != ignore_tail; ++ignore) {
-            noquote(const Cell*) cell = VAL_UNESCAPED(ignore);
+            noquote(Cell(const*)) cell = VAL_UNESCAPED(ignore);
             Symbol(const*) symbol = VAL_WORD_SYMBOL(cell);
 
           #if !defined(NDEBUG)
@@ -587,8 +587,8 @@ void Rebind_Context_Deep(
     REBCTX *dest,
     option(struct Reb_Binder*) binder
 ){
-    const Cell *tail = ARR_TAIL(CTX_VARLIST(dest));
-    Cell *head = ARR_HEAD(CTX_VARLIST(dest));
+    Cell(const*) tail = ARR_TAIL(CTX_VARLIST(dest));
+    Cell(*) head = ARR_HEAD(CTX_VARLIST(dest));
     Rebind_Values_Deep(head, tail, source, dest, binder);
 }
 
@@ -605,8 +605,8 @@ void Rebind_Context_Deep(
 //
 REBCTX *Make_Context_Detect_Managed(
     enum Reb_Kind kind,
-    const Cell *head,
-    const Cell *tail,
+    Cell(const*) head,
+    Cell(const*) tail,
     option(REBCTX*) parent
 ) {
     assert(kind != REB_MODULE);
@@ -654,7 +654,7 @@ REBCTX *Make_Context_Detect_Managed(
         }
     }
 
-    Cell *var = ARR_HEAD(varlist);
+    Cell(*) var = ARR_HEAD(varlist);
     INIT_VAL_CONTEXT_ROOTVAR(var, kind, varlist);
 
     ++var;
@@ -717,8 +717,8 @@ REBCTX *Make_Context_Detect_Managed(
 //
 REBCTX *Construct_Context_Managed(
     enum Reb_Kind kind,
-    Cell *head,  // !!! Warning: modified binding
-    const Cell *tail,
+    Cell(*) head,  // !!! Warning: modified binding
+    Cell(const*) tail,
     REBSPC *specifier,
     option(REBCTX*) parent
 ){
@@ -734,7 +734,7 @@ REBCTX *Construct_Context_Managed(
 
     Bind_Values_Shallow(head, tail, CTX_ARCHETYPE(context));
 
-    const Cell *value = head;
+    Cell(const*) value = head;
     for (; value != tail; value += 2) {
         if (not IS_SET_WORD(value))
             fail (Error_Invalid_Type(VAL_TYPE(value)));
@@ -765,7 +765,7 @@ REBCTX *Construct_Context_Managed(
 //     2 for value
 //     3 for words and values
 //
-REBARR *Context_To_Array(const Cell *context, REBINT mode)
+REBARR *Context_To_Array(Cell(const*) context, REBINT mode)
 {
     assert(!(mode & 4));
 
@@ -820,7 +820,7 @@ REBARR *Context_To_Array(const Cell *context, REBINT mode)
 // name, the VAL_FRAME_PHASE() of the context has to be taken into account.
 //
 REBLEN Find_Symbol_In_Context(
-    const Cell *context,
+    Cell(const*) context,
     Symbol(const*) symbol,
     bool strict
 ){
@@ -861,7 +861,7 @@ REBLEN Find_Symbol_In_Context(
 // Search a context's keylist looking for the given symbol, and return the
 // value for the word.  Return NULL if the symbol is not found.
 //
-REBVAL *Select_Symbol_In_Context(const Cell *context, Symbol(const*) symbol)
+REBVAL *Select_Symbol_In_Context(Cell(const*) context, Symbol(const*) symbol)
 {
     const bool strict = false;
     REBLEN n = Find_Symbol_In_Context(context, symbol, strict);

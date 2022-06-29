@@ -35,7 +35,7 @@
 // Ren-C vectors are built on type of BINARY!.  This means that the memory
 // must be read via memcpy() in order to avoid strict aliasing violations.
 //
-REBVAL *Get_Vector_At(Cell *out, noquote(const Cell*) vec, REBLEN n)
+REBVAL *Get_Vector_At(Cell(*) out, noquote(Cell(const*)) vec, REBLEN n)
 {
     REBYTE *data = VAL_VECTOR_HEAD(vec);
 
@@ -112,7 +112,7 @@ REBVAL *Get_Vector_At(Cell *out, noquote(const Cell*) vec, REBLEN n)
 }
 
 
-static void Set_Vector_At(noquote(const Cell*) vec, REBLEN n, const Cell *set) {
+static void Set_Vector_At(noquote(Cell(const*)) vec, REBLEN n, Cell(const*) set) {
     assert(IS_INTEGER(set) or IS_DECIMAL(set));  // caller should error
 
     REBYTE *data = VAL_VECTOR_HEAD(vec);
@@ -230,14 +230,14 @@ static void Set_Vector_At(noquote(const Cell*) vec, REBLEN n, const Cell *set) {
 
 
 void Set_Vector_Row(
-    noquote(const Cell*) vec,
+    noquote(Cell(const*)) vec,
     const REBVAL *blk   // !!! "can not be BLOCK!?"
 ){
     REBLEN idx = VAL_INDEX(blk);
 
     if (IS_BLOCK(blk)) {
-        const Cell *tail;
-        const Cell *val = VAL_ARRAY_AT(&tail, blk);
+        Cell(const*) tail;
+        Cell(const*) val = VAL_ARRAY_AT(&tail, blk);
 
         REBLEN n = 0;
         for (; val != tail; ++val) {
@@ -271,7 +271,7 @@ REBARR *Vector_To_Array(const REBVAL *vect)
         fail (vect);
 
     REBARR *arr = Make_Array(len);
-    Cell *dest = ARR_HEAD(arr);
+    Cell(*) dest = ARR_HEAD(arr);
     REBLEN n;
     for (n = VAL_INDEX(vect); n < VAL_LEN_HEAD(vect); ++n, ++dest)
         Get_Vector_At(dest, vect, n);
@@ -291,7 +291,7 @@ REBARR *Vector_To_Array(const REBVAL *vect)
 // <, however the REBINT returned here is supposed to.  Review if this code
 // ever becomes relevant.
 //
-REBINT Compare_Vector(noquote(const Cell*) v1, noquote(const Cell*) v2)
+REBINT Compare_Vector(noquote(Cell(const*)) v1, noquote(Cell(const*)) v2)
 {
     bool non_integer1 = not VAL_VECTOR_INTEGRAL(v1);
     bool non_integer2 = not VAL_VECTOR_INTEGRAL(v2);
@@ -365,11 +365,11 @@ void Shuffle_Vector(REBVAL *vect, bool secure)
 //
 bool Make_Vector_Spec(
     REBVAL *out,
-    const Cell *block,
+    Cell(const*) block,
     REBSPC *specifier
 ){
-    const Cell *tail;
-    const Cell *item = VAL_ARRAY_AT(&tail, block);
+    Cell(const*) tail;
+    Cell(const*) item = VAL_ARRAY_AT(&tail, block);
 
     // The specifier would be needed if variables were going to be looked
     // up, but isn't required for just symbol comparisons or extracting
@@ -518,7 +518,7 @@ REB_R MAKE_Vector(
 //
 //  CT_Vector: C
 //
-REBINT CT_Vector(noquote(const Cell*) a, noquote(const Cell*) b, bool strict)
+REBINT CT_Vector(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
 {
     UNUSED(strict);
     return Compare_Vector(a, b);
@@ -528,7 +528,7 @@ REBINT CT_Vector(noquote(const Cell*) a, noquote(const Cell*) b, bool strict)
 //
 //  Pick_Vector: C
 //
-void Pick_Vector(REBVAL *out, const REBVAL *value, const Cell *picker) {
+void Pick_Vector(REBVAL *out, const REBVAL *value, Cell(const*) picker) {
     REBINT n;
     if (IS_INTEGER(picker) or IS_DECIMAL(picker)) // #2312
         n = Int32(picker);
@@ -559,7 +559,7 @@ void Pick_Vector(REBVAL *out, const REBVAL *value, const Cell *picker) {
 //
 void Poke_Vector_Fail_If_Read_Only(
     REBVAL *value,
-    const Cell *picker,
+    Cell(const*) picker,
     const REBVAL *poke
 ){
     // Because the vector uses Alloc_Pairing() for its 2-cells-of value,
@@ -608,7 +608,7 @@ REBTYPE(Vector)
         INCLUDE_PARAMS_OF_PICK_P;
         UNUSED(ARG(location));
 
-        const Cell *picker = ARG(picker);
+        Cell(const*) picker = ARG(picker);
 
         Pick_Vector(OUT, v, picker);
         return OUT; }
@@ -620,7 +620,7 @@ REBTYPE(Vector)
         INCLUDE_PARAMS_OF_POKE_P;
         UNUSED(ARG(location));
 
-        const Cell *picker = ARG(picker);
+        Cell(const*) picker = ARG(picker);
 
         REBVAL *setval = Meta_Unquotify(ARG(value));
 
@@ -686,7 +686,7 @@ REBTYPE(Vector)
 //
 //  MF_Vector: C
 //
-void MF_Vector(REB_MOLD *mo, noquote(const Cell*) v, bool form)
+void MF_Vector(REB_MOLD *mo, noquote(Cell(const*)) v, bool form)
 {
     REBLEN len;
     REBLEN n;

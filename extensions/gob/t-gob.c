@@ -51,7 +51,7 @@ const struct {
 //
 //  CT_Gob: C
 //
-REBINT CT_Gob(noquote(const Cell*) a, noquote(const Cell*) b, bool strict)
+REBINT CT_Gob(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
 {
     UNUSED(strict);
     if (VAL_GOB(a) != VAL_GOB(b))
@@ -104,7 +104,7 @@ REBGOB *Make_Gob(void)
 //
 //  Cmp_Gob: C
 //
-REBINT Cmp_Gob(noquote(const Cell*) g1, noquote(const Cell*) g2)
+REBINT Cmp_Gob(noquote(Cell(const*)) g1, noquote(Cell(const*)) g2)
 {
     REBINT n;
 
@@ -119,7 +119,7 @@ REBINT Cmp_Gob(noquote(const Cell*) g1, noquote(const Cell*) g2)
 //
 //  Did_Set_XYF: C
 //
-static bool Did_Set_XYF(Cell *xyf, const REBVAL *val)
+static bool Did_Set_XYF(Cell(*) xyf, const REBVAL *val)
 {
     if (IS_PAIR(val)) {
         VAL_XYF_X(xyf) = VAL_PAIR_X_DEC(val);
@@ -194,14 +194,14 @@ static void Detach_Gob(REBGOB *gob)
 //
 static void Insert_Gobs(
     REBGOB *gob,
-    const Cell *arg,
+    Cell(const*) arg,
     REBLEN index,
     REBLEN len,
     bool change
 ) {
     REBLEN n, count;
-    const Cell *val;
-    const Cell *sarg;
+    Cell(const*) val;
+    Cell(const*) sarg;
     REBINT i;
 
     // Verify they are gobs:
@@ -260,7 +260,7 @@ static void Insert_Gobs(
         }
     }
 
-    Cell *item = ARR_AT(pane, index);
+    Cell(*) item = ARR_AT(pane, index);
     for (n = 0; n < len; n++) {
         val = arg++;
         if (IS_WORD(val)) {
@@ -369,7 +369,7 @@ static void Set_Gob_Flag(REBGOB *gob, Symbol(const*) name)
 //
 //  Did_Set_GOB_Var: C
 //
-static bool Did_Set_GOB_Var(REBGOB *gob, const Cell *word, const REBVAL *val)
+static bool Did_Set_GOB_Var(REBGOB *gob, Cell(const*) word, const REBVAL *val)
 {
     switch (VAL_WORD_ID(word)) {
       case SYM_OFFSET:
@@ -461,7 +461,7 @@ static bool Did_Set_GOB_Var(REBGOB *gob, const Cell *word, const REBVAL *val)
 
         if (IS_BLOCK(val)) {
             REBLEN len;
-            const Cell *head = VAL_ARRAY_LEN_AT(&len, val);
+            Cell(const*) head = VAL_ARRAY_LEN_AT(&len, val);
             Insert_Gobs(gob, head, 0, len, false);
         }
         else if (IS_GOB(val))
@@ -506,8 +506,8 @@ static bool Did_Set_GOB_Var(REBGOB *gob, const Cell *word, const REBVAL *val)
             for (i = 0; Gob_Flag_Words[i].sym != 0; ++i)
                 CLR_GOB_FLAG(gob, Gob_Flag_Words[i].flags);
 
-            const Cell *item = ARR_HEAD(VAL_ARRAY(val));
-            const Cell *tail = ARR_TAIL(VAL_ARRAY(val));
+            Cell(const*) item = ARR_HEAD(VAL_ARRAY(val));
+            Cell(const*) tail = ARR_TAIL(VAL_ARRAY(val));
             for (; item != tail; ++item)
                 if (IS_WORD(item))
                     Set_Gob_Flag(gob, VAL_WORD_SYMBOL(item));
@@ -535,9 +535,9 @@ static bool Did_Set_GOB_Var(REBGOB *gob, const Cell *word, const REBVAL *val)
 // to a NULL cell even for known fields, if not applicable to this GOB!'s type.
 //
 static bool Did_Get_GOB_Var(
-    Cell *out,
+    Cell(*) out,
     REBGOB *gob,
-    const Cell *word
+    Cell(const*) word
 ){
     switch (VAL_WORD_ID(word)) {
       case SYM_OFFSET:
@@ -650,14 +650,14 @@ static bool Did_Get_GOB_Var(
 //
 static void Set_GOB_Vars(
     REBGOB *gob,
-    const Cell *block,
+    Cell(const*) block,
     REBSPC *specifier
 ){
     DECLARE_LOCAL (var);
     DECLARE_LOCAL (val);
 
-    const Cell *tail;
-    const Cell *item = VAL_ARRAY_AT(&tail, block);
+    Cell(const*) tail;
+    Cell(const*) item = VAL_ARRAY_AT(&tail, block);
     while (item != tail) {
         Derelativize(var, item, specifier);
         ++item;
@@ -686,7 +686,7 @@ static REBARR *Gob_To_Array(REBGOB *gob)
 {
     REBARR *arr = Make_Array(10);
     SYMID words[] = {SYM_OFFSET, SYM_SIZE, SYM_ALPHA, SYM_0};
-    Cell *vals[3];
+    Cell(*) vals[3];
 
     REBINT n;
     for (n = 0; words[n] != SYM_0; ++n) {
@@ -724,7 +724,7 @@ static REBARR *Gob_To_Array(REBGOB *gob)
         }
 
         REBVAL *name = Init_Set_Word(Alloc_Tail_Array(arr), Canon_Symbol(sym));
-        Cell *slot = Alloc_Tail_Array(arr);
+        Cell(*) slot = Alloc_Tail_Array(arr);
         bool known = Did_Get_GOB_Var(slot, gob, name);
         assert(known);  // should have known that sym
         UNUSED(known);
@@ -835,7 +835,7 @@ REB_R TO_Gob(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 //
 //  MF_Gob: C
 //
-void MF_Gob(REB_MOLD *mo, noquote(const Cell*) v, bool form)
+void MF_Gob(REB_MOLD *mo, noquote(Cell(const*)) v, bool form)
 {
     UNUSED(form);
 
@@ -852,7 +852,7 @@ void MF_Gob(REB_MOLD *mo, noquote(const Cell*) v, bool form)
 void Pick_From_Gob(
     REBVAL *out,
     REBGOB *gob,
-    const Cell *picker
+    Cell(const*) picker
 ){
     if (IS_INTEGER(picker)) {
         DECLARE_LOCAL(temp);
@@ -894,7 +894,7 @@ REBTYPE(Gob)
         INCLUDE_PARAMS_OF_PICK_P;
         UNUSED(ARG(location));
 
-        const Cell *picker = ARG(picker);
+        Cell(const*) picker = ARG(picker);
 
         // !!! We do not optimize here on gob.size.x picking; it generates a
         // PAIR! for the size, and then selection of X is made from that pair.
@@ -913,7 +913,7 @@ REBTYPE(Gob)
         INCLUDE_PARAMS_OF_POKE_P;
         UNUSED(ARG(location));
 
-        const Cell *picker = ARG(picker);
+        Cell(const*) picker = ARG(picker);
 
         // The GOB! stores compressed bits for things like the SIZE, but
         // when a variable is requested it synthesizes a PAIR!.  This is
@@ -1045,7 +1045,7 @@ REBTYPE(Gob)
         INCLUDE_PARAMS_OF_INSERT;
         UNUSED(PAR(series));  // covered by `v`
 
-        Cell *value = ARG(value);
+        Cell(*) value = ARG(value);
 
         if (IS_NULLED_OR_BLANK(value))
             return_value (v);  // don't fail on read only if it would be a no-op
@@ -1061,7 +1061,7 @@ REBTYPE(Gob)
             len = 1;
         }
         else if (IS_BLOCK(value)) {
-            value = m_cast(Cell*,
+            value = m_cast(Cell(*),
                 VAL_ARRAY_LEN_AT(&len, KNOWN_MUTABLE(value))
             );  // !!!
         }

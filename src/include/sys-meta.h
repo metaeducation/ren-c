@@ -48,17 +48,17 @@
 
 //=//// FAILURE STATES ////////////////////////////////////////////////////=//
 
-inline static bool Is_Failure(const Cell *v)
+inline static bool Is_Failure(Cell(const*) v)
   { return HEART_BYTE_UNCHECKED(v) == REB_ERROR
     and QUOTE_BYTE_UNCHECKED(v) == FAILURE_255; }
 
-inline static Cell *Reify_Failure(Cell *v) {
+inline static Cell(*) Reify_Failure(Cell(*) v) {
     assert(HEART_BYTE(v) == REB_ERROR and QUOTE_BYTE(v) == FAILURE_255);
     mutable_QUOTE_BYTE(v) = 0;
     return v;
 }
 
-inline static Value *Failurize(Cell *v) {
+inline static Value *Failurize(Cell(*) v) {
     assert(IS_ERROR(v) and QUOTE_BYTE(v) == 0);
     Force_Location_Of_Error(VAL_CONTEXT(v), FS_TOP);  // ideally already set
     mutable_QUOTE_BYTE(v) = FAILURE_255;
@@ -77,7 +77,7 @@ inline static Value *Failurize(Cell *v) {
 // to deal with this problem.  But rebQ() in the API does, as does the idea
 // of "literalization".
 
-inline static Cell *Isotopic_Quote(Cell *v) {
+inline static Cell(*) Isotopic_Quote(Cell(*) v) {
     if (Is_Isotope(v)) {
         Reify_Isotope(v);  // ...make it "friendly" now...
         return v;  // ...but differentiate its status by not quoting it...
@@ -89,7 +89,7 @@ inline static Cell *Isotopic_Quote(Cell *v) {
     return Quotify(v, 1);  // a non-isotope BAD-WORD! winds up quoted
 }
 
-inline static Cell *Isotopic_Unquote(Cell *v) {
+inline static Cell(*) Isotopic_Unquote(Cell(*) v) {
     assert(not Is_Nulled(v));  // use Meta_Unquotify() instead
     if (IS_BAD_WORD(v))  // Meta quote flipped isotope off, flip back on.
         Isotopify(v);
@@ -105,10 +105,10 @@ inline static Cell *Isotopic_Unquote(Cell *v) {
 
 #if CPLUSPLUS_11
     inline static REBVAL *Isotopic_Quote(REBVAL *v)
-      { return SPECIFIC(Isotopic_Quote(cast(Cell*, v))); }
+      { return SPECIFIC(Isotopic_Quote(cast(Cell(*), v))); }
 
     inline static REBVAL *Isotopic_Unquote(REBVAL *v)
-      { return SPECIFIC(Isotopic_Unquote(cast(Cell*, v))); }
+      { return SPECIFIC(Isotopic_Unquote(cast(Cell(*), v))); }
 #endif
 
 
@@ -120,13 +120,13 @@ inline static Cell *Isotopic_Unquote(Cell *v) {
 // NULL.  It also translates emptiness (e.g. an END marker) into an isotope
 // BAD-WORD! of ~void~.  It is done by ^ and the the REB_META_XXX family.
 
-inline static Cell *Meta_Quotify(Cell *v) {
+inline static Cell(*) Meta_Quotify(Cell(*) v) {
     if (VAL_TYPE_UNCHECKED(v) == REB_NULL)
         return v;  // as-is
     return Isotopic_Quote(v);
 }
 
-inline static Cell *Meta_Unquotify(Cell *v) {
+inline static Cell(*) Meta_Unquotify(Cell(*) v) {
     if (Is_Nulled(v))
         return v;  // do nothing
     if (IS_ERROR(v))
@@ -136,10 +136,10 @@ inline static Cell *Meta_Unquotify(Cell *v) {
 
 #if CPLUSPLUS_11
     inline static REBVAL *Meta_Quotify(REBVAL *v)
-        { return SPECIFIC(Meta_Quotify(cast(Cell*, v))); }
+        { return SPECIFIC(Meta_Quotify(cast(Cell(*), v))); }
 
     inline static REBVAL *Meta_Unquotify(REBVAL *v)
-        { return SPECIFIC(Meta_Unquotify(cast(Cell*, v))); }
+        { return SPECIFIC(Meta_Unquotify(cast(Cell(*), v))); }
 #endif
 
 inline static REBVAL *Reify_Eval_Out_Meta(REBVAL *out) {

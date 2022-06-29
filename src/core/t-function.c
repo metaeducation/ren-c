@@ -47,7 +47,7 @@ REB_R Copied_Dispatcher(REBFRM *f)
 
 
 
-static bool Same_Action(noquote(const Cell*) a, noquote(const Cell*) b)
+static bool Same_Action(noquote(Cell(const*)) a, noquote(Cell(const*)) b)
 {
     assert(CELL_HEART(a) == REB_ACTION and CELL_HEART(b) == REB_ACTION);
 
@@ -68,7 +68,7 @@ static bool Same_Action(noquote(const Cell*) a, noquote(const Cell*) b)
 //
 //  CT_Action: C
 //
-REBINT CT_Action(noquote(const Cell*) a, noquote(const Cell*) b, bool strict)
+REBINT CT_Action(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
 {
     UNUSED(strict);  // no lax form of comparison
 
@@ -151,7 +151,7 @@ REB_R TO_Action(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 //
 //  MF_Action: C
 //
-void MF_Action(REB_MOLD *mo, noquote(const Cell*) v, bool form)
+void MF_Action(REB_MOLD *mo, noquote(Cell(const*)) v, bool form)
 {
     UNUSED(form);
 

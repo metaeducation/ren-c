@@ -139,7 +139,7 @@ REBNATIVE(bind)
     else
         add_midstream_types = 0;
 
-    const Cell *context;
+    Cell(const*) context;
 
     // !!! For now, force reification before doing any binding.
 
@@ -188,8 +188,8 @@ REBNATIVE(bind)
     if (not ANY_ARRAYLIKE(v))  // QUOTED! could have wrapped any type
         fail (Error_Invalid_Arg(frame_, PAR(value)));
 
-    Cell *at;
-    const Cell *tail;
+    Cell(*) at;
+    Cell(const*) tail;
     if (REF(copy)) {
         REBARR *copy = Copy_Array_Core_Managed(
             VAL_ARRAY(v),
@@ -488,8 +488,8 @@ REBNATIVE(unbind)
     else {
         assert(IS_BLOCK(word));
 
-        const Cell *tail;
-        Cell *at = VAL_ARRAY_AT_ENSURE_MUTABLE(&tail, word);
+        Cell(const*) tail;
+        Cell(*) at = VAL_ARRAY_AT_ENSURE_MUTABLE(&tail, word);
         option(REBCTX*) context = nullptr;
         Unbind_Values_Core(at, tail, context, did REF(deep));
     }
@@ -524,8 +524,8 @@ REBNATIVE(collect_words)
     if (REF(deep))
         flags |= COLLECT_DEEP;
 
-    const Cell *tail;
-    const Cell *at = VAL_ARRAY_AT(&tail, ARG(block));
+    Cell(const*) tail;
+    Cell(const*) at = VAL_ARRAY_AT(&tail, ARG(block));
     return Init_Block(
         OUT,
         Collect_Unique_Words_Managed(at, tail, flags, ARG(ignore))
@@ -539,7 +539,7 @@ REBNATIVE(collect_words)
 bool Get_Var_Push_Refinements_Throws(
     REBVAL *out,
     option(REBVAL*) steps_out,  // if NULL, then GROUP!s not legal
-    const Cell *var,
+    Cell(const*) var,
     REBSPC *var_specifier
 ){
     assert(steps_out != out);  // Legal for SET, not for GET
@@ -632,9 +632,9 @@ bool Get_Var_Push_Refinements_Throws(
             panic (var);
         }
 
-        const Cell *tail;
-        const Cell *head = VAL_ARRAY_AT(&tail, var);
-        const Cell *at;
+        Cell(const*) tail;
+        Cell(const*) head = VAL_ARRAY_AT(&tail, var);
+        Cell(const*) at;
         REBSPC *at_specifier = Derive_Specifier(var_specifier, var);
         for (at = head; at != tail; ++at) {
             if (IS_GROUP(at)) {
@@ -662,9 +662,9 @@ bool Get_Var_Push_Refinements_Throws(
     }
     else if (IS_THE_BLOCK(var)) {
         REBSPC *at_specifier = Derive_Specifier(var_specifier, var);
-        const Cell *tail;
-        const Cell *head = VAL_ARRAY_AT(&tail, var);
-        const Cell *at;
+        Cell(const*) tail;
+        Cell(const*) head = VAL_ARRAY_AT(&tail, var);
+        Cell(const*) at;
         for (at = head; at != tail; ++at)
             Derelativize(PUSH(), at, at_specifier);
     }
@@ -728,7 +728,7 @@ bool Get_Var_Push_Refinements_Throws(
 bool Get_Var_Core_Throws(
     REBVAL *out,
     option(REBVAL*) steps_out,  // if NULL, then GROUP!s not legal
-    const Cell *var,
+    Cell(const*) var,
     REBSPC *var_specifier
 ){
     REBDSP dsp_orig = DSP;
@@ -756,7 +756,7 @@ bool Get_Var_Core_Throws(
 //
 void Get_Var_May_Fail(
     REBVAL *out,
-    const Cell *source,
+    Cell(const*) source,
     REBSPC *specifier,
     bool any
 ){
@@ -783,7 +783,7 @@ void Get_Var_May_Fail(
 bool Get_Path_Push_Refinements_Throws(
     REBVAL *out,
     REBVAL *safe,
-    const Cell *path,
+    Cell(const*) path,
     REBSPC *path_specifier
 ){
     if (Not_Cell_Flag(path, SEQUENCE_HAS_NODE)) {  // byte compressed, inert
@@ -818,8 +818,8 @@ bool Get_Path_Push_Refinements_Throws(
         panic (path);
     }
 
-    const Cell *tail;
-    const Cell *head = VAL_ARRAY_AT(&tail, path);
+    Cell(const*) tail;
+    Cell(const*) head = VAL_ARRAY_AT(&tail, path);
     while (IS_BLANK(head)) {
         ++head;
         if (head == tail)
@@ -930,7 +930,7 @@ bool Get_Path_Push_Refinements_Throws(
     //
     REBLEN len = VAL_SEQUENCE_LEN(path) - 1;
     for (; len != 0; --len) {
-        const Cell *at = VAL_SEQUENCE_AT(safe, path, len);
+        Cell(const*) at = VAL_SEQUENCE_AT(safe, path, len);
         if (IS_GROUP(at)) {
             DECLARE_LOCAL (temp);
             REBSPC *derived = Derive_Specifier(
@@ -1040,7 +1040,7 @@ REBNATIVE(get)
 bool Set_Var_Core_Updater_Throws(
     REBVAL *out,  // GC-safe cell to write steps to, or put thrown value
     option(REBVAL*) steps_out,  // no GROUP!s if nulled
-    const Cell *var,  // e.g. v
+    Cell(const*) var,  // e.g. v
     REBSPC *var_specifier,  // e.g. v_specifier
     const REBVAL *setval,  // e.g. f->out (in the evaluator, right hand side)
     const REBVAL *updater
@@ -1127,9 +1127,9 @@ bool Set_Var_Core_Updater_Throws(
             panic (var);
         }
 
-        const Cell *tail;
-        const Cell *head = VAL_ARRAY_AT(&tail, var);
-        const Cell *at;
+        Cell(const*) tail;
+        Cell(const*) head = VAL_ARRAY_AT(&tail, var);
+        Cell(const*) at;
         REBSPC *at_specifier = Derive_Specifier(var_specifier, var);
         for (at = head; at != tail; ++at) {
             if (IS_GROUP(at)) {
@@ -1156,9 +1156,9 @@ bool Set_Var_Core_Updater_Throws(
         }
     }
     else if (IS_THE_BLOCK(var)) {
-        const Cell *tail;
-        const Cell *head = VAL_ARRAY_AT(&tail, var);
-        const Cell *at;
+        Cell(const*) tail;
+        Cell(const*) head = VAL_ARRAY_AT(&tail, var);
+        Cell(const*) at;
         REBSPC *at_specifier = Derive_Specifier(var_specifier, var);
         for (at = head; at != tail; ++at)
             Derelativize(PUSH(), at, at_specifier);
@@ -1271,7 +1271,7 @@ bool Set_Var_Core_Updater_Throws(
 bool Set_Var_Core_Throws(
     REBVAL *out,  // GC-safe cell to write steps to, or put thrown value
     option(REBVAL*) steps_out,  // no GROUP!s if nulled
-    const Cell *var,  // e.g. v
+    Cell(const*) var,  // e.g. v
     REBSPC *var_specifier,  // e.g. v_specifier
     const REBVAL *setval  // e.g. f->out (in the evaluator, right hand side)
 ){
@@ -1293,7 +1293,7 @@ bool Set_Var_Core_Throws(
 // preserving the "steps" to reuse in multiple assignments.
 //
 void Set_Var_May_Fail(
-    const Cell *target,
+    Cell(const*) target,
     REBSPC *target_specifier,
     const REBVAL *setval
 ){
@@ -1461,8 +1461,8 @@ REBNATIVE(resolve)
     REBCTX *where = VAL_CONTEXT(ARG(where));
     REBCTX *source = VAL_CONTEXT(ARG(source));
 
-    const Cell *tail;
-    const Cell *v = VAL_ARRAY_AT(&tail, ARG(exports));
+    Cell(const*) tail;
+    Cell(const*) v = VAL_ARRAY_AT(&tail, ARG(exports));
     for (; v != tail; ++v) {
         if (not IS_WORD(v))
             fail (ARG(exports));

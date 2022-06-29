@@ -117,7 +117,7 @@
         }
 
         operator REBVAL* () { return v; }
-        operator noquote(const Cell*) () { return v; }
+        operator noquote(Cell(const*)) () { return v; }
         REBVAL* operator->() { return v; }
 
         bool operator==(const Reb_Stack_Value_Ptr &other)

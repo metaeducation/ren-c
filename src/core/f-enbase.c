@@ -327,7 +327,7 @@ err:
 // Scan and convert a binary string.
 //
 const REBYTE *Decode_Binary(
-    Cell *out,
+    Cell(*) out,
     const REBYTE *src,
     REBLEN len,
     REBINT base,

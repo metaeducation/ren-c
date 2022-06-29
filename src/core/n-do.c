@@ -876,7 +876,7 @@ REBNATIVE(apply)
             fail (Error_Bad_Parameter_Raw(rebUnrelativize(f_value)));
         }
 
-        const Cell *lookback = Lookback_While_Fetching_Next(f);  // for error
+        Cell(const*) lookback = Lookback_While_Fetching_Next(f);  // for error
 
         if (Is_End(f_value) or IS_COMMA(f_value))
             fail (Error_Need_Non_End_Raw(rebUnrelativize(lookback)));

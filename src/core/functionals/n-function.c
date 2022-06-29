@@ -125,7 +125,7 @@ REB_R Func_Dispatcher(REBFRM *f)
 
     REBACT *phase = FRM_PHASE(f);
     REBARR *details = ACT_DETAILS(phase);
-    Cell *body = ARR_AT(details, IDX_DETAILS_1);  // code to run
+    Cell(*) body = ARR_AT(details, IDX_DETAILS_1);  // code to run
     assert(IS_BLOCK(body) and IS_RELATIVE(body) and VAL_INDEX(body) == 0);
 
     assert(ACT_HAS_RETURN(phase));  // all FUNC have RETURN
@@ -275,12 +275,12 @@ REBACT *Make_Interpreted_Action_May_Fail(
     }
 
     // Save the relativized body in the action's details block.  Since it is
-    // a Cell* and not a REBVAL*, the dispatcher must combine it with a
+    // a Cell(*) and not a REBVAL*, the dispatcher must combine it with a
     // running frame instance (the REBFRM* received by the dispatcher) before
     // executing the interpreted code.
     //
     REBARR *details = ACT_DETAILS(a);
-    Cell *rebound = Init_Relative_Block(
+    Cell(*) rebound = Init_Relative_Block(
         ARR_AT(details, IDX_NATIVE_BODY),
         a,
         copy
