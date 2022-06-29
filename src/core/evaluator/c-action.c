@@ -317,7 +317,7 @@ REB_R Action_Executor(REBFRM *f)
                 // remembered what happened we can give an informative
                 // error message vs. a perplexing one.
                 //
-                if (Get_Eval_Flag(f, DIDNT_LEFT_QUOTE_PATH))
+                if (Get_Executor_Flag(ACTION, f, DIDNT_LEFT_QUOTE_PATH))
                     fail (Error_Literal_Left_Path_Raw());
 
                 // Seeing an END in the output slot could mean that there
@@ -919,7 +919,7 @@ REB_R Action_Executor(REBFRM *f)
   dispatch:
 
     if (Get_Feed_Flag(f->feed, NEXT_ARG_FROM_OUT)) {
-        if (Get_Eval_Flag(f, DIDNT_LEFT_QUOTE_PATH))  // see notes on flag
+        if (Get_Executor_Flag(ACTION, f, DIDNT_LEFT_QUOTE_PATH))  // see notes
             fail (Error_Literal_Left_Path_Raw());
     }
 
@@ -1114,8 +1114,6 @@ REB_R Action_Executor(REBFRM *f)
         fail ("Left lookback toward thing that took no args, look at later");
     }
 
-    Drop_Action(f);  // must fail before Drop_Action()
-
     // Want to keep this flag between an operation and an ensuing enfix in
     // the same frame, so can't clear in Drop_Action(), e.g. due to:
     //
@@ -1123,10 +1121,9 @@ REB_R Action_Executor(REBFRM *f)
     //     o: make object! [f: does [1]]
     //     o.f left-the  ; want error suggesting -> here, need flag for that
     //
-    Clear_Eval_Flag(f, DIDNT_LEFT_QUOTE_PATH);
+    Clear_Executor_Flag(ACTION, f, DIDNT_LEFT_QUOTE_PATH);
 
-    if (Not_Eval_Flag(f, MAYBE_STALE))
-        Clear_Stale_Flag(f->out);
+    Drop_Action(f);  // must fail before Drop_Action()
 
     return OUT;  // not thrown
 

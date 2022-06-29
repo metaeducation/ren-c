@@ -104,7 +104,13 @@
 // !!! Evil Macro, repeats parent!
 //
 STATIC_ASSERT(
-    EVAL_EXECUTOR_FLAG_FULFILLING_ARG == ACTION_EXECUTOR_FLAG_FULFILLING_ARG
+    EVAL_EXECUTOR_FLAG_FULFILLING_ARG
+    == ACTION_EXECUTOR_FLAG_FULFILLING_ARG
+);
+
+STATIC_ASSERT(
+    EVAL_EXECUTOR_FLAG_DIDNT_LEFT_QUOTE_PATH
+    == ACTION_EXECUTOR_FLAG_DIDNT_LEFT_QUOTE_PATH
 );
 
 #define DECLARE_ACTION_SUBFRAME(f,parent) \
@@ -112,7 +118,7 @@ STATIC_ASSERT(
         EVAL_FLAG_MAYBE_STALE | EVAL_FLAG_FAILURE_RESULT_OK \
         | ((parent)->flags.bits \
             & (EVAL_EXECUTOR_FLAG_FULFILLING_ARG \
-                | EVAL_FLAG_DIDNT_LEFT_QUOTE_PATH)))
+                | EVAL_EXECUTOR_FLAG_DIDNT_LEFT_QUOTE_PATH)))
 
 
 #if DEBUG_EXPIRED_LOOKBACK
@@ -461,7 +467,7 @@ REB_R Evaluator_Executor(REBFRM *f)
         f_current = &f->feed->lookback;
         f_current_gotten = nullptr;
 
-        Set_Eval_Flag(f, DIDNT_LEFT_QUOTE_PATH);  // for better error message
+        Set_Executor_Flag(EVAL, f, DIDNT_LEFT_QUOTE_PATH);  // better error msg
         Set_Feed_Flag(f->feed, NEXT_ARG_FROM_OUT);  // literal right op is arg
 
         goto give_up_backward_quote_priority;  // run PATH!/WORD! normal
@@ -1766,7 +1772,7 @@ REB_R Evaluator_Executor(REBFRM *f)
     // retriggers and lets x run.
 
     if (Get_Feed_Flag(f->feed, NEXT_ARG_FROM_OUT)) {
-        if (Get_Eval_Flag(f, DIDNT_LEFT_QUOTE_PATH))
+        if (Get_Executor_Flag(EVAL, f, DIDNT_LEFT_QUOTE_PATH))
             fail (Error_Literal_Left_Path_Raw());
 
         assert(!"Unexpected lack of use of NEXT_ARG_FROM_OUT");
@@ -1842,8 +1848,8 @@ REB_R Evaluator_Executor(REBFRM *f)
         // the left quoting function might be okay with seeing nothing on the
         // left.  Start a new expression and let it error if that's not ok.
         //
-        assert(Not_Eval_Flag(f, DIDNT_LEFT_QUOTE_PATH));
-        if (Get_Eval_Flag(f, DIDNT_LEFT_QUOTE_PATH))
+        assert(Not_Executor_Flag(EVAL, f, DIDNT_LEFT_QUOTE_PATH));
+        if (Get_Executor_Flag(EVAL, f, DIDNT_LEFT_QUOTE_PATH))
             fail (Error_Literal_Left_Path_Raw());
 
         const REBPAR *first = First_Unspecialized_Param(nullptr, enfixed);
@@ -1973,7 +1979,7 @@ REB_R Evaluator_Executor(REBFRM *f)
     //     o: make object! [f: does [1]]
     //     o.f left-the  ; want error suggesting >- here, need flag for that
     //
-    Clear_Eval_Flag(f, DIDNT_LEFT_QUOTE_PATH);
+    Clear_Executor_Flag(EVAL, f, DIDNT_LEFT_QUOTE_PATH);
     assert(Not_Feed_Flag(f->feed, NEXT_ARG_FROM_OUT));  // must be consumed
 
   #if !defined(NDEBUG)

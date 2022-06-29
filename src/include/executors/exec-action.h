@@ -25,10 +25,19 @@
 #define EXECUTOR_ACTION &Action_Executor   // shorthand in Xxx_Executor_Flag()
 
 
-//=//// ACTION_EXECUTOR_FLAG_24 ///////////////////////////////////////////=//
+//=//// ACTION_EXECUTOR_FLAG_DIDNT_LEFT_QUOTE_PATH ////////////////////////=//
 //
-#define ACTION_EXECUTOR_FLAG_24 \
+// See EVAL_EXECUTOR_FLAG_DIDNT_LEFT_QUOTE_PATH for an explanation.
+//
+// !!! Does this need both an ACTION and EVAL executor flag?
+//
+#define ACTION_EXECUTOR_FLAG_DIDNT_LEFT_QUOTE_PATH \
     EVAL_FLAG_24
+
+STATIC_ASSERT(
+    ACTION_EXECUTOR_FLAG_DIDNT_LEFT_QUOTE_PATH
+    == EVAL_EXECUTOR_FLAG_DIDNT_LEFT_QUOTE_PATH
+);
 
 
 //=//// ACTION_EXECUTOR_FLAG_FULFILLING_ARG ///////////////////////////////=//
