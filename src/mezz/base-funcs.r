@@ -482,6 +482,35 @@ set?: func [
 ]
 
 
+defined?: func [
+    {Determine if a variable is both "attached", and not unset}
+    return: [logic!]
+    var [word! path! tuple!]
+][
+    if tuple? var [
+        return not trap [get var]  ; can't use BINDING OF on TUPLE! atm
+    ]
+    return did all [
+        '~attached~ != binding of var
+        '~ <> ^ get/any var
+    ]
+]
+
+undefined?: func [
+    {Determine if a variable is "unattached" or unset}
+    return: [logic!]
+    var [word! path! tuple!]
+][
+    if tuple? var [
+        return did trap [get var]  ; can't use BINDING OF on TUPLE! atm
+    ]
+    return did any [
+        '~attached~ = binding of var
+        '~ = ^ get/any var
+    ]
+]
+
+
 curtail: reframer func [
     {Voids an expression if it raises any NEED-NON-NULL failures}
     return: [<void> <opt> any-value!]
