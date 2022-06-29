@@ -339,11 +339,15 @@ main-startup: func [
     ; It's not foolproof, so it might come back null.  The console code can
     ; then decide if it wants to fall back on argv[0]
     ;
-    switch type of system.options.boot: get-current-exec [
-        file! []  ; found it
-        null []  ; also okay (not foolproof!)
-        fail
-    ]
+    system.options.boot: if defined? 'get-current-exec [
+        print "Trying to call the damn thing"
+
+        switch type of get-current-exec [
+            file! []  ; found it
+            null []  ; also okay (not foolproof!)
+            fail
+        ]
+    ] else [null]
 
     === HELPER FUNCTIONS ===
 
@@ -385,7 +389,9 @@ main-startup: func [
         {Return HOME path (e.g. $HOME on *nix)}
         return: [<opt> file!]
     ][
-        let get-env: attempt [:system.modules.Process.get-env] else [
+        let get-env: if select system.modules 'Process [
+            :system.modules.Process.get-env
+        ] else [
             loud-print [
                 "Interpreter not built with GET-ENV, can't detect HOME dir" LF
                 "(Build with Process extension enabled to address this)"
@@ -450,12 +456,14 @@ main-startup: func [
     ; If it did not initialize it, fall back on argv[0], if available.
     ;
     if not tail? argv [
-        o.boot: default [clean-path local-to-file first argv]
+        if defined? 'local-to-file [
+            o.boot: clean-path local-to-file first argv
+        ]
         take argv
     ]
-    if o.boot [
-        o.bin: first split-path o.boot
-    ]
+    o.bin: if o.boot [
+        first split-path o.boot
+    ] else [null]
 
     let param-or-die: func [
         {Take --option argv and then check if param arg is present, else die}
@@ -698,9 +706,11 @@ main-startup: func [
     o.args: argv  ; whatever's left is positional args
 
 
-    let boot-embedded: if check-encap [
+    let boot-embedded: all [
+        check-encap
+        system.options.boot
         get-encap system.options.boot
-    ] else [null]
+    ]
 
     if any [boot-embedded, o.script] [o.quiet: true]
 
@@ -734,6 +744,7 @@ main-startup: func [
     ; !!! see https://github.com/rebol/rebol-issues/issues/706
     ;
     all [
+        o.bin
         not find o.suppress %rebol.reb
         elide (loud-print ["Checking for rebol.reb file in" o.bin])
         exists? join o.bin %rebol.reb
