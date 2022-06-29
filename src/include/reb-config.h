@@ -72,6 +72,21 @@
 #endif
 
 
+//=//// [REDUNDANT] STATIC_ASSERT PREPROCESSOR DEFINE /////////////////////=//
+//
+// It's inconvenient to not have STATIC_ASSERT in this file, but we want it
+// in %reb-c.h as well.  Allow the redundant definition (%reb-c checks to see
+// if it's already defined).
+
+#if CPLUSPLUS_11
+    #define STATIC_ASSERT(cond) \
+        static_assert((cond), #cond) // callsite has semicolon, see C trick
+#else
+    #define STATIC_ASSERT(cond) \
+        struct GlobalScopeNoopTrick // https://stackoverflow.com/q/53923706
+#endif
+
+
 /** Primary Configuration **********************************************
 
 The primary target system is defined by:
@@ -438,9 +453,7 @@ Special internal defines used by RT, not Host-Kit developers:
 #endif
 
 #if DEBUG_MEMORY_ALIGN
-    #if (! DEBUG_CELL_WRITABILITY)
-        #error "DEBUG_MEMORY_ALIGN requires DEBUG_CELL_WRITABILITY"
-    #endif
+    STATIC_ASSERT(DEBUG_CELL_WRITABILITY == 1);  // required for align check
 #endif
 
 

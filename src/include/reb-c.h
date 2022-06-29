@@ -315,12 +315,14 @@
 // But it's too limited.  Since the code can (and should) be built as C++11
 // to test anyway, just make it a no-op in the C build.
 //
-#if CPLUSPLUS_11
-    #define STATIC_ASSERT(cond) \
-        static_assert((cond), #cond) // callsite has semicolon, see C trick
-#else
-    #define STATIC_ASSERT(cond) \
-        struct GlobalScopeNoopTrick // https://stackoverflow.com/q/53923706
+#if !defined(STATIC_ASSERT)  // used in %reb-config.h so also defined there
+    #if CPLUSPLUS_11
+        #define STATIC_ASSERT(cond) \
+            static_assert((cond), #cond) // callsite has semicolon, see C trick
+    #else
+        #define STATIC_ASSERT(cond) \
+            struct GlobalScopeNoopTrick // https://stackoverflow.com/q/53923706
+    #endif
 #endif
 
 
