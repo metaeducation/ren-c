@@ -177,7 +177,7 @@ REB_R Dir_Actor(REBFRM *frame_, REBVAL *port, const Symbol *verb)
                 fail (Error_Cannot_Open_Raw(dir->path, result));
 
             assert(IS_FILE(result));
-            Copy_Cell(DS_PUSH(), result);
+            Copy_Cell(PUSH(), result);
             rebRelease(result);
         }
 

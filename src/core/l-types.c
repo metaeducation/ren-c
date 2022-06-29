@@ -490,7 +490,7 @@ const REBYTE* Scan_Hex2(REBYTE *decoded_out, const REBYTE *bp)
 // !!! Is this redundant with Scan_Decimal?  Appears to be similar code.
 //
 const REBYTE *Scan_Dec_Buf(
-    REBYTE *out, // may live in data stack (do not call DS_PUSH(), GC, eval)
+    REBYTE *out, // may live in data stack (do not call PUSH(), GC, eval)
     bool *is_integral,
     const REBYTE *cp,
     REBLEN len // max size of buffer

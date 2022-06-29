@@ -1691,21 +1691,21 @@ REBNATIVE(map)
     if (IS_QUOTED(SPARE)) {
         Unquotify(SPARE, 1);
         if (Is_Nulled(SPARE))
-            Init_Bad_Word(DS_PUSH(), Canon(NULL));  // APPEND semantics
+            Init_Bad_Word(PUSH(), Canon(NULL));  // APPEND semantics
         else
-            Copy_Cell(DS_PUSH(), SPARE);
+            Copy_Cell(PUSH(), SPARE);
     }
     else if (ANY_THE_KIND(VAL_TYPE(SPARE))) {
-        Plainify(Copy_Cell(DS_PUSH(), SPARE));
+        Plainify(Copy_Cell(PUSH(), SPARE));
     }
     else if (IS_BLOCK(SPARE)) {
         const Cell *tail;
         const Cell *v = VAL_ARRAY_AT(&tail, SPARE);
         for (; v != tail; ++v)
-            Derelativize(DS_PUSH(), v, VAL_SPECIFIER(SPARE));
+            Derelativize(PUSH(), v, VAL_SPECIFIER(SPARE));
     }
     else if (ANY_INERT(SPARE)) {
-        Copy_Cell(DS_PUSH(), SPARE);  // non nulls added to result
+        Copy_Cell(PUSH(), SPARE);  // non nulls added to result
     }
     else {
         Init_Error(
@@ -1727,7 +1727,7 @@ REBNATIVE(map)
 
     if (not Is_Stale(OUT)) {  // only modifies on break
         assert(Is_Nulled(OUT));  // BREAK, so *must* return null
-        DS_DROP_TO(FRAME->baseline.dsp);
+        Drop_Data_Stack_To(FRAME->baseline.dsp);
         return nullptr;
     }
 

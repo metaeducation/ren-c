@@ -487,12 +487,12 @@ Special internal defines used by RT, not Host-Kit developers:
 
 #if CPLUSPLUS_11
     //
-    // Each DS_PUSH() on the data stack can potentially move all the
-    // pointers on the stack.  Hence there is a debug setting for managing
-    // these pointers in a special C++ container called STKVAL(*).  This
-    // counts to see how many stack pointers the user has in local
-    // variables, and if that number is not zero then it asserts when a
-    // push or pop is requested, or when the evaluator is invoked.
+    // Each PUSH() on the data stack can potentially move all the pointers on
+    // the stack.  Hence there is a debug setting for managing these pointers
+    // in a special C++ container called StackValue(*).  This counts to see
+    // how many stack pointers the user has in local variables, and if that
+    // number is not zero then it asserts when a push or pop is requested, or
+    // when the evaluator is invoked.
     //
     #define DEBUG_EXTANT_STACK_POINTERS DEBUG
 #else

@@ -1022,11 +1022,11 @@ static enum Reb_Token Locate_Token_May_Push_Mold(
             if (Is_End(ss->feed->value))
                 return TOKEN_END;
 
-            Derelativize(DS_PUSH(), ss->feed->value, FEED_SPECIFIER(ss->feed));
+            Derelativize(PUSH(), ss->feed->value, FEED_SPECIFIER(ss->feed));
 
             if (Get_Executor_Flag(SCAN, f, NEWLINE_PENDING)) {
                 Clear_Executor_Flag(SCAN, f, NEWLINE_PENDING);
-                Set_Cell_Flag(DS_TOP, NEWLINE_BEFORE);
+                Set_Cell_Flag(TOP, NEWLINE_BEFORE);
             }
         }
         else {  // It's UTF-8, so have to scan it ordinarily.
@@ -1977,17 +1977,17 @@ REB_R Scanner_Executor(REBFRM *f) {
         goto loop;
 
       case TOKEN_BLANK:
-        Init_Blank(DS_PUSH());
+        Init_Blank(PUSH());
         break;
 
       case TOKEN_BAD_WORD: {  // a non-isotope bad-word
         assert(*bp == '~');
         if (len == 1)
-            Init_Bad_Word(DS_PUSH(), nullptr);
+            Init_Bad_Word(PUSH(), nullptr);
         else {
             assert(bp[len - 1] == '~');
             const Symbol *label = Intern_UTF8_Managed(bp + 1, len - 2);
-            Init_Bad_Word(DS_PUSH(), label);
+            Init_Bad_Word(PUSH(), label);
         }
         break; }
 
@@ -1998,18 +1998,18 @@ REB_R Scanner_Executor(REBFRM *f) {
             // a blank is needed.  So we'll get here with [/a/, xxx] but won't
             // get here with [/a, xxx]
             //
-            Init_Blank(DS_PUSH());
+            Init_Blank(PUSH());
             ss->end = ss->begin = ep = bp;  // let parent see `,`
             goto done;
         }
 
-        Init_Comma(DS_PUSH());
+        Init_Comma(PUSH());
         break;
 
       case TOKEN_CARET:
         assert(*bp == '^');
         if (IS_LEX_ANY_SPACE(*ep) or *ep == ']' or *ep == ')') {
-            Init_Any_Word_Untracked(DS_PUSH(), REB_WORD, Canon(CARET_1));
+            Init_Any_Word_Untracked(PUSH(), REB_WORD, Canon(CARET_1));
             break;
         }
         goto token_prefixable_sigil;
@@ -2017,7 +2017,7 @@ REB_R Scanner_Executor(REBFRM *f) {
       case TOKEN_AT:
         assert(*bp == '@');
         if (IS_LEX_ANY_SPACE(*ep) or *ep == ']' or *ep == ')') {
-            Init_Any_Word_Untracked(DS_PUSH(), REB_WORD, Canon(AT_1));
+            Init_Any_Word_Untracked(PUSH(), REB_WORD, Canon(AT_1));
             break;
         }
         goto token_prefixable_sigil;
@@ -2032,7 +2032,7 @@ REB_R Scanner_Executor(REBFRM *f) {
         //
         if (level->mode == '/' or level->mode == '.') {
             if (IS_LEX_ANY_SPACE(*ep) or *ep == ']' or *ep == ')') {
-                Init_Blank(DS_PUSH());  // `a.:` or `b/:` need a blank
+                Init_Blank(PUSH());  // `a.:` or `b/:` need a blank
                 ss->end = ss->begin = ep = bp;  // let parent see `:`
                 goto done;
             }
@@ -2053,7 +2053,7 @@ REB_R Scanner_Executor(REBFRM *f) {
             )){
                 ++ep;
             }
-            Init_Get_Word(DS_PUSH(), Intern_UTF8_Managed(bp, ep - bp));
+            Init_Get_Word(PUSH(), Intern_UTF8_Managed(bp, ep - bp));
             ss->begin = ss->end = ep;
             break;
           #else
@@ -2071,7 +2071,7 @@ REB_R Scanner_Executor(REBFRM *f) {
         // than one colon, but this gets a little further for now.  :-/
         //
         if (IS_LEX_ANY_SPACE(bp[1])) {
-            Init_Word(DS_PUSH(), Canon(COLON_1));
+            Init_Word(PUSH(), Canon(COLON_1));
             break;
         }
 
@@ -2089,11 +2089,11 @@ REB_R Scanner_Executor(REBFRM *f) {
         if (len == 0)
             return FAIL(Error_Syntax(ss, level->token));
 
-        Init_Word(DS_PUSH(), Intern_UTF8_Managed(bp, len));
+        Init_Word(PUSH(), Intern_UTF8_Managed(bp, len));
         break;
 
       case TOKEN_ISSUE:
-        if (ep != Scan_Issue(DS_PUSH(), bp + 1, len - 1))
+        if (ep != Scan_Issue(PUSH(), bp + 1, len - 1))
             return FAIL(Error_Syntax(ss, level->token));
         break;
 
@@ -2110,7 +2110,7 @@ REB_R Scanner_Executor(REBFRM *f) {
             // This also applies to comments.
             //
             assert(level->quotes_pending == 0);
-            Quotify(Init_Nulled(DS_PUSH()), len);
+            Quotify(Init_Nulled(PUSH()), len);
         }
         else
             level->quotes_pending = len;  // apply quoting to next token
@@ -2168,12 +2168,12 @@ REB_R Scanner_Executor(REBFRM *f) {
             *ss->end == ':'  // `...(foo):` or `...[bar]:`
             and not Is_Dot_Or_Slash(level->mode)  // leave `:` for SET-PATH!
         ){
-            Init_Any_Array(DS_PUSH(), SETIFY_ANY_PLAIN_KIND(kind), a);
+            Init_Any_Array(PUSH(), SETIFY_ANY_PLAIN_KIND(kind), a);
             ++ss->begin;
             ++ss->end;
         }
         else
-            Init_Any_Array(DS_PUSH(), kind, a);
+            Init_Any_Array(PUSH(), kind, a);
         ep = ss->end;
         break; }
 
@@ -2200,7 +2200,7 @@ REB_R Scanner_Executor(REBFRM *f) {
         // path or tuple, or continuing one in progress).  So just do that
         // push and "unconsume" the token so the lookahead sees it.
         //
-        Init_Blank(DS_PUSH());
+        Init_Blank(PUSH());
         ep = ss->begin = ss->end = bp;  // "unconsume" `.` or `/` token
         break;
 
@@ -2209,7 +2209,7 @@ REB_R Scanner_Executor(REBFRM *f) {
             goto done;
 
         if (Is_Dot_Or_Slash(level->mode)) {  // implicit end, e.g. [just /]
-            Init_Blank(DS_PUSH());
+            Init_Blank(PUSH());
             --ss->begin;
             --ss->end;
             goto done;
@@ -2227,7 +2227,7 @@ REB_R Scanner_Executor(REBFRM *f) {
             goto done;
 
         if (Is_Dot_Or_Slash(level->mode)) {  // implicit end e.g. (the /)
-            Init_Blank(DS_PUSH());
+            Init_Blank(PUSH());
             --ss->begin;
             --ss->end;
             goto done;
@@ -2282,7 +2282,7 @@ REB_R Scanner_Executor(REBFRM *f) {
 
         // Wasn't beginning of a DECIMAL!, so scan as a normal INTEGER!
         //
-        if (ep != Scan_Integer(DS_PUSH(), bp, len))
+        if (ep != Scan_Integer(PUSH(), bp, len))
             return FAIL(Error_Syntax(ss, level->token));
         break;
 
@@ -2292,17 +2292,17 @@ REB_R Scanner_Executor(REBFRM *f) {
         if (Is_Dot_Or_Slash(*ep))
             return FAIL(Error_Syntax(ss, level->token));  // No `1.2/abc`
 
-        if (ep != Scan_Decimal(DS_PUSH(), bp, len, false))
+        if (ep != Scan_Decimal(PUSH(), bp, len, false))
             return FAIL(Error_Syntax(ss, level->token));
 
         if (bp[len - 1] == '%') {
-            mutable_HEART_BYTE(DS_TOP) = REB_PERCENT;
+            mutable_HEART_BYTE(TOP) = REB_PERCENT;
 
             // !!! DEBUG_EXTANT_STACK_POINTERS can't resolve if this is
             // a noquote(const Cell*) or REBVAL* overload with DEBUG_CHECK_CASTS.
             // Have to cast explicitly, use VAL()
             //
-            VAL_DECIMAL(VAL(DS_TOP)) /= 100.0;
+            VAL_DECIMAL(VAL(TOP)) /= 100.0;
         }
         break;
 
@@ -2311,7 +2311,7 @@ REB_R Scanner_Executor(REBFRM *f) {
             ++ep;
             return FAIL(Error_Syntax(ss, level->token));
         }
-        if (ep != Scan_Money(DS_PUSH(), bp, len))
+        if (ep != Scan_Money(PUSH(), bp, len))
             return FAIL(Error_Syntax(ss, level->token));
         break;
 
@@ -2320,12 +2320,12 @@ REB_R Scanner_Executor(REBFRM *f) {
             bp[len - 1] == ':'
             and Is_Dot_Or_Slash(level->mode)  // could be path/10: set
         ){
-            if (ep - 1 != Scan_Integer(DS_PUSH(), bp, len - 1))
+            if (ep - 1 != Scan_Integer(PUSH(), bp, len - 1))
                 return FAIL(Error_Syntax(ss, level->token));
             ss->end--;  // put ':' back on end but not beginning
             break;
         }
-        if (ep != Scan_Time(DS_PUSH(), bp, len))
+        if (ep != Scan_Time(PUSH(), bp, len))
             return FAIL(Error_Syntax(ss, level->token));
         break;
 
@@ -2341,7 +2341,7 @@ REB_R Scanner_Executor(REBFRM *f) {
             }
             ss->begin = ep;  // End point extended to cover time
         }
-        if (ep != Scan_Date(DS_PUSH(), bp, len))
+        if (ep != Scan_Date(PUSH(), bp, len))
             return FAIL(Error_Syntax(ss, level->token));
         break;
 
@@ -2350,35 +2350,35 @@ REB_R Scanner_Executor(REBFRM *f) {
         bp += 2;  // skip #", and subtract 1 from ep for "
         if (ep - 1 != Scan_UTF8_Char_Escapable(&uni, bp))
             return FAIL(Error_Syntax(ss, level->token));
-        Init_Char_May_Fail(DS_PUSH(), uni);
+        Init_Char_May_Fail(PUSH(), uni);
         break; }
 
       case TOKEN_STRING:  // UTF-8 pre-scanned above, and put in MOLD_BUF
-        Init_Text(DS_PUSH(), Pop_Molded_String(mo));
+        Init_Text(PUSH(), Pop_Molded_String(mo));
         break;
 
       case TOKEN_BINARY:
-        if (ep != Scan_Binary(DS_PUSH(), bp, len))
+        if (ep != Scan_Binary(PUSH(), bp, len))
             return FAIL(Error_Syntax(ss, level->token));
         break;
 
       case TOKEN_PAIR:
-        if (ep != Scan_Pair(DS_PUSH(), bp, len))
+        if (ep != Scan_Pair(PUSH(), bp, len))
             return FAIL(Error_Syntax(ss, level->token));
         break;
 
       case TOKEN_FILE:
-        if (ep != Scan_File(DS_PUSH(), bp, len))
+        if (ep != Scan_File(PUSH(), bp, len))
             return FAIL(Error_Syntax(ss, level->token));
         break;
 
       case TOKEN_EMAIL:
-        if (ep != Scan_Email(DS_PUSH(), bp, len))
+        if (ep != Scan_Email(PUSH(), bp, len))
             return FAIL(Error_Syntax(ss, level->token));
         break;
 
       case TOKEN_URL:
-        if (ep != Scan_URL(DS_PUSH(), bp, len))
+        if (ep != Scan_URL(PUSH(), bp, len))
             return FAIL(Error_Syntax(ss, level->token));
         break;
 
@@ -2388,7 +2388,7 @@ REB_R Scanner_Executor(REBFRM *f) {
         // know where the tag ends, so it scans the len.
         //
         if (ep - 1 != Scan_Any(
-            DS_PUSH(),
+            PUSH(),
             bp + 1,
             len - 2,
             REB_TAG,
@@ -2493,7 +2493,7 @@ REB_R Scanner_Executor(REBFRM *f) {
             // the scanner is a questionable idea, but at the very least
             // `array` must be guarded, and a data stack cell can't be
             // used as the destination...because a raw pointer into the
-            // data stack could go bad on any DS_PUSH() or DS_DROP().
+            // data stack could go bad on any PUSH() or DROP().
             //
             DECLARE_LOCAL (cell);
             PUSH_GC_GUARD(cell);
@@ -2515,7 +2515,7 @@ REB_R Scanner_Executor(REBFRM *f) {
             }
             DROP_GC_GUARD(array);
 
-            Copy_Cell(DS_PUSH(), cell);
+            Copy_Cell(PUSH(), cell);
             DROP_GC_GUARD(cell);
         }
         else {
@@ -2532,22 +2532,22 @@ REB_R Scanner_Executor(REBFRM *f) {
             //
             switch (sym) {
               case SYM_NONE:  // !!! Should be under a LEGACY flag...
-                Init_Blank(DS_PUSH());
+                Init_Blank(PUSH());
                 break;
 
               case SYM_FALSE:
-                Init_False(DS_PUSH());
+                Init_False(PUSH());
                 break;
 
               case SYM_TRUE:
-                Init_True(DS_PUSH());
+                Init_True(PUSH());
                 break;
 
               case SYM_UNSET:  // !!! Should be under a LEGACY flag...
                 //
                 // BAD-WORD!s are put in blocks, are "friendly" non-isotopes.
                 //
-                Init_Bad_Word(DS_PUSH(), Canon(UNSET));
+                Init_Bad_Word(PUSH(), Canon(UNSET));
                 break;
 
               default: {
@@ -2572,14 +2572,14 @@ REB_R Scanner_Executor(REBFRM *f) {
     // object, it would be more complex...only for efficiency, and nothing
     // like it existed before.
     //
-    if (ss->context and ANY_WORD(DS_TOP)) {
-        INIT_VAL_WORD_BINDING(DS_TOP, CTX_VARLIST(unwrap(ss->context)));
-        INIT_VAL_WORD_INDEX(DS_TOP, INDEX_ATTACHED);
+    if (ss->context and ANY_WORD(TOP)) {
+        INIT_VAL_WORD_BINDING(TOP, CTX_VARLIST(unwrap(ss->context)));
+        INIT_VAL_WORD_INDEX(TOP, INDEX_ATTACHED);
     }
 
   lookahead:
 
-    // At this point the item at DS_TOP is the last token pushed.  It has
+    // At this point the item at TOP is the last token pushed.  It has
     // not had any `pending_prefix` or `pending_quotes` applied...so when
     // processing something like `:foo/bar` on the first step we'd only see
     // `foo` pushed.  This is the point where we look for the `/` or `.`
@@ -2594,7 +2594,7 @@ REB_R Scanner_Executor(REBFRM *f) {
         if (level->mode == '/' and *ep == '.') {
             level->token = TOKEN_TUPLE;
             ++ss->begin;
-            goto scan_path_or_tuple_head_is_DS_TOP;
+            goto scan_path_or_tuple_head_is_TOP;
         }
 
         // If we are scanning `a.b` and see `/c`, we want to defer to the
@@ -2638,7 +2638,7 @@ REB_R Scanner_Executor(REBFRM *f) {
         else
             level->token = TOKEN_PATH;
 
-      scan_path_or_tuple_head_is_DS_TOP: ;
+      scan_path_or_tuple_head_is_TOP: ;
 
         REBDSP dsp_path_head = DSP;
 
@@ -2685,7 +2685,7 @@ REB_R Scanner_Executor(REBFRM *f) {
             (level->token == TOKEN_TUPLE and *ss->end == '.')
             or (level->token == TOKEN_PATH and *ss->end == '/')
         )){
-            Init_Blank(DS_PUSH());
+            Init_Blank(PUSH());
         }
 
         // R3-Alpha permitted GET-WORD! and other aberrations internally
@@ -2696,9 +2696,9 @@ REB_R Scanner_Executor(REBFRM *f) {
         // mutating it into a single element GROUP!.
         //
       blockscope {
-        STKVAL(*) head = DS_AT(dsp_path_head);
-        STKVAL(*) cleanup = head + 1;
-        for (; cleanup <= DS_TOP; ++cleanup) {
+        StackValue(*) head = Data_Stack_At(dsp_path_head);
+        StackValue(*) cleanup = head + 1;
+        for (; cleanup <= TOP; ++cleanup) {
             if (IS_GET_WORD(cleanup)) {
                 REBARR *a = Alloc_Singular(NODE_FLAG_MANAGED);
                 mutable_HEART_BYTE(cleanup) = REB_GET_WORD;
@@ -2726,7 +2726,7 @@ REB_R Scanner_Executor(REBFRM *f) {
             bool any_email = false;
             REBDSP dsp = DSP;
             for (; dsp != dsp_path_head - 1; --dsp) {
-                if (IS_EMAIL(DS_AT(dsp))) {
+                if (IS_EMAIL(Data_Stack_At(dsp))) {
                     if (any_email)
                         return FAIL(Error_Syntax(ss, level->token));
                     any_email = true;
@@ -2767,7 +2767,7 @@ REB_R Scanner_Executor(REBFRM *f) {
         assert(IS_WORD(temp) or ANY_SEQUENCE(temp));  // `/` and `...` decay
 
       push_temp:
-        Copy_Cell(DS_PUSH(), temp);
+        Copy_Cell(PUSH(), temp);
 
         // !!! Need to cover case where heart byte is a WORD!, at least when
         // it is something like `/` (refinements like /FOO should have been
@@ -2776,9 +2776,9 @@ REB_R Scanner_Executor(REBFRM *f) {
         // word attachment code above.
         //
         if (ss->context) {
-            if (ANY_WORD(DS_TOP)) {
-                INIT_VAL_WORD_BINDING(DS_TOP, CTX_VARLIST(unwrap(ss->context)));
-                INIT_VAL_WORD_INDEX(DS_TOP, INDEX_ATTACHED);
+            if (ANY_WORD(TOP)) {
+                INIT_VAL_WORD_BINDING(TOP, CTX_VARLIST(unwrap(ss->context)));
+                INIT_VAL_WORD_INDEX(TOP, INDEX_ATTACHED);
             }
         }
 
@@ -2788,16 +2788,16 @@ REB_R Scanner_Executor(REBFRM *f) {
         // including the zero.  This doesn't put any decision in stone, but
         // reserves the right to make a decision at a later time.
         //
-        if (IS_TUPLE(DS_TOP) and VAL_SEQUENCE_LEN(DS_TOP) == 2) {
+        if (IS_TUPLE(TOP) and VAL_SEQUENCE_LEN(TOP) == 2) {
             if (
-                IS_INTEGER(VAL_SEQUENCE_AT(temp, DS_TOP, 0))
-                and IS_BLANK(VAL_SEQUENCE_AT(temp, DS_TOP, 1))
+                IS_INTEGER(VAL_SEQUENCE_AT(temp, TOP, 0))
+                and IS_BLANK(VAL_SEQUENCE_AT(temp, TOP, 1))
             ){
                 return FAIL("`5.` currently reserved, please use 5.0");
             }
             if (
-                IS_BLANK(VAL_SEQUENCE_AT(temp, DS_TOP, 0))
-                and IS_INTEGER(VAL_SEQUENCE_AT(temp, DS_TOP, 1))
+                IS_BLANK(VAL_SEQUENCE_AT(temp, TOP, 0))
+                and IS_INTEGER(VAL_SEQUENCE_AT(temp, TOP, 1))
             ){
                 return FAIL("`.5` currently reserved, please use 0.5");
             }
@@ -2806,11 +2806,11 @@ REB_R Scanner_Executor(REBFRM *f) {
         // Can only store file and line information if it has an array
         //
         if (
-            Get_Cell_Flag(DS_TOP, FIRST_IS_NODE)
-            and VAL_NODE1(DS_TOP) != nullptr  // null legal in node slots ATM
-            and IS_SER_ARRAY(SER(VAL_NODE1(DS_TOP)))
+            Get_Cell_Flag(TOP, FIRST_IS_NODE)
+            and VAL_NODE1(TOP) != nullptr  // null legal in node slots ATM
+            and IS_SER_ARRAY(SER(VAL_NODE1(TOP)))
         ){
-            REBARR *a = ARR(VAL_NODE1(DS_TOP));
+            REBARR *a = ARR(VAL_NODE1(TOP));
             a->misc.line = ss->line;
             mutable_LINK(Filename, a) = ss->file;
             Set_Subclass_Flag(ARRAY, a, HAS_FILE_LINE_UNMASKED);
@@ -2851,7 +2851,7 @@ REB_R Scanner_Executor(REBFRM *f) {
                 if (ss->begin != nullptr and *ss->begin == '/') {
                     ++ss->begin;
                     level->token = TOKEN_PATH;
-                    goto scan_path_or_tuple_head_is_DS_TOP;
+                    goto scan_path_or_tuple_head_is_TOP;
                 }
             }
         }
@@ -2868,30 +2868,30 @@ REB_R Scanner_Executor(REBFRM *f) {
         if (level->prefix_pending)
             return FAIL(Error_Syntax(ss, level->token));
 
-        enum Reb_Kind kind = VAL_TYPE(DS_TOP);
+        enum Reb_Kind kind = VAL_TYPE(TOP);
         if (not ANY_PLAIN_KIND(kind))
             return FAIL(Error_Syntax(ss, level->token));
 
-        mutable_HEART_BYTE(DS_TOP) = SETIFY_ANY_PLAIN_KIND(kind);
+        mutable_HEART_BYTE(TOP) = SETIFY_ANY_PLAIN_KIND(kind);
 
         ss->begin = ++ss->end;  // !!! ?
     }
     else if (level->prefix_pending != TOKEN_END) {
-        enum Reb_Kind kind = VAL_TYPE(DS_TOP);
+        enum Reb_Kind kind = VAL_TYPE(TOP);
         if (not ANY_PLAIN_KIND(kind))
             return FAIL(Error_Syntax(ss, level->token));
 
         switch (level->prefix_pending) {
           case TOKEN_COLON:
-            mutable_HEART_BYTE(DS_TOP) = GETIFY_ANY_PLAIN_KIND(kind);
+            mutable_HEART_BYTE(TOP) = GETIFY_ANY_PLAIN_KIND(kind);
             break;
 
           case TOKEN_CARET:
-            mutable_HEART_BYTE(DS_TOP) = METAFY_ANY_PLAIN_KIND(kind);
+            mutable_HEART_BYTE(TOP) = METAFY_ANY_PLAIN_KIND(kind);
             break;
 
           case TOKEN_AT:
-            mutable_HEART_BYTE(DS_TOP) = THEIFY_ANY_PLAIN_KIND(kind);
+            mutable_HEART_BYTE(TOP) = THEIFY_ANY_PLAIN_KIND(kind);
             break;
 
           default:
@@ -2906,7 +2906,7 @@ REB_R Scanner_Executor(REBFRM *f) {
         // Transform the topmost value on the stack into a QUOTED!, to
         // account for the ''' that was preceding it.
         //
-        Quotify(DS_TOP, level->quotes_pending);
+        Quotify(TOP, level->quotes_pending);
         level->quotes_pending = 0;
     }
 
@@ -2917,7 +2917,7 @@ REB_R Scanner_Executor(REBFRM *f) {
     //
     if (Get_Executor_Flag(SCAN, f, NEWLINE_PENDING)) {
         Clear_Executor_Flag(SCAN, f, NEWLINE_PENDING);
-        Set_Cell_Flag(DS_TOP, NEWLINE_BEFORE);
+        Set_Cell_Flag(TOP, NEWLINE_BEFORE);
     }
 
     // Added for TRANSCODE/NEXT (LOAD/NEXT is deprecated, see #1703)
@@ -3185,8 +3185,8 @@ REBNATIVE(transcode)
         if (DSP == BASELINE->dsp)
             Init_Nulled(OUT);
         else {
-            Move_Cell(OUT, DS_TOP);
-            DS_DROP();
+            Move_Cell(OUT, TOP);
+            DROP();
         }
     }
     else {

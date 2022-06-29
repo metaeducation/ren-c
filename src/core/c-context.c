@@ -299,9 +299,9 @@ void Collect_End(struct Reb_Collector *cl)
 {
     REBDSP dsp = DSP;
     for (; dsp != cl->dsp_orig; --dsp) {
-        const Symbol *symbol = VAL_WORD_SYMBOL(DS_TOP);
+        const Symbol *symbol = VAL_WORD_SYMBOL(TOP);
         Remove_Binder_Index(&cl->binder, symbol);
-        DS_DROP();
+        DROP();
     }
 
     SHUTDOWN_BINDER(&cl->binder);
@@ -337,7 +337,7 @@ void Collect_Context_Keys(
 
             continue;  // don't collect if already in bind table
         }
-        Init_Word(DS_PUSH(), symbol);
+        Init_Word(PUSH(), symbol);
     }
 }
 
@@ -377,7 +377,7 @@ static void Collect_Inner_Loop(
                 continue;  // tolerate duplicate
             }
 
-            Init_Word(DS_PUSH(), symbol);
+            Init_Word(PUSH(), symbol);
             continue;
         }
 
@@ -445,9 +445,9 @@ REBSER *Collect_Keylist_Managed(
             SERIES_MASK_KEYLIST | NODE_FLAG_MANAGED
         );
 
-        STKVAL(*) word = DS_AT(cl->dsp_orig) + 1;
+        StackValue(*) word = Data_Stack_At(cl->dsp_orig) + 1;
         REBKEY* key = SER_HEAD(REBKEY, keylist);
-        for (; word != DS_TOP + 1; ++word, ++key)
+        for (; word != TOP + 1; ++word, ++key)
             Init_Key(key, VAL_WORD_SYMBOL(word));
 
         SET_SERIES_USED(keylist, num_collected);  // no terminator
@@ -536,7 +536,7 @@ REBARR *Collect_Unique_Words_Managed(
     // on the stack so that Collect_End() can remove them from the binder.
     //
     REBARR *array = Copy_Values_Len_Shallow_Core(
-        DS_AT(cl->dsp_orig + 1),
+        Data_Stack_At(cl->dsp_orig + 1),
         SPECIFIED,
         DSP - cl->dsp_orig,
         NODE_FLAG_MANAGED
@@ -777,7 +777,7 @@ REBARR *Context_To_Array(const Cell *context, REBINT mode)
     while (Did_Advance_Evars(&e)) {
         if (mode & 1) {
             Init_Any_Word_Bound(
-                DS_PUSH(),
+                PUSH(),
                 (mode & 2) ? REB_SET_WORD : REB_WORD,
                 e.ctx,
                 KEY_SYMBOL(e.key),
@@ -785,7 +785,7 @@ REBARR *Context_To_Array(const Cell *context, REBINT mode)
             );
 
             if (mode & 2)
-                Set_Cell_Flag(DS_TOP, NEWLINE_BEFORE);
+                Set_Cell_Flag(TOP, NEWLINE_BEFORE);
         }
 
         if (mode & 2) {
@@ -797,7 +797,7 @@ REBARR *Context_To_Array(const Cell *context, REBINT mode)
             if (Is_Nulled(e.var))
                 fail (Error_Null_Object_Block_Raw());
 
-            Copy_Cell(DS_PUSH(), e.var);
+            Copy_Cell(PUSH(), e.var);
         }
     }
 

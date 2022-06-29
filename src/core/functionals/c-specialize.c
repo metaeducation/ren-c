@@ -112,7 +112,7 @@ REBCTX *Make_Context_For_Action_Push_Partials(
         const Cell *word_tail = ARR_TAIL(partials);
         const Cell *word = ARR_HEAD(partials);
         for (; word != word_tail; ++word)
-            Copy_Cell(DS_PUSH(), SPECIFIC(word));
+            Copy_Cell(PUSH(), SPECIFIC(word));
     }
 
     const REBKEY *tail;
@@ -159,7 +159,7 @@ REBCTX *Make_Context_For_Action_Push_Partials(
         //
         REBDSP dsp = highest_ordered_dsp;
         for (; dsp != lowest_ordered_dsp; --dsp) {
-            STKVAL(*) ordered = DS_AT(dsp);
+            StackValue(*) ordered = Data_Stack_At(dsp);
             if (VAL_WORD_SYMBOL(ordered) != symbol)
                 continue;  // just continuing this loop
 
@@ -218,7 +218,7 @@ REBCTX *Make_Context_For_Action(
     );
 
     Manage_Series(CTX_VARLIST(exemplar));  // !!! was needed before, review
-    DS_DROP_TO(lowest_ordered_dsp);
+    Drop_Data_Stack_To(lowest_ordered_dsp);
     return exemplar;
 }
 
@@ -234,7 +234,7 @@ REBCTX *Make_Context_For_Action(
 // The caller may provide information on the order in which refinements are
 // to be specialized, using the data stack.  These refinements should be
 // pushed in the *reverse* order of their invocation, so append/dup/part
-// has /DUP at DS_TOP, and /PART under it.  List stops at lowest_ordered_dsp.
+// has /DUP at TOP, and /PART under it.  List stops at lowest_ordered_dsp.
 //
 bool Specialize_Action_Throws(
     REBVAL *out,
@@ -304,7 +304,7 @@ bool Specialize_Action_Throws(
         DROP_GC_GUARD(exemplar);
 
         if (threw) {
-            DS_DROP_TO(lowest_ordered_dsp);
+            Drop_Data_Stack_To(lowest_ordered_dsp);
             return true;
         }
 
@@ -413,7 +413,7 @@ bool Specialize_Action_Throws(
 
         while (ordered_dsp != DSP) {
             ++ordered_dsp;
-            STKVAL(*) ordered = DS_AT(ordered_dsp);
+            StackValue(*) ordered = Data_Stack_At(ordered_dsp);
             if (not IS_WORD_BOUND(ordered)) {  // specialize :print/asdf
                 Refinify(ordered);  // used as refinement, report as such
                 fail (Error_Bad_Parameter_Raw(ordered));
@@ -433,7 +433,7 @@ bool Specialize_Action_Throws(
                 );
             }
         }
-        DS_DROP_TO(lowest_ordered_dsp);
+        Drop_Data_Stack_To(lowest_ordered_dsp);
 
         if (ARR_LEN(partials) == 0) {
             Free_Unmanaged_Series(partials);

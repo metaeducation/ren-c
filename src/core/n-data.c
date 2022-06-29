@@ -642,10 +642,10 @@ bool Get_Var_Push_Refinements_Throws(
                     fail (Error_Bad_Get_Group_Raw(var));
 
                 if (Do_Any_Array_At_Throws(out, at, at_specifier)) {
-                    DS_DROP_TO(dsp_orig);
+                    Drop_Data_Stack_To(dsp_orig);
                     return true;
                 }
-                Move_Cell(DS_PUSH(), out);
+                Move_Cell(PUSH(), out);
 
                 // By convention, picker steps quote the first item if it was a
                 // GROUP!.  It has to be somehow different because `('a).b` is
@@ -654,10 +654,10 @@ bool Get_Var_Push_Refinements_Throws(
                 // of a "steps" block needs to be "fetched" we quote it.
                 //
                 if (at == head)
-                    Quotify(DS_TOP, 1);
+                    Quotify(TOP, 1);
             }
             else
-                Derelativize(DS_PUSH(), at, at_specifier);
+                Derelativize(PUSH(), at, at_specifier);
         }
     }
     else if (IS_THE_BLOCK(var)) {
@@ -666,7 +666,7 @@ bool Get_Var_Push_Refinements_Throws(
         const Cell *head = VAL_ARRAY_AT(&tail, var);
         const Cell *at;
         for (at = head; at != tail; ++at)
-            Derelativize(DS_PUSH(), at, at_specifier);
+            Derelativize(PUSH(), at, at_specifier);
     }
     else
         fail (var);
@@ -674,7 +674,7 @@ bool Get_Var_Push_Refinements_Throws(
     REBDSP dsp_at = dsp_orig + 1;
 
   blockscope {
-    STKVAL(*) at = DS_AT(dsp_at);
+    StackValue(*) at = Data_Stack_At(dsp_at);
     if (IS_QUOTED(at)) {
         Copy_Cell(out, at);
         Unquotify(out, 1);
@@ -698,12 +698,12 @@ bool Get_Var_Push_Refinements_Throws(
     while (dsp_at != DSP + 1) {
         Move_Cell(temp, out);
         Quotify(temp, 1);
-        const void *ins = rebQ(cast(REBVAL*, DS_AT(dsp_at)));
+        const void *ins = rebQ(cast(REBVAL*, Data_Stack_At(dsp_at)));
         if (rebRunThrows(
             out,  // <-- output cell
             Lib(PICK_P), temp, ins
         )){
-            DS_DROP_TO(dsp_orig);
+            Drop_Data_Stack_To(dsp_orig);
             DROP_GC_GUARD(temp);
             fail (Error_No_Catch_For_Throw(FS_TOP));
         }
@@ -715,7 +715,7 @@ bool Get_Var_Push_Refinements_Throws(
     if (steps_out and steps_out != GROUPS_OK)
         Init_Any_Array(unwrap(steps_out), REB_THE_BLOCK, Pop_Stack_Values(dsp_orig));
     else
-        DS_DROP_TO(dsp_orig);
+        Drop_Data_Stack_To(dsp_orig);
 
     Decay_If_Isotope(out);  // !!! should not be possible, review
     return false;
@@ -951,9 +951,9 @@ bool Get_Path_Push_Refinements_Throws(
             // just skip it
         }
         else if (IS_WORD(at))
-            Init_Word(DS_PUSH(), VAL_WORD_SYMBOL(at));
+            Init_Word(PUSH(), VAL_WORD_SYMBOL(at));
         else if (IS_PATH(at) and IS_REFINEMENT(at))
-            Init_Word(DS_PUSH(), VAL_REFINEMENT_SYMBOL(at));
+            Init_Word(PUSH(), VAL_REFINEMENT_SYMBOL(at));
         else
             fail (at);
     }
@@ -1137,10 +1137,10 @@ bool Set_Var_Core_Updater_Throws(
                     fail (Error_Bad_Get_Group_Raw(var));
 
                 if (Do_Any_Array_At_Throws(temp, at, at_specifier)) {
-                    DS_DROP_TO(dsp_orig);
+                    Drop_Data_Stack_To(dsp_orig);
                     return true;
                 }
-                Move_Cell(DS_PUSH(), temp);
+                Move_Cell(PUSH(), temp);
 
                 // By convention, picker steps quote the first item if it was a
                 // GROUP!.  It has to be somehow different because `('a).b` is
@@ -1149,10 +1149,10 @@ bool Set_Var_Core_Updater_Throws(
                 // of a "steps" block needs to be "fetched" we quote it.
                 //
                 if (at == head)
-                    Quotify(DS_TOP, 1);
+                    Quotify(TOP, 1);
             }
             else
-                Derelativize(DS_PUSH(), at, at_specifier);
+                Derelativize(PUSH(), at, at_specifier);
         }
     }
     else if (IS_THE_BLOCK(var)) {
@@ -1161,7 +1161,7 @@ bool Set_Var_Core_Updater_Throws(
         const Cell *at;
         REBSPC *at_specifier = Derive_Specifier(var_specifier, var);
         for (at = head; at != tail; ++at)
-            Derelativize(DS_PUSH(), at, at_specifier);
+            Derelativize(PUSH(), at, at_specifier);
     }
     else
         fail (var);
@@ -1179,7 +1179,7 @@ bool Set_Var_Core_Updater_Throws(
     REBDSP dsp_at = dsp_orig + 1;
 
   blockscope {
-    STKVAL(*) at = DS_AT(dsp_at);
+    StackValue(*) at = Data_Stack_At(dsp_at);
     if (IS_QUOTED(at)) {
         Copy_Cell(out, at);
         Unquotify(out, 1);
@@ -1203,7 +1203,7 @@ bool Set_Var_Core_Updater_Throws(
     while (dsp_at != dsp_top) {
         Move_Cell(temp, out);
         Quotify(temp, 1);
-        const void *ins = rebQ(cast(REBVAL*, DS_AT(dsp_at)));
+        const void *ins = rebQ(cast(REBVAL*, Data_Stack_At(dsp_at)));
         if (rebRunThrows(
             out,  // <-- output cell
             Lib(PICK_P), temp, ins
@@ -1219,7 +1219,7 @@ bool Set_Var_Core_Updater_Throws(
 
     Move_Cell(temp, out);
     Quotify(temp, 1);
-    const void *ins = rebQ(cast(REBVAL*, DS_AT(dsp_at)));
+    const void *ins = rebQ(cast(REBVAL*, Data_Stack_At(dsp_at)));
     if (rebRunThrows(
         out,  // <-- output cell
         updater, temp, ins, rebQ(decayed)
@@ -1243,10 +1243,13 @@ bool Set_Var_Core_Updater_Throws(
             goto poke_again;
 
         // can't use POKE, need to use SET
-        if (not IS_WORD(DS_AT(dsp_orig + 1)))
+        if (not IS_WORD(Data_Stack_At(dsp_orig + 1)))
             fail ("Can't POKE back immediate value unless it's to a WORD!");
 
-        Copy_Cell(Sink_Word_May_Fail(DS_AT(dsp_orig + 1), SPECIFIED), decayed);
+        Copy_Cell(
+            Sink_Word_May_Fail(Data_Stack_At(dsp_orig + 1), SPECIFIED),
+            decayed
+        );
     }
   }
 
@@ -1256,7 +1259,7 @@ bool Set_Var_Core_Updater_Throws(
     if (steps_out and steps_out != GROUPS_OK)
         Init_Block(unwrap(steps_out), Pop_Stack_Values(dsp_orig));
     else
-        DS_DROP_TO(dsp_orig);
+        Drop_Data_Stack_To(dsp_orig);
 
     return false;
 }

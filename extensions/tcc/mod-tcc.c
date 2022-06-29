@@ -503,7 +503,7 @@ REBNATIVE(compile_p)
                 // back and fill in its dispatcher and TCC_State after the
                 // compilation...
                 //
-                Copy_Cell(DS_PUSH(), SPECIFIC(item));
+                Copy_Cell(PUSH(), SPECIFIC(item));
 
                 REBARR *details = ACT_DETAILS(VAL_ACTION(item));
                 Cell *source = ARR_AT(details, IDX_NATIVE_BODY);
@@ -554,7 +554,7 @@ REBNATIVE(compile_p)
         //
         if (REF(inspect)) {
             DROP_GC_GUARD(handle);
-            DS_DROP_TO(dsp_orig); // don't modify the collected user natives
+            Drop_Data_Stack_To(dsp_orig);  // don't modify collected natives
             return Init_Text(OUT, Pop_Molded_String(mo));
         }
 
@@ -644,7 +644,7 @@ REBNATIVE(compile_p)
     // their function pointers to substitute in for the dispatcher.
     //
     while (DSP != dsp_orig) {
-        REBACT *action = VAL_ACTION(DS_TOP);  // stack will hold action live
+        REBACT *action = VAL_ACTION(TOP);  // stack will hold action live
         assert(Is_User_Native(action));  // can't cache stack pointer, extract
 
         REBARR *details = ACT_DETAILS(action);
@@ -668,7 +668,7 @@ REBNATIVE(compile_p)
         INIT_ACT_DISPATCHER(action, c_func);
         Copy_Cell(ARR_AT(details, IDX_TCC_NATIVE_STATE), handle);
 
-        DS_DROP();
+        DROP();
     }
 
     DROP_GC_GUARD(handle);

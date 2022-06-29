@@ -56,7 +56,7 @@ void Snap_State_Core(struct Reb_State *s)
 //
 void Rollback_Globals_To_State(struct Reb_State *s)
 {
-    DS_DROP_TO(s->dsp);
+    Drop_Data_Stack_To(s->dsp);
 
     // Free any manual series that were extant (e.g. Make_Series() nodes
     // which weren't created with NODE_FLAG_MANAGED and were not transitioned
@@ -105,7 +105,7 @@ void Assert_State_Balanced_Debug(
 ){
     if (s->dsp != DSP) {
         printf(
-            "DS_PUSH()x%d without DS_DROP()\n",
+            "PUSH()x%d without DROP()\n",
             cast(int, DSP - s->dsp)
         );
         panic_at (nullptr, file, line);
@@ -285,7 +285,7 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
     // but for this debug setting we can hope it will just not run them.
     //
     // Set_Location_Of_Error() uses stack, so this has to be done first, else
-    // the DS_PUSH() will warn that there is stack outstanding.
+    // the PUSH() will warn that there is stack outstanding.
     //
     TG_Stack_Outstanding = 0;
   #endif
@@ -444,14 +444,14 @@ void Set_Location_Of_Error(
         if (Is_Action_Frame_Fulfilling(f))
             continue;
 
-        Get_Frame_Label_Or_Nulled(DS_PUSH(), f);
+        Get_Frame_Label_Or_Nulled(PUSH(), f);
 
         // !!! We can't push a NULL to stack to pop in block.  BLANK! is one
         // option...it's not as informative as (anonymous) but also takes up
         // less space, so people might come to appreciate it.  Review.
         //
-        if (Is_Nulled(DS_TOP))
-            Init_Blank(DS_TOP);
+        if (Is_Nulled(TOP))
+            Init_Blank(TOP);
     }
     Init_Block(&vars->where, Pop_Stack_Values(dsp_orig));
 
@@ -1111,10 +1111,10 @@ REBCTX *Error_Isotope_Arg(REBFRM *f, const REBPAR *param)
     //
     REBVAL *arg = FRM_ARG(f, index);
     assert(Is_Isotope(arg));
-    Copy_Cell(DS_PUSH(), arg);
-    Reify_Isotope(DS_TOP);
+    Copy_Cell(PUSH(), arg);
+    Reify_Isotope(TOP);
 
-    return Error_Isotope_Arg_Raw(label, param_name, DS_TOP);
+    return Error_Isotope_Arg_Raw(label, param_name, TOP);
 }
 
 

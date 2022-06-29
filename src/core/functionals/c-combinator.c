@@ -184,17 +184,17 @@ REBARR *Expanded_Combinator_Spec(const REBVAL *original)
     REBSPC *specifier = VAL_SPECIFIER(original);
 
     if (IS_TEXT(item)) {
-        Derelativize(DS_PUSH(), item, specifier);  // {combinator description}
+        Derelativize(PUSH(), item, specifier);  // {combinator description}
         if (item == tail) fail("too few combinator args");
         ++item;
     }
-    Derelativize(DS_PUSH(), item, specifier);  // return:
+    Derelativize(PUSH(), item, specifier);  // return:
     if (item == tail) fail("too few combinator args");
     ++item;
-    Derelativize(DS_PUSH(), item, specifier);  // "return description"
+    Derelativize(PUSH(), item, specifier);  // "return description"
     if (item == tail) fail("too few combinator args");
     ++item;
-    Derelativize(DS_PUSH(), item, specifier);  // [return type block]
+    Derelativize(PUSH(), item, specifier);  // [return type block]
     if (item == tail) fail("too few combinator args");
     ++item;
 
@@ -231,7 +231,7 @@ REBARR *Expanded_Combinator_Spec(const REBVAL *original)
   }
 
     for (; item != tail; ++item) {
-        Derelativize(DS_PUSH(), item, specifier);  // everything else
+        Derelativize(PUSH(), item, specifier);  // everything else
     }
 
     // The scanned material is not bound.  The natives were bound into the

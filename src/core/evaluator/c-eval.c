@@ -1288,7 +1288,7 @@ REB_R Evaluator_Executor(REBFRM *f)
                     fail ("Can't circle more than one multi-return result");
                 }
                 REBVAL *let = rebValue("let temp");  // have to fabricate var
-                Move_Cell(DS_PUSH(), let);
+                Move_Cell(PUSH(), let);
                 rebRelease(let);
                 dsp_circled = DSP;
                 continue;
@@ -1300,8 +1300,8 @@ REB_R Evaluator_Executor(REBFRM *f)
             ){
                 if (dsp_circled != 0)
                     goto too_many_circled;
-                Derelativize(DS_PUSH(), check, check_specifier);
-                Plainify(DS_TOP);
+                Derelativize(PUSH(), check, check_specifier);
+                Plainify(TOP);
                 dsp_circled = DSP;
                 continue;
             }
@@ -1315,8 +1315,8 @@ REB_R Evaluator_Executor(REBFRM *f)
             // !!! Should both @(^) and ^(@) be allowed?
             //
             if (IS_META(check)) {
-                Init_Blackhole(DS_PUSH());
-                Set_Cell_Flag(DS_TOP, STACK_NOTE_METARETURN);
+                Init_Blackhole(PUSH());
+                Set_Cell_Flag(TOP, STACK_NOTE_METARETURN);
                 continue;
             }
             if (
@@ -1324,9 +1324,9 @@ REB_R Evaluator_Executor(REBFRM *f)
                 or IS_META_PATH(check)
                 or IS_META_TUPLE(check)
             ){
-                Derelativize(DS_PUSH(), check, check_specifier);
-                Plainify(DS_TOP);
-                Set_Cell_Flag(DS_TOP, STACK_NOTE_METARETURN);
+                Derelativize(PUSH(), check, check_specifier);
+                Plainify(TOP);
+                Set_Cell_Flag(TOP, STACK_NOTE_METARETURN);
                 continue;
             }
 
@@ -1338,7 +1338,7 @@ REB_R Evaluator_Executor(REBFRM *f)
                 or IS_META_GROUP(check)
             ){
                 if (Do_Any_Array_At_Throws(SPARE, check, check_specifier)) {
-                    DS_DROP_TO(f->baseline.dsp);
+                    Drop_Data_Stack_To(f->baseline.dsp);
                     goto return_thrown;
                 }
                 item = SPARE;
@@ -1349,7 +1349,7 @@ REB_R Evaluator_Executor(REBFRM *f)
                 item_specifier = check_specifier;
             }
             if (IS_BLANK(item)) {
-                Init_Blank(DS_PUSH());
+                Init_Blank(PUSH());
             }
             else if (Is_Blackhole(item)) {
                 //
@@ -1359,11 +1359,11 @@ REB_R Evaluator_Executor(REBFRM *f)
                 // fabricate a LET variable.
                 //
                 if (DSP == f->baseline.dsp or not IS_THE_GROUP(check))
-                    Init_Blackhole(DS_PUSH());
+                    Init_Blackhole(PUSH());
                 else {
                     REBVAL *let = rebValue("let temp");
                     assert(IS_WORD(let));
-                    Move_Cell(DS_PUSH(), let);
+                    Move_Cell(PUSH(), let);
                     rebRelease(let);
                 }
             }
@@ -1372,7 +1372,7 @@ REB_R Evaluator_Executor(REBFRM *f)
                 or IS_PATH(item)
                 or IS_TUPLE(item)
             ){
-                Derelativize(DS_PUSH(), item, item_specifier);
+                Derelativize(PUSH(), item, item_specifier);
             }
             else
                 fail ("SET-BLOCK! elements are WORD/PATH/TUPLE/BLANK/ISSUE");
@@ -1380,7 +1380,7 @@ REB_R Evaluator_Executor(REBFRM *f)
             if (IS_THE_GROUP(check))
                 dsp_circled = DSP;
             else if (IS_META_GROUP(check))
-                Set_Cell_Flag(DS_TOP, STACK_NOTE_METARETURN);
+                Set_Cell_Flag(TOP, STACK_NOTE_METARETURN);
         }
 
         // By default, the ordinary return result will be returned.  Indicate
@@ -1406,7 +1406,7 @@ REB_R Evaluator_Executor(REBFRM *f)
             f->feed,
             error_on_deferred
         )){
-            DS_DROP_TO(f->baseline.dsp);
+            Drop_Data_Stack_To(f->baseline.dsp);
             goto return_thrown;
         }
         if (not IS_FRAME(SPARE))  // can return QUOTED! if not action atm
@@ -1431,8 +1431,8 @@ REB_R Evaluator_Executor(REBFRM *f)
                 continue;
             if (VAL_PARAM_CLASS(param) != PARAM_CLASS_OUTPUT)
                 continue;
-            if (not IS_BLANK(DS_AT(dsp_output))) {
-                Copy_Cell(var, DS_AT(dsp_output));
+            if (not IS_BLANK(Data_Stack_At(dsp_output))) {
+                Copy_Cell(var, Data_Stack_At(dsp_output));
                 Set_Var_May_Fail(var, SPECIFIED, NONE_ISOTOPE);
             }
             ++dsp_output;
@@ -1507,12 +1507,12 @@ REB_R Evaluator_Executor(REBFRM *f)
         // in case there are GROUP! evaluations in the assignment; though that
         // needs more thinking (e.g. what if they throw?)
         //
-        Copy_Cell(SPARE, DS_AT(f->baseline.dsp + 1));
+        Copy_Cell(SPARE, Data_Stack_At(f->baseline.dsp + 1));
         if (IS_BLANK(SPARE))
             Init_Isotope(OUT, Canon(BLANK));
         else {
             if (Get_Cell_Flag(
-                DS_AT(f->baseline.dsp + 1),
+                Data_Stack_At(f->baseline.dsp + 1),
                 STACK_NOTE_METARETURN)
             ){
                 Reify_Eval_Out_Meta(OUT);
@@ -1541,19 +1541,19 @@ REB_R Evaluator_Executor(REBFRM *f)
         REBDSP dsp = DSP;
         for (; dsp != f->baseline.dsp + 1; --dsp) {
             if (
-                Get_Cell_Flag(DS_AT(dsp), STACK_NOTE_METARETURN)
+                Get_Cell_Flag(Data_Stack_At(dsp), STACK_NOTE_METARETURN)
                 or dsp_circled == dsp
             ){
                 DECLARE_LOCAL (temp);
                 PUSH_GC_GUARD(temp);
-                Copy_Cell(SPARE, DS_AT(dsp));  // see note on GROUP! eval
+                Copy_Cell(SPARE, Data_Stack_At(dsp));  // see GROUP! eval note
                 Get_Var_May_Fail(
                     temp,
                     SPARE,
                     SPECIFIED,
                     true  // any
                 );
-                if (Get_Cell_Flag(DS_AT(dsp), STACK_NOTE_METARETURN))
+                if (Get_Cell_Flag(Data_Stack_At(dsp), STACK_NOTE_METARETURN))
                     Meta_Quotify(temp);
                 Set_Var_May_Fail(
                     SPARE, SPECIFIED,
@@ -1565,7 +1565,7 @@ REB_R Evaluator_Executor(REBFRM *f)
             }
         }
 
-        DS_DROP_TO(f->baseline.dsp);
+        Drop_Data_Stack_To(f->baseline.dsp);
 
         // We've just changed the values of variables, and these variables
         // might be coming up next.  Consider:

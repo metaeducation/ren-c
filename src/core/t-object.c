@@ -87,7 +87,7 @@ static void Append_To_Context(REBVAL *context, REBVAL *arg)
             symbol,
             Collector_Index_If_Pushed(&collector)
         )){
-            Init_Word(DS_PUSH(), VAL_WORD_SYMBOL(word));
+            Init_Word(PUSH(), VAL_WORD_SYMBOL(word));
         }
         if (word + 1 == tail)  // catch malformed case with no value (#708)
             break;
@@ -98,8 +98,8 @@ static void Append_To_Context(REBVAL *context, REBVAL *arg)
     REBLEN num_added = Collector_Index_If_Pushed(&collector) - first_new_index;
     Expand_Context(c, num_added);
 
-    STKVAL(*) new_word = DS_AT(collector.dsp_orig) + first_new_index;
-    for (; new_word != DS_TOP + 1; ++new_word)
+    StackValue(*) new_word = Data_Stack_At(collector.dsp_orig) + first_new_index;
+    for (; new_word != TOP + 1; ++new_word)
         Init_None(Append_Context(c, nullptr, VAL_WORD_SYMBOL(new_word)));
   }
   }  // end the non-module part
@@ -263,9 +263,9 @@ void Init_Evars(EVARS *e, noquote(const Cell*) v) {
                     found = patch;  // will match if not overridden */
             }
             if (found) {
-                Init_Any_Word(DS_PUSH(), REB_WORD, *psym);
-                mutable_BINDING(DS_TOP) = found;
-                INIT_VAL_WORD_INDEX(DS_TOP, INDEX_ATTACHED);
+                Init_Any_Word(PUSH(), REB_WORD, *psym);
+                mutable_BINDING(TOP) = found;
+                INIT_VAL_WORD_INDEX(TOP, INDEX_ATTACHED);
             }
         }
 

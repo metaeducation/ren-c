@@ -538,7 +538,7 @@ REBTYPE(Varargs)
             }
             if (Is_Void(OUT))
                 break;
-            Move_Cell(DS_PUSH(), OUT);
+            Move_Cell(PUSH(), OUT);
         }
 
         // !!! What if caller wanted a REB_GROUP, REB_PATH, or an /INTO?

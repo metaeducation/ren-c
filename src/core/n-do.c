@@ -724,7 +724,7 @@ REBNATIVE(applique)
     Manage_Series(CTX_VARLIST(exemplar));
     Init_Frame(frame, exemplar, VAL_ACTION_LABEL(action));
 
-    DS_DROP_TO(BASELINE->dsp);  // refinement order not important here
+    Drop_Data_Stack_To(BASELINE->dsp);  // refinement order not important here
 
     Virtual_Bind_Deep_To_Existing_Context(
         def,
@@ -828,7 +828,7 @@ REBNATIVE(apply)
     Manage_Series(CTX_VARLIST(exemplar)); // Putting into a frame
     Init_Frame(frame, exemplar, VAL_ACTION_LABEL(action));  // GC guarded
 
-    DS_DROP_TO(BASELINE->dsp);  // not interested in partials ordering
+    Drop_Data_Stack_To(BASELINE->dsp);  // not interested in partials ordering
 
     DECLARE_FRAME_AT (
         f,

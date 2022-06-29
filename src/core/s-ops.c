@@ -243,8 +243,8 @@ REBARR *Split_Lines(const REBVAL *str)
             continue;
         }
 
-        Init_Text(DS_PUSH(), Pop_Molded_String(mo));
-        Set_Cell_Flag(DS_TOP, NEWLINE_BEFORE);
+        Init_Text(PUSH(), Pop_Molded_String(mo));
+        Set_Cell_Flag(TOP, NEWLINE_BEFORE);
 
         Push_Mold(mo);
 
@@ -263,8 +263,8 @@ REBARR *Split_Lines(const REBVAL *str)
     if (STR_SIZE(mo->series) == mo->offset)
         Drop_Mold(mo);
     else {
-        Init_Text(DS_PUSH(), Pop_Molded_String(mo));
-        Set_Cell_Flag(DS_TOP, NEWLINE_BEFORE);
+        Init_Text(PUSH(), Pop_Molded_String(mo));
+        Set_Cell_Flag(TOP, NEWLINE_BEFORE);
     }
 
     return Pop_Stack_Values_Core(dsp_orig, ARRAY_FLAG_NEWLINE_AT_TAIL);

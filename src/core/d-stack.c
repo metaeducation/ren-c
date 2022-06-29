@@ -114,7 +114,7 @@ REBVAL *Init_Near_For_Frame(Cell *out, REBFRM *f)
 
     REBINT start = FRM_INDEX(f) - 3;
     if (start > 0)
-        Init_Word(DS_PUSH(), Canon(ELLIPSIS_1));
+        Init_Word(PUSH(), Canon(ELLIPSIS_1));
     else if (start < 0)
         start = 0;
 
@@ -123,7 +123,7 @@ REBVAL *Init_Near_For_Frame(Cell *out, REBFRM *f)
     const Cell *item = ARR_AT(FRM_ARRAY(f), start);
     for (; item != tail and count < 6; ++item, ++count) {
         assert(not Is_Nulled(item));  // can't be in arrays, API won't splice
-        Derelativize(DS_PUSH(), item, f_specifier);
+        Derelativize(PUSH(), item, f_specifier);
 
         if (count == FRM_INDEX(f) - start - 1) {
             //
@@ -133,12 +133,12 @@ REBVAL *Init_Near_For_Frame(Cell *out, REBFRM *f)
             // mean "error source is to the left" or just "frame is at a
             // breakpoint at that position".
             //
-            Init_Word(DS_PUSH(), Canon(_P_P));
+            Init_Word(PUSH(), Canon(_P_P));
         }
     }
 
     if (item != tail)
-        Init_Word(DS_PUSH(), Canon(ELLIPSIS_1));
+        Init_Word(PUSH(), Canon(ELLIPSIS_1));
 
     // !!! This code can be called on an executing frame, such as when an
     // error happens in that frame.  Or it can be called on a pending frame

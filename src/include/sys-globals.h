@@ -227,7 +227,7 @@ TVAR uintptr_t TG_Stack_Limit;    // Limit address for CPU stack.
 #endif
 
 #if DEBUG_EXTANT_STACK_POINTERS
-    TVAR REBLEN TG_Stack_Outstanding;  // how many DS_AT()/DS_TOP refs extant
+    TVAR REBLEN TG_Stack_Outstanding;  // # of Data_Stack_At()/TOP refs extant
 #endif
 
 #if DEBUG_MONITOR_SERIES

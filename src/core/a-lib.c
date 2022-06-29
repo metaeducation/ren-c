@@ -962,8 +962,8 @@ void RL_rebPushContinuation(
 
     REBDSP dsp_orig = DSP;
     while (Not_End(feed->value)) {
-        Derelativize(DS_PUSH(), feed->value, FEED_SPECIFIER(feed));
-        Set_Cell_Flag(DS_TOP, UNEVALUATED);
+        Derelativize(PUSH(), feed->value, FEED_SPECIFIER(feed));
+        Set_Cell_Flag(TOP, UNEVALUATED);
         Fetch_Next_In_Feed(feed);
     }
     // Note: exhausting feed should take care of the va_end()

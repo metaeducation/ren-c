@@ -474,16 +474,16 @@ void Reify_Va_To_Array_In_Feed(
     assert(FEED_IS_VARIADIC(feed));
 
     if (truncated) {
-        DS_PUSH();
-        Init_Bad_Word(DS_TOP, Canon(OPTIMIZED_OUT));
+        PUSH();
+        Init_Bad_Word(TOP, Canon(OPTIMIZED_OUT));
     }
 
     REBLEN index;
 
     if (Not_End(feed->value)) {
         do {
-            Derelativize(DS_PUSH(), feed->value, FEED_SPECIFIER(feed));
-            assert(not Is_Nulled(DS_TOP));
+            Derelativize(PUSH(), feed->value, FEED_SPECIFIER(feed));
+            assert(not Is_Nulled(TOP));
             Fetch_Next_In_Feed(feed);
         } while (Not_End(feed->value));
 
@@ -678,15 +678,15 @@ static void Mark_Root_Series(void)
 // test is concerned to indicate unused capacity.  So the values are good
 // for the testing purpose, yet the GC doesn't want to consider those to be
 // "live" references.  So rather than to a full Queue_Mark_Array_Deep() on
-// the capacity of the data stack's underlying array, it begins at DS_TOP.
+// the capacity of the data stack's underlying array, it begins at TOP.
 //
 static void Mark_Data_Stack(void)
 {
     const Cell *head = ARR_HEAD(DS_Array);
-    assert(IS_TRASH(head));  // DS_AT(0) is deliberately invalid
+    assert(IS_TRASH(head));  // Data_Stack_At(0) is deliberately invalid
 
     REBVAL *stackval = DS_Movable_Top;
-    for (; stackval != head; --stackval)  // stop before DS_AT(0)
+    for (; stackval != head; --stackval)  // stop before Data_Stack_At(0)
         Queue_Mark_Value_Deep(stackval);
 
     Propagate_All_GC_Marks();

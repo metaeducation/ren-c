@@ -71,22 +71,22 @@
 //=//// EXTANT STACK POINTERS /////////////////////////////////////////////=//
 //
 // See %sys-stack.h for a deeper explanation.  This has to be declared in
-// order to put in one of noquote(const Cell*)'s implicit constructors.  Because
-// having the STKVAL(*) have a user-defined conversion to REBVAL* won't
+// order to put in one of noquote(const Cell*)s implicit constructors.  Because
+// having the StackValue(*) have a user-defined conversion to REBVAL* won't
 // get that...and you can't convert to both REBVAL* and noquote(const Cell*) as
 // that would be ambiguous.
 //
 // Even with this definition, the intersecting needs of DEBUG_CHECK_CASTS and
 // DEBUG_EXTANT_STACK_POINTERS means there will be some cases where distinct
 // overloads of REBVAL* vs. noquote(const Cell*) will wind up being ambiguous.
-// For instance, VAL_DECIMAL(STKVAL(*)) can't tell which checked overload
+// For instance, VAL_DECIMAL(StackValue(*)) can't tell which checked overload
 // to use.  In such cases, you have to cast, e.g. VAL_DECIMAL(VAL(stackval)).
 //
 #if (! DEBUG_EXTANT_STACK_POINTERS)
-    #define STKVAL(p) REBVAL*
+    #define StackValue(p) REBVAL*
 #else
     struct Reb_Stack_Value_Ptr;
-    #define STKVAL(p) Reb_Stack_Value_Ptr
+    #define StackValue(p) Reb_Stack_Value_Ptr
 #endif
 
 

@@ -248,8 +248,8 @@ REB_R Action_Executor(REBFRM *f)
         // parameters at the callsite.
 
         if (DSP != f->baseline.dsp) {  // reorderings or refinements pushed
-            STKVAL(*) ordered = DS_TOP;
-            STKVAL(*) lowest_ordered = DS_AT(f->baseline.dsp);
+            StackValue(*) ordered = TOP;
+            StackValue(*) lowest_ordered = Data_Stack_At(f->baseline.dsp);
             const REBSTR *param_symbol = KEY_SYMBOL(KEY);
 
             for (; ordered != lowest_ordered; --ordered) {
@@ -686,28 +686,28 @@ REB_R Action_Executor(REBFRM *f)
     // second time through, and we were just jumping up to check the
     // parameters in response to a R_REDO_CHECKED; if so, skip this.
     //
-    if (DSP != f->baseline.dsp and IS_WORD(DS_TOP)) {
+    if (DSP != f->baseline.dsp and IS_WORD(TOP)) {
 
       next_pickup:
 
-        assert(IS_WORD(DS_TOP));
+        assert(IS_WORD(TOP));
 
-        if (not IS_WORD_BOUND(DS_TOP)) {  // the loop didn't index it
-            Refinify(DS_TOP);  // used as refinement, so report that way
-            fail (Error_Bad_Parameter_Raw(DS_TOP));  // so duplicate or junk
+        if (not IS_WORD_BOUND(TOP)) {  // the loop didn't index it
+            Refinify(TOP);  // used as refinement, so report that way
+            fail (Error_Bad_Parameter_Raw(TOP));  // so duplicate or junk
         }
 
         // FRM_ARGS_HEAD offsets are 0-based, while index is 1-based.
         // But +1 is okay, because we want the slots after the refinement.
         //
         REBINT offset =
-            VAL_WORD_INDEX(DS_TOP) - (ARG - FRM_ARGS_HEAD(f)) - 1;
+            VAL_WORD_INDEX(TOP) - (ARG - FRM_ARGS_HEAD(f)) - 1;
         KEY += offset;
         ARG += offset;
         PARAM += offset;
 
-        assert(VAL_WORD_SYMBOL(DS_TOP) == KEY_SYMBOL(KEY));
-        DS_DROP();
+        assert(VAL_WORD_SYMBOL(TOP) == KEY_SYMBOL(KEY));
+        DROP();
 
         if (Is_Typeset_Empty(PARAM)) {  // no callsite arg, just drop
             if (DSP != f->baseline.dsp)
@@ -1180,7 +1180,7 @@ REB_R Action_Executor(REBFRM *f)
     }
 
     Drop_Action(f);
-    DS_DROP_TO(f->baseline.dsp);  // drop unprocessed stack refinements/chains
+    Drop_Data_Stack_To(f->baseline.dsp);  // drop unprocessed refinements/chains
 
     return R_THROWN;
 }}
@@ -1296,7 +1296,7 @@ void Push_Action(
         const Cell *word_tail = ARR_TAIL(partials);
         const REBVAL *word = SPECIFIC(ARR_HEAD(partials));
         for (; word != word_tail; ++word)
-            Copy_Cell(DS_PUSH(), word);
+            Copy_Cell(PUSH(), word);
     }
 
     assert(NOT_SERIES_FLAG(f->varlist, MANAGED));

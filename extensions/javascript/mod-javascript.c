@@ -379,8 +379,8 @@ EXTERN_C intptr_t RL_rebPromise(void *p, va_list *vaptr)
 
     REBDSP dsp_orig = DSP;
     while (Not_End(feed->value)) {
-        Derelativize(DS_PUSH(), feed->value, FEED_SPECIFIER(feed));
-        Set_Cell_Flag(DS_TOP, UNEVALUATED);
+        Derelativize(PUSH(), feed->value, FEED_SPECIFIER(feed));
+        Set_Cell_Flag(TOP, UNEVALUATED);
         Fetch_Next_In_Feed(feed);
     }
     // Note: exhausting feed should take care of the va_end()
@@ -1138,8 +1138,8 @@ REBNATIVE(js_stacklimit)
 
     REBDSP dsp_orig = DSP;
 
-    Init_Integer(DS_PUSH(), cast(uintptr_t, &dsp_orig));  // local pointer
-    Init_Integer(DS_PUSH(), TG_Stack_Limit);
+    Init_Integer(PUSH(), cast(uintptr_t, &dsp_orig));  // local pointer
+    Init_Integer(PUSH(), TG_Stack_Limit);
     return Init_Block(OUT, Pop_Stack_Values(dsp_orig));
 }
 

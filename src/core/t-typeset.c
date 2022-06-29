@@ -95,8 +95,8 @@ void Startup_Typesets(void)
 
     REBINT n;
     for (n = 0; Typesets[n].sym != 0; n++) {
-        Init_Typeset(DS_PUSH(), Typesets[n].bits);
-        Copy_Cell(Force_Lib_Var(Typesets[n].sym), DS_TOP);
+        Init_Typeset(PUSH(), Typesets[n].bits);
+        Copy_Cell(Force_Lib_Var(Typesets[n].sym), TOP);
     }
 
     // !!! Why does the system access the typesets through Lib_Context, vs.
@@ -324,7 +324,7 @@ REBARR *Typeset_To_Array(const REBVAL *tset)
                 // that they can take optional values.  Hence this can occur
                 // in typesets coming from ACTION!
                 //
-                Copy_Cell(DS_PUSH(), Root_Opt_Tag);
+                Copy_Cell(PUSH(), Root_Opt_Tag);
             }
             else if (n == REB_CUSTOM) {
                 //
@@ -332,10 +332,10 @@ REBARR *Typeset_To_Array(const REBVAL *tset)
                 // support in the 64-bit representation for individual
                 // custom types.  So all custom types typecheck together.
                 //
-                Init_Bad_Word(DS_PUSH(), Canon(CUSTOM_X));
+                Init_Bad_Word(PUSH(), Canon(CUSTOM_X));
             }
             else
-                Init_Builtin_Datatype(DS_PUSH(), cast(enum Reb_Kind, n));
+                Init_Builtin_Datatype(PUSH(), cast(enum Reb_Kind, n));
         }
     }
 

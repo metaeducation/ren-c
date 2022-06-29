@@ -50,8 +50,8 @@
 //
 //=// NOTES ///////////////////////////////////////////////////////////////=//
 //
-// * Do not store the result of a DS_PUSH() directly into a REBVAL* variable.
-//   Instead, use the STKVAL(*) type, which makes sure that you don't try
+// * Do not store the result of a PUSH() directly into a REBVAL* variable.
+//   Instead, use the StackValue(*) type, which makes sure that you don't try
 //   to hold a parameter across another push or an evaluation.
 //
 // * The data stack is limited in size, and this means code that uses it may
@@ -67,11 +67,11 @@
 //   can be used to back FRAME! contexts.
 //
 
-// The result of DS_PUSH() and DS_TOP is not REBVAL*, but STKVAL(*).  In an
+// The result of PUSH() and TOP is not REBVAL*, but StackValue(*).  In an
 // unchecked build this is just a REBVAL*, but with DEBUG_EXTANT_STACK_POINTERS
 // it becomes a checked C++ wrapper class...which keeps track of how many
 // such stack values are extant.  If the number is not zero, then you will
-// get an assert if you try to DS_PUSH() or DS_DROP(), as well as if you
+// get an assert if you try to PUSH() or DROP(), as well as if you
 // try to run any evaluations.
 //
 // NOTE: Due to the interactions of longjmp() with crossing C++ destructors,
@@ -169,21 +169,22 @@
 #define DSP \
     cast(REBDSP, DS_Index) // cast helps stop ++DSP, etc.
 
-// DS_TOP is the most recently pushed item.
+// TOP is the most recently pushed item.
 //
-#define DS_TOP \
-    cast(STKVAL(*), DS_Movable_Top) // cast helps stop ++DS_TOP, etc.
+#define TOP \
+    cast(StackValue(*), DS_Movable_Top) // cast helps stop ++TOP, etc.
 
-// DS_AT accesses value at given stack location.  It is allowed to point at
-// a stack location that is an end, e.g. DS_AT(dsp + 1), because that location
-// may be used as the start of a copy which is ultimately of length 0.
+// Data_Stack_At() accesses value at given stack location.  It is allowed to
+// point at a stack location that is an end, e.g. Data_Stack_At(dsp + 1),
+// because that location may be used as the start of a copy which is ultimately
+// of length 0.
 //
 // We use the fact that the data stack is always dynamic to avoid having to
 // check if it is or not.  Although the stack can only hold fully specified
-// values, someone may also DS_PUSH() trash and then initialize it with
-// DS_AT(), so we don't check it with SPECIFIC() here.
+// values, someone may also PUSH() trash and then initialize it with
+// Data_Stack_At(), so we don't check it with SPECIFIC() here.
 //
-inline static STKVAL(*) DS_AT(REBDSP d) {
+inline static StackValue(*) Data_Stack_At(REBDSP d) {
     REBVAL *at = cast(REBVAL*, DS_Array->content.dynamic.data) + d;
     assert(
         ((at->header.bits & NODE_FLAG_CELL) and d <= (DSP + 1))
@@ -212,9 +213,9 @@ inline static STKVAL(*) DS_AT(REBDSP d) {
 
 #define STACK_EXPAND_BASIS 128
 
-// Note: DS_Movable_Top is just DS_TOP, but accessing DS_TOP asserts on ENDs
+// Note: DS_Movable_Top is just TOP, but accessing TOP asserts on ENDs
 //
-inline static STKVAL(*) DS_PUSH(void) {
+inline static StackValue(*) PUSH(void) {
   #if DEBUG_EXTANT_STACK_POINTERS
     assert(TG_Stack_Outstanding == 0);  // push may disrupt any extant values
   #endif
@@ -235,22 +236,22 @@ inline static STKVAL(*) DS_PUSH(void) {
 // use with an Init_Xxx() routine on the next push.
 //
 
-inline static void DS_DROP(void) {
+inline static void DROP(void) {
   #if DEBUG_EXTANT_STACK_POINTERS
     assert(TG_Stack_Outstanding == 0);  // in the future, pop may disrupt
   #endif
-    RESET(DS_TOP);
+    RESET(TOP);
     --DS_Index;
     --DS_Movable_Top;
 }
 
-inline static void DS_DROP_TO(REBDSP dsp) {
+inline static void Drop_Data_Stack_To(REBDSP dsp) {
   #if DEBUG_EXTANT_STACK_POINTERS
     assert(TG_Stack_Outstanding == 0);  // in the future, pop may disrupt
   #endif
     assert(DSP >= dsp);
     while (DSP != dsp)
-        DS_DROP();
+        DROP();
 }
 
 // If Pop_Stack_Values_Core is used ARRAY_HAS_FILE_LINE, it means the system

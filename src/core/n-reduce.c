@@ -150,11 +150,11 @@ REBNATIVE(reduce)
     if (Is_Isotope(OUT))
         return FAIL(Error_Bad_Isotope(OUT));
 
-    Move_Cell(DS_PUSH(), OUT);
+    Move_Cell(PUSH(), OUT);
     SUBFRAME->baseline.dsp += 1;  // subframe must be adjusted, see [3]
 
     if (Get_Cell_Flag(v, NEWLINE_BEFORE))  // propagate cached newline, see [2]
-        Set_Cell_Flag(DS_TOP, NEWLINE_BEFORE);
+        Set_Cell_Flag(TOP, NEWLINE_BEFORE);
 
     goto next_reduce_step;
 
@@ -385,7 +385,7 @@ static Value* Finalize_Composer_Frame(
     const Cell *composee  // special handling if the output kind is a sequence
 ){
     if (Is_Failure(out)) {
-        DS_DROP_TO(composer_frame->baseline.dsp);
+        Drop_Data_Stack_To(composer_frame->baseline.dsp);
         return out;
     }
 
@@ -466,8 +466,8 @@ static Value* Finalize_Composer_Frame(
 //               thing3
 //           ]
 //
-// 5. At the end of the composer, we do not DS_DROP_TO() and the frame will
-//    still be alive for the caller.  This lets them have access to this
+// 5. At the end of the composer, we do not Drop_Data_Stack_To() and the frame
+//    will still be alive for the caller.  This lets them have access to this
 //    frame's BASELINE->dsp, so it knows how many items were pushed...and it
 //    also means the caller can decide if they want the accrued items or not
 //    depending on the `changed` field in the frame.
@@ -531,7 +531,7 @@ REB_R Composer_Executor(REBFRM *f)
         goto finished;
 
     if (not ANY_ARRAYLIKE(f_value)) {  // won't substitute/recurse
-        Derelativize(DS_PUSH(), f_value, f_specifier);  // keep newline flag
+        Derelativize(PUSH(), f_value, f_specifier);  // keep newline flag
         goto handle_next_item;
     }
 
@@ -573,7 +573,7 @@ REB_R Composer_Executor(REBFRM *f)
 
         // compose [[(1 + 2)] (3 + 4)] => [[(1 + 2)] 7]  ; non-deep
         //
-        Derelativize(DS_PUSH(), f_value, f_specifier);  // keep newline flag
+        Derelativize(PUSH(), f_value, f_specifier);  // keep newline flag
         goto handle_next_item;
     }
 
@@ -656,30 +656,30 @@ REB_R Composer_Executor(REBFRM *f)
 
     if (Is_Nulled(OUT)) {
         assert(group_quotes != 0);  // handled above
-        Init_Nulled(DS_PUSH());
+        Init_Nulled(PUSH());
     }
     else
-        Copy_Cell(DS_PUSH(), OUT);  // can't stack eval direct
+        Copy_Cell(PUSH(), OUT);  // can't stack eval direct
 
     if (group_heart == REB_SET_GROUP)
-        Setify(DS_TOP);
+        Setify(TOP);
     else if (group_heart == REB_GET_GROUP)
-        Getify(DS_TOP);
+        Getify(TOP);
     else if (group_heart == REB_META_GROUP)
-        Metafy(DS_TOP);
+        Metafy(TOP);
     else if (group_heart == REB_THE_GROUP)
-        Theify(DS_TOP);
+        Theify(TOP);
     else
         assert(group_heart == REB_GROUP);
 
-    Quotify(DS_TOP, group_quotes);  // match original quotes
+    Quotify(TOP, group_quotes);  // match original quotes
 
     // Use newline intent from the GROUP! in the compose pattern
     //
     if (Get_Cell_Flag(f_value, NEWLINE_BEFORE))
-        Set_Cell_Flag(DS_TOP, NEWLINE_BEFORE);
+        Set_Cell_Flag(TOP, NEWLINE_BEFORE);
     else
-        Clear_Cell_Flag(DS_TOP, NEWLINE_BEFORE);
+        Clear_Cell_Flag(TOP, NEWLINE_BEFORE);
 
     f->u.compose.changed = true;
     goto handle_next_item;
@@ -699,7 +699,7 @@ REB_R Composer_Executor(REBFRM *f)
         //
         // Quoted items lose a quote level and get pushed.
         //
-        Unquotify(Copy_Cell(DS_PUSH(), OUT), 1);
+        Unquotify(Copy_Cell(PUSH(), OUT), 1);
     }
     else if (IS_BLOCK(OUT)) {
         //
@@ -708,28 +708,28 @@ REB_R Composer_Executor(REBFRM *f)
         const Cell *push_tail;
         const Cell *push = VAL_ARRAY_AT(&push_tail, OUT);
         if (push != push_tail) {
-            Derelativize(DS_PUSH(), push, VAL_SPECIFIER(OUT));
+            Derelativize(PUSH(), push, VAL_SPECIFIER(OUT));
             if (Get_Cell_Flag(f_value, NEWLINE_BEFORE))
-                Set_Cell_Flag(DS_TOP, NEWLINE_BEFORE);  // first, see [4]
+                Set_Cell_Flag(TOP, NEWLINE_BEFORE);  // first, see [4]
             else
-                Clear_Cell_Flag(DS_TOP, NEWLINE_BEFORE);
+                Clear_Cell_Flag(TOP, NEWLINE_BEFORE);
 
             while (++push, push != push_tail)
-                Derelativize(DS_PUSH(), push, VAL_SPECIFIER(OUT));
+                Derelativize(PUSH(), push, VAL_SPECIFIER(OUT));
         }
     }
     else if (ANY_THE_KIND(VAL_TYPE(OUT))) {
         //
         // the @ types splice as is without the @
         //
-        Plainify(Copy_Cell(DS_PUSH(), OUT));
+        Plainify(Copy_Cell(PUSH(), OUT));
     }
     else if (not ANY_INERT(OUT)) {
         return FAIL("COMPOSE slots that are (( )) can't be evaluative");
     }
     else {
         assert(not ANY_ARRAY(OUT));
-        Copy_Cell(DS_PUSH(), OUT);
+        Copy_Cell(PUSH(), OUT);
     }
 
     f->u.compose.changed = true;
@@ -740,7 +740,7 @@ REB_R Composer_Executor(REBFRM *f)
     // The compose stack of the nested compose is relative to *its* baseline.
 
     if (Is_Failure(OUT)) {
-        DS_DROP_TO(SUBFRAME->baseline.dsp);
+        Drop_Data_Stack_To(SUBFRAME->baseline.dsp);
         Drop_Frame(SUBFRAME);
         return OUT;
     }
@@ -753,20 +753,20 @@ REB_R Composer_Executor(REBFRM *f)
         // arrays that don't have some substitution under them.  This
         // may be controlled by a switch if it turns out to be needed.
         //
-        DS_DROP_TO(SUBFRAME->baseline.dsp);
+        Drop_Data_Stack_To(SUBFRAME->baseline.dsp);
         Drop_Frame(SUBFRAME);
 
-        Derelativize(DS_PUSH(), f_value, f_specifier);
-        // Constify(DS_TOP);
+        Derelativize(PUSH(), f_value, f_specifier);
+        // Constify(TOP);
         goto handle_next_item;
     }
 
     Finalize_Composer_Frame(OUT, SUBFRAME, f_value);
     Drop_Frame(SUBFRAME);
-    Move_Cell(DS_PUSH(), OUT);
+    Move_Cell(PUSH(), OUT);
 
     if (Get_Cell_Flag(f_value, NEWLINE_BEFORE))
-        Set_Cell_Flag(DS_TOP, NEWLINE_BEFORE);
+        Set_Cell_Flag(TOP, NEWLINE_BEFORE);
 
     f->u.compose.changed = true;
     goto handle_next_item;
@@ -874,7 +874,7 @@ static void Flatten_Core(
             );
         }
         else
-            Derelativize(DS_PUSH(), item, specifier);
+            Derelativize(PUSH(), item, specifier);
     }
 }
 

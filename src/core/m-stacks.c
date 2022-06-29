@@ -45,20 +45,20 @@ void Startup_Data_Stack(REBLEN capacity)
     Init_Trash(ARR_HEAD(DS_Array));
     Set_Cell_Flag(ARR_HEAD(DS_Array), PROTECTED);
 
-    // The tail marker will signal DS_PUSH() that it has run out of space,
+    // The tail marker will signal PUSH() that it has run out of space,
     // and it will perform the allocation at that time.
     //
     SET_SERIES_LEN(DS_Array, 1);
     DS_Movable_Tail = ARR_TAIL(DS_Array);
 
-    // Reuse the expansion logic that happens on a DS_PUSH() to get the
+    // Reuse the expansion logic that happens on a PUSH() to get the
     // initial stack size.  It requires you to be on an END to run.
     //
     DS_Index = 1;
     DS_Movable_Top = SPECIFIC(ARR_AT(DS_Array, DS_Index));  // no Cells
     Expand_Data_Stack_May_Fail(capacity);
 
-    DS_DROP();  // drop the hypothetical thing that triggered the expand
+    DROP();  // drop the hypothetical thing that triggered the expand
 }
 
 
@@ -284,7 +284,7 @@ void Expand_Data_Stack_May_Fail(REBLEN amount)
     Extend_Series_If_Necessary(DS_Array, amount);
 
     // Update the pointer used for fast access to the top of the stack that
-    // likely was moved by the above allocation (needed before using DS_TOP)
+    // likely was moved by the above allocation (needed before using TOP)
     //
     DS_Movable_Top = cast(REBVAL*, ARR_AT(DS_Array, DS_Index));
 
@@ -329,7 +329,7 @@ REBARR *Pop_Stack_Values_Core(REBDSP dsp_start, REBFLGS flags)
     REBARR *a = Make_Array_Core(len, flags);
 
     REBLEN count = 0;
-    REBVAL *src = DS_AT(dsp_start + 1);  // not const, will be RESET()'ing
+    REBVAL *src = Data_Stack_At(dsp_start + 1);  // not const, will be RESET()
     Cell *dest = ARR_HEAD(a);
     for (; count < len; ++count, ++src, ++dest) {
         if (

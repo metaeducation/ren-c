@@ -564,9 +564,9 @@ inline static REBVAR *Force_Lib_Var(SYMID id) {
 #include "datatypes/sys-bitset.h"
 
 #include "sys-patch.h"
-#include "sys-bind.h" // needs DS_PUSH() and DS_TOP from %sys-stack.h
+#include "sys-bind.h" // needs PUSH() and TOP from %sys-stack.h
 #include "datatypes/sys-token.h"
-#include "datatypes/sys-sequence.h"  // also needs DS_PUSH()
+#include "datatypes/sys-sequence.h"  // also needs PUSH()
 
 #include "sys-roots.h"
 

@@ -162,27 +162,27 @@ REBNATIVE(lambda)
 
     REBDSP dsp_orig = DSP;  // reuses Pop_Paramlist(), see [1]
 
-    Init_None(DS_PUSH());  // key slot (signal for no pushes)
-    Init_Trash(DS_PUSH());  // unused
-    Init_Trash(DS_PUSH());  // unused
-    Init_Nulled(DS_PUSH());  // description slot
+    Init_None(PUSH());  // key slot (signal for no pushes)
+    Init_Trash(PUSH());  // unused
+    Init_Trash(PUSH());  // unused
+    Init_Nulled(PUSH());  // description slot
 
     for (; item != item_tail; ++item) {
-        Derelativize(DS_PUSH(), item, item_specifier);
+        Derelativize(PUSH(), item, item_specifier);
 
         // First in triad needs to be a WORD!, after pclass extracted...
         //
         enum Reb_Param_Class pclass;
-        if (IS_WORD(DS_TOP))
+        if (IS_WORD(TOP))
             pclass = PARAM_CLASS_NORMAL;
-        else if (IS_META_WORD(DS_TOP)) {
+        else if (IS_META_WORD(TOP)) {
             pclass = PARAM_CLASS_META;
-            const Symbol *symbol = VAL_WORD_SYMBOL(DS_TOP);
-            Init_Word(DS_TOP, symbol);
+            const Symbol *symbol = VAL_WORD_SYMBOL(TOP);
+            Init_Word(TOP, symbol);
         }
-        else if (IS_QUOTED(DS_TOP)) {
-            Unquotify(DS_TOP, 1);
-            if (not IS_WORD(DS_TOP))
+        else if (IS_QUOTED(TOP)) {
+            Unquotify(TOP, 1);
+            if (not IS_WORD(TOP))
                 fail (item);
             pclass = PARAM_CLASS_HARD;
         }
@@ -197,14 +197,14 @@ REBNATIVE(lambda)
             continue;
         }
 
-        Init_Param(DS_PUSH(), pclass | PARAM_FLAG_VANISHABLE, TS_OPT_VALUE);
+        Init_Param(PUSH(), pclass | PARAM_FLAG_VANISHABLE, TS_OPT_VALUE);
 
-        Init_Nulled(DS_PUSH());  // types (not supported)
-        Init_Nulled(DS_PUSH());  // notes (not supported)
+        Init_Nulled(PUSH());  // types (not supported)
+        Init_Nulled(PUSH());  // notes (not supported)
     }
 
     if (not optimizable) {
-        DS_DROP_TO(dsp_orig);
+        Drop_Data_Stack_To(dsp_orig);
 
         REBACT *lambda = Make_Interpreted_Action_May_Fail(
             spec,

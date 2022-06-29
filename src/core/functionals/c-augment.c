@@ -84,10 +84,10 @@ REBNATIVE(augment_p)  // see extended definition AUGMENT in %base-defs.r
 
     // Start with pushing nothings for the [0] slot
     //
-    Init_None(DS_PUSH());  // key slot (signal for no pushes)
-    Init_Trash(DS_PUSH());  // unused
-    Init_Trash(DS_PUSH());  // unused
-    Init_Nulled(DS_PUSH());  // description slot
+    Init_None(PUSH());  // key slot (signal for no pushes)
+    Init_Trash(PUSH());  // unused
+    Init_Trash(PUSH());  // unused
+    Init_Nulled(PUSH());  // description slot
 
     REBFLGS flags = MKF_KEYWORDS;
     if (ACT_HAS_RETURN(augmentee)) {
@@ -103,9 +103,9 @@ REBNATIVE(augment_p)  // see extended definition AUGMENT in %base-defs.r
     const REBKEY *key = ACT_KEYS(&tail, augmentee);
     const REBPAR *param = ACT_PARAMS_HEAD(augmentee);
     for (; key != tail; ++key, ++param) {
-        Init_Word(DS_PUSH(), KEY_SYMBOL(key));
+        Init_Word(PUSH(), KEY_SYMBOL(key));
 
-        Copy_Cell(DS_PUSH(), param);
+        Copy_Cell(PUSH(), param);
 
         // For any specialized (incl. local) parameters in the paramlist we are
         // copying, we want to "seal" them from view.  We wouldn't have access
@@ -114,10 +114,10 @@ REBNATIVE(augment_p)  // see extended definition AUGMENT in %base-defs.r
         // not suddenly subvert the access.
         //
         if (Is_Specialized(param))
-            Set_Cell_Flag(DS_TOP, STACK_NOTE_SEALED);
+            Set_Cell_Flag(TOP, STACK_NOTE_SEALED);
 
-        Init_Nulled(DS_PUSH());  // types (inherits via INHERIT-META)
-        Init_Nulled(DS_PUSH());  // notes (inherits via INHERIT-META)
+        Init_Nulled(PUSH());  // types (inherits via INHERIT-META)
+        Init_Nulled(PUSH());  // notes (inherits via INHERIT-META)
     }
   }
 

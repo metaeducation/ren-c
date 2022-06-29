@@ -259,7 +259,7 @@ inline static REBVAL *Init_Any_Sequence_Bytes(
 inline static REBVAL *Try_Init_Any_Sequence_All_Integers(
     Cell *out,
     enum Reb_Kind kind,
-    const Cell *head,  // NOTE: Can't use DS_PUSH() or evaluation
+    const Cell *head,  // NOTE: Can't use PUSH() or evaluation
     REBLEN len
 ){
     if (len > sizeof(PAYLOAD(Bytes, out)).at_least_8 - 1)
@@ -386,11 +386,11 @@ inline static REBVAL *Try_Pop_Sequence_Or_Element_Or_Nulled(
         return Init_Nulled(out);
 
     if (DSP - 1 == dsp_orig) {  // only one item, use as-is if possible
-        if (not Is_Valid_Sequence_Element(kind, DS_TOP))
+        if (not Is_Valid_Sequence_Element(kind, TOP))
             return nullptr;
 
-        Copy_Cell(out, DS_TOP);
-        DS_DROP();
+        Copy_Cell(out, TOP);
+        DROP();
 
         if (kind != REB_PATH) {  // carry over : or ^ decoration (if possible)
             if (
@@ -419,17 +419,12 @@ inline static REBVAL *Try_Pop_Sequence_Or_Element_Or_Nulled(
     }
 
     if (DSP - dsp_orig == 2) {  // two-element path optimization
-        if (not Try_Init_Any_Sequence_Pairlike(
-            out,
-            kind,
-            DS_TOP - 1,
-            DS_TOP
-        )){
-            DS_DROP_TO(dsp_orig);
+        if (not Try_Init_Any_Sequence_Pairlike(out, kind, TOP - 1, TOP)) {
+            Drop_Data_Stack_To(dsp_orig);
             return nullptr;
         }
 
-        DS_DROP_TO(dsp_orig);
+        Drop_Data_Stack_To(dsp_orig);
         return cast(REBVAL*, out);
     }
 
@@ -440,10 +435,10 @@ inline static REBVAL *Try_Pop_Sequence_Or_Element_Or_Nulled(
     if (Try_Init_Any_Sequence_All_Integers(
         out,
         kind,
-        DS_AT(dsp_orig) + 1,
+        Data_Stack_At(dsp_orig) + 1,
         DSP - dsp_orig
     )){
-        DS_DROP_TO(dsp_orig);
+        Drop_Data_Stack_To(dsp_orig);
         return cast(REBVAL*, out);
     }
 

@@ -115,7 +115,7 @@ void Push_Redo_Action_Frame(REBVAL *out, REBFRM *f1, const REBVAL *run)
             if (Is_Nulled(e.var))  // don't add to PATH!
                 continue;
 
-            Init_Word(DS_PUSH(), KEY_SYMBOL(e.key));
+            Init_Word(PUSH(), KEY_SYMBOL(e.key));
 
             if (Is_Typeset_Empty(e.param)) {
                 assert(Is_Blackhole(e.var));  // used but argless refinement

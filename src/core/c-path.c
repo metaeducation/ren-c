@@ -234,7 +234,7 @@ REB_R MAKE_Path(
         if (Is_Nulled(out))
             fail (out);  // !!! BLANK! is legit in paths, should null opt out?
 
-        Move_Cell(DS_PUSH(), out);
+        Move_Cell(PUSH(), out);
         f->baseline.dsp += 1;  // compensate for push
     }
 

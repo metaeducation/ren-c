@@ -27,7 +27,7 @@
 //
 // * Evaluator_Expression_Checks_Debug() runs before each full "expression"
 //   is evaluated, e.g. before each EVALUATE step.  It makes sure the state
-//   balanced completely--so no DS_PUSH() that wasn't balanced by a DS_DROP()
+//   balanced completely--so no PUSH() that wasn't balanced by a DROP()
 //   (for example).  It also trashes variables in the frame which might
 //   accidentally carry over from one step to another, so that there will be
 //   a crash instead of a casual reuse.

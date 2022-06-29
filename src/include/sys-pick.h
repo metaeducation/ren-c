@@ -87,11 +87,11 @@ inline static REB_R Run_Pickpoke_Dispatch(
     const Symbol *verb,
     const REBVAL *new_location
 ){
-    Copy_Cell(DS_PUSH(), D_ARG(1));
+    Copy_Cell(PUSH(), D_ARG(1));
     Copy_Cell(D_ARG(1), new_location);
     REB_R r = Run_Generic_Dispatch_Core(D_ARG(1), frame_, verb);
-    Copy_Cell(D_ARG(1), DS_TOP);
-    DS_DROP();
+    Copy_Cell(D_ARG(1), TOP);
+    DROP();
     return r;
 }
 

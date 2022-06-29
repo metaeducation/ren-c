@@ -300,14 +300,14 @@ REB_R MAKE_Array(
                 VARARG_OP_TAKE,
                 arg
             )){
-                DS_DROP_TO(dsp_orig);
+                Drop_Data_Stack_To(dsp_orig);
                 return R_THROWN;
             }
 
             if (Is_Void(out))
                 break;
 
-            Move_Cell(DS_PUSH(), out);
+            Move_Cell(PUSH(), out);
         } while (true);
 
         return Init_Any_Array(out, kind, Pop_Stack_Values(dsp_orig));
@@ -322,7 +322,7 @@ REB_R MAKE_Array(
             REBVAL *generated = rebValue(arg);
             if (not generated)
                 break;
-            Copy_Cell(DS_PUSH(), generated);
+            Copy_Cell(PUSH(), generated);
             rebRelease(generated);
         }
         return Init_Any_Array(out, kind, Pop_Stack_Values(dsp_orig));
@@ -343,7 +343,7 @@ REB_R TO_Array(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
         REBLEN i;
         for (i = 0; i < len; ++i) {
             Derelativize(
-                DS_PUSH(),
+                PUSH(),
                 VAL_SEQUENCE_AT(out, arg, i),  // use out as scratch space
                 VAL_SEQUENCE_SPECIFIER(arg)
             );

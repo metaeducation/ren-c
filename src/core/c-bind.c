@@ -487,8 +487,8 @@ REBNATIVE(let)
             REBSPC *temp_specifier = item_specifier;
 
             if (IS_QUOTED(temp)) {
-                Derelativize(DS_PUSH(), temp, temp_specifier);
-                Unquotify(DS_TOP, 1);  // drop quote in output block, see [5]
+                Derelativize(PUSH(), temp, temp_specifier);
+                Unquotify(TOP, 1);  // drop quote in output block, see [5]
                 altered = true;
                 continue;  // do not make binding
             }
@@ -506,12 +506,12 @@ REBNATIVE(let)
             switch (VAL_TYPE(temp)) {
               case REB_ISSUE:  // is multi-return opt-in for dialect, passthru
               case REB_BLANK:  // is multi-return opt-out for dialect, passthru
-                Derelativize(DS_PUSH(), temp, temp_specifier);
+                Derelativize(PUSH(), temp, temp_specifier);
                 break;
 
               case REB_WORD:
               case REB_SET_WORD: {
-                Derelativize(DS_PUSH(), temp, temp_specifier);
+                Derelativize(PUSH(), temp, temp_specifier);
                 const Symbol *symbol = VAL_WORD_SYMBOL(temp);
                 bindings = Make_Let_Patch(symbol, bindings);
                 break; }
@@ -537,7 +537,7 @@ REBNATIVE(let)
             );
         }
         else {
-            DS_DROP_TO(dsp_orig);
+            Drop_Data_Stack_To(dsp_orig);
 
             if (vars != where)
                 Copy_Cell(where, vars);  // Move_Cell() of ARG() not allowed
