@@ -131,8 +131,8 @@ REB_R Action_Executor(REBFRM *f)
         if (Get_Executor_Flag(ACTION, f, DISPATCHER_CATCHES))
             goto dispatch_phase;  // wants to see the throw
 
-        if (Get_Eval_Flag(f, ABRUPT_FAILURE)) {
-            assert(Get_Eval_Flag(f, NOTIFY_ON_ABRUPT_FAILURE));
+        if (Get_Frame_Flag(f, ABRUPT_FAILURE)) {
+            assert(Get_Frame_Flag(f, NOTIFY_ON_ABRUPT_FAILURE));
             goto dispatch_phase;
         }
 
@@ -141,7 +141,7 @@ REB_R Action_Executor(REBFRM *f)
 
     if (Is_Action_Frame_Fulfilling(f)) {
         assert(Not_Executor_Flag(ACTION, f, DISPATCHER_CATCHES));
-        assert(Not_Eval_Flag(f, NOTIFY_ON_ABRUPT_FAILURE));
+        assert(Not_Frame_Flag(f, NOTIFY_ON_ABRUPT_FAILURE));
 
         switch (STATE) {
           case ST_ACTION_INITIAL_ENTRY:
@@ -536,7 +536,7 @@ REB_R Action_Executor(REBFRM *f)
                 EVAL_EXECUTOR_FLAG_SINGLE_STEP
                 | EVAL_EXECUTOR_FLAG_FULFILLING_ARG;
             if (pclass == PARAM_CLASS_META)
-                flags |= EVAL_FLAG_META_RESULT | EVAL_FLAG_FAILURE_RESULT_OK;
+                flags |= FRAME_FLAG_META_RESULT | FRAME_FLAG_FAILURE_RESULT_OK;
 
             if (Did_Init_Inert_Optimize_Complete(ARG, f->feed, &flags))
                 break;  // no frame needed
@@ -554,7 +554,7 @@ REB_R Action_Executor(REBFRM *f)
             else {
                 if (not Typecheck_Including_Constraints(PARAM, f_next)) {
                     assert(GET_PARAM_FLAG(PARAM, ENDABLE));
-                    Init_Nulled(ARG);  // not EVAL_FLAG_BARRIER_HIT
+                    Init_Nulled(ARG);  // not FRAME_FLAG_BARRIER_HIT
                     goto continue_fulfilling;
                 }
                 Literal_Next_In_Frame(ARG, f);
@@ -627,7 +627,7 @@ REB_R Action_Executor(REBFRM *f)
                     | EVAL_EXECUTOR_FLAG_FULFILLING_ARG
                     | FLAG_STATE_BYTE(ST_EVALUATOR_LOOKING_AHEAD)
                     | EVAL_EXECUTOR_FLAG_INERT_OPTIMIZATION
-                    | EVAL_FLAG_MAYBE_STALE;  // won't be, but avoids RESET()
+                    | FRAME_FLAG_MAYBE_STALE;  // won't be, but avoids RESET()
 
                 DECLARE_FRAME (subframe, f->feed, flags);
                 Push_Frame(ARG, subframe);
@@ -1174,7 +1174,7 @@ REB_R Action_Executor(REBFRM *f)
             INIT_FRM_BINDING(f, VAL_FRAME_BINDING(OUT));
             STATE = ST_ACTION_TYPECHECKING;
             Clear_Executor_Flag(ACTION, f, DISPATCHER_CATCHES);  // else asserts
-            Clear_Eval_Flag(f, NOTIFY_ON_ABRUPT_FAILURE);
+            Clear_Frame_Flag(f, NOTIFY_ON_ABRUPT_FAILURE);
             goto typecheck_then_dispatch;
         }
     }

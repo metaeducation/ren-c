@@ -110,7 +110,7 @@ bool Make_Invokable_From_Feed_Throws(
     if (ANY_GROUP(v))  // `requote (append [a b c] #d, <can't-work>)`
         fail ("Actions made with REFRAMER cannot work with GROUP!s");
 
-    DECLARE_FRAME (f, feed, EVAL_MASK_NONE);  // FULFILL_ONLY added below
+    DECLARE_FRAME (f, feed, FRAME_MASK_NONE);  // FULFILL_ONLY added below
     Push_Frame(out, f);
 
     if (IS_WORD(v) or IS_TUPLE(v) or IS_PATH(v)) {

@@ -90,7 +90,7 @@ REB_R Lambda_Dispatcher(REBFRM *f)
         REB_WORD
     );
 
-    delegate_core (OUT, EVAL_FLAG_MAYBE_STALE, block, specifier, END);
+    delegate_core (OUT, FRAME_FLAG_MAYBE_STALE, block, specifier, END);
 }
 
 
@@ -108,7 +108,7 @@ REB_R Lambda_Unoptimized_Dispatcher(REBFRM *frame_)
     Cell *body = ARR_AT(details, IDX_DETAILS_1);  // code to run
     assert(IS_BLOCK(body) and IS_RELATIVE(body) and VAL_INDEX(body) == 0);
 
-    delegate_core (OUT, EVAL_FLAG_MAYBE_STALE, body, SPC(FRAME->varlist), END);
+    delegate_core (OUT, FRAME_FLAG_MAYBE_STALE, body, SPC(FRAME->varlist), END);
 }
 
 

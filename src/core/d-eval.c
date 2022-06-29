@@ -243,7 +243,7 @@ void Do_After_Action_Checks_Debug(REBFRM *f) {
   #if DEBUG_NATIVE_RETURNS
     if (Is_Failure(f->out)) {
         //
-        // Trampoline handles this, see EVAL_FLAG_FAILURE_RESULT_OK
+        // Trampoline handles this, see FRAME_FLAG_FAILURE_RESULT_OK
     }
     else if (ACT_HAS_RETURN(phase)) {
         const REBKEY *key = ACT_KEYS_HEAD(phase);
@@ -305,11 +305,11 @@ void Evaluator_Exit_Checks_Debug(REBFRM *f) {
     if (not Is_Throwing(f)) {
         REBFLGS filtered = (f->flags.bits & ~FLAG_STATE_BYTE(255));
         filtered &= ~ (
-            EVAL_FLAG_0_IS_TRUE  // always true
-            | EVAL_FLAG_7_IS_TRUE  // always true
-            | EVAL_FLAG_ALLOCATED_FEED
-            | EVAL_FLAG_ROOT_FRAME
-            | EVAL_FLAG_TRAMPOLINE_KEEPALIVE
+            FRAME_FLAG_0_IS_TRUE  // always true
+            | FRAME_FLAG_7_IS_TRUE  // always true
+            | FRAME_FLAG_ALLOCATED_FEED
+            | FRAME_FLAG_ROOT_FRAME
+            | FRAME_FLAG_TRAMPOLINE_KEEPALIVE
         );
 
         // These are provided as options to Evaluator_Executor, and should not
@@ -317,10 +317,10 @@ void Evaluator_Exit_Checks_Debug(REBFRM *f) {
         // any case they are okay if they are set.
         //
         filtered &= ~ (
-            EVAL_FLAG_MAYBE_STALE
-            | EVAL_FLAG_BRANCH
-            | EVAL_FLAG_META_RESULT
-            | EVAL_FLAG_FAILURE_RESULT_OK
+            FRAME_FLAG_MAYBE_STALE
+            | FRAME_FLAG_BRANCH
+            | FRAME_FLAG_META_RESULT
+            | FRAME_FLAG_FAILURE_RESULT_OK
             | EVAL_EXECUTOR_FLAG_FULFILLING_ARG
             | EVAL_EXECUTOR_FLAG_SINGLE_STEP | EVAL_EXECUTOR_FLAG_NO_RESIDUE
         );

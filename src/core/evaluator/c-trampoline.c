@@ -52,7 +52,7 @@
 //
 // 3. A fail() can happen at any moment--even due to something like a failed
 //    memory allocation requested by an executor itself.  These are called
-//    "abrupt failures" (see EVAL_FLAG_ABRUPT_FAILURE).  The executor which
+//    "abrupt failures" (see FRAME_FLAG_ABRUPT_FAILURE).  The executor which
 //    was active when that failure occurred is offered a chance to clean up.
 //    But any stacks that it pushed which were not running will be discarded.
 //
@@ -126,13 +126,13 @@ REB_R Trampoline_From_Top_Maybe_Root(void)
         ASSERT_CONTEXT(jump.error);
         assert(CTX_TYPE(jump.error) == REB_ERROR);
 
-        Set_Eval_Flag(FRAME, ABRUPT_FAILURE);
+        Set_Frame_Flag(FRAME, ABRUPT_FAILURE);
 
         Clear_Feed_Flag(FRAME->feed, NEXT_ARG_FROM_OUT);  // !!! stops asserts
 
         while (FS_TOP != FRAME) {  // drop idle frames above the fail, see [4]
-            assert(Not_Eval_Flag(FS_TOP, NOTIFY_ON_ABRUPT_FAILURE));
-            assert(Not_Eval_Flag(FS_TOP, ROOT_FRAME));
+            assert(Not_Frame_Flag(FS_TOP, NOTIFY_ON_ABRUPT_FAILURE));
+            assert(Not_Frame_Flag(FS_TOP, ROOT_FRAME));
 
             if (Is_Action_Frame(FS_TOP)) {
                 assert(Not_Executor_Flag(ACTION, FS_TOP, DISPATCHER_CATCHES));
@@ -149,7 +149,7 @@ REB_R Trampoline_From_Top_Maybe_Root(void)
         // (ABRUPT_FAILURE + NOTIFIY_ON_ABRUPT_FAILURE + return R_THROWN will
         // act as if there had never been a NOTIFY_ON_ABRUPT_FAILURE)
         //
-        if (Get_Eval_Flag(FRAME, NOTIFY_ON_ABRUPT_FAILURE)) {
+        if (Get_Frame_Flag(FRAME, NOTIFY_ON_ABRUPT_FAILURE)) {
             Init_Thrown_With_Label(
                 FS_TOP,
                 Lib(NULL),  // no "thrown value"
@@ -177,7 +177,7 @@ REB_R Trampoline_From_Top_Maybe_Root(void)
             CTX_ARCHETYPE(jump.error)  // only the ERROR! as a label
         );
 
-        if (Get_Eval_Flag(FRAME, ROOT_FRAME)) {
+        if (Get_Frame_Flag(FRAME, ROOT_FRAME)) {
             TG_Jump_List = jump.last_jump;  // ** Note: this changes FRAME **
             return R_THROWN;
         }
@@ -227,13 +227,13 @@ REB_R Trampoline_From_Top_Maybe_Root(void)
         }
     }
 
-    if (Get_Eval_Flag(FRAME, ABRUPT_FAILURE)) {
-        assert(Get_Eval_Flag(FRAME, NOTIFY_ON_ABRUPT_FAILURE));
+    if (Get_Frame_Flag(FRAME, ABRUPT_FAILURE)) {
+        assert(Get_Frame_Flag(FRAME, NOTIFY_ON_ABRUPT_FAILURE));
         assert(Is_Throwing(FRAME));
     }
     else if (
         STATE == 0  // can't read STATE when ABRUPT_FAILURE flag is set
-        and Not_Eval_Flag(FRAME, MAYBE_STALE)
+        and Not_Frame_Flag(FRAME, MAYBE_STALE)
     ){
         if (FRAME->executor != &Just_Use_Out_Executor)  // exempt, see [1]
             assert(VAL_TYPE_UNCHECKED(OUT) == REB_0);  // stale voids, see [2]
@@ -260,8 +260,8 @@ REB_R Trampoline_From_Top_Maybe_Root(void)
 
 } //=//// HANDLE FINISHED RESULTS /////////////////////////////////////////=//
 
-    if (Get_Eval_Flag(FRAME, ABRUPT_FAILURE)) {
-        assert(Get_Eval_Flag(FRAME, NOTIFY_ON_ABRUPT_FAILURE));
+    if (Get_Frame_Flag(FRAME, ABRUPT_FAILURE)) {
+        assert(Get_Frame_Flag(FRAME, NOTIFY_ON_ABRUPT_FAILURE));
         assert(r == R_THROWN);
         assert(IS_ERROR(VAL_THROWN_LABEL(FRAME)));
     }
@@ -276,7 +276,7 @@ REB_R Trampoline_From_Top_Maybe_Root(void)
         assert(IS_SPECIFIC(cast(Cell*, OUT)));
 
         if (Is_Failure(OUT)) {
-            if (Not_Eval_Flag(FRAME, FAILURE_RESULT_OK)) {
+            if (Not_Frame_Flag(FRAME, FAILURE_RESULT_OK)) {
                 //
                 // treat any failure as if it could have been thrown from
                 // anywhere, so it is bubbled up as a throw.
@@ -290,24 +290,24 @@ REB_R Trampoline_From_Top_Maybe_Root(void)
                 goto thrown;
             }
 
-            if (Get_Eval_Flag(FRAME, META_RESULT))
+            if (Get_Frame_Flag(FRAME, META_RESULT))
                 Reify_Failure(OUT);
         }
-        else if (Get_Eval_Flag(FRAME, META_RESULT)) {
+        else if (Get_Frame_Flag(FRAME, META_RESULT)) {
             Clear_Stale_Flag(OUT);  // see [1]
             Reify_Eval_Out_Meta(OUT);
         }
-        else if (Get_Eval_Flag(FRAME, BRANCH)) {
+        else if (Get_Frame_Flag(FRAME, BRANCH)) {
             Clear_Stale_Flag(OUT);  // also, see [1]
             if (Is_Void(OUT))
                 Init_None(OUT);
             else if (VAL_TYPE_UNCHECKED(OUT) == REB_NULL)
                 Init_Null_Isotope(OUT);
         }
-        else if (Not_Eval_Flag(FRAME, MAYBE_STALE))
+        else if (Not_Frame_Flag(FRAME, MAYBE_STALE))
             Clear_Stale_Flag(OUT);  // again, see [1]
 
-        if (Get_Eval_Flag(FRAME, ROOT_FRAME)) {
+        if (Get_Frame_Flag(FRAME, ROOT_FRAME)) {
             STATE = 0;  // !!! Frame gets reused, review
             DROP_TRAP_SAME_STACKLEVEL_AS_PUSH(&jump);
             return FS_TOP->out;
@@ -318,7 +318,7 @@ REB_R Trampoline_From_Top_Maybe_Root(void)
         // means that when those executors run, their frame parameter is
         // not the technical top of the stack.
         //
-        if (Get_Eval_Flag(FRAME, TRAMPOLINE_KEEPALIVE)) {
+        if (Get_Frame_Flag(FRAME, TRAMPOLINE_KEEPALIVE)) {
             FRAME = FRAME->prior;
             assert(FRAME != FS_TOP);  // sanity check (*not* the top of stack)
         }
@@ -409,14 +409,14 @@ REB_R Trampoline_From_Top_Maybe_Root(void)
         while (FS_TOP != FRAME)
             Drop_Frame(FS_TOP);  // !!! Should all inert frames be aborted?
 
-        if (Get_Eval_Flag(FRAME, ABRUPT_FAILURE)) {
+        if (Get_Frame_Flag(FRAME, ABRUPT_FAILURE)) {
             //
             // They had their chance to clean up.
             // Fail again as definitional error, but this time don't notify.
             //
-            assert(Get_Eval_Flag(FRAME, NOTIFY_ON_ABRUPT_FAILURE));
-            Clear_Eval_Flag(FRAME, NOTIFY_ON_ABRUPT_FAILURE);
-            Clear_Eval_Flag(FRAME, ABRUPT_FAILURE);
+            assert(Get_Frame_Flag(FRAME, NOTIFY_ON_ABRUPT_FAILURE));
+            Clear_Frame_Flag(FRAME, NOTIFY_ON_ABRUPT_FAILURE);
+            Clear_Frame_Flag(FRAME, ABRUPT_FAILURE);
             assert(IS_ERROR(VAL_THROWN_LABEL(FRAME)));
             REBCTX *ctx = VAL_CONTEXT(VAL_THROWN_LABEL(FRAME));
             CATCH_THROWN(SPARE, FRAME);
@@ -437,8 +437,8 @@ REB_R Trampoline_From_Top_Maybe_Root(void)
             goto result_in_out;
         }
 
-        if (Get_Eval_Flag(FRAME, ROOT_FRAME)) {  // don't abort top
-            assert(Not_Eval_Flag(FS_TOP, TRAMPOLINE_KEEPALIVE));
+        if (Get_Frame_Flag(FRAME, ROOT_FRAME)) {  // don't abort top
+            assert(Not_Frame_Flag(FS_TOP, TRAMPOLINE_KEEPALIVE));
             DROP_TRAP_SAME_STACKLEVEL_AS_PUSH(&jump);
             return R_THROWN;
         }
@@ -447,7 +447,7 @@ REB_R Trampoline_From_Top_Maybe_Root(void)
         FRAME = FS_TOP;
 
         if (FRAME->executor == &Just_Use_Out_Executor) {
-            if (Get_Eval_Flag(FRAME, TRAMPOLINE_KEEPALIVE))
+            if (Get_Frame_Flag(FRAME, TRAMPOLINE_KEEPALIVE))
                 FRAME = FRAME->prior;  // hack, don't let it be aborted, see [3]
         }
 
@@ -468,15 +468,15 @@ bool Trampoline_With_Top_As_Root_Throws(void)
 
     // !!! More efficient if caller sets this, but set it ourselves for now.
     //
-    assert(Not_Eval_Flag(root, ROOT_FRAME));
-    Set_Eval_Flag(root, ROOT_FRAME);  // can't unwind across, see [1]
+    assert(Not_Frame_Flag(root, ROOT_FRAME));
+    Set_Frame_Flag(root, ROOT_FRAME);  // can't unwind across, see [1]
 
     REB_R r = Trampoline_From_Top_Maybe_Root();
 
     assert(FS_TOP == root);
 
-    assert(Get_Eval_Flag(root, ROOT_FRAME));
-    Clear_Eval_Flag(root, ROOT_FRAME);
+    assert(Get_Frame_Flag(root, ROOT_FRAME));
+    Clear_Frame_Flag(root, ROOT_FRAME);
 
     if (r == R_THROWN)
         return true;

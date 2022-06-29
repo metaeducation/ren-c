@@ -1016,7 +1016,7 @@ REBNATIVE(for_each)
         ST_FOR_EACH_RUNNING_BODY
     };
 
-    if (Get_Eval_Flag(frame_, ABRUPT_FAILURE))  // a fail() in this dispatcher
+    if (Get_Frame_Flag(frame_, ABRUPT_FAILURE))  // a fail() in this dispatcher
         goto finalize_for_each;
 
     switch (STATE) {
@@ -1034,7 +1034,7 @@ REBNATIVE(for_each)
     Init_Object(ARG(vars), pseudo_vars_ctx);  // keep GC safe
 
     Init_Loop_Each(iterator, data);
-    Set_Eval_Flag(frame_, NOTIFY_ON_ABRUPT_FAILURE);  // to clean up iterator
+    Set_Frame_Flag(frame_, NOTIFY_ON_ABRUPT_FAILURE);  // to clean up iterator
 
     goto next_iteration;
 
@@ -1125,7 +1125,7 @@ REBNATIVE(every)
         ST_EVERY_RUNNING_BODY
     };
 
-    if (Get_Eval_Flag(frame_, ABRUPT_FAILURE))  // a fail() in this dispatcher
+    if (Get_Frame_Flag(frame_, ABRUPT_FAILURE))  // a fail() in this dispatcher
         goto finalize_every;
 
     switch (STATE) {
@@ -1143,7 +1143,7 @@ REBNATIVE(every)
     Init_Object(ARG(vars), pseudo_vars_ctx);  // keep GC safe
 
     Init_Loop_Each(iterator, data);
-    Set_Eval_Flag(frame_, NOTIFY_ON_ABRUPT_FAILURE);  // to clean up iterator
+    Set_Frame_Flag(frame_, NOTIFY_ON_ABRUPT_FAILURE);  // to clean up iterator
 
     goto next_iteration;
 
@@ -1616,7 +1616,7 @@ REBNATIVE(map)
         ST_MAP_RUNNING_BODY
     };
 
-    if (Get_Eval_Flag(frame_, ABRUPT_FAILURE))  // a fail() in this dispatcher
+    if (Get_Frame_Flag(frame_, ABRUPT_FAILURE))  // a fail() in this dispatcher
         goto finalize_map;
 
     switch (STATE) {
@@ -1648,7 +1648,7 @@ REBNATIVE(map)
     Init_Object(ARG(vars), pseudo_vars_ctx);  // keep GC safe
 
     Init_Loop_Each(iterator, data);
-    Set_Eval_Flag(frame_, NOTIFY_ON_ABRUPT_FAILURE);  // to clean up iterator
+    Set_Frame_Flag(frame_, NOTIFY_ON_ABRUPT_FAILURE);  // to clean up iterator
 
     goto next_iteration;
 
@@ -1881,7 +1881,7 @@ REBNATIVE(for)
         //
         rebPushContinuation(
             OUT,  // <-- output cell
-            EVAL_FLAG_MAYBE_STALE,
+            FRAME_FLAG_MAYBE_STALE,
             Lib(FOR_EACH), ARG(vars), rebQ(value), body
         );
         return R_DELEGATION;

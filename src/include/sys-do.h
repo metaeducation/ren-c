@@ -51,7 +51,7 @@
 //   ...what kind of actionability is there on the fact that the last step
 //   vanished, if that's the only think you know?  For this reason, you'll
 //   get an assert if you preload a frame with any values unless you use
-//   the EVAL_FLAG_MAYBE_STALE option on the frame.
+//   the FRAME_FLAG_MAYBE_STALE option on the frame.
 //
 
 
@@ -91,7 +91,7 @@ inline static bool Do_Any_Array_At_Core_Throws(
 }
 
 #define Do_Any_Array_At_Throws(out,any_array,specifier) \
-    Do_Any_Array_At_Core_Throws(out, EVAL_MASK_NONE, (any_array), (specifier))
+    Do_Any_Array_At_Core_Throws(out, FRAME_MASK_NONE, (any_array), (specifier))
 
 
 inline static bool Do_Branch_Throws(
@@ -99,7 +99,7 @@ inline static bool Do_Branch_Throws(
     const REBVAL *branch,
     const REBVAL *with
 ){
-    if (not Pushed_Continuation(out, EVAL_FLAG_BRANCH, branch, SPECIFIED, with))
+    if (not Pushed_Continuation(out, FRAME_FLAG_BRANCH, branch, SPECIFIED, with))
         return false;
 
     bool threw = Trampoline_With_Top_As_Root_Throws();

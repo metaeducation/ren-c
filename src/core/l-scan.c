@@ -2120,9 +2120,9 @@ REB_R Scanner_Executor(REBFRM *f) {
       case TOKEN_BLOCK_BEGIN: {
         DECLARE_END_FRAME (
             subframe,
-            EVAL_FLAG_TRAMPOLINE_KEEPALIVE  // we want accrued stack
+            FRAME_FLAG_TRAMPOLINE_KEEPALIVE  // we want accrued stack
                 | (f->flags.bits & SCAN_EXECUTOR_MASK_RECURSE)
-                | EVAL_FLAG_FAILURE_RESULT_OK
+                | FRAME_FLAG_FAILURE_RESULT_OK
         );
         subframe->executor = &Scanner_Executor;
 
@@ -2401,9 +2401,9 @@ REB_R Scanner_Executor(REBFRM *f) {
       case TOKEN_CONSTRUCT: {
         DECLARE_END_FRAME (
             subframe,
-            EVAL_FLAG_TRAMPOLINE_KEEPALIVE  // we want accrued stack
+            FRAME_FLAG_TRAMPOLINE_KEEPALIVE  // we want accrued stack
                 | (f->flags.bits & SCAN_EXECUTOR_MASK_RECURSE)
-                | EVAL_FLAG_FAILURE_RESULT_OK
+                | FRAME_FLAG_FAILURE_RESULT_OK
         );
         subframe->executor = &Scanner_Executor;
 
@@ -2651,7 +2651,7 @@ REB_R Scanner_Executor(REBFRM *f) {
             // Note we still might come up empty (e.g. `foo/)`)
         }
         else {
-            DECLARE_END_FRAME (subframe, EVAL_FLAG_FAILURE_RESULT_OK);
+            DECLARE_END_FRAME (subframe, FRAME_FLAG_FAILURE_RESULT_OK);
             subframe->executor = &Scanner_Executor;
 
             SCAN_LEVEL *child = &subframe->u.scan;
@@ -2952,7 +2952,7 @@ REBARR *Scan_UTF8_Managed(
     REBSIZ size,
     option(REBCTX*) context
 ){
-    DECLARE_END_FRAME (f, EVAL_MASK_NONE);
+    DECLARE_END_FRAME (f, FRAME_MASK_NONE);
     f->executor = &Scanner_Executor;
 
     SCAN_STATE ss;
@@ -3138,8 +3138,8 @@ REBNATIVE(transcode)
         : cast(REBCTX*, nullptr);  // C++98 ambiguous w/o cast
 
     REBFLGS flags =
-        EVAL_FLAG_TRAMPOLINE_KEEPALIVE  // query pending newline
-        | EVAL_FLAG_FAILURE_RESULT_OK;  // want to pass on definitional error
+        FRAME_FLAG_TRAMPOLINE_KEEPALIVE  // query pending newline
+        | FRAME_FLAG_FAILURE_RESULT_OK;  // want to pass on definitional error
     if (REF(next))
         flags |= SCAN_EXECUTOR_FLAG_JUST_ONCE;
 
@@ -3270,7 +3270,7 @@ const REBYTE *Scan_Any_Word(
     const REBSTR *file = ANONYMOUS;
     const REBLIN start_line = 1;
 
-    DECLARE_END_FRAME (f, EVAL_MASK_NONE);
+    DECLARE_END_FRAME (f, FRAME_MASK_NONE);
     SCAN_LEVEL *level = &f->u.scan;
 
     // !!! We use UNLIMITED here instead of `size` because the R3-Alpha
@@ -3369,7 +3369,7 @@ option(REBARR*) Try_Scan_Utf8_For_Detect_Feed_Pointer_Managed(
     REBFED *feed,
     option(REBCTX*) context
 ){
-    DECLARE_END_FRAME(f, EVAL_MASK_NONE);
+    DECLARE_END_FRAME(f, FRAME_MASK_NONE);
     f->executor = &Scanner_Executor;
 
     SCAN_LEVEL *level = &f->u.scan;

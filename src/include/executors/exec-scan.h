@@ -39,7 +39,7 @@
 // value to be scanned will receive the flag.
 //
 #define SCAN_EXECUTOR_FLAG_NEWLINE_PENDING \
-    EVAL_FLAG_24
+    FRAME_FLAG_24
 
 
 //=//// SCAN_EXECUTOR_FLAG_JUST_ONCE //////////////////////////////////////=//
@@ -47,7 +47,7 @@
 // Supporting flag for TRANSCODE/NEXT
 //
 #define SCAN_EXECUTOR_FLAG_JUST_ONCE \
-    EVAL_FLAG_25
+    FRAME_FLAG_25
 
 
 //=//// SCAN_EXECUTOR_FLAG_NULLEDS_LEGAL //////////////////////////////////=//
@@ -58,7 +58,7 @@
 // That's probably a bad idea.
 //
 #define SCAN_EXECUTOR_FLAG_NULLEDS_LEGAL \
-    EVAL_FLAG_26
+    FRAME_FLAG_26
 
 
 //=//// SCAN_EXECUTOR_FLAG_LOCK_SCANNED ///////////////////////////////////=//
@@ -68,37 +68,37 @@
 // !!! This also does not seem to be used, likely supplanted by CONST.
 //
 #define SCAN_EXECUTOR_FLAG_LOCK_SCANNED \
-    EVAL_FLAG_27
+    FRAME_FLAG_27
 
 
 //=//// SCAN_EXECUTOR_FLAG_27 /////////////////////////////////////////////=//
 //
 #define SCAN_EXECUTOR_FLAG_27 \
-    EVAL_FLAG_27
+    FRAME_FLAG_27
 
 
 //=//// SCAN_EXECUTOR_FLAG_24 /////////////////////////////////////////////=//
 //
 #define SCAN_EXECUTOR_FLAG_28 \
-    EVAL_FLAG_28
+    FRAME_FLAG_28
 
 
 //=//// SCAN_EXECUTOR_FLAG_29 /////////////////////////////////////////////=//
 //
 #define SCAN_EXECUTOR_FLAG_29 \
-    EVAL_FLAG_29
+    FRAME_FLAG_29
 
 
 //=//// SCAN_EXECUTOR_FLAG_30 /////////////////////////////////////////////=//
 //
 #define SCAN_EXECUTOR_FLAG_30 \
-    EVAL_FLAG_30
+    FRAME_FLAG_30
 
 
 //=//// SCAN_EXECUTOR_FLAG_31 /////////////////////////////////////////////=//
 //
 #define SCAN_EXECUTOR_FLAG_31 \
-    EVAL_FLAG_31
+    FRAME_FLAG_31
 
 
 // Flags that should be preserved when recursing the scanner

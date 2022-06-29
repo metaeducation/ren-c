@@ -144,7 +144,7 @@ REB_R Func_Dispatcher(REBFRM *f)
     assert(Is_Void(SPARE));
     continue_core(
         SPARE,  // body evaluative result discarded, see [1]
-        EVAL_MASK_NONE,  // no DISPATCHER_CATCHES, so RETURN skips, see [2]
+        FRAME_MASK_NONE,  // no DISPATCHER_CATCHES, so RETURN skips, see [2]
         body,
         SPC(f->varlist),
         END

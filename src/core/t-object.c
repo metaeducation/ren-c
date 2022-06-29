@@ -195,7 +195,7 @@ static void Append_To_Context(REBVAL *context, REBVAL *arg)
 //
 // 1. We allocate a wordlist just to notice leaks when there are no shutdowns,
 //    but there is a problem with using an unmanaged array in the case of an
-//    EVAL_FLAG_ABRUPT_FAILURE.  So we make them "fake unmanaged" so they
+//    FRAME_FLAG_ABRUPT_FAILURE.  So we make them "fake unmanaged" so they
 //    are "untracked" by saying they're managed, and taking that flag off.
 //
 void Init_Evars(EVARS *e, noquote(const Cell*) v) {

@@ -135,7 +135,7 @@ inline static bool Did_Init_Inert_Optimize_Complete(
 ){
     assert(SECOND_BYTE(*flags) == 0);  // we might set the STATE byte
     assert(not Is_End(feed->value));  // would be wasting time to call
-    assert(not (*flags & EVAL_FLAG_BRANCH));  // it's a single step
+    assert(not (*flags & FRAME_FLAG_BRANCH));  // it's a single step
 
     if (not ANY_INERT(feed->value))
         return false;  // general case evaluation requires a frame
@@ -170,7 +170,7 @@ inline static bool Did_Init_Inert_Optimize_Complete(
             //
             if (Not_Feed_Flag(feed, NO_LOOKAHEAD)) {
                 *flags |=
-                    EVAL_FLAG_MAYBE_STALE  // won't be, but avoids RESET()
+                    FRAME_FLAG_MAYBE_STALE  // won't be, but avoids RESET()
                     | FLAG_STATE_BYTE(ST_EVALUATOR_LOOKING_AHEAD)
                     | EVAL_EXECUTOR_FLAG_INERT_OPTIMIZATION;
                 return false;
@@ -187,7 +187,7 @@ inline static bool Did_Init_Inert_Optimize_Complete(
             *flags |=
                 FLAG_STATE_BYTE(ST_EVALUATOR_LOOKING_AHEAD)
                 | EVAL_EXECUTOR_FLAG_INERT_OPTIMIZATION
-                | EVAL_FLAG_MAYBE_STALE;  // won't be, but avoids RESET()
+                | FRAME_FLAG_MAYBE_STALE;  // won't be, but avoids RESET()
             return false;
         }
 
@@ -207,7 +207,7 @@ inline static bool Did_Init_Inert_Optimize_Complete(
         }
 
         *flags |=
-            EVAL_FLAG_MAYBE_STALE  // won't be, but avoids RESET()
+            FRAME_FLAG_MAYBE_STALE  // won't be, but avoids RESET()
             | FLAG_STATE_BYTE(ST_EVALUATOR_LOOKING_AHEAD)
             | EVAL_EXECUTOR_FLAG_INERT_OPTIMIZATION;
         return false;  // do normal enfix handling
@@ -220,7 +220,7 @@ inline static bool Did_Init_Inert_Optimize_Complete(
 
   optimized:
 
-    if (*flags & EVAL_FLAG_META_RESULT)
+    if (*flags & FRAME_FLAG_META_RESULT)
         Quotify(out, 1);  // inert, so not a void (or NULL)
 
     return true;
@@ -237,7 +237,7 @@ inline static bool Eval_Step_Throws(
     assert(Not_Feed_Flag(f->feed, NO_LOOKAHEAD));
     assert(Get_Executor_Flag(EVAL, f, SINGLE_STEP));
 
-    if (Not_Eval_Flag(f, MAYBE_STALE))
+    if (Not_Frame_Flag(f, MAYBE_STALE))
         RESET(out);
 
     assert(f->executor == &Evaluator_Executor);
@@ -261,7 +261,7 @@ inline static bool Eval_Step_In_Subframe_Throws(
     REBFRM *f,
     REBFLGS flags
 ){
-    if (not (flags & EVAL_FLAG_MAYBE_STALE))
+    if (not (flags & FRAME_FLAG_MAYBE_STALE))
         assert(Is_Fresh(out));
 
     assert(flags & EVAL_EXECUTOR_FLAG_SINGLE_STEP);
@@ -318,7 +318,7 @@ inline static bool Eval_Step_In_Any_Array_At_Throws(
     DECLARE_FRAME (
         f,
         feed,
-        flags | EVAL_FLAG_ALLOCATED_FEED | EVAL_EXECUTOR_FLAG_SINGLE_STEP
+        flags | FRAME_FLAG_ALLOCATED_FEED | EVAL_EXECUTOR_FLAG_SINGLE_STEP
     );
 
     Push_Frame(out, f);
@@ -346,7 +346,7 @@ inline static bool Eval_Step_In_Any_Array_At_Throws(
 // same as if the passed in values came from an array.  However, when values
 // originate from C they often have been effectively evaluated already, so
 // it's desired that WORD!s or PATH!s not execute as they typically would
-// in a block.  So this is often used with EVAL_FLAG_EXPLICIT_EVALUATE.
+// in a block.  So this is often used with FRAME_FLAG_EXPLICIT_EVALUATE.
 //
 // !!! C's va_lists are very dangerous, there is no type checking!  The
 // C++ build should be able to check this for the callers of this function
@@ -367,7 +367,7 @@ inline static bool Eval_Step_In_Va_Throws(
     DECLARE_FRAME (
         f,
         feed,
-        eval_flags | EVAL_FLAG_ALLOCATED_FEED
+        eval_flags | FRAME_FLAG_ALLOCATED_FEED
     );
 
     Push_Frame(out, f);
@@ -416,13 +416,13 @@ inline static bool Eval_Value_Core_Throws(
         FEED_MASK_DEFAULT | (value->header.bits & FEED_FLAG_CONST)
     );
 
-    DECLARE_FRAME (f, feed, flags | EVAL_FLAG_ALLOCATED_FEED);
+    DECLARE_FRAME (f, feed, flags | FRAME_FLAG_ALLOCATED_FEED);
 
     return Trampoline_Throws(out, f);
 }
 
 #define Eval_Value_Throws(out,value,specifier) \
-    Eval_Value_Core_Throws(out, EVAL_MASK_NONE, (value), (specifier))
+    Eval_Value_Core_Throws(out, FRAME_MASK_NONE, (value), (specifier))
 
 
 inline static REB_R Native_Failure_Result(REBFRM *frame_, const void *p) {

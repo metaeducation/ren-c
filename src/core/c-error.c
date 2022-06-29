@@ -203,7 +203,7 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
   #endif
 
     // The topmost frame must be the one issuing the error.  If a frame was
-    // pushed with EVAL_FLAG_TRAMPOLINE_KEEPALIVE that finished executing
+    // pushed with FRAME_FLAG_TRAMPOLINE_KEEPALIVE that finished executing
     // but remained pushed, it must be dropped before the frame that pushes
     // it issues a failure.
     //
@@ -213,7 +213,7 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
     // moment we're assuming that once a frame has failed it can't recover if
     // it originated the failure...but this may be revisited.
     //
-    assert(Not_Eval_Flag(FS_TOP, ABRUPT_FAILURE));
+    assert(Not_Frame_Flag(FS_TOP, ABRUPT_FAILURE));
 
     REBCTX *error;
     if (p == nullptr) {
@@ -424,7 +424,7 @@ void Set_Location_Of_Error(
     REBCTX *error,
     REBFRM *where  // must be valid and executing on the stack
 ) {
-    while (Get_Eval_Flag(where, BLAME_PARENT))  // e.g. Apply_Only_Throws()
+    while (Get_Frame_Flag(where, BLAME_PARENT))  // e.g. Apply_Only_Throws()
         where = where->prior;
 
     REBDSP dsp_orig = DSP;

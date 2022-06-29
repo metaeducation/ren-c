@@ -190,7 +190,7 @@ inline static option(const Symbol*) FRM_LABEL(REBFRM *f) {
     // fact that a frame "self-errored" and was notified of an abrupt failure.
     //
     inline static REBYTE& FRM_STATE_BYTE(REBFRM *f) {
-        assert(Not_Eval_Flag(f, ABRUPT_FAILURE));
+        assert(Not_Frame_Flag(f, ABRUPT_FAILURE));
         return mutable_SECOND_BYTE(f->flags);
     }
 #endif
@@ -280,7 +280,7 @@ inline static const char* Frame_Label_Or_Anonymous_UTF8(REBFRM *f) {
 // optimize performance by working with the evaluator directly.
 
 inline static void Free_Frame_Internal(REBFRM *f) {
-    if (Get_Eval_Flag(f, ALLOCATED_FEED))
+    if (Get_Frame_Flag(f, ALLOCATED_FEED))
         Free_Feed(f->feed);  // didn't inherit from parent, and not END_FRAME
 
     if (f->varlist and NOT_SERIES_FLAG(f->varlist, MANAGED))
@@ -324,7 +324,7 @@ inline static void Push_Frame(
     // out of the header) and this keeps callers from needing to worry about
     // it--or dealing with asserts that they hadn't done it.
     //
-    if (Not_Eval_Flag(f, MAYBE_STALE))
+    if (Not_Frame_Flag(f, MAYBE_STALE))
         RESET(out);
 
   #if DEBUG_EXPIRED_LOOKBACK
@@ -473,7 +473,7 @@ inline static void Prep_Frame_Core(
    if (f == nullptr)  // e.g. a failed allocation
        fail (Error_No_Memory(sizeof(REBFRM)));
 
-    f->flags.bits = flags | EVAL_FLAG_0_IS_TRUE | EVAL_FLAG_7_IS_TRUE;
+    f->flags.bits = flags | FRAME_FLAG_0_IS_TRUE | FRAME_FLAG_7_IS_TRUE;
 
     f->feed = feed;
     Prep_Void(&f->spare);
@@ -510,11 +510,11 @@ inline static void Prep_Frame_Core(
 
 #define DECLARE_FRAME_AT(name,any_array,flags) \
     DECLARE_FEED_AT (name##feed, any_array); \
-    DECLARE_FRAME (name, name##feed, (flags) | EVAL_FLAG_ALLOCATED_FEED)
+    DECLARE_FRAME (name, name##feed, (flags) | FRAME_FLAG_ALLOCATED_FEED)
 
 #define DECLARE_FRAME_AT_CORE(name,any_array,specifier,flags) \
     DECLARE_FEED_AT_CORE (name##feed, (any_array), (specifier)); \
-    DECLARE_FRAME (name, name##feed, (flags) | EVAL_FLAG_ALLOCATED_FEED)
+    DECLARE_FRAME (name, name##feed, (flags) | FRAME_FLAG_ALLOCATED_FEED)
 
 #define DECLARE_END_FRAME(name,flags) \
     DECLARE_FRAME (name, TG_End_Feed, flags)
@@ -684,7 +684,7 @@ inline static bool Eval_Value_Core_Throws(
 //
 inline static bool Pushed_Continuation(
     REBVAL *out,
-    REBFLGS flags,  // EVAL_FLAG_BRANCH, etc. for pushed frames
+    REBFLGS flags,  // FRAME_FLAG_BRANCH, etc. for pushed frames
     const Cell *branch,
     REBSPC *branch_specifier,
     const REBVAL *with  // can be same as out or not GC-safe, copied if needed
@@ -692,13 +692,13 @@ inline static bool Pushed_Continuation(
     assert(branch != out);  // it's legal for `with` to be the same as out
 
     if (IS_GROUP(branch) or IS_GET_GROUP(branch)) {  // see [2] for GET-GROUP!
-        assert(flags & EVAL_FLAG_BRANCH);  // needed for trick
-        assert(not (flags & EVAL_FLAG_MAYBE_STALE));  // OUT used as WITH
+        assert(flags & FRAME_FLAG_BRANCH);  // needed for trick
+        assert(not (flags & FRAME_FLAG_MAYBE_STALE));  // OUT used as WITH
         DECLARE_FRAME_AT_CORE (
             grouper,
             branch,
             branch_specifier,
-            EVAL_FLAG_MAYBE_STALE | (flags & (~ EVAL_FLAG_BRANCH))
+            FRAME_FLAG_MAYBE_STALE | (flags & (~ FRAME_FLAG_BRANCH))
         );
         grouper->executor = &Group_Branch_Executor;  // evaluates to get branch
         if (Is_End(with))
@@ -713,7 +713,7 @@ inline static bool Pushed_Continuation(
 
     switch (VAL_TYPE(branch)) {
       case REB_BLANK:
-        if (flags & EVAL_FLAG_BRANCH)
+        if (flags & FRAME_FLAG_BRANCH)
             Init_Null_Isotope(out);
         else
             Init_Nulled(out);
@@ -721,7 +721,7 @@ inline static bool Pushed_Continuation(
 
       case REB_QUOTED:
         Unquotify(Derelativize(out, branch, branch_specifier), 1);
-        if (Is_Nulled(out) and (flags & EVAL_FLAG_BRANCH))
+        if (Is_Nulled(out) and (flags & FRAME_FLAG_BRANCH))
             Init_Null_Isotope(out);
         goto just_use_out;
 
@@ -729,12 +729,12 @@ inline static bool Pushed_Continuation(
       case REB_BLOCK: {
         DECLARE_FRAME_AT_CORE (f, branch, branch_specifier, flags);
         if (CELL_HEART_UNCHECKED(branch) == REB_META_BLOCK) {
-            Set_Eval_Flag(f, META_RESULT);
-            Set_Eval_Flag(f, FAILURE_RESULT_OK);
+            Set_Frame_Flag(f, META_RESULT);
+            Set_Frame_Flag(f, FAILURE_RESULT_OK);
         }
 
         Push_Frame(out, f);
-        goto pushed_continuation; }  // trampoline manages EVAL_FLAG_BRANCH atm.
+        goto pushed_continuation; }  // trampoline manages FRAME_FLAG_BRANCH atm.
 
       case REB_GET_BLOCK: {  // effectively REDUCE
         DECLARE_END_FRAME (f, FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING));
@@ -851,21 +851,21 @@ inline static bool Pushed_Continuation(
     } while (0)
 
 #define continue_uncatchable(o,value,with) \
-    continue_core((o), EVAL_MASK_NONE, (value), SPECIFIED, (with))
+    continue_core((o), FRAME_MASK_NONE, (value), SPECIFIED, (with))
 
 #define continue_catchable(o,value,with) \
     do { \
         Set_Executor_Flag(ACTION, frame_, DISPATCHER_CATCHES); \
-        continue_core((o), EVAL_MASK_NONE, (value), SPECIFIED, (with)); \
+        continue_core((o), FRAME_MASK_NONE, (value), SPECIFIED, (with)); \
     } while (0)
 
 #define continue_uncatchable_branch(o,branch,with) \
-    continue_core((o), EVAL_FLAG_BRANCH, (branch), SPECIFIED, (with))
+    continue_core((o), FRAME_FLAG_BRANCH, (branch), SPECIFIED, (with))
 
 #define continue_catchable_branch(o,branch,with) \
     do { \
         Set_Executor_Flag(ACTION, frame_, DISPATCHER_CATCHES); \
-        continue_core((o), EVAL_FLAG_BRANCH, (branch), SPECIFIED, (with)); \
+        continue_core((o), FRAME_FLAG_BRANCH, (branch), SPECIFIED, (with)); \
     } while (0)
 
 
@@ -917,7 +917,7 @@ inline static REB_R Continue_Subframe_Helper(
         assert((o) == frame_->out); \
         if (Pushed_Continuation( \
             frame_->out, \
-            (fs) | (frame_->flags.bits & EVAL_FLAG_FAILURE_RESULT_OK), \
+            (fs) | (frame_->flags.bits & FRAME_FLAG_FAILURE_RESULT_OK), \
             (branch), \
             (specifier), \
             (with) \
@@ -929,14 +929,14 @@ inline static REB_R Continue_Subframe_Helper(
 
 
 #define delegate(o,value,with) \
-    delegate_core(frame_->out, EVAL_MASK_NONE, (value), SPECIFIED, (with))
+    delegate_core(frame_->out, FRAME_MASK_NONE, (value), SPECIFIED, (with))
 
 #define delegate_branch(o,branch,with) \
-    delegate_core(frame_->out, EVAL_FLAG_BRANCH, (branch), SPECIFIED, (with))
+    delegate_core(frame_->out, FRAME_FLAG_BRANCH, (branch), SPECIFIED, (with))
 
 #define delegate_maybe_stale(o,branch,with) \
     delegate_core( \
-        frame_->out, EVAL_FLAG_MAYBE_STALE, (branch), SPECIFIED, (with) \
+        frame_->out, FRAME_FLAG_MAYBE_STALE, (branch), SPECIFIED, (with) \
     )
 
 

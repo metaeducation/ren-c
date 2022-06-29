@@ -842,7 +842,7 @@ static bool Run_Va_Throws(
     DECLARE_FRAME (
         f,
         feed,
-        EVAL_FLAG_ALLOCATED_FEED | flags
+        FRAME_FLAG_ALLOCATED_FEED | flags
     );
 
     bool threw = Trampoline_Throws(out, f);
@@ -859,7 +859,7 @@ inline static void Run_Va_May_Fail(
     va_list *vaptr  // va_end() handled by feed for all cases (throws, fails)
 ){
     bool interruptible = false;
-    if (Run_Va_Throws(out, interruptible, EVAL_MASK_NONE, p, vaptr)) {
+    if (Run_Va_Throws(out, interruptible, FRAME_MASK_NONE, p, vaptr)) {
         //
         // !!! Being able to THROW across C stacks is necessary in the general
         // case (consider implementing QUIT or HALT).  Probably need to be
@@ -904,7 +904,7 @@ inline static void Run_Va_May_Fail(
 // cell.  But it's in the API file because we want the wrapping machinery
 // that handles the variadics to be applied here.
 //
-// There is a rebRunThrows() macro that passes in the flags EVAL_MASK_NONE
+// There is a rebRunThrows() macro that passes in the flags FRAME_MASK_NONE
 // and EVAL_EXECUTOR_FLAG_NO_RESIDUE defined in %sys-do.h
 //
 bool RL_rebRunCoreThrows(
@@ -991,7 +991,7 @@ REBVAL *RL_rebMeta(const void *p, va_list *vaptr)
 
     REBVAL *v = Alloc_Value();
     bool interruptible = false;
-    if (Run_Va_Throws(v, interruptible, EVAL_FLAG_META_RESULT, p, vaptr))
+    if (Run_Va_Throws(v, interruptible, FRAME_FLAG_META_RESULT, p, vaptr))
         fail (Error_No_Catch_For_Throw(FS_TOP));  // panic?
 
     if (Is_Nulled(v)) {
@@ -1016,7 +1016,7 @@ REBVAL *RL_rebEntrap(const void *p, va_list *vaptr)
 
     REBVAL *v = Alloc_Value();
     bool interruptible = false;
-    if (Run_Va_Throws(v, interruptible, EVAL_FLAG_META_RESULT, p, vaptr)) {
+    if (Run_Va_Throws(v, interruptible, FRAME_FLAG_META_RESULT, p, vaptr)) {
         Init_Error(v, Error_No_Catch_For_Throw(FS_TOP));
         return v;
     }
@@ -1045,7 +1045,7 @@ REBVAL *RL_rebEntrapInterruptible(
 
     REBVAL *v = Alloc_Value();
     bool interruptible = true;
-    if (Run_Va_Throws(v, interruptible, EVAL_FLAG_META_RESULT, p, vaptr)) {
+    if (Run_Va_Throws(v, interruptible, FRAME_FLAG_META_RESULT, p, vaptr)) {
         Init_Error(v, Error_No_Catch_For_Throw(FS_TOP));
         return v;
     }
@@ -1724,8 +1724,8 @@ REBVAL *RL_rebRescueWith(
     //
     DECLARE_END_FRAME (
         dummy,
-        EVAL_MASK_NONE
-            | EVAL_FLAG_MAYBE_STALE  // avoids RESET(dummy->out), as it's null
+        FRAME_MASK_NONE
+            | FRAME_FLAG_MAYBE_STALE  // avoids RESET(dummy->out), as it's null
     );
 
     Push_Frame(nullptr, dummy);

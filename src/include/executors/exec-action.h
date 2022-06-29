@@ -32,7 +32,7 @@
 // !!! Does this need both an ACTION and EVAL executor flag?
 //
 #define ACTION_EXECUTOR_FLAG_DIDNT_LEFT_QUOTE_PATH \
-    EVAL_FLAG_24
+    FRAME_FLAG_24
 
 STATIC_ASSERT(
     ACTION_EXECUTOR_FLAG_DIDNT_LEFT_QUOTE_PATH
@@ -46,7 +46,7 @@ STATIC_ASSERT(
 // a simple bitmask.
 //
 #define ACTION_EXECUTOR_FLAG_FULFILLING_ARG \
-    EVAL_FLAG_25
+    FRAME_FLAG_25
 
 STATIC_ASSERT(
     EVAL_EXECUTOR_FLAG_FULFILLING_ARG == ACTION_EXECUTOR_FLAG_FULFILLING_ARG
@@ -77,7 +77,7 @@ STATIC_ASSERT(
 // The best answer for right now is just to raise an error.
 //
 #define ACTION_EXECUTOR_FLAG_ERROR_ON_DEFERRED_ENFIX \
-    EVAL_FLAG_26
+    FRAME_FLAG_26
 
 
 //=//// ACTION_EXECUTOR_FLAG_DELEGATE_CONTROL /////////////////////////////=//
@@ -96,7 +96,7 @@ STATIC_ASSERT(
 // evaluated to a constant value!  This won't leave the frame on the stack).
 //
 #define ACTION_EXECUTOR_FLAG_DELEGATE_CONTROL \
-    EVAL_FLAG_27
+    FRAME_FLAG_27
 
 
 //=//// ACTION_EXECUTOR_FLAG_RUNNING_ENFIX ////////////////////////////////=//
@@ -112,7 +112,7 @@ STATIC_ASSERT(
 // on what's in the action can be seen in the REBNATIVE(shove) code.
 //
 #define ACTION_EXECUTOR_FLAG_RUNNING_ENFIX \
-    EVAL_FLAG_28
+    FRAME_FLAG_28
 
 
 //=//// ACTION_EXECUTOR_FLAG_DISPATCHER_CATCHES ///////////////////////////=//
@@ -124,7 +124,7 @@ STATIC_ASSERT(
 // something like a WHILE loop wanting to catch a BREAK.
 //
 #define ACTION_EXECUTOR_FLAG_DISPATCHER_CATCHES \
-    EVAL_FLAG_29
+    FRAME_FLAG_29
 
 
 //=//// ACTION_EXECUTOR_FLAG_FULFILL_ONLY /////////////////////////////////=//
@@ -139,7 +139,7 @@ STATIC_ASSERT(
 // line up with the frame being filled).
 //
 #define ACTION_EXECUTOR_FLAG_FULFILL_ONLY \
-    EVAL_FLAG_30
+    FRAME_FLAG_30
 
 
 //=//// ACTION_EXECUTOR_FLAG_TYPECHECK_ONLY ///////////////////////////////=//
@@ -148,7 +148,7 @@ STATIC_ASSERT(
 // only thing that should be done is typechecking...don't run the action.
 //
 #define ACTION_EXECUTOR_FLAG_TYPECHECK_ONLY \
-    EVAL_FLAG_31
+    FRAME_FLAG_31
 
 
 struct Reb_Action_Executor_State {

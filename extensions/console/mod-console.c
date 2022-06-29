@@ -389,7 +389,7 @@ REBNATIVE(console)
 
     rebPushContinuation(
         RESET(metaresult),  // aka SPARE
-        EVAL_FLAG_META_RESULT,
+        FRAME_FLAG_META_RESULT,
         group
     );
     rebRelease(group);  // Note: does not release `code`

@@ -99,8 +99,8 @@ void Startup_Frame_Stack(void)
 
     DECLARE_END_FRAME (
         f,
-        EVAL_MASK_NONE
-            | EVAL_FLAG_MAYBE_STALE  // avoids RESET(f->out), as it's nullptr
+        FRAME_MASK_NONE
+            | FRAME_FLAG_MAYBE_STALE  // avoids RESET(f->out), as it's nullptr
     );
 
     Push_Frame(nullptr, f);

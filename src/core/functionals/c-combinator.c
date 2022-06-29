@@ -204,7 +204,7 @@ REBARR *Expanded_Combinator_Spec(const REBVAL *original)
         "state [frame!]\n"
         "input [any-series!]\n";
 
-    DECLARE_END_FRAME(f, EVAL_MASK_NONE);
+    DECLARE_END_FRAME(f, FRAME_MASK_NONE);
     f->executor = &Scanner_Executor;
 
     SCAN_LEVEL *level = &f->u.scan;
@@ -345,7 +345,7 @@ void Push_Parser_Subframe(
 
     bool pushed = Pushed_Continuation(
         out,
-        EVAL_MASK_NONE,
+        FRAME_MASK_NONE,
         temp,
         SPECIFIED,
         END

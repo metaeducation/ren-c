@@ -42,7 +42,7 @@
 // There is a parallel flag in ACTION_EXECUTOR_FLAG_DIDNT_LEFT_QUOTE_PATH
 //
 #define EVAL_EXECUTOR_FLAG_DIDNT_LEFT_QUOTE_PATH \
-    EVAL_FLAG_24
+    FRAME_FLAG_24
 
 
 //=//// EVAL_EXECUTOR_FLAG_FULFILLING_ARG /////////////////////////////////=//
@@ -55,7 +55,7 @@
 // Note: There is ACTION_EXECUTOR_FLAG_FULFILLING_ARG which matches this.
 //
 #define EVAL_EXECUTOR_FLAG_FULFILLING_ARG \
-    EVAL_FLAG_25
+    FRAME_FLAG_25
 
 STATIC_ASSERT(EVAL_EXECUTOR_FLAG_FULFILLING_ARG == DETAILS_FLAG_IS_BARRIER);
 
@@ -63,13 +63,13 @@ STATIC_ASSERT(EVAL_EXECUTOR_FLAG_FULFILLING_ARG == DETAILS_FLAG_IS_BARRIER);
 //=//// EVAL_EXECUTOR_FLAG_26 /////////////////////////////////////////////=//
 //
 #define EVAL_EXECUTOR_FLAG_26 \
-    EVAL_FLAG_26
+    FRAME_FLAG_26
 
 
 //=//// EVAL_EXECUTOR_FLAG_27 /////////////////////////////////////////////=//
 //
 #define EVAL_EXECUTOR_FLAG_27 \
-    EVAL_FLAG_27
+    FRAME_FLAG_27
 
 
 //=//// EVAL_EXECUTOR_FLAG_NO_EVALUATIONS /////////////////////////////////=//
@@ -89,7 +89,7 @@ STATIC_ASSERT(EVAL_EXECUTOR_FLAG_FULFILLING_ARG == DETAILS_FLAG_IS_BARRIER);
 // series in question against enumeration.
 //
 #define EVAL_EXECUTOR_FLAG_NO_EVALUATIONS \
-    EVAL_FLAG_28
+    FRAME_FLAG_28
 
 
 //=//// EVAL_EXECUTOR_FLAG_NO_RESIDUE /////////////////////////////////////=//
@@ -109,7 +109,7 @@ STATIC_ASSERT(EVAL_EXECUTOR_FLAG_FULFILLING_ARG == DETAILS_FLAG_IS_BARRIER);
 // which it would need to reach either an END or another `||`.
 //
 #define EVAL_EXECUTOR_FLAG_NO_RESIDUE \
-    EVAL_FLAG_29
+    FRAME_FLAG_29
 
 
 //=//// EVAL_EXECUTOR_FLAG_SINGLE_STEP ////////////////////////////////////=//
@@ -123,7 +123,7 @@ STATIC_ASSERT(EVAL_EXECUTOR_FLAG_FULFILLING_ARG == DETAILS_FLAG_IS_BARRIER);
 // default is a convenience with no real different effect in evaluator returns.
 //
 #define EVAL_EXECUTOR_FLAG_SINGLE_STEP \
-    EVAL_FLAG_30
+    FRAME_FLAG_30
 
 
 //=//// EVAL_EXECUTOR_FLAG_INERT_OPTIMIZATION /////////////////////////////=//
@@ -133,7 +133,7 @@ STATIC_ASSERT(EVAL_EXECUTOR_FLAG_FULFILLING_ARG == DETAILS_FLAG_IS_BARRIER);
 // quote is not actually too late.
 //
 #define EVAL_EXECUTOR_FLAG_INERT_OPTIMIZATION \
-    EVAL_FLAG_31
+    FRAME_FLAG_31
 
 
 struct Reb_Eval_Executor_State {

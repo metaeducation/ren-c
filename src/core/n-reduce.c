@@ -105,8 +105,8 @@ REBNATIVE(reduce)
         subframe,
         v,  // REB_BLOCK or REB_GROUP
         EVAL_EXECUTOR_FLAG_SINGLE_STEP
-            | EVAL_FLAG_ALLOCATED_FEED
-            | EVAL_FLAG_TRAMPOLINE_KEEPALIVE  // reused for each step
+            | FRAME_FLAG_ALLOCATED_FEED
+            | FRAME_FLAG_TRAMPOLINE_KEEPALIVE  // reused for each step
     );
     Push_Frame(OUT, subframe);
     goto next_reduce_step;
@@ -218,10 +218,10 @@ REBNATIVE(reduce_each)
 
     REBFLGS flags =
         EVAL_EXECUTOR_FLAG_SINGLE_STEP
-        | EVAL_FLAG_TRAMPOLINE_KEEPALIVE;
+        | FRAME_FLAG_TRAMPOLINE_KEEPALIVE;
 
     if (IS_META_WORD(vars)) {  // Note: gets converted to object in next step
-        flags |= EVAL_FLAG_META_RESULT | EVAL_FLAG_FAILURE_RESULT_OK;
+        flags |= FRAME_FLAG_META_RESULT | FRAME_FLAG_FAILURE_RESULT_OK;
         mutable_HEART_BYTE(vars) = REB_WORD;
     }
 
@@ -348,8 +348,8 @@ static void Push_Composer_Frame(
         adjusted ? adjusted : arraylike,
         adjusted ? SPECIFIED : specifier,
         EVAL_EXECUTOR_FLAG_NO_EVALUATIONS
-            | EVAL_FLAG_TRAMPOLINE_KEEPALIVE  // allows stack accumulation
-            | EVAL_FLAG_FAILURE_RESULT_OK  // bubbles up definitional errors
+            | FRAME_FLAG_TRAMPOLINE_KEEPALIVE  // allows stack accumulation
+            | FRAME_FLAG_FAILURE_RESULT_OK  // bubbles up definitional errors
     );
     Push_Frame(out, subframe);  // subframe may raise definitional failure
 
@@ -586,7 +586,7 @@ REB_R Composer_Executor(REBFRM *f)
     DECLARE_FRAME (
         subframe,
         subfeed,  // used subfeed so we could skip the label if there was one
-        EVAL_FLAG_ALLOCATED_FEED
+        FRAME_FLAG_ALLOCATED_FEED
     );
 
     Push_Frame(OUT, subframe);
@@ -773,7 +773,7 @@ REB_R Composer_Executor(REBFRM *f)
 
 } finished: {  ///////////////////////////////////////////////////////////////
 
-    assert(Get_Eval_Flag(f, TRAMPOLINE_KEEPALIVE));  // caller needs, see [5]
+    assert(Get_Frame_Flag(f, TRAMPOLINE_KEEPALIVE));  // caller needs, see [5]
 
     return RESET(OUT);  // signal finished, but avoid leaking temp evaluations
 }}

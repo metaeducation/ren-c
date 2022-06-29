@@ -57,7 +57,7 @@ enum {
 // entry to Process_Action().  The ability is also used by RESKINNED.
 //
 REBFRM *Push_Downshifted_Frame(REBVAL *out, REBFRM *f) {
-    DECLARE_FRAME (sub, f->feed, EVAL_FLAG_MAYBE_STALE);
+    DECLARE_FRAME (sub, f->feed, FRAME_FLAG_MAYBE_STALE);
     Push_Frame(out, sub);
     assert(sub->varlist == nullptr);
     sub->varlist = f->varlist;
@@ -179,7 +179,7 @@ REB_R Chainer_Dispatcher(REBFRM *f)
   #endif
 
     STATE = ST_CHAINER_RUNNING_SUBFUNCTION;
-    Set_Eval_Flag(sub, TRAMPOLINE_KEEPALIVE);
+    Set_Frame_Flag(sub, TRAMPOLINE_KEEPALIVE);
     continue_subframe (sub);
 
 } run_next_in_chain: {  //////////////////////////////////////////////////////
@@ -208,7 +208,7 @@ REB_R Chainer_Dispatcher(REBFRM *f)
 
     FRM_STATE_BYTE(sub) = ST_ACTION_INITIAL_ENTRY;  // maybe zeroed (or not)?
     Clear_Executor_Flag(ACTION, sub, DISPATCHER_CATCHES);
-    Clear_Eval_Flag(sub, NOTIFY_ON_ABRUPT_FAILURE);
+    Clear_Frame_Flag(sub, NOTIFY_ON_ABRUPT_FAILURE);
 
     assert(STATE == ST_CHAINER_RUNNING_SUBFUNCTION);
     continue_subframe (sub);

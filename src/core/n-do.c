@@ -60,7 +60,7 @@ REBNATIVE(reeval)
 
     REBFLGS flags =
         EVAL_EXECUTOR_FLAG_SINGLE_STEP
-        | EVAL_FLAG_MAYBE_STALE;
+        | FRAME_FLAG_MAYBE_STALE;
 
     if (Reevaluate_In_Subframe_Throws(
         OUT,  // reeval :comment "this should leave old input"
@@ -125,7 +125,7 @@ REBNATIVE(shove)
         return_value (ARG(left));  // ...because evaluator wants `help <-` to work
 
     // It's best for SHOVE to do type checking here, as opposed to setting
-    // some kind of EVAL_FLAG_SHOVING and passing that into the evaluator, then
+    // some kind of FRAME_FLAG_SHOVING and passing that into the evaluator, then
     // expecting it to notice if you shoved into an INTEGER! or something.
     //
     // !!! To get the feature working as a first cut, this doesn't try get too
@@ -220,7 +220,7 @@ REBNATIVE(shove)
         OUT,
         frame_,
         shovee,
-        EVAL_EXECUTOR_FLAG_SINGLE_STEP | EVAL_FLAG_MAYBE_STALE,
+        EVAL_EXECUTOR_FLAG_SINGLE_STEP | FRAME_FLAG_MAYBE_STALE,
         enfix
     )){
         rebRelease(composed_set_path);  // ok if nullptr
@@ -341,7 +341,7 @@ REBNATIVE(do)
         DECLARE_FRAME (
             subframe,
             f->feed,
-            EVAL_EXECUTOR_FLAG_SINGLE_STEP | EVAL_FLAG_MAYBE_STALE
+            EVAL_EXECUTOR_FLAG_SINGLE_STEP | FRAME_FLAG_MAYBE_STALE
         );
 
         Push_Frame(OUT, subframe);
@@ -370,7 +370,7 @@ REBNATIVE(do)
 
         rebPushContinuation(
             OUT,  // <-- output cell
-            EVAL_FLAG_MAYBE_STALE,
+            FRAME_FLAG_MAYBE_STALE,
             Sys(SYM_DO_P),
                 source,
                 rebQ(REF(args)),
@@ -482,14 +482,14 @@ REBNATIVE(evaluate)
         DECLARE_FRAME (
             subframe,
             feed,
-            EVAL_FLAG_ALLOCATED_FEED | EVAL_FLAG_MAYBE_STALE
+            FRAME_FLAG_ALLOCATED_FEED | FRAME_FLAG_MAYBE_STALE
         );
         Push_Frame(OUT, subframe);
 
         if (not REF(next))  // plain evaluation to end, maybe invisible
             delegate_subframe (subframe);
 
-        Set_Eval_Flag(subframe, TRAMPOLINE_KEEPALIVE);  // to ask how far it got
+        Set_Frame_Flag(subframe, TRAMPOLINE_KEEPALIVE);  // to ask how far it got
         Set_Executor_Flag(EVAL, subframe, SINGLE_STEP);
 
         STATE = ST_EVALUATE_SINGLE_STEPPING;
@@ -534,7 +534,7 @@ REBNATIVE(evaluate)
                 &index,
                 position,
                 SPECIFIED,
-                EVAL_MASK_NONE
+                FRAME_MASK_NONE
             )){
                 // !!! A BLOCK! varargs doesn't technically need to "go bad"
                 // on a throw, since the block is still around.  But a FRAME!
@@ -799,7 +799,7 @@ REBNATIVE(apply)
         ST_APPLY_UNLABELED_EVAL_STEP
     };
 
-    if (Get_Eval_Flag(frame_, ABRUPT_FAILURE))  // a fail() in this dispatcher
+    if (Get_Frame_Flag(frame_, ABRUPT_FAILURE))  // a fail() in this dispatcher
         goto finalize_apply;
 
     switch (STATE) {
@@ -833,7 +833,7 @@ REBNATIVE(apply)
     DECLARE_FRAME_AT (
         f,
         args,
-        EVAL_EXECUTOR_FLAG_SINGLE_STEP | EVAL_FLAG_TRAMPOLINE_KEEPALIVE
+        EVAL_EXECUTOR_FLAG_SINGLE_STEP | FRAME_FLAG_TRAMPOLINE_KEEPALIVE
     );
     Push_Frame(SPARE, f);
 
@@ -841,7 +841,7 @@ REBNATIVE(apply)
     Init_Evars(e, frame);  // CTX_ARCHETYPE(exemplar) is phased, sees locals
     Init_Handle_Cdata(iterator, e, sizeof(EVARS));
 
-    Set_Eval_Flag(frame_, NOTIFY_ON_ABRUPT_FAILURE);  // to clean up iterator
+    Set_Frame_Flag(frame_, NOTIFY_ON_ABRUPT_FAILURE);  // to clean up iterator
     goto handle_next_item;
 
 } handle_next_item: {  ///////////////////////////////////////////////////////
@@ -991,7 +991,7 @@ REBNATIVE(apply)
     FREE(EVARS, e);
     Init_Trash(iterator);
 
-    Clear_Eval_Flag(frame_, NOTIFY_ON_ABRUPT_FAILURE);  // necessary?
+    Clear_Frame_Flag(frame_, NOTIFY_ON_ABRUPT_FAILURE);  // necessary?
 
     delegate_maybe_stale (OUT, frame, END);
 }}

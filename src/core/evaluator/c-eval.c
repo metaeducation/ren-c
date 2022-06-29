@@ -115,7 +115,7 @@ STATIC_ASSERT(
 
 #define DECLARE_ACTION_SUBFRAME(f,parent) \
     DECLARE_FRAME (f, (parent)->feed, \
-        EVAL_FLAG_MAYBE_STALE | EVAL_FLAG_FAILURE_RESULT_OK \
+        FRAME_FLAG_MAYBE_STALE | FRAME_FLAG_FAILURE_RESULT_OK \
         | ((parent)->flags.bits \
             & (EVAL_EXECUTOR_FLAG_FULFILLING_ARG \
                 | EVAL_EXECUTOR_FLAG_DIDNT_LEFT_QUOTE_PATH)))
@@ -230,7 +230,7 @@ REB_R Evaluator_Executor(REBFRM *f)
     //
     if (Get_Feed_Flag(f->feed, BARRIER_HIT)) {
         if (Get_Executor_Flag(EVAL, f, FULFILLING_ARG)) {
-            if (Get_Eval_Flag(f, MAYBE_STALE))
+            if (Get_Frame_Flag(f, MAYBE_STALE))
                 Mark_Eval_Out_Stale(OUT);
             else
                 assert(Is_Void(OUT));
@@ -814,7 +814,7 @@ REB_R Evaluator_Executor(REBFRM *f)
             subframe,
             f_current,
             f_specifier,
-            EVAL_MASK_NONE
+            FRAME_MASK_NONE
         );
         Push_Frame(RESET(SPARE), subframe);
 
@@ -845,7 +845,7 @@ REB_R Evaluator_Executor(REBFRM *f)
             subframe,
             f_current,
             f_specifier,
-            EVAL_FLAG_META_RESULT | EVAL_FLAG_FAILURE_RESULT_OK
+            FRAME_FLAG_META_RESULT | FRAME_FLAG_FAILURE_RESULT_OK
         );
         Push_Frame(OUT, subframe);
 
@@ -1104,7 +1104,7 @@ REB_R Evaluator_Executor(REBFRM *f)
             subframe,
             f_current,
             f_specifier,
-            EVAL_MASK_NONE
+            FRAME_MASK_NONE
         );
         Push_Frame(RESET(SPARE), subframe);
 
@@ -1478,7 +1478,7 @@ REB_R Evaluator_Executor(REBFRM *f)
                 EVAL_EXECUTOR_FLAG_SINGLE_STEP
                 | FLAG_STATE_BYTE(ST_EVALUATOR_LOOKING_AHEAD)
                 | EVAL_EXECUTOR_FLAG_INERT_OPTIMIZATION  // tolerate enfix late
-                | EVAL_FLAG_MAYBE_STALE;  // won't be, but avoids RESET()
+                | FRAME_FLAG_MAYBE_STALE;  // won't be, but avoids RESET()
 
             DECLARE_FRAME (subframe, f->feed, flags);
             assert(not Is_Stale(OUT));
@@ -1724,7 +1724,7 @@ REB_R Evaluator_Executor(REBFRM *f)
         // !!! Should ONLY happen if we processed a WORD! that looked up to
         // an invisible function, and left something behind that was not
         // previously evaluative.  To track this accurately, we would have
-        // to use an EVAL_FLAG_DEBUG_INVISIBLE_UNEVALUATIVE here, because we
+        // to use an FRAME_FLAG_DEBUG_INVISIBLE_UNEVALUATIVE here, because we
         // don't have the word anymore to look up (and even if we did, what
         // it looks up to may have changed).
         //

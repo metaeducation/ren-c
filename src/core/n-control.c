@@ -85,8 +85,8 @@
 //
 // 2. The Trampoline has some sanity checking asserts that try to stop you
 //    from making mistakes.  Because this does something weird to use the
-//    OUT cell as `with` the EVAL_FLAG_BRANCH was taken off at the callsite
-//    and the EVAL_FLAG_MAYBE_STALE added.  Reverse that here, passing through
+//    OUT cell as `with` the FRAME_FLAG_BRANCH was taken off at the callsite
+//    and the FRAME_FLAG_MAYBE_STALE added.  Reverse that here, passing through
 //    any other flags.
 //
 REB_R Group_Branch_Executor(REBFRM *frame_)
@@ -115,12 +115,12 @@ REB_R Group_Branch_Executor(REBFRM *frame_)
         evaluator,
         FRAME->feed,
         (FRAME->flags.bits  // still state byte 0
-            | EVAL_FLAG_BRANCH)
-            & (~ EVAL_FLAG_MAYBE_STALE)  // undo tricks, see [2]
+            | FRAME_FLAG_BRANCH)
+            & (~ FRAME_FLAG_MAYBE_STALE)  // undo tricks, see [2]
     );
     Push_Frame(SPARE, evaluator);
 
-    Clear_Eval_Flag(FRAME, ALLOCATED_FEED);
+    Clear_Frame_Flag(FRAME, ALLOCATED_FEED);
     FRAME->feed = TG_End_Feed;  // feed consumed by subframe
 
     STATE = ST_GROUP_BRANCH_RUNNING_GROUP;
@@ -597,7 +597,7 @@ REBNATIVE(all)
 //    can be forced with (all [... null]) or (any [true ...])
 //
 // 3. When the ALL starts, the OUT cell is stale and may contain any value
-//    produced by a previous evaluation.  But we use EVAL_FLAG_MAYBE_STALE
+//    produced by a previous evaluation.  But we use FRAME_FLAG_MAYBE_STALE
 //    and may be skipping stale evaluations from inside the ALL:
 //
 //        >> <foo> all [<bar> comment "<bar> will be stale, due to comment"]
@@ -645,8 +645,8 @@ REBNATIVE(all)
 
     REBFLGS flags =
         EVAL_EXECUTOR_FLAG_SINGLE_STEP
-        | EVAL_FLAG_MAYBE_STALE
-        | EVAL_FLAG_TRAMPOLINE_KEEPALIVE;
+        | FRAME_FLAG_MAYBE_STALE
+        | FRAME_FLAG_TRAMPOLINE_KEEPALIVE;
 
     if (IS_THE_BLOCK(block))
         flags |= EVAL_EXECUTOR_FLAG_NO_EVALUATIONS;
@@ -769,8 +769,8 @@ REBNATIVE(any)
 
     REBFLGS flags =
         EVAL_EXECUTOR_FLAG_SINGLE_STEP
-        | EVAL_FLAG_MAYBE_STALE
-        | EVAL_FLAG_TRAMPOLINE_KEEPALIVE;
+        | FRAME_FLAG_MAYBE_STALE
+        | FRAME_FLAG_TRAMPOLINE_KEEPALIVE;
 
     if (IS_THE_BLOCK(block))
         flags |= EVAL_EXECUTOR_FLAG_NO_EVALUATIONS;
@@ -929,7 +929,7 @@ REBNATIVE(case)
     DECLARE_FRAME_AT (
         f,
         cases,
-        EVAL_EXECUTOR_FLAG_SINGLE_STEP | EVAL_FLAG_TRAMPOLINE_KEEPALIVE
+        EVAL_EXECUTOR_FLAG_SINGLE_STEP | FRAME_FLAG_TRAMPOLINE_KEEPALIVE
     );
 
     Push_Frame(SPARE, f);
@@ -998,7 +998,7 @@ REBNATIVE(case)
             discarder,
             branch,
             f_specifier,
-            EVAL_MASK_NONE
+            FRAME_MASK_NONE
         );
         Move_Cell(spare_backup, SPARE);  // need to save SPARE for fallout
         Push_Frame(SPARE, discarder);
@@ -1010,7 +1010,7 @@ REBNATIVE(case)
 
     STATE = ST_CASE_RUNNING_BRANCH;
     f->executor = &Just_Use_Out_Executor;
-    continue_core (OUT, EVAL_FLAG_BRANCH, branch, f_specifier, SPARE);
+    continue_core (OUT, FRAME_FLAG_BRANCH, branch, f_specifier, SPARE);
 
 } restore_spare_from_backup: {  //////////////////////////////////////////////
 
@@ -1162,7 +1162,7 @@ REBNATIVE(switch)
                 //
                 if (Do_Any_Array_At_Core_Throws(
                     OUT,
-                    EVAL_FLAG_BRANCH,
+                    FRAME_FLAG_BRANCH,
                     f_value,
                     f_specifier
                 )){

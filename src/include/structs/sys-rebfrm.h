@@ -28,14 +28,14 @@
 // !!! A REBFRM* answers that it is a node, and a cell.  This is questionable
 // and should be reviewed now that many features no longer depend on it.
 
-#define EVAL_FLAG_0_IS_TRUE FLAG_LEFT_BIT(0) // IS a node
-STATIC_ASSERT(EVAL_FLAG_0_IS_TRUE == NODE_FLAG_NODE);
+#define FRAME_FLAG_0_IS_TRUE FLAG_LEFT_BIT(0) // IS a node
+STATIC_ASSERT(FRAME_FLAG_0_IS_TRUE == NODE_FLAG_NODE);
 
-#define EVAL_FLAG_1_IS_FALSE FLAG_LEFT_BIT(1) // is NOT free
-STATIC_ASSERT(EVAL_FLAG_1_IS_FALSE == NODE_FLAG_STALE);
+#define FRAME_FLAG_1_IS_FALSE FLAG_LEFT_BIT(1) // is NOT free
+STATIC_ASSERT(FRAME_FLAG_1_IS_FALSE == NODE_FLAG_STALE);
 
 
-//=//// EVAL_FLAG_ALLOCATED_FEED //////////////////////////////////////////=//
+//=//// FRAME_FLAG_ALLOCATED_FEED //////////////////////////////////////////=//
 //
 // Some frame recursions re-use a feed that already existed, while others will
 // allocate them.  This re-use allows recursions to keep index positions and
@@ -52,12 +52,12 @@ STATIC_ASSERT(EVAL_FLAG_1_IS_FALSE == NODE_FLAG_STALE);
 // level of indirection (a varlist) which will be patched up to not point
 // to them if they are freed.  So this bit is used for another purpose.
 //
-#define EVAL_FLAG_ALLOCATED_FEED \
+#define FRAME_FLAG_ALLOCATED_FEED \
     FLAG_LEFT_BIT(2)
 
-STATIC_ASSERT(EVAL_FLAG_ALLOCATED_FEED == NODE_FLAG_MANAGED);  // should be ok
+STATIC_ASSERT(FRAME_FLAG_ALLOCATED_FEED == NODE_FLAG_MANAGED);  // should be ok
 
-//=//// EVAL_FLAG_BRANCH ///////////////////////////////////////////////////=//
+//=//// FRAME_FLAG_BRANCH ///////////////////////////////////////////////////=//
 //
 // If something is a branch and it is evaluating, then it cannot result in
 // either a pure NULL or a void result.  So nulls must be turned into null
@@ -67,28 +67,28 @@ STATIC_ASSERT(EVAL_FLAG_ALLOCATED_FEED == NODE_FLAG_MANAGED);  // should be ok
 // not, this would require a separate continuation callback to do it.  So
 // routines like IF would not be able to just delegate to another frame.
 //
-#define EVAL_FLAG_BRANCH \
+#define FRAME_FLAG_BRANCH \
     FLAG_LEFT_BIT(3)
 
 
-//=//// EVAL_FLAG_META_RESULT ////////////////////////////////////////////=//
+//=//// FRAME_FLAG_META_RESULT ////////////////////////////////////////////=//
 //
 // When this is applied, the Trampoline is asked to return an evaluator result
 // in its ^META form.  Doing so saves on needing separate callback entry
 // points for things like meta-vs-non-meta arguments, and is a useful
 // general facility.
 //
-#define EVAL_FLAG_META_RESULT \
+#define FRAME_FLAG_META_RESULT \
     FLAG_LEFT_BIT(4)
 
 
-//=//// EVAL_FLAG_5 ///////////////////////////////////////////////////////=//
+//=//// FRAME_FLAG_5 ///////////////////////////////////////////////////////=//
 //
-#define EVAL_FLAG_5 \
+#define FRAME_FLAG_5 \
     FLAG_LEFT_BIT(5)
 
 
-//=//// EVAL_FLAG_TRAMPOLINE_KEEPALIVE ////////////////////////////////////=//
+//=//// FRAME_FLAG_TRAMPOLINE_KEEPALIVE ////////////////////////////////////=//
 //
 // This flag asks the trampoline function to not call Drop_Frame() when it
 // sees that the frame's `executor` has reached the `nullptr` state.  Instead
@@ -100,7 +100,7 @@ STATIC_ASSERT(EVAL_FLAG_ALLOCATED_FEED == NODE_FLAG_MANAGED);  // should be ok
 // requests on a frame (REDUCE, ANY, CASE, etc.) without tearing down the
 // frame and putting it back together again.
 //
-#define EVAL_FLAG_TRAMPOLINE_KEEPALIVE \
+#define FRAME_FLAG_TRAMPOLINE_KEEPALIVE \
     FLAG_LEFT_BIT(6)
 
 
@@ -109,8 +109,8 @@ STATIC_ASSERT(EVAL_FLAG_ALLOCATED_FEED == NODE_FLAG_MANAGED);  // should be ok
 // from the non-cell choices like contexts and paramlists.  This may not be
 // the best way to flag frames; alternatives are in consideration.
 //
-#define EVAL_FLAG_7_IS_TRUE FLAG_LEFT_BIT(7)
-STATIC_ASSERT(EVAL_FLAG_7_IS_TRUE == NODE_FLAG_CELL);
+#define FRAME_FLAG_7_IS_TRUE FLAG_LEFT_BIT(7)
+STATIC_ASSERT(FRAME_FLAG_7_IS_TRUE == NODE_FLAG_CELL);
 
 
 //=//// FLAGS 8-15 ARE USED FOR THE "STATE" byte ///////////////////////////=//
@@ -119,47 +119,47 @@ STATIC_ASSERT(EVAL_FLAG_7_IS_TRUE == NODE_FLAG_CELL);
 // natives or dispatchers, e.g. to encode which step they are on.
 //
 
-#undef EVAL_FLAG_8
-#undef EVAL_FLAG_9
-#undef EVAL_FLAG_10
-#undef EVAL_FLAG_11
-#undef EVAL_FLAG_12
-#undef EVAL_FLAG_13
-#undef EVAL_FLAG_14
-#undef EVAL_FLAG_15
+#undef FRAME_FLAG_8
+#undef FRAME_FLAG_9
+#undef FRAME_FLAG_10
+#undef FRAME_FLAG_11
+#undef FRAME_FLAG_12
+#undef FRAME_FLAG_13
+#undef FRAME_FLAG_14
+#undef FRAME_FLAG_15
 
 
-//=//// EVAL_FLAG_FAILURE_RESULT_OK ///////////////////////////////////////=//
+//=//// FRAME_FLAG_FAILURE_RESULT_OK ///////////////////////////////////////=//
 //
 // The special FAILURE_255 quotelevel will trip up code that isn't expecting
 // it, so most frames do not want to receive these "isotopic forms of error!"
-// This flag can be used with EVAL_FLAG_META_RESULT or without it, to say
+// This flag can be used with FRAME_FLAG_META_RESULT or without it, to say
 // that the caller is planning on dealing with the special case.
 //
 // Note: This bit is the same as CELL_FLAG_NOTE, which may be something that
 // could be exploited for some optimization.
 //
-#define EVAL_FLAG_FAILURE_RESULT_OK \
+#define FRAME_FLAG_FAILURE_RESULT_OK \
     FLAG_LEFT_BIT(16)
 
 
-//=//// EVAL_FLAG_17 //////////////////////////////////////////////////////=//
+//=//// FRAME_FLAG_17 //////////////////////////////////////////////////////=//
 //
-#define EVAL_FLAG_17 \
+#define FRAME_FLAG_17 \
     FLAG_LEFT_BIT(17)
 
 
-//=//// EVAL_FLAG_ABRUPT_FAILURE ///////////////////////////////////////////=//
+//=//// FRAME_FLAG_ABRUPT_FAILURE ///////////////////////////////////////////=//
 //
 // !!! This is a current guess for how to handle the case of re-entering an
 // executor when it fail()s abruptly.  We don't want to steal a STATE byte
 // for this in case the status of that state byte is important for cleanup.
 //
-#define EVAL_FLAG_ABRUPT_FAILURE \
+#define FRAME_FLAG_ABRUPT_FAILURE \
     FLAG_LEFT_BIT(18)
 
 
-//=//// EVAL_FLAG_NOTIFY_ON_ABRUPT_FAILURE ////////////////////////////////=//
+//=//// FRAME_FLAG_NOTIFY_ON_ABRUPT_FAILURE ////////////////////////////////=//
 //
 // Most frames don't want to be told about the errors that they themselves...
 // and if they have cleanup to do, they could do that cleanup before calling
@@ -170,31 +170,31 @@ STATIC_ASSERT(EVAL_FLAG_7_IS_TRUE == NODE_FLAG_CELL);
 // To help avoid misunderstandings, trying to read the STATE byte when in the
 // abrupt failure case causes an assert() in the C++ build.
 //
-#define EVAL_FLAG_NOTIFY_ON_ABRUPT_FAILURE \
+#define FRAME_FLAG_NOTIFY_ON_ABRUPT_FAILURE \
     FLAG_LEFT_BIT(19)
 
 
-//=//// EVAL_FLAG_BLAME_PARENT ////////////////////////////////////////////=//
+//=//// FRAME_FLAG_BLAME_PARENT ////////////////////////////////////////////=//
 //
 // Marks an error to hint that a frame is internal, and that reporting an
 // error on it probably won't give a good report.
 //
-#define EVAL_FLAG_BLAME_PARENT \
+#define FRAME_FLAG_BLAME_PARENT \
     FLAG_LEFT_BIT(20)
 
 
-//=//// EVAL_FLAG_ROOT_FRAME //////////////////////////////////////////////=//
+//=//// FRAME_FLAG_ROOT_FRAME //////////////////////////////////////////////=//
 //
 // This frame is the root of a trampoline stack, and hence it cannot be jumped
 // past by something like a YIELD, return, or other throw.  This would mean
 // crossing C stack levels that the interpreter does not control (e.g. some
 // code that called into Rebol as a library.)
 //
-#define EVAL_FLAG_ROOT_FRAME \
+#define FRAME_FLAG_ROOT_FRAME \
     FLAG_LEFT_BIT(21)
 
 
-//=//// EVAL_FLAG_MAYBE_STALE /////////////////////////////////////////////=//
+//=//// FRAME_FLAG_MAYBE_STALE /////////////////////////////////////////////=//
 //
 // This is a flag that is passed to the evaluation to indicate that it should
 // not assert if it finds a value in the ouput cell already.  But also that
@@ -203,13 +203,13 @@ STATIC_ASSERT(EVAL_FLAG_7_IS_TRUE == NODE_FLAG_CELL);
 // ALL for an optimized use of this property (to avoid needing to write to
 // a scratch cell in order to reverse the effects of a void evaluation step).
 //
-#define EVAL_FLAG_MAYBE_STALE \
+#define FRAME_FLAG_MAYBE_STALE \
     FLAG_LEFT_BIT(22)
 
 
-//=//// EVAL_FLAG_23 //////////////////////////////////////////////////////=//
+//=//// FRAME_FLAG_23 //////////////////////////////////////////////////////=//
 //
-#define EVAL_FLAG_23 \
+#define FRAME_FLAG_23 \
     FLAG_LEFT_BIT(23)
 
 
@@ -221,39 +221,39 @@ STATIC_ASSERT(EVAL_FLAG_7_IS_TRUE == NODE_FLAG_CELL);
 // functions to access these.
 //
 
-#define EVAL_FLAG_24    FLAG_LEFT_BIT(24)
-#define EVAL_FLAG_25    FLAG_LEFT_BIT(25)
-#define EVAL_FLAG_26    FLAG_LEFT_BIT(26)
-#define EVAL_FLAG_27    FLAG_LEFT_BIT(27)
-#define EVAL_FLAG_28    FLAG_LEFT_BIT(28)
-STATIC_ASSERT(EVAL_FLAG_28 == CELL_FLAG_NOTE);  // useful for optimization?
-#define EVAL_FLAG_29    FLAG_LEFT_BIT(29)
-#define EVAL_FLAG_30    FLAG_LEFT_BIT(30)
-#define EVAL_FLAG_31    FLAG_LEFT_BIT(31)
+#define FRAME_FLAG_24    FLAG_LEFT_BIT(24)
+#define FRAME_FLAG_25    FLAG_LEFT_BIT(25)
+#define FRAME_FLAG_26    FLAG_LEFT_BIT(26)
+#define FRAME_FLAG_27    FLAG_LEFT_BIT(27)
+#define FRAME_FLAG_28    FLAG_LEFT_BIT(28)
+STATIC_ASSERT(FRAME_FLAG_28 == CELL_FLAG_NOTE);  // useful for optimization?
+#define FRAME_FLAG_29    FLAG_LEFT_BIT(29)
+#define FRAME_FLAG_30    FLAG_LEFT_BIT(30)
+#define FRAME_FLAG_31    FLAG_LEFT_BIT(31)
 
-STATIC_ASSERT(31 < 32);  // otherwise EVAL_FLAG_XXX too high
+STATIC_ASSERT(31 < 32);  // otherwise FRAME_FLAG_XXX too high
 
 
-// Note: It was considered to force clients to include an EVAL_MASK_DEFAULT
+// Note: It was considered to force clients to include a FRAME_MASK_DEFAULT
 // when OR'ing together flags, to allow certain flag states to be favored
 // as truthy for the "unused" state, in case that helped some efficiency
-// trick.  This made the callsites much more noisy, so EVAL_MASK_NONE is used
+// trick.  This made the callsites much more noisy, so FRAME_MASK_NONE is used
 // solely to help call out places that don't have other flags.
 //
-#define EVAL_MASK_NONE 0
+#define FRAME_MASK_NONE 0
 
 
-#define Set_Eval_Flag(f,name) \
-    (FRM(f)->flags.bits |= EVAL_FLAG_##name)
+#define Set_Frame_Flag(f,name) \
+    (FRM(f)->flags.bits |= FRAME_FLAG_##name)
 
-#define Get_Eval_Flag(f,name) \
-    ((FRM(f)->flags.bits & EVAL_FLAG_##name) != 0)
+#define Get_Frame_Flag(f,name) \
+    ((FRM(f)->flags.bits & FRAME_FLAG_##name) != 0)
 
-#define Clear_Eval_Flag(f,name) \
-    (FRM(f)->flags.bits &= ~EVAL_FLAG_##name)
+#define Clear_Frame_Flag(f,name) \
+    (FRM(f)->flags.bits &= ~FRAME_FLAG_##name)
 
-#define Not_Eval_Flag(f,name) \
-    ((FRM(f)->flags.bits & EVAL_FLAG_##name) == 0)
+#define Not_Frame_Flag(f,name) \
+    ((FRM(f)->flags.bits & FRAME_FLAG_##name) == 0)
 
 
 
@@ -295,7 +295,7 @@ typedef Executor Dispatcher;  // sub-dispatched in Action_Executor()
 #endif
 {
     //
-    // These are EVAL_FLAG_XXX or'd together--see their documentation above.
+    // These are FRAME_FLAG_XXX or'd together--see their documentation above.
     // A Reb_Header is used so that it can implicitly terminate `cell`, if
     // that comes in useful (e.g. there's an apparent END after cell)
     //
