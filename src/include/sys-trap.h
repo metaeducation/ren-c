@@ -272,13 +272,20 @@ struct Reb_Jump {
     STATIC_ASSERT(REBOL_FAIL_JUST_ABORTS);
 
     #define TRAP_BLOCK_IN_CASE_OF_ABRUPT_FAILURE \
-        NOOP
+        struct Reb_Jump jump; /* one per trampoline invocation */ \
+        jump.last_jump = TG_Jump_List; \
+        jump.frame = FS_TOP; \
+        TG_Jump_List = &jump; \
+        if (false) \
+            goto abrupt_failure;  /* avoids unreachable code warning */
 
     #define DROP_TRAP_SAME_STACKLEVEL_AS_PUSH \
-        NOOP
+        TG_Jump_List = jump.last_jump;
 
-    #define ON_ABRUPT_FAILURE(errname) \
-        assert(!"ON_ABRUPT_FAILURE() reached with REBOL_FAIL_JUST_ABORTS");
+    #define ON_ABRUPT_FAILURE(decl) \
+      abrupt_failure: /* need to jump here to avoid unreachable warning */ \
+        assert(!"ON_ABRUPT_FAILURE() reached w/REBOL_FAIL_JUST_ABORTS=1"); \
+        decl = Error_User("REBOL_FAIL_JUST_ABORTS=1, should not reach!");
 
 #endif
 

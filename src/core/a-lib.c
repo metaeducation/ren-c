@@ -1790,7 +1790,7 @@ REBVAL *RL_rebRescueWith(
 
     REBVAL *error = Init_Error(Alloc_Value(), e);
 
-    TG_Jump_List = jump.last_jump;
+    DROP_TRAP_SAME_STACKLEVEL_AS_PUSH;
 
     if (not rescuer)
         return error;  // plain rebRescue() behavior

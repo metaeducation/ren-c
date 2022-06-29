@@ -343,7 +343,9 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
     Init_Stale_Void(&TG_Thrown_Arg);
     Init_Stale_Void(&TG_Thrown_Label);
 
-  #if REBOL_FAIL_USES_TRY_CATCH
+  #if REBOL_FAIL_JUST_ABORTS
+    panic (nullptr);  // all branches need to do something, this never happens
+  #elif REBOL_FAIL_USES_TRY_CATCH
     throw error;
   #else
     STATIC_ASSERT(REBOL_FAIL_USES_LONGJMP);
