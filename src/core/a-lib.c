@@ -1730,26 +1730,7 @@ REBVAL *RL_rebRescueWith(
 
     Push_Frame(nullptr, dummy);
 
-    struct Reb_Jump jump;
-    PUSH_TRAP_SO_FAIL_CAN_JUMP_BACK_HERE(&jump);
-
-    // The first time through the following code 'error' will be null, but...
-    // `fail` can longjmp here, so 'error' won't be null *if* that happens!
-    //
-    if (jump.error) {
-        Drop_Frame(dummy);
-
-        REBVAL *error = Init_Error(Alloc_Value(), jump.error);
-
-        TG_Jump_List = jump.last_jump;
-
-        if (not rescuer)
-            return error;  // plain rebRescue() behavior
-
-        REBVAL *result = (*rescuer)(error, opaque);  // *not* guarded by trap!
-        rebRelease(error);
-        return result;  // no special handling, may be null
-    }
+  TRAP_BLOCK_IN_CASE_OF_ABRUPT_FAILURE {  ////////////////////////////////////
 
     REBVAL *result = (*dangerous)(opaque);
 
@@ -1792,7 +1773,7 @@ REBVAL *RL_rebRescueWith(
         }
     }
 
-    DROP_TRAP_SAME_STACKLEVEL_AS_PUSH(&jump);
+    DROP_TRAP_SAME_STACKLEVEL_AS_PUSH
 
     // !!! To abstract how the system deals with exception handling, the
     // rebRescue() routine started being used in lieu of PUSH_TRAP/DROP_TRAP
@@ -1802,7 +1783,22 @@ REBVAL *RL_rebRescueWith(
     Drop_Frame_Unbalanced(dummy);
 
     return result;
-}
+
+} ON_ABRUPT_FAILURE(e) {  ////////////////////////////////////////////////////
+
+    Drop_Frame(dummy);
+
+    REBVAL *error = Init_Error(Alloc_Value(), e);
+
+    TG_Jump_List = jump.last_jump;
+
+    if (not rescuer)
+        return error;  // plain rebRescue() behavior
+
+    REBVAL *result = (*rescuer)(error, opaque);  // *not* guarded by trap!
+    rebRelease(error);
+    return result;  // no special handling, may be null
+}}
 
 
 //

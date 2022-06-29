@@ -80,21 +80,37 @@
 // it is to call out to C code that wishes to use synchronous forms of API
 // calls then nested trampolines may occur.)
 //
+// 1. We put the jmp_buf first, since it has alignment specifiers on Windows
+//
+// 2. When you run longjmp(), you can pass it a parameter which will be
+//    the apparent result of the setjmp() when it gets teleported back to.
+//    However, this parameter is only 32-bit even on 64-bit platforms, so it
+//    is not enough to hold a pointer.  (C++'s `throw` can pass an arbitrary
+//    value up to the `catch`, so this isn't needed in that case.)
+//
+// 3. Technically speaking, there's not a need for Fail_Core() to know what
+//    the currently running frame is before it jumps...because any cleanup
+//    it wants to do, it can do after the jump.  However, there's benefit
+//    that if there's any "bad" situation noticed to be able to intercept
+//    it before the stack state has been lost due to throw()/longjmp()...
+//    a debugger has more information on hand.  For this reason, the
+//    trampoline stores its concept of "current" frame in the jump structure
+//    so it is available to Fail_Core() for automated or manual inspection.
+//
 struct Reb_Jump {
-    //
-    // We put the jmp_buf first, since it has alignment specifiers on Windows
-    //
-  #ifdef HAS_POSIX_SIGNAL
-    sigjmp_buf cpu_state;
-  #else
-    jmp_buf cpu_state;
+  #if REBOL_FAIL_USES_LONGJMP
+    #ifdef HAS_POSIX_SIGNAL
+        sigjmp_buf cpu_state;  // jmp_buf as first field of struct, see [1]
+    #else
+        jmp_buf cpu_state;
+    #endif
+
+    REBCTX *error;  // longjmp() case tunnels pointer back via this, see [2]
   #endif
 
     struct Reb_Jump *last_jump;
 
-    REBFRM *frame;  // !!! Won't be relevant in stackless build
-
-    REBCTX *error;  // longjmp only takes `int`, pointer passed back via this
+    REBFRM *frame;  // trampoline caches frame here for flexibility, see [3]
 };
 
 
@@ -157,67 +173,96 @@ struct Reb_Jump {
 #endif
 
 
-// PUSH_TRAP is a construct which is used to catch errors that have been
-// triggered by the Fail_Core() function.  This can be triggered by a usage
-// of the `fail` pseudo-"keyword" in C code, and in Rebol user code by the
-// REBNATIVE(fail).  To call the push, you need a `struct Reb_State` to be
-// passed which it will write into--which is a black box that clients
-// shouldn't inspect.
+// TRAP_BLOCK is an abstraction of `try {} catch(...) {}` which can also
+// work in plain C using setjmp/longjmp().  It's for trapping "abrupt errors",
+// which are triggered the `fail` pseudo-"keyword" in C code.  These happen at
+// arbitrary moments and are not willing (or able) to go through a normal
+// `return` chain to pipe the error to the trampoline as a "thrown value".
+//
+// IN THE SETJMP IMPLEMENTATION...
 //
 // Jump buffers contain a pointer-to-a-REBCTX which represents an error.
 // Using the tricky mechanisms of setjmp/longjmp, there will be a first pass
-// of execution where the line of code after the PUSH_TRAP will see the
+// of execution where the line of code after the TRAP_BLOCK will see the
 // `jump->error` pointer as being `nullptr`.  If a trap occurs during code
 // before the paired DROP_TRAP happens, then the C state will be magically
-// teleported back to the line after the PUSH_TRAP with the error context now
-// non-null and usable.
+// teleported back to the setjmp(), and it will goto the abrupt_failure label.
 //
-// Note: The implementation of this macro was chosen stylistically to
-// hide the result of the setjmp call.  That's because you really can't
-// put "setjmp" in arbitrary conditions like `setjmp(...) ? x : y`.  That's
-// against the rules.  So although the preprocessor abuse below is a bit
-// ugly, it helps establish that anyone modifying this code later not be
-// able to avoid the truth of the limitation:
+// IN THE TRY/CATCH IMPLEMENTATION...
 //
-// http://stackoverflow.com/questions/30416403/
+// ...in progress...
 //
-// !!! THIS CAN'T BE INLINED due to technical limitations of using setjmp()
-// in inline functions (at least in gcc)
+//////////////////////////////////////////////////////////////////////////////
 //
-// https://gcc.gnu.org/bugzilla/show_bug.cgi?id=24556
+// 1. Although setjmp() does return a value, that value cannot be used in
+//    conditions, e.g. `setjmp(...) ? x : y`
 //
-// According to the developers, "This is not a bug as if you inline it, the
-// place setjmp goes to could be not where you want to goto."
+//    http://stackoverflow.com/questions/30416403/
 //
-#define PUSH_TRAP_SO_FAIL_CAN_JUMP_BACK_HERE(j) \
-    do { \
-        (j)->last_jump = TG_Jump_List; \
-        (j)->frame = FS_TOP; \
-        TG_Jump_List = (j); \
-        if (0 == SET_JUMP((j)->cpu_state))  /* initial setjmp branch */ \
-            (j)->error = nullptr;  /* this branch will always be run */ \
-        else { \
-            /* the longjmp happened */ \
-        } \
-    } while (0)
-
-
-// DROP_TRAP_SAME_STACKLEVEL_AS_PUSH has a long and informative name to
-// remind you that you must DROP_TRAP from the same scope you PUSH_TRAP
-// from.  (So do not call PUSH_TRAP in a function, then return from that
-// function and DROP_TRAP at another stack level.)
+// 2. setjmp() can't be used with inline functions in gcc:
+//
+//    https://gcc.gnu.org/bugzilla/show_bug.cgi?id=24556
+//
+//    According to the developers, "This is not a bug as if you inline it,
+//    the place setjmp goes to could be not where you want to goto."
+//
+// 3. DROP_TRAP_SAME_STACKLEVEL_AS_PUSH has a long name to remind you that
+//    you must DROP_TRAP from the same scope you PUSH_TRAP from:
 //
 //      "If the function that called setjmp has exited (whether by return
 //      or by a different longjmp higher up the stack), the behavior is
 //      undefined. In other words, only long jumps up the call stack
-//      are allowed."
+//      are allowed." - http://en.cppreference.com/w/c/program/longjmp
 //
-//      http://en.cppreference.com/w/c/program/longjmp
-//
-inline static void DROP_TRAP_SAME_STACKLEVEL_AS_PUSH(struct Reb_Jump *j) {
-    assert(j->error == nullptr);
-    TG_Jump_List = j->last_jump;
-}
+#if REBOL_FAIL_USES_LONGJMP
+    STATIC_ASSERT(REBOL_FAIL_USES_TRY_CATCH == 0);
+    STATIC_ASSERT(REBOL_FAIL_JUST_ABORTS == 0);
+
+    #define TRAP_BLOCK_IN_CASE_OF_ABRUPT_FAILURE \
+        struct Reb_Jump jump;  /* one setjmp() per trampoline invocation */ \
+        jump.last_jump = TG_Jump_List; \
+        jump.frame = FS_TOP; \
+        TG_Jump_List = &jump; \
+        if (0 == SET_JUMP(jump.cpu_state))  /* beware return value, see [1] */ \
+            jump.error = nullptr;  /* this branch will always be run */ \
+        else \
+            goto abrupt_failure; /* longjmp happened, jump.error will be set */
+
+    #define DROP_TRAP_SAME_STACKLEVEL_AS_PUSH /* name is reminder, see [1] */ \
+        TG_Jump_List = jump.last_jump;
+
+    #define ON_ABRUPT_FAILURE(errname) \
+        abrupt_failure: /* just a C label point */ \
+            REBCTX *errname = jump.error;
+
+#elif REBOL_FAIL_USES_TRY_CATCH
+    STATIC_ASSERT(REBOL_FAIL_JUST_ABORTS == 0);
+
+    #define TRAP_BLOCK_IN_CASE_OF_ABRUPT_FAILURE \
+        struct Reb_Jump jump; /* one per trampoline invocation */ \
+        jump.last_jump = TG_Jump_List; \
+        jump.frame = FS_TOP; \
+        TG_Jump_List = &jump; \
+        try /* picks up subsequent {...} block */
+
+    #define DROP_TRAP_SAME_STACKLEVEL_AS_PUSH \
+        TG_Jump_List = jump.last_jump;
+
+    #define ON_ABRUPT_FAILURE(errname) \
+        catch (REBCTX *errname) /* picks up subsequent {...} block */
+
+#else
+    STATIC_ASSERT(REBOL_FAIL_JUST_ABORTS);
+
+    #define TRAP_BLOCK_IN_CASE_OF_ABRUPT_FAILURE \
+        NOOP
+
+    #define DROP_TRAP_SAME_STACKLEVEL_AS_PUSH \
+        NOOP
+
+    #define ON_ABRUPT_FAILURE(errname) \
+        assert(!"ON_ABRUPT_FAILURE() reached with REBOL_FAIL_JUST_ABORTS");
+#endif
 
 
 //
@@ -240,45 +285,44 @@ inline static void DROP_TRAP_SAME_STACKLEVEL_AS_PUSH(struct Reb_Jump *j) {
 // NOTE: It's desired that there be a space in `fail (...)` to make it look
 // more "keyword-like" and draw attention to the fact it is a `noreturn` call.
 //
+// 1. The C build wants a polymorphic fail() that can take error contexts,
+//    UTF-8 strings, cell pointers...etc.  To do so requires accepting a
+//    `const void*` which has no checking at compile-time.  The C++ build can
+//    do better, and limit the input types that fail() will accept.
+//
+//   (This could be used by a strict build that wanted to get rid of all the
+//    hard-coded string fail()s, by triggering a compiler error on them.)
+//
 
-#ifdef NDEBUG
-    #if DEBUG_PRINTF_FAIL_LOCATIONS  // see remarks in %reb-config.h
-        #define fail(error) do { \
-            printf("fail() @ %s %d tick =", __FILE__, __LINE__); \
-            Fail_Core(error); /* prints the actual tick */ \
-        } while (0)
-    #else
-        #define fail(error) \
-            Fail_Core(error)
-    #endif
+#if DEBUG_PRINTF_FAIL_LOCATIONS
+    #define Fail_Macro_Prelude(...) \
+        printf(__VA_ARGS__)
 #else
-    #if CPLUSPLUS_11
-        //
-        // We can do a bit more checking in the C++ build, for instance to
-        // make sure you don't pass a Cell(*) into fail().  This could also
-        // be used by a strict build that wanted to get rid of all the hard
-        // coded string fail()s, by triggering a compiler error on them.
+    #define Fail_Macro_Prelude(...) \
+        NOOP
+#endif
 
-        template <class T>
-        inline static ATTRIBUTE_NO_RETURN void Fail_Core_Cpp(T *p) {
-            static_assert(
-                std::is_same<T, REBCTX>::value
-                or std::is_same<T, const char>::value
-                or std::is_base_of<const REBVAL, T>::value
-                or std::is_base_of<Reb_Cell, T>::value,
-                "fail() works on: REBCTX*, Cell(*), const char*"
-            );
-            Fail_Core(p);
-        }
+#if CPLUSPLUS_11  // add checking
+    template <class T>
+    inline static ATTRIBUTE_NO_RETURN void Fail_Macro_Helper(T *p) {
+        static_assert(
+            std::is_same<T, REBCTX>::value
+            or std::is_same<T, const char>::value
+            or std::is_base_of<const REBVAL, T>::value
+            or std::is_base_of<Reb_Cell, T>::value,
+            "fail() works on: REBCTX*, Cell(*), const char*"
+        );
+        Fail_Core(p);
+    }
+#else
+    #define Fail_Macro_Helper Fail_Core
+#endif
 
-        #define fail(error) \
-            do { \
-                Fail_Core_Cpp(error); \
-            } while (0)
-    #else
-        #define fail(error) \
-            do { \
-                Fail_Core(error); \
-            } while (0)
-    #endif
+#if REBOL_FAIL_JUST_ABORTS
+    #define fail panic
+#else
+    #define fail(error) do { \
+        Fail_Macro_Prelude("fail() @ %s %d tick =", __FILE__, __LINE__); \
+        Fail_Macro_Helper(error); /* prints the actual tick */ \
+    } while (0)
 #endif

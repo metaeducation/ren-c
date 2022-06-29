@@ -109,91 +109,31 @@ REB_R Just_Use_Out_Executor(REBFRM *f)
 //
 REB_R Trampoline_From_Top_Maybe_Root(void)
 {
-    struct Reb_Jump jump;  // only one setjmp() point per trampoline invocation
+  bounce_on_trampoline_with_trap:
 
-  push_trap_for_longjmp: {  //////////////////////////////////////////////////
+  // TRAP_BLOCK is an abstraction of `try {} catch(...) {}` which can also
+  // work in plain C using setjmp/longjmp().  It's considered desirable to
+  // support both approaches: plain C compilation (e.g. with TCC) runs on many
+  // legacy/embedded platforms, but structured exception handling has support
+  // on other systems like WasmEdge that cannot handle setjmp()/longjmp().
+  //
+  // Regardless of which implementation you are using, once an "exception" has
+  // occurred you must jump up above the block to re-enable the "catching".
+  // C++ does not allow a `goto` from outside of `try` block into it:
+  //
+  //    "A goto or switch statement shall not be used to transfer control
+  //     into a try block or into a handler. "
+  //
+  // In the case of a C setjmp()/longjmp(), we have "used up" the jump buffer
+  // after a longjmp() occurs, so obviously it needs to be re-setjmp'd.
+  //
+  // So either way, we can only jump to `bounce_on_trampoline` if no abrupt
+  // fail() has occurred.  otherwise jump to `bounce_on_trampoline_with_trap`
+  // to put the trapping back into effect.
 
-    // Any frame that is interrupted at an arbitrary moment by a fail() gets
-    // "teleported" back to this point.  The running C stack variables in any
-    // natives will be lost.  Heap-allocated Frames will be intact.  See [3]
+  TRAP_BLOCK_IN_CASE_OF_ABRUPT_FAILURE {  ////////////////////////////////////
 
-    PUSH_TRAP_SO_FAIL_CAN_JUMP_BACK_HERE(&jump);
-
-    // (The first time through the following, 'jump.error' will be null, BUT
-    // `fail` can longjmp here, so 'error' won't be null *if* that happens!)
-
-    if (jump.error) {
-        ASSERT_CONTEXT(jump.error);
-        assert(CTX_TYPE(jump.error) == REB_ERROR);
-
-        Set_Frame_Flag(FRAME, ABRUPT_FAILURE);
-
-        Clear_Feed_Flag(FRAME->feed, NEXT_ARG_FROM_OUT);  // !!! stops asserts
-
-        while (FS_TOP != FRAME) {  // drop idle frames above the fail, see [4]
-            assert(Not_Frame_Flag(FS_TOP, NOTIFY_ON_ABRUPT_FAILURE));
-            assert(Not_Frame_Flag(FS_TOP, ROOT_FRAME));
-
-            if (Is_Action_Frame(FS_TOP)) {
-                assert(Not_Executor_Flag(ACTION, FS_TOP, DISPATCHER_CATCHES));
-                assert(not Is_Action_Frame_Fulfilling(FS_TOP));
-                Drop_Action(FS_TOP);
-            }
-
-            Drop_Frame(FS_TOP);  // will call va_end() if variadic frame
-        }
-
-        // A frame that asked to be notified about abrupt failures will get
-        // the failure thrown.  The default behavior of staying in the thrown
-        // state will be to convert it to a definitional failure on return.
-        // (ABRUPT_FAILURE + NOTIFIY_ON_ABRUPT_FAILURE + return R_THROWN will
-        // act as if there had never been a NOTIFY_ON_ABRUPT_FAILURE)
-        //
-        if (Get_Frame_Flag(FRAME, NOTIFY_ON_ABRUPT_FAILURE)) {
-            Init_Thrown_With_Label(
-                FS_TOP,
-                Lib(NULL),  // no "thrown value"
-                CTX_ARCHETYPE(jump.error)  // only the ERROR! as a label
-            );
-            goto restore_trap_and_continue_fs_top;
-        }
-
-        // fail() is not treated as a efinitional error.  There is no way to
-        // tell the difference between the failure having originated from this
-        // frame or any others underneath it, so the throw convention is used.
-        //
-        // !!! It was at first wondered if since we know what FRAME was "in
-        // control" when a fail() occurred, if that should be a definitional
-        // error (the way that `return FAIL(xxx)` would be).  But this would
-        // promote every incidental error in a function to the interface
-        // contract of that function...which is not something we want (a
-        // function does not automatically have "out of memory" in its contract
-        // just because it uses memory...so all fail() errors are treated as
-        // thrown errors that can't be ^META'd or EXCEPT'd...only TRAPped.
-
-        Init_Thrown_With_Label(
-            FRAME,
-            Lib(NULL),  // no "thrown value"
-            CTX_ARCHETYPE(jump.error)  // only the ERROR! as a label
-        );
-
-        if (Get_Frame_Flag(FRAME, ROOT_FRAME)) {
-            TG_Jump_List = jump.last_jump;  // ** Note: this changes FRAME **
-            return R_THROWN;
-        }
-
-        Drop_Frame(FRAME);
-
-      restore_trap_and_continue_fs_top:
-
-        TG_Jump_List = jump.last_jump;  // ** Note: this changes FRAME **
-        // (FS_TOP will become FRAME again after push_trap)
-        goto push_trap_for_longjmp;  // have to push again to trap again
-    }
-
-    FRAME = FS_TOP;
-
-} bounce_on_the_trampoline: {  ///////////////////////////////////////////////
+  bounce_on_trampoline:
 
   // 1. The Just_Use_Out_Executor() exists vs. using something like nullptr
   //    for the executor just to make it more obvously intentional that a
@@ -309,7 +249,7 @@ REB_R Trampoline_From_Top_Maybe_Root(void)
 
         if (Get_Frame_Flag(FRAME, ROOT_FRAME)) {
             STATE = 0;  // !!! Frame gets reused, review
-            DROP_TRAP_SAME_STACKLEVEL_AS_PUSH(&jump);
+            DROP_TRAP_SAME_STACKLEVEL_AS_PUSH
             return FS_TOP->out;
         }
 
@@ -328,7 +268,7 @@ REB_R Trampoline_From_Top_Maybe_Root(void)
             FRAME = FS_TOP;
         }
 
-        goto bounce_on_the_trampoline;  // some pending frame now has a result
+        goto bounce_on_trampoline;  // some pending frame now has a result
     }
 
   //=//// HANDLE CONTINUATIONS ////////////////////////////////////////////=//
@@ -352,7 +292,7 @@ REB_R Trampoline_From_Top_Maybe_Root(void)
             assert(STATE != 0);  // otherwise state enforced nonzero, see [2]
 
         FRAME = FS_TOP;
-        goto bounce_on_the_trampoline;
+        goto bounce_on_trampoline;
     }
 
     if (r == R_DELEGATION) {
@@ -365,11 +305,13 @@ REB_R Trampoline_From_Top_Maybe_Root(void)
         FRAME->executor = &Just_Use_Out_Executor;  // whatever frames make
 
         FRAME = FS_TOP;
-        goto bounce_on_the_trampoline;
+        goto bounce_on_trampoline;
     }
 
-    if (r == R_SUSPEND)  // just to get emscripten started w/o Asyncify
+    if (r == R_SUSPEND) {  // just to get emscripten started w/o Asyncify
+        DROP_TRAP_SAME_STACKLEVEL_AS_PUSH
         return R_SUSPEND;
+    }
 
 
   //=//// HANDLE THROWS, INCLUDING (NON-ABRUPT) ERRORS ////////////////////=//
@@ -439,7 +381,7 @@ REB_R Trampoline_From_Top_Maybe_Root(void)
 
         if (Get_Frame_Flag(FRAME, ROOT_FRAME)) {  // don't abort top
             assert(Not_Frame_Flag(FS_TOP, TRAMPOLINE_KEEPALIVE));
-            DROP_TRAP_SAME_STACKLEVEL_AS_PUSH(&jump);
+            DROP_TRAP_SAME_STACKLEVEL_AS_PUSH
             return R_THROWN;
         }
 
@@ -451,11 +393,70 @@ REB_R Trampoline_From_Top_Maybe_Root(void)
                 FRAME = FRAME->prior;  // hack, don't let it be aborted, see [3]
         }
 
-        goto bounce_on_the_trampoline;  // executor will see the throw
+        goto bounce_on_trampoline;  // executor will see the throw
     }
 
     assert(!"executor(f) not OUT, R_THROWN, or R_CONTINUATION");
     panic (r);
+
+} ON_ABRUPT_FAILURE(e) {  ////////////////////////////////////////////////////
+
+  // 1. An abrupt fail(...) is treated as a "thrown error", which can not be
+  //    intercepted in the same way as a definitional error can be.
+  //
+  //   (It was wondered if since we know what FRAME was "in control" when a
+  //    fail() occurred, if this code should put a Failure() in the output
+  //    slot...as if a `return FAIL(xxx)` occurred.  But just because we know
+  //    what FRAME the trampoline last called does not mean every incidental
+  //    error should be attributed to being "from" that frame.  That would
+  //    promote any incidental error--like "out of memory", that could come
+  //    from any nested library call--to being definitional.)
+  //
+  // 2. A frame that asked to be notified about abrupt failures will get the
+  //    failure thrown.  The default behavior of staying in the thrown state
+  //    will be to convert it to a definitional failure on return.
+  //
+  //    e.g. ABRUPT_FAILURE + NOTIFIY_ON_ABRUPT_FAILURE + return R_THROWN
+  //    will act as if there had never been a NOTIFY_ON_ABRUPT_FAILURE
+
+    ASSERT_CONTEXT(e);
+    assert(CTX_TYPE(e) == REB_ERROR);
+
+    Set_Frame_Flag(FRAME, ABRUPT_FAILURE);
+
+    Clear_Feed_Flag(FRAME->feed, NEXT_ARG_FROM_OUT);  // !!! stops asserts
+
+    while (FS_TOP != FRAME) {  // drop idle frames above the fail
+        assert(Not_Frame_Flag(FS_TOP, NOTIFY_ON_ABRUPT_FAILURE));
+        assert(Not_Frame_Flag(FS_TOP, ROOT_FRAME));
+
+        if (Is_Action_Frame(FS_TOP)) {
+            assert(Not_Executor_Flag(ACTION, FS_TOP, DISPATCHER_CATCHES));
+            assert(not Is_Action_Frame_Fulfilling(FS_TOP));
+            Drop_Action(FS_TOP);
+        }
+
+        Drop_Frame(FS_TOP);  // will call va_end() if variadic frame
+    }
+
+    Init_Thrown_With_Label(  // Error is non-definitional, see [1]
+        FRAME,
+        Lib(NULL),  // no "thrown value"
+        CTX_ARCHETYPE(e)  // only the ERROR! as a label
+    );
+
+    if (Not_Frame_Flag(FRAME, NOTIFY_ON_ABRUPT_FAILURE)) {
+        if (Get_Frame_Flag(FRAME, ROOT_FRAME)) {
+            DROP_TRAP_SAME_STACKLEVEL_AS_PUSH  // ** Note: this changes FRAME **
+            return R_THROWN;
+        }
+
+        Drop_Frame(FRAME);
+    }
+
+    DROP_TRAP_SAME_STACKLEVEL_AS_PUSH  // ** Note: this changes FRAME **
+    // (FS_TOP will become FRAME again after push_trap)
+    goto bounce_on_trampoline_with_trap;  // after exception, need new trap
 }}
 
 

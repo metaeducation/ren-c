@@ -457,6 +457,84 @@ Special internal defines used by RT, not Host-Kit developers:
 #endif
 
 
+// When it comes to exception-handling mechanisms, we have 3 choices:
+//
+//    * REBOL_FAIL_USES_LONGJMP to use C's setjmp()/longjmp()
+//    * REBOL_FAIL_USES_TRY_CATCH to use C++'s try {...} catch {...}
+//    * REBOL_FAIL_JUST_ABORTS will panic() and terminate the program
+//
+// It's considered desirable to support both a C and C++ approach.  Plain C
+// compilation (e.g. with TCC) runs on many legacy/embedded platforms.  But
+// structured exception handling has support on other systems like WasmEdge
+// that cannot handle setjmp()/longjmp().
+//
+// To abstract this, Ren-C uses a keyword-like-macro called `fail()` that
+// hides the differences.  See TRAP_BLOCK_IN_CASE_OF_ABRUPT_FAILURE for a
+// breakdown of how this is pulled off.
+//
+// 1. setjmp()/longjmp() are essentially "goto on steroids", and on a
+//    traditional platform they introduce the least baggage in terms of the
+//    runtime needed to support them.  But while they are simple for many
+//    traditional platforms, a runtime that enforces a de-facto structured
+//    model may find it difficult-if-not-impossible to emulate them.
+//
+#if !defined(REBOL_FAIL_USES_LONGJMP) \
+        && !defined(REBOL_FAIL_USES_TRY_CATCH) \
+        && !defined(REBOL_FAIL_JUST_ABORTS)
+
+    #define REBOL_FAIL_USES_LONGJMP 1  // often simplest, not always: see [1]
+    #define REBOL_FAIL_USES_TRY_CATCH 0
+    #define REBOL_FAIL_JUST_ABORTS 0
+
+#elif defined(REBOL_FAIL_USES_LONGJMP)
+
+    STATIC_ASSERT(REBOL_FAIL_USES_LONGJMP == 1);
+    #if defined(REBOL_FAIL_USES_TRY_CATCH)
+        STATIC_ASSERT(REBOL_FAIL_USES_TRY_CATCH == 0);
+    #else
+        #define REBOL_FAIL_USES_TRY_CATCH 0
+    #endif
+    #if defined(REBOL_FAIL_JUST_ABORTS)
+        STATIC_ASSERT(REBOL_FAIL_JUST_ABORTS == 0);
+    #else
+        #define REBOL_FAIL_JUST_ABORTS 0
+    #endif
+
+#elif defined(REBOL_FAIL_USES_TRY_CATCH)
+
+    #if !defined(__cplusplus)
+        #error "REBOL_FAIL_USES_TRY_CATCH requires compiling Ren-C with C++"
+    #endif
+
+    STATIC_ASSERT(REBOL_FAIL_USES_TRY_CATCH == 1);
+    #if defined(REBOL_FAIL_USES_LONGJMP)
+        STATIC_ASSERT(REBOL_FAIL_USES_LONGJMP == 0)
+    #else
+        #define REBOL_FAIL_USES_LONGJMP 0
+    #endif
+    #if defined(REBOL_FAIL_JUST_ABORTS)
+        STATIC_ASSERT(REBOL_FAIL_JUST_ABORTS == 0);
+    #else
+        #define REBOL_FAIL_JUST_ABORTS 0
+    #endif
+
+#else
+
+    STATIC_ASSERT(REBOL_FAIL_JUST_ABORTS == 1);
+    #if defined(REBOL_FAIL_USES_LONGJMP)
+        STATIC_ASSERT(REBOL_FAIL_USES_LONGJMP == 0)
+    #else
+        #define REBOL_FAIL_USES_LONGJMP 0
+    #endif
+    #if defined(REBOL_FAIL_USES_TRY_CATCH)
+        STATIC_ASSERT(REBOL_FAIL_USES_TRY_CATCH == 0);
+    #else
+        #define REBOL_FAIL_USES_TRY_CATCH 0
+    #endif
+
+#endif
+
+
 // Natives can be decorated with a RETURN: annotation, but this is not
 // checked in the release build.  It's assumed they will only return the
 // correct types.  This switch is used to panic() if they're wrong.

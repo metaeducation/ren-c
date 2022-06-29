@@ -193,6 +193,10 @@ void Assert_State_Balanced_Debug(
 //
 ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
 {
+  #if REBOL_FAIL_JUST_ABORTS
+    assert(!"Fail_Core() called and REBOL_FAIL_JUST_ABORTS, shouldn't happen");
+  #endif
+
   #if DEBUG_PRINTF_FAIL_LOCATIONS && DEBUG_COUNT_TICKS
     //
     // File and line are printed by the calling macro to capture __FILE__ and
@@ -333,15 +337,20 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
     if (TG_Jump_List == nullptr)
         panic (error);
 
-    TG_Jump_List->error = error;
-
     // If a throw was being processed up the stack when the error was raised,
     // then it had the thrown argument set.
     //
     Init_Stale_Void(&TG_Thrown_Arg);
     Init_Stale_Void(&TG_Thrown_Label);
 
-    LONG_JUMP(TG_Jump_List->cpu_state, 1);
+  #if REBOL_FAIL_USES_TRY_CATCH
+    throw error;
+  #else
+    STATIC_ASSERT(REBOL_FAIL_USES_LONGJMP);
+
+    TG_Jump_List->error = error;  // longjmp() argument too small for pointer
+    LONG_JUMP(TG_Jump_List->cpu_state, 1);  // 1 so setjmp() returns nonzero
+  #endif
 }
 
 
