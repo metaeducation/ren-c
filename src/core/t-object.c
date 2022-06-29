@@ -80,7 +80,7 @@ static void Append_To_Context(REBVAL *context, REBVAL *arg)
             goto collect_end;
         }
 
-        const Symbol *symbol = VAL_WORD_SYMBOL(word);
+        Symbol(const*) symbol = VAL_WORD_SYMBOL(word);
 
         if (Try_Add_Binder_Index(
             &collector.binder,
@@ -107,7 +107,7 @@ static void Append_To_Context(REBVAL *context, REBVAL *arg)
   blockscope {  // Set new values to obj words
     const Cell *word = item;
     for (; word != tail; word += 2) {
-        const Symbol *symbol = VAL_WORD_SYMBOL(word);
+        Symbol(const*) symbol = VAL_WORD_SYMBOL(word);
         REBVAR *var;
         if (IS_MODULE(context)) {
             bool strict = true;
@@ -242,8 +242,8 @@ void Init_Evars(EVARS *e, noquote(const Cell*) v) {
 
         REBDSP dsp_orig = DSP;
 
-        Symbol **psym = SER_HEAD(Symbol*, PG_Symbols_By_Hash);
-        Symbol **psym_tail = SER_TAIL(Symbol*, PG_Symbols_By_Hash);
+        Symbol(*) *psym = SER_HEAD(Symbol(*), PG_Symbols_By_Hash);
+        Symbol(*) *psym_tail = SER_TAIL(Symbol(*), PG_Symbols_By_Hash);
         for (; psym != psym_tail; ++psym) {
             if (*psym == nullptr or *psym == &PG_Deleted_Symbol)
                 continue;
@@ -486,8 +486,8 @@ REBINT CT_Context(noquote(const Cell*) a, noquote(const Cell*) b, bool strict)
             }
         }
 
-        const Symbol *symbol1 = KEY_SYMBOL(e1.key);
-        const Symbol *symbol2 = KEY_SYMBOL(e2.key);
+        Symbol(const*) symbol1 = KEY_SYMBOL(e1.key);
+        Symbol(const*) symbol2 = KEY_SYMBOL(e2.key);
         diff = Compare_Spellings(symbol1, symbol2, strict);
         if (diff != 0)
             goto finished;
@@ -822,8 +822,8 @@ REBCTX *Copy_Context_Extra_Managed(
         REBCTX *copy = CTX(varlist); // now a well-formed context
         assert(GET_SERIES_FLAG(varlist, DYNAMIC));
 
-        Symbol **psym = SER_HEAD(Symbol*, PG_Symbols_By_Hash);
-        Symbol **psym_tail = SER_TAIL(Symbol*, PG_Symbols_By_Hash);
+        Symbol(*) *psym = SER_HEAD(Symbol(*), PG_Symbols_By_Hash);
+        Symbol(*) *psym_tail = SER_TAIL(Symbol(*), PG_Symbols_By_Hash);
         for (; psym != psym_tail; ++psym) {
             if (*psym == nullptr or *psym == &PG_Deleted_Symbol)
                 continue;
@@ -958,7 +958,7 @@ void MF_Context(REB_MOLD *mo, noquote(const Cell*) v, bool form)
 
             if (Is_Isotope(e.var)) {
                 Append_Codepoint(mo->series, '~');
-                const Symbol *label = try_unwrap(VAL_ISOTOPE_LABEL(e.var));
+                Symbol(const*) label = try_unwrap(VAL_ISOTOPE_LABEL(e.var));
                 if (label) {
                     Append_Spelling(mo->series, label);
                     Append_Codepoint(mo->series, '~');
@@ -992,7 +992,7 @@ void MF_Context(REB_MOLD *mo, noquote(const Cell*) v, bool form)
     while (Did_Advance_Evars(&e)) {
         New_Indented_Line(mo);
 
-        const Symbol *spelling = KEY_SYMBOL(e.key);
+        Symbol(const*) spelling = KEY_SYMBOL(e.key);
 
         DECLARE_LOCAL (set_word);
         Init_Set_Word(set_word, spelling);  // want escaping, e.g `|::|: 10`
@@ -1008,7 +1008,7 @@ void MF_Context(REB_MOLD *mo, noquote(const Cell*) v, bool form)
             // status would be lost).
             //
             Append_Ascii(s, "~");
-            const Symbol *label = try_unwrap(VAL_ISOTOPE_LABEL(e.var));
+            Symbol(const*) label = try_unwrap(VAL_ISOTOPE_LABEL(e.var));
             if (label) {
                 Append_Spelling(s, label);
                 Append_Ascii(s, "~");
@@ -1042,7 +1042,7 @@ void MF_Context(REB_MOLD *mo, noquote(const Cell*) v, bool form)
 }
 
 
-const Symbol *Symbol_From_Picker(const REBVAL *context, const Cell *picker)
+Symbol(const*) Symbol_From_Picker(const REBVAL *context, const Cell *picker)
 {
     UNUSED(context);  // Might the picker be context-sensitive?
 
@@ -1114,7 +1114,7 @@ REBTYPE(Context)
         UNUSED(ARG(location));
 
         const Cell *picker = ARG(picker);
-        const Symbol *symbol = Symbol_From_Picker(context, picker);
+        Symbol(const*) symbol = Symbol_From_Picker(context, picker);
 
         const REBVAL *var = TRY_VAL_CONTEXT_VAR(context, symbol);
         if (not var)
@@ -1130,7 +1130,7 @@ REBTYPE(Context)
         UNUSED(ARG(location));
 
         const Cell *picker = ARG(picker);
-        const Symbol *symbol = Symbol_From_Picker(context, picker);
+        Symbol(const*) symbol = Symbol_From_Picker(context, picker);
 
         REBVAL *setval = Meta_Unquotify(ARG(value));
 
@@ -1150,7 +1150,7 @@ REBTYPE(Context)
         UNUSED(ARG(location));
 
         const Cell *picker = ARG(picker);
-        const Symbol *symbol = Symbol_From_Picker(context, picker);
+        Symbol(const*) symbol = Symbol_From_Picker(context, picker);
 
         REBVAL *setval = Meta_Unquotify(ARG(value));
 
@@ -1278,7 +1278,7 @@ REBTYPE(Frame)
             // Can be answered for frames that have no execution phase, if
             // they were initialized with a label.
             //
-            option(const Symbol*) label = VAL_FRAME_LABEL(frame);
+            option(Symbol(const*)) label = VAL_FRAME_LABEL(frame);
             if (label)
                 return Init_Word(OUT, unwrap(label));
 

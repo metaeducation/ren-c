@@ -678,7 +678,7 @@ inline static bool IS_PREDICATE1_CELL(noquote(const Cell*) v) {
     return Get_Cell_Flag(v, REFINEMENT_LIKE);  // !!! Review: test this first?
 }
 
-inline static const Symbol *VAL_PREDICATE1_SYMBOL(
+inline static Symbol(const*) VAL_PREDICATE1_SYMBOL(
     noquote(const Cell*) v
 ){
     assert(IS_PREDICATE1_CELL(v));
@@ -693,7 +693,7 @@ inline static bool IS_PREDICATE(const Cell *v) {
     return IS_BLANK(VAL_SEQUENCE_AT(temp, v, 0));
 }
 
-inline static const Symbol *VAL_REFINEMENT_SYMBOL(
+inline static Symbol(const*) VAL_REFINEMENT_SYMBOL(
     noquote(const Cell*) v
 ){
     assert(IS_REFINEMENT_CELL(v));

@@ -641,7 +641,7 @@ REB_R Evaluator_Executor(REBFRM *f)
             }
 
             REBCTX *binding = VAL_ACTION_BINDING(unwrap(f_current_gotten));
-            const Symbol *label = VAL_WORD_SYMBOL(f_current);  // use WORD!
+            Symbol(const*) label = VAL_WORD_SYMBOL(f_current);  // use WORD!
             bool enfixed = Get_Action_Flag(action, ENFIXED);
 
             DECLARE_ACTION_SUBFRAME (subframe, f);

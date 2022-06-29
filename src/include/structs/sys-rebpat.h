@@ -74,7 +74,7 @@
 //
 // * Currently unused if the payload is for a virtual binding patch.
 //
-#define INODE_PatchSymbol_TYPE           const Symbol*
+#define INODE_PatchSymbol_TYPE           Symbol(const*)
 #define INODE_PatchSymbol_CAST           SYM
 #define HAS_INODE_PatchSymbol            FLAVOR_PATCH
 

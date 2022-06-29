@@ -385,7 +385,7 @@ REBLEN Stack_Depth(void)
 //
 const REBVAL *Find_Error_For_Sym(enum Reb_Symbol_Id id_sym)
 {
-    const Symbol *id_canon = Canon_Symbol(id_sym);
+    Symbol(const*) id_canon = Canon_Symbol(id_sym);
 
     REBCTX *categories = VAL_CONTEXT(Get_System(SYS_CATALOG, CAT_ERRORS));
 
@@ -786,7 +786,7 @@ REBCTX *Make_Error_Managed_Core(
 
         for (; msg_item != msg_tail; ++msg_item) {
             if (IS_GET_WORD(msg_item)) {
-                const Symbol *symbol = VAL_WORD_SYMBOL(msg_item);
+                Symbol(const*) symbol = VAL_WORD_SYMBOL(msg_item);
                 REBVAL *var = Append_Context(error, nullptr, symbol);
 
                 const void *p = va_arg(*vaptr, const void*);
@@ -963,7 +963,7 @@ REBCTX *Error_Bad_Func_Def(const REBVAL *spec, const REBVAL *body)
 //
 //  Error_No_Arg: C
 //
-REBCTX *Error_No_Arg(option(const Symbol*) label, const Symbol *symbol)
+REBCTX *Error_No_Arg(option(Symbol(const*)) label, Symbol(const*) symbol)
 {
     DECLARE_LOCAL (param_word);
     Init_Word(param_word, symbol);
@@ -1208,7 +1208,7 @@ REBCTX *Error_Protected_Key(const REBKEY *key)
 //
 //  Error_Math_Args: C
 //
-REBCTX *Error_Math_Args(enum Reb_Kind type, const Symbol *verb)
+REBCTX *Error_Math_Args(enum Reb_Kind type, Symbol(const*) verb)
 {
     DECLARE_LOCAL (verb_cell);
     Init_Word(verb_cell, verb);
@@ -1218,7 +1218,7 @@ REBCTX *Error_Math_Args(enum Reb_Kind type, const Symbol *verb)
 //
 //  Error_Cannot_Use: C
 //
-REBCTX *Error_Cannot_Use(const Symbol *verb, const Cell *first_arg)
+REBCTX *Error_Cannot_Use(Symbol(const*) verb, const Cell *first_arg)
 {
     DECLARE_LOCAL (verb_cell);
     Init_Word(verb_cell, verb);

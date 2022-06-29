@@ -1986,7 +1986,7 @@ REB_R Scanner_Executor(REBFRM *f) {
             Init_Bad_Word(PUSH(), nullptr);
         else {
             assert(bp[len - 1] == '~');
-            const Symbol *label = Intern_UTF8_Managed(bp + 1, len - 2);
+            Symbol(const*) label = Intern_UTF8_Managed(bp + 1, len - 2);
             Init_Bad_Word(PUSH(), label);
         }
         break; }

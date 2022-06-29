@@ -246,7 +246,7 @@ REBNATIVE(in)
     // here in IN, but BIND's behavior on words may need revisiting.
     //
     if (ANY_WORD(v)) {
-        const Symbol *symbol = VAL_WORD_SYMBOL(v);
+        Symbol(const*) symbol = VAL_WORD_SYMBOL(v);
         const bool strict = true;
         REBLEN index = Find_Symbol_In_Context(ARG(context), symbol, strict);
         if (index == 0)
@@ -284,7 +284,7 @@ REBNATIVE(without)
     // here in IN, but BIND's behavior on words may need revisiting.
     //
     if (ANY_WORD(v)) {
-        const Symbol *symbol = VAL_WORD_SYMBOL(v);
+        Symbol(const*) symbol = VAL_WORD_SYMBOL(v);
         const bool strict = true;
         REBLEN index = Find_Symbol_In_Context(ARG(context), symbol, strict);
         if (index == 0)
@@ -1467,7 +1467,7 @@ REBNATIVE(resolve)
         if (not IS_WORD(v))
             fail (ARG(exports));
 
-        const Symbol *symbol = VAL_WORD_SYMBOL(v);
+        Symbol(const*) symbol = VAL_WORD_SYMBOL(v);
 
         bool strict = true;
 

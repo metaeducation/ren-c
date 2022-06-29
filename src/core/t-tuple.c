@@ -467,7 +467,7 @@ void MF_Sequence(REB_MOLD *mo, noquote(const Cell*) v, bool form)
             // no blank molding; implicit
         }
         else if (element_kind == REB_WORD) {
-            const Symbol *sym = VAL_WORD_SYMBOL(element);
+            Symbol(const*) sym = VAL_WORD_SYMBOL(element);
             if (
                 not form
                 and Get_Subclass_Flag(SYMBOL, sym, ESCAPE_IN_SEQUENCE)

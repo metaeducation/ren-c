@@ -54,7 +54,7 @@
 // intent clearer for passing in a null REBSTR*, use ANONYMOUS instead.
 //
 #define ANONYMOUS \
-    cast(const Symbol*, nullptr)
+    cast(Symbol(const*), nullptr)
 
 
 // For a writable REBSTR, a list of entities that cache the mapping from

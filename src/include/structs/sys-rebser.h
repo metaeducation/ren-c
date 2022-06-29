@@ -795,7 +795,8 @@ union Reb_Series_Info {
     typedef struct Reb_String REBSTR;
 
     struct Reb_Symbol : public Reb_String {};  // word-constrained strings
-    typedef struct Reb_Symbol Symbol;
+    #define Symbol(star_maybe_const) \
+        struct Reb_Symbol star_maybe_const
 
     struct Reb_Bookmark_List : public Reb_Series {};
     typedef struct Reb_Bookmark_List REBBMK;  // list of UTF-8 index=>offsets
@@ -811,7 +812,10 @@ union Reb_Series_Info {
 #else
     typedef struct Reb_Series REBBIN;
     typedef struct Reb_Series REBSTR;
-    typedef struct Reb_Series Symbol;
+
+    #define Symbol(star_maybe_const)
+        struct Reb_Symbol star_maybe_const
+
     typedef struct Reb_Series REBBMK;
     typedef struct Reb_Series REBACT;
     typedef struct Reb_Series REBCTX;
@@ -823,7 +827,7 @@ union Reb_Series_Info {
 // things we increment across aren't REBSER nodes, but pointers to REBSER
 // nodes for the strings... so a "key" is a pointer.
 //
-typedef const Symbol *REBKEY;
+typedef Symbol(const*) REBKEY;
 
 
 //=//// DON'T PUT ANY CODE (OR MACROS THAT MAY NEED CODE) IN THIS FILE! ///=//

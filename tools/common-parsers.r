@@ -274,7 +274,7 @@ export proto-parser: context [
         ;     { ...
         ;
         typemacro-parentheses: [
-            "option(" thru ")"
+            "option(" opt [identifier "(" thru ")"] thru ")"
             | "(*)" | "(const*)"
             | "(const *)" (fail "use (const*) not (const *)")
             | "(const Cell*)"

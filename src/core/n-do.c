@@ -861,7 +861,7 @@ REBNATIVE(apply)
     // to mean we are naming the next argument.
 
     if (IS_PATH(f_value) and IS_REFINEMENT(f_value)) {
-        const Symbol *symbol = VAL_REFINEMENT_SYMBOL(f_value);
+        Symbol(const*) symbol = VAL_REFINEMENT_SYMBOL(f_value);
 
         REBLEN index = Find_Symbol_In_Context(frame, symbol, false);
         if (index == 0)

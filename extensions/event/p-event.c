@@ -61,7 +61,7 @@
 //
 // Internal port handler for events.
 //
-REB_R Event_Actor(REBFRM *frame_, REBVAL *port, const Symbol *verb)
+REB_R Event_Actor(REBFRM *frame_, REBVAL *port, Symbol(const*) verb)
 {
     // Validate and fetch relevant PORT fields:
     //

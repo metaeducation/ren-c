@@ -77,7 +77,7 @@
 inline static REBVAL *Init_Any_Word_Untracked(
     Cell *out,
     enum Reb_Kind kind,
-    const Symbol *sym
+    Symbol(const*) sym
 );
 
 
@@ -86,18 +86,18 @@ inline static REBVAL *Init_Any_Word_Untracked(
 #define Init_Bad_Word(out,sym) \
     Init_Bad_Word_Untracked(TRACK(out), (sym), CELL_MASK_NONE)
 
-inline static option(const Symbol*) VAL_BAD_WORD_LABEL_UNCHECKED(
+inline static option(Symbol(const*)) VAL_BAD_WORD_LABEL_UNCHECKED(
     noquote(const Cell*) v
 ){
-    return cast(const Symbol*, VAL_NODE1(v));
+    return cast(Symbol(const*), VAL_NODE1(v));
 }
 
-inline static option(const Symbol*) VAL_BAD_WORD_LABEL(
+inline static option(Symbol(const*)) VAL_BAD_WORD_LABEL(
     noquote(const Cell*) v
 ){
     assert(CELL_HEART(v) == REB_BAD_WORD);
     assert(Get_Cell_Flag(v, FIRST_IS_NODE));
-    return cast(const Symbol*, VAL_NODE1(v));
+    return cast(Symbol(const*), VAL_NODE1(v));
 }
 
 inline static OPT_SYMID VAL_BAD_WORD_ID(const Cell *v) {
@@ -106,7 +106,7 @@ inline static OPT_SYMID VAL_BAD_WORD_ID(const Cell *v) {
     if (not VAL_NODE1(v))
         return cast(OPT_SYMID, SYM_0);
 
-    return ID_OF_SYMBOL(cast(const Symbol*, VAL_NODE1(v)));
+    return ID_OF_SYMBOL(cast(Symbol(const*), VAL_NODE1(v)));
 }
 
 
@@ -118,7 +118,7 @@ inline static OPT_SYMID VAL_BAD_WORD_ID(const Cell *v) {
 
 inline static REBVAL *Init_Isotope_Untracked(
     Cell *out,
-    option(const Symbol*) label
+    option(Symbol(const*)) label
 ){
     return Init_Bad_Word_Untracked(out, label, FLAG_QUOTE_BYTE(ISOTOPE_255));
 }
@@ -149,11 +149,11 @@ inline static Cell *Isotopify(Cell *v) {
     return v;
 }
 
-inline static option(const Symbol*) VAL_ISOTOPE_LABEL(const Cell *v) {
+inline static option(Symbol(const*)) VAL_ISOTOPE_LABEL(const Cell *v) {
     assert(Is_Isotope(v));
     assert(HEART_BYTE_UNCHECKED(v) == REB_BAD_WORD);
 
-    return cast(const Symbol*, VAL_NODE1(v));
+    return cast(Symbol(const*), VAL_NODE1(v));
 }
 
 inline static OPT_SYMID VAL_ISOTOPE_ID(const Cell *v) {
@@ -163,7 +163,7 @@ inline static OPT_SYMID VAL_ISOTOPE_ID(const Cell *v) {
     if (not VAL_NODE1(v))
         return cast(OPT_SYMID, SYM_0);
 
-    return ID_OF_SYMBOL(cast(const Symbol*, VAL_NODE1(v)));
+    return ID_OF_SYMBOL(cast(Symbol(const*), VAL_NODE1(v)));
 }
 
 inline static bool Is_Isotope_With_Id(

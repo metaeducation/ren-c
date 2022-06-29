@@ -56,7 +56,7 @@ void Bind_Values_Inner_Loop(
         REBU64 type_bit = FLAGIT_KIND(heart);
 
         if (type_bit & bind_types) {
-            const Symbol *symbol = VAL_WORD_SYMBOL(cell);
+            Symbol(const*) symbol = VAL_WORD_SYMBOL(cell);
 
           if (CTX_TYPE(context) == REB_MODULE) {
             bool strict = true;
@@ -236,7 +236,7 @@ REBLEN Try_Bind_Word(const Cell *context, REBVAL *word)
 // singular array is taken for the variable content itself.
 //
 REBARR *Make_Let_Patch(
-    const Symbol *symbol,
+    Symbol(const*) symbol,
     REBSPC *specifier
 ){
     // We create a virtual binding patch to link into the binding.  The
@@ -454,7 +454,7 @@ REBNATIVE(let)
         SET_SERIES_FLAG(bindings, MANAGED);  // natives don't always manage
 
     if (IS_WORD(vars) or IS_SET_WORD(vars)) {
-        const Symbol *symbol = VAL_WORD_SYMBOL(vars);
+        Symbol(const*) symbol = VAL_WORD_SYMBOL(vars);
         bindings = Make_Let_Patch(symbol, bindings);
 
         REBVAL *where;
@@ -512,7 +512,7 @@ REBNATIVE(let)
               case REB_WORD:
               case REB_SET_WORD: {
                 Derelativize(PUSH(), temp, temp_specifier);
-                const Symbol *symbol = VAL_WORD_SYMBOL(temp);
+                Symbol(const*) symbol = VAL_WORD_SYMBOL(temp);
                 bindings = Make_Let_Patch(symbol, bindings);
                 break; }
 
@@ -1065,13 +1065,13 @@ REBCTX *Virtual_Bind_Deep_To_New_Context(
     if (rebinding)
         INIT_BINDER(&binder);
 
-    const Symbol *duplicate = nullptr;
+    Symbol(const*) duplicate = nullptr;
 
     SYMID dummy_sym = SYM_DUMMY1;
 
     REBLEN index = 1;
     while (index <= num_vars) {
-        const Symbol *symbol;
+        Symbol(const*) symbol;
 
         if (IS_BLANK(item)) {
             if (dummy_sym == SYM_DUMMY9)

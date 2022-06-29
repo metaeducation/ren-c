@@ -1305,7 +1305,7 @@ REBNATIVE(scan_net_header)
 
         Cell *val = nullptr;  // suppress maybe uninitialized warning
 
-        const Symbol *name = Intern_UTF8_Managed(start, cp - start);
+        Symbol(const*) name = Intern_UTF8_Managed(start, cp - start);
 
         cp++;
         // Search if word already present:

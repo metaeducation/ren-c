@@ -47,7 +47,7 @@
 static REB_R Clipboard_Actor(
     REBFRM *frame_,
     REBVAL *port,
-    const Symbol *verb
+    Symbol(const*) verb
 ){
     switch (ID_OF_SYMBOL(verb)) {
       case SYM_REFLECT: {

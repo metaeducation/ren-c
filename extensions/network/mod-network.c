@@ -654,7 +654,7 @@ void on_write_finished(uv_write_t *req, int status)
 static REB_R Transport_Actor(
     REBFRM *frame_,
     REBVAL *port,
-    const Symbol *verb,
+    Symbol(const*) verb,
     enum Transport_Type transport
 ){
     if (transport == TRANSPORT_UDP)  // disabled for now
@@ -1009,7 +1009,7 @@ static REB_R Transport_Actor(
 //
 //  TCP_Actor: C
 //
-static REB_R TCP_Actor(REBFRM *frame_, REBVAL *port, const Symbol *verb)
+static REB_R TCP_Actor(REBFRM *frame_, REBVAL *port, Symbol(const*) verb)
 {
     return Transport_Actor(frame_, port, verb, TRANSPORT_TCP);
 }
@@ -1018,7 +1018,7 @@ static REB_R TCP_Actor(REBFRM *frame_, REBVAL *port, const Symbol *verb)
 //
 //  UDP_Actor: C
 //
-static REB_R UDP_Actor(REBFRM *frame_, REBVAL *port, const Symbol *verb)
+static REB_R UDP_Actor(REBFRM *frame_, REBVAL *port, Symbol(const*) verb)
 {
     return Transport_Actor(frame_, port, verb, TRANSPORT_UDP);
 }

@@ -326,7 +326,7 @@ static REBARR *Gob_Flags_To_Array(REBGOB *gob)
 //
 //  Set_Gob_Flag: C
 //
-static void Set_Gob_Flag(REBGOB *gob, const Symbol *name)
+static void Set_Gob_Flag(REBGOB *gob, Symbol(const*) name)
 {
     SYMID sym = ID_OF_SYMBOL(name);
     if (sym == SYM_0) return; // !!! fail?

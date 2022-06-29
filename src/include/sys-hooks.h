@@ -96,14 +96,14 @@ typedef void (MOLD_HOOK)(REB_MOLD *mo, noquote(const Cell*) v, bool form);
 // any behavior for a specific type can still be accomplished by testing
 // the type passed into that common hook!
 //
-typedef REB_R (GENERIC_HOOK)(REBFRM *frame_, const Symbol *verb);
+typedef REB_R (GENERIC_HOOK)(REBFRM *frame_, Symbol(const*) verb);
 #define REBTYPE(n) \
-    REB_R T_##n(REBFRM *frame_, const Symbol *verb)
+    REB_R T_##n(REBFRM *frame_, Symbol(const*) verb)
 
 
 // Port hook: for implementing generic ACTION!s on a PORT! class
 //
-typedef REB_R (PORT_HOOK)(REBFRM *frame_, REBVAL *port, const Symbol *verb);
+typedef REB_R (PORT_HOOK)(REBFRM *frame_, REBVAL *port, Symbol(const*) verb);
 
 
 //=//// PARAMETER ENUMERATION /////////////////////////////////////////////=//

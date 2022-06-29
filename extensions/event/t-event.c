@@ -265,7 +265,7 @@ void Set_Event_Vars(
 static REBVAL *Get_Event_Var(
     Cell *out,
     noquote(const Cell*) v,
-    const Symbol *symbol
+    Symbol(const*) symbol
 ){
     switch (ID_OF_SYMBOL(symbol)) {
       case SYM_TYPE: {

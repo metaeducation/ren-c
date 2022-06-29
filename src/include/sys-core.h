@@ -237,7 +237,7 @@ struct Reb_Enum_Vars {
     REBARR *wordlist;
     REBVAL *word;
     REBVAL *word_tail;
-    const Symbol *keybuf;  // backing store for key
+    Symbol(const*) keybuf;  // backing store for key
 };
 
 typedef struct Reb_Enum_Vars EVARS;

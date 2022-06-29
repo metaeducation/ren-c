@@ -44,7 +44,7 @@
 // One synonym need not keep another alive, because the process of freeing
 // string nodes unlinks them from the list.  (Hence the canon can change!)
 //
-#define LINK_Synonym_TYPE       const Symbol*
+#define LINK_Synonym_TYPE       Symbol(const*)
 #define LINK_Synonym_CAST       SYM
 #define HAS_LINK_Synonym        FLAVOR_SYMBOL
 
@@ -168,10 +168,10 @@ inline static bool Same_Nonzero_Symid(SYMID a, SYMID b) {
     return cast(REBLEN, a) == cast(REBLEN, b);
 }
 
-inline static OPT_SYMID ID_OF_SYMBOL(const Symbol *s)
+inline static OPT_SYMID ID_OF_SYMBOL(Symbol(const*) s)
   { return cast(SYMID, SECOND_UINT16(s->info)); }
 
-inline static const Symbol *Canon_Symbol(SYMID symid) {
+inline static Symbol(const*) Canon_Symbol(SYMID symid) {
     assert(cast(REBLEN, symid) != 0);
     assert(cast(REBLEN, symid) < ALL_SYMS_MAX);
     return &PG_Symbol_Canons[symid];
@@ -180,7 +180,7 @@ inline static const Symbol *Canon_Symbol(SYMID symid) {
 #define Canon(name) \
     Canon_Symbol(SYM_##name)
 
-inline static bool Are_Synonyms(const Symbol *s1, const Symbol *s2) {
+inline static bool Are_Synonyms(Symbol(const*) s1, Symbol(const*) s2) {
     const REBSTR *temp = s1;
     do {
         if (temp == s2)

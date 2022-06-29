@@ -1309,7 +1309,7 @@ void Push_Action(
 //
 void Begin_Action_Core(
     REBFRM *f,
-    option(const Symbol*) label,
+    option(Symbol(const*)) label,
     bool enfix
 ){
     assert(Not_Executor_Flag(ACTION, f, RUNNING_ENFIX));

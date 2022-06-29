@@ -44,7 +44,7 @@ inline static void INIT_VAL_WORD_INDEX(Cell *v, REBLEN i) {
 inline static REBVAL *Init_Any_Word_Untracked(
     Cell *out,
     enum Reb_Kind kind,
-    const Symbol *sym
+    Symbol(const*) sym
 ){
     Reset_Cell_Header_Untracked(out, kind, CELL_FLAG_FIRST_IS_NODE);
     VAL_WORD_INDEX_U32(out) = 0;
@@ -66,7 +66,7 @@ inline static REBVAL *Init_Any_Word_Bound_Untracked(
     Cell *out,
     enum Reb_Kind type,
     REBARR *binding,  // spelling determined by linked-to thing
-    const Symbol *symbol,
+    Symbol(const*) symbol,
     REBLEN index  // must be 1 if LET patch (INDEX_ATTACHED)
 ){
     Reset_Cell_Header_Untracked(out, type, CELL_FLAG_FIRST_IS_NODE);

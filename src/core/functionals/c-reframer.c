@@ -259,7 +259,7 @@ bool Make_Frame_From_Feed_Throws(
     // Should we save the WORD! from a variable access to use as the name of
     // the identity alias?
     //
-    option(const Symbol*) label = nullptr;
+    option(Symbol(const*)) label = nullptr;
     Init_Frame(out, exemplar, label);
     return false;
 }
@@ -334,7 +334,7 @@ REBNATIVE(reframer_p)
     INCLUDE_PARAMS_OF_REFRAMER_P;
 
     REBACT *shim = VAL_ACTION(ARG(shim));
-    option(const Symbol*) label = VAL_ACTION_LABEL(ARG(shim));
+    option(Symbol(const*)) label = VAL_ACTION_LABEL(ARG(shim));
 
     REBDSP dsp_orig = DSP;
 
@@ -361,7 +361,7 @@ REBNATIVE(reframer_p)
     const REBPAR *param;
 
     if (REF(parameter)) {
-        const Symbol *symbol = VAL_WORD_SYMBOL(ARG(parameter));
+        Symbol(const*) symbol = VAL_WORD_SYMBOL(ARG(parameter));
         param_index = Get_Binder_Index_Else_0(&binder, symbol);
         if (param_index == 0) {
             error = Error_No_Arg(label, symbol);
@@ -405,7 +405,7 @@ REBNATIVE(reframer_p)
         if (Is_Specialized(param))
             continue;
 
-        const Symbol *symbol = KEY_SYMBOL(key);
+        Symbol(const*) symbol = KEY_SYMBOL(key);
         REBLEN index = Remove_Binder_Index_Else_0(&binder, symbol);
         assert(index != 0);
         UNUSED(index);
