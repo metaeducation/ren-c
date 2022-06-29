@@ -392,7 +392,7 @@ REBNATIVE(c_debug_break_at)
     UNUSED(ARG(relative));
     UNUSED(REF(compensate));
 
-    fail (Error_Debug_Only_Raw());
+    return FAIL(Error_Debug_Only_Raw());
   #endif
 }
 
