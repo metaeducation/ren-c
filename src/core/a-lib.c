@@ -1784,7 +1784,7 @@ REBVAL *RL_rebRescueWith(
 
     return result;
 
-} ON_ABRUPT_FAILURE(e) {  ////////////////////////////////////////////////////
+} ON_ABRUPT_FAILURE(REBCTX *e) {  ////////////////////////////////////////////
 
     Drop_Frame(dummy);
 

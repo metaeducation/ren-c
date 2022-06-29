@@ -27,6 +27,21 @@ use-pthreads: false
 ;
 debug-javascript-extension: true
 
+; Ren-C has build options for supporting C++ exceptions or the use of setjmp()
+; and longjmp() (or just to panic, and not handle them at all).  This affects
+; how "abrupt" failures that arise in native code is treated--e.g. the calls
+; to the `fail()` "pseudo-keyword".
+;
+; WebAssembly does not have native support for setjmp() and longjmp(), but
+; Emscripten offers some hacks that implement it.  Those hacks aren't avaliable
+; on other Wasm platforms like WasmEdge...but the C++ exceptions are.
+;
+; So by default we use the `try {...} catch {...}` variant of the exception
+; implementation, to exercise it in the web build.
+;
+; https://forum.rebol.info/t/555
+;
+abrupt-failure-model: #uses-try-catch  ; #uses-longjmp #just-aborts
 
 ; Want to make libr3.js, not an executable.  This is so that plain `make`
 ; knows we want that (vs needing to say `make libr3.js`)
@@ -88,6 +103,26 @@ extensions: make map! [
 ; Note environment variable EMCC_DEBUG for diagnostic output
 
 cflags: compose2 [
+    ((switch abrupt-failure-model [
+        #uses-try-catch [[
+            {-DREBOL_FAIL_USES_TRY_CATCH=1}
+            {-fwasm-exceptions}  ; needed in cflags *and* ldflags
+
+            ; Note: -fwasm-exceptions is faster than -fexceptions, but newer
+            ; https://emscripten.org/docs/porting/exceptions.html#webassembly-exception-handling-proposal
+
+        ]]
+        #uses-longjmp [[
+            {-DREBOL_FAIL_USES_LONGJMP=1}
+            {-s DISABLE_EXCEPTION_CATCHING=1}
+        ]]
+        #just-aborts [[
+            {-DREBOL_FAIL_JUST_ABORTS=1}
+            {-s DISABLE_EXCEPTION_CATCHING=1}
+        ]]
+        fail
+    ]))
+
     ((if debug-javascript-extension [[
         {-DDEBUG_JAVASCRIPT_EXTENSION=1}
 
@@ -105,11 +140,25 @@ cflags: compose2 [
 ]
 
 ldflags: compose2 [
-    ;
     ; We no longer test any configurations with asm.js (wasm is supported by
     ; all browsers of interest now).  But you'd set this to 0 for that.
     ;
     {-s WASM=1}
+
+    {-s DEMANGLE_SUPPORT=0}  ; C++ build does all exports as C, not needed
+
+    ((switch abrupt-failure-model [
+        #uses-try-catch [[
+            {-fwasm-exceptions}  ; needed in cflags *and* ldflags
+        ]]
+        #uses-longjmp [[
+            {-s DISABLE_EXCEPTION_CATCHING=1}
+        ]]
+        #just-aborts [[
+            {-s DISABLE_EXCEPTION_CATCHING=1}
+        ]]
+        fail
+    ]))
 
     (unspaced ["-O" optimize])
 
@@ -203,18 +252,6 @@ ldflags: compose2 [
     ; to the functions that take a `va_list` pointer, e.g. `_RL_rebElide()`.
     ;
     {--post-js prep/include/reb-lib.js}
-
-    ; Over the long term it may be the case that C++ desktop builds make use of
-    ; the exception mechanism (especially attractive is "zero-cost-exception"
-    ; methodology, which some people are nonetheless skeptical of).
-    ;
-    ; But the JavaScript build is going to be based on embracing the JS
-    ; exception model.  So disable C++ exceptions.
-    ;
-    ; https://forum.rebol.info/t//555
-    ;
-    {-s DISABLE_EXCEPTION_CATCHING=1}
-    {-s DEMANGLE_SUPPORT=0}  ; C++ build does all exports as C, not needed
 
     ; API exports can appear unused to the compiler.  It's possible to mark a
     ; C function as an export with EMTERPRETER_KEEP_ALIVE, but we prefer to

@@ -164,13 +164,29 @@ jobs:
   #====# BUILD STEPS #========================================================#
 
 
-    # !!! optimization is currently hardcoded in the web build config files as
-    # `s`.  Review if `z` would be better (it cannot be passed in the options
-    # here at time of writing, and would be ignored even if it could be due to
-    # that ldflags config hardcoding).
-    #
-    # See README: {Braces} For %make.r String Parameters
-    #
+  # !!! optimization is currently hardcoded in the web build config files as
+  # `s`.  Review if `z` would be better (it cannot be passed in the options
+  # here at time of writing, and would be ignored even if it could be due to
+  # that ldflags config hardcoding).
+  #
+  # See README: {Braces} For %make.r String Parameters
+  #
+  # NOTE ON BUILDING WITH C++: We choose to build with C++ here instead of as
+  # C, in order to use Emscripten's `-fwasm-exceptions` for native webassembly
+  # support, in concert with REBOL_USES_TRY_CATCH=1.
+  #
+  # https://emscripten.org/docs/porting/exceptions.html#webassembly-exception-handling-proposal
+  #
+  # One reason to use this instead of Emscripten's setjmp()/longjmp() is that
+  # emulation is not available on other Wasm runners like WasmEdge.  Also it's
+  # apparently pretty messy internally to do that emulation.  It seems to run
+  # fine in Chromium and Firefox with the webassembly native exceptions too,
+  # so it seems a good cohice at time of writing (mid-2022).
+  #
+  # (The setjmp()/longjmp() code path is still the default in desktop builds
+  # and gets plenty of exercise there, so another good reason to let the web
+  # build test the variation.)
+
     - name: Generate Makefile for Emscripten-Based Build
       run: |
         mkdir build
@@ -179,7 +195,7 @@ jobs:
         "$R3MAKE" ../make.r \
             config="../configs/$CONFIG_FILE" \
             target=makefile \
-            standard=gnu99 \
+            standard=c++11 \
             os_id=$OS_ID \
             debug=none \
             git_commit="{$GIT_COMMIT}" \

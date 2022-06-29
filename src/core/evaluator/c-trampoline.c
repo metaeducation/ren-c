@@ -399,7 +399,7 @@ REB_R Trampoline_From_Top_Maybe_Root(void)
     assert(!"executor(f) not OUT, R_THROWN, or R_CONTINUATION");
     panic (r);
 
-} ON_ABRUPT_FAILURE(e) {  ////////////////////////////////////////////////////
+} ON_ABRUPT_FAILURE(REBCTX *e) {  ////////////////////////////////////////////
 
   // 1. An abrupt fail(...) is treated as a "thrown error", which can not be
   //    intercepted in the same way as a definitional error can be.

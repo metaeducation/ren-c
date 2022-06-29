@@ -183,14 +183,26 @@ struct Reb_Jump {
 //
 // Jump buffers contain a pointer-to-a-REBCTX which represents an error.
 // Using the tricky mechanisms of setjmp/longjmp, there will be a first pass
-// of execution where the line of code after the TRAP_BLOCK will see the
-// `jump->error` pointer as being `nullptr`.  If a trap occurs during code
-// before the paired DROP_TRAP happens, then the C state will be magically
-// teleported back to the setjmp(), and it will goto the abrupt_failure label.
+// of execution where setjmp() returns 0 and it will fall through to the
+// code afterward.  When the longjmp() happens, the CPU will be teleported
+// back to the setjmp(), where we have it return a 1...and goto the label
+// for the `abrupt_failure`.
+//
+// On the line after the label, it takes the named variable you want to
+// declare and assigns it the error pointer that had been assigned in the
+// jump buffer.
 //
 // IN THE TRY/CATCH IMPLEMENTATION...
 //
-// ...in progress...
+// With the setjmp() version of the macros, it's incidental that what follows
+// the TRAP_BLOCK is a C scope {...}.  But it's critical to the TRY/CATCH
+// version...because the last thing in the macro is a hanging `try` keyword.
+// Similarly, what follows the ON_ABRUPT_FAILURE() need not be a scope in the
+// setjmp() version, but must be a block for the hanging `catch(...)`.
+//
+// Because of that scope requirement, the only way to slip a named error
+// variable into the subsequent scope is to actually make the error what the
+// `throw` is passed.  Fortunately this works out exactly as one would want!
 //
 //////////////////////////////////////////////////////////////////////////////
 //
@@ -215,6 +227,7 @@ struct Reb_Jump {
 //      are allowed." - http://en.cppreference.com/w/c/program/longjmp
 //
 #if REBOL_FAIL_USES_LONGJMP
+
     STATIC_ASSERT(REBOL_FAIL_USES_TRY_CATCH == 0);
     STATIC_ASSERT(REBOL_FAIL_JUST_ABORTS == 0);
 
@@ -229,13 +242,16 @@ struct Reb_Jump {
             goto abrupt_failure; /* longjmp happened, jump.error will be set */
 
     #define DROP_TRAP_SAME_STACKLEVEL_AS_PUSH /* name is reminder, see [1] */ \
+        assert(jump.error == nullptr); \
         TG_Jump_List = jump.last_jump;
 
-    #define ON_ABRUPT_FAILURE(errname) \
+    #define ON_ABRUPT_FAILURE(decl) \
         abrupt_failure: /* just a C label point */ \
-            REBCTX *errname = jump.error;
+            decl = jump.error; \
+            jump.error = nullptr;
 
 #elif REBOL_FAIL_USES_TRY_CATCH
+
     STATIC_ASSERT(REBOL_FAIL_JUST_ABORTS == 0);
 
     #define TRAP_BLOCK_IN_CASE_OF_ABRUPT_FAILURE \
@@ -248,10 +264,11 @@ struct Reb_Jump {
     #define DROP_TRAP_SAME_STACKLEVEL_AS_PUSH \
         TG_Jump_List = jump.last_jump;
 
-    #define ON_ABRUPT_FAILURE(errname) \
-        catch (REBCTX *errname) /* picks up subsequent {...} block */
+    #define ON_ABRUPT_FAILURE(decl) \
+        catch (decl) /* picks up subsequent {...} block */
 
 #else
+
     STATIC_ASSERT(REBOL_FAIL_JUST_ABORTS);
 
     #define TRAP_BLOCK_IN_CASE_OF_ABRUPT_FAILURE \
@@ -262,6 +279,7 @@ struct Reb_Jump {
 
     #define ON_ABRUPT_FAILURE(errname) \
         assert(!"ON_ABRUPT_FAILURE() reached with REBOL_FAIL_JUST_ABORTS");
+
 #endif
 
 
