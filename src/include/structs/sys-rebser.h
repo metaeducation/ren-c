@@ -813,8 +813,9 @@ union Reb_Series_Info {
     typedef struct Reb_Series REBBIN;
     typedef struct Reb_Series REBSTR;
 
-    #define Symbol(star_maybe_const)
-        struct Reb_Symbol star_maybe_const
+    typedef struct Reb_Series Reb_Symbol;
+    #define Symbol(star_maybe_const) \
+        Reb_Symbol star_maybe_const
 
     typedef struct Reb_Series REBBMK;
     typedef struct Reb_Series REBACT;

@@ -64,7 +64,7 @@
     typedef struct Reb_Value Reb_Cell;
 
     #define Cell(star_maybe_const) \
-        struct Reb_Value star_maybe_const;
+        struct Reb_Value star_maybe_const
 #else
     struct Reb_Relative_Value; // won't implicitly downcast to REBVAL
     typedef struct Reb_Relative_Value Reb_Cell;
