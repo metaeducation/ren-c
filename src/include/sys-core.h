@@ -120,7 +120,6 @@
 
 #include <stdarg.h> // va_list, va_arg()...
 #include <string.h>
-#include <setjmp.h>
 #include <math.h>
 #include <stddef.h> // for offsetof()
 

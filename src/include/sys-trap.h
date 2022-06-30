@@ -72,6 +72,10 @@
 //   mechanism for fail, but for the moment only longjmp is implemented.
 //
 
+#if REBOL_FAIL_USES_LONGJMP
+    #include <setjmp.h>
+#endif
+
 
 // R3-Alpha set up a separate `jmp_buf` at each point in the stack that wanted
 // to be able to do a TRAP.  With stackless Ren-C, only one jmp_buf is needed
@@ -232,6 +236,7 @@ struct Reb_Jump {
     STATIC_ASSERT(REBOL_FAIL_JUST_ABORTS == 0);
 
     #define TRAP_BLOCK_IN_CASE_OF_ABRUPT_FAILURE \
+        ; /* in case previous tatement was label */ \
         struct Reb_Jump jump;  /* one setjmp() per trampoline invocation */ \
         jump.last_jump = TG_Jump_List; \
         jump.frame = FS_TOP; \
@@ -255,6 +260,7 @@ struct Reb_Jump {
     STATIC_ASSERT(REBOL_FAIL_JUST_ABORTS == 0);
 
     #define TRAP_BLOCK_IN_CASE_OF_ABRUPT_FAILURE \
+        ; /* in case previous tatement was label */ \
         struct Reb_Jump jump; /* one per trampoline invocation */ \
         jump.last_jump = TG_Jump_List; \
         jump.frame = FS_TOP; \
@@ -272,6 +278,7 @@ struct Reb_Jump {
     STATIC_ASSERT(REBOL_FAIL_JUST_ABORTS);
 
     #define TRAP_BLOCK_IN_CASE_OF_ABRUPT_FAILURE \
+        ; /* in case previous tatement was label */ \
         struct Reb_Jump jump; /* one per trampoline invocation */ \
         jump.last_jump = TG_Jump_List; \
         jump.frame = FS_TOP; \

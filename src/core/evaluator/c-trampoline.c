@@ -115,7 +115,7 @@ REB_R Trampoline_From_Top_Maybe_Root(void)
   // work in plain C using setjmp/longjmp().  It's considered desirable to
   // support both approaches: plain C compilation (e.g. with TCC) runs on many
   // legacy/embedded platforms, but structured exception handling has support
-  // on other systems like WasmEdge that cannot handle setjmp()/longjmp().
+  // on other systems like some WebAssembly--where longjmp may not be.
   //
   // Regardless of which implementation you are using, once an "exception" has
   // occurred you must jump up above the block to re-enable the "catching".
