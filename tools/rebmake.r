@@ -212,7 +212,7 @@ android: make linux [
 
 emscripten: make posix [
     name: 'Emscripten
-    exe-suffix: ".js"
+    exe-suffix: ".wasm"
     dll-suffix: ".js"  ; !!! We want libr3.js for "main" lib, but .so for rest
 ]
 

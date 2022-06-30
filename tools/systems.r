@@ -289,6 +289,9 @@ systems: [
     0.16.3 node/emscripten "nodejs"
         #SG? #LEN
 
+    0.16.4 wasi/emscripten "wasi"  ; technically wasi-sdk, not emscripten
+        #SG? #LEN
+
     AIX: 17
     ;-------------------------------------------------------------------------
     0.17.0 _ _
