@@ -1,0 +1,303 @@
+#
+# File: %wasi-build.yml
+#
+#============================================================================#
+#
+# GitHub Workflow for building the Wasi version of Ren-C.  This is for use in
+# non-Browser, non-NodeJs hosts (e.g. Wasmtime, WasmEdge, Wasmer).  So rather
+# than being built with Emscripten, it is built using "Wasi-Sdk" (because the
+# STANDALONE_WEBASSEMBLY support in Emscripten is somewhat minimal).
+#
+# See %configs/wasi.r for more information on this build.
+#
+#====# PLEASE READ THE README #==============================================#
+#
+# Whenever this file says "See README", that is referring to the notes in the
+# %.github/workflows/README.md file.  If something appears in multiple GitHub
+# Workflow files, it's best to document it there instead of repeating it:
+#
+# https://github.com/metaeducation/ren-c/blob/master/.github/workflows/README.md
+#
+
+name: WebAssembly WASI
+
+
+# See README: When To Trigger Builds
+#
+on:
+  push:
+    branches: [
+      wasi
+    ]
+  pull_request:
+    branches: [
+      wasi
+    ]
+  workflow_dispatch:  # Allows running this workflow manually from Actions tab
+
+
+# Standardize to use bash on all platforms.
+#
+# See README: Using The Strict Erroring Bash Shell
+#
+defaults:
+  run:
+    shell: bash
+
+
+# Each "Job" runs in its own VM, and a workflow run is made up of one or more
+# jobs that can run sequentially or in parallel.
+#
+# See README: Jobs
+#
+jobs:
+  wasi-build:  # Name of this workflow's only job
+
+    # https://github.com/actions/virtual-environments#available-environments
+    #
+    runs-on: ubuntu-20.04
+
+
+    # See README: Build Matrix
+    #
+    strategy:
+      matrix:
+       include:
+         - os-id: 0.16.4  # "wasi" build
+           config-file: wasi.r
+
+
+    # See README: Environment Variables
+    #
+    env:
+      AWS_S3_BUCKET_NAME: metaeducation
+
+      # See README: Minimize GitHub-Specific Syntax
+      #
+      OS_ID: ${{ matrix.os-id }}
+      CONFIG_FILE: ${{ matrix.config-file }}
+
+
+    # Steps are a sequence of tasks that will be executed within a single VM
+    # as part of the job.
+    #
+    # See README: Steps
+    #
+    steps:  # (no indentatation needed below; so indent the minimum!)
+
+
+  #====# CHECKOUT STEPS #====================================================#
+
+
+    # https://github.com/actions/checkout
+    #
+    # See README: Checkout Action
+    #
+    - uses: actions/checkout@v2  # See README: Trusted Actions
+
+
+    # The full commit is passed to make to build into the binary, and the
+    # abbreviated commit is used to name the executable.
+    #
+    # See README: Portably Capturing Git Hashes
+    #
+    - name: Grab Git Hash and Short Hash Into Environment Variables
+      run: |
+        git_commit="$(git show --format="%H" --no-patch)"
+        git_commit_short="$(git show --format="%h" --no-patch)"
+        echo "GIT_COMMIT=$git_commit" >> $GITHUB_ENV
+        echo "GIT_COMMIT_SHORT=$git_commit_short" >> $GITHUB_ENV
+
+
+  #====# TOOLCHAIN INSTALLATION STEPS #======================================#
+
+    # !!! Ideally this would use the same step that clients can use to build
+    # the system with `make.sh`.  Unfortunately, something about the GitHub
+    # Ubuntus do not like the old bootstrap executable.  Make sure the
+    # ordinary path works, but for the moment patch over it just to get
+    # to a point where the action works.
+    #
+    - name: Fetch R3 To Use For "Prep" Build Steps as $R3MAKE
+      run: |
+        repo_dir=$(pwd)/
+        source tools/bash/fetch-prebuilt.sh
+        r3make=$(fetch_prebuilt)
+        echo "R3MAKE is set to $r3make"
+        echo "But that executable won't run on GitHub for some reason"
+        # "$r3make" --do "print {TESTING 1 2 3}"  # NOT WORKING, dunno why
+        cd prebuilt
+        wget http://hostilefork.com/media/shared/github/r3-linux-8994d23-patched
+        chmod +x r3-linux-8994d23-patched
+        r3make=$(pwd)/r3-linux-8994d23-patched
+        echo "So now R3MAKE is $r3make"
+        echo "R3MAKE=$r3make" >> $GITHUB_ENV  # pass to next step
+
+
+    - name: Stop the build early if the R3MAKE is no good
+      run: |
+        "$R3MAKE" --do "print {R3MAKE is Working} quit 0"
+
+
+    # Wasi-Sdk is part of the WebAssembly GitHub Repository.  It has a version
+    # of clang that has been configured to emit wasm32 instructions.  But we
+    # also need a `sysroot` to provide the cross-compilation header files, so
+    # when we compile with #include <stdio.h> (or whatever) it pulls that from
+    # wasi version instead of the /usr/include of this Linux container.
+    #
+    - name: Get the Wasi-Sdk from GitHub Release
+      run: |
+        wget https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-16/wasi-sdk-16.0-linux.tar.gz
+        tar xf wasi-sdk-16.0-linux.tar.gz
+        wget https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-16/wasi-sysroot-16.0.tar.gz
+        tar xf wasi-sysroot-16.0.tar.gz
+
+
+    # Everything in makefiles tends to be rigged up a bit hackily, and it's no
+    # exception here...the hardcoded environment variables WASI_CLANG and
+    # WASI_SYSROOT are looked up by %wasi.r in order to know where you put the
+    # non-native toolchain.
+    #
+    - name: Set Compiler and Sysroot Environment Variables Used By %wasi.r
+      run: |
+        echo "WASI_CLANG=$(pwd)/wasi-sdk-16.0/bin/clang" >> $GITHUB_ENV
+        echo "WASI_SYSROOT=$(pwd)/wasi-sysroot" >> $GITHUB_ENV
+
+
+    # Show a little bit of sanity check information
+    #
+    - name: Output System Information
+      run: |
+        echo "Current directory is: $(pwd)"
+        echo "WASI-SDK/clang version check:"
+        wasi-sdk-16.0/bin/clang -v
+
+
+  #====# BUILD STEPS #=======================================================#
+
+
+  # !!! optimization is currently hardcoded in the web build config files as
+  # `s`.  Review if `z` would be better (it cannot be passed in the options
+  # here at time of writing, and would be ignored even if it could be due to
+  # that ldflags config hardcoding).
+  #
+  # See README: {Braces} For %make.r String Parameters
+
+    - name: Generate Makefile for Emscripten-Based Build
+      run: |
+        mkdir build
+        cd build
+
+        "$R3MAKE" ../make.r \
+            config="../configs/$CONFIG_FILE" \
+            target=makefile \
+            standard=gnu99 \
+            os_id=$OS_ID \
+            debug=none \
+            git_commit="{$GIT_COMMIT}" \
+            rigorous=no \
+            static=no \
+            extensions=""
+
+
+    - name: Create Folders For Build Products (Compiler Won't Create Them)
+      run: |
+        cd build
+        make folders
+
+
+    - name: Prep the Build By Making Various Auto-Generated .h and .c Files
+      run: |
+        cd build
+        make prep
+
+
+    # https://github.com/actions/upload-artifact
+    #
+    - name: Optional Download of Prep Files Before They Can Cause Build Failure
+      if: false  # Change this to true to download a file
+      uses: actions/upload-artifact@v2  # See README: Trusted Actions
+      with:
+        name: tmp-internals.h
+        path: build/prep/include/tmp-internals.h
+
+
+    - name: Compile and Link the C Sources to To Make .wasm and .js Files
+      run: |
+        cd build
+        make -j 2  # Linux GitHub Runners have 2 cores, use 2 jobs
+
+
+    - name: List Build Products
+      run: |
+        cd build
+        ls -alF
+
+
+  #====# UPLOAD STEPS #======================================================#
+
+    # We only want to build pull requests, we do not want to upload them to
+    # the AWS server.  Deployment should happen only once a commit has been
+    # accepted and pushed to master.  And then, it should only be greenlit
+    # (to be the version the web console uses) if it passes the smoke test in
+    # a headless browser.
+    #
+    # Unfortunately...there's no particularly great way to exit the steps
+    # cleanly now if it's only a pull request.  We can stop the steps, but
+    # it would look like an error:
+    #
+    # https://github.com/actions/runner/issues/662
+    #
+    # So either we write one giant monolithic step, or every subsequent step
+    # has to be qualified with an `if: github.ref == 'refs/heads/master'`.
+    # Though the latter is not *ideal*, it's good enough for government work.
+    #
+    # Note: Steps will be stopped by default if any fail, but you can turn
+    # a step back on with an `if: failure()` condition.
+
+
+    # This action configures the AWS keys stored in GitHub's "Secrets" for
+    # the repository so that `aws s3` allows us to do uploads, without needing
+    # to publish any passwords publicly:
+    #
+    # https://github.com/aws-actions/configure-aws-credentials
+    #
+    # See README: Trusted Actions
+    #
+    - name: Configure AWS Credentials
+      if: github.ref == 'refs/heads/master'  # see notes on DEPLOY STEPS
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.METAEDUCATION_AWS_ACCESS_KEY }}
+        aws-secret-access-key: ${{ secrets.METAEDUCATION_AWS_SECRET_KEY }}
+        aws-region: us-east-1
+
+
+  #====# INSTALL WASMEDGE RUNTIME #==========================================#
+
+    # We do this after the build, because it does no good to download it
+    # unless we have something to optimize and run.
+
+    - name: Install WasmEdge Runtime
+      run: |
+        curl -sSf https://raw.githubusercontent.com/WasmEdge/WasmEdge/master/utils/install.sh | bash
+
+
+  #====# TESTING STEPS #=====================================================#
+
+    # The compiler optimisation through the -O setting is generic, and a much
+    # better optimization can be achieved if it's specifically tailored to the
+    # runtime it's going to run on.  Try optimization provided by WasmEdge.
+    #
+    - name: Optimize Build Result for WasmEdge
+      run: |
+        source /home/runner/.wasmedge/env
+        cd build
+        wasmedgec r3.wasm r3.wasm
+
+
+    - name: WasmEdge Smoke Test
+      run: |
+        source /home/runner/.wasmedge/env
+        cd build
+        wasmedge r3.wasm --do \
+          "print ['** uparse {Hello, Cloud} [thru space across to <end>] '**]"
