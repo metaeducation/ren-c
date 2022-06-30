@@ -1757,7 +1757,15 @@ REBNATIVE(startup_p)
 
     mbedtls_platform_set_snprintf(&tf_snprintf);  // see file %tf_snprintf.c
 
-  #if TO_WINDOWS
+  #if TO_EMSCRIPTEN
+
+    // !!! No random number generation, yet:
+    // https://github.com/WebAssembly/wasi-random
+    //
+    return rebNone();
+
+  #elif TO_WINDOWS
+
     if (CryptAcquireContextW(
         &gCryptProv,
         0,
@@ -1768,10 +1776,13 @@ REBNATIVE(startup_p)
         return rebNone();
     }
     gCryptProv = 0;
-  #else
+
+  #else  // assume Linux-like system
+
     rng_fd = open("/dev/urandom", O_RDONLY);
     if (rng_fd != -1)
         return rebNone();
+
   #endif
 
     // !!! Should we fail here, or wait to fail until the system tries to
