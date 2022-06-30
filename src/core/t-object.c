@@ -1345,6 +1345,9 @@ REBTYPE(Frame)
             break;
         }
       }
+
+      default:
+        break;
     }
 
     return T_Context(frame_, verb);

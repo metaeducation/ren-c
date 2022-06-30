@@ -886,6 +886,7 @@ inline static REB_R Continue_Subframe_Helper(
     }
 
     assert(sub == FS_TOP);  // currently subframe must be pushed and top frame
+    UNUSED(sub);
     return R_CONTINUATION;
 }
 
