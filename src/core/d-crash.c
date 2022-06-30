@@ -151,6 +151,7 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
             REBCTX *context = cast(REBCTX*, s);  // CTX() does too much checking!
             if (HEART_BYTE_UNCHECKED(CTX_ARCHETYPE(context)) == REB_ERROR) {
                 printf("...and that VARLIST is of an ERROR!...");
+                Force_Location_Of_Error(context, FS_TOP);
                 PROBE(context);
             }
         }
