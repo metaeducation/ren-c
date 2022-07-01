@@ -312,10 +312,10 @@ static bool Subparse_Throws(
 
     Drop_Action(f);
 
-    if ((r == R_THROWN or Is_Nulled(out)) and collection)
+    if ((r == BOUNCE_THROWN or Is_Nulled(out)) and collection)
         SET_SERIES_LEN(unwrap(collection), collect_tail);  // abort rollback
 
-    if (r == R_THROWN) {
+    if (r == BOUNCE_THROWN) {
         Drop_Frame(f);
 
         // ACCEPT and REJECT are special cases that can happen at nested parse
@@ -460,7 +460,7 @@ static Cell(const*) Get_Parse_Value(
 // adds another behavior for GET-GROUP!, e.g. :(...).  This makes them act
 // like a COMPOSE that runs each time they are visited.
 //
-REB_R Process_Group_For_Parse(
+Bounce Process_Group_For_Parse(
     Frame(*) frame_,
     REBVAL *cell,
     Cell(const*) group  // may be same as `cell`
@@ -486,7 +486,7 @@ REB_R Process_Group_For_Parse(
         P_POS = P_INPUT_LEN;
 
     if (not inject or Is_Void(cell))  // even GET-GROUP! discards voids
-        return R_VOID;
+        return BOUNCE_VOID;
 
     return cell;
 }
@@ -507,7 +507,7 @@ REB_R Process_Group_For_Parse(
 // Only in the case of THROWN_FLAG will f->out (aka OUT) be affected.
 // Otherwise, it should exit the routine as an END marker (as it started);
 //
-static REB_R Parse_One_Rule(
+static Bounce Parse_One_Rule(
     Frame(*) frame_,
     REBLEN pos,
     Cell(const*) rule
@@ -518,10 +518,10 @@ static REB_R Parse_One_Rule(
 
     if (IS_GROUP(rule) or IS_GET_GROUP(rule)) {
         rule = Process_Group_For_Parse(frame_, SPARE, rule);
-        if (rule == R_THROWN)
+        if (rule == BOUNCE_THROWN)
             return THROWN;
 
-        if (rule == R_VOID) {  // !!! Should this be legal?
+        if (rule == BOUNCE_VOID) {  // !!! Should this be legal?
             assert(pos <= P_INPUT_LEN);  // !!! Process_Group ensures
             return Init_Integer(OUT, pos);
         }
@@ -560,7 +560,7 @@ static REB_R Parse_One_Rule(
             return Init_Integer(OUT, pos);
         }
         else {
-            return R_UNHANDLED;  // Other cases below assert if item is END
+            return BOUNCE_UNHANDLED;  // Other cases below assert if item is END
         }
     }
 
@@ -572,7 +572,7 @@ static REB_R Parse_One_Rule(
       case REB_LOGIC:
         if (VAL_LOGIC(rule))
             return Init_Integer(OUT, pos);  // true matches always
-        return R_UNHANDLED;  // false matches never
+        return BOUNCE_UNHANDLED;  // false matches never
 
       case REB_INTEGER:
         fail ("Non-rule-count INTEGER! in PARSE must be literal, use QUOTE");
@@ -613,7 +613,7 @@ static REB_R Parse_One_Rule(
         P_POS = pos_before;  // restore input position
 
         if (Is_Nulled(subresult))
-            return R_UNHANDLED;
+            return BOUNCE_UNHANDLED;
 
         REBINT index = VAL_INT32(subresult);
         assert(index >= 0);
@@ -636,12 +636,12 @@ static REB_R Parse_One_Rule(
           case REB_DATATYPE:
             if (VAL_TYPE(item) == VAL_TYPE_KIND(rule))
                 return Init_Integer(OUT, pos + 1);  // specific type match
-            return R_UNHANDLED;
+            return BOUNCE_UNHANDLED;
 
           case REB_TYPESET:
             if (TYPE_CHECK(rule, VAL_TYPE(item)))
                 return Init_Integer(OUT, pos + 1);  // type was in typeset
-            return R_UNHANDLED;
+            return BOUNCE_UNHANDLED;
 
           case REB_WORD: {  // !!! Small set of simulated type constraints
             if (Matches_Fake_Type_Constraint(
@@ -650,7 +650,7 @@ static REB_R Parse_One_Rule(
             )){
                 return Init_Integer(OUT, pos + 1);
             }
-            return R_UNHANDLED; }
+            return BOUNCE_UNHANDLED; }
 
           default:
             break;
@@ -662,7 +662,7 @@ static REB_R Parse_One_Rule(
         if (Cmp_Value(item, rule, did (P_FLAGS & AM_FIND_CASE)) == 0)
             return Init_Integer(OUT, pos + 1);
 
-        return R_UNHANDLED;
+        return BOUNCE_UNHANDLED;
     }
     else {
         assert(ANY_STRING_KIND(P_TYPE) or P_TYPE == REB_BINARY);
@@ -700,7 +700,7 @@ static REB_R Parse_One_Rule(
                 1  // skip
             );
             if (index == NOT_FOUND)
-                return R_UNHANDLED;
+                return BOUNCE_UNHANDLED;
             return Init_Integer(OUT, cast(REBLEN, index) + len);
         }
         else switch (VAL_TYPE(rule)) {
@@ -722,7 +722,7 @@ static REB_R Parse_One_Rule(
             if (Check_Bit(VAL_BITSET(rule), uni, uncased))
                 return Init_Integer(OUT, P_POS + 1);
 
-            return R_UNHANDLED; }
+            return BOUNCE_UNHANDLED; }
 
           default:
             fail (Error_Parse_Rule());
@@ -773,10 +773,10 @@ static REBIXO To_Thru_Block_Rule(
                 rule = blk;
             else {
                 rule = Process_Group_For_Parse(frame_, cell, blk);
-                if (rule == R_THROWN)
+                if (rule == BOUNCE_THROWN)
                     return THROWN_FLAG;
 
-                if (rule == R_VOID)
+                if (rule == BOUNCE_VOID)
                     continue;
             }
 
@@ -828,11 +828,11 @@ static REBIXO To_Thru_Block_Rule(
                 if (ANY_ARRAY(rule))
                     fail (Error_Parse_Rule());
 
-                REB_R r = Parse_One_Rule(frame_, VAL_INDEX(iter), rule);
-                if (r == R_THROWN)
+                Bounce r = Parse_One_Rule(frame_, VAL_INDEX(iter), rule);
+                if (r == BOUNCE_THROWN)
                     return THROWN_FLAG;
 
-                if (r == R_UNHANDLED) {
+                if (r == BOUNCE_UNHANDLED) {
                     // fall through, keep looking
                     RESET(OUT);
                 }
@@ -1378,10 +1378,10 @@ REBNATIVE(subparse)
       process_group:
 
         rule = Process_Group_For_Parse(f, SPARE, rule);
-        if (rule == R_THROWN)
+        if (rule == BOUNCE_THROWN)
             return THROWN;
 
-        if (rule == R_VOID) {  // was a (...), or null-bearing :(...)
+        if (rule == BOUNCE_VOID) {  // was a (...), or null-bearing :(...)
             FETCH_NEXT_RULE(f);  // ignore result and go on to next rule
             goto pre_rule;
         }
@@ -2152,11 +2152,11 @@ REBNATIVE(subparse)
               case SYM_LIT_PATH_X:  // actually a QUOTED!
               case SYM_REFINEMENT_X:  // actually a PATH!
               case SYM_PREDICATE_X: {  // actually a TUPLE!
-                REB_R r = Parse_One_Rule(f, P_POS, rule);
-                if (r == R_THROWN)
+                Bounce r = Parse_One_Rule(f, P_POS, rule);
+                if (r == BOUNCE_THROWN)
                     goto return_thrown;
 
-                if (r == R_UNHANDLED)
+                if (r == BOUNCE_UNHANDLED)
                     i = END_FLAG;
                 else {
                     assert(r == OUT);
@@ -2301,11 +2301,11 @@ REBNATIVE(subparse)
         else {
             // Parse according to datatype
 
-            REB_R r = Parse_One_Rule(f, P_POS, rule);
-            if (r == R_THROWN)
+            Bounce r = Parse_One_Rule(f, P_POS, rule);
+            if (r == BOUNCE_THROWN)
                 return THROWN;
 
-            if (r == R_UNHANDLED)
+            if (r == BOUNCE_UNHANDLED)
                 i = END_FLAG;
             else {
                 assert(r == OUT);

@@ -50,7 +50,7 @@ REBINT CT_Datatype(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict
 //
 //  MAKE_Datatype: C
 //
-REB_R MAKE_Datatype(
+Bounce MAKE_Datatype(
     REBVAL *out,
     enum Reb_Kind kind,
     option(const REBVAL*) parent,
@@ -80,7 +80,7 @@ REB_R MAKE_Datatype(
 //
 //  TO_Datatype: C
 //
-REB_R TO_Datatype(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
+Bounce TO_Datatype(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
     return MAKE_Datatype(out, kind, nullptr, arg);
 }
 
@@ -155,7 +155,7 @@ REBTYPE(Datatype)
         break;
     }
 
-    return R_UNHANDLED;
+    return BOUNCE_UNHANDLED;
 }
 
 

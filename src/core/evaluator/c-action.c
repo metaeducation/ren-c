@@ -125,7 +125,7 @@ bool Lookahead_To_Sync_Enfix_Defer_Flag(struct Reb_Feed *feed) {
 //
 //  Action_Executor: C
 //
-REB_R Action_Executor(Frame(*) f)
+Bounce Action_Executor(Frame(*) f)
 {
     if (THROWING) {
         if (Get_Executor_Flag(ACTION, f, DISPATCHER_CATCHES))
@@ -684,7 +684,7 @@ REB_R Action_Executor(Frame(*) f)
     //
     // Note that there may be functions on the stack if this is the
     // second time through, and we were just jumping up to check the
-    // parameters in response to a R_REDO_CHECKED; if so, skip this.
+    // parameters in response to a BOUNCE_REDO_CHECKED; if so, skip this.
     //
     if (DSP != f->baseline.dsp and IS_WORD(TOP)) {
 
@@ -1027,15 +1027,15 @@ REB_R Action_Executor(Frame(*) f)
         // is not TOP_FRAME here.
         //
       case C_CONTINUATION:
-        return R_CONTINUATION;
+        return BOUNCE_CONTINUE;
 
       case C_DELEGATION:
         Set_Executor_Flag(ACTION, FRAME, DELEGATE_CONTROL);
         STATE = DELEGATE_255;  // the trampoline does this when delegating
-        return R_CONTINUATION;
+        return BOUNCE_CONTINUE;
 
       case C_SUSPEND:
-        return R_SUSPEND;
+        return BOUNCE_SUSPEND;
 
       case C_THROWN:
         //
@@ -1182,7 +1182,7 @@ REB_R Action_Executor(Frame(*) f)
     Drop_Action(f);
     Drop_Data_Stack_To(f->baseline.dsp);  // drop unprocessed refinements/chains
 
-    return R_THROWN;
+    return BOUNCE_THROWN;
 }}
 
 

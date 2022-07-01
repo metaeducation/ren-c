@@ -32,7 +32,7 @@
 // PATH!'s TO ANY-PATH! was used for TO ANY-TUPLE!.  But this contains some
 // unique behavior which might be interesting for numeric MAKEs.
 //
-REB_R MAKE_Sequence(
+Bounce MAKE_Sequence(
     REBVAL *out,
     enum Reb_Kind kind,
     option(const REBVAL*) parent,
@@ -310,7 +310,7 @@ REBTYPE(Sequence)
                 break;
 
             default:
-                return R_UNHANDLED;
+                return BOUNCE_UNHANDLED;
             }
 
             if (v > 255)
@@ -372,7 +372,7 @@ REBTYPE(Sequence)
         enum Reb_Kind kind = VAL_TYPE(sequence);
         mutable_HEART_BYTE(sequence) = REB_BLOCK;
 
-        REB_R r = T_Array(frame_, verb);
+        Bounce r = T_Array(frame_, verb);
         assert(CELL_HEART(r) == REB_BLOCK);
 
         if (r != OUT)
@@ -428,7 +428,7 @@ REBTYPE(Sequence)
         break;
     }
 
-    return R_UNHANDLED;
+    return BOUNCE_UNHANDLED;
 }
 
 

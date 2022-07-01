@@ -292,7 +292,7 @@ REBVAL *Read_Line(STD_TERM *t)
 //
 //  Console_Actor: C
 //
-REB_R Console_Actor(Frame(*) frame_, REBVAL *port, Symbol(const*) verb)
+Bounce Console_Actor(Frame(*) frame_, REBVAL *port, Symbol(const*) verb)
 {
     REBCTX *ctx = VAL_CONTEXT(port);
 
@@ -417,5 +417,5 @@ REB_R Console_Actor(Frame(*) frame_, REBVAL *port, Symbol(const*) verb)
         break;
     }
 
-    return R_UNHANDLED;
+    return BOUNCE_UNHANDLED;
 }

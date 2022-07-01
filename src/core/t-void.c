@@ -53,7 +53,7 @@ void MF_Bad_word(REB_MOLD *mo, noquote(Cell(const*)) v, bool form)
 // !!! How to create an isotope form of a BAD-WORD! in usermode, without
 // having to run an evaluation on a bad-word?  `make-isotope`?
 //
-REB_R MAKE_Bad_word(
+Bounce MAKE_Bad_word(
     REBVAL *out,
     enum Reb_Kind kind,
     option(const REBVAL*) parent,
@@ -74,7 +74,7 @@ REB_R MAKE_Bad_word(
 //
 // TO is disallowed, e.g. you can't TO convert an integer of 0 to a blank.
 //
-REB_R TO_Bad_word(REBVAL *out, enum Reb_Kind kind, const REBVAL *data) {
+Bounce TO_Bad_word(REBVAL *out, enum Reb_Kind kind, const REBVAL *data) {
     UNUSED(out);
     fail (Error_Bad_Make(kind, data));
 }
@@ -143,5 +143,5 @@ REBTYPE(Bad_word)
       default: break;
     }
 
-    return R_UNHANDLED;
+    return BOUNCE_UNHANDLED;
 }

@@ -65,7 +65,7 @@
 //
 //  DNS_Actor: C
 //
-static REB_R DNS_Actor(Frame(*) frame_, REBVAL *port, Symbol(const*) verb)
+static Bounce DNS_Actor(Frame(*) frame_, REBVAL *port, Symbol(const*) verb)
 {
     REBCTX *ctx = VAL_CONTEXT(port);
     REBVAL *spec = CTX_VAR(ctx, STD_PORT_SPEC);
@@ -184,7 +184,7 @@ static REB_R DNS_Actor(Frame(*) frame_, REBVAL *port, Symbol(const*) verb)
         break;
     }
 
-    return R_UNHANDLED;
+    return BOUNCE_UNHANDLED;
 }
 
 

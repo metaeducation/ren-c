@@ -1894,7 +1894,7 @@ static REBINT Scan_Head(SCAN_STATE *ss)
 // prior element was a GET-WORD!, the scan becomes a GET-PATH!...if the final
 // element is a SET-WORD!, the scan becomes a SET-PATH!)
 //
-REB_R Scanner_Executor(Frame(*) f) {
+Bounce Scanner_Executor(Frame(*) f) {
     Frame(*) frame_ = f;  // to use macros like OUT, SUBFRAME, etc.
 
     if (THROWING)
@@ -2505,7 +2505,7 @@ REB_R Scanner_Executor(Frame(*) f) {
                 nullptr,
                 SPECIFIC(ARR_AT(array, 1))
             );
-            if (r == R_THROWN) {  // !!! good argument for not using MAKE
+            if (r == BOUNCE_THROWN) {  // !!! good argument for not using MAKE
                 assert(false);
                 panic ("MAKE during construction syntax threw--illegal");
             }

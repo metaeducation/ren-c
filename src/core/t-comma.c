@@ -107,5 +107,5 @@ REBTYPE(Comma)
       default: break;
     }
 
-    return R_UNHANDLED;
+    return BOUNCE_UNHANDLED;
 }

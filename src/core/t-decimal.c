@@ -143,7 +143,7 @@ REBVAL *Init_Decimal_Bits(Cell(*) out, const REBYTE *bp)
 // codepoint.  Hence historical conversions have been split into the TO
 // or MAKE as a rough idea of how these rules might be followed.
 //
-REB_R MAKE_Decimal(
+Bounce MAKE_Decimal(
     REBVAL *out,
     enum Reb_Kind kind,
     option(const REBVAL*) parent,
@@ -291,7 +291,7 @@ REB_R MAKE_Decimal(
 // conversions, with MAKE used for less obvious (e.g. make decimal [1 5]
 // giving you 100000).
 //
-REB_R TO_Decimal(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
+Bounce TO_Decimal(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 {
     assert(Is_Fresh(out));
     assert(kind == REB_DECIMAL or kind == REB_PERCENT);
@@ -659,7 +659,7 @@ REBTYPE(Decimal)
         break;
     }
 
-    return R_UNHANDLED;
+    return BOUNCE_UNHANDLED;
 
 setDec:
     if (not FINITE(d1))

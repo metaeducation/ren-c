@@ -425,7 +425,7 @@ inline static bool Eval_Value_Core_Throws(
     Eval_Value_Core_Throws(out, FRAME_MASK_NONE, (value), (specifier))
 
 
-inline static REB_R Native_Failure_Result(Frame(*) frame_, const void *p) {
+inline static Bounce Native_Failure_Result(Frame(*) frame_, const void *p) {
     assert(Is_Stale_Void(&TG_Thrown_Arg));
 
     REBCTX *error;

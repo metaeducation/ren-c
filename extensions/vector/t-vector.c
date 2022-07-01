@@ -470,7 +470,7 @@ bool Make_Vector_Spec(
 //
 //  TO_Vector: C
 //
-REB_R TO_Vector(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
+Bounce TO_Vector(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 {
     if (IS_BLOCK(arg)) {
         if (Make_Vector_Spec(out, arg, VAL_SPECIFIER(arg)))
@@ -483,7 +483,7 @@ REB_R TO_Vector(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 //
 //  MAKE_Vector: C
 //
-REB_R MAKE_Vector(
+Bounce MAKE_Vector(
     REBVAL *out,
     enum Reb_Kind kind,
     option(const REBVAL*) parent,
@@ -679,7 +679,7 @@ REBTYPE(Vector)
         break;
     }
 
-    return R_UNHANDLED;
+    return BOUNCE_UNHANDLED;
 }
 
 

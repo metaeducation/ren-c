@@ -46,7 +46,7 @@ REBINT CT_Pair(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
 //
 //  MAKE_Pair: C
 //
-REB_R MAKE_Pair(
+Bounce MAKE_Pair(
     REBVAL *out,
     enum Reb_Kind kind,
     option(const REBVAL*) parent,
@@ -116,7 +116,7 @@ REB_R MAKE_Pair(
 //
 //  TO_Pair: C
 //
-REB_R TO_Pair(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
+Bounce TO_Pair(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 {
     return MAKE_Pair(out, kind, nullptr, arg);
 }
@@ -238,7 +238,7 @@ REBTYPE(Pair)
         REBVAL *setval = Meta_Unquotify(ARG(value));
 
         if (not IS_INTEGER(setval) and not IS_DECIMAL(setval))
-            return R_UNHANDLED;
+            return BOUNCE_UNHANDLED;
 
         REBVAL *which = (n == 1) ? VAL_PAIR_X(v) : VAL_PAIR_Y(v);
 

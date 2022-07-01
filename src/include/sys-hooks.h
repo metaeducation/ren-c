@@ -42,16 +42,16 @@ typedef REBINT (COMPARE_HOOK)(
 // Helper for declaring a native dispatcher function
 //
 #define REBNATIVE(n) \
-    REB_R N_##n(Frame(*) frame_)
+    Bounce N_##n(Frame(*) frame_)
 
 
 // PER-TYPE MAKE HOOKS: for `make datatype def`
 //
 // These functions must return a REBVAL* to the type they are making
 // (either in the output cell given or an API cell)...or they can return
-// R_THROWN if they throw.  (e.g. `make object! [return]` can throw)
+// BOUNCE_THROWN if they throw.  (e.g. `make object! [return]` can throw)
 //
-typedef REB_R (MAKE_HOOK)(
+typedef Bounce (MAKE_HOOK)(
     REBVAL *out,
     enum Reb_Kind kind,
     option(const REBVAL*) opt_parent,
@@ -71,7 +71,7 @@ typedef REB_R (MAKE_HOOK)(
 // and decided by the source type.  For now, the destination decides both,
 // which means TO-ness and MAKE-ness are a bit too similar.
 //
-typedef REB_R (TO_HOOK)(REBVAL*, enum Reb_Kind, const REBVAL*);
+typedef Bounce (TO_HOOK)(REBVAL*, enum Reb_Kind, const REBVAL*);
 
 
 // PER-TYPE MOLD HOOKS: for `mold value` and `form value`
@@ -96,14 +96,14 @@ typedef void (MOLD_HOOK)(REB_MOLD *mo, noquote(Cell(const*)) v, bool form);
 // any behavior for a specific type can still be accomplished by testing
 // the type passed into that common hook!
 //
-typedef REB_R (GENERIC_HOOK)(Frame(*) frame_, Symbol(const*) verb);
+typedef Bounce (GENERIC_HOOK)(Frame(*) frame_, Symbol(const*) verb);
 #define REBTYPE(n) \
-    REB_R T_##n(Frame(*) frame_, Symbol(const*) verb)
+    Bounce T_##n(Frame(*) frame_, Symbol(const*) verb)
 
 
 // Port hook: for implementing generic ACTION!s on a PORT! class
 //
-typedef REB_R (PORT_HOOK)(Frame(*) frame_, REBVAL *port, Symbol(const*) verb);
+typedef Bounce (PORT_HOOK)(Frame(*) frame_, REBVAL *port, Symbol(const*) verb);
 
 
 //=//// PARAMETER ENUMERATION /////////////////////////////////////////////=//

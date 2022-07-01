@@ -651,7 +651,7 @@ void on_write_finished(uv_write_t *req, int status)
 //
 //  Transport_Actor: C
 //
-static REB_R Transport_Actor(
+static Bounce Transport_Actor(
     Frame(*) frame_,
     REBVAL *port,
     Symbol(const*) verb,
@@ -1002,14 +1002,14 @@ static REB_R Transport_Actor(
         break;
     }
 
-    return R_UNHANDLED;
+    return BOUNCE_UNHANDLED;
 }
 
 
 //
 //  TCP_Actor: C
 //
-static REB_R TCP_Actor(Frame(*) frame_, REBVAL *port, Symbol(const*) verb)
+static Bounce TCP_Actor(Frame(*) frame_, REBVAL *port, Symbol(const*) verb)
 {
     return Transport_Actor(frame_, port, verb, TRANSPORT_TCP);
 }
@@ -1018,7 +1018,7 @@ static REB_R TCP_Actor(Frame(*) frame_, REBVAL *port, Symbol(const*) verb)
 //
 //  UDP_Actor: C
 //
-static REB_R UDP_Actor(Frame(*) frame_, REBVAL *port, Symbol(const*) verb)
+static Bounce UDP_Actor(Frame(*) frame_, REBVAL *port, Symbol(const*) verb)
 {
     return Transport_Actor(frame_, port, verb, TRANSPORT_UDP);
 }

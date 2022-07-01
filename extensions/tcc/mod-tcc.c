@@ -246,7 +246,7 @@ static void cleanup(const REBVAL *val)
 // However, as a convenience, calling a pending user native will trigger a
 // simple COMPILE for just that one function, using default options.
 //
-REB_R Pending_Native_Dispatcher(Frame(*) f) {
+Bounce Pending_Native_Dispatcher(Frame(*) f) {
     REBACT *phase = FRM_PHASE(f);
     assert(ACT_DISPATCHER(phase) == &Pending_Native_Dispatcher);
 
@@ -271,7 +271,7 @@ REB_R Pending_Native_Dispatcher(Frame(*) f) {
     // bother re-checking the argument types.
     //
     assert(ACT_DISPATCHER(phase) != &Pending_Native_Dispatcher);
-    return R_REDO_UNCHECKED;
+    return BOUNCE_REDO_UNCHECKED;
 }
 
 

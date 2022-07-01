@@ -772,7 +772,7 @@ void Extend_Gob_Core(REBGOB *gob, const REBVAL *arg) {
 //
 //  MAKE_Gob: C
 //
-REB_R MAKE_Gob(
+Bounce MAKE_Gob(
     REBVAL *out,
     enum Reb_Kind kind,
     option(const REBVAL*) parent,
@@ -821,7 +821,7 @@ REB_R MAKE_Gob(
 //
 //  TO_Gob: C
 //
-REB_R TO_Gob(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
+Bounce TO_Gob(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 {
     assert(kind == REB_CUSTOM);
     UNUSED(kind);
@@ -965,7 +965,7 @@ REBTYPE(Gob)
         }
         else if (IS_WORD(picker)) {
             if (not Did_Set_GOB_Var(gob, picker, setval))
-                return R_UNHANDLED;
+                return BOUNCE_UNHANDLED;
         }
         else
             fail (picker);
@@ -1136,7 +1136,7 @@ REBTYPE(Gob)
         break;
     }
 
-    return R_UNHANDLED;
+    return BOUNCE_UNHANDLED;
 
   set_index:
 

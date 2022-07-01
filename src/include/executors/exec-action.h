@@ -89,10 +89,10 @@ STATIC_ASSERT(
 // cannot delegate to the body block if there is a variadic, because it will
 // look like the function isn't running.
 //
-// So when a dipatcher tells Action_Executor() it wants R_DELEGATION, it does
+// So when a dipatcher tells Action_Executor() it wants BOUNCE_DELEGATE, it does
 // not propagate that to the trampoline...it just sets this flag and returns
 // a continuation.  (Note however, that using delegation has an optimization
-// that does not return R_DELEGATION, if something like a branch can be
+// that does not return BOUNCE_DELEGATE, if something like a branch can be
 // evaluated to a constant value!  This won't leave the frame on the stack).
 //
 #define ACTION_EXECUTOR_FLAG_DELEGATE_CONTROL \

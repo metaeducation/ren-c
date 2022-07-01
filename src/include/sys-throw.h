@@ -67,7 +67,7 @@ inline static const REBVAL *VAL_THROWN_LABEL(Frame(*) frame_) {
     return &TG_Thrown_Label;
 }
 
-inline static REB_R Init_Thrown_With_Label(  // assumes `arg` in TG_Thrown_Arg
+inline static Bounce Init_Thrown_With_Label(  // assumes `arg` in TG_Thrown_Arg
     Frame(*) frame_,
     const REBVAL *arg,
     const REBVAL *label  // Note: is allowed to be same as `out`
@@ -84,7 +84,7 @@ inline static REB_R Init_Thrown_With_Label(  // assumes `arg` in TG_Thrown_Arg
     Copy_Cell(&TG_Thrown_Label, label);
 
     Mark_Eval_Out_Stale(frame_->out);
-    return R_THROWN;
+    return BOUNCE_THROWN;
 }
 
 inline static void CATCH_THROWN(

@@ -74,7 +74,7 @@ REBINT CT_Money(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
 //
 //  MAKE_Money: C
 //
-REB_R MAKE_Money(
+Bounce MAKE_Money(
     REBVAL *out,
     enum Reb_Kind kind,
     option(const REBVAL*) parent,
@@ -128,7 +128,7 @@ REB_R MAKE_Money(
 //
 //  TO_Money: C
 //
-REB_R TO_Money(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
+Bounce TO_Money(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 {
     return MAKE_Money(out, kind, nullptr, arg);
 }
@@ -305,5 +305,5 @@ REBTYPE(Money)
         break;
     }
 
-    return R_UNHANDLED;
+    return BOUNCE_UNHANDLED;
 }

@@ -513,7 +513,7 @@ REBINT CT_Context(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
 //
 // For now just support ACTION! (or path/word to specify an action)
 //
-REB_R MAKE_Frame(
+Bounce MAKE_Frame(
     REBVAL *out,
     enum Reb_Kind kind,
     option(const REBVAL*) parent,
@@ -550,7 +550,7 @@ REB_R MAKE_Frame(
             feed,
             error_on_deferred
         )){
-            return R_THROWN;
+            return BOUNCE_THROWN;
         }
 
         return out;
@@ -582,7 +582,7 @@ REB_R MAKE_Frame(
 // to have an equivalent representation (an OBJECT! could be an expired frame
 // perhaps, but still would have no ACTION OF property)
 //
-REB_R TO_Frame(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
+Bounce TO_Frame(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 {
     UNUSED(out);
     fail (Error_Bad_Make(kind, arg));
@@ -592,7 +592,7 @@ REB_R TO_Frame(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 //
 //  MAKE_Context: C
 //
-REB_R MAKE_Context(
+Bounce MAKE_Context(
     REBVAL *out,
     enum Reb_Kind kind,
     option(const REBVAL*) parent,
@@ -640,7 +640,7 @@ REB_R MAKE_Context(
 
         DECLARE_LOCAL (dummy);
         if (Do_Any_Array_At_Throws(dummy, virtual_arg, SPECIFIED))
-            return R_THROWN;
+            return BOUNCE_THROWN;
 
         return out;
     }
@@ -674,7 +674,7 @@ REB_R MAKE_Context(
 //
 //  TO_Context: C
 //
-REB_R TO_Context(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
+Bounce TO_Context(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 {
     // Other context kinds (FRAME!, ERROR!, PORT!) have their own hooks.
     //
@@ -1175,7 +1175,7 @@ REBTYPE(Context)
 
         ENSURE_MUTABLE(context);
         if (not IS_OBJECT(context) and not IS_MODULE(context))
-            return R_UNHANDLED;
+            return BOUNCE_UNHANDLED;
         Append_To_Context(context, arg);
         return_value (context); }
 
@@ -1249,7 +1249,7 @@ REBTYPE(Context)
         break;
     }
 
-    return R_UNHANDLED;
+    return BOUNCE_UNHANDLED;
 }
 
 

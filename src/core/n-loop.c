@@ -123,7 +123,7 @@ REBNATIVE(continue)
 //
 //  Loop_Series_Common: C
 //
-static REB_R Loop_Series_Common(
+static Bounce Loop_Series_Common(
     Frame(*) frame_,
     REBVAL *var, // Must not be movable from context expansion, see #2274
     const REBVAL *body,
@@ -212,7 +212,7 @@ static REB_R Loop_Series_Common(
 //
 //  Loop_Integer_Common: C
 //
-static REB_R Loop_Integer_Common(
+static Bounce Loop_Integer_Common(
     Frame(*) frame_,
     REBVAL *var,  // Must not be movable from context expansion, see #2274
     const REBVAL *body,
@@ -278,7 +278,7 @@ static REB_R Loop_Integer_Common(
 //
 //  Loop_Number_Common: C
 //
-static REB_R Loop_Number_Common(
+static Bounce Loop_Number_Common(
     Frame(*) frame_,
     REBVAL *var,  // Must not be movable from context expansion, see #2274
     const REBVAL *body,
@@ -1884,7 +1884,7 @@ REBNATIVE(for)
             FRAME_FLAG_MAYBE_STALE,
             Lib(FOR_EACH), ARG(vars), rebQ(value), body
         );
-        return R_DELEGATION;
+        return BOUNCE_DELEGATE;
     }
 
     if (IS_DECIMAL(value) or IS_PERCENT(value))

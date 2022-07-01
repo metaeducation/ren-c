@@ -60,7 +60,7 @@ enum {
 // doing any virtual binding.  However, there's some difference w.r.t. the
 // "derived binding" that need a going-over.
 //
-REB_R Lambda_Dispatcher(Frame(*) f)
+Bounce Lambda_Dispatcher(Frame(*) f)
 //
 // 1. We have to use Make_Or_Reuse_Patch() here, because it could be the case
 //    that a higher level wrapper used the frame and virtually bound it.
@@ -101,7 +101,7 @@ REB_R Lambda_Dispatcher(Frame(*) f)
 // like function dispatch, except there's no RETURN to catch.  So it can
 // execute directly into the output cell.
 //
-REB_R Lambda_Unoptimized_Dispatcher(Frame(*) frame_)
+Bounce Lambda_Unoptimized_Dispatcher(Frame(*) frame_)
 {
     REBACT *phase = FRM_PHASE(FRAME);
     REBARR *details = ACT_DETAILS(phase);

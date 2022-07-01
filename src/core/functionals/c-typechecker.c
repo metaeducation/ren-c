@@ -70,7 +70,7 @@ REBNATIVE(typecheck_internal_q)
 //
 // Dispatcher used by TYPECHECKER generator for when argument is a datatype.
 //
-REB_R Datatype_Checker_Dispatcher(Frame(*) frame_)
+Bounce Datatype_Checker_Dispatcher(Frame(*) frame_)
 {
     Frame(*) f = frame_;
 
@@ -104,7 +104,7 @@ REB_R Datatype_Checker_Dispatcher(Frame(*) frame_)
 //
 // Dispatcher used by TYPECHECKER generator for when argument is a typeset.
 //
-REB_R Typeset_Checker_Dispatcher(Frame(*) frame_)
+Bounce Typeset_Checker_Dispatcher(Frame(*) frame_)
 {
     Frame(*) f = frame_;
 

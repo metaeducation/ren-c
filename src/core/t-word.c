@@ -87,7 +87,7 @@ REBINT CT_Word(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
 //
 //  MAKE_Word: C
 //
-REB_R MAKE_Word(
+Bounce MAKE_Word(
     REBVAL *out,
     enum Reb_Kind kind,
     option(const REBVAL*) parent,
@@ -155,7 +155,7 @@ REB_R MAKE_Word(
 //
 //  TO_Word: C
 //
-REB_R TO_Word(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
+Bounce TO_Word(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 {
     // This is here to convert `to word! /a` into `a`.  It also allows
     // `to word! ////a////` and variants, because it seems interesting to try
@@ -367,5 +367,5 @@ REBTYPE(Word)
         break;
     }
 
-    return R_UNHANDLED;
+    return BOUNCE_UNHANDLED;
 }

@@ -89,7 +89,7 @@
 //    and the FRAME_FLAG_MAYBE_STALE added.  Reverse that here, passing through
 //    any other flags.
 //
-REB_R Group_Branch_Executor(Frame(*) frame_)
+Bounce Group_Branch_Executor(Frame(*) frame_)
 {
     if (THROWING)
         return THROWN;
@@ -480,8 +480,8 @@ REBNATIVE(match)
         break;
 
       case REB_BLOCK: {
-        REB_R r = MAKE_Typeset(SPARE, REB_TYPESET, nullptr, test);
-        if (r == R_THROWN)
+        Bounce r = MAKE_Typeset(SPARE, REB_TYPESET, nullptr, test);
+        if (r == BOUNCE_THROWN)
             return THROWN;
         test = SPARE;
         goto test_is_typeset; }

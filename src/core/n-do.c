@@ -376,7 +376,7 @@ REBNATIVE(do)
                 rebQ(REF(args)),
                 REF(only) ? Lib(TRUE) : Lib(FALSE)
         );
-        return R_DELEGATION; }
+        return BOUNCE_DELEGATE; }
 
       case REB_ERROR :
         fail (VAL_CONTEXT(source));  // would fail anyway, see [2]

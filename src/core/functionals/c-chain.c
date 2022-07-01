@@ -113,7 +113,7 @@ Frame(*) Push_Downshifted_Frame(REBVAL *out, Frame(*) f) {
 // user invoked in the stack trace...instead of just the chained item that
 // causes an error.)
 //
-REB_R Chainer_Dispatcher(Frame(*) f)
+Bounce Chainer_Dispatcher(Frame(*) f)
 //
 // 1. Stealing the varlist leaves the actual chainer frame with no varlist
 //    content.  That means debuggers introspecting the stack may see a

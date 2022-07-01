@@ -30,7 +30,7 @@
 //
 // Update action identity that was pushed.
 //
-REB_R Copied_Dispatcher(Frame(*) f)
+Bounce Copied_Dispatcher(Frame(*) f)
 {
     REBVAL *archetype = ACT_ARCHETYPE(FRM_PHASE(f));
 
@@ -42,7 +42,7 @@ REB_R Copied_Dispatcher(Frame(*) f)
     // !!! Is it necessary to call REDO or could we just go ahead and call
     // the dispatcher ourself?
 
-    return R_REDO_UNCHECKED; // redo uses the updated phase and binding
+    return BOUNCE_REDO_UNCHECKED; // redo uses the updated phase and binding
 }
 
 
@@ -94,7 +94,7 @@ REBINT CT_Action(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
 // than being an epicycle of the design of FUNC (which is just an optimized
 // version of something that could be written in usermode).
 //
-REB_R MAKE_Action(
+Bounce MAKE_Action(
     REBVAL *out,
     enum Reb_Kind kind,
     option(const REBVAL*) parent,
@@ -137,7 +137,7 @@ REB_R MAKE_Action(
 // from a BLOCK!, e.g. `x: does [1 + y]`, so TO ACTION! of a block doesn't
 // need to do that (for instance).
 //
-REB_R TO_Action(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
+Bounce TO_Action(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 {
     assert(kind == REB_ACTION);
     UNUSED(kind);
@@ -401,5 +401,5 @@ REBTYPE(Action)
         break;
     }
 
-    return R_UNHANDLED;
+    return BOUNCE_UNHANDLED;
 }

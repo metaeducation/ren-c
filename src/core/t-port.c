@@ -43,7 +43,7 @@ REBINT CT_Port(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
 // Create a new port. This is done by calling the MAKE_PORT
 // function stored in the system/intrinsic object.
 //
-REB_R MAKE_Port(
+Bounce MAKE_Port(
     REBVAL *out,
     enum Reb_Kind kind,
     option(const REBVAL*) parent,
@@ -72,7 +72,7 @@ REB_R MAKE_Port(
 //
 //  TO_Port: C
 //
-REB_R TO_Port(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
+Bounce TO_Port(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 {
     assert(kind == REB_PORT);
     UNUSED(kind);
@@ -138,12 +138,12 @@ REBTYPE(Port)
     // it's some other kind of handle value this could crash.
     //
     if (Is_Native_Port_Actor(actor)) {
-        REB_R r = cast(PORT_HOOK*, VAL_HANDLE_CFUNC(actor))(frame_, port, verb);
+        Bounce r = cast(PORT_HOOK*, VAL_HANDLE_CFUNC(actor))(frame_, port, verb);
 
         if (not r)
            Init_Nulled(OUT);
         else if (r != OUT) {
-            assert(not IS_RETURN_SIGNAL(r));  // R_THROWN etc. unsupported
+            assert(not IS_RETURN_SIGNAL(r));  // BOUNCE_THROWN etc. unsupported
             assert(Is_Api_Value(r));
             Copy_Cell(OUT, r);
             Release_Api_Value_If_Unmanaged(r);
@@ -287,5 +287,5 @@ REBTYPE(Url)
     Move_Cell(D_ARG(1), port);
     rebRelease(port);
 
-    return R_CONTINUATION;
+    return BOUNCE_CONTINUE;
 }

@@ -355,7 +355,7 @@ static void Append_Map(
 //
 //  MAKE_Map: C
 //
-REB_R MAKE_Map(
+Bounce MAKE_Map(
     REBVAL *out,
     enum Reb_Kind kind,
     option(const REBVAL*) parent,
@@ -424,7 +424,7 @@ inline static REBMAP *Copy_Map(const REBMAP *map, REBU64 types) {
 //
 //  TO_Map: C
 //
-REB_R TO_Map(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
+Bounce TO_Map(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 {
     assert(kind == REB_MAP);
     UNUSED(kind);
@@ -803,7 +803,7 @@ REBTYPE(Map)
         // the below lines) GCC 2.95 on Haiku will warn "control reaches end
         // of non-void function" warning.  This contortion works.  :-/
         //
-        return R_UNHANDLED;
+        return BOUNCE_UNHANDLED;
     }
 
     goto return_unhandled;

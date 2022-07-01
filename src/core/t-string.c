@@ -167,7 +167,7 @@ static void reverse_string(REBSTR *str, REBLEN index, REBLEN len)
 //
 //  MAKE_String: C
 //
-REB_R MAKE_String(
+Bounce MAKE_String(
     REBVAL *out,
     enum Reb_Kind kind,
     option(const REBVAL*) parent,
@@ -256,7 +256,7 @@ REB_R MAKE_String(
 //
 //  TO_String: C
 //
-REB_R TO_String(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
+Bounce TO_String(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 {
     if (kind == REB_ISSUE) {  // encompasses what would have been TO CHAR!
         if (IS_INTEGER(arg)) {
@@ -789,7 +789,7 @@ REBTYPE(String)
             c = Int32(setval);
         }
         else  // CHANGE is a better route for splicing/removal/etc.
-            return R_UNHANDLED;
+            return BOUNCE_UNHANDLED;
 
         if (c == 0)
             fail (Error_Illegal_Zero_Byte_Raw());
@@ -1193,11 +1193,11 @@ REBTYPE(String)
             assert(IS_PORT(made));
             Copy_Cell(D_ARG(1), made);
             rebRelease(made);
-            return R_CONTINUATION;
+            return BOUNCE_CONTINUE;
         }
     }
 
-    return R_UNHANDLED;
+    return BOUNCE_UNHANDLED;
 }
 
 

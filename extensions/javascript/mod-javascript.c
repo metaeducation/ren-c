@@ -286,7 +286,7 @@ enum {
     IDX_JS_NATIVE_MAX
 };
 
-REB_R JavaScript_Dispatcher(Frame(*) f);
+Bounce JavaScript_Dispatcher(Frame(*) f);
 
 
 //=//// GLOBAL PROMISE STATE //////////////////////////////////////////////=//
@@ -445,14 +445,14 @@ void RunPromise(void)
 
 } run_promise: {  ////////////////////////////////////////////////////////////
 
-    REB_R r = Trampoline_From_Top_Maybe_Root();
+    Bounce r = Trampoline_From_Top_Maybe_Root();
 
-    if (r == R_SUSPEND) {  // cooperative suspension, see [1]
+    if (r == BOUNCE_SUSPEND) {  // cooperative suspension, see [1]
         return;  // the setTimeout() on resolve/reject will queue us back
     }
 
     REBVAL *metaresult = TOP_FRAME->out;
-    if (r == R_THROWN) {
+    if (r == BOUNCE_THROWN) {
         assert(Is_Throwing(TOP_FRAME));
         REBCTX *error = Error_No_Catch_For_Throw(TOP_FRAME);
         Init_Error(metaresult, error);
@@ -680,7 +680,7 @@ EXTERN_C void RL_rebRejectNative_internal(
 //    convert it to a throw.  For now, the halt signal is communicated
 //    uniquely back to us as 0.
 //
-REB_R JavaScript_Dispatcher(Frame(*) frame_)
+Bounce JavaScript_Dispatcher(Frame(*) frame_)
 {
     Frame(*) f = frame_;
 
@@ -751,7 +751,7 @@ REB_R JavaScript_Dispatcher(Frame(*) frame_)
             /* emscripten_sleep(50); */
 
             STATE = ST_JS_NATIVE_SUSPENDED;
-            return R_SUSPEND;  // signals trampoline to leave stack
+            return BOUNCE_SUSPEND;  // signals trampoline to leave stack
         }
     }
 

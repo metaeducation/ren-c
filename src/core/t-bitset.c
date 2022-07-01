@@ -90,7 +90,7 @@ void MF_Bitset(REB_MOLD *mo, noquote(Cell(const*)) v, bool form)
 //
 //  MAKE_Bitset: C
 //
-REB_R MAKE_Bitset(
+Bounce MAKE_Bitset(
     REBVAL *out,
     enum Reb_Kind kind,
     option(const REBVAL*) parent,
@@ -126,7 +126,7 @@ REB_R MAKE_Bitset(
 //
 //  TO_Bitset: C
 //
-REB_R TO_Bitset(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
+Bounce TO_Bitset(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 {
     return MAKE_Bitset(out, kind, nullptr, arg);
 }
@@ -581,7 +581,7 @@ REBTYPE(Bitset)
             picker,
             BITS_NOT(bset) ? Is_Falsey(setval) : Is_Truthy(setval)
         )){
-            return R_UNHANDLED;
+            return BOUNCE_UNHANDLED;
         }
         return nullptr; }
 
@@ -734,5 +734,5 @@ REBTYPE(Bitset)
         break;
     }
 
-    return R_UNHANDLED;
+    return BOUNCE_UNHANDLED;
 }

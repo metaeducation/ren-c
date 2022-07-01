@@ -44,7 +44,7 @@ REBINT CT_Integer(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
 //
 //  MAKE_Integer: C
 //
-REB_R MAKE_Integer(
+Bounce MAKE_Integer(
     REBVAL *out,
     enum Reb_Kind kind,
     option(const REBVAL*) parent,
@@ -84,7 +84,7 @@ REB_R MAKE_Integer(
 //
 //  TO_Integer: C
 //
-REB_R TO_Integer(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
+Bounce TO_Integer(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 {
     assert(kind == REB_INTEGER);
     UNUSED(kind);
@@ -458,5 +458,5 @@ REBTYPE(Integer)
         break;
     }
 
-    return R_UNHANDLED;
+    return BOUNCE_UNHANDLED;
 }

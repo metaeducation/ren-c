@@ -314,7 +314,7 @@ inline static REBVAL *Init_Gob(Cell(*) out, REBGOB *g) {
 // GOB! extension if it is loaded.
 //
 extern REBINT CT_Gob(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict);
-extern REB_R MAKE_Gob(REBVAL *out, enum Reb_Kind kind, option(const REBVAL*) parent, const REBVAL *arg);
-extern REB_R TO_Gob(REBVAL *out, enum Reb_Kind kind, const REBVAL* arg);
+extern Bounce MAKE_Gob(REBVAL *out, enum Reb_Kind kind, option(const REBVAL*) parent, const REBVAL *arg);
+extern Bounce TO_Gob(REBVAL *out, enum Reb_Kind kind, const REBVAL* arg);
 extern void MF_Gob(REB_MOLD *mo, noquote(Cell(const*)) v, bool form);
 extern REBTYPE(Gob);

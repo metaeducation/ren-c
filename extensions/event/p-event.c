@@ -61,7 +61,7 @@
 //
 // Internal port handler for events.
 //
-REB_R Event_Actor(Frame(*) frame_, REBVAL *port, Symbol(const*) verb)
+Bounce Event_Actor(Frame(*) frame_, REBVAL *port, Symbol(const*) verb)
 {
     // Validate and fetch relevant PORT fields:
     //
@@ -120,7 +120,7 @@ REB_R Event_Actor(Frame(*) frame_, REBVAL *port, Symbol(const*) verb)
         Move_Cell(save_port, D_ARG(1));
         Copy_Cell(D_ARG(1), state);
 
-        REB_R r = T_Array(frame_, verb);
+        Bounce r = T_Array(frame_, verb);
 
         SET_SIGNAL(SIG_EVENT_PORT);
         if (
@@ -157,5 +157,5 @@ REB_R Event_Actor(Frame(*) frame_, REBVAL *port, Symbol(const*) verb)
         break;
     }
 
-    return R_UNHANDLED;
+    return BOUNCE_UNHANDLED;
 }

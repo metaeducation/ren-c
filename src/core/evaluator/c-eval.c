@@ -26,7 +26,7 @@
 //
 // By design the evaluator is not recursive at the C level--it is "stackless".
 // At points where a sub-expression must be evaluated in a new frame, it will
-// heap-allocate that frame and then do a C `return` of R_CONTINUATION.
+// heap-allocate that frame and then do a C `return` of BOUNCE_CONTINUE.
 // Processing then goes through the "Trampoline" (see %c-trampoline.c), which
 // later re-enters the suspended frame's executor with the result.  Setting
 // the frame's STATE byte prior to suspension is a common way of letting a
@@ -206,7 +206,7 @@ inline static Frame(*) Maybe_Rightward_Continuation_Needed(Frame(*) f)
 //
 // It is possible to preload states and start an evaluator at any of these.
 //
-REB_R Evaluator_Executor(Frame(*) f)
+Bounce Evaluator_Executor(Frame(*) f)
 {
     if (THROWING)
         return THROWN;  // no state to clean up
@@ -1991,7 +1991,7 @@ REB_R Evaluator_Executor(Frame(*) f)
             fail (VAL_CONTEXT(OUT));
 
         STATE = ST_EVALUATOR_STEPPING_AGAIN;
-        return R_CONTINUATION;  // go through trampoline, for debug hooking
+        return BOUNCE_CONTINUE;  // go through trampoline, for debug hooking
     }
 
     return OUT;
@@ -2002,5 +2002,5 @@ REB_R Evaluator_Executor(Frame(*) f)
     Evaluator_Exit_Checks_Debug(f);
   #endif
 
-    return R_THROWN;
+    return BOUNCE_THROWN;
 }

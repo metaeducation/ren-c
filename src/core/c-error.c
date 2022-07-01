@@ -524,7 +524,7 @@ void Set_Location_Of_Error(
 // existing landscape so that if it is to be changed then it can be seen
 // exactly what is changing.
 //
-REB_R MAKE_Error(
+Bounce MAKE_Error(
     REBVAL *out,  // output location **MUST BE GC SAFE**!
     enum Reb_Kind kind,
     option(const REBVAL*) parent,
@@ -578,7 +578,7 @@ REB_R MAKE_Error(
 
         DECLARE_LOCAL (evaluated);
         if (Do_Any_Array_At_Throws(evaluated, virtual_arg, SPECIFIED))
-            return R_THROWN;
+            return BOUNCE_THROWN;
 
         vars = ERR_VARS(e);
     }
@@ -699,7 +699,7 @@ REB_R MAKE_Error(
 // !!! Historically this was identical to MAKE ERROR!, but MAKE and TO are
 // being rethought.
 //
-REB_R TO_Error(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
+Bounce TO_Error(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 {
     return MAKE_Error(out, kind, nullptr, arg);
 }

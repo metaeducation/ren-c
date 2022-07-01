@@ -176,8 +176,8 @@ REBNATIVE(poke)
     // made POKE an ENCLOSE of POKE*.  But to get a fast native, we don't have
     // enclose...so this is an approximation.  Review ensuring this is "safe".
     //
-    REB_R r = Run_Generic_Dispatch_Core(location, frame_, Canon(POKE_P));
-    if (r == R_THROWN)
+    Bounce r = Run_Generic_Dispatch_Core(location, frame_, Canon(POKE_P));
+    if (r == BOUNCE_THROWN)
         return THROWN;
     assert(r == nullptr or not IS_RETURN_SIGNAL(r));  // other signals invalid
 
@@ -204,7 +204,7 @@ REBNATIVE(poke)
 // is in line with the most popular historical interpretation of MAKE, for
 // MAKE OBJECT!--which evaluates the object body block.
 //
-REB_R MAKE_Path(
+Bounce MAKE_Path(
     REBVAL *out,
     enum Reb_Kind kind,
     option(const REBVAL*) parent,
@@ -225,7 +225,7 @@ REB_R MAKE_Path(
     while (Not_End(f->feed->value)) {
         if (Eval_Step_Throws(out, f)) {
             Drop_Frame(f);
-            return R_THROWN;
+            return BOUNCE_THROWN;
         }
 
         if (Is_Stale(out))
@@ -287,7 +287,7 @@ REB_R MAKE_Path(
 //     >> to path! ^[a b c]
 //     == /[a b c]
 //
-REB_R TO_Sequence(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
+Bounce TO_Sequence(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
     enum Reb_Kind arg_kind = VAL_TYPE(arg);
 
     if (IS_TEXT(arg)) {

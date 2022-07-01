@@ -45,7 +45,7 @@ REBINT CT_Library(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
 //
 //  MAKE_Library: C
 //
-REB_R MAKE_Library(
+Bounce MAKE_Library(
     REBVAL *out,
     enum Reb_Kind kind,
     option(const REBVAL*) parent,
@@ -80,7 +80,7 @@ REB_R MAKE_Library(
 //
 //  TO_Library: C
 //
-REB_R TO_Library(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
+Bounce TO_Library(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 {
     return MAKE_Library(out, kind, nullptr, arg);
 }
@@ -123,7 +123,7 @@ REBTYPE(Library)
         break;
     }
 
-    return R_UNHANDLED;
+    return BOUNCE_UNHANDLED;
 }
 
 

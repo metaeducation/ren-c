@@ -257,10 +257,10 @@ STATIC_ASSERT(31 < 32);  // otherwise FRAME_FLAG_XXX too high
 
 
 
-// The REB_R type is a REBVAL* but with the idea that it is legal to hold
-// types like REB_R_THROWN, etc.  This helps document interface contract.
+// The Bounce type is a REBVAL* but with the idea that it is legal to hold
+// types like BOUNCE_THROWN, etc.  This helps document interface contract.
 //
-typedef const REBVAL *REB_R;
+typedef const REBVAL *Bounce;
 
 
 // These definitions are needed in %sys-rebval.h, and can't be put in
@@ -269,7 +269,7 @@ typedef const REBVAL *REB_R;
 
 // C function implementing a native ACTION!
 //
-typedef REB_R (Executor)(Frame(*) frame_);
+typedef Bounce (Executor)(Frame(*) frame_);
 typedef Executor Dispatcher;  // sub-dispatched in Action_Executor()
 
 

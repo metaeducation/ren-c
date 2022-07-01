@@ -38,7 +38,7 @@
 // It only works when the operation in question applies to an understanding of
 // a series as containing fixed-size units.
 //
-REB_R Series_Common_Action_Maybe_Unhandled(
+Bounce Series_Common_Action_Maybe_Unhandled(
     Frame(*) frame_,
     Symbol(const*) verb
 ){
@@ -242,7 +242,7 @@ REB_R Series_Common_Action_Maybe_Unhandled(
         break;
     }
 
-    return R_UNHANDLED;  // not a common operation, uhandled...not Lib(NULL)!
+    return BOUNCE_UNHANDLED;  // not a common operation, uhandled...not Lib(NULL)!
 }
 
 

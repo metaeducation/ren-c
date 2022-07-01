@@ -100,7 +100,7 @@ inline static uint64_t File_Size_Cacheable_May_Fail(const REBVAL *port)
 //
 // Internal port handler for files.
 //
-REB_R File_Actor(Frame(*) frame_, REBVAL *port, Symbol(const*) verb)
+Bounce File_Actor(Frame(*) frame_, REBVAL *port, Symbol(const*) verb)
 {
     REBCTX *ctx = VAL_CONTEXT(port);
 
@@ -726,5 +726,5 @@ REB_R File_Actor(Frame(*) frame_, REBVAL *port, Symbol(const*) verb)
         break;
     }
 
-    return R_UNHANDLED;
+    return BOUNCE_UNHANDLED;
 }

@@ -92,7 +92,7 @@ REBINT CT_Issue(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
 //
 //  MAKE_Issue: C
 //
-REB_R MAKE_Issue(
+Bounce MAKE_Issue(
     REBVAL *out,
     enum Reb_Kind kind,
     option(const REBVAL*) parent,
@@ -154,7 +154,7 @@ REB_R MAKE_Issue(
 // might be best acting like #"&" ?  Consider in light of a general review
 // of the sematnics of MAKE and TO.
 //
-REB_R TO_Issue(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
+Bounce TO_Issue(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 {
     assert(VAL_TYPE(arg) != REB_ISSUE);  // !!! should call COPY?
 
@@ -288,7 +288,7 @@ REBTYPE(Issue)
           default:
             break;
         }
-        return R_UNHANDLED; }
+        return BOUNCE_UNHANDLED; }
 
       case SYM_COPY:  // since copy result is also immutable, Move() suffices
         return Copy_Cell(OUT, issue);
@@ -301,7 +301,7 @@ REBTYPE(Issue)
     // implementation, and will not work if the ISSUE! length is > 1.
     //
     if (not IS_CHAR(issue))
-        return R_UNHANDLED;
+        return BOUNCE_UNHANDLED;
 
     // Don't use a REBUNI for chr, because it does signed math and then will
     // detect overflow.
@@ -316,7 +316,7 @@ REBTYPE(Issue)
 
         Cell(const*) picker = ARG(picker);
         if (not IS_INTEGER(picker))
-            return R_UNHANDLED;
+            return BOUNCE_UNHANDLED;
 
         REBI64 n = VAL_INT64(picker);
         if (n <= 0)
@@ -425,7 +425,7 @@ REBTYPE(Issue)
         break; }
 
       default:
-        return R_UNHANDLED;
+        return BOUNCE_UNHANDLED;
     }
 
     if (chr < 0)

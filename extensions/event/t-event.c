@@ -368,7 +368,7 @@ static REBVAL *Get_Event_Var(
 //
 //  MAKE_Event: C
 //
-REB_R MAKE_Event(
+Bounce MAKE_Event(
     REBVAL *out,
     enum Reb_Kind kind,
     option(const REBVAL*) parent,
@@ -403,7 +403,7 @@ REB_R MAKE_Event(
 //
 //  TO_Event: C
 //
-REB_R TO_Event(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
+Bounce TO_Event(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 {
     assert(kind == REB_EVENT);
     UNUSED(kind);
@@ -431,7 +431,7 @@ REBTYPE(Event)
 
         Cell(const*) picker = ARG(picker);
         if (not IS_WORD(picker))
-            return R_UNHANDLED;
+            return BOUNCE_UNHANDLED;
 
         Get_Event_Var(OUT, event, VAL_WORD_SYMBOL(picker));
         return OUT;
@@ -445,11 +445,11 @@ REBTYPE(Event)
 
         Cell(const*) picker = Meta_Unquotify(ARG(picker));
         if (not IS_WORD(picker))
-            return R_UNHANDLED;
+            return BOUNCE_UNHANDLED;
 
         REBVAL *setval = ARG(value);
         if (!Set_Event_Var(event, picker, setval))
-            return R_UNHANDLED;
+            return BOUNCE_UNHANDLED;
 
         // This is a case where the bits are stored in the cell, so
         // whoever owns this cell has to write it back.
@@ -457,7 +457,7 @@ REBTYPE(Event)
         return_value (event);
     }
 
-    return R_UNHANDLED;
+    return BOUNCE_UNHANDLED;
 }
 
 

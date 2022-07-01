@@ -106,7 +106,7 @@
 //    a hassle to force people to put RETURN NONE or RETURN at the end.  So
 //    this is the compromise chosen.
 //
-REB_R Func_Dispatcher(Frame(*) f)
+Bounce Func_Dispatcher(Frame(*) f)
 {
     Frame(*) frame_ = f;  // so we can use OUT
 
@@ -425,7 +425,7 @@ REBNATIVE(skippable_q)
 //
 // See notes is %sys-frame.h about how there is no actual REB_THROWN type.
 //
-REB_R Init_Thrown_Unwind_Value(
+Bounce Init_Thrown_Unwind_Value(
     Frame(*) frame_,
     const REBVAL *level, // FRAME!, ACTION! (or INTEGER! relative to frame)
     const REBVAL *value,

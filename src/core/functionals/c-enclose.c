@@ -81,7 +81,7 @@ enum {
 //
 // Note: Not static because it's checked for by pointer in RESKIN.
 //
-REB_R Encloser_Dispatcher(Frame(*) f)
+Bounce Encloser_Dispatcher(Frame(*) f)
 {
     Frame(*) frame_ = f;  // for RETURN macros
 

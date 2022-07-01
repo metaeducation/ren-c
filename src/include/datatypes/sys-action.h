@@ -156,7 +156,7 @@ inline static char VAL_RETURN_SIGNAL(Cell(const*) v) {
 // This signals that the evaluator is in a "thrown state".
 //
 #define C_THROWN 'T'
-#define R_THROWN \
+#define BOUNCE_THROWN \
     cast(REBVAL*, &PG_R_Thrown)
 
 inline static bool Is_Throwing(Frame(*) frame_) {
@@ -185,7 +185,7 @@ inline static bool Is_Throwing(Frame(*) frame_) {
 // SET-PATH! should always evaluate to what was just set)
 //
 #define C_VOID 'V'
-#define R_VOID \
+#define BOUNCE_VOID \
     cast(REBVAL*, &PG_R_Void)
 
 // If Eval_Core gets back an REB_R_REDO from a dispatcher, it will re-execute
@@ -198,16 +198,16 @@ inline static bool Is_Throwing(Frame(*) frame_) {
 // who thought the types had been checked.
 //
 #define C_REDO_UNCHECKED 'r'
-#define R_REDO_UNCHECKED \
+#define BOUNCE_REDO_UNCHECKED \
     cast(REBVAL*, &PG_R_Redo_Unchecked)
 
 #define C_REDO_CHECKED 'R'
-#define R_REDO_CHECKED \
+#define BOUNCE_REDO_CHECKED \
     cast(REBVAL*, &PG_R_Redo_Checked)
 
 
 #define C_UNHANDLED 'U'
-#define R_UNHANDLED \
+#define BOUNCE_UNHANDLED \
     cast(REBVAL*, &PG_R_Unhandled)
 
 
@@ -221,7 +221,7 @@ inline static bool Is_Throwing(Frame(*) frame_) {
 // https://en.wikipedia.org/wiki/Stackless_Python
 //
 #define C_CONTINUATION 'C'
-#define R_CONTINUATION \
+#define BOUNCE_CONTINUE \
     cast(REBVAL*, &PG_R_Continuation)
 
 
@@ -229,7 +229,7 @@ inline static bool Is_Throwing(Frame(*) frame_) {
 // This is referred to as delegation.
 //
 #define C_DELEGATION 'D'
-#define R_DELEGATION \
+#define BOUNCE_DELEGATE \
     cast(REBVAL*, &PG_R_Delegation)
 
 #define DELEGATE_255 255
@@ -238,7 +238,7 @@ inline static bool Is_Throwing(Frame(*) frame_) {
 // try not using Asyncify (or at least not relying on it so heavily)
 //
 #define C_SUSPEND 'S'
-#define R_SUSPEND \
+#define BOUNCE_SUSPEND \
     cast(REBVAL*, &PG_R_Suspend)
 
 
@@ -633,10 +633,10 @@ inline static REBVAL *Maybe_Move_Cell(REBVAL *out, REBVAL *v) {
     return Move_Cell(out, v);
 }
 
-inline static REB_R Native_Thrown_Result(Frame(*) frame_) {
+inline static Bounce Native_Thrown_Result(Frame(*) frame_) {
     assert(not Is_Stale_Void(&TG_Thrown_Arg));
     Mark_Eval_Out_Stale(frame_->out);
-    return R_THROWN;
+    return BOUNCE_THROWN;
 }
 
 
@@ -698,13 +698,13 @@ inline static REBVAL *Mark_Eval_Out_Voided(REBVAL *out) {
     return out;
 }
 
-inline static REB_R Native_Void_Result(Frame(*) frame_) {
+inline static Bounce Native_Void_Result(Frame(*) frame_) {
     assert(Is_Stale_Void(&TG_Thrown_Arg));
     Mark_Eval_Out_Voided(frame_->out);
-    return R_VOID;
+    return BOUNCE_VOID;
 }
 
-inline static REB_R Native_None_Result(Frame(*) frame_) {
+inline static Bounce Native_None_Result(Frame(*) frame_) {
     assert(Is_Stale_Void(&TG_Thrown_Arg));
     return Init_None(frame_->out);
 }

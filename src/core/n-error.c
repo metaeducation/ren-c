@@ -84,7 +84,7 @@ REBNATIVE(trap)
     }
 
     if (not IS_ERROR(VAL_THROWN_LABEL(FRAME)))  // CATCH for non-ERROR! throws
-        return R_THROWN;
+        return BOUNCE_THROWN;
 
     Copy_Cell(OUT, VAL_THROWN_LABEL(FRAME));
     CATCH_THROWN(SPARE, FRAME);

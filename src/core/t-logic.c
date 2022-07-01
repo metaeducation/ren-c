@@ -296,7 +296,7 @@ REBINT CT_Logic(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
 //
 //  MAKE_Logic: C
 //
-REB_R MAKE_Logic(
+Bounce MAKE_Logic(
     REBVAL *out,
     enum Reb_Kind kind,
     option(const REBVAL*) parent,
@@ -331,7 +331,7 @@ REB_R MAKE_Logic(
 //
 //  TO_Logic: C
 //
-REB_R TO_Logic(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
+Bounce TO_Logic(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
     assert(kind == REB_LOGIC);
     UNUSED(kind);
 
@@ -434,5 +434,5 @@ REBTYPE(Logic)
         break;
     }
 
-    return R_UNHANDLED;
+    return BOUNCE_UNHANDLED;
 }

@@ -640,7 +640,7 @@ inline static bool Eval_Value_Core_Throws(
 );
 
 // Conveniences for returning a continuation.  The concept is that when a
-// R_CONTINUATION comes back via the C `return` for a native, that native's
+// BOUNCE_CONTINUE comes back via the C `return` for a native, that native's
 // C stack variables are all gone.  But the heap-allocated Rebol frame stays
 // intact and in the Rebol stack trace.  It will be resumed when the
 // continuation finishes.
@@ -847,7 +847,7 @@ inline static bool Pushed_Continuation(
     do { \
         Pushed_Continuation((o), (flags), (branch), (specifier), (with)); \
         /* don't heed result, because callback needed frame or not */ \
-        return R_CONTINUATION; \
+        return BOUNCE_CONTINUE; \
     } while (0)
 
 #define continue_uncatchable(o,value,with) \
@@ -869,7 +869,7 @@ inline static bool Pushed_Continuation(
     } while (0)
 
 
-inline static REB_R Continue_Subframe_Helper(
+inline static Bounce Continue_Subframe_Helper(
     Frame(*) f,
     bool must_be_dispatcher,
     REBFLGS catches_flag,
@@ -887,7 +887,7 @@ inline static REB_R Continue_Subframe_Helper(
 
     assert(sub == TOP_FRAME);  // currently subframe must be pushed and top frame
     UNUSED(sub);
-    return R_CONTINUATION;
+    return BOUNCE_CONTINUE;
 }
 
 #define continue_subframe(sub) \
@@ -923,7 +923,7 @@ inline static REB_R Continue_Subframe_Helper(
             (specifier), \
             (with) \
         )){ \
-            return R_DELEGATION; \
+            return BOUNCE_DELEGATE; \
         } \
         return frame_->out; /* no need to give callback to delegator */ \
     } while (0)
@@ -944,5 +944,5 @@ inline static REB_R Continue_Subframe_Helper(
 #define delegate_subframe(sub) \
     do { \
         Continue_Subframe_Helper(frame_, true, 0, (sub)); \
-        return R_DELEGATION; \
+        return BOUNCE_DELEGATE; \
     } while (0)

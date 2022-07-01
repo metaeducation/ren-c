@@ -178,7 +178,7 @@ static REBBIN *MAKE_TO_Binary_Common(const REBVAL *arg)
 //
 // See also: MAKE_String, which is similar.
 //
-REB_R MAKE_Binary(
+Bounce MAKE_Binary(
     REBVAL *out,
     enum Reb_Kind kind,
     option(const REBVAL*) parent,
@@ -238,7 +238,7 @@ bad_make:
 //
 //  TO_Binary: C
 //
-REB_R TO_Binary(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
+Bounce TO_Binary(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 {
     assert(kind == REB_BINARY);
     UNUSED(kind);
@@ -379,7 +379,7 @@ REBTYPE(Binary)
             // !!! See notes in the REBTYPE(String) about alternate cases
             // for the POKE'd value.
             //
-            return R_UNHANDLED;
+            return BOUNCE_UNHANDLED;
         }
 
         if (i > 0xff)
@@ -871,7 +871,7 @@ REBTYPE(Binary)
         break;
     }
 
-    return R_UNHANDLED;
+    return BOUNCE_UNHANDLED;
 }
 
 

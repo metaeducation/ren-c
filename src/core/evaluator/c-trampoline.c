@@ -89,10 +89,10 @@
 // Note: The branch continuations consider the "no frame necessary for
 // QUOTED!s or BLANK!s to be worth it to special-case, vs. pushing this.
 //
-REB_R Just_Use_Out_Executor(Frame(*) f)
+Bounce Just_Use_Out_Executor(Frame(*) f)
 {
     if (Is_Throwing(f))
-        return R_THROWN;
+        return BOUNCE_THROWN;
     return f->out;
 }
 
@@ -107,7 +107,7 @@ REB_R Just_Use_Out_Executor(Frame(*) f)
 //
 //  Trampoline_From_Top_Maybe_Root: C
 //
-REB_R Trampoline_From_Top_Maybe_Root(void)
+Bounce Trampoline_From_Top_Maybe_Root(void)
 {
   bounce_on_trampoline_with_trap:
 
@@ -147,7 +147,7 @@ REB_R Trampoline_From_Top_Maybe_Root(void)
 
     ASSERT_NO_DATA_STACK_POINTERS_EXTANT();
 
-    REB_R r;
+    Bounce r;
 
   #if !defined(NDEBUG)  // Total_Eval_Cycles is periodically reconciled
     ++Total_Eval_Cycles_Doublecheck;
@@ -162,7 +162,7 @@ REB_R Trampoline_From_Top_Maybe_Root(void)
         //  * (future?) Allowing a break into an interactive debugger
         //
         if (Do_Signals_Throws(FRAME)) {
-            r = R_THROWN;
+            r = BOUNCE_THROWN;
             goto thrown;
         }
     }
@@ -202,7 +202,7 @@ REB_R Trampoline_From_Top_Maybe_Root(void)
 
     if (Get_Frame_Flag(FRAME, ABRUPT_FAILURE)) {
         assert(Get_Frame_Flag(FRAME, NOTIFY_ON_ABRUPT_FAILURE));
-        assert(r == R_THROWN);
+        assert(r == BOUNCE_THROWN);
         assert(IS_ERROR(VAL_THROWN_LABEL(FRAME)));
     }
 
@@ -275,7 +275,7 @@ REB_R Trampoline_From_Top_Maybe_Root(void)
   //
   // 1. It's legal for a frame to implement itself in terms of another frame
   //    that is compatible.  This could have a separate signal, but for now
-  //    it's done as R_CONTINUATION.  Since that delegation may be to an
+  //    it's done as BOUNCE_CONTINUE.  Since that delegation may be to an
   //    INITIAL_ENTRY state, 0 needs to be legal.
   //
   // 2. If a frame besides the one that we ran is above on the stack, then
@@ -287,7 +287,7 @@ REB_R Trampoline_From_Top_Maybe_Root(void)
   //    also helps with bookkeeping and GC features, allowing the zero value
   //    to be reserved to mean something else.)
 
-    if (r == R_CONTINUATION) {
+    if (r == BOUNCE_CONTINUE) {
         if (FRAME != TOP_FRAME)  // continuing self ok, see [1]
             assert(STATE != 0);  // otherwise state enforced nonzero, see [2]
 
@@ -295,7 +295,7 @@ REB_R Trampoline_From_Top_Maybe_Root(void)
         goto bounce_on_trampoline;
     }
 
-    if (r == R_DELEGATION) {
+    if (r == BOUNCE_DELEGATE) {
         //
         // We could unhook the frame from the stack here, but leaving it in
         // provides clarity in the stack.   Hence this should not be used in
@@ -308,9 +308,9 @@ REB_R Trampoline_From_Top_Maybe_Root(void)
         goto bounce_on_trampoline;
     }
 
-    if (r == R_SUSPEND) {  // just to get emscripten started w/o Asyncify
+    if (r == BOUNCE_SUSPEND) {  // just to get emscripten started w/o Asyncify
         DROP_TRAP_SAME_STACKLEVEL_AS_PUSH
-        return R_SUSPEND;
+        return BOUNCE_SUSPEND;
     }
 
 
@@ -321,7 +321,7 @@ REB_R Trampoline_From_Top_Maybe_Root(void)
     //    has a notable use by RETURN from a FUNC, which considers its type
     //    checking to be finished so it can skip past the Action_Executor().
     //
-    //    !!! Using R_THROWN makes it possible for the UNWIND to be offered to
+    //    !!! Using BOUNCE_THROWN makes it possible for the UNWIND to be offered to
     //    dispatchers that catch throws.  This is used for instance in MACRO,
     //    which intercepts the UNWIND issued by RETURN, because it doesn't want
     //    to actually return the block (it wants to splice it).  But that may
@@ -342,7 +342,7 @@ REB_R Trampoline_From_Top_Maybe_Root(void)
     //    applicable to throw situations as well--not all want it.  For now
     //    we conflate Just_Use_Out with the intent of keepalive on throw.
 
-    if (r == R_THROWN) {
+    if (r == BOUNCE_THROWN) {
       thrown:
 
         assert(not IS_CFUNC_TRASH_DEBUG(Executor*, FRAME->executor));
@@ -382,7 +382,7 @@ REB_R Trampoline_From_Top_Maybe_Root(void)
         if (Get_Frame_Flag(FRAME, ROOT_FRAME)) {  // don't abort top
             assert(Not_Frame_Flag(TOP_FRAME, TRAMPOLINE_KEEPALIVE));
             DROP_TRAP_SAME_STACKLEVEL_AS_PUSH
-            return R_THROWN;
+            return BOUNCE_THROWN;
         }
 
         Drop_Frame(FRAME);  // restores to baseline
@@ -396,7 +396,7 @@ REB_R Trampoline_From_Top_Maybe_Root(void)
         goto bounce_on_trampoline;  // executor will see the throw
     }
 
-    assert(!"executor(f) not OUT, R_THROWN, or R_CONTINUATION");
+    assert(!"executor(f) not OUT, BOUNCE_THROWN, or BOUNCE_CONTINUE");
     panic (r);
 
 } ON_ABRUPT_FAILURE(REBCTX *e) {  ////////////////////////////////////////////
@@ -416,7 +416,7 @@ REB_R Trampoline_From_Top_Maybe_Root(void)
   //    failure thrown.  The default behavior of staying in the thrown state
   //    will be to convert it to a definitional failure on return.
   //
-  //    e.g. ABRUPT_FAILURE + NOTIFIY_ON_ABRUPT_FAILURE + return R_THROWN
+  //    e.g. ABRUPT_FAILURE + NOTIFIY_ON_ABRUPT_FAILURE + return BOUNCE_THROWN
   //    will act as if there had never been a NOTIFY_ON_ABRUPT_FAILURE
 
     ASSERT_CONTEXT(e);
@@ -448,7 +448,7 @@ REB_R Trampoline_From_Top_Maybe_Root(void)
     if (Not_Frame_Flag(FRAME, NOTIFY_ON_ABRUPT_FAILURE)) {
         if (Get_Frame_Flag(FRAME, ROOT_FRAME)) {
             DROP_TRAP_SAME_STACKLEVEL_AS_PUSH  // ** Note: this changes FRAME **
-            return R_THROWN;
+            return BOUNCE_THROWN;
         }
 
         Drop_Frame(FRAME);
@@ -472,14 +472,14 @@ bool Trampoline_With_Top_As_Root_Throws(void)
     assert(Not_Frame_Flag(root, ROOT_FRAME));
     Set_Frame_Flag(root, ROOT_FRAME);  // can't unwind across, see [1]
 
-    REB_R r = Trampoline_From_Top_Maybe_Root();
+    Bounce r = Trampoline_From_Top_Maybe_Root();
 
     assert(TOP_FRAME == root);
 
     assert(Get_Frame_Flag(root, ROOT_FRAME));
     Clear_Frame_Flag(root, ROOT_FRAME);
 
-    if (r == R_THROWN)
+    if (r == BOUNCE_THROWN)
         return true;
     if (r == root->out)
         return false;

@@ -192,7 +192,7 @@ static bool Try_Init_Startupinfo_Sink(
 //
 //  Call_Core: C
 //
-REB_R Call_Core(Frame(*) frame_) {
+Bounce Call_Core(Frame(*) frame_) {
     PROCESS_INCLUDE_PARAMS_OF_CALL_INTERNAL_P;
 
     UNUSED(REF(console));  // !!! This is not paid attention to (?)

@@ -104,7 +104,7 @@ REBINT CT_Array(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
 //     MAKE_Get_Path
 //     MAKE_Lit_Path
 //
-REB_R MAKE_Array(
+Bounce MAKE_Array(
     REBVAL *out,
     enum Reb_Kind kind,
     option(const REBVAL*) parent,
@@ -301,7 +301,7 @@ REB_R MAKE_Array(
                 arg
             )){
                 Drop_Data_Stack_To(dsp_orig);
-                return R_THROWN;
+                return BOUNCE_THROWN;
             }
 
             if (Is_Void(out))
@@ -336,7 +336,7 @@ REB_R MAKE_Array(
 //
 //  TO_Array: C
 //
-REB_R TO_Array(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
+Bounce TO_Array(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
     if (ANY_SEQUENCE(arg)) {
         REBDSP dsp_orig = DSP;
         REBLEN len = VAL_SEQUENCE_LEN(arg);
@@ -1362,13 +1362,13 @@ REBTYPE(Array)
         assert(IS_PORT(made));
         Copy_Cell(D_ARG(1), made);
         rebRelease(made);
-        return R_CONTINUATION; }  // should dispatch to the PORT!
+        return BOUNCE_CONTINUE; }  // should dispatch to the PORT!
 
       default:
         break; // fallthrough to error
     }
 
-    return R_UNHANDLED;
+    return BOUNCE_UNHANDLED;
 }
 
 

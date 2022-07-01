@@ -524,7 +524,7 @@ REBVAL *Time_Between_Dates(REBVAL *out, const REBVAL *d1, const REBVAL *d2)
 //
 //  MAKE_Date: C
 //
-REB_R MAKE_Date(
+Bounce MAKE_Date(
     REBVAL *out,
     enum Reb_Kind kind,
     option(const REBVAL*) parent,
@@ -642,7 +642,7 @@ REB_R MAKE_Date(
 //
 //  TO_Date: C
 //
-REB_R TO_Date(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
+Bounce TO_Date(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
     return MAKE_Date(out, kind, nullptr, arg);
 }
 
@@ -1155,7 +1155,7 @@ REBTYPE(Date)
         }
     }
 
-    return R_UNHANDLED;
+    return BOUNCE_UNHANDLED;
 
   fix_time:
     Normalize_Time(&secs, &day);

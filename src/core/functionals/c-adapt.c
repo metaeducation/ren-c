@@ -58,7 +58,7 @@ enum {
 // Each time a function created with ADAPT is executed, this code runs to
 // invoke the "prelude" before passing control to the "adaptee" function.
 //
-REB_R Adapter_Dispatcher(Frame(*) f)
+Bounce Adapter_Dispatcher(Frame(*) f)
 //
 // 1. When an ADAPT is done, it does not leave its product in the output
 //    cell.  This means ADAPT of COMMENT will still be invisible.
@@ -114,7 +114,7 @@ REB_R Adapter_Dispatcher(Frame(*) f)
     INIT_FRM_PHASE(f, VAL_ACTION(adaptee));
     INIT_FRM_BINDING(f, VAL_ACTION_BINDING(adaptee));
 
-    return R_REDO_CHECKED;  // redo uses updated phase & binding, see [3]
+    return BOUNCE_REDO_CHECKED;  // redo uses updated phase & binding, see [3]
 }}
 
 

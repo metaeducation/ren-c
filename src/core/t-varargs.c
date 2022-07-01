@@ -377,7 +377,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
 //
 //  MAKE_Varargs: C
 //
-REB_R MAKE_Varargs(
+Bounce MAKE_Varargs(
     REBVAL *out,
     enum Reb_Kind kind,
     option(const REBVAL*) parent,
@@ -424,7 +424,7 @@ REB_R MAKE_Varargs(
 //
 //  TO_Varargs: C
 //
-REB_R TO_Varargs(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
+Bounce TO_Varargs(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 {
     assert(kind == REB_VARARGS);
     UNUSED(kind);
@@ -549,7 +549,7 @@ REBTYPE(Varargs)
         break;
     }
 
-    return R_UNHANDLED;
+    return BOUNCE_UNHANDLED;
 }
 
 

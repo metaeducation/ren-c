@@ -395,7 +395,7 @@ REBNATIVE(console)
     rebRelease(group);  // Note: does not release `code`
 
     STATE = ST_CONSOLE_RUNNING_REQUEST;
-    return R_CONTINUATION;  // wants to produce metaresult
+    return BOUNCE_CONTINUE;  // wants to produce metaresult
 
 } request_result_in_out: {  //////////////////////////////////////////////////
 

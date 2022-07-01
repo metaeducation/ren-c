@@ -73,7 +73,7 @@ enum {
 // was created for; exemplars can be reused by functions that don't need to
 // tweak them (e.g. ADAPT).
 //
-REB_R Reorderer_Dispatcher(Frame(*) f) {
+Bounce Reorderer_Dispatcher(Frame(*) f) {
     REBARR *details = ACT_DETAILS(FRM_PHASE(f));
     assert(ARR_LEN(details) == IDX_REORDERER_MAX);
 
@@ -82,7 +82,7 @@ REB_R Reorderer_Dispatcher(Frame(*) f) {
     INIT_FRM_PHASE(f, VAL_ACTION(reorderee));
     INIT_FRM_BINDING(f, VAL_ACTION_BINDING(reorderee));
 
-    return R_REDO_UNCHECKED;  // exemplar unchanged; known to be valid
+    return BOUNCE_REDO_UNCHECKED;  // exemplar unchanged; known to be valid
 }
 
 

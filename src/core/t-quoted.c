@@ -69,7 +69,7 @@ REBINT CT_Quoted(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
 // may not be good; if it were to do a level more than 1 it would need to
 // take a BLOCK! with an INTEGER! and the value.  :-/
 //
-REB_R MAKE_Quoted(
+Bounce MAKE_Quoted(
     REBVAL *out,
     enum Reb_Kind kind,
     option(const REBVAL*) parent,
@@ -89,7 +89,7 @@ REB_R MAKE_Quoted(
 // TO is disallowed at the moment, as there is no clear equivalence of things
 // "to" a literal.  (to quoted! [[a]] => \\a, for instance?)
 //
-REB_R TO_Quoted(REBVAL *out, enum Reb_Kind kind, const REBVAL *data) {
+Bounce TO_Quoted(REBVAL *out, enum Reb_Kind kind, const REBVAL *data) {
     UNUSED(out);
     fail (Error_Bad_Make(kind, data));
 }

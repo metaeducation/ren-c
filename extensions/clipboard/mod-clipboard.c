@@ -44,7 +44,7 @@
 // could track whether it's "open" or not, but the details of what is needed
 // depends on the development of a coherent port model.
 //
-static REB_R Clipboard_Actor(
+static Bounce Clipboard_Actor(
     Frame(*) frame_,
     REBVAL *port,
     Symbol(const*) verb
@@ -197,7 +197,7 @@ static REB_R Clipboard_Actor(
         break;
     }
 
-    return R_UNHANDLED;
+    return BOUNCE_UNHANDLED;
 }
 
 

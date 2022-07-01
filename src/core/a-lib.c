@@ -1744,7 +1744,7 @@ REBVAL *RL_rebRescueWith(
     ){
         // Analogous to how TRAP works, if you don't have a handler for the
         // error case then you can't return an ERROR!, since all errors
-        // indicate a failure.  Use HEART_BYTE() since R_THROWN or other
+        // indicate a failure.  Use HEART_BYTE() since BOUNCE_THROWN or other
         // special things can be used internally, and literal errors don't
         // count either.
         //

@@ -82,13 +82,13 @@ enum {
 // for verbose debugging, as well as to record the furthest point reached.
 // At the moment we focus on the furthest point reached.
 //
-REB_R Combinator_Dispatcher(Frame(*) f)
+Bounce Combinator_Dispatcher(Frame(*) f)
 {
     REBACT *phase = FRM_PHASE(f);
     REBARR *details = ACT_DETAILS(phase);
     Cell(*) body = ARR_AT(details, IDX_DETAILS_1);  // code to run
 
-    REB_R r;
+    Bounce r;
     if (IS_ACTION(body)) {  // NATIVE-COMBINATOR
         SET_SERIES_INFO(f->varlist, HOLD);  // mandatory for natives.
         Dispatcher* dispatcher = ACT_DISPATCHER(VAL_ACTION(body));
@@ -99,7 +99,7 @@ REB_R Combinator_Dispatcher(Frame(*) f)
         r = Func_Dispatcher(f);
     }
 
-    if (r == R_THROWN)
+    if (r == BOUNCE_THROWN)
         return r;
 
     if (r == nullptr or (not Is_End(r) and Is_Nulled(r)))

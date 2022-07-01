@@ -49,7 +49,7 @@ enum {
 };
 
 
-REB_R Downshot_Dispatcher(Frame(*) f)  // runs until count is reached
+Bounce Downshot_Dispatcher(Frame(*) f)  // runs until count is reached
 {
     Frame(*) frame_ = f;  // for RETURN macros
 
@@ -66,7 +66,7 @@ REB_R Downshot_Dispatcher(Frame(*) f)  // runs until count is reached
 }
 
 
-REB_R Upshot_Dispatcher(Frame(*) f)  // won't run until count is reached
+Bounce Upshot_Dispatcher(Frame(*) f)  // won't run until count is reached
 {
     Frame(*) frame_ = f;
 

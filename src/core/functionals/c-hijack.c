@@ -161,7 +161,7 @@ void Push_Redo_Action_Frame(REBVAL *out, Frame(*) f1, const REBVAL *run)
 // an ADAPT or SPECIALIZE or a MAKE FRAME! might depend on the existing
 // paramlist shape of the identity.)  Those cases need this "shim" dispatcher.
 //
-REB_R Hijacker_Dispatcher(Frame(*) f)
+Bounce Hijacker_Dispatcher(Frame(*) f)
 {
     Frame(*) frame_ = f;  // for RETURN macros
 

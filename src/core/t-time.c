@@ -233,7 +233,7 @@ REBINT CT_Time(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
 //
 //  MAKE_Time: C
 //
-REB_R MAKE_Time(
+Bounce MAKE_Time(
     REBVAL *out,
     enum Reb_Kind kind,
     option(const REBVAL*) parent,
@@ -358,7 +358,7 @@ REB_R MAKE_Time(
 //
 //  TO_Time: C
 //
-REB_R TO_Time(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
+Bounce TO_Time(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 {
     return MAKE_Time(out, kind, nullptr, arg);
 }
@@ -711,5 +711,5 @@ REBTYPE(Time)
         }
     }
 
-    return R_UNHANDLED;
+    return BOUNCE_UNHANDLED;
 }

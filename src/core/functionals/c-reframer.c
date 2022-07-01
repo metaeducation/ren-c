@@ -275,7 +275,7 @@ bool Make_Frame_From_Feed_Throws(
 // !!! As a first cut we build on top of specialize, and look for the
 // parameter by means of a particular labeled void.
 //
-REB_R Reframer_Dispatcher(Frame(*) f)
+Bounce Reframer_Dispatcher(Frame(*) f)
 {
     Frame(*) frame_ = f;  // for RETURN macros
 
@@ -313,7 +313,7 @@ REB_R Reframer_Dispatcher(Frame(*) f)
     INIT_FRM_PHASE(f, VAL_ACTION(shim));
     INIT_FRM_BINDING(f, VAL_ACTION_BINDING(shim));
 
-    return R_REDO_CHECKED;  // the redo will use the updated phase & binding
+    return BOUNCE_REDO_CHECKED;  // the redo will use the updated phase & binding
 }
 
 

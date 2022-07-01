@@ -232,7 +232,7 @@ void Copy_Image_Value(REBVAL *out, const REBVAL *arg, REBINT len)
 //
 //  MAKE_Image: C
 //
-REB_R MAKE_Image(
+Bounce MAKE_Image(
     REBVAL *out,
     enum Reb_Kind kind,
     option(const REBVAL*) parent,
@@ -351,7 +351,7 @@ bad_make:
 //
 //  TO_Image: C
 //
-REB_R TO_Image(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
+Bounce TO_Image(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 {
     assert(kind == REB_CUSTOM);
     UNUSED(kind);
@@ -569,7 +569,7 @@ void Clear_Image(REBVAL *img)
 // reason.  (!)  The code is deprecated, but kept around and building for any
 // sufficiently motivated individual who wanted to review it.
 //
-REB_R Modify_Image(Frame(*) frame_, Symbol(const*) verb)
+Bounce Modify_Image(Frame(*) frame_, Symbol(const*) verb)
 {
     INCLUDE_PARAMS_OF_CHANGE;  // currently must have same frame as CHANGE
 
@@ -1376,5 +1376,5 @@ makeCopy2:
         break;
     }
 
-    return R_UNHANDLED;
+    return BOUNCE_UNHANDLED;
 }

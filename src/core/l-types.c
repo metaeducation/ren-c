@@ -41,7 +41,7 @@
 //
 //  MAKE_Fail: C
 //
-REB_R MAKE_Fail(
+Bounce MAKE_Fail(
     REBVAL *out,
     enum Reb_Kind kind,
     option(const REBVAL*) parent,
@@ -63,7 +63,7 @@ REB_R MAKE_Fail(
 // aren't ready yet as a general concept, this hook is overwritten in the
 // dispatch table when the extension loads.
 //
-REB_R MAKE_Unhooked(
+Bounce MAKE_Unhooked(
     REBVAL *out,
     enum Reb_Kind kind,
     option(const REBVAL*) parent,
@@ -141,8 +141,8 @@ REBNATIVE(make)
     }
 
 
-    REB_R r = hook(OUT, kind, parent, arg);  // might throw, fail...
-    if (r == R_THROWN)
+    Bounce r = hook(OUT, kind, parent, arg);  // might throw, fail...
+    if (r == BOUNCE_THROWN)
         return r;
     if (r == nullptr or VAL_TYPE(r) != kind)
         fail ("MAKE dispatcher did not return correct type");
@@ -153,7 +153,7 @@ REBNATIVE(make)
 //
 //  TO_Fail: C
 //
-REB_R TO_Fail(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
+Bounce TO_Fail(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 {
     UNUSED(out);
     UNUSED(kind);
@@ -166,7 +166,7 @@ REB_R TO_Fail(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 //
 //  TO_Unhooked: C
 //
-REB_R TO_Unhooked(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
+Bounce TO_Unhooked(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 {
     UNUSED(out);
     UNUSED(arg);
@@ -221,8 +221,8 @@ REBNATIVE(to)
 
     TO_HOOK* hook = To_Hook_For_Type(type);
 
-    REB_R r = hook(OUT, new_kind, v); // may fail();
-    if (r == R_THROWN) {
+    Bounce r = hook(OUT, new_kind, v); // may fail();
+    if (r == BOUNCE_THROWN) {
         assert(!"Illegal throw in TO conversion handler");
         fail (Error_No_Catch_For_Throw(FRAME));
     }
@@ -258,7 +258,7 @@ REBTYPE(Unhooked)
 // The series common code is in Series_Common_Action_Maybe_Unhandled(), but
 // that is only called from series.  Handle a few extra cases here.
 //
-REB_R Reflect_Core(Frame(*) frame_)
+Bounce Reflect_Core(Frame(*) frame_)
 {
     INCLUDE_PARAMS_OF_REFLECT;
 
@@ -314,7 +314,7 @@ REB_R Reflect_Core(Frame(*) frame_)
 
     Dequotify(ARG(value));
     INIT_FRM_PHASE(frame_, VAL_ACTION(Lib(REFLECT)));  // switch to generic
-    return R_CONTINUATION;
+    return BOUNCE_CONTINUE;
 }
 
 

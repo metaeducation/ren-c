@@ -472,7 +472,7 @@ static Value* Finalize_Composer_Frame(
 //    also means the caller can decide if they want the accrued items or not
 //    depending on the `changed` field in the frame.
 //
-REB_R Composer_Executor(Frame(*) f)
+Bounce Composer_Executor(Frame(*) f)
 {
     Frame(*) frame_ = f;
 

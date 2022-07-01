@@ -93,7 +93,7 @@ void Splice_Block_Into_Feed(REBFED *feed, const REBVAL *splice) {
 //
 //  Macro_Dispatcher: C
 //
-REB_R Macro_Dispatcher(Frame(*) f)
+Bounce Macro_Dispatcher(Frame(*) f)
 {
     Frame(*) frame_ = f;  // for RETURN macros
 
