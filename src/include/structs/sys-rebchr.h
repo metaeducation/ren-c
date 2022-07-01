@@ -19,7 +19,7 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Ren-C exchanges UTF-8 data with the outside world via "char*".  But inside
-// the code, REBYTE* is used for not-yet-validated bytes that are to be
+// the code, Byte* is used for not-yet-validated bytes that are to be
 // scanned as UTF-8, since it's less error-prone to do math on unsigned bytes.
 //
 // But there's a different datatype for accessing an already-validated string!
@@ -46,11 +46,11 @@
     //
     // Plain build uses trivial expansion of Utf8(*) and Utf8(const*)
     //
-    //          Utf8(*) cp; => REBYTE * cp;
-    //     Utf8(const*) cp; => REBYTE const* cp;  // same as `const REBYTE*`
+    //          Utf8(*) cp; => Byte*  cp;
+    //     Utf8(const*) cp; => Byte const* cp;  // same as `const Byte*`
     //
     #define Utf8(star_or_const_star) \
-        REBYTE star_or_const_star
+        Byte star_or_const_star
 
     #define const_if_unchecked_utf8 const
 #else
@@ -77,76 +77,76 @@
     //
     template<typename T> struct Utf8Ptr;
     #define Utf8(star_or_const_star) \
-        Utf8Ptr<REBYTE star_or_const_star>
+        Utf8Ptr<Byte star_or_const_star>
 
     #define const_if_unchecked_utf8
 
     // Primary purpose of the classes is to disable the ability to directly
-    // increment or decrement pointers to REBYTE* without going through helper
+    // increment or decrement pointers to Byte* without going through helper
     // routines that do decoding.  But we still want to do pointer comparison,
     // and C++ sadly makes us write this all out.
 
     template<>
-    struct Utf8Ptr<const REBYTE*> {
-        const REBYTE *bp;  // will actually be mutable if constructed mutable
+    struct Utf8Ptr<const Byte*> {
+        const Byte* bp;  // will actually be mutable if constructed mutable
 
         Utf8Ptr () {}
         Utf8Ptr (nullptr_t n) : bp (n) {}
-        explicit Utf8Ptr (const REBYTE *bp) : bp (bp) {}
+        explicit Utf8Ptr (const Byte* bp) : bp (bp) {}
         explicit Utf8Ptr (const char *cstr)
-            : bp (reinterpret_cast<const REBYTE*>(cstr)) {}
+            : bp (reinterpret_cast<const Byte*>(cstr)) {}
 
-        REBSIZ operator-(const REBYTE *rhs)
+        REBSIZ operator-(const Byte* rhs)
           { return bp - rhs; }
 
         REBSIZ operator-(Utf8Ptr rhs)
           { return bp - rhs.bp; }
 
-        bool operator==(const Utf8Ptr<const REBYTE*> &other)
+        bool operator==(const Utf8Ptr<const Byte*> &other)
           { return bp == other.bp; }
 
-        bool operator==(const REBYTE *other)
+        bool operator==(const Byte* other)
           { return bp == other; }
 
-        bool operator!=(const Utf8Ptr<const REBYTE*> &other)
+        bool operator!=(const Utf8Ptr<const Byte*> &other)
           { return bp != other.bp; }
 
-        bool operator!=(const REBYTE *other)
+        bool operator!=(const Byte* other)
           { return bp != other; }
 
-        bool operator>(const Utf8Ptr<const REBYTE*> &other)
+        bool operator>(const Utf8Ptr<const Byte*> &other)
           { return bp > other.bp; }
 
-        bool operator<(const REBYTE *other)
+        bool operator<(const Byte* other)
           { return bp < other; }
 
-        bool operator<=(const Utf8Ptr<const REBYTE*> &other)
+        bool operator<=(const Utf8Ptr<const Byte*> &other)
           { return bp <= other.bp; }
 
-        bool operator>=(const REBYTE *other)
+        bool operator>=(const Byte* other)
           { return bp >= other; }
 
         operator bool() { return bp != nullptr; }  // implicit
         operator const void*() { return bp; }  // implicit
-        operator const REBYTE*() { return bp; }  // implicit
+        operator const Byte*() { return bp; }  // implicit
         operator const char*()
           { return reinterpret_cast<const char*>(bp); }  // implicit
     };
 
     template<>
-    struct Utf8Ptr<REBYTE*> : public Utf8Ptr<const REBYTE*> {
-        Utf8Ptr () : Utf8Ptr<const REBYTE*>() {}
-        Utf8Ptr (nullptr_t n) : Utf8Ptr<const REBYTE*>(n) {}
-        explicit Utf8Ptr (REBYTE *bp)
-            : Utf8Ptr<const REBYTE*> (bp) {}
+    struct Utf8Ptr<Byte*> : public Utf8Ptr<const Byte*> {
+        Utf8Ptr () : Utf8Ptr<const Byte*>() {}
+        Utf8Ptr (nullptr_t n) : Utf8Ptr<const Byte*>(n) {}
+        explicit Utf8Ptr (Byte* bp)
+            : Utf8Ptr<const Byte*> (bp) {}
         explicit Utf8Ptr (char *cstr)
-            : Utf8Ptr<const REBYTE*> (reinterpret_cast<REBYTE*>(cstr)) {}
+            : Utf8Ptr<const Byte*> (reinterpret_cast<Byte*>(cstr)) {}
 
         static Utf8(*) nonconst(Utf8(const*) cp)
-          { return Utf8Ptr {const_cast<REBYTE*>(cp.bp)}; }
+          { return Utf8Ptr {const_cast<Byte*>(cp.bp)}; }
 
-        operator void*() { return const_cast<REBYTE*>(bp); }  // implicit
-        operator REBYTE*() { return const_cast<REBYTE*>(bp); }  // implicit
+        operator void*() { return const_cast<Byte*>(bp); }  // implicit
+        operator Byte*() { return const_cast<Byte*>(bp); }  // implicit
         explicit operator char*()
             { return const_cast<char*>(reinterpret_cast<const char*>(bp)); }
     };
@@ -159,7 +159,7 @@
     //
     template <>
     inline Utf8(*) m_cast_helper(Utf8(const*) v)
-      { return Utf8Ptr<REBYTE*> {const_cast<REBYTE*>(v.bp)}; }
+      { return Utf8Ptr<Byte*> {const_cast<Byte*>(v.bp)}; }
 
     template <>
     inline Utf8(*) m_cast_helper(Utf8(*) v)

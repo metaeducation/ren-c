@@ -61,7 +61,7 @@
     // defined as `void`, and the C++ build is trusted to do the more strict
     // type checking.
     //
-    struct Reb_Node { REBYTE first; };  // REBNOD is void*, but define struct
+    struct Reb_Node { Byte first; };  // REBNOD is void*, but define struct
     typedef void REBNOD;
 #else
     // If we were willing to commit to building with a C++ compiler, we'd

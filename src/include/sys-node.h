@@ -29,14 +29,14 @@
 
 
 #define NODE_BYTE(p) \
-    *cast(const REBYTE*, ensure(const REBNOD*, p))
+    *cast(const Byte*, ensure(const REBNOD*, p))
 
 #ifdef NDEBUG
     #define IS_FREE_NODE(p) \
-        (did (*cast(const REBYTE*, (p)) & NODE_BYTEMASK_0x40_STALE))
+        (did (*cast(const Byte*, (p)) & NODE_BYTEMASK_0x40_STALE))
 #else
     inline static bool IS_FREE_NODE(const void *p) {
-        REBYTE first = *cast(const REBYTE*, p);  // NODE_BYTE asserts on free!
+        Byte first = *cast(const Byte*, p);  // NODE_BYTE asserts on free!
 
         if (not (first & NODE_BYTEMASK_0x40_STALE))
             return false;  // byte access defeats strict alias
@@ -269,7 +269,7 @@ enum Reb_Pointer_Detect {
 
 inline static enum Reb_Pointer_Detect Detect_Rebol_Pointer(const void *p)
 {
-    const REBYTE* bp = cast(const REBYTE*, p);
+    const Byte* bp = cast(const Byte*, p);
 
     if (*bp == END_SIGNAL_BYTE) {  // reserved illegal UTF-8 byte 192
       #if DEBUG_POISON_CELLS

@@ -598,7 +598,7 @@ REBI64 deci_to_int(const deci a) {
 
 REBDEC deci_to_decimal(const deci a) {
     char *se;
-    REBYTE b [34];
+    Byte b [34];
     deci_to_string(b, a, 0, '.');
     return strtod(s_cast(b), &se);
 }
@@ -611,11 +611,11 @@ deci decimal_to_deci(REBDEC a) {
     REBI64 d; /* decimal significand */
     int e; /* decimal exponent */
     int s; /* sign */
-    REBYTE *c;
-    REBYTE *rve;
+    Byte* c;
+    Byte* rve;
 
     /* convert a to string */
-    c = (REBYTE *) dtoa (a, 0, DOUBLE_DIGITS, &e, &s, (char **) &rve);
+    c = (Byte* ) dtoa (a, 0, DOUBLE_DIGITS, &e, &s, (char **) &rve);
 
     e -= (rve - c);
 
@@ -1166,9 +1166,9 @@ deci deci_divide(deci a, deci b) {
 
 #define MAX_NB 7
 
-inline static int32_t m_to_string(REBYTE *s, uint32_t n, const uint32_t a[]) {
+inline static int32_t m_to_string(Byte* s, uint32_t n, const uint32_t a[]) {
     uint32_t r, b[MAX_NB];
-    REBYTE v[10 * MAX_NB + 1], *vmax, *k;
+    Byte v[10 * MAX_NB + 1], *vmax, *k;
 
     /* finds the first nonzero radix 2 ** 32 "digit" */
     for (; (n > 0) && (a[n - 1] == 0); n--);
@@ -1195,12 +1195,12 @@ inline static int32_t m_to_string(REBYTE *s, uint32_t n, const uint32_t a[]) {
 }
 
 REBINT deci_to_string(
-    REBYTE *string,
+    Byte* string,
     const deci a,
-    const REBYTE symbol,
-    const REBYTE point
+    const Byte symbol,
+    const Byte point
 ){
-    REBYTE *s = string;
+    Byte* s = string;
     int32_t j, e;
 
     // Must be compile-time const for '= {...}' style init (-Wc99-extensions)
@@ -1324,8 +1324,8 @@ deci deci_mod(deci a, deci b) {
 }
 
 /* in case of error the function returns deci_zero and *endptr = s */
-deci string_to_deci(const REBYTE *s, const REBYTE **endptr) {
-    const REBYTE *a = s;
+deci string_to_deci(const Byte* s, const Byte* *endptr) {
+    const Byte* a = s;
     deci b = {0, 0, 0, 0, 0};
     uint32_t sb[] = {0, 0, 0, 0}; /* significand */
     int32_t f = 0, e = 0; /* exponents */
@@ -1431,7 +1431,7 @@ bool deci_is_same(deci a, deci b) {
     );
 }
 
-deci binary_to_deci(const REBYTE s[12]) {
+deci binary_to_deci(const Byte s[12]) {
     deci d;
     /* this looks like the only way, since the order of bits in bitsets is compiler-dependent */
     d.s = s[0] >> 7;
@@ -1449,10 +1449,10 @@ deci binary_to_deci(const REBYTE s[12]) {
     return d;
 }
 
-REBYTE *deci_to_binary(REBYTE s[12], const deci d) {
+Byte* deci_to_binary(Byte s[12], const deci d) {
     /* this looks like the only way, since the order of bits in bitsets is compiler-dependent */
-    s[0] = d.s << 7 | (REBYTE)d.e >> 1;
-    s[1] = (REBYTE)d.e << 7 | d.m2 >> 16;
+    s[0] = d.s << 7 | (Byte)d.e >> 1;
+    s[1] = (Byte)d.e << 7 | d.m2 >> 16;
     s[2] = d.m2 >> 8;
     s[3] = d.m2 & 0xFF;
     s[4] = d.m1 >> 24;

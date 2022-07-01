@@ -91,10 +91,10 @@ inline static void Link_Api_Handle_To_Frame(Array(*) a, Frame(*) f)
 inline static void Unlink_Api_Handle_From_Frame(Array(*) a)
 {
     bool at_head = did (
-        *cast(REBYTE*, MISC(ApiPrev, a)) & NODE_BYTEMASK_0x01_CELL
+        *cast(Byte*, MISC(ApiPrev, a)) & NODE_BYTEMASK_0x01_CELL
     );
     bool at_tail = did (
-        *cast(REBYTE*, LINK(ApiNext, a)) & NODE_BYTEMASK_0x01_CELL
+        *cast(Byte*, LINK(ApiNext, a)) & NODE_BYTEMASK_0x01_CELL
     );
 
     if (at_head) {

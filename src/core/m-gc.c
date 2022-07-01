@@ -175,7 +175,7 @@ static void Queue_Unmarked_Accessible_Series_Deep(REBSER *s);
 // pointers to be swept.  See Decay_Series()
 //
 static void Queue_Mark_Node_Deep(const REBNOD **pp) {
-    REBYTE first = *cast(const REBYTE*, *pp);
+    Byte first = *cast(const Byte*, *pp);
     if (first & NODE_BYTEMASK_0x10_MARKED)
         return;  // may not be finished marking yet, but has been queued
 
@@ -551,14 +551,14 @@ static void Mark_Root_Series(void)
 {
     REBSEG *seg;
     for (seg = Mem_Pools[SER_POOL].segs; seg; seg = seg->next) {
-        REBYTE *unit = cast(REBYTE*, seg + 1);
+        Byte* unit = cast(Byte*, seg + 1);
         REBLEN n = Mem_Pools[SER_POOL].num_units;
         for (; n > 0; --n, unit += sizeof(REBSER)) {
             //
             // !!! A smarter switch statement here could do this more
             // optimally...see the sweep code for an example.
             //
-            REBYTE nodebyte = *unit;
+            Byte nodebyte = *unit;
             if (nodebyte & NODE_BYTEMASK_0x40_STALE)
                 continue;
 
@@ -947,7 +947,7 @@ static REBLEN Sweep_Series(void)
         // DEBUG_TRACK_EXTEND_CELLS, then this will be processing the REBSER
         // nodes only--see loop lower down for the pairing pool enumeration.
 
-        REBYTE *unit = cast(REBYTE*, seg + 1);
+        Byte* unit = cast(Byte*, seg + 1);
 
         for (; n > 0; --n, unit += sizeof(REBSER)) {
             switch (*unit >> 4) {
@@ -1086,7 +1086,7 @@ REBLEN Fill_Sweeplist(REBSER *sweeplist)
 
     REBSEG *seg;
     for (seg = Mem_Pools[SER_POOL].segs; seg != NULL; seg = seg->next) {
-        REBYTE *unit = cast(REBYTE*, seg + 1);
+        Byte* unit = cast(Byte*, seg + 1);
         REBLEN n = Mem_Pools[SER_POOL].num_units;
         for (; n > 0; --n, unit += sizeof(REBSER)) {
             switch (*unit >> 4) {

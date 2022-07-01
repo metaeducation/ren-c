@@ -290,7 +290,7 @@ void Startup_Pools(REBINT scale)
     }
 
     // For pool lookup. Maps size to pool index. (See Find_Pool below)
-    PG_Pool_Map = TRY_ALLOC_N(REBYTE, (4 * MEM_BIG_SIZE) + 1);
+    PG_Pool_Map = TRY_ALLOC_N(Byte, (4 * MEM_BIG_SIZE) + 1);
 
     // sizes 0 - 8 are pool 0
     for (n = 0; n <= 8; n++) PG_Pool_Map[n] = 0;
@@ -344,10 +344,10 @@ void Shutdown_Pools(void)
     REBSER *leaked = nullptr;
     REBSEG *debug_seg = Mem_Pools[SER_POOL].segs;
     for(; debug_seg != NULL; debug_seg = debug_seg->next) {
-        REBYTE *unit = cast(REBYTE*, debug_seg + 1);
+        Byte* unit = cast(Byte*, debug_seg + 1);
         REBLEN n = Mem_Pools[SER_POOL].num_units;
         for (; n > 0; --n, unit += sizeof(REBSER)) {
-            REBYTE nodebyte = *unit;
+            Byte nodebyte = *unit;
             if (nodebyte & NODE_BYTEMASK_0x40_STALE)
                 continue;
 
@@ -391,7 +391,7 @@ void Shutdown_Pools(void)
 
     FREE_N(REBPOL, MAX_POOLS, Mem_Pools);
 
-    FREE_N(REBYTE, (4 * MEM_BIG_SIZE) + 1, PG_Pool_Map);
+    FREE_N(Byte, (4 * MEM_BIG_SIZE) + 1, PG_Pool_Map);
 
     // !!! Revisit location (just has to be after all series are freed)
     FREE_N(REBSER*, MAX_EXPAND_LIST, Prior_Expand);
@@ -468,7 +468,7 @@ bool Try_Fill_Pool(REBPOL *pool)
             break;
         }
 
-        unit->next_if_free = cast(REBPLU*, cast(REBYTE*, unit) + pool->wide);
+        unit->next_if_free = cast(REBPLU*, cast(Byte*, unit) + pool->wide);
         unit = unit->next_if_free;
     }
 
@@ -491,10 +491,10 @@ REBNOD *Try_Find_Containing_Node_Debug(const void *p)
     REBSEG *seg;
 
     for (seg = Mem_Pools[SER_POOL].segs; seg; seg = seg->next) {
-        REBYTE *unit = cast(REBYTE*, seg + 1);
+        Byte* unit = cast(Byte*, seg + 1);
         REBLEN n = Mem_Pools[SER_POOL].num_units;
         for (; n > 0; --n, unit += sizeof(REBSER)) {
-            REBYTE nodebyte = *unit;
+            Byte nodebyte = *unit;
             if (nodebyte & NODE_BYTEMASK_0x40_STALE)
                 continue;
 
@@ -728,7 +728,7 @@ void Expand_Series(REBSER *s, REBLEN index, REBLEN delta)
 
     REBLEN used_old = SER_USED(s);
 
-    REBYTE wide = SER_WIDE(s);
+    Byte wide = SER_WIDE(s);
 
     const bool was_dynamic = GET_SERIES_FLAG(s, DYNAMIC);
 
@@ -938,7 +938,7 @@ void Swap_Series_Content(REBSER* a, REBSER* b)
     // which includes whether the series is dynamic or if the data lives in
     // the node itself, the width (right 8 bits), etc.
 
-    REBYTE a_len = USED_BYTE(a); // indicates dynamic if 255
+    Byte a_len = USED_BYTE(a); // indicates dynamic if 255
     mutable_USED_BYTE(a) = USED_BYTE(b);
     mutable_USED_BYTE(b) = a_len;
 
@@ -1005,7 +1005,7 @@ void Remake_Series(REBSER *s, REBLEN units, REBFLGS flags)
     bool preserve = did (flags & NODE_FLAG_NODE);
 
     REBLEN used_old = SER_USED(s);
-    REBYTE wide = SER_WIDE(s);
+    Byte wide = SER_WIDE(s);
 
     assert(NOT_SERIES_FLAG(s, FIXED_SIZE));
 
@@ -1139,7 +1139,7 @@ void Decay_Series(REBSER *s)
     }
 
     if (GET_SERIES_FLAG(s, DYNAMIC)) {
-        REBYTE wide = SER_WIDE(s);
+        Byte wide = SER_WIDE(s);
         REBLEN bias = SER_BIAS(s);
         REBLEN total = (bias + SER_REST(s)) * wide;
         char *unbiased = s->content.dynamic.data - (wide * bias);
@@ -1301,11 +1301,11 @@ REBLEN Check_Memory_Debug(void)
 {
     REBSEG *seg;
     for (seg = Mem_Pools[SER_POOL].segs; seg; seg = seg->next) {
-        REBYTE *unit = cast(REBYTE*, seg + 1);
+        Byte* unit = cast(Byte*, seg + 1);
 
         REBLEN n = Mem_Pools[SER_POOL].num_units;
         for (; n > 0; --n, unit += sizeof(REBSER)) {
-            REBYTE nodebyte = *unit;
+            Byte nodebyte = *unit;
             if (nodebyte & NODE_BYTEMASK_0x40_STALE)
                 continue;
 
@@ -1336,7 +1336,7 @@ REBLEN Check_Memory_Debug(void)
 
         REBPLU *unit = Mem_Pools[pool_num].first;
         for (; unit != nullptr; unit = unit->next_if_free) {
-            assert(*cast(const REBYTE*, unit) & NODE_BYTEMASK_0x40_STALE);
+            assert(*cast(const Byte*, unit) & NODE_BYTEMASK_0x40_STALE);
 
             ++pool_free_nodes;
 
@@ -1384,10 +1384,10 @@ void Dump_All_Series_Of_Width(REBSIZ wide)
 
     REBSEG *seg;
     for (seg = Mem_Pools[SER_POOL].segs; seg; seg = seg->next) {
-        REBYTE *unit = cast(REBYTE*, seg + 1);
+        Byte* unit = cast(Byte*, seg + 1);
         REBLEN n = Mem_Pools[SER_POOL].num_units;
         for (; n > 0; --n, unit += sizeof(REBSER)) {
-            REBYTE nodebyte = *unit;
+            Byte nodebyte = *unit;
             if (nodebyte & NODE_BYTEMASK_0x40_STALE)
                 continue;
 
@@ -1416,10 +1416,10 @@ void Dump_Series_In_Pool(REBINT pool_id)
 {
     REBSEG *seg;
     for (seg = Mem_Pools[SER_POOL].segs; seg; seg = seg->next) {
-        REBYTE *unit = cast(REBYTE*, seg + 1);
+        Byte* unit = cast(Byte*, seg + 1);
         REBLEN n = Mem_Pools[SER_POOL].num_units;
         for (; n > 0; --n, unit += sizeof(REBSER)) {
-            REBYTE nodebyte = *unit;
+            Byte nodebyte = *unit;
             if (nodebyte & NODE_BYTEMASK_0x40_STALE)
                 continue;
 
@@ -1523,11 +1523,11 @@ REBU64 Inspect_Series(bool show)
         seg_size += seg->size;
         segs++;
 
-        REBYTE *unit = cast(REBYTE*, seg + 1);
+        Byte* unit = cast(Byte*, seg + 1);
 
         REBLEN n = Mem_Pools[SER_POOL].num_units;
         for (; n > 0; --n, unit += sizeof(REBSER)) {
-            REBYTE nodebyte = *unit;
+            Byte nodebyte = *unit;
             if (nodebyte & NODE_BYTEMASK_0x40_STALE) {
                 ++fre;
                 continue;

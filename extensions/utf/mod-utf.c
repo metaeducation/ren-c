@@ -46,7 +46,7 @@
 // present it is to be considered part of the in-band data stream...so that
 // reading and writing back out will preserve the input.
 //
-REBINT What_UTF(const REBYTE *bp, REBLEN len)
+REBINT What_UTF(const Byte* bp, REBLEN len)
 {
     if (len >= 3 && bp[0] == 0xef && bp[1] == 0xbb && bp[2] == 0xbf)
         return 8; // UTF8 (endian agnostic)
@@ -85,7 +85,7 @@ REBINT What_UTF(const REBYTE *bp, REBLEN len)
 // No terminator is added.
 //
 String(*) Decode_UTF16(
-    const REBYTE *src,
+    const Byte* src,
     REBLEN len,
     bool little_endian,
     bool crlf_to_lf
@@ -191,7 +191,7 @@ REBNATIVE(decode_text)
     // having wider format support might be a good thing.
 
     REBSIZ size;
-    const REBYTE *data = VAL_BINARY_SIZE_AT(&size, ARG(data));
+    const Byte* data = VAL_BINARY_SIZE_AT(&size, ARG(data));
     return rebSizedText(cs_cast(data), size);
 }
 
@@ -293,7 +293,7 @@ REBNATIVE(decode_utf16le)
     UTF_INCLUDE_PARAMS_OF_DECODE_UTF16LE;
 
     REBSIZ size;
-    const REBYTE *data = VAL_BINARY_SIZE_AT(&size, ARG(data));
+    const Byte* data = VAL_BINARY_SIZE_AT(&size, ARG(data));
 
     const bool little_endian = true;
     Init_Text(OUT, Decode_UTF16(data, size, little_endian, false));
@@ -373,7 +373,7 @@ REBNATIVE(decode_utf16be)
     UTF_INCLUDE_PARAMS_OF_DECODE_UTF16BE;
 
     REBSIZ size;
-    const REBYTE *data = VAL_BINARY_SIZE_AT(&size, ARG(data));
+    const Byte* data = VAL_BINARY_SIZE_AT(&size, ARG(data));
 
     const bool little_endian = false;
     Init_Text(OUT, Decode_UTF16(data, size, little_endian, false));

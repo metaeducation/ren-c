@@ -289,7 +289,7 @@
 #define FLAG_FLAVOR_BYTE(flavor)        FLAG_THIRD_BYTE(flavor)
 #define FLAG_FLAVOR(name)               FLAG_FLAVOR_BYTE(FLAVOR_##name)
 
-inline static REBYTE FLAVOR_BYTE(uintptr_t flags)
+inline static Byte FLAVOR_BYTE(uintptr_t flags)
   { return THIRD_BYTE(flags); }
 
 #define SER_FLAVOR(s) \

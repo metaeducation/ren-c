@@ -202,9 +202,9 @@ REBNATIVE(load_extension)
     PUSH_GC_GUARD(module);  // !!! Is GC guard unnecessary due to references?
 
     size_t script_size;
-    REBYTE *script_utf8 = Decompress_Alloc_Core(
+    Byte* script_utf8 = Decompress_Alloc_Core(
         &script_size,
-        VAL_HANDLE_POINTER(REBYTE, script_compressed),
+        VAL_HANDLE_POINTER(Byte, script_compressed),
         VAL_HANDLE_LEN(script_compressed),
         -1,  // max
         SYM_GZIP

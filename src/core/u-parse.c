@@ -849,7 +849,7 @@ static REBIXO To_Thru_Block_Rule(
                 }
             }
             else if (P_TYPE == REB_BINARY) {
-                REBYTE ch1 = *VAL_BINARY_AT(iter);
+                Byte ch1 = *VAL_BINARY_AT(iter);
 
                 if (VAL_INDEX(iter) == P_INPUT_LEN) {
                     //
@@ -874,13 +874,13 @@ static REBIXO To_Thru_Block_Rule(
                 }
                 else if (IS_BINARY(rule)) {
                     REBSIZ rule_size;
-                    const REBYTE *rule_data = VAL_BINARY_SIZE_AT(
+                    const Byte* rule_data = VAL_BINARY_SIZE_AT(
                         &rule_size,
                         rule
                     );
 
                     REBSIZ iter_size;
-                    const REBYTE *iter_data = VAL_BINARY_SIZE_AT(
+                    const Byte* iter_data = VAL_BINARY_SIZE_AT(
                         &iter_size,
                         iter
                     );

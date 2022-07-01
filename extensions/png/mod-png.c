@@ -159,7 +159,7 @@ REBNATIVE(identify_png_q)
     state.decoder.zlibsettings.custom_context = &arg;
 
     REBSIZ size;
-    const REBYTE *data = VAL_BINARY_SIZE_AT(&size, ARG(data));
+    const Byte* data = VAL_BINARY_SIZE_AT(&size, ARG(data));
 
     unsigned width;
     unsigned height;
@@ -222,7 +222,7 @@ REBNATIVE(decode_png)
     state.info_png.color.bitdepth = 8;
 
     REBSIZ size;
-    const REBYTE *data = VAL_BINARY_SIZE_AT(&size, ARG(data));
+    const Byte* data = VAL_BINARY_SIZE_AT(&size, ARG(data));
 
     unsigned char* image_bytes;
     unsigned w;
@@ -343,10 +343,10 @@ REBNATIVE(encode_png)
     rebRelease(size);
 
     size_t binsize;
-    REBYTE *image_bytes = rebBytes(&binsize, "bytes of", image);
+    Byte* image_bytes = rebBytes(&binsize, "bytes of", image);
 
     size_t encoded_size;
-    REBYTE *encoded_bytes = NULL;
+    Byte* encoded_bytes = NULL;
     unsigned error = lodepng_encode(
         &encoded_bytes,
         &encoded_size,

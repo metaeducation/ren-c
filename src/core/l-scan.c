@@ -53,7 +53,7 @@ inline static bool Interstitial_Match(char c, char mode) {
 //
 // UTF8: The values C0, C1, F5 to FF never appear.
 //
-const REBYTE Lex_Map[256] =
+const Byte Lex_Map[256] =
 {
     /* 00 EOF */    LEX_DELIMIT|LEX_DELIMIT_END,
     /* 01     */    LEX_DEFAULT,
@@ -239,7 +239,7 @@ const REBYTE Lex_Map[256] =
 // Maps each character to its upper case value.  Done this way for speed.
 // Note the odd cases in last block.
 //
-const REBYTE Upper_Case[256] =
+const Byte Upper_Case[256] =
 {
       0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15,
      16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
@@ -267,7 +267,7 @@ const REBYTE Upper_Case[256] =
 // Maps each character to its lower case value.  Done this way for speed.
 // Note the odd cases in last block.
 //
-const REBYTE Lower_Case[256] =
+const Byte Lower_Case[256] =
 {
       0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15,
      16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
@@ -305,12 +305,12 @@ const REBYTE Lower_Case[256] =
 //
 // test: to-integer load to-binary mold to-char 1234
 //
-static const REBYTE *Scan_UTF8_Char_Escapable(Codepoint *out, const REBYTE *bp)
+static const Byte* Scan_UTF8_Char_Escapable(Codepoint *out, const Byte* bp)
 {
-    const REBYTE *cp;
-    REBYTE lex;
+    const Byte* cp;
+    Byte lex;
 
-    REBYTE c = *bp;
+    Byte c = *bp;
     if (c == '\0')
         return nullptr;  // signal error if end of string
 
@@ -405,9 +405,9 @@ static const REBYTE *Scan_UTF8_Char_Escapable(Codepoint *out, const REBYTE *bp)
 // stream might have "a^(1234)b" and need to turn "^(1234)" into the right
 // UTF-8 bytes for that codepoint in the string.
 //
-static const REBYTE *Scan_Quote_Push_Mold(
+static const Byte* Scan_Quote_Push_Mold(
     REB_MOLD *mo,
-    const REBYTE *src,
+    const Byte* src,
     SCAN_STATE *ss
 ){
     Push_Mold(mo);
@@ -505,12 +505,12 @@ static const REBYTE *Scan_Quote_Push_Mold(
 // Returns continuation point or NULL for error.  Puts result into the
 // temporary mold buffer as UTF-8.
 //
-const REBYTE *Scan_Item_Push_Mold(
+const Byte* Scan_Item_Push_Mold(
     REB_MOLD *mo,
-    const REBYTE *bp,
-    const REBYTE *ep,
-    REBYTE opt_term,  // '\0' if file like %foo - '"' if file like %"foo bar"
-    const REBYTE *opt_invalids
+    const Byte* bp,
+    const Byte* ep,
+    Byte opt_term,  // '\0' if file like %foo - '"' if file like %"foo bar"
+    const Byte* opt_invalids
 ){
     assert(opt_term < 128);  // method below doesn't search for high chars
 
@@ -542,7 +542,7 @@ const REBYTE *Scan_Item_Push_Mold(
             c = '/';
         }
         else if (c == '%') { // Accept %xx encoded char:
-            REBYTE decoded;
+            Byte decoded;
             bp = Scan_Hex2(&decoded, bp + 1);
             if (bp == nullptr)
                 return nullptr;
@@ -591,7 +591,7 @@ const REBYTE *Scan_Item_Push_Mold(
 // Skip the entire contents of a tag, including quoted strings and newlines.
 // The argument points to the opening '<'.  nullptr is returned on errors.
 //
-static const REBYTE *Skip_Tag(const REBYTE *cp)
+static const Byte* Skip_Tag(const Byte* cp)
 {
     assert(*cp == '<');
     ++cp;
@@ -629,7 +629,7 @@ static void Update_Error_Near_For_Line(
     Context(*) error,
     SCAN_STATE *ss,
     REBLEN line,
-    const REBYTE *line_head
+    const Byte* line_head
 ){
     // This sets the "where" for the error (e.g. the stack).  But then it
     // overrides the NEAR and FILE and LINE.
@@ -641,14 +641,14 @@ static void Update_Error_Near_For_Line(
 
     // Skip indentation (don't include in the NEAR)
     //
-    const REBYTE *cp = line_head;
+    const Byte* cp = line_head;
     while (IS_LEX_SPACE(*cp))
         ++cp;
 
     // Find end of line to capture in error message
     //
     REBLEN len = 0;
-    const REBYTE *bp = cp;
+    const Byte* bp = cp;
     while (not ANY_CR_LF_END(*cp)) {
         cp++;
         len++;
@@ -830,7 +830,7 @@ static LEXFLAGS Prescan_Token(SCAN_STATE *ss)
 {
     assert(IS_POINTER_TRASH_DEBUG(ss->end));  // prescan only uses ->begin
 
-    const REBYTE *cp = ss->begin;
+    const Byte* cp = ss->begin;
     LEXFLAGS flags = 0;  // flags for all LEX_SPECIALs seen after ss->begin[0]
 
     while (IS_LEX_SPACE(*cp))  // skip whitespace (if any)
@@ -1031,7 +1031,7 @@ static enum Reb_Token Locate_Token_May_Push_Mold(
         }
         else {  // It's UTF-8, so have to scan it ordinarily.
 
-            ss->begin = cast(const REBYTE*, p);  // breaks the loop...
+            ss->begin = cast(const Byte*, p);  // breaks the loop...
 
             // If we're using a va_list, we start the scan with no C string
             // pointer to serve as the beginning of line for an error message.
@@ -1052,7 +1052,7 @@ static enum Reb_Token Locate_Token_May_Push_Mold(
 
     LEXFLAGS flags = Prescan_Token(ss);  // sets ->begin, ->end
 
-    const REBYTE *cp = ss->begin;
+    const Byte* cp = ss->begin;
 
     if (*cp == ':') {
         ss->end = cp + 1;
@@ -1085,7 +1085,7 @@ static enum Reb_Token Locate_Token_May_Push_Mold(
     ){
         bool seen_angles = false;
 
-        const REBYTE *temp = cp;
+        const Byte* temp = cp;
         while (
             (*temp == '<' and (seen_angles = true))
             or (*temp == '>' and (seen_angles = true))
@@ -1738,7 +1738,7 @@ void Init_Va_Scan_Level_Core(
     SCAN_STATE *ss,
     String(const*) file,
     REBLIN line,
-    const REBYTE *opt_begin,  // preload the scanner outside the va_list
+    const Byte* opt_begin,  // preload the scanner outside the va_list
     REBFED *feed,
     option(Context(*)) context
 ){
@@ -1773,7 +1773,7 @@ void Init_Scan_Level(
     SCAN_STATE *ss,
     String(const*) file,
     REBLIN line,
-    const REBYTE *utf8,
+    const Byte* utf8,
     REBINT limit,  // !!! limit feature not implemented in R3-Alpha
     option(Context(*)) context
 ){
@@ -1818,9 +1818,9 @@ void Init_Scan_Level(
 //
 static REBINT Scan_Head(SCAN_STATE *ss)
 {
-    const REBYTE *rebol = nullptr;  // start of the REBOL word
-    const REBYTE *bracket = nullptr;  // optional [ just before REBOL
-    const REBYTE *cp = ss->begin;
+    const Byte* rebol = nullptr;  // start of the REBOL word
+    const Byte* bracket = nullptr;  // optional [ just before REBOL
+    const Byte* cp = ss->begin;
     REBLEN count = ss->line;
 
     while (true) {
@@ -1908,8 +1908,8 @@ Bounce Scanner_Executor(Frame(*) f) {
     // "bp" and "ep" capture the beginning and end pointers of the token.
     // They may be manipulated during the scan process if desired.
     //
-    const REBYTE *bp;
-    const REBYTE *ep;
+    const Byte* bp;
+    const Byte* ep;
     REBLEN len;
 
     TRASH_POINTER_IF_DEBUG(bp);
@@ -2268,7 +2268,7 @@ Bounce Scanner_Executor(Frame(*) f) {
             // If we will be scanning a TUPLE!, then we're at the head of it.
             // But it could also be a DECIMAL! if there aren't any more dots.
             //
-            const REBYTE *temp = ep + 1;
+            const Byte* temp = ep + 1;
             REBLEN temp_len = len + 1;
             for (; *temp != '.'; ++temp, ++temp_len) {
                 if (IS_LEX_DELIMIT(*temp)) {
@@ -2948,7 +2948,7 @@ Bounce Scanner_Executor(Frame(*) f) {
 //
 Array(*) Scan_UTF8_Managed(
     String(const*) file,
-    const REBYTE *utf8,
+    const Byte* utf8,
     REBSIZ size,
     option(Context(*)) context
 ){
@@ -2986,7 +2986,7 @@ Array(*) Scan_UTF8_Managed(
 //
 // Scan for header, return its offset if found or -1 if not.
 //
-REBINT Scan_Header(const REBYTE *utf8, REBLEN len)
+REBINT Scan_Header(const Byte* utf8, REBLEN len)
 {
     SCAN_LEVEL level;
     SCAN_STATE ss;
@@ -2998,7 +2998,7 @@ REBINT Scan_Header(const REBYTE *utf8, REBLEN len)
     if (result == 0)
         return -1;
 
-    const REBYTE *cp = ss.begin - 2;
+    const Byte* cp = ss.begin - 2;
 
     // Backup to start of header
 
@@ -3076,7 +3076,7 @@ REBNATIVE(transcode)
     REBVAL *source = ARG(source);
 
     REBSIZ size;
-    const REBYTE *bp = VAL_BYTES_AT(&size, source);
+    const Byte* bp = VAL_BYTES_AT(&size, source);
 
     SCAN_STATE *ss;
     REBVAL *ss_buffer = ARG(return);  // kept as a BINARY!, gets GC'd
@@ -3260,10 +3260,10 @@ REBNATIVE(transcode)
 // This method gets exactly the same results as scanner.
 // Returns symbol number, or zero for errors.
 //
-const REBYTE *Scan_Any_Word(
+const Byte* Scan_Any_Word(
     REBVAL *out,
     enum Reb_Kind kind,
-    const REBYTE *utf8,
+    const Byte* utf8,
     REBSIZ size
 ) {
     SCAN_STATE ss;
@@ -3308,9 +3308,9 @@ const REBYTE *Scan_Any_Word(
 // !!! Since this follows the same rules as FILE!, the code should merge,
 // though FILE! will make mutable strings and not have in-cell optimization.
 //
-const REBYTE *Scan_Issue(Cell(*) out, const REBYTE *cp, REBSIZ size)
+const Byte* Scan_Issue(Cell(*) out, const Byte* cp, REBSIZ size)
 {
-    const REBYTE *bp = cp;
+    const Byte* bp = cp;
 
     // !!! ISSUE! loading should use the same escaping as FILE!, and have a
     // pre-counted mold buffer, with UTF-8 validation done on the prescan.
@@ -3365,7 +3365,7 @@ const REBYTE *Scan_Issue(Cell(*) out, const REBYTE *cp, REBSIZ size)
 //  Try_Scan_Utf8_For_Detect_Feed_Pointer_Manged: C
 //
 option(Array(*)) Try_Scan_Utf8_For_Detect_Feed_Pointer_Managed(
-    const REBYTE* utf8,
+    const Byte* utf8,
     REBFED *feed,
     option(Context(*)) context
 ){

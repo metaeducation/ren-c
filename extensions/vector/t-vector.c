@@ -37,11 +37,11 @@
 //
 REBVAL *Get_Vector_At(Cell(*) out, noquote(Cell(const*)) vec, REBLEN n)
 {
-    REBYTE *data = VAL_VECTOR_HEAD(vec);
+    Byte* data = VAL_VECTOR_HEAD(vec);
 
     bool integral = VAL_VECTOR_INTEGRAL(vec);
     bool sign = VAL_VECTOR_SIGN(vec);
-    REBYTE bitsize = VAL_VECTOR_BITSIZE(vec);
+    Byte bitsize = VAL_VECTOR_BITSIZE(vec);
 
     if (not integral) {
         switch (bitsize) {
@@ -115,11 +115,11 @@ REBVAL *Get_Vector_At(Cell(*) out, noquote(Cell(const*)) vec, REBLEN n)
 static void Set_Vector_At(noquote(Cell(const*)) vec, REBLEN n, Cell(const*) set) {
     assert(IS_INTEGER(set) or IS_DECIMAL(set));  // caller should error
 
-    REBYTE *data = VAL_VECTOR_HEAD(vec);
+    Byte* data = VAL_VECTOR_HEAD(vec);
 
     bool integral = VAL_VECTOR_INTEGRAL(vec);
     bool sign = VAL_VECTOR_SIGN(vec);
-    REBYTE bitsize = VAL_VECTOR_BITSIZE(vec);
+    Byte bitsize = VAL_VECTOR_BITSIZE(vec);
 
     if (not integral) {
         REBDEC d64;
@@ -246,7 +246,7 @@ void Set_Vector_Row(
     }
     else { // !!! This would just interpet the data as int64_t pointers (???)
         REBSIZ size;
-        const REBYTE *data = VAL_BINARY_SIZE_AT(&size, blk);
+        const Byte* data = VAL_BINARY_SIZE_AT(&size, blk);
 
         DECLARE_LOCAL (temp);
 
@@ -323,7 +323,7 @@ REBINT Compare_Vector(noquote(Cell(const*)) v1, noquote(Cell(const*)) v2)
 //  Shuffle_Vector: C
 //
 // !!! R3-Alpha code did this shuffle via the bits in the vector, not by
-// extracting into values.  This could use REBYTE* access to get a similar
+// extracting into values.  This could use Byte* access to get a similar
 // effect if it were a priority.  Extract and reinsert REBVALs for now.
 //
 void Shuffle_Vector(REBVAL *vect, bool secure)
@@ -399,7 +399,7 @@ bool Make_Vector_Spec(
         ++item;
     }
 
-    REBYTE bitsize;
+    Byte bitsize;
     if (item == tail or not IS_INTEGER(item))
         return false;  // bit size required, no defaulting
     else {
@@ -415,7 +415,7 @@ bool Make_Vector_Spec(
         ++item;
     }
 
-    REBYTE len = 1;  // !!! default len to 1...why?
+    Byte len = 1;  // !!! default len to 1...why?
     if (item != tail and IS_INTEGER(item)) {
         if (Int32(item) < 0)
             return false;
@@ -497,7 +497,7 @@ Bounce MAKE_Vector(
         if (len < 0)
             goto bad_make;
 
-        REBYTE bitsize = 32;
+        Byte bitsize = 32;
         REBLEN num_bytes = (len * bitsize) / 8;
         REBBIN *bin = Make_Binary(num_bytes);
         memset(BIN_HEAD(bin), 0, num_bytes);
@@ -728,8 +728,8 @@ void MF_Vector(REB_MOLD *mo, noquote(Cell(const*)) v, bool form)
 
         Get_Vector_At(temp, v, n);
 
-        REBYTE buf[32];
-        REBYTE l;
+        Byte buf[32];
+        Byte l;
         if (integral)
             l = Emit_Integer(buf, VAL_INT64(temp));
         else

@@ -94,7 +94,7 @@ inline static SYMID VAL_TYPE_SYM(noquote(Cell(const*)) v) {
 #define VAL_TYPESET_HIGH_BITS(v) \
     EXTRA(Typeset, (v)).high_bits
 
-inline static bool TYPE_CHECK(noquote(Cell(const*)) v, REBYTE n) {
+inline static bool TYPE_CHECK(noquote(Cell(const*)) v, Byte n) {
     assert(CELL_HEART(v) == REB_TYPESET);
 
     if (n < 32)
@@ -135,7 +135,7 @@ inline static bool TYPE_CHECK_EXACT_BITS(
     return true;
 }
 
-inline static void TYPE_SET(Cell(*) v, REBYTE n) {
+inline static void TYPE_SET(Cell(*) v, Byte n) {
     assert(IS_TYPESET(v));
 
     if (n < 32) {
@@ -146,7 +146,7 @@ inline static void TYPE_SET(Cell(*) v, REBYTE n) {
     VAL_TYPESET_HIGH_BITS(v) |= FLAGIT_KIND(n - 32);
 }
 
-inline static void TYPE_CLEAR(Cell(*) v, REBYTE n) {
+inline static void TYPE_CLEAR(Cell(*) v, Byte n) {
     assert(IS_TYPESET(v));
 
     if (n < 32) {

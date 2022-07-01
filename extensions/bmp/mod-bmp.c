@@ -155,9 +155,9 @@ static bool longaligned(void) {
     return false;
 }
 
-void Map_Bytes(void *dstp, const REBYTE **srcp, const char *map) {
-    const REBYTE *src = *srcp;
-    REBYTE *dst = cast(REBYTE*, dstp);
+void Map_Bytes(void *dstp, const Byte* *srcp, const char *map) {
+    const Byte* src = *srcp;
+    Byte* dst = cast(Byte*, dstp);
     char c;
 #ifdef ENDIAN_LITTLE
     while ((c = *map++) != 0) {
@@ -212,9 +212,9 @@ void Map_Bytes(void *dstp, const REBYTE **srcp, const char *map) {
     *srcp = src;
 }
 
-void Unmap_Bytes(void *srcp, REBYTE **dstp, const char *map) {
-    REBYTE *src = cast(REBYTE*, srcp);
-    REBYTE *dst = *dstp;
+void Unmap_Bytes(void *srcp, Byte* *dstp, const char *map) {
+    Byte* src = cast(Byte*, srcp);
+    Byte* dst = *dstp;
     char c;
 #ifdef ENDIAN_LITTLE
     while ((c = *map++) != 0) {
@@ -270,7 +270,7 @@ void Unmap_Bytes(void *srcp, REBYTE **dstp, const char *map) {
 }
 
 
-static bool Has_Valid_BITMAPFILEHEADER(const REBYTE *data, uint32_t len) {
+static bool Has_Valid_BITMAPFILEHEADER(const Byte* data, uint32_t len) {
     if (len < sizeof(BITMAPFILEHEADER))
         return false;
 
@@ -298,7 +298,7 @@ REBNATIVE(identify_bmp_q)
     BMP_INCLUDE_PARAMS_OF_IDENTIFY_BMP_Q;
 
     REBSIZ size;
-    const REBYTE *data = VAL_BINARY_SIZE_AT(&size, ARG(data));
+    const Byte* data = VAL_BINARY_SIZE_AT(&size, ARG(data));
 
     // Assume signature matching is good enough (will get a fail() on
     // decode if it's a false positive).
@@ -321,7 +321,7 @@ REBNATIVE(decode_bmp)
     BMP_INCLUDE_PARAMS_OF_DECODE_BMP;
 
     REBSIZ size;
-    const REBYTE *data = VAL_BINARY_SIZE_AT(&size, ARG(data));
+    const Byte* data = VAL_BINARY_SIZE_AT(&size, ARG(data));
 
     if (not Has_Valid_BITMAPFILEHEADER(data, size))
         fail (Error_Bad_Media_Raw());
@@ -334,7 +334,7 @@ REBNATIVE(decode_bmp)
     RGBQUADPTR          color;
     RGBQUADPTR          ctab = 0;
 
-    const REBYTE *cp = data;
+    const Byte* cp = data;
 
     // !!! It strangely appears that passing &data instead of &cp to this
     // Map_Bytes call causes bugs below.  Not clear why that would be.
@@ -342,7 +342,7 @@ REBNATIVE(decode_bmp)
     BITMAPFILEHEADER bmfh;
     Map_Bytes(&bmfh, &cp, mapBITMAPFILEHEADER); // length already checked
 
-    const REBYTE *tp = cp;
+    const Byte* tp = cp;
     Map_Bytes(&bmih, &cp, mapBITMAPINFOHEADER);
     if (bmih.biSize < sizeof(BITMAPINFOHEADER)) {
         cp = tp;
@@ -389,9 +389,9 @@ REBNATIVE(decode_bmp)
     if (bmfh.bfOffBits != cast(DWORD, cp - data))
         cp = data + bmfh.bfOffBits;
 
-    REBYTE *image_bytes = rebAllocN(REBYTE, (w * h) * 4);  // RGBA is 4 bytes
+    Byte* image_bytes = rebAllocN(Byte, (w * h) * 4);  // RGBA is 4 bytes
 
-    REBYTE *dp = image_bytes;
+    Byte* dp = image_bytes;
 
     dp += (w * h - w) * 4;
 
@@ -605,7 +605,7 @@ REBNATIVE(encode_bmp)
     rebRelease(size);
 
     size_t binsize;
-    REBYTE *image_bytes = rebBytes(&binsize, "bytes of", ARG(image));
+    Byte* image_bytes = rebBytes(&binsize, "bytes of", ARG(image));
     assert(cast(int32_t, binsize) == w * h * 4);
 
     memset(&bmfh, 0, sizeof(bmfh));
@@ -614,8 +614,8 @@ REBNATIVE(encode_bmp)
     bmfh.bfSize = 14 + 40 + h * WADJUST(w);
     bmfh.bfOffBits = 14 + 40;
 
-    REBYTE *bmp_bytes = rebAllocN(REBYTE, bmfh.bfSize);
-    REBYTE *cp = bmp_bytes;
+    Byte* bmp_bytes = rebAllocN(Byte, bmfh.bfSize);
+    Byte* cp = bmp_bytes;
     Unmap_Bytes(&bmfh, &cp, mapBITMAPFILEHEADER);
 
     memset(&bmih, 0, sizeof(bmih));
@@ -632,7 +632,7 @@ REBNATIVE(encode_bmp)
     bmih.biClrImportant = 0;
     Unmap_Bytes(&bmih, &cp, mapBITMAPINFOHEADER);
 
-    REBYTE *dp = image_bytes + ((w * h - w) * 4);
+    Byte* dp = image_bytes + ((w * h - w) * 4);
 
     for (y = 0; y<h; y++) {
         for (i = 0; i<w; i++) {

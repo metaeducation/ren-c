@@ -1681,7 +1681,7 @@ bool Try_As_String(
         // Checking before keeps from constraining input on errors, but
         // may be misleading by suggesting a valid "codepoint" was seen.
         //
-        const REBYTE *at_ptr = BIN_AT(bin, offset);
+        const Byte* at_ptr = BIN_AT(bin, offset);
         if (Is_Continuation_Byte_If_Utf8(*at_ptr))
             fail ("Index at codepoint to convert binary to ANY-STRING!");
 
@@ -1710,7 +1710,7 @@ bool Try_As_String(
             index = 0;
 
             REBSIZ bytes_left = BIN_LEN(bin);
-            const REBYTE *bp = BIN_HEAD(bin);
+            const Byte* bp = BIN_HEAD(bin);
             for (; bytes_left > 0; --bytes_left, ++bp) {
                 if (bp < at_ptr)
                     ++index;
@@ -2073,7 +2073,7 @@ REBNATIVE(as)
                 // error converting we don't add any constraints to the input.
                 //
                 REBSIZ size;
-                const REBYTE *data = VAL_BINARY_SIZE_AT(&size, v);
+                const Byte* data = VAL_BINARY_SIZE_AT(&size, v);
                 str = Intern_UTF8_Managed(data, size);
 
                 // Constrain the input in the way it would be if we were doing

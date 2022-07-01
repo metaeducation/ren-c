@@ -358,7 +358,7 @@ REBNATIVE(request_file_p)
 
     gtk_file_chooser_set_select_multiple(chooser, REF(multi));
 
-    REBYTE *name;
+    Byte* name;
     if (REF(file)) {
         name = rebSpell(ARG(file));
         gtk_file_chooser_set_current_folder(chooser, cast(gchar*, name));

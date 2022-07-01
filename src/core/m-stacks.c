@@ -150,7 +150,7 @@ void Shutdown_Frame_Stack(void)
     REBSEG *seg = Mem_Pools[FRM_POOL].segs;
     for (; seg != nullptr; seg = seg->next) {
         REBLEN n = Mem_Pools[FRM_POOL].num_units;
-        REBYTE *unit = cast(REBYTE*, seg + 1);
+        Byte* unit = cast(Byte*, seg + 1);
         for (; n > 0; --n, unit += Mem_Pools[FRM_POOL].wide) {
             Frame(*) f = cast(Frame(*), unit);  // ^-- pool size may round up
             if (IS_FREE_NODE(f))
@@ -173,7 +173,7 @@ void Shutdown_Frame_Stack(void)
     REBSEG *seg = Mem_Pools[FED_POOL].segs;
     for (; seg != nullptr; seg = seg->next) {
         REBLEN n = Mem_Pools[FED_POOL].num_units;
-        REBYTE *unit = cast(REBYTE*, seg + 1);
+        Byte* unit = cast(Byte*, seg + 1);
         for (; n > 0; --n, unit += Mem_Pools[FED_POOL].wide) {
             REBFED *feed = cast(REBFED*, unit);
             if (IS_FREE_NODE(feed))

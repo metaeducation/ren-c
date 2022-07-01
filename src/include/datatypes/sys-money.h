@@ -122,14 +122,14 @@ deci deci_mod (deci a, deci b);
 /* conversion to deci */
 deci int_to_deci (REBI64 a);
 deci decimal_to_deci (REBDEC a);
-deci string_to_deci (const REBYTE *s, const REBYTE **endptr);
-deci binary_to_deci(const REBYTE *s);
+deci string_to_deci (const Byte* s, const Byte* *endptr);
+deci binary_to_deci(const Byte* s);
 
 /* conversion to other datatypes */
 REBI64 deci_to_int (const deci a);
 REBDEC deci_to_decimal (const deci a);
-REBINT deci_to_string(REBYTE *string, const deci a, const REBYTE symbol, const REBYTE point);
-REBYTE *deci_to_binary(REBYTE binary[12], const deci a);
+REBINT deci_to_string(Byte* string, const deci a, const Byte symbol, const Byte point);
+Byte* deci_to_binary(Byte binary[12], const deci a);
 
 /* math functions */
 deci deci_ldexp (deci a, int32_t e);

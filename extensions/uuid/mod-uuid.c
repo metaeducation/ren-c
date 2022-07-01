@@ -60,7 +60,7 @@ REBNATIVE(generate)
     UUID_INCLUDE_PARAMS_OF_GENERATE;
 
     REBVAL *binary = rebUninitializedBinary_internal(16);
-    REBYTE *bp = rebBinaryHead_internal(binary);
+    Byte* bp = rebBinaryHead_internal(binary);
 
   #if TO_WINDOWS
 

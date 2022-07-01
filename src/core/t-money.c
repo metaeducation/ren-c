@@ -31,12 +31,12 @@
 //
 // Scan and convert money.  Return zero if error.
 //
-const REBYTE *Scan_Money(
+const Byte* Scan_Money(
     Cell(*) out,
-    const REBYTE *cp,
+    const Byte* cp,
     REBLEN len
 ){
-    const REBYTE *end;
+    const Byte* end;
 
     if (*cp == '$') {
         ++cp;
@@ -96,13 +96,13 @@ Bounce MAKE_Money(
         return Copy_Cell(out, arg);
 
       case REB_TEXT: {
-        const REBYTE *bp = Analyze_String_For_Scan(
+        const Byte* bp = Analyze_String_For_Scan(
             nullptr,
             arg,
             MAX_SCAN_MONEY
         );
 
-        const REBYTE *end;
+        const Byte* end;
         Init_Money(out, string_to_deci(bp, &end));
         if (end == bp or *end != '\0')
             goto bad_make;
@@ -146,7 +146,7 @@ void MF_Money(REB_MOLD *mo, noquote(Cell(const*)) v, bool form)
         // at least the limit.
     }
 
-    REBYTE buf[60];
+    Byte buf[60];
     REBINT len = deci_to_string(buf, VAL_MONEY_AMOUNT(v), '$', '.');
     Append_Ascii_Len(mo->series, s_cast(buf), len);
 }
@@ -163,11 +163,11 @@ void Bin_To_Money_May_Fail(REBVAL *result, const REBVAL *val)
         fail (val);
 
     REBSIZ size;
-    const REBYTE *at = VAL_BINARY_SIZE_AT(&size, val);
+    const Byte* at = VAL_BINARY_SIZE_AT(&size, val);
     if (size > 12)
         size = 12;
 
-    REBYTE buf[MAX_HEX_LEN+4] = {0}; // binary to convert
+    Byte buf[MAX_HEX_LEN+4] = {0}; // binary to convert
     memcpy(buf, at, size);
     memcpy(buf + 12 - size, buf, size); // shift to right side
     memset(buf, 0, 12 - size);

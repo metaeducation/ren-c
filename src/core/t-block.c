@@ -238,7 +238,7 @@ Bounce MAKE_Array(
         String(const*) file = ANONYMOUS;
 
         REBSIZ size;
-        const REBYTE *at = VAL_BINARY_SIZE_AT(&size, arg);
+        const Byte* at = VAL_BINARY_SIZE_AT(&size, arg);
         option(Context(*)) context = nullptr;
         return Init_Any_Array(
             out,

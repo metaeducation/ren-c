@@ -320,7 +320,7 @@ e/emit 'mod {
      * Gzip compression of $<Script-Name> (no \0 terminator in array)
      * Originally $<length of script-uncompressed> bytes
      */
-    static const REBYTE script_compressed[$<length of script-compressed>] = {
+    static const Byte script_compressed[$<length of script-compressed>] = {
         $<Binary-To-C Script-Compressed>
     };
 

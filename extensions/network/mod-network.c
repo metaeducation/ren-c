@@ -926,7 +926,7 @@ static Bounce Transport_Actor(
         rebUnmanage(rebreq->binary);  // otherwise would be seen as a leak
 
         uv_buf_t buf;
-        buf.base = s_cast(m_cast(REBYTE*, VAL_BINARY_AT(rebreq->binary)));
+        buf.base = s_cast(m_cast(Byte*, VAL_BINARY_AT(rebreq->binary)));
         buf.len = VAL_LEN_AT(rebreq->binary);
         int r = uv_write(&rebreq->req, sock->stream, &buf, 1, on_write_finished);
         if (r < 0)
@@ -957,7 +957,7 @@ static Bounce Transport_Actor(
 
         Init_Tuple_Bytes(
             CTX_VAR(info, STD_NET_INFO_LOCAL_IP),
-            cast(REBYTE*, &sock->local_ip),
+            cast(Byte*, &sock->local_ip),
             4
         );
         Init_Integer(
@@ -967,7 +967,7 @@ static Bounce Transport_Actor(
 
         Init_Tuple_Bytes(
             CTX_VAR(info, STD_NET_INFO_REMOTE_IP),
-            cast(REBYTE*, &sock->remote_ip),
+            cast(Byte*, &sock->remote_ip),
             4
         );
         Init_Integer(

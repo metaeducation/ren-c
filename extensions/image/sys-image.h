@@ -54,12 +54,12 @@ inline static REBVAL *VAL_IMAGE_BIN(noquote(Cell(const*)) v) {
 #define VAL_IMAGE_HEIGHT(v) \
     ARR(VAL_NODE1(v))->misc.any.i
 
-inline static REBYTE *VAL_IMAGE_HEAD(noquote(Cell(const*)) v) {
+inline static Byte* VAL_IMAGE_HEAD(noquote(Cell(const*)) v) {
     assert(CELL_CUSTOM_TYPE(v) == EG_Image_Type);
     return SER_DATA(VAL_BINARY_ENSURE_MUTABLE(VAL_IMAGE_BIN(v)));
 }
 
-inline static REBYTE *VAL_IMAGE_AT_HEAD(noquote(Cell(const*)) v, REBLEN pos) {
+inline static Byte* VAL_IMAGE_AT_HEAD(noquote(Cell(const*)) v, REBLEN pos) {
     return VAL_IMAGE_HEAD(v) + (pos * 4);
 }
 
@@ -73,7 +73,7 @@ inline static REBYTE *VAL_IMAGE_AT_HEAD(noquote(Cell(const*)) v, REBLEN pos) {
 #define VAL_IMAGE_POS(v) \
     PAYLOAD(Any, (v)).second.i
 
-inline static REBYTE *VAL_IMAGE_AT(noquote(Cell(const*)) v) {
+inline static Byte* VAL_IMAGE_AT(noquote(Cell(const*)) v) {
     return VAL_IMAGE_AT_HEAD(v, VAL_IMAGE_POS(v));
 }
 
@@ -118,9 +118,9 @@ inline static REBVAL *Init_Image(
     return cast(REBVAL*, out);
 }
 
-inline static void RESET_IMAGE(REBYTE *p, REBLEN num_pixels) {
-    REBYTE *start = p;
-    REBYTE *stop = start + (num_pixels * 4);
+inline static void RESET_IMAGE(Byte* p, REBLEN num_pixels) {
+    Byte* start = p;
+    Byte* stop = start + (num_pixels * 4);
     while (start < stop) {
         *start++ = 0;  // red
         *start++ = 0;  // green

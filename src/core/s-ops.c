@@ -31,7 +31,7 @@
 // Returns true if byte string does not use upper code page
 // (e.g. no 128-255 characters)
 //
-bool All_Bytes_ASCII(REBYTE *bp, REBLEN len)
+bool All_Bytes_ASCII(Byte* bp, REBLEN len)
 {
     for (; len > 0; len--, bp++)
         if (*bp >= 0x80)
@@ -60,7 +60,7 @@ bool All_Bytes_ASCII(REBYTE *bp, REBLEN len)
 // TO DATE! permitted textual syntax that was not independently LOAD-able).
 // It should be reviewed.
 //
-const REBYTE *Analyze_String_For_Scan(
+const Byte* Analyze_String_For_Scan(
     option(REBSIZ*) size_out,
     const REBVAL *any_string,
     REBLEN max_len  // maximum length in *codepoints*
@@ -120,7 +120,7 @@ const REBYTE *Analyze_String_For_Scan(
 //
 // Used to trim off hanging spaces during FORM and MOLD.
 //
-void Trim_Tail(REB_MOLD *mo, REBYTE ascii)
+void Trim_Tail(REB_MOLD *mo, Byte ascii)
 {
     assert(ascii < 0x80);  // more work needed for multi-byte characters
 
@@ -128,7 +128,7 @@ void Trim_Tail(REB_MOLD *mo, REBYTE ascii)
     REBSIZ size = STR_SIZE(mo->series);
 
     for (; size > 0; --size, --len) {
-        REBYTE b = *BIN_AT(mo->series, size - 1);
+        Byte b = *BIN_AT(mo->series, size - 1);
         if (b != ascii)
             break;
     }

@@ -141,7 +141,7 @@ inline static void Detect_Feed_Pointer_Maybe_Fetch(
         // common) can go into feed->fetched and not make an array at all.
         //
         Array(*) reified = unwrap(Try_Scan_Utf8_For_Detect_Feed_Pointer_Managed(
-            cast(const REBYTE*, p),
+            cast(const Byte*, p),
             feed,
             Get_Context_From_Stack()
         ));

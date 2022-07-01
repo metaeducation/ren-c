@@ -1540,7 +1540,7 @@ static void Mold_Value_Limit(REB_MOLD *mo, Cell(*) v, REBLEN limit)
 
     if (end_len - start_len > limit) {
         Utf8(const*) at = cast(Utf8(const*),
-            cast(const REBYTE*, STR_HEAD(str)) + start_size
+            cast(const Byte*, STR_HEAD(str)) + start_size
         );
         REBLEN n = 0;
         for (; n < limit; ++n)

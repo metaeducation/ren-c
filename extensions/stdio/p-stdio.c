@@ -36,7 +36,7 @@
 // that layer.  And if we were going to do asynchronous file I/O it should
 // be done with a solidified layer like libuv, vs. what was in R3-Alpha.
 //
-extern size_t Read_IO(REBYTE *buf, size_t size);
+extern size_t Read_IO(Byte* buf, size_t size);
 
 
 #if defined(REBOL_SMART_CONSOLE)
@@ -395,7 +395,7 @@ Bounce Console_Actor(Frame(*) frame_, REBVAL *port, Symbol(const*) verb)
 
             assert(SER_AVAIL(bin) >= size);
 
-            REBYTE *buf = BIN_AT(bin, orig_len);
+            Byte* buf = BIN_AT(bin, orig_len);
 
             size_t actual = Read_IO(buf, size);  // appends to tail
 

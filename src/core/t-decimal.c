@@ -110,11 +110,11 @@ bool almost_equal(REBDEC a, REBDEC b, REBLEN max_diff) {
 //
 //  Init_Decimal_Bits: C
 //
-REBVAL *Init_Decimal_Bits(Cell(*) out, const REBYTE *bp)
+REBVAL *Init_Decimal_Bits(Cell(*) out, const Byte* bp)
 {
     Reset_Cell_Header_Untracked(TRACK(out), REB_DECIMAL, CELL_MASK_NONE);
 
-    REBYTE *dp = cast(REBYTE*, &VAL_DECIMAL(out));
+    Byte* dp = cast(Byte*, &VAL_DECIMAL(out));
 
   #ifdef ENDIAN_LITTLE
     REBLEN n;
@@ -170,7 +170,7 @@ Bounce MAKE_Decimal(
 
       case REB_BINARY: {
         REBSIZ size;
-        const REBYTE *at = VAL_BINARY_SIZE_AT(&size, arg);
+        const Byte* at = VAL_BINARY_SIZE_AT(&size, arg);
         if (size < 8)
             fail (arg);
 
@@ -318,7 +318,7 @@ Bounce TO_Decimal(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 
       case REB_TEXT: {
         REBSIZ size;
-        const REBYTE *bp
+        const Byte* bp
             = Analyze_String_For_Scan(&size, arg, MAX_SCAN_DECIMAL);
 
         if (NULL == Scan_Decimal(out, bp, size, kind != REB_PERCENT))
@@ -424,7 +424,7 @@ void MF_Decimal(REB_MOLD *mo, noquote(Cell(const*)) v, bool form)
 {
     UNUSED(form);
 
-    REBYTE buf[60];
+    Byte buf[60];
     REBINT len = Emit_Decimal(
         buf,
         VAL_DECIMAL(v),
@@ -445,7 +445,7 @@ void MF_Percent(REB_MOLD *mo, noquote(Cell(const*)) v, bool form)
 {
     UNUSED(form);
 
-    REBYTE buf[60];
+    Byte buf[60];
     REBINT len = Emit_Decimal(
         buf,
         VAL_DECIMAL(v),

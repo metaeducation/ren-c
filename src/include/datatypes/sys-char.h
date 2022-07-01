@@ -129,7 +129,7 @@ inline static uint_fast8_t Encoded_Size_For_Codepoint(Codepoint c) {
 // Be sure dst has at least `encoded_size` bytes available.
 //
 inline static void Encode_UTF8_Char(
-    REBYTE *dst,
+    Byte* dst,
     Codepoint c,
     uint_fast8_t encoded_size  // must match Encoded_Size_For_Codepoint(c)
 ){
@@ -140,16 +140,16 @@ inline static void Encode_UTF8_Char(
 
     switch (encoded_size) {
       case 4:
-        *--dst = cast(REBYTE, (c | mark) & mask);
+        *--dst = cast(Byte, (c | mark) & mask);
         c >>= 6;  // falls through
       case 3:
-        *--dst = cast(REBYTE, (c | mark) & mask);
+        *--dst = cast(Byte, (c | mark) & mask);
         c >>= 6;  // falls through
       case 2:
-        *--dst = cast(REBYTE, (c | mark) & mask);
+        *--dst = cast(Byte, (c | mark) & mask);
         c >>= 6;  // falls through
       case 1:
-        *--dst = cast(REBYTE, c | firstByteMark[encoded_size]);
+        *--dst = cast(Byte, c | firstByteMark[encoded_size]);
     }
 }
 
@@ -220,9 +220,9 @@ extern const uint_fast32_t offsetsFromUTF8[6];  // defined in %t-char.c
 // If presented with a length > 4, this returns false.  The Unicode
 // definition of UTF-8 goes up to 4-byte sequences.
 //
-inline static bool isLegalUTF8(const REBYTE *source, int length) {
-    REBYTE a;
-    const REBYTE *srcptr = source + length;
+inline static bool isLegalUTF8(const Byte* source, int length) {
+    Byte a;
+    const Byte* srcptr = source + length;
 
     switch (length) {
       default:
@@ -293,14 +293,14 @@ inline static bool isLegalUTF8(const REBYTE *source, int length) {
 // If failure due to insufficient data or malformed bytes, then NULL is
 // returned (size is not advanced).
 //
-inline static const REBYTE *Back_Scan_UTF8_Char(
+inline static const Byte* Back_Scan_UTF8_Char(
     Codepoint *out,
-    const REBYTE *bp,
+    const Byte* bp,
     REBSIZ *size
 ){
     *out = 0;
 
-    const REBYTE *source = bp;
+    const Byte* source = bp;
     uint_fast8_t trail = trailingBytesForUTF8[*source];
 
     // Check that we have enough valid source bytes:
@@ -382,9 +382,9 @@ inline static const REBYTE *Back_Scan_UTF8_Char(
 // strategy that splits ASCII codes to basic incrementation...otherwise it
 // would try to read continuation bytes past a `\0` string terminator.  :-/
 //
-inline static const REBYTE *Back_Scan_UTF8_Char_Unchecked(
+inline static const Byte* Back_Scan_UTF8_Char_Unchecked(
     Codepoint *out,
-    const REBYTE *bp
+    const Byte* bp
 ){
     *out = *bp;  // wait to increment...
     uint_fast8_t trail = 0;  // count as we go

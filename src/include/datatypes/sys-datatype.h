@@ -143,14 +143,14 @@ inline static CFUNC** VAL_TYPE_HOOKS(noquote(Cell(const*)) type) {
     enum Reb_Kind k = VAL_TYPE_KIND_OR_CUSTOM(type);
     if (k != REB_CUSTOM)
         return Builtin_Type_Hooks[k];
-    return cast(CFUNC**, m_cast(REBYTE*, SER_DATA(VAL_TYPE_CUSTOM(type))));
+    return cast(CFUNC**, m_cast(Byte*, SER_DATA(VAL_TYPE_CUSTOM(type))));
 }
 
 inline static CFUNC** HOOKS_FOR_TYPE_OF(noquote(Cell(const*)) v) {
     enum Reb_Kind k = CELL_HEART(v);
     if (k != REB_CUSTOM)
         return Builtin_Type_Hooks[k];
-    return cast(CFUNC**, m_cast(REBYTE*, SER_DATA(CELL_CUSTOM_TYPE(v))));
+    return cast(CFUNC**, m_cast(Byte*, SER_DATA(CELL_CUSTOM_TYPE(v))));
 }
 
 #define Generic_Hook_For_Type_Of(v) \

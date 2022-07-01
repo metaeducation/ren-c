@@ -106,17 +106,17 @@
     inline static N *NOD(T *p) {
         constexpr bool base =
             std::is_same<T0, void>::value
-            or std::is_same<T0, REBYTE>::value;
+            or std::is_same<T0, Byte>::value;
 
         static_assert(
             base,
-            "NOD() works on void* or REBYTE*"
+            "NOD() works on void* or Byte*"
         );
 
         if (not p)
             return nullptr;
 
-        if ((*reinterpret_cast<const REBYTE*>(p) & (
+        if ((*reinterpret_cast<const Byte*>(p) & (
             NODE_BYTEMASK_0x80_NODE | NODE_BYTEMASK_0x40_STALE
         )) != (
             NODE_BYTEMASK_0x80_NODE
@@ -287,7 +287,7 @@
         if (not p)
             return nullptr;
 
-        if ((*reinterpret_cast<REBYTE*>(p) & (
+        if ((*reinterpret_cast<Byte*>(p) & (
             NODE_BYTEMASK_0x80_NODE | NODE_BYTEMASK_0x40_STALE
                 | NODE_BYTEMASK_0x01_CELL
         )) != (

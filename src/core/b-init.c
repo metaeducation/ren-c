@@ -115,8 +115,8 @@ static void Check_Basics(void)
     REBFLGS flags
         = FLAG_LEFT_BIT(5) | FLAG_SECOND_BYTE(21) | FLAG_SECOND_UINT16(1975);
 
-    REBYTE m = FIRST_BYTE(flags);  // 6th bit from left set (0b00000100 is 4)
-    REBYTE d = SECOND_BYTE(flags);
+    Byte m = FIRST_BYTE(flags);  // 6th bit from left set (0b00000100 is 4)
+    Byte d = SECOND_BYTE(flags);
     uint16_t y = SECOND_UINT16(flags);
     if (m != 4 or d != 21 or y != 1975) {
       #if !defined(NDEBUG)
@@ -850,7 +850,7 @@ void Startup_Core(void)
 
     size_t utf8_size;
     const int max = -1;  // trust size in gzip data
-    REBYTE *utf8 = Decompress_Alloc_Core(
+    Byte* utf8 = Decompress_Alloc_Core(
         &utf8_size,
         Boot_Block_Compressed,
         Boot_Block_Compressed_Size,

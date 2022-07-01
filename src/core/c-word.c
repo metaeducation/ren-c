@@ -201,7 +201,7 @@ static void Expand_Word_Table(void)
 //
 Symbol(const*) Intern_UTF8_Managed_Core(
     Symbol(*) preallocated,  // if not nullptr, put symbol here
-    const REBYTE *utf8,
+    const Byte* utf8,
     size_t size
 ){
     // The hashing technique used is called "linear probing":
@@ -538,7 +538,7 @@ void Startup_Symbols(void)
 {
     size_t uncompressed_size;
     const int max = -1;  // trust size in gzip data
-    REBYTE *bytes = Decompress_Alloc_Core(
+    Byte* bytes = Decompress_Alloc_Core(
         &uncompressed_size,
         Symbol_Strings_Compressed,
         Symbol_Strings_Compressed_Size,
@@ -557,8 +557,8 @@ void Startup_Symbols(void)
     // We assume no symbols will be larger than 256 characters, so instead
     // of delimiting them in the data we length-prefix them with a byte.
     //
-    REBYTE *tail = bytes + uncompressed_size;
-    REBYTE *at = bytes;
+    Byte* tail = bytes + uncompressed_size;
+    Byte* at = bytes;
     while (at != tail) {
         assert(at < tail);
 

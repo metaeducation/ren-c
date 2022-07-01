@@ -230,7 +230,7 @@ inline static REBVAL *Try_Leading_Blank_Pathify(
 inline static REBVAL *Init_Any_Sequence_Bytes(
     Cell(*) out,
     enum Reb_Kind kind,
-    const REBYTE *data,
+    const Byte* data,
     REBSIZ size
 ){
     Reset_Cell_Header_Untracked(out, kind, CELL_MASK_NONE);
@@ -245,7 +245,7 @@ inline static REBVAL *Init_Any_Sequence_Bytes(
     }
     else {
         PAYLOAD(Bytes, out).at_least_8[IDX_SEQUENCE_USED] = size;
-        REBYTE *dest = PAYLOAD(Bytes, out).at_least_8 + 1;
+        Byte* dest = PAYLOAD(Bytes, out).at_least_8 + 1;
         for (; size > 0; --size, ++data, ++dest)
             *dest = *data;
     }
@@ -273,7 +273,7 @@ inline static REBVAL *Try_Init_Any_Sequence_All_Integers(
 
     PAYLOAD(Bytes, out).at_least_8[IDX_SEQUENCE_USED] = len;
 
-    REBYTE *bp = PAYLOAD(Bytes, out).at_least_8 + 1;
+    Byte* bp = PAYLOAD(Bytes, out).at_least_8 + 1;
 
     Cell(const*) item = head;
     REBLEN n;
@@ -283,7 +283,7 @@ inline static REBVAL *Try_Init_Any_Sequence_All_Integers(
         REBI64 i64 = VAL_INT64(item);
         if (i64 < 0 or i64 > 255)
             return nullptr;  // only packing byte form for now
-        *bp = cast(REBYTE, i64);
+        *bp = cast(Byte, i64);
     }
 
     return cast(REBVAL*, out);
@@ -324,12 +324,12 @@ inline static REBVAL *Try_Init_Any_Sequence_Pairlike_Core(
     }
 
     if (IS_INTEGER(v1) and IS_INTEGER(v2)) {
-        REBYTE buf[2];
+        Byte buf[2];
         REBI64 i1 = VAL_INT64(v1);
         REBI64 i2 = VAL_INT64(v2);
         if (i1 >= 0 and i2 >= 0 and i1 <= 255 and i2 <= 255) {
-            buf[0] = cast(REBYTE, i1);
-            buf[1] = cast(REBYTE, i2);
+            buf[0] = cast(Byte, i1);
+            buf[1] = cast(Byte, i2);
             return Init_Any_Sequence_Bytes(out, kind, buf, 2);
         }
 
@@ -541,7 +541,7 @@ inline static Cell(const*) VAL_SEQUENCE_AT(
     }
 }
 
-inline static REBYTE VAL_SEQUENCE_BYTE_AT(
+inline static Byte VAL_SEQUENCE_BYTE_AT(
     noquote(Cell(const*)) sequence,
     REBLEN n
 ){
@@ -597,7 +597,7 @@ inline static bool Did_Get_Sequence_Bytes(
 ){
     REBLEN len = VAL_SEQUENCE_LEN(sequence);
 
-    REBYTE *dp = cast(REBYTE*, buf);
+    Byte* dp = cast(Byte*, buf);
     REBSIZ i;
     DECLARE_LOCAL (temp);
     for (i = 0; i < buf_size; ++i) {
@@ -612,7 +612,7 @@ inline static bool Did_Get_Sequence_Bytes(
         if (i64 < 0 or i64 > 255)
             return false;
 
-        dp[i] = cast(REBYTE, i64);
+        dp[i] = cast(Byte, i64);
     }
     return true;
 }

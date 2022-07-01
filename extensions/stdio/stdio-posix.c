@@ -56,7 +56,7 @@ void Startup_Stdio(void)
 //
 //  Read_Stdin_Byte_Interrupted: C
 //
-bool Read_Stdin_Byte_Interrupted(bool *eof, REBYTE *out) {
+bool Read_Stdin_Byte_Interrupted(bool *eof, Byte* out) {
     int byte_or_eof = fgetc(stdin);
     if (byte_or_eof != -1) {
         assert(byte_or_eof >= 0 and byte_or_eof < 256);
@@ -130,8 +130,8 @@ void Write_IO(const REBVAL *data, REBLEN len)
             //
             bool ok = true;
 
-            const REBYTE *tail = BIN_TAIL(VAL_BINARY(data));
-            const REBYTE *bp = VAL_BINARY_AT(data);
+            const Byte* tail = BIN_TAIL(VAL_BINARY(data));
+            const Byte* bp = VAL_BINARY_AT(data);
             for (; bp != tail; ++bp) {
                 char digits[2];
                 digits[0] = Hex_Digits[*bp / 16];
@@ -152,7 +152,7 @@ void Write_IO(const REBVAL *data, REBLEN len)
     else
   #endif
     {
-        const REBYTE *bp;
+        const Byte* bp;
         REBSIZ size;
         if (IS_BINARY(data)) {
             bp = VAL_DATA_AT(data);
@@ -184,7 +184,7 @@ void Write_IO(const REBVAL *data, REBLEN len)
 //
 // The request buffer must be long enough to hold result.
 //
-size_t Read_IO(REBYTE *buffer, size_t size)
+size_t Read_IO(Byte* buffer, size_t size)
 {
   #if defined(REBOL_SMART_CONSOLE)
     assert(not Term_IO);  // should have handled in %p-stdio.h

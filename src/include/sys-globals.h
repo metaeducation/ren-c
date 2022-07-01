@@ -73,12 +73,12 @@ PVAR Dispatcher* const *PG_Next_Native_Dispatcher;
 PVAR Context(*) PG_Currently_Loading_Module;
 
 //-- Various char tables:
-PVAR REBYTE *White_Chars;
+PVAR Byte* White_Chars;
 PVAR Codepoint *Upper_Cases;
 PVAR Codepoint *Lower_Cases;
 
 // Other:
-PVAR REBYTE *PG_Pool_Map;   // Memory pool size map (created on boot)
+PVAR Byte* PG_Pool_Map;   // Memory pool size map (created on boot)
 
 PVAR REB_OPTS *Reb_Opts;
 

@@ -31,6 +31,7 @@
 #include "sys-core.h"
 #include "sys-int-funcs.h"
 
+#undef Byte  // sys-zlib.h defines it compatibly (unsigned char)
 #include "sys-zlib.h"  // for crc32_z()
 
 #include "datatypes/sys-money.h"
@@ -44,10 +45,10 @@ REBINT CT_Binary(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
     UNUSED(strict);  // no lax form of comparison
 
     REBSIZ size1;
-    const REBYTE *data1 = VAL_BINARY_SIZE_AT(&size1, a);
+    const Byte* data1 = VAL_BINARY_SIZE_AT(&size1, a);
 
     REBSIZ size2;
-    const REBYTE *data2 = VAL_BINARY_SIZE_AT(&size2, b);
+    const Byte* data2 = VAL_BINARY_SIZE_AT(&size2, b);
 
     REBLEN size = MIN(size1, size2);
 
@@ -73,20 +74,20 @@ REBINT CT_Binary(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
 static REBBIN *Make_Binary_BE64(const REBVAL *arg)
 {
     REBBIN *bin = Make_Binary(8);
-    REBYTE *bp = BIN_HEAD(bin);
+    Byte* bp = BIN_HEAD(bin);
 
     REBI64 i;
     REBDEC d;
-    const REBYTE *cp;
+    const Byte* cp;
     if (IS_INTEGER(arg)) {
         assert(sizeof(REBI64) == 8);
         i = VAL_INT64(arg);
-        cp = cast(const REBYTE*, &i);
+        cp = cast(const Byte*, &i);
     }
     else {
         assert(sizeof(REBDEC) == 8);
         d = VAL_DECIMAL(arg);
-        cp = cast(const REBYTE*, &d);
+        cp = cast(const Byte*, &d);
     }
 
   #ifdef ENDIAN_LITTLE
@@ -128,7 +129,7 @@ static REBBIN *MAKE_TO_Binary_Common(const REBVAL *arg)
     switch (VAL_TYPE(arg)) {
     case REB_BINARY: {
         REBSIZ size;
-        const REBYTE *data = VAL_BINARY_SIZE_AT(&size, arg);
+        const Byte* data = VAL_BINARY_SIZE_AT(&size, arg);
         return Copy_Bytes(data, size); }
 
     case REB_TEXT:
@@ -268,8 +269,8 @@ static int Compare_Byte(void *thunk, const void *v1, const void *v2)
 {
     REBFLGS * const flags = cast(REBFLGS*, thunk);
 
-    REBYTE b1 = *cast(const REBYTE*, v1);
-    REBYTE b2 = *cast(const REBYTE*, v2);
+    Byte b1 = *cast(const Byte*, v1);
+    Byte b2 = *cast(const Byte*, v2);
 
     if (*flags & CC_FLAG_REVERSE)
         return b2 - b1;
@@ -289,7 +290,7 @@ void MF_Binary(REB_MOLD *mo, noquote(Cell(const*)) v, bool form)
         Pre_Mold(mo, v); // #[binary!
 
     REBSIZ size;
-    const REBYTE *data = VAL_BINARY_SIZE_AT(&size, v);
+    const Byte* data = VAL_BINARY_SIZE_AT(&size, v);
 
     switch (Get_System_Int(SYS_OPTIONS, OPTIONS_BINARY_BASE, 16)) {
       default:
@@ -350,7 +351,7 @@ REBTYPE(Binary)
         if (not Did_Get_Series_Index_From_Picker(&n, v, picker))
             return nullptr;
 
-        REBYTE b = *BIN_AT(VAL_BINARY(v), n);
+        Byte b = *BIN_AT(VAL_BINARY(v), n);
 
         return Init_Integer(OUT, b);
       }
@@ -386,7 +387,7 @@ REBTYPE(Binary)
             fail (Error_Out_Of_Range(setval));
 
         REBBIN *bin = VAL_BINARY_ENSURE_MUTABLE(v);
-        BIN_HEAD(bin)[n] = cast(REBYTE, i);
+        BIN_HEAD(bin)[n] = cast(Byte, i);
 
         return nullptr; }  // caller's REBBIN* is not stale, no update needed
 
@@ -605,10 +606,10 @@ REBTYPE(Binary)
             fail (Error_Math_Args(VAL_TYPE(arg), verb));
 
         REBSIZ t0;
-        const REBYTE *p0 = VAL_BINARY_SIZE_AT(&t0, v);
+        const Byte* p0 = VAL_BINARY_SIZE_AT(&t0, v);
 
         REBSIZ t1;
-        const REBYTE *p1 = VAL_BINARY_SIZE_AT(&t1, arg);
+        const Byte* p1 = VAL_BINARY_SIZE_AT(&t1, arg);
 
         REBSIZ smaller = MIN(t0, t1);  // smaller array size
         REBSIZ larger = MAX(t0, t1);
@@ -616,7 +617,7 @@ REBTYPE(Binary)
         REBBIN *series = Make_Binary(larger);
         TERM_BIN_LEN(series, larger);
 
-        REBYTE *dest = BIN_HEAD(series);
+        Byte* dest = BIN_HEAD(series);
 
         switch (id) {
           case SYM_BITWISE_AND: {
@@ -656,12 +657,12 @@ REBTYPE(Binary)
 
       case SYM_BITWISE_NOT: {
         REBSIZ size;
-        const REBYTE *bp = VAL_BINARY_SIZE_AT(&size, v);
+        const Byte* bp = VAL_BINARY_SIZE_AT(&size, v);
 
         REBBIN *bin = Make_Binary(size);
         TERM_BIN_LEN(bin, size);  // !!! size is decremented, must set now
 
-        REBYTE *dp = BIN_HEAD(bin);
+        Byte* dp = BIN_HEAD(bin);
         for (; size > 0; --size, ++bp, ++dp)
             *dp = ~(*bp);
 
@@ -714,7 +715,7 @@ REBTYPE(Binary)
         while (amount != 0) {
             REBLEN wheel = VAL_LEN_HEAD(v) - 1;
             while (true) {
-                REBYTE *b = BIN_AT(bin, wheel);
+                Byte* b = BIN_AT(bin, wheel);
                 if (amount > 0) {
                     if (*b == 255) {
                         if (wheel == VAL_INDEX(v))
@@ -753,11 +754,11 @@ REBTYPE(Binary)
         if (VAL_TYPE(v) != VAL_TYPE(arg))
             fail (Error_Not_Same_Type_Raw());
 
-        REBYTE *v_at = VAL_BINARY_AT_ENSURE_MUTABLE(v);
-        REBYTE *arg_at = VAL_BINARY_AT_ENSURE_MUTABLE(arg);
+        Byte* v_at = VAL_BINARY_AT_ENSURE_MUTABLE(v);
+        Byte* arg_at = VAL_BINARY_AT_ENSURE_MUTABLE(arg);
 
         if (index < tail and VAL_INDEX(arg) < VAL_LEN_HEAD(arg)) {
-            REBYTE temp = *v_at;
+            Byte temp = *v_at;
             *v_at = *arg_at;
             *arg_at = temp;
         }
@@ -768,13 +769,13 @@ REBTYPE(Binary)
         UNUSED(ARG(series));
 
         REBLEN len = Part_Len_May_Modify_Index(v, ARG(part));
-        REBYTE *bp = VAL_BINARY_AT_ENSURE_MUTABLE(v);  // index may've changed
+        Byte* bp = VAL_BINARY_AT_ENSURE_MUTABLE(v);  // index may've changed
 
         if (len > 0) {
             REBLEN n = 0;
             REBLEN m = len - 1;
             for (; n < len / 2; n++, m--) {
-                REBYTE b = bp[n];
+                Byte b = bp[n];
                 bp[n] = bp[m];
                 bp[m] = b;
             }
@@ -800,7 +801,7 @@ REBTYPE(Binary)
         Copy_Cell(OUT, v);  // copy to output before index adjustment
 
         REBLEN len = Part_Len_May_Modify_Index(v, ARG(part));
-        REBYTE *data_at = VAL_BINARY_AT_ENSURE_MUTABLE(v);  // ^ index changes
+        Byte* data_at = VAL_BINARY_AT_ENSURE_MUTABLE(v);  // ^ index changes
 
         if (len <= 1)
             return OUT;
@@ -839,7 +840,7 @@ REBTYPE(Binary)
 
         if (REF(seed)) { // binary contents are the seed
             REBSIZ size;
-            const REBYTE *data = VAL_BINARY_SIZE_AT(&size, v);
+            const Byte* data = VAL_BINARY_SIZE_AT(&size, v);
             Set_Random(crc32_z(0L, data, size));
             return NONE;
         }
@@ -861,7 +862,7 @@ REBTYPE(Binary)
         for (n = BIN_LEN(bin) - index; n > 1;) {
             REBLEN k = index + cast(REBLEN, Random_Int(secure)) % n;
             n--;
-            REBYTE swap = *BIN_AT(bin, k);
+            Byte swap = *BIN_AT(bin, k);
             *BIN_AT(bin, k) = *BIN_AT(bin, n + index);
             *BIN_AT(bin, n + index) = swap;
         }
@@ -927,7 +928,7 @@ REBNATIVE(enbin)
     REBBIN* bin = Make_Binary(num_bytes);
 
     REBINT delta = little ? 1 : -1;
-    REBYTE* bp = BIN_HEAD(bin);
+    Byte* bp = BIN_HEAD(bin);
     if (not little)
         bp += num_bytes - 1;  // go backwards for big endian
 
@@ -1000,7 +1001,7 @@ REBNATIVE(debin)
     INCLUDE_PARAMS_OF_DEBIN;
 
     REBSIZ bin_size;
-    const REBYTE *bin_data = VAL_BINARY_SIZE_AT(&bin_size, ARG(binary));
+    const Byte* bin_data = VAL_BINARY_SIZE_AT(&bin_size, ARG(binary));
 
     REBVAL* settings = rebValue("compose", ARG(settings));
 
@@ -1046,7 +1047,7 @@ REBNATIVE(debin)
     // to be correct for starters...
 
     REBINT delta = little ? -1 : 1;
-    const REBYTE* bp = bin_data;
+    const Byte* bp = bin_data;
     if (little)
         bp += num_bytes - 1;  // go backwards
 

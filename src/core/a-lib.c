@@ -159,7 +159,7 @@ void *RL_rebMalloc(size_t size)
             | SERIES_FLAG_DYNAMIC  // rebRepossess() needs bias field
     ));
 
-    REBYTE *ptr = BIN_HEAD(s) + ALIGN_SIZE;
+    Byte* ptr = BIN_HEAD(s) + ALIGN_SIZE;
 
     REBSER **ps = (cast(REBSER**, ptr) - 1);
     *ps = s;  // save self in bytes that appear immediately before the data
@@ -1550,7 +1550,7 @@ static size_t Bytes_Into(
 ){
     if (IS_BINARY(v)) {
         REBSIZ size;
-        const REBYTE *data = VAL_BINARY_SIZE_AT(&size, v);
+        const Byte* data = VAL_BINARY_SIZE_AT(&size, v);
         if (buf == nullptr) {
             assert(buf_size == 0);
             return size;
@@ -2393,7 +2393,7 @@ REBVAL *RL_rebCollateExtension_internal(
     Array(*) a = Make_Array(IDX_COLLATOR_MAX);  // details
     Init_Handle_Cdata(
         ARR_AT(a, IDX_COLLATOR_SCRIPT),
-        m_cast(REBYTE*, script_compressed),  // !!! by contract, don't change!
+        m_cast(Byte*, script_compressed),  // !!! by contract, don't change!
         script_compressed_size
     );
     Init_Integer(

@@ -36,6 +36,8 @@
 //
 
 #include "sys-core.h"
+
+#undef Byte  // sys-zlib.h defines it compatibly (unsigned char)
 #include "sys-zlib.h"
 
 
@@ -45,7 +47,7 @@
 // Decode bytes in Big Endian format (least significant byte first) into a
 // uint32.  GZIP format uses this to store the decompressed-size-mod-2^32.
 //
-static uint32_t Bytes_To_U32_BE(const REBYTE *bp)
+static uint32_t Bytes_To_U32_BE(const Byte* bp)
 {
     return cast(uint32_t, bp[0])
         | cast(uint32_t, bp[1] << 8)
@@ -128,7 +130,7 @@ static Context(*) Error_Compression(const z_stream *strm, int ret)
 // Common code for compressing raw deflate, zlib envelope, gzip envelope.
 // Exported as rebDeflateAlloc() and rebGunzipAlloc() for clarity.
 //
-REBYTE *Compress_Alloc_Core(
+Byte* Compress_Alloc_Core(
     REBSIZ *size_out,
     const void* input,
     REBSIZ size_in,
@@ -179,7 +181,7 @@ REBYTE *Compress_Alloc_Core(
     strm.avail_in = size_in;
     strm.next_in = cast(const z_Bytef*, input);
 
-    REBYTE *output = rebAllocN(REBYTE, buf_size);
+    Byte* output = rebAllocN(Byte, buf_size);
     strm.avail_out = buf_size;
     strm.next_out = output;
 
@@ -208,7 +210,7 @@ REBYTE *Compress_Alloc_Core(
     //
     assert(buf_size >= strm.total_out);
     if (buf_size - strm.total_out > 1024)
-        output = cast(REBYTE*, rebRealloc(output, strm.total_out));
+        output = cast(Byte*, rebRealloc(output, strm.total_out));
 
     deflateEnd(&strm);  // done last (so strm variables can be read up to end)
     return output;
@@ -221,7 +223,7 @@ REBYTE *Compress_Alloc_Core(
 // Common code for decompressing: raw deflate, zlib envelope, gzip envelope.
 // Exported as rebInflateAlloc() and rebGunzipAlloc() for clarity.
 //
-REBYTE *Decompress_Alloc_Core(
+Byte* Decompress_Alloc_Core(
     REBSIZ *size_out,
     const void *input,
     REBSIZ size_in,
@@ -281,7 +283,7 @@ REBYTE *Decompress_Alloc_Core(
         // (compared to the input data) is actually wrong.
         //
         buf_size = Bytes_To_U32_BE(
-            cast(const REBYTE*, input) + size_in - sizeof(uint32_t)
+            cast(const Byte*, input) + size_in - sizeof(uint32_t)
         );
     }
     else {
@@ -312,9 +314,9 @@ REBYTE *Decompress_Alloc_Core(
     // Use memory backed by a managed series (can be converted to a series
     // later if desired, via Rebserize)
     //
-    REBYTE *output = rebAllocN(REBYTE, buf_size);
+    Byte* output = rebAllocN(Byte, buf_size);
     strm.avail_out = buf_size;
-    strm.next_out = cast(REBYTE*, output);
+    strm.next_out = cast(Byte*, output);
 
     // Loop through and allocate a larger buffer each time we find the
     // decompression did not run to completion.  Stop if we exceed max.
@@ -347,7 +349,7 @@ REBYTE *Decompress_Alloc_Core(
         if (max >= 0 and buf_size > cast(REBLEN, max))
             buf_size = max;
 
-        output = cast(REBYTE*, rebRealloc(output, buf_size));
+        output = cast(Byte*, rebRealloc(output, buf_size));
 
         // Extending keeps the content but may realloc the pointer, so
         // put it at the same spot to keep writing to
@@ -362,7 +364,7 @@ REBYTE *Decompress_Alloc_Core(
     //
     assert(buf_size >= strm.total_out);
     if (strm.total_out - buf_size > 1024)
-        output = cast(REBYTE*, rebRealloc(output, strm.total_out));
+        output = cast(Byte*, rebRealloc(output, strm.total_out));
 
     if (size_out)
         *size_out = strm.total_out;
@@ -405,7 +407,7 @@ REBNATIVE(checksum_core)
     REBLEN len = Part_Len_May_Modify_Index(ARG(data), ARG(part));
 
     REBSIZ size;
-    const REBYTE *data = VAL_BYTES_LIMIT_AT(&size, ARG(data), len);
+    const Byte* data = VAL_BYTES_LIMIT_AT(&size, ARG(data), len);
 
     uLong crc;  // Note: zlib.h defines "crc32" as "z_crc32"
     switch (VAL_WORD_ID(ARG(method))) {
@@ -427,7 +429,7 @@ REBNATIVE(checksum_core)
     }
 
     REBBIN *bin = Make_Binary(4);
-    REBYTE *bp = BIN_HEAD(bin);
+    Byte* bp = BIN_HEAD(bin);
 
     // Returning as a BINARY! avoids signedness issues (R3-Alpha CRC-32 was a
     // signed integer, which was weird):
@@ -468,7 +470,7 @@ REBNATIVE(deflate)
     REBLEN limit = Part_Len_May_Modify_Index(ARG(data), ARG(part));
 
     REBSIZ size;
-    const REBYTE *bp = VAL_BYTES_LIMIT_AT(&size, ARG(data), limit);
+    const Byte* bp = VAL_BYTES_LIMIT_AT(&size, ARG(data), limit);
 
     enum Reb_Symbol_Id envelope;
     if (not REF(envelope))
@@ -535,7 +537,7 @@ REBNATIVE(inflate)
     else
         max = -1;
 
-    const REBYTE *data;
+    const Byte* data;
     REBSIZ size;
     if (IS_BINARY(ARG(data))) {
         size = Part_Len_May_Modify_Index(ARG(data), ARG(part));
@@ -543,7 +545,7 @@ REBNATIVE(inflate)
     }
     else {
         size = VAL_HANDLE_LEN(ARG(data));
-        data = VAL_HANDLE_POINTER(REBYTE, ARG(data));
+        data = VAL_HANDLE_POINTER(Byte, ARG(data));
     }
 
     enum Reb_Symbol_Id envelope;

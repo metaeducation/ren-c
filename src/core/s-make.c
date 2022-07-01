@@ -54,7 +54,7 @@ String(*) Make_String_Core(REBSIZ encoded_capacity, REBFLGS flags)
 // Create a string series from the given bytes.
 // Source is always latin-1 valid. Result is always 8bit.
 //
-REBBIN *Copy_Bytes(const REBYTE *src, REBINT len)
+REBBIN *Copy_Bytes(const Byte* src, REBINT len)
 {
     if (len < 0)
         len = strsize(src);
@@ -248,7 +248,7 @@ void Append_String_Limit(String(*) dst, noquote(Cell(const*)) src, REBLEN limit)
 //
 void Append_Int(String(*) dst, REBINT num)
 {
-    REBYTE buf[32];
+    Byte buf[32];
     Form_Int(buf, num);
 
     Append_Ascii(dst, s_cast(buf));
@@ -262,7 +262,7 @@ void Append_Int(String(*) dst, REBINT num)
 //
 void Append_Int_Pad(String(*) dst, REBINT num, REBINT digs)
 {
-    REBYTE buf[32];
+    Byte buf[32];
     if (digs > 0)
         Form_Int_Pad(buf, num, digs, -digs, '0');
     else
@@ -295,7 +295,7 @@ String(*) Append_UTF8_May_Fail(
     // * In the future, some operations will be accelerated by knowing that
     //   a string only contains ASCII codepoints.
 
-    const REBYTE *bp = cb_cast(utf8);
+    const Byte* bp = cb_cast(utf8);
 
     DECLARE_MOLD (mo); // !!! REVIEW: don't need intermediate if no CRLF_TO_LF
     Push_Mold(mo);
@@ -316,7 +316,7 @@ String(*) Append_UTF8_May_Fail(
         else if (Should_Skip_Ascii_Byte_May_Fail(
             bp,
             strmode,
-            cast(const REBYTE*, utf8)
+            cast(const Byte*, utf8)
         )){
             continue;
         }
@@ -396,12 +396,12 @@ void Join_Binary_In_Byte_Buf(const REBVAL *blk, REBINT limit)
 
           case REB_INTEGER:
             EXPAND_SERIES_TAIL(buf, 1);
-            *BIN_AT(buf, tail) = cast(REBYTE, VAL_UINT8(val));  // can fail()
+            *BIN_AT(buf, tail) = cast(Byte, VAL_UINT8(val));  // can fail()
             break;
 
           case REB_BINARY: {
             REBSIZ size;
-            const REBYTE *data = VAL_BINARY_SIZE_AT(&size, val);
+            const Byte* data = VAL_BINARY_SIZE_AT(&size, val);
             EXPAND_SERIES_TAIL(buf, size);
             memcpy(BIN_AT(buf, tail), data, size);
             break; }

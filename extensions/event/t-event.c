@@ -352,7 +352,7 @@ static REBVAL *Get_Event_Var(
             //
             REBVAL *writable = m_cast(REBVAL*, SPECIFIC(CELL_TO_VAL(v)));
 
-            SET_VAL_EVENT_NODE(writable, Copy_Bytes(cast(REBYTE*, str), -1));
+            SET_VAL_EVENT_NODE(writable, Copy_Bytes(cast(Byte*, str), -1));
             mutable_VAL_EVENT_FLAGS(writable) |= EVF_COPIED;
 
             free(str);

@@ -248,7 +248,7 @@ REBNATIVE(debase)
     INCLUDE_PARAMS_OF_DEBASE;
 
     REBSIZ size;
-    const REBYTE *bp = VAL_BYTES_AT(&size, ARG(value));
+    const Byte* bp = VAL_BYTES_AT(&size, ARG(value));
 
     REBINT base = 64;
     if (REF(base))
@@ -286,7 +286,7 @@ REBNATIVE(enbase)
         base = 64;
 
     REBSIZ size;
-    const REBYTE *bp = VAL_BYTES_AT(&size, ARG(value));
+    const Byte* bp = VAL_BYTES_AT(&size, ARG(value));
 
     DECLARE_MOLD (mo);
     Push_Mold(mo);
@@ -359,7 +359,7 @@ REBNATIVE(enhex)
         //
         // https://gcc.gnu.org/bugzilla/show_bug.cgi?id=43949
         //
-        REBYTE encoded[UNI_ENCODED_MAX];
+        Byte encoded[UNI_ENCODED_MAX];
         REBLEN encoded_size;
 
         if (c >= 0x80) {  // all non-ASCII characters *must* be percent encoded
@@ -372,7 +372,7 @@ REBNATIVE(enhex)
             // be retooled to help more with this.  For now just use it to
             // speed things up a little.
 
-            encoded[0] = cast(REBYTE, c);
+            encoded[0] = cast(Byte, c);
             encoded_size = 1;
 
             switch (GET_LEX_CLASS(c)) {
@@ -494,7 +494,7 @@ REBNATIVE(dehex)
     // buffer is used to hold up to 4 bytes (and a terminator) that need
     // UTF-8 decoding--the maximum one UTF-8 encoded codepoint may have.
     //
-    REBYTE scan[5];
+    Byte scan[5];
     REBSIZ scan_size = 0;
 
     REBLEN len;
@@ -515,20 +515,20 @@ REBNATIVE(dehex)
             ++i;
             if (c > UINT8_MAX)
                 c = '\0'; // LEX_DELIMIT, will cause error below
-            REBYTE lex1 = Lex_Map[cast(REBYTE, c)];
+            Byte lex1 = Lex_Map[cast(Byte, c)];
 
             cp = NEXT_CHR(&c, cp);
             ++i;
             if (c > UINT8_MAX)
                 c = '\0'; // LEX_DELIMIT, will cause error below
-            REBYTE lex2 = Lex_Map[cast(REBYTE, c)];
+            Byte lex2 = Lex_Map[cast(Byte, c)];
 
             // If class LEX_WORD or LEX_NUMBER, there is a value contained in
             // the mask which is the value of that "digit".  So A-F and
             // a-f can quickly get their numeric values.
             //
-            REBYTE d1 = lex1 & LEX_VALUE;
-            REBYTE d2 = lex2 & LEX_VALUE;
+            Byte d1 = lex1 & LEX_VALUE;
+            Byte d2 = lex2 & LEX_VALUE;
 
             if (
                 lex1 < LEX_WORD or (d1 == 0 and lex1 < LEX_NUMBER)
@@ -541,7 +541,7 @@ REBNATIVE(dehex)
             // need to consider it a "flushing point" for the scan buffer,
             // in order to not gloss over incomplete UTF-8 sequences.
             //
-            REBYTE b = (d1 << 4) + d2;
+            Byte b = (d1 << 4) + d2;
             scan[scan_size++] = b;
         }
 
@@ -558,7 +558,7 @@ REBNATIVE(dehex)
 
           decode_codepoint:
             scan[scan_size] = '\0';
-            const REBYTE *next; // goto would cross initialization
+            const Byte* next; // goto would cross initialization
             Codepoint decoded;
             if (scan[0] < 0x80) {
                 decoded = scan[0];
@@ -741,7 +741,7 @@ REBNATIVE(enline)
 
     Free_Bookmarks_Maybe_Null(s);  // !!! Could this be avoided sometimes?
 
-    REBYTE* bp = STR_HEAD(s); // expand may change the pointer
+    Byte* bp = STR_HEAD(s); // expand may change the pointer
     REBSIZ tail = STR_SIZE(s); // size in bytes after expansion
 
     // Add missing CRs
@@ -1029,7 +1029,7 @@ REBNATIVE(find_script)
         TERM_BIN(m_cast(REBBIN*, VAL_BINARY(arg)));
 
     REBSIZ size;
-    const REBYTE *bp = VAL_BYTES_AT(&size, arg);
+    const Byte* bp = VAL_BYTES_AT(&size, arg);
 
     REBINT offset = Scan_Header(bp, size);
     if (offset == -1)
@@ -1048,7 +1048,7 @@ REBNATIVE(find_script)
     // work in Scan_Header(), but since that works on arbitrary binaries it
     // doesn't always have a codepoint delta to return with the offset.)
 
-    const REBYTE *header_bp = bp + offset;
+    const Byte* header_bp = bp + offset;
 
     REBLEN index = VAL_INDEX(arg);
     Utf8(const*) cp = VAL_STRING_AT(arg);
@@ -1088,9 +1088,9 @@ REBNATIVE(invalid_utf8_q)
     REBVAL *arg = ARG(data);
 
     REBSIZ size;
-    const REBYTE *utf8 = VAL_BINARY_SIZE_AT(&size, arg);
+    const Byte* utf8 = VAL_BINARY_SIZE_AT(&size, arg);
 
-    const REBYTE *end = utf8 + size;
+    const Byte* end = utf8 + size;
 
     REBLEN trail;
     for (; utf8 != end; utf8 += trail) {

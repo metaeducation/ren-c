@@ -138,10 +138,10 @@ void MF_Date(REB_MOLD *mo, noquote(Cell(const*)) v_orig, bool form)
     Fold_Zone_Into_Date(v);
     assert(not Does_Date_Have_Zone(v));
 
-    REBYTE dash = GET_MOLD_FLAG(mo, MOLD_FLAG_SLASH_DATE) ? '/' : '-';
+    Byte dash = GET_MOLD_FLAG(mo, MOLD_FLAG_SLASH_DATE) ? '/' : '-';
 
-    REBYTE buf[64];
-    REBYTE *bp = &buf[0];
+    Byte buf[64];
+    Byte* bp = &buf[0];
 
     bp = Form_Int(bp, cast(REBINT, VAL_DAY(v)));
     *bp++ = dash;
@@ -539,7 +539,7 @@ Bounce MAKE_Date(
 
     if (IS_TEXT(arg)) {
         REBSIZ size;
-        const REBYTE *bp = Analyze_String_For_Scan(&size, arg, MAX_SCAN_DATE);
+        const Byte* bp = Analyze_String_For_Scan(&size, arg, MAX_SCAN_DATE);
         if (NULL == Scan_Date(out, bp, size))
             goto bad_make;
         return out;

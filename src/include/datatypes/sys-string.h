@@ -75,40 +75,40 @@ inline static Utf8(*) NEXT_CHR(
     Codepoint *codepoint_out,
     Utf8(const_if_unchecked_utf8*) cp
 ){
-    const REBYTE *t = cp;
+    const Byte* t = cp;
     if (*t < 0x80)
         *codepoint_out = *t;
     else
         t = Back_Scan_UTF8_Char_Unchecked(codepoint_out, t);
-    return cast(Utf8(*), m_cast(REBYTE*, t + 1));
+    return cast(Utf8(*), m_cast(Byte*, t + 1));
 }
 
 inline static Utf8(*) BACK_CHR(
     Codepoint *codepoint_out,
     Utf8(const_if_unchecked_utf8*) cp
 ){
-    const_if_unchecked_utf8 REBYTE *t = cp;
+    const_if_unchecked_utf8 Byte* t = cp;
     --t;
     while (Is_Continuation_Byte_If_Utf8(*t))
         --t;
     NEXT_CHR(codepoint_out, cast(Utf8(const_if_unchecked_utf8*), t));
-    return cast(Utf8(*), m_cast(REBYTE*, t));
+    return cast(Utf8(*), m_cast(Byte*, t));
 }
 
 inline static Utf8(*) NEXT_STR(Utf8(const_if_unchecked_utf8*) cp) {
-    const_if_unchecked_utf8 REBYTE *t = cp;
+    const_if_unchecked_utf8 Byte* t = cp;
     do {
         ++t;
     } while (Is_Continuation_Byte_If_Utf8(*t));
-    return cast(Utf8(*), m_cast(REBYTE*, t));
+    return cast(Utf8(*), m_cast(Byte*, t));
 }
 
 inline static Utf8(*) BACK_STR(Utf8(const_if_unchecked_utf8*) cp) {
-    const_if_unchecked_utf8 REBYTE *t = cp;
+    const_if_unchecked_utf8 Byte* t = cp;
     do {
         --t;
     } while (Is_Continuation_Byte_If_Utf8(*t));
-    return cast(Utf8(*), m_cast(REBYTE*, t));
+    return cast(Utf8(*), m_cast(Byte*, t));
 }
 
 inline static Utf8(*) SKIP_CHR(
@@ -175,7 +175,7 @@ inline static Codepoint CHR_CODE(Utf8(const*) cp) {
 inline static Utf8(*) WRITE_CHR(Utf8(*) cp, Codepoint c) {
     REBSIZ size = Encoded_Size_For_Codepoint(c);
     Encode_UTF8_Char(cp, c, size);
-    return cast(Utf8(*), cast(REBYTE*, cp) + size);
+    return cast(Utf8(*), cast(Byte*, cp) + size);
 }
 
 
@@ -209,10 +209,10 @@ inline static bool Is_String_Definitely_ASCII(String(const*) str) {
     SER_USED(ensure(String(const*), s))  // UTF-8 byte count (not codepoints)
 
 inline static Utf8(*) STR_HEAD(const_if_c String(*) s)
-  { return cast(Utf8(*), SER_HEAD(REBYTE, s)); }
+  { return cast(Utf8(*), SER_HEAD(Byte, s)); }
 
 inline static Utf8(*) STR_TAIL(const_if_c String(*) s)
-  { return cast(Utf8(*), SER_TAIL(REBYTE, s)); }
+  { return cast(Utf8(*), SER_TAIL(Byte, s)); }
 
 #if CPLUSPLUS_11
     inline static Utf8(const*) STR_HEAD(String(const*) s)
@@ -347,7 +347,7 @@ inline static void Free_Bookmarks_Maybe_Null(String(*) str) {
         for (i = 0; i != index; ++i)
             cp = NEXT_STR(cp);
 
-        REBSIZ actual = cast(REBYTE*, cp) - SER_DATA(s);
+        REBSIZ actual = cast(Byte*, cp) - SER_DATA(s);
         assert(actual == offset);
     }
 #endif
@@ -375,7 +375,7 @@ inline static Utf8(*) STR_AT(const_if_c String(*) s, REBLEN at) {
 
     if (Is_Definitely_Ascii(s)) {  // can't have any false positives
         assert(not LINK(Bookmarks, s));  // mutations must ensure this
-        return cast(Utf8(*), cast(REBYTE*, STR_HEAD(s)) + at);
+        return cast(Utf8(*), cast(Byte*, STR_HEAD(s)) + at);
     }
 
     Utf8(*) cp;  // can be used to calculate offset (relative to STR_HEAD())
@@ -711,7 +711,7 @@ inline static void SET_CHAR_AT(String(*) s, REBLEN n, Codepoint c) {
         int delta = size - old_size;
         if (delta < 0) {  // shuffle forward, memmove() vs memcpy(), overlaps!
             memmove(
-                cast(REBYTE*, cp) + size,
+                cast(Byte*, cp) + size,
                 old_next_cp,
                 STR_TAIL(s) - old_next_cp
             );
@@ -721,17 +721,17 @@ inline static void SET_CHAR_AT(String(*) s, REBLEN n, Codepoint c) {
         else {
             EXPAND_SERIES_TAIL(s, delta);  // this adds to SERIES_USED
             cp = cast(Utf8(*),  // refresh `cp` (may've reallocated!)
-                cast(REBYTE*, STR_HEAD(s)) + cp_offset
+                cast(Byte*, STR_HEAD(s)) + cp_offset
             );
-            REBYTE *later = cast(REBYTE*, cp) + delta;
+            Byte* later = cast(Byte*, cp) + delta;
             memmove(
                 later,
                 cp,
-                cast(REBYTE*, STR_TAIL(s)) - later
+                cast(Byte*, STR_TAIL(s)) - later
             );  // Note: may not be terminated
         }
 
-        *cast(REBYTE*, STR_TAIL(s)) = '\0';  // add terminator
+        *cast(Byte*, STR_TAIL(s)) = '\0';  // add terminator
 
         // `cp` still is the start of the character for the index we were
         // dealing with.  Only update bookmark if it's an offset *after*
@@ -751,8 +751,8 @@ inline static void SET_CHAR_AT(String(*) s, REBLEN n, Codepoint c) {
 }
 
 inline static REBLEN Num_Codepoints_For_Bytes(
-    const REBYTE *start,
-    const REBYTE *end
+    const Byte* start,
+    const Byte* end
 ){
     assert(end >= start);
     REBLEN num_chars = 0;
@@ -871,7 +871,7 @@ inline static REBSER *Copy_Binary_At_Len(
 // not been checked to see if they are valid UTF-8.  We assume all the bytes
 // *prior* are known to be valid.
 //
-inline static Context(*) Error_Illegal_Cr(const REBYTE *at, const REBYTE *start)
+inline static Context(*) Error_Illegal_Cr(const Byte* at, const Byte* start)
 {
     assert(*at == CR);
     REBLEN back_len = 0;
@@ -882,7 +882,7 @@ inline static Context(*) Error_Illegal_Cr(const REBYTE *at, const REBYTE *start)
     }
     REBVAL *str = rebSizedText(
         cast(const char*, back),
-        at - cast(const REBYTE*, back) + 1  // include CR (escaped, e.g. ^M)
+        at - cast(const Byte*, back) + 1  // include CR (escaped, e.g. ^M)
     );
     Context(*) error = Error_Illegal_Cr_Raw(str);
     rebRelease(str);
@@ -894,9 +894,9 @@ inline static Context(*) Error_Illegal_Cr(const REBYTE *at, const REBYTE *start)
 // repeat code for implementing Reb_Strmode many places.  See notes there.
 //
 inline static bool Should_Skip_Ascii_Byte_May_Fail(
-    const REBYTE *bp,
+    const Byte* bp,
     enum Reb_Strmode strmode,
-    const REBYTE *start  // need for knowing how far back for error context
+    const Byte* start  // need for knowing how far back for error context
 ){
     if (*bp == '\0')
         fail (Error_Illegal_Zero_Byte_Raw());  // never allow #{00} in strings

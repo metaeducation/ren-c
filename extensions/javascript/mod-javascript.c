@@ -895,7 +895,7 @@ REBNATIVE(js_native)
     else
         Append_Ascii(mo->series, "f.is_awaiter = false;\n");
 
-    REBYTE id_buf[60];  // !!! Why 60?  Copied from MF_Integer()
+    Byte id_buf[60];  // !!! Why 60?  Copied from MF_Integer()
     REBINT len = Emit_Integer(id_buf, native_id);
 
     // Rebol cannot hold onto JavaScript objects directly, so there has to be

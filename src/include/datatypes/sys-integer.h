@@ -74,10 +74,10 @@ inline static uint32_t VAL_UINT32(noquote(Cell(const*)) v) {
     return cast(uint32_t, VAL_INT64(v));
 }
 
-inline static REBYTE VAL_UINT8(noquote(Cell(const*)) v) {
+inline static Byte VAL_UINT8(noquote(Cell(const*)) v) {
     if (VAL_INT64(v) > 255 or VAL_INT64(v) < 0)
         fail (Error_Out_Of_Range(CELL_TO_VAL(v)));
-    return cast(REBYTE, VAL_INT32(v));
+    return cast(Byte, VAL_INT32(v));
 }
 
 

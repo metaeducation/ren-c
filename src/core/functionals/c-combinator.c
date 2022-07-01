@@ -201,7 +201,7 @@ Array(*) Expanded_Combinator_Spec(const REBVAL *original)
     ++item;
 
   blockscope {
-    const REBYTE utf8[] =
+    const Byte utf8[] =
         "remainder: [<opt> any-series!]\n"
         "state [frame!]\n"
         "input [any-series!]\n";

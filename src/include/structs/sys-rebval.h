@@ -445,8 +445,8 @@ union Reb_Any {  // needed to beat strict aliasing, used in payload
 };
 
 union Reb_Bytes_Extra {
-    REBYTE exactly_4[sizeof(uint32_t) * 1];
-    REBYTE at_least_4[sizeof(void*) * 1];
+    Byte exactly_4[sizeof(uint32_t) * 1];
+    Byte at_least_4[sizeof(void*) * 1];
 };
 
 #define IDX_EXTRA_USED 0  // index into exactly_4 when used for in cell storage
@@ -493,7 +493,7 @@ union Reb_Value_Extra { //=/////////////////// ACTUAL EXTRA DEFINITION ////=//
 struct Reb_Logic_Payload { bool flag; };  // see %sys-logic.h
 
 struct Reb_Character_Payload {  // see %sys-char.h
-    REBYTE size_then_encoded[8];
+    Byte size_then_encoded[8];
 };
 
 struct Reb_Integer_Payload { REBI64 i64; };  // see %sys-integer.h
@@ -512,8 +512,8 @@ struct Reb_Any_Payload  // generic, for adding payloads after-the-fact
 
 union Reb_Bytes_Payload  // IMPORTANT: Do not cast, use `Pointers` instead
 {
-    REBYTE exactly_8[sizeof(uint32_t) * 2];  // same on 32-bit/64-bit platforms
-    REBYTE at_least_8[sizeof(void*) * 2];  // size depends on platform
+    Byte exactly_8[sizeof(uint32_t) * 2];  // same on 32-bit/64-bit platforms
+    Byte at_least_8[sizeof(void*) * 2];  // size depends on platform
 };
 
 // COMMA! is evaluative, but you wouldn't usually think of it as being
@@ -628,7 +628,7 @@ union Reb_Value_Payload { //=/////////////// ACTUAL PAYLOAD DEFINITION ////=//
         // This doubles the cell size, but is a *very* helpful debug option.
         // See %sys-track.h for explanation.
         //
-        const char *file;  // is REBYTE (UTF-8), but char* for debug watch
+        const char *file;  // is Byte (UTF-8), but char* for debug watch
         uintptr_t line;
         uintptr_t tick;  // stored in the Reb_Value_Extra for basic tracking
         uintptr_t touch;  // see TOUCH_CELL(), pads out to 4 * sizeof(void*)

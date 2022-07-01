@@ -118,7 +118,7 @@ Bounce MAKE_Word(
         // clear that it should do so.  Review `Analyze_String_For_Scan()`
 
         REBSIZ size;
-        const REBYTE *bp = Analyze_String_For_Scan(&size, arg, MAX_SCAN_WORD);
+        const Byte* bp = Analyze_String_For_Scan(&size, arg, MAX_SCAN_WORD);
 
         if (NULL == Scan_Any_Word(out, kind, bp, size))
             fail (Error_Bad_Char_Raw(arg));
@@ -299,7 +299,7 @@ REBTYPE(Word)
         switch (property) {
         case SYM_LENGTH: {
             String(const*) spelling = VAL_WORD_SYMBOL(v);
-            const REBYTE *bp = STR_HEAD(spelling);
+            const Byte* bp = STR_HEAD(spelling);
             REBSIZ size = STR_SIZE(spelling);
             REBLEN len = 0;
             for (; size > 0; ++bp, --size) {

@@ -69,7 +69,7 @@ REBI64 Join_Time(REB_TIMEF *tf, bool neg)
 //
 // Scan string and convert to time.  Return zero if error.
 //
-const REBYTE *Scan_Time(Cell(*) out, const REBYTE *cp, REBLEN len)
+const Byte* Scan_Time(Cell(*) out, const Byte* cp, REBLEN len)
 {
     cast(void, len); // !!! should len be paid attention to?
 
@@ -102,7 +102,7 @@ const REBYTE *Scan_Time(Cell(*) out, const REBYTE *cp, REBLEN len)
     if (*cp++ != ':')
         return NULL;
 
-    const REBYTE *sp;
+    const Byte* sp;
 
     REBINT part2 = -1;
     sp = Grab_Int(cp, &part2);
@@ -127,13 +127,13 @@ const REBYTE *Scan_Time(Cell(*) out, const REBYTE *cp, REBLEN len)
             part4 = -1;
     }
 
-    REBYTE merid;
+    Byte merid;
     if (
         *cp != '\0'
         && (UP_CASE(*cp) == 'A' || UP_CASE(*cp) == 'P')
         && (cp[1] != '\0' and UP_CASE(cp[1]) == 'M')
     ){
-        merid = cast(REBYTE, UP_CASE(*cp));
+        merid = cast(Byte, UP_CASE(*cp));
         cp += 2;
     }
     else
@@ -249,7 +249,7 @@ Bounce MAKE_Time(
 
     case REB_TEXT: { // scan using same decoding as LOAD would
         REBSIZ size;
-        const REBYTE *bp = Analyze_String_For_Scan(&size, arg, MAX_SCAN_TIME);
+        const Byte* bp = Analyze_String_For_Scan(&size, arg, MAX_SCAN_TIME);
 
         if (Scan_Time(out, bp, size) == NULL)
             goto no_time;

@@ -199,7 +199,7 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
         if (GET_SERIES_FLAG(s, INACCESSIBLE))
             break;
 
-        assert(SER_WIDE(s) == sizeof(REBYTE));
+        assert(SER_WIDE(s) == sizeof(Byte));
         ASSERT_SERIES_TERM_IF_NEEDED(s);
         assert(Is_Marked(s));
         break; }
@@ -217,7 +217,7 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
         const REBSER *s = VAL_SERIES(v);
         ASSERT_SERIES_TERM_IF_NEEDED(s);
 
-        assert(SER_WIDE(s) == sizeof(REBYTE));
+        assert(SER_WIDE(s) == sizeof(Byte));
         assert(Is_Marked(s));
 
         if (IS_NONSYMBOL_STRING(s)) {

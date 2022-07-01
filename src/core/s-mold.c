@@ -91,7 +91,7 @@
 // techniques might use an invalid UTF-8 character as an end-of-buffer signal
 // and notice it during writes, how END markers are used by the data stack.
 //
-REBYTE *Prep_Mold_Overestimated(REB_MOLD *mo, REBLEN num_bytes)
+Byte* Prep_Mold_Overestimated(REB_MOLD *mo, REBLEN num_bytes)
 {
     REBLEN tail = STR_LEN(mo->series);
     EXPAND_SERIES_TAIL(mo->series, num_bytes);  // terminates at guess
@@ -156,7 +156,7 @@ void New_Indented_Line(REB_MOLD *mo)
 {
     // Check output string has content already but no terminator:
     //
-    REBYTE *bp;
+    Byte* bp;
     if (STR_LEN(mo->series) == 0)
         bp = nullptr;
     else {

@@ -112,8 +112,8 @@ typedef struct rebol_scan_state {  // shared across all levels of a scan
     //
     // Beginning and end positions of currently processed token.
     //
-    const REBYTE *begin;
-    const REBYTE *end;
+    const Byte* begin;
+    const Byte* end;
 
     // If feed is NULL, then it is assumed that the `begin` is the source of
     // the UTF-8 data to scan.  Otherwise, it is a variadic feed of UTF-8
@@ -129,13 +129,13 @@ typedef struct rebol_scan_state {  // shared across all levels of a scan
     String(const*) file;  // file currently being scanned (or anonymous)
 
     REBLIN line;  // line number where current scan position is
-    const REBYTE *line_head;  // pointer to head of current line (for errors)
+    const Byte* line_head;  // pointer to head of current line (for errors)
 
     // The "limit" feature was not implemented, scanning just stopped at '\0'.
     // It may be interesting in the future, but it doesn't mix well with
     // scanning variadics which merge REBVAL and UTF-8 strings together...
     //
-    /* const REBYTE *limit; */
+    /* const Byte* limit; */
 
     // !!! R3-Alpha had a /RELAX mode for TRANSCODE, which offered the ability
     // to get a partial scan with an error on a token.  An error propagating
@@ -162,10 +162,10 @@ typedef struct rebol_scan_level {  // each array scan corresponds to a level
     // (Chosen as the terminal character to use in error messages for the
     // character we are seeking to find a match for).
     //
-    REBYTE mode;
+    Byte mode;
 
     REBLEN start_line;
-    const REBYTE *start_line_head;
+    const Byte* start_line_head;
 
     // !!! Before stackless, these were locals in Scan_To_Stack()
     //

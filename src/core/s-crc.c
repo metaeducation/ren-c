@@ -26,6 +26,7 @@
 
 #include "datatypes/sys-money.h" // !!! Needed for hash (should be a method?)
 
+#undef Byte  // sys-zlib.h defines it compatibly (unsigned char)
 #include "sys-zlib.h" // re-use CRC code from zlib
 const z_crc_t *crc32_table; // pointer to the zlib CRC32 table
 
@@ -39,7 +40,7 @@ const z_crc_t *crc32_table; // pointer to the zlib CRC32 table
 // See also: Hash_UTF8_Caseless(), which works with already validated UTF-8
 // bytes and takes a length in codepoints instead of a byte size.
 //
-uint32_t Hash_Scan_UTF8_Caseless_May_Fail(const REBYTE *utf8, REBSIZ size)
+uint32_t Hash_Scan_UTF8_Caseless_May_Fail(const Byte* utf8, REBSIZ size)
 {
     uint32_t crc = 0x00000000;
 
@@ -181,7 +182,7 @@ uint32_t Hash_Value(Cell(const*) cell)
 
       case REB_BINARY: {
         REBSIZ size;
-        const REBYTE *data = VAL_BINARY_SIZE_AT(&size, cell);
+        const Byte* data = VAL_BINARY_SIZE_AT(&size, cell);
         hash = Hash_Bytes(data, size);
         break; }
 
@@ -469,10 +470,10 @@ REBSER *Hash_Block(const REBVAL *block, REBLEN skip, bool cased)
 // Compute an IP checksum given some data and a length.
 // Used only on BINARY values.
 //
-REBINT Compute_IPC(const REBYTE *data, REBSIZ size)
+REBINT Compute_IPC(const Byte* data, REBSIZ size)
 {
     REBLEN sum = 0;  // stores the summation
-    const REBYTE *bp = data;
+    const Byte* bp = data;
 
     while (size > 1) {
         sum += (bp[0] << 8) | bp[1];
@@ -497,7 +498,7 @@ REBINT Compute_IPC(const REBYTE *data, REBSIZ size)
 //
 // Return a 32-bit hash value for the bytes.
 //
-REBINT Hash_Bytes(const REBYTE *data, REBLEN len) {
+REBINT Hash_Bytes(const Byte* data, REBLEN len) {
     uint32_t crc = 0x00000000;
 
     REBLEN n;

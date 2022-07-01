@@ -50,30 +50,30 @@
 
 //=//// BINARY! SERIES ////////////////////////////////////////////////////=//
 
-inline static REBYTE *BIN_AT(const_if_c REBBIN *bin, REBLEN n)
-  { return SER_AT(REBYTE, bin, n); }
+inline static Byte* BIN_AT(const_if_c REBBIN *bin, REBLEN n)
+  { return SER_AT(Byte, bin, n); }
 
-inline static REBYTE *BIN_HEAD(const_if_c REBBIN *bin)
-  { return SER_HEAD(REBYTE, bin); }
+inline static Byte* BIN_HEAD(const_if_c REBBIN *bin)
+  { return SER_HEAD(Byte, bin); }
 
-inline static REBYTE *BIN_TAIL(const_if_c REBBIN *bin)
-  { return SER_TAIL(REBYTE, bin); }
+inline static Byte* BIN_TAIL(const_if_c REBBIN *bin)
+  { return SER_TAIL(Byte, bin); }
 
-inline static REBYTE *BIN_LAST(const_if_c REBBIN *bin)
-  { return SER_LAST(REBYTE, bin); }
+inline static Byte* BIN_LAST(const_if_c REBBIN *bin)
+  { return SER_LAST(Byte, bin); }
 
 #if CPLUSPLUS_11
-    inline static const REBYTE *BIN_AT(const REBBIN *bin, REBLEN n)
-      { return SER_AT(const REBYTE, bin, n); }
+    inline static const Byte* BIN_AT(const REBBIN *bin, REBLEN n)
+      { return SER_AT(const Byte, bin, n); }
 
-    inline static const REBYTE *BIN_HEAD(const REBBIN *bin)
-      { return SER_HEAD(const REBYTE, bin); }
+    inline static const Byte* BIN_HEAD(const REBBIN *bin)
+      { return SER_HEAD(const Byte, bin); }
 
-    inline static const REBYTE *BIN_TAIL(const REBBIN *bin)
-      { return SER_TAIL(const REBYTE, bin); }
+    inline static const Byte* BIN_TAIL(const REBBIN *bin)
+      { return SER_TAIL(const Byte, bin); }
 
-    inline static const REBYTE *BIN_LAST(const REBBIN *bin)
-      { return SER_LAST(const REBYTE, bin); }
+    inline static const Byte* BIN_LAST(const REBBIN *bin)
+      { return SER_LAST(const Byte, bin); }
 #endif
 
 inline static REBLEN BIN_LEN(const REBBIN *s) {
@@ -102,7 +102,7 @@ inline static REBBIN *Make_Binary_Core(REBLEN capacity, REBFLGS flags)
 
     REBSER *s = Make_Series(capacity + 1, FLAG_FLAVOR(BINARY) | flags);
   #if !defined(NDEBUG)
-    *SER_HEAD(REBYTE, s) = BINARY_BAD_UTF8_TAIL_BYTE;  // reserve for '\0'
+    *SER_HEAD(Byte, s) = BINARY_BAD_UTF8_TAIL_BYTE;  // reserve for '\0'
   #endif
     return BIN(s);
 }
@@ -125,7 +125,7 @@ inline static const REBBIN *VAL_BINARY(noquote(Cell(const*)) v) {
     m_cast(REBBIN*, VAL_BINARY(KNOWN_MUTABLE(v)))
 
 
-inline static const REBYTE *VAL_BINARY_SIZE_AT(
+inline static const Byte* VAL_BINARY_SIZE_AT(
     REBSIZ *size_at_out,
     noquote(Cell(const*)) v
 ){
@@ -140,16 +140,16 @@ inline static const REBYTE *VAL_BINARY_SIZE_AT(
 }
 
 #define VAL_BINARY_SIZE_AT_ENSURE_MUTABLE(size_out,v) \
-    m_cast(REBYTE*, VAL_BINARY_SIZE_AT((size_out), ENSURE_MUTABLE(v)))
+    m_cast(Byte*, VAL_BINARY_SIZE_AT((size_out), ENSURE_MUTABLE(v)))
 
 #define VAL_BINARY_AT(v) \
     VAL_BINARY_SIZE_AT(nullptr, (v))
 
 #define VAL_BINARY_AT_ENSURE_MUTABLE(v) \
-    m_cast(REBYTE*, VAL_BINARY_AT(ENSURE_MUTABLE(v)))
+    m_cast(Byte*, VAL_BINARY_AT(ENSURE_MUTABLE(v)))
 
 #define VAL_BINARY_AT_KNOWN_MUTABLE(v) \
-    m_cast(REBYTE*, VAL_BINARY_AT(KNOWN_MUTABLE(v)))
+    m_cast(Byte*, VAL_BINARY_AT(KNOWN_MUTABLE(v)))
 
 #define Init_Binary(out,bin) \
     Init_Any_Series((out), REB_BINARY, (bin))

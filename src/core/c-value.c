@@ -215,8 +215,8 @@ void* Probe_Core_Debug(
     else switch (Detect_Rebol_Pointer(p)) {
       case DETECTED_AS_UTF8:
         if (
-            (*cast(const REBYTE*, p) & NODE_BYTEMASK_0x80_NODE)
-            and (*cast(const REBYTE*, p) & NODE_BYTEMASK_0x01_CELL)
+            (*cast(const Byte*, p) & NODE_BYTEMASK_0x80_NODE)
+            and (*cast(const Byte*, p) & NODE_BYTEMASK_0x01_CELL)
         ){
             printf("Wacky UTF-8 String or Stale Cell (assuming stale cell)\n");
             REBVAL *v = cast(REBVAL*, m_cast(void*, p));
@@ -231,7 +231,7 @@ void* Probe_Core_Debug(
             goto cleanup;
         }
 
-        if (*cast(const REBYTE*, p) == '\0')
+        if (*cast(const Byte*, p) == '\0')
             Probe_Print_Helper(p, expr, "REB_0 (or NUL C String)", file, line);
         else {
             Probe_Print_Helper(p, expr, "C String", file, line);

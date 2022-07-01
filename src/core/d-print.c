@@ -53,8 +53,8 @@ void Form_Hex_Pad(
     REBI64 val, // !!! was REBU64 in R3-Alpha, but code did sign comparisons!
     REBINT len
 ){
-    REBYTE buffer[MAX_HEX_LEN + 4];
-    REBYTE *bp = buffer + MAX_HEX_LEN + 1;
+    Byte buffer[MAX_HEX_LEN + 4];
+    Byte* bp = buffer + MAX_HEX_LEN + 1;
 
     REBI64 sgn = (val < 0) ? -1 : 0;
 
@@ -79,7 +79,7 @@ void Form_Hex_Pad(
 //
 // Convert byte-sized int to xx format.
 //
-void Form_Hex2(REB_MOLD *mo, REBYTE b)
+void Form_Hex2(REB_MOLD *mo, Byte b)
 {
     Append_Codepoint(mo->series, Hex_Digits[(b & 0xf0) >> 4]);
     Append_Codepoint(mo->series, Hex_Digits[b & 0xf]);
@@ -91,7 +91,7 @@ void Form_Hex2(REB_MOLD *mo, REBYTE b)
 //
 // Convert byte to %xx format
 //
-void Form_Hex_Esc(REB_MOLD *mo, REBYTE b)
+void Form_Hex_Esc(REB_MOLD *mo, Byte b)
 {
     Append_Codepoint(mo->series, '%');
     Append_Codepoint(mo->series, Hex_Digits[(b & 0xf0) >> 4]);
@@ -104,14 +104,14 @@ void Form_Hex_Esc(REB_MOLD *mo, REBYTE b)
 //
 // Convert 32 bit RGBA to xxxxxx format.
 //
-void Form_RGBA(REB_MOLD *mo, const REBYTE *dp)
+void Form_RGBA(REB_MOLD *mo, const Byte* dp)
 {
     REBLEN len_old = STR_LEN(mo->series);
     REBSIZ used_old = STR_SIZE(mo->series);
 
     EXPAND_SERIES_TAIL(mo->series, 8);  // grow by 8 bytes, may realloc
 
-    REBYTE *bp = BIN_AT(mo->series, used_old);  // potentially new buffer
+    Byte* bp = BIN_AT(mo->series, used_old);  // potentially new buffer
 
     bp[0] = Hex_Digits[(dp[0] >> 4) & 0xf];
     bp[1] = Hex_Digits[dp[0] & 0xf];

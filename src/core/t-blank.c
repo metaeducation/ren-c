@@ -203,14 +203,14 @@ REBINT CT_Handle(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
     else if (Is_Handle_Cfunc(b))
         return -1;
 
-    if (VAL_HANDLE_POINTER(REBYTE, a) == VAL_HANDLE_POINTER(REBYTE, b)) {
+    if (VAL_HANDLE_POINTER(Byte, a) == VAL_HANDLE_POINTER(Byte, b)) {
         if (VAL_HANDLE_LEN(a) == VAL_HANDLE_LEN(b))
             return 0;
 
         return VAL_HANDLE_LEN(a) > VAL_HANDLE_LEN(b) ? 1 : -1;
     }
 
-    return VAL_HANDLE_POINTER(REBYTE, a) > VAL_HANDLE_POINTER(REBYTE, b)
+    return VAL_HANDLE_POINTER(Byte, a) > VAL_HANDLE_POINTER(Byte, b)
         ? 1
         : -1;
 }

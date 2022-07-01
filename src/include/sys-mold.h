@@ -31,9 +31,9 @@ struct rebol_mold {
     REBLEN limit;       // how many characters before cutting off
     REBLEN reserve;     // how much capacity to reserve at the outset
     REBINT indent;      // indentation amount
-    REBYTE period;      // for decimal point
-    REBYTE dash;        // for date fields
-    REBYTE digits;      // decimal digits
+    Byte period;      // for decimal point
+    Byte dash;        // for date fields
+    Byte digits;      // decimal digits
 };
 
 #define Drop_Mold_If_Pushed(mo) \

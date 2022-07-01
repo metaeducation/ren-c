@@ -465,7 +465,7 @@ inline static REBLEN SER_USED(const REBSER *s) {
 // for instance a generic debugging routine might just want a byte pointer
 // but have no element type pointer to pass in.
 //
-inline static REBYTE *SER_DATA(const_if_c REBSER *s) {
+inline static Byte* SER_DATA(const_if_c REBSER *s) {
     // if updating, also update manual inlining in SER_AT_RAW
 
     // The VAL_CONTEXT(), VAL_SERIES(), VAL_ARRAY() extractors do the failing
@@ -474,11 +474,11 @@ inline static REBYTE *SER_DATA(const_if_c REBSER *s) {
     assert(NOT_SERIES_FLAG(s, INACCESSIBLE));
 
     return GET_SERIES_FLAG(s, DYNAMIC)
-        ? cast(REBYTE*, s->content.dynamic.data)
-        : cast(REBYTE*, &s->content);
+        ? cast(Byte*, s->content.dynamic.data)
+        : cast(Byte*, &s->content);
 }
 
-inline static REBYTE *SER_DATA_AT(REBYTE w, const_if_c REBSER *s, REBLEN i) {
+inline static Byte* SER_DATA_AT(Byte w, const_if_c REBSER *s, REBLEN i) {
   #if !defined(NDEBUG)
     if (w != SER_WIDE(s)) {  // will be "unusual" value if free
         if (IS_FREE_NODE(s))
@@ -500,17 +500,17 @@ inline static REBYTE *SER_DATA_AT(REBYTE w, const_if_c REBSER *s, REBLEN i) {
 
     return ((w) * (i)) + ( // v-- inlining of SER_DATA
         GET_SERIES_FLAG(s, DYNAMIC)
-            ? cast(REBYTE*, s->content.dynamic.data)
-            : cast(REBYTE*, &s->content)
+            ? cast(Byte*, s->content.dynamic.data)
+            : cast(Byte*, &s->content)
         );
 }
 
 #if CPLUSPLUS_11
-    inline static const REBYTE *SER_DATA(const REBSER *s)  // "SER_DATA_HEAD"
+    inline static const Byte* SER_DATA(const REBSER *s)  // "SER_DATA_HEAD"
       { return SER_DATA(m_cast(REBSER*, s)); }
 
-    inline static const REBYTE *SER_DATA_AT(
-        REBYTE w,
+    inline static const Byte* SER_DATA_AT(
+        Byte w,
         const REBSER *s,
         REBLEN i
     ){
@@ -585,7 +585,7 @@ inline static void SET_SERIES_USED(REBSER *s, REBLEN used) {
 
   #if !defined(NDEBUG)
     if (SER_WIDE(s) == 1) {  // presume BINARY! or ANY-STRING! (?)
-        REBYTE *tail = SER_AT(REBYTE, s, used);
+        Byte* tail = SER_AT(Byte, s, used);
         *tail = BINARY_BAD_UTF8_TAIL_BYTE;  // make missing terminator obvious
     }
   #endif
@@ -617,24 +617,24 @@ inline static void SET_SERIES_LEN(REBSER *s, REBLEN len) {
 #endif
 
 
-inline static REBYTE *SER_DATA_TAIL(size_t w, const_if_c REBSER *s)
+inline static Byte* SER_DATA_TAIL(size_t w, const_if_c REBSER *s)
   { return SER_DATA_AT(w, s, SER_USED(s)); }
 
 #if CPLUSPLUS_11
-    inline static const REBYTE *SER_DATA_TAIL(size_t w, const REBSER *s)
+    inline static const Byte* SER_DATA_TAIL(size_t w, const REBSER *s)
       { return SER_DATA_AT(w, s, SER_USED(s)); }
 #endif
 
 #define SER_TAIL(t,s) \
     cast(t*, SER_DATA_TAIL(sizeof(t), (s)))
 
-inline static REBYTE *SER_DATA_LAST(size_t wide, const_if_c REBSER *s) {
+inline static Byte* SER_DATA_LAST(size_t wide, const_if_c REBSER *s) {
     assert(SER_USED(s) != 0);
     return SER_DATA_AT(wide, s, SER_USED(s) - 1);
 }
 
 #if CPLUSPLUS_11
-    inline static const REBYTE *SER_DATA_LAST(size_t wide, const REBSER *s) {
+    inline static const Byte* SER_DATA_LAST(size_t wide, const REBSER *s) {
         assert(SER_USED(s) != 0);
         return SER_DATA_AT(wide, s, SER_USED(s) - 1);
     }
@@ -687,10 +687,10 @@ inline static void TERM_SERIES_IF_NECESSARY(REBSER *s)
 {
     if (SER_WIDE(s) == 1) {
         if (IS_SER_UTF8(s))
-            *SER_TAIL(REBYTE, s) = '\0';
+            *SER_TAIL(Byte, s) = '\0';
         else {
           #if !defined(NDEBUG)
-            *SER_TAIL(REBYTE, s) = BINARY_BAD_UTF8_TAIL_BYTE;
+            *SER_TAIL(Byte, s) = BINARY_BAD_UTF8_TAIL_BYTE;
           #endif
         }
     }
@@ -1079,7 +1079,7 @@ inline static REBLEN VAL_INDEX(noquote(Cell(const*)) v) {
 }
 
 
-inline static const REBYTE *VAL_DATA_AT(noquote(Cell(const*)) v) {
+inline static const Byte* VAL_DATA_AT(noquote(Cell(const*)) v) {
     return SER_DATA_AT(SER_WIDE(VAL_SERIES(v)), VAL_SERIES(v), VAL_INDEX(v));
 }
 
@@ -1241,7 +1241,7 @@ inline static bool Did_Series_Data_Alloc(REBSER *s, REBLEN capacity) {
     //
     assert(GET_SERIES_FLAG(s, DYNAMIC)); // caller sets
 
-    REBYTE wide = SER_WIDE(s);
+    Byte wide = SER_WIDE(s);
     assert(wide != 0);
 
     if (cast(REBU64, capacity) * wide > INT32_MAX)  // R3-Alpha said "too big"

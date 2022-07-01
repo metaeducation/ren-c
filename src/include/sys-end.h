@@ -51,10 +51,10 @@
 //
 #if (! DEBUG_CHECK_ENDS)
     #define Is_End(p) \
-        (((const REBYTE*)(p))[0] == END_SIGNAL_BYTE)  // Note: needs (p) parens!
+        (((const Byte*)(p))[0] == END_SIGNAL_BYTE)  // Note: needs (p) parens!
 #else
     inline static bool Is_End(const void *p) {
-        const REBYTE* bp = cast(const REBYTE*, p);
+        const Byte* bp = cast(const Byte*, p);
 
         if (*bp != END_SIGNAL_BYTE) {
             assert(*bp & NODE_BYTEMASK_0x01_CELL);

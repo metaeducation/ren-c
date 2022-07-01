@@ -287,8 +287,8 @@ inline static enum Reb_Kind VAL_TYPE_UNCHECKED(Cell(const*) v) {
         const char *file,
         int line
     ){
-        REBYTE heart_byte = HEART_BYTE_UNCHECKED(v);
-        REBYTE quote_byte = QUOTE_BYTE_UNCHECKED(v);
+        Byte heart_byte = HEART_BYTE_UNCHECKED(v);
+        Byte quote_byte = QUOTE_BYTE_UNCHECKED(v);
 
         if (
             (v->header.bits & (

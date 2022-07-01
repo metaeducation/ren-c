@@ -113,7 +113,7 @@ Bounce MAKE_Bitset(
 
     if (IS_BINARY(arg)) {
         REBSIZ size;
-        const REBYTE *at = VAL_BINARY_SIZE_AT(&size, arg);
+        const Byte* at = VAL_BINARY_SIZE_AT(&size, arg);
         memcpy(BIN_HEAD(bin), at, (size / 8) + 1);
         return out;
     }
@@ -241,7 +241,7 @@ void Set_Bit(REBBIN *bset, REBLEN n, bool set)
 {
     REBLEN i = n >> 3;
     REBLEN tail = BIN_LEN(bset);
-    REBYTE bit;
+    Byte bit;
 
     // Expand if not enough room:
     if (i >= tail) {
@@ -277,7 +277,7 @@ bool Set_Bits(REBBIN *bset, Cell(const*) val, bool set)
     if (IS_BINARY(val)) {
         REBLEN i = VAL_INDEX(val);
 
-        const REBYTE *bp = BIN_HEAD(VAL_BINARY(val));
+        const Byte* bp = BIN_HEAD(VAL_BINARY(val));
         for (; i != VAL_LEN_HEAD(val); i++)
             Set_Bit(bset, bp[i], set);
 
@@ -386,7 +386,7 @@ bool Set_Bits(REBBIN *bset, Cell(const*) val, bool set)
                 return false;
 
             REBSIZ n;
-            const REBYTE *at = VAL_BINARY_SIZE_AT(&n, item);
+            const Byte* at = VAL_BINARY_SIZE_AT(&n, item);
 
             Codepoint c = BIN_LEN(bset);
             if (n >= c) {
@@ -421,7 +421,7 @@ bool Check_Bits(const REBBIN *bset, Cell(const*) val, bool uncased)
 
     if (IS_BINARY(val)) {
         REBLEN i = VAL_INDEX(val);
-        const REBYTE *bp = BIN_HEAD(VAL_BINARY(val));
+        const Byte* bp = BIN_HEAD(VAL_BINARY(val));
         for (; i != VAL_LEN_HEAD(val); ++i)
             if (Check_Bit(bset, bp[i], uncased))
                 return true;
@@ -532,7 +532,7 @@ bool Check_Bits(const REBBIN *bset, Cell(const*) val, bool uncased)
 void Trim_Tail_Zeros(REBBIN *ser)
 {
     REBLEN len = BIN_LEN(ser);
-    REBYTE *bp = BIN_HEAD(ser);
+    Byte* bp = BIN_HEAD(ser);
 
     while (len > 0 && bp[len] == 0)
         len--;

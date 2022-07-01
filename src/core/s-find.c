@@ -36,8 +36,8 @@
 // in order to be purely numeric and not need to vary by locale.  Review.
 //
 REBINT Compare_Ascii_Uncased(
-    const REBYTE *b1,
-    const REBYTE *b2,
+    const Byte* b1,
+    const Byte* b2,
     REBLEN len
 ){
     for (; len > 0; len--, b1++, b2++) {
@@ -57,7 +57,7 @@ REBINT Compare_Ascii_Uncased(
 // Compare two binary strings case insensitively, stopping at '\0' terminator.
 // Return where the first differed.
 //
-const REBYTE *Try_Diff_Bytes_Uncased(const REBYTE *src, const REBYTE *pat)
+const Byte* Try_Diff_Bytes_Uncased(const Byte* src, const Byte* pat)
 {
     while (*src != '\0' and *pat != '\0') {
         if (LO_CASE(*src++) != LO_CASE(*pat++))
@@ -91,7 +91,7 @@ const REBYTE *Try_Diff_Bytes_Uncased(const REBYTE *src, const REBYTE *pat)
 //
 // Used for: WORD comparison.
 //
-REBINT Compare_UTF8(const REBYTE *s1, const REBYTE *s2, REBSIZ l2)
+REBINT Compare_UTF8(const Byte* s1, const Byte* s2, REBSIZ l2)
 {
     Codepoint c1, c2;
     REBSIZ l1 = strsize(s1);
@@ -154,7 +154,7 @@ REBINT Find_Binstr_In_Binstr(
     bool is_2_str = (CELL_HEART(binstr2) != REB_BINARY);
     REBSIZ size2;
     REBLEN len2;
-    const REBYTE* head2;
+    const Byte* head2;
     if (IS_CHAR_CELL(binstr2) and VAL_CHAR(binstr2) == 0) {
         //
         // !!! Inelegant handling of `find #{00} #`, which should work, while
@@ -162,7 +162,7 @@ REBINT Find_Binstr_In_Binstr(
         // in BINARY!.
         //
         assert(CELL_HEART(binstr1) == REB_BINARY);
-        head2 = cast(const REBYTE*, "\0");
+        head2 = cast(const Byte*, "\0");
         size2 = 1;
         if (limit2 < size2)
             size2 = limit2;
@@ -227,7 +227,7 @@ REBINT Find_Binstr_In_Binstr(
     // even if it's not validated UTF-8.  This requires knowing the size_at
     // to pass to the checked version of Back_Scan_UTF8_Char().
     //
-    const REBYTE *cp1;  // binstr1 position that is current test head of match
+    const Byte* cp1;  // binstr1 position that is current test head of match
     REBLEN len_head1;
     REBSIZ size_at1;
     if (CELL_HEART(binstr1) == REB_ISSUE)  // no VAL_LEN_HEAD() atm
@@ -254,7 +254,7 @@ REBINT Find_Binstr_In_Binstr(
 
     // Binary-compatible to: [next2 = NEXT_CHR(&c2_canon, head2)]
     Codepoint c2_canon;  // calculate first char lowercase once, vs. each step
-    const REBYTE *next2;
+    const Byte* next2;
     if (not is_2_str or *head2 < 0x80) {
         c2_canon = *head2;
         next2 = head2;
@@ -288,7 +288,7 @@ REBINT Find_Binstr_In_Binstr(
             else if (is_2_str) {  // have to treat binstr1 as a string anyway
                 cp1 += skip1;
                 size -= skip1;  // size grows by skip
-                const REBYTE* temp = Back_Scan_UTF8_Char(&c1, cp1, &size);
+                const Byte* temp = Back_Scan_UTF8_Char(&c1, cp1, &size);
                 if (temp == nullptr)
                     c1 = MAX_UNI + 1;  // won't match if `while` below breaks
             }
@@ -306,7 +306,7 @@ REBINT Find_Binstr_In_Binstr(
             c1 = CHR_CODE(cast(Utf8(const*), cp1));
         else if (is_2_str) {  // have to treat binstr1 as a string anyway
             REBSIZ size_temp = size;
-            const REBYTE* temp = Back_Scan_UTF8_Char(&c1, cp1, &size_temp);
+            const Byte* temp = Back_Scan_UTF8_Char(&c1, cp1, &size_temp);
             if (temp == nullptr)
                 goto no_match_at_this_position;
         }
@@ -322,7 +322,7 @@ REBINT Find_Binstr_In_Binstr(
             //
 
             // Binary-compatible to: [tp1 = NEXT_STR(cp1)]
-            const REBYTE *tp1;
+            const Byte* tp1;
             if (is_1_str)  // binstr2 can't be binary
                 tp1 = NEXT_STR(cast(Utf8(const*), cp1));
             else if (is_2_str) {  // searching binary as if it's a string
@@ -333,7 +333,7 @@ REBINT Find_Binstr_In_Binstr(
             else
                 tp1 = cp1 + 1;
 
-            const REBYTE *tp2 = next2;  // next2 is second position in str2
+            const Byte* tp2 = next2;  // next2 is second position in str2
 
             REBLEN n;
             for (n = 1; n < len2; n++) {  // n=0 (first item) already matched
@@ -344,7 +344,7 @@ REBINT Find_Binstr_In_Binstr(
                 else if (is_1_str)
                     tp1 = Back_Scan_UTF8_Char_Unchecked(&c1, tp1);
                 else {  // treating binstr1 as UTF-8 despite being binary
-                    const REBYTE* temp = Back_Scan_UTF8_Char(&c1, tp1, &size);
+                    const Byte* temp = Back_Scan_UTF8_Char(&c1, tp1, &size);
                     if (temp == nullptr)  // invalid or incomplete UTF-8
                         goto no_match_at_this_position;
                     tp1 = temp;
@@ -461,7 +461,7 @@ REBINT Find_Bitset_In_Binstr(
 
     bool is_str = (CELL_HEART(binstr) != REB_BINARY);
 
-    const REBYTE *cp1 = is_str ? VAL_STRING_AT(binstr) : VAL_BINARY_AT(binstr);
+    const Byte* cp1 = is_str ? VAL_STRING_AT(binstr) : VAL_BINARY_AT(binstr);
     Codepoint c1;
     if (skip > 0) {  // skip 1 will pass over cp1, so leave as is
         if (is_str)

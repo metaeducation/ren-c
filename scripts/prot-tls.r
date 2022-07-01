@@ -177,10 +177,10 @@ debug: (comment [:print] blank)
 ; !!! There was a /SECURE refinement to RANDOM, which implemented the
 ; following after generating the REBI64 into a tmp variable:
 ;
-;     REBYTE srcbuf[20], dstbuf[20];
+;     Byte srcbuf[20], dstbuf[20];
 ;
 ;     memcpy(srcbuf, &tmp, sizeof(tmp));
-;     memset(srcbuf + sizeof(tmp), *(REBYTE*)&tmp, 20 - sizeof(tmp));
+;     memset(srcbuf + sizeof(tmp), *(Byte*)&tmp, 20 - sizeof(tmp));
 ;
 ;     SHA1(srcbuf, 20, dstbuf);
 ;     memcpy(&tmp, dstbuf, sizeof(tmp));

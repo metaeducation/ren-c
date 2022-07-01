@@ -807,7 +807,7 @@ e-bootblock/emit 'compressed {
      * is enough to sync up the referencing sites.
      */
     const REBLEN Symbol_Strings_Compressed_Size = $<length of compressed>;
-    const REBYTE Symbol_Strings_Compressed[$<length of compressed>] = {
+    const Byte Symbol_Strings_Compressed[$<length of compressed>] = {
         $<Binary-To-C Compressed>
     };
 }
@@ -859,7 +859,7 @@ e-bootblock/emit 'compressed {
      * is enough to sync up the referencing sites.
      */
     const REBLEN Boot_Block_Compressed_Size = $<length of compressed>;
-    const REBYTE Boot_Block_Compressed[$<length of compressed>] = {
+    const Byte Boot_Block_Compressed[$<length of compressed>] = {
         $<Binary-To-C Compressed>
     };
 }
@@ -886,13 +886,13 @@ e-boot/emit 'fields {
      * Symbols in SYM_XXX order, separated by newline characters, compressed.
      */
     EXTERN_C const REBLEN Symbol_Strings_Compressed_Size;
-    EXTERN_C const REBYTE Symbol_Strings_Compressed[];
+    EXTERN_C const Byte Symbol_Strings_Compressed[];
 
     /*
      * Compressed data of the native specifications, uncompressed during boot.
      */
     EXTERN_C const REBLEN Boot_Block_Compressed_Size;
-    EXTERN_C const REBYTE Boot_Block_Compressed[];
+    EXTERN_C const Byte Boot_Block_Compressed[];
 
     /*
      * Raw C function pointers for natives, take Frame(*) and return REBVAL*.

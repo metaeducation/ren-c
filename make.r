@@ -461,7 +461,7 @@ gen-obj: func [
                 ; The majority of Rebol's C code was written with little
                 ; attention to overflow in arithmetic.  In many places a
                 ; bigger type is converted into a smaller type without an
-                ; explicit cast.  (REBI64 => SQLUSMALLINT, REBINT => REBYTE).
+                ; explicit cast.  (REBI64 => SQLUSMALLINT, REBINT => Byte).
                 ; Disable C4242:
                 ;
                 ;   'identifier' : conversion from 'type1' to 'type2',

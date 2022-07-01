@@ -24,6 +24,7 @@
 
 #include "sys-core.h"
 
+#undef Byte  // sys-zlib.h defines it compatibly (unsigned char)
 #include "sys-zlib.h"  // for crc32_z()
 
 #include "sys-int-funcs.h"
@@ -32,11 +33,11 @@
 
 #define MAX_QUOTED_STR  50  // max length of "string" before going to { }
 
-REBYTE *Char_Escapes;
+Byte* Char_Escapes;
 #define MAX_ESC_CHAR (0x60-1) // size of escape table
 #define IS_CHR_ESC(c) ((c) <= MAX_ESC_CHAR and Char_Escapes[c])
 
-REBYTE *URL_Escapes;
+Byte* URL_Escapes;
 #define MAX_URL_CHAR (0x80-1)
 #define IS_URL_ESC(c)  ((c) <= MAX_URL_CHAR and (URL_Escapes[c] & ESC_URL))
 #define IS_FILE_ESC(c) ((c) <= MAX_URL_CHAR and (URL_Escapes[c] & ESC_FILE))
@@ -109,12 +110,12 @@ static void reverse_string(String(*) str, REBLEN index, REBLEN len)
         return; // if non-zero, at least one character in the string
 
     if (Is_String_Definitely_ASCII(str)) {
-        REBYTE *bp = STR_AT(str, index);
+        Byte* bp = STR_AT(str, index);
 
         REBLEN n = 0;
         REBLEN m = len - 1;
         for (; n < len / 2; n++, m--) {
-            REBYTE b = bp[n];
+            Byte b = bp[n];
             bp[n] = bp[m];
             bp[m] = b;
         }
@@ -193,7 +194,7 @@ Bounce MAKE_String(
     if (ANY_UTF8(def)) {  // new type for the UTF-8 data with new allocation
         REBLEN len;
         REBSIZ size;
-        const REBYTE *utf8 = VAL_UTF8_LEN_SIZE_AT(&len, &size, def);
+        const Byte* utf8 = VAL_UTF8_LEN_SIZE_AT(&len, &size, def);
         UNUSED(len);  // !!! Data already valid and checked, should leverage
         return Init_Any_String(
             out,
@@ -209,7 +210,7 @@ Bounce MAKE_String(
 
     if (IS_BINARY(def)) {  // not necessarily valid UTF-8, so must check
         REBSIZ size;
-        const REBYTE *at = VAL_BINARY_SIZE_AT(&size, def);
+        const Byte* at = VAL_BINARY_SIZE_AT(&size, def);
         return Init_Any_String(
             out,
             kind,
@@ -285,7 +286,7 @@ Bounce TO_String(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
         // used for this.
         //
         REBSIZ size;
-        const REBYTE *at = VAL_BINARY_SIZE_AT(&size, arg);
+        const Byte* at = VAL_BINARY_SIZE_AT(&size, arg);
         return Init_Any_String(
             out,
             kind,
@@ -328,7 +329,7 @@ REBNATIVE(to_text)
 
     if (IS_BINARY(ARG(value)) and REF(relax)) {
         REBSIZ size;
-        const REBYTE *at = VAL_BINARY_SIZE_AT(&size, ARG(value));
+        const Byte* at = VAL_BINARY_SIZE_AT(&size, ARG(value));
         return Init_Any_String(
             OUT,
             REB_TEXT,
@@ -365,8 +366,8 @@ static int Compare_Chr(void *thunk, const void *v1, const void *v2)
 {
     REBLEN * const flags = cast(REBLEN*, thunk);
 
-    REBYTE b1 = *cast(const REBYTE*, v1);
-    REBYTE b2 = *cast(const REBYTE*, v2);
+    Byte b1 = *cast(const Byte*, v1);
+    Byte b2 = *cast(const Byte*, v2);
 
     assert(b1 < 0x80 and b2 < 0x80);
 
@@ -391,10 +392,10 @@ static int Compare_Chr(void *thunk, const void *v1, const void *v2)
 // Fast var-length hex output for uni-chars.
 // Returns next position (just past the insert).
 //
-REBYTE *Form_Uni_Hex(REBYTE *out, REBLEN n)
+Byte* Form_Uni_Hex(Byte* out, REBLEN n)
 {
-    REBYTE buffer[10];
-    REBYTE *bp = &buffer[10];
+    Byte buffer[10];
+    Byte* bp = &buffer[10];
 
     while (n != 0) {
         *(--bp) = Hex_Digits[n & 0xf];
@@ -453,8 +454,8 @@ void Mold_Uni_Char(REB_MOLD *mo, Codepoint c, bool parened)
             EXPAND_SERIES_TAIL(buf, 5);  // worst case: ^(1234), ^( is done
             TERM_STR_LEN_SIZE(buf, len_old, size_old);
 
-            REBYTE *bp = BIN_TAIL(buf);
-            REBYTE *ep = Form_Uni_Hex(bp, c); // !!! Make a mold...
+            Byte* bp = BIN_TAIL(buf);
+            Byte* ep = Form_Uni_Hex(bp, c); // !!! Make a mold...
             TERM_STR_LEN_SIZE(
                 buf,
                 len_old + (ep - bp),
@@ -1103,7 +1104,7 @@ REBTYPE(String)
 
         REBLEN len;
         REBSIZ size;
-        const REBYTE *utf8 = VAL_UTF8_LEN_SIZE_AT_LIMIT(&len, &size, v, limit);
+        const Byte* utf8 = VAL_UTF8_LEN_SIZE_AT_LIMIT(&len, &size, v, limit);
 
         // Test for if the range is all ASCII can just be if (len == size)...
         // that means every codepoint is one byte.
@@ -1134,9 +1135,9 @@ REBTYPE(String)
             thunk |= CC_FLAG_REVERSE;
 
         reb_qsort_r(
-            m_cast(REBYTE*, utf8),  // ok due to VAL_STRING_MUTABLE()
+            m_cast(Byte*, utf8),  // ok due to VAL_STRING_MUTABLE()
             len,
-            span * sizeof(REBYTE),
+            span * sizeof(Byte),
             &thunk,
             Compare_Chr
         );
@@ -1206,24 +1207,24 @@ REBTYPE(String)
 //
 void Startup_String(void)
 {
-    Char_Escapes = TRY_ALLOC_N_ZEROFILL(REBYTE, MAX_ESC_CHAR + 1);
+    Char_Escapes = TRY_ALLOC_N_ZEROFILL(Byte, MAX_ESC_CHAR + 1);
 
-    REBYTE *cp = Char_Escapes;
-    REBYTE c;
+    Byte* cp = Char_Escapes;
+    Byte c;
     for (c = '@'; c <= '_'; c++)
         *cp++ = c;
 
-    Char_Escapes[cast(REBYTE, '\t')] = '-'; // tab
-    Char_Escapes[cast(REBYTE, '\n')] = '/'; // line feed
-    Char_Escapes[cast(REBYTE, '"')] = '"';
-    Char_Escapes[cast(REBYTE, '^')] = '^';
+    Char_Escapes[cast(Byte, '\t')] = '-'; // tab
+    Char_Escapes[cast(Byte, '\n')] = '/'; // line feed
+    Char_Escapes[cast(Byte, '"')] = '"';
+    Char_Escapes[cast(Byte, '^')] = '^';
 
-    URL_Escapes = TRY_ALLOC_N_ZEROFILL(REBYTE, MAX_URL_CHAR + 1);
+    URL_Escapes = TRY_ALLOC_N_ZEROFILL(Byte, MAX_URL_CHAR + 1);
 
     for (c = 0; c <= ' '; c++)
         URL_Escapes[c] = ESC_URL | ESC_FILE;
 
-    const REBYTE *dc = cb_cast(";%\"()[]{}<>");
+    const Byte* dc = cb_cast(";%\"()[]{}<>");
 
     for (c = strsize(dc); c > 0; c--)
         URL_Escapes[*dc++] = ESC_URL | ESC_FILE;
@@ -1235,6 +1236,6 @@ void Startup_String(void)
 //
 void Shutdown_String(void)
 {
-    FREE_N(REBYTE, MAX_ESC_CHAR + 1, Char_Escapes);
-    FREE_N(REBYTE, MAX_URL_CHAR + 1, URL_Escapes);
+    FREE_N(Byte, MAX_ESC_CHAR + 1, Char_Escapes);
+    FREE_N(Byte, MAX_URL_CHAR + 1, URL_Escapes);
 }

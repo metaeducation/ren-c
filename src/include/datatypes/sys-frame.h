@@ -189,7 +189,7 @@ inline static option(Symbol(const*)) FRM_LABEL(Frame(*) f) {
     // is a good place to inject an assertion that you're not ignoring the
     // fact that a frame "self-errored" and was notified of an abrupt failure.
     //
-    inline static REBYTE& FRM_STATE_BYTE(Frame(*) f) {
+    inline static Byte& FRM_STATE_BYTE(Frame(*) f) {
         assert(Not_Frame_Flag(f, ABRUPT_FAILURE));
         return mutable_SECOND_BYTE(f->flags);
     }

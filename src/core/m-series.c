@@ -72,7 +72,7 @@ REBSER *Copy_Series_Core(const REBSER *s, REBFLGS flags)
         //
         copy = Make_String_Core(used, flags);
         SET_SERIES_USED(copy, used);
-        *SER_TAIL(REBYTE, copy) = '\0';
+        *SER_TAIL(Byte, copy) = '\0';
         mutable_LINK(Bookmarks, copy) = nullptr;  // !!! Review: copy these?
         copy->misc.length = s->misc.length;
     }
@@ -213,7 +213,7 @@ void Remove_Series_Units(REBSER *s, REBSIZ offset, REBLEN quantity)
 
     REBLEN total = SER_USED(s) * SER_WIDE(s);
 
-    REBYTE *data = SER_DATA(s) + start;
+    Byte* data = SER_DATA(s) + start;
     memmove(
         data,
         data + (quantity * SER_WIDE(s)),
@@ -268,7 +268,7 @@ void Unbias_Series(REBSER *s, bool keep)
     if (bias == 0)
         return;
 
-    REBYTE *data = cast(REBYTE*, s->content.dynamic.data);
+    Byte* data = cast(Byte*, s->content.dynamic.data);
 
     SER_SET_BIAS(s, 0);
     s->content.dynamic.rest += bias;
@@ -310,7 +310,7 @@ void Clear_Series(REBSER *s)
         memset(s->content.dynamic.data, 0, SER_REST(s) * SER_WIDE(s));
     }
     else
-        memset(cast(REBYTE*, &s->content), 0, sizeof(s->content));
+        memset(cast(Byte*, &s->content), 0, sizeof(s->content));
 
     TERM_SERIES_IF_NECESSARY(s);
 }
@@ -324,7 +324,7 @@ void Clear_Series(REBSER *s)
 // NOTE: The length will be set to the supplied value, but the series will
 // not be terminated.
 //
-REBYTE *Reset_Buffer(REBSER *buf, REBLEN len)
+Byte* Reset_Buffer(REBSER *buf, REBLEN len)
 {
     if (buf == NULL)
         panic ("buffer not yet allocated");
@@ -356,7 +356,7 @@ void Assert_Series_Term_Core(const REBSER *s)
       #endif
     }
     else if (SER_WIDE(s) == 1) {
-        const REBYTE *tail = BIN_TAIL(BIN(s));
+        const Byte* tail = BIN_TAIL(BIN(s));
         if (IS_SER_UTF8(s)) {
             if (*tail != '\0')
                 panic (s);

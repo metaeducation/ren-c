@@ -173,7 +173,7 @@ void Value_To_Int64(REBVAL *out, const REBVAL *value, bool no_sign)
         // preserves the old behavior in the TO INTEGER! case.
         //
         REBSIZ n;
-        const REBYTE *bp = VAL_BINARY_SIZE_AT(&n, value);
+        const Byte* bp = VAL_BINARY_SIZE_AT(&n, value);
         if (n == 0) {
             Init_Integer(out, 0);
             return;
@@ -191,7 +191,7 @@ void Value_To_Int64(REBVAL *out, const REBVAL *value, bool no_sign)
     else if (IS_ISSUE(value) or ANY_STRING(value)) {
         REBSIZ size;
         const REBLEN max_len = VAL_LEN_AT(value); // e.g. "no maximum"
-        const REBYTE *bp = Analyze_String_For_Scan(&size, value, max_len);
+        const Byte* bp = Analyze_String_For_Scan(&size, value, max_len);
         if (
             memchr(bp, '.', size)
             || memchr(bp, 'e', size)
@@ -243,7 +243,7 @@ void MF_Integer(REB_MOLD *mo, noquote(Cell(const*)) v, bool form)
 {
     UNUSED(form);
 
-    REBYTE buf[60];
+    Byte buf[60];
     REBINT len = Emit_Integer(buf, VAL_INT64(v));
     Append_Ascii_Len(mo->series, s_cast(buf), len);
 }

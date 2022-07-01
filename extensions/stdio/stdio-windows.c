@@ -113,7 +113,7 @@ void Startup_Stdio(void)
 //
 // Returns true if the operation was interrupted by a SIGINT.
 //
-bool Read_Stdin_Byte_Interrupted(bool *eof, REBYTE *out) {
+bool Read_Stdin_Byte_Interrupted(bool *eof, Byte* out) {
     //
     // We don't read bytes from the smart console--it uses UTF16 and should
     // be read with the terminal layer.  This is just for redirection or use
@@ -276,8 +276,8 @@ void Write_IO(const REBVAL *data, REBLEN len)
             // Write out one byte at a time, by translating it into two hex
             // digits and sending them to WriteConsole().
             //
-            const REBYTE *tail = BIN_TAIL(VAL_BINARY(data));
-            const REBYTE *bp = VAL_BINARY_AT(data);
+            const Byte* tail = BIN_TAIL(VAL_BINARY(data));
+            const Byte* bp = VAL_BINARY_AT(data);
             for (; bp != tail; ++bp) {
                 WCHAR digits[2];
                 digits[0] = Hex_Digits[*bp / 16];
@@ -331,7 +331,7 @@ void Write_IO(const REBVAL *data, REBLEN len)
         // Note that redirection on Windows does not use UTF-16 typically.
         // Even CMD.EXE requires a /U switch to do so.
 
-        const REBYTE *bp;
+        const Byte* bp;
         REBSIZ size;
         if (IS_BINARY(data)) {
             bp = VAL_DATA_AT(data);
@@ -364,7 +364,7 @@ void Write_IO(const REBVAL *data, REBLEN len)
 // The request buffer must be long enough to hold result.
 // Result is NOT terminated.
 //
-size_t Read_IO(REBYTE *buffer, size_t capacity)
+size_t Read_IO(Byte* buffer, size_t capacity)
 {
     assert(capacity >= 2);  // abort is signaled with (ESC '\0')
 

@@ -254,7 +254,7 @@ REBLEN Modify_String_Or_Binary(
     REBSIZ dst_off;
     if (IS_BINARY(dst)) {  // check invariants up front even if NULL / no-op
         if (IS_NONSYMBOL_STRING(dst_ser)) {
-            REBYTE at = *BIN_AT(dst_ser, dst_idx);
+            Byte at = *BIN_AT(dst_ser, dst_idx);
             if (Is_Continuation_Byte_If_Utf8(at))
                 fail (Error_Bad_Utf8_Bin_Edit_Raw());
             dst_len_old = STR_LEN(STR(dst_ser));
@@ -307,11 +307,11 @@ REBLEN Modify_String_Or_Binary(
     //
     DECLARE_MOLD (mo);  // mo->series will be non-null if Push_Mold() run
 
-    const REBYTE *src_ptr;  // start of utf-8 encoded data to insert
+    const Byte* src_ptr;  // start of utf-8 encoded data to insert
     REBLEN src_len_raw;  // length in codepoints (if dest is string)
     REBSIZ src_size_raw;  // size in bytes
 
-    REBYTE src_byte;  // only used by BINARY! (mold buffer is UTF-8 legal)
+    Byte src_byte;  // only used by BINARY! (mold buffer is UTF-8 legal)
 
     if (IS_ISSUE(src)) {  // characters store their encoding in their payload
         //
@@ -417,7 +417,7 @@ REBLEN Modify_String_Or_Binary(
                 src_len_raw = 0;
 
                 REBSIZ bytes_left = src_size_raw;
-                const REBYTE *bp = src_ptr;
+                const Byte* bp = src_ptr;
                 for (; bytes_left > 0; --bytes_left, ++bp) {
                     Codepoint c = *bp;
                     if (c < 0x80) {  // ASCII, just check for 0 bytes
@@ -621,7 +621,7 @@ REBLEN Modify_String_Or_Binary(
                     Utf8(*) pp = cast(Utf8(*),
                         BIN_AT(dst_ser, dst_off + part_size)
                     );
-                    if (Is_Continuation_Byte_If_Utf8(*cast(REBYTE*, pp)))
+                    if (Is_Continuation_Byte_If_Utf8(*cast(Byte*, pp)))
                         fail (Error_Bad_Utf8_Bin_Edit_Raw());
 
                     part = 0;
@@ -696,7 +696,7 @@ REBLEN Modify_String_Or_Binary(
     // Since the series may be expanded, its pointer could change...so this
     // can't be done up front at the top of this routine.
     //
-    REBYTE *dst_ptr = SER_AT(REBYTE, dst_ser, dst_off);
+    Byte* dst_ptr = SER_AT(Byte, dst_ser, dst_off);
 
     REBLEN d;
     for (d = 0; d < cast(REBLEN, dups); ++d) {  // dups checked above as > 0

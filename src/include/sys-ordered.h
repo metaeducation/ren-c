@@ -83,7 +83,7 @@
 // All the inert types are grouped together to make this test fast.
 //
 
-inline static bool ANY_INERT_KIND(REBYTE k) {
+inline static bool ANY_INERT_KIND(Byte k) {
     assert(k >= REB_BLANK);  // can't call on end/null
     return k <= REB_BLOCK;
 }
@@ -114,7 +114,7 @@ inline static bool ANY_INERT_KIND(REBYTE k) {
 //     }
 //     CommonCaseStuff(v);
 
-inline static bool IS_NULLED_OR_BLANK_KIND(REBYTE k)
+inline static bool IS_NULLED_OR_BLANK_KIND(Byte k)
     { return k == REB_NULL or k == REB_BLANK; }
 
 #define IS_NULLED_OR_BLANK(v) \
@@ -126,13 +126,13 @@ inline static bool IS_NULLED_OR_BLANK_KIND(REBYTE k)
 #define ANY_VALUE(v) \
     (VAL_TYPE(v) != REB_NULL)
 
-inline static bool ANY_SCALAR_KIND(REBYTE k)  // !!! Should use TS_SCALAR?
+inline static bool ANY_SCALAR_KIND(Byte k)  // !!! Should use TS_SCALAR?
     { return k == REB_TUPLE or (k >= REB_LOGIC and k <= REB_PAIR); }
 
 #define ANY_SCALAR(v) \
     ANY_SCALAR_KIND(VAL_TYPE(v))
 
-inline static bool ANY_STRING_KIND(REBYTE k)
+inline static bool ANY_STRING_KIND(Byte k)
     { return k >= REB_TEXT and k <= REB_TAG; }
 
 #define ANY_STRING(v) \
@@ -142,7 +142,7 @@ inline static bool ANY_STRING_KIND(REBYTE k)
     (k >= REB_BINARY and k <= REB_TAG)
 
 
-inline static bool ANY_BINSTR_KIND(REBYTE k)
+inline static bool ANY_BINSTR_KIND(Byte k)
     { return ANY_BINSTR_KIND_EVIL_MACRO; }
 
 #define ANY_BINSTR(v) \
@@ -152,7 +152,7 @@ inline static bool ANY_BINSTR_KIND(REBYTE k)
 #define ANY_ARRAY_OR_SEQUENCE_KIND_EVIL_MACRO \
     (did (FLAGIT_KIND(k) & (TS_ARRAY | TS_SEQUENCE)))
 
-inline static bool ANY_ARRAY_OR_SEQUENCE_KIND(REBYTE k)
+inline static bool ANY_ARRAY_OR_SEQUENCE_KIND(Byte k)
     { return ANY_ARRAY_OR_SEQUENCE_KIND_EVIL_MACRO; }
 
 #define ANY_ARRAY_OR_SEQUENCE(v) \
@@ -162,7 +162,7 @@ inline static bool ANY_ARRAY_OR_SEQUENCE_KIND(REBYTE k)
 #define ANY_ARRAY_KIND_EVIL_MACRO \
     (did (FLAGIT_KIND(k) & TS_ARRAY))
 
-inline static bool ANY_ARRAY_KIND(REBYTE k)
+inline static bool ANY_ARRAY_KIND(Byte k)
     { return ANY_ARRAY_KIND_EVIL_MACRO; }
 
 #define ANY_ARRAY(v) \
@@ -172,7 +172,7 @@ inline static bool ANY_ARRAY_KIND(REBYTE k)
 #define ANY_SEQUENCE_KIND_EVIL_MACRO \
     (did (FLAGIT_KIND(k) & TS_SEQUENCE))
 
-inline static bool ANY_SEQUENCE_KIND(REBYTE k)
+inline static bool ANY_SEQUENCE_KIND(Byte k)
     { return ANY_SEQUENCE_KIND_EVIL_MACRO; }
 
 #define ANY_SEQUENCE(v) \
@@ -182,7 +182,7 @@ inline static bool ANY_SEQUENCE_KIND(REBYTE k)
 #define ANY_SERIES_KIND_EVIL_MACRO \
     (k < 64 and did (FLAGIT_KIND(k) & TS_SERIES))
 
-inline static bool ANY_SERIES_KIND(REBYTE k)
+inline static bool ANY_SERIES_KIND(Byte k)
     { return ANY_SERIES_KIND_EVIL_MACRO; }
 
 #define ANY_SERIES(v) \
@@ -191,13 +191,13 @@ inline static bool ANY_SERIES_KIND(REBYTE k)
 #define ANY_WORD_KIND_EVIL_MACRO \
     (k < 64 and did (FLAGIT_KIND(k) & TS_WORD))
 
-inline static bool ANY_WORD_KIND(REBYTE k)
+inline static bool ANY_WORD_KIND(Byte k)
     { return ANY_WORD_KIND_EVIL_MACRO; }
 
 #define ANY_WORD(v) \
     ANY_WORD_KIND(VAL_TYPE(v))
 
-inline static bool ANY_PLAIN_GET_SET_WORD_KIND(REBYTE k)
+inline static bool ANY_PLAIN_GET_SET_WORD_KIND(Byte k)
     { return k == REB_WORD or k == REB_GET_WORD or k == REB_SET_WORD; }
 
 #define ANY_PLAIN_GET_SET_WORD(v) \
@@ -207,7 +207,7 @@ inline static bool ANY_PLAIN_GET_SET_WORD_KIND(REBYTE k)
 #define ANY_PATH_KIND_EVIL_MACRO \
     (k < 64 and did (FLAGIT_KIND(k) & TS_PATH))
 
-inline static bool ANY_PATH_KIND(REBYTE k)
+inline static bool ANY_PATH_KIND(Byte k)
     { return ANY_PATH_KIND_EVIL_MACRO; }
 
 #define ANY_PATH(v) \
@@ -217,7 +217,7 @@ inline static bool ANY_PATH_KIND(REBYTE k)
 #define ANY_TUPLE_KIND_EVIL_MACRO \
     (k < 64 and did (FLAGIT_KIND(k) & TS_TUPLE))
 
-inline static bool ANY_TUPLE_KIND(REBYTE k)
+inline static bool ANY_TUPLE_KIND(Byte k)
     { return ANY_TUPLE_KIND_EVIL_MACRO; }
 
 #define ANY_TUPLE(v) \
@@ -227,13 +227,13 @@ inline static bool ANY_TUPLE_KIND(REBYTE k)
 // Used by scanner; it figures out what kind of path something would be, then
 // switches it to a tuple if necessary.
 //
-inline static enum Reb_Kind TUPLIFY_ANY_PATH_KIND(REBYTE k) {
+inline static enum Reb_Kind TUPLIFY_ANY_PATH_KIND(Byte k) {
     assert(ANY_PATH_KIND(k));
     return cast(enum Reb_Kind, k + 1);
 }
 
 
-inline static bool ANY_BLOCK_KIND(REBYTE k)
+inline static bool ANY_BLOCK_KIND(Byte k)
     { return k == REB_BLOCK or k == REB_GET_BLOCK
         or k == REB_SET_BLOCK or k == REB_META_BLOCK or k == REB_THE_BLOCK; }
 
@@ -241,7 +241,7 @@ inline static bool ANY_BLOCK_KIND(REBYTE k)
     ANY_BLOCK_KIND(VAL_TYPE(v))
 
 
-inline static bool ANY_GROUP_KIND(REBYTE k)
+inline static bool ANY_GROUP_KIND(Byte k)
     { return k == REB_GROUP or k == REB_GET_GROUP
         or k == REB_SET_GROUP or k == REB_META_GROUP or k == REB_THE_GROUP; }
 
@@ -249,14 +249,14 @@ inline static bool ANY_GROUP_KIND(REBYTE k)
     ANY_GROUP_KIND(VAL_TYPE(v))
 
 
-inline static bool ANY_CONTEXT_KIND(REBYTE k)
+inline static bool ANY_CONTEXT_KIND(Byte k)
     { return k >= REB_OBJECT and k <= REB_PORT; }
 
 #define ANY_CONTEXT(v) \
     ANY_CONTEXT_KIND(VAL_TYPE(v))
 
 
-inline static bool ANY_NUMBER_KIND(REBYTE k)
+inline static bool ANY_NUMBER_KIND(Byte k)
     { return k == REB_INTEGER or k == REB_DECIMAL or k == REB_PERCENT; }
 
 #define ANY_NUMBER(v) \
@@ -269,58 +269,58 @@ inline static bool ANY_NUMBER_KIND(REBYTE k)
 // putting blocks/paths/words/tuples/groups together.  It means ANY_ARRAY() is
 // slower but these tests can be faster.
 
-inline static bool ANY_THE_KIND(REBYTE k)
+inline static bool ANY_THE_KIND(Byte k)
   { return k >= REB_THE_BLOCK and k <= REB_THE_WORD; }
 
-inline static bool ANY_PLAIN_KIND(REBYTE k)
+inline static bool ANY_PLAIN_KIND(Byte k)
   { return k >= REB_BLOCK and k <= REB_WORD; }
 
-inline static bool ANY_META_KIND(REBYTE k)
+inline static bool ANY_META_KIND(Byte k)
   { return k >= REB_META_BLOCK and k <= REB_META_WORD; }
 
-inline static bool ANY_SET_KIND(REBYTE k)
+inline static bool ANY_SET_KIND(Byte k)
   { return k >= REB_SET_BLOCK and k <= REB_SET_WORD; }
 
-inline static bool ANY_GET_KIND(REBYTE k)
+inline static bool ANY_GET_KIND(Byte k)
   { return k >= REB_GET_BLOCK and k <= REB_GET_WORD; }
 
-inline static enum Reb_Kind PLAINIFY_ANY_GET_KIND(REBYTE k) {
+inline static enum Reb_Kind PLAINIFY_ANY_GET_KIND(Byte k) {
     assert(ANY_GET_KIND(k));
     return cast(enum Reb_Kind, k - 10);
 }
 
-inline static enum Reb_Kind PLAINIFY_ANY_SET_KIND(REBYTE k) {
+inline static enum Reb_Kind PLAINIFY_ANY_SET_KIND(Byte k) {
     assert(ANY_SET_KIND(k));
     return cast(enum Reb_Kind, k - 5);
 }
 
-inline static enum Reb_Kind PLAINIFY_ANY_META_KIND(REBYTE k) {
+inline static enum Reb_Kind PLAINIFY_ANY_META_KIND(Byte k) {
     assert(ANY_META_KIND(k));
     return cast(enum Reb_Kind, k - 15);
 }
 
-inline static enum Reb_Kind SETIFY_ANY_PLAIN_KIND(REBYTE k) {
+inline static enum Reb_Kind SETIFY_ANY_PLAIN_KIND(Byte k) {
     assert(ANY_PLAIN_KIND(k));
     return cast(enum Reb_Kind, k + 5);
 }
 
-inline static enum Reb_Kind GETIFY_ANY_PLAIN_KIND(REBYTE k) {
+inline static enum Reb_Kind GETIFY_ANY_PLAIN_KIND(Byte k) {
     assert(ANY_PLAIN_KIND(k));
     return cast(enum Reb_Kind, k + 10);
 }
 
-inline static enum Reb_Kind METAFY_ANY_PLAIN_KIND(REBYTE k) {
+inline static enum Reb_Kind METAFY_ANY_PLAIN_KIND(Byte k) {
     assert(ANY_PLAIN_KIND(k));
     return cast(enum Reb_Kind, k + 15);
 }
 
-inline static enum Reb_Kind THEIFY_ANY_PLAIN_KIND(REBYTE k) {
+inline static enum Reb_Kind THEIFY_ANY_PLAIN_KIND(Byte k) {
     assert(ANY_PLAIN_KIND(k));
     return cast(enum Reb_Kind, k - 5);
 }
 
 
-inline static bool IS_ANY_SIGIL_KIND(REBYTE k) {
+inline static bool IS_ANY_SIGIL_KIND(Byte k) {
     assert(k < REB_QUOTED);  // can't do `@''x`
     return k >= REB_SET_BLOCK and k <= REB_META_WORD;
 }
@@ -332,7 +332,7 @@ inline static bool IS_ANY_SIGIL_KIND(REBYTE k) {
 //
 // Order is: block, group, path, word.
 
-inline static enum Reb_Kind WORDIFY_KIND(REBYTE k) {
+inline static enum Reb_Kind WORDIFY_KIND(Byte k) {
     if (ANY_BLOCK_KIND(k))
         return cast(enum Reb_Kind, k + 3);
     if (ANY_GROUP_KIND(k))
@@ -343,7 +343,7 @@ inline static enum Reb_Kind WORDIFY_KIND(REBYTE k) {
     return cast(enum Reb_Kind, k);
 }
 
-inline static enum Reb_Kind PATHIFY_KIND(REBYTE k) {
+inline static enum Reb_Kind PATHIFY_KIND(Byte k) {
     if (ANY_BLOCK_KIND(k))
         return cast(enum Reb_Kind, k + 2);
     if (ANY_GROUP_KIND(k))
@@ -354,7 +354,7 @@ inline static enum Reb_Kind PATHIFY_KIND(REBYTE k) {
     return cast(enum Reb_Kind, k - 1);
 }
 
-inline static enum Reb_Kind GROUPIFY_KIND(REBYTE k) {
+inline static enum Reb_Kind GROUPIFY_KIND(Byte k) {
     if (ANY_BLOCK_KIND(k))
         return cast(enum Reb_Kind, k + 1);
     if (ANY_GROUP_KIND(k))
@@ -365,7 +365,7 @@ inline static enum Reb_Kind GROUPIFY_KIND(REBYTE k) {
     return cast(enum Reb_Kind, k - 2);
 }
 
-inline static enum Reb_Kind BLOCKIFY_KIND(REBYTE k) {
+inline static enum Reb_Kind BLOCKIFY_KIND(Byte k) {
     if (ANY_BLOCK_KIND(k))
         return cast(enum Reb_Kind, k);
     if (ANY_GROUP_KIND(k))
@@ -379,7 +379,7 @@ inline static enum Reb_Kind BLOCKIFY_KIND(REBYTE k) {
 
 // If a type can be used with the VAL_UTF8_XXX accessors
 
-inline static bool ANY_UTF8_KIND(REBYTE k) {
+inline static bool ANY_UTF8_KIND(Byte k) {
     return ANY_STRING_KIND(k) or ANY_WORD_KIND(k)
         or k == REB_ISSUE or k == REB_URL;
 }

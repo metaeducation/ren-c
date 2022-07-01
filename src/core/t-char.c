@@ -110,7 +110,7 @@ Bounce MAKE_Issue(
 
       case REB_BINARY: {
         REBSIZ size;
-        const REBYTE *bp = VAL_BINARY_SIZE_AT(&size, arg);
+        const Byte* bp = VAL_BINARY_SIZE_AT(&size, arg);
         if (size == 0)
             goto bad_make;
 
@@ -456,7 +456,7 @@ REBNATIVE(trailing_bytes_for_utf8)
     if (byte < 0 or byte > 255)
         fail (Error_Out_Of_Range(ARG(first_byte)));
 
-    uint_fast8_t trail = trailingBytesForUTF8[cast(REBYTE, byte)];
+    uint_fast8_t trail = trailingBytesForUTF8[cast(Byte, byte)];
     if (trail > 3 and not REF(extended)) {
         assert(trail == 4 or trail == 5);
         fail ("Use /EXTENDED with TRAILNG-BYTES-FOR-UTF-8 for 4 or 5 bytes");

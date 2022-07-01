@@ -414,9 +414,9 @@ REBNATIVE(of)
 // Note, this function relies on LEX_WORD lex values having a LEX_VALUE
 // field of zero, except for hex values.
 //
-const REBYTE *Scan_Hex(
+const Byte* Scan_Hex(
     REBVAL *out,
-    const REBYTE *cp,
+    const Byte* cp,
     REBLEN minlen,
     REBLEN maxlen
 ){
@@ -425,12 +425,12 @@ const REBYTE *Scan_Hex(
 
     REBI64 i = 0;
     REBLEN len = 0;
-    REBYTE lex;
+    Byte lex;
     while ((lex = Lex_Map[*cp]) > LEX_WORD) {
-        REBYTE v;
+        Byte v;
         if (++len > maxlen)
             return_NULL;
-        v = cast(REBYTE, lex & LEX_VALUE); // char num encoded into lex
+        v = cast(Byte, lex & LEX_VALUE); // char num encoded into lex
         if (!v && lex < LEX_NUMBER)
             return_NULL;  // invalid char (word but no val)
         i = (i << 4) + v;
@@ -455,23 +455,23 @@ const REBYTE *Scan_Hex(
 // Returns new position after advancing or NULL.  On success, it always
 // consumes two bytes (which are two codepoints).
 //
-const REBYTE* Scan_Hex2(REBYTE *decoded_out, const REBYTE *bp)
+const Byte* Scan_Hex2(Byte* decoded_out, const Byte* bp)
 {
-    REBYTE c1 = bp[0];
+    Byte c1 = bp[0];
     if (c1 >= 0x80)
         return NULL;
 
-    REBYTE c2 = bp[1];
+    Byte c2 = bp[1];
     if (c2 >= 0x80)
         return NULL;
 
-    REBYTE lex1 = Lex_Map[c1];
-    REBYTE d1 = lex1 & LEX_VALUE;
+    Byte lex1 = Lex_Map[c1];
+    Byte d1 = lex1 & LEX_VALUE;
     if (lex1 < LEX_WORD || (d1 == 0 && lex1 < LEX_NUMBER))
         return NULL;
 
-    REBYTE lex2 = Lex_Map[c2];
-    REBYTE d2 = lex2 & LEX_VALUE;
+    Byte lex2 = Lex_Map[c2];
+    Byte d2 = lex2 & LEX_VALUE;
     if (lex2 < LEX_WORD || (d2 == 0 && lex2 < LEX_NUMBER))
         return NULL;
 
@@ -491,18 +491,18 @@ const REBYTE* Scan_Hex2(REBYTE *decoded_out, const REBYTE *bp)
 //
 // !!! Is this redundant with Scan_Decimal?  Appears to be similar code.
 //
-const REBYTE *Scan_Dec_Buf(
-    REBYTE *out, // may live in data stack (do not call PUSH(), GC, eval)
+const Byte* Scan_Dec_Buf(
+    Byte* out, // may live in data stack (do not call PUSH(), GC, eval)
     bool *is_integral,
-    const REBYTE *cp,
+    const Byte* cp,
     REBLEN len // max size of buffer
 ) {
     assert(len >= MAX_NUM_LEN);
 
     *is_integral = true;
 
-    REBYTE *bp = out;
-    REBYTE *be = bp + len - 1;
+    Byte* bp = out;
+    Byte* be = bp + len - 1;
 
     if (*cp == '+' || *cp == '-')
         *bp++ = *cp++;
@@ -576,18 +576,18 @@ const REBYTE *Scan_Dec_Buf(
 //
 // Scan and convert a decimal value.  Return zero if error.
 //
-const REBYTE *Scan_Decimal(
+const Byte* Scan_Decimal(
     Cell(*) out,
-    const REBYTE *cp,
+    const Byte* cp,
     REBLEN len,
     bool dec_only
 ){
-    REBYTE buf[MAX_NUM_LEN + 4];
-    REBYTE *ep = buf;
+    Byte buf[MAX_NUM_LEN + 4];
+    Byte* ep = buf;
     if (len > MAX_NUM_LEN)
         return_NULL;
 
-    const REBYTE *bp = cp;
+    const Byte* bp = cp;
 
     if (*cp == '+' || *cp == '-')
         *ep++ = *cp++;
@@ -668,9 +668,9 @@ const REBYTE *Scan_Decimal(
 // Scan and convert an integer value.  Return zero if error.
 // Allow preceding + - and any combination of ' marks.
 //
-const REBYTE *Scan_Integer(
+const Byte* Scan_Integer(
     Cell(*) out,
-    const REBYTE *cp,
+    const Byte* cp,
     REBLEN len
 ){
     // Super-fast conversion of zero and one (most common cases):
@@ -685,11 +685,11 @@ const REBYTE *Scan_Integer(
          }
     }
 
-    REBYTE buf[MAX_NUM_LEN + 4];
+    Byte buf[MAX_NUM_LEN + 4];
     if (len > MAX_NUM_LEN)
         return_NULL; // prevent buffer overflow
 
-    REBYTE *bp = buf;
+    Byte* bp = buf;
 
     bool neg = false;
 
@@ -761,18 +761,18 @@ const REBYTE *Scan_Integer(
 //
 // Scan and convert a date. Also can include a time and zone.
 //
-const REBYTE *Scan_Date(
+const Byte* Scan_Date(
     Cell(*) out,
-    const REBYTE *cp,
+    const Byte* cp,
     REBLEN len
 ) {
-    const REBYTE *end = cp + len;
+    const Byte* end = cp + len;
 
     // Skip spaces:
     for (; *cp == ' ' && cp != end; cp++);
 
     // Skip day name, comma, and spaces:
-    const REBYTE *ep;
+    const Byte* ep;
     for (ep = cp; *ep != ',' && ep != end; ep++);
     if (ep != end) {
         cp = ep + 1;
@@ -821,7 +821,7 @@ const REBYTE *Scan_Date(
     if (*cp != '/' && *cp != '-' && *cp != '.' && *cp != ' ')
         return_NULL;
 
-    REBYTE sep = *cp++;
+    Byte sep = *cp++;
 
     // Month as number or name:
     ep = Grab_Int(cp, &num);
@@ -841,7 +841,7 @@ const REBYTE *Scan_Date(
             return_NULL;
 
         for (num = 0; num != 12; ++num) {
-            const REBYTE *month_name = cb_cast(Month_Names[num]);
+            const Byte* month_name = cb_cast(Month_Names[num]);
             if (0 == Compare_Ascii_Uncased(month_name, cp, size))
                 break;
         }
@@ -1002,9 +1002,9 @@ const REBYTE *Scan_Date(
 //
 // Scan and convert a file name.
 //
-const REBYTE *Scan_File(
+const Byte* Scan_File(
     Cell(*) out,
-    const REBYTE *cp,
+    const Byte* cp,
     REBLEN len
 ){
     if (*cp == '%') {
@@ -1013,7 +1013,7 @@ const REBYTE *Scan_File(
     }
 
     Codepoint term;
-    const REBYTE *invalid;
+    const Byte* invalid;
     if (*cp == '"') {
         cp++;
         len--;
@@ -1043,9 +1043,9 @@ const REBYTE *Scan_File(
 //
 // Scan and convert email.
 //
-const REBYTE *Scan_Email(
+const Byte* Scan_Email(
     Cell(*) out,
-    const REBYTE *cp,
+    const Byte* cp,
     REBLEN len
 ){
     String(*) s = Make_String(len * 2);  // !!! guess...use mold buffer instead?
@@ -1065,7 +1065,7 @@ const REBYTE *Scan_Email(
             if (len <= 2)
                 return_NULL;
 
-            REBYTE decoded;
+            Byte decoded;
             cp = Scan_Hex2(&decoded, cp + 1);
             if (cp == NULL)
                 return_NULL;
@@ -1113,9 +1113,9 @@ const REBYTE *Scan_Email(
 // (This is similar to how local FILE!s, where e.g. slashes become backslash
 // on Windows, are expressed as TEXT!.)
 //
-const REBYTE *Scan_URL(
+const Byte* Scan_URL(
     Cell(*) out,
-    const REBYTE *cp,
+    const Byte* cp,
     REBLEN len
 ){
     return Scan_Any(out, cp, len, REB_URL, STRMODE_NO_CR);
@@ -1127,15 +1127,15 @@ const REBYTE *Scan_URL(
 //
 // Scan and convert a pair
 //
-const REBYTE *Scan_Pair(
+const Byte* Scan_Pair(
     Cell(*) out,
-    const REBYTE *cp,
+    const Byte* cp,
     REBLEN len
 ) {
-    REBYTE buf[MAX_NUM_LEN + 4];
+    Byte buf[MAX_NUM_LEN + 4];
 
     bool is_integral;
-    const REBYTE *ep = Scan_Dec_Buf(&buf[0], &is_integral, cp, MAX_NUM_LEN);
+    const Byte* ep = Scan_Dec_Buf(&buf[0], &is_integral, cp, MAX_NUM_LEN);
     if (ep == NULL)
         return_NULL;
     if (*ep != 'x' && *ep != 'X')
@@ -1151,7 +1151,7 @@ const REBYTE *Scan_Pair(
 
     ep++;
 
-    const REBYTE *xp = Scan_Dec_Buf(&buf[0], &is_integral, ep, MAX_NUM_LEN);
+    const Byte* xp = Scan_Dec_Buf(&buf[0], &is_integral, ep, MAX_NUM_LEN);
     if (!xp) {
         Free_Pairing(paired);
         return_NULL;
@@ -1181,15 +1181,15 @@ const REBYTE *Scan_Pair(
 //
 // Scan and convert binary strings.
 //
-const REBYTE *Scan_Binary(
+const Byte* Scan_Binary(
     Cell(*) out,
-    const REBYTE *cp,
+    const Byte* cp,
     REBLEN len
 ) {
     REBINT base = 16;
 
     if (*cp != '#') {
-        const REBYTE *ep = Grab_Int(cp, &base);
+        const Byte* ep = Grab_Int(cp, &base);
         if (cp == ep || *ep != '#')
             return_NULL;
         len -= cast(REBLEN, ep - cp);
@@ -1219,9 +1219,9 @@ const REBYTE *Scan_Binary(
 //
 // Scan any string that does not require special decoding.
 //
-const REBYTE *Scan_Any(
+const Byte* Scan_Any(
     Cell(*) out,
-    const REBYTE *cp,
+    const Byte* cp,
     REBLEN num_bytes,
     enum Reb_Kind type,
     enum Reb_Strmode strmode
@@ -1279,12 +1279,12 @@ REBNATIVE(scan_net_header)
 
     REBVAL *header = ARG(header);
     REBSIZ size;
-    const REBYTE *cp = VAL_BYTES_AT(&size, header);
+    const Byte* cp = VAL_BYTES_AT(&size, header);
     UNUSED(size);  // !!! Review semantics
 
     while (IS_LEX_ANY_SPACE(*cp)) cp++; // skip white space
 
-    const REBYTE *start;
+    const Byte* start;
     REBINT len;
 
     while (true) {

@@ -138,7 +138,7 @@ static Bounce DNS_Actor(Frame(*) frame_, REBVAL *port, Symbol(const*) verb)
 
             rebFree(name);
             if (he != nullptr)
-                return Init_Tuple_Bytes(OUT, cast(REBYTE*, *he->h_addr_list), 4);
+                return Init_Tuple_Bytes(OUT, cast(Byte*, *he->h_addr_list), 4);
 
             // ...else fall through to error handling...
         }

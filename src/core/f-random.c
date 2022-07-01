@@ -129,10 +129,10 @@ REBI64 Random_Int(bool secure)
             " and not the core build.  Speak up if you need a workaround."
         );
 
-        /*REBYTE srcbuf[20], dstbuf[20];
+        /*Byte srcbuf[20], dstbuf[20];
 
         memcpy(srcbuf, &tmp, sizeof(tmp));
-        memset(srcbuf + sizeof(tmp), *(REBYTE*)&tmp, 20 - sizeof(tmp));
+        memset(srcbuf + sizeof(tmp), *(Byte*)&tmp, 20 - sizeof(tmp));
 
         SHA1(srcbuf, 20, dstbuf);
         memcpy(&tmp, dstbuf, sizeof(tmp));*/

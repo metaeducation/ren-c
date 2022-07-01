@@ -74,19 +74,19 @@ void Chrom_Key_Alpha(REBVAL *v,uint32_t col,int32_t blitmode) {
 //
 // Perform LZW decompression.
 //
-void Decode_LZW(REBYTE *data, REBYTE **cpp, REBYTE *colortab, int32_t w, int32_t h, bool interlaced)
+void Decode_LZW(Byte* data, Byte* *cpp, Byte* colortab, int32_t w, int32_t h, bool interlaced)
 {
-    REBYTE  *cp = *cpp;
-    REBYTE  *rp;
+    Byte  *cp = *cpp;
+    Byte  *rp;
     int32_t  available, clear, code_mask, code_size, end_of_info, in_code;
     int32_t  old_code, bits, code, count, x, y, data_size, row, i;
-    REBYTE *dp;
+    Byte* dp;
     uint32_t datum;
     short   *prefix;
-    REBYTE  first, *pixel_stack, *suffix, *top_stack;
+    Byte  first, *pixel_stack, *suffix, *top_stack;
 
-    suffix = rebAllocN(REBYTE,
-        MAX_STACK_SIZE * (sizeof(REBYTE) + sizeof(REBYTE) + sizeof(short))
+    suffix = rebAllocN(Byte,
+        MAX_STACK_SIZE * (sizeof(Byte) + sizeof(Byte) + sizeof(short))
     );
     pixel_stack = suffix + MAX_STACK_SIZE;
     prefix = (short *)(pixel_stack + MAX_STACK_SIZE);
@@ -199,7 +199,7 @@ void Decode_LZW(REBYTE *data, REBYTE **cpp, REBYTE *colortab, int32_t w, int32_t
 }
 
 
-static bool Has_Valid_GIF_Header(const REBYTE *data, uint32_t len) {
+static bool Has_Valid_GIF_Header(const Byte* data, uint32_t len) {
     if (len < 5)
         return false;
 
@@ -227,7 +227,7 @@ REBNATIVE(identify_gif_q)
     GIF_INCLUDE_PARAMS_OF_IDENTIFY_GIF_Q;
 
     REBSIZ size;
-    const REBYTE *data = VAL_BINARY_SIZE_AT(&size, ARG(data));
+    const Byte* data = VAL_BINARY_SIZE_AT(&size, ARG(data));
 
     // Assume signature matching is good enough (will get a fail() on
     // decode if it's a false positive).
@@ -251,22 +251,22 @@ REBNATIVE(decode_gif)
     GIF_INCLUDE_PARAMS_OF_DECODE_GIF;
 
     REBSIZ size;
-    const REBYTE *data = VAL_BINARY_SIZE_AT(&size, ARG(data));
+    const Byte* data = VAL_BINARY_SIZE_AT(&size, ARG(data));
 
     if (not Has_Valid_GIF_Header(data, size))
         fail (Error_Bad_Media_Raw());
 
     int32_t  w, h;
     int32_t  transparency_index;
-    REBYTE  c, *global_colormap, *colormap;
+    Byte  c, *global_colormap, *colormap;
     uint32_t  global_colors, local_colormap;
     uint32_t  colors;
     bool  interlaced;
 
     // !!! Decode_LZW is not const-correct, trust it won't modify
     //
-    REBYTE *cp = m_cast(REBYTE*, data);
-    REBYTE *end = m_cast(REBYTE*, data) + size;
+    Byte* cp = m_cast(Byte*, data);
+    Byte* end = m_cast(Byte*, data) + size;
 
     global_colors = 0;
     global_colormap = (unsigned char *) NULL;
@@ -331,12 +331,12 @@ REBNATIVE(decode_gif)
         }
         cp += 9;
 
-        REBYTE *dp = rebAllocN(REBYTE, (w * h) * 4);  // RGBA pixels, 4 bytes
+        Byte* dp = rebAllocN(Byte, (w * h) * 4);  // RGBA pixels, 4 bytes
 
         Decode_LZW(dp, &cp, colormap, w, h, interlaced);
 
         if(transparency_index >= 0) {
-            REBYTE *p=colormap+3*transparency_index;
+            Byte* p=colormap+3*transparency_index;
             UNUSED(p);
             ///Chroma_Key_Alpha(Temp_Value, (uint32_t)(p[2]|(p[1]<<8)|(p[0]<<16)), BLIT_MODE_COLOR);
         }

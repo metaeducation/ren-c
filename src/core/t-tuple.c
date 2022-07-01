@@ -60,13 +60,13 @@ Bounce MAKE_Sequence(
     //
     if (IS_URL(arg)) {
         REBSIZ len;
-        const REBYTE *cp
+        const Byte* cp
             = Analyze_String_For_Scan(&len, arg, MAX_SCAN_TUPLE);
 
         if (len == 0)
             fail (arg);
 
-        const REBYTE *ep;
+        const Byte* ep;
         REBLEN size = 1;
         REBINT n;
         for (n = cast(REBINT, len), ep = cp; n > 0; n--, ep++) { // count '.'
@@ -80,15 +80,15 @@ Bounce MAKE_Sequence(
         if (size < 3)
             size = 3;
 
-        REBYTE buf[MAX_TUPLE];
+        Byte buf[MAX_TUPLE];
 
-        REBYTE *tp = buf;
+        Byte* tp = buf;
         for (ep = cp; len > cast(REBLEN, ep - cp); ++ep) {
             ep = Grab_Int(ep, &n);
             if (n < 0 || n > 255)
                 fail (arg);
 
-            *tp++ = cast(REBYTE, n);
+            *tp++ = cast(Byte, n);
             if (*ep != '.')
                 break;
         }
@@ -106,8 +106,8 @@ Bounce MAKE_Sequence(
         Cell(const*) tail;
         Cell(const*) item = VAL_ARRAY_AT(&tail, arg);
 
-        REBYTE buf[MAX_TUPLE];
-        REBYTE *vp = buf;
+        Byte buf[MAX_TUPLE];
+        Byte* vp = buf;
 
         for (; item != tail; ++item, ++vp, ++len) {
             if (len >= MAX_TUPLE)
@@ -132,11 +132,11 @@ Bounce MAKE_Sequence(
     REBLEN alen;
 
     if (IS_ISSUE(arg)) {
-        REBYTE buf[MAX_TUPLE];
-        REBYTE *vp = buf;
+        Byte buf[MAX_TUPLE];
+        Byte* vp = buf;
 
         String(const*) spelling = VAL_STRING(arg);
-        const REBYTE *ap = STR_HEAD(spelling);
+        const Byte* ap = STR_HEAD(spelling);
         size_t size = STR_SIZE(spelling); // UTF-8 len
         if (size & 1)
             fail (arg); // must have even # of chars
@@ -144,7 +144,7 @@ Bounce MAKE_Sequence(
         if (size > MAX_TUPLE)
             fail (arg); // valid even for UTF-8
         for (alen = 0; alen < size; alen++) {
-            REBYTE decoded;
+            Byte decoded;
             if ((ap = Scan_Hex2(&decoded, ap)) == NULL)
                 fail (arg);
             *vp++ = decoded;
@@ -153,7 +153,7 @@ Bounce MAKE_Sequence(
     }
     else if (IS_BINARY(arg)) {
         REBSIZ size;
-        const REBYTE *at = VAL_BINARY_SIZE_AT(&size, arg);
+        const Byte* at = VAL_BINARY_SIZE_AT(&size, arg);
         if (size > MAX_TUPLE)
             size = MAX_TUPLE;
         Init_Tuple_Bytes(out, at, size);
@@ -184,13 +184,13 @@ REBTYPE(Sequence)
     // tuple (or path), for compatibility in the below code for when it is.
     // This is a work in progress, just to try to get to booting.
     //
-    REBYTE buf[MAX_TUPLE];
+    Byte buf[MAX_TUPLE];
     REBLEN len = VAL_SEQUENCE_LEN(sequence);
     if (len > MAX_TUPLE)
         len = MAX_TUPLE;
     bool all_byte_sized_ints = Did_Get_Sequence_Bytes(buf, sequence, len);
     UNUSED(all_byte_sized_ints);
-    REBYTE *vp = buf;
+    Byte* vp = buf;
 
     SYMID id = ID_OF_SYMBOL(verb);
 
@@ -211,8 +211,8 @@ REBTYPE(Sequence)
     ){
         assert(vp);
 
-        REBYTE abuf[MAX_TUPLE];
-        const REBYTE *ap;
+        Byte abuf[MAX_TUPLE];
+        const Byte* ap;
         REBLEN alen;
         REBINT a;
         REBDEC dec;
@@ -317,7 +317,7 @@ REBTYPE(Sequence)
                 v = 255;
             else if (v < 0)
                 v = 0;
-            *vp = cast(REBYTE, v);
+            *vp = cast(Byte, v);
         }
         return Init_Tuple_Bytes(OUT, buf, len);
     }
@@ -326,7 +326,7 @@ REBTYPE(Sequence)
     if (id == SYM_BITWISE_NOT) {
         REBLEN temp = len;
         for (; temp > 0; --temp, vp++)
-            *vp = cast(REBYTE, ~*vp);
+            *vp = cast(Byte, ~*vp);
         return Init_Tuple_Bytes(OUT, buf, len);
     }
     if (id == SYM_RANDOM) {
@@ -341,7 +341,7 @@ REBTYPE(Sequence)
             fail (Error_Bad_Refines_Raw());
         for (; len > 0; len--, vp++) {
             if (*vp)
-                *vp = cast(REBYTE, Random_Int(did REF(secure)) % (1 + *vp));
+                *vp = cast(Byte, Random_Int(did REF(secure)) % (1 + *vp));
         }
         return Init_Tuple_Bytes(OUT, buf, len);
     }

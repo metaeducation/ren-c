@@ -44,7 +44,7 @@ extern void Shutdown_Stdio();
 //
 extern void Write_IO(const REBVAL *data, REBLEN len);
 
-extern bool Read_Stdin_Byte_Interrupted(bool *eof, REBYTE *out);
+extern bool Read_Stdin_Byte_Interrupted(bool *eof, Byte* out);
 
 
 extern Bounce Console_Actor(Frame(*) frame_, REBVAL *port, Symbol(const*) verb);
@@ -294,7 +294,7 @@ REBNATIVE(read_line)
         DECLARE_MOLD (mo);
         Push_Mold(mo);
 
-        REBYTE encoded[UNI_ENCODED_MAX];
+        Byte encoded[UNI_ENCODED_MAX];
 
         while (true) {
             if (Read_Stdin_Byte_Interrupted(&eof, &encoded[0])) {  // Ctrl-C
@@ -489,7 +489,7 @@ REBNATIVE(read_char)
     {
         bool eof;
 
-        REBYTE encoded[UNI_ENCODED_MAX];
+        Byte encoded[UNI_ENCODED_MAX];
 
         if (Read_Stdin_Byte_Interrupted(&eof, &encoded[0])) {  // Ctrl-C
             if (rebWasHalting())

@@ -59,7 +59,7 @@ REBNATIVE(identify_jpeg_q)
     // !!! jpeg_info is not const-correct; we trust it not to modify data
     //
     REBSIZ size;
-    REBYTE *data = m_cast(REBYTE*, VAL_BINARY_SIZE_AT(&size, ARG(data)));
+    Byte* data = m_cast(Byte*, VAL_BINARY_SIZE_AT(&size, ARG(data)));
 
     int w, h;
     jpeg_info(s_cast(data), size, &w, &h); // may longjmp above
@@ -87,7 +87,7 @@ REBNATIVE(decode_jpeg)
     // !!! jpeg code is not const-correct, we trust it not to modify data
     //
     REBSIZ size;
-    REBYTE *data = m_cast(REBYTE*, VAL_BINARY_SIZE_AT(&size, ARG(data)));
+    Byte* data = m_cast(Byte*, VAL_BINARY_SIZE_AT(&size, ARG(data)));
 
     int w, h;
     jpeg_info(s_cast(data), size, &w, &h); // may longjmp above

@@ -28,17 +28,20 @@
 //
 
 
-//=//// REBYTE 8-BIT UNSIGNED /////////////////////////////////////////////=//
+//=//// 8-BIT UNSIGNED BYTE ///////////////////////////////////////////////=//
 //
 // Using unsigned characters helps convey information is not limited to
 // textual data.  API-wise, ordinary `char`--marked neither signed nor
-// unsigned--is used for UTF-8 text.  But internally REBYTE is used for UTF-8
+// unsigned--is used for UTF-8 text.  But internally Byte is used for UTF-8
 // when encoding or decoding.
 //
 // Note: uint8_t may not be equivalent to unsigned char:
 // https://stackoverflow.com/a/16138470/211160
 //
-typedef unsigned char REBYTE; // don't change to uint8_t, see note
+// This is a macro, to make it possible to undefine out of the way for things
+// that define it (most likely to a synonym, as zlib.h does)
+//
+#define Byte unsigned char  // don't change to uint8_t, see note
 
 
 //=//// REBOL NUMERIC TYPES ("REBXXX") ////////////////////////////////////=//

@@ -176,7 +176,7 @@
 // and some are only forward declared.  See notes in %structs/README.md
 //
 
-#include "reb-defs.h"  // basic typedefs like REBYTE
+#include "reb-defs.h"  // basic typedefs like Byte
 
 #include "structs/sys-rebnod.h"
 #include "mem-pools.h"
@@ -196,7 +196,7 @@
 #include "structs/sys-rebctx.h"  // context structure
 #include "structs/sys-rebpat.h"  // virtual binding patch definitions
 
-#include "structs/sys-rebchr.h"  // Utf8(*) is REBYTE* in validated UTF8
+#include "structs/sys-rebchr.h"  // Utf8(*) is Byte* in validated UTF8
 
 #include "structs/sys-rebfed.h"  // REBFED (feed) definition
 #include "structs/sys-rebjmp.h"  // Jump state (for TRAP)

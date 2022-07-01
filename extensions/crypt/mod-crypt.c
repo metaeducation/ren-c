@@ -66,6 +66,7 @@
 
 #include "sys-core.h"
 
+#undef Byte  // sys-zlib.h defines it compatibly (unsigned char)
 #include "sys-zlib.h"  // needed for the ADLER32 hash
 
 #include "tmp-mod-crypt.h"
@@ -215,7 +216,7 @@ REBNATIVE(checksum)
     REBLEN len = Part_Len_May_Modify_Index(ARG(data), ARG(part));
 
     REBSIZ size;
-    const REBYTE *data = VAL_BYTES_LIMIT_AT(&size, ARG(data), len);
+    const Byte* data = VAL_BYTES_LIMIT_AT(&size, ARG(data), len);
 
     // Turn the method into a string and look it up in the table that mbedTLS
     // builds in when you `#include "md.h"`.  How many entries are in this
@@ -297,7 +298,7 @@ REBNATIVE(checksum)
     int hmac = REF(key) ? 1 : 0;  // !!! int, but seems to be a boolean?
 
     unsigned char md_size = mbedtls_md_get_size(info);
-    REBYTE *output = rebAllocN(REBYTE, md_size);
+    Byte* output = rebAllocN(Byte, md_size);
 
     REBVAL *error = nullptr;
     REBVAL *result = nullptr;
@@ -308,7 +309,7 @@ REBNATIVE(checksum)
 
     if (hmac) {
         REBSIZ key_size;
-        const REBYTE *key_bytes = VAL_BYTES_AT(&key_size, ARG(key));
+        const Byte* key_bytes = VAL_BYTES_AT(&key_size, ARG(key));
 
         IF_NOT_0(cleanup, error,
             mbedtls_md_hmac_starts(&ctx, key_bytes, key_size)
@@ -356,7 +357,7 @@ REBNATIVE(checksum)
 static int Mpi_From_Binary(mbedtls_mpi* X, const REBVAL *binary)
 {
     size_t size;
-    REBYTE *buf = rebBytes(&size, binary);  // allocates w/rebMalloc()
+    Byte* buf = rebBytes(&size, binary);  // allocates w/rebMalloc()
 
     int result = mbedtls_mpi_read_binary(X, buf, size);
 
@@ -377,7 +378,7 @@ static REBVAL *rebBinaryFromMpi(const mbedtls_mpi* X)
 {
     size_t size = mbedtls_mpi_size(X);
 
-    REBYTE *buf = rebAllocN(REBYTE, size);
+    Byte* buf = rebAllocN(Byte, size);
 
     int result = mbedtls_mpi_write_binary(X, buf, size);
 
@@ -684,12 +685,12 @@ REBNATIVE(rsa_encrypt)
     // the data from relocation or resize).
     //
     REBSIZ plaintext_size;
-    REBYTE *plaintext = rebBytes(&plaintext_size, ARG(data));
+    Byte* plaintext = rebBytes(&plaintext_size, ARG(data));
 
     // Buffer suitable for recapturing as a BINARY!
     //
     size_t key_size = mbedtls_rsa_get_len(&ctx);
-    REBYTE *encrypted = rebAllocN(REBYTE, key_size);
+    Byte* encrypted = rebAllocN(Byte, key_size);
 
     if (padding == MBEDTLS_RSA_RAW_HACK) {
         if (plaintext_size != key_size) {
@@ -902,12 +903,12 @@ REBNATIVE(rsa_decrypt)
     // the data from relocation or resize).
     //
     REBSIZ encrypted_size;
-    REBYTE *encrypted = rebBytes(&encrypted_size, ARG(data));
+    Byte* encrypted = rebBytes(&encrypted_size, ARG(data));
     assert(encrypted_size == key_size);
 
     // Buffer suitable for recapturing as a BINARY!
     //
-    REBYTE *decrypted = rebAllocN(REBYTE, key_size);
+    Byte* decrypted = rebAllocN(Byte, key_size);
 
     size_t decrypted_size;
 
@@ -1057,8 +1058,8 @@ REBNATIVE(dh_generate_keypair)
     // rebRepossess()'d as the memory backing a BINARY! series.  (This memory
     // will be automatically freed in case of a FAIL call.)
     //
-    REBYTE *gx = rebAllocN(REBYTE, gx_size);  // gx => public key
-    REBYTE *x = rebAllocN(REBYTE, x_size);  // x => private key
+    Byte* gx = rebAllocN(Byte, gx_size);  // gx => public key
+    Byte* x = rebAllocN(Byte, x_size);  // x => private key
 
     // The "make_public" routine expects to be giving back a public key as
     // bytes, so it takes that buffer for output.  But it keeps the private
@@ -1261,7 +1262,7 @@ REBNATIVE(dh_compute_secret)
     //
   blockscope {
     size_t gy_size;
-    REBYTE *gy_buf = rebBytes(&gy_size, gy);  // allocates w/rebMalloc()
+    Byte* gy_buf = rebBytes(&gy_size, gy);  // allocates w/rebMalloc()
 
     int retcode = mbedtls_dhm_read_public(&ctx, gy_buf, gy_size);
 
@@ -1271,7 +1272,7 @@ REBNATIVE(dh_compute_secret)
 
   blockscope {
     REBLEN k_size = mbedtls_dhm_get_len(&ctx);  // same size as modulus/etc.
-    REBYTE *k_buffer = rebAllocN(REBYTE, k_size);  // shared key buffer
+    Byte* k_buffer = rebAllocN(Byte, k_size);  // shared key buffer
 
     size_t olen;
     int ret = mbedtls_dhm_calc_secret(
@@ -1359,7 +1360,7 @@ REBNATIVE(aes_key)
     CRYPT_INCLUDE_PARAMS_OF_AES_KEY;
 
     REBSIZ p_size;
-    REBYTE *p_key = rebBytes(&p_size, ARG(key));
+    Byte* p_key = rebBytes(&p_size, ARG(key));
 
     REBINT keybits = p_size * 8;
     if (keybits != 128 and keybits != 192 and keybits != 256) {
@@ -1401,7 +1402,7 @@ REBNATIVE(aes_key)
     size_t blocksize = mbedtls_cipher_get_block_size(ctx);
     if (rebUnboxLogic("binary?", ARG(iv))) {
         REBSIZ iv_size;
-        REBYTE *iv = rebBytes(&iv_size, ARG(iv));
+        Byte* iv = rebBytes(&iv_size, ARG(iv));
 
         if (iv_size != blocksize) {
             error = rebValue("make error! [",
@@ -1457,7 +1458,7 @@ REBNATIVE(aes_stream)
         = VAL_HANDLE_POINTER(struct mbedtls_cipher_context_t, ARG(ctx));
 
     REBSIZ ilen;
-    REBYTE *input = rebBytes(&ilen, ARG(data));
+    Byte* input = rebBytes(&ilen, ARG(data));
 
     if (ilen == 0) {
         rebFree(input);
@@ -1482,12 +1483,12 @@ REBNATIVE(aes_stream)
     //
     REBSIZ pad_len = (((ilen - 1) >> 4) << 4) + blocksize;
 
-    REBYTE *pad_data;
+    Byte* pad_data;
     if (ilen < pad_len) {
         //
         //  make new data input with zero-padding
         //
-        pad_data = rebAllocN(REBYTE, pad_len);
+        pad_data = rebAllocN(Byte, pad_len);
         memset(pad_data, 0, pad_len);
         memcpy(pad_data, input, ilen);
         input = pad_data;
@@ -1495,7 +1496,7 @@ REBNATIVE(aes_stream)
     else
         pad_data = nullptr;
 
-    REBYTE *output = rebAllocN(REBYTE, ilen + blocksize);
+    Byte* output = rebAllocN(Byte, ilen + blocksize);
 
     size_t olen;
     IF_NOT_0(cleanup, error,
@@ -1656,7 +1657,7 @@ REBNATIVE(ecdh_shared_secret)
         = Ecp_Curve_Info_From_Word(ARG(group));
     size_t num_bytes = info->bit_size / 8;
 
-    unsigned char *public_key = rebAllocN(REBYTE, num_bytes * 2);
+    unsigned char *public_key = rebAllocN(Byte, num_bytes * 2);
 
     rebBytesInto(public_key, num_bytes * 2, "use [bin] [",
         "bin: either binary?", ARG(public), "[", ARG(public), "] [",

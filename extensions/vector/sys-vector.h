@@ -53,7 +53,7 @@ inline static bool VAL_VECTOR_INTEGRAL(noquote(Cell(const*)) v) {
     return false;
 }
 
-inline static REBYTE VAL_VECTOR_WIDE(noquote(Cell(const*)) v) {  // "wide" REBSER term
+inline static Byte VAL_VECTOR_WIDE(noquote(Cell(const*)) v) {  // "wide" REBSER term
     int32_t wide = EXTRA(Any, VAL_VECTOR_SIGN_INTEGRAL_WIDE(v)).i32;
     assert(wide == 1 or wide == 2 or wide == 3 or wide == 4);
     return wide;
@@ -62,7 +62,7 @@ inline static REBYTE VAL_VECTOR_WIDE(noquote(Cell(const*)) v) {  // "wide" REBSE
 #define VAL_VECTOR_BITSIZE(v) \
     (VAL_VECTOR_WIDE(v) * 8)
 
-inline static REBYTE *VAL_VECTOR_HEAD(noquote(Cell(const*)) v) {
+inline static Byte* VAL_VECTOR_HEAD(noquote(Cell(const*)) v) {
     assert(CELL_CUSTOM_TYPE(v) == EG_Vector_Type);
     REBVAL *binary = VAL(VAL_NODE1(v));
     return BIN_HEAD(VAL_BINARY_ENSURE_MUTABLE(binary));
@@ -81,7 +81,7 @@ inline static REBVAL *Init_Vector(
     REBBIN *bin,
     bool sign,
     bool integral,
-    REBYTE bitsize
+    Byte bitsize
 ){
     RESET_CUSTOM_CELL(out, EG_Vector_Type, CELL_FLAG_FIRST_IS_NODE);
 

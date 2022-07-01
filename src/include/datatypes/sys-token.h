@@ -70,10 +70,10 @@ inline static Codepoint VAL_CHAR(noquote(Cell(const*)) v) {
 // seems like a bad idea for something so cheap to calculate.  But keep a
 // separate entry point in case that cache comes back.
 //
-inline static REBYTE VAL_CHAR_ENCODED_SIZE(noquote(Cell(const*)) v)
+inline static Byte VAL_CHAR_ENCODED_SIZE(noquote(Cell(const*)) v)
   { return Encoded_Size_For_Codepoint(VAL_CHAR(v)); }
 
-inline static const REBYTE *VAL_CHAR_ENCODED(noquote(Cell(const*)) v) {
+inline static const Byte* VAL_CHAR_ENCODED(noquote(Cell(const*)) v) {
     assert(CELL_HEART(v) == REB_ISSUE and Not_Cell_Flag(v, ISSUE_HAS_NODE));
     assert(EXTRA(Bytes, v).exactly_4[IDX_EXTRA_LEN] <= 1);  // e.g. codepoint
     return PAYLOAD(Bytes, v).at_least_8;  // !!! '\0' terminated or not?
@@ -228,7 +228,7 @@ inline static bool Is_Blackhole(Cell(const*) v) {
 // !!! With the existence of AS, this might not be as useful as leaving
 // STRING! open for a different meaning (or an error as a sanity check).
 //
-inline static const REBYTE *VAL_BYTES_LIMIT_AT(
+inline static const Byte* VAL_BYTES_LIMIT_AT(
     REBSIZ *size_out,
     Cell(const*) v,
     REBINT limit

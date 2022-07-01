@@ -21,7 +21,7 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 
-extern const REBYTE Lex_Map[256];  // declared in %l-scan.c
+extern const Byte Lex_Map[256];  // declared in %l-scan.c
 
 //
 //  Tokens returned by the scanner.  Keep in sync with Token_Names[].
@@ -79,8 +79,8 @@ enum Reb_Token {
 #define LEX_CLASS       (3<<LEX_SHIFT)  /* class bit field */
 #define LEX_VALUE       (0x1F)          /* value bit field */
 
-#define GET_LEX_CLASS(c)  (Lex_Map[(REBYTE)c] >> LEX_SHIFT)
-#define GET_LEX_VALUE(c)  (Lex_Map[(REBYTE)c] & LEX_VALUE)
+#define GET_LEX_CLASS(c)  (Lex_Map[(Byte)c] >> LEX_SHIFT)
+#define GET_LEX_VALUE(c)  (Lex_Map[(Byte)c] & LEX_VALUE)
 
 
 /*
@@ -146,19 +146,19 @@ typedef uint16_t LEXFLAGS;  // 16 flags per lex class
 #define HAS_LEX_FLAG(f,l)       (f & LEX_FLAG(l))
 #define ONLY_LEX_FLAG(f,l)      (f == LEX_FLAG(l))
 
-#define MASK_LEX_CLASS(c)               (Lex_Map[(REBYTE)c] & LEX_CLASS)
-#define IS_LEX_SPACE(c)                 (!Lex_Map[(REBYTE)c])
-#define IS_LEX_ANY_SPACE(c)             (Lex_Map[(REBYTE)c]<=LEX_DELIMIT_RETURN)
+#define MASK_LEX_CLASS(c)               (Lex_Map[(Byte)c] & LEX_CLASS)
+#define IS_LEX_SPACE(c)                 (!Lex_Map[(Byte)c])
+#define IS_LEX_ANY_SPACE(c)             (Lex_Map[(Byte)c]<=LEX_DELIMIT_RETURN)
 #define IS_LEX_DELIMIT(c)               (MASK_LEX_CLASS(c) == LEX_DELIMIT)
 #define IS_LEX_SPECIAL(c)               (MASK_LEX_CLASS(c) == LEX_SPECIAL)
 #define IS_LEX_WORD(c)                  (MASK_LEX_CLASS(c) == LEX_WORD)
 // Optimization (necessary?)
-#define IS_LEX_NUMBER(c)                (Lex_Map[(REBYTE)c] >= LEX_NUMBER)
+#define IS_LEX_NUMBER(c)                (Lex_Map[(Byte)c] >= LEX_NUMBER)
 
-#define IS_LEX_NOT_DELIMIT(c)           (Lex_Map[(REBYTE)c] >= LEX_SPECIAL)
-#define IS_LEX_WORD_OR_NUMBER(c)        (Lex_Map[(REBYTE)c] >= LEX_WORD)
+#define IS_LEX_NOT_DELIMIT(c)           (Lex_Map[(Byte)c] >= LEX_SPECIAL)
+#define IS_LEX_WORD_OR_NUMBER(c)        (Lex_Map[(Byte)c] >= LEX_WORD)
 
-inline static bool IS_LEX_DELIMIT_HARD(REBYTE c) {
+inline static bool IS_LEX_DELIMIT_HARD(Byte c) {
     assert(IS_LEX_DELIMIT(c));
     return GET_LEX_VALUE(c) <= LEX_DELIMIT_HARD;
 }
@@ -288,10 +288,10 @@ enum rebol_esc_codes {
 // Skip to the specified byte but not past the provided end pointer of bytes.
 // nullptr if byte is not found.
 //
-inline static const REBYTE *Skip_To_Byte(
-    const REBYTE *cp,
-    const REBYTE *ep,
-    REBYTE b
+inline static const Byte* Skip_To_Byte(
+    const Byte* cp,
+    const Byte* ep,
+    Byte b
 ){
     while (cp != ep and *cp != b)
         ++cp;
