@@ -97,7 +97,7 @@ Bounce Macro_Dispatcher(Frame(*) f)
 {
     Frame(*) frame_ = f;  // for RETURN macros
 
-    REBACT *phase = FRM_PHASE(f);
+    Action(*) phase = FRM_PHASE(f);
     Array(*) details = ACT_DETAILS(phase);
     Cell(*) body = ARR_AT(details, IDX_DETAILS_1);  // code to run
     assert(IS_BLOCK(body) and IS_RELATIVE(body) and VAL_INDEX(body) == 0);
@@ -160,7 +160,7 @@ REBNATIVE(macro)
 {
     INCLUDE_PARAMS_OF_MACRO;
 
-    REBACT *macro = Make_Interpreted_Action_May_Fail(
+    Action(*) macro = Make_Interpreted_Action_May_Fail(
         ARG(spec),
         ARG(body),
         MKF_RETURN | MKF_KEYWORDS,

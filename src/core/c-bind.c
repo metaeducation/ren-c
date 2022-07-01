@@ -691,7 +691,7 @@ static void Clonify_And_Bind_Relative(
     REBFLGS flags,
     REBU64 deep_types,
     struct Reb_Binder *binder,
-    REBACT *relative
+    Action(*) relative
 ){
     if (C_STACK_OVERFLOWING(&relative))
         Fail_Stack_Overflow();
@@ -821,7 +821,7 @@ static void Clonify_And_Bind_Relative(
 //
 Array(*) Copy_And_Bind_Relative_Deep_Managed(
     const REBVAL *body,
-    REBACT *relative,
+    Action(*) relative,
     bool locals_visible
 ){
     struct Reb_Binder binder;

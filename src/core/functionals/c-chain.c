@@ -264,7 +264,7 @@ REBNATIVE(chain_p)  // see extended definition CHAIN in %base-defs.r
     // general, possibly that all actions put the return slot in a separate
     // sliver that includes the partials?
     //
-    REBACT *chain = Make_Action(
+    Action(*) chain = Make_Action(
         ACT_PARAMLIST(VAL_ACTION(first)),  // same interface as first action
         ACT_PARTIALS(VAL_ACTION(first)),
         &Chainer_Dispatcher,

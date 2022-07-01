@@ -681,7 +681,7 @@ REBNATIVE(variadic_q)
 {
     INCLUDE_PARAMS_OF_VARIADIC_Q;
 
-    REBACT *action = VAL_ACTION(ARG(action));
+    Action(*) action = VAL_ACTION(ARG(action));
 
     const REBKEY *key_tail;
     const REBKEY *key = ACT_KEYS(&key_tail, action);

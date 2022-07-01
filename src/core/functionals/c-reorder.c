@@ -101,7 +101,7 @@ REBNATIVE(reorder_p)  // see REORDER in %base-defs.r, for inheriting meta
 {
     INCLUDE_PARAMS_OF_REORDER_P;
 
-    REBACT *reorderee = VAL_ACTION(ARG(action));
+    Action(*) reorderee = VAL_ACTION(ARG(action));
     option(Symbol(const*)) label  = VAL_ACTION_LABEL(ARG(action));
 
     // Working with just the exemplar means we will lose the partials ordering
@@ -232,7 +232,7 @@ REBNATIVE(reorder_p)  // see REORDER in %base-defs.r, for inheriting meta
         SERIES_FLAG_MANAGED | SERIES_MASK_PARTIALS
     );
 
-    REBACT *reordered = Make_Action(
+    Action(*) reordered = Make_Action(
         CTX_VARLIST(exemplar),
         partials,
         &Reorderer_Dispatcher,

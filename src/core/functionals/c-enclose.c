@@ -220,7 +220,7 @@ REBNATIVE(enclose_p)  // see extended definition ENCLOSE in %base-defs.r
     //
     // !!! Return result may differ; similar issue comes up with CHAIN
     //
-    REBACT *enclosure = Make_Action(
+    Action(*) enclosure = Make_Action(
         ACT_PARAMLIST(VAL_ACTION(inner)),  // same interface as inner
         ACT_PARTIALS(VAL_ACTION(inner)),
         &Encloser_Dispatcher,

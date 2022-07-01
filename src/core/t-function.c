@@ -191,7 +191,7 @@ void MF_Action(REB_MOLD *mo, noquote(Cell(const*)) v, bool form)
 REBTYPE(Action)
 {
     REBVAL *action = D_ARG(1);
-    REBACT *act = VAL_ACTION(action);
+    Action(*) act = VAL_ACTION(action);
 
     switch (ID_OF_SYMBOL(verb)) {
 
@@ -283,7 +283,7 @@ REBTYPE(Action)
         // whatever underlied the function...even if it was foundational
         // so `underlying = VAL_ACTION(value)`
 
-        REBACT *proxy = Make_Action(
+        Action(*) proxy = Make_Action(
             ACT_PARAMLIST(act),  // not changing the interface
             ACT_PARTIALS(act),  // keeping partial specializations
             ACT_DISPATCHER(act),  // have to preserve in case original hijacked

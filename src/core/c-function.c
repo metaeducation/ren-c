@@ -88,7 +88,7 @@ static bool Params_Of_Hook(
 //
 // Returns array of function words, unbound.
 //
-Array(*) Make_Action_Parameters_Arr(REBACT *act, bool just_words)
+Array(*) Make_Action_Parameters_Arr(Action(*) act, bool just_words)
 {
     struct Params_Of_State s;
     s.just_words = just_words;
@@ -915,7 +915,7 @@ Array(*) Make_Paramlist_Managed_May_Fail(
 // take several forms depending on how much detail there is.  See the
 // ACT_SPECIALTY() definition for more information on how this is laid out.
 //
-REBACT *Make_Action(
+Action(*) Make_Action(
     Array(*) paramlist,
     option(Array(*)) partials,
     Dispatcher* dispatcher,  // native C function called by Action_Executor()
@@ -976,7 +976,7 @@ REBACT *Make_Action(
 
     mutable_INODE(Exemplar, details) = CTX(paramlist);
 
-    REBACT *act = ACT(details); // now it's a legitimate REBACT
+    Action(*) act = ACT(details); // now it's a legitimate REBACT
 
     // !!! We may have to initialize the exemplar rootvar.
     //
@@ -1037,7 +1037,7 @@ REBACT *Make_Action(
 void Get_Maybe_Fake_Action_Body(REBVAL *out, const REBVAL *action)
 {
     Context(*) binding = VAL_ACTION_BINDING(action);
-    REBACT *a = VAL_ACTION(action);
+    Action(*) a = VAL_ACTION(action);
 
     // A Hijacker *might* not need to splice itself in with a dispatcher.
     // But if it does, bypass it to get to the "real" action implementation.
@@ -1201,7 +1201,7 @@ REBNATIVE(tweak)
 {
     INCLUDE_PARAMS_OF_TWEAK;
 
-    REBACT *act = VAL_ACTION(ARG(action));
+    Action(*) act = VAL_ACTION(ARG(action));
     const REBPAR *first = First_Unspecialized_Param(nullptr, act);
 
     enum Reb_Param_Class pclass = first

@@ -737,7 +737,7 @@ const void *RL_rebArgR(const void *p, va_list *vaptr)
     ENTER_API;
 
     Frame(*) f = TOP_FRAME;
-    REBACT *act = FRM_PHASE(f);
+    Action(*) act = FRM_PHASE(f);
 
     // !!! Currently the JavaScript wrappers do not do the right thing for
     // taking just a `const char*`, so this falsely is a variadic to get the

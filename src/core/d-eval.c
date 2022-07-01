@@ -231,7 +231,7 @@ void Do_After_Action_Checks_Debug(Frame(*) f) {
     if (GET_SERIES_FLAG(f->varlist, INACCESSIBLE))  // e.g. ENCLOSE
         return;
 
-    REBACT *phase = FRM_PHASE(f);
+    Action(*) phase = FRM_PHASE(f);
 
     // Usermode functions check the return type via Func_Dispatcher(),
     // with everything else assumed to return the correct type.  But this

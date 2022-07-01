@@ -163,7 +163,7 @@ inline static bool Did_Init_Inert_Optimize_Complete(
             goto optimized;  // not enfixed
         }
 
-        REBACT *action = VAL_ACTION(unwrap(feed->gotten));
+        Action(*) action = VAL_ACTION(unwrap(feed->gotten));
         if (Get_Action_Flag(action, QUOTES_FIRST)) {
             //
             // Quoting defeats NO_LOOKAHEAD but only on soft quotes.

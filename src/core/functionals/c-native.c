@@ -55,7 +55,7 @@
 // native index is being loaded, which is non-obvious.  But these issues
 // could be addressed (e.g. by passing the native index number / DLL in).
 //
-REBACT *Make_Native(
+Action(*) Make_Native(
     REBVAL *spec,
     bool is_combinator,
     Dispatcher* dispatcher,
@@ -86,7 +86,7 @@ REBACT *Make_Native(
     );
     ASSERT_SERIES_TERM_IF_NEEDED(paramlist);
 
-    REBACT *native = Make_Action(
+    Action(*) native = Make_Action(
         paramlist,
         nullptr,  // no partials
         dispatcher,  // "dispatcher" is unique to this "native"
@@ -104,7 +104,7 @@ REBACT *Make_Native(
     // that the actual "native" in that case.
     //
     if (is_combinator) {
-        REBACT *native_combinator = native;
+        Action(*) native_combinator = native;
         native = Make_Action(
             ACT_PARAMLIST(native_combinator),
             nullptr,  // no partials
@@ -148,7 +148,7 @@ REBNATIVE(native)
     Dispatcher* dispatcher = *PG_Next_Native_Dispatcher;
     ++PG_Next_Native_Dispatcher;
 
-    REBACT *native = Make_Native(
+    Action(*) native = Make_Native(
         ARG(spec),
         did REF(combinator),
         dispatcher,
@@ -230,7 +230,7 @@ Array(*) Startup_Natives(const REBVAL *boot_natives)
     REBVAL *spec = SPECIFIC(item);
     ++item;
 
-    REBACT *the_native_action = Make_Native(
+    Action(*) the_native_action = Make_Native(
         spec,
         false,  // not a combinator
         *PG_Next_Native_Dispatcher,

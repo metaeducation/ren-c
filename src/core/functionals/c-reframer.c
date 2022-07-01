@@ -209,7 +209,7 @@ bool Make_Invokable_From_Feed_Throws(
     assert(NOT_SERIES_FLAG(varlist, MANAGED));  // not invoked yet
     f->varlist = nullptr;  // just let it GC, for now
 
-    REBACT *act = VAL_ACTION(action);
+    Action(*) act = VAL_ACTION(action);
     assert(FRM_BINDING(f) == VAL_ACTION_BINDING(action));
 
     INIT_BONUS_KEYSOURCE(varlist, ACT_KEYLIST(act));
@@ -333,7 +333,7 @@ REBNATIVE(reframer_p)
 {
     INCLUDE_PARAMS_OF_REFRAMER_P;
 
-    REBACT *shim = VAL_ACTION(ARG(shim));
+    Action(*) shim = VAL_ACTION(ARG(shim));
     option(Symbol(const*)) label = VAL_ACTION_LABEL(ARG(shim));
 
     REBDSP dsp_orig = DSP;
@@ -433,7 +433,7 @@ REBNATIVE(reframer_p)
     // which parameter to fill with the *real* frame instance.
     //
     Manage_Series(CTX_VARLIST(exemplar));
-    REBACT *reframer = Alloc_Action_From_Exemplar(
+    Action(*) reframer = Alloc_Action_From_Exemplar(
         exemplar,  // shim minus the frame argument
         &Reframer_Dispatcher,
         IDX_REFRAMER_MAX  // details array capacity => [shim, param_index]

@@ -391,7 +391,7 @@ Bounce Evaluator_Executor(Frame(*) f)
         goto give_up_backward_quote_priority;
 
   blockscope {
-    REBACT *enfixed = VAL_ACTION(unwrap(f_next_gotten));
+    Action(*) enfixed = VAL_ACTION(unwrap(f_next_gotten));
 
     if (Not_Action_Flag(enfixed, QUOTES_FIRST))
         goto give_up_backward_quote_priority;
@@ -624,7 +624,7 @@ Bounce Evaluator_Executor(Frame(*) f)
             f_current_gotten = Lookup_Word_May_Fail(f_current, f_specifier);
 
         if (VAL_TYPE_UNCHECKED(unwrap(f_current_gotten)) == REB_ACTION) {
-            REBACT *action = VAL_ACTION(unwrap(f_current_gotten));
+            Action(*) action = VAL_ACTION(unwrap(f_current_gotten));
 
             if (Get_Action_Flag(action, ENFIXED)) {
                 if (
@@ -879,7 +879,7 @@ Bounce Evaluator_Executor(Frame(*) f)
             goto return_thrown;
 
         if (IS_ACTION(SPARE)) {  // try this branch before fail on void+null
-            REBACT *act = VAL_ACTION(SPARE);
+            Action(*) act = VAL_ACTION(SPARE);
 
             // PATH! dispatch is costly and can error in more ways than WORD!:
             //
@@ -1834,7 +1834,7 @@ Bounce Evaluator_Executor(Frame(*) f)
   //=//// IS WORD ENFIXEDLY TIED TO A FUNCTION (MAY BE "INVISIBLE") ///////=//
 
   blockscope {
-    REBACT *enfixed = VAL_ACTION(unwrap(f_next_gotten));
+    Action(*) enfixed = VAL_ACTION(unwrap(f_next_gotten));
 
     if (Get_Action_Flag(enfixed, QUOTES_FIRST)) {
         //

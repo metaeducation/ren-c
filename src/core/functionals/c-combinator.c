@@ -84,7 +84,7 @@ enum {
 //
 Bounce Combinator_Dispatcher(Frame(*) f)
 {
-    REBACT *phase = FRM_PHASE(f);
+    Action(*) phase = FRM_PHASE(f);
     Array(*) details = ACT_DETAILS(phase);
     Cell(*) body = ARR_AT(details, IDX_DETAILS_1);  // code to run
 
@@ -276,7 +276,7 @@ REBNATIVE(combinator)
         &flags
     );
 
-    REBACT *combinator = Make_Action(
+    Action(*) combinator = Make_Action(
         paramlist,
         nullptr,  // no partials
         &Combinator_Dispatcher,
@@ -794,7 +794,7 @@ REBNATIVE(combinatorize)
 {
     INCLUDE_PARAMS_OF_COMBINATORIZE;
 
-    REBACT *act = VAL_ACTION(ARG(c));
+    Action(*) act = VAL_ACTION(ARG(c));
 
     // !!! The hack for PATH! handling was added to make /ONLY work; it only
     // works for refinements with no arguments by looking at what's in the path
@@ -819,7 +819,7 @@ REBNATIVE(combinatorize)
     //
     Set_Var_May_Fail(ARG(advanced), SPECIFIED, ARG(rules));
 
-    REBACT *parser = Make_Action_From_Exemplar(s.ctx);
+    Action(*) parser = Make_Action_From_Exemplar(s.ctx);
     DROP_GC_GUARD(s.ctx);
 
     return Init_Action(  // note: MAKE ACTION! copies the context, this won't

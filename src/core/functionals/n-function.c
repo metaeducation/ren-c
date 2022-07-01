@@ -123,7 +123,7 @@ Bounce Func_Dispatcher(Frame(*) f)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    REBACT *phase = FRM_PHASE(f);
+    Action(*) phase = FRM_PHASE(f);
     Array(*) details = ACT_DETAILS(phase);
     Cell(*) body = ARR_AT(details, IDX_DETAILS_1);  // code to run
     assert(IS_BLOCK(body) and IS_RELATIVE(body) and VAL_INDEX(body) == 0);
@@ -220,7 +220,7 @@ Bounce Func_Dispatcher(Frame(*) f)
 //    made these optimizations give diminishing returns, so they were all
 //    eliminated (though they set useful precedent for varying dispatchers).
 //
-REBACT *Make_Interpreted_Action_May_Fail(
+Action(*) Make_Interpreted_Action_May_Fail(
     const REBVAL *spec,
     const REBVAL *body,
     REBFLGS mkf_flags,  // MKF_RETURN, etc.
@@ -237,7 +237,7 @@ REBACT *Make_Interpreted_Action_May_Fail(
         &mkf_flags
     );
 
-    REBACT *a = Make_Action(
+    Action(*) a = Make_Action(
         paramlist,
         nullptr,  // no partials
         dispatcher,
@@ -334,7 +334,7 @@ REBNATIVE(func_p)
     REBVAL *spec = ARG(spec);
     REBVAL *body = ARG(body);
 
-    REBACT *func = Make_Interpreted_Action_May_Fail(
+    Action(*) func = Make_Interpreted_Action_May_Fail(
         spec,
         body,
         MKF_RETURN | MKF_KEYWORDS,
@@ -372,7 +372,7 @@ REBNATIVE(endable_q)
         fail ("ENDABLE? requires a WORD! bound into a FRAME! at present");
 
     Context(*) ctx = VAL_CONTEXT(SPARE);
-    REBACT *act = CTX_FRAME_ACTION(ctx);
+    Action(*) act = CTX_FRAME_ACTION(ctx);
 
     REBPAR *param = ACT_PARAM(act, VAL_WORD_INDEX(v));
     bool endable = GET_PARAM_FLAG(param, ENDABLE);
@@ -407,7 +407,7 @@ REBNATIVE(skippable_q)
         fail ("SKIPPABLE? requires a WORD! bound into a FRAME! at present");
 
     Context(*) ctx = VAL_CONTEXT(SPARE);
-    REBACT *act = CTX_FRAME_ACTION(ctx);
+    Action(*) act = CTX_FRAME_ACTION(ctx);
 
     REBPAR *param = ACT_PARAM(act, VAL_WORD_INDEX(v));
     bool skippable = GET_PARAM_FLAG(param, SKIPPABLE);
@@ -582,7 +582,7 @@ REBNATIVE(definitional_return)
     // that an ENCLOSE'd function can't return any types the original function
     // could not.  :-(
     //
-    REBACT *target_fun = target_frame->u.action.original;
+    Action(*) target_fun = target_frame->u.action.original;
 
     // Defininitional returns are "locals"--there's no argument type check.
     // So TYPESET! bits in the RETURN param are used for legal return types.

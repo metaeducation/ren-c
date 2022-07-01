@@ -140,7 +140,7 @@ REBNATIVE(adapt_p)  // see extended definition ADAPT in %base-defs.r
     // access to the locals.  That requires creating a new paramlist.  Is
     // there a better way to do that with phasing?
 
-    REBACT *adaptation = Make_Action(
+    Action(*) adaptation = Make_Action(
         ACT_PARAMLIST(VAL_ACTION(adaptee)),  // reuse partials/exemplar/etc.
         ACT_PARTIALS(VAL_ACTION(adaptee)),
         &Adapter_Dispatcher,

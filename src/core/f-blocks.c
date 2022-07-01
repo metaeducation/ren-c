@@ -304,8 +304,8 @@ Array(*) Copy_Array_Core_Managed(
 //
 Array(*) Copy_Rerelativized_Array_Deep_Managed(
     Array(const*) original,
-    REBACT *before, // references to `before` will be changed to `after`
-    REBACT *after
+    Action(*) before, // references to `before` will be changed to `after`
+    Action(*) after
 ){
     const REBFLGS flags = NODE_FLAG_MANAGED;
 

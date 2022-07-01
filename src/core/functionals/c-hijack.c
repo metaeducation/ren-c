@@ -168,8 +168,8 @@ Bounce Hijacker_Dispatcher(Frame(*) f)
     // The FRM_PHASE() here is the identity that the hijacker has taken over;
     // but the actual hijacker is in the archetype.
 
-    REBACT *phase = FRM_PHASE(f);
-    REBACT *hijacker = VAL_ACTION(ACT_ARCHETYPE(phase));
+    Action(*) phase = FRM_PHASE(f);
+    Action(*) hijacker = VAL_ACTION(ACT_ARCHETYPE(phase));
 
     // If the hijacked function was called directly -or- by an adaptation or
     // specalization etc. which was made *after* the hijack, the frame should
@@ -210,8 +210,8 @@ REBNATIVE(hijack)
 {
     INCLUDE_PARAMS_OF_HIJACK;
 
-    REBACT *victim = VAL_ACTION(ARG(victim));
-    REBACT *hijacker = VAL_ACTION(ARG(hijacker));
+    Action(*) victim = VAL_ACTION(ARG(victim));
+    Action(*) hijacker = VAL_ACTION(ARG(hijacker));
 
     if (victim == hijacker)
         return nullptr;  // permitting no-op hijack has some practical uses

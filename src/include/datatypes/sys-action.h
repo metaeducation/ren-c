@@ -262,14 +262,14 @@ inline static bool Is_Throwing(Frame(*) frame_) {
 // itself.  So an archetype represents -an- action, but it may be a hijacked
 // action from what it once was (much like a word reference).
 //
-inline static Array(*) ACT_DETAILS(REBACT *a) {
+inline static Array(*) ACT_DETAILS(Action(*) a) {
     return m_cast(Array(*), x_cast(Array(const*),
         x_cast(REBVAL*, x_cast(const REBSER*, a)->content.dynamic.data)
             ->payload.Any.first.node
     ));
 }  // ARR() has debug cost, not defined yet
 
-inline static Array(*) ACT_IDENTITY(REBACT *a)
+inline static Array(*) ACT_IDENTITY(Action(*) a)
   { return x_cast(Array(*), a); }
 
 
@@ -308,7 +308,7 @@ inline static void INIT_VAL_ACTION_BINDING(
 #define HAS_INODE_Exemplar      FLAVOR_DETAILS
 
 
-inline static option(Array(*)) ACT_PARTIALS(REBACT *a) {
+inline static option(Array(*)) ACT_PARTIALS(Action(*) a) {
     return ARR(VAL_NODE2(ACT_ARCHETYPE(a)));
 }
 
@@ -329,7 +329,7 @@ inline static option(Array(*)) ACT_PARTIALS(REBACT *a) {
 
 #define ACT_PARAMLIST(a)            CTX_VARLIST(ACT_EXEMPLAR(a))
 
-inline static REBPAR *ACT_PARAMS_HEAD(REBACT *a) {
+inline static REBPAR *ACT_PARAMS_HEAD(Action(*) a) {
     Array(*) list = CTX_VARLIST(ACT_EXEMPLAR(a));
     return cast(REBPAR*, list->content.dynamic.data) + 1;  // skip archetype
 }
@@ -396,7 +396,7 @@ inline static void Init_Key(REBKEY *dest, Symbol(const*) symbol)
 #define ACT_META(a)             MISC(DetailsMeta, ACT_IDENTITY(a))
 
 
-inline static REBACT *VAL_ACTION(noquote(Cell(const*)) v) {
+inline static Action(*) VAL_ACTION(noquote(Cell(const*)) v) {
     assert(CELL_HEART(v) == REB_ACTION);
     REBSER *s = SER(VAL_NODE1(v));
     if (GET_SERIES_FLAG(s, INACCESSIBLE))
@@ -469,7 +469,7 @@ inline static void INIT_VAL_ACTION_LABEL(
 #define LINK_Ancestor_CAST              SER
 #define HAS_LINK_Ancestor               FLAVOR_KEYLIST
 
-inline static bool Action_Is_Base_Of(REBACT *base, REBACT *derived) {
+inline static bool Action_Is_Base_Of(Action(*) base, Action(*) derived) {
     if (derived == base)
         return true;  // fast common case (review how common)
 
@@ -536,7 +536,7 @@ inline static bool Action_Is_Base_Of(REBACT *base, REBACT *derived) {
 //
 inline static REBVAL *Init_Action_Core(
     Cell(*) out,
-    REBACT *a,
+    Action(*) a,
     option(Symbol(const*)) label,  // allowed to be ANONYMOUS
     Context(*) binding  // allowed to be UNBOUND
 ){

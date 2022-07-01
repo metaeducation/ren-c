@@ -551,7 +551,7 @@ union Reb_Value_Payload { //=/////////////// ACTUAL PAYLOAD DEFINITION ////=//
     //
     // ANY-CONTEXT!  // see %sys-context.h
     //     Array(*) varlist;  // has MISC.meta, LINK.keysource
-    //     REBACT *phase;  // used by FRAME! contexts, see %sys-frame.h
+    //     Action(*) phase;  // used by FRAME! contexts, see %sys-frame.h
     //
     // ANY-SERIES!  // see %sys-series.h
     //     REBSER *rebser;  // vector/double-ended-queue of equal-sized items
@@ -567,7 +567,7 @@ union Reb_Value_Payload { //=/////////////// ACTUAL PAYLOAD DEFINITION ////=//
     //
     // VARARGS!  // see %sys-varargs.h
     //     REBINT signed_param_index;  // if negative, consider arg enfixed
-    //     REBACT *phase;  // where to look up parameter by its offset
+    //     Action(*) phase;  // where to look up parameter by its offset
 
     struct Reb_Any_Payload Any;
 
@@ -672,7 +672,7 @@ union Reb_Value_Payload { //=/////////////// ACTUAL PAYLOAD DEFINITION ////=//
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // A Cell is an equivalent struct layout to to REBVAL, but is allowed to
-// have a REBACT* as its binding.  A relative value pointer can point to a
+// have a Action(*) as its binding.  A relative value pointer can point to a
 // specific value, but a relative word or array cannot be pointed to by a
 // plain REBVAL*.  The Cell-vs-REBVAL distinction is purely commentary
 // in the C build, but the C++ build makes REBVAL a type derived from Cell.

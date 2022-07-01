@@ -276,7 +276,7 @@ inline static REBVAL *Value_From_Value_Id(heapaddr_t id) {
 // was put in that table at the time of creation (the native_id).
 //
 
-inline static heapaddr_t Native_Id_For_Action(REBACT *act)
+inline static heapaddr_t Native_Id_For_Action(Action(*) act)
   { return Heapaddr_From_Pointer(ACT_KEYLIST(act)); }
 
 enum {
@@ -826,7 +826,7 @@ REBNATIVE(js_native)
         &flags
     );
 
-    REBACT *native = Make_Action(
+    Action(*) native = Make_Action(
         paramlist,
         nullptr,  // no partials
         &JavaScript_Dispatcher,

@@ -564,7 +564,7 @@ inline static REBVAL *Init_Any_Array_At_Core(
 
 inline static Cell(*) Init_Relative_Block_At(
     Cell(*) out,
-    REBACT *action,  // action to which array has relative bindings
+    Action(*) action,  // action to which array has relative bindings
     Array(*) array,
     REBLEN index
 ){

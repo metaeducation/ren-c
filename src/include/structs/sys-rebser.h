@@ -798,7 +798,6 @@ union Reb_Series_Info {
     typedef struct Reb_Bookmark_List REBBMK;  // list of UTF-8 index=>offsets
 
     struct Reb_Action : public Reb_Series {};
-    typedef struct Reb_Action REBACT;  // the "details" array is the identity
 
     struct Reb_Context : public Reb_Series {};
 
@@ -809,7 +808,7 @@ union Reb_Series_Info {
     typedef struct Reb_Series Reb_String;
     typedef struct Reb_Series Reb_Symbol;
     typedef struct Reb_Series REBBMK;
-    typedef struct Reb_Series REBACT;
+    typedef struct Reb_Series Reb_Action;
     typedef struct Reb_Series Reb_Context;
     typedef struct Reb_Series REBMAP;
 #endif
@@ -817,14 +816,18 @@ union Reb_Series_Info {
 #define Binary(star_maybe_const) \
     Reb_Binary star_maybe_const
 
+#define String(star_maybe_const) \
+    Reb_String star_maybe_const
+
 #define Symbol(star_maybe_const) \
     Reb_Symbol star_maybe_const
+
+#define Action(star_maybe_const) \
+    Reb_Action star_maybe_const
 
 #define Context(star_maybe_const) \
     Reb_Context star_maybe_const
 
-#define String(star_maybe_const) \
-    Reb_String star_maybe_const
 
 
 // We want to be able to enumerate keys by incrementing across them.  The

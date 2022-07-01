@@ -206,7 +206,7 @@ void Init_Evars(EVARS *e, noquote(Cell(const*)) v) {
 
         TRASH_POINTER_IF_DEBUG(e->ctx);
 
-        REBACT *act = VAL_ACTION(v);
+        Action(*) act = VAL_ACTION(v);
         e->key = ACT_KEYS(&e->key_tail, act) - 1;
         e->var = nullptr;
         e->param = ACT_PARAMS_HEAD(act) - 1;
@@ -301,7 +301,7 @@ void Init_Evars(EVARS *e, noquote(Cell(const*)) v) {
             // on the public interface.  Or it can be running, in which case
             // the phase determines which additional fields should be seen.
             //
-            REBACT *phase;
+            Action(*) phase;
             if (not IS_FRAME_PHASED(v)) {
                 //
                 // See FRAME_HAS_BEEN_INVOKED about the efficiency trick used
@@ -1298,7 +1298,7 @@ REBTYPE(Frame)
             //
             return Init_Action(
                 OUT,
-                VAL_FRAME_PHASE(frame),  // just a REBACT*, no binding
+                VAL_FRAME_PHASE(frame),  // just a Action(*), no binding
                 VAL_FRAME_LABEL(frame),
                 VAL_FRAME_BINDING(frame)  // e.g. where RETURN returns to
             );

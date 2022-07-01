@@ -67,7 +67,7 @@
 
     #define SER(p)          m_cast(REBSER*, x_cast(const REBSER*, (p)))
     #define ARR(p)          m_cast(Array(*), x_cast(Array(const*), (p)))
-    #define ACT(p)          m_cast(REBACT*, x_cast(const REBACT*, (p)))
+    #define ACT(p)          m_cast(Action(*), x_cast(const Action(*), (p)))
     #define CTX(p)          m_cast(Context(*), x_cast(const Context(*), (p)))
 
     #define STR(p)          m_cast(String(*), x_cast(String(const*), (p)))
@@ -223,7 +223,7 @@
     }
 
     template <typename P>
-    inline REBACT *ACT(P p) {
+    inline Action(*) ACT(P p) {
         static_assert(
             std::is_same<P, void*>::value
                 or std::is_same<P, REBNOD*>::value
@@ -246,7 +246,7 @@
             panic (p);
         }
 
-        return reinterpret_cast<REBACT*>(p);
+        return reinterpret_cast<Action(*)>(p);
     }
 
     // !!! STR() and SYM() casts should be updated to do more than const

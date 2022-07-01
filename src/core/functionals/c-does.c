@@ -124,7 +124,7 @@ Bounce Block_Dispatcher(Frame(*) f)
 
         // Update block cell as a relativized copy (we won't do this again).
         //
-        REBACT *phase = FRM_PHASE(f);
+        Action(*) phase = FRM_PHASE(f);
         Init_Relative_Block(block, phase, relativized);
     }
 
@@ -187,7 +187,7 @@ REBNATIVE(does)
     REBVAL *source = ARG(source);
 
     if (IS_BLOCK(source)) {
-        REBACT *doer = Make_Action(
+        Action(*) doer = Make_Action(
             ACT_PARAMLIST(VAL_ACTION(Lib(SURPRISE))),  // same, no args
             nullptr,  // no partials
             &Block_Dispatcher,  // **SEE COMMENTS**, not quite like plain DO!
@@ -221,6 +221,6 @@ REBNATIVE(does)
 
     Symbol(const*) label = ANONYMOUS;  // !!! Better answer?
 
-    REBACT *doer = Make_Action_From_Exemplar(exemplar);
+    Action(*) doer = Make_Action_From_Exemplar(exemplar);
     return Init_Action(OUT, doer, label, UNBOUND);
 }

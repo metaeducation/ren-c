@@ -107,7 +107,7 @@
     SERIES_FLAG_24
 
 
-// Context(*) properties (note: shares BONUS_KEYSOURCE() with REBACT*)
+// Context(*) properties (note: shares BONUS_KEYSOURCE() with Action(*))
 //
 // Note: MODULE! contexts depend on a property stored in the META field, which
 // is another object's-worth of data *about* the module's contents (e.g. the
@@ -169,7 +169,7 @@ inline static const REBVAL *CTX_ARCHETYPE(Context(*) c) {  // read-only form
 inline static REBVAL *CTX_ROOTVAR(Context(*) c)  // mutable archetype access
   { return m_cast(REBVAL*, CTX_ARCHETYPE(c)); }  // inline checks mutability
 
-inline static REBACT *CTX_FRAME_ACTION(Context(*) c) {
+inline static Action(*) CTX_FRAME_ACTION(Context(*) c) {
     const REBVAL *archetype = CTX_ARCHETYPE(c);
     assert(VAL_TYPE(archetype) == REB_FRAME);
     return ACT(VAL_FRAME_PHASE_OR_LABEL_NODE(archetype));
@@ -203,7 +203,7 @@ inline static void INIT_VAL_CONTEXT_ROOTVAR_Core(
 inline static void INIT_VAL_FRAME_ROOTVAR_Core(
     Cell(*) out,
     Array(*) varlist,
-    REBACT *phase,
+    Action(*) phase,
     Context(*) binding  // allowed to be UNBOUND
 ){
     assert(
@@ -461,12 +461,12 @@ inline static Context(*) VAL_FRAME_BINDING(noquote(Cell(const*)) v) {
 // So extraction of the phase has to be sensitive to this.
 //
 
-inline static void INIT_VAL_FRAME_PHASE(Cell(*) v, REBACT *phase) {
+inline static void INIT_VAL_FRAME_PHASE(Cell(*) v, Action(*) phase) {
     assert(IS_FRAME(v));  // may be marked protected (e.g. archetype)
     INIT_VAL_FRAME_PHASE_OR_LABEL(v, phase);
 }
 
-inline static REBACT *VAL_FRAME_PHASE(noquote(Cell(const*)) v) {
+inline static Action(*) VAL_FRAME_PHASE(noquote(Cell(const*)) v) {
     REBSER *s = VAL_FRAME_PHASE_OR_LABEL(v);
     if (not s or IS_SYMBOL(s))  // ANONYMOUS or label, not a phase
         return CTX_FRAME_ACTION(VAL_CONTEXT(v));  // so use archetype
@@ -515,7 +515,7 @@ inline static const REBKEY *VAL_CONTEXT_KEYS_HEAD(noquote(Cell(const*)) context)
     if (CELL_HEART(context) != REB_FRAME)
         return CTX_KEYS_HEAD(VAL_CONTEXT(context));
 
-    REBACT *phase = VAL_FRAME_PHASE(context);
+    Action(*) phase = VAL_FRAME_PHASE(context);
     return ACT_KEYS_HEAD(phase);
 }
 

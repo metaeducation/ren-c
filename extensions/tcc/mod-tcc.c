@@ -105,7 +105,7 @@ int tcc_set_lib_path_i(TCCState *s, const char *path)
 // their source in ACT_DETAILS [0] and their context in ACT_DETAILS [1], so
 // for the moment just assume if the source is text it's a user native.
 //
-bool Is_User_Native(REBACT *act) {
+bool Is_User_Native(Action(*) act) {
     if (Not_Action_Flag(act, IS_NATIVE))
         return false;
 
@@ -247,7 +247,7 @@ static void cleanup(const REBVAL *val)
 // simple COMPILE for just that one function, using default options.
 //
 Bounce Pending_Native_Dispatcher(Frame(*) f) {
-    REBACT *phase = FRM_PHASE(f);
+    Action(*) phase = FRM_PHASE(f);
     assert(ACT_DISPATCHER(phase) == &Pending_Native_Dispatcher);
 
     REBVAL *action = ACT_ARCHETYPE(phase); // this action's value
@@ -303,7 +303,7 @@ REBNATIVE(make_native)
         ARG(spec),
         &flags
     );
-    REBACT *native = Make_Action(
+    Action(*) native = Make_Action(
         paramlist,
         nullptr,  // no partials
         &Pending_Native_Dispatcher,  // will be replaced e.g. by COMPILE
@@ -644,7 +644,7 @@ REBNATIVE(compile_p)
     // their function pointers to substitute in for the dispatcher.
     //
     while (DSP != dsp_orig) {
-        REBACT *action = VAL_ACTION(TOP);  // stack will hold action live
+        Action(*) action = VAL_ACTION(TOP);  // stack will hold action live
         assert(Is_User_Native(action));  // can't cache stack pointer, extract
 
         Array(*) details = ACT_DETAILS(action);

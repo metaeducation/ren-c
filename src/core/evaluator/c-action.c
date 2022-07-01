@@ -974,7 +974,7 @@ Bounce Action_Executor(Frame(*) f)
     //
     Clear_Executor_Flag(ACTION, FRAME, DISPATCHER_CATCHES);
 
-    REBACT *phase = FRM_PHASE(f);
+    Action(*) phase = FRM_PHASE(f);
 
     // Native code trusts that type checking has ensured it won't get bits
     // in its argument slots that the C won't recognize.  Usermode code that
@@ -1162,7 +1162,7 @@ Bounce Action_Executor(Frame(*) f)
             CATCH_THROWN(OUT, frame_);
             assert(IS_FRAME(OUT));
 
-            REBACT *redo_phase = VAL_FRAME_PHASE(OUT);  // earlier?  see [2]
+            Action(*) redo_phase = VAL_FRAME_PHASE(OUT);  // earlier?  see [2]
             KEY = ACT_KEYS(&KEY_TAIL, redo_phase);
             PARAM = ACT_PARAMS_HEAD(redo_phase);
             ARG = FRM_ARGS_HEAD(f);
@@ -1211,7 +1211,7 @@ Bounce Action_Executor(Frame(*) f)
 //
 void Push_Action(
     Frame(*) f,
-    REBACT *act,
+    Action(*) act,
     Context(*) binding  // actions may only be bound to contexts ATM
 ){
     f->executor = &Action_Executor;

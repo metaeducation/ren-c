@@ -290,7 +290,7 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
 
       case REB_VARARGS: {
         assert((v->header.bits & CELL_MASK_VARARGS) == CELL_MASK_VARARGS);
-        REBACT *phase = VAL_VARARGS_PHASE(v);
+        Action(*) phase = VAL_VARARGS_PHASE(v);
         if (phase)  // null if came from MAKE VARARGS!
             assert(Is_Marked(phase));
         break; }
@@ -408,7 +408,7 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
       case REB_ACTION: {
         assert((v->header.bits & CELL_MASK_ACTION) == CELL_MASK_ACTION);
 
-        REBACT *a = VAL_ACTION(v);
+        Action(*) a = VAL_ACTION(v);
         assert(Is_Marked(a));
         if (VAL_ACTION_PARTIALS_OR_LABEL(v))
             assert(Is_Marked(VAL_ACTION_PARTIALS_OR_LABEL(v)));

@@ -135,7 +135,7 @@ REBNATIVE(typechecker)
 
     REBVAL *type = ARG(type);
 
-    REBACT *typechecker = Make_Action(
+    Action(*) typechecker = Make_Action(
         ACT_PARAMLIST(VAL_ACTION(Lib(TYPECHECK_INTERNAL_Q))),
         nullptr,  // no partials
         IS_DATATYPE(type)

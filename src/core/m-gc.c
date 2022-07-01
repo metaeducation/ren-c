@@ -829,7 +829,7 @@ static void Mark_Frame_Stack_Deep(void)
         }
 
         Queue_Mark_Node_Deep(  // f->u.action.original is never nullptr
-            cast(const REBNOD**, m_cast(const REBACT**, &f->u.action.original))
+            cast(const REBNOD**, m_cast(const Action(*)*, &f->u.action.original))
         );
 
         if (f->label) { // nullptr if anonymous
@@ -884,7 +884,7 @@ static void Mark_Frame_Stack_Deep(void)
         // this is the "doing pickups" or not.  If doing pickups then skip the
         // cells for pending refinement arguments.
         //
-        REBACT *phase; // goto would cross initialization
+        Action(*) phase; // goto would cross initialization
         phase = FRM_PHASE(f);
         const REBKEY *key;
         const REBKEY *tail;

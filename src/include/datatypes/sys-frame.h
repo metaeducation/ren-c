@@ -159,9 +159,9 @@ inline static int FRM_LINE(Frame(*) f) {
 // called *a lot*) this is a macro and is unchecked.
 //
 #define FRM_PHASE(f) \
-    cast(REBACT*, VAL_FRAME_PHASE_OR_LABEL_NODE((f)->rootvar))
+    cast(Action(*), VAL_FRAME_PHASE_OR_LABEL_NODE((f)->rootvar))
 
-inline static void INIT_FRM_PHASE(Frame(*) f, REBACT *phase)  // check types
+inline static void INIT_FRM_PHASE(Frame(*) f, Action(*) phase)  // check types
   { INIT_VAL_FRAME_PHASE_OR_LABEL(f->rootvar, phase); }  // ...only
 
 inline static void INIT_FRM_BINDING(Frame(*) f, Context(*) binding)
@@ -620,7 +620,7 @@ inline static REBVAL *D_ARG_Core(Frame(*) f, REBLEN n) {  // 1 for first arg
 // Returner_Dispatcher(), but custom dispatchers use it to (e.g. JS-NATIVE)
 //
 inline static void FAIL_IF_BAD_RETURN_TYPE(Frame(*) f) {
-    REBACT *phase = FRM_PHASE(f);
+    Action(*) phase = FRM_PHASE(f);
     const REBPAR *param = ACT_PARAMS_HEAD(phase);
     assert(KEY_SYM(ACT_KEYS_HEAD(phase)) == SYM_RETURN);
 

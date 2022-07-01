@@ -73,7 +73,7 @@ REBNATIVE(augment_p)  // see extended definition AUGMENT in %base-defs.r
 {
     INCLUDE_PARAMS_OF_AUGMENT_P;
 
-    REBACT *augmentee = VAL_ACTION(ARG(action));
+    Action(*) augmentee = VAL_ACTION(ARG(action));
     option(Symbol(const*)) label = VAL_ACTION_LABEL(ARG(action));
 
     // We reuse the process from Make_Paramlist_Managed_May_Fail(), which
@@ -156,7 +156,7 @@ REBNATIVE(augment_p)  // see extended definition AUGMENT in %base-defs.r
         VAL_ACTION_BINDING(ARG(action))
     );
 
-    REBACT* augmentated = Make_Action(
+    Action(*) augmentated = Make_Action(
         paramlist,
         ACT_PARTIALS(augmentee),  // partials should still work
         &Augmenter_Dispatcher,

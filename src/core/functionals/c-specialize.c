@@ -84,14 +84,14 @@ Bounce Specializer_Dispatcher(Frame(*) f)
 // frame if needed.
 //
 Context(*) Make_Context_For_Action_Push_Partials(
-    const REBVAL *action,  // need ->binding, so can't just be a REBACT*
+    const REBVAL *action,  // need ->binding, so can't just be a Action(*)
     REBDSP lowest_ordered_dsp,  // caller can add refinement specializations
     option(struct Reb_Binder*) binder,
     const REBVAL *unspecialized  // what to put in unspecialized slots
 ){
     REBDSP highest_ordered_dsp = DSP;
 
-    REBACT *act = VAL_ACTION(action);
+    Action(*) act = VAL_ACTION(action);
 
     REBLEN num_slots = ACT_NUM_PARAMS(act) + 1;  // +1 is for CTX_ARCHETYPE()
     Array(*) varlist = Make_Array_Core(num_slots, SERIES_MASK_VARLIST);
@@ -206,7 +206,7 @@ Context(*) Make_Context_For_Action_Push_Partials(
 // not absolute.
 //
 Context(*) Make_Context_For_Action(
-    const REBVAL *action, // need ->binding, so can't just be a REBACT*
+    const REBVAL *action, // need ->binding, so can't just be a Action(*)
     REBDSP lowest_ordered_dsp,
     option(struct Reb_Binder*) binder
 ){
@@ -248,7 +248,7 @@ bool Specialize_Action_Throws(
     if (def)
         INIT_BINDER(&binder);
 
-    REBACT *unspecialized = VAL_ACTION(specializee);
+    Action(*) unspecialized = VAL_ACTION(specializee);
 
     // This produces a context where partially specialized refinement slots
     // will be on the stack (including any we are adding "virtually", from
@@ -444,7 +444,7 @@ bool Specialize_Action_Throws(
         }
     }
 
-    REBACT *specialized = Make_Action(
+    Action(*) specialized = Make_Action(
         CTX_VARLIST(exemplar),
         partials,
         &Specializer_Dispatcher,
@@ -523,7 +523,7 @@ REBNATIVE(specialize_p)  // see extended definition SPECIALIZE in %base-defs.r
 // Unspecialized parameters are visited in two passes: unsorted, then sorted.
 //
 void For_Each_Unspecialized_Param(
-    REBACT *act,
+    Action(*) act,
     PARAM_HOOK hook,
     void *opaque
 ){
@@ -681,7 +681,7 @@ static bool Last_Param_Hook(
 //
 // This means that the last parameter (D) is actually the first of FOO-D.
 //
-const REBPAR *First_Unspecialized_Param(const REBKEY ** key, REBACT *act)
+const REBPAR *First_Unspecialized_Param(const REBKEY ** key, Action(*) act)
 {
     struct Find_Param_State s;
     s.key = nullptr;
@@ -700,7 +700,7 @@ const REBPAR *First_Unspecialized_Param(const REBKEY ** key, REBACT *act)
 //
 // See notes on First_Unspecialized_Param() regarding complexity
 //
-const REBPAR *Last_Unspecialized_Param(const REBKEY ** key, REBACT *act)
+const REBPAR *Last_Unspecialized_Param(const REBKEY ** key, Action(*) act)
 {
     struct Find_Param_State s;
     s.key = nullptr;
@@ -720,7 +720,7 @@ const REBPAR *Last_Unspecialized_Param(const REBKEY ** key, REBACT *act)
 //
 REBVAL *First_Unspecialized_Arg(option(const REBPAR **) param_out, Frame(*) f)
 {
-    REBACT *phase = FRM_PHASE(f);
+    Action(*) phase = FRM_PHASE(f);
     const REBPAR *param = First_Unspecialized_Param(nullptr, phase);
     if (param_out)
         *unwrap(param_out) = param;
@@ -738,12 +738,12 @@ REBVAL *First_Unspecialized_Arg(option(const REBPAR **) param_out, Frame(*) f)
 //
 // Leaves details blank, and lets you specify the dispatcher.
 //
-REBACT *Alloc_Action_From_Exemplar(
+Action(*) Alloc_Action_From_Exemplar(
     Context(*) exemplar,
     Dispatcher* dispatcher,
     REBLEN details_capacity
 ){
-    REBACT *unspecialized = CTX_FRAME_ACTION(exemplar);
+    Action(*) unspecialized = CTX_FRAME_ACTION(exemplar);
 
     const REBKEY *tail;
     const REBKEY *key = ACT_KEYS(&tail, unspecialized);
@@ -774,7 +774,7 @@ REBACT *Alloc_Action_From_Exemplar(
 
     // This code parallels Specialize_Action_Throws(), see comments there
 
-    REBACT *action = Make_Action(
+    Action(*) action = Make_Action(
         CTX_VARLIST(exemplar),
         nullptr,  // no partials
         dispatcher,
@@ -790,9 +790,9 @@ REBACT *Alloc_Action_From_Exemplar(
 //
 // Assumes you want a Specializer_Dispatcher with the exemplar in details.
 //
-REBACT *Make_Action_From_Exemplar(Context(*) exemplar)
+Action(*) Make_Action_From_Exemplar(Context(*) exemplar)
 {
-    REBACT *action = Alloc_Action_From_Exemplar(
+    Action(*) action = Alloc_Action_From_Exemplar(
         exemplar,
         &Specializer_Dispatcher,
         IDX_SPECIALIZER_MAX  // details capacity

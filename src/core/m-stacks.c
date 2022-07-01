@@ -207,7 +207,7 @@ void Shutdown_Frame_Stack(void)
 Context(*) Get_Context_From_Stack(void)
 {
     Frame(*) f = TOP_FRAME;
-    REBACT *phase = nullptr; // avoid potential uninitialized variable warning
+    Action(*) phase = nullptr; // avoid potential uninitialized variable warning
 
     for (; f != BOTTOM_FRAME; f = f->prior) {
         if (not Is_Action_Frame(f))
