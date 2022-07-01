@@ -1773,8 +1773,6 @@ REBVAL *RL_rebRescueWith(
         }
     }
 
-    DROP_TRAP_SAME_STACKLEVEL_AS_PUSH
-
     // !!! To abstract how the system deals with exception handling, the
     // rebRescue() routine started being used in lieu of PUSH_TRAP/DROP_TRAP
     // internally to the system.  Some of these system routines accumulate
@@ -1782,6 +1780,7 @@ REBVAL *RL_rebRescueWith(
     //
     Drop_Frame_Unbalanced(dummy);
 
+    CLEANUP_BEFORE_EXITING_TRAP_BLOCK;
     return result;
 
 } ON_ABRUPT_FAILURE(Context(*) e) {  ////////////////////////////////////////////
@@ -1790,7 +1789,7 @@ REBVAL *RL_rebRescueWith(
 
     REBVAL *error = Init_Error(Alloc_Value(), e);
 
-    DROP_TRAP_SAME_STACKLEVEL_AS_PUSH;
+    CLEANUP_BEFORE_EXITING_TRAP_BLOCK;
 
     if (not rescuer)
         return error;  // plain rebRescue() behavior

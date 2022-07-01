@@ -350,6 +350,12 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
   #else
     STATIC_ASSERT(REBOL_FAIL_USES_LONGJMP);
 
+    // "If the function that called setjmp has exited (whether by return or
+    //  by a different longjmp higher up the stack), the behavior is undefined.
+    //  In other words, only long jumps up the call stack are allowed."
+    //
+    //  http://en.cppreference.com/w/c/program/longjmp
+
     TG_Jump_List->error = error;  // longjmp() argument too small for pointer
     LONG_JUMP(TG_Jump_List->cpu_state, 1);  // 1 so setjmp() returns nonzero
   #endif

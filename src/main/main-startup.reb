@@ -340,8 +340,6 @@ main-startup: func [
     ; then decide if it wants to fall back on argv[0]
     ;
     system.options.boot: if defined? 'get-current-exec [
-        print "Trying to call the damn thing"
-
         switch type of get-current-exec [
             file! []  ; found it
             null []  ; also okay (not foolproof!)

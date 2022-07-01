@@ -249,7 +249,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
 
         if (Get_Frame_Flag(FRAME, ROOT_FRAME)) {
             STATE = 0;  // !!! Frame gets reused, review
-            DROP_TRAP_SAME_STACKLEVEL_AS_PUSH
+            CLEANUP_BEFORE_EXITING_TRAP_BLOCK;
             return TOP_FRAME->out;
         }
 
@@ -309,7 +309,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
     }
 
     if (r == BOUNCE_SUSPEND) {  // just to get emscripten started w/o Asyncify
-        DROP_TRAP_SAME_STACKLEVEL_AS_PUSH
+        CLEANUP_BEFORE_EXITING_TRAP_BLOCK;
         return BOUNCE_SUSPEND;
     }
 
@@ -381,7 +381,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
 
         if (Get_Frame_Flag(FRAME, ROOT_FRAME)) {  // don't abort top
             assert(Not_Frame_Flag(TOP_FRAME, TRAMPOLINE_KEEPALIVE));
-            DROP_TRAP_SAME_STACKLEVEL_AS_PUSH
+            CLEANUP_BEFORE_EXITING_TRAP_BLOCK;
             return BOUNCE_THROWN;
         }
 
@@ -447,14 +447,14 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
 
     if (Not_Frame_Flag(FRAME, NOTIFY_ON_ABRUPT_FAILURE)) {
         if (Get_Frame_Flag(FRAME, ROOT_FRAME)) {
-            DROP_TRAP_SAME_STACKLEVEL_AS_PUSH  // ** Note: this changes FRAME **
+            CLEANUP_BEFORE_EXITING_TRAP_BLOCK;
             return BOUNCE_THROWN;
         }
 
         Drop_Frame(FRAME);
     }
 
-    DROP_TRAP_SAME_STACKLEVEL_AS_PUSH  // ** Note: this changes FRAME **
+    CLEANUP_BEFORE_EXITING_TRAP_BLOCK;  /* Note: changes FRAME */
     // (TOP_FRAME will become FRAME again after push_trap)
     goto bounce_on_trampoline_with_trap;  // after exception, need new trap
 }}
@@ -467,16 +467,23 @@ bool Trampoline_With_Top_As_Root_Throws(void)
 {
     Frame(*) root = TOP_FRAME;
 
+  #if !defined(NDEBUG)
+    struct Reb_Jump *check = TG_Jump_List;
+    assert(Not_Frame_Flag(root, ROOT_FRAME));
+  #endif
+
     // !!! More efficient if caller sets this, but set it ourselves for now.
     //
-    assert(Not_Frame_Flag(root, ROOT_FRAME));
     Set_Frame_Flag(root, ROOT_FRAME);  // can't unwind across, see [1]
 
     Bounce r = Trampoline_From_Top_Maybe_Root();
 
+  #if !defined(NDEBUG)
+    assert(check == TG_Jump_List);  // must CLEANUP_BEFORE_EXITING_TRAP_BLOCK
     assert(TOP_FRAME == root);
-
     assert(Get_Frame_Flag(root, ROOT_FRAME));
+  #endif
+
     Clear_Frame_Flag(root, ROOT_FRAME);
 
     if (r == BOUNCE_THROWN)

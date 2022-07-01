@@ -222,13 +222,14 @@ struct Reb_Jump {
 //    According to the developers, "This is not a bug as if you inline it,
 //    the place setjmp goes to could be not where you want to goto."
 //
-// 3. DROP_TRAP_SAME_STACKLEVEL_AS_PUSH has a long name to remind you that
-//    you must DROP_TRAP from the same scope you PUSH_TRAP from:
+// 3. Sadly, there's no real way to make the C version "automagically" know
+//    when you've done a `return` out of the trapped block.  As a result, the
+//    notion of which CPU buffer to jump to cannot be updated--which is a
+//    requirement when nested instances of the trap are allowed.
 //
-//      "If the function that called setjmp has exited (whether by return
-//      or by a different longjmp higher up the stack), the behavior is
-//      undefined. In other words, only long jumps up the call stack
-//      are allowed." - http://en.cppreference.com/w/c/program/longjmp
+//    We make the best of it by using it as an opportunity to keep other
+//    information up to date, like letting the system globally know what
+//    frame the trampoline currently is running (which may not be TOP_FRAME).
 //
 #if REBOL_FAIL_USES_LONGJMP
 
@@ -236,24 +237,25 @@ struct Reb_Jump {
     STATIC_ASSERT(REBOL_FAIL_JUST_ABORTS == 0);
 
     #define TRAP_BLOCK_IN_CASE_OF_ABRUPT_FAILURE \
-        ; /* in case previous tatement was label */ \
+        NOOP; /* stops warning when case previous statement was label */ \
         struct Reb_Jump jump;  /* one setjmp() per trampoline invocation */ \
         jump.last_jump = TG_Jump_List; \
         jump.frame = TOP_FRAME; \
+        jump.error = nullptr; \
         TG_Jump_List = &jump; \
-        if (0 == SET_JUMP(jump.cpu_state))  /* beware return value, see [1] */ \
-            jump.error = nullptr;  /* this branch will always be run */ \
-        else \
-            goto abrupt_failure; /* longjmp happened, jump.error will be set */
+        if (1 == SET_JUMP(jump.cpu_state))  /* beware return value, see [1] */ \
+            goto longjmp_happened; /* jump.error will be set */ \
+        /* fall through to subsequent block, happens on first SET_JUMP() */
 
-    #define DROP_TRAP_SAME_STACKLEVEL_AS_PUSH /* name is reminder, see [1] */ \
+    #define CLEANUP_BEFORE_EXITING_TRAP_BLOCK /* can't avoid, see [3] */ \
         assert(jump.error == nullptr); \
-        TG_Jump_List = jump.last_jump;
+        TG_Jump_List = jump.last_jump
 
     #define ON_ABRUPT_FAILURE(decl) \
-        abrupt_failure: /* just a C label point */ \
-            decl = jump.error; \
-            jump.error = nullptr;
+      longjmp_happened: \
+        decl = jump.error; \
+        jump.error = nullptr; \
+        /* fall through to subsequent block */
 
 #elif REBOL_FAIL_USES_TRY_CATCH
 
@@ -267,8 +269,8 @@ struct Reb_Jump {
         TG_Jump_List = &jump; \
         try /* picks up subsequent {...} block */
 
-    #define DROP_TRAP_SAME_STACKLEVEL_AS_PUSH \
-        TG_Jump_List = jump.last_jump;
+    #define CLEANUP_BEFORE_EXITING_TRAP_BLOCK /* can't avoid, see [3] */ \
+        TG_Jump_List = jump.last_jump
 
     #define ON_ABRUPT_FAILURE(decl) \
         catch (decl) /* picks up subsequent {...} block */
@@ -286,11 +288,11 @@ struct Reb_Jump {
         if (false) \
             goto abrupt_failure;  /* avoids unreachable code warning */
 
-    #define DROP_TRAP_SAME_STACKLEVEL_AS_PUSH \
-        TG_Jump_List = jump.last_jump;
+    #define CLEANUP_BEFORE_EXITING_TRAP_BLOCK /* can't avoid, see [3] */ \
+        TG_Jump_List = jump.last_jump
 
     #define ON_ABRUPT_FAILURE(decl) \
-      abrupt_failure: /* need to jump here to avoid unreachable warning */ \
+      abrupt_failure: /* impossible jump here to avoid unreachable warning */ \
         assert(!"ON_ABRUPT_FAILURE() reached w/REBOL_FAIL_JUST_ABORTS=1"); \
         decl = Error_User("REBOL_FAIL_JUST_ABORTS=1, should not reach!");
 
