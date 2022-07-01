@@ -23,7 +23,7 @@ For efficiency, frames are not made into objects that cost the GC just because
 a function is called.  Instead, they are raw C objects until a user manages
 to get access to the frame in a value (e.g. by asking for the BINDING OF a
 function's argument).  When a frame becomes exposed to userspace, it will
-"reify" a REBFRM* into an actual FRAME! object that connects as a "view" on
+"reify" a Frame(*) into an actual FRAME! object that connects as a "view" on
 the underlying memory.
 
 ### EVALUATOR HOOKS

@@ -895,7 +895,7 @@ e-boot/emit 'fields {
     EXTERN_C const REBYTE Boot_Block_Compressed[];
 
     /*
-     * Raw C function pointers for natives, take REBFRM* and return REBVAL*.
+     * Raw C function pointers for natives, take Frame(*) and return REBVAL*.
      */
     EXTERN_C const REBLEN Num_Natives;
     EXTERN_C Dispatcher* const Native_C_Funcs[];

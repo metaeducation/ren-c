@@ -1,6 +1,6 @@
 //
 //  File: %sys-rebfrm.h
-//  Summary: {REBFRM Structure Frame Definition}
+//  Summary: {Reb_Frame Structure Definition}
 //  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  Homepage: https://github.com/metaeducation/ren-c/
 //
@@ -25,7 +25,7 @@
 //
 
 
-// !!! A REBFRM* answers that it is a node, and a cell.  This is questionable
+// !!! A Frame(*) answers that it is a node, and a cell.  This is questionable
 // and should be reviewed now that many features no longer depend on it.
 
 #define FRAME_FLAG_0_IS_TRUE FLAG_LEFT_BIT(0) // IS a node
@@ -269,7 +269,7 @@ typedef const REBVAL *REB_R;
 
 // C function implementing a native ACTION!
 //
-typedef REB_R (Executor)(REBFRM *frame_);
+typedef REB_R (Executor)(Frame(*) frame_);
 typedef Executor Dispatcher;  // sub-dispatched in Action_Executor()
 
 
@@ -387,7 +387,7 @@ typedef Executor Dispatcher;  // sub-dispatched in Action_Executor()
     struct Reb_Action_Executor_State action;
 
     struct {
-        REBFRM *main_frame;
+        Frame(*) main_frame;
         bool changed;
     } compose;
 
@@ -425,7 +425,7 @@ typedef Executor Dispatcher;  // sub-dispatched in Action_Executor()
     //
     // In order to make a handle able to find the frame whose linked list it
     // belongs to (in order to update the head of the list) the terminator on
-    // the ends is not nullptr, but a pointer to the REBFRM* itself (which
+    // the ends is not nullptr, but a pointer to the Frame(*) itself (which
     // can be noticed via NODE_FLAG_FRAME as not being an API handle).
     //
     REBNOD *alloc_value_list;
@@ -465,8 +465,8 @@ typedef Executor Dispatcher;  // sub-dispatched in Action_Executor()
 // and line numbers into arrays based on the frame in effect at their time
 // of allocation.
 
-inline static const REBARR *FRM_ARRAY(REBFRM *f);
-inline static bool FRM_IS_VARIADIC(REBFRM *f);
+inline static const REBARR *FRM_ARRAY(Frame(*) f);
+inline static bool FRM_IS_VARIADIC(Frame(*) f);
 
 
 #define TOP_FRAME (TG_Top_Frame + 0) // avoid assign to TOP_FRAME via + 0
@@ -476,7 +476,7 @@ inline static bool FRM_IS_VARIADIC(REBFRM *f);
 #if defined(NDEBUG)
     #define ensure_executor(executor,f) (f)  // no-op in release build
 #else
-    inline static REBFRM *ensure_executor(Executor *executor, REBFRM *f) {
+    inline static Frame(*) ensure_executor(Executor *executor, Frame(*) f) {
         if (f->executor != executor)
             assert(!"Wrong executor for flag tested");
         return f;

@@ -75,7 +75,7 @@
 
     #define VAL(p)          x_cast(REBVAL*, (p))
 
-    #define FRM(p)          x_cast(REBFRM*, (p))
+    #define FRM(p)          x_cast(Frame(*), (p))
 
 #else
 
@@ -277,12 +277,12 @@
       { return cast(const REBVAL*, p); }
 
     template <class T>
-    inline REBFRM *FRM(T *p) {
+    inline Frame(*) FRM(T *p) {
         constexpr bool base = std::is_same<T, void>::value
             or std::is_same<T, REBNOD>::value
-            or std::is_same<T, REBFRM>::value;
+            or std::is_same<T, Reb_Frame>::value;
 
-        static_assert(base, "FRM() works on void/REBNOD/REBFRM");
+        static_assert(base, "FRM() works on void/REBNOD/Frame(*)");
 
         if (not p)
             return nullptr;
@@ -296,7 +296,7 @@
             panic (p);
         }
 
-        return reinterpret_cast<REBFRM*>(p);
+        return reinterpret_cast<Frame(*)>(p);
     }
 #endif
 

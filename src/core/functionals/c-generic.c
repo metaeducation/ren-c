@@ -52,7 +52,7 @@ enum {
 //
 //  Generic_Dispatcher: C
 //
-REB_R Generic_Dispatcher(REBFRM *f)
+REB_R Generic_Dispatcher(Frame(*) f)
 {
     REBACT *phase = FRM_PHASE(f);
     REBARR *details = ACT_DETAILS(phase);

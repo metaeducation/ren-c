@@ -73,7 +73,7 @@ enum {
 // was created for; exemplars can be reused by functions that don't need to
 // tweak them (e.g. ADAPT).
 //
-REB_R Reorderer_Dispatcher(REBFRM *f) {
+REB_R Reorderer_Dispatcher(Frame(*) f) {
     REBARR *details = ACT_DETAILS(FRM_PHASE(f));
     assert(ARR_LEN(details) == IDX_REORDERER_MAX);
 

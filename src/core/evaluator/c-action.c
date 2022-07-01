@@ -125,7 +125,7 @@ bool Lookahead_To_Sync_Enfix_Defer_Flag(struct Reb_Feed *feed) {
 //
 //  Action_Executor: C
 //
-REB_R Action_Executor(REBFRM *f)
+REB_R Action_Executor(Frame(*) f)
 {
     if (THROWING) {
         if (Get_Executor_Flag(ACTION, f, DISPATCHER_CATCHES))
@@ -1209,7 +1209,7 @@ REB_R Action_Executor(REBFRM *f)
 // cached during the creation process.
 //
 void Push_Action(
-    REBFRM *f,
+    Frame(*) f,
     REBACT *act,
     REBCTX *binding  // actions may only be bound to contexts ATM
 ){
@@ -1308,7 +1308,7 @@ void Push_Action(
 //  Begin_Action_Core: C
 //
 void Begin_Action_Core(
-    REBFRM *f,
+    Frame(*) f,
     option(Symbol(const*)) label,
     bool enfix
 ){
@@ -1359,7 +1359,7 @@ void Begin_Action_Core(
 //
 //  Drop_Action: C
 //
-void Drop_Action(REBFRM *f) {
+void Drop_Action(Frame(*) f) {
     assert(not f->label or IS_SYMBOL(unwrap(f->label)));
 
     if (Not_Executor_Flag(ACTION, f, FULFILLING_ARG))

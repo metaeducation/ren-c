@@ -70,7 +70,7 @@
 // breakpoints.  The RESUME instruction is able to execute code with /DO,
 // and that code may escape from a debug interrupt signal (like Ctrl-C).
 //
-bool Do_Signals_Throws(REBFRM *frame_)
+bool Do_Signals_Throws(Frame(*) frame_)
 {
     if (Eval_Countdown >= 0) {  // natural countdown or invocation
         //

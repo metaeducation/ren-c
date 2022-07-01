@@ -280,7 +280,7 @@ REBNATIVE(load_extension)
 // This will be the dispatcher for the natives in an extension after the
 // extension is unloaded.
 //
-static const REBVAL *Unloaded_Dispatcher(REBFRM *f)
+static const REBVAL *Unloaded_Dispatcher(Frame(*) f)
 {
     UNUSED(f);
 

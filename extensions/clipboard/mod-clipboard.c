@@ -45,7 +45,7 @@
 // depends on the development of a coherent port model.
 //
 static REB_R Clipboard_Actor(
-    REBFRM *frame_,
+    Frame(*) frame_,
     REBVAL *port,
     Symbol(const*) verb
 ){

@@ -91,7 +91,7 @@ void Collapsify_Array(REBARR *array, REBSPC *specifier, REBLEN limit)
 // onto these values for the purposes of better error messages (at the cost
 // of performance).
 //
-REBVAL *Init_Near_For_Frame(Cell(*) out, REBFRM *f)
+REBVAL *Init_Near_For_Frame(Cell(*) out, Frame(*) f)
 {
     REBLEN dsp_start = DSP;
 
@@ -169,7 +169,7 @@ REBVAL *Init_Near_For_Frame(Cell(*) out, REBFRM *f)
 //
 bool Is_Context_Running_Or_Pending(REBCTX *frame_ctx)
 {
-    REBFRM *f = CTX_FRAME_IF_ON_STACK(frame_ctx);
+    Frame(*) f = CTX_FRAME_IF_ON_STACK(frame_ctx);
     if (not f)
         return false;
 
@@ -195,7 +195,7 @@ REBNATIVE(running_q)
 
     REBCTX *frame_ctx = VAL_CONTEXT(ARG(frame));
 
-    REBFRM *f = CTX_FRAME_MAY_FAIL(frame_ctx);
+    Frame(*) f = CTX_FRAME_MAY_FAIL(frame_ctx);
 
     if (Is_Action_Frame_Fulfilling(f))
         return Init_False(OUT);
@@ -219,7 +219,7 @@ REBNATIVE(pending_q)
 
     REBCTX *frame_ctx = VAL_CONTEXT(ARG(frame));
 
-    REBFRM *f = CTX_FRAME_MAY_FAIL(frame_ctx);
+    Frame(*) f = CTX_FRAME_MAY_FAIL(frame_ctx);
 
     if (Is_Action_Frame_Fulfilling(f))
         return Init_True(OUT);

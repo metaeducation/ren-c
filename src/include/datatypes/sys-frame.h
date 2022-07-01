@@ -68,22 +68,22 @@ inline static bool ANY_ESCAPABLE_GET(Cell(const*) v) {
 // Some cases in debug code call this all the way up the call stack; it may
 // be helpful to inline this test some of those places.
 //
-inline static bool Is_Action_Frame_Fulfilling(REBFRM *f) {
+inline static bool Is_Action_Frame_Fulfilling(Frame(*) f) {
     assert(Is_Action_Frame(f));
     return f->u.action.key != f->u.action.key_tail;
 }
 
 
-inline static bool FRM_IS_VARIADIC(REBFRM *f) {
+inline static bool FRM_IS_VARIADIC(Frame(*) f) {
     return FEED_IS_VARIADIC(f->feed);
 }
 
-inline static const REBARR *FRM_ARRAY(REBFRM *f) {
+inline static const REBARR *FRM_ARRAY(Frame(*) f) {
     assert(Is_End(f->feed->value) or not FRM_IS_VARIADIC(f));
     return FEED_ARRAY(f->feed);
 }
 
-inline static REBSPC *FRM_SPECIFIER(REBFRM *f) {
+inline static REBSPC *FRM_SPECIFIER(Frame(*) f) {
     return FEED_SPECIFIER(f->feed);
 }
 
@@ -94,7 +94,7 @@ inline static REBSPC *FRM_SPECIFIER(REBFRM *f) {
 // convert these cases to ordinary arrays before running them, in order
 // to accurately present any errors.
 //
-inline static REBLEN FRM_INDEX(REBFRM *f) {
+inline static REBLEN FRM_INDEX(Frame(*) f) {
     if (Is_End(f->feed->value))
         return ARR_LEN(FRM_ARRAY(f));
 
@@ -102,12 +102,12 @@ inline static REBLEN FRM_INDEX(REBFRM *f) {
     return FEED_INDEX(f->feed) - 1;
 }
 
-inline static REBLEN FRM_EXPR_INDEX(REBFRM *f) {
+inline static REBLEN FRM_EXPR_INDEX(Frame(*) f) {
     assert(not FRM_IS_VARIADIC(f));
     return f->expr_index - 1;
 }
 
-inline static const REBSTR* FRM_FILE(REBFRM *f) {
+inline static const REBSTR* FRM_FILE(Frame(*) f) {
     if (FRM_IS_VARIADIC(f))
         return nullptr;
     if (Not_Subclass_Flag(ARRAY, FRM_ARRAY(f), HAS_FILE_LINE_UNMASKED))
@@ -115,7 +115,7 @@ inline static const REBSTR* FRM_FILE(REBFRM *f) {
     return LINK(Filename, FRM_ARRAY(f));
 }
 
-inline static const char* FRM_FILE_UTF8(REBFRM *f) {
+inline static const char* FRM_FILE_UTF8(Frame(*) f) {
     //
     // !!! Note: Too early in boot at the moment to use Canon(ANONYMOUS).
     //
@@ -123,7 +123,7 @@ inline static const char* FRM_FILE_UTF8(REBFRM *f) {
     return str ? STR_UTF8(str) : "~anonymous~";
 }
 
-inline static int FRM_LINE(REBFRM *f) {
+inline static int FRM_LINE(Frame(*) f) {
     if (FRM_IS_VARIADIC(f))
         return 0;
     if (Not_Subclass_Flag(ARRAY, FRM_ARRAY(f), HAS_FILE_LINE_UNMASKED))
@@ -161,16 +161,16 @@ inline static int FRM_LINE(REBFRM *f) {
 #define FRM_PHASE(f) \
     cast(REBACT*, VAL_FRAME_PHASE_OR_LABEL_NODE((f)->rootvar))
 
-inline static void INIT_FRM_PHASE(REBFRM *f, REBACT *phase)  // check types
+inline static void INIT_FRM_PHASE(Frame(*) f, REBACT *phase)  // check types
   { INIT_VAL_FRAME_PHASE_OR_LABEL(f->rootvar, phase); }  // ...only
 
-inline static void INIT_FRM_BINDING(REBFRM *f, REBCTX *binding)
+inline static void INIT_FRM_BINDING(Frame(*) f, REBCTX *binding)
   { mutable_BINDING(f->rootvar) = binding; }  // also fast
 
 #define FRM_BINDING(f) \
     cast(REBCTX*, BINDING((f)->rootvar))
 
-inline static option(Symbol(const*)) FRM_LABEL(REBFRM *f) {
+inline static option(Symbol(const*)) FRM_LABEL(Frame(*) f) {
     assert(Is_Action_Frame(f));
     return f->label;
 }
@@ -189,7 +189,7 @@ inline static option(Symbol(const*)) FRM_LABEL(REBFRM *f) {
     // is a good place to inject an assertion that you're not ignoring the
     // fact that a frame "self-errored" and was notified of an abrupt failure.
     //
-    inline static REBYTE& FRM_STATE_BYTE(REBFRM *f) {
+    inline static REBYTE& FRM_STATE_BYTE(Frame(*) f) {
         assert(Not_Frame_Flag(f, ABRUPT_FAILURE));
         return mutable_SECOND_BYTE(f->flags);
     }
@@ -210,7 +210,7 @@ inline static option(Symbol(const*)) FRM_LABEL(REBFRM *f) {
     #define FRM_ARG(f,n) \
         ((f)->rootvar + (n))
 #else
-    inline static REBVAL *FRM_ARG(REBFRM *f, REBLEN n) {
+    inline static REBVAL *FRM_ARG(Frame(*) f, REBLEN n) {
         assert(n != 0 and n <= FRM_NUM_ARGS(f));
         return f->rootvar + n;  // 1-indexed
     }
@@ -229,7 +229,7 @@ inline static option(Symbol(const*)) FRM_LABEL(REBFRM *f) {
 #define f_array FRM_ARRAY(f)
 
 
-inline static REBCTX *Context_For_Frame_May_Manage(REBFRM *f) {
+inline static REBCTX *Context_For_Frame_May_Manage(Frame(*) f) {
     assert(not Is_Action_Frame_Fulfilling(f));
     SET_SERIES_FLAG(f->varlist, MANAGED);
     return CTX(f->varlist);
@@ -238,7 +238,7 @@ inline static REBCTX *Context_For_Frame_May_Manage(REBFRM *f) {
 
 //=//// FRAME LABELING ////////////////////////////////////////////////////=//
 
-inline static void Get_Frame_Label_Or_Nulled(Cell(*) out, REBFRM *f) {
+inline static void Get_Frame_Label_Or_Nulled(Cell(*) out, Frame(*) f) {
     assert(Is_Action_Frame(f));
     if (f->label)
         Init_Word(out, unwrap(f->label));  // WORD!, PATH!, or stored invoke
@@ -246,7 +246,7 @@ inline static void Get_Frame_Label_Or_Nulled(Cell(*) out, REBFRM *f) {
         Init_Nulled(out);  // anonymous invocation
 }
 
-inline static const char* Frame_Label_Or_Anonymous_UTF8(REBFRM *f) {
+inline static const char* Frame_Label_Or_Anonymous_UTF8(Frame(*) f) {
     assert(Is_Action_Frame(f));
     if (f->label)
         return STR_UTF8(unwrap(f->label));
@@ -279,7 +279,7 @@ inline static const char* Frame_Label_Or_Anonymous_UTF8(REBFRM *f) {
 // This privileged level of access can be used by natives that feel they can
 // optimize performance by working with the evaluator directly.
 
-inline static void Free_Frame_Internal(REBFRM *f) {
+inline static void Free_Frame_Internal(Frame(*) f) {
     if (Get_Frame_Flag(f, ALLOCATED_FEED))
         Free_Feed(f->feed);  // didn't inherit from parent, and not END_FRAME
 
@@ -295,7 +295,7 @@ inline static void Free_Frame_Internal(REBFRM *f) {
 
 inline static void Push_Frame(
     REBVAL *out,  // type check prohibits passing `unstable` cells for output
-    REBFRM *f
+    Frame(*) f
 ){
     assert(f->feed->value != nullptr);
 
@@ -341,7 +341,7 @@ inline static void Push_Frame(
     // argument slot.  :-/
     //
   #if !defined(NDEBUG)
-    REBFRM *ftemp = TOP_FRAME;
+    Frame(*) ftemp = TOP_FRAME;
     for (; ftemp != BOTTOM_FRAME; ftemp = ftemp->prior) {
         if (not Is_Action_Frame(ftemp))
             continue;
@@ -382,7 +382,7 @@ inline static void Push_Frame(
 }
 
 
-inline static void UPDATE_EXPRESSION_START(REBFRM *f) {
+inline static void UPDATE_EXPRESSION_START(Frame(*) f) {
     if (not FRM_IS_VARIADIC(f))
         f->expr_index = FRM_INDEX(f);
 }
@@ -392,7 +392,7 @@ inline static void UPDATE_EXPRESSION_START(REBFRM *f) {
     Literal_Next_In_Feed((out), (f)->feed)
 
 
-inline static void Drop_Frame_Core(REBFRM *f) {
+inline static void Drop_Frame_Core(Frame(*) f) {
   #if DEBUG_EXPIRED_LOOKBACK
     free(f->stress);
   #endif
@@ -439,11 +439,11 @@ inline static void Drop_Frame_Core(REBFRM *f) {
     Free_Frame_Internal(f);
 }
 
-inline static void Drop_Frame_Unbalanced(REBFRM *f) {
+inline static void Drop_Frame_Unbalanced(Frame(*) f) {
     Drop_Frame_Core(f);
 }
 
-inline static void Drop_Frame(REBFRM *f)
+inline static void Drop_Frame(Frame(*) f)
 {
     if (
         not Is_Throwing(f)
@@ -466,12 +466,12 @@ inline static void Drop_Frame(REBFRM *f)
 
 
 inline static void Prep_Frame_Core(
-    REBFRM *f,
+    Frame(*) f,
     REBFED *feed,
     REBFLGS flags
 ){
    if (f == nullptr)  // e.g. a failed allocation
-       fail (Error_No_Memory(sizeof(REBFRM)));
+       fail (Error_No_Memory(sizeof(Reb_Frame)));
 
     f->flags.bits = flags | FRAME_FLAG_0_IS_TRUE | FRAME_FLAG_7_IS_TRUE;
 
@@ -505,7 +505,7 @@ inline static void Prep_Frame_Core(
 }
 
 #define DECLARE_FRAME(name,feed,flags) \
-    REBFRM * name = cast(REBFRM*, Alloc_Node(FRM_POOL)); \
+    Frame(*)  name = cast(Frame(*), Alloc_Node(FRM_POOL)); \
     Prep_Frame_Core(name, feed, flags);
 
 #define DECLARE_FRAME_AT(name,any_array,flags) \
@@ -600,7 +600,7 @@ inline static void Prep_Frame_Core(
 // more important to use the named ARG() and REF() macros.  As a stopgap
 // measure, we just sense whether the phase has a return or not.
 //
-inline static REBVAL *D_ARG_Core(REBFRM *f, REBLEN n) {  // 1 for first arg
+inline static REBVAL *D_ARG_Core(Frame(*) f, REBLEN n) {  // 1 for first arg
     REBPAR *param = ACT_PARAMS_HEAD(FRM_PHASE(f));
     REBVAL *arg = FRM_ARG(f, 1);
     while (
@@ -619,7 +619,7 @@ inline static REBVAL *D_ARG_Core(REBFRM *f, REBLEN n) {  // 1 for first arg
 // Shared code for type checking the return result.  It's used by the
 // Returner_Dispatcher(), but custom dispatchers use it to (e.g. JS-NATIVE)
 //
-inline static void FAIL_IF_BAD_RETURN_TYPE(REBFRM *f) {
+inline static void FAIL_IF_BAD_RETURN_TYPE(Frame(*) f) {
     REBACT *phase = FRM_PHASE(f);
     const REBPAR *param = ACT_PARAMS_HEAD(phase);
     assert(KEY_SYM(ACT_KEYS_HEAD(phase)) == SYM_RETURN);
@@ -870,10 +870,10 @@ inline static bool Pushed_Continuation(
 
 
 inline static REB_R Continue_Subframe_Helper(
-    REBFRM *f,
+    Frame(*) f,
     bool must_be_dispatcher,
     REBFLGS catches_flag,
-    REBFRM *sub
+    Frame(*) sub
 ){
     if (must_be_dispatcher)
         assert(Is_Action_Frame(f) and not Is_Action_Frame_Fulfilling(f));

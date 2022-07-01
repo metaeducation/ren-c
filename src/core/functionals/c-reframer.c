@@ -275,9 +275,9 @@ bool Make_Frame_From_Feed_Throws(
 // !!! As a first cut we build on top of specialize, and look for the
 // parameter by means of a particular labeled void.
 //
-REB_R Reframer_Dispatcher(REBFRM *f)
+REB_R Reframer_Dispatcher(Frame(*) f)
 {
-    REBFRM *frame_ = f;  // for RETURN macros
+    Frame(*) frame_ = f;  // for RETURN macros
 
     REBARR *details = ACT_DETAILS(FRM_PHASE(f));
     assert(ARR_LEN(details) == IDX_REFRAMER_MAX);

@@ -897,7 +897,7 @@ REBARR *Make_Paramlist_Managed_May_Fail(
 // Create an archetypal form of a function, given C code implementing a
 // dispatcher that will be called by Eval_Core.  Dispatchers are of the form:
 //
-//     const REBVAL *Dispatcher(REBFRM *f) {...}
+//     const REBVAL *Dispatcher(Frame(*) f) {...}
 //
 // The REBACT returned is "archetypal" because individual REBVALs which hold
 // the same REBACT may differ in a per-REBVAL "binding".  (This is how one

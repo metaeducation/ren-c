@@ -89,11 +89,11 @@
 // REBVALs for that object.
 //
 // It may be a simple REBSER* -or- in the case of the varlist of a running
-// FRAME! on the stack, it points to a REBFRM*.  If it's a FRAME! that
+// FRAME! on the stack, it points to a Frame(*).  If it's a FRAME! that
 // is not running on the stack, it will be the function paramlist of the
-// actual phase that function is for.  Since REBFRM* all start with a
+// actual phase that function is for.  Since Frame(*) all start with a
 // REBVAL cell, this means NODE_FLAG_CELL can be used on the node to
-// discern the case where it can be cast to a REBFRM* vs. REBARR*.
+// discern the case where it can be cast to a Frame(*) vs. REBARR*.
 //
 // (Note: FRAME!s used to use a field `misc.f` to track the associated
 // frame...but that prevented the ability to SET-META on a frame.  While
@@ -159,7 +159,7 @@ inline static char VAL_RETURN_SIGNAL(Cell(const*) v) {
 #define R_THROWN \
     cast(REBVAL*, &PG_R_Thrown)
 
-inline static bool Is_Throwing(REBFRM *frame_) {
+inline static bool Is_Throwing(Frame(*) frame_) {
     //
     // !!! An original constraint on asking if something was throwing was
     // that only the top frame could be asked about.  But Action_Executor()
@@ -633,7 +633,7 @@ inline static REBVAL *Maybe_Move_Cell(REBVAL *out, REBVAL *v) {
     return Move_Cell(out, v);
 }
 
-inline static REB_R Native_Thrown_Result(REBFRM *frame_) {
+inline static REB_R Native_Thrown_Result(Frame(*) frame_) {
     assert(not Is_Stale_Void(&TG_Thrown_Arg));
     Mark_Eval_Out_Stale(frame_->out);
     return R_THROWN;
@@ -698,13 +698,13 @@ inline static REBVAL *Mark_Eval_Out_Voided(REBVAL *out) {
     return out;
 }
 
-inline static REB_R Native_Void_Result(REBFRM *frame_) {
+inline static REB_R Native_Void_Result(Frame(*) frame_) {
     assert(Is_Stale_Void(&TG_Thrown_Arg));
     Mark_Eval_Out_Voided(frame_->out);
     return R_VOID;
 }
 
-inline static REB_R Native_None_Result(REBFRM *frame_) {
+inline static REB_R Native_None_Result(Frame(*) frame_) {
     assert(Is_Stale_Void(&TG_Thrown_Arg));
     return Init_None(frame_->out);
 }

@@ -246,7 +246,7 @@ static void cleanup(const REBVAL *val)
 // However, as a convenience, calling a pending user native will trigger a
 // simple COMPILE for just that one function, using default options.
 //
-REB_R Pending_Native_Dispatcher(REBFRM *f) {
+REB_R Pending_Native_Dispatcher(Frame(*) f) {
     REBACT *phase = FRM_PHASE(f);
     assert(ACT_DISPATCHER(phase) == &Pending_Native_Dispatcher);
 
@@ -509,7 +509,7 @@ REBNATIVE(compile_p)
                 Cell(*) source = ARR_AT(details, IDX_NATIVE_BODY);
                 Cell(*) linkname = ARR_AT(details, IDX_TCC_NATIVE_LINKNAME);
 
-                // !!! REBFRM is not exported by libRebol, though it could be
+                // !!! Frame(*) is not exported by libRebol, though it could be
                 // opaquely...and there could be some very narrow routines for
                 // interacting with it (such as picking arguments directly by
                 // value).  But transformations would be needed for Rebol arg

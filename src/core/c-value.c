@@ -442,7 +442,7 @@ void* Probe_Core_Debug(
 void Probe(const void *p)
   { Probe_Core_Debug(p, "C debug", "N/A", 0); }
 
-void Where(REBFRM *f) {
+void Where(Frame(*) f) {
     if (FEED_IS_VARIADIC(f->feed))
         Reify_Va_To_Array_In_Feed(f->feed, false);
 

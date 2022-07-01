@@ -300,7 +300,7 @@ struct Reb_Collector {
 // actually needs to preserve the CTX_ARCHETYPE().  It's not entirely clear
 // if the scenarios are meaningful--but Derelativize cannot fail(), and
 // it would without this.  It might also put in some "fake" element that
-// would fail later, but given that the REBFRM's captured binding can outlive
+// would fail later, but given that the frame's captured binding can outlive
 // the frame that might lose important functionality.
 //
 inline static REBSER *SPC_BINDING(REBSPC *specifier)
@@ -326,7 +326,7 @@ inline static void INIT_BINDING_MAY_MANAGE(
     if (not binding or GET_SERIES_FLAG(binding, MANAGED))
         return;  // unbound or managed already (frame OR object context)
 
-    REBFRM *f = FRM(BONUS(KeySource, binding));  // unmanaged only frame
+    Frame(*) f = FRM(BONUS(KeySource, binding));  // unmanaged only frame
     assert(f->u.action.key == f->u.action.key_tail);  // mid-fulfillment!
     UNUSED(f);
 

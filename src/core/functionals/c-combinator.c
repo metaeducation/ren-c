@@ -82,7 +82,7 @@ enum {
 // for verbose debugging, as well as to record the furthest point reached.
 // At the moment we focus on the furthest point reached.
 //
-REB_R Combinator_Dispatcher(REBFRM *f)
+REB_R Combinator_Dispatcher(Frame(*) f)
 {
     REBACT *phase = FRM_PHASE(f);
     REBARR *details = ACT_DETAILS(phase);
@@ -111,7 +111,7 @@ REB_R Combinator_Dispatcher(REBFRM *f)
     //
     REBVAL *state = FRM_ARG(f, IDX_COMBINATOR_PARAM_STATE);
     assert(IS_FRAME(state));  // combinators *must* have this as the UPARSE.
-    REBFRM *frame_ = CTX_FRAME_MAY_FAIL(VAL_CONTEXT(state));
+    Frame(*) frame_ = CTX_FRAME_MAY_FAIL(VAL_CONTEXT(state));
     REBVAL *furthest_word = FRM_ARG(frame_, IDX_UPARSE_PARAM_FURTHEST);
     if (Is_Nulled(furthest_word))
         return r;
@@ -627,7 +627,7 @@ REBNATIVE(further_combinator)
 
 struct Combinator_Param_State {
     REBCTX *ctx;
-    REBFRM *frame_;
+    Frame(*) frame_;
 };
 
 static bool Combinator_Param_Hook(
@@ -641,7 +641,7 @@ static bool Combinator_Param_Hook(
     struct Combinator_Param_State *s
         = cast(struct Combinator_Param_State*, opaque);
 
-    REBFRM *frame_ = s->frame_;
+    Frame(*) frame_ = s->frame_;
     INCLUDE_PARAMS_OF_COMBINATORIZE;
 
     USED(REF(path));  // currently path checking is

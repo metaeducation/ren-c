@@ -49,9 +49,9 @@ enum {
 };
 
 
-REB_R Downshot_Dispatcher(REBFRM *f)  // runs until count is reached
+REB_R Downshot_Dispatcher(Frame(*) f)  // runs until count is reached
 {
-    REBFRM *frame_ = f;  // for RETURN macros
+    Frame(*) frame_ = f;  // for RETURN macros
 
     REBARR *details = ACT_DETAILS(FRM_PHASE(f));
     assert(ARR_LEN(details) == IDX_ONESHOT_MAX);
@@ -66,9 +66,9 @@ REB_R Downshot_Dispatcher(REBFRM *f)  // runs until count is reached
 }
 
 
-REB_R Upshot_Dispatcher(REBFRM *f)  // won't run until count is reached
+REB_R Upshot_Dispatcher(Frame(*) f)  // won't run until count is reached
 {
-    REBFRM *frame_ = f;
+    Frame(*) frame_ = f;
 
     REBARR *details = ACT_DETAILS(FRM_PHASE(f));
     assert(ARR_LEN(details) == IDX_ONESHOT_MAX);

@@ -253,7 +253,7 @@ static bool Subparse_Throws(
     REBVAL *out,
     Cell(const*) input,
     REBSPC *input_specifier,
-    REBFRM *f,
+    Frame(*) f,
     option(REBARR*) collection,
     REBFLGS flags
 ){
@@ -275,7 +275,7 @@ static bool Subparse_Throws(
     //
     SET_SERIES_INFO(f->varlist, HOLD);
 
-    REBFRM *frame_ = f;
+    Frame(*) frame_ = f;
     INCLUDE_PARAMS_OF_SUBPARSE;
 
     Init_Nulled(ARG(return));
@@ -369,16 +369,16 @@ inline static REBCTX *Error_Parse_End(void) {
     return Error_Parse_End_Raw();
 }
 
-inline static REBCTX *Error_Parse_Command(REBFRM *frame_) {
+inline static REBCTX *Error_Parse_Command(Frame(*) frame_) {
     return Error_Parse_Command_Raw(P_RULE);
 }
 
-inline static REBCTX *Error_Parse_Variable(REBFRM *frame_) {
+inline static REBCTX *Error_Parse_Variable(Frame(*) frame_) {
     return Error_Parse_Variable_Raw(P_RULE);
 }
 
 
-static void Print_Parse_Index(REBFRM *frame_) {
+static void Print_Parse_Index(Frame(*) frame_) {
     USE_PARAMS_OF_SUBPARSE;
 
     DECLARE_LOCAL (input);
@@ -461,7 +461,7 @@ static Cell(const*) Get_Parse_Value(
 // like a COMPOSE that runs each time they are visited.
 //
 REB_R Process_Group_For_Parse(
-    REBFRM *frame_,
+    Frame(*) frame_,
     REBVAL *cell,
     Cell(const*) group  // may be same as `cell`
 ){
@@ -508,7 +508,7 @@ REB_R Process_Group_For_Parse(
 // Otherwise, it should exit the routine as an END marker (as it started);
 //
 static REB_R Parse_One_Rule(
-    REBFRM *frame_,
+    Frame(*) frame_,
     REBLEN pos,
     Cell(const*) rule
 ){
@@ -743,7 +743,7 @@ static REB_R Parse_One_Rule(
 // the code, it gets clarified in small steps.
 //
 static REBIXO To_Thru_Block_Rule(
-    REBFRM *frame_,
+    Frame(*) frame_,
     Cell(const*) rule_block,
     bool is_thru
 ){
@@ -994,7 +994,7 @@ static REBIXO To_Thru_Block_Rule(
 // as blocks are the common case.
 //
 static REBIXO To_Thru_Non_Block_Rule(
-    REBFRM *frame_,
+    Frame(*) frame_,
     Cell(const*) rule,
     bool is_thru
 ){
@@ -1088,7 +1088,7 @@ static REBIXO To_Thru_Non_Block_Rule(
 // or the newer `mark pos` rule.  Handles WORD! and PATH!.
 //
 static void Handle_Mark_Rule(
-    REBFRM *frame_,
+    Frame(*) frame_,
     Cell(const*) rule,
     REBSPC *specifier
 ){
@@ -1130,7 +1130,7 @@ static void Handle_Mark_Rule(
 
 
 static void Handle_Seek_Rule_Dont_Update_Begin(
-    REBFRM *frame_,
+    Frame(*) frame_,
     Cell(const*) rule,
     REBSPC *specifier
 ){
@@ -1229,7 +1229,7 @@ REBNATIVE(subparse)
 
     UNUSED(ARG(flags));  // used via P_FLAGS
 
-    REBFRM *f = frame_;  // nice alias of implicit native parameter
+    Frame(*) f = frame_;  // nice alias of implicit native parameter
 
     // If the input is quoted, e.g. `parse just ''''[...] [rules]`, we dequote
     // it while we are processing the ARG().  This is because we are trying

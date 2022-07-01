@@ -374,7 +374,7 @@ inline static void Fetch_Next_In_Feed(REBFED *feed) {
 // taken when one is interested in that data, because it may have to be
 // moved.  So current can be returned from Fetch_Next_In_Frame_Core().
 
-inline static Cell(const*) Lookback_While_Fetching_Next(REBFRM *f) {
+inline static Cell(const*) Lookback_While_Fetching_Next(Frame(*) f) {
   #if DEBUG_EXPIRED_LOOKBACK
     if (feed->stress) {
         RESET(feed->stress);

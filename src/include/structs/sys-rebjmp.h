@@ -61,7 +61,7 @@
 //   the adjustment and rollback of global state.
 //
 // * Each evaluator stack frame currently stores a Reb_State structure in its
-//   `REBFRM->baseline` field.  There are likely ways to compact and conserve
+//   `->baseline` field.  There are likely ways to compact and conserve
 //   this information, e.g. by using a small fixed size structure that can
 //   "pop out" into a dynamic structure if need be.  But, correctness first!
 //

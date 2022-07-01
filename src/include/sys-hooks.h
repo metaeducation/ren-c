@@ -42,7 +42,7 @@ typedef REBINT (COMPARE_HOOK)(
 // Helper for declaring a native dispatcher function
 //
 #define REBNATIVE(n) \
-    REB_R N_##n(REBFRM *frame_)
+    REB_R N_##n(Frame(*) frame_)
 
 
 // PER-TYPE MAKE HOOKS: for `make datatype def`
@@ -96,14 +96,14 @@ typedef void (MOLD_HOOK)(REB_MOLD *mo, noquote(Cell(const*)) v, bool form);
 // any behavior for a specific type can still be accomplished by testing
 // the type passed into that common hook!
 //
-typedef REB_R (GENERIC_HOOK)(REBFRM *frame_, Symbol(const*) verb);
+typedef REB_R (GENERIC_HOOK)(Frame(*) frame_, Symbol(const*) verb);
 #define REBTYPE(n) \
-    REB_R T_##n(REBFRM *frame_, Symbol(const*) verb)
+    REB_R T_##n(Frame(*) frame_, Symbol(const*) verb)
 
 
 // Port hook: for implementing generic ACTION!s on a PORT! class
 //
-typedef REB_R (PORT_HOOK)(REBFRM *frame_, REBVAL *port, Symbol(const*) verb);
+typedef REB_R (PORT_HOOK)(Frame(*) frame_, REBVAL *port, Symbol(const*) verb);
 
 
 //=//// PARAMETER ENUMERATION /////////////////////////////////////////////=//

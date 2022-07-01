@@ -92,7 +92,7 @@
 //     foo: func [a /b c] [...]  =>  bar: func [/b d e] [...]
 //                    foo/b 1 2  =>  bar/b 1 2
 //
-void Push_Redo_Action_Frame(REBVAL *out, REBFRM *f1, const REBVAL *run)
+void Push_Redo_Action_Frame(REBVAL *out, Frame(*) f1, const REBVAL *run)
 {
     REBARR *normals = Make_Array(FRM_NUM_ARGS(f1));  // max, e.g. no refines
 
@@ -161,9 +161,9 @@ void Push_Redo_Action_Frame(REBVAL *out, REBFRM *f1, const REBVAL *run)
 // an ADAPT or SPECIALIZE or a MAKE FRAME! might depend on the existing
 // paramlist shape of the identity.)  Those cases need this "shim" dispatcher.
 //
-REB_R Hijacker_Dispatcher(REBFRM *f)
+REB_R Hijacker_Dispatcher(Frame(*) f)
 {
-    REBFRM *frame_ = f;  // for RETURN macros
+    Frame(*) frame_ = f;  // for RETURN macros
 
     // The FRM_PHASE() here is the identity that the hijacker has taken over;
     // but the actual hijacker is in the archetype.

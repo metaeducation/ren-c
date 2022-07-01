@@ -75,7 +75,7 @@ inline static void INIT_VAL_VARARGS_BINDING(
 }
 
 
-inline static REBVAL *Init_Varargs_Untyped_Normal(Cell(*) out, REBFRM *f) {
+inline static REBVAL *Init_Varargs_Untyped_Normal(Cell(*) out, Frame(*) f) {
     Reset_Cell_Header_Untracked(out, REB_VARARGS, CELL_MASK_VARARGS);
     mutable_BINDING(out) = f->varlist;  // frame-based VARARGS!
     UNUSED(VAL_VARARGS_SIGNED_PARAM_INDEX(out));
@@ -134,7 +134,7 @@ inline static bool Is_Block_Style_Varargs(
 
 
 inline static bool Is_Frame_Style_Varargs_Maybe_Null(
-    REBFRM **f_out,
+    Frame(*) *f_out,
     noquote(Cell(const*)) vararg
 ){
     assert(CELL_HEART(vararg) == REB_VARARGS);
@@ -154,7 +154,7 @@ inline static bool Is_Frame_Style_Varargs_Maybe_Null(
 
 
 inline static bool Is_Frame_Style_Varargs_May_Fail(
-    REBFRM **f_out,
+    Frame(*) *f_out,
     Cell(const*) vararg
 ){
     if (not Is_Frame_Style_Varargs_Maybe_Null(f_out, vararg))

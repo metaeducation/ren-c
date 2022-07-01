@@ -372,7 +372,7 @@ bool Did_Get_Binding_Of(REBVAL *out, const REBVAL *v)
         // !!! In the future Reb_Context will refer to a REBNOD*, and only
         // be reified based on the properties of the cell into which it is
         // moved (e.g. OUT would be examined here to determine if it would
-        // have a longer lifetime than the REBFRM* or other node)
+        // have a longer lifetime than the Frame(*) or other node)
         //
         REBCTX *c = VAL_WORD_CONTEXT(v);
 
@@ -380,7 +380,7 @@ bool Did_Get_Binding_Of(REBVAL *out, const REBVAL *v)
         // the current moment of execution.
         //
         if (CTX_TYPE(c) == REB_FRAME) {
-            REBFRM *f = CTX_FRAME_IF_ON_STACK(c);
+            Frame(*) f = CTX_FRAME_IF_ON_STACK(c);
             if (f == nullptr)
                 Copy_Cell(out, CTX_ARCHETYPE(c));
             else
@@ -410,7 +410,7 @@ bool Did_Get_Binding_Of(REBVAL *out, const REBVAL *v)
     //
     if (IS_FRAME(out)) {
         REBCTX *c = VAL_CONTEXT(out);
-        REBFRM *f = CTX_FRAME_IF_ON_STACK(c);
+        Frame(*) f = CTX_FRAME_IF_ON_STACK(c);
         if (f) {
             INIT_VAL_FRAME_PHASE(out, FRM_PHASE(f));
             INIT_VAL_FRAME_BINDING(out, FRM_BINDING(f));

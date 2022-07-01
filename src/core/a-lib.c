@@ -736,7 +736,7 @@ const void *RL_rebArgR(const void *p, va_list *vaptr)
 {
     ENTER_API;
 
-    REBFRM *f = TOP_FRAME;
+    Frame(*) f = TOP_FRAME;
     REBACT *act = FRM_PHASE(f);
 
     // !!! Currently the JavaScript wrappers do not do the right thing for

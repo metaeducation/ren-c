@@ -78,7 +78,7 @@
     // headaches.  So it was decided that so long as they are REBSER and not
     // REBARR, that's still abstract enough to block most casual misuses.
     //
-    struct Reb_Node {};  // used as empty base class for REBSER, REBVAL, REBFRM
+    struct Reb_Node {};  // empty base class for REBSER, REBVAL, Frame
     typedef struct Reb_Node REBNOD;
 #endif
 

@@ -58,4 +58,4 @@ inline static void Fail_No_Process(const REBVAL *arg) {
 //
 #define BUF_SIZE_CHUNK 4096
 
-REB_R Call_Core(REBFRM *frame_);
+REB_R Call_Core(Frame(*) frame_);

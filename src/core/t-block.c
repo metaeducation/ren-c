@@ -278,7 +278,7 @@ REB_R MAKE_Array(
         }
         else {
             REBCTX *context = CTX(VAL_VARARGS_BINDING(arg));
-            REBFRM *param_frame = CTX_FRAME_MAY_FAIL(context);
+            Frame(*) param_frame = CTX_FRAME_MAY_FAIL(context);
 
             REBVAL *param = SPECIFIC(ARR_HEAD(
                 CTX_VARLIST(ACT_EXEMPLAR(FRM_PHASE(param_frame)))

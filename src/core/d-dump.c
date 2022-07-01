@@ -105,7 +105,7 @@ void Dump_Info(void)
 // Simple debug routine to list the function names on the stack and what the
 // current feed value is.
 //
-void Dump_Stack(REBFRM *f)
+void Dump_Stack(Frame(*) f)
 {
     if (f == BOTTOM_FRAME) {
         printf("<BOTTOM_FRAME>\n");

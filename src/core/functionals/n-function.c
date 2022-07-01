@@ -106,9 +106,9 @@
 //    a hassle to force people to put RETURN NONE or RETURN at the end.  So
 //    this is the compromise chosen.
 //
-REB_R Func_Dispatcher(REBFRM *f)
+REB_R Func_Dispatcher(Frame(*) f)
 {
-    REBFRM *frame_ = f;  // so we can use OUT
+    Frame(*) frame_ = f;  // so we can use OUT
 
     enum {
         ST_FUNC_INITIAL_ENTRY = 0,
@@ -276,7 +276,7 @@ REBACT *Make_Interpreted_Action_May_Fail(
 
     // Save the relativized body in the action's details block.  Since it is
     // a Cell(*) and not a REBVAL*, the dispatcher must combine it with a
-    // running frame instance (the REBFRM* received by the dispatcher) before
+    // running frame instance (the Frame(*) received by the dispatcher) before
     // executing the interpreted code.
     //
     REBARR *details = ACT_DETAILS(a);
@@ -426,10 +426,10 @@ REBNATIVE(skippable_q)
 // See notes is %sys-frame.h about how there is no actual REB_THROWN type.
 //
 REB_R Init_Thrown_Unwind_Value(
-    REBFRM *frame_,
+    Frame(*) frame_,
     const REBVAL *level, // FRAME!, ACTION! (or INTEGER! relative to frame)
     const REBVAL *value,
-    REBFRM *target // required if level is INTEGER! or ACTION!
+    Frame(*) target // required if level is INTEGER! or ACTION!
 ) {
     DECLARE_LOCAL (label);
     Copy_Cell(label, Lib(UNWIND));
@@ -442,7 +442,7 @@ REB_R Init_Thrown_Unwind_Value(
         if (count <= 0)
             fail (Error_Invalid_Exit_Raw());
 
-        REBFRM *f = target->prior;
+        Frame(*) f = target->prior;
         for (; true; f = f->prior) {
             if (f == BOTTOM_FRAME)
                 fail (Error_Invalid_Exit_Raw());
@@ -463,7 +463,7 @@ REB_R Init_Thrown_Unwind_Value(
     else {
         assert(IS_ACTION(level));
 
-        REBFRM *f = target->prior;
+        Frame(*) f = target->prior;
         for (; true; f = f->prior) {
             if (f == BOTTOM_FRAME)
                 fail (Error_Invalid_Exit_Raw());
@@ -552,20 +552,20 @@ REBNATIVE(definitional_return)
     INCLUDE_PARAMS_OF_DEFINITIONAL_RETURN;
 
     REBVAL *v = ARG(value);
-    REBFRM *f = frame_;  // frame of this RETURN call (implicit REBNATIVE arg)
+    Frame(*) f = frame_;  // frame of this RETURN call (implicit REBNATIVE arg)
 
     // Each ACTION! cell for RETURN has a piece of information in it that can
     // can be unique (the binding).  When invoked, that binding is held in the
-    // REBFRM*.  This generic RETURN dispatcher interprets that binding as the
+    // Frame(*).  This generic RETURN dispatcher interprets that binding as the
     // FRAME! which this instance is specifically intended to return from.
     //
     REBCTX *f_binding = FRM_BINDING(f);
     if (not f_binding)
         fail (Error_Return_Archetype_Raw());  // must have binding to jump to
 
-    REBFRM *target_frame = CTX_FRAME_MAY_FAIL(f_binding);
+    Frame(*) target_frame = CTX_FRAME_MAY_FAIL(f_binding);
 
-    // !!! We only have a REBFRM via the binding.  We don't have distinct
+    // !!! We only have a Frame(*) via the binding.  We don't have distinct
     // knowledge about exactly which "phase" the original RETURN was
     // connected to.  As a practical matter, it can only return from the
     // current phase (what other option would it have, any other phase is

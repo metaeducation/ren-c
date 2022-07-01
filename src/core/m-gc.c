@@ -293,20 +293,20 @@ static void Queue_Unmarked_Accessible_Series_Deep(REBSER *s)
         //
         if (IS_VARLIST(a) and node_BONUS(Node, s)) {
             //
-            // !!! The keysource for varlists can be set to a REBFRM*, which
+            // !!! The keysource for varlists can be set to a Frame(*), which
             // at the moment pretends to be a cell to distinguish itself.
             // This makes less sense than pretending to be a series that is
             // already marked, and has a detectable FLAVOR_XXX.  Review.
             //
             if (Is_Node_Cell(node_BONUS(Node, s)))
-                goto skip_mark_rebfrm_bonus;
+                goto skip_mark_frame_bonus;
 
             assert(IS_KEYLIST(SER(node_BONUS(Node, a))));
 
             Queue_Mark_Node_Deep(&s->content.dynamic.bonus.node);
         }
 
-        skip_mark_rebfrm_bonus:
+        skip_mark_frame_bonus:
 
     //=//// MARK ARRAY ELEMENT CELLS (if array) ///////////////////////////=//
 
@@ -761,7 +761,7 @@ static void Mark_Guarded_Nodes(void)
 //
 static void Mark_Frame_Stack_Deep(void)
 {
-    REBFRM *f = TOP_FRAME;
+    Frame(*) f = TOP_FRAME;
 
     while (true) { // mark all frames (even BOTTOM_FRAME)
         //

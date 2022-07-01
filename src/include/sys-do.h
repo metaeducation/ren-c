@@ -110,7 +110,7 @@ inline static bool Do_Branch_Throws(
 
 inline static REB_R Run_Generic_Dispatch_Core(
     const REBVAL *first_arg,  // !!! Is this always same as FRM_ARG(f, 1)?
-    REBFRM *f,
+    Frame(*) f,
     Symbol(const*) verb
 ){
     GENERIC_HOOK *hook = IS_QUOTED(first_arg)
@@ -131,7 +131,7 @@ inline static REB_R Run_Generic_Dispatch_Core(
 //
 inline static bool Run_Generic_Dispatch_Throws(
     const REBVAL *first_arg,  // !!! Is this always same as FRM_ARG(f, 1)?
-    REBFRM *f,
+    Frame(*) f,
     Symbol(const*) verb
 ){
     REB_R r = Run_Generic_Dispatch_Core(first_arg, f, verb);

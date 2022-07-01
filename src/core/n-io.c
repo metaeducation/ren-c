@@ -234,7 +234,7 @@ REBNATIVE(new_line_q)
     Cell(const*) tail;
 
     if (IS_VARARGS(pos)) {
-        REBFRM *f;
+        Frame(*) f;
         REBVAL *shared;
         if (Is_Frame_Style_Varargs_May_Fail(&f, pos)) {
             if (FRM_IS_VARIADIC(f)) {

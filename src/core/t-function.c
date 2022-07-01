@@ -30,7 +30,7 @@
 //
 // Update action identity that was pushed.
 //
-REB_R Copied_Dispatcher(REBFRM *f)
+REB_R Copied_Dispatcher(Frame(*) f)
 {
     REBVAL *archetype = ACT_ARCHETYPE(FRM_PHASE(f));
 

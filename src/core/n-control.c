@@ -89,7 +89,7 @@
 //    and the FRAME_FLAG_MAYBE_STALE added.  Reverse that here, passing through
 //    any other flags.
 //
-REB_R Group_Branch_Executor(REBFRM *frame_)
+REB_R Group_Branch_Executor(Frame(*) frame_)
 {
     if (THROWING)
         return THROWN;
@@ -938,7 +938,7 @@ REBNATIVE(case)
 
 } handle_next_clause: {  /////////////////////////////////////////////////////
 
-    REBFRM *f = SUBFRAME;
+    Frame(*) f = SUBFRAME;
 
     RESET(SPARE);  // must do before goto reached_end
 
@@ -951,7 +951,7 @@ REBNATIVE(case)
 
 } condition_result_in_spare: {  //////////////////////////////////////////////
 
-    REBFRM *f = SUBFRAME;
+    Frame(*) f = SUBFRAME;
 
     if (Is_Void(SPARE))  // skip void expressions, see [2]
         goto handle_next_clause;
@@ -978,7 +978,7 @@ REBNATIVE(case)
 
 } processed_result_in_spare: {  //////////////////////////////////////////////
 
-    REBFRM *f = SUBFRAME;
+    Frame(*) f = SUBFRAME;
 
     if (Is_Isotope(SPARE))
         fail (Error_Bad_Isotope(SPARE));

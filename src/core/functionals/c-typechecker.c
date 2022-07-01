@@ -70,9 +70,9 @@ REBNATIVE(typecheck_internal_q)
 //
 // Dispatcher used by TYPECHECKER generator for when argument is a datatype.
 //
-REB_R Datatype_Checker_Dispatcher(REBFRM *frame_)
+REB_R Datatype_Checker_Dispatcher(Frame(*) frame_)
 {
-    REBFRM *f = frame_;
+    Frame(*) f = frame_;
 
     REBARR *details = ACT_DETAILS(FRM_PHASE(f));
     assert(ARR_LEN(details) == IDX_TYPECHECKER_MAX);
@@ -104,9 +104,9 @@ REB_R Datatype_Checker_Dispatcher(REBFRM *frame_)
 //
 // Dispatcher used by TYPECHECKER generator for when argument is a typeset.
 //
-REB_R Typeset_Checker_Dispatcher(REBFRM *frame_)
+REB_R Typeset_Checker_Dispatcher(Frame(*) frame_)
 {
-    REBFRM *f = frame_;
+    Frame(*) f = frame_;
 
     REBARR *details = ACT_DETAILS(FRM_PHASE(f));
     assert(ARR_LEN(details) == IDX_TYPECHECKER_MAX);

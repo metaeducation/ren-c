@@ -978,7 +978,7 @@ static LEXFLAGS Prescan_Token(SCAN_STATE *ss)
 //
 static enum Reb_Token Locate_Token_May_Push_Mold(
     REB_MOLD *mo,
-    REBFRM *f
+    Frame(*) f
 ){
     SCAN_LEVEL *level = &f->u.scan;
     SCAN_STATE *ss = level->ss;
@@ -1894,8 +1894,8 @@ static REBINT Scan_Head(SCAN_STATE *ss)
 // prior element was a GET-WORD!, the scan becomes a GET-PATH!...if the final
 // element is a SET-WORD!, the scan becomes a SET-PATH!)
 //
-REB_R Scanner_Executor(REBFRM *f) {
-    REBFRM *frame_ = f;  // to use macros like OUT, SUBFRAME, etc.
+REB_R Scanner_Executor(Frame(*) f) {
+    Frame(*) frame_ = f;  // to use macros like OUT, SUBFRAME, etc.
 
     if (THROWING)
         return THROWN;  // no state to cleanup (just data stack, auto-cleaned)

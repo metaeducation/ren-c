@@ -363,7 +363,7 @@ REBLEN Stack_Depth(void)
 {
     REBLEN depth = 0;
 
-    REBFRM *f = TOP_FRAME;
+    Frame(*) f = TOP_FRAME;
     while (f) {
         if (Is_Action_Frame(f))
             if (not Is_Action_Frame_Fulfilling(f)) {
@@ -433,7 +433,7 @@ const REBVAL *Find_Error_For_Sym(enum Reb_Symbol_Id id_sym)
 //
 void Set_Location_Of_Error(
     REBCTX *error,
-    REBFRM *where  // must be valid and executing on the stack
+    Frame(*) where  // must be valid and executing on the stack
 ) {
     while (Get_Frame_Flag(where, BLAME_PARENT))  // e.g. Apply_Only_Throws()
         where = where->prior;
@@ -445,7 +445,7 @@ void Set_Location_Of_Error(
     // WHERE is a backtrace in the form of a block of label words, that start
     // from the top of stack and go downward.
     //
-    REBFRM *f = where;
+    Frame(*) f = where;
     for (; f != BOTTOM_FRAME; f = f->prior) {
         //
         // Only invoked functions (not pending functions, groups, etc.)
@@ -1024,7 +1024,7 @@ REBCTX *Error_No_Relative_Core(noquote(Cell(const*)) any_word)
 //  Error_Not_Varargs: C
 //
 REBCTX *Error_Not_Varargs(
-    REBFRM *f,
+    Frame(*) f,
     const REBKEY *key,
     const REBVAL *param,
     enum Reb_Kind kind
@@ -1065,7 +1065,7 @@ REBCTX *Error_Not_Varargs(
 // incompatibility with rebFail(), where the non-exposure of raw context
 // pointers meant passing REBVAL* was literally failing on an error value.
 //
-REBCTX *Error_Invalid_Arg(REBFRM *f, const REBPAR *param)
+REBCTX *Error_Invalid_Arg(Frame(*) f, const REBPAR *param)
 {
     assert(IS_TYPESET(param));
 
@@ -1098,7 +1098,7 @@ REBCTX *Error_Invalid_Arg(REBFRM *f, const REBPAR *param)
 // This directs the user that they can't take isotopes as an argument to a
 // function unless the ^META parameter convention is used.
 //
-REBCTX *Error_Isotope_Arg(REBFRM *f, const REBPAR *param)
+REBCTX *Error_Isotope_Arg(Frame(*) f, const REBPAR *param)
 {
     assert(IS_TYPESET(param));
 
@@ -1157,7 +1157,7 @@ REBCTX *Error_No_Value(Cell(const*) target) {
 //
 //  Error_No_Catch_For_Throw: C
 //
-REBCTX *Error_No_Catch_For_Throw(REBFRM *frame_)
+REBCTX *Error_No_Catch_For_Throw(Frame(*) frame_)
 {
     DECLARE_LOCAL (label);
     Copy_Cell(label, VAL_THROWN_LABEL(frame_));
@@ -1273,7 +1273,7 @@ REBCTX *Error_Unexpected_Type(enum Reb_Kind expected, enum Reb_Kind actual)
 // a type different than the arg given (which had `arg_type`)
 //
 REBCTX *Error_Arg_Type(
-    REBFRM *f,
+    Frame(*) f,
     const REBKEY *key,
     enum Reb_Kind actual
 ){
@@ -1329,7 +1329,7 @@ REBCTX *Error_Bad_Argless_Refine(const REBKEY *key)
 //
 //  Error_Bad_Return_Type: C
 //
-REBCTX *Error_Bad_Return_Type(REBFRM *f, enum Reb_Kind kind) {
+REBCTX *Error_Bad_Return_Type(Frame(*) f, enum Reb_Kind kind) {
     DECLARE_LOCAL (label);
     Get_Frame_Label_Or_Nulled(label, f);
 
@@ -1346,7 +1346,7 @@ REBCTX *Error_Bad_Return_Type(REBFRM *f, enum Reb_Kind kind) {
 //
 //  Error_Bad_Invisible: C
 //
-REBCTX *Error_Bad_Invisible(REBFRM *f) {
+REBCTX *Error_Bad_Invisible(Frame(*) f) {
     DECLARE_LOCAL (label);
     Get_Frame_Label_Or_Nulled(label, f);
 

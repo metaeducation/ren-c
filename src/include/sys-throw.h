@@ -34,10 +34,10 @@
 // There are important technical reasons for favoring the label as the output:
 //
 // * RETURN is implemented as a throw whose label is a FRAME!.  That FRAME!
-//   value can store either a REBFRM* which costs nothing extra, or a REBCTX*
+//   value can store either a Frame(*) which costs nothing extra, or a REBCTX*
 //   which requires "reifying" the frame and making it GC-visible.  Reifying
 //   would happen unconditionally if the frame is put into a global variable,
-//   but so long as the FRAME! value bubbles up no higher than the REBFRM*
+//   but so long as the FRAME! value bubbles up no higher than the Frame(*)
 //   it points to, it can be used as-is.  With RETURN, it will be exactly the
 //   right lifetime--since the originating frame is right where it stops.
 //
@@ -61,14 +61,14 @@
 //   more checking that thrown values aren't being dropped or misused.
 //
 
-inline static const REBVAL *VAL_THROWN_LABEL(REBFRM *frame_) {
+inline static const REBVAL *VAL_THROWN_LABEL(Frame(*) frame_) {
     UNUSED(frame_);
     assert(not Is_Stale_Void(&TG_Thrown_Label));
     return &TG_Thrown_Label;
 }
 
 inline static REB_R Init_Thrown_With_Label(  // assumes `arg` in TG_Thrown_Arg
-    REBFRM *frame_,
+    Frame(*) frame_,
     const REBVAL *arg,
     const REBVAL *label  // Note: is allowed to be same as `out`
 ){
@@ -89,7 +89,7 @@ inline static REB_R Init_Thrown_With_Label(  // assumes `arg` in TG_Thrown_Arg
 
 inline static void CATCH_THROWN(
     Cell(*) arg_out,
-    REBFRM *frame_
+    Frame(*) frame_
 ){
     UNUSED(frame_);
 

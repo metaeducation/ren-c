@@ -89,7 +89,7 @@
 // Note: The branch continuations consider the "no frame necessary for
 // QUOTED!s or BLANK!s to be worth it to special-case, vs. pushing this.
 //
-REB_R Just_Use_Out_Executor(REBFRM *f)
+REB_R Just_Use_Out_Executor(Frame(*) f)
 {
     if (Is_Throwing(f))
         return R_THROWN;
@@ -185,7 +185,7 @@ REB_R Trampoline_From_Top_Maybe_Root(void)
     // it receives.  The FRAME may not match TOP_FRAME at this moment.
 
   #if !defined(NDEBUG)
-    REBFRM *check = FRAME;  // make sure FRAME doesn't change during executor
+    Frame(*) check = FRAME;  // make sure FRAME doesn't change during executor
   #endif
 
     UPDATE_TICK_DEBUG(nullptr);
@@ -465,7 +465,7 @@ REB_R Trampoline_From_Top_Maybe_Root(void)
 //
 bool Trampoline_With_Top_As_Root_Throws(void)
 {
-    REBFRM *root = TOP_FRAME;
+    Frame(*) root = TOP_FRAME;
 
     // !!! More efficient if caller sets this, but set it ourselves for now.
     //
@@ -495,7 +495,7 @@ bool Trampoline_With_Top_As_Root_Throws(void)
 //
 //  Trampoline_Throws: C
 //
-bool Trampoline_Throws(REBVAL *out, REBFRM *root)
+bool Trampoline_Throws(REBVAL *out, Frame(*) root)
 {
     Push_Frame(out, root);
     bool threw = Trampoline_With_Top_As_Root_Throws();

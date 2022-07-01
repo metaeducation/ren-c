@@ -160,7 +160,7 @@ struct Reb_Action_Executor_State {
     // Compositions of functions (adaptations, specializations, hijacks, etc)
     // update the FRAME!'s payload in the f->varlist archetype to say what
     // the current "phase" is.  The reason it is updated there instead of
-    // as a REBFRM field is because specifiers use it.  Similarly, that is
+    // as a frame field is because specifiers use it.  Similarly, that is
     // where the binding is stored.
     //
     REBACT *original;

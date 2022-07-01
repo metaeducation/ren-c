@@ -569,7 +569,7 @@ void Clear_Image(REBVAL *img)
 // reason.  (!)  The code is deprecated, but kept around and building for any
 // sufficiently motivated individual who wanted to review it.
 //
-REB_R Modify_Image(REBFRM *frame_, Symbol(const*) verb)
+REB_R Modify_Image(Frame(*) frame_, Symbol(const*) verb)
 {
     INCLUDE_PARAMS_OF_CHANGE;  // currently must have same frame as CHANGE
 
@@ -781,7 +781,7 @@ REB_R Modify_Image(REBFRM *frame_, Symbol(const*) verb)
 // !!! old and very broken code, untested and probably (hopefully) not
 // used by R3-View... (?)
 //
-void Find_Image(REBFRM *frame_)
+void Find_Image(Frame(*) frame_)
 {
     INCLUDE_PARAMS_OF_FIND;
 

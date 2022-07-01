@@ -58,7 +58,7 @@ enum {
 // Each time a function created with ADAPT is executed, this code runs to
 // invoke the "prelude" before passing control to the "adaptee" function.
 //
-REB_R Adapter_Dispatcher(REBFRM *f)
+REB_R Adapter_Dispatcher(Frame(*) f)
 //
 // 1. When an ADAPT is done, it does not leave its product in the output
 //    cell.  This means ADAPT of COMMENT will still be invisible.
@@ -72,7 +72,7 @@ REB_R Adapter_Dispatcher(REBFRM *f)
 //    may have put invalid types in parameter slots.  So it needs to be
 //    typechecked before executing.
 {
-    REBFRM *frame_ = f;  // for RETURN macros
+    Frame(*) frame_ = f;  // for RETURN macros
 
     REBARR *details = ACT_DETAILS(FRM_PHASE(f));
     assert(ARR_LEN(details) == IDX_ADAPTER_MAX);
@@ -162,7 +162,7 @@ REBNATIVE(adapt_p)  // see extended definition ADAPT in %base-defs.r
     // We can't use a simple Init_Block() here, because the prelude has been
     // relativized.  It is thus not a REBVAL*, but a Cell(*)...so the
     // Adapter_Dispatcher() must combine it with the FRAME! instance before
-    // it can be executed (e.g. the `REBFRM *f` it is dispatching).
+    // it can be executed (e.g. the `Frame(*) f` it is dispatching).
     //
     REBARR *details = ACT_DETAILS(adaptation);
     Init_Relative_Block(

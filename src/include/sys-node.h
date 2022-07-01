@@ -22,7 +22,7 @@
 //
 // This provides some convenience routines that require more definitions than
 // are available when %sys-rebnod.h is being processed.  (e.g. REBVAL,
-// REBSER, REBFRM...)
+// REBSER, Frame(*)...)
 //
 // See %sys-rebnod.h for what a "node" means in this context.
 //

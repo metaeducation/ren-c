@@ -70,9 +70,9 @@ enum {
 // (Luckily these copies are often not needed, such as when the DOES is not
 // used in a method... -AND- it only needs to be made once.)
 //
-REB_R Block_Dispatcher(REBFRM *f)
+REB_R Block_Dispatcher(Frame(*) f)
 {
-    REBFRM *frame_ = f;  // for RETURN macros
+    Frame(*) frame_ = f;  // for RETURN macros
 
     REBARR *details = ACT_DETAILS(FRM_PHASE(f));
     assert(ARR_LEN(details) == IDX_DOES_MAX);

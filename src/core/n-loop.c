@@ -36,7 +36,7 @@
 //
 // Returning false means the throw was neither BREAK nor CONTINUE.
 //
-bool Try_Catch_Break_Or_Continue(Value *out, REBFRM* frame_)
+bool Try_Catch_Break_Or_Continue(Value *out, Frame(*) frame_)
 {
     const Value *label = VAL_THROWN_LABEL(frame_);
 
@@ -124,7 +124,7 @@ REBNATIVE(continue)
 //  Loop_Series_Common: C
 //
 static REB_R Loop_Series_Common(
-    REBFRM *frame_,
+    Frame(*) frame_,
     REBVAL *var, // Must not be movable from context expansion, see #2274
     const REBVAL *body,
     REBVAL *start,
@@ -213,7 +213,7 @@ static REB_R Loop_Series_Common(
 //  Loop_Integer_Common: C
 //
 static REB_R Loop_Integer_Common(
-    REBFRM *frame_,
+    Frame(*) frame_,
     REBVAL *var,  // Must not be movable from context expansion, see #2274
     const REBVAL *body,
     REBI64 start,
@@ -279,7 +279,7 @@ static REB_R Loop_Integer_Common(
 //  Loop_Number_Common: C
 //
 static REB_R Loop_Number_Common(
-    REBFRM *frame_,
+    Frame(*) frame_,
     REBVAL *var,  // Must not be movable from context expansion, see #2274
     const REBVAL *body,
     REBVAL *start,

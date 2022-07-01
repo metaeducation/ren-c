@@ -258,7 +258,7 @@ REBTYPE(Unhooked)
 // The series common code is in Series_Common_Action_Maybe_Unhandled(), but
 // that is only called from series.  Handle a few extra cases here.
 //
-REB_R Reflect_Core(REBFRM *frame_)
+REB_R Reflect_Core(Frame(*) frame_)
 {
     INCLUDE_PARAMS_OF_REFLECT;
 

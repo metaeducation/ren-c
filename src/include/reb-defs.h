@@ -147,7 +147,8 @@ struct Reb_Collector;
 
 struct Reb_Frame;
 
-typedef struct Reb_Frame REBFRM;
+#define Frame(star) \
+    struct Reb_Frame star
 
 struct Reb_Feed;
 typedef struct Reb_Feed REBFED;

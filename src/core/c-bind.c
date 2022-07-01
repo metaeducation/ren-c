@@ -384,7 +384,7 @@ REBNATIVE(let)
     REBVAL *vars = ARG(vars);
 
     UNUSED(ARG(expression));
-    REBFRM *f = frame_;  // fake variadic, see [1]
+    Frame(*) f = frame_;  // fake variadic, see [1]
 
     REBVAL *bindings_holder = ARG(return);
 
@@ -622,7 +622,7 @@ REBNATIVE(let)
 REBNATIVE(add_let_binding) {
     INCLUDE_PARAMS_OF_ADD_LET_BINDING;
 
-    REBFRM *f = CTX_FRAME_MAY_FAIL(VAL_CONTEXT(ARG(frame)));
+    Frame(*) f = CTX_FRAME_MAY_FAIL(VAL_CONTEXT(ARG(frame)));
 
     if (f_specifier)
         SET_SERIES_FLAG(f_specifier, MANAGED);
@@ -655,7 +655,7 @@ REBNATIVE(add_let_binding) {
 REBNATIVE(add_use_object) {
     INCLUDE_PARAMS_OF_ADD_USE_OBJECT;
 
-    REBFRM *f = CTX_FRAME_MAY_FAIL(VAL_CONTEXT(ARG(frame)));
+    Frame(*) f = CTX_FRAME_MAY_FAIL(VAL_CONTEXT(ARG(frame)));
 
     REBCTX *ctx = VAL_CONTEXT(ARG(object));
 

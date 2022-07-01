@@ -115,7 +115,7 @@ REBNATIVE(shove)
 {
     INCLUDE_PARAMS_OF_SHOVE;
 
-    REBFRM *f;
+    Frame(*) f;
     if (not Is_Frame_Style_Varargs_May_Fail(&f, ARG(right)))
         fail ("SHOVE (>-) not implemented for MAKE VARARGS! [...] yet");
 
@@ -325,7 +325,7 @@ REBNATIVE(do)
             return_non_void (OUT);
         }
 
-        REBFRM *f;
+        Frame(*) f;
         if (not Is_Frame_Style_Varargs_May_Fail(&f, source))
             panic (source); // Frame is the only other type
 
@@ -548,7 +548,7 @@ REBNATIVE(evaluate)
             VAL_INDEX_UNBOUNDED(position) = index;
         }
         else {
-            REBFRM *f;
+            Frame(*) f;
             if (not Is_Frame_Style_Varargs_May_Fail(&f, source))
                 panic (source); // Frame is the only other type
 
@@ -629,7 +629,7 @@ REBNATIVE(redo)
 
     REBCTX *c = VAL_CONTEXT(restartee);
 
-    REBFRM *f = CTX_FRAME_IF_ON_STACK(c);
+    Frame(*) f = CTX_FRAME_IF_ON_STACK(c);
     if (f == NULL)
         fail ("Use DO to start a not-currently running FRAME! (not REDO)");
 
@@ -846,7 +846,7 @@ REBNATIVE(apply)
 
 } handle_next_item: {  ///////////////////////////////////////////////////////
 
-    REBFRM *f = SUBFRAME;
+    Frame(*) f = SUBFRAME;
     EVARS *e = VAL_HANDLE_POINTER(EVARS, iterator);
 
     if (Is_End(f_value))

@@ -333,7 +333,7 @@ REBNATIVE(c_debug_tick)
 //
 //      return: [<opt>]
 //      tick [<blank> integer!]
-//          {Get from PANIC, REBFRM.tick, REBSER.tick, REBVAL.extra.tick}
+//          {Get from PANIC, Frame.tick, REBSER.tick, REBVAL.extra.tick}
 //      /relative
 //          {TICK parameter represents a count relative to the current tick}
 //      /compensate

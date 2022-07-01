@@ -83,7 +83,7 @@
 // actually in the container.
 //
 inline static REB_R Run_Pickpoke_Dispatch(
-    REBFRM *frame_,
+    Frame(*) frame_,
     Symbol(const*) verb,
     const REBVAL *new_location
 ){

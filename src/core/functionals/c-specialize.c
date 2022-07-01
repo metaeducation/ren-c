@@ -55,7 +55,7 @@ enum {
 // does is change the phase and binding to match the function this layer was
 // specializing.
 //
-REB_R Specializer_Dispatcher(REBFRM *f)
+REB_R Specializer_Dispatcher(Frame(*) f)
 {
     REBCTX *exemplar = ACT_EXEMPLAR(FRM_PHASE(f));
 
@@ -718,7 +718,7 @@ const REBPAR *Last_Unspecialized_Param(const REBKEY ** key, REBACT *act)
 //
 // Helper built on First_Unspecialized_Param(), can also give you the param.
 //
-REBVAL *First_Unspecialized_Arg(option(const REBPAR **) param_out, REBFRM *f)
+REBVAL *First_Unspecialized_Arg(option(const REBPAR **) param_out, Frame(*) f)
 {
     REBACT *phase = FRM_PHASE(f);
     const REBPAR *param = First_Unspecialized_Param(nullptr, phase);

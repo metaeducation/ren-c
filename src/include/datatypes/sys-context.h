@@ -49,7 +49,7 @@
 //  |      <opt> ANY-VALUE! ...    |        |     REBSTR* key symbol ...    |
 //  +------------------------------+        +-------------------------------+
 //
-// (For executing frames, the ---Link--> is actually to the REBFRM* structure
+// (For executing frames, the ---Link--> is actually to the Frame(*) structure
 // so the paramlist of the CTX_FRAME_ACTION() must be consulted.  When the
 // frame stops running, the paramlist is written back to the link again.)
 //
@@ -227,8 +227,8 @@ inline static void INIT_VAL_FRAME_ROOTVAR_Core(
 //=//// CONTEXT KEYLISTS //////////////////////////////////////////////////=//
 //
 // If a context represents a FRAME! that is currently executing, one often
-// needs to quickly navigate to the REBFRM* structure for the corresponding
-// stack level.  This is sped up by swapping the REBFRM* into the LINK() of
+// needs to quickly navigate to the Frame(*) structure for the corresponding
+// stack level.  This is sped up by swapping the Frame(*) into the LINK() of
 // the varlist until the frame is finished.  In this state, the paramlist of
 // the FRAME! action is consulted. When the action is finished, this is put
 // back in BONUS_KEYSOURCE().
@@ -243,11 +243,11 @@ inline static REBSER *CTX_KEYLIST(REBCTX *c) {
     assert(CTX_TYPE(c) != REB_MODULE);
     if (Is_Node_Cell(BONUS(KeySource, CTX_VARLIST(c)))) {
         //
-        // running frame, source is REBFRM*, so use action's paramlist.
+        // running frame, source is Frame(*), so use action's paramlist.
         //
         return ACT_KEYLIST(CTX_FRAME_ACTION(c));
     }
-    return SER(BONUS(KeySource, CTX_VARLIST(c)));  // not a REBFRM, use keylist
+    return SER(BONUS(KeySource, CTX_VARLIST(c)));  // not Frame(*), use keylist
 }
 
 inline static void INIT_CTX_KEYLIST_SHARED(REBCTX *c, REBSER *keylist) {
@@ -358,13 +358,13 @@ inline static REBVAR *CTX_VARS(const REBVAR ** tail, REBCTX *c) {
 }
 
 
-//=//// FRAME! REBCTX* <-> REBFRM* STRUCTURE //////////////////////////////=//
+//=//// FRAME! REBCTX* <-> Frame(*) STRUCTURE //////////////////////////////=//
 //
 // For a FRAME! context, the keylist is redundant with the paramlist of the
 // CTX_FRAME_ACTION() that the frame is for.  That is taken advantage of when
 // a frame is executing in order to use the LINK() keysource to point at the
-// running REBFRM* structure for that stack level.  This provides a cheap
-// way to navigate from a REBCTX* to the REBFRM* that's running it.
+// running Frame(*) structure for that stack level.  This provides a cheap
+// way to navigate from a REBCTX* to the Frame(*) that's running it.
 //
 
 inline static bool Is_Frame_On_Stack(REBCTX *c) {
@@ -372,7 +372,7 @@ inline static bool Is_Frame_On_Stack(REBCTX *c) {
     return Is_Node_Cell(BONUS(KeySource, CTX_VARLIST(c)));
 }
 
-inline static REBFRM *CTX_FRAME_IF_ON_STACK(REBCTX *c) {
+inline static Frame(*) CTX_FRAME_IF_ON_STACK(REBCTX *c) {
     REBNOD *keysource = BONUS(KeySource, CTX_VARLIST(c));
     if (not Is_Node_Cell(keysource))
         return nullptr; // e.g. came from MAKE FRAME! or Encloser_Dispatcher
@@ -380,13 +380,13 @@ inline static REBFRM *CTX_FRAME_IF_ON_STACK(REBCTX *c) {
     assert(NOT_SERIES_FLAG(CTX_VARLIST(c), INACCESSIBLE));
     assert(IS_FRAME(CTX_ARCHETYPE(c)));
 
-    REBFRM *f = FRM(keysource);
+    Frame(*) f = FRM(keysource);
     assert(f->executor == &Action_Executor);
     return f;
 }
 
-inline static REBFRM *CTX_FRAME_MAY_FAIL(REBCTX *c) {
-    REBFRM *f = CTX_FRAME_IF_ON_STACK(c);
+inline static Frame(*) CTX_FRAME_MAY_FAIL(REBCTX *c) {
+    Frame(*) f = CTX_FRAME_IF_ON_STACK(c);
     if (not f)
         fail (Error_Frame_Not_On_Stack_Raw());
     return f;
@@ -639,7 +639,7 @@ inline static void Deep_Freeze_Context(REBCTX *c) {
 #define Init_Error(v,c) \
     Init_Any_Context((v), REB_ERROR, (c))
 
-inline static void Force_Location_Of_Error(REBCTX *error, REBFRM *where) {
+inline static void Force_Location_Of_Error(REBCTX *error, Frame(*) where) {
     ERROR_VARS *vars = ERR_VARS(error);
     if (IS_NULLED_OR_BLANK(&vars->where))
         Set_Location_Of_Error(error, where);

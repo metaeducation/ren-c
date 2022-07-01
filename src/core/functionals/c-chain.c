@@ -49,14 +49,14 @@ enum {
 //
 // When a derived function dispatcher receives a frame built for the function
 // it derived from, sometimes it can do some work...update the phase...and
-// keep running in that same REBFRM* allocation.
+// keep running in that same Frame(*) allocation.
 //
 // But if it wants to stay in control and do post-processing (as CHAIN does)
 // then it needs to remain linked into the stack.  This function helps to
 // move the built frame into a new frame that can be executed with a new
 // entry to Process_Action().  The ability is also used by RESKINNED.
 //
-REBFRM *Push_Downshifted_Frame(REBVAL *out, REBFRM *f) {
+Frame(*) Push_Downshifted_Frame(REBVAL *out, Frame(*) f) {
     DECLARE_FRAME (sub, f->feed, FRAME_FLAG_MAYBE_STALE);
     Push_Frame(out, sub);
     assert(sub->varlist == nullptr);
@@ -96,7 +96,7 @@ REBFRM *Push_Downshifted_Frame(REBVAL *out, REBFRM *f) {
 // function in the pipeline.  Having the same interface as that function
 // makes a chained function specializable.
 //
-// A first cut at implementing CHAIN did it all within one REBFRM.  It changed
+// A first cut at implementing CHAIN did it all within one frame.  It changed
 // the FRM_PHASE() and returned a REDO signal--with actions pushed to the data
 // stack that the evaluator was complicit in processing as "things to run
 // afterward".  This baked awareness of chaining into %c-eval.c, when it is
@@ -104,7 +104,7 @@ REBFRM *Push_Downshifted_Frame(REBVAL *out, REBFRM *f) {
 //
 // Handling it inside the dispatcher means the Chainer_Dispatcher() stays on
 // the stack and in control.  This means either unhooking the current `f` and
-// putting a new REBFRM* above it, or stealing the content of the `f` into a
+// putting a new Frame(*) above it, or stealing the content of the `f` into a
 // new frame to put beneath it.  The latter is chosen to avoid disrupting
 // existing pointers to `f`.
 //
@@ -113,7 +113,7 @@ REBFRM *Push_Downshifted_Frame(REBVAL *out, REBFRM *f) {
 // user invoked in the stack trace...instead of just the chained item that
 // causes an error.)
 //
-REB_R Chainer_Dispatcher(REBFRM *f)
+REB_R Chainer_Dispatcher(Frame(*) f)
 //
 // 1. Stealing the varlist leaves the actual chainer frame with no varlist
 //    content.  That means debuggers introspecting the stack may see a
@@ -135,7 +135,7 @@ REB_R Chainer_Dispatcher(REBFRM *f)
 //    your chains can consume more than one argument.  It might be interesting
 //    or it might be bugs waiting to happen, trying it this way for now.
 {
-    REBFRM *frame_ = f;  // for RETURN macros
+    Frame(*) frame_ = f;  // for RETURN macros
 
     if (THROWING)  // this routine is both dispatcher and executor, see [2]
         return THROWN;
@@ -161,7 +161,7 @@ REB_R Chainer_Dispatcher(REBFRM *f)
         VAL_ARRAY(ARR_AT(details, IDX_CHAINER_PIPELINE))
     );
 
-    REBFRM *sub = Push_Downshifted_Frame(OUT, f);  // steals varlist, see [1]
+    Frame(*) sub = Push_Downshifted_Frame(OUT, f);  // steals varlist, see [1]
     f->executor = &Chainer_Dispatcher;  // so trampoline calls us, see [2]
 
     Cell(const*) chained = VAL_ARRAY_ITEM_AT(pipeline_at);
@@ -184,7 +184,7 @@ REB_R Chainer_Dispatcher(REBFRM *f)
 
 } run_next_in_chain: {  //////////////////////////////////////////////////////
 
-    REBFRM *sub = SUBFRAME;
+    Frame(*) sub = SUBFRAME;
 
     if (sub->varlist and NOT_SERIES_FLAG(sub->varlist, MANAGED))
         GC_Kill_Series(sub->varlist);

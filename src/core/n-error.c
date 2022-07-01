@@ -149,7 +149,7 @@ REBNATIVE(set_location_of_error)
         context = VAL_CONTEXT(location);
     }
 
-    REBFRM *where = CTX_FRAME_MAY_FAIL(context);
+    Frame(*) where = CTX_FRAME_MAY_FAIL(context);
 
     REBCTX *error = VAL_CONTEXT(ARG(error));
     Set_Location_Of_Error(error, where);

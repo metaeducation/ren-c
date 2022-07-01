@@ -39,7 +39,7 @@
 // a series as containing fixed-size units.
 //
 REB_R Series_Common_Action_Maybe_Unhandled(
-    REBFRM *frame_,
+    Frame(*) frame_,
     Symbol(const*) verb
 ){
     REBVAL *v = D_ARG(1);

@@ -528,7 +528,7 @@ REB_R MAKE_Frame(
     // really cost that much to keep around.  Use it sparingly (if at all).
     //
     if (IS_VARARGS(arg)) {
-        REBFRM *f_varargs;
+        Frame(*) f_varargs;
         REBFED *feed;
         if (Is_Frame_Style_Varargs_May_Fail(&f_varargs, arg)) {
             assert(Is_Action_Frame(f_varargs));
@@ -1283,7 +1283,7 @@ REBTYPE(Frame)
                 return Init_Word(OUT, unwrap(label));
 
             // If the frame is executing, we can look at the label in the
-            // REBFRM*, which will tell us what the overall execution label
+            // Frame(*), which will tell us what the overall execution label
             // would be.  This might be confusing, however...if the phase
             // is drastically different.  Review.
         }
@@ -1304,7 +1304,7 @@ REBTYPE(Frame)
             );
         }
 
-        REBFRM *f = CTX_FRAME_MAY_FAIL(c);
+        Frame(*) f = CTX_FRAME_MAY_FAIL(c);
 
         switch (prop) {
           case SYM_FILE: {
@@ -1331,7 +1331,7 @@ REBTYPE(Frame)
             //
             // Only want action frames (though `pending? = true` ones count).
             //
-            REBFRM *parent = f;
+            Frame(*) parent = f;
             while ((parent = parent->prior) != BOTTOM_FRAME) {
                 if (not Is_Action_Frame(parent))
                     continue;

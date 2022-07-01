@@ -114,7 +114,7 @@ struct Reb_Jump {
 
     struct Reb_Jump *last_jump;
 
-    REBFRM *frame;  // trampoline caches frame here for flexibility, see [3]
+    Frame(*) frame;  // trampoline caches frame here for flexibility, see [3]
 };
 
 

@@ -183,12 +183,12 @@ PVAR REBDEV *PG_Device_List;  // Linked list of R3-Alpha-style "devices"
 // it possible to do UNWIND throws that could be invisible.
 //
 // The frame to unwind to is something that could be slipped into the binding
-// of the TG_Thrown_Label, but REBFRM* bindings are not legal at the moment.
+// of the TG_Thrown_Label, but Frame(*) bindings are not legal at the moment.
 // To get past the issue, the frame is just put in the TG_Unwind_Frame.
 //
 TVAR REBVAL TG_Thrown_Arg;
 TVAR REBVAL TG_Thrown_Label;
-TVAR REBFRM *TG_Unwind_Frame;
+TVAR Frame(*) TG_Unwind_Frame;
 
 // !!! These values were held in REBVALs for some reason in R3-Alpha, which
 // means that since they were INTEGER! they were signed 64-bit integers.  It
@@ -241,8 +241,8 @@ TVAR uintptr_t TG_Stack_Limit;    // Limit address for CPU stack.
 // be filtered to get an understanding of something like a "backtrace of
 // currently running functions".
 //
-TVAR REBFRM *TG_Top_Frame;
-TVAR REBFRM *TG_Bottom_Frame;
+TVAR Frame(*) TG_Top_Frame;
+TVAR Frame(*) TG_Bottom_Frame;
 TVAR REBFED *TG_End_Feed;
 
 

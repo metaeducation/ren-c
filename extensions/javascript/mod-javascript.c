@@ -228,7 +228,7 @@ static void cleanup_js_object(const REBVAL *v) {
 
 //=//// FRAME ID AND THROWING /////////////////////////////////////////////=//
 //
-// We go ahead and use the REBCTX* instead of the raw REBFRM* to act as the
+// We go ahead and use the REBCTX* instead of the raw Frame(*) to act as the
 // unique pointer to identify a frame.  That's because if the JavaScript code
 // throws and that throw needs to make it to a promise higher up the stack, it
 // uses that pointer as an ID in a mapping table to associate the call with
@@ -242,11 +242,11 @@ static void cleanup_js_object(const REBVAL *v) {
 // JavaScript code may only be caught by JavaScript code.
 //
 
-inline static heapaddr_t Frame_Id_For_Frame(REBFRM* f) {
+inline static heapaddr_t Frame_Id_For_Frame(Frame(*) f) {
     return Heapaddr_From_Pointer(f);
 }
 
-inline static REBFRM *Frame_From_Frame_Id(heapaddr_t id) {
+inline static Frame(*) Frame_From_Frame_Id(heapaddr_t id) {
     return FRM(Pointer_From_Heapaddr(id));
 }
 
@@ -286,7 +286,7 @@ enum {
     IDX_JS_NATIVE_MAX
 };
 
-REB_R JavaScript_Dispatcher(REBFRM *f);
+REB_R JavaScript_Dispatcher(Frame(*) f);
 
 
 //=//// GLOBAL PROMISE STATE //////////////////////////////////////////////=//
@@ -571,7 +571,7 @@ EXTERN_C void RL_rebResolveNative_internal(
     intptr_t frame_id,
     intptr_t result_id
 ){
-    REBFRM *frame_ = Frame_From_Frame_Id(frame_id);
+    Frame(*) frame_ = Frame_From_Frame_Id(frame_id);
 
     TRACE(
         "reb.ResolveNative_internal(%s)",
@@ -608,7 +608,7 @@ EXTERN_C void RL_rebRejectNative_internal(
     intptr_t frame_id,
     intptr_t error_id
 ){
-    REBFRM *frame_ = Frame_From_Frame_Id(frame_id);
+    Frame(*) frame_ = Frame_From_Frame_Id(frame_id);
 
     TRACE(
         "reb.RejectNative_internal(%s)",
@@ -680,9 +680,9 @@ EXTERN_C void RL_rebRejectNative_internal(
 //    convert it to a throw.  For now, the halt signal is communicated
 //    uniquely back to us as 0.
 //
-REB_R JavaScript_Dispatcher(REBFRM *frame_)
+REB_R JavaScript_Dispatcher(Frame(*) frame_)
 {
-    REBFRM *f = frame_;
+    Frame(*) f = frame_;
 
     heapaddr_t frame_id = Frame_Id_For_Frame(f);
 

@@ -64,7 +64,7 @@
     // a tick breakpoint that way with `--breakpoint NNN`
     //
     // The debug build carries ticks many other places.  Series contain the
-    // `REBSER.tick` where they were created, frames have a `REBFRM.tick`,
+    // `REBSER.tick` where they were created, frames have a `Reb_Frame.tick`,
     // and the DEBUG_TRACK_EXTEND_CELLS switch will double the size of cells
     // so they can carry the tick, file, and line where they were initialized.
     // (Even without TRACK_EXTEND, cells that don't have their EXTRA() field
@@ -232,7 +232,7 @@ inline static bool Did_Init_Inert_Optimize_Complete(
 //
 inline static bool Eval_Step_Throws(
     REBVAL *out,
-    REBFRM *f
+    Frame(*) f
 ){
     assert(Not_Feed_Flag(f->feed, NO_LOOKAHEAD));
     assert(Get_Executor_Flag(EVAL, f, SINGLE_STEP));
@@ -258,7 +258,7 @@ inline static bool Eval_Step_Throws(
 //
 inline static bool Eval_Step_In_Subframe_Throws(
     REBVAL *out,
-    REBFRM *f,
+    Frame(*) f,
     REBFLGS flags
 ){
     if (not (flags & FRAME_FLAG_MAYBE_STALE))
@@ -281,7 +281,7 @@ inline static bool Eval_Step_In_Subframe_Throws(
 
 inline static bool Reevaluate_In_Subframe_Throws(
     REBVAL *out,
-    REBFRM *f,
+    Frame(*) f,
     const REBVAL *reval,
     REBFLGS flags,
     bool enfix
@@ -425,7 +425,7 @@ inline static bool Eval_Value_Core_Throws(
     Eval_Value_Core_Throws(out, FRAME_MASK_NONE, (value), (specifier))
 
 
-inline static REB_R Native_Failure_Result(REBFRM *frame_, const void *p) {
+inline static REB_R Native_Failure_Result(Frame(*) frame_, const void *p) {
     assert(Is_Stale_Void(&TG_Thrown_Arg));
 
     REBCTX *error;

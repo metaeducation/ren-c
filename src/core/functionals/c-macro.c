@@ -93,9 +93,9 @@ void Splice_Block_Into_Feed(REBFED *feed, const REBVAL *splice) {
 //
 //  Macro_Dispatcher: C
 //
-REB_R Macro_Dispatcher(REBFRM *f)
+REB_R Macro_Dispatcher(Frame(*) f)
 {
-    REBFRM *frame_ = f;  // for RETURN macros
+    Frame(*) frame_ = f;  // for RETURN macros
 
     REBACT *phase = FRM_PHASE(f);
     REBARR *details = ACT_DETAILS(phase);

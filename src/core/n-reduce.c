@@ -333,7 +333,7 @@ bool Match_For_Compose(noquote(Cell(const*)) group, const REBVAL *label) {
 //
 static void Push_Composer_Frame(
     Value *out,
-    REBFRM *main_frame,
+    Frame(*) main_frame,
     Cell(const*) arraylike,
     REBSPC *specifier
 ){
@@ -381,7 +381,7 @@ static void Push_Composer_Frame(
 //
 static Value* Finalize_Composer_Frame(
     Value *out,
-    REBFRM *composer_frame,
+    Frame(*) composer_frame,
     Cell(const*) composee  // special handling if the output kind is a sequence
 ){
     if (Is_Failure(out)) {
@@ -472,9 +472,9 @@ static Value* Finalize_Composer_Frame(
 //    also means the caller can decide if they want the accrued items or not
 //    depending on the `changed` field in the frame.
 //
-REB_R Composer_Executor(REBFRM *f)
+REB_R Composer_Executor(Frame(*) f)
 {
-    REBFRM *frame_ = f;
+    Frame(*) frame_ = f;
 
     if (THROWING)
         return THROWN;  // no state to cleanup (just data stack, auto-cleaned)
@@ -485,7 +485,7 @@ REB_R Composer_Executor(REBFRM *f)
     PARAM(4, deep);
     PARAM(5, predicate);
 
-    REBFRM *main_frame = f->u.compose.main_frame;  // the invoked COMPOSE native
+    Frame(*) main_frame = f->u.compose.main_frame;  // the invoked COMPOSE native
 
     UNUSED(FRM_ARG(main_frame, p_return_));
     Value *label = FRM_ARG(main_frame, p_label_);

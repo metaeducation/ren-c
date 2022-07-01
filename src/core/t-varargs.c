@@ -147,9 +147,9 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
 
     REBVAL *arg; // for updating CELL_FLAG_UNEVALUATED
 
-    option(REBFRM*) vararg_frame;
+    option(Frame(*)) vararg_frame;
 
-    REBFRM *f;
+    Frame(*) f;
     REBVAL *shared;
     if (Is_Block_Style_Varargs(&shared, vararg)) {
         //
@@ -351,7 +351,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
         //
         // !!! Array-based varargs only store the parameter list they are
         // stamped with, not the frame.  This is because storing non-reified
-        // types in payloads is unsafe...only safe to store REBFRM* in a
+        // types in payloads is unsafe...only safe to store Frame(*) in a
         // binding.  So that means only one frame can be pointed to per
         // vararg.  Revisit the question of how to give better errors.
         //
@@ -632,7 +632,7 @@ void MF_Varargs(REB_MOLD *mo, noquote(Cell(const*)) v, bool form) {
 
     Append_Ascii(mo->series, " => ");
 
-    REBFRM *f;
+    Frame(*) f;
     REBVAL *shared;
     if (Is_Block_Style_Varargs(&shared, v)) {
         if (Is_End(shared))

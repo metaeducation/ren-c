@@ -93,11 +93,11 @@
     (STATE == ST_EVALUATOR_REEVALUATING ? SPECIFIED : FEED_SPECIFIER(f->feed))
 
 
-// In the early development of FRAME!, the REBFRM* for evaluating across a
+// In the early development of FRAME!, the Frame(*) for evaluating across a
 // block was reused for each ACTION! call.  Since no more than one action was
 // running at a time, this seemed to work.  However, that didn't allow for
 // a separate "reified" entry for users to point at.  While giving each
-// action its own REBFRM* has performance downsides, it makes the objects
+// action its own Frame(*) has performance downsides, it makes the objects
 // correspond to what they are...and may be better for cohering the "executor"
 // pattern by making it possible to use a constant executor per frame.
 //
@@ -162,7 +162,7 @@ STATIC_ASSERT(
 //    hand side.  The old stackless build wrote current into the spare and
 //    restored it in the state switch().  Did this ever happen?
 //
-inline static REBFRM *Maybe_Rightward_Continuation_Needed(REBFRM *f)
+inline static Frame(*) Maybe_Rightward_Continuation_Needed(Frame(*) f)
 {
     if (Get_Feed_Flag(f->feed, NEXT_ARG_FROM_OUT))  {  // e.g. `10 -> x:`
         Clear_Feed_Flag(f->feed, NEXT_ARG_FROM_OUT);
@@ -206,7 +206,7 @@ inline static REBFRM *Maybe_Rightward_Continuation_Needed(REBFRM *f)
 //
 // It is possible to preload states and start an evaluator at any of these.
 //
-REB_R Evaluator_Executor(REBFRM *f)
+REB_R Evaluator_Executor(Frame(*) f)
 {
     if (THROWING)
         return THROWN;  // no state to clean up
@@ -698,7 +698,7 @@ REB_R Evaluator_Executor(REBFRM *f)
     set_word_common: /////////////////////////////////////////////////////////
 
       case REB_SET_WORD: {
-        REBFRM *subframe = Maybe_Rightward_Continuation_Needed(f);
+        Frame(*) subframe = Maybe_Rightward_Continuation_Needed(f);
         if (not subframe)
             goto set_word_rightside_in_out;
 
@@ -1051,7 +1051,7 @@ REB_R Evaluator_Executor(REBFRM *f)
     generic_set_common: //////////////////////////////////////////////////////
 
       case REB_SET_TUPLE: {
-        REBFRM *subframe = Maybe_Rightward_Continuation_Needed(f);
+        Frame(*) subframe = Maybe_Rightward_Continuation_Needed(f);
         if (not subframe)
             goto set_tuple_rightside_in_out;
 

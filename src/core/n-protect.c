@@ -287,7 +287,7 @@ static void Protect_Word_Value(REBVAL *word, REBFLGS flags)
 //
 // Common arguments between protect and unprotect:
 //
-static REB_R Protect_Unprotect_Core(REBFRM *frame_, REBFLGS flags)
+static REB_R Protect_Unprotect_Core(Frame(*) frame_, REBFLGS flags)
 {
     INCLUDE_PARAMS_OF_PROTECT;
 

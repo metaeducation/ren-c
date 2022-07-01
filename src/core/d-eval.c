@@ -54,7 +54,7 @@
 //
 //  Dump_Frame_Location: C
 //
-void Dump_Frame_Location(Cell(const*) v, REBFRM *f)
+void Dump_Frame_Location(Cell(const*) v, Frame(*) f)
 {
     DECLARE_LOCAL (dump);
 
@@ -112,7 +112,7 @@ void Dump_Frame_Location(Cell(const*) v, REBFRM *f)
 // These are checks common to Expression and Exit checks (hence also common
 // to the "end of Start" checks, since that runs on the first expression)
 //
-static void Evaluator_Shared_Checks_Debug(REBFRM *f)
+static void Evaluator_Shared_Checks_Debug(Frame(*) f)
 {
     // The state isn't actually guaranteed to balance overall until a frame
     // is completely dropped.  This is because a frame may be reused over
@@ -191,7 +191,7 @@ static void Evaluator_Shared_Checks_Debug(REBFRM *f)
 // This routine attempts to "trash" a lot of frame state variables to help
 // make sure one evaluation does not leak data into the next.
 //
-void Evaluator_Expression_Checks_Debug(REBFRM *f)
+void Evaluator_Expression_Checks_Debug(Frame(*) f)
 {
     assert(f == TOP_FRAME); // should be topmost frame, still
 
@@ -225,7 +225,7 @@ void Evaluator_Expression_Checks_Debug(REBFRM *f)
 //
 //  Do_After_Action_Checks_Debug: C
 //
-void Do_After_Action_Checks_Debug(REBFRM *f) {
+void Do_After_Action_Checks_Debug(Frame(*) f) {
     assert(not Is_Throwing(f));
 
     if (GET_SERIES_FLAG(f->varlist, INACCESSIBLE))  // e.g. ENCLOSE
@@ -290,7 +290,7 @@ void Do_After_Action_Checks_Debug(REBFRM *f) {
 //
 //  Evaluator_Exit_Checks_Debug: C
 //
-void Evaluator_Exit_Checks_Debug(REBFRM *f) {
+void Evaluator_Exit_Checks_Debug(Frame(*) f) {
     Evaluator_Shared_Checks_Debug(f);
 
     if (Not_End(f_next) and not FRM_IS_VARIADIC(f)) {

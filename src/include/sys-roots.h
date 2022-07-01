@@ -69,7 +69,7 @@ inline static bool Is_Api_Value(Cell(const*) v) {
     return did (v->header.bits & NODE_FLAG_ROOT);
 }
 
-inline static void Link_Api_Handle_To_Frame(REBARR *a, REBFRM *f)
+inline static void Link_Api_Handle_To_Frame(REBARR *a, Frame(*) f)
 {
     // The head of the list isn't null, but points at the frame, so that
     // API freeing operations can update the head of the list in the frame
@@ -98,7 +98,7 @@ inline static void Unlink_Api_Handle_From_Frame(REBARR *a)
     );
 
     if (at_head) {
-        REBFRM *f = FRM(MISC(ApiPrev, a));
+        Frame(*) f = FRM(MISC(ApiPrev, a));
         f->alloc_value_list = LINK(ApiNext, a);
 
         if (not at_tail) {  // only set next item's backlink if it exists

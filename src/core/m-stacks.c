@@ -130,7 +130,7 @@ void Shutdown_Frame_Stack(void)
     TG_End_Feed = nullptr;
 
   blockscope {
-    REBFRM *f = TOP_FRAME;
+    Frame(*) f = TOP_FRAME;
 
     // There's a Catch-22 on checking the balanced state for outstanding
     // manual series allocations, e.g. it can't check *before* the mold buffer
@@ -152,7 +152,7 @@ void Shutdown_Frame_Stack(void)
         REBLEN n = Mem_Pools[FRM_POOL].num_units;
         REBYTE *unit = cast(REBYTE*, seg + 1);
         for (; n > 0; --n, unit += Mem_Pools[FRM_POOL].wide) {
-            REBFRM *f = cast(REBFRM*, unit);  // ^-- pool size may round up
+            Frame(*) f = cast(Frame(*), unit);  // ^-- pool size may round up
             if (IS_FREE_NODE(f))
                 continue;
           #if DEBUG_COUNT_TICKS
@@ -206,7 +206,7 @@ void Shutdown_Frame_Stack(void)
 //
 REBCTX *Get_Context_From_Stack(void)
 {
-    REBFRM *f = TOP_FRAME;
+    Frame(*) f = TOP_FRAME;
     REBACT *phase = nullptr; // avoid potential uninitialized variable warning
 
     for (; f != BOTTOM_FRAME; f = f->prior) {
