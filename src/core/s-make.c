@@ -162,7 +162,7 @@ String(*) Append_Ascii_Len(String(*) dst, const char *ascii, REBLEN len)
     REBLEN old_size;
     REBLEN old_len;
 
-    if (dst == NULL) {
+    if (dst == nullptr) {
         dst = Make_String(len);
         old_size = 0;
         old_len = 0;

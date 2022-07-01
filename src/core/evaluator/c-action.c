@@ -250,7 +250,7 @@ Bounce Action_Executor(Frame(*) f)
         if (DSP != f->baseline.dsp) {  // reorderings or refinements pushed
             StackValue(*) ordered = TOP;
             StackValue(*) lowest_ordered = Data_Stack_At(f->baseline.dsp);
-            String(const*) param_symbol = KEY_SYMBOL(KEY);
+            Symbol(const*) param_symbol = KEY_SYMBOL(KEY);
 
             for (; ordered != lowest_ordered; --ordered) {
                 if (VAL_WORD_SYMBOL(ordered) != param_symbol)

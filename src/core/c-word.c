@@ -131,10 +131,10 @@ static void Expand_Word_Table(void)
     // Hold onto it while creating the new hash table.
 
     REBLEN old_num_slots = SER_USED(PG_Symbols_By_Hash);
-    String(*) *old_symbols_by_hash = SER_HEAD(String(*), PG_Symbols_By_Hash);
+    Symbol(*) *old_symbols_by_hash = SER_HEAD(Symbol(*), PG_Symbols_By_Hash);
 
     REBLEN num_slots = Get_Hash_Prime_May_Fail(old_num_slots + 1);
-    assert(SER_WIDE(PG_Symbols_By_Hash) == sizeof(String(*)));
+    assert(SER_WIDE(PG_Symbols_By_Hash) == sizeof(Symbol(*)));
 
     REBSER *ser = Make_Series(
         num_slots, FLAG_FLAVOR(CANONTABLE) | SERIES_FLAG_POWER_OF_2
@@ -144,11 +144,11 @@ static void Expand_Word_Table(void)
 
     // Rehash all the symbols:
 
-    String(*) *new_symbols_by_hash = SER_HEAD(String(*), ser);
+    Symbol(*) *new_symbols_by_hash = SER_HEAD(Symbol(*), ser);
 
     REBLEN old_slot;
     for (old_slot = 0; old_slot != old_num_slots; ++old_slot) {
-        String(*) symbol = old_symbols_by_hash[old_slot];
+        Symbol(*) symbol = old_symbols_by_hash[old_slot];
         if (not symbol)
             continue;
 
@@ -443,7 +443,7 @@ void GC_Kill_Interning(String(*) intern)
     node_MISC(Hitch, patch) = node_MISC(Hitch, intern);  // may be no-op
 
     REBLEN num_slots = SER_USED(PG_Symbols_By_Hash);
-    String(*) *symbols_by_hash = SER_HEAD(String(*), PG_Symbols_By_Hash);
+    Symbol(*) *symbols_by_hash = SER_HEAD(Symbol(*), PG_Symbols_By_Hash);
 
     REBLEN skip;
     REBLEN slot = First_Hash_Candidate_Slot(
@@ -637,7 +637,7 @@ void Shutdown_Interning(void)
 
         REBLEN slot;
         for (slot = 0; slot < SER_USED(PG_Symbols_By_Hash); ++slot) {
-            String(*) symbol = *SER_AT(String(*), PG_Symbols_By_Hash, slot);
+            Symbol(*) symbol = *SER_AT(Symbol(*), PG_Symbols_By_Hash, slot);
             if (symbol and symbol != DELETED_SYMBOL)
                 panic (symbol);
         }

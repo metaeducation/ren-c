@@ -58,7 +58,7 @@ static void Append_To_Context(REBVAL *context, REBVAL *arg)
     Collect_Start(&collector, COLLECT_ANY_WORD);
 
   blockscope {  // Start out binding table with words already in context
-    String(const*) duplicate;
+    Symbol(const*) duplicate;
     Collect_Context_Keys(&duplicate, &collector, c);
     assert(not duplicate);  // context should have all unique keys
   }
