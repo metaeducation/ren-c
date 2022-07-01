@@ -2499,17 +2499,17 @@ Bounce Scanner_Executor(Frame(*) f) {
             PUSH_GC_GUARD(cell);
 
             PUSH_GC_GUARD(array);
-            const REBVAL *r = hook(
+            Bounce b = hook(
                 cell,
                 kind,
                 nullptr,
                 SPECIFIC(ARR_AT(array, 1))
             );
-            if (r == BOUNCE_THROWN) {  // !!! good argument for not using MAKE
+            if (b == BOUNCE_THROWN) {  // !!! good argument for not using MAKE
                 assert(false);
                 panic ("MAKE during construction syntax threw--illegal");
             }
-            if (r != cell) {  // !!! not yet supported
+            if (b != cell) {  // !!! not yet supported
                 assert(false);
                 panic ("MAKE during construction syntax not out cell");
             }

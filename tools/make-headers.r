@@ -157,8 +157,11 @@ e-funcs/emit {
      * difference between a C++ build and a C build.
      *
      * http://stackoverflow.com/q/1041866/
+     *
+     * Debug builds are allowed to break the rule, to get the added benefit
+     * of extra C++ checking like in the Bounce type.
      */
-    #ifdef __cplusplus
+    #if CPLUSPLUS_11 == 0 || defined(NDEBUG)
     extern "C" ^{
     #endif
 
@@ -225,8 +228,8 @@ for-each item file-base/core [
 
 
 e-funcs/emit {
-    #ifdef __cplusplus
-    ^}
+    #if CPLUSPLUS_11 == 0 || defined(NDEBUG)
+    ^}  /* end of `extern "C" ^{` */
     #endif
 }
 

@@ -372,7 +372,7 @@ REBTYPE(Sequence)
         enum Reb_Kind kind = VAL_TYPE(sequence);
         mutable_HEART_BYTE(sequence) = REB_BLOCK;
 
-        Bounce r = T_Array(frame_, verb);
+        REBVAL *r = Value_From_Bounce(T_Array(frame_, verb));
         assert(CELL_HEART(r) == REB_BLOCK);
 
         if (r != OUT)

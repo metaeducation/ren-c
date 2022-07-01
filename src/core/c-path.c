@@ -179,7 +179,7 @@ REBNATIVE(poke)
     Bounce r = Run_Generic_Dispatch_Core(location, frame_, Canon(POKE_P));
     if (r == BOUNCE_THROWN)
         return THROWN;
-    assert(r == nullptr or not IS_RETURN_SIGNAL(r));  // other signals invalid
+    assert(r == nullptr or Is_Bounce_A_Value(r));  // other signals invalid
 
     // Note: if r is not nullptr here, that means there was a modification
     // which nothing is writing back.  It would be like saying:

@@ -141,12 +141,13 @@ REBNATIVE(make)
     }
 
 
-    Bounce r = hook(OUT, kind, parent, arg);  // might throw, fail...
-    if (r == BOUNCE_THROWN)
-        return r;
+    Bounce b = hook(OUT, kind, parent, arg);  // might throw, fail...
+    if (b == BOUNCE_THROWN)
+        return b;
+    REBVAL *r = Value_From_Bounce(b);
     if (r == nullptr or VAL_TYPE(r) != kind)
         fail ("MAKE dispatcher did not return correct type");
-    return r; // may be OUT or an API handle
+    return r;  // may be OUT or an API handle
 }
 
 
@@ -221,16 +222,17 @@ REBNATIVE(to)
 
     TO_HOOK* hook = To_Hook_For_Type(type);
 
-    Bounce r = hook(OUT, new_kind, v); // may fail();
-    if (r == BOUNCE_THROWN) {
+    Bounce b = hook(OUT, new_kind, v); // may fail();
+    if (b == BOUNCE_THROWN) {
         assert(!"Illegal throw in TO conversion handler");
         fail (Error_No_Catch_For_Throw(FRAME));
     }
+    REBVAL *r = Value_From_Bounce(b);
     if (r == nullptr or VAL_TYPE(r) != new_kind) {
         assert(!"TO conversion did not return intended type");
         fail (Error_Invalid_Type(VAL_TYPE(r)));
     }
-    return r; // must be either OUT or an API handle
+    return r;  // must be either OUT or an API handle
 }
 
 

@@ -88,19 +88,21 @@ Bounce Combinator_Dispatcher(Frame(*) f)
     REBARR *details = ACT_DETAILS(phase);
     Cell(*) body = ARR_AT(details, IDX_DETAILS_1);  // code to run
 
-    Bounce r;
+    Bounce b;
     if (IS_ACTION(body)) {  // NATIVE-COMBINATOR
         SET_SERIES_INFO(f->varlist, HOLD);  // mandatory for natives.
         Dispatcher* dispatcher = ACT_DISPATCHER(VAL_ACTION(body));
-        r = dispatcher(f);
+        b = dispatcher(f);
     }
     else {  // usermode COMBINATOR
         assert(IS_BLOCK(body));
-        r = Func_Dispatcher(f);
+        b = Func_Dispatcher(f);
     }
 
-    if (r == BOUNCE_THROWN)
-        return r;
+    if (b == BOUNCE_THROWN)
+        return b;
+
+    REBVAL *r = Value_From_Bounce(b);
 
     if (r == nullptr or (not Is_End(r) and Is_Nulled(r)))
         return r;  // did not advance, don't update furthest

@@ -134,24 +134,25 @@ inline static bool Run_Generic_Dispatch_Throws(
     Frame(*) f,
     Symbol(const*) verb
 ){
-    Bounce r = Run_Generic_Dispatch_Core(first_arg, f, verb);
+    Bounce b = Run_Generic_Dispatch_Core(first_arg, f, verb);
 
-    if (r == f->out) {
+    if (b == f->out) {
          // common case
     }
-    else if (r == nullptr) {
+    else if (b == nullptr) {
         Init_Nulled(f->out);
     }
-    else if (IS_RETURN_SIGNAL(r)) {
-        if (r == BOUNCE_THROWN)
-            return true;
-        assert(!"Unhandled return signal from Run_Generic_Dispatch_Core");
-    }
-    else {
+    else if (Is_Bounce_A_Value(b)) {
+        REBVAL *r = Value_From_Bounce(b);
         assert(not Is_Stale(r));
         assert(Is_Api_Value(r));
         Copy_Cell(f->out, r);
         Release_Api_Value_If_Unmanaged(r);
+    }
+    else {
+        if (b == BOUNCE_THROWN)
+            return true;
+        assert(!"Unhandled return signal from Run_Generic_Dispatch_Core");
     }
     return false;
 }

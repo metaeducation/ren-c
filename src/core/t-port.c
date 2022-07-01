@@ -138,12 +138,12 @@ REBTYPE(Port)
     // it's some other kind of handle value this could crash.
     //
     if (Is_Native_Port_Actor(actor)) {
-        Bounce r = cast(PORT_HOOK*, VAL_HANDLE_CFUNC(actor))(frame_, port, verb);
+        Bounce b = cast(PORT_HOOK*, VAL_HANDLE_CFUNC(actor))(frame_, port, verb);
 
-        if (not r)
+        if (b == nullptr)
            Init_Nulled(OUT);
-        else if (r != OUT) {
-            assert(not IS_RETURN_SIGNAL(r));  // BOUNCE_THROWN etc. unsupported
+        else if (b != OUT) {
+            REBVAL *r = Value_From_Bounce(b);
             assert(Is_Api_Value(r));
             Copy_Cell(OUT, r);
             Release_Api_Value_If_Unmanaged(r);

@@ -308,14 +308,14 @@ static bool Subparse_Throws(
     // vs. going through the evaluator, we don't get the opportunity to do
     // things like HIJACK it.  Consider APPLY-ing it.
     //
-    const REBVAL *r = N_subparse(f);
+    Bounce b = N_subparse(f);
 
     Drop_Action(f);
 
-    if ((r == BOUNCE_THROWN or Is_Nulled(out)) and collection)
+    if ((b == BOUNCE_THROWN or Is_Nulled(out)) and collection)
         SET_SERIES_LEN(unwrap(collection), collect_tail);  // abort rollback
 
-    if (r == BOUNCE_THROWN) {
+    if (b == BOUNCE_THROWN) {
         Drop_Frame(f);
 
         // ACCEPT and REJECT are special cases that can happen at nested parse
@@ -350,7 +350,7 @@ static bool Subparse_Throws(
 
     Drop_Frame(f);
 
-    assert(r == out);
+    assert(b == out);
 
     *interrupted_out = false;
     return false;
@@ -517,15 +517,16 @@ static Bounce Parse_One_Rule(
     assert(Is_Void(OUT));
 
     if (IS_GROUP(rule) or IS_GET_GROUP(rule)) {
-        rule = Process_Group_For_Parse(frame_, SPARE, rule);
-        if (rule == BOUNCE_THROWN)
+        Bounce b = Process_Group_For_Parse(frame_, SPARE, rule);
+        if (b == BOUNCE_THROWN)
             return THROWN;
 
-        if (rule == BOUNCE_VOID) {  // !!! Should this be legal?
+        if (b == BOUNCE_VOID) {  // !!! Should this be legal?
             assert(pos <= P_INPUT_LEN);  // !!! Process_Group ensures
             return Init_Integer(OUT, pos);
         }
         // was a GET-GROUP! :(...), use result as rule
+        rule = Value_From_Bounce(b);
     }
 
     if (Trace_Level) {
@@ -772,12 +773,14 @@ static REBIXO To_Thru_Block_Rule(
             if (not (IS_GROUP(blk) or IS_GET_GROUP(blk)))
                 rule = blk;
             else {
-                rule = Process_Group_For_Parse(frame_, cell, blk);
-                if (rule == BOUNCE_THROWN)
+                Bounce b = Process_Group_For_Parse(frame_, cell, blk);
+                if (b == BOUNCE_THROWN)
                     return THROWN_FLAG;
 
-                if (rule == BOUNCE_VOID)
+                if (b == BOUNCE_VOID)
                     continue;
+
+                rule = Value_From_Bounce(b);
             }
 
             if (IS_WORD(rule)) {
@@ -1375,24 +1378,24 @@ REBNATIVE(subparse)
         // up and gets another group.  In theory this could continue
         // indefinitely, but for now a GET-GROUP! can't return another.
 
-      process_group:
+      process_group: {
 
-        rule = Process_Group_For_Parse(f, SPARE, rule);
-        if (rule == BOUNCE_THROWN)
+        Bounce b = Process_Group_For_Parse(f, SPARE, rule);
+        if (b == BOUNCE_THROWN)
             return THROWN;
 
-        if (rule == BOUNCE_VOID) {  // was a (...), or null-bearing :(...)
+        if (b == BOUNCE_VOID) {  // was a (...), or null-bearing :(...)
             FETCH_NEXT_RULE(f);  // ignore result and go on to next rule
             goto pre_rule;
         }
-        assert(rule == SPARE);
+        assert(b == SPARE);
         rule = Move_Cell(P_SAVE, SPARE);
 
         // was a GET-GROUP!, e.g. :(...), fall through so its result will
         // act as a rule in its own right.
         //
         assert(IS_SPECIFIC(rule));  // can use w/P_RULE_SPECIFIER, harmless
-    }
+    }}
     else {
         // If we ran the GROUP! then that invokes the evaluator, and so
         // we already gave the GC and cancellation a chance to run.  But

@@ -256,11 +256,23 @@ STATIC_ASSERT(31 < 32);  // otherwise FRAME_FLAG_XXX too high
     ((FRM(f)->flags.bits & FRAME_FLAG_##name) == 0)
 
 
-
 // The Bounce type is a REBVAL* but with the idea that it is legal to hold
 // types like BOUNCE_THROWN, etc.  This helps document interface contract.
 //
-typedef const REBVAL *Bounce;
+#if CPLUSPLUS_11 == 0 || defined(NDEBUG)
+    typedef REBVAL *Bounce;  // avoid release build use of C++ struct in API
+#else
+    struct Bounce {
+        REBVAL *p;
+        Bounce () {}
+        Bounce (REBVAL *v) : p (v) {}
+        bool operator==(REBVAL *v) { return v == p; }
+        bool operator!=(REBVAL *v) { return v != p; }
+
+        explicit operator REBVAL* () { return p; }
+        explicit operator void* () { return p; }
+    };
+#endif
 
 
 // These definitions are needed in %sys-rebval.h, and can't be put in

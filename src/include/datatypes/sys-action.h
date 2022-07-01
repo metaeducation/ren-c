@@ -144,12 +144,17 @@ inline static REBVAL *Init_Return_Signal_Untracked(Cell(*) out, char ch) {
 #define Init_Return_Signal(out,ch) \
     Init_Return_Signal_Untracked(TRACK(out), (ch))
 
-#define IS_RETURN_SIGNAL(v) \
-    (HEART_BYTE(v) == REB_T_RETURN_SIGNAL)
+inline static bool Is_Bounce_A_Value(Bounce b)
+  { return HEART_BYTE(cast(REBVAL*, b)) != REB_T_RETURN_SIGNAL; }
 
-inline static char VAL_RETURN_SIGNAL(Cell(const*) v) {
-    assert(IS_RETURN_SIGNAL(v));
-    return PAYLOAD(Any, v).first.u;
+inline static char VAL_RETURN_SIGNAL(Bounce b) {
+    assert(not Is_Bounce_A_Value(b));
+    return PAYLOAD(Any, cast(REBVAL*, b)).first.u;
+}
+
+inline static REBVAL *Value_From_Bounce(Bounce b) {
+    assert(Is_Bounce_A_Value(b));
+    return cast(REBVAL*, b);
 }
 
 

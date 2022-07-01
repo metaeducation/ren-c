@@ -991,9 +991,9 @@ Bounce Action_Executor(Frame(*) f)
 
     Dispatcher* dispatcher = ACT_DISPATCHER(phase);
 
-    const REBVAL *r = (*dispatcher)(f);
+    Bounce b = (*dispatcher)(f);
 
-    if (r == OUT) {  // common case, made fastest
+    if (b == OUT) {  // common case, made fastest
         //
         // The stale bit is set on the output before we run the dispatcher.
         // We check to make sure it's not set at the end--so that dispatch
@@ -1005,15 +1005,16 @@ Bounce Action_Executor(Frame(*) f)
 
         Clear_Cell_Flag(OUT, UNEVALUATED);
     }
-    else if (not r) {  // API and internal code can both return `nullptr`
+    else if (b == nullptr) {  // API and internal code can both return `nullptr`
         Init_Nulled(OUT);
     }
-    else if (not IS_RETURN_SIGNAL(r)) {
+    else if (Is_Bounce_A_Value(b)) {
+        REBVAL *r = Value_From_Bounce(b);
         assert(Is_Api_Value(r));
         Copy_Cell(OUT, r);
         Release_Api_Value_If_Unmanaged(r);
     }
-    else switch (VAL_RETURN_SIGNAL(r)) {  // it's a "pseudotype" instruction
+    else switch (VAL_RETURN_SIGNAL(b)) {  // it's a "pseudotype" instruction
         //
         // !!! As the workings of stackless continue to sift out, the general
         // idea seems to be that ontinuations are based on building a
