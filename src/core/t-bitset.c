@@ -157,7 +157,7 @@ REBINT Find_Max_Bit(Cell(const*) val)
         REBLEN len;
         Utf8(const*) up = VAL_UTF8_LEN_SIZE_AT(&len, nullptr, val);
         for (; len > 0; --len) {
-            REBUNI c;
+            Codepoint c;
             up = NEXT_CHR(&c, up);
             if (c > maxi)
                 maxi = cast(REBINT, c);
@@ -288,7 +288,7 @@ bool Set_Bits(REBBIN *bset, Cell(const*) val, bool set)
         REBLEN len;
         Utf8(const*) up = VAL_UTF8_LEN_SIZE_AT(&len, nullptr, val);
         for (; len > 0; --len) {
-            REBUNI c;
+            Codepoint c;
             up = NEXT_CHR(&c, up);
             Set_Bit(bset, c, set);
         }
@@ -321,7 +321,7 @@ bool Set_Bits(REBBIN *bset, Cell(const*) val, bool set)
                 Set_Bits(bset, SPECIFIC(item), set);
                 break;
             }
-            REBUNI c = VAL_CHAR(item);
+            Codepoint c = VAL_CHAR(item);
             if (
                 item + 1 != tail
                 && IS_WORD(item + 1)
@@ -352,7 +352,7 @@ bool Set_Bits(REBBIN *bset, Cell(const*) val, bool set)
                 && IS_WORD(item + 1)
                 && VAL_WORD_SYMBOL(item + 1) == Canon(HYPHEN_1)
             ){
-                REBUNI c = n;
+                Codepoint c = n;
                 item += 2;
                 if (IS_INTEGER(item)) {
                     n = Int32s(SPECIFIC(item), 0);
@@ -388,7 +388,7 @@ bool Set_Bits(REBBIN *bset, Cell(const*) val, bool set)
             REBSIZ n;
             const REBYTE *at = VAL_BINARY_SIZE_AT(&n, item);
 
-            REBUNI c = BIN_LEN(bset);
+            Codepoint c = BIN_LEN(bset);
             if (n >= c) {
                 Expand_Series(bset, c, (n - c));
                 memset(BIN_AT(bset, c), 0, (n - c));
@@ -432,7 +432,7 @@ bool Check_Bits(const REBBIN *bset, Cell(const*) val, bool uncased)
         REBLEN len;
         Utf8(const*) up = VAL_UTF8_LEN_SIZE_AT(&len, nullptr, val);
         for (; len > 0; --len) {
-            REBUNI c;
+            Codepoint c;
             up = NEXT_CHR(&c, up);
             if (Check_Bit(bset, c, uncased))
                 return true;
@@ -457,7 +457,7 @@ bool Check_Bits(const REBBIN *bset, Cell(const*) val, bool uncased)
                 if (Check_Bits(bset, SPECIFIC(item), uncased))
                     return true;
             }
-            REBUNI c = VAL_CHAR(item);
+            Codepoint c = VAL_CHAR(item);
             if (
                 IS_WORD(item + 1)
                 && VAL_WORD_SYMBOL(item + 1) == Canon(HYPHEN_1)
@@ -487,7 +487,7 @@ bool Check_Bits(const REBBIN *bset, Cell(const*) val, bool uncased)
                 IS_WORD(item + 1)
                 && VAL_WORD_SYMBOL(item + 1) == Canon(HYPHEN_1)
             ){
-                REBUNI c = n;
+                Codepoint c = n;
                 item += 2;
                 if (IS_INTEGER(item)) {
                     n = Int32s(SPECIFIC(item), 0);

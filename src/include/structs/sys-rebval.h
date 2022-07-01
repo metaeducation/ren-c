@@ -386,7 +386,7 @@
 // work.  It's also likely preferred by x86.
 //
 
-struct Reb_Character_Extra { REBUNI codepoint; };  // see %sys-char.h
+struct Reb_Character_Extra { Codepoint codepoint; };  // see %sys-char.h
 
 struct Reb_Datatype_Extra  // see %sys-datatype.h
 {

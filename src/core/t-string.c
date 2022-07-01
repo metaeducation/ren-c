@@ -73,8 +73,8 @@ REBINT CT_String(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
     REBLEN len = MIN(l1, l2);
 
     for (; len > 0; len--) {
-        REBUNI c1;
-        REBUNI c2;
+        Codepoint c1;
+        Codepoint c2;
 
         cp1 = NEXT_CHR(&c1, cp1);
         cp2 = NEXT_CHR(&c2, cp2);
@@ -133,7 +133,7 @@ static void reverse_string(REBSTR *str, REBLEN index, REBLEN len)
         Utf8(const*) up = STR_TAIL(str);  // last exists due to len != 0
         REBLEN n;
         for (n = 0; n < len; ++n) {
-            REBUNI c;
+            Codepoint c;
             up = BACK_CHR(&c, up);
             Append_Codepoint(mo->series, c);
         }
@@ -418,7 +418,7 @@ REBYTE *Form_Uni_Hex(REBYTE *out, REBLEN n)
 //
 // For now just preserve what was there, but do it as UTF8 bytes.
 //
-void Mold_Uni_Char(REB_MOLD *mo, REBUNI c, bool parened)
+void Mold_Uni_Char(REB_MOLD *mo, Codepoint c, bool parened)
 {
     REBSTR *buf = mo->series;
 
@@ -507,7 +507,7 @@ void Mold_Text_Series_At(REB_MOLD *mo, const REBSTR *s, REBLEN index) {
 
     REBLEN x;
     for (x = index; x < len; x++) {
-        REBUNI c;
+        Codepoint c;
         up = NEXT_CHR(&c, up);
 
         switch (c) {
@@ -558,7 +558,7 @@ void Mold_Text_Series_At(REB_MOLD *mo, const REBSTR *s, REBLEN index) {
 
         REBLEN n;
         for (n = index; n < STR_LEN(s); n++) {
-            REBUNI c;
+            Codepoint c;
             up = NEXT_CHR(&c, up);
             Mold_Uni_Char(mo, c, parened);
         }
@@ -575,7 +575,7 @@ void Mold_Text_Series_At(REB_MOLD *mo, const REBSTR *s, REBLEN index) {
 
     REBLEN n;
     for (n = index; n < STR_LEN(s); n++) {
-        REBUNI c;
+        Codepoint c;
         up = NEXT_CHR(&c, up);
 
         switch (c) {
@@ -629,7 +629,7 @@ static void Mold_File(REB_MOLD *mo, noquote(Cell(const*)) v)
 
     REBLEN n;
     for (n = 0; n < len; ++n) {
-        REBUNI c;
+        Codepoint c;
         cp = NEXT_CHR(&c, cp);
 
         if (IS_FILE_ESC(c))
@@ -763,7 +763,7 @@ REBTYPE(String)
         if (not Did_Get_Series_Index_From_Picker(&n, v, picker))
             return nullptr;
 
-        REBUNI c = GET_CHAR_AT(VAL_STRING(v), n);
+        Codepoint c = GET_CHAR_AT(VAL_STRING(v), n);
 
         return Init_Char_Unchecked(OUT, c); }
 
@@ -781,7 +781,7 @@ REBTYPE(String)
 
         REBVAL *setval = Meta_Unquotify(ARG(value));
 
-        REBUNI c;
+        Codepoint c;
         if (IS_CHAR(setval)) {
             c = VAL_CHAR(setval);
         }
@@ -1062,8 +1062,8 @@ REBTYPE(String)
         REBSTR *arg_str = VAL_STRING_ENSURE_MUTABLE(arg);
 
         if (index < tail and VAL_INDEX(arg) < VAL_LEN_HEAD(arg)) {
-            REBUNI v_c = GET_CHAR_AT(v_str, VAL_INDEX(v));
-            REBUNI arg_c = GET_CHAR_AT(arg_str, VAL_INDEX(arg));
+            Codepoint v_c = GET_CHAR_AT(v_str, VAL_INDEX(v));
+            Codepoint arg_c = GET_CHAR_AT(arg_str, VAL_INDEX(arg));
 
             SET_CHAR_AT(v_str, VAL_INDEX(v), arg_c);
             SET_CHAR_AT(arg_str, VAL_INDEX(arg), v_c);
@@ -1179,7 +1179,7 @@ REBTYPE(String)
         for (n = STR_LEN(str) - index; n > 1;) {
             REBLEN k = index + cast(REBLEN, Random_Int(secure)) % n;
             n--;
-            REBUNI swap = GET_CHAR_AT(str, k);
+            Codepoint swap = GET_CHAR_AT(str, k);
             SET_CHAR_AT(str, k, GET_CHAR_AT(str, n + index));
             SET_CHAR_AT(str, n + index, swap);
         }

@@ -94,7 +94,7 @@ REBSTR *Decode_UTF16(
 
     bool expect_lf = false;
     bool ascii = true;
-    REBUNI c;
+    Codepoint c;
 
     REBLEN num_chars = 0;
 
@@ -112,7 +112,7 @@ REBSTR *Decode_UTF16(
 
         src++;
 
-        c |= little_endian ? (cast(REBUNI, *src) << 8) : *src;
+        c |= little_endian ? (cast(Codepoint, *src) << 8) : *src;
 
         if (crlf_to_lf) {
             //
@@ -227,11 +227,11 @@ static REBSER *Encode_Utf16(
 
     REBLEN i = 0;
     for (i = 0; i < len; ++i) {
-        REBUNI c;
+        Codepoint c;
         cp = NEXT_CHR(&c, cp);
 
         // !!! TBD: handle large codepoints bigger than 0xffff, and encode
-        // as UTF16.  (REBUNI is only 16 bits at time of writing)
+        // as UTF16.
 
       #if defined(ENDIAN_LITTLE)
         if (little_endian)

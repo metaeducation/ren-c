@@ -114,7 +114,7 @@ Bounce MAKE_Issue(
         if (size == 0)
             goto bad_make;
 
-        REBUNI c;
+        Codepoint c;
         if (*bp <= 0x80) {
             if (size != 1)
                 return MAKE_String(out, kind, nullptr, arg);
@@ -222,7 +222,7 @@ void MF_Issue(REB_MOLD *mo, noquote(Cell(const*)) v, bool form)
 
     bool no_quotes = true;
     Utf8(const*) cp = VAL_UTF8_AT(v);
-    REBUNI c = CHR_CODE(cp);
+    Codepoint c = CHR_CODE(cp);
     for (; c != '\0'; cp = NEXT_CHR(&c, cp)) {
         if (
             c <= 32  // control codes up to 32 (space)
@@ -303,7 +303,7 @@ REBTYPE(Issue)
     if (not IS_CHAR(issue))
         return BOUNCE_UNHANDLED;
 
-    // Don't use a REBUNI for chr, because it does signed math and then will
+    // Don't use a Codepoint for chr, because it does signed math and then will
     // detect overflow.
     //
     REBI64 chr = cast(REBI64, VAL_CHAR(issue));
@@ -327,7 +327,7 @@ REBTYPE(Issue)
         if (cast(REBLEN, n) > len)
             return nullptr;
 
-        REBUNI c;
+        Codepoint c;
         cp = NEXT_CHR(&c, cp);
         for (; n != 1; --n)
             cp = NEXT_CHR(&c, cp);
@@ -377,31 +377,31 @@ REBTYPE(Issue)
         break;
 
       case SYM_BITWISE_NOT:
-        chr = cast(REBUNI, ~chr);
+        chr = cast(Codepoint, ~chr);
         break;
 
       case SYM_BITWISE_AND:
         arg = Math_Arg_For_Char(D_ARG(2), verb);
-        chr &= cast(REBUNI, arg);
+        chr &= cast(Codepoint, arg);
         break;
 
       case SYM_BITWISE_OR:
         arg = Math_Arg_For_Char(D_ARG(2), verb);
-        chr |= cast(REBUNI, arg);
+        chr |= cast(Codepoint, arg);
         break;
 
       case SYM_BITWISE_XOR:
         arg = Math_Arg_For_Char(D_ARG(2), verb);
-        chr ^= cast(REBUNI, arg);
+        chr ^= cast(Codepoint, arg);
         break;
 
       case SYM_BITWISE_AND_NOT:
         arg = Math_Arg_For_Char(D_ARG(2), verb);
-        chr &= cast(REBUNI, ~arg);
+        chr &= cast(Codepoint, ~arg);
         break;
 
       case SYM_EVEN_Q:
-        return Init_Logic(OUT, did (cast(REBUNI, ~chr) & 1));
+        return Init_Logic(OUT, did (cast(Codepoint, ~chr) & 1));
 
       case SYM_ODD_Q:
         return Init_Logic(OUT, did (chr & 1));
@@ -419,7 +419,7 @@ REBTYPE(Issue)
         }
         if (chr == 0)
             break;
-        chr = cast(REBUNI,
+        chr = cast(Codepoint,
             1 + cast(REBLEN, Random_Int(did REF(secure)) % chr)
         );
         break; }
@@ -431,7 +431,7 @@ REBTYPE(Issue)
     if (chr < 0)
         fail (Error_Type_Limit_Raw(Datatype_From_Kind(REB_ISSUE)));
 
-    return Init_Char_May_Fail(OUT, cast(REBUNI, chr));
+    return Init_Char_May_Fail(OUT, cast(Codepoint, chr));
 }
 
 

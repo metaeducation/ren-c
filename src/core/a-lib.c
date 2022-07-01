@@ -1447,7 +1447,7 @@ static unsigned int Spell_Into_Wide(
 
     Utf8(const*) cp = VAL_UTF8_AT(v);
 
-    REBUNI c;
+    Codepoint c;
     cp = NEXT_CHR(&c, cp);
 
     REBLEN i = 0;

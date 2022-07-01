@@ -320,7 +320,7 @@ REBNATIVE(read_line)
                 fail ("READ-LINE without /RAW hit end of file with no newline");
             }
 
-            REBUNI c;
+            Codepoint c;
 
             uint_fast8_t trail = trailingBytesForUTF8[encoded[0]];
             if (trail == 0)
@@ -505,7 +505,7 @@ REBNATIVE(read_char)
             return nullptr;
         }
 
-        REBUNI c;
+        Codepoint c;
 
         uint_fast8_t trail = trailingBytesForUTF8[encoded[0]];
         if (trail == 0)

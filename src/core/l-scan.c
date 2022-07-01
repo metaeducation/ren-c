@@ -305,7 +305,7 @@ const REBYTE Lower_Case[256] =
 //
 // test: to-integer load to-binary mold to-char 1234
 //
-static const REBYTE *Scan_UTF8_Char_Escapable(REBUNI *out, const REBYTE *bp)
+static const REBYTE *Scan_UTF8_Char_Escapable(Codepoint *out, const REBYTE *bp)
 {
     const REBYTE *cp;
     REBYTE lex;
@@ -412,7 +412,7 @@ static const REBYTE *Scan_Quote_Push_Mold(
 ){
     Push_Mold(mo);
 
-    REBUNI term; // pick termination
+    Codepoint term; // pick termination
     if (*src == '{')
         term = '}';
     else {
@@ -424,7 +424,7 @@ static const REBYTE *Scan_Quote_Push_Mold(
     REBINT nest = 0;
     REBLEN lines = 0;
     while (*src != term or nest > 0) {
-        REBUNI c = *src;
+        Codepoint c = *src;
 
         switch (c) {
           case '\0':
@@ -517,7 +517,7 @@ const REBYTE *Scan_Item_Push_Mold(
     Push_Mold(mo);
 
     while (bp != ep and *bp != opt_term) {
-        REBUNI c = *bp;
+        Codepoint c = *bp;
 
         if (c == '\0')
             break;  // End of stream
@@ -1443,7 +1443,7 @@ static enum Reb_Token Locate_Token_May_Push_Mold(
                 return TOKEN_CONSTRUCT;
             }
             if (*cp == '"') {  // CHAR #"C"
-                REBUNI dummy;
+                Codepoint dummy;
                 cp++;
                 cp = Scan_UTF8_Char_Escapable(&dummy, cp);
                 if (cp and *cp == '"') {
@@ -2346,7 +2346,7 @@ Bounce Scanner_Executor(Frame(*) f) {
         break;
 
       case TOKEN_CHAR: {
-        REBUNI uni;
+        Codepoint uni;
         bp += 2;  // skip #", and subtract 1 from ep for "
         if (ep - 1 != Scan_UTF8_Char_Escapable(&uni, bp))
             return FAIL(Error_Syntax(ss, level->token));

@@ -609,7 +609,7 @@ union Reb_Series_Content {
 
       #if DEBUG_USE_UNION_PUNS
         char utf8_pun[sizeof(Reb_Cell)];  // debug watchlist insight into UTF-8
-        REBWCHAR ucs2_pun[sizeof(Reb_Cell)/sizeof(REBUNI)];  // wchar_t insight
+        REBWCHAR ucs2_pun[sizeof(Reb_Cell)/sizeof(Codepoint)];  // wchar_t insight
       #endif
     } fixed;
 };

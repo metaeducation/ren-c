@@ -72,8 +72,8 @@ const REBYTE *Analyze_String_For_Scan(
 
     // Skip leading whitespace
     //
-    REBUNI c;
-    REBUNI i;
+    Codepoint c;
+    Codepoint i;
     for (i = 0; IS_SPACE(c = CHR_CODE(up)) and (i < len); ++i, --len)
         up = NEXT_STR(up);
 
@@ -149,7 +149,7 @@ void Change_Case(
     bool upper
 ){
     if (IS_CHAR(val)) {
-        REBUNI c = VAL_CHAR(val);
+        Codepoint c = VAL_CHAR(val);
         Init_Char_Unchecked(out, upper ? UP_CASE(c) : LO_CASE(c));
         return;
     }
@@ -180,7 +180,7 @@ void Change_Case(
         for (n = 0; n < len; n++) {
             dp = up;
 
-            REBUNI c;
+            Codepoint c;
             up = NEXT_CHR(&c, up);
             if (c < UNICODE_CASES) {
                 dp = WRITE_CHR(dp, UP_CASE(c));
@@ -193,7 +193,7 @@ void Change_Case(
         for (n = 0; n < len; n++) {
             dp = up;
 
-            REBUNI c;
+            Codepoint c;
             up = NEXT_CHR(&c, up);
             if (c < UNICODE_CASES) {
                 dp = WRITE_CHR(dp, LO_CASE(c));
@@ -234,7 +234,7 @@ Array(*) Split_Lines(const REBVAL *str)
 
     Utf8(const*) cp = VAL_STRING_AT(str);
 
-    REBUNI c;
+    Codepoint c;
     cp = NEXT_CHR(&c, cp);
 
     for (; i < len; ++i, cp = NEXT_CHR(&c, cp)) {

@@ -44,7 +44,7 @@ uint32_t Hash_Scan_UTF8_Caseless_May_Fail(const REBYTE *utf8, REBSIZ size)
     uint32_t crc = 0x00000000;
 
     for (; size != 0; ++utf8, --size) {
-        REBUNI c = *utf8;
+        Codepoint c = *utf8;
 
         if (c >= 0x80) {
             utf8 = Back_Scan_UTF8_Char(&c, utf8, &size);
@@ -85,7 +85,7 @@ uint32_t Hash_UTF8_Len_Caseless(Utf8(const*) cp, REBLEN len) {
 
     REBLEN n;
     for (n = 0; n < len; n++) {
-        REBUNI c;
+        Codepoint c;
         cp = NEXT_CHR(&c, cp);
 
         c = LO_CASE(c);

@@ -74,8 +74,8 @@ PVAR Context(*) PG_Currently_Loading_Module;
 
 //-- Various char tables:
 PVAR REBYTE *White_Chars;
-PVAR REBUNI *Upper_Cases;
-PVAR REBUNI *Lower_Cases;
+PVAR Codepoint *Upper_Cases;
+PVAR Codepoint *Lower_Cases;
 
 // Other:
 PVAR REBYTE *PG_Pool_Map;   // Memory pool size map (created on boot)

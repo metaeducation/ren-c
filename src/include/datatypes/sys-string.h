@@ -1,6 +1,6 @@
 //
 //  File: %sys-string.h
-//  Summary: {Definitions for REBSTR (e.g. WORD!) and REBUNI (e.g. STRING!)}
+//  Summary: {Definitions for REBSTR (e.g. WORD!) and Codepoint (e.g. STRING!)}
 //  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  Homepage: https://github.com/metaeducation/ren-c/
 //
@@ -72,7 +72,7 @@
 
 
 inline static Utf8(*) NEXT_CHR(
-    REBUNI *codepoint_out,
+    Codepoint *codepoint_out,
     Utf8(const_if_unchecked_utf8*) cp
 ){
     const REBYTE *t = cp;
@@ -84,7 +84,7 @@ inline static Utf8(*) NEXT_CHR(
 }
 
 inline static Utf8(*) BACK_CHR(
-    REBUNI *codepoint_out,
+    Codepoint *codepoint_out,
     Utf8(const_if_unchecked_utf8*) cp
 ){
     const_if_unchecked_utf8 REBYTE *t = cp;
@@ -112,7 +112,7 @@ inline static Utf8(*) BACK_STR(Utf8(const_if_unchecked_utf8*) cp) {
 }
 
 inline static Utf8(*) SKIP_CHR(
-    REBUNI *codepoint_out,
+    Codepoint *codepoint_out,
     Utf8(const_if_unchecked_utf8*) cp,
     REBINT delta
 ){
@@ -138,14 +138,14 @@ inline static Utf8(*) SKIP_CHR(
     // overloading technique is needed to make output constness match input.
     //
     inline static Utf8(const*) NEXT_CHR(
-        REBUNI *codepoint_out,
+        Codepoint *codepoint_out,
         Utf8(const*) cp
     ){
         return NEXT_CHR(codepoint_out, m_cast(Utf8(*), cp));
     }
 
     inline static Utf8(const*) BACK_CHR(
-        REBUNI *codepoint_out,
+        Codepoint *codepoint_out,
         Utf8(const*) cp
     ){
         return BACK_CHR(codepoint_out, m_cast(Utf8(*), cp));
@@ -158,7 +158,7 @@ inline static Utf8(*) SKIP_CHR(
       { return BACK_STR(m_cast(Utf8(*), cp)); }
 
     inline static Utf8(const*) SKIP_CHR(
-        REBUNI *codepoint_out,
+        Codepoint *codepoint_out,
         Utf8(const*) cp,
         REBINT delta
     ){
@@ -166,13 +166,13 @@ inline static Utf8(*) SKIP_CHR(
     }
 #endif
 
-inline static REBUNI CHR_CODE(Utf8(const*) cp) {
-    REBUNI codepoint;
+inline static Codepoint CHR_CODE(Utf8(const*) cp) {
+    Codepoint codepoint;
     NEXT_CHR(&codepoint, cp);
     return codepoint;
 }
 
-inline static Utf8(*) WRITE_CHR(Utf8(*) cp, REBUNI c) {
+inline static Utf8(*) WRITE_CHR(Utf8(*) cp, Codepoint c) {
     REBSIZ size = Encoded_Size_For_Codepoint(c);
     Encode_UTF8_Char(cp, c, size);
     return cast(Utf8(*), cast(REBYTE*, cp) + size);
@@ -671,9 +671,9 @@ inline static REBSIZ VAL_OFFSET_FOR_INDEX(noquote(Cell(const*)) v, REBLEN index)
 // should probably lock the input series against modification...or at least
 // hold a cache that it throws away whenever it runs a GROUP!.
 
-inline static REBUNI GET_CHAR_AT(const REBSTR *s, REBLEN n) {
+inline static Codepoint GET_CHAR_AT(const REBSTR *s, REBLEN n) {
     Utf8(const*) up = STR_AT(s, n);
-    REBUNI c;
+    Codepoint c;
     NEXT_CHR(&c, up);
     return c;
 }
@@ -683,7 +683,7 @@ inline static REBUNI GET_CHAR_AT(const REBSTR *s, REBLEN n) {
 // it is an optimization that may-or-may-not be worth the added complexity of
 // having more than one way of doing a CHANGE to a character.  Review.
 //
-inline static void SET_CHAR_AT(REBSTR *s, REBLEN n, REBUNI c) {
+inline static void SET_CHAR_AT(REBSTR *s, REBLEN n, Codepoint c) {
     //
     // We are maintaining the same length, but DEBUG_UTF8_EVERYWHERE will
     // corrupt the length every time the SER_USED() changes.  Workaround that

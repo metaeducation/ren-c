@@ -29,13 +29,13 @@
 //
 // So for instance: instead of simply saying:
 //
-//     REBUNI *ptr = STR_HEAD(string_series);
-//     REBUNI c = *ptr++;  // !!! invalid, treating UTF-8 like it's ASCII!
+//     Codepoint *ptr = STR_HEAD(string_series);
+//     Codepoint c = *ptr++;  // !!! invalid, treating UTF-8 like it's ASCII!
 //
 // ...one must instead write:
 //
 //     Utf8(*) ptr = STR_HEAD(string_series);
-//     REBUNI c;
+//     Codepoint c;
 //     ptr = NEXT_CHR(&c, ptr);  // ++ptr or ptr[n] will error in C++ build
 //
 // The code that runs behind the scenes is typical UTF-8 forward and backward

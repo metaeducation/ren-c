@@ -419,7 +419,7 @@ REBLEN Modify_String_Or_Binary(
                 REBSIZ bytes_left = src_size_raw;
                 const REBYTE *bp = src_ptr;
                 for (; bytes_left > 0; --bytes_left, ++bp) {
-                    REBUNI c = *bp;
+                    Codepoint c = *bp;
                     if (c < 0x80) {  // ASCII, just check for 0 bytes
                         if (c == '\0')
                             fail (Error_Illegal_Zero_Byte_Raw());

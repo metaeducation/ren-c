@@ -96,20 +96,20 @@
 
 extern const uint_fast8_t firstByteMark[7];  // defined in %t-char.c
 
-#define UNI_REPLACEMENT_CHAR    (REBUNI)0x0000FFFD
-#define UNI_MAX_BMP             (REBUNI)0x0000FFFF
-#define UNI_MAX_UTF16           (REBUNI)0x0010FFFF
-#define UNI_MAX_UTF32           (REBUNI)0x7FFFFFFF
-#define UNI_MAX_LEGAL_UTF32     (REBUNI)0x0010FFFF
+#define UNI_REPLACEMENT_CHAR    (Codepoint)0x0000FFFD
+#define UNI_MAX_BMP             (Codepoint)0x0000FFFF
+#define UNI_MAX_UTF16           (Codepoint)0x0010FFFF
+#define UNI_MAX_UTF32           (Codepoint)0x7FFFFFFF
+#define UNI_MAX_LEGAL_UTF32     (Codepoint)0x0010FFFF
 
-#define UNI_SUR_HIGH_START  (REBUNI)0xD800
-#define UNI_SUR_HIGH_END    (REBUNI)0xDBFF
-#define UNI_SUR_LOW_START   (REBUNI)0xDC00
-#define UNI_SUR_LOW_END     (REBUNI)0xDFFF
+#define UNI_SUR_HIGH_START  (Codepoint)0xD800
+#define UNI_SUR_HIGH_END    (Codepoint)0xDBFF
+#define UNI_SUR_LOW_START   (Codepoint)0xDC00
+#define UNI_SUR_LOW_END     (Codepoint)0xDFFF
 
 #define MAX_UNI UNI_MAX_LEGAL_UTF32  // https://stackoverflow.com/a/20883643
 
-inline static uint_fast8_t Encoded_Size_For_Codepoint(REBUNI c) {
+inline static uint_fast8_t Encoded_Size_For_Codepoint(Codepoint c) {
     if (c < cast(uint32_t, 0x80))
         return 1;
     if (c < cast(uint32_t, 0x800))
@@ -130,7 +130,7 @@ inline static uint_fast8_t Encoded_Size_For_Codepoint(REBUNI c) {
 //
 inline static void Encode_UTF8_Char(
     REBYTE *dst,
-    REBUNI c,
+    Codepoint c,
     uint_fast8_t encoded_size  // must match Encoded_Size_For_Codepoint(c)
 ){
     const uint32_t mask = 0xBF;
@@ -153,7 +153,7 @@ inline static void Encode_UTF8_Char(
     }
 }
 
-inline static void Encode_UTF16_Pair(REBUNI codepoint, REBWCHAR *units)
+inline static void Encode_UTF16_Pair(Codepoint codepoint, REBWCHAR *units)
 {
     uint32_t adjusted;
     assert(0x10000 <= codepoint and codepoint <= UNI_MAX_UTF16);
@@ -162,7 +162,7 @@ inline static void Encode_UTF16_Pair(REBUNI codepoint, REBWCHAR *units)
     units[1] = UNI_SUR_LOW_START | (adjusted & 0x3FF);
 }
 
-inline static REBUNI Decode_UTF16_Pair(const REBWCHAR *units)
+inline static Codepoint Decode_UTF16_Pair(const REBWCHAR *units)
 {
     uint32_t adjusted;
     assert(UNI_SUR_HIGH_START <= units[0] and units[0] <= UNI_SUR_HIGH_END);
@@ -191,16 +191,16 @@ enum {
 //
 // Unicode "case folding" is more complex than this table used by R3-Alpha.
 
-inline static REBUNI UP_CASE(REBUNI c)
+inline static Codepoint UP_CASE(Codepoint c)
   { assert(c != '\0'); return c < UNICODE_CASES ? Upper_Cases[c] : c; }
 
-inline static REBUNI LO_CASE(REBUNI c)
+inline static Codepoint LO_CASE(Codepoint c)
   { assert(c != '\0'); return c < UNICODE_CASES ? Lower_Cases[c] : c; }
 
-inline static bool IS_WHITE(REBUNI c)
+inline static bool IS_WHITE(Codepoint c)
   { assert(c != '\0'); return c <= 32 and ((White_Chars[c] & 1) != 0); }
 
-inline static bool IS_SPACE(REBUNI c)
+inline static bool IS_SPACE(Codepoint c)
   { assert(c != '\0'); return c <= 32 and ((White_Chars[c] & 2) != 0); }
 
 
@@ -278,7 +278,7 @@ inline static bool isLegalUTF8(const REBYTE *source, int length) {
 //             // do ASCII stuff...
 //         }
 //         else {
-//             REBUNI uni;
+//             Codepoint uni;
 //             bp = Back_Scan_UTF8_Char(&uni, bp, &size);
 //             // do UNICODE stuff...
 //         }
@@ -294,7 +294,7 @@ inline static bool isLegalUTF8(const REBYTE *source, int length) {
 // returned (size is not advanced).
 //
 inline static const REBYTE *Back_Scan_UTF8_Char(
-    REBUNI *out,
+    Codepoint *out,
     const REBYTE *bp,
     REBSIZ *size
 ){
@@ -383,7 +383,7 @@ inline static const REBYTE *Back_Scan_UTF8_Char(
 // would try to read continuation bytes past a `\0` string terminator.  :-/
 //
 inline static const REBYTE *Back_Scan_UTF8_Char_Unchecked(
-    REBUNI *out,
+    Codepoint *out,
     const REBYTE *bp
 ){
     *out = *bp;  // wait to increment...

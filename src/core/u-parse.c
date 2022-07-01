@@ -710,7 +710,7 @@ static Bounce Parse_One_Rule(
             // Check current char/byte against character set, advance matches
             //
             bool uncased;
-            REBUNI uni;
+            Codepoint uni;
             if (P_TYPE == REB_BINARY) {
                 uni = *BIN_AT(BIN(P_INPUT), P_POS);
                 uncased = false;
@@ -910,7 +910,7 @@ static REBIXO To_Thru_Block_Rule(
             else {
                 assert(ANY_STRING_KIND(P_TYPE));
 
-                REBUNI unadjusted = GET_CHAR_AT(STR(P_INPUT), VAL_INDEX(iter));
+                Codepoint unadjusted = GET_CHAR_AT(STR(P_INPUT), VAL_INDEX(iter));
                 if (unadjusted == '\0') {  // cannot be passed to UP_CASE()
                     assert(VAL_INDEX(iter) == P_INPUT_LEN);
 
@@ -920,14 +920,14 @@ static REBIXO To_Thru_Block_Rule(
                     goto next_alternate_rule;  // other match is END (above)
                 }
 
-                REBUNI ch;
+                Codepoint ch;
                 if (P_FLAGS & AM_FIND_CASE)
                     ch = unadjusted;
                 else
                     ch = UP_CASE(unadjusted);
 
                 if (IS_CHAR(rule)) {
-                    REBUNI ch2 = VAL_CHAR(rule);
+                    Codepoint ch2 = VAL_CHAR(rule);
                     if (ch2 == 0)
                         goto next_alternate_rule;  // no 0 char in ANY-STRING!
 
@@ -965,7 +965,7 @@ static REBIXO To_Thru_Block_Rule(
                     }
                 }
                 else if (IS_INTEGER(rule)) {
-                    if (unadjusted == cast(REBUNI, VAL_INT32(rule))) {
+                    if (unadjusted == cast(Codepoint, VAL_INT32(rule))) {
                         if (is_thru)
                             return VAL_INDEX(iter) + 1;
                         return VAL_INDEX(iter);

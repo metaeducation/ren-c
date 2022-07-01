@@ -475,7 +475,7 @@ const REBYTE* Scan_Hex2(REBYTE *decoded_out, const REBYTE *bp)
     if (lex2 < LEX_WORD || (d2 == 0 && lex2 < LEX_NUMBER))
         return NULL;
 
-    *decoded_out = cast(REBUNI, (d1 << 4) + d2);
+    *decoded_out = cast(Codepoint, (d1 << 4) + d2);
 
     return bp + 2;
 }
@@ -1012,7 +1012,7 @@ const REBYTE *Scan_File(
         len--;
     }
 
-    REBUNI term;
+    Codepoint term;
     const REBYTE *invalid;
     if (*cp == '"') {
         cp++;

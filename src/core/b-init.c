@@ -473,7 +473,7 @@ static void Init_Root_Vars(void)
     REBSTR *nulled_uni = Make_String(1);
 
   #if !defined(NDEBUG)
-    REBUNI test_nul;
+    Codepoint test_nul;
     NEXT_CHR(&test_nul, STR_AT(nulled_uni, 0));
     assert(test_nul == '\0');
     assert(STR_LEN(nulled_uni) == 0);

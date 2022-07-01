@@ -306,7 +306,7 @@ REBTYPE(Word)
                 if (*bp < 0x80)
                     ++len;
                 else {
-                    REBUNI uni;
+                    Codepoint uni;
                     if ((bp = Back_Scan_UTF8_Char(&uni, bp, &size)) == NULL)
                         fail (Error_Bad_Utf8_Raw());
                     ++len;

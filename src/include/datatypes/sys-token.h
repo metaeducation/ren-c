@@ -52,7 +52,7 @@ inline static bool IS_CHAR(Cell(const*) v) {
     return IS_CHAR_CELL(v);
 }
 
-inline static REBUNI VAL_CHAR(noquote(Cell(const*)) v) {
+inline static Codepoint VAL_CHAR(noquote(Cell(const*)) v) {
     assert(Not_Cell_Flag(v, ISSUE_HAS_NODE));
 
     if (EXTRA(Bytes, v).exactly_4[IDX_EXTRA_LEN] == 0)
@@ -60,7 +60,7 @@ inline static REBUNI VAL_CHAR(noquote(Cell(const*)) v) {
 
     assert(EXTRA(Bytes, v).exactly_4[IDX_EXTRA_LEN] == 1);  // e.g. codepoint
 
-    REBUNI c;
+    Codepoint c;
     Back_Scan_UTF8_Char_Unchecked(&c, PAYLOAD(Bytes, v).at_least_8);
     return c;
 }
@@ -106,7 +106,7 @@ inline static REBVAL *Init_Issue_Utf8(
 // If you know that a codepoint is good (e.g. it came from an ANY-STRING!)
 // this routine can be used.
 //
-inline static REBVAL *Init_Char_Unchecked_Untracked(Cell(*) out, REBUNI c) {
+inline static REBVAL *Init_Char_Unchecked_Untracked(Cell(*) out, Codepoint c) {
     Reset_Cell_Header_Untracked(out, REB_ISSUE, CELL_MASK_NONE);
 
     if (c == 0) {
@@ -137,7 +137,7 @@ inline static REBVAL *Init_Char_Unchecked_Untracked(Cell(*) out, REBUNI c) {
 #define Init_Char_Unchecked(out,c) \
     Init_Char_Unchecked_Untracked(TRACK(out), (c))
 
-inline static REBVAL *Init_Char_May_Fail_Untracked(Cell(*) out, REBUNI c) {
+inline static REBVAL *Init_Char_May_Fail_Untracked(Cell(*) out, Codepoint c) {
     if (c > MAX_UNI) {
         DECLARE_LOCAL (temp);
         fail (Error_Codepoint_Too_High_Raw(Init_Integer(temp, c)));

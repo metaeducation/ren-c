@@ -39,7 +39,7 @@ static bool Check_Char_Range(const REBVAL *val, REBLEN limit)
     Utf8(const*) up = VAL_UTF8_LEN_SIZE_AT(&len, nullptr, val);
 
     for (; len > 0; len--) {
-        REBUNI c;
+        Codepoint c;
         up = NEXT_CHR(&c, up);
 
         if (c > limit)
@@ -1715,7 +1715,7 @@ bool Try_As_String(
                 if (bp < at_ptr)
                     ++index;
 
-                REBUNI c = *bp;
+                Codepoint c = *bp;
                 if (c < 0x80)
                     Validate_Ascii_Byte(bp, strmode, BIN_HEAD(bin));
                 else {

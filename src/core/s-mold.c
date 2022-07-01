@@ -593,7 +593,7 @@ void Throttle_Mold(REB_MOLD *mo) {
         // adjust the character length appropriately.
 
         Utf8(*) tail = STR_TAIL(mo->series);
-        REBUNI dummy;
+        Codepoint dummy;
         Utf8(*) cp = SKIP_CHR(&dummy, tail, -(overage));
 
         TERM_STR_LEN_SIZE(

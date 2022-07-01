@@ -152,7 +152,7 @@ restart:;
     REBLEN len;
     Utf8(const*) up = VAL_UTF8_LEN_SIZE_AT(&len, nullptr, string);
 
-    REBUNI c = '\0'; // for test after loop (in case loop does not run)
+    Codepoint c = '\0'; // for test after loop (in case loop does not run)
 
     REBLEN i;
     for (i = 0; i < len;) {
@@ -248,7 +248,7 @@ void Mold_File_To_Local(REB_MOLD *mo, Cell(const*) file, REBFLGS flags) {
 
     REBLEN i = 0;
 
-    REBUNI c;
+    Codepoint c;
     if (len == 0)
         c = '\0';
     else
@@ -269,7 +269,7 @@ void Mold_File_To_Local(REB_MOLD *mo, Cell(const*) file, REBFLGS flags) {
             //
             // peek ahead for a '/'
             //
-            REBUNI d = '/';
+            Codepoint d = '/';
             Utf8(const*) dp;
             if (i < len)
                 dp = NEXT_CHR(&d, up);
@@ -353,7 +353,7 @@ void Mold_File_To_Local(REB_MOLD *mo, Cell(const*) file, REBFLGS flags) {
                     // truncate it there, to trim off one path segment.
                     //
                     REBLEN n = STR_LEN(mo->series);
-                    REBUNI c2;  // character in mold buffer
+                    Codepoint c2;  // character in mold buffer
                     if (n > mo->index) {
                         Utf8(*) tp = STR_TAIL(mo->series);
 

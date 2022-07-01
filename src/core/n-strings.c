@@ -347,7 +347,7 @@ REBNATIVE(enhex)
     REBLEN len;
     Utf8(const*) cp = VAL_UTF8_LEN_SIZE_AT(&len, nullptr, ARG(string));
 
-    REBUNI c;
+    Codepoint c;
     cp = NEXT_CHR(&c, cp);
 
     REBLEN i;
@@ -500,7 +500,7 @@ REBNATIVE(dehex)
     REBLEN len;
     Utf8(const*) cp = VAL_UTF8_LEN_SIZE_AT(&len, nullptr, ARG(string));
 
-    REBUNI c;
+    Codepoint c;
     cp = NEXT_CHR(&c, cp);
 
     REBLEN i;
@@ -559,7 +559,7 @@ REBNATIVE(dehex)
           decode_codepoint:
             scan[scan_size] = '\0';
             const REBYTE *next; // goto would cross initialization
-            REBUNI decoded;
+            Codepoint decoded;
             if (scan[0] < 0x80) {
                 decoded = scan[0];
                 next = &scan[0]; // last byte is only byte (see Back_Scan)
@@ -647,7 +647,7 @@ REBNATIVE(deline)
 
     REBLEN n;
     for (n = 0; n < len_at;) {
-        REBUNI c;
+        Codepoint c;
         src = NEXT_CHR(&c, src);
         ++n;
         if (c == LF) {
@@ -714,11 +714,11 @@ REBNATIVE(enline)
     Utf8(*) cp = STR_AT(s, idx);
 
     bool relax = false;  // !!! in case we wanted to tolerate CR LF already?
-    REBUNI c_prev = '\0';
+    Codepoint c_prev = '\0';
 
     REBLEN n;
     for (n = 0; n < len; ++n) {
-        REBUNI c;
+        Codepoint c;
         cp = NEXT_CHR(&c, cp);
         if (c == LF and (not relax or c_prev != CR))
             ++delta;
@@ -800,7 +800,7 @@ REBNATIVE(entab)
 
     REBINT n = 0;
     for (; index < len; index++) {
-        REBUNI c;
+        Codepoint c;
         up = NEXT_CHR(&c, up);
 
         // Count leading spaces, insert TAB for each tabsize:
@@ -879,7 +879,7 @@ REBNATIVE(detab)
     REBLEN n = 0;
 
     for (; index < len; ++index) {
-        REBUNI c;
+        Codepoint c;
         cp = NEXT_CHR(&c, cp);
 
         if (c == '\t') {

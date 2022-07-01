@@ -93,7 +93,7 @@ const REBYTE *Try_Diff_Bytes_Uncased(const REBYTE *src, const REBYTE *pat)
 //
 REBINT Compare_UTF8(const REBYTE *s1, const REBYTE *s2, REBSIZ l2)
 {
-    REBUNI c1, c2;
+    Codepoint c1, c2;
     REBSIZ l1 = strsize(s1);
     REBINT result = 0;
 
@@ -253,7 +253,7 @@ REBINT Find_Binstr_In_Binstr(
         caseless = false;  //
 
     // Binary-compatible to: [next2 = NEXT_CHR(&c2_canon, head2)]
-    REBUNI c2_canon;  // calculate first char lowercase once, vs. each step
+    Codepoint c2_canon;  // calculate first char lowercase once, vs. each step
     const REBYTE *next2;
     if (not is_2_str or *head2 < 0x80) {
         c2_canon = *head2;
@@ -269,7 +269,7 @@ REBINT Find_Binstr_In_Binstr(
             c2_canon = LO_CASE(c2_canon);
     }
 
-    REBUNI c1;  // c1 is the currently tested character for str1
+    Codepoint c1;  // c1 is the currently tested character for str1
     if (skip1 < 0) {
         //
         // Note: `find/skip tail "abcdef" "def" -3` is "def", so first search
@@ -352,7 +352,7 @@ REBINT Find_Binstr_In_Binstr(
                 ++tp1;
 
                 // Binary-compatible to: [tp2 = NEXT_CHR(&c2, tp2)]
-                REBUNI c2;
+                Codepoint c2;
                 if (not is_2_str or *tp2 < 0x80)
                     c2 = *tp2;
                 else
@@ -462,7 +462,7 @@ REBINT Find_Bitset_In_Binstr(
     bool is_str = (CELL_HEART(binstr) != REB_BINARY);
 
     const REBYTE *cp1 = is_str ? VAL_STRING_AT(binstr) : VAL_BINARY_AT(binstr);
-    REBUNI c1;
+    Codepoint c1;
     if (skip > 0) {  // skip 1 will pass over cp1, so leave as is
         if (is_str)
             c1 = CHR_CODE(cast(Utf8(const*), cp1));

@@ -102,7 +102,7 @@ REBSTR *Copy_String_At_Limit(Cell(const*) src, REBINT limit)
 // resizing checks if an invalid UTF-8 byte were used to mark the end of the
 // capacity (the way END markers are used on the data stack?)
 //
-REBSTR *Append_Codepoint(REBSTR *dst, REBUNI c)
+REBSTR *Append_Codepoint(REBSTR *dst, Codepoint c)
 {
     if (c == '\0') {
         assert(!"Zero byte being added to string.");  // caller should handle
@@ -135,7 +135,7 @@ REBSTR *Append_Codepoint(REBSTR *dst, REBUNI c)
 // !!! This could be more optimal if a CHAR! is passed in, because it caches
 // the UTF-8 encoding in the cell.  Review callsites if that is actionable.
 //
-REBSTR *Make_Codepoint_String(REBUNI c)
+REBSTR *Make_Codepoint_String(Codepoint c)
 {
     if (c == '\0')
         fail (Error_Illegal_Zero_Byte_Raw());
@@ -305,7 +305,7 @@ REBSTR *Append_UTF8_May_Fail(
 
     REBSIZ bytes_left = size; // see remarks on Back_Scan_UTF8_Char's 3rd arg
     for (; bytes_left > 0; --bytes_left, ++bp) {
-        REBUNI c = *bp;
+        Codepoint c = *bp;
         if (c >= 0x80) {
             bp = Back_Scan_UTF8_Char(&c, bp, &bytes_left);
             if (bp == NULL)
