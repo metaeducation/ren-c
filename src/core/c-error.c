@@ -499,7 +499,7 @@ void Set_Location_Of_Error(
     }
 
     if (f != BOTTOM_FRAME) {  // found a frame with file and line information
-        const REBSTR *file = LINK(Filename, FRM_ARRAY(f));
+        String(const*) file = LINK(Filename, FRM_ARRAY(f));
         REBLIN line = FRM_ARRAY(f)->misc.line;
 
         if (file)
@@ -1529,7 +1529,7 @@ void Shutdown_Stackoverflow(void)
 //
 static void Mold_Value_Limit(REB_MOLD *mo, Cell(*) v, REBLEN limit)
 {
-    REBSTR *str = mo->series;
+    String(*) str = mo->series;
 
     REBLEN start_len = STR_LEN(str);
     REBSIZ start_size = STR_SIZE(str);

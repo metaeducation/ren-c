@@ -51,7 +51,7 @@
 
 // Some places permit an optional label (such as the names of function
 // invocations, which may not have an associated name).  To make the callsite
-// intent clearer for passing in a null REBSTR*, use ANONYMOUS instead.
+// intent clearer for passing in a null String(*), use ANONYMOUS instead.
 //
 #define ANONYMOUS \
     cast(Symbol(const*), nullptr)
@@ -197,33 +197,33 @@ inline static Utf8(*) WRITE_CHR(Utf8(*) cp, Codepoint c) {
 
 #define Is_Definitely_Ascii(s) false
 
-inline static bool Is_String_Definitely_ASCII(const REBSTR *str) {
+inline static bool Is_String_Definitely_ASCII(String(const*) str) {
     UNUSED(str);
     return false;
 }
 
 #define STR_UTF8(s) \
-    SER_HEAD(const char, ensure(const REBSTR*, s))
+    SER_HEAD(const char, ensure(String(const*), s))
 
 #define STR_SIZE(s) \
-    SER_USED(ensure(const REBSTR*, s))  // UTF-8 byte count (not codepoints)
+    SER_USED(ensure(String(const*), s))  // UTF-8 byte count (not codepoints)
 
-inline static Utf8(*) STR_HEAD(const_if_c REBSTR *s)
+inline static Utf8(*) STR_HEAD(const_if_c String(*) s)
   { return cast(Utf8(*), SER_HEAD(REBYTE, s)); }
 
-inline static Utf8(*) STR_TAIL(const_if_c REBSTR *s)
+inline static Utf8(*) STR_TAIL(const_if_c String(*) s)
   { return cast(Utf8(*), SER_TAIL(REBYTE, s)); }
 
 #if CPLUSPLUS_11
-    inline static Utf8(const*) STR_HEAD(const REBSTR *s)
-      { return STR_HEAD(m_cast(REBSTR*, s)); }
+    inline static Utf8(const*) STR_HEAD(String(const*) s)
+      { return STR_HEAD(m_cast(String(*), s)); }
 
-    inline static Utf8(const*) STR_TAIL(const REBSTR *s)
-      { return STR_TAIL(m_cast(REBSTR*, s)); }
+    inline static Utf8(const*) STR_TAIL(String(const*) s)
+      { return STR_TAIL(m_cast(String(*), s)); }
 #endif
 
 
-inline static REBLEN STR_LEN(const REBSTR *s) {
+inline static REBLEN STR_LEN(String(const*) s) {
     if (Is_Definitely_Ascii(s))
         return STR_SIZE(s);
 
@@ -248,7 +248,7 @@ inline static REBLEN STR_LEN(const REBSTR *s) {
     return len;
 }
 
-inline static REBLEN STR_INDEX_AT(const REBSTR *s, REBSIZ offset) {
+inline static REBLEN STR_INDEX_AT(String(const*) s, REBSIZ offset) {
     if (Is_Definitely_Ascii(s))
         return offset;
 
@@ -279,7 +279,7 @@ inline static REBLEN STR_INDEX_AT(const REBSTR *s, REBSIZ offset) {
     return index;
 }
 
-inline static void SET_STR_LEN_SIZE(REBSTR *s, REBLEN len, REBSIZ used) {
+inline static void SET_STR_LEN_SIZE(String(*) s, REBLEN len, REBSIZ used) {
     assert(IS_NONSYMBOL_STRING(s));
     assert(len <= used);
     assert(used == SER_USED(s));
@@ -288,7 +288,7 @@ inline static void SET_STR_LEN_SIZE(REBSTR *s, REBLEN len, REBSIZ used) {
     UNUSED(used);
 }
 
-inline static void TERM_STR_LEN_SIZE(REBSTR *s, REBLEN len, REBSIZ used) {
+inline static void TERM_STR_LEN_SIZE(String(*) s, REBLEN len, REBSIZ used) {
     assert(IS_NONSYMBOL_STRING(s));
     assert(len <= used);
     SET_SERIES_USED(s, used);
@@ -325,7 +325,7 @@ inline static REBBMK* Alloc_Bookmark(void) {
     return cast(REBBMK*, s);
 }
 
-inline static void Free_Bookmarks_Maybe_Null(REBSTR *str) {
+inline static void Free_Bookmarks_Maybe_Null(String(*) str) {
     assert(IS_NONSYMBOL_STRING(str));
     if (LINK(Bookmarks, str)) {
         GC_Kill_Series(LINK(Bookmarks, str));
@@ -334,7 +334,7 @@ inline static void Free_Bookmarks_Maybe_Null(REBSTR *str) {
 }
 
 #if !defined(NDEBUG)
-    inline static void Check_Bookmarks_Debug(REBSTR *s) {
+    inline static void Check_Bookmarks_Debug(String(*) s) {
         REBBMK *bookmark = LINK(Bookmarks, s);
         if (not bookmark)
             return;
@@ -370,7 +370,7 @@ inline static void Free_Bookmarks_Maybe_Null(REBSTR *str) {
 // iterate much faster, and most of the strings in the system might be able
 // to get away with not having any bookmarks at all.
 //
-inline static Utf8(*) STR_AT(const_if_c REBSTR *s, REBLEN at) {
+inline static Utf8(*) STR_AT(const_if_c String(*) s, REBLEN at) {
     assert(at <= STR_LEN(s));
 
     if (Is_Definitely_Ascii(s)) {  // can't have any false positives
@@ -410,7 +410,7 @@ inline static Utf8(*) STR_AT(const_if_c REBSTR *s, REBLEN at) {
         }
         if (not bookmark and IS_NONSYMBOL_STRING(s)) {
             bookmark = Alloc_Bookmark();
-            mutable_LINK(Bookmarks, m_cast(REBSTR*, s)) = bookmark;
+            mutable_LINK(Bookmarks, m_cast(String(*), s)) = bookmark;
             goto scan_from_head;  // will fill in bookmark
         }
     }
@@ -425,7 +425,7 @@ inline static Utf8(*) STR_AT(const_if_c REBSTR *s, REBLEN at) {
         }
         if (not bookmark and IS_NONSYMBOL_STRING(s)) {
             bookmark = Alloc_Bookmark();
-            mutable_LINK(Bookmarks, m_cast(REBSTR*, s)) = bookmark;
+            mutable_LINK(Bookmarks, m_cast(String(*), s)) = bookmark;
             goto scan_from_tail;  // will fill in bookmark
         }
     }
@@ -533,12 +533,12 @@ inline static Utf8(*) STR_AT(const_if_c REBSTR *s, REBLEN at) {
 }
 
 #if CPLUSPLUS_11
-    inline static Utf8(const*) STR_AT(const REBSTR *s, REBLEN at)
-      { return STR_AT(m_cast(REBSTR*, s), at); }
+    inline static Utf8(const*) STR_AT(String(const*) s, REBLEN at)
+      { return STR_AT(m_cast(String(*), s), at); }
 #endif
 
 
-inline static const REBSTR *VAL_STRING(noquote(Cell(const*)) v) {
+inline static String(const*) VAL_STRING(noquote(Cell(const*)) v) {
     if (ANY_STRINGLIKE(v))
         return STR(VAL_NODE1(v));  // VAL_SERIES() would assert
 
@@ -546,7 +546,7 @@ inline static const REBSTR *VAL_STRING(noquote(Cell(const*)) v) {
 }
 
 #define VAL_STRING_ENSURE_MUTABLE(v) \
-    m_cast(REBSTR*, VAL_STRING(ENSURE_MUTABLE(v)))
+    m_cast(String(*), VAL_STRING(ENSURE_MUTABLE(v)))
 
 // This routine works with the notion of "length" that corresponds to the
 // idea of the datatype which the series index is for.  Notably, a BINARY!
@@ -583,7 +583,7 @@ inline static REBLEN VAL_LEN_AT(noquote(Cell(const*)) v) {
 }
 
 inline static Utf8(const*) VAL_STRING_AT(noquote(Cell(const*)) v) {
-    const REBSTR *str = VAL_STRING(v);  // checks that it's ANY-STRING!
+    String(const*) str = VAL_STRING(v);  // checks that it's ANY-STRING!
     REBIDX i = VAL_INDEX_RAW(v);
     REBLEN len = STR_LEN(str);
     if (i < 0 or i > cast(REBIDX, len))
@@ -593,7 +593,7 @@ inline static Utf8(const*) VAL_STRING_AT(noquote(Cell(const*)) v) {
 
 
 inline static Utf8(const*) VAL_STRING_TAIL(noquote(Cell(const*)) v) {
-    const REBSTR *s = VAL_STRING(v);  // debug build checks it's ANY-STRING!
+    String(const*) s = VAL_STRING(v);  // debug build checks it's ANY-STRING!
     return STR_TAIL(s);
 }
 
@@ -671,7 +671,7 @@ inline static REBSIZ VAL_OFFSET_FOR_INDEX(noquote(Cell(const*)) v, REBLEN index)
 // should probably lock the input series against modification...or at least
 // hold a cache that it throws away whenever it runs a GROUP!.
 
-inline static Codepoint GET_CHAR_AT(const REBSTR *s, REBLEN n) {
+inline static Codepoint GET_CHAR_AT(String(const*) s, REBLEN n) {
     Utf8(const*) up = STR_AT(s, n);
     Codepoint c;
     NEXT_CHR(&c, up);
@@ -683,7 +683,7 @@ inline static Codepoint GET_CHAR_AT(const REBSTR *s, REBLEN n) {
 // it is an optimization that may-or-may-not be worth the added complexity of
 // having more than one way of doing a CHANGE to a character.  Review.
 //
-inline static void SET_CHAR_AT(REBSTR *s, REBLEN n, Codepoint c) {
+inline static void SET_CHAR_AT(String(*) s, REBLEN n, Codepoint c) {
     //
     // We are maintaining the same length, but DEBUG_UTF8_EVERYWHERE will
     // corrupt the length every time the SER_USED() changes.  Workaround that
@@ -765,13 +765,13 @@ inline static REBLEN Num_Codepoints_For_Bytes(
 
 //=//// ANY-STRING! CONVENIENCE MACROS ////////////////////////////////////=//
 //
-// Declaring as inline with type signature ensures you use a REBSTR* to
+// Declaring as inline with type signature ensures you use a String(*) to
 // initialize, and the C++ build can also validate managed consistent w/const.
 
 inline static REBVAL *Init_Any_String_At(
     Cell(*) out,
     enum Reb_Kind kind,
-    const_if_c REBSTR *str,
+    const_if_c String(*) str,
     REBLEN index
 ){
     Init_Any_Series_At_Core(
@@ -788,7 +788,7 @@ inline static REBVAL *Init_Any_String_At(
     inline static REBVAL *Init_Any_String_At(
         Cell(*) out,
         enum Reb_Kind kind,
-        const REBSTR *str,
+        String(const*) str,
         REBLEN index
     ){
         return Init_Any_Series_At_Core(out, kind, str, index, UNBOUND);
@@ -814,11 +814,11 @@ inline static REBVAL *Init_Any_String_At(
 #define Make_String(encoded_capacity) \
     Make_String_Core((encoded_capacity), SERIES_FLAGS_NONE)
 
-inline static REBSTR *Make_String_UTF8(const char *utf8) {
+inline static String(*) Make_String_UTF8(const char *utf8) {
     return Append_UTF8_May_Fail(NULL, utf8, strsize(utf8), STRMODE_NO_CR);
 }
 
-inline static REBSTR *Make_Sized_String_UTF8(const char *utf8, size_t size) {
+inline static String(*) Make_Sized_String_UTF8(const char *utf8, size_t size) {
     return Append_UTF8_May_Fail(NULL, utf8, size, STRMODE_NO_CR);
 }
 
@@ -831,7 +831,7 @@ inline static REBSTR *Make_Sized_String_UTF8(const char *utf8, size_t size) {
 
 //=//// REBSTR HASHING ////////////////////////////////////////////////////=//
 
-inline static REBINT Hash_String(const REBSTR *str)
+inline static REBINT Hash_String(String(const*) str)
     { return Hash_UTF8_Len_Caseless(STR_HEAD(str), STR_LEN(str)); }
 
 inline static REBINT First_Hash_Candidate_Slot(

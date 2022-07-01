@@ -24,7 +24,7 @@
 #define MOLD_BUF TG_Mold_Buf
 
 struct rebol_mold {
-    REBSTR *series;     // destination series (utf8)
+    String(*) series;     // destination series (utf8)
     REBLEN index;       // codepoint index where mold starts within series
     REBSIZ offset;      // byte offset where mold starts within series
     REBFLGS opts;       // special option flags

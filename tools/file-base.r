@@ -73,7 +73,7 @@ core: [
         ; 9.3.0-10 at -O2 optimization level in the C++ build...it pertained
         ; to:
         ;
-        ;   const REBSTR *s = VAL_STRING(v);
+        ;   String(const*) s = VAL_STRING(v);
         ;
         ; <gnu:-Wno-array-bounds>
     ][

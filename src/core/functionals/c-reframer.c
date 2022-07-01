@@ -140,7 +140,7 @@ bool Make_Invokable_From_Feed_Throws(
     if (Is_End(first))
         Fetch_Next_Forget_Lookback(f);  // now, onto the arguments...
 
-    option(const REBSTR*) label = VAL_ACTION_LABEL(f->out);
+    option(String(const*)) label = VAL_ACTION_LABEL(f->out);
 
     // !!! Process_Action_Throws() calls Drop_Action() and loses the phase.
     // It probably shouldn't, but since it does we need the action afterward

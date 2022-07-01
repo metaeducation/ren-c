@@ -141,6 +141,6 @@ STATIC_ASSERT(ARRAY_FLAG_CONST_SHALLOW == CELL_FLAG_CONST);
 // !!! LINK_FILENAME_HACK is needed in %sys-array.h due to dependencies not
 // having STR() available.
 //
-#define LINK_Filename_TYPE          const REBSTR*
-#define LINK_Filename_CAST          (const REBSTR*)STR
+#define LINK_Filename_TYPE          String(const*)
+#define LINK_Filename_CAST          (String(const*))STR
 #define HAS_LINK_Filename           FLAVOR_ARRAY

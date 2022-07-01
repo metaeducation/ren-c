@@ -58,7 +58,7 @@ static void Append_To_Context(REBVAL *context, REBVAL *arg)
     Collect_Start(&collector, COLLECT_ANY_WORD);
 
   blockscope {  // Start out binding table with words already in context
-    const REBSTR *duplicate;
+    String(const*) duplicate;
     Collect_Context_Keys(&duplicate, &collector, c);
     assert(not duplicate);  // context should have all unique keys
   }
@@ -911,7 +911,7 @@ Context(*) Copy_Context_Extra_Managed(
 //
 void MF_Context(REB_MOLD *mo, noquote(Cell(const*)) v, bool form)
 {
-    REBSTR *s = mo->series;
+    String(*) s = mo->series;
 
     Context(*) c = VAL_CONTEXT(v);
 
@@ -1308,7 +1308,7 @@ REBTYPE(Frame)
 
         switch (prop) {
           case SYM_FILE: {
-            const REBSTR *file = FRM_FILE(f);
+            String(const*) file = FRM_FILE(f);
             if (not file)
                 return nullptr;
             return Init_File(OUT, file); }

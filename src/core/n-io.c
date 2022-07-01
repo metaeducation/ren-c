@@ -92,7 +92,7 @@ REBNATIVE(mold)
 
     Mold_Value(mo, v);
 
-    REBSTR *popped = Pop_Molded_String(mo);  // sets MOLD_FLAG_TRUNCATED
+    String(*) popped = Pop_Molded_String(mo);  // sets MOLD_FLAG_TRUNCATED
 
     if (REF(truncated))
         rebElide(

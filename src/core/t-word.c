@@ -298,7 +298,7 @@ REBTYPE(Word)
 
         switch (property) {
         case SYM_LENGTH: {
-            const REBSTR *spelling = VAL_WORD_SYMBOL(v);
+            String(const*) spelling = VAL_WORD_SYMBOL(v);
             const REBYTE *bp = STR_HEAD(spelling);
             REBSIZ size = STR_SIZE(spelling);
             REBLEN len = 0;

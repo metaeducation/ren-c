@@ -131,10 +131,10 @@ static void Expand_Word_Table(void)
     // Hold onto it while creating the new hash table.
 
     REBLEN old_num_slots = SER_USED(PG_Symbols_By_Hash);
-    REBSTR* *old_symbols_by_hash = SER_HEAD(REBSTR*, PG_Symbols_By_Hash);
+    String(*) *old_symbols_by_hash = SER_HEAD(String(*), PG_Symbols_By_Hash);
 
     REBLEN num_slots = Get_Hash_Prime_May_Fail(old_num_slots + 1);
-    assert(SER_WIDE(PG_Symbols_By_Hash) == sizeof(REBSTR*));
+    assert(SER_WIDE(PG_Symbols_By_Hash) == sizeof(String(*)));
 
     REBSER *ser = Make_Series(
         num_slots, FLAG_FLAVOR(CANONTABLE) | SERIES_FLAG_POWER_OF_2
@@ -144,11 +144,11 @@ static void Expand_Word_Table(void)
 
     // Rehash all the symbols:
 
-    REBSTR **new_symbols_by_hash = SER_HEAD(REBSTR*, ser);
+    String(*) *new_symbols_by_hash = SER_HEAD(String(*), ser);
 
     REBLEN old_slot;
     for (old_slot = 0; old_slot != old_num_slots; ++old_slot) {
-        REBSTR *symbol = old_symbols_by_hash[old_slot];
+        String(*) symbol = old_symbols_by_hash[old_slot];
         if (not symbol)
             continue;
 
@@ -406,7 +406,7 @@ Symbol(const*) Intern_UTF8_Managed_Core(
 // locked strings become interned, and forward pointers to the old series in
 // the background to the interned version?
 //
-const REBSTR *Intern_Any_String_Managed(Cell(const*) v) {
+String(const*) Intern_Any_String_Managed(Cell(const*) v) {
     REBSIZ utf8_size;
     Utf8(const*) utf8 = VAL_UTF8_SIZE_AT(&utf8_size, v);
     return Intern_UTF8_Managed(utf8, utf8_size);
@@ -420,7 +420,7 @@ const REBSTR *Intern_Any_String_Managed(Cell(const*) v) {
 // Further, if it happens to be canon, we need to re-point everything in the
 // chain to a new entry.  Choose the synonym as a new canon if so.
 //
-void GC_Kill_Interning(REBSTR *intern)
+void GC_Kill_Interning(String(*) intern)
 {
     Symbol(*) synonym = LINK(Synonym, intern);
 
@@ -443,7 +443,7 @@ void GC_Kill_Interning(REBSTR *intern)
     node_MISC(Hitch, patch) = node_MISC(Hitch, intern);  // may be no-op
 
     REBLEN num_slots = SER_USED(PG_Symbols_By_Hash);
-    REBSTR* *symbols_by_hash = SER_HEAD(REBSTR*, PG_Symbols_By_Hash);
+    String(*) *symbols_by_hash = SER_HEAD(String(*), PG_Symbols_By_Hash);
 
     REBLEN skip;
     REBLEN slot = First_Hash_Candidate_Slot(
@@ -489,8 +489,8 @@ void GC_Kill_Interning(REBSTR *intern)
 //  Startup_Interning: C
 //
 // Get the engine ready to do Intern_UTF8_Managed(), which is required to
-// get REBSTR* pointers generated during a scan of ANY-WORD!s.  Words of the
-// same spelling currently look up and share the same REBSTR*, this process
+// get String(*) pointers generated during a scan of ANY-WORD!s.  Words of the
+// same spelling currently look up and share the same String(*), this process
 // is referred to as "string interning":
 //
 // https://en.wikipedia.org/wiki/String_interning
@@ -637,7 +637,7 @@ void Shutdown_Interning(void)
 
         REBLEN slot;
         for (slot = 0; slot < SER_USED(PG_Symbols_By_Hash); ++slot) {
-            REBSTR *symbol = *SER_AT(REBSTR*, PG_Symbols_By_Hash, slot);
+            String(*) symbol = *SER_AT(String(*), PG_Symbols_By_Hash, slot);
             if (symbol and symbol != DELETED_SYMBOL)
                 panic (symbol);
         }

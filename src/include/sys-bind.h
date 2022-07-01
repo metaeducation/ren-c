@@ -185,7 +185,7 @@ inline static bool Try_Add_Binder_Index(
     Symbol(const*) sym,
     REBINT index
 ){
-    REBSTR *s = m_cast(Symbol(*), sym);
+    String(*) s = m_cast(Symbol(*), sym);
     assert(index != 0);
     REBSER *old_hitch = MISC(Hitch, s);
     if (old_hitch != s and GET_SERIES_FLAG(old_hitch, BLACK))
@@ -242,7 +242,7 @@ inline static REBINT Remove_Binder_Index_Else_0( // return old value if there
     struct Reb_Binder *binder,
     Symbol(const*) str
 ){
-    REBSTR *s = m_cast(Symbol(*), str);
+    String(*) s = m_cast(Symbol(*), str);
     if (MISC(Hitch, s) == s or NOT_SERIES_FLAG(MISC(Hitch, s), BLACK))
         return 0;
 

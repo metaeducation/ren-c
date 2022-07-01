@@ -103,7 +103,7 @@ REBINT CT_String(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
 ***********************************************************************/
 
 
-static void reverse_string(REBSTR *str, REBLEN index, REBLEN len)
+static void reverse_string(String(*) str, REBLEN index, REBLEN len)
 {
     if (len == 0)
         return; // if non-zero, at least one character in the string
@@ -420,7 +420,7 @@ REBYTE *Form_Uni_Hex(REBYTE *out, REBLEN n)
 //
 void Mold_Uni_Char(REB_MOLD *mo, Codepoint c, bool parened)
 {
-    REBSTR *buf = mo->series;
+    String(*) buf = mo->series;
 
     // !!! The UTF-8 "Byte Order Mark" is an insidious thing which is not
     // necessary for UTF-8, not recommended by the Unicode standard, and
@@ -480,8 +480,8 @@ void Mold_Uni_Char(REB_MOLD *mo, Codepoint c, bool parened)
 //
 //  Mold_Text_Series_At: C
 //
-void Mold_Text_Series_At(REB_MOLD *mo, const REBSTR *s, REBLEN index) {
-    REBSTR *buf = mo->series;
+void Mold_Text_Series_At(REB_MOLD *mo, String(const*) s, REBLEN index) {
+    String(*) buf = mo->series;
 
     if (index >= STR_LEN(s)) {
         Append_Ascii(buf, "\"\"");
@@ -653,7 +653,7 @@ static void Mold_Tag(REB_MOLD *mo, noquote(Cell(const*)) v)
 //
 void MF_String(REB_MOLD *mo, noquote(Cell(const*)) v, bool form)
 {
-    REBSTR *buf = mo->series;
+    String(*) buf = mo->series;
 
     assert(ANY_STRINGLIKE(v));
 
@@ -794,7 +794,7 @@ REBTYPE(String)
         if (c == 0)
             fail (Error_Illegal_Zero_Byte_Raw());
 
-        REBSTR *s = VAL_STRING_ENSURE_MUTABLE(v);
+        String(*) s = VAL_STRING_ENSURE_MUTABLE(v);
         SET_CHAR_AT(s, n, c);
 
         return nullptr; }  // Array(*) is still fine, caller need not update
@@ -826,7 +826,7 @@ REBTYPE(String)
 
         UNUSED(PAR(series)); // already accounted for
 
-        REBSTR *s = VAL_STRING_ENSURE_MUTABLE(v);
+        String(*) s = VAL_STRING_ENSURE_MUTABLE(v);
 
         REBINT limit;
         if (REF(part))
@@ -1012,7 +1012,7 @@ REBTYPE(String)
         return OUT; }
 
       case SYM_CLEAR: {
-        REBSTR *s = VAL_STRING_ENSURE_MUTABLE(v);
+        String(*) s = VAL_STRING_ENSURE_MUTABLE(v);
 
         if (index >= tail)
             return_value (v);  // clearing after available data has no effect
@@ -1058,8 +1058,8 @@ REBTYPE(String)
         if (VAL_TYPE(v) != VAL_TYPE(arg))
             fail (Error_Not_Same_Type_Raw());
 
-        REBSTR *v_str = VAL_STRING_ENSURE_MUTABLE(v);
-        REBSTR *arg_str = VAL_STRING_ENSURE_MUTABLE(arg);
+        String(*) v_str = VAL_STRING_ENSURE_MUTABLE(v);
+        String(*) arg_str = VAL_STRING_ENSURE_MUTABLE(arg);
 
         if (index < tail and VAL_INDEX(arg) < VAL_LEN_HEAD(arg)) {
             Codepoint v_c = GET_CHAR_AT(v_str, VAL_INDEX(v));
@@ -1074,7 +1074,7 @@ REBTYPE(String)
         INCLUDE_PARAMS_OF_REVERSE;
         UNUSED(ARG(series));
 
-        REBSTR *str = VAL_STRING_ENSURE_MUTABLE(v);
+        String(*) str = VAL_STRING_ENSURE_MUTABLE(v);
 
         Copy_Cell(OUT, v);  // save before index adjustment
         REBINT len = Part_Len_May_Modify_Index(v, ARG(part));
@@ -1087,7 +1087,7 @@ REBTYPE(String)
 
         UNUSED(PAR(series));
 
-        REBSTR *str = VAL_STRING_ENSURE_MUTABLE(v);  // just ensure mutability
+        String(*) str = VAL_STRING_ENSURE_MUTABLE(v);  // just ensure mutability
         UNUSED(str);  // we use the VAL_UTF8_AT() accessor, which is const
 
         if (REF(all))
@@ -1168,7 +1168,7 @@ REBTYPE(String)
             );
         }
 
-        REBSTR *str = VAL_STRING_ENSURE_MUTABLE(v);
+        String(*) str = VAL_STRING_ENSURE_MUTABLE(v);
 
         if (not Is_String_Definitely_ASCII(str))
             fail ("UTF-8 Everywhere: String shuffle temporarily unavailable");

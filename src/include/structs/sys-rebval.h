@@ -546,7 +546,7 @@ union Reb_Value_Payload { //=/////////////// ACTUAL PAYLOAD DEFINITION ////=//
     // mutability (beyond CONST, which the cell encodes itself)
     //
     // ANY-WORD!  // see %sys-word.h
-    //     REBSTR *spelling;  // word's non-canonized spelling, UTF-8 string
+    //     String(*) spelling;  // word's non-canonized spelling, UTF-8 string
     //     REBINT index;  // index of word in context (if binding is not null)
     //
     // ANY-CONTEXT!  // see %sys-context.h

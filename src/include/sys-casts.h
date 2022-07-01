@@ -70,7 +70,7 @@
     #define ACT(p)          m_cast(REBACT*, x_cast(const REBACT*, (p)))
     #define CTX(p)          m_cast(Context(*), x_cast(const Context(*), (p)))
 
-    #define STR(p)          m_cast(REBSTR*, x_cast(const REBSTR*, (p)))
+    #define STR(p)          m_cast(String(*), x_cast(String(const*), (p)))
     #define SYM(p)          m_cast(Symbol(*), x_cast(Symbol(const*), (p)))
 
     #define VAL(p)          x_cast(REBVAL*, (p))
@@ -251,11 +251,11 @@
 
     // !!! STR() and SYM() casts should be updated to do more than const
 
-    inline static REBSTR *STR(void *p)
-      { return cast(REBSTR*, p); }
+    inline static String(*) STR(void *p)
+      { return cast(String(*), p); }
 
-    inline static const REBSTR *STR(const void *p)
-      { return cast(const REBSTR*, p); }
+    inline static String(const*) STR(const void *p)
+      { return cast(String(const*), p); }
 
     // The only time a SYM should be mutable is at its creation time, or
     // when bits are being tweaked in binding slots.  Stored or external

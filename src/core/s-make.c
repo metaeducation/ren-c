@@ -33,7 +33,7 @@
 // of encoded data.  Note that this is not a guarantee of being able to hold
 // more than `encoded_capacity / UNI_ENCODED_MAX` unencoded codepoints...
 //
-REBSTR *Make_String_Core(REBSIZ encoded_capacity, REBFLGS flags)
+String(*) Make_String_Core(REBSIZ encoded_capacity, REBFLGS flags)
 {
     assert(FLAVOR_BYTE(flags) == 0);  // shouldn't have a flavor
 
@@ -73,7 +73,7 @@ REBBIN *Copy_Bytes(const REBYTE *src, REBINT len)
 // other series due to the length being counted in characters and not
 // units of the series width.
 //
-REBSTR *Copy_String_At_Limit(Cell(const*) src, REBINT limit)
+String(*) Copy_String_At_Limit(Cell(const*) src, REBINT limit)
 {
     REBSIZ limited_size;
     REBLEN limited_length;
@@ -84,7 +84,7 @@ REBSTR *Copy_String_At_Limit(Cell(const*) src, REBINT limit)
         limit
     );
 
-    REBSTR *dst = Make_String(limited_size);
+    String(*) dst = Make_String(limited_size);
     memcpy(STR_HEAD(dst), utf8, limited_size);
     TERM_STR_LEN_SIZE(dst, limited_length, limited_size);
 
@@ -102,7 +102,7 @@ REBSTR *Copy_String_At_Limit(Cell(const*) src, REBINT limit)
 // resizing checks if an invalid UTF-8 byte were used to mark the end of the
 // capacity (the way END markers are used on the data stack?)
 //
-REBSTR *Append_Codepoint(REBSTR *dst, Codepoint c)
+String(*) Append_Codepoint(String(*) dst, Codepoint c)
 {
     if (c == '\0') {
         assert(!"Zero byte being added to string.");  // caller should handle
@@ -135,13 +135,13 @@ REBSTR *Append_Codepoint(REBSTR *dst, Codepoint c)
 // !!! This could be more optimal if a CHAR! is passed in, because it caches
 // the UTF-8 encoding in the cell.  Review callsites if that is actionable.
 //
-REBSTR *Make_Codepoint_String(Codepoint c)
+String(*) Make_Codepoint_String(Codepoint c)
 {
     if (c == '\0')
         fail (Error_Illegal_Zero_Byte_Raw());
 
     REBSIZ size = Encoded_Size_For_Codepoint(c);
-    REBSTR *s = Make_String(size);
+    String(*) s = Make_String(size);
     Encode_UTF8_Char(STR_HEAD(s), c, size);
     TERM_STR_LEN_SIZE(s, 1, size);
     return s;
@@ -157,7 +157,7 @@ REBSTR *Make_Codepoint_String(Codepoint c)
 // !!! Should debug build assert it's ASCII?  Most of these are coming from
 // string literals in the source.
 //
-REBSTR *Append_Ascii_Len(REBSTR *dst, const char *ascii, REBLEN len)
+String(*) Append_Ascii_Len(String(*) dst, const char *ascii, REBLEN len)
 {
     REBLEN old_size;
     REBLEN old_len;
@@ -188,7 +188,7 @@ REBSTR *Append_Ascii_Len(REBSTR *dst, const char *ascii, REBLEN len)
 //
 // !!! Should be in a header file so it can be inlined.
 //
-REBSTR *Append_Ascii(REBSTR *dst, const char *src)
+String(*) Append_Ascii(String(*) dst, const char *src)
 {
     return Append_Ascii_Len(dst, src, strsize(src));
 }
@@ -199,7 +199,7 @@ REBSTR *Append_Ascii(REBSTR *dst, const char *src)
 //
 // Append a UTF8 byte series to a UTF8 binary.  Terminates.
 //
-REBSTR *Append_Utf8(REBSTR *dst, const char *utf8, size_t size)
+String(*) Append_Utf8(String(*) dst, const char *utf8, size_t size)
 {
     return Append_UTF8_May_Fail(dst, utf8, size, STRMODE_NO_CR);
 }
@@ -210,7 +210,7 @@ REBSTR *Append_Utf8(REBSTR *dst, const char *utf8, size_t size)
 //
 // Append the spelling of a REBSTR to a UTF8 binary.  Terminates.
 //
-void Append_Spelling(REBSTR *dst, const REBSTR *spelling)
+void Append_Spelling(String(*) dst, String(const*) spelling)
 {
     Append_Utf8(dst, STR_UTF8(spelling), STR_SIZE(spelling));
 }
@@ -219,9 +219,9 @@ void Append_Spelling(REBSTR *dst, const REBSTR *spelling)
 //
 //  Append_String_Limit: C
 //
-// Append a partial string to a REBSTR*.
+// Append a partial string to a String(*).
 //
-void Append_String_Limit(REBSTR *dst, noquote(Cell(const*)) src, REBLEN limit)
+void Append_String_Limit(String(*) dst, noquote(Cell(const*)) src, REBLEN limit)
 {
     assert(not IS_SYMBOL(dst));
     assert(ANY_UTF8_KIND(CELL_HEART(src)));
@@ -246,7 +246,7 @@ void Append_String_Limit(REBSTR *dst, noquote(Cell(const*)) src, REBLEN limit)
 //
 // Append an integer string.
 //
-void Append_Int(REBSTR *dst, REBINT num)
+void Append_Int(String(*) dst, REBINT num)
 {
     REBYTE buf[32];
     Form_Int(buf, num);
@@ -260,7 +260,7 @@ void Append_Int(REBSTR *dst, REBINT num)
 //
 // Append an integer string.
 //
-void Append_Int_Pad(REBSTR *dst, REBINT num, REBINT digs)
+void Append_Int_Pad(String(*) dst, REBINT num, REBINT digs)
 {
     REBYTE buf[32];
     if (digs > 0)
@@ -278,8 +278,8 @@ void Append_Int_Pad(REBSTR *dst, REBINT num, REBINT digs)
 //
 // Append UTF-8 data to a series underlying an ANY-STRING! (or create new one)
 //
-REBSTR *Append_UTF8_May_Fail(
-    REBSTR *dst,  // if nullptr, that means make a new string
+String(*) Append_UTF8_May_Fail(
+    String(*) dst,  // if nullptr, that means make a new string
     const char *utf8,
     REBSIZ size,
     enum Reb_Strmode strmode

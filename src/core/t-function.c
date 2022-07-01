@@ -157,7 +157,7 @@ void MF_Action(REB_MOLD *mo, noquote(Cell(const*)) v, bool form)
 
     Append_Ascii(mo->series, "#[action! ");
 
-    option(const REBSTR*) label = VAL_ACTION_LABEL(v);
+    option(String(const*)) label = VAL_ACTION_LABEL(v);
     if (label) {
         Append_Codepoint(mo->series, '{');
         Append_Spelling(mo->series, unwrap(label));

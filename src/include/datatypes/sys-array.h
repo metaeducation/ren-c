@@ -55,7 +55,7 @@
 // lot of this central code inlinable.
 //
 #define LINK_FILENAME_HACK(s) \
-    cast(const REBSTR*, s->link.any.node)
+    cast(String(const*), s->link.any.node)
 
 
 inline static bool Has_Newline_At_Tail(Array(const*) a) {

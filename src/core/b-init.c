@@ -470,7 +470,7 @@ static void Init_Root_Vars(void)
 
     // Note: rebText() can't run yet, review.
     //
-    REBSTR *nulled_uni = Make_String(1);
+    String(*) nulled_uni = Make_String(1);
 
   #if !defined(NDEBUG)
     Codepoint test_nul;

@@ -24,7 +24,7 @@
 // It maps keys to values using two parallel series, whose indices line up in
 // correspondence:
 //
-//   "KEYLIST" - a series of pointer-sized elements to REBSTR* symbols.
+//   "KEYLIST" - a series of pointer-sized elements to String(*) symbols.
 //
 //   "VARLIST" - an array which holds an archetypal ANY-CONTEXT! value in its
 //   [0] element, and then a cell-sized slot for each variable.
@@ -42,11 +42,11 @@
 //  +          "ROOTVAR"           |        |
 //  | Archetype ANY-CONTEXT! Value |        v         KEYLIST SERIES
 //  +------------------------------+        +-------------------------------+
-//  |      <opt> ANY-VALUE! 1      |        |     REBSTR* key symbol  1     |
+//  |      <opt> ANY-VALUE! 1      |        |     String(*) key symbol  1     |
 //  +------------------------------+        +-------------------------------+
-//  |      <opt> ANY-VALUE! 2      |        |     REBSTR* key symbol 2      |
+//  |      <opt> ANY-VALUE! 2      |        |     String(*) key symbol 2      |
 //  +------------------------------+        +-------------------------------+
-//  |      <opt> ANY-VALUE! ...    |        |     REBSTR* key symbol ...    |
+//  |      <opt> ANY-VALUE! ...    |        |     String(*) key symbol ...    |
 //  +------------------------------+        +-------------------------------+
 //
 // (For executing frames, the ---Link--> is actually to the Frame(*) structure
@@ -449,7 +449,7 @@ inline static Context(*) VAL_FRAME_BINDING(noquote(Cell(const*)) v) {
 // A frame's phase is usually a pointer to the component action in effect for
 // a composite function (e.g. an ADAPT).
 //
-// But if the node where a phase would usually be found is a REBSTR* then that
+// But if the node where a phase would usually be found is a String(*) then that
 // implies there isn't any special phase besides the action stored by the
 // archetype.  Hence the value cell is storing a name to be used with the
 // action when it is extracted from the frame.  That's why this works:
@@ -488,7 +488,7 @@ inline static option(Symbol(const*)) VAL_FRAME_LABEL(Cell(const*) v) {
 
 inline static void INIT_VAL_FRAME_LABEL(
     Cell(*) v,
-    option(const REBSTR*) label
+    option(String(const*)) label
 ){
     assert(IS_FRAME(v));
     ASSERT_CELL_WRITABLE_EVIL_MACRO(v);  // No label in archetype
@@ -553,7 +553,7 @@ inline static REBVAL *Init_Any_Context(
 inline static REBVAL *Init_Frame(
     Cell(*) out,
     Context(*) c,
-    option(const REBSTR*) label  // nullptr (ANONYMOUS) is okay
+    option(String(const*)) label  // nullptr (ANONYMOUS) is okay
 ){
     Init_Any_Context(out, REB_FRAME, c);
     INIT_VAL_FRAME_LABEL(out, label);

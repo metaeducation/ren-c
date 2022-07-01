@@ -181,7 +181,7 @@ inline static Symbol(const*) Canon_Symbol(SYMID symid) {
     Canon_Symbol(SYM_##name)
 
 inline static bool Are_Synonyms(Symbol(const*) s1, Symbol(const*) s2) {
-    const REBSTR *temp = s1;
+    String(const*) temp = s1;
     do {
         if (temp == s2)
             return true;

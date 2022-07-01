@@ -230,7 +230,7 @@ REBNATIVE(load_extension)
         REBBIN *bin = VAL_BINARY_ENSURE_MUTABLE(script);
         mutable_SER_FLAVOR(bin) = FLAVOR_STRING;
         TERM_STR_LEN_SIZE(
-            cast(REBSTR*, bin),  // legal for tweaking cached data
+            cast(String(*), bin),  // legal for tweaking cached data
             script_num_codepoints,
             BIN_LEN(bin)
         );

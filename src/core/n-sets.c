@@ -208,7 +208,7 @@ REBSER *Make_Set_Operation_Series(
         do {
             // Note: val1 and val2 swapped 2nd pass!
             //
-            const REBSTR *str = VAL_STRING(val1);
+            String(const*) str = VAL_STRING(val1);
 
             DECLARE_LOCAL (iter);
             Copy_Cell(iter, val1);

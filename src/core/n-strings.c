@@ -628,7 +628,7 @@ REBNATIVE(deline)
         return OUT;
     }
 
-    REBSTR *s = VAL_STRING_ENSURE_MUTABLE(input);
+    String(*) s = VAL_STRING_ENSURE_MUTABLE(input);
     REBLEN len_head = STR_LEN(s);
 
     REBLEN len_at = VAL_LEN_AT(input);
@@ -695,7 +695,7 @@ REBNATIVE(enline)
 
     REBVAL *val = ARG(string);
 
-    REBSTR *s = VAL_STRING_ENSURE_MUTABLE(val);
+    String(*) s = VAL_STRING_ENSURE_MUTABLE(val);
     REBLEN idx = VAL_INDEX(val);
 
     REBLEN len;

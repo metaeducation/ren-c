@@ -200,7 +200,7 @@ REBTYPE(Port)
 
             REBSIZ size;
             const REBYTE *data = VAL_BINARY_SIZE_AT(&size, OUT);
-            REBSTR *decoded = Make_Sized_String_UTF8(cs_cast(data), size);
+            String(*) decoded = Make_Sized_String_UTF8(cs_cast(data), size);
             Init_Text(OUT, decoded);
         }
 

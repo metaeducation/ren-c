@@ -435,7 +435,7 @@ void Form_Base64(REB_MOLD *mo, const REBYTE *src, REBLEN len, bool brk)
     // it appends one character at a time and relies upon the mold buffer's
     // natural expansion.  Review if it needs the optimization.
 
-    REBSTR *s = mo->series;
+    String(*) s = mo->series;
 
     REBINT loop = cast(int, len / 3) - 1;
     if (brk and 4 * loop > 64)

@@ -107,7 +107,7 @@ inline static REBLEN FRM_EXPR_INDEX(Frame(*) f) {
     return f->expr_index - 1;
 }
 
-inline static const REBSTR* FRM_FILE(Frame(*) f) {
+inline static String(const*) FRM_FILE(Frame(*) f) {
     if (FRM_IS_VARIADIC(f))
         return nullptr;
     if (Not_Subclass_Flag(ARRAY, FRM_ARRAY(f), HAS_FILE_LINE_UNMASKED))
@@ -119,7 +119,7 @@ inline static const char* FRM_FILE_UTF8(Frame(*) f) {
     //
     // !!! Note: Too early in boot at the moment to use Canon(ANONYMOUS).
     //
-    const REBSTR *str = FRM_FILE(f);
+    String(const*) str = FRM_FILE(f);
     return str ? STR_UTF8(str) : "~anonymous~";
 }
 
@@ -152,7 +152,7 @@ inline static int FRM_LINE(Frame(*) f) {
     ((f)->prior + 0) // prevent assignment via this macro
 
 // The "phase" slot of a FRAME! value is the second node pointer in PAYLOAD().
-// If a frame value is non-archetypal, this slot may be occupied by a REBSTR*
+// If a frame value is non-archetypal, this slot may be occupied by a String(*)
 // which represents the cached name of the action from which the frame
 // was created.  This FRAME! value is archetypal, however...which never holds
 // such a cache.  For performance (even in the debug build, where this is

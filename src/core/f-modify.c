@@ -390,7 +390,7 @@ REBLEN Modify_String_Or_Binary(
         }
         else {
             if (IS_NONSYMBOL_STRING(bin)) {  // guaranteed valid UTF-8
-                const REBSTR *str = STR(bin);
+                String(const*) str = STR(bin);
                 if (Is_Continuation_Byte_If_Utf8(*src_ptr))
                     fail (Error_Bad_Utf8_Bin_Edit_Raw());
 
@@ -716,7 +716,7 @@ REBLEN Modify_String_Or_Binary(
     // unified with the mold buffer?)
 
     if (bookmark) {
-        REBSTR *dst_str = STR(dst_ser);
+        String(*) dst_str = STR(dst_ser);
         if (BMK_INDEX(bookmark) > STR_LEN(dst_str)) {  // past active
             assert(sym == SYM_CHANGE);  // only change removes material
             Free_Bookmarks_Maybe_Null(dst_str);

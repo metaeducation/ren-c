@@ -111,7 +111,7 @@ void Pre_Mold_Core(REB_MOLD *mo, noquote(Cell(const*)) v, bool all)
     else
         Append_Ascii(mo->series, "make ");
 
-    const REBSTR *type_name = Canon_Symbol(SYM_FROM_KIND(CELL_HEART(v)));
+    String(const*) type_name = Canon_Symbol(SYM_FROM_KIND(CELL_HEART(v)));
     Append_Spelling(mo->series, type_name);
 
     Append_Codepoint(mo->series, ' ');
@@ -398,7 +398,7 @@ void Mold_Or_Form_Cell(
     noquote(Cell(const*)) cell,
     bool form
 ){
-    REBSTR *s = mo->series;
+    String(*) s = mo->series;
     ASSERT_SERIES_TERM_IF_NEEDED(s);
 
     if (C_STACK_OVERFLOWING(&s))
@@ -461,7 +461,7 @@ void Mold_Or_Form_Value(REB_MOLD *mo, Cell(const*) v, bool form)
 //
 // Form a value based on the mold opts provided.
 //
-REBSTR *Copy_Mold_Or_Form_Value(Cell(const*) v, REBFLGS opts, bool form)
+String(*) Copy_Mold_Or_Form_Value(Cell(const*) v, REBFLGS opts, bool form)
 {
     DECLARE_MOLD (mo);
     mo->opts = opts;
@@ -477,7 +477,7 @@ REBSTR *Copy_Mold_Or_Form_Value(Cell(const*) v, REBFLGS opts, bool form)
 //
 // Form a value based on the mold opts provided.
 //
-REBSTR *Copy_Mold_Or_Form_Cell(noquote(Cell(const*)) cell, REBFLGS opts, bool form)
+String(*) Copy_Mold_Or_Form_Cell(noquote(Cell(const*)) cell, REBFLGS opts, bool form)
 {
     DECLARE_MOLD (mo);
     mo->opts = opts;
@@ -505,7 +505,7 @@ void Push_Mold(REB_MOLD *mo)
 
     assert(mo->series == nullptr);  // Indicates not pushed, see DECLARE_MOLD
 
-    REBSTR *s = MOLD_BUF;
+    String(*) s = MOLD_BUF;
     ASSERT_SERIES_TERM_IF_NEEDED(s);
 
     mo->series = s;
@@ -617,7 +617,7 @@ void Throttle_Mold(REB_MOLD *mo) {
 // is a helper that extracts the data as a string series.  It resets the
 // buffer to its length at the time when the last push began.
 //
-REBSTR *Pop_Molded_String(REB_MOLD *mo)
+String(*) Pop_Molded_String(REB_MOLD *mo)
 {
     assert(mo->series != nullptr);  // if null, there was no Push_Mold()
     ASSERT_SERIES_TERM_IF_NEEDED(mo->series);
@@ -630,7 +630,7 @@ REBSTR *Pop_Molded_String(REB_MOLD *mo)
     REBSIZ size = STR_SIZE(mo->series) - mo->offset;
     REBLEN len = STR_LEN(mo->series) - mo->index;
 
-    REBSTR *popped = Make_String(size);
+    String(*) popped = Make_String(size);
     memcpy(BIN_HEAD(popped), BIN_AT(mo->series, mo->offset), size);
     TERM_STR_LEN_SIZE(popped, len, size);
 

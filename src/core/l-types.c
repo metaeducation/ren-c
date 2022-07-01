@@ -1048,7 +1048,7 @@ const REBYTE *Scan_Email(
     const REBYTE *cp,
     REBLEN len
 ){
-    REBSTR *s = Make_String(len * 2);  // !!! guess...use mold buffer instead?
+    String(*) s = Make_String(len * 2);  // !!! guess...use mold buffer instead?
     Utf8(*) up = STR_HEAD(s);
 
     REBLEN num_chars = 0;
@@ -1241,7 +1241,7 @@ const REBYTE *Scan_Any(
     // being left open to make the scanner flexible in this respect...to
     // either convert CR LF sequences to just LF, or to preserve the CR.
     //
-    REBSTR *s = Append_UTF8_May_Fail(
+    String(*) s = Append_UTF8_May_Fail(
         nullptr,
         cs_cast(cp),
         num_bytes,
@@ -1373,7 +1373,7 @@ REBNATIVE(scan_net_header)
         // correctly, it would need to use NEXT_CHR to count the characters
         // in the loop above.  Better to convert to usermode.
 
-        REBSTR *string = Make_String(len * 2);
+        String(*) string = Make_String(len * 2);
         Utf8(*) str = STR_HEAD(string);
         cp = start;
 

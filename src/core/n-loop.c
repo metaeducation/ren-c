@@ -1517,7 +1517,7 @@ REBNATIVE(remove_each)
             );
         }
 
-        REBSTR *popped = Pop_Molded_String(mo);
+        String(*) popped = Pop_Molded_String(mo);
 
         assert(STR_LEN(popped) <= VAL_LEN_HEAD(data));
         removals = VAL_LEN_HEAD(data) - STR_LEN(popped);

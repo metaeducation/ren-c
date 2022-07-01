@@ -34,7 +34,7 @@
 //
 // * Though lighter-weight than a plain FUNC, lambdas still have to pay for
 //   a DETAILS array (minimum length 2), a paramlist (also minimum length 2),
-//   and a keylist (which may be optimizable to just a REBSTR* in the single
+//   and a keylist (which may be optimizable to just a String(*) in the single
 //   variable case...which is in the works).  Further optimizations would
 //   need to weigh in the question of how AS FRAME! SOME-LAMBDA could work,
 //   and if it would be worth it in the scheme of things.

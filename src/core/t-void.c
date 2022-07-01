@@ -37,7 +37,7 @@ void MF_Bad_word(REB_MOLD *mo, noquote(Cell(const*)) v, bool form)
 
     Append_Codepoint(mo->series, '~');
 
-    const REBSTR* label = try_unwrap(VAL_BAD_WORD_LABEL(v));
+    String(const*) label = try_unwrap(VAL_BAD_WORD_LABEL(v));
     if (label) {
         Append_Utf8(mo->series, STR_UTF8(label), STR_SIZE(label));
         Append_Codepoint(mo->series, '~');

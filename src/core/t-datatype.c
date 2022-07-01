@@ -93,7 +93,7 @@ void MF_Datatype(REB_MOLD *mo, noquote(Cell(const*)) v, bool form)
     if (not form)
         Pre_Mold_All(mo, v);  // e.g. `#[datatype!`
 
-    const REBSTR *name = Canon_Symbol(VAL_TYPE_SYM(v));
+    String(const*) name = Canon_Symbol(VAL_TYPE_SYM(v));
     Append_Spelling(mo->series, name);
 
     if (not form)

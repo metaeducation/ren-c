@@ -127,7 +127,7 @@ inline static void SET_VAL_EVENT_Y(REBVAL *v, uint16_t y) {
 
 
 // Key event data (Ren-C expands to use SYM_XXX for named keys; it would take
-// an alternate/expanded cell format for EVENT! to store a whole REBSTR*)
+// an alternate/expanded cell format for EVENT! to store a whole String(*))
 //
 // Note: It appears the keycode was zeroed when a keysym was assigned, so you
 // can only have one or the other.

@@ -612,8 +612,8 @@ inline static void SET_SERIES_LEN(REBSER *s, REBLEN len) {
     SET_SERIES_USED(s, len);
 }
 
-#if CPLUSPLUS_11  // catch cases when calling on REBSTR* directly
-    inline static void SET_SERIES_LEN(REBSTR *s, REBLEN len) = delete;
+#if CPLUSPLUS_11  // catch cases when calling on String(*) directly
+    inline static void SET_SERIES_LEN(String(*) s, REBLEN len) = delete;
 #endif
 
 

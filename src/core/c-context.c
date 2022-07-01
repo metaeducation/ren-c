@@ -315,7 +315,7 @@ void Collect_End(struct Reb_Collector *cl)
 // If requested, it will return the first duplicate found (or null).
 //
 void Collect_Context_Keys(
-    option(const REBSTR**) duplicate,
+    option(String(const*)*) duplicate,
     struct Reb_Collector *cl,
     Context(*) context
 ){
@@ -423,7 +423,7 @@ REBSER *Collect_Keylist_Managed(
     Collect_Start(cl, flags);
 
     if (prior) {
-        const REBSTR *duplicate;
+        String(const*) duplicate;
         Collect_Context_Keys(&duplicate, cl, unwrap(prior));
         assert(not duplicate);  // context should have had all unique keys
     }

@@ -792,7 +792,6 @@ union Reb_Series_Info {
     typedef struct Reb_Binary REBBIN;
 
     struct Reb_String : public Reb_Binary {};  // strings can act as binaries
-    typedef struct Reb_String REBSTR;
 
     struct Reb_Symbol : public Reb_String {};  // word-constrained strings
 
@@ -808,7 +807,7 @@ union Reb_Series_Info {
     typedef struct Reb_Map REBMAP;  // the "pairlist" is the identity
 #else
     typedef struct Reb_Series REBBIN;
-    typedef struct Reb_Series REBSTR;
+    typedef struct Reb_Series Reb_String;
     typedef struct Reb_Series Reb_Symbol;
     typedef struct Reb_Series REBBMK;
     typedef struct Reb_Series REBACT;
@@ -821,6 +820,9 @@ union Reb_Series_Info {
 
 #define Context(star_maybe_const) \
     Reb_Context star_maybe_const
+
+#define String(star_maybe_const) \
+    Reb_String star_maybe_const
 
 
 // We want to be able to enumerate keys by incrementing across them.  The

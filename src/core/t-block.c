@@ -126,7 +126,7 @@ Bounce MAKE_Array(
         REBSIZ size;
         Utf8(const*) utf8 = VAL_UTF8_SIZE_AT(&size, arg);
 
-        const REBSTR *file = ANONYMOUS;
+        String(const*) file = ANONYMOUS;
         option(Context(*)) context = nullptr;
         Init_Any_Array(
             out,
@@ -222,7 +222,7 @@ Bounce MAKE_Array(
         //
         REBSIZ utf8_size;
         Utf8(const*) utf8 = VAL_UTF8_SIZE_AT(&utf8_size, arg);
-        const REBSTR *file = ANONYMOUS;
+        String(const*) file = ANONYMOUS;
         option(Context(*)) context = nullptr;
         return Init_Any_Array(
             out,
@@ -235,7 +235,7 @@ Bounce MAKE_Array(
         // `to block! #{00BDAE....}` assumes the binary data is UTF8, and
         // goes directly to the scanner to make an unbound code array.
         //
-        const REBSTR *file = ANONYMOUS;
+        String(const*) file = ANONYMOUS;
 
         REBSIZ size;
         const REBYTE *at = VAL_BINARY_SIZE_AT(&size, arg);

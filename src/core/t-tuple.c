@@ -135,7 +135,7 @@ Bounce MAKE_Sequence(
         REBYTE buf[MAX_TUPLE];
         REBYTE *vp = buf;
 
-        const REBSTR *spelling = VAL_STRING(arg);
+        String(const*) spelling = VAL_STRING(arg);
         const REBYTE *ap = STR_HEAD(spelling);
         size_t size = STR_SIZE(spelling); // UTF-8 len
         if (size & 1)

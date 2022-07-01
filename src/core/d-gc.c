@@ -374,7 +374,7 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
       case REB_META_WORD: {
         assert(Get_Cell_Flag(v, FIRST_IS_NODE));
 
-        const REBSTR *spelling = VAL_WORD_SYMBOL(v);
+        String(const*) spelling = VAL_WORD_SYMBOL(v);
         assert(Is_Series_Frozen(spelling));
 
         // !!! Whether you can count at this point on a spelling being GC

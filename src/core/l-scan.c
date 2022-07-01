@@ -1736,7 +1736,7 @@ static enum Reb_Token Locate_Token_May_Push_Mold(
 void Init_Va_Scan_Level_Core(
     SCAN_LEVEL *level,
     SCAN_STATE *ss,
-    const REBSTR *file,
+    String(const*) file,
     REBLIN line,
     const REBYTE *opt_begin,  // preload the scanner outside the va_list
     REBFED *feed,
@@ -1771,7 +1771,7 @@ void Init_Va_Scan_Level_Core(
 void Init_Scan_Level(
     SCAN_LEVEL *out,
     SCAN_STATE *ss,
-    const REBSTR *file,
+    String(const*) file,
     REBLIN line,
     const REBYTE *utf8,
     REBINT limit,  // !!! limit feature not implemented in R3-Alpha
@@ -2947,7 +2947,7 @@ Bounce Scanner_Executor(Frame(*) f) {
 // Scan source code. Scan state initialized. No header required.
 //
 Array(*) Scan_UTF8_Managed(
-    const REBSTR *file,
+    String(const*) file,
     const REBYTE *utf8,
     REBSIZ size,
     option(Context(*)) context
@@ -2990,7 +2990,7 @@ REBINT Scan_Header(const REBYTE *utf8, REBLEN len)
 {
     SCAN_LEVEL level;
     SCAN_STATE ss;
-    const REBSTR *file = ANONYMOUS;
+    String(const*) file = ANONYMOUS;
     const REBLIN start_line = 1;
     Init_Scan_Level(&level, &ss, file, start_line, utf8, len, nullptr);
 
@@ -3107,7 +3107,7 @@ REBNATIVE(transcode)
   //
   //    !!! Should the base name and extension be stored, or whole path?
 
-    const REBSTR *file;
+    String(const*) file;
     if (REF(file)) {
         file = VAL_STRING(ARG(file));
         Freeze_Series(file);  // freezes vs. interning, see [1]
@@ -3267,7 +3267,7 @@ const REBYTE *Scan_Any_Word(
     REBSIZ size
 ) {
     SCAN_STATE ss;
-    const REBSTR *file = ANONYMOUS;
+    String(const*) file = ANONYMOUS;
     const REBLIN start_line = 1;
 
     DECLARE_END_FRAME (f, FRAME_MASK_NONE);

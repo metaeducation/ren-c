@@ -93,7 +93,7 @@ inline static REBVAL *Init_Issue_Utf8(
         EXTRA(Bytes, out).exactly_4[IDX_EXTRA_LEN] = len;
     }
     else {
-        REBSTR *str = Make_Sized_String_UTF8(cs_cast(utf8), size);
+        String(*) str = Make_Sized_String_UTF8(cs_cast(utf8), size);
         assert(STR_LEN(str) == len);  // ^-- revalidates :-/ should match
         Freeze_Series(str);
         Init_Text(out, str);
@@ -249,7 +249,7 @@ inline static const REBYTE *VAL_BYTES_LIMIT_AT(
     assert(ANY_WORD(v));
     assert(cast(REBLEN, limit) == VAL_LEN_AT(v));
 
-    const REBSTR *spelling = VAL_WORD_SYMBOL(v);
+    String(const*) spelling = VAL_WORD_SYMBOL(v);
     *size_out = STR_SIZE(spelling);
     return STR_HEAD(spelling);
 }
@@ -315,7 +315,7 @@ inline static Utf8(const*) VAL_UTF8_LEN_SIZE_AT_LIMIT(
     else {
         assert(ANY_WORDLIKE(v));
 
-        const REBSTR *spelling = VAL_WORD_SYMBOL(v);
+        String(const*) spelling = VAL_WORD_SYMBOL(v);
         utf8 = STR_HEAD(spelling);
 
         if (size_out or length_out) {

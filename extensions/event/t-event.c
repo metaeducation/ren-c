@@ -486,7 +486,7 @@ void MF_Event(REB_MOLD *mo, noquote(Cell(const*)) v, bool form)
 
         New_Indented_Line(mo);
 
-        const REBSTR *canon = Canon_Symbol(fields[field]);
+        String(const*) canon = Canon_Symbol(fields[field]);
         Append_Utf8(mo->series, STR_UTF8(canon), STR_SIZE(canon));
         Append_Ascii(mo->series, ": ");
         if (IS_WORD(var))

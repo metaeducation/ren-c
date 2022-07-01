@@ -59,7 +59,7 @@ PVAR REBLEN PG_Num_Symbol_Slots_In_Use; // Total symbol hash slots (+deleteds)
 #if !defined(NDEBUG)
     PVAR REBLEN PG_Num_Symbol_Deleteds; // Deleted symbol hash slots "in use"
 #endif
-PVAR REBSTR PG_Deleted_Symbol;  // pointer used to indicate a deletion
+PVAR Reb_Symbol PG_Deleted_Symbol;  // pointer used to indicate a deletion
 
 PVAR REBVAL *Lib_Context_Value;
 PVAR REBVAL *Sys_Context_Value;
@@ -213,7 +213,7 @@ TVAR REBSER **Prior_Expand; // Track prior series expansions (acceleration)
 TVAR REBSER *TG_Mold_Stack; // Used to prevent infinite loop in cyclical molds
 
 TVAR REBBIN *TG_Byte_Buf; // temporary byte buffer used mainly by raw print
-TVAR REBSTR *TG_Mold_Buf; // temporary UTF8 buffer - used mainly by mold
+TVAR String(*) TG_Mold_Buf; // temporary UTF8 buffer - used mainly by mold
 
 TVAR REBSER *GC_Manuals;    // Manually memory managed (not by GC)
 

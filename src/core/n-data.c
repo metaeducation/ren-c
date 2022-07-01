@@ -1685,7 +1685,7 @@ bool Try_As_String(
         if (Is_Continuation_Byte_If_Utf8(*at_ptr))
             fail ("Index at codepoint to convert binary to ANY-STRING!");
 
-        const REBSTR *str;
+        String(const*) str;
         REBLEN index;
         if (
             not IS_SER_UTF8(bin)
@@ -1732,7 +1732,7 @@ bool Try_As_String(
             str = STR(bin);
 
             TERM_STR_LEN_SIZE(
-                m_cast(REBSTR*, str),  // legal for tweaking cached data
+                m_cast(String(*), str),  // legal for tweaking cached data
                 num_codepoints,
                 BIN_LEN(bin)
             );
@@ -1777,7 +1777,7 @@ bool Try_As_String(
         Utf8(const*) utf8 = VAL_UTF8_LEN_SIZE_AT(&len, &size, v);
         assert(size + 1 <= sizeof(PAYLOAD(Bytes, v).at_least_8));  // must fit
 
-        REBSTR *str = Make_String_Core(size, SERIES_FLAGS_NONE);
+        String(*) str = Make_String_Core(size, SERIES_FLAGS_NONE);
         memcpy(SER_DATA(str), utf8, size + 1);  // +1 to include '\0'
         TERM_STR_LEN_SIZE(str, len, size);  // !!! SET_STR asserts size, review
         Freeze_Series(str);
@@ -2011,7 +2011,7 @@ REBNATIVE(as)
 
         if (ANY_STRING(v)) {  // aliasing data as an ANY-WORD! freezes data
           any_string: {
-            const REBSTR *s = VAL_STRING(v);
+            String(const*) s = VAL_STRING(v);
 
             if (not Is_Series_Frozen(s)) {
                 //
@@ -2059,7 +2059,7 @@ REBNATIVE(as)
                 if (Get_Cell_Flag(v, CONST))  // can't freeze or add IS_STRING
                     fail (Error_Alias_Constrains_Raw());
 
-            const REBSTR *str;
+            String(const*) str;
             if (IS_SYMBOL(bin))
                 str = STR(bin);
             else {

@@ -84,13 +84,13 @@ REBINT What_UTF(const REBYTE *bp, REBLEN len)
 // Returns length in chars (negative if all chars are ASCII).
 // No terminator is added.
 //
-REBSTR *Decode_UTF16(
+String(*) Decode_UTF16(
     const REBYTE *src,
     REBLEN len,
     bool little_endian,
     bool crlf_to_lf
 ){
-    REBSTR *s = Make_String(len * 2);  // !!! conservative, 4 bytes per 2...
+    String(*) s = Make_String(len * 2);  // !!! conservative, 4 bytes per 2...
 
     bool expect_lf = false;
     bool ascii = true;
