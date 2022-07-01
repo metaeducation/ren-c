@@ -34,7 +34,7 @@ Bounce Copied_Dispatcher(Frame(*) f)
 {
     REBVAL *archetype = ACT_ARCHETYPE(FRM_PHASE(f));
 
-    //REBCTX *exemplar = ACT_EXEMPLAR(FRM_PHASE(f));
+    //Context(*) exemplar = ACT_EXEMPLAR(FRM_PHASE(f));
 
     INIT_FRM_PHASE(f, VAL_ACTION(archetype));
     //INIT_FRM_BINDING(f, CTX_FRAME_BINDING(exemplar));
@@ -112,7 +112,7 @@ Bounce MAKE_Action(
         // some middle ground.
         //
         REBVAL *frame_copy = rebValue("copy", arg);
-        REBCTX *exemplar = VAL_CONTEXT(frame_copy);
+        Context(*) exemplar = VAL_CONTEXT(frame_copy);
         rebRelease(frame_copy);
 
         return Init_Action(
@@ -300,7 +300,7 @@ REBTYPE(Action)
         Array(*) details = ACT_DETAILS(proxy);
         Init_Bad_Word(ARR_AT(details, 1), Canon(COPY));  // dummy ~copy~
 
-        REBCTX *meta = ACT_META(act);
+        Context(*) meta = ACT_META(act);
         assert(ACT_META(proxy) == nullptr);
         mutable_ACT_META(proxy) = meta;  // !!! Note: not a copy of meta
 

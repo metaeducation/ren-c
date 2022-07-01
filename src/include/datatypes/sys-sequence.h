@@ -125,7 +125,7 @@ inline static bool Is_Valid_Sequence_Element(
 // the output cell passed in will be either a REB_NULL (if the data was
 // too short) or it will be the first badly-typed value that was problematic.
 //
-inline static REBCTX *Error_Bad_Sequence_Init(const REBVAL *v) {
+inline static Context(*) Error_Bad_Sequence_Init(const REBVAL *v) {
     if (Is_Nulled(v))
         return Error_Sequence_Too_Short_Raw();
     fail (Error_Bad_Sequence_Item_Raw(v));

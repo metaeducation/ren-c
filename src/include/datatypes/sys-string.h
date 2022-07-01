@@ -871,7 +871,7 @@ inline static REBSER *Copy_Binary_At_Len(
 // not been checked to see if they are valid UTF-8.  We assume all the bytes
 // *prior* are known to be valid.
 //
-inline static REBCTX *Error_Illegal_Cr(const REBYTE *at, const REBYTE *start)
+inline static Context(*) Error_Illegal_Cr(const REBYTE *at, const REBYTE *start)
 {
     assert(*at == CR);
     REBLEN back_len = 0;
@@ -884,7 +884,7 @@ inline static REBCTX *Error_Illegal_Cr(const REBYTE *at, const REBYTE *start)
         cast(const char*, back),
         at - cast(const REBYTE*, back) + 1  // include CR (escaped, e.g. ^M)
     );
-    REBCTX *error = Error_Illegal_Cr_Raw(str);
+    Context(*) error = Error_Illegal_Cr_Raw(str);
     rebRelease(str);
     return error;
 }

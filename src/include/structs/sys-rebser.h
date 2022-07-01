@@ -77,7 +77,7 @@
 //   concerns specific to special treatment and handling, in interaction with
 //   the garbage collector as well as handling "relative vs specific" values.
 //
-// * Several related types (REBACT for function, REBCTX for context) are
+// * Several related types (REBACT for function, Context(*) for context) are
 //   actually stylized arrays.  They are laid out with special values in their
 //   content (e.g. at the [0] index), or by links to other series in their
 //   `->misc` field of the REBSER node.  Hence series are the basic building
@@ -795,8 +795,6 @@ union Reb_Series_Info {
     typedef struct Reb_String REBSTR;
 
     struct Reb_Symbol : public Reb_String {};  // word-constrained strings
-    #define Symbol(star_maybe_const) \
-        struct Reb_Symbol star_maybe_const
 
     struct Reb_Bookmark_List : public Reb_Series {};
     typedef struct Reb_Bookmark_List REBBMK;  // list of UTF-8 index=>offsets
@@ -805,23 +803,24 @@ union Reb_Series_Info {
     typedef struct Reb_Action REBACT;  // the "details" array is the identity
 
     struct Reb_Context : public Reb_Series {};
-    typedef struct Reb_Context REBCTX;  // the "varlist" is the identity
 
     struct Reb_Map : public Reb_Series {};
     typedef struct Reb_Map REBMAP;  // the "pairlist" is the identity
 #else
     typedef struct Reb_Series REBBIN;
     typedef struct Reb_Series REBSTR;
-
     typedef struct Reb_Series Reb_Symbol;
-    #define Symbol(star_maybe_const) \
-        Reb_Symbol star_maybe_const
-
     typedef struct Reb_Series REBBMK;
     typedef struct Reb_Series REBACT;
-    typedef struct Reb_Series REBCTX;
+    typedef struct Reb_Series Reb_Context;
     typedef struct Reb_Series REBMAP;
 #endif
+
+#define Symbol(star_maybe_const) \
+    Reb_Symbol star_maybe_const
+
+#define Context(star_maybe_const) \
+    Reb_Context star_maybe_const
 
 
 // We want to be able to enumerate keys by incrementing across them.  The

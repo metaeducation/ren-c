@@ -127,7 +127,7 @@ Bounce MAKE_Array(
         REBCHR(const*) utf8 = VAL_UTF8_SIZE_AT(&size, arg);
 
         const REBSTR *file = ANONYMOUS;
-        option(REBCTX*) context = nullptr;
+        option(Context(*)) context = nullptr;
         Init_Any_Array(
             out,
             kind,
@@ -223,7 +223,7 @@ Bounce MAKE_Array(
         REBSIZ utf8_size;
         REBCHR(const*) utf8 = VAL_UTF8_SIZE_AT(&utf8_size, arg);
         const REBSTR *file = ANONYMOUS;
-        option(REBCTX*) context = nullptr;
+        option(Context(*)) context = nullptr;
         return Init_Any_Array(
             out,
             kind,
@@ -239,7 +239,7 @@ Bounce MAKE_Array(
 
         REBSIZ size;
         const REBYTE *at = VAL_BINARY_SIZE_AT(&size, arg);
-        option(REBCTX*) context = nullptr;
+        option(Context(*)) context = nullptr;
         return Init_Any_Array(
             out,
             kind,
@@ -277,7 +277,7 @@ Bounce MAKE_Array(
             assert(not IS_VARLIST(VAL_VARARGS_BINDING(arg)));
         }
         else {
-            REBCTX *context = CTX(VAL_VARARGS_BINDING(arg));
+            Context(*) context = CTX(VAL_VARARGS_BINDING(arg));
             Frame(*) param_frame = CTX_FRAME_MAY_FAIL(context);
 
             REBVAL *param = SPECIFIC(ARR_HEAD(
@@ -713,7 +713,7 @@ void MF_Array(REB_MOLD *mo, noquote(Cell(const*)) v, bool form)
     enum Reb_Kind kind = CELL_HEART(v);
 
     if (form) {
-        option(REBCTX*) context = nullptr;
+        option(Context(*)) context = nullptr;
         Form_Array_At(mo, VAL_ARRAY(v), VAL_INDEX(v), context);
         return;
     }

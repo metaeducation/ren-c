@@ -88,7 +88,7 @@ REBNATIVE(generic)
     REBVAL *verb = ARG(verb);
     REBVAL *spec = ARG(spec);
 
-    REBCTX *meta;
+    Context(*) meta;
     REBFLGS flags = MKF_KEYWORDS | MKF_RETURN;
     Array(*) paramlist = Make_Paramlist_Managed_May_Fail(
         &meta,

@@ -164,11 +164,11 @@ inline static int FRM_LINE(Frame(*) f) {
 inline static void INIT_FRM_PHASE(Frame(*) f, REBACT *phase)  // check types
   { INIT_VAL_FRAME_PHASE_OR_LABEL(f->rootvar, phase); }  // ...only
 
-inline static void INIT_FRM_BINDING(Frame(*) f, REBCTX *binding)
+inline static void INIT_FRM_BINDING(Frame(*) f, Context(*) binding)
   { mutable_BINDING(f->rootvar) = binding; }  // also fast
 
 #define FRM_BINDING(f) \
-    cast(REBCTX*, BINDING((f)->rootvar))
+    cast(Context(*), BINDING((f)->rootvar))
 
 inline static option(Symbol(const*)) FRM_LABEL(Frame(*) f) {
     assert(Is_Action_Frame(f));
@@ -229,7 +229,7 @@ inline static option(Symbol(const*)) FRM_LABEL(Frame(*) f) {
 #define f_array FRM_ARRAY(f)
 
 
-inline static REBCTX *Context_For_Frame_May_Manage(Frame(*) f) {
+inline static Context(*) Context_For_Frame_May_Manage(Frame(*) f) {
     assert(not Is_Action_Frame_Fulfilling(f));
     SET_SERIES_FLAG(f->varlist, MANAGED);
     return CTX(f->varlist);
@@ -801,7 +801,7 @@ inline static bool Pushed_Continuation(
         if (IS_FRAME_PHASED(branch))  // see REDO for tail-call recursion
             fail ("Use REDO to restart a running FRAME! (not DO)");
 
-        REBCTX *c = VAL_CONTEXT(branch);  // checks for INACCESSIBLE
+        Context(*) c = VAL_CONTEXT(branch);  // checks for INACCESSIBLE
 
         if (Get_Subclass_Flag(VARLIST, CTX_VARLIST(c), FRAME_HAS_BEEN_INVOKED))
             fail (Error_Stale_Frame_Raw());

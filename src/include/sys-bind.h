@@ -44,7 +44,7 @@
 // matches the set count.
 //
 // The binding will be either a REBACT (relative to a function) or a
-// REBCTX (specific to a context), or simply a plain Array(*) such as
+// Context(*) (specific to a context), or simply a plain Array(*) such as
 // EMPTY_ARRAY which indicates UNBOUND.  The FLAVOR_BYTE() says what it is
 //
 //     ANY-WORD!: binding is the word's binding
@@ -90,7 +90,7 @@
 // is at MAKE-time, o3 put its binding into any functions bound to o2 or o1,
 // thus getting its overriding behavior.
 //
-inline static bool Is_Overriding_Context(REBCTX *stored, REBCTX *override)
+inline static bool Is_Overriding_Context(Context(*) stored, Context(*) override)
 {
     REBNOD *stored_source = BONUS(KeySource, CTX_VARLIST(stored));
     REBNOD *temp = BONUS(KeySource, CTX_VARLIST(override));
@@ -409,7 +409,7 @@ inline static void Unbind_Any_Word(Cell(*) v) {
     INIT_VAL_WORD_BINDING(v, nullptr);
 }
 
-inline static REBCTX *VAL_WORD_CONTEXT(const REBVAL *v) {
+inline static Context(*) VAL_WORD_CONTEXT(const REBVAL *v) {
     assert(IS_WORD_BOUND(v));
     Array(*) binding = VAL_WORD_BINDING(v);
     if (SER_FLAVOR(binding) == FLAVOR_PATCH)
@@ -420,7 +420,7 @@ inline static REBCTX *VAL_WORD_CONTEXT(const REBVAL *v) {
             == FRM(BONUS(KeySource, binding))->u.action.key  // not fulfilling
     );
     binding->leader.bits |= NODE_FLAG_MANAGED;  // !!! review managing needs
-    REBCTX *c = CTX(binding);
+    Context(*) c = CTX(binding);
     FAIL_IF_INACCESSIBLE_CTX(c);
     return c;
 }
@@ -514,7 +514,7 @@ inline static option(REBSER*) Get_Word_Container(
         }
 
         if (IS_MODULE(ARR_SINGLE(specifier))) {
-            REBCTX *mod = VAL_CONTEXT(ARR_SINGLE(specifier));
+            Context(*) mod = VAL_CONTEXT(ARR_SINGLE(specifier));
             REBVAL *var = MOD_VAR(mod, symbol, true);
             if (var) {
                 *index_out = INDEX_PATCHED;
@@ -541,7 +541,7 @@ inline static option(REBSER*) Get_Word_Container(
         }
 
       blockscope {
-        REBCTX *overload = CTX(overbind);
+        Context(*) overload = CTX(overbind);
 
         // Length at time of virtual bind is cached by index.  This avoids
         // allowing untrustworthy cache states.
@@ -580,7 +580,7 @@ inline static option(REBSER*) Get_Word_Container(
 
   not_virtually_bound: {
 
-    REBCTX *c;
+    Context(*) c;
 
     if (binding == UNBOUND)
         return nullptr;  // once no virtual bind found, no binding is unbound
@@ -751,7 +751,7 @@ inline static const REBVAL *Lookup_Word_May_Fail(
     }
     if (IS_PATCH(s))
         return SPECIFIC(ARR_SINGLE(ARR(s)));
-    REBCTX *c = CTX(s);
+    Context(*) c = CTX(s);
     if (GET_SERIES_FLAG(CTX_VARLIST(c), INACCESSIBLE))
         fail (Error_No_Relative_Core(any_word));
 
@@ -770,7 +770,7 @@ inline static option(const REBVAL*) Lookup_Word(
         return nullptr;
     if (IS_PATCH(s))
         return SPECIFIC(ARR_SINGLE(ARR(s)));
-    REBCTX *c = CTX(s);
+    Context(*) c = CTX(s);
     if (GET_SERIES_FLAG(CTX_VARLIST(c), INACCESSIBLE))
         return nullptr;
 
@@ -804,7 +804,7 @@ inline static REBVAL *Lookup_Mutable_Word_May_Fail(
     if (IS_PATCH(s))
         var = SPECIFIC(ARR_SINGLE(ARR(s)));
     else {
-        REBCTX *c = CTX(s);
+        Context(*) c = CTX(s);
 
         // A context can be permanently frozen (`lock obj`) or temporarily
         // protected, e.g. `protect obj | unprotect obj`.  A native will
@@ -992,7 +992,7 @@ inline static REBNOD** SPC_FRAME_CTX_ADDRESS(REBSPC *specifier)
     return &node_LINK(NextPatch, specifier);
 }
 
-inline static option(REBCTX*) SPC_FRAME_CTX(REBSPC *specifier)
+inline static option(Context(*)) SPC_FRAME_CTX(REBSPC *specifier)
 {
     if (specifier == UNBOUND)  // !!! have caller check?
         return nullptr;
@@ -1156,7 +1156,7 @@ inline static REBSPC *Derive_Specifier_Core(
         // but breaks the "black box" quality of function composition.
         //
       #if !defined(NDEBUG)
-        REBCTX *frame_ctx = try_unwrap(SPC_FRAME_CTX(specifier));
+        Context(*) frame_ctx = try_unwrap(SPC_FRAME_CTX(specifier));
         if (
             frame_ctx == nullptr
             or (
@@ -1258,19 +1258,19 @@ inline static REBSPC *Derive_Specifier_Core(
             // no special invariant to check, anything goes for derived
         }
         else if (IS_DETAILS(old)) {  // relative
-            REBCTX *derived_ctx = try_unwrap(SPC_FRAME_CTX(derived));
-            REBCTX *specifier_ctx = try_unwrap(SPC_FRAME_CTX(specifier));
+            Context(*) derived_ctx = try_unwrap(SPC_FRAME_CTX(derived));
+            Context(*) specifier_ctx = try_unwrap(SPC_FRAME_CTX(specifier));
             assert(derived_ctx == specifier_ctx);
         }
         else {
             assert(IS_PATCH(old));
 
-            REBCTX *binding_ctx = try_unwrap(SPC_FRAME_CTX(old));
+            Context(*) binding_ctx = try_unwrap(SPC_FRAME_CTX(old));
             if (binding_ctx == UNSPECIFIED) {
                 // anything goes for the frame in the derived specifier
             }
             else {
-                REBCTX *derived_ctx = try_unwrap(SPC_FRAME_CTX(derived));
+                Context(*) derived_ctx = try_unwrap(SPC_FRAME_CTX(derived));
                 assert(derived_ctx == binding_ctx);
             }
         }

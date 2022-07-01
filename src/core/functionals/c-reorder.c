@@ -108,7 +108,7 @@ REBNATIVE(reorder_p)  // see REORDER in %base-defs.r, for inheriting meta
     // information from the interface.  But that's what we want, as the
     // caller is to specify a complete ordering.
     //
-    REBCTX *exemplar = ACT_EXEMPLAR(reorderee);
+    Context(*) exemplar = ACT_EXEMPLAR(reorderee);
 
     // We need a binder to efficiently map arguments to their position in
     // the parameters array, and track which parameters are mentioned.
@@ -132,7 +132,7 @@ REBNATIVE(reorder_p)  // see REORDER in %base-defs.r, for inheriting meta
     // without cleaning the binder up first, balancing it all out to zeros.
     // Errors must be stored and reported after the cleanup.
     //
-    option(REBCTX*) error = nullptr;
+    option(Context(*)) error = nullptr;
 
     REBDSP dsp_orig = DSP;
 

@@ -72,7 +72,7 @@
     //
     // https://en.cppreference.com/w/cpp/language/ebo
     //
-    // At one time there was an attempt to make REBCTX/REBACT/REBMAP derive
+    // At one time there was an attempt to make Context/REBACT/REBMAP derive
     // from REBNOD, but not REBSER.  Facilitating that through multiple
     // inheritance foils the Empty Base Class optimization, and creates other
     // headaches.  So it was decided that so long as they are REBSER and not

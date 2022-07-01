@@ -252,7 +252,7 @@ bool Make_Frame_From_Feed_Throws(
         return false;
 
     assert(IS_QUOTED(out));
-    REBCTX *exemplar = Make_Context_For_Action(Lib(IDENTITY), DSP, nullptr);
+    Context(*) exemplar = Make_Context_For_Action(Lib(IDENTITY), DSP, nullptr);
 
     Unquotify(Copy_Cell(CTX_VAR(exemplar, 2), out), 1);
 
@@ -340,14 +340,14 @@ REBNATIVE(reframer_p)
 
     struct Reb_Binder binder;
     INIT_BINDER(&binder);
-    REBCTX *exemplar = Make_Context_For_Action_Push_Partials(
+    Context(*) exemplar = Make_Context_For_Action_Push_Partials(
         ARG(shim),
         dsp_orig,
         &binder,
         NONE_ISOTOPE
     );
 
-    option(REBCTX*) error = nullptr;  // can't fail() with binder in effect
+    option(Context(*)) error = nullptr;  // can't fail() with binder in effect
 
     REBLEN param_index = 0;
 

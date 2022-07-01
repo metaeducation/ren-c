@@ -361,19 +361,19 @@ static bool Subparse_Throws(
 // question, but now the `where` at the time of failure will indicate the
 // location in the parse dialect that's the problem.
 
-inline static REBCTX *Error_Parse_Rule(void) {
+inline static Context(*) Error_Parse_Rule(void) {
     return Error_Parse_Rule_Raw();
 }
 
-inline static REBCTX *Error_Parse_End(void) {
+inline static Context(*) Error_Parse_End(void) {
     return Error_Parse_End_Raw();
 }
 
-inline static REBCTX *Error_Parse_Command(Frame(*) frame_) {
+inline static Context(*) Error_Parse_Command(Frame(*) frame_) {
     return Error_Parse_Command_Raw(P_RULE);
 }
 
-inline static REBCTX *Error_Parse_Variable(Frame(*) frame_) {
+inline static Context(*) Error_Parse_Variable(Frame(*) frame_) {
     return Error_Parse_Variable_Raw(P_RULE);
 }
 
@@ -2741,7 +2741,7 @@ REBNATIVE(parse_p)
         and IS_WORD(rules_at) and VAL_WORD_ID(rules_at) == SYM_COLLECT
         and IS_BLOCK(rules_at + 1)
     ){
-        REBCTX *frame_ctx = Context_For_Frame_May_Manage(frame_);
+        Context(*) frame_ctx = Context_For_Frame_May_Manage(frame_);
         DECLARE_LOCAL (specific);
         Derelativize(specific, rules_at + 1, P_RULE_SPECIFIER);
         return rebValue(

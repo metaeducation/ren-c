@@ -318,7 +318,7 @@ REBVAL *Request_Connect_Socket(const REBVAL *port)
 // Accept an inbound connection on a TCP listen socket.
 //
 void on_new_connection(uv_stream_t *server, int status) {
-    REBCTX *listener_port_ctx = cast(REBCTX*, server->data);
+    Context(*) listener_port_ctx = cast(Context(*), server->data);
     const REBVAL *listening_port = CTX_ARCHETYPE(listener_port_ctx);
     SOCKREQ *listening_sock = Sock_Of_Port(listening_port);
     UNUSED(listening_sock);
@@ -330,7 +330,7 @@ void on_new_connection(uv_stream_t *server, int status) {
     if (status < 0)
         fail (rebError_UV(status));
 
-    REBCTX *client = Copy_Context_Shallow_Managed(listener_port_ctx);
+    Context(*) client = Copy_Context_Shallow_Managed(listener_port_ctx);
     PUSH_GC_GUARD(client);
 
     Init_Nulled(CTX_VAR(client, STD_PORT_DATA));  // just to be sure
@@ -454,7 +454,7 @@ void on_read_alloc(uv_handle_t *handle, size_t suggested_size, uv_buf_t *buf)
 
     Reb_Read_Request *rebreq = cast(Reb_Read_Request*, handle->data);
 
-    REBCTX *port_ctx = rebreq->port_ctx;
+    Context(*) port_ctx = rebreq->port_ctx;
     REBVAL *port_data = CTX_VAR(port_ctx, STD_PORT_DATA);
 
     size_t bufsize;
@@ -498,7 +498,7 @@ void on_read_alloc(uv_handle_t *handle, size_t suggested_size, uv_buf_t *buf)
 void on_read(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf)
 {
     Reb_Read_Request *rebreq = cast(Reb_Read_Request*, stream->data);
-    REBCTX *port_ctx = rebreq->port_ctx;
+    Context(*) port_ctx = rebreq->port_ctx;
 
     REBVAL *port_data = CTX_VAR(port_ctx, STD_PORT_DATA);
 
@@ -660,7 +660,7 @@ static Bounce Transport_Actor(
     if (transport == TRANSPORT_UDP)  // disabled for now
         fail ("https://forum.rebol.info/t/fringe-udp-support-archiving/1730");
 
-    REBCTX *ctx = VAL_CONTEXT(port);
+    Context(*) ctx = VAL_CONTEXT(port);
     REBVAL *spec = CTX_VAR(ctx, STD_PORT_SPEC);
 
     // If a transfer is in progress, the port_data is a BINARY!.  Its index
@@ -953,7 +953,7 @@ static Bounce Transport_Actor(
             "copy ensure object! (@", port, ").scheme.info"
         );  // shallow copy
 
-        REBCTX *info = VAL_CONTEXT(result);
+        Context(*) info = VAL_CONTEXT(result);
 
         Init_Tuple_Bytes(
             CTX_VAR(info, STD_NET_INFO_LOCAL_IP),

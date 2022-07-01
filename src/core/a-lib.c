@@ -1784,7 +1784,7 @@ REBVAL *RL_rebRescueWith(
 
     return result;
 
-} ON_ABRUPT_FAILURE(REBCTX *e) {  ////////////////////////////////////////////
+} ON_ABRUPT_FAILURE(Context(*) e) {  ////////////////////////////////////////////
 
     Drop_Frame(dummy);
 
@@ -2164,7 +2164,7 @@ REBVAL *RL_rebError_OS(int errnum)  // see also convenience macro rebFail_OS()
 {
     ENTER_API;
 
-    REBCTX *error;
+    Context(*) error;
 
   #if TO_WINDOWS
     if (errnum == 0)

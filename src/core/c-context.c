@@ -33,7 +33,7 @@
 // Create context with capacity, allocating space for both words and values.
 // Context will report actual CTX_LEN() of 0 after this call.
 //
-REBCTX *Alloc_Context_Core(enum Reb_Kind kind, REBLEN capacity, REBFLGS flags)
+Context(*) Alloc_Context_Core(enum Reb_Kind kind, REBLEN capacity, REBFLGS flags)
 {
     REBSER *keylist = Make_Series(
         capacity,  // no terminator
@@ -63,7 +63,7 @@ REBCTX *Alloc_Context_Core(enum Reb_Kind kind, REBLEN capacity, REBFLGS flags)
 //
 // Returns whether or not the expansion invalidated existing keys.
 //
-bool Expand_Context_Keylist_Core(REBCTX *context, REBLEN delta)
+bool Expand_Context_Keylist_Core(Context(*) context, REBLEN delta)
 {
     REBSER *keylist = CTX_KEYLIST(context);
     assert(IS_KEYLIST(keylist));
@@ -124,7 +124,7 @@ bool Expand_Context_Keylist_Core(REBCTX *context, REBLEN delta)
 //
 // Expand a context. Copy words if keylist is not unique.
 //
-void Expand_Context(REBCTX *context, REBLEN delta)
+void Expand_Context(Context(*) context, REBLEN delta)
 {
     // varlist is unique to each object--expand without making a copy.
     //
@@ -145,7 +145,7 @@ void Expand_Context(REBCTX *context, REBLEN delta)
 // to this context after the operation.
 //
 REBVAR *Append_Context(
-    REBCTX *context,
+    Context(*) context,
     option(Cell(*)) any_word,  // binding modified (Note: quoted words allowed)
     option(Symbol(const*)) symbol
 ) {
@@ -317,7 +317,7 @@ void Collect_End(struct Reb_Collector *cl)
 void Collect_Context_Keys(
     option(const REBSTR**) duplicate,
     struct Reb_Collector *cl,
-    REBCTX *context
+    Context(*) context
 ){
     const REBKEY *tail;
     const REBKEY *key = CTX_KEYS(&tail, context);
@@ -414,7 +414,7 @@ static void Collect_Inner_Loop(
 REBSER *Collect_Keylist_Managed(
     Cell(const*) head,
     Cell(const*) tail,
-    option(REBCTX*) prior,
+    option(Context(*)) prior,
     REBFLGS flags  // see %sys-core.h for COLLECT_ANY_WORD, etc.
 ) {
     struct Reb_Collector collector;
@@ -583,8 +583,8 @@ Array(*) Collect_Unique_Words_Managed(
 // which types of values need to be copied, deep copied, and rebound.
 //
 void Rebind_Context_Deep(
-    REBCTX *source,
-    REBCTX *dest,
+    Context(*) source,
+    Context(*) dest,
     option(struct Reb_Binder*) binder
 ){
     Cell(const*) tail = ARR_TAIL(CTX_VARLIST(dest));
@@ -603,11 +603,11 @@ void Rebind_Context_Deep(
 // Optionally a parent context may be passed in, which will contribute its
 // keylist of words to the result if provided.
 //
-REBCTX *Make_Context_Detect_Managed(
+Context(*) Make_Context_Detect_Managed(
     enum Reb_Kind kind,
     Cell(const*) head,
     Cell(const*) tail,
-    option(REBCTX*) parent
+    option(Context(*)) parent
 ) {
     assert(kind != REB_MODULE);
 
@@ -628,7 +628,7 @@ REBCTX *Make_Context_Detect_Managed(
     mutable_MISC(VarlistMeta, varlist) = nullptr;
     mutable_LINK(Patches, varlist) = nullptr;  // start w/no virtual binds
 
-    REBCTX *context = CTX(varlist);
+    Context(*) context = CTX(varlist);
 
     // This isn't necessarily the clearest way to determine if the keylist is
     // shared.  Note Collect_Keylist_Managed() isn't called from anywhere
@@ -715,14 +715,14 @@ REBCTX *Make_Context_Detect_Managed(
 // !!! Because this is a work in progress, set-words would be gathered if
 // they were used as values, so they are not currently permitted.
 //
-REBCTX *Construct_Context_Managed(
+Context(*) Construct_Context_Managed(
     enum Reb_Kind kind,
     Cell(*) head,  // !!! Warning: modified binding
     Cell(const*) tail,
     REBSPC *specifier,
-    option(REBCTX*) parent
+    option(Context(*)) parent
 ){
-    REBCTX *context = Make_Context_Detect_Managed(
+    Context(*) context = Make_Context_Detect_Managed(
         kind, // type
         head, // values to scan for toplevel set-words
         tail,
@@ -829,7 +829,7 @@ REBLEN Find_Symbol_In_Context(
         // Modules hang their variables off the symbol itself, in a linked
         // list with other modules who also have variables of that name.
         //
-        REBCTX *c = VAL_CONTEXT(context);
+        Context(*) c = VAL_CONTEXT(context);
         return MOD_VAR(c, symbol, strict) ? INDEX_ATTACHED : 0;
     }
 
@@ -884,7 +884,7 @@ REBVAL *Select_Symbol_In_Context(Cell(const*) context, Symbol(const*) symbol)
 //
 REBVAL *Obj_Value(REBVAL *value, REBLEN index)
 {
-    REBCTX *context = VAL_CONTEXT(value);
+    Context(*) context = VAL_CONTEXT(value);
 
     if (index > CTX_LEN(context)) return 0;
     return CTX_VAR(context, index);
@@ -912,7 +912,7 @@ void Shutdown_Collector(void)
 //
 //  Assert_Context_Core: C
 //
-void Assert_Context_Core(REBCTX *c)
+void Assert_Context_Core(Context(*) c)
 {
     Array(*) varlist = CTX_VARLIST(c);
 

@@ -65,7 +65,7 @@
     inline static REBSPC* SPC(void *p) {
         assert(p != SPECIFIED); // use SPECIFIED, not SPC(SPECIFIED)
 
-        REBCTX *c = CTX(p);
+        Context(*) c = CTX(p);
         assert(CTX_TYPE(c) == REB_FRAME);
 
         // Note: May be managed or unamanged.
@@ -248,7 +248,7 @@ inline static Array(*) Make_Patch_Core(
 //
 inline static void Virtual_Bind_Patchify(
     REBVAL *any_array,
-    REBCTX *ctx,
+    Context(*) ctx,
     enum Reb_Kind kind
 ){
     // Update array's binding.  Note that once virtually bound, mutating BIND

@@ -29,7 +29,7 @@
 #include "sys-core.h"
 
 
-static REBCTX *Error_Bad_Date_Compare(noquote(Cell(const*)) a, noquote(Cell(const*)) b)
+static Context(*) Error_Bad_Date_Compare(noquote(Cell(const*)) a, noquote(Cell(const*)) b)
 {
     return Error_Invalid_Compare_Raw(
         cast(const REBVAL*, a),

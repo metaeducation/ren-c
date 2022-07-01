@@ -121,7 +121,7 @@ Bounce Encloser_Dispatcher(Frame(*) f)
     // out to be fundamentally broken for some reason.
     //
     //-----------------------------------------------------------begin-old-code
-    // REBCTX *c = Steal_Context_Vars(
+    // Context(*) c = Steal_Context_Vars(
     //     CTX(f->varlist),
     //     ACT_KEYLIST(FRM_PHASE(f))
     // );
@@ -139,7 +139,7 @@ Bounce Encloser_Dispatcher(Frame(*) f)
 
     //-----------------------------------------------------------begin-new-code
     Array(*) varlist = f->varlist;
-    REBCTX *c = CTX(varlist);
+    Context(*) c = CTX(varlist);
 
     // Replace the f->varlist with a dead list.
     //

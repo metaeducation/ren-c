@@ -1212,7 +1212,7 @@ Bounce Action_Executor(Frame(*) f)
 void Push_Action(
     Frame(*) f,
     REBACT *act,
-    REBCTX *binding  // actions may only be bound to contexts ATM
+    Context(*) binding  // actions may only be bound to contexts ATM
 ){
     f->executor = &Action_Executor;
 

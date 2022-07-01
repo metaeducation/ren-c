@@ -627,7 +627,7 @@ REBNATIVE(redo)
         Move_Cell(restartee, OUT);
     }
 
-    REBCTX *c = VAL_CONTEXT(restartee);
+    Context(*) c = VAL_CONTEXT(restartee);
 
     Frame(*) f = CTX_FRAME_IF_ON_STACK(c);
     if (f == NULL)
@@ -715,7 +715,7 @@ REBNATIVE(applique)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    REBCTX *exemplar = Make_Context_For_Action_Push_Partials(  // see [1]
+    Context(*) exemplar = Make_Context_For_Action_Push_Partials(  // see [1]
         action,
         BASELINE->dsp,  // lowest_ordered_dsp of refinements to weave in
         nullptr,  // no binder needed
@@ -819,7 +819,7 @@ REBNATIVE(apply)
 
     /*struct Reb_Binder binder;  // see [1]
     INIT_BINDER(&binder);*/
-    REBCTX *exemplar = Make_Context_For_Action_Push_Partials(  // see [2]
+    Context(*) exemplar = Make_Context_For_Action_Push_Partials(  // see [2]
         action,
         BASELINE->dsp, // lowest_ordered_dsp of refinements to weave in
         nullptr /* &binder */,

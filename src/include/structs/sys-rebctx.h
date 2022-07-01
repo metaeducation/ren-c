@@ -24,7 +24,7 @@
 // This file just defines basic structures and flags.
 //
 
-#define MISC_VarlistMeta_TYPE      REBCTX*
+#define MISC_VarlistMeta_TYPE      Context(*)
 #define MISC_VarlistMeta_CAST      CTX
 #define HAS_MISC_VarlistMeta       FLAVOR_VARLIST
 
@@ -89,5 +89,5 @@
         | SERIES_FLAG_LINK_NODE_NEEDS_MARK  /* ancestor */ )
 
 
-inline static Array(*) CTX_VARLIST(REBCTX *ctx)
+inline static Array(*) CTX_VARLIST(Context(*) ctx)
   { return x_cast(Array(*), ctx); }  // ARR() has debug cost, not defined yet

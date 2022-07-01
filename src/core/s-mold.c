@@ -309,7 +309,7 @@ void Form_Array_At(
     REB_MOLD *mo,
     Array(const*) array,
     REBLEN index,
-    option(REBCTX*) context
+    option(Context(*)) context
 ){
     // Form a series (part_mold means mold non-string values):
     REBINT len = ARR_LEN(array) - index;

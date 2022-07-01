@@ -57,7 +57,7 @@ enum {
 //
 Bounce Specializer_Dispatcher(Frame(*) f)
 {
-    REBCTX *exemplar = ACT_EXEMPLAR(FRM_PHASE(f));
+    Context(*) exemplar = ACT_EXEMPLAR(FRM_PHASE(f));
 
     INIT_FRM_PHASE(f, CTX_FRAME_ACTION(exemplar));
     INIT_FRM_BINDING(f, CTX_FRAME_BINDING(exemplar));
@@ -83,7 +83,7 @@ Bounce Specializer_Dispatcher(Frame(*) f)
 // refinements added on the stack) we go ahead and collect bindings from the
 // frame if needed.
 //
-REBCTX *Make_Context_For_Action_Push_Partials(
+Context(*) Make_Context_For_Action_Push_Partials(
     const REBVAL *action,  // need ->binding, so can't just be a REBACT*
     REBDSP lowest_ordered_dsp,  // caller can add refinement specializations
     option(struct Reb_Binder*) binder,
@@ -205,12 +205,12 @@ REBCTX *Make_Context_For_Action_Push_Partials(
 // which to make it usable should be relative to the lowest ordered DSP and
 // not absolute.
 //
-REBCTX *Make_Context_For_Action(
+Context(*) Make_Context_For_Action(
     const REBVAL *action, // need ->binding, so can't just be a REBACT*
     REBDSP lowest_ordered_dsp,
     option(struct Reb_Binder*) binder
 ){
-    REBCTX *exemplar = Make_Context_For_Action_Push_Partials(
+    Context(*) exemplar = Make_Context_For_Action_Push_Partials(
         action,
         lowest_ordered_dsp,
         binder,
@@ -258,7 +258,7 @@ bool Specialize_Action_Throws(
     // identity, specific to SPECIALIZE.  This allows a full spectrum of
     // specialization values, including even to `~` isotopes.
     //
-    REBCTX *exemplar = Make_Context_For_Action_Push_Partials(
+    Context(*) exemplar = Make_Context_For_Action_Push_Partials(
         specializee,
         lowest_ordered_dsp,
         def ?
@@ -739,7 +739,7 @@ REBVAL *First_Unspecialized_Arg(option(const REBPAR **) param_out, Frame(*) f)
 // Leaves details blank, and lets you specify the dispatcher.
 //
 REBACT *Alloc_Action_From_Exemplar(
-    REBCTX *exemplar,
+    Context(*) exemplar,
     Dispatcher* dispatcher,
     REBLEN details_capacity
 ){
@@ -790,7 +790,7 @@ REBACT *Alloc_Action_From_Exemplar(
 //
 // Assumes you want a Specializer_Dispatcher with the exemplar in details.
 //
-REBACT *Make_Action_From_Exemplar(REBCTX *exemplar)
+REBACT *Make_Action_From_Exemplar(Context(*) exemplar)
 {
     REBACT *action = Alloc_Action_From_Exemplar(
         exemplar,

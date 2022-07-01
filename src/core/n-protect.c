@@ -222,7 +222,7 @@ void Protect_Series(const REBSER *s_const, REBLEN index, REBFLGS flags)
 //
 // Anything that calls this must call Uncolor() when done.
 //
-void Protect_Context(REBCTX *c, REBFLGS flags)
+void Protect_Context(Context(*) c, REBFLGS flags)
 {
     Array(*) varlist = m_cast(Array(*), CTX_VARLIST(c));  // mutate flags only
 
@@ -525,7 +525,7 @@ void Force_Value_Frozen_Core(
             SET_SERIES_INFO(a, AUTO_LOCKED);
     }
     else if (ANY_CONTEXT_KIND(heart)) {
-        REBCTX *c = VAL_CONTEXT(v);
+        Context(*) c = VAL_CONTEXT(v);
         if (deep)
             Deep_Freeze_Context(c);
         else

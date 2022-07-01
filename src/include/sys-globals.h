@@ -65,12 +65,12 @@ PVAR REBVAL *Lib_Context_Value;
 PVAR REBVAL *Sys_Context_Value;
 PVAR REBVAL *User_Context_Value;
 
-PVAR REBCTX *Lib_Context;
-PVAR REBCTX *Sys_Context;
-PVAR REBCTX *User_Context;
+PVAR Context(*) Lib_Context;
+PVAR Context(*) Sys_Context;
+PVAR Context(*) User_Context;
 
 PVAR Dispatcher* const *PG_Next_Native_Dispatcher;
-PVAR REBCTX *PG_Currently_Loading_Module;
+PVAR Context(*) PG_Currently_Loading_Module;
 
 //-- Various char tables:
 PVAR REBYTE *White_Chars;

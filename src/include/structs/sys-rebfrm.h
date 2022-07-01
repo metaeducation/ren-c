@@ -386,7 +386,7 @@ typedef Executor Dispatcher;  // sub-dispatched in Action_Executor()
     // which limits its marking up to the progress point of `key`.
     //
     // It starts out unmanaged, so that if no usages by the user specifically
-    // ask for a FRAME! value, and the REBCTX* isn't needed to store in a
+    // ask for a FRAME! value, and the Context(*) isn't needed to store in a
     // Derelativize()'d or Move_Velue()'d value as a binding, it can be
     // reused or freed.  See Push_Action() and Drop_Action() for the logic.
     //

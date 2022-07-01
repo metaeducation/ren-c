@@ -138,7 +138,7 @@ REBNATIVE(set_location_of_error)
 
     REBVAL *location = ARG(location);
 
-    REBCTX *context;
+    Context(*) context;
     if (IS_WORD(location)) {
         if (not IS_WORD_BOUND(location))
             fail ("SET-LOCATION-OF-ERROR requires bound WORD!");
@@ -151,7 +151,7 @@ REBNATIVE(set_location_of_error)
 
     Frame(*) where = CTX_FRAME_MAY_FAIL(context);
 
-    REBCTX *error = VAL_CONTEXT(ARG(error));
+    Context(*) error = VAL_CONTEXT(ARG(error));
     Set_Location_Of_Error(error, where);
 
     return nullptr;

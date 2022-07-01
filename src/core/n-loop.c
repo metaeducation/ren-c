@@ -412,7 +412,7 @@ REBNATIVE(cfor)
 {
     INCLUDE_PARAMS_OF_CFOR;
 
-    REBCTX *context = Virtual_Bind_Deep_To_New_Context(
+    Context(*) context = Virtual_Bind_Deep_To_New_Context(
         ARG(body),  // may be updated, will still be GC safe
         ARG(word)
     );
@@ -497,7 +497,7 @@ REBNATIVE(for_skip)
         return VOID;
     }
 
-    REBCTX *context = Virtual_Bind_Deep_To_New_Context(
+    Context(*) context = Virtual_Bind_Deep_To_New_Context(
         ARG(body),  // may be updated, will still be GC safe
         ARG(word)
     );
@@ -781,7 +781,7 @@ void Init_Loop_Each(Value *iterator, Value *data)
 //
 // It's possible to opt out of variable slots using BLANK!.
 //
-static bool Try_Loop_Each_Next(const Value *iterator, REBCTX *vars_ctx)
+static bool Try_Loop_Each_Next(const Value *iterator, Context(*) vars_ctx)
 {
     struct Loop_Each_State *les;
     les = VAL_HANDLE_POINTER(struct Loop_Each_State, iterator);
@@ -1027,7 +1027,7 @@ REBNATIVE(for_each)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    REBCTX *pseudo_vars_ctx = Virtual_Bind_Deep_To_New_Context(
+    Context(*) pseudo_vars_ctx = Virtual_Bind_Deep_To_New_Context(
         ARG(body),  // may be updated, will still be GC safe
         ARG(vars)
     );
@@ -1136,7 +1136,7 @@ REBNATIVE(every)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    REBCTX *pseudo_vars_ctx = Virtual_Bind_Deep_To_New_Context(
+    Context(*) pseudo_vars_ctx = Virtual_Bind_Deep_To_New_Context(
         ARG(body),  // may be updated, will still be GC safe
         ARG(vars)
     );
@@ -1271,7 +1271,7 @@ REBNATIVE(remove_each)
     if (VAL_INDEX(data) >= VAL_LEN_AT(data))  // past series end
         return Init_Integer(OUT, 0);
 
-    REBCTX *context = Virtual_Bind_Deep_To_New_Context(
+    Context(*) context = Virtual_Bind_Deep_To_New_Context(
         body,  // may be updated, will still be GC safe
         ARG(vars)
     );
@@ -1641,7 +1641,7 @@ REBNATIVE(map)
         fail ("MAP only supports one-level QUOTED! series/path for the moment");
     }
 
-    REBCTX *pseudo_vars_ctx = Virtual_Bind_Deep_To_New_Context(
+    Context(*) pseudo_vars_ctx = Virtual_Bind_Deep_To_New_Context(
         ARG(body),  // may be updated, will still be GC safe
         ARG(vars)
     );
@@ -1894,7 +1894,7 @@ REBNATIVE(for)
     if (n < 1)  // Loop_Integer from 1 to 0 with bump of 1 is infinite
         return VOID;
 
-    REBCTX *context = Virtual_Bind_Deep_To_New_Context(body, vars);
+    Context(*) context = Virtual_Bind_Deep_To_New_Context(body, vars);
     Init_Object(ARG(vars), context);  // keep GC safe
 
     assert(CTX_LEN(context) == 1);

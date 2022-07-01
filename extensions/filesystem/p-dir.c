@@ -67,7 +67,7 @@ REBVAL *Try_Read_Directory_Entry(FILEREQ *dir);
 //
 Bounce Dir_Actor(Frame(*) frame_, REBVAL *port, Symbol(const*) verb)
 {
-    REBCTX *ctx = VAL_CONTEXT(port);
+    Context(*) ctx = VAL_CONTEXT(port);
 
     REBVAL *state = CTX_VAR(ctx, STD_PORT_STATE);
     FILEREQ *dir;

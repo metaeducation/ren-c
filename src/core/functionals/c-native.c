@@ -59,7 +59,7 @@ REBACT *Make_Native(
     REBVAL *spec,
     bool is_combinator,
     Dispatcher* dispatcher,
-    REBCTX *module
+    Context(*) module
 ){
     // There are implicit parameters to both NATIVE/COMBINATOR and usermode
     // COMBINATOR.  The native needs the full spec.
@@ -77,7 +77,7 @@ REBACT *Make_Native(
     // the Natives table.  The associated C function is provided by a
     // table built in the bootstrap scripts, `Native_C_Funcs`.
 
-    REBCTX *meta;
+    Context(*) meta;
     REBFLGS flags = MKF_KEYWORDS | MKF_RETURN;
     Array(*) paramlist = Make_Paramlist_Managed_May_Fail(
         &meta,
@@ -175,7 +175,7 @@ static void Init_Action_Meta_Shim(void) {
     SYMID field_syms[3] = {
         SYM_DESCRIPTION, SYM_PARAMETER_TYPES, SYM_PARAMETER_NOTES
     };
-    REBCTX *meta = Alloc_Context_Core(REB_OBJECT, 4, NODE_FLAG_MANAGED);
+    Context(*) meta = Alloc_Context_Core(REB_OBJECT, 4, NODE_FLAG_MANAGED);
     REBLEN i = 1;
     for (; i != 4; ++i)
         Init_Nulled(

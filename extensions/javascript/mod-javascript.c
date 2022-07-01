@@ -228,7 +228,7 @@ static void cleanup_js_object(const REBVAL *v) {
 
 //=//// FRAME ID AND THROWING /////////////////////////////////////////////=//
 //
-// We go ahead and use the REBCTX* instead of the raw Frame(*) to act as the
+// We go ahead and use the Context(*) instead of the raw Frame(*) to act as the
 // unique pointer to identify a frame.  That's because if the JavaScript code
 // throws and that throw needs to make it to a promise higher up the stack, it
 // uses that pointer as an ID in a mapping table to associate the call with
@@ -454,7 +454,7 @@ void RunPromise(void)
     REBVAL *metaresult = TOP_FRAME->out;
     if (r == BOUNCE_THROWN) {
         assert(Is_Throwing(TOP_FRAME));
-        REBCTX *error = Error_No_Catch_For_Throw(TOP_FRAME);
+        Context(*) error = Error_No_Catch_For_Throw(TOP_FRAME);
         Init_Error(metaresult, error);
     }
     else {
@@ -792,7 +792,7 @@ Bounce JavaScript_Dispatcher(Frame(*) frame_)
     }
 
     TRACE("Calling fail() with error context");
-    REBCTX *ctx = VAL_CONTEXT(OUT);
+    Context(*) ctx = VAL_CONTEXT(OUT);
     fail (ctx);  // better than Init_Thrown_With_Label(), gives location
 }}
 
@@ -818,7 +818,7 @@ REBNATIVE(js_native)
     REBVAL *spec = ARG(spec);
     REBVAL *source = ARG(source);
 
-    REBCTX *meta;
+    Context(*) meta;
     REBFLGS flags = MKF_RETURN | MKF_KEYWORDS;
     Array(*) paramlist = Make_Paramlist_Managed_May_Fail(
         &meta,
@@ -944,7 +944,7 @@ REBNATIVE(js_native)
     );
     REBVAL *error = cast(REBVAL*, Pointer_From_Heapaddr(error_addr));
     if (error) {
-        REBCTX *ctx = VAL_CONTEXT(error);
+        Context(*) ctx = VAL_CONTEXT(error);
         rebRelease(error);  // !!! failing, so not actually needed (?)
 
         TRACE("JS-NATIVE had malformed JS, calling fail() w/error context");
@@ -1063,7 +1063,7 @@ REBNATIVE(js_eval_p)
 
     REBVAL *error = Value_From_Value_Id(addr);
     assert(IS_ERROR(error));
-    REBCTX *ctx = VAL_CONTEXT(error);
+    Context(*) ctx = VAL_CONTEXT(error);
     rebRelease(error);
     fail (ctx);  // better than Init_Thrown_With_Label(), identifies source
 }}

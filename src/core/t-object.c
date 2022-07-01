@@ -27,7 +27,7 @@
 
 static void Append_To_Context(REBVAL *context, REBVAL *arg)
 {
-    REBCTX *c = VAL_CONTEXT(context);
+    Context(*) c = VAL_CONTEXT(context);
 
     if (ANY_WORD(arg)) {  // Add an unset word: `append context 'some-word`
         const bool strict = true;
@@ -52,7 +52,7 @@ static void Append_To_Context(REBVAL *context, REBVAL *arg)
     // Can't actually fail() during a collect, so make sure any errors are
     // set and then jump to a Collect_End()
     //
-    REBCTX *error = nullptr;
+    Context(*) error = nullptr;
 
   if (not IS_MODULE(context)) {
     Collect_Start(&collector, COLLECT_ANY_WORD);
@@ -324,7 +324,7 @@ void Init_Evars(EVARS *e, noquote(Cell(const*)) v) {
                 // a function that reuses its exemplar, but should not be able
                 // to see the locals (for instance).
                 //
-                REBCTX *exemplar = ACT_EXEMPLAR(phase);
+                Context(*) exemplar = ACT_EXEMPLAR(phase);
                 e->locals_visible = (CTX_FRAME_ACTION(exemplar) == phase);
             }
 
@@ -449,8 +449,8 @@ REBINT CT_Context(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
     if (CELL_HEART(a) != CELL_HEART(b))  // e.g. ERROR! won't equal OBJECT!
         return CELL_HEART(a) > CELL_HEART(b) ? 1 : 0;
 
-    REBCTX *c1 = VAL_CONTEXT(a);
-    REBCTX *c2 = VAL_CONTEXT(b);
+    Context(*) c1 = VAL_CONTEXT(a);
+    Context(*) c2 = VAL_CONTEXT(b);
     if (c1 == c2)
         return 0;  // short-circuit, always equal if same context pointer
 
@@ -561,7 +561,7 @@ Bounce MAKE_Frame(
     if (not IS_ACTION(arg))
         fail (Error_Bad_Make(kind, arg));
 
-    REBCTX *exemplar = Make_Context_For_Action(
+    Context(*) exemplar = Make_Context_For_Action(
         arg, // being used here as input (e.g. the ACTION!)
         lowest_ordered_dsp, // will weave in any refinements pushed
         nullptr // no binder needed, not running any code
@@ -608,19 +608,19 @@ Bounce MAKE_Context(
 
         assert(not parent);
 
-        REBCTX *ctx = Alloc_Context_Core(REB_MODULE, 1, NODE_FLAG_MANAGED);
+        Context(*) ctx = Alloc_Context_Core(REB_MODULE, 1, NODE_FLAG_MANAGED);
         return Init_Any_Context(out, REB_MODULE, ctx);
     }
 
-    option(REBCTX*) parent_ctx = parent
+    option(Context(*)) parent_ctx = parent
         ? VAL_CONTEXT(unwrap(parent))
-        : cast(REBCTX*, nullptr);  // C++98 ambiguous w/o cast
+        : cast(Context(*), nullptr);  // C++98 ambiguous w/o cast
 
     if (IS_BLOCK(arg)) {
         Cell(const*) tail;
         Cell(const*) at = VAL_ARRAY_AT(&tail, arg);
 
-        REBCTX *ctx = Make_Context_Detect_Managed(
+        Context(*) ctx = Make_Context_Detect_Managed(
             kind,
             at,
             tail,
@@ -648,7 +648,7 @@ Bounce MAKE_Context(
     // `make object! 10` - currently not prohibited for any context type
     //
     if (ANY_NUMBER(arg)) {
-        REBCTX *context = Make_Context_Detect_Managed(
+        Context(*) context = Make_Context_Detect_Managed(
             kind,
             END,  // values to scan for toplevel set-words (empty)
             END,
@@ -663,7 +663,7 @@ Bounce MAKE_Context(
 
     // make object! map!
     if (IS_MAP(arg)) {
-        REBCTX *c = Alloc_Context_From_Map(VAL_MAP(arg));
+        Context(*) c = Alloc_Context_From_Map(VAL_MAP(arg));
         return Init_Any_Context(out, kind, c);
     }
 
@@ -707,7 +707,7 @@ REBNATIVE(meta_of)  // see notes on MISC_META()
 
     REBVAL *v = ARG(value);
 
-    REBCTX *meta;
+    Context(*) meta;
     if (IS_ACTION(v))
         meta = ACT_META(VAL_ACTION(v));
     else {
@@ -740,7 +740,7 @@ REBNATIVE(set_meta)
 
     REBVAL *meta = ARG(meta);
 
-    REBCTX *meta_ctx;
+    Context(*) meta_ctx;
     if (ANY_CONTEXT(meta)) {
         if (IS_FRAME(meta))
             fail ("SET-META can't store context bindings, frames disallowed");
@@ -773,8 +773,8 @@ REBNATIVE(set_meta)
 // in cells gets duplicated (so new context has the same VAR_MARKED_HIDDEN
 // settings on its variables).  Review if the copying can be cohered better.
 //
-REBCTX *Copy_Context_Extra_Managed(
-    REBCTX *original,
+Context(*) Copy_Context_Extra_Managed(
+    Context(*) original,
     REBLEN extra,
     REBU64 types
 ){
@@ -819,7 +819,7 @@ REBCTX *Copy_Context_Extra_Managed(
         INIT_BONUS_KEYSOURCE(varlist, nullptr);
         mutable_LINK(Patches, varlist) = nullptr;
 
-        REBCTX *copy = CTX(varlist); // now a well-formed context
+        Context(*) copy = CTX(varlist); // now a well-formed context
         assert(GET_SERIES_FLAG(varlist, DYNAMIC));
 
         Symbol(*) *psym = SER_HEAD(Symbol(*), PG_Symbols_By_Hash);
@@ -867,7 +867,7 @@ REBCTX *Copy_Context_Extra_Managed(
     SET_SERIES_LEN(varlist, CTX_LEN(original) + 1);
     varlist->leader.bits |= SERIES_MASK_VARLIST;
 
-    REBCTX *copy = CTX(varlist); // now a well-formed context
+    Context(*) copy = CTX(varlist); // now a well-formed context
 
     if (extra == 0)
         INIT_CTX_KEYLIST_SHARED(copy, CTX_KEYLIST(original));  // ->link field
@@ -913,7 +913,7 @@ void MF_Context(REB_MOLD *mo, noquote(Cell(const*)) v, bool form)
 {
     REBSTR *s = mo->series;
 
-    REBCTX *c = VAL_CONTEXT(v);
+    Context(*) c = VAL_CONTEXT(v);
 
     // Prevent endless mold loop:
     //
@@ -1061,7 +1061,7 @@ Symbol(const*) Symbol_From_Picker(const REBVAL *context, Cell(const*) picker)
 REBTYPE(Context)
 {
     REBVAL *context = D_ARG(1);
-    REBCTX *c = VAL_CONTEXT(context);
+    Context(*) c = VAL_CONTEXT(context);
 
     OPT_SYMID symid = ID_OF_SYMBOL(verb);
 
@@ -1140,7 +1140,7 @@ REBTYPE(Context)
 
         assert(Not_Cell_Flag(var, PROTECTED));
         Copy_Cell(var, setval);
-        return nullptr; }  // caller's REBCTX* is not stale, no update needed
+        return nullptr; }  // caller's Context(*) is not stale, no update needed
 
 
     //=//// PROTECT* ///////////////////////////////////////////////////////=//
@@ -1166,7 +1166,7 @@ REBTYPE(Context)
         else
             Clear_Cell_Flag(var, PROTECTED);
 
-        return nullptr; }  // caller's REBCTX* is not stale, no update needed
+        return nullptr; }  // caller's Context(*) is not stale, no update needed
 
       case SYM_APPEND: {
         REBVAL *arg = D_ARG(2);
@@ -1262,7 +1262,7 @@ REBTYPE(Context)
 REBTYPE(Frame)
 {
     REBVAL *frame = D_ARG(1);
-    REBCTX *c = VAL_CONTEXT(frame);
+    Context(*) c = VAL_CONTEXT(frame);
 
     OPT_SYMID symid = ID_OF_SYMBOL(verb);
 
@@ -1336,7 +1336,7 @@ REBTYPE(Frame)
                 if (not Is_Action_Frame(parent))
                     continue;
 
-                REBCTX* ctx_parent = Context_For_Frame_May_Manage(parent);
+                Context(*) ctx_parent = Context_For_Frame_May_Manage(parent);
                 return_value (CTX_ARCHETYPE(ctx_parent));
             }
             return nullptr; }
@@ -1395,9 +1395,9 @@ REBNATIVE(construct)
     INCLUDE_PARAMS_OF_CONSTRUCT;
 
     REBVAL *spec = ARG(spec);
-    REBCTX *parent = REF(with)
+    Context(*) parent = REF(with)
         ? VAL_CONTEXT(ARG(with))
-        : cast(REBCTX*, nullptr);  // C++98 ambiguous w/o cast
+        : cast(Context(*), nullptr);  // C++98 ambiguous w/o cast
 
     // This parallels the code originally in CONSTRUCT.  Run it if the /ONLY
     // refinement was passed in.
@@ -1426,7 +1426,7 @@ REBNATIVE(construct)
     Cell(const*) tail;
     Cell(*) at = VAL_ARRAY_AT_ENSURE_MUTABLE(&tail, spec);
 
-    REBCTX *ctx = Make_Context_Detect_Managed(
+    Context(*) ctx = Make_Context_Detect_Managed(
         parent ? CTX_TYPE(parent) : REB_OBJECT,  // !!! Presume object?
         at,
         tail,

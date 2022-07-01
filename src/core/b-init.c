@@ -184,7 +184,7 @@ void Set_Stack_Limit(void *base, uintptr_t bounds) {
 //
 static void Startup_Lib(void)
 {
-    REBCTX *lib = Alloc_Context_Core(REB_MODULE, 1, NODE_FLAG_MANAGED);
+    Context(*) lib = Alloc_Context_Core(REB_MODULE, 1, NODE_FLAG_MANAGED);
     ensureNullptr(Lib_Context_Value) = Alloc_Value();
     Init_Any_Context(Lib_Context_Value, REB_MODULE, lib);
     ensureNullptr(Lib_Context) = VAL_CONTEXT(Lib_Context_Value);
@@ -519,7 +519,7 @@ static void Init_System_Object(
     Array(*) datatypes_catalog,
     Array(*) natives_catalog,
     Array(*) generics_catalog,
-    REBCTX *errors_catalog
+    Context(*) errors_catalog
 ) {
     assert(VAL_INDEX(boot_sysobj_spec) == 0);
     Cell(const*) spec_tail;
@@ -528,7 +528,7 @@ static void Init_System_Object(
 
     // Create the system object from the sysobj block (defined in %sysobj.r)
     //
-    REBCTX *system = Make_Context_Detect_Managed(
+    Context(*) system = Make_Context_Detect_Managed(
         REB_OBJECT, // type
         spec_head, // scan for toplevel set-words
         spec_tail,
@@ -587,7 +587,7 @@ static void Init_System_Object(
     //
   blockscope {
     REBVAL *std_error = Get_System(SYS_STANDARD, STD_ERROR);
-    REBCTX *c = VAL_CONTEXT(std_error);
+    Context(*) c = VAL_CONTEXT(std_error);
     mutable_HEART_BYTE(std_error) = REB_ERROR;
 
     REBVAL *rootvar = CTX_ROOTVAR(c);
@@ -835,7 +835,7 @@ void Startup_Core(void)
     Assert_Pointer_Detection_Working();  // uses root series/values to test
   #endif
 
-    REBCTX *sys = Alloc_Context_Core(REB_MODULE, 1, NODE_FLAG_MANAGED);
+    Context(*) sys = Alloc_Context_Core(REB_MODULE, 1, NODE_FLAG_MANAGED);
     ensureNullptr(Sys_Context_Value) = Alloc_Value();
     Init_Any_Context(Sys_Context_Value, REB_MODULE, sys);
     ensureNullptr(Sys_Context) = VAL_CONTEXT(Sys_Context_Value);
@@ -924,7 +924,7 @@ void Startup_Core(void)
 
     // boot->errors is the error definition list from %errors.r
     //
-    REBCTX *errors_catalog = Startup_Errors(SPECIFIC(&boot->errors));
+    Context(*) errors_catalog = Startup_Errors(SPECIFIC(&boot->errors));
     PUSH_GC_GUARD(errors_catalog);
 
     Init_System_Object(

@@ -232,7 +232,7 @@ struct Reb_Enum_Vars {
     // enumerating the array is the easiest near-term option.  This is a list
     // of the bound words.
     //
-    REBCTX *ctx;
+    Context(*) ctx;
     Array(*) wordlist;
     REBVAL *word;
     REBVAL *word_tail;

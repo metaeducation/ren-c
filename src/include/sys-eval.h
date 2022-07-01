@@ -428,7 +428,7 @@ inline static bool Eval_Value_Core_Throws(
 inline static Bounce Native_Failure_Result(Frame(*) frame_, const void *p) {
     assert(Is_Stale_Void(&TG_Thrown_Arg));
 
-    REBCTX *error;
+    Context(*) error;
     switch (Detect_Rebol_Pointer(p)) {
       case DETECTED_AS_UTF8:
         error = Error_User(cast(const char*, p));

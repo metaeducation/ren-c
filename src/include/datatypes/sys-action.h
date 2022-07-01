@@ -82,7 +82,7 @@
 //
 
 
-// REBCTX types use this field of their varlist (which is the identity of
+// Context types use this field of their varlist (which is the identity of
 // an ANY-CONTEXT!) to find their "keylist".  It is stored in the REBSER
 // node of the varlist Array(*) vs. in the REBVAL of the ANY-CONTEXT! so
 // that the keylist can be changed without needing to update all the
@@ -273,14 +273,14 @@ inline static Array(*) ACT_IDENTITY(REBACT *a)
   { return x_cast(Array(*), a); }
 
 
-inline static REBCTX *VAL_ACTION_BINDING(noquote(Cell(const*)) v) {
+inline static Context(*) VAL_ACTION_BINDING(noquote(Cell(const*)) v) {
     assert(CELL_HEART(v) == REB_ACTION);
     return CTX(BINDING(v));
 }
 
 inline static void INIT_VAL_ACTION_BINDING(
     Cell(*) v,
-    REBCTX *binding
+    Context(*) binding
 ){
     assert(IS_ACTION(v));
     mutable_BINDING(v) = binding;
@@ -303,7 +303,7 @@ inline static void INIT_VAL_ACTION_BINDING(
 // before the place where the exemplar is to be found.
 //
 
-#define INODE_Exemplar_TYPE     REBCTX*
+#define INODE_Exemplar_TYPE     Context(*)
 #define INODE_Exemplar_CAST     CTX
 #define HAS_INODE_Exemplar      FLAVOR_DETAILS
 
@@ -538,7 +538,7 @@ inline static REBVAL *Init_Action_Core(
     Cell(*) out,
     REBACT *a,
     option(Symbol(const*)) label,  // allowed to be ANONYMOUS
-    REBCTX *binding  // allowed to be UNBOUND
+    Context(*) binding  // allowed to be UNBOUND
 ){
   #if !defined(NDEBUG)
     Extra_Init_Action_Checks_Debug(a);

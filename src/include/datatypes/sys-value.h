@@ -50,7 +50,7 @@
 //
 // The PROBE macro can be used in debug builds to mold a REBVAL much like the
 // Rebol `probe` operation.  But it's actually polymorphic, and if you have
-// a REBSER*, REBCTX*, or Array(*) it can be used with those as well.  In C++,
+// a REBSER*, Context(*), or Array(*) it can be used with those as well.  In C++,
 // you can even get the same value and type out as you put in...just like in
 // Rebol, permitting things like `return PROBE(Make_Some_Series(...));`
 //
@@ -576,7 +576,7 @@ inline static REBVAL *SPECIFIC(const_if_c Cell(*) v) {
 #define SPECIFIED \
     ((REBSPC*)nullptr)  // cast() doesn't like nullptr, fix
 
-#define UNBOUND nullptr  // not always a REBNOD* (sometimes REBCTX)
+#define UNBOUND nullptr  // not always a REBNOD* (sometimes Context(*))
 #define UNSPECIFIED nullptr
 
 

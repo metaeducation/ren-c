@@ -237,7 +237,7 @@ REBNATIVE(in)
 {
     INCLUDE_PARAMS_OF_IN;
 
-    REBCTX *ctx = VAL_CONTEXT(ARG(context));
+    Context(*) ctx = VAL_CONTEXT(ARG(context));
     REBVAL *v = ARG(value);
 
     // !!! Note that BIND of a WORD! in historical Rebol/Red would return the
@@ -275,7 +275,7 @@ REBNATIVE(without)
 {
     INCLUDE_PARAMS_OF_WITHOUT;
 
-    REBCTX *ctx = VAL_CONTEXT(ARG(context));
+    Context(*) ctx = VAL_CONTEXT(ARG(context));
     REBVAL *v = ARG(value);
 
     // !!! Note that BIND of a WORD! in historical Rebol/Red would return the
@@ -330,7 +330,7 @@ REBNATIVE(use)
     Value *vars = ARG(vars);
     Value *body = ARG(body);
 
-    REBCTX *context = Virtual_Bind_Deep_To_New_Context(
+    Context(*) context = Virtual_Bind_Deep_To_New_Context(
         body,  // may be replaced with rebound copy, or left the same
         vars  // similar to the "spec" of a loop: WORD!/LIT-WORD!/BLOCK!
     );
@@ -350,7 +350,7 @@ bool Did_Get_Binding_Of(REBVAL *out, const REBVAL *v)
 {
     switch (VAL_TYPE(v)) {
     case REB_ACTION: {
-        REBCTX *binding = VAL_ACTION_BINDING(v); // e.g. METHOD, RETURNs
+        Context(*) binding = VAL_ACTION_BINDING(v); // e.g. METHOD, RETURNs
         if (not binding)
             return false;
 
@@ -374,7 +374,7 @@ bool Did_Get_Binding_Of(REBVAL *out, const REBVAL *v)
         // moved (e.g. OUT would be examined here to determine if it would
         // have a longer lifetime than the Frame(*) or other node)
         //
-        REBCTX *c = VAL_WORD_CONTEXT(v);
+        Context(*) c = VAL_WORD_CONTEXT(v);
 
         // If it's a FRAME! we want the phase to match the execution phase at
         // the current moment of execution.
@@ -409,7 +409,7 @@ bool Did_Get_Binding_Of(REBVAL *out, const REBVAL *v)
     // practice...keep an eye out for counterexamples.
     //
     if (IS_FRAME(out)) {
-        REBCTX *c = VAL_CONTEXT(out);
+        Context(*) c = VAL_CONTEXT(out);
         Frame(*) f = CTX_FRAME_IF_ON_STACK(c);
         if (f) {
             INIT_VAL_FRAME_PHASE(out, FRM_PHASE(f));
@@ -490,7 +490,7 @@ REBNATIVE(unbind)
 
         Cell(const*) tail;
         Cell(*) at = VAL_ARRAY_AT_ENSURE_MUTABLE(&tail, word);
-        option(REBCTX*) context = nullptr;
+        option(Context(*)) context = nullptr;
         Unbind_Values_Core(at, tail, context, did REF(deep));
     }
 
@@ -1458,8 +1458,8 @@ REBNATIVE(resolve)
 {
     INCLUDE_PARAMS_OF_RESOLVE;
 
-    REBCTX *where = VAL_CONTEXT(ARG(where));
-    REBCTX *source = VAL_CONTEXT(ARG(source));
+    Context(*) where = VAL_CONTEXT(ARG(where));
+    Context(*) source = VAL_CONTEXT(ARG(source));
 
     Cell(const*) tail;
     Cell(const*) v = VAL_ARRAY_AT(&tail, ARG(exports));

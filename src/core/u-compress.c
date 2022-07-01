@@ -105,7 +105,7 @@ static void zfree(void *opaque, void *addr)
 // Zlib gives back string error messages.  We use them or fall back on the
 // integer code if there is no message.
 //
-static REBCTX *Error_Compression(const z_stream *strm, int ret)
+static Context(*) Error_Compression(const z_stream *strm, int ret)
 {
     // rebMalloc() fails vs. returning nullptr, so as long as zalloc() is used
     // then Z_MEM_ERROR should never happen.

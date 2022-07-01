@@ -167,7 +167,7 @@ REBVAL *Init_Near_For_Frame(Cell(*) out, Frame(*) f)
 //
 //  Is_Context_Running_Or_Pending: C
 //
-bool Is_Context_Running_Or_Pending(REBCTX *frame_ctx)
+bool Is_Context_Running_Or_Pending(Context(*) frame_ctx)
 {
     Frame(*) f = CTX_FRAME_IF_ON_STACK(frame_ctx);
     if (not f)
@@ -193,7 +193,7 @@ REBNATIVE(running_q)
 {
     INCLUDE_PARAMS_OF_RUNNING_Q;
 
-    REBCTX *frame_ctx = VAL_CONTEXT(ARG(frame));
+    Context(*) frame_ctx = VAL_CONTEXT(ARG(frame));
 
     Frame(*) f = CTX_FRAME_MAY_FAIL(frame_ctx);
 
@@ -217,7 +217,7 @@ REBNATIVE(pending_q)
 {
     INCLUDE_PARAMS_OF_PENDING_Q;
 
-    REBCTX *frame_ctx = VAL_CONTEXT(ARG(frame));
+    Context(*) frame_ctx = VAL_CONTEXT(ARG(frame));
 
     Frame(*) f = CTX_FRAME_MAY_FAIL(frame_ctx);
 

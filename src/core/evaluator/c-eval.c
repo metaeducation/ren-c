@@ -640,7 +640,7 @@ Bounce Evaluator_Executor(Frame(*) f)
                 }
             }
 
-            REBCTX *binding = VAL_ACTION_BINDING(unwrap(f_current_gotten));
+            Context(*) binding = VAL_ACTION_BINDING(unwrap(f_current_gotten));
             Symbol(const*) label = VAL_WORD_SYMBOL(f_current);  // use WORD!
             bool enfixed = Get_Action_Flag(action, ENFIXED);
 
@@ -1419,7 +1419,7 @@ Bounce Evaluator_Executor(Frame(*) f)
         REBDSP dsp_output = f->baseline.dsp + 2;
 
       blockscope {
-        REBCTX *c = VAL_CONTEXT(SPARE);
+        Context(*) c = VAL_CONTEXT(SPARE);
         const REBKEY *key_tail;
         const REBKEY *key = CTX_KEYS(&key_tail, c);
         REBVAR *var = CTX_VARS_HEAD(c);

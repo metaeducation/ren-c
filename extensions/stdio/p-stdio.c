@@ -294,7 +294,7 @@ REBVAL *Read_Line(STD_TERM *t)
 //
 Bounce Console_Actor(Frame(*) frame_, REBVAL *port, Symbol(const*) verb)
 {
-    REBCTX *ctx = VAL_CONTEXT(port);
+    Context(*) ctx = VAL_CONTEXT(port);
 
     switch (ID_OF_SYMBOL(verb)) {
       case SYM_REFLECT: {

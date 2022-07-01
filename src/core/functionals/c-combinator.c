@@ -268,7 +268,7 @@ REBNATIVE(combinator)
     DECLARE_LOCAL (expanded_spec);
     Init_Block(expanded_spec, Expanded_Combinator_Spec(ARG(spec)));
 
-    REBCTX *meta;
+    Context(*) meta;
     REBFLGS flags = MKF_KEYWORDS | MKF_RETURN;
     Array(*) paramlist = Make_Paramlist_Managed_May_Fail(
         &meta,
@@ -328,7 +328,7 @@ void Push_Parser_Subframe(
     assert(ANY_SERIES(input));
     assert(IS_ACTION(parser));
 
-    REBCTX *ctx = Make_Context_For_Action(parser, DSP, nullptr);
+    Context(*) ctx = Make_Context_For_Action(parser, DSP, nullptr);
 
     const REBKEY* remainder_key = CTX_KEY(ctx, IDX_COMBINATOR_PARAM_REMAINDER);
     const REBKEY* input_key = CTX_KEY(ctx, IDX_COMBINATOR_PARAM_INPUT);
@@ -423,7 +423,7 @@ REBNATIVE(text_x_combinator)
 {
     INCLUDE_PARAMS_OF_TEXT_X_COMBINATOR;
 
-    REBCTX *state = VAL_CONTEXT(ARG(state));
+    Context(*) state = VAL_CONTEXT(ARG(state));
     bool cased = Is_Truthy(CTX_VAR(state, IDX_UPARSE_PARAM_CASE));
 
     Value *v = ARG(value);
@@ -628,7 +628,7 @@ REBNATIVE(further_combinator)
 
 
 struct Combinator_Param_State {
-    REBCTX *ctx;
+    Context(*) ctx;
     Frame(*) frame_;
 };
 

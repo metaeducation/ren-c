@@ -27,7 +27,7 @@
 
 
 
-#define MISC_DetailsMeta_TYPE      REBCTX*
+#define MISC_DetailsMeta_TYPE      Context(*)
 #define MISC_DetailsMeta_CAST      CTX
 #define HAS_MISC_DetailsMeta       FLAVOR_DETAILS
 

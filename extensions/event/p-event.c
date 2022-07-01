@@ -65,7 +65,7 @@ Bounce Event_Actor(Frame(*) frame_, REBVAL *port, Symbol(const*) verb)
 {
     // Validate and fetch relevant PORT fields:
     //
-    REBCTX *ctx = VAL_CONTEXT(port);
+    Context(*) ctx = VAL_CONTEXT(port);
     REBVAL *state = CTX_VAR(ctx, STD_PORT_STATE);
     REBVAL *spec = CTX_VAR(ctx, STD_PORT_SPEC);
     if (!IS_OBJECT(spec))

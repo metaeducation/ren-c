@@ -204,7 +204,7 @@ void Shutdown_Frame_Stack(void)
 // This is used to an advantage in the APIs like rebValue(), to be able to get
 // a notion of a "current context" applicable *only* to when natives run.
 //
-REBCTX *Get_Context_From_Stack(void)
+Context(*) Get_Context_From_Stack(void)
 {
     Frame(*) f = TOP_FRAME;
     REBACT *phase = nullptr; // avoid potential uninitialized variable warning

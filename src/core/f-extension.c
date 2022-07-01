@@ -192,7 +192,7 @@ REBNATIVE(load_extension)
 
     // !!! used to use STD_EXT_CTX, now this would go in META OF
 
-    REBCTX *module_ctx = Alloc_Context_Core(REB_MODULE, 1, NODE_FLAG_MANAGED);
+    Context(*) module_ctx = Alloc_Context_Core(REB_MODULE, 1, NODE_FLAG_MANAGED);
 
     PG_Next_Native_Dispatcher = dispatchers;
     PG_Currently_Loading_Module = module_ctx;

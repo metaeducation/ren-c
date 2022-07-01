@@ -739,7 +739,7 @@ Bounce Call_Core(Frame(*) frame_) {
         rebFail_OS (ret);
 
     if (REF(info)) {
-        REBCTX *info = Alloc_Context(REB_OBJECT, 2);
+        Context(*) info = Alloc_Context(REB_OBJECT, 2);
 
         Init_Integer(Append_Context(info, nullptr, Canon(ID)), pid);
         if (REF(wait))

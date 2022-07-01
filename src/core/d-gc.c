@@ -189,7 +189,7 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
 
       case REB_EVENT: {  // packed cell structure with one GC-able slot
         assert(Get_Cell_Flag(v, FIRST_IS_NODE));
-        REBNOD *n = VAL_NODE1(v);  // REBGOB*, REBCTX*, etc.
+        REBNOD *n = VAL_NODE1(v);  // REBGOB*, Context(*), etc.
         assert(n == nullptr or Is_Marked(n));
         break; }
 
@@ -247,7 +247,7 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
             break;
 
         assert((v->header.bits & CELL_MASK_CONTEXT) == CELL_MASK_CONTEXT);
-        REBCTX *context = VAL_CONTEXT(v);
+        Context(*) context = VAL_CONTEXT(v);
         assert(Is_Marked(context));
 
         // Currently the "binding" in a context is only used by FRAME! to

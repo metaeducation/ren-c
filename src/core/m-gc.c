@@ -633,7 +633,7 @@ static void Mark_Root_Series(void)
                 // root set.
 
                 // Only plain arrays are supported as unmanaged across
-                // evaluations, because REBCTX and REBACT and REBMAP are too
+                // evaluations, because Context and REBACT and REBMAP are too
                 // complex...they must be managed before evaluations happen.
                 // Manage and use PUSH_GC_GUARD and DROP_GC_GUARD on them.
                 //
@@ -1227,7 +1227,7 @@ REBLEN Recycle_Core(bool shutdown, REBSER *sweeplist)
                 continue;
             REBSER *patch = MISC(Hitch, *psym);
             for (; patch != *psym; patch = SER(node_MISC(Hitch, patch))) {
-                REBCTX *context = INODE(PatchContext, patch);
+                Context(*) context = INODE(PatchContext, patch);
                 if (GET_SERIES_FLAG(patch, MARKED)) {
                     assert(GET_SERIES_FLAG(CTX_VARLIST(context), MARKED));
                     continue;

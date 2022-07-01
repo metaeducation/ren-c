@@ -28,7 +28,7 @@
 // other series nodes).
 //
 // The API value content is in the single cell, with LINK().owner holding
-// a REBCTX* of the FRAME! that controls its lifetime, or EMPTY_ARRAY.  This
+// a Context(*) of the FRAME! that controls its lifetime, or EMPTY_ARRAY.  This
 // link field exists in the pointer immediately prior to the REBVAL*, which
 // means it can be sniffed as a REBNOD* and distinguished from handles that
 // were given back with rebMalloc(), so routines can discern them.

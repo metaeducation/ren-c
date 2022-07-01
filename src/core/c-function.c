@@ -489,7 +489,7 @@ void Push_Paramlist_Triads_May_Fail(
 // as part of this popping process.
 //
 Array(*) Pop_Paramlist_With_Meta_May_Fail(
-    REBCTX **meta,
+    Context(*) *meta,
     REBDSP dsp_orig,
     REBFLGS flags,
     REBDSP definitional_return_dsp
@@ -848,7 +848,7 @@ Array(*) Pop_Paramlist_With_Meta_May_Fail(
 // variable.  But it won't be a void at the start.
 //
 Array(*) Make_Paramlist_Managed_May_Fail(
-    REBCTX **meta,
+    Context(*) *meta,
     const REBVAL *spec,
     REBFLGS *flags  // flags may be modified to carry additional information
 ){
@@ -1036,7 +1036,7 @@ REBACT *Make_Action(
 //
 void Get_Maybe_Fake_Action_Body(REBVAL *out, const REBVAL *action)
 {
-    REBCTX *binding = VAL_ACTION_BINDING(action);
+    Context(*) binding = VAL_ACTION_BINDING(action);
     REBACT *a = VAL_ACTION(action);
 
     // A Hijacker *might* not need to splice itself in with a dispatcher.

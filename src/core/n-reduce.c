@@ -225,7 +225,7 @@ REBNATIVE(reduce_each)
         mutable_HEART_BYTE(vars) = REB_WORD;
     }
 
-    REBCTX *context = Virtual_Bind_Deep_To_New_Context(
+    Context(*) context = Virtual_Bind_Deep_To_New_Context(
         ARG(body),  // may be updated, will still be GC safe
         ARG(vars)
     );

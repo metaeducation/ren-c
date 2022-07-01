@@ -207,7 +207,7 @@ REBNATIVE(does)
     // On all other types, we just make it act like a specialized call to
     // DO for that value.
 
-    REBCTX *exemplar = Make_Context_For_Action(
+    Context(*) exemplar = Make_Context_For_Action(
         Lib(DO),
         DSP,  // lower dsp would be if we wanted to add refinements
         nullptr  // don't set up a binder; just poke specializee in frame

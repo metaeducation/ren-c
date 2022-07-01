@@ -217,7 +217,7 @@ REBNATIVE(lambda)
         return Init_Action(OUT, lambda, ANONYMOUS, UNBOUND);
     }
 
-    REBCTX *meta;
+    Context(*) meta;
     Array(*) paramlist = Pop_Paramlist_With_Meta_May_Fail(
         &meta,
         dsp_orig,

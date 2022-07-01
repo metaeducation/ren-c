@@ -360,7 +360,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
             Clear_Frame_Flag(FRAME, NOTIFY_ON_ABRUPT_FAILURE);
             Clear_Frame_Flag(FRAME, ABRUPT_FAILURE);
             assert(IS_ERROR(VAL_THROWN_LABEL(FRAME)));
-            REBCTX *ctx = VAL_CONTEXT(VAL_THROWN_LABEL(FRAME));
+            Context(*) ctx = VAL_CONTEXT(VAL_THROWN_LABEL(FRAME));
             CATCH_THROWN(SPARE, FRAME);
             fail (ctx);
         }
@@ -399,7 +399,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
     assert(!"executor(f) not OUT, BOUNCE_THROWN, or BOUNCE_CONTINUE");
     panic (cast(void*, r));
 
-} ON_ABRUPT_FAILURE(REBCTX *e) {  ////////////////////////////////////////////
+} ON_ABRUPT_FAILURE(Context(*) e) {  ////////////////////////////////////////////
 
   // 1. An abrupt fail(...) is treated as a "thrown error", which can not be
   //    intercepted in the same way as a definitional error can be.

@@ -57,7 +57,7 @@ REBMAP *Make_Map(REBLEN capacity)
 }
 
 
-static REBCTX *Error_Conflicting_Key(
+static Context(*) Error_Conflicting_Key(
     Cell(const*) key,
     REBSPC *specifier
 ){
@@ -493,7 +493,7 @@ Array(*) Map_To_Array(const REBMAP *map, REBINT what)
 //
 //  Alloc_Context_From_Map: C
 //
-REBCTX *Alloc_Context_From_Map(const REBMAP *map)
+Context(*) Alloc_Context_From_Map(const REBMAP *map)
 {
     // Doesn't use Length_Map because it only wants to consider words.
     //
@@ -514,7 +514,7 @@ REBCTX *Alloc_Context_From_Map(const REBMAP *map)
 
     // See Alloc_Context() - cannot use it directly because no Collect_Words
 
-    REBCTX *c = Alloc_Context(REB_OBJECT, count);
+    Context(*) c = Alloc_Context(REB_OBJECT, count);
 
     Cell(const*) mval_tail = ARR_TAIL(MAP_PAIRLIST(map));
     Cell(const*) mval = ARR_HEAD(MAP_PAIRLIST(map));

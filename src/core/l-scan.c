@@ -626,7 +626,7 @@ static const REBYTE *Skip_Tag(const REBYTE *cp)
 // clear that this is what's happening for the moment.
 //
 static void Update_Error_Near_For_Line(
-    REBCTX *error,
+    Context(*) error,
     SCAN_STATE *ss,
     REBLEN line,
     const REBYTE *line_head
@@ -692,7 +692,7 @@ static void Update_Error_Near_For_Line(
 // code size in some way, but having lots of calls help esp. when scanning
 // during boot and getting error line numbers printf'd in the Wasm build.
 //
-static REBCTX *Error_Syntax(SCAN_STATE *ss, enum Reb_Token token) {
+static Context(*) Error_Syntax(SCAN_STATE *ss, enum Reb_Token token) {
     //
     // The scanner code has `bp` and `ep` locals which mirror ss->begin and
     // ss->end.  However, they get out of sync.  If they are updated, they
@@ -718,7 +718,7 @@ static REBCTX *Error_Syntax(SCAN_STATE *ss, enum Reb_Token token) {
         )
     );
 
-    REBCTX *error = Error_Scan_Invalid_Raw(token_name, token_text);
+    Context(*) error = Error_Scan_Invalid_Raw(token_name, token_text);
     Update_Error_Near_For_Line(error, ss, ss->line, ss->line_head);
     return error;
 }
@@ -734,11 +734,11 @@ static REBCTX *Error_Syntax(SCAN_STATE *ss, enum Reb_Token token) {
 // better form of this error would walk the scan state stack and be able to
 // report all the unclosed terms.
 //
-static REBCTX *Error_Missing(SCAN_LEVEL *level, char wanted) {
+static Context(*) Error_Missing(SCAN_LEVEL *level, char wanted) {
     DECLARE_LOCAL (expected);
     Init_Text(expected, Make_Codepoint_String(wanted));
 
-    REBCTX *error = Error_Scan_Missing_Raw(expected);
+    Context(*) error = Error_Scan_Missing_Raw(expected);
 
     // We have two options of where to implicate the error...either the start
     // of the thing being scanned, or where we are now (or, both).  But we
@@ -769,11 +769,11 @@ static REBCTX *Error_Missing(SCAN_LEVEL *level, char wanted) {
 //
 // For instance, `load "abc ]"`
 //
-static REBCTX *Error_Extra(SCAN_STATE *ss, char seen) {
+static Context(*) Error_Extra(SCAN_STATE *ss, char seen) {
     DECLARE_LOCAL (unexpected);
     Init_Text(unexpected, Make_Codepoint_String(seen));
 
-    REBCTX *error = Error_Scan_Extra_Raw(unexpected);
+    Context(*) error = Error_Scan_Extra_Raw(unexpected);
     Update_Error_Near_For_Line(error, ss, ss->line, ss->line_head);
     return error;
 }
@@ -788,8 +788,8 @@ static REBCTX *Error_Extra(SCAN_STATE *ss, char seen) {
 // applications if it would point out the locations of both points.  R3-Alpha
 // only pointed out the location of the start token.
 //
-static REBCTX *Error_Mismatch(SCAN_LEVEL *level, char wanted, char seen) {
-    REBCTX *error = Error_Scan_Mismatch_Raw(rebChar(wanted), rebChar(seen));
+static Context(*) Error_Mismatch(SCAN_LEVEL *level, char wanted, char seen) {
+    Context(*) error = Error_Scan_Mismatch_Raw(rebChar(wanted), rebChar(seen));
     Update_Error_Near_For_Line(
         error,
         level->ss,
@@ -1156,7 +1156,7 @@ static enum Reb_Token Locate_Token_May_Push_Mold(
             else
                 assert(strmode == STRMODE_NO_CR);
 
-            REBCTX *error = Error_Illegal_Cr(cp, ss->begin);
+            Context(*) error = Error_Illegal_Cr(cp, ss->begin);
             Update_Error_Near_For_Line(error, ss, ss->line, ss->line_head);
             fail (error); }
 
@@ -1740,7 +1740,7 @@ void Init_Va_Scan_Level_Core(
     REBLIN line,
     const REBYTE *opt_begin,  // preload the scanner outside the va_list
     REBFED *feed,
-    option(REBCTX*) context
+    option(Context(*)) context
 ){
     level->ss = ss;
     ss->feed = feed;
@@ -1775,7 +1775,7 @@ void Init_Scan_Level(
     REBLIN line,
     const REBYTE *utf8,
     REBINT limit,  // !!! limit feature not implemented in R3-Alpha
-    option(REBCTX*) context
+    option(Context(*)) context
 ){
     out->ss = ss;
 
@@ -2950,7 +2950,7 @@ Array(*) Scan_UTF8_Managed(
     const REBSTR *file,
     const REBYTE *utf8,
     REBSIZ size,
-    option(REBCTX*) context
+    option(Context(*)) context
 ){
     DECLARE_END_FRAME (f, FRAME_MASK_NONE);
     f->executor = &Scanner_Executor;
@@ -3133,9 +3133,9 @@ REBNATIVE(transcode)
     else
         fail ("/LINE must be an INTEGER! or an ANY-WORD! integer variable");
 
-    REBCTX *context = REF(where)
+    Context(*) context = REF(where)
         ? VAL_CONTEXT(ARG(where))
-        : cast(REBCTX*, nullptr);  // C++98 ambiguous w/o cast
+        : cast(Context(*), nullptr);  // C++98 ambiguous w/o cast
 
     REBFLGS flags =
         FRAME_FLAG_TRAMPOLINE_KEEPALIVE  // query pending newline
@@ -3367,7 +3367,7 @@ const REBYTE *Scan_Issue(Cell(*) out, const REBYTE *cp, REBSIZ size)
 option(Array(*)) Try_Scan_Utf8_For_Detect_Feed_Pointer_Managed(
     const REBYTE* utf8,
     REBFED *feed,
-    option(REBCTX*) context
+    option(Context(*)) context
 ){
     DECLARE_END_FRAME(f, FRAME_MASK_NONE);
     f->executor = &Scanner_Executor;

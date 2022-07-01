@@ -102,7 +102,7 @@ inline static uint64_t File_Size_Cacheable_May_Fail(const REBVAL *port)
 //
 Bounce File_Actor(Frame(*) frame_, REBVAL *port, Symbol(const*) verb)
 {
-    REBCTX *ctx = VAL_CONTEXT(port);
+    Context(*) ctx = VAL_CONTEXT(port);
 
     // The first time the port code gets entered the state field will be NULL.
     // This code reacts to that by capturing the path out of the spec.  If the

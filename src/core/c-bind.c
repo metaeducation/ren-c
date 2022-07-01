@@ -39,7 +39,7 @@ void Bind_Values_Inner_Loop(
     struct Reb_Binder *binder,
     Cell(*) head,
     Cell(const*) tail,
-    REBCTX *context,
+    Context(*) context,
     REBU64 bind_types, // !!! REVIEW: force word types low enough for 32-bit?
     REBU64 add_midstream_types,
     REBFLGS flags
@@ -138,7 +138,7 @@ void Bind_Values_Core(
     struct Reb_Binder binder;
     INIT_BINDER(&binder);
 
-    REBCTX *c = VAL_CONTEXT(context);
+    Context(*) c = VAL_CONTEXT(context);
 
     // Associate the canon of a word with an index number.  (This association
     // is done by poking the index into the REBSER of the series behind the
@@ -185,7 +185,7 @@ void Bind_Values_Core(
 void Unbind_Values_Core(
     Cell(*) head,
     Cell(const*) tail,
-    option(REBCTX*) context,
+    option(Context(*)) context,
     bool deep
 ){
     Cell(*) v = head;
@@ -657,7 +657,7 @@ REBNATIVE(add_use_object) {
 
     Frame(*) f = CTX_FRAME_MAY_FAIL(VAL_CONTEXT(ARG(frame)));
 
-    REBCTX *ctx = VAL_CONTEXT(ARG(object));
+    Context(*) ctx = VAL_CONTEXT(ARG(object));
 
     if (f_specifier)
         SET_SERIES_FLAG(f_specifier, MANAGED);
@@ -902,8 +902,8 @@ Array(*) Copy_And_Bind_Relative_Deep_Managed(
 void Rebind_Values_Deep(
     Cell(*) head,
     Cell(const*) tail,
-    REBCTX *from,
-    REBCTX *to,
+    Context(*) from,
+    Context(*) to,
     option(struct Reb_Binder*) binder
 ) {
     Cell(*) v = head;
@@ -938,7 +938,7 @@ void Rebind_Values_Deep(
             // binding pointer (in the function's value cell) is changed to
             // be this object.
             //
-            REBCTX *stored = VAL_ACTION_BINDING(v);
+            Context(*) stored = VAL_ACTION_BINDING(v);
             if (stored == UNBOUND) {
                 //
                 // Leave NULL bindings alone.  Hence, unlike in R3-Alpha, an
@@ -996,7 +996,7 @@ void Rebind_Values_Deep(
 //
 // !!! Loops should probably free their objects by default when finished
 //
-REBCTX *Virtual_Bind_Deep_To_New_Context(
+Context(*) Virtual_Bind_Deep_To_New_Context(
     REBVAL *body_in_out, // input *and* output parameter
     REBVAL *spec
 ){
@@ -1054,7 +1054,7 @@ REBCTX *Virtual_Bind_Deep_To_New_Context(
     // Keylists are always managed, but varlist is unmanaged by default (so
     // it can be freed if there is a problem)
     //
-    REBCTX *c = Alloc_Context(REB_OBJECT, num_vars);
+    Context(*) c = Alloc_Context(REB_OBJECT, num_vars);
 
     // We want to check for duplicates and a Binder can be used for that
     // purpose--but note that a fail() cannot happen while binders are
@@ -1254,7 +1254,7 @@ REBCTX *Virtual_Bind_Deep_To_New_Context(
 //
 void Virtual_Bind_Deep_To_Existing_Context(
     REBVAL *any_array,
-    REBCTX *context,
+    Context(*) context,
     struct Reb_Binder *binder,
     enum Reb_Kind kind
 ){
@@ -1285,7 +1285,7 @@ void Virtual_Bind_Deep_To_Existing_Context(
 }
 
 
-void Bind_Nonspecifically(Cell(*) head, Cell(const*) tail, REBCTX *context)
+void Bind_Nonspecifically(Cell(*) head, Cell(const*) tail, Context(*) context)
 {
     Cell(*) v = head;
     for (; v != tail; ++v) {

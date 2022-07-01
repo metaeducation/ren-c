@@ -68,7 +68,7 @@
 // * a Symbol, if it's a standalone LET variable; there'd be no way to know
 //   its name otherwise.
 //
-// * a REBCTX, if it's an field in a "sea context" like Lib or User.  In this
+// * a Context, if it's an field in a "sea context" like Lib or User.  In this
 //   case, the spelling is found by following the MISC linkages, which are
 //   part of the "Hitch" circularly linked list that ends in the symbol
 //
@@ -78,12 +78,12 @@
 #define INODE_PatchSymbol_CAST           SYM
 #define HAS_INODE_PatchSymbol            FLAVOR_PATCH
 
-#define INODE_PatchContext_TYPE          REBCTX*
+#define INODE_PatchContext_TYPE          Context(*)
 #define INODE_PatchContext_CAST          CTX
 #define HAS_INODE_PatchContext           FLAVOR_PATCH
 
 
-// Next node is either to another patch, a frame specifier REBCTX, or nullptr.
+// Next node is either to another patch, a frame specifier context, or nullptr.
 //
 #define LINK_NextPatch_TYPE            Array(*)
 #define LINK_NextPatch_CAST            ARR

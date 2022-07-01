@@ -29,7 +29,7 @@
 //   "VARLIST" - an array which holds an archetypal ANY-CONTEXT! value in its
 //   [0] element, and then a cell-sized slot for each variable.
 //
-// A `REBCTX*` is an alias of the varlist's `Array(*)`, and keylists are
+// A `Context(*)` is an alias of the varlist's `Array(*)`, and keylists are
 // reached through the `->link` of the varlist.  The reason varlists
 // are used as the identity of the context is that keylists can be shared
 // between contexts.
@@ -37,7 +37,7 @@
 // Indices into the arrays are 0-based for keys and 1-based for values, with
 // the [0] elements of the varlist used an archetypal value:
 //
-//    VARLIST ARRAY (aka REBCTX*)  ---Link--+
+//    VARLIST ARRAY (aka Context(*))  ---Link--+
 //  +------------------------------+        |
 //  +          "ROOTVAR"           |        |
 //  | Archetype ANY-CONTEXT! Value |        v         KEYLIST SERIES
@@ -54,7 +54,7 @@
 // frame stops running, the paramlist is written back to the link again.)
 //
 // The "ROOTVAR" is a canon value image of an ANY-CONTEXT!'s `REBVAL`.  This
-// trick allows a single REBCTX* pointer to be passed around rather than the
+// trick allows a single Context(*) pointer to be passed around rather than the
 // REBVAL struct which is 4x larger, yet use existing memory to make a REBVAL*
 // when needed (using CTX_ARCHETYPE()).  ACTION!s have a similar trick.
 //
@@ -107,7 +107,7 @@
     SERIES_FLAG_24
 
 
-// REBCTX* properties (note: shares BONUS_KEYSOURCE() with REBACT*)
+// Context(*) properties (note: shares BONUS_KEYSOURCE() with REBACT*)
 //
 // Note: MODULE! contexts depend on a property stored in the META field, which
 // is another object's-worth of data *about* the module's contents (e.g. the
@@ -136,7 +136,7 @@
 // in the context itself as the [0] element of the varlist.  This means it is
 // always on hand when a REBVAL* is needed, so you can do things like:
 //
-//     REBCTX *c = ...;
+//     Context(*) c = ...;
 //     rebElide("print [pick", CTX_ARCHETYPE(c), "'field]");
 //
 // The archetype stores the varlist, and since it has a value header it also
@@ -153,7 +153,7 @@
 // For the moment that is done with the CTX_META() field instead.
 //
 
-inline static const REBVAL *CTX_ARCHETYPE(REBCTX *c) {  // read-only form
+inline static const REBVAL *CTX_ARCHETYPE(Context(*) c) {  // read-only form
     const REBSER *varlist = CTX_VARLIST(c);
     if (GET_SERIES_FLAG(varlist, INACCESSIBLE)) {  // a freed stub
         assert(NOT_SERIES_FLAG(varlist, DYNAMIC));  // variables are gone
@@ -166,16 +166,16 @@ inline static const REBVAL *CTX_ARCHETYPE(REBCTX *c) {  // read-only form
 #define CTX_TYPE(c) \
     VAL_TYPE(CTX_ARCHETYPE(c))
 
-inline static REBVAL *CTX_ROOTVAR(REBCTX *c)  // mutable archetype access
+inline static REBVAL *CTX_ROOTVAR(Context(*) c)  // mutable archetype access
   { return m_cast(REBVAL*, CTX_ARCHETYPE(c)); }  // inline checks mutability
 
-inline static REBACT *CTX_FRAME_ACTION(REBCTX *c) {
+inline static REBACT *CTX_FRAME_ACTION(Context(*) c) {
     const REBVAL *archetype = CTX_ARCHETYPE(c);
     assert(VAL_TYPE(archetype) == REB_FRAME);
     return ACT(VAL_FRAME_PHASE_OR_LABEL_NODE(archetype));
 }
 
-inline static REBCTX *CTX_FRAME_BINDING(REBCTX *c) {
+inline static Context(*) CTX_FRAME_BINDING(Context(*) c) {
     const REBVAL *archetype = CTX_ARCHETYPE(c);
     assert(VAL_TYPE(archetype) == REB_FRAME);
     return CTX(BINDING(archetype));
@@ -204,7 +204,7 @@ inline static void INIT_VAL_FRAME_ROOTVAR_Core(
     Cell(*) out,
     Array(*) varlist,
     REBACT *phase,
-    REBCTX *binding  // allowed to be UNBOUND
+    Context(*) binding  // allowed to be UNBOUND
 ){
     assert(
         (GET_SERIES_FLAG(varlist, INACCESSIBLE) and out == ARR_SINGLE(varlist))
@@ -239,7 +239,7 @@ inline static void INIT_VAL_FRAME_ROOTVAR_Core(
 // is moved (see CELL_MASK_COPIED regarding this mechanic)
 //
 
-inline static REBSER *CTX_KEYLIST(REBCTX *c) {
+inline static REBSER *CTX_KEYLIST(Context(*) c) {
     assert(CTX_TYPE(c) != REB_MODULE);
     if (Is_Node_Cell(BONUS(KeySource, CTX_VARLIST(c)))) {
         //
@@ -250,21 +250,21 @@ inline static REBSER *CTX_KEYLIST(REBCTX *c) {
     return SER(BONUS(KeySource, CTX_VARLIST(c)));  // not Frame(*), use keylist
 }
 
-inline static void INIT_CTX_KEYLIST_SHARED(REBCTX *c, REBSER *keylist) {
+inline static void INIT_CTX_KEYLIST_SHARED(Context(*) c, REBSER *keylist) {
     Set_Subclass_Flag(KEYLIST, keylist, SHARED);
     INIT_BONUS_KEYSOURCE(CTX_VARLIST(c), keylist);
 }
 
-inline static void INIT_CTX_KEYLIST_UNIQUE(REBCTX *c, REBSER *keylist) {
+inline static void INIT_CTX_KEYLIST_UNIQUE(Context(*) c, REBSER *keylist) {
     assert(Not_Subclass_Flag(KEYLIST, keylist, SHARED));
     INIT_BONUS_KEYSOURCE(CTX_VARLIST(c), keylist);
 }
 
 
-//=//// REBCTX* ACCESSORS /////////////////////////////////////////////////=//
+//=//// Context(*) ACCESSORS /////////////////////////////////////////////////=//
 //
 // These are access functions that should be used when what you have in your
-// hand is just a REBCTX*.  THIS DOES NOT ACCOUNT FOR PHASE...so there can
+// hand is just a Context(*).  THIS DOES NOT ACCOUNT FOR PHASE...so there can
 // actually be a difference between these two expressions for FRAME!s:
 //
 //     REBVAL *x = VAL_CONTEXT_KEYS_HEAD(context);  // accounts for phase
@@ -276,12 +276,12 @@ inline static void INIT_CTX_KEYLIST_UNIQUE(REBCTX *c, REBSER *keylist) {
 // as it is valid.
 //
 
-inline static REBLEN CTX_LEN(REBCTX *c) {
+inline static REBLEN CTX_LEN(Context(*) c) {
     assert(CTX_TYPE(c) != REB_MODULE);
     return CTX_VARLIST(c)->content.dynamic.used - 1;  // -1 for archetype
 }
 
-inline static const REBKEY *CTX_KEY(REBCTX *c, REBLEN n) {
+inline static const REBKEY *CTX_KEY(Context(*) c, REBLEN n) {
     //
     // !!! Inaccessible contexts have to retain their keylists, at least
     // until all words bound to them have been adjusted somehow, because the
@@ -293,13 +293,13 @@ inline static const REBKEY *CTX_KEY(REBCTX *c, REBLEN n) {
     return SER_AT(const REBKEY, CTX_KEYLIST(c), n - 1);
 }
 
-inline static REBVAR *CTX_VAR(REBCTX *c, REBLEN n) {  // 1-based, no Cell(*)
+inline static REBVAR *CTX_VAR(Context(*) c, REBLEN n) {  // 1-based, no Cell(*)
     assert(NOT_SERIES_FLAG(CTX_VARLIST(c), INACCESSIBLE));
     assert(n != 0 and n <= CTX_LEN(c));
     return cast(REBVAR*, cast(REBSER*, c)->content.dynamic.data) + n;
 }
 
-inline static REBVAR *MOD_VAR(REBCTX *c, Symbol(const*) sym, bool strict) {
+inline static REBVAR *MOD_VAR(Context(*) c, Symbol(const*) sym, bool strict) {
     //
     // Optimization for Lib_Context for datatypes + natives + generics; use
     // tailored order of SYM_XXX constants to beeline for the storage.  The
@@ -345,34 +345,34 @@ inline static REBVAR *MOD_VAR(REBCTX *c, Symbol(const*) sym, bool strict) {
 #define CTX_VARS_HEAD(c) \
     (cast(REBVAR*, cast(REBSER*, (c))->content.dynamic.data) + 1)
 
-inline static const REBKEY *CTX_KEYS(const REBKEY ** tail, REBCTX *c) {
+inline static const REBKEY *CTX_KEYS(const REBKEY ** tail, Context(*) c) {
     REBSER *keylist = CTX_KEYLIST(c);
     *tail = SER_TAIL(REBKEY, keylist);
     return SER_HEAD(REBKEY, keylist);
 }
 
-inline static REBVAR *CTX_VARS(const REBVAR ** tail, REBCTX *c) {
+inline static REBVAR *CTX_VARS(const REBVAR ** tail, Context(*) c) {
     REBVAR *head = CTX_VARS_HEAD(c);
     *tail = head + cast(REBSER*, (c))->content.dynamic.used - 1;
     return head;
 }
 
 
-//=//// FRAME! REBCTX* <-> Frame(*) STRUCTURE //////////////////////////////=//
+//=//// FRAME! Context(*) <-> Frame(*) STRUCTURE //////////////////////////////=//
 //
 // For a FRAME! context, the keylist is redundant with the paramlist of the
 // CTX_FRAME_ACTION() that the frame is for.  That is taken advantage of when
 // a frame is executing in order to use the LINK() keysource to point at the
 // running Frame(*) structure for that stack level.  This provides a cheap
-// way to navigate from a REBCTX* to the Frame(*) that's running it.
+// way to navigate from a Context(*) to the Frame(*) that's running it.
 //
 
-inline static bool Is_Frame_On_Stack(REBCTX *c) {
+inline static bool Is_Frame_On_Stack(Context(*) c) {
     assert(IS_FRAME(CTX_ARCHETYPE(c)));
     return Is_Node_Cell(BONUS(KeySource, CTX_VARLIST(c)));
 }
 
-inline static Frame(*) CTX_FRAME_IF_ON_STACK(REBCTX *c) {
+inline static Frame(*) CTX_FRAME_IF_ON_STACK(Context(*) c) {
     REBNOD *keysource = BONUS(KeySource, CTX_VARLIST(c));
     if (not Is_Node_Cell(keysource))
         return nullptr; // e.g. came from MAKE FRAME! or Encloser_Dispatcher
@@ -385,14 +385,14 @@ inline static Frame(*) CTX_FRAME_IF_ON_STACK(REBCTX *c) {
     return f;
 }
 
-inline static Frame(*) CTX_FRAME_MAY_FAIL(REBCTX *c) {
+inline static Frame(*) CTX_FRAME_MAY_FAIL(Context(*) c) {
     Frame(*) f = CTX_FRAME_IF_ON_STACK(c);
     if (not f)
         fail (Error_Frame_Not_On_Stack_Raw());
     return f;
 }
 
-inline static void FAIL_IF_INACCESSIBLE_CTX(REBCTX *c) {
+inline static void FAIL_IF_INACCESSIBLE_CTX(Context(*) c) {
     if (GET_SERIES_FLAG(CTX_VARLIST(c), INACCESSIBLE)) {
         if (CTX_TYPE(c) == REB_FRAME)
             fail (Error_Expired_Frame_Raw()); // !!! different error?
@@ -410,9 +410,9 @@ inline static void FAIL_IF_INACCESSIBLE_CTX(REBCTX *c) {
 // be checked elsewhere...or also check it before use.
 //
 
-inline static REBCTX *VAL_CONTEXT(noquote(Cell(const*)) v) {
+inline static Context(*) VAL_CONTEXT(noquote(Cell(const*)) v) {
     assert(ANY_CONTEXT_KIND(CELL_HEART(v)));
-    REBCTX *c = CTX(VAL_NODE1(v));
+    Context(*) c = CTX(VAL_NODE1(v));
     FAIL_IF_INACCESSIBLE_CTX(c);
     return c;
 }
@@ -430,7 +430,7 @@ inline static REBCTX *VAL_CONTEXT(noquote(Cell(const*)) v) {
 // a running frame gets re-executed.  More study is needed.
 //
 
-inline static void INIT_VAL_FRAME_BINDING(Cell(*) v, REBCTX *binding) {
+inline static void INIT_VAL_FRAME_BINDING(Cell(*) v, Context(*) binding) {
     assert(
         IS_FRAME(v)  // may be marked protected (e.g. archetype)
         or IS_ACTION(v)  // used by UNWIND
@@ -438,7 +438,7 @@ inline static void INIT_VAL_FRAME_BINDING(Cell(*) v, REBCTX *binding) {
     EXTRA(Binding, v) = binding;
 }
 
-inline static REBCTX *VAL_FRAME_BINDING(noquote(Cell(const*)) v) {
+inline static Context(*) VAL_FRAME_BINDING(noquote(Cell(const*)) v) {
     assert(REB_FRAME == CELL_HEART(v));
     return CTX(BINDING(v));
 }
@@ -532,7 +532,7 @@ inline static const REBKEY *VAL_CONTEXT_KEYS_HEAD(noquote(Cell(const*)) context)
 inline static REBVAL *Init_Any_Context(
     Cell(*) out,
     enum Reb_Kind kind,
-    REBCTX *c
+    Context(*) c
 ){
   #if !defined(NDEBUG)
     Extra_Init_Any_Context_Checks_Debug(kind, c);
@@ -552,7 +552,7 @@ inline static REBVAL *Init_Any_Context(
 
 inline static REBVAL *Init_Frame(
     Cell(*) out,
-    REBCTX *c,
+    Context(*) c,
     option(const REBSTR*) label  // nullptr (ANONYMOUS) is okay
 ){
     Init_Any_Context(out, REB_FRAME, c);
@@ -577,7 +577,7 @@ inline static REBVAL *Init_Frame(
 // Make sure a context's keylist is not shared.  Note any CTX_KEY() values
 // may go stale from this context after this call.
 //
-inline static REBCTX *Force_Keylist_Unique(REBCTX *context) {
+inline static Context(*) Force_Keylist_Unique(Context(*) context) {
     bool was_changed = Expand_Context_Keylist_Core(context, 0);
     UNUSED(was_changed);  // keys wouldn't go stale if this was false
     return context;
@@ -597,7 +597,7 @@ inline static REBCTX *Force_Keylist_Unique(REBCTX *context) {
 //
 //=////////////////////////////////////////////////////////////////////////=//
 
-inline static void Deep_Freeze_Context(REBCTX *c) {
+inline static void Deep_Freeze_Context(Context(*) c) {
     Protect_Context(
         c,
         PROT_SET | PROT_DEEP | PROT_FREEZE
@@ -639,7 +639,7 @@ inline static void Deep_Freeze_Context(REBCTX *c) {
 #define Init_Error(v,c) \
     Init_Any_Context((v), REB_ERROR, (c))
 
-inline static void Force_Location_Of_Error(REBCTX *error, Frame(*) where) {
+inline static void Force_Location_Of_Error(Context(*) error, Frame(*) where) {
     ERROR_VARS *vars = ERR_VARS(error);
     if (IS_NULLED_OR_BLANK(&vars->where))
         Set_Location_Of_Error(error, where);
@@ -656,7 +656,7 @@ inline static void FAIL_IF_BAD_PORT(REBVAL *port) {
     if (not ANY_CONTEXT(port))
         fail (Error_Invalid_Port_Raw());
 
-    REBCTX *ctx = VAL_CONTEXT(port);
+    Context(*) ctx = VAL_CONTEXT(port);
     if (
         CTX_LEN(ctx) < (STD_PORT_MAX - 1)
         or not IS_OBJECT(CTX_VAR(ctx, STD_PORT_SPEC))
@@ -716,7 +716,7 @@ inline static const REBVAR *TRY_VAL_CONTEXT_VAR_CORE(
 // filled-in heap memory can be directly used as the args for the invocation,
 // instead of needing to push a redundant run of stack-based memory cells.
 //
-inline static REBCTX *Steal_Context_Vars(REBCTX *c, REBNOD *keysource) {
+inline static Context(*) Steal_Context_Vars(Context(*) c, REBNOD *keysource) {
     REBSER *stub = CTX_VARLIST(c);
 
     // Rather than memcpy() and touch up the header and info to remove

@@ -109,7 +109,7 @@ struct Reb_Jump {
         jmp_buf cpu_state;
     #endif
 
-    REBCTX *error;  // longjmp() case tunnels pointer back via this, see [2]
+    Context(*) error;  // longjmp() case tunnels pointer back via this, see [2]
   #endif
 
     struct Reb_Jump *last_jump;
@@ -185,7 +185,7 @@ struct Reb_Jump {
 //
 // IN THE SETJMP IMPLEMENTATION...
 //
-// Jump buffers contain a pointer-to-a-REBCTX which represents an error.
+// Jump buffers contain a pointer-to-a-Context(*) which represents an error.
 // Using the tricky mechanisms of setjmp/longjmp, there will be a first pass
 // of execution where setjmp() returns 0 and it will fall through to the
 // code afterward.  When the longjmp() happens, the CPU will be teleported
@@ -338,11 +338,11 @@ struct Reb_Jump {
     template <class T>
     inline static ATTRIBUTE_NO_RETURN void Fail_Macro_Helper(T *p) {
         static_assert(
-            std::is_same<T, REBCTX>::value
+            std::is_same<T, Reb_Context>::value
             or std::is_same<T, const char>::value
             or std::is_base_of<const REBVAL, T>::value
             or std::is_base_of<Reb_Cell, T>::value,
-            "fail() works on: REBCTX*, Cell(*), const char*"
+            "fail() works on: Context(*), Cell(*), const char*"
         );
         Fail_Core(p);
     }

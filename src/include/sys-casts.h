@@ -22,7 +22,7 @@
 // C++ debug build provides.  But it's also some of the most vital.
 //
 // It is often the case that a stored pointer for a series or node is the
-// base class, e.g. a REBSER* when it is actually the varlist of a REBCTX*.
+// base class, e.g. a REBSER* when it is actually the varlist of a Context(*).
 // The process for casting something from a base class to a subclass is
 // referred to as "downcasting":
 //
@@ -68,7 +68,7 @@
     #define SER(p)          m_cast(REBSER*, x_cast(const REBSER*, (p)))
     #define ARR(p)          m_cast(Array(*), x_cast(Array(const*), (p)))
     #define ACT(p)          m_cast(REBACT*, x_cast(const REBACT*, (p)))
-    #define CTX(p)          m_cast(REBCTX*, x_cast(const REBCTX*, (p)))
+    #define CTX(p)          m_cast(Context(*), x_cast(const Context(*), (p)))
 
     #define STR(p)          m_cast(REBSTR*, x_cast(const REBSTR*, (p)))
     #define SYM(p)          m_cast(Symbol(*), x_cast(Symbol(const*), (p)))
@@ -191,8 +191,8 @@
         typename T0 = typename std::remove_const<T>::type,
         typename C = typename std::conditional<
             std::is_const<T>::value,  // boolean
-            const REBCTX,  // true branch
-            REBCTX  // false branch
+            const Reb_Context,  // true branch
+            Reb_Context  // false branch
         >::type
     >
     inline static C *CTX(T *p) {

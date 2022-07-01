@@ -267,7 +267,7 @@ REBINT Get_System_Int(REBLEN i1, REBLEN i2, REBINT default_int)
 //
 // !!! Overlaps with ASSERT_CONTEXT, review folding them together.
 //
-void Extra_Init_Any_Context_Checks_Debug(enum Reb_Kind kind, REBCTX *c) {
+void Extra_Init_Any_Context_Checks_Debug(enum Reb_Kind kind, Context(*) c) {
     assert(
         (CTX_VARLIST(c)->leader.bits & SERIES_MASK_VARLIST)
         == SERIES_MASK_VARLIST

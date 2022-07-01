@@ -231,7 +231,7 @@ inline static void Detect_Feed_Pointer_Maybe_Fetch(
             //
             // Besides instructions, other series types aren't currenlty
             // supported...though it was considered that you could use
-            // REBCTX* or REBACT* directly instead of their archtypes.  This
+            // Context(*) or REBACT* directly instead of their archtypes.  This
             // was considered when thinking about ditching value archetypes
             // altogether (e.g. no usable cell pattern guaranteed at the head)
             // but it's important in several APIs to emphasize a value gives

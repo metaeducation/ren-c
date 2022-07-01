@@ -67,7 +67,7 @@
 //
 static Bounce DNS_Actor(Frame(*) frame_, REBVAL *port, Symbol(const*) verb)
 {
-    REBCTX *ctx = VAL_CONTEXT(port);
+    Context(*) ctx = VAL_CONTEXT(port);
     REBVAL *spec = CTX_VAR(ctx, STD_PORT_SPEC);
 
     switch (ID_OF_SYMBOL(verb)) {

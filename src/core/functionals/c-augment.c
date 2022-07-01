@@ -131,7 +131,7 @@ REBNATIVE(augment_p)  // see extended definition AUGMENT in %base-defs.r
         &definitional_return_dsp
     );
 
-    REBCTX *meta;
+    Context(*) meta;
     Array(*) paramlist = Pop_Paramlist_With_Meta_May_Fail(
         &meta,
         dsp_orig,

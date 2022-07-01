@@ -230,7 +230,7 @@ REBACT *Make_Interpreted_Action_May_Fail(
     assert(IS_BLOCK(spec) and IS_BLOCK(body));
     assert(details_capacity >= 1);  // relativized body put in details[0]
 
-    REBCTX *meta;
+    Context(*) meta;
     Array(*) paramlist = Make_Paramlist_Managed_May_Fail(
         &meta,
         spec,
@@ -371,7 +371,7 @@ REBNATIVE(endable_q)
     if (not IS_FRAME(SPARE))
         fail ("ENDABLE? requires a WORD! bound into a FRAME! at present");
 
-    REBCTX *ctx = VAL_CONTEXT(SPARE);
+    Context(*) ctx = VAL_CONTEXT(SPARE);
     REBACT *act = CTX_FRAME_ACTION(ctx);
 
     REBPAR *param = ACT_PARAM(act, VAL_WORD_INDEX(v));
@@ -406,7 +406,7 @@ REBNATIVE(skippable_q)
     if (not IS_FRAME(SPARE))
         fail ("SKIPPABLE? requires a WORD! bound into a FRAME! at present");
 
-    REBCTX *ctx = VAL_CONTEXT(SPARE);
+    Context(*) ctx = VAL_CONTEXT(SPARE);
     REBACT *act = CTX_FRAME_ACTION(ctx);
 
     REBPAR *param = ACT_PARAM(act, VAL_WORD_INDEX(v));
@@ -559,7 +559,7 @@ REBNATIVE(definitional_return)
     // Frame(*).  This generic RETURN dispatcher interprets that binding as the
     // FRAME! which this instance is specifically intended to return from.
     //
-    REBCTX *f_binding = FRM_BINDING(f);
+    Context(*) f_binding = FRM_BINDING(f);
     if (not f_binding)
         fail (Error_Return_Archetype_Raw());  // must have binding to jump to
 
@@ -672,7 +672,7 @@ REBNATIVE(inherit_meta)
 
     UNUSED(ARG(augment));  // !!! not yet implemented
 
-    REBCTX *m1 = ACT_META(VAL_ACTION(original));
+    Context(*) m1 = ACT_META(VAL_ACTION(original));
     if (not m1)  // nothing to copy
         return_value (ARG(derived));
 
@@ -680,7 +680,7 @@ REBNATIVE(inherit_meta)
     // if it was created via an AUGMENT, it will have some...only the notes
     // and types for the added parameters, the others will be NULL.
     //
-    REBCTX *m2 = ACT_META(VAL_ACTION(derived));
+    Context(*) m2 = ACT_META(VAL_ACTION(derived));
     if (not m2) {  // doesn't have its own information
         m2 = Copy_Context_Shallow_Managed(VAL_CONTEXT(Root_Action_Meta));
         mutable_ACT_META(VAL_ACTION(derived)) = m2;
@@ -714,7 +714,7 @@ REBNATIVE(inherit_meta)
         if (not ANY_CONTEXT(val1))
             fail ("Expected context in original meta information");
 
-        REBCTX *ctx1 = VAL_CONTEXT(val1);
+        Context(*) ctx1 = VAL_CONTEXT(val1);
 
         REBVAL *val2 = Select_Symbol_In_Context(
             CTX_ARCHETYPE(m2),
@@ -723,7 +723,7 @@ REBNATIVE(inherit_meta)
         if (not val2)
             continue;
 
-        REBCTX *ctx2;
+        Context(*) ctx2;
         if (Is_Nulled(val2) or Is_None(val2)) {
             ctx2 = Make_Context_For_Action(
                 derived,  // the action
