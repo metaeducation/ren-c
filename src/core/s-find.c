@@ -284,7 +284,7 @@ REBINT Find_Binstr_In_Binstr(
                 return NOT_FOUND;
 
             if (is_1_str)
-                cp1 = SKIP_CHR(&c1, cast(REBCHR(const*), cp1), skip1);
+                cp1 = SKIP_CHR(&c1, cast(Utf8(const*), cp1), skip1);
             else if (is_2_str) {  // have to treat binstr1 as a string anyway
                 cp1 += skip1;
                 size -= skip1;  // size grows by skip
@@ -303,7 +303,7 @@ REBINT Find_Binstr_In_Binstr(
             return NOT_FOUND;
 
         if (is_1_str)
-            c1 = CHR_CODE(cast(REBCHR(const*), cp1));
+            c1 = CHR_CODE(cast(Utf8(const*), cp1));
         else if (is_2_str) {  // have to treat binstr1 as a string anyway
             REBSIZ size_temp = size;
             const REBYTE* temp = Back_Scan_UTF8_Char(&c1, cp1, &size_temp);
@@ -324,7 +324,7 @@ REBINT Find_Binstr_In_Binstr(
             // Binary-compatible to: [tp1 = NEXT_STR(cp1)]
             const REBYTE *tp1;
             if (is_1_str)  // binstr2 can't be binary
-                tp1 = NEXT_STR(cast(REBCHR(const*), cp1));
+                tp1 = NEXT_STR(cast(Utf8(const*), cp1));
             else if (is_2_str) {  // searching binary as if it's a string
                 REBSIZ encoded_c1_size = Encoded_Size_For_Codepoint(c1);
                 tp1 = cp1 + encoded_c1_size;
@@ -406,7 +406,7 @@ REBINT Find_Binstr_In_Binstr(
         // codepoints if string or bytes if not.
         //
         if (is_1_str)
-            cp1 = SKIP_CHR(&c1, cast(REBCHR(const*), cp1), skip1);
+            cp1 = SKIP_CHR(&c1, cast(Utf8(const*), cp1), skip1);
         else {
             // When binstr2 is a string and binstr1 isn't, we are treating
             // binstr1 as a string despite being unchecked bytes.  Reset the
@@ -465,13 +465,13 @@ REBINT Find_Bitset_In_Binstr(
     REBUNI c1;
     if (skip > 0) {  // skip 1 will pass over cp1, so leave as is
         if (is_str)
-            c1 = CHR_CODE(cast(REBCHR(const*), cp1));
+            c1 = CHR_CODE(cast(Utf8(const*), cp1));
         else
             c1 = *cp1;
     }
     else {
         if (is_str)
-            cp1 = BACK_CHR(&c1, cast(REBCHR(const*), cp1));
+            cp1 = BACK_CHR(&c1, cast(Utf8(const*), cp1));
         else {
             --cp1;
             c1 = *cp1;
@@ -493,7 +493,7 @@ REBINT Find_Bitset_In_Binstr(
             break;
 
         if (is_str)
-            cp1 = SKIP_CHR(&c1, cast(REBCHR(const*), cp1), skip);
+            cp1 = SKIP_CHR(&c1, cast(Utf8(const*), cp1), skip);
         else {
             cp1 += skip;
             c1 = *cp1;

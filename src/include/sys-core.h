@@ -196,7 +196,7 @@
 #include "structs/sys-rebctx.h"  // context structure
 #include "structs/sys-rebpat.h"  // virtual binding patch definitions
 
-#include "structs/sys-rebchr.h"  // REBCHR(*) is REBYTE* in validated UTF8
+#include "structs/sys-rebchr.h"  // Utf8(*) is REBYTE* in validated UTF8
 
 #include "structs/sys-rebfed.h"  // REBFED (feed) definition
 #include "structs/sys-rebjmp.h"  // Jump state (for TRAP)

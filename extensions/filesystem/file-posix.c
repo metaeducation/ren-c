@@ -353,7 +353,7 @@ REBVAL *Write_File(const REBVAL *port, const REBVAL *value, REBLEN limit)
     size_t size;
 
     if (IS_TEXT(value) or IS_ISSUE(value)) {
-        REBCHR(const*) utf8 = VAL_UTF8_LEN_SIZE_AT_LIMIT(
+        Utf8(const*) utf8 = VAL_UTF8_LEN_SIZE_AT_LIMIT(
             nullptr,
             &size,
             value,

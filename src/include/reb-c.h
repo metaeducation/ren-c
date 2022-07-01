@@ -440,7 +440,7 @@
      *
      * NOTE: m_cast_helper() may seem like overkill, but it's actually needed
      * as a hook point to overload casting with smart pointer types, e.g.
-     * `m_cast(REBCHR(*), some_const_rebchr)`.  Search for overloads of the
+     * `m_cast(Utf8(*), some_const_rebchr)`.  Search for overloads of the
      * m_cast_helper() in certain builds before deciding to simplify this.
      */
     template<typename T, typename V>

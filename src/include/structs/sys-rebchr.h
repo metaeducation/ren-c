@@ -6,7 +6,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2012-2019 Ren-C Open Source Contributors
+// Copyright 2012-2022 Ren-C Open Source Contributors
 //
 // See README.md and CREDITS.md for more information
 //
@@ -20,9 +20,12 @@
 //
 // Ren-C exchanges UTF-8 data with the outside world via "char*".  But inside
 // the code, REBYTE* is used for not-yet-validated bytes that are to be
-// scanned as UTF-8.  When accessing an already-checked string, however,
-// the REBCHR(*) type is used...signaling no error checking should need to be
-// done while walking through the UTF-8 sequence.
+// scanned as UTF-8, since it's less error-prone to do math on unsigned bytes.
+//
+// But there's a different datatype for accessing an already-validated string!
+// The Utf8(*) type is used...signaling no error checking should need to be
+// done while walking through the UTF-8 sequence.  It also protects against
+// naive `char` accesses and single-byte incrementation of UTF-8 data.
 //
 // So for instance: instead of simply saying:
 //
@@ -31,7 +34,7 @@
 //
 // ...one must instead write:
 //
-//     REBCHR(*) ptr = STR_HEAD(string_series);
+//     Utf8(*) ptr = STR_HEAD(string_series);
 //     REBUNI c;
 //     ptr = NEXT_CHR(&c, ptr);  // ++ptr or ptr[n] will error in C++ build
 //
@@ -41,12 +44,12 @@
 
 #if (! DEBUG_UTF8_EVERYWHERE)
     //
-    // Plain build uses trivial expansion of REBCHR(*) and REBCHR(const*)
+    // Plain build uses trivial expansion of Utf8(*) and Utf8(const*)
     //
-    //          REBCHR(*) cp; => REBYTE * cp;
-    //     REBCHR(const*) cp; => REBYTE const* cp;  // same as `const REBYTE*`
+    //          Utf8(*) cp; => REBYTE * cp;
+    //     Utf8(const*) cp; => REBYTE const* cp;  // same as `const REBYTE*`
     //
-    #define REBCHR(star_or_const_star) \
+    #define Utf8(star_or_const_star) \
         REBYTE star_or_const_star
 
     #define const_if_unchecked_utf8 const
@@ -55,7 +58,7 @@
         #error "DEBUG_UTF8_EVERYWHERE requires C++11 or higher"
     #endif
 
-    // Debug mode uses templates to expand REBCHR(*) and REBCHR(const*) into
+    // Debug mode uses templates to expand Utf8(*) and Utf8(const*) into
     // pointer classes.  This technique allows the simple C compilation too:
     //
     // http://blog.hostilefork.com/kinda-smart-pointers-in-c/
@@ -72,9 +75,9 @@
     // the C version.  That allows for the compile-time type checking but no
     // added runtime overhead.
     //
-    template<typename T> struct RebchrPtr;
-    #define REBCHR(star_or_const_star) \
-        RebchrPtr<REBYTE star_or_const_star>
+    template<typename T> struct Utf8Ptr;
+    #define Utf8(star_or_const_star) \
+        Utf8Ptr<REBYTE star_or_const_star>
 
     #define const_if_unchecked_utf8
 
@@ -84,40 +87,40 @@
     // and C++ sadly makes us write this all out.
 
     template<>
-    struct RebchrPtr<const REBYTE*> {
+    struct Utf8Ptr<const REBYTE*> {
         const REBYTE *bp;  // will actually be mutable if constructed mutable
 
-        RebchrPtr () {}
-        RebchrPtr (nullptr_t n) : bp (n) {}
-        explicit RebchrPtr (const REBYTE *bp) : bp (bp) {}
-        explicit RebchrPtr (const char *cstr)
+        Utf8Ptr () {}
+        Utf8Ptr (nullptr_t n) : bp (n) {}
+        explicit Utf8Ptr (const REBYTE *bp) : bp (bp) {}
+        explicit Utf8Ptr (const char *cstr)
             : bp (reinterpret_cast<const REBYTE*>(cstr)) {}
 
         REBSIZ operator-(const REBYTE *rhs)
           { return bp - rhs; }
 
-        REBSIZ operator-(RebchrPtr rhs)
+        REBSIZ operator-(Utf8Ptr rhs)
           { return bp - rhs.bp; }
 
-        bool operator==(const RebchrPtr<const REBYTE*> &other)
+        bool operator==(const Utf8Ptr<const REBYTE*> &other)
           { return bp == other.bp; }
 
         bool operator==(const REBYTE *other)
           { return bp == other; }
 
-        bool operator!=(const RebchrPtr<const REBYTE*> &other)
+        bool operator!=(const Utf8Ptr<const REBYTE*> &other)
           { return bp != other.bp; }
 
         bool operator!=(const REBYTE *other)
           { return bp != other; }
 
-        bool operator>(const RebchrPtr<const REBYTE*> &other)
+        bool operator>(const Utf8Ptr<const REBYTE*> &other)
           { return bp > other.bp; }
 
         bool operator<(const REBYTE *other)
           { return bp < other; }
 
-        bool operator<=(const RebchrPtr<const REBYTE*> &other)
+        bool operator<=(const Utf8Ptr<const REBYTE*> &other)
           { return bp <= other.bp; }
 
         bool operator>=(const REBYTE *other)
@@ -131,16 +134,16 @@
     };
 
     template<>
-    struct RebchrPtr<REBYTE*> : public RebchrPtr<const REBYTE*> {
-        RebchrPtr () : RebchrPtr<const REBYTE*>() {}
-        RebchrPtr (nullptr_t n) : RebchrPtr<const REBYTE*>(n) {}
-        explicit RebchrPtr (REBYTE *bp)
-            : RebchrPtr<const REBYTE*> (bp) {}
-        explicit RebchrPtr (char *cstr)
-            : RebchrPtr<const REBYTE*> (reinterpret_cast<REBYTE*>(cstr)) {}
+    struct Utf8Ptr<REBYTE*> : public Utf8Ptr<const REBYTE*> {
+        Utf8Ptr () : Utf8Ptr<const REBYTE*>() {}
+        Utf8Ptr (nullptr_t n) : Utf8Ptr<const REBYTE*>(n) {}
+        explicit Utf8Ptr (REBYTE *bp)
+            : Utf8Ptr<const REBYTE*> (bp) {}
+        explicit Utf8Ptr (char *cstr)
+            : Utf8Ptr<const REBYTE*> (reinterpret_cast<REBYTE*>(cstr)) {}
 
-        static REBCHR(*) nonconst(REBCHR(const*) cp)
-          { return RebchrPtr {const_cast<REBYTE*>(cp.bp)}; }
+        static Utf8(*) nonconst(Utf8(const*) cp)
+          { return Utf8Ptr {const_cast<REBYTE*>(cp.bp)}; }
 
         operator void*() { return const_cast<REBYTE*>(bp); }  // implicit
         operator REBYTE*() { return const_cast<REBYTE*>(bp); }  // implicit
@@ -155,11 +158,11 @@
     // cheat when the class is being used with the helpers.
     //
     template <>
-    inline REBCHR(*) m_cast_helper(REBCHR(const*) v)
-      { return RebchrPtr<REBYTE*> {const_cast<REBYTE*>(v.bp)}; }
+    inline Utf8(*) m_cast_helper(Utf8(const*) v)
+      { return Utf8Ptr<REBYTE*> {const_cast<REBYTE*>(v.bp)}; }
 
     template <>
-    inline REBCHR(*) m_cast_helper(REBCHR(*) v)
+    inline Utf8(*) m_cast_helper(Utf8(*) v)
       { return v; }  // m_cast() is supposed to be able to be a no-op
   #else
     #error "DEBUG_UTF8_EVERYWHERE currently requires DEBUG_CHECK_CASTS"

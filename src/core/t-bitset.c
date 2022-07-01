@@ -155,7 +155,7 @@ REBINT Find_Max_Bit(Cell(const*) val)
     case REB_ISSUE:
     case REB_TAG: {
         REBLEN len;
-        REBCHR(const*) up = VAL_UTF8_LEN_SIZE_AT(&len, nullptr, val);
+        Utf8(const*) up = VAL_UTF8_LEN_SIZE_AT(&len, nullptr, val);
         for (; len > 0; --len) {
             REBUNI c;
             up = NEXT_CHR(&c, up);
@@ -286,7 +286,7 @@ bool Set_Bits(REBBIN *bset, Cell(const*) val, bool set)
 
     if (IS_ISSUE(val) or ANY_STRING(val)) {
         REBLEN len;
-        REBCHR(const*) up = VAL_UTF8_LEN_SIZE_AT(&len, nullptr, val);
+        Utf8(const*) up = VAL_UTF8_LEN_SIZE_AT(&len, nullptr, val);
         for (; len > 0; --len) {
             REBUNI c;
             up = NEXT_CHR(&c, up);
@@ -430,7 +430,7 @@ bool Check_Bits(const REBBIN *bset, Cell(const*) val, bool uncased)
 
     if (ANY_STRING(val)) {
         REBLEN len;
-        REBCHR(const*) up = VAL_UTF8_LEN_SIZE_AT(&len, nullptr, val);
+        Utf8(const*) up = VAL_UTF8_LEN_SIZE_AT(&len, nullptr, val);
         for (; len > 0; --len) {
             REBUNI c;
             up = NEXT_CHR(&c, up);

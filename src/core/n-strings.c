@@ -345,7 +345,7 @@ REBNATIVE(enhex)
     Push_Mold (mo);
 
     REBLEN len;
-    REBCHR(const*) cp = VAL_UTF8_LEN_SIZE_AT(&len, nullptr, ARG(string));
+    Utf8(const*) cp = VAL_UTF8_LEN_SIZE_AT(&len, nullptr, ARG(string));
 
     REBUNI c;
     cp = NEXT_CHR(&c, cp);
@@ -498,7 +498,7 @@ REBNATIVE(dehex)
     REBSIZ scan_size = 0;
 
     REBLEN len;
-    REBCHR(const*) cp = VAL_UTF8_LEN_SIZE_AT(&len, nullptr, ARG(string));
+    Utf8(const*) cp = VAL_UTF8_LEN_SIZE_AT(&len, nullptr, ARG(string));
 
     REBUNI c;
     cp = NEXT_CHR(&c, cp);
@@ -633,8 +633,8 @@ REBNATIVE(deline)
 
     REBLEN len_at = VAL_LEN_AT(input);
 
-    REBCHR(*) dest = VAL_STRING_AT_KNOWN_MUTABLE(input);
-    REBCHR(const*) src = dest;
+    Utf8(*) dest = VAL_STRING_AT_KNOWN_MUTABLE(input);
+    Utf8(const*) src = dest;
 
     // DELINE tolerates either LF or CR LF, in order to avoid disincentivizing
     // remote data in CR LF format from being "fixed" to pure LF format, for
@@ -706,12 +706,12 @@ REBNATIVE(enline)
     // Calculate the size difference by counting the number of LF's
     // that have no CR's in front of them.
     //
-    // !!! The REBCHR(*) interface isn't technically necessary if one is
+    // !!! The Utf8(*) interface isn't technically necessary if one is
     // counting to the end (one could just go by bytes instead of characters)
     // but this would not work if someone added, say, an ENLINE/PART...since
     // the byte ending position of interest might not be end of the string.
 
-    REBCHR(*) cp = STR_AT(s, idx);
+    Utf8(*) cp = STR_AT(s, idx);
 
     bool relax = false;  // !!! in case we wanted to tolerate CR LF already?
     REBUNI c_prev = '\0';
@@ -795,7 +795,7 @@ REBNATIVE(entab)
 
     REBLEN len = VAL_LEN_AT(ARG(string));
 
-    REBCHR(const*) up = VAL_STRING_AT(ARG(string));
+    Utf8(const*) up = VAL_STRING_AT(ARG(string));
     REBLEN index = VAL_INDEX(ARG(string));
 
     REBINT n = 0;
@@ -873,7 +873,7 @@ REBNATIVE(detab)
 
     // Estimate new length based on tab expansion:
 
-    REBCHR(const*) cp = VAL_STRING_AT(ARG(string));
+    Utf8(const*) cp = VAL_STRING_AT(ARG(string));
     REBLEN index = VAL_INDEX(ARG(string));
 
     REBLEN n = 0;
@@ -1051,7 +1051,7 @@ REBNATIVE(find_script)
     const REBYTE *header_bp = bp + offset;
 
     REBLEN index = VAL_INDEX(arg);
-    REBCHR(const*) cp = VAL_STRING_AT(arg);
+    Utf8(const*) cp = VAL_STRING_AT(arg);
     for (; cp != header_bp; cp = NEXT_STR(cp))
         ++index;
 

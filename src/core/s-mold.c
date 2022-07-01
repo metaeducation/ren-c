@@ -592,9 +592,9 @@ void Throttle_Mold(REB_MOLD *mo) {
         // not bytes.  Have to back up the right number of bytes, but also
         // adjust the character length appropriately.
 
-        REBCHR(*) tail = STR_TAIL(mo->series);
+        Utf8(*) tail = STR_TAIL(mo->series);
         REBUNI dummy;
-        REBCHR(*) cp = SKIP_CHR(&dummy, tail, -(overage));
+        Utf8(*) cp = SKIP_CHR(&dummy, tail, -(overage));
 
         TERM_STR_LEN_SIZE(
             mo->series,

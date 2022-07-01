@@ -36,7 +36,7 @@ static bool Check_Char_Range(const REBVAL *val, REBLEN limit)
     assert(ANY_STRING(val));
 
     REBLEN len;
-    REBCHR(const*) up = VAL_UTF8_LEN_SIZE_AT(&len, nullptr, val);
+    Utf8(const*) up = VAL_UTF8_LEN_SIZE_AT(&len, nullptr, val);
 
     for (; len > 0; len--) {
         REBUNI c;
@@ -1750,7 +1750,7 @@ bool Try_As_String(
             str = STR(bin);
             index = 0;
 
-            REBCHR(const*) cp = STR_HEAD(str);
+            Utf8(const*) cp = STR_HEAD(str);
             REBLEN len = STR_LEN(str);
             while (index < len and cp != at_ptr) {
                 ++index;
@@ -1774,7 +1774,7 @@ bool Try_As_String(
 
         REBLEN len;
         REBSIZ size;
-        REBCHR(const*) utf8 = VAL_UTF8_LEN_SIZE_AT(&len, &size, v);
+        Utf8(const*) utf8 = VAL_UTF8_LEN_SIZE_AT(&len, &size, v);
         assert(size + 1 <= sizeof(PAYLOAD(Bytes, v).at_least_8));  // must fit
 
         REBSTR *str = Make_String_Core(size, SERIES_FLAGS_NONE);
@@ -2001,7 +2001,7 @@ REBNATIVE(as)
             // through the same validation.  Review efficiency.
             //
             REBSIZ size;
-            REBCHR(const*) utf8 = VAL_UTF8_SIZE_AT(&size, v);
+            Utf8(const*) utf8 = VAL_UTF8_SIZE_AT(&size, v);
             if (nullptr == Scan_Any_Word(OUT, new_kind, utf8, size))
                 fail (Error_Bad_Char_Raw(v));
 
@@ -2098,7 +2098,7 @@ REBNATIVE(as)
             // Data lives in payload--make new frozen series for BINARY!
 
             REBSIZ size;
-            REBCHR(const*) utf8 = VAL_UTF8_SIZE_AT(&size, v);
+            Utf8(const*) utf8 = VAL_UTF8_SIZE_AT(&size, v);
             REBBIN *bin = Make_Binary_Core(size, NODE_FLAG_MANAGED);
             memcpy(BIN_HEAD(bin), utf8, size + 1);
             SET_SERIES_USED(bin, size);

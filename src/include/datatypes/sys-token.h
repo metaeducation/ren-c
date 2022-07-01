@@ -81,7 +81,7 @@ inline static const REBYTE *VAL_CHAR_ENCODED(noquote(Cell(const*)) v) {
 
 inline static REBVAL *Init_Issue_Utf8(
     Cell(*) out,
-    REBCHR(const*) utf8,  // previously validated UTF-8 (maybe not null term?)
+    Utf8(const*) utf8,  // previously validated UTF-8 (maybe not null term?)
     REBSIZ size,
     REBLEN len  // while validating, you should have counted the codepoints
 ){
@@ -262,7 +262,7 @@ inline static const REBYTE *VAL_BYTES_LIMIT_AT(
 // ANY-WORD! or an ANY-STRING! to get UTF-8 data.  This is a convenience
 // routine for handling that.
 //
-inline static REBCHR(const*) VAL_UTF8_LEN_SIZE_AT_LIMIT(
+inline static Utf8(const*) VAL_UTF8_LEN_SIZE_AT_LIMIT(
     option(REBLEN*) length_out,
     option(REBSIZ*) size_out,
     noquote(Cell(const*)) v,
@@ -286,7 +286,7 @@ inline static REBCHR(const*) VAL_UTF8_LEN_SIZE_AT_LIMIT(
         }
         else {
             len = 0;
-            REBCHR(const*) at = cast(REBCHR(const*),
+            Utf8(const*) at = cast(Utf8(const*),
                 PAYLOAD(Bytes, v).at_least_8
             );
             for (; limit != 0; --limit, ++len)
@@ -298,10 +298,10 @@ inline static REBCHR(const*) VAL_UTF8_LEN_SIZE_AT_LIMIT(
             *unwrap(length_out) = len;
         if (size_out)
             *unwrap(size_out) = size;
-        return cast(REBCHR(const*), PAYLOAD(Bytes, v).at_least_8);
+        return cast(Utf8(const*), PAYLOAD(Bytes, v).at_least_8);
     }
 
-    REBCHR(const*) utf8;
+    Utf8(const*) utf8;
     if (ANY_STRINGLIKE(v)) {
         utf8 = VAL_STRING_AT(v);
 
@@ -326,7 +326,7 @@ inline static REBCHR(const*) VAL_UTF8_LEN_SIZE_AT_LIMIT(
                 //
                 // Note that signed cast to REBLEN of -1 UNLIMITED is a large #
                 //
-                REBCHR(const*) cp = utf8;
+                Utf8(const*) cp = utf8;
                 REBLEN index = 0;
                 for (; index < cast(REBLEN, limit); ++index, cp = NEXT_STR(cp)) {
                     if (CHR_CODE(cp) == '\0')

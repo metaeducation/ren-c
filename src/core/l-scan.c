@@ -3355,7 +3355,7 @@ const REBYTE *Scan_Issue(Cell(*) out, const REBYTE *cp, REBSIZ size)
     // !!! Review UTF-8 Safety, needs to use mold buffer the way TEXT! does
     // to scan the data.
     //
-    Init_Issue_Utf8(out, cast(REBCHR(const*), cp), size, len);
+    Init_Issue_Utf8(out, cast(Utf8(const*), cp), size, len);
 
     return bp;
 }

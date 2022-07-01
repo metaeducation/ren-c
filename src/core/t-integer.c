@@ -105,7 +105,7 @@ Bounce TO_Integer(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 void Hex_String_To_Integer(REBVAL *out, const REBVAL *value)
 {
     REBSIZ utf8_size;
-    REBCHR(const*) bp = VAL_UTF8_SIZE_AT(&utf8_size, value);
+    Utf8(const*) bp = VAL_UTF8_SIZE_AT(&utf8_size, value);
 
     if (utf8_size > MAX_HEX_LEN) {
         // Lacks BINARY!'s accommodation of leading 00s or FFs

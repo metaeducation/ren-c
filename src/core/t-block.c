@@ -124,7 +124,7 @@ Bounce MAKE_Array(
         // `make block! "a <b> #c"` => `[a <b> #c]`, scans as code (unbound)
         //
         REBSIZ size;
-        REBCHR(const*) utf8 = VAL_UTF8_SIZE_AT(&size, arg);
+        Utf8(const*) utf8 = VAL_UTF8_SIZE_AT(&size, arg);
 
         const REBSTR *file = ANONYMOUS;
         option(Context(*)) context = nullptr;
@@ -221,7 +221,7 @@ Bounce MAKE_Array(
         // get an unbound code array.
         //
         REBSIZ utf8_size;
-        REBCHR(const*) utf8 = VAL_UTF8_SIZE_AT(&utf8_size, arg);
+        Utf8(const*) utf8 = VAL_UTF8_SIZE_AT(&utf8_size, arg);
         const REBSTR *file = ANONYMOUS;
         option(Context(*)) context = nullptr;
         return Init_Any_Array(

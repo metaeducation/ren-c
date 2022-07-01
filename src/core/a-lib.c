@@ -1362,7 +1362,7 @@ static size_t Spell_Into(
         fail ("rebSpell() APIs require UTF-8 types (strings, words, tokens)");
 
     REBSIZ utf8_size;
-    REBCHR(const*) utf8 = VAL_UTF8_SIZE_AT(&utf8_size, v);
+    Utf8(const*) utf8 = VAL_UTF8_SIZE_AT(&utf8_size, v);
 
     if (not buf) {
         assert(buf_size == 0);
@@ -1445,7 +1445,7 @@ static unsigned int Spell_Into_Wide(
 
     unsigned int num_wchars = 0;  // some codepoints need 2 wchars
 
-    REBCHR(const*) cp = VAL_UTF8_AT(v);
+    Utf8(const*) cp = VAL_UTF8_AT(v);
 
     REBUNI c;
     cp = NEXT_CHR(&c, cp);

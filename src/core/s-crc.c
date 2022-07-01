@@ -80,7 +80,7 @@ uint32_t Hash_Scan_UTF8_Caseless_May_Fail(const REBYTE *utf8, REBSIZ size)
 // NOTE: This takes LENGTH, not number of bytes, because it goes codepoint by
 // codepoint for the lowercase operation.
 //
-uint32_t Hash_UTF8_Len_Caseless(REBCHR(const*) cp, REBLEN len) {
+uint32_t Hash_UTF8_Len_Caseless(Utf8(const*) cp, REBLEN len) {
     uint32_t crc = 0x00000000;
 
     REBLEN n;
@@ -192,7 +192,7 @@ uint32_t Hash_Value(Cell(const*) cell)
       case REB_TAG:
       case REB_ISSUE: {  // ISSUE! may or may not have CELL_FLAG_ISSUE_HAS_NODE
         REBLEN len;
-        REBCHR(const*) utf8 = VAL_UTF8_LEN_SIZE_AT(&len, nullptr, cell);
+        Utf8(const*) utf8 = VAL_UTF8_LEN_SIZE_AT(&len, nullptr, cell);
         hash = Hash_UTF8_Len_Caseless(utf8, len);
         break; }
 

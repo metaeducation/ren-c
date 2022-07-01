@@ -65,10 +65,10 @@ REBINT CT_String(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
     );
 
     REBLEN l1;
-    REBCHR(const*) cp1 = VAL_UTF8_LEN_SIZE_AT(&l1, nullptr, a);
+    Utf8(const*) cp1 = VAL_UTF8_LEN_SIZE_AT(&l1, nullptr, a);
 
     REBLEN l2;
-    REBCHR(const*) cp2 = VAL_UTF8_LEN_SIZE_AT(&l2, nullptr, b);
+    Utf8(const*) cp2 = VAL_UTF8_LEN_SIZE_AT(&l2, nullptr, b);
 
     REBLEN len = MIN(l1, l2);
 
@@ -130,7 +130,7 @@ static void reverse_string(REBSTR *str, REBLEN index, REBLEN len)
 
         REBLEN val_len_head = STR_LEN(str);
 
-        REBCHR(const*) up = STR_TAIL(str);  // last exists due to len != 0
+        Utf8(const*) up = STR_TAIL(str);  // last exists due to len != 0
         REBLEN n;
         for (n = 0; n < len; ++n) {
             REBUNI c;
@@ -503,7 +503,7 @@ void Mold_Text_Series_At(REB_MOLD *mo, const REBSTR *s, REBLEN index) {
     REBLEN chr1e = 0;
     REBLEN malign = 0;
 
-    REBCHR(const*) up = STR_AT(s, index);
+    Utf8(const*) up = STR_AT(s, index);
 
     REBLEN x;
     for (x = index; x < len; x++) {
@@ -625,7 +625,7 @@ static void Mold_File(REB_MOLD *mo, noquote(Cell(const*)) v)
     Append_Codepoint(mo->series, '%');
 
     REBLEN len;
-    REBCHR(const*) cp = VAL_UTF8_LEN_SIZE_AT(&len, nullptr, v);
+    Utf8(const*) cp = VAL_UTF8_LEN_SIZE_AT(&len, nullptr, v);
 
     REBLEN n;
     for (n = 0; n < len; ++n) {
@@ -1151,7 +1151,7 @@ REBTYPE(String)
             assert(ANY_STRING(v));
 
             REBSIZ utf8_size;
-            REBCHR(const*) utf8 = VAL_UTF8_SIZE_AT(&utf8_size, v);
+            Utf8(const*) utf8 = VAL_UTF8_SIZE_AT(&utf8_size, v);
             Set_Random(crc32_z(0L, utf8, utf8_size));
             return NONE;
         }

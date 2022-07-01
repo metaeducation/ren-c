@@ -98,7 +98,7 @@ REBSTR *Decode_UTF16(
 
     REBLEN num_chars = 0;
 
-    REBCHR(*) dp = STR_HEAD(s);
+    Utf8(*) dp = STR_HEAD(s);
 
     for (; len > 0; len--, src++) {
         //
@@ -216,11 +216,11 @@ REBNATIVE(encode_text)
 
 
 static REBSER *Encode_Utf16(
-    REBCHR(const*) data,
+    Utf8(const*) data,
     REBLEN len,
     bool little_endian
 ){
-    REBCHR(const*) cp = data;
+    Utf8(const*) cp = data;
 
     REBBIN *bin = Make_Binary(sizeof(uint16_t) * len);
     uint16_t* up = cast(uint16_t*, BIN_HEAD(bin));
@@ -322,7 +322,7 @@ REBNATIVE(encode_utf16le)
     UTF_INCLUDE_PARAMS_OF_ENCODE_UTF16LE;
 
     REBLEN len;
-    REBCHR(const*) utf8 = VAL_UTF8_LEN_SIZE_AT(&len, nullptr, ARG(text));
+    Utf8(const*) utf8 = VAL_UTF8_LEN_SIZE_AT(&len, nullptr, ARG(text));
 
     const bool little_endian = true;
     Init_Binary(OUT, Encode_Utf16(utf8, len, little_endian));
@@ -402,7 +402,7 @@ REBNATIVE(encode_utf16be)
     UTF_INCLUDE_PARAMS_OF_ENCODE_UTF16BE;
 
     REBLEN len;
-    REBCHR(const*) utf8 = VAL_UTF8_LEN_SIZE_AT(&len, nullptr, ARG(text));
+    Utf8(const*) utf8 = VAL_UTF8_LEN_SIZE_AT(&len, nullptr, ARG(text));
 
     const bool little_endian = false;
     Init_Binary(OUT, Encode_Utf16(utf8, len, little_endian));

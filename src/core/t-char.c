@@ -161,7 +161,7 @@ Bounce TO_Issue(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
     if (ANY_STRING(arg) or ANY_WORD(arg)) {
         REBLEN len;
         REBSIZ size;
-        REBCHR(const*) utf8 = VAL_UTF8_LEN_SIZE_AT(&len, &size, arg);
+        Utf8(const*) utf8 = VAL_UTF8_LEN_SIZE_AT(&len, &size, arg);
 
         if (len == 0)  // don't "accidentally" create zero-codepoint `#`
             fail (Error_Illegal_Zero_Byte_Raw());
@@ -221,7 +221,7 @@ void MF_Issue(REB_MOLD *mo, noquote(Cell(const*)) v, bool form)
     // of what that logic *should* do.
 
     bool no_quotes = true;
-    REBCHR(const*) cp = VAL_UTF8_AT(v);
+    Utf8(const*) cp = VAL_UTF8_AT(v);
     REBUNI c = CHR_CODE(cp);
     for (; c != '\0'; cp = NEXT_CHR(&c, cp)) {
         if (
@@ -323,7 +323,7 @@ REBTYPE(Issue)
             return nullptr;
 
         REBLEN len;
-        REBCHR(const*) cp = VAL_UTF8_LEN_SIZE_AT(&len, nullptr, issue);
+        Utf8(const*) cp = VAL_UTF8_LEN_SIZE_AT(&len, nullptr, issue);
         if (cast(REBLEN, n) > len)
             return nullptr;
 

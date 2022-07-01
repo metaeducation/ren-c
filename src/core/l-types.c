@@ -1049,7 +1049,7 @@ const REBYTE *Scan_Email(
     REBLEN len
 ){
     REBSTR *s = Make_String(len * 2);  // !!! guess...use mold buffer instead?
-    REBCHR(*) up = STR_HEAD(s);
+    Utf8(*) up = STR_HEAD(s);
 
     REBLEN num_chars = 0;
 
@@ -1374,7 +1374,7 @@ REBNATIVE(scan_net_header)
         // in the loop above.  Better to convert to usermode.
 
         REBSTR *string = Make_String(len * 2);
-        REBCHR(*) str = STR_HEAD(string);
+        Utf8(*) str = STR_HEAD(string);
         cp = start;
 
         // "Code below *MUST* mirror that above:"

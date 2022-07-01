@@ -327,7 +327,7 @@ inline static const REBYTE *Back_Scan_UTF8_Char(
     // is that since this check only applies to non-ASCII, it is worth it to
     // do the validation.
     //
-    // !!! Once a UTF-8 ANY-STRING! has been loaded (e.g. REBCHR(*)), this
+    // !!! Once a UTF-8 ANY-STRING! has been loaded (e.g. Utf8(*)), this
     // routine could be stripped down to remove checks for character decoding.
     // But again, low priority--it would only apply to non-ASCII chars.
     //

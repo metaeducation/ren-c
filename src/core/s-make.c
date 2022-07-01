@@ -77,7 +77,7 @@ REBSTR *Copy_String_At_Limit(Cell(const*) src, REBINT limit)
 {
     REBSIZ limited_size;
     REBLEN limited_length;
-    REBCHR(const*) utf8 = VAL_UTF8_LEN_SIZE_AT_LIMIT(
+    Utf8(const*) utf8 = VAL_UTF8_LEN_SIZE_AT_LIMIT(
         &limited_length,
         &limited_size,
         src,
@@ -228,7 +228,7 @@ void Append_String_Limit(REBSTR *dst, noquote(Cell(const*)) src, REBLEN limit)
 
     REBLEN len;
     REBSIZ size;
-    REBCHR(const*) utf8 = VAL_UTF8_LEN_SIZE_AT_LIMIT(&len, &size, src, limit);
+    Utf8(const*) utf8 = VAL_UTF8_LEN_SIZE_AT_LIMIT(&len, &size, src, limit);
 
     REBLEN old_len = STR_LEN(dst);
     REBSIZ old_used = STR_SIZE(dst);
@@ -413,7 +413,7 @@ void Join_Binary_In_Byte_Buf(const REBVAL *blk, REBINT limit)
           case REB_URL:
           case REB_TAG: {
             REBSIZ utf8_size;
-            REBCHR(const*) utf8 = VAL_UTF8_SIZE_AT(&utf8_size, val);
+            Utf8(const*) utf8 = VAL_UTF8_SIZE_AT(&utf8_size, val);
 
             EXPAND_SERIES_TAIL(buf, utf8_size);
             memcpy(BIN_AT(buf, tail), utf8, utf8_size);

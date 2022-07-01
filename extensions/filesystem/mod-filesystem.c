@@ -150,7 +150,7 @@ REBSTR *To_REBOL_Path(Cell(const*) string, REBFLGS flags)
 
 restart:;
     REBLEN len;
-    REBCHR(const*) up = VAL_UTF8_LEN_SIZE_AT(&len, nullptr, string);
+    Utf8(const*) up = VAL_UTF8_LEN_SIZE_AT(&len, nullptr, string);
 
     REBUNI c = '\0'; // for test after loop (in case loop does not run)
 
@@ -244,7 +244,7 @@ void Mold_File_To_Local(REB_MOLD *mo, Cell(const*) file, REBFLGS flags) {
     assert(IS_FILE(file));
 
     REBLEN len;
-    REBCHR(const*) up = VAL_UTF8_LEN_SIZE_AT(&len, nullptr, file);
+    Utf8(const*) up = VAL_UTF8_LEN_SIZE_AT(&len, nullptr, file);
 
     REBLEN i = 0;
 
@@ -270,7 +270,7 @@ void Mold_File_To_Local(REB_MOLD *mo, Cell(const*) file, REBFLGS flags) {
             // peek ahead for a '/'
             //
             REBUNI d = '/';
-            REBCHR(const*) dp;
+            Utf8(const*) dp;
             if (i < len)
                 dp = NEXT_CHR(&d, up);
             else
@@ -355,7 +355,7 @@ void Mold_File_To_Local(REB_MOLD *mo, Cell(const*) file, REBFLGS flags) {
                     REBLEN n = STR_LEN(mo->series);
                     REBUNI c2;  // character in mold buffer
                     if (n > mo->index) {
-                        REBCHR(*) tp = STR_TAIL(mo->series);
+                        Utf8(*) tp = STR_TAIL(mo->series);
 
                         --n;
                         tp = BACK_CHR(&c2, tp);

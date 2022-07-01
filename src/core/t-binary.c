@@ -138,7 +138,7 @@ static REBBIN *MAKE_TO_Binary_Common(const REBVAL *arg)
     case REB_TAG:
     case REB_ISSUE: {
         REBSIZ utf8_size;
-        REBCHR(const*) utf8 = VAL_UTF8_SIZE_AT(&utf8_size, arg);
+        Utf8(const*) utf8 = VAL_UTF8_SIZE_AT(&utf8_size, arg);
 
         REBBIN *bin = Make_Binary(utf8_size);
         memcpy(BIN_HEAD(bin), utf8, utf8_size);

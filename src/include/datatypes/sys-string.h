@@ -30,7 +30,7 @@
 // attack the problem three ways:
 //
 // * Avoiding loops which try to access by index, and instead make it easier
-//   to smoothly traverse known good UTF-8 data using REBCHR(*).
+//   to smoothly traverse known good UTF-8 data using Utf8(*).
 //
 // * Monitoring strings if they are ASCII only and using that to make an
 //   optimized jump.  !!! Work in progress, see notes below.
@@ -71,49 +71,49 @@
 #define HAS_LINK_Bookmarks      FLAVOR_STRING
 
 
-inline static REBCHR(*) NEXT_CHR(
+inline static Utf8(*) NEXT_CHR(
     REBUNI *codepoint_out,
-    REBCHR(const_if_unchecked_utf8*) cp
+    Utf8(const_if_unchecked_utf8*) cp
 ){
     const REBYTE *t = cp;
     if (*t < 0x80)
         *codepoint_out = *t;
     else
         t = Back_Scan_UTF8_Char_Unchecked(codepoint_out, t);
-    return cast(REBCHR(*), m_cast(REBYTE*, t + 1));
+    return cast(Utf8(*), m_cast(REBYTE*, t + 1));
 }
 
-inline static REBCHR(*) BACK_CHR(
+inline static Utf8(*) BACK_CHR(
     REBUNI *codepoint_out,
-    REBCHR(const_if_unchecked_utf8*) cp
+    Utf8(const_if_unchecked_utf8*) cp
 ){
     const_if_unchecked_utf8 REBYTE *t = cp;
     --t;
     while (Is_Continuation_Byte_If_Utf8(*t))
         --t;
-    NEXT_CHR(codepoint_out, cast(REBCHR(const_if_unchecked_utf8*), t));
-    return cast(REBCHR(*), m_cast(REBYTE*, t));
+    NEXT_CHR(codepoint_out, cast(Utf8(const_if_unchecked_utf8*), t));
+    return cast(Utf8(*), m_cast(REBYTE*, t));
 }
 
-inline static REBCHR(*) NEXT_STR(REBCHR(const_if_unchecked_utf8*) cp) {
+inline static Utf8(*) NEXT_STR(Utf8(const_if_unchecked_utf8*) cp) {
     const_if_unchecked_utf8 REBYTE *t = cp;
     do {
         ++t;
     } while (Is_Continuation_Byte_If_Utf8(*t));
-    return cast(REBCHR(*), m_cast(REBYTE*, t));
+    return cast(Utf8(*), m_cast(REBYTE*, t));
 }
 
-inline static REBCHR(*) BACK_STR(REBCHR(const_if_unchecked_utf8*) cp) {
+inline static Utf8(*) BACK_STR(Utf8(const_if_unchecked_utf8*) cp) {
     const_if_unchecked_utf8 REBYTE *t = cp;
     do {
         --t;
     } while (Is_Continuation_Byte_If_Utf8(*t));
-    return cast(REBCHR(*), m_cast(REBYTE*, t));
+    return cast(Utf8(*), m_cast(REBYTE*, t));
 }
 
-inline static REBCHR(*) SKIP_CHR(
+inline static Utf8(*) SKIP_CHR(
     REBUNI *codepoint_out,
-    REBCHR(const_if_unchecked_utf8*) cp,
+    Utf8(const_if_unchecked_utf8*) cp,
     REBINT delta
 ){
     if (delta > 0) {
@@ -129,7 +129,7 @@ inline static REBCHR(*) SKIP_CHR(
         }
     }
     NEXT_CHR(codepoint_out, cp);
-    return m_cast(REBCHR(*), cp);
+    return m_cast(Utf8(*), cp);
 }
 
 #if DEBUG_UTF8_EVERYWHERE
@@ -137,45 +137,45 @@ inline static REBCHR(*) SKIP_CHR(
     // See the definition of `const_if_c` for the explanation of why this
     // overloading technique is needed to make output constness match input.
     //
-    inline static REBCHR(const*) NEXT_CHR(
+    inline static Utf8(const*) NEXT_CHR(
         REBUNI *codepoint_out,
-        REBCHR(const*) cp
+        Utf8(const*) cp
     ){
-        return NEXT_CHR(codepoint_out, m_cast(REBCHR(*), cp));
+        return NEXT_CHR(codepoint_out, m_cast(Utf8(*), cp));
     }
 
-    inline static REBCHR(const*) BACK_CHR(
+    inline static Utf8(const*) BACK_CHR(
         REBUNI *codepoint_out,
-        REBCHR(const*) cp
+        Utf8(const*) cp
     ){
-        return BACK_CHR(codepoint_out, m_cast(REBCHR(*), cp));
+        return BACK_CHR(codepoint_out, m_cast(Utf8(*), cp));
     }
 
-    inline static REBCHR(const*) NEXT_STR(REBCHR(const*) cp)
-      { return NEXT_STR(m_cast(REBCHR(*), cp)); }
+    inline static Utf8(const*) NEXT_STR(Utf8(const*) cp)
+      { return NEXT_STR(m_cast(Utf8(*), cp)); }
 
-    inline static REBCHR(const*) BACK_STR(REBCHR(const*) cp)
-      { return BACK_STR(m_cast(REBCHR(*), cp)); }
+    inline static Utf8(const*) BACK_STR(Utf8(const*) cp)
+      { return BACK_STR(m_cast(Utf8(*), cp)); }
 
-    inline static REBCHR(const*) SKIP_CHR(
+    inline static Utf8(const*) SKIP_CHR(
         REBUNI *codepoint_out,
-        REBCHR(const*) cp,
+        Utf8(const*) cp,
         REBINT delta
     ){
-        return SKIP_CHR(codepoint_out, m_cast(REBCHR(*), cp), delta);
+        return SKIP_CHR(codepoint_out, m_cast(Utf8(*), cp), delta);
     }
 #endif
 
-inline static REBUNI CHR_CODE(REBCHR(const*) cp) {
+inline static REBUNI CHR_CODE(Utf8(const*) cp) {
     REBUNI codepoint;
     NEXT_CHR(&codepoint, cp);
     return codepoint;
 }
 
-inline static REBCHR(*) WRITE_CHR(REBCHR(*) cp, REBUNI c) {
+inline static Utf8(*) WRITE_CHR(Utf8(*) cp, REBUNI c) {
     REBSIZ size = Encoded_Size_For_Codepoint(c);
     Encode_UTF8_Char(cp, c, size);
-    return cast(REBCHR(*), cast(REBYTE*, cp) + size);
+    return cast(Utf8(*), cast(REBYTE*, cp) + size);
 }
 
 
@@ -208,17 +208,17 @@ inline static bool Is_String_Definitely_ASCII(const REBSTR *str) {
 #define STR_SIZE(s) \
     SER_USED(ensure(const REBSTR*, s))  // UTF-8 byte count (not codepoints)
 
-inline static REBCHR(*) STR_HEAD(const_if_c REBSTR *s)
-  { return cast(REBCHR(*), SER_HEAD(REBYTE, s)); }
+inline static Utf8(*) STR_HEAD(const_if_c REBSTR *s)
+  { return cast(Utf8(*), SER_HEAD(REBYTE, s)); }
 
-inline static REBCHR(*) STR_TAIL(const_if_c REBSTR *s)
-  { return cast(REBCHR(*), SER_TAIL(REBYTE, s)); }
+inline static Utf8(*) STR_TAIL(const_if_c REBSTR *s)
+  { return cast(Utf8(*), SER_TAIL(REBYTE, s)); }
 
 #if CPLUSPLUS_11
-    inline static REBCHR(const*) STR_HEAD(const REBSTR *s)
+    inline static Utf8(const*) STR_HEAD(const REBSTR *s)
       { return STR_HEAD(m_cast(REBSTR*, s)); }
 
-    inline static REBCHR(const*) STR_TAIL(const REBSTR *s)
+    inline static Utf8(const*) STR_TAIL(const REBSTR *s)
       { return STR_TAIL(m_cast(REBSTR*, s)); }
 #endif
 
@@ -239,8 +239,8 @@ inline static REBLEN STR_LEN(const REBSTR *s) {
     // they're not too long (since spaces and newlines are illegal.)
     //
     REBLEN len = 0;
-    REBCHR(const*) ep = STR_TAIL(s);
-    REBCHR(const*) cp = STR_HEAD(s);
+    Utf8(const*) ep = STR_TAIL(s);
+    Utf8(const*) cp = STR_HEAD(s);
     while (cp != ep) {
         cp = NEXT_STR(cp);
         ++len;
@@ -270,8 +270,8 @@ inline static REBLEN STR_INDEX_AT(const REBSTR *s, REBSIZ offset) {
     // they're not too long (since spaces and newlines are illegal.)
     //
     REBLEN index = 0;
-    REBCHR(const*) ep = cast(REBCHR(const*), BIN_AT(s, offset));
-    REBCHR(const*) cp = STR_HEAD(s);
+    Utf8(const*) ep = cast(Utf8(const*), BIN_AT(s, offset));
+    Utf8(const*) cp = STR_HEAD(s);
     while (cp != ep) {
         cp = NEXT_STR(cp);
         ++index;
@@ -342,7 +342,7 @@ inline static void Free_Bookmarks_Maybe_Null(REBSTR *str) {
         REBLEN index = BMK_INDEX(bookmark);
         REBSIZ offset = BMK_OFFSET(bookmark);
 
-        REBCHR(*) cp = STR_HEAD(s);
+        Utf8(*) cp = STR_HEAD(s);
         REBLEN i;
         for (i = 0; i != index; ++i)
             cp = NEXT_STR(cp);
@@ -366,19 +366,19 @@ inline static void Free_Bookmarks_Maybe_Null(REBSTR *str) {
 
 // Note that we only ever create caches for strings that have had STR_AT()
 // run on them.  So the more operations that avoid STR_AT(), the better!
-// Using STR_HEAD() and STR_TAIL() will give a REBCHR(*) that can be used to
+// Using STR_HEAD() and STR_TAIL() will give a Utf8(*) that can be used to
 // iterate much faster, and most of the strings in the system might be able
 // to get away with not having any bookmarks at all.
 //
-inline static REBCHR(*) STR_AT(const_if_c REBSTR *s, REBLEN at) {
+inline static Utf8(*) STR_AT(const_if_c REBSTR *s, REBLEN at) {
     assert(at <= STR_LEN(s));
 
     if (Is_Definitely_Ascii(s)) {  // can't have any false positives
         assert(not LINK(Bookmarks, s));  // mutations must ensure this
-        return cast(REBCHR(*), cast(REBYTE*, STR_HEAD(s)) + at);
+        return cast(Utf8(*), cast(REBYTE*, STR_HEAD(s)) + at);
     }
 
-    REBCHR(*) cp;  // can be used to calculate offset (relative to STR_HEAD())
+    Utf8(*) cp;  // can be used to calculate offset (relative to STR_HEAD())
     REBLEN index;
 
     REBBMK *bookmark = nullptr;  // updated at end if not nulled out
@@ -461,9 +461,9 @@ inline static REBCHR(*) STR_AT(const_if_c REBSTR *s, REBLEN at) {
 
     index = booked;
     if (bookmark)
-        cp = cast(REBCHR(*), SER_DATA(s) + BMK_OFFSET(bookmark));
+        cp = cast(Utf8(*), SER_DATA(s) + BMK_OFFSET(bookmark));
     else
-        cp = cast(REBCHR(*), SER_DATA(s));
+        cp = cast(Utf8(*), SER_DATA(s));
   }
 
     if (index > at) {
@@ -522,7 +522,7 @@ inline static REBCHR(*) STR_AT(const_if_c REBSTR *s, REBLEN at) {
     BMK_OFFSET(bookmark) = cp - STR_HEAD(s);
 
   #if DEBUG_VERIFY_STR_AT
-    REBCHR(*) check_cp = STR_HEAD(s);
+    Utf8(*) check_cp = STR_HEAD(s);
     REBLEN check_index = 0;
     for (; check_index != at; ++check_index)
         check_cp = NEXT_STR(check_cp);
@@ -533,7 +533,7 @@ inline static REBCHR(*) STR_AT(const_if_c REBSTR *s, REBLEN at) {
 }
 
 #if CPLUSPLUS_11
-    inline static REBCHR(const*) STR_AT(const REBSTR *s, REBLEN at)
+    inline static Utf8(const*) STR_AT(const REBSTR *s, REBLEN at)
       { return STR_AT(m_cast(REBSTR*, s), at); }
 #endif
 
@@ -582,7 +582,7 @@ inline static REBLEN VAL_LEN_AT(noquote(Cell(const*)) v) {
     return VAL_LEN_HEAD(v) - i;  // take current index into account
 }
 
-inline static REBCHR(const*) VAL_STRING_AT(noquote(Cell(const*)) v) {
+inline static Utf8(const*) VAL_STRING_AT(noquote(Cell(const*)) v) {
     const REBSTR *str = VAL_STRING(v);  // checks that it's ANY-STRING!
     REBIDX i = VAL_INDEX_RAW(v);
     REBLEN len = STR_LEN(str);
@@ -592,7 +592,7 @@ inline static REBCHR(const*) VAL_STRING_AT(noquote(Cell(const*)) v) {
 }
 
 
-inline static REBCHR(const*) VAL_STRING_TAIL(noquote(Cell(const*)) v) {
+inline static Utf8(const*) VAL_STRING_TAIL(noquote(Cell(const*)) v) {
     const REBSTR *s = VAL_STRING(v);  // debug build checks it's ANY-STRING!
     return STR_TAIL(s);
 }
@@ -600,10 +600,10 @@ inline static REBCHR(const*) VAL_STRING_TAIL(noquote(Cell(const*)) v) {
 
 
 #define VAL_STRING_AT_ENSURE_MUTABLE(v) \
-    m_cast(REBCHR(*), VAL_STRING_AT(ENSURE_MUTABLE(v)))
+    m_cast(Utf8(*), VAL_STRING_AT(ENSURE_MUTABLE(v)))
 
 #define VAL_STRING_AT_KNOWN_MUTABLE(v) \
-    m_cast(REBCHR(*), VAL_STRING_AT(KNOWN_MUTABLE(v)))
+    m_cast(Utf8(*), VAL_STRING_AT(KNOWN_MUTABLE(v)))
 
 
 inline static REBSIZ VAL_SIZE_LIMIT_AT(
@@ -613,8 +613,8 @@ inline static REBSIZ VAL_SIZE_LIMIT_AT(
 ){
     assert(ANY_STRINGLIKE(v));
 
-    REBCHR(const*) at = VAL_STRING_AT(v);  // !!! update cache if needed
-    REBCHR(const*) tail;
+    Utf8(const*) at = VAL_STRING_AT(v);  // !!! update cache if needed
+    Utf8(const*) tail;
 
     REBLEN len_at = VAL_LEN_AT(v);
     if (cast(REBLEN, limit) >= len_at) {  // UNLIMITED casts to large unsigned
@@ -644,7 +644,7 @@ inline static REBSIZ VAL_OFFSET(Cell(const*) v) {
 inline static REBSIZ VAL_OFFSET_FOR_INDEX(noquote(Cell(const*)) v, REBLEN index) {
     assert(ANY_STRING_KIND(CELL_HEART(v)));
 
-    REBCHR(const*) at;
+    Utf8(const*) at;
 
     if (index == VAL_INDEX(v))
         at = VAL_STRING_AT(v); // !!! update cache if needed
@@ -664,7 +664,7 @@ inline static REBSIZ VAL_OFFSET_FOR_INDEX(noquote(Cell(const*)) v, REBLEN index)
 //=//// INEFFICIENT SINGLE GET-AND-SET CHARACTER OPERATIONS //////////////=//
 //
 // These should generally be avoided by routines that are iterating, which
-// should instead be using the REBCHR(*)-based APIs to maneuver through the
+// should instead be using the Utf8(*)-based APIs to maneuver through the
 // UTF-8 data in a continuous way.
 //
 // !!! At time of writing, PARSE is still based on this method.  Instead, it
@@ -672,7 +672,7 @@ inline static REBSIZ VAL_OFFSET_FOR_INDEX(noquote(Cell(const*)) v, REBLEN index)
 // hold a cache that it throws away whenever it runs a GROUP!.
 
 inline static REBUNI GET_CHAR_AT(const REBSTR *s, REBLEN n) {
-    REBCHR(const*) up = STR_AT(s, n);
+    Utf8(const*) up = STR_AT(s, n);
     REBUNI c;
     NEXT_CHR(&c, up);
     return c;
@@ -696,8 +696,8 @@ inline static void SET_CHAR_AT(REBSTR *s, REBLEN n, REBUNI c) {
     assert(IS_NONSYMBOL_STRING(s));
     assert(n < STR_LEN(s));
 
-    REBCHR(*) cp = STR_AT(s, n);
-    REBCHR(*) old_next_cp = NEXT_STR(cp);  // scans fast (for leading bytes)
+    Utf8(*) cp = STR_AT(s, n);
+    Utf8(*) old_next_cp = NEXT_STR(cp);  // scans fast (for leading bytes)
 
     REBSIZ size = Encoded_Size_For_Codepoint(c);
     REBSIZ old_size = old_next_cp - cp;
@@ -720,7 +720,7 @@ inline static void SET_CHAR_AT(REBSTR *s, REBLEN n, REBUNI c) {
         }
         else {
             EXPAND_SERIES_TAIL(s, delta);  // this adds to SERIES_USED
-            cp = cast(REBCHR(*),  // refresh `cp` (may've reallocated!)
+            cp = cast(Utf8(*),  // refresh `cp` (may've reallocated!)
                 cast(REBYTE*, STR_HEAD(s)) + cp_offset
             );
             REBYTE *later = cast(REBYTE*, cp) + delta;
@@ -756,7 +756,7 @@ inline static REBLEN Num_Codepoints_For_Bytes(
 ){
     assert(end >= start);
     REBLEN num_chars = 0;
-    REBCHR(const*) cp = cast(REBCHR(const*), start);
+    Utf8(const*) cp = cast(Utf8(const*), start);
     for (; cp != end; ++num_chars)
         cp = NEXT_STR(cp);
     return num_chars;
@@ -875,7 +875,7 @@ inline static Context(*) Error_Illegal_Cr(const REBYTE *at, const REBYTE *start)
 {
     assert(*at == CR);
     REBLEN back_len = 0;
-    REBCHR(const*) back = cast(REBCHR(const*), at);
+    Utf8(const*) back = cast(Utf8(const*), at);
     while (back_len < 41 and back != start) {
         back = BACK_STR(back);
         ++back_len;

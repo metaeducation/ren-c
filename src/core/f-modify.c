@@ -507,7 +507,7 @@ REBLEN Modify_String_Or_Binary(
     // !!! Bad first implementation; improve.
     //
     if (IS_NONSYMBOL_STRING(dst_ser)) {
-        REBCHR(const*) t = cast(REBCHR(const*), src_ptr + src_size_raw);
+        Utf8(const*) t = cast(Utf8(const*), src_ptr + src_size_raw);
         while (src_len_raw > limit) {
             t = BACK_STR(t);
             --src_len_raw;
@@ -617,8 +617,8 @@ REBLEN Modify_String_Or_Binary(
                 }
                 else {  // count how many codepoints are in the `part`
                     part_size = part;
-                    REBCHR(*) cp = cast(REBCHR(*), BIN_AT(dst_ser, dst_off));
-                    REBCHR(*) pp = cast(REBCHR(*),
+                    Utf8(*) cp = cast(Utf8(*), BIN_AT(dst_ser, dst_off));
+                    Utf8(*) pp = cast(Utf8(*),
                         BIN_AT(dst_ser, dst_off + part_size)
                     );
                     if (Is_Continuation_Byte_If_Utf8(*cast(REBYTE*, pp)))

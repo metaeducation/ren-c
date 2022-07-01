@@ -66,7 +66,7 @@ const REBYTE *Analyze_String_For_Scan(
     REBLEN max_len  // maximum length in *codepoints*
 ){
     REBLEN len;
-    REBCHR(const*) up = VAL_UTF8_LEN_SIZE_AT(&len, nullptr, any_string);
+    Utf8(const*) up = VAL_UTF8_LEN_SIZE_AT(&len, nullptr, any_string);
     if (len == 0)
         fail (Error_Index_Out_Of_Range_Raw());
 
@@ -80,7 +80,7 @@ const REBYTE *Analyze_String_For_Scan(
     if (len == 0)
         fail (Error_Index_Out_Of_Range_Raw());
 
-    REBCHR(const*) at_index = up;
+    Utf8(const*) at_index = up;
 
     // Skip up to max_len non-space characters.
     //
@@ -173,8 +173,8 @@ void Change_Case(
     // be possible, only contractions (is that true?)  Review when UTF-8
     // Everywhere is more mature to the point this is worth worrying about.
     //
-    REBCHR(*) up = VAL_STRING_AT_ENSURE_MUTABLE(val);
-    REBCHR(*) dp;
+    Utf8(*) up = VAL_STRING_AT_ENSURE_MUTABLE(val);
+    Utf8(*) dp;
     if (upper) {
         REBLEN n;
         for (n = 0; n < len; n++) {
@@ -232,7 +232,7 @@ Array(*) Split_Lines(const REBVAL *str)
     DECLARE_MOLD (mo);
     Push_Mold(mo);
 
-    REBCHR(const*) cp = VAL_STRING_AT(str);
+    Utf8(const*) cp = VAL_STRING_AT(str);
 
     REBUNI c;
     cp = NEXT_CHR(&c, cp);
@@ -249,7 +249,7 @@ Array(*) Split_Lines(const REBVAL *str)
         Push_Mold(mo);
 
         if (c == CR) {
-            REBCHR(const*) tp = NEXT_CHR(&c, cp);
+            Utf8(const*) tp = NEXT_CHR(&c, cp);
             if (c == LF) {
                 ++i;
                 cp = tp; // treat CR LF as LF, lone CR as LF
