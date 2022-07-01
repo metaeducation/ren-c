@@ -60,7 +60,7 @@ inline static Cell(*) Reify_Failure(Cell(*) v) {
 
 inline static Value *Failurize(Cell(*) v) {
     assert(IS_ERROR(v) and QUOTE_BYTE(v) == 0);
-    Force_Location_Of_Error(VAL_CONTEXT(v), FS_TOP);  // ideally already set
+    Force_Location_Of_Error(VAL_CONTEXT(v), TOP_FRAME);  // ideally already set
     mutable_QUOTE_BYTE(v) = FAILURE_255;
     return VAL(v);
 }

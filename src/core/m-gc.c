@@ -761,9 +761,9 @@ static void Mark_Guarded_Nodes(void)
 //
 static void Mark_Frame_Stack_Deep(void)
 {
-    REBFRM *f = FS_TOP;
+    REBFRM *f = TOP_FRAME;
 
-    while (true) { // mark all frames (even FS_BOTTOM)
+    while (true) { // mark all frames (even BOTTOM_FRAME)
         //
         // Note: MISC_PENDING() should either live in FEED_ARRAY(), or
         // it may be trash (e.g. if it's an apply).  GC can ignore it.
@@ -914,7 +914,7 @@ static void Mark_Frame_Stack_Deep(void)
       propagate_and_continue:;
 
         Propagate_All_GC_Marks();
-        if (f == FS_BOTTOM)
+        if (f == BOTTOM_FRAME)
             break;
 
         f = f->prior;

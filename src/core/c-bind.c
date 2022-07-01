@@ -1007,7 +1007,7 @@ REBCTX *Virtual_Bind_Deep_To_New_Context(
     if (IS_GROUP(spec)) {
         DECLARE_LOCAL (temp);
         if (Do_Any_Array_At_Throws(temp, spec, SPECIFIED))
-            fail (Error_No_Catch_For_Throw(FS_TOP));
+            fail (Error_No_Catch_For_Throw(TOP_FRAME));
         Move_Cell(spec, temp);
     }
 

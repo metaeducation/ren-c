@@ -1024,7 +1024,7 @@ REB_R Action_Executor(REBFRM *f)
         //
         // Some cases do not actually push a frame, if it's quicker to just do
         // an evaluation (like a QUOTED! branch).  So can't assert that FRAME
-        // is not FS_TOP here.
+        // is not TOP_FRAME here.
         //
       case C_CONTINUATION:
         return R_CONTINUATION;

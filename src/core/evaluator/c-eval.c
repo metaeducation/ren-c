@@ -604,7 +604,7 @@ REB_R Evaluator_Executor(REBFRM *f)
         // eval calls that lookahead, but no lookahead after the action runs)
         //
         STATE = ST_EVALUATOR_RUNNING_ACTION;
-        continue_subframe (FS_TOP); }
+        continue_subframe (TOP_FRAME); }
 
 
     //=//// WORD! //////////////////////////////////////////////////////////=//

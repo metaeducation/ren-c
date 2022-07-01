@@ -444,7 +444,7 @@ REB_R Init_Thrown_Unwind_Value(
 
         REBFRM *f = target->prior;
         for (; true; f = f->prior) {
-            if (f == FS_BOTTOM)
+            if (f == BOTTOM_FRAME)
                 fail (Error_Invalid_Exit_Raw());
 
             if (not Is_Action_Frame(f))
@@ -465,7 +465,7 @@ REB_R Init_Thrown_Unwind_Value(
 
         REBFRM *f = target->prior;
         for (; true; f = f->prior) {
-            if (f == FS_BOTTOM)
+            if (f == BOTTOM_FRAME)
                 fail (Error_Invalid_Exit_Raw());
 
             if (not Is_Action_Frame(f))

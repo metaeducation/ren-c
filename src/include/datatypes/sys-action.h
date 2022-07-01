@@ -169,7 +169,7 @@ inline static bool Is_Throwing(REBFRM *frame_) {
     // frames above on the stack.
     //
     if (not Is_Stale_Void(&TG_Thrown_Arg)) {
-        /*assert(frame_ == FS_TOP);*/  // forget even that check
+        /*assert(frame_ == TOP_FRAME);*/  // forget even that check
         UNUSED(frame_);  // currently only used for debug build check
         return true;
     }
@@ -596,19 +596,19 @@ inline static void Mark_Eval_Out_Stale(REBVAL *out) {
 }
 
 inline static void Clear_Void_Flag(REBVAL *out) {
-    assert(not Is_Throwing(FS_TOP));  // stale outs during throw means thrown
+    assert(not Is_Throwing(TOP_FRAME));  // stale outs during throw means thrown
     out->header.bits &= (~ CELL_FLAG_OUT_NOTE_VOIDED);
 }
 
 // Must handle the Translucent and Invisible cases before clearing stale.
 //
 inline static void Clear_Stale_Flag(REBVAL *out) {
-    assert(not Is_Throwing(FS_TOP));  // stale outs during throw means thrown
+    assert(not Is_Throwing(TOP_FRAME));  // stale outs during throw means thrown
     out->header.bits &= ~ (CELL_FLAG_STALE | CELL_FLAG_OUT_NOTE_VOIDED);
 }
 
 inline static bool Was_Eval_Step_Void(const REBVAL *out) {
-    assert(not Is_Throwing(FS_TOP));  // stale outs during throw means thrown
+    assert(not Is_Throwing(TOP_FRAME));  // stale outs during throw means thrown
     return did (out->header.bits & CELL_FLAG_OUT_NOTE_VOIDED);
 }
 
@@ -620,7 +620,7 @@ inline static bool Was_Eval_Step_Void(const REBVAL *out) {
 // CELL_FLAG_STALE set).  Review design of this.
 //
 inline static bool Is_Stale(const REBVAL *out) {
-    assert(not Is_Throwing(FS_TOP));  // stale outs during throw means thrown
+    assert(not Is_Throwing(TOP_FRAME));  // stale outs during throw means thrown
     ASSERT_CELL_INITABLE_EVIL_MACRO(out);
 
     return did (out->header.bits & CELL_FLAG_STALE);

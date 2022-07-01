@@ -107,8 +107,8 @@ void Dump_Info(void)
 //
 void Dump_Stack(REBFRM *f)
 {
-    if (f == FS_BOTTOM) {
-        printf("<FS_BOTTOM>\n");
+    if (f == BOTTOM_FRAME) {
+        printf("<BOTTOM_FRAME>\n");
         fflush(stdout);
         return;
     }

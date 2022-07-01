@@ -1332,7 +1332,7 @@ REBTYPE(Frame)
             // Only want action frames (though `pending? = true` ones count).
             //
             REBFRM *parent = f;
-            while ((parent = parent->prior) != FS_BOTTOM) {
+            while ((parent = parent->prior) != BOTTOM_FRAME) {
                 if (not Is_Action_Frame(parent))
                     continue;
 

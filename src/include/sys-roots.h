@@ -144,7 +144,7 @@ inline static REBVAL *Alloc_Value(void)
     // be responsible for marking the node live, freeing the node in case
     // of a fail() that interrupts the frame, and reporting any leaks.
     //
-    Link_Api_Handle_To_Frame(a, FS_TOP);
+    Link_Api_Handle_To_Frame(a, TOP_FRAME);
 
     return v;
 }

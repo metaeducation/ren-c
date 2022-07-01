@@ -239,7 +239,7 @@ struct Reb_Jump {
         ; /* in case previous tatement was label */ \
         struct Reb_Jump jump;  /* one setjmp() per trampoline invocation */ \
         jump.last_jump = TG_Jump_List; \
-        jump.frame = FS_TOP; \
+        jump.frame = TOP_FRAME; \
         TG_Jump_List = &jump; \
         if (0 == SET_JUMP(jump.cpu_state))  /* beware return value, see [1] */ \
             jump.error = nullptr;  /* this branch will always be run */ \
@@ -263,7 +263,7 @@ struct Reb_Jump {
         ; /* in case previous tatement was label */ \
         struct Reb_Jump jump; /* one per trampoline invocation */ \
         jump.last_jump = TG_Jump_List; \
-        jump.frame = FS_TOP; \
+        jump.frame = TOP_FRAME; \
         TG_Jump_List = &jump; \
         try /* picks up subsequent {...} block */
 
@@ -281,7 +281,7 @@ struct Reb_Jump {
         ; /* in case previous tatement was label */ \
         struct Reb_Jump jump; /* one per trampoline invocation */ \
         jump.last_jump = TG_Jump_List; \
-        jump.frame = FS_TOP; \
+        jump.frame = TOP_FRAME; \
         TG_Jump_List = &jump; \
         if (false) \
             goto abrupt_failure;  /* avoids unreachable code warning */

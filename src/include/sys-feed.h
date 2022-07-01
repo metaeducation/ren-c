@@ -647,7 +647,7 @@ inline static void Prep_Any_Array_Feed(
 #define DECLARE_FEED_AT_CORE(name,any_array,specifier) \
     REBFED *name = Alloc_Feed(); \
     Prep_Any_Array_Feed(name, \
-        (any_array), (specifier), FS_TOP->feed->flags.bits \
+        (any_array), (specifier), TOP_FRAME->feed->flags.bits \
     );
 
 #define DECLARE_FEED_AT(name,any_array) \

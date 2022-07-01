@@ -245,7 +245,7 @@ inline static bool Eval_Step_Throws(
     f->out = out;
     assert(f->baseline.dsp == DSP);
 
-    assert(f == FS_TOP);  // should already be pushed, use core trampoline
+    assert(f == TOP_FRAME);  // should already be pushed, use core trampoline
 
     return Trampoline_With_Top_As_Root_Throws();
 }
@@ -447,8 +447,8 @@ inline static REB_R Native_Failure_Result(REBFRM *frame_, const void *p) {
     assert(CTX_TYPE(error) == REB_ERROR);
     Force_Location_Of_Error(error, frame_);
 
-    while (FS_TOP != frame_)  // cancel subframes as default behavior
-        Drop_Frame_Unbalanced(FS_TOP);  // Note: won't seem like THROW/Fail
+    while (TOP_FRAME != frame_)  // cancel subframes as default behavior
+        Drop_Frame_Unbalanced(TOP_FRAME);  // Note: won't seem like THROW/Fail
 
     return Failurize(Init_Error(frame_->out, error));
 }

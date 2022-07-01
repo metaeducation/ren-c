@@ -736,7 +736,7 @@ const void *RL_rebArgR(const void *p, va_list *vaptr)
 {
     ENTER_API;
 
-    REBFRM *f = FS_TOP;
+    REBFRM *f = TOP_FRAME;
     REBACT *act = FRM_PHASE(f);
 
     // !!! Currently the JavaScript wrappers do not do the right thing for
@@ -866,7 +866,7 @@ inline static void Run_Va_May_Fail(
         // converted to a kind of error, and then re-converted into a THROW
         // to bubble up through Rebol stacks?  Development on this is ongoing.
         //
-        fail (Error_No_Catch_For_Throw(FS_TOP));
+        fail (Error_No_Catch_For_Throw(TOP_FRAME));
     }
 
     // It's convenient to be able to write:
@@ -992,7 +992,7 @@ REBVAL *RL_rebMeta(const void *p, va_list *vaptr)
     REBVAL *v = Alloc_Value();
     bool interruptible = false;
     if (Run_Va_Throws(v, interruptible, FRAME_FLAG_META_RESULT, p, vaptr))
-        fail (Error_No_Catch_For_Throw(FS_TOP));  // panic?
+        fail (Error_No_Catch_For_Throw(TOP_FRAME));  // panic?
 
     if (Is_Nulled(v)) {
         rebRelease(v);
@@ -1017,7 +1017,7 @@ REBVAL *RL_rebEntrap(const void *p, va_list *vaptr)
     REBVAL *v = Alloc_Value();
     bool interruptible = false;
     if (Run_Va_Throws(v, interruptible, FRAME_FLAG_META_RESULT, p, vaptr)) {
-        Init_Error(v, Error_No_Catch_For_Throw(FS_TOP));
+        Init_Error(v, Error_No_Catch_For_Throw(TOP_FRAME));
         return v;
     }
 
@@ -1046,7 +1046,7 @@ REBVAL *RL_rebEntrapInterruptible(
     REBVAL *v = Alloc_Value();
     bool interruptible = true;
     if (Run_Va_Throws(v, interruptible, FRAME_FLAG_META_RESULT, p, vaptr)) {
-        Init_Error(v, Error_No_Catch_For_Throw(FS_TOP));
+        Init_Error(v, Error_No_Catch_For_Throw(TOP_FRAME));
         return v;
     }
 
@@ -2019,7 +2019,7 @@ REBVAL *RL_rebManage(REBVAL *v)
         fail ("Attempt to rebManage() a handle that's already managed.");
 
     SET_SERIES_FLAG(a, MANAGED);
-    Link_Api_Handle_To_Frame(a, FS_TOP);
+    Link_Api_Handle_To_Frame(a, TOP_FRAME);
 
     return v;
 }

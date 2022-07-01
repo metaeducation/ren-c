@@ -105,10 +105,10 @@ void Startup_Frame_Stack(void)
 
     Push_Frame(nullptr, f);
 
-    TRASH_POINTER_IF_DEBUG(f->prior); // help catch enumeration past FS_BOTTOM
+    TRASH_POINTER_IF_DEBUG(f->prior); // help catch enumeration past BOTTOM_FRAME
     TG_Bottom_Frame = f;
 
-    assert(FS_TOP == f and FS_BOTTOM == f);
+    assert(TOP_FRAME == f and BOTTOM_FRAME == f);
 }
 
 
@@ -117,7 +117,7 @@ void Startup_Frame_Stack(void)
 //
 void Shutdown_Frame_Stack(void)
 {
-    assert(FS_TOP == FS_BOTTOM);
+    assert(TOP_FRAME == BOTTOM_FRAME);
 
     // To stop enumerations from using nullptr to stop the walk, and not count
     // the bottom frame as a "real stack level", it had a trash pointer put
@@ -130,7 +130,7 @@ void Shutdown_Frame_Stack(void)
     TG_End_Feed = nullptr;
 
   blockscope {
-    REBFRM *f = FS_TOP;
+    REBFRM *f = TOP_FRAME;
 
     // There's a Catch-22 on checking the balanced state for outstanding
     // manual series allocations, e.g. it can't check *before* the mold buffer
@@ -139,7 +139,7 @@ void Shutdown_Frame_Stack(void)
     //
     Drop_Frame_Core(f); // can't be Drop_Frame() or Drop_Frame_Unbalanced()
 
-    assert(not FS_TOP);
+    assert(not TOP_FRAME);
   }
 
     TG_Top_Frame = nullptr;
@@ -206,10 +206,10 @@ void Shutdown_Frame_Stack(void)
 //
 REBCTX *Get_Context_From_Stack(void)
 {
-    REBFRM *f = FS_TOP;
+    REBFRM *f = TOP_FRAME;
     REBACT *phase = nullptr; // avoid potential uninitialized variable warning
 
-    for (; f != FS_BOTTOM; f = f->prior) {
+    for (; f != BOTTOM_FRAME; f = f->prior) {
         if (not Is_Action_Frame(f))
             continue;
 
@@ -217,7 +217,7 @@ REBCTX *Get_Context_From_Stack(void)
         break;
     }
 
-    if (f == FS_BOTTOM) {
+    if (f == BOTTOM_FRAME) {
         //
         // No natives are in effect, so this is API code running directly from
         // an `int main()`.  Previously this always ran in the user context,

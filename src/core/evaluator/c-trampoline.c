@@ -62,7 +62,7 @@
 //
 //    (Example: When something like ALL is "between steps", the frame it
 //     pushed to process its block will be above it on the stack.  If the ALL
-//     decides to call fail(), the non-running stack frame can be "FS_TOP"
+//     decides to call fail(), the non-running stack frame can be "TOP_FRAME"
 //     above the ALL's "FRAME".)
 //
 
@@ -182,7 +182,7 @@ REB_R Trampoline_From_Top_Maybe_Root(void)
 { //=//// CALL THE EXECUTOR ///////////////////////////////////////////////=//
 
     // The executor may push more frames or change the executor of the frame
-    // it receives.  The FRAME may not match FS_TOP at this moment.
+    // it receives.  The FRAME may not match TOP_FRAME at this moment.
 
   #if !defined(NDEBUG)
     REBFRM *check = FRAME;  // make sure FRAME doesn't change during executor
@@ -250,7 +250,7 @@ REB_R Trampoline_From_Top_Maybe_Root(void)
         if (Get_Frame_Flag(FRAME, ROOT_FRAME)) {
             STATE = 0;  // !!! Frame gets reused, review
             DROP_TRAP_SAME_STACKLEVEL_AS_PUSH
-            return FS_TOP->out;
+            return TOP_FRAME->out;
         }
 
         // Some natives and executors want to be able to leave a pushed frame
@@ -260,12 +260,12 @@ REB_R Trampoline_From_Top_Maybe_Root(void)
         //
         if (Get_Frame_Flag(FRAME, TRAMPOLINE_KEEPALIVE)) {
             FRAME = FRAME->prior;
-            assert(FRAME != FS_TOP);  // sanity check (*not* the top of stack)
+            assert(FRAME != TOP_FRAME);  // sanity check (*not* the top of stack)
         }
         else {
-            assert(FRAME == FS_TOP);  // sanity check (is the top of the stack)
+            assert(FRAME == TOP_FRAME);  // sanity check (is the top of the stack)
             Drop_Frame(FRAME);
-            FRAME = FS_TOP;
+            FRAME = TOP_FRAME;
         }
 
         goto bounce_on_trampoline;  // some pending frame now has a result
@@ -288,10 +288,10 @@ REB_R Trampoline_From_Top_Maybe_Root(void)
   //    to be reserved to mean something else.)
 
     if (r == R_CONTINUATION) {
-        if (FRAME != FS_TOP)  // continuing self ok, see [1]
+        if (FRAME != TOP_FRAME)  // continuing self ok, see [1]
             assert(STATE != 0);  // otherwise state enforced nonzero, see [2]
 
-        FRAME = FS_TOP;
+        FRAME = TOP_FRAME;
         goto bounce_on_trampoline;
     }
 
@@ -304,7 +304,7 @@ REB_R Trampoline_From_Top_Maybe_Root(void)
         STATE = DELEGATE_255;  // maintain non-zero invariant
         FRAME->executor = &Just_Use_Out_Executor;  // whatever frames make
 
-        FRAME = FS_TOP;
+        FRAME = TOP_FRAME;
         goto bounce_on_trampoline;
     }
 
@@ -348,8 +348,8 @@ REB_R Trampoline_From_Top_Maybe_Root(void)
         assert(not IS_CFUNC_TRASH_DEBUG(Executor*, FRAME->executor));
         TRASH_CFUNC_IF_DEBUG(Executor*, FRAME->executor);
 
-        while (FS_TOP != FRAME)
-            Drop_Frame(FS_TOP);  // !!! Should all inert frames be aborted?
+        while (TOP_FRAME != FRAME)
+            Drop_Frame(TOP_FRAME);  // !!! Should all inert frames be aborted?
 
         if (Get_Frame_Flag(FRAME, ABRUPT_FAILURE)) {
             //
@@ -380,13 +380,13 @@ REB_R Trampoline_From_Top_Maybe_Root(void)
         }
 
         if (Get_Frame_Flag(FRAME, ROOT_FRAME)) {  // don't abort top
-            assert(Not_Frame_Flag(FS_TOP, TRAMPOLINE_KEEPALIVE));
+            assert(Not_Frame_Flag(TOP_FRAME, TRAMPOLINE_KEEPALIVE));
             DROP_TRAP_SAME_STACKLEVEL_AS_PUSH
             return R_THROWN;
         }
 
         Drop_Frame(FRAME);  // restores to baseline
-        FRAME = FS_TOP;
+        FRAME = TOP_FRAME;
 
         if (FRAME->executor == &Just_Use_Out_Executor) {
             if (Get_Frame_Flag(FRAME, TRAMPOLINE_KEEPALIVE))
@@ -426,17 +426,17 @@ REB_R Trampoline_From_Top_Maybe_Root(void)
 
     Clear_Feed_Flag(FRAME->feed, NEXT_ARG_FROM_OUT);  // !!! stops asserts
 
-    while (FS_TOP != FRAME) {  // drop idle frames above the fail
-        assert(Not_Frame_Flag(FS_TOP, NOTIFY_ON_ABRUPT_FAILURE));
-        assert(Not_Frame_Flag(FS_TOP, ROOT_FRAME));
+    while (TOP_FRAME != FRAME) {  // drop idle frames above the fail
+        assert(Not_Frame_Flag(TOP_FRAME, NOTIFY_ON_ABRUPT_FAILURE));
+        assert(Not_Frame_Flag(TOP_FRAME, ROOT_FRAME));
 
-        if (Is_Action_Frame(FS_TOP)) {
-            assert(Not_Executor_Flag(ACTION, FS_TOP, DISPATCHER_CATCHES));
-            assert(not Is_Action_Frame_Fulfilling(FS_TOP));
-            Drop_Action(FS_TOP);
+        if (Is_Action_Frame(TOP_FRAME)) {
+            assert(Not_Executor_Flag(ACTION, TOP_FRAME, DISPATCHER_CATCHES));
+            assert(not Is_Action_Frame_Fulfilling(TOP_FRAME));
+            Drop_Action(TOP_FRAME);
         }
 
-        Drop_Frame(FS_TOP);  // will call va_end() if variadic frame
+        Drop_Frame(TOP_FRAME);  // will call va_end() if variadic frame
     }
 
     Init_Thrown_With_Label(  // Error is non-definitional, see [1]
@@ -455,7 +455,7 @@ REB_R Trampoline_From_Top_Maybe_Root(void)
     }
 
     DROP_TRAP_SAME_STACKLEVEL_AS_PUSH  // ** Note: this changes FRAME **
-    // (FS_TOP will become FRAME again after push_trap)
+    // (TOP_FRAME will become FRAME again after push_trap)
     goto bounce_on_trampoline_with_trap;  // after exception, need new trap
 }}
 
@@ -465,7 +465,7 @@ REB_R Trampoline_From_Top_Maybe_Root(void)
 //
 bool Trampoline_With_Top_As_Root_Throws(void)
 {
-    REBFRM *root = FS_TOP;
+    REBFRM *root = TOP_FRAME;
 
     // !!! More efficient if caller sets this, but set it ourselves for now.
     //
@@ -474,7 +474,7 @@ bool Trampoline_With_Top_As_Root_Throws(void)
 
     REB_R r = Trampoline_From_Top_Maybe_Root();
 
-    assert(FS_TOP == root);
+    assert(TOP_FRAME == root);
 
     assert(Get_Frame_Flag(root, ROOT_FRAME));
     Clear_Frame_Flag(root, ROOT_FRAME);

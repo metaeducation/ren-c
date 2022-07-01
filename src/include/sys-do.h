@@ -103,7 +103,7 @@ inline static bool Do_Branch_Throws(
         return false;
 
     bool threw = Trampoline_With_Top_As_Root_Throws();
-    Drop_Frame(FS_TOP);
+    Drop_Frame(TOP_FRAME);
     return threw;
 }
 

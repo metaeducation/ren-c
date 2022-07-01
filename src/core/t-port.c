@@ -59,7 +59,7 @@ REB_R MAKE_Port(
         out,  // <-- output cell
         Sys(SYM_MAKE_PORT_P), rebQ(arg)
     )){
-        fail (Error_No_Catch_For_Throw(FS_TOP));
+        fail (Error_No_Catch_For_Throw(TOP_FRAME));
     }
 
     if (not IS_PORT(out))  // should always create a port
@@ -173,7 +173,7 @@ REBTYPE(Port)
     Push_Redo_Action_Frame(OUT, frame_, action);
 
     STATE = ST_TYPE_PORT_RUNNING_ACTOR;
-    continue_uncatchable_subframe (FS_TOP);
+    continue_uncatchable_subframe (TOP_FRAME);
 
 } post_process_output: {  ////////////////////////////////////////////////////
 

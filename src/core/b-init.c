@@ -957,7 +957,7 @@ void Startup_Core(void)
     //
     Startup_Stackoverflow();
 
-    assert(DSP == 0 and FS_TOP == FS_BOTTOM);
+    assert(DSP == 0 and TOP_FRAME == BOTTOM_FRAME);
 
 //=//// RUN MEZZANINE CODE NOW THAT ERROR HANDLING IS INITIALIZED /////////=//
 
@@ -1099,7 +1099,7 @@ void Startup_Core(void)
 
   //=//// FINISH UP ///////////////////////////////////////////////////////=//
 
-    assert(DSP == 0 and FS_TOP == FS_BOTTOM);
+    assert(DSP == 0 and TOP_FRAME == BOTTOM_FRAME);
 
     DROP_GC_GUARD(boot_array);
 

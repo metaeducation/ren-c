@@ -130,7 +130,7 @@ static void Evaluator_Shared_Checks_Debug(REBFRM *f)
         assert(Lookup_Word(f_next, f_specifier) == f_next_gotten);
     }
 
-    assert(f == FS_TOP);
+    assert(f == TOP_FRAME);
 
     // If this fires, it means that Flip_Series_To_White was not called an
     // equal number of times after Flip_Series_To_Black, which means that
@@ -193,7 +193,7 @@ static void Evaluator_Shared_Checks_Debug(REBFRM *f)
 //
 void Evaluator_Expression_Checks_Debug(REBFRM *f)
 {
-    assert(f == FS_TOP); // should be topmost frame, still
+    assert(f == TOP_FRAME); // should be topmost frame, still
 
     assert(Not_Executor_Flag(EVAL, f, DIDNT_LEFT_QUOTE_PATH));
     if (Not_Executor_Flag(EVAL, f, FULFILLING_ARG))

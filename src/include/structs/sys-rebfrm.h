@@ -338,7 +338,7 @@ typedef Executor Dispatcher;  // sub-dispatched in Action_Executor()
     Executor* executor;
 
     // The prior call frame.  This never needs to be checked against nullptr,
-    // because the bottom of the stack is FS_BOTTOM which is allocated at
+    // because the bottom of the stack is BOTTOM_FRAME which is allocated at
     // startup and never used to run code.
     //
     struct Reb_Frame *prior;
@@ -469,8 +469,8 @@ inline static const REBARR *FRM_ARRAY(REBFRM *f);
 inline static bool FRM_IS_VARIADIC(REBFRM *f);
 
 
-#define FS_TOP (TG_Top_Frame + 0) // avoid assign to FS_TOP via + 0
-#define FS_BOTTOM (TG_Bottom_Frame + 0) // avoid assign to FS_BOTTOM via + 0
+#define TOP_FRAME (TG_Top_Frame + 0) // avoid assign to TOP_FRAME via + 0
+#define BOTTOM_FRAME (TG_Bottom_Frame + 0) // avoid assign to BOTTOM_FRAME via + 0
 
 
 #if defined(NDEBUG)

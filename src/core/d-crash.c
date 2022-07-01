@@ -100,7 +100,7 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
     // Address Sanitizer gives a reasonable idea of the stack.
     //
     Dump_Info();
-    Dump_Stack(FS_TOP, 0);
+    Dump_Stack(TOP_FRAME, 0);
   #endif
 
   #if !defined(NDEBUG) && defined(HAVE_EXECINFO_AVAILABLE)
@@ -151,7 +151,7 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
             REBCTX *context = cast(REBCTX*, s);  // CTX() does too much checking!
             if (HEART_BYTE_UNCHECKED(CTX_ARCHETYPE(context)) == REB_ERROR) {
                 printf("...and that VARLIST is of an ERROR!...");
-                Force_Location_Of_Error(context, FS_TOP);
+                Force_Location_Of_Error(context, TOP_FRAME);
                 PROBE(context);
             }
         }

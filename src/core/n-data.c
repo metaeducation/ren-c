@@ -705,7 +705,7 @@ bool Get_Var_Push_Refinements_Throws(
         )){
             Drop_Data_Stack_To(dsp_orig);
             DROP_GC_GUARD(temp);
-            fail (Error_No_Catch_For_Throw(FS_TOP));
+            fail (Error_No_Catch_For_Throw(TOP_FRAME));
         }
         ++dsp_at;
     }
@@ -763,7 +763,7 @@ void Get_Var_May_Fail(
     REBVAL *steps_out = nullptr;
 
     if (Get_Var_Core_Throws(out, steps_out, source, specifier))
-        fail (Error_No_Catch_For_Throw(FS_TOP));
+        fail (Error_No_Catch_For_Throw(TOP_FRAME));
 
     if (not any)
         if (Is_Isotope(out))
@@ -1210,7 +1210,7 @@ bool Set_Var_Core_Updater_Throws(
         )){
             DROP_GC_GUARD(temp);
             DROP_GC_GUARD(writeback);
-            fail (Error_No_Catch_For_Throw(FS_TOP));  // don't let PICKs throw
+            fail (Error_No_Catch_For_Throw(TOP_FRAME));  // don't let PICKs throw
         }
         ++dsp_at;
     }
@@ -1226,7 +1226,7 @@ bool Set_Var_Core_Updater_Throws(
     )){
         DROP_GC_GUARD(temp);
         DROP_GC_GUARD(writeback);
-        fail (Error_No_Catch_For_Throw(FS_TOP));  // don't let POKEs throw
+        fail (Error_No_Catch_For_Throw(TOP_FRAME));  // don't let POKEs throw
     }
 
     // Subsequent updates become pokes, regardless of initial updater function
@@ -1301,7 +1301,7 @@ void Set_Var_May_Fail(
 
     DECLARE_LOCAL (dummy);
     if (Set_Var_Core_Throws(dummy, steps_out, target, target_specifier, setval))
-        fail (Error_No_Catch_For_Throw(FS_TOP));
+        fail (Error_No_Catch_For_Throw(TOP_FRAME));
 }
 
 

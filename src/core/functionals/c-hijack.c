@@ -189,7 +189,7 @@ REB_R Hijacker_Dispatcher(REBFRM *f)
     // the hijacking...and has to be remapped.
     //
     Push_Redo_Action_Frame(OUT, f, ACT_ARCHETYPE(phase));
-    delegate_subframe (FS_TOP);
+    delegate_subframe (TOP_FRAME);
 }
 
 

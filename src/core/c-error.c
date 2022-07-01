@@ -211,13 +211,13 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
     // but remained pushed, it must be dropped before the frame that pushes
     // it issues a failure.
     //
-    assert(FS_TOP->executor != nullptr);
+    assert(TOP_FRAME->executor != nullptr);
 
     // You can't abruptly fail during the handling of abrupt failure.  At the
     // moment we're assuming that once a frame has failed it can't recover if
     // it originated the failure...but this may be revisited.
     //
-    assert(Not_Frame_Flag(FS_TOP, ABRUPT_FAILURE));
+    assert(Not_Frame_Flag(TOP_FRAME, ABRUPT_FAILURE));
 
     REBCTX *error;
     if (p == nullptr) {
@@ -259,15 +259,15 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
             }
             rebRelease(cast(const REBVAL*, v));  // released even if we didn't
         }
-        else if (not Is_Action_Frame(FS_TOP))
+        else if (not Is_Action_Frame(TOP_FRAME))
             error = Error_Bad_Value(v);
         else {
-            const REBPAR *head = ACT_PARAMS_HEAD(FRM_PHASE(FS_TOP));
-            REBLEN num_params = ACT_NUM_PARAMS(FRM_PHASE(FS_TOP));
+            const REBPAR *head = ACT_PARAMS_HEAD(FRM_PHASE(TOP_FRAME));
+            REBLEN num_params = ACT_NUM_PARAMS(FRM_PHASE(TOP_FRAME));
 
             if (v >= head and v < head + num_params) {
                 const REBPAR *param = cast_PAR(cast(const REBVAL*, v));
-                error = Error_Invalid_Arg(FS_TOP, param);
+                error = Error_Invalid_Arg(TOP_FRAME, param);
             }
             else
                 error = Error_Bad_Value(v);
@@ -302,7 +302,7 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
     // to use for it.
     //
     if (error != Error_No_Memory(1020))  // static global, review
-        Force_Location_Of_Error(error, FS_TOP);
+        Force_Location_Of_Error(error, TOP_FRAME);
 
   #if DEBUG_HAS_PROBE
     if (PG_Probe_Failures) {  // see R3_PROBE_FAILURES environment variable
@@ -363,7 +363,7 @@ REBLEN Stack_Depth(void)
 {
     REBLEN depth = 0;
 
-    REBFRM *f = FS_TOP;
+    REBFRM *f = TOP_FRAME;
     while (f) {
         if (Is_Action_Frame(f))
             if (not Is_Action_Frame_Fulfilling(f)) {
@@ -446,7 +446,7 @@ void Set_Location_Of_Error(
     // from the top of stack and go downward.
     //
     REBFRM *f = where;
-    for (; f != FS_BOTTOM; f = f->prior) {
+    for (; f != BOTTOM_FRAME; f = f->prior) {
         //
         // Only invoked functions (not pending functions, groups, etc.)
         //
@@ -483,7 +483,7 @@ void Set_Location_Of_Error(
     // stack, looking for arrays with ARRAY_HAS_FILE_LINE.
     //
     f = where;
-    for (; f != FS_BOTTOM; f = f->prior) {
+    for (; f != BOTTOM_FRAME; f = f->prior) {
         if (FRM_IS_VARIADIC(f)) {
             //
             // !!! We currently skip any calls from C (e.g. rebValue()) and look
@@ -498,7 +498,7 @@ void Set_Location_Of_Error(
         break;
     }
 
-    if (f != FS_BOTTOM) {  // found a frame with file and line information
+    if (f != BOTTOM_FRAME) {  // found a frame with file and line information
         const REBSTR *file = LINK(Filename, FRM_ARRAY(f));
         REBLIN line = FRM_ARRAY(f)->misc.line;
 

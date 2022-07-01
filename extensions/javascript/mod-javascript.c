@@ -451,10 +451,10 @@ void RunPromise(void)
         return;  // the setTimeout() on resolve/reject will queue us back
     }
 
-    REBVAL *metaresult = FS_TOP->out;
+    REBVAL *metaresult = TOP_FRAME->out;
     if (r == R_THROWN) {
-        assert(Is_Throwing(FS_TOP));
-        REBCTX *error = Error_No_Catch_For_Throw(FS_TOP);
+        assert(Is_Throwing(TOP_FRAME));
+        REBCTX *error = Error_No_Catch_For_Throw(TOP_FRAME);
         Init_Error(metaresult, error);
     }
     else {
@@ -464,7 +464,7 @@ void RunPromise(void)
             Meta_Quotify(metaresult);
     }
 
-    Drop_Frame(FS_TOP);
+    Drop_Frame(TOP_FRAME);
 
     // Note: The difference between `throw()` and `reject()` in JS is subtle.
     //

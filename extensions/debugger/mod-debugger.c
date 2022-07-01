@@ -67,7 +67,7 @@ bool Do_Breakpoint_Throws(
     REBVAL *inst = rebValue("debug-console");
 
     if (IS_INTEGER(inst)) {
-        Init_Thrown_With_Label(FS_TOP, inst, Lib(QUIT));
+        Init_Thrown_With_Label(TOP_FRAME, inst, Lib(QUIT));
         rebRelease(inst);
         return true;
     }

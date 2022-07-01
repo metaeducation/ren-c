@@ -341,8 +341,8 @@ inline static void Push_Frame(
     // argument slot.  :-/
     //
   #if !defined(NDEBUG)
-    REBFRM *ftemp = FS_TOP;
-    for (; ftemp != FS_BOTTOM; ftemp = ftemp->prior) {
+    REBFRM *ftemp = TOP_FRAME;
+    for (; ftemp != BOTTOM_FRAME; ftemp = ftemp->prior) {
         if (not Is_Action_Frame(ftemp))
             continue;
         if (Is_Action_Frame_Fulfilling(ftemp))
@@ -583,7 +583,7 @@ inline static void Prep_Frame_Core(
     #define SPARE   FRM_SPARE(frame_)       // scratch GC-safe cell
     #define STATE   FRM_STATE_BYTE(frame_)
 
-    #define SUBFRAME    (assert(FS_TOP->prior == frame_), FS_TOP)
+    #define SUBFRAME    (assert(TOP_FRAME->prior == frame_), TOP_FRAME)
 
     #define VOID        Native_Void_Result(frame_)
     #define NONE        Native_None_Result(frame_)
@@ -885,7 +885,7 @@ inline static REB_R Continue_Subframe_Helper(
         f->flags.bits |= catches_flag;
     }
 
-    assert(sub == FS_TOP);  // currently subframe must be pushed and top frame
+    assert(sub == TOP_FRAME);  // currently subframe must be pushed and top frame
     UNUSED(sub);
     return R_CONTINUATION;
 }

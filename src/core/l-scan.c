@@ -637,7 +637,7 @@ static void Update_Error_Near_For_Line(
     // !!! The error should actually report both the file and line that is
     // running as well as the file and line being scanned.  Review.
     //
-    Set_Location_Of_Error(error, FS_TOP);
+    Set_Location_Of_Error(error, TOP_FRAME);
 
     // Skip indentation (don't include in the NEAR)
     //
