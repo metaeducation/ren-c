@@ -79,7 +79,7 @@ REBACT *Make_Native(
 
     REBCTX *meta;
     REBFLGS flags = MKF_KEYWORDS | MKF_RETURN;
-    REBARR *paramlist = Make_Paramlist_Managed_May_Fail(
+    Array(*) paramlist = Make_Paramlist_Managed_May_Fail(
         &meta,
         spec,
         &flags  // return type checked only in debug build
@@ -94,7 +94,7 @@ REBACT *Make_Native(
     );
     Set_Action_Flag(native, IS_NATIVE);
 
-    REBARR *details = ACT_DETAILS(native);
+    Array(*) details = ACT_DETAILS(native);
     Init_Blank(ARR_AT(details, IDX_NATIVE_BODY));
     Copy_Cell(ARR_AT(details, IDX_NATIVE_CONTEXT), CTX_ARCHETYPE(module));
 
@@ -196,9 +196,9 @@ static void Shutdown_Action_Meta_Shim(void) {
 //
 // Returns an array of words bound to natives for SYSTEM.CATALOG.NATIVES
 //
-REBARR *Startup_Natives(const REBVAL *boot_natives)
+Array(*) Startup_Natives(const REBVAL *boot_natives)
 {
-    REBARR *catalog = Make_Array(Num_Natives);
+    Array(*) catalog = Make_Array(Num_Natives);
 
     // Must be called before first use of Make_Paramlist_Managed_May_Fail()
     //

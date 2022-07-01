@@ -205,7 +205,7 @@ bool Make_Invokable_From_Feed_Throws(
     // can theoretically just be put back into the reuse list, or managed
     // and handed out for other purposes by the caller.
     //
-    REBARR *varlist = f->varlist;
+    Array(*) varlist = f->varlist;
     assert(NOT_SERIES_FLAG(varlist, MANAGED));  // not invoked yet
     f->varlist = nullptr;  // just let it GC, for now
 
@@ -279,7 +279,7 @@ Bounce Reframer_Dispatcher(Frame(*) f)
 {
     Frame(*) frame_ = f;  // for RETURN macros
 
-    REBARR *details = ACT_DETAILS(FRM_PHASE(f));
+    Array(*) details = ACT_DETAILS(FRM_PHASE(f));
     assert(ARR_LEN(details) == IDX_REFRAMER_MAX);
 
     REBVAL* shim = DETAILS_AT(details, IDX_REFRAMER_SHIM);
@@ -439,7 +439,7 @@ REBNATIVE(reframer_p)
         IDX_REFRAMER_MAX  // details array capacity => [shim, param_index]
     );
 
-    REBARR *details = ACT_DETAILS(reframer);
+    Array(*) details = ACT_DETAILS(reframer);
     Copy_Cell(ARR_AT(details, IDX_REFRAMER_SHIM), ARG(shim));
     Init_Integer(ARR_AT(details, IDX_REFRAMER_PARAM_INDEX), param_index);
 

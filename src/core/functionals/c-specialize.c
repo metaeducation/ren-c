@@ -94,7 +94,7 @@ REBCTX *Make_Context_For_Action_Push_Partials(
     REBACT *act = VAL_ACTION(action);
 
     REBLEN num_slots = ACT_NUM_PARAMS(act) + 1;  // +1 is for CTX_ARCHETYPE()
-    REBARR *varlist = Make_Array_Core(num_slots, SERIES_MASK_VARLIST);
+    Array(*) varlist = Make_Array_Core(num_slots, SERIES_MASK_VARLIST);
     INIT_CTX_KEYLIST_SHARED(CTX(varlist), ACT_KEYLIST(act));
 
     Cell(*) rootvar = ARR_HEAD(varlist);
@@ -107,7 +107,7 @@ REBCTX *Make_Context_For_Action_Push_Partials(
 
     // If there is a PARTIALS list, then push its refinements.
     //
-    REBARR *partials = try_unwrap(ACT_PARTIALS(act));
+    Array(*) partials = try_unwrap(ACT_PARTIALS(act));
     if (partials) {
         Cell(const*) word_tail = ARR_TAIL(partials);
         Cell(const*) word = ARR_HEAD(partials);
@@ -393,7 +393,7 @@ bool Specialize_Action_Throws(
     // Everything should have balanced out for a valid specialization.
     // Turn partial refinements into an array of things to push.
     //
-    REBARR *partials;
+    Array(*) partials;
     if (ordered_dsp == DSP)
         partials = nullptr;
     else {
@@ -527,7 +527,7 @@ void For_Each_Unspecialized_Param(
     PARAM_HOOK hook,
     void *opaque
 ){
-    option(REBARR*) partials = ACT_PARTIALS(act);
+    option(Array(*)) partials = ACT_PARTIALS(act);
 
     // Walking the parameters in a potentially "unsorted" fashion.  Offer them
     // to the passed-in hook in case it has a use for this first pass (e.g.

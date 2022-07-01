@@ -250,9 +250,9 @@ Bounce Series_Common_Action_Maybe_Unhandled(
 // Compare_Arrays_At_Indexes: C
 //
 REBINT Compare_Arrays_At_Indexes(
-    const REBARR *s_array,
+    Array(const*) s_array,
     REBLEN s_index,
-    const REBARR *t_array,
+    Array(const*) t_array,
     REBLEN t_index,
     bool is_case
 ){
@@ -483,7 +483,7 @@ REBINT Cmp_Value(Cell(const*) sval, Cell(const*) tval, bool strict)
 // the value or the TAIL index if not found.
 //
 REBLEN Find_In_Array_Simple(
-    const REBARR *array,
+    Array(const*) array,
     REBLEN index,
     Cell(const*) target
 ){

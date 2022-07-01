@@ -28,7 +28,7 @@
 // Meta information in singular->misc.meta
 //
 
-typedef REBARR REBLIB;
+typedef Reb_Array REBLIB;
 
 extern REBTYP *EG_Library_Type;
 

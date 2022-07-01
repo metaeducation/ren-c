@@ -38,10 +38,10 @@ PVAR REBU64 PG_Mem_Limit;   // Memory limit set by SECURE
 
 
 
-// This is a series that holds 8-platform-pointer REBARR nodes, arranged in
+// This is a series that holds 8-platform-pointer Array nodes, arranged in
 // canon order.  It provides fast access to lib entries by symbol.
 //
-PVAR REBARR PG_Lib_Patches[LIB_SYMS_MAX];
+PVAR Reb_Array PG_Lib_Patches[LIB_SYMS_MAX];
 
 // In Ren-C, words are REBSER nodes (REBSTR subtype).  They may be GC'd (unless
 // they are in the %words.r list, in which case their canon forms are
@@ -146,17 +146,17 @@ PVAR REBVAL *Root_Empty_Text; // read-only ""
 PVAR REBVAL *Root_Empty_Binary; // read-only #{}
 PVAR REBVAL *Root_Empty_Block; // read-only []
 PVAR REBVAL *Root_2_Blanks_Block;  // read-only [_ _]
-PVAR REBARR* PG_Empty_Array; // optimization of VAL_ARRAY(Root_Empty_Block)
-PVAR REBARR* PG_2_Blanks_Array;  // surrogate array used by `/` paths
+PVAR Array(*) PG_Empty_Array; // optimization of VAL_ARRAY(Root_Empty_Block)
+PVAR Array(*) PG_2_Blanks_Array;  // surrogate array used by `/` paths
 
-PVAR REBARR PG_Inaccessible_Series;  // singular inaccessible varlist
+PVAR Reb_Array PG_Inaccessible_Series;  // singular inaccessible varlist
 
 PVAR REBVAL *Root_Action_Meta;
 
 PVAR REBVAL *Root_Stackoverflow_Error;  // made in advance, avoids extra calls
 PVAR REBVAL *Root_No_Memory_Error;  // also must be made in advance
 
-PVAR REBARR *PG_Extension_Types;  // array of datatypes created by extensions
+PVAR Array(*) PG_Extension_Types;  // array of datatypes created by extensions
 
 // This signal word should be thread-local, but it will not work
 // when implemented that way. Needs research!!!!
@@ -247,7 +247,7 @@ TVAR REBFED *TG_End_Feed;
 
 
 //-- Evaluation stack:
-TVAR REBARR *DS_Array;
+TVAR Array(*) DS_Array;
 TVAR REBDSP DS_Index;
 TVAR REBVAL *DS_Movable_Top;
 TVAR Cell(const*) DS_Movable_Tail;

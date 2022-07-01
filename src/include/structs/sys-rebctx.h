@@ -89,5 +89,5 @@
         | SERIES_FLAG_LINK_NODE_NEEDS_MARK  /* ancestor */ )
 
 
-inline static REBARR *CTX_VARLIST(REBCTX *ctx)
-  { return x_cast(REBARR*, ctx); }  // ARR() has debug cost, not defined yet
+inline static Array(*) CTX_VARLIST(REBCTX *ctx)
+  { return x_cast(Array(*), ctx); }  // ARR() has debug cost, not defined yet

@@ -88,7 +88,7 @@ static bool Params_Of_Hook(
 //
 // Returns array of function words, unbound.
 //
-REBARR *Make_Action_Parameters_Arr(REBACT *act, bool just_words)
+Array(*) Make_Action_Parameters_Arr(REBACT *act, bool just_words)
 {
     struct Params_Of_State s;
     s.just_words = just_words;
@@ -488,7 +488,7 @@ void Push_Paramlist_Triads_May_Fail(
 // duplicate parameters on the stack, and the checking via a binder is done
 // as part of this popping process.
 //
-REBARR *Pop_Paramlist_With_Meta_May_Fail(
+Array(*) Pop_Paramlist_With_Meta_May_Fail(
     REBCTX **meta,
     REBDSP dsp_orig,
     REBFLGS flags,
@@ -563,7 +563,7 @@ REBARR *Pop_Paramlist_With_Meta_May_Fail(
     // !!! This is no longer true, since details is the identity.  Review
     // optimization potential.
     //
-    REBARR *paramlist = Make_Array_Core(
+    Array(*) paramlist = Make_Array_Core(
         num_slots,
         SERIES_MASK_PARAMLIST
     );
@@ -716,7 +716,7 @@ REBARR *Pop_Paramlist_With_Meta_May_Fail(
     // Only make `parameter-types` if there were blocks in the spec
     //
     if (flags & MKF_HAS_TYPES) {
-        REBARR *types_varlist = Make_Array_Core(
+        Array(*) types_varlist = Make_Array_Core(
             num_slots,
             SERIES_MASK_VARLIST | NODE_FLAG_MANAGED
         );
@@ -763,7 +763,7 @@ REBARR *Pop_Paramlist_With_Meta_May_Fail(
     // Only make `parameter-notes` if there were strings (besides description)
     //
     if (flags & MKF_HAS_NOTES) {
-        REBARR *notes_varlist = Make_Array_Core(
+        Array(*) notes_varlist = Make_Array_Core(
             num_slots,
             SERIES_MASK_VARLIST | NODE_FLAG_MANAGED
         );
@@ -847,7 +847,7 @@ REBARR *Pop_Paramlist_With_Meta_May_Fail(
 // You don't have to use it if you don't want to...and may overwrite the
 // variable.  But it won't be a void at the start.
 //
-REBARR *Make_Paramlist_Managed_May_Fail(
+Array(*) Make_Paramlist_Managed_May_Fail(
     REBCTX **meta,
     const REBVAL *spec,
     REBFLGS *flags  // flags may be modified to carry additional information
@@ -880,7 +880,7 @@ REBARR *Make_Paramlist_Managed_May_Fail(
         flags,
         &definitional_return_dsp
     );
-    REBARR *paramlist = Pop_Paramlist_With_Meta_May_Fail(
+    Array(*) paramlist = Pop_Paramlist_With_Meta_May_Fail(
         meta,
         dsp_orig,
         *flags,
@@ -904,7 +904,7 @@ REBARR *Make_Paramlist_Managed_May_Fail(
 // RETURN is distinguished from another--the binding data stored in the REBVAL
 // identifies the pointer of the FRAME! to exit).
 //
-// Actions have an associated REBARR of data, accessible via ACT_DETAILS().
+// Actions have an associated Array(*) of data, accessible via ACT_DETAILS().
 // This is where they can store information that will be available when the
 // dispatcher is called.
 //
@@ -916,8 +916,8 @@ REBARR *Make_Paramlist_Managed_May_Fail(
 // ACT_SPECIALTY() definition for more information on how this is laid out.
 //
 REBACT *Make_Action(
-    REBARR *paramlist,
-    option(REBARR*) partials,
+    Array(*) paramlist,
+    option(Array(*)) partials,
     Dispatcher* dispatcher,  // native C function called by Action_Executor()
     REBLEN details_capacity  // capacity of ACT_DETAILS (including archetype)
 ){
@@ -953,7 +953,7 @@ REBACT *Make_Action(
     // the dispatcher understands it to be, by contract.  Terminate it
     // at the given length implicitly.
     //
-    REBARR *details = Make_Array_Core(
+    Array(*) details = Make_Array_Core(
         details_capacity,  // leave room for archetype
         SERIES_MASK_DETAILS | NODE_FLAG_MANAGED
     );
@@ -1063,7 +1063,7 @@ void Get_Maybe_Fake_Action_Body(REBVAL *out, const REBVAL *action)
         // Interpreted code, the body is a block with some bindings relative
         // to the action.
 
-        REBARR *details = ACT_DETAILS(a);
+        Array(*) details = ACT_DETAILS(a);
         Cell(*) body = ARR_AT(details, IDX_DETAILS_1);
 
         // The PARAMLIST_HAS_RETURN tricks for definitional return make it
@@ -1087,14 +1087,14 @@ void Get_Maybe_Fake_Action_Body(REBVAL *out, const REBVAL *action)
             UNUSED(real_body_index);
         }
 
-        const REBARR *maybe_fake_body;
+        Array(const*) maybe_fake_body;
         if (example == nullptr) {
             maybe_fake_body = VAL_ARRAY(body);
         }
         else {
             // See %sysobj.r for STANDARD/FUNC-BODY and STANDARD/PROC-BODY
             //
-            REBARR *fake = Copy_Array_Shallow_Flags(
+            Array(*) fake = Copy_Array_Shallow_Flags(
                 VAL_ARRAY(example),
                 VAL_SPECIFIER(example),
                 NODE_FLAG_MANAGED
@@ -1151,7 +1151,7 @@ void Get_Maybe_Fake_Action_Body(REBVAL *out, const REBVAL *action)
     }
 
     if (ACT_DISPATCHER(a) == &Generic_Dispatcher) {
-        REBARR *details = ACT_DETAILS(a);
+        Array(*) details = ACT_DETAILS(a);
         REBVAL *verb = DETAILS_AT(details, 1);
         assert(IS_WORD(verb));
         Copy_Cell(out, verb);

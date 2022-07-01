@@ -109,7 +109,7 @@ bool Is_User_Native(REBACT *act) {
     if (Not_Action_Flag(act, IS_NATIVE))
         return false;
 
-    REBARR *details = ACT_DETAILS(act);
+    Array(*) details = ACT_DETAILS(act);
     assert(ARR_LEN(details) >= 2); // ACTION_FLAG_NATIVE needs source+context
     return IS_TEXT(ARR_AT(details, IDX_NATIVE_BODY));
 }
@@ -298,7 +298,7 @@ REBNATIVE(make_native)
 
     REBCTX *meta;
     REBFLGS flags = MKF_MASK_NONE;  // natives can't use <none>, <void>
-    REBARR *paramlist = Make_Paramlist_Managed_May_Fail(
+    Array(*) paramlist = Make_Paramlist_Managed_May_Fail(
         &meta,
         ARG(spec),
         &flags
@@ -313,7 +313,7 @@ REBNATIVE(make_native)
     assert(ACT_META(native) == nullptr);
     mutable_ACT_META(native) = meta;
 
-    REBARR *details = ACT_DETAILS(native);
+    Array(*) details = ACT_DETAILS(native);
 
     if (Is_Series_Frozen(VAL_SERIES(source)))
         Copy_Cell(ARR_AT(details, IDX_NATIVE_BODY), source); // no copy
@@ -505,7 +505,7 @@ REBNATIVE(compile_p)
                 //
                 Copy_Cell(PUSH(), SPECIFIC(item));
 
-                REBARR *details = ACT_DETAILS(VAL_ACTION(item));
+                Array(*) details = ACT_DETAILS(VAL_ACTION(item));
                 Cell(*) source = ARR_AT(details, IDX_NATIVE_BODY);
                 Cell(*) linkname = ARR_AT(details, IDX_TCC_NATIVE_LINKNAME);
 
@@ -647,7 +647,7 @@ REBNATIVE(compile_p)
         REBACT *action = VAL_ACTION(TOP);  // stack will hold action live
         assert(Is_User_Native(action));  // can't cache stack pointer, extract
 
-        REBARR *details = ACT_DETAILS(action);
+        Array(*) details = ACT_DETAILS(action);
         REBVAL *linkname = DETAILS_AT(details, IDX_TCC_NATIVE_LINKNAME);
 
         char *name_utf8 = rebSpell("ensure text!", linkname);

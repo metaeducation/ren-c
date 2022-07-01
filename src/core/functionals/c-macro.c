@@ -49,7 +49,7 @@ void Splice_Block_Into_Feed(REBFED *feed, const REBVAL *splice) {
     //
     if (Get_Feed_Flag(feed, TOOK_HOLD)) {
         assert(GET_SERIES_INFO(FEED_ARRAY(feed), HOLD));
-        CLEAR_SERIES_INFO(m_cast(REBARR*, FEED_ARRAY(feed)), HOLD);
+        CLEAR_SERIES_INFO(m_cast(Array(*), FEED_ARRAY(feed)), HOLD);
         Clear_Feed_Flag(feed, TOOK_HOLD);
     }
 
@@ -59,10 +59,10 @@ void Splice_Block_Into_Feed(REBFED *feed, const REBVAL *splice) {
     // be used once the splice runs out.
     //
     if (FEED_IS_VARIADIC(feed) or Not_End(feed->value)) {
-        REBARR *saved = Alloc_Singular(
+        Array(*) saved = Alloc_Singular(
             FLAG_FLAVOR(FEED) | SERIES_FLAG_MANAGED  // no tracking
         );
-        memcpy(saved, FEED_SINGULAR(feed), sizeof(REBARR));
+        memcpy(saved, FEED_SINGULAR(feed), sizeof(Reb_Array));
         assert(NOT_SERIES_FLAG(saved, MANAGED));
 
         // old feed data resumes after the splice
@@ -84,7 +84,7 @@ void Splice_Block_Into_Feed(REBFED *feed, const REBVAL *splice) {
     // per-splice hold logic.  Pending whole system review of iteration.
     //
     if (Not_End(feed->value) and NOT_SERIES_INFO(FEED_ARRAY(feed), HOLD)) {
-        SET_SERIES_INFO(m_cast(REBARR*, FEED_ARRAY(feed)), HOLD);
+        SET_SERIES_INFO(m_cast(Array(*), FEED_ARRAY(feed)), HOLD);
         Set_Feed_Flag(feed, TOOK_HOLD);
     }
 }
@@ -98,7 +98,7 @@ Bounce Macro_Dispatcher(Frame(*) f)
     Frame(*) frame_ = f;  // for RETURN macros
 
     REBACT *phase = FRM_PHASE(f);
-    REBARR *details = ACT_DETAILS(phase);
+    Array(*) details = ACT_DETAILS(phase);
     Cell(*) body = ARR_AT(details, IDX_DETAILS_1);  // code to run
     assert(IS_BLOCK(body) and IS_RELATIVE(body) and VAL_INDEX(body) == 0);
 
@@ -201,7 +201,7 @@ REBNATIVE(inline)
         // This could probably be done more efficiently, but for now just
         // turn it into a block.
         //
-        REBARR *a = Alloc_Singular(SERIES_FLAGS_NONE);
+        Array(*) a = Alloc_Singular(SERIES_FLAGS_NONE);
         Unquotify(Move_Cell(ARR_SINGLE(a), splice), 1);
         Init_Block(splice, a);
     }

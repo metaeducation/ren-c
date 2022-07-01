@@ -308,7 +308,7 @@ void Init_Evars(EVARS *e, noquote(Cell(const*)) v) {
                 // to make sure archetypal frame views do not DO a frame after
                 // being run where the action could've tainted the arguments.
                 //
-                REBARR *varlist = CTX_VARLIST(e->ctx);
+                Array(*) varlist = CTX_VARLIST(e->ctx);
                 if (Get_Subclass_Flag(VARLIST, varlist, FRAME_HAS_BEEN_INVOKED))
                     fail (Error_Stale_Frame_Raw());
 
@@ -782,7 +782,7 @@ REBCTX *Copy_Context_Extra_Managed(
 
     REBLEN len = (CTX_TYPE(original) == REB_MODULE) ? 0 : CTX_LEN(original);
 
-    REBARR *varlist = Make_Array_For_Copy(
+    Array(*) varlist = Make_Array_For_Copy(
         len + extra + 1,
         SERIES_MASK_VARLIST | NODE_FLAG_MANAGED,
         nullptr // original_array, N/A because LINK()/MISC() used otherwise
@@ -933,7 +933,7 @@ void MF_Context(REB_MOLD *mo, noquote(Cell(const*)) v, bool form)
     Push_Pointer_To_Series(TG_Mold_Stack, c);
 
     if (CELL_HEART(v) == REB_FRAME and not IS_FRAME_PHASED(v)) {
-        REBARR *varlist = CTX_VARLIST(VAL_CONTEXT(v));
+        Array(*) varlist = CTX_VARLIST(VAL_CONTEXT(v));
         if (Get_Subclass_Flag(VARLIST, varlist, FRAME_HAS_BEEN_INVOKED)) {
             Append_Ascii(s, "make frame! [...invoked frame...]\n");
             Drop_Pointer_From_Series(TG_Mold_Stack, c);

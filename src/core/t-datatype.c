@@ -249,7 +249,7 @@ bool Matches_Fake_Type_Constraint(Cell(const*) v, enum Reb_Symbol_Id sym) {
 // the integer datatype value).  Returns an array of words for the added
 // datatypes to use in SYSTEM/CATALOG/DATATYPES.  See %boot/types.r
 //
-REBARR *Startup_Datatypes(REBARR *boot_types, REBARR *boot_typespecs)
+Array(*) Startup_Datatypes(Array(*) boot_types, Array(*) boot_typespecs)
 {
     if (ARR_LEN(boot_types) != REB_MAX - 1)  // exclude REB_0_VOID
         panic (boot_types);  // other types/internals should have a WORD!
@@ -260,7 +260,7 @@ REBARR *Startup_Datatypes(REBARR *boot_types, REBARR *boot_typespecs)
     if (VAL_WORD_ID(word) != SYM_NULL)
         panic (word);  // First internal byte type is NULL at 1
 
-    REBARR *catalog = Make_Array(REB_MAX - 1);
+    Array(*) catalog = Make_Array(REB_MAX - 1);
 
     REBINT n;
     for (n = 1; word != word_tail; ++word, ++n) {
@@ -328,7 +328,7 @@ REBARR *Startup_Datatypes(REBARR *boot_types, REBARR *boot_typespecs)
     // !!! For the purposes of just getting this mechanism off the ground,
     // this establishes it for just the 4 extension types we currently have.
     //
-    REBARR *a = Make_Array(4);
+    Array(*) a = Make_Array(4);
     int i;
     for (i = 0; i < 5; ++i) {
         REBTYP *type = Make_Binary(sizeof(CFUNC*) * IDX_HOOKS_MAX);

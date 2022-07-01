@@ -157,7 +157,7 @@ REBNATIVE(wait_p)  // See wrapping function WAIT in usermode code
             break;
 
           case REB_PORT: {
-            REBARR *single = Make_Array(1);
+            Array(*) single = Make_Array(1);
             Append_Value(single, SPECIFIC(val));
             Init_Block(ARG(value), single);
             ports = ARG(value);

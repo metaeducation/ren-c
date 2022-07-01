@@ -124,7 +124,7 @@ REBSER *Make_Set_Operation_Series(
         do {
             // Note: val1 and val2 swapped 2nd pass!
             //
-            const REBARR *array1 = VAL_ARRAY(val1);
+            Array(const*) array1 = VAL_ARRAY(val1);
 
             // Check what is in series1 but not in series2
             //
@@ -138,7 +138,7 @@ REBSER *Make_Set_Operation_Series(
                 Cell(const*) item = ARR_AT(array1, i);
                 if (flags & SOP_FLAG_CHECK) {
                     h = Find_Key_Hashed(
-                        m_cast(REBARR*, VAL_ARRAY(val2)),  // mode 1 unchanged
+                        m_cast(Array(*), VAL_ARRAY(val2)),  // mode 1 unchanged
                         hser,
                         item,
                         VAL_SPECIFIER(val1),

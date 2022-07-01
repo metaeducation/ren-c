@@ -1445,7 +1445,7 @@ REBNATIVE(catch)
   was_caught:  ///////////////////////////////////////////////////////////////
 
     if (REF(name) or REF(any)) {
-        REBARR *a = Make_Array(2);
+        Array(*) a = Make_Array(2);
 
         Copy_Cell(ARR_AT(a, 0), label); // throw name
         CATCH_THROWN(ARR_AT(a, 1), frame_); // thrown value--may be null!

@@ -39,7 +39,7 @@
 // (at least until they become arbitrary precision) but it's not enough for
 // a generic BLOCK! or an ACTION! (for instance).  So the remaining bits
 // often will point to one or more Rebol "nodes" (see %sys-series.h for an
-// explanation of REBSER, REBARR, REBCTX, and REBMAP.)
+// explanation of REBSER, Array(*), REBCTX, and REBMAP.)
 //
 // So the next part of the structure is the "Extra".  This is the size of one
 // pointer, which sits immediately after the header (that's also the size of
@@ -550,7 +550,7 @@ union Reb_Value_Payload { //=/////////////// ACTUAL PAYLOAD DEFINITION ////=//
     //     REBINT index;  // index of word in context (if binding is not null)
     //
     // ANY-CONTEXT!  // see %sys-context.h
-    //     REBARR *varlist;  // has MISC.meta, LINK.keysource
+    //     Array(*) varlist;  // has MISC.meta, LINK.keysource
     //     REBACT *phase;  // used by FRAME! contexts, see %sys-frame.h
     //
     // ANY-SERIES!  // see %sys-series.h
@@ -562,8 +562,8 @@ union Reb_Value_Payload { //=/////////////// ACTUAL PAYLOAD DEFINITION ////=//
     //     REBLEN depth;  // how deep quoting level is (> 3 if payload needed)
     //
     // ACTION!  // see %sys-action.h
-    //     REBARR *paramlist;  // has MISC.meta, LINK.underlying
-    //     REBARR *details;  // has MISC.dispatcher, LINK.specialty
+    //     Array(*) paramlist;  // has MISC.meta, LINK.underlying
+    //     Array(*) details;  // has MISC.dispatcher, LINK.specialty
     //
     // VARARGS!  // see %sys-varargs.h
     //     REBINT signed_param_index;  // if negative, consider arg enfixed

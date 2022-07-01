@@ -32,8 +32,8 @@
 // Additional capacity beyond what is required can be added
 // by giving an `extra` count of how many value cells one needs.
 //
-REBARR *Copy_Array_At_Extra_Shallow(
-    const REBARR *original,
+Array(*) Copy_Array_At_Extra_Shallow(
+    Array(const*) original,
     REBLEN index,
     REBSPC *specifier,
     REBLEN extra,
@@ -46,7 +46,7 @@ REBARR *Copy_Array_At_Extra_Shallow(
 
     len -= index;
 
-    REBARR *copy = Make_Array_For_Copy(len + extra, flags, original);
+    Array(*) copy = Make_Array_For_Copy(len + extra, flags, original);
 
     Cell(const*) src = ARR_AT(original, index);
     Cell(*) dest = ARR_HEAD(copy);
@@ -66,8 +66,8 @@ REBARR *Copy_Array_At_Extra_Shallow(
 // Shallow copy an array from the given index for given maximum
 // length (clipping if it exceeds the array length)
 //
-REBARR *Copy_Array_At_Max_Shallow(
-    const REBARR *original,
+Array(*) Copy_Array_At_Max_Shallow(
+    Array(const*) original,
     REBLEN index,
     REBSPC *specifier,
     REBLEN max
@@ -80,7 +80,7 @@ REBARR *Copy_Array_At_Max_Shallow(
     if (index + max > ARR_LEN(original))
         max = ARR_LEN(original) - index;
 
-    REBARR *copy = Make_Array_For_Copy(max, flags, original);
+    Array(*) copy = Make_Array_For_Copy(max, flags, original);
 
     REBLEN count = 0;
     Cell(const*) src = ARR_AT(original, index);
@@ -100,14 +100,14 @@ REBARR *Copy_Array_At_Max_Shallow(
 // Shallow copy the first 'len' values of `head` into a new series created to
 // hold that many entries, with an optional bit of extra space at the end.
 //
-REBARR *Copy_Values_Len_Extra_Shallow_Core(
+Array(*) Copy_Values_Len_Extra_Shallow_Core(
     Cell(const*) head,
     REBSPC *specifier,
     REBLEN len,
     REBLEN extra,
     REBFLGS flags
 ){
-    REBARR *a = Make_Array_Core(len + extra, flags);
+    Array(*) a = Make_Array_Core(len + extra, flags);
 
     REBLEN count = 0;
     Cell(const*) src = head;
@@ -241,8 +241,8 @@ void Clonify(
 // the resulting array will already be deeply under GC management, and hence
 // cannot be freed with Free_Unmanaged_Series().
 //
-REBARR *Copy_Array_Core_Managed(
-    const REBARR *original,
+Array(*) Copy_Array_Core_Managed(
+    Array(const*) original,
     REBLEN index,
     REBSPC *specifier,
     REBLEN tail,
@@ -262,7 +262,7 @@ REBARR *Copy_Array_Core_Managed(
 
     // Currently we start by making a shallow copy and then adjust it
 
-    REBARR *copy = Make_Array_For_Copy(
+    Array(*) copy = Make_Array_For_Copy(
         len + extra,
         flags | NODE_FLAG_MANAGED,
         original
@@ -302,14 +302,14 @@ REBARR *Copy_Array_Core_Managed(
 // and change all the relative binding information from one function's
 // paramlist to another.
 //
-REBARR *Copy_Rerelativized_Array_Deep_Managed(
-    const REBARR *original,
+Array(*) Copy_Rerelativized_Array_Deep_Managed(
+    Array(const*) original,
     REBACT *before, // references to `before` will be changed to `after`
     REBACT *after
 ){
     const REBFLGS flags = NODE_FLAG_MANAGED;
 
-    REBARR *copy = Make_Array_For_Copy(ARR_LEN(original), flags, original);
+    Array(*) copy = Make_Array_For_Copy(ARR_LEN(original), flags, original);
     Cell(const*) src_tail = ARR_TAIL(original);
     Cell(const*) src = ARR_HEAD(original);
     Cell(*) dest = ARR_HEAD(copy);
@@ -361,7 +361,7 @@ REBARR *Copy_Rerelativized_Array_Deep_Managed(
 //
 // Note: Updates the termination and tail.
 //
-Cell(*) Alloc_Tail_Array(REBARR *a)
+Cell(*) Alloc_Tail_Array(Array(*) a)
 {
     EXPAND_SERIES_TAIL(a, 1);
     SET_SERIES_LEN(a, ARR_LEN(a));
@@ -379,7 +379,7 @@ Cell(*) Alloc_Tail_Array(REBARR *a)
 //
 //  Uncolor_Array: C
 //
-void Uncolor_Array(const REBARR *a)
+void Uncolor_Array(Array(const*) a)
 {
     if (Is_Series_White(a))
         return; // avoid loop

@@ -224,7 +224,7 @@ void Protect_Series(const REBSER *s_const, REBLEN index, REBFLGS flags)
 //
 void Protect_Context(REBCTX *c, REBFLGS flags)
 {
-    REBARR *varlist = m_cast(REBARR*, CTX_VARLIST(c));  // mutate flags only
+    Array(*) varlist = m_cast(Array(*), CTX_VARLIST(c));  // mutate flags only
 
     if (Is_Series_Black(varlist))
         return; // avoid loop
@@ -516,7 +516,7 @@ void Force_Value_Frozen_Core(
     enum Reb_Kind heart = CELL_HEART(v);
 
     if (ANY_ARRAY_KIND(heart)) {
-        REBARR *a = m_cast(REBARR*, VAL_ARRAY(v));  // mutate flags only
+        Array(*) a = m_cast(Array(*), VAL_ARRAY(v));  // mutate flags only
         if (deep)
             Freeze_Array_Deep(a);
         else
@@ -531,7 +531,7 @@ void Force_Value_Frozen_Core(
         else
             fail ("What does a shallow freeze of a context mean?");
         if (locker)
-            SET_SERIES_INFO(m_cast(REBARR*, CTX_VARLIST(c)), AUTO_LOCKED);
+            SET_SERIES_INFO(m_cast(Array(*), CTX_VARLIST(c)), AUTO_LOCKED);
     }
     else if (ANY_SERIES_KIND(heart)) {
         REBSER *s = m_cast(REBSER*, VAL_SERIES(v));  // mutate flags only

@@ -22,7 +22,7 @@
 //
 // API REBVALs live in singular arrays (which fit inside a REBSER node, that
 // is the size of 2 REBVALs).  But they aren't kept alive by references from
-// other values, like the way that a REBARR used by a BLOCK! is kept alive.
+// other values, like the way that an Array(*) used by a BLOCK! is kept alive.
 // They are kept alive by being roots (currently implemented with a flag
 // NODE_FLAG_ROOT, but it could also mean living in a distinct pool from
 // other series nodes).
@@ -69,7 +69,7 @@ inline static bool Is_Api_Value(Cell(const*) v) {
     return did (v->header.bits & NODE_FLAG_ROOT);
 }
 
-inline static void Link_Api_Handle_To_Frame(REBARR *a, Frame(*) f)
+inline static void Link_Api_Handle_To_Frame(Array(*) a, Frame(*) f)
 {
     // The head of the list isn't null, but points at the frame, so that
     // API freeing operations can update the head of the list in the frame
@@ -88,7 +88,7 @@ inline static void Link_Api_Handle_To_Frame(REBARR *a, Frame(*) f)
     f->alloc_value_list = a;
 }
 
-inline static void Unlink_Api_Handle_From_Frame(REBARR *a)
+inline static void Unlink_Api_Handle_From_Frame(Array(*) a)
 {
     bool at_head = did (
         *cast(REBYTE*, MISC(ApiPrev, a)) & NODE_BYTEMASK_0x01_CELL
@@ -127,7 +127,7 @@ inline static void Unlink_Api_Handle_From_Frame(REBARR *a)
 //
 inline static REBVAL *Alloc_Value(void)
 {
-    REBARR *a = Alloc_Singular(
+    Array(*) a = Alloc_Singular(
         FLAG_FLAVOR(API) |  NODE_FLAG_ROOT | NODE_FLAG_MANAGED
     );
 
@@ -153,7 +153,7 @@ inline static void Free_Value(REBVAL *v)
 {
     assert(Is_Api_Value(v));
 
-    REBARR *a = Singular_From_Cell(v);
+    Array(*) a = Singular_From_Cell(v);
     RESET(ARR_SINGLE(a));
 
     if (GET_SERIES_FLAG(a, MANAGED))

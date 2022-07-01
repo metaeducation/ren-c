@@ -43,10 +43,10 @@ enum {
     PROT_FREEZE = 1 << 4
 };
 
-inline static bool Is_Array_Frozen_Shallow(const REBARR *a)
+inline static bool Is_Array_Frozen_Shallow(Array(const*) a)
   { return GET_SERIES_INFO(a, FROZEN_SHALLOW); }
 
-inline static bool Is_Array_Frozen_Deep(const REBARR *a) {
+inline static bool Is_Array_Frozen_Deep(Array(const*) a) {
     if (NOT_SERIES_INFO(a, FROZEN_DEEP))
         return false;
 
@@ -54,7 +54,7 @@ inline static bool Is_Array_Frozen_Deep(const REBARR *a) {
     return true;
 }
 
-inline static REBARR *Freeze_Array_Deep(REBARR *a) {
+inline static Array(*) Freeze_Array_Deep(Array(*) a) {
     Protect_Series(
         a,
         0, // start protection at index 0
@@ -64,7 +64,7 @@ inline static REBARR *Freeze_Array_Deep(REBARR *a) {
     return a;
 }
 
-inline static REBARR *Freeze_Array_Shallow(REBARR *a) {
+inline static Array(*) Freeze_Array_Shallow(Array(*) a) {
     SET_SERIES_INFO(a, FROZEN_SHALLOW);
     return a;
 }
@@ -80,4 +80,3 @@ inline static REBARR *Freeze_Array_Shallow(REBARR *a) {
 
 #define Force_Value_Frozen_Shallow(v) \
     Force_Value_Frozen_Core((v), false, EMPTY_ARRAY)  // auto-locked
-

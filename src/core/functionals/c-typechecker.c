@@ -74,7 +74,7 @@ Bounce Datatype_Checker_Dispatcher(Frame(*) frame_)
 {
     Frame(*) f = frame_;
 
-    REBARR *details = ACT_DETAILS(FRM_PHASE(f));
+    Array(*) details = ACT_DETAILS(FRM_PHASE(f));
     assert(ARR_LEN(details) == IDX_TYPECHECKER_MAX);
 
     REBVAL *datatype = DETAILS_AT(details, IDX_TYPECHECKER_TYPE);
@@ -108,7 +108,7 @@ Bounce Typeset_Checker_Dispatcher(Frame(*) frame_)
 {
     Frame(*) f = frame_;
 
-    REBARR *details = ACT_DETAILS(FRM_PHASE(f));
+    Array(*) details = ACT_DETAILS(FRM_PHASE(f));
     assert(ARR_LEN(details) == IDX_TYPECHECKER_MAX);
 
     REBVAL *typeset = DETAILS_AT(details, IDX_TYPECHECKER_TYPE);

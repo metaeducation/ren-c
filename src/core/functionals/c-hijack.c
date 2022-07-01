@@ -94,7 +94,7 @@
 //
 void Push_Redo_Action_Frame(REBVAL *out, Frame(*) f1, const REBVAL *run)
 {
-    REBARR *normals = Make_Array(FRM_NUM_ARGS(f1));  // max, e.g. no refines
+    Array(*) normals = Make_Array(FRM_NUM_ARGS(f1));  // max, e.g. no refines
 
     REBDSP dsp_orig = DSP;  // we push refinements as we find them
 
@@ -216,8 +216,8 @@ REBNATIVE(hijack)
     if (victim == hijacker)
         return nullptr;  // permitting no-op hijack has some practical uses
 
-    REBARR *victim_identity = ACT_IDENTITY(victim);
-    REBARR *hijacker_identity = ACT_IDENTITY(hijacker);
+    Array(*) victim_identity = ACT_IDENTITY(victim);
+    Array(*) hijacker_identity = ACT_IDENTITY(hijacker);
 
     if (Action_Is_Base_Of(victim, hijacker)) {
         //

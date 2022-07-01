@@ -29,7 +29,7 @@
 //   "VARLIST" - an array which holds an archetypal ANY-CONTEXT! value in its
 //   [0] element, and then a cell-sized slot for each variable.
 //
-// A `REBCTX*` is an alias of the varlist's `REBARR*`, and keylists are
+// A `REBCTX*` is an alias of the varlist's `Array(*)`, and keylists are
 // reached through the `->link` of the varlist.  The reason varlists
 // are used as the identity of the context is that keylists can be shared
 // between contexts.
@@ -115,7 +115,7 @@
 //
 #define CTX_META(c)     MISC(VarlistMeta, CTX_VARLIST(c))
 
-#define LINK_Patches_TYPE       REBARR*
+#define LINK_Patches_TYPE       Array(*)
 #define LINK_Patches_CAST       ARR
 #define HAS_LINK_Patches        FLAVOR_VARLIST
 
@@ -184,7 +184,7 @@ inline static REBCTX *CTX_FRAME_BINDING(REBCTX *c) {
 inline static void INIT_VAL_CONTEXT_ROOTVAR_Core(
     Cell(*) out,
     enum Reb_Kind kind,
-    REBARR *varlist
+    Array(*) varlist
 ){
     assert(kind != REB_FRAME);  // use INIT_VAL_FRAME_ROOTVAR() instead
     assert(out == ARR_HEAD(varlist));
@@ -202,7 +202,7 @@ inline static void INIT_VAL_CONTEXT_ROOTVAR_Core(
 
 inline static void INIT_VAL_FRAME_ROOTVAR_Core(
     Cell(*) out,
-    REBARR *varlist,
+    Array(*) varlist,
     REBACT *phase,
     REBCTX *binding  // allowed to be UNBOUND
 ){

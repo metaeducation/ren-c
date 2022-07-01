@@ -287,7 +287,7 @@ void Unbias_Series(REBSER *s, bool keep)
 // Reset series to empty. Reset bias, tail, and termination.
 // The tail is reset to zero.
 //
-void Reset_Array(REBARR *a)
+void Reset_Array(Array(*) a)
 {
     if (GET_SERIES_FLAG(a, DYNAMIC))
         Unbias_Series(a, false);

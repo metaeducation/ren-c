@@ -1,13 +1,13 @@
 //
 //  File: %sys-array.h
-//  Summary: {Definitions for REBARR}
+//  Summary: {Definitions for Reb_Array}
 //  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  Homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2017 Ren-C Open Source Contributors
+// Copyright 2012-2022 Ren-C Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information
@@ -20,20 +20,13 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// A "Rebol Array" is a series of REBVAL value cells.  In R3-Alpha, there was
-// a full-sized cell that would hold an END signal--much like a string
-// terminator.  Ren-C does not terminate arrays but relies on the known length,
-// in order to save on space--and avoid the cost of keeping the terminator up
-// to date as the array grows or resizes.
-//
-// (Note: The debug build may put "trash" at the termination location whenever
-// the array size is updated, to make it easier to catch out-of-bounds access.
-// But the release build does not do this)
+// A "Rebol Array" is a series of value cells.  Every BLOCK! or GROUP! points
+// at an array node, which you see in the source as Array(*).
 //
 // While many array operations are shared in common with REBSER, there is a
 // (deliberate) type incompatibility introduced.  The type compatibility is
-// only present when building as C++.  To get the underlying REBSER of a REBARR
-// use the SER() operation.
+// only present when building as C++.  To cast as the underlying REBSER, use
+// he SER() operation.
 //
 // An ARRAY is the main place in the system where "relative" values come
 // from, because all relative words are created during the copy of the
@@ -42,6 +35,17 @@
 // a relative value, but it cannot be copied without a "specifier" FRAME!
 // context (which is also required to do a GET_VAR lookup).
 //
+//=//// NOTES /////////////////////////////////////////////////////////////=//
+//
+//  * In R3-Alpha, there was a full-sized cell at the end of every array that
+//    would hold an END signal--much like a strin  terminator.  Ren-C does not
+//    terminate arrays but relies on the known length, in order to save on
+//    space.  This also avoids the cost of keeping the terminator up to date
+//    as the array grows or resizes.
+//
+//   (Note: The debug build may put "trash" at the tail position whenever
+//    the array size is updated, to make it easier to catch out-of-bounds
+//    access.  But the release build does not do this)
 
 
 // !!! We generally want to use LINK(Filename, x) but that uses the STR()
@@ -54,7 +58,7 @@
     cast(const REBSTR*, s->link.any.node)
 
 
-inline static bool Has_Newline_At_Tail(const REBARR *a) {
+inline static bool Has_Newline_At_Tail(Array(const*) a) {
     if (SER_FLAVOR(a) != FLAVOR_ARRAY)
         return false;  // only plain arrays can have newlines
 
@@ -63,7 +67,7 @@ inline static bool Has_Newline_At_Tail(const REBARR *a) {
     return did (a->leader.bits & ARRAY_FLAG_NEWLINE_AT_TAIL);
 }
 
-inline static bool Has_File_Line(const REBARR *a) {
+inline static bool Has_File_Line(Array(const*) a) {
     if (SER_FLAVOR(a) != FLAVOR_ARRAY)
         return false;  // only plain arrays can have newlines
 
@@ -76,37 +80,37 @@ inline static bool Has_File_Line(const REBARR *a) {
 // HEAD, TAIL, and LAST refer to specific value pointers in the array.  Since
 // empty arrays have no "last" value then ARR_LAST should not be called on it.
 
-inline static Cell(*) ARR_AT(const_if_c REBARR *a, REBLEN n)
+inline static Cell(*) ARR_AT(const_if_c Array(*) a, REBLEN n)
   { return SER_AT(Reb_Cell, a, n); }
 
-inline static Cell(*) ARR_HEAD(const_if_c REBARR *a)
+inline static Cell(*) ARR_HEAD(const_if_c Array(*) a)
   { return SER_HEAD(Reb_Cell, a); }
 
-inline static Cell(*) ARR_TAIL(const_if_c REBARR *a)
+inline static Cell(*) ARR_TAIL(const_if_c Array(*) a)
   { return SER_TAIL(Reb_Cell, a); }
 
-inline static Cell(*) ARR_LAST(const_if_c REBARR *a)
+inline static Cell(*) ARR_LAST(const_if_c Array(*) a)
   { return SER_LAST(Reb_Cell, a); }
 
-inline static Cell(*) ARR_SINGLE(const_if_c REBARR *a) {
+inline static Cell(*) ARR_SINGLE(const_if_c Array(*) a) {
     assert(NOT_SERIES_FLAG(a, DYNAMIC));
     return cast(Cell(*), &a->content.fixed);
 }
 
 #if CPLUSPLUS_11
-    inline static Cell(const*) ARR_AT(const REBARR *a, REBLEN n)
+    inline static Cell(const*) ARR_AT(Array(const*) a, REBLEN n)
         { return SER_AT(const Reb_Cell, a, n); }
 
-    inline static Cell(const*) ARR_HEAD(const REBARR *a)
+    inline static Cell(const*) ARR_HEAD(Array(const*) a)
         { return SER_HEAD(const Reb_Cell, a); }
 
-    inline static Cell(const*) ARR_TAIL(const REBARR *a)
+    inline static Cell(const*) ARR_TAIL(Array(const*) a)
         { return SER_TAIL(const Reb_Cell, a); }
 
-    inline static Cell(const*) ARR_LAST(const REBARR *a)
+    inline static Cell(const*) ARR_LAST(Array(const*) a)
         { return SER_LAST(const Reb_Cell, a); }
 
-    inline static Cell(const*) ARR_SINGLE(const REBARR *a) {
+    inline static Cell(const*) ARR_SINGLE(Array(const*) a) {
         assert(NOT_SERIES_FLAG(a, DYNAMIC));
         return cast(const Reb_Cell*, &a->content.fixed);
     }
@@ -116,8 +120,8 @@ inline static Cell(*) ARR_SINGLE(const_if_c REBARR *a) {
 // It's possible to calculate the array from just a cell if you know it's a
 // cell inside a singular array.
 //
-inline static REBARR *Singular_From_Cell(Cell(const*) v) {
-    REBARR *singular = ARR(  // some checking in debug builds is done by ARR()
+inline static Array(*) Singular_From_Cell(Cell(const*) v) {
+    Array(*) singular = ARR(  // some checking in debug builds is done by ARR()
         cast(void*,
             cast(REBYTE*, m_cast(Cell(*), v))
             - offsetof(struct Reb_Series, content)
@@ -127,7 +131,7 @@ inline static REBARR *Singular_From_Cell(Cell(const*) v) {
     return singular;
 }
 
-inline static REBLEN ARR_LEN(const REBARR *a)
+inline static REBLEN ARR_LEN(Array(const*) a)
   { return SER_USED(a); }
 
 
@@ -148,7 +152,7 @@ inline static REBLEN ARR_LEN(const REBARR *a)
 // as well on stack values and heap values.
 //
 inline static void Prep_Array(
-    REBARR *a,
+    Array(*) a,
     REBLEN capacity  // Expand_Series passes 0 on dynamic reallocation
 ){
     assert(GET_SERIES_FLAG(a, DYNAMIC));
@@ -191,8 +195,8 @@ inline static void Prep_Array(
 // Make a series that is the right size to store REBVALs (and marked for the
 // garbage collector to look into recursively).  ARR_LEN() will be 0.
 //
-inline static REBARR *Make_Array_Core_Into(
-    REBARR *prealloc,
+inline static Array(*) Make_Array_Core_Into(
+    Array(*) prealloc,
     REBLEN capacity,
     REBFLGS flags
 ){
@@ -240,8 +244,8 @@ inline static REBARR *Make_Array_Core_Into(
     PG_Reb_Stats->Blocks++;
   #endif
 
-    assert(ARR_LEN(cast(REBARR*, s)) == 0);
-    return cast(REBARR*, s);
+    assert(ARR_LEN(cast(Array(*), s)) == 0);
+    return cast(Array(*), s);
 }
 
 #define Make_Array_Core(capacity,flags) \
@@ -257,10 +261,10 @@ inline static REBARR *Make_Array_Core_Into(
 // compete with the usage of the ->misc and ->link fields of the series node
 // for internal arrays.
 //
-inline static REBARR *Make_Array_For_Copy(
+inline static Array(*) Make_Array_For_Copy(
     REBLEN capacity,
     REBFLGS flags,
-    const REBARR *original
+    Array(const*) original
 ){
     if (original and Has_Newline_At_Tail(original)) {
         //
@@ -275,7 +279,7 @@ inline static REBARR *Make_Array_For_Copy(
         and (flags & ARRAY_FLAG_HAS_FILE_LINE_UNMASKED)
         and (original and Has_File_Line(original))
     ){
-        REBARR *a = Make_Array_Core(
+        Array(*) a = Make_Array_Core(
             capacity,
             flags & ~ARRAY_FLAG_HAS_FILE_LINE_UNMASKED
         );
@@ -297,7 +301,7 @@ inline static REBARR *Make_Array_For_Copy(
 //
 // For `flags`, be sure to consider if you need ARRAY_FLAG_HAS_FILE_LINE.
 //
-inline static REBARR *Alloc_Singular(REBFLGS flags) {
+inline static Array(*) Alloc_Singular(REBFLGS flags) {
     assert(not (flags & SERIES_FLAG_DYNAMIC));
     return Make_Array_Core(1, flags | SERIES_FLAG_FIXED_SIZE);
 }
@@ -358,8 +362,8 @@ enum {
 
 // See TS_NOT_COPIED for the default types excluded from being deep copied
 //
-inline static REBARR* Copy_Array_At_Extra_Deep_Flags_Managed(
-    const REBARR *original, // ^-- not macro because original mentioned twice
+inline static Array(*) Copy_Array_At_Extra_Deep_Flags_Managed(
+    Array(const*) original, // ^-- not macro because original mentioned twice
     REBLEN index,
     REBSPC *specifier,
     REBLEN extra,
@@ -396,20 +400,20 @@ inline static REBARR* Copy_Array_At_Extra_Deep_Flags_Managed(
 // These operations do not need to take the value's index position into
 // account; they strictly operate on the array series
 //
-inline static const REBARR *VAL_ARRAY(noquote(Cell(const*)) v) {
+inline static Array(const*) VAL_ARRAY(noquote(Cell(const*)) v) {
     assert(ANY_ARRAYLIKE(v));
 
-    const REBARR *a = ARR(VAL_NODE1(v));
+    Array(const*) a = ARR(VAL_NODE1(v));
     if (GET_SERIES_FLAG(a, INACCESSIBLE))
         fail (Error_Series_Data_Freed_Raw());
     return a;
 }
 
 #define VAL_ARRAY_ENSURE_MUTABLE(v) \
-    m_cast(REBARR*, VAL_ARRAY(ENSURE_MUTABLE(v)))
+    m_cast(Array(*), VAL_ARRAY(ENSURE_MUTABLE(v)))
 
 #define VAL_ARRAY_KNOWN_MUTABLE(v) \
-    m_cast(REBARR*, VAL_ARRAY(KNOWN_MUTABLE(v)))
+    m_cast(Array(*), VAL_ARRAY(KNOWN_MUTABLE(v)))
 
 
 // These array operations take the index position into account.  The use
@@ -424,7 +428,7 @@ inline static Cell(const*) VAL_ARRAY_LEN_AT(
     option(REBLEN*) len_at_out,
     noquote(Cell(const*)) v
 ){
-    const REBARR *arr = VAL_ARRAY(v);
+    Array(const*) arr = VAL_ARRAY(v);
     REBIDX i = VAL_INDEX_RAW(v);  // VAL_ARRAY() already checks it's series
     REBLEN len = ARR_LEN(arr);
     if (i < 0 or i > cast(REBIDX, len))
@@ -438,7 +442,7 @@ inline static Cell(const*) VAL_ARRAY_AT(
     option(Cell(const*)*) tail_out,
     noquote(Cell(const*)) v
 ){
-    const REBARR *arr = VAL_ARRAY(v);
+    Array(const*) arr = VAL_ARRAY(v);
     REBIDX i = VAL_INDEX_RAW(v);  // VAL_ARRAY() already checks it's series
     REBLEN len = ARR_LEN(arr);
     if (i < 0 or i > cast(REBIDX, len))
@@ -453,7 +457,7 @@ inline static Cell(const*) VAL_ARRAY_AT_HEAD_T(
     option(Cell(const*)*) tail_out,
     noquote(Cell(const*)) v
 ){
-    const REBARR *arr = VAL_ARRAY(v);
+    Array(const*) arr = VAL_ARRAY(v);
     REBIDX i = VAL_INDEX_RAW(v);  // VAL_ARRAY() already checks it's series
     Cell(const*) at = ARR_AT(arr, i);
     if (tail_out) {  // inlining should remove this if() for no tail
@@ -509,7 +513,7 @@ inline static Cell(const*) VAL_ARRAY_AT_HEAD(
     Cell(const*) v,
     REBLEN n
 ){
-    const REBARR *a = VAL_ARRAY(v);  // debug build checks it's ANY-ARRAY!
+    Array(const*) a = VAL_ARRAY(v);  // debug build checks it's ANY-ARRAY!
     if (n > ARR_LEN(a))
         fail (Error_Index_Out_Of_Range_Raw());
     return ARR_AT(a, (n));
@@ -517,15 +521,15 @@ inline static Cell(const*) VAL_ARRAY_AT_HEAD(
 
 //=//// ANY-ARRAY! INITIALIZER HELPERS ////////////////////////////////////=//
 //
-// Declaring as inline with type signature ensures you use a REBARR* to
+// Declaring as inline with type signature ensures you use a Array(*) to
 // initialize, and the C++ build can also validate managed consistent w/const.
 
 inline static REBVAL *Init_Any_Array_At_Core(
     Cell(*) out,
     enum Reb_Kind kind,
-    const_if_c REBARR *array,
+    const_if_c Array(*) array,
     REBLEN index,
-    REBARR *binding
+    Array(*) binding
 ){
     return Init_Any_Series_At_Core(
         out,
@@ -540,9 +544,9 @@ inline static REBVAL *Init_Any_Array_At_Core(
     inline static REBVAL *Init_Any_Array_At_Core(
         Cell(*) out,
         enum Reb_Kind kind,
-        const REBARR *array,  // all const arrays should be already managed
+        Array(const*) array,  // all const arrays should be already managed
         REBLEN index,
-        REBARR *binding
+        Array(*) binding
     ){
         return Init_Any_Series_At_Core(out, kind, array, index, binding);
     }
@@ -561,7 +565,7 @@ inline static REBVAL *Init_Any_Array_At_Core(
 inline static Cell(*) Init_Relative_Block_At(
     Cell(*) out,
     REBACT *action,  // action to which array has relative bindings
-    REBARR *array,
+    Array(*) array,
     REBLEN index
 ){
     Reset_Cell_Header_Untracked(out, REB_BLOCK, CELL_FLAG_FIRST_IS_NODE);

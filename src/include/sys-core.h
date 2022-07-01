@@ -233,7 +233,7 @@ struct Reb_Enum_Vars {
     // of the bound words.
     //
     REBCTX *ctx;
-    REBARR *wordlist;
+    Array(*) wordlist;
     REBVAL *word;
     REBVAL *word_tail;
     Symbol(const*) keybuf;  // backing store for key
@@ -487,7 +487,7 @@ inline static void SET_SIGNAL(REBFLGS f) { // used in %sys-series.h
 #include "sys-trash.h"  // doesn't need SYMID (%sys-bad-word.h does)
 
 #include "datatypes/sys-series.h"
-#include "datatypes/sys-array.h"  // REBARR used by UTF-8 string bookmarks
+#include "datatypes/sys-array.h"  // Array(*) used by UTF-8 string bookmarks
 
 
 //=//// LIB BUILTINS ACCESS MACRO //////////////////////////////////////////=//

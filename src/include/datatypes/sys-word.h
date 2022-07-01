@@ -65,7 +65,7 @@ inline static REBVAL *Init_Any_Word_Untracked(
 inline static REBVAL *Init_Any_Word_Bound_Untracked(
     Cell(*) out,
     enum Reb_Kind type,
-    REBARR *binding,  // spelling determined by linked-to thing
+    Array(*) binding,  // spelling determined by linked-to thing
     Symbol(const*) symbol,
     REBLEN index  // must be 1 if LET patch (INDEX_ATTACHED)
 ){
@@ -96,7 +96,7 @@ inline static REBVAL *Init_Any_Word_Bound_Untracked(
 inline static REBVAL *Init_Any_Word_Patched(  // e.g. LET or MODULE! var
     Cell(*) out,
     enum Reb_Kind type,
-    REBARR *patch
+    Array(*) patch
 ){
     return Init_Any_Word_Bound_Untracked(
         out,

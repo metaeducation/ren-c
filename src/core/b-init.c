@@ -192,7 +192,7 @@ static void Startup_Lib(void)
   //=//// INITIALIZE LIB PATCHES ///////////////////////////////////////////=//
 
     for (REBLEN i = 1; i < LIB_SYMS_MAX; ++i) {
-        REBARR *patch = &PG_Lib_Patches[i];
+        Array(*) patch = &PG_Lib_Patches[i];
         Make_Array_Core_Into(
             patch,
             1,
@@ -256,7 +256,7 @@ static void Shutdown_Lib(void)
     // Startup() gets called again.
     //
     for (REBLEN i = 1; i < LIB_SYMS_MAX; ++i) {
-        REBARR *patch = &PG_Lib_Patches[i];
+        Array(*) patch = &PG_Lib_Patches[i];
 
         if (INODE(PatchContext, patch) == nullptr)
             continue;  // was never initialized !!! should it not be in lib?
@@ -383,7 +383,7 @@ static void Startup_Empty_Arrays(void)
     // are accessed as an array, they give two blanks `[_ _]`.
     //
   blockscope {
-    REBARR *a = Make_Array_Core(2, NODE_FLAG_MANAGED);
+    Array(*) a = Make_Array_Core(2, NODE_FLAG_MANAGED);
     Init_Blank(ARR_AT(a, 0));
     Init_Blank(ARR_AT(a, 1));
     SET_SERIES_LEN(a, 2);
@@ -516,9 +516,9 @@ static void Shutdown_Root_Vars(void)
 //
 static void Init_System_Object(
     const REBVAL *boot_sysobj_spec,
-    REBARR *datatypes_catalog,
-    REBARR *natives_catalog,
-    REBARR *generics_catalog,
+    Array(*) datatypes_catalog,
+    Array(*) natives_catalog,
+    Array(*) generics_catalog,
     REBCTX *errors_catalog
 ) {
     assert(VAL_INDEX(boot_sysobj_spec) == 0);
@@ -865,7 +865,7 @@ void Startup_Core(void)
     // (We could separate the text of the SYS portion out, and scan that
     // separately to avoid the extra work.  Not a high priority.)
     //
-    REBARR *boot_array = Scan_UTF8_Managed(
+    Array(*) boot_array = Scan_UTF8_Managed(
         Intern_Unsized_Managed("-tmp-boot-"),
         utf8,
         utf8_size,
@@ -895,7 +895,7 @@ void Startup_Core(void)
     // definition of natives, things like the <opt> tag are needed as a basis
     // for comparison to see if a usage matches that.
 
-    REBARR *datatypes_catalog = Startup_Datatypes(
+    Array(*) datatypes_catalog = Startup_Datatypes(
         VAL_ARRAY_KNOWN_MUTABLE(&boot->types),
         VAL_ARRAY_KNOWN_MUTABLE(&boot->typespecs)
     );
@@ -912,13 +912,13 @@ void Startup_Core(void)
     // boot->natives is from the automatically gathered list of natives found
     // by scanning comments in the C sources for `native: ...` declarations.
     //
-    REBARR *natives_catalog = Startup_Natives(SPECIFIC(&boot->natives));
+    Array(*) natives_catalog = Startup_Natives(SPECIFIC(&boot->natives));
     Manage_Series(natives_catalog);
     PUSH_GC_GUARD(natives_catalog);
 
     // boot->generics is the list in %generics.r
     //
-    REBARR *generics_catalog = Startup_Generics(SPECIFIC(&boot->generics));
+    Array(*) generics_catalog = Startup_Generics(SPECIFIC(&boot->generics));
     Manage_Series(generics_catalog);
     PUSH_GC_GUARD(generics_catalog);
 

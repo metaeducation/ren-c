@@ -196,7 +196,7 @@ inline static REBVAL *Try_Leading_Blank_Pathify(
         return v;
     }
 
-    REBARR *a = Make_Array_Core(
+    Array(*) a = Make_Array_Core(
         2,  // TBD: optimize "pairlike" to use a pairing node
         NODE_FLAG_MANAGED
     );
@@ -237,7 +237,7 @@ inline static REBVAL *Init_Any_Sequence_Bytes(
     mutable_BINDING(out) = nullptr;  // paths are bindable, can't have garbage
 
     if (size > sizeof(PAYLOAD(Bytes, out).at_least_8) - 1) {  // too big
-        REBARR *a = Make_Array_Core(size, NODE_FLAG_MANAGED);
+        Array(*) a = Make_Array_Core(size, NODE_FLAG_MANAGED);
         for (; size > 0; --size, ++data)
             Init_Integer(Alloc_Tail_Array(a), *data);
 
@@ -341,7 +341,7 @@ inline static REBVAL *Try_Init_Any_Sequence_Pairlike_Core(
         return nullptr;
     }
 
-    REBARR *a = Make_Array_Core(
+    Array(*) a = Make_Array_Core(
         2,
         NODE_FLAG_MANAGED  // optimize "pairlike"
     );
@@ -442,7 +442,7 @@ inline static REBVAL *Try_Pop_Sequence_Or_Element_Or_Nulled(
         return cast(REBVAL*, out);
     }
 
-    REBARR *a = Pop_Stack_Values_Core(dsp_orig, NODE_FLAG_MANAGED);
+    Array(*) a = Pop_Stack_Values_Core(dsp_orig, NODE_FLAG_MANAGED);
     Freeze_Array_Shallow(a);
     if (not Try_Init_Any_Sequence_Arraylike(out, kind, a))
         return nullptr;
@@ -474,7 +474,7 @@ inline static REBLEN VAL_SEQUENCE_LEN(noquote(Cell(const*)) sequence) {
         return 2;
 
       case FLAVOR_ARRAY : {  // uncompressed sequence
-        REBARR *a = ARR(VAL_NODE1(sequence));
+        Array(*) a = ARR(VAL_NODE1(sequence));
         assert(ARR_LEN(a) >= 2);
         assert(Is_Array_Frozen_Shallow(a));
         return ARR_LEN(a); }
@@ -530,7 +530,7 @@ inline static Cell(const*) VAL_SEQUENCE_AT(
         return store; }
 
       case FLAVOR_ARRAY : {  // uncompressed sequence
-        const REBARR *a = ARR(VAL_NODE1(sequence));
+        Array(const*) a = ARR(VAL_NODE1(sequence));
         assert(ARR_LEN(a) >= 2);
         assert(Is_Array_Frozen_Shallow(a));
         return ARR_AT(a, n); }  // array is read only

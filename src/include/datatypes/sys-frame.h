@@ -78,7 +78,7 @@ inline static bool FRM_IS_VARIADIC(Frame(*) f) {
     return FEED_IS_VARIADIC(f->feed);
 }
 
-inline static const REBARR *FRM_ARRAY(Frame(*) f) {
+inline static Array(const*) FRM_ARRAY(Frame(*) f) {
     assert(Is_End(f->feed->value) or not FRM_IS_VARIADIC(f));
     return FEED_ARRAY(f->feed);
 }
@@ -407,7 +407,7 @@ inline static void Drop_Frame_Core(Frame(*) f) {
         //
         REBNOD *n = f->alloc_value_list;
         while (n != f) {
-            REBARR *a = ARR(n);
+            Array(*) a = ARR(n);
             n = LINK(ApiNext, a);
             RESET(ARR_SINGLE(a));
             GC_Kill_Series(a);
@@ -423,7 +423,7 @@ inline static void Drop_Frame_Core(Frame(*) f) {
       #if !defined(NDEBUG)
         REBNOD *n = f->alloc_value_list;
         while (n != f) {
-            REBARR *a = ARR(n);
+            Array(*) a = ARR(n);
             printf("API handle was allocated but not freed, panic'ing leak\n");
             panic (a);
         }
@@ -809,7 +809,7 @@ inline static bool Pushed_Continuation(
         DECLARE_END_FRAME (f, FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING) | flags);
         f->executor = &Action_Executor;  // usually done by Push_Action()s
 
-        REBARR *varlist = CTX_VARLIST(c);
+        Array(*) varlist = CTX_VARLIST(c);
         f->varlist = varlist;
         f->rootvar = CTX_ROOTVAR(c);
         INIT_BONUS_KEYSOURCE(varlist, f);

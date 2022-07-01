@@ -1222,7 +1222,7 @@ void Push_Action(
     STATIC_ASSERT(
         ACTION_EXECUTOR_FLAG_FULFILLING_ARG == DETAILS_FLAG_IS_BARRIER
     );
-    REBARR *identity = ACT_IDENTITY(act);
+    Array(*) identity = ACT_IDENTITY(act);
     if (f->flags.bits & identity->leader.bits & DETAILS_FLAG_IS_BARRIER)
         fail (Error_Expression_Barrier_Raw());
 
@@ -1292,7 +1292,7 @@ void Push_Action(
     // specialization together.  This means only the outermost specialization
     // is needed to fill the specialized slots contributed by later phases.
     //
-    REBARR *partials = try_unwrap(ACT_PARTIALS(act));
+    Array(*) partials = try_unwrap(ACT_PARTIALS(act));
     if (partials) {
         Cell(const*) word_tail = ARR_TAIL(partials);
         const REBVAL *word = SPECIFIC(ARR_HEAD(partials));

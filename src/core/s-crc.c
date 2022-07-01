@@ -413,14 +413,14 @@ REBSER *Hash_Block(const REBVAL *block, REBLEN skip, bool cased)
 
     REBLEN *hashes = SER_HEAD(REBLEN, hashlist);
 
-    const REBARR *array = VAL_ARRAY(block);
+    Array(const*) array = VAL_ARRAY(block);
     REBLEN n = VAL_INDEX(block);
 
     while (true) {
         REBLEN skip_index = skip;
 
         REBLEN hash = Find_Key_Hashed(
-            m_cast(REBARR*, array),  // mode == 0, no modification, cast ok
+            m_cast(Array(*), array),  // mode == 0, no modification, cast ok
             hashlist,
             value,
             VAL_SPECIFIER(block),

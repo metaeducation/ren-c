@@ -36,7 +36,7 @@
 // In the C++ build we can do better:
 //
 // * Templates can stop illegal downcasting (e.g. keep you from trying to turn
-//   an `int*` into a `REBARR*`, but allow you to do it for `REBSER*`).
+//   an `int*` into a `Array(*)`, but allow you to do it for `REBSER*`).
 //
 // * They can also stop unnecessary downcasting...such as casting a REBSER*
 //   to a REBSER*.
@@ -66,7 +66,7 @@
     #define NOD(p)          m_cast(REBNOD*, x_cast(const REBNOD*, (p)))
 
     #define SER(p)          m_cast(REBSER*, x_cast(const REBSER*, (p)))
-    #define ARR(p)          m_cast(REBARR*, x_cast(const REBARR*, (p)))
+    #define ARR(p)          m_cast(Array(*), x_cast(Array(const*), (p)))
     #define ACT(p)          m_cast(REBACT*, x_cast(const REBACT*, (p)))
     #define CTX(p)          m_cast(REBCTX*, x_cast(const REBCTX*, (p)))
 
@@ -161,8 +161,8 @@
         typename T0 = typename std::remove_const<T>::type,
         typename A = typename std::conditional<
             std::is_const<T>::value,  // boolean
-            const REBARR,  // true branch
-            REBARR  // false branch
+            const Reb_Array,  // true branch
+            Reb_Array  // false branch
         >::type
     >
     inline A *ARR(T *p) {
@@ -200,8 +200,8 @@
             std::is_same<T0, void>::value
                 or std::is_same<T0, REBNOD>::value
                 or std::is_same<T0, REBSER>::value
-                or std::is_same<T0, REBARR>::value,
-            "CTX() works on [void* REBNOD* REBSER* REBARR*]"
+                or std::is_same<T0, Reb_Array>::value,
+            "CTX() works on [void* REBNOD* REBSER* Array(*)]"
         );
         if (not p)
             return nullptr;
@@ -228,8 +228,8 @@
             std::is_same<P, void*>::value
                 or std::is_same<P, REBNOD*>::value
                 or std::is_same<P, REBSER*>::value
-                or std::is_same<P, REBARR*>::value,
-            "ACT() works on [void* REBNOD* REBSER* REBARR*]"
+                or std::is_same<P, Array(*)>::value,
+            "ACT() works on [void* REBNOD* REBSER* Array(*)]"
         );
 
         if (not p)
@@ -302,7 +302,7 @@
 
 
 inline static REBMAP *MAP(void *p) {  // not a fancy cast ATM.
-    REBARR *a = ARR(p);
+    Array(*) a = ARR(p);
     assert(IS_PAIRLIST(a));
     return cast(REBMAP*, a);
 }

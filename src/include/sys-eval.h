@@ -26,7 +26,7 @@
 // written such that a longjmp up to a failure handler above it can run
 // safely and clean up even though intermediate stacks have vanished.
 //
-// Ren-C can run the evaluator across a REBARR-style series of input based on
+// Ren-C can run the evaluator across an Array(*)-style input series based on
 // index.  It can also enumerate through C's `va_list`, providing the ability
 // to pass pointers as REBVAL* to comma-separated input at the source level.
 //

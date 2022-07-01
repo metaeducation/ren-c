@@ -377,7 +377,7 @@ static void Push_Composer_Frame(
 //    to `(blank).1` which does turn into `.1`
 //
 // 3. There are N instances of the NEWLINE_BEFORE flags on the pushed items,
-//    and we need N + 1 flags.  Borrow the tail flag from the input REBARR.
+//    and we need N + 1 flags.  Borrow the tail flag from the input array.
 //
 static Value* Finalize_Composer_Frame(
     Value *out,

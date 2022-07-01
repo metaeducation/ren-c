@@ -284,7 +284,7 @@ static void Queue_Unmarked_Accessible_Series_Deep(REBSER *s)
         }
     }
     else if (IS_SER_ARRAY(s)) {
-        REBARR *a = ARR(s);
+        Array(*) a = ARR(s);
 
     //=//// MARK BONUS (if not using slot for `bias`) /////////////////////=//
 
@@ -323,7 +323,7 @@ static void Queue_Unmarked_Accessible_Series_Deep(REBSER *s)
         //
         if (SER_FULL(GC_Mark_Stack))
             Extend_Series_If_Necessary(GC_Mark_Stack, 8);
-        *SER_AT(REBARR*, GC_Mark_Stack, SER_USED(GC_Mark_Stack)) = a;
+        *SER_AT(Array(*), GC_Mark_Stack, SER_USED(GC_Mark_Stack)) = a;
         SET_SERIES_USED(GC_Mark_Stack, SER_USED(GC_Mark_Stack) + 1);  // !term
     }
 }
@@ -398,13 +398,13 @@ static void Propagate_All_GC_Marks(void)
         // Data pointer may change in response to an expansion during
         // Mark_Array_Deep_Core(), so must be refreshed on each loop.
         //
-        REBARR *a = *SER_AT(REBARR*, GC_Mark_Stack, SER_USED(GC_Mark_Stack));
+        Array(*) a = *SER_AT(Array(*), GC_Mark_Stack, SER_USED(GC_Mark_Stack));
 
         // Termination is not required in the release build (the length is
         // enough to know where it ends).  But overwrite with trash in debug.
         //
         TRASH_POINTER_IF_DEBUG(
-            *SER_AT(REBARR*, GC_Mark_Stack, SER_USED(GC_Mark_Stack))
+            *SER_AT(Array(*), GC_Mark_Stack, SER_USED(GC_Mark_Stack))
         );
 
         // We should have marked this series at queueing time to keep it from
@@ -508,7 +508,7 @@ void Reify_Va_To_Array_In_Feed(
     if (DSP == dsp_orig)
         Init_Block(FEED_SINGLE(feed), EMPTY_ARRAY);  // reuse array
     else {
-        REBARR *a = Pop_Stack_Values_Core(dsp_orig, SERIES_FLAG_MANAGED);
+        Array(*) a = Pop_Stack_Values_Core(dsp_orig, SERIES_FLAG_MANAGED);
         Init_Any_Array_At(FEED_SINGLE(feed), REB_BLOCK, a, index);
     }
 
@@ -524,7 +524,7 @@ void Reify_Va_To_Array_In_Feed(
         assert(FEED_PENDING(feed) == nullptr);
     else {
         assert(Not_Feed_Flag(feed, TOOK_HOLD));
-        SET_SERIES_INFO(m_cast(REBARR*, FEED_ARRAY(feed)), HOLD);
+        SET_SERIES_INFO(m_cast(Array(*), FEED_ARRAY(feed)), HOLD);
         Set_Feed_Flag(feed, TOOK_HOLD);
     }
 }
@@ -569,7 +569,7 @@ static void Mark_Root_Series(void)
                 // This came from Alloc_Value(); all references should be
                 // from the C stack, only this visit should be marking it.
                 //
-                REBARR *a = ARR(cast(void*, unit));
+                Array(*) a = ARR(cast(void*, unit));
 
                 assert(not (a->leader.bits & NODE_FLAG_MARKED));
 
@@ -622,7 +622,7 @@ static void Mark_Root_Series(void)
                 if (s->leader.bits & NODE_FLAG_MANAGED)
                     continue; // BLOCK! should mark it
 
-                REBARR *a = ARR(s);
+                Array(*) a = ARR(s);
 
                 if (IS_VARLIST(a))
                     if (CTX_TYPE(CTX(a)) == REB_FRAME)
@@ -768,7 +768,7 @@ static void Mark_Frame_Stack_Deep(void)
         // Note: MISC_PENDING() should either live in FEED_ARRAY(), or
         // it may be trash (e.g. if it's an apply).  GC can ignore it.
         //
-        REBARR *singular = FEED_SINGULAR(f->feed);
+        Array(*) singular = FEED_SINGULAR(f->feed);
         do {
             Queue_Mark_Value_Deep(ARR_SINGLE(singular));
             singular = LINK(Splice, singular);
@@ -861,7 +861,7 @@ static void Mark_Frame_Stack_Deep(void)
             // "may not pass CTX() test"
             //
             Queue_Mark_Node_Deep(
-                cast(const REBNOD**, m_cast(const REBARR**, &f->varlist))
+                cast(const REBNOD**, m_cast(Array(const*)*, &f->varlist))
             );
             goto propagate_and_continue;
         }
@@ -1278,7 +1278,7 @@ REBLEN Recycle_Core(bool shutdown, REBSER *sweeplist)
     // Unmark the Lib() fixed patches
     //
     for (REBLEN i = 1; i < LIB_SYMS_MAX; ++i) {
-        REBARR *patch = &PG_Lib_Patches[i];
+        Array(*) patch = &PG_Lib_Patches[i];
         if (GET_SERIES_FLAG(patch, MARKED)) {
             CLEAR_SERIES_FLAG(patch, MARKED);
             --mark_count;

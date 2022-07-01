@@ -50,7 +50,7 @@
 //
 // The PROBE macro can be used in debug builds to mold a REBVAL much like the
 // Rebol `probe` operation.  But it's actually polymorphic, and if you have
-// a REBSER*, REBCTX*, or REBARR* it can be used with those as well.  In C++,
+// a REBSER*, REBCTX*, or Array(*) it can be used with those as well.  In C++,
 // you can even get the same value and type out as you put in...just like in
 // Rebol, permitting things like `return PROBE(Make_Some_Series(...));`
 //
@@ -502,7 +502,7 @@ inline static bool IS_RELATIVE(Cell(const*) v) {
     (not IS_RELATIVE(v))
 
 
-// When you have a Cell(*) (e.g. from a REBARR) that you KNOW to be specific,
+// When you have a Cell(*) (e.g. from a array) that you KNOW to be specific,
 // you might be bothered by an error like:
 //
 //     "invalid conversion from 'Reb_Value*' to 'Reb_Specific_Value*'"

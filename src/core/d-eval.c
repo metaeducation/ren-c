@@ -183,7 +183,7 @@ static void Evaluator_Shared_Checks_Debug(Frame(*) f)
 //     write f's *own* arg slots to fulfill them.
 //
 //     f->feed
-//     Contains the REBARR* or C va_list of subsequent values to fetch...as
+//     Contains the Array(*) or C va_list of subsequent values to fetch...as
 //     well as the specifier.  The current value, its cached "gotten" value if
 //     it is a WORD!, and other information is stored here through a level of
 //     indirection so it may be shared and updated between recursions.

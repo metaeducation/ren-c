@@ -42,7 +42,7 @@ REBCTX *Alloc_Context_Core(enum Reb_Kind kind, REBLEN capacity, REBFLGS flags)
     mutable_LINK(Ancestor, keylist) = keylist;  // default to keylist itself
     assert(SER_USED(keylist) == 0);
 
-    REBARR *varlist = Make_Array_Core(
+    Array(*) varlist = Make_Array_Core(
         capacity + 1,  // size + room for rootvar (array terminator implicit)
         SERIES_MASK_VARLIST  // includes assurance of dynamic allocation
             | flags  // e.g. NODE_FLAG_MANAGED
@@ -164,7 +164,7 @@ REBVAR *Append_Context(
                 ID_OF_SYMBOL(unwrap(symbol))
                 : VAL_WORD_ID(unwrap(any_word));
 
-        REBARR *patch;
+        Array(*) patch;
         if (id != SYM_0 and id <= LIB_SYMS_MAX) {
             //
             // Low symbol IDs are all in PG_Lib_Patches for fast access, and
@@ -463,7 +463,7 @@ REBSER *Collect_Keylist_Managed(
 //
 // Collect unique words from a block, possibly deeply...maybe just SET-WORD!s.
 //
-REBARR *Collect_Unique_Words_Managed(
+Array(*) Collect_Unique_Words_Managed(
     Cell(const*) head,
     Cell(const*) tail,
     REBFLGS flags,  // See COLLECT_XXX
@@ -535,7 +535,7 @@ REBARR *Collect_Unique_Words_Managed(
     // We don't use Pop_Stack_Values_Core() because we want to keep the values
     // on the stack so that Collect_End() can remove them from the binder.
     //
-    REBARR *array = Copy_Values_Len_Shallow_Core(
+    Array(*) array = Copy_Values_Len_Shallow_Core(
         Data_Stack_At(cl->dsp_orig + 1),
         SPECIFIED,
         DSP - cl->dsp_orig,
@@ -619,7 +619,7 @@ REBCTX *Make_Context_Detect_Managed(
     );
 
     REBLEN len = SER_USED(keylist);
-    REBARR *varlist = Make_Array_Core(
+    Array(*) varlist = Make_Array_Core(
         1 + len,  // needs room for rootvar
         SERIES_MASK_VARLIST
             | NODE_FLAG_MANAGED // Note: Rebind below requires managed context
@@ -765,7 +765,7 @@ REBCTX *Construct_Context_Managed(
 //     2 for value
 //     3 for words and values
 //
-REBARR *Context_To_Array(Cell(const*) context, REBINT mode)
+Array(*) Context_To_Array(Cell(const*) context, REBINT mode)
 {
     assert(!(mode & 4));
 
@@ -914,7 +914,7 @@ void Shutdown_Collector(void)
 //
 void Assert_Context_Core(REBCTX *c)
 {
-    REBARR *varlist = CTX_VARLIST(c);
+    Array(*) varlist = CTX_VARLIST(c);
 
     if (
         (varlist->leader.bits & SERIES_MASK_VARLIST) != SERIES_MASK_VARLIST

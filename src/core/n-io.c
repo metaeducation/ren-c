@@ -174,7 +174,7 @@ REBNATIVE(new_line)
     REBVAL *pos = ARG(position);
     Cell(const*) tail;
     Cell(*) item = VAL_ARRAY_AT_ENSURE_MUTABLE(&tail, pos);
-    REBARR *a = VAL_ARRAY_KNOWN_MUTABLE(pos);  // need if setting flag at tail
+    Array(*) a = VAL_ARRAY_KNOWN_MUTABLE(pos);  // need if setting flag at tail
 
     REBINT skip;
     if (REF(all))
@@ -229,7 +229,7 @@ REBNATIVE(new_line_q)
 
     REBVAL *pos = ARG(position);
 
-    const REBARR *arr;
+    Array(const*) arr;
     Cell(const*) item;
     Cell(const*) tail;
 

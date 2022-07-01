@@ -20,7 +20,7 @@
 //
 // See %sys-patch.h for a description of virtual binding patches.
 //
-// There is currently not a separate REBPAT* type (it's just a REBARR) but
+// There is currently not a separate REBPAT* type (it's just an Array(*)) but
 // there might need to be one for clarity, eventually.  This file defines the
 // flags and layout because they're needed by inline functions before
 // %sys-patch.h is included.
@@ -36,7 +36,7 @@
 // up the field in varlists to point to the specifier that was in effect when
 // it was created.
 //
-#define MISC_Variant_TYPE        REBARR*
+#define MISC_Variant_TYPE        Array(*)
 #define MISC_Variant_CAST        ARR
 #define HAS_MISC_Variant         FLAVOR_PATCH
 
@@ -85,7 +85,7 @@
 
 // Next node is either to another patch, a frame specifier REBCTX, or nullptr.
 //
-#define LINK_NextPatch_TYPE            REBARR*
+#define LINK_NextPatch_TYPE            Array(*)
 #define LINK_NextPatch_CAST            ARR
 #define HAS_LINK_NextPatch             FLAVOR_PATCH
 

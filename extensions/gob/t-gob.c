@@ -64,7 +64,7 @@ REBINT CT_Gob(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
 //
 //  Make_Gob: C
 //
-// Creates a REBARR* which contains a compact representation of information
+// Creates a Array(*) which contains a compact representation of information
 // describing a GOB!.  Does not include the GOB's index, which is unique to
 // each GOB! value and lives in the cell's payload.
 //
@@ -97,7 +97,7 @@ REBGOB *Make_Gob(void)
     GOB_TYPE(a) = GOBT_NONE;
 
     SET_SERIES_LEN(a, IDX_GOB_MAX);
-    return a;  // REBGOB is-a REBARR
+    return a;  // REBGOB is-an Array(*)
 }
 
 
@@ -238,7 +238,7 @@ static void Insert_Gobs(
 
     // Create or expand the pane series:
 
-    REBARR *pane = GOB_PANE(gob);
+    Array(*) pane = GOB_PANE(gob);
 
     if (not pane) {
         pane = Make_Array_Core(
@@ -309,9 +309,9 @@ static void Remove_Gobs(REBGOB *gob, REBLEN index, REBLEN len)
 //
 //  Gob_Flags_To_Array: C
 //
-static REBARR *Gob_Flags_To_Array(REBGOB *gob)
+static Array(*) Gob_Flags_To_Array(REBGOB *gob)
 {
-    REBARR *a = Make_Array(3);
+    Array(*) a = Make_Array(3);
 
     REBINT i;
     for (i = 0; Gob_Flag_Words[i].sym != SYM_0; ++i) {
@@ -602,7 +602,7 @@ static bool Did_Get_GOB_Var(
         break;
 
       case SYM_PANE: {
-        REBARR *pane = GOB_PANE(gob);
+        Array(*) pane = GOB_PANE(gob);
         if (not pane)
             Init_Block(out, Make_Array(0));
         else
@@ -682,9 +682,9 @@ static void Set_GOB_Vars(
 
 // Used by MOLD to create a block.
 //
-static REBARR *Gob_To_Array(REBGOB *gob)
+static Array(*) Gob_To_Array(REBGOB *gob)
 {
-    REBARR *arr = Make_Array(10);
+    Array(*) arr = Make_Array(10);
     SYMID words[] = {SYM_OFFSET, SYM_SIZE, SYM_ALPHA, SYM_0};
     Cell(*) vals[3];
 
@@ -841,7 +841,7 @@ void MF_Gob(REB_MOLD *mo, noquote(Cell(const*)) v, bool form)
 
     Pre_Mold(mo, v);
 
-    REBARR *array = Gob_To_Array(VAL_GOB(v));
+    Array(*) array = Gob_To_Array(VAL_GOB(v));
     Mold_Array_At(mo, array, 0, "[]");
     Free_Unmanaged_Series(array);
 

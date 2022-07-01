@@ -311,7 +311,7 @@ Bounce TO_Typeset(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 //
 // https://forum.rebol.info/t/the-typeset-representation-problem/1300
 //
-REBARR *Typeset_To_Array(const REBVAL *tset)
+Array(*) Typeset_To_Array(const REBVAL *tset)
 {
     REBDSP dsp_orig = DSP;
 

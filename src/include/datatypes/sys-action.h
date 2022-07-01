@@ -84,7 +84,7 @@
 
 // REBCTX types use this field of their varlist (which is the identity of
 // an ANY-CONTEXT!) to find their "keylist".  It is stored in the REBSER
-// node of the varlist REBARR vs. in the REBVAL of the ANY-CONTEXT! so
+// node of the varlist Array(*) vs. in the REBVAL of the ANY-CONTEXT! so
 // that the keylist can be changed without needing to update all the
 // REBVALs for that object.
 //
@@ -93,7 +93,7 @@
 // is not running on the stack, it will be the function paramlist of the
 // actual phase that function is for.  Since Frame(*) all start with a
 // REBVAL cell, this means NODE_FLAG_CELL can be used on the node to
-// discern the case where it can be cast to a Frame(*) vs. REBARR*.
+// discern the case where it can be cast to a Frame(*) vs. Array(*).
 //
 // (Note: FRAME!s used to use a field `misc.f` to track the associated
 // frame...but that prevented the ability to SET-META on a frame.  While
@@ -112,7 +112,7 @@
 #define BONUS_KeySource_CAST        // none, just use node (NOD() complains)
 #define HAS_BONUS_KeySource         FLAVOR_VARLIST
 
-inline static void INIT_BONUS_KEYSOURCE(REBARR *varlist, REBNOD *keysource) {
+inline static void INIT_BONUS_KEYSOURCE(Array(*) varlist, REBNOD *keysource) {
     if (keysource != nullptr and not Is_Node_Cell(keysource))
         assert(IS_KEYLIST(SER(keysource)));
     mutable_BONUS(KeySource, varlist) = keysource;
@@ -262,15 +262,15 @@ inline static bool Is_Throwing(Frame(*) frame_) {
 // itself.  So an archetype represents -an- action, but it may be a hijacked
 // action from what it once was (much like a word reference).
 //
-inline static REBARR *ACT_DETAILS(REBACT *a) {
-    return m_cast(REBARR*, x_cast(const REBARR*,
+inline static Array(*) ACT_DETAILS(REBACT *a) {
+    return m_cast(Array(*), x_cast(Array(const*),
         x_cast(REBVAL*, x_cast(const REBSER*, a)->content.dynamic.data)
             ->payload.Any.first.node
     ));
 }  // ARR() has debug cost, not defined yet
 
-inline static REBARR *ACT_IDENTITY(REBACT *a)
-  { return x_cast(REBARR*, a); }
+inline static Array(*) ACT_IDENTITY(REBACT *a)
+  { return x_cast(Array(*), a); }
 
 
 inline static REBCTX *VAL_ACTION_BINDING(noquote(Cell(const*)) v) {
@@ -308,7 +308,7 @@ inline static void INIT_VAL_ACTION_BINDING(
 #define HAS_INODE_Exemplar      FLAVOR_DETAILS
 
 
-inline static option(REBARR*) ACT_PARTIALS(REBACT *a) {
+inline static option(Array(*)) ACT_PARTIALS(REBACT *a) {
     return ARR(VAL_NODE2(ACT_ARCHETYPE(a)));
 }
 
@@ -330,7 +330,7 @@ inline static option(REBARR*) ACT_PARTIALS(REBACT *a) {
 #define ACT_PARAMLIST(a)            CTX_VARLIST(ACT_EXEMPLAR(a))
 
 inline static REBPAR *ACT_PARAMS_HEAD(REBACT *a) {
-    REBARR *list = CTX_VARLIST(ACT_EXEMPLAR(a));
+    Array(*) list = CTX_VARLIST(ACT_EXEMPLAR(a));
     return cast(REBPAR*, list->content.dynamic.data) + 1;  // skip archetype
 }
 

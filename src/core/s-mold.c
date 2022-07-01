@@ -237,7 +237,7 @@ void Drop_Pointer_From_Series(REBSER *s, const void *p)
 //
 void Mold_Array_At(
     REB_MOLD *mo,
-    const REBARR *a,
+    Array(const*) a,
     REBLEN index,
     const char *sep
 ){
@@ -307,7 +307,7 @@ void Mold_Array_At(
 //
 void Form_Array_At(
     REB_MOLD *mo,
-    const REBARR *array,
+    Array(const*) array,
     REBLEN index,
     option(REBCTX*) context
 ){

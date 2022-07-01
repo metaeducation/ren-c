@@ -159,7 +159,7 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
             // simple handle, no GC interaction
         }
         else {
-            REBARR *a = VAL_HANDLE_SINGULAR(v);
+            Array(*) a = VAL_HANDLE_SINGULAR(v);
 
             // Handle was created with Init_Handle_XXX_Managed.  It holds a
             // REBSER node that contains exactly one handle, and the actual
@@ -305,7 +305,7 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
       case REB_SET_GROUP:
       case REB_GET_GROUP:
       case REB_META_GROUP: {
-        REBARR *a = ARR(VAL_NODE1(v));
+        Array(*) a = ARR(VAL_NODE1(v));
         if (GET_SERIES_FLAG(a, INACCESSIBLE))
             break;
 
@@ -351,7 +351,7 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
           // !!! Optimization abandoned
           //
           case FLAVOR_ARRAY : {
-            REBARR *a = ARR(VAL_NODE1(v));
+            Array(*) a = ARR(VAL_NODE1(v));
             assert(NOT_SERIES_FLAG(a, INACCESSIBLE));
 
             assert(ARR_LEN(a) >= 2);
@@ -447,7 +447,7 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
 // LINK() or MISC(), or which fields had been assigned to correctly use for
 // reading back what to mark.  This has been standardized.
 //
-void Assert_Array_Marked_Correctly(const REBARR *a) {
+void Assert_Array_Marked_Correctly(Array(const*) a) {
     assert(Is_Marked(a));
 
     #ifdef HEAVY_CHECKS
@@ -475,14 +475,14 @@ void Assert_Array_Marked_Correctly(const REBARR *a) {
         // because of the potential for overflowing the C stack with calls
         // to Queue_Mark_Function_Deep.
 
-        REBARR *details = ACT_IDENTITY(VAL_ACTION(archetype));
+        Array(*) details = ACT_IDENTITY(VAL_ACTION(archetype));
         assert(Is_Marked(details));
 
-        REBARR *list = CTX_VARLIST(ACT_EXEMPLAR(VAL_ACTION(archetype)));
+        Array(*) list = CTX_VARLIST(ACT_EXEMPLAR(VAL_ACTION(archetype)));
         assert(IS_VARLIST(list));
     }
     else if (IS_VARLIST(a)) {
-        const REBVAL *archetype = CTX_ARCHETYPE(CTX(m_cast(REBARR*, a)));
+        const REBVAL *archetype = CTX_ARCHETYPE(CTX(m_cast(Array(*), a)));
 
         // Currently only FRAME! archetypes use binding
         //

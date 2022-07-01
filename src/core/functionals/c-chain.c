@@ -153,7 +153,7 @@ Bounce Chainer_Dispatcher(Frame(*) f)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    REBARR *details = ACT_DETAILS(FRM_PHASE(f));
+    Array(*) details = ACT_DETAILS(FRM_PHASE(f));
     assert(ARR_LEN(details) == IDX_CHAINER_MAX);
 
     Value *pipeline_at = Init_Block(

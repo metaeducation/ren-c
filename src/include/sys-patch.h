@@ -76,7 +76,7 @@
     inline static REBSPC *VAL_SPECIFIER(noquote(Cell(const*)) v) {
         assert(ANY_ARRAYLIKE(v));
 
-        REBARR *a = ARR(BINDING(v));
+        Array(*) a = ARR(BINDING(v));
         if (not a)
             return SPECIFIED;
 
@@ -98,8 +98,8 @@
 // Shared routine that handles linking the patch into the context's variant
 // list, and bumping the meta out of the misc into the misc if needed.
 //
-inline static REBARR *Make_Patch_Core(
-    REBARR *binding,  // must be a varlist or a LET patch
+inline static Array(*) Make_Patch_Core(
+    Array(*) binding,  // must be a varlist or a LET patch
     REBLEN limit,  // if patch, must be 1
     REBSPC *next,
     enum Reb_Kind kind,
@@ -159,7 +159,7 @@ inline static REBARR *Make_Patch_Core(
     //   because the standard error object starts life as an object.  (This
     //   mechanism needs revisiting, but it's just another reason.)
     //
-    REBARR *patch = Alloc_Singular(
+    Array(*) patch = Alloc_Singular(
         //
         // INODE is not used yet (likely application: symbol for patches that
         // represent lets).  Consider uses in patches that represent objects.

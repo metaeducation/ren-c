@@ -50,7 +50,7 @@ REBINT CT_Map(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
 //
 REBMAP *Make_Map(REBLEN capacity)
 {
-    REBARR *pairlist = Make_Array_Core(capacity * 2, SERIES_MASK_PAIRLIST);
+    Array(*) pairlist = Make_Array_Core(capacity * 2, SERIES_MASK_PAIRLIST);
     mutable_LINK(Hashlist, pairlist) = Make_Hash_Series(capacity);
 
     return MAP(pairlist);
@@ -81,7 +81,7 @@ static REBCTX *Error_Conflicting_Key(
 //     2 - search, return hash, else append value and return -1
 //
 REBINT Find_Key_Hashed(
-    REBARR *array,
+    Array(*) array,
     REBSER *hashlist,
     Cell(const*) key,  // !!! assumes ++key finds the values
     REBSPC *specifier,
@@ -187,7 +187,7 @@ static void Rehash_Map(REBMAP *map)
     if (!hashlist) return;
 
     REBLEN *hashes = SER_HEAD(REBLEN, hashlist);
-    REBARR *pairlist = MAP_PAIRLIST(map);
+    Array(*) pairlist = MAP_PAIRLIST(map);
 
     REBVAL *key = SPECIFIC(ARR_HEAD(pairlist));
     REBLEN n;
@@ -262,7 +262,7 @@ REBLEN Find_Map_Entry(
     assert(not Is_Nulled(key));
 
     REBSER *hashlist = MAP_HASHLIST(map); // can be null
-    REBARR *pairlist = MAP_PAIRLIST(map);
+    Array(*) pairlist = MAP_PAIRLIST(map);
 
     assert(hashlist);
 
@@ -377,7 +377,7 @@ Bounce MAKE_Map(
 
 
 inline static REBMAP *Copy_Map(const REBMAP *map, REBU64 types) {
-    REBARR *copy = Copy_Array_Shallow_Flags(
+    Array(*) copy = Copy_Array_Shallow_Flags(
         MAP_PAIRLIST(map),
         SPECIFIED,
         SERIES_MASK_PAIRLIST
@@ -464,10 +464,10 @@ Bounce TO_Map(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 //
 // what: -1 - words, +1 - values, 0 -both
 //
-REBARR *Map_To_Array(const REBMAP *map, REBINT what)
+Array(*) Map_To_Array(const REBMAP *map, REBINT what)
 {
     REBLEN count = Length_Map(map);
-    REBARR *a = Make_Array(count * ((what == 0) ? 2 : 1));
+    Array(*) a = Make_Array(count * ((what == 0) ? 2 : 1));
 
     Cell(*) dest = ARR_HEAD(a);
     Cell(const*) val_tail = ARR_TAIL(MAP_PAIRLIST(map));

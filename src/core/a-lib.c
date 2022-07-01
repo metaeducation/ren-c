@@ -969,7 +969,7 @@ void RL_rebPushContinuation(
     // Note: exhausting feed should take care of the va_end()
     Free_Feed(feed);
 
-    REBARR *code = Pop_Stack_Values_Core(dsp_orig, SERIES_FLAG_MANAGED);
+    Array(*) code = Pop_Stack_Values_Core(dsp_orig, SERIES_FLAG_MANAGED);
 
     DECLARE_LOCAL (block);
     Init_Block(block, code);
@@ -1766,7 +1766,7 @@ REBVAL *RL_rebRescueWith(
             // state) won't be covered by this, and must be unmanaged.
 
           proxy_result: {
-            REBARR *a = Singular_From_Cell(result);
+            Array(*) a = Singular_From_Cell(result);
             Unlink_Api_Handle_From_Frame(a);  // e.g. linked to f
             Link_Api_Handle_To_Frame(a, dummy->prior);  // link to caller
           }
@@ -1876,11 +1876,11 @@ const REBINS *RL_rebQUOTING(const void *p)
         goto handle_cell;
     }
 
-    REBARR *a;
+    Array(*) a;
 
     switch (Detect_Rebol_Pointer(p)) {
       case DETECTED_AS_SERIES: {
-        a = m_cast(REBARR*, cast(const REBARR*, p));
+        a = m_cast(Array(*), cast(Array(const*), p));
         if (Not_Subclass_Flag(API, a, RELEASE))
             fail ("Can't quote instructions (besides rebR())");
         break; }
@@ -1917,11 +1917,11 @@ const REBINS *RL_rebUNQUOTING(const void *p)
     if (p == nullptr)
         fail ("Cannot unquote NULL");
 
-    REBARR *a;
+    Array(*) a;
 
     switch (Detect_Rebol_Pointer(p)) {
       case DETECTED_AS_SERIES: {
-        a = m_cast(REBARR*, cast(const REBARR*, p));
+        a = m_cast(Array(*), cast(Array(const*), p));
         if (Not_Subclass_Flag(API, a, RELEASE))
             fail ("Can't unquote instructions (besides rebR())");
         break; }
@@ -1966,7 +1966,7 @@ const REBINS *RL_rebRELEASING(REBVAL *v)
     if (not Is_Api_Value(v))
         fail ("Cannot apply rebR() to non-API value");
 
-    REBARR *a = Singular_From_Cell(v);
+    Array(*) a = Singular_From_Cell(v);
     if (Get_Subclass_Flag(API, a, RELEASE))
         fail ("Cannot apply rebR() more than once to the same API value");
 
@@ -1984,7 +1984,7 @@ const void *RL_rebINLINE(const REBVAL *v)
 {
     ENTER_API;
 
-    REBARR *a = Alloc_Singular(
+    Array(*) a = Alloc_Singular(
         FLAG_FLAVOR(INSTRUCTION_SPLICE) | NODE_FLAG_MANAGED
     );
     CLEAR_SERIES_FLAG(a, MANAGED);  // lying avoided manuals tracking
@@ -2012,7 +2012,7 @@ REBVAL *RL_rebManage(REBVAL *v)
 
     assert(Is_Api_Value(v));
 
-    REBARR *a = Singular_From_Cell(v);
+    Array(*) a = Singular_From_Cell(v);
     assert(GET_SERIES_FLAG(a, ROOT));
 
     if (GET_SERIES_FLAG(a, MANAGED))
@@ -2041,7 +2041,7 @@ void RL_rebUnmanage(void *p)
     REBVAL *v = cast(REBVAL*, nod);
     assert(Is_Api_Value(v));
 
-    REBARR *a = Singular_From_Cell(v);
+    Array(*) a = Singular_From_Cell(v);
     assert(GET_SERIES_FLAG(a, ROOT));
 
     if (NOT_SERIES_FLAG(a, MANAGED))
@@ -2329,7 +2329,7 @@ REBNATIVE(api_transient)
 
     REBVAL *v = Copy_Cell(Alloc_Value(), ARG(value));
     rebUnmanage(v);  // has to survive the API-TRANSIENT's frame
-    REBARR *a = Singular_From_Cell(v);
+    Array(*) a = Singular_From_Cell(v);
     Set_Subclass_Flag(API, a, RELEASE);
 
     // Regarding adddresses in WASM:
@@ -2390,7 +2390,7 @@ REBVAL *RL_rebCollateExtension_internal(
     void *dispatchers,  // Dispatcher*, but Dispatcher is not in the API
     int dispatchers_len
 ){
-    REBARR *a = Make_Array(IDX_COLLATOR_MAX);  // details
+    Array(*) a = Make_Array(IDX_COLLATOR_MAX);  // details
     Init_Handle_Cdata(
         ARR_AT(a, IDX_COLLATOR_SCRIPT),
         m_cast(REBYTE*, script_compressed),  // !!! by contract, don't change!

@@ -102,7 +102,7 @@ REBNATIVE(builtin_extensions)
     // all the collated information that would be needed to initialize and
     // use the extension (but don't act on the information yet!)
 
-    REBARR *list = Make_Array(NUM_BUILTIN_EXTENSIONS);
+    Array(*) list = Make_Array(NUM_BUILTIN_EXTENSIONS);
     REBLEN i;
     for (i = 0; i != NUM_BUILTIN_EXTENSIONS; ++i) {
         COLLATE_CFUNC *collator = Builtin_Extension_Collators[i];
@@ -149,7 +149,7 @@ REBNATIVE(load_extension)
     // and shutdown functions, as well as Rebol script source, plus Dispatcher
     // functions for each native.
     //
-    const REBARR *details;
+    Array(const*) details;
 
     if (IS_BLOCK(ARG(where))) {  // It's one of the BUILTIN-EXTENSIONS
         details = VAL_ARRAY(ARG(where)); // already "collated"

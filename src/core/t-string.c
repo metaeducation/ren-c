@@ -797,7 +797,7 @@ REBTYPE(String)
         REBSTR *s = VAL_STRING_ENSURE_MUTABLE(v);
         SET_CHAR_AT(s, n, c);
 
-        return nullptr; }  // REBARR* is still fine, caller need not update
+        return nullptr; }  // Array(*) is still fine, caller need not update
 
 
       case SYM_REFLECT: {

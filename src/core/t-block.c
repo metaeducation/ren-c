@@ -62,7 +62,7 @@ REBNATIVE(only)  // https://forum.rebol.info/t/1182/11
     // cell that aren't used otherwise to express this state...and it would
     // only work for limited levels of such boxing--likely just one level.
     //
-    REBARR *a = Alloc_Singular(NODE_FLAG_MANAGED);
+    Array(*) a = Alloc_Singular(NODE_FLAG_MANAGED);
     Copy_Cell(ARR_SINGLE(a), ARG(value));
     Freeze_Array_Shallow(a);  // immutable (to permit future optimized case)
     return Init_Block(OUT, a);
@@ -362,7 +362,7 @@ Bounce TO_Array(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
     else {
         // !!! Review handling of making a 1-element PATH!, e.g. TO PATH! 10
         //
-        REBARR *single = Alloc_Singular(NODE_FLAG_MANAGED);
+        Array(*) single = Alloc_Singular(NODE_FLAG_MANAGED);
         Copy_Cell(ARR_SINGLE(single), arg);
         return Init_Any_Array(out, kind, single);
     }
@@ -376,7 +376,7 @@ Bounce TO_Array(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
 // SELECT - (value that follows)".  It's not clear what this meant.
 //
 REBINT Find_In_Array(
-    const REBARR *array,
+    Array(const*) array,
     REBLEN index_unsigned, // index to start search
     REBLEN end_unsigned, // ending position
     Cell(const*) target,
@@ -590,7 +590,7 @@ static int Compare_Val_Custom(void *arg, const void *v1, const void *v2)
 //
 //  Shuffle_Array: C
 //
-void Shuffle_Array(REBARR *arr, REBLEN idx, bool secure)
+void Shuffle_Array(Array(*) arr, REBLEN idx, bool secure)
 {
     REBLEN n;
     REBLEN k;
@@ -851,12 +851,12 @@ REBTYPE(Array)
         if (n < 0 or n >= cast(REBINT, VAL_LEN_HEAD(array)))
             fail (Error_Out_Of_Range(picker));
 
-        REBARR *mut_arr = VAL_ARRAY_ENSURE_MUTABLE(array);
+        Array(*) mut_arr = VAL_ARRAY_ENSURE_MUTABLE(array);
         Cell(*) at = ARR_AT(mut_arr, n);
         Move_Cell(at, setval);
         Init_None(setval);  // can't leave ARG slots RESET()
 
-        return nullptr; }  // REBARR* is still fine, caller need not update
+        return nullptr; }  // Array(*) is still fine, caller need not update
 
 
       case SYM_UNIQUE:
@@ -878,7 +878,7 @@ REBTYPE(Array)
         if (REF(deep))
             fail (Error_Bad_Refines_Raw());
 
-        REBARR *arr = VAL_ARRAY_ENSURE_MUTABLE(array);
+        Array(*) arr = VAL_ARRAY_ENSURE_MUTABLE(array);
 
         REBLEN len;
         if (REF(part)) {
@@ -966,7 +966,7 @@ REBTYPE(Array)
 
         REBLEN limit = Part_Tail_May_Modify_Index(array, ARG(part));
 
-        const REBARR *arr = VAL_ARRAY(array);
+        Array(const*) arr = VAL_ARRAY(array);
         REBLEN index = VAL_INDEX(array);
 
         REBINT skip;
@@ -1032,7 +1032,7 @@ REBTYPE(Array)
             Init_Nulled(ARG(value));  // low-level NULL acts as nothing
         }
 
-        REBARR *arr = VAL_ARRAY_ENSURE_MUTABLE(array);
+        Array(*) arr = VAL_ARRAY_ENSURE_MUTABLE(array);
         REBLEN index = VAL_INDEX(array);
 
         REBFLGS flags = 0;
@@ -1092,7 +1092,7 @@ REBTYPE(Array)
         return OUT; }
 
       case SYM_CLEAR: {
-        REBARR *arr = VAL_ARRAY_ENSURE_MUTABLE(array);
+        Array(*) arr = VAL_ARRAY_ENSURE_MUTABLE(array);
         REBLEN index = VAL_INDEX(array);
 
         if (index < VAL_LEN_HEAD(array)) {
@@ -1113,7 +1113,7 @@ REBTYPE(Array)
         REBU64 types = 0;
         REBLEN tail = Part_Tail_May_Modify_Index(array, ARG(part));
 
-        const REBARR *arr = VAL_ARRAY(array);
+        Array(const*) arr = VAL_ARRAY(array);
         REBLEN index = VAL_INDEX(array);
 
         if (REF(deep))
@@ -1137,7 +1137,7 @@ REBTYPE(Array)
         //
         flags |= (array->header.bits & ARRAY_FLAG_CONST_SHALLOW);
 
-        REBARR *copy = Copy_Array_Core_Managed(
+        Array(*) copy = Copy_Array_Core_Managed(
             arr,
             index, // at
             specifier,
@@ -1179,7 +1179,7 @@ REBTYPE(Array)
         INCLUDE_PARAMS_OF_REVERSE;
         UNUSED(ARG(series));  // covered by `v`
 
-        REBARR *arr = VAL_ARRAY_ENSURE_MUTABLE(array);
+        Array(*) arr = VAL_ARRAY_ENSURE_MUTABLE(array);
         REBLEN index = VAL_INDEX(array);
 
         REBLEN len = Part_Len_May_Modify_Index(array, ARG(part));
@@ -1256,7 +1256,7 @@ REBTYPE(Array)
         INCLUDE_PARAMS_OF_SORT;
         UNUSED(PAR(series));  // covered by `v`
 
-        REBARR *arr = VAL_ARRAY_ENSURE_MUTABLE(array);
+        Array(*) arr = VAL_ARRAY_ENSURE_MUTABLE(array);
 
         struct sort_flags flags;
         flags.cased = did REF(case);
@@ -1333,7 +1333,7 @@ REBTYPE(Array)
             return Inherit_Const(OUT, array);
         }
 
-        REBARR *arr = VAL_ARRAY_ENSURE_MUTABLE(array);
+        Array(*) arr = VAL_ARRAY_ENSURE_MUTABLE(array);
         Shuffle_Array(arr, VAL_INDEX(array), did REF(secure));
         return_value (array); }
 
@@ -1390,7 +1390,7 @@ REBNATIVE(blockify)
     if (IS_BLOCK(v))
         return_value (v);
 
-    REBARR *a = Make_Array_Core(
+    Array(*) a = Make_Array_Core(
         1,
         NODE_FLAG_MANAGED | ARRAY_MASK_HAS_FILE_LINE
     );
@@ -1423,7 +1423,7 @@ REBNATIVE(groupify)
     if (IS_GROUP(v))
         return_value (v);
 
-    REBARR *a = Make_Array_Core(
+    Array(*) a = Make_Array_Core(
         1,
         NODE_FLAG_MANAGED | ARRAY_MASK_HAS_FILE_LINE
     );
@@ -1454,7 +1454,7 @@ REBNATIVE(enblock)
 
     REBVAL *v = ARG(value);
 
-    REBARR *a = Make_Array_Core(
+    Array(*) a = Make_Array_Core(
         1,
         NODE_FLAG_MANAGED | ARRAY_MASK_HAS_FILE_LINE
     );
@@ -1485,7 +1485,7 @@ REBNATIVE(engroup)
 
     REBVAL *v = ARG(value);
 
-    REBARR *a = Make_Array_Core(
+    Array(*) a = Make_Array_Core(
         1,
         NODE_FLAG_MANAGED | ARRAY_MASK_HAS_FILE_LINE
     );
@@ -1552,14 +1552,14 @@ REBNATIVE(glom)
         if (splice)  // it was a non-quoted block initially
             return_value (result);  // see note: index may be nonzero
 
-        REBARR *a = Make_Array_Core(1, SERIES_FLAG_MANAGED);
+        Array(*) a = Make_Array_Core(1, SERIES_FLAG_MANAGED);
         Copy_Cell(ARR_HEAD(a), result);  // we know it was inert or quoted
         SET_SERIES_LEN(a, 1);
         return Init_Block(OUT, a);
     }
 
     assert(IS_BLOCK(accumulator));
-    REBARR *a = VAL_ARRAY_ENSURE_MUTABLE(accumulator);
+    Array(*) a = VAL_ARRAY_ENSURE_MUTABLE(accumulator);
 
     if (not splice) {
         //
@@ -1580,7 +1580,7 @@ REBNATIVE(glom)
         // But in the interests of time, just expand the target array for now
         // if necessary--work on other details later.
         //
-        REBARR *r = VAL_ARRAY_ENSURE_MUTABLE(result);
+        Array(*) r = VAL_ARRAY_ENSURE_MUTABLE(result);
         REBSPC *r_specifier = VAL_SPECIFIER(result);
         REBLEN a_len = ARR_LEN(a);
         REBLEN r_len = ARR_LEN(r);
@@ -1615,7 +1615,7 @@ REBNATIVE(glom)
 //
 //  Assert_Array_Core: C
 //
-void Assert_Array_Core(const REBARR *a)
+void Assert_Array_Core(Array(const*) a)
 {
     // Basic integrity checks (series is not marked free, etc.)  Note that
     // we don't use ASSERT_SERIES the macro here, because that checks to

@@ -53,7 +53,7 @@ Bounce Downshot_Dispatcher(Frame(*) f)  // runs until count is reached
 {
     Frame(*) frame_ = f;  // for RETURN macros
 
-    REBARR *details = ACT_DETAILS(FRM_PHASE(f));
+    Array(*) details = ACT_DETAILS(FRM_PHASE(f));
     assert(ARR_LEN(details) == IDX_ONESHOT_MAX);
 
     Cell(*) n = DETAILS_AT(details, IDX_ONESHOT_COUNTER);
@@ -70,7 +70,7 @@ Bounce Upshot_Dispatcher(Frame(*) f)  // won't run until count is reached
 {
     Frame(*) frame_ = f;
 
-    REBARR *details = ACT_DETAILS(FRM_PHASE(f));
+    Array(*) details = ACT_DETAILS(FRM_PHASE(f));
     assert(ARR_LEN(details) == IDX_ONESHOT_MAX);
 
     Cell(*) n = DETAILS_AT(details, IDX_ONESHOT_COUNTER);

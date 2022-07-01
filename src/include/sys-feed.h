@@ -39,7 +39,7 @@
 #define FEED_SINGULAR(feed)     ARR(&(feed)->singular)
 #define FEED_SINGLE(feed)       mutable_SER_CELL(&(feed)->singular)
 
-#define LINK_Splice_TYPE        REBARR*
+#define LINK_Splice_TYPE        Array(*)
 #define LINK_Splice_CAST        ARR
 #define HAS_LINK_Splice         FLAVOR_FEED
 
@@ -140,7 +140,7 @@ inline static void Detect_Feed_Pointer_Maybe_Fetch(
         // !!! Scans that produce only one value (which are likely very
         // common) can go into feed->fetched and not make an array at all.
         //
-        REBARR* reified = unwrap(Try_Scan_Utf8_For_Detect_Feed_Pointer_Managed(
+        Array(*) reified = unwrap(Try_Scan_Utf8_For_Detect_Feed_Pointer_Managed(
             cast(const REBYTE*, p),
             feed,
             Get_Context_From_Stack()
@@ -171,7 +171,7 @@ inline static void Detect_Feed_Pointer_Maybe_Fetch(
         break; }
 
       case DETECTED_AS_SERIES: {  // e.g. rebQ, rebU, or a rebR() handle
-        REBARR *inst1 = ARR(m_cast(void*, p));
+        Array(*) inst1 = ARR(m_cast(void*, p));
 
         // As we feed forward, we're supposed to be freeing this--it is not
         // managed -and- it's not manuals tracked, it is only held alive by
@@ -354,12 +354,16 @@ inline static void Fetch_Next_In_Feed(REBFED *feed) {
             if (FEED_SPLICE(feed)) {  // one or more additional splices to go
                 if (Get_Feed_Flag(feed, TOOK_HOLD)) {  // see note above
                     assert(GET_SERIES_INFO(FEED_ARRAY(feed), HOLD));
-                    CLEAR_SERIES_INFO(m_cast(REBARR*, FEED_ARRAY(feed)), HOLD);
+                    CLEAR_SERIES_INFO(m_cast(Array(*), FEED_ARRAY(feed)), HOLD);
                     Clear_Feed_Flag(feed, TOOK_HOLD);
                 }
 
-                REBARR *splice = FEED_SPLICE(feed);
-                memcpy(FEED_SINGULAR(feed), FEED_SPLICE(feed), sizeof(REBARR));
+                Array(*) splice = FEED_SPLICE(feed);
+                memcpy(
+                    FEED_SINGULAR(feed),
+                    FEED_SPLICE(feed),
+                    sizeof(Reb_Array)
+                );
                 GC_Kill_Series(splice);
                 goto retry_splice;
             }
@@ -509,7 +513,7 @@ inline static void Free_Feed(REBFED *feed) {
     //
     if (Get_Feed_Flag(feed, TOOK_HOLD)) {
         assert(GET_SERIES_INFO(FEED_ARRAY(feed), HOLD));
-        CLEAR_SERIES_INFO(m_cast(REBARR*, FEED_ARRAY(feed)), HOLD);
+        CLEAR_SERIES_INFO(m_cast(Array(*), FEED_ARRAY(feed)), HOLD);
         Clear_Feed_Flag(feed, TOOK_HOLD);
     }
 
@@ -532,7 +536,7 @@ inline static void Free_Feed(REBFED *feed) {
 inline static void Prep_Array_Feed(
     REBFED *feed,
     option(Cell(const*)) first,
-    const REBARR *array,
+    Array(const*) array,
     REBLEN index,
     REBSPC *specifier,
     REBFLGS flags
@@ -566,7 +570,7 @@ inline static void Prep_Array_Feed(
     if (Is_End(feed->value) or GET_SERIES_INFO(array, HOLD))
         NOOP;  // already temp-locked
     else {
-        SET_SERIES_INFO(m_cast(REBARR*, array), HOLD);
+        SET_SERIES_INFO(m_cast(Array(*), array), HOLD);
         Set_Feed_Flag(feed, TOOK_HOLD);
     }
 

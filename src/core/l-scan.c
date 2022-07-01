@@ -2149,7 +2149,7 @@ Bounce Scanner_Executor(Frame(*) f) {
         if (Get_Executor_Flag(SCAN, SUBFRAME, NEWLINE_PENDING))
             flags |= ARRAY_FLAG_NEWLINE_AT_TAIL;
 
-        REBARR *a = Pop_Stack_Values_Core(SUBFRAME->baseline.dsp, flags);
+        Array(*) a = Pop_Stack_Values_Core(SUBFRAME->baseline.dsp, flags);
         Drop_Frame(SUBFRAME);
 
         // Tag array with line where the beginning bracket/group/etc. was found
@@ -2430,7 +2430,7 @@ Bounce Scanner_Executor(Frame(*) f) {
         if (Get_Executor_Flag(SCAN, f, NEWLINE_PENDING))
             flags |= ARRAY_FLAG_NEWLINE_AT_TAIL;
 
-        REBARR *array = Pop_Stack_Values_Core(SUBFRAME->baseline.dsp, flags);
+        Array(*) array = Pop_Stack_Values_Core(SUBFRAME->baseline.dsp, flags);
 
         Drop_Frame(SUBFRAME);
 
@@ -2700,7 +2700,7 @@ Bounce Scanner_Executor(Frame(*) f) {
         StackValue(*) cleanup = head + 1;
         for (; cleanup <= TOP; ++cleanup) {
             if (IS_GET_WORD(cleanup)) {
-                REBARR *a = Alloc_Singular(NODE_FLAG_MANAGED);
+                Array(*) a = Alloc_Singular(NODE_FLAG_MANAGED);
                 mutable_HEART_BYTE(cleanup) = REB_GET_WORD;
 
                 Move_Cell(ARR_SINGLE(a), cleanup);
@@ -2810,7 +2810,7 @@ Bounce Scanner_Executor(Frame(*) f) {
             and VAL_NODE1(TOP) != nullptr  // null legal in node slots ATM
             and IS_SER_ARRAY(SER(VAL_NODE1(TOP)))
         ){
-            REBARR *a = ARR(VAL_NODE1(TOP));
+            Array(*) a = ARR(VAL_NODE1(TOP));
             a->misc.line = ss->line;
             mutable_LINK(Filename, a) = ss->file;
             Set_Subclass_Flag(ARRAY, a, HAS_FILE_LINE_UNMASKED);
@@ -2946,7 +2946,7 @@ Bounce Scanner_Executor(Frame(*) f) {
 //
 // Scan source code. Scan state initialized. No header required.
 //
-REBARR *Scan_UTF8_Managed(
+Array(*) Scan_UTF8_Managed(
     const REBSTR *file,
     const REBYTE *utf8,
     REBSIZ size,
@@ -2968,7 +2968,7 @@ REBARR *Scan_UTF8_Managed(
     if (Get_Executor_Flag(SCAN, f, NEWLINE_PENDING))
         flags |= ARRAY_FLAG_NEWLINE_AT_TAIL;
 
-    REBARR *a = Pop_Stack_Values_Core(f->baseline.dsp, flags);
+    Array(*) a = Pop_Stack_Values_Core(f->baseline.dsp, flags);
 
     Drop_Frame(f);  // after pop, stack should have balanced
 
@@ -3194,7 +3194,7 @@ REBNATIVE(transcode)
         if (Get_Executor_Flag(SCAN, SUBFRAME, NEWLINE_PENDING))
             flags |= ARRAY_FLAG_NEWLINE_AT_TAIL;
 
-        REBARR *a = Pop_Stack_Values_Core(BASELINE->dsp, flags);
+        Array(*) a = Pop_Stack_Values_Core(BASELINE->dsp, flags);
 
         a->misc.line = ss->line;
         mutable_LINK(Filename, a) = ss->file;
@@ -3364,7 +3364,7 @@ const REBYTE *Scan_Issue(Cell(*) out, const REBYTE *cp, REBSIZ size)
 //
 //  Try_Scan_Utf8_For_Detect_Feed_Pointer_Manged: C
 //
-option(REBARR*) Try_Scan_Utf8_For_Detect_Feed_Pointer_Managed(
+option(Array(*)) Try_Scan_Utf8_For_Detect_Feed_Pointer_Managed(
     const REBYTE* utf8,
     REBFED *feed,
     option(REBCTX*) context
@@ -3396,7 +3396,7 @@ option(REBARR*) Try_Scan_Utf8_For_Detect_Feed_Pointer_Managed(
     }
 
     REBFLGS flags = SERIES_FLAG_MANAGED;
-    REBARR *reified = Pop_Stack_Values_Core(f->baseline.dsp, flags);
+    Array(*) reified = Pop_Stack_Values_Core(f->baseline.dsp, flags);
     Drop_Frame(f);
     return reified;
 }

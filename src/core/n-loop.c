@@ -962,7 +962,7 @@ void Shutdown_Loop_Each(Value *iterator)
         CLEAR_SERIES_FLAG(m_cast(REBSER*, les->series), FIXED_SIZE);
 
     if (IS_DATATYPE(les->data))  // must free temp array of instances
-        Free_Unmanaged_Series(m_cast(REBARR*, ARR(les->series)));
+        Free_Unmanaged_Series(m_cast(Array(*), ARR(les->series)));
 
     if (ANY_CONTEXT(les->data))
         Shutdown_Evars(&les->u.evars);

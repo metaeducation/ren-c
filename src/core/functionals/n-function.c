@@ -124,7 +124,7 @@ Bounce Func_Dispatcher(Frame(*) f)
   initial_entry: {  //////////////////////////////////////////////////////////
 
     REBACT *phase = FRM_PHASE(f);
-    REBARR *details = ACT_DETAILS(phase);
+    Array(*) details = ACT_DETAILS(phase);
     Cell(*) body = ARR_AT(details, IDX_DETAILS_1);  // code to run
     assert(IS_BLOCK(body) and IS_RELATIVE(body) and VAL_INDEX(body) == 0);
 
@@ -231,7 +231,7 @@ REBACT *Make_Interpreted_Action_May_Fail(
     assert(details_capacity >= 1);  // relativized body put in details[0]
 
     REBCTX *meta;
-    REBARR *paramlist = Make_Paramlist_Managed_May_Fail(
+    Array(*) paramlist = Make_Paramlist_Managed_May_Fail(
         &meta,
         spec,
         &mkf_flags
@@ -248,7 +248,7 @@ REBACT *Make_Interpreted_Action_May_Fail(
     mutable_ACT_META(a) = meta;
 
     const bool locals_visible = true;  // we created exemplar, see all!
-    REBARR *copy = Copy_And_Bind_Relative_Deep_Managed(
+    Array(*) copy = Copy_And_Bind_Relative_Deep_Managed(
         body,  // new copy has locals bound relatively to the new action
         a,
         locals_visible
@@ -279,7 +279,7 @@ REBACT *Make_Interpreted_Action_May_Fail(
     // running frame instance (the Frame(*) received by the dispatcher) before
     // executing the interpreted code.
     //
-    REBARR *details = ACT_DETAILS(a);
+    Array(*) details = ACT_DETAILS(a);
     Cell(*) rebound = Init_Relative_Block(
         ARR_AT(details, IDX_NATIVE_BODY),
         a,

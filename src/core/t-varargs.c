@@ -399,7 +399,7 @@ Bounce MAKE_Varargs(
         // By protocol, if the array is exhausted then the shared element
         // should be an END marker (not an array at its end)
         //
-        REBARR *array1 = Alloc_Singular(NODE_FLAG_MANAGED);
+        Array(*) array1 = Alloc_Singular(NODE_FLAG_MANAGED);
         if (VAL_LEN_AT(arg) == 0)
             Init_Stale_Void(ARR_SINGLE(array1));
         else

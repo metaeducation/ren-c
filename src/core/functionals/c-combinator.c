@@ -85,7 +85,7 @@ enum {
 Bounce Combinator_Dispatcher(Frame(*) f)
 {
     REBACT *phase = FRM_PHASE(f);
-    REBARR *details = ACT_DETAILS(phase);
+    Array(*) details = ACT_DETAILS(phase);
     Cell(*) body = ARR_AT(details, IDX_DETAILS_1);  // code to run
 
     Bounce b;
@@ -177,7 +177,7 @@ Bounce Combinator_Dispatcher(Frame(*) f)
 // and the rebValue("...") function won't work, so it had to be hacked up as
 // a handcoded routine.  Review.
 //
-REBARR *Expanded_Combinator_Spec(const REBVAL *original)
+Array(*) Expanded_Combinator_Spec(const REBVAL *original)
 {
     REBDSP dsp_orig = DSP;
 
@@ -240,7 +240,7 @@ REBARR *Expanded_Combinator_Spec(const REBVAL *original)
     // Lib_Context initially.  Hack around the issue by repeating that binding
     // on the product.
     //
-    REBARR *expanded = Pop_Stack_Values(dsp_orig);
+    Array(*) expanded = Pop_Stack_Values(dsp_orig);
     Bind_Values_Deep(ARR_HEAD(expanded), ARR_TAIL(expanded), Lib_Context_Value);
 
     return expanded;
@@ -270,7 +270,7 @@ REBNATIVE(combinator)
 
     REBCTX *meta;
     REBFLGS flags = MKF_KEYWORDS | MKF_RETURN;
-    REBARR *paramlist = Make_Paramlist_Managed_May_Fail(
+    Array(*) paramlist = Make_Paramlist_Managed_May_Fail(
         &meta,
         expanded_spec,
         &flags
@@ -289,7 +289,7 @@ REBNATIVE(combinator)
     // bind things that are copied.
     //
     const bool locals_visible = true;
-    REBARR *relativized = Copy_And_Bind_Relative_Deep_Managed(
+    Array(*) relativized = Copy_And_Bind_Relative_Deep_Managed(
         ARG(body),
         combinator,
         locals_visible
@@ -501,7 +501,7 @@ REBNATIVE(some_combinator)
     Value *input = ARG(input);
 
     Value *state = ARG(state);
-    REBARR *loops = VAL_ARRAY_ENSURE_MUTABLE(
+    Array(*) loops = VAL_ARRAY_ENSURE_MUTABLE(
         CTX_VAR(VAL_CONTEXT(state), IDX_UPARSE_PARAM_LOOPS)
     );
 

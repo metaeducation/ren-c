@@ -390,7 +390,7 @@ typedef Executor Dispatcher;  // sub-dispatched in Action_Executor()
     // Derelativize()'d or Move_Velue()'d value as a binding, it can be
     // reused or freed.  See Push_Action() and Drop_Action() for the logic.
     //
-    REBARR *varlist;
+    Array(*) varlist;
     REBVAL *rootvar; // cache of CTX_ARCHETYPE(varlist) if varlist is not null
 
   union {
@@ -477,7 +477,7 @@ typedef Executor Dispatcher;  // sub-dispatched in Action_Executor()
 // and line numbers into arrays based on the frame in effect at their time
 // of allocation.
 
-inline static const REBARR *FRM_ARRAY(Frame(*) f);
+inline static Array(const*) FRM_ARRAY(Frame(*) f);
 inline static bool FRM_IS_VARIADIC(Frame(*) f);
 
 

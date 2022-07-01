@@ -55,7 +55,7 @@ enum {
 Bounce Generic_Dispatcher(Frame(*) f)
 {
     REBACT *phase = FRM_PHASE(f);
-    REBARR *details = ACT_DETAILS(phase);
+    Array(*) details = ACT_DETAILS(phase);
     Symbol(const*) verb = VAL_WORD_SYMBOL(DETAILS_AT(details, IDX_GENERIC_VERB));
 
     // !!! It's technically possible to throw in locals or refinements at
@@ -90,7 +90,7 @@ REBNATIVE(generic)
 
     REBCTX *meta;
     REBFLGS flags = MKF_KEYWORDS | MKF_RETURN;
-    REBARR *paramlist = Make_Paramlist_Managed_May_Fail(
+    Array(*) paramlist = Make_Paramlist_Managed_May_Fail(
         &meta,
         spec,
         &flags  // return type checked only in debug build
@@ -129,7 +129,7 @@ REBNATIVE(generic)
 
     Set_Action_Flag(generic, IS_NATIVE);
 
-    REBARR *details = ACT_DETAILS(generic);
+    Array(*) details = ACT_DETAILS(generic);
     Init_Word(ARR_AT(details, IDX_NATIVE_BODY), VAL_WORD_SYMBOL(verb));
     Copy_Cell(ARR_AT(details, IDX_NATIVE_CONTEXT), Lib_Context_Value);
 
@@ -145,7 +145,7 @@ REBNATIVE(generic)
 //
 // Returns an array of words bound to generics for SYSTEM/CATALOG/ACTIONS
 //
-REBARR *Startup_Generics(const REBVAL *boot_generics)
+Array(*) Startup_Generics(const REBVAL *boot_generics)
 {
     assert(VAL_INDEX(boot_generics) == 0); // should be at head, sanity check
     Cell(const*) tail;

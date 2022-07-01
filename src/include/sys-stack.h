@@ -23,7 +23,7 @@
 // The data stack (DS_) is for pushing one individual REBVAL at a time.  The
 // values can then be popped in a Last-In-First-Out way.  It is also possible
 // to mark a stack position, do any number of pushes, and then ask for the
-// range of values pushed since the mark to be placed into a REBARR array.
+// range of values pushed since the mark to be placed into a Reb_Array array.
 // As long as a value is on the data stack, any series it refers to will be
 // protected from being garbage-collected.
 //
@@ -62,9 +62,8 @@
 // * Although R3-Alpha used the data stack for pushing function arguments,
 //   the arguments were frequently passed around by pointer (vs. using an
 //   indexed "DSP" position).  This was bad since the data stack could
-//   relocate its contents due to growth.  For this and other reasons,
-//   the Rebol call stack is built out of linked REBARR allocations which
-//   can be used to back FRAME! contexts.
+//   relocate its contents due to growth.  This has completely changed in
+//   Ren-C, with heap based stacks and stacklessness (see %c-trampoline.c)
 //
 
 // The result of PUSH() and TOP is not REBVAL*, but StackValue(*).  In an

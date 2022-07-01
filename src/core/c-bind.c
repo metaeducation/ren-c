@@ -235,7 +235,7 @@ REBLEN Try_Bind_Word(Cell(const*) context, REBVAL *word)
 // archetypal form of that context...because the only value cell in the
 // singular array is taken for the variable content itself.
 //
-REBARR *Make_Let_Patch(
+Array(*) Make_Let_Patch(
     Symbol(const*) symbol,
     REBSPC *specifier
 ){
@@ -243,7 +243,7 @@ REBARR *Make_Let_Patch(
     // difference with this patch is that its singular value is the value
     // of a new variable.
 
-    REBARR *patch = Alloc_Singular(
+    Array(*) patch = Alloc_Singular(
         //
         // LINK is the symbol that the virtual binding matches.
         //
@@ -819,7 +819,7 @@ static void Clonify_And_Bind_Relative(
 // these relative words...so that they refer to the archetypal function
 // to which they should be relative.
 //
-REBARR *Copy_And_Bind_Relative_Deep_Managed(
+Array(*) Copy_And_Bind_Relative_Deep_Managed(
     const REBVAL *body,
     REBACT *relative,
     bool locals_visible
@@ -842,10 +842,10 @@ REBARR *Copy_And_Bind_Relative_Deep_Managed(
     Shutdown_Evars(&e);
   }
 
-    REBARR *copy;
+    Array(*) copy;
 
   blockscope {
-    const REBARR *original = VAL_ARRAY(body);
+    Array(const*) original = VAL_ARRAY(body);
     REBLEN index = VAL_INDEX(body);
     REBSPC *specifier = VAL_SPECIFIER(body);
     REBLEN tail = VAL_LEN_AT(body);

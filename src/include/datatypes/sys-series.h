@@ -46,14 +46,14 @@
 //
 //=//// NOTES //////////////////////////////////////////////////////////////=//
 //
-// * Series subclasses REBARR, REBCTX, REBACT, REBMAP are defined which are
+// * Series subclasses Reb_Array, REBCTX, REBACT, REBMAP are defined which are
 //   explained where they are defined in separate header files.
 //
 // * It is desirable to have series subclasses be different types, even though
 //   there are some common routines for processing them.  e.g. not every
 //   function that would take a REBSER* would actually be handled in the same
-//   way for a REBARR*.  Plus, just because a REBCTX* is implemented as a
-//   REBARR* with a link to another REBARR* doesn't mean most clients should
+//   way for a Array(*).  Plus, just because a REBCTX* is implemented as a
+//   Array(*) with a link to another Array(*) doesn't mean most clients should
 //   be accessing the array--in a C++ build this would mean it would have some
 //   kind of protected inheritance scheme.
 //
@@ -390,7 +390,7 @@ inline static size_t SER_TOTAL_IF_DYNAMIC(const REBSER *s) {
 //
 #if DEBUG_SERIES_ORIGINS || DEBUG_COUNT_TICKS
     inline static void Touch_Series_Debug(void *p) {
-        REBSER *s = SER(cast(REBNOD*, p));  // allow REBARR, REBCTX, REBACT...
+        REBSER *s = SER(cast(REBNOD*, p));  // allow Array(*), REBCTX, REBACT...
 
         // NOTE: When series are allocated, the only thing valid here is the
         // header.  Hence you can't tell (for instance) if it's an array or
@@ -1119,7 +1119,7 @@ inline static REBVAL *Init_Any_Series_At_Core(
     enum Reb_Kind type,
     const REBSER *s,  // ensured managed by calling macro
     REBLEN index,
-    REBARR *specifier
+    Array(*) specifier
 ){
   #if !defined(NDEBUG)
     assert(ANY_SERIES_KIND(type) or type == REB_URL);

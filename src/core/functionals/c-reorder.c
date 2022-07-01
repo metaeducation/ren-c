@@ -74,7 +74,7 @@ enum {
 // tweak them (e.g. ADAPT).
 //
 Bounce Reorderer_Dispatcher(Frame(*) f) {
-    REBARR *details = ACT_DETAILS(FRM_PHASE(f));
+    Array(*) details = ACT_DETAILS(FRM_PHASE(f));
     assert(ARR_LEN(details) == IDX_REORDERER_MAX);
 
     REBVAL *reorderee = DETAILS_AT(details, IDX_REORDERER_REORDEREE);
@@ -227,7 +227,7 @@ REBNATIVE(reorder_p)  // see REORDER in %base-defs.r, for inheriting meta
     if (error)  // *now* it's safe to fail...
         fail (unwrap(error));
 
-    REBARR *partials = Pop_Stack_Values_Core(
+    Array(*) partials = Pop_Stack_Values_Core(
         dsp_orig,
         SERIES_FLAG_MANAGED | SERIES_MASK_PARTIALS
     );
@@ -239,7 +239,7 @@ REBNATIVE(reorder_p)  // see REORDER in %base-defs.r, for inheriting meta
         IDX_REORDERER_MAX
     );
 
-    REBARR *details = ACT_DETAILS(reordered);
+    Array(*) details = ACT_DETAILS(reordered);
     Copy_Cell(DETAILS_AT(details, IDX_REORDERER_REORDEREE), ARG(action));
 
     return Init_Action(OUT, reordered, label, UNBOUND);

@@ -132,7 +132,7 @@ REBNATIVE(augment_p)  // see extended definition AUGMENT in %base-defs.r
     );
 
     REBCTX *meta;
-    REBARR *paramlist = Pop_Paramlist_With_Meta_May_Fail(
+    Array(*) paramlist = Pop_Paramlist_With_Meta_May_Fail(
         &meta,
         dsp_orig,
         flags,

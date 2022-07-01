@@ -387,7 +387,7 @@ EXTERN_C intptr_t RL_rebPromise(void *p, va_list *vaptr)
 
     Free_Feed(feed);  // feeds are dynamically allocated and must be freed
 
-    REBARR *code = Pop_Stack_Values(dsp_orig);
+    Array(*) code = Pop_Stack_Values(dsp_orig);
     assert(NOT_SERIES_FLAG(code, MANAGED));  // using array as ID, don't GC it
 
     // We singly link the promises such that they will be executed backwards.
@@ -432,7 +432,7 @@ void RunPromise(void)
 
     info->state = PROMISE_STATE_RUNNING;
 
-    REBARR *a = ARR(Pointer_From_Heapaddr(info->promise_id));
+    Array(*) a = ARR(Pointer_From_Heapaddr(info->promise_id));
     assert(NOT_SERIES_FLAG(a, MANAGED));  // took off so it didn't GC
     SET_SERIES_FLAG(a, MANAGED);  // but need it back on to execute it
 
@@ -712,7 +712,7 @@ Bounce JavaScript_Dispatcher(Frame(*) frame_)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    REBARR *details = ACT_DETAILS(FRM_PHASE(f));
+    Array(*) details = ACT_DETAILS(FRM_PHASE(f));
     bool is_awaiter = VAL_LOGIC(ARR_AT(details, IDX_JS_NATIVE_IS_AWAITER));
 
     struct Reb_Promise_Info *info = PG_Promises;
@@ -820,7 +820,7 @@ REBNATIVE(js_native)
 
     REBCTX *meta;
     REBFLGS flags = MKF_RETURN | MKF_KEYWORDS;
-    REBARR *paramlist = Make_Paramlist_Managed_May_Fail(
+    Array(*) paramlist = Make_Paramlist_Managed_May_Fail(
         &meta,
         spec,
         &flags
@@ -839,7 +839,7 @@ REBNATIVE(js_native)
 
     heapaddr_t native_id = Native_Id_For_Action(native);
 
-    REBARR *details = ACT_DETAILS(native);
+    Array(*) details = ACT_DETAILS(native);
 
     if (Is_Series_Frozen(VAL_SERIES(source)))
         Copy_Cell(ARR_AT(details, IDX_NATIVE_BODY), source);  // no copy

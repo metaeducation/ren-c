@@ -191,7 +191,7 @@ REBNATIVE(bind)
     Cell(*) at;
     Cell(const*) tail;
     if (REF(copy)) {
-        REBARR *copy = Copy_Array_Core_Managed(
+        Array(*) copy = Copy_Array_Core_Managed(
             VAL_ARRAY(v),
             VAL_INDEX(v), // at
             VAL_SPECIFIER(v),
@@ -1844,7 +1844,7 @@ REBNATIVE(as)
 
             switch (SER_FLAVOR(SER(node1))) {
               case FLAVOR_SYMBOL: {
-                REBARR *a = Make_Array_Core(2, NODE_FLAG_MANAGED);
+                Array(*) a = Make_Array_Core(2, NODE_FLAG_MANAGED);
                 if (Get_Cell_Flag(v, REFINEMENT_LIKE)) {
                     Init_Blank(ARR_AT(a, 0));
                     Copy_Cell(ARR_AT(a, 1), v);

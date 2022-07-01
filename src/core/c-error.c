@@ -960,7 +960,7 @@ REBCTX *Error_Bad_Func_Def(const REBVAL *spec, const REBVAL *body)
     // !!! Improve this error; it's simply a direct emulation of arity-1
     // error that existed before refactoring code out of MAKE_Function().
 
-    REBARR *a = Make_Array(2);
+    Array(*) a = Make_Array(2);
     Append_Value(a, spec);
     Append_Value(a, body);
 

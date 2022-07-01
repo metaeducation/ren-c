@@ -35,7 +35,7 @@
 //
 // Ren-C has transitioned this so that GOBs work within the user-defined type
 // system, where no custom GC behavior is needed.  e.g. a REBGOB is actually
-// just a REBARR, and marked using the array marking mechanics.
+// just an Array(*), and marked using the array marking mechanics.
 //
 // To keep memory usage in the same order of magnitude as R3-Alpha, the GOB!'s
 // array is only 7 cells in length.  This allows it to fit into the 8 cell
@@ -73,7 +73,7 @@
 // there are more bits to squeeze out if the complexity warranted it.)
 //
 enum {
-    IDX_GOB_PANE,  // List of child GOBs, was REBSER, now REBARR for marking
+    IDX_GOB_PANE,  // List of child GOBs, was REBSER, now Array(*) for marking
     IDX_GOB_CONTENT,
     IDX_GOB_DATA,
     IDX_GOB_OFFSET_AND_FLAGS,  // location (x, y) in payload, flags in extra
@@ -223,7 +223,7 @@ typedef struct gob_window {  // Maps gob to window
 
 #define GOB_PANE_VALUE(g)       ARR_AT((g), IDX_GOB_PANE)
 
-inline static REBARR *GOB_PANE(REBGOB *g) {
+inline static Array(*) GOB_PANE(REBGOB *g) {
     Cell(*) v = GOB_PANE_VALUE(g);
     if (IS_BLANK(v))
         return nullptr;

@@ -73,7 +73,7 @@
 //
 // * For the API of operations available on REBSER types, see %sys-series.h
 //
-// * REBARR is a series that contains Rebol values (REBVALs).  It has many
+// * Array(*) is a series that contains Rebol values (REBVALs).  It has many
 //   concerns specific to special treatment and handling, in interaction with
 //   the garbage collector as well as handling "relative vs specific" values.
 //
@@ -777,7 +777,7 @@ union Reb_Series_Info {
 };
 
 
-// In C++, REBSTR and REBARR are declared as derived from REBSER.  This gives
+// In C++, REBSTR and Array(*) are declared as derived from REBSER.  This gives
 // desirable type checking properties (like being able to pass an array to
 // a routine that needs a series, but not vice versa).  And it also means
 // that the fields are available.

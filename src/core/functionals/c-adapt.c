@@ -74,7 +74,7 @@ Bounce Adapter_Dispatcher(Frame(*) f)
 {
     Frame(*) frame_ = f;  // for RETURN macros
 
-    REBARR *details = ACT_DETAILS(FRM_PHASE(f));
+    Array(*) details = ACT_DETAILS(FRM_PHASE(f));
     assert(ARR_LEN(details) == IDX_ADAPTER_MAX);
 
     enum {
@@ -153,7 +153,7 @@ REBNATIVE(adapt_p)  // see extended definition ADAPT in %base-defs.r
     // bind things that are copied.
     //
     const bool locals_visible = false;
-    REBARR *prelude = Copy_And_Bind_Relative_Deep_Managed(
+    Array(*) prelude = Copy_And_Bind_Relative_Deep_Managed(
         ARG(prelude),
         adaptation,
         locals_visible
@@ -164,7 +164,7 @@ REBNATIVE(adapt_p)  // see extended definition ADAPT in %base-defs.r
     // Adapter_Dispatcher() must combine it with the FRAME! instance before
     // it can be executed (e.g. the `Frame(*) f` it is dispatching).
     //
-    REBARR *details = ACT_DETAILS(adaptation);
+    Array(*) details = ACT_DETAILS(adaptation);
     Init_Relative_Block(
         ARR_AT(details, IDX_ADAPTER_PRELUDE),
         adaptation,

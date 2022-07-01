@@ -20,9 +20,9 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// In the C build, a REBARR* and REBSER* are the same type.  The C++ build
-// derives REBARR from REBSER...meaning you can pass an array to a function
-// that expects a series, but not vice-versa.
+// In the C build, a Array(*) and REBSER* are the same type.  The C++ build
+// derives Reb_Array from Reb_Series...meaning you can pass an array to a
+// function that expects a series, but not vice-versa.
 //
 // There are several subclasses (FLAVOR_XXX) whose elements are value cells,
 // and hence are arrays.  However the "plain" array, e.g. the kind used in
@@ -34,10 +34,12 @@
 
 #if CPLUSPLUS_11
     struct Reb_Array : public Reb_Series {};
-    typedef struct Reb_Array REBARR;
 #else
-    typedef struct Reb_Series REBARR;
+    typedef struct Reb_Series Reb_Array;
 #endif
+
+#define Array(star_maybe_const) \
+    Reb_Array star_maybe_const
 
 
 // It may become interesting to say that a specifier can be a pairing or
@@ -47,16 +49,16 @@
 // the interests of making the code strict-aliasing-safe for starters, assume
 // all specifiers are arrays.
 //
-typedef REBARR REBSPC;
+typedef Reb_Array REBSPC;
 
 
 // To help document places in the core that are complicit in the "extension
 // hack", alias arrays being used for the FFI and GOB to another name.
 //
-typedef REBARR REBGOB;
+typedef Reb_Array REBGOB;
 
-typedef REBARR REBSTU;
-typedef REBARR REBFLD;
+typedef Reb_Array REBSTU;
+typedef Reb_Array REBFLD;
 
 typedef REBBIN REBTYP;  // Rebol Type (list of hook function pointers)
 

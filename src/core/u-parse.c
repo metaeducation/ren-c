@@ -124,7 +124,7 @@
 
 #define P_COLLECTION \
     (Is_Nulled(ARG(collection)) \
-        ? cast(REBARR*, nullptr) \
+        ? cast(Array(*), nullptr) \
         : VAL_ARRAY_KNOWN_MUTABLE(ARG(collection)) \
     )
 
@@ -254,7 +254,7 @@ static bool Subparse_Throws(
     Cell(const*) input,
     REBSPC *input_specifier,
     Frame(*) f,
-    option(REBARR*) collection,
+    option(Array(*)) collection,
     REBFLGS flags
 ){
     assert(ANY_SERIES_KIND(CELL_HEART(input)));
@@ -625,7 +625,7 @@ static Bounce Parse_One_Rule(
     }
 
     if (IS_SER_ARRAY(P_INPUT)) {
-        const REBARR *arr = ARR(P_INPUT);
+        Array(const*) arr = ARR(P_INPUT);
         Cell(const*) item = ARR_AT(arr, pos);
 
         switch (VAL_TYPE(rule)) {
@@ -1689,7 +1689,7 @@ REBNATIVE(subparse)
 
                     assert(pos_after >= pos_before);  // 0 or more matches
 
-                    REBARR *target;
+                    Array(*) target;
                     if (pos_after == pos_before and not only) {
                         target = nullptr;
                     }
@@ -1926,7 +1926,7 @@ REBNATIVE(subparse)
         ){
             FETCH_NEXT_RULE(f);
 
-            REBARR *collection = Make_Array_Core(
+            Array(*) collection = Make_Array_Core(
                 10,  // !!! how big?
                 NODE_FLAG_MANAGED
             );
@@ -2586,7 +2586,7 @@ REBNATIVE(subparse)
                     // last minute that allows protects or unprotects
                     // to happen in rule processing if GROUP!s execute.
                     //
-                    REBARR *a = VAL_ARRAY_ENSURE_MUTABLE(ARG(position));
+                    Array(*) a = VAL_ARRAY_ENSURE_MUTABLE(ARG(position));
                     P_POS = Modify_Array(
                         a,
                         begin,

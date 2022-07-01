@@ -169,7 +169,7 @@ REBNATIVE(map_gob_offset)
         gob = Map_Gob_Inner(gob, &xo, &yo);
     }
 
-    REBARR *arr = Make_Array(2);
+    Array(*) arr = Make_Array(2);
     Init_Gob(Alloc_Tail_Array(arr), gob);
     Init_Pair_Dec(Alloc_Tail_Array(arr), xo, yo);
 

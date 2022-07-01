@@ -76,7 +76,7 @@
     // from REBNOD, but not REBSER.  Facilitating that through multiple
     // inheritance foils the Empty Base Class optimization, and creates other
     // headaches.  So it was decided that so long as they are REBSER and not
-    // REBARR, that's still abstract enough to block most casual misuses.
+    // Array(*), that's still abstract enough to block most casual misuses.
     //
     struct Reb_Node {};  // empty base class for REBSER, REBVAL, Frame
     typedef struct Reb_Node REBNOD;

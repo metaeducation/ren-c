@@ -170,7 +170,7 @@ void MF_Action(REB_MOLD *mo, noquote(Cell(const*)) v, bool form)
     // drops types)
     //
     const bool just_words = false;
-    REBARR *parameters = Make_Action_Parameters_Arr(VAL_ACTION(v), just_words);
+    Array(*) parameters = Make_Action_Parameters_Arr(VAL_ACTION(v), just_words);
     Mold_Array_At(mo, parameters, 0, "[]");
     Free_Unmanaged_Series(parameters);
 
@@ -297,7 +297,7 @@ REBTYPE(Action)
             2
         );
 
-        REBARR *details = ACT_DETAILS(proxy);
+        Array(*) details = ACT_DETAILS(proxy);
         Init_Bad_Word(ARR_AT(details, 1), Canon(COPY));  // dummy ~copy~
 
         REBCTX *meta = ACT_META(act);
@@ -375,11 +375,11 @@ REBTYPE(Action)
             // is a series with the file and line bits set, then that's what
             // it returns for FILE OF and LINE OF.
 
-            REBARR *details = ACT_DETAILS(act);
+            Array(*) details = ACT_DETAILS(act);
             if (ARR_LEN(details) < 1 or not ANY_ARRAY(ARR_HEAD(details)))
                 return nullptr;
 
-            const REBARR *a = VAL_ARRAY(ARR_HEAD(details));
+            Array(const*) a = VAL_ARRAY(ARR_HEAD(details));
             if (Not_Subclass_Flag(ARRAY, a, HAS_FILE_LINE_UNMASKED))
                 return nullptr;
 

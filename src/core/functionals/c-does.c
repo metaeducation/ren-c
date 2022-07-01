@@ -74,14 +74,14 @@ Bounce Block_Dispatcher(Frame(*) f)
 {
     Frame(*) frame_ = f;  // for RETURN macros
 
-    REBARR *details = ACT_DETAILS(FRM_PHASE(f));
+    Array(*) details = ACT_DETAILS(FRM_PHASE(f));
     assert(ARR_LEN(details) == IDX_DOES_MAX);
 
     Cell(*) block = ARR_AT(details, IDX_DOES_BLOCK);
         // ^-- note not a `Cell(const*) block`, may get updated!
     assert(IS_BLOCK(block) and VAL_INDEX(block) == 0);
 
-    const REBARR *body = VAL_ARRAY(block);
+    Array(const*) body = VAL_ARRAY(block);
 
     if (IS_SPECIFIC(block)) {
         if (FRM_BINDING(f) == UNBOUND) {
@@ -108,7 +108,7 @@ Bounce Block_Dispatcher(Frame(*) f)
         // through a copy on behalf of o2/b.
 
         const bool locals_visible = false;  // no locals, doesn't matter...
-        REBARR *relativized = Copy_And_Bind_Relative_Deep_Managed(
+        Array(*) relativized = Copy_And_Bind_Relative_Deep_Managed(
             SPECIFIC(block),
             FRM_PHASE(f),
             locals_visible

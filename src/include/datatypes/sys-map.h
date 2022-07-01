@@ -49,12 +49,12 @@
 #define LINK_Hashlist_CAST          SER
 #define HAS_LINK_Hashlist           FLAVOR_PAIRLIST
 
-inline static REBARR *MAP_PAIRLIST(const_if_c REBMAP *map)
-  { return x_cast(REBARR*, map); }
+inline static Array(*) MAP_PAIRLIST(const_if_c REBMAP *map)
+  { return x_cast(Array(*), map); }
 
 #if CPLUSPLUS_11
-    inline static const REBARR *MAP_PAIRLIST(const REBMAP *map)
-      { return x_cast(const REBARR*, map); }
+    inline static Array(const*) MAP_PAIRLIST(const REBMAP *map)
+      { return x_cast(Array(const*), map); }
 #endif
 
 #define MAP_HASHLIST(m) \
@@ -67,7 +67,7 @@ inline static REBARR *MAP_PAIRLIST(const_if_c REBMAP *map)
 inline static const REBMAP *VAL_MAP(noquote(Cell(const*)) v) {
     assert(CELL_HEART(v) == REB_MAP);
 
-    REBARR *a = ARR(VAL_NODE1(v));
+    Array(*) a = ARR(VAL_NODE1(v));
     if (GET_SERIES_FLAG(a, INACCESSIBLE))
         fail (Error_Series_Data_Freed_Raw());
 

@@ -236,7 +236,7 @@ REBCTX *Get_Context_From_Stack(void)
     if (Not_Action_Flag(phase, IS_NATIVE))
         return Lib_Context;
 
-    REBARR *details = ACT_DETAILS(phase);
+    Array(*) details = ACT_DETAILS(phase);
     REBVAL *context = DETAILS_AT(details, IDX_NATIVE_CONTEXT);
     return VAL_CONTEXT(context);
 }
@@ -321,12 +321,12 @@ void Expand_Data_Stack_May_Fail(REBLEN amount)
 //
 // !!! How can we pass in callsite file/line for tracking info?
 //
-REBARR *Pop_Stack_Values_Core(REBDSP dsp_start, REBFLGS flags)
+Array(*) Pop_Stack_Values_Core(REBDSP dsp_start, REBFLGS flags)
 {
     ASSERT_NO_DATA_STACK_POINTERS_EXTANT();  // in the future, pop may disrupt
 
     REBLEN len = DSP - dsp_start;
-    REBARR *a = Make_Array_Core(len, flags);
+    Array(*) a = Make_Array_Core(len, flags);
 
     REBLEN count = 0;
     REBVAL *src = Data_Stack_At(dsp_start + 1);  // not const, will be RESET()

@@ -104,7 +104,7 @@ inline static REBVAL *Init_Image(
 ){
     assert(GET_SERIES_FLAG(bin, MANAGED));
 
-    REBARR *a = Alloc_Singular(NODE_FLAG_MANAGED);
+    Array(*) a = Alloc_Singular(NODE_FLAG_MANAGED);
     Init_Binary(ARR_SINGLE(a), bin);
 
     RESET_CUSTOM_CELL(out, EG_Image_Type, CELL_FLAG_FIRST_IS_NODE);

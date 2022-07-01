@@ -44,7 +44,7 @@
 // matches the set count.
 //
 // The binding will be either a REBACT (relative to a function) or a
-// REBCTX (specific to a context), or simply a plain REBARR such as
+// REBCTX (specific to a context), or simply a plain Array(*) such as
 // EMPTY_ARRAY which indicates UNBOUND.  The FLAVOR_BYTE() says what it is
 //
 //     ANY-WORD!: binding is the word's binding
@@ -194,7 +194,7 @@ inline static bool Try_Add_Binder_Index(
     // Not actually managed...but GC doesn't run while binders are active,
     // and we don't want to pay for putting this in the manual tracking list.
     //
-    REBARR *new_hitch = Alloc_Singular(
+    Array(*) new_hitch = Alloc_Singular(
         NODE_FLAG_MANAGED | SERIES_FLAG_BLACK | FLAG_FLAVOR(HITCH)
     );
     CLEAR_SERIES_FLAG(new_hitch, MANAGED);
@@ -246,7 +246,7 @@ inline static REBINT Remove_Binder_Index_Else_0( // return old value if there
     if (MISC(Hitch, s) == s or NOT_SERIES_FLAG(MISC(Hitch, s), BLACK))
         return 0;
 
-    REBARR *hitch = ARR(MISC(Hitch, s));
+    Array(*) hitch = ARR(MISC(Hitch, s));
 
     REBINT index = VAL_INT32(ARR_SINGLE(hitch));
     mutable_MISC(Hitch, s) = ARR(node_MISC(Hitch, hitch));
@@ -355,7 +355,7 @@ inline static REBLEN VAL_WORD_INDEX(Cell(const*) v) {
     return cast(REBLEN, i);
 }
 
-inline static REBARR *VAL_WORD_BINDING(Cell(const*) v) {
+inline static Array(*) VAL_WORD_BINDING(Cell(const*) v) {
     assert(ANY_WORDLIKE(v));
     return ARR(BINDING(v));  // could be nullptr / UNBOUND
 }
@@ -411,7 +411,7 @@ inline static void Unbind_Any_Word(Cell(*) v) {
 
 inline static REBCTX *VAL_WORD_CONTEXT(const REBVAL *v) {
     assert(IS_WORD_BOUND(v));
-    REBARR *binding = VAL_WORD_BINDING(v);
+    Array(*) binding = VAL_WORD_BINDING(v);
     if (SER_FLAVOR(binding) == FLAVOR_PATCH)
         binding = CTX_VARLIST(INODE(PatchContext, binding));
     assert(
@@ -523,7 +523,7 @@ inline static option(REBSER*) Get_Word_Container(
             goto skip_miss_patch;
         }
 
-        REBARR *overbind;  // avoid goto-past-initialization warning
+        Array(*) overbind;  // avoid goto-past-initialization warning
         overbind = ARR(BINDING(ARR_SINGLE(specifier)));
         if (not IS_VARLIST(overbind)) {  // a patch-formed LET overload
             if (INODE(PatchSymbol, overbind) == symbol) {
@@ -1011,9 +1011,9 @@ inline static option(REBCTX*) SPC_FRAME_CTX(REBSPC *specifier)
 // whether it's worth searching their patchlist or not...as newly created
 // patches can't appear in their prior create list.
 //
-inline static REBARR *Merge_Patches_May_Reuse(
-    REBARR *parent,
-    REBARR *child
+inline static Array(*) Merge_Patches_May_Reuse(
+    Array(*) parent,
+    Array(*) child
 ){
     assert(IS_PATCH(parent));
     assert(IS_PATCH(child));
@@ -1034,7 +1034,7 @@ inline static REBARR *Merge_Patches_May_Reuse(
     // If we get to the end of the merge chain and don't find the child, then
     // we're going to need a patch that incorporates it.
     //
-    REBARR *next;
+    Array(*) next;
     bool was_next_reused;
     if (NextPatch(parent) == nullptr or IS_VARLIST(NextPatch(parent))) {
         next = child;
@@ -1056,7 +1056,7 @@ inline static REBARR *Merge_Patches_May_Reuse(
     // So we have to make a new patch that points to the LET, or promote it
     // (using node-identity magic) into an object.  We point at the LET.
     //
-    REBARR *binding;
+    Array(*) binding;
     REBLEN limit;
     enum Reb_Kind kind;
     if (Get_Subclass_Flag(PATCH, parent, LET)) {
@@ -1107,7 +1107,7 @@ inline static REBSPC *Derive_Specifier_Core(
     REBSPC *specifier,  // merge this specifier...
     noquote(Cell(const*)) any_array  // ...onto the one in this array
 ){
-    REBARR *old = ARR(BINDING(any_array));
+    Array(*) old = ARR(BINDING(any_array));
 
     // If any specifiers in a chain are inaccessible, the whole thing is.
     //
@@ -1253,7 +1253,7 @@ inline static REBSPC *Derive_Specifier_Core(
         noquote(Cell(const*)) any_array
     ){
         REBSPC *derived = Derive_Specifier_Core(specifier, any_array);
-        REBARR *old = ARR(BINDING(any_array));
+        Array(*) old = ARR(BINDING(any_array));
         if (old == UNSPECIFIED or IS_VARLIST(old)) {
             // no special invariant to check, anything goes for derived
         }

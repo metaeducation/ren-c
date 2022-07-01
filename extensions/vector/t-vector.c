@@ -264,13 +264,13 @@ void Set_Vector_Row(
 //
 // Convert a vector to a block.
 //
-REBARR *Vector_To_Array(const REBVAL *vect)
+Array(*) Vector_To_Array(const REBVAL *vect)
 {
     REBLEN len = VAL_LEN_AT(vect);
     if (len <= 0)
         fail (vect);
 
-    REBARR *arr = Make_Array(len);
+    Array(*) arr = Make_Array(len);
     Cell(*) dest = ARR_HEAD(arr);
     REBLEN n;
     for (n = VAL_INDEX(vect); n < VAL_LEN_HEAD(vect); ++n, ++dest)

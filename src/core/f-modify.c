@@ -31,7 +31,7 @@
 // Returns new dst_idx
 //
 REBLEN Modify_Array(
-    REBARR *dst_arr,  // target
+    Array(*) dst_arr,  // target
     REBLEN dst_idx,  // position
     enum Reb_Symbol_Id sym,  // INSERT, APPEND, CHANGE
     const REBVAL *src_val,  // source
@@ -110,7 +110,7 @@ REBLEN Modify_Array(
 
         // Are we modifying ourselves? If so, copy src_val block first:
         if (dst_arr == VAL_ARRAY(src_val)) {
-            REBARR *copy = Copy_Array_At_Extra_Shallow(
+            Array(*) copy = Copy_Array_At_Extra_Shallow(
                 VAL_ARRAY(src_val),
                 VAL_INDEX(src_val),
                 VAL_SPECIFIER(src_val),

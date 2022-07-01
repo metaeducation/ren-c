@@ -75,7 +75,7 @@ Bounce Lambda_Dispatcher(Frame(*) f)
     Frame(*) frame_ = f;
 
     REBACT *phase = FRM_PHASE(f);
-    REBARR *details = ACT_DETAILS(phase);
+    Array(*) details = ACT_DETAILS(phase);
     assert(ARR_LEN(details) == IDX_LAMBDA_MAX);
 
     const REBVAL *block = DETAILS_AT(details, IDX_LAMBDA_BLOCK);
@@ -104,7 +104,7 @@ Bounce Lambda_Dispatcher(Frame(*) f)
 Bounce Lambda_Unoptimized_Dispatcher(Frame(*) frame_)
 {
     REBACT *phase = FRM_PHASE(FRAME);
-    REBARR *details = ACT_DETAILS(phase);
+    Array(*) details = ACT_DETAILS(phase);
     Cell(*) body = ARR_AT(details, IDX_DETAILS_1);  // code to run
     assert(IS_BLOCK(body) and IS_RELATIVE(body) and VAL_INDEX(body) == 0);
 
@@ -218,7 +218,7 @@ REBNATIVE(lambda)
     }
 
     REBCTX *meta;
-    REBARR *paramlist = Pop_Paramlist_With_Meta_May_Fail(
+    Array(*) paramlist = Pop_Paramlist_With_Meta_May_Fail(
         &meta,
         dsp_orig,
         MKF_KEYWORDS,
@@ -234,7 +234,7 @@ REBNATIVE(lambda)
 
     assert(ACT_META(lambda) == nullptr);
 
-    REBARR *details = ACT_DETAILS(lambda);
+    Array(*) details = ACT_DETAILS(lambda);
     Copy_Cell(ARR_AT(details, IDX_LAMBDA_BLOCK), body);
 
     return Init_Action(OUT, lambda, ANONYMOUS, UNBOUND);

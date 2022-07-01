@@ -85,7 +85,7 @@ Bounce Encloser_Dispatcher(Frame(*) f)
 {
     Frame(*) frame_ = f;  // for RETURN macros
 
-    REBARR *details = ACT_DETAILS(FRM_PHASE(f));
+    Array(*) details = ACT_DETAILS(FRM_PHASE(f));
     assert(ARR_LEN(details) == IDX_ENCLOSER_MAX);
 
     REBVAL *inner = DETAILS_AT(details, IDX_ENCLOSER_INNER);
@@ -138,7 +138,7 @@ Bounce Encloser_Dispatcher(Frame(*) f)
     //-------------------------------------------------------------end-old-code
 
     //-----------------------------------------------------------begin-new-code
-    REBARR *varlist = f->varlist;
+    Array(*) varlist = f->varlist;
     REBCTX *c = CTX(varlist);
 
     // Replace the f->varlist with a dead list.
@@ -227,7 +227,7 @@ REBNATIVE(enclose_p)  // see extended definition ENCLOSE in %base-defs.r
         IDX_ENCLOSER_MAX  // details array capacity => [inner, outer]
     );
 
-    REBARR *details = ACT_DETAILS(enclosure);
+    Array(*) details = ACT_DETAILS(enclosure);
     Copy_Cell(ARR_AT(details, IDX_ENCLOSER_INNER), inner);
     Copy_Cell(ARR_AT(details, IDX_ENCLOSER_OUTER), outer);
 

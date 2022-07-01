@@ -1275,7 +1275,7 @@ REBNATIVE(scan_net_header)
 {
     INCLUDE_PARAMS_OF_SCAN_NET_HEADER;
 
-    REBARR *result = Make_Array(10); // Just a guess at size (use STD_BUF?)
+    Array(*) result = Make_Array(10); // Just a guess at size (use STD_BUF?)
 
     REBVAL *header = ARG(header);
     REBSIZ size;
@@ -1325,7 +1325,7 @@ REBNATIVE(scan_net_header)
                 }
                 else {
                     // Create new block for values:
-                    REBARR *a = Make_Array(2);
+                    Array(*) a = Make_Array(2);
                     Derelativize(
                         Alloc_Tail_Array(a),
                         item + 1, // prior value
