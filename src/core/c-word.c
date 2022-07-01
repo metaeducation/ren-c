@@ -270,7 +270,7 @@ Symbol(const*) Intern_UTF8_Managed_Core(
 
   new_interning: {
 
-    REBBIN *s = BIN(Make_Series_Into(
+    Binary(*) s = BIN(Make_Series_Into(
         preallocated,  // if not nullptr, will use this memory for the node
         size + 1,  // if small, fits in a REBSER node (no data allocation)
         FLAG_FLAVOR(SYMBOL) | SERIES_FLAG_FIXED_SIZE | NODE_FLAG_MANAGED

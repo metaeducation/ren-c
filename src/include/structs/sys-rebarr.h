@@ -60,7 +60,7 @@ typedef Reb_Array REBGOB;
 typedef Reb_Array REBSTU;
 typedef Reb_Array REBFLD;
 
-typedef REBBIN REBTYP;  // Rebol Type (list of hook function pointers)
+typedef Reb_Binary REBTYP;  // Rebol Type (list of hook function pointers)
 
 
 //=//// ARRAY_FLAG_HAS_FILE_LINE_UNMASKED /////////////////////////////////=//

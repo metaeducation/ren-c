@@ -244,7 +244,7 @@ inline static void INIT_VAL_NODE2(Cell(*) v, option(const REBNOD*) node) {
 
 inline static const REBTYP *CELL_CUSTOM_TYPE(noquote(Cell(const*)) v) {
     assert(CELL_HEART(v) == REB_CUSTOM);
-    return cast(const REBBIN*, EXTRA(Any, v).node);
+    return cast(Binary(const*), EXTRA(Any, v).node);
 }
 
 // Sometimes you have a noquote and need to pass a REBVAL* to something.  It

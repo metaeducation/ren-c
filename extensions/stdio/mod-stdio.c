@@ -197,7 +197,7 @@ REBNATIVE(read_stdin)
         bool eof = false;
 
         REBSIZ max = VAL_UINT32(ARG(size));
-        REBBIN *bin = Make_Binary(max);
+        Binary(*) bin = Make_Binary(max);
         REBLEN i = 0;
         while (BIN_LEN(bin) < max) {
             if (Read_Stdin_Byte_Interrupted(&eof, BIN_AT(bin, i))) {  // Ctrl-C

@@ -279,7 +279,7 @@ REBSER *Make_Set_Operation_Series(
     else {
         assert(IS_BINARY(val1) and IS_BINARY(val2));
 
-        REBBIN *buf = BYTE_BUF;
+        Binary(*) buf = BYTE_BUF;
         REBLEN buf_start_len = BIN_LEN(buf);
         EXPAND_SERIES_TAIL(buf, i);  // ask for at least `i` capacity
         REBLEN buf_at = buf_start_len;
@@ -287,7 +287,7 @@ REBSER *Make_Set_Operation_Series(
         do {
             // Note: val1 and val2 swapped 2nd pass!
             //
-            const REBBIN *bin = VAL_BINARY(val1);
+            Binary(const*) bin = VAL_BINARY(val1);
 
             // Iterate over first series
             //
@@ -355,7 +355,7 @@ REBSER *Make_Set_Operation_Series(
         } while (true);
 
         REBLEN out_len = buf_at - buf_start_len;
-        REBBIN *out_bin = Make_Binary(out_len);
+        Binary(*) out_bin = Make_Binary(out_len);
         memcpy(BIN_HEAD(out_bin), BIN_AT(buf, buf_start_len), out_len);
         TERM_BIN_LEN(out_bin, out_len);
         out_ser = out_bin;

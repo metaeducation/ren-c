@@ -1026,7 +1026,7 @@ REBNATIVE(find_script)
     // forcing termination on the binary.
     //
     if (IS_BINARY(arg))  // see BINARY_BAD_UTF8_TAIL_BYTE
-        TERM_BIN(m_cast(REBBIN*, VAL_BINARY(arg)));
+        TERM_BIN(m_cast(Binary(*), VAL_BINARY(arg)));
 
     REBSIZ size;
     const Byte* bp = VAL_BYTES_AT(&size, arg);

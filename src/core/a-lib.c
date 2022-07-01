@@ -150,7 +150,7 @@ void *RL_rebMalloc(size_t size)
 {
     ENTER_API;
 
-    REBBIN *s = BIN(Make_Series(
+    Binary(*) s = BIN(Make_Series(
         ALIGN_SIZE  // stores REBSER* (must be at least big enough for void*)
             + size  // for the actual data capacity (may be 0, see notes)
             + 1,  // for termination (AS TEXT! of rebRepossess(), see notes)
@@ -209,10 +209,10 @@ void *RL_rebRealloc(void *ptr, size_t new_size)
     if (not ptr)  // C realloc() accepts null
         return rebMalloc(new_size);
 
-    REBBIN **ps = cast(REBBIN**, ptr) - 1;
-    UNPOISON_MEMORY(ps, sizeof(REBBIN*));  // need to underrun to fetch `s`
+    Binary(*) *ps = cast(Binary(*)*, ptr) - 1;
+    UNPOISON_MEMORY(ps, sizeof(Binary(*)));  // need to underrun to fetch `s`
 
-    REBBIN *s = *ps;
+    Binary(*) s = *ps;
 
     REBLEN old_size = BIN_LEN(s) - ALIGN_SIZE;
 
@@ -240,10 +240,10 @@ void RL_rebFree(void *ptr)
     if (not ptr)
         return;
 
-    REBBIN **ps = cast(REBBIN**, ptr) - 1;
-    UNPOISON_MEMORY(ps, sizeof(REBBIN*));  // need to underrun to fetch `s`
+    Binary(*) *ps = cast(Binary(*)*, ptr) - 1;
+    UNPOISON_MEMORY(ps, sizeof(Binary(*)));  // need to underrun to fetch `s`
 
-    REBBIN *s = *ps;
+    Binary(*) s = *ps;
     if (Is_Node_Cell(s)) {
         rebJumps(
             "panic [",
@@ -287,10 +287,10 @@ REBVAL *RL_rebRepossess(void *ptr, size_t size)
 {
     ENTER_API;
 
-    REBBIN **ps = cast(REBBIN**, ptr) - 1;
-    UNPOISON_MEMORY(ps, sizeof(REBBIN*));  // need to underrun to fetch `s`
+    Binary(*) *ps = cast(Binary(*)*, ptr) - 1;
+    UNPOISON_MEMORY(ps, sizeof(Binary(*)));  // need to underrun to fetch `s`
 
-    REBBIN *s = *ps;
+    Binary(*) s = *ps;
     assert(NOT_SERIES_FLAG(s, MANAGED));
 
     if (size > BIN_LEN(s) - ALIGN_SIZE)
@@ -530,7 +530,7 @@ REBVAL *RL_rebSizedBinary(const void *bytes, size_t size)
 {
     ENTER_API;
 
-    REBBIN *bin = Make_Binary(size);
+    Binary(*) bin = Make_Binary(size);
     memcpy(BIN_HEAD(bin), bytes, size);
     TERM_BIN_LEN(bin, size);
 
@@ -561,7 +561,7 @@ REBVAL *RL_rebUninitializedBinary_internal(size_t size)
 {
     ENTER_API;
 
-    REBBIN *bin = Make_Binary(size);
+    Binary(*) bin = Make_Binary(size);
 
     // !!! Caution, unfilled bytes, access or molding may be *worse* than
     // random by the rules of C if they don't get written!  Must be filled

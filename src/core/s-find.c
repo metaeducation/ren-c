@@ -441,7 +441,7 @@ REBINT Find_Bitset_In_Binstr(
     noquote(Cell(const*)) binstr,
     REBLEN end_unsigned,
     REBINT skip,
-    const REBBIN *bset,
+    Binary(const*) bset,
     REBFLGS flags
 ){
   #if !defined(NDEBUG)

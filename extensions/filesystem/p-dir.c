@@ -101,7 +101,7 @@ Bounce Dir_Actor(Frame(*) frame_, REBVAL *port, Symbol(const*) verb)
         // structure...which would mean different Rename_Directory() and
         // Rename_File() calls, for instance.
         //
-        REBBIN *bin = Make_Binary(sizeof(FILEREQ));
+        Binary(*) bin = Make_Binary(sizeof(FILEREQ));
         Init_Binary(state, bin);
         TERM_BIN_LEN(bin, sizeof(FILEREQ));
 

@@ -71,9 +71,9 @@ REBINT CT_Binary(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
 ***********************************************************************/
 
 
-static REBBIN *Make_Binary_BE64(const REBVAL *arg)
+static Binary(*) Make_Binary_BE64(const REBVAL *arg)
 {
-    REBBIN *bin = Make_Binary(8);
+    Binary(*) bin = Make_Binary(8);
     Byte* bp = BIN_HEAD(bin);
 
     REBI64 i;
@@ -124,7 +124,7 @@ static REBBIN *Make_Binary_BE64(const REBVAL *arg)
 // Note also the existence of AS and storing strings as UTF-8 should reduce
 // copying, e.g. `as binary! some-string` will be cheaper than TO or MAKE.
 //
-static REBBIN *MAKE_TO_Binary_Common(const REBVAL *arg)
+static Binary(*) MAKE_TO_Binary_Common(const REBVAL *arg)
 {
     switch (VAL_TYPE(arg)) {
     case REB_BINARY: {
@@ -141,7 +141,7 @@ static REBBIN *MAKE_TO_Binary_Common(const REBVAL *arg)
         REBSIZ utf8_size;
         Utf8(const*) utf8 = VAL_UTF8_SIZE_AT(&utf8_size, arg);
 
-        REBBIN *bin = Make_Binary(utf8_size);
+        Binary(*) bin = Make_Binary(utf8_size);
         memcpy(BIN_HEAD(bin), utf8, utf8_size);
         TERM_BIN_LEN(bin, utf8_size);
         return bin; }
@@ -152,7 +152,7 @@ static REBBIN *MAKE_TO_Binary_Common(const REBVAL *arg)
 
     case REB_TUPLE: {
         REBLEN len = VAL_SEQUENCE_LEN(arg);
-        REBBIN *bin = Make_Binary(len);
+        Binary(*) bin = Make_Binary(len);
         if (Did_Get_Sequence_Bytes(BIN_HEAD(bin), arg, len)) {
             TERM_BIN_LEN(bin, len);
             return bin;
@@ -163,7 +163,7 @@ static REBBIN *MAKE_TO_Binary_Common(const REBVAL *arg)
         return Copy_Bytes(BIN_HEAD(VAL_BINARY(arg)), VAL_LEN_HEAD(arg));
 
     case REB_MONEY: {
-        REBBIN *bin = Make_Binary(12);
+        Binary(*) bin = Make_Binary(12);
         deci_to_binary(BIN_HEAD(bin), VAL_MONEY_AMOUNT(arg));
         TERM_BIN_LEN(bin, 12);
         return bin; }
@@ -386,10 +386,10 @@ REBTYPE(Binary)
         if (i > 0xff)
             fail (Error_Out_Of_Range(setval));
 
-        REBBIN *bin = VAL_BINARY_ENSURE_MUTABLE(v);
+        Binary(*) bin = VAL_BINARY_ENSURE_MUTABLE(v);
         BIN_HEAD(bin)[n] = cast(Byte, i);
 
-        return nullptr; }  // caller's REBBIN* is not stale, no update needed
+        return nullptr; }  // caller's Binary(*) is not stale, no update needed
 
 
       case SYM_UNIQUE:
@@ -511,7 +511,7 @@ REBTYPE(Binary)
       case SYM_TAKE: {
         INCLUDE_PARAMS_OF_TAKE;
 
-        REBBIN *bin = VAL_BINARY_ENSURE_MUTABLE(v);
+        Binary(*) bin = VAL_BINARY_ENSURE_MUTABLE(v);
 
         UNUSED(PAR(series));
 
@@ -561,7 +561,7 @@ REBTYPE(Binary)
         return OUT; }
 
       case SYM_CLEAR: {
-        REBBIN *bin = VAL_BINARY_ENSURE_MUTABLE(v);
+        Binary(*) bin = VAL_BINARY_ENSURE_MUTABLE(v);
 
         if (index >= tail)
             return_value (v); // clearing after available data has no effect
@@ -614,7 +614,7 @@ REBTYPE(Binary)
         REBSIZ smaller = MIN(t0, t1);  // smaller array size
         REBSIZ larger = MAX(t0, t1);
 
-        REBBIN *series = Make_Binary(larger);
+        Binary(*) series = Make_Binary(larger);
         TERM_BIN_LEN(series, larger);
 
         Byte* dest = BIN_HEAD(series);
@@ -659,7 +659,7 @@ REBTYPE(Binary)
         REBSIZ size;
         const Byte* bp = VAL_BINARY_SIZE_AT(&size, v);
 
-        REBBIN *bin = Make_Binary(size);
+        Binary(*) bin = Make_Binary(size);
         TERM_BIN_LEN(bin, size);  // !!! size is decremented, must set now
 
         Byte* dp = BIN_HEAD(bin);
@@ -693,7 +693,7 @@ REBTYPE(Binary)
       case SYM_SUBTRACT:
       case SYM_ADD: {
         REBVAL *arg = D_ARG(2);
-        REBBIN *bin = VAL_BINARY_ENSURE_MUTABLE(v);
+        Binary(*) bin = VAL_BINARY_ENSURE_MUTABLE(v);
 
         REBINT amount;
         if (IS_INTEGER(arg))
@@ -851,11 +851,11 @@ REBTYPE(Binary)
 
             index += cast(REBLEN, Random_Int(did REF(secure)))
                 % (tail - index);
-            const REBBIN *bin = VAL_BINARY(v);
+            Binary(const*) bin = VAL_BINARY(v);
             return Init_Integer(OUT, *BIN_AT(bin, index));  // PICK
         }
 
-        REBBIN *bin = VAL_BINARY_ENSURE_MUTABLE(v);
+        Binary(*) bin = VAL_BINARY_ENSURE_MUTABLE(v);
 
         bool secure = did REF(secure);
         REBLEN n;
@@ -925,7 +925,7 @@ REBNATIVE(enbin)
     // with BigNum conversions as well).  Improvements welcome, but trying
     // to be correct for starters...
 
-    REBBIN* bin = Make_Binary(num_bytes);
+    Binary(*) bin = Make_Binary(num_bytes);
 
     REBINT delta = little ? 1 : -1;
     Byte* bp = BIN_HEAD(bin);

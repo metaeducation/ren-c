@@ -37,7 +37,7 @@ String(*) Make_String_Core(REBSIZ encoded_capacity, REBFLGS flags)
 {
     assert(FLAVOR_BYTE(flags) == 0);  // shouldn't have a flavor
 
-    REBBIN *bin = BIN(Make_Series(
+    Binary(*) bin = BIN(Make_Series(
         encoded_capacity + 1,  // binary includes room for '\0' terminator
         FLAG_FLAVOR(STRING) | flags
     ));
@@ -54,12 +54,12 @@ String(*) Make_String_Core(REBSIZ encoded_capacity, REBFLGS flags)
 // Create a string series from the given bytes.
 // Source is always latin-1 valid. Result is always 8bit.
 //
-REBBIN *Copy_Bytes(const Byte* src, REBINT len)
+Binary(*) Copy_Bytes(const Byte* src, REBINT len)
 {
     if (len < 0)
         len = strsize(src);
 
-    REBBIN *bin = Make_Binary(len);
+    Binary(*) bin = Make_Binary(len);
     memcpy(BIN_HEAD(bin), src, len);
     TERM_BIN_LEN(bin, len);
     return bin;
@@ -374,7 +374,7 @@ String(*) Append_UTF8_May_Fail(
 //
 void Join_Binary_In_Byte_Buf(const REBVAL *blk, REBINT limit)
 {
-    REBBIN *buf = BYTE_BUF;
+    Binary(*) buf = BYTE_BUF;
 
     REBLEN tail = 0;
 

@@ -1670,7 +1670,7 @@ bool Try_As_String(
         Inherit_Const(Quotify(out, quotes), v);
     }
     else if (IS_BINARY(v)) {  // If valid UTF-8, BINARY! aliases as ANY-STRING!
-        const REBBIN *bin = VAL_BINARY(v);
+        Binary(const*) bin = VAL_BINARY(v);
         REBSIZ offset = VAL_INDEX(v);
 
         // The position in the binary must correspond to an actual
@@ -1728,7 +1728,7 @@ bool Try_As_String(
 
                 ++num_codepoints;
             }
-            mutable_SER_FLAVOR(m_cast(REBBIN*, bin)) = FLAVOR_STRING;
+            mutable_SER_FLAVOR(m_cast(Binary(*), bin)) = FLAVOR_STRING;
             str = STR(bin);
 
             TERM_STR_LEN_SIZE(
@@ -1736,7 +1736,7 @@ bool Try_As_String(
                 num_codepoints,
                 BIN_LEN(bin)
             );
-            mutable_LINK(Bookmarks, m_cast(REBBIN*, bin)) = nullptr;
+            mutable_LINK(Bookmarks, m_cast(Binary(*), bin)) = nullptr;
 
             // !!! TBD: cache index/offset
 
@@ -2054,7 +2054,7 @@ REBNATIVE(as)
             // We have to permanently freeze the underlying series from any
             // mutation to use it in a WORD! (and also, may add STRING flag);
             //
-            const REBBIN *bin = VAL_BINARY(v);
+            Binary(const*) bin = VAL_BINARY(v);
             if (not Is_Series_Frozen(bin))
                 if (Get_Cell_Flag(v, CONST))  // can't freeze or add IS_STRING
                     fail (Error_Alias_Constrains_Raw());
@@ -2079,7 +2079,7 @@ REBNATIVE(as)
                 // Constrain the input in the way it would be if we were doing
                 // the more efficient reuse.
                 //
-                mutable_SER_FLAVOR(m_cast(REBBIN*, bin)) = FLAVOR_STRING;
+                mutable_SER_FLAVOR(m_cast(Binary(*), bin)) = FLAVOR_STRING;
                 Freeze_Series(bin);
             }
 
@@ -2099,7 +2099,7 @@ REBNATIVE(as)
 
             REBSIZ size;
             Utf8(const*) utf8 = VAL_UTF8_SIZE_AT(&size, v);
-            REBBIN *bin = Make_Binary_Core(size, NODE_FLAG_MANAGED);
+            Binary(*) bin = Make_Binary_Core(size, NODE_FLAG_MANAGED);
             memcpy(BIN_HEAD(bin), utf8, size + 1);
             SET_SERIES_USED(bin, size);
             Freeze_Series(bin);

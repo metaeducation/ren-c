@@ -366,7 +366,7 @@ Bounce Console_Actor(Frame(*) frame_, REBVAL *port, Symbol(const*) verb)
             Init_Binary(data, Make_Binary(readbuf_size));
         }
         else if (SER_REST(VAL_BINARY(data)) < readbuf_size) {
-            REBBIN *bin = VAL_BINARY_ENSURE_MUTABLE(data);
+            Binary(*) bin = VAL_BINARY_ENSURE_MUTABLE(data);
             EXPAND_SERIES_TAIL(bin, readbuf_size - SER_REST(bin));
         }
 
@@ -390,7 +390,7 @@ Bounce Console_Actor(Frame(*) frame_, REBVAL *port, Symbol(const*) verb)
             // Windows data as text with lines will thus have to deline it (!)
             //
             size_t size = readbuf_size - VAL_LEN_AT(data);
-            REBBIN *bin = VAL_BINARY_ENSURE_MUTABLE(data);
+            Binary(*) bin = VAL_BINARY_ENSURE_MUTABLE(data);
             REBLEN orig_len = VAL_LEN_AT(data);
 
             assert(SER_AVAIL(bin) >= size);

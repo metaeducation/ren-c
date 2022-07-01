@@ -3147,7 +3147,7 @@ REBNATIVE(transcode)
     subframe->executor = &Scanner_Executor;
     SCAN_LEVEL *level = &subframe->u.scan;
 
-    REBBIN *bin = Make_Binary(sizeof(SCAN_STATE));
+    Binary(*) bin = Make_Binary(sizeof(SCAN_STATE));
     ss = cast(SCAN_STATE*, BIN_HEAD(bin));
 
     Init_Scan_Level(level, ss, file, start_line, bp, size, context);
@@ -3220,7 +3220,7 @@ REBNATIVE(transcode)
         Copy_Cell(rest, source);
 
         if (IS_BINARY(source)) {
-            const REBBIN *bin = VAL_BINARY(source);
+            Binary(const*) bin = VAL_BINARY(source);
             if (ss->begin)
                 VAL_INDEX_UNBOUNDED(rest) = ss->begin - BIN_HEAD(bin);
             else

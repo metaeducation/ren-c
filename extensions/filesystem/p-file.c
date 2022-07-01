@@ -152,7 +152,7 @@ Bounce File_Actor(Frame(*) frame_, REBVAL *port, Symbol(const*) verb)
         // was seen as having another benefit in making the internal state
         // opaque to users, so they didn't depend on it or fiddle with it.
         //
-        REBBIN *bin = Make_Binary(sizeof(FILEREQ));
+        Binary(*) bin = Make_Binary(sizeof(FILEREQ));
         Init_Binary(state, bin);
         TERM_BIN_LEN(bin, sizeof(FILEREQ));
 

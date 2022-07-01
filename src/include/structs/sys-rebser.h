@@ -789,7 +789,6 @@ union Reb_Series_Info {
 //
 #if CPLUSPLUS_11
     struct Reb_Binary : public Reb_Series {};
-    typedef struct Reb_Binary REBBIN;
 
     struct Reb_String : public Reb_Binary {};  // strings can act as binaries
 
@@ -806,7 +805,7 @@ union Reb_Series_Info {
     struct Reb_Map : public Reb_Series {};
     typedef struct Reb_Map REBMAP;  // the "pairlist" is the identity
 #else
-    typedef struct Reb_Series REBBIN;
+    typedef struct Reb_Series Reb_Binary;
     typedef struct Reb_Series Reb_String;
     typedef struct Reb_Series Reb_Symbol;
     typedef struct Reb_Series REBBMK;
@@ -814,6 +813,9 @@ union Reb_Series_Info {
     typedef struct Reb_Series Reb_Context;
     typedef struct Reb_Series REBMAP;
 #endif
+
+#define Binary(star_maybe_const) \
+    Reb_Binary star_maybe_const
 
 #define Symbol(star_maybe_const) \
     Reb_Symbol star_maybe_const

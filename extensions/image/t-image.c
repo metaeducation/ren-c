@@ -579,7 +579,7 @@ Bounce Modify_Image(Frame(*) frame_, Symbol(const*) verb)
     REBVAL *value = ARG(series);  // !!! confusing name
     REBVAL *arg = ARG(value);
 
-    REBBIN *bin = VAL_BINARY_ENSURE_MUTABLE(VAL_IMAGE_BIN(value));
+    Binary(*) bin = VAL_BINARY_ENSURE_MUTABLE(VAL_IMAGE_BIN(value));
 
     REBLEN index = VAL_IMAGE_POS(value);
     REBLEN tail = VAL_IMAGE_LEN_HEAD(value);
@@ -988,7 +988,7 @@ void Pick_Image(REBVAL *out, const REBVAL *value, Cell(const*) picker)
             break;
 
         case SYM_RGB: {
-            REBBIN *nser = Make_Binary(len * 3);
+            Binary(*) nser = Make_Binary(len * 3);
             SET_SERIES_LEN(nser, len * 3);
             RGB_To_Bin(BIN_HEAD(nser), src, len, false);
             TERM_BIN(nser);
@@ -996,7 +996,7 @@ void Pick_Image(REBVAL *out, const REBVAL *value, Cell(const*) picker)
             break; }
 
         case SYM_ALPHA: {
-            REBBIN *nser = Make_Binary(len);
+            Binary(*) nser = Make_Binary(len);
             SET_SERIES_LEN(nser, len);
             Alpha_To_Bin(BIN_HEAD(nser), src, len);
             TERM_BIN(nser);
@@ -1215,7 +1215,7 @@ REBTYPE(Image)
             // of images being at an "index" is sketchy.  Assume that someone
             // asking for the bytes doesn't care about the index.
             //
-            const REBBIN *bin = VAL_BINARY(VAL_IMAGE_BIN(image));
+            Binary(const*) bin = VAL_BINARY(VAL_IMAGE_BIN(image));
             return Init_Binary(OUT, bin); }  // at 0 index
 
         default:

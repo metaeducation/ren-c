@@ -653,7 +653,7 @@ String(*) Pop_Molded_String(REB_MOLD *mo)
 // !!! This particular use of the mold buffer might undermine tricks which
 // could be used with invalid UTF-8 bytes--for instance.  Review.
 //
-REBBIN *Pop_Molded_Binary(REB_MOLD *mo)
+Binary(*) Pop_Molded_Binary(REB_MOLD *mo)
 {
     assert(STR_LEN(mo->series) >= mo->offset);
 
@@ -661,7 +661,7 @@ REBBIN *Pop_Molded_Binary(REB_MOLD *mo)
     Throttle_Mold(mo);
 
     REBSIZ size = STR_SIZE(mo->series) - mo->offset;
-    REBBIN *bin = Make_Binary(size);
+    Binary(*) bin = Make_Binary(size);
     memcpy(BIN_HEAD(bin), BIN_AT(mo->series, mo->offset), size);
     TERM_BIN_LEN(bin, size);
 

@@ -244,7 +244,7 @@ REBLEN Modify_String_Or_Binary(
 
     ENSURE_MUTABLE(dst);  // note this also rules out ANY-WORD!s
 
-    REBBIN *dst_ser = BIN(VAL_SERIES_ENSURE_MUTABLE(dst));
+    Binary(*) dst_ser = BIN(VAL_SERIES_ENSURE_MUTABLE(dst));
     assert(not IS_SYMBOL(dst_ser));  // would be immutable
 
     REBLEN dst_idx = VAL_INDEX(dst);
@@ -377,7 +377,7 @@ REBLEN Modify_String_Or_Binary(
         src_len_raw = src_size_raw = 1;
     }
     else if (IS_BINARY(src)) {
-        const REBBIN *bin = VAL_BINARY(src);
+        Binary(const*) bin = VAL_BINARY(src);
         REBLEN offset = VAL_INDEX(src);
 
         src_ptr = BIN_AT(bin, offset);

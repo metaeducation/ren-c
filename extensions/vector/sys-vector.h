@@ -78,7 +78,7 @@ inline static REBLEN VAL_VECTOR_LEN_AT(noquote(Cell(const*)) v) {
 
 inline static REBVAL *Init_Vector(
     Cell(*) out,
-    REBBIN *bin,
+    Binary(*) bin,
     bool sign,
     bool integral,
     Byte bitsize

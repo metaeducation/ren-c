@@ -453,7 +453,7 @@ bool Make_Vector_Spec(
         fail ("Too many arguments in MAKE VECTOR! block");
 
     REBLEN num_bytes = len * (bitsize / 8);
-    REBBIN *bin = Make_Binary(num_bytes);
+    Binary(*) bin = Make_Binary(num_bytes);
     memset(BIN_HEAD(bin), 0, num_bytes);  // !!! 0 bytes -> 0 int/float?
     TERM_BIN_LEN(bin, num_bytes);
 
@@ -499,7 +499,7 @@ Bounce MAKE_Vector(
 
         Byte bitsize = 32;
         REBLEN num_bytes = (len * bitsize) / 8;
-        REBBIN *bin = Make_Binary(num_bytes);
+        Binary(*) bin = Make_Binary(num_bytes);
         memset(BIN_HEAD(bin), 0, num_bytes);
         TERM_BIN_LEN(bin, num_bytes);
 
@@ -650,7 +650,7 @@ REBTYPE(Vector)
         if (REF(part) or REF(deep) or REF(types))
             fail (Error_Bad_Refines_Raw());
 
-        REBBIN *bin = BIN(Copy_Series_Core(
+        Binary(*) bin = BIN(Copy_Series_Core(
             VAL_BINARY(VAL_VECTOR_BINARY(v)),
             NODE_FLAG_MANAGED
         ));

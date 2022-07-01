@@ -195,7 +195,7 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
 
       case REB_BINARY: {
         assert(Get_Cell_Flag(v, FIRST_IS_NODE));
-        REBBIN *s = BIN(VAL_NODE1(v));
+        Binary(*) s = BIN(VAL_NODE1(v));
         if (GET_SERIES_FLAG(s, INACCESSIBLE))
             break;
 

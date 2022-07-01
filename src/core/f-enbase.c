@@ -169,12 +169,12 @@ static const Byte Enbase64[64] =
 //
 //  Decode_Base2: C
 //
-static REBBIN *Decode_Base2(const Byte* *src, REBLEN len, Byte delim)
+static Binary(*) Decode_Base2(const Byte* *src, REBLEN len, Byte delim)
 {
     REBLEN count = 0;
     REBLEN accum = 0;
 
-    REBBIN *bin = Make_Binary(len >> 3);
+    Binary(*) bin = Make_Binary(len >> 3);
     Byte* bp = BIN_HEAD(bin);
     const Byte* cp = *src;
 
@@ -213,12 +213,12 @@ err:
 //
 //  Decode_Base16: C
 //
-static REBBIN *Decode_Base16(const Byte* *src, REBLEN len, Byte delim)
+static Binary(*) Decode_Base16(const Byte* *src, REBLEN len, Byte delim)
 {
     REBLEN count = 0;
     REBLEN accum = 0;
 
-    REBBIN *bin = Make_Binary(len / 2);
+    Binary(*) bin = Make_Binary(len / 2);
     Byte* bp = BIN_HEAD(bin);
     const Byte* cp = *src;
 
@@ -251,7 +251,7 @@ err:
 //
 //  Decode_Base64: C
 //
-static REBBIN *Decode_Base64(const Byte* *src, REBLEN len, Byte delim)
+static Binary(*) Decode_Base64(const Byte* *src, REBLEN len, Byte delim)
 {
     REBLEN flip = 0;
     REBLEN accum = 0;
@@ -259,7 +259,7 @@ static REBBIN *Decode_Base64(const Byte* *src, REBLEN len, Byte delim)
     // Allocate buffer large enough to hold result:
     // Accounts for e bytes decoding into 3 bytes.
 
-    REBBIN *bin = Make_Binary(((len + 3) * 3) / 4);
+    Binary(*) bin = Make_Binary(((len + 3) * 3) / 4);
     Byte* bp = BIN_HEAD(bin);
     const Byte* cp = *src;
 

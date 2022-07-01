@@ -898,7 +898,7 @@ static bool Try_Loop_Each_Next(const Value *iterator, Context(*) vars_ctx)
             break; }
 
           case REB_BINARY: {
-            const REBBIN *bin = BIN(les->series);
+            Binary(const*) bin = BIN(les->series);
             if (var)
                 Init_Integer(var, BIN_HEAD(bin)[les->u.eser.index]);
             if (++les->u.eser.index == les->u.eser.len)
@@ -1321,7 +1321,7 @@ REBNATIVE(remove_each)
                     VAL_SPECIFIER(data)
                 );
             else if (IS_BINARY(data)) {
-                REBBIN *bin = BIN(series);
+                Binary(*) bin = BIN(series);
                 Init_Integer(var, cast(REBI64, BIN_HEAD(bin)[index]));
             }
             else {
@@ -1401,7 +1401,7 @@ REBNATIVE(remove_each)
             do {
                 assert(start <= len);
                 if (IS_BINARY(data)) {
-                    REBBIN *bin = BIN(series);
+                    Binary(*) bin = BIN(series);
                     Append_Ascii_Len(
                         mo->series,
                         cs_cast(BIN_AT(bin, start)),
@@ -1477,7 +1477,7 @@ REBNATIVE(remove_each)
             goto done_finalizing;
         }
 
-        REBBIN *bin = BIN(series);
+        Binary(*) bin = BIN(series);
 
         // If there was a THROW, or fail() we need the remaining data
         //
@@ -1489,7 +1489,7 @@ REBNATIVE(remove_each)
             orig_len - start
         );
 
-        REBBIN *popped = Pop_Molded_Binary(mo);  // not UTF-8 if binary, see [7]
+        Binary(*) popped = Pop_Molded_Binary(mo);  // not UTF-8 if binary, see [7]
 
         assert(BIN_LEN(popped) <= VAL_LEN_HEAD(data));
         removals = VAL_LEN_HEAD(data) - BIN_LEN(popped);

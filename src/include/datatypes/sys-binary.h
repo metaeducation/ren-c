@@ -39,53 +39,53 @@
 
 
 #if CPLUSPLUS_11  // !!! Make fancier checks, as with SER() and ARR()
-    inline static REBBIN *BIN(void *p)
-        { return reinterpret_cast<REBBIN*>(p); }
-    inline static const REBBIN *BIN(const void *p)
-        { return reinterpret_cast<const REBBIN*>(p); }
+    inline static Binary(*) BIN(void *p)
+        { return reinterpret_cast<Binary(*)>(p); }
+    inline static Binary(const*) BIN(const void *p)
+        { return reinterpret_cast<Binary(const*)>(p); }
 #else
-    #define BIN(p) cast(REBBIN*, (p))
+    #define BIN(p) cast(Binary(*), (p))
 #endif
 
 
 //=//// BINARY! SERIES ////////////////////////////////////////////////////=//
 
-inline static Byte* BIN_AT(const_if_c REBBIN *bin, REBLEN n)
+inline static Byte* BIN_AT(const_if_c Binary(*) bin, REBLEN n)
   { return SER_AT(Byte, bin, n); }
 
-inline static Byte* BIN_HEAD(const_if_c REBBIN *bin)
+inline static Byte* BIN_HEAD(const_if_c Binary(*) bin)
   { return SER_HEAD(Byte, bin); }
 
-inline static Byte* BIN_TAIL(const_if_c REBBIN *bin)
+inline static Byte* BIN_TAIL(const_if_c Binary(*) bin)
   { return SER_TAIL(Byte, bin); }
 
-inline static Byte* BIN_LAST(const_if_c REBBIN *bin)
+inline static Byte* BIN_LAST(const_if_c Binary(*) bin)
   { return SER_LAST(Byte, bin); }
 
 #if CPLUSPLUS_11
-    inline static const Byte* BIN_AT(const REBBIN *bin, REBLEN n)
+    inline static const Byte* BIN_AT(Binary(const*) bin, REBLEN n)
       { return SER_AT(const Byte, bin, n); }
 
-    inline static const Byte* BIN_HEAD(const REBBIN *bin)
+    inline static const Byte* BIN_HEAD(Binary(const*) bin)
       { return SER_HEAD(const Byte, bin); }
 
-    inline static const Byte* BIN_TAIL(const REBBIN *bin)
+    inline static const Byte* BIN_TAIL(Binary(const*) bin)
       { return SER_TAIL(const Byte, bin); }
 
-    inline static const Byte* BIN_LAST(const REBBIN *bin)
+    inline static const Byte* BIN_LAST(Binary(const*) bin)
       { return SER_LAST(const Byte, bin); }
 #endif
 
-inline static REBLEN BIN_LEN(const REBBIN *s) {
+inline static REBLEN BIN_LEN(Binary(const*) s) {
     assert(SER_WIDE(s) == 1);
     return SER_USED(s);
 }
 
-inline static void TERM_BIN(REBBIN *s) {
+inline static void TERM_BIN(Binary(*) s) {
     *BIN_TAIL(s) = '\0';
 }
 
-inline static void TERM_BIN_LEN(REBBIN *s, REBLEN len) {
+inline static void TERM_BIN_LEN(Binary(*) s, REBLEN len) {
     assert(SER_WIDE(s) == 1);
     SET_SERIES_USED(s, len);
     *BIN_TAIL(s) = '\0';
@@ -96,7 +96,7 @@ inline static void TERM_BIN_LEN(REBBIN *s, REBLEN len) {
 // terminator in case they are aliased as UTF-8 later, e.g. `as word! binary`,
 // since it could be costly to give them that capacity after-the-fact.
 //
-inline static REBBIN *Make_Binary_Core(REBLEN capacity, REBFLGS flags)
+inline static Binary(*) Make_Binary_Core(REBLEN capacity, REBFLGS flags)
 {
     assert(FLAVOR_BYTE(flags) == 0);  // shouldn't pass in a flavor
 
@@ -113,23 +113,23 @@ inline static REBBIN *Make_Binary_Core(REBLEN capacity, REBFLGS flags)
 
 //=//// BINARY! VALUES ////////////////////////////////////////////////////=//
 
-inline static const REBBIN *VAL_BINARY(noquote(Cell(const*)) v) {
+inline static Binary(const*) VAL_BINARY(noquote(Cell(const*)) v) {
     assert(CELL_HEART(v) == REB_BINARY);
     return BIN(VAL_SERIES(v));
 }
 
 #define VAL_BINARY_ENSURE_MUTABLE(v) \
-    m_cast(REBBIN*, VAL_BINARY(ENSURE_MUTABLE(v)))
+    m_cast(Binary(*), VAL_BINARY(ENSURE_MUTABLE(v)))
 
 #define VAL_BINARY_KNOWN_MUTABLE(v) \
-    m_cast(REBBIN*, VAL_BINARY(KNOWN_MUTABLE(v)))
+    m_cast(Binary(*), VAL_BINARY(KNOWN_MUTABLE(v)))
 
 
 inline static const Byte* VAL_BINARY_SIZE_AT(
     REBSIZ *size_at_out,
     noquote(Cell(const*)) v
 ){
-    const REBBIN *bin = VAL_BINARY(v);
+    Binary(const*) bin = VAL_BINARY(v);
     REBIDX i = VAL_INDEX_RAW(v);
     REBSIZ size = BIN_LEN(bin);
     if (i < 0 or i > cast(REBIDX, size))

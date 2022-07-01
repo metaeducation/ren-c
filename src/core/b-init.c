@@ -482,7 +482,7 @@ static void Init_Root_Vars(void)
     ensureNullptr(Root_Empty_Text) = Init_Text(Alloc_Value(), nulled_uni);
     Force_Value_Frozen_Deep(Root_Empty_Text);
 
-    REBBIN *bzero = Make_Binary(0);
+    Binary(*) bzero = Make_Binary(0);
     ensureNullptr(Root_Empty_Binary) = Init_Binary(Alloc_Value(), bzero);
     Force_Value_Frozen_Deep(Root_Empty_Binary);
 }

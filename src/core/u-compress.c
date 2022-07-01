@@ -428,7 +428,7 @@ REBNATIVE(checksum_core)
         fail ("METHOD for CHECKSUM-CORE must be CRC32 or ADLER32");
     }
 
-    REBBIN *bin = Make_Binary(4);
+    Binary(*) bin = Make_Binary(4);
     Byte* bp = BIN_HEAD(bin);
 
     // Returning as a BINARY! avoids signedness issues (R3-Alpha CRC-32 was a

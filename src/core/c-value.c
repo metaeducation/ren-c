@@ -384,7 +384,7 @@ void* Probe_Core_Debug(
     //=//// SERIES WITH ELEMENTS WIDTH 1 ///////////////////////////////////=//
 
       case FLAVOR_BINARY: {
-        REBBIN *bin = BIN(s);
+        Binary(*) bin = BIN(s);
         Probe_Print_Helper(p, expr, "Byte-Size Series", file, line);
 
         const bool brk = (BIN_LEN(bin) > 32);  // !!! duplicates MF_Binary code

@@ -336,7 +336,7 @@ void on_new_connection(uv_stream_t *server, int status) {
     Init_Nulled(CTX_VAR(client, STD_PORT_DATA));  // just to be sure
 
     REBVAL *c_state = CTX_VAR(client, STD_PORT_STATE);
-    REBBIN *bin = Make_Binary(sizeof(SOCKREQ));
+    Binary(*) bin = Make_Binary(sizeof(SOCKREQ));
     Init_Binary(c_state, bin);
     memset(BIN_HEAD(bin), 0, sizeof(SOCKREQ));
     TERM_BIN_LEN(bin, sizeof(SOCKREQ));
@@ -463,7 +463,7 @@ void on_read_alloc(uv_handle_t *handle, size_t suggested_size, uv_buf_t *buf)
     else
         bufsize = rebreq->length - rebreq->actual;  // !!! use suggestion here?
 
-    REBBIN *bin;
+    Binary(*) bin;
     if (Is_Nulled(port_data)) {
         bin = Make_Binary(bufsize);
         Init_Binary(port_data, bin);
@@ -502,7 +502,7 @@ void on_read(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf)
 
     REBVAL *port_data = CTX_VAR(port_ctx, STD_PORT_DATA);
 
-    REBBIN *bin;
+    Binary(*) bin;
     if (Is_Nulled(port_data)) {
         //
         // An error like "connection reset by peer" can occur before a call to
@@ -684,7 +684,7 @@ static Bounce Transport_Actor(
         // things compatible while ripping out the devreq code this must too.
         //
         assert(Is_Nulled(state));
-        REBBIN *bin = Make_Binary(sizeof(SOCKREQ));
+        Binary(*) bin = Make_Binary(sizeof(SOCKREQ));
         Init_Binary(state, bin);
         memset(BIN_HEAD(bin), 0, sizeof(SOCKREQ));
         TERM_BIN_LEN(bin, sizeof(SOCKREQ));
