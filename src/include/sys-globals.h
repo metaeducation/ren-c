@@ -62,7 +62,7 @@ PVAR REBLEN PG_Num_Symbol_Slots_In_Use; // Total symbol hash slots (+deleteds)
 PVAR Reb_Symbol PG_Deleted_Symbol;  // pointer used to indicate a deletion
 
 PVAR REBVAL *Lib_Context_Value;
-PVAR REBVAL *Sys_Context_Value;
+PVAR REBVAL *Sys_Util_Module;
 PVAR REBVAL *User_Context_Value;
 
 PVAR Context(*) Lib_Context;

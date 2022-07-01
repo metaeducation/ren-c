@@ -538,7 +538,15 @@ static void Init_System_Object(
     // Create a global value for it in the Lib context, so we can say things
     // like `system.contexts` (also protects newly made context from GC).
     //
+    // We also make a shorthand synonym for this as SYS.  In R3-Alpha, SYS
+    // was a context containing some utility functions, some of which were
+    // meant to be called from the core when writing those utilities in pure
+    // C would be tedious.  But we put those functions in a module called
+    // UTIL inside SYSTEM, and then abbreviate SYS as a synonym for SYSTEM.
+    // Hence the utilities are available as SYS.UTIL
+    //
     Init_Object(force_Lib(SYSTEM), system);
+    Init_Object(force_Lib(SYS), system);
 
     Bind_Values_Deep(spec_head, spec_tail, Lib_Context_Value);
 
@@ -620,8 +628,6 @@ static void Init_System_Object(
 //
 static void Init_Contexts_Object(void)
 {
-    Copy_Cell(Get_System(SYS_CONTEXTS, CTX_SYS), Sys_Context_Value);
-
     Copy_Cell(Get_System(SYS_CONTEXTS, CTX_LIB), Lib_Context_Value);
 
     // We don't initialize the USER context...yet.  Make it more obvious what
@@ -835,10 +841,6 @@ void Startup_Core(void)
     Assert_Pointer_Detection_Working();  // uses root series/values to test
   #endif
 
-    Context(*) sys = Alloc_Context_Core(REB_MODULE, 1, NODE_FLAG_MANAGED);
-    ensureNullptr(Sys_Context_Value) = Alloc_Value();
-    Init_Any_Context(Sys_Context_Value, REB_MODULE, sys);
-    ensureNullptr(Sys_Context) = VAL_CONTEXT(Sys_Context_Value);
 
 //=//// LOAD BOOT BLOCK ///////////////////////////////////////////////////=//
 
@@ -859,17 +861,17 @@ void Startup_Core(void)
     );
 
     // The boot code contains portions that are supposed to be interned to the
-    // SYS context instead of the LIB context.  But the Base and Mezzanine
+    // SYS.UTIL context instead of the LIB context.  But the Base and Mezzanine
     // are interned to the Lib, so go ahead and take advantage of that.
     //
-    // (We could separate the text of the SYS portion out, and scan that
+    // (We could separate the text of the SYS.UTIL portion out, and scan that
     // separately to avoid the extra work.  Not a high priority.)
     //
     Array(*) boot_array = Scan_UTF8_Managed(
         Intern_Unsized_Managed("-tmp-boot-"),
         utf8,
         utf8_size,
-        Lib_Context  // used by Base + Mezzanine, overruled in SYS
+        Lib_Context  // used by Base + Mezzanine, overruled in SYS.UTIL
     );
     PUSH_GC_GUARD(boot_array); // managed, so must be guarded
 
@@ -1006,37 +1008,45 @@ void Startup_Core(void)
     if (error)
         panic (error);
 
-  //=//// SYS STARTUP //////////////////////////////////////////////////////=//
+  //=//// SYSTEM.UTIL STARTUP /////////////////////////////////////////////=//
 
-    // The SYS context contains supporting Rebol code for implementing "system"
-    // features.  It is lower-level than the LIB context, but has natives,
-    // generics, and the definitions from Startup_Base() available.
+    // The SYSTEM.UTIL context contains supporting Rebol code for implementing
+    // "system" features.  It is lower-level than the LIB context, but has
+    // natives, generics, and the definitions from Startup_Base() available.
     //
-    // See the helper Sys() for a quick way of getting at the functions by
+    // See the helper SysUtil() for a quick way of getting at the functions by
     // their symbol.
     //
-    // (Note: The SYS context should not be confused with "the system object",
-    // which is a different thing.)
+    // (Note: The SYSTEM.UTIL context was renamed from just "SYS" to avoid
+    //  being confused with "the system object", which is a different thing.
+    //  Better was to say SYS was just an abbreviation for SYSTEM.)
+
+    Context(*) util = Alloc_Context_Core(REB_MODULE, 1, NODE_FLAG_MANAGED);
+    ensureNullptr(Sys_Util_Module) = Alloc_Value();
+    Init_Any_Context(Sys_Util_Module, REB_MODULE, util);
+    ensureNullptr(Sys_Context) = VAL_CONTEXT(Sys_Util_Module);
 
     error = rebEntrap(
         //
         // The scan of the boot block interned everything to Lib_Context, but
         // we want to overwrite that with the Sys_Context here.
         //
-        "intern*", Sys_Context_Value, &boot->sys,
+        "sys.util:", Sys_Util_Module,
 
-        "bind/only/set", &boot->sys, Sys_Context_Value,
-        "ensure blank! do", &boot->sys,
+        "intern* sys.util", &boot->system_util,
+
+        "bind/only/set", &boot->system_util, Sys_Util_Module,
+        "ensure blank! do", &boot->system_util,
 
         // SYS contains the implementation of the module machinery itself, so
         // we don't have MODULE or EXPORT available.  Do the exports manually,
         // and then import the results to lib.
         //
-        "set-meta", Sys_Context_Value, "make object! [",
+        "set-meta sys.util make object! [",
             "Name: 'System",  // this is MAKE OBJECT!, not MODULE, must quote
             "Exports: [module load load-value decode encode encoding-of]",
         "]",
-        "sys.import*", Lib_Context_Value, Sys_Context_Value,
+        "sys.util.import*", Lib_Context_Value, Sys_Util_Module,
 
         "null"  // falsey for `if (error)`
     );
@@ -1176,7 +1186,7 @@ void Shutdown_Core(bool clean)
 
     Shutdown_Lib();
 
-    rebReleaseAndNull(&Sys_Context_Value);
+    rebReleaseAndNull(&Sys_Util_Module);
     Sys_Context = nullptr;
 
     rebReleaseAndNull(&User_Context_Value);

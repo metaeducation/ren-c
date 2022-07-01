@@ -1807,7 +1807,7 @@ check-response: function [
 ]
 
 
-sys.make-scheme [
+sys.util.make-scheme [
     name: 'tls
     title: "TLS protocol v1.0"
     spec: make system.standard.port-spec-net []

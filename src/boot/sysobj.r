@@ -41,8 +41,6 @@ catalog: make object! [
 ]
 
 contexts: make object! [
-    root:
-    sys:
     lib:
     user:
         _
@@ -73,6 +71,8 @@ extensions: []
 codecs: make object! []
 
 schemes: make object! []
+
+util: '
 
 ports: make object! [
     wait-list: []   ; List of ports to add to 'wait

@@ -519,8 +519,8 @@ inline static REBVAR *Force_Lib_Var(SYMID id) {
 #define force_Lib(name) \
     Force_Lib_Var(SYM_##name)
 
-#define Sys(symid) \
-    cast(const REBVAR*, MOD_VAR(Sys_Context, Canon_Symbol(symid), true))
+#define SysUtil(name) \
+    cast(const REBVAR*, MOD_VAR(Sys_Context, Canon_Symbol(SYM_##name), true))
 
 
 //=//// CONTINUE VALUE TYPES ///////////////////////////////////////////////=//

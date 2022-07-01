@@ -435,7 +435,7 @@ main-startup: func [
         o.resources: resources-dir
     ]
 
-    sys.script-pre-load-hook: :host-script-pre-load
+    sys.util.script-pre-load-hook: :host-script-pre-load
 
     let do-string: _  ; will be set if a string is given with --do
 

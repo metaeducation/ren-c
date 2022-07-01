@@ -57,7 +57,7 @@ Bounce MAKE_Port(
 
     if (rebRunThrows(
         out,  // <-- output cell
-        Sys(SYM_MAKE_PORT_P), rebQ(arg)
+        SysUtil(MAKE_PORT_P), rebQ(arg)
     )){
         fail (Error_No_Catch_For_Throw(TOP_FRAME));
     }

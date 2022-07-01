@@ -371,7 +371,7 @@ REBNATIVE(do)
         rebPushContinuation(
             OUT,  // <-- output cell
             FRAME_FLAG_MAYBE_STALE,
-            Sys(SYM_DO_P),
+            SysUtil(DO_P),
                 source,
                 rebQ(REF(args)),
                 REF(only) ? Lib(TRUE) : Lib(FALSE)

@@ -728,11 +728,11 @@ mezz-files: load %../mezz/boot-files.r  ; base, sys, mezz
 
 sys-toplevel: copy []
 
-for-each section [boot-base boot-sys boot-mezz] [
+for-each section [boot-base boot-system-util boot-mezz] [
     set section s: make text! 20000
     append/line s "["
     for-each file first mezz-files [  ; doesn't use LOAD to strip
-        gather: try if section = 'boot-sys ['sys-toplevel]
+        gather: try if section = 'boot-system-util ['sys-toplevel]
         text: stripload/gather join %../mezz/ file opt gather
         append/line s text
     ]
@@ -778,7 +778,7 @@ sections: [
     boot-errors
     boot-sysobj
     :boot-base
-    :boot-sys
+    :boot-system-util
     :boot-mezz
 ]
 
@@ -876,7 +876,8 @@ e-boot: make-emitter "Bootstrap Structure and Root Module" (
 fields: collect [
     for-each word sections [
         word: form as word! word
-        remove/part word 5 ; boot_
+        remove/part word 5  ; 5 leading characters, [boot-]xxx
+        word: to-c-name word
         keep cscape/with {Reb_Cell ${word}} 'word
     ]
 ]

@@ -139,13 +139,13 @@ module: func [
     ; probably better to have such cases use MAKE MODULE! instead of MODULE.
     ;
     append mod compose [
-        import: (specialize :sys.import* [where: mod])
+        import: (specialize :sys.util.import* [where: mod])
         intern: (specialize :intern* [where: mod])
 
         ; If you DO a file, it doesn't get an EXPORT operation...only modules.
         ;
         export: (if spec.type = 'Module [
-            specialize :sys.export* [where: mod]
+            specialize :sys.util.export* [where: mod]
         ] else [
             specialize :fail [reason: [
                 {Scripts must be invoked via IMPORT to get EXPORT, not DO:}
