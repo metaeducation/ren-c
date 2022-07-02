@@ -820,7 +820,7 @@ REBVAL *RL_rebArg(const void *p, va_list *vaptr)
 static bool Run_Va_Throws(
     REBVAL *out,
     bool interruptible,  // whether a HALT can cause a longjmp/throw
-    REBFLGS flags,
+    Flags flags,
     const void *p,  // first pointer (may be END, nullptr means NULLED)
     va_list *vaptr  // va_end() handled by feed for all cases (throws, fails)
 ){
@@ -832,7 +832,7 @@ static bool Run_Va_Throws(
     // the intereter will be okay, it's like any line in your program could
     // have half-run.  Review a holistic answer.
     //
-    REBFLGS saved_sigmask = Eval_Sigmask;
+    Flags saved_sigmask = Eval_Sigmask;
     if (interruptible)
         Eval_Sigmask |= SIG_HALT;  // enable
     else
@@ -909,7 +909,7 @@ inline static void Run_Va_May_Fail(
 //
 bool RL_rebRunCoreThrows(
     REBVAL *out,
-    uintptr_t flags,  // REBFLGS not exported in API
+    uintptr_t flags,  // Flags not exported in API
     const void *p, va_list *vaptr
 ){
     bool threw = Eval_Step_In_Va_Throws(

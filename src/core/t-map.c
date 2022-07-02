@@ -413,7 +413,7 @@ inline static REBMAP *Copy_Map(const REBMAP *map, REBU64 types) {
         if (Is_Nulled(v))
             continue; // "zombie" map element (not present)
 
-        REBFLGS flags = NODE_FLAG_MANAGED;  // !!! Review
+        Flags flags = NODE_FLAG_MANAGED;  // !!! Review
         Clonify(v, flags, types);
     }
 

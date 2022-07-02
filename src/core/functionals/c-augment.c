@@ -89,7 +89,7 @@ REBNATIVE(augment_p)  // see extended definition AUGMENT in %base-defs.r
     Init_Trash(PUSH());  // unused
     Init_Nulled(PUSH());  // description slot
 
-    REBFLGS flags = MKF_KEYWORDS;
+    Flags flags = MKF_KEYWORDS;
     if (ACT_HAS_RETURN(augmentee)) {
         flags |= MKF_RETURN;
         definitional_return_dsp = DSP + 4;

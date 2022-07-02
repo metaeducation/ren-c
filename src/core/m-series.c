@@ -54,7 +54,7 @@ void Extend_Series_If_Necessary(REBSER *s, REBLEN delta)
 // middle of a UTF-8 codepoint, hence a string series aliased as a binary
 // could only have its copy used in a BINARY!.
 //
-REBSER *Copy_Series_Core(const REBSER *s, REBFLGS flags)
+REBSER *Copy_Series_Core(const REBSER *s, Flags flags)
 {
     assert(not IS_SER_ARRAY(s));
 
@@ -114,7 +114,7 @@ REBSER *Copy_Series_At_Len_Extra(
     REBLEN index,
     REBLEN len,
     REBLEN extra,
-    REBFLGS flags
+    Flags flags
 ){
     assert(not IS_SER_ARRAY(s));
 

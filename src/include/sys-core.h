@@ -458,7 +458,7 @@ enum rebol_signals {
     SIG_EVENT_PORT = 1 << 3
 };
 
-inline static void SET_SIGNAL(REBFLGS f) { // used in %sys-series.h
+inline static void SET_SIGNAL(Flags f) { // used in %sys-series.h
     Eval_Signals |= f;
 
     if (Eval_Countdown == -1)  // already set to trigger on next tick...

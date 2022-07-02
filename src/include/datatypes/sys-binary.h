@@ -96,7 +96,7 @@ inline static void TERM_BIN_LEN(Binary(*) s, REBLEN len) {
 // terminator in case they are aliased as UTF-8 later, e.g. `as word! binary`,
 // since it could be costly to give them that capacity after-the-fact.
 //
-inline static Binary(*) Make_Binary_Core(REBLEN capacity, REBFLGS flags)
+inline static Binary(*) Make_Binary_Core(REBLEN capacity, Flags flags)
 {
     assert(FLAVOR_BYTE(flags) == 0);  // shouldn't pass in a flavor
 

@@ -82,7 +82,7 @@ struct Reb_State {
     // a PUSH_TRAP to put it back.  We save effort for that case by saving
     // the signal mask and restoring it at the trap states.
     //
-    REBFLGS saved_sigmask;
+    Flags saved_sigmask;
 };
 
 

@@ -42,7 +42,7 @@ void Bind_Values_Inner_Loop(
     Context(*) context,
     REBU64 bind_types, // !!! REVIEW: force word types low enough for 32-bit?
     REBU64 add_midstream_types,
-    REBFLGS flags
+    Flags flags
 ){
     Cell(*) v = head;
     for (; v != tail; ++v) {
@@ -133,7 +133,7 @@ void Bind_Values_Core(
     Cell(const*) context,
     REBU64 bind_types,
     REBU64 add_midstream_types,
-    REBFLGS flags // see %sys-core.h for BIND_DEEP, etc.
+    Flags flags // see %sys-core.h for BIND_DEEP, etc.
 ) {
     struct Reb_Binder binder;
     INIT_BINDER(&binder);
@@ -567,7 +567,7 @@ REBNATIVE(let)
 
     assert(IS_SET_WORD(SPARE) or IS_SET_BLOCK(SPARE));
 
-    REBFLGS flags =
+    Flags flags =
         EVAL_EXECUTOR_FLAG_SINGLE_STEP
         | FLAG_STATE_BYTE(ST_EVALUATOR_REEVALUATING)
         | (f->flags.bits & EVAL_EXECUTOR_FLAG_FULFILLING_ARG);
@@ -684,7 +684,7 @@ REBNATIVE(add_use_object) {
 //
 static void Clonify_And_Bind_Relative(
     REBVAL *v,  // Note: incoming value is not relative
-    REBFLGS flags,
+    Flags flags,
     REBU64 deep_types,
     struct Reb_Binder *binder,
     Action(*) relative
@@ -850,7 +850,7 @@ Array(*) Copy_And_Bind_Relative_Deep_Managed(
     if (index > tail)  // !!! should this be asserted?
         index = tail;
 
-    REBFLGS flags = ARRAY_MASK_HAS_FILE_LINE | NODE_FLAG_MANAGED;
+    Flags flags = ARRAY_MASK_HAS_FILE_LINE | NODE_FLAG_MANAGED;
     REBU64 deep_types = (TS_SERIES | TS_SEQUENCE) & ~TS_NOT_COPIED;
 
     REBLEN len = tail - index;

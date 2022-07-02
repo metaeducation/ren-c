@@ -1168,7 +1168,7 @@ inline static REBVAL *Init_Any_Series_At_Core(
 // Note: This series will not participate in management tracking!
 // See NODE_FLAG_MANAGED handling in Make_Array_Core() and Make_Series().
 //
-inline static REBSER *Prep_Series_Node(void *preallocated, REBFLGS flags) {
+inline static REBSER *Prep_Series_Node(void *preallocated, Flags flags) {
     assert(not (flags & NODE_FLAG_CELL));
 
     REBSER *s = cast(REBSER*, preallocated);  // won't pass SER() yet
@@ -1327,7 +1327,7 @@ inline static bool Did_Series_Data_Alloc(REBSER *s, REBLEN capacity) {
 inline static REBSER *Make_Series_Into(
     void* preallocated,
     REBLEN capacity,
-    REBFLGS flags
+    Flags flags
 ){
     size_t wide = Wide_For_Flavor(
         cast(enum Reb_Series_Flavor, FLAVOR_BYTE(flags))

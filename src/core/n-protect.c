@@ -136,7 +136,7 @@ REBNATIVE(mutable_q) {
 // Derelativize() vs. just blitting the raw bits of a cell around.  (The C++
 // build enforces this by disallowing direct bit assignment via `=`).
 //
-static void Protect_Var(REBVAL *var, REBFLGS flags)
+static void Protect_Var(REBVAL *var, Flags flags)
 {
     if (flags & PROT_WORD) {
         assert(READABLE(var));
@@ -165,7 +165,7 @@ static void Protect_Var(REBVAL *var, REBFLGS flags)
 //
 // Anything that calls this must call Uncolor() when done.
 //
-void Protect_Value(Cell(const*) v, REBFLGS flags)
+void Protect_Value(Cell(const*) v, Flags flags)
 {
     if (Is_Isotope(v))
         return;
@@ -184,7 +184,7 @@ void Protect_Value(Cell(const*) v, REBFLGS flags)
 //
 // Anything that calls this must call Uncolor() when done.
 //
-void Protect_Series(const REBSER *s_const, REBLEN index, REBFLGS flags)
+void Protect_Series(const REBSER *s_const, REBLEN index, Flags flags)
 {
     REBSER *s = m_cast(REBSER*, s_const);  // mutate flags only
 
@@ -222,7 +222,7 @@ void Protect_Series(const REBSER *s_const, REBLEN index, REBFLGS flags)
 //
 // Anything that calls this must call Uncolor() when done.
 //
-void Protect_Context(Context(*) c, REBFLGS flags)
+void Protect_Context(Context(*) c, Flags flags)
 {
     Array(*) varlist = m_cast(Array(*), CTX_VARLIST(c));  // mutate flags only
 
@@ -258,7 +258,7 @@ void Protect_Context(Context(*) c, REBFLGS flags)
 //
 //  Protect_Word_Value: C
 //
-static void Protect_Word_Value(REBVAL *word, REBFLGS flags)
+static void Protect_Word_Value(REBVAL *word, Flags flags)
 {
     if (ANY_WORD(word) and IS_WORD_BOUND(word)) {
         //
@@ -287,7 +287,7 @@ static void Protect_Word_Value(REBVAL *word, REBFLGS flags)
 //
 // Common arguments between protect and unprotect:
 //
-static Bounce Protect_Unprotect_Core(Frame(*) frame_, REBFLGS flags)
+static Bounce Protect_Unprotect_Core(Frame(*) frame_, Flags flags)
 {
     INCLUDE_PARAMS_OF_PROTECT;
 
@@ -406,7 +406,7 @@ REBNATIVE(protect)
     UNUSED(PAR(words));
     UNUSED(PAR(values));
 
-    REBFLGS flags = PROT_SET;
+    Flags flags = PROT_SET;
 
     if (REF(hide))
         flags |= PROT_HIDE;

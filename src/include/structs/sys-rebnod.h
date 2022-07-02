@@ -122,14 +122,14 @@
 #define PLATFORM_BITS \
     (sizeof(uintptr_t) * 8)
 
-// !!! Originally the REBFLGS type was a `uint_fast32_t`.  However, there were
+// !!! Originally the Flags type was a `uint_fast32_t`.  However, there were
 // several cases of the type being used with these macros...which only work
-// with platform sized ints.  If the callsites that use REBFLGS are all
+// with platform sized ints.  If the callsites that use Flags are all
 // changed to not hold things like NODE_FLAG_XXX then this could be changed
 // back, but until then it has to be uintptr_t (which is likely defined to be
 // the same as uint_fast32_t on most platforms anyway).
 //
-typedef uintptr_t REBFLGS;
+typedef uintptr_t Flags;
 
 #if defined(ENDIAN_BIG) // Byte w/most significant bit first
 

@@ -269,7 +269,7 @@ REBNATIVE(combinator)
     Init_Block(expanded_spec, Expanded_Combinator_Spec(ARG(spec)));
 
     Context(*) meta;
-    REBFLGS flags = MKF_KEYWORDS | MKF_RETURN;
+    Flags flags = MKF_KEYWORDS | MKF_RETURN;
     Array(*) paramlist = Make_Paramlist_Managed_May_Fail(
         &meta,
         expanded_spec,
@@ -635,7 +635,7 @@ struct Combinator_Param_State {
 static bool Combinator_Param_Hook(
     const REBKEY *key,
     const REBPAR *param,
-    REBFLGS flags,
+    Flags flags,
     void *opaque
 ){
     UNUSED(flags);

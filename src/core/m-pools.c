@@ -995,7 +995,7 @@ REBNATIVE(swap_contents)
 // Reallocate a series as a given maximum size.  Content in the retained
 // portion of the length will be preserved if NODE_FLAG_NODE is passed in.
 //
-void Remake_Series(REBSER *s, REBLEN units, REBFLGS flags)
+void Remake_Series(REBSER *s, REBLEN units, Flags flags)
 {
     // !!! This routine is being scaled back in terms of what it's allowed to
     // do for the moment; so the method of passing in flags is a bit strange.

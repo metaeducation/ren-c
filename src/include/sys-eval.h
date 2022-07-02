@@ -131,7 +131,7 @@ enum {
 inline static bool Did_Init_Inert_Optimize_Complete(
     REBVAL *out,
     REBFED *feed,
-    REBFLGS *flags
+    Flags *flags
 ){
     assert(SECOND_BYTE(*flags) == 0);  // we might set the STATE byte
     assert(not Is_End(feed->value));  // would be wasting time to call
@@ -259,7 +259,7 @@ inline static bool Eval_Step_Throws(
 inline static bool Eval_Step_In_Subframe_Throws(
     REBVAL *out,
     Frame(*) f,
-    REBFLGS flags
+    Flags flags
 ){
     if (not (flags & FRAME_FLAG_MAYBE_STALE))
         assert(Is_Fresh(out));
@@ -283,7 +283,7 @@ inline static bool Reevaluate_In_Subframe_Throws(
     REBVAL *out,
     Frame(*) f,
     const REBVAL *reval,
-    REBFLGS flags,
+    Flags flags,
     bool enfix
 ){
     assert(SECOND_BYTE(flags) == 0);
@@ -303,7 +303,7 @@ inline static bool Eval_Step_In_Any_Array_At_Throws(
     REBLEN *index_out,
     Cell(const*) any_array,  // Note: legal to have any_array = out
     REBSPC *specifier,
-    REBFLGS flags
+    Flags flags
 ){
     assert(Is_Fresh(out));
 
@@ -355,10 +355,10 @@ inline static bool Eval_Step_In_Any_Array_At_Throws(
 //
 inline static bool Eval_Step_In_Va_Throws(
     REBVAL *out,  // must be initialized, won't change if all empty/invisible
-    REBFLGS feed_flags,
+    Flags feed_flags,
     const void *p,
     va_list *vaptr,
-    REBFLGS eval_flags
+    Flags eval_flags
 ){
     DECLARE_VA_FEED (feed, p, vaptr, feed_flags);
 
@@ -396,7 +396,7 @@ inline static bool Eval_Step_In_Va_Throws(
 
 inline static bool Eval_Value_Core_Throws(
     REBVAL *out,
-    REBFLGS flags,
+    Flags flags,
     Cell(const*) value,  // e.g. a BLOCK! here would just evaluate to itself!
     REBSPC *specifier
 ){

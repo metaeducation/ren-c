@@ -282,7 +282,7 @@ enum {
 };
 
 struct Reb_Collector {
-    REBFLGS flags;
+    Flags flags;
     REBDSP dsp_orig;
     struct Reb_Binder binder;
 };

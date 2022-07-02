@@ -267,7 +267,7 @@ enum COMPARE_CHR_FLAGS {
 //
 static int Compare_Byte(void *thunk, const void *v1, const void *v2)
 {
-    REBFLGS * const flags = cast(REBFLGS*, thunk);
+    Flags * const flags = cast(Flags*, thunk);
 
     Byte b1 = *cast(const Byte*, v1);
     Byte b2 = *cast(const Byte*, v2);
@@ -429,7 +429,7 @@ REBTYPE(Binary)
             Init_Nulled(ARG(value));  // low-level code treats as nothing
         }
 
-        REBFLGS flags = 0;
+        Flags flags = 0;
         if (REF(part))
             flags |= AM_PART;
         if (REF(line))
@@ -471,7 +471,7 @@ REBTYPE(Binary)
 
         REBVAL *pattern = ARG(pattern);
 
-        REBFLGS flags = (
+        Flags flags = (
             (REF(match) ? AM_FIND_MATCH : 0)
             | (REF(case) ? AM_FIND_CASE : 0)
         );
@@ -796,7 +796,7 @@ REBTYPE(Binary)
         if (REF(compare))
             fail (Error_Bad_Refines_Raw());  // !!! not in R3-Alpha
 
-        REBFLGS thunk = 0;
+        Flags thunk = 0;
 
         Copy_Cell(OUT, v);  // copy to output before index adjustment
 

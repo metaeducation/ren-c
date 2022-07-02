@@ -255,7 +255,7 @@ static bool Subparse_Throws(
     REBSPC *input_specifier,
     Frame(*) f,
     option(Array(*)) collection,
-    REBFLGS flags
+    Flags flags
 ){
     assert(ANY_SERIES_KIND(CELL_HEART(input)));
 
@@ -1038,7 +1038,7 @@ static REBIXO To_Thru_Non_Block_Rule(
         // !!! This adjusts it to search for non-literal words, but are there
         // other considerations for how non-block rules act with array input?
         //
-        REBFLGS find_flags = (P_FLAGS & AM_FIND_CASE);
+        Flags find_flags = (P_FLAGS & AM_FIND_CASE);
         DECLARE_LOCAL (temp);
         if (IS_QUOTED(rule)) {  // make `'[foo bar]` match `[foo bar]`
             Derelativize(temp, rule, P_RULE_SPECIFIER);

@@ -37,7 +37,7 @@ Array(*) Copy_Array_At_Extra_Shallow(
     REBLEN index,
     REBSPC *specifier,
     REBLEN extra,
-    REBFLGS flags
+    Flags flags
 ){
     REBLEN len = ARR_LEN(original);
 
@@ -72,7 +72,7 @@ Array(*) Copy_Array_At_Max_Shallow(
     REBSPC *specifier,
     REBLEN max
 ){
-    const REBFLGS flags = 0;
+    const Flags flags = 0;
 
     if (index > ARR_LEN(original))
         return Make_Array_For_Copy(0, flags, original);
@@ -105,7 +105,7 @@ Array(*) Copy_Values_Len_Extra_Shallow_Core(
     REBSPC *specifier,
     REBLEN len,
     REBLEN extra,
-    REBFLGS flags
+    Flags flags
 ){
     Array(*) a = Make_Array_Core(len + extra, flags);
 
@@ -140,7 +140,7 @@ Array(*) Copy_Values_Len_Extra_Shallow_Core(
 //
 void Clonify(
     Cell(*) v,
-    REBFLGS flags,
+    Flags flags,
     REBU64 deep_types
 ){
     if (C_STACK_OVERFLOWING(&deep_types))
@@ -247,7 +247,7 @@ Array(*) Copy_Array_Core_Managed(
     REBSPC *specifier,
     REBLEN tail,
     REBLEN extra,
-    REBFLGS flags,
+    Flags flags,
     REBU64 deep_types
 ){
     if (index > tail) // !!! should this be asserted?
@@ -307,7 +307,7 @@ Array(*) Copy_Rerelativized_Array_Deep_Managed(
     Action(*) before, // references to `before` will be changed to `after`
     Action(*) after
 ){
-    const REBFLGS flags = NODE_FLAG_MANAGED;
+    const Flags flags = NODE_FLAG_MANAGED;
 
     Array(*) copy = Make_Array_For_Copy(ARR_LEN(original), flags, original);
     Cell(const*) src_tail = ARR_TAIL(original);

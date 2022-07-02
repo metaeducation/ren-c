@@ -118,7 +118,7 @@ static void Check_Basics(void)
     // See the %sys-node.h file for an explanation of what these are, and
     // why having them work is fundamental to the API.
 
-    REBFLGS flags
+    Flags flags
         = FLAG_LEFT_BIT(5) | FLAG_SECOND_BYTE(21) | FLAG_SECOND_UINT16(1975);
 
     Byte m = FIRST_BYTE(flags);  // 6th bit from left set (0b00000100 is 4)

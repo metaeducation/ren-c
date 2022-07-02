@@ -875,7 +875,7 @@ REBTYPE(String)
             Init_Nulled(ARG(value));  // low-level treats NULL as nothing
         }
 
-        REBFLGS flags = 0;
+        Flags flags = 0;
         if (REF(part))
             flags |= AM_PART;
         if (REF(line))
@@ -916,7 +916,7 @@ REBTYPE(String)
 
         UNUSED(PAR(series));
 
-        REBFLGS flags = (
+        Flags flags = (
             (REF(match) ? AM_FIND_MATCH : 0)
             | (REF(case) ? AM_FIND_CASE : 0)
         );

@@ -532,7 +532,7 @@ Bounce Action_Executor(Frame(*) f)
                 goto continue_fulfilling;
             }
 
-            REBFLGS flags =
+            Flags flags =
                 EVAL_EXECUTOR_FLAG_SINGLE_STEP
                 | EVAL_EXECUTOR_FLAG_FULFILLING_ARG;
             if (pclass == PARAM_CLASS_META)
@@ -622,7 +622,7 @@ Bounce Action_Executor(Frame(*) f)
                 // to jump into a subframe where subframe->out is the ARG,
                 // and it knows to get the arg from there.
 
-                REBFLGS flags =
+                Flags flags =
                     EVAL_EXECUTOR_FLAG_SINGLE_STEP
                     | EVAL_EXECUTOR_FLAG_FULFILLING_ARG
                     | FLAG_STATE_BYTE(ST_EVALUATOR_LOOKING_AHEAD)

@@ -58,7 +58,7 @@ REBNATIVE(reeval)
 
     bool enfix = IS_ACTION(v) and Get_Action_Flag(VAL_ACTION(v), ENFIXED);
 
-    REBFLGS flags =
+    Flags flags =
         EVAL_EXECUTOR_FLAG_SINGLE_STEP
         | FRAME_FLAG_MAYBE_STALE;
 
@@ -559,7 +559,7 @@ REBNATIVE(evaluate)
             if (Is_End(f->feed->value))
                 return nullptr;
 
-            REBFLGS flags = EVAL_EXECUTOR_FLAG_SINGLE_STEP;
+            Flags flags = EVAL_EXECUTOR_FLAG_SINGLE_STEP;
             if (Eval_Step_In_Subframe_Throws(SPARE, f, flags))
                 return THROWN;
         }

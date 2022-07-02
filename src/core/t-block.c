@@ -381,7 +381,7 @@ REBINT Find_In_Array(
     REBLEN end_unsigned, // ending position
     Cell(const*) target,
     REBLEN len, // length of target
-    REBFLGS flags, // see AM_FIND_XXX
+    Flags flags, // see AM_FIND_XXX
     REBINT skip // skip factor
 ){
     // If not using FIND/ONLY, then looking for an empty block should match
@@ -928,7 +928,7 @@ REBTYPE(Array)
         if (IS_BLANK(pattern))
             return nullptr;  // BLANK! in, NULL out
 
-        REBFLGS flags = (
+        Flags flags = (
             (REF(match) ? AM_FIND_MATCH : 0)
             | (REF(case) ? AM_FIND_CASE : 0)
         );
@@ -1035,7 +1035,7 @@ REBTYPE(Array)
         Array(*) arr = VAL_ARRAY_ENSURE_MUTABLE(array);
         REBLEN index = VAL_INDEX(array);
 
-        REBFLGS flags = 0;
+        Flags flags = 0;
 
         Copy_Cell(OUT, array);
 
@@ -1129,7 +1129,7 @@ REBTYPE(Array)
             }
         }
 
-        REBFLGS flags = ARRAY_MASK_HAS_FILE_LINE;
+        Flags flags = ARRAY_MASK_HAS_FILE_LINE;
 
         // We shouldn't be returning a const value from the copy, but if the
         // input value was const and we don't copy some types deeply, those

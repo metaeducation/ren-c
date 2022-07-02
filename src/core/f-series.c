@@ -44,7 +44,7 @@ Bounce Series_Common_Action_Maybe_Unhandled(
 ){
     REBVAL *v = D_ARG(1);
 
-    REBFLGS sop_flags;  // "SOP_XXX" Set Operation Flags
+    Flags sop_flags;  // "SOP_XXX" Set Operation Flags
 
     SYMID id = ID_OF_SYMBOL(verb);
     switch (id) {

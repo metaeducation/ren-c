@@ -303,7 +303,7 @@ void Evaluator_Exit_Checks_Debug(Frame(*) f) {
   //=//// CHECK FOR STRAY FLAGS ///////////////////////////////////////////=//
 
     if (not Is_Throwing(f)) {
-        REBFLGS filtered = (f->flags.bits & ~FLAG_STATE_BYTE(255));
+        Flags filtered = (f->flags.bits & ~FLAG_STATE_BYTE(255));
         filtered &= ~ (
             FRAME_FLAG_0_IS_TRUE  // always true
             | FRAME_FLAG_7_IS_TRUE  // always true

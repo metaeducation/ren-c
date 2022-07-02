@@ -2145,7 +2145,7 @@ Bounce Scanner_Executor(Frame(*) f) {
         if (Is_Failure(OUT))
             return FAIL(OUT);
 
-        REBFLGS flags = NODE_FLAG_MANAGED;
+        Flags flags = NODE_FLAG_MANAGED;
         if (Get_Executor_Flag(SCAN, SUBFRAME, NEWLINE_PENDING))
             flags |= ARRAY_FLAG_NEWLINE_AT_TAIL;
 
@@ -2426,7 +2426,7 @@ Bounce Scanner_Executor(Frame(*) f) {
         if (Is_Failure(OUT))
             return FAIL(OUT);
 
-        REBFLGS flags = NODE_FLAG_MANAGED;
+        Flags flags = NODE_FLAG_MANAGED;
         if (Get_Executor_Flag(SCAN, f, NEWLINE_PENDING))
             flags |= ARRAY_FLAG_NEWLINE_AT_TAIL;
 
@@ -2964,7 +2964,7 @@ Array(*) Scan_UTF8_Managed(
     if (Trampoline_With_Top_As_Root_Throws())
         fail (Error_No_Catch_For_Throw(f));
 
-    REBFLGS flags = NODE_FLAG_MANAGED;
+    Flags flags = NODE_FLAG_MANAGED;
     if (Get_Executor_Flag(SCAN, f, NEWLINE_PENDING))
         flags |= ARRAY_FLAG_NEWLINE_AT_TAIL;
 
@@ -3137,7 +3137,7 @@ REBNATIVE(transcode)
         ? VAL_CONTEXT(ARG(where))
         : cast(Context(*), nullptr);  // C++98 ambiguous w/o cast
 
-    REBFLGS flags =
+    Flags flags =
         FRAME_FLAG_TRAMPOLINE_KEEPALIVE  // query pending newline
         | FRAME_FLAG_FAILURE_RESULT_OK;  // want to pass on definitional error
     if (REF(next))
@@ -3190,7 +3190,7 @@ REBNATIVE(transcode)
         }
     }
     else {
-        REBFLGS flags = NODE_FLAG_MANAGED;
+        Flags flags = NODE_FLAG_MANAGED;
         if (Get_Executor_Flag(SCAN, SUBFRAME, NEWLINE_PENDING))
             flags |= ARRAY_FLAG_NEWLINE_AT_TAIL;
 
@@ -3395,7 +3395,7 @@ option(Array(*)) Try_Scan_Utf8_For_Detect_Feed_Pointer_Managed(
         return nullptr;
     }
 
-    REBFLGS flags = SERIES_FLAG_MANAGED;
+    Flags flags = SERIES_FLAG_MANAGED;
     Array(*) reified = Pop_Stack_Values_Core(f->baseline.dsp, flags);
     Drop_Frame(f);
     return reified;

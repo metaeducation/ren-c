@@ -56,7 +56,7 @@
 REBSER *Make_Set_Operation_Series(
     const REBVAL *val1,
     const REBVAL *val2,
-    REBFLGS flags,
+    Flags flags,
     bool cased,
     REBLEN skip
 ){

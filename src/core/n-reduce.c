@@ -162,7 +162,7 @@ REBNATIVE(reduce)
 
     Drop_Frame_Unbalanced(SUBFRAME);  // Drop_Frame() asserts on accumulation
 
-    REBFLGS pop_flags = NODE_FLAG_MANAGED | ARRAY_MASK_HAS_FILE_LINE;
+    Flags pop_flags = NODE_FLAG_MANAGED | ARRAY_MASK_HAS_FILE_LINE;
     if (Get_Subclass_Flag(ARRAY, VAL_ARRAY(v), NEWLINE_AT_TAIL))
         pop_flags |= ARRAY_FLAG_NEWLINE_AT_TAIL;
 
@@ -216,7 +216,7 @@ REBNATIVE(reduce_each)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    REBFLGS flags =
+    Flags flags =
         EVAL_EXECUTOR_FLAG_SINGLE_STEP
         | FRAME_FLAG_TRAMPOLINE_KEEPALIVE;
 
@@ -407,7 +407,7 @@ static Value(*) Finalize_Composer_Frame(
         return Quotify(out, quotes);  // may not be sequence, see [2]
     }
 
-    REBFLGS flags = NODE_FLAG_MANAGED | ARRAY_MASK_HAS_FILE_LINE;
+    Flags flags = NODE_FLAG_MANAGED | ARRAY_MASK_HAS_FILE_LINE;
     if (Get_Subclass_Flag(ARRAY, VAL_ARRAY(composee), NEWLINE_AT_TAIL))
         flags |= ARRAY_FLAG_NEWLINE_AT_TAIL;  // proxy newline flag, see [3]
 

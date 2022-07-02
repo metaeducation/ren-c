@@ -177,7 +177,7 @@ inline static Frame(*) Maybe_Rightward_Continuation_Needed(Frame(*) f)
 
     RESET(OUT);  // all SET-XXX! overwrite out, see [2]
 
-    REBFLGS flags =
+    Flags flags =
         EVAL_EXECUTOR_FLAG_SINGLE_STEP  // v-- if f was fulfilling, we are
         | (f->flags.bits & EVAL_EXECUTOR_FLAG_FULFILLING_ARG);
 
@@ -1474,7 +1474,7 @@ Bounce Evaluator_Executor(Frame(*) f)
         // jumping into the evaluator at the ST_EVALUATOR_LOOKING_AHEAD state.
         //
         if (VAL_TYPE_UNCHECKED(f_next) == REB_WORD) {  // tolerate REB_0_END
-            REBFLGS flags =
+            Flags flags =
                 EVAL_EXECUTOR_FLAG_SINGLE_STEP
                 | FLAG_STATE_BYTE(ST_EVALUATOR_LOOKING_AHEAD)
                 | EVAL_EXECUTOR_FLAG_INERT_OPTIMIZATION  // tolerate enfix late

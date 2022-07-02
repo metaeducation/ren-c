@@ -321,7 +321,7 @@ void Expand_Data_Stack_May_Fail(REBLEN amount)
 //
 // !!! How can we pass in callsite file/line for tracking info?
 //
-Array(*) Pop_Stack_Values_Core(REBDSP dsp_start, REBFLGS flags)
+Array(*) Pop_Stack_Values_Core(REBDSP dsp_start, Flags flags)
 {
     ASSERT_NO_DATA_STACK_POINTERS_EXTANT();  // in the future, pop may disrupt
 

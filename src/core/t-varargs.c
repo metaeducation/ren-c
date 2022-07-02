@@ -302,7 +302,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
         //
         switch (pclass) {
         case PARAM_CLASS_NORMAL: {
-            REBFLGS flags =
+            Flags flags =
                 EVAL_EXECUTOR_FLAG_SINGLE_STEP
                 | EVAL_EXECUTOR_FLAG_FULFILLING_ARG;
 

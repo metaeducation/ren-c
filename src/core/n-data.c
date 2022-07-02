@@ -515,7 +515,7 @@ REBNATIVE(collect_words)
 {
     INCLUDE_PARAMS_OF_COLLECT_WORDS;
 
-    REBFLGS flags;
+    Flags flags;
     if (REF(set))
         flags = COLLECT_ONLY_SET_WORDS;
     else

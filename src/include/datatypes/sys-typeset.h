@@ -316,7 +316,7 @@ inline static REBVAL *Init_Typeset_Core(Cell(*) out, REBU64 bits)
 
 inline static REBPAR *Init_Param_Core(
     Cell(*) out,
-    REBFLGS param_flags,
+    Flags param_flags,
     REBU64 bits
 ){
     Reset_Cell_Header_Untracked(out, REB_TYPESET, CELL_MASK_NONE);

@@ -123,6 +123,6 @@ typedef enum {
 typedef bool (PARAM_HOOK)(
     const REBKEY *key,
     const REBPAR *param,
-    REBFLGS flags,
+    Flags flags,
     void *opaque
 );

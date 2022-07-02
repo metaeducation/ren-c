@@ -468,7 +468,7 @@ inline static void Drop_Frame(Frame(*) f)
 inline static void Prep_Frame_Core(
     Frame(*) f,
     REBFED *feed,
-    REBFLGS flags
+    Flags flags
 ){
    if (f == nullptr)  // e.g. a failed allocation
        fail (Error_No_Memory(sizeof(struct Reb_Frame)));
@@ -634,7 +634,7 @@ inline static void FAIL_IF_BAD_RETURN_TYPE(Frame(*) f) {
 
 inline static bool Eval_Value_Core_Throws(
     REBVAL *out,
-    REBFLGS flags,
+    Flags flags,
     Cell(const*) value,  // e.g. a BLOCK! here would just evaluate to itself!
     REBSPC *specifier
 );
@@ -684,7 +684,7 @@ inline static bool Eval_Value_Core_Throws(
 //
 inline static bool Pushed_Continuation(
     REBVAL *out,
-    REBFLGS flags,  // FRAME_FLAG_BRANCH, etc. for pushed frames
+    Flags flags,  // FRAME_FLAG_BRANCH, etc. for pushed frames
     Cell(const*) branch,
     REBSPC *branch_specifier,
     const REBVAL *with  // can be same as out or not GC-safe, copied if needed
@@ -872,7 +872,7 @@ inline static bool Pushed_Continuation(
 inline static Bounce Continue_Subframe_Helper(
     Frame(*) f,
     bool must_be_dispatcher,
-    REBFLGS catches_flag,
+    Flags catches_flag,
     Frame(*) sub
 ){
     if (must_be_dispatcher)

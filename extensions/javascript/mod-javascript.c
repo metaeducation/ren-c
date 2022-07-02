@@ -819,7 +819,7 @@ REBNATIVE(js_native)
     REBVAL *source = ARG(source);
 
     Context(*) meta;
-    REBFLGS flags = MKF_RETURN | MKF_KEYWORDS;
+    Flags flags = MKF_RETURN | MKF_KEYWORDS;
     Array(*) paramlist = Make_Paramlist_Managed_May_Fail(
         &meta,
         spec,

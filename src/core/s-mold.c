@@ -461,7 +461,7 @@ void Mold_Or_Form_Value(REB_MOLD *mo, Cell(const*) v, bool form)
 //
 // Form a value based on the mold opts provided.
 //
-String(*) Copy_Mold_Or_Form_Value(Cell(const*) v, REBFLGS opts, bool form)
+String(*) Copy_Mold_Or_Form_Value(Cell(const*) v, Flags opts, bool form)
 {
     DECLARE_MOLD (mo);
     mo->opts = opts;
@@ -477,7 +477,7 @@ String(*) Copy_Mold_Or_Form_Value(Cell(const*) v, REBFLGS opts, bool form)
 //
 // Form a value based on the mold opts provided.
 //
-String(*) Copy_Mold_Or_Form_Cell(noquote(Cell(const*)) cell, REBFLGS opts, bool form)
+String(*) Copy_Mold_Or_Form_Cell(noquote(Cell(const*)) cell, Flags opts, bool form)
 {
     DECLARE_MOLD (mo);
     mo->opts = opts;

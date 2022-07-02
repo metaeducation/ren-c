@@ -223,7 +223,7 @@ Bounce Func_Dispatcher(Frame(*) f)
 Action(*) Make_Interpreted_Action_May_Fail(
     const REBVAL *spec,
     const REBVAL *body,
-    REBFLGS mkf_flags,  // MKF_RETURN, etc.
+    Flags mkf_flags,  // MKF_RETURN, etc.
     Dispatcher* dispatcher,
     REBLEN details_capacity
 ){

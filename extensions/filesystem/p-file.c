@@ -488,7 +488,7 @@ Bounce File_Actor(Frame(*) frame_, REBVAL *port, Symbol(const*) verb)
 
         UNUSED(PAR(spec));
 
-        REBFLGS flags = 0;
+        Flags flags = 0;
 
         if (REF(new))
             flags |= UV_FS_O_CREAT | UV_FS_O_TRUNC;

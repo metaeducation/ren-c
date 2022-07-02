@@ -136,7 +136,7 @@ enum {
 // volume when no root slash was provided.  It was an odd case to support
 // the MSDOS convention of `c:file`.  That is not done here.
 //
-String(*) To_REBOL_Path(Cell(const*) string, REBFLGS flags)
+String(*) To_REBOL_Path(Cell(const*) string, Flags flags)
 {
     assert(IS_TEXT(string));
 
@@ -240,7 +240,7 @@ enum {
 // Implementation routine of To_Local_Path which leaves the path in the mold
 // buffer (e.g. for further appending or just counting the number of bytes)
 //
-void Mold_File_To_Local(REB_MOLD *mo, Cell(const*) file, REBFLGS flags) {
+void Mold_File_To_Local(REB_MOLD *mo, Cell(const*) file, Flags flags) {
     assert(IS_FILE(file));
 
     REBLEN len;
@@ -464,7 +464,7 @@ void Mold_File_To_Local(REB_MOLD *mo, Cell(const*) file, REBFLGS flags) {
 // Convert Rebol-format filename to a local-format filename.  This is the
 // opposite operation of To_REBOL_Path.
 //
-String(*) To_Local_Path(Cell(const*) file, REBFLGS flags) {
+String(*) To_Local_Path(Cell(const*) file, Flags flags) {
     DECLARE_MOLD (mo);
     Push_Mold(mo);
 

@@ -551,7 +551,7 @@ void For_Each_Unspecialized_Param(
         if (VAL_PARAM_CLASS(param) == PARAM_CLASS_RETURN)
             continue;
 
-        REBFLGS flags = 0;
+        Flags flags = 0;
 
         if (partials) {  // even normal parameters can appear in partials
             Cell(const*) partial_tail = ARR_TAIL(unwrap(partials));
@@ -641,7 +641,7 @@ struct Find_Param_State {
 static bool First_Param_Hook(
     const REBKEY *key,
     const REBPAR *param,
-    REBFLGS flags,
+    Flags flags,
     void *opaque
 ){
     struct Find_Param_State *s = cast(struct Find_Param_State*, opaque);
@@ -658,7 +658,7 @@ static bool First_Param_Hook(
 static bool Last_Param_Hook(
     const REBKEY *key,
     const REBPAR *param,
-    REBFLGS flags,
+    Flags flags,
     void *opaque
 ){
     struct Find_Param_State *s = cast(struct Find_Param_State*, opaque);

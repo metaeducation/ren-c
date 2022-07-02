@@ -160,7 +160,7 @@ PVAR Array(*) PG_Extension_Types;  // array of datatypes created by extensions
 
 // This signal word should be thread-local, but it will not work
 // when implemented that way. Needs research!!!!
-PVAR REBFLGS Eval_Signals;   // Signal flags
+PVAR Flags Eval_Signals;   // Signal flags
 
 // !!! R3-Alpha was prescriptive about the design of devices and how they
 // managed requests.  Ren-C pulls back on this and has devices manage their
@@ -274,9 +274,9 @@ TVAR REBI64 Total_Eval_Cycles;      // Total evaluation counter (upward)
 TVAR REBI64 Eval_Limit;             // Evaluation limit (set by secure)
 TVAR int_fast32_t Eval_Countdown;  // Evaluation counter until Do_Signals()
 TVAR int_fast32_t Eval_Dose;        // Evaluation counter reset value
-TVAR REBFLGS Eval_Sigmask;          // Masking out signal flags
+TVAR Flags Eval_Sigmask;          // Masking out signal flags
 
-TVAR REBFLGS Trace_Flags;    // Trace flag
+TVAR Flags Trace_Flags;    // Trace flag
 TVAR REBINT Trace_Level;    // Trace depth desired
 TVAR REBINT Trace_Depth;    // Tracks trace indentation
 TVAR REBLEN Trace_Limit;    // Backtrace buffering limit

@@ -426,7 +426,7 @@ inline static void Init_Cell_Header_Untracked(
 inline static REBVAL *RESET_CUSTOM_CELL(
     Cell(*) out,
     REBTYP *type,
-    REBFLGS flags
+    Flags flags
 ){
     Reset_Cell_Header_Untracked(out, REB_CUSTOM, flags);
     EXTRA(Any, out).node = type;
@@ -668,7 +668,7 @@ inline static void Copy_Cell_Header(
 inline static Cell(*) Copy_Cell_Untracked(
     Cell(*) out,
     Cell(const*) v,
-    REBFLGS copy_mask  // typically you don't copy UNEVALUATED, PROTECTED, etc
+    Flags copy_mask  // typically you don't copy UNEVALUATED, PROTECTED, etc
 ){
     assert(out != v);  // usually a sign of a mistake; not worth supporting
     assert(VAL_TYPE_UNCHECKED(v) != REB_0_END);  // faster than Not_End()
@@ -712,7 +712,7 @@ inline static Cell(*) Copy_Cell_Untracked(
     inline static REBVAL *Copy_Cell_Untracked(
         Cell(*) out,
         const REBVAL *v,
-        REBFLGS copy_mask
+        Flags copy_mask
     ){
         return cast(REBVAL*, Copy_Cell_Untracked(
             out,
@@ -724,7 +724,7 @@ inline static Cell(*) Copy_Cell_Untracked(
     inline static REBVAL *Copy_Cell_Untracked(
         REBVAL *out,
         const REBVAL *v,
-        REBFLGS copy_mask
+        Flags copy_mask
     ){
         return cast(REBVAL*, Copy_Cell_Untracked(
             cast(Cell(*), out),
@@ -736,7 +736,7 @@ inline static Cell(*) Copy_Cell_Untracked(
     inline static Cell(*) Copy_Cell_Untracked(
         REBVAL *out,
         Cell(const*) v,
-        REBFLGS copy_mask
+        Flags copy_mask
     ) = delete;
 #endif
 

@@ -198,7 +198,7 @@ inline static void Prep_Array(
 inline static Array(*) Make_Array_Core_Into(
     void* preallocated,
     REBLEN capacity,
-    REBFLGS flags
+    Flags flags
 ){
   #if DEBUG_TERM_ARRAYS
     if (capacity > 1 or (flags & SERIES_FLAG_DYNAMIC))  // space for term
@@ -263,7 +263,7 @@ inline static Array(*) Make_Array_Core_Into(
 //
 inline static Array(*) Make_Array_For_Copy(
     REBLEN capacity,
-    REBFLGS flags,
+    Flags flags,
     Array(const*) original
 ){
     if (original and Has_Newline_At_Tail(original)) {
@@ -301,7 +301,7 @@ inline static Array(*) Make_Array_For_Copy(
 //
 // For `flags`, be sure to consider if you need ARRAY_FLAG_HAS_FILE_LINE.
 //
-inline static Array(*) Alloc_Singular(REBFLGS flags) {
+inline static Array(*) Alloc_Singular(Flags flags) {
     assert(not (flags & SERIES_FLAG_DYNAMIC));
     return Make_Array_Core(1, flags | SERIES_FLAG_FIXED_SIZE);
 }
@@ -367,7 +367,7 @@ inline static Array(*) Copy_Array_At_Extra_Deep_Flags_Managed(
     REBLEN index,
     REBSPC *specifier,
     REBLEN extra,
-    REBFLGS flags
+    Flags flags
 ){
     return Copy_Array_Core_Managed(
         original,

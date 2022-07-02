@@ -37,7 +37,7 @@ struct Params_Of_State {
 static bool Params_Of_Hook(
     const REBKEY *key,
     const REBPAR *param,
-    REBFLGS flags,
+    Flags flags,
     void *opaque
 ){
     struct Params_Of_State *s = cast(struct Params_Of_State*, opaque);
@@ -125,7 +125,7 @@ enum Reb_Spec_Mode {
 //
 void Push_Paramlist_Triads_May_Fail(
     const REBVAL *spec,
-    REBFLGS *flags,
+    Flags *flags,
     REBDSP *definitional_return_dsp
 ){
     assert(IS_BLOCK(spec));
@@ -491,7 +491,7 @@ void Push_Paramlist_Triads_May_Fail(
 Array(*) Pop_Paramlist_With_Meta_May_Fail(
     Context(*) *meta,
     REBDSP dsp_orig,
-    REBFLGS flags,
+    Flags flags,
     REBDSP definitional_return_dsp
 ){
     // Definitional RETURN slots must have their argument value fulfilled with
@@ -850,7 +850,7 @@ Array(*) Pop_Paramlist_With_Meta_May_Fail(
 Array(*) Make_Paramlist_Managed_May_Fail(
     Context(*) *meta,
     const REBVAL *spec,
-    REBFLGS *flags  // flags may be modified to carry additional information
+    Flags *flags  // flags may be modified to carry additional information
 ){
     REBDSP dsp_orig = DSP;
     assert(TOP == Data_Stack_At(dsp_orig));
@@ -1208,7 +1208,7 @@ REBNATIVE(tweak)
         ? VAL_PARAM_CLASS(first)
         : PARAM_CLASS_NORMAL;  // imagine it as <end>able
 
-    REBFLGS flag;
+    Flags flag;
 
     switch (VAL_WORD_ID(ARG(property))) {
       case SYM_BARRIER:   // don't allow being taken as an argument, e.g. |

@@ -860,7 +860,7 @@ Context(*) Copy_Context_Extra_Managed(
             CELL_MASK_COPY | CELL_FLAG_VAR_MARKED_HIDDEN
         );
 
-        REBFLGS flags = NODE_FLAG_MANAGED;  // !!! Review, which flags?
+        Flags flags = NODE_FLAG_MANAGED;  // !!! Review, which flags?
         Clonify(dest, flags, types);
     }
 

@@ -643,7 +643,7 @@ REBNATIVE(all)
     if (VAL_LEN_AT(block) == 0)
         return VOID;
 
-    REBFLGS flags =
+    Flags flags =
         EVAL_EXECUTOR_FLAG_SINGLE_STEP
         | FRAME_FLAG_MAYBE_STALE
         | FRAME_FLAG_TRAMPOLINE_KEEPALIVE;
@@ -767,7 +767,7 @@ REBNATIVE(any)
     if (VAL_LEN_AT(block) == 0)
         return VOID;
 
-    REBFLGS flags =
+    Flags flags =
         EVAL_EXECUTOR_FLAG_SINGLE_STEP
         | FRAME_FLAG_MAYBE_STALE
         | FRAME_FLAG_TRAMPOLINE_KEEPALIVE;

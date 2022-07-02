@@ -110,8 +110,8 @@ bool Do_Signals_Throws(Frame(*) frame_)
     //
     // !!! This seems overdesigned considering SIG_EVENT_PORT isn't used.
     //
-    REBFLGS filtered_sigs = Eval_Signals & Eval_Sigmask;
-    REBFLGS saved_sigmask = Eval_Sigmask;
+    Flags filtered_sigs = Eval_Signals & Eval_Sigmask;
+    Flags saved_sigmask = Eval_Sigmask;
     Eval_Sigmask = 0;
 
     // "Be careful of signal loops! EG: do not PRINT from here."

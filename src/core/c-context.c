@@ -33,7 +33,7 @@
 // Create context with capacity, allocating space for both words and values.
 // Context will report actual CTX_LEN() of 0 after this call.
 //
-Context(*) Alloc_Context_Core(enum Reb_Kind kind, REBLEN capacity, REBFLGS flags)
+Context(*) Alloc_Context_Core(enum Reb_Kind kind, REBLEN capacity, Flags flags)
 {
     REBSER *keylist = Make_Series(
         capacity,  // no terminator
@@ -281,7 +281,7 @@ REBVAR *Append_Context(
 // indices.  The symbols are collected on the stack.  Use Collect_End() to
 // free the map.
 //
-void Collect_Start(struct Reb_Collector* collector, REBFLGS flags)
+void Collect_Start(struct Reb_Collector* collector, Flags flags)
 {
     collector->flags = flags;
     collector->dsp_orig = DSP;
@@ -415,7 +415,7 @@ REBSER *Collect_Keylist_Managed(
     Cell(const*) head,
     Cell(const*) tail,
     option(Context(*)) prior,
-    REBFLGS flags  // see %sys-core.h for COLLECT_ANY_WORD, etc.
+    Flags flags  // see %sys-core.h for COLLECT_ANY_WORD, etc.
 ) {
     struct Reb_Collector collector;
     struct Reb_Collector *cl = &collector;
@@ -466,7 +466,7 @@ REBSER *Collect_Keylist_Managed(
 Array(*) Collect_Unique_Words_Managed(
     Cell(const*) head,
     Cell(const*) tail,
-    REBFLGS flags,  // See COLLECT_XXX
+    Flags flags,  // See COLLECT_XXX
     const REBVAL *ignorables  // BLOCK!, ANY-CONTEXT!, or BLANK! for none
 ){
     // We do not want to fail() during the bind at this point in time (the
@@ -671,7 +671,7 @@ Context(*) Make_Context_Detect_Managed(
         const REBVAR *src_tail;
         REBVAL *src = CTX_VARS(&src_tail, unwrap(parent));
         for (; src != src_tail; ++dest, ++src) {
-            REBFLGS flags = NODE_FLAG_MANAGED;  // !!! Review, what flags?
+            Flags flags = NODE_FLAG_MANAGED;  // !!! Review, what flags?
             assert(Is_Nulled(dest));
             Copy_Cell(dest, src);
             Clonify(dest, flags, TS_CLONE);

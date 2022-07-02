@@ -297,7 +297,7 @@ REBNATIVE(make_native)
     REBVAL *source = ARG(source);
 
     Context(*) meta;
-    REBFLGS flags = MKF_MASK_NONE;  // natives can't use <none>, <void>
+    Flags flags = MKF_MASK_NONE;  // natives can't use <none>, <void>
     Array(*) paramlist = Make_Paramlist_Managed_May_Fail(
         &meta,
         ARG(spec),

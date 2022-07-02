@@ -33,7 +33,7 @@
 // of encoded data.  Note that this is not a guarantee of being able to hold
 // more than `encoded_capacity / UNI_ENCODED_MAX` unencoded codepoints...
 //
-String(*) Make_String_Core(REBSIZ encoded_capacity, REBFLGS flags)
+String(*) Make_String_Core(REBSIZ encoded_capacity, Flags flags)
 {
     assert(FLAVOR_BYTE(flags) == 0);  // shouldn't have a flavor
 

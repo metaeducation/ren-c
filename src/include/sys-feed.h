@@ -540,7 +540,7 @@ inline static void Prep_Array_Feed(
     Array(const*) array,
     REBLEN index,
     REBSPC *specifier,
-    REBFLGS flags
+    Flags flags
 ){
     feed->flags.bits = flags;
 
@@ -592,7 +592,7 @@ inline static void Prep_Va_Feed(
     struct Reb_Feed *feed,
     const void *p,
     option(va_list*) vaptr,
-    REBFLGS flags
+    Flags flags
 ){
     // We want to initialize with something that will give back SPECIFIED.
     // It must therefore be bindable.  Try a COMMA!
@@ -627,11 +627,11 @@ inline static void Prep_Any_Array_Feed(
     REBFED *feed,
     noquote(Cell(const*)) any_array,  // array is extracted and HOLD put on
     REBSPC *specifier,
-    REBFLGS parent_flags  // only reads FEED_FLAG_CONST out of this
+    Flags parent_flags  // only reads FEED_FLAG_CONST out of this
 ){
     // Note that `CELL_FLAG_CONST == FEED_FLAG_CONST`
     //
-    REBFLGS flags;
+    Flags flags;
     if (Get_Cell_Flag(any_array, EXPLICITLY_MUTABLE))
         flags = FEED_MASK_DEFAULT;  // override const from parent frame
     else

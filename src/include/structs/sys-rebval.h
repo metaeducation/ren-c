@@ -353,7 +353,7 @@
     ~(CELL_MASK_PERSIST | CELL_FLAG_NOTE | CELL_FLAG_UNEVALUATED)
 
 #define CELL_MASK_ALL \
-    ~cast(REBFLGS, 0)
+    ~cast(Flags, 0)
 
 #if DEBUG_POISON_CELLS
     #define CELL_MASK_POISON \

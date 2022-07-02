@@ -396,7 +396,7 @@ inline static Cell(*) Isotopify_If_Nulled(Cell(*) v) {
 inline static REBVAL *Move_Cell_Untracked(
     Cell(*) out,
     REBVAL *v,
-    REBFLGS copy_mask
+    Flags copy_mask
 ){
     Copy_Cell_Untracked(out, v, copy_mask);  // Move_Cell() adds track to `out`
     RESET_Untracked(v);  // not useful to track and just implicate Move_Cell()

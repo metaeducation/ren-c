@@ -142,7 +142,7 @@ REBINT Find_Binstr_In_Binstr(
     REBLEN end1_unsigned,  // end binstr1 *index* (not a limiting *length*)
     noquote(Cell(const*)) binstr2,  // pattern to be found
     REBLEN limit2,  // in units of binstr2 (usually VAL_LEN_AT(binstr2))
-    REBFLGS flags,  // AM_FIND_CASE, AM_FIND_MATCH
+    Flags flags,  // AM_FIND_CASE, AM_FIND_MATCH
     REBINT skip1  // in length units of binstr1 (bytes or codepoints)
 ){
   #if !defined(NDEBUG)
@@ -442,7 +442,7 @@ REBINT Find_Bitset_In_Binstr(
     REBLEN end_unsigned,
     REBINT skip,
     Binary(const*) bset,
-    REBFLGS flags
+    Flags flags
 ){
   #if !defined(NDEBUG)
     *len_out = 0xDECAFBAD;
