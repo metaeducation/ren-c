@@ -531,7 +531,7 @@ inline static void Prep_Frame_Core(
 //
 // These accessors are what is behind the INCLUDE_PARAMS_OF_XXX macros that
 // are used in natives.  They capture the implicit Reb_Frame* passed to every
-// REBNATIVE ('frame_') and read the information out cleanly, like this:
+// DECLARE_NATIVE ('frame_') and read the information out cleanly, like this:
 //
 //     PARAM(1, foo);
 //     PARAM(2, bar);

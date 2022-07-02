@@ -323,7 +323,7 @@ Bounce TO_String(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 //      /relax "Allow invisible codepoints like CR when converting BINARY!"
 //  ]
 //
-REBNATIVE(to_text)
+DECLARE_NATIVE(to_text)
 {
     INCLUDE_PARAMS_OF_TO_TEXT;
 

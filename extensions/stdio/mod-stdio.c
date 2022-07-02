@@ -58,7 +58,7 @@ extern Bounce Console_Actor(Frame(*) frame_, REBVAL *port, Symbol(const*) verb);
 //      return: [handle!]
 //  ]
 //
-REBNATIVE(get_console_actor_handle)
+DECLARE_NATIVE(get_console_actor_handle)
 {
     Make_Port_Actor_Handle(OUT, &Console_Actor);
     return OUT;
@@ -71,7 +71,7 @@ REBNATIVE(get_console_actor_handle)
 //      return: <none>
 //  ]
 //
-REBNATIVE(startup_p)
+DECLARE_NATIVE(startup_p)
 {
     STDIO_INCLUDE_PARAMS_OF_STARTUP_P;
 
@@ -96,7 +96,7 @@ REBNATIVE(startup_p)
 //          "Text to write, if a STRING! or CHAR! is converted to OS format"
 //  ]
 //
-REBNATIVE(write_stdout)
+DECLARE_NATIVE(write_stdout)
 //
 // Note: It is sometimes desirable to write raw binary data to stdout.  e.g.
 // CGI scripts may be hooked up to stream data for a download, and not want the
@@ -166,7 +166,7 @@ REBNATIVE(write_stdout)
 //          [integer!]
 //  ]
 //
-REBNATIVE(read_stdin)
+DECLARE_NATIVE(read_stdin)
 //
 // READ-LINE caters to the needs of the console and always returns TEXT!.  So
 // it will error if input is redirected from a file that is not UTF-8.  But
@@ -233,7 +233,7 @@ REBNATIVE(read_stdin)
 //      /hide "Mask input with a * character (not implemented)"
 //  ]
 //
-REBNATIVE(read_line)
+DECLARE_NATIVE(read_line)
 {
     STDIO_INCLUDE_PARAMS_OF_READ_LINE;
 
@@ -393,7 +393,7 @@ REBNATIVE(read_line)
 //          [integer! decimal!]
 //  ]
 //
-REBNATIVE(read_char)
+DECLARE_NATIVE(read_char)
 //
 // Note: There is no EOF signal here as in READ-LINE.  Because READ-LINE in
 // raw mode needed to distinguishing between termination due to newline and
@@ -543,7 +543,7 @@ REBNATIVE(read_char)
 //      return: <none>
 //  ]
 //
-REBNATIVE(shutdown_p)
+DECLARE_NATIVE(shutdown_p)
 {
     STDIO_INCLUDE_PARAMS_OF_SHUTDOWN_P;
 

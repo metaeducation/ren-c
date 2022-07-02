@@ -1199,7 +1199,7 @@ static void Handle_Seek_Rule_Dont_Update_Begin(
 //      <local> position num-quotes save
 //  ]
 //
-REBNATIVE(subparse)
+DECLARE_NATIVE(subparse)
 //
 // Rules are matched until one of these things happens:
 //
@@ -2697,7 +2697,7 @@ REBNATIVE(subparse)
 //      /redbol "Use Rebol2/Red-style rules vs. UPARSE-style rules"
 //  ]
 //
-REBNATIVE(parse_p)
+DECLARE_NATIVE(parse_p)
 //
 // https://forum.rebol.info/t/1084
 {
@@ -2821,7 +2821,7 @@ REBNATIVE(parse_p)
 //      return: []  ; !!! Notation for divergent function?
 //  ]
 //
-REBNATIVE(parse_accept)
+DECLARE_NATIVE(parse_accept)
 //
 // !!! This was not created for user usage, but rather as a label for the
 // internal throw used to indicate "accept".
@@ -2839,7 +2839,7 @@ REBNATIVE(parse_accept)
 //      return: []  ; !!! Notation for divergent function?
 //  ]
 //
-REBNATIVE(parse_reject)
+DECLARE_NATIVE(parse_reject)
 //
 // !!! This was not created for user usage, but rather as a label for the
 // internal throw used to indicate "reject".

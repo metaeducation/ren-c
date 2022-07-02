@@ -157,7 +157,7 @@ String(*) Decode_UTF16(
 //      data [binary!]
 //  ]
 //
-REBNATIVE(identify_text_q)
+DECLARE_NATIVE(identify_text_q)
 {
     UTF_INCLUDE_PARAMS_OF_IDENTIFY_TEXT_Q;
 
@@ -176,7 +176,7 @@ REBNATIVE(identify_text_q)
 //      data [binary!]
 //  ]
 //
-REBNATIVE(decode_text)
+DECLARE_NATIVE(decode_text)
 {
     UTF_INCLUDE_PARAMS_OF_DECODE_TEXT;
 
@@ -205,7 +205,7 @@ REBNATIVE(decode_text)
 //      string [text!]
 //  ]
 //
-REBNATIVE(encode_text)
+DECLARE_NATIVE(encode_text)
 {
     UTF_INCLUDE_PARAMS_OF_ENCODE_TEXT;
 
@@ -264,7 +264,7 @@ static REBSER *Encode_Utf16(
 //      data [binary!]
 //  ]
 //
-REBNATIVE(identify_utf16le_q)
+DECLARE_NATIVE(identify_utf16le_q)
 {
     UTF_INCLUDE_PARAMS_OF_IDENTIFY_UTF16LE_Q;
 
@@ -288,7 +288,7 @@ REBNATIVE(identify_utf16le_q)
 //      data [binary!]
 //  ]
 //
-REBNATIVE(decode_utf16le)
+DECLARE_NATIVE(decode_utf16le)
 {
     UTF_INCLUDE_PARAMS_OF_DECODE_UTF16LE;
 
@@ -317,7 +317,7 @@ REBNATIVE(decode_utf16le)
 //      text [text!]
 //  ]
 //
-REBNATIVE(encode_utf16le)
+DECLARE_NATIVE(encode_utf16le)
 {
     UTF_INCLUDE_PARAMS_OF_ENCODE_UTF16LE;
 
@@ -344,7 +344,7 @@ REBNATIVE(encode_utf16le)
 //      data [binary!]
 //  ]
 //
-REBNATIVE(identify_utf16be_q)
+DECLARE_NATIVE(identify_utf16be_q)
 {
     UTF_INCLUDE_PARAMS_OF_IDENTIFY_UTF16BE_Q;
 
@@ -368,7 +368,7 @@ REBNATIVE(identify_utf16be_q)
 //      data [binary!]
 //  ]
 //
-REBNATIVE(decode_utf16be)
+DECLARE_NATIVE(decode_utf16be)
 {
     UTF_INCLUDE_PARAMS_OF_DECODE_UTF16BE;
 
@@ -397,7 +397,7 @@ REBNATIVE(decode_utf16be)
 //      text [text!]
 //  ]
 //
-REBNATIVE(encode_utf16be)
+DECLARE_NATIVE(encode_utf16be)
 {
     UTF_INCLUDE_PARAMS_OF_ENCODE_UTF16BE;
 

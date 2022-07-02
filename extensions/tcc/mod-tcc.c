@@ -290,7 +290,7 @@ Bounce Pending_Native_Dispatcher(Frame(*) f) {
 //          [text!]
 //  ]
 //
-REBNATIVE(make_native)
+DECLARE_NATIVE(make_native)
 {
     TCC_INCLUDE_PARAMS_OF_MAKE_NATIVE;
 
@@ -376,7 +376,7 @@ REBNATIVE(make_native)
 //      /files "COMPILABLES is a list of TEXT! specifying local filenames"
 //  ]
 //
-REBNATIVE(compile_p)
+DECLARE_NATIVE(compile_p)
 {
     TCC_INCLUDE_PARAMS_OF_COMPILE_P;
 

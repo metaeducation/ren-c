@@ -1147,7 +1147,7 @@ void RL_rebJumps(const void *p, va_list *vaptr)
 //
 // Analogue of DID, which is an isotope-tolerant version of NON NULL?.
 // e.g. "Would the supplied expression run a THEN"
-// See REBNATIVE(did_1) for explanation.
+// See DECLARE_NATIVE(did_1) for explanation.
 //
 bool RL_rebDid(const void *p, va_list *vaptr)
 {
@@ -2322,7 +2322,7 @@ REBVAL *RL_rebError_OS(int errnum)  // see also convenience macro rebFail_OS()
 //      value [<opt> any-value!]
 //  ]
 //
-REBNATIVE(api_transient)
+DECLARE_NATIVE(api_transient)
 {
     INCLUDE_PARAMS_OF_API_TRANSIENT;
 

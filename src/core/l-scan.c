@@ -3055,7 +3055,7 @@ void Shutdown_Scanner(void)
 //          [module!]
 //  ]
 //
-REBNATIVE(transcode)
+DECLARE_NATIVE(transcode)
 //
 // R3-Alpha's TRANSCODE would return a length 2 BLOCK!.  Ren-C uses multiple
 // return values, and operates in a reduced case where if you ask for only

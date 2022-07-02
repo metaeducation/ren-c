@@ -208,7 +208,7 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
 //      /value "Interpret reason as a value cell to debug dump, vs. a message"
 //  ]
 //
-REBNATIVE(panic)
+DECLARE_NATIVE(panic)
 //
 // Note: The ^reason parameter is meta so that `panic ~bad-word~` won't
 // cause a parameter type check error, but actually runs this panic() code.
@@ -271,7 +271,7 @@ REBNATIVE(panic)
 //      /where [frame! any-word!]
 //  ]
 //
-REBNATIVE(fail)
+DECLARE_NATIVE(fail)
 {
     INCLUDE_PARAMS_OF_FAIL;
 

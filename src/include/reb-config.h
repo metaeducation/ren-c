@@ -394,13 +394,13 @@ Special internal defines used by RT, not Host-Kit developers:
 #endif
 
 
-// See debugbreak.h and REBNATIVE(c_debug_break)...useful!
+// See debugbreak.h and DECLARE_NATIVE(c_debug_break)...useful!
 //
 #if !defined(INCLUDE_C_DEBUG_BREAK_NATIVE)
     #define INCLUDE_C_DEBUG_BREAK_NATIVE DEBUG
 #endif
 
-// See REBNATIVE(test_librebol)
+// See DECLARE_NATIVE(test_librebol)
 //
 #if !defined(INCLUDE_TEST_LIBREBOL_NATIVE)
     #define INCLUDE_TEST_LIBREBOL_NATIVE DEBUG

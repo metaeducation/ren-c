@@ -69,7 +69,7 @@
 //          [block!]
 //  ]
 //
-REBNATIVE(augment_p)  // see extended definition AUGMENT in %base-defs.r
+DECLARE_NATIVE(augment_p)  // see extended definition AUGMENT in %base-defs.r
 {
     INCLUDE_PARAMS_OF_AUGMENT_P;
 

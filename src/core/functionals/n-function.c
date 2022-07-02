@@ -327,7 +327,7 @@ Action(*) Make_Interpreted_Action_May_Fail(
 //          [block!]
 //  ]
 //
-REBNATIVE(func_p)
+DECLARE_NATIVE(func_p)
 {
     INCLUDE_PARAMS_OF_FUNC_P;
 
@@ -355,7 +355,7 @@ REBNATIVE(func_p)
 //      parameter [word!]
 //  ]
 //
-REBNATIVE(endable_q)
+DECLARE_NATIVE(endable_q)
 //
 // !!! The general mechanics by which parameter properties are extracted have
 // not been designed.  This extraction feature was added to support making
@@ -390,7 +390,7 @@ REBNATIVE(endable_q)
 //      parameter [word!]
 //  ]
 //
-REBNATIVE(skippable_q)
+DECLARE_NATIVE(skippable_q)
 //
 // !!! The general mechanics by which parameter properties are extracted have
 // not been designed.  This extraction feature was added to support making
@@ -497,7 +497,7 @@ Bounce Init_Thrown_Unwind_Value(
 //          [<opt> <end> any-value!]
 //  ]
 //
-REBNATIVE(unwind)
+DECLARE_NATIVE(unwind)
 //
 // UNWIND is implemented via a throw that bubbles through the stack.  Using
 // UNWIND's action REBVAL with a target `binding` field is the protocol
@@ -536,7 +536,7 @@ REBNATIVE(unwind)
 //          [<end> <opt> <void> any-value!]
 //  ]
 //
-REBNATIVE(definitional_return)
+DECLARE_NATIVE(definitional_return)
 //
 // Returns in Ren-C are functions that are aware of the function they return
 // to.  So the dispatchers for functions that provide return e.g. FUNC will
@@ -552,7 +552,7 @@ REBNATIVE(definitional_return)
     INCLUDE_PARAMS_OF_DEFINITIONAL_RETURN;
 
     REBVAL *v = ARG(value);
-    Frame(*) f = frame_;  // frame of this RETURN call (implicit REBNATIVE arg)
+    Frame(*) f = frame_;  // frame of this RETURN call (implicit DECLARE_NATIVE arg)
 
     // Each ACTION! cell for RETURN has a piece of information in it that can
     // can be unique (the binding).  When invoked, that binding is held in the
@@ -663,7 +663,7 @@ REBNATIVE(definitional_return)
 //          [block!]
 //  ]
 //
-REBNATIVE(inherit_meta)
+DECLARE_NATIVE(inherit_meta)
 {
     INCLUDE_PARAMS_OF_INHERIT_META;
 

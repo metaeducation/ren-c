@@ -389,7 +389,7 @@ Byte* Decompress_Alloc_Core(
 //          [any-value!]
 //  ]
 //
-REBNATIVE(checksum_core)
+DECLARE_NATIVE(checksum_core)
 //
 // Most checksum and hashing algorithms are optional in the build (at time of
 // writing they are all in the "Crypt" extension).  This is because they come
@@ -463,7 +463,7 @@ REBNATIVE(checksum_core)
 //          [word!]
 //  ]
 //
-REBNATIVE(deflate)
+DECLARE_NATIVE(deflate)
 {
     INCLUDE_PARAMS_OF_DEFLATE;
 
@@ -514,7 +514,7 @@ REBNATIVE(deflate)
 //          [word!]
 //  ]
 //
-REBNATIVE(inflate)
+DECLARE_NATIVE(inflate)
 //
 // GZIP is a slight variant envelope which uses a CRC32 checksum.  For data
 // whose original size was < 2^32 bytes, the gzip envelope stored that size...

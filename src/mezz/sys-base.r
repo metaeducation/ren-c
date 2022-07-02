@@ -187,7 +187,7 @@ module: func [
 
 
 ; DO of functions, blocks, paths, and other do-able types is done directly by
-; C code in REBNATIVE(do).  But that code delegates to this Rebol function
+; C code in DECLARE_NATIVE(do).  But that code delegates to this Rebol function
 ; for ANY-STRING! and BINARY! types (presumably because it would be laborious
 ; to express as C).
 ;

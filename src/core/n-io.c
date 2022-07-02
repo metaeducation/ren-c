@@ -35,7 +35,7 @@
 //          [any-value!]
 //  ]
 //
-REBNATIVE(form)
+DECLARE_NATIVE(form)
 {
     INCLUDE_PARAMS_OF_FORM;
 
@@ -66,7 +66,7 @@ REBNATIVE(form)
 //          [integer!]
 //  ]
 //
-REBNATIVE(mold)
+DECLARE_NATIVE(mold)
 {
     INCLUDE_PARAMS_OF_MOLD;
 
@@ -115,7 +115,7 @@ REBNATIVE(mold)
 //          "Text to write, if a STRING! or CHAR! is converted to OS format"
 //  ]
 //
-REBNATIVE(write_stdout)
+DECLARE_NATIVE(write_stdout)
 //
 // This code isn't supposed to run during normal bootup.  But for debugging
 // we don't want a parallel set of PRINT operations and specializations just
@@ -165,7 +165,7 @@ REBNATIVE(write_stdout)
 //          [integer!]
 //  ]
 //
-REBNATIVE(new_line)
+DECLARE_NATIVE(new_line)
 {
     INCLUDE_PARAMS_OF_NEW_LINE;
 
@@ -223,7 +223,7 @@ REBNATIVE(new_line)
 //          [block! group! varargs!]
 //  ]
 //
-REBNATIVE(new_line_q)
+DECLARE_NATIVE(new_line_q)
 {
     INCLUDE_PARAMS_OF_NEW_LINE_Q;
 

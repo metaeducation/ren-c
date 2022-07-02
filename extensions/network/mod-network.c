@@ -1032,7 +1032,7 @@ static Bounce UDP_Actor(Frame(*) frame_, REBVAL *port, Symbol(const*) verb)
 //      return: [handle!]
 //  ]
 //
-REBNATIVE(get_tcp_actor_handle)
+DECLARE_NATIVE(get_tcp_actor_handle)
 {
     NETWORK_INCLUDE_PARAMS_OF_GET_TCP_ACTOR_HANDLE;
 
@@ -1049,7 +1049,7 @@ REBNATIVE(get_tcp_actor_handle)
 //      return: [handle!]
 //  ]
 //
-REBNATIVE(get_udp_actor_handle)
+DECLARE_NATIVE(get_udp_actor_handle)
 //
 // !!! Note: has not been ported to libuv.
 {
@@ -1088,7 +1088,7 @@ bool Dev_Net_Poll(void)
 //      return: <none>
 //  ]
 //
-REBNATIVE(startup_p)
+DECLARE_NATIVE(startup_p)
 //
 // Intialize networking libraries and related interfaces.  This needs to be
 // called prior to any socket functions.
@@ -1136,7 +1136,7 @@ REBNATIVE(startup_p)
 //      return: <none>
 //  ]
 //
-REBNATIVE(shutdown_p)
+DECLARE_NATIVE(shutdown_p)
 {
     NETWORK_INCLUDE_PARAMS_OF_SHUTDOWN_P;
 

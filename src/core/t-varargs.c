@@ -677,7 +677,7 @@ void MF_Varargs(REB_MOLD *mo, noquote(Cell(const*)) v, bool form) {
 //      action [action!]
 //  ]
 //
-REBNATIVE(variadic_q)
+DECLARE_NATIVE(variadic_q)
 {
     INCLUDE_PARAMS_OF_VARIADIC_Q;
 

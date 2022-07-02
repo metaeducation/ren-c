@@ -1197,7 +1197,7 @@ REBTYPE(Fail)
 //      enable [logic!]
 //  ]
 //
-REBNATIVE(tweak)
+DECLARE_NATIVE(tweak)
 {
     INCLUDE_PARAMS_OF_TWEAK;
 

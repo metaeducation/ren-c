@@ -108,7 +108,7 @@ static void Arc_Trans(REBVAL *out, const REBVAL *value, bool radians, REBLEN kin
 //          "Value is specified in radians (in degrees by default)"
 //  ]
 //
-REBNATIVE(cosine)
+DECLARE_NATIVE(cosine)
 {
     INCLUDE_PARAMS_OF_COSINE;
 
@@ -131,7 +131,7 @@ REBNATIVE(cosine)
 //          "Value is specified in radians (in degrees by default)"
 //  ]
 //
-REBNATIVE(sine)
+DECLARE_NATIVE(sine)
 {
     INCLUDE_PARAMS_OF_SINE;
 
@@ -154,7 +154,7 @@ REBNATIVE(sine)
 //          "Value is specified in radians (in degrees by default)"
 //  ]
 //
-REBNATIVE(tangent)
+DECLARE_NATIVE(tangent)
 {
     INCLUDE_PARAMS_OF_TANGENT;
 
@@ -177,7 +177,7 @@ REBNATIVE(tangent)
 //          "Returns result in radians (in degrees by default)"
 //  ]
 //
-REBNATIVE(arccosine)
+DECLARE_NATIVE(arccosine)
 {
     INCLUDE_PARAMS_OF_ARCCOSINE;
 
@@ -197,7 +197,7 @@ REBNATIVE(arccosine)
 //          "Returns result in radians (in degrees by default)"
 //  ]
 //
-REBNATIVE(arcsine)
+DECLARE_NATIVE(arcsine)
 {
     INCLUDE_PARAMS_OF_ARCSINE;
 
@@ -217,7 +217,7 @@ REBNATIVE(arcsine)
 //          "Returns result in radians (in degrees by default)"
 //  ]
 //
-REBNATIVE(arctangent)
+DECLARE_NATIVE(arctangent)
 {
     INCLUDE_PARAMS_OF_ARCTANGENT;
 
@@ -235,7 +235,7 @@ REBNATIVE(arctangent)
 //      power [any-number!]
 //  ]
 //
-REBNATIVE(exp)
+DECLARE_NATIVE(exp)
 {
     INCLUDE_PARAMS_OF_EXP;
 
@@ -257,7 +257,7 @@ REBNATIVE(exp)
 //      value [any-number!]
 //  ]
 //
-REBNATIVE(log_10)
+DECLARE_NATIVE(log_10)
 {
     INCLUDE_PARAMS_OF_LOG_10;
 
@@ -278,7 +278,7 @@ REBNATIVE(log_10)
 //      value [any-number!]
 //  ]
 //
-REBNATIVE(log_2)
+DECLARE_NATIVE(log_2)
 {
     INCLUDE_PARAMS_OF_LOG_2;
 
@@ -299,7 +299,7 @@ REBNATIVE(log_2)
 //      value [any-number!]
 //  ]
 //
-REBNATIVE(log_e)
+DECLARE_NATIVE(log_e)
 {
     INCLUDE_PARAMS_OF_LOG_E;
 
@@ -320,7 +320,7 @@ REBNATIVE(log_e)
 //      value [any-number!]
 //  ]
 //
-REBNATIVE(square_root)
+DECLARE_NATIVE(square_root)
 {
     INCLUDE_PARAMS_OF_SQUARE_ROOT;
 
@@ -361,7 +361,7 @@ REBNATIVE(square_root)
 //          "Logical shift (sign bit ignored)"
 //  ]
 //
-REBNATIVE(shift)
+DECLARE_NATIVE(shift)
 {
     INCLUDE_PARAMS_OF_SHIFT;
 
@@ -579,7 +579,7 @@ REBINT Compare_Modify_Values(Cell(*) a, Cell(*) b, bool strict)
 //      value2 [<opt> any-value!]
 //  ]
 //
-REBNATIVE(equal_q)
+DECLARE_NATIVE(equal_q)
 {
     INCLUDE_PARAMS_OF_EQUAL_Q;
 
@@ -599,7 +599,7 @@ REBNATIVE(equal_q)
 //      value2 [<opt> any-value!]
 //  ]
 //
-REBNATIVE(not_equal_q)
+DECLARE_NATIVE(not_equal_q)
 {
     INCLUDE_PARAMS_OF_NOT_EQUAL_Q;
 
@@ -619,7 +619,7 @@ REBNATIVE(not_equal_q)
 //      value2 [<opt> any-value!]
 //  ]
 //
-REBNATIVE(strict_equal_q)
+DECLARE_NATIVE(strict_equal_q)
 {
     INCLUDE_PARAMS_OF_STRICT_EQUAL_Q;
 
@@ -642,7 +642,7 @@ REBNATIVE(strict_equal_q)
 //      value2 [<opt> any-value!]
 //  ]
 //
-REBNATIVE(strict_not_equal_q)
+DECLARE_NATIVE(strict_not_equal_q)
 {
     INCLUDE_PARAMS_OF_STRICT_NOT_EQUAL_Q;
 
@@ -665,7 +665,7 @@ REBNATIVE(strict_not_equal_q)
 //      value2 [<opt> any-value!]
 //  ]
 //
-REBNATIVE(same_q)
+DECLARE_NATIVE(same_q)
 //
 // This used to be "strictness mode 3" of Compare_Modify_Values.  However,
 // folding SAME?-ness in required the comparisons to take REBVALs instead
@@ -752,7 +752,7 @@ REBNATIVE(same_q)
 //      value1 value2
 //  ]
 //
-REBNATIVE(lesser_q)
+DECLARE_NATIVE(lesser_q)
 {
     INCLUDE_PARAMS_OF_LESSER_Q;
 
@@ -783,7 +783,7 @@ REBNATIVE(lesser_q)
 //      value1 value2
 //  ]
 //
-REBNATIVE(equal_or_lesser_q)
+DECLARE_NATIVE(equal_or_lesser_q)
 {
     INCLUDE_PARAMS_OF_EQUAL_OR_LESSER_Q;
 
@@ -802,7 +802,7 @@ REBNATIVE(equal_or_lesser_q)
 //      value1 value2
 //  ]
 //
-REBNATIVE(greater_q)
+DECLARE_NATIVE(greater_q)
 {
     INCLUDE_PARAMS_OF_GREATER_Q;
 
@@ -821,7 +821,7 @@ REBNATIVE(greater_q)
 //      value1 value2
 //  ]
 //
-REBNATIVE(greater_or_equal_q)
+DECLARE_NATIVE(greater_or_equal_q)
 {
     INCLUDE_PARAMS_OF_GREATER_OR_EQUAL_Q;
 
@@ -841,7 +841,7 @@ REBNATIVE(greater_or_equal_q)
 //      value2 [any-scalar! date! any-series!]
 //  ]
 //
-REBNATIVE(maximum)
+DECLARE_NATIVE(maximum)
 {
     INCLUDE_PARAMS_OF_MAXIMUM;
 
@@ -880,7 +880,7 @@ REBNATIVE(maximum)
 //      value2 [any-scalar! date! any-series!]
 //  ]
 //
-REBNATIVE(minimum)
+DECLARE_NATIVE(minimum)
 {
     INCLUDE_PARAMS_OF_MINIMUM;
 
@@ -936,7 +936,7 @@ inline static REBVAL *Init_Zeroed_Hack(Cell(*) out, enum Reb_Kind kind) {
 //      number [any-number! money! time! pair!]
 //  ]
 //
-REBNATIVE(negative_q)
+DECLARE_NATIVE(negative_q)
 {
     INCLUDE_PARAMS_OF_NEGATIVE_Q;
 
@@ -958,7 +958,7 @@ REBNATIVE(negative_q)
 //      number [any-number! money! time! pair!]
 //  ]
 //
-REBNATIVE(positive_q)
+DECLARE_NATIVE(positive_q)
 {
     INCLUDE_PARAMS_OF_POSITIVE_Q;
 
@@ -980,7 +980,7 @@ REBNATIVE(positive_q)
 //      value
 //  ]
 //
-REBNATIVE(zero_q)
+DECLARE_NATIVE(zero_q)
 {
     INCLUDE_PARAMS_OF_ZERO_Q;
 

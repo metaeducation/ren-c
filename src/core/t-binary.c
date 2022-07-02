@@ -888,7 +888,7 @@ REBTYPE(Binary)
 //          [integer!]
 //  ]
 //
-REBNATIVE(enbin)
+DECLARE_NATIVE(enbin)
 //
 // !!! This routine may wind up being folded into ENCODE as a block-oriented
 // syntax for talking to the "little endian" and "big endian" codecs, but
@@ -992,7 +992,7 @@ REBNATIVE(enbin)
 //          [binary!]
 //  ]
 //
-REBNATIVE(debin)
+DECLARE_NATIVE(debin)
 //
 // !!! This routine may wind up being folded into DECODE as a block-oriented
 // syntax for talking to the "little endian" and "big endian" codecs, but

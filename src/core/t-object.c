@@ -701,7 +701,7 @@ Bounce TO_Context(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 //      value [<blank> action! any-context!]
 //  ]
 //
-REBNATIVE(meta_of)  // see notes on MISC_META()
+DECLARE_NATIVE(meta_of)  // see notes on MISC_META()
 {
     INCLUDE_PARAMS_OF_META_OF;
 
@@ -732,7 +732,7 @@ REBNATIVE(meta_of)  // see notes on MISC_META()
 //      meta [<opt> any-context!]
 //  ]
 //
-REBNATIVE(set_meta)
+DECLARE_NATIVE(set_meta)
 //
 // See notes accompanying the `meta` field in the REBSER definition.
 {
@@ -1381,7 +1381,7 @@ void MF_Frame(REB_MOLD *mo, noquote(Cell(const*)) v, bool form)
 //          [any-context!]
 //  ]
 //
-REBNATIVE(construct)
+DECLARE_NATIVE(construct)
 //
 // !!! This assumes you want a SELF defined.  The entire concept of SELF
 // needs heavy review.

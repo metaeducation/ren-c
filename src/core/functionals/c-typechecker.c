@@ -53,7 +53,7 @@ enum {
 //      optional [<opt> any-value!]
 //  ]
 //
-REBNATIVE(typecheck_internal_q)
+DECLARE_NATIVE(typecheck_internal_q)
 //
 // Note: This prototype is used by all TYPECHECKER instances.  (It steals the
 // paramlist from this native.)
@@ -129,7 +129,7 @@ Bounce Typeset_Checker_Dispatcher(Frame(*) frame_)
 //      type [datatype! typeset!]
 //  ]
 //
-REBNATIVE(typechecker)
+DECLARE_NATIVE(typechecker)
 {
     INCLUDE_PARAMS_OF_TYPECHECKER;
 

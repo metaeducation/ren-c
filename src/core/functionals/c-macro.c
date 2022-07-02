@@ -156,7 +156,7 @@ Bounce Macro_Dispatcher(Frame(*) f)
 //          [block!]
 //  ]
 //
-REBNATIVE(macro)
+DECLARE_NATIVE(macro)
 {
     INCLUDE_PARAMS_OF_MACRO;
 
@@ -188,7 +188,7 @@ REBNATIVE(macro)
 //          [blank! block! quoted!]
 //  ]
 //
-REBNATIVE(inline)
+DECLARE_NATIVE(inline)
 {
     INCLUDE_PARAMS_OF_INLINE;
 

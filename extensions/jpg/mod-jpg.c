@@ -47,7 +47,7 @@ extern void jpeg_load(char *buffer, int nbytes, char *output);
 //      data [binary!]
 //  ]
 //
-REBNATIVE(identify_jpeg_q)
+DECLARE_NATIVE(identify_jpeg_q)
 {
     JPG_INCLUDE_PARAMS_OF_IDENTIFY_JPEG_Q;
 
@@ -76,7 +76,7 @@ REBNATIVE(identify_jpeg_q)
 //      data [binary!]
 //  ]
 //
-REBNATIVE(decode_jpeg)
+DECLARE_NATIVE(decode_jpeg)
 {
     JPG_INCLUDE_PARAMS_OF_DECODE_JPEG;
 

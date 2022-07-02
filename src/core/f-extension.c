@@ -83,7 +83,7 @@ extern RL_LIB Ext_Lib;
 //          [block!]
 //  ]
 //
-REBNATIVE(builtin_extensions)
+DECLARE_NATIVE(builtin_extensions)
 //
 // The config file used by %make.r marks extensions to be built into the
 // executable (`+`), built as a dynamic library (`*`), or not built at
@@ -125,7 +125,7 @@ REBNATIVE(builtin_extensions)
 //          [file! block!]  ; !!! Should it take a LIBRARY! instead?
 //  ]
 //
-REBNATIVE(load_extension)
+DECLARE_NATIVE(load_extension)
 //
 // An "Extension" is a form of module which has associated native code.  There
 // are two ways of getting that native code: one is through a "DLL", and
@@ -296,7 +296,7 @@ static const REBVAL *Unloaded_Dispatcher(Frame(*) f)
 //          [module!]
 //  ]
 //
-REBNATIVE(unload_extension)
+DECLARE_NATIVE(unload_extension)
 //
 // !!! The initial extension model had support for not just loading extensions
 // from a DLL, but also unloading them.  It raises a lot of questions that are
@@ -325,7 +325,7 @@ REBNATIVE(unload_extension)
         fail ("Could not find extension in loaded extensions list");
     rebElide(Lib(TAKE), rebR(pos));
 
-    // There is a murky issue about how to disconnect REBNATIVE()s from
+    // There is a murky issue about how to disconnect DECLARE_NATIVE()s from
     // dispatchers that have been unloaded.  If an extension is unloaded
     // and reloaded again, should old ACTION! values work again?  If so, how
     // would this deal with a recompiled extension which might have changed

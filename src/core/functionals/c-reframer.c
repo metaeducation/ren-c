@@ -329,7 +329,7 @@ Bounce Reframer_Dispatcher(Frame(*) f)
 //          [word!]
 //  ]
 //
-REBNATIVE(reframer_p)
+DECLARE_NATIVE(reframer_p)
 {
     INCLUDE_PARAMS_OF_REFRAMER_P;
 

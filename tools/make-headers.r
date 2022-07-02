@@ -51,7 +51,7 @@ emit-proto: func [
 ][
     any [
         find proto "static"
-        find proto "REBNATIVE(" ; Natives handled by make-natives.r
+        find proto "DECLARE_NATIVE(" ; Natives handled by make-natives.r
 
         ; The REBTYPE macro actually is expanded in %tmp-internals.h
         ; Should we allow macro expansion or do the REBTYPE another way?
@@ -88,7 +88,7 @@ emit-proto: func [
         'C [
             ; The only accepted type for now
         ]
-        ; Natives handled by searching for REBNATIVE() currently.  If it
+        ; Natives handled by searching for DECLARE_NATIVE() currently.  If it
         ; checked for the word NATIVE it would also have to look for paths
         ; if natives took refinements (as they once took NATIVE/BODY)
 
@@ -170,7 +170,7 @@ e-funcs/emit {
     /*
      * NATIVE PROTOTYPES
      *
-     * REBNATIVE is a macro which will expand such that REBNATIVE(parse) will
+     * DECLARE_NATIVE is a macro which will expand such that DECLARE_NATIVE(parse) will
      * define a function named `N_parse`.  The prototypes are included in a
      * system-wide header in order to allow recognizing a given native by
      * identity in the C code, e.g.:
@@ -183,7 +183,7 @@ e-funcs/emit newline
 for-each val boot-natives [
     if set-word? val [
         e-funcs/emit 'val {
-            REBNATIVE(${to word! val});
+            DECLARE_NATIVE(${to word! val});
         }
     ]
 ]

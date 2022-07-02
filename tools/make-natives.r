@@ -33,7 +33,7 @@ REBOL [
         //      /refinement "Refinement description here"
         //  ]
         //
-        REBNATIVE(native_name) {
+        DECLARE_NATIVE(native_name) {
             INCLUDE_PARAMS_OF_NATIVE_NAME;
 
             if (REF(refinement)) {

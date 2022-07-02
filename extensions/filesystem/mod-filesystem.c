@@ -57,7 +57,7 @@ extern Bounce Dir_Actor(Frame(*) frame_, REBVAL *port, Symbol(const*) verb);
 //      return: <none>
 //  ]
 //
-REBNATIVE(startup_p)
+DECLARE_NATIVE(startup_p)
 {
     FILESYSTEM_INCLUDE_PARAMS_OF_STARTUP_P;
 
@@ -73,7 +73,7 @@ REBNATIVE(startup_p)
 //      return: [handle!]
 //  ]
 //
-REBNATIVE(get_file_actor_handle)
+DECLARE_NATIVE(get_file_actor_handle)
 {
     Make_Port_Actor_Handle(OUT, &File_Actor);
     return OUT;
@@ -88,7 +88,7 @@ REBNATIVE(get_file_actor_handle)
 //      return: <none>
 //  ]
 //
-REBNATIVE(shutdown_p)
+DECLARE_NATIVE(shutdown_p)
 {
     FILESYSTEM_INCLUDE_PARAMS_OF_SHUTDOWN_P;
 
@@ -104,7 +104,7 @@ REBNATIVE(shutdown_p)
 //      return: [handle!]
 //  ]
 //
-REBNATIVE(get_dir_actor_handle)
+DECLARE_NATIVE(get_dir_actor_handle)
 {
     Make_Port_Actor_Handle(OUT, &Dir_Actor);
     return OUT;
@@ -488,7 +488,7 @@ String(*) To_Local_Path(Cell(const*) file, Flags flags) {
 //          {Ensure input path is treated as a directory}
 //  ]
 //
-REBNATIVE(local_to_file)
+DECLARE_NATIVE(local_to_file)
 {
     FILESYSTEM_INCLUDE_PARAMS_OF_LOCAL_TO_FILE;
 
@@ -524,7 +524,7 @@ REBNATIVE(local_to_file)
 //          {For directories, do not add a slash or backslash to the tail}
 //  ]
 //
-REBNATIVE(file_to_local)
+DECLARE_NATIVE(file_to_local)
 {
     FILESYSTEM_INCLUDE_PARAMS_OF_FILE_TO_LOCAL;
 
@@ -556,7 +556,7 @@ REBNATIVE(file_to_local)
 //      return: [<opt> file! url!]
 //  ]
 //
-REBNATIVE(what_dir)
+DECLARE_NATIVE(what_dir)
 {
     FILESYSTEM_INCLUDE_PARAMS_OF_WHAT_DIR;
 
@@ -597,7 +597,7 @@ REBNATIVE(what_dir)
 //      path [file! url!]
 //  ]
 //
-REBNATIVE(change_dir)
+DECLARE_NATIVE(change_dir)
 {
     FILESYSTEM_INCLUDE_PARAMS_OF_CHANGE_DIR;
 
@@ -636,7 +636,7 @@ extern REBVAL *Get_Current_Exec();
 //      return: [<opt> file!]
 //  ]
 //
-REBNATIVE(get_current_exec)
+DECLARE_NATIVE(get_current_exec)
 {
     FILESYSTEM_INCLUDE_PARAMS_OF_GET_CURRENT_EXEC;
 

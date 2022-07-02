@@ -196,7 +196,7 @@ static Bounce DNS_Actor(Frame(*) frame_, REBVAL *port, Symbol(const*) verb)
 //      return: [handle!]
 //  ]
 //
-REBNATIVE(get_dns_actor_handle)
+DECLARE_NATIVE(get_dns_actor_handle)
 {
     Make_Port_Actor_Handle(OUT, &DNS_Actor);
     return OUT;

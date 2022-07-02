@@ -46,7 +46,7 @@
 //          {Depending on VALUE, more expressions may be consumed}
 //  ]
 //
-REBNATIVE(reeval)
+DECLARE_NATIVE(reeval)
 {
     INCLUDE_PARAMS_OF_REEVAL;
 
@@ -95,7 +95,7 @@ REBNATIVE(reeval)
 //      /set "If left hand side is a SET-WORD! or SET-PATH!, shove and assign"
 //  ]
 //
-REBNATIVE(shove)
+DECLARE_NATIVE(shove)
 //
 // PATH!s do not do infix lookup in Rebol, and there are good reasons for this
 // in terms of both performance and semantics.  However, it is sometimes
@@ -273,7 +273,7 @@ REBNATIVE(shove)
 //      /only "Don't catch QUIT (default behavior for BLOCK!)"
 //  ]
 //
-REBNATIVE(do)
+DECLARE_NATIVE(do)
 // 2. FAIL is the preferred operation for triggering errors, as it has a
 //    natural behavior for blocks passed to construct readable messages and
 //    "FAIL X" more clearly communicates a failure than "DO X".  But DO of an
@@ -421,7 +421,7 @@ REBNATIVE(do)
 //      ]
 //  ]
 //
-REBNATIVE(evaluate)
+DECLARE_NATIVE(evaluate)
 //
 // 1. We want EVALUATE to treat all ANY-ARRAY! the same.  (e.g. a ^[1 + 2] just
 //    does the same thing as [1 + 2] and gives 3, not '3)  Rather than mutate
@@ -607,7 +607,7 @@ REBNATIVE(evaluate)
 //          [action!]
 //  ]
 //
-REBNATIVE(redo)
+DECLARE_NATIVE(redo)
 //
 // This can be used to implement tail-call recursion:
 //
@@ -683,7 +683,7 @@ REBNATIVE(redo)
 //          [block!]
 //  ]
 //
-REBNATIVE(applique)
+DECLARE_NATIVE(applique)
 //
 // 1. Make a FRAME! for the ACTION!, weaving in the ordered refinements
 //    collected on the stack (if any).  Any refinements that are used in any
@@ -754,7 +754,7 @@ REBNATIVE(applique)
 //      <local> frame index
 //  ]
 //
-REBNATIVE(apply)
+DECLARE_NATIVE(apply)
 //
 // 1. Binders cannot be held across evaluations at this time.  Do slow
 //    lookups for refinements, but this is something that needs rethinking.

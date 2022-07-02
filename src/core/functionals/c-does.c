@@ -143,7 +143,7 @@ Bounce Block_Dispatcher(Frame(*) f)
 //      return: [<opt> <void> any-value!]
 //  ]
 //
-REBNATIVE(surprise)
+DECLARE_NATIVE(surprise)
 //
 // !!! DOES needed a specialization for block that had no arguments and no
 // constraint on the return value.  That's a pretty weird function spec, and
@@ -166,7 +166,7 @@ REBNATIVE(surprise)
 //          [any-value!]
 //  ]
 //
-REBNATIVE(does)
+DECLARE_NATIVE(does)
 //
 // !!! Note: `does [...]` and `does [do [...]]` are not exactly the same.  The
 // generated ACTION! of the first form uses Block_Dispatcher() and does

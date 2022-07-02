@@ -45,7 +45,7 @@
 //          [block! action!]
 //  ]
 //
-REBNATIVE(trap)
+DECLARE_NATIVE(trap)
 //
 // !!! For stackless, the implementation of TRAP is actually moved into the
 // trampoline.  A generic mechanism that allows dispatchers to register
@@ -68,7 +68,7 @@ REBNATIVE(trap)
 
   initial_entry: {
     if (Not_Cell_Flag(code, CONST))
-        Set_Cell_Flag(code, EXPLICITLY_MUTABLE);  // see REBNATIVE(do) for why
+        Set_Cell_Flag(code, EXPLICITLY_MUTABLE);  // see DECLARE_NATIVE(do) for why
 
     STATE = ST_TRAP_EVALUATING;
     continue_catchable (OUT, code, END);
@@ -108,7 +108,7 @@ REBNATIVE(trap)
 //          [any-branch!]
 //  ]
 //
-REBNATIVE(except)
+DECLARE_NATIVE(except)
 {
     INCLUDE_PARAMS_OF_EXCEPT;
 
@@ -132,7 +132,7 @@ REBNATIVE(except)
 //      location [frame! any-word!]
 //  ]
 //
-REBNATIVE(set_location_of_error)
+DECLARE_NATIVE(set_location_of_error)
 {
     INCLUDE_PARAMS_OF_SET_LOCATION_OF_ERROR;
 

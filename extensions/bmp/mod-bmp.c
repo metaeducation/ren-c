@@ -293,7 +293,7 @@ static bool Has_Valid_BITMAPFILEHEADER(const Byte* data, uint32_t len) {
 //      data [binary!]
 //  ]
 //
-REBNATIVE(identify_bmp_q)
+DECLARE_NATIVE(identify_bmp_q)
 {
     BMP_INCLUDE_PARAMS_OF_IDENTIFY_BMP_Q;
 
@@ -316,7 +316,7 @@ REBNATIVE(identify_bmp_q)
 //      data [binary!]
 //  ]
 //
-REBNATIVE(decode_bmp)
+DECLARE_NATIVE(decode_bmp)
 {
     BMP_INCLUDE_PARAMS_OF_DECODE_BMP;
 
@@ -591,7 +591,7 @@ REBNATIVE(decode_bmp)
 //      image [image!]
 //  ]
 //
-REBNATIVE(encode_bmp)
+DECLARE_NATIVE(encode_bmp)
 {
     BMP_INCLUDE_PARAMS_OF_ENCODE_BMP;
 

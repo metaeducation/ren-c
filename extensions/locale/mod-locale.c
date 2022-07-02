@@ -52,7 +52,7 @@
 //          Territory*: Full localized name of the country/region}
 //  ]
 //
-REBNATIVE(locale)
+DECLARE_NATIVE(locale)
 //
 // This function only needs to make OS calls on Windows.  The POSIX version
 // parses environment variables and uses compiled-in tables.  See the HIJACK
@@ -142,7 +142,7 @@ REBNATIVE(locale)
 //      value [text!]
 //  ]
 //
-REBNATIVE(setlocale)
+DECLARE_NATIVE(setlocale)
 {
     LOCALE_INCLUDE_PARAMS_OF_SETLOCALE;
 

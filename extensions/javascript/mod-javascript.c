@@ -809,7 +809,7 @@ Bounce JavaScript_Dispatcher(Frame(*) frame_)
 //      /awaiter "Uses async JS function, invocation will implicitly `await`"
 //  ]
 //
-REBNATIVE(js_native)
+DECLARE_NATIVE(js_native)
 //
 // Note: specialized as JS-AWAITER in %ext-javascript-init.reb
 {
@@ -982,7 +982,7 @@ REBNATIVE(js_native)
 //      /value "Return a Rebol value"
 //  ]
 //
-REBNATIVE(js_eval_p)
+DECLARE_NATIVE(js_eval_p)
 //
 // Note: JS-EVAL is a higher-level routine built on this JS-EVAL* native, that
 // can accept a BLOCK! with escaped-in Rebol values, via JS-DO-DIALECT-HELPER.
@@ -1077,7 +1077,7 @@ REBNATIVE(js_eval_p)
 //      return: <none>
 //  ]
 //
-REBNATIVE(startup_p)
+DECLARE_NATIVE(startup_p)
 {
     JAVASCRIPT_INCLUDE_PARAMS_OF_STARTUP_P;
 
@@ -1110,7 +1110,7 @@ REBNATIVE(startup_p)
 //      enable [logic!]
 //  ]
 //
-REBNATIVE(js_trace)
+DECLARE_NATIVE(js_trace)
 {
     JAVASCRIPT_INCLUDE_PARAMS_OF_JS_TRACE;
 
@@ -1132,7 +1132,7 @@ REBNATIVE(js_trace)
 //      return: [block!]
 //  ]
 //
-REBNATIVE(js_stacklimit)
+DECLARE_NATIVE(js_stacklimit)
 {
     JAVASCRIPT_INCLUDE_PARAMS_OF_JS_STACKLIMIT;
 

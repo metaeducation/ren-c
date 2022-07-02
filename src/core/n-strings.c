@@ -41,7 +41,7 @@
 //      /tail "Include delimiter at tail of result (if non-NULL)"
 //  ]
 //
-REBNATIVE(delimit)
+DECLARE_NATIVE(delimit)
 //
 // Evaluates each item in a block and forms it, with an optional delimiter.
 // If all the items in the block are null, or no items are found, this will
@@ -243,7 +243,7 @@ REBNATIVE(delimit)
 //          [integer!]
 //  ]
 //
-REBNATIVE(debase)
+DECLARE_NATIVE(debase)
 {
     INCLUDE_PARAMS_OF_DEBASE;
 
@@ -275,7 +275,7 @@ REBNATIVE(debase)
 //          [integer!]
 //  ]
 //
-REBNATIVE(enbase)
+DECLARE_NATIVE(enbase)
 {
     INCLUDE_PARAMS_OF_ENBASE;
 
@@ -324,7 +324,7 @@ REBNATIVE(enbase)
 //          "String to encode, all non-ASCII or illegal URL bytes encoded"
 //  ]
 //
-REBNATIVE(enhex)
+DECLARE_NATIVE(enhex)
 {
     INCLUDE_PARAMS_OF_ENHEX;
 
@@ -483,7 +483,7 @@ REBNATIVE(enhex)
 //          "See http://en.wikipedia.org/wiki/Percent-encoding"
 //  ]
 //
-REBNATIVE(dehex)
+DECLARE_NATIVE(dehex)
 {
     INCLUDE_PARAMS_OF_DEHEX;
 
@@ -613,7 +613,7 @@ REBNATIVE(dehex)
 //      /lines "Return block of lines (works for LF, CR-LF endings)"
 //  ]
 //
-REBNATIVE(deline)
+DECLARE_NATIVE(deline)
 {
     INCLUDE_PARAMS_OF_DELINE;
 
@@ -689,7 +689,7 @@ REBNATIVE(deline)
 //      string [any-string!] "(modified)"
 //  ]
 //
-REBNATIVE(enline)
+DECLARE_NATIVE(enline)
 {
     INCLUDE_PARAMS_OF_ENLINE;
 
@@ -780,7 +780,7 @@ REBNATIVE(enline)
 //          [integer!]
 //  ]
 //
-REBNATIVE(entab)
+DECLARE_NATIVE(entab)
 {
     INCLUDE_PARAMS_OF_ENTAB;
 
@@ -856,7 +856,7 @@ REBNATIVE(entab)
 //          [integer!]
 //  ]
 //
-REBNATIVE(detab)
+DECLARE_NATIVE(detab)
 {
     INCLUDE_PARAMS_OF_DETAB;
 
@@ -915,7 +915,7 @@ REBNATIVE(detab)
 //          [any-number! any-string!]
 //  ]
 //
-REBNATIVE(lowercase)
+DECLARE_NATIVE(lowercase)
 {
     INCLUDE_PARAMS_OF_LOWERCASE;
 
@@ -936,7 +936,7 @@ REBNATIVE(lowercase)
 //          [any-number! any-string!]
 //  ]
 //
-REBNATIVE(uppercase)
+DECLARE_NATIVE(uppercase)
 {
     INCLUDE_PARAMS_OF_UPPERCASE;
 
@@ -956,7 +956,7 @@ REBNATIVE(uppercase)
 //          [integer!]
 //  ]
 //
-REBNATIVE(to_hex)
+DECLARE_NATIVE(to_hex)
 {
     INCLUDE_PARAMS_OF_TO_HEX;
 
@@ -1015,7 +1015,7 @@ REBNATIVE(to_hex)
 //      script [binary! text!]
 //  ]
 //
-REBNATIVE(find_script)
+DECLARE_NATIVE(find_script)
 {
     INCLUDE_PARAMS_OF_FIND_SCRIPT;
 
@@ -1070,7 +1070,7 @@ REBNATIVE(find_script)
 //      data [binary!]
 //  ]
 //
-REBNATIVE(invalid_utf8_q)
+DECLARE_NATIVE(invalid_utf8_q)
 //
 // !!! A motivation for adding this native was because R3-Alpha did not fully
 // validate UTF-8 input, for perceived reasons of performance:

@@ -141,7 +141,7 @@ static unsigned rebol_zlib_compress(
 //      data [binary!]
 //  ]
 //
-REBNATIVE(identify_png_q)
+DECLARE_NATIVE(identify_png_q)
 {
     PNG_INCLUDE_PARAMS_OF_IDENTIFY_PNG_Q;
 
@@ -197,7 +197,7 @@ REBNATIVE(identify_png_q)
 //      data [binary!]
 //  ]
 //
-REBNATIVE(decode_png)
+DECLARE_NATIVE(decode_png)
 {
     PNG_INCLUDE_PARAMS_OF_DECODE_PNG;
 
@@ -273,7 +273,7 @@ REBNATIVE(decode_png)
 //      image [image!]
 //  ]
 //
-REBNATIVE(encode_png)
+DECLARE_NATIVE(encode_png)
 //
 // !!! Semantics for IMAGE! being a "series" with a "position" were extremely
 // dodgy in Rebol2/R3-Alpha (and remain so in things like Red today).  Saving

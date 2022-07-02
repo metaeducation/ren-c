@@ -17,7 +17,7 @@ static void kill_process(pid_t pid, int signal);
 //      return: [integer!]
 //  ]
 //
-REBNATIVE(get_pid)
+DECLARE_NATIVE(get_pid)
 {
     PROCESS_INCLUDE_PARAMS_OF_GET_PID;
 
@@ -34,7 +34,7 @@ REBNATIVE(get_pid)
 //      return: [integer!]
 //  ]
 //
-REBNATIVE(get_uid)
+DECLARE_NATIVE(get_uid)
 {
     PROCESS_INCLUDE_PARAMS_OF_GET_UID;
 
@@ -50,7 +50,7 @@ REBNATIVE(get_uid)
 //      return: [integer!]
 //  ]
 //
-REBNATIVE(get_euid)
+DECLARE_NATIVE(get_euid)
 {
     PROCESS_INCLUDE_PARAMS_OF_GET_EUID;
 
@@ -66,7 +66,7 @@ REBNATIVE(get_euid)
 //      return: [integer!]
 //  ]
 //
-REBNATIVE(get_gid)
+DECLARE_NATIVE(get_gid)
 {
     PROCESS_INCLUDE_PARAMS_OF_GET_UID;
 
@@ -82,7 +82,7 @@ REBNATIVE(get_gid)
 //      return: [integer!]
 //  ]
 //
-REBNATIVE(get_egid)
+DECLARE_NATIVE(get_egid)
 {
     PROCESS_INCLUDE_PARAMS_OF_GET_EUID;
 
@@ -101,7 +101,7 @@ REBNATIVE(get_egid)
 //          [integer!]
 //  ]
 //
-REBNATIVE(set_uid)
+DECLARE_NATIVE(set_uid)
 {
     PROCESS_INCLUDE_PARAMS_OF_SET_UID;
 
@@ -132,7 +132,7 @@ REBNATIVE(set_uid)
 //          [integer!]
 //  ]
 //
-REBNATIVE(set_euid)
+DECLARE_NATIVE(set_euid)
 {
     PROCESS_INCLUDE_PARAMS_OF_SET_EUID;
 
@@ -163,7 +163,7 @@ REBNATIVE(set_euid)
 //          [integer!]
 //  ]
 //
-REBNATIVE(set_gid)
+DECLARE_NATIVE(set_gid)
 {
     PROCESS_INCLUDE_PARAMS_OF_SET_GID;
 
@@ -194,7 +194,7 @@ REBNATIVE(set_gid)
 //          [integer!]
 //  ]
 //
-REBNATIVE(set_egid)
+DECLARE_NATIVE(set_egid)
 {
     PROCESS_INCLUDE_PARAMS_OF_SET_EGID;
 
@@ -227,7 +227,7 @@ REBNATIVE(set_egid)
 //          {The signal number}
 //  ]
 //
-REBNATIVE(send_signal)
+DECLARE_NATIVE(send_signal)
 {
     PROCESS_INCLUDE_PARAMS_OF_SEND_SIGNAL;
 

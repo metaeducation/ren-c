@@ -49,7 +49,7 @@ extern REBVAL *Get_Current_Datetime_Value(void);
 //      /local "Give time in current zone without including the time zone"
 //  ]
 //
-REBNATIVE(now)
+DECLARE_NATIVE(now)
 {
     TIME_INCLUDE_PARAMS_OF_NOW;
 

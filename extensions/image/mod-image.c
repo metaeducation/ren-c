@@ -39,7 +39,7 @@ REBTYP *EG_Image_Type = nullptr;
 //      return: <none>
 //  ]
 //
-REBNATIVE(startup_p)
+DECLARE_NATIVE(startup_p)
 {
     IMAGE_INCLUDE_PARAMS_OF_STARTUP_P;
 
@@ -70,7 +70,7 @@ REBNATIVE(startup_p)
 //      return: <none>
 //  ]
 //
-REBNATIVE(shutdown_p)
+DECLARE_NATIVE(shutdown_p)
 {
     IMAGE_INCLUDE_PARAMS_OF_SHUTDOWN_P;
 

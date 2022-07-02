@@ -135,7 +135,7 @@ REBTYPE(Library)
 //      return: <none>
 //  ]
 //
-REBNATIVE(startup_p)
+DECLARE_NATIVE(startup_p)
 {
     LIBRARY_INCLUDE_PARAMS_OF_STARTUP_P;
 
@@ -170,7 +170,7 @@ extern RL_LIB Ext_Lib;
 //      linkname [text!]
 //  ]
 //
-REBNATIVE(run_library_collator)
+DECLARE_NATIVE(run_library_collator)
 {
     LIBRARY_INCLUDE_PARAMS_OF_RUN_LIBRARY_COLLATOR;
 
@@ -213,7 +213,7 @@ REBNATIVE(run_library_collator)
 //      return: <none>
 //  ]
 //
-REBNATIVE(shutdown_p)
+DECLARE_NATIVE(shutdown_p)
 {
     LIBRARY_INCLUDE_PARAMS_OF_SHUTDOWN_P;
 

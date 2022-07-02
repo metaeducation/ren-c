@@ -206,7 +206,7 @@ Bounce Hijacker_Dispatcher(Frame(*) f)
 //          [action!]
 //  ]
 //
-REBNATIVE(hijack)
+DECLARE_NATIVE(hijack)
 {
     INCLUDE_PARAMS_OF_HIJACK;
 

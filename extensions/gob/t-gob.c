@@ -745,12 +745,12 @@ static Array(*) Gob_To_Array(REBGOB *gob)
 //
 // !!! R3-Alpha's MAKE has been unified with construction syntax, which has
 // no "parent" slot (just type and value).  To try and incrementally keep
-// code working, this parameterized function is called by both REBNATIVE(make)
-// REBNATIVE(construct).
+// code working, this parameterized function is called by both DECLARE_NATIVE(make)
+// DECLARE_NATIVE(construct).
 //
 void Extend_Gob_Core(REBGOB *gob, const REBVAL *arg) {
     //
-    // !!! See notes about derivation in REBNATIVE(make).  When deriving, it
+    // !!! See notes about derivation in DECLARE_NATIVE(make).  When deriving, it
     // appeared to copy the variables while nulling out the pane and parent
     // fields.  Then it applied the variables.  It also *said* in the case of
     // passing in another gob "merge gob provided as argument", but didn't

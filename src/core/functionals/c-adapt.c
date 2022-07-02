@@ -130,7 +130,7 @@ Bounce Adapter_Dispatcher(Frame(*) f)
 //          [block!]
 //  ]
 //
-REBNATIVE(adapt_p)  // see extended definition ADAPT in %base-defs.r
+DECLARE_NATIVE(adapt_p)  // see extended definition ADAPT in %base-defs.r
 {
     INCLUDE_PARAMS_OF_ADAPT_P;
 

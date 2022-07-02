@@ -153,7 +153,7 @@ REBTYPE(Quoted)
 //      /soft "Evaluate if a GET-GROUP!, GET-WORD!, or GET-PATH!"
 //  ]
 //
-REBNATIVE(the)
+DECLARE_NATIVE(the)
 //
 // Note: THE is not a perfect synonym for the action assigned to @.  See notes
 // on THE* for why.
@@ -186,7 +186,7 @@ REBNATIVE(the)
 //          [any-value!]
 //  ]
 //
-REBNATIVE(the_p)
+DECLARE_NATIVE(the_p)
 //
 // THE* is the variant assigned to @.  It does not let you use it with
 // BAD-WORD!, except for ~null~, which is transitioned to true NULL.
@@ -236,7 +236,7 @@ REBNATIVE(the_p)
 //      /soft "Evaluate if a GET-GROUP!, GET-WORD!, or GET-PATH!"
 //  ]
 //
-REBNATIVE(just)
+DECLARE_NATIVE(just)
 //
 // Note: This could be defined as `chain [:the | :quote]`.  However, it can be
 // needed early in the boot (before REDESCRIBE is available), and it is also
@@ -271,7 +271,7 @@ REBNATIVE(just)
 //          [integer!]
 //  ]
 //
-REBNATIVE(quote)
+DECLARE_NATIVE(quote)
 {
     INCLUDE_PARAMS_OF_QUOTE;
 
@@ -298,7 +298,7 @@ REBNATIVE(quote)
 //      ^optional [<void> <opt> any-value!]
 //  ]
 //
-REBNATIVE(meta)
+DECLARE_NATIVE(meta)
 {
     INCLUDE_PARAMS_OF_META;
 
@@ -320,7 +320,7 @@ REBNATIVE(meta)
 //      ^optional [<opt> <void> any-value!]
 //  ]
 //
-REBNATIVE(meta_p)
+DECLARE_NATIVE(meta_p)
 {
     INCLUDE_PARAMS_OF_META_P;
 
@@ -343,7 +343,7 @@ REBNATIVE(meta_p)
 //          [integer!]
 //  ]
 //
-REBNATIVE(unquote)
+DECLARE_NATIVE(unquote)
 {
     INCLUDE_PARAMS_OF_UNQUOTE;
 
@@ -372,7 +372,7 @@ REBNATIVE(unquote)
 //          [<opt> <void> quoted! the-word! bad-word! error!]
 //  ]
 //
-REBNATIVE(unmeta)
+DECLARE_NATIVE(unmeta)
 //
 // Note: It is weird to accept isotopes as input to an UNMETA operation, as it
 // is not possible to produce them with a META operation.  But the asymmetric
@@ -436,7 +436,7 @@ REBNATIVE(unmeta)
 //      ^optional [<opt> <void> any-value!]
 //  ]
 //
-REBNATIVE(maybe)
+DECLARE_NATIVE(maybe)
 {
     INCLUDE_PARAMS_OF_MAYBE;
 
@@ -466,7 +466,7 @@ REBNATIVE(maybe)
 //          [<opt> <void> any-value!]
 //  ]
 //
-REBNATIVE(maybe_a)
+DECLARE_NATIVE(maybe_a)
 //
 // !!! One aspect of the implementation of translucency is that functions like
 // IF do not actually overwrite the output cell when they don't run their
@@ -503,7 +503,7 @@ REBNATIVE(maybe_a)
 //      optional [<opt> any-value!]
 //  ]
 //
-REBNATIVE(quoted_q)
+DECLARE_NATIVE(quoted_q)
 {
     INCLUDE_PARAMS_OF_QUOTED_Q;
 
@@ -520,7 +520,7 @@ REBNATIVE(quoted_q)
 //      optional [<opt> any-value!]
 //  ]
 //
-REBNATIVE(noquote)
+DECLARE_NATIVE(noquote)
 {
     INCLUDE_PARAMS_OF_NOQUOTE;
 

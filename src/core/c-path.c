@@ -120,7 +120,7 @@ REBVAL *Try_Init_Any_Sequence_At_Arraylike_Core(
 //          {Index offset, symbol, or other value to use as index}
 //  ]
 //
-REBNATIVE(pick)
+DECLARE_NATIVE(pick)
 //
 // In R3-Alpha, PICK was an "action", which dispatched on types through the
 // "action mechanic" for the following types:
@@ -159,7 +159,7 @@ REBNATIVE(pick)
 //      /immediate "Allow modification even if it will not mutate location"
 //  ]
 //
-REBNATIVE(poke)
+DECLARE_NATIVE(poke)
 //
 // As with PICK, POKE is changed in Ren-C from its own action to "whatever
 // path-setting (now path-poking) would do".

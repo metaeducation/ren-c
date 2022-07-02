@@ -298,7 +298,7 @@ Array(*) Make_Let_Patch(
 //          [<variadic> <end> <opt> any-value!]
 //  ]
 //
-REBNATIVE(let)
+DECLARE_NATIVE(let)
 //
 // 1. Though LET shows as a variadic function on its interface, it does not
 //    need to use the variadic argument...since it is a native (and hence
@@ -619,7 +619,7 @@ REBNATIVE(let)
 //      value [<opt> any-value!]
 //  ]
 //
-REBNATIVE(add_let_binding) {
+DECLARE_NATIVE(add_let_binding) {
     INCLUDE_PARAMS_OF_ADD_LET_BINDING;
 
     Frame(*) f = CTX_FRAME_MAY_FAIL(VAL_CONTEXT(ARG(frame)));
@@ -652,7 +652,7 @@ REBNATIVE(add_let_binding) {
 //      object [object!]
 //  ]
 //
-REBNATIVE(add_use_object) {
+DECLARE_NATIVE(add_use_object) {
     INCLUDE_PARAMS_OF_ADD_USE_OBJECT;
 
     Frame(*) f = CTX_FRAME_MAY_FAIL(VAL_CONTEXT(ARG(frame)));
@@ -1310,7 +1310,7 @@ void Bind_Nonspecifically(Cell(*) head, Cell(const*) tail, Context(*) context)
 //      data [block!]
 //  ]
 //
-REBNATIVE(intern_p)
+DECLARE_NATIVE(intern_p)
 {
     INCLUDE_PARAMS_OF_INTERN_P;
 

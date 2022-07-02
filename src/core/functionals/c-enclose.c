@@ -209,7 +209,7 @@ Bounce Encloser_Dispatcher(Frame(*) f)
 //          [action!]
 //  ]
 //
-REBNATIVE(enclose_p)  // see extended definition ENCLOSE in %base-defs.r
+DECLARE_NATIVE(enclose_p)  // see extended definition ENCLOSE in %base-defs.r
 {
     INCLUDE_PARAMS_OF_ENCLOSE_P;
 

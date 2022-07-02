@@ -197,7 +197,7 @@ for-each info all-protos [
 ]
 
 
-=== {FORWARD-DECLARE REBNATIVE DISPATCHER PROTOTYPES} ===
+=== {FORWARD-DECLARE DECLARE_NATIVE DISPATCHER PROTOTYPES} ===
 
 ; We need to put all the C functions that implement the extension's native
 ; into an array.  But those functions live in the C file for the module.
@@ -207,20 +207,20 @@ for-each info all-protos [
 dispatcher-forward-decls: collect [
     for-each info all-protos [
         name: info/name
-        keep cscape/with {REBNATIVE(${Name})} 'name
+        keep cscape/with {DECLARE_NATIVE(${Name})} 'name
     ]
 ]
 e1/emit 'mod {
     /*
-     * Redefine REBNATIVE macro locally to include extension name.
+     * Redefine DECLARE_NATIVE macro locally to include extension name.
      * This avoids name collisions with the core, or with other extensions.
      */
-    #undef REBNATIVE
-    #define REBNATIVE(n) \
+    #undef DECLARE_NATIVE
+    #define DECLARE_NATIVE(n) \
         Bounce N_${MOD}_##n(Frame(*) frame_)
 
     /*
-     * Forward-declare REBNATIVE() dispatcher prototypes
+     * Forward-declare DECLARE_NATIVE() dispatcher prototypes
      */
     $[Dispatcher-Forward-Decls];
 }
@@ -304,7 +304,7 @@ dispatcher_c_names: collect [  ; must be in the order that NATIVE is called!
 e/emit 'mod {
     #include "sys-core.h" /* !!! Could this just use "rebol.h"? */
 
-    #include "tmp-mod-$<mod>.h" /* for REBNATIVE() forward decls */
+    #include "tmp-mod-$<mod>.h" /* for DECLARE_NATIVE() forward decls */
 
     /*
      * See comments on RL_LIB in %make-reb-lib.r, and how it is used to pass

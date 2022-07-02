@@ -138,7 +138,7 @@ Action(*) Make_Native(
 //      /combinator
 //  ]
 //
-REBNATIVE(native)
+DECLARE_NATIVE(native)
 {
     INCLUDE_PARAMS_OF_NATIVE;
 

@@ -93,7 +93,7 @@ Bounce Upshot_Dispatcher(Frame(*) f)  // won't run until count is reached
 //      branch [any-branch!]
 //  ]
 //
-REBNATIVE(do_branch)
+DECLARE_NATIVE(do_branch)
 //
 // !!! This function only exists to serve as the interface for the generated
 // function from N-SHOT.  More thinking is necessary about how to layer DO
@@ -118,7 +118,7 @@ REBNATIVE(do_branch)
 //          [integer!]
 //  ]
 //
-REBNATIVE(n_shot)
+DECLARE_NATIVE(n_shot)
 {
     INCLUDE_PARAMS_OF_N_SHOT;
 

@@ -222,7 +222,7 @@ static bool Has_Valid_GIF_Header(const Byte* data, uint32_t len) {
 //      data [binary!]
 //  ]
 //
-REBNATIVE(identify_gif_q)
+DECLARE_NATIVE(identify_gif_q)
 {
     GIF_INCLUDE_PARAMS_OF_IDENTIFY_GIF_Q;
 
@@ -246,7 +246,7 @@ REBNATIVE(identify_gif_q)
 //      data [binary!]
 //  ]
 //
-REBNATIVE(decode_gif)
+DECLARE_NATIVE(decode_gif)
 {
     GIF_INCLUDE_PARAMS_OF_DECODE_GIF;
 

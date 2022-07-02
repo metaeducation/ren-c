@@ -36,7 +36,7 @@
 //          [<opt> any-value!]
 //  ]
 //
-REBNATIVE(only)  // https://forum.rebol.info/t/1182/11
+DECLARE_NATIVE(only)  // https://forum.rebol.info/t/1182/11
 //
 // Conceived as the replacement tool for the likes of APPEND/ONLY, e.g.
 //
@@ -1382,7 +1382,7 @@ REBTYPE(Array)
 //          [<opt> any-value!]
 //  ]
 //
-REBNATIVE(blockify)
+DECLARE_NATIVE(blockify)
 {
     INCLUDE_PARAMS_OF_BLOCKIFY;
 
@@ -1415,7 +1415,7 @@ REBNATIVE(blockify)
 //          [<opt> any-value!]
 //  ]
 //
-REBNATIVE(groupify)
+DECLARE_NATIVE(groupify)
 {
     INCLUDE_PARAMS_OF_GROUPIFY;
 
@@ -1448,7 +1448,7 @@ REBNATIVE(groupify)
 //          [<opt> any-value!]
 //  ]
 //
-REBNATIVE(enblock)
+DECLARE_NATIVE(enblock)
 {
     INCLUDE_PARAMS_OF_ENBLOCK;
 
@@ -1479,7 +1479,7 @@ REBNATIVE(enblock)
 //          [<opt> any-value!]
 //  ]
 //
-REBNATIVE(engroup)
+DECLARE_NATIVE(engroup)
 {
     INCLUDE_PARAMS_OF_ENGROUP;
 
@@ -1510,7 +1510,7 @@ REBNATIVE(engroup)
 //      result [any-value!]
 //  ]
 //
-REBNATIVE(glom)
+DECLARE_NATIVE(glom)
 //
 // GLOM was designed to bubble up `pending` values (e.g. collected values) in
 // UPARSE, which are lists...but often they will be empty.  So creating lots of

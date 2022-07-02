@@ -965,7 +965,7 @@ void Swap_Series_Content(REBSER* a, REBSER* b)
 //      series2 [any-series!]
 //  ]
 //
-REBNATIVE(swap_contents)
+DECLARE_NATIVE(swap_contents)
 {
     INCLUDE_PARAMS_OF_SWAP_CONTENTS;
 

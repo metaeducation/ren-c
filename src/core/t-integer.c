@@ -137,7 +137,7 @@ void Hex_String_To_Integer(REBVAL *out, const REBVAL *value)
 // REBU64, a request for unsigned interpretation is limited to using
 // 63 of those bits.  A range error will be thrown otherwise.
 //
-// If a type is added or removed, update REBNATIVE(to_integer)'s spec
+// If a type is added or removed, update DECLARE_NATIVE(to_integer)'s spec
 //
 void Value_To_Int64(REBVAL *out, const REBVAL *value, bool no_sign)
 {

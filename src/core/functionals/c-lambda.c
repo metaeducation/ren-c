@@ -123,7 +123,7 @@ Bounce Lambda_Unoptimized_Dispatcher(Frame(*) frame_)
 //          [<const> block!]
 //  ]
 //
-REBNATIVE(lambda)
+DECLARE_NATIVE(lambda)
 //
 // 1. For the moment, this lazily reuses Pop_Paramlist(), just because that
 //    code is a vetted path.  It could be done much more efficiently, but at

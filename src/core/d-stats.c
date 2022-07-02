@@ -42,7 +42,7 @@
 //          [integer!]
 //  ]
 //
-REBNATIVE(stats)
+DECLARE_NATIVE(stats)
 {
     INCLUDE_PARAMS_OF_STATS;
 
@@ -103,7 +103,7 @@ REBNATIVE(stats)
 //          [word!]
 //  ]
 //
-REBNATIVE(callgrind)
+DECLARE_NATIVE(callgrind)
 //
 // Note: In order to start callgrind without collecting data by default (so
 // that you can instrument just part of the code) use:

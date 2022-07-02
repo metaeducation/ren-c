@@ -59,7 +59,7 @@ static bool Check_Char_Range(const REBVAL *val, REBLEN limit)
 //      value [any-string! char! integer!]
 //  ]
 //
-REBNATIVE(ascii_q)
+DECLARE_NATIVE(ascii_q)
 {
     INCLUDE_PARAMS_OF_ASCII_Q;
 
@@ -76,7 +76,7 @@ REBNATIVE(ascii_q)
 //      value [any-string! char! integer!]
 //  ]
 //
-REBNATIVE(latin1_q)
+DECLARE_NATIVE(latin1_q)
 {
     INCLUDE_PARAMS_OF_LATIN1_Q;
 
@@ -94,7 +94,7 @@ REBNATIVE(latin1_q)
 //      y [any-number!]
 //  ]
 //
-REBNATIVE(as_pair)
+DECLARE_NATIVE(as_pair)
 {
     INCLUDE_PARAMS_OF_AS_PAIR;
 
@@ -118,7 +118,7 @@ REBNATIVE(as_pair)
 //      /set "Add to context any new set-words found"
 //  ]
 //
-REBNATIVE(bind)
+DECLARE_NATIVE(bind)
 {
     INCLUDE_PARAMS_OF_BIND;
 
@@ -233,7 +233,7 @@ REBNATIVE(bind)
 //      value [<const> <blank> any-word! any-array!]  ; QUOTED! support?
 //  ]
 //
-REBNATIVE(in)
+DECLARE_NATIVE(in)
 {
     INCLUDE_PARAMS_OF_IN;
 
@@ -271,7 +271,7 @@ REBNATIVE(in)
 //      value [<const> <blank> any-word! any-array!]  ; QUOTED! support?
 //  ]
 //
-REBNATIVE(without)
+DECLARE_NATIVE(without)
 {
     INCLUDE_PARAMS_OF_WITHOUT;
 
@@ -315,7 +315,7 @@ REBNATIVE(without)
 //          [block!]
 //  ]
 //
-REBNATIVE(use)
+DECLARE_NATIVE(use)
 //
 // !!! USE is somewhat deprecated, because LET does something very similar
 // without bringing in indentation and an extra block.  The USE word is being
@@ -435,7 +435,7 @@ bool Did_Get_Binding_Of(REBVAL *out, const REBVAL *v)
 //      optional [<opt> any-value!]
 //  ]
 //
-REBNATIVE(value_q)
+DECLARE_NATIVE(value_q)
 {
     INCLUDE_PARAMS_OF_VALUE_Q;
 
@@ -452,7 +452,7 @@ REBNATIVE(value_q)
 //      optional [<opt> any-value!]
 //  ]
 //
-REBNATIVE(any_inert_q)
+DECLARE_NATIVE(any_inert_q)
 //
 // This could be done via a typeset bit the way ANY-BLOCK! and other tests are
 // done.  However, the types are organized to make this particular test fast.
@@ -477,7 +477,7 @@ REBNATIVE(any_inert_q)
 //          "Process nested blocks"
 //  ]
 //
-REBNATIVE(unbind)
+DECLARE_NATIVE(unbind)
 {
     INCLUDE_PARAMS_OF_UNBIND;
 
@@ -511,7 +511,7 @@ REBNATIVE(unbind)
 //          [any-context! block!]
 //  ]
 //
-REBNATIVE(collect_words)
+DECLARE_NATIVE(collect_words)
 {
     INCLUDE_PARAMS_OF_COLLECT_WORDS;
 
@@ -976,7 +976,7 @@ bool Get_Path_Push_Refinements_Throws(
 //      /any "Do not error on BAD-WORD! isotopes"
 //  ]
 //
-REBNATIVE(get)
+DECLARE_NATIVE(get)
 //
 // 1. Plain PICK can't throw (e.g. from a GROUP!) because it won't evaluate
 //    them.  However, we can get errors.  Confirm we only are raising errors
@@ -1320,7 +1320,7 @@ void Set_Var_May_Fail(
 //      ^value [<opt> <void> any-value!]
 //  ]
 //
-REBNATIVE(set)
+DECLARE_NATIVE(set)
 //
 // 1. While the written value would decay if an isotope, the overall return
 //    result is the same as was passed in:
@@ -1374,7 +1374,7 @@ REBNATIVE(set)
 //      ^optional [<opt> <void> any-value!]
 //  ]
 //
-REBNATIVE(try)
+DECLARE_NATIVE(try)
 {
     INCLUDE_PARAMS_OF_TRY;  // Was once known as TO-VALUE, but TRY has stuck
 
@@ -1409,7 +1409,7 @@ REBNATIVE(try)
 //      ^optional [<opt> <blank> <void> any-value!]
 //  ]
 //
-REBNATIVE(opt)
+DECLARE_NATIVE(opt)
 {
     INCLUDE_PARAMS_OF_OPT;
 
@@ -1454,7 +1454,7 @@ REBNATIVE(opt)
 //          [<blank> block!]
 //  ]
 //
-REBNATIVE(resolve)
+DECLARE_NATIVE(resolve)
 {
     INCLUDE_PARAMS_OF_RESOLVE;
 
@@ -1500,7 +1500,7 @@ REBNATIVE(resolve)
 //      action [action!]
 //  ]
 //
-REBNATIVE(enfixed_q)
+DECLARE_NATIVE(enfixed_q)
 {
     INCLUDE_PARAMS_OF_ENFIXED_Q;
 
@@ -1520,7 +1520,7 @@ REBNATIVE(enfixed_q)
 //      action [action!]
 //  ]
 //
-REBNATIVE(enfix)
+DECLARE_NATIVE(enfix)
 {
     INCLUDE_PARAMS_OF_ENFIX;
 
@@ -1547,7 +1547,7 @@ REBNATIVE(enfix)
 //      parameter [word!]
 //  ]
 //
-REBNATIVE(semiquoted_q)
+DECLARE_NATIVE(semiquoted_q)
 //
 // This operation is somewhat dodgy.  So even though the flag is carried by
 // all values, and could be generalized in the system somehow to query on
@@ -1575,7 +1575,7 @@ REBNATIVE(semiquoted_q)
 //      ^value [<opt> <void> any-value!]
 //  ]
 //
-REBNATIVE(identity) // sample uses: https://stackoverflow.com/q/3136338
+DECLARE_NATIVE(identity) // sample uses: https://stackoverflow.com/q/3136338
 {
     INCLUDE_PARAMS_OF_IDENTITY;
 
@@ -1597,7 +1597,7 @@ REBNATIVE(identity) // sample uses: https://stackoverflow.com/q/3136338
 //      memory [<blank> any-series! any-context! handle!]
 //  ]
 //
-REBNATIVE(free)
+DECLARE_NATIVE(free)
 {
     INCLUDE_PARAMS_OF_FREE;
 
@@ -1625,7 +1625,7 @@ REBNATIVE(free)
 //      value [any-value!]
 //  ]
 //
-REBNATIVE(free_q)
+DECLARE_NATIVE(free_q)
 {
     INCLUDE_PARAMS_OF_FREE_Q;
 
@@ -1816,7 +1816,7 @@ bool Try_As_String(
 //      ]
 //  ]
 //
-REBNATIVE(as)
+DECLARE_NATIVE(as)
 {
     INCLUDE_PARAMS_OF_AS;
 
@@ -2167,7 +2167,7 @@ REBNATIVE(as)
 //      /strict "Don't allow CR LF sequences in the alias"
 //  ]
 //
-REBNATIVE(as_text)
+DECLARE_NATIVE(as_text)
 {
     INCLUDE_PARAMS_OF_AS_TEXT;
 
@@ -2206,7 +2206,7 @@ REBNATIVE(as_text)
 //      value2 [any-series!]
 //  ]
 //
-REBNATIVE(aliases_q)
+DECLARE_NATIVE(aliases_q)
 {
     INCLUDE_PARAMS_OF_ALIASES_Q;
 
@@ -2223,7 +2223,7 @@ REBNATIVE(aliases_q)
 //      optional [<opt> any-value!]
 //  ]
 //
-REBNATIVE(null_q)
+DECLARE_NATIVE(null_q)
 {
     INCLUDE_PARAMS_OF_NULL_Q;
 
@@ -2240,7 +2240,7 @@ REBNATIVE(null_q)
 //      ^optional [<opt> <void> any-value!]
 //  ]
 //
-REBNATIVE(none_q)
+DECLARE_NATIVE(none_q)
 {
     INCLUDE_PARAMS_OF_NONE_Q;
 
@@ -2256,7 +2256,7 @@ REBNATIVE(none_q)
 //      return: [<void>]
 //  ]
 //
-REBNATIVE(void)
+DECLARE_NATIVE(void)
 {
     INCLUDE_PARAMS_OF_VOID;
 
@@ -2273,7 +2273,7 @@ REBNATIVE(void)
 //      ^optional [<opt> <void> any-value!]
 //  ]
 //
-REBNATIVE(void_q)
+DECLARE_NATIVE(void_q)
 {
     INCLUDE_PARAMS_OF_VOID_Q;
 
@@ -2290,7 +2290,7 @@ REBNATIVE(void_q)
 //      ^optional [<opt> any-value!]
 //  ]
 //
-REBNATIVE(blackhole_q)
+DECLARE_NATIVE(blackhole_q)
 {
     INCLUDE_PARAMS_OF_BLACKHOLE_Q;
 
@@ -2315,7 +2315,7 @@ REBNATIVE(blackhole_q)
 //      ^optional [<opt> <void> any-value!]
 //  ]
 //
-REBNATIVE(heavy) {
+DECLARE_NATIVE(heavy) {
     INCLUDE_PARAMS_OF_HEAVY;
 
     REBVAL *v = ARG(optional);
@@ -2339,7 +2339,7 @@ REBNATIVE(heavy) {
 //      ^optional [<opt> any-value!]
 //  ]
 //
-REBNATIVE(light) {
+DECLARE_NATIVE(light) {
     INCLUDE_PARAMS_OF_LIGHT;
 
     Move_Cell(OUT, Meta_Unquotify(ARG(optional)));
@@ -2357,7 +2357,7 @@ REBNATIVE(light) {
 //      return: []
 //  ]
 //
-REBNATIVE(none) {
+DECLARE_NATIVE(none) {
     INCLUDE_PARAMS_OF_NONE;
 
     return NONE;
@@ -2373,7 +2373,7 @@ REBNATIVE(none) {
 //      ^optional [<opt> any-value!]
 //  ]
 //
-REBNATIVE(decay)
+DECLARE_NATIVE(decay)
 {
     INCLUDE_PARAMS_OF_DECAY;
 
@@ -2393,7 +2393,7 @@ REBNATIVE(decay)
 //      ^optional [<opt> any-value!]
 //  ]
 //
-REBNATIVE(isotopify_if_falsey)
+DECLARE_NATIVE(isotopify_if_falsey)
 {
     INCLUDE_PARAMS_OF_ISOTOPIFY_IF_FALSEY;
 
@@ -2417,7 +2417,7 @@ REBNATIVE(isotopify_if_falsey)
 //      ^optional [<opt> <void> any-value!]
 //  ]
 //
-REBNATIVE(reify)
+DECLARE_NATIVE(reify)
 {
     INCLUDE_PARAMS_OF_REIFY;
 
@@ -2446,7 +2446,7 @@ REBNATIVE(reify)
 //      value [<opt> any-value!]
 //  ]
 //
-REBNATIVE(something_q)
+DECLARE_NATIVE(something_q)
 //
 // !!! See remarks on `nothing?` regarding `~` and isotopes.
 {

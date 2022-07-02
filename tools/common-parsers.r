@@ -251,7 +251,7 @@ export proto-parser: context [
                     ; It's hacky to just throw it in here, but the general
                     ; consensus is that the build process needs to be made
                     ; much simpler.  It really should be going by seeing it
-                    ; is a REBNATIVE() vs. worrying too much about the text
+                    ; is a DECLARE_NATIVE() vs. worrying too much about the text
                     ; pattern in the comment being detected.
                     ;
                     if any [

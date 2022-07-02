@@ -93,7 +93,7 @@ void Trace_Parse_Input(const REBVAL *str)
 //          "Traces functions only (less output)"
 //  ]
 //
-REBNATIVE(trace)
+DECLARE_NATIVE(trace)
 //
 // !!! R3-Alpha had a kind of interesting concept of storing the backtrace in
 // a buffer, up to a certain number of lines.  So it wouldn't be visible and

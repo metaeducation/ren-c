@@ -42,7 +42,7 @@
 //          {Optional argument that may be useful for ad hoc tests}
 //  ]
 //
-REBNATIVE(test_librebol)
+DECLARE_NATIVE(test_librebol)
 {
     INCLUDE_PARAMS_OF_TEST_LIBREBOL;
     UNUSED(ARG(value));
@@ -118,7 +118,7 @@ REBNATIVE(test_librebol)
 //      value [<opt> any-value!]
 //  ]
 //
-REBNATIVE(diagnose)
+DECLARE_NATIVE(diagnose)
 {
   INCLUDE_PARAMS_OF_DIAGNOSE;
 
@@ -158,7 +158,7 @@ REBNATIVE(diagnose)
 //          [integer! percent!]
 //  ]
 //
-REBNATIVE(fuzz)
+DECLARE_NATIVE(fuzz)
 {
     INCLUDE_PARAMS_OF_FUZZ;
 

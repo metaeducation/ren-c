@@ -77,7 +77,7 @@ Bounce Generic_Dispatcher(Frame(*) f)
 //      spec [block!]
 //  ]
 //
-REBNATIVE(generic)
+DECLARE_NATIVE(generic)
 //
 // The `generic` native is designed to be an enfix function that quotes its
 // first argument, so when you write `foo: generic [...]`, the FOO: gets quoted

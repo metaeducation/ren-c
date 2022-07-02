@@ -234,7 +234,7 @@ Bounce Chainer_Dispatcher(Frame(*) f)
 //          [block!]
 //  ]
 //
-REBNATIVE(chain_p)  // see extended definition CHAIN in %base-defs.r
+DECLARE_NATIVE(chain_p)  // see extended definition CHAIN in %base-defs.r
 {
     INCLUDE_PARAMS_OF_CHAIN_P;
 

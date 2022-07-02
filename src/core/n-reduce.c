@@ -37,7 +37,7 @@
 //          [action!]
 //  ]
 //
-REBNATIVE(reduce)
+DECLARE_NATIVE(reduce)
 //
 // 1. It's not completely clear what the semantics of non-block REDUCE should
 //    be, but right now single value REDUCE does a REEVALUATE where it does
@@ -189,7 +189,7 @@ REBNATIVE(reduce)
 //          [block!]
 //  ]
 //
-REBNATIVE(reduce_each)
+DECLARE_NATIVE(reduce_each)
 //
 // 1. This current REDUCE-EACH only works with one variable, and it has to
 //    be a plain WORD!.  It should be able to support ^META words, as well as
@@ -800,7 +800,7 @@ Bounce Composer_Executor(Frame(*) f)
 //  ; Note: /ONLY is intentionally no longer supported
 //  https://forum.rebol.info/t/the-superpowers-of-ren-cs-revamped-compose/979/7
 //
-REBNATIVE(compose)
+DECLARE_NATIVE(compose)
 {
     INCLUDE_PARAMS_OF_COMPOSE;
 
@@ -891,7 +891,7 @@ static void Flatten_Core(
 //      /deep
 //  ]
 //
-REBNATIVE(flatten)
+DECLARE_NATIVE(flatten)
 {
     INCLUDE_PARAMS_OF_FLATTEN;
 

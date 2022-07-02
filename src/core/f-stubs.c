@@ -530,7 +530,7 @@ REBVAL *Setify(REBVAL *out) {  // called on stack values; can't call evaluator
 //      value [<blank> any-value!]
 //  ]
 //
-REBNATIVE(setify)
+DECLARE_NATIVE(setify)
 {
     INCLUDE_PARAMS_OF_SETIFY;
 
@@ -576,7 +576,7 @@ REBVAL *Getify(REBVAL *out) {  // called on stack values; can't call evaluator
 //      value [<blank> any-value!]
 //  ]
 //
-REBNATIVE(getify)
+DECLARE_NATIVE(getify)
 {
     INCLUDE_PARAMS_OF_GETIFY;
 
@@ -622,7 +622,7 @@ REBVAL *Metafy(REBVAL *out) {  // called on stack values; can't call evaluator
 //      value [<blank> any-value!]
 //  ]
 //
-REBNATIVE(metafy)
+DECLARE_NATIVE(metafy)
 {
     INCLUDE_PARAMS_OF_METAFY;
 
@@ -668,7 +668,7 @@ REBVAL *Theify(REBVAL *out) {  // called on stack values; can't call evaluator
 //      value [<blank> any-value!]
 //  ]
 //
-REBNATIVE(inert)
+DECLARE_NATIVE(inert)
 //
 // Operators such as ANY and ALL have a behavior variation for @[xxx] blocks
 // that assume the content is already reduced.  This helps to produce that
@@ -718,7 +718,7 @@ REBVAL *Plainify(REBVAL *out) {
 //      value [<blank> any-value!]
 //  ]
 //
-REBNATIVE(plain)
+DECLARE_NATIVE(plain)
 {
     INCLUDE_PARAMS_OF_PLAIN;
 

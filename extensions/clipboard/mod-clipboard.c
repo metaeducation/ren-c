@@ -209,7 +209,7 @@ static Bounce Clipboard_Actor(
 //      return: [handle!]
 //  ]
 //
-REBNATIVE(get_clipboard_actor_handle)
+DECLARE_NATIVE(get_clipboard_actor_handle)
 {
     Make_Port_Actor_Handle(OUT, &Clipboard_Actor);
     return OUT;

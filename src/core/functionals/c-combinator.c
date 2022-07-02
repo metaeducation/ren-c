@@ -257,7 +257,7 @@ Array(*) Expanded_Combinator_Spec(const REBVAL *original)
 //      body [block!]
 //  ]
 //
-REBNATIVE(combinator)
+DECLARE_NATIVE(combinator)
 {
     INCLUDE_PARAMS_OF_COMBINATOR;
 
@@ -367,7 +367,7 @@ void Push_Parser_Subframe(
 //      parser [action!]
 //  ]
 //
-REBNATIVE(opt_combinator)
+DECLARE_NATIVE(opt_combinator)
 {
     INCLUDE_PARAMS_OF_OPT_COMBINATOR;
 
@@ -419,7 +419,7 @@ REBNATIVE(opt_combinator)
 //      value [text!]
 //  ]
 //
-REBNATIVE(text_x_combinator)
+DECLARE_NATIVE(text_x_combinator)
 {
     INCLUDE_PARAMS_OF_TEXT_X_COMBINATOR;
 
@@ -479,7 +479,7 @@ REBNATIVE(text_x_combinator)
 //      parser [action!]
 //  ]
 //
-REBNATIVE(some_combinator)
+DECLARE_NATIVE(some_combinator)
 //
 // 1. If we don't put a phase on this, then it will pay attention to the
 //    FRAME_HAS_BEEN_INVOKED flag and prohibit things like STOP from advancing
@@ -579,7 +579,7 @@ REBNATIVE(some_combinator)
 //      parser [action!]
 //  ]
 //
-REBNATIVE(further_combinator)
+DECLARE_NATIVE(further_combinator)
 {
     INCLUDE_PARAMS_OF_FURTHER_COMBINATOR;
 
@@ -772,7 +772,7 @@ static bool Combinator_Param_Hook(
 //      /path "Invoking Path" [path!]
 //  ]
 //
-REBNATIVE(combinatorize)
+DECLARE_NATIVE(combinatorize)
 //
 // While *parsers* take one argument (the input), *parser combinators* may take
 // more.  If the arguments are quoted, then they are taken literally from the

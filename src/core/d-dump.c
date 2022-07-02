@@ -144,7 +144,7 @@ void Dump_Stack(Frame(*) f)
 //      :value [word!]
 //  ]
 //
-REBNATIVE(dump)
+DECLARE_NATIVE(dump)
 {
     INCLUDE_PARAMS_OF_DUMP;
 

@@ -184,7 +184,7 @@ int get_random(void *p_rng, unsigned char *output, size_t output_len)
 //          [binary! text!]
 //  ]
 //
-REBNATIVE(checksum)
+DECLARE_NATIVE(checksum)
 //
 // !!! The /METHOD refinement is being removed because you pretty much always
 // need to supply a method.  As an interim compatibility measure, it is kept
@@ -467,7 +467,7 @@ void Get_Padding_And_Hash_From_Spec(
 //      /insecure "Allow insecure key sizes--for teaching purposes only"
 //  ]
 //
-REBNATIVE(rsa_generate_keypair)
+DECLARE_NATIVE(rsa_generate_keypair)
 {
     CRYPT_INCLUDE_PARAMS_OF_RSA_GENERATE_KEYPAIR;
 
@@ -623,7 +623,7 @@ REBNATIVE(rsa_generate_keypair)
 //      public-key [object!]
 //  ]
 //
-REBNATIVE(rsa_encrypt)
+DECLARE_NATIVE(rsa_encrypt)
 {
     CRYPT_INCLUDE_PARAMS_OF_RSA_ENCRYPT;
 
@@ -756,7 +756,7 @@ REBNATIVE(rsa_encrypt)
 //      private-key [object!]
 //  ]
 //
-REBNATIVE(rsa_decrypt)
+DECLARE_NATIVE(rsa_decrypt)
 {
     CRYPT_INCLUDE_PARAMS_OF_RSA_DECRYPT;
 
@@ -993,7 +993,7 @@ REBNATIVE(rsa_decrypt)
 //      /insecure "Don't raise errors if base/modulus choice becomes suspect"
 //  ]
 //
-REBNATIVE(dh_generate_keypair)
+DECLARE_NATIVE(dh_generate_keypair)
 {
     CRYPT_INCLUDE_PARAMS_OF_DH_GENERATE_KEYPAIR;
 
@@ -1199,7 +1199,7 @@ REBNATIVE(dh_generate_keypair)
 //          [binary!]
 //  ]
 //
-REBNATIVE(dh_compute_secret)
+DECLARE_NATIVE(dh_compute_secret)
 {
     CRYPT_INCLUDE_PARAMS_OF_DH_COMPUTE_SECRET;
 
@@ -1355,7 +1355,7 @@ static void cleanup_aes_ctx(const REBVAL *v)
 //      /decrypt "Make cipher context for decryption (default is to encrypt)"
 //  ]
 //
-REBNATIVE(aes_key)
+DECLARE_NATIVE(aes_key)
 {
     CRYPT_INCLUDE_PARAMS_OF_AES_KEY;
 
@@ -1445,7 +1445,7 @@ REBNATIVE(aes_key)
 //      data [binary!]
 //  ]
 //
-REBNATIVE(aes_stream)
+DECLARE_NATIVE(aes_stream)
 {
     CRYPT_INCLUDE_PARAMS_OF_AES_STREAM;
 
@@ -1560,7 +1560,7 @@ static const struct mbedtls_ecp_curve_info *Ecp_Curve_Info_From_Word(
 //          [word!]
 //  ]
 //
-REBNATIVE(ecc_generate_keypair)
+DECLARE_NATIVE(ecc_generate_keypair)
 //
 // !!! Note: using curve25519 seems to always give a y coordinate of zero
 // in the public key.  Is this correct (it seems to yield the right secret)?
@@ -1649,7 +1649,7 @@ REBNATIVE(ecc_generate_keypair)
 //          [binary! object!]
 //  ]
 //
-REBNATIVE(ecdh_shared_secret)
+DECLARE_NATIVE(ecdh_shared_secret)
 {
     CRYPT_INCLUDE_PARAMS_OF_ECDH_SHARED_SECRET;
 
@@ -1752,7 +1752,7 @@ EXTERN_C int tf_snprintf(char *s, size_t n, const char *fmt, ...);
 //      return: <none>
 //  ]
 //
-REBNATIVE(startup_p)
+DECLARE_NATIVE(startup_p)
 {
     CRYPT_INCLUDE_PARAMS_OF_STARTUP_P;
 
@@ -1801,7 +1801,7 @@ REBNATIVE(startup_p)
 //      return: <none>
 //  ]
 //
-REBNATIVE(shutdown_p)
+DECLARE_NATIVE(shutdown_p)
 {
     CRYPT_INCLUDE_PARAMS_OF_SHUTDOWN_P;
 

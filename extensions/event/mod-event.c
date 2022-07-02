@@ -44,7 +44,7 @@ extern bool Wait_Milliseconds_Interrupted(unsigned int millisec);
 //      return: <none>
 //  ]
 //
-REBNATIVE(startup_p)
+DECLARE_NATIVE(startup_p)
 {
     EVENT_INCLUDE_PARAMS_OF_STARTUP_P;
 
@@ -79,7 +79,7 @@ REBNATIVE(startup_p)
 //      return: <none>
 //  ]
 //
-REBNATIVE(shutdown_p)
+DECLARE_NATIVE(shutdown_p)
 {
     EVENT_INCLUDE_PARAMS_OF_SHUTDOWN_P;
 
@@ -113,7 +113,7 @@ REBNATIVE(shutdown_p)
 //      value [<opt> any-number! time! port! block!]
 //  ]
 //
-REBNATIVE(wait_p)  // See wrapping function WAIT in usermode code
+DECLARE_NATIVE(wait_p)  // See wrapping function WAIT in usermode code
 //
 // WAIT* expects a BLOCK! argument to have been pre-reduced; this means it
 // does not have to implement the reducing process "stacklessly" itself.  The

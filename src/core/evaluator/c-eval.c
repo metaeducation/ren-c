@@ -262,7 +262,7 @@ Bounce Evaluator_Executor(Frame(*) f)
         // not to redundantly apply LET bindings.  See `f_specifier` above.
 
         // The re-evaluate functionality may not want to heed the enfix state
-        // in the action itself.  See REBNATIVE(shove)'s /ENFIX for instance.
+        // in the action itself.  See DECLARE_NATIVE(shove)'s /ENFIX for instance.
         // So we go by the state of a flag on entry.
         //
         if (f->u.eval.enfix_reevaluate == 'N') {

@@ -221,7 +221,7 @@ void Enable_Halting(void)
 //      <local> old-console was-halting-enabled no-recover
 //  ]
 //
-REBNATIVE(console)
+DECLARE_NATIVE(console)
 //
 // !!! The idea behind the console is that it can be called with skinning;
 // so that if BREAKPOINT wants to spin up a console, it can...but with a

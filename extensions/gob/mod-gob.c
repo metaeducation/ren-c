@@ -40,7 +40,7 @@ REBTYP *EG_Gob_Type = nullptr;  // (E)xtension (G)lobal
 //      return: <none>
 //  ]
 //
-REBNATIVE(startup_p)
+DECLARE_NATIVE(startup_p)
 {
     GOB_INCLUDE_PARAMS_OF_STARTUP_P;
 
@@ -71,7 +71,7 @@ REBNATIVE(startup_p)
 //      return: <none>
 //  ]
 //
-REBNATIVE(shutdown_p)
+DECLARE_NATIVE(shutdown_p)
 {
     GOB_INCLUDE_PARAMS_OF_SHUTDOWN_P;
 
@@ -140,7 +140,7 @@ static REBGOB *Map_Gob_Inner(REBGOB *gob, REBD32 *xo, REBD32 *yo)
 //          "Translate from deeper gob to top gob."
 //  ]
 //
-REBNATIVE(map_gob_offset)
+DECLARE_NATIVE(map_gob_offset)
 {
     GOB_INCLUDE_PARAMS_OF_MAP_GOB_OFFSET;
     UNUSED(ARG(gob));

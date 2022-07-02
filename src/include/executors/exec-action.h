@@ -109,7 +109,7 @@ STATIC_ASSERT(
 //
 // It is also used to indicate to a ST_EVALUATOR_REEVALUATING frame whether
 // to run an ACTION! cell as enfix or not.  The reason this may be overridden
-// on what's in the action can be seen in the REBNATIVE(shove) code.
+// on what's in the action can be seen in the DECLARE_NATIVE(shove) code.
 //
 #define ACTION_EXECUTOR_FLAG_RUNNING_ENFIX \
     FRAME_FLAG_28

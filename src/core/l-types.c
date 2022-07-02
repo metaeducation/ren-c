@@ -93,7 +93,7 @@ Bounce MAKE_Unhooked(
 //          {Definition or size of the new value (binding may be modified)}
 //  ]
 //
-REBNATIVE(make)
+DECLARE_NATIVE(make)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
@@ -111,7 +111,7 @@ REBNATIVE(make)
         }
     }
 
-    // See notes in REBNATIVE(do) for why this is the easiest way to pass
+    // See notes in DECLARE_NATIVE(do) for why this is the easiest way to pass
     // a flag to Do_Any_Array(), to help us discern the likes of:
     //
     //     foo: does [make object! [x: [1 2 3]]]  ; x inherits frame const
@@ -190,7 +190,7 @@ Bounce TO_Unhooked(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 //      value [<blank> any-value!]
 //  ]
 //
-REBNATIVE(to)
+DECLARE_NATIVE(to)
 {
     INCLUDE_PARAMS_OF_TO;
 
@@ -332,7 +332,7 @@ Bounce Reflect_Core(Frame(*) frame_)
 //          "Such as: type, length, spec, body, words, values, title"
 //  ]
 //
-REBNATIVE(reflect_native)
+DECLARE_NATIVE(reflect_native)
 //
 // Although REFLECT goes through dispatch to the REBTYPE(), it was needing
 // a null check in Type_Action_Dispatcher--which no other type needs.  So
@@ -355,7 +355,7 @@ REBNATIVE(reflect_native)
 //          [<opt> any-value!]
 //  ]
 //
-REBNATIVE(of)
+DECLARE_NATIVE(of)
 //
 // !!! ':PROPERTY is not loadable by the bootstrap executable at time of
 // writing.  But that is desired over 'PROPERTY or :PROPERTY so that both
@@ -1262,7 +1262,7 @@ const Byte* Scan_Any(
 //          [binary!]
 //  ]
 //
-REBNATIVE(scan_net_header)
+DECLARE_NATIVE(scan_net_header)
 //
 // !!! This routine used to be a feature of CONSTRUCT in R3-Alpha, and was
 // used by %prot-http.r.  The idea was that instead of providing a parent

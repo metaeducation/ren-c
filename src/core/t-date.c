@@ -1196,7 +1196,7 @@ REBTYPE(Date)
 //      zone [blank! integer!]
 //  ]
 //
-REBNATIVE(make_date_ymdsnz)
+DECLARE_NATIVE(make_date_ymdsnz)
 //
 // !!! This native exists to avoid adding specialized C routines to the API
 // for the purposes of date creation in NOW.  Ideally there would be a nicer
@@ -1238,7 +1238,7 @@ REBNATIVE(make_date_ymdsnz)
 //          [blank! integer!]
 //  ]
 //
-REBNATIVE(make_time_sn)
+DECLARE_NATIVE(make_time_sn)
 //
 // !!! The MAKE TIME! as defined by historical Rebol lacked granularity to
 // to add fractions of seconds (it was `make time! [hour minutes seconds]`).

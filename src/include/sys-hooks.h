@@ -41,7 +41,7 @@ typedef REBINT (COMPARE_HOOK)(
 
 // Helper for declaring a native dispatcher function
 //
-#define REBNATIVE(n) \
+#define DECLARE_NATIVE(n) \
     Bounce N_##n(Frame(*) frame_)
 
 

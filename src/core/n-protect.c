@@ -35,7 +35,7 @@
 //          [<opt> any-value!]  ; INTEGER!, etc. someday
 //  ]
 //
-REBNATIVE(const) {
+DECLARE_NATIVE(const) {
     INCLUDE_PARAMS_OF_CONST;
 
     REBVAL *v = ARG(value);
@@ -58,7 +58,7 @@ REBNATIVE(const) {
 //      value [any-series! any-context!]
 //  ]
 //
-REBNATIVE(const_q) {
+DECLARE_NATIVE(const_q) {
     INCLUDE_PARAMS_OF_CONST_Q;
 
     // !!! Should this integrate the question of if the series is immutable,
@@ -80,7 +80,7 @@ REBNATIVE(const_q) {
 //          [<opt> any-value!]  ; INTEGER!, etc. someday
 //  ]
 //
-REBNATIVE(mutable)
+DECLARE_NATIVE(mutable)
 {
     INCLUDE_PARAMS_OF_MUTABLE;
 
@@ -111,7 +111,7 @@ REBNATIVE(mutable)
 //      value [any-series! any-context!]
 //  ]
 //
-REBNATIVE(mutable_q) {
+DECLARE_NATIVE(mutable_q) {
     INCLUDE_PARAMS_OF_MUTABLE_Q;
 
     // !!! Should this integrate the question of if the series is immutable,
@@ -381,7 +381,7 @@ static Bounce Protect_Unprotect_Core(Frame(*) frame_, Flags flags)
 //      /hide "Hide variables (avoid binding and lookup)"
 //  ]
 //
-REBNATIVE(protect)
+DECLARE_NATIVE(protect)
 {
     INCLUDE_PARAMS_OF_PROTECT;
 
@@ -430,7 +430,7 @@ REBNATIVE(protect)
 //      /hide "HACK to make PROTECT and UNPROTECT have the same signature"
 //  ]
 //
-REBNATIVE(unprotect)
+DECLARE_NATIVE(unprotect)
 {
     INCLUDE_PARAMS_OF_UNPROTECT;
 
@@ -483,7 +483,7 @@ bool Is_Value_Frozen_Deep(Cell(const*) v) {
 //      value [any-value!]
 //  ]
 //
-REBNATIVE(locked_q)
+DECLARE_NATIVE(locked_q)
 {
     INCLUDE_PARAMS_OF_LOCKED_Q;
 
@@ -562,7 +562,7 @@ void Force_Value_Frozen_Core(
 //  ;       [any-series!]  ; not exposed for the moment
 //  ]
 //
-REBNATIVE(freeze)
+DECLARE_NATIVE(freeze)
 {
     INCLUDE_PARAMS_OF_FREEZE;
 

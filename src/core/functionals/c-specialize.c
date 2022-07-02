@@ -470,7 +470,7 @@ bool Specialize_Action_Throws(
 //          [block!]
 //  ]
 //
-REBNATIVE(specialize_p)  // see extended definition SPECIALIZE in %base-defs.r
+DECLARE_NATIVE(specialize_p)  // see extended definition SPECIALIZE in %base-defs.r
 {
     INCLUDE_PARAMS_OF_SPECIALIZE_P;
 

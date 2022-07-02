@@ -150,7 +150,7 @@ Bounce Group_Branch_Executor(Frame(*) frame_)
 //          [any-branch!]
 //  ]
 //
-REBNATIVE(if)
+DECLARE_NATIVE(if)
 //
 // 1. It's a common mistake to write something like `if [1 > 2]` and be
 //    surprised that is considered "truthy" (as it's an unevaluated block).
@@ -190,7 +190,7 @@ REBNATIVE(if)
 //          [any-branch!]
 //  ]
 //
-REBNATIVE(either)
+DECLARE_NATIVE(either)
 {
     INCLUDE_PARAMS_OF_EITHER;
 
@@ -215,7 +215,7 @@ REBNATIVE(either)
 //      /decay "Pre-decay ~null~ isotope input to NULL"
 //  ]
 //
-REBNATIVE(did_1)  // see TO-C-NAME
+DECLARE_NATIVE(did_1)  // see TO-C-NAME
 //
 // DID exists as a complement to isotopes to help solve conflation of falsey
 // values with conditional tests.  One example:
@@ -261,7 +261,7 @@ REBNATIVE(did_1)  // see TO-C-NAME
 //      /decay "Pre-decay ~null~ isotope input to NULL"
 //  ]
 //
-REBNATIVE(didnt)
+DECLARE_NATIVE(didnt)
 {
     INCLUDE_PARAMS_OF_DIDNT;
 
@@ -291,7 +291,7 @@ REBNATIVE(didnt)
 //      /decay "Pre-decay ~null~ isotope input to NULL"
 //  ]
 //
-REBNATIVE(then)  // see `tweak :then 'defer on` in %base-defs.r
+DECLARE_NATIVE(then)  // see `tweak :then 'defer on` in %base-defs.r
 //
 // 1. We received the left hand side as ^meta, so it's quoted in order to be
 //    isotope-tolerant.  If passed to a branch action, unquote back to normal.
@@ -332,7 +332,7 @@ REBNATIVE(then)  // see `tweak :then 'defer on` in %base-defs.r
 //      /decay "Pre-decay ~null~ isotope input to NULL"
 //  ]
 //
-REBNATIVE(also)  // see `tweak :also 'defer on` in %base-defs.r
+DECLARE_NATIVE(also)  // see `tweak :also 'defer on` in %base-defs.r
 {
     INCLUDE_PARAMS_OF_ALSO;  // `then func [x] [(...) :x]` => `also [...]`
 
@@ -388,7 +388,7 @@ REBNATIVE(also)  // see `tweak :also 'defer on` in %base-defs.r
 //      /decay "Pre-decay ~null~ isotope input to NULL"
 //  ]
 //
-REBNATIVE(else)  // see `tweak :else 'defer on` in %base-defs.r
+DECLARE_NATIVE(else)  // see `tweak :else 'defer on` in %base-defs.r
 //
 // 1. ELSE is not reactive to "nothing" isotopes (~) by design:
 //
@@ -451,7 +451,7 @@ REBNATIVE(else)  // see `tweak :else 'defer on` in %base-defs.r
 //      value [<opt> any-value!]
 //  ]
 //
-REBNATIVE(match)
+DECLARE_NATIVE(match)
 //
 // Note: Ambitious ideas for the "MATCH dialect" are on hold, and this function
 // just does some fairly simple matching:
@@ -544,7 +544,7 @@ REBNATIVE(match)
 //      value [<opt> any-value!]
 //  ]
 //
-REBNATIVE(must)  // `must x` is a faster synonym for `non null x`
+DECLARE_NATIVE(must)  // `must x` is a faster synonym for `non null x`
 {
     INCLUDE_PARAMS_OF_MUST;
 
@@ -568,7 +568,7 @@ REBNATIVE(must)  // `must x` is a faster synonym for `non null x`
 //          [action!]
 //  ]
 //
-REBNATIVE(all)
+DECLARE_NATIVE(all)
 //
 // 1. ALL takes advantage of the tricky mechanics of "void" in the system, so
 //    that void evaluations can be vanished without requiring saving a copy of
@@ -733,7 +733,7 @@ REBNATIVE(all)
 //          [action!]
 //  ]
 //
-REBNATIVE(any)
+DECLARE_NATIVE(any)
 //
 // 1. Don't let ANY return something falsey, but using an isotope means that
 //    it can work with DID/THEN
@@ -851,7 +851,7 @@ REBNATIVE(any)
 //          [action!]
 //  ]
 //
-REBNATIVE(case)
+DECLARE_NATIVE(case)
 //
 // 1. It may seem tempting to run PREDICATE from on `f` directly, allowing it
 //    to take arity > 2.  Don't do this.  We have to get a true/false answer
@@ -1064,7 +1064,7 @@ REBNATIVE(case)
 //          [action!]
 //  ]
 //
-REBNATIVE(switch)
+DECLARE_NATIVE(switch)
 {
     INCLUDE_PARAMS_OF_SWITCH;
 
@@ -1238,7 +1238,7 @@ REBNATIVE(switch)
 //          [action!]
 //  ]
 //
-REBNATIVE(default)
+DECLARE_NATIVE(default)
 //
 // 1. The TARGET may be something like a TUPLE! that contains GROUP!s.  This
 //    could put us at risk of double-evaluation if we do a GET to check the
@@ -1333,7 +1333,7 @@ REBNATIVE(default)
 //      /any "Catch all throws except QUIT (can be used with /QUIT)"
 //  ]
 //
-REBNATIVE(catch)
+DECLARE_NATIVE(catch)
 //
 // There's a refinement for catching quits, and CATCH/ANY will not alone catch
 // it (you have to CATCH/ANY/QUIT).  Currently the label for quitting is the
@@ -1478,7 +1478,7 @@ REBNATIVE(catch)
 //          [word! action! object!]
 //  ]
 //
-REBNATIVE(throw)
+DECLARE_NATIVE(throw)
 //
 // Choices are currently limited for what one can use as a "name" of a THROW.
 // Note blocks as names would conflict with the `name_list` feature in CATCH.

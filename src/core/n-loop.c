@@ -76,7 +76,7 @@ bool Try_Catch_Break_Or_Continue(Value(*) out, Frame(*) frame_)
 //      return: []  ; !!! notation for divergent function?
 //  ]
 //
-REBNATIVE(break)
+DECLARE_NATIVE(break)
 //
 // BREAK is implemented via a thrown signal that bubbles up through the stack.
 // It uses the value of its own native function as the name of the throw,
@@ -98,7 +98,7 @@ REBNATIVE(break)
 //          [<end> <opt> any-value!]
 //  ]
 //
-REBNATIVE(continue)
+DECLARE_NATIVE(continue)
 //
 // CONTINUE is implemented via a thrown signal that bubbles up through the
 // stack.  It uses the value of its own native function as the name of the
@@ -408,7 +408,7 @@ REBVAL *Real_Var_From_Pseudo(REBVAL *pseudo_var) {
 //          "Code to evaluate"
 //  ]
 //
-REBNATIVE(cfor)
+DECLARE_NATIVE(cfor)
 {
     INCLUDE_PARAMS_OF_CFOR;
 
@@ -483,7 +483,7 @@ REBNATIVE(cfor)
 //          [<const> any-branch!]
 //  ]
 //
-REBNATIVE(for_skip)
+DECLARE_NATIVE(for_skip)
 {
     INCLUDE_PARAMS_OF_FOR_SKIP;
 
@@ -580,7 +580,7 @@ REBNATIVE(for_skip)
 //          [<opt> <end> any-value!]
 //  ]
 //
-REBNATIVE(stop)
+DECLARE_NATIVE(stop)
 //
 // See CYCLE for notes about STOP
 {
@@ -608,7 +608,7 @@ REBNATIVE(stop)
 //          "Block or action to evaluate each time"
 //  ]
 //
-REBNATIVE(cycle)
+DECLARE_NATIVE(cycle)
 //
 // 1. Most loops are not allowed to explicitly return a value and stop looping,
 //    because that would make it impossible to tell from the outside whether
@@ -991,7 +991,7 @@ void Shutdown_Loop_Each(Value(*) iterator)
 //          [<const> block! meta-block!]
 //  ]
 //
-REBNATIVE(for_each)
+DECLARE_NATIVE(for_each)
 //
 // 1. On a "void" continue, it may seem tempting to drop out the last result:
 //
@@ -1092,7 +1092,7 @@ REBNATIVE(for_each)
 //          "Block to evaluate each time"
 //  ]
 //
-REBNATIVE(every)
+DECLARE_NATIVE(every)
 //
 // 1. In light of other tolerances in the system for voids in logic tests
 //    (see ALL & ANY), EVERY treats a void as "no vote".
@@ -1216,7 +1216,7 @@ REBNATIVE(every)
 //          [<const> block!]
 //  ]
 //
-REBNATIVE(remove_each)
+DECLARE_NATIVE(remove_each)
 //
 // 1. For reasons of semantics and performance, REMOVE-EACH does not actually
 //    perform removals "as it goes".  It could run afoul of any number of
@@ -1554,7 +1554,7 @@ REBNATIVE(remove_each)
 //          [<const> block!]
 //  ]
 //
-REBNATIVE(map_each)
+DECLARE_NATIVE(map_each)
 //
 // !!! MAP-EACH is a legacy construct that lacks the planned flexibility of
 // MAP, as it presumes a 1:1 mapping vs. being able to splice.  The syntax of
@@ -1590,7 +1590,7 @@ REBNATIVE(map_each)
 //          [<const> block! meta-block!]
 //  ]
 //
-REBNATIVE(map)
+DECLARE_NATIVE(map)
 //
 // 1. Void is allowed for skipping map elements:
 //
@@ -1751,7 +1751,7 @@ REBNATIVE(map)
 //          [<const> block! action!]
 //  ]
 //
-REBNATIVE(repeat)
+DECLARE_NATIVE(repeat)
 //
 // 1. We pass the index into the body if it's an ACTION! as we count.  But if
 //    it's a LOGIC! TRUE no index is passed, because we don't count.  If we
@@ -1836,7 +1836,7 @@ REBNATIVE(repeat)
 //          [<const> any-value!]
 //  ]
 //
-REBNATIVE(for)
+DECLARE_NATIVE(for)
 {
     INCLUDE_PARAMS_OF_FOR;
 
@@ -1946,7 +1946,7 @@ REBNATIVE(for)
 //          [action!]
 //  ]
 //
-REBNATIVE(until)
+DECLARE_NATIVE(until)
 //
 // 1. When CONTINUE has an argument, it acts as if the loop body evaluated to
 //    that argument.  But UNTIL's condition and body are the same.  That means
@@ -2045,7 +2045,7 @@ REBNATIVE(until)
 //      body [<const> block! action!]
 //  ]
 //
-REBNATIVE(while)
+DECLARE_NATIVE(while)
 //
 // 1. It was considered if `while true [...]` should infinite loop, and then
 //    `while false [...]` never ran.  However, that could lead to accidents

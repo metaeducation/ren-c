@@ -445,7 +445,7 @@ REBTYPE(Issue)
 //      /extended "Permit 4 or 5 trailing bytes, not legal in the UTF-8 spec"
 //  ]
 //
-REBNATIVE(trailing_bytes_for_utf8)
+DECLARE_NATIVE(trailing_bytes_for_utf8)
 //
 // !!! This is knowledge Rebol has, and it can be useful for anyone writing
 // code that processes UTF-8 (e.g. the terminal).  Might as well expose it.

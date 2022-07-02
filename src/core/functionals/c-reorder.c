@@ -97,7 +97,7 @@ Bounce Reorderer_Dispatcher(Frame(*) f) {
 //          [block!]
 //  ]
 //
-REBNATIVE(reorder_p)  // see REORDER in %base-defs.r, for inheriting meta
+DECLARE_NATIVE(reorder_p)  // see REORDER in %base-defs.r, for inheriting meta
 {
     INCLUDE_PARAMS_OF_REORDER_P;
 

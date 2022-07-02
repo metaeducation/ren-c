@@ -112,7 +112,7 @@ bool Do_Breakpoint_Throws(
 //      return: <void>
 //  ]
 //
-REBNATIVE(breakpoint_p)
+DECLARE_NATIVE(breakpoint_p)
 //
 // !!! Need definition to test for N_DEBUGGER_breakpoint function
 {
@@ -147,7 +147,7 @@ REBNATIVE(breakpoint_p)
 //          "Run the given code if breakpoint does not override"
 //  ]
 //
-REBNATIVE(pause)
+DECLARE_NATIVE(pause)
 //
 // !!! Need definition to test for N_DEBUGGER_pause function
 {
@@ -175,7 +175,7 @@ REBNATIVE(pause)
 //          [<end> block!]
 //  ]
 //
-REBNATIVE(resume)
+DECLARE_NATIVE(resume)
 //
 // The CONSOLE makes a wall to prevent arbitrary THROWs and FAILs from ending
 // a level of interactive inspection.  But RESUME is special, (with a throw
@@ -234,7 +234,7 @@ REBNATIVE(resume)
 //          "Number of steps to take (default is 1) or IN, OUT, OVER"
 //  ]
 //
-REBNATIVE(step)
+DECLARE_NATIVE(step)
 {
     DEBUGGER_INCLUDE_PARAMS_OF_STEP;
     UNUSED(ARG(amount));

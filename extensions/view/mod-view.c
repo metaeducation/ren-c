@@ -112,7 +112,7 @@
 //          [block!]
 //  ]
 //
-REBNATIVE(request_file_p)
+DECLARE_NATIVE(request_file_p)
 {
     VIEW_INCLUDE_PARAMS_OF_REQUEST_FILE_P;
 
@@ -505,7 +505,7 @@ int CALLBACK ReqDirCallbackProc(
 //          [file!]
 //  ]
 //
-REBNATIVE(request_dir_p)
+DECLARE_NATIVE(request_dir_p)
 //
 // !!! This came from Saphirion/Atronix R3-View.  It said "WARNING: TEMPORARY
 // implementation! Used only by host-core.c Will be most probably changed

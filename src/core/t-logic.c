@@ -36,7 +36,7 @@
 //      value2 [any-value!]
 //  ]
 //
-REBNATIVE(and_q)
+DECLARE_NATIVE(and_q)
 {
     INCLUDE_PARAMS_OF_AND_Q;
 
@@ -57,7 +57,7 @@ REBNATIVE(and_q)
 //      value2 [any-value!]
 //  ]
 //
-REBNATIVE(nor_q)
+DECLARE_NATIVE(nor_q)
 {
     INCLUDE_PARAMS_OF_NOR_Q;
 
@@ -78,7 +78,7 @@ REBNATIVE(nor_q)
 //      value2 [any-value!]
 //  ]
 //
-REBNATIVE(nand_q)
+DECLARE_NATIVE(nand_q)
 {
     INCLUDE_PARAMS_OF_NAND_Q;
 
@@ -99,7 +99,7 @@ REBNATIVE(nand_q)
 //      optional [<opt> any-value!]
 //  ]
 //
-REBNATIVE(to_logic)
+DECLARE_NATIVE(to_logic)
 {
     INCLUDE_PARAMS_OF_TO_LOGIC;
 
@@ -117,7 +117,7 @@ REBNATIVE(to_logic)
 //      optional [<opt> any-value!]
 //  ]
 //
-REBNATIVE(not_1)  // see TO-C-NAME
+DECLARE_NATIVE(not_1)  // see TO-C-NAME
 {
     INCLUDE_PARAMS_OF_NOT_1;
 
@@ -162,7 +162,7 @@ inline static bool Do_Logic_Right_Side_Throws(
 //          [group! tuple! word!]
 //  ]
 //
-REBNATIVE(and_1)  // see TO-C-NAME
+DECLARE_NATIVE(and_1)  // see TO-C-NAME
 {
     INCLUDE_PARAMS_OF_AND_1;
 
@@ -193,7 +193,7 @@ REBNATIVE(and_1)  // see TO-C-NAME
 //          [group! tuple! word!]
 //  ]
 //
-REBNATIVE(or_1)  // see TO-C-NAME
+DECLARE_NATIVE(or_1)  // see TO-C-NAME
 {
     INCLUDE_PARAMS_OF_OR_1;
 
@@ -224,7 +224,7 @@ REBNATIVE(or_1)  // see TO-C-NAME
 //          [group! tuple! word!]
 //  ]
 //
-REBNATIVE(xor_1)  // see TO-C-NAME
+DECLARE_NATIVE(xor_1)  // see TO-C-NAME
 {
     INCLUDE_PARAMS_OF_XOR_1;
 
@@ -257,7 +257,7 @@ REBNATIVE(xor_1)  // see TO-C-NAME
 //          [<opt> <void> any-value!]  ; not a literal GROUP! as with XOR
 //  ]
 //
-REBNATIVE(unless)
+DECLARE_NATIVE(unless)
 //
 // Though this routine is similar to XOR, it is different enough in usage and
 // looks from AND/OR/XOR to warrant not needing XOR's protection (e.g. forcing

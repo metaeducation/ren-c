@@ -40,7 +40,7 @@ REBTYP *EG_Vector_Type;  // (E)xtension (G)lobal
 //      return: <none>
 //  ]
 //
-REBNATIVE(startup_p)
+DECLARE_NATIVE(startup_p)
 {
     VECTOR_INCLUDE_PARAMS_OF_STARTUP_P;
 
@@ -69,7 +69,7 @@ REBNATIVE(startup_p)
 //      return: <none>
 //  ]
 //
-REBNATIVE(shutdown_p)
+DECLARE_NATIVE(shutdown_p)
 {
     VECTOR_INCLUDE_PARAMS_OF_SHUTDOWN_P;
 
