@@ -726,7 +726,8 @@ e-lib/emit 'ver {
           #elif CPLUSPLUS_11
             /* Custom C++11 or above flag, to override Visual Studio's lie */
           #else
-            #error "REBOL_EXPLICIT_END must be used prior to C99 or C+++11"
+            /* Some C++98 or otherwise compilers support __VA_ARGS__ anyway */
+            #warning "REBOL_EXPLICIT_END may be needed prior to C99 or C++11"
           #endif
 
             $[C99-Or-C++11-Macros]
