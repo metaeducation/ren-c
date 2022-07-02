@@ -774,6 +774,11 @@ union Reb_Series_Info {
     intptr_t *guard;  // intentionally alloc'd and freed for use by panic()
     uintptr_t tick;  // also maintains sizeof(REBSER) % sizeof(REBI64) == 0
   #endif
+
+  #if DEBUG_COUNT_LOCALS
+    uintptr_t num_locals;  // count how many local references
+    uintptr_t unused;
+  #endif
 };
 
 
@@ -790,9 +795,9 @@ union Reb_Series_Info {
 #if CPLUSPLUS_11
     struct Reb_Binary : public Reb_Series {};
 
-    struct Reb_String : public Reb_Binary {};  // strings can act as binaries
+    struct Raw_String : public Reb_Binary {};  // strings can act as binaries
 
-    struct Reb_Symbol : public Reb_String {};  // word-constrained strings
+    struct Reb_Symbol : public Raw_String {};  // word-constrained strings
 
     struct Reb_Bookmark_List : public Reb_Series {};
     typedef struct Reb_Bookmark_List REBBMK;  // list of UTF-8 index=>offsets
@@ -805,7 +810,7 @@ union Reb_Series_Info {
     typedef struct Reb_Map REBMAP;  // the "pairlist" is the identity
 #else
     typedef struct Reb_Series Reb_Binary;
-    typedef struct Reb_Series Reb_String;
+    typedef struct Reb_Series Raw_String;
     typedef struct Reb_Series Reb_Symbol;
     typedef struct Reb_Series REBBMK;
     typedef struct Reb_Series Reb_Action;
@@ -816,11 +821,18 @@ union Reb_Series_Info {
 #define Binary(star_maybe_const) \
     Reb_Binary star_maybe_const
 
-#define String(star_maybe_const) \
-    Reb_String star_maybe_const
-
 #define Symbol(star_maybe_const) \
     Reb_Symbol star_maybe_const
+
+#if DEBUG_COUNT_LOCALS
+    #include "sys-holder.hpp"
+
+    #define String(star_maybe_const) \
+        SeriesHolder<Raw_String star_maybe_const>
+#else
+    #define String(star_maybe_const) \
+        Raw_String star_maybe_const
+#endif
 
 #define Action(star_maybe_const) \
     Reb_Action star_maybe_const

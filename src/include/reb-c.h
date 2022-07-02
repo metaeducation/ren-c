@@ -437,7 +437,7 @@
       #if CPLUSPLUS_11
         static_assert(
             !std::is_pointer<T>::value
-                || !std::is_const<std::remove_pointer_t<T>>::value,
+                || !std::is_const<typename std::remove_pointer<T>::type>::value,
             "invalid m_cast() - requested a const type for output result"
         );
         /* ignore volatile, we don't use it */

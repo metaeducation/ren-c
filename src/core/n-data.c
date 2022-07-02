@@ -1732,7 +1732,7 @@ bool Try_As_String(
             str = STR(bin);
 
             TERM_STR_LEN_SIZE(
-                m_cast(String(*), str),  // legal for tweaking cached data
+                m_cast(Raw_String*, str),  // legal for tweaking cached data
                 num_codepoints,
                 BIN_LEN(bin)
             );

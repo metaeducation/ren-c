@@ -108,7 +108,7 @@ typedef struct Reb_Pool_Unit REBPLU;
 
 //=//// SERIES AND NON-INHERITED SUBCLASS DEFINITIONS /////////////////////=//
 //
-// The C++ build defines Reb_Array, Reb_Binary, and Reb_String as being
+// The C++ build defines Reb_Array, Reb_Binary, and Raw_String as being
 // derived from Reb_Series.  This affords convenience by having it possible
 // to pass the derived class to something taking a base class, but not vice
 // versa.  However, you cannot forward-declare inheritance:

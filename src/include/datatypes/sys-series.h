@@ -1197,6 +1197,10 @@ inline static REBSER *Prep_Series_Node(void *preallocated, REBFLGS flags) {
     PG_Reb_Stats->Series_Made++;
   #endif
 
+  #if DEBUG_COUNT_LOCALS
+    s->num_locals = 0;
+  #endif
+
     return s;
 }
 

@@ -208,18 +208,18 @@ inline static bool Is_String_Definitely_ASCII(String(const*) str) {
 #define STR_SIZE(s) \
     SER_USED(ensure(String(const*), s))  // UTF-8 byte count (not codepoints)
 
-inline static Utf8(*) STR_HEAD(const_if_c String(*) s)
+inline static Utf8(*) STR_HEAD(const_if_c Raw_String* s)
   { return cast(Utf8(*), SER_HEAD(Byte, s)); }
 
-inline static Utf8(*) STR_TAIL(const_if_c String(*) s)
+inline static Utf8(*) STR_TAIL(const_if_c Raw_String* s)
   { return cast(Utf8(*), SER_TAIL(Byte, s)); }
 
 #if CPLUSPLUS_11
-    inline static Utf8(const*) STR_HEAD(String(const*) s)
-      { return STR_HEAD(m_cast(String(*), s)); }
+    inline static Utf8(const*) STR_HEAD(const Raw_String* s)
+      { return STR_HEAD(m_cast(Raw_String*, s)); }
 
-    inline static Utf8(const*) STR_TAIL(String(const*) s)
-      { return STR_TAIL(m_cast(String(*), s)); }
+    inline static Utf8(const*) STR_TAIL(const Raw_String* s)
+      { return STR_TAIL(m_cast(Raw_String*, s)); }
 #endif
 
 
@@ -279,7 +279,7 @@ inline static REBLEN STR_INDEX_AT(String(const*) s, REBSIZ offset) {
     return index;
 }
 
-inline static void SET_STR_LEN_SIZE(String(*) s, REBLEN len, REBSIZ used) {
+inline static void SET_STR_LEN_SIZE(Raw_String* s, REBLEN len, REBSIZ used) {
     assert(IS_NONSYMBOL_STRING(s));
     assert(len <= used);
     assert(used == SER_USED(s));
@@ -288,7 +288,7 @@ inline static void SET_STR_LEN_SIZE(String(*) s, REBLEN len, REBSIZ used) {
     UNUSED(used);
 }
 
-inline static void TERM_STR_LEN_SIZE(String(*) s, REBLEN len, REBSIZ used) {
+inline static void TERM_STR_LEN_SIZE(Raw_String* s, REBLEN len, REBSIZ used) {
     assert(IS_NONSYMBOL_STRING(s));
     assert(len <= used);
     SET_SERIES_USED(s, used);
@@ -370,7 +370,7 @@ inline static void Free_Bookmarks_Maybe_Null(String(*) str) {
 // iterate much faster, and most of the strings in the system might be able
 // to get away with not having any bookmarks at all.
 //
-inline static Utf8(*) STR_AT(const_if_c String(*) s, REBLEN at) {
+inline static Utf8(*) STR_AT(const_if_c Raw_String* s, REBLEN at) {
     assert(at <= STR_LEN(s));
 
     if (Is_Definitely_Ascii(s)) {  // can't have any false positives
@@ -410,7 +410,8 @@ inline static Utf8(*) STR_AT(const_if_c String(*) s, REBLEN at) {
         }
         if (not bookmark and IS_NONSYMBOL_STRING(s)) {
             bookmark = Alloc_Bookmark();
-            mutable_LINK(Bookmarks, m_cast(String(*), s)) = bookmark;
+            const Raw_String* p = s;
+            mutable_LINK(Bookmarks, m_cast(Raw_String*, p)) = bookmark;
             goto scan_from_head;  // will fill in bookmark
         }
     }
@@ -425,7 +426,8 @@ inline static Utf8(*) STR_AT(const_if_c String(*) s, REBLEN at) {
         }
         if (not bookmark and IS_NONSYMBOL_STRING(s)) {
             bookmark = Alloc_Bookmark();
-            mutable_LINK(Bookmarks, m_cast(String(*), s)) = bookmark;
+            const Raw_String *p = s;
+            mutable_LINK(Bookmarks, m_cast(Raw_String*, p)) = bookmark;
             goto scan_from_tail;  // will fill in bookmark
         }
     }
@@ -533,12 +535,12 @@ inline static Utf8(*) STR_AT(const_if_c String(*) s, REBLEN at) {
 }
 
 #if CPLUSPLUS_11
-    inline static Utf8(const*) STR_AT(String(const*) s, REBLEN at)
-      { return STR_AT(m_cast(String(*), s), at); }
+    inline static Utf8(const*) STR_AT(const Raw_String* s, REBLEN at)
+      { return STR_AT(m_cast(Raw_String*, s), at); }
 #endif
 
 
-inline static String(const*) VAL_STRING(noquote(Cell(const*)) v) {
+inline static const Raw_String *VAL_STRING(noquote(Cell(const*)) v) {
     if (ANY_STRINGLIKE(v))
         return STR(VAL_NODE1(v));  // VAL_SERIES() would assert
 
@@ -546,7 +548,7 @@ inline static String(const*) VAL_STRING(noquote(Cell(const*)) v) {
 }
 
 #define VAL_STRING_ENSURE_MUTABLE(v) \
-    m_cast(String(*), VAL_STRING(ENSURE_MUTABLE(v)))
+    m_cast(Raw_String*, VAL_STRING(ENSURE_MUTABLE(v)))
 
 // This routine works with the notion of "length" that corresponds to the
 // idea of the datatype which the series index is for.  Notably, a BINARY!
@@ -771,7 +773,7 @@ inline static REBLEN Num_Codepoints_For_Bytes(
 inline static REBVAL *Init_Any_String_At(
     Cell(*) out,
     enum Reb_Kind kind,
-    const_if_c String(*) str,
+    const_if_c Raw_String* str,
     REBLEN index
 ){
     Init_Any_Series_At_Core(
@@ -788,7 +790,7 @@ inline static REBVAL *Init_Any_String_At(
     inline static REBVAL *Init_Any_String_At(
         Cell(*) out,
         enum Reb_Kind kind,
-        String(const*) str,
+        const Raw_String* str,
         REBLEN index
     ){
         return Init_Any_Series_At_Core(out, kind, str, index, UNBOUND);
@@ -815,11 +817,11 @@ inline static REBVAL *Init_Any_String_At(
     Make_String_Core((encoded_capacity), SERIES_FLAGS_NONE)
 
 inline static String(*) Make_String_UTF8(const char *utf8) {
-    return Append_UTF8_May_Fail(NULL, utf8, strsize(utf8), STRMODE_NO_CR);
+    return Append_UTF8_May_Fail(nullptr, utf8, strsize(utf8), STRMODE_NO_CR);
 }
 
 inline static String(*) Make_Sized_String_UTF8(const char *utf8, size_t size) {
-    return Append_UTF8_May_Fail(NULL, utf8, size, STRMODE_NO_CR);
+    return Append_UTF8_May_Fail(nullptr, utf8, size, STRMODE_NO_CR);
 }
 
 

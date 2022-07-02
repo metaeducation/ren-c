@@ -86,11 +86,17 @@ static void Check_Basics(void)
     if (sizeof_REBVAL != sizeof(void*) * 4)
         panic ("size of REBVAL is not sizeof(void*) * 4");
 
+    size_t sersize = sizeof(REBVAL) * 2;
+
     #if DEBUG_SERIES_ORIGINS || DEBUG_COUNT_TICKS
-        assert(sizeof(REBSER) == sizeof(REBVAL) * 2 + sizeof(void*) * 2);
-    #else
-        assert(sizeof(REBSER) == sizeof(REBVAL) * 2);
+      sersize += sizeof(void*) * 2;
     #endif
+
+    #if DEBUG_COUNT_LOCALS
+      sersize += sizeof(void*) * 2;
+    #endif
+
+    assert(sizeof(REBSER) == sersize);
   #endif
 
     //=//// CHECK REBSER INFO PLACEMENT ///////////////////////////////////=//

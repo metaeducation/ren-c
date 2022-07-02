@@ -1188,6 +1188,14 @@ void GC_Kill_Series(REBSER *s)
     }
   #endif
 
+  #if DEBUG_COUNT_LOCALS
+    if (s->num_locals != 0) {
+        PROBE(s);
+        printf("Leaked refs in GC_Kill_Series: %d\n", cast(int, s->num_locals));
+        panic (s);
+    }
+  #endif
+
     // By default the series is touched so its tick reflects the tick that
     // freed it.  If you need to know the tick where it was allocated, then
     // comment this out so it remains that way.

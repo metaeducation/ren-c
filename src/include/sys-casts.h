@@ -70,7 +70,8 @@
     #define ACT(p)          m_cast(Action(*), x_cast(const Action(*), (p)))
     #define CTX(p)          m_cast(Context(*), x_cast(const Context(*), (p)))
 
-    #define STR(p)          m_cast(String(*), x_cast(String(const*), (p)))
+    #define STR(p)          m_cast(Raw_String*, x_cast(const Raw_String*, (p)))
+
     #define SYM(p)          m_cast(Symbol(*), x_cast(Symbol(const*), (p)))
 
     #define VAL(p)          x_cast(REBVAL*, (p))
