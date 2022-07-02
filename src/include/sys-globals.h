@@ -52,14 +52,14 @@ PVAR Reb_Array PG_Lib_Patches[LIB_SYMS_MAX];
 // forms of words are created, and removed when they are GC'd.  It is scaled
 // according to the total number of canons in the system.
 //
-PVAR Reb_Symbol PG_Symbol_Canons[ALL_SYMS_MAX + 1];
+PVAR Raw_Symbol PG_Symbol_Canons[ALL_SYMS_MAX + 1];
 
 PVAR REBSER *PG_Symbols_By_Hash; // Symbol REBSTR pointers indexed by hash
 PVAR REBLEN PG_Num_Symbol_Slots_In_Use; // Total symbol hash slots (+deleteds)
 #if !defined(NDEBUG)
     PVAR REBLEN PG_Num_Symbol_Deleteds; // Deleted symbol hash slots "in use"
 #endif
-PVAR Reb_Symbol PG_Deleted_Symbol;  // pointer used to indicate a deletion
+PVAR Raw_Symbol PG_Deleted_Symbol;  // pointer used to indicate a deletion
 
 PVAR REBVAL *Lib_Context_Value;
 PVAR REBVAL *Sys_Util_Module;

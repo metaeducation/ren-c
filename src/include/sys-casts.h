@@ -72,7 +72,7 @@
 
     #define STR(p)          m_cast(Raw_String*, x_cast(const Raw_String*, (p)))
 
-    #define SYM(p)          m_cast(Symbol(*), x_cast(Symbol(const*), (p)))
+    #define SYM(p)          m_cast(Raw_Symbol*, x_cast(const Raw_Symbol*, (p)))
 
     #define VAL(p)          x_cast(REBVAL*, (p))
 

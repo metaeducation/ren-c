@@ -373,7 +373,7 @@ inline static Symbol(const*) KEY_SYMBOL(const REBKEY *key)
   { return *key; }
 
 
-inline static void Init_Key(REBKEY *dest, Symbol(const*) symbol)
+inline static void Init_Key(REBKEY *dest, const Raw_Symbol* symbol)
   { *dest = symbol; }
 
 #define KEY_SYM(key) \

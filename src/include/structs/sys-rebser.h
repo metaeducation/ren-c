@@ -797,7 +797,7 @@ union Reb_Series_Info {
 
     struct Raw_String : public Reb_Binary {};  // strings can act as binaries
 
-    struct Reb_Symbol : public Raw_String {};  // word-constrained strings
+    struct Raw_Symbol : public Raw_String {};  // word-constrained strings
 
     struct Reb_Bookmark_List : public Reb_Series {};
     typedef struct Reb_Bookmark_List REBBMK;  // list of UTF-8 index=>offsets
@@ -811,7 +811,7 @@ union Reb_Series_Info {
 #else
     typedef struct Reb_Series Reb_Binary;
     typedef struct Reb_Series Raw_String;
-    typedef struct Reb_Series Reb_Symbol;
+    typedef struct Reb_Series Raw_Symbol;
     typedef struct Reb_Series REBBMK;
     typedef struct Reb_Series Reb_Action;
     typedef struct Reb_Series Reb_Context;
@@ -821,17 +821,20 @@ union Reb_Series_Info {
 #define Binary(star_maybe_const) \
     Reb_Binary star_maybe_const
 
-#define Symbol(star_maybe_const) \
-    Reb_Symbol star_maybe_const
-
 #if DEBUG_COUNT_LOCALS
     #include "sys-holder.hpp"
 
     #define String(star_maybe_const) \
         SeriesHolder<Raw_String star_maybe_const>
+
+    #define Symbol(star_maybe_const) \
+        SeriesHolder<Raw_Symbol star_maybe_const>
 #else
     #define String(star_maybe_const) \
         Raw_String star_maybe_const
+
+    #define Symbol(star_maybe_const) \
+        Raw_Symbol star_maybe_const
 #endif
 
 #define Action(star_maybe_const) \
@@ -846,7 +849,7 @@ union Reb_Series_Info {
 // things we increment across aren't REBSER nodes, but pointers to REBSER
 // nodes for the strings... so a "key" is a pointer.
 //
-typedef Symbol(const*) REBKEY;
+typedef const Raw_Symbol* REBKEY;
 
 
 //=//// DON'T PUT ANY CODE (OR MACROS THAT MAY NEED CODE) IN THIS FILE! ///=//

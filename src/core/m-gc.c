@@ -280,7 +280,7 @@ static void Queue_Unmarked_Accessible_Series_Deep(REBSER *s)
             assert(NOT_SERIES_FLAG(*key, INACCESSIBLE));
             if (GET_SERIES_FLAG(*key, MARKED))
                 continue;
-            Queue_Unmarked_Accessible_Series_Deep(m_cast(Symbol(*), *key));
+            Queue_Unmarked_Accessible_Series_Deep(m_cast(Raw_Symbol*, *key));
         }
     }
     else if (IS_SER_ARRAY(s)) {
@@ -702,8 +702,8 @@ static void Mark_Data_Stack(void)
 //
 static void Mark_Symbol_Series(void)
 {
-    Symbol(*) canon = &PG_Symbol_Canons[0];
-    Symbol(*) tail = &PG_Symbol_Canons[0] + ALL_SYMS_MAX;
+    Raw_Symbol* canon = &PG_Symbol_Canons[0];
+    Raw_Symbol* tail = &PG_Symbol_Canons[0] + ALL_SYMS_MAX;
 
     assert(canon->leader.bits & SERIES_FLAG_FREE);  // SYM_0, we corrupt it
     ++canon;
@@ -836,7 +836,7 @@ static void Mark_Frame_Stack_Deep(void)
             Symbol(const*) sym = unwrap(f->label);
             if (NOT_SERIES_FLAG(sym, MARKED)) {
                 assert(NOT_SERIES_FLAG(sym, INACCESSIBLE));  // can't happen
-                Queue_Unmarked_Accessible_Series_Deep(m_cast(Symbol(*), sym));
+                Queue_Unmarked_Accessible_Series_Deep(m_cast(Raw_Symbol*, sym));
             }
         }
 

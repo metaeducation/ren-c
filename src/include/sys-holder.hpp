@@ -236,13 +236,13 @@ inline TP m_cast_helper(SeriesHolder<TP>& s)
 #if !defined(NDEBUG)
     template <typename TP>
     inline static void TRASH_POINTER_IF_DEBUG(SeriesHolder<TP>& s) {
-        s.p = reinterpret_cast<TP>(static_cast<uintptr_t>(0xDECAFBAD));
+        s.p = nullptr;  // smart pointer can't hold trash
     }
 
     template <typename TP>
     inline static bool IS_POINTER_TRASH_DEBUG(SeriesHolder<TP>& s) {
         return (
-            s.p == reinterpret_cast<TP>(static_cast<uintptr_t>(0xDECAFBAD))
+            s.p == nullptr  // smart pointer can't hold trash
         );
     }
 #endif

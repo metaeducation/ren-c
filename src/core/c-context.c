@@ -218,7 +218,7 @@ REBVAR *Append_Context(
 
         // skip over binding-related hitches
         //
-        REBSER *updating = m_cast(Symbol(*), unwrap(symbol));
+        REBSER *updating = m_cast(Raw_Symbol*, unwrap(symbol));
         while (GET_SERIES_FLAG(SER(node_MISC(Hitch, updating)), BLACK))
             updating = SER(node_MISC(Hitch, updating));
 
@@ -247,7 +247,7 @@ REBVAR *Append_Context(
     Init_Key(
         SER_LAST(REBKEY, keylist),
         symbol
-            ? unwrap(symbol)
+            ? cast(const Raw_Symbol*, unwrap(symbol))
             : VAL_WORD_SYMBOL(VAL_UNESCAPED(unwrap(any_word)))
     );
 

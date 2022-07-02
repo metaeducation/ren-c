@@ -667,7 +667,6 @@ Special internal defines used by RT, not Host-Kit developers:
 // outstanding on the stack.  The mechanism may evolve to permit things like
 // the C++ build being able to GC at arbitrary moments.
 //
-//#define DEBUG_COUNT_LOCALS 1
 #if !defined(DEBUG_COUNT_LOCALS)
     #define DEBUG_COUNT_LOCALS 0
 #endif
