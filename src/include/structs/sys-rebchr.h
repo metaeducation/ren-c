@@ -151,8 +151,6 @@
             { return const_cast<char*>(reinterpret_cast<const char*>(bp)); }
     };
 
-  #if DEBUG_CHECK_CASTS
-    //
     // const_cast<> and reinterpret_cast<> don't work with user-defined
     // conversion operators.  But since this codebase uses m_cast, we can
     // cheat when the class is being used with the helpers.
@@ -164,7 +162,4 @@
     template <>
     inline Utf8(*) m_cast_helper(Utf8(*) v)
       { return v; }  // m_cast() is supposed to be able to be a no-op
-  #else
-    #error "DEBUG_UTF8_EVERYWHERE currently requires DEBUG_CHECK_CASTS"
-  #endif
 #endif

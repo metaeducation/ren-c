@@ -425,32 +425,37 @@
      * access.  Stray writes to that can cause even time-traveling bugs, with
      * effects *before* that write is made...due to "undefined behavior".
      */
-#elif (! CPLUSPLUS_11) || (! DEBUG_CHECK_CASTS)
-    /* Well-intentioned macros aside, C has no way to enforce that you can't
-     * cast away a const without m_cast. C++98 builds can do that, at least:
-     */
-    #define m_cast(t,v)     const_cast<t>(v)
-    #define cast(t,v)       ((t)(v))
-    #define c_cast(t,v)     const_cast<t>(v)
 #else
-    /* __cplusplus >= 201103L has C++11's type_traits, where we get some
-     * actual power.  cast becomes a reinterpret_cast for pointers and a
-     * static_cast otherwise.  We ensure c_cast added a const and m_cast
-     * removed one, and that neither affected volatility.
-     *
-     * NOTE: m_cast_helper() may seem like overkill, but it's actually needed
+    /*
+     * NOTE: m_cast_helper() is needed vs. plain const_cast<> in all C++ builds
      * as a hook point to overload casting with smart pointer types, e.g.
      * `m_cast(Utf8(*), some_const_rebchr)`.  Search for overloads of the
      * m_cast_helper() in certain builds before deciding to simplify this.
      */
     template<typename T, typename V>
     T m_cast_helper(V v) {
-        static_assert(!std::is_const<T>::value,
-            "invalid m_cast() - requested a const type for output result");
-        static_assert(std::is_volatile<T>::value == std::is_volatile<V>::value,
-            "invalid m_cast() - input and output have mismatched volatility");
+      #if CPLUSPLUS_11
+        static_assert(
+            !std::is_pointer<T>::value
+                || !std::is_const<std::remove_pointer_t<T>>::value,
+            "invalid m_cast() - requested a const type for output result"
+        );
+        /* ignore volatile, we don't use it */
+      #endif
         return const_cast<T>(v);
     }
+
+    #define m_cast(t,v)     m_cast_helper<t>(v)
+
+  #if CPLUSPLUS_11 == 0 || DEBUG_CHECK_CASTS == 0
+    #define cast(t,v)       ((t)(v))
+    #define c_cast(t,v)     const_cast<t>(v)
+  #else
+    /* __cplusplus >= 201103L has C++11's type_traits, where we get some
+     * actual power.  cast becomes a reinterpret_cast for pointers and a
+     * static_cast otherwise.  We ensure c_cast added a const and m_cast
+     * removed one, and that neither affected volatility.
+     */
     /* construct if possible for ptr to ptr casting (non-class source) */
     template<typename T, typename V,
         typename std::enable_if<
@@ -488,9 +493,9 @@
             "invalid c_cast() - input and output have mismatched volatility");
         return const_cast<T>(v);
     }
-    #define m_cast(t, v)    m_cast_helper<t>(v)
     #define cast(t, v)      cast_helper<t>(v)
     #define c_cast(t, v)    c_cast_helper<t>(v)
+  #endif
 #endif
 
 
