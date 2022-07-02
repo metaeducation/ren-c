@@ -372,7 +372,9 @@ REBNATIVE(console)
     // decide whether to accept the cancellation or consider it an error
     // condition or a reason to fall back to the default skin).
     //
-    Enable_Halting();
+    assert(not (Eval_Sigmask & SIG_HALT));
+    Eval_Sigmask |= SIG_HALT;  // tell Trampoline to throw evaluator on halts
+    Enable_Halting();  // add hook that will call rebHalt() on Ctrl-C
 
     // DON'T ADD ANY MORE LIBREBOL CODE HERE.  If this is a user-requested
     // evaluation, then any extra libRebol code run here will wind up being
@@ -399,10 +401,12 @@ REBNATIVE(console)
 
 } request_result_in_out: {  //////////////////////////////////////////////////
 
+    Eval_Sigmask &= ~SIG_HALT;  // tell Trampoline not to halt on evals
+    Disable_Halting();  // remove hook that calls rebHalt() on Ctrl-C
+
     if (THROWING)
         Init_Error(metaresult, Error_No_Catch_For_Throw(FRAME));
 
-    Disable_Halting();
     goto run_skin;
 
 } finished: {  ///////////////////////////////////////////////////////////////
