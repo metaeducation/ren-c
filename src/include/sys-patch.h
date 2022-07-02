@@ -100,7 +100,6 @@
 //
 inline static Array(*) Make_Patch_Core(
     Array(*) binding,  // must be a varlist or a LET patch
-    REBLEN limit,  // if patch, must be 1
     REBSPC *next,
     enum Reb_Kind kind,
     bool reuse
@@ -108,28 +107,16 @@ inline static Array(*) Make_Patch_Core(
     UNUSED(reuse);  // review
 
     assert(kind == REB_WORD or kind == REB_SET_WORD);
-    if (IS_VARLIST(binding))
-        assert(
-            (CTX_TYPE(CTX(binding)) == REB_MODULE and limit == INDEX_ATTACHED)
-            or limit <= CTX_LEN(CTX(binding))
-        );
+    if (IS_VARLIST(binding)) {
+        if (
+            REB_MODULE != CTX_TYPE(CTX(binding))
+            and CTX_LEN(CTX(binding)) == 0  // nothing to bind to
+        ){
+            return next;
+        }
+    }
     else
         assert(Get_Subclass_Flag(PATCH, binding, LET));
-
-    // 0 happens with `make object! []` and similar cases.
-    //
-    // The way virtual binding works, it remembers the length of the context
-    // at the time the virtual binding occurred.  This means any keys added
-    // after the bind will not be visible.  Hence if the context is empty,
-    // this virtual bind can be a no-op.
-    //
-    // (Note: While it may or may not be desirable to see added variables,
-    // allowing that would make it impractical to trust cached virtual bind
-    // data that is embedded into words...making caching worthless.  So
-    // it is chosen to match the "at that moment" behavior of mutable BIND.)
-    //
-    if (limit == 0)
-        return next;
 
     // It's possible for a user to try and doubly virtual bind things...but
     // for the moment assume it only happens on accident and alert us to it.
@@ -181,7 +168,6 @@ inline static Array(*) Make_Patch_Core(
         // of telling the historical order.  Punt on figuring out the answer
         // for it and just let virtual binds see the latest situation.
         //
-        assert(limit == INDEX_ATTACHED);
         Init_Any_Context(ARR_SINGLE(patch), REB_MODULE, CTX(binding));
     }
     else {
@@ -190,9 +176,9 @@ inline static Array(*) Make_Patch_Core(
             kind,
             binding,
             IS_VARLIST(binding)
-                ? *CTX_KEY(CTX(binding), limit)
+                ? KEY_SYMBOL(CTX_KEY(CTX(binding), 1))  // arbitrary word
                 : INODE(PatchSymbol, binding),
-            limit
+            1  // arbitrary word (used to use CTX_LEN())
         );
     }
 
@@ -221,11 +207,11 @@ inline static Array(*) Make_Patch_Core(
 }
 
 
-#define Make_Or_Reuse_Patch(ctx,limit,next,kind) \
-    Make_Patch_Core(CTX_VARLIST(ctx), (limit), (next), (kind), true)
+#define Make_Or_Reuse_Patch(ctx,next,kind) \
+    Make_Patch_Core(CTX_VARLIST(ctx), (next), (kind), true)
 
-#define Make_Original_Patch(ctx,limit,next,kind) \
-    Make_Patch_Core(CTX_VARLIST(ctx), (limit), (next), (kind), false)
+#define Make_Original_Patch(ctx,next,kind) \
+    Make_Patch_Core(CTX_VARLIST(ctx), (next), (kind), false)  // unused
 
 
 //
@@ -259,12 +245,7 @@ inline static void Virtual_Bind_Patchify(
     //
     INIT_BINDING_MAY_MANAGE(
         any_array,
-        Make_Or_Reuse_Patch(
-            ctx,
-            CTX_TYPE(ctx) == REB_MODULE ? INDEX_ATTACHED : CTX_LEN(ctx),
-            VAL_SPECIFIER(any_array),
-            kind
-        )
+        Make_Or_Reuse_Patch(ctx, VAL_SPECIFIER(any_array), kind)
     );
     Constify(any_array);
 }

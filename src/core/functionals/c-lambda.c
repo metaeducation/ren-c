@@ -85,7 +85,6 @@ Bounce Lambda_Dispatcher(Frame(*) f)
 
     REBSPC *specifier = Make_Or_Reuse_Patch(  // may reuse, see [1]
         CTX(f->varlist),
-        CTX_LEN(CTX(f->varlist)),
         VAL_SPECIFIER(block),  // redundant with feed, see [2]
         REB_WORD
     );

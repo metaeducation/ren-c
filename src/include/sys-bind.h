@@ -543,14 +543,18 @@ inline static option(REBSER*) Get_Word_Container(
       blockscope {
         Context(*) overload = CTX(overbind);
 
-        // Length at time of virtual bind is cached by index.  This avoids
-        // allowing untrustworthy cache states.
+        // !!! At one time, this would enumerate up to a "cached_len" which
+        // was the length of the object at the time of the virtual bind.
+        // However, that is unreliable (e.g. in AUGMENT scenarios) and did
+        // not really work.  A "rematch" with virtual binding is in the works,
+        // where all these ideas will be reviewed.
         //
-        REBLEN cached_len = VAL_WORD_INDEX(ARR_SINGLE(specifier));
+        /* REBLEN cached_len = VAL_WORD_INDEX(ARR_SINGLE(specifier)); */
 
         REBLEN index = 1;
-        const REBKEY *key = CTX_KEYS_HEAD(overload);
-        for (; index <= cached_len; ++key, ++index) {
+        const REBKEY *key_tail;
+        const REBKEY *key = CTX_KEYS(&key_tail, overload);
+        for (; key != key_tail; ++key, ++index) {
             if (KEY_SYMBOL(key) != symbol)
                 continue;
 
@@ -1057,11 +1061,9 @@ inline static Array(*) Merge_Patches_May_Reuse(
     // (using node-identity magic) into an object.  We point at the LET.
     //
     Array(*) binding;
-    REBLEN limit;
     enum Reb_Kind kind;
     if (Get_Subclass_Flag(PATCH, parent, LET)) {
         binding = parent;
-        limit = 1;
 
         // !!! LET bindings do not have anywhere to put the subclass info of
         // whether they only apply to SET-WORD!s or things like that, so they
@@ -1076,13 +1078,11 @@ inline static Array(*) Merge_Patches_May_Reuse(
     }
     else {
         binding = ARR(BINDING(ARR_SINGLE(parent)));
-        limit = VAL_WORD_INDEX(ARR_SINGLE(parent));
         kind = VAL_TYPE(ARR_SINGLE(parent));
     }
 
     return Make_Patch_Core(
         binding,
-        limit,
         next,
         kind,
         was_next_reused

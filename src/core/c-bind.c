@@ -661,12 +661,8 @@ REBNATIVE(add_use_object) {
 
     if (f_specifier)
         SET_SERIES_FLAG(f_specifier, MANAGED);
-    REBSPC *patch = Make_Or_Reuse_Patch(  // optimizes out CTX_LEN() == 0
-        ctx,
-        CTX_LEN(ctx),
-        f_specifier,
-        REB_WORD
-    );
+
+    REBSPC *patch = Make_Or_Reuse_Patch(ctx, f_specifier, REB_WORD);
 
     mutable_BINDING(FEED_SINGLE(f->feed)) = patch;
 
