@@ -540,6 +540,12 @@
     //
     #include <cstddef>
     using std::nullptr_t;
+
+#elif defined(nullptr)
+    //
+    // If you try something like building with Emscripten in C++98, it will
+    // shim nullptr itself...trying to override it will cause an error.
+    //
 #else
     // C++98 shim from "Effective C++": https://stackoverflow.com/a/44517878
     //
@@ -567,6 +573,7 @@
        seems to cause linker errors.  So instead, you must define the
        nullptr instance somewhere if using this shim.  :-(  */
 
+    #define REBOL_USE_NULLPTR_SHIM  // currently instance is in %a-lib.c
     extern const nullptr_t nullptr;
 #endif
 

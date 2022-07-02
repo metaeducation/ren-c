@@ -2352,8 +2352,8 @@ REBNATIVE(api_transient)
 // for the Haiku build and it's ancient compiler (GCC 2.95, released 2001)
 // which can build neither C99 nor C++11.
 //
-#if defined(__cplusplus) and ! (CPLUSPLUS_11 || defined(_MSC_VER))
-    const nullptr_t nullptr = {};
+#if defined(REBOL_USE_NULLPTR_SHIM)
+    const nullptr_t nullptr = {};  // global instance behind faked nullptr
 #endif
 
 
