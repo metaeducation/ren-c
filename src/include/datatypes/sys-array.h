@@ -196,7 +196,7 @@ inline static void Prep_Array(
 // garbage collector to look into recursively).  ARR_LEN() will be 0.
 //
 inline static Array(*) Make_Array_Core_Into(
-    Array(*) prealloc,
+    void* preallocated,
     REBLEN capacity,
     REBFLGS flags
 ){
@@ -205,7 +205,7 @@ inline static Array(*) Make_Array_Core_Into(
         capacity += 1;  // account for cell needed for terminator (END)
   #endif
 
-    REBSER *s = Make_Series_Into(prealloc, capacity, flags);
+    REBSER *s = Make_Series_Into(preallocated, capacity, flags);
     assert(IS_SER_ARRAY(s));  // flavor should have been an array flavor
 
     if (GET_SERIES_FLAG(s, DYNAMIC)) {
@@ -249,7 +249,7 @@ inline static Array(*) Make_Array_Core_Into(
 }
 
 #define Make_Array_Core(capacity,flags) \
-    Make_Array_Core_Into(nullptr, (capacity), (flags))
+    Make_Array_Core_Into(Alloc_Series_Node(), (capacity), (flags))
 
 #define Make_Array(capacity) \
     Make_Array_Core((capacity), ARRAY_MASK_HAS_FILE_LINE)

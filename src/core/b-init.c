@@ -192,9 +192,8 @@ static void Startup_Lib(void)
   //=//// INITIALIZE LIB PATCHES ///////////////////////////////////////////=//
 
     for (REBLEN i = 1; i < LIB_SYMS_MAX; ++i) {
-        Array(*) patch = &PG_Lib_Patches[i];
-        Make_Array_Core_Into(
-            patch,
+        Array(*) patch = Make_Array_Core_Into(
+            &PG_Lib_Patches[i],
             1,
             FLAG_FLAVOR(PATCH)  // checked when setting INODE(PatchContext)
             | PATCH_FLAG_LET

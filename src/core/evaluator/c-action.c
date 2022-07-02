@@ -1229,8 +1229,9 @@ void Push_Action(
     REBLEN num_args = ACT_NUM_PARAMS(act);  // includes specialized + locals
 
     assert(f->varlist == nullptr);
-    REBSER *s = Alloc_Series_Node(
-        nullptr,  // not preallocated
+
+    REBSER *s = Prep_Series_Node(
+        Alloc_Series_Node(),  // not preallocated
         SERIES_MASK_VARLIST
             | SERIES_FLAG_FIXED_SIZE // FRAME!s don't expand ATM
     );

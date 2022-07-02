@@ -940,7 +940,7 @@ static REBLEN Sweep_Series(void)
 
         // We use a generic byte pointer (unsigned char*) to dodge the rules
         // for strict aliasing, as the pool may contain pairs of REBVAL from
-        // Alloc_Pairing(), or a REBSER from Alloc_Series_Node().  The shared
+        // Alloc_Pairing(), or a REBSER from Prep_Series_Node().  The shared
         // first byte node masks are defined and explained in %sys-rebnod.h
         //
         // NOTE: If you are using a build with UNUSUAL_REBVAL_SIZE such as

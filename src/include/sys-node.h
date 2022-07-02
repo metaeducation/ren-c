@@ -180,6 +180,10 @@ inline static void *Alloc_Node(REBLEN pool_id) {
     fail (Error_No_Memory(pool->wide * pool->num_units));
 }
 
+#define Alloc_Series_Node() ( \
+    (GC_Ballast -= sizeof(REBSER)) <= 0 ? SET_SIGNAL(SIG_RECYCLE) : NOOP, \
+    Alloc_Node(SER_POOL))  // won't pass SER() yet, don't cast it
+
 
 // Free a node, returning it to its pool.  Once it is freed, its header will
 // have SERIES_FLAG_FREE...which will identify the node as not in use to anyone

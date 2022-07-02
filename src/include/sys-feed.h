@@ -469,12 +469,13 @@ inline static REBFED* Alloc_Feed(void) {
     Init_Trash(Prep_Cell(&feed->fetched));
     Init_Trash(Prep_Cell(&feed->lookback));
 
-    REBSER *s = &feed->singular;  // SER() not yet valid
-    s->leader.bits = NODE_FLAG_NODE | FLAG_FLAVOR(FEED);
-    SER_INFO(s) = SERIES_INFO_MASK_NONE;
+    REBSER *s = Prep_Series_Node(
+        &feed->singular,  // preallocated
+        NODE_FLAG_NODE | FLAG_FLAVOR(FEED)
+    );
     Prep_Cell(FEED_SINGLE(feed));
-    mutable_LINK(Splice, &feed->singular) = nullptr;
-    mutable_MISC(Pending, &feed->singular) = nullptr;
+    mutable_LINK(Splice, s) = nullptr;
+    mutable_MISC(Pending, s) = nullptr;
 
     return feed;
 }

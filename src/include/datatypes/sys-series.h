@@ -1168,17 +1168,10 @@ inline static REBVAL *Init_Any_Series_At_Core(
 // Note: This series will not participate in management tracking!
 // See NODE_FLAG_MANAGED handling in Make_Array_Core() and Make_Series().
 //
-inline static REBSER *Alloc_Series_Node(REBSER *preallocated, REBFLGS flags) {
+inline static REBSER *Prep_Series_Node(void *preallocated, REBFLGS flags) {
     assert(not (flags & NODE_FLAG_CELL));
 
-    REBSER *s;
-    if (preallocated)
-        s = preallocated;
-    else {
-        s = cast(REBSER*, Alloc_Node(SER_POOL));
-        if ((GC_Ballast -= sizeof(REBSER)) <= 0)
-            SET_SIGNAL(SIG_RECYCLE);
-    }
+    REBSER *s = cast(REBSER*, preallocated);  // won't pass SER() yet
 
     // Out of the 8 platform pointers that comprise a series node, only 3
     // actually need to be initialized to get a functional non-dynamic series
@@ -1328,7 +1321,7 @@ inline static bool Did_Series_Data_Alloc(REBSER *s, REBLEN capacity) {
 // Large series will be allocated from system memory.
 //
 inline static REBSER *Make_Series_Into(
-    REBSER *preallocated,
+    void* preallocated,
     REBLEN capacity,
     REBFLGS flags
 ){
@@ -1338,7 +1331,7 @@ inline static REBSER *Make_Series_Into(
     if (cast(REBU64, capacity) * wide > INT32_MAX)
         fail (Error_No_Memory(cast(REBU64, capacity) * wide));
 
-    REBSER *s = Alloc_Series_Node(preallocated, flags);
+    REBSER *s = Prep_Series_Node(preallocated, flags);
 
     if (GET_SERIES_FLAG(s, INFO_NODE_NEEDS_MARK))
         TRASH_POINTER_IF_DEBUG(s->info.node);
@@ -1387,7 +1380,7 @@ inline static REBSER *Make_Series_Into(
 }
 
 #define Make_Series(capacity,flags) \
-    Make_Series_Into(nullptr, (capacity), (flags))
+    Make_Series_Into(Alloc_Node(SER_POOL), (capacity), (flags))
 
 
 enum act_modify_mask {

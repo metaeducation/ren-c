@@ -122,8 +122,8 @@ inline static void Unlink_Api_Handle_From_Frame(Array(*) a)
 // We are introducing the containing node for this cell to the GC and can't
 // leave it trash.  If a pattern like `Do_Evaluation_Into(Alloc_Value(), ...)`
 // is used, then there might be a recycle during the evaluation that sees it.
-// Low-level allocation already pulled off making it END with just three
-// assignments, see Alloc_Series_Node() for that magic.
+// Low-level allocation already pulled off making it VOID with just three
+// assignments, see Prep_Series_Node() for that magic.
 //
 inline static REBVAL *Alloc_Value(void)
 {

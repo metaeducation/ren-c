@@ -723,8 +723,8 @@ inline static Context(*) Steal_Context_Vars(Context(*) c, REBNOD *keysource) {
     // SERIES_INFO_HOLD from DETAILS_FLAG_IS_NATIVE, or NODE_FLAG_MANAGED,
     // etc.--use constant assignments and only copy the remaining fields.
     //
-    REBSER *copy = Alloc_Series_Node(
-        nullptr,  // not preallocated
+    REBSER *copy = Prep_Series_Node(
+        Alloc_Series_Node(),  // not preallocated
         SERIES_MASK_VARLIST
             | SERIES_FLAG_FIXED_SIZE
     );

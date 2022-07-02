@@ -200,7 +200,7 @@ static void Expand_Word_Table(void)
 // shared instance had been managed by someone else or not.
 //
 Symbol(const*) Intern_UTF8_Managed_Core(
-    Symbol(*) preallocated,  // if not nullptr, put symbol here
+    option(void*) preallocated,  // most calls don't know if allocation needed
     const Byte* utf8,
     size_t size
 ){
@@ -271,7 +271,7 @@ Symbol(const*) Intern_UTF8_Managed_Core(
   new_interning: {
 
     Binary(*) s = BIN(Make_Series_Into(
-        preallocated,  // if not nullptr, will use this memory for the node
+        preallocated ? unwrap(preallocated) : Alloc_Series_Node(),
         size + 1,  // if small, fits in a REBSER node (no data allocation)
         FLAG_FLAVOR(SYMBOL) | SERIES_FLAG_FIXED_SIZE | NODE_FLAG_MANAGED
     ));
