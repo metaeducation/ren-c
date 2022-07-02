@@ -36,9 +36,9 @@
 //
 // Returning false means the throw was neither BREAK nor CONTINUE.
 //
-bool Try_Catch_Break_Or_Continue(Value *out, Frame(*) frame_)
+bool Try_Catch_Break_Or_Continue(Value(*) out, Frame(*) frame_)
 {
-    const Value *label = VAL_THROWN_LABEL(frame_);
+    const Value(*) label = VAL_THROWN_LABEL(frame_);
 
     // Throw /NAME-s used by CONTINUE and BREAK are the actual native
     // function values of the routines themselves.
@@ -106,7 +106,7 @@ REBNATIVE(continue)
 {
     INCLUDE_PARAMS_OF_CONTINUE;
 
-    Value *v = ARG(value);
+    Value(*) v = ARG(value);
 
     if (Is_Meta_Of_Void(v) or Is_Meta_Of_End(v))
         RESET(v);  // Treat CONTINUE same as CONTINUE VOID
@@ -586,7 +586,7 @@ REBNATIVE(stop)
 {
     INCLUDE_PARAMS_OF_STOP;
 
-    Value *v = ARG(value);
+    Value(*) v = ARG(value);
 
     if (Is_Meta_Of_Void(v) or Is_Meta_Of_End(v))
         RESET(v);  // Treat STOP the same as STOP VOID
@@ -626,7 +626,7 @@ REBNATIVE(cycle)
 {
     INCLUDE_PARAMS_OF_CYCLE;
 
-    Value *body = ARG(body);
+    Value(*) body = ARG(body);
 
     enum {
         ST_CYCLE_INITIAL_ENTRY = 0,
@@ -700,7 +700,7 @@ struct Loop_Each_State {
 //
 //  Init_Loop_Each: C
 //
-void Init_Loop_Each(Value *iterator, Value *data)
+void Init_Loop_Each(Value(*) iterator, Value(*) data)
 {
     struct Loop_Each_State *les = TRY_ALLOC(struct Loop_Each_State);
 
@@ -781,7 +781,7 @@ void Init_Loop_Each(Value *iterator, Value *data)
 //
 // It's possible to opt out of variable slots using BLANK!.
 //
-static bool Try_Loop_Each_Next(const Value *iterator, Context(*) vars_ctx)
+static bool Try_Loop_Each_Next(Value(const*) iterator, Context(*) vars_ctx)
 {
     struct Loop_Each_State *les;
     les = VAL_HANDLE_POINTER(struct Loop_Each_State, iterator);
@@ -953,7 +953,7 @@ static bool Try_Loop_Each_Next(const Value *iterator, Context(*) vars_ctx)
 //
 // Cleanups that need to be done despite error, throw, etc.
 //
-void Shutdown_Loop_Each(Value *iterator)
+void Shutdown_Loop_Each(Value(*) iterator)
 {
     struct Loop_Each_State *les;
     les = VAL_HANDLE_POINTER(struct Loop_Each_State, iterator);
@@ -1005,11 +1005,11 @@ REBNATIVE(for_each)
 {
     INCLUDE_PARAMS_OF_FOR_EACH;
 
-    Value *vars = ARG(vars);  // transformed to context on initial_entry
-    Value *data = ARG(data);
-    Value *body = ARG(body);  // bound to vars context on initial_entry
+    Value(*) vars = ARG(vars);  // transformed to context on initial_entry
+    Value(*) data = ARG(data);
+    Value(*) body = ARG(body);  // bound to vars context on initial_entry
 
-    Value *iterator = ARG(return);  // reuse to hold Loop_Each_State
+    Value(*) iterator = ARG(return);  // reuse to hold Loop_Each_State
 
     enum {
         ST_FOR_EACH_INITIAL_ENTRY = 0,
@@ -1114,11 +1114,11 @@ REBNATIVE(every)
 {
     INCLUDE_PARAMS_OF_EVERY;
 
-    Value *vars = ARG(vars);  // transformed to context on initial_entry
-    Value *data = ARG(data);
-    Value *body = ARG(body);  // bound to vars context on initial_entry
+    Value(*) vars = ARG(vars);  // transformed to context on initial_entry
+    Value(*) data = ARG(data);
+    Value(*) body = ARG(body);  // bound to vars context on initial_entry
 
-    Value *iterator = ARG(return);  // place to store iteration state
+    Value(*) iterator = ARG(return);  // place to store iteration state
 
     enum {
         ST_EVERY_INITIAL_ENTRY = 0,
@@ -1263,8 +1263,8 @@ REBNATIVE(remove_each)
 {
     INCLUDE_PARAMS_OF_REMOVE_EACH;
 
-    Value *data = ARG(data);
-    Value *body = ARG(body);
+    Value(*) data = ARG(data);
+    Value(*) body = ARG(body);
 
     REBSER *series = VAL_SERIES_ENSURE_MUTABLE(data);  // check even if empty
 
@@ -1605,11 +1605,11 @@ REBNATIVE(map)
 {
     INCLUDE_PARAMS_OF_MAP;
 
-    Value *vars = ARG(vars);  // transformed to context on initial_entry
-    Value *data = ARG(data);
-    Value *body = ARG(body);  // bound to vars context on initial_entry
+    Value(*) vars = ARG(vars);  // transformed to context on initial_entry
+    Value(*) data = ARG(data);
+    Value(*) body = ARG(body);  // bound to vars context on initial_entry
 
-    Value *iterator = ARG(return);  // reuse to hold Loop_Each_State
+    Value(*) iterator = ARG(return);  // reuse to hold Loop_Each_State
 
     enum {
         ST_MAP_INITIAL_ENTRY = 0,
@@ -1760,10 +1760,10 @@ REBNATIVE(repeat)
 {
     INCLUDE_PARAMS_OF_REPEAT;
 
-    Value *count = ARG(count);
-    Value *body = ARG(body);
+    Value(*) count = ARG(count);
+    Value(*) body = ARG(body);
 
-    Value *index = SPARE;  // use spare cell to hold current index
+    Value(*) index = SPARE;  // use spare cell to hold current index
 
     enum {
         ST_REPEAT_INITIAL_ENTRY = 0,
@@ -1969,10 +1969,10 @@ REBNATIVE(until)
 {
     INCLUDE_PARAMS_OF_UNTIL;
 
-    Value *body = ARG(body);
-    Value *predicate = ARG(predicate);
+    Value(*) body = ARG(body);
+    Value(*) predicate = ARG(predicate);
 
-    Value *condition;  // can point to OUT or SPARE
+    Value(*) condition;  // can point to OUT or SPARE
 
     enum {
         ST_UNTIL_INITIAL_ENTRY = 0,
@@ -2078,8 +2078,8 @@ REBNATIVE(while)
 {
     INCLUDE_PARAMS_OF_WHILE;
 
-    Value *condition = ARG(condition);  // condition is BLOCK! only, see [1]
-    Value *body = ARG(body);
+    Value(*) condition = ARG(condition);  // condition is BLOCK! only, see [1]
+    Value(*) body = ARG(body);
 
     enum {
         ST_WHILE_INITIAL_ENTRY = 0,

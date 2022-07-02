@@ -58,8 +58,8 @@ REBNATIVE(reduce)
 {
     INCLUDE_PARAMS_OF_REDUCE;
 
-    Value *v = ARG(value);  // newline flag on `v` cell is leveraged, see [2]
-    Value *predicate = ARG(predicate);
+    Value(*) v = ARG(value);  // newline flag on `v` cell is leveraged, see [2]
+    Value(*) predicate = ARG(predicate);
 
     enum {
         ST_REDUCE_INITIAL_ENTRY = 0,
@@ -197,9 +197,9 @@ REBNATIVE(reduce_each)
 {
     INCLUDE_PARAMS_OF_REDUCE_EACH;
 
-    Value *vars = ARG(vars);
-    Value *block = ARG(block);
-    Value *body = ARG(body);
+    Value(*) vars = ARG(vars);
+    Value(*) block = ARG(block);
+    Value(*) body = ARG(body);
 
     enum {
         ST_REDUCE_EACH_INITIAL_ENTRY = 0,
@@ -332,12 +332,12 @@ bool Match_For_Compose(noquote(Cell(const*)) group, const REBVAL *label) {
 //    so long as it is passed in the `main_frame` member of Frame.
 //
 static void Push_Composer_Frame(
-    Value *out,
+    Value(*) out,
     Frame(*) main_frame,
     Cell(const*) arraylike,
     REBSPC *specifier
 ){
-    const Value* adjusted = nullptr;
+    Value(const*) adjusted = nullptr;
     if (ANY_PATH(arraylike)) {  // allow sequences, see [1]
         Derelativize(out, arraylike, specifier);
         adjusted = rebValue(Lib(AS), Lib(BLOCK_X), rebQ(out));
@@ -379,8 +379,8 @@ static void Push_Composer_Frame(
 // 3. There are N instances of the NEWLINE_BEFORE flags on the pushed items,
 //    and we need N + 1 flags.  Borrow the tail flag from the input array.
 //
-static Value* Finalize_Composer_Frame(
-    Value *out,
+static Value(*) Finalize_Composer_Frame(
+    Value(*) out,
     Frame(*) composer_frame,
     Cell(const*) composee  // special handling if the output kind is a sequence
 ){
@@ -488,10 +488,10 @@ Bounce Composer_Executor(Frame(*) f)
     Frame(*) main_frame = f->u.compose.main_frame;  // the invoked COMPOSE native
 
     UNUSED(FRM_ARG(main_frame, p_return_));
-    Value *label = FRM_ARG(main_frame, p_label_);
+    Value(*) label = FRM_ARG(main_frame, p_label_);
     UNUSED(FRM_ARG(main_frame, p_value_));
     bool deep = not Is_Nulled(FRM_ARG(main_frame, p_deep_));
-    Value *predicate = FRM_ARG(main_frame, p_predicate_);
+    Value(*) predicate = FRM_ARG(main_frame, p_predicate_);
 
     assert(Is_Nulled(predicate) or IS_ACTION(predicate));
 
@@ -804,7 +804,7 @@ REBNATIVE(compose)
 {
     INCLUDE_PARAMS_OF_COMPOSE;
 
-    Value *v = ARG(value);
+    Value(*) v = ARG(value);
 
     UNUSED(ARG(label));  // options used by Composer_Executor() via main_frame
     UNUSED(ARG(deep));

@@ -327,8 +327,8 @@ REBNATIVE(use)
 {
     INCLUDE_PARAMS_OF_USE;
 
-    Value *vars = ARG(vars);
-    Value *body = ARG(body);
+    Value(*) vars = ARG(vars);
+    Value(*) body = ARG(body);
 
     Context(*) context = Virtual_Bind_Deep_To_New_Context(
         body,  // may be replaced with rebound copy, or left the same

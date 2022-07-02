@@ -131,7 +131,7 @@ Bounce Group_Branch_Executor(Frame(*) frame_)
     if (ANY_GROUP(SPARE))
         fail (Error_Bad_Branch_Type_Raw());  // stop infinite recursion (good?)
 
-    const Value *with = Is_Stale(OUT) ? END : OUT;  // with is here, see [1]
+    Value(const*) with = Is_Stale(OUT) ? END : OUT;  // with is here, see [1]
 
     assert(Is_End(FRAME->feed->value));
     delegate_branch (OUT, SPARE, with);
@@ -166,8 +166,8 @@ REBNATIVE(if)
 {
     INCLUDE_PARAMS_OF_IF;
 
-    Value *condition = ARG(condition);
-    Value *branch = ARG(branch);
+    Value(*) condition = ARG(condition);
+    Value(*) branch = ARG(branch);
 
     if (Is_Conditional_False(condition))  // errors on literal block, see [1]
         return VOID;
@@ -194,13 +194,13 @@ REBNATIVE(either)
 {
     INCLUDE_PARAMS_OF_EITHER;
 
-    Value *condition = ARG(condition);
+    Value(*) condition = ARG(condition);
 
-    Value *branch = Is_Conditional_True(condition)  // see [1] on REBNATIVE(if)
+    Value(*) branch = Is_Conditional_True(condition)  // see [1] on IF native
         ? ARG(true_branch)
         : ARG(false_branch);
 
-    delegate_branch (OUT, branch, condition);  // see [2] on REBNATIVE(if)
+    delegate_branch (OUT, branch, condition);  // see [2] on IF native
 }
 
 
@@ -238,7 +238,7 @@ REBNATIVE(did_1)  // see TO-C-NAME
 {
     INCLUDE_PARAMS_OF_DID_1;
 
-    Value *in = ARG(optional);
+    Value(*) in = ARG(optional);
 
     if (Is_Nulled(in) or Is_Meta_Of_Void(in))
         return Init_False(OUT);
@@ -265,7 +265,7 @@ REBNATIVE(didnt)
 {
     INCLUDE_PARAMS_OF_DIDNT;
 
-    Value *in = ARG(optional);
+    Value(*) in = ARG(optional);
 
     if (Is_Nulled(in) or Is_Meta_Of_Void(in))
         return Init_True(OUT);
@@ -298,8 +298,8 @@ REBNATIVE(then)  // see `tweak :then 'defer on` in %base-defs.r
 {
     INCLUDE_PARAMS_OF_THEN;
 
-    Value *in = ARG(optional);
-    Value *branch = ARG(branch);
+    Value(*) in = ARG(optional);
+    Value(*) branch = ARG(branch);
 
     if (IS_ERROR(in)) {  // ^META error represents definitional failure, skip
         Copy_Cell(OUT, in);
@@ -336,8 +336,8 @@ REBNATIVE(also)  // see `tweak :also 'defer on` in %base-defs.r
 {
     INCLUDE_PARAMS_OF_ALSO;  // `then func [x] [(...) :x]` => `also [...]`
 
-    Value *in = ARG(optional);
-    Value *branch = ARG(branch);
+    Value(*) in = ARG(optional);
+    Value(*) branch = ARG(branch);
 
     enum {
         ST_ALSO_INITIAL_ENTRY = 0,
@@ -415,8 +415,8 @@ REBNATIVE(else)  // see `tweak :else 'defer on` in %base-defs.r
 {
     INCLUDE_PARAMS_OF_ELSE;  // ELSE reacts to null and void, not none, see [1]
 
-    Value *in = ARG(optional);
-    Value *branch = ARG(branch);
+    Value(*) in = ARG(optional);
+    Value(*) branch = ARG(branch);
 
     if (IS_ERROR(in)) {  // ^META error represents definitional failure, skip
         Copy_Cell(OUT, in);
@@ -617,13 +617,13 @@ REBNATIVE(all)
 {
     INCLUDE_PARAMS_OF_ALL;
 
-    Value *block = ARG(block);
-    Value *predicate = ARG(predicate);
+    Value(*) block = ARG(block);
+    Value(*) predicate = ARG(predicate);
 
-    Value *any_matches = ARG(return);  // reuse return cell for flag, see [3]
+    Value(*) any_matches = ARG(return);  // reuse return cell for flag, see [3]
     Init_False(any_matches);
 
-    Value *condition;  // will be found in OUT or SPARE
+    Value(*) condition;  // will be found in OUT or SPARE
 
     enum {
         ST_ALL_INITIAL_ENTRY = 0,
@@ -744,10 +744,10 @@ REBNATIVE(any)
 {
     INCLUDE_PARAMS_OF_ANY;
 
-    Value *predicate = ARG(predicate);
-    Value *block = ARG(block);
+    Value(*) predicate = ARG(predicate);
+    Value(*) block = ARG(block);
 
-    Value *condition;  // could point to OUT or SPARE
+    Value(*) condition;  // could point to OUT or SPARE
 
     enum {
         ST_ANY_INITIAL_ENTRY = 0,

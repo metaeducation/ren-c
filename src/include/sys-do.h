@@ -74,7 +74,7 @@
 // bias to having to do this or Do_XXX() versions explode into passing
 // mutability parameters all over the place.  This is better.)
 //
-inline static void Tweak_Non_Const_To_Explicitly_Mutable(Value *source) {
+inline static void Tweak_Non_Const_To_Explicitly_Mutable(Value(*) source) {
     if (Not_Cell_Flag(source, CONST))
         Set_Cell_Flag(source, EXPLICITLY_MUTABLE);
 }

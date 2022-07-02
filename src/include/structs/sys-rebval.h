@@ -715,8 +715,6 @@ union Reb_Value_Payload { //=/////////////// ACTUAL PAYLOAD DEFINITION ////=//
     );
 #endif
 
-typedef struct Reb_Value Value;  // Friendly alias uses inside core for REBVAL
-
 
 //=//// VARS and PARAMs ///////////////////////////////////////////////////=//
 //
@@ -740,3 +738,7 @@ typedef struct Reb_Value Value;  // Friendly alias uses inside core for REBVAL
 
     #define cast_PAR(v) (v)
 #endif
+
+
+#define Value(star_maybe_const) \
+    struct Reb_Value star_maybe_const  // will evolve to use Holder class

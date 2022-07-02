@@ -112,8 +112,8 @@ REBNATIVE(except)
 {
     INCLUDE_PARAMS_OF_EXCEPT;
 
-    Value *v = ARG(optional);
-    Value *branch = ARG(branch);
+    Value(*) v = ARG(optional);
+    Value(*) branch = ARG(branch);
 
     if (not IS_ERROR(v))
         return UNMETA(v);

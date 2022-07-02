@@ -371,10 +371,10 @@ REBNATIVE(opt_combinator)
 {
     INCLUDE_PARAMS_OF_OPT_COMBINATOR;
 
-    Value *remainder = ARG(remainder);  // output (combinator implicit)
+    Value(*) remainder = ARG(remainder);  // output (combinator implicit)
 
-    Value *input = ARG(input);  // combinator implicit
-    Value *parser = ARG(parser);
+    Value(*) input = ARG(input);  // combinator implicit
+    Value(*) parser = ARG(parser);
     UNUSED(ARG(state));  // combinator implicit
 
     enum {
@@ -426,8 +426,8 @@ REBNATIVE(text_x_combinator)
     Context(*) state = VAL_CONTEXT(ARG(state));
     bool cased = Is_Truthy(CTX_VAR(state, IDX_UPARSE_PARAM_CASE));
 
-    Value *v = ARG(value);
-    Value *input = ARG(input);
+    Value(*) v = ARG(value);
+    Value(*) input = ARG(input);
 
     if (ANY_ARRAY(input)) {
         Cell(const*) tail;
@@ -496,11 +496,11 @@ REBNATIVE(some_combinator)
 {
     INCLUDE_PARAMS_OF_SOME_COMBINATOR;
 
-    Value *remainder = ARG(remainder);
-    Value *parser = ARG(parser);
-    Value *input = ARG(input);
+    Value(*) remainder = ARG(remainder);
+    Value(*) parser = ARG(parser);
+    Value(*) input = ARG(input);
 
-    Value *state = ARG(state);
+    Value(*) state = ARG(state);
     Array(*) loops = VAL_ARRAY_ENSURE_MUTABLE(
         CTX_VAR(VAL_CONTEXT(state), IDX_UPARSE_PARAM_LOOPS)
     );

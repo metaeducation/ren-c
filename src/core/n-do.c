@@ -693,10 +693,10 @@ REBNATIVE(applique)
 {
     INCLUDE_PARAMS_OF_APPLIQUE;
 
-    Value *action = ARG(action);
-    Value *def = ARG(def);
+    Value(*) action = ARG(action);
+    Value(*) def = ARG(def);
 
-    Value *frame = ARG(return);  // reuse as GC-safe cell for FRAME!
+    Value(*) frame = ARG(return);  // reuse as GC-safe cell for FRAME!
 
     enum {
         ST_APPLIQUE_INITIAL_ENTRY = 0,
@@ -784,11 +784,11 @@ REBNATIVE(apply)
 {
     INCLUDE_PARAMS_OF_APPLY;
 
-    Value *action = ARG(action);
-    Value *args = ARG(args);
+    Value(*) action = ARG(action);
+    Value(*) args = ARG(args);
 
-    Value *frame = ARG(frame);  // local variable for holding GC-safe frame
-    Value *iterator = ARG(return);  // reuse to hold Evars iterator
+    Value(*) frame = ARG(frame);  // local variable for holding GC-safe frame
+    Value(*) iterator = ARG(return);  // reuse to hold Evars iterator
 
     REBVAR *var;  // may come from evars iterator or found by index
     REBPAR *param;  // (same)
