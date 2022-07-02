@@ -694,7 +694,7 @@ inline static const REBVAR *TRY_VAL_CONTEXT_VAR_CORE(
             var = CTX_VAR(VAL_CONTEXT(context), n);
     }
     if (var and writable and Get_Cell_Flag(var, PROTECTED))
-        fail (Error_Protected_Key(&symbol));
+        fail (Error_Protected_Key(symbol));
     return var;
 }
 

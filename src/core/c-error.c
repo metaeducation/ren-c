@@ -1213,10 +1213,10 @@ Context(*) Error_Out_Of_Range(Cell(const*) arg)
 //
 //  Error_Protected_Key: C
 //
-Context(*) Error_Protected_Key(const REBKEY *key)
+Context(*) Error_Protected_Key(Symbol(const*) sym)
 {
     DECLARE_LOCAL (key_name);
-    Init_Word(key_name, KEY_SYMBOL(key));
+    Init_Word(key_name, sym);
 
     return Error_Protected_Word_Raw(key_name);
 }

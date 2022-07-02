@@ -125,7 +125,7 @@ static void Append_To_Context(REBVAL *context, REBVAL *arg)
         }
 
         if (Get_Cell_Flag(var, PROTECTED)) {
-            error = Error_Protected_Key(&symbol);
+            error = Error_Protected_Key(symbol);
             goto collect_end;
         }
 
