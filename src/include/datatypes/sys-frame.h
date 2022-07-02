@@ -471,7 +471,7 @@ inline static void Prep_Frame_Core(
     REBFLGS flags
 ){
    if (f == nullptr)  // e.g. a failed allocation
-       fail (Error_No_Memory(sizeof(Reb_Frame)));
+       fail (Error_No_Memory(sizeof(struct Reb_Frame)));
 
     f->flags.bits = flags | FRAME_FLAG_0_IS_TRUE | FRAME_FLAG_7_IS_TRUE;
 

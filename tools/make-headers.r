@@ -152,16 +152,18 @@ boot-natives: load (join output-dir %boot/tmp-natives.r)
 
 e-funcs/emit {
     /*
-     * When building as C++, the linkage on these functions should be done
-     * without "name mangling" so that library clients will not notice a
-     * difference between a C++ build and a C build.
+     * Once there was a rule that C++ builds would not be different in function
+     * from a C build.  This way, an extension DLL could be compiled to run
+     * in either, when compiled against %sys-core.h
      *
-     * http://stackoverflow.com/q/1041866/
+     * But libRebol has become good enough that it is likely going to be the
+     * required interface for extensions, and the features enabled by C++ may
+     * become too good to ignore.  So the internal API does permit the passing
+     * of things like Utf8(*) and String(*) for now.
      *
-     * Debug builds are allowed to break the rule, to get the added benefit
-     * of extra C++ checking like in the Bounce type.
+     * This may be revisited in the future.
      */
-    #if CPLUSPLUS_11 == 0 || defined(NDEBUG)
+    #if 0
     extern "C" ^{
     #endif
 
@@ -228,7 +230,7 @@ for-each item file-base/core [
 
 
 e-funcs/emit {
-    #if CPLUSPLUS_11 == 0 || defined(NDEBUG)
+    #if 0
     ^}  /* end of `extern "C" ^{` */
     #endif
 }

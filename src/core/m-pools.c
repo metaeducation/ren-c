@@ -225,7 +225,7 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
     DEF_POOL(sizeof(REBVAL) * 2, 16),  // Pairings, PAR_POOL
   #endif
 
-    DEF_POOL(ALIGN(sizeof(Reb_Frame), sizeof(REBI64)), 128),  // Frames
+    DEF_POOL(ALIGN(sizeof(struct Reb_Frame), sizeof(REBI64)), 128),  // Frames
     DEF_POOL(ALIGN(sizeof(REBFED), sizeof(REBI64)), 128),  // Feeds
 
     DEF_POOL(sizeof(REBI64), 1), // Just used for tracking main memory
@@ -1184,14 +1184,6 @@ void GC_Kill_Series(REBSER *s)
   #if !defined(NDEBUG)
     if (IS_FREE_NODE(s)) {
         printf("Freeing already freed node.\n");
-        panic (s);
-    }
-  #endif
-
-  #if DEBUG_COUNT_LOCALS
-    if (s->num_locals != 0) {
-        PROBE(s);
-        printf("Leaked refs in GC_Kill_Series: %d\n", cast(int, s->num_locals));
         panic (s);
     }
   #endif

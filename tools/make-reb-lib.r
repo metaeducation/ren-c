@@ -480,7 +480,7 @@ e-lib/emit 'ver {
      * use in the variadic calls, because the feeding of the va_list in
      * case of error is the only way they are cleaned up.
      */
-    #if CPLUSPLUS_11
+    #if defined(CPLUSPLUS_11) && CPLUSPLUS_11
         struct Reb_Node;
         #define REBINS Reb_Node  /* `struct` breaks MS variadic templates */
     #else
