@@ -253,6 +253,7 @@ struct Reb_Jump {
 
     #define ON_ABRUPT_FAILURE(decl) \
       longjmp_happened: \
+        NOOP; /* must be statement after label */ \
         decl = jump.error; \
         jump.error = nullptr; \
         /* fall through to subsequent block */
