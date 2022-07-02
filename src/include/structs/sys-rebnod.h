@@ -165,6 +165,7 @@ typedef uintptr_t REBFLGS;
     // http://stackoverflow.com/a/2100549/211160
     //
     #error "ENDIAN_BIG or ENDIAN_LITTLE must be defined"
+    #include <stophere>  // https://stackoverflow.com/a/45661130
 #endif
 
 // `unsigned char` is used below, as opposed to `uint8_t`, to coherently

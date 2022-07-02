@@ -114,6 +114,7 @@
 
 #if !defined(assert)
     #error "Include <assert.h> before including reb-c.h"
+    #include <stophere>  // https://stackoverflow.com/a/45661130
 #endif
 
 #if !defined(NDEBUG) && defined(__GLIBC__) && defined(__GLIBC_MINOR__) \

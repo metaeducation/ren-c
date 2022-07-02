@@ -82,6 +82,7 @@
 
   #if (! CPLUSPLUS_11)
     #error "DEBUG_CHECK_CASTS requires C++11 (or later)"
+    #include <stophere>  // https://stackoverflow.com/a/45661130
   #endif
 
     // The C++ variants are more heavyweight, and beyond the scope of writing

@@ -502,9 +502,10 @@ Special internal defines used by RT, not Host-Kit developers:
 
 #elif defined(REBOL_FAIL_USES_TRY_CATCH)
 
-    #if !defined(__cplusplus)
-        #error "REBOL_FAIL_USES_TRY_CATCH requires compiling Ren-C with C++"
-    #endif
+  #if !defined(__cplusplus)
+    #error "REBOL_FAIL_USES_TRY_CATCH requires compiling Ren-C with C++"
+    #include <stophere>  // https://stackoverflow.com/a/45661130
+  #endif
 
     STATIC_ASSERT(REBOL_FAIL_USES_TRY_CATCH == 1);
     #if defined(REBOL_FAIL_USES_LONGJMP)
@@ -666,8 +667,13 @@ Special internal defines used by RT, not Host-Kit developers:
 // outstanding on the stack.  The mechanism may evolve to permit things like
 // the C++ build being able to GC at arbitrary moments.
 //
+//#define DEBUG_COUNT_LOCALS 1
 #if !defined(DEBUG_COUNT_LOCALS)
     #define DEBUG_COUNT_LOCALS 0
+#endif
+#if DEBUG_COUNT_LOCALS && CPLUSPLUS_11 == 0
+    #error "DEBUG_COUNT_LOCALS requires C++11 or higher"
+    #include <stophere>  // https://stackoverflow.com/a/45661130
 #endif
 
 
