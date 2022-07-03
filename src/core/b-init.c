@@ -192,7 +192,7 @@ static void Startup_Lib(void)
 {
     Context(*) lib = Alloc_Context_Core(REB_MODULE, 1, NODE_FLAG_MANAGED);
     ensureNullptr(Lib_Context_Value) = Alloc_Value();
-    Init_Any_Context(Lib_Context_Value, REB_MODULE, lib);
+    Init_Context_Cell(Lib_Context_Value, REB_MODULE, lib);
     ensureNullptr(Lib_Context) = VAL_CONTEXT(Lib_Context_Value);
 
   //=//// INITIALIZE LIB PATCHES ///////////////////////////////////////////=//
@@ -1028,7 +1028,7 @@ void Startup_Core(void)
 
     Context(*) util = Alloc_Context_Core(REB_MODULE, 1, NODE_FLAG_MANAGED);
     ensureNullptr(Sys_Util_Module) = Alloc_Value();
-    Init_Any_Context(Sys_Util_Module, REB_MODULE, util);
+    Init_Context_Cell(Sys_Util_Module, REB_MODULE, util);
     ensureNullptr(Sys_Context) = VAL_CONTEXT(Sys_Util_Module);
 
     error = rebEntrap(

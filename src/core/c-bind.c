@@ -530,7 +530,7 @@ DECLARE_NATIVE(let)
             where = OUT;
 
         if (altered) {  // elements altered, can't reuse input block rebound
-            Init_Any_Array(
+            Init_Array_Cell(
                 where,  // may be SPARE, and vars may point to it
                 VAL_TYPE(vars),
                 Pop_Stack_Values_Core(dsp_orig, NODE_FLAG_MANAGED)

@@ -509,7 +509,7 @@ void Reify_Va_To_Array_In_Feed(
         Init_Block(FEED_SINGLE(feed), EMPTY_ARRAY);  // reuse array
     else {
         Array(*) a = Pop_Stack_Values_Core(dsp_orig, SERIES_FLAG_MANAGED);
-        Init_Any_Array_At(FEED_SINGLE(feed), REB_BLOCK, a, index);
+        Init_Array_Cell_At(FEED_SINGLE(feed), REB_BLOCK, a, index);
     }
 
     if (truncated)

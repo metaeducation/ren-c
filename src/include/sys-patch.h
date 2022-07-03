@@ -168,7 +168,7 @@ inline static Array(*) Make_Patch_Core(
         // of telling the historical order.  Punt on figuring out the answer
         // for it and just let virtual binds see the latest situation.
         //
-        Init_Any_Context(ARR_SINGLE(patch), REB_MODULE, CTX(binding));
+        Init_Context_Cell(ARR_SINGLE(patch), REB_MODULE, CTX(binding));
     }
     else {
         Init_Any_Word_Bound_Untracked(

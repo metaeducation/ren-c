@@ -101,7 +101,7 @@ REBVAL *Try_Init_Any_Sequence_At_Arraylike_Core(
     // do it is that leaving it as an index allows for aliasing BLOCK! as
     // PATH! from non-head positions.
 
-    Init_Any_Series_At_Core(out, REB_BLOCK, a, index, specifier);
+    Init_Series_Cell_At_Core(out, REB_BLOCK, a, index, specifier);
     mutable_HEART_BYTE(out) = kind;
 
     return cast(REBVAL*, out);

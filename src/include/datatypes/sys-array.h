@@ -524,14 +524,14 @@ inline static Cell(const*) VAL_ARRAY_AT_HEAD(
 // Declaring as inline with type signature ensures you use a Array(*) to
 // initialize, and the C++ build can also validate managed consistent w/const.
 
-inline static REBVAL *Init_Any_Array_At_Core(
+inline static REBVAL *Init_Array_Cell_At_Core(
     Cell(*) out,
     enum Reb_Kind kind,
     const_if_c Array(*) array,
     REBLEN index,
     Array(*) binding
 ){
-    return Init_Any_Series_At_Core(
+    return Init_Series_Cell_At_Core(
         out,
         kind,
         Force_Series_Managed_Core(array),
@@ -541,25 +541,25 @@ inline static REBVAL *Init_Any_Array_At_Core(
 }
 
 #if CPLUSPLUS_11
-    inline static REBVAL *Init_Any_Array_At_Core(
+    inline static REBVAL *Init_Array_Cell_At_Core(
         Cell(*) out,
         enum Reb_Kind kind,
         Array(const*) array,  // all const arrays should be already managed
         REBLEN index,
         Array(*) binding
     ){
-        return Init_Any_Series_At_Core(out, kind, array, index, binding);
+        return Init_Series_Cell_At_Core(out, kind, array, index, binding);
     }
 #endif
 
-#define Init_Any_Array_At(v,t,a,i) \
-    Init_Any_Array_At_Core((v), (t), (a), (i), UNBOUND)
+#define Init_Array_Cell_At(v,t,a,i) \
+    Init_Array_Cell_At_Core((v), (t), (a), (i), UNBOUND)
 
-#define Init_Any_Array(v,t,a) \
-    Init_Any_Array_At((v), (t), (a), 0)
+#define Init_Array_Cell(v,t,a) \
+    Init_Array_Cell_At((v), (t), (a), 0)
 
-#define Init_Block(v,s)     Init_Any_Array((v), REB_BLOCK, (s))
-#define Init_Group(v,s)     Init_Any_Array((v), REB_GROUP, (s))
+#define Init_Block(v,s)     Init_Array_Cell((v), REB_BLOCK, (s))
+#define Init_Group(v,s)     Init_Array_Cell((v), REB_GROUP, (s))
 
 
 inline static Cell(*) Init_Relative_Block_At(

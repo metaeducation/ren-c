@@ -2167,12 +2167,12 @@ Bounce Scanner_Executor(Frame(*) f) {
             *ss->end == ':'  // `...(foo):` or `...[bar]:`
             and not Is_Dot_Or_Slash(level->mode)  // leave `:` for SET-PATH!
         ){
-            Init_Any_Array(PUSH(), SETIFY_ANY_PLAIN_KIND(kind), a);
+            Init_Array_Cell(PUSH(), SETIFY_ANY_PLAIN_KIND(kind), a);
             ++ss->begin;
             ++ss->end;
         }
         else
-            Init_Any_Array(PUSH(), kind, a);
+            Init_Array_Cell(PUSH(), kind, a);
         ep = ss->end;
         break; }
 
@@ -2738,7 +2738,7 @@ Bounce Scanner_Executor(Frame(*) f) {
                 // the scanner, but still pretty cool we can do it this way.)
                 //
                 DECLARE_LOCAL (items);
-                Init_Any_Array(
+                Init_Array_Cell(
                     items,
                     REB_THE_BLOCK,  // don't want to evaluate
                     Pop_Stack_Values(dsp_path_head - 1)

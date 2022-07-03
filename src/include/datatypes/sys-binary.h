@@ -152,10 +152,10 @@ inline static const Byte* VAL_BINARY_SIZE_AT(
     m_cast(Byte*, VAL_BINARY_AT(KNOWN_MUTABLE(v)))
 
 #define Init_Binary(out,bin) \
-    Init_Any_Series((out), REB_BINARY, (bin))
+    Init_Series_Cell((out), REB_BINARY, (bin))
 
 #define Init_Binary_At(out,bin,offset) \
-    Init_Any_Series_At((out), REB_BINARY, (bin), (offset))
+    Init_Series_Cell_At((out), REB_BINARY, (bin), (offset))
 
 
 //=//// GLOBAL BINARIES //////////////////////////////////////////////////=//

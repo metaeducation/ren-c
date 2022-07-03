@@ -226,10 +226,10 @@ Bounce MAKE_Binary(
         if (i < 0 or i > cast(REBINT, VAL_LEN_AT(first)))
             goto bad_make;
 
-        return Init_Any_Series_At(out, REB_BINARY, VAL_SERIES(first), i);
+        return Init_Series_Cell_At(out, REB_BINARY, VAL_SERIES(first), i);
     }
 
-    return Init_Any_Series(out, REB_BINARY, MAKE_TO_Binary_Common(def));
+    return Init_Series_Cell(out, REB_BINARY, MAKE_TO_Binary_Common(def));
 
 bad_make:
     fail (Error_Bad_Make(REB_BINARY, def));
@@ -245,9 +245,9 @@ Bounce TO_Binary(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
     UNUSED(kind);
 
     if (IS_INTEGER(arg) or IS_DECIMAL(arg))
-        return Init_Any_Series(out, REB_BINARY, Make_Binary_BE64(arg));
+        return Init_Series_Cell(out, REB_BINARY, Make_Binary_BE64(arg));
 
-    return Init_Any_Series(out, REB_BINARY, MAKE_TO_Binary_Common(arg));
+    return Init_Series_Cell(out, REB_BINARY, MAKE_TO_Binary_Common(arg));
 }
 
 
@@ -499,7 +499,7 @@ REBTYPE(Binary)
             //
             if (REF(tail))
                 ret += size;
-            return Init_Any_Series_At(OUT, REB_BINARY, VAL_BINARY(v), ret);
+            return Init_Series_Cell_At(OUT, REB_BINARY, VAL_BINARY(v), ret);
         }
 
         ret++;
@@ -522,7 +522,7 @@ REBTYPE(Binary)
         if (REF(part)) {
             len = Part_Len_May_Modify_Index(v, ARG(part));
             if (len == 0)
-                return Init_Any_Series(OUT, VAL_TYPE(v), Make_Binary(0));
+                return Init_Series_Cell(OUT, VAL_TYPE(v), Make_Binary(0));
         } else
             len = 1;
 
@@ -541,7 +541,7 @@ REBTYPE(Binary)
             if (not REF(part))
                 return Init_Blank(OUT);
 
-            return Init_Any_Series(OUT, VAL_TYPE(v), Make_Binary(0));
+            return Init_Series_Cell(OUT, VAL_TYPE(v), Make_Binary(0));
         }
 
         index = VAL_INDEX(v);
@@ -589,7 +589,7 @@ REBTYPE(Binary)
 
         REBINT len = Part_Len_May_Modify_Index(v, ARG(part));
 
-        return Init_Any_Series(
+        return Init_Series_Cell(
             OUT,
             REB_BINARY,
             Copy_Binary_At_Len(VAL_SERIES(v), VAL_INDEX(v), len)
@@ -653,7 +653,7 @@ REBTYPE(Binary)
             assert(false);  // not reachable
         }
 
-        return Init_Any_Series(OUT, REB_BINARY, series); }
+        return Init_Series_Cell(OUT, REB_BINARY, series); }
 
       case SYM_BITWISE_NOT: {
         Size size;
@@ -666,7 +666,7 @@ REBTYPE(Binary)
         for (; size > 0; --size, ++bp, ++dp)
             *dp = ~(*bp);
 
-        return Init_Any_Series(OUT, REB_BINARY, bin); }
+        return Init_Series_Cell(OUT, REB_BINARY, bin); }
 
     // Arithmetic operations are allowed on BINARY!, because it's too limiting
     // to not allow `#{4B} + 1` => `#{4C}`.  Allowing the operations requires

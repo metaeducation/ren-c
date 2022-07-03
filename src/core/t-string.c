@@ -246,7 +246,7 @@ Bounce MAKE_String(
         if (i < 0 or i > cast(REBINT, VAL_LEN_AT(first)))
             goto bad_make;
 
-        return Init_Any_Series_At(out, kind, VAL_SERIES(first), i);
+        return Init_Series_Cell_At(out, kind, VAL_SERIES(first), i);
     }
 
   bad_make:
@@ -951,7 +951,7 @@ REBTYPE(String)
             //
             if (REF(tail))
                 ret += len;
-            return Init_Any_Series_At(OUT, VAL_TYPE(v), VAL_SERIES(v), ret);
+            return Init_Series_Cell_At(OUT, VAL_TYPE(v), VAL_SERIES(v), ret);
         }
 
         assert(id == SYM_SELECT);

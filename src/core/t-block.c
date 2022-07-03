@@ -117,7 +117,7 @@ Bounce MAKE_Array(
         //
         // `make block! 10` => creates array with certain initial capacity
         //
-        return Init_Any_Array(out, kind, Make_Array(Int32s(arg, 0)));
+        return Init_Array_Cell(out, kind, Make_Array(Int32s(arg, 0)));
     }
     else if (IS_TEXT(arg)) {
         //
@@ -128,7 +128,7 @@ Bounce MAKE_Array(
 
         String(const*) file = ANONYMOUS;
         option(Context(*)) context = nullptr;
-        Init_Any_Array(
+        Init_Array_Cell(
             out,
             kind,
             Scan_UTF8_Managed(file, utf8, size, context)
@@ -186,7 +186,7 @@ Bounce MAKE_Array(
         // line markers should use construction syntax to preserve them.
 
         REBSPC *derived = Derive_Specifier(VAL_SPECIFIER(arg), any_array);
-        return Init_Any_Series_At_Core(
+        return Init_Series_Cell_At_Core(
             out,
             kind,
             VAL_ARRAY(any_array),
@@ -199,7 +199,7 @@ Bounce MAKE_Array(
         // !!! Should MAKE GROUP! and MAKE PATH! from a TYPESET! work like
         // MAKE BLOCK! does?  Allow it for now.
         //
-        return Init_Any_Array(out, kind, Typeset_To_Array(arg));
+        return Init_Array_Cell(out, kind, Typeset_To_Array(arg));
     }
     else if (ANY_ARRAY(arg)) {
         //
@@ -209,7 +209,7 @@ Bounce MAKE_Array(
         //
         REBLEN len;
         Cell(const*) at = VAL_ARRAY_LEN_AT(&len, arg);
-        return Init_Any_Array(
+        return Init_Array_Cell(
             out,
             kind,
             Copy_Values_Len_Shallow(at, VAL_SPECIFIER(arg), len)
@@ -224,7 +224,7 @@ Bounce MAKE_Array(
         Utf8(const*) utf8 = VAL_UTF8_SIZE_AT(&utf8_size, arg);
         String(const*) file = ANONYMOUS;
         option(Context(*)) context = nullptr;
-        return Init_Any_Array(
+        return Init_Array_Cell(
             out,
             kind,
             Scan_UTF8_Managed(file, utf8, utf8_size, context)
@@ -240,17 +240,17 @@ Bounce MAKE_Array(
         Size size;
         const Byte* at = VAL_BINARY_SIZE_AT(&size, arg);
         option(Context(*)) context = nullptr;
-        return Init_Any_Array(
+        return Init_Array_Cell(
             out,
             kind,
             Scan_UTF8_Managed(file, at, size, context)
         );
     }
     else if (IS_MAP(arg)) {
-        return Init_Any_Array(out, kind, Map_To_Array(VAL_MAP(arg), 0));
+        return Init_Array_Cell(out, kind, Map_To_Array(VAL_MAP(arg), 0));
     }
     else if (ANY_CONTEXT(arg)) {
-        return Init_Any_Array(out, kind, Context_To_Array(arg, 3));
+        return Init_Array_Cell(out, kind, Context_To_Array(arg, 3));
     }
     else if (IS_VARARGS(arg)) {
         //
@@ -310,7 +310,7 @@ Bounce MAKE_Array(
             Move_Cell(PUSH(), out);
         } while (true);
 
-        return Init_Any_Array(out, kind, Pop_Stack_Values(dsp_orig));
+        return Init_Array_Cell(out, kind, Pop_Stack_Values(dsp_orig));
     }
     else if (IS_ACTION(arg)) {
         //
@@ -325,7 +325,7 @@ Bounce MAKE_Array(
             Copy_Cell(PUSH(), generated);
             rebRelease(generated);
         }
-        return Init_Any_Array(out, kind, Pop_Stack_Values(dsp_orig));
+        return Init_Array_Cell(out, kind, Pop_Stack_Values(dsp_orig));
     }
 
   bad_make:;
@@ -348,12 +348,12 @@ Bounce TO_Array(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
                 VAL_SEQUENCE_SPECIFIER(arg)
             );
         }
-        return Init_Any_Array(out, kind, Pop_Stack_Values(dsp_orig));
+        return Init_Array_Cell(out, kind, Pop_Stack_Values(dsp_orig));
     }
     else if (ANY_ARRAY(arg)) {
         REBLEN len;
         Cell(const*) at = VAL_ARRAY_LEN_AT(&len, arg);
-        return Init_Any_Array(
+        return Init_Array_Cell(
             out,
             kind,
             Copy_Values_Len_Shallow(at, VAL_SPECIFIER(arg), len)
@@ -364,7 +364,7 @@ Bounce TO_Array(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
         //
         Array(*) single = Alloc_Singular(NODE_FLAG_MANAGED);
         Copy_Cell(ARR_SINGLE(single), arg);
-        return Init_Any_Array(out, kind, single);
+        return Init_Array_Cell(out, kind, single);
     }
 }
 
@@ -1147,7 +1147,7 @@ REBTYPE(Array)
             types // types to copy deeply
         );
 
-        return Init_Any_Array(OUT, VAL_TYPE(array), copy); }
+        return Init_Array_Cell(OUT, VAL_TYPE(array), copy); }
 
     //-- Special actions:
 

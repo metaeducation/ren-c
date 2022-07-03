@@ -529,13 +529,13 @@ inline static const REBKEY *VAL_CONTEXT_KEYS_HEAD(noquote(Cell(const*)) context)
 // that is its canon form from a single pointer...the REBVAL sitting in
 // the 0 slot of the context's varlist.
 //
-inline static REBVAL *Init_Any_Context(
+inline static REBVAL *Init_Context_Cell(
     Cell(*) out,
     enum Reb_Kind kind,
     Context(*) c
 ){
   #if !defined(NDEBUG)
-    Extra_Init_Any_Context_Checks_Debug(kind, c);
+    Extra_Init_Context_Cell_Checks_Debug(kind, c);
   #endif
     UNUSED(kind);
     ASSERT_SERIES_MANAGED(CTX_VARLIST(c));
@@ -545,17 +545,17 @@ inline static REBVAL *Init_Any_Context(
 }
 
 #define Init_Object(out,c) \
-    Init_Any_Context((out), REB_OBJECT, (c))
+    Init_Context_Cell((out), REB_OBJECT, (c))
 
 #define Init_Port(out,c) \
-    Init_Any_Context((out), REB_PORT, (c))
+    Init_Context_Cell((out), REB_PORT, (c))
 
 inline static REBVAL *Init_Frame(
     Cell(*) out,
     Context(*) c,
     option(String(const*)) label  // nullptr (ANONYMOUS) is okay
 ){
-    Init_Any_Context(out, REB_FRAME, c);
+    Init_Context_Cell(out, REB_FRAME, c);
     INIT_VAL_FRAME_LABEL(out, label);
     return cast(REBVAL*, out);
 }
@@ -637,7 +637,7 @@ inline static void Deep_Freeze_Context(Context(*) c) {
     ERR_VARS(VAL_CONTEXT(v))
 
 #define Init_Error(v,c) \
-    Init_Any_Context((v), REB_ERROR, (c))
+    Init_Context_Cell((v), REB_ERROR, (c))
 
 inline static void Force_Location_Of_Error(Context(*) error, Frame(*) where) {
     ERROR_VARS *vars = ERR_VARS(error);

@@ -261,7 +261,7 @@ Array(*) Startup_Natives(const REBVAL *boot_natives)
     Bind_Values_Set_Midstream_Shallow(item, tail, Lib_Context_Value);
 
     DECLARE_LOCAL (skipped);
-    Init_Any_Array_At(skipped, REB_BLOCK, VAL_ARRAY(boot_natives), 3);
+    Init_Array_Cell_At(skipped, REB_BLOCK, VAL_ARRAY(boot_natives), 3);
 
     DECLARE_LOCAL (discarded);
     if (Do_Any_Array_At_Throws(discarded, skipped, SPECIFIED))

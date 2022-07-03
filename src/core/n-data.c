@@ -202,7 +202,7 @@ DECLARE_NATIVE(bind)
         );
         at = ARR_HEAD(copy);
         tail = ARR_TAIL(copy);
-        Init_Any_Array(OUT, VAL_TYPE(v), copy);
+        Init_Array_Cell(OUT, VAL_TYPE(v), copy);
     }
     else {
         ENSURE_MUTABLE(v);  // use IN for virtual binding
@@ -714,7 +714,7 @@ bool Get_Var_Push_Refinements_Throws(
     DROP_GC_GUARD(temp);
 
     if (steps_out and steps_out != GROUPS_OK)
-        Init_Any_Array(unwrap(steps_out), REB_THE_BLOCK, Pop_Stack_Values(dsp_orig));
+        Init_Array_Cell(unwrap(steps_out), REB_THE_BLOCK, Pop_Stack_Values(dsp_orig));
     else
         Drop_Data_Stack_To(dsp_orig);
 

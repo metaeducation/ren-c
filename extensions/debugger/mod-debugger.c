@@ -198,7 +198,7 @@ DECLARE_NATIVE(resume)
 
     REBVAL *expr = ARG(expression);
     if (Is_Nulled(expr))  // e.g. <end> (actuall null not legal)
-        Init_Any_Array(expr, REB_META_GROUP, EMPTY_ARRAY);
+        Init_Array_Cell(expr, REB_META_GROUP, EMPTY_ARRAY);
     else {
         assert(IS_BLOCK(expr));
         mutable_HEART_BYTE(expr) = REB_META_GROUP;

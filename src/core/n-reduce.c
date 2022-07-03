@@ -164,7 +164,7 @@ DECLARE_NATIVE(reduce)
     if (Get_Subclass_Flag(ARRAY, VAL_ARRAY(v), NEWLINE_AT_TAIL))
         pop_flags |= ARRAY_FLAG_NEWLINE_AT_TAIL;
 
-    return Init_Any_Array(
+    return Init_Array_Cell(
         OUT,
         VAL_TYPE(v),
         Pop_Stack_Values_Core(FRAME->baseline.dsp, pop_flags)
@@ -408,7 +408,7 @@ static Value(*) Finalize_Composer_Frame(
     if (Get_Subclass_Flag(ARRAY, VAL_ARRAY(composee), NEWLINE_AT_TAIL))
         flags |= ARRAY_FLAG_NEWLINE_AT_TAIL;  // proxy newline flag, see [3]
 
-    Init_Any_Array(
+    Init_Array_Cell(
         out,
         heart,
         Pop_Stack_Values_Core(composer_frame->baseline.dsp, flags)

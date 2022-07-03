@@ -167,7 +167,7 @@ inline static void Detect_Feed_Pointer_Maybe_Fetch(
         assert(not FEED_IS_VARIADIC(feed));
 
         feed->value = ARR_HEAD(reified);
-        Init_Any_Array_At(FEED_SINGLE(feed), REB_BLOCK, reified, 1);
+        Init_Array_Cell_At(FEED_SINGLE(feed), REB_BLOCK, reified, 1);
         break; }
 
       case DETECTED_AS_SERIES: {  // e.g. rebQ, rebU, or a rebR() handle
@@ -547,7 +547,7 @@ inline static REBFED *Prep_Array_Feed(
     if (first) {
         feed->value = unwrap(first);
         assert(Not_End(feed->value));
-        Init_Any_Array_At_Core(
+        Init_Array_Cell_At_Core(
             FEED_SINGLE(feed), REB_BLOCK, array, index, specifier
         );
         assert(VAL_TYPE_UNCHECKED(feed->value) != REB_0_END);
@@ -557,7 +557,7 @@ inline static REBFED *Prep_Array_Feed(
         feed->value = ARR_AT(array, index);
         if (feed->value == ARR_TAIL(array))
             feed->value = END;
-        Init_Any_Array_At_Core(
+        Init_Array_Cell_At_Core(
             FEED_SINGLE(feed), REB_BLOCK, array, index + 1, specifier
         );
     }

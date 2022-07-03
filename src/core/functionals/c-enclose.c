@@ -132,7 +132,7 @@ Bounce Encloser_Dispatcher(Frame(*) f)
     //
     // // f->varlist may or may not have wound up being managed.  It was not
     // // allocated through the usual mechanisms, so if unmanaged it's not in
-    // // the tracking list Init_Any_Context() expects.  Just fiddle the bit.
+    // // the tracking list Init_Context_Cell() expects.  Just fiddle the bit.
     // //
     // SET_SERIES_FLAG(CTX_VARLIST(c), MANAGED); */
     //-------------------------------------------------------------end-old-code

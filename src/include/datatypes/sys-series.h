@@ -1114,7 +1114,7 @@ inline static void INIT_SPECIFIER(Cell(*) v, const void *p) {
 }
 
 
-inline static REBVAL *Init_Any_Series_At_Core(
+inline static REBVAL *Init_Series_Cell_At_Core(
     Cell(*) out,
     enum Reb_Kind type,
     const REBSER *s,  // ensured managed by calling macro
@@ -1152,12 +1152,12 @@ inline static REBVAL *Init_Any_Series_At_Core(
     return cast(REBVAL*, out);
 }
 
-#define Init_Any_Series_At(v,t,s,i) \
-    Init_Any_Series_At_Core((v), (t), \
+#define Init_Series_Cell_At(v,t,s,i) \
+    Init_Series_Cell_At_Core((v), (t), \
         Force_Series_Managed_Core(s), (i), UNBOUND)
 
-#define Init_Any_Series(v,t,s) \
-    Init_Any_Series_At((v), (t), (s), 0)
+#define Init_Series_Cell(v,t,s) \
+    Init_Series_Cell_At((v), (t), (s), 0)
 
 
 // Make a series of a given width (unit size).  The series will be zero

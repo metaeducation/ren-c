@@ -224,7 +224,7 @@ Bounce Series_Common_Action_Maybe_Unhandled(
         INCLUDE_PARAMS_OF_DIFFERENCE;  // should all have compatible specs
         UNUSED(ARG(value1));  // covered by `value`
 
-        return Init_Any_Series(
+        return Init_Series_Cell(
             OUT,
             VAL_TYPE(v),
             Make_Set_Operation_Series(

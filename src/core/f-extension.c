@@ -198,7 +198,7 @@ DECLARE_NATIVE(load_extension)
     PG_Currently_Loading_Module = module_ctx;
 
     DECLARE_LOCAL (module);
-    Init_Any_Context(module, REB_MODULE, module_ctx);
+    Init_Context_Cell(module, REB_MODULE, module_ctx);
     PUSH_GC_GUARD(module);  // !!! Is GC guard unnecessary due to references?
 
     size_t script_size;
@@ -268,7 +268,7 @@ DECLARE_NATIVE(load_extension)
     // defined in a couple of extensions, but no protocol by which the
     // system will automatically call them on shutdown (yet)
 
-    return Init_Any_Context(OUT, REB_MODULE, module_ctx);
+    return Init_Context_Cell(OUT, REB_MODULE, module_ctx);
 }
 
 

@@ -779,7 +779,7 @@ inline static REBVAL *Init_Any_String_At(
     const_if_c Raw_String* str,
     REBLEN index
 ){
-    Init_Any_Series_At_Core(
+    Init_Series_Cell_At_Core(
         out,
         kind,
         Force_Series_Managed_Core(str),
@@ -796,7 +796,7 @@ inline static REBVAL *Init_Any_String_At(
         const Raw_String* str,
         REBLEN index
     ){
-        return Init_Any_Series_At_Core(out, kind, str, index, UNBOUND);
+        return Init_Series_Cell_At_Core(out, kind, str, index, UNBOUND);
     }
 #endif
 

@@ -382,7 +382,7 @@ static void Print_Parse_Index(Frame(*) frame_) {
     USE_PARAMS_OF_SUBPARSE;
 
     DECLARE_LOCAL (input);
-    Init_Any_Series_At_Core(
+    Init_Series_Cell_At_Core(
         input,
         P_TYPE,
         P_INPUT,
@@ -1705,7 +1705,7 @@ DECLARE_NATIVE(subparse)
                     }
                     else if (not IS_SER_ARRAY(P_INPUT)) {  // BINARY! (?)
                         target = nullptr;  // not an array, one item
-                        Init_Any_Series(
+                        Init_Series_Cell(
                             Alloc_Tail_Array(P_COLLECTION),
                             P_TYPE,
                             Copy_Binary_At_Len(
@@ -2398,7 +2398,7 @@ DECLARE_NATIVE(subparse)
                     // distinction (which Rebol2 did not).  But don't keep
                     // SET-XXX! or GET-XXX! (like how quoting is not kept)
                     //
-                    Init_Any_Array(
+                    Init_Array_Cell(
                         sink,
                         ANY_GROUP_KIND(P_TYPE) ? REB_GROUP : REB_BLOCK,
                         Copy_Array_At_Max_Shallow(
@@ -2419,7 +2419,7 @@ DECLARE_NATIVE(subparse)
                     assert(ANY_STRING_KIND(P_TYPE));
 
                     DECLARE_LOCAL (begin_val);
-                    Init_Any_Series_At(begin_val, P_TYPE, P_INPUT, begin);
+                    Init_Series_Cell_At(begin_val, P_TYPE, P_INPUT, begin);
 
                     // Rebol2 behavior of always "netural" TEXT!.  Avoids
                     // creation of things like URL!-typed fragments that
@@ -2508,8 +2508,8 @@ DECLARE_NATIVE(subparse)
 
                     /*
                     DECLARE_LOCAL (begin_val);
-                    Init_Any_Series_At(begin_val, P_TYPE, P_INPUT, begin);
-                    Init_Any_Series(
+                    Init_Series_Cell_At(begin_val, P_TYPE, P_INPUT, begin);
+                    Init_Series_Cell(
                         captured,
                         P_TYPE,
                         Copy_String_At_Limit(begin_val, count)

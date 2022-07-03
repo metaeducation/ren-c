@@ -608,7 +608,7 @@ Bounce MAKE_Context(
         assert(not parent);
 
         Context(*) ctx = Alloc_Context_Core(REB_MODULE, 1, NODE_FLAG_MANAGED);
-        return Init_Any_Context(out, REB_MODULE, ctx);
+        return Init_Context_Cell(out, REB_MODULE, ctx);
     }
 
     option(Context(*)) parent_ctx = parent
@@ -625,7 +625,7 @@ Bounce MAKE_Context(
             tail,
             parent_ctx
         );
-        Init_Any_Context(out, kind, ctx); // GC guards it
+        Init_Context_Cell(out, kind, ctx); // GC guards it
 
         DECLARE_LOCAL (virtual_arg);
         Copy_Cell(virtual_arg, arg);
@@ -654,7 +654,7 @@ Bounce MAKE_Context(
             parent_ctx
         );
 
-        return Init_Any_Context(out, kind, context);
+        return Init_Context_Cell(out, kind, context);
     }
 
     if (parent)
@@ -663,7 +663,7 @@ Bounce MAKE_Context(
     // make object! map!
     if (IS_MAP(arg)) {
         Context(*) c = Alloc_Context_From_Map(VAL_MAP(arg));
-        return Init_Any_Context(out, kind, c);
+        return Init_Context_Cell(out, kind, c);
     }
 
     fail (Error_Bad_Make(kind, arg));
@@ -1211,7 +1211,7 @@ REBTYPE(Context)
             );
         }
 
-        return Init_Any_Context(
+        return Init_Context_Cell(
             OUT,
             VAL_TYPE(context),
             Copy_Context_Extra_Managed(c, 0, types)

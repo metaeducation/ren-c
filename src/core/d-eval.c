@@ -93,7 +93,7 @@ void Dump_Frame_Location(Cell(const*) v, Frame(*) f)
             Reify_Va_To_Array_In_Feed(f->feed, truncated);
         }
 
-        Init_Any_Array_At_Core(
+        Init_Array_Cell_At_Core(
             dump,
             REB_BLOCK,
             f_array,
