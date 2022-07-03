@@ -61,7 +61,7 @@ bool All_Bytes_ASCII(Byte* bp, REBLEN len)
 // It should be reviewed.
 //
 const Byte* Analyze_String_For_Scan(
-    option(REBSIZ*) size_out,
+    option(Size*) size_out,
     const REBVAL *any_string,
     REBLEN max_len  // maximum length in *codepoints*
 ){
@@ -124,8 +124,8 @@ void Trim_Tail(REB_MOLD *mo, Byte ascii)
 {
     assert(ascii < 0x80);  // more work needed for multi-byte characters
 
-    REBLEN len = STR_LEN(mo->series);
-    REBSIZ size = STR_SIZE(mo->series);
+    Length len = STR_LEN(mo->series);
+    Size size = STR_SIZE(mo->series);
 
     for (; size > 0; --size, --len) {
         Byte b = *BIN_AT(mo->series, size - 1);
@@ -260,7 +260,7 @@ Array(*) Split_Lines(const REBVAL *str)
     // If there's any remainder we pushed in the buffer, consider the end of
     // string to be an implicit line-break
 
-    if (STR_SIZE(mo->series) == mo->offset)
+    if (STR_SIZE(mo->series) == mo->base.size)
         Drop_Mold(mo);
     else {
         Init_Text(PUSH(), Pop_Molded_String(mo));

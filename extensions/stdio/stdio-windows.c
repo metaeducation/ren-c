@@ -332,7 +332,7 @@ void Write_IO(const REBVAL *data, REBLEN len)
         // Even CMD.EXE requires a /U switch to do so.
 
         const Byte* bp;
-        REBSIZ size;
+        Size size;
         if (IS_BINARY(data)) {
             bp = VAL_DATA_AT(data);
             size = len;

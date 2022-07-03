@@ -407,7 +407,7 @@ Symbol(const*) Intern_UTF8_Managed_Core(
 // the background to the interned version?
 //
 String(const*) Intern_Any_String_Managed(Cell(const*) v) {
-    REBSIZ utf8_size;
+    Size utf8_size;
     Utf8(const*) utf8 = VAL_UTF8_SIZE_AT(&utf8_size, v);
     return Intern_UTF8_Managed(utf8, utf8_size);
 }

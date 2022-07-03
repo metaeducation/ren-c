@@ -63,7 +63,7 @@ Bounce MAKE_Pair(
         //
         // -1234567890x-1234567890
         //
-        REBSIZ size;
+        Size size;
         const Byte* bp
             = Analyze_String_For_Scan(&size, arg, VAL_LEN_AT(arg));
 

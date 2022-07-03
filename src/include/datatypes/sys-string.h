@@ -173,7 +173,7 @@ inline static Codepoint CHR_CODE(Utf8(const*) cp) {
 }
 
 inline static Utf8(*) WRITE_CHR(Utf8(*) cp, Codepoint c) {
-    REBSIZ size = Encoded_Size_For_Codepoint(c);
+    Size size = Encoded_Size_For_Codepoint(c);
     Encode_UTF8_Char(cp, c, size);
     return cast(Utf8(*), cast(Byte*, cp) + size);
 }
@@ -223,7 +223,7 @@ inline static Utf8(*) STR_TAIL(const_if_c Raw_String* s)
 #endif
 
 
-inline static REBLEN STR_LEN(String(const*) s) {
+inline static Length STR_LEN(String(const*) s) {
     if (Is_Definitely_Ascii(s))
         return STR_SIZE(s);
 
@@ -248,13 +248,13 @@ inline static REBLEN STR_LEN(String(const*) s) {
     return len;
 }
 
-inline static REBLEN STR_INDEX_AT(String(const*) s, REBSIZ offset) {
+inline static REBLEN STR_INDEX_AT(String(const*) s, Size byteoffset) {
     if (Is_Definitely_Ascii(s))
-        return offset;
+        return byteoffset;
 
     // The position `offset` describes must be a codepoint boundary.
     //
-    assert(not Is_Continuation_Byte_If_Utf8(*BIN_AT(s, offset)));
+    assert(not Is_Continuation_Byte_If_Utf8(*BIN_AT(s, byteoffset)));
 
     if (IS_NONSYMBOL_STRING(s)) {  // length is cached for non-ANY-WORD!
       #if DEBUG_UTF8_EVERYWHERE
@@ -270,7 +270,7 @@ inline static REBLEN STR_INDEX_AT(String(const*) s, REBSIZ offset) {
     // they're not too long (since spaces and newlines are illegal.)
     //
     REBLEN index = 0;
-    Utf8(const*) ep = cast(Utf8(const*), BIN_AT(s, offset));
+    Utf8(const*) ep = cast(Utf8(const*), BIN_AT(s, byteoffset));
     Utf8(const*) cp = STR_HEAD(s);
     while (cp != ep) {
         cp = NEXT_STR(cp);
@@ -279,7 +279,7 @@ inline static REBLEN STR_INDEX_AT(String(const*) s, REBSIZ offset) {
     return index;
 }
 
-inline static void SET_STR_LEN_SIZE(Raw_String* s, REBLEN len, REBSIZ used) {
+inline static void SET_STR_LEN_SIZE(Raw_String* s, REBLEN len, Size used) {
     assert(IS_NONSYMBOL_STRING(s));
     assert(len <= used);
     assert(used == SER_USED(s));
@@ -288,7 +288,7 @@ inline static void SET_STR_LEN_SIZE(Raw_String* s, REBLEN len, REBSIZ used) {
     UNUSED(used);
 }
 
-inline static void TERM_STR_LEN_SIZE(Raw_String* s, REBLEN len, REBSIZ used) {
+inline static void TERM_STR_LEN_SIZE(Raw_String* s, REBLEN len, Size used) {
     assert(IS_NONSYMBOL_STRING(s));
     assert(len <= used);
     SET_SERIES_USED(s, used);
@@ -340,14 +340,14 @@ inline static void Free_Bookmarks_Maybe_Null(String(*) str) {
             return;
 
         REBLEN index = BMK_INDEX(bookmark);
-        REBSIZ offset = BMK_OFFSET(bookmark);
+        Size offset = BMK_OFFSET(bookmark);
 
         Utf8(*) cp = STR_HEAD(s);
         REBLEN i;
         for (i = 0; i != index; ++i)
             cp = NEXT_STR(cp);
 
-        REBSIZ actual = cast(Byte*, cp) - SER_DATA(s);
+        Size actual = cast(Byte*, cp) - SER_DATA(s);
         assert(actual == offset);
     }
 #endif
@@ -608,7 +608,7 @@ inline static Utf8(const*) VAL_STRING_TAIL(noquote(Cell(const*)) v) {
     m_cast(Utf8(*), VAL_STRING_AT(KNOWN_MUTABLE(v)))
 
 
-inline static REBSIZ VAL_SIZE_LIMIT_AT(
+inline static Size VAL_SIZE_LIMIT_AT(
     option(REBLEN*) length_out,  // length in chars to end (including limit)
     noquote(Cell(const*)) v,
     REBINT limit  // UNLIMITED (e.g. a very large number) for no limit
@@ -639,11 +639,14 @@ inline static REBSIZ VAL_SIZE_LIMIT_AT(
 #define VAL_SIZE_AT(v) \
     VAL_SIZE_LIMIT_AT(nullptr, v, UNLIMITED)
 
-inline static REBSIZ VAL_OFFSET(Cell(const*) v) {
+inline static Size VAL_BYTEOFFSET(Cell(const*) v) {
     return VAL_STRING_AT(v) - STR_HEAD(VAL_STRING(v));
 }
 
-inline static REBSIZ VAL_OFFSET_FOR_INDEX(noquote(Cell(const*)) v, REBLEN index) {
+inline static Size VAL_BYTEOFFSET_FOR_INDEX(
+    noquote(Cell(const*)) v,
+    REBLEN index
+){
     assert(ANY_STRING_KIND(CELL_HEART(v)));
 
     Utf8(const*) at;
@@ -701,8 +704,8 @@ inline static void SET_CHAR_AT(String(*) s, REBLEN n, Codepoint c) {
     Utf8(*) cp = STR_AT(s, n);
     Utf8(*) old_next_cp = NEXT_STR(cp);  // scans fast (for leading bytes)
 
-    REBSIZ size = Encoded_Size_For_Codepoint(c);
-    REBSIZ old_size = old_next_cp - cp;
+    Size size = Encoded_Size_For_Codepoint(c);
+    Size old_size = old_next_cp - cp;
     if (size == old_size) {
         // common case... no memory shuffling needed, no bookmarks need
         // to be updated.

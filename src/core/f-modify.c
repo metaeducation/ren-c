@@ -248,10 +248,10 @@ REBLEN Modify_String_Or_Binary(
     assert(not IS_SYMBOL(dst_ser));  // would be immutable
 
     REBLEN dst_idx = VAL_INDEX(dst);
-    REBSIZ dst_used = SER_USED(dst_ser);
+    Size dst_used = SER_USED(dst_ser);
 
     REBLEN dst_len_old = 0xDECAFBAD;  // only if IS_SER_STRING(dst_ser)
-    REBSIZ dst_off;
+    Size dst_off;
     if (IS_BINARY(dst)) {  // check invariants up front even if NULL / no-op
         if (IS_NONSYMBOL_STRING(dst_ser)) {
             Byte at = *BIN_AT(dst_ser, dst_idx);
@@ -265,7 +265,7 @@ REBLEN Modify_String_Or_Binary(
         assert(ANY_STRING(dst));
         assert(IS_NONSYMBOL_STRING(dst_ser));
 
-        dst_off = VAL_OFFSET_FOR_INDEX(dst, dst_idx);  // !!! review for speed
+        dst_off = VAL_BYTEOFFSET_FOR_INDEX(dst, dst_idx);  // !!! review for speed
         dst_len_old = STR_LEN(STR(dst_ser));
     }
 
@@ -309,7 +309,7 @@ REBLEN Modify_String_Or_Binary(
 
     const Byte* src_ptr;  // start of utf-8 encoded data to insert
     REBLEN src_len_raw;  // length in codepoints (if dest is string)
-    REBSIZ src_size_raw;  // size in bytes
+    Size src_size_raw;  // size in bytes
 
     Byte src_byte;  // only used by BINARY! (mold buffer is UTF-8 legal)
 
@@ -416,7 +416,7 @@ REBLEN Modify_String_Or_Binary(
                 //
                 src_len_raw = 0;
 
-                REBSIZ bytes_left = src_size_raw;
+                Size bytes_left = src_size_raw;
                 const Byte* bp = src_ptr;
                 for (; bytes_left > 0; --bytes_left, ++bp) {
                     Codepoint c = *bp;
@@ -492,12 +492,12 @@ REBLEN Modify_String_Or_Binary(
 
       use_mold_buffer:
 
-        src_ptr = BIN_AT(mo->series, mo->offset);
-        src_size_raw = STR_SIZE(mo->series) - mo->offset;
+        src_ptr = BIN_AT(mo->series, mo->base.size);
+        src_size_raw = STR_SIZE(mo->series) - mo->base.size;
         if (not IS_NONSYMBOL_STRING(dst_ser))
             src_len_raw = src_size_raw;
         else
-            src_len_raw = STR_LEN(mo->series) - mo->index;
+            src_len_raw = STR_LEN(mo->series) - mo->base.index;
     }
 
     // Here we are accounting for a /PART where we know the source series
@@ -522,7 +522,7 @@ REBLEN Modify_String_Or_Binary(
 
   binary_limit_accounted_for: ;  // needs ; (next line is declaration)
 
-    REBSIZ src_size_total;  // includes duplicates and newlines, if applicable
+    Size src_size_total;  // includes duplicates and newlines, if applicable
     REBLEN src_len_total;
     if (flags & AM_LINE) {
         src_size_total = (src_size_raw + 1) * dups;
@@ -570,7 +570,7 @@ REBLEN Modify_String_Or_Binary(
             part = src_len_total;
 
         REBLEN dst_len_at;
-        REBSIZ dst_size_at;
+        Size dst_size_at;
         if (IS_NONSYMBOL_STRING(dst_ser)) {
             if (IS_BINARY(dst)) {
                 dst_size_at = VAL_LEN_AT(dst);  // byte count
@@ -602,7 +602,7 @@ REBLEN Modify_String_Or_Binary(
         // codepoint is being overwritten (with a larger one), three bytes
         // have to be moved safely out of the way before being overwritten.
 
-        REBSIZ part_size;
+        Size part_size;
         if (IS_NONSYMBOL_STRING(dst_ser)) {
             if (IS_BINARY(dst)) {
                 //

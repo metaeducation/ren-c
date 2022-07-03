@@ -61,7 +61,16 @@
 typedef int_fast32_t REBINT; // series index, signed, at *least* 32 bits
 typedef intptr_t REBIDX; // series index, signed, at *least* 32 bits
 typedef uint_fast32_t REBLEN; // series length, unsigned, at *least* 32 bits
-typedef size_t REBSIZ; // 32 bit (size in bytes)
+
+// !!! These values are an attempt to differentiate 0-based indexing from
+// 1-based indexing, and try to be type-incompatible.
+//
+typedef int_fast32_t Index;
+typedef uint_fast32_t Offset;
+typedef uint_fast32_t Length;
+
+typedef size_t Size;  // Size (in bytes)
+
 typedef int64_t REBI64; // 64 bit integer
 typedef uint64_t REBU64; // 64 bit unsigned integer
 typedef float REBD32; // 32 bit decimal
@@ -132,7 +141,7 @@ typedef struct Reb_Series REBSER;
 
 struct Reb_Bookmark {
     REBLEN index;
-    REBSIZ offset;
+    Size offset;
 };
 
 //=//// BINDING ///////////////////////////////////////////////////////////=//

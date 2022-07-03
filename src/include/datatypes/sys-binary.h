@@ -126,16 +126,16 @@ inline static Binary(const*) VAL_BINARY(noquote(Cell(const*)) v) {
 
 
 inline static const Byte* VAL_BINARY_SIZE_AT(
-    REBSIZ *size_at_out,
+    option(Size*) size_at_out,
     noquote(Cell(const*)) v
 ){
     Binary(const*) bin = VAL_BINARY(v);
     REBIDX i = VAL_INDEX_RAW(v);
-    REBSIZ size = BIN_LEN(bin);
+    Size size = BIN_LEN(bin);
     if (i < 0 or i > cast(REBIDX, size))
         fail (Error_Index_Out_Of_Range_Raw());
     if (size_at_out)
-        *size_at_out = size - i;
+        *unwrap(size_at_out) = size - i;
     return BIN_AT(bin, i);
 }
 

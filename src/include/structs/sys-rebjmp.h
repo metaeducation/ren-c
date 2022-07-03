@@ -72,7 +72,7 @@ struct Reb_State {
 
     REBLEN manuals_len; // Where GC_Manuals was when state started
     REBLEN mold_buf_len;
-    REBSIZ mold_buf_size;
+    Size mold_buf_size;
     REBLEN mold_loop_tail;
 
     // Some operations disable the ability to halt, e.g. remove SIG_HALT

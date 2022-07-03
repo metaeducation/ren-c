@@ -59,7 +59,7 @@ Bounce MAKE_Sequence(
     // URL! here fixes it, though there are still open questions.
     //
     if (IS_URL(arg)) {
-        REBSIZ len;
+        Size len;
         const Byte* cp
             = Analyze_String_For_Scan(&len, arg, MAX_SCAN_TUPLE);
 
@@ -152,7 +152,7 @@ Bounce MAKE_Sequence(
         Init_Tuple_Bytes(out, buf, size);
     }
     else if (IS_BINARY(arg)) {
-        REBSIZ size;
+        Size size;
         const Byte* at = VAL_BINARY_SIZE_AT(&size, arg);
         if (size > MAX_TUPLE)
             size = MAX_TUPLE;

@@ -231,7 +231,7 @@ inline static REBVAL *Init_Any_Sequence_Bytes(
     Cell(*) out,
     enum Reb_Kind kind,
     const Byte* data,
-    REBSIZ size
+    Size size
 ){
     Reset_Cell_Header_Untracked(out, kind, CELL_MASK_NONE);
     mutable_BINDING(out) = nullptr;  // paths are bindable, can't have garbage
@@ -591,14 +591,14 @@ inline static REBSPC *VAL_SEQUENCE_SPECIFIER(
 // to it are transitional.
 //
 inline static bool Did_Get_Sequence_Bytes(
-    void *buf,
+    void* buf,
     Cell(const*) sequence,
-    REBSIZ buf_size
+    Size buf_size
 ){
     REBLEN len = VAL_SEQUENCE_LEN(sequence);
 
     Byte* dp = cast(Byte*, buf);
-    REBSIZ i;
+    Size i;
     DECLARE_LOCAL (temp);
     for (i = 0; i < buf_size; ++i) {
         if (i >= len) {
@@ -620,7 +620,7 @@ inline static bool Did_Get_Sequence_Bytes(
 inline static void Get_Tuple_Bytes(
     void *buf,
     Cell(const*) tuple,
-    REBSIZ buf_size
+    Size buf_size
 ){
     assert(IS_TUPLE(tuple));
     if (not Did_Get_Sequence_Bytes(buf, tuple, buf_size))

@@ -1361,7 +1361,7 @@ static size_t Spell_Into(
     if (not ANY_UTF8(v))
         fail ("rebSpell() APIs require UTF-8 types (strings, words, tokens)");
 
-    REBSIZ utf8_size;
+    Size utf8_size;
     Utf8(const*) utf8 = VAL_UTF8_SIZE_AT(&utf8_size, v);
 
     if (not buf) {
@@ -1369,7 +1369,7 @@ static size_t Spell_Into(
         return utf8_size;  // caller must allocate a buffer of size + 1
     }
 
-    REBSIZ limit = MIN(buf_size, utf8_size);
+    Size limit = MIN(buf_size, utf8_size);
     memcpy(buf, utf8, limit);
     buf[limit] = 0;
     return utf8_size;
@@ -1549,38 +1549,38 @@ static size_t Bytes_Into(
     const REBVAL *v
 ){
     if (IS_BINARY(v)) {
-        REBSIZ size;
+        Size size;
         const Byte* data = VAL_BINARY_SIZE_AT(&size, v);
         if (buf == nullptr) {
             assert(buf_size == 0);
             return size;
         }
 
-        REBSIZ limit = MIN(buf_size, size);
+        Size limit = MIN(buf_size, size);
         memcpy(buf, data, limit);
         return size;
     }
 
     if (IS_CHAR(v)) {  // Note: CHAR! caches its UTF-8 encoding in the cell
-        REBSIZ size = VAL_CHAR_ENCODED_SIZE(v);
+        Size size = VAL_CHAR_ENCODED_SIZE(v);
         if (buf == nullptr) {
             assert(buf_size == 0);
             return size;
         }
 
-        REBSIZ limit = MIN(buf_size, size);
+        Size limit = MIN(buf_size, size);
         memcpy(buf, VAL_CHAR_ENCODED(v), limit);
         return size;
     }
 
     if (ANY_WORD(v) or ANY_STRING(v)) {
-        REBSIZ size = Spell_Into(nullptr, 0, v);
+        Size size = Spell_Into(nullptr, 0, v);
         if (buf == nullptr) {
             assert(buf_size == 0);
             return size;
         }
 
-        REBSIZ check = Spell_Into(s_cast(buf), buf_size, v);
+        Size check = Spell_Into(s_cast(buf), buf_size, v);
         assert(check == size);
         UNUSED(check);
 
@@ -1637,7 +1637,7 @@ unsigned char *RL_rebBytes(
         return nullptr;  // blank in, null out
     }
 
-    REBSIZ size = Bytes_Into(nullptr, 0, v);
+    Size size = Bytes_Into(nullptr, 0, v);
 
     unsigned char *result = rebAllocN(unsigned char, size);  // no +1 needed...
     assert(result[size] == '\0');  // ...see rebRepossess() for why

@@ -117,7 +117,7 @@ Bounce MAKE_Word(
         // !!! Note this permits `TO WORD! "    spaced-out"` ... it's not
         // clear that it should do so.  Review `Analyze_String_For_Scan()`
 
-        REBSIZ size;
+        Size size;
         const Byte* bp = Analyze_String_For_Scan(&size, arg, MAX_SCAN_WORD);
 
         if (NULL == Scan_Any_Word(out, kind, bp, size))
@@ -297,20 +297,14 @@ REBTYPE(Word)
         assert(property != SYM_0);
 
         switch (property) {
-        case SYM_LENGTH: {
+          case SYM_LENGTH: {  // byte size stored, but not # of codepoints
             String(const*) spelling = VAL_WORD_SYMBOL(v);
-            const Byte* bp = STR_HEAD(spelling);
-            REBSIZ size = STR_SIZE(spelling);
-            REBLEN len = 0;
-            for (; size > 0; ++bp, --size) {
-                if (*bp < 0x80)
-                    ++len;
-                else {
-                    Codepoint uni;
-                    if ((bp = Back_Scan_UTF8_Char(&uni, bp, &size)) == NULL)
-                        fail (Error_Bad_Utf8_Raw());
-                    ++len;
-               }
+            Utf8(const*) cp = STR_HEAD(spelling);
+            Size size = STR_SIZE(spelling);
+            Length len = 0;
+            for (; size > 0; cp = NEXT_STR(cp)) {  // manually walk codepoints
+                size = size - 1;
+                len = len + 1;
             }
             return Init_Integer(OUT, len); }
 

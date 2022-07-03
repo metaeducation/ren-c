@@ -196,7 +196,7 @@ REBNATIVE(read_stdin)
         //
         bool eof = false;
 
-        REBSIZ max = VAL_UINT32(ARG(size));
+        Size max = VAL_UINT32(ARG(size));
         Binary(*) bin = Make_Binary(max);
         REBLEN i = 0;
         while (BIN_LEN(bin) < max) {
@@ -304,7 +304,7 @@ REBNATIVE(read_line)
                 fail ("Interruption of READ-LINE for reason other than HALT?");
             }
             if (eof) {
-                if (mo->offset == STR_SIZE(mo->series)) {
+                if (mo->base.size == STR_SIZE(mo->series)) {
                     //
                     // If we hit the end of file before accumulating any data,
                     // then just return nullptr as an end of file signal.
@@ -326,7 +326,7 @@ REBNATIVE(read_line)
             if (trail == 0)
                 c = encoded[0];
             else {
-                REBSIZ size = 1;  // we add to size as we count trailing bytes
+                Size size = 1;  // we add to size as we count trailing bytes
                 while (trail != 0) {
                     if (Read_Stdin_Byte_Interrupted(&eof, &encoded[size])) {
                         if (rebWasHalting())
@@ -511,7 +511,7 @@ REBNATIVE(read_char)
         if (trail == 0)
             c = encoded[0];
         else {
-            REBSIZ size = 1;  // we add to size as we count trailing bytes
+            Size size = 1;  // we add to size as we count trailing bytes
             while (trail != 0) {
                 if (Read_Stdin_Byte_Interrupted(&eof, &encoded[size])) {
                     if (rebWasHalting())

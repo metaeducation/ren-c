@@ -561,7 +561,7 @@ REBNATIVE(compile_p)
         if (
             tcc_compile_string(
                 state,
-                cs_cast(BIN_AT(mo->series, mo->offset))
+                cs_cast(BIN_AT(mo->series, mo->base.size))
             ) < 0
         ){
             rebJumps ("fail [",

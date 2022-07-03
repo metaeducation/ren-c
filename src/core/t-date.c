@@ -538,7 +538,7 @@ Bounce MAKE_Date(
         return Copy_Cell(out, arg);
 
     if (IS_TEXT(arg)) {
-        REBSIZ size;
+        Size size;
         const Byte* bp = Analyze_String_For_Scan(&size, arg, MAX_SCAN_DATE);
         if (NULL == Scan_Date(out, bp, size))
             goto bad_make;

@@ -1278,7 +1278,7 @@ REBNATIVE(scan_net_header)
     Array(*) result = Make_Array(10); // Just a guess at size (use STD_BUF?)
 
     REBVAL *header = ARG(header);
-    REBSIZ size;
+    Size size;
     const Byte* cp = VAL_BYTES_AT(&size, header);
     UNUSED(size);  // !!! Review semantics
 

@@ -199,7 +199,7 @@ REBSER *Make_Set_Operation_Series(
     else if (ANY_STRING(val1)) {
         DECLARE_MOLD (mo);
 
-        // ask mo->series to have at least `i` capacity beyond mo->offset
+        // ask mo->series to have at least `i` capacity beyond mo->base.size
         //
         SET_MOLD_FLAG(mo, MOLD_FLAG_RESERVE);
         mo->reserve = i;
@@ -245,7 +245,7 @@ REBSER *Make_Set_Operation_Series(
                     CELL_FLAG_FIRST_IS_NODE
                 );
                 INIT_VAL_NODE1(mo_value, mo->series);
-                VAL_INDEX_RAW(mo_value) = mo->index;
+                VAL_INDEX_RAW(mo_value) = mo->base.index;
 
                 if (
                     NOT_FOUND == Find_Binstr_In_Binstr(
@@ -334,7 +334,7 @@ REBSER *Make_Set_Operation_Series(
                     )
                 ){
                     EXPAND_SERIES_TAIL(buf, skip);
-                    REBSIZ size_at;
+                    Size size_at;
                     const Byte* iter_at = VAL_BINARY_SIZE_AT(&size_at, iter);
                     REBLEN min = MIN(size_at, skip);
                     memcpy(BIN_AT(buf, buf_at), iter_at, min);

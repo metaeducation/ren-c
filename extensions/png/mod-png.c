@@ -158,7 +158,7 @@ REBNATIVE(identify_png_q)
     int arg = 5;
     state.decoder.zlibsettings.custom_context = &arg;
 
-    REBSIZ size;
+    Size size;
     const Byte* data = VAL_BINARY_SIZE_AT(&size, ARG(data));
 
     unsigned width;
@@ -221,7 +221,7 @@ REBNATIVE(decode_png)
     state.info_png.color.colortype = LCT_RGBA;
     state.info_png.color.bitdepth = 8;
 
-    REBSIZ size;
+    Size size;
     const Byte* data = VAL_BINARY_SIZE_AT(&size, ARG(data));
 
     unsigned char* image_bytes;

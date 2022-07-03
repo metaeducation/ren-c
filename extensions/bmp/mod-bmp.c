@@ -297,7 +297,7 @@ REBNATIVE(identify_bmp_q)
 {
     BMP_INCLUDE_PARAMS_OF_IDENTIFY_BMP_Q;
 
-    REBSIZ size;
+    Size size;
     const Byte* data = VAL_BINARY_SIZE_AT(&size, ARG(data));
 
     // Assume signature matching is good enough (will get a fail() on
@@ -320,7 +320,7 @@ REBNATIVE(decode_bmp)
 {
     BMP_INCLUDE_PARAMS_OF_DECODE_BMP;
 
-    REBSIZ size;
+    Size size;
     const Byte* data = VAL_BINARY_SIZE_AT(&size, ARG(data));
 
     if (not Has_Valid_BITMAPFILEHEADER(data, size))

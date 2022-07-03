@@ -140,7 +140,7 @@ inline static void Probe_Molded_Value(const REBVAL *v)
     Push_Mold(mo);
     Mold_Value(mo, v);
 
-    printf("%s\n", cast(const char*, STR_AT(mo->series, mo->index)));
+    printf("%s\n", cast(const char*, STR_AT(mo->series, mo->base.index)));
     fflush(stdout);
 
     Drop_Mold(mo);
@@ -423,8 +423,8 @@ void* Probe_Core_Debug(
 
   cleanup:
 
-    if (mo->offset != STR_LEN(mo->series))
-        printf("%s\n", cast(const char*, STR_AT(mo->series, mo->index)));
+    if (mo->base.size != STR_SIZE(mo->series))
+        printf("%s\n", cast(const char*, STR_AT(mo->series, mo->base.index)));
     fflush(stdout);
 
     Drop_Mold(mo);
@@ -458,7 +458,7 @@ void Where(Frame(*) f) {
         Mold_Array_At(mo, FEED_ARRAY(f->feed), before_index, "[]");
         Throttle_Mold(mo);
         printf("Where(Before):\n");
-        printf("%s\n\n", BIN_AT(mo->series, mo->offset));
+        printf("%s\n\n", BIN_AT(mo->series, mo->base.size));
         Drop_Mold(mo);
     }
 
@@ -469,7 +469,7 @@ void Where(Frame(*) f) {
     Mold_Array_At(mo, FEED_ARRAY(f->feed), index, "[]");
     Throttle_Mold(mo);
     printf("Where(At):\n");
-    printf("%s\n\n", BIN_AT(mo->series, mo->offset));
+    printf("%s\n\n", BIN_AT(mo->series, mo->base.size));
     Drop_Mold(mo);
 }
 

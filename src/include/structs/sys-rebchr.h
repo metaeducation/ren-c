@@ -97,10 +97,10 @@
         explicit Utf8Ptr (const char *cstr)
             : bp (reinterpret_cast<const Byte*>(cstr)) {}
 
-        REBSIZ operator-(const Byte* rhs)
+        Size operator-(const Byte* rhs)
           { return bp - rhs; }
 
-        REBSIZ operator-(Utf8Ptr rhs)
+        Size operator-(Utf8Ptr rhs)
           { return bp - rhs.bp; }
 
         bool operator==(const Utf8Ptr<const Byte*> &other)

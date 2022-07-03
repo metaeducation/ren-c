@@ -162,7 +162,7 @@ void Bin_To_Money_May_Fail(REBVAL *result, const REBVAL *val)
     if (not IS_BINARY(val))
         fail (val);
 
-    REBSIZ size;
+    Size size;
     const Byte* at = VAL_BINARY_SIZE_AT(&size, val);
     if (size > 12)
         size = 12;

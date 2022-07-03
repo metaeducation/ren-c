@@ -1671,7 +1671,7 @@ bool Try_As_String(
     }
     else if (IS_BINARY(v)) {  // If valid UTF-8, BINARY! aliases as ANY-STRING!
         Binary(const*) bin = VAL_BINARY(v);
-        REBSIZ offset = VAL_INDEX(v);
+        Size byteoffset = VAL_INDEX(v);
 
         // The position in the binary must correspond to an actual
         // codepoint boundary.  UTF-8 continuation byte is any byte where
@@ -1681,7 +1681,7 @@ bool Try_As_String(
         // Checking before keeps from constraining input on errors, but
         // may be misleading by suggesting a valid "codepoint" was seen.
         //
-        const Byte* at_ptr = BIN_AT(bin, offset);
+        const Byte* at_ptr = BIN_AT(bin, byteoffset);
         if (Is_Continuation_Byte_If_Utf8(*at_ptr))
             fail ("Index at codepoint to convert binary to ANY-STRING!");
 
@@ -1709,7 +1709,7 @@ bool Try_As_String(
 
             index = 0;
 
-            REBSIZ bytes_left = BIN_LEN(bin);
+            Size bytes_left = BIN_LEN(bin);
             const Byte* bp = BIN_HEAD(bin);
             for (; bytes_left > 0; --bytes_left, ++bp) {
                 if (bp < at_ptr)
@@ -1773,7 +1773,7 @@ bool Try_As_String(
         // with if the payload *was* in the series, this alias must be frozen.
 
         REBLEN len;
-        REBSIZ size;
+        Size size;
         Utf8(const*) utf8 = VAL_UTF8_LEN_SIZE_AT(&len, &size, v);
         assert(size + 1 <= sizeof(PAYLOAD(Bytes, v).at_least_8));  // must fit
 
@@ -1920,7 +1920,7 @@ REBNATIVE(as)
 
         if (ANY_STRING(v)) {
             REBLEN len;
-            REBSIZ utf8_size = VAL_SIZE_LIMIT_AT(&len, v, UNLIMITED);
+            Size utf8_size = VAL_SIZE_LIMIT_AT(&len, v, UNLIMITED);
 
             if (utf8_size + 1 <= sizeof(PAYLOAD(Bytes, v).at_least_8)) {
                 //
@@ -2000,7 +2000,7 @@ REBNATIVE(as)
             // !!! This uses the same path as Scan_Word() to try and run
             // through the same validation.  Review efficiency.
             //
-            REBSIZ size;
+            Size size;
             Utf8(const*) utf8 = VAL_UTF8_SIZE_AT(&size, v);
             if (nullptr == Scan_Any_Word(OUT, new_kind, utf8, size))
                 fail (Error_Bad_Char_Raw(v));
@@ -2072,7 +2072,7 @@ REBNATIVE(as)
                 // *before* freezing the old string, so that if there's an
                 // error converting we don't add any constraints to the input.
                 //
-                REBSIZ size;
+                Size size;
                 const Byte* data = VAL_BINARY_SIZE_AT(&size, v);
                 str = Intern_UTF8_Managed(data, size);
 
@@ -2097,7 +2097,7 @@ REBNATIVE(as)
 
             // Data lives in payload--make new frozen series for BINARY!
 
-            REBSIZ size;
+            Size size;
             Utf8(const*) utf8 = VAL_UTF8_SIZE_AT(&size, v);
             Binary(*) bin = Make_Binary_Core(size, NODE_FLAG_MANAGED);
             memcpy(BIN_HEAD(bin), utf8, size + 1);
@@ -2112,7 +2112,7 @@ REBNATIVE(as)
             Init_Binary_At(
                 OUT,
                 VAL_STRING(v),
-                ANY_WORD(v) ? 0 : VAL_OFFSET(v)
+                ANY_WORD(v) ? 0 : VAL_BYTEOFFSET(v)
             );
             return Inherit_Const(OUT, v);
         }

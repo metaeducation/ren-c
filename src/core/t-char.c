@@ -109,7 +109,7 @@ Bounce MAKE_Issue(
         return Init_Char_May_Fail(out, n); }
 
       case REB_BINARY: {
-        REBSIZ size;
+        Size size;
         const Byte* bp = VAL_BINARY_SIZE_AT(&size, arg);
         if (size == 0)
             goto bad_make;
@@ -159,8 +159,8 @@ Bounce TO_Issue(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
     assert(VAL_TYPE(arg) != REB_ISSUE);  // !!! should call COPY?
 
     if (ANY_STRING(arg) or ANY_WORD(arg)) {
-        REBLEN len;
-        REBSIZ size;
+        Length len;
+        Size size;
         Utf8(const*) utf8 = VAL_UTF8_LEN_SIZE_AT(&len, &size, arg);
 
         if (len == 0)  // don't "accidentally" create zero-codepoint `#`
@@ -276,7 +276,7 @@ REBTYPE(Issue)
             return Init_Integer(OUT, VAL_CHAR(issue));
 
           case SYM_SIZE: {
-            REBSIZ size;
+            Size size;
             VAL_UTF8_SIZE_AT(&size, issue);
             return Init_Integer(OUT, size); }
 

@@ -198,7 +198,7 @@ REBTYPE(Port)
             if (not IS_BINARY(OUT))
                 fail ("/STRING or /LINES used on a non-BINARY!/STRING! read");
 
-            REBSIZ size;
+            Size size;
             const Byte* data = VAL_BINARY_SIZE_AT(&size, OUT);
             String(*) decoded = Make_Sized_String_UTF8(cs_cast(data), size);
             Init_Text(OUT, decoded);

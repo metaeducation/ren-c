@@ -747,7 +747,7 @@ Bounce Modify_Image(Frame(*) frame_, Symbol(const*) verb)
         Copy_Rect_Data(value, x, y, part_x, part_y, arg, 0, 0);
     }
     else if (IS_BINARY(arg)) {
-        REBSIZ size;
+        Size size;
         const Byte* data = VAL_BINARY_SIZE_AT(&size, arg);
         if (part > cast(REBINT, size))
             part = size;  // clip it
@@ -1064,7 +1064,7 @@ void Poke_Image_Fail_If_Read_Only(
                 Fill_Line(src, pixel, len, true);
             }
             else if (IS_BINARY(poke)) {
-                REBSIZ size;
+                Size size;
                 const Byte* data = VAL_BINARY_SIZE_AT(&size, poke);
                 Bin_To_RGB(
                     src,
@@ -1086,7 +1086,7 @@ void Poke_Image_Fail_If_Read_Only(
                 Fill_Alpha_Line(src, cast(Byte, n), len);
             }
             else if (IS_BINARY(poke)) {
-                REBSIZ size;
+                Size size;
                 const Byte* data = VAL_BINARY_SIZE_AT(&size, poke);
                 Bin_To_Alpha(src, len, data, size);
             }

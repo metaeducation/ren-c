@@ -131,9 +131,9 @@ static Context(*) Error_Compression(const z_stream *strm, int ret)
 // Exported as rebDeflateAlloc() and rebGunzipAlloc() for clarity.
 //
 Byte* Compress_Alloc_Core(
-    REBSIZ *size_out,
+    option(Size*) size_out,
     const void* input,
-    REBSIZ size_in,
+    Size size_in,
     enum Reb_Symbol_Id envelope  // SYM_NONE, SYM_ZLIB, or SYM_GZIP
 ){
     z_stream strm;
@@ -191,7 +191,7 @@ Byte* Compress_Alloc_Core(
 
     assert(strm.total_out == buf_size - strm.avail_out);
     if (size_out)
-        *size_out = strm.total_out;
+        *unwrap(size_out) = strm.total_out;
 
   #if !defined(NDEBUG)
     //
@@ -224,9 +224,9 @@ Byte* Compress_Alloc_Core(
 // Exported as rebInflateAlloc() and rebGunzipAlloc() for clarity.
 //
 Byte* Decompress_Alloc_Core(
-    REBSIZ *size_out,
+    Size* size_out,
     const void *input,
-    REBSIZ size_in,
+    Size size_in,
     int max,
     enum Reb_Symbol_Id envelope  // SYM_NONE, SYM_ZLIB, SYM_GZIP, or SYM_DETECT
 ){
@@ -270,7 +270,7 @@ Byte* Decompress_Alloc_Core(
         envelope == SYM_GZIP  // not DETECT, trust stored size
         and size_in < 4161808  // (2^32 / 1032 + 18) ->1032 max deflate ratio
     ){
-        const REBSIZ gzip_min_overhead = 18;  // at *least* 18 bytes
+        const Size gzip_min_overhead = 18;  // at *least* 18 bytes
         if (size_in < gzip_min_overhead)
             fail ("GZIP compressed size less than minimum for gzip format");
 
@@ -406,7 +406,7 @@ REBNATIVE(checksum_core)
 
     REBLEN len = Part_Len_May_Modify_Index(ARG(data), ARG(part));
 
-    REBSIZ size;
+    Size size;
     const Byte* data = VAL_BYTES_LIMIT_AT(&size, ARG(data), len);
 
     uLong crc;  // Note: zlib.h defines "crc32" as "z_crc32"
@@ -469,7 +469,7 @@ REBNATIVE(deflate)
 
     REBLEN limit = Part_Len_May_Modify_Index(ARG(data), ARG(part));
 
-    REBSIZ size;
+    Size size;
     const Byte* bp = VAL_BYTES_LIMIT_AT(&size, ARG(data), limit);
 
     enum Reb_Symbol_Id envelope;
@@ -538,7 +538,7 @@ REBNATIVE(inflate)
         max = -1;
 
     const Byte* data;
-    REBSIZ size;
+    Size size;
     if (IS_BINARY(ARG(data))) {
         size = Part_Len_May_Modify_Index(ARG(data), ARG(part));
         data = VAL_BINARY_AT(ARG(data));  // after (in case index modified)

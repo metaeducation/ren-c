@@ -190,7 +190,7 @@ REBNATIVE(decode_text)
     // is to UTF-8 for source code, a .TXT file is a different beast, so
     // having wider format support might be a good thing.
 
-    REBSIZ size;
+    Size size;
     const Byte* data = VAL_BINARY_SIZE_AT(&size, ARG(data));
     return rebSizedText(cs_cast(data), size);
 }
@@ -292,7 +292,7 @@ REBNATIVE(decode_utf16le)
 {
     UTF_INCLUDE_PARAMS_OF_DECODE_UTF16LE;
 
-    REBSIZ size;
+    Size size;
     const Byte* data = VAL_BINARY_SIZE_AT(&size, ARG(data));
 
     const bool little_endian = true;
@@ -372,7 +372,7 @@ REBNATIVE(decode_utf16be)
 {
     UTF_INCLUDE_PARAMS_OF_DECODE_UTF16BE;
 
-    REBSIZ size;
+    Size size;
     const Byte* data = VAL_BINARY_SIZE_AT(&size, ARG(data));
 
     const bool little_endian = false;

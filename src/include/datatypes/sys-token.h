@@ -82,7 +82,7 @@ inline static const Byte* VAL_CHAR_ENCODED(noquote(Cell(const*)) v) {
 inline static REBVAL *Init_Issue_Utf8(
     Cell(*) out,
     Utf8(const*) utf8,  // previously validated UTF-8 (maybe not null term?)
-    REBSIZ size,
+    Size size,
     REBLEN len  // while validating, you should have counted the codepoints
 ){
     if (size + 1 <= sizeof(PAYLOAD(Bytes, out)).at_least_8) {
@@ -121,7 +121,7 @@ inline static REBVAL *Init_Char_Unchecked_Untracked(Cell(*) out, Codepoint c) {
         PAYLOAD(Bytes, out).at_least_8[0] = '\0';  // terminate
     }
     else {
-        REBSIZ encoded_size = Encoded_Size_For_Codepoint(c);
+        Size encoded_size = Encoded_Size_For_Codepoint(c);
         Encode_UTF8_Char(PAYLOAD(Bytes, out).at_least_8, c, encoded_size);
         PAYLOAD(Bytes, out).at_least_8[encoded_size] = '\0';  // terminate
 
@@ -229,7 +229,7 @@ inline static bool Is_Blackhole(Cell(const*) v) {
 // STRING! open for a different meaning (or an error as a sanity check).
 //
 inline static const Byte* VAL_BYTES_LIMIT_AT(
-    REBSIZ *size_out,
+    Size* size_out,
     Cell(const*) v,
     REBINT limit
 ){
@@ -264,19 +264,19 @@ inline static const Byte* VAL_BYTES_LIMIT_AT(
 //
 inline static Utf8(const*) VAL_UTF8_LEN_SIZE_AT_LIMIT(
     option(REBLEN*) length_out,
-    option(REBSIZ*) size_out,
+    option(Size*) size_out,
     noquote(Cell(const*)) v,
     REBINT limit
 ){
   #if !defined(NDEBUG)
-    REBSIZ dummy_size;
+    Size dummy_size;
     if (not size_out)
         size_out = &dummy_size;  // force size calculation for debug check
   #endif
 
     if (CELL_HEART(v) == REB_ISSUE and Not_Cell_Flag(v, ISSUE_HAS_NODE)) {
         REBLEN len;
-        REBSIZ size;
+        Size size;
         //
         // Note that unsigned cast of UNLIMITED as -1 to REBLEN is a large #
         //
@@ -306,7 +306,7 @@ inline static Utf8(const*) VAL_UTF8_LEN_SIZE_AT_LIMIT(
         utf8 = VAL_STRING_AT(v);
 
         if (size_out or length_out) {
-            REBSIZ utf8_size = VAL_SIZE_LIMIT_AT(length_out, v, limit);
+            Size utf8_size = VAL_SIZE_LIMIT_AT(length_out, v, limit);
             if (size_out)
                 *unwrap(size_out) = utf8_size;
             // length_out handled by VAL_SIZE_LIMIT_AT, even if nullptr

@@ -140,7 +140,7 @@ REBSER *Copy_Series_At_Len_Extra(
 // Remove a series of values (bytes, longs, reb-vals) from the
 // series at the given index.
 //
-void Remove_Series_Units(REBSER *s, REBSIZ offset, REBLEN quantity)
+void Remove_Series_Units(REBSER *s, Size byteoffset, REBLEN quantity)
 {
     if (quantity == 0)
         return;
@@ -148,12 +148,12 @@ void Remove_Series_Units(REBSER *s, REBSIZ offset, REBLEN quantity)
     bool is_dynamic = GET_SERIES_FLAG(s, DYNAMIC);
     REBLEN used_old = SER_USED(s);
 
-    REBLEN start = offset * SER_WIDE(s);
+    REBLEN start = byteoffset * SER_WIDE(s);
 
     // Optimized case of head removal.  For a dynamic series this may just
     // add "bias" to the head...rather than move any bytes.
 
-    if (is_dynamic and offset == 0) {
+    if (is_dynamic and byteoffset == 0) {
         if (cast(REBLEN, quantity) > used_old)
             quantity = used_old;
 
@@ -201,13 +201,13 @@ void Remove_Series_Units(REBSER *s, REBSIZ offset, REBLEN quantity)
         return;
     }
 
-    if (offset >= used_old)
+    if (byteoffset >= used_old)
         return;
 
     // Clip if past end and optimize the remove operation:
 
-    if (quantity + offset >= used_old) {
-        SET_SERIES_USED(s, offset);
+    if (quantity + byteoffset >= used_old) {
+        SET_SERIES_USED(s, byteoffset);
         return;
     }
 

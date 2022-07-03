@@ -33,7 +33,7 @@
 // of encoded data.  Note that this is not a guarantee of being able to hold
 // more than `encoded_capacity / UNI_ENCODED_MAX` unencoded codepoints...
 //
-String(*) Make_String_Core(REBSIZ encoded_capacity, Flags flags)
+String(*) Make_String_Core(Size encoded_capacity, Flags flags)
 {
     assert(FLAVOR_BYTE(flags) == 0);  // shouldn't have a flavor
 
@@ -75,8 +75,8 @@ Binary(*) Copy_Bytes(const Byte* src, REBINT len)
 //
 String(*) Copy_String_At_Limit(Cell(const*) src, REBINT limit)
 {
-    REBSIZ limited_size;
-    REBLEN limited_length;
+    Size limited_size;
+    Length limited_length;
     Utf8(const*) utf8 = VAL_UTF8_LEN_SIZE_AT_LIMIT(
         &limited_length,
         &limited_size,
@@ -112,10 +112,10 @@ String(*) Append_Codepoint(String(*) dst, Codepoint c)
     assert(c <= MAX_UNI);
     assert(not IS_SYMBOL(dst));
 
-    REBLEN old_len = STR_LEN(dst);
+    Length old_len = STR_LEN(dst);
 
-    REBSIZ tail = STR_SIZE(dst);
-    REBSIZ encoded_size = Encoded_Size_For_Codepoint(c);
+    Size tail = STR_SIZE(dst);
+    Size encoded_size = Encoded_Size_For_Codepoint(c);
     EXPAND_SERIES_TAIL(dst, encoded_size);
     Encode_UTF8_Char(BIN_AT(dst, tail), c, encoded_size);
 
@@ -140,7 +140,7 @@ String(*) Make_Codepoint_String(Codepoint c)
     if (c == '\0')
         fail (Error_Illegal_Zero_Byte_Raw());
 
-    REBSIZ size = Encoded_Size_For_Codepoint(c);
+    Size size = Encoded_Size_For_Codepoint(c);
     String(*) s = Make_String(size);
     Encode_UTF8_Char(STR_HEAD(s), c, size);
     TERM_STR_LEN_SIZE(s, 1, size);
@@ -226,12 +226,12 @@ void Append_String_Limit(String(*) dst, noquote(Cell(const*)) src, REBLEN limit)
     assert(not IS_SYMBOL(dst));
     assert(ANY_UTF8_KIND(CELL_HEART(src)));
 
-    REBLEN len;
-    REBSIZ size;
+    Length len;
+    Size size;
     Utf8(const*) utf8 = VAL_UTF8_LEN_SIZE_AT_LIMIT(&len, &size, src, limit);
 
-    REBLEN old_len = STR_LEN(dst);
-    REBSIZ old_used = STR_SIZE(dst);
+    Length old_len = STR_LEN(dst);
+    Size old_used = STR_SIZE(dst);
 
     REBLEN tail = STR_SIZE(dst);
     Expand_Series(dst, tail, size);  // series USED changes too
@@ -281,7 +281,7 @@ void Append_Int_Pad(String(*) dst, REBINT num, REBINT digs)
 String(*) Append_UTF8_May_Fail(
     String(*) dst,  // if nullptr, that means make a new string
     const char *utf8,
-    REBSIZ size,
+    Size size,
     enum Reb_Strmode strmode
 ){
     // This routine does not just append bytes blindly because:
@@ -303,7 +303,7 @@ String(*) Append_UTF8_May_Fail(
     bool all_ascii = true;
     REBLEN num_codepoints = 0;
 
-    REBSIZ bytes_left = size; // see remarks on Back_Scan_UTF8_Char's 3rd arg
+    Size bytes_left = size;  // see remarks on Back_Scan_UTF8_Char's 3rd arg
     for (; bytes_left > 0; --bytes_left, ++bp) {
         Codepoint c = *bp;
         if (c >= 0x80) {
@@ -338,20 +338,20 @@ String(*) Append_UTF8_May_Fail(
     if (not dst)
         return Pop_Molded_String(mo);
 
-    REBLEN old_len = STR_LEN(dst);
-    REBSIZ old_size = STR_SIZE(dst);
+    Length old_len = STR_LEN(dst);
+    Size old_size = STR_SIZE(dst);
 
     EXPAND_SERIES_TAIL(dst, size);
     memcpy(
         BIN_AT(dst, old_size),
-        BIN_AT(mo->series, mo->offset),
-        STR_SIZE(mo->series) - mo->offset
+        BIN_AT(mo->series, mo->base.size),
+        STR_SIZE(mo->series) - mo->base.size
     );
 
     TERM_STR_LEN_SIZE(
         dst,
         old_len + num_codepoints,
-        old_size + STR_SIZE(mo->series) - mo->offset
+        old_size + STR_SIZE(mo->series) - mo->base.size
     );
 
     Drop_Mold(mo);
@@ -400,7 +400,7 @@ void Join_Binary_In_Byte_Buf(const REBVAL *blk, REBINT limit)
             break;
 
           case REB_BINARY: {
-            REBSIZ size;
+            Size size;
             const Byte* data = VAL_BINARY_SIZE_AT(&size, val);
             EXPAND_SERIES_TAIL(buf, size);
             memcpy(BIN_AT(buf, tail), data, size);
@@ -412,7 +412,7 @@ void Join_Binary_In_Byte_Buf(const REBVAL *blk, REBINT limit)
           case REB_EMAIL:
           case REB_URL:
           case REB_TAG: {
-            REBSIZ utf8_size;
+            Size utf8_size;
             Utf8(const*) utf8 = VAL_UTF8_SIZE_AT(&utf8_size, val);
 
             EXPAND_SERIES_TAIL(buf, utf8_size);

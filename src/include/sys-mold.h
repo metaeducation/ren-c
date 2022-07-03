@@ -25,8 +25,10 @@
 
 struct rebol_mold {
     String(*) series;     // destination series (utf8)
-    REBLEN index;       // codepoint index where mold starts within series
-    REBSIZ offset;      // byte offset where mold starts within series
+    struct {
+        REBLEN index;       // codepoint index where mold starts within series
+        Size size;      // byte offset where mold starts within series
+    } base;
     Flags opts;       // special option flags
     REBLEN limit;       // how many characters before cutting off
     REBLEN reserve;     // how much capacity to reserve at the outset

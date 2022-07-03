@@ -696,7 +696,7 @@ SQLRETURN ODBC_BindParameter(
         // subset even on databases that don't know what they're dealing with.
         //
       case SQL_C_CHAR: {  // TEXT! when target column is VARCHAR
-        REBSIZ encoded_size_no_term;
+        Size encoded_size_no_term;
         switch (char_column_encoding) {
           case CHAR_COL_UTF8: {
             unsigned char *utf8 = rebBytes(&encoded_size_no_term, v);

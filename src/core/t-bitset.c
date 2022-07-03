@@ -112,7 +112,7 @@ Bounce MAKE_Bitset(
         return out; // allocated at a size, no contents.
 
     if (IS_BINARY(arg)) {
-        REBSIZ size;
+        Size size;
         const Byte* at = VAL_BINARY_SIZE_AT(&size, arg);
         memcpy(BIN_HEAD(bin), at, (size / 8) + 1);
         return out;
@@ -385,7 +385,7 @@ bool Set_Bits(Binary(*) bset, Cell(const*) val, bool set)
             if (not IS_BINARY(item))
                 return false;
 
-            REBSIZ n;
+            Size n;
             const Byte* at = VAL_BINARY_SIZE_AT(&n, item);
 
             Codepoint c = BIN_LEN(bset);

@@ -44,10 +44,10 @@ REBINT CT_Binary(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
 {
     UNUSED(strict);  // no lax form of comparison
 
-    REBSIZ size1;
+    Size size1;
     const Byte* data1 = VAL_BINARY_SIZE_AT(&size1, a);
 
-    REBSIZ size2;
+    Size size2;
     const Byte* data2 = VAL_BINARY_SIZE_AT(&size2, b);
 
     REBLEN size = MIN(size1, size2);
@@ -128,7 +128,7 @@ static Binary(*) MAKE_TO_Binary_Common(const REBVAL *arg)
 {
     switch (VAL_TYPE(arg)) {
     case REB_BINARY: {
-        REBSIZ size;
+        Size size;
         const Byte* data = VAL_BINARY_SIZE_AT(&size, arg);
         return Copy_Bytes(data, size); }
 
@@ -138,7 +138,7 @@ static Binary(*) MAKE_TO_Binary_Common(const REBVAL *arg)
     case REB_URL:
     case REB_TAG:
     case REB_ISSUE: {
-        REBSIZ utf8_size;
+        Size utf8_size;
         Utf8(const*) utf8 = VAL_UTF8_SIZE_AT(&utf8_size, arg);
 
         Binary(*) bin = Make_Binary(utf8_size);
@@ -289,7 +289,7 @@ void MF_Binary(REB_MOLD *mo, noquote(Cell(const*)) v, bool form)
     if (GET_MOLD_FLAG(mo, MOLD_FLAG_ALL) and VAL_INDEX(v) != 0)
         Pre_Mold(mo, v); // #[binary!
 
-    REBSIZ size;
+    Size size;
     const Byte* data = VAL_BINARY_SIZE_AT(&size, v);
 
     switch (Get_System_Int(SYS_OPTIONS, OPTIONS_BINARY_BASE, 16)) {
@@ -605,14 +605,14 @@ REBTYPE(Binary)
         if (not IS_BINARY(arg))
             fail (Error_Math_Args(VAL_TYPE(arg), verb));
 
-        REBSIZ t0;
+        Size t0;
         const Byte* p0 = VAL_BINARY_SIZE_AT(&t0, v);
 
-        REBSIZ t1;
+        Size t1;
         const Byte* p1 = VAL_BINARY_SIZE_AT(&t1, arg);
 
-        REBSIZ smaller = MIN(t0, t1);  // smaller array size
-        REBSIZ larger = MAX(t0, t1);
+        Size smaller = MIN(t0, t1);  // smaller array size
+        Size larger = MAX(t0, t1);
 
         Binary(*) series = Make_Binary(larger);
         TERM_BIN_LEN(series, larger);
@@ -656,7 +656,7 @@ REBTYPE(Binary)
         return Init_Any_Series(OUT, REB_BINARY, series); }
 
       case SYM_BITWISE_NOT: {
-        REBSIZ size;
+        Size size;
         const Byte* bp = VAL_BINARY_SIZE_AT(&size, v);
 
         Binary(*) bin = Make_Binary(size);
@@ -815,7 +815,7 @@ REBTYPE(Binary)
                 fail (PAR(skip));
         }
 
-        REBSIZ size = 1;
+        Size size = 1;
         if (skip > 1) {
             len /= skip;
             size *= skip;
@@ -839,7 +839,7 @@ REBTYPE(Binary)
         UNUSED(PAR(value));
 
         if (REF(seed)) { // binary contents are the seed
-            REBSIZ size;
+            Size size;
             const Byte* data = VAL_BINARY_SIZE_AT(&size, v);
             Set_Random(crc32_z(0L, data, size));
             return NONE;
@@ -1000,7 +1000,7 @@ REBNATIVE(debin)
 {
     INCLUDE_PARAMS_OF_DEBIN;
 
-    REBSIZ bin_size;
+    Size bin_size;
     const Byte* bin_data = VAL_BINARY_SIZE_AT(&bin_size, ARG(binary));
 
     REBVAL* settings = rebValue("compose", ARG(settings));

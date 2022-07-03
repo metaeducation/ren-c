@@ -104,7 +104,7 @@ Bounce TO_Integer(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 //
 void Hex_String_To_Integer(REBVAL *out, const REBVAL *value)
 {
-    REBSIZ utf8_size;
+    Size utf8_size;
     Utf8(const*) bp = VAL_UTF8_SIZE_AT(&utf8_size, value);
 
     if (utf8_size > MAX_HEX_LEN) {
@@ -172,7 +172,7 @@ void Value_To_Int64(REBVAL *out, const REBVAL *value, bool no_sign)
         // This is a stopgap while ENBIN and DEBIN are hammered out which
         // preserves the old behavior in the TO INTEGER! case.
         //
-        REBSIZ n;
+        Size n;
         const Byte* bp = VAL_BINARY_SIZE_AT(&n, value);
         if (n == 0) {
             Init_Integer(out, 0);
@@ -189,8 +189,8 @@ void Value_To_Int64(REBVAL *out, const REBVAL *value, bool no_sign)
         return;
     }
     else if (IS_ISSUE(value) or ANY_STRING(value)) {
-        REBSIZ size;
-        const REBLEN max_len = VAL_LEN_AT(value); // e.g. "no maximum"
+        Size size;
+        const Length max_len = VAL_LEN_AT(value);  // e.g. "no maximum"
         const Byte* bp = Analyze_String_For_Scan(&size, value, max_len);
         if (
             memchr(bp, '.', size)

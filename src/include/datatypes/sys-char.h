@@ -296,7 +296,7 @@ inline static bool isLegalUTF8(const Byte* source, int length) {
 inline static const Byte* Back_Scan_UTF8_Char(
     Codepoint *out,
     const Byte* bp,
-    REBSIZ *size
+    option(Size*) size
 ){
     *out = 0;
 
@@ -305,7 +305,7 @@ inline static const Byte* Back_Scan_UTF8_Char(
 
     // Check that we have enough valid source bytes:
     if (size) {
-        if (cast(uint_fast8_t, trail + 1) > *size)
+        if (cast(uint_fast8_t, trail + 1) > *unwrap(size))
             return nullptr;
     }
     else if (trail != 0) {
@@ -359,7 +359,7 @@ inline static const Byte* Back_Scan_UTF8_Char(
         return nullptr;
 
     if (size)
-        *size -= trail;
+        *unwrap(size) -= trail;
 
     // Note that Ren-C disallows internal zero bytes in ANY-STRING!, so that
     // a single pointer can be given to C for the data and no length...and

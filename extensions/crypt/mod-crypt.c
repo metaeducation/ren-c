@@ -215,7 +215,7 @@ REBNATIVE(checksum)
 
     REBLEN len = Part_Len_May_Modify_Index(ARG(data), ARG(part));
 
-    REBSIZ size;
+    Size size;
     const Byte* data = VAL_BYTES_LIMIT_AT(&size, ARG(data), len);
 
     // Turn the method into a string and look it up in the table that mbedTLS
@@ -308,7 +308,7 @@ REBNATIVE(checksum)
     IF_NOT_0(cleanup, error, mbedtls_md_setup(&ctx, info, hmac));
 
     if (hmac) {
-        REBSIZ key_size;
+        Size key_size;
         const Byte* key_bytes = VAL_BYTES_AT(&key_size, ARG(key));
 
         IF_NOT_0(cleanup, error,
@@ -684,7 +684,7 @@ REBNATIVE(rsa_encrypt)
     // likely offer "raw" data access under some constraints (e.g. locking
     // the data from relocation or resize).
     //
-    REBSIZ plaintext_size;
+    Size plaintext_size;
     Byte* plaintext = rebBytes(&plaintext_size, ARG(data));
 
     // Buffer suitable for recapturing as a BINARY!
@@ -902,7 +902,7 @@ REBNATIVE(rsa_decrypt)
     // likely offer "raw" data access under some constraints (e.g. locking
     // the data from relocation or resize).
     //
-    REBSIZ encrypted_size;
+    Size encrypted_size;
     Byte* encrypted = rebBytes(&encrypted_size, ARG(data));
     assert(encrypted_size == key_size);
 
@@ -1005,7 +1005,7 @@ REBNATIVE(dh_generate_keypair)
 
     mbedtls_mpi G;
     mbedtls_mpi P;
-    REBSIZ p_size;  // goto would cross initialization
+    Size p_size;  // goto would cross initialization
     mbedtls_mpi_init(&G);
     mbedtls_mpi_init(&P);
 
@@ -1359,7 +1359,7 @@ REBNATIVE(aes_key)
 {
     CRYPT_INCLUDE_PARAMS_OF_AES_KEY;
 
-    REBSIZ p_size;
+    Size p_size;
     Byte* p_key = rebBytes(&p_size, ARG(key));
 
     REBINT keybits = p_size * 8;
@@ -1401,7 +1401,7 @@ REBNATIVE(aes_key)
   blockscope {
     size_t blocksize = mbedtls_cipher_get_block_size(ctx);
     if (rebUnboxLogic("binary?", ARG(iv))) {
-        REBSIZ iv_size;
+        Size iv_size;
         Byte* iv = rebBytes(&iv_size, ARG(iv));
 
         if (iv_size != blocksize) {
@@ -1457,7 +1457,7 @@ REBNATIVE(aes_stream)
     struct mbedtls_cipher_context_t *ctx
         = VAL_HANDLE_POINTER(struct mbedtls_cipher_context_t, ARG(ctx));
 
-    REBSIZ ilen;
+    Size ilen;
     Byte* input = rebBytes(&ilen, ARG(data));
 
     if (ilen == 0) {
@@ -1481,7 +1481,7 @@ REBNATIVE(aes_stream)
     // the old AES implementation--but this needs to change, maybe to
     // a PORT! model of some kind.
     //
-    REBSIZ pad_len = (((ilen - 1) >> 4) << 4) + blocksize;
+    Size pad_len = (((ilen - 1) >> 4) << 4) + blocksize;
 
     Byte* pad_data;
     if (ilen < pad_len) {

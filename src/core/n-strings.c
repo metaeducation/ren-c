@@ -247,7 +247,7 @@ REBNATIVE(debase)
 {
     INCLUDE_PARAMS_OF_DEBASE;
 
-    REBSIZ size;
+    Size size;
     const Byte* bp = VAL_BYTES_AT(&size, ARG(value));
 
     REBINT base = 64;
@@ -285,7 +285,7 @@ REBNATIVE(enbase)
     else
         base = 64;
 
-    REBSIZ size;
+    Size size;
     const Byte* bp = VAL_BYTES_AT(&size, ARG(value));
 
     DECLARE_MOLD (mo);
@@ -495,7 +495,7 @@ REBNATIVE(dehex)
     // UTF-8 decoding--the maximum one UTF-8 encoded codepoint may have.
     //
     Byte scan[5];
-    REBSIZ scan_size = 0;
+    Size scan_size = 0;
 
     REBLEN len;
     Utf8(const*) cp = VAL_UTF8_LEN_SIZE_AT(&len, nullptr, ARG(string));
@@ -698,8 +698,8 @@ REBNATIVE(enline)
     String(*) s = VAL_STRING_ENSURE_MUTABLE(val);
     REBLEN idx = VAL_INDEX(val);
 
-    REBLEN len;
-    REBSIZ size = VAL_SIZE_LIMIT_AT(&len, val, UNLIMITED);
+    Length len;
+    Size size = VAL_SIZE_LIMIT_AT(&len, val, UNLIMITED);
 
     REBLEN delta = 0;
 
@@ -742,7 +742,7 @@ REBNATIVE(enline)
     Free_Bookmarks_Maybe_Null(s);  // !!! Could this be avoided sometimes?
 
     Byte* bp = STR_HEAD(s); // expand may change the pointer
-    REBSIZ tail = STR_SIZE(s); // size in bytes after expansion
+    Size tail = STR_SIZE(s); // size in bytes after expansion
 
     // Add missing CRs
 
@@ -997,8 +997,8 @@ REBNATIVE(to_hex)
     // !!! Issue should be able to use string from mold buffer directly when
     // UTF-8 Everywhere unification of ANY-WORD! and ANY-STRING! is done.
     //
-    assert(len == STR_SIZE(mo->series) - mo->offset);
-    if (NULL == Scan_Issue(OUT, BIN_AT(mo->series, mo->offset), len))
+    assert(len == STR_SIZE(mo->series) - mo->base.size);
+    if (NULL == Scan_Issue(OUT, BIN_AT(mo->series, mo->base.size), len))
         fail (PAR(value));
 
     Drop_Mold(mo);
@@ -1028,7 +1028,7 @@ REBNATIVE(find_script)
     if (IS_BINARY(arg))  // see BINARY_BAD_UTF8_TAIL_BYTE
         TERM_BIN(m_cast(Binary(*), VAL_BINARY(arg)));
 
-    REBSIZ size;
+    Size size;
     const Byte* bp = VAL_BYTES_AT(&size, arg);
 
     REBINT offset = Scan_Header(bp, size);
@@ -1087,7 +1087,7 @@ REBNATIVE(invalid_utf8_q)
 
     REBVAL *arg = ARG(data);
 
-    REBSIZ size;
+    Size size;
     const Byte* utf8 = VAL_BINARY_SIZE_AT(&size, arg);
 
     const Byte* end = utf8 + size;

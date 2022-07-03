@@ -1538,7 +1538,7 @@ static void Mold_Value_Limit(REB_MOLD *mo, Cell(*) v, REBLEN limit)
     String(*) str = mo->series;
 
     REBLEN start_len = STR_LEN(str);
-    REBSIZ start_size = STR_SIZE(str);
+    Size start_size = STR_SIZE(str);
 
     Mold_Value(mo, v);  // Note: can't cache pointer into `str` across this
 

@@ -364,7 +364,7 @@ REBLEN Part_Len_May_Modify_Index(
         if (not IS_ISSUE(series))
             return VAL_LEN_AT(series);  // leave index alone, use plain length
 
-        REBSIZ size;
+        Size size;
         VAL_UTF8_SIZE_AT(&size, series);
         return size;
     }

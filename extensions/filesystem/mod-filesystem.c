@@ -170,7 +170,7 @@ restart:;
                 //
                 // Drop mold so far, and change C:/ to /C/ (and C:X to /C/X)
                 //
-                TERM_STR_LEN_SIZE(mo->series, mo->index, mo->offset);
+                TERM_STR_LEN_SIZE(mo->series, mo->base.index, mo->base.size);
                 Append_Codepoint(mo->series, '/');
                 lead_slash = true; // don't do this the second time around
                 goto restart;
@@ -354,19 +354,19 @@ void Mold_File_To_Local(REB_MOLD *mo, Cell(const*) file, Flags flags) {
                     //
                     REBLEN n = STR_LEN(mo->series);
                     Codepoint c2;  // character in mold buffer
-                    if (n > mo->index) {
+                    if (n > mo->base.index) {
                         Utf8(*) tp = STR_TAIL(mo->series);
 
                         --n;
                         tp = BACK_CHR(&c2, tp);
                         assert(c2 == OS_DIR_SEP);
 
-                        if (n > mo->index) {
+                        if (n > mo->base.index) {
                             --n; // don't want the *ending* slash
                             tp = BACK_CHR(&c2, tp);
                         }
 
-                        while (n > mo->index and c2 != OS_DIR_SEP) {
+                        while (n > mo->base.index and c2 != OS_DIR_SEP) {
                             --n;
                             tp = BACK_CHR(&c2, tp);
                         }
@@ -415,7 +415,7 @@ void Mold_File_To_Local(REB_MOLD *mo, Cell(const*) file, Flags flags) {
 
             REBLEN n = STR_SIZE(mo->series);
             if (
-                n > mo->offset
+                n > mo->base.size
                 and *BIN_AT(mo->series, n - 1) == OS_DIR_SEP
             ){
                 // Collapse multiple sequential slashes into just one, by
@@ -451,8 +451,8 @@ void Mold_File_To_Local(REB_MOLD *mo, Cell(const*) file, Flags flags) {
     // is included in the filename (move, delete), so it might not be wanted.
     //
     if (flags & REB_FILETOLOCAL_NO_TAIL_SLASH) {
-        REBSIZ n = STR_SIZE(mo->series);
-        if (n > mo->offset and *BIN_AT(mo->series, n - 1) == OS_DIR_SEP)
+        Size n = STR_SIZE(mo->series);
+        if (n > mo->base.size and *BIN_AT(mo->series, n - 1) == OS_DIR_SEP)
             TERM_STR_LEN_SIZE(mo->series, STR_LEN(mo->series) - 1, n - 1);
     }
 }

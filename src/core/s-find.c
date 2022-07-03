@@ -91,10 +91,10 @@ const Byte* Try_Diff_Bytes_Uncased(const Byte* src, const Byte* pat)
 //
 // Used for: WORD comparison.
 //
-REBINT Compare_UTF8(const Byte* s1, const Byte* s2, REBSIZ l2)
+REBINT Compare_UTF8(const Byte* s1, const Byte* s2, Size l2)
 {
     Codepoint c1, c2;
-    REBSIZ l1 = strsize(s1);
+    Size l1 = strsize(s1);
     REBINT result = 0;
 
     for (; l1 > 0 && l2 > 0; s1++, s2++, l1--, l2--) {
@@ -152,8 +152,8 @@ REBINT Find_Binstr_In_Binstr(
     assert((flags & ~(AM_FIND_CASE | AM_FIND_MATCH)) == 0);
 
     bool is_2_str = (CELL_HEART(binstr2) != REB_BINARY);
-    REBSIZ size2;
-    REBLEN len2;
+    Size size2;
+    Length len2;
     const Byte* head2;
     if (IS_CHAR_CELL(binstr2) and VAL_CHAR(binstr2) == 0) {
         //
@@ -228,8 +228,8 @@ REBINT Find_Binstr_In_Binstr(
     // to pass to the checked version of Back_Scan_UTF8_Char().
     //
     const Byte* cp1;  // binstr1 position that is current test head of match
-    REBLEN len_head1;
-    REBSIZ size_at1;
+    Length len_head1;
+    Size size_at1;
     if (CELL_HEART(binstr1) == REB_ISSUE)  // no VAL_LEN_HEAD() atm
         cp1 = VAL_UTF8_LEN_SIZE_AT(&len_head1, &size_at1, binstr1);
     else if (CELL_HEART(binstr1) != REB_BINARY) {
@@ -246,7 +246,7 @@ REBINT Find_Binstr_In_Binstr(
     // by the byte skip.  If skipping left, it needs to grow by the byte skip.
     // This is only applicable when treating a binstr1 binary as text.
     //
-    REBSIZ size = size_at1;
+    Size size = size_at1;
 
     bool caseless = not (flags & AM_FIND_CASE);  // case insenstive
     if (not is_2_str)
@@ -305,7 +305,7 @@ REBINT Find_Binstr_In_Binstr(
         if (is_1_str)
             c1 = CHR_CODE(cast(Utf8(const*), cp1));
         else if (is_2_str) {  // have to treat binstr1 as a string anyway
-            REBSIZ size_temp = size;
+            Size size_temp = size;
             const Byte* temp = Back_Scan_UTF8_Char(&c1, cp1, &size_temp);
             if (temp == nullptr)
                 goto no_match_at_this_position;
@@ -326,7 +326,7 @@ REBINT Find_Binstr_In_Binstr(
             if (is_1_str)  // binstr2 can't be binary
                 tp1 = NEXT_STR(cast(Utf8(const*), cp1));
             else if (is_2_str) {  // searching binary as if it's a string
-                REBSIZ encoded_c1_size = Encoded_Size_For_Codepoint(c1);
+                Size encoded_c1_size = Encoded_Size_For_Codepoint(c1);
                 tp1 = cp1 + encoded_c1_size;
                 size -= encoded_c1_size;
             }

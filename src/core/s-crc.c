@@ -40,7 +40,7 @@ const z_crc_t *crc32_table; // pointer to the zlib CRC32 table
 // See also: Hash_UTF8_Caseless(), which works with already validated UTF-8
 // bytes and takes a length in codepoints instead of a byte size.
 //
-uint32_t Hash_Scan_UTF8_Caseless_May_Fail(const Byte* utf8, REBSIZ size)
+uint32_t Hash_Scan_UTF8_Caseless_May_Fail(const Byte* utf8, Size size)
 {
     uint32_t crc = 0x00000000;
 
@@ -181,7 +181,7 @@ uint32_t Hash_Value(Cell(const*) cell)
         break;
 
       case REB_BINARY: {
-        REBSIZ size;
+        Size size;
         const Byte* data = VAL_BINARY_SIZE_AT(&size, cell);
         hash = Hash_Bytes(data, size);
         break; }
@@ -470,7 +470,7 @@ REBSER *Hash_Block(const REBVAL *block, REBLEN skip, bool cased)
 // Compute an IP checksum given some data and a length.
 // Used only on BINARY values.
 //
-REBINT Compute_IPC(const Byte* data, REBSIZ size)
+REBINT Compute_IPC(const Byte* data, Size size)
 {
     REBLEN sum = 0;  // stores the summation
     const Byte* bp = data;

@@ -509,8 +509,8 @@ void Push_Mold(REB_MOLD *mo)
     ASSERT_SERIES_TERM_IF_NEEDED(s);
 
     mo->series = s;
-    mo->offset = STR_SIZE(s);
-    mo->index = STR_LEN(s);
+    mo->base.size = STR_SIZE(s);
+    mo->base.index = STR_LEN(s);
 
     if (GET_MOLD_FLAG(mo, MOLD_FLAG_LIMIT))
         assert(mo->limit != 0);  // !!! Should a limit of 0 be allowed?
@@ -526,8 +526,8 @@ void Push_Mold(REB_MOLD *mo)
         // compatible with the appending mold is to come back with an
         // empty buffer after a push.
         //
-        Expand_Series(s, mo->offset, mo->reserve);
-        SET_SERIES_USED(s, mo->offset);
+        Expand_Series(s, mo->base.size, mo->reserve);
+        SET_SERIES_USED(s, mo->base.size);
     }
     else if (SER_REST(s) - SER_USED(s) > MAX_COMMON) {
         //
@@ -585,8 +585,8 @@ void Throttle_Mold(REB_MOLD *mo) {
     if (NOT_MOLD_FLAG(mo, MOLD_FLAG_LIMIT))
         return;
 
-    if (STR_LEN(mo->series) - mo->index > mo->limit) {
-        REBINT overage = (STR_LEN(mo->series) - mo->index) - mo->limit;
+    if (STR_LEN(mo->series) - mo->base.index > mo->limit) {
+        REBINT overage = (STR_LEN(mo->series) - mo->base.index) - mo->limit;
 
         // Mold buffer is UTF-8...length limit is (currently) in characters,
         // not bytes.  Have to back up the right number of bytes, but also
@@ -627,11 +627,11 @@ String(*) Pop_Molded_String(REB_MOLD *mo)
     //
     Throttle_Mold(mo);
 
-    REBSIZ size = STR_SIZE(mo->series) - mo->offset;
-    REBLEN len = STR_LEN(mo->series) - mo->index;
+    Size size = STR_SIZE(mo->series) - mo->base.size;
+    Length len = STR_LEN(mo->series) - mo->base.index;
 
     String(*) popped = Make_String(size);
-    memcpy(BIN_HEAD(popped), BIN_AT(mo->series, mo->offset), size);
+    memcpy(BIN_HEAD(popped), BIN_AT(mo->series, mo->base.size), size);
     TERM_STR_LEN_SIZE(popped, len, size);
 
     // Though the protocol of Mold_Value does terminate, it only does so if
@@ -640,7 +640,7 @@ String(*) Pop_Molded_String(REB_MOLD *mo)
     // whatever value in the terminator spot was there.  This could be
     // addressed by making no-op molds terminate.
     //
-    TERM_STR_LEN_SIZE(STR(mo->series), mo->index, mo->offset);
+    TERM_STR_LEN_SIZE(STR(mo->series), mo->base.index, mo->base.size);
 
     mo->series = nullptr;  // indicates mold is not currently pushed
     return popped;
@@ -655,14 +655,14 @@ String(*) Pop_Molded_String(REB_MOLD *mo)
 //
 Binary(*) Pop_Molded_Binary(REB_MOLD *mo)
 {
-    assert(STR_LEN(mo->series) >= mo->offset);
+    assert(STR_LEN(mo->series) >= mo->base.size);
 
     ASSERT_SERIES_TERM_IF_NEEDED(mo->series);
     Throttle_Mold(mo);
 
-    REBSIZ size = STR_SIZE(mo->series) - mo->offset;
+    Size size = STR_SIZE(mo->series) - mo->base.size;
     Binary(*) bin = Make_Binary(size);
-    memcpy(BIN_HEAD(bin), BIN_AT(mo->series, mo->offset), size);
+    memcpy(BIN_HEAD(bin), BIN_AT(mo->series, mo->base.size), size);
     TERM_BIN_LEN(bin, size);
 
     // Though the protocol of Mold_Value does terminate, it only does so if
@@ -671,7 +671,7 @@ Binary(*) Pop_Molded_Binary(REB_MOLD *mo)
     // whatever value in the terminator spot was there.  This could be
     // addressed by making no-op molds terminate.
     //
-    TERM_STR_LEN_SIZE(mo->series, mo->index, mo->offset);
+    TERM_STR_LEN_SIZE(mo->series, mo->base.index, mo->base.size);
 
     mo->series = nullptr;  // indicates mold is not currently pushed
     return bin;
@@ -707,7 +707,7 @@ void Drop_Mold_Core(
 
     // see notes in Pop_Molded_String()
     //
-    TERM_STR_LEN_SIZE(mo->series, mo->index, mo->offset);
+    TERM_STR_LEN_SIZE(mo->series, mo->base.index, mo->base.size);
 
     mo->series = nullptr;  // indicates mold is not currently pushed
 }

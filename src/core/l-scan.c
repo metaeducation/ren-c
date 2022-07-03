@@ -2949,7 +2949,7 @@ Bounce Scanner_Executor(Frame(*) f) {
 Array(*) Scan_UTF8_Managed(
     String(const*) file,
     const Byte* utf8,
-    REBSIZ size,
+    Size size,
     option(Context(*)) context
 ){
     DECLARE_END_FRAME (f, FRAME_MASK_NONE);
@@ -3075,7 +3075,7 @@ REBNATIVE(transcode)
 
     REBVAL *source = ARG(source);
 
-    REBSIZ size;
+    Size size;
     const Byte* bp = VAL_BYTES_AT(&size, source);
 
     SCAN_STATE *ss;
@@ -3264,7 +3264,7 @@ const Byte* Scan_Any_Word(
     REBVAL *out,
     enum Reb_Kind kind,
     const Byte* utf8,
-    REBSIZ size
+    Size size
 ) {
     SCAN_STATE ss;
     String(const*) file = ANONYMOUS;
@@ -3286,7 +3286,7 @@ const Byte* Scan_Any_Word(
         return nullptr;
 
     assert(ss.end >= ss.begin);
-    if (size > cast(REBSIZ, ss.end - ss.begin))
+    if (size > cast(Size, ss.end - ss.begin))
         return nullptr;  // e.g. `as word! "ab cd"` just sees "ab"
 
     Init_Any_Word(out, kind, Intern_UTF8_Managed(utf8, size));
@@ -3308,7 +3308,7 @@ const Byte* Scan_Any_Word(
 // !!! Since this follows the same rules as FILE!, the code should merge,
 // though FILE! will make mutable strings and not have in-cell optimization.
 //
-const Byte* Scan_Issue(Cell(*) out, const Byte* cp, REBSIZ size)
+const Byte* Scan_Issue(Cell(*) out, const Byte* cp, Size size)
 {
     const Byte* bp = cp;
 
@@ -3317,7 +3317,7 @@ const Byte* Scan_Issue(Cell(*) out, const Byte* cp, REBSIZ size)
     //
     REBLEN len = 0;
 
-    REBSIZ n = size;
+    Size n = size;
     while (n > 0) {
         if (not Is_Continuation_Byte_If_Utf8(*bp))
             ++len;

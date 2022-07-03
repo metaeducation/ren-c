@@ -873,13 +873,13 @@ static REBIXO To_Thru_Block_Rule(
                     }
                 }
                 else if (IS_BINARY(rule)) {
-                    REBSIZ rule_size;
+                    Size rule_size;
                     const Byte* rule_data = VAL_BINARY_SIZE_AT(
                         &rule_size,
                         rule
                     );
 
-                    REBSIZ iter_size;
+                    Size iter_size;
                     const Byte* iter_data = VAL_BINARY_SIZE_AT(
                         &iter_size,
                         iter

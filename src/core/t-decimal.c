@@ -169,7 +169,7 @@ Bounce MAKE_Decimal(
         break;
 
       case REB_BINARY: {
-        REBSIZ size;
+        Size size;
         const Byte* at = VAL_BINARY_SIZE_AT(&size, arg);
         if (size < 8)
             fail (arg);
@@ -317,7 +317,7 @@ Bounce TO_Decimal(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
         goto dont_divide_if_percent;
 
       case REB_TEXT: {
-        REBSIZ size;
+        Size size;
         const Byte* bp
             = Analyze_String_For_Scan(&size, arg, MAX_SCAN_DECIMAL);
 

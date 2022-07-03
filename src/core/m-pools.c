@@ -1378,7 +1378,7 @@ REBLEN Check_Memory_Debug(void)
 //
 //  Dump_All_Series_Of_Width: C
 //
-void Dump_All_Series_Of_Width(REBSIZ wide)
+void Dump_All_Series_Of_Width(Size wide)
 {
     REBLEN count = 0;
 
@@ -1455,7 +1455,7 @@ void Dump_Pools(void)
     REBLEN n;
     for (n = 0; n != SYSTEM_POOL; n++) {
         REBLEN segs = 0;
-        REBSIZ size = 0;
+        Size size = 0;
 
         size = segs = 0;
 

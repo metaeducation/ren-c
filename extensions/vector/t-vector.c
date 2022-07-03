@@ -245,7 +245,7 @@ void Set_Vector_Row(
         }
     }
     else { // !!! This would just interpet the data as int64_t pointers (???)
-        REBSIZ size;
+        Size size;
         const Byte* data = VAL_BINARY_SIZE_AT(&size, blk);
 
         DECLARE_LOCAL (temp);

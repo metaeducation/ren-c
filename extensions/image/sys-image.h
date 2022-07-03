@@ -133,7 +133,7 @@ inline static void RESET_IMAGE(Byte* p, REBLEN num_pixels) {
 //
 inline static REBVAL *Init_Image_Black_Opaque(Cell(*) out, REBLEN w, REBLEN h)
 {
-    REBSIZ size = (w * h) * 4;  // RGBA pixels, 4 bytes each
+    Size size = (w * h) * 4;  // RGBA pixels, 4 bytes each
     Binary(*) bin = Make_Binary(size);
     TERM_BIN_LEN(bin, size);
     Manage_Series(bin);

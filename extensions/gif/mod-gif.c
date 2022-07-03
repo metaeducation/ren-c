@@ -226,7 +226,7 @@ REBNATIVE(identify_gif_q)
 {
     GIF_INCLUDE_PARAMS_OF_IDENTIFY_GIF_Q;
 
-    REBSIZ size;
+    Size size;
     const Byte* data = VAL_BINARY_SIZE_AT(&size, ARG(data));
 
     // Assume signature matching is good enough (will get a fail() on
@@ -250,7 +250,7 @@ REBNATIVE(decode_gif)
 {
     GIF_INCLUDE_PARAMS_OF_DECODE_GIF;
 
-    REBSIZ size;
+    Size size;
     const Byte* data = VAL_BINARY_SIZE_AT(&size, ARG(data));
 
     if (not Has_Valid_GIF_Header(data, size))

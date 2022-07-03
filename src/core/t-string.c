@@ -192,8 +192,8 @@ Bounce MAKE_String(
     }
 
     if (ANY_UTF8(def)) {  // new type for the UTF-8 data with new allocation
-        REBLEN len;
-        REBSIZ size;
+        Length len;
+        Size size;
         const Byte* utf8 = VAL_UTF8_LEN_SIZE_AT(&len, &size, def);
         UNUSED(len);  // !!! Data already valid and checked, should leverage
         return Init_Any_String(
@@ -209,7 +209,7 @@ Bounce MAKE_String(
     }
 
     if (IS_BINARY(def)) {  // not necessarily valid UTF-8, so must check
-        REBSIZ size;
+        Size size;
         const Byte* at = VAL_BINARY_SIZE_AT(&size, def);
         return Init_Any_String(
             out,
@@ -285,7 +285,7 @@ Bounce TO_String(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
         // compatible for right now, but ultimately MAKE or AS should be
         // used for this.
         //
-        REBSIZ size;
+        Size size;
         const Byte* at = VAL_BINARY_SIZE_AT(&size, arg);
         return Init_Any_String(
             out,
@@ -328,7 +328,7 @@ REBNATIVE(to_text)
     INCLUDE_PARAMS_OF_TO_TEXT;
 
     if (IS_BINARY(ARG(value)) and REF(relax)) {
-        REBSIZ size;
+        Size size;
         const Byte* at = VAL_BINARY_SIZE_AT(&size, ARG(value));
         return Init_Any_String(
             OUT,
@@ -449,8 +449,8 @@ void Mold_Uni_Char(REB_MOLD *mo, Codepoint c, bool parened)
         if (parened or c == 0x1E or c == 0xFEFF) {
             Append_Ascii(buf, "^(");
 
-            REBLEN len_old = STR_LEN(buf);
-            REBSIZ size_old = STR_SIZE(buf);
+            Length len_old = STR_LEN(buf);
+            Size size_old = STR_SIZE(buf);
             EXPAND_SERIES_TAIL(buf, 5);  // worst case: ^(1234), ^( is done
             TERM_STR_LEN_SIZE(buf, len_old, size_old);
 
@@ -806,7 +806,7 @@ REBTYPE(String)
         UNUSED(ARG(value));  // accounted for by `v`
 
         if (VAL_WORD_ID(ARG(property)) == SYM_SIZE) {
-            REBSIZ size;
+            Size size;
             VAL_UTF8_SIZE_AT(&size, v);
             return Init_Integer(OUT, size);
         }
@@ -838,10 +838,10 @@ REBTYPE(String)
             return_value (v);
 
         REBLEN len;
-        REBSIZ size = VAL_SIZE_LIMIT_AT(&len, v, limit);
+        Size size = VAL_SIZE_LIMIT_AT(&len, v, limit);
 
-        REBSIZ offset = VAL_OFFSET_FOR_INDEX(v, index);
-        REBSIZ size_old = STR_SIZE(s);
+        Size offset = VAL_BYTEOFFSET_FOR_INDEX(v, index);
+        Size size_old = STR_SIZE(s);
 
         Remove_Series_Units(s, offset, size);  // !!! at one time, kept term
         Free_Bookmarks_Maybe_Null(s);
@@ -1026,7 +1026,7 @@ REBTYPE(String)
             Unbias_Series(s, false);
 
         Free_Bookmarks_Maybe_Null(s);  // review!
-        REBSIZ offset = VAL_OFFSET_FOR_INDEX(v, index);
+        Size offset = VAL_BYTEOFFSET_FOR_INDEX(v, index);
         Free_Bookmarks_Maybe_Null(s);
 
         TERM_STR_LEN_SIZE(s, cast(REBLEN, index), offset);
@@ -1102,8 +1102,8 @@ REBTYPE(String)
         if (limit <= 1)
             return OUT;
 
-        REBLEN len;
-        REBSIZ size;
+        Length len;
+        Size size;
         const Byte* utf8 = VAL_UTF8_LEN_SIZE_AT_LIMIT(&len, &size, v, limit);
 
         // Test for if the range is all ASCII can just be if (len == size)...
@@ -1151,7 +1151,7 @@ REBTYPE(String)
         if (REF(seed)) { // string/binary contents are the seed
             assert(ANY_STRING(v));
 
-            REBSIZ utf8_size;
+            Size utf8_size;
             Utf8(const*) utf8 = VAL_UTF8_SIZE_AT(&utf8_size, v);
             Set_Random(crc32_z(0L, utf8, utf8_size));
             return NONE;

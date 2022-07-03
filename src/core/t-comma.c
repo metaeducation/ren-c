@@ -34,9 +34,9 @@ void MF_Comma(REB_MOLD *mo, noquote(Cell(const*)) v, bool form)
     UNUSED(form);
     UNUSED(v);
 
-    REBSIZ size = STR_SIZE(mo->series);
+    Size size = STR_SIZE(mo->series);
     if (
-        size > mo->offset + 1
+        size > mo->base.size + 1
         and *BIN_AT(mo->series, size - 1) == ' '  // not multibyte char
         and *BIN_AT(mo->series, size - 2) != ','  // also safe compare
     ){

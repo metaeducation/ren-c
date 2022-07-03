@@ -248,7 +248,7 @@ Bounce MAKE_Time(
         return Copy_Cell(out, arg);
 
     case REB_TEXT: { // scan using same decoding as LOAD would
-        REBSIZ size;
+        Size size;
         const Byte* bp = Analyze_String_For_Scan(&size, arg, MAX_SCAN_TIME);
 
         if (Scan_Time(out, bp, size) == NULL)

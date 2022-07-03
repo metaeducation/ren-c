@@ -910,7 +910,7 @@ REBNATIVE(js_native)
     // thing in the mold buffer.  Get a pointer to it.
     //
     TERM_BIN(mo->series);  // !!! is this necessary?
-    const char *js = cs_cast(BIN_AT(mo->series, mo->offset));
+    const char *js = cs_cast(BIN_AT(mo->series, mo->base.size));
 
     TRACE("Registering native_id %ld", cast(long, native_id));
 

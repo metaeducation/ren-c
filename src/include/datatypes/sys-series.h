@@ -444,7 +444,7 @@ inline static size_t SER_TOTAL_IF_DYNAMIC(const REBSER *s) {
 // "content", there's room for a length in the node.
 //
 
-inline static REBLEN SER_USED(const REBSER *s) {
+inline static Length SER_USED(const REBSER *s) {
     if (GET_SERIES_FLAG(s, DYNAMIC))
         return s->content.dynamic.used;
     if (IS_SER_ARRAY(s)) {
@@ -1244,7 +1244,7 @@ inline static bool Did_Series_Data_Alloc(REBSER *s, REBLEN capacity) {
     if (cast(REBU64, capacity) * wide > INT32_MAX)  // R3-Alpha said "too big"
         return false;
 
-    REBSIZ size; // size of allocation (possibly bigger than we need)
+    Size size; // size of allocation (possibly bigger than we need)
 
     REBLEN pool_num = FIND_POOL(capacity * wide);
     if (pool_num < SYSTEM_POOL) {
@@ -1269,7 +1269,7 @@ inline static bool Did_Series_Data_Alloc(REBSER *s, REBLEN capacity) {
 
         size = capacity * wide;
         if (GET_SERIES_FLAG(s, POWER_OF_2)) {
-            REBSIZ size2 = 2048;
+            Size size2 = 2048;
             while (size2 < size)
                 size2 *= 2;
             size = size2;

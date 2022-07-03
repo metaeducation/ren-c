@@ -107,7 +107,7 @@ void Form_Hex_Esc(REB_MOLD *mo, Byte b)
 void Form_RGBA(REB_MOLD *mo, const Byte* dp)
 {
     REBLEN len_old = STR_LEN(mo->series);
-    REBSIZ used_old = STR_SIZE(mo->series);
+    Size used_old = STR_SIZE(mo->series);
 
     EXPAND_SERIES_TAIL(mo->series, 8);  // grow by 8 bytes, may realloc
 
