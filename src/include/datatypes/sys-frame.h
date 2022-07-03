@@ -589,6 +589,7 @@ inline static Frame(*) Prep_Frame_Core(
     #define OUT     FRM_OUT(frame_)         // GC-safe slot for output value
     #define SPARE   FRM_SPARE(frame_)       // scratch GC-safe cell
     #define STATE   FRM_STATE_BYTE(frame_)
+    #define PHASE   FRM_PHASE(frame_)
 
     #define SUBFRAME    (assert(TOP_FRAME->prior == frame_), TOP_FRAME)
 

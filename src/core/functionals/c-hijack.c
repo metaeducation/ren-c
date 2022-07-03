@@ -161,25 +161,22 @@ void Push_Redo_Action_Frame(REBVAL *out, Frame(*) f1, const REBVAL *run)
 // an ADAPT or SPECIALIZE or a MAKE FRAME! might depend on the existing
 // paramlist shape of the identity.)  Those cases need this "shim" dispatcher.
 //
-Bounce Hijacker_Dispatcher(Frame(*) f)
+Bounce Hijacker_Dispatcher(Frame(*) frame_)
 {
-    Frame(*) frame_ = f;  // for RETURN macros
+    // The PHASE here is the *identity that the hijacker has overtaken*
+    // But the actual hijacker is in the archetype.
 
-    // The FRM_PHASE() here is the identity that the hijacker has taken over;
-    // but the actual hijacker is in the archetype.
-
-    Action(*) phase = FRM_PHASE(f);
-    Action(*) hijacker = VAL_ACTION(ACT_ARCHETYPE(phase));
+    Action(*) hijacker = VAL_ACTION(ACT_ARCHETYPE(PHASE));
 
     // If the hijacked function was called directly -or- by an adaptation or
     // specalization etc. which was made *after* the hijack, the frame should
     // be compatible.  Check by seeing if the keylists are derived.
     //
     Keylist(*) exemplar_keylist = CTX_KEYLIST(ACT_EXEMPLAR(hijacker));
-    Keylist(*) keylist = CTX_KEYLIST(CTX(f->varlist));
+    Keylist(*) keylist = CTX_KEYLIST(CTX(FRAME->varlist));
     while (true) {
         if (keylist == exemplar_keylist)
-            return ACT_DISPATCHER(hijacker)(f);
+            return ACT_DISPATCHER(hijacker)(FRAME);
         if (keylist == LINK(Ancestor, keylist))  // terminates with self ref.
             break;
         keylist = LINK(Ancestor, keylist);
@@ -188,7 +185,7 @@ Bounce Hijacker_Dispatcher(Frame(*) f)
     // Otherwise, we assume the frame was built for the function prior to
     // the hijacking...and has to be remapped.
     //
-    Push_Redo_Action_Frame(OUT, f, ACT_ARCHETYPE(phase));
+    Push_Redo_Action_Frame(OUT, FRAME, ACT_ARCHETYPE(PHASE));
     delegate_subframe (TOP_FRAME);
 }
 
@@ -207,6 +204,36 @@ Bounce Hijacker_Dispatcher(Frame(*) f)
 //  ]
 //
 DECLARE_NATIVE(hijack)
+//
+// 1. Should the paramlists of the hijacker and victim match, that means any
+//    ADAPT or CHAIN or SPECIALIZE of the victim can work equally well if we
+//    just use the hijacker's dispatcher directly.  This is a reasonably
+//    common case, and especially common when putting a copy of the originally
+//    hijacked function back.
+//
+// 2. A mismatch means there could be someone out there pointing at the
+//    victim function function who expects it to have a different frame than
+//    it does.  In case that someone needs to run the function with that frame,
+//    a proxy "shim" is needed.
+//
+//    !!! It could be possible to do things here like test to see if frames
+//    were compatible in some way that could accelerate the process of building
+//    a new frame.  But in general one basically needs a new function call.
+//
+// 3. We do not return a copy of the original function that can be used to
+//    restore the behavior.  Because you can make such a copy yourself if
+//    you intend to put the behavior back:
+//
+//        foo-saved: copy :foo
+//        hijack :foo :bar
+//        ...
+//        hijack :foo :foo-saved
+//
+//    Making such a copy in this routine would be wasteful if it wasn't used.
+//
+// 4. !!! What should be done about MISC(victim_paramlist).meta?  Leave it
+//    alone?  Add a note about the hijacking?  Also: how should binding and
+//    hijacking interact?
 {
     INCLUDE_PARAMS_OF_HIJACK;
 
@@ -219,56 +246,24 @@ DECLARE_NATIVE(hijack)
     Array(*) victim_identity = ACT_IDENTITY(victim);
     Array(*) hijacker_identity = ACT_IDENTITY(hijacker);
 
-    if (Action_Is_Base_Of(victim, hijacker)) {
-        //
-        // Should the paramlists of the hijacker and victim match, that means
-        // any ADAPT or CHAIN or SPECIALIZE of the victim can work equally
-        // well if we just use the hijacker's dispatcher directly.  This is a
-        // reasonably common case, and especially common when putting a copy
-        // of the originally hijacked function back.
-
+    if (Action_Is_Base_Of(victim, hijacker)) {  // no shim needed, see [1]
         mutable_LINK_DISPATCHER(victim_identity)
             = cast(CFUNC*, LINK_DISPATCHER(hijacker_identity));
     }
-    else {
-        // A mismatch means there could be someone out there pointing at this
-        // function who expects it to have a different frame than it does.
-        // In case that someone needs to run the function with that frame,
-        // a proxy "shim" is needed.
-        //
-        // !!! It could be possible to do things here like test to see if
-        // frames were compatible in some way that could accelerate the
-        // process of building a new frame.  But in general one basically
-        // needs to do a new function call.
-        //
+    else {  // mismatch, so shim required, see [2]
         mutable_LINK_DISPATCHER(victim_identity)
             = cast(CFUNC*, &Hijacker_Dispatcher);
     }
 
-    // The hijacker is no longer allowed to corrupt details arrays.
-    // It may only move the archetype into the [0] slot of the identity.
+    Copy_Cell(  // move the archetype into the 0 slot of victim's identity
+        ACT_ARCHETYPE(victim),
+        ACT_ARCHETYPE(hijacker)
+    );
 
-    Copy_Cell(ACT_ARCHETYPE(victim), ACT_ARCHETYPE(hijacker));
-
-    // !!! What should be done about MISC(victim_paramlist).meta?  Leave it
-    // alone?  Add a note about the hijacking?  Also: how should binding and
-    // hijacking interact?
-
-    // We do not return a copy of the original function that can be used to
-    // restore the behavior.  Because you can make such a copy yourself if
-    // you intend to put the behavior back:
-    //
-    //     foo-saved: copy :foo
-    //     hijack :foo :bar
-    //     ...
-    //     hijack :foo :foo-saved
-    //
-    // Making such a copy in this routine would be wasteful if it wasn't used.
-    //
-    return Init_Action(
+    return Init_Action(  // don't bother returning copy of original, see [3]
         OUT,
         victim,
-        VAL_ACTION_LABEL(ARG(victim)),
+        VAL_ACTION_LABEL(ARG(victim)),  // MISC(victim_paramlist).meta? see [4]
         VAL_ACTION_BINDING(ARG(hijacker))
     );
 }
