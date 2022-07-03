@@ -180,7 +180,11 @@ script?: func [
     if match [file! url!] source [
         source: read source
     ]
-    return find-script source
+    transcode-header as binary! source else [
+        return false
+    ] except [
+        return false
+    ]
 ]
 
 file-type?: function [

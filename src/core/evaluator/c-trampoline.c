@@ -345,7 +345,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
     if (r == BOUNCE_THROWN) {
       thrown:
 
-        assert(not IS_CFUNC_TRASH_DEBUG(Executor*, FRAME->executor));
+        /*assert(not IS_CFUNC_TRASH_DEBUG(Executor*, FRAME->executor));*/
         TRASH_CFUNC_IF_DEBUG(Executor*, FRAME->executor);
 
         while (TOP_FRAME != FRAME)

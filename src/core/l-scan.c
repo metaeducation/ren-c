@@ -1799,83 +1799,6 @@ void Init_Scan_Level(
 
 
 //
-//  Scan_Head: C
-//
-// Search text for a REBOL header.  It is distinguished as the word REBOL
-// followed by a '[' (they can be separated only by lines and comments).
-//
-// There can be nothing on the line before the header.  Also, if a '['
-// precedes the header, then note its position (for embedded code).
-//
-// Returns:
-//     0 if no header,
-//     1 if header,
-//    -1 if embedded header (inside []).
-//
-// The ss begin pointer is updated to point to the header block.
-// The ss structure is updated to point to the beginning of the source text.
-// Keep track of line-count.
-//
-static REBINT Scan_Head(SCAN_STATE *ss)
-{
-    const Byte* rebol = nullptr;  // start of the REBOL word
-    const Byte* bracket = nullptr;  // optional [ just before REBOL
-    const Byte* cp = ss->begin;
-    REBLEN count = ss->line;
-
-    while (true) {
-        while (IS_LEX_SPACE(*cp))  // skip white space
-            ++cp;
-
-        switch (*cp) {
-          case '[':
-            if (rebol) {
-                ss->begin = ++cp;
-                ss->line = count;
-                return (bracket ? -1 : 1);
-            }
-            bracket = cp++;
-            break;
-
-          case 'R':
-          case 'r':
-            if (nullptr != Try_Diff_Bytes_Uncased(cp, cb_cast(Str_REBOL))) {
-                rebol = cp;
-                cp += 5;
-                break;
-            }
-            cp++;
-            bracket = nullptr;  // prior '[' was a red herring
-            goto semicolon;
-
-        case ';':
-        semicolon:
-            goto skipline;
-
-          case 0:
-            return 0;
-
-        default:  // everything else...
-            if (not ANY_CR_LF_END(*cp))
-                rebol = bracket = nullptr;
-
-          skipline:
-            while (not ANY_CR_LF_END(*cp))
-                ++cp;
-            if (*cp == CR and cp[1] == LF)
-                ++cp;
-            if (*cp != '\0')
-                ++cp;
-            ++count;
-            break;
-        }
-    }
-
-    DEAD_END;
-}
-
-
-//
 //  Scanner_Executor: C
 //
 // Scans values to the data stack, based on a mode.  This mode can be
@@ -2980,38 +2903,6 @@ Array(*) Scan_UTF8_Managed(
 
 
 //
-//  Scan_Header: C
-//
-// Scan for header, return its offset if found or -1 if not.
-//
-REBINT Scan_Header(const Byte* utf8, REBLEN len)
-{
-    SCAN_LEVEL level;
-    SCAN_STATE ss;
-    String(const*) file = ANONYMOUS;
-    const REBLIN start_line = 1;
-    Init_Scan_Level(&level, &ss, file, start_line, utf8, len, nullptr);
-
-    REBINT result = Scan_Head(&ss);
-    if (result == 0)
-        return -1;
-
-    const Byte* cp = ss.begin - 2;
-
-    // Backup to start of header
-
-    if (result > 0) {  // normal header found
-        while (cp != utf8 and *cp != 'r' and *cp != 'R')
-            --cp;
-    } else {
-        while (cp != utf8 and *cp != '[')
-            --cp;
-    }
-    return cast(REBINT, cp - utf8);
-}
-
-
-//
 //  Startup_Scanner: C
 //
 void Startup_Scanner(void)
@@ -3095,7 +2986,20 @@ DECLARE_NATIVE(transcode)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-  // 1. Originally, interning was used on the file to avoid redundancy.  But
+  // 1. Though all BINARY! leave a spare byte at the end in case they are
+  //    turned into a string, they are not terminated by default.  (Read about
+  //    BINARY_BAD_UTF8_TAIL_BYTE for why; it helps reinforce the fact that
+  //    binaries consider 0 a legal content value, while strings do not.)
+  //
+  //    Most of the time this is a good thing because it helps make sure that
+  //    people are passing around the `size` correctly.  But R3-Alpha's
+  //    scanner was not written to test against a limit...it looks for `\0`
+  //    bytes, so all input must have it.
+  //
+  //    Hack around the problem by forcing termination on the binary (there
+  //    is always room to do this, in case it becomes string-aliased.)
+  //
+  // 2. Originally, interning was used on the file to avoid redundancy.  But
   //    that meant the interning mechanic was being given strings that were
   //    not necessarily valid WORD! symbols.  There's probably not *that* much
   //    redundancy of files being scanned, and plain old freezing can keep the
@@ -3105,10 +3009,13 @@ DECLARE_NATIVE(transcode)
   //
   //    !!! Should the base name and extension be stored, or whole path?
 
+    if (IS_BINARY(source))  // scanner needs data to end in '\0', see [1]
+        TERM_BIN(m_cast(Binary(*), VAL_BINARY(source)));
+
     String(const*) file;
     if (REF(file)) {
         file = VAL_STRING(ARG(file));
-        Freeze_Series(file);  // freezes vs. interning, see [1]
+        Freeze_Series(file);  // freezes vs. interning, see [2]
     }
     else
         file = ANONYMOUS;

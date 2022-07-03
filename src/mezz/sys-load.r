@@ -36,9 +36,60 @@ REBOL [
 ; brought back once the code solidifies.
 
 
+transcode-header: func [
+    {Try to match a data binary! as being a script, definitional fail if not}
 
+    return: [<opt> block!]
+    rest: [binary!]
+    line: [integer!]
+
+    data [binary!]
+    /file [file! url!]
+
+    <local> key hdr error
+][
+    set line 1
+    trap [
+        [key (rest)]: transcode/file/line data file line
+        [hdr (rest) error]: transcode/file/line (get rest) file line
+    ] then e -> [
+        return fail e  ; definitional (can be suppressed by SCRIPT?)
+    ]
+
+    return all [not error, key = 'REBOL, block? hdr] then [hdr]
+]
+
+
+; This function decodes the script header from the script body.  It checks the
+; header 'compress and 'content options, and supports length-specified  or
+; script-in-a-block embedding.
+;
+; It will set the 'content field to the binary source if 'content is true.
+; The 'content will be set to the source at the position of the beginning of
+; the script header, skipping anything before it. For multi-scripts it doesn't
+; copy the portion of the content that relates to the current script, or at
+; all, so be careful with the source data you get.
+;
+; If the 'compress option is set then the body will be decompressed.  Binary
+; vs. script encoded compression will be autodetected.
+;
+; Normally, returns the header object, the body text (as binary), and the
+; end of the script or script-in-a-block. The end position can be used to
+; determine where to stop decoding the body text. After the end is the rest of
+; the binary data, which can contain anything you like. This can support
+; multiple scripts in the same binary data ("multi-scripts").
+;
+; If not /ONLY and the script is embedded in a block and not compressed then
+; the body text will be a decoded block instead of binary, to avoid the
+; overhead of decoding the body twice.
+;
+; Syntax errors are returned as words:
+;    no-header
+;    bad-header
+;    bad-compress
+;
 load-header: function [
-    {Loads script header object and body binary (not loaded).}
+    {Loads script header object and body binary (not loaded)}
 
     return: "header OBJECT! if present, or error WORD!"
         [<opt> object! word!]
@@ -62,67 +113,21 @@ load-header: function [
     let line-out: line  ; we use LINE for the line number inside the body
     line: 1
 
-    ; This function decodes the script header from the script body.  It checks
-    ; the header 'compress and 'content options, and supports length-specified
-    ; or script-in-a-block embedding.
-    ;
-    ; It will set the 'content field to the binary source if 'content is true.
-    ; The 'content will be set to the source at the position of the beginning
-    ; of the script header, skipping anything before it. For multi-scripts it
-    ; doesn't copy the portion of the content that relates to the current
-    ; script, or at all, so be careful with the source data you get.
-    ;
-    ; If the 'compress option is set then the body will be decompressed.
-    ; Binary vs. script encoded compression will be autodetected.
-    ;
-    ; Normally, returns the header object, the body text (as binary), and the
-    ; the end of the script or script-in-a-block. The end position can be used
-    ; to determine where to stop decoding the body text. After the end is the
-    ; rest of the binary data, which can contain anything you like. This can
-    ; support multiple scripts in the same binary data, multi-scripts.
-    ;
-    ; If not /ONLY and the script is embedded in a block and not compressed
-    ; then the body text will be a decoded block instead of binary, to avoid
-    ; the overhead of decoding the body twice.
-    ;
-    ; Syntax errors are returned as words:
-    ;    no-header
-    ;    bad-header
-    ;    bad-compress
+    let data: as binary! source  ; if it's not UTF-8, decoding provides error
 
-    if binary? source [
-        tmp: source  ; if it's not UTF-8, the decoding will provide the error
-    ]
+    ; The TRANSCODE function convention is that the LINE OF is the line number
+    ; of the *end* of the transcoding so far, (to sync line numbering across
+    ; multiple transcodes)
 
-    if text? source [tmp: as binary! source]
+    === TRY TO MATCH PATTERN OF "REBOL [...]" ===
 
-    if not (data: script? tmp) [  ; !!! Review: SCRIPT? doesn't return LOGIC!
-        ; no script header found
+    let [hdr rest 'line]: transcode-header/file data file else [
         return either required ['no-header] [
-            if body [set body tmp]
+            if body [set body data]
             if line-out [set line-out line]  ; e.g. line 1
-            if final [set final tail of tmp]
+            if final [set final tail of data]
             return null  ; no header object
         ]
-    ]
-
-    ; The TRANSCODE function returns a BLOCK! containing the transcoded
-    ; elements as well as a BINARY! indicating any remainder.  Convention
-    ; is also that block has a LINE OF with the line number of the *end*
-    ; of the transcoding so far, to sync line numbering across transcodes.
-
-    ; get 'rebol keyword
-
-    let [key rest]: transcode/file/line data file 'line
-
-    ; get header block
-
-    let [hdr 'rest error]: transcode/file/line rest file 'line
-
-    if error [fail error]
-
-    if not block? :hdr [
-        return 'no-header  ; header block is incomplete
     ]
 
     trap [
@@ -155,7 +160,7 @@ load-header: function [
     ]
 
     let binary
-    if :key = 'rebol [
+    if true [  ; was `if key = 'REBOL`, how was that ever not true?
         ; regular script, binary or script encoded compression supported
         case [
             find try hdr.options just compress [

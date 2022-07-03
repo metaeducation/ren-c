@@ -1007,60 +1007,6 @@ DECLARE_NATIVE(to_hex)
 
 
 //
-//  find-script: native [
-//
-//  {Find a script header within a binary string. Returns starting position.}
-//
-//      return: [<opt> binary! text!]
-//      script [binary! text!]
-//  ]
-//
-DECLARE_NATIVE(find_script)
-{
-    INCLUDE_PARAMS_OF_FIND_SCRIPT;
-
-    REBVAL *arg = ARG(script);
-
-    // !!! The scanner requires binaries to end with '\0' at this time.  It
-    // should be able to take a length limit.  Hack around the problem by
-    // forcing termination on the binary.
-    //
-    if (IS_BINARY(arg))  // see BINARY_BAD_UTF8_TAIL_BYTE
-        TERM_BIN(m_cast(Binary(*), VAL_BINARY(arg)));
-
-    Size size;
-    const Byte* bp = VAL_BYTES_AT(&size, arg);
-
-    REBINT offset = Scan_Header(bp, size);
-    if (offset == -1)
-        return nullptr;
-
-    Copy_Cell(OUT, arg);
-
-    if (IS_BINARY(arg)) {  // may not all be valid UTF-8
-        VAL_INDEX_RAW(OUT) += offset;
-        return OUT;
-    }
-
-    assert(IS_TEXT(arg));  // we know it was all valid UTF-8
-
-    // Discover the codepoint index of the offset (this conceptually repeats
-    // work in Scan_Header(), but since that works on arbitrary binaries it
-    // doesn't always have a codepoint delta to return with the offset.)
-
-    const Byte* header_bp = bp + offset;
-
-    REBLEN index = VAL_INDEX(arg);
-    Utf8(const*) cp = VAL_STRING_AT(arg);
-    for (; cp != header_bp; cp = NEXT_STR(cp))
-        ++index;
-
-    VAL_INDEX_RAW(OUT) = index;
-    return OUT;
-}
-
-
-//
 //  invalid-utf8?: native [
 //
 //  {Checks UTF-8 encoding}
