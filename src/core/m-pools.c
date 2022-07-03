@@ -576,7 +576,7 @@ REBNOD *Try_Find_Containing_Node_Debug(const void *p)
 // them ensures they are cleaned up.
 //
 REBVAL *Alloc_Pairing(void) {
-    REBVAL *paired = cast(REBVAL*, Alloc_Node(PAR_POOL));  // 2x REBVAL size
+    REBVAL *paired = cast(REBVAL*, Alloc_Pooled(PAR_POOL));  // 2x REBVAL size
     Prep_Cell(paired);
 
     REBVAL *key = PAIRING_KEY(paired);
@@ -617,7 +617,7 @@ void Unmanage_Pairing(REBVAL *paired) {
 //
 void Free_Pairing(REBVAL *paired) {
     assert(Not_Cell_Flag(paired, MANAGED));
-    Free_Node(SER_POOL, paired);
+    Free_Pooled(SER_POOL, paired);
 
   #if DEBUG_COUNT_TICKS
     //
@@ -1199,11 +1199,11 @@ void GC_Kill_Series(REBSER *s)
 
   #if !defined(NDEBUG)
     FREETRASH_POINTER_IF_DEBUG(s->info.node);
-    // The spot LINK occupies will be used by Free_Node() to link the freelist
+    // The spot LINK occupies will be used by Free_Pooled() to link the freelist
     FREETRASH_POINTER_IF_DEBUG(s->misc.trash);
   #endif
 
-    Free_Node(SER_POOL, s);
+    Free_Pooled(SER_POOL, s);
 
     if (GC_Ballast > 0)
         CLR_SIGNAL(SIG_RECYCLE);  // Enough space that requested GC can cancel

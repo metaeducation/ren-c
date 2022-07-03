@@ -1386,10 +1386,10 @@ void Drop_Action(Frame(*) f) {
         if (GET_SERIES_FLAG(f->varlist, MANAGED))
             f->varlist = nullptr; // references exist, let a new one alloc
         else {
-            // This node could be reused vs. calling Alloc_Node() on the next
+            // This node could be reused vs. calling Alloc_Pooled() on the next
             // action invocation...but easier for the moment to let it go.
             //
-            Free_Node(SER_POOL, f->varlist);
+            Free_Pooled(SER_POOL, f->varlist);
             f->varlist = nullptr;
         }
     }

@@ -21,11 +21,11 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // In R3-Alpha, the memory pool details were not exported to most of the
-// system.  However, Alloc_Node() takes a pool ID, so things that want to make
-// nodes need to know about SER_POOL.  And in order to take advantage of
+// system.  However, Alloc_Pooled() takes a pool ID, so things that want to
+// make nodes need to know about SER_POOL.  And in order to take advantage of
 // inlining, the system has to put a lot of things in header files.  Not
 // being able to do so leads to a lot of pushing and popping overhead for
-// parameters to commonly called routines (e.g. Alloc_Node())
+// parameters to commonly called routines (e.g. Alloc_Pooled())
 //
 // Hence if there are rules on which file is supposed to be calling which,
 // those should be implemented in %source-analysis.r.

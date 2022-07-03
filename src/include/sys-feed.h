@@ -461,7 +461,7 @@ inline static void Literal_Next_In_Feed(REBVAL *out, Feed(*) feed) {
 
 
 #define Alloc_Feed() \
-    Alloc_Node(FED_POOL)
+    Alloc_Pooled(FED_POOL)
 
 inline static void Free_Feed(Feed(*) feed) {
     //
@@ -501,7 +501,7 @@ inline static void Free_Feed(Feed(*) feed) {
         Clear_Feed_Flag(feed, TOOK_HOLD);
     }
 
-    Free_Node(FED_POOL, cast(REBNOD*, feed));
+    Free_Pooled(FED_POOL, cast(REBNOD*, feed));
 }
 
 inline static Feed(*) Prep_Feed_Common(void* preallocated, Flags flags) {

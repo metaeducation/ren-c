@@ -996,7 +996,7 @@ static REBLEN Sweep_Series(void)
                 //
                 if (*unit & NODE_BYTEMASK_0x01_CELL) {
                     assert(not (*unit & NODE_BYTEMASK_0x02_ROOT));
-                    Free_Node(SER_POOL, NOD(unit));  // Free_Pairing manual
+                    Free_Pooled(SER_POOL, NOD(unit));  // Free_Pairing manual
                 }
                 else {
                     REBSER *s = cast(REBSER*, unit);
@@ -1060,7 +1060,7 @@ static REBLEN Sweep_Series(void)
                   #endif
                 }
                 else {
-                    Free_Node(PAR_POOL, v);  // Free_Pairing is for manuals
+                    Free_Pooled(PAR_POOL, v);  // Free_Pairing is for manuals
                     ++sweep_count;
                 }
             }

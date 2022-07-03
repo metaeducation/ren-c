@@ -119,7 +119,7 @@
 // is required for correct functioning of some types.  (See notes on
 // alignment in %sys-rebval.h.)
 //
-inline static void *Try_Alloc_Node(REBLEN pool_id)
+inline static void *Try_Alloc_Pooled(REBLEN pool_id)
 {
     REBPOL *pool = &Mem_Pools[pool_id];
     if (not pool->first) {  // pool has run out of nodes
@@ -171,8 +171,8 @@ inline static void *Try_Alloc_Node(REBLEN pool_id)
 }
 
 
-inline static void *Alloc_Node(REBLEN pool_id) {
-    void *node = Try_Alloc_Node(pool_id);
+inline static void *Alloc_Pooled(REBLEN pool_id) {
+    void *node = Try_Alloc_Pooled(pool_id);
     if (node)
         return node;
 
@@ -182,14 +182,14 @@ inline static void *Alloc_Node(REBLEN pool_id) {
 
 #define Alloc_Series_Node() ( \
     (GC_Ballast -= sizeof(REBSER)) <= 0 ? SET_SIGNAL(SIG_RECYCLE) : NOOP, \
-    Alloc_Node(SER_POOL))  // won't pass SER() yet, don't cast it
+    Alloc_Pooled(SER_POOL))  // won't pass SER() yet, don't cast it
 
 
 // Free a node, returning it to its pool.  Once it is freed, its header will
 // have SERIES_FLAG_FREE...which will identify the node as not in use to anyone
 // who enumerates the nodes in the pool (such as the garbage collector).
 //
-inline static void Free_Node(REBLEN pool_id, REBNOD* node)
+inline static void Free_Pooled(REBLEN pool_id, REBNOD* node)
 {
   #if DEBUG_MONITOR_SERIES
     if (node == PG_Monitor_Node_Debug) {
@@ -217,7 +217,7 @@ inline static void Free_Node(REBLEN pool_id, REBNOD* node)
     // cache usage, but makes the "poisoning" nearly useless.
     //
     // This code was added to insert an empty segment, such that this node
-    // won't be picked by the next Alloc_Node.  That enlongates the poisonous
+    // won't be picked by the next Alloc_Pooled.  That enlongates the poisonous
     // time of this area to catch stale pointers.  But doing this in the
     // debug build only creates a source of variant behavior.
 

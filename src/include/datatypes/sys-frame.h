@@ -289,7 +289,7 @@ inline static void Free_Frame_Internal(Frame(*) f) {
 
     assert(IS_POINTER_TRASH_DEBUG(f->alloc_value_list));
 
-    Free_Node(FRM_POOL, f);
+    Free_Pooled(FRM_POOL, f);
 }
 
 
@@ -507,7 +507,7 @@ inline static Frame(*) Prep_Frame_Core(
 }
 
 #define Make_Frame(feed,flags) \
-    Prep_Frame_Core(cast(Frame(*), Alloc_Node(FRM_POOL)), (feed), (flags))
+    Prep_Frame_Core(cast(Frame(*), Alloc_Pooled(FRM_POOL)), (feed), (flags))
 
 #define Make_Frame_At_Core(any_array,specifier,frame_flags) \
     Make_Frame( \

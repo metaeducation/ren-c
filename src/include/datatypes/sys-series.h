@@ -1249,7 +1249,7 @@ inline static bool Did_Series_Data_Alloc(REBSER *s, REBLEN capacity) {
     REBLEN pool_num = FIND_POOL(capacity * wide);
     if (pool_num < SYSTEM_POOL) {
         // ...there is a pool designated for allocations of this size range
-        s->content.dynamic.data = cast(char*, Try_Alloc_Node(pool_num));
+        s->content.dynamic.data = cast(char*, Try_Alloc_Pooled(pool_num));
         if (not s->content.dynamic.data)
             return false;
 
@@ -1384,7 +1384,7 @@ inline static REBSER *Make_Series_Into(
 }
 
 #define Make_Series(capacity,flags) \
-    Make_Series_Into(Alloc_Node(SER_POOL), (capacity), (flags))
+    Make_Series_Into(Alloc_Pooled(SER_POOL), (capacity), (flags))
 
 
 enum act_modify_mask {
