@@ -403,10 +403,8 @@ inline static bool Eval_Value_Core_Throws(
         return false;  // fast things that don't need frames (should inline)
     }
 
-    // Passes `first` so can't use DECLARE_ARRAY_FEED
-    Feed(*) feed = Alloc_Feed();
-    Prep_Array_Feed(
-        feed,
+    Feed(*) feed = Prep_Array_Feed(
+        Alloc_Feed(),
         value,  // first--in this case, the only value in the feed...
         EMPTY_ARRAY,  // ...because we're using the empty array after that
         0,  // ...at index 0

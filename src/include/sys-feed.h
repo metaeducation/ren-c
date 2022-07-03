@@ -460,25 +460,8 @@ inline static void Literal_Next_In_Feed(REBVAL *out, Feed(*) feed) {
 }
 
 
-inline static Feed(*) Alloc_Feed(void) {
-    Feed(*) feed = cast(Feed(*), Alloc_Node(FED_POOL));
-  #if DEBUG_COUNT_TICKS
-    feed->tick = TG_Tick;
-  #endif
-
-    Init_Trash(Prep_Cell(&feed->fetched));
-    Init_Trash(Prep_Cell(&feed->lookback));
-
-    REBSER *s = Prep_Series_Node(
-        &feed->singular,  // preallocated
-        NODE_FLAG_NODE | FLAG_FLAVOR(FEED)
-    );
-    Prep_Cell(FEED_SINGLE(feed));
-    mutable_LINK(Splice, s) = nullptr;
-    mutable_MISC(Pending, s) = nullptr;
-
-    return feed;
-}
+#define Alloc_Feed() \
+    Alloc_Node(FED_POOL)
 
 inline static void Free_Feed(Feed(*) feed) {
     //
@@ -521,28 +504,38 @@ inline static void Free_Feed(Feed(*) feed) {
     Free_Node(FED_POOL, cast(REBNOD*, feed));
 }
 
+inline static Feed(*) Prep_Feed_Common(void* preallocated, Flags flags) {
+   Feed(*) feed = cast(Reb_Feed*, preallocated);
 
-// It is more pleasant to have a uniform way of speaking of frames by pointer,
-// so this macro sets that up for you, the same way DECLARE_LOCAL does.  The
-// optimizer should eliminate the extra pointer.
-//
-// Just to simplify matters, the frame cell is set to a bit pattern the GC
-// will accept.  It would need stack preparation anyway, and this simplifies
-// the invariant so if a recycle happens before Eval_Core() gets to its
-// body, it's always set to something.  Using an unreadable trash means we
-// signal to users of the frame that they can't be assured of any particular
-// value between evaluations; it's not cleared.
-//
+  #if DEBUG_COUNT_TICKS
+    feed->tick = TG_Tick;
+  #endif
+
+    Init_Trash(Prep_Cell(&feed->fetched));
+    Init_Trash(Prep_Cell(&feed->lookback));
+
+    REBSER *s = Prep_Series_Node(
+        &feed->singular,  // preallocated
+        NODE_FLAG_NODE | FLAG_FLAVOR(FEED)
+    );
+    Prep_Cell(FEED_SINGLE(feed));
+    mutable_LINK(Splice, s) = nullptr;
+    mutable_MISC(Pending, s) = nullptr;
+
+    feed->flags.bits = flags;
+
+    return feed;
+}
 
 inline static Feed(*) Prep_Array_Feed(
-    Feed(*) feed,
+    void* preallocated,
     option(Cell(const*)) first,
     Array(const*) array,
     REBLEN index,
     REBSPC *specifier,
     Flags flags
 ){
-    feed->flags.bits = flags;
+    Feed(*) feed = Prep_Feed_Common(preallocated, flags);
 
     if (first) {
         feed->value = unwrap(first);
@@ -593,17 +586,18 @@ inline static Feed(*) Prep_Array_Feed(
 
 
 inline static Feed(*) Prep_Va_Feed(
-    struct Reb_Feed *feed,
+    void* preallocated,
     const void *p,
     option(va_list*) vaptr,
     Flags flags
 ){
+    Feed(*) feed = Prep_Feed_Common(preallocated, flags);
+
     // We want to initialize with something that will give back SPECIFIED.
     // It must therefore be bindable.  Try a COMMA!
     //
     Init_Comma(FEED_SINGLE(feed));
 
-    feed->flags.bits = flags;
     if (not vaptr) {  // `p` should be treated as a packed void* array
         FEED_VAPTR_POINTER(feed) = nullptr;
         FEED_PACKED(feed) = cast(const void* const*, p);
@@ -627,14 +621,14 @@ inline static Feed(*) Prep_Va_Feed(
 #define Make_Variadic_Feed(p,vaptr,flags) \
     Prep_Va_Feed(Alloc_Feed(), (p), (vaptr), (flags))
 
-inline static Feed(*) Prep_Any_Array_Feed(
-    Feed(*) feed,
+inline static Feed(*) Prep_Feed_At(
+    void *preallocated,
     noquote(Cell(const*)) any_array,  // array is extracted and HOLD put on
     REBSPC *specifier,
     Flags parent_flags  // only reads FEED_FLAG_CONST out of this
 ){
-    // Note that `CELL_FLAG_CONST == FEED_FLAG_CONST`
-    //
+    STATIC_ASSERT(CELL_FLAG_CONST == FEED_FLAG_CONST);
+
     Flags flags;
     if (Get_Cell_Flag(any_array, EXPLICITLY_MUTABLE))
         flags = FEED_MASK_DEFAULT;  // override const from parent frame
@@ -643,20 +637,18 @@ inline static Feed(*) Prep_Any_Array_Feed(
             | (parent_flags & FEED_FLAG_CONST)  // inherit
             | (any_array->header.bits & CELL_FLAG_CONST);  // heed
 
-    Prep_Array_Feed(
-        feed,
+    return Prep_Array_Feed(
+        preallocated,
         nullptr,  // `first` = nullptr, don't inject arbitrary 1st element
         VAL_ARRAY(any_array),
         VAL_INDEX(any_array),
         Derive_Specifier(specifier, any_array),
         flags
-    );
-
-    return feed;
+    );;
 }
 
 #define Make_Feed_At_Core(any_array,specifier) \
-    Prep_Any_Array_Feed( \
+    Prep_Feed_At( \
         Alloc_Feed(), \
         (any_array), (specifier), TOP_FRAME->feed->flags.bits \
     );
