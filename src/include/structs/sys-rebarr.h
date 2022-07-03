@@ -35,7 +35,7 @@
 #if CPLUSPLUS_11
     struct Reb_Array : public Reb_Series {};
 #else
-    typedef struct Reb_Series Reb_Array;
+    typedef Reb_Series Reb_Array;
 #endif
 
 #define Array(star_maybe_const) \

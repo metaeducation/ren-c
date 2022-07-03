@@ -95,11 +95,11 @@
     #define ensure_flavor(flavor,s) (s)  // no-op in release build
 #else
     inline static REBSER *ensure_flavor(
-        enum Reb_Series_Flavor flavor,
+        enum Reb_Stub_Flavor flavor,
         const_if_c REBSER *s
     ){
         if (SER_FLAVOR(s) != flavor) {
-            enum Reb_Series_Flavor actual = SER_FLAVOR(s);
+            enum Reb_Stub_Flavor actual = SER_FLAVOR(s);
             USED(actual);
             panic (s);
         }
@@ -108,11 +108,11 @@
 
     #if CPLUSPLUS_11
         inline static const REBSER *ensure_flavor(
-            enum Reb_Series_Flavor flavor,
+            enum Reb_Stub_Flavor flavor,
             const REBSER *s
         ){
             if (SER_FLAVOR(s) != flavor) {
-                enum Reb_Series_Flavor actual = SER_FLAVOR(s);
+                enum Reb_Stub_Flavor actual = SER_FLAVOR(s);
                 USED(actual);
                 panic (s);
             }
@@ -1330,7 +1330,7 @@ inline static REBSER *Make_Series_Into(
     Flags flags
 ){
     size_t wide = Wide_For_Flavor(
-        cast(enum Reb_Series_Flavor, FLAVOR_BYTE(flags))
+        cast(enum Reb_Stub_Flavor, FLAVOR_BYTE(flags))
     );
     if (cast(REBU64, capacity) * wide > INT32_MAX)
         fail (Error_No_Memory(cast(REBU64, capacity) * wide));

@@ -733,7 +733,7 @@ inline static Context(*) Steal_Context_Vars(Context(*) c, REBNOD *keysource) {
     memcpy(  // https://stackoverflow.com/q/57721104/
         cast(char*, &copy->content),
         cast(char*, &stub->content),
-        sizeof(union Reb_Series_Content)
+        sizeof(union Reb_Stub_Content)
     );
     mutable_MISC(VarlistMeta, copy) = nullptr;  // let stub have the meta
     mutable_LINK(Patches, copy) = nullptr;  // don't carry forward patches

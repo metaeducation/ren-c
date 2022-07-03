@@ -135,8 +135,10 @@ typedef struct Reb_Pool_Unit REBPLU;
 // higher level definitions in %sys-series.h are *before* %sys-value.h.
 //
 
-struct Reb_Series;
-typedef struct Reb_Series REBSER;
+struct Reb_Stub;
+typedef struct Reb_Stub Reb_Series;
+
+typedef Reb_Series REBSER;
 
 
 struct Reb_Bookmark {

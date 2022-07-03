@@ -853,7 +853,7 @@ void Expand_Series(REBSER *s, REBLEN index, REBLEN delta)
     // routines that do calculations operate on the content as a whole, not
     // the REBSER node, so the content is extracted either way.
     //
-    union Reb_Series_Content content_old;
+    union Reb_Stub_Content content_old;
     REBINT bias_old;
     REBLEN size_old;
     char *data_old;
@@ -942,15 +942,15 @@ void Swap_Series_Content(REBSER* a, REBSER* b)
     mutable_USED_BYTE(a) = USED_BYTE(b);
     mutable_USED_BYTE(b) = a_len;
 
-    union Reb_Series_Content a_content = a->content;
+    union Reb_Stub_Content a_content = a->content;
     a->content = b->content;
     b->content = a_content;
 
-    union Reb_Series_Misc a_misc = a->misc;
+    union Reb_Stub_Misc a_misc = a->misc;
     a->misc = b->misc;
     b->misc = a_misc;
 
-    union Reb_Series_Link a_link = a->link;
+    union Reb_Stub_Link a_link = a->link;
     a->link = b->link;
     b->link = a_link;
 }
@@ -1019,7 +1019,7 @@ void Remake_Series(REBSER *s, REBLEN units, Flags flags)
     // updating preservation.)
 
     char *data_old;
-    union Reb_Series_Content content_old;
+    union Reb_Stub_Content content_old;
     if (was_dynamic) {
         assert(s->content.dynamic.data != NULL);
         data_old = s->content.dynamic.data;

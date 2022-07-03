@@ -293,7 +293,7 @@ inline static Byte FLAVOR_BYTE(uintptr_t flags)
   { return THIRD_BYTE(flags); }
 
 #define SER_FLAVOR(s) \
-    x_cast(enum Reb_Series_Flavor, THIRD_BYTE((s)->leader))
+    x_cast(enum Reb_Stub_Flavor, THIRD_BYTE((s)->leader))
 
 #define mutable_SER_FLAVOR(s) \
     mutable_THIRD_BYTE((s)->leader)
@@ -443,7 +443,7 @@ STATIC_ASSERT(SERIES_INFO_0_IS_FALSE == NODE_FLAG_NODE);
 
 // SERIES_FLAG_DYNAMIC indicates that a series has a dynamically allocated
 // portion, and it has a whole uintptr_t to use for the length.  However, if
-// that flag is not set the payload is small, fitting in Reb_Series_Content
+// that flag is not set the payload is small, fitting in Reb_Stub_Content
 // where the allocation tracking information would be.
 //
 // If the data is an array, then the length can only be 0 or 1, since the
@@ -537,7 +537,7 @@ STATIC_ASSERT(SERIES_INFO_0_IS_FALSE == NODE_FLAG_NODE);
 //
 
 
-union Reb_Series_Bonus {
+union Reb_Stub_Bonus {
     //
     // In R3-Alpha, the bias was not a full REBLEN but was limited in range to
     // 16 bits or so.  This means 16 info bits are likely available if needed
@@ -555,7 +555,7 @@ union Reb_Series_Bonus {
 };
 
 
-struct Reb_Series_Dynamic {
+struct Reb_Stub_Dynamic {
     //
     // `data` is the "head" of the series data.  It might not point directly
     // at the memory location that was returned from the allocator if it has
@@ -582,17 +582,17 @@ struct Reb_Series_Dynamic {
     // This is the 4th pointer on 32-bit platforms which could be used for
     // something when a series is dynamic.
     //
-    union Reb_Series_Bonus bonus;
+    union Reb_Stub_Bonus bonus;
 };
 
 
-union Reb_Series_Content {
+union Reb_Stub_Content {
     //
     // If the series does not fit into the REBSER node, then it must be
     // dynamically allocated.  This is the tracking structure for that
     // dynamic data allocation.
     //
-    struct Reb_Series_Dynamic dynamic;
+    struct Reb_Stub_Dynamic dynamic;
 
     // If not(SERIES_FLAG_DYNAMIC), then 0 or 1 length arrays can be held in
     // the series node.  If the single cell holds an END, it's 0 length...
@@ -621,7 +621,7 @@ union Reb_Series_Content {
     cast(Cell(*), &(s)->content.fixed.cells[0])  // unchecked ARR_SINGLE()
 
 
-union Reb_Series_Link {
+union Reb_Stub_Link {
     //
     // If you assign one member in a union and read from another, then that's
     // technically undefined behavior.  But this field is used as the one
@@ -653,7 +653,7 @@ union Reb_Series_Link {
 // in the series node, and hence visible to all REBVALs that might be
 // referring to the series.
 //
-union Reb_Series_Misc {
+union Reb_Stub_Misc {
     //
     // Used to preload bad data in the debug build; see notes on link.trash
     //
@@ -701,7 +701,7 @@ union Reb_Series_Misc {
 // its SER_USED(), so only strings and arrays can pull this trick...when
 // they are used to implement internal structures.
 //
-union Reb_Series_Info {
+union Reb_Stub_Info {
     //
     // Using a union lets us see the underlying `uintptr_t` type-punned in
     // debug builds as bytes/bits.
@@ -713,9 +713,9 @@ union Reb_Series_Info {
 
 
 #if CPLUSPLUS_11
-    struct Reb_Series : public Reb_Node
+    struct Reb_Stub : public Reb_Node
 #else
-    struct Reb_Series
+    struct Reb_Stub
 #endif
 {
     // See the description of SERIES_FLAG_XXX for the bits in this header.
@@ -744,7 +744,7 @@ union Reb_Series_Info {
     //
     // Use the LINK() macro to acquire this field...don't access directly.
     //
-    union Reb_Series_Link link;
+    union Reb_Stub_Link link;
 
     // `content` is the sizeof(REBVAL) data for the series, which is thus
     // 4 platform pointers in size.  If the series is small enough, the header
@@ -752,7 +752,7 @@ union Reb_Series_Info {
     // bits.  If it's too large, it will instead be a pointer and tracking
     // information for another allocation.
     //
-    union Reb_Series_Content content;
+    union Reb_Stub_Content content;
 
     // `info` consists of bits that could apply equally to any series, and
     // that may need to be tested together as a group.  Make_Series()
@@ -763,12 +763,12 @@ union Reb_Series_Info {
     // interesting added caching feature or otherwise that would use
     // it, while not making any feature specifically require a 64-bit CPU.
     //
-    union Reb_Series_Info info;
+    union Reb_Stub_Info info;
 
     // This is the second pointer-sized piece of series data that is used
     // for various purposes, similar to link.
     //
-    union Reb_Series_Misc misc;
+    union Reb_Stub_Misc misc;
 
   #if DEBUG_SERIES_ORIGINS || DEBUG_COUNT_TICKS
     intptr_t *guard;  // intentionally alloc'd and freed for use by panic()
@@ -809,13 +809,13 @@ union Reb_Series_Info {
     struct Reb_Map : public Reb_Series {};
     typedef struct Reb_Map REBMAP;  // the "pairlist" is the identity
 #else
-    typedef struct Reb_Series Reb_Binary;
-    typedef struct Reb_Series Raw_String;
-    typedef struct Reb_Series Raw_Symbol;
-    typedef struct Reb_Series REBBMK;
-    typedef struct Reb_Series Reb_Action;
-    typedef struct Reb_Series Reb_Context;
-    typedef struct Reb_Series REBMAP;
+    typedef Reb_Series Reb_Binary;
+    typedef Reb_Series Raw_String;
+    typedef Reb_Series Raw_Symbol;
+    typedef Reb_Series REBBMK;
+    typedef Reb_Series Reb_Action;
+    typedef Reb_Series Reb_Context;
+    typedef Reb_Series REBMAP;
 #endif
 
 #define Binary(star_maybe_const) \

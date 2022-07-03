@@ -36,7 +36,7 @@
 //
 
 
-enum Reb_Series_Flavor {
+enum Reb_Stub_Flavor {
     //
     // The 0 value is used for just plain old arrays, so that you can call
     // Make_Array_Core() with some additional flags but leave out a flavor...
@@ -164,7 +164,7 @@ enum Reb_Series_Flavor {
 // This doesn't need to be particularly fast...so a lookup table is probably
 // not needed.  Still, the common cases (array and strings) are put first.
 //
-inline static size_t Wide_For_Flavor(enum Reb_Series_Flavor flavor) {
+inline static size_t Wide_For_Flavor(enum Reb_Stub_Flavor flavor) {
     assert(flavor != FLAVOR_TRASH);
     if (flavor <= FLAVOR_MAX_ARRAY)
         return sizeof(REBVAL);

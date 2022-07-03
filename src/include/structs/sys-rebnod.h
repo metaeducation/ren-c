@@ -249,11 +249,11 @@ inline static uintptr_t FLAG_SECOND_UINT16(uint16_t u)
 // against the FLAG_BIT_LEFT(xx) numbers if anything seems fishy.
 //
 // Note: Bitfields are notoriously underspecified, and there's no way to do
-// `#if sizeof(struct Reb_Series_Header_Pun) <= sizeof(uint32_t)`.  Hence
+// `#if sizeof(struct Reb_Stub_Header_Pun) <= sizeof(uint32_t)`.  Hence
 // the DEBUG_USE_BITFIELD_HEADER_PUNS flag should be set with caution.
 //
 #if DEBUG_USE_BITFIELD_HEADER_PUNS
-    struct Reb_Series_Header_Pun {
+    struct Reb_Stub_Header_Pun {
         int _07_cell_always_false:1;
         int _06_root:1;
         int _05_misc_needs_mark:1;
@@ -299,7 +299,7 @@ inline static uintptr_t FLAG_SECOND_UINT16(uint16_t u)
         unsigned int _16to31_symid_if_sym:8;
     }__attribute__((packed));
 
-    struct Reb_Value_Header_Pun {
+    struct Reb_Cell_Header_Pun {
         int _07_cell_always_true:1;
         int _06_root:1;
         int _05_second_needs_mark:1;
@@ -369,8 +369,8 @@ union Reb_Header {
     char chars_pun[4];
 
     #if DEBUG_USE_BITFIELD_HEADER_PUNS
-        struct Reb_Series_Header_Pun series_pun;
-        struct Reb_Value_Header_Pun value_pun;
+        struct Reb_Stub_Header_Pun series_pun;
+        struct Reb_Cell_Header_Pun value_pun;
         struct Reb_Info_Header_Pun info_pun;
     #endif
   #endif

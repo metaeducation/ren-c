@@ -124,7 +124,7 @@ inline static Array(*) Singular_From_Cell(Cell(const*) v) {
     Array(*) singular = ARR(  // some checking in debug builds is done by ARR()
         cast(void*,
             cast(Byte*, m_cast(Cell(*), v))
-            - offsetof(struct Reb_Series, content)
+            - offsetof(struct Reb_Stub, content)
         )
     );
     assert(NOT_SERIES_FLAG(singular, DYNAMIC));
