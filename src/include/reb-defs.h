@@ -162,8 +162,8 @@ struct Reb_Frame;
 #define Frame(star) \
     struct Reb_Frame star
 
-struct Reb_Feed;
-typedef struct Reb_Feed REBFED;
+struct Reb_Feed_Struct;
+typedef struct Reb_Feed_Struct Reb_Feed;
 
 struct Reb_State;
 struct Reb_Jump;

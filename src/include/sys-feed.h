@@ -63,7 +63,7 @@
 #define FEED_VAPTR_POINTER(feed)    PAYLOAD(Comma, FEED_SINGLE(feed)).vaptr
 #define FEED_PACKED(feed)           PAYLOAD(Comma, FEED_SINGLE(feed)).packed
 
-inline static option(va_list*) FEED_VAPTR(REBFED *feed)
+inline static option(va_list*) FEED_VAPTR(Feed(*) feed)
   { return FEED_VAPTR_POINTER(feed); }
 
 
@@ -92,7 +92,7 @@ inline static option(va_list*) FEED_VAPTR(REBFED *feed)
 // cannot have its first parameter in the variadic, va_list* is insufficient)
 //
 inline static void Detect_Feed_Pointer_Maybe_Fetch(
-    REBFED *feed,
+    Feed(*) feed,
     const void *p
 ){
     assert(FEED_PENDING(feed) == nullptr);
@@ -285,7 +285,7 @@ inline static void Detect_Feed_Pointer_Maybe_Fetch(
 // Once a va_list is "fetched", it cannot be "un-fetched".  Hence only one
 // unit of fetch is done at a time, into f->value.
 //
-inline static void Fetch_Next_In_Feed(REBFED *feed) {
+inline static void Fetch_Next_In_Feed(Feed(*) feed) {
     //
     // !!! This used to assert that feed->value wasn't "Is_End()".  Things have
     // gotten more complex, because feed->fetched may have been Move_Cell()'d
@@ -443,7 +443,7 @@ inline static Cell(const*) Lookback_While_Fetching_Next(Frame(*) f) {
 inline static void Inertly_Derelativize_Inheriting_Const(
     REBVAL *out,
     Cell(const*) v,
-    REBFED *feed
+    Feed(*) feed
 ){
     assert(not Is_Isotope(v));  // Source should not have isotopes
 
@@ -454,14 +454,14 @@ inline static void Inertly_Derelativize_Inheriting_Const(
         out->header.bits |= (feed->flags.bits & FEED_FLAG_CONST);
 }
 
-inline static void Literal_Next_In_Feed(REBVAL *out, struct Reb_Feed *feed) {
+inline static void Literal_Next_In_Feed(REBVAL *out, Feed(*) feed) {
     Inertly_Derelativize_Inheriting_Const(out, feed->value, feed);
     Fetch_Next_In_Feed(feed);
 }
 
 
-inline static REBFED* Alloc_Feed(void) {
-    REBFED* feed = cast(REBFED*, Alloc_Node(FED_POOL));
+inline static Feed(*) Alloc_Feed(void) {
+    Feed(*) feed = cast(Feed(*), Alloc_Node(FED_POOL));
   #if DEBUG_COUNT_TICKS
     feed->tick = TG_Tick;
   #endif
@@ -480,7 +480,7 @@ inline static REBFED* Alloc_Feed(void) {
     return feed;
 }
 
-inline static void Free_Feed(REBFED *feed) {
+inline static void Free_Feed(Feed(*) feed) {
     //
     // Aborting valist frames is done by just feeding all the values
     // through until the end.  This is assumed to do any work, such
@@ -534,8 +534,8 @@ inline static void Free_Feed(REBFED *feed) {
 // value between evaluations; it's not cleared.
 //
 
-inline static REBFED *Prep_Array_Feed(
-    REBFED *feed,
+inline static Feed(*) Prep_Array_Feed(
+    Feed(*) feed,
     option(Cell(const*)) first,
     Array(const*) array,
     REBLEN index,
@@ -592,7 +592,7 @@ inline static REBFED *Prep_Array_Feed(
     )
 
 
-inline static REBFED *Prep_Va_Feed(
+inline static Feed(*) Prep_Va_Feed(
     struct Reb_Feed *feed,
     const void *p,
     option(va_list*) vaptr,
@@ -627,8 +627,8 @@ inline static REBFED *Prep_Va_Feed(
 #define Make_Variadic_Feed(p,vaptr,flags) \
     Prep_Va_Feed(Alloc_Feed(), (p), (vaptr), (flags))
 
-inline static REBFED *Prep_Any_Array_Feed(
-    REBFED *feed,
+inline static Feed(*) Prep_Any_Array_Feed(
+    Feed(*) feed,
     noquote(Cell(const*)) any_array,  // array is extracted and HOLD put on
     REBSPC *specifier,
     Flags parent_flags  // only reads FEED_FLAG_CONST out of this

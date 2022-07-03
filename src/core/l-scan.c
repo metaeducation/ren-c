@@ -1739,7 +1739,7 @@ void Init_Va_Scan_Level_Core(
     String(const*) file,
     REBLIN line,
     const Byte* opt_begin,  // preload the scanner outside the va_list
-    REBFED *feed,
+    Feed(*) feed,
     option(Context(*)) context
 ){
     level->ss = ss;
@@ -3364,7 +3364,7 @@ const Byte* Scan_Issue(Cell(*) out, const Byte* cp, Size size)
 //
 option(Array(*)) Try_Scan_Utf8_For_Detect_Feed_Pointer_Managed(
     const Byte* utf8,
-    REBFED *feed,
+    Feed(*) feed,
     option(Context(*)) context
 ){
     Frame(*) f = Make_End_Frame(FRAME_MASK_NONE);

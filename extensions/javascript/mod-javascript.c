@@ -375,7 +375,7 @@ EXTERN_C intptr_t RL_rebPromise(void *p, va_list *vaptr)
     // for granted the resolve() function created on return from this helper
     // already exists.
 
-    REBFED *feed = Make_Variadic_Feed(p, vaptr, FEED_MASK_DEFAULT);
+    Feed(*) feed = Make_Variadic_Feed(p, vaptr, FEED_MASK_DEFAULT);
 
     REBDSP dsp_orig = DSP;
     while (Not_End(feed->value)) {

@@ -40,7 +40,7 @@
 //
 //  Splice_Block_Into_Feed: C
 //
-void Splice_Block_Into_Feed(REBFED *feed, const REBVAL *splice) {
+void Splice_Block_Into_Feed(Feed(*) feed, const REBVAL *splice) {
     //
     // !!! The mechanics for taking and releasing holds on arrays needs work,
     // but this effectively releases the hold on the code array while the

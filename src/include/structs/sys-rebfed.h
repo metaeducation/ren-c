@@ -148,7 +148,7 @@ STATIC_ASSERT(FEED_FLAG_CONST == CELL_FLAG_CONST);
 #if (! CPLUSPLUS_11)
     #define FEED(f) f
 #else
-    #define FEED(f) static_cast<REBFED*>(f)
+    #define FEED(f) static_cast<Feed(*)>(f)
 #endif
 
 #define Set_Feed_Flag(f,name) \
@@ -167,7 +167,7 @@ STATIC_ASSERT(FEED_FLAG_CONST == CELL_FLAG_CONST);
 #define TRASHED_INDEX ((REBLEN)(-3))
 
 
-struct Reb_Feed {
+struct Reb_Feed_Struct {
     union Reb_Header flags;  // quoting level included
 
     // This is the "prefetched" value being processed.  Entry points to the
@@ -295,3 +295,6 @@ struct Reb_Feed {
     REBTCK tick;
   #endif
 };
+
+#define Feed(star_maybe_const) \
+    Reb_Feed star_maybe_const

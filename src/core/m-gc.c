@@ -466,7 +466,7 @@ static void Propagate_All_GC_Marks(void)
 // before any items are consumed).
 //
 void Reify_Va_To_Array_In_Feed(
-    REBFED *feed,
+    Feed(*) feed,
     bool truncated
 ) {
     REBDSP dsp_orig = DSP;

@@ -119,7 +119,7 @@ typedef struct rebol_scan_state {  // shared across all levels of a scan
     // the UTF-8 data to scan.  Otherwise, it is a variadic feed of UTF-8
     // strings and values that are spliced in.
     //
-    REBFED *feed;
+    Feed(*) feed;
 
     // Module to bind words to while scanning.  Splices from the feed will
     // not count...only words bound from text portions of the scan.

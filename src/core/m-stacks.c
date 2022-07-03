@@ -94,7 +94,7 @@ void Startup_Frame_Stack(void)
     TG_Top_Frame = TG_Bottom_Frame = nullptr;
   #endif
 
-    REBFED *end_feed = Make_Array_Feed_Core(EMPTY_ARRAY, 0, SPECIFIED);
+    Feed(*) end_feed = Make_Array_Feed_Core(EMPTY_ARRAY, 0, SPECIFIED);
     TG_End_Feed = end_feed;  // used by Make_End_Frame
 
     Frame(*) f = Make_End_Frame(
@@ -174,7 +174,7 @@ void Shutdown_Frame_Stack(void)
         REBLEN n = Mem_Pools[FED_POOL].num_units;
         Byte* unit = cast(Byte*, seg + 1);
         for (; n > 0; --n, unit += Mem_Pools[FED_POOL].wide) {
-            REBFED *feed = cast(REBFED*, unit);
+            Feed(*) feed = cast(Feed(*), unit);
             if (IS_FREE_NODE(feed))
                 continue;
           #if DEBUG_COUNT_TICKS

@@ -529,7 +529,7 @@ Bounce MAKE_Frame(
     //
     if (IS_VARARGS(arg)) {
         Frame(*) f_varargs;
-        REBFED *feed;
+        Feed(*) feed;
         if (Is_Frame_Style_Varargs_May_Fail(&f_varargs, arg)) {
             assert(Is_Action_Frame(f_varargs));
             feed = f_varargs->feed;

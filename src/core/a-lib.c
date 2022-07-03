@@ -838,7 +838,7 @@ static bool Run_Va_Throws(
     else
         Eval_Sigmask &= ~SIG_HALT;  // disable
 
-    REBFED *feed = Make_Variadic_Feed(p, vaptr, FEED_MASK_DEFAULT);
+    Feed(*) feed = Make_Variadic_Feed(p, vaptr, FEED_MASK_DEFAULT);
 
     Frame(*) f = Make_Frame(
         feed,
@@ -958,7 +958,7 @@ void RL_rebPushContinuation(
 ){
     ENTER_API;
 
-    REBFED *feed = Make_Variadic_Feed(p, vaptr, FEED_MASK_DEFAULT);
+    Feed(*) feed = Make_Variadic_Feed(p, vaptr, FEED_MASK_DEFAULT);
 
     REBDSP dsp_orig = DSP;
     while (Not_End(feed->value)) {

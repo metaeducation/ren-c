@@ -475,7 +475,7 @@ DECLARE_NATIVE(evaluate)
             return VOID;
         }
 
-        REBFED* feed = Make_Feed_At_Core(  // use feed, see [1]
+        Feed(*) feed = Make_Feed_At_Core(  // use feed, see [1]
             source,
             SPECIFIED
         );

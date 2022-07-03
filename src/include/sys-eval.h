@@ -130,7 +130,7 @@ enum {
 //
 inline static bool Did_Init_Inert_Optimize_Complete(
     REBVAL *out,
-    REBFED *feed,
+    Feed(*) feed,
     Flags *flags
 ){
     assert(SECOND_BYTE(*flags) == 0);  // we might set the STATE byte
@@ -308,7 +308,7 @@ inline static bool Eval_Step_In_Any_Array_At_Throws(
     assert(Is_Fresh(out));
 
     assert(not (flags & EVAL_EXECUTOR_FLAG_SINGLE_STEP));  // added here
-    REBFED *feed = Make_Feed_At_Core(any_array, specifier);
+    Feed(*) feed = Make_Feed_At_Core(any_array, specifier);
 
     if (Is_End(feed->value)) {
         *index_out = 0xDECAFBAD;  // avoid compiler warning
@@ -359,7 +359,7 @@ inline static bool Eval_Step_In_Va_Throws(
     va_list *vaptr,
     Flags eval_flags
 ){
-    REBFED *feed = Make_Variadic_Feed(p, vaptr, feed_flags);
+    Feed(*) feed = Make_Variadic_Feed(p, vaptr, feed_flags);
 
     assert(eval_flags & EVAL_EXECUTOR_FLAG_SINGLE_STEP);
 
@@ -404,7 +404,7 @@ inline static bool Eval_Value_Core_Throws(
     }
 
     // Passes `first` so can't use DECLARE_ARRAY_FEED
-    REBFED *feed = Alloc_Feed();
+    Feed(*) feed = Alloc_Feed();
     Prep_Array_Feed(
         feed,
         value,  // first--in this case, the only value in the feed...

@@ -576,7 +576,7 @@ Bounce Composer_Executor(Frame(*) f)
 
     // If <*> is the label and (<*> 1 + 2) is found, run just (1 + 2).
     //
-    REBFED *subfeed = Make_Feed_At_Core(match, match_specifier);
+    Feed(*) subfeed = Make_Feed_At_Core(match, match_specifier);
     if (not Is_Nulled(label))
         Fetch_Next_In_Feed(subfeed);  // wasn't possibly at END
 

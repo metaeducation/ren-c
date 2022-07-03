@@ -326,7 +326,7 @@ typedef Executor Dispatcher;  // sub-dispatched in Action_Executor()
     // Since frames may share source information, this needs to be done with
     // a dereference.
     //
-    REBFED *feed;
+    Feed(*) feed;
 
     // The frame's "spare" is used for different purposes.  PARSE uses it as a
     // scratch storage space.  Path evaluation uses it as where the calculated

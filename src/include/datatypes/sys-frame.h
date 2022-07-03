@@ -467,7 +467,7 @@ inline static void Drop_Frame(Frame(*) f)
 
 inline static Frame(*) Prep_Frame_Core(
     Frame(*) f,
-    REBFED *feed,
+    Feed(*) feed,
     Flags flags
 ){
    if (f == nullptr)  // e.g. a failed allocation

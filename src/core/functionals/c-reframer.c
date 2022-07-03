@@ -82,7 +82,7 @@ enum {
 bool Make_Invokable_From_Feed_Throws(
     REBVAL *out,
     Cell(const*) first,  // if not END, override first value (vs. feed->value)
-    REBFED *feed,
+    Feed(*) feed,
     bool error_on_deferred  // if not planning to keep running, can't ELSE/THEN
 ){
     assert(Not_Feed_Flag(feed, NEXT_ARG_FROM_OUT));  // not supported?
@@ -242,7 +242,7 @@ bool Make_Invokable_From_Feed_Throws(
 bool Make_Frame_From_Feed_Throws(
     REBVAL *out,
     Cell(const*) first,
-    REBFED *feed,
+    Feed(*) feed,
     bool error_on_deferred
 ){
     if (Make_Invokable_From_Feed_Throws(out, first, feed, error_on_deferred))

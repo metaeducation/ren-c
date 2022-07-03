@@ -243,7 +243,7 @@ TVAR uintptr_t TG_Stack_Limit;    // Limit address for CPU stack.
 //
 TVAR Frame(*) TG_Top_Frame;
 TVAR Frame(*) TG_Bottom_Frame;
-TVAR REBFED *TG_End_Feed;
+TVAR Feed(*) TG_End_Feed;
 
 
 //-- Evaluation stack:

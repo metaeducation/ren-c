@@ -95,7 +95,7 @@
 //
 // Returns TRUE if it set the flag.
 //
-bool Lookahead_To_Sync_Enfix_Defer_Flag(struct Reb_Feed *feed) {
+bool Lookahead_To_Sync_Enfix_Defer_Flag(Feed(*) feed) {
     assert(Not_Feed_Flag(feed, DEFERRING_ENFIX));
     assert(not feed->gotten);
 
