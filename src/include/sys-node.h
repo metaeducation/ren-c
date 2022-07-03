@@ -122,9 +122,9 @@
 // is required for correct functioning of some types.  (See notes on
 // alignment in %sys-rebval.h.)
 //
-inline static void *Try_Alloc_Pooled(REBLEN pool_id)
+inline static void *Try_Alloc_Pooled(PoolID pool_id)
 {
-    REBPOL *pool = &Mem_Pools[pool_id];
+    Pool* pool = &Mem_Pools[pool_id];
     if (not pool->first) {  // pool has run out of nodes
         if (not Try_Fill_Pool(pool))  // attempt to refill it
             return nullptr;
@@ -146,7 +146,7 @@ inline static void *Try_Alloc_Pooled(REBLEN pool_id)
 
     assert(pool->first);
 
-    REBPLU *unit = pool->first;
+    PoolUnit* unit = pool->first;
 
     pool->first = unit->next_if_free;
     if (unit == pool->last)
@@ -176,25 +176,25 @@ inline static void *Try_Alloc_Pooled(REBLEN pool_id)
 }
 
 
-inline static void *Alloc_Pooled(REBLEN pool_id) {
+inline static void *Alloc_Pooled(PoolID pool_id) {
     void *node = Try_Alloc_Pooled(pool_id);
     if (node)
         return node;
 
-    REBPOL *pool = &Mem_Pools[pool_id];
-    fail (Error_No_Memory(pool->wide * pool->num_units));
+    Pool* pool = &Mem_Pools[pool_id];
+    fail (Error_No_Memory(pool->wide * pool->num_units_per_segment));
 }
 
 #define Alloc_Series_Node() ( \
     (GC_Ballast -= sizeof(REBSER)) <= 0 ? SET_SIGNAL(SIG_RECYCLE) : NOOP, \
-    Alloc_Pooled(SER_POOL))  // won't pass SER() yet, don't cast it
+    Alloc_Pooled(STUB_POOL))  // won't pass SER() yet, don't cast it
 
 
 // Free a node, returning it to its pool.  Once it is freed, its header will
 // have SERIES_FLAG_FREE...which will identify the node as not in use to anyone
 // who enumerates the nodes in the pool (such as the garbage collector).
 //
-inline static void Free_Pooled(REBLEN pool_id, void* p)
+inline static void Free_Pooled(PoolID pool_id, void* p)
 {
   #if DEBUG_MONITOR_SERIES
     if (p == PG_Monitor_Node_Debug) {
@@ -206,11 +206,11 @@ inline static void Free_Pooled(REBLEN pool_id, void* p)
     }
   #endif
 
-    REBPLU* unit = cast(REBPLU*, p);
+    PoolUnit* unit = cast(PoolUnit*, p);
 
     mutable_FIRST_BYTE(unit->headspot) = FREED_SERIES_BYTE;
 
-    REBPOL *pool = &Mem_Pools[pool_id];
+    Pool* pool = &Mem_Pools[pool_id];
 
   #ifdef NDEBUG
     unit->next_if_free = pool->first;
@@ -255,12 +255,12 @@ inline static void Free_Pooled(REBLEN pool_id, void* p)
 
 //=//// POINTER DETECTION (UTF-8, SERIES, FREED SERIES, END) //////////////=//
 //
-// Ren-C's "nodes" (REBVAL and REBSER derivatives) all have a platform-pointer
+// Ren-C's "nodes" (Cell and Stub derivatives) all have a platform-pointer
 // sized header of bits, which is constructed using byte-order-sensitive bit
 // flags (see FLAG_LEFT_BIT and related definitions for how those work).
 //
 // The values for the bits were chosen carefully, so that the leading byte of
-// REBVAL and REBSER could be distinguished from the leading byte of a UTF-8
+// Cell and Stub could be distinguished from the leading byte of a UTF-8
 // string, as well as from each other.  This is taken advantage of in the API.
 //
 // During startup, Assert_Pointer_Detection_Working() checks invariants that

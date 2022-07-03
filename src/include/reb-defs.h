@@ -68,6 +68,7 @@ typedef uint_fast32_t REBLEN; // series length, unsigned, at *least* 32 bits
 typedef int_fast32_t Index;
 typedef uint_fast32_t Offset;
 typedef uint_fast32_t Length;
+typedef uint_fast32_t Count;
 
 typedef size_t Size;  // Size (in bytes)
 
@@ -108,11 +109,12 @@ typedef uint_fast32_t Codepoint;
 
 //=//// MEMORY POOLS //////////////////////////////////////////////////////=//
 //
-typedef struct rebol_mem_pool REBPOL;
+typedef struct rebol_mem_pool Pool;
 
 struct Reb_Pool_Unit;
-typedef struct Reb_Pool_Unit REBPLU;
+typedef struct Reb_Pool_Unit PoolUnit;
 
+typedef signed int PoolID;  // used with UNLIMITED (-1)
 
 
 //=//// SERIES AND NON-INHERITED SUBCLASS DEFINITIONS /////////////////////=//

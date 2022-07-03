@@ -222,7 +222,7 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
     DEF_POOL(sizeof(REBSER), 4096), // Series headers
 
   #if UNUSUAL_REBVAL_SIZE  // sizeof(REBVAL)*2 != sizeof(REBSER)
-    DEF_POOL(sizeof(REBVAL) * 2, 16),  // Pairings, PAR_POOL
+    DEF_POOL(sizeof(REBVAL) * 2, 16),  // Pairings, PAIR_POOL
   #endif
 
     DEF_POOL(ALIGN(sizeof(struct Reb_Frame), sizeof(REBI64)), 128),  // Frames
@@ -263,15 +263,15 @@ void Startup_Pools(REBINT scale)
         scale = 1;
     }
 
-    Mem_Pools = TRY_ALLOC_N(REBPOL, MAX_POOLS);
+    Mem_Pools = TRY_ALLOC_N(Pool, MAX_POOLS);
 
     // Copy pool sizes to new pool structure:
     //
     REBLEN n;
     for (n = 0; n < MAX_POOLS; n++) {
-        Mem_Pools[n].segs = NULL;
-        Mem_Pools[n].first = NULL;
-        Mem_Pools[n].last = NULL;
+        Mem_Pools[n].segments = nullptr;
+        Mem_Pools[n].first = nullptr;
+        Mem_Pools[n].last = nullptr;
 
         // A panic is used instead of an assert, since the debug sizes and
         // release sizes may be different...and both must be checked.
@@ -283,8 +283,12 @@ void Startup_Pools(REBINT scale)
 
         Mem_Pools[n].wide = Mem_Pool_Spec[n].wide;
 
-        Mem_Pools[n].num_units = (Mem_Pool_Spec[n].num_units * scale) / unscale;
-        if (Mem_Pools[n].num_units < 2) Mem_Pools[n].num_units = 2;
+        Mem_Pools[n].num_units_per_segment = (
+            (Mem_Pool_Spec[n].num_units_per_segment * scale) / unscale
+        );
+
+        if (Mem_Pools[n].num_units_per_segment < 2)
+            Mem_Pools[n].num_units_per_segment = 2;
         Mem_Pools[n].free = 0;
         Mem_Pools[n].has = 0;
     }
@@ -340,20 +344,22 @@ void Shutdown_Pools(void)
     GC_Kill_Series(GC_Manuals);
 
   #if !defined(NDEBUG)
-    int num_leaks = 0;
+  blockscope {
+    Count num_leaks = 0;
     REBSER *leaked = nullptr;
-    REBSEG *debug_seg = Mem_Pools[SER_POOL].segs;
-    for(; debug_seg != NULL; debug_seg = debug_seg->next) {
-        Byte* unit = cast(Byte*, debug_seg + 1);
-        REBLEN n = Mem_Pools[SER_POOL].num_units;
-        for (; n > 0; --n, unit += sizeof(REBSER)) {
-            Byte nodebyte = *unit;
-            if (nodebyte & NODE_BYTEMASK_0x40_STALE)
+    Segment* seg = Mem_Pools[STUB_POOL].segments;
+
+    for(; seg != nullptr; seg = seg->next) {
+        Count n = Mem_Pools[STUB_POOL].num_units_per_segment;
+        Byte* stub = cast(Byte*, seg + 1);
+
+        for (; n > 0; --n, stub += sizeof(Stub)) {
+            if (*stub & NODE_BYTEMASK_0x40_STALE)
                 continue;
 
             ++num_leaks;
 
-            REBSER *s = SER(cast(void*, unit));
+            REBSER *s = SER(cast(void*, stub));
             if (GET_SERIES_FLAG(s, MANAGED)) {
                 printf("MANAGED series leak, this REALLY shouldn't happen\n");
                 leaked = s;  // report a managed one if found
@@ -370,26 +376,28 @@ void Shutdown_Pools(void)
         }
     }
     if (leaked) {
-        printf("%d leaked series at shutdown...panic()ing one\n", num_leaks);
+        printf("%d leaked series...panic()ing one\n", cast(int, num_leaks));
         panic (leaked);
     }
+  }
   #endif
 
-    REBLEN pool_num;
-    for (pool_num = 0; pool_num < MAX_POOLS; pool_num++) {
-        REBPOL *pool = &Mem_Pools[pool_num];
-        REBLEN mem_size = pool->wide * pool->num_units + sizeof(REBSEG);
+    PoolID pool_id;
+    for (pool_id = 0; pool_id < MAX_POOLS; ++pool_id) {
+        Pool *pool = &Mem_Pools[pool_id];
+        Size mem_size = (
+            pool->wide * pool->num_units_per_segment + sizeof(Segment)
+        );
 
-        REBSEG *seg = pool->segs;
+        Segment* seg = pool->segments;
         while (seg) {
-            REBSEG *next;
-            next = seg->next;
+            Segment* next = seg->next;
             FREE_N(char, mem_size, cast(char*, seg));
             seg = next;
         }
     }
 
-    FREE_N(REBPOL, MAX_POOLS, Mem_Pools);
+    FREE_N(Pool, MAX_POOLS, Mem_Pools);
 
     FREE_N(Byte, (4 * MEM_BIG_SIZE) + 1, PG_Pool_Map);
 
@@ -432,24 +440,24 @@ void Shutdown_Pools(void)
 // the size and units specified when the pool header was created.  The nodes
 // of the pool are linked to the free list.
 //
-bool Try_Fill_Pool(REBPOL *pool)
+bool Try_Fill_Pool(Pool* pool)
 {
-    REBLEN num_units = pool->num_units;
-    REBLEN mem_size = pool->wide * num_units + sizeof(REBSEG);
+    REBLEN num_units = pool->num_units_per_segment;
+    REBLEN mem_size = pool->wide * num_units + sizeof(Segment);
 
-    REBSEG *seg = cast(REBSEG*, TRY_ALLOC_N(char, mem_size));
+    Segment* seg = cast(Segment*, TRY_ALLOC_N(char, mem_size));
     if (seg == nullptr)
         return false;
 
     seg->size = mem_size;
-    seg->next = pool->segs;
-    pool->segs = seg;
+    seg->next = pool->segments;
+    pool->segments = seg;
     pool->has += num_units;
     pool->free += num_units;
 
     // Add new nodes to the end of free list:
 
-    REBPLU *unit = cast(REBPLU*, seg + 1);
+    PoolUnit* unit = cast(PoolUnit*, seg + 1);
 
     if (not pool->first) {
         assert(not pool->last);
@@ -468,7 +476,7 @@ bool Try_Fill_Pool(REBPOL *pool)
             break;
         }
 
-        unit->next_if_free = cast(REBPLU*, cast(Byte*, unit) + pool->wide);
+        unit->next_if_free = cast(PoolUnit*, cast(Byte*, unit) + pool->wide);
         unit = unit->next_if_free;
     }
 
@@ -488,17 +496,17 @@ bool Try_Fill_Pool(REBPOL *pool)
 //
 Node* Try_Find_Containing_Node_Debug(const void *p)
 {
-    REBSEG *seg;
+    Segment* seg = Mem_Pools[STUB_POOL].segments;
 
-    for (seg = Mem_Pools[SER_POOL].segs; seg; seg = seg->next) {
+    for (; seg != nullptr; seg = seg->next) {
+        Count n = Mem_Pools[STUB_POOL].num_units_per_segment;
         Byte* stub = cast(Byte*, seg + 1);
-        REBLEN n = Mem_Pools[SER_POOL].num_units;
+
         for (; n > 0; --n, stub += sizeof(Stub)) {
-            Byte nodebyte = *stub;
-            if (nodebyte & NODE_BYTEMASK_0x40_STALE)
+            if (*stub & NODE_BYTEMASK_0x40_STALE)
                 continue;
 
-            if (nodebyte & NODE_BYTEMASK_0x01_CELL) { // a "pairing"
+            if (*stub & NODE_BYTEMASK_0x01_CELL) { // a "pairing"
                 REBVAL *pairing = VAL(cast(void*, stub));
                 if (p >= cast(void*, pairing) and p < cast(void*, pairing + 1))
                     return pairing;  // REBSER is actually REBVAL[2]
@@ -576,7 +584,7 @@ Node* Try_Find_Containing_Node_Debug(const void *p)
 // them ensures they are cleaned up.
 //
 REBVAL *Alloc_Pairing(void) {
-    REBVAL *paired = cast(REBVAL*, Alloc_Pooled(PAR_POOL));  // 2x REBVAL size
+    REBVAL *paired = cast(REBVAL*, Alloc_Pooled(PAIR_POOL));  // 2x REBVAL size
     Prep_Cell(paired);
 
     REBVAL *key = PAIRING_KEY(paired);
@@ -617,7 +625,7 @@ void Unmanage_Pairing(REBVAL *paired) {
 //
 void Free_Pairing(REBVAL *paired) {
     assert(Not_Cell_Flag(paired, MANAGED));
-    Free_Pooled(SER_POOL, paired);
+    Free_Pooled(STUB_POOL, paired);
 
   #if DEBUG_COUNT_TICKS
     //
@@ -642,23 +650,23 @@ void Free_Pairing(REBVAL *paired) {
 // !!! Ideally this wouldn't be exported, but series data is now used to hold
 // function arguments.
 //
-void Free_Unbiased_Series_Data(char *unbiased, REBLEN total)
+void Free_Unbiased_Series_Data(char *unbiased, Size total)
 {
-    REBLEN pool_num = FIND_POOL(total);
-    REBPOL *pool;
+    PoolID pool_id = Pool_Id_For_Size(total);
+    Pool* pool;
 
-    if (pool_num < SYSTEM_POOL) {
+    if (pool_id < SYSTEM_POOL) {
         //
         // The series data does not honor "node protocol" when it is in use
         // The pools are not swept the way the REBSER pool is, so only the
         // free nodes have significance to their headers.  Use a cast and not
         // NOD() because that assumes not (SERIES_FLAG_FREE)
         //
-        REBPLU *unit = cast(REBPLU*, unbiased);
+        PoolUnit* unit = cast(PoolUnit*, unbiased);
 
-        assert(Mem_Pools[pool_num].wide >= total);
+        assert(Mem_Pools[pool_id].wide >= total);
 
-        pool = &Mem_Pools[pool_num];
+        pool = &Mem_Pools[pool_id];
         unit->next_if_free = pool->first;
         pool->first = unit;
         pool->free++;
@@ -1203,7 +1211,7 @@ void GC_Kill_Series(REBSER *s)
     FREETRASH_POINTER_IF_DEBUG(s->misc.trash);
   #endif
 
-    Free_Pooled(SER_POOL, s);
+    Free_Pooled(STUB_POOL, s);
 
     if (GC_Ballast > 0)
         CLR_SIGNAL(SIG_RECYCLE);  // Enough space that requested GC can cancel
@@ -1299,50 +1307,50 @@ void Assert_Pointer_Detection_Working(void)
 //
 REBLEN Check_Memory_Debug(void)
 {
-    REBSEG *seg;
-    for (seg = Mem_Pools[SER_POOL].segs; seg; seg = seg->next) {
-        Byte* unit = cast(Byte*, seg + 1);
+    Segment* seg = Mem_Pools[STUB_POOL].segments;
 
-        REBLEN n = Mem_Pools[SER_POOL].num_units;
-        for (; n > 0; --n, unit += sizeof(REBSER)) {
-            Byte nodebyte = *unit;
-            if (nodebyte & NODE_BYTEMASK_0x40_STALE)
+    for (; seg != nullptr; seg = seg->next) {
+        Count n = Mem_Pools[STUB_POOL].num_units_per_segment;
+        Byte* stub = cast(Byte*, seg + 1);
+
+        for (; n > 0; --n, stub += sizeof(REBSER)) {
+            if (*stub & NODE_BYTEMASK_0x40_STALE)
                 continue;
 
-            if (nodebyte & NODE_BYTEMASK_0x01_CELL)
+            if (*stub & NODE_BYTEMASK_0x01_CELL)
                 continue; // a pairing
 
-            REBSER *s = SER(cast(void*, unit));
+            REBSER *s = SER(cast(void*, stub));
             if (NOT_SERIES_FLAG(s, DYNAMIC))
                 continue; // data lives in the series node itself
 
             if (SER_REST(s) == 0)
                 panic (s); // zero size allocations not legal
 
-            REBLEN pool_num = FIND_POOL(SER_TOTAL(s));
-            if (pool_num >= SER_POOL)
+            PoolID pool_id = Pool_Id_For_Size(SER_TOTAL(s));
+            if (pool_id >= STUB_POOL)
                 continue; // size doesn't match a known pool
 
-            if (Mem_Pools[pool_num].wide < SER_TOTAL(s))
+            if (Mem_Pools[pool_id].wide < SER_TOTAL(s))
                 panic (s);
         }
     }
 
-    REBLEN total_free_nodes = 0;
+    Count total_free_nodes = 0;
 
-    REBLEN pool_num;
-    for (pool_num = 0; pool_num != SYSTEM_POOL; pool_num++) {
-        REBLEN pool_free_nodes = 0;
+    PoolID pool_id;
+    for (pool_id = 0; pool_id != SYSTEM_POOL; pool_id++) {
+        Count pool_free_nodes = 0;
 
-        REBPLU *unit = Mem_Pools[pool_num].first;
+        PoolUnit* unit = Mem_Pools[pool_id].first;
         for (; unit != nullptr; unit = unit->next_if_free) {
             assert(*cast(const Byte*, unit) & NODE_BYTEMASK_0x40_STALE);
 
             ++pool_free_nodes;
 
             bool found = false;
-            seg = Mem_Pools[pool_num].segs;
-            for (; seg != NULL; seg = seg->next) {
+            seg = Mem_Pools[pool_id].segments;
+            for (; seg != nullptr; seg = seg->next) {
                 if (
                     cast(uintptr_t, unit) > cast(uintptr_t, seg)
                     and (
@@ -1365,7 +1373,7 @@ REBLEN Check_Memory_Debug(void)
             }
         }
 
-        if (Mem_Pools[pool_num].free != pool_free_nodes)
+        if (Mem_Pools[pool_id].free != pool_free_nodes)
             panic ("actual free unit count does not agree with pool header");
 
         total_free_nodes += pool_free_nodes;
@@ -1380,18 +1388,18 @@ REBLEN Check_Memory_Debug(void)
 //
 void Dump_All_Series_Of_Width(Size wide)
 {
-    REBLEN count = 0;
+    Count count = 0;
+    Segment* seg = Mem_Pools[STUB_POOL].segments;
 
-    REBSEG *seg;
-    for (seg = Mem_Pools[SER_POOL].segs; seg; seg = seg->next) {
-        Byte* unit = cast(Byte*, seg + 1);
-        REBLEN n = Mem_Pools[SER_POOL].num_units;
-        for (; n > 0; --n, unit += sizeof(REBSER)) {
-            Byte nodebyte = *unit;
-            if (nodebyte & NODE_BYTEMASK_0x40_STALE)
+    for (; seg != nullptr; seg = seg->next) {
+        Count n = Mem_Pools[STUB_POOL].num_units_per_segment;
+        Byte* stub = cast(Byte*, seg + 1);
+
+        for (; n > 0; --n, stub += sizeof(Stub)) {
+            if (*stub & NODE_BYTEMASK_0x40_STALE)
                 continue;
 
-            REBSER *s = SER(cast(void*, unit));
+            REBSER *s = SER(cast(void*, stub));
             if (SER_WIDE(s) == wide) {
                 ++count;
                 printf(
@@ -1412,26 +1420,28 @@ void Dump_All_Series_Of_Width(Size wide)
 //
 // Dump all series in pool @pool_id, UNLIMITED (-1) for all pools
 //
-void Dump_Series_In_Pool(REBINT pool_id)
+void Dump_Series_In_Pool(PoolID pool_id)
 {
-    REBSEG *seg;
-    for (seg = Mem_Pools[SER_POOL].segs; seg; seg = seg->next) {
-        Byte* unit = cast(Byte*, seg + 1);
-        REBLEN n = Mem_Pools[SER_POOL].num_units;
-        for (; n > 0; --n, unit += sizeof(REBSER)) {
-            Byte nodebyte = *unit;
+    Segment* seg = Mem_Pools[STUB_POOL].segments;
+
+    for (; seg != nullptr; seg = seg->next) {
+        Count n = Mem_Pools[STUB_POOL].num_units_per_segment;
+        Byte* stub = cast(Byte*, seg + 1);
+
+        for (; n > 0; --n, stub += sizeof(Stub)) {
+            Byte nodebyte = *stub;
             if (nodebyte & NODE_BYTEMASK_0x40_STALE)
                 continue;
 
             if (nodebyte & NODE_BYTEMASK_0x01_CELL)
                 continue;  // pairing
 
-            REBSER *s = SER(cast(void*, unit));
+            REBSER *s = SER(cast(void*, stub));
             if (
                 pool_id == UNLIMITED
                 or (
                     GET_SERIES_FLAG(s, DYNAMIC)
-                    and cast(REBLEN, pool_id) == FIND_POOL(SER_TOTAL(s))
+                    and pool_id == Pool_Id_For_Size(SER_TOTAL(s))
                 )
             ){
                 Dump_Series(s, "Dump_Series_In_Pool");
@@ -1452,32 +1462,31 @@ void Dump_Pools(void)
     REBLEN total = 0;
     REBLEN tused = 0;
 
-    REBLEN n;
-    for (n = 0; n != SYSTEM_POOL; n++) {
-        REBLEN segs = 0;
+    PoolID id;
+    for (id = 0; id != SYSTEM_POOL; ++id) {
+        Count num_segs = 0;
         Size size = 0;
 
-        size = segs = 0;
+        Segment* seg = Mem_Pools[id].segments;
 
-        REBSEG *seg;
-        for (seg = Mem_Pools[n].segs; seg; seg = seg->next, segs++)
+        for (; seg != nullptr; seg = seg->next, ++num_segs)
             size += seg->size;
 
-        REBLEN used = Mem_Pools[n].has - Mem_Pools[n].free;
+        REBLEN used = Mem_Pools[id].has - Mem_Pools[id].free;
         printf(
             "Pool[%-2d] %5dB %-5d/%-5d:%-4d (%3d%%) ",
-            cast(int, n),
-            cast(int, Mem_Pools[n].wide),
+            cast(int, id),
+            cast(int, Mem_Pools[id].wide),
             cast(int, used),
-            cast(int, Mem_Pools[n].has),
-            cast(int, Mem_Pools[n].num_units),
+            cast(int, Mem_Pools[id].has),
+            cast(int, Mem_Pools[id].num_units_per_segment),
             cast(int,
-                Mem_Pools[n].has != 0 ? ((used * 100) / Mem_Pools[n].has) : 0
+                Mem_Pools[id].has != 0 ? ((used * 100) / Mem_Pools[id].has) : 0
             )
         );
-        printf("%-2d segs, %-7d total\n", cast(int, segs), cast(int, size));
+        printf("%-2d segs, %-7d total\n", cast(int, num_segs), cast(int, size));
 
-        tused += used * Mem_Pools[n].wide;
+        tused += used * Mem_Pools[id].wide;
         total += size;
     }
 
@@ -1503,31 +1512,28 @@ void Dump_Pools(void)
 //
 REBU64 Inspect_Series(bool show)
 {
-    REBLEN segs = 0;
-    REBLEN tot = 0;
-    REBLEN blks = 0;
-    REBLEN strs = 0;
-    REBLEN odds = 0;
-    REBLEN fre = 0;
+    Count segs = 0;
+    Count tot = 0;
+    Count blks = 0;
+    Count strs = 0;
+    Count odds = 0;
+    Count fre = 0;
 
-    REBLEN seg_size = 0;
-    REBLEN str_size = 0;
-    REBLEN blk_size = 0;
-    REBLEN odd_size = 0;
+    Size seg_size = 0;
+    Size str_size = 0;
+    Size blk_size = 0;
+    Size odd_size = 0;
 
-    REBU64 tot_size = 0;
+    Size tot_size = 0;
 
-    REBSEG *seg;
-    for (seg = Mem_Pools[SER_POOL].segs; seg; seg = seg->next) {
+    Segment* seg = Mem_Pools[STUB_POOL].segments;
 
-        seg_size += seg->size;
-        segs++;
+    for (; seg != nullptr; seg = seg->next, seg_size += seg->size, ++segs) {
+        Count n = Mem_Pools[STUB_POOL].num_units_per_segment;
+        Byte* stub = cast(Byte*, seg + 1);
 
-        Byte* unit = cast(Byte*, seg + 1);
-
-        REBLEN n = Mem_Pools[SER_POOL].num_units;
-        for (; n > 0; --n, unit += sizeof(REBSER)) {
-            Byte nodebyte = *unit;
+        for (; n > 0; --n, stub += sizeof(Stub)) {
+            Byte nodebyte = *stub;
             if (nodebyte & NODE_BYTEMASK_0x40_STALE) {
                 ++fre;
                 continue;
@@ -1538,7 +1544,7 @@ REBU64 Inspect_Series(bool show)
             if (nodebyte & NODE_BYTEMASK_0x01_CELL)
                 continue;
 
-            REBSER *s = SER(cast(void*, unit));
+            REBSER *s = SER(cast(void*, stub));
 
             tot_size += SER_TOTAL_IF_DYNAMIC(s); // else 0
 
@@ -1560,9 +1566,9 @@ REBU64 Inspect_Series(bool show)
     // Size up unused memory:
     //
     REBU64 fre_size = 0;
-    REBINT pool_num;
-    for (pool_num = 0; pool_num != SYSTEM_POOL; pool_num++) {
-        fre_size += Mem_Pools[pool_num].free * Mem_Pools[pool_num].wide;
+    PoolID pool_id;
+    for (pool_id = 0; pool_id != SYSTEM_POOL; pool_id++) {
+        fre_size += Mem_Pools[pool_id].free * Mem_Pools[pool_id].wide;
     }
 
     if (show) {

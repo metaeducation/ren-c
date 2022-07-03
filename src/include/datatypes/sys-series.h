@@ -1196,7 +1196,7 @@ inline static Stub* Prep_Stub(void *preallocated, Flags flags) {
 }
 
 
-inline static REBLEN FIND_POOL(size_t size) {
+inline static PoolID Pool_Id_For_Size(Size size) {
   #if DEBUG_ENABLE_ALWAYS_MALLOC
     if (PG_Always_Malloc)
         return SYSTEM_POOL;
@@ -1237,16 +1237,16 @@ inline static bool Did_Series_Data_Alloc(REBSER *s, REBLEN capacity) {
 
     Size size; // size of allocation (possibly bigger than we need)
 
-    REBLEN pool_num = FIND_POOL(capacity * wide);
-    if (pool_num < SYSTEM_POOL) {
+    PoolID pool_id = Pool_Id_For_Size(capacity * wide);
+    if (pool_id < SYSTEM_POOL) {
         // ...there is a pool designated for allocations of this size range
-        s->content.dynamic.data = cast(char*, Try_Alloc_Pooled(pool_num));
+        s->content.dynamic.data = cast(char*, Try_Alloc_Pooled(pool_id));
         if (not s->content.dynamic.data)
             return false;
 
         // The pooled allocation might wind up being larger than we asked.
         // Don't waste the space...mark as capacity the series could use.
-        size = Mem_Pools[pool_num].wide;
+        size = Mem_Pools[pool_id].wide;
         assert(size >= capacity * wide);
 
         // We don't round to power of 2 for allocations in memory pools
@@ -1379,7 +1379,7 @@ inline static REBSER *Make_Series_Into(
 }
 
 #define Make_Series_Core(capacity,flags) \
-    Make_Series_Into(Alloc_Pooled(SER_POOL), (capacity), (flags))
+    Make_Series_Into(Alloc_Pooled(STUB_POOL), (capacity), (flags))
 
 #define Make_Series(flavor,capacity,flags) \
     cast(Raw_##flavor*, Make_Series_Core((capacity), (flags)))

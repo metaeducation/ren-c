@@ -198,7 +198,7 @@ TVAR REBI64 TG_Ballast;
 TVAR REBI64 TG_Max_Ballast;
 
 //-- Memory and GC:
-TVAR REBPOL *Mem_Pools;     // Memory pool array
+TVAR Pool* Mem_Pools;     // Memory pool array
 TVAR bool GC_Recycling;    // True when the GC is in a recycle
 TVAR REBINT GC_Ballast;     // Bytes allocated to force automatic GC
 TVAR bool GC_Disabled;      // true when RECYCLE/OFF is run

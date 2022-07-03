@@ -1389,7 +1389,7 @@ void Drop_Action(Frame(*) f) {
             // This node could be reused vs. calling Alloc_Pooled() on the next
             // action invocation...but easier for the moment to let it go.
             //
-            Free_Pooled(SER_POOL, f->varlist);
+            Free_Pooled(STUB_POOL, f->varlist);
             f->varlist = nullptr;
         }
     }

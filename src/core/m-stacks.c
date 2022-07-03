@@ -146,11 +146,13 @@ void Shutdown_Frame_Stack(void)
 
   #if !defined(NDEBUG)
   blockscope {
-    REBSEG *seg = Mem_Pools[FRM_POOL].segs;
+    Segment* seg = Mem_Pools[FRAME_POOL].segments;
+
     for (; seg != nullptr; seg = seg->next) {
-        REBLEN n = Mem_Pools[FRM_POOL].num_units;
+        Count n = Mem_Pools[FRAME_POOL].num_units_per_segment;
         Byte* unit = cast(Byte*, seg + 1);
-        for (; n > 0; --n, unit += Mem_Pools[FRM_POOL].wide) {
+
+        for (; n > 0; --n, unit += Mem_Pools[FRAME_POOL].wide) {
             Frame(*) f = cast(Frame(*), unit);  // ^-- pool size may round up
             if (IS_FREE_NODE(f))
                 continue;
@@ -169,11 +171,13 @@ void Shutdown_Frame_Stack(void)
 
   #if !defined(NDEBUG)
   blockscope {
-    REBSEG *seg = Mem_Pools[FED_POOL].segs;
+    Segment* seg = Mem_Pools[FEED_POOL].segments;
+
     for (; seg != nullptr; seg = seg->next) {
-        REBLEN n = Mem_Pools[FED_POOL].num_units;
+        REBLEN n = Mem_Pools[FEED_POOL].num_units_per_segment;
         Byte* unit = cast(Byte*, seg + 1);
-        for (; n > 0; --n, unit += Mem_Pools[FED_POOL].wide) {
+
+        for (; n > 0; --n, unit += Mem_Pools[FEED_POOL].wide) {
             Feed(*) feed = cast(Feed(*), unit);
             if (IS_FREE_NODE(feed))
                 continue;

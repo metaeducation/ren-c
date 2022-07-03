@@ -22,7 +22,7 @@
 //
 // In R3-Alpha, the memory pool details were not exported to most of the
 // system.  However, Alloc_Pooled() takes a pool ID, so things that want to
-// make nodes need to know about SER_POOL.  And in order to take advantage of
+// make nodes need to know about STUB_POOL.  And in order to take advantage of
 // inlining, the system has to put a lot of things in header files.  Not
 // being able to do so leads to a lot of pushing and popping overhead for
 // parameters to commonly called routines (e.g. Alloc_Pooled())
@@ -37,27 +37,27 @@
 typedef struct rebol_mem_segment {
     struct rebol_mem_segment *next;
     uintptr_t size;
-} REBSEG;
+} Segment;
 
 
 // Specifies initial pool sizes
 //
 typedef struct rebol_mem_spec {
     REBLEN wide;  // size of allocation unit
-    REBLEN num_units;  // units per segment allocation
+    REBLEN num_units_per_segment;  // units per segment allocation
 } REBPOOLSPEC;
 
 
 // Pools manage fixed sized blocks of memory
 //
 struct rebol_mem_pool {
-    REBSEG *segs;  // first memory segment
-    REBPLU *first;  // first free item in pool
-    REBPLU *last;  // last free item in pool
-    REBLEN wide;  // size of allocation unit
-    REBLEN num_units;  // units per segment allocation
-    REBLEN free;  // number of units remaining
-    REBLEN has;  // total number of units
+    Segment* segments;  // first memory segment
+    PoolUnit* first;  // first free item in pool
+    PoolUnit* last;  // last free item in pool
+    Size wide;  // size of allocation unit
+    Length num_units_per_segment;  // units per segment allocation
+    Count free;  // number of units remaining
+    Count has;  // total number of units
 };
 
 #define DEF_POOL(size, count) {size, count}
@@ -73,14 +73,14 @@ enum Mem_Pool_Specs {
     MEM_SMALL_POOLS = MEM_TINY_POOL + 16,
     MEM_MID_POOLS = MEM_SMALL_POOLS + 4,
     MEM_BIG_POOLS = MEM_MID_POOLS + 4, // larger pools
-    SER_POOL = MEM_BIG_POOLS,
+    STUB_POOL = MEM_BIG_POOLS,
   #if UNUSUAL_REBVAL_SIZE
-    PAR_POOL,
+    PAIR_POOL,
   #else
-    PAR_POOL = SER_POOL,
+    PAIR_POOL = STUB_POOL,
   #endif
-    FRM_POOL,
-    FED_POOL,
+    FRAME_POOL,
+    FEED_POOL,
     SYSTEM_POOL,
     MAX_POOLS
 };

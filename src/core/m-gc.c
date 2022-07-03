@@ -549,16 +549,17 @@ void Reify_Va_To_Array_In_Feed(
 //
 static void Mark_Root_Series(void)
 {
-    REBSEG *seg;
-    for (seg = Mem_Pools[SER_POOL].segs; seg; seg = seg->next) {
-        Byte* unit = cast(Byte*, seg + 1);
-        REBLEN n = Mem_Pools[SER_POOL].num_units;
-        for (; n > 0; --n, unit += sizeof(REBSER)) {
+    Segment* seg = Mem_Pools[STUB_POOL].segments;
+
+    for (; seg != nullptr; seg = seg->next) {
+        Byte* stub = cast(Byte*, seg + 1);
+        Length n = Mem_Pools[STUB_POOL].num_units_per_segment;
+        for (; n > 0; --n, stub += sizeof(Stub)) {
             //
             // !!! A smarter switch statement here could do this more
             // optimally...see the sweep code for an example.
             //
-            Byte nodebyte = *unit;
+            Byte nodebyte = *stub;
             if (nodebyte & NODE_BYTEMASK_0x40_STALE)
                 continue;
 
@@ -569,7 +570,7 @@ static void Mark_Root_Series(void)
                 // This came from Alloc_Value(); all references should be
                 // from the C stack, only this visit should be marking it.
                 //
-                Array(*) a = ARR(cast(void*, unit));
+                Array(*) a = ARR(cast(void*, stub));
 
                 assert(not (a->leader.bits & NODE_FLAG_MARKED));
 
@@ -598,7 +599,7 @@ static void Mark_Root_Series(void)
             }
 
             if (nodebyte & NODE_BYTEMASK_0x01_CELL) {  // a pairing
-                REBVAL *paired = VAL(cast(void*, unit));
+                REBVAL *paired = VAL(cast(void*, stub));
                 if (paired->header.bits & NODE_FLAG_MANAGED)
                     continue; // PAIR! or other value will mark it
 
@@ -614,7 +615,7 @@ static void Mark_Root_Series(void)
             // the stack want to know the "last".)  Hence it is exempt from
             // this marking rather than keeping the length up to date.  Review.
             //
-            REBSER *s = SER(cast(void*, unit));
+            REBSER *s = SER(cast(void*, stub));
             if (
                 IS_SER_ARRAY(s)
                 and s != DS_Array  // !!! Review DS_Array exemption!
@@ -926,31 +927,35 @@ static void Mark_Frame_Stack_Deep(void)
 //  Sweep_Series: C
 //
 // Scans all series nodes (REBSER structs) in all segments that are part of
-// the SER_POOL.  If a series had its lifetime management delegated to the
+// the STUB_POOL.  If a series had its lifetime management delegated to the
 // garbage collector with Manage_Series(), then if it didn't get "marked" as
 // live during the marking phase then free it.
 //
-static REBLEN Sweep_Series(void)
+//////////////////////////////////////////////////////////////////////////////
+//
+// 1. We use a generic byte pointer (unsigned char*) to dodge the rules for
+//    strict aliases, as the pool contain pairs of REBVAL from Alloc_Pairing(),
+//    or a REBSER from Prep_Stub().  The shared first byte node masks are
+//    defined and explained in %sys-rebnod.h
+//
+// 2. For efficiency of memory use, REBSER is nominally 2*sizeof(REBVAL), and
+//    so pairs can use the same Stub nodes.  But features that might make the
+//    cells a size greater than REBSER size require doing pairings in a
+//    different pool.
+//
+static Count Sweep_Series(void)
 {
-    REBLEN sweep_count = 0;
+    Count sweep_count = 0;
 
-    REBSEG *seg = Mem_Pools[SER_POOL].segs;
+  blockscope {
+    Segment* seg = Mem_Pools[STUB_POOL].segments;
+
     for (; seg != nullptr; seg = seg->next) {
-        REBLEN n = Mem_Pools[SER_POOL].num_units;
+        Count n = Mem_Pools[STUB_POOL].num_units_per_segment;
+        Byte* stub = cast(Byte*, seg + 1);  // byte beats strict alias, see [1]
 
-        // We use a generic byte pointer (unsigned char*) to dodge the rules
-        // for strict aliasing, as the pool may contain pairs of REBVAL from
-        // Alloc_Pairing(), or a REBSER from Prep_Stub().  The shared
-        // first byte node masks are defined and explained in %sys-rebnod.h
-        //
-        // NOTE: If you are using a build with UNUSUAL_REBVAL_SIZE such as
-        // DEBUG_TRACK_EXTEND_CELLS, then this will be processing the REBSER
-        // nodes only--see loop lower down for the pairing pool enumeration.
-
-        Byte* unit = cast(Byte*, seg + 1);
-
-        for (; n > 0; --n, unit += sizeof(REBSER)) {
-            switch (*unit >> 4) {
+        for (; n > 0; --n, stub += sizeof(Stub)) {
+            switch (*stub >> 4) {
               case 0:
               case 1:  // 0x1
               case 2:  // 0x2
@@ -964,7 +969,7 @@ static REBLEN Sweep_Series(void)
                 // reserved for UTF-8 strings (corresponding to valid ASCII
                 // values in the first byte).
                 //
-                panic (unit);
+                panic (stub);
 
             // v-- Everything below here has NODE_FLAG_NODE set (0x8)
 
@@ -985,7 +990,7 @@ static REBLEN Sweep_Series(void)
                 // 0x8 + 0x1: marked but not managed, this can't happen,
                 // because the marking itself asserts nodes are managed.
                 //
-                panic (unit);
+                panic (stub);
 
               case 10:
                 // 0x8 + 0x2: managed but didn't get marked, should be GC'd
@@ -994,12 +999,12 @@ static REBLEN Sweep_Series(void)
                 // as part of the switch, but see its definition for why it
                 // is at position 8 from left and not an earlier bit.
                 //
-                if (*unit & NODE_BYTEMASK_0x01_CELL) {
-                    assert(not (*unit & NODE_BYTEMASK_0x02_ROOT));
-                    Free_Pooled(SER_POOL, NOD(unit));  // Free_Pairing manual
+                if (*stub & NODE_BYTEMASK_0x01_CELL) {
+                    assert(not (*stub & NODE_BYTEMASK_0x02_ROOT));
+                    Free_Pooled(STUB_POOL, stub);  // Free_Pairing manual
                 }
                 else {
-                    REBSER *s = cast(REBSER*, unit);
+                    REBSER *s = cast(REBSER*, stub);
                     GC_Kill_Series(s);
                 }
                 ++sweep_count;
@@ -1009,7 +1014,7 @@ static REBLEN Sweep_Series(void)
                 // 0x8 + 0x2 + 0x1: managed and marked, so it's still live.
                 // Don't GC it, just clear the mark.
                 //
-                *unit &= ~NODE_BYTEMASK_0x10_MARKED;
+                *stub &= ~NODE_BYTEMASK_0x10_MARKED;
               #if !defined(NDEBUG)
                 --mark_count;
               #endif
@@ -1023,26 +1028,26 @@ static REBLEN Sweep_Series(void)
               case 12:
                 // 0x8 + 0x4: free node, uses special illegal UTF-8 byte
                 //
-                assert(*unit == FREED_SERIES_BYTE);
+                assert(*stub == FREED_SERIES_BYTE);
                 break;
 
               case 13:
               case 14:
               case 15:
-                panic (unit);  // 0x8 + 0x4 + ... reserved for UTF-8
+                panic (stub);  // 0x8 + 0x4 + ... reserved for UTF-8
             }
         }
     }
+  }
 
-    // For efficiency of memory use, REBSER is nominally defined as
-    // 2*sizeof(REBVAL), and so pairs can use the same nodes.  But features
-    // that might make the cells a size greater than REBSER size require
-    // doing pairings in a different pool.
-    //
-  #if UNUSUAL_REBVAL_SIZE
-    for (seg = Mem_Pools[PAR_POOL].segs; seg != NULL; seg = seg->next) {
+  #if UNUSUAL_REBVAL_SIZE  // pairing pool is separate in this case, see [2]
+  blockscope {
+    Segment* seg = Mem_Pools[PAIR_POOL].segments;
+
+    for (; seg != nullptr; seg = seg->next) {
+        Length n = Mem_Pools[PAIR_POOL].num_units_per_segment;
+
         REBVAL *v = cast(REBVAL*, seg + 1);
-        REBLEN n = Mem_Pools[PAR_POOL].num_units;
         for (; n > 0; --n, v += 2) {
             if (v->header.bits & SERIES_FLAG_FREE) {
                 assert(FIRST_BYTE(v->header) == FREED_SERIES_BYTE);
@@ -1060,12 +1065,13 @@ static REBLEN Sweep_Series(void)
                   #endif
                 }
                 else {
-                    Free_Pooled(PAR_POOL, v);  // Free_Pairing is for manuals
+                    Free_Pooled(PAIR_POOL, v);  // Free_Pairing is for manuals
                     ++sweep_count;
                 }
             }
         }
     }
+  }
   #endif
 
     return sweep_count;
@@ -1082,12 +1088,15 @@ REBLEN Fill_Sweeplist(REBSER *sweeplist)
     assert(SER_WIDE(sweeplist) == sizeof(Node*));
     assert(SER_USED(sweeplist) == 0);
 
-    REBLEN sweep_count = 0;
+    Count sweep_count = 0;
 
-    REBSEG *seg;
-    for (seg = Mem_Pools[SER_POOL].segs; seg != NULL; seg = seg->next) {
+    Segment* seg = Mem_Pools[STUB_POOL].segments;
+
+    for (; seg != nullptr; seg = seg->next) {
+        Count n = Mem_Pools[STUB_POOL].num_units_per_segment;
+
         Byte* stub = cast(Byte*, seg + 1);
-        REBLEN n = Mem_Pools[SER_POOL].num_units;
+
         for (; n > 0; --n, stub += sizeof(Stub)) {
             switch (*stub >> 4) {
               case 9: {  // 0x8 + 0x1
@@ -1175,7 +1184,7 @@ REBLEN Recycle_Core(bool shutdown, REBSER *sweeplist)
 
   #if DEBUG_COLLECT_STATS
     PG_Reb_Stats->Recycle_Counter++;
-    PG_Reb_Stats->Recycle_Series = Mem_Pools[SER_POOL].free;
+    PG_Reb_Stats->Recycle_Series = Mem_Pools[STUB_POOL].free;
     PG_Reb_Stats->Mark_Count = 0;
   #endif
 
@@ -1306,7 +1315,7 @@ REBLEN Recycle_Core(bool shutdown, REBSER *sweeplist)
   #if DEBUG_COLLECT_STATS
     // Compute new stats:
     PG_Reb_Stats->Recycle_Series
-        = Mem_Pools[SER_POOL].free - PG_Reb_Stats->Recycle_Series;
+        = Mem_Pools[STUB_POOL].free - PG_Reb_Stats->Recycle_Series;
     PG_Reb_Stats->Recycle_Series_Total += PG_Reb_Stats->Recycle_Series;
     PG_Reb_Stats->Recycle_Prior_Eval = Total_Eval_Cycles;
   #endif
