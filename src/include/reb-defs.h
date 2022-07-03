@@ -136,7 +136,10 @@ typedef struct Reb_Pool_Unit REBPLU;
 //
 
 struct Reb_Stub;
-typedef struct Reb_Stub Raw_Series;
+
+typedef struct Reb_Stub Stub;
+
+typedef Stub Raw_Series;
 
 typedef Raw_Series REBSER;
 

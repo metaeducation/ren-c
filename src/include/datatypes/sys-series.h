@@ -389,7 +389,7 @@ inline static size_t SER_TOTAL_IF_DYNAMIC(const REBSER *s) {
 // enable it only comes automatically with address sanitizer.
 //
 #if DEBUG_SERIES_ORIGINS || DEBUG_COUNT_TICKS
-    inline static void Touch_Series_Debug(void *p) {
+    inline static void Touch_Stub_Debug(void *p) {
         REBSER *s = SER(cast(REBNOD*, p));  // Array(*), Context(*), REBACT...
 
         // NOTE: When series are allocated, the only thing valid here is the
@@ -408,10 +408,10 @@ inline static size_t SER_TOTAL_IF_DYNAMIC(const REBSER *s) {
       #endif
     }
 
-    #define TOUCH_SERIES_IF_DEBUG(s) \
-        Touch_Series_Debug(s)
+    #define TOUCH_STUB_IF_DEBUG(s) \
+        Touch_Stub_Debug(s)
 #else
-    #define TOUCH_SERIES_IF_DEBUG(s) \
+    #define TOUCH_STUB_IF_DEBUG(s) \
         NOOP
 #endif
 
@@ -598,7 +598,7 @@ inline static void SET_SERIES_USED(REBSER *s, REBLEN used) {
     //
     if (IS_NONSYMBOL_STRING(s)) {
         s->misc.length = 0xDECAFBAD;
-        TOUCH_SERIES_IF_DEBUG(s);
+        TOUCH_STUB_IF_DEBUG(s);
     }
   #endif
 }
@@ -1160,23 +1160,14 @@ inline static REBVAL *Init_Series_Cell_At_Core(
     Init_Series_Cell_At((v), (t), (s), 0)
 
 
-// Make a series of a given width (unit size).  The series will be zero
-// length to start with, and will not have a dynamic data allocation.  This
-// is a particularly efficient default state, so separating the dynamic
-// allocation into a separate routine is not a huge cost.
+// Out of the 8 platform pointers that comprise a series node, only 3 actually
+// need to be initialized to get a functional non-dynamic series or array of
+// length 0!  Only one is set here.  The info should be set by the caller.
 //
-// Note: This series will not participate in management tracking!
-// See NODE_FLAG_MANAGED handling in Make_Array_Core() and Make_Series().
-//
-inline static REBSER *Prep_Series_Node(void *preallocated, Flags flags) {
+inline static Stub* Prep_Stub(void *preallocated, Flags flags) {
     assert(not (flags & NODE_FLAG_CELL));
 
-    REBSER *s = cast(REBSER*, preallocated);  // won't pass SER() yet
-
-    // Out of the 8 platform pointers that comprise a series node, only 3
-    // actually need to be initialized to get a functional non-dynamic series
-    // or array of length 0!  Only one is set here.  The info should be
-    // set by the caller, as should a terminator in the internal payload
+    Stub *s = cast(Stub*, preallocated);
 
     s->leader.bits = NODE_FLAG_NODE | flags;  // #1
 
@@ -1190,7 +1181,7 @@ inline static REBSER *Prep_Series_Node(void *preallocated, Flags flags) {
     memset(&s->info, 0xAE, sizeof(s->info));  // #7
     SAFETRASH_POINTER_IF_DEBUG(s->link.trash);  // #8
 
-    TOUCH_SERIES_IF_DEBUG(s);  // tag current C stack as series origin in ASAN
+    TOUCH_STUB_IF_DEBUG(s);  // tag current C stack as series origin in ASAN
   #endif
 
   #if DEBUG_COLLECT_STATS
@@ -1335,12 +1326,16 @@ inline static REBSER *Make_Series_Into(
     if (cast(REBU64, capacity) * wide > INT32_MAX)
         fail (Error_No_Memory(cast(REBU64, capacity) * wide));
 
-    REBSER *s = Prep_Series_Node(preallocated, flags);
+    Stub* s = Prep_Stub(preallocated, flags);
 
-    if (GET_SERIES_FLAG(s, INFO_NODE_NEEDS_MARK))
+  #if defined(NDEBUG)
+    SER_INFO(s) = SERIES_INFO_MASK_NONE;
+  #else
+    if (flags & SERIES_FLAG_INFO_NODE_NEEDS_MARK)
         TRASH_POINTER_IF_DEBUG(s->info.node);
     else
         SER_INFO(s) = SERIES_INFO_MASK_NONE;
+  #endif
 
     if (
         (flags & SERIES_FLAG_DYNAMIC)  // inlining will constant fold

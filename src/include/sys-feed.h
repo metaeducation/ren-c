@@ -514,7 +514,7 @@ inline static Feed(*) Prep_Feed_Common(void* preallocated, Flags flags) {
     Init_Trash(Prep_Cell(&feed->fetched));
     Init_Trash(Prep_Cell(&feed->lookback));
 
-    REBSER *s = Prep_Series_Node(
+    Stub* s = Prep_Stub(
         &feed->singular,  // preallocated
         NODE_FLAG_NODE | FLAG_FLAVOR(FEED)
     );

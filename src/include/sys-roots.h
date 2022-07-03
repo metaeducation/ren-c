@@ -123,7 +123,7 @@ inline static void Unlink_Api_Handle_From_Frame(Array(*) a)
 // leave it trash.  If a pattern like `Do_Evaluation_Into(Alloc_Value(), ...)`
 // is used, then there might be a recycle during the evaluation that sees it.
 // Low-level allocation already pulled off making it VOID with just three
-// assignments, see Prep_Series_Node() for that magic.
+// assignments, see Prep_Stub() for that magic.
 //
 inline static REBVAL *Alloc_Value(void)
 {

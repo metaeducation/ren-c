@@ -1065,7 +1065,7 @@ void Remake_Series(REBSER *s, REBLEN units, Flags flags)
   #if DEBUG_UTF8_EVERYWHERE
     if (IS_NONSYMBOL_STRING(s)) {
         s->misc.length = 0xDECAFBAD;
-        TOUCH_SERIES_IF_DEBUG(s);
+        TOUCH_STUB_IF_DEBUG(s);
     }
   #endif
 
@@ -1192,7 +1192,7 @@ void GC_Kill_Series(REBSER *s)
     // freed it.  If you need to know the tick where it was allocated, then
     // comment this out so it remains that way.
     //
-    TOUCH_SERIES_IF_DEBUG(s);
+    TOUCH_STUB_IF_DEBUG(s);
 
     if (NOT_SERIES_FLAG(s, INACCESSIBLE))
         Decay_Series(s);

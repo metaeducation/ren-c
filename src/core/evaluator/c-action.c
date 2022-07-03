@@ -1230,7 +1230,7 @@ void Push_Action(
 
     assert(f->varlist == nullptr);
 
-    REBSER *s = Prep_Series_Node(
+    Stub* s = Prep_Stub(
         Alloc_Series_Node(),  // not preallocated
         SERIES_MASK_VARLIST
             | SERIES_FLAG_FIXED_SIZE // FRAME!s don't expand ATM
