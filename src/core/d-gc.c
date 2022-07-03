@@ -59,8 +59,8 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
 
         assert(IS_SER_ARRAY(binding));
         if (IS_VARLIST(binding) and CTX_TYPE(CTX(binding)) == REB_FRAME) {
-            REBNOD *keysource = BONUS(KeySource, ARR(binding));
-            if (not Is_Node_Cell(keysource)) {
+            Node* keysource = BONUS(KeySource, ARR(binding));
+            if (Is_Node_A_Stub(keysource)) {
                 if (
                     (SER(keysource)->leader.bits & SERIES_MASK_KEYLIST)
                     != SERIES_MASK_KEYLIST
@@ -189,7 +189,7 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
 
       case REB_EVENT: {  // packed cell structure with one GC-able slot
         assert(Get_Cell_Flag(v, FIRST_IS_NODE));
-        REBNOD *n = VAL_NODE1(v);  // REBGOB*, Context(*), etc.
+        Node* n = VAL_NODE1(v);  // REBGOB*, Context(*), etc.
         assert(n == nullptr or Is_Marked(n));
         break; }
 
@@ -333,7 +333,7 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
         if (Not_Cell_Flag(v, SEQUENCE_HAS_NODE))
             break;  // should be just bytes
 
-        const REBNOD *node1 = VAL_NODE1(v);
+        const Node* node1 = VAL_NODE1(v);
         assert(not (NODE_BYTE(node1) & NODE_BYTEMASK_0x01_CELL));
 
         switch (SER_FLAVOR(SER(node1))) {
@@ -496,11 +496,11 @@ void Assert_Array_Marked_Correctly(Array(const*) a) {
         // because of the potential for overflowing the C stack with calls
         // to Queue_Mark_Context_Deep.
 
-        REBNOD *keysource = BONUS(KeySource, a);
+        Node* keysource = BONUS(KeySource, a);
         if (not keysource) {
             assert(VAL_TYPE(archetype) == REB_MODULE);
         }
-        else if (Is_Node_Cell(keysource)) {
+        else if (Is_Node_A_Cell(keysource)) {
             //
             // Must be a FRAME! and it must be on the stack running.  If
             // it has stopped running, then the keylist must be set to

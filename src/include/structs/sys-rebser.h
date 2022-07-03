@@ -551,7 +551,7 @@ union Reb_Stub_Bonus {
     // Series nodes that do not use bias (e.g. context varlists) can use the
     // bonus slot for other information.
     //
-    const REBNOD *node;
+    const Node* node;
 };
 
 
@@ -640,7 +640,7 @@ union Reb_Stub_Link {
     //
     void *fd;
 
-    // If a REBNOD* is stored in the link field, it has to use this union
+    // If a Node* is stored in the link field, it has to use this union
     // member for SERIES_INFO_LINK_NODE_NEEDS_MARK to see it.  To help make
     // the reference sites be unique for each purpose and still be type safe,
     // see the LINK() macro helpers.
@@ -687,7 +687,7 @@ union Reb_Stub_Misc {
     //
     bool negated;
 
-    // If a REBNOD* is stored in the misc field, it has to use this union
+    // If a Node* is stored in the misc field, it has to use this union
     // member for SERIES_INFO_MISC_NODE_NEEDS_MARK to see it.  To help make
     // the reference sites be unique for each purpose and still be type safe,
     // see the MISC() macro helpers.
@@ -708,12 +708,12 @@ union Reb_Stub_Info {
     //
     union Reb_Header flags;
 
-    const REBNOD *node;
+    const Node* node;
 };
 
 
 #if CPLUSPLUS_11
-    struct Reb_Stub : public Reb_Node
+    struct Reb_Stub : public Raw_Node
 #else
     struct Reb_Stub
 #endif

@@ -66,7 +66,7 @@
         template <
             typename T,
             typename std::enable_if<
-                std::is_pointer<T>::value  // assume pointers are REBNOD*
+                std::is_pointer<T>::value  // assume pointers are Node*
             >::type* = nullptr
         >
         T Probe_Cpp_Helper(T v, const char *expr, const char *file, int line)
@@ -209,21 +209,21 @@
 // flag bits of the node.  This could have a runtime check in debug build
 // with a C++ variation that only takes mutable pointers.
 //
-inline static void INIT_VAL_NODE1(Cell(*) v, option(const REBNOD*) node) {
+inline static void INIT_VAL_NODE1(Cell(*) v, option(const Node*) node) {
     assert(v->header.bits & CELL_FLAG_FIRST_IS_NODE);
     PAYLOAD(Any, v).first.node = try_unwrap(node);
 }
 
-inline static void INIT_VAL_NODE2(Cell(*) v, option(const REBNOD*) node) {
+inline static void INIT_VAL_NODE2(Cell(*) v, option(const Node*) node) {
     assert(v->header.bits & CELL_FLAG_SECOND_IS_NODE);
     PAYLOAD(Any, v).second.node = try_unwrap(node);
 }
 
 #define VAL_NODE1(v) \
-    m_cast(REBNOD*, PAYLOAD(Any, (v)).first.node)
+    m_cast(Node*, PAYLOAD(Any, (v)).first.node)
 
 #define VAL_NODE2(v) \
-    m_cast(REBNOD*, PAYLOAD(Any, (v)).second.node)
+    m_cast(Node*, PAYLOAD(Any, (v)).second.node)
 
 
 
@@ -462,7 +462,7 @@ inline static REBVAL *RESET_CUSTOM_CELL(
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Some value types use their `->extra` field in order to store a pointer to
-// a REBNOD which constitutes their notion of "binding".
+// a Node which constitutes their notion of "binding".
 //
 // This can be null (which indicates unbound), to a function's paramlist
 // (which indicates a relative binding), or to a context's varlist (which
@@ -545,7 +545,7 @@ inline static REBVAL *SPECIFIC(const_if_c Cell(*) v) {
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Some value types use their `->extra` field in order to store a pointer to
-// a REBNOD which constitutes their notion of "binding".
+// a Node which constitutes their notion of "binding".
 //
 // This can either be null (a.k.a. UNBOUND), or to a function's paramlist
 // (indicates a relative binding), or to a context's varlist (which indicates
@@ -576,7 +576,7 @@ inline static REBVAL *SPECIFIC(const_if_c Cell(*) v) {
 #define SPECIFIED \
     ((REBSPC*)nullptr)  // cast() doesn't like nullptr, fix
 
-#define UNBOUND nullptr  // not always a REBNOD* (sometimes Context(*))
+#define UNBOUND nullptr  // not always a Node* (sometimes Context(*))
 #define UNSPECIFIED nullptr
 
 
@@ -587,8 +587,8 @@ inline static bool ANY_ARRAYLIKE(noquote(Cell(const*)) v) {
         return false;
     if (Not_Cell_Flag(v, FIRST_IS_NODE))
         return false;
-    const REBNOD *node1 = VAL_NODE1(v);
-    if (NODE_BYTE(node1) & NODE_BYTEMASK_0x01_CELL)
+    const Node* node1 = VAL_NODE1(v);
+    if (Is_Node_A_Cell(node1))
         return false;
     return SER_FLAVOR(SER(node1)) == FLAVOR_ARRAY;
 }
@@ -600,8 +600,8 @@ inline static bool ANY_WORDLIKE(noquote(Cell(const*)) v) {
         return false;
     if (Not_Cell_Flag(v, FIRST_IS_NODE))
         return false;
-    const REBNOD *node1 = VAL_NODE1(v);
-    if (NODE_BYTE(node1) & NODE_BYTEMASK_0x01_CELL)
+    const Node* node1 = VAL_NODE1(v);
+    if (Is_Node_A_Cell(node1))
         return false;
     return SER_FLAVOR(SER(node1)) == FLAVOR_SYMBOL;
 }

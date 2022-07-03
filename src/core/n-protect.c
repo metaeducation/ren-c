@@ -463,8 +463,8 @@ bool Is_Value_Frozen_Deep(Cell(const*) v) {
     if (Not_Cell_Flag(cell, FIRST_IS_NODE))
         return true;  // payloads that live in cell are immutable
 
-    REBNOD *node = VAL_NODE1(cell);
-    if (node == nullptr or Is_Node_Cell(node))
+    Node* node = VAL_NODE1(cell);
+    if (node == nullptr or Is_Node_A_Cell(node))
         return true;  // !!! Will all non-quoted Pairings be frozen?
 
     // Frozen deep should be set even on non-arrays, e.g. all frozen shallow

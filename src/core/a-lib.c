@@ -32,7 +32,7 @@
 // the C code using the library isn't competing as much for definitions in
 // the global namespace.
 //
-// Also, due to the nature of REBNOD (see %sys-node.h), it's possible to feed
+// Also, due to the nature of Node (see %sys-node.h), it's possible to feed
 // the scanner with a list of pointers that may be to UTF-8 strings or to
 // Rebol values.  The behavior is to "splice" in the values at the point in
 // the scan that they occur, e.g.
@@ -244,7 +244,7 @@ void RL_rebFree(void *ptr)
     UNPOISON_MEMORY(ps, sizeof(Binary(*)));  // need to underrun to fetch `s`
 
     Binary(*) s = *ps;
-    if (Is_Node_Cell(s)) {
+    if (Is_Node_A_Cell(s)) {
         rebJumps(
             "panic [",
                 "{rebFree() mismatched with allocator!}"
@@ -2032,11 +2032,11 @@ void RL_rebUnmanage(void *p)
 {
     ENTER_API;
 
-    REBNOD *nod = NOD(p);
-    if (not Is_Node_Cell(nod))
+    Node* n = NOD(p);
+    if (Is_Node_A_Stub(n))
         fail ("rebUnmanage() not yet implemented for rebMalloc() data");
 
-    REBVAL *v = cast(REBVAL*, nod);
+    REBVAL *v = cast(REBVAL*, n);
     assert(Is_Api_Value(v));
 
     Array(*) a = Singular_From_Cell(v);

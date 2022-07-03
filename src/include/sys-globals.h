@@ -231,7 +231,7 @@ TVAR uintptr_t TG_Stack_Limit;    // Limit address for CPU stack.
 #endif
 
 #if DEBUG_MONITOR_SERIES
-    PVAR const REBNOD *PG_Monitor_Node_Debug;
+    PVAR const Node* PG_Monitor_Node_Debug;
 #endif
 
 // Each time Eval_Core is called a Reb_Frame* is pushed to the "frame stack".

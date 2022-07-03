@@ -162,7 +162,7 @@ DECLARE_NATIVE(recycle)
 
         REBLEN index = 0;
         for (index = 0; index < count; ++index) {
-            REBNOD *node = *SER_AT(REBNOD*, sweeplist, index);
+            Node* node = *SER_AT(Node*, sweeplist, index);
             PROBE(node);
             UNUSED(node);
         }

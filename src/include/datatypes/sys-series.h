@@ -209,26 +209,26 @@
 //
 
 #define LINK(Field, s) \
-    LINK_##Field##_CAST(m_cast(REBNOD*, \
+    LINK_##Field##_CAST(m_cast(Node*, \
         ensure_flavor(HAS_LINK_##Field, (s))->link.any.node))
 
 #define MISC(Field, s) \
-    MISC_##Field##_CAST(m_cast(REBNOD*, \
+    MISC_##Field##_CAST(m_cast(Node*, \
         ensure_flavor(HAS_MISC_##Field, (s))->misc.any.node))
 
 #define mutable_LINK(Field, s) \
-    ensured(LINK_##Field##_TYPE, const REBNOD*, \
+    ensured(LINK_##Field##_TYPE, const Node*, \
         ensure_flavor(HAS_LINK_##Field, (s))->link.any.node)
 
 #define mutable_MISC(Field, s) \
-    ensured(MISC_##Field##_TYPE, const REBNOD*, \
+    ensured(MISC_##Field##_TYPE, const Node*, \
         ensure_flavor(HAS_MISC_##Field, (s))->misc.any.node)
 
 #define node_LINK(Field, s) \
-    *m_cast(REBNOD**, &(s)->link.any.node)  // const ok for strict alias
+    *m_cast(Node**, &(s)->link.any.node)  // const ok for strict alias
 
 #define node_MISC(Field, s) \
-    *m_cast(REBNOD**, &(s)->misc.any.node)  // const ok for strict alias
+    *m_cast(Node**, &(s)->misc.any.node)  // const ok for strict alias
 
 
 
@@ -277,15 +277,15 @@
     ((SER_INFO(s) & SERIES_INFO_##name) == 0)
 
 #define INODE(Field, s) \
-    INODE_##Field##_CAST(m_cast(REBNOD*, \
+    INODE_##Field##_CAST(m_cast(Node*, \
         ensure_flavor(HAS_INODE_##Field, (s))->info.node))
 
 #define mutable_INODE(Field, s) \
-    ensured(INODE_##Field##_TYPE, const REBNOD*, \
+    ensured(INODE_##Field##_TYPE, const Node*, \
         ensure_flavor(HAS_INODE_##Field, (s))->info.node)
 
 #define node_INODE(Field, s) \
-    *m_cast(REBNOD**, &(s)->info.node)  // const ok for strict alias
+    *m_cast(Node**, &(s)->info.node)  // const ok for strict alias
 
 
 //=//// SERIES CAPACITY AND TOTAL SIZE /////////////////////////////////////=//
@@ -355,26 +355,26 @@ inline static size_t SER_TOTAL_IF_DYNAMIC(const REBSER *s) {
     #define SER_BONUS(s) \
         (s)->content.dynamic.bonus.node
 #else
-    inline static const struct Reb_Node * const &SER_BONUS(const REBSER *s) {
+    inline static const struct Raw_Node * const &SER_BONUS(const REBSER *s) {
         assert(s->leader.bits & SERIES_FLAG_DYNAMIC);
         return s->content.dynamic.bonus.node;
     }
-    inline static const struct Reb_Node * &SER_BONUS(REBSER *s) {
+    inline static const struct Raw_Node * &SER_BONUS(REBSER *s) {
         assert(s->leader.bits & SERIES_FLAG_DYNAMIC);
         return s->content.dynamic.bonus.node;
     }
 #endif
 
 #define BONUS(Field, s) \
-    BONUS_##Field##_CAST(m_cast(REBNOD*, \
+    BONUS_##Field##_CAST(m_cast(Node*, \
         SER_BONUS(ensure_flavor(HAS_BONUS_##Field, (s)))))
 
 #define mutable_BONUS(Field, s) \
-    ensured(BONUS_##Field##_TYPE, const REBNOD*, \
+    ensured(BONUS_##Field##_TYPE, const Node*, \
         SER_BONUS(ensure_flavor(HAS_BONUS_##Field, (s))))
 
 #define node_BONUS(Field, s) \
-    *m_cast(REBNOD**, &SER_BONUS(s))  // const ok for strict alias
+    *m_cast(Node**, &SER_BONUS(s))  // const ok for strict alias
 
 
 //=//// SERIES "TOUCH" FOR DEBUGGING ///////////////////////////////////////=//
@@ -390,7 +390,7 @@ inline static size_t SER_TOTAL_IF_DYNAMIC(const REBSER *s) {
 //
 #if DEBUG_SERIES_ORIGINS || DEBUG_COUNT_TICKS
     inline static void Touch_Stub_Debug(void *p) {
-        REBSER *s = SER(cast(REBNOD*, p));  // Array(*), Context(*), REBACT...
+        Stub *s = cast(Stub*, p);  // Array*, Context*, Action*...
 
         // NOTE: When series are allocated, the only thing valid here is the
         // header.  Hence you can't tell (for instance) if it's an array or
@@ -428,7 +428,7 @@ inline static size_t SER_TOTAL_IF_DYNAMIC(const REBSER *s) {
     inline static void MONITOR_SERIES(void *p) {
         printf("Adding monitor to %p on tick #%d\n", p, cast(int, TG_Tick));
         fflush(stdout);
-        PG_Monitor_Node_Debug = SER(cast(REBNOD*, p));
+        PG_Monitor_Node_Debug = SER(cast(Node*, p));
     }
 #endif
 
@@ -974,11 +974,11 @@ inline static Cell(const*) ENSURE_MUTABLE(Cell(const*) v) {
 #define PUSH_GC_GUARD(node) \
     Push_Guard_Node(node)
 
-inline static void DROP_GC_GUARD(const REBNOD *node) {
+inline static void DROP_GC_GUARD(const Node* node) {
   #if defined(NDEBUG)
     UNUSED(node);
   #else
-    if (node != *SER_LAST(const REBNOD*, GC_Guarded)) {
+    if (node != *SER_LAST(const Node*, GC_Guarded)) {
         printf("DROP_GC_GUARD() pointer that wasn't last PUSH_GC_GUARD()\n");
         panic (node);
     }

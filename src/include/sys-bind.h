@@ -92,8 +92,8 @@
 //
 inline static bool Is_Overriding_Context(Context(*) stored, Context(*) override)
 {
-    REBNOD *stored_source = BONUS(KeySource, CTX_VARLIST(stored));
-    REBNOD *temp = BONUS(KeySource, CTX_VARLIST(override));
+    Node* stored_source = BONUS(KeySource, CTX_VARLIST(stored));
+    Node* temp = BONUS(KeySource, CTX_VARLIST(override));
 
     // FRAME! "keylists" are actually paramlists, and the LINK.underlying
     // field is used in paramlists (precluding a LINK.ancestor).  Plus, since
@@ -106,9 +106,9 @@ inline static bool Is_Overriding_Context(Context(*) stored, Context(*) override)
     // !!! Note that in virtual binding, something like a FOR-EACH would
     // wind up overriding words bound to FRAME!s, even though not "derived".
     //
-    if (Is_Node_Cell(stored_source))
+    if (Is_Node_A_Cell(stored_source))
         return false;
-    if (Is_Node_Cell(temp))
+    if (Is_Node_A_Cell(temp))
         return false;
 
     while (true) {
@@ -984,7 +984,7 @@ inline static REBVAL *Derelativize_Untracked(
 // top of each other, the chain always bottoms out on the same FRAME! that
 // the original specifier was pointing to.
 //
-inline static REBNOD** SPC_FRAME_CTX_ADDRESS(REBSPC *specifier)
+inline static Node** SPC_FRAME_CTX_ADDRESS(REBSPC *specifier)
 {
     assert(IS_PATCH(specifier));
     while (
@@ -1201,7 +1201,7 @@ inline static REBSPC *Derive_Specifier_Core(
         // an extra check of that, review when efficiency is being revisited
         // (SPC_PATCH_CTX() as separate entry point?)
         //
-        REBNOD **specifier_frame_ctx_addr = SPC_FRAME_CTX_ADDRESS(specifier);
+        Node** specifier_frame_ctx_addr = SPC_FRAME_CTX_ADDRESS(specifier);
         if (*specifier_frame_ctx_addr == old)  // all clear to reuse
             return specifier;
 

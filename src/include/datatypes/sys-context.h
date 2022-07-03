@@ -241,7 +241,7 @@ inline static void INIT_VAL_FRAME_ROOTVAR_Core(
 
 inline static Keylist(*) CTX_KEYLIST(Context(*) c) {
     assert(CTX_TYPE(c) != REB_MODULE);
-    if (Is_Node_Cell(BONUS(KeySource, CTX_VARLIST(c)))) {
+    if (Is_Node_A_Cell(BONUS(KeySource, CTX_VARLIST(c)))) {
         //
         // running frame, source is Frame(*), so use action's paramlist.
         //
@@ -369,12 +369,12 @@ inline static REBVAR *CTX_VARS(const REBVAR ** tail, Context(*) c) {
 
 inline static bool Is_Frame_On_Stack(Context(*) c) {
     assert(IS_FRAME(CTX_ARCHETYPE(c)));
-    return Is_Node_Cell(BONUS(KeySource, CTX_VARLIST(c)));
+    return Is_Node_A_Cell(BONUS(KeySource, CTX_VARLIST(c)));
 }
 
 inline static Frame(*) CTX_FRAME_IF_ON_STACK(Context(*) c) {
-    REBNOD *keysource = BONUS(KeySource, CTX_VARLIST(c));
-    if (not Is_Node_Cell(keysource))
+    Node* keysource = BONUS(KeySource, CTX_VARLIST(c));
+    if (not Is_Node_A_Cell(keysource))
         return nullptr; // e.g. came from MAKE FRAME! or Encloser_Dispatcher
 
     assert(NOT_SERIES_FLAG(CTX_VARLIST(c), INACCESSIBLE));
@@ -716,7 +716,7 @@ inline static const REBVAR *TRY_VAL_CONTEXT_VAR_CORE(
 // filled-in heap memory can be directly used as the args for the invocation,
 // instead of needing to push a redundant run of stack-based memory cells.
 //
-inline static Context(*) Steal_Context_Vars(Context(*) c, REBNOD *keysource) {
+inline static Context(*) Steal_Context_Vars(Context(*) c, Node* keysource) {
     REBSER *stub = CTX_VARLIST(c);
 
     // Rather than memcpy() and touch up the header and info to remove

@@ -36,12 +36,12 @@
 //
 // Returns the containing node.
 //
-REBNOD *Dump_Value_Debug(Cell(const*) v)
+Node* Dump_Value_Debug(Cell(const*) v)
 {
     fflush(stdout);
     fflush(stderr);
 
-    REBNOD *containing = Try_Find_Containing_Node_Debug(v);
+    Node* containing = Try_Find_Containing_Node_Debug(v);
 
   #if DEBUG_TRACK_EXTEND_CELLS
     printf("REBVAL init");
@@ -71,7 +71,7 @@ REBNOD *Dump_Value_Debug(Cell(const*) v)
     if (not containing)
         return nullptr;
 
-    if (not Is_Node_Cell(containing)) {
+    if (Is_Node_A_Stub(containing)) {
         printf(
             "Containing series for value pointer found, %p:\n",
             cast(void*, containing)
@@ -100,7 +100,7 @@ REBNOD *Dump_Value_Debug(Cell(const*) v)
 // information was stored.  See DEBUG_TRACK_EXTEND_CELLS.
 //
 ATTRIBUTE_NO_RETURN void Panic_Value_Debug(Cell(const*) v) {
-    REBNOD *containing = Dump_Value_Debug(v);
+    Node* containing = Dump_Value_Debug(v);
 
     if (containing) {
         printf("Panicking the containing REBSER...\n");

@@ -299,7 +299,7 @@ void Extra_Init_Context_Cell_Checks_Debug(enum Reb_Kind kind, Context(*) c) {
     // REBVAL is reserved for future use in other context types...so make
     // sure it's null at this point in time.
     //
-    REBNOD *archetype_phase = VAL_FRAME_PHASE_OR_LABEL_NODE(archetype);
+    Node* archetype_phase = VAL_FRAME_PHASE_OR_LABEL_NODE(archetype);
     if (CTX_TYPE(c) == REB_FRAME)
         assert(IS_DETAILS(ARR(archetype_phase)));
     else

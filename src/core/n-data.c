@@ -369,11 +369,6 @@ bool Did_Get_Binding_Of(REBVAL *out, const REBVAL *v)
         // result in that word having a FRAME! incarnated as a REBSER node (if
         // it was not already reified.)
         //
-        // !!! In the future Raw_Context will refer to a REBNOD*, and only
-        // be reified based on the properties of the cell into which it is
-        // moved (e.g. OUT would be examined here to determine if it would
-        // have a longer lifetime than the Frame(*) or other node)
-        //
         Context(*) c = VAL_WORD_CONTEXT(v);
 
         // If it's a FRAME! we want the phase to match the execution phase at
@@ -608,7 +603,7 @@ bool Get_Var_Push_Refinements_Throws(
         if (Not_Cell_Flag(var, SEQUENCE_HAS_NODE))  // byte compressed
             fail (var);
 
-        const REBNOD *node1 = VAL_NODE1(var);
+        const Node* node1 = VAL_NODE1(var);
         if (NODE_BYTE(node1) & NODE_BYTEMASK_0x01_CELL) { // pair compressed
             assert(false);  // these don't exist yet
             fail (var);
@@ -792,7 +787,7 @@ bool Get_Path_Push_Refinements_Throws(
         return false;
     }
 
-    const REBNOD *node1 = VAL_NODE1(path);
+    const Node* node1 = VAL_NODE1(path);
     if (NODE_BYTE(node1) & NODE_BYTEMASK_0x01_CELL) {
         assert(false);  // none of these exist yet
         return false;
@@ -1103,8 +1098,8 @@ bool Set_Var_Core_Updater_Throws(
         if (Not_Cell_Flag(var, SEQUENCE_HAS_NODE))  // compressed byte form
             fail (var);
 
-        const REBNOD* node1 = VAL_NODE1(var);
-        if (NODE_BYTE(node1) & NODE_BYTEMASK_0x01_CELL) {  // pair optimization
+        const Node* node1 = VAL_NODE1(var);
+        if (Is_Node_A_Cell(node1)) {  // pair optimization
             assert(false);  // these don't exist yet
             fail (var);
         }
@@ -1637,7 +1632,7 @@ DECLARE_NATIVE(free_q)
     if (Not_Cell_Flag(v, FIRST_IS_NODE))
         return Init_False(OUT);
 
-    REBNOD *n = VAL_NODE1(v);
+    Node* n = VAL_NODE1(v);
 
     // If the node is not a series (e.g. a pairing), it cannot be freed (as
     // a freed version of a pairing is the same size as the pairing).
@@ -1645,7 +1640,7 @@ DECLARE_NATIVE(free_q)
     // !!! Technically speaking a PAIR! could be freed as an array could, it
     // would mean converting the node.  Review.
     //
-    if (n == nullptr or Is_Node_Cell(n))
+    if (n == nullptr or Is_Node_A_Cell(n))
         return Init_False(OUT);
 
     return Init_Logic(OUT, GET_SERIES_FLAG(SER(n), INACCESSIBLE));
@@ -1840,7 +1835,7 @@ DECLARE_NATIVE(as)
             if (Not_Cell_Flag(v, SEQUENCE_HAS_NODE))
                 fail ("Array Conversions of byte-oriented sequences TBD");
 
-            const REBNOD *node1 = VAL_NODE1(v);
+            const Node* node1 = VAL_NODE1(v);
             assert(not (NODE_BYTE(node1) & NODE_BYTEMASK_0x01_CELL));
 
             switch (SER_FLAVOR(SER(node1))) {

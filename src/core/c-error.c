@@ -116,8 +116,8 @@ void Assert_State_Balanced_Debug(
             "PUSH_GC_GUARD()x%d without DROP_GC_GUARD()\n",
             cast(int, SER_USED(GC_Guarded) - s->guarded_len)
         );
-        REBNOD *guarded = *SER_AT(
-            REBNOD*,
+        Node* guarded = *SER_AT(
+            Node*,
             GC_Guarded,
             SER_USED(GC_Guarded) - 1
         );

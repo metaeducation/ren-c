@@ -73,10 +73,10 @@
 // But access via the GC just sees the fields as their generic nodes (though
 // through a non-const point of view, to mark them).
 
-#define LINK_Node_TYPE      REBNOD*
+#define LINK_Node_TYPE      Node*
 #define LINK_Node_CAST
 
-#define MISC_Node_TYPE      REBNOD*
+#define MISC_Node_TYPE      Node*
 #define MISC_Node_CAST
 
 
@@ -174,13 +174,13 @@ static void Queue_Unmarked_Accessible_Series_Deep(REBSER *s);
 // turned into a decayed form and only kept alive to prevent referencing
 // pointers to be swept.  See Decay_Series()
 //
-static void Queue_Mark_Node_Deep(const REBNOD **pp) {
+static void Queue_Mark_Node_Deep(const Node**pp) {
     Byte first = *cast(const Byte*, *pp);
     if (first & NODE_BYTEMASK_0x10_MARKED)
         return;  // may not be finished marking yet, but has been queued
 
     if (first & NODE_BYTEMASK_0x01_CELL) {  // e.g. a pairing
-        REBVAL *v = VAL(m_cast(REBNOD*, *pp));
+        REBVAL *v = VAL(m_cast(Node*, *pp));
         if (Get_Cell_Flag(v, MANAGED))
             Queue_Mark_Pairing_Deep(v);
         else {
@@ -190,7 +190,7 @@ static void Queue_Mark_Node_Deep(const REBNOD **pp) {
         return;  // it's 2 cells, sizeof(REBSER), but no room for REBSER data
     }
 
-    REBSER *s = SER(m_cast(REBNOD*, *pp));
+    REBSER *s = SER(m_cast(Node*, *pp));
     if (GET_SERIES_FLAG(s, INACCESSIBLE)) {
         //
         // All inaccessible nodes are collapsed and canonized into a universal
@@ -298,7 +298,7 @@ static void Queue_Unmarked_Accessible_Series_Deep(REBSER *s)
             // This makes less sense than pretending to be a series that is
             // already marked, and has a detectable FLAVOR_XXX.  Review.
             //
-            if (Is_Node_Cell(node_BONUS(Node, s)))
+            if (Is_Node_A_Cell(node_BONUS(Node, s)))
                 goto skip_mark_frame_bonus;
 
             assert(IS_KEYLIST(SER(node_BONUS(Node, a))));
@@ -727,10 +727,10 @@ static void Mark_Symbol_Series(void)
 //
 static void Mark_Guarded_Nodes(void)
 {
-    const REBNOD **np = SER_HEAD(const REBNOD*, GC_Guarded);
+    const Node* *np = SER_HEAD(const Node*, GC_Guarded);
     REBLEN n = SER_USED(GC_Guarded);
     for (; n > 0; --n, ++np) {
-        if (Is_Node_Cell(*np)) {
+        if (Is_Node_A_Cell(*np)) {
             //
             // !!! What if someone tried to GC_GUARD a managed paired REBSER?
             //
@@ -829,7 +829,7 @@ static void Mark_Frame_Stack_Deep(void)
         }
 
         Queue_Mark_Node_Deep(  // f->u.action.original is never nullptr
-            cast(const REBNOD**, m_cast(const Action(*)*, &f->u.action.original))
+            cast(const Node**, m_cast(const Action(*)*, &f->u.action.original))
         );
 
         if (f->label) { // nullptr if anonymous
@@ -861,7 +861,7 @@ static void Mark_Frame_Stack_Deep(void)
             // "may not pass CTX() test"
             //
             Queue_Mark_Node_Deep(
-                cast(const REBNOD**, m_cast(Array(const*)*, &f->varlist))
+                cast(const Node**, m_cast(Array(const*)*, &f->varlist))
             );
             goto propagate_and_continue;
         }
@@ -1079,19 +1079,19 @@ static REBLEN Sweep_Series(void)
 //
 REBLEN Fill_Sweeplist(REBSER *sweeplist)
 {
-    assert(SER_WIDE(sweeplist) == sizeof(REBNOD*));
+    assert(SER_WIDE(sweeplist) == sizeof(Node*));
     assert(SER_USED(sweeplist) == 0);
 
     REBLEN sweep_count = 0;
 
     REBSEG *seg;
     for (seg = Mem_Pools[SER_POOL].segs; seg != NULL; seg = seg->next) {
-        Byte* unit = cast(Byte*, seg + 1);
+        Byte* stub = cast(Byte*, seg + 1);
         REBLEN n = Mem_Pools[SER_POOL].num_units;
-        for (; n > 0; --n, unit += sizeof(REBSER)) {
-            switch (*unit >> 4) {
+        for (; n > 0; --n, stub += sizeof(Stub)) {
+            switch (*stub >> 4) {
               case 9: {  // 0x8 + 0x1
-                REBSER *s = SER(cast(void*, unit));
+                REBSER *s = SER(cast(void*, stub));
                 ASSERT_SERIES_MANAGED(s);
                 if (s->leader.bits & NODE_FLAG_MARKED) {
                     s->leader.bits &= ~NODE_FLAG_MARKED;
@@ -1101,7 +1101,7 @@ REBLEN Fill_Sweeplist(REBSER *sweeplist)
                 }
                 else {
                     EXPAND_SERIES_TAIL(sweeplist, 1);
-                    *SER_AT(REBNOD*, sweeplist, sweep_count) = s;
+                    *SER_AT(Node*, sweeplist, sweep_count) = s;
                     ++sweep_count;
                 }
                 break; }
@@ -1111,9 +1111,9 @@ REBLEN Fill_Sweeplist(REBSER *sweeplist)
                 // It's a cell which is managed where the value is not an END.
                 // This is a managed pairing, so mark bit should be heeded.
                 //
-                // !!! It is a REBNOD, but *not* a "series".
+                // !!! It is a Stub Node, but *not* a "series".
                 //
-                REBVAL *pairing = VAL(cast(void*, unit));
+                REBVAL *pairing = VAL(cast(void*, stub));
                 assert(pairing->header.bits & NODE_FLAG_MANAGED);
                 if (pairing->header.bits & NODE_FLAG_MARKED) {
                     pairing->header.bits &= ~NODE_FLAG_MARKED;
@@ -1123,7 +1123,7 @@ REBLEN Fill_Sweeplist(REBSER *sweeplist)
                 }
                 else {
                     EXPAND_SERIES_TAIL(sweeplist, 1);
-                    *SER_AT(REBNOD*, sweeplist, sweep_count) = pairing;
+                    *SER_AT(Node*, sweeplist, sweep_count) = pairing;
                     ++sweep_count;
                 }
                 break; }
@@ -1377,10 +1377,10 @@ REBLEN Recycle(void)
 //
 //  Push_Guard_Node: C
 //
-void Push_Guard_Node(const REBNOD *node)
+void Push_Guard_Node(const Node* node)
 {
   #if !defined(NDEBUG)
-    if (NODE_BYTE(node) & NODE_BYTEMASK_0x01_CELL) {
+    if (Is_Node_A_Cell(node)) {
         //
         // It is a value.  Cheap check: require that it already contain valid
         // data when the guard call is made (even if GC isn't necessarily
@@ -1398,7 +1398,7 @@ void Push_Guard_Node(const REBNOD *node)
         // being able to resize and reallocate the data pointer.  But this is
         // a somewhat expensive check, so only feasible to run occasionally.
         //
-        REBNOD *containing = Try_Find_Containing_Node_Debug(v);
+        Node* containing = Try_Find_Containing_Node_Debug(v);
         if (containing)
             panic (containing);
       #endif
@@ -1414,7 +1414,7 @@ void Push_Guard_Node(const REBNOD *node)
     if (SER_FULL(GC_Guarded))
         Extend_Series_If_Necessary(GC_Guarded, 8);
 
-    *SER_AT(const REBNOD*, GC_Guarded, SER_USED(GC_Guarded)) = node;
+    *SER_AT(const Node*, GC_Guarded, SER_USED(GC_Guarded)) = node;
 
     SET_SERIES_USED(GC_Guarded, SER_USED(GC_Guarded) + 1);
 }

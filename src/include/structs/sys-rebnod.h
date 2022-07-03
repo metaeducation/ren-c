@@ -57,15 +57,15 @@
     //
     // In plain C builds, there's no such thing as "base classes".  So the
     // only way to make a function that can accept either a REBSER* or a
-    // REBVAL* without knowing which is to use a `void*`.  So the REBNOD is
+    // REBVAL* without knowing which is to use a `void*`.  So the Node is
     // defined as `void`, and the C++ build is trusted to do the more strict
     // type checking.
     //
-    struct Reb_Node { Byte first; };  // REBNOD is void*, but define struct
-    typedef void REBNOD;
+    struct Raw_Node { Byte first; };  // Node is void*, but define struct
+    typedef void Node;
 #else
     // If we were willing to commit to building with a C++ compiler, we'd
-    // want to make the Reb_Node contain the common `header` bits that REBSER
+    // want to make the Raw_Node contain the common `header` bits that REBSER
     // and REBVAL would share.  But since we're not, we instead make a less
     // invasive empty base class, that doesn't disrupt the memory layout of
     // derived classes due to the "Empty Base Class Optimization":
@@ -73,13 +73,13 @@
     // https://en.cppreference.com/w/cpp/language/ebo
     //
     // At one time there was an attempt to make Context/REBACT/REBMAP derive
-    // from REBNOD, but not REBSER.  Facilitating that through multiple
+    // from Node, but not Raw_Series.  Facilitating that through multiple
     // inheritance foils the Empty Base Class optimization, and creates other
-    // headaches.  So it was decided that so long as they are REBSER and not
+    // headaches.  So it was decided that so long as they are Raw_Series, not
     // Array(*), that's still abstract enough to block most casual misuses.
     //
-    struct Reb_Node {};  // empty base class for REBSER, REBVAL, Frame
-    typedef struct Reb_Node REBNOD;
+    struct Raw_Node {};  // empty base class for REBSER, REBVAL, Frame
+    typedef struct Raw_Node Node;
 #endif
 
 

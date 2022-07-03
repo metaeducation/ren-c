@@ -78,7 +78,7 @@ enum {
 //
 // In order to keep the core GC agnostic about events, if the pointer's slot
 // is to something that needs to participate in GC behavior, it must be a
-// REBNOD* and the cell must be marked with CELL_FLAG_PAYLOAD_FIRST_IS_NODE.
+// Node* and the cell must be marked with CELL_FLAG_PAYLOAD_FIRST_IS_NODE.
 //
 
 enum {

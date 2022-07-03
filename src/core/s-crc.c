@@ -214,7 +214,7 @@ uint32_t Hash_Value(Cell(const*) cell)
             break;
         }
 
-        const REBNOD* node1 = VAL_NODE1(cell);
+        const Node* node1 = VAL_NODE1(cell);
         assert(not (NODE_BYTE(node1) & NODE_BYTEMASK_0x01_CELL));
 
         switch (SER_FLAVOR(SER(node1))) {

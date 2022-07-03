@@ -486,26 +486,26 @@ bool Try_Fill_Pool(REBPOL *pool)
 // a data pointer lives in.  It returns NULL if it can't find one.  It's very
 // slow, because it has to look at all the series.  Use sparingly!
 //
-REBNOD *Try_Find_Containing_Node_Debug(const void *p)
+Node* Try_Find_Containing_Node_Debug(const void *p)
 {
     REBSEG *seg;
 
     for (seg = Mem_Pools[SER_POOL].segs; seg; seg = seg->next) {
-        Byte* unit = cast(Byte*, seg + 1);
+        Byte* stub = cast(Byte*, seg + 1);
         REBLEN n = Mem_Pools[SER_POOL].num_units;
-        for (; n > 0; --n, unit += sizeof(REBSER)) {
-            Byte nodebyte = *unit;
+        for (; n > 0; --n, stub += sizeof(Stub)) {
+            Byte nodebyte = *stub;
             if (nodebyte & NODE_BYTEMASK_0x40_STALE)
                 continue;
 
             if (nodebyte & NODE_BYTEMASK_0x01_CELL) { // a "pairing"
-                REBVAL *pairing = VAL(cast(void*, unit));
+                REBVAL *pairing = VAL(cast(void*, stub));
                 if (p >= cast(void*, pairing) and p < cast(void*, pairing + 1))
                     return pairing;  // REBSER is actually REBVAL[2]
                 continue;
             }
 
-            REBSER *s = SER(cast(void*, unit));
+            REBSER *s = SER(cast(void*, stub));
             if (NOT_SERIES_FLAG(s, DYNAMIC)) {
                 if (
                     p >= cast(void*, &s->content)

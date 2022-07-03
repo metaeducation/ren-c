@@ -29,7 +29,7 @@
 
 
 #define NODE_BYTE(p) \
-    *cast(const Byte*, ensure(const REBNOD*, p))
+    *cast(const Byte*, ensure(const Node*, p))
 
 #ifdef NDEBUG
     #define IS_FREE_NODE(p) \
@@ -105,8 +105,11 @@
 #endif
 
 
-#define Is_Node_Cell(n) \
+#define Is_Node_A_Cell(n) \
     (did (NODE_BYTE(n) & NODE_BYTEMASK_0x01_CELL))
+
+#define Is_Node_A_Stub(n) \
+    (not (NODE_BYTE(n) & NODE_BYTEMASK_0x01_CELL))
 
 
 // Allocate a node from a pool.  Returned node will not be zero-filled, but
@@ -166,7 +169,9 @@ inline static void *Try_Alloc_Pooled(REBLEN pool_id)
     }
   #endif
 
-    assert(IS_FREE_NODE(cast(REBNOD*, unit)));  // client must make non-free
+    // !!! Review this, as not all pools store "nodes".
+    //
+    assert(IS_FREE_NODE(cast(Node*, unit)));  // client must make non-free
     return cast(void*, unit);
 }
 
@@ -189,20 +194,19 @@ inline static void *Alloc_Pooled(REBLEN pool_id) {
 // have SERIES_FLAG_FREE...which will identify the node as not in use to anyone
 // who enumerates the nodes in the pool (such as the garbage collector).
 //
-inline static void Free_Pooled(REBLEN pool_id, REBNOD* node)
+inline static void Free_Pooled(REBLEN pool_id, void* p)
 {
   #if DEBUG_MONITOR_SERIES
-    if (node == PG_Monitor_Node_Debug) {
+    if (p == PG_Monitor_Node_Debug) {
         printf(
-            "Freeing series %p on tick #%d\n",
-            cast(void*, node),
+            "Freeing series %p on tick #%d\n", p,
             cast(int, TG_Tick)
         );
         fflush(stdout);
     }
   #endif
 
-    REBPLU* unit = cast(REBPLU*, node);
+    REBPLU* unit = cast(REBPLU*, p);
 
     mutable_FIRST_BYTE(unit->headspot) = FREED_SERIES_BYTE;
 

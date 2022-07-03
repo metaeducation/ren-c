@@ -405,9 +405,9 @@ inline static void Drop_Frame_Core(Frame(*) f) {
         // handles attached to a frame to leak--you are expected to release
         // everything.  But definitional failure and throw cases are exempt.
         //
-        REBNOD *n = f->alloc_value_list;
+        Node* n = f->alloc_value_list;
         while (n != f) {
-            Array(*) a = ARR(n);
+            Raw_Array* a = ARR(n);
             n = LINK(ApiNext, a);
             RESET(ARR_SINGLE(a));
             GC_Kill_Series(a);
@@ -421,9 +421,9 @@ inline static void Drop_Frame_Core(Frame(*) f) {
     }
     else {
       #if !defined(NDEBUG)
-        REBNOD *n = f->alloc_value_list;
+        Node* n = f->alloc_value_list;
         while (n != f) {
-            Array(*) a = ARR(n);
+            Raw_Array* a = ARR(n);
             printf("API handle was allocated but not freed, panic'ing leak\n");
             panic (a);
         }

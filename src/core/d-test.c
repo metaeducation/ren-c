@@ -73,7 +73,7 @@ DECLARE_NATIVE(test_librebol)
     Set_Cell_Flag(Init_Integer(PUSH(), 2), NEWLINE_BEFORE);
     intptr_t getter = rebUnboxInteger("api-transient {Hello}");
     Recycle();  // transient should survive a recycle
-    REBNOD *getter_node = cast(REBNOD*, cast(void*, getter));
+    Node* getter_node = cast(Node*, cast(void*, getter));
     bool equal = rebUnboxLogic("{Hello} = @", getter_node);
 
     Init_Logic(PUSH(), equal);  // ^-- see NOTICE

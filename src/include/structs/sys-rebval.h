@@ -426,7 +426,7 @@ union Reb_Any {  // needed to beat strict aliasing, used in payload
     // if the intent is immutability, or a conservative state of possible
     // immutability (e.g. the CONST usermode status hasn't been checked)
     //
-    const REBNOD *node;
+    const Node* node;
 
     // The GC is only marking one field in the union...the node.  So that is
     // the only field that should be assigned and read.  These "type puns"
@@ -461,7 +461,7 @@ union Reb_Bytes_Extra {
 union Reb_Value_Extra { //=/////////////////// ACTUAL EXTRA DEFINITION ////=//
 
     struct Reb_Character_Extra Character;
-    const REBNOD *Binding;  // see %sys-bind.h
+    const Node* Binding;  // see %sys-bind.h
     struct Reb_Datatype_Extra Datatype;
     struct Reb_Date_Extra Date;
     struct Reb_Typeset_Extra Typeset;
@@ -612,7 +612,7 @@ union Reb_Value_Payload { //=/////////////// ACTUAL PAYLOAD DEFINITION ////=//
 //
 
 #if CPLUSPLUS_11
-    struct alignas(ALIGN_SIZE) Reb_Raw : public Reb_Node
+    struct alignas(ALIGN_SIZE) Reb_Raw : public Raw_Node
 #elif C_11
     struct alignas(ALIGN_SIZE) Reb_Value
 #else
@@ -662,7 +662,7 @@ union Reb_Value_Payload { //=/////////////// ACTUAL PAYLOAD DEFINITION ////=//
     (v)->extra.Binding
 
 #define BINDING(v) \
-    x_cast(REBSER*, m_cast(REBNOD*, (v)->extra.Binding))
+    x_cast(REBSER*, m_cast(Node*, (v)->extra.Binding))
 
 
 //=////////////////////////////////////////////////////////////////////////=//

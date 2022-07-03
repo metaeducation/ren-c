@@ -78,8 +78,8 @@ REBGOB *Make_Gob(void)
             | SERIES_FLAG_MISC_NODE_NEEDS_MARK
     );
 
-    SET_GOB_PARENT(a, nullptr);  // in LINK(), is a REBNOD*, GC must mark
-    SET_GOB_OWNER(a, nullptr);  // in MISC(), is a REBNOD*, GC must mark
+    SET_GOB_PARENT(a, nullptr);  // in LINK(), is a Node*, GC must mark
+    SET_GOB_OWNER(a, nullptr);  // in MISC(), is a Node*, GC must mark
 
     Init_Blank(ARR_AT(a, IDX_GOB_PANE));
     Init_Blank(ARR_AT(a, IDX_GOB_CONTENT));

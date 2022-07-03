@@ -501,7 +501,7 @@ inline static void Free_Feed(Feed(*) feed) {
         Clear_Feed_Flag(feed, TOOK_HOLD);
     }
 
-    Free_Pooled(FED_POOL, cast(REBNOD*, feed));
+    Free_Pooled(FED_POOL, feed);
 }
 
 inline static Feed(*) Prep_Feed_Common(void* preallocated, Flags flags) {

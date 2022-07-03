@@ -481,8 +481,8 @@ e-lib/emit 'ver {
      * case of error is the only way they are cleaned up.
      */
     #if defined(CPLUSPLUS_11) && CPLUSPLUS_11
-        struct Reb_Node;
-        #define REBINS Reb_Node  /* `struct` breaks MS variadic templates */
+        struct Raw_Node;
+        #define REBINS Raw_Node  /* `struct` breaks MS variadic templates */
     #else
         #define REBINS void
     #endif

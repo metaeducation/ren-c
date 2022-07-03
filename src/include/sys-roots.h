@@ -30,7 +30,7 @@
 // The API value content is in the single cell, with LINK().owner holding
 // a Context(*) of the FRAME! that controls its lifetime, or EMPTY_ARRAY.  This
 // link field exists in the pointer immediately prior to the REBVAL*, which
-// means it can be sniffed as a REBNOD* and distinguished from handles that
+// means it can be sniffed as NODE_FLAG_CELL, distinguished from handles that
 // were given back with rebMalloc(), so routines can discern them.
 //
 // MISC() is currently unused, but could serve as a reference count or other
@@ -42,11 +42,11 @@
 //
 
 
-#define LINK_ApiNext_TYPE       REBNOD*
+#define LINK_ApiNext_TYPE       Node*
 #define LINK_ApiNext_CAST       // none, just use node (NOD() complains)
 #define HAS_LINK_ApiNext        FLAVOR_API
 
-#define MISC_ApiPrev_TYPE       REBNOD*
+#define MISC_ApiPrev_TYPE       Node*
 #define MISC_ApiPrev_CAST       // none, just use node (NOD() complains)
 #define HAS_MISC_ApiPrev        FLAVOR_API
 

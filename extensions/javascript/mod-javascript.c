@@ -517,7 +517,7 @@ void RunPromise(void)
         // Note: Expired, can't use VAL_CONTEXT
         //
         assert(IS_FRAME(result));
-        REBNOD *frame_ctx = VAL_NODE1(result);
+        Node* frame_ctx = VAL_NODE1(result);
         heapaddr_t throw_id = Heapaddr_From_Pointer(frame_ctx);
 
         EM_ASM(

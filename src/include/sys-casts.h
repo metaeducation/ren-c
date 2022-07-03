@@ -63,12 +63,12 @@
     // C++ templating magic to validate the constness, and keep the C source
     // form more readable at the callsites.
 
-    #define NOD(p)          m_cast(REBNOD*, x_cast(const REBNOD*, (p)))
+    #define NOD(p)          m_cast(Node*, x_cast(const Node*, (p)))
 
-    #define SER(p)          m_cast(REBSER*, x_cast(const REBSER*, (p)))
-    #define ARR(p)          m_cast(Array(*), x_cast(Array(const*), (p)))
-    #define ACT(p)          m_cast(Action(*), x_cast(const Action(*), (p)))
-    #define CTX(p)          m_cast(Context(*), x_cast(const Context(*), (p)))
+    #define SER(p)          m_cast(Raw_Series*, x_cast(const Raw_Series*, (p)))
+    #define ARR(p)          m_cast(Raw_Array*, x_cast(const Raw_Array*, (p)))
+    #define ACT(p)          m_cast(Raw_Action*, x_cast(const Raw_Action*, (p)))
+    #define CTX(p)          m_cast(Raw_Context*, x_cast(const Raw_Context*, (p)))
 
     #define STR(p)          m_cast(Raw_String*, x_cast(const Raw_String*, (p)))
 
@@ -90,7 +90,7 @@
     // a const-derived-class pointer output.  The function will make sure
     // the bit patterns are a match for the cast.
 
-    inline static REBNOD *NOD(nullptr_t p) {
+    inline static Node* NOD(nullptr_t p) {
         UNUSED(p);
         return nullptr;
     }
@@ -100,8 +100,8 @@
         typename T0 = typename std::remove_const<T>::type,
         typename N = typename std::conditional<
             std::is_const<T>::value,  // boolean
-            const REBNOD,  // true branch
-            REBNOD  // false branch
+            const Node,  // true branch
+            Node  // false branch
         >::type
     >
     inline static N *NOD(T *p) {
@@ -140,8 +140,8 @@
     inline S *SER(T *p) {
         static_assert(
             std::is_same<T0, void>::value
-                or std::is_same<T0, REBNOD>::value,
-            "SER() works on [void* REBNOD*]"
+                or std::is_same<T0, Node>::value,
+            "SER() works on [void* Node*]"
         );
         if (not p)
             return nullptr;
@@ -169,9 +169,9 @@
     inline A *ARR(T *p) {
         static_assert(
             std::is_same<T0, void>::value
-                or std::is_same<T0, REBNOD>::value
-                or std::is_same<T0, REBSER>::value,
-            "ARR() works on [void* REBNOD* REBSER*]"
+                or std::is_same<T0, Node>::value
+                or std::is_same<T0, Raw_Series>::value,
+            "ARR() works on [void* Node* Series*]"
         );
         if (not p)
             return nullptr;
@@ -199,10 +199,10 @@
     inline static C *CTX(T *p) {
         static_assert(
             std::is_same<T0, void>::value
-                or std::is_same<T0, REBNOD>::value
-                or std::is_same<T0, REBSER>::value
+                or std::is_same<T0, Node>::value
+                or std::is_same<T0, Raw_Series>::value
                 or std::is_same<T0, Raw_Array>::value,
-            "CTX() works on [void* REBNOD* REBSER* Array(*)]"
+            "CTX() works on [void* Node* Series* Array*]"
         );
         if (not p)
             return nullptr;
@@ -227,10 +227,10 @@
     inline Action(*) ACT(P p) {
         static_assert(
             std::is_same<P, void*>::value
-                or std::is_same<P, REBNOD*>::value
-                or std::is_same<P, REBSER*>::value
-                or std::is_same<P, Array(*)>::value,
-            "ACT() works on [void* REBNOD* REBSER* Array(*)]"
+                or std::is_same<P, Node*>::value
+                or std::is_same<P, Raw_Series*>::value
+                or std::is_same<P, Raw_Array*>::value,
+            "ACT() works on [void* Node* Series* Array*]"
         );
 
         if (not p)
@@ -280,10 +280,10 @@
     template <class T>
     inline Frame(*) FRM(T *p) {
         constexpr bool base = std::is_same<T, void>::value
-            or std::is_same<T, REBNOD>::value
+            or std::is_same<T, Node>::value
             or std::is_same<T, Reb_Frame>::value;
 
-        static_assert(base, "FRM() works on void/REBNOD/Frame(*)");
+        static_assert(base, "FRM() works on void* Node* Frame*");
 
         if (not p)
             return nullptr;

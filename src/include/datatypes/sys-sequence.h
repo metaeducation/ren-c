@@ -463,8 +463,8 @@ inline static REBLEN VAL_SEQUENCE_LEN(noquote(Cell(const*)) sequence) {
         return PAYLOAD(Bytes, sequence).at_least_8[IDX_SEQUENCE_USED];
     }
 
-    const REBNOD *node1 = VAL_NODE1(sequence);
-    if (NODE_BYTE(node1) & NODE_BYTEMASK_0x01_CELL) {  // see if it's a pairing
+    const Node* node1 = VAL_NODE1(sequence);
+    if (Is_Node_A_Cell(node1)) {  // see if it's a pairing
         assert(false);  // these don't exist yet
         return 2;  // compressed 2-element sequence
     }
@@ -508,8 +508,8 @@ inline static Cell(const*) VAL_SEQUENCE_AT(
         return Init_Integer(store, PAYLOAD(Bytes, sequence).at_least_8[n + 1]);
     }
 
-    const REBNOD *node1 = VAL_NODE1(sequence);
-    if (NODE_BYTE(node1) & NODE_BYTEMASK_0x01_CELL) {  // test if it's a pairing
+    const Node* node1 = VAL_NODE1(sequence);
+    if (Is_Node_A_Cell(node1)) {  // test if it's a pairing
         assert(false);  // these don't exist yet
         return nullptr;  // compressed 2-element sequence
     }
@@ -565,8 +565,8 @@ inline static REBSPC *VAL_SEQUENCE_SPECIFIER(
     if (Not_Cell_Flag(sequence, SEQUENCE_HAS_NODE))  // compressed bytes
         return SPECIFIED;
 
-    const REBNOD *node1 = VAL_NODE1(sequence);
-    if (NODE_BYTE(node1) & NODE_BYTEMASK_0x01_CELL) {  // see if it's a pairing
+    const Node* node1 = VAL_NODE1(sequence);
+    if (Is_Node_A_Cell(node1)) {  // see if it's a pairing
         assert(false);  // these don't exist yet
         return SPECIFIED;  // compressed 2-element sequence
     }
@@ -646,8 +646,8 @@ inline static bool IS_REFINEMENT_CELL(noquote(Cell(const*)) v) {
     if (Not_Cell_Flag(v, SEQUENCE_HAS_NODE))
         return false;
 
-    const REBNOD *node1 = VAL_NODE1(v);
-    if (NODE_BYTE(node1) & NODE_BYTEMASK_0x01_CELL)
+    const Node* node1 = VAL_NODE1(v);
+    if (Is_Node_A_Cell(node1))
         return false;
 
     if (SER_FLAVOR(SER(node1)) != FLAVOR_SYMBOL)
@@ -668,8 +668,8 @@ inline static bool IS_PREDICATE1_CELL(noquote(Cell(const*)) v) {
     if (Not_Cell_Flag(v, SEQUENCE_HAS_NODE))
         return false;
 
-    const REBNOD *node1 = VAL_NODE1(v);
-    if (NODE_BYTE(node1) & NODE_BYTEMASK_0x01_CELL)
+    const Node* node1 = VAL_NODE1(v);
+    if (Is_Node_A_Cell(node1))
         return false;
 
     if (SER_FLAVOR(SER(node1)) != FLAVOR_SYMBOL)

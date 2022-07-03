@@ -104,16 +104,16 @@
 // anyway, and it's a faster test to check this for NODE_FLAG_CELL than to
 // separately extract the CTX_TYPE() and treat frames differently.)
 //
-// It is done as a base-class REBNOD* as opposed to a union in order to
+// It is done as a base-class Node* as opposed to a union in order to
 // not run afoul of C's rules, by which you cannot assign one member of
 // a union and then read from another.
 //
-#define BONUS_KeySource_TYPE        REBNOD*
+#define BONUS_KeySource_TYPE        Node*
 #define BONUS_KeySource_CAST        // none, just use node (NOD() complains)
 #define HAS_BONUS_KeySource         FLAVOR_VARLIST
 
-inline static void INIT_BONUS_KEYSOURCE(Array(*) varlist, REBNOD *keysource) {
-    if (keysource != nullptr and not Is_Node_Cell(keysource))
+inline static void INIT_BONUS_KEYSOURCE(Array(*) varlist, Node* keysource) {
+    if (keysource != nullptr and Is_Node_A_Stub(keysource))
         assert(IS_KEYLIST(SER(keysource)));
     mutable_BONUS(KeySource, varlist) = keysource;
 }

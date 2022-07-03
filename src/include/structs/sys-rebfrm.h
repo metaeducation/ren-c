@@ -301,7 +301,7 @@ typedef Executor Dispatcher;  // sub-dispatched in Action_Executor()
 //
 
 #if CPLUSPLUS_11
-    struct Reb_Frame : public Reb_Node
+    struct Reb_Frame : public Raw_Node
 #else
     struct Reb_Frame
 #endif
@@ -440,7 +440,7 @@ typedef Executor Dispatcher;  // sub-dispatched in Action_Executor()
     // the ends is not nullptr, but a pointer to the Frame(*) itself (which
     // can be noticed via NODE_FLAG_FRAME as not being an API handle).
     //
-    REBNOD *alloc_value_list;
+    Node* alloc_value_list;
 
    #if DEBUG_COUNT_TICKS
     //
