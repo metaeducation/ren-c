@@ -1048,7 +1048,7 @@ REBTYPE(Gob)
         Cell(*) value = ARG(value);
 
         if (IS_NULLED_OR_BLANK(value))
-            return_value (v);  // don't fail on read only if it would be a no-op
+            return COPY(v);  // don't fail on read only if it would be a no-op
 
         if (REF(line))
             fail (Error_Bad_Refines_Raw());
@@ -1070,13 +1070,13 @@ REBTYPE(Gob)
 
         Insert_Gobs(gob, value, index, len, false);
 
-        return_value (v); }
+        return COPY(v); }
 
     case SYM_CLEAR:
         if (tail > index)
             Remove_Gobs(gob, index, tail - index);
 
-        return_value (v);
+        return COPY(v);
 
     case SYM_REMOVE: {
         INCLUDE_PARAMS_OF_REMOVE;
@@ -1088,7 +1088,7 @@ REBTYPE(Gob)
         if (index < tail && len != 0)
             Remove_Gobs(gob, index, len);
 
-        return_value (v); }
+        return COPY(v); }
 
     case SYM_TAKE: {
         INCLUDE_PARAMS_OF_TAKE;

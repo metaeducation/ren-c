@@ -1027,7 +1027,7 @@ REBTYPE(Array)
             if (len == 0) {
                 if (id == SYM_APPEND)  // append always returns head
                     VAL_INDEX_RAW(array) = 0;
-                return_value (array);  // don't fail on read only if would be a no-op
+                return COPY(array);  // don't fail on read only if would be a no-op
             }
             Init_Nulled(ARG(value));  // low-level NULL acts as nothing
         }
@@ -1101,7 +1101,7 @@ REBTYPE(Array)
             else
                 SET_SERIES_LEN(arr, cast(REBLEN, index));
         }
-        return_value (array);
+        return COPY(array);
     }
 
     //-- Creation:
@@ -1173,7 +1173,7 @@ REBTYPE(Array)
             Copy_Cell(a, b);
             Copy_Cell(b, &temp);
         }
-        return_value (array); }
+        return COPY(array); }
 
       case SYM_REVERSE: {
         INCLUDE_PARAMS_OF_REVERSE;
@@ -1184,7 +1184,7 @@ REBTYPE(Array)
 
         REBLEN len = Part_Len_May_Modify_Index(array, ARG(part));
         if (len == 0)
-            return_value (array); // !!! do 1-element reversals update newlines?
+            return COPY(array); // !!! do 1-element reversals update newlines?
 
         Cell(*) front = ARR_AT(arr, index);
         Cell(*) back = front + len - 1;
@@ -1250,7 +1250,7 @@ REBTYPE(Array)
             else
                 Clear_Cell_Flag(back, NEWLINE_BEFORE);
         }
-        return_value (array); }
+        return COPY(array); }
 
       case SYM_SORT: {
         INCLUDE_PARAMS_OF_SORT;
@@ -1335,7 +1335,7 @@ REBTYPE(Array)
 
         Array(*) arr = VAL_ARRAY_ENSURE_MUTABLE(array);
         Shuffle_Array(arr, VAL_INDEX(array), did REF(secure));
-        return_value (array); }
+        return COPY(array); }
 
     // !!! The ability to transform some BLOCK!s into PORT!s for some actions
     // was hardcoded in a fairly ad-hoc way in R3-Alpha, which was based on
@@ -1388,7 +1388,7 @@ DECLARE_NATIVE(blockify)
 
     REBVAL *v = ARG(value);
     if (IS_BLOCK(v))
-        return_value (v);
+        return COPY(v);
 
     Array(*) a = Make_Array_Core(
         1,
@@ -1421,7 +1421,7 @@ DECLARE_NATIVE(groupify)
 
     REBVAL *v = ARG(value);
     if (IS_GROUP(v))
-        return_value (v);
+        return COPY(v);
 
     Array(*) a = Make_Array_Core(
         1,
@@ -1536,7 +1536,7 @@ DECLARE_NATIVE(glom)
     assert(not Is_Nulled(result));  // type checking should prevent
 
     if (IS_BLANK(result)) {
-        return_value (accumulator);
+        return COPY(accumulator);
     }
     else if (IS_QUOTED(result)) {
         Unquotify(result, 1);
@@ -1550,7 +1550,7 @@ DECLARE_NATIVE(glom)
 
     if (IS_BLANK(accumulator)) {
         if (splice)  // it was a non-quoted block initially
-            return_value (result);  // see note: index may be nonzero
+            return COPY(result);  // see note: index may be nonzero
 
         Array(*) a = Make_Array_Core(1, SERIES_FLAG_MANAGED);
         Copy_Cell(ARR_HEAD(a), result);  // we know it was inert or quoted
@@ -1606,7 +1606,7 @@ DECLARE_NATIVE(glom)
         Decay_Series(r);
     }
 
-    return_value (accumulator);
+    return COPY(accumulator);
 }
 
 

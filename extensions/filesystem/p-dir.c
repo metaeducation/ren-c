@@ -196,7 +196,7 @@ Bounce Dir_Actor(Frame(*) frame_, REBVAL *port, Symbol(const*) verb)
             fail (Error_No_Create_Raw(dir->path));  // higher level error
         }
 
-        return_value (port); }
+        return COPY(port); }
 
     //=//// RENAME /////////////////////////////////////////////////////////=//
 
@@ -212,7 +212,7 @@ Bounce Dir_Actor(Frame(*) frame_, REBVAL *port, Symbol(const*) verb)
 
         Copy_Cell(dir->path, ARG(to));  // !!! this mutates the spec, bad?
 
-        return_value (port); }
+        return COPY(port); }
 
     //=//// DELETE /////////////////////////////////////////////////////////=//
 
@@ -222,7 +222,7 @@ Bounce Dir_Actor(Frame(*) frame_, REBVAL *port, Symbol(const*) verb)
             rebRelease(error);  // !!! throws away details
             fail (Error_No_Delete_Raw(dir->path));  // higher level error
         }
-        return_value (port); }
+        return COPY(port); }
 
     //=//// OPEN ///////////////////////////////////////////////////////////=//
     //
@@ -251,13 +251,13 @@ Bounce Dir_Actor(Frame(*) frame_, REBVAL *port, Symbol(const*) verb)
             }
         }
 
-        return_value (port); }
+        return COPY(port); }
 
     //=//// CLOSE //////////////////////////////////////////////////////////=//
 
       case SYM_CLOSE:
         Init_Nulled(state);
-        return_value (port);
+        return COPY(port);
 
     //=//// QUERY //////////////////////////////////////////////////////////=//
     //

@@ -370,7 +370,7 @@ DECLARE_NATIVE(also)  // see `tweak :also 'defer on` in %base-defs.r
 
 } return_original_input: {  //////////////////////////////////////////////////
 
-    return_value (in);  // in argument has already been Meta_Unquotify()'d
+    return COPY(in);  // in argument has already been Meta_Unquotify()'d
 }}
 
 
@@ -432,7 +432,7 @@ DECLARE_NATIVE(else)  // see `tweak :else 'defer on` in %base-defs.r
         Init_Null_Isotope(SPARE);  // action branch decays if non-meta, see [3]
     }
     else
-        return_value (Meta_Unquotify(in));  // unquotify to pass thru, see [4]
+        return COPY(Meta_Unquotify(in));  // unquotify to pass thru, see [4]
 
     return DELEGATE_BRANCH(OUT, branch, SPARE);
 }
@@ -550,7 +550,7 @@ DECLARE_NATIVE(must)  // `must x` is a faster synonym for `non null x`
     if (Is_Nulled(ARG(value)))
         fail ("MUST requires argument to not be NULL");
 
-    return_value (ARG(value));
+    return COPY(ARG(value));
 }
 
 
@@ -1308,7 +1308,7 @@ DECLARE_NATIVE(default)
         fail (Error_No_Catch_For_Throw(FRAME));
     }
 
-    return_value (SPARE);
+    return COPY(SPARE);
 }}
 
 

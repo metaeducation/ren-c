@@ -85,7 +85,7 @@ DECLARE_NATIVE(reduce)
   initial_entry_non_array: {  /////////////////////////////////////////////////
 
     if (ANY_INERT(v))
-        return_value (v);  // save time if it's something like a TEXT!
+        return COPY(v);  // save time if it's something like a TEXT!
 
     Frame(*) subframe = Make_End_Frame(
         FLAG_STATE_BYTE(ST_EVALUATOR_REEVALUATING)
@@ -820,10 +820,10 @@ DECLARE_NATIVE(compose)
   initial_entry: {  //////////////////////////////////////////////////////////
 
     if (Is_Blackhole(v))
-        return_value (v);  // sink locations composed to avoid double eval
+        return COPY(v);  // sink locations composed to avoid double eval
 
     if (ANY_WORD(v) or IS_ACTION(v))
-        return_value (v);  // makes it easier to `set compose target`
+        return COPY(v);  // makes it easier to `set compose target`
 
     Push_Composer_Frame(OUT, frame_, v, VAL_SPECIFIER(v));
 

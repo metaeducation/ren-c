@@ -122,7 +122,7 @@ DECLARE_NATIVE(shove)
     REBVAL *left = ARG(left);
 
     if (Is_End(f_value))  // ...shouldn't happen for WORD!/PATH! unless APPLY
-        return_value (ARG(left));  // ...because evaluator wants `help <-` to work
+        return COPY(ARG(left));  // ...because evaluator wants `help <-` to work
 
     // It's best for SHOVE to do type checking here, as opposed to setting
     // some kind of FRAME_FLAG_SHOVING and passing that into the evaluator, then

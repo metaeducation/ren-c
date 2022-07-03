@@ -424,7 +424,7 @@ REBTYPE(Binary)
             if (len == 0) {
                 if (id == SYM_APPEND) // append always returns head
                     VAL_INDEX_RAW(v) = 0;
-                return_value (v); // don't fail on read only if it would be a no-op
+                return COPY(v); // don't fail on read only if it would be a no-op
             }
             Init_Nulled(ARG(value));  // low-level code treats as nothing
         }
@@ -458,7 +458,7 @@ REBTYPE(Binary)
             len,
             REF(dup) ? Int32(ARG(dup)) : 1
         );
-        return_value (v); }
+        return COPY(v); }
 
     //-- Search:
       case SYM_SELECT:
@@ -564,7 +564,7 @@ REBTYPE(Binary)
         Binary(*) bin = VAL_BINARY_ENSURE_MUTABLE(v);
 
         if (index >= tail)
-            return_value (v); // clearing after available data has no effect
+            return COPY(v); // clearing after available data has no effect
 
         // !!! R3-Alpha would take this opportunity to make it so that if the
         // series is now empty, it reclaims the "bias" (unused capacity at
@@ -574,7 +574,7 @@ REBTYPE(Binary)
             Unbias_Series(bin, false);
 
         TERM_BIN_LEN(bin, cast(REBLEN, index));  // may have string alias
-        return_value (v); }
+        return COPY(v); }
 
     //-- Creation:
 
@@ -707,7 +707,7 @@ REBTYPE(Binary)
             amount = -amount;
 
         if (amount == 0) // adding or subtracting 0 works, even #{} + 0
-            return_value (v);
+            return COPY(v);
 
         if (VAL_LEN_AT(v) == 0) // add/subtract to #{} otherwise
             fail (Error_Overflow_Raw());
@@ -744,7 +744,7 @@ REBTYPE(Binary)
                 }
             }
         }
-        return_value (v); }
+        return COPY(v); }
 
     //-- Special actions:
 
@@ -762,7 +762,7 @@ REBTYPE(Binary)
             *v_at = *arg_at;
             *arg_at = temp;
         }
-        return_value (v); }
+        return COPY(v); }
 
       case SYM_REVERSE: {
         INCLUDE_PARAMS_OF_REVERSE;
@@ -780,7 +780,7 @@ REBTYPE(Binary)
                 bp[m] = b;
             }
         }
-        return_value (v); }
+        return COPY(v); }
 
       case SYM_SORT: {
         INCLUDE_PARAMS_OF_SORT;
@@ -866,7 +866,7 @@ REBTYPE(Binary)
             *BIN_AT(bin, k) = *BIN_AT(bin, n + index);
             *BIN_AT(bin, n + index) = swap;
         }
-        return_value (v); }
+        return COPY(v); }
 
       default:
         break;

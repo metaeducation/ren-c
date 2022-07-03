@@ -645,23 +645,6 @@ inline static Bounce Native_Thrown_Result(Frame(*) frame_) {
 }
 
 
-// Convenience routine for returning a value which is *not* located in OUT.
-// (If at all possible, it's better to build values directly into OUT and
-// then return the OUT pointer...this is the fastest form of returning.)
-//
-// Note: We do not allow direct `return v` of arbitrary values to be copied
-// in the dispatcher because it's too easy to think that will work for an
-// arbitrary local variable, which would be dead after the return.
-//
-#define return_value(v) \
-    do { \
-        const REBVAL *x_check = (v); /* can only expand (v) once! */ \
-        assert(x_check != OUT); /* name has x_ to not collide with locals */ \
-        assert(not Is_Api_Value(x_check)); /* too easy to not release() */ \
-        return Copy_Cell(OUT, x_check); \
-    } while (0)
-
-
 #define return_branched(v) \
     do { \
         const REBVAL *x_check = (v); /* can only expand (v) once! */ \

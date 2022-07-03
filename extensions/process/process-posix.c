@@ -106,7 +106,7 @@ DECLARE_NATIVE(set_uid)
     PROCESS_INCLUDE_PARAMS_OF_SET_UID;
 
     if (setuid(VAL_INT32(ARG(uid))) >= 0)
-        return_value (ARG(uid));
+        return COPY(ARG(uid));
 
     switch (errno) {
       case EINVAL:
@@ -137,7 +137,7 @@ DECLARE_NATIVE(set_euid)
     PROCESS_INCLUDE_PARAMS_OF_SET_EUID;
 
     if (seteuid(VAL_INT32(ARG(euid))) >= 0)
-        return_value (ARG(euid));
+        return COPY(ARG(euid));
 
     switch (errno) {
       case EINVAL:
@@ -168,7 +168,7 @@ DECLARE_NATIVE(set_gid)
     PROCESS_INCLUDE_PARAMS_OF_SET_GID;
 
     if (setgid(VAL_INT32(ARG(gid))) >= 0)
-        return_value (ARG(gid));
+        return COPY(ARG(gid));
 
     switch (errno) {
       case EINVAL:
@@ -199,7 +199,7 @@ DECLARE_NATIVE(set_egid)
     PROCESS_INCLUDE_PARAMS_OF_SET_EGID;
 
     if (setegid(VAL_INT32(ARG(egid))) >= 0)
-        return_value (ARG(egid));
+        return COPY(ARG(egid));
 
     switch (errno) {
       case EINVAL:

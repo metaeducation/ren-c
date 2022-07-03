@@ -242,7 +242,7 @@ REBTYPE(Url)
         //
         // https://forum.rebol.info/t/copy-and-port/1699
         //
-        return_value (url);
+        return COPY(url);
     }
     else if (Get_Cell_Flag(url, UNEVALUATED)) {
         //

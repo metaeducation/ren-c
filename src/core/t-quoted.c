@@ -278,7 +278,7 @@ DECLARE_NATIVE(quote)
     REBINT depth = REF(depth) ? VAL_INT32(ARG(depth)) : 1;
 
     if (depth == 0)
-        return_value (ARG(optional));
+        return COPY(ARG(optional));
 
     if (depth < 0)
         fail (PAR(depth));
@@ -307,7 +307,7 @@ DECLARE_NATIVE(meta)
     if (Is_Meta_Of_Void(v))
         return VOID;  // see META* for non-passthru of ~void~ isotope
 
-    return_value (v);  // argument was already ^META, no need to Meta_Quotify()
+    return COPY(v);  // argument was already ^META, no need to Meta_Quotify()
 }
 
 
@@ -326,7 +326,7 @@ DECLARE_NATIVE(meta_p)
 
     REBVAL *v = ARG(optional);
 
-    return_value (v);  // argument was ^META, so no need to Meta_Quotify()
+    return COPY(v);  // argument was ^META, so no need to Meta_Quotify()
 }
 
 
@@ -526,5 +526,5 @@ DECLARE_NATIVE(noquote)
 
     REBVAL *v = ARG(optional);
     Unquotify(v, VAL_NUM_QUOTES(v));
-    return_value (v);
+    return COPY(v);
 }

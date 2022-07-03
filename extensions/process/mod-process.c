@@ -535,7 +535,7 @@ DECLARE_NATIVE(set_env)
     rebFree(key_utf8);
   #endif
 
-    return_value (ARG(value));
+    return COPY(ARG(value));
 }
 
 

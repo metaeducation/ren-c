@@ -45,7 +45,7 @@ DECLARE_NATIVE(const) {
     Clear_Cell_Flag(v, EXPLICITLY_MUTABLE);
     Set_Cell_Flag(v, CONST);
 
-    return_value (v);
+    return COPY(v);
 }
 
 
@@ -98,7 +98,7 @@ DECLARE_NATIVE(mutable)
     Clear_Cell_Flag(v, CONST);
     Set_Cell_Flag(v, EXPLICITLY_MUTABLE);
 
-    return_value (v);
+    return COPY(v);
 }
 
 
@@ -304,7 +304,7 @@ static Bounce Protect_Unprotect_Core(Frame(*) frame_, Flags flags)
 
     if (ANY_WORD(value) || ANY_SEQUENCE(value)) {
         Protect_Word_Value(value, flags); // will unmark if deep
-        return_value (ARG(value));
+        return COPY(ARG(value));
     }
 
     if (IS_BLOCK(value)) {
@@ -316,7 +316,7 @@ static Bounce Protect_Unprotect_Core(Frame(*) frame_, Flags flags)
                 Derelativize(word, item, VAL_SPECIFIER(value));
                 Protect_Word_Value(word, flags);  // will unmark if deep
             }
-            return_value (ARG(value));
+            return COPY(ARG(value));
         }
         if (REF(values)) {
             REBVAL *var;
@@ -348,7 +348,7 @@ static Bounce Protect_Unprotect_Core(Frame(*) frame_, Flags flags)
                 if (flags & PROT_DEEP)
                     Uncolor(var);
             }
-            return_value (ARG(value));
+            return COPY(ARG(value));
         }
     }
 
@@ -360,7 +360,7 @@ static Bounce Protect_Unprotect_Core(Frame(*) frame_, Flags flags)
     if (flags & PROT_DEEP)
         Uncolor(value);
 
-    return_value (ARG(value));
+    return COPY(ARG(value));
 }
 
 
@@ -397,7 +397,7 @@ DECLARE_NATIVE(protect)
         )){
             return THROWN;
         }
-        return_value (v);
+        return COPY(v);
     }
 
     // Avoid unused parameter warnings (core routine handles them via frame)
@@ -575,5 +575,5 @@ DECLARE_NATIVE(freeze)
     REBSER *locker = nullptr;
     Force_Value_Frozen_Core(ARG(value), did REF(deep), locker);
 
-    return_value (ARG(value));
+    return COPY(ARG(value));
 }

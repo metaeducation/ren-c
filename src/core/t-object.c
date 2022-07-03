@@ -717,7 +717,7 @@ DECLARE_NATIVE(meta_of)  // see notes on MISC_META()
     if (not meta)
         return nullptr;
 
-    return_value (CTX_ARCHETYPE(meta));
+    return COPY(CTX_ARCHETYPE(meta));
 }
 
 
@@ -758,7 +758,7 @@ DECLARE_NATIVE(set_meta)
     else
         mutable_MISC(VarlistMeta, CTX_VARLIST(VAL_CONTEXT(v))) = meta_ctx;
 
-    return_value (meta);
+    return COPY(meta);
 }
 
 
@@ -1170,13 +1170,13 @@ REBTYPE(Context)
       case SYM_APPEND: {
         REBVAL *arg = D_ARG(2);
         if (IS_NULLED_OR_BLANK(arg))
-            return_value (context);  // don't fail on R/O if it would be a no-op
+            return COPY(context);  // don't fail on R/O if it would be a no-op
 
         ENSURE_MUTABLE(context);
         if (not IS_OBJECT(context) and not IS_MODULE(context))
             return BOUNCE_UNHANDLED;
         Append_To_Context(context, arg);
-        return_value (context); }
+        return COPY(context); }
 
       case SYM_COPY: {  // Note: words are not copied and bindings not changed!
         INCLUDE_PARAMS_OF_COPY;
@@ -1242,7 +1242,7 @@ REBTYPE(Context)
         if (ID_OF_SYMBOL(verb) == SYM_FIND)
             return Init_True(OUT); // !!! obscures non-LOGIC! result?
 
-        return_value (CTX_VAR(c, n)); }
+        return COPY(CTX_VAR(c, n)); }
 
       default:
         break;
@@ -1336,7 +1336,7 @@ REBTYPE(Frame)
                     continue;
 
                 Context(*) ctx_parent = Context_For_Frame_May_Manage(parent);
-                return_value (CTX_ARCHETYPE(ctx_parent));
+                return COPY(CTX_ARCHETYPE(ctx_parent));
             }
             return nullptr; }
 

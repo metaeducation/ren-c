@@ -465,7 +465,7 @@ DECLARE_NATIVE(text_x_combinator)
     // If not an array, we have return the rule on match since there's
     // no isolated value to capture.
 
-    return_value (v);
+    return COPY(v);
 }
 
 

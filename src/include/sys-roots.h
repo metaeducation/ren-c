@@ -195,3 +195,18 @@ inline static void Release_Api_Value_If_Unmanaged(const REBVAL* r) {
     if (Not_Cell_Flag(r, MANAGED))
         rebRelease(r);
 }
+
+
+// Convenience routine for returning a value which is *not* located in OUT.
+// (If at all possible, it's better to build values directly into OUT and
+// then return the OUT pointer...this is the fastest form of returning.)
+//
+// Note: We do not allow direct `return v` of arbitrary values to be copied
+// in the dispatcher because it's too easy to think that will work for an
+// arbitrary local variable, which would be dead after the return.
+//
+inline static Bounce Native_Copy_Result(Frame(*) frame_, Value(const*) v) {
+    assert(v != frame_->out);   // Copy_Cell() would fail; don't tolerate
+    assert(not Is_Api_Value(v)); // too easy to not release()
+    return Copy_Cell(frame_->out, v);
+}

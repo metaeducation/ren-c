@@ -534,7 +534,7 @@ DECLARE_NATIVE(setify)
 {
     INCLUDE_PARAMS_OF_SETIFY;
 
-    return_value (Setify(ARG(value)));
+    return COPY(Setify(ARG(value)));
 }
 
 
@@ -580,7 +580,7 @@ DECLARE_NATIVE(getify)
 {
     INCLUDE_PARAMS_OF_GETIFY;
 
-    return_value (Getify(ARG(value)));
+    return COPY(Getify(ARG(value)));
 }
 
 
@@ -626,7 +626,7 @@ DECLARE_NATIVE(metafy)
 {
     INCLUDE_PARAMS_OF_METAFY;
 
-    return_value (Metafy(ARG(value)));
+    return COPY(Metafy(ARG(value)));
 }
 
 
@@ -676,7 +676,7 @@ DECLARE_NATIVE(inert)
 {
     INCLUDE_PARAMS_OF_INERT;
 
-    return_value (Theify(ARG(value)));
+    return COPY(Theify(ARG(value)));
 }
 
 
@@ -722,5 +722,5 @@ DECLARE_NATIVE(plain)
 {
     INCLUDE_PARAMS_OF_PLAIN;
 
-    return_value (Plainify(ARG(value)));
+    return COPY(Plainify(ARG(value)));
 }

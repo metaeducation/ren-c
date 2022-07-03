@@ -505,7 +505,7 @@ REBTYPE(Time)
         REBVAL *setval = Meta_Unquotify(ARG(value));
 
         Poke_Time_Immediate(time, picker, setval);
-        return_value (time);  // caller needs to update their time bits
+        return COPY(time);  // caller needs to update their time bits
     }
 
     if (
@@ -641,7 +641,7 @@ REBTYPE(Time)
         // unary actions
         switch (id) {
           case SYM_COPY:
-            return_value (time);  // immediate type, just copy bits
+            return COPY(time);  // immediate type, just copy bits
 
           case SYM_ODD_Q:
             return Init_Logic(OUT, (SECS_FROM_NANO(secs) & 1) != 0);
@@ -681,12 +681,12 @@ REBTYPE(Time)
                     Dec64(to) * SEC_SEC
                 );
                 VAL_DECIMAL(to) /= SEC_SEC;
-                return_value (to);
+                return COPY(to);
             }
             else if (IS_INTEGER(to)) {
                 VAL_INT64(to)
                     = Round_Int(secs, frame_, Int32(to) * SEC_SEC) / SEC_SEC;
-                return_value (to);
+                return COPY(to);
             }
 
             fail (PAR(to)); }

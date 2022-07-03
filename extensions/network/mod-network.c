@@ -778,10 +778,10 @@ static Bounce Transport_Actor(
                     fail (listen_error);
             }
 
-            return_value (port); }
+            return COPY(port); }
 
           case SYM_CLOSE:
-            return_value (port);
+            return COPY(port);
 
           default:
             fail (Error_On_Port(SYM_NOT_OPEN, port, -12));
@@ -873,7 +873,7 @@ static Bounce Transport_Actor(
 
         rebFree(rebreq);
 
-        return_value (port); }
+        return COPY(port); }
 
       case SYM_WRITE: {
         INCLUDE_PARAMS_OF_WRITE;
@@ -942,7 +942,7 @@ static Bounce Transport_Actor(
 
         rebFree(rebreq);
 
-        return_value (port); }
+        return COPY(port); }
 
       case SYM_QUERY: {
         //
@@ -983,7 +983,7 @@ static Bounce Transport_Actor(
             if (error)
                 fail (error);
         }
-        return_value (port); }
+        return COPY(port); }
 
       case SYM_CONNECT: {
         //
@@ -996,7 +996,7 @@ static Bounce Transport_Actor(
         if (error != nullptr)
             fail (error);
 
-        return_value (port); }
+        return COPY(port); }
 
       default:
         break;

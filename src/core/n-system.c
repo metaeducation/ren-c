@@ -272,7 +272,7 @@ DECLARE_NATIVE(check)
         ASSERT_ARRAY(ACT_DETAILS(VAL_ACTION(value)));
     }
 
-    return_value (value);
+    return COPY(value);
 #endif
 }
 

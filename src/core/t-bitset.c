@@ -630,7 +630,7 @@ REBTYPE(Bitset)
       case SYM_INSERT: {
         REBVAL *arg = D_ARG(2);
         if (IS_NULLED_OR_BLANK(arg))
-            return_value (v);  // don't fail on read only if it would be a no-op
+            return COPY(v);  // don't fail on read only if it would be a no-op
 
         Binary(*) bin = VAL_BITSET_ENSURE_MUTABLE(v);
 
@@ -642,7 +642,7 @@ REBTYPE(Bitset)
 
         if (not Set_Bits(bin, arg, diff))
             fail (arg);
-        return_value (v); }
+        return COPY(v); }
 
       case SYM_REMOVE: {
         INCLUDE_PARAMS_OF_REMOVE;
@@ -656,7 +656,7 @@ REBTYPE(Bitset)
         if (not Set_Bits(bin, ARG(part), false))
             fail (PAR(part));
 
-        return_value (v); }
+        return COPY(v); }
 
       case SYM_COPY: {
         INCLUDE_PARAMS_OF_COPY;
@@ -673,7 +673,7 @@ REBTYPE(Bitset)
         Binary(*) bin = VAL_BITSET_ENSURE_MUTABLE(v);
         INIT_BITS_NOT(bin, false);
         Clear_Series(bin);
-        return_value (v); }
+        return COPY(v); }
 
       case SYM_INTERSECT:
       case SYM_UNION:

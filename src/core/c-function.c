@@ -1241,5 +1241,5 @@ DECLARE_NATIVE(tweak)
     else
         ACT_IDENTITY(act)->leader.bits &= ~flag;
 
-    return_value (ARG(action));
+    return COPY(ARG(action));
 }

@@ -410,7 +410,7 @@ DECLARE_NATIVE(shift)
         }
     }
 
-    return_value (ARG(value));
+    return COPY(ARG(value));
 }
 
 

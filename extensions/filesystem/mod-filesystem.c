@@ -622,7 +622,7 @@ DECLARE_NATIVE(change_dir)
 
     Copy_Cell(current_path, arg);
 
-    return_value (arg);
+    return COPY(arg);
 }
 
 

@@ -359,7 +359,7 @@ enum Boot_Levels {
 
 // Modes allowed by Make_Function:
 enum {
-    MKF_RETURN      = 1 << 0,   // give a return_value (but local RETURN: overrides)
+    MKF_RETURN      = 1 << 0,   // give a return COPY(but local RETURN: overrides)
     MKF_KEYWORDS    = 1 << 1,   // respond to tags like <opt>, <with>, <local>
     MKF_2           = 1 << 2,
 
@@ -568,6 +568,7 @@ inline static REBVAR *Force_Lib_Var(SYMID id) {
 #include "datatypes/sys-sequence.h"  // also needs PUSH()
 
 #include "sys-roots.h"
+
 
 #include "sys-throw.h"
 #include "sys-feed.h"

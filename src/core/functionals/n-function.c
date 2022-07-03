@@ -674,7 +674,7 @@ DECLARE_NATIVE(inherit_meta)
 
     Context(*) m1 = ACT_META(VAL_ACTION(original));
     if (not m1)  // nothing to copy
-        return_value (ARG(derived));
+        return COPY(ARG(derived));
 
     // Often the derived function won't have its own meta information yet.  But
     // if it was created via an AUGMENT, it will have some...only the notes
@@ -758,5 +758,5 @@ DECLARE_NATIVE(inherit_meta)
         Shutdown_Evars(&e);
     }
 
-    return_value (ARG(derived));
+    return COPY(ARG(derived));
 }

@@ -163,13 +163,13 @@ DECLARE_NATIVE(bind)
         // Bind a single word (also works on refinements, `/a` ...or `a.`, etc.
 
         if (Try_Bind_Word(context, v))
-            return_value (v);
+            return COPY(v);
 
         // not in context, bind/new means add it if it's not.
         //
         if (REF(new) or (IS_SET_WORD(v) and REF(set))) {
             Init_None(Append_Context(VAL_CONTEXT(context), v, nullptr));
-            return_value (v);
+            return COPY(v);
         }
 
         fail (Error_Not_In_Context_Raw(v));
@@ -182,7 +182,7 @@ DECLARE_NATIVE(bind)
     //
     if (REB_ACTION == CELL_HEART(v)) {
         INIT_VAL_ACTION_BINDING(v, VAL_CONTEXT(context));
-        return_value (v);
+        return COPY(v);
     }
 
     if (not ANY_ARRAYLIKE(v))  // QUOTED! could have wrapped any type
@@ -256,7 +256,7 @@ DECLARE_NATIVE(in)
 
     assert(ANY_ARRAY(v));
     Virtual_Bind_Deep_To_Existing_Context(v, ctx, nullptr, REB_WORD);
-    return_value (v);
+    return COPY(v);
 }
 
 
@@ -300,7 +300,7 @@ DECLARE_NATIVE(without)
 
     assert(ANY_ARRAY(v));
     Virtual_Bind_Deep_To_Existing_Context(v, ctx, nullptr, REB_WORD);
-    return_value (v);
+    return COPY(v);
 }
 
 //
@@ -489,7 +489,7 @@ DECLARE_NATIVE(unbind)
         Unbind_Values_Core(at, tail, context, did REF(deep));
     }
 
-    return_value (word);
+    return COPY(word);
 }
 
 
@@ -1356,7 +1356,7 @@ DECLARE_NATIVE(set)
     if (steps_out and steps_out != GROUPS_OK)
         Set_Var_May_Fail(steps_var, SPECIFIED, steps_out);
 
-    return_value (v);  // result does not decay unless void, see [1]
+    return COPY(v);  // result does not decay unless void, see [1]
 }
 
 
@@ -1391,7 +1391,7 @@ DECLARE_NATIVE(try)
     if (Is_Isotope(v))
         fail (Error_Bad_Isotope(v));  // Don't tolerate other isotopes
 
-    return_value (v);
+    return COPY(v);
 }
 
 
@@ -1433,7 +1433,7 @@ DECLARE_NATIVE(opt)
     if (Is_Nulled(v))
         return Init_Null_Isotope(OUT);
 
-    return_value (v);
+    return COPY(v);
 }
 
 
@@ -1483,7 +1483,7 @@ DECLARE_NATIVE(resolve)
         Copy_Cell(dest, src);
     }
 
-    return_value (ARG(where));
+    return COPY(ARG(where));
 }
 
 
@@ -1530,7 +1530,7 @@ DECLARE_NATIVE(enfix)
 
     Set_Action_Flag(VAL_ACTION(action), ENFIXED);
 
-    return_value (action);
+    return COPY(action);
 }
 
 
@@ -1580,7 +1580,7 @@ DECLARE_NATIVE(identity) // sample uses: https://stackoverflow.com/q/3136338
     if (Is_Meta_Of_Void(v))
         return VOID;
 
-    return_value (Meta_Unquotify(v));
+    return COPY(Meta_Unquotify(v));
 }
 
 
@@ -1821,7 +1821,7 @@ DECLARE_NATIVE(as)
     REBVAL *t = ARG(type);
     enum Reb_Kind new_kind = VAL_TYPE_KIND(t);
     if (new_kind == VAL_TYPE(v))
-        return_value (v);
+        return COPY(v);
 
     switch (new_kind) {
       case REB_INTEGER: {
@@ -2176,7 +2176,7 @@ DECLARE_NATIVE(as_text)
 
     enum Reb_Kind new_kind = REB_TEXT;
     if (new_kind == VAL_TYPE(v) and not REF(strict))
-        return_value (Quotify(v, quotes));  // just may change quotes
+        return COPY(Quotify(v, quotes));  // just may change quotes
 
     if (not Try_As_String(
         OUT,
@@ -2322,7 +2322,7 @@ DECLARE_NATIVE(heavy) {
     if (Is_Nulled(v))
         return Init_Null_Isotope(OUT);
 
-    return_value (Meta_Unquotify(v));
+    return COPY(Meta_Unquotify(v));
 }
 
 
@@ -2426,10 +2426,10 @@ DECLARE_NATIVE(reify)
         return Init_Bad_Word(OUT, Canon(VOID));
 
     if (IS_BAD_WORD(v))  // e.g. the input was an isotope form
-        return_value (v);
+        return COPY(v);
 
     assert(IS_QUOTED(v));
-    return_value (Unquotify(v, 1));
+    return COPY(Unquotify(v, 1));
 }
 
 

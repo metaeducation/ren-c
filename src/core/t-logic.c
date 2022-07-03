@@ -269,14 +269,14 @@ DECLARE_NATIVE(unless)
     REBVAL *right = ARG(right);
 
     if (Is_Meta_Of_Void(right))  // if right disappears (no branching), left
-        return_value (left);
+        return COPY(left);
 
     Meta_Unquotify(right);
 
     if (Is_Truthy(right))
-        return_value (right);
+        return COPY(right);
 
-    return_value (left); // preserve the exact truthy or falsey value
+    return COPY(left); // preserve the exact truthy or falsey value
 }
 
 

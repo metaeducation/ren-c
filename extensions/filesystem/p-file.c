@@ -195,11 +195,11 @@ Bounce File_Actor(Frame(*) frame_, REBVAL *port, Symbol(const*) verb)
 
           case SYM_HEAD:
             file->offset = 0;
-            return_value (port);
+            return COPY(port);
 
           case SYM_TAIL:
             file->offset = File_Size_Cacheable_May_Fail(port);
-            return_value (port);
+            return COPY(port);
 
           case SYM_HEAD_Q:
             return Init_Logic(OUT, file->offset == 0);
@@ -468,7 +468,7 @@ Bounce File_Actor(Frame(*) frame_, REBVAL *port, Symbol(const*) verb)
         if (result)
             fail (result);
 
-        return_value (port); }
+        return COPY(port); }
 
     //=//// OPEN ///////////////////////////////////////////////////////////=//
     //
@@ -514,7 +514,7 @@ Bounce File_Actor(Frame(*) frame_, REBVAL *port, Symbol(const*) verb)
         if (error != nullptr)
             fail (Error_Cannot_Open_Raw(file->path, error));
 
-        return_value (port); }
+        return COPY(port); }
 
     //=//// COPY ///////////////////////////////////////////////////////////=//
     //
@@ -551,7 +551,7 @@ Bounce File_Actor(Frame(*) frame_, REBVAL *port, Symbol(const*) verb)
             if (error)
                 fail (error);
         }
-        return_value (port); }
+        return COPY(port); }
 
     //=//// DELETE /////////////////////////////////////////////////////////=//
     //
@@ -572,7 +572,7 @@ Bounce File_Actor(Frame(*) frame_, REBVAL *port, Symbol(const*) verb)
         if (error)
             fail (error);
 
-        return_value (port); }
+        return COPY(port); }
 
     //=//// RENAME /////////////////////////////////////////////////////////=//
     //
@@ -624,7 +624,7 @@ Bounce File_Actor(Frame(*) frame_, REBVAL *port, Symbol(const*) verb)
 
         Copy_Cell(file->path, ARG(to));  // !!! this mutates the spec, bad?
 
-        return_value (port); }
+        return COPY(port); }
 
     //=//// CREATE /////////////////////////////////////////////////////////=//
     //
@@ -689,7 +689,7 @@ Bounce File_Actor(Frame(*) frame_, REBVAL *port, Symbol(const*) verb)
         }
 
         file->offset += offset;
-        return_value (port); }
+        return COPY(port); }
 
     //=//// CLEAR //////////////////////////////////////////////////////////=//
     //
@@ -720,7 +720,7 @@ Bounce File_Actor(Frame(*) frame_, REBVAL *port, Symbol(const*) verb)
         if (truncate_error)
             fail (truncate_error);
 
-        return_value (port); }
+        return COPY(port); }
 
       default:
         break;

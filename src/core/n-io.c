@@ -209,7 +209,7 @@ DECLARE_NATIVE(new_line)
             break;
     }
 
-    return_value (pos);
+    return COPY(pos);
 }
 
 

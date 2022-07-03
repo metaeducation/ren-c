@@ -408,10 +408,10 @@ Bounce Console_Actor(Frame(*) frame_, REBVAL *port, Symbol(const*) verb)
         return rebValue("copy", data, "elide clear", data); }
 
       case SYM_OPEN:
-        return_value (port);
+        return COPY(port);
 
       case SYM_CLOSE:
-        return_value (port);
+        return COPY(port);
 
       default:
         break;

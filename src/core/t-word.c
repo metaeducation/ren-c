@@ -355,7 +355,7 @@ REBTYPE(Word)
         break; }
 
       case SYM_COPY:
-        return_value (v);
+        return COPY(v);
 
       default:
         break;

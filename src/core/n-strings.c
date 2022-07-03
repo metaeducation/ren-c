@@ -728,7 +728,7 @@ DECLARE_NATIVE(enline)
     }
 
     if (delta == 0)
-        return_value (ARG(string)); // nothing to do
+        return COPY(ARG(string)); // nothing to do
 
     REBLEN old_len = s->misc.length;
     EXPAND_SERIES_TAIL(s, delta);  // corrupts str->misc.length
@@ -764,7 +764,7 @@ DECLARE_NATIVE(enline)
         --size;
     }
 
-    return_value (ARG(string));
+    return COPY(ARG(string));
 }
 
 

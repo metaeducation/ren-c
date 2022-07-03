@@ -596,6 +596,7 @@ inline static Frame(*) Prep_Frame_Core(
     #define VOID        Native_Void_Result(frame_)
     #define NONE        Native_None_Result(frame_)
     #define THROWN      Native_Thrown_Result(frame_)
+    #define COPY(v)     Native_Copy_Result(frame_, (v))
     #define FAIL(p)     Native_Failure_Result(frame_, (p))
     #define UNMETA(v)   Native_Unmeta_Result(frame_, (v))
 
