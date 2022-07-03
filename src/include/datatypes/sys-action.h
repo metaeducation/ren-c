@@ -645,15 +645,14 @@ inline static Bounce Native_Thrown_Result(Frame(*) frame_) {
 }
 
 
-#define return_branched(v) \
-    do { \
-        const REBVAL *x_check = (v); /* can only expand (v) once! */ \
-        assert(x_check == OUT); /* name has x_ to not collide with locals */ \
-        assert(not Is_Void(OUT)); \
-        assert(VAL_TYPE_UNCHECKED(OUT) != REB_NULL); /* isotopes ok */ \
-        UNUSED(x_check); \
-        return OUT; \
-    } while (false)
+// Asserts that value is not void or pure null
+//
+inline static Bounce Native_Branched_Result(Frame(*) frame_, Value(*) v) {
+    assert(v == frame_->out);  // would not be zero cost if we supported copy
+    assert(not Is_Void(v));
+    assert(VAL_TYPE_UNCHECKED(v) != REB_NULL);  // unchecked, as isotopes ok
+    return frame_->out;
+}
 
 
 inline static REBVAL *Mark_Eval_Out_Voided(REBVAL *out) {

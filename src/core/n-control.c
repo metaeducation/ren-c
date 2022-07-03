@@ -529,7 +529,7 @@ DECLARE_NATIVE(match)
 
     Copy_Cell(OUT, v);  // Otherwise, input is the result
 
-    return_branched (OUT);  // asserts no pure NULL or isotope ~void~
+    return BRANCHED(OUT);
 }
 
 
@@ -715,7 +715,7 @@ DECLARE_NATIVE(all)
         return VOID;
 
     Clear_Stale_Flag(OUT);  // un-hide values "underneath" void, again see [1]
-    return_branched (OUT);
+    return BRANCHED(OUT);
 }}
 
 
@@ -820,7 +820,7 @@ DECLARE_NATIVE(any)
 
     if (Is_Truthy(condition)) {
         Drop_Frame(SUBFRAME);
-        return_branched (OUT);  // successful ANY returns the value
+        return BRANCHED(OUT);  // successful ANY returns the value
     }
 
     if (Is_End(SUBFRAME->feed->value))
@@ -1021,7 +1021,7 @@ DECLARE_NATIVE(case)
 
     if (not REF(all)) {
         Drop_Frame(SUBFRAME);
-        return_branched (OUT);
+        return BRANCHED(OUT);
     }
 
     goto handle_next_clause;
@@ -1035,13 +1035,13 @@ DECLARE_NATIVE(case)
     if (not Is_Void(SPARE)) {  // prioritize fallout result, see [4]
         Isotopify_If_Nulled(SPARE);
         Move_Cell(OUT, SPARE);
-        return_branched (OUT);  // asserts no ~void~ or pure null
+        return BRANCHED(OUT);
     }
 
     if (Is_Stale(OUT))  // none of the clauses of an /ALL ran a branch
         return VOID;
 
-    return_branched (OUT);  // asserts no ~void~ or pure null
+    return BRANCHED(OUT);
 }}
 
 
@@ -1186,7 +1186,7 @@ DECLARE_NATIVE(switch)
 
         if (not REF(all)) {
             Drop_Frame(f);
-            return_branched (OUT);  // asserts no pure NULL or isotope ~void~
+            return BRANCHED(OUT);
         }
 
         Fetch_Next_Forget_Lookback(f);  // keep matching if /ALL
@@ -1203,7 +1203,7 @@ DECLARE_NATIVE(switch)
     //
     if (not Is_Void(SPARE)) {
         Move_Cell(OUT, SPARE);
-        return_branched (OUT);
+        return BRANCHED(OUT);
     }
 
     // if no fallout, use last /ALL clause, or ~void~ isotope if END
@@ -1211,7 +1211,7 @@ DECLARE_NATIVE(switch)
     if (Is_Stale(OUT))
         return VOID;
 
-    return_branched (OUT);  // asserts no pure NULL or isotope ~void~
+    return BRANCHED(OUT);
 
   threw:
 
@@ -1459,7 +1459,7 @@ DECLARE_NATIVE(catch)
         return NONE;  // void would trigger ELSE
 
     Isotopify_If_Nulled(OUT);  // a caught NULL triggers THEN, not ELSE
-    return_branched (OUT);
+    return BRANCHED(OUT);
 }}
 
 

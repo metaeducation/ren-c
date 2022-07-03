@@ -205,7 +205,7 @@ static Bounce Loop_Series_Common(
     if (Is_Stale(OUT))
         return VOID;
 
-    return_branched (OUT);
+    return BRANCHED(OUT);
 }
 
 
@@ -241,7 +241,7 @@ static Bounce Loop_Integer_Common(
             if (Is_Void(OUT))  // CONTINUE w/no argument
                 Init_None(OUT);
         }
-        return_branched (OUT);
+        return BRANCHED(OUT);
     }
 
     // As per #1993, start relative to end determines the "direction" of the
@@ -271,7 +271,7 @@ static Bounce Loop_Integer_Common(
             fail (Error_Overflow_Raw());
     }
 
-    return_branched (OUT);
+    return BRANCHED(OUT);
 }
 
 
@@ -330,7 +330,7 @@ static Bounce Loop_Number_Common(
             if (Is_Void(OUT))  // CONTINUE w/no argument
                 Init_None(OUT);
         }
-        return_branched (OUT);  // BREAK -> NULL
+        return BRANCHED(OUT);
     }
 
     // As per #1993, see notes in Loop_Integer_Common()
@@ -360,7 +360,7 @@ static Bounce Loop_Number_Common(
     if (Is_Stale(OUT))
         return VOID;
 
-    return_branched (OUT);
+    return BRANCHED(OUT);
 }
 
 
@@ -566,7 +566,7 @@ DECLARE_NATIVE(for_skip)
     if (Is_Stale(OUT))
         return VOID;
 
-    return_branched (OUT);
+    return BRANCHED(OUT);
 }
 
 
@@ -1813,7 +1813,7 @@ DECLARE_NATIVE(repeat)
     }
 
     if (VAL_INT64(count) == VAL_INT64(index))  // reached the desired count
-        return_branched (OUT);
+        return BRANCHED(OUT);
 
     ++VAL_INT64(index);  // bump index by one
 
@@ -1924,7 +1924,7 @@ DECLARE_NATIVE(for)
         fail (Error_Invalid_Type(VAL_TYPE(var)));
 
     if (VAL_INT64(var) == VAL_INT64(value))
-        return_branched (OUT);
+        return BRANCHED(OUT);
 
     if (REB_I64_ADD_OF(VAL_INT64(var), 1, &VAL_INT64(var)))
         fail (Error_Overflow_Raw());
@@ -2026,7 +2026,7 @@ DECLARE_NATIVE(until)
             fail (Error_Bad_Isotope(condition));  // all isotopes fail, see [3]
 
         if (Is_Truthy(condition))
-            return_branched (OUT);  // truthy result, return value!
+            return BRANCHED(OUT);  // truthy result, return value!
     }
 
     STATE = ST_UNTIL_EVALUATING_BODY;
@@ -2111,7 +2111,7 @@ DECLARE_NATIVE(while)
         if (Is_Stale(OUT))
             return VOID;  // body never ran, so no result to return!
 
-        return_branched (OUT);  // see [4]
+        return BRANCHED(OUT);  // see [4]
     }
 
     STATE = ST_WHILE_EVALUATING_BODY;  // body result => OUT

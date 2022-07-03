@@ -90,7 +90,7 @@ DECLARE_NATIVE(trap)
     CATCH_THROWN(SPARE, FRAME);
     assert(Is_Nulled(SPARE));  // all error throws are null-valued
 
-    return_branched (OUT);
+    return BRANCHED(OUT);
   }
 }
 

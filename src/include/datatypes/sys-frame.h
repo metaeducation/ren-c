@@ -599,6 +599,7 @@ inline static Frame(*) Prep_Frame_Core(
     #define COPY(v)     Native_Copy_Result(frame_, (v))
     #define FAIL(p)     Native_Failure_Result(frame_, (p))
     #define UNMETA(v)   Native_Unmeta_Result(frame_, (v))
+    #define BRANCHED(v) Native_Branched_Result(frame_, (v))
 
     #define BASELINE   (&frame_->baseline)
 #endif

@@ -291,7 +291,7 @@ DECLARE_NATIVE(reduce_each)
     if (Is_Breaking_Null(OUT))
         return nullptr;  // BREAK encountered
 
-    return_branched (OUT);
+    return BRANCHED(OUT);
 }}
 
 
