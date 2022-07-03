@@ -96,7 +96,7 @@ DECLARE_NATIVE(reduce)
     subframe->u.eval.current_gotten = nullptr;
     subframe->u.eval.enfix_reevaluate = 'N';  // detect?
 
-    delegate_subframe (subframe);
+    return DELEGATE_SUBFRAME(subframe);
 
 } initial_entry_any_array: {  ////////////////////////////////////////////////
 
@@ -121,7 +121,7 @@ DECLARE_NATIVE(reduce)
 
     SUBFRAME->executor = &Evaluator_Executor;
     STATE = ST_REDUCE_EVAL_STEP;
-    continue_uncatchable_subframe (SUBFRAME);
+    return CONTINUE_SUBFRAME(SUBFRAME);
 
 } reduce_step_result_in_out: {  //////////////////////////////////////////////
 
@@ -133,7 +133,7 @@ DECLARE_NATIVE(reduce)
 
     SUBFRAME->executor = &Just_Use_Out_Executor;
     STATE = ST_REDUCE_RUNNING_PREDICATE;
-    continue_uncatchable (OUT, predicate, OUT);  // arg can be same as output
+    return CONTINUE(OUT, predicate, OUT);  // arg can be same as output
 
 } process_out: {  ////////////////////////////////////////////////////////////
 
@@ -246,7 +246,7 @@ DECLARE_NATIVE(reduce_each)
     RESET(SPARE);
 
     STATE = ST_REDUCE_EACH_REDUCING_STEP;
-    continue_uncatchable_subframe (SUBFRAME);
+    return CONTINUE_SUBFRAME(SUBFRAME);
 
 } reduce_step_output_in_spare: {  ////////////////////////////////////////////
 
@@ -261,7 +261,7 @@ DECLARE_NATIVE(reduce_each)
     SUBFRAME->executor = &Just_Use_Out_Executor;  // pass through subframe
 
     STATE = ST_REDUCE_EACH_RUNNING_BODY;
-    continue_catchable_branch(OUT, body, END);
+    return CATCH_CONTINUE_BRANCH(OUT, body, END);
 
 } body_result_in_out: {  /////////////////////////////////////////////////////
 
@@ -565,7 +565,7 @@ Bounce Composer_Executor(Frame(*) f)
 
             Push_Composer_Frame(OUT, main_frame, f_value, f_specifier);
             STATE = ST_COMPOSER_RECURSING_DEEP;
-            continue_subframe (SUBFRAME);
+            return CATCH_CONTINUE_SUBFRAME(SUBFRAME);
         }
 
         // compose [[(1 + 2)] (3 + 4)] => [[(1 + 2)] 7]  ; non-deep
@@ -591,7 +591,7 @@ Bounce Composer_Executor(Frame(*) f)
         STATE == ST_COMPOSER_EVAL_GROUP
         or STATE == ST_COMPOSER_EVAL_DOUBLED_GROUP
     );
-    continue_subframe (subframe);
+    return CATCH_CONTINUE_SUBFRAME(subframe);
 
 } group_result_in_out: {  ////////////////////////////////////////////////////
 
@@ -602,7 +602,7 @@ Bounce Composer_Executor(Frame(*) f)
         goto handle_next_item;  // voids not offered to predicates, by design
 
     STATE = ST_COMPOSER_RUNNING_PREDICATE;
-    continue_uncatchable (OUT, predicate, OUT);
+    return CONTINUE(OUT, predicate, OUT);
 
 } process_out: {  ////////////////////////////////////////////////////////////
 
@@ -828,7 +828,7 @@ DECLARE_NATIVE(compose)
     Push_Composer_Frame(OUT, frame_, v, VAL_SPECIFIER(v));
 
     STATE = ST_COMPOSE_COMPOSING;
-    continue_uncatchable_subframe (SUBFRAME);
+    return CONTINUE_SUBFRAME(SUBFRAME);
 
 } composer_finished: {  //////////////////////////////////////////////////////
 

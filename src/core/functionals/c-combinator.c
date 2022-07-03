@@ -397,7 +397,7 @@ DECLARE_NATIVE(opt_combinator)
     Push_Parser_Subframe(OUT, remainder, parser, input);
 
     STATE = ST_OPT_COMBINATOR_RUNNING_PARSER;
-    continue_subframe (SUBFRAME);
+    return CATCH_CONTINUE_SUBFRAME(SUBFRAME);
 
 } parser_result_in_out: {  ///////////////////////////////////////////////////
 
@@ -533,7 +533,7 @@ DECLARE_NATIVE(some_combinator)
     Push_Parser_Subframe(OUT, remainder, parser, input);
 
     STATE = ST_SOME_COMBINATOR_FIRST_PARSER_RUN;
-    continue_uncatchable_subframe (SUBFRAME);  // mirror usermode, see [2]
+    return CONTINUE_SUBFRAME(SUBFRAME);  // mirror usermode, see [2]
 
 } first_parse_result_in_out: {  //////////////////////////////////////////////
 
@@ -554,7 +554,7 @@ DECLARE_NATIVE(some_combinator)
     Push_Parser_Subframe(SPARE, remainder, parser, input);
 
     STATE = ST_SOME_COMBINATOR_LATER_PARSER_RUN;
-    continue_uncatchable_subframe (SUBFRAME);
+    return CONTINUE_SUBFRAME(SUBFRAME);
 
 } later_parse_result_in_spare: {  ////////////////////////////////////////////
 
@@ -608,7 +608,7 @@ DECLARE_NATIVE(further_combinator)
     Push_Parser_Subframe(OUT, remainder, parser, input);
 
     STATE = ST_FURTHER_COMBINATOR_RUNNING_PARSER;
-    continue_subframe (SUBFRAME);
+    return CATCH_CONTINUE_SUBFRAME(SUBFRAME);
 
 } parser_result_in_out: {  ///////////////////////////////////////////////////
 

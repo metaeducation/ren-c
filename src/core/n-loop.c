@@ -642,14 +642,14 @@ DECLARE_NATIVE(cycle)
   initial_entry: {  //////////////////////////////////////////////////////////
 
     STATE = ST_CYCLE_EVALUATING_BODY;
-    continue_catchable (OUT, body, END);
+    return CATCH_CONTINUE(OUT, body, END);
 
 } body_was_evaluated: {  /////////////////////////////////////////////////////
 
     if (THROWING)
         goto handle_thrown;
 
-    continue_catchable (OUT, body, END);  // no break or stop, so keep going
+    return CATCH_CONTINUE(OUT, body, END);  // no break or stop, so keep going
 
 } handle_thrown: {  /////////////////////////////////////////////////////////
 
@@ -657,7 +657,7 @@ DECLARE_NATIVE(cycle)
         if (Is_Breaking_Null(OUT))
             return nullptr;
 
-        continue_catchable(OUT, body, END);  // plain continue
+        return CATCH_CONTINUE(OUT, body, END);  // plain continue
     }
 
     const REBVAL *label = VAL_THROWN_LABEL(FRAME);
@@ -1044,7 +1044,7 @@ DECLARE_NATIVE(for_each)
         goto finalize_for_each;
 
     STATE = ST_FOR_EACH_RUNNING_BODY;
-    continue_catchable (OUT, body, END);
+    return CATCH_CONTINUE(OUT, body, END);
 
 } body_result_in_spare_or_threw: {  //////////////////////////////////////////
 
@@ -1153,7 +1153,7 @@ DECLARE_NATIVE(every)
         goto finalize_every;
 
     STATE = ST_EVERY_RUNNING_BODY;
-    continue_catchable (SPARE, body, END);
+    return CATCH_CONTINUE(SPARE, body, END);
 
 } body_result_in_spare: {  ///////////////////////////////////////////////////
 
@@ -1658,7 +1658,7 @@ DECLARE_NATIVE(map)
         goto finalize_map;
 
     STATE = ST_MAP_RUNNING_BODY;
-    continue_catchable (SPARE, body, END);  // body may be META-BLOCK!
+    return CATCH_CONTINUE(SPARE, body, END);  // body may be META-BLOCK!
 
 } body_result_in_spare: {  ///////////////////////////////////////////////////
 
@@ -1783,7 +1783,7 @@ DECLARE_NATIVE(repeat)
             return VOID;  // treat false as "don't run"
 
         STATE = ST_REPEAT_EVALUATING_BODY;  // true is "infinite loop"
-        continue_catchable_branch (OUT, ARG(body), END);  // no index, see [1]
+        return CATCH_CONTINUE_BRANCH(OUT, ARG(body), END);  // no index, see [1]
     }
 
     if (VAL_INT64(count) <= 0)
@@ -1792,7 +1792,7 @@ DECLARE_NATIVE(repeat)
     Init_Integer(index, 1);
 
     STATE = ST_REPEAT_EVALUATING_BODY;
-    continue_catchable_branch (OUT, ARG(body), index);
+    return CATCH_CONTINUE_BRANCH(OUT, ARG(body), index);
 
 } body_result_in_out: {  /////////////////////////////////////////////////////
 
@@ -1809,7 +1809,7 @@ DECLARE_NATIVE(repeat)
 
     if (IS_LOGIC(count)) {
         assert(VAL_LOGIC(count) == true);  // false already returned
-        continue_catchable_branch(OUT, body, END);  // true infinite loops
+        return CATCH_CONTINUE_BRANCH(OUT, body, END);  // true infinite loops
     }
 
     if (VAL_INT64(count) == VAL_INT64(index))  // reached the desired count
@@ -1817,7 +1817,7 @@ DECLARE_NATIVE(repeat)
 
     ++VAL_INT64(index);  // bump index by one
 
-    continue_catchable_branch (OUT, body, index);  // keep looping
+    return CATCH_CONTINUE_BRANCH(OUT, body, index);  // keep looping
 }}
 
 
@@ -1903,7 +1903,7 @@ DECLARE_NATIVE(for)
     Init_Integer(var, 1);
 
     STATE = ST_FOR_RUNNING_BODY;
-    continue_catchable_branch (OUT, body, var);
+    return CATCH_CONTINUE_BRANCH(OUT, body, var);
 
 } body_result_in_out: {  /////////////////////////////////////////////////////
 
@@ -1930,7 +1930,7 @@ DECLARE_NATIVE(for)
         fail (Error_Overflow_Raw());
 
     STATE = ST_FOR_RUNNING_BODY;
-    continue_catchable_branch (OUT, body, var);
+    return CATCH_CONTINUE_BRANCH(OUT, body, var);
 }}
 
 
@@ -1990,7 +1990,7 @@ DECLARE_NATIVE(until)
   initial_entry: {  //////////////////////////////////////////////////////////
 
     STATE = ST_UNTIL_EVALUATING_BODY;
-    continue_catchable (OUT, body, END);
+    return CATCH_CONTINUE(OUT, body, END);
 
 } body_result_in_out: {  /////////////////////////////////////////////////////
 
@@ -2010,7 +2010,7 @@ DECLARE_NATIVE(until)
     }
 
     STATE = ST_UNTIL_RUNNING_PREDICATE;
-    continue_uncatchable (SPARE, predicate, OUT);
+    return CONTINUE(SPARE, predicate, OUT);
 
 } predicate_result_in_spare: {  //////////////////////////////////////////////
 
@@ -2030,7 +2030,7 @@ DECLARE_NATIVE(until)
     }
 
     STATE = ST_UNTIL_EVALUATING_BODY;
-    continue_catchable(OUT, body, END);  // not truthy, keep going
+    return CATCH_CONTINUE(OUT, body, END);  // not truthy, keep going
 }}
 
 
@@ -2097,7 +2097,7 @@ DECLARE_NATIVE(while)
   evaluate_condition: {  /////////////////////////////////////////////////////
 
     STATE = ST_WHILE_EVALUATING_CONDITION;
-    continue_uncatchable (SPARE, condition, END);  // ignore BREAKs, see [2]
+    return CONTINUE(SPARE, condition, END);  // ignore BREAKs, see [2]
 
 } condition_was_evaluated: {  ////////////////////////////////////////////////
 
@@ -2115,7 +2115,7 @@ DECLARE_NATIVE(while)
     }
 
     STATE = ST_WHILE_EVALUATING_BODY;  // body result => OUT
-    continue_catchable_branch (OUT, body, SPARE);  // catch break & continue
+    return CATCH_CONTINUE_BRANCH(OUT, body, SPARE);  // catch break & continue
 
 } body_was_evaluated: {  /////////////////////////////////////////////////////
 

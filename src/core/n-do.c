@@ -297,7 +297,7 @@ DECLARE_NATIVE(do)
 
     switch (VAL_TYPE(source)) {
       case REB_BLOCK :  // no REB_GROUP, etc...EVAL does that.  see [1]
-        delegate (OUT, source, END);
+        return DELEGATE(OUT, source, END);
 
       case REB_VARARGS : {
         REBVAL *position;
@@ -384,10 +384,10 @@ DECLARE_NATIVE(do)
         if (First_Unspecialized_Param(nullptr, VAL_ACTION(source)))
             fail (Error_Do_Arity_Non_Zero_Raw());  // specific error?  see [3]
 
-        delegate (OUT, source, END);
+        return DELEGATE(OUT, source, END);
 
       case REB_FRAME :
-        delegate (OUT, source, END);
+        return DELEGATE(OUT, source, END);
 
       case REB_QUOTED :
         Copy_Cell(OUT, ARG(source));
@@ -424,7 +424,7 @@ DECLARE_NATIVE(evaluate)
 //
 // 1. We want EVALUATE to treat all ANY-ARRAY! the same.  (e.g. a ^[1 + 2] just
 //    does the same thing as [1 + 2] and gives 3, not '3)  Rather than mutate
-//    the cell to plain BLOCK! and pass it to continue_core(), we initialize
+//    the cell to plain BLOCK! and pass it to CONTINUE_CORE(), we initialize
 //    a feed from the array directly.
 //
 // 6. There may have been a LET statement in the code.  If there was, we have
@@ -488,13 +488,13 @@ DECLARE_NATIVE(evaluate)
         Push_Frame(OUT, subframe);
 
         if (not REF(next))  // plain evaluation to end, maybe invisible
-            delegate_subframe (subframe);
+            return DELEGATE_SUBFRAME(subframe);
 
         Set_Frame_Flag(subframe, TRAMPOLINE_KEEPALIVE);  // to ask how far it got
         Set_Executor_Flag(EVAL, subframe, SINGLE_STEP);
 
         STATE = ST_EVALUATE_SINGLE_STEPPING;
-        continue_uncatchable_subframe (subframe);
+        return CONTINUE_SUBFRAME(subframe);
     }
     else switch (VAL_TYPE(source)) {
 
@@ -508,13 +508,13 @@ DECLARE_NATIVE(evaluate)
         if (REF(next))
             fail ("/NEXT Behavior not implemented for FRAME! in EVALUATE");
 
-        delegate_maybe_stale (OUT, source, END);
+        return DELEGATE_MAYBE_STALE(OUT, source, END);
 
       case REB_ACTION: {
         if (First_Unspecialized_Param(nullptr, VAL_ACTION(source)))
             fail (Error_Do_Arity_Non_Zero_Raw());  // see notes in DO on error
 
-        delegate (OUT, source, END); }
+        return DELEGATE(OUT, source, END); }
 
       case REB_VARARGS : {
         assert(IS_VARARGS(source));
@@ -735,11 +735,11 @@ DECLARE_NATIVE(applique)
     );
 
     STATE = ST_APPLIQUE_RUNNING_DEF_BLOCK;
-    continue_uncatchable (SPARE, def, END);  // first run block bound to frame
+    return CONTINUE(SPARE, def, END);  // first run block bound to frame
 
 } definition_result_in_spare: {  /////////////////////////////////////////////
 
-    delegate_maybe_stale (OUT, frame, END);  // now run the frame
+    return DELEGATE_MAYBE_STALE(OUT, frame, END);  // now run the frame
 }}
 
 
@@ -887,7 +887,7 @@ DECLARE_NATIVE(apply)
         Init_Integer(ARG(index), index);
 
         STATE = ST_APPLY_LABELED_EVAL_STEP;
-        continue_catchable_subframe (SUBFRAME);
+        return CATCH_CONTINUE_SUBFRAME(SUBFRAME);
     }
 
     while (true) {
@@ -911,7 +911,7 @@ DECLARE_NATIVE(apply)
     }
 
     STATE = ST_APPLY_UNLABELED_EVAL_STEP;
-    continue_catchable_subframe (SUBFRAME);
+    return CATCH_CONTINUE_SUBFRAME(SUBFRAME);
 
 } labeled_step_result_in_spare: {  ///////////////////////////////////////////
 
@@ -993,5 +993,5 @@ DECLARE_NATIVE(apply)
 
     Clear_Frame_Flag(frame_, NOTIFY_ON_ABRUPT_FAILURE);  // necessary?
 
-    delegate_maybe_stale (OUT, frame, END);
+    return DELEGATE_MAYBE_STALE(OUT, frame, END);
 }}

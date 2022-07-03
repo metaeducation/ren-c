@@ -89,7 +89,12 @@ Bounce Lambda_Dispatcher(Frame(*) f)
         REB_WORD
     );
 
-    delegate_core (OUT, FRAME_FLAG_MAYBE_STALE, block, specifier, END);
+    return DELEGATE_CORE(
+        OUT,
+        FRAME_FLAG_MAYBE_STALE,
+        block, specifier,
+        END
+    );
 }
 
 
@@ -107,7 +112,13 @@ Bounce Lambda_Unoptimized_Dispatcher(Frame(*) frame_)
     Cell(*) body = ARR_AT(details, IDX_DETAILS_1);  // code to run
     assert(IS_BLOCK(body) and IS_RELATIVE(body) and VAL_INDEX(body) == 0);
 
-    delegate_core (OUT, FRAME_FLAG_MAYBE_STALE, body, SPC(FRAME->varlist), END);
+    return DELEGATE_CORE(
+        OUT,  // output
+        FRAME_FLAG_MAYBE_STALE,  // flags
+        body,  // branch
+        SPC(FRAME->varlist),  // specifier
+        END  // with
+    );
 }
 
 

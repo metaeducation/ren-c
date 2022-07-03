@@ -544,7 +544,7 @@ Bounce Action_Executor(Frame(*) f)
             Frame(*) subframe = Make_Frame(f->feed, flags);
             Push_Frame(ARG, subframe);
 
-            continue_subframe (subframe); }
+            return CATCH_CONTINUE_SUBFRAME(subframe); }
 
   //=//// HARD QUOTED ARG-OR-REFINEMENT-ARG ///////////////////////////////=//
 
@@ -631,7 +631,7 @@ Bounce Action_Executor(Frame(*) f)
 
                 Frame(*) subframe = Make_Frame(f->feed, flags);
                 Push_Frame(ARG, subframe);
-                continue_subframe (subframe);
+                return CATCH_CONTINUE_SUBFRAME(subframe);
             }
             else if (ANY_ESCAPABLE_GET(ARG)) {
                 //

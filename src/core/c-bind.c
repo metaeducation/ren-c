@@ -580,7 +580,7 @@ DECLARE_NATIVE(let)
     Push_Frame(OUT, subframe);
 
     assert(STATE == ST_LET_EVAL_STEP);  // checked above
-    continue_uncatchable_subframe (subframe);
+    return CONTINUE_SUBFRAME (subframe);
 
 } integrate_eval_bindings: {  ////////////////////////////////////////////////
 

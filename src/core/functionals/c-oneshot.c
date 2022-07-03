@@ -61,8 +61,8 @@ Bounce Downshot_Dispatcher(Frame(*) f)  // runs until count is reached
         return nullptr;  // always return null once 0 is reached
     --VAL_INT64(n);
 
-    REBVAL *code = FRM_ARG(f, 2);  // skip the RETURN
-    delegate_branch (OUT, code, END);
+    Value(*) code = FRM_ARG(f, 2);  // skip the RETURN
+    return DELEGATE_BRANCH(OUT, code, END);
 }
 
 
@@ -79,8 +79,8 @@ Bounce Upshot_Dispatcher(Frame(*) f)  // won't run until count is reached
         return nullptr;  // return null until 0 is reached
     }
 
-    REBVAL *code = FRM_ARG(f, 2);  // skip the RETURN
-    delegate_branch (OUT, code, END);
+    Value(*) code = FRM_ARG(f, 2);  // skip the RETURN
+    return DELEGATE_BRANCH(OUT, code, END);
 }
 
 

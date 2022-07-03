@@ -173,7 +173,7 @@ REBTYPE(Port)
     Push_Redo_Action_Frame(OUT, frame_, action);
 
     STATE = ST_TYPE_PORT_RUNNING_ACTOR;
-    continue_uncatchable_subframe (TOP_FRAME);
+    return CONTINUE_SUBFRAME(TOP_FRAME);
 
 } post_process_output: {  ////////////////////////////////////////////////////
 

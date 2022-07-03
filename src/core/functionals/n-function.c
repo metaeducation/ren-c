@@ -142,7 +142,7 @@ Bounce Func_Dispatcher(Frame(*) f)
     STATE = ST_FUNC_BODY_EXECUTING;
 
     assert(Is_Void(SPARE));
-    continue_core(
+    return CONTINUE_CORE(
         SPARE,  // body evaluative result discarded, see [1]
         FRAME_MASK_NONE,  // no DISPATCHER_CATCHES, so RETURN skips, see [2]
         body,

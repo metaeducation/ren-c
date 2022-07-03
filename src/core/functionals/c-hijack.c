@@ -186,7 +186,7 @@ Bounce Hijacker_Dispatcher(Frame(*) frame_)
     // the hijacking...and has to be remapped.
     //
     Push_Redo_Action_Frame(OUT, FRAME, ACT_ARCHETYPE(PHASE));
-    delegate_subframe (TOP_FRAME);
+    return DELEGATE_SUBFRAME(TOP_FRAME);
 }
 
 

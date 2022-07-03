@@ -76,7 +76,7 @@
 //////////////////////////////////////////////////////////////////////////////
 //
 // 1. The `with` parameter in continuations isn't required to be GC safe or
-//    even distinct from the output cell (see continue_core()).  So whoever
+//    even distinct from the output cell (see CONTINUE_CORE()).  So whoever
 //    dispatched to the group branch executor could have passed a fleeting
 //    value pointer...hence it needs to be stored somewhere.  So the group
 //    executor expects it to be preloaded into `out`...or that out be marked
@@ -123,7 +123,7 @@ Bounce Group_Branch_Executor(Frame(*) frame_)
     FRAME->feed = TG_End_Feed;  // feed consumed by subframe
 
     STATE = ST_GROUP_BRANCH_RUNNING_GROUP;
-    continue_subframe (evaluator);
+    return CATCH_CONTINUE_SUBFRAME(evaluator);
 
 } group_result_in_spare: {  //////////////////////////////////////////////////
 
@@ -133,7 +133,7 @@ Bounce Group_Branch_Executor(Frame(*) frame_)
     Value(const*) with = Is_Stale(OUT) ? END : OUT;  // with is here, see [1]
 
     assert(Is_End(FRAME->feed->value));
-    delegate_branch (OUT, SPARE, with);
+    return DELEGATE_BRANCH(OUT, SPARE, with);
 }}
 
 
@@ -171,7 +171,7 @@ DECLARE_NATIVE(if)
     if (Is_Conditional_False(condition))  // errors on literal block, see [1]
         return VOID;
 
-    delegate_branch (OUT, branch, condition);  // no callback needed, see [2]
+    return DELEGATE_BRANCH(OUT, branch, condition);  // no callback, see [2]
 }
 
 
@@ -199,7 +199,7 @@ DECLARE_NATIVE(either)
         ? ARG(true_branch)
         : ARG(false_branch);
 
-    delegate_branch (OUT, branch, condition);  // see [2] on IF native
+    return DELEGATE_BRANCH(OUT, branch, condition);  // see [2] on IF native
 }
 
 
@@ -313,7 +313,7 @@ DECLARE_NATIVE(then)  // see `tweak :then 'defer on` in %base-defs.r
         return VOID;
     }
 
-    delegate_branch (OUT, branch, Meta_Unquotify(in));  // need unmeta, see [1]
+    return DELEGATE_BRANCH(OUT, branch, Meta_Unquotify(in));  // unmeta, see [1]
 }
 
 
@@ -366,7 +366,7 @@ DECLARE_NATIVE(also)  // see `tweak :also 'defer on` in %base-defs.r
         return Init_Isotope(OUT, Canon(NULL));  // telegraph null isotope
 
     STATE = ST_ALSO_RUNNING_BRANCH;
-    continue_uncatchable (SPARE, branch, Meta_Unquotify(in));
+    return CONTINUE(SPARE, branch, Meta_Unquotify(in));
 
 } return_original_input: {  //////////////////////////////////////////////////
 
@@ -434,7 +434,7 @@ DECLARE_NATIVE(else)  // see `tweak :else 'defer on` in %base-defs.r
     else
         return_value (Meta_Unquotify(in));  // unquotify to pass thru, see [4]
 
-    delegate_branch (OUT, branch, SPARE);
+    return DELEGATE_BRANCH(OUT, branch, SPARE);
 }
 
 
@@ -654,7 +654,7 @@ DECLARE_NATIVE(all)
     Push_Frame(OUT, subframe);
 
     STATE = ST_ALL_EVAL_STEP;
-    continue_uncatchable_subframe(subframe);
+    return CONTINUE_SUBFRAME(subframe);
 
 } eval_step_finished: {  /////////////////////////////////////////////////////
 
@@ -663,14 +663,14 @@ DECLARE_NATIVE(all)
             goto reached_end;
 
         assert(STATE == ST_ALL_EVAL_STEP);
-        continue_uncatchable_subframe (SUBFRAME);
+        return CONTINUE_SUBFRAME(SUBFRAME);
     }
 
     if (not Is_Nulled(predicate)) {
         SUBFRAME->executor = &Just_Use_Out_Executor;  // tunnel thru, see [4]
 
         STATE = ST_ALL_PREDICATE;
-        continue_uncatchable(SPARE, predicate, OUT);
+        return CONTINUE(SPARE, predicate, OUT);
     }
 
     condition = OUT;  // without predicate, `condition` is same as evaluation
@@ -705,7 +705,7 @@ DECLARE_NATIVE(all)
         goto reached_end;
 
     assert(STATE == ST_ALL_EVAL_STEP);
-    continue_uncatchable_subframe(SUBFRAME);  // leave OUT as stale value
+    return CONTINUE_SUBFRAME(SUBFRAME);  // leave OUT as stale value
 
 } reached_end: {  ////////////////////////////////////////////////////////////
 
@@ -778,7 +778,7 @@ DECLARE_NATIVE(any)
     Push_Frame(OUT, subframe);
 
     STATE = ST_ANY_EVAL_STEP;
-    continue_uncatchable_subframe(subframe);
+    return CONTINUE_SUBFRAME(subframe);
 
 } eval_step_finished: {  /////////////////////////////////////////////////////
 
@@ -787,14 +787,14 @@ DECLARE_NATIVE(any)
             goto reached_end;
 
         assert(STATE == ST_ANY_EVAL_STEP);
-        continue_uncatchable_subframe (SUBFRAME);
+        return CONTINUE_SUBFRAME(SUBFRAME);
     }
 
     if (not Is_Nulled(predicate)) {
         SUBFRAME->executor = &Just_Use_Out_Executor;  // tunnel thru, see [4]
 
         STATE = ST_ANY_PREDICATE;
-        continue_uncatchable(SPARE, predicate, OUT);
+        return CONTINUE(SPARE, predicate, OUT);
     }
 
     condition = OUT;
@@ -827,7 +827,7 @@ DECLARE_NATIVE(any)
         goto reached_end;
 
     assert(STATE == ST_ANY_EVAL_STEP);
-    continue_uncatchable_subframe (SUBFRAME);
+    return CONTINUE_SUBFRAME(SUBFRAME);
 
 } reached_end: {  ////////////////////////////////////////////////////////////
 
@@ -945,7 +945,7 @@ DECLARE_NATIVE(case)
 
     STATE = ST_CASE_CONDITION_EVAL_STEP;
     f->executor = &Evaluator_Executor;
-    continue_uncatchable_subframe (f);  // one step to pass predicate, see [1]
+    return CONTINUE_SUBFRAME(f);  // one step to pass predicate, see [1]
 
 } condition_result_in_spare: {  //////////////////////////////////////////////
 
@@ -965,7 +965,7 @@ DECLARE_NATIVE(case)
 
     STATE = ST_CASE_RUNNING_PREDICATE;
     f->executor = &Just_Use_Out_Executor;
-    continue_uncatchable (SPARE, predicate, temp);
+    return CONTINUE(SPARE, predicate, temp);
 
 } predicate_result_in_spare: {  //////////////////////////////////////////////
 
@@ -1002,12 +1002,12 @@ DECLARE_NATIVE(case)
 
         STATE = ST_CASE_DISCARDING_GET_GROUP;
         f->executor = &Just_Use_Out_Executor;
-        continue_uncatchable_subframe (discarder);
+        return CONTINUE_SUBFRAME(discarder);
     }
 
     STATE = ST_CASE_RUNNING_BRANCH;
     f->executor = &Just_Use_Out_Executor;
-    continue_core (OUT, FRAME_FLAG_BRANCH, branch, f_specifier, SPARE);
+    return CONTINUE_CORE(OUT, FRAME_FLAG_BRANCH, branch, f_specifier, SPARE);
 
 } restore_spare_from_backup: {  //////////////////////////////////////////////
 
@@ -1277,7 +1277,7 @@ DECLARE_NATIVE(default)
 
     if (not Is_Nulled(predicate)) {
         STATE = ST_DEFAULT_RUNNING_PREDICATE;
-        continue_uncatchable(SPARE, predicate, OUT);
+        return CONTINUE(SPARE, predicate, OUT);
     }
 
     if (Is_Isotope(OUT)) {
@@ -1288,7 +1288,7 @@ DECLARE_NATIVE(default)
         return OUT;
 
     STATE = ST_DEFAULT_EVALUATING_BRANCH;
-    continue_uncatchable(SPARE, branch, OUT);
+    return CONTINUE(SPARE, branch, OUT);
 
 } predicate_result_in_spare: {  //////////////////////////////////////////////
 
@@ -1299,7 +1299,7 @@ DECLARE_NATIVE(default)
         return OUT;
 
     STATE = ST_DEFAULT_EVALUATING_BRANCH;
-    continue_uncatchable(SPARE, branch, OUT);
+    return CONTINUE(SPARE, branch, OUT);
 
 } branch_result_in_spare: {  /////////////////////////////////////////////////
 
@@ -1361,7 +1361,7 @@ DECLARE_NATIVE(catch)
         fail (Error_Bad_Refines_Raw());
 
     STATE = ST_CATCH_RUNNING_CODE;
-    continue_catchable (OUT, ARG(block), END);
+    return CATCH_CONTINUE(OUT, ARG(block), END);
 
 } code_result_in_out: {  //////////////////////////////////////////////////////
 

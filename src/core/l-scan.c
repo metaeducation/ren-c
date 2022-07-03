@@ -2137,7 +2137,7 @@ Bounce Scanner_Executor(Frame(*) f) {
         subframe->u.scan.mode = (level->token == TOKEN_BLOCK_BEGIN ? ']' : ')');
         STATE = ST_SCANNER_SCANNING_CHILD_ARRAY;
         Push_Frame(OUT, subframe);
-        continue_subframe (subframe); }
+        return CATCH_CONTINUE_SUBFRAME(subframe); }
 
  child_array_scanned: {  /////////////////////////////////////////////////////
 
@@ -2417,7 +2417,7 @@ Bounce Scanner_Executor(Frame(*) f) {
         subframe->u.scan.mode = ']';
         STATE = ST_SCANNER_SCANNING_CONSTRUCT;
         Push_Frame(OUT, subframe);
-        continue_subframe (subframe); }
+        return CATCH_CONTINUE_SUBFRAME(subframe); }
 
   construct_scan_to_stack_finished: {  ///////////////////////////////////////
 
@@ -3155,7 +3155,7 @@ DECLARE_NATIVE(transcode)
 
     Push_Frame(OUT, subframe);
     STATE = ST_TRANSCODE_SCANNING;
-    continue_uncatchable_subframe (subframe);
+    return CONTINUE_SUBFRAME (subframe);
 
 } scan_to_stack_maybe_failed: {  /////////////////////////////////////////////
 

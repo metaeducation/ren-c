@@ -854,62 +854,47 @@ inline static bool Pushed_Continuation(
 //
 // Branch continuations enforce the result not being pure null or void.
 
-#define continue_core(o,flags,branch,specifier,with) \
-    do { \
-        Pushed_Continuation((o), (flags), (branch), (specifier), (with)); \
-        /* don't heed result, because callback needed frame or not */ \
-        return BOUNCE_CONTINUE; \
-    } while (0)
+#define CONTINUE_CORE(o,flags,value,specifier,with) ( \
+    Pushed_Continuation((o), (flags), (value), (specifier), (with)), \
+    BOUNCE_CONTINUE)  /* ^-- don't heed result: want callback, push or not */
 
-#define continue_uncatchable(o,value,with) \
-    continue_core((o), FRAME_MASK_NONE, (value), SPECIFIED, (with))
+#define CONTINUE(o,value,with) \
+    CONTINUE_CORE((o), FRAME_MASK_NONE, (value), SPECIFIED, (with))
 
-#define continue_catchable(o,value,with) \
-    do { \
-        Set_Executor_Flag(ACTION, frame_, DISPATCHER_CATCHES); \
-        continue_core((o), FRAME_MASK_NONE, (value), SPECIFIED, (with)); \
-    } while (0)
+#define CATCH_CONTINUE(o,value,with) ( \
+    Set_Executor_Flag(ACTION, frame_, DISPATCHER_CATCHES), \
+    CONTINUE_CORE((o), FRAME_MASK_NONE, (value), SPECIFIED, (with)))
 
-#define continue_uncatchable_branch(o,branch,with) \
-    continue_core((o), FRAME_FLAG_BRANCH, (branch), SPECIFIED, (with))
+#define CONTINUE_BRANCH(o,value,with) \
+    CONTINUE_CORE((o), FRAME_FLAG_BRANCH, (value), SPECIFIED, (with))
 
-#define continue_catchable_branch(o,branch,with) \
-    do { \
-        Set_Executor_Flag(ACTION, frame_, DISPATCHER_CATCHES); \
-        continue_core((o), FRAME_FLAG_BRANCH, (branch), SPECIFIED, (with)); \
-    } while (0)
-
+#define CATCH_CONTINUE_BRANCH(o,value,with) ( \
+    Set_Executor_Flag(ACTION, frame_, DISPATCHER_CATCHES), \
+    CONTINUE_CORE((o), FRAME_FLAG_BRANCH, (value), SPECIFIED, (with)))
 
 inline static Bounce Continue_Subframe_Helper(
     Frame(*) f,
-    bool must_be_dispatcher,
-    Flags catches_flag,
+    bool catches,
     Frame(*) sub
 ){
-    if (must_be_dispatcher)
+    if (catches) {  // all executors catch, but action may or may not delegate
+        if (Is_Action_Frame(f) and not Is_Action_Frame_Fulfilling(f))
+            f->flags.bits |= ACTION_EXECUTOR_FLAG_DISPATCHER_CATCHES;
+    }
+    else {  // Only Action_Executor() can let dispatchers avoid catching
         assert(Is_Action_Frame(f) and not Is_Action_Frame_Fulfilling(f));
-    else
-        assert(not Is_Action_Frame(f) or Is_Action_Frame_Fulfilling(f));
-
-    if (catches_flag != 0) {
-        assert(catches_flag == ACTION_EXECUTOR_FLAG_DISPATCHER_CATCHES);
-        f->flags.bits |= catches_flag;
     }
 
-    assert(sub == TOP_FRAME);  // currently subframe must be pushed and top frame
+    assert(sub == TOP_FRAME);  // currently subframe must be pushed & top frame
     UNUSED(sub);
     return BOUNCE_CONTINUE;
 }
 
-#define continue_subframe(sub) \
-    return Continue_Subframe_Helper(frame_, false, 0, (sub))
+#define CATCH_CONTINUE_SUBFRAME(sub) \
+    Continue_Subframe_Helper(frame_, true, (sub))
 
-#define continue_catchable_subframe(sub) \
-    return Continue_Subframe_Helper( \
-        frame_, true, ACTION_EXECUTOR_FLAG_DISPATCHER_CATCHES, (sub))
-
-#define continue_uncatchable_subframe(sub) \
-    return Continue_Subframe_Helper(frame_, true, 0, (sub))
+#define CONTINUE_SUBFRAME(sub) \
+    Continue_Subframe_Helper(frame_, false, (sub))
 
 
 //=//// DELEGATION HELPER MACROS ///////////////////////////////////////////=//
@@ -924,36 +909,28 @@ inline static Bounce Continue_Subframe_Helper(
 // if the delegating frame were freed before running what's underneath it...
 // at least it could be collapsed into a more primordial state.  Review.
 
-#define delegate_core(o,fs,branch,specifier,with) \
-    do { \
-        assert((o) == frame_->out); \
-        if (Pushed_Continuation( \
+#define DELEGATE_CORE(o,fs,branch,specifier,with) ( \
+        assert((o) == frame_->out), \
+        Pushed_Continuation( \
             frame_->out, \
             (fs) | (frame_->flags.bits & FRAME_FLAG_FAILURE_RESULT_OK), \
             (branch), \
             (specifier), \
             (with) \
-        )){ \
-            return BOUNCE_DELEGATE; \
-        } \
-        return frame_->out; /* no need to give callback to delegator */ \
-    } while (0)
+        ) ? BOUNCE_DELEGATE \
+          : frame_->out)  // no need to give callback to delegator
 
 
-#define delegate(o,value,with) \
-    delegate_core(frame_->out, FRAME_MASK_NONE, (value), SPECIFIED, (with))
+#define DELEGATE(o,value,with) \
+    DELEGATE_CORE(frame_->out, FRAME_MASK_NONE, (value), SPECIFIED, (with))
 
-#define delegate_branch(o,branch,with) \
-    delegate_core(frame_->out, FRAME_FLAG_BRANCH, (branch), SPECIFIED, (with))
+#define DELEGATE_BRANCH(o,branch,with) \
+    DELEGATE_CORE(frame_->out, FRAME_FLAG_BRANCH, (branch), SPECIFIED, (with))
 
-#define delegate_maybe_stale(o,branch,with) \
-    delegate_core( \
-        frame_->out, FRAME_FLAG_MAYBE_STALE, (branch), SPECIFIED, (with) \
-    )
+#define DELEGATE_MAYBE_STALE(o,branch,with) \
+    DELEGATE_CORE( \
+        frame_->out, FRAME_FLAG_MAYBE_STALE, (branch), SPECIFIED, (with))
 
-
-#define delegate_subframe(sub) \
-    do { \
-        Continue_Subframe_Helper(frame_, true, 0, (sub)); \
-        return BOUNCE_DELEGATE; \
-    } while (0)
+#define DELEGATE_SUBFRAME(sub) ( \
+    Continue_Subframe_Helper(frame_, false, (sub)), \
+    BOUNCE_DELEGATE)

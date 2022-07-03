@@ -71,7 +71,7 @@ DECLARE_NATIVE(trap)
         Set_Cell_Flag(code, EXPLICITLY_MUTABLE);  // see DECLARE_NATIVE(do) for why
 
     STATE = ST_TRAP_EVALUATING;
-    continue_catchable (OUT, code, END);
+    return CATCH_CONTINUE(OUT, code, END);
   }
 
   evaluation_finished: {
@@ -118,7 +118,7 @@ DECLARE_NATIVE(except)
     if (not IS_ERROR(v))
         return UNMETA(v);
 
-    delegate_branch (OUT, branch, v);
+    return DELEGATE_BRANCH(OUT, branch, v);
 }
 
 

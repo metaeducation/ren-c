@@ -607,7 +607,7 @@ Bounce Evaluator_Executor(Frame(*) f)
         // eval calls that lookahead, but no lookahead after the action runs)
         //
         STATE = ST_EVALUATOR_RUNNING_ACTION;
-        continue_subframe (TOP_FRAME); }
+        return CATCH_CONTINUE_SUBFRAME(TOP_FRAME); }
 
 
     //=//// WORD! //////////////////////////////////////////////////////////=//
@@ -706,7 +706,7 @@ Bounce Evaluator_Executor(Frame(*) f)
             goto set_word_rightside_in_out;
 
         STATE = ST_EVALUATOR_SET_WORD_RIGHTSIDE;
-        continue_subframe (subframe);  // throws not caught
+        return CATCH_CONTINUE_SUBFRAME(subframe);
 
       } set_word_rightside_in_out: {  ////////////////////////////////////////
 
@@ -821,7 +821,7 @@ Bounce Evaluator_Executor(Frame(*) f)
         Push_Frame(RESET(SPARE), subframe);
 
         STATE = ST_EVALUATOR_RUNNING_GROUP;  // must target spare, see [2]
-        continue_subframe (subframe);
+        return CATCH_CONTINUE_SUBFRAME(subframe);
 
       } group_result_in_spare: {  ////////////////////////////////////////////
 
@@ -851,7 +851,7 @@ Bounce Evaluator_Executor(Frame(*) f)
         Push_Frame(OUT, subframe);
 
         STATE = ST_EVALUATOR_RUNNING_META_GROUP;
-        continue_subframe (subframe); }
+        return CATCH_CONTINUE_SUBFRAME(subframe); }
 
 
     //=//// TUPLE! /////////////////////////////////////////////////////////=//
@@ -1057,7 +1057,7 @@ Bounce Evaluator_Executor(Frame(*) f)
             goto set_tuple_rightside_in_out;
 
         STATE = ST_EVALUATOR_SET_TUPLE_RIGHTSIDE;
-        continue_subframe (subframe);  // throws not caught
+        return CATCH_CONTINUE_SUBFRAME(subframe);
 
       } set_tuple_rightside_in_out: {  ///////////////////////////////////////
 
@@ -1109,7 +1109,7 @@ Bounce Evaluator_Executor(Frame(*) f)
         Push_Frame(RESET(SPARE), subframe);
 
         STATE = ST_EVALUATOR_RUNNING_SET_GROUP;
-        continue_subframe (subframe);
+        return CATCH_CONTINUE_SUBFRAME(subframe);
 
       } set_group_result_in_spare: {  ////////////////////////////////////////
 
@@ -1444,7 +1444,7 @@ Bounce Evaluator_Executor(Frame(*) f)
         //
         STATE = ST_EVALUATOR_SET_BLOCK_RIGHTSIDE;
         frame_->u.eval.dsp_circled = dsp_circled;
-        continue_uncatchable (OUT, SPARE, END);
+        return CONTINUE(OUT, SPARE, END);
 
     } set_block_rightside_result_in_out: {  //////////////////////////////////
 
@@ -1485,7 +1485,7 @@ Bounce Evaluator_Executor(Frame(*) f)
             Push_Frame(OUT, subframe);  // offer potential enfix previous OUT
 
             STATE = ST_EVALUATOR_SET_BLOCK_LOOKAHEAD;
-            continue_subframe (subframe);
+            return CATCH_CONTINUE_SUBFRAME(subframe);
         }
 
     } set_block_lookahead_result_in_out: {  //////////////////////////////////

@@ -180,7 +180,7 @@ Bounce Chainer_Dispatcher(Frame(*) f)
 
     STATE = ST_CHAINER_RUNNING_SUBFUNCTION;
     Set_Frame_Flag(sub, TRAMPOLINE_KEEPALIVE);
-    continue_subframe (sub);
+    return CATCH_CONTINUE_SUBFRAME(sub);
 
 } run_next_in_chain: {  //////////////////////////////////////////////////////
 
@@ -211,7 +211,7 @@ Bounce Chainer_Dispatcher(Frame(*) f)
     Clear_Frame_Flag(sub, NOTIFY_ON_ABRUPT_FAILURE);
 
     assert(STATE == ST_CHAINER_RUNNING_SUBFUNCTION);
-    continue_subframe (sub);
+    return CATCH_CONTINUE_SUBFRAME(sub);
 
 } finished: {  ///////////////////////////////////////////////////////////////
 

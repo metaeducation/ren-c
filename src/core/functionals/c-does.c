@@ -84,11 +84,8 @@ Bounce Block_Dispatcher(Frame(*) f)
     Array(const*) body = VAL_ARRAY(block);
 
     if (IS_SPECIFIC(block)) {
-        if (FRM_BINDING(f) == UNBOUND) {
-            delegate (OUT, block, END);
-
-            // ~unreachable~
-        }
+        if (FRM_BINDING(f) == UNBOUND)
+            return DELEGATE(OUT, block, END);
 
         // Until "virtual binding" is implemented, we would lose f->binding's
         // ability to influence any variable lookups in the block if we did
@@ -130,8 +127,13 @@ Bounce Block_Dispatcher(Frame(*) f)
 
     assert(IS_RELATIVE(block));
 
-    // Note: DOES will not evaluate invisibly (see LAMBDA)
-    delegate_core (OUT, FRAME_MASK_NONE, block, SPC(f->varlist), END);
+    return DELEGATE_CORE(
+        OUT,  // output
+        FRAME_MASK_NONE,  // No MAYBE_STALE, can't be invisible.  See LAMBDA.
+        block,  // branch
+        SPC(f->varlist),  // specifier
+        END  // with
+    );
 }
 
 

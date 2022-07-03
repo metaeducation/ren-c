@@ -98,10 +98,10 @@ Bounce Adapter_Dispatcher(Frame(*) f)
     );
 
     STATE = ST_ADAPTER_RUNNING_PRELUDE;
-    assert(Is_Void(SPARE));
-    continue_core(
+
+    return CONTINUE_CORE(  // Note: we won't catch throws or errors
         SPARE,  // Evaluate prelude into SPARE cell (result discarded, see [1])
-        FRAME_MASK_NONE,  // don't catch throws or errors
+        FRAME_MASK_NONE,  // plain result
         prelude,  // definitional RETURN not available yet, see [2]
         SPC(f->varlist),
         END
