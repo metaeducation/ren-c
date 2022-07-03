@@ -289,7 +289,7 @@ void Extra_Init_Context_Cell_Checks_Debug(enum Reb_Kind kind, Context(*) c) {
     // "sometimes managed, sometimes not" keylists...a bad invariant.
     //
     if (CTX_TYPE(c) != REB_MODULE) {  // keylist is global symbol table
-        REBSER *keylist = CTX_KEYLIST(c);
+        Keylist(*) keylist = CTX_KEYLIST(c);
         ASSERT_SERIES_MANAGED(keylist);
     }
 
@@ -320,7 +320,7 @@ void Extra_Init_Action_Checks_Debug(Action(*) a) {
     //
     UNUSED(archetype);
 
-    REBSER *keylist = ACT_KEYLIST(a);
+    Keylist(*) keylist = ACT_KEYLIST(a);
     assert(
         (keylist->leader.bits & SERIES_MASK_KEYLIST)
         == SERIES_MASK_KEYLIST

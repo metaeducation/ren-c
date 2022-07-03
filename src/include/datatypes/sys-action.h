@@ -319,7 +319,7 @@ inline static option(Array(*)) ACT_PARTIALS(Action(*) a) {
 // and also forward declared.
 //
 #define ACT_KEYLIST(a) \
-    SER(BONUS(KeySource, ACT_EXEMPLAR(a)))
+    cast(Raw_Keylist*, BONUS(KeySource, ACT_EXEMPLAR(a)))
 
 #define ACT_KEYS_HEAD(a) \
     SER_HEAD(const REBKEY, ACT_KEYLIST(a))
@@ -465,8 +465,8 @@ inline static void INIT_VAL_ACTION_LABEL(
 // The code for processing derivation is slightly different; it should be
 // unified more if possible.
 
-#define LINK_Ancestor_TYPE              REBSER*
-#define LINK_Ancestor_CAST              SER
+#define LINK_Ancestor_TYPE              Raw_Keylist*
+#define LINK_Ancestor_CAST              KEYS
 #define HAS_LINK_Ancestor               FLAVOR_KEYLIST
 
 inline static bool Action_Is_Base_Of(Action(*) base, Action(*) derived) {

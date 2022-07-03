@@ -77,7 +77,6 @@
     #define VAL(p)          x_cast(REBVAL*, (p))
 
     #define FRM(p)          x_cast(Frame(*), (p))
-
 #else
 
   #if (! CPLUSPLUS_11)
@@ -308,3 +307,5 @@ inline static REBMAP *MAP(void *p) {  // not a fancy cast ATM.
     assert(IS_PAIRLIST(a));
     return cast(REBMAP*, a);
 }
+
+#define KEYS(p)         x_cast(Raw_Keylist*, (p))

@@ -568,10 +568,10 @@ Array(*) Pop_Paramlist_With_Meta_May_Fail(
         SERIES_MASK_PARAMLIST
     );
 
-    REBSER *keylist = Make_Series(
+    Keylist(*) keylist = cast(Raw_Keylist*, Make_Series(
         (num_slots - 1),  // - 1 archetype
         SERIES_MASK_KEYLIST | NODE_FLAG_MANAGED
-    );
+    ));
     mutable_LINK(Ancestor, keylist) = keylist;  // chain ends with self
 
     if (flags & MKF_HAS_RETURN)
@@ -938,7 +938,7 @@ Action(*) Make_Action(
     // a placeholder for more useful consistency checking which might be done.
     //
   blockscope {
-    REBSER *keylist = SER(BONUS(KeySource, paramlist));
+    Keylist(*) keylist = cast(Raw_Keylist*, BONUS(KeySource, paramlist));
 
     ASSERT_SERIES_MANAGED(keylist);  // paramlists/keylists, can be shared
     assert(SER_USED(keylist) + 1 == ARR_LEN(paramlist));

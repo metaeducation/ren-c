@@ -808,6 +808,8 @@ union Reb_Stub_Info {
 
     struct Reb_Map : public Reb_Series {};
     typedef struct Reb_Map REBMAP;  // the "pairlist" is the identity
+
+    struct Raw_Keylist : public Reb_Series {};
 #else
     typedef Reb_Series Reb_Binary;
     typedef Reb_Series Raw_String;
@@ -816,6 +818,7 @@ union Reb_Stub_Info {
     typedef Reb_Series Reb_Action;
     typedef Reb_Series Reb_Context;
     typedef Reb_Series REBMAP;
+    typedef Reb_Series Raw_Keylist;
 #endif
 
 #define Binary(star_maybe_const) \
@@ -843,6 +846,8 @@ union Reb_Stub_Info {
 #define Context(star_maybe_const) \
     Reb_Context star_maybe_const
 
+#define Keylist(star_maybe_const) \
+    Raw_Keylist star_maybe_const
 
 
 // We want to be able to enumerate keys by incrementing across them.  The

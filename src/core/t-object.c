@@ -873,13 +873,13 @@ Context(*) Copy_Context_Extra_Managed(
     else {
         assert(CTX_TYPE(original) != REB_FRAME);  // can't expand FRAME!s
 
-        REBSER *keylist = Copy_Series_At_Len_Extra(
+        Keylist(*) keylist = cast(Raw_Keylist*, Copy_Series_At_Len_Extra(
             CTX_KEYLIST(original),
             0,
             CTX_LEN(original),
             extra,
             SERIES_MASK_KEYLIST | NODE_FLAG_MANAGED
-        );
+        ));
 
         mutable_LINK(Ancestor, keylist) = CTX_KEYLIST(original);
 

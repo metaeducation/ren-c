@@ -35,10 +35,10 @@
 //
 Context(*) Alloc_Context_Core(enum Reb_Kind kind, REBLEN capacity, Flags flags)
 {
-    REBSER *keylist = Make_Series(
+    Keylist(*) keylist = cast(Raw_Keylist*, Make_Series(
         capacity,  // no terminator
         SERIES_MASK_KEYLIST | NODE_FLAG_MANAGED  // always shareable
-    );
+    ));
     mutable_LINK(Ancestor, keylist) = keylist;  // default to keylist itself
     assert(SER_USED(keylist) == 0);
 
@@ -65,7 +65,7 @@ Context(*) Alloc_Context_Core(enum Reb_Kind kind, REBLEN capacity, Flags flags)
 //
 bool Expand_Context_Keylist_Core(Context(*) context, REBLEN delta)
 {
-    REBSER *keylist = CTX_KEYLIST(context);
+    Keylist(*) keylist = CTX_KEYLIST(context);
     assert(IS_KEYLIST(keylist));
 
     if (Get_Subclass_Flag(KEYLIST, keylist, SHARED)) {
@@ -78,13 +78,13 @@ bool Expand_Context_Keylist_Core(Context(*) context, REBLEN delta)
         // (If all shared copies break away in this fashion, then the last
         // copy of the dangling keylist will be GC'd.)
 
-        REBSER *copy = Copy_Series_At_Len_Extra(
+        Keylist(*) copy = cast(Raw_Keylist*, Copy_Series_At_Len_Extra(
             keylist,
             0,
             SER_USED(keylist),
             delta,
             SERIES_MASK_KEYLIST
-        );
+        ));
 
         // Preserve link to ancestor keylist.  Note that if it pointed to
         // itself, we update this keylist to point to itself.
@@ -234,7 +234,7 @@ REBVAR *Append_Context(
         return cast(REBVAR*, ARR_SINGLE(patch));
     }
 
-    REBSER *keylist = CTX_KEYLIST(context);
+    Keylist(*) keylist = CTX_KEYLIST(context);
 
     // Add the key to key list
     //
@@ -411,7 +411,7 @@ static void Collect_Inner_Loop(
 // in prior) then then `prior`'s keylist may be returned.  The result is
 // always pre-managed, because it may not be legal to free prior's keylist.
 //
-REBSER *Collect_Keylist_Managed(
+Keylist(*) Collect_Keylist_Managed(
     Cell(const*) head,
     Cell(const*) tail,
     option(Context(*)) prior,
@@ -436,14 +436,14 @@ REBSER *Collect_Keylist_Managed(
     // collect buffer than the original keylist) then make a new keylist
     // array, otherwise reuse the original
     //
-    REBSER *keylist;
+    Keylist(*) keylist;
     if (prior and CTX_LEN(unwrap(prior)) == num_collected)
         keylist = CTX_KEYLIST(unwrap(prior));
     else {
-        keylist = Make_Series(
+        keylist = cast(Raw_Keylist*, Make_Series(
             num_collected,  // no terminator
             SERIES_MASK_KEYLIST | NODE_FLAG_MANAGED
-        );
+        ));
 
         StackValue(*) word = Data_Stack_At(cl->dsp_orig) + 1;
         REBKEY* key = SER_HEAD(REBKEY, keylist);
@@ -611,7 +611,7 @@ Context(*) Make_Context_Detect_Managed(
 ) {
     assert(kind != REB_MODULE);
 
-    REBSER *keylist = Collect_Keylist_Managed(
+    Keylist(*) keylist = Collect_Keylist_Managed(
         head,
         tail,
         parent,
@@ -926,7 +926,7 @@ void Assert_Context_Core(Context(*) c)
     if (not ANY_CONTEXT(rootvar) or VAL_CONTEXT(rootvar) != c)
         panic (rootvar);
 
-    REBSER *keylist = CTX_KEYLIST(c);
+    Keylist(*) keylist = CTX_KEYLIST(c);
 
     REBLEN keys_len = SER_USED(keylist);
     REBLEN vars_len = ARR_LEN(varlist);
