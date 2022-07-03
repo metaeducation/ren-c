@@ -113,8 +113,8 @@ STATIC_ASSERT(
     == ACTION_EXECUTOR_FLAG_DIDNT_LEFT_QUOTE_PATH
 );
 
-#define DECLARE_ACTION_SUBFRAME(f,parent) \
-    DECLARE_FRAME (f, (parent)->feed, \
+#define Make_Action_Subframe(parent) \
+    Make_Frame((parent)->feed, \
         FRAME_FLAG_MAYBE_STALE | FRAME_FLAG_FAILURE_RESULT_OK \
         | ((parent)->flags.bits \
             & (EVAL_EXECUTOR_FLAG_FULFILLING_ARG \
@@ -184,7 +184,10 @@ inline static Frame(*) Maybe_Rightward_Continuation_Needed(Frame(*) f)
     if (Did_Init_Inert_Optimize_Complete(OUT, f->feed, &flags))
         return nullptr;  // If eval not hooked, ANY-INERT! may not need a frame
 
-    DECLARE_FRAME (subframe, f->feed, flags);  // inert optimize adjusts flags
+    Frame(*) subframe = Make_Frame(
+        f->feed,
+        flags  // inert optimize adjusted the flags to jump in mid-eval
+    );
     Push_Frame(OUT, subframe);
 
     assert(f_current != &f->feed->lookback);  // are these possible?  see [3]
@@ -271,7 +274,7 @@ Bounce Evaluator_Executor(Frame(*) f)
         else {
             assert(f->u.eval.enfix_reevaluate == 'Y');
 
-            DECLARE_ACTION_SUBFRAME (subframe, f);
+            Frame(*) subframe = Make_Action_Subframe(f);
             Push_Frame(OUT, subframe);
             Push_Action(
                 subframe,
@@ -477,7 +480,7 @@ Bounce Evaluator_Executor(Frame(*) f)
     // Wasn't the at-end exception, so run normal enfix with right winning.
     //
   blockscope {
-    DECLARE_ACTION_SUBFRAME (subframe, f);
+    Frame(*) subframe = Make_Action_Subframe(f);
     Push_Frame(OUT, subframe);
     Push_Action(
         subframe,
@@ -568,7 +571,7 @@ Bounce Evaluator_Executor(Frame(*) f)
     // Most action evaluations are triggered from a WORD! or PATH! case.
 
       case REB_ACTION: {
-        DECLARE_ACTION_SUBFRAME (subframe, f);
+        Frame(*) subframe = Make_Action_Subframe(f);
         Push_Frame(OUT, subframe);
         Push_Action(
             subframe,
@@ -644,7 +647,7 @@ Bounce Evaluator_Executor(Frame(*) f)
             Symbol(const*) label = VAL_WORD_SYMBOL(f_current);  // use WORD!
             bool enfixed = Get_Action_Flag(action, ENFIXED);
 
-            DECLARE_ACTION_SUBFRAME (subframe, f);
+            Frame(*) subframe = Make_Action_Subframe(f);
             Push_Frame(OUT, subframe);
             Push_Action(subframe, action, binding);
             Begin_Action_Core(subframe, label, enfixed);
@@ -810,8 +813,7 @@ Bounce Evaluator_Executor(Frame(*) f)
       case REB_GROUP: {
         f_next_gotten = nullptr;  // arbitrary code changes fetched variables
 
-        DECLARE_FRAME_AT_CORE (
-            subframe,
+        Frame(*) subframe = Make_Frame_At_Core(
             f_current,
             f_specifier,
             FRAME_MASK_NONE
@@ -841,8 +843,7 @@ Bounce Evaluator_Executor(Frame(*) f)
       case REB_META_GROUP: {
         f_next_gotten = nullptr;  // arbitrary code changes fetched variables
 
-        DECLARE_FRAME_AT_CORE (
-            subframe,
+        Frame(*) subframe = Make_Frame_At_Core(
             f_current,
             f_specifier,
             FRAME_FLAG_META_RESULT | FRAME_FLAG_FAILURE_RESULT_OK
@@ -891,7 +892,7 @@ Bounce Evaluator_Executor(Frame(*) f)
             if (Get_Action_Flag(act, ENFIXED))
                 fail ("Use `>-` to shove left enfix operands into PATH!s");
 
-            DECLARE_ACTION_SUBFRAME (subframe, f);
+            Frame(*) subframe = Make_Action_Subframe(f);
             Push_Frame(OUT, subframe);
             Push_Action(
                 subframe,
@@ -939,7 +940,7 @@ Bounce Evaluator_Executor(Frame(*) f)
         // pushed we want to capture it before that point (so it knows the
         // refinements are for it).
         //
-        DECLARE_ACTION_SUBFRAME (subframe, f);
+        Frame(*) subframe = Make_Action_Subframe(f);
         Push_Frame(OUT, subframe);
 
         if (Get_Path_Push_Refinements_Throws(
@@ -1100,8 +1101,7 @@ Bounce Evaluator_Executor(Frame(*) f)
       case REB_SET_GROUP: {
         f_next_gotten = nullptr;  // arbitrary code changes fetched variables
 
-        DECLARE_FRAME_AT_CORE (
-            subframe,
+        Frame(*) subframe = Make_Frame_At_Core(
             f_current,
             f_specifier,
             FRAME_MASK_NONE
@@ -1480,7 +1480,7 @@ Bounce Evaluator_Executor(Frame(*) f)
                 | EVAL_EXECUTOR_FLAG_INERT_OPTIMIZATION  // tolerate enfix late
                 | FRAME_FLAG_MAYBE_STALE;  // won't be, but avoids RESET()
 
-            DECLARE_FRAME (subframe, f->feed, flags);
+            Frame(*) subframe = Make_Frame(f->feed, flags);
             assert(not Is_Stale(OUT));
             Push_Frame(OUT, subframe);  // offer potential enfix previous OUT
 
@@ -1959,7 +1959,7 @@ Bounce Evaluator_Executor(Frame(*) f)
     // of parameter fulfillment.  We want to reuse the OUT value and get it
     // into the new function's frame.
 
-    DECLARE_ACTION_SUBFRAME (subframe, f);
+    Frame(*) subframe = Make_Action_Subframe(f);
     Push_Frame(OUT, subframe);
     Push_Action(subframe, enfixed, VAL_ACTION_BINDING(unwrap(f_next_gotten)));
     Begin_Enfix_Action(subframe, VAL_WORD_SYMBOL(f_next));

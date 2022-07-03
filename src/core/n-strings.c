@@ -89,7 +89,7 @@ DECLARE_NATIVE(delimit)
     else
         assert(IS_BLOCK(line));
 
-    DECLARE_FRAME_AT (f, line, flags);
+    Frame(*) f = Make_Frame_At(line, flags);
     Push_Frame(OUT, f);
 
     DECLARE_MOLD (mo);

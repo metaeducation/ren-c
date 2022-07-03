@@ -465,7 +465,7 @@ inline static void Drop_Frame(Frame(*) f)
 }
 
 
-inline static void Prep_Frame_Core(
+inline static Frame(*) Prep_Frame_Core(
     Frame(*) f,
     REBFED *feed,
     Flags flags
@@ -493,7 +493,7 @@ inline static void Prep_Frame_Core(
 
     // !!! Previously only the DSP was captured in f->baseline.dsp, but then
     // redundantly captured via a SNAP_STATE() in Push_Frame().  The
-    // responsibilities of DECLARE_FRAME vs Push_Frame() aren't clearly laid
+    // responsibilities of Prep_Frame() vs Push_Frame() aren't clearly laid
     // out, but some clients do depend on the DSP being captured before
     // Push_Frame() is called, so this snaps the whole baseline here.
     //
@@ -502,22 +502,29 @@ inline static void Prep_Frame_Core(
   #if DEBUG_COUNT_TICKS
     f->tick = TG_Tick;
   #endif
+
+    return f;
 }
 
-#define DECLARE_FRAME(name,feed,flags) \
-    Frame(*)  name = cast(Frame(*), Alloc_Node(FRM_POOL)); \
-    Prep_Frame_Core(name, feed, flags);
+#define Make_Frame(feed,flags) \
+    Prep_Frame_Core(cast(Frame(*), Alloc_Node(FRM_POOL)), (feed), (flags))
 
-#define DECLARE_FRAME_AT(name,any_array,flags) \
-    DECLARE_FEED_AT (name##feed, any_array); \
-    DECLARE_FRAME (name, name##feed, (flags) | FRAME_FLAG_ALLOCATED_FEED)
+#define Make_Frame_At_Core(any_array,specifier,frame_flags) \
+    Make_Frame( \
+        Prep_Any_Array_Feed( \
+            Alloc_Feed(), \
+            (any_array), \
+            (specifier), \
+            TOP_FRAME->feed->flags.bits \
+        ), \
+        (frame_flags) | FRAME_FLAG_ALLOCATED_FEED \
+    )
 
-#define DECLARE_FRAME_AT_CORE(name,any_array,specifier,flags) \
-    DECLARE_FEED_AT_CORE (name##feed, (any_array), (specifier)); \
-    DECLARE_FRAME (name, name##feed, (flags) | FRAME_FLAG_ALLOCATED_FEED)
+#define Make_Frame_At(any_array,flags) \
+    Make_Frame_At_Core((any_array), SPECIFIED, (flags))
 
-#define DECLARE_END_FRAME(name,flags) \
-    DECLARE_FRAME (name, TG_End_Feed, flags)
+#define Make_End_Frame(flags) \
+    Make_Frame(TG_End_Feed, (flags))
 
 
 #define Begin_Enfix_Action(f,label) \
@@ -694,8 +701,7 @@ inline static bool Pushed_Continuation(
     if (IS_GROUP(branch) or IS_GET_GROUP(branch)) {  // see [2] for GET-GROUP!
         assert(flags & FRAME_FLAG_BRANCH);  // needed for trick
         assert(not (flags & FRAME_FLAG_MAYBE_STALE));  // OUT used as WITH
-        DECLARE_FRAME_AT_CORE (
-            grouper,
+        Frame(*) grouper = Make_Frame_At_Core(
             branch,
             branch_specifier,
             FRAME_FLAG_MAYBE_STALE | (flags & (~ FRAME_FLAG_BRANCH))
@@ -727,7 +733,7 @@ inline static bool Pushed_Continuation(
 
       case REB_META_BLOCK:
       case REB_BLOCK: {
-        DECLARE_FRAME_AT_CORE (f, branch, branch_specifier, flags);
+        Frame(*) f = Make_Frame_At_Core(branch, branch_specifier, flags);
         if (CELL_HEART_UNCHECKED(branch) == REB_META_BLOCK) {
             Set_Frame_Flag(f, META_RESULT);
             Set_Frame_Flag(f, FAILURE_RESULT_OK);
@@ -737,7 +743,7 @@ inline static bool Pushed_Continuation(
         goto pushed_continuation; }  // trampoline manages FRAME_FLAG_BRANCH atm.
 
       case REB_GET_BLOCK: {  // effectively REDUCE
-        DECLARE_END_FRAME (f, FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING));
+        Frame(*) f = Make_End_Frame(FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING));
 
         const REBVAL *action = Lib(REDUCE);
         Push_Action(f, VAL_ACTION(action), VAL_ACTION_BINDING(action));
@@ -761,7 +767,9 @@ inline static bool Pushed_Continuation(
         goto pushed_continuation; }
 
       case REB_ACTION : {
-        DECLARE_END_FRAME (f, FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING));
+        Frame(*) f = Make_End_Frame(
+            FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING) | flags
+        );
         Push_Action(f, VAL_ACTION(branch), VAL_ACTION_BINDING(branch));
         Begin_Prefix_Action(f, VAL_ACTION_LABEL(branch));
 
@@ -806,7 +814,9 @@ inline static bool Pushed_Continuation(
         if (Get_Subclass_Flag(VARLIST, CTX_VARLIST(c), FRAME_HAS_BEEN_INVOKED))
             fail (Error_Stale_Frame_Raw());
 
-        DECLARE_END_FRAME (f, FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING) | flags);
+        Frame(*) f = Make_End_Frame(
+            FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING) | flags
+        );
         f->executor = &Action_Executor;  // usually done by Push_Action()s
 
         Array(*) varlist = CTX_VARLIST(c);

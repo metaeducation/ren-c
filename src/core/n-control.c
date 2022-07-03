@@ -111,8 +111,7 @@ Bounce Group_Branch_Executor(Frame(*) frame_)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    DECLARE_FRAME(
-        evaluator,
+    Frame(*) evaluator = Make_Frame(
         FRAME->feed,
         (FRAME->flags.bits  // still state byte 0
             | FRAME_FLAG_BRANCH)
@@ -651,7 +650,7 @@ DECLARE_NATIVE(all)
     if (IS_THE_BLOCK(block))
         flags |= EVAL_EXECUTOR_FLAG_NO_EVALUATIONS;
 
-    DECLARE_FRAME_AT (subframe, block, flags);
+    Frame(*) subframe = Make_Frame_At(block, flags);
     Push_Frame(OUT, subframe);
 
     STATE = ST_ALL_EVAL_STEP;
@@ -775,7 +774,7 @@ DECLARE_NATIVE(any)
     if (IS_THE_BLOCK(block))
         flags |= EVAL_EXECUTOR_FLAG_NO_EVALUATIONS;
 
-    DECLARE_FRAME_AT (subframe, block, flags);
+    Frame(*) subframe = Make_Frame_At(block, flags);
     Push_Frame(OUT, subframe);
 
     STATE = ST_ANY_EVAL_STEP;
@@ -926,8 +925,7 @@ DECLARE_NATIVE(case)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    DECLARE_FRAME_AT (
-        f,
+    Frame(*) f = Make_Frame_At(
         cases,
         EVAL_EXECUTOR_FLAG_SINGLE_STEP | FRAME_FLAG_TRAMPOLINE_KEEPALIVE
     );
@@ -994,9 +992,8 @@ DECLARE_NATIVE(case)
             // GET-GROUP! run even on no-match (see IF), but result discarded
         }
 
-        DECLARE_FRAME_AT_CORE (  // turns into array feed, :(...) not special
-            discarder,
-            branch,
+        Frame(*) discarder = Make_Frame_At_Core(
+            branch,  // turning into feed drops cell type, :(...) not special
             f_specifier,
             FRAME_MASK_NONE
         );
@@ -1070,7 +1067,7 @@ DECLARE_NATIVE(switch)
 
     REBVAL *predicate = ARG(predicate);
 
-    DECLARE_FRAME_AT (f, ARG(cases), EVAL_EXECUTOR_FLAG_SINGLE_STEP);
+    Frame(*) f = Make_Frame_At(ARG(cases), EVAL_EXECUTOR_FLAG_SINGLE_STEP);
 
     Push_Frame(SPARE, f);
 

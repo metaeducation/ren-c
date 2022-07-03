@@ -588,8 +588,7 @@ static Bounce Parse_One_Rule(
         REBLEN pos_before = P_POS;
         P_POS = pos;  // modify input position
 
-        DECLARE_FRAME_AT_CORE (
-            subframe,
+        Frame(*) subframe = Make_Frame_At_Core(
             rule, rule_specifier(),
             FRAME_MASK_NONE
         );
@@ -1656,7 +1655,7 @@ DECLARE_NATIVE(subparse)
                 }
                 else {  // Ordinary rule (may be block, may not be)
 
-                    DECLARE_FRAME (subframe, f->feed, FRAME_MASK_NONE);
+                    Frame(*) subframe = Make_Frame(f->feed, FRAME_MASK_NONE);
 
                     // Want the subframe to see the BLOCK!, not ^[...]
                     //
@@ -1932,7 +1931,7 @@ DECLARE_NATIVE(subparse)
             );
             PUSH_GC_GUARD(collection);
 
-            DECLARE_FRAME (subframe, f->feed, FRAME_MASK_NONE);
+            Frame(*) subframe = Make_Frame(f->feed, FRAME_MASK_NONE);
 
             bool interrupted;
             assert(Is_Void(OUT));  // invariant until finished
@@ -2212,8 +2211,7 @@ DECLARE_NATIVE(subparse)
                     break;
                 }
 
-                DECLARE_FRAME_AT_CORE (
-                    subframe,
+                Frame(*) subframe = Make_Frame_At_Core(
                     subrule, P_RULE_SPECIFIER,
                     FRAME_MASK_NONE
                 );
@@ -2256,8 +2254,7 @@ DECLARE_NATIVE(subparse)
         }
         else if (IS_BLOCK(rule)) {  // word fetched block, or inline block
 
-            DECLARE_FRAME_AT_CORE (
-                subframe,
+            Frame(*) subframe = Make_Frame_At_Core(
                 rule, rule_specifier(),
                 FRAME_MASK_NONE
             );
@@ -2756,7 +2753,7 @@ DECLARE_NATIVE(parse_p)
     if (not ANY_SERIES_KIND(CELL_HEART(input)))
         fail ("PARSE input must be an ANY-SERIES! (use AS BLOCK! for PATH!)");
 
-    DECLARE_FRAME_AT (subframe, rules, FRAME_MASK_NONE);
+    Frame(*) subframe = Make_Frame_At(rules, FRAME_MASK_NONE);
 
     bool interrupted;
     if (Subparse_Throws(

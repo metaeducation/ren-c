@@ -206,7 +206,7 @@ Array(*) Expanded_Combinator_Spec(const REBVAL *original)
         "state [frame!]\n"
         "input [any-series!]\n";
 
-    DECLARE_END_FRAME(f, FRAME_MASK_NONE);
+    Frame(*) f = Make_End_Frame(FRAME_MASK_NONE);
     f->executor = &Scanner_Executor;
 
     SCAN_LEVEL *level = &f->u.scan;

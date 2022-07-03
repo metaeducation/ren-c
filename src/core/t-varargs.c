@@ -184,8 +184,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
             fail ("Variadic literal parameters not yet implemented");
 
         case PARAM_CLASS_NORMAL: {
-            DECLARE_FRAME_AT (
-                f_temp,
+            Frame(*) f_temp = Make_Frame_At(
                 shared,
                 EVAL_EXECUTOR_FLAG_SINGLE_STEP
                     | EVAL_EXECUTOR_FLAG_FULFILLING_ARG

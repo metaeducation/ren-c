@@ -541,7 +541,7 @@ Bounce Action_Executor(Frame(*) f)
             if (Did_Init_Inert_Optimize_Complete(ARG, f->feed, &flags))
                 break;  // no frame needed
 
-            DECLARE_FRAME (subframe, f->feed, flags);
+            Frame(*) subframe = Make_Frame(f->feed, flags);
             Push_Frame(ARG, subframe);
 
             continue_subframe (subframe); }
@@ -629,7 +629,7 @@ Bounce Action_Executor(Frame(*) f)
                     | EVAL_EXECUTOR_FLAG_INERT_OPTIMIZATION
                     | FRAME_FLAG_MAYBE_STALE;  // won't be, but avoids RESET()
 
-                DECLARE_FRAME (subframe, f->feed, flags);
+                Frame(*) subframe = Make_Frame(f->feed, flags);
                 Push_Frame(ARG, subframe);
                 continue_subframe (subframe);
             }

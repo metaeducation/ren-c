@@ -572,7 +572,7 @@ DECLARE_NATIVE(let)
         | FLAG_STATE_BYTE(ST_EVALUATOR_REEVALUATING)
         | (f->flags.bits & EVAL_EXECUTOR_FLAG_FULFILLING_ARG);
 
-    DECLARE_FRAME (subframe, FRAME->feed, flags);
+    Frame(*) subframe = Make_Frame(FRAME->feed, flags);
     subframe->u.eval.current = SPARE;
     subframe->u.eval.current_gotten = nullptr;
     subframe->u.eval.enfix_reevaluate = 'N';  // detect?

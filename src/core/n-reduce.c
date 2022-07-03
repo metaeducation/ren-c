@@ -87,8 +87,7 @@ DECLARE_NATIVE(reduce)
     if (ANY_INERT(v))
         return_value (v);  // save time if it's something like a TEXT!
 
-    DECLARE_END_FRAME (
-        subframe,
+    Frame(*) subframe = Make_End_Frame(
         FLAG_STATE_BYTE(ST_EVALUATOR_REEVALUATING)
     );
     Push_Frame(OUT, subframe);
@@ -101,8 +100,7 @@ DECLARE_NATIVE(reduce)
 
 } initial_entry_any_array: {  ////////////////////////////////////////////////
 
-    DECLARE_FRAME_AT (
-        subframe,
+    Frame(*) subframe = Make_Frame_At(
         v,  // REB_BLOCK or REB_GROUP
         EVAL_EXECUTOR_FLAG_SINGLE_STEP
             | FRAME_FLAG_ALLOCATED_FEED
@@ -234,7 +232,7 @@ DECLARE_NATIVE(reduce_each)
     if (IS_THE_BLOCK(block))
         flags |= EVAL_EXECUTOR_FLAG_NO_EVALUATIONS;
 
-    DECLARE_FRAME_AT (subframe, block, flags);
+    Frame(*) subframe = Make_Frame_At(block, flags);
     Push_Frame(SPARE, subframe);
     goto reduce_next;
 
@@ -343,8 +341,7 @@ static void Push_Composer_Frame(
         adjusted = rebValue(Lib(AS), Lib(BLOCK_X), rebQ(out));
     }
 
-    DECLARE_FRAME_AT_CORE (
-        subframe,
+    Frame(*) subframe = Make_Frame_At_Core(
         adjusted ? adjusted : arraylike,
         adjusted ? SPECIFIED : specifier,
         EVAL_EXECUTOR_FLAG_NO_EVALUATIONS
@@ -579,12 +576,11 @@ Bounce Composer_Executor(Frame(*) f)
 
     // If <*> is the label and (<*> 1 + 2) is found, run just (1 + 2).
     //
-    DECLARE_FEED_AT_CORE (subfeed, match, match_specifier);
+    REBFED *subfeed = Make_Feed_At_Core(match, match_specifier);
     if (not Is_Nulled(label))
         Fetch_Next_In_Feed(subfeed);  // wasn't possibly at END
 
-    DECLARE_FRAME (
-        subframe,
+    Frame(*) subframe = Make_Frame(
         subfeed,  // used subfeed so we could skip the label if there was one
         FRAME_FLAG_ALLOCATED_FEED
     );

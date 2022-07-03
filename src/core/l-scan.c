@@ -2118,8 +2118,7 @@ Bounce Scanner_Executor(Frame(*) f) {
 
       case TOKEN_GROUP_BEGIN:
       case TOKEN_BLOCK_BEGIN: {
-        DECLARE_END_FRAME (
-            subframe,
+        Frame(*) subframe = Make_End_Frame(
             FRAME_FLAG_TRAMPOLINE_KEEPALIVE  // we want accrued stack
                 | (f->flags.bits & SCAN_EXECUTOR_MASK_RECURSE)
                 | FRAME_FLAG_FAILURE_RESULT_OK
@@ -2399,8 +2398,7 @@ Bounce Scanner_Executor(Frame(*) f) {
         break;
 
       case TOKEN_CONSTRUCT: {
-        DECLARE_END_FRAME (
-            subframe,
+        Frame(*) subframe = Make_End_Frame(
             FRAME_FLAG_TRAMPOLINE_KEEPALIVE  // we want accrued stack
                 | (f->flags.bits & SCAN_EXECUTOR_MASK_RECURSE)
                 | FRAME_FLAG_FAILURE_RESULT_OK
@@ -2651,7 +2649,7 @@ Bounce Scanner_Executor(Frame(*) f) {
             // Note we still might come up empty (e.g. `foo/)`)
         }
         else {
-            DECLARE_END_FRAME (subframe, FRAME_FLAG_FAILURE_RESULT_OK);
+            Frame(*) subframe = Make_End_Frame(FRAME_FLAG_FAILURE_RESULT_OK);
             subframe->executor = &Scanner_Executor;
 
             SCAN_LEVEL *child = &subframe->u.scan;
@@ -2952,7 +2950,7 @@ Array(*) Scan_UTF8_Managed(
     Size size,
     option(Context(*)) context
 ){
-    DECLARE_END_FRAME (f, FRAME_MASK_NONE);
+    Frame(*) f = Make_End_Frame(FRAME_MASK_NONE);
     f->executor = &Scanner_Executor;
 
     SCAN_STATE ss;
@@ -3143,7 +3141,7 @@ DECLARE_NATIVE(transcode)
     if (REF(next))
         flags |= SCAN_EXECUTOR_FLAG_JUST_ONCE;
 
-    DECLARE_END_FRAME (subframe, flags);
+    Frame(*) subframe = Make_End_Frame(flags);
     subframe->executor = &Scanner_Executor;
     SCAN_LEVEL *level = &subframe->u.scan;
 
@@ -3270,7 +3268,7 @@ const Byte* Scan_Any_Word(
     String(const*) file = ANONYMOUS;
     const REBLIN start_line = 1;
 
-    DECLARE_END_FRAME (f, FRAME_MASK_NONE);
+    Frame(*) f = Make_End_Frame(FRAME_MASK_NONE);
     SCAN_LEVEL *level = &f->u.scan;
 
     // !!! We use UNLIMITED here instead of `size` because the R3-Alpha
@@ -3369,7 +3367,7 @@ option(Array(*)) Try_Scan_Utf8_For_Detect_Feed_Pointer_Managed(
     REBFED *feed,
     option(Context(*)) context
 ){
-    DECLARE_END_FRAME(f, FRAME_MASK_NONE);
+    Frame(*) f = Make_End_Frame(FRAME_MASK_NONE);
     f->executor = &Scanner_Executor;
 
     SCAN_LEVEL *level = &f->u.scan;

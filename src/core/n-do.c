@@ -338,8 +338,7 @@ DECLARE_NATIVE(do)
             return OUT;
         }
 
-        DECLARE_FRAME (
-            subframe,
+        Frame(*) subframe = Make_Frame(
             f->feed,
             EVAL_EXECUTOR_FLAG_SINGLE_STEP | FRAME_FLAG_MAYBE_STALE
         );
@@ -476,11 +475,13 @@ DECLARE_NATIVE(evaluate)
             return VOID;
         }
 
-        DECLARE_FEED_AT_CORE (feed, source, SPECIFIED);  // use feed, see [1]
+        REBFED* feed = Make_Feed_At_Core(  // use feed, see [1]
+            source,
+            SPECIFIED
+        );
         assert(Not_End(feed->value));
 
-        DECLARE_FRAME (
-            subframe,
+        Frame(*) subframe = Make_Frame(
             feed,
             FRAME_FLAG_ALLOCATED_FEED | FRAME_FLAG_MAYBE_STALE
         );
@@ -830,8 +831,7 @@ DECLARE_NATIVE(apply)
 
     Drop_Data_Stack_To(BASELINE->dsp);  // not interested in partials ordering
 
-    DECLARE_FRAME_AT (
-        f,
+    Frame(*) f = Make_Frame_At(
         args,
         EVAL_EXECUTOR_FLAG_SINGLE_STEP | FRAME_FLAG_TRAMPOLINE_KEEPALIVE
     );

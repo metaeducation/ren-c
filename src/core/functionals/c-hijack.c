@@ -137,7 +137,7 @@ void Push_Redo_Action_Frame(REBVAL *out, Frame(*) f1, const REBVAL *run)
 
     DECLARE_LOCAL (block);
     Init_Block(block, normals);
-    DECLARE_FRAME_AT (f2, block, FRAME_FLAG_MAYBE_STALE);
+    Frame(*) f2 = Make_Frame_At(block, FRAME_FLAG_MAYBE_STALE);
     f2->baseline.dsp = dsp_orig;
 
     Push_Frame(out, f2);

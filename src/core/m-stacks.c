@@ -94,11 +94,10 @@ void Startup_Frame_Stack(void)
     TG_Top_Frame = TG_Bottom_Frame = nullptr;
   #endif
 
-    DECLARE_ARRAY_FEED (end_feed, EMPTY_ARRAY, 0, SPECIFIED);
-    TG_End_Feed = end_feed;  // used by DECLARE_END_FRAME
+    REBFED *end_feed = Make_Array_Feed_Core(EMPTY_ARRAY, 0, SPECIFIED);
+    TG_End_Feed = end_feed;  // used by Make_End_Frame
 
-    DECLARE_END_FRAME (
-        f,
+    Frame(*) f = Make_End_Frame(
         FRAME_MASK_NONE
             | FRAME_FLAG_MAYBE_STALE  // avoids RESET(f->out), as it's nullptr
     );

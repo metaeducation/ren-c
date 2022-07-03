@@ -534,7 +534,7 @@ inline static void Free_Feed(REBFED *feed) {
 // value between evaluations; it's not cleared.
 //
 
-inline static void Prep_Array_Feed(
+inline static REBFED *Prep_Array_Feed(
     REBFED *feed,
     option(Cell(const*)) first,
     Array(const*) array,
@@ -580,15 +580,19 @@ inline static void Prep_Array_Feed(
         assert(FEED_PENDING(feed) == nullptr);
     else
         assert(READABLE(feed->value));
+
+    return feed;
 }
 
-#define DECLARE_ARRAY_FEED(name,array,index,specifier) \
-    REBFED *name = Alloc_Feed(); \
-    Prep_Array_Feed(name, \
-        nullptr, (array), (index), (specifier), FEED_MASK_DEFAULT \
-    );
+#define Make_Array_Feed_Core(array,index,specifier) \
+    Prep_Array_Feed( \
+        Alloc_Feed(), \
+        nullptr, (array), (index), (specifier), \
+        FEED_MASK_DEFAULT \
+    )
 
-inline static void Prep_Va_Feed(
+
+inline static REBFED *Prep_Va_Feed(
     struct Reb_Feed *feed,
     const void *p,
     option(va_list*) vaptr,
@@ -613,17 +617,17 @@ inline static void Prep_Va_Feed(
 
     feed->gotten = nullptr;
     assert(Is_End(feed->value) or READABLE(feed->value));
+    return feed;
 }
 
 // The flags is passed in by the macro here by default, because it does a
 // fetch as part of the initialization from the `first`...and if you want
 // the flags to take effect, they must be passed in up front.
 //
-#define DECLARE_VA_FEED(name,p,vaptr,flags) \
-    REBFED *name = Alloc_Feed(); \
-    Prep_Va_Feed(name, (p), (vaptr), (flags)); \
+#define Make_Variadic_Feed(p,vaptr,flags) \
+    Prep_Va_Feed(Alloc_Feed(), (p), (vaptr), (flags))
 
-inline static void Prep_Any_Array_Feed(
+inline static REBFED *Prep_Any_Array_Feed(
     REBFED *feed,
     noquote(Cell(const*)) any_array,  // array is extracted and HOLD put on
     REBSPC *specifier,
@@ -647,13 +651,15 @@ inline static void Prep_Any_Array_Feed(
         Derive_Specifier(specifier, any_array),
         flags
     );
+
+    return feed;
 }
 
-#define DECLARE_FEED_AT_CORE(name,any_array,specifier) \
-    REBFED *name = Alloc_Feed(); \
-    Prep_Any_Array_Feed(name, \
+#define Make_Feed_At_Core(any_array,specifier) \
+    Prep_Any_Array_Feed( \
+        Alloc_Feed(), \
         (any_array), (specifier), TOP_FRAME->feed->flags.bits \
     );
 
-#define DECLARE_FEED_AT(name,any_array) \
-    DECLARE_FEED_AT_CORE(name, (any_array), SPECIFIED)
+#define Make_Feed_At(name,any_array) \
+    Make_Feed_At_Core(name, (any_array), SPECIFIED)

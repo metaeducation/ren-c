@@ -375,7 +375,7 @@ EXTERN_C intptr_t RL_rebPromise(void *p, va_list *vaptr)
     // for granted the resolve() function created on return from this helper
     // already exists.
 
-    DECLARE_VA_FEED (feed, p, vaptr, FEED_MASK_DEFAULT);
+    REBFED *feed = Make_Variadic_Feed(p, vaptr, FEED_MASK_DEFAULT);
 
     REBDSP dsp_orig = DSP;
     while (Not_End(feed->value)) {
@@ -439,7 +439,7 @@ void RunPromise(void)
     DECLARE_LOCAL (code);
     Init_Block(code, a);
 
-    DECLARE_FRAME_AT (f, code, FRAME_FLAG_ROOT_FRAME);
+    Frame(*) f = Make_Frame_At(code, FRAME_FLAG_ROOT_FRAME);
     Push_Frame (Alloc_Value(), f);
     goto run_promise;
 

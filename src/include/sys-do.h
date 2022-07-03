@@ -85,7 +85,7 @@ inline static bool Do_Any_Array_At_Core_Throws(
     Cell(const*) any_array,
     REBSPC *specifier
 ){
-    DECLARE_FRAME_AT_CORE (f, any_array, specifier, flags);
+    Frame(*) f = Make_Frame_At_Core(any_array, specifier, flags);
 
     return Trampoline_Throws(out, f);
 }

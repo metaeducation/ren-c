@@ -838,9 +838,9 @@ static bool Run_Va_Throws(
     else
         Eval_Sigmask &= ~SIG_HALT;  // disable
 
-    DECLARE_VA_FEED (feed, p, vaptr, FEED_MASK_DEFAULT);
-    DECLARE_FRAME (
-        f,
+    REBFED *feed = Make_Variadic_Feed(p, vaptr, FEED_MASK_DEFAULT);
+
+    Frame(*) f = Make_Frame(
         feed,
         FRAME_FLAG_ALLOCATED_FEED | flags
     );
@@ -958,7 +958,7 @@ void RL_rebPushContinuation(
 ){
     ENTER_API;
 
-    DECLARE_VA_FEED (feed, p, vaptr, FEED_MASK_DEFAULT);
+    REBFED *feed = Make_Variadic_Feed(p, vaptr, FEED_MASK_DEFAULT);
 
     REBDSP dsp_orig = DSP;
     while (Not_End(feed->value)) {
@@ -973,7 +973,7 @@ void RL_rebPushContinuation(
 
     DECLARE_LOCAL (block);
     Init_Block(block, code);
-    DECLARE_FRAME_AT(f, block, flags);
+    Frame(*) f = Make_Frame_At(block, flags);
     Push_Frame(out, f);
 }
 
@@ -1722,8 +1722,7 @@ REBVAL *RL_rebRescueWith(
     // body of the C function for the rebRescue() to be automatically cleaned
     // up in the case of an error.  There must be a frame to attach them to.
     //
-    DECLARE_END_FRAME (
-        dummy,
+    Frame(*) dummy = Make_End_Frame(
         FRAME_MASK_NONE
             | FRAME_FLAG_MAYBE_STALE  // avoids RESET(dummy->out), as it's null
     );

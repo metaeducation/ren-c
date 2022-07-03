@@ -273,7 +273,7 @@ inline static bool Eval_Step_In_Subframe_Throws(
     // preload of inert data.  So we're responsible for clearing the flag if
     // the caller didn't actually want stale data.
 
-    DECLARE_FRAME (subframe, f->feed, flags);
+    Frame(*) subframe = Make_Frame(f->feed, flags);
 
     return Trampoline_Throws(out, subframe);
 }
@@ -289,7 +289,7 @@ inline static bool Reevaluate_In_Subframe_Throws(
     assert(SECOND_BYTE(flags) == 0);
     flags |= FLAG_STATE_BYTE(ST_EVALUATOR_REEVALUATING);
 
-    DECLARE_FRAME (subframe, f->feed, flags);
+    Frame(*) subframe = Make_Frame(f->feed, flags);
     subframe->u.eval.current = reval;
     subframe->u.eval.current_gotten = nullptr;
     subframe->u.eval.enfix_reevaluate = enfix ? 'Y' : 'N';
@@ -308,15 +308,14 @@ inline static bool Eval_Step_In_Any_Array_At_Throws(
     assert(Is_Fresh(out));
 
     assert(not (flags & EVAL_EXECUTOR_FLAG_SINGLE_STEP));  // added here
-    DECLARE_FEED_AT_CORE (feed, any_array, specifier);
+    REBFED *feed = Make_Feed_At_Core(any_array, specifier);
 
     if (Is_End(feed->value)) {
         *index_out = 0xDECAFBAD;  // avoid compiler warning
         return false;
     }
 
-    DECLARE_FRAME (
-        f,
+    Frame(*) f = Make_Frame(
         feed,
         flags | FRAME_FLAG_ALLOCATED_FEED | EVAL_EXECUTOR_FLAG_SINGLE_STEP
     );
@@ -360,12 +359,11 @@ inline static bool Eval_Step_In_Va_Throws(
     va_list *vaptr,
     Flags eval_flags
 ){
-    DECLARE_VA_FEED (feed, p, vaptr, feed_flags);
+    REBFED *feed = Make_Variadic_Feed(p, vaptr, feed_flags);
 
     assert(eval_flags & EVAL_EXECUTOR_FLAG_SINGLE_STEP);
 
-    DECLARE_FRAME (
-        f,
+    Frame(*) f = Make_Frame(
         feed,
         eval_flags | FRAME_FLAG_ALLOCATED_FEED
     );
@@ -416,7 +414,7 @@ inline static bool Eval_Value_Core_Throws(
         FEED_MASK_DEFAULT | (value->header.bits & FEED_FLAG_CONST)
     );
 
-    DECLARE_FRAME (f, feed, flags | FRAME_FLAG_ALLOCATED_FEED);
+    Frame(*) f = Make_Frame(feed, flags | FRAME_FLAG_ALLOCATED_FEED);
 
     return Trampoline_Throws(out, f);
 }

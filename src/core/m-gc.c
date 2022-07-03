@@ -813,7 +813,7 @@ static void Mark_Frame_Stack_Deep(void)
             Queue_Mark_Maybe_Stale_Cell_Deep(f->out);
 
         // Frame temporary cell should always contain initialized bits, as
-        // DECLARE_FRAME sets it up and no one is supposed to trash it.
+        // Make_Frame() sets it up and no one is supposed to trash it.
         //
         Queue_Mark_Maybe_Stale_Cell_Deep(&f->feed->fetched);
         Queue_Mark_Maybe_Stale_Cell_Deep(&f->feed->lookback);
