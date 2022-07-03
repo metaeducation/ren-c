@@ -542,24 +542,25 @@ bool Get_Var_Push_Refinements_Throws(
     Cell(const*) var,
     REBSPC *var_specifier
 ){
+    assert(var != out);
     assert(steps_out != out);  // Legal for SET, not for GET
 
     if (ANY_GROUP(var)) {  // !!! GET-GROUP! makes sense, but SET-GROUP!?
         if (not steps_out)
             fail (Error_Bad_Get_Group_Raw(var));
 
-        DECLARE_LOCAL (temp);
-        if (Do_Any_Array_At_Throws(temp, var, var_specifier))
+        if (steps_out != GROUPS_OK)
+            fail ("GET-VAR on GROUP! with steps doesn't have answer ATM");
+
+        if (Do_Any_Array_At_Throws(out, var, var_specifier))
             return true;
 
-        Move_Cell(out, temp);  // if spare was source, we are replacing it
-        var = out;
-        var_specifier = SPECIFIED;
+        return false;
     }
 
     if (IS_BLANK(var)) {
         Init_Nulled(out);  // "blank in, null out" get variable convention
-        if (steps_out)
+        if (steps_out and steps_out != GROUPS_OK)
             Init_Blank(unwrap(steps_out));
         return false;
     }
