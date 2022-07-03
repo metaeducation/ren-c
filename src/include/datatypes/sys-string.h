@@ -316,7 +316,7 @@ inline static void TERM_STR_LEN_SIZE(Raw_String* s, REBLEN len, Size used) {
     SER_HEAD(struct Reb_Bookmark, c_cast(REBBMK*, (b)))->offset
 
 inline static REBBMK* Alloc_Bookmark(void) {
-    REBSER *s = Make_Series(
+    REBSER *s = Make_Series_Core(
         1,
         FLAG_FLAVOR(BOOKMARKLIST) | SERIES_FLAG_MANAGED
     );

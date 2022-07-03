@@ -21,7 +21,7 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // In the C build, a Array(*) and REBSER* are the same type.  The C++ build
-// derives Reb_Array from Reb_Series...meaning you can pass an array to a
+// derives Raw_Array from Raw_Series...meaning you can pass an array to a
 // function that expects a series, but not vice-versa.
 //
 // There are several subclasses (FLAVOR_XXX) whose elements are value cells,
@@ -33,13 +33,13 @@
 //
 
 #if CPLUSPLUS_11
-    struct Reb_Array : public Reb_Series {};
+    struct Raw_Array : public Raw_Series {};
 #else
-    typedef Reb_Series Reb_Array;
+    typedef Raw_Series Raw_Array;
 #endif
 
 #define Array(star_maybe_const) \
-    Reb_Array star_maybe_const
+    Raw_Array star_maybe_const
 
 
 // It may become interesting to say that a specifier can be a pairing or
@@ -49,23 +49,23 @@
 // the interests of making the code strict-aliasing-safe for starters, assume
 // all specifiers are arrays.
 //
-typedef Reb_Array REBSPC;
+typedef Raw_Array REBSPC;
 
 
 // To help document places in the core that are complicit in the "extension
 // hack", alias arrays being used for the FFI and GOB to another name.
 //
-typedef Reb_Array REBGOB;
+typedef Raw_Array REBGOB;
 
-typedef Reb_Array REBSTU;
-typedef Reb_Array REBFLD;
+typedef Raw_Array REBSTU;
+typedef Raw_Array REBFLD;
 
-typedef Reb_Binary REBTYP;  // Rebol Type (list of hook function pointers)
+typedef Raw_Binary REBTYP;  // Rebol Type (list of hook function pointers)
 
 
 //=//// ARRAY_FLAG_HAS_FILE_LINE_UNMASKED /////////////////////////////////=//
 //
-// The Reb_Series node has two pointers in it, ->link and ->misc, which are
+// The Raw_Series node has two pointers in it, ->link and ->misc, which are
 // used for a variety of purposes (pointing to the keylist for an object,
 // the C code that runs as the dispatcher for a function, etc.)  But for
 // regular source series, they can be used to store the filename and line

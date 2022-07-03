@@ -1,6 +1,6 @@
 //
 //  File: %sys-array.h
-//  Summary: {Definitions for Reb_Array}
+//  Summary: {Definitions for Raw_Array}
 //  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  Homepage: https://github.com/metaeducation/ren-c/
 //

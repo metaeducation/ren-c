@@ -718,7 +718,7 @@ void Drop_Mold_Core(
 //
 void Startup_Mold(REBLEN size)
 {
-    TG_Mold_Stack = Make_Series(10, FLAG_FLAVOR(MOLDSTACK));
+    TG_Mold_Stack = Make_Series_Core(10, FLAG_FLAVOR(MOLDSTACK));
 
     // Most string code tries to optimize "bookmarks" that help map indices
     // to encoded codepoint positions in such a way that when the string

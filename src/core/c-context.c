@@ -35,10 +35,10 @@
 //
 Context(*) Alloc_Context_Core(enum Reb_Kind kind, REBLEN capacity, Flags flags)
 {
-    Keylist(*) keylist = cast(Raw_Keylist*, Make_Series(
+    Keylist(*) keylist = Make_Series(Keylist,
         capacity,  // no terminator
         SERIES_MASK_KEYLIST | NODE_FLAG_MANAGED  // always shareable
-    ));
+    );
     mutable_LINK(Ancestor, keylist) = keylist;  // default to keylist itself
     assert(SER_USED(keylist) == 0);
 
@@ -440,10 +440,10 @@ Keylist(*) Collect_Keylist_Managed(
     if (prior and CTX_LEN(unwrap(prior)) == num_collected)
         keylist = CTX_KEYLIST(unwrap(prior));
     else {
-        keylist = cast(Raw_Keylist*, Make_Series(
+        keylist = Make_Series(Keylist,
             num_collected,  // no terminator
             SERIES_MASK_KEYLIST | NODE_FLAG_MANAGED
-        ));
+        );
 
         StackValue(*) word = Data_Stack_At(cl->dsp_orig) + 1;
         REBKEY* key = SER_HEAD(REBKEY, keylist);

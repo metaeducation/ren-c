@@ -341,7 +341,7 @@ struct Reb_Jump {
     template <class T>
     inline static ATTRIBUTE_NO_RETURN void Fail_Macro_Helper(T *p) {
         static_assert(
-            std::is_same<T, Reb_Context>::value
+            std::is_same<T, Raw_Context>::value
             or std::is_same<T, const char>::value
             or std::is_base_of<const REBVAL, T>::value
             or std::is_base_of<Reb_Cell, T>::value,

@@ -124,7 +124,7 @@ typedef struct rebol_scan_state {  // shared across all levels of a scan
     // Module to bind words to while scanning.  Splices from the feed will
     // not count...only words bound from text portions of the scan.
     //
-    option(Reb_Context*) context;
+    option(Raw_Context*) context;
 
     const Raw_String* file;  // currently scanning (or anonymous)
 

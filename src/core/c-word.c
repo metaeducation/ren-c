@@ -136,7 +136,7 @@ static void Expand_Word_Table(void)
     REBLEN num_slots = Get_Hash_Prime_May_Fail(old_num_slots + 1);
     assert(SER_WIDE(PG_Symbols_By_Hash) == sizeof(Symbol(*)));
 
-    REBSER *ser = Make_Series(
+    REBSER *ser = Make_Series_Core(
         num_slots, FLAG_FLAVOR(CANONTABLE) | SERIES_FLAG_POWER_OF_2
     );
     Clear_Series(ser);
@@ -520,7 +520,7 @@ void Startup_Interning(void)
     n = 1; // forces exercise of rehashing logic in debug build
   #endif
 
-    ensureNullptr(PG_Symbols_By_Hash) = Make_Series(
+    ensureNullptr(PG_Symbols_By_Hash) = Make_Series_Core(
         n, FLAG_FLAVOR(CANONTABLE) | SERIES_FLAG_POWER_OF_2
     );
     Clear_Series(PG_Symbols_By_Hash);  // all slots start as nullptr

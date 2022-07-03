@@ -37,14 +37,14 @@ String(*) Make_String_Core(Size encoded_capacity, Flags flags)
 {
     assert(FLAVOR_BYTE(flags) == 0);  // shouldn't have a flavor
 
-    Binary(*) bin = BIN(Make_Series(
+    Raw_String* str = Make_Series(String,
         encoded_capacity + 1,  // binary includes room for '\0' terminator
         FLAG_FLAVOR(STRING) | flags
-    ));
-    bin->misc.length = 0;
-    mutable_LINK(Bookmarks, bin) = nullptr;  // generated on demand
-    *BIN_HEAD(bin) = '\0';  // zero length, so head = tail
-    return STR(bin);
+    );
+    str->misc.length = 0;
+    mutable_LINK(Bookmarks, str) = nullptr;  // generated on demand
+    *BIN_HEAD(str) = '\0';  // zero length, so head = tail
+    return str;
 }
 
 

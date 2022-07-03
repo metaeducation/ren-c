@@ -369,7 +369,7 @@ bool Did_Get_Binding_Of(REBVAL *out, const REBVAL *v)
         // result in that word having a FRAME! incarnated as a REBSER node (if
         // it was not already reified.)
         //
-        // !!! In the future Reb_Context will refer to a REBNOD*, and only
+        // !!! In the future Raw_Context will refer to a REBNOD*, and only
         // be reified based on the properties of the cell into which it is
         // moved (e.g. OUT would be examined here to determine if it would
         // have a longer lifetime than the Frame(*) or other node)

@@ -100,7 +100,10 @@ inline static Binary(*) Make_Binary_Core(REBLEN capacity, Flags flags)
 {
     assert(FLAVOR_BYTE(flags) == 0);  // shouldn't pass in a flavor
 
-    REBSER *s = Make_Series(capacity + 1, FLAG_FLAVOR(BINARY) | flags);
+    Raw_Binary* s = Make_Series(Binary,
+        capacity + 1,
+        FLAG_FLAVOR(BINARY) | flags
+    );
   #if !defined(NDEBUG)
     *SER_HEAD(Byte, s) = BINARY_BAD_UTF8_TAIL_BYTE;  // reserve for '\0'
   #endif

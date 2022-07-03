@@ -20,7 +20,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// `struct Reb_Series` (or "REBSER") is a small-ish fixed-size descriptor for
+// `struct Raw_Series` (or "REBSER") is a small-ish fixed-size descriptor for
 // series data.  Usually it contains a pointer to a larger allocation for the
 // actual contents.  But if the series is small enough, the contents are
 // embedded into the REBSER structure itself.
@@ -636,7 +636,7 @@ union Reb_Stub_Link {
     // library is not loaded.
     //
     // !!! As with some other types, this may not need the optimization of
-    // being in the Reb_Series node--but be handled via user defined types
+    // being in the Raw_Series node--but be handled via user defined types
     //
     void *fd;
 
@@ -788,41 +788,41 @@ union Reb_Stub_Info {
 // that the fields are available.
 //
 // In order for the inheritance to be known, these definitions cannot occur
-// until Reb_Series is fully defined.  So this is the earliest it can be done:
+// until Raw_Series is fully defined.  So this is the earliest it can be done:
 //
 // https://stackoverflow.com/q/2159390/
 //
 #if CPLUSPLUS_11
-    struct Reb_Binary : public Reb_Series {};
+    struct Raw_Binary : public Raw_Series {};
 
-    struct Raw_String : public Reb_Binary {};  // strings can act as binaries
+    struct Raw_String : public Raw_Binary {};  // strings can act as binaries
 
     struct Raw_Symbol : public Raw_String {};  // word-constrained strings
 
-    struct Reb_Bookmark_List : public Reb_Series {};
+    struct Reb_Bookmark_List : public Raw_Series {};
     typedef struct Reb_Bookmark_List REBBMK;  // list of UTF-8 index=>offsets
 
-    struct Reb_Action : public Reb_Series {};
+    struct Raw_Action : public Raw_Series {};
 
-    struct Reb_Context : public Reb_Series {};
+    struct Raw_Context : public Raw_Series {};
 
-    struct Reb_Map : public Reb_Series {};
+    struct Reb_Map : public Raw_Series {};
     typedef struct Reb_Map REBMAP;  // the "pairlist" is the identity
 
-    struct Raw_Keylist : public Reb_Series {};
+    struct Raw_Keylist : public Raw_Series {};
 #else
-    typedef Reb_Series Reb_Binary;
-    typedef Reb_Series Raw_String;
-    typedef Reb_Series Raw_Symbol;
-    typedef Reb_Series REBBMK;
-    typedef Reb_Series Reb_Action;
-    typedef Reb_Series Reb_Context;
-    typedef Reb_Series REBMAP;
-    typedef Reb_Series Raw_Keylist;
+    typedef Raw_Series Raw_Binary;
+    typedef Raw_Series Raw_String;
+    typedef Raw_Series Raw_Symbol;
+    typedef Raw_Series REBBMK;
+    typedef Raw_Series Raw_Action;
+    typedef Raw_Series Raw_Context;
+    typedef Raw_Series REBMAP;
+    typedef Raw_Series Raw_Keylist;
 #endif
 
 #define Binary(star_maybe_const) \
-    Reb_Binary star_maybe_const
+    Raw_Binary star_maybe_const
 
 #if DEBUG_COUNT_LOCALS
     #include "sys-holder.hpp"
@@ -841,10 +841,10 @@ union Reb_Stub_Info {
 #endif
 
 #define Action(star_maybe_const) \
-    Reb_Action star_maybe_const
+    Raw_Action star_maybe_const
 
 #define Context(star_maybe_const) \
-    Reb_Context star_maybe_const
+    Raw_Context star_maybe_const
 
 #define Keylist(star_maybe_const) \
     Raw_Keylist star_maybe_const

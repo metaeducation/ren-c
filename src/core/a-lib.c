@@ -150,14 +150,14 @@ void *RL_rebMalloc(size_t size)
 {
     ENTER_API;
 
-    Binary(*) s = BIN(Make_Series(
+    Binary(*) s = Make_Series(Binary,
         ALIGN_SIZE  // stores REBSER* (must be at least big enough for void*)
             + size  // for the actual data capacity (may be 0, see notes)
             + 1,  // for termination (AS TEXT! of rebRepossess(), see notes)
         FLAG_FLAVOR(BINARY)  // rebRepossess() only creates binary series ATM
             | SERIES_FLAG_DONT_RELOCATE  // direct data pointer handed back
             | SERIES_FLAG_DYNAMIC  // rebRepossess() needs bias field
-    ));
+    );
 
     Byte* ptr = BIN_HEAD(s) + ALIGN_SIZE;
 

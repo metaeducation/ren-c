@@ -52,7 +52,7 @@ enum Reb_Stub_Flavor {
     // series can be reached from it via the LINK() in the series node, which
     // is known as a "keylist".
     //
-    // See notes on Reb_Context for further details about what a context is.
+    // See notes on Raw_Context for further details about what a context is.
     //
     FLAVOR_VARLIST,
     FLAVOR_PARAMLIST = FLAVOR_VARLIST,  // review

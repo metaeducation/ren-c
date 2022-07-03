@@ -315,7 +315,7 @@ void Startup_Pools(REBINT scale)
     // As a trick to keep this series from trying to track itself, say it's
     // managed, then sneak the flag off.
     //
-    GC_Manuals = Make_Series(
+    GC_Manuals = Make_Series_Core(
         15,
         FLAG_FLAVOR(SERIESLIST) | NODE_FLAG_MANAGED
     );
@@ -1279,9 +1279,9 @@ void Assert_Pointer_Detection_Working(void)
     assert(Detect_Rebol_Pointer(END) == DETECTED_AS_END);
     assert(Detect_Rebol_Pointer(rebEND) == DETECTED_AS_END);
 
-    REBSER *ser = Make_Series(1, FLAG_FLAVOR(BINARY));
-    assert(Detect_Rebol_Pointer(ser) == DETECTED_AS_SERIES);
-    Free_Unmanaged_Series(ser);
+    Binary(*) bin = Make_Series(Binary, 1, FLAG_FLAVOR(BINARY));
+    assert(Detect_Rebol_Pointer(bin) == DETECTED_AS_SERIES);
+    Free_Unmanaged_Series(bin);
 }
 
 

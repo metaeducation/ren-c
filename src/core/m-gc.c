@@ -1434,12 +1434,12 @@ void Startup_GC(void)
 
     // Temporary series and values protected from GC. Holds node pointers.
     //
-    GC_Guarded = Make_Series(15, FLAG_FLAVOR(NODELIST));
+    GC_Guarded = Make_Series_Core(15, FLAG_FLAVOR(NODELIST));
 
     // The marking queue used in lieu of recursion to ensure that deeply
     // nested structures don't cause the C stack to overflow.
     //
-    GC_Mark_Stack = Make_Series(100, FLAG_FLAVOR(NODELIST));
+    GC_Mark_Stack = Make_Series_Core(100, FLAG_FLAVOR(NODELIST));
 }
 
 

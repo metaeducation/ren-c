@@ -100,7 +100,7 @@ struct SeriesHolder {
     T* p;
 
     static_assert(
-        std::is_base_of<Reb_Series, typename std::remove_const<T>::type>::value,
+        std::is_base_of<Raw_Series, typename std::remove_const<T>::type>::value,
         "SeriesHolder<Raw_Series*> only works on Raw_Series derived types"
     );
 
@@ -109,7 +109,7 @@ struct SeriesHolder {
     explicit SeriesHolder (const void* other) {  // allow casting
         p = reinterpret_cast<T*>(const_cast<void*>(other));
         if (p) {
-            auto *s = m_cast(Reb_Series*, x_cast(const Reb_Series*, p));
+            auto *s = m_cast(Raw_Series*, x_cast(const Raw_Series*, p));
             assert(s->num_locals < INT32_MAX);
             s->num_locals = s->num_locals + 1;
         }
@@ -157,7 +157,7 @@ struct SeriesHolder {
 
     ~SeriesHolder () {
         if (p) {
-            auto *s = m_cast(Reb_Series*, x_cast(const Reb_Series*, p));
+            auto *s = m_cast(Raw_Series*, x_cast(const Raw_Series*, p));
             assert(s->num_locals > 0);
             s->num_locals = s->num_locals - 1;
         }

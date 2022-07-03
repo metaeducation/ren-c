@@ -117,8 +117,8 @@ typedef struct Reb_Pool_Unit REBPLU;
 
 //=//// SERIES AND NON-INHERITED SUBCLASS DEFINITIONS /////////////////////=//
 //
-// The C++ build defines Reb_Array, Reb_Binary, and Raw_String as being
-// derived from Reb_Series.  This affords convenience by having it possible
+// The C++ build defines Raw_Array, Raw_Binary, and Raw_String as being
+// derived from Raw_Series.  This affords convenience by having it possible
 // to pass the derived class to something taking a base class, but not vice
 // versa.  However, you cannot forward-declare inheritance:
 //
@@ -130,15 +130,15 @@ typedef struct Reb_Pool_Unit REBPLU;
 // inherit.  You have to specify which series you want to extract, e.g.
 // GET_SERIES_FLAG(CTX_VARLIST(context)), not just GET_SERIES_FLAG(context).
 //
-// Note that because the Reb_Series structure includes a Reb_Value by value,
+// Note that because the Raw_Series structure includes a Reb_Value by value,
 // the %sys-rebser.h must be included *after* %sys-rebval.h; however the
 // higher level definitions in %sys-series.h are *before* %sys-value.h.
 //
 
 struct Reb_Stub;
-typedef struct Reb_Stub Reb_Series;
+typedef struct Reb_Stub Raw_Series;
 
-typedef Reb_Series REBSER;
+typedef Raw_Series REBSER;
 
 
 struct Reb_Bookmark {

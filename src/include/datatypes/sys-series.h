@@ -1383,8 +1383,11 @@ inline static REBSER *Make_Series_Into(
     return s;
 }
 
-#define Make_Series(capacity,flags) \
+#define Make_Series_Core(capacity,flags) \
     Make_Series_Into(Alloc_Pooled(SER_POOL), (capacity), (flags))
+
+#define Make_Series(flavor,capacity,flags) \
+    cast(Raw_##flavor*, Make_Series_Core((capacity), (flags)))
 
 
 enum act_modify_mask {

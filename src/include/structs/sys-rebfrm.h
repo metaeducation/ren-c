@@ -276,8 +276,8 @@ STATIC_ASSERT(31 < 32);  // otherwise FRAME_FLAG_XXX too high
 
 
 // These definitions are needed in %sys-rebval.h, and can't be put in
-// %sys-rebact.h because that depends on Reb_Array, which depends on
-// Reb_Series, which depends on values... :-/
+// %sys-rebact.h because that depends on Raw_Array, which depends on
+// Raw_Series, which depends on values... :-/
 
 // C function implementing a native ACTION!
 //

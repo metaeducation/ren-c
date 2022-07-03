@@ -364,7 +364,7 @@ uint32_t Hash_Value(Cell(const*) cell)
 REBSER *Make_Hash_Series(REBLEN len)
 {
     REBLEN n = Get_Hash_Prime_May_Fail(len * 2);  // best when 2X # of keys
-    REBSER *ser = Make_Series(n + 1, FLAG_FLAVOR(HASHLIST));
+    REBSER *ser = Make_Series_Core(n + 1, FLAG_FLAVOR(HASHLIST));
     Clear_Series(ser);
     SET_SERIES_LEN(ser, n);
 

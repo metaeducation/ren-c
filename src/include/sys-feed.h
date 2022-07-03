@@ -358,11 +358,11 @@ inline static void Fetch_Next_In_Feed(Feed(*) feed) {
                     Clear_Feed_Flag(feed, TOOK_HOLD);
                 }
 
-                Reb_Array* splice = FEED_SPLICE(feed);
+                Raw_Array* splice = FEED_SPLICE(feed);
                 memcpy(
                     FEED_SINGULAR(feed),
                     FEED_SPLICE(feed),
-                    sizeof(Reb_Array)
+                    sizeof(Raw_Array)
                 );
                 GC_Kill_Series(splice);  // Array(*) would hold reference
                 goto retry_splice;

@@ -568,10 +568,10 @@ Array(*) Pop_Paramlist_With_Meta_May_Fail(
         SERIES_MASK_PARAMLIST
     );
 
-    Keylist(*) keylist = cast(Raw_Keylist*, Make_Series(
+    Keylist(*) keylist = Make_Series(Keylist,
         (num_slots - 1),  // - 1 archetype
         SERIES_MASK_KEYLIST | NODE_FLAG_MANAGED
-    ));
+    );
     mutable_LINK(Ancestor, keylist) = keylist;  // chain ends with self
 
     if (flags & MKF_HAS_RETURN)

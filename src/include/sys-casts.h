@@ -162,8 +162,8 @@
         typename T0 = typename std::remove_const<T>::type,
         typename A = typename std::conditional<
             std::is_const<T>::value,  // boolean
-            const Reb_Array,  // true branch
-            Reb_Array  // false branch
+            const Raw_Array,  // true branch
+            Raw_Array  // false branch
         >::type
     >
     inline A *ARR(T *p) {
@@ -192,8 +192,8 @@
         typename T0 = typename std::remove_const<T>::type,
         typename C = typename std::conditional<
             std::is_const<T>::value,  // boolean
-            const Reb_Context,  // true branch
-            Reb_Context  // false branch
+            const Raw_Context,  // true branch
+            Raw_Context  // false branch
         >::type
     >
     inline static C *CTX(T *p) {
@@ -201,7 +201,7 @@
             std::is_same<T0, void>::value
                 or std::is_same<T0, REBNOD>::value
                 or std::is_same<T0, REBSER>::value
-                or std::is_same<T0, Reb_Array>::value,
+                or std::is_same<T0, Raw_Array>::value,
             "CTX() works on [void* REBNOD* REBSER* Array(*)]"
         );
         if (not p)
