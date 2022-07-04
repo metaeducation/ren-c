@@ -375,20 +375,12 @@ EXTERN_C intptr_t RL_rebPromise(void *p, va_list *vaptr)
     // for granted the resolve() function created on return from this helper
     // already exists.
 
-    Feed(*) feed = Make_Variadic_Feed(p, vaptr, FEED_MASK_DEFAULT);
+    DECLARE_LOCAL (block);
+    RL_rebTranscodeInto(block, p, vaptr);
 
-    REBDSP dsp_orig = DSP;
-    while (Not_End(feed->value)) {
-        Derelativize(PUSH(), feed->value, FEED_SPECIFIER(feed));
-        Set_Cell_Flag(TOP, UNEVALUATED);
-        Fetch_Next_In_Feed(feed);
-    }
-    // Note: exhausting feed should take care of the va_end()
-
-    Free_Feed(feed);  // feeds are dynamically allocated and must be freed
-
-    Array(*) code = Pop_Stack_Values(dsp_orig);
-    assert(NOT_SERIES_FLAG(code, MANAGED));  // using array as ID, don't GC it
+    Array(*) code = VAL_ARRAY_ENSURE_MUTABLE(block);
+    assert(GET_SERIES_FLAG(code, MANAGED));
+    CLEAR_SERIES_FLAG(code, MANAGED);  // using array as ID, don't GC it
 
     // We singly link the promises such that they will be executed backwards.
     // What's good about that is that it will help people realize that over

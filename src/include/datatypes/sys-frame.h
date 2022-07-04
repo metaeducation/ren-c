@@ -79,7 +79,7 @@ inline static bool FRM_IS_VARIADIC(Frame(*) f) {
 }
 
 inline static Array(const*) FRM_ARRAY(Frame(*) f) {
-    assert(Is_End(f->feed->value) or not FRM_IS_VARIADIC(f));
+    assert(not FRM_IS_VARIADIC(f));
     return FEED_ARRAY(f->feed);
 }
 

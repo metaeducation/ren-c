@@ -334,64 +334,6 @@ inline static bool Eval_Step_In_Any_Array_At_Throws(
 }
 
 
-// (va_list by pointer: http://stackoverflow.com/a/3369762/211160)
-//
-// Central routine for doing an evaluation of an array of values by calling
-// a C function with those parameters (e.g. supplied as arguments, separated
-// by commas).  Uses same method to do so as functions like printf() do.
-//
-// The evaluator has a common means of fetching values out of both arrays
-// and C va_lists via Fetch_Next_In_Frame(), so this code can behave the
-// same as if the passed in values came from an array.  However, when values
-// originate from C they often have been effectively evaluated already, so
-// it's desired that WORD!s or PATH!s not execute as they typically would
-// in a block.  So this is often used with FRAME_FLAG_EXPLICIT_EVALUATE.
-//
-// !!! C's va_lists are very dangerous, there is no type checking!  The
-// C++ build should be able to check this for the callers of this function
-// *and* check that you ended properly.  It means this function will need
-// two different signatures (and so will each caller of this routine).
-//
-inline static bool Eval_Step_In_Va_Throws(
-    REBVAL *out,  // must be initialized, won't change if all empty/invisible
-    Flags feed_flags,
-    const void *p,
-    va_list *vaptr,
-    Flags eval_flags
-){
-    Feed(*) feed = Make_Variadic_Feed(p, vaptr, feed_flags);
-
-    assert(eval_flags & EVAL_EXECUTOR_FLAG_SINGLE_STEP);
-
-    Frame(*) f = Make_Frame(
-        feed,
-        eval_flags | FRAME_FLAG_ALLOCATED_FEED
-    );
-
-    Push_Frame(out, f);
-
-    if (Trampoline_With_Top_As_Root_Throws()) {
-        Drop_Frame(f);
-        return true;
-    }
-
-    bool too_many = (eval_flags & EVAL_EXECUTOR_FLAG_NO_RESIDUE)
-        and Not_End(feed->value);  // feed will be freed in Drop_Frame()
-
-    Drop_Frame(f); // will va_end() if not reified during evaluation
-
-    if (too_many)
-        fail (Error_Apply_Too_Many_Raw());
-
-    // A va_list-based feed has a lookahead, and also may be spooled due to
-    // the GC being triggered.  So the va_list had ownership taken, and it's
-    // not possible to return a REBIXO here to "resume the va_list later".
-    // That can only be done if the feed is held alive across evaluations.
-    //
-    return false;
-}
-
-
 inline static bool Eval_Value_Core_Throws(
     REBVAL *out,
     Flags flags,

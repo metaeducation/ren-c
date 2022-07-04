@@ -995,42 +995,45 @@ static enum Reb_Token Locate_Token_May_Push_Mold(
     // input to be processed.
     //
     while (not ss->begin) {
-        if (not ss->feed)  // not a variadic va_list-based scan...
-            return TOKEN_END;  // ...so end of utf-8 input was *the* end
-
         const void *p;
-        if (FEED_VAPTR(ss->feed))
-            p = va_arg(*unwrap(FEED_VAPTR(ss->feed)), const void*);
+        if (FEED_VAPTR(f->feed))
+            p = va_arg(*unwrap(FEED_VAPTR(f->feed)), const void*);
         else
-            p = *FEED_PACKED(ss->feed)++;
+            p = *FEED_PACKED(f->feed)++;
 
-        if (not p or Detect_Rebol_Pointer(p) != DETECTED_AS_UTF8) {
-            //
-            // If it's not a UTF-8 string we don't know how to handle it.
-            // Don't want to repeat complex value decoding logic here, so
-            // call common routine.
-            //
-            // !!! This is a recursion, since it is the function that calls
-            // the scanner in the first place when it saw a UTF-8 pointer.
-            // This should be protected against feeding through instructions
-            // and causing another recursion (it shouldn't do so now).  This
-            // suggests we might need a better way of doing things, but it
-            // shows the general gist for now.
-            //
-            Detect_Feed_Pointer_Maybe_Fetch(ss->feed, p);
-
-            if (Is_End(ss->feed->value))
-                return TOKEN_END;
-
-            Derelativize(PUSH(), ss->feed->value, FEED_SPECIFIER(ss->feed));
-
+        if (not p) {
+            Init_Bad_Word(PUSH(), Canon(NULL));
             if (Get_Executor_Flag(SCAN, f, NEWLINE_PENDING)) {
                 Clear_Executor_Flag(SCAN, f, NEWLINE_PENDING);
                 Set_Cell_Flag(TOP, NEWLINE_BEFORE);
             }
         }
-        else {  // It's UTF-8, so have to scan it ordinarily.
+        else switch (Detect_Rebol_Pointer(p)) {
+          case DETECTED_AS_END:
+            Handle_Feed_End(f->feed);
+            return TOKEN_END;
 
+          case DETECTED_AS_CELL: {
+            const REBVAL *cell = cast(const REBVAL*, p);
+            assert(not Is_Nulled(cell));  // !!! worth it to be annoying?
+            Copy_Cell(PUSH(), cell);
+            if (Get_Executor_Flag(SCAN, f, NEWLINE_PENDING)) {
+                Clear_Executor_Flag(SCAN, f, NEWLINE_PENDING);
+                Set_Cell_Flag(TOP, NEWLINE_BEFORE);
+            }
+            break; }
+
+          case DETECTED_AS_SERIES:  // e.g. rebQ, rebU, or a rebR() handle
+            if (Did_Handle_Feed_Series_Set_Value(f->feed, p)) {
+                Derelativize(PUSH(), f->feed->value, FEED_SPECIFIER(f->feed));
+                if (Get_Executor_Flag(SCAN, f, NEWLINE_PENDING)) {
+                    Clear_Executor_Flag(SCAN, f, NEWLINE_PENDING);
+                    Set_Cell_Flag(TOP, NEWLINE_BEFORE);
+                }
+            }
+            break;
+
+          case DETECTED_AS_UTF8: {  // String segment, scan it ordinarily.
             ss->begin = cast(const Byte*, p);  // breaks the loop...
 
             // If we're using a va_list, we start the scan with no C string
@@ -1043,11 +1046,15 @@ static enum Reb_Token Locate_Token_May_Push_Mold(
             // context for the error-causing input.
             //
             if (not ss->line_head) {
-                assert(FEED_VAPTR(ss->feed) or FEED_PACKED(ss->feed));
+                assert(FEED_VAPTR(f->feed) or FEED_PACKED(f->feed));
                 assert(not level->start_line_head);
                 level->start_line_head = ss->line_head = ss->begin;
             }
-         }
+            break; }
+
+          default:
+            assert(false);
+        }
     }
 
     LEXFLAGS flags = Prescan_Token(ss);  // sets ->begin, ->end
@@ -1729,22 +1736,18 @@ static enum Reb_Token Locate_Token_May_Push_Mold(
 
 
 //
-//  Init_Va_Scan_Level_Core: C
+//  Init_Scan_Level: C
 //
 // Initialize a scanner state structure, using variadic C arguments.
 //
-void Init_Va_Scan_Level_Core(
+void Init_Scan_Level(
     SCAN_LEVEL *level,
     SCAN_STATE *ss,
     String(const*) file,
     REBLIN line,
-    const Byte* opt_begin,  // preload the scanner outside the va_list
-    Feed(*) feed,
-    option(Context(*)) context
+    const Byte* opt_begin  // preload the scanner outside the va_list
 ){
     level->ss = ss;
-    ss->feed = feed;
-    ss->context = context;
 
     ss->begin = opt_begin;  // if null, Locate_Token's first fetch from vaptr
     TRASH_POINTER_IF_DEBUG(ss->end);
@@ -1759,42 +1762,9 @@ void Init_Va_Scan_Level_Core(
     // any errors occur...it just might not give the whole picture when used
     // to offer an error message of what's happening with the spliced values.
     //
-    level->start_line_head = ss->line_head = nullptr;
+    level->start_line_head = ss->line_head = opt_begin;
     level->start_line = ss->line = line;
     level->mode = '\0';
-}
-
-
-//
-//  Init_Scan_Level: C
-//
-void Init_Scan_Level(
-    SCAN_LEVEL *out,
-    SCAN_STATE *ss,
-    String(const*) file,
-    REBLIN line,
-    const Byte* utf8,
-    REBINT limit,  // !!! limit feature not implemented in R3-Alpha
-    option(Context(*)) context
-){
-    out->ss = ss;
-
-    if (limit != UNLIMITED)
-        assert(utf8[limit] == '\0');  // !!! for now, only limit allowed
-    UNUSED(limit);
-
-    ss->feed = nullptr;  // signal Locate_Token this isn't a variadic scan
-    ss->begin = utf8;
-    TRASH_POINTER_IF_DEBUG(ss->end);
-
-    ss->file = file;
-    ss->feed = nullptr;
-    ss->context = context;
-    ss->depth = 0;
-
-    out->mode = '\0';
-    out->start_line_head = ss->line_head = utf8;
-    out->start_line = ss->line = line;
 }
 
 
@@ -2041,7 +2011,8 @@ Bounce Scanner_Executor(Frame(*) f) {
 
       case TOKEN_GROUP_BEGIN:
       case TOKEN_BLOCK_BEGIN: {
-        Frame(*) subframe = Make_End_Frame(
+        Frame(*) subframe = Make_Frame(
+            f->feed,
             FRAME_FLAG_TRAMPOLINE_KEEPALIVE  // we want accrued stack
                 | (f->flags.bits & SCAN_EXECUTOR_MASK_RECURSE)
                 | FRAME_FLAG_FAILURE_RESULT_OK
@@ -2321,7 +2292,8 @@ Bounce Scanner_Executor(Frame(*) f) {
         break;
 
       case TOKEN_CONSTRUCT: {
-        Frame(*) subframe = Make_End_Frame(
+        Frame(*) subframe = Make_Frame(
+            f->feed,
             FRAME_FLAG_TRAMPOLINE_KEEPALIVE  // we want accrued stack
                 | (f->flags.bits & SCAN_EXECUTOR_MASK_RECURSE)
                 | FRAME_FLAG_FAILURE_RESULT_OK
@@ -2493,8 +2465,8 @@ Bounce Scanner_Executor(Frame(*) f) {
     // object, it would be more complex...only for efficiency, and nothing
     // like it existed before.
     //
-    if (ss->context and ANY_WORD(TOP)) {
-        INIT_VAL_WORD_BINDING(TOP, CTX_VARLIST(unwrap(ss->context)));
+    if (f->feed->context and ANY_WORD(TOP)) {
+        INIT_VAL_WORD_BINDING(TOP, CTX_VARLIST(unwrap(f->feed->context)));
         INIT_VAL_WORD_INDEX(TOP, INDEX_ATTACHED);
     }
 
@@ -2572,7 +2544,10 @@ Bounce Scanner_Executor(Frame(*) f) {
             // Note we still might come up empty (e.g. `foo/)`)
         }
         else {
-            Frame(*) subframe = Make_End_Frame(FRAME_FLAG_FAILURE_RESULT_OK);
+            Frame(*) subframe = Make_Frame(
+                f->feed,
+                FRAME_FLAG_FAILURE_RESULT_OK
+            );
             subframe->executor = &Scanner_Executor;
 
             SCAN_LEVEL *child = &subframe->u.scan;
@@ -2696,9 +2671,9 @@ Bounce Scanner_Executor(Frame(*) f) {
         // be redundant in that case.  Review how this ties in with the
         // word attachment code above.
         //
-        if (ss->context) {
+        if (f->feed->context) {
             if (ANY_WORD(TOP)) {
-                INIT_VAL_WORD_BINDING(TOP, CTX_VARLIST(unwrap(ss->context)));
+                INIT_VAL_WORD_BINDING(TOP, CTX_VARLIST(unwrap(f->feed->context)));
                 INIT_VAL_WORD_INDEX(TOP, INDEX_ATTACHED);
             }
         }
@@ -2865,7 +2840,19 @@ Bounce Scanner_Executor(Frame(*) f) {
 //
 //  Scan_UTF8_Managed: C
 //
-// Scan source code. Scan state initialized. No header required.
+// This is a "stackful" call that takes a buffer of UTF-8 and will try to
+// scan it into an array, or raise an "abrupt" error (that won't be catchable
+// by things like ATTEMPT or EXCEPT, only TRAP).
+//
+// 1. This routine doesn't offer parameterizatoin for variadic "splicing" of
+//    already-loaded values mixed with the textual code as it's being
+//    scanned.  (For that, see `rebTranscodeInto()`.)  But the underlying
+//    scanner API requires a variadic feed to be provided...so we just pass
+//    a simple 2-element feed in of [UTF-8 string, END]
+//
+// 2. This uses the "C++ form" of variadic, where it packs the elements into
+//    an array, vs. using the va_arg() stack.  So vaptr is nullptr to signal
+//    the `p` pointer is this packed array, vs. the first item of a va_list.)
 //
 Array(*) Scan_UTF8_Managed(
     String(const*) file,
@@ -2873,28 +2860,34 @@ Array(*) Scan_UTF8_Managed(
     Size size,
     option(Context(*)) context
 ){
-    Frame(*) f = Make_End_Frame(FRAME_MASK_NONE);
-    f->executor = &Scanner_Executor;
+    assert(utf8[size] == '\0');
+    UNUSED(size);  // scanner stops at `\0` (no size limit functionality)
 
-    SCAN_STATE ss;
-    const REBLIN start_line = 1;
-    Init_Scan_Level(&f->u.scan, &ss, file, start_line, utf8, size, context);
+    const void* packed[2] = {utf8, END};
+    Feed(*) feed = Make_Variadic_Feed(  // scanner requires variadic, see [1]
+        packed, nullptr,  // va_list* as nullptr means `p` is packed, see [2]
+        context,
+        FEED_MASK_DEFAULT
+    );
 
-    DECLARE_LOCAL (temp);
-    Push_Frame(temp, f);
-    if (Trampoline_With_Top_As_Root_Throws())
-        fail (Error_No_Catch_For_Throw(f));
+    REBDSP dsp_orig = DSP;
+    while (Not_End(feed->value)) {
+        Derelativize(PUSH(), feed->value, FEED_SPECIFIER(feed));
+        Set_Cell_Flag(TOP, UNEVALUATED);
+        Fetch_Next_In_Feed(feed);
+    }
+    // Note: exhausting feed should take care of the va_end()
 
     Flags flags = NODE_FLAG_MANAGED;
-    if (Get_Executor_Flag(SCAN, f, NEWLINE_PENDING))
-        flags |= ARRAY_FLAG_NEWLINE_AT_TAIL;
+/*    if (Get_Executor_Flag(SCAN, f, NEWLINE_PENDING))  // !!! feed flag
+        flags |= ARRAY_FLAG_NEWLINE_AT_TAIL; */
 
-    Array(*) a = Pop_Stack_Values_Core(f->baseline.dsp, flags);
+    Free_Feed(feed);  // feeds are dynamically allocated and must be freed
 
-    Drop_Frame(f);  // after pop, stack should have balanced
+    Array(*) a = Pop_Stack_Values_Core(dsp_orig, flags);
 
-    a->misc.line = ss.line;
-    mutable_LINK(Filename, a) = ss.file;
+    a->misc.line = 1;
+    mutable_LINK(Filename, a) = file;
     Set_Subclass_Flag(ARRAY, a, HAS_FILE_LINE_UNMASKED);
     SET_SERIES_FLAG(a, LINK_NODE_NEEDS_MARK);
 
@@ -3042,20 +3035,40 @@ DECLARE_NATIVE(transcode)
         ? VAL_CONTEXT(ARG(where))
         : cast(Context(*), nullptr);  // C++98 ambiguous w/o cast
 
+    // !!! This workaround allows the oddly shaped variadic feed to still do
+    // a fetch after it has initialized and get the second end.  This should
+    // be re-stylized, but this permits a string form scan to avoid doing the
+    // scanning in the Make_Variadic_Feed() to accomplish the invariant of
+    // having f->value be a value from the get-go.
+    //
+    const void* packed[2] = {END, END};
+    Feed(*) feed = Make_Variadic_Feed(packed, nullptr, context, FEED_MASK_DEFAULT);
+    assert(not FEED_VAPTR(feed));
+
     Flags flags =
         FRAME_FLAG_TRAMPOLINE_KEEPALIVE  // query pending newline
-        | FRAME_FLAG_FAILURE_RESULT_OK;  // want to pass on definitional error
+        | FRAME_FLAG_FAILURE_RESULT_OK  // want to pass on definitional error
+        | FRAME_FLAG_ALLOCATED_FEED;
     if (REF(next))
         flags |= SCAN_EXECUTOR_FLAG_JUST_ONCE;
 
-    Frame(*) subframe = Make_End_Frame(flags);
+    // !!! Currently Init_Near_For_Frame() on scanning values tests the feed
+    // value...so we can't leave it as trash.  An error may happen before we
+    // load any real value in the slot.  So leave as END, even though there's
+    // a second END coming...
+    //
+    assert(Is_End(feed->value));
+
+    Frame(*) subframe = Make_Frame(feed, flags);
     subframe->executor = &Scanner_Executor;
     SCAN_LEVEL *level = &subframe->u.scan;
 
     Binary(*) bin = Make_Binary(sizeof(SCAN_STATE));
     ss = cast(SCAN_STATE*, BIN_HEAD(bin));
 
-    Init_Scan_Level(level, ss, file, start_line, bp, size, context);
+    UNUSED(size);  // currently we don't use this information
+
+    Init_Scan_Level(level, ss, file, start_line, bp);
     TERM_BIN_LEN(bin, sizeof(SCAN_STATE));
 
     Init_Binary(ss_buffer, bin);
@@ -3178,11 +3191,7 @@ const Byte* Scan_Any_Word(
     Frame(*) f = Make_End_Frame(FRAME_MASK_NONE);
     SCAN_LEVEL *level = &f->u.scan;
 
-    // !!! We use UNLIMITED here instead of `size` because the R3-Alpha
-    // scanner did not implement scan limits; it always expected the input
-    // to end at '\0'.  We crop the word based on the size after the scan.
-    //
-    Init_Scan_Level(level, &ss, file, start_line, utf8, UNLIMITED, nullptr);
+    Init_Scan_Level(level, &ss, file, start_line, utf8);
 
     DECLARE_MOLD (mo);
 
@@ -3271,23 +3280,20 @@ const Byte* Scan_Issue(Cell(*) out, const Byte* cp, Size size)
 //
 option(Array(*)) Try_Scan_Utf8_For_Detect_Feed_Pointer_Managed(
     const Byte* utf8,
-    Feed(*) feed,
-    option(Context(*)) context
+    Feed(*) feed
 ){
-    Frame(*) f = Make_End_Frame(FRAME_MASK_NONE);
+    Frame(*) f = Make_Frame(feed, FRAME_MASK_NONE);
     f->executor = &Scanner_Executor;
 
     SCAN_LEVEL *level = &f->u.scan;
     SCAN_STATE ss;
     const REBLIN start_line = 1;
-    Init_Va_Scan_Level_Core(
+    Init_Scan_Level(
         level,
         &ss,
         Intern_Unsized_Managed("-variadic-"),
         start_line,
-        utf8,
-        feed,
-        context
+        utf8
     );
 
     DECLARE_LOCAL (temp);

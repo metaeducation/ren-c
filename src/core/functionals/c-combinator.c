@@ -200,41 +200,26 @@ Array(*) Expanded_Combinator_Spec(const REBVAL *original)
     if (item == tail) fail("too few combinator args");
     ++item;
 
-  blockscope {
     const Byte utf8[] =
         "remainder: [<opt> any-series!]\n"
         "state [frame!]\n"
         "input [any-series!]\n";
 
-    Frame(*) f = Make_End_Frame(FRAME_MASK_NONE);
-    f->executor = &Scanner_Executor;
+    const void* packed[2] = {utf8, END};
 
-    SCAN_LEVEL *level = &f->u.scan;
+    Feed(*) feed = Make_Variadic_Feed(packed, nullptr, nullptr, FEED_MASK_DEFAULT);
 
-    SCAN_STATE ss;
-    const REBLIN start_line = 1;
-    Init_Scan_Level(
-        level,
-        &ss,
-        ANONYMOUS,
-        start_line,
-        utf8,
-        strsize(utf8),
-        nullptr
-    );
-
-    DECLARE_LOCAL (temp);
-    Push_Frame(temp, f);
-    if (Trampoline_With_Top_As_Root_Throws())
-        fail (Error_No_Catch_For_Throw(f));
-
-    Drop_Frame_Unbalanced(f);
-    // Note: We pushed unbound code, won't find FRAME! etc.
-  }
-
-    for (; item != tail; ++item) {
-        Derelativize(PUSH(), item, specifier);  // everything else
+    while (Not_End(feed->value)) {
+        Derelativize(PUSH(), feed->value, FEED_SPECIFIER(feed));
+        Fetch_Next_In_Feed(feed);
     }
+
+    Free_Feed(feed);
+
+    // Note: We pushed unbound code, won't find FRAME! etc.
+
+    for (; item != tail; ++item)
+        Derelativize(PUSH(), item, specifier);  // everything else
 
     // The scanned material is not bound.  The natives were bound into the
     // Lib_Context initially.  Hack around the issue by repeating that binding

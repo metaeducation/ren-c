@@ -58,7 +58,7 @@
 // ("{abc", "def", "ghi}") and get the TEXT! {abcdefghi}.  On that note,
 // ("a", "/", "b") produces `a / b` and not the PATH! `a/b`.
 //
-//==//// NOTES ////////////////////////////////////////////////////////////=//
+//==//// EXPORT NOTES /////////////////////////////////////////////////////=//
 //
 // Each exported routine here has a name RL_rebXxxYyy.  This is a name by
 // which it can be called internally from the codebase like any other function
@@ -814,9 +814,32 @@ REBVAL *RL_rebArg(const void *p, va_list *vaptr)
 // The default evaluators splice Rebol values "as-is" into the feed.  This
 // means that any evaluator active types (like WORD!, ACTION!, GROUP!...)
 // will run.  This can be mitigated with rebQ or "@"
-//
-//=////////////////////////////////////////////////////////////////////////=//
 
+
+//
+//  Run_Va_Throws: C
+//
+// * Due to the nature of C va_lists you always have to have one non-variadic
+//   parameter.  This turns out all right with Ren-C being able to even work
+//   with something like `rebValue()`, because rebValue() is actually a macro
+//   that throws in a rebEND to get `rebValue_inline(rebEND)`.
+//
+// * Every variadic entry point receives the non-optional pointer `p`, and
+//   the captured va_list for the rest of the arguments in `vaptr`.
+//
+//  (va_list by pointer: http://stackoverflow.com/a/3369762/211160)
+//
+//   However, there's a special meaning given to `p` when vaptr is null.
+//   In that case, p is no longer the first variadic argument but a pointer
+//   to a packed array of `const void*`.  This method is preferred by the
+//   C++ build, because using variadic templates it can recursively process
+//   the arguments and pack them into that array...doing additional type
+//   checking and conversions.
+//
+//  (The WebAssembly also uses this packed array format, as it does not
+//   require delving into the compiler-specific details of how a va_list is
+//   encoded...and can stick to the standardized layout of a pointer array.)
+//
 static bool Run_Va_Throws(
     REBVAL *out,
     bool interruptible,  // whether a HALT can cause a longjmp/throw
@@ -838,7 +861,11 @@ static bool Run_Va_Throws(
     else
         Eval_Sigmask &= ~SIG_HALT;  // disable
 
-    Feed(*) feed = Make_Variadic_Feed(p, vaptr, FEED_MASK_DEFAULT);
+    Feed(*) feed = Make_Variadic_Feed(
+        p, vaptr,
+        Get_Context_From_Stack(),
+        FEED_MASK_DEFAULT
+    );
 
     Frame(*) f = Make_Frame(
         feed,
@@ -880,10 +907,10 @@ inline static void Run_Va_May_Fail(
     //
     // Also: we want cases like `rebNot(nullptr)` to work, but the variadic
     // evaluator cannot splice NULL into the feed of execution and have it
-    // be convertible into an array.  The ~null~ BAD-WORD! in isotope form
-    // provides a compromise, and it decays into a regular null several
-    // places in the system (e.g. normal arguments).  Here is another place
-    // the tolerance is extended to.
+    // be convertible into an array.  The ~null~ BAD-WORD! provides a
+    // compromise, and it evaluates to an isotope that decays to a regular null
+    // several places in the system (e.g. normal arguments).  Here is another
+    // place the tolerance is extended to.
 
     Reify_Eval_Out_Plain(out);
     Decay_If_Isotope(out);
@@ -912,15 +939,35 @@ bool RL_rebRunCoreThrows(
     uintptr_t flags,  // Flags not exported in API
     const void *p, va_list *vaptr
 ){
-    bool threw = Eval_Step_In_Va_Throws(
-        out,
-        FEED_MASK_DEFAULT,
-        p,  // first argument (C variadic protocol: at least 1 normal arg)
-        vaptr,  // va_end() handled by Eval_Va_Core on success/fail/throw
-        flags
+    Feed(*) feed = Make_Variadic_Feed(
+        p, vaptr,
+        Get_Context_From_Stack(),
+        FEED_MASK_DEFAULT
     );
 
-    return threw;
+    assert(flags & EVAL_EXECUTOR_FLAG_SINGLE_STEP);
+
+    Frame(*) f = Make_Frame(
+        feed,
+        flags | FRAME_FLAG_ALLOCATED_FEED
+    );
+
+    Push_Frame(out, f);
+
+    if (Trampoline_With_Top_As_Root_Throws()) {
+        Drop_Frame(f);
+        return true;
+    }
+
+    bool too_many = (flags & EVAL_EXECUTOR_FLAG_NO_RESIDUE)
+        and Not_End(feed->value);  // feed will be freed in Drop_Frame()
+
+    Drop_Frame(f);  // will va_end() if not reified during evaluation
+
+    if (too_many)
+        fail (Error_Apply_Too_Many_Raw());
+
+    return false;
 }
 
 
@@ -947,9 +994,54 @@ REBVAL *RL_rebValue(const void *p, va_list *vaptr)
 
 
 //
+//  rebTranscodeInto: RL_API
+//
+// Just scans the source given into a BLOCK! without executing it.
+//
+// 1. This uses whatever context is currently considered "active" on the
+//    stack, which is consistent with the general behavior of the API.  It's
+//    all being juggled around right now, but see Scan_UTF8_Managed() for
+//    a non-variadic entry point to scanning that is related.
+//
+//
+REBVAL *RL_rebTranscodeInto(
+    REBVAL *out,
+    const void *p, va_list *vaptr
+){
+    ENTER_API;
+
+    Feed(*) feed = Make_Variadic_Feed(
+        p, vaptr,
+        Get_Context_From_Stack(),  // No context parameter, see [1]
+        FEED_MASK_DEFAULT
+    );
+
+    REBDSP dsp_orig = DSP;
+    while (Not_End(feed->value)) {
+        Derelativize(PUSH(), feed->value, FEED_SPECIFIER(feed));
+        Set_Cell_Flag(TOP, UNEVALUATED);
+        Fetch_Next_In_Feed(feed);
+    }
+
+    Free_Feed(feed);  // Note: exhausting feed should take care of the va_end()
+
+    return Init_Block(
+        out,
+        Pop_Stack_Values_Core(dsp_orig, SERIES_FLAG_MANAGED)
+    );
+}
+
+
+//
 //  rebPushContinuation: RL_API
 //
 // Helper for when variadic code wants to run as its own stack frame.
+//
+// 1. We don't call `rebTranscodeInto()` here, because that would package
+//    up an arbitrary number of variadic parameters that are meant to
+//    be things like REBVAL* and string.  But we have exactly 3 parameters
+//    in hand, and want to pass them directly to the implementation routine,
+//    as they're encodings of variadic parameters--not the actual parameters!
 //
 void RL_rebPushContinuation(
     REBVAL *out,
@@ -958,21 +1050,9 @@ void RL_rebPushContinuation(
 ){
     ENTER_API;
 
-    Feed(*) feed = Make_Variadic_Feed(p, vaptr, FEED_MASK_DEFAULT);
-
-    REBDSP dsp_orig = DSP;
-    while (Not_End(feed->value)) {
-        Derelativize(PUSH(), feed->value, FEED_SPECIFIER(feed));
-        Set_Cell_Flag(TOP, UNEVALUATED);
-        Fetch_Next_In_Feed(feed);
-    }
-    // Note: exhausting feed should take care of the va_end()
-    Free_Feed(feed);
-
-    Array(*) code = Pop_Stack_Values_Core(dsp_orig, SERIES_FLAG_MANAGED);
-
     DECLARE_LOCAL (block);
-    Init_Block(block, code);
+    RL_rebTranscodeInto(block, p, vaptr);  // use core "RL_" call, see [1]
+
     Frame(*) f = Make_Frame_At(block, flags);
     Push_Frame(out, f);
 }

@@ -63,8 +63,10 @@
 #define FEED_VAPTR_POINTER(feed)    PAYLOAD(Comma, FEED_SINGLE(feed)).vaptr
 #define FEED_PACKED(feed)           PAYLOAD(Comma, FEED_SINGLE(feed)).packed
 
-inline static option(va_list*) FEED_VAPTR(Feed(*) feed)
-  { return FEED_VAPTR_POINTER(feed); }
+inline static option(va_list*) FEED_VAPTR(Feed(*) feed) {
+    assert(FEED_IS_VARIADIC(feed));
+    return FEED_VAPTR_POINTER(feed);
+}
 
 
 
@@ -84,6 +86,135 @@ inline static option(va_list*) FEED_VAPTR(Feed(*) feed)
     VAL_INDEX_UNBOUNDED(FEED_SINGLE(feed))
 
 
+// When we see nullptr in the valist, we make a compromise of convenience,
+// where a ~null~ BAD-WORD! is put in the feed.  We've told a lie, but if
+// evaluated it will produce a ~null~ isotope...which will decay to a pure
+// null if assigned to a variable.
+//
+// Also: the `@` operator is tweaked to not accept BAD-WORD! except for ~null~,
+// in which case it makes a pure null...so this can be leveraged in API calls.
+//
+inline static void Handle_Feed_Nullptr(Feed(*) feed) {
+    Init_Bad_Word(&feed->fetched, Canon(NULL));
+    feed->value = &feed->fetched;
+
+    assert(FEED_SPECIFIER(feed) == SPECIFIED);  // !!! why assert this?
+}
+
+
+// 1. The va_end() is taken care of here; all code--regardless of throw or
+//    errors--must walk through feeds to the end in order to clean up manual
+//    series backing instructions (and also to run va_end() if needed, which
+//    is required by the standard and may be essential on some platforms).
+//
+// 2. !!! Error reporting expects there to be an array.  The whole story of
+//    errors when there's a va_list is not told very well, and what will
+//    have to likely happen is that in debug modes, all va_list are reified
+//    from the beginning, else there's not going to be a way to present
+//    errors in context.  Fake an empty array for now.
+//
+inline static void Handle_Feed_End(Feed(*) feed) {
+    feed->value = END;
+
+    if (FEED_VAPTR(feed))
+        va_end(*unwrap(FEED_VAPTR(feed)));  // *ALL* valist get here, see [1]
+    else
+        assert(FEED_PACKED(feed));
+
+    Init_Block(FEED_SINGLE(feed), EMPTY_ARRAY);  // array expected, see [2]
+}
+
+
+inline static void Handle_Feed_Cell(Feed(*) feed, const void *p) {
+    const REBVAL *cell = cast(const REBVAL*, p);
+    assert(not IS_RELATIVE(cast(Cell(const*), cell)));
+
+    assert(FEED_SPECIFIER(feed) == SPECIFIED);
+
+    if (Is_Nulled(cell))  // API enforces use of C's nullptr (0) for NULL
+        assert(!"NULLED cell API leak, see NULLIFY_NULLED() in C source");
+
+    feed->value = cell;  // cell can be used as-is
+}
+
+
+// As we feed forward, we're supposed to be freeing this--it is not managed
+// -and- it's not manuals tracked, it is only held alive by the va_list()'s
+// plan to visit it.  A fail() here won't auto free it *because it is this
+// traversal code which is supposed to free*.
+//
+// !!! Actually, THIS CODE CAN'T FAIL.  :-/  It is part of the implementation
+// of fail's cleanup itself.
+//
+inline static bool Did_Handle_Feed_Series_Set_Value(
+    Feed(*) feed,
+    const void* p
+){
+    Array(*) inst1 = ARR(m_cast(void*, p));
+
+    switch (SER_FLAVOR(inst1)) {
+      case FLAVOR_INSTRUCTION_SPLICE: {
+        REBVAL *single = SPECIFIC(ARR_SINGLE(inst1));
+        if (IS_BLANK(single)) {
+            GC_Kill_Series(inst1);
+            return false;
+        }
+
+        if (IS_BLOCK(single)) {
+            feed->value = nullptr;  // will become FEED_PENDING(), ignored
+            Splice_Block_Into_Feed(feed, single);
+        }
+        else {
+            assert(IS_QUOTED(single));
+            Unquotify(Copy_Cell(&feed->fetched, single), 1);
+            feed->value = &feed->fetched;
+        }
+        GC_Kill_Series(inst1);
+        break; }
+
+      case FLAVOR_API: {
+        //
+        // We usually get the API *cells* passed to us, not the singular
+        // array holding them.  But the rebR() function will actually
+        // flip the "release" flag and then return the existing API handle
+        // back, now behaving as an instruction.
+        //
+        assert(Get_Subclass_Flag(API, inst1, RELEASE));
+
+        // !!! Originally this asserted it was a managed handle, but the
+        // needs of API-TRANSIENT are such that a handle which outlives
+        // the frame is returned as a SINGULAR_API_RELEASE.  Review.
+        //
+        /*assert(GET_SERIES_FLAG(inst1, MANAGED));*/
+
+        // See notes above (duplicate code, fix!) about how we might like
+        // to use the as-is value and wait to free until the next cycle
+        // vs. putting it in fetched/MARKED_TEMPORARY...but that makes
+        // this more convoluted.  Review.
+
+        REBVAL *single = SPECIFIC(ARR_SINGLE(inst1));
+        Copy_Cell(&feed->fetched, single);
+        feed->value = &feed->fetched;
+        rebRelease(single);  // *is* the instruction
+        break; }
+
+      default:
+        //
+        // Besides instructions, other series types aren't currenlty
+        // supported...though it was considered that you could use
+        // Context(*) or Action(*) directly instead of their archtypes.  This
+        // was considered when thinking about ditching value archetypes
+        // altogether (e.g. no usable cell pattern guaranteed at the head)
+        // but it's important in several APIs to emphasize a value gives
+        // phase information, while archetypes do not.
+        //
+        panic (inst1);
+    }
+
+    return true;
+}
+
+
 // Ordinary Rebol internals deal with REBVAL* that are resident in arrays.
 // But a va_list can contain UTF-8 string components or special instructions
 // that are other Detect_Rebol_Pointer() types.  Anyone who wants to set or
@@ -97,39 +228,43 @@ inline static void Detect_Feed_Pointer_Maybe_Fetch(
 ){
     assert(FEED_PENDING(feed) == nullptr);
 
-  detect_again:;
+  detect: {  /////////////////////////////////////////////////////////////////
 
-    // !!! On stack overflow errors, the system (theoretically) will go through
-    // all the frames and make sure variadic feeds are ended.  If we put
-    // trash in this value (e.g. 0xDECAFBAD) that code crashes.  For now, use
-    // END so that if something below causes a stack overflow before the
-    // operation finishes, those crashes don't happen.
-    //
-    feed->value = END;  // should be assigned below
+  // 1. !!! On stack overflow errors, the system (theoretically) goes through
+  //   all the frames and make sure variadic feeds are ended.  If we put trash
+  //   in feed->value (e.g. 0xDECAFBAD) that code crashes.  For now, use END
+  //   so that if something below causes a stack overflow before the operation
+  //   finishes, those crashes don't happen.
+  //
+  //  (Note: Becoming irrelevant due to stackless trampoline--there should be
+  //   no "abrupt" stack overflow errors!)
+  //
+  // 2. This happens when an empty array comes from a string scan.  It's not
+  //    legal to put an END in f->value unless the array is actually over, so
+  //    get another pointer out of the va_list and keep going.
+
+    feed->value = END;  // must be assigned below, see [1] for why not trash
 
     if (not p) {  // libRebol's null/<opt> (Is_Nulled prohibited in CELL case)
 
-        // This is the compromise of convenience, where ~null~ is put in
-        // to the feed.  If it's converted into an array we've told a
-        // small lie (~null~ is a BAD-WORD! and a thing, so not the same
-        // as the NULL non-thing).  It will evaluate to a ~null~ isotope
-        // which *usually* acts like NULL, but not with ELSE/THEN directly.
-        //
-        // We must use something legal to put in arrays, so non-isotope.
-        //
-        Init_Bad_Word(&feed->fetched, Canon(NULL));
-
-        assert(FEED_SPECIFIER(feed) == SPECIFIED);  // !!! why assert this?
-        feed->value = &feed->fetched;
+        Handle_Feed_Nullptr(feed);
 
     } else switch (Detect_Rebol_Pointer(p)) {
 
+      case DETECTED_AS_END:  // end of input (all feeds must be spooled to end)
+        Handle_Feed_End(feed);
+        break;
+
+      case DETECTED_AS_CELL:
+        Handle_Feed_Cell(feed, p);
+        break;
+
+      case DETECTED_AS_SERIES:  // e.g. rebQ, rebU, or a rebR() handle
+        if (Did_Handle_Feed_Series_Set_Value(feed, p))
+            break;
+        goto detect_again;
+
       case DETECTED_AS_UTF8: {
-        //
-        // Note that the context is only used on loaded text from C string
-        // data.  The scanner leaves all spliced values with whatever bindings
-        // they have (even if that is none).
-        //
         // !!! Some kind of "binding instruction" might allow other uses?
         //
         // !!! We really should be able to free this array without managing it
@@ -140,143 +275,40 @@ inline static void Detect_Feed_Pointer_Maybe_Fetch(
         // !!! Scans that produce only one value (which are likely very
         // common) can go into feed->fetched and not make an array at all.
         //
-        Array(*) reified = unwrap(Try_Scan_Utf8_For_Detect_Feed_Pointer_Managed(
-            cast(const Byte*, p),
-            feed,
-            Get_Context_From_Stack()
-        ));
+        Array(*) reified = unwrap(
+            Try_Scan_Utf8_For_Detect_Feed_Pointer_Managed(
+                cast(const Byte*, p),
+                feed
+            )
+        );
 
-        if (not reified) {
-            //
-            // This happens when somone says rebValue(..., "", ...) or similar,
-            // and gets an empty array from a string scan.  It's not legal
-            // to put an END in f->value, and it's unknown if the variadic
-            // feed is actually over so as to put null... so get another
-            // value out of the va_list and keep going.
-            //
-            if (FEED_VAPTR(feed))
-                p = va_arg(*unwrap(FEED_VAPTR(feed)), const void*);
-            else
-                p = *FEED_PACKED(feed)++;
+        if (not reified)  // rebValue(..., "", ...); or similar, see [2]
             goto detect_again;
-        }
 
         // !!! for now, assume scan went to the end; ultimately it would need
         // to pass the feed in as a parameter for partial scans
         //
-        assert(not FEED_IS_VARIADIC(feed));
+        assert(Is_End(feed->value));
 
         feed->value = ARR_HEAD(reified);
         Init_Array_Cell_At(FEED_SINGLE(feed), REB_BLOCK, reified, 1);
         break; }
 
-      case DETECTED_AS_SERIES: {  // e.g. rebQ, rebU, or a rebR() handle
-        Array(*) inst1 = ARR(m_cast(void*, p));
-
-        // As we feed forward, we're supposed to be freeing this--it is not
-        // managed -and- it's not manuals tracked, it is only held alive by
-        // the va_list()'s plan to visit it.  A fail() here won't auto free
-        // it *because it is this traversal code which is supposed to free*.
-        //
-        // !!! Actually, THIS CODE CAN'T FAIL.  :-/  It is part of the
-        // implementation of fail's cleanup itself.
-        //
-        switch (SER_FLAVOR(inst1)) {
-          case FLAVOR_INSTRUCTION_SPLICE: {
-            REBVAL *single = SPECIFIC(ARR_SINGLE(inst1));
-            if (IS_BLANK(single)) {
-                GC_Kill_Series(inst1);
-                goto detect_again;
-            }
-
-            if (IS_BLOCK(single)) {
-                feed->value = nullptr;  // will become FEED_PENDING(), ignored
-                Splice_Block_Into_Feed(feed, single);
-            }
-            else {
-                assert(IS_QUOTED(single));
-                Unquotify(Copy_Cell(&feed->fetched, single), 1);
-                feed->value = &feed->fetched;
-            }
-            GC_Kill_Series(inst1);
-            break; }
-
-          case FLAVOR_API: {
-            //
-            // We usually get the API *cells* passed to us, not the singular
-            // array holding them.  But the rebR() function will actually
-            // flip the "release" flag and then return the existing API handle
-            // back, now behaving as an instruction.
-            //
-            assert(Get_Subclass_Flag(API, inst1, RELEASE));
-
-            // !!! Originally this asserted it was a managed handle, but the
-            // needs of API-TRANSIENT are such that a handle which outlives
-            // the frame is returned as a SINGULAR_API_RELEASE.  Review.
-            //
-            /*assert(GET_SERIES_FLAG(inst1, MANAGED));*/
-
-            // See notes above (duplicate code, fix!) about how we might like
-            // to use the as-is value and wait to free until the next cycle
-            // vs. putting it in fetched/MARKED_TEMPORARY...but that makes
-            // this more convoluted.  Review.
-
-            REBVAL *single = SPECIFIC(ARR_SINGLE(inst1));
-            Copy_Cell(&feed->fetched, single);
-            feed->value = &feed->fetched;
-            rebRelease(single);  // *is* the instruction
-            break; }
-
-          default:
-            //
-            // Besides instructions, other series types aren't currenlty
-            // supported...though it was considered that you could use
-            // Context(*) or Action(*) directly instead of their archtypes.  This
-            // was considered when thinking about ditching value archetypes
-            // altogether (e.g. no usable cell pattern guaranteed at the head)
-            // but it's important in several APIs to emphasize a value gives
-            // phase information, while archetypes do not.
-            //
-            panic (inst1);
-        }
-        break; }
-
-      case DETECTED_AS_CELL: {
-        const REBVAL *cell = cast(const REBVAL*, p);
-        assert(not IS_RELATIVE(cast(Cell(const*), cell)));
-
-        assert(FEED_SPECIFIER(feed) == SPECIFIED);
-
-        if (Is_Nulled(cell))  // API enforces use of C's nullptr (0) for NULL
-            assert(!"NULLED cell API leak, see NULLIFY_NULLED() in C source");
-
-        feed->value = cell;  // cell can be used as-is
-        break; }
-
-      case DETECTED_AS_END: {  // end of variadic input, so that's it for this
-        feed->value = END;
-
-        // The va_end() is taken care of here, or if there is a throw/fail it
-        // is taken care of by Abort_Frame_Core()
-        //
-        if (FEED_VAPTR(feed))
-            va_end(*unwrap(FEED_VAPTR(feed)));
-        else
-            assert(FEED_PACKED(feed));
-
-        // !!! Error reporting expects there to be an array.  The whole story
-        // of errors when there's a va_list is not told very well, and what
-        // will have to likely happen is that in debug modes, all va_list
-        // are reified from the beginning, else there's not going to be
-        // a way to present errors in context.  Fake an empty array for now.
-        //
-        Init_Block(FEED_SINGLE(feed), EMPTY_ARRAY);
-        break; }
-
       default:
         panic (p);
     }
-}
+
+    return;
+
+} detect_again: {  ///////////////////////////////////////////////////////////
+
+    if (FEED_VAPTR(feed))
+        p = va_arg(*unwrap(FEED_VAPTR(feed)), const void*);
+    else
+        p = *FEED_PACKED(feed)++;
+
+    goto detect;
+}}
 
 
 //
@@ -523,6 +555,9 @@ inline static Feed(*) Prep_Feed_Common(void* preallocated, Flags flags) {
     mutable_MISC(Pending, s) = nullptr;
 
     feed->flags.bits = flags;
+    TRASH_POINTER_IF_DEBUG(feed->value);
+
+    TRASH_POINTER_IF_DEBUG(feed->context);  // experiment!
 
     return feed;
 }
@@ -574,6 +609,8 @@ inline static Feed(*) Prep_Array_Feed(
     else
         assert(READABLE(feed->value));
 
+    feed->context = nullptr;  // already has binding
+
     return feed;
 }
 
@@ -585,10 +622,29 @@ inline static Feed(*) Prep_Array_Feed(
     )
 
 
-inline static Feed(*) Prep_Va_Feed(
+// Note: The invariant of a feed is that it must be cued up to having a ->value
+// field set before the first Fetch_Next() is called.  So variadics lead to
+// an awkward situation since they start off with a `p` pointer that needs
+// to be saved somewhere that *isn't* a value.
+//
+// The way of dealing with this historically was to "prefetch" and kick-off
+// the scanner before returning from Prep_Variadic_Feed().  So the entire
+// scan could be finished in one swoop, transforming the va_list feed into
+// an array form.
+//
+// This has some wide ramifications, such as meaning that scan errors will
+// be triggered in the prep process...before the trampoline is running in
+// effect with the guarding.  So that's bad.  It needs to stop.  But how?
+//
+// Note that the context is only used on loaded text from C string data.  The
+// scanner leaves all spliced values with whatever bindings they have (even
+// if that is none).
+//
+inline static Feed(*) Prep_Variadic_Feed(
     void* preallocated,
     const void *p,
     option(va_list*) vaptr,
+    option(Context(*)) context,
     Flags flags
 ){
     Feed(*) feed = Prep_Feed_Common(preallocated, flags);
@@ -607,19 +663,28 @@ inline static Feed(*) Prep_Va_Feed(
         FEED_VAPTR_POINTER(feed) = unwrap(vaptr);
         FEED_PACKED(feed) = nullptr;
     }
-    Detect_Feed_Pointer_Maybe_Fetch(feed, p);
+
+    feed->context = context;  // must set before first detect
+
+    if (Detect_Rebol_Pointer(p) == DETECTED_AS_END) {
+        feed->value = END;  // leave END pending (needed by TRANSCODE, etc.)
+    }
+    else {
+        Detect_Feed_Pointer_Maybe_Fetch(feed, p);  // at least 1st fetch taken
+        assert(Is_End(feed->value) or READABLE(feed->value));
+    }
 
     feed->gotten = nullptr;
-    assert(Is_End(feed->value) or READABLE(feed->value));
+
     return feed;
 }
 
-// The flags is passed in by the macro here by default, because it does a
+// The flags are passed in by the macro here by default, because it does a
 // fetch as part of the initialization from the `first`...and if you want
 // the flags to take effect, they must be passed in up front.
 //
-#define Make_Variadic_Feed(p,vaptr,flags) \
-    Prep_Va_Feed(Alloc_Feed(), (p), (vaptr), (flags))
+#define Make_Variadic_Feed(p,vaptr,context,flags) \
+    Prep_Variadic_Feed(Alloc_Feed(), (p), (vaptr), (context), (flags))
 
 inline static Feed(*) Prep_Feed_At(
     void *preallocated,

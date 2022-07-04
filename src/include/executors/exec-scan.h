@@ -115,17 +115,6 @@ typedef struct rebol_scan_state {  // shared across all levels of a scan
     const Byte* begin;
     const Byte* end;
 
-    // If feed is NULL, then it is assumed that the `begin` is the source of
-    // the UTF-8 data to scan.  Otherwise, it is a variadic feed of UTF-8
-    // strings and values that are spliced in.
-    //
-    Feed(*) feed;
-
-    // Module to bind words to while scanning.  Splices from the feed will
-    // not count...only words bound from text portions of the scan.
-    //
-    option(Raw_Context*) context;
-
     const Raw_String* file;  // currently scanning (or anonymous)
 
     REBLIN line;  // line number where current scan position is
