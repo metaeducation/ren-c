@@ -63,7 +63,9 @@
 #define FEED_VAPTR_POINTER(feed)    PAYLOAD(Comma, FEED_SINGLE(feed)).vaptr
 #define FEED_PACKED(feed)           PAYLOAD(Comma, FEED_SINGLE(feed)).packed
 
-#define At_Feed(feed)               cast(const Reb_Cell*, (feed)->p)
+#define At_Feed(feed) ( /* evil macro */ \
+    assert(Not_Feed_Flag((feed), NEEDS_SYNC)), \
+    cast(const Reb_Cell*, (feed)->p))
 
 inline static option(va_list*) FEED_VAPTR(Feed(*) feed) {
     assert(FEED_IS_VARIADIC(feed));
@@ -115,20 +117,27 @@ inline static void Handle_Feed_Nullptr(Feed(*) feed) {
 //    from the beginning, else there's not going to be a way to present
 //    errors in context.  Fake an empty array for now.
 //
-inline static void Handle_Feed_End(Feed(*) feed) {
-    feed->p = END;
+inline static void Finalize_Variadic_Feed(Feed(*) feed) {
+    assert(FEED_IS_VARIADIC(feed));
+    assert(FEED_PENDING(feed) == nullptr);
+
+    assert(Is_End(feed->p));  // must spool to end, regardless of throw/fail!
 
     if (FEED_VAPTR(feed))
         va_end(*unwrap(FEED_VAPTR(feed)));  // *ALL* valist get here, see [1]
     else
         assert(FEED_PACKED(feed));
 
-    Init_Block(FEED_SINGLE(feed), EMPTY_ARRAY);  // array expected, see [2]
+    TRASH_POINTER_IF_DEBUG(FEED_VAPTR_POINTER(feed));
+    TRASH_POINTER_IF_DEBUG(FEED_PACKED(feed));
 }
 
 
-inline static void Handle_Feed_Cell(Feed(*) feed, const void *p) {
-    const REBVAL *cell = cast(const REBVAL*, p);
+// A cell pointer in a variadic feed should be fine to use directly, because
+// all such "spliced" cells should be specific.
+//
+inline static Value(const*) Check_Variadic_Feed_Cell(Feed(*) feed) {
+    const REBVAL *cell = cast(const REBVAL*, feed->p);
     assert(not IS_RELATIVE(cast(Cell(const*), cell)));
 
     assert(FEED_SPECIFIER(feed) == SPECIFIED);
@@ -136,7 +145,7 @@ inline static void Handle_Feed_Cell(Feed(*) feed, const void *p) {
     if (Is_Nulled(cell))  // API enforces use of C's nullptr (0) for NULL
         assert(!"NULLED cell API leak, see NULLIFY_NULLED() in C source");
 
-    feed->p = cell;  // cell can be used as-is
+    return cell;
 }
 
 
@@ -148,18 +157,17 @@ inline static void Handle_Feed_Cell(Feed(*) feed, const void *p) {
 // !!! Actually, THIS CODE CAN'T FAIL.  :-/  It is part of the implementation
 // of fail's cleanup itself.
 //
-inline static bool Did_Handle_Feed_Series_Set_Value(
-    Feed(*) feed,
-    const void* p
+inline static option(Value(const*)) Try_Reify_Variadic_Feed_Series(
+    Feed(*) feed
 ){
-    Array(*) inst1 = ARR(m_cast(void*, p));
+    Array(*) inst1 = ARR(m_cast(void*, feed->p));
 
     switch (SER_FLAVOR(inst1)) {
       case FLAVOR_INSTRUCTION_SPLICE: {
         REBVAL *single = SPECIFIC(ARR_SINGLE(inst1));
         if (IS_BLANK(single)) {
             GC_Kill_Series(inst1);
-            return false;
+            return nullptr;
         }
 
         if (IS_BLOCK(single)) {
@@ -213,21 +221,16 @@ inline static bool Did_Handle_Feed_Series_Set_Value(
         panic (inst1);
     }
 
-    return true;
+    return cast(const REBVAL*, feed->p);
 }
 
 
 // Ordinary Rebol internals deal with REBVAL* that are resident in arrays.
 // But a va_list can contain UTF-8 string components or special instructions
-// that are other Detect_Rebol_Pointer() types.  Anyone who wants to set or
-// preload a frame's state for a va_list has to do this detection, so this
-// code has to be factored out to just take a void* (because a C va_list
-// cannot have its first parameter in the variadic, va_list* is insufficient)
 //
-inline static void Detect_Feed_Pointer_Maybe_Fetch(
-    Feed(*) feed,
-    const void *p
-){
+inline static void Force_Variadic_Feed_At_Cell_Or_End_May_Fail(Feed(*) feed)
+{
+    assert(FEED_IS_VARIADIC(feed));
     assert(FEED_PENDING(feed) == nullptr);
 
   detect: {  /////////////////////////////////////////////////////////////////
@@ -236,26 +239,24 @@ inline static void Detect_Feed_Pointer_Maybe_Fetch(
   //    legal to put an END in f->value unless the array is actually over, so
   //    get another pointer out of the va_list and keep going.
 
-    TRASH_POINTER_IF_DEBUG(feed->p);
-
-    if (not p) {  // libRebol's null/<opt> (Is_Nulled prohibited in CELL case)
+    if (not feed->p) {  // libRebol's NULL (prohibited as an Is_Nulled() CELL)
 
         Handle_Feed_Nullptr(feed);
 
-    } else switch (Detect_Rebol_Pointer(p)) {
+    } else switch (Detect_Rebol_Pointer(feed->p)) {
 
       case DETECTED_AS_END:  // end of input (all feeds must be spooled to end)
-        Handle_Feed_End(feed);
-        break;
+        feed->p = END;  // canonize to cell form for VAL_TYPE_UNCHECKED()
+        break;  // va_end() handled by Free_Feed() logic
 
       case DETECTED_AS_CELL:
-        Handle_Feed_Cell(feed, p);
+        Check_Variadic_Feed_Cell(feed);
         break;
 
       case DETECTED_AS_SERIES:  // e.g. rebQ, rebU, or a rebR() handle
-        if (Did_Handle_Feed_Series_Set_Value(feed, p))
-            break;
-        goto detect_again;
+        if (not Try_Reify_Variadic_Feed_Series(feed))
+            goto detect_again;
+        break;
 
       case DETECTED_AS_UTF8: {
         // !!! Some kind of "binding instruction" might allow other uses?
@@ -268,15 +269,13 @@ inline static void Detect_Feed_Pointer_Maybe_Fetch(
         // !!! Scans that produce only one value (which are likely very
         // common) can go into feed->fetched and not make an array at all.
         //
-        Array(*) reified = unwrap(
-            Try_Scan_Utf8_For_Detect_Feed_Pointer_Managed(
-                cast(const Byte*, p),
-                feed
-            )
-        );
+        Array(*) reified = try_unwrap(Try_Scan_Variadic_Feed_Utf8_Managed(feed));
 
-        if (not reified)  // rebValue(..., "", ...); or similar, see [1]
+        if (not reified) {  // rebValue("", ...), see [1]
+            if (Is_End(feed->p))
+                break;
             goto detect_again;
+        }
 
         // !!! for now, assume scan went to the end; ultimately it would need
         // to pass the feed in as a parameter for partial scans
@@ -288,20 +287,34 @@ inline static void Detect_Feed_Pointer_Maybe_Fetch(
         break; }
 
       default:
-        panic (p);
+        panic (feed->p);
     }
 
+    assert(feed->p != rebEND);  // non-cell crashes VAL_TYPE_UNCHECKED()
+    assert(Is_End(feed->p) or READABLE(cast(const Reb_Cell*, feed->p)));
     return;
 
 } detect_again: {  ///////////////////////////////////////////////////////////
 
     if (FEED_VAPTR(feed))
-        p = va_arg(*unwrap(FEED_VAPTR(feed)), const void*);
+        feed->p = va_arg(*unwrap(FEED_VAPTR(feed)), const void*);
     else
-        p = *FEED_PACKED(feed)++;
+        feed->p = *FEED_PACKED(feed)++;
 
     goto detect;
 }}
+
+
+// This is higher-level, and should be called by non-internal feed mechanics.
+//
+inline static void Sync_Feed_At_Cell_Or_End_May_Fail(Feed(*) feed) {
+    if (Get_Feed_Flag(feed, NEEDS_SYNC)) {
+        Force_Variadic_Feed_At_Cell_Or_End_May_Fail(feed);
+        Clear_Feed_Flag(feed, NEEDS_SYNC);
+    }
+    assert(feed->p != rebEND);  // non-cell crashes VAL_TYPE_UNCHECKED()
+    assert(Is_End(feed->p) or READABLE(cast(const Reb_Cell*, feed->p)));
+}
 
 
 //
@@ -311,21 +324,18 @@ inline static void Detect_Feed_Pointer_Maybe_Fetch(
 // unit of fetch is done at a time, into f->value.
 //
 inline static void Fetch_Next_In_Feed(Feed(*) feed) {
-    //
-    // !!! This used to assert that At_Feed(feed) wasn't "Is_End()".  It has
-    // gotten more complex, because feed->fetched may have been Move_Cell()'d
-    // from, which triggers a RESET() and that's indistinguishable from END.
-    // To the extent the original assert provided safety, revisit it.
+    assert(Not_Feed_Flag(feed, NEEDS_SYNC));
+
+    assert(Not_End(feed->p));  // should test for end before fetching again
 
     // The NEXT_ARG_FROM_OUT flag is a trick used by frames, which must be
     // careful about the management of the trick.  It's put on the feed
     // and not the frame in order to catch cases where it slips by, so this
     // assert is important.
     //
-    if (Get_Feed_Flag(feed, NEXT_ARG_FROM_OUT))
-        assert(!"Fetch_Next_In_Feed() called but NEXT_ARG_FROM_OUT set");
+    assert(Not_Feed_Flag(feed, NEXT_ARG_FROM_OUT));
 
-    // We are changing ->value, and thus by definition any ->gotten value
+    // We are changing "Feed_At()", and thus by definition any ->gotten value
     // will be invalid.  It might be "wasteful" to always set this to null,
     // especially if it's going to be overwritten with the real fetch...but
     // at a source level, having every call to Fetch_Next_In_Frame have to
@@ -348,18 +358,16 @@ inline static void Fetch_Next_In_Feed(Feed(*) feed) {
         // differentiated and loaded.
         //
         if (FEED_VAPTR(feed)) {
-            const void *p = va_arg(*unwrap(FEED_VAPTR(feed)), const void*);
-            Detect_Feed_Pointer_Maybe_Fetch(feed, p);
+            feed->p = va_arg(*unwrap(FEED_VAPTR(feed)), const void*);
         }
         else {
-            //
             // C++ variadics use an ordinary packed array of pointers, because
             // they do more ambitious things with the arguments and there is
             // no (standard) way to construct a C va_list programmatically.
             //
-            const void *p = *FEED_PACKED(feed)++;
-            Detect_Feed_Pointer_Maybe_Fetch(feed, p);
+            feed->p = *FEED_PACKED(feed)++;
         }
+        Force_Variadic_Feed_At_Cell_Or_End_May_Fail(feed);
     }
     else {
         if (FEED_INDEX(feed) != cast(REBINT, ARR_LEN(FEED_ARRAY(feed)))) {
@@ -394,6 +402,8 @@ inline static void Fetch_Next_In_Feed(Feed(*) feed) {
             }
         }
     }
+
+    assert(Is_End(feed->p) or READABLE(cast(const Reb_Cell*, feed->p)));
 }
 
 
@@ -519,7 +529,10 @@ inline static void Free_Feed(Feed(*) feed) {
     // `do code: [clear code]` doesn't drop the hold until the block frame
     // is actually fully dropped.)
     //
-    if (Get_Feed_Flag(feed, TOOK_HOLD)) {
+    if (FEED_IS_VARIADIC(feed)) {
+        Finalize_Variadic_Feed(feed);
+    }
+    else if (Get_Feed_Flag(feed, TOOK_HOLD)) {
         assert(GET_SERIES_INFO(FEED_ARRAY(feed), HOLD));
         CLEAR_SERIES_INFO(m_cast(Array(*), FEED_ARRAY(feed)), HOLD);
         Clear_Feed_Flag(feed, TOOK_HOLD);
@@ -548,9 +561,9 @@ inline static Feed(*) Prep_Feed_Common(void* preallocated, Flags flags) {
 
     feed->flags.bits = flags;
     TRASH_POINTER_IF_DEBUG(feed->p);
+    TRASH_POINTER_IF_DEBUG(feed->gotten);
 
     TRASH_POINTER_IF_DEBUG(feed->context);  // experiment!
-
     return feed;
 }
 
@@ -587,7 +600,7 @@ inline static Feed(*) Prep_Array_Feed(
     // their time to run comes up to not be END anymore.  But if we put a
     // hold on conservatively, it won't be dropped by Free_Feed() time.
     //
-    if (Is_End(At_Feed(feed)) or GET_SERIES_INFO(array, HOLD))
+    if (Is_End(feed->p) or GET_SERIES_INFO(array, HOLD))
         NOOP;  // already temp-locked
     else {
         SET_SERIES_INFO(m_cast(Array(*), array), HOLD);
@@ -595,10 +608,10 @@ inline static Feed(*) Prep_Array_Feed(
     }
 
     feed->gotten = nullptr;
-    if (Is_End(At_Feed(feed)))
+    if (Is_End(feed->p))
         assert(FEED_PENDING(feed) == nullptr);
     else
-        assert(READABLE(At_Feed(feed)));
+        assert(READABLE(cast(const Reb_Cell*, feed->p)));
 
     feed->context = nullptr;  // already has binding
 
@@ -638,7 +651,7 @@ inline static Feed(*) Prep_Variadic_Feed(
     option(Context(*)) context,
     Flags flags
 ){
-    Feed(*) feed = Prep_Feed_Common(preallocated, flags);
+    Feed(*) feed = Prep_Feed_Common(preallocated, flags | FEED_FLAG_NEEDS_SYNC);
 
     // We want to initialize with something that will give back SPECIFIED.
     // It must therefore be bindable.  Try a COMMA!
@@ -648,22 +661,24 @@ inline static Feed(*) Prep_Variadic_Feed(
     if (not vaptr) {  // `p` should be treated as a packed void* array
         FEED_VAPTR_POINTER(feed) = nullptr;
         FEED_PACKED(feed) = cast(const void* const*, p);
-        p = *FEED_PACKED(feed)++;
+        feed->p = *FEED_PACKED(feed)++;
     }
     else {
         FEED_VAPTR_POINTER(feed) = unwrap(vaptr);
         FEED_PACKED(feed) = nullptr;
+        feed->p = p;
     }
 
-    feed->context = context;  // must set before first detect
+    // Note: We DON'T call Force_Variadic_Feed_At_Cell_Or_End_May_Fail() here.
+    // Because we do not want Prep_Variadic_Feed() to fail, as it could have
+    // no error trapping in effect...because it happens when frames are being
+    // set up and haven't been pushed to the trampoline yet.
+    //
+    // The upshot of this is that if feed->p is a pointer to UTF8 or an
+    // "instruction", it must be synchronized before you get a cell pointer.
+    // So At_Feed() will assert if you do not synchronize first.
 
-    if (Detect_Rebol_Pointer(p) == DETECTED_AS_END) {
-        feed->p = END;  // leave END pending (needed by TRANSCODE, etc.)
-    }
-    else {
-        Detect_Feed_Pointer_Maybe_Fetch(feed, p);  // at least 1st fetch taken
-        assert(Is_End(feed->p) or READABLE(cast(const Reb_Cell*, feed->p)));
-    }
+    feed->context = context;
 
     feed->gotten = nullptr;
 

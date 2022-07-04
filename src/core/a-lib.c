@@ -1015,6 +1015,7 @@ REBVAL *RL_rebTranscodeInto(
         Get_Context_From_Stack(),  // No context parameter, see [1]
         FEED_MASK_DEFAULT
     );
+    Sync_Feed_At_Cell_Or_End_May_Fail(feed);
 
     REBDSP dsp_orig = DSP;
     while (Not_End(At_Feed(feed))) {

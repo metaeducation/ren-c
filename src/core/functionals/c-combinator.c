@@ -205,9 +205,10 @@ Array(*) Expanded_Combinator_Spec(const REBVAL *original)
         "state [frame!]\n"
         "input [any-series!]\n";
 
-    const void* packed[2] = {utf8, END};
+    const void* packed[2] = {utf8, END};  // Warning: stack, can't Trampoline
 
     Feed(*) feed = Make_Variadic_Feed(packed, nullptr, nullptr, FEED_MASK_DEFAULT);
+    Sync_Feed_At_Cell_Or_End_May_Fail(feed);
 
     while (Not_End(At_Feed(feed))) {
         Derelativize(PUSH(), At_Feed(feed), FEED_SPECIFIER(feed));

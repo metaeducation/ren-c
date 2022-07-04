@@ -448,12 +448,12 @@ static void Propagate_All_GC_Marks(void)
 
 
 //
-//  Reify_Va_To_Array_In_Feed: C
+//  Reify_Variadic_Feed_As_Array_Feed: C
 //
 // For performance and memory usage reasons, a variadic C function call that
 // wants to invoke the evaluator with just a comma-delimited list of REBVAL*
-// does not need to make a series to hold them.  Eval_Core is written to use
-// the va_list traversal as an alternate to DO-ing an ARRAY.
+// does not need to make a series to hold them.  Fetch_Next_In_Feed() is
+// written to use the va_list traversal as an alternative.
 //
 // However, va_lists cannot be backtracked once advanced.  So in a debug mode
 // it can be helpful to turn all the va_lists into arrays before running
@@ -465,67 +465,67 @@ static void Propagate_All_GC_Marks(void)
 // (unless told that it's not truncated, e.g. a debug mode that calls it
 // before any items are consumed).
 //
-void Reify_Va_To_Array_In_Feed(
+void Reify_Variadic_Feed_As_Array_Feed(
     Feed(*) feed,
     bool truncated
-) {
-    REBDSP dsp_orig = DSP;
-
+){
     assert(FEED_IS_VARIADIC(feed));
 
-    if (truncated) {
-        PUSH();
-        Init_Bad_Word(TOP, Canon(OPTIMIZED_OUT));
-    }
-
-    REBLEN index;
+    REBDSP dsp_orig = DSP;
 
     if (Not_End(At_Feed(feed))) {
+        if (truncated)
+            Init_Bad_Word(PUSH(), Canon(OPTIMIZED_OUT));
+
         do {
             Derelativize(PUSH(), At_Feed(feed), FEED_SPECIFIER(feed));
             assert(not Is_Nulled(TOP));
             Fetch_Next_In_Feed(feed);
         } while (Not_End(At_Feed(feed)));
 
-        if (truncated)
-            index = 2;  // skip the --optimized-out--
+        assert(DSP != dsp_orig);
+        Finalize_Variadic_Feed(feed);
+
+        if (DSP == dsp_orig) {
+            Init_Block(FEED_SINGLE(feed), EMPTY_ARRAY);  // reuse array
+            feed->p = END;
+        }
+        else {
+            Index index = truncated ? 2 : 1;  // skip --optimized-out--
+
+            Array(*) a = Pop_Stack_Values_Core(dsp_orig, SERIES_FLAG_MANAGED);
+            Init_Array_Cell_At(FEED_SINGLE(feed), REB_BLOCK, a, index);
+
+            // need to be sure feed->p isn't invalid... and not end
+
+            if (truncated)
+                feed->p = ARR_AT(FEED_ARRAY(feed), 1);  // skip trunc
+            else
+                feed->p = ARR_HEAD(FEED_ARRAY(feed));
+
+            assert(READABLE(At_Feed(feed)));  // not end at start, not end now
+
+            // The array just popped into existence, and it's tied to a running
+            // frame...so safe to say we're holding it.
+            //
+            assert(Not_Feed_Flag(feed, TOOK_HOLD));
+            SET_SERIES_INFO(m_cast(Array(*), FEED_ARRAY(feed)), HOLD);
+            Set_Feed_Flag(feed, TOOK_HOLD);
+        }
+    }
+    else {
+        Finalize_Variadic_Feed(feed);
+
+        if (truncated) {
+            Init_Bad_Word(PUSH(), Canon(OPTIMIZED_OUT));
+
+            Array(*) a = Pop_Stack_Values_Core(dsp_orig, SERIES_FLAG_MANAGED);
+            Init_Array_Cell_At(FEED_SINGLE(feed), REB_BLOCK, a, 2);
+        }
         else
-            index = 1;  // position at start of the extracted values
-    }
-    else {
-        assert(FEED_PENDING(feed) == nullptr);
+            Init_Array_Cell_At(FEED_SINGLE(feed), REB_BLOCK, EMPTY_ARRAY, 1);
 
-        // Leave at end of frame, but give back the array to serve as
-        // notice of the truncation (if it was truncated)
-        //
-        index = 0;
-    }
-
-    // feeding forward should have called va_end
-    //
-    assert(not FEED_IS_VARIADIC(feed));
-
-    if (DSP == dsp_orig)
-        Init_Block(FEED_SINGLE(feed), EMPTY_ARRAY);  // reuse array
-    else {
-        Array(*) a = Pop_Stack_Values_Core(dsp_orig, SERIES_FLAG_MANAGED);
-        Init_Array_Cell_At(FEED_SINGLE(feed), REB_BLOCK, a, index);
-    }
-
-    if (truncated)
-        feed->p = ARR_AT(FEED_ARRAY(feed), 1);  // skip trunc
-    else
-        feed->p = ARR_HEAD(FEED_ARRAY(feed));
-
-    // The array just popped into existence, and it's tied to a running
-    // frame...so safe to say we're holding it (if not at the end).
-    //
-    if (Is_End(feed->p))
-        assert(FEED_PENDING(feed) == nullptr);
-    else {
-        assert(Not_Feed_Flag(feed, TOOK_HOLD));
-        SET_SERIES_INFO(m_cast(Array(*), FEED_ARRAY(feed)), HOLD);
-        Set_Feed_Flag(feed, TOOK_HOLD);
+        feed->p = END;
     }
 }
 
@@ -775,13 +775,10 @@ static void Mark_Frame_Stack_Deep(void)
             singular = LINK(Splice, singular);
         } while (singular);
 
-        // END is possible, because the frame could be sitting at the end of
-        // a block when a function runs, e.g. `do [zero-arity]`.  That frame
-        // will stay on the stack while the zero-arity function is running.
-        // The array still might be used in an error, so can't GC it.
-        //
-        if (Not_End(f->feed->p))
-            Queue_Mark_Opt_Value_Deep(cast(Reb_Cell*, f->feed->p));
+        // !!! This used to mark f->feed->p; but we probably do not need to.
+        // All variadics are reified as arrays in the GC (we could avoid this
+        // using va_copy, but probably not worth it).  All values in feed
+        // should be covered in terms of GC protection.
 
         // If ->gotten is set, it usually shouldn't need markeding because
         // it's fetched via f->value and so would be kept alive by it.  Any

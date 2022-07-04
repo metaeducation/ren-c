@@ -90,7 +90,7 @@ void Dump_Frame_Location(Cell(const*) v, Frame(*) f)
             // related to va_list frame processing.
             //
             const bool truncated = true;
-            Reify_Va_To_Array_In_Feed(f->feed, truncated);
+            Reify_Variadic_Feed_As_Array_Feed(f->feed, truncated);
         }
 
         Init_Array_Cell_At_Core(
@@ -217,7 +217,7 @@ void Evaluator_Expression_Checks_Debug(Frame(*) f)
     //
     if (FRM_IS_VARIADIC(f) and SPORADICALLY(50)) {
         const bool truncated = true;
-        Reify_Va_To_Array_In_Feed(f->feed, truncated);
+        Reify_Variadic_Feed_As_Array_Feed(f->feed, truncated);
     }
 }
 

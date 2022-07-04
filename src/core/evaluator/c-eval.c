@@ -248,6 +248,7 @@ Bounce Evaluator_Executor(Frame(*) f)
     //
     switch (STATE) {
       case ST_EVALUATOR_INITIAL_ENTRY:
+        Sync_Feed_At_Cell_Or_End_May_Fail(f->feed);
         TRASH_POINTER_IF_DEBUG(f_current);
         /*TRASH_POINTER_IF_DEBUG(f_current_gotten);*/  // trash option() ptrs?
         break;

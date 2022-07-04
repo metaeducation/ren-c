@@ -321,7 +321,7 @@ typedef Executor Dispatcher;  // sub-dispatched in Action_Executor()
     // arbitrary REBVAL*s through a variable argument list on the C stack.
     // This means no array needs to be dynamically allocated (though some
     // conditions require the va_list to be converted to an array, see notes
-    // on Reify_Va_To_Array_In_Feed().)
+    // on Reify_Variadic_Feed_As_Array_Feed().)
     //
     // Since frames may share source information, this needs to be done with
     // a dereference.

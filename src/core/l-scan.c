@@ -995,27 +995,24 @@ static enum Reb_Token Locate_Token_May_Push_Mold(
     // input to be processed.
     //
     while (not ss->begin) {
-        const void *p;
-        if (FEED_VAPTR(f->feed))
-            p = va_arg(*unwrap(FEED_VAPTR(f->feed)), const void*);
-        else
-            p = *FEED_PACKED(f->feed)++;
-
-        if (not p) {
+        if (f->feed->p == nullptr) {  // API null
+            //
+            // We don't call Handle_Feed_Nullptr() because we don't need the
+            // cell in f->feed->fetched.
+            //
             Init_Bad_Word(PUSH(), Canon(NULL));
             if (Get_Executor_Flag(SCAN, f, NEWLINE_PENDING)) {
                 Clear_Executor_Flag(SCAN, f, NEWLINE_PENDING);
                 Set_Cell_Flag(TOP, NEWLINE_BEFORE);
             }
         }
-        else switch (Detect_Rebol_Pointer(p)) {
+        else switch (Detect_Rebol_Pointer(f->feed->p)) {
           case DETECTED_AS_END:
-            Handle_Feed_End(f->feed);
+            f->feed->p = END;  // non-cell crashes VAL_TYPE_UNCHECKED()
             return TOKEN_END;
 
           case DETECTED_AS_CELL: {
-            const REBVAL *cell = cast(const REBVAL*, p);
-            assert(not Is_Nulled(cell));  // !!! worth it to be annoying?
+            Value(const*) cell = Check_Variadic_Feed_Cell(f->feed);
             Copy_Cell(PUSH(), cell);
             if (Get_Executor_Flag(SCAN, f, NEWLINE_PENDING)) {
                 Clear_Executor_Flag(SCAN, f, NEWLINE_PENDING);
@@ -1023,18 +1020,20 @@ static enum Reb_Token Locate_Token_May_Push_Mold(
             }
             break; }
 
-          case DETECTED_AS_SERIES:  // e.g. rebQ, rebU, or a rebR() handle
-            if (Did_Handle_Feed_Series_Set_Value(f->feed, p)) {
-                Derelativize(PUSH(), At_Feed(f->feed), FEED_SPECIFIER(f->feed));
-                if (Get_Executor_Flag(SCAN, f, NEWLINE_PENDING)) {
-                    Clear_Executor_Flag(SCAN, f, NEWLINE_PENDING);
-                    Set_Cell_Flag(TOP, NEWLINE_BEFORE);
-                }
+          case DETECTED_AS_SERIES: {  // e.g. rebQ, rebU, or a rebR() handle
+            option(Value(const*)) v = Try_Reify_Variadic_Feed_Series(f->feed);
+            if (not v)
+                goto get_next_variadic_pointer;
+
+            Copy_Cell(PUSH(), unwrap(v));
+            if (Get_Executor_Flag(SCAN, f, NEWLINE_PENDING)) {
+                Clear_Executor_Flag(SCAN, f, NEWLINE_PENDING);
+                Set_Cell_Flag(TOP, NEWLINE_BEFORE);
             }
-            break;
+            break; }
 
           case DETECTED_AS_UTF8: {  // String segment, scan it ordinarily.
-            ss->begin = cast(const Byte*, p);  // breaks the loop...
+            ss->begin = cast(const Byte*, f->feed->p);  // breaks the loop...
 
             // If we're using a va_list, we start the scan with no C string
             // pointer to serve as the beginning of line for an error message.
@@ -1055,6 +1054,13 @@ static enum Reb_Token Locate_Token_May_Push_Mold(
           default:
             assert(false);
         }
+
+      get_next_variadic_pointer:
+
+        if (FEED_VAPTR(f->feed))
+            f->feed->p = va_arg(*unwrap(FEED_VAPTR(f->feed)), const void*);
+        else
+            f->feed->p = *FEED_PACKED(f->feed)++;
     }
 
     LEXFLAGS flags = Prescan_Token(ss);  // sets ->begin, ->end
@@ -1745,11 +1751,11 @@ void Init_Scan_Level(
     SCAN_STATE *ss,
     String(const*) file,
     REBLIN line,
-    const Byte* opt_begin  // preload the scanner outside the va_list
+    option(const Byte* bp)
 ){
     level->ss = ss;
 
-    ss->begin = opt_begin;  // if null, Locate_Token's first fetch from vaptr
+    ss->begin = try_unwrap(bp);  // Locate_Token's first fetch from vaptr
     TRASH_POINTER_IF_DEBUG(ss->end);
 
     ss->file = file;
@@ -1762,7 +1768,7 @@ void Init_Scan_Level(
     // any errors occur...it just might not give the whole picture when used
     // to offer an error message of what's happening with the spliced values.
     //
-    level->start_line_head = ss->line_head = opt_begin;
+    level->start_line_head = ss->line_head = ss->begin;
     level->start_line = ss->line = line;
     level->mode = '\0';
 }
@@ -2863,12 +2869,13 @@ Array(*) Scan_UTF8_Managed(
     assert(utf8[size] == '\0');
     UNUSED(size);  // scanner stops at `\0` (no size limit functionality)
 
-    const void* packed[2] = {utf8, END};
+    const void* packed[2] = {utf8, END};  // WARNING: Stack, can't trampoline!
     Feed(*) feed = Make_Variadic_Feed(  // scanner requires variadic, see [1]
         packed, nullptr,  // va_list* as nullptr means `p` is packed, see [2]
         context,
         FEED_MASK_DEFAULT
     );
+    Sync_Feed_At_Cell_Or_End_May_Fail(feed);
 
     REBDSP dsp_orig = DSP;
     while (Not_End(At_Feed(feed))) {
@@ -3031,19 +3038,17 @@ DECLARE_NATIVE(transcode)
     else
         fail ("/LINE must be an INTEGER! or an ANY-WORD! integer variable");
 
-    Context(*) context = REF(where)
+    // Because we're building a frame, we can't make a {bp, END} packed array
+    // and start up a variadic feed...because the stack variable would go
+    // bad as soon as we yielded to the trampoline.  Have to use an END feed
+    // and preload the ss->begin of the scanner here.
+    //
+    // Note: Could reuse global TG_End_Feed if context was null.
+
+    Feed(*) feed = Make_Array_Feed_Core(EMPTY_ARRAY, 0, SPECIFIED);
+    feed->context = REF(where)
         ? VAL_CONTEXT(ARG(where))
         : cast(Context(*), nullptr);  // C++98 ambiguous w/o cast
-
-    // !!! This workaround allows the oddly shaped variadic feed to still do
-    // a fetch after it has initialized and get the second end.  This should
-    // be re-stylized, but this permits a string form scan to avoid doing the
-    // scanning in the Make_Variadic_Feed() to accomplish the invariant of
-    // having f->value be a value from the get-go.
-    //
-    const void* packed[2] = {END, END};
-    Feed(*) feed = Make_Variadic_Feed(packed, nullptr, context, FEED_MASK_DEFAULT);
-    assert(not FEED_VAPTR(feed));
 
     Flags flags =
         FRAME_FLAG_TRAMPOLINE_KEEPALIVE  // query pending newline
@@ -3051,13 +3056,6 @@ DECLARE_NATIVE(transcode)
         | FRAME_FLAG_ALLOCATED_FEED;
     if (REF(next))
         flags |= SCAN_EXECUTOR_FLAG_JUST_ONCE;
-
-    // !!! Currently Init_Near_For_Frame() on scanning values tests the feed
-    // value...so we can't leave it as trash.  An error may happen before we
-    // load any real value in the slot.  So leave as END, even though there's
-    // a second END coming...
-    //
-    assert(Is_End(At_Feed(feed)));
 
     Frame(*) subframe = Make_Frame(feed, flags);
     subframe->executor = &Scanner_Executor;
@@ -3069,6 +3067,7 @@ DECLARE_NATIVE(transcode)
     UNUSED(size);  // currently we don't use this information
 
     Init_Scan_Level(level, ss, file, start_line, bp);
+
     TERM_BIN_LEN(bin, sizeof(SCAN_STATE));
 
     Init_Binary(ss_buffer, bin);
@@ -3188,7 +3187,7 @@ const Byte* Scan_Any_Word(
     String(const*) file = ANONYMOUS;
     const REBLIN start_line = 1;
 
-    Frame(*) f = Make_End_Frame(FRAME_MASK_NONE);
+    Frame(*) f = Make_End_Frame(FRAME_MASK_NONE);  // note: no feed `context`
     SCAN_LEVEL *level = &f->u.scan;
 
     Init_Scan_Level(level, &ss, file, start_line, utf8);
@@ -3276,12 +3275,12 @@ const Byte* Scan_Issue(Cell(*) out, const Byte* cp, Size size)
 
 
 //
-//  Try_Scan_Utf8_For_Detect_Feed_Pointer_Manged: C
+//  Try_Scan_Variadic_Feed_Utf8_Managed: C
 //
-option(Array(*)) Try_Scan_Utf8_For_Detect_Feed_Pointer_Managed(
-    const Byte* utf8,
-    Feed(*) feed
-){
+option(Array(*)) Try_Scan_Variadic_Feed_Utf8_Managed(Feed(*) feed)
+{
+    assert(Detect_Rebol_Pointer(feed->p)  == DETECTED_AS_UTF8);
+
     Frame(*) f = Make_Frame(feed, FRAME_MASK_NONE);
     f->executor = &Scanner_Executor;
 
@@ -3293,7 +3292,7 @@ option(Array(*)) Try_Scan_Utf8_For_Detect_Feed_Pointer_Managed(
         &ss,
         Intern_Unsized_Managed("-variadic-"),
         start_line,
-        utf8
+        nullptr  // let scanner fetch feed->p Utf8 as new ss->begin
     );
 
     DECLARE_LOCAL (temp);

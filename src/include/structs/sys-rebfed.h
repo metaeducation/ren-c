@@ -120,6 +120,24 @@ STATIC_ASSERT(FEED_FLAG_1_IS_FALSE == NODE_FLAG_STALE);
     FLAG_LEFT_BIT(6)
 
 
+//=//// FEED_FLAG_NEEDS_SYNC ///////////////////////////////////////////////=//
+//
+// Originally all feeds were "prefetched" and a value was sitting waiting to
+// be used.  But with variadic feeds, requiring this meant that the scanner
+// had to be run before the first fetch occurred--if the first variadic item
+// was a string.  This was especially problematic because it meant an error
+// could occur in the scanner before the frame that would be receiving the
+// feed was pushed.  Because that meant the error would happen before the
+// exception handling in the Trampoline could be set up.
+//
+// So now this flag is set in Prep_Feed_Common(), and can be checked by
+// accessors to make sure you don't use the pointer until you've called the
+// fetch at least once.
+//
+#define FEED_FLAG_NEEDS_SYNC \
+    FLAG_LEFT_BIT(7)
+
+
 //=//// BITS 8...15 ARE CURRENTLY UNUSED ///////////////////////////////////=//
 
 // These had once been used for a "quoting byte", but that feature was not

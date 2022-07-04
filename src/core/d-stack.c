@@ -95,12 +95,14 @@ REBVAL *Init_Near_For_Frame(Cell(*) out, Frame(*) f)
 {
     REBLEN dsp_start = DSP;
 
-    if (Not_End(At_Feed(f->feed)) and FRM_IS_VARIADIC(f)) {
+    if (FRM_IS_VARIADIC(f)) {
         //
-        // Traversing a C va_arg, so reify into a (truncated) array.
+        // A variadic feed may not be able to be reified, if the data is
+        // malformed.  But it also might be able to be... *unless this is
+        // a scanner frame itself raising the error*.
         //
         const bool truncated = true;
-        Reify_Va_To_Array_In_Feed(f->feed, truncated);
+        Reify_Variadic_Feed_As_Array_Feed(f->feed, truncated);
     }
 
     // Get at most 6 values out of the array.  Ideally 3 before and after

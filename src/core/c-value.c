@@ -444,7 +444,7 @@ void Probe(const void *p)
 
 void Where(Frame(*) f) {
     if (FEED_IS_VARIADIC(f->feed))
-        Reify_Va_To_Array_In_Feed(f->feed, false);
+        Reify_Variadic_Feed_As_Array_Feed(f->feed, false);
 
     REBLEN index = FEED_INDEX(f->feed);
 

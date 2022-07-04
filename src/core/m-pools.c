@@ -1286,6 +1286,7 @@ void Assert_Pointer_Detection_Working(void)
 
     assert(Detect_Rebol_Pointer(END) == DETECTED_AS_END);
     assert(Detect_Rebol_Pointer(rebEND) == DETECTED_AS_END);
+    assert(VAL_TYPE_UNCHECKED(END) == REB_0_END);
 
     Binary(*) bin = Make_Series(Binary, 1, FLAG_FLAVOR(BINARY));
     assert(Detect_Rebol_Pointer(bin) == DETECTED_AS_SERIES);
