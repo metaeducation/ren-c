@@ -58,7 +58,7 @@ void Splice_Block_Into_Feed(Feed(*) feed, const REBVAL *splice) {
     // is moved into a dynamically allocated splice which is then linked to
     // be used once the splice runs out.
     //
-    if (FEED_IS_VARIADIC(feed) or Not_End(feed->value)) {
+    if (FEED_IS_VARIADIC(feed) or Not_End(feed->p)) {
         Array(*) saved = Alloc_Singular(
             FLAG_FLAVOR(FEED) | SERIES_FLAG_MANAGED  // no tracking
         );
@@ -68,13 +68,13 @@ void Splice_Block_Into_Feed(Feed(*) feed, const REBVAL *splice) {
         // old feed data resumes after the splice
         mutable_LINK(Splice, &feed->singular) = saved;
 
-        // The feed->value which would have been seen next has to be preserved
+        // The feed->p which would have been seen next has to be preserved
         // as the first thing to run when the next splice happens.
         //
-        mutable_MISC(Pending, saved) = feed->value;
+        mutable_MISC(Pending, saved) = At_Feed(feed);
     }
 
-    feed->value = VAL_ARRAY_ITEM_AT(splice);
+    feed->p = VAL_ARRAY_ITEM_AT(splice);
     Copy_Cell(FEED_SINGLE(feed), splice);
     ++VAL_INDEX_UNBOUNDED(FEED_SINGLE(feed));
 
@@ -83,7 +83,7 @@ void Splice_Block_Into_Feed(Feed(*) feed, const REBVAL *splice) {
     // !!! See remarks above about this per-feed hold logic that should be
     // per-splice hold logic.  Pending whole system review of iteration.
     //
-    if (Not_End(feed->value) and NOT_SERIES_INFO(FEED_ARRAY(feed), HOLD)) {
+    if (Not_End(At_Feed(feed)) and NOT_SERIES_INFO(FEED_ARRAY(feed), HOLD)) {
         SET_SERIES_INFO(m_cast(Array(*), FEED_ARRAY(feed)), HOLD);
         Set_Feed_Flag(feed, TOOK_HOLD);
     }

@@ -251,8 +251,8 @@ DECLARE_NATIVE(new_line_q)
             }
 
             arr = f_array;
-            item = f->feed->value;
-            tail = f->feed->value + 1;  // !!! Review
+            item = At_Feed(f->feed);
+            tail = At_Feed(f->feed) + 1;  // !!! Review
         }
         else if (Is_Block_Style_Varargs(&shared, pos)) {
             arr = VAL_ARRAY(shared);

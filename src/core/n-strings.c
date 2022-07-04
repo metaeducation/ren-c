@@ -104,12 +104,12 @@ DECLARE_NATIVE(delimit)
     bool pending = false;  // pending delimiter output, *if* more non-nulls
     bool nothing = true;  // any elements seen so far have been null or blank
 
-    while (Not_End(f_value)) {
+    while (Not_End(At_Frame(f))) {
         // See philosophy on handling blanks differently from nulls, but only
         // at dialect "source level".
         // https://forum.rebol.info/t/1348
         //
-        if (VAL_TYPE_UNCHECKED(f_value) == REB_BLANK) {
+        if (VAL_TYPE_UNCHECKED(At_Frame(f)) == REB_BLANK) {
             Literal_Next_In_Frame(OUT, f);
             Append_Codepoint(mo->series, ' ');
             pending = false;
@@ -213,7 +213,7 @@ DECLARE_NATIVE(delimit)
 
             pending = true;
         }
-    } while (Not_End(f_value));
+    } while (Not_End(At_Frame(f)));
 
     if (nothing) {
         Drop_Mold(mo);

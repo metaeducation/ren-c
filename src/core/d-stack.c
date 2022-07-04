@@ -95,7 +95,7 @@ REBVAL *Init_Near_For_Frame(Cell(*) out, Frame(*) f)
 {
     REBLEN dsp_start = DSP;
 
-    if (Not_End(f->feed->value) and FRM_IS_VARIADIC(f)) {
+    if (Not_End(At_Feed(f->feed)) and FRM_IS_VARIADIC(f)) {
         //
         // Traversing a C va_arg, so reify into a (truncated) array.
         //

@@ -202,7 +202,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
             Reify_Eval_Out_Plain(out);
 
             if (
-                Is_End(f_temp->feed->value)
+                Is_End(At_Feed(f_temp->feed))
                 or Get_Feed_Flag(f_temp->feed, BARRIER_HIT)
             ){
                 Init_Stale_Void(shared);
@@ -288,7 +288,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
             op,
             hit_barrier
                 ? END
-                : cast(Cell(const*) , f->feed->value), // might be END
+                : cast(Cell(const*) , At_Feed(f->feed)), // might be END
             f_specifier,
             pclass
         )){
@@ -315,10 +315,10 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
 
         case PARAM_CLASS_MEDIUM:  // !!! Review nuance
         case PARAM_CLASS_SOFT:
-            if (ANY_ESCAPABLE_GET(f_value)) {
+            if (ANY_ESCAPABLE_GET(At_Frame(f))) {
                 if (Eval_Value_Throws(
                     out,
-                    f_value,
+                    At_Frame(f),
                     f_specifier
                 )){
                     return true;
@@ -645,14 +645,14 @@ void MF_Varargs(REB_MOLD *mo, noquote(Cell(const*)) v, bool form) {
         if (f == NULL)
             Append_Ascii(mo->series, "!!!");
         else if (
-            Is_End(f->feed->value)
+            Is_End(At_Feed(f->feed))
             or Get_Feed_Flag(f->feed, BARRIER_HIT)
         ){
             Append_Ascii(mo->series, "[]");
         }
         else if (pclass == PARAM_CLASS_HARD) {
             Append_Ascii(mo->series, "[");
-            Mold_Value(mo, f->feed->value); // one value shown if hard quoted
+            Mold_Value(mo, At_Feed(f->feed)); // one value shown if hard quoted
             Append_Ascii(mo->series, " ...]");
         }
         else

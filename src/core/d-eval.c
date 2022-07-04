@@ -43,10 +43,10 @@
 
 #include "sys-core.h"
 
-#undef f_value
+#undef At_Frame
 #undef f_gotten
 
-#define f_next f->feed->value
+#define f_next At_Feed(f->feed)
 #define f_next_gotten f->feed->gotten
 
 #if DEBUG_COUNT_TICKS && DEBUG_HAS_PROBE

@@ -960,7 +960,7 @@ bool RL_rebRunCoreThrows(
     }
 
     bool too_many = (flags & EVAL_EXECUTOR_FLAG_NO_RESIDUE)
-        and Not_End(feed->value);  // feed will be freed in Drop_Frame()
+        and Not_End(At_Feed(feed));  // feed will be freed in Drop_Frame()
 
     Drop_Frame(f);  // will va_end() if not reified during evaluation
 
@@ -1017,8 +1017,8 @@ REBVAL *RL_rebTranscodeInto(
     );
 
     REBDSP dsp_orig = DSP;
-    while (Not_End(feed->value)) {
-        Derelativize(PUSH(), feed->value, FEED_SPECIFIER(feed));
+    while (Not_End(At_Feed(feed))) {
+        Derelativize(PUSH(), At_Feed(feed), FEED_SPECIFIER(feed));
         Set_Cell_Flag(TOP, UNEVALUATED);
         Fetch_Next_In_Feed(feed);
     }

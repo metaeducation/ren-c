@@ -1025,7 +1025,7 @@ static enum Reb_Token Locate_Token_May_Push_Mold(
 
           case DETECTED_AS_SERIES:  // e.g. rebQ, rebU, or a rebR() handle
             if (Did_Handle_Feed_Series_Set_Value(f->feed, p)) {
-                Derelativize(PUSH(), f->feed->value, FEED_SPECIFIER(f->feed));
+                Derelativize(PUSH(), At_Feed(f->feed), FEED_SPECIFIER(f->feed));
                 if (Get_Executor_Flag(SCAN, f, NEWLINE_PENDING)) {
                     Clear_Executor_Flag(SCAN, f, NEWLINE_PENDING);
                     Set_Cell_Flag(TOP, NEWLINE_BEFORE);
@@ -2871,8 +2871,8 @@ Array(*) Scan_UTF8_Managed(
     );
 
     REBDSP dsp_orig = DSP;
-    while (Not_End(feed->value)) {
-        Derelativize(PUSH(), feed->value, FEED_SPECIFIER(feed));
+    while (Not_End(At_Feed(feed))) {
+        Derelativize(PUSH(), At_Feed(feed), FEED_SPECIFIER(feed));
         Set_Cell_Flag(TOP, UNEVALUATED);
         Fetch_Next_In_Feed(feed);
     }
@@ -3057,7 +3057,7 @@ DECLARE_NATIVE(transcode)
     // load any real value in the slot.  So leave as END, even though there's
     // a second END coming...
     //
-    assert(Is_End(feed->value));
+    assert(Is_End(At_Feed(feed)));
 
     Frame(*) subframe = Make_Frame(feed, flags);
     subframe->executor = &Scanner_Executor;

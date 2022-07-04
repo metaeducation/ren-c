@@ -46,10 +46,9 @@
 // and maintains the optional cache of what the fetched value of that is.
 // These macros help make the code less ambiguous.
 //
-#undef f_value
 #undef f_gotten
-#define f_next f->feed->value
-#define f_next_gotten f->feed->gotten
+#define f_next              cast(const Reb_Cell*, f->feed->p)
+#define f_next_gotten       f->feed->gotten
 
 #undef ARG                       // undefine the ARG(x) macro that natives use
 #define ARG f->u.action.arg      // ...aredefine as currently fulfilling arg
@@ -101,10 +100,10 @@ bool Lookahead_To_Sync_Enfix_Defer_Flag(Feed(*) feed) {
 
     Clear_Feed_Flag(feed, NO_LOOKAHEAD);
 
-    if (VAL_TYPE_UNCHECKED(feed->value) != REB_WORD)  // REB_0 is END
+    if (VAL_TYPE_UNCHECKED(At_Feed(feed)) != REB_WORD)  // REB_0 is END
         return false;
 
-    feed->gotten = Lookup_Word(feed->value, FEED_SPECIFIER(feed));
+    feed->gotten = Lookup_Word(At_Feed(feed), FEED_SPECIFIER(feed));
 
     if (
         not feed->gotten

@@ -480,12 +480,12 @@ void Reify_Va_To_Array_In_Feed(
 
     REBLEN index;
 
-    if (Not_End(feed->value)) {
+    if (Not_End(At_Feed(feed))) {
         do {
-            Derelativize(PUSH(), feed->value, FEED_SPECIFIER(feed));
+            Derelativize(PUSH(), At_Feed(feed), FEED_SPECIFIER(feed));
             assert(not Is_Nulled(TOP));
             Fetch_Next_In_Feed(feed);
-        } while (Not_End(feed->value));
+        } while (Not_End(At_Feed(feed)));
 
         if (truncated)
             index = 2;  // skip the --optimized-out--
@@ -513,14 +513,14 @@ void Reify_Va_To_Array_In_Feed(
     }
 
     if (truncated)
-        feed->value = ARR_AT(FEED_ARRAY(feed), 1);  // skip trunc
+        feed->p = ARR_AT(FEED_ARRAY(feed), 1);  // skip trunc
     else
-        feed->value = ARR_HEAD(FEED_ARRAY(feed));
+        feed->p = ARR_HEAD(FEED_ARRAY(feed));
 
     // The array just popped into existence, and it's tied to a running
     // frame...so safe to say we're holding it (if not at the end).
     //
-    if (Is_End(feed->value))
+    if (Is_End(feed->p))
         assert(FEED_PENDING(feed) == nullptr);
     else {
         assert(Not_Feed_Flag(feed, TOOK_HOLD));
@@ -780,8 +780,8 @@ static void Mark_Frame_Stack_Deep(void)
         // will stay on the stack while the zero-arity function is running.
         // The array still might be used in an error, so can't GC it.
         //
-        if (Not_End(f->feed->value))
-            Queue_Mark_Opt_Value_Deep(f->feed->value);
+        if (Not_End(f->feed->p))
+            Queue_Mark_Opt_Value_Deep(cast(Reb_Cell*, f->feed->p));
 
         // If ->gotten is set, it usually shouldn't need markeding because
         // it's fetched via f->value and so would be kept alive by it.  Any
@@ -789,7 +789,7 @@ static void Mark_Frame_Stack_Deep(void)
         // would fetch differently should have meant clearing ->gotten.
         //
         if (f_gotten)
-            assert(f_gotten == Lookup_Word(f_value, f_specifier));
+            assert(f_gotten == Lookup_Word(At_Frame(f), f_specifier));
 
         if (
             f_specifier != SPECIFIED

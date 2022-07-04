@@ -132,7 +132,7 @@ Bounce Group_Branch_Executor(Frame(*) frame_)
 
     Value(const*) with = Is_Stale(OUT) ? END : OUT;  // with is here, see [1]
 
-    assert(Is_End(FRAME->feed->value));
+    assert(Is_End(At_Feed(FRAME->feed)));
     return DELEGATE_BRANCH(OUT, SPARE, with);
 }}
 
@@ -659,7 +659,7 @@ DECLARE_NATIVE(all)
 } eval_step_finished: {  /////////////////////////////////////////////////////
 
     if (Is_Stale(OUT)) {  // void steps, e.g. (comment "hi") (if false [<a>])
-        if (Is_End(SUBFRAME->feed->value))
+        if (Is_End(At_Feed(SUBFRAME->feed)))
             goto reached_end;
 
         assert(STATE == ST_ALL_EVAL_STEP);
@@ -701,7 +701,7 @@ DECLARE_NATIVE(all)
 
     Init_True(any_matches);
 
-    if (Is_End(SUBFRAME->feed->value))
+    if (Is_End(At_Feed(SUBFRAME->feed)))
         goto reached_end;
 
     assert(STATE == ST_ALL_EVAL_STEP);
@@ -783,7 +783,7 @@ DECLARE_NATIVE(any)
 } eval_step_finished: {  /////////////////////////////////////////////////////
 
     if (Is_Stale(OUT)) {  // void steps, e.g. (comment "hi") (if false [<a>])
-        if (Is_End(SUBFRAME->feed->value))
+        if (Is_End(At_Feed(SUBFRAME->feed)))
             goto reached_end;
 
         assert(STATE == ST_ANY_EVAL_STEP);
@@ -823,7 +823,7 @@ DECLARE_NATIVE(any)
         return BRANCHED(OUT);  // successful ANY returns the value
     }
 
-    if (Is_End(SUBFRAME->feed->value))
+    if (Is_End(At_Feed(SUBFRAME->feed)))
         goto reached_end;
 
     assert(STATE == ST_ANY_EVAL_STEP);
@@ -936,25 +936,21 @@ DECLARE_NATIVE(case)
 
 } handle_next_clause: {  /////////////////////////////////////////////////////
 
-    Frame(*) f = SUBFRAME;
-
     RESET(SPARE);  // must do before goto reached_end
 
-    if (Is_End(f_value))
+    if (Is_End(At_Frame(SUBFRAME)))
         goto reached_end;
 
     STATE = ST_CASE_CONDITION_EVAL_STEP;
-    f->executor = &Evaluator_Executor;
-    return CONTINUE_SUBFRAME(f);  // one step to pass predicate, see [1]
+    SUBFRAME->executor = &Evaluator_Executor;
+    return CONTINUE_SUBFRAME(SUBFRAME);  // one step to pass predicate, see [1]
 
 } condition_result_in_spare: {  //////////////////////////////////////////////
-
-    Frame(*) f = SUBFRAME;
 
     if (Is_Void(SPARE))  // skip void expressions, see [2]
         goto handle_next_clause;
 
-    if (Is_End(f_value))
+    if (Is_End(At_Frame(SUBFRAME)))
         goto reached_end;  // we tolerate "fallout" from a condition
 
     if (Is_Nulled(predicate))
@@ -964,7 +960,7 @@ DECLARE_NATIVE(case)
     Move_Cell(temp, SPARE);
 
     STATE = ST_CASE_RUNNING_PREDICATE;
-    f->executor = &Just_Use_Out_Executor;
+    SUBFRAME->executor = &Just_Use_Out_Executor;
     return CONTINUE(SPARE, predicate, temp);
 
 } predicate_result_in_spare: {  //////////////////////////////////////////////
@@ -976,14 +972,12 @@ DECLARE_NATIVE(case)
 
 } processed_result_in_spare: {  //////////////////////////////////////////////
 
-    Frame(*) f = SUBFRAME;
-
     if (Is_Isotope(SPARE))
         fail (Error_Bad_Isotope(SPARE));
 
     bool matched = Is_Truthy(SPARE);
 
-    Cell(const*) branch = Lookback_While_Fetching_Next(f);
+    Cell(const*) branch = Lookback_While_Fetching_Next(SUBFRAME);
 
     if (not matched) {
         if (not IS_GET_GROUP(branch))
@@ -994,20 +988,25 @@ DECLARE_NATIVE(case)
 
         Frame(*) discarder = Make_Frame_At_Core(
             branch,  // turning into feed drops cell type, :(...) not special
-            f_specifier,
+            FRM_SPECIFIER(SUBFRAME),
             FRAME_MASK_NONE
         );
         Move_Cell(spare_backup, SPARE);  // need to save SPARE for fallout
         Push_Frame(SPARE, discarder);
 
         STATE = ST_CASE_DISCARDING_GET_GROUP;
-        f->executor = &Just_Use_Out_Executor;
+        SUBFRAME->executor = &Just_Use_Out_Executor;
         return CONTINUE_SUBFRAME(discarder);
     }
 
     STATE = ST_CASE_RUNNING_BRANCH;
-    f->executor = &Just_Use_Out_Executor;
-    return CONTINUE_CORE(OUT, FRAME_FLAG_BRANCH, branch, f_specifier, SPARE);
+    SUBFRAME->executor = &Just_Use_Out_Executor;
+    return CONTINUE_CORE(
+        OUT,
+        FRAME_FLAG_BRANCH,
+        branch, FRM_SPECIFIER(SUBFRAME),
+        SPARE
+    );
 
 } restore_spare_from_backup: {  //////////////////////////////////////////////
 
@@ -1077,9 +1076,9 @@ DECLARE_NATIVE(switch)
 
     assert(Is_Void(SPARE));
 
-    for (; Not_End(f_value); RESET(SPARE)) {  // clears fallout each `continue`
+    for (; Not_End(At_Frame(f)); RESET(SPARE)) {  // clears fallout each `continue`
 
-        if (IS_BLOCK(f_value) or IS_ACTION(f_value)) {
+        if (IS_BLOCK(At_Frame(f)) or IS_ACTION(At_Frame(f))) {
             Fetch_Next_Forget_Lookback(f);
             continue;
         }
@@ -1100,7 +1099,7 @@ DECLARE_NATIVE(switch)
         if (Is_Void(SPARE))  // skip comments or failed conditionals
             continue;  // see note [2] in comments for CASE
 
-        if (Is_End(f_value))
+        if (Is_End(At_Frame(f)))
             goto reached_end;  // nothing left, so drop frame and return
 
         if (Is_Nulled(predicate)) {
@@ -1150,17 +1149,17 @@ DECLARE_NATIVE(switch)
         // Skip ahead to try and find BLOCK!/ACTION! branch to take the match
         //
         while (true) {
-            if (Is_End(f_value))
+            if (Is_End(At_Frame(f)))
                 goto reached_end;
 
-            if (IS_BLOCK(f_value) or IS_META_BLOCK(f_value)) {
+            if (IS_BLOCK(At_Frame(f)) or IS_META_BLOCK(At_Frame(f))) {
                 //
-                // f_value is Cell, can't Do_Branch
+                // At_Frame(f) is Cell, can't Do_Branch
                 //
                 if (Do_Any_Array_At_Core_Throws(
                     OUT,
                     FRAME_FLAG_BRANCH,
-                    f_value,
+                    At_Frame(f),
                     f_specifier
                 )){
                     goto threw;
@@ -1168,11 +1167,11 @@ DECLARE_NATIVE(switch)
                 break;
             }
 
-            if (IS_ACTION(f_value)) {  // must have been COMPOSE'd in cases
+            if (IS_ACTION(At_Frame(f))) {  // must have been COMPOSE'd in cases
                 DECLARE_LOCAL (temp);
                 if (rebRunThrows(
                     temp,  // <-- output cell
-                    SPECIFIC(f_value),  // actions don't need specifiers
+                    SPECIFIC(At_Frame(f)),  // actions don't need specifiers
                         rebQ(OUT)
                 )){
                     goto threw;

@@ -222,7 +222,7 @@ Bounce MAKE_Path(
 
     REBDSP dsp_orig = DSP;
 
-    while (Not_End(f->feed->value)) {
+    while (Not_End(At_Feed(f->feed))) {
         if (Eval_Step_Throws(out, f)) {
             Drop_Frame(f);
             return BOUNCE_THROWN;

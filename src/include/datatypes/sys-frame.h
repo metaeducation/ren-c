@@ -95,7 +95,7 @@ inline static REBSPC *FRM_SPECIFIER(Frame(*) f) {
 // to accurately present any errors.
 //
 inline static REBLEN FRM_INDEX(Frame(*) f) {
-    if (Is_End(f->feed->value))
+    if (Is_End(At_Feed(f->feed)))
         return ARR_LEN(FRM_ARRAY(f));
 
     assert(not FRM_IS_VARIADIC(f));
@@ -221,7 +221,8 @@ inline static option(Symbol(const*)) FRM_LABEL(Frame(*) f) {
 // are a bit "evil", they are extremely helpful for code readability.  They
 // may be #undef'd if they are causing a problem somewhere.
 
-#define f_value f->feed->value
+#define At_Frame(f)     At_Feed((f)->feed)
+
 #define f_specifier FEED_SPECIFIER(f->feed)
 #define f_spare FRM_SPARE(f)
 #define f_gotten f->feed->gotten
@@ -297,8 +298,6 @@ inline static void Push_Frame(
     REBVAL *out,  // type check prohibits passing `unstable` cells for output
     Frame(*) f
 ){
-    assert(f->feed->value != nullptr);
-
     // All calls through to Eval_Core() are assumed to happen at the same C
     // stack level for a pushed frame (though this is not currently enforced).
     // Hence it's sufficient to check for C stack overflow only once, e.g.
@@ -434,7 +433,7 @@ inline static void Drop_Frame_Core(Frame(*) f) {
     TG_Top_Frame = f->prior;
 
     // Note: Free_Feed() will handle feeding a frame through to its end (which
-    // may release handles/etc), so no requirement f->feed->value be at END.
+    // may release handles/etc), so no requirement Frame_At(f) be at END.
 
     Free_Frame_Internal(f);
 }
@@ -511,7 +510,7 @@ inline static Frame(*) Prep_Frame_Core(
 
 #define Make_Frame_At_Core(any_array,specifier,frame_flags) \
     Make_Frame( \
-        Prep_Feed_At( \
+        Prep_At_Feed( \
             Alloc_Feed(), \
             (any_array), \
             (specifier), \

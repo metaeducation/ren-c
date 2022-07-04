@@ -111,7 +111,7 @@
     USED(ARG(position)); \
     USED(ARG(save))
 
-#define P_RULE              (frame_->feed->value + 0)  // rvalue
+#define P_RULE              (At_Feed(frame_->feed) + 0)  // rvalue
 #define P_RULE_SPECIFIER    FRM_SPECIFIER(frame_)
 
 #define P_TYPE              VAL_TYPE(ARG(input))
@@ -1659,7 +1659,7 @@ DECLARE_NATIVE(subparse)
 
                     // Want the subframe to see the BLOCK!, not ^[...]
                     //
-                    f->feed->value = rule;
+                    f->feed->p = rule;
 
                     bool interrupted;
                     assert(Is_Void(OUT));  // invariant until finished

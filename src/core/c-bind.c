@@ -410,7 +410,7 @@ DECLARE_NATIVE(let)
 
     // A first level of indirection is permitted since LET allows the syntax
     // [let (word_or_block): <whatever>].  Handle those groups in such a way
-    // that it updates `f_value` itself to reflect the group product.
+    // that it updates `At_Frame(f)` itself to reflect the group product.
 
     if (
         IS_GROUP(vars) or IS_SET_GROUP(vars)

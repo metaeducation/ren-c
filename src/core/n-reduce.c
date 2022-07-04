@@ -111,10 +111,10 @@ DECLARE_NATIVE(reduce)
 
 } next_reduce_step: {  ///////////////////////////////////////////////////////
 
-    if (Is_End(SUBFRAME->feed->value))
+    if (Is_End(At_Feed(SUBFRAME->feed)))
         goto finished;
 
-    if (Get_Cell_Flag(SUBFRAME->feed->value, NEWLINE_BEFORE))
+    if (Get_Cell_Flag(At_Feed(SUBFRAME->feed), NEWLINE_BEFORE))
         Set_Cell_Flag(v, NEWLINE_BEFORE);  // cache newline flag, see [2]
     else
         Clear_Cell_Flag(v, NEWLINE_BEFORE);
@@ -238,7 +238,7 @@ DECLARE_NATIVE(reduce_each)
 
 } reduce_next: {  ////////////////////////////////////////////////////////////
 
-    if (Is_End(SUBFRAME->feed->value))
+    if (Is_End(At_Feed(SUBFRAME->feed)))
         goto finished;
 
     SUBFRAME->executor = &Evaluator_Executor;  // restore from pass through
@@ -524,15 +524,17 @@ Bounce Composer_Executor(Frame(*) f)
 
 } handle_current_item: {  ////////////////////////////////////////////////////
 
-    if (Is_End(f_value))
+    Cell(const*) at = At_Frame(f);
+
+    if (Is_End(at))
         goto finished;
 
-    if (not ANY_ARRAYLIKE(f_value)) {  // won't substitute/recurse
-        Derelativize(PUSH(), f_value, f_specifier);  // keep newline flag
+    if (not ANY_ARRAYLIKE(at)) {  // won't substitute/recurse
+        Derelativize(PUSH(), at, f_specifier);  // keep newline flag
         goto handle_next_item;
     }
 
-    enum Reb_Kind heart = CELL_HEART(f_value);  // quoted groups match, see [1]
+    enum Reb_Kind heart = CELL_HEART(at);  // quoted groups match, see [1]
 
     REBSPC *match_specifier = nullptr;
     noquote(Cell(const*)) match = nullptr;
@@ -542,8 +544,8 @@ Bounce Composer_Executor(Frame(*) f)
         // Don't compose at this level, but may need to walk deeply to
         // find compositions inside it if /DEEP and it's an array
     }
-    else if (Is_Any_Doubled_Group(f_value)) {
-        Cell(const*) inner = VAL_ARRAY_ITEM_AT(f_value);  // 1 item
+    else if (Is_Any_Doubled_Group(at)) {
+        Cell(const*) inner = VAL_ARRAY_ITEM_AT(at);  // 1 item
         assert(IS_GROUP(inner));
         if (Match_For_Compose(inner, label)) {
             STATE = ST_COMPOSER_EVAL_DOUBLED_GROUP;
@@ -552,9 +554,9 @@ Bounce Composer_Executor(Frame(*) f)
         }
     }
     else {  // plain compose, if match
-        if (Match_For_Compose(f_value, label)) {
+        if (Match_For_Compose(at, label)) {
             STATE = ST_COMPOSER_EVAL_GROUP;
-            match = f_value;
+            match = at;
             match_specifier = f_specifier;
         }
     }
@@ -563,20 +565,20 @@ Bounce Composer_Executor(Frame(*) f)
         if (deep) {
             // compose/deep [does [(1 + 2)] nested] => [does [3] nested]
 
-            Push_Composer_Frame(OUT, main_frame, f_value, f_specifier);
+            Push_Composer_Frame(OUT, main_frame, at, f_specifier);
             STATE = ST_COMPOSER_RECURSING_DEEP;
             return CATCH_CONTINUE_SUBFRAME(SUBFRAME);
         }
 
         // compose [[(1 + 2)] (3 + 4)] => [[(1 + 2)] 7]  ; non-deep
         //
-        Derelativize(PUSH(), f_value, f_specifier);  // keep newline flag
+        Derelativize(PUSH(), at, f_specifier);  // keep newline flag
         goto handle_next_item;
     }
 
     // If <*> is the label and (<*> 1 + 2) is found, run just (1 + 2).
     //
-    Feed(*) subfeed = Make_Feed_At_Core(match, match_specifier);
+    Feed(*) subfeed = Make_At_Feed_Core(match, match_specifier);
     if (not Is_Nulled(label))
         Fetch_Next_In_Feed(subfeed);  // wasn't possibly at END
 
@@ -612,8 +614,8 @@ Bounce Composer_Executor(Frame(*) f)
         or STATE == ST_COMPOSER_RUNNING_PREDICATE
     );
 
-    enum Reb_Kind group_heart = CELL_HEART(f_value);
-    REBLEN group_quotes = VAL_NUM_QUOTES(f_value);
+    enum Reb_Kind group_heart = CELL_HEART(At_Frame(f));
+    REBLEN group_quotes = VAL_NUM_QUOTES(At_Frame(f));
 
     if (Is_Void(OUT)) {
         //
@@ -672,7 +674,7 @@ Bounce Composer_Executor(Frame(*) f)
 
     // Use newline intent from the GROUP! in the compose pattern
     //
-    if (Get_Cell_Flag(f_value, NEWLINE_BEFORE))
+    if (Get_Cell_Flag(At_Frame(f), NEWLINE_BEFORE))
         Set_Cell_Flag(TOP, NEWLINE_BEFORE);
     else
         Clear_Cell_Flag(TOP, NEWLINE_BEFORE);
@@ -705,7 +707,7 @@ Bounce Composer_Executor(Frame(*) f)
         Cell(const*) push = VAL_ARRAY_AT(&push_tail, OUT);
         if (push != push_tail) {
             Derelativize(PUSH(), push, VAL_SPECIFIER(OUT));
-            if (Get_Cell_Flag(f_value, NEWLINE_BEFORE))
+            if (Get_Cell_Flag(At_Frame(f), NEWLINE_BEFORE))
                 Set_Cell_Flag(TOP, NEWLINE_BEFORE);  // first, see [4]
             else
                 Clear_Cell_Flag(TOP, NEWLINE_BEFORE);
@@ -752,16 +754,16 @@ Bounce Composer_Executor(Frame(*) f)
         Drop_Data_Stack_To(SUBFRAME->baseline.dsp);
         Drop_Frame(SUBFRAME);
 
-        Derelativize(PUSH(), f_value, f_specifier);
+        Derelativize(PUSH(), At_Frame(f), f_specifier);
         // Constify(TOP);
         goto handle_next_item;
     }
 
-    Finalize_Composer_Frame(OUT, SUBFRAME, f_value);
+    Finalize_Composer_Frame(OUT, SUBFRAME, At_Frame(f));
     Drop_Frame(SUBFRAME);
     Move_Cell(PUSH(), OUT);
 
-    if (Get_Cell_Flag(f_value, NEWLINE_BEFORE))
+    if (Get_Cell_Flag(At_Frame(f), NEWLINE_BEFORE))
         Set_Cell_Flag(TOP, NEWLINE_BEFORE);
 
     f->u.compose.changed = true;

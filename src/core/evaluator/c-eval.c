@@ -67,9 +67,9 @@
 // and maintains the optional cache of what the fetched value of that is.
 // These macros help make the code less ambiguous.
 //
-#undef f_value
+#undef At_Frame
 #undef f_gotten
-#define f_next              f->feed->value
+#define f_next              cast(const Reb_Cell*, f->feed->p)
 #define f_next_gotten       f->feed->gotten
 #define f_current           f->u.eval.current
 #define f_current_gotten    f->u.eval.current_gotten
@@ -219,9 +219,9 @@ Bounce Evaluator_Executor(Frame(*) f)
     assert(OUT != SPARE);  // overwritten by temporary calculations
 
     if (Get_Executor_Flag(EVAL, f, NO_EVALUATIONS)) {  // see flag for rationale
-        if (Is_End(f->feed->value))
+        if (Is_End(At_Feed(f->feed)))
             return OUT;
-        Derelativize(OUT, f->feed->value, FEED_SPECIFIER(f->feed));
+        Derelativize(OUT, At_Feed(f->feed), FEED_SPECIFIER(f->feed));
         Set_Cell_Flag(OUT, UNEVALUATED);
         Fetch_Next_Forget_Lookback(f);
         return OUT;

@@ -539,7 +539,7 @@ Bounce MAKE_Frame(
             if (not Is_Block_Style_Varargs(&shared, arg))
                 fail ("Expected BLOCK!-style varargs");  // shouldn't happen
 
-            feed = Make_Feed_At_Core(shared, SPECIFIED);
+            feed = Make_At_Feed_Core(shared, SPECIFIED);
         }
 
         bool error_on_deferred = true;

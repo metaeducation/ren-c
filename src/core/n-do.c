@@ -121,7 +121,7 @@ DECLARE_NATIVE(shove)
 
     REBVAL *left = ARG(left);
 
-    if (Is_End(f_value))  // ...shouldn't happen for WORD!/PATH! unless APPLY
+    if (Is_End(At_Frame(f)))  // shouldn't happen for WORD!/PATH! unless APPLY
         return COPY(ARG(left));  // ...because evaluator wants `help <-` to work
 
     // It's best for SHOVE to do type checking here, as opposed to setting
@@ -136,23 +136,23 @@ DECLARE_NATIVE(shove)
 
     REBVAL *shovee = ARG(right); // reuse arg cell for the shoved-into
 
-    if (IS_WORD(f_value) or IS_PATH(f_value) or IS_TUPLE(f_value)) {
+    if (IS_WORD(At_Frame(f)) or IS_PATH(At_Frame(f)) or IS_TUPLE(At_Frame(f))) {
         Get_Var_May_Fail(
             OUT, // can't eval directly into arg slot
-            f_value,
+            At_Frame(f),
             f_specifier,
             false
         );
         Move_Cell(shovee, OUT);
     }
-    else if (IS_GROUP(f_value)) {
-        if (Do_Any_Array_At_Throws(OUT, f_value, f_specifier))
+    else if (IS_GROUP(At_Frame(f))) {
+        if (Do_Any_Array_At_Throws(OUT, At_Frame(f), f_specifier))
             return THROWN;
 
         Move_Cell(shovee, OUT);  // can't eval directly into arg slot
     }
     else
-        Copy_Cell(shovee, SPECIFIC(f_value));
+        Copy_Cell(shovee, SPECIFIC(At_Frame(f)));
 
     if (not IS_ACTION(shovee) and not ANY_SET_KIND(VAL_TYPE(shovee)))
         fail ("SHOVE's immediate right must be ACTION! or SET-XXX! type");
@@ -333,7 +333,7 @@ DECLARE_NATIVE(do)
         // the varargs came from.  It's still on the stack, and we don't want
         // to disrupt its state.  Use a subframe.
 
-        if (Is_End(f->feed->value)) {
+        if (Is_End(At_Feed(f->feed))) {
             Init_None(OUT);
             return OUT;
         }
@@ -349,7 +349,7 @@ DECLARE_NATIVE(do)
                 Drop_Frame(subframe);
                 return THROWN;
             }
-        } while (Not_End(f->feed->value));
+        } while (Not_End(At_Feed(f->feed)));
 
         Drop_Frame(subframe);
 
@@ -475,11 +475,11 @@ DECLARE_NATIVE(evaluate)
             return VOID;
         }
 
-        Feed(*) feed = Make_Feed_At_Core(  // use feed, see [1]
+        Feed(*) feed = Make_At_Feed_Core(  // use feed, see [1]
             source,
             SPECIFIED
         );
-        assert(Not_End(feed->value));
+        assert(Not_End(At_Feed(feed)));
 
         Frame(*) subframe = Make_Frame(
             feed,
@@ -557,7 +557,7 @@ DECLARE_NATIVE(evaluate)
             // the varargs came from.  It's still on the stack--we don't want
             // to disrupt its state (beyond feed advancing).  Use a subframe.
 
-            if (Is_End(f->feed->value))
+            if (Is_End(At_Feed(f->feed)))
                 return nullptr;
 
             Flags flags = EVAL_EXECUTOR_FLAG_SINGLE_STEP;
@@ -849,10 +849,12 @@ DECLARE_NATIVE(apply)
     Frame(*) f = SUBFRAME;
     EVARS *e = VAL_HANDLE_POINTER(EVARS, iterator);
 
-    if (Is_End(f_value))
+    Cell(const*) at = At_Frame(f);
+
+    if (Is_End(at))
         goto finalize_apply;
 
-    if (IS_COMMA(f_value)) {
+    if (IS_COMMA(at)) {
         Fetch_Next_Forget_Lookback(f);
         goto handle_next_item;
     }
@@ -860,12 +862,12 @@ DECLARE_NATIVE(apply)
     // We do special handling if we see a /REFINEMENT ... that is taken
     // to mean we are naming the next argument.
 
-    if (IS_PATH(f_value) and IS_REFINEMENT(f_value)) {
-        Symbol(const*) symbol = VAL_REFINEMENT_SYMBOL(f_value);
+    if (IS_PATH(at) and IS_REFINEMENT(at)) {
+        Symbol(const*) symbol = VAL_REFINEMENT_SYMBOL(At_Frame(f));
 
         REBLEN index = Find_Symbol_In_Context(frame, symbol, false);
         if (index == 0)
-            fail (Error_Bad_Parameter_Raw(rebUnrelativize(f_value)));
+            fail (Error_Bad_Parameter_Raw(rebUnrelativize(at)));
 
         var = CTX_VAR(VAL_CONTEXT(frame), index);
 
@@ -873,15 +875,16 @@ DECLARE_NATIVE(apply)
             IS_TAG(var)  // we asked all unspecialized slots to hold this tag
             and VAL_SERIES(var) == VAL_SERIES(Root_Unspecialized_Tag)
         )){
-            fail (Error_Bad_Parameter_Raw(rebUnrelativize(f_value)));
+            fail (Error_Bad_Parameter_Raw(rebUnrelativize(at)));
         }
 
         Cell(const*) lookback = Lookback_While_Fetching_Next(f);  // for error
+        at = At_Frame(f);
 
-        if (Is_End(f_value) or IS_COMMA(f_value))
+        if (Is_End(at) or IS_COMMA(at))
             fail (Error_Need_Non_End_Raw(rebUnrelativize(lookback)));
 
-        if (IS_PATH(f_value) and IS_REFINEMENT(f_value))  // two label, see [3]
+        if (IS_PATH(at) and IS_REFINEMENT(at))  // see [3]
             fail (Error_Need_Non_End_Raw(rebUnrelativize(lookback)));
 
         Init_Integer(ARG(index), index);

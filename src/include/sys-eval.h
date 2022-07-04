@@ -134,16 +134,16 @@ inline static bool Did_Init_Inert_Optimize_Complete(
     Flags *flags
 ){
     assert(SECOND_BYTE(*flags) == 0);  // we might set the STATE byte
-    assert(not Is_End(feed->value));  // would be wasting time to call
+    assert(not Is_End(At_Feed(feed)));  // would be wasting time to call
     assert(not (*flags & FRAME_FLAG_BRANCH));  // it's a single step
 
-    if (not ANY_INERT(feed->value))
+    if (not ANY_INERT(At_Feed(feed)))
         return false;  // general case evaluation requires a frame
 
     Literal_Next_In_Feed(out, feed);
 
-    if (VAL_TYPE_UNCHECKED(feed->value) == REB_WORD) {
-        feed->gotten = Lookup_Word(feed->value, FEED_SPECIFIER(feed));
+    if (VAL_TYPE_UNCHECKED(At_Feed(feed)) == REB_WORD) {
+        feed->gotten = Lookup_Word(At_Feed(feed), FEED_SPECIFIER(feed));
         if (
             not feed->gotten
             or REB_ACTION != VAL_TYPE_UNCHECKED(unwrap(feed->gotten))
@@ -308,9 +308,9 @@ inline static bool Eval_Step_In_Any_Array_At_Throws(
     assert(Is_Fresh(out));
 
     assert(not (flags & EVAL_EXECUTOR_FLAG_SINGLE_STEP));  // added here
-    Feed(*) feed = Make_Feed_At_Core(any_array, specifier);
+    Feed(*) feed = Make_At_Feed_Core(any_array, specifier);
 
-    if (Is_End(feed->value)) {
+    if (Is_End(At_Feed(feed))) {
         *index_out = 0xDECAFBAD;  // avoid compiler warning
         return false;
     }

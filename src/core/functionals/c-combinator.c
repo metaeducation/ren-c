@@ -209,8 +209,8 @@ Array(*) Expanded_Combinator_Spec(const REBVAL *original)
 
     Feed(*) feed = Make_Variadic_Feed(packed, nullptr, nullptr, FEED_MASK_DEFAULT);
 
-    while (Not_End(feed->value)) {
-        Derelativize(PUSH(), feed->value, FEED_SPECIFIER(feed));
+    while (Not_End(At_Feed(feed))) {
+        Derelativize(PUSH(), At_Feed(feed), FEED_SPECIFIER(feed));
         Fetch_Next_In_Feed(feed);
     }
 
