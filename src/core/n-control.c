@@ -992,10 +992,10 @@ DECLARE_NATIVE(case)
             FRAME_MASK_NONE
         );
         Move_Cell(spare_backup, SPARE);  // need to save SPARE for fallout
-        Push_Frame(SPARE, discarder);
 
         STATE = ST_CASE_DISCARDING_GET_GROUP;
         SUBFRAME->executor = &Just_Use_Out_Executor;
+        Push_Frame(SPARE, discarder);
         return CONTINUE_SUBFRAME(discarder);
     }
 
