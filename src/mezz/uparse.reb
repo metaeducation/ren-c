@@ -842,15 +842,15 @@ default-combinators: make map! reduce [
         ]
     ]
 
-    === INTO KEYWORD ===
+    === SUBPARSE COMBINATOR ===
 
     ; Rebol2 had a INTO combinator which only took one argument: a rule to use
     ; when processing the nested input.  There was a popular proposal that
-    ; INTO would take a datatype, which would help simplify a common pattern:
+    ; INTO would take a datatype, which would help simplify a common pattern.
     ;
     ;     ahead text! into [some "a"]  ; arity-1 form
     ;     =>
-    ;     into text! [some "a"]  ; arity-2 form
+    ;     into text! [some "a"]  ; arity-2 form, from proposals/Topaz
     ;
     ; The belief being that wanting to test the type you were going "INTO" was
     ; needed more often than not, and that at worst it would incentivize adding
@@ -859,9 +859,10 @@ default-combinators: make map! reduce [
     ;
     ; UPARSE reframes this not to take just a datatype, but a "value-bearing
     ; rule".  This means you can use it with generated data that is not
-    ; strictly resident in the series:
+    ; strictly resident in the series, effectively parameterizing it like
+    ; PARSE itself...so it's called SUBPARSE:
     ;
-    ;     uparse "((aaaa)))" [into [between some "(" some ")"] [some "a"]]
+    ;     uparse "((aaaa)))" [subparse [between some "(" some ")"] [some "a"]]
     ;
     ; Because any value-bearing rule can be used, GROUP! rules are also legal,
     ; which lets you break the rules up for legibility (and avoids interpreting
@@ -869,12 +870,14 @@ default-combinators: make map! reduce [
     ;
     ;     uparse [| | any any any | | |] [
     ;          content: between some '| some '|
-    ;          into (content) [some 'any]
-    ;          do [thru x]
+    ;          subparse (content) [some 'any]
     ;     ]
+    ;
+    ; arity-1 INTO may still be useful as a shorthand for SUBPARSE <ANY>, but
+    ; it's also a little bit obtuse when read in context.
 
-    'into combinator [
-        {Perform a recursion into another datatype with a rule}
+    'subparse combinator [
+        {Perform a recursion into other data with a rule}
         return: "Result of the subparser"
             [<opt> <void> any-value!]
         parser [action!]  ; !!! Easier expression of value-bearing parser?

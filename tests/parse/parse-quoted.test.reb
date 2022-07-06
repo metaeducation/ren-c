@@ -11,9 +11,9 @@
 ([a b] == uparse [... [a b]] [thru '[a b]])
 (1 == uparse [1 1 1] [some '1])
 
-; !!! Review: how do we go INTO a QUOTED! series?
+; !!! Review: how do we SUBPARSE a QUOTED! series?
 ;
-;   pos: uparse* [''[1 + 2]] [into quoted! [copy x to <end>], <here>]
+;   pos: uparse* [''[1 + 2]] [subparse quoted! [copy x to <end>], <here>]
 ;   [] == pos
 ;   x == [1 + 2]
 ;

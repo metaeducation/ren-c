@@ -468,7 +468,7 @@ https://github.com/metaeducation/ren-c/issues/935
             collect [
                 some [
                     keep integer!
-                    | p: <here> block! seek (p) into any-series! [
+                    | p: <here>, block!, seek (p), subparse any-series! [
                         keep ^ collect [opt some [
                             keep integer! keep ^('+)
                             | <any> keep ^(foo '-)

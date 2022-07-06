@@ -10,13 +10,12 @@
         let access-dir: _
         let verbose: _
         let dir
-        let arg
         uparse args [opt some [
             "-a", access-dir: [
                 <end> (true)
                 | "true" (true)
                 | "false" (false)
-                | dir: <any>, (to-file dir)
+                | dir: <text>, (to-file dir)  ; manual form, use TO-FILE/ below
             ]
             |
             ["-h" | "-help" | "--help" || (-help, quit)]
@@ -26,9 +25,9 @@
                 | "-v" (2)
             ]
             |
-            port: into <any> integer!
+            port: subparse text! integer!
             |
-            arg: <any> (root-dir: to-file arg)
+            root-dir: to-file/ text!
         ]]
         else [
             return null

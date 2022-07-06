@@ -409,7 +409,7 @@ make-state-updater: func [
     uparse transdialect [
         some [
             left: state-rule '-> right: [
-                into block! [opt some state-rule, <input>]
+                subparse block! [opt some state-rule, <input>]
                 | collect keep state-rule
             ]
             (append transitions :[left right])

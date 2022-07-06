@@ -230,7 +230,7 @@ math: func [
     ])
 ][
     clear nested-expr-val
-    let res: either parse expr expression [expr-val] [blank]
+    let res: either parse3 expr expression [expr-val] [blank]
 
     either only [
         return res

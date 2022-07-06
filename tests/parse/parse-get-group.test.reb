@@ -24,7 +24,9 @@
     ("a" == uparse "aaa" [:(1 + 2) "a"])
     (
         count: 0
-        "a" == uparse ["a" "aa" "aaa"] [some [into text! [:(count: count + 1) "a"]]]
+        "a" == uparse ["a" "aa" "aaa"] [
+            some [subparse text! [:(count: count + 1) "a"]]
+        ]
     )
 ] true)]
 
