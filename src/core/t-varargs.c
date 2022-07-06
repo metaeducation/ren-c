@@ -518,7 +518,7 @@ REBTYPE(Varargs)
             return OUT;
         }
 
-        REBDSP dsp_orig = DSP;
+        StackIndex base = TOP_INDEX;
 
         if (not IS_INTEGER(ARG(part)))
             fail (PAR(part));
@@ -542,7 +542,7 @@ REBTYPE(Varargs)
 
         // !!! What if caller wanted a REB_GROUP, REB_PATH, or an /INTO?
         //
-        return Init_Block(OUT, Pop_Stack_Values(dsp_orig)); }
+        return Init_Block(OUT, Pop_Stack_Values(base)); }
 
     default:
         break;

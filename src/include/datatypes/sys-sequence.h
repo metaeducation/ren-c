@@ -380,12 +380,12 @@ inline static REBVAL *Try_Init_Any_Sequence_Pairlike_Core(
 inline static REBVAL *Try_Pop_Sequence_Or_Element_Or_Nulled(
     Cell(*) out,  // will be the error-triggering value if nullptr returned
     enum Reb_Kind kind,
-    REBDSP dsp_orig
+    StackIndex base
 ){
-    if (DSP == dsp_orig)
+    if (TOP_INDEX == base)
         return Init_Nulled(out);
 
-    if (DSP - 1 == dsp_orig) {  // only one item, use as-is if possible
+    if (TOP_INDEX - 1 == base) {  // only one item, use as-is if possible
         if (not Is_Valid_Sequence_Element(kind, TOP))
             return nullptr;
 
@@ -418,13 +418,13 @@ inline static REBVAL *Try_Pop_Sequence_Or_Element_Or_Nulled(
         return cast(REBVAL*, out);  // valid path element, standing alone
     }
 
-    if (DSP - dsp_orig == 2) {  // two-element path optimization
+    if (TOP_INDEX - base == 2) {  // two-element path optimization
         if (not Try_Init_Any_Sequence_Pairlike(out, kind, TOP - 1, TOP)) {
-            Drop_Data_Stack_To(dsp_orig);
+            Drop_Data_Stack_To(base);
             return nullptr;
         }
 
-        Drop_Data_Stack_To(dsp_orig);
+        Drop_Data_Stack_To(base);
         return cast(REBVAL*, out);
     }
 
@@ -435,14 +435,14 @@ inline static REBVAL *Try_Pop_Sequence_Or_Element_Or_Nulled(
     if (Try_Init_Any_Sequence_All_Integers(
         out,
         kind,
-        Data_Stack_At(dsp_orig) + 1,
-        DSP - dsp_orig
+        Data_Stack_At(base) + 1,
+        TOP_INDEX - base
     )){
-        Drop_Data_Stack_To(dsp_orig);
+        Drop_Data_Stack_To(base);
         return cast(REBVAL*, out);
     }
 
-    Array(*) a = Pop_Stack_Values_Core(dsp_orig, NODE_FLAG_MANAGED);
+    Array(*) a = Pop_Stack_Values_Core(base, NODE_FLAG_MANAGED);
     Freeze_Array_Shallow(a);
     if (not Try_Init_Any_Sequence_Arraylike(out, kind, a))
         return nullptr;

@@ -1128,11 +1128,11 @@ DECLARE_NATIVE(js_stacklimit)
 {
     JAVASCRIPT_INCLUDE_PARAMS_OF_JS_STACKLIMIT;
 
-    REBDSP dsp_orig = DSP;
+    StackIndex base = TOP_INDEX;
 
-    Init_Integer(PUSH(), cast(uintptr_t, &dsp_orig));  // local pointer
+    Init_Integer(PUSH(), cast(uintptr_t, &base));  // local pointer
     Init_Integer(PUSH(), TG_Stack_Limit);
-    return Init_Block(OUT, Pop_Stack_Values(dsp_orig));
+    return Init_Block(OUT, Pop_Stack_Values(base));
 }
 
 

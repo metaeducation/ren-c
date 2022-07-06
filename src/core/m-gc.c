@@ -471,7 +471,7 @@ void Reify_Variadic_Feed_As_Array_Feed(
 ){
     assert(FEED_IS_VARIADIC(feed));
 
-    REBDSP dsp_orig = DSP;
+    StackIndex base = TOP_INDEX;
 
     if (Not_End(At_Feed(feed))) {
         if (truncated)
@@ -483,35 +483,29 @@ void Reify_Variadic_Feed_As_Array_Feed(
             Fetch_Next_In_Feed(feed);
         } while (Not_End(At_Feed(feed)));
 
-        assert(DSP != dsp_orig);
+        assert(TOP_INDEX != base);
         Finalize_Variadic_Feed(feed);
 
-        if (DSP == dsp_orig) {
-            Init_Block(FEED_SINGLE(feed), EMPTY_ARRAY);  // reuse array
-            feed->p = END;
-        }
-        else {
-            Index index = truncated ? 2 : 1;  // skip --optimized-out--
+        Index index = truncated ? 2 : 1;  // skip --optimized-out--
 
-            Array(*) a = Pop_Stack_Values_Core(dsp_orig, SERIES_FLAG_MANAGED);
-            Init_Array_Cell_At(FEED_SINGLE(feed), REB_BLOCK, a, index);
+        Array(*) a = Pop_Stack_Values_Core(base, SERIES_FLAG_MANAGED);
+        Init_Array_Cell_At(FEED_SINGLE(feed), REB_BLOCK, a, index);
 
-            // need to be sure feed->p isn't invalid... and not end
+        // need to be sure feed->p isn't invalid... and not end
 
-            if (truncated)
-                feed->p = ARR_AT(FEED_ARRAY(feed), 1);  // skip trunc
-            else
-                feed->p = ARR_HEAD(FEED_ARRAY(feed));
+        if (truncated)
+            feed->p = ARR_AT(FEED_ARRAY(feed), 1);  // skip trunc
+        else
+            feed->p = ARR_HEAD(FEED_ARRAY(feed));
 
-            assert(READABLE(At_Feed(feed)));  // not end at start, not end now
+        assert(READABLE(At_Feed(feed)));  // not end at start, not end now
 
-            // The array just popped into existence, and it's tied to a running
-            // frame...so safe to say we're holding it.
-            //
-            assert(Not_Feed_Flag(feed, TOOK_HOLD));
-            SET_SERIES_INFO(m_cast(Array(*), FEED_ARRAY(feed)), HOLD);
-            Set_Feed_Flag(feed, TOOK_HOLD);
-        }
+        // The array just popped into existence, and it's tied to a running
+        // frame...so safe to say we're holding it.
+        //
+        assert(Not_Feed_Flag(feed, TOOK_HOLD));
+        SET_SERIES_INFO(m_cast(Array(*), FEED_ARRAY(feed)), HOLD);
+        Set_Feed_Flag(feed, TOOK_HOLD);
     }
     else {
         Finalize_Variadic_Feed(feed);
@@ -519,7 +513,7 @@ void Reify_Variadic_Feed_As_Array_Feed(
         if (truncated) {
             Init_Bad_Word(PUSH(), Canon(OPTIMIZED_OUT));
 
-            Array(*) a = Pop_Stack_Values_Core(dsp_orig, SERIES_FLAG_MANAGED);
+            Array(*) a = Pop_Stack_Values_Core(base, SERIES_FLAG_MANAGED);
             Init_Array_Cell_At(FEED_SINGLE(feed), REB_BLOCK, a, 2);
         }
         else

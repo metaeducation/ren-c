@@ -283,12 +283,12 @@ enum {
 
 struct Reb_Collector {
     Flags flags;
-    REBDSP dsp_orig;
+    StackIndex stack_base;
     struct Reb_Binder binder;
 };
 
 #define Collector_Index_If_Pushed(collector) \
-    ((DSP - (collector)->dsp_orig) + 1)  // index of *next* item to add
+    ((TOP_INDEX - (collector)->stack_base) + 1)  // index of *next* item to add
 
 
 // The process of derelativization will resolve a relative value with a

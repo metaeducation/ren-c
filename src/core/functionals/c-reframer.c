@@ -252,7 +252,11 @@ bool Make_Frame_From_Feed_Throws(
         return false;
 
     assert(IS_QUOTED(out));
-    Context(*) exemplar = Make_Context_For_Action(Lib(IDENTITY), DSP, nullptr);
+    Context(*) exemplar = Make_Context_For_Action(
+        Lib(IDENTITY),
+        TOP_INDEX,
+        nullptr
+    );
 
     Unquotify(Copy_Cell(CTX_VAR(exemplar, 2), out), 1);
 
@@ -336,13 +340,13 @@ DECLARE_NATIVE(reframer_p)
     Action(*) shim = VAL_ACTION(ARG(shim));
     option(Symbol(const*)) label = VAL_ACTION_LABEL(ARG(shim));
 
-    REBDSP dsp_orig = DSP;
+    StackIndex base = TOP_INDEX;
 
     struct Reb_Binder binder;
     INIT_BINDER(&binder);
     Context(*) exemplar = Make_Context_For_Action_Push_Partials(
         ARG(shim),
-        dsp_orig,
+        base,
         &binder,
         NONE_ISOTOPE
     );
@@ -351,7 +355,7 @@ DECLARE_NATIVE(reframer_p)
 
     REBLEN param_index = 0;
 
-    if (DSP != dsp_orig) {
+    if (TOP_INDEX != base) {
         error = Error_User("REFRAMER can't use partial specializions ATM");
         goto cleanup_binder;
     }

@@ -227,9 +227,9 @@ REBTYPE(Action)
         else
             fail (picker);
 
-        REBDSP dsp_orig = DSP;
+        StackIndex base = TOP_INDEX;
         Init_Word(PUSH(), symbol);
-        if (Specialize_Action_Throws(OUT, action, nullptr, dsp_orig))
+        if (Specialize_Action_Throws(OUT, action, nullptr, base))
             return THROWN;
 
         return OUT; }

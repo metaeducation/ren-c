@@ -177,7 +177,7 @@ Bounce Action_Executor(Frame(*) f)
 
     assert(not IS_POINTER_TRASH_DEBUG(ORIGINAL));  // set by Begin_Action()
 
-    assert(DSP >= f->baseline.dsp);  // path processing may push REFINEMENT!s
+    assert(TOP_INDEX >= f->baseline.stack_base);  // paths push refinements
 
     assert(STATE != ST_ACTION_DOING_PICKUPS);
     STATE = ST_ACTION_FULFILLING_ARGS;
@@ -191,7 +191,7 @@ Bounce Action_Executor(Frame(*) f)
       continue_fulfilling:
         assert(not Is_Void(ARG));
         if (STATE == ST_ACTION_DOING_PICKUPS) {
-            if (DSP != f->baseline.dsp)
+            if (TOP_INDEX != f->baseline.stack_base)
                 goto next_pickup;
 
             f->u.action.key = nullptr;  // don't need key
@@ -246,9 +246,9 @@ Bounce Action_Executor(Frame(*) f)
         // two-pass mechanism to implement the reordering of non-optional
         // parameters at the callsite.
 
-        if (DSP != f->baseline.dsp) {  // reorderings or refinements pushed
+        if (TOP_INDEX != BASELINE->stack_base) {  // reorderings/refinements
             StackValue(*) ordered = TOP;
-            StackValue(*) lowest_ordered = Data_Stack_At(f->baseline.dsp);
+            StackValue(*) lowest_ordered = Data_Stack_At(BASELINE->stack_base);
             Symbol(const*) param_symbol = KEY_SYMBOL(KEY);
 
             for (; ordered != lowest_ordered; --ordered) {
@@ -685,7 +685,7 @@ Bounce Action_Executor(Frame(*) f)
     // second time through, and we were just jumping up to check the
     // parameters in response to a BOUNCE_REDO_CHECKED; if so, skip this.
     //
-    if (DSP != f->baseline.dsp and IS_WORD(TOP)) {
+    if (TOP_INDEX != BASELINE->stack_base and IS_WORD(TOP)) {
 
       next_pickup:
 
@@ -709,7 +709,7 @@ Bounce Action_Executor(Frame(*) f)
         DROP();
 
         if (Is_Typeset_Empty(PARAM)) {  // no callsite arg, just drop
-            if (DSP != f->baseline.dsp)
+            if (TOP_INDEX != BASELINE->stack_base)
                 goto next_pickup;
 
             f->u.action.key = nullptr;  // don't need key
@@ -1180,7 +1180,7 @@ Bounce Action_Executor(Frame(*) f)
     }
 
     Drop_Action(f);
-    Drop_Data_Stack_To(f->baseline.dsp);  // drop unprocessed refinements/chains
+    Drop_Data_Stack_To(f->baseline.stack_base);  // unprocessed refinements
 
     return BOUNCE_THROWN;
 }}

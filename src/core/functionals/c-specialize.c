@@ -76,7 +76,7 @@ Bounce Specializer_Dispatcher(Frame(*) f)
 // It is able to take in more specialized refinements on the stack.  These
 // will be ordered *after* partial specializations in the function already.
 // The caller passes in the stack pointer of the lowest priority refinement,
-// which goes up to DSP for the highest of those added specializations.
+// which goes up to TOP_INDEX for the highest of those added specializations.
 //
 // Since this is walking the parameters to make the frame already--and since
 // we don't want to bind to anything specialized out (including the ad-hoc
@@ -85,11 +85,11 @@ Bounce Specializer_Dispatcher(Frame(*) f)
 //
 Context(*) Make_Context_For_Action_Push_Partials(
     const REBVAL *action,  // need ->binding, so can't just be a Action(*)
-    REBDSP lowest_ordered_dsp,  // caller can add refinement specializations
+    StackIndex lowest_ordered_stackindex,  // caller can add refinements
     option(struct Reb_Binder*) binder,
     const REBVAL *unspecialized  // what to put in unspecialized slots
 ){
-    REBDSP highest_ordered_dsp = DSP;
+    StackIndex highest_ordered_stackindex = TOP_INDEX;
 
     Action(*) act = VAL_ACTION(action);
 
@@ -157,9 +157,9 @@ Context(*) Make_Context_For_Action_Push_Partials(
 
         // Check the passed-in refinements on the stack for usage.
         //
-        REBDSP dsp = highest_ordered_dsp;
-        for (; dsp != lowest_ordered_dsp; --dsp) {
-            StackValue(*) ordered = Data_Stack_At(dsp);
+        StackIndex stackindex = highest_ordered_stackindex;
+        for (; stackindex != lowest_ordered_stackindex; --stackindex) {
+            StackValue(*) ordered = Data_Stack_At(stackindex);
             if (VAL_WORD_SYMBOL(ordered) != symbol)
                 continue;  // just continuing this loop
 
@@ -202,23 +202,23 @@ Context(*) Make_Context_For_Action_Push_Partials(
 // !!! The ultimate concept is that it would be possible for a FRAME! to
 // preserve ordering information such that an ACTION! could be made from it.
 // Right now the information is the stack ordering numbers of the refinements
-// which to make it usable should be relative to the lowest ordered DSP and
-// not absolute.
+// which to make it usable should be relative to the lowest ordered StackIndex
+// and not absolute.
 //
 Context(*) Make_Context_For_Action(
     const REBVAL *action, // need ->binding, so can't just be a Action(*)
-    REBDSP lowest_ordered_dsp,
+    StackIndex lowest_ordered_stackindex,
     option(struct Reb_Binder*) binder
 ){
     Context(*) exemplar = Make_Context_For_Action_Push_Partials(
         action,
-        lowest_ordered_dsp,
+        lowest_ordered_stackindex,
         binder,
         NONE_ISOTOPE
     );
 
     Manage_Series(CTX_VARLIST(exemplar));  // !!! was needed before, review
-    Drop_Data_Stack_To(lowest_ordered_dsp);
+    Drop_Data_Stack_To(lowest_ordered_stackindex);
     return exemplar;
 }
 
@@ -240,7 +240,7 @@ bool Specialize_Action_Throws(
     REBVAL *out,
     REBVAL *specializee,
     option(REBVAL*) def,  // !!! REVIEW: binding modified directly, not copied
-    REBDSP lowest_ordered_dsp
+    StackIndex lowest_ordered_stackindex
 ){
     assert(out != specializee);
 
@@ -252,7 +252,7 @@ bool Specialize_Action_Throws(
 
     // This produces a context where partially specialized refinement slots
     // will be on the stack (including any we are adding "virtually", from
-    // the current DSP down to the lowest_ordered_dsp).
+    // the current TOP_INDEX down to the lowest_ordered_dsp).
     //
     // All unspecialized slots (including partials) will be a unique tag
     // identity, specific to SPECIALIZE.  This allows a full spectrum of
@@ -260,7 +260,7 @@ bool Specialize_Action_Throws(
     //
     Context(*) exemplar = Make_Context_For_Action_Push_Partials(
         specializee,
-        lowest_ordered_dsp,
+        lowest_ordered_stackindex,
         def ?
             &binder
             : cast(struct Reb_Binder*, nullptr),  // C++98 ambiguous w/o cast
@@ -304,7 +304,7 @@ bool Specialize_Action_Throws(
         DROP_GC_GUARD(exemplar);
 
         if (threw) {
-            Drop_Data_Stack_To(lowest_ordered_dsp);
+            Drop_Data_Stack_To(lowest_ordered_stackindex);
             return true;
         }
 
@@ -317,7 +317,7 @@ bool Specialize_Action_Throws(
 
     REBVAL *arg = CTX_VARS_HEAD(exemplar);
 
-    REBDSP ordered_dsp = lowest_ordered_dsp;
+    StackIndex ordered_stackindex = lowest_ordered_stackindex;
 
     for (; key != tail; ++key, ++param, ++arg) {
         if (Is_Specialized(param))
@@ -394,7 +394,7 @@ bool Specialize_Action_Throws(
     // Turn partial refinements into an array of things to push.
     //
     Array(*) partials;
-    if (ordered_dsp == DSP)
+    if (ordered_stackindex == TOP_INDEX)
         partials = nullptr;
     else {
         // The list of ordered refinements may contain some cases like /ONLY
@@ -407,13 +407,13 @@ bool Specialize_Action_Throws(
         // but since we error and throw those arrays away it doesn't matter.
         //
         partials = Make_Array_Core(
-            DSP - ordered_dsp,  // maximum partial count possible
+            TOP_INDEX - ordered_stackindex,  // maximum partial count possible
             SERIES_MASK_PARTIALS  // don't manage, yet... may free
         );
 
-        while (ordered_dsp != DSP) {
-            ++ordered_dsp;
-            StackValue(*) ordered = Data_Stack_At(ordered_dsp);
+        while (ordered_stackindex != TOP_INDEX) {
+            ++ordered_stackindex;
+            StackValue(*) ordered = Data_Stack_At(ordered_stackindex);
             if (not IS_WORD_BOUND(ordered)) {  // specialize :print/asdf
                 Refinify(ordered);  // used as refinement, report as such
                 fail (Error_Bad_Parameter_Raw(ordered));
@@ -433,7 +433,7 @@ bool Specialize_Action_Throws(
                 );
             }
         }
-        Drop_Data_Stack_To(lowest_ordered_dsp);
+        Drop_Data_Stack_To(lowest_ordered_stackindex);
 
         if (ARR_LEN(partials) == 0) {
             Free_Unmanaged_Series(partials);
@@ -470,29 +470,23 @@ bool Specialize_Action_Throws(
 //          [block!]
 //  ]
 //
-DECLARE_NATIVE(specialize_p)  // see extended definition SPECIALIZE in %base-defs.r
+DECLARE_NATIVE(specialize_p)  // see extended SPECIALIZE in %base-defs.r
+//
+// 1. Refinement specializations via path are pushed to the stack, giving
+//    order information that can't be meaningfully gleaned from an arbitrary
+//    code block (e.g. `specialize :append [dup: x | if y [part: z]]`, we
+//    shouldn't think that intends any ordering of /dup/part or /part/dup)
 {
     INCLUDE_PARAMS_OF_SPECIALIZE_P;
 
-    REBVAL *specializee = ARG(action);
-
-    // Refinement specializations via path are pushed to the stack, giving
-    // order information that can't be meaningfully gleaned from an arbitrary
-    // code block (e.g. `specialize :append [dup: x | if y [part: z]]`, we
-    // shouldn't think that intends any ordering of /dup/part or /part/dup)
-    //
-    REBDSP lowest_ordered_dsp = DSP; // capture before any refinements pushed
-
-    // !!! When SPECIALIZE would take a PATH! instead of an action, this is
-    // where refinements could be pushed to weave into the specialization.
-    // To make the interface less confusing, we no longer do this...but we
-    // could push refinements here if we wanted to.
+    Value(*) specializee = ARG(action);
+    Value(*) def = ARG(def);
 
     if (Specialize_Action_Throws(
         OUT,
         specializee,
-        ARG(def),
-        lowest_ordered_dsp
+        def,
+        BASELINE->stack_base  // lowest ordered stackindex, see [1]
     )){
         return THROWN;  // e.g. `specialize :append/dup [value: throw 10]`
     }

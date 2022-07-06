@@ -222,7 +222,7 @@ void Change_Case(
 //
 Array(*) Split_Lines(const REBVAL *str)
 {
-    REBDSP dsp_orig = DSP;
+    StackIndex base = TOP_INDEX;
 
     REBLEN len = VAL_LEN_AT(str);
     REBLEN i = VAL_INDEX(str);
@@ -267,5 +267,5 @@ Array(*) Split_Lines(const REBVAL *str)
         Set_Cell_Flag(TOP, NEWLINE_BEFORE);
     }
 
-    return Pop_Stack_Values_Core(dsp_orig, ARRAY_FLAG_NEWLINE_AT_TAIL);
+    return Pop_Stack_Values_Core(base, ARRAY_FLAG_NEWLINE_AT_TAIL);
 }

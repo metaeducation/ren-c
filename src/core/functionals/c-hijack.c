@@ -96,7 +96,7 @@ void Push_Redo_Action_Frame(REBVAL *out, Frame(*) f1, const REBVAL *run)
 {
     Array(*) normals = Make_Array(FRM_NUM_ARGS(f1));  // max, e.g. no refines
 
-    REBDSP dsp_orig = DSP;  // we push refinements as we find them
+    StackIndex base = TOP_INDEX;  // we push refinements as we find them
 
     EVARS e;  // use EVARS to get parameter reordering right (in theory?)
     Init_Evars(&e, CTX_ARCHETYPE(Context_For_Frame_May_Manage(f1)));
@@ -138,7 +138,7 @@ void Push_Redo_Action_Frame(REBVAL *out, Frame(*) f1, const REBVAL *run)
     DECLARE_LOCAL (block);
     Init_Block(block, normals);
     Frame(*) f2 = Make_Frame_At(block, FRAME_FLAG_MAYBE_STALE);
-    f2->baseline.dsp = dsp_orig;
+    f2->baseline.stack_base = base;
 
     Push_Frame(out, f2);
     Push_Action(f2, VAL_ACTION(run), VAL_ACTION_BINDING(run));

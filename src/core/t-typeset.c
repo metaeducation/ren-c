@@ -91,7 +91,7 @@ REBINT CT_Typeset(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
 //
 void Startup_Typesets(void)
 {
-    REBDSP dsp_orig = DSP;
+    StackIndex base = TOP_INDEX;
 
     REBINT n;
     for (n = 0; Typesets[n].sym != 0; n++) {
@@ -102,7 +102,7 @@ void Startup_Typesets(void)
     // !!! Why does the system access the typesets through Lib_Context, vs.
     // using the Root_Typesets?
     //
-    Root_Typesets = Init_Block(Alloc_Value(), Pop_Stack_Values(dsp_orig));
+    Root_Typesets = Init_Block(Alloc_Value(), Pop_Stack_Values(base));
     Force_Value_Frozen_Deep(Root_Typesets);
 }
 
@@ -313,7 +313,7 @@ Bounce TO_Typeset(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 //
 Array(*) Typeset_To_Array(const REBVAL *tset)
 {
-    REBDSP dsp_orig = DSP;
+    StackIndex base = TOP_INDEX;
 
     REBINT n;
     for (n = 1; n < REB_MAX; ++n) {
@@ -339,7 +339,7 @@ Array(*) Typeset_To_Array(const REBVAL *tset)
         }
     }
 
-    return Pop_Stack_Values(dsp_orig);
+    return Pop_Stack_Values(base);
 }
 
 

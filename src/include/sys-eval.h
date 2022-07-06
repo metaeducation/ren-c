@@ -243,7 +243,7 @@ inline static bool Eval_Step_Throws(
     assert(f->executor == &Evaluator_Executor);
 
     f->out = out;
-    assert(f->baseline.dsp == DSP);
+    assert(f->baseline.stack_base == TOP_INDEX);
 
     assert(f == TOP_FRAME);  // should already be pushed, use core trampoline
 

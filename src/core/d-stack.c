@@ -93,7 +93,7 @@ void Collapsify_Array(Array(*) array, REBSPC *specifier, REBLEN limit)
 //
 REBVAL *Init_Near_For_Frame(Cell(*) out, Frame(*) f)
 {
-    REBLEN dsp_start = DSP;
+    StackIndex base = TOP_INDEX;
 
     if (FRM_IS_VARIADIC(f)) {
         //
@@ -153,7 +153,7 @@ REBVAL *Init_Near_For_Frame(Cell(*) out, Frame(*) f)
     }
     */
 
-    Array(*) near = Pop_Stack_Values_Core(dsp_start, NODE_FLAG_MANAGED);
+    Array(*) near = Pop_Stack_Values_Core(base, NODE_FLAG_MANAGED);
 
     // Simplify overly-deep blocks embedded in the where so they show (...)
     // instead of printing out fully.

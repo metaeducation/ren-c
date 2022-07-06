@@ -248,7 +248,7 @@ TVAR Feed(*) TG_End_Feed;
 
 //-- Evaluation stack:
 TVAR Array(*) DS_Array;
-TVAR REBDSP DS_Index;
+TVAR StackIndex DS_Index;
 TVAR REBVAL *DS_Movable_Top;
 TVAR Cell(const*) DS_Movable_Tail;
 

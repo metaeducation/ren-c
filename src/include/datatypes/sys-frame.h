@@ -176,10 +176,6 @@ inline static option(Symbol(const*)) FRM_LABEL(Frame(*) f) {
 }
 
 
-#define FRM_DSP_ORIG(f) \
-    ((f)->dsp_orig + 0) // prevent assignment via this macro
-
-
 #if (! CPLUSPLUS_11)
     #define FRM_STATE_BYTE(f) \
         mutable_SECOND_BYTE((f)->flags)
@@ -456,7 +452,7 @@ inline static void Drop_Frame(Frame(*) f)
         //
         ASSERT_STATE_BALANCED(&f->baseline);
       #else
-        assert(DSP == f->baseline.dsp);  // Cheaper check
+        assert(TOP_INDEX == f->baseline.stack_base);  // Cheaper check
       #endif
     }
 
@@ -490,10 +486,10 @@ inline static Frame(*) Prep_Frame_Core(
     TRASH_POINTER_IF_DEBUG(f->label_utf8);
   #endif
 
-    // !!! Previously only the DSP was captured in f->baseline.dsp, but then
-    // redundantly captured via a SNAP_STATE() in Push_Frame().  The
+    // !!! Previously just TOP_STACK was captured in f->baseline.stack_base,
+    // but then redundantly captured via a SNAP_STATE() in Push_Frame().  The
     // responsibilities of Prep_Frame() vs Push_Frame() aren't clearly laid
-    // out, but some clients do depend on the DSP being captured before
+    // out, but some clients do depend on the StackIndex being captured before
     // Push_Frame() is called, so this snaps the whole baseline here.
     //
     SNAP_STATE(&f->baseline);  // see notes on `baseline` in Reb_Frame

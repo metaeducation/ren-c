@@ -1727,13 +1727,13 @@ DECLARE_NATIVE(map)
 
     if (not Is_Stale(OUT)) {  // only modifies on break
         assert(Is_Nulled(OUT));  // BREAK, so *must* return null
-        Drop_Data_Stack_To(FRAME->baseline.dsp);
+        Drop_Data_Stack_To(FRAME->baseline.stack_base);
         return nullptr;
     }
 
     return Init_Block(  // always returns block unless break, see [3]
         OUT,
-        Pop_Stack_Values(FRAME->baseline.dsp)
+        Pop_Stack_Values(FRAME->baseline.stack_base)
     );
 }}
 

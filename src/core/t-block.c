@@ -292,7 +292,7 @@ Bounce MAKE_Array(
                 fail (Error_Null_Vararg_Array_Raw());
         }
 
-        REBDSP dsp_orig = DSP;
+        StackIndex base = TOP_INDEX;
 
         do {
             if (Do_Vararg_Op_Maybe_End_Throws(
@@ -300,7 +300,7 @@ Bounce MAKE_Array(
                 VARARG_OP_TAKE,
                 arg
             )){
-                Drop_Data_Stack_To(dsp_orig);
+                Drop_Data_Stack_To(base);
                 return BOUNCE_THROWN;
             }
 
@@ -310,14 +310,14 @@ Bounce MAKE_Array(
             Move_Cell(PUSH(), out);
         } while (true);
 
-        return Init_Array_Cell(out, kind, Pop_Stack_Values(dsp_orig));
+        return Init_Array_Cell(out, kind, Pop_Stack_Values(base));
     }
     else if (IS_ACTION(arg)) {
         //
         // !!! Experimental behavior; if action can run as arity-0, then
         // invoke it so long as it doesn't return null, collecting values.
         //
-        REBDSP dsp_orig = DSP;
+        StackIndex base = TOP_INDEX;
         while (true) {
             REBVAL *generated = rebValue(arg);
             if (not generated)
@@ -325,7 +325,7 @@ Bounce MAKE_Array(
             Copy_Cell(PUSH(), generated);
             rebRelease(generated);
         }
-        return Init_Array_Cell(out, kind, Pop_Stack_Values(dsp_orig));
+        return Init_Array_Cell(out, kind, Pop_Stack_Values(base));
     }
 
   bad_make:;
@@ -338,7 +338,7 @@ Bounce MAKE_Array(
 //
 Bounce TO_Array(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
     if (ANY_SEQUENCE(arg)) {
-        REBDSP dsp_orig = DSP;
+        StackIndex base = TOP_INDEX;
         REBLEN len = VAL_SEQUENCE_LEN(arg);
         REBLEN i;
         for (i = 0; i < len; ++i) {
@@ -348,7 +348,7 @@ Bounce TO_Array(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
                 VAL_SEQUENCE_SPECIFIER(arg)
             );
         }
-        return Init_Array_Cell(out, kind, Pop_Stack_Values(dsp_orig));
+        return Init_Array_Cell(out, kind, Pop_Stack_Values(base));
     }
     else if (ANY_ARRAY(arg)) {
         REBLEN len;

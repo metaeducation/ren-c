@@ -220,7 +220,7 @@ Bounce MAKE_Path(
 
     Push_Frame(out, f);
 
-    REBDSP dsp_orig = DSP;
+    StackIndex base = TOP_INDEX;
 
     while (Not_End(At_Feed(f->feed))) {
         if (Eval_Step_Throws(out, f)) {
@@ -235,12 +235,12 @@ Bounce MAKE_Path(
             fail (out);  // !!! BLANK! is legit in paths, should null opt out?
 
         Move_Cell(PUSH(), out);
-        f->baseline.dsp += 1;  // compensate for push
+        f->baseline.stack_base += 1;  // compensate for push
     }
 
-    REBVAL *p = Try_Pop_Sequence_Or_Element_Or_Nulled(out, kind, dsp_orig);
+    REBVAL *p = Try_Pop_Sequence_Or_Element_Or_Nulled(out, kind, base);
 
-    Drop_Frame_Unbalanced(f); // !!! f->baseline.dsp got captured each loop
+    Drop_Frame_Unbalanced(f); // !!! f's stack_base got captured each loop
 
     if (not p)
         fail (Error_Bad_Sequence_Init(out));

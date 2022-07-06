@@ -34,7 +34,7 @@
 //
 void Snap_State_Core(struct Reb_State *s)
 {
-    s->dsp = DSP;
+    s->stack_base = TOP_INDEX;
 
     s->guarded_len = SER_USED(GC_Guarded);
 
@@ -56,7 +56,7 @@ void Snap_State_Core(struct Reb_State *s)
 //
 void Rollback_Globals_To_State(struct Reb_State *s)
 {
-    Drop_Data_Stack_To(s->dsp);
+    Drop_Data_Stack_To(s->stack_base);
 
     // Free any manual series that were extant (e.g. Make_Series() nodes
     // which weren't created with NODE_FLAG_MANAGED and were not transitioned
@@ -103,10 +103,10 @@ void Assert_State_Balanced_Debug(
     const char *file,
     int line
 ){
-    if (s->dsp != DSP) {
+    if (s->stack_base != TOP_INDEX) {
         printf(
             "PUSH()x%d without DROP()\n",
-            cast(int, DSP - s->dsp)
+            cast(int, TOP_INDEX - s->stack_base)
         );
         panic_at (nullptr, file, line);
     }
@@ -444,7 +444,7 @@ void Set_Location_Of_Error(
     while (Get_Frame_Flag(where, BLAME_PARENT))  // e.g. Apply_Only_Throws()
         where = where->prior;
 
-    REBDSP dsp_orig = DSP;
+    StackIndex base = TOP_INDEX;
 
     ERROR_VARS *vars = ERR_VARS(error);
 
@@ -470,7 +470,7 @@ void Set_Location_Of_Error(
         if (Is_Nulled(TOP))
             Init_Blank(TOP);
     }
-    Init_Block(&vars->where, Pop_Stack_Values(dsp_orig));
+    Init_Block(&vars->where, Pop_Stack_Values(base));
 
     // Nearby location of the error.  Reify any valist that is running,
     // so that the error has an array to present.

@@ -179,7 +179,7 @@ Bounce Combinator_Dispatcher(Frame(*) f)
 //
 Array(*) Expanded_Combinator_Spec(const REBVAL *original)
 {
-    REBDSP dsp_orig = DSP;
+    StackIndex base = TOP_INDEX;
 
     Cell(const*) tail;
     Cell(const*) item = VAL_ARRAY_AT(&tail, original);
@@ -226,7 +226,7 @@ Array(*) Expanded_Combinator_Spec(const REBVAL *original)
     // Lib_Context initially.  Hack around the issue by repeating that binding
     // on the product.
     //
-    Array(*) expanded = Pop_Stack_Values(dsp_orig);
+    Array(*) expanded = Pop_Stack_Values(base);
     Bind_Values_Deep(ARR_HEAD(expanded), ARR_TAIL(expanded), Lib_Context_Value);
 
     return expanded;
@@ -314,7 +314,7 @@ void Push_Parser_Subframe(
     assert(ANY_SERIES(input));
     assert(IS_ACTION(parser));
 
-    Context(*) ctx = Make_Context_For_Action(parser, DSP, nullptr);
+    Context(*) ctx = Make_Context_For_Action(parser, TOP_INDEX, nullptr);
 
     const REBKEY* remainder_key = CTX_KEY(ctx, IDX_COMBINATOR_PARAM_REMAINDER);
     const REBKEY* input_key = CTX_KEY(ctx, IDX_COMBINATOR_PARAM_INPUT);
@@ -791,7 +791,7 @@ DECLARE_NATIVE(combinatorize)
         fail ("PATH! mechanics in COMBINATORIZE not supported ATM");
 
     struct Combinator_Param_State s;
-    s.ctx = Make_Context_For_Action(ARG(c), DSP, nullptr);
+    s.ctx = Make_Context_For_Action(ARG(c), TOP_INDEX, nullptr);
     s.frame_ = frame_;
 
     PUSH_GC_GUARD(s.ctx);  // Combinator_Param_Hook may call evaluator

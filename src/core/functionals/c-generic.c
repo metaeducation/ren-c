@@ -177,7 +177,7 @@ Array(*) Startup_Generics(const REBVAL *boot_generics)
     if (0 != strcmp("open", STR_UTF8(Canon(OPEN))))
         panic (Canon(OPEN));
 
-    REBDSP dsp_orig = DSP;
+    StackIndex base = TOP_INDEX;
 
     Cell(*) item = head;
     for (; item != tail; ++item)
@@ -186,5 +186,5 @@ Array(*) Startup_Generics(const REBVAL *boot_generics)
             mutable_HEART_BYTE(TOP) = REB_WORD; // change pushed to WORD!
         }
 
-    return Pop_Stack_Values(dsp_orig); // catalog of generics
+    return Pop_Stack_Values(base);  // catalog of generics
 }

@@ -142,5 +142,5 @@ struct Reb_Eval_Executor_State {
 
     char enfix_reevaluate;  // either 'Y' or 'N' (catches bugs)
 
-    REBDSP dsp_circled;  // used only by multi-return
+    StackIndex stackindex_circled;  // used only by multi-return
 };

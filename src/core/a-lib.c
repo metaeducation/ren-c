@@ -1017,7 +1017,7 @@ REBVAL *RL_rebTranscodeInto(
     );
     Sync_Feed_At_Cell_Or_End_May_Fail(feed);
 
-    REBDSP dsp_orig = DSP;
+    StackIndex base = TOP_INDEX;
     while (Not_End(At_Feed(feed))) {
         Derelativize(PUSH(), At_Feed(feed), FEED_SPECIFIER(feed));
         Set_Cell_Flag(TOP, UNEVALUATED);
@@ -1028,7 +1028,7 @@ REBVAL *RL_rebTranscodeInto(
 
     return Init_Block(
         out,
-        Pop_Stack_Values_Core(dsp_orig, SERIES_FLAG_MANAGED)
+        Pop_Stack_Values_Core(base, SERIES_FLAG_MANAGED)
     );
 }
 

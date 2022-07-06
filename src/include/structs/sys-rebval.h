@@ -254,7 +254,7 @@
 //
 // * STACK_NOTE_CIRCLED - When doing multi-returns, this marks which stack
 //   element representing a return slot should act as the main return value.
-//   (It could be done with a DSP position, but this thinks ahead to stackless,
+//   (It could be done with a StackIndex, but this thinks ahead to stackless,
 //   so storing in the data stack makes it survive the evaluation.)
 //
 

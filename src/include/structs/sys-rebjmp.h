@@ -42,10 +42,10 @@
 //
 //     g: generator [yield reduce [yield "a" yield "b"]]
 //
-//     >> g  ; imagine DSP is 0 here
+//     >> g  ; imagine TOP_INDEX is 0 here
 //     == "a"
 //
-//     >> reduce [g g]  ; REDUCE changes the DSP as it accrues values
+//     >> reduce [g g]  ; REDUCE changes the TOP_INDEX as it accrues values
 //     == ["b" ["a" "b"]]
 //
 // The REDUCE inside the generator and outside the generator both need to
@@ -67,7 +67,7 @@
 //
 
 struct Reb_State {
-    REBDSP dsp;
+    StackIndex stack_base;
     REBLEN guarded_len;
 
     REBLEN manuals_len; // Where GC_Manuals was when state started
@@ -91,7 +91,7 @@ struct Reb_State {
 // !!! This is a macro because it may be that since snapping the state is
 // done on every frame push, that code should be in the header so it could
 // get inlined.  However, header dependencies currently put definitions like
-// DSP and MOLD_BUF later.  Review if it's worth it to break this out
+// TOP_INDEX and MOLD_BUF later.  Review if it's worth it to break this out
 // in a different way.
 //
 #define SNAP_STATE(s) \

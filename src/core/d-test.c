@@ -55,7 +55,7 @@ DECLARE_NATIVE(test_librebol)
         )
     );
   #else
-    REBDSP dsp_orig = DSP;
+    StackIndex base = TOP_INDEX;
 
   // !!! NOTICE: We are pushing values to the data stack, but we can't hold
   // a pointer to the stack via PUSH() on the same line as doing an API
@@ -103,7 +103,7 @@ DECLARE_NATIVE(test_librebol)
     Init_Logic(PUSH(), is_null);
   }
 
-    return Init_Block(OUT, Pop_Stack_Values(dsp_orig));
+    return Init_Block(OUT, Pop_Stack_Values(base));
   #endif
 }
 

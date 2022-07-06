@@ -67,7 +67,7 @@ void Startup_Data_Stack(REBLEN capacity)
 //
 void Shutdown_Data_Stack(void)
 {
-    assert(DSP == 0);
+    assert(TOP_INDEX == 0);
     assert(IS_TRASH(ARR_HEAD(DS_Array)));
 
     Free_Unmanaged_Series(DS_Array);
@@ -253,7 +253,7 @@ Context(*) Get_Context_From_Stack(void)
 //
 // WARNING: This will invalidate any extant pointers to REBVALs living in
 // the stack.  It is for this reason that stack access should be done by
-// REBDSP "data stack pointers" and not by REBVAL* across *any* operation
+// StackIndex "data stack indices" and not by REBVAL* across *any* operation
 // which could do a push or pop.  (Currently stable w.r.t. pop but there may
 // be compaction at some point.)
 //
@@ -323,15 +323,15 @@ void Expand_Data_Stack_May_Fail(REBLEN amount)
 //
 // !!! How can we pass in callsite file/line for tracking info?
 //
-Array(*) Pop_Stack_Values_Core(REBDSP dsp_start, Flags flags)
+Array(*) Pop_Stack_Values_Core(StackIndex base, Flags flags)
 {
     ASSERT_NO_DATA_STACK_POINTERS_EXTANT();  // in the future, pop may disrupt
 
-    REBLEN len = DSP - dsp_start;
+    Length len = TOP_INDEX - base;
     Array(*) a = Make_Array_Core(len, flags);
 
-    REBLEN count = 0;
-    REBVAL *src = Data_Stack_At(dsp_start + 1);  // not const, will be RESET()
+    Count count = 0;
+    Value(*) src = Data_Stack_At(base + 1);  // not const, will be RESET()
     Cell(*) dest = ARR_HEAD(a);
     for (; count < len; ++count, ++src, ++dest) {
         if (

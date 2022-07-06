@@ -164,7 +164,7 @@ Bounce Dir_Actor(Frame(*) frame_, REBVAL *port, Symbol(const*) verb)
         if (REF(part) or REF(seek) or REF(string) or REF(lines))
             fail (Error_Bad_Refines_Raw());
 
-        REBDSP dsp_orig = DSP;
+        StackIndex base = TOP_INDEX;
         while (true) {
             REBVAL *result = Try_Read_Directory_Entry(dir);
             if (result == nullptr)
@@ -181,7 +181,7 @@ Bounce Dir_Actor(Frame(*) frame_, REBVAL *port, Symbol(const*) verb)
             rebRelease(result);
         }
 
-        Init_Block(OUT, Pop_Stack_Values(dsp_orig));
+        Init_Block(OUT, Pop_Stack_Values(base));
         return OUT; }
 
     //=//// CREATE /////////////////////////////////////////////////////////=//

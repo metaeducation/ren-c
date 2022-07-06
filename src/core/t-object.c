@@ -98,7 +98,7 @@ static void Append_To_Context(REBVAL *context, REBVAL *arg)
     REBLEN num_added = Collector_Index_If_Pushed(&collector) - first_new_index;
     Expand_Context(c, num_added);
 
-    StackValue(*) new_word = Data_Stack_At(collector.dsp_orig) + first_new_index;
+    StackValue(*) new_word = Data_Stack_At(collector.stack_base) + first_new_index;
     for (; new_word != TOP + 1; ++new_word)
         Init_None(Append_Context(c, nullptr, VAL_WORD_SYMBOL(new_word)));
   }
@@ -240,7 +240,7 @@ void Init_Evars(EVARS *e, noquote(Cell(const*)) v) {
 
         e->ctx = VAL_CONTEXT(v);
 
-        REBDSP dsp_orig = DSP;
+        StackIndex base = TOP_INDEX;
 
         Symbol(*) *psym = SER_HEAD(Symbol(*), PG_Symbols_By_Hash);
         Symbol(*) *psym_tail = SER_TAIL(Symbol(*), PG_Symbols_By_Hash);
@@ -269,7 +269,7 @@ void Init_Evars(EVARS *e, noquote(Cell(const*)) v) {
             }
         }
 
-        e->wordlist = Pop_Stack_Values_Core(dsp_orig, SERIES_FLAG_MANAGED);
+        e->wordlist = Pop_Stack_Values_Core(base, SERIES_FLAG_MANAGED);
         CLEAR_SERIES_FLAG(e->wordlist, MANAGED);  // see [1]
 
         e->word = cast(REBVAL*, ARR_HEAD(e->wordlist)) - 1;
@@ -555,14 +555,14 @@ Bounce MAKE_Frame(
         return out;
     }
 
-    REBDSP lowest_ordered_dsp = DSP;  // Data stack gathers any refinements
+    StackIndex lowest_ordered_stackindex = TOP_INDEX;  // for refinements
 
     if (not IS_ACTION(arg))
         fail (Error_Bad_Make(kind, arg));
 
     Context(*) exemplar = Make_Context_For_Action(
         arg, // being used here as input (e.g. the ACTION!)
-        lowest_ordered_dsp, // will weave in any refinements pushed
+        lowest_ordered_stackindex, // will weave in any refinements pushed
         nullptr // no binder needed, not running any code
     );
 

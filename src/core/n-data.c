@@ -597,7 +597,7 @@ bool Get_Var_Push_Refinements_Throws(
         return threw;
     }
 
-    REBDSP dsp_orig = DSP;
+    StackIndex base = TOP_INDEX;
 
     if (ANY_SEQUENCE(var)) {
         if (Not_Cell_Flag(var, SEQUENCE_HAS_NODE))  // byte compressed
@@ -638,7 +638,7 @@ bool Get_Var_Push_Refinements_Throws(
                     fail (Error_Bad_Get_Group_Raw(var));
 
                 if (Do_Any_Array_At_Throws(out, at, at_specifier)) {
-                    Drop_Data_Stack_To(dsp_orig);
+                    Drop_Data_Stack_To(base);
                     return true;
                 }
                 Move_Cell(PUSH(), out);
@@ -667,10 +667,10 @@ bool Get_Var_Push_Refinements_Throws(
     else
         fail (var);
 
-    REBDSP dsp_at = dsp_orig + 1;
+    StackIndex stackindex = base + 1;
 
   blockscope {
-    StackValue(*) at = Data_Stack_At(dsp_at);
+    StackValue(*) at = Data_Stack_At(stackindex);
     if (IS_QUOTED(at)) {
         Copy_Cell(out, at);
         Unquotify(out, 1);
@@ -686,32 +686,34 @@ bool Get_Var_Push_Refinements_Throws(
     else
         fail (Copy_Cell(out, at));
   }
-    ++dsp_at;
+    ++stackindex;
 
     DECLARE_LOCAL (temp);
     PUSH_GC_GUARD(temp);
 
-    while (dsp_at != DSP + 1) {
+    while (stackindex != TOP_INDEX + 1) {
         Move_Cell(temp, out);
         Quotify(temp, 1);
-        const void *ins = rebQ(cast(REBVAL*, Data_Stack_At(dsp_at)));
+        const void *ins = rebQ(cast(REBVAL*, Data_Stack_At(stackindex)));
         if (rebRunThrows(
             out,  // <-- output cell
             Lib(PICK_P), temp, ins
         )){
-            Drop_Data_Stack_To(dsp_orig);
+            Drop_Data_Stack_To(base);
             DROP_GC_GUARD(temp);
             fail (Error_No_Catch_For_Throw(TOP_FRAME));
         }
-        ++dsp_at;
+        ++stackindex;
     }
 
     DROP_GC_GUARD(temp);
 
-    if (steps_out and steps_out != GROUPS_OK)
-        Init_Array_Cell(unwrap(steps_out), REB_THE_BLOCK, Pop_Stack_Values(dsp_orig));
+    if (steps_out and steps_out != GROUPS_OK) {
+        Array(*) a = Pop_Stack_Values(base);
+        Init_Array_Cell(unwrap(steps_out), REB_THE_BLOCK, a);
+    }
     else
-        Drop_Data_Stack_To(dsp_orig);
+        Drop_Data_Stack_To(base);
 
     Decay_If_Isotope(out);  // !!! should not be possible, review
     return false;
@@ -727,11 +729,11 @@ bool Get_Var_Core_Throws(
     Cell(const*) var,
     REBSPC *var_specifier
 ){
-    REBDSP dsp_orig = DSP;
+    StackIndex base = TOP_INDEX;
     bool threw = Get_Var_Push_Refinements_Throws(
         out, steps_out, var, var_specifier
     );
-    if (DSP != dsp_orig) {
+    if (TOP_INDEX != base) {
         assert(IS_ACTION(out) and not threw);
         //
         // !!! Note: passing EMPTY_BLOCK here for the def causes problems;
@@ -739,7 +741,7 @@ bool Get_Var_Core_Throws(
         //
         DECLARE_LOCAL (action);
         Move_Cell(action, out);
-        return Specialize_Action_Throws(out, action, nullptr, dsp_orig);
+        return Specialize_Action_Throws(out, action, nullptr, base);
     }
     return threw;
 }
@@ -1087,7 +1089,7 @@ bool Set_Var_Core_Updater_Throws(
         return false;  // did not throw
     }
 
-    REBDSP dsp_orig = DSP;
+    StackIndex base = TOP_INDEX;
 
     // If we have a sequence, then GROUP!s must be evaluated.  (If we're given
     // a steps array as input, then a GROUP! is literally meant as a
@@ -1133,7 +1135,7 @@ bool Set_Var_Core_Updater_Throws(
                     fail (Error_Bad_Get_Group_Raw(var));
 
                 if (Do_Any_Array_At_Throws(temp, at, at_specifier)) {
-                    Drop_Data_Stack_To(dsp_orig);
+                    Drop_Data_Stack_To(base);
                     return true;
                 }
                 Move_Cell(PUSH(), temp);
@@ -1168,14 +1170,14 @@ bool Set_Var_Core_Updater_Throws(
 
     PUSH_GC_GUARD(temp);
 
-    REBDSP dsp_top = DSP;
+    StackIndex stackindex_top = TOP_INDEX;
 
   poke_again:
   blockscope {
-    REBDSP dsp_at = dsp_orig + 1;
+    StackIndex stackindex = base + 1;
 
   blockscope {
-    StackValue(*) at = Data_Stack_At(dsp_at);
+    StackValue(*) at = Data_Stack_At(stackindex);
     if (IS_QUOTED(at)) {
         Copy_Cell(out, at);
         Unquotify(out, 1);
@@ -1192,14 +1194,14 @@ bool Set_Var_Core_Updater_Throws(
         fail (Copy_Cell(out, at));
   }
 
-    ++dsp_at;
+    ++stackindex;
 
     // Keep PICK-ing until you come to the last step.
 
-    while (dsp_at != dsp_top) {
+    while (stackindex != stackindex_top) {
         Move_Cell(temp, out);
         Quotify(temp, 1);
-        const void *ins = rebQ(cast(REBVAL*, Data_Stack_At(dsp_at)));
+        const void *ins = rebQ(cast(REBVAL*, Data_Stack_At(stackindex)));
         if (rebRunThrows(
             out,  // <-- output cell
             Lib(PICK_P), temp, ins
@@ -1208,14 +1210,14 @@ bool Set_Var_Core_Updater_Throws(
             DROP_GC_GUARD(writeback);
             fail (Error_No_Catch_For_Throw(TOP_FRAME));  // don't let PICKs throw
         }
-        ++dsp_at;
+        ++stackindex;
     }
 
     // Now do a the final step, an update (often a poke)
 
     Move_Cell(temp, out);
     Quotify(temp, 1);
-    const void *ins = rebQ(cast(REBVAL*, Data_Stack_At(dsp_at)));
+    const void *ins = rebQ(cast(REBVAL*, Data_Stack_At(stackindex)));
     if (rebRunThrows(
         out,  // <-- output cell
         updater, temp, ins, rebQ(decayed)
@@ -1233,17 +1235,17 @@ bool Set_Var_Core_Updater_Throws(
         Move_Cell(writeback, out);
         decayed = writeback;  // e.g. decayed setval
 
-        --dsp_top;
+        --stackindex_top;
 
-        if (dsp_top != dsp_orig + 1)
+        if (stackindex_top != base + 1)
             goto poke_again;
 
         // can't use POKE, need to use SET
-        if (not IS_WORD(Data_Stack_At(dsp_orig + 1)))
+        if (not IS_WORD(Data_Stack_At(base + 1)))
             fail ("Can't POKE back immediate value unless it's to a WORD!");
 
         Copy_Cell(
-            Sink_Word_May_Fail(Data_Stack_At(dsp_orig + 1), SPECIFIED),
+            Sink_Word_May_Fail(Data_Stack_At(base + 1), SPECIFIED),
             decayed
         );
     }
@@ -1253,9 +1255,9 @@ bool Set_Var_Core_Updater_Throws(
     DROP_GC_GUARD(writeback);
 
     if (steps_out and steps_out != GROUPS_OK)
-        Init_Block(unwrap(steps_out), Pop_Stack_Values(dsp_orig));
+        Init_Block(unwrap(steps_out), Pop_Stack_Values(base));
     else
-        Drop_Data_Stack_To(dsp_orig);
+        Drop_Data_Stack_To(base);
 
     return false;
 }

@@ -214,7 +214,7 @@ Bounce Evaluator_Executor(Frame(*) f)
     if (THROWING)
         return THROWN;  // no state to clean up
 
-    assert(DSP >= f->baseline.dsp);  // REDUCE accrues, APPLY adds refinements
+    assert(TOP_INDEX >= BASELINE->stack_base);  // e.g. REDUCE accrues
     assert(INITABLE(OUT));  // all invisible will preserve output
     assert(OUT != SPARE);  // overwritten by temporary calculations
 
@@ -1268,7 +1268,7 @@ Bounce Evaluator_Executor(Frame(*) f)
         if (VAL_LEN_AT(f_current) == 0)
             fail ("SET-BLOCK! must not be empty for now.");
 
-        REBDSP dsp_circled = 0;  // which pushed address is main return
+        StackIndex stackindex_circled = 0;  // which pushed is main return
 
       blockscope {
         Cell(const*) tail;
@@ -1284,14 +1284,14 @@ Bounce Evaluator_Executor(Frame(*) f)
             // to that and make the decision, so handle it up front.
             //
             if (IS_THE(check)) {
-                if (dsp_circled != 0) {
+                if (stackindex_circled != 0) {
                   too_many_circled:
                     fail ("Can't circle more than one multi-return result");
                 }
                 REBVAL *let = rebValue("let temp");  // have to fabricate var
                 Move_Cell(PUSH(), let);
                 rebRelease(let);
-                dsp_circled = DSP;
+                stackindex_circled = TOP_INDEX;
                 continue;
             }
             if (
@@ -1299,11 +1299,11 @@ Bounce Evaluator_Executor(Frame(*) f)
                 or IS_THE_PATH(check)
                 or IS_THE_TUPLE(check)
             ){
-                if (dsp_circled != 0)
+                if (stackindex_circled != 0)
                     goto too_many_circled;
                 Derelativize(PUSH(), check, check_specifier);
                 Plainify(TOP);
-                dsp_circled = DSP;
+                stackindex_circled = TOP_INDEX;
                 continue;
             }
 
@@ -1339,7 +1339,7 @@ Bounce Evaluator_Executor(Frame(*) f)
                 or IS_META_GROUP(check)
             ){
                 if (Do_Any_Array_At_Throws(SPARE, check, check_specifier)) {
-                    Drop_Data_Stack_To(f->baseline.dsp);
+                    Drop_Data_Stack_To(BASELINE->stack_base);
                     goto return_thrown;
                 }
                 item = SPARE;
@@ -1359,7 +1359,7 @@ Bounce Evaluator_Executor(Frame(*) f)
                 // a variable location to write the result to.  For now, just
                 // fabricate a LET variable.
                 //
-                if (DSP == f->baseline.dsp or not IS_THE_GROUP(check))
+                if (TOP_INDEX == BASELINE->stack_base or not IS_THE_GROUP(check))
                     Init_Blackhole(PUSH());
                 else {
                     REBVAL *let = rebValue("let temp");
@@ -1379,7 +1379,7 @@ Bounce Evaluator_Executor(Frame(*) f)
                 fail ("SET-BLOCK! elements are WORD/PATH/TUPLE/BLANK/ISSUE");
 
             if (IS_THE_GROUP(check))
-                dsp_circled = DSP;
+                stackindex_circled = TOP_INDEX;
             else if (IS_META_GROUP(check))
                 Set_Cell_Flag(TOP, STACK_NOTE_METARETURN);
         }
@@ -1389,8 +1389,8 @@ Bounce Evaluator_Executor(Frame(*) f)
         // to set it to nonzero in the case of `[@ ...]: ...` to give an error
         // if more than one return were circled.)
         //
-        if (dsp_circled == f->baseline.dsp + 1)
-            dsp_circled = 0;
+        if (stackindex_circled == BASELINE->stack_base + 1)
+            stackindex_circled = 0;
      }
 
         // Build a frame for the function call by fulfilling its arguments.
@@ -1407,7 +1407,7 @@ Bounce Evaluator_Executor(Frame(*) f)
             f->feed,
             error_on_deferred
         )){
-            Drop_Data_Stack_To(f->baseline.dsp);
+            Drop_Data_Stack_To(BASELINE->stack_base);
             goto return_thrown;
         }
         if (not IS_FRAME(SPARE))  // can return QUOTED! if not action atm
@@ -1417,7 +1417,7 @@ Bounce Evaluator_Executor(Frame(*) f)
         // words/paths/_/# from the data stack.  Note the first slot is set
         // from the "primary" output so it doesn't go in a slot.
         //
-        REBDSP dsp_output = f->baseline.dsp + 2;
+        StackIndex stackindex_output = BASELINE->stack_base + 2;
 
       blockscope {
         Context(*) c = VAL_CONTEXT(SPARE);
@@ -1426,17 +1426,17 @@ Bounce Evaluator_Executor(Frame(*) f)
         REBVAR *var = CTX_VARS_HEAD(c);
         const REBPAR *param = ACT_PARAMS_HEAD(CTX_FRAME_ACTION(c));
         for (; key != key_tail; ++key, ++var, ++param) {
-            if (dsp_output == DSP + 1)
+            if (stackindex_output == TOP_INDEX + 1)
                 break;  // no more outputs requested
             if (Is_Specialized(param))
                 continue;
             if (VAL_PARAM_CLASS(param) != PARAM_CLASS_OUTPUT)
                 continue;
-            if (not IS_BLANK(Data_Stack_At(dsp_output))) {
-                Copy_Cell(var, Data_Stack_At(dsp_output));
+            if (not IS_BLANK(Data_Stack_At(stackindex_output))) {
+                Copy_Cell(var, Data_Stack_At(stackindex_output));
                 Set_Var_May_Fail(var, SPECIFIED, NONE_ISOTOPE);
             }
-            ++dsp_output;
+            ++stackindex_output;
         }
       }
 
@@ -1444,7 +1444,7 @@ Bounce Evaluator_Executor(Frame(*) f)
         // an assignment)
         //
         STATE = ST_EVALUATOR_SET_BLOCK_RIGHTSIDE;
-        frame_->u.eval.dsp_circled = dsp_circled;
+        frame_->u.eval.stackindex_circled = stackindex_circled;
         return CONTINUE(OUT, SPARE, END);
 
     } set_block_rightside_result_in_out: {  //////////////////////////////////
@@ -1491,7 +1491,7 @@ Bounce Evaluator_Executor(Frame(*) f)
 
     } set_block_lookahead_result_in_out: {  //////////////////////////////////
 
-        REBDSP dsp_circled = frame_->u.eval.dsp_circled;
+        StackIndex stackindex_circled = frame_->u.eval.stackindex_circled;
 
         // Take care of the SET for the main result.  For the moment, if you
         // asked to opt out of the main result this will give you a ~blank~
@@ -1508,12 +1508,12 @@ Bounce Evaluator_Executor(Frame(*) f)
         // in case there are GROUP! evaluations in the assignment; though that
         // needs more thinking (e.g. what if they throw?)
         //
-        Copy_Cell(SPARE, Data_Stack_At(f->baseline.dsp + 1));
+        Copy_Cell(SPARE, Data_Stack_At(BASELINE->stack_base + 1));
         if (IS_BLANK(SPARE))
             Init_Isotope(OUT, Canon(BLANK));
         else {
             if (Get_Cell_Flag(
-                Data_Stack_At(f->baseline.dsp + 1),
+                Data_Stack_At(BASELINE->stack_base + 1),
                 STACK_NOTE_METARETURN)
             ){
                 Reify_Eval_Out_Meta(OUT);
@@ -1539,34 +1539,34 @@ Bounce Evaluator_Executor(Frame(*) f)
         // original marked with meta, then meta them.  And if a return element
         // was "circled" then it becomes the overall return.
         //
-        REBDSP dsp = DSP;
-        for (; dsp != f->baseline.dsp + 1; --dsp) {
+        StackIndex stackindex = TOP_INDEX;
+        for (; stackindex != BASELINE->stack_base + 1; --stackindex) {
             if (
-                Get_Cell_Flag(Data_Stack_At(dsp), STACK_NOTE_METARETURN)
-                or dsp_circled == dsp
+                Get_Cell_Flag(Data_Stack_At(stackindex), STACK_NOTE_METARETURN)
+                or stackindex_circled == stackindex
             ){
                 DECLARE_LOCAL (temp);
                 PUSH_GC_GUARD(temp);
-                Copy_Cell(SPARE, Data_Stack_At(dsp));  // see GROUP! eval note
+                Copy_Cell(SPARE, Data_Stack_At(stackindex));  // see GROUP! note
                 Get_Var_May_Fail(
                     temp,
                     SPARE,
                     SPECIFIED,
                     true  // any
                 );
-                if (Get_Cell_Flag(Data_Stack_At(dsp), STACK_NOTE_METARETURN))
+                if (Get_Cell_Flag(Data_Stack_At(stackindex), STACK_NOTE_METARETURN))
                     Meta_Quotify(temp);
                 Set_Var_May_Fail(
                     SPARE, SPECIFIED,
                     temp
                 );
-                if (dsp_circled == dsp)
+                if (stackindex_circled == stackindex)
                     Move_Cell(OUT, temp);
                 DROP_GC_GUARD(temp);
             }
         }
 
-        Drop_Data_Stack_To(f->baseline.dsp);
+        Drop_Data_Stack_To(BASELINE->stack_base);
 
         // We've just changed the values of variables, and these variables
         // might be coming up next.  Consider:

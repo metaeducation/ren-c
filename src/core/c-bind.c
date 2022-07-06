@@ -478,7 +478,7 @@ DECLARE_NATIVE(let)
         Cell(const*) item = VAL_ARRAY_AT(&tail, vars);
         REBSPC *item_specifier = VAL_SPECIFIER(vars);
 
-        REBDSP dsp_orig = DSP;
+        StackIndex base = TOP_INDEX;
 
         bool altered = false;
 
@@ -533,11 +533,11 @@ DECLARE_NATIVE(let)
             Init_Array_Cell(
                 where,  // may be SPARE, and vars may point to it
                 VAL_TYPE(vars),
-                Pop_Stack_Values_Core(dsp_orig, NODE_FLAG_MANAGED)
+                Pop_Stack_Values_Core(base, NODE_FLAG_MANAGED)
             );
         }
         else {
-            Drop_Data_Stack_To(dsp_orig);
+            Drop_Data_Stack_To(base);
 
             if (vars != where)
                 Copy_Cell(where, vars);  // Move_Cell() of ARG() not allowed

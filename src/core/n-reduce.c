@@ -149,7 +149,7 @@ DECLARE_NATIVE(reduce)
         return FAIL(Error_Bad_Isotope(OUT));
 
     Move_Cell(PUSH(), OUT);
-    SUBFRAME->baseline.dsp += 1;  // subframe must be adjusted, see [3]
+    SUBFRAME->baseline.stack_base += 1;  // subframe must be adjusted, see [3]
 
     if (Get_Cell_Flag(v, NEWLINE_BEFORE))  // propagate cached newline, see [2]
         Set_Cell_Flag(TOP, NEWLINE_BEFORE);
@@ -167,7 +167,7 @@ DECLARE_NATIVE(reduce)
     return Init_Array_Cell(
         OUT,
         VAL_TYPE(v),
-        Pop_Stack_Values_Core(FRAME->baseline.dsp, pop_flags)
+        Pop_Stack_Values_Core(FRAME->baseline.stack_base, pop_flags)
     );
 }}
 
@@ -382,7 +382,7 @@ static Value(*) Finalize_Composer_Frame(
     Cell(const*) composee  // special handling if the output kind is a sequence
 ){
     if (Is_Failure(out)) {
-        Drop_Data_Stack_To(composer_frame->baseline.dsp);
+        Drop_Data_Stack_To(composer_frame->baseline.stack_base);
         return out;
     }
 
@@ -393,7 +393,7 @@ static Value(*) Finalize_Composer_Frame(
         if (not Try_Pop_Sequence_Or_Element_Or_Nulled(
             out,
             CELL_HEART(composee),
-            composer_frame->baseline.dsp
+            composer_frame->baseline.stack_base
         )){
             if (Is_Valid_Sequence_Element(heart, out))
                 fail (Error_Cant_Decorate_Type_Raw(out));  // no `3:`, see [1]
@@ -411,7 +411,7 @@ static Value(*) Finalize_Composer_Frame(
     Init_Array_Cell(
         out,
         heart,
-        Pop_Stack_Values_Core(composer_frame->baseline.dsp, flags)
+        Pop_Stack_Values_Core(composer_frame->baseline.stack_base, flags)
     );
 
     return Quotify(out, quotes);
@@ -465,7 +465,7 @@ static Value(*) Finalize_Composer_Frame(
 //
 // 5. At the end of the composer, we do not Drop_Data_Stack_To() and the frame
 //    will still be alive for the caller.  This lets them have access to this
-//    frame's BASELINE->dsp, so it knows how many items were pushed...and it
+//    frame's BASELINE->stack_base, so it knows what all was pushed...and it
 //    also means the caller can decide if they want the accrued items or not
 //    depending on the `changed` field in the frame.
 //
@@ -738,7 +738,7 @@ Bounce Composer_Executor(Frame(*) f)
     // The compose stack of the nested compose is relative to *its* baseline.
 
     if (Is_Failure(OUT)) {
-        Drop_Data_Stack_To(SUBFRAME->baseline.dsp);
+        Drop_Data_Stack_To(SUBFRAME->baseline.stack_base);
         Drop_Frame(SUBFRAME);
         return OUT;
     }
@@ -751,7 +751,7 @@ Bounce Composer_Executor(Frame(*) f)
         // arrays that don't have some substitution under them.  This
         // may be controlled by a switch if it turns out to be needed.
         //
-        Drop_Data_Stack_To(SUBFRAME->baseline.dsp);
+        Drop_Data_Stack_To(SUBFRAME->baseline.stack_base);
         Drop_Frame(SUBFRAME);
 
         Derelativize(PUSH(), At_Frame(f), f_specifier);
@@ -893,7 +893,7 @@ DECLARE_NATIVE(flatten)
 {
     INCLUDE_PARAMS_OF_FLATTEN;
 
-    REBDSP dsp_orig = DSP;
+    StackIndex base = TOP_INDEX;
 
     Cell(const*) tail;
     Cell(*) at = VAL_ARRAY_AT_ENSURE_MUTABLE(&tail, ARG(block));
@@ -904,5 +904,5 @@ DECLARE_NATIVE(flatten)
         REF(deep) ? FLATTEN_DEEP : FLATTEN_ONCE
     );
 
-    return Init_Block(OUT, Pop_Stack_Values(dsp_orig));
+    return Init_Block(OUT, Pop_Stack_Values(base));
 }

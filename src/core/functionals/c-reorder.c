@@ -134,7 +134,7 @@ DECLARE_NATIVE(reorder_p)  // see REORDER in %base-defs.r, for inheriting meta
     //
     option(Context(*)) error = nullptr;
 
-    REBDSP dsp_orig = DSP;
+    StackIndex base = TOP_INDEX;
 
     // We proceed through the array, and remove the binder indices as we go.
     // This lets us check for double uses or use of words that aren't in the
@@ -228,7 +228,7 @@ DECLARE_NATIVE(reorder_p)  // see REORDER in %base-defs.r, for inheriting meta
         fail (unwrap(error));
 
     Array(*) partials = Pop_Stack_Values_Core(
-        dsp_orig,
+        base,
         SERIES_FLAG_MANAGED | SERIES_MASK_PARTIALS
     );
 

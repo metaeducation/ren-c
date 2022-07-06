@@ -93,9 +93,9 @@ Array(*) Make_Action_Parameters_Arr(Action(*) act, bool just_words)
     struct Params_Of_State s;
     s.just_words = just_words;
 
-    REBDSP dsp_orig = DSP;
+    StackIndex base = TOP_INDEX;
     For_Each_Unspecialized_Param(act, &Params_Of_Hook, &s);
-    return Pop_Stack_Values(dsp_orig);
+    return Pop_Stack_Values(base);
 }
 
 
@@ -126,7 +126,7 @@ enum Reb_Spec_Mode {
 void Push_Paramlist_Triads_May_Fail(
     const REBVAL *spec,
     Flags *flags,
-    REBDSP *definitional_return_dsp
+    StackIndex *return_stackindex
 ){
     assert(IS_BLOCK(spec));
 
@@ -152,19 +152,19 @@ void Push_Paramlist_Triads_May_Fail(
             if (mode == SPEC_MODE_WITH)
                 continue;
 
-            StackValue(*) notes = NOTES_SLOT(DSP);
+            StackValue(*) notes = NOTES_SLOT(TOP_INDEX);
             assert(
                 Is_Nulled(notes)  // hasn't been written to yet
                 or IS_TEXT(notes)  // !!! we overwrite, but should we append?
             );
 
-            if (Is_None(KEY_SLOT(DSP))) {
+            if (Is_None(KEY_SLOT(TOP_INDEX))) {
                 // no keys seen yet, act as description
                 Init_Text(notes, Copy_String_At(item));
                 *flags |= MKF_HAS_DESCRIPTION;
             }
             else {
-                assert(IS_WORD(KEY_SLOT(DSP)));
+                assert(IS_WORD(KEY_SLOT(TOP_INDEX)));
                 Init_Text(notes, Copy_String_At(item));
                 *flags |= MKF_HAS_NOTES;
             }
@@ -185,7 +185,7 @@ void Push_Paramlist_Triads_May_Fail(
                 continue;
             }
             else if (0 == CT_String(item, Root_None_Tag, strict)) {
-                StackValue(*) param = PARAM_SLOT(DSP);
+                StackValue(*) param = PARAM_SLOT(TOP_INDEX);
                 SET_PARAM_FLAG(param, RETURN_NONE);  // enforce RETURN NONE
 
                 // Fake as if they said []
@@ -197,7 +197,7 @@ void Push_Paramlist_Triads_May_Fail(
                 //
                 // Fake as if they said [<void>] !!! make more efficient
                 //
-                StackValue(*) param = PARAM_SLOT(DSP);
+                StackValue(*) param = PARAM_SLOT(TOP_INDEX);
                 CLEAR_ALL_TYPESET_BITS(param);
                 SET_PARAM_FLAG(param, RETURN_VOID);
                 SET_PARAM_FLAG(param, ENDABLE);
@@ -210,10 +210,10 @@ void Push_Paramlist_Triads_May_Fail(
     //=//// BLOCK! OF TYPES TO MAKE TYPESET FROM (PLUS PARAMETER TAGS) ////=//
 
         if (IS_BLOCK(item)) {
-            if (Is_None(KEY_SLOT(DSP)))  // too early, `func [[integer!] {!}]`
+            if (Is_None(KEY_SLOT(TOP_INDEX)))  // early, `func [[integer!] {!}]`
                 fail (Error_Bad_Func_Def_Raw(item));
 
-            StackValue(*) types = TYPES_SLOT(DSP);
+            StackValue(*) types = TYPES_SLOT(TOP_INDEX);
 
             if (IS_BLOCK(types))  // too many, `func [x [integer!] [blank!]]`
                 fail (Error_Bad_Func_Def_Raw(item));
@@ -236,7 +236,7 @@ void Push_Paramlist_Triads_May_Fail(
             if (mode != SPEC_MODE_NORMAL)  // <local> <with>
                 fail (Error_Bad_Func_Def_Raw(item));
 
-            StackValue(*) param = PARAM_SLOT(DSP);
+            StackValue(*) param = PARAM_SLOT(TOP_INDEX);
 
             // By default parameters can be passed void, but if a block spec
             // is found then it has to say `<void>` to allow it.
@@ -357,7 +357,7 @@ void Push_Paramlist_Triads_May_Fail(
             else {
                 if (  // let RETURN: presence indicate you know new rules
                     refinement_seen and mode == SPEC_MODE_NORMAL
-                    and *definitional_return_dsp == 0
+                    and *return_stackindex == 0
                 ){
                     fail (Error_Legacy_Refinement_Raw(spec));
                 }
@@ -417,11 +417,11 @@ void Push_Paramlist_Triads_May_Fail(
         //
         PUSH_SLOTS();
 
-        Init_Word(KEY_SLOT(DSP), symbol);
-        Init_Nulled(TYPES_SLOT(DSP));  // may or may not add later
-        Init_Nulled(NOTES_SLOT(DSP));  // may or may not add later
+        Init_Word(KEY_SLOT(TOP_INDEX), symbol);
+        Init_Nulled(TYPES_SLOT(TOP_INDEX));  // may or may not add later
+        Init_Nulled(NOTES_SLOT(TOP_INDEX));  // may or may not add later
 
-        StackValue(*) param = PARAM_SLOT(DSP);
+        StackValue(*) param = PARAM_SLOT(TOP_INDEX);
 
         // Non-annotated arguments allow all parameter types, but a normal
         // parameter cannot pick up a non-isotope form of BAD-WORD!.
@@ -465,13 +465,13 @@ void Push_Paramlist_Triads_May_Fail(
         // (despite violating the "pure locals are NULL" premise)
         //
         if (symbol == Canon(RETURN)) {
-            if (*definitional_return_dsp != 0) {
+            if (*return_stackindex != 0) {
                 DECLARE_LOCAL (word);
                 Init_Word(word, symbol);
                 fail (Error_Dup_Vars_Raw(word));  // most dup checks are later
             }
             if (pclass == PARAM_CLASS_RETURN)
-                *definitional_return_dsp = DSP;  // RETURN: explicit
+                *return_stackindex = TOP_INDEX;  // RETURN: explicit
             else
                 *flags &= ~MKF_RETURN;
         }
@@ -490,9 +490,9 @@ void Push_Paramlist_Triads_May_Fail(
 //
 Array(*) Pop_Paramlist_With_Meta_May_Fail(
     Context(*) *meta,
-    REBDSP dsp_orig,
+    StackIndex base,
     Flags flags,
-    REBDSP definitional_return_dsp
+    StackIndex return_stackindex
 ){
     // Definitional RETURN slots must have their argument value fulfilled with
     // an ACTION! specific to the action called on *every instantiation*.
@@ -505,13 +505,13 @@ Array(*) Pop_Paramlist_With_Meta_May_Fail(
     // enables adding more arguments/refinements/locals in derived functions.
 
     if (flags & MKF_RETURN) {
-        if (definitional_return_dsp == 0) { // no explicit RETURN: pure local
+        if (return_stackindex == 0) { // no explicit RETURN: pure local
             PUSH_SLOTS();
 
-            Init_Word(KEY_SLOT(DSP), Canon(RETURN));
-            definitional_return_dsp = DSP;
+            Init_Word(KEY_SLOT(TOP_INDEX), Canon(RETURN));
+            return_stackindex = TOP_INDEX;
 
-            StackValue(*) param = PARAM_SLOT(DSP);
+            StackValue(*) param = PARAM_SLOT(TOP_INDEX);
 
             // By default, you can return anything.  This goes with the bias
             // that checks happen on the reading side of things, not writing.
@@ -535,14 +535,14 @@ Array(*) Pop_Paramlist_With_Meta_May_Fail(
                 TS_OPT_VALUE
             );
 
-            Init_Nulled(TYPES_SLOT(DSP));
-            Init_Nulled(NOTES_SLOT(DSP));
+            Init_Nulled(TYPES_SLOT(TOP_INDEX));
+            Init_Nulled(NOTES_SLOT(TOP_INDEX));
         }
         else {
-            StackValue(*) param = PARAM_SLOT(definitional_return_dsp);
+            StackValue(*) param = PARAM_SLOT(return_stackindex);
 
             assert(
-                VAL_WORD_ID(KEY_SLOT(definitional_return_dsp)) == SYM_RETURN
+                VAL_WORD_ID(KEY_SLOT(return_stackindex)) == SYM_RETURN
             );
             SET_PARAM_FLAG(param, RETURN_TYPECHECKED);  // was explicit
         }
@@ -555,8 +555,8 @@ Array(*) Pop_Paramlist_With_Meta_May_Fail(
 
     // Slots, which is length +1 (includes the rootvar or rootparam)
     //
-    assert((DSP - dsp_orig) % 4 == 0);
-    REBLEN num_slots = (DSP - dsp_orig) / 4;
+    assert((TOP_INDEX - base) % 4 == 0);
+    Count num_slots = (TOP_INDEX - base) / 4;
 
     // Must make the function "paramlist" even if "empty", for identity.
     //
@@ -592,20 +592,20 @@ Array(*) Pop_Paramlist_With_Meta_May_Fail(
     REBVAL *param = Init_Isotope(ARR_HEAD(paramlist), Canon(ROOTVAR)) + 1;
     REBKEY *key = SER_HEAD(REBKEY, keylist);
 
-    if (definitional_return_dsp != 0) {
+    if (return_stackindex != 0) {
         assert(flags & MKF_RETURN);
-        Init_Key(key, VAL_WORD_SYMBOL(KEY_SLOT(definitional_return_dsp)));
+        Init_Key(key, VAL_WORD_SYMBOL(KEY_SLOT(return_stackindex)));
         ++key;
 
-        Copy_Cell(param, PARAM_SLOT(definitional_return_dsp));
+        Copy_Cell(param, PARAM_SLOT(return_stackindex));
         ++param;
     }
 
-    REBDSP dsp = dsp_orig + 8;
-    for (; dsp <= DSP; dsp += 4) {
-        Symbol(const*) symbol = VAL_WORD_SYMBOL(KEY_SLOT(dsp));
+    StackIndex stackindex = base + 8;
+    for (; stackindex <= TOP_INDEX; stackindex += 4) {
+        Symbol(const*) symbol = VAL_WORD_SYMBOL(KEY_SLOT(stackindex));
 
-        StackValue(*) slot = PARAM_SLOT(dsp);
+        StackValue(*) slot = PARAM_SLOT(stackindex);
 
         // "Sealed" parameters do not count in the binding.  See AUGMENT for
         // notes on why we do this (you can augment a function that has a
@@ -628,7 +628,7 @@ Array(*) Pop_Paramlist_With_Meta_May_Fail(
             hidden = false;
         }
 
-        if (dsp == definitional_return_dsp)
+        if (stackindex == return_stackindex)
             continue;  // was added to the head of the list already
 
         Init_Key(key, symbol);
@@ -705,7 +705,7 @@ Array(*) Pop_Paramlist_With_Meta_May_Fail(
     // slot, the third cell we pushed onto the stack.  Extract it if so.
     //
     if (flags & MKF_HAS_DESCRIPTION) {
-        StackValue(*) description = NOTES_SLOT(dsp_orig + 4);
+        StackValue(*) description = NOTES_SLOT(base + 4);
         assert(IS_TEXT(description));
         Copy_Cell(
             CTX_VAR(*meta, STD_ACTION_META_DESCRIPTION),
@@ -730,20 +730,20 @@ Array(*) Pop_Paramlist_With_Meta_May_Fail(
         REBVAL *dest = SPECIFIC(rootvar) + 1;
         Cell(const*) param = ARR_AT(paramlist, 1);
 
-        if (definitional_return_dsp != 0) {
+        if (return_stackindex != 0) {
             assert(flags & MKF_RETURN);
             ++param;
 
-            Copy_Cell(dest, TYPES_SLOT(definitional_return_dsp));
+            Copy_Cell(dest, TYPES_SLOT(return_stackindex));
             ++dest;
         }
 
-        REBDSP dsp = dsp_orig + 8;
-        for (; dsp <= DSP; dsp += 4) {
-            StackValue(*) types = TYPES_SLOT(dsp);
+        StackIndex stackindex = base + 8;
+        for (; stackindex <= TOP_INDEX; stackindex += 4) {
+            StackValue(*) types = TYPES_SLOT(stackindex);
             assert(Is_Nulled(types) or IS_BLOCK(types));
 
-            if (dsp == definitional_return_dsp)
+            if (stackindex == return_stackindex)
                 continue;  // was added to the head of the list already
 
             Copy_Cell(dest, types);
@@ -777,20 +777,20 @@ Array(*) Pop_Paramlist_With_Meta_May_Fail(
         Cell(const*) param = ARR_AT(paramlist, 1);
         REBVAL *dest = SPECIFIC(rootvar) + 1;
 
-        if (definitional_return_dsp != 0) {
+        if (return_stackindex != 0) {
             assert(flags & MKF_RETURN);
             ++param;
 
-            Copy_Cell(dest, NOTES_SLOT(definitional_return_dsp));
+            Copy_Cell(dest, NOTES_SLOT(return_stackindex));
             ++dest;
         }
 
-        REBDSP dsp = dsp_orig + 8;
-        for (; dsp <= DSP; dsp += 4) {
-            StackValue(*) notes = NOTES_SLOT(dsp);
+        StackIndex stackindex = base + 8;
+        for (; stackindex <= TOP_INDEX; stackindex += 4) {
+            StackValue(*) notes = NOTES_SLOT(stackindex);
             assert(IS_TEXT(notes) or Is_Nulled(notes));
 
-            if (dsp == definitional_return_dsp)
+            if (stackindex == return_stackindex)
                 continue;  // was added to the head of the list already
 
             Copy_Cell(dest, notes);
@@ -809,7 +809,7 @@ Array(*) Pop_Paramlist_With_Meta_May_Fail(
 
     // With all the values extracted from stack to array, restore stack pointer
     //
-    Drop_Data_Stack_To(dsp_orig);
+    Drop_Data_Stack_To(base);
 
     return paramlist;
 }
@@ -852,10 +852,10 @@ Array(*) Make_Paramlist_Managed_May_Fail(
     const REBVAL *spec,
     Flags *flags  // flags may be modified to carry additional information
 ){
-    REBDSP dsp_orig = DSP;
-    assert(TOP == Data_Stack_At(dsp_orig));
+    StackIndex base = TOP_INDEX;
+    assert(TOP == Data_Stack_At(base));
 
-    REBDSP definitional_return_dsp = 0;
+    StackIndex return_stackindex = 0;
 
     PUSH_SLOTS();
 
@@ -867,10 +867,10 @@ Array(*) Make_Paramlist_Managed_May_Fail(
     // the function description--it will be extracted from the slot before
     // it is turned into a rootkey for param_notes.
     //
-    Init_None(KEY_SLOT(DSP));  // signal for no parameters pushed
-    Init_Trash(PARAM_SLOT(DSP));  // not used at all
-    Init_Trash(TYPES_SLOT(DSP));  // not used at all
-    Init_Nulled(NOTES_SLOT(DSP));  // overwritten if description
+    Init_None(KEY_SLOT(TOP_INDEX));  // signal for no parameters pushed
+    Init_Trash(PARAM_SLOT(TOP_INDEX));  // not used at all
+    Init_Trash(TYPES_SLOT(TOP_INDEX));  // not used at all
+    Init_Nulled(NOTES_SLOT(TOP_INDEX));  // overwritten if description
 
     // The process is broken up into phases so that the spec analysis code
     // can be reused in AUGMENT.
@@ -878,13 +878,13 @@ Array(*) Make_Paramlist_Managed_May_Fail(
     Push_Paramlist_Triads_May_Fail(
         spec,
         flags,
-        &definitional_return_dsp
+        &return_stackindex
     );
     Array(*) paramlist = Pop_Paramlist_With_Meta_May_Fail(
         meta,
-        dsp_orig,
+        base,
         *flags,
-        definitional_return_dsp
+        return_stackindex
     );
 
     return paramlist;

@@ -2048,7 +2048,10 @@ Bounce Scanner_Executor(Frame(*) f) {
         if (Get_Executor_Flag(SCAN, SUBFRAME, NEWLINE_PENDING))
             flags |= ARRAY_FLAG_NEWLINE_AT_TAIL;
 
-        Array(*) a = Pop_Stack_Values_Core(SUBFRAME->baseline.dsp, flags);
+        Array(*) a = Pop_Stack_Values_Core(
+            SUBFRAME->baseline.stack_base,
+            flags
+        );
         Drop_Frame(SUBFRAME);
 
         // Tag array with line where the beginning bracket/group/etc. was found
@@ -2329,7 +2332,10 @@ Bounce Scanner_Executor(Frame(*) f) {
         if (Get_Executor_Flag(SCAN, f, NEWLINE_PENDING))
             flags |= ARRAY_FLAG_NEWLINE_AT_TAIL;
 
-        Array(*) array = Pop_Stack_Values_Core(SUBFRAME->baseline.dsp, flags);
+        Array(*) array = Pop_Stack_Values_Core(
+            SUBFRAME->baseline.stack_base,
+            flags
+        );
 
         Drop_Frame(SUBFRAME);
 
@@ -2539,7 +2545,7 @@ Bounce Scanner_Executor(Frame(*) f) {
 
       scan_path_or_tuple_head_is_TOP: ;
 
-        REBDSP dsp_path_head = DSP;
+        StackIndex stackindex_path_head = TOP_INDEX;
 
         if (
             *ss->begin == '\0'  // `foo/`
@@ -2598,7 +2604,7 @@ Bounce Scanner_Executor(Frame(*) f) {
         // mutating it into a single element GROUP!.
         //
       blockscope {
-        StackValue(*) head = Data_Stack_At(dsp_path_head);
+        StackValue(*) head = Data_Stack_At(stackindex_path_head);
         StackValue(*) cleanup = head + 1;
         for (; cleanup <= TOP; ++cleanup) {
             if (IS_GET_WORD(cleanup)) {
@@ -2626,9 +2632,9 @@ Bounce Scanner_Executor(Frame(*) f) {
         //
         if (level->token == TOKEN_TUPLE) {
             bool any_email = false;
-            REBDSP dsp = DSP;
-            for (; dsp != dsp_path_head - 1; --dsp) {
-                if (IS_EMAIL(Data_Stack_At(dsp))) {
+            StackIndex stackindex = TOP_INDEX;
+            for (; stackindex != stackindex_path_head - 1; --stackindex) {
+                if (IS_EMAIL(Data_Stack_At(stackindex))) {
                     if (any_email)
                         return FAIL(Error_Syntax(ss, level->token));
                     any_email = true;
@@ -2645,7 +2651,7 @@ Bounce Scanner_Executor(Frame(*) f) {
                 Init_Array_Cell(
                     items,
                     REB_THE_BLOCK,  // don't want to evaluate
-                    Pop_Stack_Values(dsp_path_head - 1)
+                    Pop_Stack_Values(stackindex_path_head - 1)
                 );
                 PUSH_GC_GUARD(items);
                 REBVAL *email = rebValue("as email! delimit {.}", items);
@@ -2660,7 +2666,7 @@ Bounce Scanner_Executor(Frame(*) f) {
         REBVAL *check = Try_Pop_Sequence_Or_Element_Or_Nulled(
             temp,  // doesn't write directly to stack since popping stack
             level->token == TOKEN_TUPLE ? REB_TUPLE : REB_PATH,
-            dsp_path_head - 1
+            stackindex_path_head - 1
         );
         if (not check)
             return FAIL(Error_Syntax(ss, level->token));
@@ -2877,7 +2883,7 @@ Array(*) Scan_UTF8_Managed(
     );
     Sync_Feed_At_Cell_Or_End_May_Fail(feed);
 
-    REBDSP dsp_orig = DSP;
+    StackIndex base = TOP_INDEX;
     while (Not_End(At_Feed(feed))) {
         Derelativize(PUSH(), At_Feed(feed), FEED_SPECIFIER(feed));
         Set_Cell_Flag(TOP, UNEVALUATED);
@@ -2891,7 +2897,7 @@ Array(*) Scan_UTF8_Managed(
 
     Free_Feed(feed);  // feeds are dynamically allocated and must be freed
 
-    Array(*) a = Pop_Stack_Values_Core(dsp_orig, flags);
+    Array(*) a = Pop_Stack_Values_Core(base, flags);
 
     a->misc.line = 1;
     mutable_LINK(Filename, a) = file;
@@ -3099,7 +3105,7 @@ DECLARE_NATIVE(transcode)
     }
 
     if (REF(next)) {
-        if (DSP == BASELINE->dsp)
+        if (TOP_INDEX == BASELINE->stack_base)
             Init_Nulled(OUT);
         else {
             Move_Cell(OUT, TOP);
@@ -3111,7 +3117,7 @@ DECLARE_NATIVE(transcode)
         if (Get_Executor_Flag(SCAN, SUBFRAME, NEWLINE_PENDING))
             flags |= ARRAY_FLAG_NEWLINE_AT_TAIL;
 
-        Array(*) a = Pop_Stack_Values_Core(BASELINE->dsp, flags);
+        Array(*) a = Pop_Stack_Values_Core(BASELINE->stack_base, flags);
 
         a->misc.line = ss->line;
         mutable_LINK(Filename, a) = ss->file;
@@ -3300,13 +3306,13 @@ option(Array(*)) Try_Scan_Variadic_Feed_Utf8_Managed(Feed(*) feed)
     if (Trampoline_With_Top_As_Root_Throws())
         fail (Error_No_Catch_For_Throw(f));
 
-    if (DSP == f->baseline.dsp) {
+    if (TOP_INDEX == f->baseline.stack_base) {
         Drop_Frame(f);
         return nullptr;
     }
 
     Flags flags = SERIES_FLAG_MANAGED;
-    Array(*) reified = Pop_Stack_Values_Core(f->baseline.dsp, flags);
+    Array(*) reified = Pop_Stack_Values_Core(f->baseline.stack_base, flags);
     Drop_Frame(f);
     return reified;
 }

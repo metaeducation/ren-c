@@ -79,8 +79,8 @@ DECLARE_NATIVE(augment_p)  // see extended definition AUGMENT in %base-defs.r
     // We reuse the process from Make_Paramlist_Managed_May_Fail(), which
     // pushes descriptors to the stack in groups for each parameter.
 
-    REBDSP dsp_orig = DSP;
-    REBDSP definitional_return_dsp = 0;
+    StackIndex base = TOP_INDEX;
+    StackIndex return_stackindex = 0;
 
     // Start with pushing nothings for the [0] slot
     //
@@ -92,7 +92,7 @@ DECLARE_NATIVE(augment_p)  // see extended definition AUGMENT in %base-defs.r
     Flags flags = MKF_KEYWORDS;
     if (ACT_HAS_RETURN(augmentee)) {
         flags |= MKF_RETURN;
-        definitional_return_dsp = DSP + 4;
+        return_stackindex = TOP_INDEX + 4;
     }
 
     // For each parameter in the original function, we push a corresponding
@@ -128,15 +128,15 @@ DECLARE_NATIVE(augment_p)  // see extended definition AUGMENT in %base-defs.r
     Push_Paramlist_Triads_May_Fail(
         ARG(spec),
         &flags,
-        &definitional_return_dsp
+        &return_stackindex
     );
 
     Context(*) meta;
     Array(*) paramlist = Pop_Paramlist_With_Meta_May_Fail(
         &meta,
-        dsp_orig,
+        base,
         flags,
-        definitional_return_dsp
+        return_stackindex
     );
 
     // Usually when you call Make_Action() on a freshly generated paramlist,

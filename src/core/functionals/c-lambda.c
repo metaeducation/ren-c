@@ -170,7 +170,7 @@ DECLARE_NATIVE(lambda)
         item_tail = nullptr;
     }
 
-    REBDSP dsp_orig = DSP;  // reuses Pop_Paramlist(), see [1]
+    StackIndex base = TOP_INDEX;  // reuses Pop_Paramlist(), see [1]
 
     Init_None(PUSH());  // key slot (signal for no pushes)
     Init_Trash(PUSH());  // unused
@@ -214,7 +214,7 @@ DECLARE_NATIVE(lambda)
     }
 
     if (not optimizable) {
-        Drop_Data_Stack_To(dsp_orig);
+        Drop_Data_Stack_To(base);
 
         Action(*) lambda = Make_Interpreted_Action_May_Fail(
             spec,
@@ -230,9 +230,9 @@ DECLARE_NATIVE(lambda)
     Context(*) meta;
     Array(*) paramlist = Pop_Paramlist_With_Meta_May_Fail(
         &meta,
-        dsp_orig,
+        base,
         MKF_KEYWORDS,
-        0  // no definitional_return_dsp
+        0  // no return_stackindex
     );
 
     Action(*) lambda = Make_Action(

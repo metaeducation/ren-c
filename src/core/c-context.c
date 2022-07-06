@@ -284,7 +284,7 @@ REBVAR *Append_Context(
 void Collect_Start(struct Reb_Collector* collector, Flags flags)
 {
     collector->flags = flags;
-    collector->dsp_orig = DSP;
+    collector->stack_base = TOP_INDEX;
     INIT_BINDER(&collector->binder);
 }
 
@@ -297,8 +297,8 @@ void Collect_Start(struct Reb_Collector* collector, Flags flags)
 //
 void Collect_End(struct Reb_Collector *cl)
 {
-    REBDSP dsp = DSP;
-    for (; dsp != cl->dsp_orig; --dsp) {
+    StackIndex index = TOP_INDEX;
+    for (; index != cl->stack_base; --index) {
         Symbol(const*) symbol = VAL_WORD_SYMBOL(TOP);
         Remove_Binder_Index(&cl->binder, symbol);
         DROP();
@@ -430,7 +430,7 @@ Keylist(*) Collect_Keylist_Managed(
 
     Collect_Inner_Loop(cl, head, tail);
 
-    REBLEN num_collected = DSP - cl->dsp_orig;
+    Count num_collected = TOP_INDEX - cl->stack_base;
 
     // If new keys were added to the collect buffer (as evidenced by a longer
     // collect buffer than the original keylist) then make a new keylist
@@ -445,7 +445,7 @@ Keylist(*) Collect_Keylist_Managed(
             SERIES_MASK_KEYLIST | NODE_FLAG_MANAGED
         );
 
-        StackValue(*) word = Data_Stack_At(cl->dsp_orig) + 1;
+        StackValue(*) word = Data_Stack_At(cl->stack_base) + 1;
         REBKEY* key = SER_HEAD(REBKEY, keylist);
         for (; word != TOP + 1; ++word, ++key)
             Init_Key(key, VAL_WORD_SYMBOL(word));
@@ -536,9 +536,9 @@ Array(*) Collect_Unique_Words_Managed(
     // on the stack so that Collect_End() can remove them from the binder.
     //
     Array(*) array = Copy_Values_Len_Shallow_Core(
-        Data_Stack_At(cl->dsp_orig + 1),
+        Data_Stack_At(cl->stack_base + 1),
         SPECIFIED,
-        DSP - cl->dsp_orig,
+        TOP_INDEX - cl->stack_base,
         NODE_FLAG_MANAGED
     );
 
@@ -769,7 +769,7 @@ Array(*) Context_To_Array(Cell(const*) context, REBINT mode)
 {
     assert(!(mode & 4));
 
-    REBDSP dsp_orig = DSP;
+    StackIndex base = TOP_INDEX;
 
     EVARS e;
     Init_Evars(&e, context);
@@ -804,7 +804,7 @@ Array(*) Context_To_Array(Cell(const*) context, REBINT mode)
     Shutdown_Evars(&e);
 
     return Pop_Stack_Values_Core(
-        dsp_orig,
+        base,
         did (mode & 2) ? ARRAY_FLAG_NEWLINE_AT_TAIL : 0
     );
 }

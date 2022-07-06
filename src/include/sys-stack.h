@@ -45,14 +45,14 @@
 // push is tested to see if an expansion is needed, a trick is used.  This
 // trick is to grow the stack in blocks, and always maintain that the block
 // has an END marker at its point of capacity--and ensure that there are no
-// end markers between the DSP and that capacity.  This way, if a push runs
-// up against an END it knows to do an expansion.
+// end markers between the TOP_INDEX and that capacity.  This way, if a push
+// runs up against an END it knows to do an expansion.
 //
 //=// NOTES ///////////////////////////////////////////////////////////////=//
 //
 // * Do not store the result of a PUSH() directly into a REBVAL* variable.
 //   Instead, use the StackValue(*) type, which makes sure that you don't try
-//   to hold a parameter across another push or an evaluation.
+//   to hold a pointer into the stack across another push or an evaluation.
 //
 // * The data stack is limited in size, and this means code that uses it may
 //   break down when working on larger cases:
@@ -60,10 +60,10 @@
 //   https://github.com/metaeducation/ren-c/issues/679
 //
 // * Although R3-Alpha used the data stack for pushing function arguments,
-//   the arguments were frequently passed around by pointer (vs. using an
-//   indexed "DSP" position).  This was bad since the data stack could
-//   relocate its contents due to growth.  This has completely changed in
-//   Ren-C, with heap based stacks and stacklessness (see %c-trampoline.c)
+//   the arguments were frequently passed around by pointer (vs. using a
+//   StackIndex position).  This was bad since the data stack could relocate
+//   its contents due to growth.  This has completely changed in Ren-C, with
+//   memory-pooled frames and stacklessness (see %c-trampoline.c)
 //
 
 // The result of PUSH() and TOP is not REBVAL*, but StackValue(*).  In an
@@ -162,11 +162,8 @@
 #endif
 
 
-// DSP stands for "(D)ata (S)tack "(P)osition", and is the index of the top
-// of the data stack (last valid item in the underlying array)
-//
-#define DSP \
-    cast(REBDSP, DS_Index) // cast helps stop ++DSP, etc.
+#define TOP_INDEX \
+    cast(StackIndex, DS_Index)  // cast helps stop ++TOP_INDEX, etc.
 
 // TOP is the most recently pushed item.
 //
@@ -183,11 +180,11 @@
 // values, someone may also PUSH() trash and then initialize it with
 // Data_Stack_At(), so we don't check it with SPECIFIC() here.
 //
-inline static StackValue(*) Data_Stack_At(REBDSP d) {
-    REBVAL *at = cast(REBVAL*, DS_Array->content.dynamic.data) + d;
+inline static StackValue(*) Data_Stack_At(StackIndex i) {
+    REBVAL *at = cast(REBVAL*, DS_Array->content.dynamic.data) + i;
     assert(
-        ((at->header.bits & NODE_FLAG_CELL) and d <= (DSP + 1))
-        or (not (SECOND_BYTE(at->header) != REB_0 and d == (DSP + 1)))
+        ((at->header.bits & NODE_FLAG_CELL) and i <= (TOP_INDEX + 1))
+        or (not (SECOND_BYTE(at->header) != REB_0 and i == (TOP_INDEX + 1)))
     );
     return at;
 }
@@ -244,12 +241,12 @@ inline static void DROP(void) {
     --DS_Movable_Top;
 }
 
-inline static void Drop_Data_Stack_To(REBDSP dsp) {
+inline static void Drop_Data_Stack_To(StackIndex i) {
   #if DEBUG_EXTANT_STACK_POINTERS
     assert(TG_Stack_Outstanding == 0);  // in the future, pop may disrupt
   #endif
-    assert(DSP >= dsp);
-    while (DSP != dsp)
+    assert(TOP_INDEX >= i);
+    while (TOP_INDEX != i)
         DROP();
 }
 

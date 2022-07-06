@@ -727,7 +727,7 @@ DECLARE_NATIVE(inherit_meta)
         if (Is_Nulled(val2) or Is_None(val2)) {
             ctx2 = Make_Context_For_Action(
                 derived,  // the action
-                DSP,  // will weave in any refinements pushed (none apply)
+                TOP_INDEX,  // would weave in refinements pushed (none apply)
                 nullptr  // !!! review, use fast map from names to indices
             );
             Init_Frame(val2, ctx2, ANONYMOUS);

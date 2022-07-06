@@ -462,7 +462,7 @@ DECLARE_NATIVE(compile_p)
 
     REBVAL *compilables = ARG(compilables);
 
-    REBDSP dsp_orig = DSP;  // natives are pushed to the stack
+    StackIndex base = TOP_INDEX;  // natives are pushed to the stack
 
     if (REF(files)) {
         Cell(const*) tail;
@@ -554,7 +554,7 @@ DECLARE_NATIVE(compile_p)
         //
         if (REF(inspect)) {
             DROP_GC_GUARD(handle);
-            Drop_Data_Stack_To(dsp_orig);  // don't modify collected natives
+            Drop_Data_Stack_To(base);  // don't modify collected natives
             return Init_Text(OUT, Pop_Molded_String(mo));
         }
 
@@ -628,7 +628,7 @@ DECLARE_NATIVE(compile_p)
             fail ("TCC failed to relocate the code");
     }
     else {
-        assert(DSP == dsp_orig);  // no user natives if outputting file!
+        assert(TOP_INDEX == base);  // no user natives if outputting file!
 
         char *output_file_utf8 = rebSpell(
             "ensure text! pick", config, "'output-file"
@@ -643,7 +643,7 @@ DECLARE_NATIVE(compile_p)
     // With compilation complete, find the matching linker names and get
     // their function pointers to substitute in for the dispatcher.
     //
-    while (DSP != dsp_orig) {
+    while (TOP_INDEX != base) {
         Action(*) action = VAL_ACTION(TOP);  // stack will hold action live
         assert(Is_User_Native(action));  // can't cache stack pointer, extract
 
