@@ -1061,162 +1061,167 @@ DECLARE_NATIVE(case)
 //  ]
 //
 DECLARE_NATIVE(switch)
+//
+// 1. With switch, we have one fixed value ("left") and then an evaluated
+//    value from the block ("right") which we pass to a comparison predicate
+//    to determine a match.  It may seem tempting to build a frame for the
+//    predicate partially specialized with the left, and allow it to consume
+//    the right from the feed...allowing it to take arity > 2 (as well as
+//    to honor any quoting convention the predicate has.
+//
+//    Right now that's not what we do, because it would preclude being able
+//    to have "fallout".  This should probably be reconsidered, but there are
+//    some other SWITCH redesign questions up in the air already:
+//
+//    https://forum.rebol.info/t/match-in-rust-vs-switch/1835
+//
+// 2. It's okay that we are letting the comparison change `value` here, because
+//    equality is supposed to be transitive.  So if it changes 0.01 to 1% in
+//    order to compare it, anything 0.01 would have compared equal to so
+//    will 1%.  (That's the idea, anyway, required for `a = b` and `b = c` to
+//    properly imply `a = c`.)
+//
+//    !!! This means fallout can be modified from its intent.  Rather than copy
+//    here, this is a reminder to review the mechanism by which equality is
+//    determined--and why it has to mutate.
+//
+//     !!! A branch composed into the switch cases block may want to see the
+//     un-mutated condition value.
+//
 {
     INCLUDE_PARAMS_OF_SWITCH;
 
-    REBVAL *predicate = ARG(predicate);
-
-    Frame(*) f = Make_Frame_At(ARG(cases), EVAL_EXECUTOR_FLAG_SINGLE_STEP);
-
-    Push_Frame(SPARE, f);
-
     REBVAL *left = ARG(value);
+    REBVAL *predicate = ARG(predicate);
+    REBVAL *cases = ARG(cases);
+
+    enum {
+        ST_SWITCH_INITIAL_ENTRY = 0,
+        ST_SWITCH_EVALUATING_RIGHT,
+        ST_SWITCH_RUNNING_BRANCH
+    };
+
+    switch (STATE) {
+      case ST_SWITCH_INITIAL_ENTRY:
+        goto initial_entry;
+
+      case ST_SWITCH_EVALUATING_RIGHT:
+        goto right_result_in_spare;
+
+      case ST_SWITCH_RUNNING_BRANCH:
+        if (not REF(all)) {
+            Drop_Frame(SUBFRAME);
+            return BRANCHED(OUT);
+        }
+        goto next_switch_step;
+
+      default: assert(false);
+    }
+
+  initial_entry: {  //////////////////////////////////////////////////////////
+
     if (IS_BLOCK(left) and Get_Cell_Flag(left, UNEVALUATED))
         fail (Error_Block_Switch_Raw(left));  // `switch [x] [...]` safeguard
 
-    assert(Is_Void(SPARE));
+    Frame(*) subframe = Make_Frame_At(
+        cases,
+        EVAL_EXECUTOR_FLAG_SINGLE_STEP
+            | FRAME_FLAG_TRAMPOLINE_KEEPALIVE
+    );
 
-    for (; Not_End(At_Frame(f)); RESET(SPARE)) {  // clears fallout each `continue`
+    Push_Frame(SPARE, subframe);
 
-        if (IS_BLOCK(At_Frame(f)) or IS_ACTION(At_Frame(f))) {
-            Fetch_Next_Forget_Lookback(f);
-            continue;
-        }
+} next_switch_step: {  ///////////////////////////////////////////////////////
 
-        // Feed the frame forward...evaluate one step to get second argument.
-        //
-        // NOTE: It may seem tempting to run COMPARE from the frame directly,
-        // allowing it to take arity > 2.  Don't do this.  We have to get a
-        // true/false answer *and* know what the right hand argument was, for
-        // full switching coverage and for DEFAULT to work.
-        //
-        // !!! Advanced frame tricks *might* make this possible for N-ary
-        // functions, the same way `match parse "aaa" [some "a"]` => "aaa"
+    RESET(SPARE);  // fallout must be reset each time
 
-        if (Eval_Step_Throws(SPARE, f))
-            goto threw;  // ^-- spare is already reset, exploit?
+    Cell(const*) at = At_Frame(SUBFRAME);
 
-        if (Is_Void(SPARE))  // skip comments or failed conditionals
-            continue;  // see note [2] in comments for CASE
+    if (Is_End(at))
+        goto reached_end;
 
-        if (Is_End(At_Frame(f)))
-            goto reached_end;  // nothing left, so drop frame and return
-
-        if (Is_Nulled(predicate)) {
-            //
-            // It's okay that we are letting the comparison change `value`
-            // here, because equality is supposed to be transitive.  So if it
-            // changes 0.01 to 1% in order to compare it, anything 0.01 would
-            // have compared equal to so will 1%.  (That's the idea, anyway,
-            // required for `a = b` and `b = c` to properly imply `a = c`.)
-            //
-            // !!! This means fallout can be modified from its intent.  Rather
-            // than copy here, this is a reminder to review the mechanism by
-            // which equality is determined--and why it has to mutate.
-            //
-            // !!! A branch composed into the switch cases block may want to
-            // see the un-mutated condition value.
-            //
-            const bool strict = false;
-            if (0 != Compare_Modify_Values(left, SPARE, strict))
-                continue;
-        }
-        else {
-            // `switch x .greater? [10 [...]]` acts like `case [x > 10 [...]]
-            // The ARG(value) passed in is the left/first argument to compare.
-            //
-            // !!! Using Run_Throws loses the labeling of the function we were
-            // given (label).  Consider how it might be passed through
-            // for better stack traces and error messages.
-            //
-            // !!! We'd like to run this faster, so we aim to be able to
-            // reuse this frame...hence SPARE should not be expected to
-            // survive across this point.
-            //
-            DECLARE_LOCAL (temp);
-            if (rebRunThrows(
-                temp,  // <-- output cell
-                predicate,
-                    rebQ(left),  // first arg (left hand side if infix)
-                    rebQ(SPARE)  // second arg (right hand side if infix)
-            )){
-                goto threw;
-            }
-            if (Is_Falsey(temp))
-                continue;
-        }
-
-        // Skip ahead to try and find BLOCK!/ACTION! branch to take the match
-        //
-        while (true) {
-            if (Is_End(At_Frame(f)))
-                goto reached_end;
-
-            if (IS_BLOCK(At_Frame(f)) or IS_META_BLOCK(At_Frame(f))) {
-                //
-                // At_Frame(f) is Cell, can't Do_Branch
-                //
-                if (Do_Any_Array_At_Core_Throws(
-                    OUT,
-                    FRAME_FLAG_BRANCH,
-                    At_Frame(f),
-                    f_specifier
-                )){
-                    goto threw;
-                }
-                break;
-            }
-
-            if (IS_ACTION(At_Frame(f))) {  // must have been COMPOSE'd in cases
-                DECLARE_LOCAL (temp);
-                if (rebRunThrows(
-                    temp,  // <-- output cell
-                    SPECIFIC(At_Frame(f)),  // actions don't need specifiers
-                        rebQ(OUT)
-                )){
-                    goto threw;
-                }
-                Move_Cell(OUT, temp);
-                break;
-            }
-
-            Fetch_Next_Forget_Lookback(f);
-        }
-
-        if (not REF(all)) {
-            Drop_Frame(f);
-            return BRANCHED(OUT);
-        }
-
-        Fetch_Next_Forget_Lookback(f);  // keep matching if /ALL
+    if (IS_BLOCK(at) or IS_ACTION(at)) {  // seen with no match in effect
+        Fetch_Next_Forget_Lookback(SUBFRAME);  // just skip over it
+        goto next_switch_step;
     }
 
-  reached_end:
+    STATE = ST_SWITCH_EVALUATING_RIGHT;
+    SUBFRAME->executor = &Evaluator_Executor;
+    return CONTINUE_SUBFRAME(SUBFRAME);  // no direct predicate call, see [1]
+
+} right_result_in_spare: {  //////////////////////////////////////////////////
+
+    if (Is_Void(SPARE))  // skip comments or failed conditionals
+        goto next_switch_step;  // see note [2] in comments for CASE
+
+    if (Is_End(At_Frame(SUBFRAME)))
+        goto reached_end;  // nothing left, so drop frame and return
+
+    if (Is_Nulled(predicate)) {
+        const bool strict = false;
+        if (0 != Compare_Modify_Values(left, SPARE, strict))  // modify, see [2]
+            goto next_switch_step;
+    }
+    else {
+        // `switch x .greater? [10 [...]]` acts like `case [x > 10 [...]]
+        // The ARG(value) passed in is the left/first argument to compare.
+        //
+        // !!! We'd like to run this faster, so we aim to be able to
+        // reuse this frame...hence SPARE should not be expected to
+        // survive across this point.
+        //
+        DECLARE_LOCAL (temp);
+        if (rebRunThrows(
+            temp,  // <-- output cell
+            predicate,
+                rebQ(left),  // first arg (left hand side if infix)
+                rebQ(SPARE)  // second arg (right hand side if infix)
+        )){
+            Move_Cell(OUT, temp);
+            return BOUNCE_THROWN;  // aborts subframe
+        }
+        if (Is_Falsey(temp))
+            goto next_switch_step;
+    }
+
+    Cell(const*) at = At_Frame(SUBFRAME);
+
+    while (true) {  // skip ahead for BLOCK!/ACTION! to process the match
+        if (Is_End(at))
+            goto reached_end;
+
+        if (IS_BLOCK(at) or IS_META_BLOCK(at) or IS_ACTION(at))
+            break;
+
+        Fetch_Next_Forget_Lookback(SUBFRAME);
+        at = At_Frame(SUBFRAME);
+    }
+
+    STATE = ST_SWITCH_RUNNING_BRANCH;
+    SUBFRAME->executor = &Just_Use_Out_Executor;
+    return CONTINUE_CORE(
+        RESET(OUT),
+        FRAME_FLAG_BRANCH,
+        at, FRM_SPECIFIER(SUBFRAME),
+        END
+    );
+
+} reached_end: {  ////////////////////////////////////////////////////////////
 
     assert(REF(all) or Is_Stale(OUT));
 
-    Drop_Frame(f);
+    Drop_Frame(SUBFRAME);
 
-    // See remarks in CASE about why fallout result is prioritized, and why
-    // it cannot be a pure NULL.
-    //
-    if (not Is_Void(SPARE)) {
+    if (not Is_Void(SPARE)) {  // see remarks in CASE on fallout prioritization
         Move_Cell(OUT, SPARE);
         return BRANCHED(OUT);
     }
 
-    // if no fallout, use last /ALL clause, or ~void~ isotope if END
-    //
-    if (Is_Stale(OUT))
+    if (Is_Stale(OUT))  // no fallout, and no branches ran
         return VOID;
 
     return BRANCHED(OUT);
-
-  threw:
-
-    Drop_Frame(f);
-    return THROWN;
-}
+}}
 
 
 //
