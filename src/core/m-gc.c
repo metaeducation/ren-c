@@ -484,7 +484,8 @@ void Reify_Variadic_Feed_As_Array_Feed(
         } while (Not_End(At_Feed(feed)));
 
         assert(TOP_INDEX != base);
-        Finalize_Variadic_Feed(feed);
+        if (FEED_IS_VARIADIC(feed))  // UTF-8 scan may have finalized it
+            Finalize_Variadic_Feed(feed);
 
         Index index = truncated ? 2 : 1;  // skip --optimized-out--
 

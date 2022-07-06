@@ -281,6 +281,7 @@ inline static void Force_Variadic_Feed_At_Cell_Or_End_May_Fail(Feed(*) feed)
         // to pass the feed in as a parameter for partial scans
         //
         assert(Is_End(feed->p));
+        Finalize_Variadic_Feed(feed);
 
         feed->p = ARR_HEAD(reified);
         Init_Array_Cell_At(FEED_SINGLE(feed), REB_BLOCK, reified, 1);
