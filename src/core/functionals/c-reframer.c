@@ -135,7 +135,7 @@ Frame(*) Make_Pushed_Frame_From_Action_Feed_May_Throw(
 
 
 //
-//  Make_Invokable_From_Feed_Throws: C
+//  Init_Invokable_From_Feed_Throws: C
 //
 // This builds a frame from a feed *as if* it were going to be used to call
 // an action, but doesn't actually make the call.  Instead it leaves the
@@ -146,7 +146,7 @@ Frame(*) Make_Pushed_Frame_From_Action_Feed_May_Throw(
 // version of what would be evaluated to.  So in the case of NULL, it will be
 // a single quote of nothing.
 //
-bool Make_Invokable_From_Feed_Throws(
+bool Init_Invokable_From_Feed_Throws(
     REBVAL *out,
     Cell(const*) first,  // if not END, override first value, vs. At_Feed(feed)
     Feed(*) feed,
@@ -248,7 +248,7 @@ bool Make_Invokable_From_Feed_Throws(
 
 
 //
-//  Make_Frame_From_Feed_Throws: C
+//  Init_Frame_From_Feed_Throws: C
 //
 // Making an invokable from a feed might return a QUOTED!, because that is
 // more efficient (and truthful) than creating a FRAME! for the identity
@@ -256,13 +256,13 @@ bool Make_Invokable_From_Feed_Throws(
 // that has to follow the rules of MAKE FRAME!...e.g. returning a frame.
 // This converts QUOTED!s into frames for the identity function.
 //
-bool Make_Frame_From_Feed_Throws(
+bool Init_Frame_From_Feed_Throws(
     REBVAL *out,
     Cell(const*) first,
     Feed(*) feed,
     bool error_on_deferred
 ){
-    if (Make_Invokable_From_Feed_Throws(out, first, feed, error_on_deferred))
+    if (Init_Invokable_From_Feed_Throws(out, first, feed, error_on_deferred))
         return true;
 
     if (IS_FRAME(out))
@@ -319,7 +319,7 @@ Bounce Reframer_Dispatcher(Frame(*) f)
     // invisibility.  So the frame's spare cell is used.
     //
     bool error_on_deferred = true;
-    if (Make_Invokable_From_Feed_Throws(
+    if (Init_Invokable_From_Feed_Throws(
         SPARE,
         END,
         f->feed,

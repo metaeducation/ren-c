@@ -543,7 +543,7 @@ Bounce MAKE_Frame(
         }
 
         bool error_on_deferred = true;
-        if (Make_Frame_From_Feed_Throws(
+        if (Init_Frame_From_Feed_Throws(
             out,
             END,
             feed,
