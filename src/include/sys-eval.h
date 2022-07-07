@@ -123,6 +123,20 @@ enum {
 };
 
 
+#define Init_Pushed_Refinement(out,symbol) \
+    Init_Any_Word((out), REB_THE_WORD, symbol)
+
+#define Init_Pushable_Refinement_Bound(out,symbol,context,index) \
+    Init_Any_Word_Bound((out), REB_THE_WORD, (symbol), (context), (index))
+
+#define Is_Pushed_Refinement IS_THE_WORD
+
+inline static REBVAL *Refinify_Pushed_Refinement(REBVAL *v) {
+    assert(Is_Pushed_Refinement(v));
+    return Refinify(Plainify(v));
+}
+
+
 // Even though ANY_INERT() is a quick test, you can't skip the cost of frame
 // processing--due to enfix.  But a feed only looks ahead one unit at a time,
 // so advancing the frame past an inert item to find an enfix function means

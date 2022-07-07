@@ -949,9 +949,9 @@ bool Get_Path_Push_Refinements_Throws(
             // just skip it
         }
         else if (IS_WORD(at))
-            Init_Word(PUSH(), VAL_WORD_SYMBOL(at));
+            Init_Pushed_Refinement(PUSH(), VAL_WORD_SYMBOL(at));
         else if (IS_PATH(at) and IS_REFINEMENT(at))
-            Init_Word(PUSH(), VAL_REFINEMENT_SYMBOL(at));
+            Init_Pushed_Refinement(PUSH(), VAL_REFINEMENT_SYMBOL(at));
         else
             fail (at);
     }

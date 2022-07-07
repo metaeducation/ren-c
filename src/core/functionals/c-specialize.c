@@ -111,8 +111,10 @@ Context(*) Make_Context_For_Action_Push_Partials(
     if (partials) {
         Cell(const*) word_tail = ARR_TAIL(partials);
         Cell(const*) word = ARR_HEAD(partials);
-        for (; word != word_tail; ++word)
+        for (; word != word_tail; ++word) {
             Copy_Cell(PUSH(), SPECIFIC(word));
+            assert(Is_Pushed_Refinement(TOP));
+        }
     }
 
     const REBKEY *tail;
@@ -415,7 +417,7 @@ bool Specialize_Action_Throws(
             ++ordered_stackindex;
             StackValue(*) ordered = Data_Stack_At(ordered_stackindex);
             if (not IS_WORD_BOUND(ordered)) {  // specialize :print/asdf
-                Refinify(ordered);  // used as refinement, report as such
+                Refinify_Pushed_Refinement(ordered);
                 fail (Error_Bad_Parameter_Raw(ordered));
             }
 
@@ -424,9 +426,8 @@ bool Specialize_Action_Throws(
                 //
                 // It's still partial...
                 //
-                Init_Any_Word_Bound(
+                Init_Pushable_Refinement_Bound(
                     Alloc_Tail_Array(partials),
-                    REB_WORD,
                     KEY_SYMBOL(CTX_KEY(exemplar, VAL_WORD_INDEX(ordered))),
                     exemplar,
                     VAL_WORD_INDEX(ordered)

@@ -252,6 +252,8 @@ Bounce Action_Executor(Frame(*) f)
             Symbol(const*) param_symbol = KEY_SYMBOL(KEY);
 
             for (; ordered != lowest_ordered; --ordered) {
+                assert(Is_Pushed_Refinement(ordered));
+
                 if (VAL_WORD_SYMBOL(ordered) != param_symbol)
                     continue;
 
@@ -685,14 +687,14 @@ Bounce Action_Executor(Frame(*) f)
     // second time through, and we were just jumping up to check the
     // parameters in response to a BOUNCE_REDO_CHECKED; if so, skip this.
     //
-    if (TOP_INDEX != BASELINE->stack_base and IS_WORD(TOP)) {
+    if (TOP_INDEX != BASELINE->stack_base) {
 
       next_pickup:
 
-        assert(IS_WORD(TOP));
+        assert(Is_Pushed_Refinement(TOP));
 
         if (not IS_WORD_BOUND(TOP)) {  // the loop didn't index it
-            Refinify(TOP);  // used as refinement, so report that way
+            Refinify_Pushed_Refinement(TOP);
             fail (Error_Bad_Parameter_Raw(TOP));  // so duplicate or junk
         }
 

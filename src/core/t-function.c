@@ -228,7 +228,7 @@ REBTYPE(Action)
             fail (picker);
 
         StackIndex base = TOP_INDEX;
-        Init_Word(PUSH(), symbol);
+        Init_Pushed_Refinement(PUSH(), symbol);
         if (Specialize_Action_Throws(OUT, action, nullptr, base))
             return THROWN;
 
