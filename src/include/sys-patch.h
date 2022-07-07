@@ -174,10 +174,10 @@ inline static Array(*) Make_Patch_Core(
         Init_Any_Word_Bound_Untracked(
             TRACK(ARR_SINGLE(patch)),
             kind,
-            binding,
             IS_VARLIST(binding)
                 ? KEY_SYMBOL(CTX_KEY(CTX(binding), 1))  // arbitrary word
                 : INODE(PatchSymbol, binding),
+            binding,
             1  // arbitrary word (used to use CTX_LEN())
         );
     }

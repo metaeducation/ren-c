@@ -427,8 +427,8 @@ bool Specialize_Action_Throws(
                 Init_Any_Word_Bound(
                     Alloc_Tail_Array(partials),
                     REB_WORD,
-                    exemplar,
                     KEY_SYMBOL(CTX_KEY(exemplar, VAL_WORD_INDEX(ordered))),
+                    exemplar,
                     VAL_WORD_INDEX(ordered)
                 );
             }

@@ -836,8 +836,8 @@ static bool Try_Loop_Each_Next(Value(const*) iterator, Context(*) vars_ctx)
                 Init_Any_Word_Bound(
                     var,
                     REB_WORD,
-                    VAL_CONTEXT(les->data),
                     KEY_SYMBOL(les->u.evars.key),
+                    VAL_CONTEXT(les->data),
                     les->u.evars.index
                 );
 

@@ -779,8 +779,8 @@ Array(*) Context_To_Array(Cell(const*) context, REBINT mode)
             Init_Any_Word_Bound(
                 PUSH(),
                 (mode & 2) ? REB_SET_WORD : REB_WORD,
-                e.ctx,
                 KEY_SYMBOL(e.key),
+                e.ctx,
                 e.index
             );
 

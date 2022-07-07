@@ -251,7 +251,7 @@ DECLARE_NATIVE(in)
         REBLEN index = Find_Symbol_In_Context(ARG(context), symbol, strict);
         if (index == 0)
             return nullptr;
-        return Init_Any_Word_Bound(OUT, VAL_TYPE(v), ctx, symbol, index);
+        return Init_Any_Word_Bound(OUT, VAL_TYPE(v), symbol, ctx, index);
     }
 
     assert(ANY_ARRAY(v));
@@ -292,8 +292,8 @@ DECLARE_NATIVE(without)
         return Init_Any_Word_Bound(
             OUT,
             VAL_TYPE(v),
-            ctx,
             symbol,  // !!! incoming case...consider impact of strict if false?
+            ctx,
             index
         );
     }

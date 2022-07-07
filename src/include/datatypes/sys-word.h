@@ -65,8 +65,8 @@ inline static REBVAL *Init_Any_Word_Untracked(
 inline static REBVAL *Init_Any_Word_Bound_Untracked(
     Cell(*) out,
     enum Reb_Kind type,
-    Array(*) binding,  // spelling determined by linked-to thing
     Symbol(const*) symbol,
+    Array(*) binding,  // spelling determined by linked-to thing
     REBLEN index  // must be 1 if LET patch (INDEX_ATTACHED)
 ){
     Reset_Cell_Header_Untracked(out, type, CELL_FLAG_FIRST_IS_NODE);
@@ -89,9 +89,9 @@ inline static REBVAL *Init_Any_Word_Bound_Untracked(
     return cast(REBVAL*, out);
 }
 
-#define Init_Any_Word_Bound(out,type,context,symbol,index) \
+#define Init_Any_Word_Bound(out,type,symbol,context,index) \
     Init_Any_Word_Bound_Untracked(TRACK(out), \
-            (type), CTX_VARLIST(context), (symbol), (index))
+            (type), (symbol), CTX_VARLIST(context), (index))
 
 inline static REBVAL *Init_Any_Word_Patched(  // e.g. LET or MODULE! var
     Cell(*) out,
@@ -101,13 +101,13 @@ inline static REBVAL *Init_Any_Word_Patched(  // e.g. LET or MODULE! var
     return Init_Any_Word_Bound_Untracked(
         out,
         type,
-        patch,
         INODE(PatchSymbol, patch),
+        patch,
         INDEX_PATCHED
     );
 }
 
-#define Init_Any_Word_Attached(out,type,module,symbol) \
+#define Init_Any_Word_Attached(out,type,symbol,module) \
     Init_Any_Word_Bound_Untracked(TRACK(out), \
             (type), (symbol), CTX_VARLIST(module), INDEX_ATTACHED)
 
