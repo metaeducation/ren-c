@@ -68,6 +68,73 @@ enum {
 
 
 //
+//  Make_Pushed_Frame_From_Action_Feed_May_Throw: C
+//
+// 1. The idea of creating a frame from an evaluative step which includes infix
+//    as part of the step would ultimately have to make a composite frame that
+//    captured the entire chain of the operation.  That's a heavy concept, but
+//    for now we just try to get multiple returns to work which are part of
+//    the evaluator and hence can do trickier things.
+//
+// 2. At the moment, Begin_Prefix_Action() marks the frame as having been
+//    invoked...but since it didn't get managed it drops the flag in
+//    Drop_Action().
+//
+//    !!! The flag is new, as a gambit to try and avoid copying frames for
+//    DO-ing just in order to expire the old identity.  Under development.
+//
+// 3. The function did not actually execute, so no SPC(f) was never handed
+//    out...the varlist should never have gotten managed.  So this context
+//    can theoretically just be put back into the reuse list, or managed
+//    and handed out for other purposes.  Caller's choice.
+//
+Frame(*) Make_Pushed_Frame_From_Action_Feed_May_Throw(
+    REBVAL *out,
+    Value(*) action,
+    Feed(*) feed,
+    StackIndex base,
+    bool error_on_deferred
+){
+    Frame(*) f = Make_Frame(
+        feed,
+        FRAME_FLAG_MAYBE_STALE  // fulfill only added below
+    );
+    f->baseline.stack_base = base;  // incorporate refinements
+    Mark_Eval_Out_Stale(out);
+    Push_Frame(out, f);
+
+    if (error_on_deferred)  // can't deal with ELSE/THEN, see [1]
+        f->flags.bits |= ACTION_EXECUTOR_FLAG_ERROR_ON_DEFERRED_ENFIX;
+
+    Push_Action(f, VAL_ACTION(action), VAL_ACTION_BINDING(action));
+    Begin_Prefix_Action(f, VAL_ACTION_LABEL(action));
+
+    Set_Executor_Flag(ACTION, f, FULFILL_ONLY);  // Push_Action() won't allow
+
+    assert(FRM_BINDING(f) == VAL_ACTION_BINDING(action));  // no invocation
+
+    if (Trampoline_With_Top_As_Root_Throws())
+        return f;
+
+    assert(Is_Stale(f->out));  // should only have gathered arguments
+
+    assert(  // !!! new flag, see [2]
+        Not_Subclass_Flag(VARLIST, f->varlist, FRAME_HAS_BEEN_INVOKED)
+    );
+
+    assert(not (f->flags.bits & ACTION_EXECUTOR_FLAG_FULFILL_ONLY));
+
+    f->u.action.original = VAL_ACTION(action);
+    INIT_FRM_PHASE(f, VAL_ACTION(action));  // Drop_Action() cleared, restore
+    INIT_FRM_BINDING(f, VAL_ACTION_BINDING(action));
+
+    assert(NOT_SERIES_FLAG(f->varlist, MANAGED));  // shouldn't be, see [3]
+
+    return f;  // may not be at end or thrown, e.g. (x: does+ just y x = 'y)
+}
+
+
+//
 //  Make_Invokable_From_Feed_Throws: C
 //
 // This builds a frame from a feed *as if* it were going to be used to call
@@ -110,8 +177,7 @@ bool Make_Invokable_From_Feed_Throws(
     if (ANY_GROUP(v))  // `requote (append [a b c] #d, <can't-work>)`
         fail ("Actions made with REFRAMER cannot work with GROUP!s");
 
-    Frame(*) f = Make_Frame(feed, FRAME_MASK_NONE);  // FULFILL_ONLY adds below
-    Push_Frame(out, f);
+    StackIndex base = TOP_INDEX;
 
     if (IS_WORD(v) or IS_TUPLE(v) or IS_PATH(v)) {
         DECLARE_LOCAL (steps);
@@ -121,26 +187,19 @@ bool Make_Invokable_From_Feed_Throws(
             v,
             FEED_SPECIFIER(feed)
         )){
-            Drop_Frame(f);
             return true;
         }
     }
     else
         Derelativize(out, v, FEED_SPECIFIER(feed));
 
+    if (Is_End(first))
+        Fetch_Next_In_Feed(feed);  // we've seen it now
+
     if (not IS_ACTION(out)) {
         Quotify(out, 1);
-
-        if (Is_End(first))
-            Fetch_Next_Forget_Lookback(f);  // we've seen it now
-        Drop_Frame(f);
         return false;
     }
-
-    if (Is_End(first))
-        Fetch_Next_Forget_Lookback(f);  // now, onto the arguments...
-
-    option(String(const*)) label = VAL_ACTION_LABEL(f->out);
 
     // !!! Process_Action_Throws() calls Drop_Action() and loses the phase.
     // It probably shouldn't, but since it does we need the action afterward
@@ -150,83 +209,41 @@ bool Make_Invokable_From_Feed_Throws(
     Move_Cell(action, out);
     PUSH_GC_GUARD(action);
 
-    // It is desired that any nulls encountered be processed as if they are
-    // not specialized...and gather at the callsite if necessary.
+    option(String(const*)) label = VAL_ACTION_LABEL(action);
 
-    // The idea of creating a frame from an evaluative step which includes
-    // infix as part of the step would ultimately have to make a composite
-    // frame that captured the entire chain of the operation.  That's a heavy
-    // concept, but for now we just try to get multiple returns to work which
-    // are part of the evaluator and hence can do trickier things.
-    //
-    if (error_on_deferred)  // can't deal with ELSE/THEN
-        f->flags.bits |= ACTION_EXECUTOR_FLAG_ERROR_ON_DEFERRED_ENFIX;
+    Frame(*) f = Make_Pushed_Frame_From_Action_Feed_May_Throw(
+        out,
+        action,
+        feed,
+        base,
+        error_on_deferred
+    );
 
-    Push_Action(f, VAL_ACTION(action), VAL_ACTION_BINDING(action));
-    Begin_Prefix_Action(f, VAL_ACTION_LABEL(action));
-
-    // Use this special mode where we ask the dispatcher not to run, just to
-    // gather the args.  Push_Action() checks that it's not set, so we don't
-    // set it until after that.
-    //
-    Set_Executor_Flag(ACTION, f, FULFILL_ONLY);
-
-    assert(FRM_BINDING(f) == VAL_ACTION_BINDING(action));  // no invocation
-
-    assert(Is_Fresh(f->out));
-
-    if (Trampoline_With_Top_As_Root_Throws()) {
-        DROP_GC_GUARD(action);
+    if (Is_Throwing(f)) {  // signals threw
         Drop_Frame(f);
+        DROP_GC_GUARD(action);
         return true;
     }
-
-    assert(Is_Fresh(f->out));  // should only have gathered arguments
-
-    // At the moment, Begin_Prefix_Action() marks the frame as having been
-    // invoked...but since it didn't get managed it drops the flag in
-    // Drop_Action().
-    //
-    // !!! The flag is new, as a gambit to try and avoid copying frames for
-    // DO-ing just in order to expire the old identity.  Under development.
-    //
-    assert(Not_Subclass_Flag(VARLIST, f->varlist, FRAME_HAS_BEEN_INVOKED));
-
-    assert(not (f->flags.bits & ACTION_EXECUTOR_FLAG_FULFILL_ONLY));
-
-    // Drop_Action() clears out the phase and binding.  Put them back.
-    // !!! Should it check EVAL_EXECUTOR_FLAG_FULFILL_ONLY?
-
-    INIT_FRM_PHASE(f, VAL_ACTION(action));
-    INIT_FRM_BINDING(f, VAL_ACTION_BINDING(action));
-
-    // The function did not actually execute, so no SPC(f) was never handed
-    // out...the varlist should never have gotten managed.  So this context
-    // can theoretically just be put back into the reuse list, or managed
-    // and handed out for other purposes by the caller.
-    //
-    Array(*) varlist = f->varlist;
-    assert(NOT_SERIES_FLAG(varlist, MANAGED));  // not invoked yet
-    f->varlist = nullptr;  // just let it GC, for now
-
-    Action(*) act = VAL_ACTION(action);
-    assert(FRM_BINDING(f) == VAL_ACTION_BINDING(action));
-
-    INIT_BONUS_KEYSOURCE(varlist, ACT_KEYLIST(act));
-
-    // May not be at end or thrown, e.g. (x: does+ just y x = 'y)
-    //
-    DROP_GC_GUARD(action);  // before drop to balance at right time
-    Drop_Frame(f);
 
     // The exemplar may or may not be managed as of yet.  We want it
     // managed, but Push_Action() does not use ordinary series creation to
     // make its nodes, so manual ones don't wind up in the tracking list.
     //
+    Action(*) act = VAL_ACTION(action);
+    assert(FRM_BINDING(f) == VAL_ACTION_BINDING(action));
+
+    assert(NOT_SERIES_FLAG(f->varlist, MANAGED));
+
+    Array(*) varlist = f->varlist;
+    f->varlist = nullptr;  // don't let Drop_Frame() free varlist (we want it)
+    INIT_BONUS_KEYSOURCE(varlist, ACT_KEYLIST(act));  // disconnect from f
+    Drop_Frame(f);
+    DROP_GC_GUARD(action);
+
     SET_SERIES_FLAG(varlist, MANAGED); // can't use Manage_Series
 
     Init_Frame(out, CTX(varlist), label);
-    return false;
+    return false;  // didn't throw
 }
 
 

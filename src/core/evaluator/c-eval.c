@@ -1393,25 +1393,46 @@ Bounce Evaluator_Executor(Frame(*) f)
             stackindex_circled = 0;
      }
 
+        StackIndex base = TOP_INDEX;
+
         // Build a frame for the function call by fulfilling its arguments.
         // The function will be in a state that it can be called, but not
         // invoked yet.
         //
-        // !!! This function can currently return a QUOTED! of the next value
-        // if it's not an ACTION!; consider that an error for multi-return.
-        //
-        bool error_on_deferred = false;
-        if (Make_Frame_From_Feed_Throws(
-            SPARE,
-            END,
-            f->feed,
-            error_on_deferred
+        STATE = ST_EVALUATOR_SET_BLOCK_RIGHTSIDE;  // reeval messes f_specifier
+        DECLARE_LOCAL (action);
+        if (Get_Var_Push_Refinements_Throws(
+            action,
+            GROUPS_OK,
+            f_next,
+            f_specifier
         )){
             Drop_Data_Stack_To(BASELINE->stack_base);
             goto return_thrown;
         }
-        if (not IS_FRAME(SPARE))  // can return QUOTED! if not action atm
+
+        // We haven't ruled out other things on the right of SET-BLOCK!, but
+        // nothing yet...
+        //
+        if (not IS_ACTION(action))
             fail ("SET-BLOCK! is only allowed to have ACTION! on right ATM.");
+
+        Fetch_Next_Forget_Lookback(f);
+
+        bool error_on_deferred = false;
+        Frame(*) sub = Make_Pushed_Frame_From_Action_Feed_May_Throw(
+            OUT,
+            action,
+            f->feed,
+            base,
+            error_on_deferred
+        );
+
+        if (Is_Throwing(sub)) {
+            Drop_Frame(sub);
+            Drop_Data_Stack_To(BASELINE->stack_base);
+            goto return_thrown;
+        }
 
         // Now we want to enumerate through the outputs, and fill them with
         // words/paths/_/# from the data stack.  Note the first slot is set
@@ -1420,11 +1441,15 @@ Bounce Evaluator_Executor(Frame(*) f)
         StackIndex stackindex_output = BASELINE->stack_base + 2;
 
       blockscope {
-        Context(*) c = VAL_CONTEXT(SPARE);
-        const REBKEY *key_tail;
-        const REBKEY *key = CTX_KEYS(&key_tail, c);
-        REBVAR *var = CTX_VARS_HEAD(c);
-        const REBPAR *param = ACT_PARAMS_HEAD(CTX_FRAME_ACTION(c));
+        sub->executor = &Action_Executor;
+
+        Begin_Prefix_Action(sub, VAL_ACTION_LABEL(action));
+
+        const REBKEY *key_tail = sub->u.action.key_tail;
+        const REBKEY *key = sub->u.action.key;
+        Value(*) var = sub->u.action.arg;
+        const REBPAR *param = sub->u.action.param;
+
         for (; key != key_tail; ++key, ++var, ++param) {
             if (stackindex_output == TOP_INDEX + 1)
                 break;  // no more outputs requested
@@ -1443,9 +1468,11 @@ Bounce Evaluator_Executor(Frame(*) f)
         // Now run the frame...no need to preserve OUT (always overwritten on
         // an assignment)
         //
-        STATE = ST_EVALUATOR_SET_BLOCK_RIGHTSIDE;
+        assert(STATE == ST_EVALUATOR_SET_BLOCK_RIGHTSIDE);
         frame_->u.eval.stackindex_circled = stackindex_circled;
-        return CONTINUE(OUT, SPARE, END);
+
+        FRM_STATE_BYTE(sub) = ST_ACTION_TYPECHECKING;
+        return CATCH_CONTINUE_SUBFRAME(sub);
 
     } set_block_rightside_result_in_out: {  //////////////////////////////////
 
@@ -1482,7 +1509,6 @@ Bounce Evaluator_Executor(Frame(*) f)
                 | FRAME_FLAG_MAYBE_STALE;  // won't be, but avoids RESET()
 
             Frame(*) subframe = Make_Frame(f->feed, flags);
-            assert(not Is_Stale(OUT));
             Push_Frame(OUT, subframe);  // offer potential enfix previous OUT
 
             STATE = ST_EVALUATOR_SET_BLOCK_LOOKAHEAD;
@@ -1516,16 +1542,18 @@ Bounce Evaluator_Executor(Frame(*) f)
                 Data_Stack_At(BASELINE->stack_base + 1),
                 STACK_NOTE_METARETURN)
             ){
-                Reify_Eval_Out_Meta(OUT);
+                if (Is_Stale(OUT))
+                    Init_Meta_Of_Void(OUT);
+                else
+                    Reify_Eval_Out_Meta(OUT);
 
                 Set_Var_May_Fail(SPARE, SPECIFIED, OUT);
             }
-            else if (Is_Void(OUT)) {
+            else if (Is_Stale(OUT)) {
                 Set_Var_May_Fail(
                     SPARE, SPECIFIED,
-                    NONE_ISOTOPE  // still want to return the ~void~ isotope
+                    NONE_ISOTOPE  // !!! Should we go with ~void~ isotope?
                 );
-                Init_None(OUT);  // propagate none (same as SET, SET-WORD!)
             }
             else {  // ordinary assignment
                 Set_Var_May_Fail(

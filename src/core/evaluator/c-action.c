@@ -732,7 +732,7 @@ Bounce Action_Executor(Frame(*) f)
     f->u.action.key_tail = nullptr;
 
     if (Get_Executor_Flag(ACTION, f, FULFILL_ONLY)) {  // no typecheck
-        assert(Is_Fresh(OUT));  // didn't touch out
+        assert(Is_Stale(OUT));  // didn't touch out
         goto skip_output_check;
     }
 
@@ -1313,8 +1313,11 @@ void Begin_Action_Core(
     option(Symbol(const*)) label,
     bool enfix
 ){
-    assert(Not_Executor_Flag(ACTION, f, RUNNING_ENFIX));
-    assert(Not_Feed_Flag(f->feed, DEFERRING_ENFIX));
+    // These assertions were blocking code sharing with SET-BLOCK! mechanics.
+    // Review where the right place to put them is.
+    //
+    /*assert(Not_Executor_Flag(ACTION, f, RUNNING_ENFIX));
+    assert(Not_Feed_Flag(f->feed, DEFERRING_ENFIX));*/
 
     assert(Not_Subclass_Flag(VARLIST, f->varlist, FRAME_HAS_BEEN_INVOKED));
     Set_Subclass_Flag(VARLIST, f->varlist, FRAME_HAS_BEEN_INVOKED);
