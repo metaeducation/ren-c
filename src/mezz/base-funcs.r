@@ -740,7 +740,7 @@ entrap: func [
     code [block! action!]
     <local> result
 ][
-    return any [trap/result code 'result, ^result]
+    return any [[# ^result]: trap code, result]
 ]
 
 reduce*: redescribe [
