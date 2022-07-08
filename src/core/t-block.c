@@ -1630,7 +1630,7 @@ void Assert_Array_Core(Array(const*) a)
     REBLEN i;
     REBLEN len = ARR_LEN(a);
     for (i = 0; i < len; ++i, ++item) {
-        if (VAL_TYPE(item) >= REB_MAX) {
+        if (VAL_TYPE_UNCHECKED(item) >= REB_MAX) {
             printf("Invalid VAL_TYPE() at index %d\n", cast(int, i));
             panic (a);
         }
