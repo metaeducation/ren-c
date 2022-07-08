@@ -378,7 +378,9 @@ inline static bool Typecheck_Including_Constraints(
             FLAGIT_KIND(REB_NULL)
             | FLAGIT_KIND(REB_ISSUE)  // for Is_Blackhole() use with SET
             | FLAGIT_KIND(REB_WORD)
-            | FLAGIT_KIND(REB_TUPLE);
+            | FLAGIT_KIND(REB_TUPLE)
+            | FLAGIT_KIND(REB_META_WORD)
+            | FLAGIT_KIND(REB_META_TUPLE);
         return (ts_out & FLAGIT_KIND(VAL_TYPE(v))) != 0;
     }
 

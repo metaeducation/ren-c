@@ -1316,8 +1316,12 @@ Bounce Evaluator_Executor(Frame(*) f)
             // !!! Should both @(^) and ^(@) be allowed?
             //
             if (IS_META(check)) {
-                Init_Blackhole(PUSH());
-                Set_Cell_Flag(TOP, STACK_NOTE_METARETURN);
+                if (stackindex_circled != 0)
+                    goto too_many_circled;
+                REBVAL *let = rebValue("let temp, '^temp");  // have to fabricate var
+                Move_Cell(PUSH(), let);
+                rebRelease(let);
+                stackindex_circled = TOP_INDEX;
                 continue;
             }
             if (
@@ -1326,8 +1330,6 @@ Bounce Evaluator_Executor(Frame(*) f)
                 or IS_META_TUPLE(check)
             ){
                 Derelativize(PUSH(), check, check_specifier);
-                Plainify(TOP);
-                Set_Cell_Flag(TOP, STACK_NOTE_METARETURN);
                 continue;
             }
 
@@ -1381,7 +1383,7 @@ Bounce Evaluator_Executor(Frame(*) f)
             if (IS_THE_GROUP(check))
                 stackindex_circled = TOP_INDEX;
             else if (IS_META_GROUP(check))
-                Set_Cell_Flag(TOP, STACK_NOTE_METARETURN);
+                Metafy(TOP);
         }
 
         // By default, the ordinary return result will be returned.  Indicate
@@ -1538,10 +1540,7 @@ Bounce Evaluator_Executor(Frame(*) f)
         if (IS_BLANK(SPARE))
             Init_Isotope(OUT, Canon(BLANK));
         else {
-            if (Get_Cell_Flag(
-                Data_Stack_At(BASELINE->stack_base + 1),
-                STACK_NOTE_METARETURN)
-            ){
+            if (ANY_META_KIND(VAL_TYPE(Data_Stack_At(BASELINE->stack_base + 1)))) {
                 if (Is_Stale(OUT))
                     Init_Meta_Of_Void(OUT);
                 else
@@ -1570,7 +1569,7 @@ Bounce Evaluator_Executor(Frame(*) f)
         StackIndex stackindex = TOP_INDEX;
         for (; stackindex != BASELINE->stack_base + 1; --stackindex) {
             if (
-                Get_Cell_Flag(Data_Stack_At(stackindex), STACK_NOTE_METARETURN)
+                ANY_META_KIND(VAL_TYPE(Data_Stack_At(stackindex)))
                 or stackindex_circled == stackindex
             ){
                 DECLARE_LOCAL (temp);
@@ -1582,7 +1581,8 @@ Bounce Evaluator_Executor(Frame(*) f)
                     SPECIFIED,
                     true  // any
                 );
-                if (Get_Cell_Flag(Data_Stack_At(stackindex), STACK_NOTE_METARETURN))
+
+                if (ANY_META_KIND(VAL_TYPE(Data_Stack_At(stackindex))))
                     Meta_Quotify(temp);
                 Set_Var_May_Fail(
                     SPARE, SPECIFIED,

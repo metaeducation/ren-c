@@ -252,11 +252,6 @@
 //   the more ephemeral "note" is used on the stack element and then changed
 //   to the sticky flag on the paramlist when popping.
 //
-// * STACK_NOTE_CIRCLED - When doing multi-returns, this marks which stack
-//   element representing a return slot should act as the main return value.
-//   (It could be done with a StackIndex, but this thinks ahead to stackless,
-//   so storing in the data stack makes it survive the evaluation.)
-//
 
 #define CELL_FLAG_NOTE \
     FLAG_LEFT_BIT(28)
@@ -265,7 +260,6 @@
 #define CELL_FLAG_NOTE_REMOVE CELL_FLAG_NOTE
 #define CELL_FLAG_BIND_NOTE_REUSE CELL_FLAG_NOTE
 #define CELL_FLAG_STACK_NOTE_SEALED CELL_FLAG_NOTE
-#define CELL_FLAG_STACK_NOTE_METARETURN CELL_FLAG_NOTE
 
 
 //=//// CELL_FLAG_NEWLINE_BEFORE //////////////////////////////////////////=//
