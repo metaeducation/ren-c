@@ -1193,6 +1193,15 @@ Bounce Action_Executor(Frame(*) f)
         }
     }
 
+    // !!! As a convenience, we automatically drop evaluator frames above
+    // on the stack.  This doesn't necessarily generalize well, but if we
+    // didn't do it then anything that pushed a subframe to do an evaluator
+    // walk (like a CASE or ANY) would need to explicitly catch evaluator
+    // throws...which is make-work.
+    //
+    while (TOP_FRAME != f)
+        Drop_Frame(TOP_FRAME);  // !!! Should all inert frames be aborted?
+
     Drop_Action(f);
     Drop_Data_Stack_To(f->baseline.stack_base);  // unprocessed refinements
 

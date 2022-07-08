@@ -345,11 +345,10 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
     if (r == BOUNCE_THROWN) {
       thrown:
 
+        assert(FRAME == TOP_FRAME);  // Action_Executor() helps, drops inerts
+
         /*assert(not IS_CFUNC_TRASH_DEBUG(Executor*, FRAME->executor));*/
         TRASH_CFUNC_IF_DEBUG(Executor*, FRAME->executor);
-
-        while (TOP_FRAME != FRAME)
-            Drop_Frame(TOP_FRAME);  // !!! Should all inert frames be aborted?
 
         if (Get_Frame_Flag(FRAME, ABRUPT_FAILURE)) {
             //
