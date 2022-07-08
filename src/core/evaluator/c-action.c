@@ -173,7 +173,7 @@ Bounce Action_Executor(Frame(*) f)
 
     goto dispatch_phase;  // STATE byte belongs to dispatcher after fulfill
 
-  fulfill:
+  fulfill: {  ////////////////////////////////////////////////////////////////
 
     assert(not IS_POINTER_TRASH_DEBUG(ORIGINAL));  // set by Begin_Action()
 
@@ -724,7 +724,7 @@ Bounce Action_Executor(Frame(*) f)
         goto fulfill_arg;
     }
 
-  fulfill_and_any_pickups_done:
+} fulfill_and_any_pickups_done: {  ///////////////////////////////////////////
 
     if (Get_Executor_Flag(ACTION, f, FULFILL_ONLY)) {  // no typecheck
         assert(Is_Stale(OUT));  // didn't touch out
@@ -733,19 +733,49 @@ Bounce Action_Executor(Frame(*) f)
 
     STATE = ST_ACTION_TYPECHECKING;
 
-  //=//// ACTION! ARGUMENTS NOW GATHERED, DO TYPECHECK PASS ///////////////=//
+    // Action arguments now gathered, do typecheck pass
 
-    // It might seem convenient to type check arguments while they are being
-    // fulfilled vs. performing another loop.  But the semantics of the system
-    // allows manipulation of arguments between fulfillment and execution, and
-    // that could turn invalid arguments good or valid arguments bad.  Plus
-    // if all the arguments are evaluated before any type checking, that puts
-    // custom type checks inside the body of a function on equal footing with
-    // any system-optimized type checking.
-    //
-    // So a second loop is required by the system's semantics.
+} typecheck_then_dispatch: {  ////////////////////////////////////////////////
 
-  typecheck_then_dispatch:
+  // It might seem convenient to type check arguments while they are being
+  // fulfilled vs. performing another loop.  But the semantics of the system
+  // allows manipulation of arguments between fulfillment and execution, and
+  // that could turn invalid arguments good or valid arguments bad.  Plus if
+  // all the arguments are evaluated before any type checking, that puts
+  // custom type checks inside the body of a function on equal footing with
+  // any system-optimized type checking.
+  //
+  // So a second loop is required by the system's semantics.
+  //
+  // 1. We assume typecheck was done when the parameter was specialized.  It
+  //    cannot be manipulated from the outside (e.g. by REFRAMER) so there is
+  //    no benefit to deferring the check, only extra cost on each invocation.
+  //
+  //    BUT note that if you have a redo situation as with an ENCLOSE, a
+  //    specialized out parameter becomes visible in the frame and can be
+  //    modified.  Even though it's hidden, it may need to be typechecked
+  //    again (unless it was *fully* hidden).
+  //
+  // 2. Since isotopes are illegal in general (and become BAD-WORD! when
+  //    passed to ^META parmaeters), ~void~ and ~end~ isotopes are chosen as
+  //    special signals for actual void and end intent.
+  //
+  // 3. We can't a-priori typecheck the variadic argument, since the values
+  //    aren't calculated until the function starts running.  Instead we stamp
+  //    this instance of the varargs with a way to reach back and see the
+  //    parameter type signature.
+  //
+  //    The data feed is unchanged (can come from this frame, or another, or
+  //    just an array from MAKE VARARGS! of a BLOCK!)
+  //
+  // 4. Store the offset so that both the arg and param locations can quickly
+  //    be recovered, while using only a single slot in the cell.  Sign denotes
+  //    whether the parameter was enfixed or not.
+  //
+  // 5. !!! Should explicit mutability override, so people can say things
+  //    like `foo: func [...] mutable [...]` ?  This seems bad, because the
+  //    contract of the function hasn't been "tweaked" with reskinning.
+
     assert(STATE == ST_ACTION_TYPECHECKING);
 
     Mark_Eval_Out_Stale(OUT);
@@ -757,27 +787,13 @@ Bounce Action_Executor(Frame(*) f)
     for (; KEY != KEY_TAIL; ++KEY, ++ARG, ++PARAM) {
         assert(not Is_Void(ARG));
 
-        // We assume typecheck was done when the parameter was specialized.
-        // It cannot be manipulated from the outside (e.g. by REFRAMER) so
-        // there is no benefit to deferring the check, only extra cost on
-        // each invocation.
-        //
-        // BUT note that if you have a redo situation as with an ENCLOSE, a
-        // specialized out parameter becomes visible in the frame and can be
-        // modified.  Even though it's hidden, it may need to be typechecked
-        // again, unless it was fully hidden.
-        //
-        if (Is_Specialized(PARAM))
+        if (Is_Specialized(PARAM))  // checked when specialized, see [1]
             continue;
 
         if (VAL_PARAM_CLASS(PARAM) == PARAM_CLASS_RETURN)
             continue;  // !!! hack
 
-        // Since isotopes are illegal in general (and become BAD-WORD! when
-        // passed to ^META parmaeters), ~void~ and ~end~ isotopes are chosen
-        // as special signals for actual void and end intent.
-        //
-        if (Is_Isotope(ARG)) {
+        if (Is_Isotope(ARG)) {  // some special meanings since illegal, see [2]
             if (Is_None(ARG)) {  // e.g. (~) isotope, unspecialized
                 Init_Nulled(ARG);
             }
@@ -807,30 +823,14 @@ Bounce Action_Executor(Frame(*) f)
             }
         }
 
-        // We can't a-priori typecheck the variadic argument, since the values
-        // aren't calculated until the function starts running.  Instead we
-        // stamp this instance of the varargs with a way to reach back and
-        // see the parameter type signature.
-        //
-        // The data feed is unchanged (can come from this frame, or another,
-        // or just an array from MAKE VARARGS! of a BLOCK!)
-        //
-        if (GET_PARAM_FLAG(PARAM, VARIADIC)) {
-            //
-            // The types on the parameter are for the values fetched later.
-            // Actual argument must be a VARARGS!
-            //
-            if (not IS_VARARGS(ARG))
+        if (GET_PARAM_FLAG(PARAM, VARIADIC)) {  // can't check now, see [3]
+            if (not IS_VARARGS(ARG))  // argument itself is always VARARGS!
                 fail (Error_Not_Varargs(f, KEY, PARAM, VAL_TYPE(ARG)));
 
             INIT_VAL_VARARGS_PHASE(ARG, FRM_PHASE(f));
 
-            // Store the offset so that both the arg and param locations can
-            // quickly be recovered, while using only a single slot in the
-            // REBVAL.  Sign denotes whether the parameter was enfixed or not.
-            //
             bool enfix = false;  // !!! how does enfix matter?
-            VAL_VARARGS_SIGNED_PARAM_INDEX(ARG) =
+            VAL_VARARGS_SIGNED_PARAM_INDEX(ARG) =  // store offset, see [4]
                 enfix
                     ? -(ARG - FRM_ARGS_HEAD(f) + 1)
                     : ARG - FRM_ARGS_HEAD(f) + 1;
@@ -839,14 +839,11 @@ Bounce Action_Executor(Frame(*) f)
             continue;
         }
 
-        // Refinements have a special rule beyond plain type checking, in that
-        // they don't just want an ISSUE! or NULL, they want # or NULL.
-        //
         if (
             GET_PARAM_FLAG(PARAM, REFINEMENT)
             or GET_PARAM_FLAG(PARAM, SKIPPABLE)
         ){
-            Typecheck_Refinement(KEY, PARAM, ARG);
+            Typecheck_Refinement(KEY, PARAM, ARG);  // extra check of # or NULL
             continue;
         }
 
@@ -885,19 +882,13 @@ Bounce Action_Executor(Frame(*) f)
             }
         }
 
-        // Apply constness if requested.
-        //
-        // !!! Should explicit mutability override, so people can say things
-        // like `foo: func [...] mutable [...]` ?  This seems bad, because the
-        // contract of the function hasn't been "tweaked" with reskinning.
-        //
         if (GET_PARAM_FLAG(PARAM, CONST))
-            Set_Cell_Flag(ARG, CONST);
+            Set_Cell_Flag(ARG, CONST);  // mutability override?  see [5]
 
-        // !!! Review when # is used here
+
         if (GET_PARAM_FLAG(PARAM, REFINEMENT)) {
             Typecheck_Refinement(KEY, PARAM, ARG);
-            continue;
+            continue;  // !!! Review when # is used here
         }
 
         if (KEY_SYM(KEY) == SYM_RETURN)
@@ -907,15 +898,27 @@ Bounce Action_Executor(Frame(*) f)
             fail (Error_Arg_Type(f, KEY, kind));
     }
 
+  // Action arguments now gathered, begin dispatching
 
-  //=//// ACTION! ARGUMENTS NOW GATHERED, DISPATCH PHASE //////////////////=//
+} dispatch: {  ///////////////////////////////////////////////////////////////
 
   // 1. Here we free the union for use by the dispatcher...though currently
   //    one slot is stolen for the base stack address the dispatcher should
   //    consider (variables can be stored to write back to for multi-return).
   //    It's also needed to keep f->original.  Think about how to improve.
-
-  dispatch:
+  //
+  // 2. This happens if you have something intending to act as enfix but
+  //    that does not consume arguments, e.g. `x: enfixed func [] []`.  An
+  //    enfixed function with no arguments might sound dumb, but it allows
+  //    a 0-arity function to run in the same evaluation step as the left
+  //    hand side.  This is how expression work (see `|:`)
+  //
+  //    !!! This is dealt with in `skip_output_check`, is it needed here too?
+  //
+  // 3. Resetting the spare cell here has a slight cost, but stops leaks of
+  //    internal processing to actions.  It means that any attempts to read
+  //    the spare cell will give an assert, but also means the cell is fresh
+  //    and ready to use (e.g. to target of an Eval_Maybe_Stale() operation).
 
     assert(Not_Executor_Flag(ACTION, f, IN_DISPATCH));
     Set_Executor_Flag(ACTION, f, IN_DISPATCH);
@@ -930,13 +933,7 @@ Bounce Action_Executor(Frame(*) f)
             fail (Error_Literal_Left_Path_Raw());
     }
 
-    // This happens if you have something intending to act as enfix but
-    // that does not consume arguments, e.g. `x: enfixed func [] []`.
-    // An enfixed function with no arguments might sound dumb, but it allows
-    // a 0-arity function to run in the same evaluation step as the left
-    // hand side.  This is how expression work (see `|:`)
-    //
-    if (Get_Feed_Flag(f->feed, NEXT_ARG_FROM_OUT)) {
+    if (Get_Feed_Flag(f->feed, NEXT_ARG_FROM_OUT)) {  // can happen, see [2]
         assert(Get_Executor_Flag(ACTION, f, RUNNING_ENFIX));
         Clear_Feed_Flag(f->feed, NEXT_ARG_FROM_OUT);
         Mark_Eval_Out_Stale(OUT);
@@ -957,59 +954,49 @@ Bounce Action_Executor(Frame(*) f)
         goto skip_output_check;
     }
 
-    // Resetting the spare cell here has a slight cost, but keeps from leaking
-    // internal processing to actions.  It means that any attempts to read
-    // the spare cell will give an assert, but it also means the cell is fresh
-    // and ready to use (e.g. as a target of an Eval_Maybe_Stale() operation).
-    //
-    RESET(SPARE);
+    RESET(SPARE);  // tiny cost (one bit clear) but worth it, see [3]
     STATE = 0;  // reset to zero for each phase
 
     f_next_gotten = nullptr;  // arbitrary code changes fetched variables
 
-    // Note that the dispatcher may push ACTION! values to the data stack
-    // which are used to process the return result after the switch.
-    //
-  dispatch_phase: {
-    assert(Not_Executor_Flag(ACTION, FRAME, DELEGATE_CONTROL));  // finished!
+} dispatch_phase: {  /////////////////////////////////////////////////////////
 
-    // Each time a continuation happens, the dispatcher gets a new chance to
-    // decide if it wants to catch throws.
-    //
-    // !!! Should this be done in the continuations themselves, so that an
-    // action that doesn't use any continuations won't pay for this clearing?
-    //
-    Clear_Executor_Flag(ACTION, FRAME, DISPATCHER_CATCHES);
+  // 1. Each time a continuation happens, the dispatcher gets a new chance to
+  //    decide if it wants to catch throws.
+  //
+  //    !!! Should this be done in the continuations themselves, so that an
+  //    action that doesn't use any continuations won't pay for this clearing?
+  //
+  // 2. Native code trusts that type checking has ensured it won't get bits
+  //    in its argument slots that the C won't recognize.  Usermode code that
+  //    gets its hands on a native's FRAME! (e.g. for debug viewing) can't be
+  //    allowed to change the frame values to other bit patterns out from
+  //    under the C or it could result in a crash.
+  //
+  //    !!! Once the IS_NATIVE flag was the same as the HOLD info bit, but
+  //    that trick got shaken up with flag reordering.  Review.
+  //
+  // 3. The stale bit is set on the output before we run the dispatcher.  We
+  //    check to make sure it's not stale at the end--because that could often
+  //    mean the function forgot to write the output cell on some code path.
+  //    (To intentionally not write anything and "vaporize", use `return VOID`
+  //    which gives back a distinct `Bounce` signal to know it's purposeful.)
+
+    assert(Not_Executor_Flag(ACTION, FRAME, DELEGATE_CONTROL));  // delegated!
+    Clear_Executor_Flag(ACTION, FRAME, DISPATCHER_CATCHES);  // see [1]
 
     Action(*) phase = FRM_PHASE(f);
 
-    // Native code trusts that type checking has ensured it won't get bits
-    // in its argument slots that the C won't recognize.  Usermode code that
-    // gets its hands on a native's FRAME! (e.g. for debug viewing) can't be
-    // allowed to change the frame values to other bit patterns out from
-    // under the C or it could result in a crash.
-    //
-    // !!! Once the IS_NATIVE flag was the same as the HOLD info bit, but that
-    // trick got shaken up with flag reordering.  Review.
-    //
     /*STATIC_ASSERT(DETAILS_FLAG_IS_NATIVE == SERIES_INFO_HOLD);*/
     if (Get_Action_Flag(phase, IS_NATIVE))
-        SER_INFO(f->varlist) |= SERIES_INFO_HOLD;
+        SER_INFO(f->varlist) |= SERIES_INFO_HOLD;  // prevents crashes, see [2]
 
     Dispatcher* dispatcher = ACT_DISPATCHER(phase);
 
     Bounce b = (*dispatcher)(f);
 
     if (b == OUT) {  // common case, made fastest
-        //
-        // The stale bit is set on the output before we run the dispatcher.
-        // We check to make sure it's not set at the end--so that dispatch
-        // didn't forget to write something into the output cell on some
-        // code path.  (To intentionally not write anything and "vaporize",
-        // use `return_void` and not plain `return`.)
-        //
         assert(not Is_Stale(OUT));
-
         Clear_Cell_Flag(OUT, UNEVALUATED);
     }
     else if (b == nullptr) {  // API and internal code can both return `nullptr`
@@ -1022,20 +1009,9 @@ Bounce Action_Executor(Frame(*) f)
         Release_Api_Value_If_Unmanaged(r);
     }
     else switch (VAL_RETURN_SIGNAL(b)) {  // it's a "pseudotype" instruction
-        //
-        // !!! As the workings of stackless continue to sift out, the general
-        // idea seems to be that ontinuations are based on building a
-        // frame as the currency for the continuation and linking it in...
-        // then getting an optional callback.  Initial concepts were that
-        // this would be memoized in some way that the dispatcher could help
-        // you with, but that help should be done another way.
-        //
-        // Some cases do not actually push a frame, if it's quicker to just do
-        // an evaluation (like a QUOTED! branch).  So can't assert that FRAME
-        // is not TOP_FRAME here.
-        //
+
       case C_CONTINUATION:
-        return BOUNCE_CONTINUE;
+        return BOUNCE_CONTINUE;  // Note: may not have pushed a new frame...
 
       case C_DELEGATION:
         Set_Executor_Flag(ACTION, FRAME, DELEGATE_CONTROL);
@@ -1046,51 +1022,32 @@ Bounce Action_Executor(Frame(*) f)
         return BOUNCE_SUSPEND;
 
       case C_THROWN:
-        //
-        // Stay THROWN and let stack levels above try and catch
-        //
         goto handle_thrown_maybe_redo;
 
       case C_VOID :
         assert(Is_Stale(OUT));  // The invisible output is always in f->out.
         break;
 
-    // REDO instructions represent the idea that it is desired to run the
-    // f->phase again.  The dispatcher may have changed the value of what
-    // f->phase is, for instance.
-
       case C_REDO_UNCHECKED:
         Clear_Executor_Flag(ACTION, f, IN_DISPATCH);
-        goto dispatch;
+        goto dispatch;  // Note: dispatcher may have changed frame's PHASE
 
       case C_REDO_CHECKED:
         Clear_Executor_Flag(ACTION, f, IN_DISPATCH);
         STATE = ST_ACTION_TYPECHECKING;
         goto typecheck_then_dispatch;
 
-        // !!! There were generic dispatchers that were returning this, and
-        // it wasn't noticed when unhandled was the same as END.  For instance
-        // this was arising in the ISSUE! dispatcher when you said `#a + 1`.
-        // Path dispatchers make use of this, but should regular actions?  Is
-        // there a meaningful enough error to fabricate?
-        //
-      case C_UNHANDLED:
+      case C_UNHANDLED:  // was used e.g. by `#a + 1`, should we revive this?
         fail ("Not handled (review instances of this error!)");
 
       default:
         assert(!"Invalid pseudotype returned from action dispatcher");
     }
-  }
 
-  dispatch_completed:
+} dispatch_completed: {  /////////////////////////////////////////////////////
 
-  //=//// ACTION! CALL COMPLETION /////////////////////////////////////////=//
-
-    // Here we know the function finished and nothing threw past it or
-    // FAIL / fail()'d.  It should still be in REB_ACTION evaluation
-    // type, and overwritten the f->out with a non-thrown value.  If the
-    // function composition is a CHAIN, the chained functions are still
-    // pending on the stack to be run.
+  // Here we know the function finished and nothing threw past it or had an
+  // abrupt fail().  (It may have done a `return FAIL(...)`, however.)
 
   #if !defined(NDEBUG)
     Do_After_Action_Checks_Debug(f);
@@ -1099,71 +1056,81 @@ Bounce Action_Executor(Frame(*) f)
     if (not Is_Failure(OUT))  // !!! Should there be an R_FAIL ?
         assert(f->u.action.dispatcher_base == TOP_INDEX);
 
-  skip_output_check:
+} skip_output_check: {  //////////////////////////////////////////////////////
 
-    if (Get_Feed_Flag(f->feed, NEXT_ARG_FROM_OUT)) {
-        //
-        // !!! This used to assert that there was no NEXT_ARG_FROM_OUT flag
-        // set, but this can happen, e.g.:
-        //
-        //     >> left-soft: enfixed func ['x [word!]] [return x]
-        //     >> (|| left-soft)
-        //
-        // The LEFT-SOFT looked back, and would have been able to take the ||
-        // except it noticed that it took no arguments.  So it allowed the ||
-        // to win the context (this is how HELP can quote things that quote
-        // left and would usually win, but don't when they have no args).
-        //
-        // The problem is that || doesn't take any arguments, so the LEFT-SOFT
-        // has put itself into the output cell to be quoted, but the || has
-        // this tweak:
-        //
-        //      tweak :|| 'barrier on
-        //
-        // It's not important enough to fix at time of writing, so error.  But
-        // a good answer needs to reactivate/reevaluate LEFT-SOFT as a new
-        // expression, somehow.
-        //
+  // This is where things get jumped to if you pass a <blank> argument a
+  // BLANK! and it wants to jump past all the processing and return, or if
+  // a frame just wants argument fulfillment and no execution.
+  //
+  // NOTE: Anything that calls fail() must do so before Drop_Action()!
+  //
+  // 1. !!! This used to assert that there was no NEXT_ARG_FROM_OUT flag
+  //    set, but this can actually happen, e.g.:
+  //
+  //      >> left-soft: enfixed func ['x [word!]] [return x]
+  //      >> (|| left-soft)
+  //
+  //    The LEFT-SOFT looked back, and would have been able to take the ||
+  //    except it noticed that it took no arguments.  So it allowed the ||
+  //    to win the context (this is how HELP can quote things that quote
+  //    left and would usually win, but don't when they have no args).
+  //
+  //    The problem is that || doesn't take any arguments, so the LEFT-SOFT
+  //    has put itself into the output cell to be quoted, but the || has
+  //    this tweak:
+  //
+  //      tweak :|| 'barrier on
+  //
+  //   It's not important enough to fix at time of writing, so error.  But
+  //   a good answer needs to reactivate/reevaluate LEFT-SOFT as a new
+  //   expression, somehow.
+  //
+  // 2. Want to keep this flag between an operation and an ensuing enfix in
+  //    the same frame, so can't clear in Drop_Action(), e.g. due to:
+  //
+  //      left-the: enfix :the
+  //      o: make object! [f: does [1]]
+  //      o.f left-the  ; want error suggesting -> here, need flag for that
+
+    if (Get_Feed_Flag(f->feed, NEXT_ARG_FROM_OUT))
         fail ("Left lookback toward thing that took no args, look at later");
-    }
 
-    // Want to keep this flag between an operation and an ensuing enfix in
-    // the same frame, so can't clear in Drop_Action(), e.g. due to:
-    //
-    //     left-the: enfix :the
-    //     o: make object! [f: does [1]]
-    //     o.f left-the  ; want error suggesting -> here, need flag for that
-    //
-    Clear_Executor_Flag(ACTION, f, DIDNT_LEFT_QUOTE_PATH);
+    Clear_Executor_Flag(ACTION, f, DIDNT_LEFT_QUOTE_PATH);  // for why, see [2]
 
     Drop_Action(f);  // must fail before Drop_Action()
 
     return OUT;  // not thrown
 
-  handle_thrown_maybe_redo: {  ///////////////////////////////////////////////
+} handle_thrown_maybe_redo: {  ///////////////////////////////////////////////
 
-    // Until stackless is universal, an action dispatcher may make a stackful
-    // call to something that issues a REDO.  So we can't handle REDO at the
-    // top of this executor where we test for THROWING, the way we might if
-    // we could always expect continuations as the sources of throws.
-    //
-    // 1. REDO is the mechanism for doing "tail calls", and it is a generic
-    //    feature offered on ACTION! frames regardless of what executor
-    //    they use.  It starts the function phase again from its top, and
-    //    reuses the frame already allocated.
-    //
-    // 2. Since dispatchers run arbitrary code to pick how (and if) they want
-    //    to change the phase on each redo, we have no easy way to tell if a
-    //    phase is "earlier" or "later".
-    //
-    // 3. We are reusing the frame and may be jumping to an "earlier phase" of
-    //    a composite function, or even to a "not-even-earlier-just-compatible"
-    //    phase of another function (sibling tail call).  Type checking is
-    //    necessary, as is zeroing out any locals...but if we're jumping to any
-    //    higher or different phase we need to reset the specialization
-    //    values as well.
-    //
-    //    !!! Consider folding this pass into the typechecking loop itself.
+  // Until stackless is universal, an action dispatcher may make a stackful
+  // call to something that issues a REDO.  So we can't handle REDO at the
+  // top of this executor where we test for THROWING, the way we might if
+  // we could always expect continuations as the sources of throws.
+  //
+  // 1. REDO is the mechanism for doing "tail calls", and it is a generic
+  //    feature offered on ACTION! frames regardless of what executor
+  //    they use.  It starts the function phase again from its top, and
+  //    reuses the frame already allocated.
+  //
+  // 2. Since dispatchers run arbitrary code to pick how (and if) they want
+  //    to change the phase on each redo, we have no easy way to tell if a
+  //    phase is "earlier" or "later".
+  //
+  // 3. We are reusing the frame and may be jumping to an "earlier phase" of
+  //    a composite function, or even to a "not-even-earlier-just-compatible"
+  //    phase of another function (sibling tail call).  Type checking is
+  //    necessary, as is zeroing out any locals...but if we're jumping to any
+  //    higher or different phase we need to reset the specialization
+  //    values as well.
+  //
+  //    !!! Consider folding this pass into the typechecking loop itself.
+  //
+  // 4. As a convenience, we automatically drop evaluator frames above on the
+  //    stack.  This doesn't necessarily generalize well, but if we didn't do
+  //    it then anything that pushed a subframe to do an evaluator walk (like
+  //    a CASE or ANY) would need to explicitly catch evaluator throws...which
+  //    seems like make-work.
 
     const REBVAL *label = VAL_THROWN_LABEL(frame_);
     if (IS_ACTION(label)) {
@@ -1193,13 +1160,7 @@ Bounce Action_Executor(Frame(*) f)
         }
     }
 
-    // !!! As a convenience, we automatically drop evaluator frames above
-    // on the stack.  This doesn't necessarily generalize well, but if we
-    // didn't do it then anything that pushed a subframe to do an evaluator
-    // walk (like a CASE or ANY) would need to explicitly catch evaluator
-    // throws...which is make-work.
-    //
-    while (TOP_FRAME != f)
+    while (TOP_FRAME != f)  // convenient for natives pushing SUBFRAME, see [4]
         Drop_Frame(TOP_FRAME);  // !!! Should all inert frames be aborted?
 
     Drop_Action(f);
