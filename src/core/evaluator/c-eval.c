@@ -880,7 +880,7 @@ Bounce Evaluator_Executor(Frame(*) f)
         if (Get_Var_Core_Throws(SPARE, GROUPS_OK, f_current, f_specifier))
             goto return_thrown;
 
-        if (IS_ACTION(SPARE)) {  // try this branch before fail on void+null
+        if (VAL_TYPE_UNCHECKED(SPARE) == REB_ACTION) {  // uncheck for isotopes
             Action(*) act = VAL_ACTION(SPARE);
 
             // PATH! dispatch is costly and can error in more ways than WORD!:
@@ -904,7 +904,7 @@ Bounce Evaluator_Executor(Frame(*) f)
             goto process_action;
         }
 
-        if (Is_Isotope(SPARE))
+        if (Is_Isotope(SPARE))  // we test *after* action (faster common case)
             fail (Error_Bad_Word_Get(f_current, SPARE));
 
         Move_Cell(OUT, SPARE);  // won't move CELL_FLAG_UNEVALUATED
