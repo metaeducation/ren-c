@@ -15,7 +15,7 @@
                 <end> (true)
                 | "true" (true)
                 | "false" (false)
-                | dir: <text>, (to-file dir)  ; manual form, use TO-FILE/ below
+                | dir: text!, (to-file dir)  ; manual form, use TO-FILE/ below
             ]
             |
             ["-h" | "-help" | "--help" || (-help, quit)]

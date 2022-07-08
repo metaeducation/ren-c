@@ -1370,8 +1370,8 @@ DECLARE_NATIVE(catch)
 } code_result_in_out: {  //////////////////////////////////////////////////////
 
     if (not THROWING) {
-        if (REF(result))
-            rebElide(Lib(SET), rebQ(REF(result)), rebQ(OUT));
+        if (WANTED(result))
+            Copy_Cell(ARG(result), OUT);
 
         return nullptr;  // no throw means just return null
     }

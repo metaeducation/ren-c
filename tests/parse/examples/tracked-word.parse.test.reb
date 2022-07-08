@@ -31,8 +31,6 @@
         <static> indent (0)
     ][
         let input: f.input  ; save to use after DO F
-        let remainder: f.remainder  ; (same)
-        let pending: f.pending
         let name: f.value
 
         indent: me + 1
@@ -41,9 +39,9 @@
 
         if null? result' [return null]
 
-        let consumed: copy/part input get remainder
+        let consumed: copy/part input f.remainder
 
-        let subpending: any [get pending, copy []]
+        let subpending: any [f.pending, copy []]
 
         ; GROUP!s in the pending list are deferred until the parse finishes
         ; (or reaches a PHASE boundary).  We don't know if this rule will
@@ -62,7 +60,7 @@
             ])
         ]
 
-        set pending subpending
+        f.pending: subpending
         return unmeta result'
     ]
 

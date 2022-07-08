@@ -251,7 +251,7 @@ DECLARE_NATIVE(read_line)
     // be reviewed in light of this new entry point.
 
     REBVAL *line;
-    bool eof;
+    bool eof;  // can tell whether all code paths assign or not, vs ARG(eof)
 
   #ifdef REBOL_SMART_CONSOLE
     if (Term_IO) {
@@ -264,8 +264,7 @@ DECLARE_NATIVE(read_line)
         // lines of input, e.g. in the REPL.
         //
         if (rebUnboxLogic(rebQ(line), "= '~escape~")) {
-            if (REF(eof))
-                rebElide(Lib(SET), rebQ(ARG(eof)), Lib(FALSE));
+            Init_False(ARG(eof));
             return line;
         }
 
@@ -310,8 +309,7 @@ DECLARE_NATIVE(read_line)
                     // then just return nullptr as an end of file signal.
                     //
                     Drop_Mold(mo);
-                    if (REF(eof))
-                        rebElide(Lib(SET), rebQ(ARG(eof)), Lib(TRUE));
+                    Init_True(ARG(eof));
                     return nullptr;
                 }
 
@@ -373,9 +371,7 @@ DECLARE_NATIVE(read_line)
     }
   #endif
 
-    if (REF(eof))
-        rebElide(Lib(SET), rebQ(ARG(eof)), rebL(eof));
-
+    Init_Logic(ARG(eof), eof);
     return line;
 }
 

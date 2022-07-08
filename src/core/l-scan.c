@@ -3060,7 +3060,7 @@ DECLARE_NATIVE(transcode)
         FRAME_FLAG_TRAMPOLINE_KEEPALIVE  // query pending newline
         | FRAME_FLAG_FAILURE_RESULT_OK  // want to pass on definitional error
         | FRAME_FLAG_ALLOCATED_FEED;
-    if (REF(next))
+    if (WANTED(next))
         flags |= SCAN_EXECUTOR_FLAG_JUST_ONCE;
 
     Frame(*) subframe = Make_Frame(feed, flags);
@@ -3092,19 +3092,16 @@ DECLARE_NATIVE(transcode)
     //
     // Return a block of the results, so [1] and [[1]] in those cases.
 
-    if (REF(relax)) {
+    if (WANTED(relax)) {
         //
         // !!! Currently the /RELAX feature is broken, waiting on a new and
         // better implementation empowered by stackless.  Say it succeeded by
         // returning NULL, but if there's an error it will not be intercepted.
         //
-        if (not Is_Blackhole(REF(relax))) {
-            REBVAL *var = Sink_Word_May_Fail(ARG(relax), SPECIFIED);
-            Init_Nulled(var);
-        }
+        Init_Nulled(ARG(relax));
     }
 
-    if (REF(next)) {
+    if (WANTED(next)) {
         if (TOP_INDEX == STACK_BASE)
             Init_Nulled(OUT);
         else {
@@ -3138,8 +3135,8 @@ DECLARE_NATIVE(transcode)
     // Return the input BINARY! or TEXT! advanced by how much the transcode
     // operation consumed.
     //
-    if (REF(next) and not Is_Blackhole(ARG(next))) {
-        REBVAL *rest = ARG(return);  // use return as scratch slot
+    if (WANTED(next)) {
+        REBVAL *rest = ARG(next);  // use return as scratch slot
         Copy_Cell(rest, source);
 
         if (IS_BINARY(source)) {
@@ -3167,9 +3164,6 @@ DECLARE_NATIVE(transcode)
             else
                 VAL_INDEX_RAW(rest) += BIN_TAIL(VAL_STRING(source)) - bp;
         }
-
-        if (Set_Var_Core_Throws(SPARE, nullptr, ARG(next), SPECIFIED, rest))
-            return THROWN;
     }
 
     return OUT;

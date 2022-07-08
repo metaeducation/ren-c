@@ -76,9 +76,9 @@ DECLARE_NATIVE(trap)
 
   evaluation_finished: {
     if (not THROWING) {
-        if (REF(result)) {
+        if (WANTED(result)) {
             Reify_Eval_Out_Plain(OUT);
-            rebElide(Lib(SET), rebQ(REF(result)), rebQ(OUT));
+            Copy_Cell(ARG(result), OUT);
         }
         return nullptr;
     }

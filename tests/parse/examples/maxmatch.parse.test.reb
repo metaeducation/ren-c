@@ -33,11 +33,11 @@
                 null? result1'
                 (index of remainder1) < (index of remainder2)
             ] then [
-                set remainder remainder2
+                remainder: remainder2
                 return unmeta result2'
             ]
         ]
-        set remainder remainder1
+        remainder: remainder1
         return unmeta result1'
     ]
     true
@@ -183,13 +183,13 @@
                 null? result1'
                 (index of remainder1) < (index of remainder2)
             ] then [
-                set remainder remainder2
-                set pending pending2
+                remainder: remainder2
+                pending: pending2
                 return unmeta result2'
             ]
         ]
-        set remainder remainder1
-        set pending pending1
+        remainder: remainder1
+        pending: pending1
         return unmeta result1'
     ]
     true

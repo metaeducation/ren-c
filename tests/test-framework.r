@@ -426,7 +426,7 @@ export do-recover: func [
     ]
 
     process-tests test-sources :run-test-cluster then [
-        let temp: spaced [
+        summary: spaced [
             "system.version:" system.version LF
             "code-checksum:" code-checksum LF
             "test-checksum:" test-checksum LF
@@ -444,8 +444,7 @@ export do-recover: func [
             "Skipped:" skipped LF
         ]
 
-        log [temp]
-        if summary [set summary temp]
+        log [summary]
     ]
 
     return log-file

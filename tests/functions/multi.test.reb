@@ -16,13 +16,13 @@
 
 [
     (test: func [return: x y: z:] [
-        if not null? y [
-            assert ['~ = ^(get/any y)]
-            set y <y-result>
+        if not unset? 'y [
+            assert [wanted? 'y]
+            y: <y-result>
         ]
-        if not null? z [
-            assert ['~ = ^(get/any z)]
-            set z <z-result>
+        if not unset? 'z [
+            assert [wanted? 'z]
+            z: <z-result>
         ]
 
         return 304
@@ -96,7 +96,7 @@
 [
     (
         foo: func [return: [integer!] other: [integer!] arg] [
-            set other 10
+            other: 10
             return 20
         ]
         null? until [[# #]: foo break]
@@ -159,7 +159,7 @@
 
     (
         foo: func [return: [integer!] other: [integer!]] [
-            if other [set other 10] return 20
+            if wanted? 'other [other: 10] return 20
         ]
         did all [
             '~weird~ = [^x y]: foo then [~weird~]

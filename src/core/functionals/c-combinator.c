@@ -631,7 +631,8 @@ static bool Combinator_Param_Hook(
     Frame(*) frame_ = s->frame_;
     INCLUDE_PARAMS_OF_COMBINATORIZE;
 
-    USED(REF(path));  // currently path checking is
+    UNUSED(REF(path));  // used by caller of hook
+    UNUSED(ARG(advanced));  // used by caller of hook
 
     SYMID symid = KEY_SYM(key);
 
@@ -719,15 +720,18 @@ static bool Combinator_Param_Hook(
         }
         else {
             // !!! Getting more than one value back from a libRebol API is not
-            // currently supported.  But it should be, somehow.  For the moment
-            // we abuse the ADVANCED variable by setting it prematurely and then
-            // extract it back to the rules.
-            //
+            // currently supported.  Usermode code is not allowed to directly
+            // write to native frame variables, so hack in a temporary here.
+            // (could be done much more efficiently another way!)
+
+            if (rebRunThrows(SPARE, "let temp"))
+                assert(!"LET failed");
             REBVAL *parser = rebValue(
-                "[#", ARG(advanced), "]: parsify", ARG(state), ARG(rules)
+                "[#", SPARE, "]: parsify", ARG(state), ARG(rules)
             );
+            bool any = false;
+            Get_Var_May_Fail(ARG(rules), SPARE, SPECIFIED, any);
             Copy_Cell(var, parser);
-            Get_Var_May_Fail(ARG(rules), ARG(advanced), SPECIFIED, true);
             rebRelease(parser);
         }
         break; }
@@ -802,7 +806,7 @@ DECLARE_NATIVE(combinatorize)
     // Set the advanced parameter to how many rules were consumed (the hook
     // steps through ARG(rules), updating its index)
     //
-    Set_Var_May_Fail(ARG(advanced), SPECIFIED, ARG(rules));
+    Copy_Cell(ARG(advanced), ARG(rules));
 
     Action(*) parser = Make_Action_From_Exemplar(s.ctx);
     DROP_GC_GUARD(s.ctx);

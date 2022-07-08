@@ -120,7 +120,7 @@ combinator: func [
             ; we just use it to notice the furthest parse point reached.
             ;
             let state: f.state
-            let remainder: f.remainder
+            f.remainder: ~wanted~
 
             let result': ^ eval f  ; want to detect "pure void" (/MAYBE)
             if state.verbose [
@@ -129,9 +129,8 @@ combinator: func [
             return unmeta (result' also [
                 all [  ; if success, mark state.furthest
                     state.furthest
-                    remainder <> #
-                    (index? remainder: get remainder) > (index? get state.furthest)
-                    set state.furthest remainder
+                    (index? f.remainder) > (index? state.furthest)
+                    state.furthest: f.remainder
                 ]
             ])
         ]
@@ -181,7 +180,7 @@ combinator: func [
         ((if autopipe '[
             let f: binding of 'return
 
-            set pending _
+            pending: _
             let in-args: false
             for-each [key val] f [
                 if not in-args [
@@ -202,7 +201,7 @@ combinator: func [
                     ][
                         f2.pending: let subpending
                         return unmeta ((^ eval f2) also [
-                            set pending glom (get pending) subpending
+                            pending: glom pending subpending
                         ])
                     ]
                 ]
@@ -258,7 +257,7 @@ default-combinators: make map! reduce [
         parser [action!]
         <local> result'
     ][
-        ([^result' (remainder)]: parser input) then [
+        ([^result' remainder]: parser input) then [
             any [
                 result' = '~null~  ; `maybe if true [null]` vanishes
                 result' = '~       ; `maybe if true [if false [<a>]]` vanishes
@@ -267,7 +266,7 @@ default-combinators: make map! reduce [
             ]
             return unmeta result'  ; return successful parser result
         ]
-        set remainder input  ; succeed on parser failure but don't advance input
+        remainder: input  ; succeed on parser failure but don't advance input
         return void  ; void result (vanishes, or leaves SET-WORD!s unchanged)
     ]
 
@@ -278,10 +277,10 @@ default-combinators: make map! reduce [
         parser [action!]
         <local> result'
     ][
-        ([^result' (remainder)]: parser input) then [
+        ([^result' remainder]: parser input) then [
             return unmeta result'  ; return successful parser result
         ]
-        set remainder input  ; succeed on parser failure but don't advance input
+        remainder: input  ; succeed on parser failure but don't advance input
         return heavy null  ; "heavy null" result (plain NULL signals failure)
     ]
 
@@ -291,10 +290,10 @@ default-combinators: make map! reduce [
             [<opt> bad-word!]
         parser [action!]
     ][
-        ([^ (remainder)]: parser input) then [  ; don't care about result
+        ([^ remainder]: parser input) then [  ; don't care about result
             return null
         ]
-        set remainder input  ; parser failed, so NOT reports success
+        remainder: input  ; parser failed, so NOT reports success
         return ~not~  ; clearer than returning NULL
     ]
 
@@ -304,7 +303,8 @@ default-combinators: make map! reduce [
             [<opt> any-value!]
         parser [action!]
     ][
-        return [# #]: parser input  ; don't care about remainder
+        remainder: input
+        return parser input  ; don't care about what parser's remainder is
     ]
 
     'further combinator [
@@ -320,7 +320,7 @@ default-combinators: make map! reduce [
         if (index? pos) <= (index? input) [
             return null  ; the rule matched, but did not advance the input
         ]
-        set remainder pos
+        remainder: pos
         return unmeta result'
     ]
 
@@ -355,7 +355,7 @@ default-combinators: make map! reduce [
         cycle [  ; if first try succeeds, we'll succeed overall--keep looping
             ([^result' pos]: parser input) else [
                 take/last state.loops
-                set remainder input
+                remainder: input
                 return unmeta last-result'
             ]
             last-result': result'
@@ -379,7 +379,7 @@ default-combinators: make map! reduce [
         cycle [
             ([# pos]: condition-parser input) else [
                 take/last state.loops
-                set remainder input
+                remainder: input
                 return unmeta last-result'
             ]
 
@@ -437,7 +437,7 @@ default-combinators: make map! reduce [
             ;
             ([^ pos]: parser input) else [
                 take/last state.loops
-                set remainder input
+                remainder: input
                 return count
             ]
             count: count + 1
@@ -456,7 +456,7 @@ default-combinators: make map! reduce [
             fail "No PARSE iteration to BREAK"
         ]
 
-        set f.remainder input
+        f.remainder: input
         unwind f null
     ]
 
@@ -478,7 +478,7 @@ default-combinators: make map! reduce [
             fail "No PARSE iteration to STOP"
         ]
 
-        set f.remainder input
+        f.remainder: input
         unwind f unmeta result'
     ]
 
@@ -537,7 +537,7 @@ default-combinators: make map! reduce [
         return: "The INDEX OF the parse position"
             [integer!]
     ][
-        set remainder input
+        remainder: input
         return index of input
     ]
 
@@ -548,9 +548,9 @@ default-combinators: make map! reduce [
         parser [action!]
         <local> s e
     ][
-        ([^ (remainder)]: parser input) else [return null]
+        ([^ remainder]: parser input) else [return null]
 
-        e: index of get remainder
+        e: index of remainder
         s: index of input
 
         ; Because parse operations can SEEK, this can potentially create
@@ -585,7 +585,7 @@ default-combinators: make map! reduce [
         replacer [action!]  ; !!! How to say result is used here?
         <local> replacement'
     ][
-        ([^ (remainder)]: parser input) else [  ; first find end position
+        ([^ remainder]: parser input) else [  ; first find end position
             return null
         ]
 
@@ -601,7 +601,7 @@ default-combinators: make map! reduce [
 
         ; CHANGE returns tail, use as new remainder
         ;
-        set remainder change/part input (unquote replacement') (get remainder)
+        remainder: change/part input (unquote replacement') remainder
         return ~changed~
     ]
 
@@ -611,11 +611,11 @@ default-combinators: make map! reduce [
             [<opt> bad-word!]
         parser [action!]
     ][
-        ([^ (remainder)]: parser input) else [  ; first find end position
+        ([^ remainder]: parser input) else [  ; first find end position
             return null
         ]
 
-        set remainder remove/part input get remainder
+        remainder: remove/part input remainder
         return ~removed~
     ]
 
@@ -636,7 +636,7 @@ default-combinators: make map! reduce [
 
         assert [quoted? insertion']
 
-        set remainder insert input (unquote insertion')
+        remainder: insert input (unquote insertion')
         return ~inserted~
     ]
 
@@ -651,7 +651,7 @@ default-combinators: make map! reduce [
     ][
         cycle [
             ([^result' #]: parser input) then [
-                set remainder input  ; TO means do not include match range
+                remainder: input  ; TO means do not include match range
                 return unmeta result'
             ]
             if tail? input [  ; could be `to <end>`, so check tail *after*
@@ -667,11 +667,10 @@ default-combinators: make map! reduce [
         return: "The rule's product"
             [<opt> any-value!]
         parser [action!]
-        <local> result' pos
+        <local> result'
     ][
         cycle [
-            ([^result' pos]: parser input) then [
-                set remainder pos
+            ([^result' remainder]: parser input) then [
                 return unmeta result'
             ]
             if tail? input [  ; could be `thru <end>`, check TAIL? *after*
@@ -688,7 +687,7 @@ default-combinators: make map! reduce [
         parser [action!]
         <local> where
     ][
-        ([^where (remainder)]: parser input) else [
+        ([^where remainder]: parser input) else [
             return null
         ]
         if bad-word? where [
@@ -700,17 +699,17 @@ default-combinators: make map! reduce [
                 ; Allow opting out
             ]
             integer? where [
-                set remainder at head input where
+                remainder: at head input where
             ]
             any-series? :where [
                 if not same? head input head where [
                     fail "Series SEEK in UPARSE must be in the same series"
                 ]
-                set remainder where
+                remainder: where
             ]
             fail "SEEK requires INTEGER!, series position, or BLANK!"
         ]
-        return get remainder
+        return remainder
     ]
 
     'between combinator [
@@ -726,7 +725,7 @@ default-combinators: make map! reduce [
 
         let limit: start
         cycle [
-            ([^ (remainder)]: parser-right limit) then [  ; found it
+            ([^ remainder]: parser-right limit) then [  ; found it
                 return copy/part start limit
             ]
             if tail? limit [  ; remainder is null
@@ -759,7 +758,7 @@ default-combinators: make map! reduce [
             fail ["No TAG! Combinator registered for" value]
         ]
 
-        return [# (remainder) (pending)]: comb state input
+        return [# remainder pending]: comb state input
     ]
 
     <here> combinator [
@@ -767,7 +766,7 @@ default-combinators: make map! reduce [
         return: "parse position"
             [any-series!]
     ][
-        set remainder input
+        remainder: input
         return input
     ]
 
@@ -777,10 +776,10 @@ default-combinators: make map! reduce [
             [<opt> any-series!]
     ][
         if tail? input [
-            set remainder input
+            remainder: input
             return input
         ]
-        set remainder null
+        remainder: null
         return null
     ]
 
@@ -789,7 +788,7 @@ default-combinators: make map! reduce [
         return: "parse position"
             [any-series!]
     ][
-        set remainder input
+        remainder: input
         return state.input
     ]
 
@@ -801,7 +800,7 @@ default-combinators: make map! reduce [
         if tail? input [
             return null
         ]
-        set remainder next input
+        remainder: next input
         return input.1
     ]
 
@@ -819,14 +818,14 @@ default-combinators: make map! reduce [
             [<opt> any-series!]
         parser [action!]
     ][
-        ([^ (remainder)]: parser input) then [
+        ([^ remainder]: parser input) then [
             if any-array? input [
-                return as block! copy/part input get remainder
+                return as block! copy/part input remainder
             ]
             if any-string? input [
-                return as text! copy/part input get remainder
+                return as text! copy/part input remainder
             ]
-            return copy/part input get remainder
+            return copy/part input remainder
         ]
         return null
     ]
@@ -884,7 +883,7 @@ default-combinators: make map! reduce [
         subparser [action!]
         <local> subseries result'
     ][
-        ([^subseries (remainder)]: parser input) else [
+        ([^subseries remainder]: parser input) else [
             ;
             ; If the parser in the first argument can't get a value to subparse
             ; then we don't process it.
@@ -941,7 +940,7 @@ default-combinators: make map! reduce [
         parser [action!]
         <local> subpending collected
     ][
-        ([^ (remainder) subpending]: parser input) else [
+        ([^ remainder subpending]: parser input) else [
             return null
         ]
 
@@ -961,7 +960,7 @@ default-combinators: make map! reduce [
             ]
         ]
 
-        set pending subpending
+        pending: subpending
         return collected
     ]
 
@@ -972,14 +971,14 @@ default-combinators: make map! reduce [
         parser [action!]
         <local> result result' subpending
     ][
-        ([^result' (remainder) subpending]: parser input) else [
+        ([^result' remainder subpending]: parser input) else [
             return null
         ]
         if bad-word? result' [
             fail ["Cannot KEEP a" result' "isotope"]
         ]
         if result' = the '_ [  ; result' is quoted, so they kept a blank
-            set pending _
+            pending: _
             return ~null~  ; succeed but return null isotope
         ]
 
@@ -996,7 +995,7 @@ default-combinators: make map! reduce [
         ;
         case [
             quoted? :result [  ; wanted to KEEP the unquoted thing literally
-                set pending (glom subpending result')  ; just one quote level
+                pending: glom subpending result'  ; just one quote level
             ]
             block? :result [
                 subpending: default [copy []]  ; !!! optimize empty results?
@@ -1008,13 +1007,13 @@ default-combinators: make map! reduce [
                     ;
                     append subpending ^ ^item
                 ]
-                set pending subpending
+                pending: subpending
             ]
             any-the-value? :result [
-                set pending (glom subpending ^(plain result'))  ; drop @
+                pending: glom subpending ^(plain result')  ; drop @
             ]
             any-inert? :result [  ; quote doesn't matter
-                set pending (glom subpending ^result')  ; just one quote level
+                pending: glom subpending ^result'  ; just one quote level
             ]
             fail "Can only KEEP values that are QUOTED! or ANY-INERT!"
         ]
@@ -1047,7 +1046,7 @@ default-combinators: make map! reduce [
         parser [action!]
         <local> obj subpending
     ][
-        ([^ (remainder) subpending]: parser input) else [
+        ([^ remainder subpending]: parser input) else [
             return null
         ]
 
@@ -1062,7 +1061,7 @@ default-combinators: make map! reduce [
             ]
         ]
 
-        set pending subpending
+        pending: subpending
         return obj
     ]
 
@@ -1083,7 +1082,7 @@ default-combinators: make map! reduce [
             ]
         ]
 
-        ([^result' (remainder) (pending)]: parser input) else [
+        ([^result' remainder pending]: parser input) else [
             return null
         ]
 
@@ -1091,7 +1090,7 @@ default-combinators: make map! reduce [
         ; This lets us emit null fields and isotopes, since the MAKE OBJECT!
         ; will do an evaluation.
         ;
-        set pending glom get pending ^ :[as set-word! target result']
+        pending: glom pending ^ :[as set-word! target result']
         return unmeta result'
     ]
 
@@ -1112,7 +1111,7 @@ default-combinators: make map! reduce [
             [action!]
         <local> result'
     ][
-        ([^result' (remainder)]: parser input) else [return null]
+        ([^result' remainder]: parser input) else [return null]
 
         return set value unmeta result'
     ]
@@ -1125,7 +1124,7 @@ default-combinators: make map! reduce [
             [action!]
         <local> result'
     ][
-        ([^result' (remainder)]: parser input) else [return null]
+        ([^result' remainder]: parser input) else [return null]
 
         return set value unmeta result'
     ]
@@ -1162,7 +1161,7 @@ default-combinators: make map! reduce [
                 if input.1 <> value [
                     return null
                 ]
-                set remainder next input
+                remainder: next input
                 return input.1
             ]
 
@@ -1192,7 +1191,7 @@ default-combinators: make map! reduce [
             ]
         ]
 
-        set remainder input
+        remainder: input
         return value
     ]
 
@@ -1211,20 +1210,20 @@ default-combinators: make map! reduce [
         case [
             any-array? input [
                 if input.1 == value [
-                    set remainder next input
+                    remainder: next input
                     return input.1
                 ]
                 return null
             ]
             any-string? input [
-                if set remainder find/match/case/tail input value [
+                if remainder: find/match/case/tail input value [
                     return value
                 ]
                 return null
             ]
             true [
                 assert [binary? input]
-                if set remainder find/match/case/tail input value [
+                if remainder: find/match/case/tail input value [
                     return value
                 ]
                 return null
@@ -1247,14 +1246,14 @@ default-combinators: make map! reduce [
         case [
             any-array? input [
                 if input.1 = value [
-                    set remainder next input
+                    remainder: next input
                     return input.1
                 ]
                 return null
             ]
             true [  ; Note: BITSET! acts as "byteset" here
                 ; binary or any-string input
-                if set remainder find/match/tail input value [
+                if remainder: find/match/tail input value [
                     return value
                 ]
                 return null
@@ -1279,13 +1278,13 @@ default-combinators: make map! reduce [
         pending: [blank! block!]
         value [any-array!]  ; allow any array to use this "DO combinator"
     ][
-        set remainder input
+        remainder: input
 
         if <delay> = first value [
             if length of value = 1 [
                 fail "Use ('<delay>) to evaluate to the tag <delay> in GROUP!"
             ]
-            set pending :[next value]  ; GROUP! signals delayed groups
+            pending: :[next value]  ; GROUP! signals delayed groups
             return void
         ]
 
@@ -1294,7 +1293,7 @@ default-combinators: make map! reduce [
         ; x to NULL and not fail the SET-WORD! combinator rule...which is
         ; what true NULL would signify.  Use HEAVY.
         ;
-        set pending _
+        pending: _
         return heavy eval value
     ]
 
@@ -1305,8 +1304,8 @@ default-combinators: make map! reduce [
         parser [action!]
         <local> subpending result'
     ][
-        ([^result' (remainder) subpending]: parser input) else [
-            set pending _
+        ([^result' remainder subpending]: parser input) else [
+            pending: _
             return null
         ]
 
@@ -1316,7 +1315,7 @@ default-combinators: make map! reduce [
             if group? :item [eval item, true]
         ]
 
-        set pending subpending
+        pending: subpending
         return unmeta result'
     ]
 
@@ -1351,7 +1350,8 @@ default-combinators: make map! reduce [
         ]
 
         if r = @void [  ; like [:(if false [...])] or [:(comment "hi")]
-            set pending _
+            pending: _
+            remainder: input
             return void
         ]
 
@@ -1380,7 +1380,7 @@ default-combinators: make map! reduce [
         ; arguments here, but this should have better errors if the datatype
         ; combinator takes arguments.
         ;
-        return [# (remainder) (pending)]: comb state input :r
+        return [# remainder pending]: comb state input :r
     ]
 
     === GET-BLOCK! COMBINATOR ===
@@ -1418,20 +1418,20 @@ default-combinators: make map! reduce [
         case [
             any-array? input [
                 if input.1 = value [
-                    set remainder next input
+                    remainder: next input
                     return input.1
                 ]
             ]
             any-string? input [
                 if find value try input.1 [
-                    set remainder next input
+                    remainder: next input
                     return input.1
                 ]
             ]
             true [
                 assert [binary? input]
                 if find value try input.1 [
-                    set remainder next input
+                    remainder: next input
                     return input.1
                 ]
             ]
@@ -1461,8 +1461,8 @@ default-combinators: make map! reduce [
         ;
         if any-array? input [
             if :input.1 = unquote value [
-                set remainder next input
-                set pending _
+                remainder: next input
+                pending: _
                 return unquote value
             ]
             return null
@@ -1477,14 +1477,14 @@ default-combinators: make map! reduce [
             value: append copy {} unquote value
 
             comb: :(state.combinators).(text!)
-            return [# (remainder) (pending)]: comb state input value
+            return [# remainder pending]: comb state input value
         ]
 
         assert [binary? input]
 
         value: to binary! unquote value
         comb: :(state.combinators).(binary!)
-        return [# (remainder) (pending)]: comb state input value
+        return [# remainder pending]: comb state input value
     ]
 
     'the combinator [
@@ -1497,7 +1497,7 @@ default-combinators: make map! reduce [
         ; of ['''x] may be clarifying when trying to match ''x (for instance)
 
         comb: :(state.combinators).(quoted!)
-        return [# (remainder) (pending)]: comb state input ^value
+        return [# remainder pending]: comb state input ^value
     ]
 
     === BLANK! COMBINATOR ===
@@ -1509,8 +1509,8 @@ default-combinators: make map! reduce [
             [<opt>]
         value [blank!]
     ][
-        set remainder input
-        set pending _
+        remainder: input
+        pending: _
         return ~null~  ; combinators RETURN/NO-DECAY by default
     ]
 
@@ -1529,7 +1529,7 @@ default-combinators: make map! reduce [
         value [logic!]
     ][
         if value [
-            set remainder input
+            remainder: input
             return true
         ]
         return null
@@ -1564,7 +1564,7 @@ default-combinators: make map! reduce [
                 return null
             ]
         ]
-        set remainder input
+        remainder: input
         return unmeta result'
     ]
 
@@ -1579,7 +1579,7 @@ default-combinators: make map! reduce [
 
         switch type of unmeta times' [
             blank! [
-                set remainder input
+                remainder: input
                 return void  ; `[repeat (_) rule]` is a no-op
             ]
             issue! [
@@ -1594,7 +1594,7 @@ default-combinators: make map! reduce [
             block! the-block! [
                 uparse unquote times' [
                     '_ '_ <end> (
-                        set remainder input
+                        remainder: input
                         return void  ; `[repeat ([_ _]) rule]` is a no-op
                     )
                     |
@@ -1630,14 +1630,14 @@ default-combinators: make map! reduce [
                     if i <= min [  ; `<=` not `<` as this iteration failed!
                         return null
                     ]
-                    set remainder input
+                    remainder: input
                     return unmeta result'
                 ]
             )
         ]
 
         take/last state.loops
-        set remainder input
+        remainder: input
         return unmeta result'
     ]
 
@@ -1671,7 +1671,7 @@ default-combinators: make map! reduce [
             if value <> kind of input.1 [
                 return null
             ]
-            set remainder next input
+            remainder: next input
             return input.1
         ][
             any [
@@ -1683,7 +1683,7 @@ default-combinators: make map! reduce [
                 ; So we actually need this TRAP here.  Review.
                 ;
                 trap [
-                    [item (remainder) @error]: transcode input
+                    [item remainder @error]: transcode input
                 ]
                 value != type of :item
             ] then [
@@ -1703,11 +1703,11 @@ default-combinators: make map! reduce [
             if not find value try (kind of input.1) [
                 return null
             ]
-            set remainder next input
+            remainder: next input
             return input.1
         ][
             any [
-                [item (remainder) error]: transcode input
+                [item remainder error]: transcode input
                 not find value (type of :item)
             ] then [
                 return null
@@ -1731,7 +1731,7 @@ default-combinators: make map! reduce [
         return: "Ensuing value in the rule stream 'as-is'" [any-value!]
         'item [any-value!]
     ][
-        set remainder input
+        remainder: input
         return item
     ]
 
@@ -1749,7 +1749,7 @@ default-combinators: make map! reduce [
                 "(It's really useful to the C API!)"
             ]
         ]
-        set remainder input
+        remainder: input
         return item
     ]
 
@@ -1757,7 +1757,7 @@ default-combinators: make map! reduce [
         return: "The input THE-WORD!" [the-word!]
         value [the-word!]
     ][
-        set remainder input
+        remainder: input
         return value
     ]
 
@@ -1765,7 +1765,7 @@ default-combinators: make map! reduce [
         return: "The input THE-PATH!" [the-path!]
         value [the-path!]
     ][
-        set remainder input
+        remainder: input
         return value
     ]
 
@@ -1773,7 +1773,7 @@ default-combinators: make map! reduce [
         return: "The input THE-TUPLE!" [the-tuple!]
         value [the-tuple!]
     ][
-        set remainder input
+        remainder: input
         return value
     ]
 
@@ -1781,7 +1781,7 @@ default-combinators: make map! reduce [
         return: "The input THE-GROUP!" [the-group!]
         value [the-group!]
     ][
-        set remainder input
+        remainder: input
         return value
     ]
 
@@ -1789,7 +1789,7 @@ default-combinators: make map! reduce [
         return: "The input THE-BLOCK!" [the-block!]
         value [the-block!]
     ][
-        set remainder input
+        remainder: input
         return value
     ]
 
@@ -1820,7 +1820,7 @@ default-combinators: make map! reduce [
         <local> comb
     ][
         comb: :(state.combinators).(quoted!)
-        return [# (remainder) (pending)]: comb state input quote get value
+        return [# remainder pending]: comb state input quote get value
     ]
 
     '~the-path!~ combinator [
@@ -1830,7 +1830,7 @@ default-combinators: make map! reduce [
         <local> comb
     ][
         comb: :(state.combinators).(quoted!)
-        return [# (remainder) (pending)]: comb state input quote get value
+        return [# remainder pending]: comb state input quote get value
     ]
 
     '~the-tuple!~ combinator [
@@ -1840,7 +1840,7 @@ default-combinators: make map! reduce [
         <local> comb
     ][
         comb: :(state.combinators).(quoted!)
-        return [# (remainder) (pending)]: comb state input quote get value
+        return [# remainder pending]: comb state input quote get value
     ]
 
     '~the-group!~ combinator [
@@ -1852,16 +1852,16 @@ default-combinators: make map! reduce [
         totalpending: copy []
         value: as group! value
         comb: :(state.combinators).(group!)
-        ([^result' input (pending)]: comb state input value) else [
+        ([^result' input pending]: comb state input value) else [
             return null
         ]
-        totalpending: glom totalpending (get pending)
+        totalpending: glom totalpending pending
         comb: :(state.combinators).(quoted!)
-        ([^result' (remainder) (pending)]: comb state input result') else [
+        ([^result' remainder pending]: comb state input result') else [
             return null
         ]
-        totalpending: glom totalpending (get pending)
-        set pending totalpending
+        totalpending: glom totalpending pending
+        pending: totalpending
         return unmeta result'
     ]
 
@@ -1883,16 +1883,16 @@ default-combinators: make map! reduce [
         totalpending: copy []
         value: as block! value
         comb: :(state.combinators).(block!)
-        ([^result' input (pending)]: comb state input value) else [
+        ([^result' input pending]: comb state input value) else [
             return null
         ]
-        totalpending: glom totalpending (get pending)
+        totalpending: glom totalpending pending
         comb: :(state.combinators).(quoted!)
-        ([^result' (remainder) (pending)]: comb state input result') else [
+        ([^result' remainder pending]: comb state input result') else [
             return null
         ]
-        totalpending: glom totalpending (get pending)
-        set pending totalpending
+        totalpending: glom totalpending pending
+        pending: totalpending
         return unmeta result'
     ]
 
@@ -1915,7 +1915,7 @@ default-combinators: make map! reduce [
         return: "Meta quoted" [<opt> bad-word! quoted! the-word!]
         parser [action!]
     ][
-        return [^ (remainder)]: parser input
+        return [^ remainder]: parser input
     ]
 
     meta-word! combinator [
@@ -1926,7 +1926,7 @@ default-combinators: make map! reduce [
     ][
         value: as word! value
         comb: :(state.combinators).(word!)
-        return [^ (remainder) (pending)]: comb state input value  ; leave meta
+        return [^ remainder pending]: comb state input value  ; leave meta
     ]
 
     meta-tuple! combinator [
@@ -1937,7 +1937,7 @@ default-combinators: make map! reduce [
     ][
         value: as tuple! value
         comb: :(state.combinators).(tuple!)
-        return [^ (remainder) (pending)]: comb state input value  ; leave meta
+        return [^ remainder pending]: comb state input value  ; leave meta
     ]
 
     meta-path! combinator [
@@ -1948,7 +1948,7 @@ default-combinators: make map! reduce [
     ][
         value: as path! value
         comb: :(state.combinators).(path!)
-        return [^ (remainder) (pending)]: comb state input value  ; leave meta
+        return [^ remainder pending]: comb state input value  ; leave meta
     ]
 
     meta-group! combinator [
@@ -1959,7 +1959,7 @@ default-combinators: make map! reduce [
     ][
         value: as group! value
         comb: :(state.combinators).(group!)
-        return [^ (remainder) (pending)]: comb state input value  ; leave meta
+        return [^ remainder pending]: comb state input value  ; leave meta
     ]
 
     meta-block! combinator [
@@ -1970,7 +1970,7 @@ default-combinators: make map! reduce [
     ][
         value: as block! value
         comb: :(state.combinators).(block!)
-        return [^ (remainder) (pending)]: comb state input value  ; leave meta
+        return [^ remainder pending]: comb state input value  ; leave meta
     ]
 
     === INVISIBLE COMBINATORS ===
@@ -1989,7 +1989,7 @@ default-combinators: make map! reduce [
             [<void> <opt>]
         parser [action!]
     ][
-        ([^ (remainder)]: parser input) else [
+        ([^ remainder]: parser input) else [
             return null
         ]
         return void
@@ -2018,6 +2018,7 @@ default-combinators: make map! reduce [
         ; The more efficient and flexible form is presumed here to be the
         ; most useful, and the closest parallel to the plain COMMENT action.
         ;
+        remainder: input
         return void
     ]
 
@@ -2070,21 +2071,21 @@ default-combinators: make map! reduce [
                 ensure action! :parsers.1
                 if meta-word? param [
                     param: to word! param
-                    f.(param): ([^ input (pending)]: parsers.1 input) else [
+                    f.(param): ([^ input pending]: parsers.1 input) else [
                         return null
                     ]
                 ] else [
-                    f.(param): ([# input (pending)]: parsers.1 input) else [
+                    f.(param): ([# input pending]: parsers.1 input) else [
                         return null
                     ]
                 ]
-                totalpending: glom totalpending (get pending)
+                totalpending: glom totalpending pending
                 parsers: next parsers
             ]
         ]
         assert [tail? parsers]
-        set remainder input
-        set pending totalpending
+        remainder: input
+        pending: totalpending
         return eval f
     ]
 
@@ -2145,7 +2146,8 @@ default-combinators: make map! reduce [
                 fail "LIT-WORD! hack only works with array inputs"
             ]
             all [quoted? input.1, word? unquote input.1] then [
-                set remainder next input
+                pending: _
+                remainder: next input
                 return unquote input.1
             ] else [
                 return null
@@ -2156,7 +2158,8 @@ default-combinators: make map! reduce [
                 fail "LIT-PATH! hack only works with array inputs"
             ]
             all [quoted? input.1, path? unquote input.1] then [
-                set remainder next input
+                pending: _
+                remainder: next input
                 return unquote input.1
             ] else [
                 return null
@@ -2171,7 +2174,7 @@ default-combinators: make map! reduce [
         ; arguments here, but this should have better errors if the datatype
         ; combinator takes arguments.
         ;
-        return [# (remainder) (pending)]: comb state input :r
+        return [# remainder pending]: comb state input :r
     ]
 
     === NEW-STYLE ANY COMBINATOR ===
@@ -2220,7 +2223,7 @@ default-combinators: make map! reduce [
             ; We take the first parser that succeeds.
             ;
             let [parser 'block]: parsify state block
-            ([^result' (remainder) (pending)]: parser input) then [
+            ([^result' remainder pending]: parser input) then [
                 return unmeta result'
             ]
         ]
@@ -2304,8 +2307,8 @@ default-combinators: make map! reduce [
                 ; If we didn't find an inline sequencing operator, then the
                 ; successful alternate means the whole block is done.
                 ;
-                set remainder pos
-                set pending totalpending
+                remainder: pos
+                pending: totalpending
                 return unmeta result'
             ]
 
@@ -2360,14 +2363,14 @@ default-combinators: make map! reduce [
                         if r = '|| [break]
                     ]
                 ] else [
-                    set remainder null
+                    remainder: null
                     return null
                 ]
             ]
         ]
 
-        set remainder pos
-        set pending totalpending
+        remainder: pos
+        pending: totalpending
         return unmeta result'
     ]
 
@@ -2542,7 +2545,7 @@ comment [combinatorize: func [
         ]
     ]
 
-    set advanced rules
+    advanced: rules
     return make action! f
 ]]
 
@@ -2589,7 +2592,7 @@ parsify: func [
                 ; rules to produce a parser instance.  This is the common case.
                 ;
                 if comb: match action! :value [
-                    return [# (advanced)]: combinatorize :comb rules state
+                    return [# advanced]: combinatorize :comb rules state
                 ]
 
                 ; Ordinary data values are dispatched to the combinator for
@@ -2611,7 +2614,7 @@ parsify: func [
                 ;
                 comb: select state.combinators type of :value
                 return (
-                    [# (advanced)]: combinatorize/value :comb rules state :value
+                    [# advanced]: combinatorize/value :comb rules state :value
                 )
             ]
 
@@ -2628,7 +2631,7 @@ parsify: func [
             ;
             if comb: match action! :value [
                 if combinator? :comb [
-                    return [# (advanced)]: combinatorize :comb rules state
+                    return [# advanced]: combinatorize :comb rules state
                 ]
 
                 let name: uppercase to text! r
@@ -2648,7 +2651,7 @@ parsify: func [
             ; non-erroring behavior is desired.)
             ;
             comb: select state.combinators word!
-            return [# (advanced)]: combinatorize/value :comb rules state r
+            return [# advanced]: combinatorize/value :comb rules state r
         ]
 
         path? :r [
@@ -2706,13 +2709,13 @@ parsify: func [
                     ]
                 ]
 
-                return [# (advanced)]:
+                return [# advanced]:
                         combinatorize/value :comb rules state :action
             ]
 
             let word: ensure word! first r
             if comb: select state.combinators word [
-                return [# (advanced)]: combinatorize/path :comb rules state r
+                return [# advanced]: combinatorize/path :comb rules state r
             ]
 
             ; !!! Originally this would just say "unknown combinator" at this
@@ -2737,7 +2740,7 @@ parsify: func [
         fail ["Unhandled type in PARSIFY:" kind of :r "-" mold :r]
     ]
 
-    return [# (advanced)]: combinatorize/value :comb rules state r
+    return [# advanced]: combinatorize/value :comb rules state r
 ]
 
 
@@ -2816,8 +2819,10 @@ uparse*: func [
     ; The COMBINATOR definition makes a function which is hooked with code
     ; that will mark the furthest point reached by any match.
     ;
-    if furthest [
-        set furthest input
+    if wanted? 'furthest [
+        furthest: input
+    ] else [
+        furthest: null  ; all [state.furthest...] first check for if updating
     ]
 
     ; Each UPARSE operation can have a different set of combinators in
@@ -2847,8 +2852,8 @@ uparse*: func [
         return null  ; match failure (as opposed to success, w/null result)
     ]
 
-    if pending [
-        set pending subpending
+    if wanted? 'pending [
+        pending: subpending
     ] else [
         all [subpending, not empty? subpending] then [
             fail "Residual items accumulated in pending array"
@@ -2937,7 +2942,7 @@ append redbol-combinators reduce [
             ] then [
                 take/last state.loops
 
-                set remainder input
+                remainder: input
                 return ~any~
             ]
             input: pos
@@ -2967,7 +2972,7 @@ append redbol-combinators reduce [
                 same? pos input  ; no progress => stop successfully
             ] then [
                 take/last state.loops
-                set remainder input
+                remainder: input
                 return ~some~
             ]
             input: pos
@@ -2986,7 +2991,7 @@ append redbol-combinators reduce [
         cycle [
             ([# pos]: parser input) else [
                 take/last state.loops
-                set remainder input  ; WHILE never fails (but REJECT?)
+                remainder: input  ; WHILE never fails (but REJECT?)
                 return ~while~
             ]
             input: pos
@@ -3017,10 +3022,10 @@ append redbol-combinators reduce [
         'target [word! set-word!]
         parser [action!]
     ][
-        ([^ (remainder)]: parser input) else [
+        ([^ remainder]: parser input) else [
             return null
         ]
-        set target copy/part input get remainder
+        set target copy/part input remainder
         return ~copy~
     ]
 
@@ -3032,10 +3037,10 @@ append redbol-combinators reduce [
         parser [action!]
         <local> pos
     ][
-        ([^ (remainder)]: parser input) else [
+        ([^ remainder]: parser input) else [
             return null
         ]
-        if same? (get remainder) input [  ; no advancement gives NONE
+        if same? remainder input [  ; no advancement gives NONE
             set target null
         ] else [
             set target input.1  ; one unit ahead otherwise
@@ -3056,7 +3061,7 @@ append redbol-combinators reduce [
         value [set-word!]
     ][
         set value input
-        set remainder input ; don't change position
+        remainder: input ; don't change position
         return ~mark~
     ]
 
@@ -3070,7 +3075,7 @@ append redbol-combinators reduce [
         if not same? head input head get value [
             fail "SEEK (via GET-WORD!) in UPARSE must be in the same series"
         ]
-        set remainder get value
+        remainder: get value
         return ~seek~
     ]
 
@@ -3110,7 +3115,7 @@ append redbol-combinators reduce [
             result': last-result'
         ]
 
-        set remainder input
+        remainder: input
         return unmeta result'
     ]
 
@@ -3160,7 +3165,7 @@ append redbol-combinators reduce [
         ] then [
             return null
         ]
-        set remainder next input
+        remainder: next input
         return ~into~
     ]
 

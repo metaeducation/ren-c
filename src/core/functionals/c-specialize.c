@@ -373,6 +373,9 @@ bool Specialize_Action_Throws(
         if (not Typecheck_Including_Constraints(param, arg))
             fail (arg);  // !!! merge w/Error_Invalid_Arg()
 
+        if (VAL_PARAM_CLASS(param) == PARAM_CLASS_OUTPUT)
+            Set_Cell_Flag(arg, PARAM_NOTE_SPECIALIZED_OUTPUT);
+
         continue;
 
       specialized_arg_no_typecheck:

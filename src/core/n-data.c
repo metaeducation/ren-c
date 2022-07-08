@@ -982,26 +982,23 @@ DECLARE_NATIVE(get)
 {
     INCLUDE_PARAMS_OF_GET;
 
-    const REBVAL *steps_var = REF(steps);
+    REBVAL *steps = ARG(steps);
     REBVAL *source = ARG(source);
 
-    REBVAL *steps_out;
-    if (steps_var)
-        steps_out = Is_Blackhole(steps_var) ? GROUPS_OK : SPARE;
+    if (WANTED(steps)) {
+        // see note in SET, we can't tell if GROUPS_OK would be sufficient
+    }
     else
-        steps_out = nullptr;  // no GROUP! evals
+        steps = nullptr;  // no GROUP! evals
 
-    if (Get_Var_Core_Throws(OUT, steps_out, source, SPECIFIED)) {
-        assert(steps_out or IS_ERROR(VAL_THROWN_LABEL(frame_)));  // see [1]
+    if (Get_Var_Core_Throws(OUT, steps, source, SPECIFIED)) {
+        assert(steps or IS_ERROR(VAL_THROWN_LABEL(frame_)));  // see [1]
         return THROWN;
     }
 
     if (not REF(any))
         if (Is_Isotope(OUT))
             fail (Error_Bad_Word_Get(source, OUT));
-
-    if (steps_out and steps_out != GROUPS_OK)
-        Set_Var_May_Fail(steps_var, SPECIFIED, steps_out);
 
     return OUT;
 }
@@ -1320,7 +1317,13 @@ void Set_Var_May_Fail(
 //
 DECLARE_NATIVE(set)
 //
-// 1. While the written value would decay if an isotope, the overall return
+// 1. Internally we have an optimization for allowing you to say evaluations
+//    with groups are okay, but you don't actually plan to use the steps.
+//    But we aren't told if something is ~wanted~ vs. ~wanted-in-a-variable~
+//    so we can't special-case with GROUPS_OK.  Review revealing this nuance
+//    via a distinct state.
+//
+// 2. While the written value would decay if an isotope, the overall return
 //    result is the same as was passed in:
 //
 //        >> set 'x match logic! false
@@ -1329,36 +1332,33 @@ DECLARE_NATIVE(set)
 //    The exception is ~void~ isotopes, which have no reified form, and are
 //    returned as none (~) isotopes.
 //
-// 2. Plain POKE can't throw (e.g. from a GROUP!) because it won't evaluate
+// 3. Plain POKE can't throw (e.g. from a GROUP!) because it won't evaluate
 //    them.  However, we can get errors.  Confirm we only are raising errors
 //    unless steps_out were passed.
 {
     INCLUDE_PARAMS_OF_SET;
 
-    const REBVAL *steps_var = REF(steps);
+    REBVAL *steps = ARG(steps);
     REBVAL *target = ARG(target);
     REBVAL *v = ARG(value);
 
-    REBVAL *steps_out;
-    if (steps_var)
-        steps_out = Is_Blackhole(steps_var) ? GROUPS_OK : SPARE;
+    if (WANTED(steps)) {
+        // can't tell if GROUPS_OK would be sufficient, see [1]
+    }
     else
-        steps_out = nullptr;  // no GROUP! evals
+        steps = nullptr;  // no GROUP! evals
 
     if (Is_Meta_Of_Void(v))
-        Init_None(v);  // can't store the void--no reified form, see [1]
+        Init_None(v);  // can't store the void--no reified form, see [2]
     else
         Meta_Unquotify(v);
 
-    if (Set_Var_Core_Throws(OUT, steps_out, target, SPECIFIED, v)) {
-        assert(steps_out or IS_ERROR(VAL_THROWN_LABEL(frame_)));  // see [2]
+    if (Set_Var_Core_Throws(OUT, steps, target, SPECIFIED, v)) {
+        assert(steps or IS_ERROR(VAL_THROWN_LABEL(frame_)));  // see [3]
         return THROWN;
     }
 
-    if (steps_out and steps_out != GROUPS_OK)
-        Set_Var_May_Fail(steps_var, SPECIFIED, steps_out);
-
-    return COPY(v);  // result does not decay unless void, see [1]
+    return COPY(v);  // result does not decay unless void, see [2]
 }
 
 
@@ -2243,6 +2243,33 @@ DECLARE_NATIVE(none_q)
     INCLUDE_PARAMS_OF_NONE_Q;
 
     return Init_Logic(OUT, Is_Meta_Of_None(ARG(optional)));
+}
+
+
+//
+//  wanted?: native [
+//
+//  "Tells you if output is a ~wanted~ isotope, indicating it was requested"
+//
+//      return: [logic!]
+//      output [word! tuple!]
+//  ]
+//
+DECLARE_NATIVE(wanted_q)
+{
+    INCLUDE_PARAMS_OF_WANTED_Q;
+
+    Value(*) output = ARG(output);
+    bool any = true;
+    Get_Var_May_Fail(SPARE, output, SPECIFIED, any);
+
+    if (Is_None(SPARE))
+        return Init_False(OUT);
+
+    if (Is_Isotope_With_Id(SPARE, SYM_WANTED))
+        return Init_True(OUT);
+
+    fail ("WANTED? can only be used on none (~) isotopes or ~wanted~");
 }
 
 

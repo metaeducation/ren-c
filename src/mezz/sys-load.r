@@ -48,10 +48,10 @@ transcode-header: func [
 
     <local> key hdr error
 ][
-    set line 1
+    line: 1
     trap [
-        [key (rest)]: transcode/file/line data file line
-        [hdr (rest) error]: transcode/file/line (get rest) file line
+        [key rest]: transcode/file/line data file line
+        [hdr rest error]: transcode/file/line rest file line
     ] then e -> [
         return fail e  ; definitional (can be suppressed by SCRIPT?)
     ]
@@ -98,7 +98,7 @@ load-header: function [
     line: "<output>"
         [integer!]
     final: "<output>"
-        [<output> binary!]
+        [binary!]
 
     source "Source code (text! will be UTF-8 encoded)"
         [binary! text!]
@@ -110,7 +110,6 @@ load-header: function [
     <static>
     non-ws (make bitset! [not 1 - 32])
 ][
-    let line-out: line  ; we use LINE for the line number inside the body
     line: 1
 
     let data: as binary! source  ; if it's not UTF-8, decoding provides error
@@ -123,9 +122,8 @@ load-header: function [
 
     let [hdr rest 'line]: transcode-header/file data file else [
         return either required ['no-header] [
-            if body [set body data]
-            if line-out [set line-out line]  ; e.g. line 1
-            if final [set final tail of data]
+            body: data
+            final: tail of data
             return null  ; no header object
         ]
     ]
@@ -153,9 +151,8 @@ load-header: function [
     ]
 
     if only [  ; when it's /ONLY, decompression is not performed
-        if body [set body rest]
-        if line-out [set line-out line]
-        if final [set final end]
+        body: rest
+        final: end
         return hdr
     ]
 
@@ -198,9 +195,9 @@ load-header: function [
         ]
     ]
 
-    if body [set body ensure [binary! text!] rest]
-    if line-out [set line-out ensure integer! line]
-    if final [set final ensure [binary! text!] end]
+    body: ensure [binary! text!] rest
+    ensure integer! line
+    final: ensure [binary! text!] end
 
     ensure object! hdr
     ensure [<opt> block! blank!] hdr.options
@@ -221,7 +218,7 @@ load: func [
     /type "E.g. rebol, text, markup, jpeg... (by default, auto-detected)"
         [word!]
 
-    <local> file line data hdr
+    <local> file line data
 ][
     if match [file! url! tag! the-word!] source [
         source: clean-path source
@@ -265,11 +262,11 @@ load: func [
 
     ensure [text! binary!] data
 
-    [hdr data line]: load-header/file data file
+    [header data line]: load-header/file data file
 
-    if word? hdr [cause-error 'syntax hdr source]
+    if word? header [cause-error 'syntax header source]
 
-    ensure [blank! object!] hdr: default [_]
+    ensure [blank! object!] header: default [_]
     ensure [binary! block! text!] data
 
     ; Convert code to block, insert header if requested
@@ -283,15 +280,13 @@ load: func [
 
     all [
         'unbound != type
-        'module != select hdr 'type
-        not find (try get 'hdr.options) [unbound]
+        'module != select header 'type
+        not find (try get 'header.options) [unbound]
     ] then [
         data: intern* system.contexts.user data
     ]
 
-    if header [
-        set header opt hdr
-    ]
+    header: opt header
     return :data
 ]
 
@@ -420,8 +415,6 @@ import*: func [
     <static>
         importing-remotely (false)
 ][
-    product: default [#]  ; we do nothing differently if not requested
-
     return: adapt :return [  ; make sure all return paths actually import vars
         ;
         ; Note: `value` below is the argument to RETURN.  It is a ^META
@@ -446,20 +439,18 @@ import*: func [
         assert [not into]  ; ONLY isn't applicable unless scanning new source
 
         let name: (meta-of source).name else [
-            set product '~nameless~
+            product: ~nameless~
             return source  ; no name, so just do the RESOLVE to get variables
         ]
         let mod: select/skip system.modules name 2 else [
             append system.modules :[name source]  ; not in module list, add it
-            set product '~registered~
+            product: ~registered~
             return source
         ]
         if mod != source [
             fail ["Conflict: more than one module instance named" name]
         ]
-        if product [
-            set product '~cached~
-        ]
+        product: ~cached~
         return source
     ]
 
@@ -541,7 +532,7 @@ import*: func [
 
     let name: (try hdr).name
     (select/skip system.modules try name 2) then cached -> [
-        set product ~cached~
+        product: ~cached~
         return cached
     ]
 
@@ -615,7 +606,7 @@ import*: func [
     ; from the unfinished R3-Alpha module system, and its decade of atrophy
     ; that happened after that...
 
-    let [mod '(product) quitting]: module/into/file/line try hdr code into file line
+    let [mod 'product quitting]: module/into/file/line try hdr code into file line
 
     ensure module! mod
 
@@ -633,7 +624,7 @@ import*: func [
     === PROPAGATE QUIT IF REQUESTED, OR RETURN MODULE ===
 
     if quitting and only [
-        quit get/any product  ; "rethrow" the QUIT if DO/ONLY
+        quit get/any 'product  ; "rethrow" the QUIT if DO/ONLY
     ]
 
     return mod

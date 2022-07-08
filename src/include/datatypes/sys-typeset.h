@@ -368,22 +368,6 @@ inline static bool Typecheck_Including_Constraints(
         }
     }
 
-    if (VAL_PARAM_CLASS(param) == PARAM_CLASS_OUTPUT) {
-        //
-        // !!! For the moment, output parameters don't actually check the
-        // typeset for the value being written... they just check that you've
-        // given a location to write.
-        //
-        const REBU64 ts_out =
-            FLAGIT_KIND(REB_NULL)
-            | FLAGIT_KIND(REB_ISSUE)  // for Is_Blackhole() use with SET
-            | FLAGIT_KIND(REB_WORD)
-            | FLAGIT_KIND(REB_TUPLE)
-            | FLAGIT_KIND(REB_META_WORD)
-            | FLAGIT_KIND(REB_META_TUPLE);
-        return (ts_out & FLAGIT_KIND(VAL_TYPE(v))) != 0;
-    }
-
     // We do an adjustment of the argument to accommodate meta parameters,
     // which check the unquoted type.  But what's built for the frame must be
     // quoted--e.g. MAKE FRAME! or specialized, since isotopes can't be passed

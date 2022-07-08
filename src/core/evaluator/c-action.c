@@ -122,6 +122,73 @@ bool Lookahead_To_Sync_Enfix_Defer_Flag(Feed(*) feed) {
 
 
 //
+//  Proxy_Multi_Returns: C
+//
+// This code has to be factored out because RETURN uses it before it does an
+// UNWIND.  We already force type checking through the returns, so this (along
+// with any typechecking) should also be done.
+//
+void Proxy_Multi_Returns(Frame(*) f)
+{
+    KEY = ACT_KEYS(&KEY_TAIL, f->u.action.original);
+    PARAM = ACT_PARAMS_HEAD(f->u.action.original);
+    ARG = FRM_ARGS_HEAD(f);
+
+    for (; KEY != KEY_TAIL; ++KEY, ++PARAM, ++ARG) {
+        if (Is_Specialized(PARAM))
+            continue;
+        if (VAL_PARAM_CLASS(PARAM) != PARAM_CLASS_OUTPUT)
+            continue;
+
+        Value(*) var = ARG + 1;
+
+        if (Is_None(var) or IS_BLANK(var) or Is_Blackhole(var)) {
+            // no writeback
+        }
+        else if (IS_META_WORD(var) or IS_META_TUPLE(var)) {
+            Meta_Quotify(ARG);
+            Set_Var_May_Fail(var, SPECIFIED, ARG);
+        }
+        else {
+            assert(IS_WORD(var) or IS_TUPLE(var));
+            Set_Var_May_Fail(var, SPECIFIED, ARG);
+        }
+
+        ++KEY; ++PARAM; ++ARG;
+    }
+}
+
+
+static void Bump_Specialized_Output_Aside(Frame(*) f) {
+    if (Is_Isotope(ARG))
+        fail (Error_Bad_Isotope(ARG));
+
+    Value(*) var = ARG + 1;  // hidden local for variable
+    assert(Is_None(var));  // should not have been bumped into yet!
+
+    if (Is_Nulled(ARG) or IS_BLANK(ARG)) {  // not requested
+        Init_Blank(var);
+        Init_None(ARG);
+    }
+    else if (Is_Blackhole(ARG)) {  // requested with no variable
+        Init_Blackhole(var);
+        Init_Isotope(ARG, Canon(WANTED));  // unique state?
+    }
+    else if (
+        IS_WORD(ARG) or IS_TUPLE(ARG)
+        or IS_META_WORD(ARG) or IS_META_TUPLE(ARG)
+    ){
+        Move_Cell(var, ARG);
+        Init_Isotope(ARG, Canon(WANTED));
+    }
+    else
+        fail ("OUTPUT: parameters must be SET-table targets");
+
+    ++KEY, ++PARAM, ++ARG;  // with for included, skip past `var`
+}
+
+
+//
 //  Action_Executor: C
 //
 Bounce Action_Executor(Frame(*) f)
@@ -156,6 +223,15 @@ Bounce Action_Executor(Frame(*) f)
                 );
                 Init_Void_Isotope(ARG);  // typecheck would turn ~ to NULL
             }
+
+            // continue_fulfilling is used for all params including specialized
+            // which use PARAM as the specialized value.  We have to do this
+            // work here, before calling continue_fulfilling--as it applies
+            // only when parameters are being evaluated (hence PARAMs)
+            //
+            if (VAL_PARAM_CLASS(PARAM) == PARAM_CLASS_OUTPUT)  // must move
+                Bump_Specialized_Output_Aside(f);
+
             goto continue_fulfilling;
 
           case ST_ACTION_TYPECHECKING:
@@ -216,6 +292,9 @@ Bounce Action_Executor(Frame(*) f)
         //
         if (Is_Specialized(PARAM)) {  // specialized includes local
             Copy_Cell(ARG, PARAM);
+            if (Get_Cell_Flag(PARAM, PARAM_NOTE_SPECIALIZED_OUTPUT))
+                Bump_Specialized_Output_Aside(f);
+
             goto continue_fulfilling;
         }
 
@@ -791,7 +870,7 @@ Bounce Action_Executor(Frame(*) f)
     ARG = FRM_ARGS_HEAD(f);
     PARAM = ACT_PARAMS_HEAD(FRM_PHASE(f));
 
-    for (; KEY != KEY_TAIL; ++KEY, ++ARG, ++PARAM) {
+    for (; KEY != KEY_TAIL; ++KEY, ++PARAM, ++ARG) {
         assert(not Is_Void(ARG));
 
         if (Is_Specialized(PARAM))  // checked when specialized, see [1]
@@ -799,6 +878,36 @@ Bounce Action_Executor(Frame(*) f)
 
         if (VAL_PARAM_CLASS(PARAM) == PARAM_CLASS_RETURN)
             continue;  // !!! hack
+
+        if (VAL_PARAM_CLASS(PARAM) == PARAM_CLASS_OUTPUT) {
+            Value(*) var = ARG + 1;
+            if (Is_None(var)) {  // no variable proxied in, can accept one here
+                if (Is_None(ARG)) {
+                    // leave alone
+                }
+                else if (VAL_TYPE_UNCHECKED(ARG) == REB_NULL) {
+                    Init_None(ARG);  // Can we avoid NULL happening?
+                }
+                else if (Is_Isotope_With_Id(ARG, SYM_WANTED)) {
+                    Init_Blackhole(var);  // allow so ENCLOSE can make requests
+                }
+                else
+                    Bump_Specialized_Output_Aside(f);
+            }
+            else {  // variable already proxied in
+                assert(
+                    IS_BLANK(var) or Is_Blackhole(var)
+                    or IS_WORD(var) or IS_TUPLE(var)
+                    or IS_META_WORD(var) or IS_META_TUPLE(var)
+                );
+
+                if (not (Is_None(ARG) or Is_Isotope_With_Id(ARG, SYM_WANTED)))
+                    fail ("Frame filled with variable in spoken-for output");
+
+                ++KEY, ++PARAM, ++ARG;
+            }
+            continue;
+        }
 
         if (Is_Isotope(ARG)) {  // some special meanings since illegal, see [2]
             if (Is_None(ARG)) {  // e.g. (~) isotope, unspecialized
@@ -1062,6 +1171,12 @@ Bounce Action_Executor(Frame(*) f)
 
     if (not Is_Failure(OUT))  // !!! Should there be an R_FAIL ?
         assert(f->u.action.dispatcher_base == TOP_INDEX);
+
+    goto proxy_multi_returns;
+
+} proxy_multi_returns: {  ////////////////////////////////////////////////////
+
+    Proxy_Multi_Returns(f);
 
 } skip_output_check: {  //////////////////////////////////////////////////////
 

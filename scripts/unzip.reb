@@ -152,8 +152,8 @@ zip-entry: func [
     ; central-dir file entry.  note that the file attributes are
     ; interpreted based on the OS of origin--can't say Amiga :-(
     ;
-    assert [central-dir-entry]  ; currently expects you request it
-    set central-dir-entry join binary! reduce [
+    assert [wanted? 'central-dir-entry]  ; currently expects you request it
+    central-dir-entry: join binary! reduce [
         central-file-sig
         #{1E}  ; version of zip spec this encoder speaks (#{1E}=3.0)
         #{03}  ; OS of origin: 0=DOS, 3=Unix, 7=Mac, 1=Amiga...

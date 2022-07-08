@@ -252,6 +252,16 @@
 //   the more ephemeral "note" is used on the stack element and then changed
 //   to the sticky flag on the paramlist when popping.
 //
+// * PARAM_NOTE_SPECIALIZED_OUTPUT - It's possible to specialize an output
+//   to a variable that a function is supposed to write to (or to specialize
+//   out an output parameter to write to blank, and remove it from the
+//   interface completely).  But the nature of the design is that when you
+//   specialize something, you lose the parameter specification as far as
+//   the phase is concerned--so it's not known it' san output.  But that
+//   information is needed to know to bump the variable into the slot after
+//   the output where the proxy variable is stored, so the output slot itself
+//   can be read and written as the variable contents.  We use this flag
+//   when specializing to convey the information.
 
 #define CELL_FLAG_NOTE \
     FLAG_LEFT_BIT(28)
@@ -260,6 +270,7 @@
 #define CELL_FLAG_NOTE_REMOVE CELL_FLAG_NOTE
 #define CELL_FLAG_BIND_NOTE_REUSE CELL_FLAG_NOTE
 #define CELL_FLAG_STACK_NOTE_SEALED CELL_FLAG_NOTE
+#define CELL_FLAG_PARAM_NOTE_SPECIALIZED_OUTPUT CELL_FLAG_NOTE
 
 
 //=//// CELL_FLAG_NEWLINE_BEFORE //////////////////////////////////////////=//

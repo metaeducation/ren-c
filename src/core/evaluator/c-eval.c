@@ -1449,21 +1449,31 @@ Bounce Evaluator_Executor(Frame(*) f)
 
         const REBKEY *key_tail = sub->u.action.key_tail;
         const REBKEY *key = sub->u.action.key;
-        Value(*) var = sub->u.action.arg;
+        Value(*) arg = sub->u.action.arg;
         const REBPAR *param = sub->u.action.param;
 
-        for (; key != key_tail; ++key, ++var, ++param) {
+        for (; key != key_tail; ++key, ++arg, ++param) {
             if (stackindex_output == TOP_INDEX + 1)
                 break;  // no more outputs requested
             if (Is_Specialized(param))
                 continue;
             if (VAL_PARAM_CLASS(param) != PARAM_CLASS_OUTPUT)
                 continue;
-            if (not IS_BLANK(Data_Stack_At(stackindex_output))) {
-                Copy_Cell(var, Data_Stack_At(stackindex_output));
-                Set_Var_May_Fail(var, SPECIFIED, NONE_ISOTOPE);
-            }
+
+            Value(*) var = arg + 1;
+
+            StackValue(*) at = Data_Stack_At(stackindex_output);
             ++stackindex_output;
+
+            assert(Is_None(arg) or Is_Nulled(arg));
+
+            if (IS_BLANK(at))
+                Init_None(arg);
+            else
+                Init_Isotope(arg, Canon(WANTED));
+
+            Copy_Cell(var, at);
+            ++key, ++arg, ++param;
         }
       }
 
@@ -1562,36 +1572,18 @@ Bounce Evaluator_Executor(Frame(*) f)
             }
         }
 
-        // Iterate the other return slots.  For any variables besides the
-        // original marked with meta, then meta them.  And if a return element
-        // was "circled" then it becomes the overall return.
+        // Function machinery did the proxying.  If a return element was
+        // "circled" then it becomes the overall return.  (This will be put
+        // in as part of the function machinery behavior also, soon.)
         //
-        StackIndex stackindex = TOP_INDEX;
-        for (; stackindex != BASELINE->stack_base + 1; --stackindex) {
-            if (
-                ANY_META_KIND(VAL_TYPE(Data_Stack_At(stackindex)))
-                or stackindex_circled == stackindex
-            ){
-                DECLARE_LOCAL (temp);
-                PUSH_GC_GUARD(temp);
-                Copy_Cell(SPARE, Data_Stack_At(stackindex));  // see GROUP! note
-                Get_Var_May_Fail(
-                    temp,
-                    SPARE,
-                    SPECIFIED,
-                    true  // any
-                );
-
-                if (ANY_META_KIND(VAL_TYPE(Data_Stack_At(stackindex))))
-                    Meta_Quotify(temp);
-                Set_Var_May_Fail(
-                    SPARE, SPECIFIED,
-                    temp
-                );
-                if (stackindex_circled == stackindex)
-                    Move_Cell(OUT, temp);
-                DROP_GC_GUARD(temp);
-            }
+        if (stackindex_circled != 0) {
+            Copy_Cell(SPARE, Data_Stack_At(stackindex_circled));  // stable
+            Get_Var_May_Fail(  // (PICK* can be methodized, hence SPARE stable)
+                OUT,
+                SPARE,
+                SPECIFIED,
+                true  // any
+            );
         }
 
         Drop_Data_Stack_To(BASELINE->stack_base);

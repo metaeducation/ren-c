@@ -639,10 +639,13 @@ DECLARE_NATIVE(definitional_return)
             fail (Error_Bad_Return_Type(target_frame, VAL_TYPE(v)));
     }
 
-  skip_type_check: {
+  skip_type_check: {  ////////////////////////////////////////////////////////
+
+    Proxy_Multi_Returns(target_frame);
+
     DECLARE_LOCAL (label);
     Copy_Cell(label, Lib(UNWIND)); // see also Make_Thrown_Unwind_Value
-    TG_Unwind_Frame = CTX_FRAME_IF_ON_STACK(f_binding);
+    TG_Unwind_Frame = target_frame;
 
     return Init_Thrown_With_Label(FRAME, v, label);
   }

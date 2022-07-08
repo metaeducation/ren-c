@@ -116,12 +116,12 @@
     )
 ]
 
-; Furthest needs to tolerate combinators that didn't request a remainder
-; (TO is one of these).  Review: Should remainder storage be enforced?
+; TO and AHEAD are "broken" w.r.t. FURTHEST at the moment
+; https://forum.rebol.info/t/semantics-of-uparses-furthest/1868
 (
-    [value furthest]: uparse "abc" [to "c"]
+    [value furthest]: uparse "abcd" [to "c"]
     did all [
         value = null
-        furthest = "c"
+        furthest = "d"
     ]
 )

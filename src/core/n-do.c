@@ -469,9 +469,8 @@ DECLARE_NATIVE(evaluate)
 
     if (ANY_ARRAY(source)) {
         if (VAL_LEN_AT(source) == 0) {  // `evaluate []` is invisible intent
-            if (REF(next))
-                rebElide(Lib(SET), rebQ(next), nullptr);
-
+            if (WANTED(next))
+                Init_Nulled(ARG(next));
             return VOID;
         }
 
@@ -487,7 +486,7 @@ DECLARE_NATIVE(evaluate)
         );
         Push_Frame(OUT, subframe);
 
-        if (not REF(next))  // plain evaluation to end, maybe invisible
+        if (not WANTED(next))  // plain evaluation to end, maybe invisible
             return DELEGATE_SUBFRAME(subframe);
 
         Set_Frame_Flag(subframe, TRAMPOLINE_KEEPALIVE);  // to ask how far it got
@@ -505,7 +504,7 @@ DECLARE_NATIVE(evaluate)
         // LET bindings can be preserved.  Binding is still a mess when it
         // comes to questions like backtracking in blocks, so review.
         //
-        if (REF(next))
+        if (WANTED(next))
             fail ("/NEXT Behavior not implemented for FRAME! in EVALUATE");
 
         return DELEGATE_MAYBE_STALE(OUT, source, END);
@@ -570,8 +569,8 @@ DECLARE_NATIVE(evaluate)
         fail (PAR(source));
     }
 
-    if (Is_Truthy(next))
-        Set_Var_May_Fail(next, SPECIFIED, source);
+    if (WANTED(next))
+        Copy_Cell(next, source);
 
     if (Is_Void(SPARE))
         return VOID;
@@ -581,8 +580,8 @@ DECLARE_NATIVE(evaluate)
 } single_step_result_in_out: {  //////////////////////////////////////////////
 
     VAL_INDEX_UNBOUNDED(source) = FRM_INDEX(SUBFRAME);  // new index
-    if (REF(next))
-        rebElide(Lib(SET), rebQ(next), source);
+    if (WANTED(next))
+        Copy_Cell(ARG(next), source);
 
     REBSPC *specifier = FRM_SPECIFIER(SUBFRAME);
     INIT_BINDING_MAY_MANAGE(source, specifier);  // integrate LETs, see [6]

@@ -13,7 +13,7 @@
     ][
         if tail? input [return null]
 
-        return [# (remainder)]: evaluate input
+        return [# remainder]: evaluate input
     ]
     true)
 
@@ -25,7 +25,7 @@
         input [block!]
         <local> mode value
     ][
-        set saved copy []
+        saved: copy []
 
         mode: #save
         return uparse input [collect [
@@ -37,7 +37,7 @@
                 [value: uparse-evaluate] [
                     :(mode = #keep) keep ^ (value)
                     |
-                    :(mode = #save) (if did value [append get saved ^value])
+                    :(mode = #save) (if did value [append saved ^value])
                 ]
             ]
         ]]

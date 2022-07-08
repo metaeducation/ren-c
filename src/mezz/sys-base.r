@@ -161,7 +161,6 @@ module: func [
     ; if that module's init code decided to QUIT to end processing prematurely.
     ; (QUIT is not a failure when running scripts.)
     ;
-    product: default [#]
     catch/quit [
         ;
         ; If the body didn't get turned into a block (and is still a BINARY!
@@ -170,15 +169,15 @@ module: func [
         ;
         assert [block? body]
 
-        set product do body
-        if quitting [set quitting false]
+        product: do body
+        quitting: false
     ]
     then ^arg-to-quit -> [
-        if quitting [
-            set quitting true
-            set product unmeta arg-to-quit
+        if wanted? 'quitting [
+            quitting: true
+            product: unmeta arg-to-quit
         ] else [
-            set product ~quit~  ; don't give distinction in result
+            product: ~quit~  ; don't give distinction in result
         ]
     ]
 
@@ -236,5 +235,5 @@ do*: func [
     ; of times.  So what DO does is effectively flips the order of the
     ; return results of IMPORT.
     ;
-    return [(try context) @result]: import*/args/only blank source args only
+    return [context @result]: import*/args/only blank source args only
 ]

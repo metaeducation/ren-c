@@ -94,12 +94,7 @@ DECLARE_NATIVE(mold)
 
     String(*) popped = Pop_Molded_String(mo);  // sets MOLD_FLAG_TRUNCATED
 
-    if (REF(truncated))
-        rebElide(
-            Lib(SET),
-            rebQ(REF(truncated)),
-            rebL(mo->opts & MOLD_FLAG_WAS_TRUNCATED)
-        );
+    Init_Logic(ARG(truncated), did (mo->opts & MOLD_FLAG_WAS_TRUNCATED));
 
     return Init_Text(OUT, popped);
 }
