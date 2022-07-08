@@ -95,8 +95,7 @@ DECLARE_NATIVE(augment_p)  // see extended definition AUGMENT in %base-defs.r
         return_stackindex = TOP_INDEX + 4;
     }
 
-    // For each parameter in the original function, we push a corresponding
-    // "triad".
+    // For each parameter in the original function, push a "quad"
     //
   blockscope {
     const REBKEY *tail;
@@ -125,7 +124,7 @@ DECLARE_NATIVE(augment_p)  // see extended definition AUGMENT in %base-defs.r
     // the stack.  This may add duplicates--which will be detected when we
     // try to pop the stack into a paramlist.
     //
-    Push_Paramlist_Triads_May_Fail(
+    Push_Paramlist_Quads_May_Fail(
         ARG(spec),
         &flags,
         &return_stackindex

@@ -142,6 +142,9 @@ DECLARE_NATIVE(native)
 {
     INCLUDE_PARAMS_OF_NATIVE;
 
+    Value(*) spec = ARG(spec);
+    bool is_combinator = did REF(combinator);
+
     if (not PG_Next_Native_Dispatcher)
         fail ("NATIVE is for internal use during boot and extension loading");
 
@@ -149,8 +152,8 @@ DECLARE_NATIVE(native)
     ++PG_Next_Native_Dispatcher;
 
     Action(*) native = Make_Native(
-        ARG(spec),
-        did REF(combinator),
+        spec,
+        is_combinator,
         dispatcher,
         PG_Currently_Loading_Module
     );

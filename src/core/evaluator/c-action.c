@@ -355,8 +355,12 @@ Bounce Action_Executor(Frame(*) f)
                 Init_Varargs_Untyped_Enfix(ARG, OUT);
             }
             else switch (pclass) {
-              case PARAM_CLASS_NORMAL:
               case PARAM_CLASS_OUTPUT:
+                assert(!"PARAM_CLASS_OUTPUT being set via NEXT_ARG_FROM_OUT");
+                goto normal_from_out;  // this had handling here, why?
+
+            normal_from_out:
+              case PARAM_CLASS_NORMAL:
                 if (Is_Void(OUT))
                     Init_Void_Isotope(ARG);
                 else {
@@ -523,8 +527,11 @@ Bounce Action_Executor(Frame(*) f)
 
   //=//// REGULAR ARG-OR-REFINEMENT-ARG (consumes 1 EVALUATE's worth) /////=//
 
+          case PARAM_CLASS_OUTPUT:  // e.g. evaluate/next [1 + 2] 'var
+            goto output_from_feed;
+
+        output_from_feed:
           case PARAM_CLASS_NORMAL:
-          case PARAM_CLASS_OUTPUT:
           case PARAM_CLASS_META: {
             if (Get_Feed_Flag(f->feed, BARRIER_HIT) or Is_End(f_next)) {
                 Init_End_Isotope(ARG);

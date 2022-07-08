@@ -180,7 +180,7 @@ DECLARE_NATIVE(lambda)
     for (; item != item_tail; ++item) {
         Derelativize(PUSH(), item, item_specifier);
 
-        // First in triad needs to be a WORD!, after pclass extracted...
+        // First in quad needs to be a WORD!, after pclass extracted...
         //
         enum Reb_Param_Class pclass;
         if (IS_WORD(TOP))

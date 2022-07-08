@@ -190,6 +190,11 @@ export emit-include-params-macro: function [
             param-name: as text! to word! noquote item
             keep cscape/with {PARAM($<n>, ${param-name})} [n param-name]
             n: n + 1
+
+            if all [(the return:) <> :paramlist/1 set-word? item] [
+                keep cscape/with {/* dummy output var slot $<n>) */} [n]
+                n: n + 1  ; skip slot where outputs stow their variables
+            ]
         ]
     ]
 

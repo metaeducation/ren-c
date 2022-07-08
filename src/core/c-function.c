@@ -115,15 +115,55 @@ enum Reb_Spec_Mode {
 #define PUSH_SLOTS() \
     do { PUSH(); PUSH(); PUSH(); PUSH(); } while (0)
 
+
 //
-//  Push_Paramlist_Triads_May_Fail: C
+//  Finalize_Param_Quad: C
+//
+void Finalize_Param_Quad(enum Reb_Symbol_Id* dummy_sym) {
+    if (Is_None(PARAM_SLOT(TOP_INDEX)))
+        return;  // local (VAL_PARAM_CLASS() will fail)
+
+    assert(Not_Cell_Flag(PARAM_SLOT(TOP_INDEX), STACK_NOTE_SEALED));
+
+    switch (VAL_PARAM_CLASS(
+        cast(REBPAR*, cast(REBVAL*, PARAM_SLOT(TOP_INDEX)))
+    )){
+      // We get an extra slot in the paramlist for each output.  This way the
+      // frame has a cell to store a WORD!/TUPLE! in that it will write back
+      // to at the end of the function.
+      //
+      case PARAM_CLASS_OUTPUT: {
+        PUSH_SLOTS();
+
+        if (*dummy_sym == SYM_DUMMY9)
+            fail ("Current limit of 9 multi-return outs per func");
+
+        Init_Word(KEY_SLOT(TOP_INDEX), Canon_Symbol(*dummy_sym));
+        *dummy_sym = cast(enum Reb_Symbol_Id, cast(int, *dummy_sym) + 1);
+
+        Init_Nulled(TYPES_SLOT(TOP_INDEX));
+        Init_Nulled(NOTES_SLOT(TOP_INDEX));
+
+        StackValue(*) param = PARAM_SLOT(TOP_INDEX);
+        Init_None(param);
+        Set_Cell_Flag(param, STACK_NOTE_SEALED);
+        break; }
+
+      default:
+        break;
+    }
+}
+
+
+//
+//  Push_Paramlist_Quads_May_Fail: C
 //
 // This is an implementation routine for Make_Paramlist_Managed_May_Fail().
 // It was broken out into its own separate routine so that the AUGMENT
 // function could reuse the logic for function spec analysis.  It may not
 // be broken out in a particularly elegant way, but it's a start.
 //
-void Push_Paramlist_Triads_May_Fail(
+void Push_Paramlist_Quads_May_Fail(
     const REBVAL *spec,
     Flags *flags,
     StackIndex *return_stackindex
@@ -133,6 +173,10 @@ void Push_Paramlist_Triads_May_Fail(
     enum Reb_Spec_Mode mode = SPEC_MODE_NORMAL;
 
     bool refinement_seen = false;
+
+    enum Reb_Symbol_Id dummy_sym = SYM_DUMMY1;
+
+    StackIndex base = TOP_INDEX;
 
     Cell(const*) tail;
     Cell(const*) value = VAL_ARRAY_AT(&tail, spec);
@@ -351,7 +395,7 @@ void Push_Paramlist_Triads_May_Fail(
                 }
                 else if (not quoted) {
                     refinement = true;  // sets PARAM_FLAG_REFINEMENT
-                    pclass = PARAM_CLASS_OUTPUT;
+                    pclass = PARAM_CLASS_OUTPUT;  // Finalize adds local after
                 }
             }
             else {
@@ -414,7 +458,10 @@ void Push_Paramlist_Triads_May_Fail(
             continue;
 
         // Pushing description values for a new named element...
-        //
+
+        if (TOP_INDEX != base)
+            Finalize_Param_Quad(&dummy_sym);
+
         PUSH_SLOTS();
 
         Init_Word(KEY_SLOT(TOP_INDEX), symbol);
@@ -476,6 +523,9 @@ void Push_Paramlist_Triads_May_Fail(
                 *flags &= ~MKF_RETURN;
         }
     }
+
+    if (TOP_INDEX != base)
+        Finalize_Param_Quad(&dummy_sym);
 }
 
 
@@ -606,6 +656,7 @@ Array(*) Pop_Paramlist_With_Meta_May_Fail(
         Symbol(const*) symbol = VAL_WORD_SYMBOL(KEY_SLOT(stackindex));
 
         StackValue(*) slot = PARAM_SLOT(stackindex);
+        assert(Not_Cell_Flag(slot, VAR_MARKED_HIDDEN));  // use NOTE_SEALED
 
         // "Sealed" parameters do not count in the binding.  See AUGMENT for
         // notes on why we do this (you can augment a function that has a
@@ -875,7 +926,7 @@ Array(*) Make_Paramlist_Managed_May_Fail(
     // The process is broken up into phases so that the spec analysis code
     // can be reused in AUGMENT.
     //
-    Push_Paramlist_Triads_May_Fail(
+    Push_Paramlist_Quads_May_Fail(
         spec,
         flags,
         &return_stackindex
