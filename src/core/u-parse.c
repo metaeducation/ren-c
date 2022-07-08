@@ -264,11 +264,6 @@ static bool Subparse_Throws(
 
     Begin_Prefix_Action(f, Canon(SUBPARSE));
 
-    f->u.action.key = nullptr;  // informs infix lookahead
-    f->u.action.key_tail = nullptr;
-    f->u.action.arg = m_cast(REBVAL*, END);
-    f->u.action.param = cast_PAR(END);
-
     // This needs to be set before INCLUDE_PARAMS_OF_SUBPARSE; it is what
     // ensures that usermode accesses to the frame won't be able to fiddle
     // the frame values to bit patterns the native might crash on.
@@ -308,6 +303,8 @@ static bool Subparse_Throws(
     // vs. going through the evaluator, we don't get the opportunity to do
     // things like HIJACK it.  Consider APPLY-ing it.
     //
+    Set_Executor_Flag(ACTION, f, IN_DISPATCH);
+
     Bounce b = N_subparse(f);
 
     Drop_Action(f);

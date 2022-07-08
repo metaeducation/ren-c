@@ -327,7 +327,7 @@ inline static void INIT_BINDING_MAY_MANAGE(
         return;  // unbound or managed already (frame OR object context)
 
     Frame(*) f = FRM(BONUS(KeySource, binding));  // unmanaged only frame
-    assert(f->u.action.key == f->u.action.key_tail);  // mid-fulfillment!
+    assert(not Is_Action_Frame_Fulfilling(f));
     UNUSED(f);
 
     m_cast(REBSER*, binding)->leader.bits |= NODE_FLAG_MANAGED;  // GC sees...
@@ -416,8 +416,7 @@ inline static Context(*) VAL_WORD_CONTEXT(const REBVAL *v) {
         binding = CTX_VARLIST(INODE(PatchContext, binding));
     assert(
         GET_SERIES_FLAG(binding, MANAGED) or
-        FRM(BONUS(KeySource, binding))->u.action.key_tail
-            == FRM(BONUS(KeySource, binding))->u.action.key  // not fulfilling
+        not Is_Action_Frame_Fulfilling(FRM(BONUS(KeySource, binding)))
     );
     binding->leader.bits |= NODE_FLAG_MANAGED;  // !!! review managing needs
     Context(*) c = CTX(binding);

@@ -167,7 +167,7 @@ DECLARE_NATIVE(reduce)
     return Init_Array_Cell(
         OUT,
         VAL_TYPE(v),
-        Pop_Stack_Values_Core(FRAME->baseline.stack_base, pop_flags)
+        Pop_Stack_Values_Core(STACK_BASE, pop_flags)
     );
 }}
 

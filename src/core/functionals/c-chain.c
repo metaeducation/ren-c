@@ -57,7 +57,10 @@ enum {
 // entry to Process_Action().  The ability is also used by RESKINNED.
 //
 Frame(*) Push_Downshifted_Frame(REBVAL *out, Frame(*) f) {
-    Frame(*) sub = Make_Frame(f->feed, FRAME_FLAG_MAYBE_STALE);
+    Frame(*) sub = Make_Frame(
+        f->feed,
+        ACTION_EXECUTOR_FLAG_IN_DISPATCH | FRAME_FLAG_MAYBE_STALE
+    );
     Push_Frame(out, sub);
     assert(sub->varlist == nullptr);
     sub->varlist = f->varlist;
@@ -76,14 +79,11 @@ Frame(*) Push_Downshifted_Frame(REBVAL *out, Frame(*) f) {
     TRASH_POINTER_IF_DEBUG(f->executor);  // caller must set
     TRASH_OPTION_IF_DEBUG(f->label);
 
-    TRASH_IF_DEBUG(f->u);  // not an action anymore; fills with garbage bytes
-
-    sub->u.action.key = nullptr;
-    sub->u.action.key_tail = nullptr;
-    sub->u.action.arg = sub->rootvar + 1;  // !!! enforced by Action_Executor()
-    sub->u.action.param = cast_PAR(END);
+    sub->u.action.dispatcher_base = f->u.action.dispatcher_base;
 
     sub->executor = &Action_Executor;
+
+    TRASH_IF_DEBUG(f->u);  // not an action anymore; trash after get stack base
 
     return sub;
 }
@@ -208,6 +208,7 @@ Bounce Chainer_Dispatcher(Frame(*) f)
 
     FRM_STATE_BYTE(sub) = ST_ACTION_INITIAL_ENTRY;  // maybe zeroed (or not)?
     Clear_Executor_Flag(ACTION, sub, DISPATCHER_CATCHES);
+    Clear_Executor_Flag(ACTION, sub, IN_DISPATCH);
     Clear_Frame_Flag(sub, NOTIFY_ON_ABRUPT_FAILURE);
 
     assert(STATE == ST_CHAINER_RUNNING_SUBFUNCTION);

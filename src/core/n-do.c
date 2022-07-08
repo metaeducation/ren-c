@@ -718,14 +718,14 @@ DECLARE_NATIVE(applique)
 
     Context(*) exemplar = Make_Context_For_Action_Push_Partials(  // see [1]
         action,
-        BASELINE->stack_base,  // lowest_ordered_dsp of refinements to weave in
+        STACK_BASE,  // lowest_ordered_dsp of refinements to weave in
         nullptr,  // no binder needed
         NONE_ISOTOPE  // seen as unspecialized by ST_ACTION_TYPECHECKING
     );
     Manage_Series(CTX_VARLIST(exemplar));
     Init_Frame(frame, exemplar, VAL_ACTION_LABEL(action));
 
-    Drop_Data_Stack_To(BASELINE->stack_base);  // refinement order unimportant
+    Drop_Data_Stack_To(STACK_BASE);  // refinement order unimportant
 
     Virtual_Bind_Deep_To_Existing_Context(
         def,
@@ -822,14 +822,14 @@ DECLARE_NATIVE(apply)
     INIT_BINDER(&binder);*/
     Context(*) exemplar = Make_Context_For_Action_Push_Partials(  // see [2]
         action,
-        BASELINE->stack_base, // lowest_ordered_dsp of refinements to weave in
+        STACK_BASE, // lowest_ordered_dsp of refinements to weave in
         nullptr /* &binder */,
         Root_Unspecialized_Tag  // is checked for by *identity*, not value!
     );
     Manage_Series(CTX_VARLIST(exemplar)); // Putting into a frame
     Init_Frame(frame, exemplar, VAL_ACTION_LABEL(action));  // GC guarded
 
-    Drop_Data_Stack_To(BASELINE->stack_base);  // partials ordering unimportant
+    Drop_Data_Stack_To(STACK_BASE);  // partials ordering unimportant
 
     Frame(*) f = Make_Frame_At(
         args,

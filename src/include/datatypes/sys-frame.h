@@ -65,15 +65,6 @@ inline static bool ANY_ESCAPABLE_GET(Cell(const*) v) {
     ((f)->executor == &Action_Executor)
 
 
-// Some cases in debug code call this all the way up the call stack; it may
-// be helpful to inline this test some of those places.
-//
-inline static bool Is_Action_Frame_Fulfilling(Frame(*) f) {
-    assert(Is_Action_Frame(f));
-    return f->u.action.key != f->u.action.key_tail;
-}
-
-
 inline static bool FRM_IS_VARIADIC(Frame(*) f) {
     return FEED_IS_VARIADIC(f->feed);
 }
@@ -587,6 +578,9 @@ inline static Frame(*) Prep_Frame_Core(
     #define PHASE   FRM_PHASE(frame_)
 
     #define SUBFRAME    (assert(TOP_FRAME->prior == frame_), TOP_FRAME)
+
+    #define STACK_BASE \
+        (assert(Is_Action_Frame(frame_)), frame_->u.action.dispatcher_base)
 
     #define VOID        Native_Void_Result(frame_)
     #define NONE        Native_None_Result(frame_)

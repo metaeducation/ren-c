@@ -3105,7 +3105,7 @@ DECLARE_NATIVE(transcode)
     }
 
     if (REF(next)) {
-        if (TOP_INDEX == BASELINE->stack_base)
+        if (TOP_INDEX == STACK_BASE)
             Init_Nulled(OUT);
         else {
             Move_Cell(OUT, TOP);
@@ -3117,7 +3117,7 @@ DECLARE_NATIVE(transcode)
         if (Get_Executor_Flag(SCAN, SUBFRAME, NEWLINE_PENDING))
             flags |= ARRAY_FLAG_NEWLINE_AT_TAIL;
 
-        Array(*) a = Pop_Stack_Values_Core(BASELINE->stack_base, flags);
+        Array(*) a = Pop_Stack_Values_Core(STACK_BASE, flags);
 
         a->misc.line = ss->line;
         mutable_LINK(Filename, a) = ss->file;

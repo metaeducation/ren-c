@@ -55,6 +55,9 @@ STATIC_ASSERT(
 
 //=//// ACTION_EXECUTOR_FLAG_ERROR_ON_DEFERRED_ENFIX //////////////////////=//
 //
+// !!! TEMPORARILY DISABLED (defined to 0) - SHORT ON FLAGS AND NEED FOR
+// ANOTHER MORE IMPORTANT PURPOSE - KEPT AS DOCUMENTATION !!!
+//
 // There are advanced features that "abuse" the evaluator, e.g. by making it
 // create a specialization exemplar by example from a stream of code.  These
 // cases are designed to operate in isolation, and are incompatible with the
@@ -77,6 +80,17 @@ STATIC_ASSERT(
 // The best answer for right now is just to raise an error.
 //
 #define ACTION_EXECUTOR_FLAG_ERROR_ON_DEFERRED_ENFIX \
+    0  // !!! DISABLED FOR NOW, BUT CALLSITES CAN STILL REFERENCE
+
+
+//=//// ACTION_EXECUTOR_FLAG_IN_DISPATCH //////////////////////////////////=//
+//
+// When the action dispatcher is fulfilling arguments, it needs frame state
+// for tracking the current key/argument/parameter.  During that time it can
+// also use the STATE byte in the frame for arbitrary purposes.  But once
+// it starts running dispatch it has to leave the byte to the dispatcher.
+//
+#define ACTION_EXECUTOR_FLAG_IN_DISPATCH \
     FRAME_FLAG_26
 
 
@@ -191,4 +205,13 @@ struct Reb_Action_Executor_State {
     // that space is used to hold the specialized value cell.
     //
     const REBPAR *param;
+
+    StackIndex dispatcher_base;
 };
+
+
+#define Is_Action_Frame_Fulfilling(f) \
+    Not_Executor_Flag(ACTION, f, IN_DISPATCH)
+
+#define Is_Action_Frame_Dispatching(f) \
+    Get_Executor_Flag(ACTION, f, IN_DISPATCH)

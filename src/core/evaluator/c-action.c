@@ -194,8 +194,6 @@ Bounce Action_Executor(Frame(*) f)
             if (TOP_INDEX != f->baseline.stack_base)
                 goto next_pickup;
 
-            f->u.action.key = nullptr;  // don't need key
-            f->u.action.key_tail = nullptr;
             goto fulfill_and_any_pickups_done;
         }
         continue;
@@ -714,8 +712,6 @@ Bounce Action_Executor(Frame(*) f)
             if (TOP_INDEX != BASELINE->stack_base)
                 goto next_pickup;
 
-            f->u.action.key = nullptr;  // don't need key
-            f->u.action.key_tail = nullptr;
             goto fulfill_and_any_pickups_done;
         }
 
@@ -729,9 +725,6 @@ Bounce Action_Executor(Frame(*) f)
     }
 
   fulfill_and_any_pickups_done:
-
-    f->u.action.key = nullptr;  // signals !Is_Action_Frame_Fulfilling()
-    f->u.action.key_tail = nullptr;
 
     if (Get_Executor_Flag(ACTION, f, FULFILL_ONLY)) {  // no typecheck
         assert(Is_Stale(OUT));  // didn't touch out
@@ -917,7 +910,20 @@ Bounce Action_Executor(Frame(*) f)
 
   //=//// ACTION! ARGUMENTS NOW GATHERED, DISPATCH PHASE //////////////////=//
 
+  // 1. Here we free the union for use by the dispatcher...though currently
+  //    one slot is stolen for the base stack address the dispatcher should
+  //    consider (variables can be stored to write back to for multi-return).
+  //    It's also needed to keep f->original.  Think about how to improve.
+
   dispatch:
+
+    assert(Not_Executor_Flag(ACTION, f, IN_DISPATCH));
+    Set_Executor_Flag(ACTION, f, IN_DISPATCH);
+
+    Action(*) save_original = f->u.action.original;
+    TRASH_IF_DEBUG(f->u);  // freed for dispatcher use...
+    f->u.action.original = save_original;  // ...er, mostly.  see [1]
+    f->u.action.dispatcher_base = TOP_INDEX;
 
     if (Get_Feed_Flag(f->feed, NEXT_ARG_FROM_OUT)) {
         if (Get_Executor_Flag(ACTION, f, DIDNT_LEFT_QUOTE_PATH))  // see notes
@@ -1054,9 +1060,11 @@ Bounce Action_Executor(Frame(*) f)
     // f->phase is, for instance.
 
       case C_REDO_UNCHECKED:
+        Clear_Executor_Flag(ACTION, f, IN_DISPATCH);
         goto dispatch;
 
       case C_REDO_CHECKED:
+        Clear_Executor_Flag(ACTION, f, IN_DISPATCH);
         STATE = ST_ACTION_TYPECHECKING;
         goto typecheck_then_dispatch;
 
@@ -1087,6 +1095,9 @@ Bounce Action_Executor(Frame(*) f)
   #if !defined(NDEBUG)
     Do_After_Action_Checks_Debug(f);
   #endif
+
+    if (not Is_Failure(OUT))  // !!! Should there be an R_FAIL ?
+        assert(f->u.action.dispatcher_base == TOP_INDEX);
 
   skip_output_check:
 
@@ -1177,6 +1188,7 @@ Bounce Action_Executor(Frame(*) f)
             STATE = ST_ACTION_TYPECHECKING;
             Clear_Executor_Flag(ACTION, f, DISPATCHER_CATCHES);  // else asserts
             Clear_Frame_Flag(f, NOTIFY_ON_ABRUPT_FAILURE);
+            Clear_Executor_Flag(ACTION, f, IN_DISPATCH);
             goto typecheck_then_dispatch;
         }
     }

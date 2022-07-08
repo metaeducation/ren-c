@@ -833,13 +833,6 @@ static void Mark_Frame_Stack_Deep(void)
             }
         }
 
-        // !!! A feature was allowing `param` to GC protect an arbitrary
-        // value while a function was running.  This is not currently being
-        // used, but other frames could do this with their spare state.
-        //
-        if (f->u.action.key != f->u.action.key_tail and f->u.action.param)
-            Queue_Mark_Opt_Void_Cell_Deep(f->u.action.param);
-
         if (f->varlist and GET_SERIES_FLAG(f->varlist, MANAGED)) {
             //
             // If the context is all set up with valid values and managed,
