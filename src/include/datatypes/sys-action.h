@@ -162,7 +162,7 @@ inline static REBVAL *Value_From_Bounce(Bounce b) {
 //
 #define C_THROWN 'T'
 #define BOUNCE_THROWN \
-    cast(REBVAL*, &PG_R_Thrown)
+    cast(Bounce, &PG_R_Thrown)
 
 inline static bool Is_Throwing(Frame(*) frame_) {
     //
@@ -191,7 +191,7 @@ inline static bool Is_Throwing(Frame(*) frame_) {
 //
 #define C_VOID 'V'
 #define BOUNCE_VOID \
-    cast(REBVAL*, &PG_R_Void)
+    cast(Bounce, &PG_R_Void)
 
 // If Eval_Core gets back an REB_R_REDO from a dispatcher, it will re-execute
 // the f->phase in the frame.  This function may be changed by the dispatcher
@@ -204,16 +204,16 @@ inline static bool Is_Throwing(Frame(*) frame_) {
 //
 #define C_REDO_UNCHECKED 'r'
 #define BOUNCE_REDO_UNCHECKED \
-    cast(REBVAL*, &PG_R_Redo_Unchecked)
+    cast(Bounce, &PG_R_Redo_Unchecked)
 
 #define C_REDO_CHECKED 'R'
 #define BOUNCE_REDO_CHECKED \
-    cast(REBVAL*, &PG_R_Redo_Checked)
+    cast(Bounce, &PG_R_Redo_Checked)
 
 
 #define C_UNHANDLED 'U'
 #define BOUNCE_UNHANDLED \
-    cast(REBVAL*, &PG_R_Unhandled)
+    cast(Bounce, &PG_R_Unhandled)
 
 
 // Continuations are used to mitigate the problems that occur when the C stack
@@ -227,7 +227,7 @@ inline static bool Is_Throwing(Frame(*) frame_) {
 //
 #define C_CONTINUATION 'C'
 #define BOUNCE_CONTINUE \
-    cast(REBVAL*, &PG_R_Continuation)
+    cast(Bounce, &PG_R_Continuation)
 
 
 // A dispatcher may want to run a "continuation" but not be called back.
@@ -235,7 +235,7 @@ inline static bool Is_Throwing(Frame(*) frame_) {
 //
 #define C_DELEGATION 'D'
 #define BOUNCE_DELEGATE \
-    cast(REBVAL*, &PG_R_Delegation)
+    cast(Bounce, &PG_R_Delegation)
 
 #define DELEGATE_255 255
 
@@ -244,7 +244,7 @@ inline static bool Is_Throwing(Frame(*) frame_) {
 //
 #define C_SUSPEND 'S'
 #define BOUNCE_SUSPEND \
-    cast(REBVAL*, &PG_R_Suspend)
+    cast(Bounce, &PG_R_Suspend)
 
 
 #define CELL_MASK_ACTION \

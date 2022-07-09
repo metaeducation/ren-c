@@ -256,11 +256,19 @@ STATIC_ASSERT(31 < 32);  // otherwise FRAME_FLAG_XXX too high
     ((FRM(f)->flags.bits & FRAME_FLAG_##name) == 0)
 
 
-// The Bounce type is a REBVAL* but with the idea that it is legal to hold
-// types like BOUNCE_THROWN, etc.  This helps document interface contract.
+// !!! It was thought that a standard layout struct with just {REBVAL *p} in
+// it would be compatible as a return result with plain REBVAL *p.  That does
+// not seem to be the case...because when an extension-defined dispatcher is
+// defined to return REBVAL*, it is incompatible with callers expecting a
+// Bounce struct as defined below.
 //
-#if CPLUSPLUS_11 == 0 || defined(NDEBUG)
-    typedef REBVAL *Bounce;  // avoid release build use of C++ struct in API
+// It would be nice to have the added typechecking on the Bounce types; this
+// would prevent states like BOUNCE_THROWN from accidentally being passed
+// somewhere that took REBVAL* only.  But not so important to hold up the idea
+// of extensions that only speak in REBVAL*.  Review when there's time.
+//
+#if 1  /* CPLUSPLUS_11 == 0 || defined(NDEBUG) */
+    typedef REBVAL* Bounce;
 #else
     struct Bounce {
         REBVAL *p;
@@ -268,6 +276,9 @@ STATIC_ASSERT(31 < 32);  // otherwise FRAME_FLAG_XXX too high
         Bounce (REBVAL *v) : p (v) {}
         bool operator==(REBVAL *v) { return v == p; }
         bool operator!=(REBVAL *v) { return v != p; }
+
+        bool operator==(const Bounce& other) { return other.p == p; }
+        bool operator!=(const Bounce& other) { return other.p != p; }
 
         explicit operator REBVAL* () { return p; }
         explicit operator void* () { return p; }
