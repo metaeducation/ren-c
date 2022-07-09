@@ -651,6 +651,7 @@ inline static Bounce Native_Branched_Result(Frame(*) frame_, Value(*) v) {
     assert(v == frame_->out);  // would not be zero cost if we supported copy
     assert(not Is_Void(v));
     assert(VAL_TYPE_UNCHECKED(v) != REB_NULL);  // unchecked, as isotopes ok
+    UNUSED(v);
     return frame_->out;
 }
 

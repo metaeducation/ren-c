@@ -284,6 +284,17 @@ STATIC_ASSERT(31 < 32);  // otherwise FRAME_FLAG_XXX too high
 typedef Bounce (Executor)(Frame(*) frame_);
 typedef Executor Dispatcher;  // sub-dispatched in Action_Executor()
 
+// This is for working around pedantic C and C++ errors, when an extension
+// that doesn't use %sys-core.h tries to redefine dispatcher in terms of
+// taking a void* and returning a REBVAL*.
+//
+#ifdef __cplusplus
+    #define dispatcher_cast(ptr) \
+        cast(Dispatcher*, cast(void*, (ptr)))
+#else
+    #define dispatcher_cast(ptr) \
+        cast(Dispatcher*, (ptr))
+#endif
 
 #include "executors/exec-eval.h"
 #include "executors/exec-action.h"

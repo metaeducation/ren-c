@@ -1373,7 +1373,7 @@ REBINT CT_Frame(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
 //  MF_Frame: C
 //
 void MF_Frame(REB_MOLD *mo, noquote(Cell(const*)) v, bool form)
-  { return MF_Context(mo, v, form); }
+  { MF_Context(mo, v, form); }
 
 
 //

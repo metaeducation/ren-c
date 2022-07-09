@@ -374,7 +374,7 @@ e/emit 'mod {
      * should still work (it's a standard layout type).
      */
     static Dispatcher* native_dispatchers[$<num-natives> + 1] = {
-        cast(Dispatcher*, cast(void*, $[Dispatcher_C_Names])),
+        dispatcher_cast($[Dispatcher_C_Names]),
         nullptr /* just here to ensure > 0 length array (C++ requirement) */
     };
 

@@ -97,6 +97,7 @@ static void Check_Basics(void)
     #endif
 
     assert(sizeof(REBSER) == sersize);
+    UNUSED(sersize);
   #endif
 
     //=//// CHECK REBSER INFO PLACEMENT ///////////////////////////////////=//
