@@ -457,7 +457,9 @@ main-startup: func [
     ;
     if not tail? argv [
         if defined? 'local-to-file [
-            o.boot: clean-path local-to-file first argv
+            o.boot: default [
+                clean-path local-to-file first argv
+            ]
         ]
         take argv
     ]
