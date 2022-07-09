@@ -27,3 +27,5 @@ ldflags: try switch system-config/os-base [
         ["-framework CoreFoundation"]
     ]
 ]
+
+use-librebol: true  ; can't use %sys-core.h with MacOS UUID APIs, conflicts

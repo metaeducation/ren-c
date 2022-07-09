@@ -764,6 +764,8 @@ extension-class: make object! [
 
     hook: _  ; FILE! of extension-specific Rebol script to run during rebmake
 
+    use-librebol: false  ; default right now is use %sys-core.h
+
     ; Internal Fields
 
     sequence: _ ; the sequence in which the extension should be loaded
@@ -1900,6 +1902,7 @@ prep: make rebmake/entry-class [
                     fail "ext/source must be BLOCK! or FILE!"
                 ]]
                 unspaced [{OS_ID=} system-config/id]
+                unspaced [{USE_LIBREBOL=} ext/use-librebol]
             ]
 
             if ext/hook [

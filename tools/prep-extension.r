@@ -74,6 +74,12 @@ mkdir/deep output-dir
 
 config: config-system try get 'args/OS_ID
 
+use-librebol: switch get 'args/USE_LIBREBOL [
+    "false" [false]
+    "true" [true]
+    fail "%prep-extension.r needs USE_LIBREBOL as true or false"
+]
+
 mod: ensure text! args/MODULE
 m-name: mod
 l-m-name: lowercase copy m-name
@@ -184,16 +190,37 @@ e1: make-emitter "Module C Header File Preface" (
 
 e1/emit {
     #include "sys-ext.h" /* for things like DECLARE_MODULE_INIT() */
+}
+e1/emit newline
 
+
+=== {IF NOT USING LIBREBOL, DEFINE INCLUDE_PARAMS_OF_XXX MACROS} ===
+
+e1/emit {
     /*
     ** INCLUDE_PARAMS_OF MACROS: DEFINING PARAM(), REF(), ARG()
     */
 }
 e1/emit newline
 
-for-each info all-protos [
-    emit-include-params-macro/ext e1 info/proto u-m-name
-    e1/emit newline
+if use-librebol [
+    for-each info all-protos [
+        parse2 info/proto [
+            copy proto-name to ":"
+        ]
+        proto-name: to-c-name proto-name
+        e1/emit 'info {
+            #define ${U-M-NAME}_INCLUDE_PARAMS_OF_${PROTO-NAME} \
+                (void)frame_
+        }
+        e1/emit newline
+    ]
+]
+else [
+    for-each info all-protos [
+        emit-include-params-macro/ext e1 info/proto u-m-name
+        e1/emit newline
+    ]
 ]
 
 
@@ -210,15 +237,31 @@ dispatcher-forward-decls: collect [
         keep cscape/with {DECLARE_NATIVE(${Name})} 'name
     ]
 ]
-e1/emit 'mod {
-    /*
-     * Redefine DECLARE_NATIVE macro locally to include extension name.
-     * This avoids name collisions with the core, or with other extensions.
-     */
-    #undef DECLARE_NATIVE
-    #define DECLARE_NATIVE(n) \
-        Bounce N_${MOD}_##n(Frame(*) frame_)
 
+if use-librebol [
+    e1/emit 'mod {
+        /*
+        * Redefine DECLARE_NATIVE macro locally to include extension name.
+        * This avoids name collisions with the core, or with other extensions.
+        */
+        #undef DECLARE_NATIVE
+        #define DECLARE_NATIVE(n) \
+            REBVAL* N_${MOD}_##n(void* frame_)
+    }
+]
+else [
+    e1/emit 'mod {
+        /*
+        * Redefine DECLARE_NATIVE macro locally to include extension name.
+        * This avoids name collisions with the core, or with other extensions.
+        */
+        #undef DECLARE_NATIVE
+        #define DECLARE_NATIVE(n) \
+            Bounce N_${MOD}_##n(Frame(*) frame_)
+    }
+]
+
+e1/emit {
     /*
      * Forward-declare DECLARE_NATIVE() dispatcher prototypes
      */
@@ -326,10 +369,12 @@ e/emit 'mod {
 
     /*
      * Pointers to function dispatchers for natives (in same order as the
-     * order of native specs after being loaded).
+     * order of native specs after being loaded).  Cast is used so that if
+     * an extension uses "rebol.h" and doesn't return a Bounce C++ class it
+     * should still work (it's a standard layout type).
      */
     static Dispatcher* native_dispatchers[$<num-natives> + 1] = {
-        $[Dispatcher_C_Names],
+        cast(Dispatcher*, cast(void*, $[Dispatcher_C_Names])),
         nullptr /* just here to ensure > 0 length array (C++ requirement) */
     };
 
