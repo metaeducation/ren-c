@@ -274,11 +274,10 @@ DECLARE_NATIVE(combinator)
     // we might as well mutably bind it--there's no incentive to virtual
     // bind things that are copied.
     //
-    const bool locals_visible = true;
     Array(*) relativized = Copy_And_Bind_Relative_Deep_Managed(
         ARG(body),
         combinator,
-        locals_visible
+        VAR_VISIBILITY_ALL
     );
 
     Init_Relative_Block(

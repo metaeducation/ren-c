@@ -216,9 +216,9 @@ void Init_Evars(EVARS *e, noquote(Cell(const*)) v) {
         // There's no clear best answer to whether the locals should be
         // visible when enumerating an action, only the caller knows if it's
         // a context where they should be.  Guess conservatively and let them
-        // set `e->locals_visible = true` if they think they should be.
+        // set e->visibility if they think they should see more.
         //
-        e->locals_visible = false;
+        e->visibility = VAR_VISIBILITY_INPUTS;
 
       #if !defined(NDEBUG)
         e->wordlist = Make_Array_Core(1, SERIES_FLAG_MANAGED);
@@ -303,17 +303,17 @@ void Init_Evars(EVARS *e, noquote(Cell(const*)) v) {
             //
             Action(*) phase;
             if (not IS_FRAME_PHASED(v)) {
-                //
+                phase = CTX_FRAME_ACTION(e->ctx);
+
                 // See FRAME_HAS_BEEN_INVOKED about the efficiency trick used
                 // to make sure archetypal frame views do not DO a frame after
                 // being run where the action could've tainted the arguments.
                 //
                 Array(*) varlist = CTX_VARLIST(e->ctx);
                 if (Get_Subclass_Flag(VARLIST, varlist, FRAME_HAS_BEEN_INVOKED))
-                    fail (Error_Stale_Frame_Raw());
-
-                phase = CTX_FRAME_ACTION(e->ctx);
-                e->locals_visible = false;
+                    e->visibility = VAR_VISIBILITY_OUTPUTS;
+                else
+                    e->visibility = VAR_VISIBILITY_INPUTS;
             }
             else {
                 phase = VAL_FRAME_PHASE(v);
@@ -325,7 +325,10 @@ void Init_Evars(EVARS *e, noquote(Cell(const*)) v) {
                 // to see the locals (for instance).
                 //
                 Context(*) exemplar = ACT_EXEMPLAR(phase);
-                e->locals_visible = (CTX_FRAME_ACTION(exemplar) == phase);
+                if (CTX_FRAME_ACTION(exemplar) == phase)
+                    e->visibility = VAR_VISIBILITY_ALL;
+                else
+                    e->visibility = VAR_VISIBILITY_INPUTS;
             }
 
             e->param = ACT_PARAMS_HEAD(phase) - 1;
@@ -402,10 +405,16 @@ bool Did_Advance_Evars(EVARS *e) {
                 continue;
             }
 
-            if (Is_Specialized(e->param)) {  // not TYPESET! with a PARAM_CLASS
-                if (e->locals_visible)
-                    return true;  // private sees ONE level of specialization
+            if (e->visibility == VAR_VISIBILITY_ALL)
+                return true;  // private sees ONE level of specialization
+
+            if (Is_Specialized(e->param))  // not TYPESET! with a PARAM_CLASS
                 continue;  // public should not see specialized args
+
+            if (e->visibility == VAR_VISIBILITY_OUTPUTS) {
+                if (VAL_PARAM_CLASS(e->param) == PARAM_CLASS_OUTPUT)
+                    return true;
+                continue;
             }
 
             // Note: while RETURN: parameters were considered to be "local"

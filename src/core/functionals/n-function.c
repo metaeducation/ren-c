@@ -247,11 +247,10 @@ Action(*) Make_Interpreted_Action_May_Fail(
     assert(ACT_META(a) == nullptr);
     mutable_ACT_META(a) = meta;
 
-    const bool locals_visible = true;  // we created exemplar, see all!
     Array(*) copy = Copy_And_Bind_Relative_Deep_Managed(
         body,  // new copy has locals bound relatively to the new action
         a,
-        locals_visible
+        VAR_VISIBILITY_ALL // we created exemplar, see all!
     );
 
     // Favor the spec first, then the body, for file and line information.

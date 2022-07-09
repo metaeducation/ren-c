@@ -818,7 +818,7 @@ static void Clonify_And_Bind_Relative(
 Array(*) Copy_And_Bind_Relative_Deep_Managed(
     const REBVAL *body,
     Action(*) relative,
-    bool locals_visible
+    enum Reb_Var_Visibility visibility
 ){
     struct Reb_Binder binder;
     INIT_BINDER(&binder);
@@ -832,7 +832,7 @@ Array(*) Copy_And_Bind_Relative_Deep_Managed(
   blockscope {
     EVARS e;
     Init_Evars(&e, ACT_ARCHETYPE(relative));
-    e.locals_visible = locals_visible;
+    e.visibility = visibility;
     while (Did_Advance_Evars(&e))
         Add_Binder_Index(&binder, KEY_SYMBOL(e.key), e.index);
     Shutdown_Evars(&e);
@@ -878,7 +878,7 @@ Array(*) Copy_And_Bind_Relative_Deep_Managed(
   blockscope {  // Reset binding table, see notes above regarding locals
     EVARS e;
     Init_Evars(&e, ACT_ARCHETYPE(relative));
-    e.locals_visible = locals_visible;
+    e.visibility = visibility;
     while (Did_Advance_Evars(&e))
         Remove_Binder_Index(&binder, KEY_SYMBOL(e.key));
     Shutdown_Evars(&e);

@@ -64,3 +64,26 @@
         var = 1020
     ]
 )]
+
+(
+    wrapped: enclose (
+        func [out: in] [out: in + 1]
+    ) f -> [
+        x: f.in
+        do f
+        f.out * 10
+    ]
+    110 = wrapped 10
+)
+
+(
+    wrapped: enclose (
+        func [out: in] [out: in + 1]
+    ) f -> [
+        x: f.in
+        do f
+        f.in
+    ]
+    e: trap [wrapped 10]
+    e.id = 'bad-pick
+)

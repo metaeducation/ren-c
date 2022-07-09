@@ -152,11 +152,10 @@ DECLARE_NATIVE(adapt_p)  // see extended definition ADAPT in %base-defs.r
     // we might as well mutably bind it--there's no incentive to virtual
     // bind things that are copied.
     //
-    const bool locals_visible = false;
     Array(*) prelude = Copy_And_Bind_Relative_Deep_Managed(
         ARG(prelude),
         adaptation,
-        locals_visible
+        VAR_VISIBILITY_INPUTS
     );
 
     // We can't use a simple Init_Block() here, because the prelude has been

@@ -104,11 +104,10 @@ Bounce Block_Dispatcher(Frame(*) f)
         // Derelativize()'d out to make it specific, and then re-relativized
         // through a copy on behalf of o2/b.
 
-        const bool locals_visible = false;  // no locals, doesn't matter...
         Array(*) relativized = Copy_And_Bind_Relative_Deep_Managed(
             SPECIFIC(block),
             FRM_PHASE(f),
-            locals_visible
+            VAR_VISIBILITY_INPUTS  // no locals, does not matter
         );
 
         // Preserve file and line information from the original, if present.

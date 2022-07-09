@@ -213,11 +213,17 @@
 // lot of inconvenience for C code, needing to wrap up state...so this does
 // it with an enumeration struct.
 
+enum Reb_Var_Visibility {
+    VAR_VISIBILITY_ALL,
+    VAR_VISIBILITY_INPUTS,
+    VAR_VISIBILITY_OUTPUTS
+};
+
 struct Reb_Enum_Vars {
     const REBKEY *key;
     const REBKEY *key_tail;
     REBPAR *param;
-    bool locals_visible;
+    enum Reb_Var_Visibility visibility;
     REBVAR *var;
     REBLEN index;  // important for enumerations that are binding
 
