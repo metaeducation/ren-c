@@ -556,7 +556,10 @@ inline static Frame(*) Prep_Frame_Core(
     FRM_ARG(frame_, (p_##name##_))
 
 #define PAR(name) \
-    ACT_PARAM(FRM_PHASE(frame_), (p_##name##_))  // a REB_P_XXX pseudovalue
+    ACT_PARAM(FRM_PHASE(frame_), (p_##name##_))  // a TYPESET!
+
+#define PARAM_SYMBOL(name) \
+    KEY_SYMBOL(ACT_KEY(FRM_PHASE(frame_), (p_##name##_)))
 
 #define REF(name) \
     NULLIFY_NULLED(ARG(name))
