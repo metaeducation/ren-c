@@ -339,13 +339,15 @@ main-startup: func [
     ; It's not foolproof, so it might come back null.  The console code can
     ; then decide if it wants to fall back on argv[0]
     ;
-    system.options.boot: if defined? 'get-current-exec [
-        switch type of get-current-exec [
+    if defined? 'get-current-exec [
+        switch type of system.options.boot: get-current-exec [
             file! []  ; found it
             null []  ; also okay (not foolproof!)
             fail
         ]
-    ] else [null]
+    ] else [
+        system.options.boot: null
+    ]
 
     === HELPER FUNCTIONS ===
 
