@@ -532,7 +532,7 @@ DECLARE_NATIVE(unwind)
 //
 //      return: []  ; !!! notation for "divergent?"
 //      ^value "If no argument is given, result will act like RETURN VOID"
-//          [<end> <opt> <void> any-value!]
+//          [<end> <opt> <void> <fail> any-value!]
 //  ]
 //
 DECLARE_NATIVE(definitional_return)

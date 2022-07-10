@@ -620,8 +620,11 @@ Bounce Action_Executor(Frame(*) f)
             Flags flags =
                 EVAL_EXECUTOR_FLAG_SINGLE_STEP
                 | EVAL_EXECUTOR_FLAG_FULFILLING_ARG;
-            if (pclass == PARAM_CLASS_META)
-                flags |= FRAME_FLAG_META_RESULT | FRAME_FLAG_FAILURE_RESULT_OK;
+            if (pclass == PARAM_CLASS_META) {
+                flags |= FRAME_FLAG_META_RESULT;
+                if (GET_PARAM_FLAG(PARAM, WANT_FAILURES))
+                    flags |= FRAME_FLAG_FAILURE_RESULT_OK;
+            }
 
             if (Did_Init_Inert_Optimize_Complete(ARG, f->feed, &flags))
                 break;  // no frame needed

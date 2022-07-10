@@ -316,7 +316,7 @@ DECLARE_NATIVE(meta)
 //  {Behavior of ^^ symbol, gives ~void~ BAD-WORD! vs. passing through voids}
 //
 //      return: [<opt> quoted! bad-word! the-word! error!]
-//      ^optional [<opt> <void> any-value!]
+//      ^optional [<opt> <void> <fail> any-value!]
 //  ]
 //
 DECLARE_NATIVE(meta_p)

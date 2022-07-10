@@ -197,6 +197,9 @@ bool Add_Typeset_Bits_Core(
             else if (0 == CT_String(item, Root_Void_Tag, strict)) {
                 SET_PARAM_FLAG(typeset, VANISHABLE);
             }
+            else if (0 == CT_String(item, Root_Fail_Tag, strict)) {
+                SET_PARAM_FLAG(typeset, WANT_FAILURES);
+            }
             else if (0 == CT_String(item, Root_Skip_Tag, strict)) {
                 if (VAL_PARAM_CLASS(typeset) != PARAM_CLASS_HARD)
                     fail ("Only hard-quoted parameters are <skip>-able");

@@ -137,6 +137,8 @@ PVAR REBVAL *Root_Local_Tag; // marks beginning of a list of "pure locals"
 PVAR REBVAL *Root_Skip_Tag; // marks a hard quote as "skippable" if wrong type
 PVAR REBVAL *Root_Const_Tag; // pass a CONST version of the input argument
 PVAR REBVAL *Root_Void_Tag;  // tolerance for void returns or passing void args
+PVAR REBVAL *Root_Fail_Tag;  // meta parameters that want failures
+
 
 PVAR REBVAL *Root_Unspecialized_Tag;  // unique unspecialized slot identity
 

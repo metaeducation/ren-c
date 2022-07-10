@@ -103,7 +103,7 @@ DECLARE_NATIVE(trap)
 //      return: "Non-failure input, or product of processing failure"
 //          [<opt> any-value!]
 //      ^optional "<deferred argument> Run branch if this is definitional fail"
-//          [<opt> <void> any-value!]
+//          [<opt> <void> <fail> any-value!]
 //      :branch "If arity-1 ACTION!, receives value that triggered branch"
 //          [any-branch!]
 //  ]
