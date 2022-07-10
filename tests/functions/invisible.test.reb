@@ -226,8 +226,8 @@
     ; quotes when there is nothing to their right means you now get errors.
     ; It's not clear what the best behavior is, so punting for now.
     ;
-    ('literal-left-path = (trap [<bug> 'left-soft = do [|| left-soft]]).id)
-    ('literal-left-path = (trap [<bug> 'left-soft* = do [|| left-soft*]]).id)
+    ('literal-left-tuple = (trap [<bug> 'left-soft = do [|| left-soft]]).id)
+    ('literal-left-tuple = (trap [<bug> 'left-soft* = do [|| left-soft*]]).id)
     (null? do [left-soft*])
 
     ('|| = do [right-hard ||])
@@ -236,8 +236,8 @@
 
     ; !!! See notes above.
     ;
-    ('literal-left-path = (trap [<bug> 'left-hard = do [|| left-hard]]).id)
-    ('literal-left-path = (trap [<bug> 'left-hard* = do [|| left-hard*]]).id)
+    ('literal-left-tuple = (trap [<bug> 'left-hard = do [|| left-hard]]).id)
+    ('literal-left-tuple = (trap [<bug> 'left-hard* = do [|| left-hard*]]).id)
     (null? do [left-hard*])
 ]
 
@@ -304,8 +304,8 @@
     ; quotes when there is nothing to their right means you now get errors.
     ; It's not clear what the best behavior is, so punting for now.
     ;
-    ('literal-left-path = (trap [<bug> 'left-soft = do [|| left-soft]]).id)
-    ('literal-left-path = (trap [<bug> 'left-soft* = do [|| left-soft*]]).id)
+    ('literal-left-tuple = (trap [<bug> 'left-soft = do [|| left-soft]]).id)
+    ('literal-left-tuple = (trap [<bug> 'left-soft* = do [|| left-soft*]]).id)
     (null? do [left-soft*])
 
     ('|| = do [right-hard ||])
@@ -314,8 +314,8 @@
 
     ; !!! See notes above.
     ;
-    ('literal-left-path = (trap [<bug> 'left-hard = do [|| left-hard]]).id)
-    ('literal-left-path = (trap [<bug> 'left-hard* = do [|| left-hard*]]).id)
+    ('literal-left-tuple = (trap [<bug> 'left-hard = do [|| left-hard]]).id)
+    ('literal-left-tuple = (trap [<bug> 'left-hard* = do [|| left-hard*]]).id)
     (null? do [left-hard*])
 ]
 

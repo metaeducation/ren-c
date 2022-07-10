@@ -395,8 +395,8 @@ Bounce Action_Executor(Frame(*) f)
                 // remembered what happened we can give an informative
                 // error message vs. a perplexing one.
                 //
-                if (Get_Executor_Flag(ACTION, f, DIDNT_LEFT_QUOTE_PATH))
-                    fail (Error_Literal_Left_Path_Raw());
+                if (Get_Executor_Flag(ACTION, f, DIDNT_LEFT_QUOTE_TUPLE))
+                    fail (Error_Literal_Left_Tuple_Raw());
 
                 // Seeing an END in the output slot could mean that there
                 // was really "nothing" to the left, or it could be a
@@ -1048,8 +1048,8 @@ Bounce Action_Executor(Frame(*) f)
     f->u.action.dispatcher_base = TOP_INDEX;
 
     if (Get_Feed_Flag(f->feed, NEXT_ARG_FROM_OUT)) {
-        if (Get_Executor_Flag(ACTION, f, DIDNT_LEFT_QUOTE_PATH))  // see notes
-            fail (Error_Literal_Left_Path_Raw());
+        if (Get_Executor_Flag(ACTION, f, DIDNT_LEFT_QUOTE_TUPLE))  // see notes
+            fail (Error_Literal_Left_Tuple_Raw());
     }
 
     if (Get_Feed_Flag(f->feed, NEXT_ARG_FROM_OUT)) {  // can happen, see [2]
@@ -1220,7 +1220,7 @@ Bounce Action_Executor(Frame(*) f)
     if (Get_Feed_Flag(f->feed, NEXT_ARG_FROM_OUT))
         fail ("Left lookback toward thing that took no args, look at later");
 
-    Clear_Executor_Flag(ACTION, f, DIDNT_LEFT_QUOTE_PATH);  // for why, see [2]
+    Clear_Executor_Flag(ACTION, f, DIDNT_LEFT_QUOTE_TUPLE);  // for why, see [2]
 
     Drop_Action(f);  // must fail before Drop_Action()
 

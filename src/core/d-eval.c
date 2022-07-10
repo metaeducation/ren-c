@@ -195,7 +195,7 @@ void Evaluator_Expression_Checks_Debug(Frame(*) f)
 {
     assert(f == TOP_FRAME); // should be topmost frame, still
 
-    assert(Not_Executor_Flag(EVAL, f, DIDNT_LEFT_QUOTE_PATH));
+    assert(Not_Executor_Flag(EVAL, f, DIDNT_LEFT_QUOTE_TUPLE));
     if (Not_Executor_Flag(EVAL, f, FULFILLING_ARG))
         assert(Not_Feed_Flag(f->feed, NO_LOOKAHEAD));
     assert(Not_Feed_Flag(f->feed, DEFERRING_ENFIX));

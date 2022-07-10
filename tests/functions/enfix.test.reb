@@ -128,10 +128,10 @@
         true
     )
 
-    ((trap [o.i left-the]).id = 'literal-left-path)
+    ((trap [o.i left-the]).id = 'literal-left-tuple)
     (o.i ->- left-the = 'o.i)
 
-    ((trap [o.f left-the]).id = 'literal-left-path)
+    ((trap [o.f left-the]).id = 'literal-left-tuple)
     (o.f ->- left-the = 'o.f)
 ]
 

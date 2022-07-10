@@ -109,8 +109,8 @@ STATIC_ASSERT(
 );
 
 STATIC_ASSERT(
-    EVAL_EXECUTOR_FLAG_DIDNT_LEFT_QUOTE_PATH
-    == ACTION_EXECUTOR_FLAG_DIDNT_LEFT_QUOTE_PATH
+    EVAL_EXECUTOR_FLAG_DIDNT_LEFT_QUOTE_TUPLE
+    == ACTION_EXECUTOR_FLAG_DIDNT_LEFT_QUOTE_TUPLE
 );
 
 #define Make_Action_Subframe(parent) \
@@ -118,7 +118,7 @@ STATIC_ASSERT(
         FRAME_FLAG_MAYBE_STALE | FRAME_FLAG_FAILURE_RESULT_OK \
         | ((parent)->flags.bits \
             & (EVAL_EXECUTOR_FLAG_FULFILLING_ARG \
-                | EVAL_EXECUTOR_FLAG_DIDNT_LEFT_QUOTE_PATH)))
+                | EVAL_EXECUTOR_FLAG_DIDNT_LEFT_QUOTE_TUPLE)))
 
 
 #if DEBUG_EXPIRED_LOOKBACK
@@ -450,7 +450,7 @@ Bounce Evaluator_Executor(Frame(*) f)
         Is_End(f_next)  // v-- out is what used to be on left
         and (
             VAL_TYPE_UNCHECKED(OUT) == REB_WORD
-            or VAL_TYPE_UNCHECKED(OUT) == REB_PATH
+            or VAL_TYPE_UNCHECKED(OUT) == REB_TUPLE
         )
     ){
         // We make a special exemption for left-stealing arguments, when
@@ -471,7 +471,7 @@ Bounce Evaluator_Executor(Frame(*) f)
         f_current = &f->feed->lookback;
         f_current_gotten = nullptr;
 
-        Set_Executor_Flag(EVAL, f, DIDNT_LEFT_QUOTE_PATH);  // better error msg
+        Set_Executor_Flag(EVAL, f, DIDNT_LEFT_QUOTE_TUPLE);  // better error msg
         Set_Feed_Flag(f->feed, NEXT_ARG_FROM_OUT);  // literal right op is arg
 
         goto give_up_backward_quote_priority;  // run PATH!/WORD! normal
@@ -1793,8 +1793,8 @@ Bounce Evaluator_Executor(Frame(*) f)
     // retriggers and lets x run.
 
     if (Get_Feed_Flag(f->feed, NEXT_ARG_FROM_OUT)) {
-        if (Get_Executor_Flag(EVAL, f, DIDNT_LEFT_QUOTE_PATH))
-            fail (Error_Literal_Left_Path_Raw());
+        if (Get_Executor_Flag(EVAL, f, DIDNT_LEFT_QUOTE_TUPLE))
+            fail (Error_Literal_Left_Tuple_Raw());
 
         assert(!"Unexpected lack of use of NEXT_ARG_FROM_OUT");
     }
@@ -1869,9 +1869,9 @@ Bounce Evaluator_Executor(Frame(*) f)
         // the left quoting function might be okay with seeing nothing on the
         // left.  Start a new expression and let it error if that's not ok.
         //
-        assert(Not_Executor_Flag(EVAL, f, DIDNT_LEFT_QUOTE_PATH));
-        if (Get_Executor_Flag(EVAL, f, DIDNT_LEFT_QUOTE_PATH))
-            fail (Error_Literal_Left_Path_Raw());
+        assert(Not_Executor_Flag(EVAL, f, DIDNT_LEFT_QUOTE_TUPLE));
+        if (Get_Executor_Flag(EVAL, f, DIDNT_LEFT_QUOTE_TUPLE))
+            fail (Error_Literal_Left_Tuple_Raw());
 
         const REBPAR *first = First_Unspecialized_Param(nullptr, enfixed);
         if (VAL_PARAM_CLASS(first) == PARAM_CLASS_SOFT) {
@@ -2000,7 +2000,7 @@ Bounce Evaluator_Executor(Frame(*) f)
     //     o: make object! [f: does [1]]
     //     o.f left-the  ; want error suggesting >- here, need flag for that
     //
-    Clear_Executor_Flag(EVAL, f, DIDNT_LEFT_QUOTE_PATH);
+    Clear_Executor_Flag(EVAL, f, DIDNT_LEFT_QUOTE_TUPLE);
     assert(Not_Feed_Flag(f->feed, NEXT_ARG_FROM_OUT));  // must be consumed
 
   #if !defined(NDEBUG)
