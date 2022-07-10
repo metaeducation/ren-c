@@ -34,7 +34,8 @@ extern const Byte Lex_Map[256];  // declared in %l-scan.c
 // be because of the Token_Names[] array.
 //
 enum Reb_Token {
-    TOKEN_END = 0,
+    TOKEN_0 = 0,
+    TOKEN_END,
     TOKEN_NEWLINE,
     TOKEN_BLANK,
     TOKEN_BAD_WORD,

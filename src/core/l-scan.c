@@ -898,7 +898,7 @@ static LEXFLAGS Prescan_Token(SCAN_STATE *ss)
 
 
 //
-//  Locate_Token_May_Push_Mold: C
+//  Maybe_Locate_Token_May_Push_Mold: C
 //
 // Find the beginning and end character pointers for the next token in the
 // scanner state.  If the scanner is being fed variadically by a list of UTF-8
@@ -933,7 +933,7 @@ static LEXFLAGS Prescan_Token(SCAN_STATE *ss)
 //
 // !!! This is a somewhat weird separation of responsibilities, that seems to
 // arise from a desire to make "Scan_XXX" functions independent of the
-// "Locate_Token_May_Push_Mold" function.  But if the work of locating the
+// "Maybe_Locate_Token_May_Push_Mold" function.  But if work on locating the
 // value means you have to basically do what you'd do to read it into a REBVAL
 // anyway, why split it?  This is especially true now that the variadic
 // splicing pushes values directly from this routine.
@@ -976,7 +976,8 @@ static LEXFLAGS Prescan_Token(SCAN_STATE *ss)
 // encoded source is because all the characters that dictate the tokenization
 // are currently in the ASCII range (< 128).
 //
-static enum Reb_Token Locate_Token_May_Push_Mold(
+static enum Reb_Token Maybe_Locate_Token_May_Push_Mold(
+    Context(*)* error,
     REB_MOLD *mo,
     Frame(*) f
 ){
@@ -1169,9 +1170,9 @@ static enum Reb_Token Locate_Token_May_Push_Mold(
             else
                 assert(strmode == STRMODE_NO_CR);
 
-            Context(*) error = Error_Illegal_Cr(cp, ss->begin);
-            Update_Error_Near_For_Line(error, ss, ss->line, ss->line_head);
-            fail (error); }
+            *error = Error_Illegal_Cr(cp, ss->begin);
+            Update_Error_Near_For_Line(*error, ss, ss->line, ss->line_head);
+            return TOKEN_0; }
 
           case LEX_DELIMIT_LINEFEED:
           delimit_line_feed:
@@ -1208,14 +1209,19 @@ static enum Reb_Token Locate_Token_May_Push_Mold(
             while (not ANY_CR_LF_END(*cp))
                 ++cp;
             ss->end = cp;
-            if (ss->begin[0] == '"')
-                fail (Error_Missing(level, '"'));
-            if (ss->begin[0] == '{')
-                fail (Error_Missing(level, '}'));
+            if (ss->begin[0] == '"') {
+                *error = Error_Missing(level, '"');
+                return TOKEN_0;
+            }
+            if (ss->begin[0] == '{') {
+                *error = Error_Missing(level, '}');
+                return TOKEN_0;
+            }
             panic ("Invalid string start delimiter");
 
           case LEX_DELIMIT_RIGHT_BRACE:
-            fail (Error_Extra(ss, '}'));
+            *error = Error_Extra(ss, '}');
+            return TOKEN_0;
 
           case LEX_DELIMIT_SLASH:  // a /REFINEMENT-style PATH!
             assert(*cp == '/');
@@ -1245,12 +1251,14 @@ static enum Reb_Token Locate_Token_May_Push_Mold(
             ss->end = cp;
             if (*cp == ',' or not IS_LEX_DELIMIT(*cp)) {
                 ++ss->end;  // don't allow `,,` or `a,b` etc.
-                fail (Error_Syntax(ss, TOKEN_COMMA));
+                *error = Error_Syntax(ss, TOKEN_COMMA);
+                return TOKEN_0;
             }
             return TOKEN_COMMA;
 
           case LEX_DELIMIT_UTF8_ERROR:
-            fail (Error_Syntax(ss, TOKEN_WORD));
+            *error = Error_Syntax(ss, TOKEN_WORD);
+            return TOKEN_0;
 
           default:
             panic ("Invalid LEX_DELIMIT class");
@@ -1280,13 +1288,15 @@ static enum Reb_Token Locate_Token_May_Push_Mold(
                     continue;
 
                 ss->end = cp;
-                fail (Error_Syntax(ss, TOKEN_WORD));
+                *error = Error_Syntax(ss, TOKEN_WORD);
+                return TOKEN_0;
             }
             ss->end = cp + 1;
             if (IS_LEX_DELIMIT(cp[1]) or cp[1] == ':')
                 return TOKEN_ESCAPED_WORD;
 
-            fail (Error_Syntax(ss, TOKEN_WORD));
+            *error = Error_Syntax(ss, TOKEN_WORD);
+            return TOKEN_0;
         }
 
         if (GET_LEX_VALUE(*cp) == LEX_SPECIAL_SEMICOLON) {  // begin comment
@@ -1306,8 +1316,10 @@ static enum Reb_Token Locate_Token_May_Push_Mold(
             and *cp != '\''  // want '@foo to be a ... ?
             and *cp != '#'  // want #@ to be an ISSUE! (charlike)
         ){
-            if (*cp == '@')  // consider `@a@b`, `@@`, etc. ambiguous
-                fail (Error_Syntax(ss, TOKEN_EMAIL));
+            if (*cp == '@') {  // consider `@a@b`, `@@`, etc. ambiguous
+                *error = Error_Syntax(ss, TOKEN_EMAIL);
+                return TOKEN_0;
+            }
 
             token = TOKEN_EMAIL;
             goto prescan_subsume_all_dots;
@@ -1324,7 +1336,8 @@ static enum Reb_Token Locate_Token_May_Push_Mold(
             if (cp[1] == '%') {  // %% is WORD! exception
                 if (not IS_LEX_DELIMIT(cp[2]) and cp[2] != ':') {
                     ss->end = cp + 3;
-                    fail (Error_Syntax(ss, TOKEN_FILE));
+                    *error = Error_Syntax(ss, TOKEN_FILE);
+                    return TOKEN_0;
                 }
                 ss->end = cp + 2;
                 return TOKEN_WORD;
@@ -1343,12 +1356,15 @@ static enum Reb_Token Locate_Token_May_Push_Mold(
                 // a single character.
                 //
                 ss->end = cp;
-                fail (Error_Syntax(ss, token));
+                *error = Error_Syntax(ss, token);
+                return TOKEN_0;
             }
             if (*cp == '"') {
                 cp = Scan_Quote_Push_Mold(mo, cp, ss);
-                if (not cp)
-                    fail (Error_Syntax(ss, token));
+                if (not cp) {
+                    *error = Error_Syntax(ss, token);
+                    return TOKEN_0;
+                }
                 ss->end = cp;
                 return token;
             }
@@ -1379,7 +1395,8 @@ static enum Reb_Token Locate_Token_May_Push_Mold(
             return TOKEN_APOSTROPHE;
 
           case LEX_SPECIAL_GREATER:  // arrow words like `>` handled above
-            fail (Error_Syntax(ss, TOKEN_TAG));
+            *error = Error_Syntax(ss, TOKEN_TAG);
+            return TOKEN_0;
 
           case LEX_SPECIAL_LESSER:
             cp = Skip_Tag(cp);
@@ -1390,7 +1407,8 @@ static enum Reb_Token Locate_Token_May_Push_Mold(
                     or IS_LEX_ANY_SPACE(*cp)  // `<abc>def` not legal
                 )
             ){
-                fail (Error_Syntax(ss, TOKEN_TAG));
+                *error = Error_Syntax(ss, TOKEN_TAG);
+                return TOKEN_0;
             }
             ss->end = cp;
             return TOKEN_TAG;
@@ -1428,7 +1446,8 @@ static enum Reb_Token Locate_Token_May_Push_Mold(
                     token = TOKEN_WORD;
                     goto prescan_word;
                 }
-                fail (Error_Syntax(ss, TOKEN_WORD));
+                *error = Error_Syntax(ss, TOKEN_WORD);
+                return TOKEN_0;
             }
             token = TOKEN_WORD;
             goto prescan_word;
@@ -1468,7 +1487,8 @@ static enum Reb_Token Locate_Token_May_Push_Mold(
                 while (not ANY_CR_LF_END(*cp))
                     ++cp;
                 ss->end = cp;
-                fail (Error_Syntax(ss, TOKEN_CHAR));
+                *error = Error_Syntax(ss, TOKEN_CHAR);
+                return TOKEN_0;
             }
             if (*cp == '{') {  // BINARY #{12343132023902902302938290382}
                 ss->end = ss->begin;  // save start
@@ -1491,7 +1511,8 @@ static enum Reb_Token Locate_Token_May_Push_Mold(
                 // have bad characters in it, but that would be detected by
                 // the caller, so we mention the missing `}` first.)
                 //
-                fail (Error_Missing(level, '}'));
+                *error = Error_Missing(level, '}');
+                return TOKEN_0;
             }
             if (cp - 1 == ss->begin) {
                 --cp;
@@ -1499,7 +1520,8 @@ static enum Reb_Token Locate_Token_May_Push_Mold(
                 goto issue_or_file_token;  // same policies on including `/`
             }
 
-            fail (Error_Syntax(ss, TOKEN_INTEGER));
+            *error = Error_Syntax(ss, TOKEN_INTEGER);
+            return TOKEN_0;
 
           case LEX_SPECIAL_DOLLAR:
             if (
@@ -1527,23 +1549,27 @@ static enum Reb_Token Locate_Token_May_Push_Mold(
                 while (not IS_LEX_DELIMIT(*cp))
                     ++cp;
                 ss->end = cp;
-                fail (Error_Syntax(ss, TOKEN_BAD_WORD));
+                *error = Error_Syntax(ss, TOKEN_BAD_WORD);
+                return TOKEN_0;
             }
             if (*cp == ':') {  // !!! Error here on `~:`, or would it anyway?
                 ss->end = cp;
-                fail (Error_Syntax(ss, TOKEN_BAD_WORD));
+                *error = Error_Syntax(ss, TOKEN_BAD_WORD);
+                return TOKEN_0;
             }
             for (; *cp != '~'; ++cp) {
                 if (IS_LEX_DELIMIT(*cp)) {
                     ss->end = cp;
-                    fail (Error_Syntax(ss, TOKEN_BAD_WORD));  // `[return ~a]`
+                    *error = Error_Syntax(ss, TOKEN_BAD_WORD);  // `[return ~a]`
+                    return TOKEN_0;
                 }
             }
             ss->end = cp + 1;
             return TOKEN_BAD_WORD; }
 
           default:
-            fail (Error_Syntax(ss, TOKEN_WORD));
+            *error = Error_Syntax(ss, TOKEN_WORD);
+            return TOKEN_0;
         }
 
       case LEX_CLASS_WORD:
@@ -1590,7 +1616,8 @@ static enum Reb_Token Locate_Token_May_Push_Mold(
                     goto pound;  // base-2 binary, "very rare"
                 }
             }
-            fail (Error_Syntax(ss, TOKEN_INTEGER));
+            *error = Error_Syntax(ss, TOKEN_INTEGER);
+            return TOKEN_0;
         }
 
         if (HAS_LEX_FLAG(flags, LEX_SPECIAL_COLON)) {
@@ -1609,7 +1636,8 @@ static enum Reb_Token Locate_Token_May_Push_Mold(
                     )
                 )
             ){
-                fail (Error_Syntax(ss, TOKEN_INTEGER));
+                *error = Error_Syntax(ss, TOKEN_INTEGER);
+                return TOKEN_0;
             }
             return TOKEN_INTEGER;
         }
@@ -1640,7 +1668,8 @@ static enum Reb_Token Locate_Token_May_Push_Mold(
         }
         if (HAS_LEX_FLAG(flags, LEX_SPECIAL_APOSTROPHE))  // 1'200
             return TOKEN_INTEGER;
-        fail (Error_Syntax(ss, TOKEN_INTEGER));
+        *error = Error_Syntax(ss, TOKEN_INTEGER);
+        return TOKEN_0;
 
       default:
         break;  // panic after switch, so no cases fall through accidentally
@@ -1661,7 +1690,8 @@ static enum Reb_Token Locate_Token_May_Push_Mold(
                 flags,
                 ~LEX_FLAG(LEX_SPECIAL_COLON) & LEX_WORD_FLAGS
             )){
-                fail (Error_Syntax(ss, TOKEN_WORD));
+                *error = Error_Syntax(ss, TOKEN_WORD);
+                return TOKEN_0;
             }
             --ss->end;  // don't actually include the colon
             return TOKEN_WORD;
@@ -1683,14 +1713,16 @@ static enum Reb_Token Locate_Token_May_Push_Mold(
         token = TOKEN_MONEY;
         goto prescan_subsume_up_to_one_dot;
     }
-    if (HAS_LEX_FLAGS(flags, LEX_WORD_FLAGS))
-        fail (Error_Syntax(ss, TOKEN_WORD));  // has non-word chars (eg % \ )
-
+    if (HAS_LEX_FLAGS(flags, LEX_WORD_FLAGS)) {
+        *error = Error_Syntax(ss, TOKEN_WORD);  // has non-word chars (eg % \ )
+        return TOKEN_0;
+    }
     if (
         HAS_LEX_FLAG(flags, LEX_SPECIAL_LESSER)
         or HAS_LEX_FLAG(flags, LEX_SPECIAL_GREATER)
     ){
-        fail (Error_Syntax(ss, token));  // "arrow words" handled at beginning
+        *error = Error_Syntax(ss, token);  // arrow words handled at beginning
+        return TOKEN_0;
     }
 
     return token;
@@ -1842,12 +1874,18 @@ Bounce Scanner_Executor(Frame(*) f) {
   initial_entry: {  //////////////////////////////////////////////////////////
 
     level->quotes_pending = 0;
-    level->prefix_pending = TOKEN_END;
+    level->prefix_pending = TOKEN_0;
 
 } loop: {  //////////////////////////////////////////////////////////////////
 
     Drop_Mold_If_Pushed(mo);
-    level->token = Locate_Token_May_Push_Mold(mo, f);
+    Context(*) locate_error;
+    level->token = Maybe_Locate_Token_May_Push_Mold(&locate_error, mo, f);
+
+    if (level->token == TOKEN_0) {  // error signal
+        assert(CTX_TYPE(locate_error) == REB_ERROR);
+        return FAIL(locate_error);
+    }
 
     if (level->token == TOKEN_END) {  // reached '\0'
         //
@@ -1963,7 +2001,7 @@ Bounce Scanner_Executor(Frame(*) f) {
         goto token_prefixable_sigil;
 
       token_prefixable_sigil:
-        if (level->prefix_pending != TOKEN_END)
+        if (level->prefix_pending != TOKEN_0)
             return FAIL(Error_Syntax(ss, level->token));  // no "GET-GET-WORD!"
 
         // !!! This is a hack to support plain colon.  It should support more
@@ -1999,7 +2037,7 @@ Bounce Scanner_Executor(Frame(*) f) {
       case TOKEN_APOSTROPHE: {
         assert(*bp == '\'');  // should be `len` sequential apostrophes
 
-        if (level->prefix_pending != TOKEN_END)  // can't do @'foo: or :'foo
+        if (level->prefix_pending != TOKEN_0)  // can't do @'foo: or :'foo
             return FAIL(Error_Syntax(ss, level->token));
 
         if (IS_LEX_ANY_SPACE(*ep) or *ep == ']' or *ep == ')' or *ep == ';') {
@@ -2773,7 +2811,7 @@ Bounce Scanner_Executor(Frame(*) f) {
 
         ss->begin = ++ss->end;  // !!! ?
     }
-    else if (level->prefix_pending != TOKEN_END) {
+    else if (level->prefix_pending != TOKEN_0) {
         enum Reb_Kind kind = VAL_TYPE(TOP);
         if (not ANY_PLAIN_KIND(kind))
             return FAIL(Error_Syntax(ss, level->token));
@@ -2795,7 +2833,7 @@ Bounce Scanner_Executor(Frame(*) f) {
             level->token = level->prefix_pending;
             return FAIL(Error_Syntax(ss, level->token));
         }
-        level->prefix_pending = TOKEN_END;
+        level->prefix_pending = TOKEN_0;
     }
 
     if (level->quotes_pending != 0) {
@@ -2829,7 +2867,7 @@ Bounce Scanner_Executor(Frame(*) f) {
     Drop_Mold_If_Pushed(mo);
 
     assert(level->quotes_pending == 0);
-    assert(level->prefix_pending == TOKEN_END);
+    assert(level->prefix_pending == TOKEN_0);
 
     // Note: ss->newline_pending may be true; used for ARRAY_NEWLINE_AT_TAIL
 
@@ -3028,7 +3066,7 @@ DECLARE_NATIVE(transcode)
     else if (IS_INTEGER(line_number)) {
         start_line = VAL_INT32(line_number);
         if (start_line <= 0)
-            fail (PAR(line));
+            fail (PAR(line));  // definitional?
     }
     else
         fail ("/LINE must be an INTEGER! or an ANY-WORD! integer variable");
@@ -3185,7 +3223,8 @@ const Byte* Scan_Any_Word(
 
     DECLARE_MOLD (mo);
 
-    enum Reb_Token token = Locate_Token_May_Push_Mold(mo, f);
+    Context(*) error;
+    enum Reb_Token token = Maybe_Locate_Token_May_Push_Mold(&error, mo, f);
     if (token != TOKEN_WORD)
         return nullptr;
 
