@@ -828,7 +828,7 @@ ext-console-impl: func [
         ; Note LOAD now makes BLOCK! even for a single item,
         ; e.g. `load "word"` => `[word]`
         ;
-        code: load delimit newline result
+        code: transcode/where (delimit newline result) sys.contexts.user
         assert [block? code]
 
     ] then error -> [
