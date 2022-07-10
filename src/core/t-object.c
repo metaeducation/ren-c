@@ -1311,6 +1311,9 @@ REBTYPE(Frame)
             );
         }
 
+        if (prop == SYM_WORDS)
+            return T_Context(frame_, verb);
+
         Frame(*) f = CTX_FRAME_MAY_FAIL(c);
 
         switch (prop) {
