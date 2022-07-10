@@ -789,14 +789,15 @@ inline static bool Pushed_Continuation(
                 break;
 
             if (Is_Void(with))
-              { Init_Void_Isotope(arg); break; }
+              { Init_Void_Isotope(arg); break; }  // typecheck handles
 
-            Copy_Cell(arg, Pointer_To_Decayed(with));
+            if (VAL_PARAM_CLASS(param) == PARAM_CLASS_META) {
+                Copy_Cell(arg, with);  // do not decay, see [4]
+                Meta_Quotify(arg);
+                break;
+            }
 
-            if (VAL_PARAM_CLASS(param) == PARAM_CLASS_META)
-              { Meta_Quotify(arg); break; }
-
-            Decay_If_Isotope(arg);  // decay when normal parameter, see [4]
+            Copy_Cell(arg, Pointer_To_Decayed(with));  // normal decay, see [4]
 
             if (Is_Isotope(arg))
                 fail ("Can't pass isotope to non-META parameter");
