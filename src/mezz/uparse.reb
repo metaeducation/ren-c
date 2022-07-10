@@ -1140,6 +1140,19 @@ default-combinators: make map! reduce [
         ]
     ]
 
+    set-group! combinator [
+        return: "The set value"
+            [<opt> any-value!]
+        value [set-group!]
+        parser "Failed parser will means target will be unchanged"
+            [action!]
+        <local> result'
+    ][
+        let var: eval value
+        ([^result' remainder]: parser input) else [return null]
+        return set var unmeta result'
+    ]
+
     === TEXT! COMBINATOR ===
 
     ; For now we just make text act as FIND/MATCH/TAIL, though this needs to be

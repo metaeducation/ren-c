@@ -301,20 +301,6 @@
     did parse3 ["a" "aa" "aaa"] [some [into [:(count: count + 1) "a"]]]
 )
 
-; SET-GROUP!
-; What these might do in PARSE could be more ambitious, but for starters they
-; provide a level of indirection in SET.
-
-(
-    m: ~
-    word: 'm
-    did all [
-        did parse3 [1020] [(word): integer!]
-        word = 'm
-        m = 1020
-    ]
-)
-
 ; LOGIC! BEHAVIOR
 ; A logic true acts as a no-op, while a logic false causes matches to fail
 

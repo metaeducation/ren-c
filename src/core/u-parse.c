@@ -1902,7 +1902,7 @@ DECLARE_NATIVE(subparse)
         Get_Var_May_Fail(SPARE, rule, P_RULE_SPECIFIER, false);
         rule = Copy_Cell(P_SAVE, SPARE);
     }
-    else if (IS_SET_TUPLE(rule) or IS_SET_GROUP(rule)) {
+    else if (IS_SET_TUPLE(rule)) {
       handle_set:
         FETCH_NEXT_RULE_KEEP_LAST(&set_or_copy_word, f);
 
@@ -2437,30 +2437,6 @@ DECLARE_NATIVE(subparse)
             else if (P_FLAGS & PF_SET) {
                 if (count > 1)
                     fail (Error_Parse_Multiple_Set_Raw());
-
-                // We waited to eval the SET-GROUP! until we knew we had
-                // something we wanted to set.  Do so, and then go through
-                // a normal setting procedure.
-                //
-                if (IS_SET_GROUP(set_or_copy_word)) {
-                    if (Do_Any_Array_At_Throws(
-                        SPARE,
-                        set_or_copy_word,
-                        P_RULE_SPECIFIER
-                    )){
-                        return THROWN;
-                    }
-
-                    // !!! What SET-GROUP! can do in PARSE is more
-                    // ambitious than just an indirection for naming
-                    // variables or paths...but for starters it does
-                    // that just to show where more work could be done.
-
-                    if (not (IS_WORD(SPARE) or IS_SET_WORD(SPARE)))
-                        fail (Error_Parse_Variable_Raw(SPARE));
-
-                    set_or_copy_word = SPARE;
-                }
 
                 if (count == 0) {
                     //

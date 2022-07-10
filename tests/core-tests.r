@@ -247,6 +247,7 @@
 %parse/parse-return.test.reb
 %parse/parse-seek.test.reb
 %parse/parse-set-word.test.reb
+%parse/parse-set-group.test.reb
 %parse/parse-some.test.reb
 %parse/parse-stop.test.reb
 %parse/parse-tag-any.test.reb
