@@ -719,18 +719,21 @@ find-last: redescribe [
     ]
 )
 
-attempt: lambda [
+attempt: func [
     {Evaluate a block and returns result or NULL if an expression fails}
 
+    return: "Returns NULL on failure only, VOID evaluations become unset"
+        [<opt> any-value!]
     code [block!]
+    <local> last'
 ][
+    last': the ~
     reduce-each ^result' code [
-        if error? result' [break]  ; BREAK will mean overall result is NULL
-        unmeta result'
+        if error? result' [return null]
+        if @void = result' [continue]
+        last': result'
     ]
-    ; attempt [] is void, and conflates `attempt [] else [...]` with failure
-    ; That's like ANY/ALL, but they say `any [void void]` is void as well
-    ; It would be more coherent if attempt could do cumulative invisibility
+    return heavy unmeta last'
 ]
 
 entrap: func [
