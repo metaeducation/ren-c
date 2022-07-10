@@ -531,7 +531,7 @@ void Set_Location_Of_Error(
 // exactly what is changing.
 //
 Bounce MAKE_Error(
-    REBVAL *out,  // output location **MUST BE GC SAFE**!
+    Frame(*) frame_,
     enum Reb_Kind kind,
     option(const REBVAL*) parent,
     const REBVAL *arg
@@ -569,7 +569,7 @@ Bounce MAKE_Error(
         // Protect the error from GC by putting into out, which must be
         // passed in as a GC-protecting value slot.
         //
-        Init_Error(out, e);
+        Init_Error(OUT, e);
 
         Rebind_Context_Deep(root_error, e, nullptr);  // NULL=>no more binds
 
@@ -600,7 +600,7 @@ Bounce MAKE_Error(
         // Minus the message, this is the default state of root_error.
 
         e = Copy_Context_Shallow_Managed(root_error);
-        Init_Error(out, e);
+        Init_Error(OUT, e);
 
         vars = ERR_VARS(e);
         assert(Is_Nulled(&vars->type));
@@ -609,7 +609,7 @@ Bounce MAKE_Error(
         Init_Text(&vars->message, Copy_String_At(arg));
     }
     else
-        fail (arg);
+        return FAIL(arg);
 
     // Validate the error contents, and reconcile message template and ID
     // information with any data in the object.  Do this for the IS_STRING
@@ -647,7 +647,7 @@ Bounce MAKE_Error(
                 assert(IS_TEXT(message) or IS_BLOCK(message));
 
                 if (not Is_Nulled(&vars->message))
-                    fail (Error_Invalid_Error_Raw(arg));
+                    return FAIL(Error_Invalid_Error_Raw(arg));
 
                 Copy_Cell(&vars->message, message);
             }
@@ -664,7 +664,7 @@ Bounce MAKE_Error(
                 //
                 //     make error! [type: 'script id: 'set-self]
 
-                fail (Error_Invalid_Error_Raw(CTX_ARCHETYPE(e)));
+                return FAIL(Error_Invalid_Error_Raw(CTX_ARCHETYPE(e)));
             }
         }
         else {
@@ -694,8 +694,8 @@ Bounce MAKE_Error(
         }
     }
 
-    assert(IS_ERROR(out));
-    return out;
+    assert(IS_ERROR(OUT));
+    return OUT;
 }
 
 
@@ -705,9 +705,9 @@ Bounce MAKE_Error(
 // !!! Historically this was identical to MAKE ERROR!, but MAKE and TO are
 // being rethought.
 //
-Bounce TO_Error(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
+Bounce TO_Error(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg)
 {
-    return MAKE_Error(out, kind, nullptr, arg);
+    return MAKE_Error(frame_, kind, nullptr, arg);
 }
 
 

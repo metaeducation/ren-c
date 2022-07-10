@@ -45,14 +45,14 @@ REBINT CT_Integer(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
 //  MAKE_Integer: C
 //
 Bounce MAKE_Integer(
-    REBVAL *out,
+    Frame(*) frame_,
     enum Reb_Kind kind,
     option(const REBVAL*) parent,
     const REBVAL *arg
 ){
     assert(kind == REB_INTEGER);
     if (parent)
-        fail (Error_Bad_Make_Parent(kind, unwrap(parent)));
+        return FAIL(Error_Bad_Make_Parent(kind, unwrap(parent)));
 
     if (IS_LOGIC(arg)) {
         //
@@ -65,35 +65,43 @@ Bounce MAKE_Integer(
         // fewer seeming "rules" than TO would.
 
         if (VAL_LOGIC(arg))
-            Init_Integer(out, 1);
+            Init_Integer(OUT, 1);
         else
-            Init_Integer(out, 0);
+            Init_Integer(OUT, 0);
 
         // !!! The same principle could suggest MAKE is not bound by
         // the "reversibility" requirement and hence could interpret
         // binaries unsigned by default.  Before getting things any
         // weirder should probably leave it as is.
     }
-    else
-        Value_To_Int64(out, arg, false);
+    else {
+        Context(*) error = Maybe_Value_To_Int64(OUT, arg, false);
+        if (error)
+            return FAIL(error);
+    }
 
-    return out;
+    return OUT;
 }
 
 
 //
 //  TO_Integer: C
 //
-Bounce TO_Integer(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
+Bounce TO_Integer(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg)
 {
     assert(kind == REB_INTEGER);
     UNUSED(kind);
 
     if (IS_ISSUE(arg))
-        fail ("Use CODEPOINT OF for INTEGER! from single-character ISSUE!");
+        return FAIL(
+            "Use CODEPOINT OF for INTEGER! from single-character ISSUE!"
+        );
 
-    Value_To_Int64(out, arg, false);
-    return out;
+    Context(*) error = Maybe_Value_To_Int64(OUT, arg, false);
+    if (error)
+        return FAIL(error);
+
+    return OUT;
 }
 
 
@@ -139,7 +147,7 @@ void Hex_String_To_Integer(REBVAL *out, const REBVAL *value)
 //
 // If a type is added or removed, update DECLARE_NATIVE(to_integer)'s spec
 //
-void Value_To_Int64(REBVAL *out, const REBVAL *value, bool no_sign)
+Context(*) Maybe_Value_To_Int64(REBVAL *out, const REBVAL *value, bool no_sign)
 {
     // !!! Code extracted from REBTYPE(Integer)'s A_MAKE and A_TO cases
     // Use SWITCH instead of IF chain? (was written w/ANY_STR test)
@@ -150,7 +158,7 @@ void Value_To_Int64(REBVAL *out, const REBVAL *value, bool no_sign)
     }
     if (IS_DECIMAL(value) || IS_PERCENT(value)) {
         if (VAL_DECIMAL(value) < MIN_D64 || VAL_DECIMAL(value) >= MAX_D64)
-            fail (Error_Overflow_Raw());
+            return Error_Overflow_Raw();
 
         Init_Integer(out, cast(REBI64, VAL_DECIMAL(value)));
         goto check_sign;
@@ -176,7 +184,7 @@ void Value_To_Int64(REBVAL *out, const REBVAL *value, bool no_sign)
         const Byte* bp = VAL_BINARY_SIZE_AT(&n, value);
         if (n == 0) {
             Init_Integer(out, 0);
-            return;
+            return nullptr;
         }
         REBVAL *sign = (*bp >= 0x80)
             ? rebValue("'+/-")
@@ -186,7 +194,7 @@ void Value_To_Int64(REBVAL *out, const REBVAL *value, bool no_sign)
 
         Copy_Cell(out, result);
         rebRelease(result);
-        return;
+        return nullptr;
     }
     else if (IS_ISSUE(value) or ANY_STRING(value)) {
         Size size;
@@ -207,13 +215,13 @@ void Value_To_Int64(REBVAL *out, const REBVAL *value, bool no_sign)
                     goto check_sign;
                 }
 
-                fail (Error_Overflow_Raw());
+                return Error_Overflow_Raw();
             }
         }
         if (Scan_Integer(out, bp, size))
             goto check_sign;
 
-        fail (Error_Bad_Make(REB_INTEGER, value));
+        return Error_Bad_Make(REB_INTEGER, value);
     }
     else if (IS_LOGIC(value)) {
         //
@@ -221,18 +229,21 @@ void Value_To_Int64(REBVAL *out, const REBVAL *value, bool no_sign)
         // "falsehood" condition, e.g. `if 0 [print "this prints"]`.  So to
         // say TO LOGIC! 0 is FALSE would be disingenuous.
         //
-        fail (Error_Bad_Make(REB_INTEGER, value));
+        return Error_Bad_Make(REB_INTEGER, value);
     }
     else if (IS_TIME(value)) {
         Init_Integer(out, SECS_FROM_NANO(VAL_NANO(value))); // always unsigned
-        return;
+        return nullptr;
     }
     else
-        fail (Error_Bad_Make(REB_INTEGER, value));
+        return Error_Bad_Make(REB_INTEGER, value);
 
 check_sign:
+
     if (no_sign && VAL_INT64(out) < 0)
-        fail (Error_Positive_Raw());
+        return Error_Positive_Raw();
+
+    return nullptr;
 }
 
 

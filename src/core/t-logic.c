@@ -297,14 +297,14 @@ REBINT CT_Logic(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
 //  MAKE_Logic: C
 //
 Bounce MAKE_Logic(
-    REBVAL *out,
+    Frame(*) frame_,
     enum Reb_Kind kind,
     option(const REBVAL*) parent,
     const REBVAL *arg
 ){
     assert(kind == REB_LOGIC);
     if (parent)
-        fail (Error_Bad_Make_Parent(kind, unwrap(parent)));
+        return FAIL(Error_Bad_Make_Parent(kind, unwrap(parent)));
 
     // As a construction routine, MAKE takes more liberties in the
     // meaning of its parameters, so it lets zero values be false.
@@ -321,17 +321,17 @@ Bounce MAKE_Logic(
         )
         || (IS_MONEY(arg) && deci_is_zero(VAL_MONEY_AMOUNT(arg)))
     ){
-        return Init_False(out);
+        return Init_False(OUT);
     }
 
-    return Init_True(out);
+    return Init_True(OUT);
 }
 
 
 //
 //  TO_Logic: C
 //
-Bounce TO_Logic(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
+Bounce TO_Logic(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg) {
     assert(kind == REB_LOGIC);
     UNUSED(kind);
 
@@ -339,7 +339,7 @@ Bounce TO_Logic(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
     // interpreter canon that all non-none non-logic-false values are
     // considered effectively "truth".
     //
-    return Init_Logic(out, Is_Truthy(arg));
+    return Init_Logic(OUT, Is_Truthy(arg));
 }
 
 

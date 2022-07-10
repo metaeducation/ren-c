@@ -1227,10 +1227,9 @@ void Get_Maybe_Fake_Action_Body(REBVAL *out, const REBVAL *action)
 //
 REBTYPE(Fail)
 {
-    UNUSED(frame_);
     UNUSED(verb);
 
-    fail ("Datatype does not have a dispatcher registered.");
+    return FAIL("Datatype does not have a dispatcher registered.");
 }
 
 

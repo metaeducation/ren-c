@@ -95,7 +95,7 @@ REBINT CT_Action(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
 // version of something that could be written in usermode).
 //
 Bounce MAKE_Action(
-    REBVAL *out,
+    Frame(*) frame_,
     enum Reb_Kind kind,
     option(const REBVAL*) parent,
     const REBVAL *arg
@@ -116,7 +116,7 @@ Bounce MAKE_Action(
         rebRelease(frame_copy);
 
         return Init_Action(
-            out,
+            OUT,
             Make_Action_From_Exemplar(exemplar),
             VAL_FRAME_LABEL(arg),
             VAL_FRAME_BINDING(arg)
@@ -124,9 +124,9 @@ Bounce MAKE_Action(
     }
 
     if (not IS_BLOCK(arg))
-        fail (Error_Bad_Make(REB_ACTION, arg));
+        return FAIL(Error_Bad_Make(REB_ACTION, arg));
 
-    fail ("Ren-C does not support MAKE ACTION! on BLOCK! (see FUNC*/FUNC)");
+    return FAIL("Ren-C does not MAKE ACTION! on BLOCK! (see FUNC*/FUNC)");
 }
 
 
@@ -137,14 +137,12 @@ Bounce MAKE_Action(
 // from a BLOCK!, e.g. `x: does [1 + y]`, so TO ACTION! of a block doesn't
 // need to do that (for instance).
 //
-Bounce TO_Action(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
+Bounce TO_Action(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg)
 {
     assert(kind == REB_ACTION);
     UNUSED(kind);
 
-    UNUSED(out);
-
-    fail (arg);
+    return FAIL(arg);
 }
 
 

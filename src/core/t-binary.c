@@ -124,52 +124,56 @@ static Binary(*) Make_Binary_BE64(const REBVAL *arg)
 // Note also the existence of AS and storing strings as UTF-8 should reduce
 // copying, e.g. `as binary! some-string` will be cheaper than TO or MAKE.
 //
-static Binary(*) MAKE_TO_Binary_Common(const REBVAL *arg)
+static Bounce MAKE_TO_Binary_Common(Frame(*) frame_, const REBVAL *arg)
 {
     switch (VAL_TYPE(arg)) {
     case REB_BINARY: {
         Size size;
         const Byte* data = VAL_BINARY_SIZE_AT(&size, arg);
-        return Copy_Bytes(data, size); }
+        return Init_Binary(OUT, Copy_Bytes(data, size)); }
 
-    case REB_TEXT:
-    case REB_FILE:
-    case REB_EMAIL:
-    case REB_URL:
-    case REB_TAG:
-    case REB_ISSUE: {
+      case REB_TEXT:
+      case REB_FILE:
+      case REB_EMAIL:
+      case REB_URL:
+      case REB_TAG:
+      case REB_ISSUE: {
         Size utf8_size;
         Utf8(const*) utf8 = VAL_UTF8_SIZE_AT(&utf8_size, arg);
 
         Binary(*) bin = Make_Binary(utf8_size);
         memcpy(BIN_HEAD(bin), utf8, utf8_size);
         TERM_BIN_LEN(bin, utf8_size);
-        return bin; }
+        return Init_Binary(OUT, bin); }
 
-    case REB_BLOCK:
+      case REB_BLOCK: {
         Join_Binary_In_Byte_Buf(arg, -1);
-        return BIN(Copy_Series_Core(BYTE_BUF, SERIES_FLAGS_NONE));
+        Binary(*) bin = BIN(Copy_Series_Core(BYTE_BUF, SERIES_FLAGS_NONE));
+        return Init_Binary(OUT, bin); }
 
-    case REB_TUPLE: {
+      case REB_TUPLE: {
         REBLEN len = VAL_SEQUENCE_LEN(arg);
         Binary(*) bin = Make_Binary(len);
         if (Did_Get_Sequence_Bytes(BIN_HEAD(bin), arg, len)) {
             TERM_BIN_LEN(bin, len);
-            return bin;
+            return Init_Binary(OUT, bin);
         }
         fail ("TUPLE! did not consist entirely of INTEGER! values 0-255"); }
 
-    case REB_BITSET:
-        return Copy_Bytes(BIN_HEAD(VAL_BINARY(arg)), VAL_LEN_HEAD(arg));
+      case REB_BITSET:
+        return Init_Binary(
+            OUT,
+            Copy_Bytes(BIN_HEAD(VAL_BINARY(arg)), VAL_LEN_HEAD(arg))
+        );
 
-    case REB_MONEY: {
+      case REB_MONEY: {
         Binary(*) bin = Make_Binary(12);
         deci_to_binary(BIN_HEAD(bin), VAL_MONEY_AMOUNT(arg));
         TERM_BIN_LEN(bin, 12);
-        return bin; }
+        return Init_Binary(OUT, bin); }
 
-    default:
-        fail (Error_Bad_Make(REB_BINARY, arg));
+      default:
+        return FAIL(Error_Bad_Make(REB_BINARY, arg));
     }
 }
 
@@ -180,7 +184,7 @@ static Binary(*) MAKE_TO_Binary_Common(const REBVAL *arg)
 // See also: MAKE_String, which is similar.
 //
 Bounce MAKE_Binary(
-    REBVAL *out,
+    Frame(*) frame_,
     enum Reb_Kind kind,
     option(const REBVAL*) parent,
     const REBVAL *def
@@ -195,7 +199,7 @@ Bounce MAKE_Binary(
         // !!! R3-Alpha tolerated decimal, e.g. `make string! 3.14`, which
         // is semantically nebulous (round up, down?) and generally bad.
         //
-        return Init_Binary(out, Make_Binary(Int32s(def, 0)));
+        return Init_Binary(OUT, Make_Binary(Int32s(def, 0)));
     }
 
     if (IS_BLOCK(def)) {
@@ -226,28 +230,28 @@ Bounce MAKE_Binary(
         if (i < 0 or i > cast(REBINT, VAL_LEN_AT(first)))
             goto bad_make;
 
-        return Init_Series_Cell_At(out, REB_BINARY, VAL_SERIES(first), i);
+        return Init_Series_Cell_At(OUT, REB_BINARY, VAL_SERIES(first), i);
     }
 
-    return Init_Series_Cell(out, REB_BINARY, MAKE_TO_Binary_Common(def));
+    return MAKE_TO_Binary_Common(frame_, def);
 
-bad_make:
-    fail (Error_Bad_Make(REB_BINARY, def));
+  bad_make:
+    return FAIL(Error_Bad_Make(REB_BINARY, def));
 }
 
 
 //
 //  TO_Binary: C
 //
-Bounce TO_Binary(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
+Bounce TO_Binary(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg)
 {
     assert(kind == REB_BINARY);
     UNUSED(kind);
 
     if (IS_INTEGER(arg) or IS_DECIMAL(arg))
-        return Init_Series_Cell(out, REB_BINARY, Make_Binary_BE64(arg));
+        return Init_Series_Cell(OUT, REB_BINARY, Make_Binary_BE64(arg));
 
-    return Init_Series_Cell(out, REB_BINARY, MAKE_TO_Binary_Common(arg));
+    return MAKE_TO_Binary_Common(frame_, arg);
 }
 
 

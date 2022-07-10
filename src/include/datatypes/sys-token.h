@@ -137,21 +137,22 @@ inline static REBVAL *Init_Char_Unchecked_Untracked(Cell(*) out, Codepoint c) {
 #define Init_Char_Unchecked(out,c) \
     Init_Char_Unchecked_Untracked(TRACK(out), (c))
 
-inline static REBVAL *Init_Char_May_Fail_Untracked(Cell(*) out, Codepoint c) {
+inline static Context(*) Maybe_Init_Char_Untracked(Cell(*) out, Codepoint c) {
     if (c > MAX_UNI) {
         DECLARE_LOCAL (temp);
-        fail (Error_Codepoint_Too_High_Raw(Init_Integer(temp, c)));
+        return Error_Codepoint_Too_High_Raw(Init_Integer(temp, c));
     }
 
     // !!! Should other values that can't be read be forbidden?  Byte order
     // mark?  UTF-16 surrogate stuff?  If something is not legitimate in a
     // UTF-8 codepoint stream, it shouldn't be used.
 
-    return Init_Char_Unchecked(out, c);
+    Init_Char_Unchecked_Untracked(out, c);
+    return nullptr;
 }
 
-#define Init_Char_May_Fail(out,c) \
-    Init_Char_May_Fail_Untracked(TRACK(out), (c))
+#define Maybe_Init_Char(out,c) \
+    Maybe_Init_Char_Untracked(TRACK(out), (c))
 
 
 //=//// "BLACKHOLE" (Empty ISSUE!, a.k.a. CODEPOINT 0) ////////////////////=//

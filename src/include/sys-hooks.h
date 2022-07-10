@@ -52,7 +52,7 @@ typedef REBINT (COMPARE_HOOK)(
 // BOUNCE_THROWN if they throw.  (e.g. `make object! [return]` can throw)
 //
 typedef Bounce (MAKE_HOOK)(
-    REBVAL *out,
+    Frame(*) frame_,
     enum Reb_Kind kind,
     option(const REBVAL*) opt_parent,
     const REBVAL *def
@@ -71,7 +71,7 @@ typedef Bounce (MAKE_HOOK)(
 // and decided by the source type.  For now, the destination decides both,
 // which means TO-ness and MAKE-ness are a bit too similar.
 //
-typedef Bounce (TO_HOOK)(REBVAL*, enum Reb_Kind, const REBVAL*);
+typedef Bounce (TO_HOOK)(Frame(*) frame_, enum Reb_Kind, const REBVAL*);
 
 
 // PER-TYPE MOLD HOOKS: for `mold value` and `form value`

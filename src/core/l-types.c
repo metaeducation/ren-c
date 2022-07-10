@@ -42,17 +42,16 @@
 //  MAKE_Fail: C
 //
 Bounce MAKE_Fail(
-    REBVAL *out,
+    Frame(*) frame_,
     enum Reb_Kind kind,
     option(const REBVAL*) parent,
     const REBVAL *arg
 ){
-    UNUSED(out);
     UNUSED(kind);
     UNUSED(parent);
     UNUSED(arg);
 
-    fail ("Datatype does not have a MAKE handler registered");
+    return FAIL("Datatype does not have a MAKE handler registered");
 }
 
 
@@ -64,19 +63,20 @@ Bounce MAKE_Fail(
 // dispatch table when the extension loads.
 //
 Bounce MAKE_Unhooked(
-    REBVAL *out,
+    Frame(*) frame_,
     enum Reb_Kind kind,
     option(const REBVAL*) parent,
     const REBVAL *arg
 ){
-    UNUSED(out);
     UNUSED(parent);
     UNUSED(arg);
 
     const REBVAL *type = Datatype_From_Kind(kind);
     UNUSED(type); // !!! put in error message?
 
-    fail ("Datatype is provided by an extension that's not currently loaded");
+    return FAIL(
+        "Datatype is provided by an extension that's not currently loaded"
+    );
 }
 
 
@@ -141,13 +141,17 @@ DECLARE_NATIVE(make)
     }
 
 
-    Bounce b = hook(OUT, kind, parent, arg);  // might throw, fail...
+    Bounce b = hook(frame_, kind, parent, arg);  // might throw, fail...
     if (b == BOUNCE_THROWN)
         return b;
     REBVAL *r = Value_From_Bounce(b);
-    if (r == nullptr or VAL_TYPE(r) != kind)
-        fail ("MAKE dispatcher did not return correct type");
-    return r;  // may be OUT or an API handle
+    if (r != nullptr) {
+        if (Is_Failure(r))
+            return r;
+        if (VAL_TYPE(r) == kind)
+            return r;
+    }
+    return FAIL("MAKE dispatcher did not return correct type");
 }
 
 
@@ -222,15 +226,18 @@ DECLARE_NATIVE(to)
 
     TO_HOOK* hook = To_Hook_For_Type(type);
 
-    Bounce b = hook(OUT, new_kind, v); // may fail();
+    Bounce b = hook(frame_, new_kind, v); // may fail();
     if (b == BOUNCE_THROWN) {
         assert(!"Illegal throw in TO conversion handler");
         fail (Error_No_Catch_For_Throw(FRAME));
     }
     REBVAL *r = Value_From_Bounce(b);
+    if (Is_Failure(r))
+        return r;
+
     if (r == nullptr or VAL_TYPE(r) != new_kind) {
         assert(!"TO conversion did not return intended type");
-        fail (Error_Invalid_Type(VAL_TYPE(r)));
+        return FAIL(Error_Invalid_Type(VAL_TYPE(r)));
     }
     return r;  // must be either OUT or an API handle
 }
@@ -245,10 +252,11 @@ DECLARE_NATIVE(to)
 //
 REBTYPE(Unhooked)
 {
-    UNUSED(frame_);
     UNUSED(verb);
 
-    fail ("Datatype does not have its REBTYPE() handler loaded by extension");
+    return FAIL(
+        "Datatype does not have its REBTYPE() handler loaded by extension"
+    );
 }
 
 

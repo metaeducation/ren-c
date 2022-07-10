@@ -70,16 +70,16 @@ REBINT CT_Quoted(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
 // take a BLOCK! with an INTEGER! and the value.  :-/
 //
 Bounce MAKE_Quoted(
-    REBVAL *out,
+    Frame(*) frame_,
     enum Reb_Kind kind,
     option(const REBVAL*) parent,
     const REBVAL *arg
 ){
     assert(kind == REB_QUOTED);
     if (parent)
-        fail (Error_Bad_Make_Parent(kind, unwrap(parent)));
+        return FAIL(Error_Bad_Make_Parent(kind, unwrap(parent)));
 
-    return Quotify(Copy_Cell(out, arg), 1);
+    return Quotify(Copy_Cell(OUT, arg), 1);
 }
 
 
@@ -89,9 +89,8 @@ Bounce MAKE_Quoted(
 // TO is disallowed at the moment, as there is no clear equivalence of things
 // "to" a literal.  (to quoted! [[a]] => \\a, for instance?)
 //
-Bounce TO_Quoted(REBVAL *out, enum Reb_Kind kind, const REBVAL *data) {
-    UNUSED(out);
-    fail (Error_Bad_Make(kind, data));
+Bounce TO_Quoted(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *data) {
+    return FAIL(Error_Bad_Make(kind, data));
 }
 
 

@@ -489,7 +489,13 @@ REBVAL *RL_rebChar(uint32_t codepoint)
 {
     ENTER_API;
 
-    return Init_Char_May_Fail(Alloc_Value(), codepoint);
+    REBVAL* v = Alloc_Value();
+    Context(*) error = Maybe_Init_Char(v, codepoint);
+    if (error) {
+        rebRelease(v);
+        fail (error);
+    }
+    return v;
 }
 
 

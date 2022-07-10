@@ -96,7 +96,7 @@ DECLARE_NATIVE(builtin_extensions)
 // function merely returns the built-in extensions, which can be loaded with
 // the LOAD-EXTENSION function.
 {
-    UNUSED(frame_);
+    INCLUDE_PARAMS_OF_BUILTIN_EXTENSIONS;
 
     // Call the generator functions for each builtin extension to get back
     // all the collated information that would be needed to initialize and
@@ -111,7 +111,7 @@ DECLARE_NATIVE(builtin_extensions)
         Copy_Cell(Alloc_Tail_Array(list), details);
         rebRelease(details);
     }
-    return Init_Block(Alloc_Value(), list);
+    return Init_Block(OUT, list);
 }
 
 

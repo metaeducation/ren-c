@@ -54,7 +54,7 @@ void MF_Bad_word(REB_MOLD *mo, noquote(Cell(const*)) v, bool form)
 // having to run an evaluation on a bad-word?  `make-isotope`?
 //
 Bounce MAKE_Bad_word(
-    REBVAL *out,
+    Frame(*) frame_,
     enum Reb_Kind kind,
     option(const REBVAL*) parent,
     const REBVAL *arg
@@ -63,9 +63,9 @@ Bounce MAKE_Bad_word(
     UNUSED(parent);
 
     if (IS_WORD(arg))
-        return Init_Bad_Word(out, VAL_WORD_SYMBOL(arg));
+        return Init_Bad_Word(OUT, VAL_WORD_SYMBOL(arg));
 
-    fail (Error_Bad_Make(kind, arg));
+    return FAIL(Error_Bad_Make(kind, arg));
 }
 
 
@@ -74,9 +74,8 @@ Bounce MAKE_Bad_word(
 //
 // TO is disallowed, e.g. you can't TO convert an integer of 0 to a blank.
 //
-Bounce TO_Bad_word(REBVAL *out, enum Reb_Kind kind, const REBVAL *data) {
-    UNUSED(out);
-    fail (Error_Bad_Make(kind, data));
+Bounce TO_Bad_word(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *data) {
+    return FAIL(Error_Bad_Make(kind, data));
 }
 
 

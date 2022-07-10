@@ -2041,8 +2041,10 @@ Bounce Scanner_Executor(Frame(*) f) {
 
  child_array_scanned: {  /////////////////////////////////////////////////////
 
-        if (Is_Failure(OUT))
-            return FAIL(OUT);
+        if (Is_Failure(OUT)) {
+            Drop_Frame(SUBFRAME);  // could also return FAIL(VAL_CONTEXT(OUT))
+            return OUT;
+        }
 
         Flags flags = NODE_FLAG_MANAGED;
         if (Get_Executor_Flag(SCAN, SUBFRAME, NEWLINE_PENDING))
@@ -2252,7 +2254,10 @@ Bounce Scanner_Executor(Frame(*) f) {
         bp += 2;  // skip #", and subtract 1 from ep for "
         if (ep - 1 != Scan_UTF8_Char_Escapable(&uni, bp))
             return FAIL(Error_Syntax(ss, level->token));
-        Init_Char_May_Fail(PUSH(), uni);
+
+        Context(*) error = Maybe_Init_Char(PUSH(), uni);
+        if (error)
+            return FAIL(error);
         break; }
 
       case TOKEN_STRING:  // UTF-8 pre-scanned above, and put in MOLD_BUF
@@ -2325,8 +2330,10 @@ Bounce Scanner_Executor(Frame(*) f) {
 
   construct_scan_to_stack_finished: {  ///////////////////////////////////////
 
-        if (Is_Failure(OUT))
-            return FAIL(OUT);
+        if (Is_Failure(OUT)) {
+            Drop_Frame(SUBFRAME);  // could also return FAIL(VAL_CONTEXT(OUT))
+            return OUT;
+        }
 
         Flags flags = NODE_FLAG_MANAGED;
         if (Get_Executor_Flag(SCAN, f, NEWLINE_PENDING))
@@ -2381,17 +2388,6 @@ Bounce Scanner_Executor(Frame(*) f) {
             // not baked in.  It adds to the concerns the scanner already
             // has about evaluation, etc.  However, there are tests based
             // on this...so we keep them loading and working for now.
-            //
-            enum Reb_Kind kind;
-            MAKE_HOOK *hook;
-            if (sym == SYM_IMAGE_X) {
-                kind = REB_CUSTOM;
-                hook = Make_Hook_For_Image();
-            }
-            else {
-                kind = KIND_FROM_SYM(sym);
-                hook = Make_Hook_For_Kind(kind);
-            }
 
             // !!! As written today, MAKE may call into the evaluator, and
             // hence a GC may be triggered.  Performing evaluations during
@@ -2400,28 +2396,21 @@ Bounce Scanner_Executor(Frame(*) f) {
             // used as the destination...because a raw pointer into the
             // data stack could go bad on any PUSH() or DROP().
             //
-            DECLARE_LOCAL (cell);
-            PUSH_GC_GUARD(cell);
-
             PUSH_GC_GUARD(array);
-            Bounce b = hook(
-                cell,
-                kind,
-                nullptr,
-                SPECIFIC(ARR_AT(array, 1))
-            );
-            if (b == BOUNCE_THROWN) {  // !!! good argument for not using MAKE
-                assert(false);
-                panic ("MAKE during construction syntax threw--illegal");
-            }
-            if (b != cell) {  // !!! not yet supported
-                assert(false);
-                panic ("MAKE during construction syntax not out cell");
+            if (rebRunThrows(
+                SPARE,  // can't write to movable stack location
+                Lib(MAKE),  // will not work during boot!
+                SPECIFIC(ARR_AT(array, 0)),
+                rebQ(SPECIFIC(ARR_AT(array, 1)))  // e.g. ACTION! as WORD!
+            )){
+                CATCH_THROWN(OUT, frame_);
+                DECLARE_LOCAL (temp);
+                Init_Block(temp, array);
+                return FAIL(Error_Malconstruct_Raw(temp));
             }
             DROP_GC_GUARD(array);
 
-            Copy_Cell(PUSH(), cell);
-            DROP_GC_GUARD(cell);
+            Copy_Cell(PUSH(), SPARE);
         }
         else {
             if (ARR_LEN(array) != 1) {
@@ -2577,11 +2566,11 @@ Bounce Scanner_Executor(Frame(*) f) {
 
             Drop_Frame_Unbalanced(subframe);  // allow stack accrual
 
-            if (Is_Failure(OUT))
-                return FAIL(OUT);
-
             if (threw)  // drop failing stack before throwing
                 fail (Error_No_Catch_For_Throw(f));
+
+            if (Is_Failure(OUT))
+                return OUT;
         }
 
         // The scanning process for something like `.` or `a/` will not have
@@ -3084,8 +3073,10 @@ DECLARE_NATIVE(transcode)
 
 } scan_to_stack_maybe_failed: {  /////////////////////////////////////////////
 
-    if (Is_Failure(OUT))
-        return FAIL(OUT);
+    if (Is_Failure(OUT)) {
+        Drop_Frame(SUBFRAME);  // could FAIL(VAL_CONTEXT(OUT)) instead
+        return OUT;
+    }
 
     // If the source data bytes are "1" then the scanner will push INTEGER! 1
     // if the source data is "[1]" then the scanner will push BLOCK! [1]

@@ -276,7 +276,9 @@ DECLARE_NATIVE(terminate)
   #if TO_WINDOWS
 
     if (GetCurrentProcessId() == cast(DWORD, VAL_INT32(ARG(pid))))
-        fail ("Use QUIT or EXIT-REBOL to terminate current process, instead");
+        return FAIL(
+          "Use QUIT or EXIT-REBOL to terminate current process, vs. TERMINATE"
+        );
 
     DWORD err = 0;
     HANDLE ph = OpenProcess(PROCESS_TERMINATE, FALSE, VAL_INT32(ARG(pid)));
@@ -321,8 +323,7 @@ DECLARE_NATIVE(terminate)
 
   #else
 
-    UNUSED(frame_);
-    fail ("terminate is not implemented for this platform");
+    return FAIL("terminate is not implemented for this platform");
 
   #endif
 }

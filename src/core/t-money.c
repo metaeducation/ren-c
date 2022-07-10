@@ -75,25 +75,25 @@ REBINT CT_Money(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
 //  MAKE_Money: C
 //
 Bounce MAKE_Money(
-    REBVAL *out,
+    Frame(*) frame_,
     enum Reb_Kind kind,
     option(const REBVAL*) parent,
     const REBVAL *arg
 ){
     assert(kind == REB_MONEY);
     if (parent)
-        fail (Error_Bad_Make_Parent(kind, unwrap(parent)));
+        return FAIL(Error_Bad_Make_Parent(kind, unwrap(parent)));
 
     switch (VAL_TYPE(arg)) {
       case REB_INTEGER:
-        return Init_Money(out, int_to_deci(VAL_INT64(arg)));
+        return Init_Money(OUT, int_to_deci(VAL_INT64(arg)));
 
       case REB_DECIMAL:
       case REB_PERCENT:
-        return Init_Money(out, decimal_to_deci(VAL_DECIMAL(arg)));
+        return Init_Money(OUT, decimal_to_deci(VAL_DECIMAL(arg)));
 
       case REB_MONEY:
-        return Copy_Cell(out, arg);
+        return Copy_Cell(OUT, arg);
 
       case REB_TEXT: {
         const Byte* bp = Analyze_String_For_Scan(
@@ -103,34 +103,35 @@ Bounce MAKE_Money(
         );
 
         const Byte* end;
-        Init_Money(out, string_to_deci(bp, &end));
+        Init_Money(OUT, string_to_deci(bp, &end));
         if (end == bp or *end != '\0')
             goto bad_make;
-        return out; }
+        return OUT; }
 
 //      case REB_ISSUE:
       case REB_BINARY:
-        Bin_To_Money_May_Fail(out, arg);
-        return out;
+        Bin_To_Money_May_Fail(OUT, arg);
+        return OUT;
 
       case REB_LOGIC:
-        return Init_Money(out, int_to_deci(VAL_LOGIC(arg) ? 1 : 0));
+        return Init_Money(OUT, int_to_deci(VAL_LOGIC(arg) ? 1 : 0));
 
       default:
         break;
     }
 
   bad_make:
-    fail (Error_Bad_Make(REB_MONEY, arg));
+
+    return FAIL(Error_Bad_Make(REB_MONEY, arg));
 }
 
 
 //
 //  TO_Money: C
 //
-Bounce TO_Money(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
+Bounce TO_Money(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg)
 {
-    return MAKE_Money(out, kind, nullptr, arg);
+    return MAKE_Money(frame_, kind, nullptr, arg);
 }
 
 

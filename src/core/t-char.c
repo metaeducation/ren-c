@@ -93,7 +93,7 @@ REBINT CT_Issue(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
 //  MAKE_Issue: C
 //
 Bounce MAKE_Issue(
-    REBVAL *out,
+    Frame(*) frame_,
     enum Reb_Kind kind,
     option(const REBVAL*) parent,
     const REBVAL *arg
@@ -106,7 +106,10 @@ Bounce MAKE_Issue(
       case REB_INTEGER:
       case REB_DECIMAL: {
         REBINT n = Int32(arg);
-        return Init_Char_May_Fail(out, n); }
+        Context(*) error = Maybe_Init_Char(OUT, n);
+        if (error)
+            return FAIL(error);
+        return OUT; }
 
       case REB_BINARY: {
         Size size;
@@ -117,7 +120,7 @@ Bounce MAKE_Issue(
         Codepoint c;
         if (*bp <= 0x80) {
             if (size != 1)
-                return MAKE_String(out, kind, nullptr, arg);
+                return MAKE_String(frame_, kind, nullptr, arg);
 
             c = *bp;
         }
@@ -127,23 +130,27 @@ Bounce MAKE_Issue(
             if (bp == nullptr)
                 goto bad_make;  // must be valid UTF8
             if (size != 0)
-                return MAKE_String(out, kind, nullptr, arg);
+                return MAKE_String(frame_, kind, nullptr, arg);
         }
-        return Init_Char_May_Fail(out, c); }
+        Context(*) error = Maybe_Init_Char(OUT, c);
+        if (error)
+            return FAIL(error);
+        return OUT; }
 
       case REB_TEXT:
         if (VAL_LEN_AT(arg) == 0)
             fail ("Empty ISSUE! is zero codepoint, unlike empty TEXT!");
         if (VAL_LEN_AT(arg) == 1)
-            return Init_Char_Unchecked(out, CHR_CODE(VAL_UTF8_AT(arg)));
-        return MAKE_String(out, kind, nullptr, arg);
+            return Init_Char_Unchecked(OUT, CHR_CODE(VAL_UTF8_AT(arg)));
+        return MAKE_String(frame_, kind, nullptr, arg);
 
       default:
         break;
     }
 
   bad_make:
-    fail (Error_Bad_Make(REB_ISSUE, arg));
+
+    return FAIL(Error_Bad_Make(REB_ISSUE, arg));
 }
 
 
@@ -154,7 +161,7 @@ Bounce MAKE_Issue(
 // might be best acting like #"&" ?  Consider in light of a general review
 // of the sematnics of MAKE and TO.
 //
-Bounce TO_Issue(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
+Bounce TO_Issue(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg)
 {
     assert(VAL_TYPE(arg) != REB_ISSUE);  // !!! should call COPY?
 
@@ -164,12 +171,12 @@ Bounce TO_Issue(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
         Utf8(const*) utf8 = VAL_UTF8_LEN_SIZE_AT(&len, &size, arg);
 
         if (len == 0)  // don't "accidentally" create zero-codepoint `#`
-            fail (Error_Illegal_Zero_Byte_Raw());
+            return FAIL(Error_Illegal_Zero_Byte_Raw());
 
-        return Init_Issue_Utf8(out, utf8, size, len);
+        return Init_Issue_Utf8(OUT, utf8, size, len);
     }
 
-    fail (Error_Bad_Cast_Raw(arg, Datatype_From_Kind(kind)));
+    return FAIL(Error_Bad_Cast_Raw(arg, Datatype_From_Kind(kind)));
 }
 
 
@@ -429,9 +436,12 @@ REBTYPE(Issue)
     }
 
     if (chr < 0)
-        fail (Error_Type_Limit_Raw(Datatype_From_Kind(REB_ISSUE)));
+        return FAIL(Error_Type_Limit_Raw(Datatype_From_Kind(REB_ISSUE)));
 
-    return Init_Char_May_Fail(OUT, cast(Codepoint, chr));
+    Context(*) error = Maybe_Init_Char(OUT, cast(Codepoint, chr));
+    if (error)
+        return FAIL(error);
+    return OUT;
 }
 
 

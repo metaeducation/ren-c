@@ -51,37 +51,38 @@ REBINT CT_Datatype(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict
 //  MAKE_Datatype: C
 //
 Bounce MAKE_Datatype(
-    REBVAL *out,
+    Frame(*) frame_,
     enum Reb_Kind kind,
     option(const REBVAL*) parent,
     const REBVAL *arg
 ){
     if (parent)
-        fail (Error_Bad_Make_Parent(kind, unwrap(parent)));
+        return FAIL(Error_Bad_Make_Parent(kind, unwrap(parent)));
 
     if (IS_URL(arg)) {
         REBVAL *custom = Datatype_From_Url(arg);
         if (custom != nullptr)
-            return Copy_Cell(out, custom);
+            return Copy_Cell(OUT, custom);
     }
     if (IS_WORD(arg)) {
         SYMID sym = VAL_WORD_ID(arg);
         if (sym == SYM_0 or sym >= SYM_FROM_KIND(REB_MAX))
             goto bad_make;
 
-        return Init_Builtin_Datatype(out, KIND_FROM_SYM(sym));
+        return Init_Builtin_Datatype(OUT, KIND_FROM_SYM(sym));
     }
 
-  bad_make:;
-    fail (Error_Bad_Make(kind, arg));
+  bad_make:
+
+    return FAIL(Error_Bad_Make(kind, arg));
 }
 
 
 //
 //  TO_Datatype: C
 //
-Bounce TO_Datatype(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
-    return MAKE_Datatype(out, kind, nullptr, arg);
+Bounce TO_Datatype(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg) {
+    return MAKE_Datatype(frame_, kind, nullptr, arg);
 }
 
 

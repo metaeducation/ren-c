@@ -234,7 +234,7 @@ REBINT CT_Time(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
 //  MAKE_Time: C
 //
 Bounce MAKE_Time(
-    REBVAL *out,
+    Frame(*) frame_,
     enum Reb_Kind kind,
     option(const REBVAL*) parent,
     const REBVAL *arg
@@ -245,22 +245,22 @@ Bounce MAKE_Time(
 
     switch (VAL_TYPE(arg)) {
     case REB_TIME: // just copy it (?)
-        return Copy_Cell(out, arg);
+        return Copy_Cell(OUT, arg);
 
     case REB_TEXT: { // scan using same decoding as LOAD would
         Size size;
         const Byte* bp = Analyze_String_For_Scan(&size, arg, MAX_SCAN_TIME);
 
-        if (Scan_Time(out, bp, size) == NULL)
-            goto no_time;
+        if (Scan_Time(OUT, bp, size) == nullptr)
+            goto bad_make;
 
-        return out; }
+        return OUT; }
 
     case REB_INTEGER: // interpret as seconds
         if (VAL_INT64(arg) < -MAX_SECONDS || VAL_INT64(arg) > MAX_SECONDS)
             fail (Error_Out_Of_Range(arg));
 
-        return Init_Time_Nanoseconds(out, VAL_INT64(arg) * SEC_SEC);
+        return Init_Time_Nanoseconds(OUT, VAL_INT64(arg) * SEC_SEC);
 
     case REB_DECIMAL:
         if (
@@ -269,17 +269,17 @@ Bounce MAKE_Time(
         ){
             fail (Error_Out_Of_Range(arg));
         }
-        return Init_Time_Nanoseconds(out, DEC_TO_SECS(VAL_DECIMAL(arg)));
+        return Init_Time_Nanoseconds(OUT, DEC_TO_SECS(VAL_DECIMAL(arg)));
 
     case REB_BLOCK: { // [hh mm ss]
         Cell(const*) tail;
         Cell(const*) item = VAL_ARRAY_AT(&tail, arg);
 
         if (item == tail)
-            goto no_time;  // must have at least hours
+            goto bad_make;  // must have at least hours
 
         if (not IS_INTEGER(item))
-            goto no_time;  // hours must be integer
+            goto bad_make;  // hours must be integer
 
         bool neg;
         REBI64 i = Int32(item);
@@ -292,75 +292,76 @@ Bounce MAKE_Time(
 
         REBI64 secs = i * 3600;
         if (secs > MAX_SECONDS)
-            goto no_time;
+            goto bad_make;
 
         if (tail != ++item) {  // minutes
             if (not IS_INTEGER(item))
-                goto no_time;
+                goto bad_make;
 
             if ((i = Int32(item)) < 0)
-                goto no_time;
+                goto bad_make;
 
             secs += i * 60;
             if (secs > MAX_SECONDS)
-                goto no_time;
+                goto bad_make;
         }
 
         if (item != tail and tail != ++item) {  // seconds
             if (IS_INTEGER(item)) {
                 if ((i = Int32(item)) < 0)
-                    goto no_time;
+                    goto bad_make;
 
                 secs += i;
                 if (secs > MAX_SECONDS)
-                    goto no_time;
+                    goto bad_make;
             }
             else if (IS_DECIMAL(item)) {
                 if (
                     secs + cast(REBI64, VAL_DECIMAL(item)) + 1
                     > MAX_SECONDS
                 ){
-                    goto no_time;
+                    goto bad_make;
                 }
 
                 // added in below
             }
             else
-                goto no_time;
+                goto bad_make;
         }
 
         REBI64 nano = secs * SEC_SEC;
 
         if (item != tail and tail != ++item) {
             if (not IS_DECIMAL(item))
-                goto no_time;
+                goto bad_make;
 
             nano += DEC_TO_SECS(VAL_DECIMAL(item));
         }
 
         if (item != tail and ++item != tail)
-            goto no_time;  // more than 4 items of initialization
+            goto bad_make;  // more than 4 items of initialization
 
         if (neg)
             nano = -nano;
 
-        return Init_Time_Nanoseconds(out, nano); }
+        return Init_Time_Nanoseconds(OUT, nano); }
 
       default:
-        goto no_time;
+        goto bad_make;
     }
 
-  no_time:
-    fail (Error_Bad_Make(REB_TIME, arg));
+  bad_make:
+
+    return FAIL(Error_Bad_Make(REB_TIME, arg));
 }
 
 
 //
 //  TO_Time: C
 //
-Bounce TO_Time(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
+Bounce TO_Time(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg)
 {
-    return MAKE_Time(out, kind, nullptr, arg);
+    return MAKE_Time(frame_, kind, nullptr, arg);
 }
 
 

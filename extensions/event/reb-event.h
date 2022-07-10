@@ -148,8 +148,8 @@ inline static void SET_VAL_EVENT_Y(REBVAL *v, uint16_t y) {
 // EVENT! extension if it is loaded.
 //
 extern REBINT CT_Event(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict);
-extern Bounce MAKE_Event(REBVAL *out, enum Reb_Kind kind, option(const REBVAL*) parent, const REBVAL *arg);
-extern Bounce TO_Event(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg);
+extern Bounce MAKE_Event(Frame(*) frame_, enum Reb_Kind kind, option(const REBVAL*) parent, const REBVAL *arg);
+extern Bounce TO_Event(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg);
 extern void MF_Event(REB_MOLD *mo, noquote(Cell(const*)) v, bool form);
 extern REBTYPE(Event);
 

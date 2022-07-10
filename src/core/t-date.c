@@ -525,30 +525,33 @@ REBVAL *Time_Between_Dates(REBVAL *out, const REBVAL *d1, const REBVAL *d2)
 //  MAKE_Date: C
 //
 Bounce MAKE_Date(
-    REBVAL *out,
+    Frame(*) frame_,
     enum Reb_Kind kind,
     option(const REBVAL*) parent,
     const REBVAL *arg
 ){
     assert(kind == REB_DATE);
     if (parent)
-        fail (Error_Bad_Make_Parent(kind, unwrap(parent)));
+        return FAIL(Error_Bad_Make_Parent(kind, unwrap(parent)));
 
     if (IS_DATE(arg))
-        return Copy_Cell(out, arg);
+        return Copy_Cell(OUT, arg);
 
     if (IS_TEXT(arg)) {
         Size size;
         const Byte* bp = Analyze_String_For_Scan(&size, arg, MAX_SCAN_DATE);
-        if (NULL == Scan_Date(out, bp, size))
+        if (NULL == Scan_Date(OUT, bp, size))
             goto bad_make;
-        return out;
+        return OUT;
     }
 
-    if (not ANY_ARRAY(arg))
-        goto bad_make;
+    if (ANY_ARRAY(arg))
+        goto make_from_array;
 
-  blockscope {
+    goto bad_make;
+
+  make_from_array: {  ////////////////////////////////////////////////////////
+
     Cell(const*) tail;
     Cell(const*) item = VAL_ARRAY_AT(&tail, arg);
 
@@ -615,7 +618,7 @@ Bounce MAKE_Date(
 
             tz = cast(REBINT, VAL_NANO(item) / (ZONE_MINS * MIN_SEC));
             if (tz < -MAX_ZONE or tz > MAX_ZONE)
-                fail (Error_Out_Of_Range(item));
+                return FAIL(Error_Out_Of_Range(item));
             ++item;
 
             if (item != tail)
@@ -626,24 +629,24 @@ Bounce MAKE_Date(
     if (secs != NO_DATE_TIME)
         Normalize_Time(&secs, &day);
 
-    Reset_Cell_Header_Untracked(TRACK(out), REB_DATE, CELL_MASK_NONE);
-    VAL_DATE(out) = Normalize_Date(day, month, year, tz);
-    PAYLOAD(Time, out).nanoseconds = secs;
+    Reset_Cell_Header_Untracked(TRACK(OUT), REB_DATE, CELL_MASK_NONE);
+    VAL_DATE(OUT) = Normalize_Date(day, month, year, tz);
+    PAYLOAD(Time, OUT).nanoseconds = secs;
 
-    Adjust_Date_UTC(out);
-    return out;
-  }
+    Adjust_Date_UTC(OUT);
+    return OUT;
 
-  bad_make:
-    fail (Error_Bad_Make(REB_DATE, arg));
-}
+} bad_make: {  ///////////////////////////////////////////////////////////////
+
+    return FAIL(Error_Bad_Make(REB_DATE, arg));
+}}
 
 
 //
 //  TO_Date: C
 //
-Bounce TO_Date(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
-    return MAKE_Date(out, kind, nullptr, arg);
+Bounce TO_Date(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg) {
+    return MAKE_Date(frame_, kind, nullptr, arg);
 }
 
 

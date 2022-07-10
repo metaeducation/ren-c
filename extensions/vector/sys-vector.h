@@ -107,7 +107,7 @@ inline static REBVAL *Init_Vector(
 // VECTOR! extension if it is loaded.
 //
 extern REBINT CT_Vector(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict);
-extern Bounce MAKE_Vector(REBVAL *out, enum Reb_Kind kind, option(const REBVAL*) parent, const REBVAL *arg);
-extern Bounce TO_Vector(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg);
+extern Bounce MAKE_Vector(Frame(*) frame_, enum Reb_Kind kind, option(const REBVAL*) parent, const REBVAL *arg);
+extern Bounce TO_Vector(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg);
 extern void MF_Vector(REB_MOLD *mo, noquote(Cell(const*)) v, bool form);
 extern REBTYPE(Vector);

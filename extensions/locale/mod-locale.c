@@ -54,9 +54,9 @@
 //
 DECLARE_NATIVE(locale)
 //
-// This function only needs to make OS calls on Windows.  The POSIX version
-// parses environment variables and uses compiled-in tables.  See the HIJACK
-// in %ext-locale-init.reb for that.
+// 1. This function only needs to make OS calls on Windows.  The POSIX version
+//    parses environment variables and uses compiled-in tables.  See the HIJACK
+//    in %ext-locale-init.reb for that.
 {
   #if TO_WINDOWS
     LOCALE_INCLUDE_PARAMS_OF_LOCALE;
@@ -93,8 +93,7 @@ DECLARE_NATIVE(locale)
 
     return text;
   #else
-    UNUSED(frame_);  // v-- see notes above on how this is HIJACK'd on POSIX
-    fail ("LOCALE not implemented natively for non-Windows");
+    return FAIL("LOCALE not implemented natively for non-Windows");  // see [1]
   #endif
 }
 

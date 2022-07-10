@@ -377,14 +377,14 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
 //  MAKE_Varargs: C
 //
 Bounce MAKE_Varargs(
-    REBVAL *out,
+    Frame(*) frame_,
     enum Reb_Kind kind,
     option(const REBVAL*) parent,
     const REBVAL *arg
 ){
     assert(kind == REB_VARARGS);
     if (parent)
-        fail (Error_Bad_Make_Parent(kind, unwrap(parent)));
+        return FAIL(Error_Bad_Make_Parent(kind, unwrap(parent)));
 
     // With MAKE VARARGS! on an ANY-ARRAY!, the array is the backing store
     // (shared) that the varargs interface cannot affect, but changes to
@@ -405,13 +405,13 @@ Bounce MAKE_Varargs(
             Copy_Cell(ARR_SINGLE(array1), arg);
 
         Reset_Cell_Header_Untracked(
-            TRACK(out), REB_VARARGS, CELL_MASK_VARARGS
+            TRACK(OUT), REB_VARARGS, CELL_MASK_VARARGS
         );
-        INIT_VAL_VARARGS_PHASE(out, nullptr);
-        UNUSED(VAL_VARARGS_SIGNED_PARAM_INDEX(out));  // trashes in C++11
-        INIT_VAL_VARARGS_BINDING(out, array1);
+        INIT_VAL_VARARGS_PHASE(OUT, nullptr);
+        UNUSED(VAL_VARARGS_SIGNED_PARAM_INDEX(OUT));  // trashes in C++11
+        INIT_VAL_VARARGS_BINDING(OUT, array1);
 
-        return out;
+        return OUT;
     }
 
     // !!! Permit FRAME! ?
@@ -423,14 +423,12 @@ Bounce MAKE_Varargs(
 //
 //  TO_Varargs: C
 //
-Bounce TO_Varargs(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
+Bounce TO_Varargs(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg)
 {
     assert(kind == REB_VARARGS);
     UNUSED(kind);
 
-    UNUSED(out);
-
-    fail (arg);
+    return FAIL(arg);
 }
 
 

@@ -233,32 +233,32 @@ void Copy_Image_Value(REBVAL *out, const REBVAL *arg, REBINT len)
 //  MAKE_Image: C
 //
 Bounce MAKE_Image(
-    REBVAL *out,
+    Frame(*) frame_,
     enum Reb_Kind kind,
     option(const REBVAL*) parent,
     const REBVAL *arg
 ){
     if (parent)
-        fail (Error_Bad_Make_Parent(kind, unwrap(parent)));
+        return FAIL(Error_Bad_Make_Parent(kind, unwrap(parent)));
 
     if (IS_IMAGE(arg)) {
         //
         // make image! img
         //
-        Copy_Image_Value(out, arg, VAL_IMAGE_LEN_AT(arg));
+        Copy_Image_Value(OUT, arg, VAL_IMAGE_LEN_AT(arg));
     }
     else if (IS_BLANK(arg)) {
         //
         // make image! [] (or none)
         //
-        Init_Image_Black_Opaque(out, 0, 0);
+        Init_Image_Black_Opaque(OUT, 0, 0);
     }
     else if (IS_PAIR(arg)) {  // `make image! 10x20`
         REBINT w = VAL_PAIR_X_INT(arg);
         REBINT h = VAL_PAIR_Y_INT(arg);
         w = MAX(w, 0);
         h = MAX(h, 0);
-        Init_Image_Black_Opaque(out, w, h);
+        Init_Image_Black_Opaque(OUT, w, h);
     }
     else if (IS_BLOCK(arg)) {  // make image! [size rgba index]
         Cell(const*) tail;
@@ -274,7 +274,7 @@ Bounce MAKE_Image(
         ++item;
 
         if (item == tail) {  // just `make image! [10x20]`, allow it
-            Init_Image_Black_Opaque(out, w, h);
+            Init_Image_Black_Opaque(OUT, w, h);
             ++item;
         }
         else if (IS_BINARY(item)) {  // use bytes as-is
@@ -288,25 +288,25 @@ Bounce MAKE_Image(
             // directly as-is...so Ren-C only supports RGBA.
 
             if (VAL_INDEX(item) != 0)
-                fail ("MAKE IMAGE! w/BINARY! must have binary at HEAD");
+                return FAIL("MAKE IMAGE! w/BINARY! must have binary at HEAD");
 
             if (VAL_LEN_HEAD(item) != cast(REBLEN, w * h * 4))
-                fail ("MAKE IMAGE! w/BINARY! must have RGBA pixels for size");
+                return FAIL("MAKE IMAGE! w/BINARY! needs RGBA pixels for size");
 
-            Init_Image(out, VAL_BINARY(item), w, h);
+            Init_Image(OUT, VAL_BINARY(item), w, h);
             ++item;
 
             // !!! Sketchy R3-Alpha concept: "image position".  The block
             // MAKE IMAGE! format allowed you to specify it.
 
             if (item != tail and IS_INTEGER(item)) {
-                VAL_IMAGE_POS(out) = (Int32s(SPECIFIC(item), 1) - 1);
+                VAL_IMAGE_POS(OUT) = (Int32s(SPECIFIC(item), 1) - 1);
                 ++item;
             }
         }
         else if (IS_TUPLE(item)) {  // `make image! [1.2.3.255 4.5.6.128 ...]`
-            Init_Image_Black_Opaque(out, w, h);  // inefficient, overwritten
-            Byte* ip = VAL_IMAGE_HEAD(out); // image pointer
+            Init_Image_Black_Opaque(OUT, w, h);  // inefficient, overwritten
+            Byte* ip = VAL_IMAGE_HEAD(OUT); // image pointer
 
             Byte pixel[4];
             Set_Pixel_Tuple(pixel, item);
@@ -320,13 +320,13 @@ Bounce MAKE_Image(
             }
         }
         else if (IS_BLOCK(item)) {
-            Init_Image_Black_Opaque(out, w, h);  // inefficient, overwritten
+            Init_Image_Black_Opaque(OUT, w, h);  // inefficient, overwritten
 
             REBLEN bad_index;
             if (Array_Has_Non_Tuple(&bad_index, item))
                 fail (Error_Bad_Value(VAL_ARRAY_AT_HEAD(item, bad_index)));
 
-            Byte* ip = VAL_IMAGE_HEAD(out);  // image pointer
+            Byte* ip = VAL_IMAGE_HEAD(OUT);  // image pointer
 
             Tuples_To_RGBA(
                 ip, w * h, VAL_ARRAY_ITEM_AT(item), VAL_LEN_AT(item)
@@ -336,12 +336,12 @@ Bounce MAKE_Image(
             goto bad_make;
 
         if (item != tail)
-            fail ("Too many elements in BLOCK! for MAKE IMAGE!");
+            return FAIL("Too many elements in BLOCK! for MAKE IMAGE!");
     }
     else
-        fail (Error_Invalid_Type(VAL_TYPE(arg)));
+        return FAIL(Error_Invalid_Type(VAL_TYPE(arg)));
 
-    return out;
+    return OUT;
 
 bad_make:
     fail (Error_Bad_Make(kind, arg));
@@ -351,13 +351,12 @@ bad_make:
 //
 //  TO_Image: C
 //
-Bounce TO_Image(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
+Bounce TO_Image(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg)
 {
     assert(kind == REB_CUSTOM);
     UNUSED(kind);
-    UNUSED(out);
 
-    fail (arg);
+    return FAIL(arg);
 }
 
 

@@ -105,19 +105,19 @@ REBINT CT_Array(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
 //     MAKE_Lit_Path
 //
 Bounce MAKE_Array(
-    REBVAL *out,
+    Frame(*) frame_,
     enum Reb_Kind kind,
     option(const REBVAL*) parent,
     const REBVAL *arg
 ){
     if (parent)
-        fail (Error_Bad_Make_Parent(kind, unwrap(parent)));
+        return FAIL(Error_Bad_Make_Parent(kind, unwrap(parent)));
 
     if (IS_INTEGER(arg) or IS_DECIMAL(arg)) {
         //
         // `make block! 10` => creates array with certain initial capacity
         //
-        return Init_Array_Cell(out, kind, Make_Array(Int32s(arg, 0)));
+        return Init_Array_Cell(OUT, kind, Make_Array(Int32s(arg, 0)));
     }
     else if (IS_TEXT(arg)) {
         //
@@ -129,11 +129,11 @@ Bounce MAKE_Array(
         String(const*) file = ANONYMOUS;
         option(Context(*)) context = nullptr;
         Init_Array_Cell(
-            out,
+            OUT,
             kind,
             Scan_UTF8_Managed(file, utf8, size, context)
         );
-        return out;
+        return OUT;
     }
     else if (ANY_ARRAY(arg)) {
         //
@@ -187,7 +187,7 @@ Bounce MAKE_Array(
 
         REBSPC *derived = Derive_Specifier(VAL_SPECIFIER(arg), any_array);
         return Init_Series_Cell_At_Core(
-            out,
+            OUT,
             kind,
             VAL_ARRAY(any_array),
             index,
@@ -199,7 +199,7 @@ Bounce MAKE_Array(
         // !!! Should MAKE GROUP! and MAKE PATH! from a TYPESET! work like
         // MAKE BLOCK! does?  Allow it for now.
         //
-        return Init_Array_Cell(out, kind, Typeset_To_Array(arg));
+        return Init_Array_Cell(OUT, kind, Typeset_To_Array(arg));
     }
     else if (ANY_ARRAY(arg)) {
         //
@@ -210,7 +210,7 @@ Bounce MAKE_Array(
         REBLEN len;
         Cell(const*) at = VAL_ARRAY_LEN_AT(&len, arg);
         return Init_Array_Cell(
-            out,
+            OUT,
             kind,
             Copy_Values_Len_Shallow(at, VAL_SPECIFIER(arg), len)
         );
@@ -225,7 +225,7 @@ Bounce MAKE_Array(
         String(const*) file = ANONYMOUS;
         option(Context(*)) context = nullptr;
         return Init_Array_Cell(
-            out,
+            OUT,
             kind,
             Scan_UTF8_Managed(file, utf8, utf8_size, context)
         );
@@ -241,16 +241,16 @@ Bounce MAKE_Array(
         const Byte* at = VAL_BINARY_SIZE_AT(&size, arg);
         option(Context(*)) context = nullptr;
         return Init_Array_Cell(
-            out,
+            OUT,
             kind,
             Scan_UTF8_Managed(file, at, size, context)
         );
     }
     else if (IS_MAP(arg)) {
-        return Init_Array_Cell(out, kind, Map_To_Array(VAL_MAP(arg), 0));
+        return Init_Array_Cell(OUT, kind, Map_To_Array(VAL_MAP(arg), 0));
     }
     else if (ANY_CONTEXT(arg)) {
-        return Init_Array_Cell(out, kind, Context_To_Array(arg, 3));
+        return Init_Array_Cell(OUT, kind, Context_To_Array(arg, 3));
     }
     else if (IS_VARARGS(arg)) {
         //
@@ -289,14 +289,14 @@ Bounce MAKE_Array(
                 param += VAL_VARARGS_SIGNED_PARAM_INDEX(arg);
 
             if (TYPE_CHECK(param, REB_NULL))
-                fail (Error_Null_Vararg_Array_Raw());
+                return FAIL(Error_Null_Vararg_Array_Raw());
         }
 
         StackIndex base = TOP_INDEX;
 
         do {
             if (Do_Vararg_Op_Maybe_End_Throws(
-                out,
+                OUT,
                 VARARG_OP_TAKE,
                 arg
             )){
@@ -304,13 +304,13 @@ Bounce MAKE_Array(
                 return BOUNCE_THROWN;
             }
 
-            if (Is_Void(out))
+            if (Is_Void(OUT))
                 break;
 
-            Move_Cell(PUSH(), out);
+            Move_Cell(PUSH(), OUT);
         } while (true);
 
-        return Init_Array_Cell(out, kind, Pop_Stack_Values(base));
+        return Init_Array_Cell(OUT, kind, Pop_Stack_Values(base));
     }
     else if (IS_ACTION(arg)) {
         //
@@ -325,18 +325,19 @@ Bounce MAKE_Array(
             Copy_Cell(PUSH(), generated);
             rebRelease(generated);
         }
-        return Init_Array_Cell(out, kind, Pop_Stack_Values(base));
+        return Init_Array_Cell(OUT, kind, Pop_Stack_Values(base));
     }
 
-  bad_make:;
-    fail (Error_Bad_Make(kind, arg));
+  bad_make:
+
+    return FAIL(Error_Bad_Make(kind, arg));
 }
 
 
 //
 //  TO_Array: C
 //
-Bounce TO_Array(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
+Bounce TO_Array(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg) {
     if (ANY_SEQUENCE(arg)) {
         StackIndex base = TOP_INDEX;
         REBLEN len = VAL_SEQUENCE_LEN(arg);
@@ -344,17 +345,17 @@ Bounce TO_Array(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
         for (i = 0; i < len; ++i) {
             Derelativize(
                 PUSH(),
-                VAL_SEQUENCE_AT(out, arg, i),  // use out as scratch space
+                VAL_SEQUENCE_AT(OUT, arg, i),  // use out as scratch space
                 VAL_SEQUENCE_SPECIFIER(arg)
             );
         }
-        return Init_Array_Cell(out, kind, Pop_Stack_Values(base));
+        return Init_Array_Cell(OUT, kind, Pop_Stack_Values(base));
     }
     else if (ANY_ARRAY(arg)) {
         REBLEN len;
         Cell(const*) at = VAL_ARRAY_LEN_AT(&len, arg);
         return Init_Array_Cell(
-            out,
+            OUT,
             kind,
             Copy_Values_Len_Shallow(at, VAL_SPECIFIER(arg), len)
         );
@@ -364,7 +365,7 @@ Bounce TO_Array(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
         //
         Array(*) single = Alloc_Singular(NODE_FLAG_MANAGED);
         Copy_Cell(ARR_SINGLE(single), arg);
-        return Init_Array_Cell(out, kind, single);
+        return Init_Array_Cell(OUT, kind, single);
     }
 }
 

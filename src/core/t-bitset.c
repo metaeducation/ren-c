@@ -91,44 +91,44 @@ void MF_Bitset(REB_MOLD *mo, noquote(Cell(const*)) v, bool form)
 //  MAKE_Bitset: C
 //
 Bounce MAKE_Bitset(
-    REBVAL *out,
+    Frame(*) frame_,
     enum Reb_Kind kind,
     option(const REBVAL*) parent,
     const REBVAL *arg
 ){
     assert(kind == REB_BITSET);
     if (parent)
-        fail (Error_Bad_Make_Parent(kind, unwrap(parent)));
+        return FAIL(Error_Bad_Make_Parent(kind, unwrap(parent)));
 
     REBINT len = Find_Max_Bit(arg);
     if (len == NOT_FOUND)
-        fail (arg);
+        return FAIL(arg);
 
     Binary(*) bin = Make_Bitset(cast(REBLEN, len));
     Manage_Series(bin);
-    Init_Bitset(out, bin);
+    Init_Bitset(OUT, bin);
 
     if (IS_INTEGER(arg))
-        return out; // allocated at a size, no contents.
+        return OUT; // allocated at a size, no contents.
 
     if (IS_BINARY(arg)) {
         Size size;
         const Byte* at = VAL_BINARY_SIZE_AT(&size, arg);
         memcpy(BIN_HEAD(bin), at, (size / 8) + 1);
-        return out;
+        return OUT;
     }
 
     Set_Bits(bin, arg, true);
-    return out;
+    return OUT;
 }
 
 
 //
 //  TO_Bitset: C
 //
-Bounce TO_Bitset(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
+Bounce TO_Bitset(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg)
 {
-    return MAKE_Bitset(out, kind, nullptr, arg);
+    return MAKE_Bitset(frame_, kind, nullptr, arg);
 }
 
 

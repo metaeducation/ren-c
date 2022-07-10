@@ -33,20 +33,20 @@
 // unique behavior which might be interesting for numeric MAKEs.
 //
 Bounce MAKE_Sequence(
-    REBVAL *out,
+    Frame(*) frame_,
     enum Reb_Kind kind,
     option(const REBVAL*) parent,
     const REBVAL *arg
 ){
     if (kind == REB_TEXT or ANY_PATH_KIND(kind))  // delegate for now
-        return MAKE_Path(out, kind, parent, arg);
+        return MAKE_Path(frame_, kind, parent, arg);
 
     assert(kind == REB_TUPLE);
     if (parent)
-        fail (Error_Bad_Make_Parent(kind, unwrap(parent)));
+        return FAIL(Error_Bad_Make_Parent(kind, unwrap(parent)));
 
     if (IS_TUPLE(arg))
-        return Copy_Cell(out, arg);
+        return Copy_Cell(OUT, arg);
 
     // !!! Net lookup parses IP addresses out of `tcp://93.184.216.34` or
     // similar URL!s.  In Rebol3 these captures come back the same type
@@ -86,7 +86,7 @@ Bounce MAKE_Sequence(
         for (ep = cp; len > cast(REBLEN, ep - cp); ++ep) {
             ep = Grab_Int(ep, &n);
             if (n < 0 || n > 255)
-                fail (arg);
+                return FAIL(arg);
 
             *tp++ = cast(Byte, n);
             if (*ep != '.')
@@ -94,9 +94,9 @@ Bounce MAKE_Sequence(
         }
 
         if (len > cast(REBLEN, ep - cp))
-            fail (arg);
+            return FAIL(arg);
 
-        return Init_Tuple_Bytes(out, buf, size);
+        return Init_Tuple_Bytes(OUT, buf, size);
     }
 
     if (ANY_ARRAY(arg)) {
@@ -126,7 +126,7 @@ Bounce MAKE_Sequence(
             *vp = n;
         }
 
-        return Init_Tuple_Bytes(out, buf, len);
+        return Init_Tuple_Bytes(OUT, buf, len);
     }
 
     REBLEN alen;
@@ -149,22 +149,23 @@ Bounce MAKE_Sequence(
                 fail (arg);
             *vp++ = decoded;
         }
-        Init_Tuple_Bytes(out, buf, size);
+        Init_Tuple_Bytes(OUT, buf, size);
     }
     else if (IS_BINARY(arg)) {
         Size size;
         const Byte* at = VAL_BINARY_SIZE_AT(&size, arg);
         if (size > MAX_TUPLE)
             size = MAX_TUPLE;
-        Init_Tuple_Bytes(out, at, size);
+        Init_Tuple_Bytes(OUT, at, size);
     }
     else
-        fail (arg);
+        return FAIL(arg);
 
-    return out;
+    return OUT;
 
   bad_make:
-    fail (Error_Bad_Make(REB_TUPLE, arg));
+
+    return FAIL(Error_Bad_Make(REB_TUPLE, arg));
 }
 
 

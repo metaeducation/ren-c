@@ -205,50 +205,50 @@ DECLARE_NATIVE(poke)
 // MAKE OBJECT!--which evaluates the object body block.
 //
 Bounce MAKE_Path(
-    REBVAL *out,
+    Frame(*) frame_,
     enum Reb_Kind kind,
     option(const REBVAL*) parent,
     const REBVAL *arg
 ){
     if (parent)
-        fail (Error_Bad_Make_Parent(kind, unwrap(parent)));
+        return FAIL(Error_Bad_Make_Parent(kind, unwrap(parent)));
 
     if (not IS_BLOCK(arg))
         fail (Error_Bad_Make(kind, arg)); // "make path! 0" has no meaning
 
     Frame(*) f = Make_Frame_At(arg, EVAL_EXECUTOR_FLAG_SINGLE_STEP);
 
-    Push_Frame(out, f);
+    Push_Frame(OUT, f);
 
     StackIndex base = TOP_INDEX;
 
     while (Not_End(At_Feed(f->feed))) {
-        if (Eval_Step_Throws(out, f)) {
+        if (Eval_Step_Throws(OUT, f)) {
             Drop_Frame(f);
             return BOUNCE_THROWN;
         }
 
-        if (Is_Stale(out))
+        if (Is_Stale(OUT))
             continue;
 
-        if (Is_Nulled(out))
-            fail (out);  // !!! BLANK! is legit in paths, should null opt out?
+        if (Is_Nulled(OUT))
+            return FAIL(Error_Need_Non_Null_Raw());
 
-        Move_Cell(PUSH(), out);
+        Move_Cell(PUSH(), OUT);
         f->baseline.stack_base += 1;  // compensate for push
     }
 
-    REBVAL *p = Try_Pop_Sequence_Or_Element_Or_Nulled(out, kind, base);
+    REBVAL *p = Try_Pop_Sequence_Or_Element_Or_Nulled(OUT, kind, base);
 
     Drop_Frame_Unbalanced(f); // !!! f's stack_base got captured each loop
 
     if (not p)
-        fail (Error_Bad_Sequence_Init(out));
+        fail (Error_Bad_Sequence_Init(OUT));
 
-    if (not ANY_PATH(out))  // e.g. `make path! ['x]` giving us the WORD! `x`
-        fail (Error_Sequence_Too_Short_Raw());
+    if (not ANY_PATH(OUT))  // e.g. `make path! ['x]` giving us the WORD! `x`
+        return FAIL(Error_Sequence_Too_Short_Raw());
 
-    return out;
+    return OUT;
 }
 
 
@@ -287,7 +287,7 @@ Bounce MAKE_Path(
 //     >> to path! ^[a b c]
 //     == /[a b c]
 //
-Bounce TO_Sequence(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
+Bounce TO_Sequence(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg) {
     enum Reb_Kind arg_kind = VAL_TYPE(arg);
 
     if (IS_TEXT(arg)) {
@@ -320,18 +320,18 @@ Bounce TO_Sequence(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
         // !!! If we don't copy an array, we don't get a new form to use for
         // new bindings in lookups.  Review!
         //
-        Copy_Cell(out, arg);
-        mutable_HEART_BYTE(out) = kind;
-        return out;
+        Copy_Cell(OUT, arg);
+        mutable_HEART_BYTE(OUT) = kind;
+        return OUT;
     }
 
     if (arg_kind != REB_BLOCK) {
-        Copy_Cell(out, arg);  // move value so we can modify it
-        Dequotify(out);  // remove quotes (should TO take a noquote(Cell(*))?)
-        Plainify(out);  // remove any decorations like @ or :
-        if (not Try_Leading_Blank_Pathify(out, kind))
-            fail (Error_Bad_Sequence_Init(out));
-        return out;
+        Copy_Cell(OUT, arg);  // move value so we can modify it
+        Dequotify(OUT);  // remove quotes (should TO take a noquote(Cell(*))?)
+        Plainify(OUT);  // remove any decorations like @ or :
+        if (not Try_Leading_Blank_Pathify(OUT, kind))
+            return FAIL(Error_Bad_Sequence_Init(OUT));
+        return OUT;
     }
 
     // BLOCK! is universal container, and the only type that is converted.
@@ -340,18 +340,18 @@ Bounce TO_Sequence(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
 
     REBLEN len = VAL_LEN_AT(arg);
     if (len < 2)
-        fail (Error_Sequence_Too_Short_Raw());
+        return FAIL(Error_Sequence_Too_Short_Raw());
 
     if (len == 2) {
         Cell(const*) at = VAL_ARRAY_ITEM_AT(arg);
         if (not Try_Init_Any_Sequence_Pairlike_Core(
-            out,
+            OUT,
             kind,
             at,
             at + 1,
             VAL_SPECIFIER(arg)
         )){
-            fail (Error_Bad_Sequence_Init(out));
+            return FAIL(Error_Bad_Sequence_Init(OUT));
         }
     }
     else {
@@ -367,16 +367,16 @@ Bounce TO_Sequence(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
         Freeze_Array_Shallow(a);
         Force_Series_Managed(a);
 
-        if (not Try_Init_Any_Sequence_Arraylike(out, kind, a))
-            fail (Error_Bad_Sequence_Init(out));
+        if (not Try_Init_Any_Sequence_Arraylike(OUT, kind, a))
+            return FAIL(Error_Bad_Sequence_Init(OUT));
     }
 
-    if (VAL_TYPE(out) != kind) {
-        assert(VAL_TYPE(out) == REB_WORD);
-        fail (Error_Bad_Sequence_Init(out));
+    if (VAL_TYPE(OUT) != kind) {
+        assert(VAL_TYPE(OUT) == REB_WORD);
+        return FAIL(Error_Bad_Sequence_Init(OUT));
     }
 
-    return out;
+    return OUT;
 }
 
 

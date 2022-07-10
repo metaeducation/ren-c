@@ -389,7 +389,7 @@ inline static Bounce Native_Failure_Result(Frame(*) frame_, const void *p) {
         error = CTX(m_cast(void*, p));
         break; }
       case DETECTED_AS_CELL: {  // note: can be Is_Failure()
-        error = VAL_CONTEXT(VAL(m_cast(void*, p)));
+        error = Error_Bad_Value(VAL(p));
         break; }
       default:
         assert(false);

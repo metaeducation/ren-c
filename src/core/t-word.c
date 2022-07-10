@@ -88,7 +88,7 @@ REBINT CT_Word(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
 //  MAKE_Word: C
 //
 Bounce MAKE_Word(
-    REBVAL *out,
+    Frame(*) frame_,
     enum Reb_Kind kind,
     option(const REBVAL*) parent,
     const REBVAL *arg
@@ -103,9 +103,9 @@ Bounce MAKE_Word(
         // true since EXTRA(Binding, ...) conveys the entire bind state.
         // Rethink what it means to preserve the bits vs. not.
         //
-        Copy_Cell(out, arg);
-        mutable_HEART_BYTE(out) = kind;
-        return out;
+        Copy_Cell(OUT, arg);
+        mutable_HEART_BYTE(OUT) = kind;
+        return OUT;
     }
 
     if (ANY_STRING(arg)) {
@@ -120,10 +120,10 @@ Bounce MAKE_Word(
         Size size;
         const Byte* bp = Analyze_String_For_Scan(&size, arg, MAX_SCAN_WORD);
 
-        if (NULL == Scan_Any_Word(out, kind, bp, size))
-            fail (Error_Bad_Char_Raw(arg));
+        if (NULL == Scan_Any_Word(OUT, kind, bp, size))
+            return FAIL(Error_Bad_Char_Raw(arg));
 
-        return out;
+        return OUT;
     }
     else if (IS_ISSUE(arg)) {
         //
@@ -131,31 +131,31 @@ Bounce MAKE_Word(
         //
       as_word: {
         REBVAL *as = rebValue("as", Datatype_From_Kind(kind), arg);
-        Copy_Cell(out, as);
+        Copy_Cell(OUT, as);
         rebRelease(as);
 
-        return out;
+        return OUT;
       }
     }
     else if (IS_DATATYPE(arg)) {
-        return Init_Any_Word(out, kind, Canon_Symbol(VAL_TYPE_SYM(arg)));
+        return Init_Any_Word(OUT, kind, Canon_Symbol(VAL_TYPE_SYM(arg)));
     }
     else if (IS_LOGIC(arg)) {
         return Init_Any_Word(
-            out,
+            OUT,
             kind,
             VAL_LOGIC(arg) ? Canon(TRUE) : Canon(FALSE)
         );
     }
 
-    fail (Error_Unexpected_Type(REB_WORD, VAL_TYPE(arg)));
+    return FAIL(Error_Unexpected_Type(REB_WORD, VAL_TYPE(arg)));
 }
 
 
 //
 //  TO_Word: C
 //
-Bounce TO_Word(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
+Bounce TO_Word(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg)
 {
     // This is here to convert `to word! /a` into `a`.  It also allows
     // `to word! ////a////` and variants, because it seems interesting to try
@@ -166,7 +166,7 @@ Bounce TO_Word(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
     // a generalization of "refinement paths"
     //
     if (IS_PATH(arg) or IS_TUPLE(arg)) {
-        RESET(out);
+        RESET(OUT);
 
         DECLARE_LOCAL (temp);
 
@@ -177,20 +177,24 @@ Bounce TO_Word(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
             if (IS_BLANK(item))
                 continue;
             if (not IS_WORD(item))
-                fail ("Can't make ANY-WORD! from path unless it's one WORD!");
-            if (not Is_Void(out))
-                fail ("Can't make ANY-WORD! from path w/more than one WORD!");
-            Derelativize(out, item, VAL_SEQUENCE_SPECIFIER(arg));
+                return FAIL(
+                    "Can't make ANY-WORD! from path unless it's one WORD!"
+                );
+            if (not Is_Void(OUT))
+                return FAIL(
+                    "Can't make ANY-WORD! from path w/more than one WORD!"
+                );
+            Derelativize(OUT, item, VAL_SEQUENCE_SPECIFIER(arg));
         }
 
-        if (Is_Void(out))
-            fail ("Can't MAKE ANY-WORD! from PATH! that's all BLANK!s");
+        if (Is_Void(OUT))
+            return FAIL("Can't MAKE ANY-WORD! from PATH! that's all BLANK!s");
 
-        mutable_HEART_BYTE(out) = kind;
-        return out;
+        mutable_HEART_BYTE(OUT) = kind;
+        return OUT;
     }
 
-    return MAKE_Word(out, kind, nullptr, arg);
+    return MAKE_Word(frame_, kind, nullptr, arg);
 }
 
 

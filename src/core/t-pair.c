@@ -47,17 +47,17 @@ REBINT CT_Pair(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
 //  MAKE_Pair: C
 //
 Bounce MAKE_Pair(
-    REBVAL *out,
+    Frame(*) frame_,
     enum Reb_Kind kind,
     option(const REBVAL*) parent,
     const REBVAL *arg
 ){
     assert(kind == REB_PAIR);
     if (parent)
-        fail (Error_Bad_Make_Parent(kind, unwrap(parent)));
+        return FAIL(Error_Bad_Make_Parent(kind, unwrap(parent)));
 
     if (IS_PAIR(arg))
-        return Copy_Cell(out, arg);
+        return Copy_Cell(OUT, arg);
 
     if (IS_TEXT(arg)) {
         //
@@ -67,10 +67,10 @@ Bounce MAKE_Pair(
         const Byte* bp
             = Analyze_String_For_Scan(&size, arg, VAL_LEN_AT(arg));
 
-        if (NULL == Scan_Pair(out, bp, size))
+        if (NULL == Scan_Pair(OUT, bp, size))
             goto bad_make;
 
-        return out;
+        return OUT;
     }
 
     Cell(const*) x;
@@ -105,20 +105,20 @@ Bounce MAKE_Pair(
     else
         goto bad_make;
 
-    return Init_Pair(out, x, y);
+    return Init_Pair(OUT, x, y);
 
-  bad_make:;
+  bad_make:
 
-    fail (Error_Bad_Make(REB_PAIR, arg));
+    return FAIL(Error_Bad_Make(REB_PAIR, arg));
 }
 
 
 //
 //  TO_Pair: C
 //
-Bounce TO_Pair(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
+Bounce TO_Pair(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg)
 {
-    return MAKE_Pair(out, kind, nullptr, arg);
+    return MAKE_Pair(frame_, kind, nullptr, arg);
 }
 
 

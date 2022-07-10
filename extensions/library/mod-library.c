@@ -46,7 +46,7 @@ REBINT CT_Library(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
 //  MAKE_Library: C
 //
 Bounce MAKE_Library(
-    REBVAL *out,
+    Frame(*) frame_,
     enum Reb_Kind kind,
     option(const REBVAL*) parent,
     const REBVAL *arg
@@ -54,15 +54,15 @@ Bounce MAKE_Library(
     assert(kind == REB_CUSTOM);
 
     if (parent)
-        fail (Error_Bad_Make_Parent(kind, unwrap(parent)));
+        return FAIL(Error_Bad_Make_Parent(kind, unwrap(parent)));
 
     if (not IS_FILE(arg))
-        fail (Error_Unexpected_Type(REB_FILE, VAL_TYPE(arg)));
+        return FAIL(Error_Unexpected_Type(REB_FILE, VAL_TYPE(arg)));
 
     void *fd = Open_Library(arg);
 
     if (fd == NULL)
-        fail (arg);
+        return FAIL(arg);
 
     REBLIB *lib = Alloc_Singular(FLAG_FLAVOR(LIBRARY) | NODE_FLAG_MANAGED);
     Init_Trash(ARR_SINGLE(lib));  // !!! save name? other data?
@@ -70,19 +70,19 @@ Bounce MAKE_Library(
     lib->link.fd = fd;  // seen as shared by all instances
     node_MISC(Meta, lib) = nullptr;  // !!! build from spec, e.g. arg?
 
-    RESET_CUSTOM_CELL(out, EG_Library_Type, CELL_FLAG_FIRST_IS_NODE);
-    INIT_VAL_NODE1(out, lib);
+    RESET_CUSTOM_CELL(OUT, EG_Library_Type, CELL_FLAG_FIRST_IS_NODE);
+    INIT_VAL_NODE1(OUT, lib);
 
-    return out;
+    return OUT;
 }
 
 
 //
 //  TO_Library: C
 //
-Bounce TO_Library(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
+Bounce TO_Library(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg)
 {
-    return MAKE_Library(out, kind, nullptr, arg);
+    return MAKE_Library(frame_, kind, nullptr, arg);
 }
 
 

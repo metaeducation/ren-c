@@ -144,14 +144,14 @@ REBVAL *Init_Decimal_Bits(Cell(*) out, const Byte* bp)
 // or MAKE as a rough idea of how these rules might be followed.
 //
 Bounce MAKE_Decimal(
-    REBVAL *out,
+    Frame(*) frame_,
     enum Reb_Kind kind,
     option(const REBVAL*) parent,
     const REBVAL *arg
 ){
     assert(kind == REB_DECIMAL or kind == REB_PERCENT);
     if (parent)
-        fail (Error_Bad_Make_Parent(kind, unwrap(parent)));
+        return FAIL(Error_Bad_Make_Parent(kind, unwrap(parent)));
 
     REBDEC d;
 
@@ -172,10 +172,10 @@ Bounce MAKE_Decimal(
         Size size;
         const Byte* at = VAL_BINARY_SIZE_AT(&size, arg);
         if (size < 8)
-            fail (arg);
+            return FAIL(arg);
 
-        Init_Decimal_Bits(out, at); // makes REB_DECIMAL
-        d = VAL_DECIMAL(out);
+        Init_Decimal_Bits(OUT, at); // makes REB_DECIMAL
+        d = VAL_DECIMAL(OUT);
         break; }
 
         // !!! It's not obvious that TEXT shouldn't provide conversions; and
@@ -183,7 +183,7 @@ Bounce MAKE_Decimal(
         // TO does it as well.
         //
       case REB_TEXT:
-        return TO_Decimal(out, kind, arg);
+        return TO_Decimal(frame_, kind, arg);
 
         // !!! MAKE DECIMAL! from a PATH! ... as opposed to TO DECIMAL ...
         // will allow evaluation of arbitrary code.  This is an experiment on
@@ -229,14 +229,14 @@ Bounce MAKE_Decimal(
         Cell(const*) item = VAL_ARRAY_LEN_AT(&len, arg);
 
         if (len != 2)
-            fail (Error_Bad_Make(kind, arg));
+            return FAIL(Error_Bad_Make(kind, arg));
 
         if (IS_INTEGER(item))
             d = cast(REBDEC, VAL_INT64(item));
         else if (IS_DECIMAL(item) || IS_PERCENT(item))
             d = VAL_DECIMAL(item);
         else
-            fail (Error_Bad_Value(item));
+            return FAIL(Error_Bad_Value(item));
 
         ++item;
 
@@ -246,7 +246,7 @@ Bounce MAKE_Decimal(
         else if (IS_DECIMAL(item) || IS_PERCENT(item))
             exp = VAL_DECIMAL(item);
         else
-            fail (Error_Bad_Value(item));
+            return FAIL(Error_Bad_Value(item));
 
         while (exp >= 1) {
             //
@@ -255,7 +255,7 @@ Bounce MAKE_Decimal(
             --exp;
             d *= 10.0;
             if (!FINITE(d))
-                fail (Error_Overflow_Raw());
+                return FAIL(Error_Overflow_Raw());
         }
 
         while (exp <= -1) {
@@ -273,14 +273,15 @@ Bounce MAKE_Decimal(
 
   dont_divide_if_percent:
     if (!FINITE(d))
-        fail (Error_Overflow_Raw());
+        return FAIL(Error_Overflow_Raw());
 
-    Reset_Cell_Header_Untracked(TRACK(out), kind, CELL_MASK_NONE);
-    VAL_DECIMAL(out) = d;
-    return out;
+    Reset_Cell_Header_Untracked(TRACK(OUT), kind, CELL_MASK_NONE);
+    VAL_DECIMAL(OUT) = d;
+    return OUT;
 
   bad_make:
-    fail (Error_Bad_Make(kind, arg));
+
+    return FAIL(Error_Bad_Make(kind, arg));
 }
 
 
@@ -291,9 +292,9 @@ Bounce MAKE_Decimal(
 // conversions, with MAKE used for less obvious (e.g. make decimal [1 5]
 // giving you 100000).
 //
-Bounce TO_Decimal(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
+Bounce TO_Decimal(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg)
 {
-    assert(Is_Fresh(out));
+    assert(Is_Fresh(OUT));
     assert(kind == REB_DECIMAL or kind == REB_PERCENT);
 
     REBDEC d;
@@ -321,10 +322,10 @@ Bounce TO_Decimal(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
         const Byte* bp
             = Analyze_String_For_Scan(&size, arg, MAX_SCAN_DECIMAL);
 
-        if (NULL == Scan_Decimal(out, bp, size, kind != REB_PERCENT))
+        if (NULL == Scan_Decimal(OUT, bp, size, kind != REB_PERCENT))
             goto bad_to;
 
-        d = VAL_DECIMAL(out); // may need to divide if percent, fall through
+        d = VAL_DECIMAL(OUT); // may need to divide if percent, fall through
         break; }
 
       case REB_PATH: {  // fractions as 1/2 are an intuitive use for PATH!
@@ -342,7 +343,7 @@ Bounce TO_Decimal(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
             goto bad_to;
 
         if (VAL_INT64(denominator) == 0)
-            fail (Error_Zero_Divide_Raw());
+            return FAIL(Error_Zero_Divide_Raw());
 
         d = cast(REBDEC, VAL_INT64(numerator))
             / cast(REBDEC, VAL_INT64(denominator));
@@ -357,7 +358,7 @@ Bounce TO_Decimal(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
         // for now so people don't have to change it twice.
         //
       case REB_BINARY:
-        return MAKE_Decimal(out, kind, nullptr, arg);
+        return MAKE_Decimal(frame_, kind, nullptr, arg);
 
       default:
         goto bad_to;
@@ -367,15 +368,17 @@ Bounce TO_Decimal(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
         d /= 100.0;
 
   dont_divide_if_percent:
-    if (not FINITE(d))
-        fail (Error_Overflow_Raw());
 
-    Reset_Cell_Header_Untracked(TRACK(out), kind, CELL_MASK_NONE);
-    VAL_DECIMAL(out) = d;
-    return out;
+    if (not FINITE(d))
+        return FAIL(Error_Overflow_Raw());
+
+    Reset_Cell_Header_Untracked(TRACK(OUT), kind, CELL_MASK_NONE);
+    VAL_DECIMAL(OUT) = d;
+    return OUT;
 
   bad_to:
-    fail (Error_Bad_Cast_Raw(arg, Datatype_From_Kind(kind)));
+
+    return FAIL(Error_Bad_Cast_Raw(arg, Datatype_From_Kind(kind)));
 }
 
 

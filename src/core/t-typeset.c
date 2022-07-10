@@ -260,44 +260,45 @@ bool Add_Typeset_Bits_Core(
 //  MAKE_Typeset: C
 //
 Bounce MAKE_Typeset(
-    REBVAL *out,
+    Frame(*) frame_,
     enum Reb_Kind kind,
     option(const REBVAL*) parent,
     const REBVAL *arg
 ){
     assert(kind == REB_TYPESET);
     if (parent)
-        fail (Error_Bad_Make_Parent(kind, unwrap(parent)));
+        return FAIL(Error_Bad_Make_Parent(kind, unwrap(parent)));
 
     if (IS_TYPESET(arg))
-        return Copy_Cell(out, arg);
+        return Copy_Cell(OUT, arg);
 
     if (!IS_BLOCK(arg)) goto bad_make;
 
   blockscope {
     Cell(const*) tail;
     Cell(const*) at = VAL_ARRAY_AT(&tail, arg);
-    Init_Typeset(out, 0);
+    Init_Typeset(OUT, 0);
     Add_Typeset_Bits_Core(
-        cast_PAR(out),
+        cast_PAR(OUT),
         at,
         tail,
         VAL_SPECIFIER(arg)
     );
-    return out;
+    return OUT;
   }
 
   bad_make:
-    fail (Error_Bad_Make(REB_TYPESET, arg));
+
+    return FAIL(Error_Bad_Make(REB_TYPESET, arg));
 }
 
 
 //
 //  TO_Typeset: C
 //
-Bounce TO_Typeset(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
+Bounce TO_Typeset(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg)
 {
-    return MAKE_Typeset(out, kind, nullptr, arg);
+    return MAKE_Typeset(frame_, kind, nullptr, arg);
 }
 
 

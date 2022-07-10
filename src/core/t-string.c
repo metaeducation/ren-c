@@ -169,13 +169,13 @@ static void reverse_string(String(*) str, REBLEN index, REBLEN len)
 //  MAKE_String: C
 //
 Bounce MAKE_String(
-    REBVAL *out,
+    Frame(*) frame_,
     enum Reb_Kind kind,
     option(const REBVAL*) parent,
     const REBVAL *def
 ){
     if (parent)
-        fail (Error_Bad_Make_Parent(kind, unwrap(parent)));
+        return FAIL(Error_Bad_Make_Parent(kind, unwrap(parent)));
 
     if (IS_INTEGER(def)) {  // new string with given integer capacity
         //
@@ -188,7 +188,7 @@ Bounce MAKE_String(
         // is semantically nebulous (round up, down?) and generally bad.
         // Red continues this behavior.
         //
-        return Init_Any_String(out, kind, Make_String(Int32s(def, 0)));
+        return Init_Any_String(OUT, kind, Make_String(Int32s(def, 0)));
     }
 
     if (ANY_UTF8(def)) {  // new type for the UTF-8 data with new allocation
@@ -197,7 +197,7 @@ Bounce MAKE_String(
         const Byte* utf8 = VAL_UTF8_LEN_SIZE_AT(&len, &size, def);
         UNUSED(len);  // !!! Data already valid and checked, should leverage
         return Init_Any_String(
-            out,
+            OUT,
             kind,
             Append_UTF8_May_Fail(  // !!! Should never fail
                 nullptr,
@@ -212,7 +212,7 @@ Bounce MAKE_String(
         Size size;
         const Byte* at = VAL_BINARY_SIZE_AT(&size, def);
         return Init_Any_String(
-            out,
+            OUT,
             kind,
             Append_UTF8_May_Fail(nullptr, cs_cast(at), size, STRMODE_NO_CR)
         );
@@ -246,18 +246,19 @@ Bounce MAKE_String(
         if (i < 0 or i > cast(REBINT, VAL_LEN_AT(first)))
             goto bad_make;
 
-        return Init_Series_Cell_At(out, kind, VAL_SERIES(first), i);
+        return Init_Series_Cell_At(OUT, kind, VAL_SERIES(first), i);
     }
 
   bad_make:
-    fail (Error_Bad_Make(kind, def));
+
+    return FAIL(Error_Bad_Make(kind, def));
 }
 
 
 //
 //  TO_String: C
 //
-Bounce TO_String(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
+Bounce TO_String(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg)
 {
     if (kind == REB_ISSUE) {  // encompasses what would have been TO CHAR!
         if (IS_INTEGER(arg)) {
@@ -268,10 +269,10 @@ Bounce TO_String(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
             // more about capturing an internal implementation, that falls
             // under AS ISSUE!, which could handle multi-codepoint TUPLE! too.
             //
-            fail ("Use AS ISSUE! to convert integer codepoint to ISSUE!");
+            return FAIL("Use AS ISSUE! to convert integer codepoint to ISSUE!");
         }
         if (IS_CHAR(arg) and VAL_CHAR(arg) == 0)
-            fail (Error_Illegal_Zero_Byte_Raw());  // `#` acts as codepoint 0
+            return FAIL(Error_Illegal_Zero_Byte_Raw());  // `#` as codepoint 0
 
         // Fall through
     }
@@ -288,7 +289,7 @@ Bounce TO_String(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
         Size size;
         const Byte* at = VAL_BINARY_SIZE_AT(&size, arg);
         return Init_Any_String(
-            out,
+            OUT,
             kind,
             Append_UTF8_May_Fail(nullptr, cs_cast(at), size, STRMODE_NO_CR)
         );
@@ -304,10 +305,10 @@ Bounce TO_String(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
     // moment, it is kept as-is to avoid disruption.
     //
     if (IS_TAG(arg))
-        return MAKE_String(out, kind, nullptr, arg);
+        return MAKE_String(frame_, kind, nullptr, arg);
 
     return Init_Any_String(
-        out,
+        OUT,
         kind,
         Copy_Form_Value(arg, MOLD_FLAG_TIGHT)
     );

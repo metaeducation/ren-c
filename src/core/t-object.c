@@ -523,13 +523,13 @@ REBINT CT_Context(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
 // For now just support ACTION! (or path/word to specify an action)
 //
 Bounce MAKE_Frame(
-    REBVAL *out,
+    Frame(*) frame_,
     enum Reb_Kind kind,
     option(const REBVAL*) parent,
     const REBVAL *arg
 ){
     if (parent)
-        fail (Error_Bad_Make_Parent(kind, unwrap(parent)));
+        return FAIL(Error_Bad_Make_Parent(kind, unwrap(parent)));
 
     // MAKE FRAME! on a VARARGS! was an experiment designed before REFRAMER
     // existed, to allow writing things like REQUOTE.  It's still experimental
@@ -553,7 +553,7 @@ Bounce MAKE_Frame(
 
         bool error_on_deferred = true;
         if (Init_Frame_From_Feed_Throws(
-            out,
+            OUT,
             END,
             feed,
             error_on_deferred
@@ -561,13 +561,13 @@ Bounce MAKE_Frame(
             return BOUNCE_THROWN;
         }
 
-        return out;
+        return OUT;
     }
 
     StackIndex lowest_ordered_stackindex = TOP_INDEX;  // for refinements
 
     if (not IS_ACTION(arg))
-        fail (Error_Bad_Make(kind, arg));
+        return FAIL(Error_Bad_Make(kind, arg));
 
     Context(*) exemplar = Make_Context_For_Action(
         arg, // being used here as input (e.g. the ACTION!)
@@ -579,7 +579,7 @@ Bounce MAKE_Frame(
     // put /REFINEMENTs in refinement slots (instead of true/false/null)
     // to preserve the order of execution.
 
-    return Init_Frame(out, exemplar, VAL_ACTION_LABEL(arg));
+    return Init_Frame(OUT, exemplar, VAL_ACTION_LABEL(arg));
 }
 
 
@@ -590,10 +590,9 @@ Bounce MAKE_Frame(
 // to have an equivalent representation (an OBJECT! could be an expired frame
 // perhaps, but still would have no ACTION OF property)
 //
-Bounce TO_Frame(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
+Bounce TO_Frame(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg)
 {
-    UNUSED(out);
-    fail (Error_Bad_Make(kind, arg));
+    return FAIL(Error_Bad_Make(kind, arg));
 }
 
 
@@ -601,7 +600,7 @@ Bounce TO_Frame(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 //  MAKE_Context: C
 //
 Bounce MAKE_Context(
-    REBVAL *out,
+    Frame(*) frame_,
     enum Reb_Kind kind,
     option(const REBVAL*) parent,
     const REBVAL *arg
@@ -612,12 +611,12 @@ Bounce MAKE_Context(
 
     if (kind == REB_MODULE) {
         if (not Is_Blackhole(arg))
-            fail ("Currently only (MAKE MODULE! #) is allowed.  Review.");
+            return FAIL("Currently only (MAKE MODULE! #) is allowed");
 
         assert(not parent);
 
         Context(*) ctx = Alloc_Context_Core(REB_MODULE, 1, NODE_FLAG_MANAGED);
-        return Init_Context_Cell(out, REB_MODULE, ctx);
+        return Init_Context_Cell(OUT, REB_MODULE, ctx);
     }
 
     option(Context(*)) parent_ctx = parent
@@ -634,7 +633,7 @@ Bounce MAKE_Context(
             tail,
             parent_ctx
         );
-        Init_Context_Cell(out, kind, ctx); // GC guards it
+        Init_Context_Cell(OUT, kind, ctx); // GC guards it
 
         DECLARE_LOCAL (virtual_arg);
         Copy_Cell(virtual_arg, arg);
@@ -650,7 +649,7 @@ Bounce MAKE_Context(
         if (Do_Any_Array_At_Throws(dummy, virtual_arg, SPECIFIED))
             return BOUNCE_THROWN;
 
-        return out;
+        return OUT;
     }
 
     // `make object! 10` - currently not prohibited for any context type
@@ -663,26 +662,26 @@ Bounce MAKE_Context(
             parent_ctx
         );
 
-        return Init_Context_Cell(out, kind, context);
+        return Init_Context_Cell(OUT, kind, context);
     }
 
     if (parent)
-        fail (Error_Bad_Make_Parent(kind, unwrap(parent)));
+        return FAIL(Error_Bad_Make_Parent(kind, unwrap(parent)));
 
     // make object! map!
     if (IS_MAP(arg)) {
         Context(*) c = Alloc_Context_From_Map(VAL_MAP(arg));
-        return Init_Context_Cell(out, kind, c);
+        return Init_Context_Cell(OUT, kind, c);
     }
 
-    fail (Error_Bad_Make(kind, arg));
+    return FAIL(Error_Bad_Make(kind, arg));
 }
 
 
 //
 //  TO_Context: C
 //
-Bounce TO_Context(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
+Bounce TO_Context(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg)
 {
     // Other context kinds (FRAME!, ERROR!, PORT!) have their own hooks.
     //
@@ -693,10 +692,10 @@ Bounce TO_Context(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
         // !!! Contexts hold canon values now that are typed, this init
         // will assert--a TO conversion would thus need to copy the varlist
         //
-        return Init_Object(out, VAL_CONTEXT(arg));
+        return Init_Object(OUT, VAL_CONTEXT(arg));
     }
 
-    fail (Error_Bad_Make(kind, arg));
+    return FAIL(Error_Bad_Make(kind, arg));
 }
 
 

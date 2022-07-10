@@ -470,13 +470,13 @@ bool Make_Vector_Spec(
 //
 //  TO_Vector: C
 //
-Bounce TO_Vector(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
+Bounce TO_Vector(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg)
 {
     if (IS_BLOCK(arg)) {
-        if (Make_Vector_Spec(out, arg, VAL_SPECIFIER(arg)))
-            return out;
+        if (Make_Vector_Spec(OUT, arg, VAL_SPECIFIER(arg)))
+            return OUT;
     }
-    fail (Error_Bad_Make(kind, arg));
+    return FAIL(Error_Bad_Make(kind, arg));
 }
 
 
@@ -484,13 +484,13 @@ Bounce TO_Vector(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 //  MAKE_Vector: C
 //
 Bounce MAKE_Vector(
-    REBVAL *out,
+    Frame(*) frame_,
     enum Reb_Kind kind,
     option(const REBVAL*) parent,
     const REBVAL *arg
 ){
     if (parent)
-        fail (Error_Bad_Make_Parent(kind, unwrap(parent)));
+        return FAIL(Error_Bad_Make_Parent(kind, unwrap(parent)));
 
     if (IS_INTEGER(arg) or IS_DECIMAL(arg)) {  // e.g. `make vector! 100`
         REBINT len = Int32s(arg, 0);
@@ -505,13 +505,14 @@ Bounce MAKE_Vector(
 
         const bool sign = true;
         const bool integral = true;
-        return Init_Vector(out, bin, sign, integral, bitsize);
+        return Init_Vector(OUT, bin, sign, integral, bitsize);
     }
 
-    return TO_Vector(out, kind, arg);
+    return TO_Vector(frame_, kind, arg);
 
-  bad_make:;
-    fail (Error_Bad_Make(kind, arg));
+  bad_make:
+
+    return FAIL(Error_Bad_Make(kind, arg));
 }
 
 

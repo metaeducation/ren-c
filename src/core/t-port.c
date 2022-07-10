@@ -44,41 +44,41 @@ REBINT CT_Port(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
 // function stored in the system/intrinsic object.
 //
 Bounce MAKE_Port(
-    REBVAL *out,
+    Frame(*) frame_,
     enum Reb_Kind kind,
     option(const REBVAL*) parent,
     const REBVAL *arg
 ){
     assert(kind == REB_PORT);
     if (parent)
-        fail (Error_Bad_Make_Parent(kind, unwrap(parent)));
+        return FAIL(Error_Bad_Make_Parent(kind, unwrap(parent)));
 
     assert(not Is_Nulled(arg)); // API would require NULLIFY_NULLED
 
     if (rebRunThrows(
-        out,  // <-- output cell
+        OUT,  // <-- output cell
         SysUtil(MAKE_PORT_P), rebQ(arg)
     )){
         fail (Error_No_Catch_For_Throw(TOP_FRAME));
     }
 
-    if (not IS_PORT(out))  // should always create a port
-        fail (out);
+    if (not IS_PORT(OUT))  // should always create a port
+        return FAIL(OUT);
 
-    return out;
+    return OUT;
 }
 
 
 //
 //  TO_Port: C
 //
-Bounce TO_Port(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
+Bounce TO_Port(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg)
 {
     assert(kind == REB_PORT);
     UNUSED(kind);
 
-    if (!IS_OBJECT(arg))
-        fail (Error_Bad_Make(REB_PORT, arg));
+    if (not IS_OBJECT(arg))
+        return FAIL(Error_Bad_Make(REB_PORT, arg));
 
     // !!! cannot convert TO a PORT! without copying the whole context...
     // which raises the question of why convert an object to a port,
@@ -89,7 +89,7 @@ Bounce TO_Port(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
     REBVAL *rootvar = CTX_ROOTVAR(context);
     mutable_HEART_BYTE(rootvar) = REB_PORT;
 
-    return Init_Port(out, context);
+    return Init_Port(OUT, context);
 }
 
 

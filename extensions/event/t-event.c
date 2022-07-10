@@ -309,7 +309,10 @@ static REBVAL *Get_Event_Var(
         if (VAL_EVENT_KEYSYM(v) != SYM_0)
             return Init_Word(out, Canon_Symbol(VAL_EVENT_KEYSYM(v)));
 
-        return Init_Char_May_Fail(out, VAL_EVENT_KEYCODE(v)); }
+        Context(*) error = Maybe_Init_Char(out, VAL_EVENT_KEYCODE(v));
+        if (error)
+            fail (error);
+        return SPECIFIC(out); }
 
       case SYM_FLAGS:
         if (
@@ -369,7 +372,7 @@ static REBVAL *Get_Event_Var(
 //  MAKE_Event: C
 //
 Bounce MAKE_Event(
-    REBVAL *out,
+    Frame(*) frame_,
     enum Reb_Kind kind,
     option(const REBVAL*) parent,
     const REBVAL *arg
@@ -381,35 +384,34 @@ Bounce MAKE_Event(
         if (not IS_BLOCK(arg))
             fail (Error_Bad_Make(REB_EVENT, arg));
 
-        Copy_Cell(out, unwrap(parent));  // !!! "shallow" event clone
-        Set_Event_Vars(out, arg, VAL_SPECIFIER(arg));
-        return out;
+        Copy_Cell(OUT, unwrap(parent));  // !!! "shallow" event clone
+        Set_Event_Vars(OUT, arg, VAL_SPECIFIER(arg));
+        return OUT;
     }
 
     if (not IS_BLOCK(arg))
         fail (Error_Unexpected_Type(REB_EVENT, VAL_TYPE(arg)));
 
-    Reset_Cell_Header_Untracked(TRACK(out), REB_EVENT, CELL_FLAG_FIRST_IS_NODE);
-    INIT_VAL_NODE1(out, nullptr);
-    SET_VAL_EVENT_TYPE(out, SYM_NONE);  // SYM_0 shouldn't be used
-    mutable_VAL_EVENT_FLAGS(out) = EVF_MASK_NONE;
-    mutable_VAL_EVENT_MODEL(out) = EVM_PORT;  // ?
+    Reset_Cell_Header_Untracked(TRACK(OUT), REB_EVENT, CELL_FLAG_FIRST_IS_NODE);
+    INIT_VAL_NODE1(OUT, nullptr);
+    SET_VAL_EVENT_TYPE(OUT, SYM_NONE);  // SYM_0 shouldn't be used
+    mutable_VAL_EVENT_FLAGS(OUT) = EVF_MASK_NONE;
+    mutable_VAL_EVENT_MODEL(OUT) = EVM_PORT;  // ?
 
-    Set_Event_Vars(out, arg, VAL_SPECIFIER(arg));
-    return out;
+    Set_Event_Vars(OUT, arg, VAL_SPECIFIER(arg));
+    return OUT;
 }
 
 
 //
 //  TO_Event: C
 //
-Bounce TO_Event(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
+Bounce TO_Event(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg)
 {
     assert(kind == REB_EVENT);
     UNUSED(kind);
 
-    UNUSED(out);
-    fail (arg);
+    return FAIL(arg);
 }
 
 

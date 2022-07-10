@@ -1913,8 +1913,12 @@ DECLARE_NATIVE(as)
         goto bad_cast;
 
       case REB_ISSUE: {
-        if (IS_INTEGER(v))
-            return Init_Char_May_Fail(OUT, VAL_UINT32(v));
+        if (IS_INTEGER(v)) {
+            Context(*) error = Maybe_Init_Char(OUT, VAL_UINT32(v));
+            if (error)
+                return FAIL(error);
+            return OUT;
+        }
 
         if (ANY_STRING(v)) {
             REBLEN len;

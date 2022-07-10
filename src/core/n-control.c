@@ -479,10 +479,10 @@ DECLARE_NATIVE(match)
         break;
 
       case REB_BLOCK: {
-        Bounce r = MAKE_Typeset(SPARE, REB_TYPESET, nullptr, test);
+        Bounce r = MAKE_Typeset(frame_, REB_TYPESET, nullptr, test);
         if (r == BOUNCE_THROWN)
             return THROWN;
-        test = SPARE;
+        test = Move_Cell(SPARE, OUT);;
         goto test_is_typeset; }
 
       case REB_TYPESET:

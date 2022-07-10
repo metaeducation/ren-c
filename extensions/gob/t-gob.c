@@ -773,7 +773,7 @@ void Extend_Gob_Core(REBGOB *gob, const REBVAL *arg) {
 //  MAKE_Gob: C
 //
 Bounce MAKE_Gob(
-    REBVAL *out,
+    Frame(*) frame_,
     enum Reb_Kind kind,
     option(const REBVAL*) parent,
     const REBVAL *arg
@@ -785,7 +785,7 @@ Bounce MAKE_Gob(
         REBGOB *gob = Make_Gob();
         Extend_Gob_Core(gob, arg);
         Manage_Series(gob);
-        return Init_Gob(out, gob);
+        return Init_Gob(OUT, gob);
     }
 
     if (parent) {
@@ -804,7 +804,7 @@ Bounce MAKE_Gob(
         Init_Blank(ARR_AT(gob, IDX_GOB_PANE));
         SET_GOB_PARENT(gob, nullptr);
         Extend_Gob_Core(gob, arg);
-        return Init_Gob(out, gob);
+        return Init_Gob(OUT, gob);
     }
 
     // !!! Previously a parent was allowed here, but completely overwritten
@@ -814,21 +814,19 @@ Bounce MAKE_Gob(
     Init_Blank(GOB_PANE_VALUE(gob));
     SET_GOB_PARENT(gob, nullptr);
     Manage_Series(gob);
-    return Init_Gob(out, gob);
+    return Init_Gob(OUT, gob);
 }
 
 
 //
 //  TO_Gob: C
 //
-Bounce TO_Gob(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
+Bounce TO_Gob(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg)
 {
     assert(kind == REB_CUSTOM);
     UNUSED(kind);
 
-    UNUSED(out);
-
-    fail (arg);
+    return FAIL(arg);
 }
 
 
