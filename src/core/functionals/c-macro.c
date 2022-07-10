@@ -97,6 +97,9 @@ Bounce Macro_Dispatcher(Frame(*) f)
 {
     Frame(*) frame_ = f;  // for RETURN macros
 
+    if (Get_Action_Flag(FRM_PHASE(frame_), ENFIXED))
+        fail ("ENFIX MACRO not yet supported");
+
     Action(*) phase = FRM_PHASE(f);
     Array(*) details = ACT_DETAILS(phase);
     Cell(*) body = ARR_AT(details, IDX_DETAILS_1);  // code to run
@@ -140,7 +143,13 @@ Bounce Macro_Dispatcher(Frame(*) f)
 
     Splice_Block_Into_Feed(f->feed, SPARE);
 
-    return VOID;
+    Frame(*) reeval_frame = Make_Frame(
+        f->feed,
+        EVAL_EXECUTOR_FLAG_SINGLE_STEP  // inherit?
+    );
+
+    Push_Frame(OUT, reeval_frame);
+    return DELEGATE_SUBFRAME(reeval_frame);
 }
 
 
@@ -183,7 +192,7 @@ DECLARE_NATIVE(macro)
 //
 //  {Inject an array of content into the execution stream, or single value}
 //
-//      return: <void>
+//      return: [<opt> <void> any-value!]
 //      splice "If quoted single value, if blank no insertion (e.g. invisible)"
 //          [blank! block! quoted!]
 //  ]
@@ -193,10 +202,10 @@ DECLARE_NATIVE(inline)
     INCLUDE_PARAMS_OF_INLINE;
 
     REBVAL *splice = ARG(splice);
-    if (IS_BLANK(splice))
-        return VOID;  // do nothing, just return invisibly
-
-    if (IS_QUOTED(splice)) {
+    if (IS_BLANK(splice)) {
+        // do nothing, just return invisibly
+    }
+    else if (IS_QUOTED(splice)) {
         //
         // This could probably be done more efficiently, but for now just
         // turn it into a block.
@@ -204,10 +213,17 @@ DECLARE_NATIVE(inline)
         Array(*) a = Alloc_Singular(SERIES_FLAGS_NONE);
         Unquotify(Move_Cell(ARR_SINGLE(a), splice), 1);
         Init_Block(splice, a);
+        Splice_Block_Into_Feed(frame_->feed, ARG(splice));
+    }
+    else {
+        assert(IS_BLOCK(splice));
+        Splice_Block_Into_Feed(frame_->feed, ARG(splice));
     }
 
-    assert(IS_BLOCK(splice));
-    Splice_Block_Into_Feed(frame_->feed, ARG(splice));
-
-    return VOID;
+    Frame(*) reeval_frame = Make_Frame(
+        frame_->feed,
+        EVAL_EXECUTOR_FLAG_SINGLE_STEP  // inherit?
+    );
+    Push_Frame(OUT, reeval_frame);
+    return DELEGATE_SUBFRAME(reeval_frame);
 }

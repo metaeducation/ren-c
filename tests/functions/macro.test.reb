@@ -16,10 +16,16 @@
 (
     m: macro [return: [block!] x] [return [append x ^ first]]
     [1 2 3 d] = m [1 2 3] [d e f]
-)(
-    m: enfix macro [discard] [[+ 2]]  ; !!! discard must be present ATM
-    1 m = 3
 )
+
+; !!! Macros are sketchy in terms of the implementation.  It's possible to do
+; them enfixedly, but there are a number of sanity checking asserts that are
+; blocking it at this time.  The asserts are more valuable than the feature,
+; so it's on hold until things can be clarified more
+;
+;    m: enfix macro [discard] [[+ 2]]  ; !!! discard needed ATM
+;    1 m = 3
+
 
 ; INLINE is a variant of macro for putting code directly into the feed
 ; It accepts BLOCK! (splice contents), QUOTED! (splice single value) or just
