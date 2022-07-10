@@ -142,11 +142,11 @@ DECLARE_NATIVE(reduce)
 
     Decay_If_Isotope(OUT);
 
-    if (Is_Nulled(OUT))
-        return FAIL(Error_Need_Non_Null_Raw());  // error enables e.g. CURTAIL
-
     if (Is_Isotope(OUT))
         return FAIL(Error_Bad_Isotope(OUT));
+
+    if (Is_Nulled(OUT))
+        return FAIL(Error_Need_Non_Null_Raw());  // error enables e.g. CURTAIL
 
     Move_Cell(PUSH(), OUT);
     SUBFRAME->baseline.stack_base += 1;  // subframe must be adjusted, see [3]
