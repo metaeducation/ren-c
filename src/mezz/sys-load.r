@@ -158,29 +158,34 @@ load-header: function [
 
     let binary
     if true [  ; was `if key = 'REBOL`, how was that ever not true?
-        ; regular script, binary or script encoded compression supported
-        case [
-            find try hdr.options just compress [
-                rest: any [
-                    attempt [
-                        ; Raw bits.  whitespace *could* be tolerated; if
-                        ; you know the kind of compression and are looking
-                        ; for its signature (gzip is 0x1f8b)
-                        ;
-                        gunzip/part rest end
-                    ]
-                    attempt [
-                        ; BINARY! literal ("'SCRIPT encoded").  Since it
-                        ; uses transcode, leading whitespace and comments
-                        ; are tolerated before the literal.
-                        ;
-                        [binary rest]: transcode/file/line rest file 'line
-                        gunzip binary
-                    ]
-                ] else [
-                    return 'bad-compress
+        ;
+        ; !!! R3-Alpha apparently used a very bad heuristic of attempting to
+        ; decompress garbage (likely asking for a very big memory allocation
+        ; and failing), and trapped it to see if it failed.  It did those
+        ; traps with ATTEMPT.  ATTEMPT no longer glosses over such things.
+        ;
+        ; This feature needs redesign if it's to be kept, but switching it
+        ; to use TRAP with the bad idea for now.
+        ;
+        if find try hdr.options just compress [
+            rest: catch [
+                trap [
+                    ; Raw bits.  whitespace *could* be tolerated; if
+                    ; you know the kind of compression and are looking
+                    ; for its signature (gzip is 0x1f8b)
+                    ;
+                    throw gunzip/part rest end
                 ]
-            ]  ; else assumed not compressed
+                trap [
+                    ; BINARY! literal ("'SCRIPT encoded").  Since it
+                    ; uses transcode, leading whitespace and comments
+                    ; are tolerated before the literal.
+                    ;
+                    [binary rest]: transcode/file/line rest file 'line
+                    throw gunzip binary
+                ]
+                return 'bad-compress
+            ]
         ]
     ] else [
         ; block-embedded script, only script compression
