@@ -2079,10 +2079,8 @@ Bounce Scanner_Executor(Frame(*) f) {
 
  child_array_scanned: {  /////////////////////////////////////////////////////
 
-        if (Is_Failure(OUT)) {
-            Drop_Frame(SUBFRAME);  // could also return FAIL(VAL_CONTEXT(OUT))
-            return OUT;
-        }
+        if (Is_Failure(OUT))
+            goto handle_failure;
 
         Flags flags = NODE_FLAG_MANAGED;
         if (Get_Executor_Flag(SCAN, SUBFRAME, NEWLINE_PENDING))
@@ -2368,10 +2366,8 @@ Bounce Scanner_Executor(Frame(*) f) {
 
   construct_scan_to_stack_finished: {  ///////////////////////////////////////
 
-        if (Is_Failure(OUT)) {
-            Drop_Frame(SUBFRAME);  // could also return FAIL(VAL_CONTEXT(OUT))
-            return OUT;
-        }
+        if (Is_Failure(OUT))
+            goto handle_failure;
 
         Flags flags = NODE_FLAG_MANAGED;
         if (Get_Executor_Flag(SCAN, f, NEWLINE_PENDING))
@@ -2861,9 +2857,9 @@ Bounce Scanner_Executor(Frame(*) f) {
         goto done;
 
     goto loop;
-  }
 
-  done: {
+} done: {  ///////////////////////////////////////////////////////////////////
+
     Drop_Mold_If_Pushed(mo);
 
     assert(level->quotes_pending == 0);
@@ -2872,8 +2868,18 @@ Bounce Scanner_Executor(Frame(*) f) {
     // Note: ss->newline_pending may be true; used for ARRAY_NEWLINE_AT_TAIL
 
     return NONE;
-  }
-}
+
+} handle_failure: {  /////////////////////////////////////////////////////////
+
+    assert(Is_Failure(OUT));
+
+    if (Get_Executor_Flag(SCAN, f, KEEP_STACK_ON_FAILURE))
+        Drop_Frame_Unbalanced(SUBFRAME);
+    else
+        Drop_Frame(SUBFRAME);  // could `return FAIL(VAL_CONTEXT(OUT))`
+
+    return OUT;
+}}
 
 
 //
@@ -3089,6 +3095,8 @@ DECLARE_NATIVE(transcode)
         | FRAME_FLAG_ALLOCATED_FEED;
     if (WANTED(next))
         flags |= SCAN_EXECUTOR_FLAG_JUST_ONCE;
+    if (WANTED(relax))
+        flags |= SCAN_EXECUTOR_FLAG_KEEP_STACK_ON_FAILURE;
 
     Frame(*) subframe = Make_Frame(feed, flags);
     subframe->executor = &Scanner_Executor;
@@ -3111,11 +3119,6 @@ DECLARE_NATIVE(transcode)
 
 } scan_to_stack_maybe_failed: {  /////////////////////////////////////////////
 
-    if (Is_Failure(OUT)) {
-        Drop_Frame(SUBFRAME);  // could FAIL(VAL_CONTEXT(OUT)) instead
-        return OUT;
-    }
-
     // If the source data bytes are "1" then the scanner will push INTEGER! 1
     // if the source data is "[1]" then the scanner will push BLOCK! [1]
     //
@@ -3127,7 +3130,16 @@ DECLARE_NATIVE(transcode)
         // better implementation empowered by stackless.  Say it succeeded by
         // returning NULL, but if there's an error it will not be intercepted.
         //
-        Init_Nulled(ARG(relax));
+        if (Is_Failure(OUT)) {
+            Reify_Failure(OUT);
+            Move_Cell(ARG(relax), OUT);
+        }
+        else
+            Init_Nulled(ARG(relax));
+    }
+    else if (Is_Failure(OUT)) {
+        Drop_Frame(SUBFRAME);  // could FAIL(VAL_CONTEXT(OUT)) instead
+        return OUT;
     }
 
     if (WANTED(next)) {
