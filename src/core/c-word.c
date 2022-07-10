@@ -283,7 +283,12 @@ Symbol(const*) Intern_UTF8_Managed_Core(
     // we only run this the first time a symbol is interned.
     //
   blockscope {
-    for (REBLEN i = 0; i < size; ++i) {
+    if (GET_LEX_CLASS(utf8[0]) == LEX_CLASS_NUMBER) {  // |1| is a WORD!
+        Set_Subclass_Flag(SYMBOL, s, ESCAPE_PLAIN);
+        Set_Subclass_Flag(SYMBOL, s, ESCAPE_WITH_SIGIL);
+        Set_Subclass_Flag(SYMBOL, s, ESCAPE_IN_SEQUENCE);
+    }
+    else for (REBLEN i = 0; i < size; ++i) {
         if (utf8[i] == ' ') {
             Set_Subclass_Flag(SYMBOL, s, ESCAPE_PLAIN);
             Set_Subclass_Flag(SYMBOL, s, ESCAPE_WITH_SIGIL);

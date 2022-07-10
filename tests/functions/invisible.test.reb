@@ -118,6 +118,15 @@
 ;
 ; Keeping as a test of the variadic feature it exercised.
 [
+    (
+        weird: [|1|]
+        did all [
+            word? first weird
+            "1" = as text! first weird
+            "[|1|]" = mold weird
+        ]
+    )
+
     (|1|: lambda [
         {Barrier that's willing to only run one expression after it}
 
