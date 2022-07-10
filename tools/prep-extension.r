@@ -209,7 +209,7 @@ if use-librebol [
             copy proto-name to ":"
         ]
         proto-name: to-c-name proto-name
-        e1/emit 'info {
+        e1/emit [info u-m-name] {
             #define ${U-M-NAME}_INCLUDE_PARAMS_OF_${PROTO-NAME} \
                 (void)frame_
         }
@@ -261,7 +261,7 @@ else [
     }
 ]
 
-e1/emit {
+e1/emit 'dispatcher-forward-decls {
     /*
      * Forward-declare DECLARE_NATIVE() dispatcher prototypes
      */
