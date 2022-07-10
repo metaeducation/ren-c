@@ -259,7 +259,8 @@
     ("%%" = as text! match get-word! first [:%%])
     ("%%" = as text! match meta-word! first [^%%])
 
-    ("|%%|/foo" = form match path! '|%%|/foo)
+    ("|%%|/foo" = mold match path! '|%%|/foo)
+    ("%%/foo" = form match path! '|%%|/foo)
 ]
 
 [
