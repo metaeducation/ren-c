@@ -10,41 +10,41 @@
 (
     res: ~
     did all [
-        'a == uparse [a] [res: <any>]
+        'a == parse [a] [res: <any>]
         res = 'a
     ]
 )
 
 [
-    (didn't uparse [a a] [1 <any>])
-    ('a == uparse [a a] [2 <any>])
-    (didn't uparse [a a] [3 <any>])
+    (didn't parse [a a] [1 <any>])
+    ('a == parse [a a] [2 <any>])
+    (didn't parse [a a] [3 <any>])
 
-    (didn't uparse [a a] [repeat ([1 1]) <any>])
-    ('a == uparse [a a] [repeat ([1 2]) <any>])
-    ('a == uparse [a a] [repeat ([2 2]) <any>])
-    ('a == uparse [a a] [repeat ([2 3]) <any>])
-    (didn't uparse [a a] [repeat ([3 4]) <any>])
+    (didn't parse [a a] [repeat ([1 1]) <any>])
+    ('a == parse [a a] [repeat ([1 2]) <any>])
+    ('a == parse [a a] [repeat ([2 2]) <any>])
+    ('a == parse [a a] [repeat ([2 3]) <any>])
+    (didn't parse [a a] [repeat ([3 4]) <any>])
 
-    ('a == uparse [a] [<any>])
-    ('b == uparse [a b] [<any> <any>])
-    ('b == uparse [a b] [<any> [<any>]])
-    ('b == uparse [a b] [[<any>] [<any>]])
+    ('a == parse [a] [<any>])
+    ('b == parse [a b] [<any> <any>])
+    ('b == parse [a b] [<any> [<any>]])
+    ('b == parse [a b] [[<any>] [<any>]])
 ]
 
 [
-    (didn't uparse "aa" [1 <any>])
-    (#a == uparse "aa" [2 <any>])
-    (didn't uparse "aa" [3 <any>])
+    (didn't parse "aa" [1 <any>])
+    (#a == parse "aa" [2 <any>])
+    (didn't parse "aa" [3 <any>])
 
-    (didn't uparse "aa" [repeat ([1 1]) <any>])
-    (#a == uparse "aa" [repeat ([1 2]) <any>])
-    (#a == uparse "aa" [repeat ([2 2]) <any>])
-    (#a == uparse "aa" [repeat ([2 3]) <any>])
-    (didn't uparse "aa" [repeat ([3 4]) <any>])
+    (didn't parse "aa" [repeat ([1 1]) <any>])
+    (#a == parse "aa" [repeat ([1 2]) <any>])
+    (#a == parse "aa" [repeat ([2 2]) <any>])
+    (#a == parse "aa" [repeat ([2 3]) <any>])
+    (didn't parse "aa" [repeat ([3 4]) <any>])
 
-    (#a == uparse "a" [<any>])
-    (#b == uparse "ab" [<any> <any>])
-    (#b == uparse "ab" [<any> [<any>]])
-    (#b == uparse "ab" [[<any>] [<any>]])
+    (#a == parse "a" [<any>])
+    (#b == parse "ab" [<any> <any>])
+    (#b == parse "ab" [<any> [<any>]])
+    (#b == parse "ab" [[<any>] [<any>]])
 ]

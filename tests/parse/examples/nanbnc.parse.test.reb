@@ -10,10 +10,10 @@
         true
     )
 
-    (#c = uparse "abc" nanbnc)
-    (#c = uparse "aabbcc" nanbnc)
-    (#c = uparse "aaabbbccc" nanbnc)
-    (didn't uparse "abbc" nanbnc)
-    (didn't uparse "abcc" nanbnc)
-    (didn't uparse "aabbc" nanbnc)
+    (#c = parse "abc" nanbnc)
+    (#c = parse "aabbcc" nanbnc)
+    (#c = parse "aaabbbccc" nanbnc)
+    (didn't parse "abbc" nanbnc)
+    (didn't parse "abcc" nanbnc)
+    (didn't parse "aabbc" nanbnc)
 ]

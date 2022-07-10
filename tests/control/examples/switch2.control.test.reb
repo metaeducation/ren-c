@@ -18,7 +18,7 @@ switch2: func [
     result': @void
     more: true
 
-    uparse cases [cycle [
+    parse cases [cycle [
         uwhile :(more) [
             ; Find next condition clause, or break loop if we hit => or end
             ;

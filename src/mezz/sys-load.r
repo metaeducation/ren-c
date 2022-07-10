@@ -326,7 +326,7 @@ adjust-url-for-raw: func [
 ][
     let text: to text! url  ; URL! may become immutable, try thinking ahead
 
-    uparse text [
+    parse text [
         "http" opt "s" "://gitlab.com/"
         thru "/"  ; user name
         thru "/"  ; repository name
@@ -339,7 +339,7 @@ adjust-url-for-raw: func [
 
     ; Adjust a decorated GitHub UI to https://raw.githubusercontent.com
     let start
-    uparse text [
+    parse text [
         "http" opt "s" "://github.com/"
         start: <here>
         thru "/"  ; user name
@@ -353,7 +353,7 @@ adjust-url-for-raw: func [
     ]
 
     ; Adjust a Github Gist URL to https://gist.github.com/.../raw/
-    uparse text [
+    parse text [
         "http" opt "s" "://gist.github.com/"
         start: <here>
         thru "/"  ; user name

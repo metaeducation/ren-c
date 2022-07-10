@@ -9,14 +9,14 @@
 ; has semantics in UPARSE.  For any to receive it literally and do its own form
 ; of processing, it has to be a rule product.
 
-("b" = uparse "ab" [some any (["a" "b"])])
-(null = uparse "abc" [some any (["a" "b"])])
+("b" = parse "ab" [some any (["a" "b"])])
+(null = parse "abc" [some any (["a" "b"])])
 
-(3 = uparse ["foo" <baz> 3] [some any ([tag! integer! text!])])
+(3 = parse ["foo" <baz> 3] [some any ([tag! integer! text!])])
 
 ; Alternative notation: use a THE-BLOCK!
 
-("b" = uparse "ab" [some any @["a" "b"]])
-(null = uparse "abc" [some any @["a" "b"]])
+("b" = parse "ab" [some any @["a" "b"]])
+(null = parse "abc" [some any @["a" "b"]])
 
-(3 = uparse ["foo" <baz> 3] [some any @[tag! integer! text!]])
+(3 = parse ["foo" <baz> 3] [some any @[tag! integer! text!]])

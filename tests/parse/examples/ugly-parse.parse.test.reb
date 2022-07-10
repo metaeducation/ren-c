@@ -14,7 +14,7 @@
     ugly-combinators.(group!): :default-combinators.(get-group!)
     ugly-combinators.(get-group!): null
 
-    ugly-parse: specialize :uparse [combinators: ugly-combinators]
+    ugly-parse: specialize :parse [combinators: ugly-combinators]
 
     ugly-combinators.discard: combinator [
         return: "Don't return anything" [<void>]

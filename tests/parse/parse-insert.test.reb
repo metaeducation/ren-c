@@ -8,7 +8,7 @@
     t: {----------------------------------------------------}
     cfor n 2 50 1 [
         sub: copy/part s n
-        uparse sub [some [
+        parse sub [some [
             remove <any>
             insert ("-")
         ]]
@@ -19,11 +19,11 @@
 
 [https://github.com/red/red/issues/3357
     (did all [
-        '~inserted~ == meta uparse x3357: [] [insert ^('foo)]
+        '~inserted~ == meta parse x3357: [] [insert ^('foo)]
         x3357 = [foo]
     ])
     (did all [
-        '~inserted~ == meta uparse x3357b: [] [insert ^(the foo)]
+        '~inserted~ == meta parse x3357b: [] [insert ^(the foo)]
         x3357b = [foo]
     ])
 ]
@@ -31,32 +31,32 @@
 ; Block insertion tests from %parse-test.red
 [
     (did all [
-        '~inserted~ == meta uparse blk: [] [insert (1)]
+        '~inserted~ == meta parse blk: [] [insert (1)]
         blk = [1]
     ])
     (did all [
-        'a == uparse blk: [a a] [<any> insert ^(the b) <any>]
+        'a == parse blk: [a a] [<any> insert ^(the b) <any>]
         blk = [a b a]
     ])
     (did all [
-        '~removed~ == meta uparse blk: [] [
+        '~removed~ == meta parse blk: [] [
             p: <here> insert ^(the a) seek (p) remove 'a
         ]
         blk = []
     ])
     (did all [
-        '~inserted~ == meta uparse blk: [] [insert ([a b])]
+        '~inserted~ == meta parse blk: [] [insert ([a b])]
         blk = [a b]
     ])
     (did all [
-        '~inserted~ == meta uparse blk: [] [insert ^([a b])]
+        '~inserted~ == meta parse blk: [] [insert ^([a b])]
         blk = [[a b]]
     ])
     (
         series: [a b c]
         letter: 'x
         did all [
-            'c == uparse series [insert ^(letter) 'a 'b 'c]
+            'c == parse series [insert ^(letter) 'a 'b 'c]
             series == [x a b c]
         ]
     )
@@ -64,7 +64,7 @@
         series: [a b c]
         letters: [x y z]
         did all [
-            'c == uparse series ['a 'b insert (letters) insert ^(letters) 'c]
+            'c == parse series ['a 'b insert (letters) insert ^(letters) 'c]
             series == [a b x y z [x y z] c]
         ]
     )
@@ -72,7 +72,7 @@
         series: [b]
         digit: 2
         did all [
-            'b == uparse series [insert (digit) 'b]
+            'b == parse series [insert (digit) 'b]
             series == [2 b]
         ]
     )
@@ -82,21 +82,21 @@
 ; TEXT! insertion tests from %parse-test.red
 [
     (did all [
-        '~inserted~ == meta uparse str: "" [insert (#1)]
+        '~inserted~ == meta parse str: "" [insert (#1)]
         str = "1"
     ])
     (did all [
-        #a == uparse str: "aa" [<any> insert (#b) <any>]
+        #a == parse str: "aa" [<any> insert (#b) <any>]
         str = "aba"
     ])
     (did all [
-        '~removed~ == meta uparse str: "" [
+        '~removed~ == meta parse str: "" [
             p: <here> insert (#a) seek (p) remove #a
         ]
         str = ""
     ])
     (did all [
-        '~removed~ == meta uparse str: "test" [
+        '~removed~ == meta parse str: "test" [
             some [<any> p: <here> insert (#_)] seek (p) remove <any>
         ]
         str = "t_e_s_t"
@@ -106,21 +106,21 @@
 ; BINARY! insertion tests from %parse-test.red
 [
    (did all [
-        '~inserted~ == meta uparse bin: #{} [insert (#"^A")]
+        '~inserted~ == meta parse bin: #{} [insert (#"^A")]
         bin = #{01}
     ])
     (did all [
-        10 == uparse bin: #{0A0A} [<any> insert (#{0B}) <any>]
+        10 == parse bin: #{0A0A} [<any> insert (#{0B}) <any>]
         bin = #{0A0B0A}
     ])
     (did all [
-        '~removed~ == meta uparse bin: #{} [
+        '~removed~ == meta parse bin: #{} [
             p: <here> insert (#{0A}) seek (p) remove #{0A}
         ]
         bin = #{}
     ])
     (did all [
-        '~removed~ == meta uparse bin: #{DEADBEEF} [
+        '~removed~ == meta parse bin: #{DEADBEEF} [
             some [<any> p: <here> insert (#)] seek (p) remove <any>
         ]
         bin = #{DE00AD00BE00EF}
@@ -139,7 +139,7 @@
         series: [a b c]
         letters: [x y z]
         did all [
-            'c == uparse series [
+            'c == parse series [
                 mark: <here>
                 'a
 
@@ -166,7 +166,7 @@
         series: [a b c]
         letter: 'x
         did all [
-            'c == uparse series [
+            'c == parse series [
                 mark: <here> insert ^(letter) 'a 'b
 
                 ; Try equivalent of Red's `insert only mark letter`
@@ -185,7 +185,7 @@
         series: [a b c]
         letters: [x y z]
         did all [
-            [x y z] == uparse series [
+            [x y z] == parse series [
                 to <end> mark: <here> [false]
                 |
                 ; Try equivalent of Red's `insert only mark letters`

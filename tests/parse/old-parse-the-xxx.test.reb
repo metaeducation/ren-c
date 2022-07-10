@@ -8,7 +8,7 @@
     x: ~
     tag: <hello>
     did all [
-        <world> = uparse [<hello> <world>] [x: @tag, '<world>]
+        <world> = parse [<hello> <world>] [x: @tag, '<world>]
         x = <hello>
     ]
 )
@@ -16,24 +16,24 @@
     x: ~
     obj: make object! [field: <hello>]
     did all [
-        <world> = uparse [<hello> <world>] [x: @obj.field, '<world>]
+        <world> = parse [<hello> <world>] [x: @obj.field, '<world>]
         x = <hello>
     ]
 )
-(1 = uparse [1 1 1] [some @(3 - 2)])
-(2 = uparse [1 1 1 2] [@[some @(3 - 2), (1 + 1)]])
-("b" = uparse "aaab" [@[some "x" ("y") | some "a" ("b")]])
+(1 = parse [1 1 1] [some @(3 - 2)])
+(2 = parse [1 1 1 2] [@[some @(3 - 2), (1 + 1)]])
+("b" = parse "aaab" [@[some "x" ("y") | some "a" ("b")]])
 
 [
     (data: [[some rule] [some rule]], true)
 
     (
         x: [some rule]
-        ~unknown~ = uparse data [some @x]
+        ~unknown~ = parse data [some @x]
     )(
-        ~unknown~ = uparse data [some @([some rule])]
+        ~unknown~ = parse data [some @([some rule])]
     )(
         obj: make object! [x: [some rule]]
-        ~unknown~ uparse data [some @obj.x]
+        ~unknown~ parse data [some @obj.x]
     )
 ]

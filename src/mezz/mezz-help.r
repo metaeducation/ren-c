@@ -339,7 +339,7 @@ help: function [
     args: _  ; required parameters (and "skippable" parameters, at the moment)
     refinements: _  ; optional parameters (PARAMETERS OF puts at tail)
 
-    uparse parameters of :value [
+    parse parameters of :value [
         args: across opt some [word! | meta-word! | get-word! | lit-word!]
         refinements: across opt some path!  ; as mentioned, these are at tail
     ] else [

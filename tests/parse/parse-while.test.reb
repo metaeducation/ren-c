@@ -7,8 +7,8 @@
 ; confusing, rather whether the rule succeeded.  Hence tests for logic need to
 ; be done with GET-GROUP! on imperative code.
 
-(uparse [1 2 3] [(x: 0) uwhile :(x < 3) [x: integer!]])
+(parse [1 2 3] [(x: 0) uwhile :(x < 3) [x: integer!]])
 
-(1020 = uparse "aaa" [uwhile [some "a"] (1020)])
+(1020 = parse "aaa" [uwhile [some "a"] (1020)])
 
-(none? uparse "" [uwhile [some "a"] (1020)])
+(none? parse "" [uwhile [some "a"] (1020)])

@@ -2,10 +2,10 @@
 ;
 ; Simple combinator, not much to go wrong.  Always succeeds.
 
-(1 = uparse* "aa" [<index>])
-(2 = uparse "aa" ["a" <index> elide thru <end>])
-(3 = uparse* "aa" ["aa" <index>])
+(1 = parse* "aa" [<index>])
+(2 = parse "aa" ["a" <index> elide thru <end>])
+(3 = parse* "aa" ["aa" <index>])
 
-(1 = uparse [a a] [<index> elide to <end>])
-(2 = uparse* [a a] ['a <index>])
-(3 = uparse [a a] ['a 'a <index>])
+(1 = parse [a a] [<index> elide to <end>])
+(2 = parse* [a a] ['a <index>])
+(3 = parse [a a] ['a 'a <index>])

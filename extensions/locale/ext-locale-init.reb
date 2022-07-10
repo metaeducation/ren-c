@@ -462,7 +462,7 @@ if 'Windows <> first system.platform [
         territory: null
 
         letter: charset [#"a" - #"z" #"A" - #"Z"]
-        uparse env-lang [
+        parse env-lang [
             lang: across some letter
             opt [#"_" territory: across some letter]
             to <end>

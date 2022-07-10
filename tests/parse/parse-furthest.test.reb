@@ -5,6 +5,6 @@
 ; far it got
 
 (did all [
-    null = [# furthest]: uparse "aaabbb" [some "a"]
+    null = [# furthest]: parse "aaabbb" [some "a"]
     furthest = "bbb"
 ])

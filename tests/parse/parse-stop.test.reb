@@ -4,28 +4,28 @@
 ; match a rule and return a result.
 
 [
-    (none? uparse "a" [some ["a" stop]])
-    ("a" = uparse "a" [some [stop "a"]])
+    (none? parse "a" [some ["a" stop]])
+    ("a" = parse "a" [some [stop "a"]])
 ]
 
 ; You should be able to stop at any depth
 [
-    ("aa" == uparse "aaa" [some ["a" stop] "aa"])
-    ("aa" == uparse "aaa" [some ["a" [stop]] "aa"])
-    ("a" == uparse "aaa" [some ["a" [["a" stop]]] "a"])
+    ("aa" == parse "aaa" [some ["a" stop] "aa"])
+    ("aa" == parse "aaa" [some ["a" [stop]] "aa"])
+    ("a" == parse "aaa" [some ["a" [["a" stop]]] "a"])
 ]
 
 ; STOP optionally takes a rule as an argument
 [
-    ("a" == uparse "aaa" [some ["a" stop "a"] "a"])
-    ("a" == uparse "aaa" [some ["a" [stop "a"]] "a"])
-    ("" == uparse "aaa" [some ["a" [["a" stop "a"]]] ""])
+    ("a" == parse "aaa" [some ["a" stop "a"] "a"])
+    ("a" == parse "aaa" [some ["a" [stop "a"]] "a"])
+    ("" == parse "aaa" [some ["a" [["a" stop "a"]]] ""])
 ]
 
 (
-    "a" == uparse "aaa" [some ["a", elide opt stop "b"]]
+    "a" == parse "aaa" [some ["a", elide opt stop "b"]]
 )
 
 ; https://github.com/Oldes/Rebol-issues/issues/967
 ;
-(x: ~, did all [none? uparse "" [some  [(x: 2) stop]], x = 2])
+(x: ~, did all [none? parse "" [some  [(x: 2) stop]], x = 2])

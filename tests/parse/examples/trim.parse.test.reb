@@ -116,17 +116,17 @@ utrim: function [
     ; /ALL just removes all whitespace entirely.  No subtlety needed.
     ;
     if all_TRIM [
-        uparse series [opt some [remove rule | <any> | <end> stop]]
+        parse series [opt some [remove rule | <any> | <end> stop]]
         return series
     ]
 
     case/all [
         head_TRIM [
-            uparse series [opt remove [some rule] to <end>]
+            parse series [opt remove [some rule] to <end>]
         ]
 
         tail_TRIM [
-            uparse series [opt some [remove [some rule <end>] | <any>]]  ; #2289
+            parse series [opt some [remove [some rule <end>] | <any>]]  ; #2289
         ]
     ] then [
         return series
@@ -138,7 +138,7 @@ utrim: function [
     ; with leading and trailing whitespace removed.
     ;
     if lines [
-        uparse series [opt some [change [some rule] (space) <any> | <any>]]
+        parse series [opt some [change [some rule] (space) <any> | <any>]]
         if space = first series [take series]
         if space = last series [take/last series]
         return series
@@ -150,7 +150,7 @@ utrim: function [
     ;
     indent: #  ; by default, remove all indentation (opt in to the REPEAT)
     if auto [
-        uparse* series [
+        parse* series [
             ; Don't count empty lines, (e.g. utrim/auto {^/^/^/    asdf})
             opt remove [some LF]
 
@@ -160,7 +160,7 @@ utrim: function [
 
     line-start-rule: [opt remove repeat (indent) rule]
 
-    uparse series [
+    parse series [
         line-start-rule
         opt some [
             not <end>
@@ -176,7 +176,7 @@ utrim: function [
     ; While trimming with /TAIL takes out any number of newlines, plain utrim
     ; in R3-Alpha and Red leaves at most one newline at the end.
     ;
-    uparse series [
+    parse series [
         maybe remove some newline
         opt some [newline remove [some newline <end>] | <any>]
     ]

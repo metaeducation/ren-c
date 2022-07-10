@@ -6,15 +6,15 @@
 ; but removed input etc. would create an issue.  FURTHER takes the test
 ; for advancement out and makes it usable with any rule.
 
-(null = uparse "" [further [opt "a" opt "b"] ("at least one")])
-("at least 1" = uparse "a" [further [opt "a" opt "b"] ("at least 1")])
-("at least 1" = uparse "a" [further [opt "a" opt "b"] ("at least 1")])
-("at least 1" = uparse "ab" [further [opt "a" opt "b"] ("at least 1")])
+(null = parse "" [further [opt "a" opt "b"] ("at least one")])
+("at least 1" = parse "a" [further [opt "a" opt "b"] ("at least 1")])
+("at least 1" = parse "a" [further [opt "a" opt "b"] ("at least 1")])
+("at least 1" = parse "ab" [further [opt "a" opt "b"] ("at least 1")])
 
-(none? uparse "" [repeat (#) some further [to <end>]])
+(none? parse "" [repeat (#) some further [to <end>]])
 
 [https://github.com/red/red/issues/3927
-    (didn't uparse "bx" [some further [not "b" | <any>]])
+    (didn't parse "bx" [some further [not "b" | <any>]])
 ]
 
 ; Only SOME is needed in Red, but OPT SOME FURTHER is needed here.  But the
@@ -28,13 +28,13 @@
 ;  like that?  Why use alternates instead of just saying it's zero-or-more
 ;  #"^L", then followed by a single not #{0B}?"
 [
-    ('a == uparse [a a] [opt some further ['c | not 'b] 2 <any>])
-    (#a == uparse "aa" [opt some further [#c | not #b] 2 <any>])
-    (10 == uparse #{0A0A} [opt some further [#"^L" | not #{0B}] 2 <any>])
+    ('a == parse [a a] [opt some further ['c | not 'b] 2 <any>])
+    (#a == parse "aa" [opt some further [#c | not #b] 2 <any>])
+    (10 == parse #{0A0A} [opt some further [#"^L" | not #{0B}] 2 <any>])
 
     ; Saner way to write it... no need for FURTHER.
     ;
-    ('a == uparse [a a] [opt some 'c, not 'b, 2 <any>])
-    (#a == uparse "aa" [opt some #c, not #b, 2 <any>])
-    (10 == uparse #{0A0A} [opt some #"^L", not #{0B}, 2 <any>])
+    ('a == parse [a a] [opt some 'c, not 'b, 2 <any>])
+    (#a == parse "aa" [opt some #c, not #b, 2 <any>])
+    (10 == parse #{0A0A} [opt some #"^L", not #{0B}, 2 <any>])
 ]

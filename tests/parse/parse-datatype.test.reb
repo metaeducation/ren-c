@@ -11,13 +11,13 @@
 ; to handle the below rule if it was `1020****` and having a `some "*"` rule
 ; at the tail as well.
 
-(123 = uparse "123" [integer!])
+(123 = parse "123" [integer!])
 
 [
     (
         res: ~
         did all [
-            'a == uparse [a] [res: word!]
+            'a == parse [a] [res: word!]
             res = 'a
         ]
     )
@@ -25,7 +25,7 @@
         res: ~
         res2: ~
         did all [
-            'a == uparse [a] [res: res2: 'a]
+            'a == parse [a] [res: res2: 'a]
             res = 'a
             res2 = 'a
         ]
@@ -35,28 +35,28 @@
 
 (
     did all [
-        1020 == uparse "***{A String} 1020" [some "*", t: text!, i: integer!]
+        1020 == parse "***{A String} 1020" [some "*", t: text!, i: integer!]
         t = {A String}
         i = 1020
     ]
 )
 
 [
-    (123 == uparse [a 123] ['a integer!])
-    (didn't uparse [a 123] ['a char!])
-    (123 == uparse [a 123] [['a] [integer!]])
-    (didn't uparse [a 123] ['a [char!]])
-    (123 == uparse [123] [any-number!])
-    (didn't uparse [123] [any-string!])
-    (123 == uparse [123] [[any-number!]])
-    (didn't uparse [123] [[any-string!]])
+    (123 == parse [a 123] ['a integer!])
+    (didn't parse [a 123] ['a char!])
+    (123 == parse [a 123] [['a] [integer!]])
+    (didn't parse [a 123] ['a [char!]])
+    (123 == parse [123] [any-number!])
+    (didn't parse [123] [any-string!])
+    (123 == parse [123] [[any-number!]])
+    (didn't parse [123] [[any-string!]])
 ]
 
 [
     (
         res: ~
         did all [
-            3 == uparse [a 123] [
+            3 == parse [a 123] [
                 'a (res: 1) [char! (res: 2) | integer! (res: 3)]
             ]
             res = 3
@@ -65,7 +65,7 @@
     (
         res: ~
         did all [
-            didn't uparse [a 123] ['a (res: 1) [char! (res: 2) | text! (res: 3)]]
+            didn't parse [a 123] ['a (res: 1) [char! (res: 2) | text! (res: 3)]]
             res = 1
         ]
     )
@@ -91,42 +91,42 @@
 
     (
         bin: #{68747470733A2F2F6578616D706C652E6F726722}
-        bin = uparse to binary! {https://example.org"} [
+        bin = parse to binary! {https://example.org"} [
             x: across url!
             (assert [{https://example.org"} == as text! to url! x])
         ]
     )
-    ({"} == uparse to binary! {a@b.com"} [
+    ({"} == parse to binary! {a@b.com"} [
         x: across email! (assert [a@b.com == to email! to text! x])
         {"}
     ])
 ]
 
 [https://github.com/red/red/issues/4678
-    ('~blank~ = meta uparse to binary! "_" [blank!])
+    ('~blank~ = meta parse to binary! "_" [blank!])
 
-    (didn't uparse to binary! "#(" [blank!])
-    (didn't uparse to binary! "(" [blank!])
-    (didn't uparse to binary! "[" [blank!])
+    (didn't parse to binary! "#(" [blank!])
+    (didn't parse to binary! "(" [blank!])
+    (didn't parse to binary! "[" [blank!])
 ]
 
 ; QUOTED! needs to be recognized (KIND OF VALUE and TYPE OF VALUE are currently
 ; different, and this had caused a problem)
 [
-    ((the 'x) == uparse ['x] [quoted!])
-    ((the '[]) == uparse [' '() '[]] [3 quoted!])
+    ((the 'x) == parse ['x] [quoted!])
+    ((the '[]) == parse [' '() '[]] [3 quoted!])
 ]
 
 [https://github.com/red/red/issues/4863
-    ('word == uparse to-binary "word" [word!])
-    ('word == uparse to-binary "   word" [word!])
-    (123 == uparse to-binary "123" [integer!])
-    (didn't uparse to-binary "123.456" [integer!])
-    (123 == uparse to-binary "    123" [integer!])
-    ([hello 123 world] == uparse to-binary "hello 123 world" [
+    ('word == parse to-binary "word" [word!])
+    ('word == parse to-binary "   word" [word!])
+    (123 == parse to-binary "123" [integer!])
+    (didn't parse to-binary "123.456" [integer!])
+    (123 == parse to-binary "    123" [integer!])
+    ([hello 123 world] == parse to-binary "hello 123 world" [
         collect [keep ^ word!, keep integer!, keep ^ word!]
     ])
-    ([hello 123 world] == uparse to-binary "hello 123 world" [
+    ([hello 123 world] == parse to-binary "hello 123 world" [
         collect [keep ^ word!, space, keep integer!, space, keep ^ word!]
     ])
 ]

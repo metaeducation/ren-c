@@ -14,7 +14,7 @@
     earlier: copy []
     later: copy []
     did all [
-        "d" = uparse "abcd" [
+        "d" = parse "abcd" [
            "a" (append earlier <A>)
            "b" (<delay> append later <B>)
            "c" (append earlier <C>)
@@ -32,7 +32,7 @@
     earlier: copy []
     later: copy []
     did all [
-        didn't uparse "abcd" [
+        didn't parse "abcd" [
            "a" (append earlier <A>)
            "b" (<delay> append later <B>)
            "c" (append earlier <C>)
@@ -51,7 +51,7 @@
     earlier: copy []
     later: copy []
     did all [
-        didn't uparse "abcd" [
+        didn't parse "abcd" [
            phase [
                "a" (append earlier <A>)
                "b" (<delay> append later <B>)

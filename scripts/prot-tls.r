@@ -406,7 +406,7 @@ make-state-updater: func [
 ][
     transitions: make map! []  ; transformed dialect that always maps to BLOCK!
     state-rule: [tag! | issue!]
-    uparse transdialect [
+    parse transdialect [
         some [
             left: state-rule '-> right: [
                 subparse block! [opt some state-rule, <input>]

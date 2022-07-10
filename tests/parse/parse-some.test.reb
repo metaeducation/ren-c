@@ -5,13 +5,13 @@
 (
     x: ~
     did all [
-        "a" == uparse "aaa" [x: opt some "b", some "a"]
+        "a" == parse "aaa" [x: opt some "b", some "a"]
         x = null
     ]
 )(
     x: ~
     did all [
-        "a" == uparse "aaa" [x: opt some "a"]
+        "a" == parse "aaa" [x: opt some "a"]
         x = "a"
     ]
 )
@@ -19,7 +19,7 @@
 [#296 (
     n: 0
     <infinite> = catch [
-        uparse "abc" [
+        parse "abc" [
             some [to <end> (n: n + 1, if n = 50 [throw <infinite>])]
         ]
         fail ~unreachable~
@@ -27,7 +27,7 @@
 )(
     n: 0
     did all [
-        1 == uparse "abc" [
+        1 == parse "abc" [
             some further [to <end> (n: n + 1)]
         ]
         n = 2
@@ -42,19 +42,19 @@
     (
         x: ~
         did all [
-            "a" == uparse "a" [x: "a"]
+            "a" == parse "a" [x: "a"]
             "a" = x
         ]
     )(
         x: null
         did all [
-            "a" == uparse "aaa" [x: some "a"]
+            "a" == parse "aaa" [x: some "a"]
             "a" = x  ; SOME doesn't want to be "expensive" on average
         ]
     )(
         x: null
         did all [
-            "a" == uparse "aaa" [x: [some "a" | some "b"]]
+            "a" == parse "aaa" [x: [some "a" | some "b"]]
             "a" = x  ; demonstrates use of the result (which alternate taken)
         ]
     )
@@ -64,7 +64,7 @@
     (
         res: ~
         did all [
-            'c == uparse [b a a a c] [<any> res: some 'a 'c]
+            'c == parse [b a a a c] [<any> res: some 'a 'c]
             res = 'a
         ]
     )
@@ -72,40 +72,40 @@
         res: ~
         wa: ['a]
         did all [
-            'c == uparse [b a a a c] [<any> res: some wa 'c]
+            'c == parse [b a a a c] [<any> res: some wa 'c]
             res = 'a
         ]
     )
 ]
 
 [
-    ('a == uparse [a a] [some ['a]])
-    (didn't uparse [a a] [some ['a] 'b])
-    ('a == uparse [a a b a b b b a] [some [<any>]])
-    ('a == uparse [a a b a b b b a] [some ['a | 'b]])
-    (didn't uparse [a a b a b b b a] [some ['a | 'c]])
-    ('b == uparse [a a b b] [some 'a some 'b])
-    (didn't uparse [a a b b] [some 'a some 'c])
-    ('c == uparse [b a a a c] [<any> some ['a] 'c])
+    ('a == parse [a a] [some ['a]])
+    (didn't parse [a a] [some ['a] 'b])
+    ('a == parse [a a b a b b b a] [some [<any>]])
+    ('a == parse [a a b a b b b a] [some ['a | 'b]])
+    (didn't parse [a a b a b b b a] [some ['a | 'c]])
+    ('b == parse [a a b b] [some 'a some 'b])
+    (didn't parse [a a b b] [some 'a some 'c])
+    ('c == parse [b a a a c] [<any> some ['a] 'c])
 ]
 
 [
-    (#a == uparse "aa" [some [#a]])
-    (didn't uparse "aa" [some [#a] #b])
-    (#a == uparse "aababbba" [some [<any>]])
-    ("a" == uparse "aababbba" [some ["a" | "b"]])
-    (didn't uparse "aababbba" [some ["a" | #c]])
+    (#a == parse "aa" [some [#a]])
+    (didn't parse "aa" [some [#a] #b])
+    (#a == parse "aababbba" [some [<any>]])
+    ("a" == parse "aababbba" [some ["a" | "b"]])
+    (didn't parse "aababbba" [some ["a" | #c]])
 
-    ("b" == uparse "aabb" [some #a some "b"])
-    (didn't uparse "aabb" [some "a" some #c])
+    ("b" == parse "aabb" [some #a some "b"])
+    (didn't parse "aabb" [some "a" some #c])
 ]
 
 [https://github.com/red/red/issues/3108
-    ([] == uparse [1] [some further [to <end>]])
-    ([] == uparse [1] [some further [to [<end>]]])
+    ([] == parse [1] [some further [to <end>]])
+    ([] == parse [1] [some further [to [<end>]]])
 ]
 
-(#c == uparse "baaac" [<any> some [#a] #c])
+(#c == parse "baaac" [<any> some [#a] #c])
 
 
 ; OPT SOME or MAYBE SOME tests (which used to be WHILE)
@@ -113,24 +113,24 @@
 (
     x: ~
     did all [
-        "a" == uparse "aaa" [x: maybe some "b", opt some "a"]
+        "a" == parse "aaa" [x: maybe some "b", opt some "a"]
         unset? 'x
     ]
 )
 
 [
-    (none? uparse [] [maybe some 'a])
-    ('~ = ^(uparse [] [maybe some 'b]))
-    ('a == uparse [a] [maybe some 'a])
-    (didn't uparse [a] [maybe some 'b])
-    ('a == uparse [a] [maybe some 'b <any>])
-    ('b == uparse [a b a b] [maybe some ['b | 'a]])
+    (none? parse [] [maybe some 'a])
+    ('~ = ^(parse [] [maybe some 'b]))
+    ('a == parse [a] [maybe some 'a])
+    (didn't parse [a] [maybe some 'b])
+    ('a == parse [a] [maybe some 'b <any>])
+    ('b == parse [a b a b] [maybe some ['b | 'a]])
 ]
 
 [(
     x: ~
     did all [
-        "a" == uparse "aaa" [x: maybe some "a"]
+        "a" == parse "aaa" [x: maybe some "a"]
         x = "a"
     ]
 )]
@@ -138,15 +138,15 @@
 ; OPT SOME that never actually has a succeeding rule gives back a match that
 ; is a ~null~ isotope, which decays to null
 [
-    ('~null~ = ^ uparse "a" ["a" opt some "b"])
-    ('~null~ = ^ uparse "a" ["a" [opt "b"]])
-    (@void = uparse "a" ["a" ^[maybe some "b"]])
+    ('~null~ = ^ parse "a" ["a" opt some "b"])
+    ('~null~ = ^ parse "a" ["a" [opt "b"]])
+    (@void = parse "a" ["a" ^[maybe some "b"]])
 ]
 
 ; This test works in Rebol2 even if it starts `i: 0`, presumably a bug.
 (
     i: 1
-    uparse "a" [maybe some [
+    parse "a" [maybe some [
         (
             i: i + 1
             j: if i = 2 [[<end> <any>]] else [null]
@@ -159,22 +159,22 @@
 [#1268 (
     i: 0
     <infinite?> = catch [
-        uparse "a" [maybe some [(i: i + 1) (if i > 100 [throw <infinite?>])]]
+        parse "a" [maybe some [(i: i + 1) (if i > 100 [throw <infinite?>])]]
     ]
 )(
     i: 0
-    uparse "a" [maybe some [(i: i + 1 j: try if i = 2 [[false]]) j]]
+    parse "a" [maybe some [(i: i + 1 j: try if i = 2 [[false]]) j]]
     i == 2
 )]
 
 
 [
-    (none? uparse "" [maybe some #a])
-    (none? uparse "" [maybe some #b])
-    (#a == uparse "a" [maybe some #a])
-    (didn't uparse "a" [maybe some #b])
-    (#a == uparse "a" [maybe some #b <any>])
-    (#b == uparse "abab" [maybe some [#b | #a]])
+    (none? parse "" [maybe some #a])
+    (none? parse "" [maybe some #b])
+    (#a == parse "a" [maybe some #a])
+    (didn't parse "a" [maybe some #b])
+    (#a == parse "a" [maybe some #b <any>])
+    (#b == parse "abab" [maybe some [#b | #a]])
 ]
 
 ; WHILE tests from %parse-test.red, rethought as MAYBE SOME or OPT SOME
@@ -183,23 +183,23 @@
         x: blank
         true
     )
-    (#[true] == uparse #{020406} [
+    (#[true] == parse #{020406} [
         maybe some [x: across <any> :(even? first x)]
     ])
-    (didn't uparse #{01} [x: across <any> :(even? first x)])
-    (didn't uparse #{0105} [some [x: across <any> :(even? first x)]])
-    (none? uparse #{} [maybe some #{0A}])
-    ('~ = ^ uparse #{} [maybe some #{0B}])
-    (#{0A} == uparse #{0A} [maybe some #{0A}])
-    (didn't uparse #{0A} [maybe some #{0B}])
-    (10 == uparse #{0A} [maybe some #{0B} <any>])
-    (#{0B} == uparse #{0A0B0A0B} [maybe some [#{0B} | #{0A}]])
-    (error? trap [uparse #{} [ahead]])
-    (didn't uparse #{0A} [maybe some #{0A} #{0A}])
-    (1 == uparse #{01} [ahead [#{0A} | #"^A"] <any>])
+    (didn't parse #{01} [x: across <any> :(even? first x)])
+    (didn't parse #{0105} [some [x: across <any> :(even? first x)]])
+    (none? parse #{} [maybe some #{0A}])
+    ('~ = ^ parse #{} [maybe some #{0B}])
+    (#{0A} == parse #{0A} [maybe some #{0A}])
+    (didn't parse #{0A} [maybe some #{0B}])
+    (10 == parse #{0A} [maybe some #{0B} <any>])
+    (#{0B} == parse #{0A0B0A0B} [maybe some [#{0B} | #{0A}]])
+    (error? trap [parse #{} [ahead]])
+    (didn't parse #{0A} [maybe some #{0A} #{0A}])
+    (1 == parse #{01} [ahead [#{0A} | #"^A"] <any>])
 ]
 
 [
-    ('a == uparse [a a] [maybe some 'a])
-    ('a == uparse [a a] [maybe some 'a, maybe some 'b])
+    ('a == parse [a a] [maybe some 'a])
+    ('a == parse [a a] [maybe some 'a, maybe some 'b])
 ]

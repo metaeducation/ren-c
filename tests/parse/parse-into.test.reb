@@ -5,45 +5,45 @@
 ; can generate a new series, as well as pick one out of a block.
 
 [
-    (none? uparse [[]] [subparse any-series! []])
-    ('a == uparse [[a]] [subparse any-series! ['a]])
-    ('c == uparse [b [a] c] ['b subparse any-series! ['a] 'c])
-    (#a == uparse ["a"] [subparse any-series! [#a]])
-    ('c == uparse [b "a" c] ['b subparse any-series! ["a"] 'c])
-    (#a == uparse [["a"]] [subparse block! [subparse any-series! [#a]]])
-    (didn't uparse [[a]] [subparse any-series! ['a 'b]])
-    (didn't uparse [[a]] [subparse any-series! [some 'b]])
-    ([a] == uparse [[a]] [subparse any-series! ['a 'b] | block!])
+    (none? parse [[]] [subparse any-series! []])
+    ('a == parse [[a]] [subparse any-series! ['a]])
+    ('c == parse [b [a] c] ['b subparse any-series! ['a] 'c])
+    (#a == parse ["a"] [subparse any-series! [#a]])
+    ('c == parse [b "a" c] ['b subparse any-series! ["a"] 'c])
+    (#a == parse [["a"]] [subparse block! [subparse any-series! [#a]]])
+    (didn't parse [[a]] [subparse any-series! ['a 'b]])
+    (didn't parse [[a]] [subparse any-series! [some 'b]])
+    ([a] == parse [[a]] [subparse any-series! ['a 'b] | block!])
 ]
 
-("a" == uparse ["aa"] [subparse text! ["a" "a"]])
+("a" == parse ["aa"] [subparse text! ["a" "a"]])
 
 ; One key feature of UPARSE is that rule chaining is done in such a way that
 ; it delegates the recognition to the parse engine, meaning that rules do not
 ; have to be put into blocks as often.
 [
-    ("a" = uparse ["aaaa"] [subparse text! some 2 "a"])
-    (null = uparse ["aaaa"] [subparse text! some 3 "a"])
+    ("a" = parse ["aaaa"] [subparse text! some 2 "a"])
+    (null = parse ["aaaa"] [subparse text! some 3 "a"])
 ]
 
 
 (
     did all [
-        "aaa" == uparse ["aaa"] [subparse text! [x: across some "a"]]
+        "aaa" == parse ["aaa"] [subparse text! [x: across some "a"]]
         x = "aaa"
     ]
 )
 
 (
     did all [
-        "aaa" == uparse ["aaa"] [subparse <any> [x: across some "a"]]
+        "aaa" == parse ["aaa"] [subparse <any> [x: across some "a"]]
         x = "aaa"
     ]
 )
 
 (
     did all [
-        "aaa" == uparse "((aaa)))" [
+        "aaa" == parse "((aaa)))" [
             subparse [between some "(" some ")"] [x: across some "a"]
         ]
         x = "aaa"
@@ -52,7 +52,7 @@
 
 (
     did all [
-        [some some some] == uparse [| | some some some | | |] [
+        [some some some] == parse [| | some some some | | |] [
             content: between some '| some '|
             subparse (content) [x: collect [some keep ^['some]]]
         ]
@@ -61,21 +61,21 @@
 )
 
 [(
-    "" == uparse "baaabccc" [
+    "" == parse "baaabccc" [
         subparse [between "b" "b"] [some "a" <end>] to <end>
     ]
 )(
-    didn't uparse "baaabccc" [
+    didn't parse "baaabccc" [
         subparse [between "b" "b"] ["a" <end>], to <end>
     ]
 )(
-    didn't uparse "baaabccc" [subparse [between "b" "b"] ["a"], to <end>]
+    didn't parse "baaabccc" [subparse [between "b" "b"] ["a"], to <end>]
 )(
-    "" == uparse "baaabccc" [
+    "" == parse "baaabccc" [
         subparse [between "b" "b"] ["a" to <end>], "c", to <end>
     ]
 )(
-    "" == uparse "aaabccc" [subparse [across to "b"] [some "a"], to <end>]
+    "" == parse "aaabccc" [subparse [across to "b"] [some "a"], to <end>]
 )]
 
 
@@ -84,7 +84,7 @@
 ; Note: If functions with INPUT that return progress would act implicitly as
 ; combinators, then SUBPARSE <HERE> would be how PARSE would act.
 [(
-    x: match-uparse "aaabbb" [
+    x: match-parse "aaabbb" [
         some "a"
         subparse <here> ["bbb" (b: "yep, Bs")]
         "bbb" (bb: "Bs again")
@@ -95,7 +95,7 @@
         bb = "Bs again"
     ]
 )(
-    x: match-uparse "aaabbbccc" [
+    x: match-parse "aaabbbccc" [
         some "a"
         subparse <here> ["bbb" to <end> (b: "yep, Bs")]
         "bbb" (bb: "Bs again")
@@ -109,13 +109,13 @@
     ]
 )]
 
-; SUBPARSE is not legal if a string uparse is already running
+; SUBPARSE is not legal if a string parse is already running
 ;
-(error? trap [uparse "aa" [subparse <here> ["a" "a"]]])
+(error? trap [parse "aa" [subparse <here> ["a" "a"]]])
 
 ; Manual SUBPARSE via a recursion
 [
-    ("test" = uparse [a "test"] [
-        'a s: text! (assert [#t == uparse s [4 <any>]])
+    ("test" = parse [a "test"] [
+        'a s: text! (assert [#t == parse s [4 <any>]])
     ])
 ]

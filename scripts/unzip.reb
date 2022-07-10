@@ -359,7 +359,7 @@ unzip: function [
     if not central-end-pos: find-reverse (tail source) end-of-central-sig [
         fail "Could not find end of central directory signature"
     ]
-    uparse central-end-pos [
+    parse central-end-pos [
         end-of-central-sig  ; by definition (pos matched this)
 
         2 <any>  ; disk_nbr
@@ -474,7 +474,7 @@ unzip: function [
     ; While this is by no means broken up perfectly into subrules, it is
     ; clearer than it was.
     ;
-    uparse (skip source central-directory-offset) [
+    parse (skip source central-directory-offset) [
         repeat (num-central-entries) [
             ;
             ; Process one central directory entry, extracting its fields

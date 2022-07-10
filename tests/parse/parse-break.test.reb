@@ -8,17 +8,17 @@
 ; want it to be seen as successful.
 
 [
-    (null = uparse "a" [some ["a" break]])
-    ("a" = uparse "a" [opt some ["a" break] "a"])
+    (null = parse "a" [some ["a" break]])
+    ("a" = parse "a" [opt some ["a" break] "a"])
 ]
 
 ; You should be able to break at any depth
 [
-    (didn't uparse "aaa" [some ["a" break] "aaa"])
-    (didn't uparse "aaa" [some ["a" [break]] "aaa"])
-    (didn't uparse "aaa" [some ["a" [["a" | break]]] "aaa"])
+    (didn't parse "aaa" [some ["a" break] "aaa"])
+    (didn't parse "aaa" [some ["a" [break]] "aaa"])
+    (didn't parse "aaa" [some ["a" [["a" | break]]] "aaa"])
 
-    ("aaa" == uparse "aaa" [opt some ["a" break] "aaa"])
-    ("aaa" == uparse "aaa" [opt some ["a" [break]] "aaa"])
-    ("aaa" == uparse "aaa" [opt some ["a" [["a" break]]] "aaa"])
+    ("aaa" == parse "aaa" [opt some ["a" break] "aaa"])
+    ("aaa" == parse "aaa" [opt some ["a" [break]] "aaa"])
+    ("aaa" == parse "aaa" [opt some ["a" [["a" break]]] "aaa"])
 ]

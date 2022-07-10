@@ -192,7 +192,7 @@ ask: function [
         text! [prompt: question]  ; `ask "Input:"` doesn't filter type
         datatype! [type: question]  ; `ask text!` has no prompt (like INPUT)
         block! [
-            uparse question [
+            parse question [
                 opt prompt: text!
                 opt word: word! (type: ensure datatype! get word)
             ] else [

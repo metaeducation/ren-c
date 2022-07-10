@@ -237,7 +237,7 @@ check-response: function [
         ; We use a RETURN rule to end the parse abruptly after matching only
         ; the initial part to derive a value.
         ;
-        uparse line [return [
+        parse line [return [
             "HTTP/1." ["0" | "1"] some space [
                 "100" ('continue)
                 |

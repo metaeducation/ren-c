@@ -29,12 +29,12 @@
 ; Collecting non-array series fragments
 
 (did all [
-    pos: parse* "aaabbb" [x: collect [keep [some "a"]] <here>]
+    pos: parse3* "aaabbb" [x: collect [keep [some "a"]] <here>]
     "bbb" = pos
     x = ["aaa"]
 ])
 (did all [
-    pos: parse* "aaabbbccc" [
+    pos: parse3* "aaabbbccc" [
         x: collect [keep [some "a"] some "b" keep [some "c"]]
         <here>
     ]
@@ -45,7 +45,7 @@
 ; Backtracking (more tests needed!)
 
 (did all [
-    pos: parse* [1 2 3] [
+    pos: parse3* [1 2 3] [
         x: collect [
             keep integer! keep integer! keep text!
             |
@@ -88,7 +88,7 @@
 ; !!! This is extended in UPARSE to the other META-XXX! types.
 ;
 (did all [
-    pos: parse* [1 2 3] [
+    pos: parse3* [1 2 3] [
         x: collect [
             keep integer!
             keep (second [A [<pick> <me>] B])
@@ -100,7 +100,7 @@
     x = [1 <pick> <me> 2]
 ])
 (did all [
-    pos: parse* [1 2 3] [
+    pos: parse3* [1 2 3] [
         x: collect [
             keep integer!
             keep ^(second [A [<pick> <me>] B])

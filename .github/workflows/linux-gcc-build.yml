@@ -321,7 +321,7 @@ jobs:
           call/shell/output {date --iso-8601=seconds} unixtime: copy {}
           print ["UNIX Time (date --iso-8601) reported as:" unixtime]
 
-          uparse unixtime [
+          parse unixtime [
               year: between <here> "-" (year: to integer! year)
               month: between <here> "-" (month: to integer! month)
               day: between <here> "T" (day: to integer! day)
@@ -351,7 +351,7 @@ jobs:
       shell: r3built --fragment {0}  # See README: Ren-C Code As Step
       run: |
         print {== Hello From R3 HTTPS Read Test! ==}
-        uparse as text! read https://example.com [
+        parse as text! read https://example.com [
             thru '<h1> header: across to '</h1> to <end>
         ] else [
             fail "Couldn't Capture Page Title"
@@ -441,7 +441,7 @@ jobs:
         r3-url-lastpart: get-env 'R3_URL_LASTPART
 
         url: latest-of/variant os-id variation
-        uparse (as text! url) [thru r3-url-lastpart] then [
+        parse (as text! url) [thru r3-url-lastpart] then [
             print ["LATEST-OF Matched:" url]
         ] else [
             fail ["!!! LATEST-OF Gave Mismatched URL:" url]

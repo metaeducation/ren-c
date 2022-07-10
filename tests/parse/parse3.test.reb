@@ -329,7 +329,7 @@
 
 (
     did all [
-        pos: parse* [... [a b]] [to '[a b], <here>]
+        pos: parse3* [... [a b]] [to '[a b], <here>]
         pos = [[a b]]
     ]
 )
@@ -339,7 +339,7 @@
 ; Quote level is not retained by captured content
 ;
 (did all [
-    pos: parse* [''[1 + 2]] [into [copy x to <end>], <here>]
+    pos: parse3* [''[1 + 2]] [into [copy x to <end>], <here>]
     [] == pos
     x == [1 + 2]
 ])
@@ -499,15 +499,15 @@
 ; tick marks from everything like ["ab"] to become just ['ab]
 ;
 (did all [
-    pos: parse* "abbbbbc" ['a some ['b], <here>]
+    pos: parse3* "abbbbbc" ['a some ['b], <here>]
     "c" = pos
 ])
 (did all [
-    pos: parse* "abbbbc" ['ab, some ['bc | 'b], <here>]
+    pos: parse3* "abbbbc" ['ab, some ['bc | 'b], <here>]
     "" = pos
 ])
 (did all [
-    pos: parse* "abc10def" ['abc '10, <here>]
+    pos: parse3* "abc10def" ['abc '10, <here>]
     "def" = pos
 ])
 

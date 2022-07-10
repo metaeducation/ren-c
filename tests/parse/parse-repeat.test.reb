@@ -11,18 +11,18 @@
 ; With REPEAT this was clearer, since it has a known arity of 2, so you know
 ; to look for the count and the rule.
 ;
-;    >> uparse "aaa" [repeat (foo) rule]
+;    >> parse "aaa" [repeat (foo) rule]
 ;
 ; However, REPEAT adds much more flexibility.  It can opt-out with a blank:
 ;
 ;    >> num: _
-;    >> did uparse "aaa" [repeat (num) "b", some "a"]
+;    >> did parse "aaa" [repeat (num) "b", some "a"]
 ;    == #[true]
 ;
 ; It can also "opt all the way in" and become a synonym for MAYBE SOME with #:
 ;
 ;    >> num: #
-;    >> did uparse "aaaaaaaaaa" [repeat (num) "a"]
+;    >> did parse "aaaaaaaaaa" [repeat (num) "a"]
 ;    == #[true]
 ;
 ; These decayed forms mean that you can get behavior differences out of your
@@ -32,11 +32,11 @@
 ;
 ;    >> min: 3
 ;    >> max: #
-;    >> did uparse "aaaaaaa" [repeat (:[min max]) "a"]
+;    >> did parse "aaaaaaa" [repeat (:[min max]) "a"]
 ;    == #[true]
-;    >> did uparse "aaaaaaaaaaaaaaaaaaa" [repeat (:[min max]) "a"]
+;    >> did parse "aaaaaaaaaaaaaaaaaaa" [repeat (:[min max]) "a"]
 ;    == #[true]
-;    >> did uparse "aa" [repeat (:[min max]) "a"]
+;    >> did parse "aa" [repeat (:[min max]) "a"]
 ;    == #[false]
 ;
 ; If maximum is blank then it's assumed to be the same as if it were equal
@@ -48,84 +48,84 @@
 (
     var: 3
     rule: "a"
-    "a" == uparse "aaa" [repeat (var) rule]  ; clearer than [var rule]
+    "a" == parse "aaa" [repeat (var) rule]  ; clearer than [var rule]
 )
 
 (
     var: 3
     rule: "a"
-    "a" == uparse "aaaaaa" [2 repeat (var) rule]
+    "a" == parse "aaaaaa" [2 repeat (var) rule]
 )
 
 (
-    "b" == uparse ["b" 3 "b" "b" "b"] [rule: <any>, repeat integer! rule]
+    "b" == parse ["b" 3 "b" "b" "b"] [rule: <any>, repeat integer! rule]
 )
 
 ; Plain loops that never actually run their body give back a match that is
 ; a ~void~ isotope, as do 0-iteration REPEAT and INTEGER! rules.
 [
-    ("a" = uparse "a" ["a" repeat (0) "b"])
-    (@void = uparse "a" ["a" ^[repeat (0) "b"]])
+    ("a" = parse "a" ["a" repeat (0) "b"])
+    (@void = parse "a" ["a" ^[repeat (0) "b"]])
 ]
 
 ; Conventional ranges
 [
-    (didn't uparse "a" [repeat ([2 3]) "a"])
-    ("a" == uparse "aa" [repeat ([2 3]) "a"])
-    ("a" == uparse "aaa" [repeat ([2 3]) "a"])
-    (didn't uparse "aaaa" [repeat ([2 3]) "a"])
+    (didn't parse "a" [repeat ([2 3]) "a"])
+    ("a" == parse "aa" [repeat ([2 3]) "a"])
+    ("a" == parse "aaa" [repeat ([2 3]) "a"])
+    (didn't parse "aaaa" [repeat ([2 3]) "a"])
 ]
 
 ; Opt out completely
 [
-    ("a" == uparse "aaaaaaa" [repeat (_) "b", maybe some "a"])
-    ("a" == uparse "aaaaaaaaaaaaaaaaaaa" [repeat (_) "b", maybe some "a"])
-    ("a" == uparse "aa" [repeat (_) "b", maybe some "a"])
-    (none? uparse "" [repeat (_) "b", maybe some "a"])
+    ("a" == parse "aaaaaaa" [repeat (_) "b", maybe some "a"])
+    ("a" == parse "aaaaaaaaaaaaaaaaaaa" [repeat (_) "b", maybe some "a"])
+    ("a" == parse "aa" [repeat (_) "b", maybe some "a"])
+    (none? parse "" [repeat (_) "b", maybe some "a"])
 ]
 
 ; Opt out completely, block form
 [
-    ("a" == uparse "aaaaaaa" [repeat ([_ _]) "b", maybe some "a"])
-    ("a" == uparse "aaaaaaaaaaaaaaaaaaa" [repeat ([_ _]) "b", maybe some "a"])
-    ("a" == uparse "aa" [repeat ([_ _]) "b", maybe some "a"])
-    (none? uparse "" [repeat ([_ _]) "b", maybe some "a"])
+    ("a" == parse "aaaaaaa" [repeat ([_ _]) "b", maybe some "a"])
+    ("a" == parse "aaaaaaaaaaaaaaaaaaa" [repeat ([_ _]) "b", maybe some "a"])
+    ("a" == parse "aa" [repeat ([_ _]) "b", maybe some "a"])
+    (none? parse "" [repeat ([_ _]) "b", maybe some "a"])
 ]
 
 ; Minimum but no maximum
 [
-    ("a" == uparse "aaaaaaa" [repeat ([3 #]) "a"])
-    ("a" == uparse "aaaaaaaaaaaaaaaaaaa" [repeat ([3 #]) "a"])
-    (didn't uparse "aa" [repeat ([3 #]) "a"])
-    (didn't uparse "" [repeat ([3 #]) "a"])
+    ("a" == parse "aaaaaaa" [repeat ([3 #]) "a"])
+    ("a" == parse "aaaaaaaaaaaaaaaaaaa" [repeat ([3 #]) "a"])
+    (didn't parse "aa" [repeat ([3 #]) "a"])
+    (didn't parse "" [repeat ([3 #]) "a"])
 ]
 
 ; Opt out of maximum (e.g. min max equivalence)
 [
-    ("a" == uparse "aaa" [repeat ([3 _]) "a"])
-    (didn't uparse "aaaaaaaaaaaaaaaaaaa" [repeat ([3 _]) "a"])
-    (didn't uparse "aa" [repeat ([3 _]) "a"])
-    (didn't uparse "" [repeat ([3 _]) "a"])
+    ("a" == parse "aaa" [repeat ([3 _]) "a"])
+    (didn't parse "aaaaaaaaaaaaaaaaaaa" [repeat ([3 _]) "a"])
+    (didn't parse "aa" [repeat ([3 _]) "a"])
+    (didn't parse "" [repeat ([3 _]) "a"])
 ]
 
 ; No minimum or maximum (MAYBE SOME equivalent), just using #
 [
-    ("a" == uparse "aaaaaaa" [repeat (#) "a"])
-    ("a" == uparse "aaaaaaaaaaaaaaaaaaa" [repeat (#) "a"])
-    ("a" == uparse "aa" [repeat (#) "a"])
-    (none? uparse "" [repeat (#) "a"])
+    ("a" == parse "aaaaaaa" [repeat (#) "a"])
+    ("a" == parse "aaaaaaaaaaaaaaaaaaa" [repeat (#) "a"])
+    ("a" == parse "aa" [repeat (#) "a"])
+    (none? parse "" [repeat (#) "a"])
 ]
 
 ; No minimum or maximum (MAYBE SOME equivalent), block form
 [
-    ("a" == uparse "aaaaaaa" [repeat ([_ #]) "a"])
-    ("a" == uparse "aaaaaaaaaaaaaaaaaaa" [repeat ([_ #]) "a"])
-    ("a" == uparse "aa" [repeat ([_ #]) "a"])
-    (none? uparse "" [repeat ([_ #]) "a"])
+    ("a" == parse "aaaaaaa" [repeat ([_ #]) "a"])
+    ("a" == parse "aaaaaaaaaaaaaaaaaaa" [repeat ([_ #]) "a"])
+    ("a" == parse "aa" [repeat ([_ #]) "a"])
+    (none? parse "" [repeat ([_ #]) "a"])
 ]
 
 ; THE-BLOCK! also accepted
 [
-    (didn't uparse "a" [repeat @[2 3] "a"])
-    ("a" == uparse "aaaaaaa" [repeat @[_ _] "b", maybe some "a"])
+    (didn't parse "a" [repeat @[2 3] "a"])
+    ("a" == parse "aaaaaaa" [repeat @[_ _] "b", maybe some "a"])
 ]

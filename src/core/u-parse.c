@@ -2675,7 +2675,7 @@ DECLARE_NATIVE(subparse)
 
 
 //
-//  parse*: native [
+//  parse3*: native [
 //
 //  "Parse series according to grammar rules"
 //
@@ -2691,11 +2691,11 @@ DECLARE_NATIVE(subparse)
 //      /redbol "Use Rebol2/Red-style rules vs. UPARSE-style rules"
 //  ]
 //
-DECLARE_NATIVE(parse_p)
+DECLARE_NATIVE(parse3_p)
 //
 // https://forum.rebol.info/t/1084
 {
-    INCLUDE_PARAMS_OF_PARSE_P;
+    INCLUDE_PARAMS_OF_PARSE3_P;
 
     REBVAL *input = ARG(input);
     REBVAL *rules = ARG(rules);

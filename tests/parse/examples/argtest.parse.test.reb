@@ -10,7 +10,7 @@
         let access-dir: _
         let verbose: _
         let dir
-        uparse args [opt some [
+        parse args [opt some [
             "-a", access-dir: [
                 <end> (true)
                 | "true" (true)

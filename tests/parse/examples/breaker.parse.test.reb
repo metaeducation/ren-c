@@ -4,7 +4,7 @@
     (did breaker: func [return: [block!] text [text!]] [
         let capturing
         let inner
-        return uparse text [collect opt some [
+        return parse text [collect opt some [
             not <end>
             (capturing: false)
             keep opt between <here> ["$(" (capturing: true) | <end>]

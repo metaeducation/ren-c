@@ -7,15 +7,15 @@
 
 ; Plain usage...potentially vanish inline, leaving prior result
 
-("a" = uparse "aaa" [some "a" maybe some "b"])
-("b" = uparse "aaabbb" [some "a" maybe some "b"])
+("a" = parse "aaa" [some "a" maybe some "b"])
+("b" = parse "aaabbb" [some "a" maybe some "b"])
 
 
 ; Usages with SET-WORD!, potentially opting out of changing variables and
 ; making the rule evaluation their previous value if opting out.
 
 (did all [
-    "b" == uparse "bbb" [
+    "b" == parse "bbb" [
         (x: 10, y: 20)
         y: x: maybe some "a"  ; !!! maybe retention concept TBD
         some "b"
@@ -25,7 +25,7 @@
 ])
 
 (did all [
-    "b" == uparse "aaabbb" [
+    "b" == parse "aaabbb" [
         (x: 10, y: 20)
         y: x: maybe some "a"  ; matched, so non-void...changes x
         some "b"
@@ -35,7 +35,7 @@
 ])
 
 (did all [
-    "b" == uparse "aaabbb" [
+    "b" == parse "aaabbb" [
         (x: 10, y: 20)
         y: x: maybe elide some "a"  ; !!! TBD: invisibles stay invisible
         some "b"
@@ -45,7 +45,7 @@
 ])
 
 (did all [
-    "b" == uparse "bbb" [
+    "b" == parse "bbb" [
         (x: 10, y: 20)
         y: x: maybe (~null~)  ; !!! TBD: align with `maybe if true [null]`
         some "b"
@@ -55,7 +55,7 @@
 ])
 
 (did all [
-    "b" == uparse "bbb" [
+    "b" == parse "bbb" [
         (x: 10, y: 20)
         y: x: maybe (~)  ; Isotopic ~none~ not conflated w/invisible
         some "b"

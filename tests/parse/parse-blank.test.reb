@@ -7,79 +7,79 @@
 ; (At one time it was thought it might be how to say "match any value", as
 ; underscore is sometimes used in this wildcarding fashion in some languages:
 ;
-;    >> did uparse [x <y> "z"] [_ _ _]
+;    >> did parse [x <y> "z"] [_ _ _]
 ;    == #[true]
 ;
 ; ...but the <any> tag combinator serves this purpose more literately.)
 ;
 
-('~null~ == meta uparse [x] ['x blank])
-([] == uparse [x] [blank 'x <end>])
+('~null~ == meta parse [x] ['x blank])
+([] == parse [x] [blank 'x <end>])
 
-('~null~ == meta uparse [] [blank blank blank])
+('~null~ == meta parse [] [blank blank blank])
 
-(didn't uparse [x <y> "z"] ['_ '_ '_])
-('~blank~ == meta uparse [_ _ _] ['_ '_ '_])
+(didn't parse [x <y> "z"] ['_ '_ '_])
+('~blank~ == meta parse [_ _ _] ['_ '_ '_])
 (
     q-blank: quote _
-    '~blank~ == meta uparse [_ _ _] [q-blank q-blank q-blank]
+    '~blank~ == meta parse [_ _ _] [q-blank q-blank q-blank]
 )
 
-('~null~ == meta uparse [] [[[blank blank blank]]])
+('~null~ == meta parse [] [[[blank blank blank]]])
 
 [
-    ('~null~ == meta uparse [] [blank])
-    ('~null~ == meta uparse [a] [<any> blank])
-    ('~null~ == meta uparse [a] [blank <any> blank])
-    ('~null~ == meta uparse [a] ['a blank])
-    ('~null~ == meta uparse [a] [blank 'a blank])
+    ('~null~ == meta parse [] [blank])
+    ('~null~ == meta parse [a] [<any> blank])
+    ('~null~ == meta parse [a] [blank <any> blank])
+    ('~null~ == meta parse [a] ['a blank])
+    ('~null~ == meta parse [a] [blank 'a blank])
     (
         wa: ['a]
-        '~null~ == meta uparse [a] [wa blank]
+        '~null~ == meta parse [a] [wa blank]
     )
     (
         wa: ['a]
-        '~null~ == meta uparse [a] [blank wa blank]
+        '~null~ == meta parse [a] [blank wa blank]
     )
-    ('a == uparse [a] [['b | blank] 'a])
-    ('a == uparse [a] [['b | [blank]] 'a])
-    ('a == uparse [a] [[['b | [blank]]] 'a])
+    ('a == parse [a] [['b | blank] 'a])
+    ('a == parse [a] [['b | [blank]] 'a])
+    ('a == parse [a] [[['b | [blank]]] 'a])
 ]
 
 [
-    ('~null~ == meta uparse "" [blank])
-    ('~null~ == meta uparse "a" [<any> blank])
-    ('~null~ == meta uparse "a" [blank <any> blank])
-    ('~null~ == meta uparse "a" [#a blank])
-    ('~null~ == meta uparse "a" [blank #a blank])
+    ('~null~ == meta parse "" [blank])
+    ('~null~ == meta parse "a" [<any> blank])
+    ('~null~ == meta parse "a" [blank <any> blank])
+    ('~null~ == meta parse "a" [#a blank])
+    ('~null~ == meta parse "a" [blank #a blank])
     (
         wa: [#a]
-        '~null~ == meta uparse "a" [wa blank]
+        '~null~ == meta parse "a" [wa blank]
     )
     (
         wa: [#a]
-        '~null~ == meta uparse "a" [blank wa blank]
+        '~null~ == meta parse "a" [blank wa blank]
     )
-    (#a == uparse "a" [[#b | blank] #a])
-    (#a == uparse "a" [[#b | [blank]] #a])
-    (#a == uparse "a" [[[#b | [blank]]] #a])
+    (#a == parse "a" [[#b | blank] #a])
+    (#a == parse "a" [[#b | [blank]] #a])
+    (#a == parse "a" [[[#b | [blank]]] #a])
 ]
 
 [
-    ('~null~ == meta uparse #{} [blank])
-    ('~null~ == meta uparse #{0A} [<any> blank])
-    ('~null~ == meta uparse #{0A} [blank <any> blank])
-    ('~null~ == meta uparse #{0A} [#{0A} blank])
-    ('~null~ == meta uparse #{0A} [blank #{0A} blank])
+    ('~null~ == meta parse #{} [blank])
+    ('~null~ == meta parse #{0A} [<any> blank])
+    ('~null~ == meta parse #{0A} [blank <any> blank])
+    ('~null~ == meta parse #{0A} [#{0A} blank])
+    ('~null~ == meta parse #{0A} [blank #{0A} blank])
     (
         wa: [#{0A}]
-        '~null~ == meta uparse #{0A} [wa blank]
+        '~null~ == meta parse #{0A} [wa blank]
     )
     (
         wa: [#{0A}]
-        '~null~ == meta uparse #{0A} [blank wa blank]
+        '~null~ == meta parse #{0A} [blank wa blank]
     )
-    (#{0A} == uparse #{0A} [[#{0B} | blank] #{0A}])
-    (#{0A} == uparse #{0A} [[#{0B} | [blank]] #{0A}])
-    (#{0A} == uparse #{0A} [[[#{0B} | [blank]]] #{0A}])
+    (#{0A} == parse #{0A} [[#{0B} | blank] #{0A}])
+    (#{0A} == parse #{0A} [[#{0B} | [blank]] #{0A}])
+    (#{0A} == parse #{0A} [[[#{0B} | [blank]]] #{0A}])
 ]

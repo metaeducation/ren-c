@@ -300,4 +300,4 @@ jobs:
         source /home/runner/.wasmedge/env
         cd build
         wasmedge r3.wasm --do \
-          "print ['** uparse {Hello, Cloud} [thru space across to <end>] '**]"
+          "print ['** parse {Hello, Cloud} [thru space across to <end>] '**]"

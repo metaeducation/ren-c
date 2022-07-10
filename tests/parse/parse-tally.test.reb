@@ -2,18 +2,18 @@
 ;
 ; TALLY is a new rule for making counting easier
 
-(3 = uparse "aaa" [tally "a"])
+(3 = parse "aaa" [tally "a"])
 
-(null = uparse "aaa" [tally "b"])  ; doesn't finish parse
-(0 = uparse "aaa" [tally "b" elide to <end>])  ; must be at end
-(0 = uparse* "aaa" [tally "b"])  ; alternately, use non-force-completion
+(null = parse "aaa" [tally "b"])  ; doesn't finish parse
+(0 = parse "aaa" [tally "b" elide to <end>])  ; must be at end
+(0 = parse* "aaa" [tally "b"])  ; alternately, use non-force-completion
 
 (did all [
-    uparse "(((stuff)))" [
+    parse "(((stuff)))" [
         n: tally "("
         inner: between <here> repeat (n) ")"
     ]
     inner = "stuff"
 ])
 
-(3 == uparse "abbcccabb" [tally ["a" 2 "b" | 3 "c"]])
+(3 == parse "abbcccabb" [tally ["a" 2 "b" | 3 "c"]])

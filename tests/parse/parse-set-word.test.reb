@@ -7,38 +7,38 @@
 [(
     x: ~
     did all [
-        "hello" == uparse [1 "hello"] [x: [tag! | integer!] text!]
+        "hello" == parse [1 "hello"] [x: [tag! | integer!] text!]
         x = 1  ; not [1]
     ]
 )(
     x: ~
     did all [
-        "hello" == uparse [1 "hello"] [x: [tag! integer! | integer! text!]]
+        "hello" == parse [1 "hello"] [x: [tag! integer! | integer! text!]]
         x = "hello"
     ]
 )(
     x: ~
     did all [
-        '~null~ == meta uparse [] [x: [opt integer!]]
+        '~null~ == meta parse [] [x: [opt integer!]]
         x = null
     ]
 )(
     x: <before>
     did all [
-        didn't uparse [] [x: [integer!]]
+        didn't parse [] [x: [integer!]]
         x = <before>
     ]
 )(
     x: ~
     did all [
-        '~null~ == meta uparse [] [x: opt [integer!]]
+        '~null~ == meta parse [] [x: opt [integer!]]
         x = null
     ]
 )
 
 (
     did all [
-        [1 2 3] == uparse [1 2 3] [x: collect [some keep integer!]]
+        [1 2 3] == parse [1 2 3] [x: collect [some keep integer!]]
         x = [1 2 3]
     ]
 )]
@@ -50,7 +50,7 @@
     t: "t"
     i: "i"
     did all [
-        <foo> == uparse [<foo>] [i: integer! | t: tag!]
+        <foo> == parse [<foo>] [i: integer! | t: tag!]
         i = "i"  ; undisturbed
         t = <foo>
     ]
@@ -58,7 +58,7 @@
     t: "t"
     i: "i"
     did all [
-        <foo> == uparse [<foo>] [i: opt integer!, t: tag!]
+        <foo> == parse [<foo>] [i: opt integer!, t: tag!]
         i = null
         t = <foo>
     ]
@@ -68,8 +68,8 @@
     (
         x4318: 0
         did all [
-            error? trap [uparse [] [x4318: across]]
-            error? trap [uparse [] [x4318:]]
+            error? trap [parse [] [x4318: across]]
+            error? trap [parse [] [x4318:]]
             zero? x4318
         ]
     )
@@ -84,14 +84,14 @@
 (
     x: ~, y: 10
     did all [
-        <result> = uparse "a" [x: y: elide "a" (<result>)]
+        <result> = parse "a" [x: y: elide "a" (<result>)]
         unset? 'x
         unset? 'y
     ]
 )(
     obj: make object! [x: ~, y: 10]
     did all [
-        <result> = uparse "a" [obj.x: obj.y: elide "a" (<result>)]
+        <result> = parse "a" [obj.x: obj.y: elide "a" (<result>)]
         unset? 'obj.x
         unset? 'obj.y
     ]

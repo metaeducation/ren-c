@@ -3,10 +3,10 @@
 ; Reimagination of R3-Alpha's DO, which let you treat the input block as code
 ; and advance through a step of evaluation.
 ;
-; https://forum.rebol.info/t/replacing-r3-parses-do-rule-w-uparses-evaluate/1478
+; https://forum.rebol.info/t/replacing-r3-parses-do-rule-w-parses-evaluate/1478
 
 [
-    (uparse-evaluate: combinator [
+    (parse-evaluate: combinator [
         {Run the evaluator one step to advance input, and produce a result}
         return: "Result of one evaluation step"
             [<opt> any-value!]
@@ -28,13 +28,13 @@
         saved: copy []
 
         mode: #save
-        return uparse input [collect [
+        return parse input [collect [
             some [
                 mode: ['<K> (#keep) | '<S> (#save) | tag! (fail "BAD MODE")]
                 |
                 [',]  ; skip over commas
                 |
-                [value: uparse-evaluate] [
+                [value: parse-evaluate] [
                     :(mode = #keep) keep ^ (value)
                     |
                     :(mode = #save) (if did value [append saved ^value])

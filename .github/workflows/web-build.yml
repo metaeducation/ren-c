@@ -418,7 +418,7 @@ jobs:
       with:
         script: |
           cd %tests/cypress/e2e/
-          list: uparse as text! read %README.md [
+          list: parse as text! read %README.md [
               collect some [
                   keep ["*" space url! elide newline]
                   | thru newline

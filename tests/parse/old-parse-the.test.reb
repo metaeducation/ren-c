@@ -9,18 +9,18 @@
 ; it might read better, e.g. `parse [x: result'] [set-word! the result']`
 
 [
-    ('wb == uparse [wb] [the wb])
-    (123 == uparse [123] [the 123])
-    (3 == uparse [3 3] [2 the 3])
-    (_ == uparse [blank] [the blank])
-    ('some == uparse [some] [the some])
+    ('wb == parse [wb] [the wb])
+    (123 == parse [123] [the 123])
+    (3 == parse [3 3] [2 the 3])
+    (_ == parse [blank] [the blank])
+    ('some == parse [some] [the some])
 ]
 
 [#1314 (
     d: [a b c 1 d]
     true
 )(
-    'd = uparse d [thru the 1 'd]
+    'd = parse d [thru the 1 'd]
 )(
-    1 = uparse d [thru 'c the 1 elide 'd]
+    1 = parse d [thru 'c the 1 elide 'd]
 )]

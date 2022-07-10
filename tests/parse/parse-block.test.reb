@@ -12,15 +12,15 @@
 
 ; No-op rule of empty block should always match.
 [
-    (none? uparse "" [])
-    (none? uparse "" [[]])
-    (none? uparse "" [[[]]])
+    (none? parse "" [])
+    (none? parse "" [[]])
+    (none? parse "" [[[]]])
 
-    (none? uparse [] [])
-    (none? uparse [] [[[]]])
-    (null = uparse [x] [])
-    (null = uparse [x] [[[]]])
-    ('x = uparse [x] [[] 'x []])
+    (none? parse [] [])
+    (none? parse [] [[[]]])
+    (null = parse [x] [])
+    (null = parse [x] [[[]]])
+    ('x = parse [x] [[] 'x []])
 ]
 
 
@@ -33,14 +33,14 @@
     (
         res: 0
         did all [
-            'a == uparse [a] [res: wa]
+            'a == parse [a] [res: wa]
             res = 'a
         ]
     )
     (
         res: 0
         did all [
-            'a == uparse [a a] [res: 2 wa]
+            'a == parse [a a] [res: 2 wa]
             res = 'a
         ]
     )
@@ -48,10 +48,10 @@
 
 ; | means alternate clause
 [
-    (didn't uparse [a b] ['b | 'a])
-    (#a == uparse [#a] [[#b | #a]])
-    (didn't uparse [a b] [['b | 'a]])
-    ('b == uparse [a b] [['a | 'b] ['b | 'a]])
+    (didn't parse [a b] ['b | 'a])
+    (#a == parse [#a] [[#b | #a]])
+    (didn't parse [a b] [['b | 'a]])
+    ('b == parse [a b] [['a | 'b] ['b | 'a]])
 ]
 
 
@@ -63,8 +63,8 @@
 ;
 ; https://forum.rebol.info/t/separating-parse-rules-across-contexts/313/6
 [
-    (2 = uparse [1 2] [[integer! integer!]])
-    ("a" = uparse ["a"] [[integer! | text!]])
+    (2 = parse [1 2] [[integer! integer!]])
+    ("a" = parse ["a"] [[integer! | text!]])
 ]
 
 
@@ -73,7 +73,7 @@
     (
         x: ~
         did all [
-            '~null~ == meta uparse [1] [x: [integer! opt text!]]
+            '~null~ == meta parse [1] [x: [integer! opt text!]]
             x = null
         ]
     )
@@ -81,7 +81,7 @@
     (
         x: ~
         did all [
-            '~null~ == meta uparse [1] [integer! x: [(null)]]
+            '~null~ == meta parse [1] [integer! x: [(null)]]
             x = null
         ]
     )
@@ -93,13 +93,13 @@
 ;
 ;    ["a" | "b" || "c"] <=> [["a" | "b"] "c"]
 [
-    ("c" = uparse "ac" ["a" | "b" || "c"])
-    ("c" = uparse "bc" ["a" | "b" || "c"])
-    (null = uparse "xc" ["a" | "b" || "c"])
+    ("c" = parse "ac" ["a" | "b" || "c"])
+    ("c" = parse "bc" ["a" | "b" || "c"])
+    (null = parse "xc" ["a" | "b" || "c"])
 
-    ("c" = uparse "ac" ["a" || "b" | "c"])
-    ("b" = uparse "ab" ["a" || "b" | "c"])
-    (null = uparse "ax" ["a" || "b" | "c"])
+    ("c" = parse "ac" ["a" || "b" | "c"])
+    ("b" = parse "ab" ["a" || "b" | "c"])
+    (null = parse "ax" ["a" || "b" | "c"])
 ]
 
 
@@ -110,7 +110,7 @@
 ; say you don't want the ~null~ isotope, or does that just confuse things?  Is
 ; it better to just rig that up from the outside?
 ;
-;     uparse data rules then result -> [
+;     parse data rules then result -> [
 ;         ; If RESULT is null we can react differently here
 ;     ] else [
 ;         ; This is a match failure null
@@ -120,12 +120,12 @@
 ; it's this easy to work around.
 [
     (
-        x: uparse "aaa" [some "a" (null)] else [fail "Shouldn't be reached"]
+        x: parse "aaa" [some "a" (null)] else [fail "Shouldn't be reached"]
         x = null
     )
     (
         did-not-match: false
-        uparse "aaa" [some "b"] else [did-not-match: true]
+        parse "aaa" [some "b"] else [did-not-match: true]
         did-not-match
     )
 ]
@@ -134,7 +134,7 @@
 [#1672 (  ; infinite recursion
     x: 0
     a: [(x: x + 1, if x = 200 [throw <deep-enough>]) a]
-    <deep-enough> = catch [uparse [] a]
+    <deep-enough> = catch [parse [] a]
 )]
 
 
@@ -142,14 +142,14 @@
     (
         res: ~
         did all [
-            'b == uparse [a a b] [<any> res: ['a | 'b] <any>]
+            'b == parse [a a b] [<any> res: ['a | 'b] <any>]
             res = 'a
         ]
     )
     (
         res: '~before~
         did all [
-            didn't uparse [a] [res: ['c | 'b]]
+            didn't parse [a] [res: ['c | 'b]]
             res = '~before~
         ]
     )

@@ -9,16 +9,16 @@
 [
     (
         block: [a]
-        (tail block) = uparse block ['a <end>]
+        (tail block) = parse block ['a <end>]
     )
-    (didn't uparse [a b] ['a <end>])
-    ([] == uparse [a] [<any> <end>])
-    (didn't uparse [a b] [<any> <end>])
-    ([] == uparse [] [<end>])
+    (didn't parse [a b] ['a <end>])
+    ([] == parse [a] [<any> <end>])
+    (didn't parse [a b] [<any> <end>])
+    ([] == parse [] [<end>])
     (
         be6: ~
         did all [
-            1 == uparse [] [<end> (be6: 1)]
+            1 == parse [] [<end> (be6: 1)]
             be6 = 1
         ]
     )
@@ -28,16 +28,16 @@
 [
     (
         text: "a"
-        (tail text) == uparse text [#a <end>]
+        (tail text) == parse text [#a <end>]
     )
-    (didn't uparse "ab" [#a <end>])
-    ("" == uparse "a" [<any> <end>])
-    (didn't uparse "ab" [<any> <end>])
-    ("" == uparse "" [<end>])
+    (didn't parse "ab" [#a <end>])
+    ("" == parse "a" [<any> <end>])
+    (didn't parse "ab" [<any> <end>])
+    ("" == parse "" [<end>])
     (
         be6: ~
         did all [
-            1 == uparse "" [<end> (be6: 1)]
+            1 == parse "" [<end> (be6: 1)]
             be6 = 1
         ]
     )
@@ -47,16 +47,16 @@
 [
     (
         binary: #{0A}
-        (tail binary) == uparse #{0A} [#{0A} <end>]
+        (tail binary) == parse #{0A} [#{0A} <end>]
     )
-    (didn't uparse #{0A0B} [#{0A} <end>])
-    (#{} == uparse #{0A} [<any> <end>])
-    (didn't uparse #{0A0B} [<any> <end>])
-    (#{} == uparse #{} [<end>])
+    (didn't parse #{0A0B} [#{0A} <end>])
+    (#{} == parse #{0A} [<any> <end>])
+    (didn't parse #{0A0B} [<any> <end>])
+    (#{} == parse #{} [<end>])
     (
         be6: ~
         did all [
-            1 == uparse #{} [<end> (be6: 1)]
+            1 == parse #{} [<end> (be6: 1)]
             be6 = 1
         ]
     )

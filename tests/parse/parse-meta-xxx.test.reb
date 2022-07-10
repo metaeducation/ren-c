@@ -4,16 +4,16 @@
 
 [
     (did all  [
-        @void = uparse "" [synthesized: ^[]]
+        @void = parse "" [synthesized: ^[]]
         @void = synthesized
     ])
     (did all  [
-        @void = uparse "" [synthesized: ^[comment "hi"]]
+        @void = parse "" [synthesized: ^[comment "hi"]]
         @void = synthesized
     ])
     (did all  [
-        '~void~ == uparse "" [synthesized: ^[(~void~)]]
+        '~void~ == parse "" [synthesized: ^[(~void~)]]
         '~void~ = synthesized
     ])
-    ('~friendly~ = uparse [~friendly~] [bad-word!])
+    ('~friendly~ = parse [~friendly~] [bad-word!])
 ]

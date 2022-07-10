@@ -365,7 +365,7 @@ trim: function [
     ;
     indent: _
     if auto [
-        parse* series [
+        parse3* series [
             ; Don't count empty lines, (e.g. trim/auto {^/^/^/    asdf})
             remove [opt some LF]
 

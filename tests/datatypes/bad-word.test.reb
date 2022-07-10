@@ -30,7 +30,7 @@
 (
     valid: ["~abc~" "~a|b~"]
     for-each str valid [
-        word: uparse str [to-word/ between '~ '~]
+        word: parse str [to-word/ between '~ '~]
         bad: load-value str
         assert [bad-word? bad]
         assert [word = label of bad]

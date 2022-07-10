@@ -1,12 +1,12 @@
 ; %parse-tag-here.test.reb
 ;
-; As alternatives to using SET-WORD! to set the uparse position and GET-WORD!
-; to get the uparse position, Ren-C has <here> and the SEEK keyword.  <HERE>
+; As alternatives to using SET-WORD! to set the parse position and GET-WORD!
+; to get the parse position, Ren-C has <here> and the SEEK keyword.  <HERE>
 ; follows Topaz precedent as the new means of capturing positions
 ; (e.g. POS: <HERE>).  But it is useful for other purposes, when a rule is
 ; needed for capturing the current position.
 ;
-; https://github.com/giesse/red-topaz-uparse
+; https://github.com/giesse/red-topaz-parse
 ;
 ; For rationale on why it is a TAG! and not simply the word HERE, see:
 ;
@@ -18,12 +18,12 @@
 
 [(
     did all [
-        "b" == uparse "aaabbb" [some "a", pos: <here>, some "b"]
+        "b" == parse "aaabbb" [some "a", pos: <here>, some "b"]
         pos = "bbb"
     ]
 )(
     did all [
-        "stuff" == uparse "<<<stuff>>>" [
+        "stuff" == parse "<<<stuff>>>" [
             left: across some "<"
             (n: length of left)
             x: between <here> repeat (n) ">"
@@ -33,26 +33,26 @@
 )]
 
 (did all [
-    [x y] = res: uparse ser: [x y] [pos: <here>, elide [<any>, <any>]]
+    [x y] = res: parse ser: [x y] [pos: <here>, elide [<any>, <any>]]
     pos = ser
 ])
 (did all [
-    [y] == res: uparse ser: [x y] [<any>, pos: <here>, elide <any>]
+    [y] == res: parse ser: [x y] [<any>, pos: <here>, elide <any>]
     pos = next ser
 ])
 (did all [
-    [] == res: uparse ser: [x y] [<any>, <any>, pos: <here>]
+    [] == res: parse ser: [x y] [<any>, <any>, pos: <here>]
     pos = tail of ser
 ])
 [#2130 (
     did all [
-        'x == res: uparse ser: [x] [pos: <here>, val: word!]
+        'x == res: parse ser: [x] [pos: <here>, val: word!]
         val = 'x
         pos = ser
     ]
 )(
     did all [
-        null? res: uparse ser: "foo" [pos: <here>, val: across <any>]
+        null? res: parse ser: "foo" [pos: <here>, val: across <any>]
         val = "f"
         pos = ser
     ]
@@ -64,7 +64,7 @@
     a-value: first [a/b]
     b-value: ~
     did all [
-        didn't uparse as block! a-value [b-value: <here>]
+        didn't parse as block! a-value [b-value: <here>]
         a-value = to path! b-value
     ]
 )
@@ -72,7 +72,7 @@
     a-value: first [()]
     b-value: ~
     did all [
-        '() == uparse a-value [b-value: <here>]
+        '() == parse a-value [b-value: <here>]
         same? a-value b-value
     ]
 )
@@ -82,56 +82,56 @@
     (
         p: ~
         did all [
-            "" == uparse "" [p: <here>]
+            "" == parse "" [p: <here>]
             tail? p
         ]
     )
     (
         p: ~
         did all [
-            "" == uparse "" [[[p: <here>]]]
+            "" == parse "" [[[p: <here>]]]
             tail? p
         ]
     )
     (
         p: ~
         did all [
-            #a == uparse "a" [p: <here> #a]
+            #a == parse "a" [p: <here> #a]
             p = "a"
         ]
     )
     (
         p: ~
         did all [
-            "" == uparse "a" [#a p: <here>]
+            "" == parse "a" [#a p: <here>]
             tail? p
         ]
     )
     (
         p: ~
         did all [
-            "" == uparse "a" [#a [p: <here>]]
+            "" == parse "a" [#a [p: <here>]]
             tail? p
         ]
     )
     (
         p: ~
         did all [
-            didn't uparse "ab" [#a p: <here>]
+            didn't parse "ab" [#a p: <here>]
             p = "b"
         ]
     )
     (
         p: ~
         did all [
-            #b == uparse "ab" [#a [p: <here>] [#b | #c]]
+            #b == parse "ab" [#a [p: <here>] [#b | #c]]
             p = "b"
         ]
     )
     (
         p: ~
         did all [
-            "b" == uparse "aaabb" [3 #a p: <here> 2 #b seek (p) [2 "b"]]
+            "b" == parse "aaabb" [3 #a p: <here> 2 #b seek (p) [2 "b"]]
             p = "bb"
         ]
     )
@@ -142,56 +142,56 @@
     (
         p: ~
         did all [
-            [] == uparse [] [p: <here>]
+            [] == parse [] [p: <here>]
             tail? p
         ]
     )
     (
         p: ~
         did all [
-            [] == uparse [] [[[p: <here>]]]
+            [] == parse [] [[[p: <here>]]]
             tail? p
         ]
     )
     (
         p: ~
         did all [
-            'a == uparse [a] [p: <here> 'a]
+            'a == parse [a] [p: <here> 'a]
             p = [a]
         ]
     )
     (
         p: ~
         did all [
-            [] == uparse [a] ['a p: <here>]
+            [] == parse [a] ['a p: <here>]
             tail? p
         ]
     )
     (
         p: ~
         did all [
-            [] == uparse [a] ['a [p: <here>]]
+            [] == parse [a] ['a [p: <here>]]
             tail? p
         ]
     )
     (
         p: ~
         did all [
-            didn't uparse [a b] ['a p: <here>]
+            didn't parse [a b] ['a p: <here>]
             p = [b]
         ]
     )
     (
         p: ~
         did all [
-            'b == uparse [a b] ['a [p: <here>] ['b | 'c]]
+            'b == parse [a b] ['a [p: <here>] ['b | 'c]]
             p = [b]
         ]
     )
     (
         p: ~
         did all [
-            'b == uparse [a a a b b] [3 'a p: <here> 2 'b seek (p) [2 'b]]
+            'b == parse [a a a b b] [3 'a p: <here> 2 'b seek (p) [2 'b]]
             p = [b b]
         ]
     )
@@ -202,56 +202,56 @@
     (
         p: ~
         did all [
-            #{} == uparse #{} [p: <here>]
+            #{} == parse #{} [p: <here>]
             tail? p
         ]
     )
     (
         p: ~
         did all [
-            #{} == uparse #{} [[[p: <here>]]]
+            #{} == parse #{} [[[p: <here>]]]
             tail? p
         ]
     )
     (
         p: ~
         did all [
-            #{0A} == uparse #{0A} [p: <here> #{0A}]
+            #{0A} == parse #{0A} [p: <here> #{0A}]
             p = #{0A}
         ]
     )
     (
         p: ~
         did all [
-            #{} == uparse #{0A} [#{0A} p: <here>]
+            #{} == parse #{0A} [#{0A} p: <here>]
             tail? p
         ]
     )
     (
         p: ~
         did all [
-            #{} == uparse #{0A} [#{0A} [p: <here>]]
+            #{} == parse #{0A} [#{0A} [p: <here>]]
             tail? p
         ]
     )
     (
         p: ~
         did all [
-            didn't uparse #{0A0B} [#{0A} p: <here>]
+            didn't parse #{0A0B} [#{0A} p: <here>]
             p = #{0B}
         ]
     )
     (
         p: ~
         did all [
-            #{0B} == uparse #{0A0B} [#{0A} [p: <here>] [#{0B} | #"^L"]]
+            #{0B} == parse #{0A0B} [#{0A} [p: <here>] [#{0B} | #"^L"]]
             p = #{0B}
         ]
     )
     (
         p: ~
         did all [
-            #{0B} == uparse #{0A0A0A0B0B} [
+            #{0B} == parse #{0A0A0A0B0B} [
                 3 #{0A} p: <here> 2 #{0B} seek (p) [2 #{0B}]
             ]
             p = #{0B0B}

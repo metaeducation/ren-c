@@ -15,31 +15,31 @@
 
 
 [
-    ([] = uparse [] [collect []])
-    ([] = uparse "" [collect []])
-    ([] = uparse #{} [collect []])
+    ([] = parse [] [collect []])
+    ([] = parse "" [collect []])
+    ([] = parse #{} [collect []])
 
-    (null = uparse [1] [collect []])
-    (null = uparse "1" [collect []])
-    (null = uparse #{01} [collect []])
+    (null = parse [1] [collect []])
+    (null = parse "1" [collect []])
+    (null = parse #{01} [collect []])
 
-    ([1] = uparse [1] [collect [keep <any>]])
-    ([#1] = uparse "1" [collect [keep <any>]])
-    ([1] = uparse #{01} [collect [keep <any>]])
+    ([1] = parse [1] [collect [keep <any>]])
+    ([#1] = parse "1" [collect [keep <any>]])
+    ([1] = parse #{01} [collect [keep <any>]])
 
-    ([1 2 3] = uparse [1 2 3] [collect [some [keep integer!]]])
+    ([1 2 3] = parse [1 2 3] [collect [some [keep integer!]]])
     (
         digit: charset "0123456789"
-        [#1 #2 #3] = uparse "123" [collect [some [keep digit]]]
+        [#1 #2 #3] = parse "123" [collect [some [keep digit]]]
     )
     (
         digit: charset [0 - 9]
-        [1 2 3] = uparse #{010203} [collect [some [keep digit]]]
+        [1 2 3] = parse #{010203} [collect [some [keep digit]]]
     )
 
     (
         digit: charset "0123456789"
-        [#2] = uparse "123" [
+        [#2] = parse "123" [
             collect [some [
                 keep [v: digit, elide :(even? load-value as text! v)]
                 |
@@ -49,7 +49,7 @@
     )
     (
         digit: charset [0 - 9]
-        [2] = uparse #{010203} [
+        [2] = parse #{010203} [
             collect [some [
                 keep [v: digit, elide :(even? v)]
                 |
@@ -60,37 +60,37 @@
 
     (
         digit: charset "0123456789"
-        [1 2 3] = uparse "123" [
+        [1 2 3] = parse "123" [
             collect [some [d: across digit keep (load-value d)]]
         ]
     )
     (
         digit: charset [0 - 9]
-        [2 3 4] = uparse #{010203} [
+        [2 3 4] = parse #{010203} [
             collect [some [d: across digit keep (1 + first d)]]
         ]
     )
 
     (
-        ["aa" "bbb"] = uparse "aabbb" [
+        ["aa" "bbb"] = parse "aabbb" [
             collect [keep across some "a", keep across some #b]
         ]
     )
     (
-        [#{0A0A} #{0B0B0B}] = uparse #{0A0A0B0B0B} [
+        [#{0A0A} #{0B0B0B}] = parse #{0A0A0B0B0B} [
             collect [keep across some #{0A}, keep across some #{0B}]
         ]
     )
 
     (
         alpha: charset [#a - #z]
-        ["abc" "def"] = uparse "abc|def" [
+        ["abc" "def"] = parse "abc|def" [
             collect [some [keep across some alpha | <any>]]
         ]
     )
     (
         digit: charset [0 - 9]
-        [#{010203} #{040506}] = uparse #{01020311040506} [
+        [#{010203} #{040506}] = parse #{01020311040506} [
             collect [some [keep across some digit | <any>]]
         ]
     )
@@ -102,21 +102,21 @@
     (
         a: ~
         did all [
-            [] == uparse [] [a: collect []]
+            [] == parse [] [a: collect []]
             a = []
         ]
     )
     (
         a: ~
         did all [
-            [] == uparse "" [a: collect []]
+            [] == parse "" [a: collect []]
             a = []
         ]
     )
     (
         a: ~
         did all [
-            [] == uparse #{} [a: collect []]
+            [] == parse #{} [a: collect []]
             a = []
         ]
     )
@@ -124,21 +124,21 @@
     (
         a: ~
         did all [
-            [1] == uparse [1] [a: collect [keep <any>]]
+            [1] == parse [1] [a: collect [keep <any>]]
             a = [1]
         ]
     )
     (
         a: ~
         did all [
-            [#1] == uparse "1" [a: collect [keep <any>]]
+            [#1] == parse "1" [a: collect [keep <any>]]
             a = [#1]
         ]
     )
     (
         a: ~
         did all [
-            [1] == uparse #{01} [a: collect [keep <any>]]
+            [1] == parse #{01} [a: collect [keep <any>]]
             a = [1]
         ]
     )
@@ -149,15 +149,15 @@
 ; a rule you asked to have match fails.  There are other tools for getting
 ; the result out if you wish.
 [
-    ([1 2 3] = uparse [1 2 3 yay] [collect [some keep integer!] elide word!])
-    ('yay = uparse [1 2 3 yay] [collect [some keep integer!] word!])
-    (null = uparse [1 2 3 <bomb>] [collect [some keep integer!] word!])
-    ([1 2 3] = uparse [1 2 3 <bomb>] [
+    ([1 2 3] = parse [1 2 3 yay] [collect [some keep integer!] elide word!])
+    ('yay = parse [1 2 3 yay] [collect [some keep integer!] word!])
+    (null = parse [1 2 3 <bomb>] [collect [some keep integer!] word!])
+    ([1 2 3] = parse [1 2 3 <bomb>] [
         collect [some keep integer!] elide to <end>
     ])
 
     (did all [
-        'yay = uparse [1 2 3 yay] [block: collect [some keep integer!] word!]
+        'yay = parse [1 2 3 yay] [block: collect [some keep integer!] word!]
         block = [1 2 3]
     ])
 ]
@@ -166,7 +166,7 @@
 [(
     x: ~
     did all [
-        [1 2] == uparse [1 2] [x: collect [
+        [1 2] == parse [1 2] [x: collect [
             keep integer! keep tag! | keep integer! keep integer!
         ]]
         x = [1 2]
@@ -174,19 +174,19 @@
 )(
     x: ~
     did all [  ; semi-nonsensical use of BETWEEN just because it takes 2 rules
-        ["(" ")"] == uparse "(abc)" [x: collect between keep "(" keep ")"]
+        ["(" ")"] == parse "(abc)" [x: collect between keep "(" keep ")"]
         x = ["(" ")"]
     ]
 )(
     x: <before>
     did all [  ; semi-nonsensical use of BETWEEN just because it takes 2 rules
-        didn't uparse "(abc}" [x: collect between "(" keep ")"]
+        didn't parse "(abc}" [x: collect between "(" keep ")"]
         x = <before>
     ]
 )(
     x: ~
     did all [
-        [#a <kept> #a <kept> #a <kept>] == uparse "aaa" [x: collect [some [
+        [#a <kept> #a <kept> #a <kept>] == parse "aaa" [x: collect [some [
             keep (try if false [<not kept>])
             keep <any>
             keep (try if true [<kept>])
@@ -198,20 +198,20 @@
 
 ; Note potential confusion that SOME KEEP and KEEP SOME are not the same.
 [
-    (["a" "a" "a"] = uparse "aaa" [collect [some keep "a"]])
-    (["a"] = uparse "aaa" [collect [keep some "a"]])
+    (["a" "a" "a"] = parse "aaa" [collect [some keep "a"]])
+    (["a"] = parse "aaa" [collect [keep some "a"]])
 ]
 
 
 ; META-BLOCK! can be used to keep the result of a rule as-is, e.g. keeping the
 ; result of a nested COLLECT as a BLOCK!
 [(
-    result: uparse "abbbbabbab" [collect [
+    result: parse "abbbbabbab" [collect [
         some [keep "a", keep [collect [some keep "b" keep (<hi>)]]]
     ]]
     result = ["a" "b" "b" "b" "b" <hi> "a" "b" "b" <hi> "a" "b" <hi>]
 )(
-    result: uparse "abbbbabbab" [collect [
+    result: parse "abbbbabbab" [collect [
         some [keep "a", keep ^[collect [some keep "b" keep (<hi>)]]]
     ]]
     result = ["a" ["b" "b" "b" "b" <hi>] "a" ["b" "b" <hi>] "a" ["b" <hi>]]
@@ -220,13 +220,13 @@
 
 ; You can KEEP inside a KEEP rule.
 [
-    (["a" "a"] = uparse "aaa" [collect [keep keep "a", "aa"]])
-    (["a" "a" "a"] = uparse "aaa" [collect [keep [keep "a" keep "a"] "a"]])
+    (["a" "a"] = parse "aaa" [collect [keep keep "a", "aa"]])
+    (["a" "a" "a"] = parse "aaa" [collect [keep [keep "a" keep "a"] "a"]])
 
-    (["aaa" "aaa"] = uparse "aaa" [
+    (["aaa" "aaa"] = parse "aaa" [
         collect [keep keep "a", "b" | keep keep "aaa"]
     ])
-    (["a" "a" "a" "c" "c"] = uparse "aaa" [
+    (["a" "a" "a" "c" "c"] = parse "aaa" [
         collect [keep [keep "a" keep "a"] [keep "b" | keep ["a" keep ("c")]]]
     ])
 ]
@@ -235,19 +235,19 @@
 ; SOME KEEP vs KEEP SOME
 [
     (did all [
-        [3] == uparse [1 2 3] [x: collect [keep some integer!]]
+        [3] == parse [1 2 3] [x: collect [keep some integer!]]
         x = [3]
     ])
     (did all [
-        [1 2 3] == uparse [1 2 3] [x: collect [some keep integer!]]
+        [1 2 3] == parse [1 2 3] [x: collect [some keep integer!]]
         x = [1 2 3]
     ])
     (did all [
-        [3] == uparse [1 2 3] [x: collect [keep ^[some integer!]]]
+        [3] == parse [1 2 3] [x: collect [keep ^[some integer!]]]
         x = [3]
     ])
     (did all [
-        [1 2 3] == uparse [1 2 3] [x: collect [some [keep ^integer!]]]
+        [1 2 3] == parse [1 2 3] [x: collect [some [keep ^integer!]]]
         x = [1 2 3]
     ])
 ]
@@ -255,12 +255,12 @@
 ; Collecting non-array series fragments
 [
     (did all [
-        pos: uparse* "aaabbb" [x: collect [keep [across some "a"]] <here>]
+        pos: parse* "aaabbb" [x: collect [keep [across some "a"]] <here>]
         "bbb" = pos
         x = ["aaa"]
     ])
     (did all [
-        pos: uparse* "aaabbbccc" [
+        pos: parse* "aaabbbccc" [
             x: collect [keep [across some "a"] some "b" keep [across some "c"]]
             <here>
         ]
@@ -272,7 +272,7 @@
 ; "Backtracking" (more tests needed!)
 [
     (did all [
-        pos: uparse* [1 2 3] [
+        pos: parse* [1 2 3] [
             x: collect [
                 keep integer! keep integer! keep text!
                 |
@@ -290,7 +290,7 @@
 [
     (did all [
         x: <before>
-        null = uparse [1 2] [x: collect [keep integer! keep text!]]
+        null = parse [1 2] [x: collect [keep integer! keep text!]]
         x = <before>
     ])
 ]
@@ -298,7 +298,7 @@
 ; Nested collect
 [
     (did all [
-        [] == uparse [1 2 3 4] [
+        [] == parse [1 2 3 4] [
             a: collect [
                 keep integer!
                 b: collect [keep across 2 integer!]
@@ -316,7 +316,7 @@
 ; input series or a match rule.
 [
     (did all [
-        pos: uparse* [1 2 3] [
+        pos: parse* [1 2 3] [
             x: collect [
                 keep integer!
                 keep (second [A [<pick> <me>] B])
@@ -328,7 +328,7 @@
         x = [1 <pick> <me> 2]
     ])
     (did all [
-        pos: uparse* [1 2 3] [
+        pos: parse* [1 2 3] [
             x: collect [
                 keep integer!
                 keep ^(second [A [<pick> <me>] B])
@@ -340,7 +340,7 @@
         x = [1 [<pick> <me>] 2]
     ])
     (did all [
-        [[a b c]] == uparse [1 2 3] [x: collect [keep ^([a b c]) to <end>]]
+        [[a b c]] == parse [1 2 3] [x: collect [keep ^([a b c]) to <end>]]
         x = [[a b c]]
     ])
 ]
@@ -349,19 +349,19 @@
 https://github.com/metaeducation/ren-c/issues/935
 [
     (did all [
-        ["aaa" "b"] == uparse "aaabbb" [
+        ["aaa" "b"] == parse "aaabbb" [
             x: collect [keep across some "a" keep some "b"]
         ]
         x = ["aaa" "b"]
     ])
 
     (did all [
-        "" == uparse "aaabbb" [x: collect [keep across to "b"] to <end>]
+        "" == parse "aaabbb" [x: collect [keep across to "b"] to <end>]
         x = ["aaa"]
     ])
 
     (did all [
-        ["b"] == uparse "aaabbb" [
+        ["b"] == parse "aaabbb" [
             outer: collect [
                 some [inner: collect keep across some "a" | keep some "b"]
             ]
@@ -374,19 +374,19 @@ https://github.com/metaeducation/ren-c/issues/935
 ; Filtering tests (from %parse-test.red)
 [
     (
-        [2] = uparse [1 2 3] [
+        [2] = parse [1 2 3] [
             collect [some [keep [v: integer! elide :(even? v)] | <any>]]
         ]
     )
     (
-        [3 4 8] = uparse [a 3 4 t "test" 8] [
+        [3 4 8] = parse [a 3 4 t "test" 8] [
             collect [some [keep integer! | <any>]]
         ]
     )
     (
         list: ~
         did all [
-            [3 4 8] == uparse [a 3 4 t "test" 8] [
+            [3 4 8] == parse [a 3 4 t "test" 8] [
                 list: collect [some [keep integer! | <any>]]
             ]
             list = [3 4 8]
@@ -397,29 +397,29 @@ https://github.com/metaeducation/ren-c/issues/935
 ; Note difference between KEEP ACROSS SOME and KEEP SOME.
 [
     (
-        [[b b b]] = uparse [a b b b] [collect [<any>, keep ^ across some 'b]]
+        [[b b b]] = parse [a b b b] [collect [<any>, keep ^ across some 'b]]
     )
     (
-        [b b b] = uparse [a b b b] [collect [<any>, keep across some 'b]]
+        [b b b] = parse [a b b b] [collect [<any>, keep across some 'b]]
     )
     (
-        [b] = uparse [a b b b] [collect [<any>, keep ^ some 'b]]
+        [b] = parse [a b b b] [collect [<any>, keep ^ some 'b]]
     )
 ]
 
 [https://github.com/red/red/issues/567
     (
-        ["12"] = uparse "12" [collect [keep value: across 2 <any>]]
+        ["12"] = parse "12" [collect [keep value: across 2 <any>]]
     )
 ]
 
 [https://github.com/red/red/issues/569
     (
         size: 1
-        ["1"] = uparse "1" [collect [keep value: across repeat (size) <any>]]
+        ["1"] = parse "1" [collect [keep value: across repeat (size) <any>]]
     )(
         size: 2
-        ["12"] = uparse "12" [collect [keep value: across repeat (size) <any>]]
+        ["12"] = parse "12" [collect [keep value: across repeat (size) <any>]]
     )
 ]
 
@@ -433,14 +433,14 @@ https://github.com/metaeducation/ren-c/issues/935
 ;     == ""
 ;
 [https://github.com/red/red/issues/2561
-    ([""] = uparse "" [collect [keep to <end>]])
-    ([""] = uparse "" [collect [keep across to <end>]])
+    ([""] = parse "" [collect [keep to <end>]])
+    ([""] = parse "" [collect [keep across to <end>]])
 ]
 
 [https://github.com/red/red/issues/3108
     (
         partition3108: function [elems [block!] size [integer!]] [
-            return uparse elems [
+            return parse elems [
                 collect some [not <end> ||
                     keep ^ across repeat (size) <any>
                     | keep ^ collect keep across to <end>
@@ -457,14 +457,14 @@ https://github.com/metaeducation/ren-c/issues/935
     ; Apparently not if a block comes from a group (?!)  UPARSE is much more
     ; consistent in its rules!
     ;
-    ([[a b]] = uparse [] [collect keep ^([a b])])
-    ([a] = uparse [] [collect keep ^('a)])
+    ([[a b]] = parse [] [collect keep ^([a b])])
+    ([a] = parse [] [collect keep ^('a)])
 ]
 
 [
     (
         foo: func [value] [return value]
-        res: uparse [a 3 4 t [t 9] "test" 8] [
+        res: parse [a 3 4 t [t 9] "test" 8] [
             collect [
                 some [
                     keep integer!
@@ -487,7 +487,7 @@ https://github.com/metaeducation/ren-c/issues/939
 (
     thing: ~
     did all [
-        null = uparse "a" [thing: collect [foo: <here>, "a", keep seek (foo)]]
+        null = parse "a" [thing: collect [foo: <here>, "a", keep seek (foo)]]
         foo = "a"
         thing = ["a"]
     ]
@@ -497,7 +497,7 @@ https://github.com/metaeducation/ren-c/issues/939
 (
     data: [foo: "a" bar: "b" | foo: "c" bar: "d"]
 
-    [[foo: "a" bar: "b"] [foo: "c" bar: "d"]] = uparse data [
+    [[foo: "a" bar: "b"] [foo: "c" bar: "d"]] = parse data [
         collect some further [keep ^ collect [
             [keep [^ 'foo:], keep text!]
             [keep [^ 'bar:], keep text!]

@@ -34,7 +34,7 @@
         ]
 
         block? escape [
-            uparse escape [
+            parse escape [
                 prefix: delimiter-types
                 suffix: delimiter-types
             ] else [
@@ -115,7 +115,7 @@
         (append out a)  ; finalize output - transfer any remainder verbatim
     ]
 
-    apply :uparse* [source rule, /case case_REWORD] else [fail]  ; why fail?
+    apply :parse* [source rule, /case case_REWORD] else [fail]  ; why fail?
     return out
 ])
 

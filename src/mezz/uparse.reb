@@ -7,10 +7,9 @@ Rebol [
 
     Exports: [
         combinator
-        uparse  default-combinators
+        parse  default-combinators
         uparse2 redbol-combinators
         using  ; TBD: will become new meaning of USE
-        uparse?  ; !!! deprecated
     ]
 
     Description: {
@@ -526,10 +525,10 @@ default-combinators: make map! reduce [
     ; Note this is distinct from TALLY, which is an iterative construct that
     ; counts the number of times it can match the rule it is given:
     ;
-    ;     >> uparse "ababab" [tally "ab"]
+    ;     >> parse "ababab" [tally "ab"]
     ;     == 3
     ;
-    ;     >> uparse "ababab" [measure some "ab"]
+    ;     >> parse "ababab" [measure some "ab"]
     ;     == 6
 
     <index> combinator [
@@ -861,13 +860,13 @@ default-combinators: make map! reduce [
     ; strictly resident in the series, effectively parameterizing it like
     ; PARSE itself...so it's called SUBPARSE:
     ;
-    ;     uparse "((aaaa)))" [subparse [between some "(" some ")"] [some "a"]]
+    ;     parse "((aaaa)))" [subparse [between some "(" some ")"] [some "a"]]
     ;
     ; Because any value-bearing rule can be used, GROUP! rules are also legal,
     ; which lets you break the rules up for legibility (and avoids interpreting
     ; arrays as rules themselves)
     ;
-    ;     uparse [| | any any any | | |] [
+    ;     parse [| | any any any | | |] [
     ;          content: between some '| some '|
     ;          subparse (content) [some 'any]
     ;     ]
@@ -1389,7 +1388,7 @@ default-combinators: make map! reduce [
     ; have to be "run this block as a rule, and use the synthesized product
     ; as a rule"
     ;
-    ;     >> did uparse "aaabbb" [:[some "a" ([some "b"])]
+    ;     >> did parse "aaabbb" [:[some "a" ([some "b"])]
     ;     == #[true]
     ;
     ; It's hard offhand to think of great uses for that, but that isn't to say
@@ -1453,7 +1452,7 @@ default-combinators: make map! reduce [
     ][
         ; Review: should it be legal to say:
         ;
-        ;     >> uparse "" [' (1020)]
+        ;     >> parse "" [' (1020)]
         ;     == 1020
         ;
         ; Arguably there is a null match at every position.  A ^null might
@@ -1521,7 +1520,7 @@ default-combinators: make map! reduce [
     ; not match".  When combined with GET-GROUP!, this fully replaces the
     ; need for the IF construct.
     ;
-    ; e.g. uparse "..." [:(mode = 'read) ... | :(mode = 'write) ...]
+    ; e.g. parse "..." [:(mode = 'read) ... | :(mode = 'write) ...]
 
     logic! combinator [
         return: "True if success, null if failure"
@@ -1592,7 +1591,7 @@ default-combinators: make map! reduce [
                 max: min: unquote times'
             ]
             block! the-block! [
-                uparse unquote times' [
+                parse unquote times' [
                     '_ '_ <end> (
                         remainder: input
                         return void  ; `[repeat ([_ _]) rule]` is a no-op
@@ -1647,7 +1646,7 @@ default-combinators: make map! reduce [
     ; but since Ren-C uses UTF-8 Everywhere it makes it practical to merge in
     ; transcoding:
     ;
-    ;     >> uparse "{Neat!} 1020" [t: text! i: integer!]
+    ;     >> parse "{Neat!} 1020" [t: text! i: integer!]
     ;     == "{Neat!} 1020"
     ;
     ;     >> t
@@ -1678,7 +1677,7 @@ default-combinators: make map! reduce [
                 ; !!! Not all errors are recoverable in transcode, so some
                 ; actually fail vs. return an error, e.g.:
                 ;
-                ;     uparse to binary! "#(" [blank!]
+                ;     parse to binary! "#(" [blank!]
                 ;
                 ; So we actually need this TRAP here.  Review.
                 ;
@@ -1800,7 +1799,7 @@ default-combinators: make map! reduce [
     ;
     ;     >> block: [some "a"]
     ;
-    ;     >> uparse [[some "a"] [some "a"]] [some @block]
+    ;     >> parse [[some "a"] [some "a"]] [some @block]
     ;     == [some "a"]
     ;
     ; However they need to have logic in them to do things like partial string
@@ -2005,14 +2004,14 @@ default-combinators: make map! reduce [
         ; quoting out material that's quoted?  This *could* make a parser and
         ; simply not call it:
         ;
-        ;    >> uparse "aaa" [3 "a" comment across some "b"]
+        ;    >> parse "aaa" [3 "a" comment across some "b"]
         ;    == "a"
         ;
         ; In any case, forming a parser rule that's not going to be run is
         ; less efficient than just quoting material, which can be done on
         ; rules with illegal content:
         ;
-        ;    >> uparse "a" [comment [across some "a" ~illegal~] "a"]
+        ;    >> parse "a" [comment [across some "a" ~illegal~] "a"]
         ;    == "a"
         ;
         ; The more efficient and flexible form is presumed here to be the
@@ -2395,7 +2394,7 @@ default-combinators: make map! reduce [
     ][
         e: make error! [
             type: 'User
-            id: 'uparse
+            id: 'parse
             message: to text! reason
         ]
         set-location-of-error e binding of 'reason
@@ -2760,7 +2759,7 @@ parsify: func [
 ; So this formulates everything on top of a UPARSE* that returns the sythesized
 ; result
 
-uparse*: func [
+parse*: func [
     {Process as much of the input as parse rules consume (see also UPARSE)}
 
     return: "Synthesized value from last match rule, or NULL if rules failed"
@@ -2877,18 +2876,18 @@ uparse*: func [
     return isotopify-if-falsey unmeta synthesized'
 ]
 
-uparse: (comment [redescribe [  ; redescribe not working at the moment (?)
+parse: (comment [redescribe [  ; redescribe not working at the moment (?)
     {Process input in the parse dialect, must match to end (see also UPARSE*)}
 ] ]
-    :uparse*/fully
+    :parse*/fully
 )
 
-sys.util.uparse: :uparse  ; !!! expose UPARSE to SYS.UTIL module, hack...
+sys.util.parse: :parse  ; !!! expose UPARSE to SYS.UTIL module, hack...
 
-match-uparse: (comment [redescribe [  ; redescribe not working at the moment (?)
+match-parse: (comment [redescribe [  ; redescribe not working at the moment (?)
     {Process input in the parse dialect, input if match (see also UPARSE*)}
 ] ]
-    ; Note: Users could write `uparse data [...rules... || <input>]` and get
+    ; Note: Users could write `parse data [...rules... || <input>]` and get
     ; the same effect generally.
     ;
     ; !!! It might be tempting to write this as an ADAPT which changes the
@@ -2899,7 +2898,7 @@ match-uparse: (comment [redescribe [  ; redescribe not working at the moment (?)
     ; But if someone changed the meaning of <input> with different /COMBINATORS
     ; that would not work.  This method will work regardless.
     ;
-    enclose :uparse*/fully func [f [frame!]] [
+    enclose :parse*/fully func [f [frame!]] [
         let input: f.input  ; DO FRAME! invalidates args; cache for returning
 
         return all [^ eval f, input]
@@ -3138,7 +3137,7 @@ append redbol-combinators reduce [
 
     === OLD-STYLE INTO BEHAVIOR ===
 
-    ; New INTO is arity-2
+    ; New SUBPARSE is arity-2
     ;
     ; https://forum.rebol.info/t/new-more-powerful-arity-2-into-in-uparse/1555
 
@@ -3226,10 +3225,10 @@ redbol-combinators.('reject): :default-combinators.('break)
 redbol-combinators.('collect): null
 redbol-combinators.('keep): null
 
-uparse2*: specialize :uparse* [
+uparse2*: specialize :parse* [
     combinators: redbol-combinators
 ]
-uparse2: specialize :uparse*/fully [
+uparse2: specialize :parse*/fully [
     combinators: redbol-combinators
 ]
 

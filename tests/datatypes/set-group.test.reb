@@ -6,9 +6,9 @@
 ;
 ;     (...): default [...]
 ;
-; And later shown to great effect with EMIT in uparse:
+; And later shown to great effect with EMIT in PARSE
 ;
-;     uparse ... [gather [varname: across to ..., emit (varname): ...]]
+;     parse ... [gather [varname: across to ..., emit (varname): ...]]
 ;
 ; Some weirder ideas, like that SET-GROUP! of an ACTION! will call arity-1
 ; actions with the right hand side have been axed.

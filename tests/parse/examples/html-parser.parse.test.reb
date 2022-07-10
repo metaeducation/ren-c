@@ -19,7 +19,7 @@
     ; BREAK in order to keep going with the rule.
     (
         ws: charset " ^-^/^M"
-        res: uparse html rule: [
+        res: parse html rule: [
             collect maybe some [
                 ws
                 |
@@ -38,7 +38,7 @@
 
     (
         ws: charset " ^-^/^M"
-        res: uparse html rule: [
+        res: parse html rule: [
             collect maybe some [
                 ws
                 |

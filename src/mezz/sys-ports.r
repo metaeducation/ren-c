@@ -18,9 +18,9 @@ REBOL [
 ]
 
 ; !!! UPARSE is not available in SYS because it is higher level.  We hack it
-; up so that when %uparse.reb runs it pokes itself into sys.util.uparse
+; up so that when %uparse.reb runs it pokes itself into sys.util.parse
 ;
-uparse: ~sys-util-uparse-not-set-yet~
+parse: ~sys-util-parse-not-set-yet~
 
 make-port*: function [
     "SYS: Called by system on MAKE of PORT! port from a scheme."
@@ -207,7 +207,7 @@ make-port*: function [
         return: [object!]
         url [url! text!]
     ][
-        return uparse as text! url [gather rules] else [
+        return parse as text! url [gather rules] else [
             fail ["Could not decode URL to an object:" url]
         ]
     ]
