@@ -25,3 +25,28 @@
     block: [m o.f]
     :(block) = [m o.f]
 )
+
+; Groups can pass on a failure that happens as their last slot.  Otherwise
+; you need to use something like ATTEMPT.
+[
+    (
+        e: ^ (1 + 2 fail "handled")
+        e.message = "handled"
+    )
+    (
+        e: ^(1 + 2 fail "handled")
+        e.message = "handled"
+    )
+    (
+        e: trap [
+            (fail "unhandled" 1 + 2)
+        ]
+        e.message = "unhandled"
+    )
+    (
+        e: trap [
+            ^(fail "unhandled" 1 + 2)
+        ]
+        e.message = "unhandled"
+    )
+]

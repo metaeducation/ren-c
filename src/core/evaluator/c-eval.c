@@ -817,7 +817,7 @@ Bounce Evaluator_Executor(Frame(*) f)
         Frame(*) subframe = Make_Frame_At_Core(
             f_current,
             f_specifier,
-            FRAME_MASK_NONE
+            FRAME_FLAG_FAILURE_RESULT_OK
         );
         Push_Frame(RESET(SPARE), subframe);
 
