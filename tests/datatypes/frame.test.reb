@@ -30,8 +30,8 @@
         f.value = <d>
         [a b c <d> <d>] = do f
         'stale-frame = pick trap [do f] 'id
-        'stale-frame = pick trap [f.series] 'id
-        'stale-frame = pick trap [f.value] 'id
+        'bad-pick = pick trap [f.series] 'id
+        'bad-pick = pick trap [f.value] 'id
     ]
 )
 

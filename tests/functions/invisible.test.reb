@@ -29,7 +29,7 @@
             1 + comment "a" comment "b" 2 * 3 fail "too far"
         ] 'pos
     ]
-    e.id = 'isotope-arg
+    e.id = 'bad-isotope
 )
 (
     pos: ~
@@ -64,7 +64,7 @@
     1 = do [1 elide "a"]
 )
 (
-    '~ = ^ do [elide "a"]
+    @void = ^ do [elide "a"]
 )
 (
     @void = ^ eval [elide "a"]
@@ -108,7 +108,7 @@
     e: trap [
         x: 1 + elide (y: 10) 2 * 3  ; non-interstitial, no longer legal
     ]
-    e.id = 'isotope-arg
+    e.id = 'bad-isotope
 )
 
 ; ONCE-BAR was an experiment created to see if it could be done, and was
@@ -152,7 +152,7 @@
 ]
 
 (
-    none? do [|||]
+    void? do [|||]
 )
 (
     void? eval [|||]
@@ -160,12 +160,14 @@
 (
     3 = do [1 + 2 ||| 10 + 20, 100 + 200]
 )
-(
-    ok? trap [reeval (lambda [x [<end>]] []) ||| 1 2 3]
-)
-(
-    error? trap [reeval (lambda [x [<opt>]] []) ||| 1 2 3]
-)
+
+; !!! There used to be some concept that these void-returning things could
+; appear like an "end" to functions.  But rules for reification have changed,
+; in that there are no "pure invisibles".  So saying that it's an <end> is
+; questionable.  Review when there's enough time in priorities to think on it.
+;
+;     (ok? trap [reeval (lambda [x [<end>]] []) ||| 1 2 3])
+;     (error? trap [reeval (lambda [x [<opt>]] []) ||| 1 2 3])
 
 (
     [3 11] = reduce [1 + 2 elide 3 + 4 5 + 6]
@@ -362,7 +364,8 @@
 ; REEVAL has been tuned to be able to act invisibly if the thing being
 ; reevaluated turns out to be invisible.
 ;
-(integer? reeval the (comment "this group vaporizes") 1020)
+(integer? (reeval the (comment "this group vaporizes") 1020))
+
 (<before> = (<before> reeval :comment "erase me"))
 (
     x: <before>
@@ -390,13 +393,13 @@
 ;
 (
     e: trap [() 1 + () 2 = () 3]
-    e.id = 'isotope-arg
+    e.id = 'bad-isotope
 )
 (
     e: trap [
         (comment "one") 1 + (comment "two") 2 = (comment "three") 3
     ]
-    e.id = 'isotope-arg
+    e.id = 'bad-isotope
 )
 
 ; "Opportunistic Invisibility" means that functions can treat invisibility as

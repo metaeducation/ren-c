@@ -18,7 +18,7 @@
 ]
 [#1152 ; SORT not stable (order not preserved)
     (
-    set [c d] sort reduce [a: "a" b: "a"]
+    [c d]: unpack inert sort reduce [a: "a" b: "a"]
     all [
         same? c a
         same? d b

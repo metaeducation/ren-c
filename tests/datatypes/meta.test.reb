@@ -22,6 +22,8 @@
 ((the '3) = ^ (comment "Hi" 1 + 2))
 ((the '3) = ^(comment "Hi" 1 + 2))
 
-; !!! Is this the best behavior, or should it say "need-non-end"?
-;
-(null = trap [^])
+; !!! Is this the best behavior, or should it return an @end?
+(
+    e: trap [^]
+    e.id = 'no-arg
+)

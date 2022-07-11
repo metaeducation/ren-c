@@ -69,5 +69,5 @@
 )(
     x: ~problem-signal~
     x: default [1020]
-    x = 1020
+    ^x = '~problem-signal~
 )]

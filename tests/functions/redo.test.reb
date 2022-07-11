@@ -82,7 +82,15 @@
 
     <success> = outer 1
 )
+
+; !!! This initially seemed to have some broken expectations, that the OUTER
+; would be able to view a variable (f.n) of INNER, when INNER does a redo of
+; OUTER that does not also redo INNER...hence the frame is stale.  Not clear
+; what the point was, but changed to count down a global to at least demo
+; the ability to REDO an ENCLOSE frame.
 (
+    global: 1
+
     inner: func [return: [text!] n /captured-frame [frame!]] [
         if n = 0 [
            return "inner phase run by redo"
@@ -92,11 +100,12 @@
     ]
 
     outer: enclose :inner func [return: [tag!] f] [
-        if f.n = 0 [
+        if global = 0 [  ; was F.N, see note about that being wrong
             return <success>
         ]
 
         f.captured-frame: binding of 'f
+        global: me - 1
 
         ; Fall through to inner
         ; It is running in the same frame's memory, but...

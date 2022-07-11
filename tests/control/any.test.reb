@@ -9,7 +9,7 @@
     (@void = ^ any [])
     (
         e: trap [if any [] [<safety>]]
-        e.id = 'isotope-arg
+        e.id = 'bad-isotope
     )
     (
         x: <overwritten>

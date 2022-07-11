@@ -132,10 +132,6 @@
 )
 
 (
-    is-barrier?: func [x [<end> integer!]] [null? x]
-    is-barrier? (<| 10)
-)
-(
     10 = (10 |>)
 )
 

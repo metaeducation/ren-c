@@ -282,7 +282,7 @@
         ]
         comment {Invisible normal arity-0 function should run on next eval}
     )(
-        enbar: enfixed func [return: <void>] [enbar: _]
+        enbar: enfixed func [left] [enbar: _, return left]
         did all [
             [304] == [var @]: evaluate [1020 enbar 304]
             var == 1020
@@ -326,8 +326,9 @@
             ]
         ]
     )(
-        enibar: enfixed func [return: <void> 'i [<skip> integer!]] [
+        enibar: enfixed func [return: [integer!] 'i [<skip> integer!]] [
             enibar: _
+            return i
         ]
         did all [
             did all [

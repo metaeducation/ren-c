@@ -111,7 +111,7 @@
 
 ; SUBPARSE is not legal if a string parse is already running
 ;
-(error? trap [parse "aa" [subparse <here> ["a" "a"]]])
+(["a" "a"] = parse "aa" [collect [subparse <here> [some keep "a"]] elide "aa"])
 
 ; Manual SUBPARSE via a recursion
 [
