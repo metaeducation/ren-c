@@ -386,13 +386,17 @@ DECLARE_NATIVE(protect)
     INCLUDE_PARAMS_OF_PROTECT;
 
     REBVAL *v = ARG(value);
-    if (IS_TUPLE(v)) {
+    if (ANY_WORD(v) or ANY_TUPLE(v)) {
+        if (REF(hide))
+            Init_Word(SPARE, Canon(HIDE));
+        else
+            Init_Word(SPARE, Canon(PROTECT));
         if (Set_Var_Core_Updater_Throws(
             OUT,
             nullptr,
             v,
             SPECIFIED,
-            Lib(TRUE),
+            SPARE,
             Lib(PROTECT_P)
         )){
             return THROWN;
@@ -443,6 +447,22 @@ DECLARE_NATIVE(unprotect)
 
     if (REF(hide))
         fail ("Cannot un-hide an object field once hidden");
+
+    REBVAL *v = ARG(value);
+    if (ANY_WORD(v) or ANY_TUPLE(v)) {
+        Init_Word(SPARE, Canon(UNPROTECT));
+        if (Set_Var_Core_Updater_Throws(
+            OUT,
+            nullptr,
+            v,
+            SPECIFIED,
+            SPARE,
+            Lib(PROTECT_P)
+        )){
+            return THROWN;
+        }
+        return COPY(v);
+    }
 
     return Protect_Unprotect_Core(frame_, PROT_WORD);
 }

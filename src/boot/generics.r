@@ -383,8 +383,8 @@ protect*: generic [
         [any-value!]
     picker "The property to update (e.g. object field)"
         [any-value!]
-    ^value "Protection signal, currently a LOGIC!"
-        [logic!]
+    ^value "Protection signal, currently [PROTECT UNPROTECT HIDE]"
+        [word!]
 ]
 
 

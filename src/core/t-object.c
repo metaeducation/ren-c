@@ -1165,13 +1165,25 @@ REBTYPE(Context)
         if (not var)
             fail (Error_Bad_Pick_Raw(picker));
 
-        if (not IS_LOGIC(setval))
-            fail ("PROTECT* currently takes just logic");
+        if (not IS_WORD(setval))
+            fail ("PROTECT* currently takes just WORD!");
 
-        if (VAL_LOGIC(setval))
+        switch (VAL_WORD_ID(setval)) {
+          case SYM_PROTECT:
             Set_Cell_Flag(var, PROTECTED);
-        else
+            break;
+
+          case SYM_UNPROTECT:
             Clear_Cell_Flag(var, PROTECTED);
+            break;
+
+          case SYM_HIDE:
+            Set_Cell_Flag(var, VAR_MARKED_HIDDEN);
+            break;
+
+          default:
+            fail (var);
+        }
 
         return nullptr; }  // caller's Context(*) is not stale, no update needed
 
