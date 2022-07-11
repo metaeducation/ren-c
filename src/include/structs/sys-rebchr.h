@@ -51,8 +51,6 @@
     //
     #define Utf8(star_or_const_star) \
         Byte star_or_const_star
-
-    #define const_if_unchecked_utf8 const
 #else
   #if (! CPLUSPLUS_11)
     #error "DEBUG_UTF8_EVERYWHERE requires C++11 or higher"
@@ -79,8 +77,6 @@
     template<typename T> struct Utf8Ptr;
     #define Utf8(star_or_const_star) \
         Utf8Ptr<Byte star_or_const_star>
-
-    #define const_if_unchecked_utf8
 
     // Primary purpose of the classes is to disable the ability to directly
     // increment or decrement pointers to Byte* without going through helper

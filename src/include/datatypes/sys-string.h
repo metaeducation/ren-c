@@ -73,38 +73,38 @@
 
 inline static Utf8(*) NEXT_CHR(
     Codepoint *codepoint_out,
-    Utf8(const_if_unchecked_utf8*) cp
+    Utf8(const_if_c*) cp
 ){
-    const Byte* t = cp;
+    const_if_c Byte* t = cp;
     if (*t < 0x80)
         *codepoint_out = *t;
     else
-        t = Back_Scan_UTF8_Char_Unchecked(codepoint_out, t);
+        t = m_cast(Byte*, Back_Scan_UTF8_Char_Unchecked(codepoint_out, t));
     return cast(Utf8(*), m_cast(Byte*, t + 1));
 }
 
 inline static Utf8(*) BACK_CHR(
     Codepoint *codepoint_out,
-    Utf8(const_if_unchecked_utf8*) cp
+    Utf8(const_if_c*) cp
 ){
-    const_if_unchecked_utf8 Byte* t = cp;
+    const_if_c Byte* t = cp;
     --t;
     while (Is_Continuation_Byte_If_Utf8(*t))
         --t;
-    NEXT_CHR(codepoint_out, cast(Utf8(const_if_unchecked_utf8*), t));
+    NEXT_CHR(codepoint_out, cast(Utf8(const_if_c*), t));
     return cast(Utf8(*), m_cast(Byte*, t));
 }
 
-inline static Utf8(*) NEXT_STR(Utf8(const_if_unchecked_utf8*) cp) {
-    const_if_unchecked_utf8 Byte* t = cp;
+inline static Utf8(*) NEXT_STR(Utf8(const_if_c*) cp) {
+    const_if_c Byte* t = cp;
     do {
         ++t;
     } while (Is_Continuation_Byte_If_Utf8(*t));
     return cast(Utf8(*), m_cast(Byte*, t));
 }
 
-inline static Utf8(*) BACK_STR(Utf8(const_if_unchecked_utf8*) cp) {
-    const_if_unchecked_utf8 Byte* t = cp;
+inline static Utf8(*) BACK_STR(Utf8(const_if_c*) cp) {
+    const_if_c Byte* t = cp;
     do {
         --t;
     } while (Is_Continuation_Byte_If_Utf8(*t));
@@ -113,7 +113,7 @@ inline static Utf8(*) BACK_STR(Utf8(const_if_unchecked_utf8*) cp) {
 
 inline static Utf8(*) SKIP_CHR(
     Codepoint *codepoint_out,
-    Utf8(const_if_unchecked_utf8*) cp,
+    Utf8(const_if_c*) cp,
     REBINT delta
 ){
     if (delta > 0) {
@@ -132,7 +132,7 @@ inline static Utf8(*) SKIP_CHR(
     return m_cast(Utf8(*), cp);
 }
 
-#if DEBUG_UTF8_EVERYWHERE
+#if CPLUSPLUS_11
     //
     // See the definition of `const_if_c` for the explanation of why this
     // overloading technique is needed to make output constness match input.
