@@ -233,6 +233,7 @@
 %parse/parse-integer.test.reb
 %parse/parse-into.test.reb
 %parse/parse-issue.test.reb
+%parse/parse-just.test.reb
 %parse/parse-logic.test.reb
 %parse/parse-maybe.test.reb
 %parse/parse-measure.test.reb
@@ -256,6 +257,7 @@
 %parse/parse-tag-index.test.reb
 %parse/parse-tally.test.reb
 %parse/parse-text.test.reb
+%parse/parse-the.test.reb
 %parse/parse-the-xxx.test.reb
 %parse/parse-thru.test.reb
 %parse/parse-to.test.reb

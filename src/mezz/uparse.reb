@@ -1499,17 +1499,38 @@ default-combinators: make map! reduce [
         return [# remainder pending]: comb state input value
     ]
 
-    'the combinator [
+    'lit combinator [  ; should long form be LITERALLY or LITERAL ?
         return: "Literal value" [<opt> any-value!]
         pending: [blank! block!]
         'value [any-value!]
         <local> comb
     ][
-        ; Though generic quoting exists, being able to say [the ''x] instead
+        ; Though generic quoting exists, being able to say [lit ''x] instead
         ; of ['''x] may be clarifying when trying to match ''x (for instance)
 
         comb: :(state.combinators).(quoted!)
         return [# remainder pending]: comb state input ^value
+    ]
+
+    === NON-ADVANCING OPERATORS ===
+
+    ; These all act as their normal forms, to save you from the uglier THE/
+    ; or META/ invocations.
+
+    'the combinator [
+        return: "Quoted form of literal value (not matched)" [any-value!]
+        'value [any-value!]
+    ][
+        remainder: input
+        return :value
+    ]
+
+    'just combinator [
+        return: "Quoted form of literal value (not matched)" [quoted!]
+        'value [any-value!]
+    ][
+        remainder: input
+        return quote :value
     ]
 
     === BLANK! COMBINATOR ===
@@ -1738,14 +1759,6 @@ default-combinators: make map! reduce [
     ; air to use is via a GROUP!, that becomes contentious in COMPOSE.
     ;
     ; https://forum.rebol.info/t/1643/2
-
-    'the combinator [  ; synonym for @, for people who dislike symbols
-        return: "Ensuing value in the rule stream 'as-is'" [any-value!]
-        'item [any-value!]
-    ][
-        remainder: input
-        return item
-    ]
 
     '@ combinator [
         return: "Ensuing value in the rule stream 'as-is'" [<opt> any-value!]
