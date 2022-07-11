@@ -331,6 +331,12 @@
 ])
 
 
+; Limited support for @word
+(
+    block: [some rule]
+    did parse3 [[some rule] [some rule]] [2 @block]
+)
+
 ; As alternatives to using SET-WORD! to set the parse position and GET-WORD!
 ; to get the parse position, Ren-C has keywords HERE and SEEK.  HERE has
 ; precedent in Topaz:

@@ -123,9 +123,3 @@
     ("a" == parse "aa" [repeat ([_ #]) "a"])
     (none? parse "" [repeat ([_ #]) "a"])
 ]
-
-; THE-BLOCK! also accepted
-[
-    (didn't parse "a" [repeat @[2 3] "a"])
-    ("a" == parse "aaaaaaa" [repeat @[_ _] "b", maybe some "a"])
-]

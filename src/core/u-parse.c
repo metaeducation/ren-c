@@ -630,6 +630,12 @@ static Bounce Parse_One_Rule(
             rule = Unquotify(SPARE, 1);
             break;  // fall through to direct match
 
+          case REB_THE_WORD: {
+            bool any = false;
+            Get_Var_May_Fail(SPARE, rule, P_RULE_SPECIFIER, any);
+            rule = SPARE;
+            break; }  // all through to direct match
+
           case REB_DATATYPE:
             if (VAL_TYPE(item) == VAL_TYPE_KIND(rule))
                 return Init_Integer(OUT, pos + 1);  // specific type match
@@ -1039,6 +1045,12 @@ static REBIXO To_Thru_Non_Block_Rule(
         if (IS_QUOTED(rule)) {  // make `'[foo bar]` match `[foo bar]`
             Derelativize(temp, rule, P_RULE_SPECIFIER);
             rule = Unquotify(temp, 1);
+            find_flags |= AM_FIND_ONLY;  // !!! Is this implied?
+        }
+        else if (IS_THE_WORD(rule)) {
+            bool any = false;
+            Get_Var_May_Fail(temp, rule, P_RULE_SPECIFIER, any);
+            rule = temp;
             find_flags |= AM_FIND_ONLY;  // !!! Is this implied?
         }
 

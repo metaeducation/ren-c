@@ -1749,79 +1749,10 @@ default-combinators: make map! reduce [
         ]
     ]
 
-    === NEW THE-XXX! COMBINATORS ===
+    === THE-XXX! COMBINATORS ===
 
-    ; The role of THE-XXX! combinators has been in flux, but are believed to
-    ; provide the most value by being quoting or "as-is" operations.
-    ;
-    ; The rationale for this decision is laid out here, which mostly comes down
-    ; to the fact that if the only way you can synthesize values out of thin
-    ; air to use is via a GROUP!, that becomes contentious in COMPOSE.
-    ;
-    ; https://forum.rebol.info/t/1643/2
-
-    '@ combinator [
-        return: "Ensuing value in the rule stream 'as-is'" [<opt> any-value!]
-        'item [any-value!]
-    ][
-        if bad-word? :item [  ; keep nuance of ~null~ making NULL
-            if '~null~ = :item [
-                return null
-            ]
-            fail [
-                "@ turns ~null~ into NULL and rejects other BAD-WORD!s"
-                "Use THE if that behavior is unhelpful for your situation."
-                "(It's really useful to the C API!)"
-            ]
-        ]
-        remainder: input
-        return item
-    ]
-
-    the-word! combinator [
-        return: "The input THE-WORD!" [the-word!]
-        value [the-word!]
-    ][
-        remainder: input
-        return value
-    ]
-
-    the-path! combinator [
-        return: "The input THE-PATH!" [the-path!]
-        value [the-path!]
-    ][
-        remainder: input
-        return value
-    ]
-
-    the-tuple! combinator [
-        return: "The input THE-TUPLE!" [the-tuple!]
-        value [the-tuple!]
-    ][
-        remainder: input
-        return value
-    ]
-
-    the-group! combinator [
-        return: "The input THE-GROUP!" [the-group!]
-        value [the-group!]
-    ][
-        remainder: input
-        return value
-    ]
-
-    the-block! combinator [
-        return: "The input THE-BLOCK!" [the-block!]
-        value [the-block!]
-    ][
-        remainder: input
-        return value
-    ]
-
-    === OLD THE-XXX! COMBINATORS ===
-
-    ; !!! This was an old concept of THE-XXX! combinators for doing literal
-    ; matches instead of by rule, e.g.
+    ; What the THE-XXX! combinators are for is doing literal matches vs. a
+    ; match through a rule, e.g.:
     ;
     ;     >> block: [some "a"]
     ;
@@ -1832,13 +1763,21 @@ default-combinators: make map! reduce [
     ; matches on text.  That logic has to be in the QUOTED! combinator, so
     ; this code builds on that instead of repeating it.
     ;
-    ; THE REASON THESE WERE CHANGED is explained in the new combinators.  But
-    ; there may be a return of these someday, e.g. if $(gr o up) and $word
-    ; come along...to shuffle the definitions.  So they're kept.
-    ;
     ; !!! These follow a simple pattern, could generate at a higher level.
 
-    '~the-word!~ combinator [
+    '@ combinator [
+        return: "Match product of result of applying rule" [<opt> any-value!]
+        pending: [blank! block!]
+        parser [action!]
+        <local> comb result'
+    ][
+        ([^result' remainder]: parser input) else [return null]
+
+        comb: :(state.combinators).(quoted!)
+        return [# remainder pending]: comb state remainder result'
+    ]
+
+    the-word! combinator [
         return: "Literal value" [<opt> any-value!]
         pending: [blank! block!]
         value [the-word!]
@@ -1848,7 +1787,7 @@ default-combinators: make map! reduce [
         return [# remainder pending]: comb state input quote get value
     ]
 
-    '~the-path!~ combinator [
+    the-path! combinator [
         return: "Literal value" [<opt> any-value!]
         pending: [blank! block!]
         value [the-word!]
@@ -1858,7 +1797,7 @@ default-combinators: make map! reduce [
         return [# remainder pending]: comb state input quote get value
     ]
 
-    '~the-tuple!~ combinator [
+    the-tuple! combinator [
         return: "Literal value" [<opt> any-value!]
         pending: [blank! block!]
         value [the-tuple!]
@@ -1868,29 +1807,50 @@ default-combinators: make map! reduce [
         return [# remainder pending]: comb state input quote get value
     ]
 
-    '~the-group!~ combinator [
+    the-group! combinator [
         return: "Literal value" [<opt> any-value!]
         pending: [blank! block!]
         value [the-group!]
-        <local> result' comb totalpending
+        <local> result' comb totalpending single
     ][
         totalpending: copy []
         value: as group! value
         comb: :(state.combinators).(group!)
-        ([^result' input pending]: comb state input value) else [
+        ([^result' remainder pending]: comb state input value) else [
             return null
         ]
         totalpending: glom totalpending pending
+
         comb: :(state.combinators).(quoted!)
-        ([^result' remainder pending]: comb state input result') else [
-            return null
+
+        all [
+            length of value = 1
+            group? single: first value
+            length of single = 1
+        ] then [
+            ; Splice-match semantics for @((thing)), match the block itemwise.
+            ; Experimental feature with weird syntax...
+            ;
+            if (not quoted? result') or (not block? unmeta result') [
+                fail "Inline matching @((...)) requires BLOCK! for the moment"
+            ]
+            for-each item unmeta result' [
+                ([^result' remainder pending]: comb state remainder quote item) else [
+                    return null
+                ]
+                totalpending: glom totalpending pending
+            ]
+        ] else [
+            ([^result' remainder pending]: comb state remainder result') else [
+                return null
+            ]
+            totalpending: glom totalpending pending
         ]
-        totalpending: glom totalpending pending
         pending: totalpending
         return unmeta result'
     ]
 
-    '~the-block!~ combinator [
+    the-block! combinator [
         return: "Literal value" [<opt> any-value!]
         pending: [blank! block!]
         value [the-block!]

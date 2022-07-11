@@ -1,20 +1,46 @@
 ; %parse-the-xxx.test.reb
 ;
-; @ and the @xxx types are used to synthesize material out of thin air without using
-; a GROUP!.  This becomes important if you are writing COMPOSE rules, because if
-; you have to use a GROUP! every time you fabricate material that isn't being matched
-; in the input then that is contentious with the use of GROUP!s to call out places
-; in the composition.  @ breaks the Gordian knot in such a situation by just taking
-; whatever follows it literally.
+; THE-XXX! types are based around matching things literally.  GROUP!s will
+; evaluate, and BLOCK!s will use th synthesized value of the rule to be the
+; thing that gets matched.
 
-([keep some #a] = parse "a" [collect [keep @ [keep some], keep <any>]])
-([keep #a] = parse "a" [collect [keep @ 'keep, keep <any>]])
-([keep #a] = parse "a" [collect [keep @keep, keep <any>]])
+(
+    x: ~
+    tag: <hello>
+    did all [
+        <world> = parse [<hello> <world>] [x: @tag, '<world>]
+        x = <hello>
+    ]
+)
+(
+    x: ~
+    obj: make object! [field: <hello>]
+    did all [
+        <world> = parse [<hello> <world>] [x: @obj.field, '<world>]
+        x = <hello>
+    ]
+)
+(1 = parse [1 1 1] [some @(3 - 2)])
+(2 = parse [1 1 1 2] [@[some @(3 - 2), (1 + 1)]])
+("b" = parse "aaab" [@[some "x" ("y") | some "a" ("b")]])
 
-([keep #a] = parse "a" [collect [keep the 'keep, keep <any>]])
+[
+    (data: [[some rule] [some rule]], true)
 
-([@keep #a] = parse "a" [collect [keep ^ @keep, keep <any>]])
-([tupley.keep #a] = parse "a" [collect [keep @tupley.keep, keep <any>]])
-([keep/pathy #a] = parse "a" [collect [keep @keep/pathy, keep <any>]])
+    (
+        x: [some rule]
+        [some rule] = parse data [some @x]
+    )(
+        [some rule] = parse data [some @([some rule])]
+    )(
+        obj: make object! [x: [some rule]]
+        [some rule] = parse data [some @obj.x]
+    )
 
-([(keep some) #a] = parse "a" [collect [keep @(keep some), keep <any>]])
+    ([some rule] = parse data [@ block!])
+]
+
+(
+    block: [some stuff]
+    'stuff = parse [some stuff some stuff] [repeat (2) @((block))]
+)
