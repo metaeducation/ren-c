@@ -3,22 +3,20 @@
 ; This is a test for building a usermode switch construct which is able to do
 ; creative matching of partial clauses
 
-(
+[(
 log: :elide
 
 switch2: func [
-    value [<opt> any-value!]
+    value [<opt> <void> any-value!]
     cases [block!]
-    /all
-    <local> switch2-all more found result' condition branch
+    /multi
+    <local> more found result' condition branch
 ][
-    (switch2-all: :all, all: :lib.all)  ; Should be a spec dialect feature!
-
     found: false
     result': @void
     more: true
 
-    parse cases [cycle [
+    return parse cases [cycle [
         while :(more) [
             ; Find next condition clause, or break loop if we hit => or end
             ;
@@ -67,15 +65,13 @@ switch2: func [
             ;
             [:(not found) (log ["Skipping branch:" mold branch])]
 
-            ; Otherwise, run the branch.  Keep going if we are using /ALL,
+            ; Otherwise, run the branch.  Keep going if we are using /MULTI,
             ; else return whatever that branch gives back.
-            [
-                (result': ^ if true :branch)  ; branch semantics for null, void
-
-                [:(not switch2-all) return (unmeta result')]
-
-                (found: false)
-            ]
+            (
+                result': ^ if true :branch  ; IF semantics for null, void
+                if not multi [return unmeta result']
+                found: false
+            )
         ]
     ]]
 ]
@@ -84,3 +80,11 @@ true)
 (#i = switch2 1020 [match integer! => [#i], match tag! => [#t]])
 
 (#t = switch2 <ren-c> [match integer! => [#i], match tag! => [#t]])
+
+([<integer!> <any-value!>] = collect [
+    switch2/multi 1 [
+        match integer! => [keep <integer!>]
+        match any-value! => [keep <any-value!>]
+    ]
+])
+]
