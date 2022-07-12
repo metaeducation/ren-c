@@ -265,7 +265,6 @@
 %parse/parse-thru.test.reb
 %parse/parse-to.test.reb
 %parse/parse-word.test.reb
-%parse/uparse2.test.reb
 %parse/examples/argtest.parse.test.reb
 %parse/examples/breaker.parse.test.reb
 %parse/examples/countify.parse.test.reb
@@ -278,7 +277,6 @@
 %parse/examples/split.parse.test.reb
 %parse/examples/tracked-word.parse.test.reb
 %parse/examples/trim.parse.test.reb
-%parse/examples/urldecode.parse.test.reb
 
 %redbol/redbol-apply.test.reb
 
