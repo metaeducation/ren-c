@@ -403,7 +403,7 @@ requote: reframer lambda [
 ;
 ->: enfixed lambda [
     :words "Names of arguments (will not be type checked)"
-        [<end> word! lit-word! meta-word! block!]
+        [<end> word! lit-word! meta-word! refinement! block!]
     body "Code to execute"
         [block!]
 ][

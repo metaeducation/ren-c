@@ -129,7 +129,7 @@ Bounce Lambda_Unoptimized_Dispatcher(Frame(*) frame_)
 //
 //      return: [action!]
 //      spec "Names of arguments (will not be type checked)"
-//          [blank! word! lit-word! meta-word! block!]
+//          [blank! word! lit-word! meta-word! refinement! block!]
 //      body "Code to execute"
 //          [<const> block!]
 //  ]
@@ -156,8 +156,10 @@ DECLARE_NATIVE(lambda)
     }
     else if (
         IS_WORD(spec)
+        or IS_GET_WORD(spec)
         or IS_META_WORD(spec)
         or IS_QUOTED(spec)
+        or (IS_PATH(spec) and IS_REFINEMENT(spec))
     ){
         item = spec;
         item_specifier = SPECIFIED;
@@ -170,8 +172,6 @@ DECLARE_NATIVE(lambda)
         item_tail = nullptr;
     }
 
-    StackIndex base = TOP_INDEX;  // reuses Pop_Paramlist(), see [1]
-
     Init_None(PUSH());  // key slot (signal for no pushes)
     Init_Trash(PUSH());  // unused
     Init_Trash(PUSH());  // unused
@@ -182,6 +182,7 @@ DECLARE_NATIVE(lambda)
 
         // First in quad needs to be a WORD!, after pclass extracted...
         //
+        Flags param_flags = PARAM_FLAG_VANISHABLE;
         enum Reb_Param_Class pclass;
         if (IS_WORD(TOP))
             pclass = PARAM_CLASS_NORMAL;
@@ -190,11 +191,22 @@ DECLARE_NATIVE(lambda)
             Symbol(const*) symbol = VAL_WORD_SYMBOL(TOP);
             Init_Word(TOP, symbol);
         }
+        else if (IS_GET_WORD(TOP)) {
+            pclass = PARAM_CLASS_SOFT;
+            Symbol(const*) symbol = VAL_WORD_SYMBOL(TOP);
+            Init_Word(TOP, symbol);
+        }
         else if (IS_QUOTED(TOP)) {
             Unquotify(TOP, 1);
             if (not IS_WORD(TOP))
                 fail (item);
             pclass = PARAM_CLASS_HARD;
+        }
+        else if (IS_PATH(TOP) and IS_REFINEMENT(TOP)) {
+            pclass = PARAM_CLASS_NORMAL;
+            Symbol(const*) symbol = VAL_REFINEMENT_SYMBOL(TOP);
+            Init_Word(TOP, symbol);
+            param_flags |= PARAM_FLAG_REFINEMENT;
         }
         else if (IS_SET_WORD(item) and VAL_WORD_ID(item) == SYM_RETURN) {
             fail ("LAMBDA (->) does not offer RETURN facilities, use FUNCTION");
@@ -207,14 +219,20 @@ DECLARE_NATIVE(lambda)
             continue;
         }
 
-        Init_Param(PUSH(), pclass | PARAM_FLAG_VANISHABLE, TS_OPT_VALUE);
+        Init_Param(
+            PUSH(),
+            pclass | param_flags,
+            (param_flags & PARAM_FLAG_REFINEMENT)
+                ? 0  // lambda has no types, so only parameterless refinements
+                : TS_OPT_VALUE
+        );
 
         Init_Nulled(PUSH());  // types (not supported)
         Init_Nulled(PUSH());  // notes (not supported)
     }
 
     if (not optimizable) {
-        Drop_Data_Stack_To(base);
+        Drop_Data_Stack_To(STACK_BASE);
 
         Action(*) lambda = Make_Interpreted_Action_May_Fail(
             spec,
@@ -227,10 +245,10 @@ DECLARE_NATIVE(lambda)
         return Init_Action(OUT, lambda, ANONYMOUS, UNBOUND);
     }
 
-    Context(*) meta;
+    Context(*) meta;  // reuses Pop_Paramlist(), see [1]
     Array(*) paramlist = Pop_Paramlist_With_Meta_May_Fail(
         &meta,
-        base,
+        STACK_BASE,
         MKF_KEYWORDS,
         0  // no return_stackindex
     );

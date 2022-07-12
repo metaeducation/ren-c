@@ -36,3 +36,32 @@
     (lammy: lambda '[x y] [elide x + y], void? lammy 1 2)
     (lammy: lambda [x y <local> z] [elide x + y], void? lammy 1 2)
 ]
+
+(
+    test: /x -> [x]
+    did all [
+        null = test
+        # = test/x
+    ]
+)
+
+(
+    test: [:x] -> [x]  ; :x -> [x] subverts *lambda's* parameter convention!
+    did all [
+        3 = test :(1 + 2)
+        (the (1 + 2)) = test (1 + 2)
+    ]
+)
+
+(
+    test: return -> [return + 1]
+    2 = test 1
+)
+
+(
+    test: ["More complex" /return] -> [if return [<yes>] else [<no>]]
+    did all [
+        <no> = test
+        <yes> = test/return
+    ]
+)

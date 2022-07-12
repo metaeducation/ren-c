@@ -438,12 +438,12 @@ void Push_Paramlist_Quads_May_Fail(
                 local = true;
         }
 
-        if (ID_OF_SYMBOL(symbol) == SYM_RETURN and pclass != PARAM_CLASS_RETURN) {
-            //
-            // Cancel definitional return if any non-SET-WORD! uses the name
-            // RETURN when defining a FUNC.
-            //
-            *flags &= ~MKF_RETURN;
+        if (
+            (*flags & MKF_RETURN)
+            and ID_OF_SYMBOL(symbol) == SYM_RETURN
+            and pclass != PARAM_CLASS_RETURN
+        ){
+            fail ("Generator provides RETURN:, use LAMBDA if not desired");
         }
 
         // Because FUNC does not do any locals gathering by default, the main
@@ -501,26 +501,16 @@ void Push_Paramlist_Quads_May_Fail(
             SET_PARAM_FLAG(param, VANISHABLE);
         }
 
-        // All these would cancel a definitional return (leave has same idea):
-        //
-        //     func [return [integer!]]
-        //     func [/refinement return]
-        //     func [<local> return]
-        //     func [<with> return]
-        //
-        // ...although `return:` is explicitly tolerated ATM for compatibility
-        // (despite violating the "pure locals are NULL" premise)
-        //
         if (symbol == Canon(RETURN)) {
             if (*return_stackindex != 0) {
                 DECLARE_LOCAL (word);
                 Init_Word(word, symbol);
                 fail (Error_Dup_Vars_Raw(word));  // most dup checks are later
             }
-            if (pclass == PARAM_CLASS_RETURN)
+            if (*flags & MKF_RETURN) {
+                assert(pclass == PARAM_CLASS_RETURN);
                 *return_stackindex = TOP_INDEX;  // RETURN: explicit
-            else
-                *flags &= ~MKF_RETURN;
+            }
         }
     }
 
