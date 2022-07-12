@@ -19,7 +19,7 @@
 (null? repeat 1 [attempt [break 2] 2])
 ; recursion
 (1 = attempt [attempt [1]])
-('~null~ = ^ attempt [attempt [1 / 0]])
+(null = ^ attempt [attempt [1 / 0]])
 
 ; infinite recursion, no more stack overflow error...
 (

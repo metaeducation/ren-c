@@ -722,7 +722,7 @@ find-last: redescribe [
 attempt: func [
     {Evaluate a block and returns result or NULL if an expression fails}
 
-    return: "Returns NULL on failure only, VOID evaluations become unset"
+    return: "Returns NULL on failure (-or- if last evaluative result is NULL)"
         [<opt> any-value!]
     code [block!]
     <local> last'
@@ -733,7 +733,7 @@ attempt: func [
         if @void = result' [continue]
         last': result'
     ]
-    return heavy unmeta last'
+    return unmeta last'
 ]
 
 entrap: func [
