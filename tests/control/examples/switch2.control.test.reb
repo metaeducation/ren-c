@@ -19,7 +19,7 @@ switch2: func [
     more: true
 
     parse cases [cycle [
-        uwhile :(more) [
+        while :(more) [
             ; Find next condition clause, or break loop if we hit => or end
             ;
             condition: between <here> any [

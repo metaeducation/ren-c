@@ -350,7 +350,6 @@ reorder: enclose :reorder* lambda [f] [
 ; of interface parity with UPARSE.
 ;
 parse3: :parse3*/fully  ; could be more complex definition (UPARSE is!)
-here: <here>  ; temporary workaround for compatibility, will be removed
 
 ; The PARSE name has been taken by what was UPARSE.
 

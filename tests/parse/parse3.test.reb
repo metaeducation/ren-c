@@ -247,7 +247,7 @@
 
 [https://github.com/metaeducation/ren-c/issues/377 (
     o: make object! [a: 1]
-    parse3 s: "a" [o.a: here, skip]
+    parse3 s: "a" [o.a: <here>, skip]
     o.a = s
 )]
 

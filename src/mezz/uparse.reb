@@ -363,7 +363,7 @@ default-combinators: make map! reduce [
         fail ~unreachable~
     ]
 
-    'uwhile combinator [
+    'while combinator [
         {Run the body parser in a loop, for as long as condition matches}
         return: "Result of last body parser (or none if failure)"
             [<opt> any-value!]
@@ -2241,16 +2241,20 @@ default-combinators: make map! reduce [
             [<opt> <void> any-value!]
         pending: [blank! block!]
         value [block!]
-        <local> rules pos result' totalpending subpending
+        /limit "Limit of how far to consider (used by <...> recursion)"
+            [block!]
+        /thru "Keep trying rule until end of block"
+        <local> rules pos result' f sublimit totalpending subpending
     ][
         rules: value  ; alias for clarity
+        limit: default [tail of rules]
         pos: input
 
         totalpending: _  ; can become GLOM'd into a BLOCK!
 
         result': @void  ; default result is void
 
-        while [not tail? rules] [
+        while [not same? rules limit] [
             if state.verbose [
                 print ["RULE:" mold/limit rules 60]
                 print ["INPUT:" mold/limit pos 60]
@@ -2312,8 +2316,26 @@ default-combinators: make map! reduce [
             ; Do one "Parse Step".  This involves turning whatever is at the
             ; next parse position into an ACTION!, then running it.
             ;
-            let [action 'rules]: parsify state rules
-            let f: make frame! :action
+            if rules.1 = '<...> [  ; "variadic" parser, use recursion
+                rules: next rules
+                if tail? rules [  ; if at end, act like [elide to <end>]
+                    remainder: tail of pos
+                    pending: totalpending
+                    return unmeta result'
+                ]
+                sublimit: find/part rules <...> limit
+
+                f: make frame! action of binding of 'return  ; this combinator
+                f.state: state
+                f.value: rules
+                f.limit: sublimit
+                f.thru: #
+
+                rules: sublimit else [tail of rules]
+            ] else [
+                f: make frame! [# rules]: parsify state rules
+            ]
+
             f.input: pos
             f.remainder: 'pos
             f.pending: 'subpending
@@ -2351,8 +2373,13 @@ default-combinators: make map! reduce [
                         if r = '|| [break]
                     ]
                 ] else [
-                    remainder: null
-                    return null
+                    if (not thru) or (tail? input) [
+                        remainder: null
+                        return null
+                    ]
+                    rules: value
+                    pos: input: my next
+                    continue
                 ]
             ]
         ]
