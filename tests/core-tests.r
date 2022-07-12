@@ -99,6 +99,7 @@
 %control/catch.test.reb
 %control/compose.test.reb
 %control/default.test.reb
+%control/destructure.test.reb
 %control/disarm.test.reb
 %control/do.test.reb
 %control/either.test.reb
@@ -114,6 +115,8 @@
 %control/unless.test.reb
 %control/wait.test.reb
 %control/quit.test.reb
+%control/examples/switch2.control.test.reb
+
 %convert/as-binary.test.reb
 %convert/as-string.test.reb
 %convert/enbin.test.reb

@@ -44,5 +44,6 @@ REBOL [
     %mezz-colors.r
     %mezz-legacy.r
 
-    %uparse.reb  ; migrated to mezzanine, will someday have native portions
+    %uparse.r  ; migrated to mezzanine, will someday have native portions
+    %uparse-extras.r  ; e.g. DESTRUCTURE
 ]
