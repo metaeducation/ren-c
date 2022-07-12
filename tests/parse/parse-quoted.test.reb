@@ -110,14 +110,14 @@
     (
         res: ~
         did all [
-            'a == parse [a a] [res: 2 'a]
+            'a == parse [a a] [res: repeat 2 'a]
             res = 'a
         ]
     )
     (
         res: '~before~
         did all [
-            didn't parse [a a] [res: 3 'a]
+            didn't parse [a a] [res: repeat 3 'a]
             res = '~before~
         ]
     )

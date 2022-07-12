@@ -230,7 +230,6 @@
 %parse/parse-get-group.test.reb
 %parse/parse-group.test.reb
 %parse/parse-insert.test.reb
-%parse/parse-integer.test.reb
 %parse/parse-into.test.reb
 %parse/parse-issue.test.reb
 %parse/parse-just.test.reb
@@ -249,6 +248,7 @@
 %parse/parse-seek.test.reb
 %parse/parse-set-word.test.reb
 %parse/parse-set-group.test.reb
+%parse/parse-skip.test.reb
 %parse/parse-some.test.reb
 %parse/parse-stop.test.reb
 %parse/parse-tag-any.test.reb

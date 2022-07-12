@@ -73,14 +73,14 @@
     (
         res: ~
         did all [
-            #a == parse "aa" [res: 2 #a]
+            #a == parse "aa" [res: repeat 2 #a]
             res = #a
         ]
     )
     (
         res: '~before~
         did all [
-            didn't parse "aa" [res: 3 #a]
+            didn't parse "aa" [res: repeat 3 #a]
             res = '~before~
         ]
     )
@@ -101,7 +101,7 @@
     (
         res: ~
         did all [
-            #a == parse "aa" [res: 2 wa]
+            #a == parse "aa" [res: repeat 2 wa]
             res = #a
         ]
     )
@@ -200,9 +200,9 @@
             res = 1
         ]
     )
-    (didn't parse "aa" [1 [#a]])
-    (#a == parse "aa" [2 [#a]])
-    (didn't parse "aa" [3 [#a]])
+    (didn't parse "aa" [repeat 1 [#a]])
+    (#a == parse "aa" [repeat 2 [#a]])
+    (didn't parse "aa" [repeat 3 [#a]])
 
     (didn't parse "aa" [repeat ([1 1]) [#a]])
     (#a == parse "aa" [repeat ([1 2]) [#a]])
@@ -215,11 +215,11 @@
     (#a == parse "aa" [repeat ([2 3]) #a])
     (didn't parse "aa" [repeat ([3 4]) #a])
 
-    (didn't parse "aa" [1 #a])
-    (#a == parse "aa" [2 #a])
-    (didn't parse "aa" [3 #a])
+    (didn't parse "aa" [repeat 1 #a])
+    (#a == parse "aa" [repeat 2 #a])
+    (didn't parse "aa" [repeat 3 #a])
     (#a == parse "aa" [some [#a]])
     (#a = parse "aa" [some [#a] repeat (#) [#b]])
-    ("b" == parse "aabb" [2 #a 2 "b"])
-    (didn't parse "aabb" [2 "a" 3 #b])
+    ("b" == parse "aabb" [repeat 2 #a, repeat 2 "b"])
+    (didn't parse "aabb" [repeat 2 "a", repeat 3 #b])
 ]

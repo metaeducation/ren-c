@@ -601,9 +601,9 @@ split: function [
         ensure [bitset! text! char! word! tag!] dlm
         [
             some [not <end> [
-                copy mk1: [to dlm | to <end>]
+                copy mk1: [to @dlm | to <end>]
                 (keep ^mk1)
-                opt thru dlm
+                opt thru @dlm
             ]]
         ]
     ]]

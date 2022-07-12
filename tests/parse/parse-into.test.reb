@@ -22,8 +22,8 @@
 ; it delegates the recognition to the parse engine, meaning that rules do not
 ; have to be put into blocks as often.
 [
-    ("a" = parse ["aaaa"] [subparse text! some 2 "a"])
-    (null = parse ["aaaa"] [subparse text! some 3 "a"])
+    ("a" = parse ["aaaa"] [subparse text! some repeat 2 "a"])
+    (null = parse ["aaaa"] [subparse text! some repeat 3 "a"])
 ]
 
 
@@ -116,6 +116,6 @@
 ; Manual SUBPARSE via a recursion
 [
     ("test" = parse [a "test"] [
-        'a s: text! (assert [#t == parse s [4 <any>]])
+        'a s: text! (assert [#t == parse s [repeat 4 <any>]])
     ])
 ]

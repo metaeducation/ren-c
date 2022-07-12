@@ -670,6 +670,12 @@ static Bounce Parse_One_Rule(
     else {
         assert(ANY_STRING_KIND(P_TYPE) or P_TYPE == REB_BINARY);
 
+        if (IS_THE_WORD(rule)) {
+            bool any = false;
+            Get_Var_May_Fail(SPARE, rule, P_RULE_SPECIFIER, any);
+            rule = SPARE;
+        }
+
         // We try to allow some conveniences when parsing strings based on
         // how items render, e.g.:
         //
@@ -1071,6 +1077,13 @@ static REBIXO To_Thru_Non_Block_Rule(
             return cast(REBLEN, i) + 1;
 
         return cast(REBLEN, i);
+    }
+    else {
+        if (IS_THE_WORD(rule)) {
+            bool any = false;
+            Get_Var_May_Fail(SPARE, rule, P_RULE_SPECIFIER, any);
+            rule = SPARE;
+        }
     }
 
     //=//// PARSE INPUT IS A STRING OR BINARY, USE A FIND ROUTINE /////////=//

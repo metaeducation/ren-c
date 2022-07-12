@@ -16,9 +16,9 @@
 )
 
 [
-    (didn't parse [a a] [1 <any>])
-    ('a == parse [a a] [2 <any>])
-    (didn't parse [a a] [3 <any>])
+    (didn't parse [a a] [repeat 1 <any>])
+    ('a == parse [a a] [repeat 2 <any>])
+    (didn't parse [a a] [repeat 3 <any>])
 
     (didn't parse [a a] [repeat ([1 1]) <any>])
     ('a == parse [a a] [repeat ([1 2]) <any>])
@@ -33,9 +33,9 @@
 ]
 
 [
-    (didn't parse "aa" [1 <any>])
-    (#a == parse "aa" [2 <any>])
-    (didn't parse "aa" [3 <any>])
+    (didn't parse "aa" [repeat 1 <any>])
+    (#a == parse "aa" [repeat 2 <any>])
+    (didn't parse "aa" [repeat 3 <any>])
 
     (didn't parse "aa" [repeat ([1 1]) <any>])
     (#a == parse "aa" [repeat ([1 2]) <any>])

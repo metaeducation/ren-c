@@ -91,7 +91,7 @@
         str = "a"
     ])
     (did all [
-        '~changed~ == meta parse str: "123" [change [3 <any>] (#a)]
+        '~changed~ == meta parse str: "123" [change [repeat 3 <any>] (#a)]
         str = "a"
     ])
     (
@@ -104,7 +104,7 @@
         ]
     )
     (did all [
-        '~changed~ == meta parse str: "123" [change 3 <any> (99)]
+        '~changed~ == meta parse str: "123" [change skip 3 (99)]
         str = "99"
     ])
     (did all [
@@ -113,7 +113,7 @@
     ])
     (did all [
         #4 == parse str: "12abc34" [
-            some [to alpha change [some alpha] ("zzzz")] 2 <any>
+            some [to alpha change [some alpha] ("zzzz")] repeat 2 <any>
         ]
         str = "12zzzz34"
     ])
@@ -127,7 +127,7 @@
         bin = #{0A}
     ])
     (did all [
-        '~changed~ == meta parse bin: #{010203} [change [3 <any>] (#{0A})]
+        '~changed~ == meta parse bin: #{010203} [change [skip 3] (#{0A})]
         bin = #{0A}
     ])
     (
@@ -140,7 +140,7 @@
         ]
     )
     (did all [
-        '~changed~ == meta parse bin: #{010203} [change 3 <any> (99)]
+        '~changed~ == meta parse bin: #{010203} [change skip 3 (99)]
         bin = #{63}
     ])
     (did all [
@@ -151,7 +151,7 @@
     ])
     (did all [
         14 == parse bin: #{0A0B0C03040D0E} [
-            some [to digit change [some digit] (#{BEEF})] 2 <any>
+            some [to digit change [some digit] (#{BEEF})] repeat 2 <any>
         ]
         bin = #{0A0B0CBEEF0D0E}
     ])

@@ -301,7 +301,7 @@
         [] == parse [1 2 3 4] [
             a: collect [
                 keep integer!
-                b: collect [keep across 2 integer!]
+                b: collect [keep across repeat 2 integer!]
                 keep integer!
             ]
             <end>
@@ -409,7 +409,7 @@ https://github.com/metaeducation/ren-c/issues/935
 
 [https://github.com/red/red/issues/567
     (
-        ["12"] = parse "12" [collect [keep value: across 2 <any>]]
+        ["12"] = parse "12" [collect [keep value: across repeat 2 <any>]]
     )
 ]
 

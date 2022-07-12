@@ -54,7 +54,7 @@
 (
     var: 3
     rule: "a"
-    "a" == parse "aaaaaa" [2 repeat (var) rule]
+    "a" == parse "aaaaaa" [repeat 2 repeat (var) rule]
 )
 
 (

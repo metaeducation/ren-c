@@ -131,7 +131,9 @@
     (
         p: ~
         did all [
-            "b" == parse "aaabb" [3 #a p: <here> 2 #b seek (p) [2 "b"]]
+            "b" == parse "aaabb" [
+                repeat 3 #a p: <here> repeat 2 #b seek (p) [repeat 2 "b"]
+            ]
             p = "bb"
         ]
     )
@@ -191,7 +193,9 @@
     (
         p: ~
         did all [
-            'b == parse [a a a b b] [3 'a p: <here> 2 'b seek (p) [2 'b]]
+            'b == parse [a a a b b] [
+                repeat 3 'a p: <here> repeat 2 'b seek (p) [repeat 2 'b]
+            ]
             p = [b b]
         ]
     )
@@ -252,7 +256,11 @@
         p: ~
         did all [
             #{0B} == parse #{0A0A0A0B0B} [
-                3 #{0A} p: <here> 2 #{0B} seek (p) [2 #{0B}]
+                repeat 3 #{0A}
+                p: <here>
+                repeat 2 #{0B}
+                seek (p)
+                [repeat 2 #{0B}]
             ]
             p = #{0B0B}
         ]

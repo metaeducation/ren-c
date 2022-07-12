@@ -96,7 +96,7 @@
         ] => "bbbfff"
     }
 )(
-    (trackparse "bbbfffbbbfff" [2 bar-rule]) == trim/auto {
+    (trackparse "bbbfffbbbfff" [repeat 2 bar-rule]) == trim/auto {
         bar-rule [
             foo-rule [
             ] => "fff"

@@ -38,7 +38,7 @@
     (
         digit: charset [0 - 9]
         did all [
-            3 == parse #{0BADCAFE010203} [to digit p: <here> 3 <any>]
+            #{010203} = parse #{0BADCAFE010203} [to digit p: <here> skip 3]
             p = #{010203}
         ]
     )
@@ -139,7 +139,7 @@
     (
         digit: charset "0123456789"
         did all [
-            #3 == parse "hello 123" [to digit p: <here> 3 <any>]
+            "123" = parse "hello 123" [to digit p: <here> skip 3]
             p = "123"
         ]
     )

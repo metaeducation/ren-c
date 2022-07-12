@@ -114,7 +114,7 @@
 ; different, and this had caused a problem)
 [
     ((the 'x) == parse ['x] [quoted!])
-    ((the '[]) == parse [' '() '[]] [3 quoted!])
+    ((the '[]) == parse [' '() '[]] [repeat 3 quoted!])
 ]
 
 [https://github.com/red/red/issues/4863

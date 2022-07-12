@@ -40,7 +40,7 @@
     (
         res: 0
         did all [
-            'a == parse [a a] [res: 2 wa]
+            'a == parse [a a] [res: repeat 2 wa]
             res = 'a
         ]
     )

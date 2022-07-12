@@ -79,9 +79,9 @@
             res = 1
         ]
     )
-    (didn't parse #{0A0A} [1 [#{0A}]])
-    (#{0A} == parse #{0A0A} [2 [#{0A}]])
-    (didn't parse #{0A0A} [3 [#{0A}]])
+    (didn't parse #{0A0A} [repeat 1 [#{0A}]])
+    (#{0A} == parse #{0A0A} [repeat 2 [#{0A}]])
+    (didn't parse #{0A0A} [repeat 3 [#{0A}]])
 
     (didn't parse #{0A0A} [repeat ([1 1]) [#{0A}]])
     (#{0A} == parse #{0A0A} [repeat ([1 2]) [#{0A}]])
@@ -99,12 +99,12 @@
     (10 == parse #{0A0A} [repeat ([2 3]) <any>])
     (didn't parse #{0A0A} [repeat ([3 4]) <any>])
 
-    (didn't parse #{0A0A} [1 #{0A}])
-    (#{0A} == parse #{0A0A} [2 #{0A}])
-    (didn't parse #{0A0A} [3 #{0A}])
-    (didn't parse #{0A0A} [1 <any>])
-    (10 == parse #{0A0A} [2 <any>])
-    (didn't parse #{0A0A} [3 <any>])
+    (didn't parse #{0A0A} [repeat 1 #{0A}])
+    (#{0A} == parse #{0A0A} [repeat 2 #{0A}])
+    (didn't parse #{0A0A} [repeat 3 #{0A}])
+    (didn't parse #{0A0A} [repeat 1 <any>])
+    (10 == parse #{0A0A} [repeat 2 <any>])
+    (didn't parse #{0A0A} [repeat 3 <any>])
     (10 == parse #{0A} [<any>])
     (11 == parse #{0A0B} [<any> <any>])
     (11 == parse #{0A0B} [<any> [<any>]])
@@ -116,8 +116,8 @@
     (didn't parse #{0A0A0B0A0B0B0B0A} [some [#{0A} | #"^L"]])
     (#{0A} == parse #{0A0A} [some [#{0A}]])
     ('~null~ = ^ parse #{0A0A} [some [#{0A}] opt some [#{0B}]])
-    (#{0B} == parse #{0A0A0B0B} [2 #{0A} 2 #{0B}])
-    (didn't parse #{0A0A0B0B} [2 #{0A} 3 #{0B}])
+    (#{0B} == parse #{0A0A0B0B} [repeat 2 #{0A} repeat 2 #{0B}])
+    (didn't parse #{0A0A0B0B} [repeat 2 #{0A} repeat 3 #{0B}])
     (#{0B} == parse #{0A0A0B0B} [some #{0A} some #{0B}])
     (didn't parse #{0A0A0B0B} [some #{0A} some #"^L"])
     (#"^L" == parse #{0B0A0A0A0C} [<any> some [#{0A}] #"^L"])
@@ -156,14 +156,14 @@
     (
         res: ~
         did all [
-            #{0A} == parse #{0A0A} [res: 2 #{0A}]
+            #{0A} == parse #{0A0A} [res: repeat 2 #{0A}]
             res = #{0A}
         ]
     )
     (
         res: '~before~
         did all [
-            didn't parse #{0A0A} [res: 3 #{0A}]
+            didn't parse #{0A0A} [res: repeat 3 #{0A}]
             res = '~before~
         ]
     )
@@ -186,7 +186,7 @@
         wa: [#{0A}]
         res: ~
         did all [
-            #{0A} == parse #{0A0A} [res: 2 wa]
+            #{0A} == parse #{0A0A} [res: repeat 2 wa]
             res = #{0A}
         ]
     )

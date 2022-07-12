@@ -1570,10 +1570,10 @@ default-combinators: make map! reduce [
 
     === INTEGER! COMBINATOR ===
 
-    ; The default combinator for INTEGER! can't be used to represent a range of
-    ; matches, e.g. between 2 and 4, using the sequential integer notation that
-    ; was in historical Redbol PARSE.  For now we say plain UPARSE considers it
-    ; more important that `[2 4 rule]` be the same as `[2 [4 rule]]`.
+    ; The behavior of INTEGER! in UPARSE is to just evaluate to itself.  If you
+    ; want to repeat a rule a certain number of times, you have to say REPEAT.
+    ;
+    ; A compatibility combinator for Rebol2 PARSE has the repeat semantics.
     ;
     ; It is possible to break this regularity with quoted/skippable combinator
     ; arguments.  And it's necessary to do so for the Redbol emulation.  See
@@ -1582,23 +1582,12 @@ default-combinators: make map! reduce [
     ; Note that REPEAT allows the use of BLANK! to opt out of an iteration.
 
     integer! combinator [
-        return: "Last parser result"
-            [<opt> <void> any-value!]
+        return: "Just the INTEGER! (see REPEAT for repeating rules)"
+            [integer!]
         value [integer!]
-        parser [action!]
-        <local> result'
     ][
-        ; Note: REPEAT is considered a loop, but INTEGER!'s combinator is not.
-        ; Hence BREAK will not break a literal integer-specified loop
-
-        result': @void  ; `0 <any>` => void intent
-        repeat value [
-            ([^result' input]: parser input) else [
-                return null
-            ]
-        ]
         remainder: input
-        return unmeta result'
+        return value
     ]
 
     'repeat combinator [
@@ -2009,9 +1998,23 @@ default-combinators: make map! reduce [
 
     'skip combinator [
         {Historical SKIP is deprecated, give an error}
-        return: "N/A" []
+        return: "Invisible" [<opt> <void>]
+        parser [action!]
+        <local> result
     ][
-        fail [https://forum.rebol.info/t/1557]
+        ([result #]: parser input) else [return null]
+
+        if blank? :result [
+            remainder: input
+            return void
+        ]
+        if not integer? :result [
+            fail "SKIP expects INTEGER! amount to skip"
+        ]
+        remainder: skip input result else [
+            return null  ; out of range SKIP gives NULL, not considered match
+        ]
+        return void
     ]
 
     === ACTION! COMBINATOR ===

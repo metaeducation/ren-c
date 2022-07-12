@@ -14,8 +14,8 @@
 [#1246
     ("1" == parse "1" [not not "1" "1"])
     ("1" == parse "1" [not [not "1"] "1"])
-    (didn't parse "" [not 0 "a"])
-    (didn't parse "" [not [0 "a"]])
+    (didn't parse "" [not repeat 0 "a"])
+    (didn't parse "" [not [repeat 0 "a"]])
 ]
 
 [#1240

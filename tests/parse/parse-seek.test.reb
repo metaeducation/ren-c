@@ -6,8 +6,10 @@
 ; Unlike R3-Alpha, changing the series being parsed is not allowed.
 
 ("a" == parse "a" [seek (_) "a"])
-("b" == parse "aaabbb" ["a" pos: <here> 2 "a" seek (pos) 2 "a" 3 "b"])
-("b" == parse "aaabbb" ["a" 2 "a" seek (2) 2 "a" 3 "b"])
+("b" == parse "aaabbb" [
+    "a" pos: <here> repeat 2 "a" seek (pos) repeat 2 "a" repeat 3 "b"
+])
+("b" == parse "aaabbb" ["a" repeat 2 "a" seek (2) repeat 2 "a" repeat 3 "b"])
 
 (
     did all [

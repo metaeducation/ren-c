@@ -70,14 +70,14 @@
     (
         res: ~
         did all [
-            [a a] == parse [a a] [res: across 2 'a]
+            [a a] == parse [a a] [res: across repeat 2 'a]
             res = [a a]
         ]
     )
     (
         res: '~before~
         did all [
-            didn't parse [a a] [res: across 3 'a]
+            didn't parse [a a] [res: across repeat 3 'a]
             res = '~before~
         ]
     )
@@ -121,7 +121,7 @@
         wa: ['a]
         res: ~
         did all [
-            [a a] == parse [a a] [res: across 2 wa]
+            [a a] == parse [a a] [res: across repeat 2 wa]
             res = [a a]
         ]
     )
@@ -139,35 +139,35 @@
     (
         v: '~before~
         did all [
-            didn't parse/part input [v: across 3 <any>] 2
+            didn't parse/part input [v: across repeat 3 <any>] 2
             v = '~before~
         ]
     )
     (
         v: ~
         did all [
-            [h 5 #l] == parse/part input [v: across 3 <any>] 3
+            [h 5 #l] == parse/part input [v: across repeat 3 <any>] 3
             v = [h 5 #l]
         ]
     )
     (
         v: ~
         did all [
-            didn't parse/part input [v: across 3 <any>] 4
+            didn't parse/part input [v: across repeat 3 <any>] 4
             v = [h 5 #l]
         ]
     )
     (
         v: ~
         did all [
-            "l" == parse/part input [v: across 3 <any> <any>] 4
+            "l" == parse/part input [v: across repeat 3 <any> <any>] 4
             v = [h 5 #l]
         ]
     )
     (
         v: ~
         did all [
-            [5 #l "l"] == parse/part next input [v: across 3 <any>] 3
+            [5 #l "l"] == parse/part next input [v: across repeat 3 <any>] 3
             v = [5 #l "l"]
         ]
     )
@@ -188,42 +188,44 @@
     (
         v: '~before~
         did all [
-            didn't parse/part input2 [v: across 3 'a] 2
+            didn't parse/part input2 [v: across repeat 3 'a] 2
             v = '~before~
         ]
     )
     (
         v: ~
         did all [
-            [a a a] == parse/part input2 [v: across 3 'a] 3
+            [a a a] == parse/part input2 [v: across repeat 3 'a] 3
             v = [a a a]
         ]
     )
     (
         v: '~before~
         did all [
-            didn't parse/part input [v: across 3 <any>] skip input 2
+            didn't parse/part input [v: across repeat 3 <any>] skip input 2
             v = '~before~
         ]
     )
     (
         v: ~
         did all [
-            [h 5 #l] == parse/part input [v: across 3 <any>] skip input 3
+            [h 5 #l] == parse/part input [v: across repeat 3 <any>] skip input 3
             v = [h 5 #l]
         ]
     )
     (
         v: ~
         did all [
-            didn't parse/part input [v: across 3 <any>] skip input 4
+            didn't parse/part input [v: across repeat 3 <any>] skip input 4
             v = [h 5 #l]
         ]
     )
     (
         v: ~
         did all [
-            "l" == parse/part input [v: across 3 <any> <any>] skip input 4
+            "l" == parse/part input [
+                v: across repeat 3 <any> <any>
+            ] skip input 4
             v = [h 5 #l]
         ]
     )
@@ -231,7 +233,7 @@
         v: ~
         did all [
             [5 #l "l"] == parse/part next input [
-                v: across 3 <any>
+                v: across repeat 3 <any>
             ] skip input 4
             v = [5 #l "l"]
         ]
@@ -253,14 +255,14 @@
     (
         v: '~before~
         did all [
-            didn't parse/part input2 [v: across 3 'a] skip input2 2
+            didn't parse/part input2 [v: across repeat 3 'a] skip input2 2
             v = '~before~
         ]
     )
     (
         v: blank
         did all [
-            [a a a] == parse/part input2 [v: across 3 'a] skip input2 3
+            [a a a] == parse/part input2 [v: across repeat 3 'a] skip input2 3
             v = [a a a]
         ]
     )
@@ -295,14 +297,14 @@
     (
         res: ~
         did all [
-            "aa" == parse "aa" [res: across 2 #a]
+            "aa" == parse "aa" [res: across repeat 2 #a]
             res = "aa"
         ]
     )
     (
         res: '~before~
         did all [
-            didn't parse "aa" [res: across 3 #a]
+            didn't parse "aa" [res: across repeat 3 #a]
             res = '~before~
         ]
     )
@@ -325,7 +327,7 @@
         wa: [#a]
         res: ~
         did all [
-            "aa" == parse "aa" [res: across 2 wa]
+            "aa" == parse "aa" [res: across repeat 2 wa]
             res = "aa"
         ]
     )
@@ -364,35 +366,35 @@
     (
         v: '~before~
         did all [
-            didn't parse/part input [v: across 3 <any>] 2
+            didn't parse/part input [v: across repeat 3 <any>] 2
             v = '~before~
         ]
     )
     (
         v: ~
         did all [
-            "hel" == parse/part input [v: across 3 <any>] 3
+            "hel" == parse/part input [v: across repeat 3 <any>] 3
             v = "hel"
         ]
     )
     (
         v: ~
         did all [
-            didn't parse/part input [v: across 3 <any>] 4
+            didn't parse/part input [v: across repeat 3 <any>] 4
             v = "hel"
         ]
     )
     (
         v: ~
         did all [
-            #l == parse/part input [v: across 3 <any> <any>] 4
+            #l == parse/part input [v: across repeat 3 <any> <any>] 4
             v = "hel"
         ]
     )
     (
         v: ~
         did all [
-            "ell" == parse/part next input [v: across 3 <any>] 3
+            "ell" == parse/part next input [v: across repeat 3 <any>] 3
             v = "ell"
         ]
     )
@@ -413,63 +415,63 @@
     (
         v: '~before~
         did all [
-            didn't parse/part input [v: across 3 letters] 2
+            didn't parse/part input [v: across repeat 3 letters] 2
             v = '~before~
         ]
     )
     (
         v: ~
         did all [
-            "hel" == parse/part input [v: across 3 letters] 3
+            "hel" == parse/part input [v: across repeat 3 letters] 3
             v = "hel"
         ]
     )
     (
         v: '~before~
         did all [
-            didn't parse/part input2 [v: across 3 #a] 2
+            didn't parse/part input2 [v: across repeat 3 #a] 2
             v = '~before~
         ]
     )
     (
         v: ~
         did all [
-            "aaa" == parse/part input2 [v: across 3 #a] 3
+            "aaa" == parse/part input2 [v: across repeat 3 #a] 3
             v = "aaa"
         ]
     )
     (
         v: '~before~
         did all [
-            didn't parse/part input [v: across 3 <any>] skip input 2
+            didn't parse/part input [v: across repeat 3 <any>] skip input 2
             v = '~before~
         ]
     )
     (
         v: ~
         did all [
-            "hel" == parse/part input [v: across 3 <any>] skip input 3
+            "hel" == parse/part input [v: across repeat 3 <any>] skip input 3
             v = "hel"
         ]
     )
     (
         v: ~
         did all [
-            didn't parse/part input [v: across 3 <any>] skip input 4
+            didn't parse/part input [v: across repeat 3 <any>] skip input 4
             v = "hel"
         ]
     )
     (
         v: ~
         did all [
-            #l == parse/part input [v: across 3 <any> <any>] skip input 4
+            #l == parse/part input [v: across skip 3, <any>] skip input 4
             v = "hel"
         ]
     )
     (
         v: ~
         did all [
-            "ell" == parse/part next input [v: across 3 <any>] skip input 4
+            "ell" == parse/part next input [v: across skip 3] skip input 4
             v = "ell"
         ]
     )
@@ -490,28 +492,28 @@
     (
         v: '~before~
         did all [
-            didn't parse/part input [v: across 3 letters] skip input 2
+            didn't parse/part input [v: across repeat 3 letters] skip input 2
             v = '~before~
         ]
     )
     (
         v: ~
         did all [
-            "hel" == parse/part input [v: across 3 letters] skip input 3
+            "hel" == parse/part input [v: across repeat 3 letters] skip input 3
             v = "hel"
         ]
     )
     (
         v: '~before~
         did all [
-            didn't parse/part input2 [v: across 3 #a] skip input2 2
+            didn't parse/part input2 [v: across repeat 3 #a] skip input2 2
             v = '~before~
         ]
     )
     (
         v: ~
         did all [
-            "aaa" == parse/part input2 [v: across 3 #a] skip input2 3
+            "aaa" == parse/part input2 [v: across repeat 3 #a] skip input2 3
             v = "aaa"
         ]
     )
@@ -546,14 +548,14 @@
     (
         res: ~
         did all [
-            #{0A0A} == parse #{0A0A} [res: across 2 #{0A}]
+            #{0A0A} == parse #{0A0A} [res: across repeat 2 #{0A}]
             res = #{0A0A}
         ]
     )
     (
         res: '~before~
         did all [
-            didn't parse #{0A0A} [res: across 3 #{0A}]
+            didn't parse #{0A0A} [res: across repeat 3 #{0A}]
             res = '~before~
         ]
     )
@@ -597,7 +599,7 @@
         wa: [#{0A}]
         res: ~
         did all [
-            #{0A0A} == parse #{0A0A} [res: across 2 wa]
+            #{0A0A} == parse #{0A0A} [res: across repeat 2 wa]
             res = #{0A0A}
         ]
     )
@@ -615,35 +617,35 @@
     (
         v: '~before~
         did all [
-            didn't parse/part input [v: across 3 <any>] 2
+            didn't parse/part input [v: across repeat 3 <any>] 2
             v = '~before~
         ]
     )
     (
         v: ~
         did all [
-            #{DEADBE} == parse/part input [v: across 3 <any>] 3
+            #{DEADBE} == parse/part input [v: across skip 3] 3
             v = #{DEADBE}
         ]
     )
     (
         v: ~
         did all [
-            didn't parse/part input [v: across 3 <any>] 4
+            didn't parse/part input [v: across repeat 3 <any>] 4
             v = #{DEADBE}
         ]
     )
     (
         v: ~
         did all [
-            239 == parse/part input [v: across 3 <any> <any>] 4
+            239 == parse/part input [v: across skip 3, <any>] 4
             v = #{DEADBE}
         ]
     )
     (
         v: ~
         did all [
-            #{ADBEEF} == parse/part next input [v: across 3 <any>] 3
+            #{ADBEEF} == parse/part next input [v: across skip 3] 3
             v = #{ADBEEF}
         ]
     )
@@ -664,63 +666,63 @@
     (
         v: '~before~
         did all [
-            didn't parse/part input [v: across 3 letters] 2
+            didn't parse/part input [v: across repeat 3 letters] 2
             v = '~before~
         ]
     )
     (
         v: ~
         did all [
-            #{DEADBE} == parse/part input [v: across 3 letters] 3
+            #{DEADBE} == parse/part input [v: across repeat 3 letters] 3
             v = #{DEADBE}
         ]
     )
     (
         v: '~before~
         did all [
-            didn't parse/part input2 [v: across 3 #{0A}] 2
+            didn't parse/part input2 [v: across repeat 3 #{0A}] 2
             v = '~before~
         ]
     )
     (
         v: ~
         did all [
-            #{0A0A0A} == parse/part input2 [v: across 3 #{0A}] 3
+            #{0A0A0A} == parse/part input2 [v: across repeat 3 #{0A}] 3
             v = #{0A0A0A}
         ]
     )
     (
         v: '~before~
         did all [
-            didn't parse/part input [v: across 3 <any>] skip input 2
+            didn't parse/part input [v: across skip 3] skip input 2
             v = '~before~
         ]
     )
     (
         v: ~
         did all [
-            #{DEADBE} == parse/part input [v: across 3 <any>] skip input 3
+            #{DEADBE} == parse/part input [v: across skip 3] skip input 3
             v = #{DEADBE}
         ]
     )
     (
         v: ~
         did all [
-            didn't parse/part input [v: across 3 <any>] skip input 4
+            didn't parse/part input [v: across repeat 3 <any>] skip input 4
             v = #{DEADBE}
         ]
     )
     (
         v: ~
         did all [
-            239 == parse/part input [v: across 3 <any> <any>] skip input 4
+            239 == parse/part input [v: across skip 3, <any>] skip input 4
             v = #{DEADBE}
         ]
     )
     (
         v: ~
         did all [
-            #{ADBEEF} == parse/part next input [v: across 3 <any>] skip input 4
+            #{ADBEEF} == parse/part next input [v: across skip 3] skip input 4
             v = #{ADBEEF}
         ]
     )
@@ -741,28 +743,32 @@
     (
         v: '~before~
         did all [
-            didn't parse/part input [v: across 3 letters] skip input 2
+            didn't parse/part input [v: across repeat 3 letters] skip input 2
             v = '~before~
         ]
     )
     (
         v: ~
         did all [
-            #{DEADBE} == parse/part input [v: across 3 letters] skip input 3
+            #{DEADBE} == parse/part input [
+                v: across repeat 3 letters
+            ] skip input 3
             v = #{DEADBE}
         ]
     )
     (
         v: '~before~
         did all [
-            didn't parse/part input2 [v: across 3 #{0A}] skip input2 2
+            didn't parse/part input2 [v: across repeat 3 #{0A}] skip input2 2
             v = '~before~
         ]
     )
     (
         v: ~
         did all [
-            #{0A0A0A} == parse/part input2 [v: across 3 #{0A}] skip input2 3
+            #{0A0A0A} == parse/part input2 [
+                v: across repeat 3 #{0A}
+            ] skip input2 3
             v = #{0A0A0A}
         ]
     )

@@ -14,7 +14,7 @@
 (
     did all [
         <c> == parse [<a> <b> * * * {Thing!} * * <c>] [
-            some tag!, x: between 3 '* 2 '*, some tag!
+            some tag!, x: between [repeat 3 '*] [repeat 2 '*], some tag!
         ]
         x = [{Thing!}]
     ]

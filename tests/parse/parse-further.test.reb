@@ -28,13 +28,13 @@
 ;  like that?  Why use alternates instead of just saying it's zero-or-more
 ;  #"^L", then followed by a single not #{0B}?"
 [
-    ('a == parse [a a] [opt some further ['c | not 'b] 2 <any>])
-    (#a == parse "aa" [opt some further [#c | not #b] 2 <any>])
-    (10 == parse #{0A0A} [opt some further [#"^L" | not #{0B}] 2 <any>])
+    ('a == parse [a a] [opt some further ['c | not 'b] repeat 2 <any>])
+    (#a == parse "aa" [opt some further [#c | not #b] repeat 2 <any>])
+    (10 == parse #{0A0A} [opt some further [#"^L" | not #{0B}] repeat 2 <any>])
 
     ; Saner way to write it... no need for FURTHER.
     ;
-    ('a == parse [a a] [opt some 'c, not 'b, 2 <any>])
-    (#a == parse "aa" [opt some #c, not #b, 2 <any>])
-    (10 == parse #{0A0A} [opt some #"^L", not #{0B}, 2 <any>])
+    ('a == parse [a a] [opt some 'c, not 'b, repeat 2 <any>])
+    (#a == parse "aa" [opt some #c, not #b, repeat 2 <any>])
+    (10 == parse #{0A0A} [opt some #"^L", not #{0B}, repeat 2 <any>])
 ]

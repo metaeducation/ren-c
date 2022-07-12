@@ -85,13 +85,13 @@
 )
 
 [https://github.com/red/red/issues/678
-    ("cat" == parse "catcatcatcat" [4 "cat"])
-    ("cat" == parse "catcatcat" [3 "cat"])
-    ("cat" == parse "catcat" [2 "cat"])
-    (didn't parse "cat" [4 "cat"])
-    (didn't parse "cat" [3 "cat"])
-    (didn't parse "cat" [2 "cat"])
-    ("cat" == parse "cat" [1 "cat"])
+    ("cat" == parse "catcatcatcat" [repeat 4 "cat"])
+    ("cat" == parse "catcatcat" [repeat 3 "cat"])
+    ("cat" == parse "catcat" [repeat 2 "cat"])
+    (didn't parse "cat" [repeat 4 "cat"])
+    (didn't parse "cat" [repeat 3 "cat"])
+    (didn't parse "cat" [repeat 2 "cat"])
+    ("cat" == parse "cat" [repeat 1 "cat"])
 ]
 
 ; String casing

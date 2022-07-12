@@ -337,10 +337,10 @@ unzip: function [
     ; utility rules like this have trouble with name overlap in the
     ; enclosing routine.  To be addressed soon.
     ;
-    uint16-rule: [tmpbin: across 2 <any>, (debin [LE + 2] tmpbin)]
-    uint32-rule: [tmpbin: across 4 <any>, (debin [LE + 4] tmpbin)]
-    msdos-date-rule: [tmpbin: across 2 <any>, (get-msdos-date tmpbin)]
-    msdos-time-rule: [tmpbin: across 2 <any>, (get-msdos-time tmpbin)]
+    uint16-rule: [tmpbin: across skip 2, (debin [LE + 2] tmpbin)]
+    uint32-rule: [tmpbin: across skip 4, (debin [LE + 4] tmpbin)]
+    msdos-date-rule: [tmpbin: across skip 2, (get-msdos-date tmpbin)]
+    msdos-time-rule: [tmpbin: across skip 2, (get-msdos-time tmpbin)]
 
     ; NOTE: The original rebzip.r did decompression based on the local file
     ; header records in the zip file.  But due to streaming compression
@@ -362,9 +362,9 @@ unzip: function [
     parse central-end-pos [
         end-of-central-sig  ; by definition (pos matched this)
 
-        2 <any>  ; disk_nbr
-        2 <any>  ; cd_start_disk
-        2 <any>  ; disk_cd_entries
+        skip 2  ; disk_nbr
+        skip 2  ; cd_start_disk
+        skip 2  ; disk_cd_entries
         num-central-entries: uint16-rule
         total-central-directory-size: uint32-rule
         central-directory-offset: uint32-rule
@@ -376,7 +376,7 @@ unzip: function [
         ; contains the end-of-central-sig, which is not formally prohibited
         ; by the spec (though some suggest it should be).
         ;
-        repeat (archive-comment-len) <any>
+        skip (archive-comment-len)
 
         [<end> | (fail "Extra information at end of ZIP file")]
     ] else [
@@ -392,14 +392,14 @@ unzip: function [
     central-directory-entry-rule: [
         [central-file-sig | (fail "CENTRAL-FILE-SIG mismatch")]
 
-        version-created-by: across 2 <any>  ; version that made this file
-        version-needed: across 2 <any>  ; version needed to extract
-        flags: across 2 <any>
+        version-created-by: across skip 2  ; version that made this file
+        version-needed: across skip 2  ; version needed to extract
+        flags: across skip 2
 
         method-number: uint16-rule
         time: msdos-time-rule
         date: msdos-date-rule
-        crc: across 4 <any>  ; crc32 little endian, maybe 0 in local header
+        crc: across skip 4  ; crc32 little endian, maybe 0 in local header
         compressed-size: uint32-rule  ; maybe 0 in local header
         uncompressed-size: uint32-rule  ; maybe 0 in local header
 
@@ -407,13 +407,13 @@ unzip: function [
         extra-field-length: uint16-rule
         file-comment-length: uint16-rule  ; not in local header
         disk-number-start: uint16-rule  ; not in local header
-        internal-attributes: across 2 <any>  ; not in local header
-        external-attributes: across 4 <any>  ; not in local header
+        internal-attributes: across skip 2  ; not in local header
+        external-attributes: across skip 4  ; not in local header
         local-header-offset: uint32-rule  ; (for finding local header)
-        name: [temp: across repeat (name-length) <any>, (to-file temp)]
+        name: [temp: across skip (name-length), (to-file temp)]
 
-        repeat (extra-field-length) <any>  ; !!! Expose "extra" field?
-        repeat (file-comment-length) <any>  ; !!! Expose file comment?
+        skip (extra-field-length)  ; !!! Expose "extra" field?
+        skip (file-comment-length)  ; !!! Expose file comment?
     ]
 
     ; When it was realized that the old rebzip.r method of relying on the
@@ -426,8 +426,8 @@ unzip: function [
     check-local-directory-entry-rule: [
         [local-file-sig | (fail "LOCAL-FILE-SIG mismatch")]
 
-        x: across 2 <any>, (assert [x = version-needed])
-        x: across 2 <any>, (assert [x = flags])
+        x: across skip 2, (assert [x = version-needed])
+        x: across skip 2, (assert [x = flags])
         x: uint16-rule, (assert [x = method-number])
         x: msdos-time-rule, (assert [x = time])
         x: msdos-date-rule, (assert [x = date])
@@ -446,11 +446,11 @@ unzip: function [
             ; we go with that approach as well, given that there are file
             ; attributes there not available in the local header anyway.
             ;
-            x: across 4 <any>, (assert [x = #{00000000}])  ; crc
+            x: across skip 4, (assert [x = #{00000000}])  ; crc
             x: uint32-rule, (assert [x = 0])  ; compressed size
             x: uint32-rule, (assert [x = 0])  ; uncompressed size
         |
-            x: across 4 <any>, (assert [x = crc])
+            x: across skip 4, (assert [x = crc])
             x: uint32-rule, (assert [x = compressed-size])
             x: uint32-rule, (assert [x = uncompressed-size])
         ]
@@ -466,9 +466,9 @@ unzip: function [
         ;
         local-extra-field-length: uint16-rule
 
-        x: across repeat (name-length) <any>, (assert [(to-file x) = name])
+        x: across skip (name-length), (assert [(to-file x) = name])
 
-        repeat (local-extra-field-length) <any>
+        skip (local-extra-field-length)
     ]
 
     ; While this is by no means broken up perfectly into subrules, it is

@@ -48,24 +48,32 @@
     ; eight "a", so it's possible to get 4 matches of 2 "a" in but only
     ; 2 matches of 3 "a".
     ;
-    (4 = parse "aaaaaaaa" [maxmatch-D [tally 2 "a"] [tally 3 "a"]])
-    (4 = parse "aaaaaaaa" [maxmatch-D [tally 3 "a"] [tally 2 "a"]])
+    (4 = parse "aaaaaaaa" [
+        maxmatch-D [tally repeat 2 "a"] [tally repeat 3 "a"]
+    ])
+    (4 = parse "aaaaaaaa" [
+        maxmatch-D [tally repeat 3 "a"] [tally repeat 2 "a"]
+    ])
 
     ; With 9, it's the 3 "a" rule that gets further than the 2 "a" rule
     ; Just for fun show different bracketing options.  :-)
     ;
-    (3 = parse "aaaaaaaaa" [maxmatch-D tally 2 "a" tally 3 "a"])
-    (3 = parse "aaaaaaaaa" [maxmatch-D tally [3 "a"] tally [2 "a"]])
+    (3 = parse "aaaaaaaaa" [
+        maxmatch-D tally repeat 2 "a" tally repeat 3 "a"
+    ])
+    (3 = parse "aaaaaaaaa" [
+        maxmatch-D tally [repeat 3 "a"] tally [repeat 2 "a"]
+    ])
 
     ; As long as one rule succeeds, it's the longest match
     ;
-    (4 = parse "aaaaaaaa" [maxmatch-D [tally 2 "a"] [some "a" some "b"]])
-    (4 = parse "aaaaaaaa" [maxmatch-D [some "a" some "b"] [tally 2 "a"]])
+    (4 = parse "aaaaaaaa" [maxmatch-D [tally repeat 2 "a"] [some "a" some "b"]])
+    (4 = parse "aaaaaaaa" [maxmatch-D [some "a" some "b"] [tally repeat 2 "a"]])
 
     ; If neither rule succeeds the maxmatch fails
     ;
-    (null = parse "aaaaaaaa" [maxmatch-D [100 "a"] [some "a" some "b"]])
-    (null = parse "aaaaaaaa" [maxmatch-D [some "a" some "b"] [100 "a"]])
+    (null = parse "aaaaaaaa" [maxmatch-D [repeat 100 "a"] [some "a" some "b"]])
+    (null = parse "aaaaaaaa" [maxmatch-D [some "a" some "b"] [repeat 100 "a"]])
 
     ; COLLECT VARIATIONS - DEMONSTRATE THE AUTOMATIC ROLLBACK VARIANT
     ;
@@ -81,12 +89,16 @@
     ;
     (["aa" "aa" "aa" "aa" "aaa" "aaa"] = parse "aaaaaaaa" [
         collect [
-            maxmatch-D [some keep across 2 "a"] [some keep across 3 "a"]
+            maxmatch-D
+                [some keep across repeat 2 "a"]
+                [some keep across repeat 3 "a"]
         ]
     ])
     (["aaa" "aaa" "aa" "aa" "aa" "aa"] = parse "aaaaaaaa" [
         collect [
-            maxmatch-D [some keep across 3 "a"] [some keep across 2 "a"]
+            maxmatch-D
+                [some keep across repeat 3 "a"]
+                [some keep across repeat 2 "a"]
         ]
     ])
 
@@ -96,12 +108,16 @@
     ;
     (["aa" "aa" "aa" "aa" "aaa" "aaa" "aaa"] = parse "aaaaaaaaa" [
         collect [
-            maxmatch-D some [keep across 2 "a"] some [keep across 3 "a"]
+            maxmatch-D
+                some [keep across repeat 2 "a"]
+                some [keep across repeat 3 "a"]
         ]
     ])
     (["aaa" "aaa" "aaa" "aa" "aa" "aa" "aa"] = parse "aaaaaaaaa" [
         collect [
-            maxmatch-D [some keep [across 3 "a"]] [some keep [across 2 "a"]]
+            maxmatch-D
+                [some keep [across repeat 3 "a"]]
+                [some keep [across repeat 2 "a"]]
         ]
     ])
 
@@ -110,12 +126,16 @@
     ;
     (["aa" "aa" "aa" "aa"] = parse "aaaaaaaa" [
         collect [
-            maxmatch-D [some keep across 2 "a"] [some keep "a" some keep "b"]
+            maxmatch-D
+                [some keep across repeat 2 "a"]
+                [some keep "a" some keep "b"]
         ]
     ])
     (["aa" "aa" "aa" "aa"] = parse "aaaaaaaa" [
         collect [
-            maxmatch-D [some keep "a" some keep "b"] [some keep across 2 "a"]
+            maxmatch-D
+                [some keep "a" some keep "b"]
+                [some keep across repeat 2 "a"]
         ]
     ])
 
@@ -124,12 +144,12 @@
     ;
     (null = parse "aaaaaaaa" [
         collect [
-            maxmatch-D [100 keep "a"] [some keep "a" some keep "b"]
+            maxmatch-D [repeat 100 keep "a"] [some keep "a" some keep "b"]
         ]
     ])
     (null = parse "aaaaaaaa" [
         collect [
-            maxmatch-D [some keep "a" some keep "b"] [100 keep "a"]
+            maxmatch-D [some keep "a" some keep "b"] [repeat 100 keep "a"]
         ]
     ])
 
@@ -141,11 +161,11 @@
             ["aa" "aa" "aa" "aaa" "aaa"] = parse "aaaaaaaa" [collect [
                 g: gather [
                     maxmatch-D [
-                        3 keep across 2 "a"
+                        repeat 3 keep across repeat 2 "a"
                         emit x: ["a" (10)] emit y: ["a" (20)]
                     ] [
                         emit z: (304)
-                        some keep across 3 "a"
+                        some keep across repeat 3 "a"
                     ]
                 ]
             ]]
@@ -200,24 +220,32 @@
     ; eight "a", so it's possible to get 4 matches of 2 "a" in but only
     ; 2 matches of 3 "a".
     ;
-    (4 = parse "aaaaaaaa" [maxmatch-C [tally 2 "a"] [tally 3 "a"]])
-    (4 = parse "aaaaaaaa" [maxmatch-C [tally 3 "a"] [tally 2 "a"]])
+    (4 = parse "aaaaaaaa" [
+        maxmatch-C [tally repeat 2 "a"] [tally repeat 3 "a"]
+    ])
+    (4 = parse "aaaaaaaa" [
+        maxmatch-C [tally repeat 3 "a"] [tally repeat 2 "a"]
+    ])
 
     ; With 9, it's the 3 "a" rule that gets further than the 2 "a" rule
     ; Just for fun show different bracketing options.  :-)
     ;
-    (3 = parse "aaaaaaaaa" [maxmatch-C tally 2 "a" tally 3 "a"])
-    (3 = parse "aaaaaaaaa" [maxmatch-C tally [3 "a"] tally [2 "a"]])
+    (3 = parse "aaaaaaaaa" [
+        maxmatch-C tally repeat 2 "a" tally repeat 3 "a"
+    ])
+    (3 = parse "aaaaaaaaa" [
+        maxmatch-C tally [repeat 3 "a"] tally [repeat 2 "a"]
+    ])
 
     ; As long as one rule succeeds, it's the longest match
     ;
-    (4 = parse "aaaaaaaa" [maxmatch-C [tally 2 "a"] [some "a" some "b"]])
-    (4 = parse "aaaaaaaa" [maxmatch-C [some "a" some "b"] [tally 2 "a"]])
+    (4 = parse "aaaaaaaa" [maxmatch-C [tally repeat 2 "a"] [some "a" some "b"]])
+    (4 = parse "aaaaaaaa" [maxmatch-C [some "a" some "b"] [tally repeat 2 "a"]])
 
     ; If neither rule succeeds the maxmatch fails
     ;
-    (null = parse "aaaaaaaa" [maxmatch-C [100 "a"] [some "a" some "b"]])
-    (null = parse "aaaaaaaa" [maxmatch-C [some "a" some "b"] [100 "a"]])
+    (null = parse "aaaaaaaa" [maxmatch-C [repeat 100 "a"] [some "a" some "b"]])
+    (null = parse "aaaaaaaa" [maxmatch-C [some "a" some "b"] [repeat 100 "a"]])
 
     ; COLLECT VARIATIONS - DEMONSTRATE THE AUTOMATIC ROLLBACK VARIANT
     ;
@@ -234,12 +262,16 @@
     ;
     (["aa" "aa" "aa" "aa"] = parse "aaaaaaaa" [
         collect [
-            maxmatch-C [some keep across 2 "a"] [some keep across 3 "a"]
+            maxmatch-C
+                [some keep across repeat 2 "a"]
+                [some keep across repeat 3 "a"]
         ]
     ])
     (["aa" "aa" "aa" "aa"] = parse "aaaaaaaa" [
         collect [
-            maxmatch-C [some keep across 3 "a"] [some keep across 2 "a"]
+            maxmatch-C
+                [some keep across repeat 3 "a"]
+                [some keep across repeat 2 "a"]
         ]
     ])
 
@@ -250,12 +282,16 @@
     ;
     (["aaa" "aaa" "aaa"] = parse "aaaaaaaaa" [
         collect [
-            maxmatch-C some [keep across 2 "a"] some [keep across 3 "a"]
+            maxmatch-C
+                some [keep across repeat 2 "a"]
+                some [keep across repeat 3 "a"]
         ]
     ])
     (["aaa" "aaa" "aaa"] = parse "aaaaaaaaa" [
         collect [
-            maxmatch-C [some keep [across 3 "a"]] [some keep [across 2 "a"]]
+            maxmatch-C
+                [some keep [across repeat 3 "a"]]
+                [some keep [across repeat 2 "a"]]
         ]
     ])
 
@@ -264,12 +300,16 @@
     ;
     (["aa" "aa" "aa" "aa"] = parse "aaaaaaaa" [
         collect [
-            maxmatch-C [some keep across 2 "a"] [some keep "a" some keep "b"]
+            maxmatch-C
+                [some keep across repeat 2 "a"]
+                [some keep "a" some keep "b"]
         ]
     ])
     (["aa" "aa" "aa" "aa"] = parse "aaaaaaaa" [
         collect [
-            maxmatch-C [some keep "a" some keep "b"] [some keep across 2 "a"]
+            maxmatch-C
+                [some keep "a" some keep "b"]
+                [some keep across repeat 2 "a"]
         ]
     ])
 
@@ -278,12 +318,12 @@
     ;
     (null = parse "aaaaaaaa" [
         collect [
-            maxmatch-C [100 keep "a"] [some keep "a" some keep "b"]
+            maxmatch-C [repeat 100 keep "a"] [some keep "a" some keep "b"]
         ]
     ])
     (null = parse "aaaaaaaa" [
         collect [
-            maxmatch-C [some keep "a" some keep "b"] [100 keep "a"]
+            maxmatch-C [some keep "a" some keep "b"] [repeat 100 keep "a"]
         ]
     ])
 
@@ -295,11 +335,11 @@
             ["aa" "aa" "aa"] = parse "aaaaaaaa" [collect [
                 g: gather [
                     maxmatch-C [
-                        3 keep across 2 "a"
+                        repeat 3 keep across repeat 2 "a"
                         emit x: ["a" (10)] emit y: ["a" (20)]
                     ] [
                         emit z: (304)
-                        some keep across 3 "a"
+                        some keep across repeat 3 "a"
                     ]
                 ]
             ]]
