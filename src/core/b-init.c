@@ -754,7 +754,7 @@ void Startup_Core(void)
     // tick to indicate some other characteristic when tick values are stored.
     //
   #if DEBUG_COUNT_TICKS
-    TG_Tick = 1;
+    TG_tick = 1;
   #endif
 
 //=//// INITIALIZE STACK MARKER METRICS ///////////////////////////////////=//

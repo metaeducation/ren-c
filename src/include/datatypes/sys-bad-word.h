@@ -404,7 +404,7 @@ inline static REBVAL *Move_Cell_Untracked(
   #if DEBUG_TRACK_EXTEND_CELLS  // `out` has tracking info we can use
     v->file = out->file;
     v->line = out->line;
-    v->tick = TG_Tick;
+    v->tick = TG_tick;
   #endif
 
     return cast(REBVAL*, out);

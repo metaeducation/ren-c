@@ -73,7 +73,7 @@
 #if DEBUG_COUNT_TICKS  // <-- THIS IS VERY USEFUL, SEE UPDATE_TICK_DEBUG()
 
     //      *** DON'T COMMIT THIS v-- KEEP IT AT ZERO! ***
-    REBTCK TG_Break_At_Tick =      0;
+    Tick TG_break_at_tick =      0;
     //      *** DON'T COMMIT THIS --^ KEEP IT AT ZERO! ***
 
 #endif  // ^-- SERIOUSLY: READ ABOUT C-DEBUG-BREAK AND PLACES TICKS ARE STORED
@@ -190,7 +190,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
 
     UPDATE_TICK_DEBUG(nullptr);
 
-    // v-- This is the TG_Break_At_Tick or C-DEBUG-BREAK landing spot --v
+    // v-- This is the TG_break_at_tick or C-DEBUG-BREAK landing spot --v
                       r = (FRAME->executor)(FRAME);
     // ^-- **STEP IN** to this call using the debugger to debug it!!! --^
 

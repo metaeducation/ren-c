@@ -411,7 +411,7 @@ uintptr_t RL_rebTick(void)
     ENTER_API;
 
   #if DEBUG_COUNT_TICKS
-    return cast(long, TG_Tick);
+    return cast(long, TG_tick);
   #else
     return 0;
   #endif

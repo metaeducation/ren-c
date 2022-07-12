@@ -546,7 +546,7 @@ inline static Feed(*) Prep_Feed_Common(void* preallocated, Flags flags) {
    Feed(*) feed = cast(Reb_Feed*, preallocated);
 
   #if DEBUG_COUNT_TICKS
-    feed->tick = TG_Tick;
+    feed->tick = TG_tick;
   #endif
 
     Init_Trash(Prep_Cell(&feed->fetched));

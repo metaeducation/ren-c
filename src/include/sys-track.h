@@ -42,7 +42,7 @@
 #if DEBUG_TRACK_EXTEND_CELLS  // assume DEBUG_COUNT_TICKS
 
     #define TOUCH_CELL(c) \
-        ((c)->touch = TG_Tick)
+        ((c)->touch = TG_tick)
 
     inline static Cell(*) Track_Cell_Debug(
         Cell(*) v,
@@ -51,7 +51,7 @@
     ){
         v->file = file;
         v->line = line;
-        v->tick = TG_Tick;
+        v->tick = TG_tick;
         v->touch = 0;
         return cast(REBVAL*, v);
     }
@@ -64,7 +64,7 @@
     ){
         v->file = file;
         v->line = line;
-        v->tick = TG_Tick;
+        v->tick = TG_tick;
         v->touch = 0;
         return v;
     }

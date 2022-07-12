@@ -652,7 +652,7 @@ inline static void Copy_Cell_Header(
   #if DEBUG_TRACK_EXTEND_CELLS
     out->file = v->file;
     out->line = v->line;
-    out->tick = TG_Tick;  // initialization tick
+    out->tick = TG_tick;  // initialization tick
     out->touch = v->touch;  // arbitrary debugging use via TOUCH_CELL
   #endif
 }

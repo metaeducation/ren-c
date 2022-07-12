@@ -54,24 +54,24 @@
 
 #if DEBUG_COUNT_TICKS
     //
-    // !!! The TG_Tick gets used in inline functions, and as a result it must
+    // !!! The TG_tick gets used in inline functions, and as a result it must
     // be defined earlier than when the %sys-globals.h file can be included.
     // This may be worked around by making sure all the types used in that
     // file are present in %reb-defs.h ... review.
     //
-    extern REBTCK TG_Break_At_Tick;
+    extern Tick TG_break_at_tick;
 #endif
 
 #if DEBUG_COUNT_TICKS
     #if DEBUG_FANCY_PANIC
         #define panic(v) \
-            Panic_Core((v), TG_Tick, __FILE__, __LINE__)
+            Panic_Core((v), TG_tick, __FILE__, __LINE__)
 
         #define panic_at(v,file,line) \
-            Panic_Core((v), TG_Tick, (file), (line))
+            Panic_Core((v), TG_tick, (file), (line))
     #else
         #define panic(v) \
-            Panic_Core((v), TG_Tick, NULL, 0)
+            Panic_Core((v), TG_tick, NULL, 0)
 
         #define panic_at(v,file,line) \
             UNUSED(file); \
@@ -149,19 +149,19 @@
 
 #define BREAK_NOW() /* macro means no stack frame, breaks at callsite */ \
     do { \
-        printf("BREAK_ON_TICK() @ tick %ld\n", cast(long int, TG_Tick)); \
+        printf("BREAK_ON_TICK() @ tick %ld\n", cast(long int, TG_tick)); \
         fflush(stdout); \
         Dump_Frame_Location(nullptr, TOP_FRAME); \
         debug_break(); /* see %debug_break.h */ \
     } while (false)
 
 #define BREAK_ON_TICK(tick) \
-    if (tick == TG_Tick) BREAK_NOW()
+    if (tick == TG_tick) BREAK_NOW()
 
 #if defined(NDEBUG) || (! DEBUG_COUNT_TICKS)
     #define SPORADICALLY(modulus) \
         false
 #else
     #define SPORADICALLY(modulus) \
-        (TG_Tick % modulus == 0)
+        (TG_tick % modulus == 0)
 #endif

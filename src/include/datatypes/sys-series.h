@@ -402,7 +402,7 @@ inline static size_t SER_TOTAL_IF_DYNAMIC(const REBSER *s) {
       #endif
 
       #if DEBUG_COUNT_TICKS
-        s->tick = TG_Tick;
+        s->tick = TG_tick;
       #else
         s->tick = 0;
       #endif
@@ -426,7 +426,7 @@ inline static size_t SER_TOTAL_IF_DYNAMIC(const REBSER *s) {
 
 #if DEBUG_MONITOR_SERIES
     inline static void MONITOR_SERIES(void *p) {
-        printf("Adding monitor to %p on tick #%d\n", p, cast(int, TG_Tick));
+        printf("Adding monitor to %p on tick #%d\n", p, cast(int, TG_tick));
         fflush(stdout);
         PG_Monitor_Node_Debug = SER(cast(Node*, p));
     }

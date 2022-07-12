@@ -59,7 +59,7 @@ static bool panicking = false;
 //
 ATTRIBUTE_NO_RETURN void Panic_Core(
     const void *p,  // REBSER*, REBVAL*, or UTF-8 char*
-    REBTCK tick,
+    Tick tick,
     const char *file, // UTF8
     int line
 ){
@@ -218,13 +218,13 @@ DECLARE_NATIVE(panic)
 
     REBVAL *v = Meta_Unquotify(ARG(reason));  // remove quote level from @reason
 
-    // Use frame tick (if available) instead of TG_Tick, so tick count dumped
+    // Use frame tick (if available) instead of TG_tick, so tick count dumped
     // is the exact moment before the PANIC ACTION! was invoked.
     //
   #if DEBUG_COUNT_TICKS
-    REBTCK tick = frame_->tick;
+    Tick tick = frame_->tick;
   #else
-    REBTCK tick = 0;
+    Tick tick = 0;
   #endif
 
     // panic() on the string value itself will report information about the

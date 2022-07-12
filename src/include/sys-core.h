@@ -332,7 +332,7 @@ typedef struct rebol_opts {
     #endif
 #endif
 
-#include "sys-globals.h"  // includes things like TG_Tick, used by panic()
+#include "sys-globals.h"  // includes things like TG_tick, used by panic()
 
 
 #include "sys-panic.h"  // "blue screen of death"-style termination

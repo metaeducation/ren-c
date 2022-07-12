@@ -315,7 +315,7 @@ struct Reb_Feed_Struct {
   #endif
 
   #if DEBUG_COUNT_TICKS
-    REBTCK tick;
+    Tick tick;
   #endif
 };
 

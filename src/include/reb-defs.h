@@ -77,7 +77,7 @@ typedef uint64_t REBU64; // 64 bit unsigned integer
 typedef float REBD32; // 32 bit decimal
 typedef double REBDEC; // 64 bit decimal
 typedef uintptr_t REBLIN; // type used to store line numbers in Rebol files
-typedef uintptr_t REBTCK; // type the debug build uses for evaluator "ticks"
+typedef uintptr_t Tick; // type the debug build uses for evaluator "ticks"
 
 
 // These were used in R3-Alpha, with the benefit that UNLIMITED will cast to

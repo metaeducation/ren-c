@@ -125,7 +125,7 @@ inline static void Probe_Print_Helper(
 ){
     printf("\n-- (%s)=0x%p : %s", expr, p, label);
   #if DEBUG_COUNT_TICKS
-    printf(" : tick %d", cast(int, TG_Tick));
+    printf(" : tick %d", cast(int, TG_tick));
   #endif
     printf(" %s @%d\n", file, line);
 

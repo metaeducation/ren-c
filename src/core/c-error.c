@@ -203,7 +203,7 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
     // __LINE__ without adding parameter overhead to this function for non
     // debug builds.
     //
-    printf("%ld\n", cast(long, TG_Tick));  /* tick count prefix */
+    printf("%ld\n", cast(long, TG_tick));  /* tick count prefix */
   #endif
 
     // The topmost frame must be the one issuing the error.  If a frame was

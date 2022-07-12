@@ -129,9 +129,9 @@ DECLARE_NATIVE(diagnose)
     REBVAL *v = ARG(value);
 
   #if DEBUG_COUNT_TICKS
-    REBTCK tick = frame_->tick;
+    Tick tick = frame_->tick;
   #else
-    REBTCK tick = 0
+    Tick tick = 0
   #endif
 
     printf(

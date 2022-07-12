@@ -319,7 +319,7 @@ DECLARE_NATIVE(c_debug_tick)
     INCLUDE_PARAMS_OF_C_DEBUG_TICK;
 
   #if !defined(NDEBUG) && DEBUG_COUNT_TICKS
-    return Init_Integer(OUT, TG_Tick);
+    return Init_Integer(OUT, TG_tick);
   #else
     return nullptr;
   #endif
@@ -374,18 +374,18 @@ DECLARE_NATIVE(c_debug_break_at)
         //
         // https://math.stackexchange.com/q/2521219/
         //
-        REBTCK one = 1; // MSVC gives misguided warning for cast(REBTCK, 1)
-        TG_Tick =
-            (one << (ceil_log2(TG_Tick) + 1))
+        Tick one = 1; // MSVC gives misguided warning for cast(Tick, 1)
+        TG_tick =
+            (one << (ceil_log2(TG_tick) + 1))
             + VAL_INT64(ARG(tick))
             - 1;
         return nullptr;
     }
 
     if (REF(relative))
-        TG_Break_At_Tick = frame_->tick + 1 + VAL_INT64(ARG(tick));
+        TG_break_at_tick = frame_->tick + 1 + VAL_INT64(ARG(tick));
     else
-        TG_Break_At_Tick = VAL_INT64(ARG(tick));
+        TG_break_at_tick = VAL_INT64(ARG(tick));
     return nullptr;
   #else
     UNUSED(ARG(tick));
@@ -422,7 +422,7 @@ DECLARE_NATIVE(c_debug_break)
         // Queue it so the break happens right before the MOLD, not after it
         // happened and has been passed as an argument.
         //
-        TG_Break_At_Tick = frame_->tick + 1;
+        TG_break_at_tick = frame_->tick + 1;
         return VOID;
      #else
         // No tick counting or tick-break checking, but still want some

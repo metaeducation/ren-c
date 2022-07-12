@@ -486,7 +486,7 @@ inline static Frame(*) Prep_Frame_Core(
     SNAP_STATE(&f->baseline);  // see notes on `baseline` in Reb_Frame
 
   #if DEBUG_COUNT_TICKS
-    f->tick = TG_Tick;
+    f->tick = TG_tick;
   #endif
 
     return f;

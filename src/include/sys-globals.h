@@ -22,7 +22,7 @@
 //
 
 #if DEBUG_COUNT_TICKS  // VERY USEFUL! see notes in evaluator
-    PVAR REBTCK TG_Tick;
+    PVAR Tick TG_tick;
 #endif
 
 //-- Bootstrap variables:

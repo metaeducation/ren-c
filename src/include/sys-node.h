@@ -137,7 +137,7 @@ inline static void *Try_Alloc_Pooled(PoolID pool_id)
             if (PG_Fuzz_Factor == 0)
                 return nullptr;
         }
-        else if ((TG_Tick % 10000) <= cast(REBLEN, PG_Fuzz_Factor)) {
+        else if ((TG_tick % 10000) <= cast(REBLEN, PG_Fuzz_Factor)) {
             PG_Fuzz_Factor = 0;
             return nullptr;
         }
@@ -200,7 +200,7 @@ inline static void Free_Pooled(PoolID pool_id, void* p)
     if (p == PG_Monitor_Node_Debug) {
         printf(
             "Freeing series %p on tick #%d\n", p,
-            cast(int, TG_Tick)
+            cast(int, TG_tick)
         );
         fflush(stdout);
     }

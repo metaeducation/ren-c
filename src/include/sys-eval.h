@@ -76,15 +76,15 @@
 
     #define UPDATE_TICK_DEBUG(v) \
         do { \
-            if (TG_Tick < INTPTR_MAX)  /* avoid rollover (may be 32-bit!) */ \
-                ++TG_Tick; \
+            if (TG_tick < INTPTR_MAX)  /* avoid rollover (may be 32-bit!) */ \
+                ++TG_tick; \
             if ( \
-                TG_Break_At_Tick != 0 and TG_Tick >= TG_Break_At_Tick \
+                TG_break_at_tick != 0 and TG_tick >= TG_break_at_tick \
             ){ \
-                printf("BREAKING AT TICK %u\n", cast(unsigned int, TG_Tick)); \
+                printf("BREAKING AT TICK %u\n", cast(unsigned int, TG_tick)); \
                 Dump_Frame_Location((v), frame_); \
                 debug_break();  /* see %debug_break.h */ \
-                TG_Break_At_Tick = 0; \
+                TG_break_at_tick = 0; \
             } \
         } while (false)  // macro so that breakpoint is at right stack level!
 #else

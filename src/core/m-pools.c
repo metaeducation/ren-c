@@ -105,7 +105,7 @@ void *Try_Alloc_Mem(size_t size)
             if (PG_Fuzz_Factor == 0)
                 return nullptr;
         }
-        else if ((TG_Tick % 10000) <= cast(REBLEN, PG_Fuzz_Factor)) {
+        else if ((TG_tick % 10000) <= cast(REBLEN, PG_Fuzz_Factor)) {
             PG_Fuzz_Factor = 0;
             return nullptr;
         }
@@ -632,7 +632,7 @@ void Free_Pairing(REBVAL *paired) {
     // This wasn't actually a REBSER, so can't cast with SER().  But poke the
     // tick where the node was freed into the memory spot so panic finds it.
     //
-    ((REBSER*)(paired))->tick = TG_Tick;
+    ((REBSER*)(paired))->tick = TG_tick;
   #endif
 }
 
