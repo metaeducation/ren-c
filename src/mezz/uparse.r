@@ -2343,6 +2343,9 @@ default-combinators: make map! reduce [
             ; maybe expression can vanish.
             ;
             (^ eval f) then temp -> [
+                if error? temp [  ; !!! Rethink when right moment for errors is
+                    fail temp
+                ]
                 if temp <> @void  [
                     result': temp  ; overwrite if was visible
                 ]
