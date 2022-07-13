@@ -314,8 +314,6 @@ void Clear_Series(REBSER *s)
     }
     else
         memset(cast(Byte*, &s->content), 0, sizeof(s->content));
-
-    TERM_SERIES_IF_NECESSARY(s);
 }
 
 
