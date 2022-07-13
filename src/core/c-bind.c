@@ -907,12 +907,12 @@ void Rebind_Values_Deep(
         if (Is_Isotope(v))
             continue;
 
-        if (ANY_ARRAY_OR_SEQUENCE(v)) {
+        if (ANY_ARRAYLIKE(v)) {
             Cell(const*) sub_tail;
             Cell(*) sub_at = VAL_ARRAY_AT_MUTABLE_HACK(&sub_tail, v);
             Rebind_Values_Deep(sub_at, sub_tail, from, to, binder);
         }
-        else if (ANY_WORD(v) and BINDING(v) == from) {
+        else if (ANY_WORDLIKE(v) and BINDING(v) == from) {
             INIT_VAL_WORD_BINDING(v, to);
 
             if (binder) {
