@@ -1467,10 +1467,7 @@ Bounce Evaluator_Executor(Frame(*) f)
 
             assert(Is_None(arg) or Is_Nulled(arg));
 
-            if (IS_BLANK(at))
-                Init_None(arg);
-            else
-                Init_Isotope(arg, Canon(WANTED));
+            Init_None(arg);
 
             Copy_Cell(var, at);
             ++key, ++arg, ++param;

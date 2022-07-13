@@ -2253,7 +2253,7 @@ DECLARE_NATIVE(none_q)
 //
 //  wanted?: native [
 //
-//  "Tells you if output is a ~wanted~ isotope, indicating it was requested"
+//  "Tells you if a multi-return output parameter is wanted by the caller"
 //
 //      return: [logic!]
 //      output [word! tuple!]
@@ -2264,17 +2264,32 @@ DECLARE_NATIVE(wanted_q)
     INCLUDE_PARAMS_OF_WANTED_Q;
 
     Value(*) output = ARG(output);
-    bool any = true;
-    Get_Var_May_Fail(SPARE, output, SPECIFIED, any);
 
-    if (Is_None(SPARE))
+    goto initial_entry;
+
+  initial_entry: {  //////////////////////////////////////////////////////////
+
+    if (not Did_Get_Binding_Of(SPARE, output) or not IS_FRAME(SPARE))
+        goto not_output_parameter;
+
+    Action(*) phase = VAL_FRAME_PHASE(SPARE);
+
+    Index index = VAL_WORD_INDEX(output);
+    REBPAR* param = ACT_PARAM(phase, index);
+    if (VAL_PARAM_CLASS(param) != PARAM_CLASS_OUTPUT)
+        goto not_output_parameter;
+
+    Value(*) var = CTX_VAR(VAL_CONTEXT(SPARE), index + 1);
+    if (Is_None(var) or IS_BLANK(var))
         return Init_False(OUT);
 
-    if (Is_Isotope_With_Id(SPARE, SYM_WANTED))
-        return Init_True(OUT);
+    assert(IS_WORD(var) or IS_TUPLE(var) or Is_Blackhole(var));
+    return Init_True(OUT);
 
-    fail ("WANTED? can only be used on none (~) isotopes or ~wanted~");
-}
+} not_output_parameter: {  ///////////////////////////////////////////////////
+
+    fail ("WANTED? can only be used on output parameters");
+}}
 
 
 //

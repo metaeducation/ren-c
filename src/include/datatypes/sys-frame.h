@@ -566,9 +566,8 @@ inline static Frame(*) Prep_Frame_Core(
 
 #define WANTED(name) ( \
     assert(VAL_PARAM_CLASS(PAR(name)) == PARAM_CLASS_OUTPUT), \
-    Is_Isotope_With_Id(ARG(name), SYM_WANTED) ? true : ( \
-        assert(Is_None(ARG(name))), false \
-    ))
+        (not Is_None(ARG(name) + 1) and not IS_BLANK(ARG(name) + 1)))
+
 
 // Quick access functions from natives (or compatible functions that name a
 // Reb_Frame pointer `frame_`) to get some of the common public fields.

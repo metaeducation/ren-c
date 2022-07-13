@@ -46,8 +46,6 @@ inherited  ; answer from BINDING OF when variable is attached and inherited
 
 optimized-out
 
-wanted  ; signal for multi-return output when has requesting variable (or #)
-
 ;=== LEGACY HELPERS ===
 
 image!  ; !!! for LOAD #[image! [...]] (used in tests), and molding, temporary

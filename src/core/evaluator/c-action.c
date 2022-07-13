@@ -168,21 +168,20 @@ static void Bump_Specialized_Output_Aside(Frame(*) f) {
 
     if (Is_Nulled(ARG) or IS_BLANK(ARG)) {  // not requested
         Init_Blank(var);
-        Init_None(ARG);
     }
     else if (Is_Blackhole(ARG)) {  // requested with no variable
         Init_Blackhole(var);
-        Init_Isotope(ARG, Canon(WANTED));  // unique state?
     }
     else if (
         IS_WORD(ARG) or IS_TUPLE(ARG)
         or IS_META_WORD(ARG) or IS_META_TUPLE(ARG)
     ){
         Move_Cell(var, ARG);
-        Init_Isotope(ARG, Canon(WANTED));
     }
     else
         fail ("OUTPUT: parameters must be SET-table targets");
+
+    Init_None(ARG);
 
     ++KEY, ++PARAM, ++ARG;  // with for included, skip past `var`
 }
@@ -891,9 +890,6 @@ Bounce Action_Executor(Frame(*) f)
                 else if (VAL_TYPE_UNCHECKED(ARG) == REB_NULL) {
                     Init_None(ARG);  // Can we avoid NULL happening?
                 }
-                else if (Is_Isotope_With_Id(ARG, SYM_WANTED)) {
-                    Init_Blackhole(var);  // allow so ENCLOSE can make requests
-                }
                 else
                     Bump_Specialized_Output_Aside(f);
             }
@@ -904,7 +900,7 @@ Bounce Action_Executor(Frame(*) f)
                     or IS_META_WORD(var) or IS_META_TUPLE(var)
                 );
 
-                if (not (Is_None(ARG) or Is_Isotope_With_Id(ARG, SYM_WANTED)))
+                if (not Is_None(ARG))
                     fail ("Frame filled with variable in spoken-for output");
 
                 ++KEY, ++PARAM, ++ARG;

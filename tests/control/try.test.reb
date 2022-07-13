@@ -56,6 +56,6 @@
     [e v]: trap [fail "Hello"]
     did all [
         error? e
-        wanted? 'v  ; !!! Being reviewed under today's mechanics
+        unset? 'v
     ]
 )

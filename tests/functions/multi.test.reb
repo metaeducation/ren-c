@@ -16,12 +16,10 @@
 
 [
     (test: func [return: x y: z:] [
-        if not unset? 'y [
-            assert [wanted? 'y]
+        if wanted? 'y [
             y: <y-result>
         ]
-        if not unset? 'z [
-            assert [wanted? 'z]
+        if wanted? 'z [
             z: <z-result>
         ]
 

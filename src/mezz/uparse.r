@@ -118,7 +118,6 @@ combinator: func [
             ; we just use it to notice the furthest parse point reached.
             ;
             let state: f.state
-            f.remainder: ~wanted~
 
             let result': ^ eval f  ; want to detect "pure void" (/MAYBE)
             if state.verbose [
