@@ -235,7 +235,7 @@ Context(*) Get_Context_From_Stack(void)
     // eval hook, or a Func_Dispatcher().  For now, just assume that means
     // you want the code to bind into the lib context.
     //
-    if (Not_Action_Flag(phase, IS_NATIVE))
+    if (not Is_Action_Native(phase))
         return Lib_Context;
 
     Array(*) details = ACT_DETAILS(phase);

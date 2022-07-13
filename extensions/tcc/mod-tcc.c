@@ -106,7 +106,7 @@ int tcc_set_lib_path_i(TCCState *s, const char *path)
 // for the moment just assume if the source is text it's a user native.
 //
 bool Is_User_Native(Action(*) act) {
-    if (Not_Action_Flag(act, IS_NATIVE))
+    if (not Is_Action_Native(act))
         return false;
 
     Array(*) details = ACT_DETAILS(act);

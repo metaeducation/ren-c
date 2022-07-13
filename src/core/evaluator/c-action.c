@@ -1107,7 +1107,7 @@ Bounce Action_Executor(Frame(*) f)
     Action(*) phase = FRM_PHASE(f);
 
     /*STATIC_ASSERT(DETAILS_FLAG_IS_NATIVE == SERIES_INFO_HOLD);*/
-    if (Get_Action_Flag(phase, IS_NATIVE))
+    if (Is_Action_Native(phase))
         SER_INFO(f->varlist) |= SERIES_INFO_HOLD;  // prevents crashes, see [2]
 
     Dispatcher* dispatcher = ACT_DISPATCHER(phase);

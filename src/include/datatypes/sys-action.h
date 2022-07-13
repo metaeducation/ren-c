@@ -297,6 +297,13 @@ inline static void INIT_VAL_ACTION_BINDING(
     SER_AT(REBVAL, ACT_IDENTITY(a), 0)
 
 
+// Only the archetype should be asked if it is native (because the archetype
+// guides interpretation of the details array).
+//
+#define Is_Action_Native(a) \
+    Get_Action_Flag(VAL_ACTION(ACT_ARCHETYPE(a)), IS_NATIVE)
+
+
 //=//// PARAMLIST, EXEMPLAR, AND PARTIALS /////////////////////////////////=//
 //
 // Since partial specialization is somewhat rare, it is an optional splice

@@ -413,12 +413,24 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
         if (VAL_ACTION_PARTIALS_OR_LABEL(v))
             assert(Is_Marked(VAL_ACTION_PARTIALS_OR_LABEL(v)));
 
+        if (Is_Action_Native(a)) {
+            Array(*) details = ACT_DETAILS(a);
+            assert(ARR_LEN(details) >= IDX_NATIVE_MAX);
+            Value(*) body = DETAILS_AT(details, IDX_NATIVE_BODY);
+            Value(*) context = DETAILS_AT(details, IDX_NATIVE_CONTEXT);
+            assert(
+                IS_BLANK(body)
+                or IS_WORD(body)  // GENERIC uses the slot for the "verb"
+            );
+            assert(ANY_CONTEXT(context));
+        }
+
         // We used to check the [0] slot of the details holds an archetype
         // that is consistent with the details itself.  That is no longer true
         // (by design), see HIJACK and COPY of actions for why.
         //
         REBVAL *archetype = ACT_ARCHETYPE(a);
-        UNUSED(archetype);
+        assert(IS_ACTION(archetype));
         break; }
 
       case REB_QUOTED:
