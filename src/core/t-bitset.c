@@ -575,7 +575,7 @@ REBTYPE(Bitset)
 
         REBVAL *setval = Meta_Unquotify(ARG(value));
 
-        Binary(*) bset = BIN(VAL_SERIES_ENSURE_MUTABLE(v));
+        Binary(*) bset = BIN(VAL_BITSET_ENSURE_MUTABLE(v));
         if (not Set_Bits(
             bset,
             picker,
@@ -681,16 +681,30 @@ REBTYPE(Bitset)
       case SYM_EXCLUDE: {
         REBVAL *arg = D_ARG(2);
         if (IS_BITSET(arg)) {
-            if (BITS_NOT(VAL_BITSET(arg)))  // !!! see #2365
+            if (BITS_NOT(VAL_BITSET(arg))) {  // !!! see #2365
                 fail ("Bitset negation not handled by set operations");
+            }
             Binary(const*) bin = VAL_BITSET(arg);
             Init_Binary(arg, bin);
         }
         else if (not IS_BINARY(arg))
             fail (Error_Math_Args(VAL_TYPE(arg), verb));
 
-        if (BITS_NOT(VAL_BITSET(v)))  // !!! see #2365
-            fail ("Bitset negation not handled by set operations");
+        bool negated_result = false;
+
+        if (BITS_NOT(VAL_BITSET(v))) {  // !!! see #2365
+            //
+            // !!! Narrowly handle the case of exclusion from a negated bitset
+            // as simply unioning, because %pdf-maker.r uses this.  General
+            // answer is on the Roaring Bitsets branch--this R3 stuff is junk.
+            //
+            if (sym == SYM_EXCLUDE) {
+                negated_result = true;
+                sym = SYM_UNION;
+            }
+            else
+                fail ("Bitset negation not handled by (most) set operations");
+        }
 
         Binary(const*) bin = VAL_BITSET(v);
         Init_Binary(v, bin);
@@ -726,7 +740,7 @@ REBTYPE(Bitset)
         Binary(*) bits = VAL_BINARY_KNOWN_MUTABLE(processed);
         rebRelease(processed);
 
-        INIT_BITS_NOT(bits, false);
+        INIT_BITS_NOT(bits, negated_result);
         Trim_Tail_Zeros(bits);
         return Init_Bitset(OUT, bits); }
 
