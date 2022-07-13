@@ -454,7 +454,7 @@ default-combinators: make map! reduce [
         ]
 
         f.remainder: input
-        unwind f null
+        f.return null
     ]
 
     'stop combinator [
@@ -476,7 +476,7 @@ default-combinators: make map! reduce [
         ]
 
         f.remainder: input
-        unwind f unmeta result'
+        f.return unmeta result'
     ]
 
    === RETURN KEYWORD ===
@@ -503,7 +503,7 @@ default-combinators: make map! reduce [
         ; we UNWIND then we bypass any of its handling code, so it won't set
         ; the /PROGRESS etc.  Review.
         ;
-        unwind state unmeta value'
+        state.return unmeta value'
     ]
 
     === INDEX and MEASUREMENT COMBINATORS ===
