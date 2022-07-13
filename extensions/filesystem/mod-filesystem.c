@@ -116,6 +116,16 @@ enum {
     PATH_OPT_SRC_IS_DIR = 1 << 0
 };
 
+inline static bool Last_In_Mold_Is_Slash(REB_MOLD *mo) {
+    if (mo->base.size == SER_USED(mo->series))
+        return false;  // nothing added yet
+
+    // It's UTF-8 data, so we can just check the last byte; if it's a
+    // continuation code it will not match an ASCII character.
+    //
+    return *SER_LAST(Byte, mo->series) == '/';
+}
+
 
 //
 //  To_REBOL_Path: C
@@ -146,7 +156,6 @@ String(*) To_REBOL_Path(Cell(const*) string, Flags flags)
     bool lead_slash = false; // did we restart to insert a leading slash?
     bool saw_colon = false; // have we hit a ':' yet?
     bool saw_slash = false; // have we hit a '/' yet?
-    bool last_was_slash = false; // was last character appended a slash?
 
 restart:;
     REBLEN len;
@@ -196,15 +205,12 @@ restart:;
             }
         }
         else if (c == '\\' || c== '/') { // !!! Should this use OS_DIR_SEP
-            if (last_was_slash)
+            if (Last_In_Mold_Is_Slash(mo))
                 continue; // Collapse multiple / or \ to a single slash
 
             c = '/';
-            last_was_slash = true;
             saw_slash = true;
         }
-        else
-            last_was_slash = false;
 
         Append_Codepoint(mo->series, c);
     }
@@ -212,8 +218,9 @@ restart:;
     // If this is supposed to be a directory and the last character is not a
     // slash, make it one (this is Rebol's rule for FILE!s that are dirs)
     //
-    if ((flags & PATH_OPT_SRC_IS_DIR) and c != '/') // watch for %/c/ case
-        Append_Codepoint(mo->series, '/');
+    if (flags & PATH_OPT_SRC_IS_DIR)
+        if (not Last_In_Mold_Is_Slash(mo))
+            Append_Codepoint(mo->series, '/');
 
     return Pop_Molded_String(mo);
 }
