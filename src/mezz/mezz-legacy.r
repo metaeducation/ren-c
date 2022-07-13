@@ -16,13 +16,12 @@ REBOL [
     }
 ]
 
-; !!! This is temporary due to a failed experiment of making WHILE arity-1 to
-; line up with PARSE.  LOOP was used as the arity-2 version for a time.  On
-; the bright side, that made PARSE WHILE easier to find and eliminate.  Once
-; that elimination is complete, turn the LOOP back to WHILE and reclaim LOOP
-; for a generic dialect like Lisp's.
-;
-loop: :while
+loop: function [] [
+    fail @return [
+        "Short word LOOP is reserved for a generalized looping dialect:"
+        https://forum.rebol.info/t/common-lisp-loop-and-iterate/1878
+    ]
+]
 
 ; !!! As a first step of removing the need for APPEND/ONLY (and friends), this
 ; moves the behavior into mezzanine code for testing.

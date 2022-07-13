@@ -149,8 +149,6 @@ compose: func [] [
     fail/where "Use COMPOSE2 in Bootstrap Process, not COMPOSE" 'return
 ]
 
-loop: :while  ; !!! Temporary, will be reclaimed.
-
 ; Modern DO is more limited in giving back "void intent" so it doesn't go
 ; well in situations like `map-each code blocks-of-code [do code]`...because
 ; situations that would have returned NULL and opted out don't opt out.
