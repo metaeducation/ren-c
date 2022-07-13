@@ -645,20 +645,6 @@ call*: adapt 'call [
 ]
 call: specialize :call* [wait: true]
 
-; Due to various weaknesses in the historical Rebol APPLY, a frame-based
-; method retook the name.  A usermode emulation of the old APPLY was written
-; under the quirky name "APPLIQUE" that nobody used, but that provided a good
-; way to keep running tests of the usermode construct to make sure that a
-; FRAME!-based custom apply operation worked.
-;
-; But the quirks in apply with refinements were solved, meaning a plain
-; positional APPLY retakes the term.  The usermode APPLIQUE should work the
-; same as long as you aren't invoking refinements.
-
-redbol-apply: :applique
-applique: :apply
-apply: :redbol-apply
-
 find-reverse: specialize :find [
     reverse: true
 
