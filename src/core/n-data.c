@@ -1072,7 +1072,30 @@ bool Set_Var_Core_Updater_Throws(
 
       set_target:
 
-        Copy_Cell(Sink_Word_May_Fail(var, var_specifier), decayed);
+        if (VAL_ACTION(updater) == VAL_ACTION(Lib(POKE_P))) {
+            //
+            // Shortcut past POKE for WORD! (though this subverts hijacking,
+            // review that case.)
+            //
+            Copy_Cell(Sink_Word_May_Fail(var, var_specifier), decayed);
+        }
+        else {
+            // !!! This is a hack to try and get things working for PROTECT*.
+            // Things are in roughly the right place, but very shaky.  Revisit
+            // as BINDING OF is reviewed in terms of answers for LET.
+            //
+            Derelativize(temp, var, var_specifier);
+            Quotify(temp, 1);
+            PUSH_GC_GUARD(temp);
+            if (rebRunThrows(
+                out,  // <-- output cell
+                updater, "binding of", temp, temp, rebQ(decayed)
+            )){
+                DROP_GC_GUARD(temp);
+                fail (Error_No_Catch_For_Throw(TOP_FRAME));
+            }
+            DROP_GC_GUARD(temp);
+        }
 
         if (steps_out and steps_out != GROUPS_OK) {
             if (steps_out != var)  // could be true if GROUP eval

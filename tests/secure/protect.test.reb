@@ -1,4 +1,24 @@
 ; functions/secure/protect.r
+;
+; PROTECT is able to protect values (which involves a bit set on the value
+; cell).  It also can protect variables--which in R3-Alpha involved setting a
+; bit on a context's key slot.  But that was buggy since keys could be reused
+; in multiple objects...so Ren-C also puts the protection of variables as a
+; bit on the value slot where the variable keeps its storage, so it is a
+; per-instance bit.
+;
+; So you can have a variable called B which is unchangeable holding a mutable
+; BLOCK! value, or a variable called B which is changeable holding an immutable
+; BLOCK! value...
+
+; Basic WORD! protection
+(
+    b: 10
+    protect 'b
+    e: trap [b: 20]
+    e.id = 'protected-word
+)
+
 ; block
 [#1748 (
     value: copy original: [1 + 2 + 3]
