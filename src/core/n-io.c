@@ -96,6 +96,7 @@ DECLARE_NATIVE(mold)
 
     Init_Logic(ARG(truncated), did (mo->opts & MOLD_FLAG_WAS_TRUNCATED));
 
+    Proxy_Multi_Returns(frame_);
     return Init_Text(OUT, popped);
 }
 

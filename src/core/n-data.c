@@ -1000,6 +1000,7 @@ DECLARE_NATIVE(get)
         if (Is_Isotope(OUT))
             fail (Error_Bad_Word_Get(source, OUT));
 
+    Proxy_Multi_Returns(frame_);
     return OUT;
 }
 
@@ -1381,6 +1382,7 @@ DECLARE_NATIVE(set)
         return THROWN;
     }
 
+    Proxy_Multi_Returns(frame_);
     return COPY(v);  // result does not decay unless void, see [2]
 }
 

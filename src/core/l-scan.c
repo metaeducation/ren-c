@@ -3207,6 +3207,7 @@ DECLARE_NATIVE(transcode)
         }
     }
 
+    Proxy_Multi_Returns(frame_);
     return OUT;
 }}
 

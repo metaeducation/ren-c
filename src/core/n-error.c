@@ -79,6 +79,7 @@ DECLARE_NATIVE(trap)
         if (WANTED(result)) {
             Reify_Eval_Out_Plain(OUT);
             Copy_Cell(ARG(result), OUT);
+            Proxy_Multi_Returns(frame_);
         }
         return nullptr;
     }

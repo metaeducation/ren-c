@@ -1171,12 +1171,6 @@ Bounce Action_Executor(Frame(*) f)
     if (not Is_Failure(OUT))  // !!! Should there be an R_FAIL ?
         assert(f->u.action.dispatcher_base == TOP_INDEX);
 
-    goto proxy_multi_returns;
-
-} proxy_multi_returns: {  ////////////////////////////////////////////////////
-
-    Proxy_Multi_Returns(f);
-
 } skip_output_check: {  //////////////////////////////////////////////////////
 
   // This is where things get jumped to if you pass a <blank> argument a

@@ -154,14 +154,20 @@ Bounce Func_Dispatcher(Frame(*) f)
 
     const REBPAR *param = ACT_PARAMS_HEAD(FRM_PHASE(f));
 
-    if (NOT_PARAM_FLAG(param, RETURN_TYPECHECKED))
+    if (NOT_PARAM_FLAG(param, RETURN_TYPECHECKED)) {
+        Proxy_Multi_Returns(f);
         return NONE;  // none falls out of FUNC by default
+    }
 
-    if (GET_PARAM_FLAG(param, RETURN_VOID))
+    if (GET_PARAM_FLAG(param, RETURN_VOID)) {
+        Proxy_Multi_Returns(f);
         return VOID;  // void, regardless of body result, see [3]
+    }
 
-    if (GET_PARAM_FLAG(param, RETURN_NONE))
+    if (GET_PARAM_FLAG(param, RETURN_NONE)) {
+        Proxy_Multi_Returns(f);
         return NONE;  // none, regardless of body result, see [3]
+    }
 
     fail ("Functions with RETURN: in spec must use RETURN to typecheck");
 }}

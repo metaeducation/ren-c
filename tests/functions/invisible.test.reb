@@ -132,7 +132,7 @@
 
         right [<opt> <end> any-value! <variadic>]
         'lookahead [any-value! <variadic>]
-        look:
+        <local> look
     ][
         take right  ; returned value
 

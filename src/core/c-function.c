@@ -394,6 +394,12 @@ void Push_Paramlist_Quads_May_Fail(
                     pclass = PARAM_CLASS_RETURN;
                 }
                 else if (not quoted) {
+                    if (not (*flags & MKF_RETURN)) {
+                        fail (
+                            "Function generator does not provide multi-RETURN"
+                        );
+                    }
+
                     refinement = true;  // sets PARAM_FLAG_REFINEMENT
                     pclass = PARAM_CLASS_OUTPUT;  // Finalize adds local after
                 }

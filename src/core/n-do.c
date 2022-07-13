@@ -469,8 +469,10 @@ DECLARE_NATIVE(evaluate)
 
     if (ANY_ARRAY(source)) {
         if (VAL_LEN_AT(source) == 0) {  // `evaluate []` is invisible intent
-            if (WANTED(next))
+            if (WANTED(next)) {
                 Init_Nulled(ARG(next));
+                Proxy_Multi_Returns(frame_);
+            }
             return VOID;
         }
 
@@ -569,8 +571,10 @@ DECLARE_NATIVE(evaluate)
         fail (PAR(source));
     }
 
-    if (WANTED(next))
+    if (WANTED(next)) {
         Copy_Cell(next, source);
+        Proxy_Multi_Returns(frame_);
+    }
 
     if (Is_Void(SPARE))
         return VOID;
@@ -580,8 +584,10 @@ DECLARE_NATIVE(evaluate)
 } single_step_result_in_out: {  //////////////////////////////////////////////
 
     VAL_INDEX_UNBOUNDED(source) = FRM_INDEX(SUBFRAME);  // new index
-    if (WANTED(next))
+    if (WANTED(next)) {
         Copy_Cell(ARG(next), source);
+        Proxy_Multi_Returns(frame_);
+    }
 
     REBSPC *specifier = FRM_SPECIFIER(SUBFRAME);
     INIT_BINDING_MAY_MANAGE(source, specifier);  // integrate LETs, see [6]
