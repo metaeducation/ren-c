@@ -1433,14 +1433,14 @@ default-combinators: make map! reduce [
                 ]
             ]
             any-string? input [
-                if find value try input.1 [
+                if pick value try input.1 [
                     remainder: next input
                     return input.1
                 ]
             ]
             true [
                 assert [binary? input]
-                if find value try input.1 [
+                if pick value try input.1 [
                     remainder: next input
                     return input.1
                 ]

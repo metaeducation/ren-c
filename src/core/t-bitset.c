@@ -607,8 +607,8 @@ REBTYPE(Bitset)
 
     // Add AND, OR, XOR
 
-      case SYM_FIND: {
-        INCLUDE_PARAMS_OF_FIND;
+      case SYM_SELECT: {
+        INCLUDE_PARAMS_OF_SELECT;
         UNUSED(PAR(series));  // covered by `v`
 
         UNUSED(REF(reverse));  // Deprecated https://forum.rebol.info/t/1126
@@ -617,7 +617,7 @@ REBTYPE(Bitset)
         if (REF(part) or REF(skip) or REF(tail) or REF(match))
             fail (Error_Bad_Refines_Raw());
 
-        if (not Check_Bits(VAL_BITSET(v), ARG(pattern), did REF(case)))
+        if (not Check_Bits(VAL_BITSET(v), ARG(value), did REF(case)))
             return nullptr;
         return Init_True(OUT); }
 

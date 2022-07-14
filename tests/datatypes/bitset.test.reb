@@ -14,16 +14,16 @@
 [https://github.com/metaeducation/ren-c/issues/825 (
     cs: charset [#"^(FFFE)" - #"^(FFFF)"]
     all [
-        find cs #"^(FFFF)"
-        find cs #"^(FFFE)"
-        not find cs #"^(FFFD)"
+        pick cs #"^(FFFF)"
+        pick cs #"^(FFFE)"
+        not pick cs #"^(FFFD)"
     ]
 )(
     cs: charset [#"^(FFFF)" - #"^(FFFF)"]
     all [
-        find cs #"^(FFFF)"
-        not find cs #"^(FFFE)"
-        not find cs #"^(FFFD)"
+        pick cs #"^(FFFF)"
+        not pick cs #"^(FFFE)"
+        not pick cs #"^(FFFD)"
     ]
 )]
 
@@ -31,7 +31,7 @@
     bs: make bitset! 8
     for i 8 [
         assert [bs.(i) = null]
-        assert [not find bs i]
+        assert [not pick bs i]
         bs.(i): true
     ]
     for i 8 [
@@ -62,9 +62,9 @@
     invalid: exclude (complement bs) make bitset! [4 5]
     for i 8 [
         if i <= 5 [
-            assert [not find invalid i]
+            assert [not pick invalid i]
         ] else [
-            assert [find invalid i]
+            assert [pick invalid i]
         ]
     ]
     true

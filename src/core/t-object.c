@@ -1237,9 +1237,8 @@ REBTYPE(Context)
             Copy_Context_Extra_Managed(c, 0, types)
         ); }
 
-      case SYM_SELECT:
-      case SYM_FIND: {
-        INCLUDE_PARAMS_OF_FIND;
+      case SYM_SELECT: {
+        INCLUDE_PARAMS_OF_SELECT;
         UNUSED(ARG(series));  // extracted as `c`
         UNUSED(ARG(reverse));
         UNUSED(ARG(last));
@@ -1247,7 +1246,7 @@ REBTYPE(Context)
         if (REF(part) or REF(skip) or REF(tail) or REF(match))
             fail (Error_Bad_Refines_Raw());
 
-        REBVAL *pattern = ARG(pattern);
+        REBVAL *pattern = ARG(value);
         if (not IS_WORD(pattern))
             return nullptr;
 

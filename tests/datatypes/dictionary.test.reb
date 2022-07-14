@@ -26,10 +26,10 @@
 [#1930 (
     m: make map! 8
     clear m
-    not find m 'a
+    null = select m 'a
 )]
 
-(did find make map! [foo 0] 'foo)
+(0 = select make map! [foo 0] 'foo)
 
 [#2293 (
     thing: copy/deep [a [b]]

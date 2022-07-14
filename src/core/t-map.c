@@ -619,9 +619,8 @@ REBTYPE(Map)
         }
         fail (Error_Cannot_Reflect(REB_MAP, property)); }
 
-      case SYM_FIND:
       case SYM_SELECT: {
-        INCLUDE_PARAMS_OF_FIND;
+        INCLUDE_PARAMS_OF_SELECT;
         UNUSED(PAR(series));  // covered by `v`
 
         UNUSED(REF(reverse));  // Deprecated https://forum.rebol.info/t/1126
@@ -634,7 +633,7 @@ REBTYPE(Map)
 
         REBINT n = Find_Map_Entry(
             m_cast(REBMAP*, VAL_MAP(map)),  // should not modify, see below
-            ARG(pattern),
+            ARG(value),
             SPECIFIED,
             nullptr,  // nullptr indicates it will only search, not modify
             SPECIFIED,
@@ -648,12 +647,6 @@ REBTYPE(Map)
             OUT,
             SPECIFIC(ARR_AT(MAP_PAIRLIST(m), ((n - 1) * 2) + 1))
         );
-
-        if (ID_OF_SYMBOL(verb) == SYM_FIND) {
-            if (Is_Nulled(OUT))
-                return OUT;
-            return Init_True(OUT);
-        }
 
         return OUT; }
 
