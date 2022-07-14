@@ -7,7 +7,7 @@
     not in o 'b
 )]
 
-([] = append copy [] (blank))
+([_] = append copy [] (blank))
 
 
 ; Slipstream in some tests of MY (there don't seem to be a lot of tests here)
@@ -156,8 +156,7 @@
     ([a b c ~null~] = append [a b c] quote null)
 
     (
-        e: trap [[a b c] = append [a b c] ^(null)]
-        e.id = 'arg-required
+        [a b c] = append [a b c] ^(null)
     )
 ]
 

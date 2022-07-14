@@ -15,7 +15,7 @@
 [
     ("a  c" = spaced ["a" _ comment <b> _ "c"])
     ("a c" = spaced ["a" blank comment <b> blank "c"])
-    ("a c" = spaced ["a" maybe null comment <b> try null "c"])
+    ("a c" = spaced ["a" maybe null comment <b> (null else '_) "c"])
 ]
 
 ; ISSUE! is to be merged with CHAR! and does not space
@@ -90,5 +90,5 @@
     (",a," = delimit/head/tail "," "a")
 
     (null = delimit/head/tail "," [void])
-    (null = delimit/head/tail "," _)
+    (null = try delimit/head/tail "," null)
 ]

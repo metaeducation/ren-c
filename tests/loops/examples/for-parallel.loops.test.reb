@@ -14,14 +14,14 @@
             ; Use the cool UNPACK facility to set the variables:
             ; https://forum.rebol.info/t/1634
             ;
-            (vars): unpack [(first try blk1) (first try blk2)]
+            (vars): unpack [(try first blk1) (try first blk2)]
 
             do body  ; BREAK from body break the outer while, it returns NULL
 
             ; Now ELIDE the increment, so body evaluation above is result
             ;
-            elide blk1: try next blk1  ; TRY to get BLANK! vs. NULL at end
-            elide blk2: try next blk2
+            elide blk1: ((try next blk1) else '_)
+            elide blk2: ((try next blk2) else '_)
         ]
     ], true)
 

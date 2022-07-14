@@ -51,14 +51,14 @@ array: func [
     {Makes and initializes a block of a given size}
 
     return: "Generated block or null if blank input"
-        [<opt> block!]
+        [block!]
     size "Size or block of sizes for each dimension"
         [<blank> integer! block!]
     /initial "Initial value (will be called each time if a function)"
         [any-value!]
     <local> rest block
 ][
-    initial: try :initial  ; default to BLANK!
+    initial: default [_]  ; if not specified, array will be all blanks
     if block? size [
         rest: next size else [
             ;
@@ -98,9 +98,9 @@ replace: function [
     target "Series to replace within (modified)"
         [any-series!]
     pattern "Value to be replaced (converted if necessary)"
-        [any-value!]
+        [<opt> any-value!]
     replacement "Value to replace with (called each time if a function)"
-        [any-value!]
+        [<opt> any-value!]
 
     ; !!! Note these refinments alias ALL, CASE, TAIL natives!
     /all "Replace all occurrences"
@@ -109,7 +109,7 @@ replace: function [
 
     ; Consider adding an /any refinement to use find/any, once that works.
 ][
-    if blank? :pattern [return target]
+    if null? :pattern [return target]
 
     all_REPLACE: all
     all: :lib.all
@@ -544,7 +544,7 @@ split: function [
         [block! integer! char! bitset! text! tag! word!]
     /into "If dlm is integer, split in n pieces (vs. pieces of length n)"
 ][
-    parse3 (try match block! dlm) [some integer!] then [
+    (try parse3 (match block! dlm) [some integer!]) then [
         return map-each len dlm [
             if len <= 0 [
                 series: skip series negate len

@@ -1024,13 +1024,10 @@ REBTYPE(Array)
         // Note that while inserting or appending NULL is a no-op, CHANGE with
         // a /PART can actually erase data.
         //
-        if (IS_BLANK(ARG(value))) {  // only blanks bypass
-            if (len == 0) {
-                if (id == SYM_APPEND)  // append always returns head
-                    VAL_INDEX_RAW(array) = 0;
-                return COPY(array);  // don't fail on read only if would be a no-op
-            }
-            Init_Nulled(ARG(value));  // low-level NULL acts as nothing
+        if (Is_Nulled(ARG(value)) and len == 0) {
+            if (id == SYM_APPEND)  // append always returns head
+                VAL_INDEX_RAW(array) = 0;
+            return COPY(array);  // don't fail on read only if would be a no-op
         }
 
         Array(*) arr = VAL_ARRAY_ENSURE_MUTABLE(array);
@@ -1506,9 +1503,9 @@ DECLARE_NATIVE(engroup)
 //
 //  {Efficient destructive appending operation that will reuse appended memory}
 //
-//      return: [blank! block!]
-//      accumulator [blank! block!]
-//      result [any-value!]
+//      return: [<opt> block!]
+//      accumulator [<opt> block!]
+//      result [<opt> any-value!]
 //  ]
 //
 DECLARE_NATIVE(glom)
@@ -1534,9 +1531,7 @@ DECLARE_NATIVE(glom)
     //
     bool splice = false;
 
-    assert(not Is_Nulled(result));  // type checking should prevent
-
-    if (IS_BLANK(result)) {
+    if (Is_Nulled(result)) {
         return COPY(accumulator);
     }
     else if (IS_QUOTED(result)) {
@@ -1549,7 +1544,7 @@ DECLARE_NATIVE(glom)
         splice = true;
     }
 
-    if (IS_BLANK(accumulator)) {
+    if (Is_Nulled(accumulator)) {
         if (splice)  // it was a non-quoted block initially
             return COPY(result);  // see note: index may be nonzero
 

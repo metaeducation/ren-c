@@ -80,6 +80,8 @@ make-file-block-parts: func [
         item: predicate item
 
         switch type of item [
+            null []  ; !!! Review
+
             blank! []
 
             refinement! [  ; bootstrap only
@@ -164,7 +166,7 @@ make-file-tuple-parts: func [
         item: predicate item
 
         text: switch type of item [
-            blank! [item]
+            blank! [null]
             text! [item]
             file! [as text! item]
             word! [as text! item]
@@ -172,7 +174,7 @@ make-file-tuple-parts: func [
             fail ["Unknown tuple component type"]
         ]
 
-        if find text "/" [  ; BLANK! will opt out
+        if try find text "/" [
             fail embedded-file-slash-error text
         ]
 

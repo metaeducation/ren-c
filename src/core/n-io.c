@@ -32,7 +32,7 @@
 //
 //      return: [text!]
 //      value "The value to form (currently errors on BAD-WORD!)"
-//          [any-value!]
+//          [<blank> any-value!]
 //  ]
 //
 DECLARE_NATIVE(form)

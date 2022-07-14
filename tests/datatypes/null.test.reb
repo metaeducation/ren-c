@@ -43,7 +43,7 @@
 )
 (
     e: trap [form null]
-    'arg-required = e.id
+    'try-if-null-meant = e.id
 )
 
 ; The specific role of ~null~ isotopes is to be reactive with THEN and not

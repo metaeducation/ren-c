@@ -485,7 +485,7 @@ String(*) To_Local_Path(Cell(const*) file, Flags flags) {
 //
 //  {Converts a local system file path TEXT! to a Rebol FILE! path.}
 //
-//      return: [<opt> file!]
+//      return: [file!]
 //          {The returned value should be a valid natural FILE! literal}
 //      path [<blank> text! file!]
 //          {Path to convert (by default, only TEXT! for type safety)}
@@ -519,7 +519,7 @@ DECLARE_NATIVE(local_to_file)
 //
 //  {Converts a Rebol FILE! path to TEXT! of the local system file path}
 //
-//      return: [<opt> text!]
+//      return: [text!]
 //          {A TEXT! like "\foo\bar" is not a "natural" FILE! %\foo\bar}
 //      path [<blank> file! text!]
 //          {Path to convert (by default, only FILE! for type safety)}

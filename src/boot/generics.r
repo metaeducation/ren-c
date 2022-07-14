@@ -335,7 +335,7 @@ select: generic [
 
     return: [<opt> any-value!]
     series [<blank> any-series! any-context! map!]
-    value [any-value!]
+    value [<blank> any-value!]
     /part "Limits the search to a given length or position"
         [any-number! any-series! pair!]
     /case "Characters are case-sensitive"
@@ -410,7 +410,7 @@ copy: generic [
     return: "Return type will match the input type, or void if blank"
         [<opt> any-value!]
     value "If an ANY-SERIES!, it is only copied from its current position"
-        [any-value!]
+        [<blank> any-value!]
     /part "Limits to a given length or position"
         [any-number! any-series! pair!]
     /deep "Also copies series values within the block"
@@ -441,8 +441,8 @@ insert: generic [
         integer!]  ; !!! INSERT returns INTEGER! in ODBC, review this
     series "At position (modified)"
         [<blackhole> any-series! port! map! object! bitset! port!]
-    value "What to insert (BLANK!s opt out)"
-        [any-value!]
+    value "What to insert (NULL produces TRY-interceptible failure if no-op)"
+        [<opt> any-value!]
     /part "Limits to a given length or position"
         [any-number! any-series! pair!]
     /dup "Duplicates the insert a specified number of times"
@@ -459,8 +459,8 @@ append: generic [
     return: [any-series! port! map! object! module! bitset!]
     series "Any position (modified)"
         [<blackhole> any-series! port! map! object! module! bitset!]
-    value "What to append (BLANK!s opt out)"
-        [any-value!]
+    value "What to append (NULL produces TRY-interceptible failure if no-op)"
+        [<opt> any-value!]
     /part "Limits to a given length or position"
         [any-number! any-series! pair!]
     /dup "Duplicates the insert a specified number of times"
@@ -477,8 +477,8 @@ change: generic [
     return: [any-series! port!]
     series "At position (modified)"
         [<blackhole> any-series! port!]
-    value "The new value (BLANK!s opt out)"
-        [any-value!]
+    value "The new value (NULL produces TRY-interceptible failure if no-op)"
+        [<opt> any-value!]
     /part "Limits the amount to change to a given length or position"
         [any-number! any-series! pair!]
     /dup "Duplicates the change a specified number of times"

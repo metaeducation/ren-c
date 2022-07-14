@@ -57,7 +57,11 @@ run-single-test: func [
     let [error result]: trap as block! code
     case [
         error [
-            spaced ["error" any [to text! try error.id, try error.message]]
+            spaced ["error" any [
+                try to text! error.id
+                error.message
+                "(unknown)"
+            ]]
         ]
         bad-word? ^result [
             "test returned" (mold ^result) "(isotope)"
@@ -106,7 +110,7 @@ run-test-cluster: func [
     ;
     ; Modules created with module "inherit" from LIB by default.
     ;
-    let isolate: module _ [
+    let isolate: module null [
         print: lambda [x] [
             fail @x "Don't use PRINT in tests"
         ]
@@ -257,7 +261,7 @@ process-tests: function [
             'collect-tests set body: block! (
                 log ["@collect-tests" space mold body]
                 trap [
-                    let [# collected]: module _ compose/deep [collect [
+                    let [# collected]: module null compose/deep [collect [
                         let keep-test: adapt :keep [
                             if not block? :value [
                                 fail "KEEP-TEST takes BLOCK! (acts as GROUP!)"

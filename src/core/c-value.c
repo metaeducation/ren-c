@@ -179,6 +179,13 @@ void Probe_Cell_Print_Helper(
         }
         Append_Ascii(mo->series, "  ; isotope");
     }
+    else if (Is_Failure(v)) {
+        Append_Ascii(mo->series, "!!! FAILURE !!!\n");
+        DECLARE_LOCAL (temp);
+        Copy_Cell(temp, v);
+        Reify_Failure(temp);
+        Mold_Value(mo, v);
+    }
     else if (Is_Nulled(v)) {
         Append_Ascii(mo->series, "; null");
     }

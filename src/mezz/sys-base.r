@@ -40,7 +40,7 @@ module: func [
         [logic!]
 
     spec "The header block of the module (modified)"
-        [blank! block! object!]
+        [<opt> block! object!]
     body "The body of the module (all bindings will be overwritten if block)"
         [text! binary! block!]
     /mixin "Bind body to this additional object before executing"
@@ -144,7 +144,7 @@ module: func [
 
         ; If you DO a file, it doesn't get an EXPORT operation...only modules.
         ;
-        export: (if spec.type = 'Module [
+        export: (if spec and (spec.type = 'Module) [
             specialize :sys.util.export* [where: mod]
         ] else [
             specialize :fail [reason: [

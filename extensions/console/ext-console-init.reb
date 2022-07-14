@@ -385,7 +385,7 @@ start-console: func [
 
     all [
         skin-file
-        not find o.suppress skin-file
+        not try find o.suppress skin-file
         o.resources
         exists? skin-file: join o.resources skin-file
     ] then [
@@ -875,7 +875,7 @@ ext-console-impl: func [
 
     === HANDLE CODE THAT HAS BEEN SUCCESSFULLY LOADED ===
 
-    if let shortcut: select system.console.shortcuts try first code [
+    if let shortcut: try select system.console.shortcuts first code [
         ;
         ; Shortcuts like `q => [quit]`, `d => [dump]`
         ;

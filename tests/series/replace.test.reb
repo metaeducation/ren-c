@@ -55,18 +55,17 @@
 
 ;((make hash! [x a b [a B]]) = replace/case make hash! [a B a b [a B]] [a B] 'x)
 
-; REPLACE BLANK! behavior
-; https://forum.rebol.info/t/null-first-class-values-and-safety/895/2
+; REPLACE NULL behavior
 
-([3 4] = replace copy [3 0 4] 0 blank)
-([3 0 4] = replace copy [3 0 4] blank 1020)
-([2 0 2 0] = replace/all copy [1 0 2 0 1 0 2 0] [1 0] blank)
-("34" = replace copy "304" "0" blank)
-("304" = replace copy "304" blank "1020")
-("2020" = replace/all copy "10201020" "10" blank)
-(#{3040} = replace copy #{300040} #{00} blank)
-(#{300040} = replace copy #{300040} blank #{10002000})
-(#{20002000} = replace/all copy #{1000200010002000} #{1000} blank)
+([3 4] = replace copy [3 0 4] 0 null)
+([3 0 4] = replace copy [3 0 4] null 1020)
+([2 0 2 0] = replace/all copy [1 0 2 0 1 0 2 0] [1 0] null)
+("34" = replace copy "304" "0" null)
+("304" = replace copy "304" null "1020")
+("2020" = replace/all copy "10201020" "10" null)
+(#{3040} = replace copy #{300040} #{00} null)
+(#{300040} = replace copy #{300040} null #{10002000})
+(#{20002000} = replace/all copy #{1000200010002000} #{1000} null)
 
 ; REPLACE/DEEP - /DEEP not (yet?) implemented in Ren-C
 

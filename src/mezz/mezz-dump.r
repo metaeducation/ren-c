@@ -229,7 +229,7 @@ summarize-obj: function [
         val
     ]
 
-    wild: to-logic find (try match text! :pattern) "*"
+    wild: try to-logic try find (match text! :pattern) "*"
 
     return collect [
         for-each [word val] obj [
@@ -266,7 +266,9 @@ summarize-obj: function [
                 ]
             ]
 
-            keep spaced ["  " (form-pad word 15) (form-pad try type 10) :desc]
+            keep spaced [
+                "  " (form-pad word 15) (form-pad type 10) maybe desc
+            ]
         ]
     ]
 ]

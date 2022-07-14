@@ -93,7 +93,7 @@ clean-path: func [
                 ]
             ]
 
-            target: to file! unspaced [current path]
+            target: to file! unspaced [maybe current, path]  ; !!! why MAYBE?
         ]
     ]
 

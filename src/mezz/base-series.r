@@ -88,8 +88,8 @@ join: function [
     ]
     value [<opt> any-value!]
 ][
-    if blank? :value [
-        return copy base  ; can't be <blank> because that returns NULL
+    if null? :value [
+        return copy base
     ]
 
     type: type of base  ; to set output type back to original if transformed
@@ -110,18 +110,22 @@ join: function [
         find :[issue! url!] type [base: to text! base]
     ] else [
         base: copy base
-        type: _  ; don't apply any conversion at end
+        type: null  ; don't apply any conversion at end
     ]
 
     result: switch type of :value [
         block! [
-            if find any-sequence! type [  ; want slash or dot "calculus"
+            if type and (find any-sequence! type) [  ; slash or dot "calculus"
                 sep: either find any-path! type ['/] ['.]
                 for-each item value [
                     if blank? item [
                         continue  ; blanks skipped, use / or . to get "blanks"
                     ]
-                    if not find any-sequence! kind of item [
+                    if not any [
+                        find any-sequence! kind of item
+                        item = '.  ; !!! REVIEW
+                        item = '/
+                    ][
                         case [
                             empty? base [append base ^item]
                             _ = last base [change back tail base ^item]
@@ -161,7 +165,7 @@ join: function [
             ]
         ]
     ] else [
-        if find any-sequence! type [
+        if type and (find any-sequence! type) [
             if find any-sequence! kind of value [
                 if not match [path! tuple!] value [
                     fail "Can only append plain PATH! and TUPLE! to sequences"

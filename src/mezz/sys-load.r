@@ -134,11 +134,11 @@ load-header: function [
         return 'bad-header
     ]
 
-    (match [block! blank!] try :hdr.options) else [
+    (match [<opt> block!] :hdr.options) else [
         return 'bad-header
     ]
 
-    if find try hdr.options just content [
+    if try find hdr.options just content [
         append hdr compose [content (data)]  ; as of start of header
     ]
 
@@ -167,7 +167,7 @@ load-header: function [
         ; This feature needs redesign if it's to be kept, but switching it
         ; to use TRAP with the bad idea for now.
         ;
-        if find try hdr.options just compress [
+        if try find hdr.options just compress [
             rest: catch [
                 trap [
                     ; Raw bits.  whitespace *could* be tolerated; if
@@ -271,7 +271,7 @@ load: func [
 
     if word? header [cause-error 'syntax header source]
 
-    ensure [blank! object!] header: default [_]
+    ensure [<opt> object!] header
     ensure [binary! block! text!] data
 
     ; Convert code to block, insert header if requested
@@ -285,13 +285,12 @@ load: func [
 
     all [
         'unbound != type
-        'module != select header 'type
-        not find (try get 'header.options) [unbound]
+        'module != try select header 'type
+        not try find (try select header 'options) [unbound]
     ] then [
         data: intern* system.contexts.user data
     ]
 
-    header: opt header
     return :data
 ]
 
@@ -432,7 +431,7 @@ import*: func [
         ; should maybe ban it as well (or at least make it inconvenient).  But
         ; do it for the moment since that is how it has worked in the past.
         ;
-        let exports: select (try meta-of ensure module! unmeta :value) 'exports
+        let exports: try select (meta-of ensure module! unmeta :value) 'exports
         if exports [
             resolve where (unmeta :value) exports
         ]
@@ -447,7 +446,7 @@ import*: func [
             product: ~nameless~
             return source  ; no name, so just do the RESOLVE to get variables
         ]
-        let mod: select/skip system.modules name 2 else [
+        let mod: (try select/skip system.modules name 2) else [
             append system.modules :[name source]  ; not in module list, add it
             product: ~registered~
             return source
@@ -464,7 +463,7 @@ import*: func [
 
     ; If URL is decorated source (syntax highlighting, etc.) get raw form.
     ;
-    (adjust-url-for-raw try match url! :source) then adjusted -> [
+    (try adjust-url-for-raw match url! :source) then adjusted -> [
         source: adjusted  ; !!! https://forum.rebol.info/t/1582/6
     ]
 
@@ -535,8 +534,8 @@ import*: func [
         ]
     ]
 
-    let name: (try hdr).name
-    (select/skip system.modules try name 2) then cached -> [
+    let name: try select hdr 'name
+    (try select/skip system.modules name 2) then cached -> [
         product: ~cached~
         return cached
     ]
@@ -556,11 +555,11 @@ import*: func [
     let original-script: system.script
 
     system.script: make system.standard.script compose [
-        title: try select try hdr 'title
+        title: try select hdr 'title
         header: hdr
         parent: :original-script
         path: dir
-        args: (try :args)  ; variable named same as field, trips up binding
+        args: (:args else [_])  ; variable same name as field, trips up binding
     ]
 
     if (set? 'script-pre-load-hook) and (match [file! url!] source) [
@@ -571,7 +570,7 @@ import*: func [
         ;
         ; !!! Should there be a post-script-hook?
         ;
-        script-pre-load-hook is-module try hdr
+        try script-pre-load-hook is-module hdr
     ]
 
     === CHANGE WORKING DIRECTORY TO MODULE'S DIRECTORY (IF IT'S A MODULE) ===
@@ -611,7 +610,7 @@ import*: func [
     ; from the unfinished R3-Alpha module system, and its decade of atrophy
     ; that happened after that...
 
-    let [mod 'product quitting]: module/into/file/line try hdr code into file line
+    let [mod 'product quitting]: module/into/file/line hdr code into file line
 
     ensure module! mod
 

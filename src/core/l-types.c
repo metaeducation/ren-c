@@ -318,9 +318,7 @@ Bounce Reflect_Core(Frame(*) frame_)
     // no entry in the dispatcher table for them.
     //
     if (heart == REB_NULL)  // including escaped nulls, `''''`
-        fail ("NULL isn't valid for REFLECT, except for TYPE OF ()");
-    if (heart == REB_BLANK)
-        return nullptr; // only TYPE OF works on blank, otherwise it's null
+        return FAIL(Error_Try_If_Null_Meant_Raw(Lib(NULL)));
 
     Dequotify(ARG(value));
     INIT_FRM_PHASE(frame_, VAL_ACTION(Lib(REFLECT)));  // switch to generic

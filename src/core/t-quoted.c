@@ -432,7 +432,7 @@ DECLARE_NATIVE(unmeta)
 //
 //      return: "Value (if it's anything other than the states being checked)"
 //          [<opt> <void> any-value!]
-//      ^optional [<opt> <void> any-value!]
+//      ^optional [<opt> <void> <fail> any-value!]
 //  ]
 //
 DECLARE_NATIVE(maybe)
@@ -440,6 +440,17 @@ DECLARE_NATIVE(maybe)
     INCLUDE_PARAMS_OF_MAYBE;
 
     REBVAL *v = ARG(optional);
+
+    if (IS_ERROR(v)) {  // fold in TRY behavior as well
+        ERROR_VARS *vars = ERR_VARS(VAL_CONTEXT(v));
+        if (
+            IS_WORD(&vars->id)
+            and VAL_WORD_ID(&vars->id) == SYM_TRY_IF_NULL_MEANT
+        ){
+            return VOID;
+        }
+        return FAIL(VAL_CONTEXT(v));
+    }
 
     if (
         Is_Nulled(v) or Is_Meta_Of_Null_Isotope(v)

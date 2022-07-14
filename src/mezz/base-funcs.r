@@ -258,7 +258,7 @@ func: func* [
         ]
     ]
 
-    append new-spec try with-return  ; if FUNC* suppresses return generation
+    try append new-spec with-return  ; if FUNC* suppresses return generation
 
     ; The constness of the body parameter influences whether FUNC* will allow
     ; mutations of the created function body or not.  It's disallowed by
@@ -310,7 +310,7 @@ what-dir: func [  ; This can be HIJACK'd by a "smarter" version
     {Returns the current directory path}
     return: [<opt> file! url!]
 ][
-    return opt system.options.current-path
+    return system.options.current-path
 ]
 
 change-dir: func [  ; This can be HIJACK'd by a "smarter" version
@@ -333,8 +333,8 @@ redescribe: func [
         {(modified) Action whose description is to be updated.}
 ][
     let meta: meta-of :value
-    let notes: _
-    let description: _
+    let notes: null
+    let description: null
 
     ; For efficiency, objects are only created on demand by hitting the
     ; required point in the PARSE.  Hence `redescribe [] :foo` will not tamper
@@ -344,7 +344,7 @@ redescribe: func [
     let on-demand-meta: does [
         meta: default [set-meta :value copy system.standard.action-meta]
 
-        if not find meta 'description [
+        if not in meta 'description [
             fail [{archetype META-OF doesn't have DESCRIPTION slot} meta]
         ]
 
@@ -958,7 +958,7 @@ fail: func [
     ; !!! PATH! doesn't do BINDING OF, and in the general case it couldn't
     ; tell you where it resolved to without evaluating, just do WORD! for now.
     ;
-    let frame: try match frame! binding of try match the-word! :blame
+    let frame: try match frame! try binding of match the-word! :blame
 
     let error: switch type of :reason [
         error! [reason]

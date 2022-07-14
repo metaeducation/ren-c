@@ -189,7 +189,7 @@
         {Match maximum of two rules, keeping side effects of both if match}
         return: "Result of the longest match (favors first parser if equal)"
            [<opt> any-value!]
-        pending: [blank! block!]
+        pending: [<opt> block!]
         parser1 [action!]
         parser2 [action!]
         <local> result1' result2' remainder1 remainder2 pending1 pending2

@@ -29,7 +29,7 @@
 
 (
     f: lambda ['look [<variadic>]] [try first look]
-    blank? applique :f [look: make varargs! []]
+    null? applique :f [look: make varargs! []]
 )
 
 ; !!! Experimental behavior of enfixed variadics, is to act as either 0 or 1

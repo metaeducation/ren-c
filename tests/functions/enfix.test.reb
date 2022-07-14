@@ -44,15 +44,15 @@
 
 [
     (
-        skippy: lambda ['x [<skip> integer!] y] [reduce [try :x y]]
+        skippy: lambda ['x [<skip> integer!] y] [reduce [reify x y]]
         lefty: enfixed :skippy
         true
     )
 
-    ([_ "hi"] = skippy "hi")
+    ([~null~ "hi"] = skippy "hi")
     ([10 "hi"] = skippy 10 "hi")
 
-    ([_ "hi"] = lefty "hi")
+    ([~null~ "hi"] = lefty "hi")
     ([1 "hi"] = 1 lefty "hi")
 
     ; Enfixed skipped left arguments mean that a function will not be executed
@@ -63,7 +63,7 @@
         did all [
             <tag> = evaluate/next block 'block
             [lefty "hi"] = block
-            [_ "hi"] = evaluate/next block 'block
+            [~null~ "hi"] = evaluate/next block 'block
             [] = block
         ]
     )
@@ -77,12 +77,12 @@
         did all [
             1 = evaluate/next block 'block
             [lefty "hi"] = block
-            [_ "hi"] = evaluate/next block 'block
+            [~null~ "hi"] = evaluate/next block 'block
             [] = block
         ]
     )
 
-    ([_ "hi"] = any [false blank lefty "hi"])
+    ([~null~ "hi"] = any [false blank lefty "hi"])
 ]
 
 

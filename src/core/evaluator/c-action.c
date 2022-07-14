@@ -965,11 +965,12 @@ Bounce Action_Executor(Frame(*) f)
         enum Reb_Kind kind = VAL_TYPE(ARG);
 
         if (
-            kind == REB_BLANK  // v-- e.g. <blank> param
-            and GET_PARAM_FLAG(PARAM, NOOP_IF_BLANK)
+            (kind == REB_NULL)
+            and GET_PARAM_FLAG(PARAM, NOOP_IF_BLANK)  // e.g. <blank> param
         ){
             Set_Executor_Flag(ACTION, f, TYPECHECK_ONLY);
-            Init_Nulled(OUT);
+            Init_Error(OUT, Error_Try_If_Null_Meant_Raw(Lib(NULL)));
+            Failurize(OUT);
             continue;
         }
 
@@ -1063,8 +1064,8 @@ Bounce Action_Executor(Frame(*) f)
 
     if (Get_Executor_Flag(ACTION, f, TYPECHECK_ONLY)) {  // <blank>, <blackhole>
         assert(
-            Is_Isotope_With_Id(OUT, SYM_BLACKHOLE)
-            or Is_Nulled(OUT)
+            Is_Failure(OUT)
+            or Is_Isotope_With_Id(OUT, SYM_BLACKHOLE)
         );
         goto skip_output_check;
     }

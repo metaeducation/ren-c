@@ -174,14 +174,14 @@ host-script-pre-load: func [
     {Code registered as a hook when a module or script are loaded}
     return: <none>
     is-module [logic!]
-    hdr [blank! object!]
-        {Header object (will be blank for DO of BINARY! with no header)}
+    hdr [<opt> object!]
+        {Header object (missing for DO of BINARY! with no header)}
 ][
     ; Print out the script info
     boot-print [
-        (if is-module ["Module:"] else ["Script:"]) reify select hdr 'title
-            "Version:" reify select hdr 'version
-            "Date:" reify select hdr 'date
+        (if is-module ["Module:"] else ["Script:"]) reify try select hdr 'title
+            "Version:" reify try select hdr 'version
+            "Date:" reify try select hdr 'date
     ]
 ]
 
@@ -747,7 +747,7 @@ main-startup: func [
     ;
     all [
         o.bin
-        not find o.suppress %rebol.reb
+        not try find o.suppress %rebol.reb
         elide (loud-print ["Checking for rebol.reb file in" o.bin])
         exists? join o.bin %rebol.reb
     ] then [

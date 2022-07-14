@@ -18,18 +18,18 @@ spec-of: function [
     return: [block!]
     action [action!]
 ][
-    meta: try match object! meta-of :action
+    meta: match object! meta-of :action
 
     return collect [
-        keep/line try ensure [<opt> text!] select meta 'description
+        keep/line ensure [<opt> text!] try select meta 'description
 
-        types: ensure [<opt> frame! object!] select meta 'parameter-types
-        notes: ensure [<opt> frame! object!] select meta 'parameter-notes
+        types: ensure [<opt> frame! object!] try select meta 'parameter-types
+        notes: ensure [<opt> frame! object!] try select meta 'parameter-notes
 
-        return-type: ensure [<opt> block!] select try types 'return
-        return-note: ensure [<opt> text!] select try notes 'return
+        return-type: ensure [<opt> block!] try select types 'return
+        return-note: ensure [<opt> text!] try select notes 'return
 
-        any [return-type, return-note] then [
+        if return-type or return-note [
             keep compose [
                 return: (maybe return-type) (maybe return-note)
             ]
@@ -38,8 +38,8 @@ spec-of: function [
         for-each param parameters of :action [
             keep compose [
                 (param)
-                    (maybe select try types param)
-                    (maybe select try notes param)
+                    (maybe try select types param)
+                    (maybe try select notes param)
             ]
         ]
     ]
@@ -58,11 +58,11 @@ description-of: function [
         image! [spaced ["size:" v.size]]
         datatype! [
             spec: ensure object! spec of v  ; "type specs" need simplifying
-            opt copy spec.title
+            copy spec.title
         ]
         action! [
             if meta: meta-of :v [
-                opt copy try get 'meta.description  ; can be BLANK!
+                try copy try get 'meta.description
             ]
         ]
         gob! [spaced ["offset:" v.offset "size:" v.size]]
@@ -336,12 +336,12 @@ help: function [
 
     print "USAGE:"
 
-    args: _  ; required parameters (and "skippable" parameters, at the moment)
-    refinements: _  ; optional parameters (PARAMETERS OF puts at tail)
+    args: ~  ; required parameters (and "skippable" parameters, at the moment)
+    refinements: ~  ; optional parameters (PARAMETERS OF puts at tail)
 
     parse parameters of :value [
-        args: across opt some [word! | meta-word! | get-word! | lit-word!]
-        refinements: across opt some path!  ; as mentioned, these are at tail
+        args: opt across some [word! | meta-word! | get-word! | lit-word!]
+        refinements: opt across some path!  ; as mentioned, these are at tail
     ] else [
         fail ["Unknown results in PARAMETERS OF:" mold parameters of :value]
     ]
@@ -349,27 +349,30 @@ help: function [
     ; Output exemplar calling string, e.g. LEFT + RIGHT or FOO A B C
     ; !!! Should refinement args be shown for enfixed case??
     ;
-    all [enfixed, not empty? args] then [
+    all [enfixed, args] then [
         print [_ _ _ _ args.1 (uppercase mold topic) form next args]
     ] else [
-        print [_ _ _ _ (uppercase mold topic), form args, form refinements]
+        print [
+            _ _ _ _ (uppercase mold topic)
+                maybe form args, maybe form refinements
+        ]
     ]
 
-    meta: try meta-of :value
+    meta: meta-of :value
 
     print newline
 
     print "DESCRIPTION:"
-    print [_ _ _ _ meta.description else ["(undocumented)"]]
+    print [_ _ _ _ (try select meta 'description) else ["(undocumented)"]]
     print [_ _ _ _ (uppercase mold topic) {is an ACTION!}]
 
     print-args: [list /indent-words] -> [
         for-each param list [
-            types: ensure [<opt> block!] (
-                select try meta.parameter-types to-word noquote param
+            types: ensure [<opt> block!] (try
+                select (try select meta 'parameter-types) to-word noquote param
             )
-            note: ensure [<opt> text!] (
-                select try meta.parameter-notes to-word noquote param
+            note: ensure [<opt> text!] (try
+                select (try select meta 'parameter-notes) to-word noquote param
             )
 
             print [_ _ _ _ param (if types [mold types])]
@@ -383,8 +386,8 @@ help: function [
     ; that isn't intended for use as a definitional return is a return type.
     ; The concepts are still being fleshed out.
     ;
-    return-type: select try meta.parameter-types 'return
-    return-note: select try meta.parameter-notes 'return
+    return-type: try select try select meta 'parameter-types 'return
+    return-note: try select try select meta 'parameter-notes 'return
 
     print newline
     print [
@@ -394,13 +397,13 @@ help: function [
         print [_ _ _ _ return-note]
     ]
 
-    if not empty? args [
+    if args [
         print newline
         print "ARGUMENTS:"
         print-args args
     ]
 
-    if not empty? refinements [
+    if refinements [
         print newline
         print "REFINEMENTS:"
         print-args/indent-words refinements

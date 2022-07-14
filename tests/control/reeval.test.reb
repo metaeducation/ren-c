@@ -74,7 +74,7 @@
 (false = reeval false)
 ($1 == reeval $1)
 (null? reeval (specialize :of [property: 'type]) null)
-(null? do _)
+(null? try do null)
 (
     a-value: make object! []
     same? :a-value reeval :a-value

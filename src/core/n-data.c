@@ -1390,35 +1390,36 @@ DECLARE_NATIVE(set)
 //
 //  try: native [
 //
-//  {Turn nulls and ~void~ isotopes to blank (See also: OPT)}
+//  {Turn null parameter failures and pure void to NULL}
 //
-//      return: "blank if input would trigger ELSE, original value otherwise"
-//          [any-value!]
-//      ^optional [<opt> <void> any-value!]
+//      return: [<opt> any-value!]
+//      ^optional [<opt> <void> <fail> any-value!]
 //  ]
 //
 DECLARE_NATIVE(try)
 {
-    INCLUDE_PARAMS_OF_TRY;  // Was once known as TO-VALUE, but TRY has stuck
+    INCLUDE_PARAMS_OF_TRY;
 
     REBVAL *v = ARG(optional);
 
-    if (Is_Nulled(v))
-        return Init_Blank(OUT);
+    if (IS_ERROR(v)) {
+        ERROR_VARS *vars = ERR_VARS(VAL_CONTEXT(v));
+        if (
+            IS_WORD(&vars->id)
+            and VAL_WORD_ID(&vars->id) == SYM_TRY_IF_NULL_MEANT
+        ){
+            return COPY(SPECIFIC(&vars->line + 1));
+        }
+        return FAIL(VAL_CONTEXT(v));
+    }
 
-    if (Is_Meta_Of_Void(v))
-        return Init_Blank(OUT);
+    if (Is_Nulled(v) or Is_Meta_Of_Void(v))
+        return Init_Nulled(OUT);
 
     Meta_Unquotify(v);
-    Decay_If_Isotope(v);  // Decay "normal" isotopes, including ~null~ isotopes
+    Decay_If_Isotope(v);  // !!! this decays isotopes, should it?
 
-    if (Is_Nulled(v))
-        return Init_Blank(OUT);
-
-    if (Is_Isotope(v))
-        fail (Error_Bad_Isotope(v));  // Don't tolerate other isotopes
-
-    return COPY(v);
+    return COPY(v);  // !!! also tolerates other isotopes, should it?
 }
 
 
@@ -1429,7 +1430,7 @@ DECLARE_NATIVE(try)
 //
 //      return: "null on blank, ~null~ if input was NULL, or original value"
 //          [<opt> any-value!]
-//      ^optional [<opt> <blank> <void> any-value!]
+//      ^optional [<opt> <void> any-value!]
 //  ]
 //
 DECLARE_NATIVE(opt)

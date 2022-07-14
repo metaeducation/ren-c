@@ -867,13 +867,10 @@ REBTYPE(String)
         // Note that while inserting or appending NULL is a no-op, CHANGE with
         // a /PART can actually erase data.
         //
-        if (IS_BLANK(ARG(value))) {  // only blanks bypass
-            if (len == 0) {
-                if (id == SYM_APPEND) // append always returns head
-                    VAL_INDEX_RAW(v) = 0;
-                return COPY(v); // don't fail on read only if it would be a no-op
-            }
-            Init_Nulled(ARG(value));  // low-level treats NULL as nothing
+        if (Is_Nulled(ARG(value)) and len == 0) {
+            if (id == SYM_APPEND) // append always returns head
+                VAL_INDEX_RAW(v) = 0;
+            return COPY(v);  // don't fail on read only if would be a no-op
         }
 
         Flags flags = 0;
