@@ -72,7 +72,7 @@ standard: 'c
 rigorous: no
 
 static: no
-pkg-config: try get-env "PKGCONFIG" ;path to pkg-config, or default
+pkg-config: get-env "PKGCONFIG"  ; path to pkg-config, or default
 
 odbc-requires-ltdl: no
 
@@ -85,11 +85,11 @@ pre-vista: no
 
 git-commit: _
 
-includes: _
-definitions: _
-cflags: _
-libraries: _
-ldflags: _
+includes: null
+definitions: null
+cflags: null
+libraries: null
+ldflags: null
 
 main: _
 

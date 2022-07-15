@@ -198,9 +198,9 @@ export emit-include-params-macro: function [
         ]
     ]
 
-    prefix: if ext [unspaced [ext "_"]] else [_]
+    prefix: either try ext [unspaced [ext "_"]] [null]
     e/emit [prefix native-name items] {
-        #define ${PREFIX}INCLUDE_PARAMS_OF_${NATIVE-NAME} \
+        #define ${TRY PREFIX}INCLUDE_PARAMS_OF_${NATIVE-NAME} \
             $[Items]; \
             assert(GET_SERIES_INFO(frame_->varlist, HOLD))
     }

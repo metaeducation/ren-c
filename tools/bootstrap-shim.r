@@ -46,8 +46,7 @@ REBOL [
     }
 ]
 
-; The snapshotted Ren-C existed right before <blank> was legal to mark an
-; argument as meaning a function returns null if that argument is blank.
+; The snapshotted Ren-C existed before <try> was legal to mark on arguments.
 ; See if this causes an error, and if so assume it's the old Ren-C, not a
 ; new one...?
 ;
@@ -57,7 +56,7 @@ REBOL [
 ; obvious reward.)
 ;
 trap [
-    func [i [<blank> integer!]] [...]  ; modern interpreter or already shimmed
+    func [i [<try> integer!]] [...]  ; modern interpreter or already shimmed
     if in (pick system 'options) 'redbol-paths [
         system.options.redbol-paths: true
     ]
@@ -65,7 +64,7 @@ trap [
     ; Fall through to the body of this file, we are shimming version ~8994d23
 ] else [
     trap [
-        lib/func [i [<blank> integer!]] [...]
+        lib/func [i [<try> integer!]] [...]
     ] then [
         ;
         ; Old bootstrap executables that are already shimmed should not do
@@ -186,7 +185,28 @@ to-logic: func [return: [logic!] optional [<opt> any-value!]] [
     to logic! :optional
 ]
 
-try: lib/func [  ; since null word/path fetches cause errors, work around it
+opt: func [v [<opt> any-value!]] [
+    if null? :v [fail/where "OPT on NULL" 'v]
+    if blank? :v [return null]
+    :v
+]
+
+; The safety aspect of new TRY isn't really worth attempting to emulate in the
+; bootstrap shim.  So the <try> parameters are simply "null in, null out" with
+; no requirement that a TRY be on the callsite.
+;
+; However, NULL word/path fetches cause errors in the bootstrap shim.  While
+; we can avoid the use of NULL and just use BLANK! for various opt-out
+; purposes in bootstrap, some variables are best initialized to null... so
+; we adapt TRY so it's variadic and works around fetch errors for WORD!/PATH!.
+;
+; This results in putting TRY in places that are superfluous for the current
+; build on WORD! and PATH!, and then the current build needs TRY on the results
+; of <try> functions that the bootstrap build does not.  So it's a kind of
+; "try inflation", but since TRY is a no-op on null variable fetches in the
+; current build this seems a reasonable enough mitigation strategy for now.
+;
+try: lib/func [
     :look [<...> any-value!]  ; <...> old variadic notation
     args [<...> <opt> any-value!]  ; <...> old variadic notation
 ][
@@ -194,9 +214,9 @@ try: lib/func [  ; since null word/path fetches cause errors, work around it
         match [path! word!] first look
         not match action! get first look
     ] then [
-        return lib/try get take look
+        return get take look
     ]
-    return lib/try take* args
+    return take* args
 ]
 
 null?: lib/func [
@@ -212,6 +232,17 @@ null?: lib/func [
     return lib/null? take* args
 ]
 
+; We don't have isotopes in the bootstrap build.  But if a branch produces
+; NULL it will yield a "VOID!" (kind of like a BAD-WORD! of ~void~)  Turn these
+; into NULL, and trust that the current build will catch cases of something
+; like a PRINT being turned into a NULL.
+;
+decay: func [v [<opt> any-value!]] [
+    if void? :v [return null]
+    :v
+]
+
+
 |: lib/func [] [
     fail/where [
         "| is replaced by COMMA! for expression barriers"
@@ -224,7 +255,7 @@ null?: lib/func [
 load-value: :load
 load-all: :load/all
 
-maybe: :opt  ; for use in compose, it's works for mapping to new semantics
+maybe: :try  ; for use in compose, to new semantics... leave NULL alone
 
 the: :quote  ; Renamed due to the QUOTED! datatype
 quote: lib/func [x [<opt> any-value!]] [
@@ -265,11 +296,16 @@ append: adapt :append [
     if only [
         fail/where "APPEND/ONLY no longer allowed, use ^^" 'series
     ]
-    value: opt case [
-        blank? :value [_]
-        block? :value [:value]
+    value: lib/opt case [
+        null? :value [_]  ; OPT to NULL
+        void? :value [fail "APPEND of VOID! disallowed"]
+        blank? :value [fail "APPEND with ^^ BLANK! only"]
+        block? :value [
+            if lib/find value void! [fail "APPEND of BLOCK! w/VOID! disallowed"]
+            :value
+        ]
         match any-inert! :value [:value]
-        fail/where ["APPEND takes block, blank, ANY-INERT!"] 'value
+        fail/where ["APPEND takes block, NULL, ANY-INERT!"] 'value
     ]
 ]
 
@@ -278,11 +314,16 @@ insert: adapt :insert [
         fail/where "INSERT/ONLY no longer allowed, use ^^" 'series
     ]
 
-    value: opt case [
-        blank? :value [_]
-        block? :value [:value]
+    value: lib/opt case [
+        null? :value [_]  ; OPT to NULL
+        void? :value [fail "INSERT of VOID! disallowed"]
+        blank? :value [fail "INSERT with ^^ BLANK! only"]
+        block? :value [
+            if lib/find value void! [fail "INSERT of BLOCK! w/VOID! disallowed"]
+            :value
+        ]
         match any-inert! :value [:value]
-        fail/where ["INSERT takes block, blank, ANY-INERT!"] 'value
+        fail/where ["INSERT takes block, NULL, ANY-INERT!"] 'value
     ]
 ]
 
@@ -291,11 +332,16 @@ change: adapt :change [
         fail/where "CHANGE/ONLY no longer allowed, use ^^" 'series
     ]
 
-    value: opt case [
-        blank? :value [_]
-        block? :value [:value]
+    value: lib/opt case [
+        null? :value [_]  ; OPT to NULL
+        void? :value [fail "CHANGE of VOID! disallowed"]
+        blank? :value [fail "CHANGE with ^^ BLANK! only"]
+        block? :value [
+            if lib/find value void! [fail "CHANGE of BLOCK! w/VOID! disallowed"]
+            :value
+        ]
         match any-inert! :value [:value]
-        fail/where ["CHANGE takes block, blank, ANY-INERT!"] 'value
+        fail/where ["CHANGE takes block, NULL, ANY-INERT!"] 'value
     ]
 ]
 
@@ -377,7 +423,7 @@ collect*: func [  ; variant that gives NULL if no actual keeps (none or blanks)
 ][
     keeper: specialize (  ; SPECIALIZE to remove series argument
         enclose 'append function [f [frame!] <with> out] [  ; gets /LINE, /DUP
-            if blank? :f/value [return null]  ; doesn't "count" as collected
+            if null? :f/value [return null]  ; doesn't "count" as collected
 
             f/series: out: default [make block! 16]  ; won't return null now
             :f/value  ; ELIDE leaves as result (F/VALUE invalid after DO F)
@@ -431,14 +477,14 @@ let: lib/func [
 
 
 modernize-action: lib/function [
-    "Account for <blank> annotation, refinements as own arguments"
+    "Account for <try> annotation, refinements as own arguments"
     return: [block!]
     spec [block!]
     body [block!]
 ][
     last-refine-word: _
 
-    blankers: copy []
+    tryers: copy []
     proxiers: copy []
 
     spec: lib/collect [  ; Note: offers KEEP/ONLY
@@ -469,6 +515,10 @@ modernize-action: lib/function [
                 ; have a fake proxying parameter.
 
                 if not block? spec/1 [
+                    lib/append proxiers compose2 [  ; turn blank to null
+                        (as set-word! last-refine-word)
+                            lib/opt (as get-word! last-refine-word)
+                    ]
                     continue
                 ]
 
@@ -477,7 +527,7 @@ modernize-action: lib/function [
                 keep/only spec/1
 
                 lib/append proxiers compose2 [
-                    (as set-word! last-refine-word) lib/try (as get-word! proxy)
+                    (as set-word! last-refine-word) (as get-word! proxy)
                     set (as lit-word! proxy) void
                 ]
                 spec: my next
@@ -525,13 +575,13 @@ modernize-action: lib/function [
                     continue
                 ]
 
-                ; Substitute BLANK! for any <blank> found, and save some code
-                ; to inject for that parameter to return null if it's blank
+                ; Substitute <opt> for any <try> found, and save some code
+                ; to inject for that parameter to return null if it's null
                 ;
-                if lib/find (lib/try match block! spec/1) <blank> [
-                    keep/only replace copy spec/1 <blank> 'blank!
-                    lib/append blankers compose2 [
-                        if blank? (as get-word! w) [return null]
+                if lib/find (lib/try match block! spec/1) <try> [
+                    keep/only replace copy spec/1 <try> <opt>
+                    lib/append tryers compose2 [
+                        if null? (as get-word! w) [return null]
                     ]
                     spec: my next
                     continue
@@ -561,7 +611,7 @@ modernize-action: lib/function [
     lib/append spec collect-lets body
 
     body: compose2 [
-        ((blankers))
+        ((tryers))
         ((proxiers))
         (as group! body)
     ]
@@ -598,7 +648,9 @@ mutable: lib/func [x [any-value!]] [
 ; Historical JOIN reduced.  Modern JOIN does not; it is more nuanced, and
 ; does consistency checking on joins of tuples and paths.
 ;
-join: func [base value <local>] [
+join: func [base value [<opt> any-value!] <local>] [
+    if null? :value [return copy base]
+
     base: switch base [
         binary! [copy #{}]
         text! [copy ""]
@@ -907,4 +959,26 @@ apply: lib/function [
     ]
 
     do f
+]
+
+local-to-file-old: :lib/local-to-file
+local-to-file: lib/local-to-file: lib/func [path [<opt> text! file!] /pass /dir] [
+    path: default [_]
+    local-to-file-old/(pass)/(dir) path
+]
+
+file-to-local-old: :lib/file-to-local
+file-to-local: lib/file-to-local: lib/func [
+    path [<opt> text! file!] /pass /full /no-tail-slash /wild
+][
+    path: default [_]
+    file-to-local-old/(pass)/(full)/(no-tail-slash)/(wild) path
+]
+
+select: lib/func [
+    series [<opt> any-series! any-context! map!]
+    value [any-value!]
+][
+    if null? :series [return null]
+    lib/select :series :value
 ]

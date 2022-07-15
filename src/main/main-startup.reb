@@ -399,7 +399,7 @@ main-startup: func [
             return null
         ]
 
-        return to-dir try any [
+        return try to-dir any [
             get-env 'HOME
             all [
                 let homedrive: get-env 'HOMEDRIVE

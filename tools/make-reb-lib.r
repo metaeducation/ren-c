@@ -104,7 +104,7 @@ emit-proto: func [return: <none> proto] [
                         ; #"." in variadics (but all va_list* in API defs)
                     ]
                     pos: back tail param
-                    while [find identifier-chars pos/1] [
+                    while [pick identifier-chars pos/1] [
                         pos: back pos
                     ]
                     keep trim/tail copy/part param next pos  ; TEXT! of type
@@ -198,34 +198,37 @@ c89-variadic-inlines: make block! length of api-objects
 c++-variadic-inlines: make block! length of api-objects
 
 for-each api api-objects [do in api [
-    if find spec #noreturn [
+    all [
+        try spec
+        find spec #noreturn
+    ] then [
         assert [returns = "void"]
         opt-dead-end: "DEAD_END;"
         opt-noreturn: "ATTRIBUTE_NO_RETURN"
     ] else [
-        opt-dead-end: _
-        opt-noreturn: _
+        opt-dead-end: null
+        opt-noreturn: null
     ]
 
-    opt-return: try if returns != "void" ["return"]
+    opt-return: either returns != "void" ["return"] [null]
 
     make-c-proxy: function [
         return: [text!]
         /inline
         <with> returns wrapper-params
     ][
-        inline: try if inline ["_inline"]
+        inline: either try inline ["_inline"] [null]
 
         returns: default ["void"]
 
         wrapper-params: default ["void"]
 
         return cscape/with {
-            $<OPT-NORETURN>
-            inline static $<Returns> $<Name>$<inline>($<Wrapper-Params>) {
-                $<Opt-Va-Start>
-                $<opt-return> LIBREBOL_PREFIX($<Name>)($<Proxied-Args>);
-                $<OPT-DEAD-END>
+            $<TRY OPT-NORETURN>
+            inline static $<Returns> $<Name>$<try inline>($<Try Wrapper-Params>) {
+                $<Try Opt-Va-Start>
+                $<try opt-return> LIBREBOL_PREFIX($<Name>)($<Try Proxied-Args>);
+                $<TRY OPT-DEAD-END>
             }
         } compose2 [
             wrapper-params  ; "global" where locals undefined, must be first
@@ -244,11 +247,11 @@ for-each api api-objects [do in api [
 
         return cscape/with {
             template <typename... Ts>
-            $<OPT-NORETURN>
-            inline static $<Returns> $<Name>($<Wrapper-Params>) {
+            $<TRY OPT-NORETURN>
+            inline static $<Returns> $<Name>($<Try Wrapper-Params>) {
                 LIBREBOL_PACK_CPP_ARGS;
-                $<opt-return> LIBREBOL_PREFIX($<Name>)($<Proxied-Args>);
-                $<OPT-DEAD-END>
+                $<try opt-return> LIBREBOL_PREFIX($<Name>)($<Try Proxied-Args>);
+                $<TRY OPT-DEAD-END>
             }
         } compose2 [
             wrapper-params  ; "global" where locals undefined, must be first
@@ -297,13 +300,13 @@ for-each api api-objects [do in api [
         append c++-variadic-inlines make-c++-proxy
     ]
     else [
-        opt-va-start: _
+        opt-va-start: null
 
-        wrapper-params: try delimit ", " map-each [type var] paramlist [
+        wrapper-params: delimit ", " map-each [type var] paramlist [
             spaced [type var]
         ]
 
-        proxied-args: try delimit ", " map-each [type var] paramlist [
+        proxied-args: delimit ", " map-each [type var] paramlist [
             to text! var
         ]
 

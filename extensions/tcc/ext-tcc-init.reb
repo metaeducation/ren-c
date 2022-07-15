@@ -164,7 +164,7 @@ compile: func [
     ; For now, if the options don't specify a `runtime-dir` use CONFIG_TCCDIR,
     ; which is a standard setting.
 
-    config.runtime-path: default [try any [
+    config.runtime-path: default [any [
         local-to-file try get-env "CONFIG_TCCDIR"  ; (backslashes on windows)
 
         ; !!! Guessing is probably a good idea in the long term, but in the
@@ -395,7 +395,7 @@ compile: func [
         ; step, try overriding with the LIBREBOL_INCLUDE_DIR environment
         ; variable, if it wasn't explicitly passed in the options.
 
-        config.librebol-path: default [try any [
+        config.librebol-path: default [any [
             get-env "LIBREBOL_INCLUDE_DIR"
 
             ; Guess it is in the runtime directory (%encap-tcc-resources.reb
@@ -409,7 +409,7 @@ compile: func [
         switch type of config.librebol-path [
             text! [config.librebol-path: my local-to-file]
             file! []
-            blank! [
+            null [
                 fail [
                     {LIBREBOL_INCLUDE_DIR currently must be set either as an}
                     {environment variable or as LIBREBOL-PATH in /OPTIONS so}

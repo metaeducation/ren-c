@@ -35,14 +35,14 @@ export parsing-at: func [
     return use [result position][
         block: compose2/only [try (as group! block)]
         if not end [
-            block: compose2/deep [try if not tail? (word) [((block))]]
+            block: compose2/deep [decay either not tail? (word) [((block))] [_]]
         ]
         block: compose2/deep [
-            result: either position: ((block)) [[
-                :position  ; seek
-            ]] [[
-                end skip
-            ]]
+            result: either position: ((block)) [
+                [:position]  ; seek
+            ][
+                [end skip]
+            ]
         ]
         use compose2 [(word)] compose2/deep [
             [

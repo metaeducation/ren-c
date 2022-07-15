@@ -45,9 +45,9 @@ target-platform: _
 
 map-files-to-local: func [
     return: [block!]
-    files [blank! file! block!]
+    files [<opt> file! block!]
 ][
-    if blank? files [return copy []]
+    if null? :files [return copy []]
     if not block? files [files: reduce [files]]
     return map-each f files [
         file-to-local f
@@ -57,10 +57,10 @@ map-files-to-local: func [
 ends-with?: func [
     return: [logic!]
     s [any-string!]
-    suffix [blank! any-string!]
+    suffix [<opt> any-string!]
 ][
     return to-logic any [
-        blank? suffix
+        null? :suffix
         empty? suffix
         suffix = (skip tail-of s negate length of suffix)
     ]
@@ -97,7 +97,7 @@ run-command: func [
     return trim/with x "^/^M"
 ]
 
-pkg-config: func [
+pkg-config: func [  ; !!! Note: Does not appear to be used
     return: [text! block!]
     pkg [any-string!]
     var [word!]
@@ -319,9 +319,9 @@ project-class: make object! [
     ; _not_ from project to project.
     ; They will be applied _in addition_ to the obj-file level settings
     ;
-    includes: _
-    definitions: _
-    cflags: _
+    includes: null
+    definitions: null
+    cflags: null
 
     ; These can be inherited from project to obj-files and will be overwritten
     ; at the obj-file level
@@ -337,13 +337,13 @@ solution-class: make project-class [
 ext-dynamic-class: make object! [
     class: #dynamic-extension
     output: _
-    flags: _ ;static?
+    flags: null  ;static?
 ]
 
 ext-static-class: make object! [
     class: #static-extension
     output: _
-    flags: _ ;static?
+    flags: null  ;static?
 ]
 
 application-class: make project-class [
@@ -352,8 +352,8 @@ application-class: make project-class [
     generated?: false
 
     linker: _
-    searches: _
-    ldflags: _
+    searches: null
+    ldflags: null
 
     link: meth [return: <none>] [
         linker/link output depends ldflags
@@ -363,9 +363,9 @@ application-class: make project-class [
         let ld: any [linker, default-linker]
         return ld/command/debug
             output
-            depends
-            searches
-            ldflags
+            try depends
+            try searches
+            try ldflags
             debug
     ]
 
@@ -377,10 +377,10 @@ dynamic-library-class: make project-class [
     generated?: false
     linker: _
 
-    searches: _
-    ldflags: _
+    searches: null
+    ldflags: null
     link: meth [return: <none>] [
-        linker/link output depends ldflags
+        linker/link output try depends try ldflags
     ]
 
     command: meth [
@@ -391,9 +391,9 @@ dynamic-library-class: make project-class [
         let l: any [linker, default-linker]
         return l/command/dynamic
             output
-            depends
-            searches
-            ldflags
+            try depends
+            try searches
+            try ldflags
     ]
 ]
 
@@ -412,7 +412,7 @@ compiler-class: make object! [
     name: _
     id: _ ;flag prefix
     version: _
-    exec-file: _
+    exec-file: null
     compile: meth [
         return: <none>
         output [file!]
@@ -435,7 +435,7 @@ compiler-class: make object! [
     ;check if the compiler is available
     check: meth [
         return: [logic!]
-        path [<blank> any-string!]
+        path [<try> any-string!]
     ][
         fail ~tbd~
     ]
@@ -489,21 +489,21 @@ gcc: make compiler-class [
     ][
         return spaced collect [
             keep any [
-                (file-to-local/pass exec-file)
+                (try file-to-local/pass try exec-file)
                 (to text! name)  ; the "gcc" may get overridden as "g++"
             ]
 
             keep either E ["-E"]["-c"]
 
-            if PIC [
+            if try PIC [
                 keep "-fPIC"
             ]
-            if I [
+            if try I [
                 for-each inc (map-files-to-local I) [
                     keep unspaced ["-I" inc]
                 ]
             ]
-            if D [
+            if try D [
                 for-each flg D [
                     if word? flg [flg: as text! flg]
 
@@ -530,7 +530,7 @@ gcc: make compiler-class [
                     ]
                 ]
             ]
-            if O [
+            if try O [
                 case [
                     O = true [keep "-O2"]
                     O = false [keep "-O0"]
@@ -542,7 +542,7 @@ gcc: make compiler-class [
                     fail ["unrecognized optimization level:" O]
                 ]
             ]
-            if g [
+            if try g [
                 case [
                     g = true [keep "-g -g3"]
                     g = false []
@@ -551,9 +551,9 @@ gcc: make compiler-class [
                     fail ["unrecognized debug option:" g]
                 ]
             ]
-            if F [
+            if try F [
                 for-each flg F [
-                    keep try filter-flag flg id
+                    try keep filter-flag flg id
                 ]
             ]
 
@@ -561,7 +561,7 @@ gcc: make compiler-class [
 
             output: file-to-local output
 
-            any [E, ends-with? output target-platform/obj-suffix] then [
+            any [try E, ends-with? output target-platform/obj-suffix] then [
                 keep output
             ] else [
                 keep [output target-platform/obj-suffix]
@@ -603,7 +603,7 @@ cl: make compiler-class [
         /E "only preprocessing"
     ][
         return spaced collect [
-            keep any [(file-to-local/pass exec-file) "cl"]
+            keep any [(try file-to-local/pass try exec-file) "cl"]
             keep "/nologo"  ; don't show startup banner (must be lowercase)
             keep either E ["/P"]["/c"]
 
@@ -615,12 +615,12 @@ cl: make compiler-class [
             ;
             keep "/FS"
 
-            if I [
+            if try I [
                 for-each inc (map-files-to-local I) [
                     keep unspaced ["/I" inc]
                 ]
             ]
-            if D [
+            if try D [
                 for-each flg D [
                     if word? flg [flg: as text! flg]
 
@@ -645,7 +645,7 @@ cl: make compiler-class [
                     ]
                 ]
             ]
-            if O [
+            if try O [
                 case [
                     O = true [keep "/O2"]
                     all [O, not zero? O] [
@@ -653,7 +653,7 @@ cl: make compiler-class [
                     ]
                 ]
             ]
-            if g [
+            if try g [
                 case [
                     any [
                         g = true
@@ -666,9 +666,9 @@ cl: make compiler-class [
                     fail ["unrecognized debug option:" g]
                 ]
             ]
-            if F [
+            if try F [
                 for-each flg F [
-                    keep try filter-flag flg id
+                    try keep filter-flag flg id
                 ]
             ]
 
@@ -703,9 +703,9 @@ linker-class: make object! [
     commands: meth [
         return: [<opt> block!]
         output [file!]
-        depends [block! blank!]
-        searches [block! blank!]
-        ldflags [block! any-string! blank!]
+        depends [<opt> block!]
+        searches [<opt> block!]
+        ldflags [<opt> block! any-string!]
     ][
         ...  ; overridden
     ]
@@ -722,51 +722,51 @@ ld: make linker-class [
     ;
     name: 'ld
     version: _
-    exec-file: _
+    exec-file: null
     id: "gnu"
     command: meth [
         return: [text!]
         output [file!]
-        depends [block! blank!]
-        searches [block! blank!]
-        ldflags [block! any-string! blank!]
+        depends [<opt> block!]
+        searches [<opt> block!]
+        ldflags [<opt> block! any-string!]
         /dynamic
         /debug [logic!]
     ][
-        let suffix: either dynamic [
+        let suffix: either try dynamic [
             try target-platform/dll-suffix
         ][
             try target-platform/exe-suffix
         ]
         return spaced collect [
-            keep any [(file-to-local/pass exec-file) "gcc"]
+            keep any [(try file-to-local/pass try exec-file) "gcc"]
 
             ; !!! This was breaking emcc.  However, it is needed in order to
             ; get shared libraries on Posix.  That feature is being resurrected
             ; so turn it back on.
             ; https://github.com/emscripten-core/emscripten/issues/11814
             ;
-            if dynamic [keep "-shared"]
+            if try dynamic [keep "-shared"]
 
             keep "-o"
 
             output: file-to-local output
-            either ends-with? output suffix [
+            either ends-with? output :suffix [
                 keep output
             ][
-                keep unspaced [output suffix]
+                keep unspaced [output :suffix]
             ]
 
-            for-each search (map-files-to-local searches) [
+            for-each search (map-files-to-local try searches) [
                 keep unspaced ["-L" search]
             ]
 
             for-each flg ldflags [
-                keep try filter-flag flg id
+                try keep filter-flag flg id
             ]
 
             for-each dep depends [
-                keep try accept dep
+                try keep accept dep
             ]
         ]
     ]
@@ -775,7 +775,7 @@ ld: make linker-class [
         return: [<opt> text!]
         dep [object!]
     ][
-        return opt (switch dep/class [
+        return decay (switch dep/class [
             #object-file [
                 file-to-local dep/output
             ]
@@ -786,7 +786,9 @@ ld: make linker-class [
                     ]
                 ][
                     spaced [
-                        if find dep/flags 'static ["-static"]
+                        if try dep/flags [
+                            if find dep/flags 'static ["-static"]
+                        ]
                         unspaced ["-l" dep/output]
                     ]
                 ]
@@ -800,16 +802,15 @@ ld: make linker-class [
                 ]
             ]
             #application [
-                _
+                null
             ]
             #variable [
-                _
+                null
             ]
             #entry [
-                _
+                null
             ]
-        ] else [
-            dump dep
+            (elide dump dep)
             fail "unrecognized dependency"
         ])
     ]
@@ -830,48 +831,48 @@ ld: make linker-class [
 llvm-link: make linker-class [
     name: 'llvm-link
     version: _
-    exec-file: _
+    exec-file: null
     id: "llvm"
     command: meth [
         return: [text!]
         output [file!]
-        depends [block! blank!]
-        searches [block! blank!]
-        ldflags [block! any-string! blank!]
+        depends [<opt> block!]
+        searches [<opt> block!]
+        ldflags [<opt> block! any-string!]
         /dynamic
         /debug [logic!]
     ][
-        let suffix: either dynamic [
+        let suffix: either try dynamic [
             target-platform/dll-suffix
         ][
             target-platform/exe-suffix
         ]
 
         return spaced collect [
-            keep any [(file-to-local/pass exec-file) "llvm-link"]
+            keep any [(try file-to-local/pass try exec-file) "llvm-link"]
 
             keep "-o"
 
             output: file-to-local output
-            either ends-with? output suffix [
+            either ends-with? output :suffix [
                 keep output
             ][
-                keep unspaced [output suffix]
+                keep unspaced [output :suffix]
             ]
 
             ; llvm-link doesn't seem to deal with libraries
             comment [
-                for-each search (map-files-to-local searches) [
+                for-each search ((map-files-to-local try searches) else [_]) [
                     keep unspaced ["-L" search]
                 ]
             ]
 
             for-each flg ldflags [
-                keep try filter-flag flg id
+                try keep filter-flag flg id
             ]
 
             for-each dep depends [
-                keep try accept dep
+                try keep accept dep
             ]
         ]
     ]
@@ -880,15 +881,15 @@ llvm-link: make linker-class [
         return: [<opt> text!]
         dep [object!]
     ][
-        return (opt switch dep/class [
+        return decay (switch dep/class [
             #object-file [
                 file-to-local dep/output
             ]
             #dynamic-extension [
-                _
+                null
             ]
             #static-extension [
-                _
+                null
             ]
             #object-library [
                 spaced map-each ddep dep/depends [
@@ -896,13 +897,13 @@ llvm-link: make linker-class [
                 ]
             ]
             #application [
-                _
+                null
             ]
             #variable [
-                _
+                null
             ]
             #entry [
-                _
+                null
             ]
             (elide dump dep)
             fail "unrecognized dependency"
@@ -915,29 +916,29 @@ link: make linker-class [
     name: 'link
     id: "msc"
     version: _
-    exec-file: _
+    exec-file: null
     command: meth [
         return: [text!]
         output [file!]
-        depends [block! blank!]
-        searches [block! blank!]
-        ldflags [block! any-string! blank!]
+        depends [<opt> block!]
+        searches [<opt> block!]
+        ldflags [<opt> block! any-string!]
         /dynamic
         /debug [logic!]
     ][
-        let suffix: either dynamic [
-            target-platform/dll-suffix
+        let suffix: either try dynamic [
+            try target-platform/dll-suffix
         ][
-            target-platform/exe-suffix
+            try target-platform/exe-suffix
         ]
         return spaced collect [
-            keep any [(file-to-local/pass exec-file) "link"]
+            keep any [(try file-to-local/pass try exec-file) "link"]
 
             ; https://docs.microsoft.com/en-us/cpp/build/reference/debug-generate-debug-info
-            if debug [keep "/DEBUG"]
+            if try debug [keep "/DEBUG"]
 
             keep "/NOLOGO"  ; don't show startup banner (link takes uppercase!)
-            if dynamic [keep "/DLL"]
+            if try dynamic [keep "/DLL"]
 
             output: file-to-local output
             keep unspaced [
@@ -948,16 +949,16 @@ link: make linker-class [
                 ]
             ]
 
-            for-each search (map-files-to-local searches) [
+            for-each search ((map-files-to-local try searches) else [_]) [
                 keep unspaced ["/LIBPATH:" search]
             ]
 
             for-each flg ldflags [
-                keep try filter-flag flg id
+                try keep filter-flag flg id
             ]
 
             for-each dep depends [
-                keep try accept dep
+                try keep accept dep
             ]
         ]
     ]
@@ -966,7 +967,7 @@ link: make linker-class [
         return: [<opt> text!]
         dep [object!]
     ][
-        return (opt switch dep/class [
+        return decay switch dep/class [
             #object-file [
                 file-to-local to-file dep/output
             ]
@@ -974,7 +975,7 @@ link: make linker-class [
                 comment [import file]  ; static property is ignored
 
                 either tag? dep/output [
-                    try filter-flag dep/output id
+                    filter-flag dep/output id
                 ][
                     ;dump dep/output
                     file-to-local/pass either ends-with? dep/output ".lib" [
@@ -993,17 +994,17 @@ link: make linker-class [
                 ]
             ]
             #application [
-                file-to-local any [try dep/implib, join dep/basename ".lib"]
+                file-to-local any [:dep/implib, join dep/basename ".lib"]
             ]
             #variable [
-                _
+                null
             ]
             #entry [
-                _
+                null
             ]
             (elide dump dep)
             fail "unrecognized dependency"
-        ])
+        ]
     ]
 ]
 
@@ -1011,7 +1012,7 @@ strip-class: make object! [
     class: #strip
     name: _
     id: _  ; flag prefix
-    exec-file: _
+    exec-file: null
     options: _
     commands: meth [
         return: [block!]
@@ -1019,7 +1020,7 @@ strip-class: make object! [
         /params [block! any-string!]
     ][
         return reduce [spaced collect [
-            keep any [file-to-local/pass exec-file, "strip"]
+            keep any [try file-to-local/pass try exec-file, "strip"]
             params: default [options]
             switch type of params [
                 block! [
@@ -1044,16 +1045,16 @@ strip: make strip-class [
 object-file-class: make object! [
     class: #object-file
     compiler: _
-    cflags: _
-    definitions: _
+    cflags: null
+    definitions: null
     source: ~
     output: ~
     basename: _  ; output without extension part
     optimization: _
     debug: _
-    includes: _
+    includes: null
     generated?: false
-    depends: _
+    depends: null
 
     compile: meth [return: <none>] [
         compiler/compile
@@ -1087,7 +1088,7 @@ object-file-class: make object! [
 
             /I compose2 [((maybe includes)) ((maybe I))]
             /D compose2 [((maybe definitions)) ((maybe D))]
-            /F compose2 [((maybe F)) ((maybe cflags))]  ; extra cflags override
+            /F compose2 [((maybe F)) ((maybe cflags))]  ; x cflags override
 
             ; "current setting overwrites /refinement"
             ; "because the refinements are inherited from the parent" (?)
@@ -1095,8 +1096,8 @@ object-file-class: make object! [
             /O any [O, optimization]
             /g any [g, debug]
 
-            /PIC PIC
-            /E E
+            /PIC try PIC
+            /E try E
         ]
     ]
 
@@ -1116,13 +1117,13 @@ object-file-class: make object! [
 
         return make entry-class [
             target: output
-            depends: append copy either depends [depends][[]] source
+            depends: append copy either try depends [depends][[]] source
             commands: reduce [apply :command [
-                /I opt parent/includes
-                /D opt parent/definitions
-                /F opt parent/cflags
-                /O opt parent/optimization
-                /g opt parent/debug
+                /I try parent/includes
+                /D try parent/definitions
+                /F try parent/cflags
+                /O try parent/optimization
+                /g try parent/debug
                 /PIC to-logic any [PIC, parent/class = #dynamic-library]
             ]]
         ]
@@ -1133,7 +1134,7 @@ entry-class: make object! [
     class: #entry
     id: _
     target: ~
-    depends: _
+    depends: '
     commands: ~
     generated?: false
 ]
@@ -1296,14 +1297,14 @@ generator-class: make object! [
         project [object!]
     ][
         if not let suffix: find reduce [
-            #application try target-platform/exe-suffix
-            #dynamic-library try target-platform/dll-suffix
-            #static-library try target-platform/archive-suffix
-            #object-library try target-platform/archive-suffix
-            #object-file try target-platform/obj-suffix
+            #application (:target-platform/exe-suffix else [_])
+            #dynamic-library (:target-platform/dll-suffix else [_])
+            #static-library (:target-platform/archive-suffix else [_])
+            #object-library (:target-platform/archive-suffix else [_])
+            #object-file (:target-platform/obj-suffix else [_])
         ] project/class [return none]
 
-        suffix: second suffix
+        suffix: opt second suffix
 
         case [
             null? project/output [
@@ -1324,8 +1325,8 @@ generator-class: make object! [
                 basename: project/output
                 project/output: join basename suffix
             ]
-            ends-with? project/output try suffix [
-                basename: either suffix [
+            ends-with? project/output :suffix [
+                basename: either :suffix [
                     copy/part project/output
                         (length of project/output) - (length of suffix)
                 ][
@@ -1412,8 +1413,8 @@ makefile: make generator-class [
                         ]
                         fail ["Unknown entry/target type" entry/target]
                     ]
-                    for-each w (ensure [block! blank!] entry/depends) [
-                        switch pick (try match object! w) 'class [
+                    for-each w (try entry/depends else [[]]) [
+                        switch try select (match object! w) 'class [
                             #variable [
                                 keep unspaced ["$(" w/name ")"]
                             ]
@@ -1436,10 +1437,14 @@ makefile: make generator-class [
                 ; lines of shell code that run to build the target.  These
                 ; may use escaped makefile variables that get substituted.
                 ;
-                for-each cmd (ensure [block! blank!] entry/commands) [
-                    let c: ((match text! cmd) else [gen-cmd cmd]) else [continue]
-                    if empty? c [continue]  ; !!! Review why this happens
-                    keep unspaced [tab c]  ; makefiles demand TAB codepoint :-(
+                if try entry/commands [
+                    for-each cmd (ensure block! entry/commands) [
+                        let c: ((match text! cmd) else [gen-cmd cmd]) else [
+                            continue
+                        ]
+                        if empty? c [continue]  ; !!! Review why this happens
+                        keep unspaced [tab c]  ; makefiles demand TAB :-(
+                    ]
                 ]
             ]
 
@@ -1490,7 +1495,7 @@ makefile: make generator-class [
                         depends: join objs map-each ddep dep/depends [
                             if ddep/class <> #object-library [ddep]
                         ]
-                        commands: append reduce [dep/command] try dep/post-build-commands
+                        commands: append reduce [dep/command] :dep/post-build-commands
                     ]
                     emit buf dep
                 ]

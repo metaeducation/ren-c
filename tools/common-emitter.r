@@ -115,16 +115,16 @@ export cscape: function [
             ; SET no longer takes BLOCK!, and bootstrap executable doesn't have
             ; SET-BLOCK! so no UNPACK.
             ;
-            pattern: item/1
+            pattern: opt item/1
             col: item/2
             mode: item/3
             expr: item/4
-            prefix: item/5
-            suffix: item/6
+            prefix: opt item/5
+            suffix: opt item/6
 
             any-upper: did find/case expr charset [#"A" - #"Z"]
             any-lower: did find/case expr charset [#"a" - #"z"]
-            keep pattern
+            try keep :pattern
 
             ; With binding being case-sensitive, we lowercase the expression.
             ; Since we do the lowercasing before the load, embedded string
@@ -145,27 +145,33 @@ export cscape: function [
                     bind code item
                 ]
             ]
-            sub: try do code
+            sub: do code
+            assert [not blank? try sub]  ; has been converted to nulls, use TRY
 
-            sub: switch mode [  ; still want to make sure mode is good
+            sub: decay switch mode [  ; still want to make sure mode is good
                 #cname [
                     ; !!! The #prefixed scope is unchecked for valid global or
                     ; local identifiers.  This is okay for cases that actually
                     ; are prefixed, like `cscape {SYM_${...}}`.  But if there
                     ; is no prefix, then the check might be helpful.  Review.
                     ;
-                    try to-c-name/scope sub #prefixed
+                    try to-c-name/scope try sub #prefixed
                 ]
                 #unspaced [
                     case [
-                        blank? sub [blank]
+                        null? try sub [null]
                         block? sub [unspaced sub]
                     ] else [
                         form sub
                     ]
                 ]
-                #delimit [try delimit (unspaced [suffix newline]) sub]
-
+                #delimit [
+                    either try sub [
+                        delimit (unspaced [maybe :suffix newline]) sub
+                    ][
+                        null
+                    ]
+                ]
                 fail ["Invalid CSCAPE mode:" mode]
             ]
             sub: default [copy "/* _ */"]  ; replaced in post phase
@@ -184,7 +190,7 @@ export cscape: function [
             ;
             indent: unspaced collect [
                 keep newline
-                keep prefix
+                try keep :prefix
             ]
             replace/all sub newline indent
 
@@ -259,7 +265,7 @@ export make-emitter: function [
     stem: second split-path file
 
     temporary: to-logic any [
-        temporary
+        try temporary
         did parse2 stem ["tmp-" to end]
     ]
 
@@ -323,7 +329,7 @@ export make-emitter: function [
                 fail "tab character passed to emit"
             ]
 
-            if tabbed [
+            if try tabbed [
                 replace/all buf-emit spaced-tab tab
             ]
 

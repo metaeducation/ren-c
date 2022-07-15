@@ -530,7 +530,7 @@ at-value: func ['field] [return next find/only boot-sysobj to-set-word field]
 
 boot-sysobj: load strip-commas-and-null-apostrophes read/string %sysobj.r
 change at-value version ^(version)
-change at-value commit git-commit
+change at-value commit ^(git-commit)
 change at-value build now/utc
 change at-value product ^(quote to word! product)  ; ^ to keep quote
 
@@ -732,8 +732,8 @@ for-each section [boot-base boot-system-util boot-mezz] [
     set section s: make text! 20000
     append/line s "["
     for-each file first mezz-files [  ; doesn't use LOAD to strip
-        gather: try if section = 'boot-system-util ['sys-toplevel]
-        text: stripload/gather join %../mezz/ file opt gather
+        gather: either section = 'boot-system-util ['sys-toplevel] [null]
+        text: stripload/gather join %../mezz/ file try gather
         append/line s text
     ]
     append/line s "_"  ; !!! would <section-done> be better?

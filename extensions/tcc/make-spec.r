@@ -19,11 +19,11 @@ includes: [
 ; it has %libtcc.h in it.  Then it's *probably* a directory TCC was cloned
 ; and built in--not just where the helper library libtcc1.a was installed.
 
-config-tccdir-with-libtcc-h: try all [
+config-tccdir-with-libtcc-h: all [
     ;
     ; CONFIG_TCCDIR will have backslashes on Windows, use LOCAL-TO-FILE on it.
     ;
-    config-tccdir: local-to-file (try get-env "CONFIG_TCCDIR")
+    config-tccdir: try local-to-file (get-env "CONFIG_TCCDIR")
 
     elide (if #"/" <> last config-tccdir [
         print "NOTE: CONFIG_TCCDIR environment variable doesn't end in '/'"
@@ -37,25 +37,25 @@ config-tccdir-with-libtcc-h: try all [
     config-tccdir
 ]
 
-libtcc-include-dir: try any [
-    local-to-file try get-env "LIBTCC_INCLUDE_DIR"
-    config-tccdir-with-libtcc-h
+libtcc-include-dir: any [
+    try local-to-file get-env "LIBTCC_INCLUDE_DIR"
+    try config-tccdir-with-libtcc-h
 ]
 
-libtcc-lib-dir: try any [
-    local-to-file try get-env "LIBTCC_LIB_DIR"
-    config-tccdir-with-libtcc-h
+libtcc-lib-dir: any [
+    try local-to-file get-env "LIBTCC_LIB_DIR"
+    try config-tccdir-with-libtcc-h
 ]
 
 
 cflags: compose2 [
-    (if libtcc-include-dir [
+    (if try libtcc-include-dir [
         unspaced [{-I} {"} file-to-local libtcc-include-dir {"}]
     ])
 ]
 
 ldflags: compose2 [
-    (if libtcc-lib-dir [
+    (if try libtcc-lib-dir [
         unspaced [{-L} {"} file-to-local libtcc-lib-dir {"}]
     ])
 ]

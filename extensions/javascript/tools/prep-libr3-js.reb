@@ -374,7 +374,7 @@ for-each-api [
         fail ["No JavaScript return mapping for type" returns]
     ]
 
-    js-param-types: try collect* [
+    js-param-types: collect* [
         for-each [type var] paramlist [
             keep to-js-type type else [
                 fail [
@@ -386,7 +386,7 @@ for-each-api [
     ]
 
     if is-variadic [
-        if js-param-types [
+        if try js-param-types [
             print cscape/with
             "!!! WARNING! !!! Skipping mixed variadic function $<Name> !!!"
             api
@@ -484,7 +484,7 @@ for-each-api [
             reb.$<No-Reb-Name> = cwrap_tolerant(  /* vs. R3Module.cwrap() */
                 'RL_$<Name>',
                 $<Js-Returns>, [
-                    $(Js-Param-Types),
+                    $(Try Js-Param-Types),
                 ]
             )
         } api

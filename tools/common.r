@@ -39,7 +39,7 @@ export to-c-name: function [
 
     return: [<opt> text!]
     value "Will be converted to text (via UNSPACED if BLOCK!)"
-        [<blank> text! block! word!]
+        [<try> text! block! word!]
     /scope "[#global #local #prefixed] see http://stackoverflow.com/q/228783/"
         [issue!]
 ][
@@ -152,12 +152,12 @@ export to-c-name: function [
         all [
             scope <> #prefixed
             head? s
-            find charset [#"0" - #"9"] s/1
+            pick charset [#"0" - #"9"] s/1
         ] then [
             fail ["identifier" string "starts with digit in to-c-name"]
         ]
 
-        find c-chars s/1 else [
+        pick c-chars s/1 else [
             fail ["Non-alphanumeric or hyphen in" string "in to-c-name"]
         ]
     ]
@@ -202,7 +202,7 @@ export binary-to-c: function [
     data-len: length of data
 
     out: make text! 6 * (length of data)
-    while [not empty? try data] [
+    while [all [data, not empty? data]] [
         ; grab hexes in groups of 8 bytes
         hexed: enbase/base (copy/part data 8) 16
         data: skip data 8
@@ -211,7 +211,7 @@ export binary-to-c: function [
         ]
 
         take/last out  ; drop the last space
-        if empty? try data [
+        if any [not data, empty? try data] [
             take/last out  ; lose that last comma
         ]
         append out newline  ; newline after each group, and at end
@@ -495,7 +495,7 @@ export stripload: function [
     ; Currently this is only used by the SYS context in order to generate top
     ; #define constants for easy access to the functions there.
     ;
-    if gather [
+    if try gather [
         assert [block? get gather]
         append get gather collect [
             for-next t text [
@@ -523,7 +523,7 @@ export stripload: function [
         ]
     ]
 
-    if header [
+    if try header [
         if not hdr: copy/part (find/tail text "[") (find text "^/]") [
             fail ["Couldn't locate header in STRIPLOAD of" file]
         ]
