@@ -479,7 +479,7 @@ if 'Windows <> first system.platform [
                 ]
             ]
             find [territory territory*] ^type [
-                return select iso-3166 try territory
+                return try select iso-3166 territory
             ]
         ]
         fail ["Invalid locale type:" type]
