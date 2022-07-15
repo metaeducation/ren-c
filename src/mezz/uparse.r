@@ -2239,7 +2239,7 @@ default-combinators: make map! reduce [
             [<opt> <void> any-value!]
         pending: [<opt> block!]
         value [block!]
-        /limit "Limit of how far to consider (used by <...> recursion)"
+        /limit "Limit of how far to consider (used by ... recursion)"
             [block!]
         /thru "Keep trying rule until end of block"
         <local> rules pos result' f sublimit totalpending subpending
@@ -2314,14 +2314,14 @@ default-combinators: make map! reduce [
             ; Do one "Parse Step".  This involves turning whatever is at the
             ; next parse position into an ACTION!, then running it.
             ;
-            if rules.1 = '<...> [  ; "variadic" parser, use recursion
+            if rules.1 = '... [  ; "variadic" parser, use recursion
                 rules: next rules
                 if tail? rules [  ; if at end, act like [elide to <end>]
                     remainder: tail of pos
                     pending: totalpending
                     return unmeta result'
                 ]
-                sublimit: find/part rules <...> limit
+                sublimit: find/part rules [...] limit
 
                 f: make frame! action of binding of 'return  ; this combinator
                 f.state: state

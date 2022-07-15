@@ -23,7 +23,7 @@
     1020 = destructure block [
         x: [integer!] y: [integer!]
 
-        [<...> x 'a y <...>] => [x + y]
+        [... x 'a y ...] => [x + y]
     ]
 )
 
