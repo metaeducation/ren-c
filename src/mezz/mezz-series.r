@@ -53,7 +53,7 @@ array: func [
     return: "Generated block or null if blank input"
         [block!]
     size "Size or block of sizes for each dimension"
-        [<blank> integer! block!]
+        [<try> integer! block!]
     /initial "Initial value (will be called each time if a function)"
         [any-value!]
     <local> rest block
@@ -424,7 +424,7 @@ collect*: func [
     return: "Result block, or null if no KEEPs (prevent nulls with KEEP [])"
         [<opt> block!]
     body "Block to evaluate"
-        [<blank> block!]
+        [<try> block!]
 ][
     let out: null
     let keeper: specialize* (  ; SPECIALIZE to hide series argument

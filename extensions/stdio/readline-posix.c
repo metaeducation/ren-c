@@ -951,7 +951,7 @@ void Term_Insert(STD_TERM *t, const REBVAL *v) {
         WRITE_UTF8(encoded, encoded_size);
         rebFree(encoded);
 
-        REBVAL *v_last_line = rebValue("next try find-last", v, "newline");
+        REBVAL *v_last_line = rebValue("try next find-last", v, "newline");
 
         // If there were any newlines, then whatever is in the current line
         // buffer will no longer be there.

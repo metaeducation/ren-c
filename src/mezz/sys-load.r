@@ -219,7 +219,7 @@ load: func [
         [object!]
 
     source "Source of the information being loaded"
-        [<blank> file! url! tag! the-word! text! binary!]
+        [<try> file! url! tag! the-word! text! binary!]
     /type "E.g. rebol, text, markup, jpeg... (by default, auto-detected)"
         [word!]
 
@@ -326,7 +326,7 @@ load-value: redescribe [
 
 adjust-url-for-raw: func [
     return: [<opt> url!]
-    url [<blank> url!]
+    url [<try> url!]
 ][
     let text: to text! url  ; URL! may become immutable, try thinking ahead
 
@@ -559,7 +559,7 @@ import*: func [
         header: hdr
         parent: :original-script
         path: dir
-        args: (:args else [_])  ; variable same name as field, trips up binding
+        args: '(:args)  ; variable same name as field, trips up binding
     ]
 
     if (set? 'script-pre-load-hook) and (match [file! url!] source) [

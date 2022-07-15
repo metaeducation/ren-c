@@ -254,7 +254,7 @@ DECLARE_NATIVE(shove)
 //
 //      return: [<opt> <void> any-value!]
 //      source "Block of code, or indirect specification to find/make it" [
-//          <blank>  ; opts out of the DO, returns null
+//          <try>  ; opts out of the DO, returns null
 //          block!  ; source code in block form (see EVALUATE for other kinds)
 //          text!  ; source code in text form
 //          binary!  ; treated as UTF-8
@@ -412,7 +412,7 @@ DECLARE_NATIVE(do)
 //          [any-array! varargs!]
 //
 //      source [
-//          <blank>  ; useful for `evaluate try ...` scenarios when no match
+//          <try>  ; useful for `try evaluate ...` scenarios when no match
 //          any-array!  ; source code in block form
 //          action!
 //          frame!

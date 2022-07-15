@@ -226,7 +226,7 @@ DECLARE_NATIVE(checksum)
         "all [@", REF(method), "@", REF(settings), "] then [",
             "fail {Specify SETTINGS or /METHOD for CHECKSUM, not both}",
         "]",
-        "uppercase try to text! try any [",
+        "uppercase try to text! any [",
             "@", REF(method), "@", REF(settings),
         "]"
     );

@@ -2787,7 +2787,7 @@ parse*: func [
         [<opt> block!]
 
     input "Input data"
-        [<blank> any-series! url! any-sequence!]
+        [<try> any-series! url! any-sequence!]
     rules "Block of parse rules"
         [block!]
 
@@ -2930,7 +2930,7 @@ match-parse: (comment [redescribe [  ; redescribe not working at the moment (?)
 ;
 using: func [
     return: <none>  ; should it return a value?  (e.g. the object?)
-    obj [<blank> object!]
+    obj [<try> object!]
 ][
     add-use-object (binding of 'obj) obj
 ]

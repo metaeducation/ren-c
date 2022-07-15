@@ -319,8 +319,8 @@ Bounce TO_String(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg)
 //  to-text: native [
 //      {Variant of TO TEXT! with option to tolerate invisible codepoints}
 //
-//      return: [<opt> text!]
-//      value [<blank> any-value!]
+//      return: [text!]
+//      value [<try> any-value!]
 //      /relax "Allow invisible codepoints like CR when converting BINARY!"
 //  ]
 //

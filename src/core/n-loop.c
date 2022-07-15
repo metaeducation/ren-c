@@ -476,9 +476,9 @@ DECLARE_NATIVE(cfor)
 //      'word "Variable set to each position in the series at skip distance"
 //          [word! lit-word! blank!]
 //      series "The series to iterate over"
-//          [<blank> any-series!]
+//          [<try> any-series!]
 //      skip "Number of positions to skip each time"
-//          [<blank> integer!]
+//          [<try> integer!]
 //      body "Code to evaluate each time"
 //          [<const> any-branch!]
 //  ]
@@ -985,7 +985,7 @@ void Shutdown_Loop_Each(Value(*) iterator)
 //      :vars "Word or block of words to set each time, no new var if quoted"
 //          [blank! word! lit-word! block! group!]
 //      data "The series to traverse"
-//          [<blank> any-series! any-context! map! any-sequence!
+//          [<try> any-series! any-context! map! any-sequence!
 //           action!]  ; experimental
 //      body "Block to evaluate each time"
 //          [<const> block! meta-block!]
@@ -1086,7 +1086,7 @@ DECLARE_NATIVE(for_each)
 //          {null on BREAK, blank on empty, false or the last truthy value}
 //      :vars "Word or block of words to set each time, no new var if quoted"
 //          [blank! word! lit-word! block! group!]
-//      data [<blank> any-series! any-context! map! datatype! action!]
+//      data [<try> any-series! any-context! map! datatype! action!]
 //          "The series to traverse"
 //      body [<const> block! meta-block!]
 //          "Block to evaluate each time"
@@ -1549,7 +1549,7 @@ DECLARE_NATIVE(remove_each)
 //      :vars "Word or block of words to set each time, no new var if quoted"
 //          [blank! word! lit-word! block! group!]
 //      data "The series to traverse"
-//          [<blank> any-series! any-sequence! action!]
+//          [<try> any-series! any-sequence! action!]
 //      body "Block to evaluate each time (result will be kept literally)"
 //          [<const> block!]
 //  ]
@@ -1580,12 +1580,12 @@ DECLARE_NATIVE(map_each)
 //
 //  {Evaluate a block for each value(s) in a series and collect as a block}
 //
-//      return: "Collected block"
+//      return: "Collected block or NULL if BREAK"
 //          [<opt> block!]
 //      :vars "Word or block of words to set each time, no new var if quoted"
 //          [blank! word! lit-word! block! group!]
 //      data "The series to traverse (only QUOTED! BLOCK! at the moment...)"
-//          [<blank> quoted! action!]
+//          [<try> quoted! action!]
 //      :body "Block to evaluate each time"
 //          [<const> block! meta-block!]
 //  ]
@@ -1746,7 +1746,7 @@ DECLARE_NATIVE(map)
 //      return: "Last body result, or null if BREAK"
 //          [<opt> <void> any-value!]
 //      count "Repetitions (true loops infinitely, false doesn't run)"
-//          [<blank> any-number! logic!]
+//          [<try> any-number! logic!]
 //      body "Block to evaluate or action to run"
 //          [<const> block! action!]
 //  ]
@@ -1831,7 +1831,7 @@ DECLARE_NATIVE(repeat)
 //      :vars "Word or block of words to set each time, no new var if quoted"
 //          [blank! word! lit-word! block! group!]
 //      value "Maximum number or series to traverse"
-//          [<blank> any-number! any-sequence! quoted! block! action!]
+//          [<try> any-number! any-sequence! quoted! block! action!]
 //      'body "!!! actually just BLOCK!, but quoted to catch legacy uses"
 //          [<const> any-value!]
 //  ]

@@ -487,7 +487,7 @@ String(*) To_Local_Path(Cell(const*) file, Flags flags) {
 //
 //      return: [file!]
 //          {The returned value should be a valid natural FILE! literal}
-//      path [<blank> text! file!]
+//      path [<try> text! file!]
 //          {Path to convert (by default, only TEXT! for type safety)}
 //      /pass
 //          {Convert TEXT!, but pass thru FILE!, assuming it's canonized}
@@ -521,7 +521,7 @@ DECLARE_NATIVE(local_to_file)
 //
 //      return: [text!]
 //          {A TEXT! like "\foo\bar" is not a "natural" FILE! %\foo\bar}
-//      path [<blank> file! text!]
+//      path [<try> file! text!]
 //          {Path to convert (by default, only FILE! for type safety)}
 //      /pass
 //          {Convert FILE!s, but pass thru TEXT!, assuming it's local}

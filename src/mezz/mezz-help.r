@@ -50,7 +50,7 @@ description-of: function [
     {One-line summary of a value's purpose}
 
     return: [<opt> text!]
-    v [<blank> any-value!]
+    v [<try> any-value!]
 ][
     return opt switch type of reify get/any 'v [
         bad-word! [null]
@@ -76,7 +76,7 @@ browse: function [
     "stub function for browse* in extensions/process/ext-process-init.reb"
 
     return: <none>
-    location [<blank> url! file!]
+    location [<try> url! file!]
 ][
     print "Browse needs redefining"
 ]

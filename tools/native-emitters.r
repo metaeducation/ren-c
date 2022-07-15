@@ -198,7 +198,7 @@ export emit-include-params-macro: function [
         ]
     ]
 
-    prefix: try if ext [unspaced [ext "_"]]
+    prefix: if ext [unspaced [ext "_"]] else [_]
     e/emit [prefix native-name items] {
         #define ${PREFIX}INCLUDE_PARAMS_OF_${NATIVE-NAME} \
             $[Items]; \

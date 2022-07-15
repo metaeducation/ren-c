@@ -15,7 +15,7 @@ launch: function [
     {Runs a script as a separate process; return immediately.}
 
     script "The name of the script"
-        [<blank> file! text!]
+        [<try> file! text!]
     /args "Arguments to the script"
         [text! block!]
     /wait "Wait for the process to terminate"

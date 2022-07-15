@@ -806,7 +806,7 @@ count-up: func [
     "Loop the body, setting a word from 1 up to the end value given"
     return: [<opt> any-value!]
     'var [word!]
-    limit [<blank> integer! issue!]
+    limit [<try> integer! issue!]
     body [block!]
     <local> start end result'
 ][

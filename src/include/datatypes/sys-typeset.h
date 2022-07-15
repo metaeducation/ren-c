@@ -222,15 +222,15 @@ inline static void CLEAR_ALL_TYPESET_BITS(Cell(*) v) {
 #define PARAM_FLAG_PREDICATE \
     FLAG_LEFT_BIT(12)
 
-// Parameters can be marked such that if they are blank, the action will not
-// be run at all.  This is done via the `<blank>` annotation, which indicates
-// "handle blanks specially" (in contrast to BLANK!, which just means a
-// parameter can be passed in as a blank, and the function runs normally)
+// Parameters can be marked such that if they are null, the action will not
+// be run at all.  This is done via the `<try>` annotation, which indicates
+// a special error will be raised that TRY (and MAYBE) will intercept, if it
+// arises out of the direct call being made (e.g. a definitional failure)
 //
-#define PARAM_FLAG_NOOP_IF_BLANK \
+#define PARAM_FLAG_NEED_TRY_IF_NULL \
     FLAG_LEFT_BIT(13)
 
-// Similar to <blank>, the <blackhole> annotation causes a function to be a
+// Similar to <try>, the <blackhole> annotation causes a function to be a
 // no-op if that parameter is a `#`, and makes the overall function return a
 // `#` back.  Finer-grained control is needed by some functions, e.g. SET
 // which is willing to take a blackhole! as a target, but wants to return

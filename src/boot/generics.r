@@ -294,7 +294,7 @@ skip: generic [
     {Returns the series forward or backward from the current position.}
     return: "Input skipped by offset, or null if out of bounds"
         [<opt> any-series! port!]
-    series [<blank> any-series! port!]
+    series [<try> any-series! port!]
     offset [any-number! logic! pair!]
     /unbounded "Return out of bounds series if before tail or after head"
 ]
@@ -303,7 +303,7 @@ at: generic [
     {Returns the series at the specified index.}
     return: "Input at the given index, not clipped to head/tail by default"
         [<opt> any-series! port!]
-    series [<blank> any-series! port!]
+    series [<try> any-series! port!]
     index [any-number! logic! pair!]
     /bounded "Return null if index is before tail or after head"
 ]
@@ -316,9 +316,9 @@ find: generic [
     return: "position found, else null - logic true if non-positional find"
         [<opt> any-series! logic!]
     series [
-        <blank> any-series! any-context! map! bitset! typeset!
+        <try> any-series! any-context! map! bitset! typeset!
     ]
-    pattern [<blank> any-value!]
+    pattern [<try> any-value!]
     /part "Limits the search to a given length or position"
         [any-number! any-series! pair!]
     /case "Characters are case-sensitive"
@@ -334,8 +334,8 @@ select: generic [
     {Searches for a value; returns the value that follows, else null}
 
     return: [<opt> any-value!]
-    series [<blank> any-series! any-context! map!]
-    value [<blank> any-value!]
+    series [<try> any-series! any-context! map!]
+    value [<try> any-value!]
     /part "Limits the search to a given length or position"
         [any-number! any-series! pair!]
     /case "Characters are case-sensitive"
@@ -408,9 +408,9 @@ copy: generic [
     {Copies a series, object, or other value.}
 
     return: "Return type will match the input type, or void if blank"
-        [<opt> any-value!]
+        [any-value!]
     value "If an ANY-SERIES!, it is only copied from its current position"
-        [<blank> any-value!]
+        [<try> any-value!]
     /part "Limits to a given length or position"
         [any-number! any-series! pair!]
     /deep "Also copies series values within the block"

@@ -376,7 +376,7 @@ main-startup: func [
 
         return: "Null if not found"
             [<opt> file!]
-        dir [<blank> text!]
+        dir [<try> text!]
     ][
         return all [
             not empty? dir

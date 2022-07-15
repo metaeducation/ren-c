@@ -129,7 +129,7 @@ browse*: func [
     "Open web browser to a URL or local file."
 
     return: <none>
-    location [<blank> url! file!]
+    location [<try> url! file!]
 ][
     print "Opening web browser..."
 

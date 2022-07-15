@@ -182,7 +182,10 @@ bool Add_Typeset_Bits_Core(
                 }
             }
             else if (0 == CT_String(item, Root_Blank_Tag, strict)) {
-                SET_PARAM_FLAG(typeset, NOOP_IF_BLANK);
+                fail ("<blank> tag replaced with <try> tag");
+            }
+            else if (0 == CT_String(item, Root_Try_Tag, strict)) {
+                SET_PARAM_FLAG(typeset, NEED_TRY_IF_NULL);
             }
             else if (0 == CT_String(item, Root_Blackhole_Tag, strict)) {
                 SET_PARAM_FLAG(typeset, NOOP_IF_BLACKHOLE);

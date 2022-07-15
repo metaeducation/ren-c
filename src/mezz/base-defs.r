@@ -616,7 +616,7 @@ print: func* [
     return: "NULL if blank input or effectively empty block, else none"
         [<opt> bad-word!]
     line "Line of text or block, blank or [] has NO output, newline allowed"
-        [<blank> char! text! block! quoted!]
+        [<try> char! text! block! quoted!]
 ][
     if char? line [
         if line <> newline [

@@ -32,7 +32,7 @@
 //
 //      return: [text!]
 //      value "The value to form (currently errors on BAD-WORD!)"
-//          [<blank> any-value!]
+//          [<try> any-value!]
 //  ]
 //
 DECLARE_NATIVE(form)
@@ -106,8 +106,8 @@ DECLARE_NATIVE(mold)
 //
 //  "Boot-only implementation of WRITE-STDOUT (HIJACK'd by STDIO module)"
 //
-//      return: [<opt> bad-word!]
-//      value [<blank> text! char! binary!]
+//      return: <none>
+//      value [<try> text! char! binary!]
 //          "Text to write, if a STRING! or CHAR! is converted to OS format"
 //  ]
 //

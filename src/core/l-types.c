@@ -85,12 +85,12 @@ Bounce MAKE_Unhooked(
 //
 //  {Constructs or allocates the specified datatype.}
 //
-//      return: [<opt> any-value!]
-//          "Constructed value, or null if BLANK! input"
-//      type [<blank> meta-word! any-value!]
-//          {The datatype or parent value to construct from}
-//      def [<blank> any-value!]
-//          {Definition or size of the new value (binding may be modified)}
+//      return: "Constructed value"
+//          [any-value!]
+//      type "The datatype or parent value to construct from"
+//          [<try> meta-word! any-value!]
+//      def "Definition or size of the new value (binding may be modified)"
+//          [<try> any-value!]
 //  ]
 //
 DECLARE_NATIVE(make)
@@ -188,10 +188,10 @@ Bounce TO_Unhooked(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 //
 //  {Converts to a specified datatype, copying any underying data}
 //
-//      return: "VALUE converted to TYPE, null if type or value are blank"
+//      return: "VALUE converted to TYPE"
 //          [<opt> any-value!]
-//      type [<blank> datatype! meta-word!]
-//      value [<blank> any-value!]
+//      type [<try> datatype! meta-word!]
+//      value [<try> any-value!]
 //  ]
 //
 DECLARE_NATIVE(to)

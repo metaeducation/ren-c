@@ -76,7 +76,7 @@ REBINT CT_Blank(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
 //  REBTYPE: C
 //
 // While generics like SELECT are able to dispatch on BLANK! and return NULL,
-// they do so by not running at all...see PARAM_FLAG_NOOP_IF_BLANK.
+// they do so by not running at all...see PARAM_FLAG_NEED_TRY_IF_NULL.
 //
 REBTYPE(Blank)
 {
@@ -85,7 +85,7 @@ REBTYPE(Blank)
         INCLUDE_PARAMS_OF_REFLECT;
         UNUSED(ARG(value)); // taken care of by `unit` above.
 
-        // !!! REFLECT cannot use PARAM_FLAG_NOOP_IF_BLANK, due to the special
+        // !!! REFLECT can't use PARAM_FLAG_NEED_TRY_IF_NULL, due to the special
         // case of TYPE OF...where a BLANK! in needs to provide BLANK! the
         // datatype out.  Also, there currently exist "reflectors" that
         // return LOGIC!, e.g. TAIL?...and logic cannot blindly return null:

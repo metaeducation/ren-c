@@ -2684,9 +2684,9 @@ DECLARE_NATIVE(subparse)
 //          [<opt> bad-word! any-series!]
 //
 //      input "Input series to parse"
-//          [<blank> any-series! any-sequence! url!]
+//          [<try> any-series! any-sequence! url!]
 //      rules "Rules to parse by"
-//          [<blank> block!]
+//          [<try> block!]
 //      /case "Uses case-sensitive comparison"
 //      /fully "Require parse to reach end, see PARSE specialization"
 //      /redbol "Use Rebol2/Red-style rules vs. UPARSE-style rules"

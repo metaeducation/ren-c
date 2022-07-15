@@ -705,7 +705,7 @@ Bounce TO_Context(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg)
 //  {Get a reference to the "meta" context associated with a value.}
 //
 //      return: [<opt> any-context!]
-//      value [<blank> action! any-context!]
+//      value [<try> action! any-context!]
 //  ]
 //
 DECLARE_NATIVE(meta_of)  // see notes on MISC_META()
@@ -1395,7 +1395,7 @@ void MF_Frame(REB_MOLD *mo, noquote(Cell(const*)) v, bool form)
 //  "Creates an ANY-CONTEXT! instance"
 //
 //      return: [<opt> any-context!]
-//      spec [<blank> block!]
+//      spec [<try> block!]
 //          "Object specification block (bindings modified)"
 //      /only "Values are kept as-is"
 //      /with "Use a parent/prototype context"

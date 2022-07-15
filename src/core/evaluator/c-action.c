@@ -966,7 +966,7 @@ Bounce Action_Executor(Frame(*) f)
 
         if (
             (kind == REB_NULL)
-            and GET_PARAM_FLAG(PARAM, NOOP_IF_BLANK)  // e.g. <blank> param
+            and GET_PARAM_FLAG(PARAM, NEED_TRY_IF_NULL)  // e.g. <try> param
         ){
             Set_Executor_Flag(ACTION, f, TYPECHECK_ONLY);
             Init_Error(OUT, Error_Try_If_Null_Meant_Raw(Lib(NULL)));
@@ -1062,7 +1062,7 @@ Bounce Action_Executor(Frame(*) f)
         or IS_VALUE_IN_ARRAY_DEBUG(FEED_ARRAY(f->feed), f_next)
     );
 
-    if (Get_Executor_Flag(ACTION, f, TYPECHECK_ONLY)) {  // <blank>, <blackhole>
+    if (Get_Executor_Flag(ACTION, f, TYPECHECK_ONLY)) {  // <try>, <blackhole>
         assert(
             Is_Failure(OUT)
             or Is_Isotope_With_Id(OUT, SYM_BLACKHOLE)
@@ -1174,7 +1174,7 @@ Bounce Action_Executor(Frame(*) f)
 
 } skip_output_check: {  //////////////////////////////////////////////////////
 
-  // This is where things get jumped to if you pass a <blank> argument a
+  // This is where things get jumped to if you pass a <try> argument a
   // BLANK! and it wants to jump past all the processing and return, or if
   // a frame just wants argument fulfillment and no execution.
   //

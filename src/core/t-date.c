@@ -1195,8 +1195,8 @@ REBTYPE(Date)
 //          "1 to 31"
 //      seconds [integer!]
 //          "3600 for each hour, 60 for each minute"
-//      nano [blank! integer!]
-//      zone [blank! integer!]
+//      nano [<opt> integer!]
+//      zone [<opt> integer!]
 //  ]
 //
 DECLARE_NATIVE(make_date_ymdsnz)
@@ -1215,12 +1215,12 @@ DECLARE_NATIVE(make_date_ymdsnz)
     VAL_MONTH(OUT) = VAL_INT32(ARG(month));
     VAL_DAY(OUT) = VAL_INT32(ARG(day));
 
-    if (IS_BLANK(ARG(zone)))
+    if (Is_Nulled(ARG(zone)))
         VAL_DATE(OUT).zone = NO_DATE_ZONE;
     else
         VAL_DATE(OUT).zone = VAL_INT32(ARG(zone)) / ZONE_MINS;
 
-    REBI64 nano = IS_BLANK(ARG(nano)) ? 0 : VAL_INT64(ARG(nano));
+    REBI64 nano = Is_Nulled(ARG(nano)) ? 0 : VAL_INT64(ARG(nano));
     PAYLOAD(Time, OUT).nanoseconds
         = SECS_TO_NANO(VAL_INT64(ARG(seconds))) + nano;
 
@@ -1238,7 +1238,7 @@ DECLARE_NATIVE(make_date_ymdsnz)
 //      seconds "3600 for each hour, 60 for each minute"
 //          [integer!]
 //      nano "Nanoseconds"
-//          [blank! integer!]
+//          [<opt> integer!]
 //  ]
 //
 DECLARE_NATIVE(make_time_sn)
@@ -1257,7 +1257,7 @@ DECLARE_NATIVE(make_time_sn)
 
     Reset_Cell_Header_Untracked(TRACK(OUT), REB_TIME, CELL_MASK_NONE);
 
-    REBI64 nano = IS_BLANK(ARG(nano)) ? 0 : VAL_INT64(ARG(nano));
+    REBI64 nano = Is_Nulled(ARG(nano)) ? 0 : VAL_INT64(ARG(nano));
     PAYLOAD(Time, OUT).nanoseconds
         = SECS_TO_NANO(VAL_INT64(ARG(seconds))) + nano;
 

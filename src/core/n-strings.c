@@ -32,11 +32,11 @@
 //
 //  {Joins a block of values into TEXT! with delimiters}
 //
-//      return: "Null if blank input or block's contents are all null"
+//      return: "NULL if block's contents all vaporize (pure void or empty)"
 //          [<opt> text!]
 //      delimiter [<opt> blank! char! text!]
 //      line "Will be copied if already a text value"
-//          [<blank> text! block! the-block! issue!]
+//          [<try> text! block! the-block! issue!]
 //      /head "Include delimiter at head of result (if non-NULL)"
 //      /tail "Include delimiter at tail of result (if non-NULL)"
 //  ]

@@ -230,7 +230,7 @@ DECLARE_NATIVE(bind)
 //
 //      return: [<opt> any-word! any-array!]
 //      context [any-context!]
-//      value [<const> <blank> any-word! any-array!]  ; QUOTED! support?
+//      value [<const> <try> any-word! any-array!]  ; QUOTED! support?
 //  ]
 //
 DECLARE_NATIVE(in)
@@ -265,10 +265,10 @@ DECLARE_NATIVE(in)
 //
 //  "Remove a virtual binding from a value"
 //
-//      return: [<opt> any-word! any-array!]
+//      return: [any-word! any-array!]
 //      context "If integer, then removes that number of virtual bindings"
 //          [integer! any-context!]
-//      value [<const> <blank> any-word! any-array!]  ; QUOTED! support?
+//      value [<const> <try> any-word! any-array!]  ; QUOTED! support?
 //  ]
 //
 DECLARE_NATIVE(without)
@@ -970,7 +970,7 @@ bool Get_Path_Push_Refinements_Throws(
 //          [the-block! the-word! blank!]
 //
 //      source "Word or path to get, or block of PICK steps"
-//          [<blank> any-word! any-sequence! any-group! the-block!]
+//          [<try> any-word! any-sequence! any-group! the-block!]
 //      /any "Do not error on BAD-WORD! isotopes"
 //  ]
 //
@@ -1472,10 +1472,10 @@ DECLARE_NATIVE(opt)
 //
 //      return: "Same as the target module"
 //          [module!]
-//      where [<blank> module!] "(modified)"
-//      source [<blank> module!]
+//      where [<try> module!] "(modified)"
+//      source [<try> module!]
 //      exports "Which words to export from the source"
-//          [<blank> block!]
+//          [<try> block!]
 //  ]
 //
 DECLARE_NATIVE(resolve)
@@ -1618,7 +1618,7 @@ DECLARE_NATIVE(identity) // sample uses: https://stackoverflow.com/q/3136338
 //  {Releases the underlying data of a value so it can no longer be accessed}
 //
 //      return: <none>
-//      memory [<blank> any-series! any-context! handle!]
+//      memory [<try> any-series! any-context! handle!]
 //  ]
 //
 DECLARE_NATIVE(free)
@@ -1826,14 +1826,14 @@ bool Try_As_String(
 //  {Aliases underlying data of one value to act as another of same class}
 //
 //      return: [
-//          <opt> integer!
+//          integer!
 //          issue! url!
 //          any-sequence! any-series! any-word!
 //          frame! action!
 //      ]
 //      type [datatype!]
 //      value [
-//          <blank>
+//          <try>
 //          integer!
 //          issue! url!
 //          any-sequence! any-series! any-word! frame! action!
@@ -2190,8 +2190,8 @@ DECLARE_NATIVE(as)
 //  as-text: native [
 //      {AS TEXT! variant that may disallow CR LF sequences in BINARY! alias}
 //
-//      return: [<opt> text!]
-//      value [<blank> any-value!]
+//      return: [text!]
+//      value [<try> any-value!]
 //      /strict "Don't allow CR LF sequences in the alias"
 //  ]
 //
