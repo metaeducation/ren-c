@@ -241,8 +241,8 @@ to-js-type: func [
         ; UTF-8 on the emscripten heap (freed after the call).  Returned
         ; `char *` should be turned into JS GC'd strings, then freed.
         ;
-        ; !!! These APIs can also return nulls.  rebSpell("second [{a}]") is
-        ; now null, as a way of doing passthru on failures.
+        ; !!! These APIs may nulls.  rebTrySpell("second [{a}]") is null, as a
+        ; way of doing passthru on soft failure.
         ;
         (s = "char *") or (s = "const char *") ["'string'"]
 

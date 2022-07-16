@@ -995,7 +995,6 @@ REBVAL *RL_rebValue(const void *p, va_list *vaptr)
     }
 
     return result;  // caller must rebRelease()
-
 }
 
 
@@ -1487,13 +1486,15 @@ size_t RL_rebSpellInto(
 
 
 //
-//  rebSpell: RL_API
+//  rebTrySpell: RL_API
 //
 // This gives the spelling as UTF-8 bytes.  Length in codepoints should be
 // extracted with LENGTH OF.  If size in bytes of the encoded UTF-8 is needed,
 // use the binary extraction API (works on ANY-STRING! to get UTF-8)
 //
-char *RL_rebSpell(const void *p, va_list *vaptr)
+// Can return nullptr.  Use rebSpell() if you want a failure instead.
+//
+char *RL_rebTrySpell(const void *p, va_list *vaptr)
 {
     ENTER_API;
 
@@ -1501,9 +1502,7 @@ char *RL_rebSpell(const void *p, va_list *vaptr)
     Run_Va_May_Fail(v, p, vaptr);  // calls va_end()
 
     if (Is_Nulled(v))
-        fail ("rebSpell() does not take NULL (use TRY/BLANK! to opt out)");
-    if (IS_BLANK(v))
-        return nullptr;  // blank in, null out
+        return nullptr;
 
     size_t size = Spell_Into(nullptr, 0, v);
     char *result = rebAllocN(char, size);  // no +1 for term needed...
@@ -1514,6 +1513,18 @@ char *RL_rebSpell(const void *p, va_list *vaptr)
     UNUSED(check);
 
     return result;
+}
+
+//
+//  rebSpell: RL_API
+//
+// Raises error on NULL
+//
+char *RL_rebSpell(const void *p, va_list *vaptr) {
+    char* spell = RL_rebTrySpell(p, vaptr);
+    if (spell == nullptr)
+        fail ("rebSpell() does not take NULL, see rebTrySpell()");
+    return spell;
 }
 
 
@@ -1594,12 +1605,12 @@ unsigned int RL_rebSpellIntoWide(
 
 
 //
-//  rebSpellWide: RL_API
+//  rebTrySpellWide: RL_API
 //
 // Gives the spelling as WCHARs.  The result is UTF-16, so some codepoints
 // won't fit in single WCHARs.
 //
-REBWCHAR *RL_rebSpellWide(const void *p, va_list *vaptr)
+REBWCHAR *RL_rebTrySpellWide(const void *p, va_list *vaptr)
 {
     ENTER_API;
 
@@ -1607,9 +1618,7 @@ REBWCHAR *RL_rebSpellWide(const void *p, va_list *vaptr)
     Run_Va_May_Fail(v, p, vaptr);  // calls va_end()
 
     if (Is_Nulled(v))
-        fail ("rebSpellWide() does not take NULL (use TRY/BLANK! to opt out)");
-    if (IS_BLANK(v))
-        return nullptr;  // blank in, null out
+        return nullptr;
 
     REBLEN len = Spell_Into_Wide(nullptr, 0, v);
     REBWCHAR *result = cast(
@@ -1621,6 +1630,20 @@ REBWCHAR *RL_rebSpellWide(const void *p, va_list *vaptr)
     UNUSED(check);
 
     return result;
+}
+
+
+//
+//  rebSpellWide: RL_API
+//
+// Raises error on NULL
+//
+REBWCHAR *RL_rebSpellWide(const void *p, va_list *vaptr)
+{
+    REBWCHAR* spell = RL_rebTrySpellWide(p, vaptr);
+    if (spell == nullptr)
+        fail ("rebSpellWide() does not take NULL, see rebTrySpellWide()");
+    return spell;
 }
 
 
@@ -1702,13 +1725,13 @@ size_t RL_rebBytesInto(
 
 
 //
-//  rebBytes: RL_API
+//  rebTryBytes: RL_API
 //
 // Can be used to get the bytes of a BINARY! and its size, or the UTF-8
 // encoding of an ANY-STRING! or ANY-WORD! and that size in bytes.  (Hence,
 // for strings it is like rebSpell() except telling you how many bytes.)
 //
-unsigned char *RL_rebBytes(
+unsigned char *RL_rebTryBytes(
     size_t *size_out,  // !!! Enforce non-null, to ensure type safety?
     const void *p, va_list *vaptr
 ){
@@ -1717,9 +1740,7 @@ unsigned char *RL_rebBytes(
     DECLARE_LOCAL (v);
     Run_Va_May_Fail(v, p, vaptr);  // calls va_end()
 
-    if (Is_Nulled(v))
-        fail ("rebBytes() does not take NULL (use TRY/BLANK! to opt out)");
-    if (IS_BLANK(v)) {
+    if (Is_Nulled(v)) {
         *size_out = 0;
         return nullptr;  // blank in, null out
     }
@@ -1732,6 +1753,22 @@ unsigned char *RL_rebBytes(
 
     *size_out = size;
     return cast(unsigned char*, result);
+}
+
+
+//
+//  rebBytes: RL_API
+//
+// Raises error on NULL
+//
+unsigned char *RL_rebBytes(
+    size_t *size_out,  // !!! Enforce non-null, to ensure type safety?
+    const void *p, va_list *vaptr
+){
+    unsigned char* bytes = RL_rebTryBytes(size_out, p, vaptr);
+    if (bytes == nullptr)
+        fail ("rebBytes() does not take NULL, see rebTryBytes()");
+    return bytes;
 }
 
 

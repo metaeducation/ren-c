@@ -222,11 +222,11 @@ DECLARE_NATIVE(checksum)
     // builds in when you `#include "md.h"`.  How many entries are in this
     // table depend on the config settings (see %mbedtls-rebol-config.h)
     //
-    char *method_name = rebSpell(
+    char *method_name = rebTrySpell(
         "all [@", REF(method), "@", REF(settings), "] then [",
             "fail {Specify SETTINGS or /METHOD for CHECKSUM, not both}",
         "]",
-        "uppercase try to text! any [",
+        "try uppercase try to text! any [",
             "@", REF(method), "@", REF(settings),
         "]"
     );

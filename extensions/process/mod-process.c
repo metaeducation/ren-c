@@ -462,20 +462,23 @@ DECLARE_NATIVE(set_env)
     REBVAL *value = ARG(value);
 
   #if TO_WINDOWS
-    WCHAR *key_wide = rebSpellWide(variable);
-    WCHAR *opt_val_wide = rebSpellWide("ensure [<opt> text!]", value);
+    WCHAR* key_wide = rebSpellWide(variable);
+    option(WCHAR*) val_wide = rebTrySpellWide("ensure [<opt> text!]", value);
 
-    if (not SetEnvironmentVariable(key_wide, opt_val_wide)) {  // null unsets
+    if (not SetEnvironmentVariable(
+        key_wide,
+        try_unwrap(val_wide)  // null means unset the environment variable
+    )){
         REBVAL *error = rebError_OS(GetLastError());
         rebJumps ("fail", rebR(error));
     }
 
-    rebFree(opt_val_wide);
+    rebFree(try_unwrap(val_wide));
     rebFree(key_wide);
   #else
     char *key_utf8 = rebSpell(variable);
 
-    if (Is_Nulled(value)) {
+    if (Is_Nulled(value)) {  // distinct setenv() and unsetenv() calls
       #ifdef unsetenv
         if (unsetenv(key_utf8) == -1)
             rebJumps ("fail {unsetenv() couldn't unset environment variable}");
