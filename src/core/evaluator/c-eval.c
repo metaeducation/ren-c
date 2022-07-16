@@ -1480,6 +1480,13 @@ Bounce Evaluator_Executor(Frame(*) f)
         assert(STATE == ST_EVALUATOR_SET_BLOCK_RIGHTSIDE);
         frame_->u.eval.stackindex_circled = stackindex_circled;
 
+        if (
+            IS_META_WORD(Data_Stack_At(BASELINE->stack_base + 1))
+            or IS_META_TUPLE(Data_Stack_At(BASELINE->stack_base + 1))
+        ){
+            Set_Frame_Flag(sub, FAILURE_RESULT_OK);
+        }
+
         FRM_STATE_BYTE(sub) = ST_ACTION_TYPECHECKING;
         return CATCH_CONTINUE_SUBFRAME(sub);
 

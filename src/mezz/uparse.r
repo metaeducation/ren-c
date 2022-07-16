@@ -281,6 +281,24 @@ default-combinators: make map! reduce [
         return heavy null  ; "heavy null" result (plain NULL signals failure)
     ]
 
+    'try combinator [
+        {If applying parser fails, succeed and return NULL; don't advance input}
+        return: "PARSER's result if it succeeds, otherwise NULL"
+            [<opt> any-value!]
+        parser [action!]
+        <local> result'
+    ][
+        ([^result' remainder]: parser input) else [
+            remainder: input  ; succeed on parse failure but don't advance input
+            return heavy null  ; "heavy null" result (plain NULL is failure)
+        ]
+        if (error? result') and (result'.id = 'try-if-null-meant) [
+            remainder: input
+            return heavy null  ; intercepting special error counts too
+        ]
+        return unmeta result'  ; return successful parser result
+    ]
+
     'not combinator [
         {Fail if the parser rule given succeeds, else continue}
         return: "~not~ if the rule fails, NULL if it succeeds"
@@ -687,14 +705,18 @@ default-combinators: make map! reduce [
         ([^where remainder]: parser input) else [
             return null
         ]
+        if where = '~null~ [  ; e.g. was a plain NULL, isotoped by combinator
+            return unmeta make error! [
+                message: [{Call should use TRY if NULL intended, gives:} :arg1]
+                id: 'try-if-null-meant
+                arg1: null
+            ]
+        ]
         if bad-word? where [
             fail "Cannot SEEK to isotope"
         ]
         where: my unquote
         case [
-            blank? where [
-                ; Allow opting out
-            ]
             integer? where [
                 remainder: at head input where
             ]
@@ -704,7 +726,7 @@ default-combinators: make map! reduce [
                 ]
                 remainder: where
             ]
-            fail "SEEK requires INTEGER!, series position, or BLANK!"
+            fail "SEEK requires INTEGER!, series position, or NULL (with TRY)"
         ]
         return remainder
     ]
