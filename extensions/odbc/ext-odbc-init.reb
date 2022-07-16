@@ -113,13 +113,13 @@ sys.util.make-scheme [
             return: <none>
             port [port!]
         ][
-            if get try in (statement: port.locals) 'hstmt [
+            if try get try in (statement: port.locals) 'hstmt [
                 remove find head statement.database.statements port
                 close-statement statement
                 return none
             ]
 
-            if get try in (connection: port.locals) 'hdbc [
+            if try get try in (connection: port.locals) 'hdbc [
                 for-each stmt-port connection.statements [close stmt-port]
                 clear connection.statements
                 close-connection connection
@@ -196,14 +196,14 @@ sqlform: func [
 
         meta-word! meta-tuple! meta-path! [
             any [
-                as text! [# #]: get value
+                try as text! [# #]: get value
                 {}
             ]
         ]
 
         meta-group! [
             any [
-                as text! do as block! value
+                try as text! do as block! value
                 {}
             ]
         ]
