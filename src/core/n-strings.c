@@ -47,12 +47,35 @@ DECLARE_NATIVE(delimit)
 // If all the items in the block are null, or no items are found, this will
 // return a nulled value.
 //
-// CHAR! suppresses the delimiter logic.  Hence:
 //
-//    >> delimit ":" ["a" space "b" | () "c" newline "d" "e"]
-//    == `"a b^/c^/d:e"
+// 1. Erroring on NULL has been found to catch real bugs in practice.  It also
+//    enables clever constructs like CURTAIL.  You can reify nulls as ~null~:
 //
-// Note only the last interstitial is considered a candidate for delimiting.
+//        >> spaced [reify null "a" if true [null]]
+//        == "~null~ a"
+//
+// 2. CHAR! suppresses the delimiter logic.  Hence:
+//
+//        >> delimit ":" ["a" space "b" newline void "c" newline "d" "e"]
+//        == "a b^/c^/d:e"
+//
+//    Only the last interstitial is considered a candidate for delimiting.
+//
+// 3. BLOCK!s are methods for gathering material to be part of the delimit.
+//    The behavior is defined as being not reduced and without spaces between.
+//  ..The main place you find this behavior is in the APPEND of a block to a
+//    string.  So this code delegates to that.
+//
+//    !!! Unify with the Modify_String() code so this doesn't need to call
+//    through the API.
+//
+// 4. Empty strings are distinct from voids in terms of still being delimited.
+//    This is important, e.g. in comma-delimited formats for empty fields.
+//
+//    >> delimit "," [field1 field2 field3]  ; field2 is ""
+//    one,,three
+//
+//    The same principle would apply to a "space-delimited format".
 {
     INCLUDE_PARAMS_OF_DELIMIT;
 
@@ -105,74 +128,36 @@ DECLARE_NATIVE(delimit)
     bool nothing = true;  // any elements seen so far have been null or blank
 
     while (Not_End(At_Frame(f))) {
-        // See philosophy on handling blanks differently from nulls, but only
-        // at dialect "source level".
-        // https://forum.rebol.info/t/1348
-        //
-        if (VAL_TYPE_UNCHECKED(At_Frame(f)) == REB_BLANK) {
-            Literal_Next_In_Frame(OUT, f);
-            Append_Codepoint(mo->series, ' ');
-            pending = false;
-            nothing = false;
-            continue;
-        }
-
         if (Eval_Step_Throws(OUT, f)) {
             Drop_Mold(mo);
             Drop_Frame(f);
             return THROWN;
         }
 
-        // These are all the things that we're willing to vaporize.  Since
-        // operations like delimit are not positional, the risk is mitigated
-        // of letting things like nulls and voids vaporize.
-
-        if (Is_Void(OUT))
-            continue;  // spaced [comment "a" ...]
-                       // spaced [if false [<a>] ...]
+        if (Is_Void(OUT))  // spaced [maybe null], spaced [if false [<a>]], etc
+            continue;  // vaporize
 
         Decay_If_Isotope(OUT);  // spaced [match [logic!] false ...]
 
-        if (Is_Isotope(OUT)) {
-            //
-            // It is better to error on isotopes or to reify them to BAD-WORD!
-            //
+        if (Is_Isotope(OUT))
             return FAIL(Error_Bad_Isotope(OUT));
-        }
 
-        if (Is_Nulled(OUT)) {
-            //
-            // Erroring on NULL catches bugs in practice, and enables CURTAIL.
-            // We error, but you can REIFY nulls as ~null~ if you want:
-            //
-            //    >> spaced [reify null "a" if true [null]]
-            //    == "~null~ a"
-            //
+        if (Is_Nulled(OUT))  // catches bugs in practice, see [1]
             return FAIL(Error_Need_Non_Null_Raw());
-        }
-
-        if (IS_BLANK(OUT))  // see note above on BLANK!
-            continue;  // opt-out and maybe keep option open to return NULL
 
         nothing = false;
 
-        if (IS_ISSUE(OUT)) {  // do not delimit (unified w/char)
+        if (IS_BLANK(OUT)) {  // BLANK! acts as space
+            Append_Codepoint(mo->series, ' ');
+        }
+        else if (IS_ISSUE(OUT)) {  // do not delimit (unified w/char), see [2]
             Form_Value(mo, OUT);
             pending = false;
         }
-        else if (ANY_ARRAY(OUT)) {
+        else if (ANY_ARRAY(OUT)) {  // BLOCK!s not reduced--no spaces, see [3]
             if (not IS_BLOCK(OUT))
                 fail ("Only BLOCK! array types can be used in DELIMIT");
 
-            // BLOCK!s are methods for gathering material to be part of the
-            // delimit.  The behavior is defined as being not reduced and
-            // without spaces between...the main place you find this behavior
-            // is in the APPEND of a block to a string.  So this code delegates
-            // to that.
-            //
-            // !!! Unify with the Modify_String() code so this doesn't need
-            // to call through the API.
-            //
             if (VAL_LEN_AT(OUT) != 0) {
                 if (pending)
                     Form_Value(mo, delimiter);
@@ -202,16 +187,7 @@ DECLARE_NATIVE(delimit)
             else
                 Form_Value(mo, OUT);
 
-            // Note that empty strings are distinct from blanks/nulls/[] in
-            // terms of still being delimited.  This is important, e.g. in
-            // comma-delimited formats to denote empty fields.
-            //
-            //    >> delimit "," [field1 field2 field3]  ; field2 is ""
-            //    one,,three
-            //
-            // The same principle would apply to a "space-delimited format".
-
-            pending = true;
+            pending = true;  // note this includes empty strings, see [4]
         }
     } while (Not_End(At_Frame(f)));
 
