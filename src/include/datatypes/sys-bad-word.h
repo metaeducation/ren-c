@@ -133,7 +133,7 @@ inline static bool Is_Isotope(Cell(const*) v) {
     if (HEART_BYTE(v) == REB_BAD_WORD)
         return true;
 
-    assert(HEART_BYTE(v) == REB_ERROR);
+    assert(HEART_BYTE(v) == REB_ERROR or HEART_BYTE(v) == REB_BLOCK);
     return false;
 }
 

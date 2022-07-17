@@ -391,6 +391,9 @@ inline static bool Typecheck_Including_Constraints(
         else if (IS_ERROR(v)) {
             return true;  // new definitional error concept
         }
+        else if (IS_BLOCK(v)) {
+            return true;  // new splicing array concept
+        }
         else {
             assert(IS_QUOTED(v));  // must be quoted otherwise
             if (VAL_NUM_QUOTES(v) > 1)

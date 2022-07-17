@@ -293,7 +293,7 @@ DECLARE_NATIVE(quote)
 //  {Turns BAD-WORD! isotopes into plain BAD-WORD!, ignores NULL, quotes rest}
 //
 //      return: "Will be invisible if input is purely invisible (see META*)"
-//          [<void> <opt> quoted! bad-word! error!]
+//          [<void> <opt> quoted! bad-word! error! block!]
 //      ^optional [<void> <opt> any-value!]
 //  ]
 //
@@ -315,7 +315,7 @@ DECLARE_NATIVE(meta)
 //
 //  {Behavior of ^^ symbol, gives ~void~ BAD-WORD! vs. passing through voids}
 //
-//      return: [<opt> quoted! bad-word! the-word! error!]
+//      return: [<opt> quoted! bad-word! the-word! error! block!]
 //      ^optional [<opt> <void> <fail> any-value!]
 //  ]
 //
@@ -368,7 +368,7 @@ DECLARE_NATIVE(unquote)
 //
 //      return: [<opt> <void> any-value!]
 //      ^value "Taken as ^META for passthru tolerance of pure and isotope void"
-//          [<opt> <void> quoted! the-word! bad-word! error!]
+//          [<opt> <void> quoted! the-word! bad-word! error! block!]
 //  ]
 //
 DECLARE_NATIVE(unmeta)
@@ -422,6 +422,29 @@ DECLARE_NATIVE(unmeta)
     // Now remove the level of meta the user was asking for.
     //
     return UNMETA(v);
+}
+
+
+//
+//  splice: native [
+//
+//  {Make block arguments splice}
+//
+//      return: "Isotope of BLOCK! (e.g. quote level -1, nicknamed 'a splice')"
+//          []  ; isotopic block!
+//      array [<opt> any-array!]
+//  ]
+//
+DECLARE_NATIVE(splice)
+{
+    INCLUDE_PARAMS_OF_SPLICE;
+
+    REBVAL *v = ARG(array);
+
+    if (Is_Nulled(v))
+        return nullptr;  // Put TRY on the APPEND or whatever, not SPLICE
+
+    return Splicify(Copy_Cell(OUT, v));
 }
 
 

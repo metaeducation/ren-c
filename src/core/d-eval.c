@@ -245,6 +245,10 @@ void Do_After_Action_Checks_Debug(Frame(*) f) {
         //
         // Trampoline handles this, see FRAME_FLAG_FAILURE_RESULT_OK
     }
+    else if (Is_Splice(f->out)) {
+        //
+        // This suggests "Is_Isotope()" might have to subsume splices.
+    }
     else if (ACT_HAS_RETURN(phase)) {
         const REBKEY *key = ACT_KEYS_HEAD(phase);
         const REBPAR *param = ACT_PARAMS_HEAD(phase);

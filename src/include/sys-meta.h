@@ -65,6 +65,22 @@ inline static Value(*) Failurize(Cell(*) v) {
     return VAL(v);
 }
 
+inline static bool Is_Splice(Cell(const*) v)
+  { return HEART_BYTE_UNCHECKED(v) == REB_BLOCK
+    and QUOTE_BYTE_UNCHECKED(v) == SPLICE_255; }
+
+inline static Cell(*) Reify_Splice(Cell(*) v) {
+    assert(HEART_BYTE(v) == REB_BLOCK and QUOTE_BYTE(v) == SPLICE_255);
+    mutable_QUOTE_BYTE(v) = 0;
+    return v;
+}
+
+inline static Value(*) Splicify(Cell(*) v) {
+    assert(IS_BLOCK(v) and QUOTE_BYTE(v) == 0);
+    mutable_QUOTE_BYTE(v) = SPLICE_255;
+    return VAL(v);
+}
+
 
 //=//// ISOTOPIC QUOTING ///////////////////////////////////////////////////=//
 
@@ -84,6 +100,10 @@ inline static Cell(*) Isotopic_Quote(Cell(*) v) {
     }
     if (Is_Failure(v)) {
         Reify_Failure(v);
+        return v;
+    }
+    if (Is_Splice(v)) {
+        Reify_Splice(v);
         return v;
     }
     return Quotify(v, 1);  // a non-isotope BAD-WORD! winds up quoted
@@ -157,5 +177,7 @@ inline static Bounce Native_Unmeta_Result(Frame(*) frame_, const REBVAL *v) {
         fail ("END not processed by UNMETA at this time");
     if (IS_ERROR(v))
         return Failurize(Copy_Cell(frame_->out, v));
+    if (IS_BLOCK(v))
+        return Splicify(Copy_Cell(frame_->out, v));
     return Meta_Unquotify(Copy_Cell(frame_->out, v));
 }

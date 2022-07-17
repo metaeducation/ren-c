@@ -991,9 +991,11 @@ Bounce Action_Executor(Frame(*) f)
                 and kind != REB_THE_WORD  // @end or @void
                 and kind != REB_QUOTED
                 and kind != REB_ERROR  // special annotation to allow?
+                and kind != REB_BLOCK
             ){
                 fail (
-                    "^META arguments only [<null> bad-word! the-word! quoted!]"
+                    "^META arguments only:"
+                        " [<null> bad-word! the-word! quoted! block!]"
                 );
             }
         }

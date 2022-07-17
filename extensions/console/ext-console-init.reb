@@ -124,7 +124,11 @@ export console!: make object! [
         ; We use SET instead of a SET-WORD! here to avoid caching the action
         ; name as "last-result", so it should keep the name it had before.
         ;
-        set 'last-result unmeta v
+        if block? v [
+            set 'last-result ~splice~  ; thinking being done on this...
+        ] else [
+            set 'last-result unmeta v
+        ]
 
         === DISPLAY NULL AS IF IT WERE A COMMENT, AS IT HAS NO VALUE ===
 
@@ -243,6 +247,13 @@ export console!: make object! [
             ;
             print unspaced [result _ mold v _ _ {;} _ "isotope"]
             return none
+        ]
+
+        === ISOTOPIC BLOCKS (NEW!) ===
+
+        if block? v [
+            print "; isotopic block (splice)"
+            v: quote v  ; print normally
         ]
 
         === "ORDINARY" VALUES (^META v parameter means they get quoted) ===
@@ -471,7 +482,7 @@ ext-console-impl: func [
     prior "BLOCK! or GROUP! that last invocation of HOST-CONSOLE requested"
         [blank! block! group!]
     result "^META result from evaluating PRIOR, or non-quoted error"
-        [<opt> the-word! quoted! bad-word! error!]
+        [<opt> the-word! quoted! bad-word! error! block!]
     resumable "Is the RESUME function allowed to exit this console"
         [logic!]
     skin "Console skin to use if the console has to be launched"
@@ -746,7 +757,7 @@ ext-console-impl: func [
 
     === HANDLE RESULT FROM EXECUTION OF CODE ON USER'S BEHALF ===
 
-    ensure [<opt> the-word! quoted! bad-word!] result
+    ensure [<opt> the-word! quoted! bad-word! block!] result
 
     if result = @void [
         ;
