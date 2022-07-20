@@ -125,7 +125,7 @@ export console!: make object! [
         ; name as "last-result", so it should keep the name it had before.
         ;
         if block? v [
-            set 'last-result ~splice~  ; thinking being done on this...
+            set 'last-result ~spread~  ; thinking being done on this...
         ] else [
             set 'last-result unmeta v
         ]
@@ -507,15 +507,15 @@ ext-console-impl: func [
     ][
         switch type of item [
             issue! [
-                if not empty? instruction [append/line instruction [,]]
+                if not empty? instruction [append/line instruction ',]
                 insert instruction item
             ]
             text! [
-                append/line instruction compose [comment (item)]
+                append/line instruction spread compose [comment (item)]
             ]
             block! [
-                if not empty? instruction [append/line instruction [,]]
-                append/line instruction compose/deep <*> item
+                if not empty? instruction [append/line instruction ',]
+                append/line instruction spread compose/deep <*> item
             ]
             fail
         ]
@@ -869,7 +869,7 @@ ext-console-impl: func [
                 ;
                 write-stdout unspaced [unclosed "\" _ _]
                 emit [reduce [  ; reduce will runs in sandbox
-                    ((<*> result))  ; splice previous inert literal lines
+                    (<*> spread result)  ; splice previous inert literal lines
                     system.console.input-hook  ; hook to run in sandbox
                 ]]
 

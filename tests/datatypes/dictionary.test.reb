@@ -36,8 +36,8 @@
     m: make map! reduce [1 thing]
     m2: copy/deep m
     thing2: select m2 1
-    append thing.2 [c]
-    append thing2 [d]
+    append thing.2 spread [c]
+    append thing2 spread [d]
     did all [
         thing = [a [b c]]
         thing2 = [a [b] d]

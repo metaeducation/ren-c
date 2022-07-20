@@ -61,7 +61,7 @@ decode-key-value-text: function [
     ][
         key: replace/all copy/part position eof #" " #"-"
         remove back tail-of key
-        append meta reduce [
+        append meta spread reduce [
             to word! key
             trim/auto copy/part eof eol
         ]
@@ -84,7 +84,7 @@ load-until-blank: function [
     text [text!]
     /next {Return values and next position.}
 ] [
-    wsp: compose2 [some (charset { ^-})]
+    wsp: compose [some (charset { ^-})]
 
     res: _  ; !!! collect as SET-WORD!s for locals, evolving...
     rebol-value: parsing-at x [

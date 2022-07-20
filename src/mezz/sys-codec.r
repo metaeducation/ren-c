@@ -49,19 +49,19 @@ register-codec*: func [
         encode: '(:encode)
     ]
 
-    append system.codecs reduce [(to set-word! name) codec]
+    append system.codecs spread reduce [(to set-word! name) codec]
 
     ; Media-types block format: [.abc .def type ...]
     ; !!! Should be a map, with blocks of codecs on collisions
     ;
-    append append system.options.file-types suffixes ^ (bind name system.codecs)
+    append append system.options.file-types suffixes (bind name system.codecs)
 
     return codec
 ]
 
 
 ; Special import case for extensions:
-append system.options.file-types switch fourth system.version [
+append system.options.file-types spread switch fourth system.version [
     3 [
         [%.rx %.dll extension] ; Windows
     ]

@@ -187,9 +187,9 @@
     x: ~
     did all [
         [#a <kept> #a <kept> #a <kept>] == parse "aaa" [x: collect [some [
-            keep (try if false [<not kept>])
+            keep (if false [<not kept>])
             keep <any>
-            keep (try if true [<kept>])
+            keep (if true [<kept>])
         ]]]
         x = [#a <kept> #a <kept> #a <kept>]
     ]
@@ -203,16 +203,16 @@
 ]
 
 
-; META-BLOCK! can be used to keep the result of a rule as-is, e.g. keeping the
-; result of a nested COLLECT as a BLOCK!
+; SPREAD can be used to keep the contents of a result rule block, vs. the
+; default of keeping the block as-is.
 [(
     result: parse "abbbbabbab" [collect [
-        some [keep "a", keep [collect [some keep "b" keep (<hi>)]]]
+        some [keep "a", keep spread collect [some keep "b" keep (<hi>)]]
     ]]
     result = ["a" "b" "b" "b" "b" <hi> "a" "b" "b" <hi> "a" "b" <hi>]
 )(
     result: parse "abbbbabbab" [collect [
-        some [keep "a", keep ^[collect [some keep "b" keep (<hi>)]]]
+        some [keep "a", keep [collect [some keep "b" keep (<hi>)]]]
     ]]
     result = ["a" ["b" "b" "b" "b" <hi>] "a" ["b" "b" <hi>] "a" ["b" <hi>]]
 )]
@@ -243,11 +243,11 @@
         x = [1 2 3]
     ])
     (did all [
-        [3] == parse [1 2 3] [x: collect [keep ^[some integer!]]]
+        [3] == parse [1 2 3] [x: collect [keep [some integer!]]]
         x = [3]
     ])
     (did all [
-        [1 2 3] == parse [1 2 3] [x: collect [some [keep ^integer!]]]
+        [1 2 3] == parse [1 2 3] [x: collect [some [keep integer!]]]
         x = [1 2 3]
     ])
 ]
@@ -276,7 +276,7 @@
             x: collect [
                 keep integer! keep integer! keep text!
                 |
-                keep integer! keep across some integer!
+                keep integer! keep spread across some integer!
             ]
             <here>
         ]
@@ -301,7 +301,7 @@
         [] == parse [1 2 3 4] [
             a: collect [
                 keep integer!
-                b: collect [keep across repeat 2 integer!]
+                b: collect [keep spread across repeat 2 integer!]
                 keep integer!
             ]
             <end>
@@ -319,7 +319,7 @@
         pos: parse* [1 2 3] [
             x: collect [
                 keep integer!
-                keep (second [A [<pick> <me>] B])
+                keep spread (second [A [<pick> <me>] B])
                 keep integer!
             ]
             <here>
@@ -331,7 +331,7 @@
         pos: parse* [1 2 3] [
             x: collect [
                 keep integer!
-                keep ^(second [A [<pick> <me>] B])
+                keep (second [A [<pick> <me>] B])
                 keep integer!
             ]
             <here>
@@ -340,7 +340,7 @@
         x = [1 [<pick> <me>] 2]
     ])
     (did all [
-        [[a b c]] == parse [1 2 3] [x: collect [keep ^([a b c]) to <end>]]
+        [[a b c]] == parse [1 2 3] [x: collect [keep ([a b c]) to <end>]]
         x = [[a b c]]
     ])
 ]
@@ -397,13 +397,13 @@ https://github.com/metaeducation/ren-c/issues/935
 ; Note difference between KEEP ACROSS SOME and KEEP SOME.
 [
     (
-        [[b b b]] = parse [a b b b] [collect [<any>, keep ^ across some 'b]]
+        [[b b b]] = parse [a b b b] [collect [<any>, keep across some 'b]]
     )
     (
-        [b b b] = parse [a b b b] [collect [<any>, keep across some 'b]]
+        [b b b] = parse [a b b b] [collect [<any>, keep spread across some 'b]]
     )
     (
-        [b] = parse [a b b b] [collect [<any>, keep ^ some 'b]]
+        [b] = parse [a b b b] [collect [<any>, keep some 'b]]
     )
 ]
 
@@ -442,9 +442,20 @@ https://github.com/metaeducation/ren-c/issues/935
         partition3108: function [elems [block!] size [integer!]] [
             return parse elems [
                 collect some [not <end> ||
-                    keep ^ across repeat (size) <any>
-                    | keep ^ collect keep across to <end>
-                ]          ; |-- this --| single collect keep is superflous
+                    keep across repeat (size) <any>
+                    | keep spread collect keep across to <end>
+                ]        ; |------ this -----| spread collect keep is superflous
+            ]
+        ]
+        [[1 2] [3 4] [5 6] [7 8] [9]] = partition3108 [1 2 3 4 5 6 7 8 9] 2
+    )
+    (
+        partition3108: function [elems [block!] size [integer!]] [
+            return parse elems [
+                collect some [not <end> ||
+                    keep across repeat (size) <any>
+                    | keep across to <end>  ; equivalent, shorter
+                ]
             ]
         ]
         [[1 2] [3 4] [5 6] [7 8] [9]] = partition3108 [1 2 3 4 5 6 7 8 9] 2
@@ -457,8 +468,8 @@ https://github.com/metaeducation/ren-c/issues/935
     ; Apparently not if a block comes from a group (?!)  UPARSE is much more
     ; consistent in its rules!
     ;
-    ([[a b]] = parse [] [collect keep ^([a b])])
-    ([a] = parse [] [collect keep ^('a)])
+    ([[a b]] = parse [] [collect keep ([a b])])
+    ([a] = parse [] [collect keep ('a)])
 ]
 
 [
@@ -469,9 +480,9 @@ https://github.com/metaeducation/ren-c/issues/935
                 some [
                     keep integer!
                     | p: <here>, block!, seek (p), subparse any-series! [
-                        keep ^ collect [opt some [
-                            keep integer! keep ^('+)
-                            | <any> keep ^(foo '-)
+                        keep collect [opt some [
+                            keep integer! keep ('+)
+                            | <any> keep (foo '-)
                         ]]
                     ]
                     | <any>
@@ -498,9 +509,9 @@ https://github.com/metaeducation/ren-c/issues/939
     data: [foo: "a" bar: "b" | foo: "c" bar: "d"]
 
     [[foo: "a" bar: "b"] [foo: "c" bar: "d"]] = parse data [
-        collect some further [keep ^ collect [
-            [keep [^ 'foo:], keep text!]
-            [keep [^ 'bar:], keep text!]
+        collect some further [keep collect [
+            [keep ['foo:], keep text!]
+            [keep ['bar:], keep text!]
             ['| | <end>]
         ]]
     ]

@@ -52,7 +52,7 @@
             ]
             text? x [
                 id: (match error! trap [load x]).id
-                assert [find [scan-invalid scan-extra scan-missing] ^id]
+                assert [find [scan-invalid scan-extra scan-missing] id]
             ]
             fail "wrong type"
         ]

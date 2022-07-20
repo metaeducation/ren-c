@@ -15,7 +15,7 @@
     itemfirst: reorder :append [value series]
     did all [
         [a b c <item>] = itemfirst <item> [a b c]
-        [value series /part /only /dup /line] = parameters of :itemfirst
+        [value series /part /dup /line] = parameters of :itemfirst
     ]
 )
 

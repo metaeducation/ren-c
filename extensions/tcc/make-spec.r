@@ -48,19 +48,19 @@ libtcc-lib-dir: any [
 ]
 
 
-cflags: compose2 [
+cflags: compose [
     (if try libtcc-include-dir [
         unspaced [{-I} {"} file-to-local libtcc-include-dir {"}]
     ])
 ]
 
-ldflags: compose2 [
+ldflags: compose [
     (if try libtcc-lib-dir [
         unspaced [{-L} {"} file-to-local libtcc-lib-dir {"}]
     ])
 ]
 
-libraries: compose2 [  ; Note: dependent libraries first, dependencies after.
+libraries: compose [  ; Note: dependent libraries first, dependencies after.
     %tcc
 
     ; As of 10-Dec-2019, pthreads became a dependency for libtcc on linux:
@@ -75,7 +75,7 @@ libraries: compose2 [  ; Note: dependent libraries first, dependencies after.
     ;
     ; https://stackoverflow.com/a/38672664/
     ;
-    (if not find/only [Windows Android] system-config/os-base [%pthread])
+    (if not find [Windows Android] system-config/os-base [%pthread])
 ]
 
 requires: [

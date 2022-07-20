@@ -19,11 +19,11 @@
 
 [https://github.com/red/red/issues/3357
     (did all [
-        '~inserted~ == meta parse x3357: [] [insert ^('foo)]
+        '~inserted~ == meta parse x3357: [] [insert ('foo)]
         x3357 = [foo]
     ])
     (did all [
-        '~inserted~ == meta parse x3357b: [] [insert ^(the foo)]
+        '~inserted~ == meta parse x3357b: [] [insert (the foo)]
         x3357b = [foo]
     ])
 ]
@@ -35,28 +35,28 @@
         blk = [1]
     ])
     (did all [
-        'a == parse blk: [a a] [<any> insert ^(the b) <any>]
+        'a == parse blk: [a a] [<any> insert (the b) <any>]
         blk = [a b a]
     ])
     (did all [
         '~removed~ == meta parse blk: [] [
-            p: <here> insert ^(the a) seek (p) remove 'a
+            p: <here> insert (the a) seek (p) remove 'a
         ]
         blk = []
     ])
     (did all [
-        '~inserted~ == meta parse blk: [] [insert ([a b])]
+        '~inserted~ == meta parse blk: [] [insert (spread [a b])]
         blk = [a b]
     ])
     (did all [
-        '~inserted~ == meta parse blk: [] [insert ^([a b])]
+        '~inserted~ == meta parse blk: [] [insert ([a b])]
         blk = [[a b]]
     ])
     (
         series: [a b c]
         letter: 'x
         did all [
-            'c == parse series [insert ^(letter) 'a 'b 'c]
+            'c == parse series [insert (letter) 'a 'b 'c]
             series == [x a b c]
         ]
     )
@@ -64,7 +64,9 @@
         series: [a b c]
         letters: [x y z]
         did all [
-            'c == parse series ['a 'b insert (letters) insert ^(letters) 'c]
+            'c == parse series [
+                'a 'b insert (spread letters) insert (letters) 'c
+            ]
             series == [a b x y z [x y z] c]
         ]
     )
@@ -146,14 +148,14 @@
                 ; Try equivalent of Red's `insert mark letters`
                 pos: <here>
                 seek (mark)
-                insert (letters)
+                insert (spread letters)
                 after: <here>
                 seek (skip pos (index? after) - (index? mark))
 
                 ; Try equivalent of Red's `insert only mark letters`
                 pos: <here>
                 seek (mark)
-                insert ^(letters)
+                insert (letters)
                 after: <here>
                 seek (skip pos (index? after) - (index? mark))
 
@@ -167,12 +169,12 @@
         letter: 'x
         did all [
             'c == parse series [
-                mark: <here> insert ^(letter) 'a 'b
+                mark: <here> insert (letter) 'a 'b
 
                 ; Try equivalent of Red's `insert only mark letter`
                 pos: <here>
                 seek (mark)
-                insert ^(letter)
+                insert (letter)
                 after: <here>
                 seek (skip pos (index? after) - (index? mark))
 
@@ -191,7 +193,7 @@
                 ; Try equivalent of Red's `insert only mark letters`
                 pos: <here>
                 seek (mark)
-                insert ^(letters)
+                insert (letters)
                 after: <here>
                 ; don't adjust pos, it is before insert point
                 seek (pos)
@@ -199,7 +201,7 @@
                 ; Try equivalent of Red's `insert mark letters`
                 pos: <here>
                 seek (mark)
-                insert (letters)
+                insert (spread letters)
                 after: <here>
                 ; don't adjust pos, it is before insert point
                 seek (pos)

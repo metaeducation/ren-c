@@ -57,7 +57,7 @@ wasi-sysroot: to file! (get-env 'WASI_SYSROOT else [
     ]
 ])
 
-toolset: compose2 [
+toolset: compose [
     gcc (wasi-clang)
     ld (wasi-clang)
 ]
@@ -98,7 +98,7 @@ optimize: if debug-wasi-extension [0] else ["s"]
 ;
 ;      https://github.com/second-state/wasmedge-quickjs
 ;
-extensions: make map! compose2 [
+extensions: make map! compose [
     BMP -
     Clipboard -
     Crypt -
@@ -134,7 +134,7 @@ extensions: make map! compose2 [
 ;
 ; Note environment variable EMCC_DEBUG for diagnostic output
 
-cflags: compose2 [
+cflags: compose [
     {--sysroot ${WASI_SYSROOT}}
 
     ; "wasm lacks signal support; to enable minimal signal emulation..."
@@ -147,17 +147,17 @@ cflags: compose2 [
 
     {-DREBOL_FAIL_JUST_ABORTS=1}  ; no exceptions or setjmp()/longjmp()
 
-    ((if debug-wasi-extension [[
+    (if debug-wasi-extension [spread [
         {-DDEBUG_HAS_PROBE=1}
         {-DDEBUG_FANCY_PANIC=1}
         {-DDEBUG_COUNT_TICKS=1}
         {-DDEBUG_PRINTF_FAIL_LOCATIONS=1}
 
         {-DDEBUG_COLLECT_STATS=1}  ; !!! maybe temporary, has cost but good info
-    ]]))
+    ]])
 ]
 
-ldflags: compose2 [
+ldflags: compose [
     (unspaced ["-O" optimize])
 
     {-lwasi-emulated-signal}  ; cflags needs {-D_WASI_EMULATED_SIGNAL}

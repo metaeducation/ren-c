@@ -62,7 +62,7 @@ disable-user-includes: function [
     open-include (charset {"<})
     close-include (charset {">})
 ] [
-    include-rule: compose2 [
+    include-rule: compose [
         (if stdio [
             [open-include name: across "stdio.h" close-include |]
         ])
@@ -194,14 +194,14 @@ fix-kr: function [
                 parse2 params [
                     opt some white-space
                     name: across identifier (
-                        append param-block reduce [name _]
+                        append param-block spread reduce [name _]
                     )
                     opt some [
                         opt some white-space
                         ","
                         opt some white-space
                         name: across identifier (
-                            append param-block reduce [name _]
+                            append param-block spread reduce [name _]
                         )
                     ]
                     <end> | (fail)
@@ -322,12 +322,12 @@ for-each h-file [
     %zlib.h
     %deflate.h
 ] [
-    append header-lines read/lines join path-zlib h-file
+    append header-lines spread read/lines join path-zlib h-file
 ]
 
 disable-user-includes header-lines
 
-insert header-lines [
+insert header-lines spread [
     {}
     {// Ren-C}
     {#define NO_DUMMY_DECL 1}
@@ -337,7 +337,7 @@ insert header-lines [
     {}
 ]
 
-insert header-lines make-warning-lines file-include {ZLIB aggregated header}
+insert header-lines spread make-warning-lines file-include {ZLIB aggregated header}
 
 write/lines (join path-include file-include) header-lines
 
@@ -349,13 +349,13 @@ write/lines (join path-include file-include) header-lines
 
 source-lines: copy []
 
-append source-lines read/lines (join path-zlib %crc32.c)
+append source-lines spread read/lines (join path-zlib %crc32.c)
 
 ;
 ; Macros DO1 and DO8 are defined differently in crc32.c, and if you don't
 ; #undef them you'll get a redefinition warning.
 ;
-append source-lines [
+append source-lines spread [
     {#undef DO1  /* REBOL: see make-zlib.r */}
     {#undef DO8  /* REBOL: see make-zlib.r */}
 ]
@@ -376,7 +376,7 @@ for-each c-file [
     %inffast.c
     %inflate.c
 ][
-    append source-lines read/lines (join path-zlib c-file)
+    append source-lines spread read/lines (join path-zlib c-file)
 ]
 
 disable-user-includes/stdio/inline source-lines copy [
@@ -385,14 +385,14 @@ disable-user-includes/stdio/inline source-lines copy [
     %crc32.h
 ]
 
-insert source-lines [
+insert source-lines spread [
     {}
     {#include "sys-zlib.h"  /* REBOL: see make-zlib.r */}
     {#define local static}
     {}
 ]
 
-insert source-lines make-warning-lines file-source {ZLIB aggregated source}
+insert source-lines spread make-warning-lines file-source {ZLIB aggregated source}
 
 all-source: newlined source-lines
 

@@ -329,6 +329,7 @@ Bounce File_Actor(Frame(*) frame_, REBVAL *port, Symbol(const*) verb)
 
       case SYM_APPEND: {
         INCLUDE_PARAMS_OF_APPEND;
+        Unquotify_Dont_Expect_Meta(ARG(value));
 
         if (REF(part) or REF(dup) or REF(line))
             fail (Error_Bad_Refines_Raw());

@@ -115,6 +115,8 @@ inline static Cell(*) Isotopic_Unquote(Cell(*) v) {
         Isotopify(v);
     else if (IS_ERROR(v))
         Failurize(v);
+    else if (IS_BLOCK(v))
+        Splicify(v);
     else
         Unquotify_Core(v, 1);
     return v;

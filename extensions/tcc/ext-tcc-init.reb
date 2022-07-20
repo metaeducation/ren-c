@@ -263,7 +263,7 @@ compile: func [
             ;
             ; Better suggestions on how to do this are of course welcome.  :-/
             ;
-            insert config.library-path [
+            insert config.library-path spread [
                 "/usr/lib.gcc/x86_64-linux-gnu/7/32/"
                 "/usr/lib.gcc/x86_64-linux-gnu/7/../../../../lib32/"
                 "/lib.../lib32/"
@@ -298,7 +298,7 @@ compile: func [
             triplet: try if 40 = fifth system.version [  ; 64-bit
                 "x86_64-linux-gnu"
             ]
-            insert config.library-path compose [
+            insert config.library-path spread compose [
                 (unspaced ["/usr/" lddir])
                 (if triplet [unspaced ["/usr/" lddir "/" triplet]])
                 (unspaced ["/" lddir])
@@ -484,7 +484,7 @@ c99: func [
 
     let settings: collect [
         let option-no-arg-rule: [copy option: to [space | <end>] (
-            keep compose [options (option)]
+            keep spread compose [options (option)]
         )]
 
         let option
@@ -500,7 +500,7 @@ c99: func [
                 ;
                 replace/all option {"} {\"}
 
-                keep compose [options (option)]
+                keep spread compose [options (option)]
             )
         ]
 
@@ -513,7 +513,7 @@ c99: func [
             last-pos: <here>  ; Save for errors
 
             "-c" (  ; just compile (no link phase)
-                keep compose [output-type (outtype: 'OBJ)]
+                keep spread compose [output-type (outtype: 'OBJ)]
                 outfile: _  ; don't need to specify
             )
             |
@@ -521,7 +521,7 @@ c99: func [
             option-with-arg-rule
             |
             "-E" (  ; preprocess only, print to standard output (not file)
-                keep compose [output-type (outtype: 'PREPROCESS)]
+                keep spread compose [output-type (outtype: 'PREPROCESS)]
                 outfile: _  ; don't need to specify
             )
             |
@@ -530,17 +530,17 @@ c99: func [
             |
             "-I"  ; add directory to search for #include files
             opt space copy temp: to [space | <end>] (
-                keep compose [include-path (temp)]
+                keep spread compose [include-path (temp)]
             )
             |
             "-L"  ; add directory to search for library files
             opt space copy temp: to [space | <end>] (
-                keep compose [library-path (temp)]
+                keep spread compose [library-path (temp)]
             )
             |
             "-l"  ; add library (-llibrary means search for "liblibrary.a")
             opt space copy temp: to [space | <end>] (
-                keep compose [library (temp)]
+                keep spread compose [library (temp)]
             )
             |
             ahead "-O"  ; optimization level
@@ -548,7 +548,7 @@ c99: func [
             |
             "-o"  ; output file (else default should be "a.out")
             opt space copy outfile: to [space | <end>] (  ; overwrites a.out
-                keep compose [output-file (outfile)]
+                keep spread compose [output-file (outfile)]
             )
             |
             ahead "-s"  ; strip out any extra information (don't use with -g)
@@ -590,7 +590,7 @@ c99: func [
     ]
 
     if not outtype [  ; no -c or -E, so assume EXE
-        append settings compose [output-type EXE]
+        append settings spread compose [output-type EXE]
     ]
 
     if not outfile [
@@ -600,7 +600,7 @@ c99: func [
                 ; COMPILE error if you don't give it an output filename than
                 ; just guess "a.out", so make that decision in this command)
                 ;
-                append settings compose [output-file ("a.out")]
+                append settings spread compose [output-file ("a.out")]
             ]
             'OBJ [
                 if infile != <multi> [
@@ -613,7 +613,7 @@ c99: func [
     ]
 
     if runtime [  ; overrides search for environment variable CONFIG_TCCDIR
-        append settings compose [runtime-path (runtime)]
+        append settings spread compose [runtime-path (runtime)]
     ]
 
     if inspect [

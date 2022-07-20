@@ -11,10 +11,10 @@
 (" A" = delimit ":" [_ "A" maybe null])
 (":A:" = delimit ":" ["" "A" ""])
 
-; literal blanks act as spaces, fetched ones act as nulls
+; now all blanks act as spaces in string contexts
 [
     ("a  c" = spaced ["a" _ comment <b> _ "c"])
-    ("a c" = spaced ["a" blank comment <b> blank "c"])
+    ("a  c" = spaced ["a" blank comment <b> blank "c"])
     ("a c" = spaced ["a" maybe null comment <b> (null else '_) "c"])
 ]
 

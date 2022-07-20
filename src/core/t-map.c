@@ -621,12 +621,14 @@ REBTYPE(Map)
 
       case SYM_SELECT: {
         INCLUDE_PARAMS_OF_SELECT;
+        Unquotify_Dont_Expect_Meta(ARG(value));
+
         UNUSED(PAR(series));  // covered by `v`
 
         UNUSED(REF(reverse));  // Deprecated https://forum.rebol.info/t/1126
         UNUSED(REF(last));  // ...a HIJACK in %mezz-legacy errors if used
 
-        if (REF(part) or REF(skip) or REF(tail) or REF(match))
+        if (REF(part) or REF(skip) or WANTED(tail) or REF(match))
             fail (Error_Bad_Refines_Raw());
 
         const REBMAP *m = VAL_MAP(map);
@@ -672,16 +674,16 @@ REBTYPE(Map)
         UNUSED(PAR(series));
 
         REBVAL *value = ARG(value);
-        if (IS_NULLED_OR_BLANK(value))
+        if (Is_Nulled(value))
             return COPY(map);  // don't fail on read only if it would be a no-op
+
+        if (not IS_BLOCK(value))
+            fail ("Appending to MAP! only accepts a splice block of key/value");
 
         REBMAP *m = VAL_MAP_ENSURE_MUTABLE(map);
 
         if (REF(line) or REF(dup))
             fail (Error_Bad_Refines_Raw());
-
-        if (not IS_BLOCK(value))
-            fail (PAR(value));
 
         REBLEN len = Part_Len_May_Modify_Index(value, ARG(part));
         Cell(const*) tail;

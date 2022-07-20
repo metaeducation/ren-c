@@ -32,7 +32,7 @@ REBOL [
     }
 ]
 
-if not find words of :import [product] [  ; See %import-shim.r
+if not find words of :import 'product [  ; See %import-shim.r
     do load append copy system/script/path %import-shim.r
 ]
 
@@ -515,7 +515,7 @@ gcc: make compiler-class [
                     ; This is a stopgap workaround that ultimately would
                     ; permit cross-platform {MBEDTLS_CONFIG_FILE="filename.h"}
                     ;
-                    if find/only [gcc g++ cl] name [
+                    if find [gcc g++ cl] name [
                         flg: replace/all copy flg {"} {\"}
                     ]
 
@@ -553,7 +553,7 @@ gcc: make compiler-class [
             ]
             if try F [
                 for-each flg F [
-                    try keep filter-flag flg id
+                    keep maybe filter-flag flg id
                 ]
             ]
 
@@ -668,7 +668,7 @@ cl: make compiler-class [
             ]
             if try F [
                 for-each flg F [
-                    try keep filter-flag flg id
+                    keep maybe filter-flag flg id
                 ]
             ]
 
@@ -762,11 +762,11 @@ ld: make linker-class [
             ]
 
             for-each flg ldflags [
-                try keep filter-flag flg id
+                keep maybe filter-flag flg id
             ]
 
             for-each dep depends [
-                try keep accept dep
+                keep maybe accept dep
             ]
         ]
     ]
@@ -868,11 +868,11 @@ llvm-link: make linker-class [
             ]
 
             for-each flg ldflags [
-                try keep filter-flag flg id
+                keep maybe filter-flag flg id
             ]
 
             for-each dep depends [
-                try keep accept dep
+                keep maybe accept dep
             ]
         ]
     ]
@@ -954,11 +954,11 @@ link: make linker-class [
             ]
 
             for-each flg ldflags [
-                try keep filter-flag flg id
+                keep maybe filter-flag flg id
             ]
 
             for-each dep depends [
-                try keep accept dep
+                keep maybe accept dep
             ]
         ]
     ]
@@ -1086,9 +1086,10 @@ object-file-class: make object! [
             output
             source
 
-            /I compose2 [((maybe includes)) ((maybe I))]
-            /D compose2 [((maybe definitions)) ((maybe D))]
-            /F compose2 [((maybe F)) ((maybe cflags))]  ; x cflags override
+            /I compose [(maybe spread try includes) (maybe spread try I)]
+            /D compose [(maybe spread try definitions) (maybe spread try D)]
+            /F compose [(maybe spread try F) (maybe spread try cflags)]
+                                                ; ^-- reverses priority, why?
 
             ; "current setting overwrites /refinement"
             ; "because the refinements are inherited from the parent" (?)
@@ -1181,21 +1182,21 @@ generator-class: make object! [
             #cmd-create [
                 applique any [
                     :gen-cmd-create :target-platform/gen-cmd-create
-                ] compose2 [
+                ] compose [
                     cmd: (cmd)
                 ]
             ]
             #cmd-delete [
                 applique any [
                     :gen-cmd-delete :target-platform/gen-cmd-delete
-                ] compose2 [
+                ] compose [
                     cmd: (cmd)
                 ]
             ]
             #cmd-strip [
                 applique any [
                     :gen-cmd-strip :target-platform/gen-cmd-strip
-                ] compose2 [
+                ] compose [
                     cmd: (cmd)
                 ]
             ]
@@ -1257,15 +1258,15 @@ generator-class: make object! [
         return: <none>
         solution [object!]
     ][
-        if find/only words-of solution 'output [
+        if find words-of solution 'output [
             setup-outputs solution
         ]
         flip-flag solution false
 
-        if find/only words-of solution 'depends [
-            for-each dep solution/depends [
+        if find words-of solution 'depends [
+            for-each dep any [try solution/depends []] [
                 if dep/class = #variable [
-                    append vars reduce [
+                    append vars spread reduce [
                         dep/name
                         any [dep/value, dep/default]
                     ]
@@ -1280,11 +1281,11 @@ generator-class: make object! [
         to [logic!]
     ][
         all [
-            find/only words-of project 'generated?
+            find words-of project 'generated?
             to != project/generated?
         ] then [
             project/generated?: to
-            if find/only words-of project 'depends [
+            if find words-of project 'depends [
                 for-each dep project/depends [
                     flip-flag dep to
                 ]
@@ -1487,7 +1488,7 @@ makefile: make generator-class [
                     for-each obj dep/depends [
                         ;dump obj
                         if obj/class = #object-library [
-                            append objs obj/depends
+                            append objs spread obj/depends
                         ]
                     ]
                     append buf gen-rule make entry-class [
@@ -1495,7 +1496,9 @@ makefile: make generator-class [
                         depends: join objs map-each ddep dep/depends [
                             if ddep/class <> #object-library [ddep]
                         ]
-                        commands: append reduce [dep/command] :dep/post-build-commands
+                        commands: append reduce [dep/command] maybe (
+                            spread :dep/post-build-commands
+                        )
                     ]
                     emit buf dep
                 ]
@@ -1639,7 +1642,7 @@ export execution: make generator-class [
                 let objs: make block! 8
                 for-each obj project/depends [
                     if obj/class = #object-library [
-                        append objs obj/depends
+                        append objs spread obj/depends
                     ]
                 ]
                 for-each dep project/depends [

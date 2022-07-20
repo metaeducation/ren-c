@@ -14,7 +14,7 @@
     a: [0]
     b: make block! 0
     insert b a
-    a == b
+    [[0]] == b
 )
 ; paren
 (
@@ -25,14 +25,14 @@
 (
     a: first [(0)]
     b: make group! 0
-    insert b first a
-    b == '(0)
+    insert b a
+    b == '((0))
 )
 (
     a: first [(0)]
     b: make group! 0
     insert b ^a
-    b == '((0))
+    b == '('(0))
 )
 ; text
 (
@@ -128,31 +128,31 @@
 (
     a: make block! 0
     b: at [1 2 3 4 5 6 7 8 9] 5
-    insert/part a b 1
+    insert/part a spread b 1
     a == [5]
 )
 (
     a: make block! 0
     b: at [1 2 3 4 5 6 7 8 9] 5
-    insert/part a b 5
+    insert/part a spread b 5
     a == [5 6 7 8 9]
 )
 (
     a: make block! 0
     b: at [1 2 3 4 5 6 7 8 9] 5
-    insert/part a b 6
+    insert/part a spread b 6
     a == [5 6 7 8 9]
 )
 (
     a: make block! 0
     b: at [1 2 3 4 5 6 7 8 9] 5
-    insert/part a b 2147483647
+    insert/part a spread b 2147483647
     a == [5 6 7 8 9]
 )
 (
     a: make block! 0
     b: at [1 2 3 4 5 6 7 8 9] 5
-    insert/part a b 0
+    insert/part a spread b 0
     empty? a
 )
 
@@ -168,34 +168,33 @@
 (
     a: make block! 0
     b: at [1 2 3 4 5 6 7 8 9] 5
-    insert/part a b -1
+    insert/part a spread b -1
     a == []
 )
 (
     a: make block! 0
     b: at [1 2 3 4 5 6 7 8 9] 5
-    insert/part a b -4
+    insert/part a spread b -4
     a == []
 )
 (
     a: make block! 0
     b: at [1 2 3 4 5 6 7 8 9] 5
-    insert/part a b -5
+    insert/part a spread b -5
     a == []
 )
 (
     a: make block! 0
     b: at [1 2 3 4 5 6 7 8 9] 5
-    insert/part a b -2147483648
+    insert/part a spread b -2147483648
     a == []
 )
 
 
-; insert/only
 (
     a: make block! 0
     b: []
-    insert/only a b
+    insert a b
     same? b first a
 )
 ; insert/dup

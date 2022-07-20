@@ -10,10 +10,9 @@
     f1: make frame! :append
     f1.return: null
     f1.series: [a b c]
-    f1.value: <d>
+    f1.value: meta <d>
     f1.part: null
     f1.dup: null
-    f1.only: null
     f1.line: null
 
     mirror: reframer lambda [f [frame!]] [f]

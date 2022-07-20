@@ -439,7 +439,7 @@
         return case [
             count = 0 [reduce [data]]
             true [
-               append/only (f/count count - 1) data
+               append (f/count count - 1) data
             ]
         ]
     ]

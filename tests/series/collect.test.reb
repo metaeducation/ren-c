@@ -7,17 +7,17 @@
 
 
 ; COLLECT* is the lower-level operation that returns NULL if it opts out of
-; collecting with BLANK!s or has no collects.  Empty blocks count as asking
+; collecting with nulls or has no collects.  Empty blocks count as asking
 ; to collect emptiness.
 [
     (null = collect* [])
     ([] = collect [])
 
-    (null = collect* [assert [null = (keep _)]])
-    ([] = collect [assert [null = (keep _)]])
+    (null = collect* [assert [void? keep void]])
+    ([] = collect [assert [void? keep void]])
 
-    ([] = collect* [assert [[] = (keep [])]])
-    ([] = collect [assert [[] = (keep [])]])
+    ([] = collect* [assert [[] = ^(keep spread [])]])
+    ([] = collect [assert [[] = ^(keep spread [])]])
 ]
 
 [
@@ -30,7 +30,7 @@
                 line: #
                 part: null
             ][
-                value: try spaced :value
+                value: quote try spaced unquote :value
             ]
             (as group! body)
         ]
@@ -55,7 +55,7 @@
                     line: null
                     part: null
                 ][
-                    value: try unspaced :value
+                    value: quote try unspaced unquote :value
                 ]
                 (as group! body)
             ]

@@ -195,8 +195,8 @@ struct Reb_Feed_Struct {
     // in the initial value gives the option of that value being out of band.
     //
     // (Hence if one has the series `[[a b c] [d e]]` it would be possible to
-    // have an independent path value `append/only` and NOT insert it in the
-    // series, yet get the effect of `append/only [a b c] [d e]`.  This only
+    // have an independent WORD! such as `append` and NOT insert it in the
+    // series, yet get the effect of `append [a b c] [d e]`.  This only
     // works for one value, but is a convenient no-cost trick for apply-like
     // situations...as insertions usually have to "slide down" the values in
     // the series and may also need to perform alloc/free/copy to expand.

@@ -42,21 +42,21 @@
 (
     s: copy [a b c]
     did all [
-        [b c] = change s [-]
+        [b c] = change s '-
         s = [- b c]
     ]
 )
 (
     s: copy [a b c]
     did all [
-        [c] = change s [- -]
+        [c] = change s spread [- -]
         s = [- - c]
     ]
 )
 (
     s: copy [a b c]
     did all [
-        [] = change s [- - - -]
+        [] = change s spread [- - - -]
         s = [- - - -]
     ]
 )

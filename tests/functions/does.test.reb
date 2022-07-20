@@ -22,7 +22,7 @@
 ; DOES of BLOCK! as more an arity-0 func... block evaluated each time
 (
     backup: block: copy [a b]
-    f: does [append/only block [c d]]
+    f: does [append block [c d]]
     f
     block: copy [x y]
     f
@@ -43,7 +43,7 @@
 
     (
         backup: block: copy [a b]
-        f: does+ append/only block [c d]
+        f: does+ append block [c d]
         f
         block: copy [x y]
         f

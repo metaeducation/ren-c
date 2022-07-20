@@ -24,7 +24,7 @@
 // interstitial delimiters.  The two basic forms are PATH! (separated by `/`)
 // and TUPLE! (separated by `.`)
 //
-//     append/dup/only   ; a 3-element PATH!
+//     append/dup        ; a 2-element PATH!
 //     192.168.0.1       ; a 4-element TUPLE!
 //
 // Because they are defined by separators *between* elements, sequences of

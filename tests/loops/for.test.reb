@@ -186,9 +186,9 @@
 ; paths are immutable, but for-each is legal on them
 
 (
-    [a b c] = collect [for x each 'a/b/c [keep ^x]]
+    [a b c] = collect [for x each 'a/b/c [keep x]]
 )(
-    [_ _] = collect [for x each '/ [keep ^x]]
+    [_ _] = collect [for x each '/ [keep x]]
 )
 
 ; FOR-EACH X is an alias of FOR X EACH

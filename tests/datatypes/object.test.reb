@@ -62,24 +62,24 @@
 ; appending to objects
 [#1979 (
     o: make object! []
-    append o [b: 1 b: 2]
+    append o spread [b: 1 b: 2]
     1 == length of words of o
 )]
 (
     o: make object! [b: 0]
-    append o [b: 1 b: 2]
+    append o spread [b: 1 b: 2]
     1 == length of words of o
 )
 (
     o: make object! []
     c: "c"
-    append o compose [b: "b" b: (c)]
+    append o spread compose [b: "b" b: (c)]
     same? c o.b
 )
 (
     o: make object! [b: "a"]
     c: "c"
-    append o compose [b: "b" b: (c)]
+    append o spread compose [b: "b" b: (c)]
     same? c o.b
 )
 
@@ -91,7 +91,7 @@
 ;
 ; [#2076 (
 ;     o: make object! [x: 10]
-;     e: trap [append o [self: 1]]
+;     e: trap [append o spread [self: 1]]
 ;     e.id = 'hidden
 ; )]
 ;
@@ -118,7 +118,7 @@
     '~ = ^ get/any 'o.self
 )(
     o: make object! []
-    append o [self: 1]
+    append o spread [self: 1]
     o.self = 1
 )
 
@@ -148,7 +148,7 @@
             ; ...
             ; var-256: 256
             ;
-            keep compose [
+            keep spread compose [
                 (as word! unspaced ["var-" n]): (n)
             ]
         ]
@@ -159,12 +159,12 @@
             ; ...
             ; fun-256: meth [] [var-1 + var-2 ... + var-256]
             ;
-            keep compose [
+            keep spread compose [
                 (as word! unspaced ["meth-" n]): meth [] (collect [
-                    keep [return]
+                    keep 'return
                     count-up i n [
-                        keep compose [
-                            (as word! unspaced ["var-" i]) ((if i <> n '[+]))
+                        keep spread compose [
+                            (as word! unspaced ["var-" i]) (if i <> n ['+])
                         ]
                     ]
                 ])

@@ -417,13 +417,15 @@ REBTYPE(Typeset)
         UNUSED(REF(case));  // !!! tolerate, even though ignored?
 
         if (
-            REF(part) or REF(skip) or REF(tail) or REF(match)
+            REF(part) or REF(skip) or WANTED(tail) or REF(match)
             or REF(reverse) or REF(last)
         ){
             fail (Error_Bad_Refines_Raw());
         }
 
         REBVAL *pattern = ARG(pattern);
+        Unquotify_Dont_Expect_Meta(pattern);
+
         if (not IS_DATATYPE(pattern))
             fail (pattern);
 

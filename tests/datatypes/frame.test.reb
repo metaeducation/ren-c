@@ -23,11 +23,11 @@
 (
     f: make frame! :append
     f.series: [a b c]
-    f.value: <d>
+    f.value: the '<d>
     did all [
         [a b c <d>] = do copy f  ; making a copy works around the expiration
         f.series = [a b c <d>]
-        f.value = <d>
+        f.value = quote <d>
         [a b c <d> <d>] = do f
         'stale-frame = pick trap [do f] 'id
         'bad-pick = pick trap [f.series] 'id

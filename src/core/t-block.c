@@ -26,45 +26,42 @@
 
 
 //
-//  only: native [
+//  only*: native [
 //
 //  {Optimized native for creating a single-element wrapper block}
 //
-//     return: "Top-level immutable block, containing value"
-//          [block!]
+//     return: [block!]
 //     value "If NULL, the resulting block will be empty"
 //          [<opt> any-value!]
 //  ]
 //
-DECLARE_NATIVE(only)  // https://forum.rebol.info/t/1182/11
+DECLARE_NATIVE(only_p)  // https://forum.rebol.info/t/1182/11
 //
-// Conceived as the replacement tool for the likes of APPEND/ONLY, e.g.
+// 1. This uses a "singular" array which is the size of a "stub" (8 platform
+//    pointers).  The cell is put in the portion of the stub where tracking
+//    information for a dynamically allocated series would ordinarily be.
 //
-//     >> only [d]
-//     == [[d]]
+//    Prior to SPLICE and isotopic BLOCK!--when blocks spliced by default--
+//    this was conceived as a replacement for things like APPEND/ONLY, e.g.
 //
-//     >> append [a b c] only [d]
-//     == [a b c [d]]
+//        >> only [d]
+//        == [[d]]
+//
+//        >> append [a b c] only [d]
+//        == [a b c [d]]  ; pre-isotopic-BLOCK! concept of splice by default
+//
+//    But this has been leapfrogged by making APPEND take ^META and having
+//    SPLICE return isotopic blocks.
 {
-    INCLUDE_PARAMS_OF_ONLY;
+    INCLUDE_PARAMS_OF_ONLY_P;
 
-    if (Is_Nulled(ARG(value)))
-        return Init_Block(OUT, EMPTY_ARRAY);  // global immutable array
+    Value(*) v = ARG(value);
 
-    // This uses a "singular" array which is the size of a node (8 platform
-    // pointers).  The cell is put in the portion of the node where tracking
-    // information for a dynamically allocated series would ordinarily be.
-    //
-    // !!! This is more optimized than most array the user might create.  But
-    // an even more aggressive optimization is being planned.  The idea is
-    // to let a cell be annotated to say it's actually a block containing its
-    // payload.  Much like generic quoting, this would exploit bit(s) in the
-    // cell that aren't used otherwise to express this state...and it would
-    // only work for limited levels of such boxing--likely just one level.
-    //
-    Array(*) a = Alloc_Singular(NODE_FLAG_MANAGED);
-    Copy_Cell(ARR_SINGLE(a), ARG(value));
-    Freeze_Array_Shallow(a);  // immutable (to permit future optimized case)
+    Array(*) a = Alloc_Singular(NODE_FLAG_MANAGED);  // semi-efficient, see [1]
+    if (Is_Nulled(v))
+        assert(ARR_LEN(a) == 0);  // singulars initialize empty
+    else
+        Copy_Cell(ARR_SINGLE(a), ARG(value));
     return Init_Block(OUT, a);
 }
 
@@ -385,7 +382,7 @@ REBINT Find_In_Array(
     Flags flags, // see AM_FIND_XXX
     REBINT skip // skip factor
 ){
-    // If not using FIND/ONLY, then looking for an empty block should match
+    // If not in an "/ONLY" mode, then looking for an empty block should match
     // any position (there are infinitely many empty blocks spliced in at
     // any block location).
     //
@@ -925,8 +922,6 @@ REBTYPE(Array)
         REBVAL *pattern = ARG(pattern);
 
         if (Is_Nulled(pattern))
-            fail ("Cannot FIND/SELECT null (use BLANK!, see TRY)");
-        if (IS_BLANK(pattern))
             return nullptr;  // BLANK! in, NULL out
 
         Flags flags = (
@@ -943,27 +938,8 @@ REBTYPE(Array)
         else if (IS_BLOCK(pattern)) {
             VAL_ARRAY_LEN_AT(&len, pattern);
         }
-        else if (ANY_THE_KIND(VAL_TYPE(pattern))) {
-            Plainify(pattern);
-            len = 1;
-            flags |= AM_FIND_ONLY;
-        }
-        else if (not ANY_INERT(pattern)) {
-            //
-            // !!! Need to think about `select block 'key` when you are trying
-            // to have get select-parity between blocks and objects.  Rethink
-            // what FIND on objects means, also.
-            //
-            if (not IS_WORD(pattern))
-                fail ("Cannot FIND evaluative values w/o QUOTE");
-
-            flags |= AM_FIND_ONLY;
-            len = 1;
-        }
-        else {
-            assert(not ANY_ARRAY(pattern));
-            len = 1;
-        }
+        else
+            fail ("Only Isotope supported by FIND/SELECT is SPLICE");
 
         REBLEN limit = Part_Tail_May_Modify_Index(array, ARG(part));
 
@@ -991,13 +967,14 @@ REBTYPE(Array)
         UNUSED(find);
 
         if (id == SYM_FIND) {
-            //
-            // Historical FIND/MATCH implied /TAIL, Ren-C and Red don't do that
-            //
-            if (REF(tail))
-                ret += len;
-            VAL_INDEX_RAW(array) = ret;
+            if (WANTED(tail)) {
+                Copy_Cell(ARG(tail), array);
+                VAL_INDEX_RAW(ARG(tail)) = ret + len;
+                Proxy_Multi_Returns(frame_);
+            }
             Copy_Cell(OUT, array);
+            VAL_INDEX_RAW(OUT) = ret;
+            return OUT;
         }
         else {
             ret += len;
@@ -1015,6 +992,11 @@ REBTYPE(Array)
         INCLUDE_PARAMS_OF_INSERT;
         UNUSED(PAR(series));
 
+        Value(*) arg = ARG(value);
+        assert(not Is_Nulled(arg));
+        if (Is_Meta_Of_Void(arg))
+            Init_Nulled(arg);
+
         REBLEN len; // length of target
         if (id == SYM_CHANGE)
             len = Part_Len_May_Modify_Index(array, ARG(part));
@@ -1024,7 +1006,7 @@ REBTYPE(Array)
         // Note that while inserting or appending NULL is a no-op, CHANGE with
         // a /PART can actually erase data.
         //
-        if (Is_Nulled(ARG(value)) and len == 0) {
+        if (Is_Nulled(arg) and len == 0) {
             if (id == SYM_APPEND)  // append always returns head
                 VAL_INDEX_RAW(array) = 0;
             return COPY(array);  // don't fail on read only if would be a no-op
@@ -1037,13 +1019,11 @@ REBTYPE(Array)
 
         Copy_Cell(OUT, array);
 
-        REBVAL *v = ARG(value);
-
-        if (Is_Nulled(v)) {
+        if (Is_Nulled(arg)) {
             // handled before mutability check
         }
-        else if (IS_QUOTED(v)) {
-            Unquotify(v, 1);
+        else if (IS_QUOTED(arg)) {
+            Unquotify(arg, 1);
 
             // There is an exemption made here:
             //
@@ -1057,21 +1037,13 @@ REBTYPE(Array)
             //     >> compose [(null) * ((null))]
             //     == [~null~ *]
             //
-            if (Is_Nulled(v))
-                Init_Bad_Word(v, Canon(NULL));
+            if (Is_Nulled(arg))
+                Init_Bad_Word(arg, Canon(NULL));
         }
-        else if (IS_BLOCK(v))
+        else if (IS_BLOCK(arg))  // not quoted to ^META parameter, so isotope
             flags |= AM_SPLICE;
-        else if (ANY_THE_KIND(VAL_TYPE(v)))
-            Plainify(v);
-        else if (not ANY_INERT(v))
-            fail ("Cannot APPEND/INSERT/CHANGE evaluative values w/o QUOTE");
-        else {
-            // The only inert array type besides BLOCK! is THE-BLOCK!, and we
-            // handle ANY_THE_KIND() above as dropping the @ and not splicing.
-            //
-            assert(not ANY_ARRAY(v));
-        }
+        else
+            fail ("Only Isotope for APPEND/INSERT/CHANGE must is SPLICE");
 
         if (REF(part))
             flags |= AM_PART;
@@ -1082,7 +1054,7 @@ REBTYPE(Array)
             arr,
             index,
             cast(enum Reb_Symbol_Id, id),
-            v,
+            arg,
             flags,
             len,
             REF(dup) ? Int32(ARG(dup)) : 1
@@ -1505,7 +1477,7 @@ DECLARE_NATIVE(engroup)
 //
 //      return: [<opt> block!]
 //      accumulator [<opt> block!]
-//      result [<opt> any-value!]
+//      ^result [<opt> any-value!]
 //  ]
 //
 DECLARE_NATIVE(glom)
@@ -1531,17 +1503,14 @@ DECLARE_NATIVE(glom)
     //
     bool splice = false;
 
-    if (Is_Nulled(result)) {
+    if (Is_Nulled(result))
         return COPY(accumulator);
-    }
-    else if (IS_QUOTED(result)) {
-        Unquotify(result, 1);
-    }
-    else if (not ANY_INERT(result)) {
-        fail ("Cannot GLOM evaluative values w/o QUOTE");
-    }
-    else if (IS_BLOCK(result)) {  // ANY_ARRAY inert, or just BLOCK!?
+
+    if (IS_BLOCK(result)) {  // ANY_ARRAY inert, or just BLOCK!?
         splice = true;
+    }
+    else {
+        Unquotify(result, 1);
     }
 
     if (Is_Nulled(accumulator)) {

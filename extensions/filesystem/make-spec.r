@@ -19,11 +19,11 @@ uv-nowarn: ~
 ; Start from a base of files that are common for either Windows or UNIXes
 ;
 if os = 'Windows [
-    append definitions [
+    append definitions spread [
         WIN32_LEAN_AND_MEAN
         _WIN32_WINNT=0x0602
     ]
-    append uv-sources [
+    append uv-sources spread [
         ;
         ; files in %src/windows/
         ;
@@ -53,7 +53,7 @@ if os = 'Windows [
         winapi.c
         winsock.c
     ]
-    append libraries [
+    append libraries spread [
         ;
         ; These include bases like GetMessage(), and are already included by
         ; the Event extension, but needed if you don't build with that.
@@ -121,11 +121,11 @@ if os = 'Windows [
     ]
 ]
 else [
-    append definitions [
+    append definitions spread [
         _FILE_OFFSET_BITS=64
         _LARGEFILE_SOURCE
     ]
-    append uv-sources [
+    append uv-sources spread [
         ;
         ; files in %src/unix/
         ;
@@ -149,7 +149,7 @@ else [
         udp.c
     ]
     if not find [Android OS390 QNX] os [
-        append libraries [
+        append libraries spread [
             %pthread  ; Android has pthread in its C library
         ]
     ]
@@ -161,27 +161,27 @@ else [
 ]
 
 if os = 'AIX [
-    append definitions [
+    append definitions spread [
        _ALL_SOURCE
        _LINUX_SOURCE_COMPAT
        _THREAD_SAFE
        _XOPEN_SOURCE=500
        HAVE_SYS_AHAFS_EVPRODS_H
     ]
-    append uv-sources [
+    append uv-sources spread [
         aix.c
         aix-common.c
     ]
-    append libraries [
+    append libraries spread [
         %perfstat
     ]
 ]
 
 if os = 'Android [
-    append definitions [
+    append definitions spread [
         _GNU_SOURCE
     ]
-    append uv-sources [
+    append uv-sources spread [
        ; Note: android-ifaddrs.c was removed
        linux-core.c
        linux-inotify.c
@@ -193,55 +193,55 @@ if os = 'Android [
        random-sysctl-linux.c
        epoll.c
     ]
-    append libraries [
+    append libraries spread [
         %dl
     ]
 ]
 
 if find [Macintosh Android Linux] os [
-    append uv-sources [
+    append uv-sources spread [
         proctitle.c
     ]
 ]
 
 if find [DragonFly FreeBSD] os [
-    append uv-sources [
+    append uv-sources spread [
         freebsd.c
     ]
 ]
 
 if find [DragonFly FreeBSD NetBSD OpenBSD] os [
-    append uv-sources [
+    append uv-sources spread [
         posix-hrtime.c
         bsd-proctitle.c
     ]
 ]
 
 if find [Macintosh iOS DragonFly FreeBSD NetBSD OpenBSD] os [
-    append uv-sources [
+    append uv-sources spread [
         bsd-ifaddrs.c
         kqueue.c
     ]
 ]
 
 if os = 'FreeBSD [
-    append uv-sources [
+    append uv-sources spread [
         random-getrandom.c
     ]
 ]
 
 if find [Macintosh OpenBSD] os [
-    append uv-sources [
+    append uv-sources spread [
         random-getentropy.c
     ]
 ]
 
 if os = 'Macintosh [
-    append definitions [
+    append definitions spread [
         _DARWIN_UNLIMITED_SELECT=1
         _DARWIN_USE_64_BIT_INODE=1
     ]
-    append uv-sources [
+    append uv-sources spread [
        darwin-proctitle.c
        darwin.c
        fsevents.c
@@ -249,11 +249,11 @@ if os = 'Macintosh [
 ]
 
 if os = 'Linux [
-    append definitions [
+    append definitions spread [
         _GNU_SOURCE
         _POSIX_C_SOURCE=200112
     ]
-    append uv-sources [
+    append uv-sources spread [
         linux-core.c
         linux-inotify.c
         linux-syscalls.c
@@ -262,32 +262,32 @@ if os = 'Linux [
         random-sysctl-linux.c
         epoll.c
     ]
-    append libraries [
+    append libraries spread [
         %dl
         %rt
     ]
 ]
 
 if os = 'NetBSD [
-    append libraries [%kvm]
-    append uv-sources [
+    append libraries spread [%kvm]
+    append uv-sources spread [
         netbsd.c
     ]
 ]
 
 if os = 'OpenBSD [
-    append uv-sources [
+    append uv-sources spread [
         openbsd.c
     ]
 ]
 
 if os = 'Sun [
-    append definitions [__EXTENSIONS__ _XOPEN_SOURCE=500 _REENTRANT]
-    append uv-sources [
+    append definitions spread [__EXTENSIONS__ _XOPEN_SOURCE=500 _REENTRANT]
+    append uv-sources spread [
        no-proctitle.c
        sunos.c
     ]
-    append libraries [
+    append libraries spread [
         %kstat
         %nsl
         %sendfile
@@ -296,8 +296,8 @@ if os = 'Sun [
 ]
 
 if os = 'Haiku [
-    append definitions [_BSD_SOURCE]
-    append uv-sources [
+    append definitions spread [_BSD_SOURCE]
+    append uv-sources spread [
         haiku.c
         bsd-ifaddrs.c
         no-fsevents.c
@@ -305,14 +305,14 @@ if os = 'Haiku [
         posix-hrtime.c
         posix-poll.c
     ]
-    append libraries [
+    append libraries spread [
         %bsd
         %network
     ]
 ]
 
 if os = 'QNX [
-    append uv-sources [
+    append uv-sources spread [
         posix-hrtime.c
         posix-poll.c
         qnx.c
@@ -320,7 +320,7 @@ if os = 'QNX [
         no-proctitle.c
         no-fsevents.c
     ]
-    append libraries [
+    append libraries spread [
         %socket
     ]
 ]
@@ -334,10 +334,10 @@ uv-depends: map-each tuple uv-sources [  ; WORD! in bootstrap
     ] else [
         join %filesystem/libuv/src/unix/ to file! tuple
     ]
-    compose2 [(file) #no-c++ ((uv-nowarn))]
+    compose [(file) #no-c++ (spread uv-nowarn)]
 ]
 
-append uv-depends map-each tuple [  ; WORD! in bootstrap
+append uv-depends spread map-each tuple [  ; WORD! in bootstrap
     fs-poll.c
     idna.c
     inet.c
@@ -350,8 +350,8 @@ append uv-depends map-each tuple [  ; WORD! in bootstrap
     uv-data-getter-setters.c
     version.c
 ][
-    compose2 [
-        (join %filesystem/libuv/src/ to file! tuple) #no-c++ ((uv-nowarn))
+    compose [
+        (join %filesystem/libuv/src/ to file! tuple) #no-c++ (spread uv-nowarn)
     ]
 ]
 
@@ -365,7 +365,7 @@ includes: reduce [
 ]
 
 
-depends: compose2 [
+depends: compose [
     ;
     ; If you `#include "uv.h"` and try to build as C++ with warnings up you
     ; will get warning 5220.
@@ -374,16 +374,16 @@ depends: compose2 [
     [%filesystem/p-dir.c <msc:/wd5220>]
     [%filesystem/file-posix.c <msc:/wd5220>]
 
-    ((uv-depends))
+    (spread uv-depends)
 
-    ((if "1" = get-env "USE_BACKDATED_GLIBC" [
-        [
+    (if "1" = get-env "USE_BACKDATED_GLIBC" [
+        spread [
             [%filesystem/fcntl-patch.c]
         ]
-    ]))
+    ])
 ]
 
-ldflags: compose2 [
+ldflags: compose [
     (if "1" = get-env "USE_BACKDATED_GLIBC" [
         {-Wl,--wrap=fcntl64 -Wl,--wrap=log -Wl,--wrap=pow}
     ])

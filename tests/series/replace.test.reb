@@ -10,11 +10,12 @@
 ; REPLACE
 
 ([1 2 8 4 5] = replace [1 2 3 4 5] 3 8)
-([1 2 8 9 4 5] = replace [1 2 3 4 5] 3 [8 9])
-([1 2 8 9 5] = replace [1 2 3 4 5] [3 4] [8 9])
-([1 2 8 5] = replace [1 2 3 4 5] [3 4] 8)
-([1 2 a 5] = replace [1 2 3 4 5] [3 4] [a])
-([a g c d] = replace [a b c d] just b [g])
+([1 2 8 9 4 5] = replace [1 2 3 4 5] 3 spread [8 9])
+([1 2 8 9 5] = replace [1 2 3 4 5] spread [3 4] spread [8 9])
+([1 2 8 5] = replace [1 2 3 4 5] spread [3 4] 8)
+([1 2 a 5] = replace [1 2 3 4 5] spread [3 4] spread [a])
+([a [g] c d] = replace [a b c d] 'b [g])
+([a g c d] = replace [a b c d] 'b spread [g])
 (#{006400} = replace #{000100} #{01} 100)
 (%file.ext = replace %file.sub.ext ".sub." #".")
 ("abra-abra" = replace "abracadabra" "cad" #"-")
@@ -33,9 +34,9 @@
 ; REPLACE/ALL
 
 ([1 4 3 4 5] = replace/all [1 2 3 2 5] 2 4)
-([1 4 5 3 4 5] = replace/all [1 2 3 2] 2 [4 5])
-([1 8 9 8 9] = replace/all [1 2 3 2 3] [2 3] [8 9])
-([1 8 8] = replace/all [1 2 3 2 3] [2 3] 8)
+([1 4 5 3 4 5] = replace/all [1 2 3 2] 2 spread [4 5])
+([1 8 9 8 9] = replace/all [1 2 3 2 3] spread [2 3] spread [8 9])
+([1 8 8] = replace/all [1 2 3 2 3] spread [2 3] 8)
 (#{640164} = replace/all #{000100} #{00} #{64})
 (%file.sub.ext = replace/all %file!sub!ext #"!" #".")
 (<tag body end> = replace/all <tag_body_end> "_" " ")
@@ -44,28 +45,28 @@
 
 ("axbAab" = replace/case "aAbAab" "A" "x")
 ("axbxab" = replace/case/all "aAbAab" "A" "x")
-("axbAab" = replace/case "aAbAab" ["A"] does ["x"])
-("axbxab" = replace/case/all "aAbAab" ["A"] does ["x"])
+("axbAab" = replace/case "aAbAab" "A" does ["x"])
+("axbxab" = replace/case/all "aAbAab" "A" does ["x"])
 (%file.txt = replace/case %file.TXT.txt %.TXT "")
 (%file.txt = replace/case/all %file.TXT.txt.TXT %.TXT "")
 (<tag xyXx> = replace/case <tag xXXx> "X" "y")
 (<tag xyyx> = replace/case/all <tag xXXx> "X" "y")
-(["a" "B" "x"] = replace/case/all ["a" "B" "a" "b"] ["a" "b"] "x")
-('(x A x) = replace/case/all '(a A a) [a] [x])
+(["a" "B" "x"] = replace/case/all ["a" "B" "a" "b"] spread ["a" "b"] "x")
+('(x A x) = replace/case/all '(a A a) spread [a] spread [x])
 
 ;((make hash! [x a b [a B]]) = replace/case make hash! [a B a b [a B]] [a B] 'x)
 
-; REPLACE NULL behavior
+; REPLACE VOID behavior
 
-([3 4] = replace copy [3 0 4] 0 null)
-([3 0 4] = replace copy [3 0 4] null 1020)
-([2 0 2 0] = replace/all copy [1 0 2 0 1 0 2 0] [1 0] null)
-("34" = replace copy "304" "0" null)
-("304" = replace copy "304" null "1020")
-("2020" = replace/all copy "10201020" "10" null)
-(#{3040} = replace copy #{300040} #{00} null)
-(#{300040} = replace copy #{300040} null #{10002000})
-(#{20002000} = replace/all copy #{1000200010002000} #{1000} null)
+([3 4] = replace copy [3 0 4] 0 void)
+([3 0 4] = replace copy [3 0 4] void 1020)
+([2 0 2 0] = replace/all copy [1 0 2 0 1 0 2 0] spread [1 0] void)
+("34" = replace copy "304" "0" void)
+("304" = replace copy "304" void "1020")
+("2020" = replace/all copy "10201020" "10" void)
+(#{3040} = replace copy #{300040} #{00} void)
+(#{300040} = replace copy #{300040} void #{10002000})
+(#{20002000} = replace/all copy #{1000200010002000} #{1000} void)
 
 ; REPLACE/DEEP - /DEEP not (yet?) implemented in Ren-C
 

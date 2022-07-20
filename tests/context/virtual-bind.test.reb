@@ -71,7 +71,7 @@
 
 [
     (
-        group: append '() use [x y] [x: 10, y: 20, [((x + y))]]
+        group: append '() spread use [x y] [x: 10, y: 20, [((x + y))]]
         group = '(((x + y)))
     )
 
@@ -112,7 +112,7 @@
     for-each x data [
         code: copy []
         for-each y data [
-            append code compose [sum: sum + do [(x) + (y) + z]]
+            append code spread compose [sum: sum + do [(x) + (y) + z]]
         ]
         for-each z data code
     ]

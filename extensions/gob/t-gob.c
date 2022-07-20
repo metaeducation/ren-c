@@ -1044,6 +1044,7 @@ REBTYPE(Gob)
         UNUSED(PAR(series));  // covered by `v`
 
         Cell(*) value = ARG(value);
+        Unquotify_Dont_Expect_Meta(value);
 
         if (IS_NULLED_OR_BLANK(value))
             return COPY(v);  // don't fail on read only if it would be a no-op
@@ -1117,6 +1118,8 @@ REBTYPE(Gob)
         goto set_index;
 
     case SYM_FIND:
+        Unquotify_Dont_Expect_Meta(D_ARG(2));
+
         if (IS_GOB(D_ARG(2))) {
             index = Find_Gob(gob, VAL_GOB(D_ARG(2)));
             if (cast(REBINT, index) == NOT_FOUND)

@@ -6,16 +6,16 @@ includes: [
     %prep/extensions/library
 ]
 
-depends: compose2 [
-    ((switch system-config/os-base [
+depends: compose [
+    (switch system-config/os-base [
         'Windows [
-            [
+            spread [
                 [%library/library-windows.c]
             ]
         ]
     ] else [
-        [
+        spread [
             [%library/library-posix.c]
         ]
-    ]))
+    ])
 ]

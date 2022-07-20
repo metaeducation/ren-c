@@ -112,7 +112,7 @@ elf-format: context [
     handler: func [return: <none> name [word!] num-bytes [integer!]] [
         assert [
             binary? begin, num-bytes <= length of begin,
-            find [read write] ^mode
+            find [read write] mode
         ]
 
         either mode = 'read [
@@ -580,10 +580,10 @@ pe-format: context [
             word [any-word!]
         ][
             any [
-                find words ^ to word! word
-                find def ^ to set-word! word
+                find words to word! word
+                find def to set-word! word
             ] else [
-                append def ^ to set-word! word
+                append def to set-word! word
             ]
         ]
 
@@ -594,7 +594,7 @@ pe-format: context [
             if locked? words [
                 words: copy words
             ]
-            append words [err]
+            append words 'err
         ][
             words: [err]
         ]
@@ -616,7 +616,7 @@ pe-format: context [
 
         parse3 rule [opt some block-rule] else [fail]
 
-        set name make object! append def [~]
+        set name make object! append def '~
         return bind rule get name
     ]
 
@@ -743,7 +743,7 @@ pe-format: context [
     data-directory-rule: gen-rule 'data-directory [
         u32-le (RVA: u32)
         u32-le (size: u32)
-        (append data-directories copy data-directory)
+        (append data-directories copy ensure object! data-directory)
     ]
 
     section: ~
@@ -755,7 +755,7 @@ pe-format: context [
         u32-le (physical-offset: u32)
         copy reserved [12 skip]  ; 12 bytes
         u32-le (flags: u32)
-        (append sections copy section)
+        (append sections copy ensure object! section)
     ]
 
     garbage: ~

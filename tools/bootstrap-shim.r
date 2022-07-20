@@ -81,17 +81,6 @@ trap [
         fail/where "Use PARSE2 in Bootstrap Process, not UPARSE/PARSE" 'return
     ]
 
-    ; Don't want to try and write a foolproof new-compose for bootstrap exe,
-    ; so just make a COMPOSE2 that splices by default.  (You can still use the
-    ; notation of (( )) to hint that splicing is requested, and it will do
-    ; the checks when built with newer executables it's a spliceable type.)
-    ;
-    export compose2: adapt augment :compose [/only] [
-        if not only [
-            predicate: :blockify  ; in block if not already, only blocks splice
-        ]
-    ]
-
     ; LOAD changed to have no /ALL, so it always enforces getting a block.
     ; But LOAD-VALUE comes in the box to load a single value.
     ;
@@ -114,15 +103,16 @@ trap [
     ; files would ideally be modules and able to import, but the inheritance
     ; makes this complex...so binding the bootstrap-shim doesn't work.  It is
     ; experimental territory for new Ren-C, and making a shim version would
-    ; be even shakier...so just export COMPOSE2 to LIB so %make-spec.r sees it.
+    ; be even shakier...so just export the shimmed version of COMPOSE to LIB
+    ; so %make-spec.r sees it.
+    ;
+    ; !!! Actually, the code in make-spec.r should see all the new definitions
+    ; for things like APPEND and such.  But COMPOSE was the big one.  Rethink.
 
-    append lib compose [
-        compose2: (:compose2)
+    append lib spread compose [  ; new COMPOSE with new APPEND in bootstrap...
         load-all: (:load)
-    ]
-
-    export compose: func [] [
-        fail/where "Use COMPOSE2 in Bootstrap Process, not COMPOSE" 'return
+        compose: (:compose)
+        spread: (:spread)
     ]
 
     quit
@@ -143,9 +133,40 @@ set '~done~ :null
 
 repeat: :loop
 
-compose2: :compose
-compose: func [] [
-    fail/where "Use COMPOSE2 in Bootstrap Process, not COMPOSE" 'return
+compose: lib/func [block [block!] /deep <local> result pos product count] [
+    if deep [
+        fail/where "COMPOSE bootstrap shim doesn't recurse, yet" 'block
+    ]
+    pos: result: copy block
+    while [not tail? pos] [
+        if not group? pos/1 [
+            pos: next pos
+            continue
+        ]
+
+        product: do pos/1
+        all [
+            block? :product
+            #splice! = first product
+        ] then [
+            ; Doing the change can insert more than one item, update pos
+            ;
+            pos: lib/change/part pos second product 1
+        ] else [
+            if null? :product [
+                ;
+                ; Permit NULL but only in bootstrap build (as it has no pure
+                ; void and null is the product of non-branch conditionals).
+                ; Trust current build to catch errors.
+                ;
+                lib/change/part pos null 1
+            ] else [
+                lib/change/only pos :product
+                pos: next pos
+            ]
+        ]
+    ]
+    return result
 ]
 
 ; Modern DO is more limited in giving back "void intent" so it doesn't go
@@ -278,71 +299,75 @@ any-inert!: make typeset! [
     any-string! binary! char! any-context! time! date! any-number! object!
 ]
 
-; The ^ is legal in words, so we're able to make a ^ operator that puts things
-; into blocks as an alternative to /ONLY.  But while `^ a` and `^(a)` can work
-; as the latter is interpreted as `^ (a)` in old versions, you can't have `^a`
-; work since that makes a new WORD!.
-;
-; Use LIB/APPEND etc. in this shim file for historical semantics (and will run
-; faster).
-
-set '^ lib/func [x [<opt> any-value!]] [
-    :x then [
-        if void? :x ['~bad-word~] else [reduce [:x]]
-    ]
+spread: lib/func [x [<opt> block!]] [
+    if :x [reduce [#splice! x]]
 ]
 
-append: adapt :append [
-    if only [
-        fail/where "APPEND/ONLY no longer allowed, use ^^" 'series
-    ]
-    value: lib/opt case [
-        null? :value [_]  ; OPT to NULL
-        void? :value [fail "APPEND of VOID! disallowed"]
-        blank? :value [fail "APPEND with ^^ BLANK! only"]
-        block? :value [
-            if lib/find value void! [fail "APPEND of BLOCK! w/VOID! disallowed"]
-            :value
+append: lib/func [series value [<opt> any-value!] /line <local> only] [
+    if object? series [
+        all [
+            block? value
+            #splice! = (first value)
+        ] else [
+            fail/where "Bootstrap shim for OBJECT! only APPENDs SPLICEs" 'return
         ]
-        match any-inert! :value [:value]
-        fail/where ["APPEND takes block, NULL, ANY-INERT!"] 'value
+        return lib/append series second value
     ]
+
+    only: 'only
+    case [
+        null? :value []
+        void? :value [fail/where "APPEND of VOID! disallowed" 'value]
+        blank? :value [fail/where "APPEND blanks with [_] only" 'value]
+        block? :value [
+            if lib/find value void! [
+                fail/where "APPEND of BLOCK! w/VOID! disallowed" 'value
+            ]
+            if #splice! = (first value) [
+                value: second value
+                only: _
+            ]
+        ]
+    ]
+    lib/append/(only)/(line) series :value
 ]
 
-insert: adapt :insert [
-    if only [
-        fail/where "INSERT/ONLY no longer allowed, use ^^" 'series
-    ]
-
-    value: lib/opt case [
-        null? :value [_]  ; OPT to NULL
-        void? :value [fail "INSERT of VOID! disallowed"]
-        blank? :value [fail "INSERT with ^^ BLANK! only"]
+insert: lib/func [series value [<opt> any-value!] /line <local> only] [
+    only: 'only
+    case [
+        null? :value []
+        void? :value [fail/where "INSERT of VOID! disallowed" 'value]
+        blank? :value [fail/where "INSERT blanks with [_] only" 'value]
         block? :value [
-            if lib/find value void! [fail "INSERT of BLOCK! w/VOID! disallowed"]
-            :value
+            if lib/find value void! [
+                fail/where "INSERT of BLOCK! w/VOID! disallowed"
+            ]
+            if #splice! = (first value) [
+                value: second value
+                only: _
+            ]
         ]
-        match any-inert! :value [:value]
-        fail/where ["INSERT takes block, NULL, ANY-INERT!"] 'value
     ]
+    lib/insert/(only)/(line) series :value
 ]
 
-change: adapt :change [
-    if only [
-        fail/where "CHANGE/ONLY no longer allowed, use ^^" 'series
-    ]
-
-    value: lib/opt case [
-        null? :value [_]  ; OPT to NULL
-        void? :value [fail "CHANGE of VOID! disallowed"]
-        blank? :value [fail "CHANGE with ^^ BLANK! only"]
+change: lib/func [series value [<opt> any-value!] /line <local> only] [
+    only: 'only
+    case [
+        null? :value []
+        void? :value [fail/where "CHANGE of VOID! disallowed" 'value]
+        blank? :value [fail/where "CHANGE blanks with [_] only" 'value]
         block? :value [
-            if lib/find value void! [fail "CHANGE of BLOCK! w/VOID! disallowed"]
-            :value
+            if lib/find value void! [
+                fail/where "CHANGE of BLOCK! w/VOID! disallowed" 'value
+            ]
+            if #splice! = (first value) [
+                value: second value
+                only: _
+            ]
         ]
-        match any-inert! :value [:value]
-        fail/where ["CHANGE takes block, NULL, ANY-INERT!"] 'value
     ]
+    lib/change/(only)/(line) series :value
 ]
 
 
@@ -356,7 +381,7 @@ change: adapt :change [
 ; and a notion that ENFIX is applied to SET-WORD!s not ACTION!s (which was
 ; later overturned), remapping lambda to `->` is complicated.
 ;
-do compose2 [(to set-word! first [->]) enfix :lambda]
+do compose [(to set-word! first [->]) enfix :lambda]
 unset first [=>]
 
 ; SET was changed to accept BAD-WORD! isotopes
@@ -416,13 +441,13 @@ enfixed: enfix :enfix
 ; wanting to change that, we also want KEEP to be based on the new rules and
 ; not have /ONLY.  So redo it here in the shim.
 ;
-collect*: func [  ; variant that gives NULL if no actual keeps (none or blanks)
+collect*: lib/func [  ; variant giving NULL if no actual material kept
     return: [<opt> block!]
     body [block!]
     <local> out keeper
 ][
     keeper: specialize (  ; SPECIALIZE to remove series argument
-        enclose 'append function [f [frame!] <with> out] [  ; gets /LINE, /DUP
+        enclose 'append lib/func [f [frame!] <with> out] [  ; gets /LINE, /DUP
             if null? :f/value [return null]  ; doesn't "count" as collected
 
             f/series: out: default [make block! 16]  ; won't return null now
@@ -515,7 +540,7 @@ modernize-action: lib/function [
                 ; have a fake proxying parameter.
 
                 if not block? spec/1 [
-                    lib/append proxiers compose2 [  ; turn blank to null
+                    lib/append proxiers compose [  ; turn blank to null
                         (as set-word! last-refine-word)
                             lib/opt (as get-word! last-refine-word)
                     ]
@@ -526,7 +551,7 @@ modernize-action: lib/function [
                 keep/only proxy
                 keep/only spec/1
 
-                lib/append proxiers compose2 [
+                lib/append proxiers compose [
                     (as set-word! last-refine-word) (as get-word! proxy)
                     set (as lit-word! proxy) void
                 ]
@@ -580,7 +605,7 @@ modernize-action: lib/function [
                 ;
                 if lib/find (lib/try match block! spec/1) <try> [
                     keep/only replace copy spec/1 <try> <opt>
-                    lib/append tryers compose2 [
+                    lib/append tryers compose [
                         if null? (as get-word! w) [return null]
                     ]
                     spec: my next
@@ -610,9 +635,9 @@ modernize-action: lib/function [
     lib/append spec <local>
     lib/append spec collect-lets body
 
-    body: compose2 [
-        ((tryers))
-        ((proxiers))
+    body: compose [  ; new COMPOSE, with SPREAD
+        (spread tryers)
+        (spread proxiers)
         (as group! body)
     ]
     return reduce [spec body]
@@ -669,7 +694,7 @@ join: func [base value [<opt> any-value!] <local>] [
 
     ; Dumb version; just append the value.
     ;
-    append base :value
+    lib/append base :value  ; splice by default version
 ]
 
 ; https://forum.rebol.info/t/has-hasnt-worked-rethink-construct/1058
@@ -691,7 +716,7 @@ has: ~
 const?: lib/func [x] [return false]
 
 call*: adapt 'call [
-    if block? command [command: compose2 command]
+    if block? command [command: compose command]
 ]
 call: specialize :call* [wait: true]
 
@@ -835,7 +860,6 @@ delimit: lib/func [
         line: evaluate/set line 'value
         any [
             null? get 'value
-            blank? value
         ] then [
             continue
         ]

@@ -124,9 +124,9 @@
     (didn't parse to-binary "123.456" [integer!])
     (123 == parse to-binary "    123" [integer!])
     ([hello 123 world] == parse to-binary "hello 123 world" [
-        collect [keep ^ word!, keep integer!, keep ^ word!]
+        collect [keep word!, keep integer!, keep word!]
     ])
     ([hello 123 world] == parse to-binary "hello 123 world" [
-        collect [keep ^ word!, space, keep integer!, space, keep ^ word!]
+        collect [keep word!, space, keep integer!, space, keep word!]
     ])
 ]

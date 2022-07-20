@@ -10,19 +10,19 @@
         let rules: collect [
             for-each t things [
                 counts.(t): 0
-                keep ^t
-                keep ^ compose/deep '(counts.(t): me + 1)
-                keep/line [|]
+                keep t
+                keep compose/deep '(counts.(t): me + 1)
+                keep/line '|
             ]
-            keep [false]
+            keep 'false
         ]
         return parse data (compose/deep [
-            opt some [((rules))]  ; could be `opt some [rules]`, but it's a test
+            opt some [(spread rules)]  ; could also be `opt some [rules]`
         ]) then [
             collect [
                 for-each [key value] counts [
-                    keep ^key
-                    keep ^value
+                    keep key
+                    keep value
                 ]
             ]
         ] else [

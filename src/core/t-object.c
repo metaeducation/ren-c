@@ -25,27 +25,14 @@
 #include "sys-core.h"
 
 
-static void Append_To_Context(REBVAL *context, REBVAL *arg)
+static void Append_Vars_To_Context_From_Block(REBVAL *context, REBVAL *block)
 {
     Context(*) c = VAL_CONTEXT(context);
 
-    if (ANY_WORD(arg)) {  // Add an unset word: `append context 'some-word`
-        const bool strict = true;
-        if (0 == Find_Symbol_In_Context(
-            context,
-            VAL_WORD_SYMBOL(arg),
-            strict
-        )){
-            Init_None(Append_Context(c, nullptr, VAL_WORD_SYMBOL(arg)));
-        }
-        return;
-    }
-
-    if (not IS_BLOCK(arg))
-        fail (arg);
+    assert(IS_BLOCK(block));
 
     Cell(const*) tail;
-    Cell(const*) item = VAL_ARRAY_AT(&tail, arg);
+    Cell(const*) item = VAL_ARRAY_AT(&tail, block);
 
     struct Reb_Collector collector;
     //
@@ -148,7 +135,7 @@ static void Append_To_Context(REBVAL *context, REBVAL *arg)
             break;  // fix bug#708
         }
         else
-            Derelativize(var, &word[1], VAL_SPECIFIER(arg));
+            Derelativize(var, &word[1], VAL_SPECIFIER(block));
     }
   }
 
@@ -1189,13 +1176,30 @@ REBTYPE(Context)
 
       case SYM_APPEND: {
         REBVAL *arg = D_ARG(2);
-        if (IS_NULLED_OR_BLANK(arg))
+        if (Is_Nulled(arg))
             return COPY(context);  // don't fail on R/O if it would be a no-op
 
         ENSURE_MUTABLE(context);
         if (not IS_OBJECT(context) and not IS_MODULE(context))
             return BOUNCE_UNHANDLED;
-        Append_To_Context(context, arg);
+
+        if (VAL_NUM_QUOTES(arg) == 1 and ANY_WORD_KIND(CELL_HEART(arg))) {
+            // Add an unset word: `append context 'some-word`
+            const bool strict = true;
+            if (0 == Find_Symbol_In_Context(
+                context,
+                VAL_WORD_SYMBOL(arg),
+                strict
+            )){
+                Init_None(Append_Context(c, nullptr, VAL_WORD_SYMBOL(arg)));
+            }
+            return COPY(context);
+        }
+
+        if (not IS_BLOCK(arg))  // unquoted BLOCK! means parameter was splice
+            fail (arg);
+
+        Append_Vars_To_Context_From_Block(context, arg);
         return COPY(context); }
 
       case SYM_COPY: {  // Note: words are not copied and bindings not changed!
@@ -1243,10 +1247,11 @@ REBTYPE(Context)
         UNUSED(ARG(reverse));
         UNUSED(ARG(last));
 
-        if (REF(part) or REF(skip) or REF(tail) or REF(match))
+        if (REF(part) or REF(skip) or WANTED(tail) or REF(match))
             fail (Error_Bad_Refines_Raw());
 
         REBVAL *pattern = ARG(value);
+        Unquotify_Dont_Expect_Meta(pattern);
         if (not IS_WORD(pattern))
             return nullptr;
 

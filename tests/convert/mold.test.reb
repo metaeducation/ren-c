@@ -2,13 +2,13 @@
 ; cyclic block
 [#860 #6 (
     a: copy []
-    insert/only a a
+    insert a a
     text? mold a
 )]
 ; cyclic paren
 (
     a: first [()]
-    insert/only a a
+    insert a a
     text? mold a
 )
 ; cyclic object
@@ -22,7 +22,7 @@
     catch [forever [
         a: copy []
         if error? trap [
-            repeat n [a: append/only copy [] a]
+            repeat n [a: append copy [] a]
             mold a
         ] [throw true]
         n: n * 2
@@ -85,7 +85,7 @@
     block: copy [a b c]
     new-line block true
     new-line tail block true
-    append block [d e f]
+    append block spread [d e f]
     {[^/    a b c^/    d e f]} = mold block
 )
 
@@ -93,13 +93,13 @@
     block: copy [a b c]
     new-line block true
     new-line tail block true
-    append/line block [d e f]
+    append/line block spread [d e f]
     {[^/    a b c^/    d e f^/]} = mold block
 )
 
 (
     block: copy []
-    append/line block [d e f]
+    append/line block spread [d e f]
     {[^/    d e f^/]} = mold block
 )
 
@@ -107,7 +107,7 @@
     block: copy [a b c]
     new-line block true
     new-line tail block true
-    append/line block [d e f]
+    append/line block spread [d e f]
     {[^/    a b c^/    d e f^/]} = mold block
 )
 

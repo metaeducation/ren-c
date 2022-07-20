@@ -21,7 +21,7 @@ spec-of: function [
     meta: match object! meta-of :action
 
     return collect [
-        keep/line ensure [<opt> text!] try select meta 'description
+        keep/line maybe ensure [<opt> text!] try select meta 'description
 
         types: ensure [<opt> frame! object!] try select meta 'parameter-types
         notes: ensure [<opt> frame! object!] try select meta 'parameter-notes
@@ -30,13 +30,13 @@ spec-of: function [
         return-note: ensure [<opt> text!] try select notes 'return
 
         if return-type or return-note [
-            keep compose [
+            keep spread compose [
                 return: (maybe return-type) (maybe return-note)
             ]
         ]
 
         for-each param parameters of :action [
-            keep compose [
+            keep spread compose [
                 (param)
                     (maybe try select types param)
                     (maybe try select notes param)
@@ -184,7 +184,7 @@ help: function [
         libuser: copy system.contexts.lib
         for-each [key val] system.contexts.user [
             if set? 'val [
-               append libuser reduce [key ^val]
+               append libuser spread reduce [key ^val]
             ]
         ]
         libuser
@@ -501,7 +501,7 @@ what: function [
             ][
                 description-of :val else ["(undocumented)"]
             ]
-            append list reduce [word arg]
+            append list spread reduce [word arg]
             size: max size length of to-text word
         ]
     ]

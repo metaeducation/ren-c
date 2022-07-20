@@ -178,7 +178,7 @@ make-file-tuple-parts: func [
             fail embedded-file-slash-error text
         ]
 
-        keep text
+        keep maybe text
 
         if not last? tuple [keep #"."]
     ]]

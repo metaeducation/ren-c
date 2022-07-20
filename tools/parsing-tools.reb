@@ -33,22 +33,20 @@ export parsing-at: func [
     /end {Drop the default tail check (allows evaluation at the tail).}
 ][
     return use [result position][
-        block: compose2/only [try (as group! block)]
+        block: compose [try (as group! block)]
         if not end [
-            block: compose2/deep [decay either not tail? (word) [((block))] [_]]
+            block: compose [decay either not tail? (word) (block) [_]]
         ]
-        block: compose2/deep [
-            result: either position: ((block)) [
+        block: compose [
+            result: either position: (spread block) [
                 [:position]  ; seek
             ][
                 [end skip]
             ]
         ]
-        use compose2 [(word)] compose2/deep [
-            [
-                (as set-word! :word)  ; <here>
-                (as group! block) result
-            ]
-        ]
+        use compose [(word)] reduce [compose [
+            (as set-word! word)  ; <here>
+            (as group! block) result
+        ]]
     ]
 ]

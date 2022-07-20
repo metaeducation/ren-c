@@ -25,7 +25,7 @@ Rebol [
         * DO no longer changes the working directory to system.script.path,
           so to include this it should say this magic incantation:
 
-            if not find words of import [product] [
+            if not find words of import 'product [
                 do load append copy system/script/path %import-shim.r
             ]
 
@@ -84,7 +84,9 @@ export: func [
 ][
     if :set-word [
         args: take args
-        append system/contexts/user reduce [set-word (set set-word :args)]
+        lib/append system/contexts/user reduce [  ; splices blocks by default
+            set-word (set set-word :args)
+        ]
         return get 'args
     ]
 
@@ -98,7 +100,9 @@ export: func [
         if not word? :word [  ; no type checking in shim via BLOCK!s
             fail "EXPORT only exports block of words in bootstrap shim"
         ]
-        append system/contexts/user reduce [word get word]
+        lib/append system/contexts/user reduce [  ; splices blocks by default
+            word get word
+        ]
     ]
 ]
 

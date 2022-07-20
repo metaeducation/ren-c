@@ -938,6 +938,9 @@ Bounce Action_Executor(Frame(*) f)
             }
         }
 
+        if (Is_Splice(ARG))
+            fail (Error_Isotope_Arg(f, PARAM));
+
         if (GET_PARAM_FLAG(PARAM, VARIADIC)) {  // can't check now, see [3]
             if (not IS_VARARGS(ARG))  // argument itself is always VARARGS!
                 fail (Error_Not_Varargs(f, KEY, PARAM, VAL_TYPE(ARG)));

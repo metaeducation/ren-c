@@ -105,7 +105,7 @@ export collect-tests: function [
     ;
     append into clean-path file
 
-    append into collect [parse3 code [
+    append into spread collect [parse3 code [
         opt some [
             pos: <here>
 
@@ -114,8 +114,8 @@ export collect-tests: function [
             ; context, but all by itself.
             ;
             set item group! (
-                keep only flags, flags: copy []
-                keep/line only :[item]  ; one isolated group
+                keep flags, flags: copy []
+                keep/line :[item]  ; one isolated group
             )
             |
             ; A BLOCK! groups together several tests that rely on common
@@ -125,8 +125,8 @@ export collect-tests: function [
             ; with whatever other code there is.
             ;
             set item block! (
-                keep only flags, flags: copy []
-                keep/line only item
+                keep flags, flags: copy []
+                keep/line item
             )
             |
             ; ISSUE! and URL! have historically just been ignored, they are a
@@ -163,10 +163,10 @@ export collect-tests: function [
             ;
             '@collect-tests, set body block! (
                 keep @collect-tests
-                keep only body
+                keep body
             )
         ] else [
-            append into reduce [
+            append into spread reduce [
                 'dialect
                 spaced [
                     newline
@@ -225,7 +225,7 @@ export collect-logs: function [
                                 |
                             (fail "invalid test result")
                         ]
-                        append collected-logs reduce [
+                        append collected-logs spread reduce [
                             last-vector
                             value
                         ]

@@ -55,9 +55,10 @@ last: redescribe [
 ; inefficient.  However, it's easier to work it out as a userspace routine
 ; to figure out exactly what it should do, and make it a native later.
 ;
+; !!! Should JOIN implicitly reduce?  Rebol2's did.
+;
 ; JOIN does "path & tuple calculus" and makes sure the slashes or dots are
-; correct.  BLANK!s do not have meaning and are discarded, while values cannot
-; be joined against each other without slashes:
+; correct:
 ;
 ;     >> join path! [a b c]
 ;     ** Error: you can't stick a to b without a /, nor b to c without a /
@@ -65,11 +66,8 @@ last: redescribe [
 ;     >> join path! [a/ b / c]
 ;     == a/b/c
 ;
-;     >> join 'a/ [_ _ _ b]
-;     == a/b
-;
-; Note: `join ':a [b c]` => `:a/b/c` or `join [a] '/b/c` => [a]/b/c might seem
-; interesting and could occupy sematnics left open by illegal APPEND arguments.
+; Note: `join ':a [b c]` => `:a/b/c` or `join [a] '/b/c` => [a]/b/c` may seem
+; interesting and could occupy semantics open by illegal APPEND arguments...
 ; But anything that makes the result type not match the base type is likely
 ; to just cause confusion.  Weirdos who want features *like that* can make them
 ; but JOIN isn't the right place for it.
@@ -86,125 +84,96 @@ join: function [
         any-sequence!
         port! map! object! module! bitset!
     ]
-    value [<opt> any-value!]
+    value [
+        <opt> quoted! block! path! tuple!
+        text! url! issue! file! binary! integer!  ; !!! ANY-INERT is missing
+    ]
 ][
-    if null? :value [
+    if null? value [
         return copy base
+    ]
+    if (not block? value) or (all [not any-sequence? base, any-sequence? value]) [
+        value: quote value  ; implicitly make safe for SPREAD (unquotes)
     ]
 
     type: type of base  ; to set output type back to original if transformed
-    case [
-        type = datatype! [
-            type: base
-            case [
-                find any-sequence! type [base: copy []]
-                find any-array! type [base: copy []]
-                find any-string! type [base: copy ""]
-                type = issue! [base: copy ""]
-                type = binary! [base: copy #{}]
 
-                fail ["Invalid datatype for JOIN:" type]
-            ]
+    if type = datatype! [
+        type: base
+        base: case [
+            find any-sequence! type [[]]
+            find any-array! type [[]]
+            find any-string! type [""]
+            type = issue! [""]
+            type = binary! [#{}]
+
+            fail ["Invalid datatype for JOIN:" type]
         ]
-        find any-sequence! type [base: to block! base]
-        find :[issue! url!] type [base: to text! base]
-    ] else [
-        base: copy base
-        type: null  ; don't apply any conversion at end
     ]
 
-    result: switch type of :value [
-        block! [
-            if type and (find any-sequence! type) [  ; slash or dot "calculus"
-                sep: either find any-path! type ['/] ['.]
-                for-each item value [
-                    if blank? item [
-                        continue  ; blanks skipped, use / or . to get "blanks"
-                    ]
-                    if not any [
-                        find any-sequence! kind of item
-                        item = '.  ; !!! REVIEW
-                        item = '/
-                    ][
-                        case [
-                            empty? base [append base ^item]
-                            _ = last base [change back tail base ^item]
-                            fail @item ["Elements must be separated with" sep]
-                        ]
-                    ] else [
-                        case [
-                            item = sep [
-                                if empty? base [  ; e.g. `join path! [/]`
-                                    append base ^blank
-                                    append base ^blank
-                                ] else [
-                                    append base ^blank
-                                ]
-                            ]
-                            (last base) and (first item) [
-                                fail @item [
-                                    "Elements must be separated with" sep
-                                ]
-                            ]
-                            (not last base) and (first item) [
-                                take/last base
-                                append base as block! item
-                            ]
-                        ] else [
-                            if _ = first item [
-                                append base next as block! item
-                            ] else [
-                                append base as block! item
-                            ]
-                        ]
-                    ]
-                ]
-            ]
-            else [
-                append base value
-            ]
-        ]
-    ] else [
-        if type and (find any-sequence! type) [
-            if find any-sequence! kind of value [
-                if not match [path! tuple!] value [
-                    fail "Can only append plain PATH! and TUPLE! to sequences"
-                ]
-                if type = type of value [  ; merging scenario
-                    all [last base, first value] then [
-                        fail "Elements must be separated with / or ."
-                    ]
-                    value: as block! value
+    ; !!! This doesn't do any "slash calculus" on URLs or files, e.g. to stop
+    ; the append of two slashes in a row.  That is done by the MAKE-FILE code,
+    ; and should be reviewed if it belongs here too.
+    ;
+    if find :[url! issue! file!] type [
+        return as type append (to text! base) spread value
+    ]
 
-                    ; `(join 'a/ '/b)` needs to make a block [a _ b]
-                    ; But if there's a one sided slash there needs to be no
-                    ; blank between, it's a normal path.
-                    ;
-                    all [not last base, not first value] then [
-                        take/last base
+    if not find any-sequence! type [
+        return as type append (copy base) spread value
+    ]
+
+    base: to block! base  ; copies
+
+    if not block? value [
+        value: reduce [unquote value]  ; !!! should FOR-EACH take quoted?
+    ]
+
+    sep: either find any-path! type ['/] ['.]
+    for-each item value [  ; !!! or REDUCE-EACH, for implicit reduce...?
+        if blank? item [
+            continue  ; old-rule, skips blanks
+        ]
+        any [
+            find any-sequence! kind of item
+            item = '.  ; !!! REVIEW
+            item = '/
+        ] then [
+            case [
+                item = sep [
+                    if empty? base [  ; e.g. `join path! [/]`
+                        append base blank
+                        append base blank
                     ] else [
-                        if not last base [take/last base]
-                        if not first value [value: next value]  ; locked
+                        append base blank
                     ]
+                ]
+                (last base) and (first item) [
+                    fail @item [
+                        "Elements must be separated with" sep
+                    ]
+                ]
+                (not last base) and (first item) [
+                    take/last base
+                    append base spread as block! item
                 ]
             ] else [
-                if not quoted? value [
-                    value: quote value  ; !!! allows `join 'a/ 'b`, good idea?
+                if _ = first item [
+                    append base spread next as block! item
+                ] else [
+                    append base spread as block! item
                 ]
-                if last base [
-                    fail "Elements must be separated with / or ."
-                ]
-                take/last base
+            ]
+        ] else [
+            case [
+                empty? base [append base item]
+                _ = last base [change back tail base item]
+                fail @item ["Elements must be separated with" sep]
             ]
         ]
-        append base :value
     ]
 
-    if type [
-        return as type base
-    ]
-
-    return base
+    return as type base
 ]
 
 

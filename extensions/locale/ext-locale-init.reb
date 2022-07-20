@@ -472,13 +472,13 @@ if 'Windows <> first system.platform [
         ]
 
         case [
-            find [language language*] ^type [
+            find [language language*] type [
                 return any [
                     all [find ["C" "POSIX"] lang "English"]
                     select iso-639 lang
                 ]
             ]
-            find [territory territory*] ^type [
+            find [territory territory*] type [
                 return try select iso-3166 territory
             ]
         ]

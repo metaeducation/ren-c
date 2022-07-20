@@ -632,6 +632,10 @@ DECLARE_NATIVE(definitional_return)
         //
         // allow, so you can definitionally fail
     }
+    else if (Is_Splice(v)) {
+        //
+        // allow for now, but this needs a better answer in typechecking
+    }
     else if (Is_Isotope(v)) {
         //
         // allow, so that you can say `return ~xxx~` in functions whose spec

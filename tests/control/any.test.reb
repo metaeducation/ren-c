@@ -371,7 +371,7 @@
 (
     n: 0
     blk: [all [either 5000 = n: n + 1 [throw <deep-enough>] [true]]]
-    append blk.2 quote as group! blk
+    append blk.2 as group! blk
     <deep-enough> = catch blk
 )
 

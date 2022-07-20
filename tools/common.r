@@ -19,7 +19,7 @@ REBOL [
     }
 ]
 
-if not find words of :import [product] [  ; See %import-shim.r
+if not find words of :import 'product [  ; See %import-shim.r
     do load append copy system/script/path %import-shim.r
 ]
 
@@ -260,8 +260,8 @@ export for-each-record: function [
 
         spec: collect [
             for-each column-name headings [
-                keep ^(column-name)
-                keep compose2/only [the (table/1)]
+                keep column-name
+                keep spread compose [the (table/1)]
                 table: next table
             ]
         ]
@@ -331,14 +331,14 @@ export parse-args: function [
             find value ","
         ][value: mold split value ","]
         either name [
-            append ret reduce [name value]
+            append ret spread reduce [name value]
         ][  ; standalone-arg
-            append standalone ^(value)
+            append standalone value
         ]
     ]
     if not empty? standalone [
-        append ret [|]
-        append ret ^(standalone)
+        append ret '|
+        append ret standalone
     ]
     return ret
 ]
@@ -402,7 +402,7 @@ export relative-to-path: func [
         target: next target
     ]
     iterate base [base/1: %..]
-    append base target
+    append base spread target
 
     base: to-file delimit "/" base
     assert [dir? base]
@@ -482,7 +482,7 @@ export stripload: function [
         file: <textual source>
     ][
         text: as text! read source
-        contents: find/tail text "^/]"
+        contents: next next find text "^/]"  ; /TAIL changed in new builds
         file: source
     ]
 
@@ -496,8 +496,7 @@ export stripload: function [
     ; #define constants for easy access to the functions there.
     ;
     if try gather [
-        assert [block? get gather]
-        append get gather collect [
+        append (ensure block! get gather) spread collect [
             for-next t text [
                 newline-pos: find t newline else [tail text]
                 if not colon-pos: find/part t ":" newline-pos [
@@ -516,7 +515,7 @@ export stripload: function [
                     not find str {"}
                     not find str "/"
                 ] then [
-                    keep ^(as word! str)
+                    keep as word! str
                 ]
                 t: newline-pos
             ]
@@ -524,7 +523,7 @@ export stripload: function [
     ]
 
     if try header [
-        if not hdr: copy/part (find/tail text "[") (find text "^/]") [
+        if not hdr: copy/part (next find text "[") (find text "^/]") [
             fail ["Couldn't locate header in STRIPLOAD of" file]
         ]
         parse2 hdr rule else [

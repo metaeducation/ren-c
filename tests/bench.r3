@@ -133,8 +133,8 @@ l < 2
 compare first a second a
 ] [
 set/any 'b first a
-change/only a second a
-change/only next a get/any 'b
+change a second a
+change next a get/any 'b
 ]
 ] [
 mid: to integer! l / 2
@@ -150,12 +150,12 @@ a la b lb /local c
 c: copy/part a la
 loop-until [
 either (compare first b first c) [
-change/only a first b
+change a first b
 b: next b
 a: next a
 zero? lb: lb - 1
 ] [
-change/only a first c
+change a first c
 c: next c
 a: next a
 empty? c

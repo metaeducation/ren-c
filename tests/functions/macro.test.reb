@@ -14,7 +14,7 @@
 ; like SPECIALIZE or ADAPT that a formally specified function would.
 
 (
-    m: macro [return: [block!] x] [return [append x ^ first]]
+    m: macro [return: [block!] x] [return [append x first]]
     [1 2 3 d] = m [1 2 3] [d e f]
 )
 
@@ -28,7 +28,7 @@
 
 
 ; INLINE is a variant of macro for putting code directly into the feed
-; It accepts BLOCK! (splice contents), QUOTED! (splice single value) or just
+; It accepts BLOCK! (spread contents), QUOTED! (splice single value) or just
 ; BLANK! as a no-op.
 [
     (

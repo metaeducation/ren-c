@@ -19,7 +19,7 @@
 ; block! test
 (
     out: copy []
-    for-next i [1 2 3] [append out i]
+    for-next i [1 2 3] [append out spread i]
     out = [1 2 3 2 3 3]
 )
 ; TODO: is hash! test and list! test needed too?

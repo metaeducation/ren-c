@@ -428,6 +428,9 @@ DECLARE_NATIVE(else)  // see `tweak :else 'defer on` in %base-defs.r
     else if (Is_Meta_Of_Void(in)) {
         assert(Is_Void(SPARE));  // branch argument is SPARE for void, see [2]
     }
+    else if (IS_BLOCK(in)) {
+        return Splicify(Copy_Cell(OUT, in));
+    }
     else if (REF(decay) and Is_Meta_Of_Null_Isotope(in)) {
         Init_Null_Isotope(SPARE);  // action branch decays if non-meta, see [3]
     }

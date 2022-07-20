@@ -24,7 +24,7 @@
 (ok? trap [copy blank])
 [#877 (
     a: copy []
-    insert/only a a
+    insert a a
     error? trap [copy/deep a]
     true
 )]

@@ -1628,19 +1628,17 @@ DECLARE_NATIVE(subparse)
 
                 rule = Get_Parse_Value(P_SAVE, P_RULE, P_RULE_SPECIFIER);
 
-                // If you say KEEP ^(whatever) then that acts like /ONLY did
+                // If you say KEEP (whatever) then that acts like /ONLY did
+                // and KEEP SPREAD (whatever) will splice
                 //
-                bool only;
-                if (ANY_META_KIND(VAL_TYPE(rule))) {
-                    if (rule != P_SAVE) {  // move to mutable location
-                        Derelativize(P_SAVE, rule, P_RULE_SPECIFIER);
-                        rule = P_SAVE;
-                    }
-                    Plainify(P_SAVE);  // take the ^ off
-                    only = true;
+                bool spread;
+                if (IS_WORD(rule) and VAL_WORD_ID(rule) == SYM_SPREAD) {
+                    spread = true;
+                    FETCH_NEXT_RULE(f);  // e.g. skip the SPREAD
+                    rule = Get_Parse_Value(P_SAVE, P_RULE, P_RULE_SPECIFIER);
                 }
                 else
-                    only = false;
+                    spread = false;
 
                 if (IS_GROUP(rule)) {
                     //
@@ -1656,17 +1654,17 @@ DECLARE_NATIVE(subparse)
                         goto return_thrown;
                     }
 
-                    if (Is_Void(OUT)) {
-                        // Nothing to add
-                    }
-                    else if (only) {
-                        Copy_Cell(
-                            Alloc_Tail_Array(P_COLLECTION),
-                            OUT
-                        );
+                    if (Is_Void(OUT))
+                        fail (Error_Bad_Void());
+
+                    if (spread) {
+                        if (not IS_BLOCK(OUT))
+                            fail ("SPREAD only works with BLOCK! in PARSE3");
+
+                        rebElide(Lib(APPEND), ARG(collection), Lib(SPREAD), rebQ(OUT));
                     }
                     else
-                        rebElide("append", ARG(collection), rebQ(OUT));
+                        rebElide(Lib(APPEND), ARG(collection), rebQ(OUT));
 
                     RESET(OUT);  // since we didn't throw, put it back
 
@@ -1678,10 +1676,6 @@ DECLARE_NATIVE(subparse)
                 else {  // Ordinary rule (may be block, may not be)
 
                     Frame(*) subframe = Make_Frame(f->feed, FRAME_MASK_NONE);
-
-                    // Want the subframe to see the BLOCK!, not ^[...]
-                    //
-                    f->feed->p = rule;
 
                     bool interrupted;
                     assert(Is_Void(OUT));  // invariant until finished
@@ -1711,7 +1705,7 @@ DECLARE_NATIVE(subparse)
                     assert(pos_after >= pos_before);  // 0 or more matches
 
                     Array(*) target;
-                    if (pos_after == pos_before and not only) {
+                    if (pos_after == pos_before and spread) {
                         target = nullptr;
                     }
                     else if (ANY_STRING_KIND(P_TYPE)) {
@@ -1737,7 +1731,7 @@ DECLARE_NATIVE(subparse)
                             )
                         );
                     }
-                    else if (only) {  // taken to mean "add as one block"
+                    else if (not spread) {  // taken to mean "add as one block"
                         target = Make_Array_Core(
                             pos_after - pos_before,
                             NODE_FLAG_MANAGED
@@ -2540,7 +2534,8 @@ DECLARE_NATIVE(subparse)
                 rule = Get_Parse_Value(P_SAVE, P_RULE, P_RULE_SPECIFIER);
                 FETCH_NEXT_RULE(f);
 
-                // If you say KEEP ^(whatever) then that acts like /ONLY did
+                // If you say KEEP (whatever) then that acts like /ONLY did
+                // and KEEP (spread whatever) will splice
                 //
                 bool only;
                 if (ANY_META_KIND(VAL_TYPE(rule))) {

@@ -650,7 +650,7 @@ echo: func* [
                     new-line? args [stop]
                     comma? first args [stop]
                 ]
-                keep ^ take args
+                keep take args
             ]
         ]
     ]

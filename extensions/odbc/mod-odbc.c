@@ -1710,10 +1710,10 @@ DECLARE_NATIVE(copy_odbc)
             }
 
             REBVAL *temp = ODBC_Column_To_Rebol_Value(col);
-            rebElide("append", record, "quote", rebR(temp));
+            rebElide("append", record, rebR(temp));
         }
 
-        rebElide("append", results, "quote", rebR(record));
+        rebElide("append", results, rebR(record));
         ++row;
     }
 

@@ -146,7 +146,7 @@
     '~ = ^ foo
 )(
     data: [a b c]
-    f: func [return: <none>] [append data [1 2 3]]
+    f: func [return: <none>] [append data spread [1 2 3]]
     '~ = ^ f
 )]
 
@@ -199,7 +199,7 @@
 ; values, so long as they are "friendly" (e.g. come from picking out of a
 ; block vs. running it, or come from a quote evaluation).
 ;
-([~abc~ ~def~] = collect [keep [~abc~], keep [~def~]])
+([~abc~ ~def~] = collect [keep spread [~abc~], keep '~def~])
 
 ; Erroring modes of BAD-WORD! are being fetched by WORD! and logic tests.
 ; They are inert values otherwise, so PARSE should treat them such.

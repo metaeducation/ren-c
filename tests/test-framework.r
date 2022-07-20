@@ -406,7 +406,7 @@ export do-recover: func [
             fail "do-recover log file parsing problem"
         ]
         last-vector
-        test-sources: find-last/tail test-sources last-vector
+        [# test-sources]: find-last test-sources last-vector
 
         print [
             "recovering at:"

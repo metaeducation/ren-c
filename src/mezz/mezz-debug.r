@@ -49,7 +49,7 @@ verify: function [
                 type: 'Script
                 id: 'assertion-failure
                 arg1: compose [
-                    ((copy/part conditions pos)) ** (case [
+                    (spread copy/part conditions pos) ** (case [
                         bad-word? result' [result']  ; isotope
                         null? result' [the null]
                         blank? unquote result' [the blank]

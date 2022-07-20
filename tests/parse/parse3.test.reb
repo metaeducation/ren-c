@@ -446,19 +446,19 @@
         let rules: collect [
             for-each t things [
                 counts.(t): 0
-                keep ^t
-                keep ^ compose/deep '(counts.(t): me + 1)
-                keep/line [|]
+                keep t
+                keep compose/deep '(counts.(t): me + 1)
+                keep/line '|
             ]
-            keep [fail]
+            keep 'fail
         ]
         return parse3 data (compose/deep [
-            opt some [((rules))]  ; could be `opt some [rules]`, but it's a test
+            opt some [(spread rules)]  ; could also be `opt some [rules]`
         ]) then [
             collect [
                 for-each [key value] counts [
-                    keep ^key
-                    keep ^value
+                    keep key
+                    keep value
                 ]
             ]
         ] else [
@@ -492,7 +492,7 @@
 
 ; Ren-C made it possible to use quoted WORD!s in place of CHAR! or TEXT! to
 ; match in strings.  This gives a cleaner look, as you drop off 3 vertical
-; tick marks from everything like ["ab"] to become just ['ab]
+; tick marks from everything like ["ab"] to become ['ab]
 ;
 (did all [
     pos: parse3* "abbbbbc" ['a some ['b], <here>]

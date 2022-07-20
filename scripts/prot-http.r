@@ -88,7 +88,7 @@ make-http-request: func [
     result: unspaced [
         uppercase form method _
             either file? target [next mold target] [target]
-            _ "HTTP/" (find headers [Host:] then ["1.1"] else ["1.0"]) CR LF
+            _ "HTTP/" (find headers 'Host: then ["1.1"] else ["1.0"]) CR LF
     ]
     for-each [word string] headers [
         append result unspaced [mold word _ string CR LF]
@@ -194,12 +194,12 @@ check-response: function [
         any [
             all [
                 d1: find conn.data crlfbin
-                d2: find/tail d1 crlf2bin
+                [# d2]: find d1 crlf2bin  ; want tail, use multireturn
                 net-log/C "server standard content separator of #{0D0A0D0A}"
             ]
             all [
                 d1: find conn.data #{0A}
-                d2: find/tail d1 #{0A0A}
+                [# d2]: find d1 #{0A0A}  ; want tail, use multireturn
                 net-log/C "server malformed line separator of #{0A0A}"
             ]
         ] else [
@@ -324,7 +324,7 @@ check-response: function [
             ]
             if state.mode = <ready> [
                 all [
-                    find [get head] ^spec.method else [all [
+                    find [get head] spec.method else [all [
                         info.response-parsed = 'see-other
                         spec.method: 'get
                     ]]
@@ -521,7 +521,7 @@ read-body: function [
                 copy trailer to crlf2bin to <end>
             ] then [
                 trailer: scan-net-header as binary! trailer
-                append headers trailer
+                append headers spread trailer
                 clear conn.data
             ]
 

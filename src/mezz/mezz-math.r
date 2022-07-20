@@ -221,7 +221,7 @@ math: func [
             (
                 ; This rule can be recursively called as well,
                 ; so result has to be passed via a stack
-                insert nested-expr-val ^expr-val
+                insert nested-expr-val expr-val
                 restore-vars
             )
             ; vars could be changed even it failed, so restore them and fail

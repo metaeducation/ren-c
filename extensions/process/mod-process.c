@@ -184,7 +184,7 @@ DECLARE_NATIVE(get_os_browsers)
     // Caller should try xdg-open first, then try x-www-browser otherwise
     //
     rebElide(
-        "append", list, "[",
+        "append", list, "spread [",
             rebT("xdg-open %1"),
             rebT("x-www-browser %1"),
         "]"
@@ -588,7 +588,7 @@ DECLARE_NATIVE(list_env)
         REBVAL *val = rebLengthedTextWide(eq_pos + 1, val_len);
 
         rebElide(
-            "append", map, "[", rebR(key), rebR(val), "]"
+            "append", map, "spread [", rebR(key), rebR(val), "]"
         );
 
         key_equals_val += len + 1; // next
@@ -619,7 +619,7 @@ DECLARE_NATIVE(list_env)
         int val_size = size - (eq_pos - key_equals_val) - 1;
         REBVAL *val = rebSizedText(eq_pos + 1, val_size);
 
-        rebElide("append", map, "[", rebR(key), rebR(val), "]");
+        rebElide("append", map, "spread [", rebR(key), rebR(val), "]");
     }
   #endif
 

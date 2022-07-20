@@ -124,7 +124,7 @@
         if mtype [
             value: to mtype collect [
                 count-up index (length of value) [
-                    keep ^(transform pick value index)
+                    keep (transform pick value index)
                 ]
             ]
         ]
@@ -183,7 +183,7 @@
 
         start: true
         for-each v items [
-            append/only compares iter.1
+            append compares iter.1
 
             all [
                 not start
@@ -205,7 +205,7 @@
         ]
 
         if not new-line? iter [
-            append/only compares iter.1
+            append compares iter.1
             !!failure!!
         ]
     ]

@@ -281,16 +281,16 @@ systems: [
     Emscripten: 16
     ;-------------------------------------------------------------------------
     0.16.1 web/emscripten "emscripten"
-        #SG? #LEN
+        #LEN
 
     0.16.2 pthread/emscripten "emscripten-pthread"
-        #SG? #LEN
+        #LEN
 
     0.16.3 node/emscripten "nodejs"
-        #SG? #LEN
+        #LEN
 
     0.16.4 wasi/emscripten "wasi"  ; technically wasi-sdk, not emscripten
-        #SG? #LEN
+        #LEN
 
     AIX: 17
     ;-------------------------------------------------------------------------
@@ -345,7 +345,6 @@ export system-definitions: make object! [
     ;
     SGD: "OS_STACK_GROWS_DOWN"    ; most widespread choice in C compilers
     ;SGU: "OS_STACK_GROWS_UP"     ; rarer (Debian HPPA, some emscripten/wasm)
-    SG?: _                        ; try to detect growth direction at runtime
 
     W32: <msc:WIN32>              ; aes.c requires this
     UNI: "UNICODE"                ; win32 wants it
@@ -536,7 +535,7 @@ use [
         for-each flag s/libraries [assert [word? flag]]
         for-each flag s/ldflags [assert [word? flag]]
 
-        for-each [word context] compose2/only [
+        for-each [word context] compose [
             definitions (system-definitions)
             libraries (system-libraries)
             cflags (compiler-flags)
@@ -555,11 +554,11 @@ use [
         ]
     ]
 
-    unused-flags: exclude compose2 [
-        ((words-of compiler-flags))
-        ((words-of linker-flags))
-        ((words-of system-definitions))
-        ((words-of system-libraries))
+    unused-flags: exclude compose [
+        (spread words-of compiler-flags)
+        (spread words-of linker-flags)
+        (spread words-of system-definitions)
+        (spread words-of system-libraries)
     ] used-flags
 
     if not empty? unused-flags [

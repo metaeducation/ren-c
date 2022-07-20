@@ -31,9 +31,9 @@
     (error? trap [trap [1 / 0] then :add])
 ]
 
-[#1506 ((
+[#1506 (
     10 = reeval func [return: [integer!]] [trap [return 10] 20]
-))]
+)]
 
 ; ENTRAP (similar to TRAP but single result, ^META result if not an error)
 

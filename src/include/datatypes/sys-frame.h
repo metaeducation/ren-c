@@ -610,7 +610,8 @@ inline static REBVAL *D_ARG_Core(Frame(*) f, REBLEN n) {  // 1 for first arg
     REBPAR *param = ACT_PARAMS_HEAD(FRM_PHASE(f));
     REBVAL *arg = FRM_ARG(f, 1);
     while (
-        VAL_PARAM_CLASS(param) == PARAM_CLASS_RETURN
+        Is_Specialized(param)  // e.g. slots for saving multi-return variables
+        or VAL_PARAM_CLASS(param) == PARAM_CLASS_RETURN
         or VAL_PARAM_CLASS(param) == PARAM_CLASS_OUTPUT
     ){
         ++param;

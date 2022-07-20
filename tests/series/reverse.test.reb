@@ -5,7 +5,9 @@
 
 
 [#2326 (
-    data: collect [keep/line [1 2] keep/line [3 4 5] keep/line [6]]
+    data: collect [
+        keep/line spread [1 2] keep/line spread [3 4 5] keep/line spread [6]
+    ]
     ; == [
     ;     1 2
     ;     3 4 5

@@ -22,7 +22,7 @@ REBOL [
 
 print "--- Make Boot : System Embedded Script ---"
 
-if not find words of :import [product] [  ; See %import-shim.r
+if not find words of :import 'product [  ; See %import-shim.r
     do load append copy system/script/path %import-shim.r
 ]
 
@@ -40,13 +40,14 @@ config: config-system try get 'args/OS_ID
 first-rebol-commit: "19d4f969b4f5c1536f24b023991ec11ee6d5adfb"
 
 if args/GIT_COMMIT = "unknown" [
-    git-commit: _
+    git-commit: null
 ] else [
     git-commit: args/GIT_COMMIT
     if (length of git-commit) != (length of first-rebol-commit) [
-        print ["GIT_COMMIT should be a full hash, e.g." first-rebol-commit]
-        print ["Invalid hash was:" git-commit]
-        quit
+        fail [
+            "GIT_COMMIT should be a full hash, e.g." first-rebol-commit newline
+            "Invalid hash was:" git-commit
+        ]
     ]
 ]
 
@@ -169,7 +170,7 @@ add-sym: function [
     /exists "return ID of existing SYM_XXX constant if already exists"
     <with> sym-n
 ][
-    if pos: find/only syms-words as text! word [
+    if pos: find syms-words as text! word [
         if exists [return index of pos]
         fail ["Duplicate word specified" word]
     ]
@@ -277,9 +278,9 @@ n: 0
 for-each-record t type-table [
     if n != 0 [
         append boot-types either issue? t/name [
-            ^(to-word t/name)
+            to-word t/name
         ][
-            ^(to-word unspaced [form t/name "!"])
+            to-word unspaced [form t/name "!"]
         ]
     ]
 
@@ -306,9 +307,9 @@ nontypes: collect [
     ]
 ]
 
-value-flagnots: compose2 [
+value-flagnots: compose [
     "(FLAGIT_KIND(REB_MAX) - 1)"  ; Subtract 1 to get mask for everything
-    ((nontypes))  ; take out all nontypes
+    (spread nontypes)  ; take out all nontypes
 ]
 
 e-types/emit 'value-flagnots {
@@ -336,9 +337,9 @@ for-each-record t type-table [
     for-each ts t/typesets [
         spot: any [
             select typeset-sets ts
-            first back insert tail typeset-sets reduce [ts copy []]
+            first back insert tail typeset-sets spread reduce [ts copy []]
         ]
-        append spot ^(t/name)
+        append spot t/name
     ]
 ]
 
@@ -526,15 +527,15 @@ e-sysobj: make-emitter "System Object" (
     join prep-dir %include/tmp-sysobj.h
 )
 
-at-value: func ['field] [return next find/only boot-sysobj to-set-word field]
+at-value: func ['field] [return next find boot-sysobj to-set-word field]
 
 boot-sysobj: load strip-commas-and-null-apostrophes read/string %sysobj.r
-change at-value version ^(version)
-change at-value commit ^(git-commit)
-change at-value build now/utc
-change at-value product ^(quote to word! product)  ; ^ to keep quote
+change (at-value version) version
+change (at-value commit) either try git-commit [git-commit] ['null]
+change (at-value build) now/utc
+change (at-value product) (quote to word! product)  ; want it to be quoted
 
-change at-value platform ^ reduce [
+change at-value platform reduce [
     any [config/platform-name "Unknown"]
     any [config/build-label ""]
 ]
@@ -827,7 +828,7 @@ e-bootblock/emit 'nats {
 
 boot-typespecs: collect [
     for-each-record t type-table [
-        keep ^ reduce [t/description]
+        keep reduce [t/description]
     ]
 ]
 

@@ -103,6 +103,7 @@ Bounce Event_Actor(Frame(*) frame_, REBVAL *port, Symbol(const*) verb)
 
     case SYM_INSERT:
     case SYM_APPEND:
+        Unquotify_Dont_Expect_Meta(D_ARG(2));
         if (not IS_EVENT(D_ARG(2)))
             fail (D_ARG(2));
         goto act_blk;

@@ -18,10 +18,8 @@
     did all [
         ")" == parse str [
             "("
-            change [to ")"] [
-                collect [
-                    some ["a" keep ("A") | <any>]
-                ]
+            change [to ")"] spread collect [
+                some ["a" keep ("A") | <any>]
             ]
             ")"
         ]
@@ -52,11 +50,11 @@
 ; BLOCK! change tests from %parse-test.red
 [
     (did all [
-        '~changed~ == meta parse blk: [1] [change integer! ^(the a)]
+        '~changed~ == meta parse blk: [1] [change integer! (the a)]
         blk = [a]
     ])
     (did all [
-        '~changed~ == meta parse blk: [1 2 3] [change [some integer!] ^(the a)]
+        '~changed~ == meta parse blk: [1 2 3] [change [some integer!] (the a)]
         blk = [a]
     ])
     (did all [
@@ -68,18 +66,18 @@
         blk = [99]
     ])
     (did all [
-        '~changed~ == meta parse blk: [1 2 3] [change [some integer!] ^([a])]
+        '~changed~ == meta parse blk: [1 2 3] [change [some integer!] ([a])]
         blk = [[a]]
     ])
     (did all [
         '~changed~ == meta parse blk: [1 2 3] [
-            change [some integer!] ^(reduce [1 + 2])
+            change [some integer!] (reduce [1 + 2])
         ]
         blk = [[3]]
     ])
     (
-        b: ["long long long string" "long long long string" [1]]
-        '~changed~ == meta parse copy "." [change <any> (b)]
+        b: ["long long long string" "long long long string" 1]
+        '~changed~ == meta parse copy "." [change <any> (spread b)]
     )
 ]
 

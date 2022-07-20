@@ -113,7 +113,7 @@ log-emit: function [
     body [block!]
 ][
     body: new-line/all compose body false
-    append/line log (head insert body label)
+    append/line log spread (head insert body label)
 ]
 
 export analyse: context [
@@ -422,7 +422,7 @@ list: context [
 
         if equal? #"/" last item [
             contents: read %% (repo-dir)/(item)
-            insert queue map-each x contents [join item x]
+            insert queue spread map-each x contents [join item x]
             item: null
         ] else [
             any [
@@ -453,12 +453,12 @@ c-parser-extension: context bind bind [
 
     grammar.function-body: braced
 
-    append grammar.format-func-section [
+    append grammar.format-func-section spread [
         last-func-end: <here>
         opt some [nl | eol | wsp]
     ]
 
-    append grammar.other-segment ^ the (
+    append grammar.other-segment '(
         last-func-end: _
     )
 

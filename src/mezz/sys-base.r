@@ -104,7 +104,7 @@ module: func [
             spec.type = 'Module
             not in spec 'Exports
         ] then [
-            append spec compose [Exports: (make block! 10)]
+            append spec spread compose [Exports: (make block! 10)]
         ]
 
         set-meta mod spec
@@ -138,7 +138,7 @@ module: func [
     ; would omit them.  But since MODULE is not that complex to write,
     ; probably better to have such cases use MAKE MODULE! instead of MODULE.
     ;
-    append mod compose [
+    append mod spread compose [
         import: (specialize :sys.util.import* [where: mod])
         intern: (specialize :intern* [where: mod])
 

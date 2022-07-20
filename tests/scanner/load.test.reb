@@ -72,7 +72,7 @@
 (equal? read %./ load %./)
 (
     write %test.txt s: "test of text"
-    s = load %test.txt
+    [test of text] = load %test.txt
     elide delete %test.txt
 )
 (

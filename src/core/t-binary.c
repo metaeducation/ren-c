@@ -415,6 +415,11 @@ REBTYPE(Binary)
         INCLUDE_PARAMS_OF_INSERT;  // compatible frame with APPEND, CHANGE
         UNUSED(PAR(series));  // covered by `v`
 
+        Value(*) arg = ARG(value);
+        assert(not Is_Nulled(arg));
+        if (Is_Meta_Of_Void(arg))
+            Init_Nulled(arg);
+
         REBLEN len; // length of target
         if (id == SYM_CHANGE)
             len = Part_Len_May_Modify_Index(v, ARG(part));
@@ -424,7 +429,7 @@ REBTYPE(Binary)
         // Note that while inserting or appending NULL is a no-op, CHANGE with
         // a /PART can actually erase data.
         //
-        if (Is_Nulled(ARG(value)) and len == 0) {
+        if (Is_Nulled(arg) and len == 0) {
             if (id == SYM_APPEND) // append always returns head
                 VAL_INDEX_RAW(v) = 0;
             return COPY(v);  // don't fail on read only if would be a no-op
@@ -438,7 +443,7 @@ REBTYPE(Binary)
 
         // !!! This mimics the historical behavior for now:
         //
-        //     rebol2>> append "abc" quote 'd
+        //     rebol2>> append "abc" 'd
         //     == "abcd"
         //
         //     rebol2>> append/only "abc" [d e]  ; like appending (the '[d e])
@@ -448,8 +453,13 @@ REBTYPE(Binary)
         // quoted that should give molding semantics, so quoted blocks include
         // their brackets.  Review.
         //
-        if (IS_QUOTED(ARG(value)))
-            Unquotify(ARG(value), 1);
+        if (not IS_BLOCK(arg) and not Is_Nulled(arg)) {  // not a splice
+            if (not IS_QUOTED(arg))
+                fail (ARG(value));
+            Unquotify(arg, 1);  // remove "^META" level
+            if (ANY_ARRAY(arg) or ANY_SEQUENCE(arg))
+                fail (ARG(value));
+        }
 
         VAL_INDEX_RAW(v) = Modify_String_Or_Binary(
             v,
@@ -471,6 +481,7 @@ REBTYPE(Binary)
         UNUSED(REF(last));  // ...a HIJACK in %mezz-legacy errors if used
 
         REBVAL *pattern = ARG(pattern);
+        Unquotify_Dont_Expect_Meta(pattern);
 
         Flags flags = (
             (REF(match) ? AM_FIND_MATCH : 0)
@@ -495,12 +506,21 @@ REBTYPE(Binary)
             return nullptr;
 
         if (id == SYM_FIND) {
-            //
-            // Historical FIND/MATCH implied /TAIL, Ren-C and Red don't do that
-            //
-            if (REF(tail))
-                ret += size;
-            return Init_Series_Cell_At(OUT, REB_BINARY, VAL_BINARY(v), ret);
+            if (WANTED(tail)) {
+                Init_Series_Cell_At(
+                    ARG(tail),
+                    REB_BINARY,
+                    VAL_BINARY(v),
+                    ret + size
+                );
+                Proxy_Multi_Returns(frame_);
+            }
+            return Init_Series_Cell_At(
+                OUT,
+                REB_BINARY,
+                VAL_BINARY(v),
+                ret
+            );
         }
 
         ret++;

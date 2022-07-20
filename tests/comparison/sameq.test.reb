@@ -100,15 +100,15 @@
 ; reflexivity for cyclic blocks
 (
     a-value: copy []
-    insert/only a-value a-value
+    insert a-value a-value
     same? a-value a-value
 )
 ; comparison of cyclic blocks
 (
     a-value: copy []
-    insert/only a-value a-value
+    insert a-value a-value
     b-value: copy []
-    insert/only b-value b-value
+    insert b-value b-value
     not same? a-value b-value
 )
 

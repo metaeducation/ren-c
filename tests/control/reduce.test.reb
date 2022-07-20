@@ -114,7 +114,7 @@
 
     ([3 7] = collect [reduce-each x [1 + 2 3 + 4] [keep x]])
 
-    ([1 + 2] = collect [reduce-each x @[1 + 2] [keep ^x]])
+    ([1 + 2] = collect [reduce-each x @[1 + 2] [keep x]])
 
     (
         e: trap [reduce-each x [1 + 2] [fail "foo"]]

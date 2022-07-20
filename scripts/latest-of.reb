@@ -223,7 +223,7 @@ latest-of: func [
         fail ["First digit of OS specification tuple must be 0:" os]
     ]
 
-    let extension: if (find/only [0.3.1 0.3.40] os) [".exe"] else [null]
+    let extension: if (find [0.3.1 0.3.40] os) [".exe"] else [null]
 
 
     === DEFAULT VARIANT TO DEBUG ===
@@ -238,10 +238,10 @@ latest-of: func [
     if variant = 'checked [
         variant: 'debug
     ]
-    if not find/case/only build-variants variant [
+    if not find/case build-variants variant [
         fail ["Build variant must be one of:" mold build-variants]
     ]
-    let suffix: if variant = 'release [null] else [join "-" variant]
+    let suffix: if variant = 'release [null] else [join "-" as text! variant]
 
 
     === DEFAULT COMMIT TO THE LAST GREEN-LIT HASH ===

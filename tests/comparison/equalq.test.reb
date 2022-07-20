@@ -134,7 +134,7 @@
 ; Reflexivity for cyclic blocks
 (
     a-value: copy []
-    insert/only a-value a-value
+    insert a-value a-value
     equal? a-value a-value
 )
 ; Comparison of cyclic blocks
@@ -143,9 +143,9 @@
 ; "         to suppress, use: --max-stackframe=4094200 or greater"
 [#1049 (
     a-value: copy []
-    insert/only a-value a-value
+    insert a-value a-value
     b-value: copy []
-    insert/only b-value b-value
+    insert b-value b-value
     error? trap [equal? a-value b-value]
     true
 )]
@@ -629,6 +629,6 @@
 (not equal? make port! http:// make port! http://)
 [#859 (
     a: copy the ()
-    insert/only a a
+    insert a a
     error? trap [do a]
 )]

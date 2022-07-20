@@ -32,11 +32,11 @@
 ]
 
 (
-    append-123: specialize :append [value: [1 2 3] only: #]
+    append-123: specialize :append [value: [1 2 3]]  ; quoted by specialize
     [a b c [1 2 3] [1 2 3]] = append-123/dup copy [a b c] 2
 )
 (
-    append-123: specialize :append/only [value: [1 2 3]]
+    append-123: specialize :append [value: [1 2 3]]
     append-123-twice: specialize :append-123 [dup: 2]
     [a b c [1 2 3] [1 2 3]] = append-123-twice copy [a b c]
 )
@@ -50,9 +50,9 @@
     [a b c 10 10] = do f
 )
 (
-    f: make frame! :append/only
+    f: make frame! :append
     f.series: copy [a b c]
-    f.value: [d e f]
+    f.value: quote [d e f]
     [a b c [d e f]] = do f
 )
 (
@@ -83,13 +83,13 @@
         true
     )
 
-    (r = apd copy xy abc 2 3)
+    (r = apd copy xy spread abc 2 3)
     (r = applique :apd [series: copy xy, value: abc, part: 2, dup: 3])
 
-    (r = apd3 copy xy abc 2)
+    (r = apd3 copy xy spread abc 2)
     (r = applique :apd3 [series: copy xy, value: abc, part: 2])
 
-    (r = ap2d copy xy abc 3)
+    (r = ap2d copy xy spread abc 3)
     (r = applique :ap2d [series: copy xy, value: abc, dup: 3])
 ]
 
@@ -105,18 +105,18 @@
         true
     )
 
-    (r = adp copy xy abc 3 2)
+    (r = adp copy xy spread abc 3 2)
     (r = applique :adp [series: copy xy, value: abc, dup: 3, part: 2])
 
-    (r = adp2 copy xy abc 3)
+    (r = adp2 copy xy spread abc 3)
     (r = applique :adp2 [series: copy xy, value: abc, dup: 3])
 
-    (r = ad3p copy xy abc 2)
+    (r = ad3p copy xy spread abc 2)
     (r = applique :ad3p [series: copy xy, value: abc, part: 2])
 ]
 
 (
-    aopd3: specialize :append/only [
+    aopd3: specialize :append [
         dup: 3
         part: 1
     ]
@@ -125,7 +125,7 @@
 
     did all [
         , r = aopd3 copy [a b c] [d e]
-        , r = applique :aopd3 [series: copy [a b c] value: [d e]]
+        , r = applique :aopd3 [series: copy [a b c] value: quote [d e]]
     ]
 )
 
@@ -133,11 +133,10 @@
     is-bad: true
 
     for-each code [
-        [specialize :append/only/only []]
         [specialize :append/asdf []]
         [
-            apo: specialize :append/only []
-            specialize :apo/only []
+            flp: specialize :file-to-local/pass []
+            specialize :flp/pass []
         ]
     ][
         is-bad: me and ('bad-parameter = (trap [do code]).id)
@@ -192,5 +191,5 @@
     apd: make action! f
     apd [d e f]
 
-    data = [a b c d e f]
+    data = [a b c [d e f]]
 )

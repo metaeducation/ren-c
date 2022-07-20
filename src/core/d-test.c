@@ -81,7 +81,7 @@ DECLARE_NATIVE(test_librebol)
 
   blockscope {
     Set_Cell_Flag(Init_Integer(PUSH(), 3), NEWLINE_BEFORE);
-    REBVAL *macro = rebValue("macro [x] [[append x ^ first]]");
+    REBVAL *macro = rebValue("macro [x] [[append x first]]");
     REBVAL *mtest1 = rebValue(macro, "[1 2 3]", "[d e f]");
     Copy_Cell(PUSH(), mtest1);  // ^-- see NOTICE
     rebRelease(mtest1);

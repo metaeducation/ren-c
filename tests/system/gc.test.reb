@@ -2,7 +2,7 @@
 
 [#1776 #2072 (
     a: copy []
-    repeat 200'000 [a: append/only copy [] a]
+    repeat 200'000 [a: append copy [] a]
     recycle
     true
 )]

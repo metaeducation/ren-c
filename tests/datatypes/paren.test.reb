@@ -20,7 +20,7 @@
     fact: copy/deep the (
         either num1 = 1 [num2] [num2: num1 * num2 num1: num1 - 1]
     )
-    insert/only tail of last fact fact
+    insert tail of last fact fact
     24 = eval fact
 )
 
@@ -33,6 +33,6 @@
 [#859 #1665 (
     n: 0
     fact: to group! [n: n + 1 if n = 5000 [throw <deep-enough>]]
-    append/only fact fact
+    append fact fact
     <deep-enough> = catch [eval fact]
 )]

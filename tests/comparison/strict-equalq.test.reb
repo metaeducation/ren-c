@@ -102,15 +102,15 @@
 ; reflexivity for cyclic blocks
 (
     a-value: copy []
-    insert/only a-value a-value
+    insert a-value a-value
     strict-equal? a-value a-value
 )
 ; comparison of cyclic blocks
 [#1049 (
     a-value: copy []
-    insert/only a-value a-value
+    insert a-value a-value
     b-value: copy []
-    insert/only b-value b-value
+    insert b-value b-value
     error? trap [strict-equal? a-value b-value]
     true
 )]

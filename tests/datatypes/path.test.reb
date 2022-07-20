@@ -220,7 +220,7 @@
 
 ; Need to decay null isotopes in GROUP!s
 ;
-([a b c d] = append/(if true [null]) [a b c] [d])
+([a b c d] = append/(if true [null]) [a b c] spread [d])
 
 ; Made this example in a forum post, tested it working, so why not a test
 (

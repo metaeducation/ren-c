@@ -51,7 +51,7 @@
 ; block! test
 (
     out: copy []
-    cfor i b: [1 2 3] back tail of b 1 [append out i]
+    cfor i b: [1 2 3] back tail of b 1 [append out spread i]
     out = [1 2 3 2 3 3]
 )
 ; zero repetition block test

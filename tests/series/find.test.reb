@@ -12,9 +12,9 @@
     blk: [1]
     same? blk find blk 1
 )
-(null? find/part [x] just x 0)
-(equal? [x] find/part [x] just x 1)
-(equal? [x] find-reverse tail of [x] just x)
+(null? find/part [x] 'x 0)
+(equal? [x] find/part [x] 'x 1)
+(equal? [x] find-reverse tail of [x] 'x)
 
 ; Historically Rebol FIND/MATCH implied /TAIL.  This was frowned upon in Ren-C,
 ; and ultimately changed by Red, which seems like pretty good evidence that
@@ -26,7 +26,7 @@
 ; Copyright (C) 2011-2015 Red Foundation).
 [
     (equal? [x y] find/match [x y] 'x)
-    (equal? [y] find/match/tail [x y] 'x)
+    (equal? [y] [# @]: find/match [x y] 'x)
 
     ([here and now] = find/match [here and now] 'here)
     (null = find/match [here and now] 'her)
@@ -46,8 +46,8 @@
     ([he✐re and now] = find/match [he✐re and now] 'he✐re)
 ]
 
-(equal? [x] find-last [x] just x)
-(equal? [x] find-last [x x x] just x)
+(equal? [x] find-last [x] 'x)
+(equal? [x] find-last [x x x] 'x)
 [#66
     (null? find/skip [1 2 3 4 5 6] 2 3)
 ]
@@ -149,10 +149,9 @@
     (#{00} = find/case #{00} #)
 ]
 
-; @ types are now handled as literal by APPEND/FIND unless quoted
 [
-    ([b c] = find [a b c] @b)
-    ([[b c] d] = find [a [b c] d] @[b c])
+    ([b c] = find [a b c] 'b)
+    ([[b c] d] = find [a [b c] d] '[b c])
 ]
 
 ; Should be able to find URL! in a TEXT!

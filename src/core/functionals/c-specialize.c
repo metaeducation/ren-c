@@ -29,8 +29,8 @@
 // action.  Slots in that frame that would have held TYPESET! information for
 // the parameter are replaced by the fixed value, which is type checked.
 //
-// Partial specialization uses a different mechanism.  While `:append/only`
-// fulfills a frame slot value since /ONLY has no arguments, `:append/part`
+// Partial specialization uses a different mechanism.  `:file-to-local/pass`
+// fulfills a frame slot value since /PASS has no arguments, but `:append/part`
 // does not.  Distinctions between `:append/dup/part` and `:append/part/dup`
 // require ordering information that has to be tracked outside of the
 // exemplar frame.
@@ -175,7 +175,7 @@ Context(*) Make_Context_For_Action_Push_Partials(
             // If refinement named on stack takes no arguments, then it can't
             // be partially specialized...only fully, and won't be bound:
             //
-            //     specialize :append/only [only: #]  ; only not bound
+            //     specialize :skip/unbounded [unbounded: #]  ; word not bound
             //
             Init_Blackhole(arg);
             goto continue_specialized;

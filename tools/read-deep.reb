@@ -13,7 +13,7 @@ REBOL [
     Purpose: "Recursive READ strategies."
 ]
 
-if not find words of :import [product] [  ; See %import-shim.r
+if not find words of :import 'product [  ; See %import-shim.r
     do load append copy system/script/path %import-shim.r
 ]
 
@@ -36,7 +36,7 @@ read-deep-seq: func [
     let item: take queue
 
     if equal? #"/" last item [
-        insert queue map-each x read %% (repo-dir)/(item) [join item x]
+        insert queue spread map-each x read %% (repo-dir)/(item) [join item x]
     ]
 
     return item

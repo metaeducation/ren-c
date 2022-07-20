@@ -8,21 +8,27 @@
 ; introduced in Red, without backtracking...and affecting the return result.
 ; In Ren-C, backtracking is implemented, and also it is used to set variables
 ; (like a SET or COPY) instead of affecting the return result.
+;
+; As an additional twist on PARSE3 collect vs UPARSE collect, there is no
+; notion of "rule product"...hence what to keep is based on the range of
+; the match.  KEEP INTEGER! thus keeps a block with a single element in it,
+; and KEEP SPREAD INTEGER! is needed to splice the integer into the collected
+; block.  It is not considered worth it to re-engineer parse3 to resolve this.
 
 (did all [
+    did parse3 [1 2 3] [x: collect [keep spread [some integer!]]]
+    x = [1 2 3]
+])
+(did all [
+    did parse3 [1 2 3] [x: collect [some [keep spread integer!]]]
+    x = [1 2 3]
+])
+(did all [
     did parse3 [1 2 3] [x: collect [keep [some integer!]]]
-    x = [1 2 3]
-])
-(did all [
-    did parse3 [1 2 3] [x: collect [some [keep integer!]]]
-    x = [1 2 3]
-])
-(did all [
-    did parse3 [1 2 3] [x: collect [keep ^[some integer!]]]
     x = [[1 2 3]]
 ])
 (did all [
-    did parse3 [1 2 3] [x: collect [some [keep ^integer!]]]
+    did parse3 [1 2 3] [x: collect [some [keep integer!]]]
     x = [[1] [2] [3]]
 ])
 
@@ -47,9 +53,9 @@
 (did all [
     pos: parse3* [1 2 3] [
         x: collect [
-            keep integer! keep integer! keep text!
+            keep spread integer! keep spread integer! keep text!
             |
-            keep integer! keep [some integer!]
+            keep spread integer! keep spread [some integer!]
         ]
         <here>
     ]
@@ -62,7 +68,7 @@
 
 (did all [
     x: <before>
-    null = parse3 [1 2] [x: collect [keep integer! keep text!]]
+    null = parse3 [1 2] [x: collect [keep spread integer! keep spread text!]]
     x = <before>
 ])
 
@@ -71,9 +77,9 @@
 (did all [
     did parse3 [1 2 3 4] [
         a: collect [
-            keep integer!
-            b: collect [keep [2 integer!]]
-            keep integer!
+            keep spread integer!
+            b: collect [keep spread [2 integer!]]
+            keep spread integer!
         ]
         <end>
     ]
@@ -82,17 +88,15 @@
     b = [2 3]
 ])
 
-; META-GROUP! can be used to keep material that did not originate from the
+; GROUP! can be used to keep material that did not originate from the
 ; input series or a match rule.
-;
-; !!! This is extended in UPARSE to the other META-XXX! types.
 ;
 (did all [
     pos: parse3* [1 2 3] [
         x: collect [
-            keep integer!
-            keep (second [A [<pick> <me>] B])
-            keep integer!
+            keep spread integer!
+            keep spread (second [A [<pick> <me>] B])
+            keep spread integer!
         ]
         <here>
     ]
@@ -102,9 +106,9 @@
 (did all [
     pos: parse3* [1 2 3] [
         x: collect [
-            keep integer!
-            keep ^(second [A [<pick> <me>] B])
-            keep integer!
+            keep spread integer!
+            keep (second [A [<pick> <me>] B])
+            keep spread integer!
         ]
         <here>
     ]
@@ -112,7 +116,7 @@
     x = [1 [<pick> <me>] 2]
 ])
 (did all [
-    did parse3 [1 2 3] [x: collect [keep ^([a b c]) to <end>]]
+    did parse3 [1 2 3] [x: collect [keep ([a b c]) to <end>]]
     x = [[a b c]]
 ])
 

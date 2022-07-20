@@ -784,6 +784,8 @@ void Find_Image(Frame(*) frame_)
 {
     INCLUDE_PARAMS_OF_FIND;
 
+    Unquotify_Dont_Expect_Meta(ARG(pattern));
+
     UNUSED(REF(reverse));  // Deprecated https://forum.rebol.info/t/1126
     UNUSED(REF(last));  // ...a HIJACK in %mezz-legacy errors if used
 
@@ -858,8 +860,8 @@ void Find_Image(Frame(*) frame_)
         n++;
     }
     else
-        if (REF(tail))
-            ++n;
+        if (WANTED(tail))
+            ++n;  // !!! not implemented, but would increment n
 
     VAL_IMAGE_POS(value) = n;
     return;
@@ -1301,7 +1303,9 @@ REBTYPE(Image)
     case SYM_APPEND:
     case SYM_INSERT:
     case SYM_CHANGE: {
-        if (IS_NULLED_OR_BLANK(D_ARG(2))) {
+        Unquotify_Dont_Expect_Meta(D_ARG(2));
+
+        if (Is_Nulled(D_ARG(2))) {
             if (id == SYM_APPEND) // append returns head position
                 VAL_IMAGE_POS(image) = 0;
             return COPY(image); // don't fail on read only if it would be a no-op

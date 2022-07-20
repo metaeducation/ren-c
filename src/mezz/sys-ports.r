@@ -65,7 +65,7 @@ make-port*: function [
             ; analysis.  All of this needs to be rewritten, but go along with
             ; the strange historical behavior for now.
             ;
-            spec: make object! append copy spec :['ref: spec]
+            spec: make object! append copy spec spread :['ref: spec]
             name: spec.scheme
         ]
         object! [
@@ -111,10 +111,10 @@ make-port*: function [
     overloads: copy []
     for-each [key val] spec [
         if not any [bad-word? ^val, null? :val, blank? :val] [
-            append overloads :[to set-word! key get 'val]  ; override
+            append overloads spread :[to set-word! key get 'val]  ; override
         ]
     ]
-    append port.spec overloads
+    append port.spec spread overloads
 
     port.spec.scheme: name
     port.scheme: scheme
@@ -245,7 +245,7 @@ make-scheme: function [
                 block? args
                 block? body
             ]
-            append actor reduce [
+            append actor spread reduce [
                 name (reeval op args body) ; add action! to object! w/name
             ]
         ]
@@ -256,5 +256,5 @@ make-scheme: function [
         fail ["Scheme actor" :scheme.name "can't be" type of :scheme.actor]
     ]
 
-    append system.schemes reduce [scheme.name scheme]
+    append system.schemes spread reduce [scheme.name scheme]
 ]

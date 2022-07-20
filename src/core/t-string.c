@@ -855,8 +855,12 @@ REBTYPE(String)
       case SYM_INSERT:
       case SYM_CHANGE: {
         INCLUDE_PARAMS_OF_INSERT;
+        UNUSED(PAR(series));
 
-        UNUSED(PAR(series));  // is v
+        Value(*) arg = ARG(value);
+        assert(not Is_Nulled(arg));
+        if (Is_Meta_Of_Void(arg))
+            Init_Nulled(arg);
 
         REBLEN len; // length of target
         if (ID_OF_SYMBOL(verb) == SYM_CHANGE)
@@ -867,7 +871,7 @@ REBTYPE(String)
         // Note that while inserting or appending NULL is a no-op, CHANGE with
         // a /PART can actually erase data.
         //
-        if (Is_Nulled(ARG(value)) and len == 0) {
+        if (Is_Nulled(arg) and len == 0) {
             if (id == SYM_APPEND) // append always returns head
                 VAL_INDEX_RAW(v) = 0;
             return COPY(v);  // don't fail on read only if would be a no-op
@@ -879,25 +883,27 @@ REBTYPE(String)
         if (REF(line))
             flags |= AM_LINE;
 
-        // !!! This mimics the historical behavior for now:
+        // !!! This mimics historical type tolerance, e.g. not everything that
+        // gets appended has to be a string:
         //
-        //     rebol2>> append "abc" quote 'd
+        //     rebol2>> append "abc" 'd
         //     == "abcd"
         //
-        //     rebol2>> append/only "abc" [d e]  ; like appending (the '[d e])
-        //     == "abcde"
+        // However it will not try to FORM blocks or other arrays; it only
+        // accepts isotopic blocks to imply "append each item individually".
         //
-        // But for consistency, it would seem that if the incoming value is
-        // quoted that should give molding semantics, so quoted blocks include
-        // their brackets.  Review.
-        //
-        if (IS_QUOTED(ARG(value)))
-            Unquotify(ARG(value), 1);
+        if (not IS_BLOCK(arg) and not Is_Nulled(arg)) {  // not a splice
+            if (not IS_QUOTED(arg))
+                fail (ARG(value));
+            Unquotify(arg, 1);  // remove "^META" level
+            if (ANY_ARRAY(arg) or ANY_SEQUENCE(arg))
+                fail (ARG(value));
+        }
 
         VAL_INDEX_RAW(v) = Modify_String_Or_Binary(  // does read-only check
             v,
             cast(enum Reb_Symbol_Id, id),
-            ARG(value),
+            arg,
             flags,
             len,
             REF(dup) ? Int32(ARG(dup)) : 1
@@ -908,6 +914,7 @@ REBTYPE(String)
       case SYM_SELECT:
       case SYM_FIND: {
         INCLUDE_PARAMS_OF_FIND;
+        Unquotify_Dont_Expect_Meta(ARG(pattern));
 
         UNUSED(REF(reverse));  // Deprecated https://forum.rebol.info/t/1126
         UNUSED(REF(last));  // ...a HIJACK in %mezz-legacy errors if used
@@ -944,12 +951,21 @@ REBTYPE(String)
         UNUSED(find);
 
         if (id == SYM_FIND) {
-            //
-            // Historical FIND/MATCH implied /TAIL, Ren-C and Red don't do that
-            //
-            if (REF(tail))
-                ret += len;
-            return Init_Series_Cell_At(OUT, VAL_TYPE(v), VAL_SERIES(v), ret);
+            if (WANTED(tail)) {
+                Init_Series_Cell_At(
+                    ARG(tail),
+                    VAL_TYPE(v),
+                    VAL_SERIES(v),
+                    ret + len
+                );
+                Proxy_Multi_Returns(frame_);
+            }
+            return Init_Series_Cell_At(
+                OUT,
+                VAL_TYPE(v),
+                VAL_SERIES(v),
+                ret
+            );
         }
 
         assert(id == SYM_SELECT);

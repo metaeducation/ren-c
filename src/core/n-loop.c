@@ -1563,9 +1563,15 @@ DECLARE_NATIVE(map_each)
     INCLUDE_PARAMS_OF_MAP_EACH;
 
     UNUSED(PAR(vars));
+    UNUSED(PAR(body));
 
-    Quotify(ARG(data), 1);  // MAP wants data to be QUOTED! atm
-    Metafy(ARG(body));  // want the body to effectively quote the argument
+    // The theory is that MAP would use a dialect on BLOCK! arguments for data
+    // by default, like [1 thru 10].  But you could give it an arbitrary
+    // enumerating action and it would iteratively call it.  Since such an
+    // iterator does not exist yet (and would not be cheap) a QUOTED! BLOCK!
+    // is used temporarily as a substitute for passing a block iterator.
+    //
+    Quotify(ARG(data), 1);
 
     INIT_FRM_PHASE(frame_, VAL_ACTION(Lib(MAP)));
     // INIT_FRM_BINDING ?
@@ -1677,44 +1683,24 @@ DECLARE_NATIVE(map)
 
     Decay_If_Isotope(SPARE);
 
-    if (Is_Nulled(SPARE))
-        Init_Isotope(SPARE, Canon(NULL));
     if (Is_Isotope(SPARE)) {
         Init_Error(SPARE, Error_Bad_Isotope(SPARE));
         Init_Thrown_With_Label(FRAME, SPARE, Lib(NULL));
         goto finalize_map;
     }
 
-    if (IS_BLANK(SPARE))  // blank also skips
-        goto next_iteration;
-
-    if (IS_QUOTED(SPARE)) {
-        Unquotify(SPARE, 1);
-        if (Is_Nulled(SPARE))
-            Init_Bad_Word(PUSH(), Canon(NULL));  // APPEND semantics
-        else
-            Copy_Cell(PUSH(), SPARE);
-    }
-    else if (ANY_THE_KIND(VAL_TYPE(SPARE))) {
-        Plainify(Copy_Cell(PUSH(), SPARE));
-    }
-    else if (IS_BLOCK(SPARE)) {
+    if (Is_Splice(SPARE)) {
+        Reify_Splice(SPARE);
         Cell(const*) tail;
         Cell(const*) v = VAL_ARRAY_AT(&tail, SPARE);
         for (; v != tail; ++v)
             Derelativize(PUSH(), v, VAL_SPECIFIER(SPARE));
     }
-    else if (ANY_INERT(SPARE)) {
+    else if (Is_Nulled(SPARE)) {
+        fail (Error_Need_Non_Null_Raw());
+    }
+    else
         Copy_Cell(PUSH(), SPARE);  // non nulls added to result
-    }
-    else {
-        Init_Error(
-            SPARE,
-            Error_User("Cannot MAP evaluative values w/o QUOTE")
-        );
-        Init_Thrown_With_Label(FRAME, SPARE, Lib(NULL));
-        goto finalize_map;
-    }
 
     goto next_iteration;
 

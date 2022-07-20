@@ -69,14 +69,14 @@
                 fail ["Invalid keyword type:" keyword]
             ]
 
-            keep/line ^ compose [
+            keep/line compose [
                 (if match [integer! word!] keyword [
                     to-text keyword  ; `parse "a1" ['a '1]` illegal for now
                 ] else [
                     keyword
                 ])
 
-                ((suffix))  ; vaporize if suffix is blank
+                (maybe suffix)  ; vaporize if suffix is blank
 
                 (engroup quote keyword)  ; make rule evaluate to actual keyword
             ]

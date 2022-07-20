@@ -1127,9 +1127,14 @@ Context(*) Error_Isotope_Arg(Frame(*) f, const REBPAR *param)
     // bad word there...
     //
     REBVAL *arg = FRM_ARG(f, index);
-    assert(Is_Isotope(arg));
     Copy_Cell(PUSH(), arg);
-    Reify_Isotope(TOP);
+
+    if (Is_Isotope(arg))
+        Reify_Isotope(TOP);
+    else {
+        assert(Is_Splice(arg));
+        Reify_Splice(TOP);
+    }
 
     return Error_Isotope_Arg_Raw(label, param_name, TOP);
 }

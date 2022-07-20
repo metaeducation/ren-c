@@ -111,7 +111,7 @@ char!  ; !!! simulated datatype constraint (single-element ISSUE!)
 match  ; !!! no longer supported by PARSE3
 do
 into
-only
+spread
 end  ; must be last (SYM_END referred to by GET_VAR() in %u-parse.c)
 
 ; It is convenient to be able to say `for-each [_ x y] [1 2 3 ...] [...]` and

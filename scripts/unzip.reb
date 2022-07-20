@@ -614,7 +614,7 @@ unzip: function [
 ]
 
 
-append lib compose [
+append lib spread compose [
     zip: (:zip)
     unzip: (:unzip)
 ]

@@ -3,49 +3,49 @@
 ; Ren-C's APPLY is a hybrid of positional and non-positional application.
 
 (-1 = apply :negate [1])
-([a b c d e] = apply :append [[a b c] [d e]])
+([a b c d e] = apply :append [[a b c] spread [d e]])
 
 ; Refinements can be provided in any order.  Commas can be used interstitially
 [
-    ([a b c d e d e] = apply :append [[a b c] [d e] /dup 2])
-    ([a b c d e d e] = apply :append [/dup 2 [a b c] [d e]])
-    ([a b c d e d e] = apply :append [[a b c] /dup 2 [d e]])
+    ([a b c d e d e] = apply :append [[a b c] spread [d e] /dup 2])
+    ([a b c d e d e] = apply :append [/dup 2 [a b c] spread [d e]])
+    ([a b c d e d e] = apply :append [[a b c] /dup 2 spread [d e]])
 
-    ([a b c d d] = apply :append [/dup 2 [a b c] [d e] /part 1])
-    ([a b c d d] = apply :append [[a b c] [d e] /part 1 /dup 2])
+    ([a b c d d] = apply :append [/dup 2 [a b c] spread [d e] /part 1])
+    ([a b c d d] = apply :append [[a b c] spread [d e] /part 1 /dup 2])
 ]
 
 ; Not only can refinements be used by name, any parameter can.
 ; Once a parameter has been supplied by name, it is no longer considered for
 ; consuming positionally.
 [
-    ([a b c d e] = apply :append [/series [a b c] /value [d e]])
-    ([a b c d e] = apply :append [/value [d e] /series [a b c]])
+    ([a b c d e] = apply :append [/series [a b c] /value spread [d e]])
+    ([a b c d e] = apply :append [/value spread [d e] /series [a b c]])
 
-    ([a b c d e] = apply :append [/series [a b c] [d e]])
-    ([a b c d e] = apply :append [/value [d e] [a b c]])
+    ([a b c d e] = apply :append [/series [a b c] spread [d e]])
+    ([a b c d e] = apply :append [/value spread [d e] [a b c]])
 ]
 
 ; Giving too many arguments is an error
 [
     (did all [
-        e: trap [apply :append [[a b c] [d e] [f g]]]
+        e: trap [apply :append [[a b c] spread [d e] [f g]]]
         e.id = 'apply-too-many
     ])
     (did all [
-        e: trap [apply :append [/value [d e] [a b c] [f g]]]
+        e: trap [apply :append [/value spread [d e] [a b c] [f g]]]
         e.id = 'apply-too-many
     ])
 ]
 
 ; You can use commas so long as they are at interstitial positions
 [
-    ([a b c d e d e] = apply :append [[a b c], [d e], /dup 2])
-    ([a b c d e d e] = apply :append [/dup 2, [a b c] [d e]])
+    ([a b c d e d e] = apply :append [[a b c], spread [d e], /dup 2])
+    ([a b c d e d e] = apply :append [/dup 2, [a b c] spread [d e]])
 
     (did all [
         e: trap [
-            [a b c d e d e] = apply :append [/dup, 2 [a b c] [d e]]
+            [a b c d e d e] = apply :append [/dup, 2 [a b c] spread [d e]]
             e.arg1 = 'need-non-end
             e.arg2 = '/dup
         ]
@@ -56,14 +56,14 @@
 [
     (did all [
         e: trap [
-            [a b c d e d e] = apply :append [/dup /part 1 [a b c] [d e]]
+            [a b c d e d e] = apply :append [/dup /part 1 [a b c] spread [d e]]
             e.arg1 = 'need-non-end
             e.arg2 = '/dup
         ]
     ])
     (did all [
         e: trap [
-            [a b c d e d e] = apply :append [[a b c] [d e] /dup]
+            [a b c d e d e] = apply :append [[a b c] spread [d e] /dup]
             e.arg1 = 'need-non-end
             e.arg2 = '/dup
         ]
@@ -126,7 +126,7 @@
 (
     s: applique :append [
         series: copy [a b c]
-        value: [d e]
+        value: spread [d e]
         dup: 2
     ]
     s = [a b c d e d e]

@@ -114,7 +114,7 @@ func: func* [
     |
         :(if var '[  ; so long as we haven't reached any <local> or <with> etc.
             set var: [any-word! | any-path! | quoted!] (
-                append new-spec ^var  ; need quote level as-is in new spec
+                append new-spec var
 
                 var: noquote var
                 case [
@@ -122,11 +122,11 @@ func: func* [
                         if (length of var != 2) or (_ <> var.1) [
                             fail ["Bad path in spec:" ^spec]
                         ]
-                        append exclusions ^var.2  ; exclude args/refines
+                        append exclusions var.2  ; exclude args/refines
                     ]
 
                     any-word? var [
-                        append exclusions ^var  ; exclude args/refines
+                        append exclusions var  ; exclude args/refines
                     ]
 
                     true [  ; QUOTED! could have been anything
@@ -136,7 +136,7 @@ func: func* [
             )
             |
             set other: block! (
-                append new-spec ^other  ; data type blocks
+                append new-spec other  ; data type blocks
             )
             |
             copy other some text! (
@@ -156,7 +156,7 @@ func: func* [
                 ]
             ]
             defaulters: default [copy []]
-            append defaulters compose [
+            append defaulters spread compose [
                 (var): default '(eval other.1)
             ]
         )
@@ -166,11 +166,11 @@ func: func* [
     |
         '<local> (append new-spec <local>)
         opt some [set var: word! set other: opt group! (
-            append new-spec ^var
-            append exclusions ^var
+            append new-spec var
+            append exclusions var
             if other [
                 defaulters: default [copy []]
-                append defaulters compose [  ; always sets
+                append defaulters spread compose [  ; always sets
                     (var): '(eval other)
                 ]
             ]
@@ -187,14 +187,14 @@ func: func* [
                 if not object? other [other: ensure any-context! get other]
                 bind new-body other
                 for-each [key val] other [
-                    append exclusions ^key
+                    append exclusions key
                 ]
             )
         ]
     |
         '<with> opt some [
             set other: [word! | path!] (
-                append exclusions ^other
+                append exclusions other
 
                 ; Definitional returns need to be signaled even if FUNC, so
                 ; the FUNC* doesn't automatically generate one.
@@ -213,9 +213,9 @@ func: func* [
         )
         maybe some [
             set var: word! (other: _) maybe set other: group! (
-                append exclusions ^var
-                append statics ^(as set-word! var)
-                append statics ^(other else [the ~])
+                append exclusions var
+                append statics (as set-word! var)
+                append statics (other else [the ~])
             )
         ]
         (var: _)
@@ -252,13 +252,11 @@ func: func* [
     ; a spec block.  This is a work in progress.
     ;
     if locals [
-        append new-spec [<local>]
-        for-each loc locals [
-            append new-spec ^loc
-        ]
+        append new-spec <local>
+        append new-spec spread locals
     ]
 
-    try append new-spec with-return  ; if FUNC* suppresses return generation
+    append new-spec maybe with-return  ; if FUNC* suppresses return generation
 
     ; The constness of the body parameter influences whether FUNC* will allow
     ; mutations of the created function body or not.  It's disallowed by
@@ -268,7 +266,7 @@ func: func* [
     if const? body [new-body: const new-body]
 
     return func* new-spec either defaulters [
-        append defaulters ^ as group! any [new-body body]
+        append defaulters as group! any [new-body body]
     ][
         any [new-body body]
     ]
@@ -299,7 +297,7 @@ function: specialize :func [gather: #]
     if showing [
         print form collect [
             keep [===]
-            until [equal? ''=== keep ^(take remarks)]  ; prints tail `===`
+            until [equal? ''=== keep take remarks]  ; prints tail `===`
         ]
     ] else [
         until [equal? '=== take remarks]
@@ -582,7 +580,7 @@ so: enfixed func [
         fail @condition make error! [
             type: 'Script
             id: 'assertion-failure
-            arg1: compose [((:condition)) so]
+            arg1: compose [(condition) so]
         ]
     ]
     if tail? feed [return none]
@@ -890,7 +888,7 @@ meth: enfixed func [
     ]
     return set member bind (
         apply :func [
-            compose [((spec)) <in> (context)]
+            compose [(spread spec) <in> (context)]
             body
             /gather gather
         ]
@@ -909,7 +907,7 @@ cause-error: func [
     ; Filter out functional values:
     iterate args [
         if action? first args [
-            change args ^(meta-of first args)
+            change args (meta-of first args)
         ]
     ]
 
@@ -991,7 +989,7 @@ fail: func [
     ] else [
         null? reason so make error! compose [
             type: 'Script
-            ((case [
+            (spread case [
                 frame and (blame) '[
                     id: 'invalid-arg
                     arg1: label of frame
@@ -1009,7 +1007,7 @@ fail: func [
                 ]
             ] else '[
                 id: 'unknown-error
-            ]))
+            ])
         ]
     ]
 
@@ -1050,7 +1048,7 @@ generate: func [
         ]]
         append words w
     ]
-    let spec: compose [/reset [block!] <static> ((unique words)) count]
+    let spec: compose [/reset [block!] <static> (spread unique words) count]
     let body: compose/deep [
         if reset [count: reset return]
         if block? count [
@@ -1060,10 +1058,10 @@ generate: func [
         ]
         count: me + 1
         let result: (to group! iteration)
-        ((either empty? condition
+        (spread either empty? condition
             [[ return result ]]
             [compose [ return if (to group! condition) [result] ]]
-        ))
+        )
     ]
     let f: function spec body
     f/reset init
@@ -1106,11 +1104,11 @@ read-lines: func [
             pos: _
             parse3 buffer (rule)
             if pos [break]
-            ((if same? src system.ports.input
+            (spread if same? src system.ports.input
                 '[data: read port]
                 else
                 '[data: read/part port 4096]
-            ))
+            )
             if empty? data [
                 eof: true
                 pos: tail of buffer
@@ -1119,7 +1117,7 @@ read-lines: func [
             append buffer data
         ]
         if all [eof empty? buffer] [return null]
-        ((if not binary '[to text!])) take/part buffer pos
+        (maybe spread if not binary '[to text!]) take/part buffer pos
     ]
 ]
 

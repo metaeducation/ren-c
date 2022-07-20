@@ -137,44 +137,44 @@ combinator: func [
 
     let action: func compose [
         ; Get the text description if given
-        ((if text? spec.1 [spec.1, elide spec: my next]))
+        (if text? spec.1 [spec.1, elide spec: my next])
 
         ; Enforce a RETURN: definition.
         ;
-        ((
+        (
             assert [spec.1 = 'return:]
             assert [text? spec.2]
             assert [block? spec.3]
 
-            reduce [spec.1 spec.2 spec.3]
+            spread reduce [spec.1 spec.2 spec.3]
             elide spec: my skip 3
-        ))
+        )
 
         remainder: [<opt> any-series!]  ; all combinators have remainder
 
-        ((if spec.1 = 'pending: [
+        (if spec.1 = 'pending: [
             assert [spec.2 = [<opt> block!]]
             autopipe: false  ; they're asking to handle pending themselves
-            reduce [spec.1 spec.2]
+            spread reduce [spec.1 spec.2]
             elide spec: my skip 2
         ] else [
             autopipe: true  ; they didn't mention pending, handle automatically
-            [pending: [<opt> block!]]
-        ]))
+            spread [pending: [<opt> block!]]
+        ])
 
         state [frame!]
         input [any-series!]
 
         ; Whatever arguments the combinator takes, if any
         ;
-        ((spec))
+        (spread spec)
     ] compose [
         ;
         ; !!! If we are "autopipe" then we need to make it so the parsers that
         ; we receive in will automatically bubble up their pending contents in
         ; order of being called.
 
-        ((if autopipe '[
+        (maybe spread try if autopipe '[
             let f: binding of 'return
 
             pending: null
@@ -198,12 +198,12 @@ combinator: func [
                     ][
                         f2.pending: let subpending
                         return unmeta ((^ eval f2) also [
-                            pending: glom pending subpending
+                            pending: glom pending spread subpending
                         ])
                     ]
                 ]
             ]
-        ]))
+        ])
 
         return (as group! body)
 
@@ -230,9 +230,9 @@ combinator?: func [
 ][
     keys: words of :action  ; test if it's a combinator
     return did all [
-        find keys quote 'remainder
-        find keys quote 'input
-        find keys quote 'state
+        find keys 'remainder
+        find keys 'input
+        find keys 'state
     ]
 ]
 
@@ -297,6 +297,22 @@ default-combinators: make map! reduce [
             return heavy null  ; intercepting special error counts too
         ]
         return unmeta result'  ; return successful parser result
+    ]
+
+    'spread combinator [
+        {Return isotope form of array arguments}
+        return: "PARSER's result if it succeeds, otherwise NULL"
+            [<opt>]
+        parser [action!]
+        <local> result'
+    ][
+        ([^result' remainder]: parser input) else [
+            return null
+        ]
+        if (not quoted? result') or (not any-array? result': unquote result') [
+            fail "SPREAD only accepts ANY-ARRAY!"
+        ]
+        return unmeta result'  ; was unquoted above
     ]
 
     'not combinator [
@@ -382,7 +398,7 @@ default-combinators: make map! reduce [
     'while combinator [
         {Run the body parser in a loop, for as long as condition matches}
         return: "Result of last body parser (or none if failure)"
-            [<opt> any-value!]
+            [<opt> <void> any-value!]
         condition-parser [action!]
         body-parser [action!]
         <local> result' last-result' pos
@@ -612,11 +628,9 @@ default-combinators: make map! reduce [
             fail "Cannot CHANGE to isotope"
         ]
 
-        assert [quoted? replacement']
-
         ; CHANGE returns tail, use as new remainder
         ;
-        remainder: change/part input (unquote replacement') remainder
+        remainder: change/part input (unmeta replacement') remainder
         return ~changed~
     ]
 
@@ -649,9 +663,7 @@ default-combinators: make map! reduce [
             fail "Cannot INSERT isotope"
         ]
 
-        assert [quoted? insertion']
-
-        remainder: insert input (unquote insertion')
+        remainder: insert input (unmeta insertion')
         return ~inserted~
     ]
 
@@ -660,7 +672,7 @@ default-combinators: make map! reduce [
     'to combinator [
         {Match up TO a certain rule (result position before succeeding rule)}
         return: "The rule's product"
-            [<opt> any-value!]
+            [<opt> <void> any-value!]
         parser [action!]
         <local> result'
     ][
@@ -680,7 +692,7 @@ default-combinators: make map! reduce [
     'thru combinator [
         {Match up THRU a certain rule (result position after succeeding rule)}
         return: "The rule's product"
-            [<opt> any-value!]
+            [<opt> <void> any-value!]
         parser [action!]
         <local> result'
     ][
@@ -809,6 +821,15 @@ default-combinators: make map! reduce [
     ][
         remainder: input
         return state.input
+    ]
+
+    <subinput> combinator [
+        {Get the input of the SUBPARSE operation}
+        return: "parse position"
+            [any-series!]
+    ][
+        remainder: input
+        return head of input  ; !!! What if SUBPARSE series not at head?
     ]
 
     <any> combinator [  ; historically called "SKIP"
@@ -975,7 +996,7 @@ default-combinators: make map! reduce [
         ;
         collected: collect [
             remove-each item any [subpending #] [
-                if quoted? :item [keep item, true]
+                if quoted? :item [keep unquote item, true]
             ]
         ]
 
@@ -996,45 +1017,34 @@ default-combinators: make map! reduce [
         if bad-word? result' [
             fail ["Cannot KEEP a" result' "isotope"]
         ]
-        if result' = the '_ [  ; result' is quoted, so they kept a blank
+        if result' = @void [  ; pure void
             pending: null
-            return ~null~  ; succeed but return null isotope
+            return ~null~  ; succeed but return null isotope (?)
         ]
 
-        result: unquote result'
-
         ; Since COLLECT is considered the most common `pending` client, we
-        ; reserve QUOTED! items for collected things.  This means we go ahead
-        ; and flatten blocks out into quoted items.
+        ; reserve QUOTED! items for collected things.
         ;
-        ; Note that if result (unquoted) was a QUOTED!, that's what they asked
-        ; to collect...which means they wanted it literally.  All collect items
-        ; are appended literally--consider the list to be flattened, so
-        ; COLLECT itself doesn't have to worry about splicing.
+        ; All collect items are appended literally--so COLLECT itself doesn't
+        ; have to worry about splicing.  More efficient concepts (like double
+        ; quoting normal items, and single quoting spliced blocks) could be
+        ; used instead--though copies of blocks would be needed either way.
         ;
         case [
-            quoted? :result [  ; wanted to KEEP the unquoted thing literally
-                pending: glom subpending result'  ; just one quote level
+            quoted? :result' [  ; unmeta'd result asked to be kept literally
+                pending: glom subpending result'  ; retain meta quote as signal
             ]
-            block? :result [
+            block? :result' [
                 subpending: default [copy []]  ; !!! optimize empty results?
-                for-each item result [
+                for-each item result' [
                     ;
-                    ; One level of quote is to tell this APPEND we want to add
-                    ; literally (that one will be removed).  The other level is
-                    ; to signal that this pending item targets COLLECT.
+                    ; We quote to signal that this pending item targets COLLECT.
                     ;
-                    append subpending ^ ^item
+                    append subpending quote item
                 ]
                 pending: subpending
             ]
-            any-the-value? :result [
-                pending: glom subpending ^(plain result')  ; drop @
-            ]
-            any-inert? :result [  ; quote doesn't matter
-                pending: glom subpending ^result'  ; just one quote level
-            ]
-            fail "Can only KEEP values that are QUOTED! or ANY-INERT!"
+            fail "Incorrect KEEP (not value or SPREAD)"
         ]
 
         return unmeta result'
@@ -1074,7 +1084,7 @@ default-combinators: make map! reduce [
 
         obj: make object! collect [
             remove-each item any [subpending #] [
-                if block? :item [keep item, true]
+                if block? :item [keep spread item, true]
             ] else [
                 ; should it error or fail if subpending was BLANK! ?
             ]
@@ -1109,7 +1119,7 @@ default-combinators: make map! reduce [
         ; This lets us emit null fields and isotopes, since the MAKE OBJECT!
         ; will do an evaluation.
         ;
-        pending: glom pending ^ :[as set-word! target result']
+        pending: glom pending :[as set-word! target result']
         return unmeta result'
     ]
 
@@ -1175,8 +1185,8 @@ default-combinators: make map! reduce [
 
     === TEXT! COMBINATOR ===
 
-    ; For now we just make text act as FIND/MATCH/TAIL, though this needs to be
-    ; sensitive to whether we are operating on blocks or text/binary.
+    ; For now we just build TEXT! on FIND, though this needs to be sensitive
+    ; to whether we are operating on blocks or text/binary.
     ;
     ; !!! We presume that it's value-bearing, and gives back the value it
     ; matched against.  If you don't want it, you have to ELIDE it.  Note this
@@ -1201,10 +1211,10 @@ default-combinators: make map! reduce [
             ; no isolated value to capture.  Should we copy it?
 
             any-string? input [
-                input: apply :find [
+                apply :find [
                     input value
                     /match true
-                    /tail true
+                    /tail 'remainder
                     /case state.case
                 ] else [
                     return null
@@ -1212,10 +1222,10 @@ default-combinators: make map! reduce [
             ]
             true [
                 assert [binary? input]
-                input: apply :find [
+                apply :find [
                     input value
                     /match true
-                    /tail true
+                    /tail 'remainder
                     /case state.case
                 ] else [
                     return null
@@ -1223,7 +1233,6 @@ default-combinators: make map! reduce [
             ]
         ]
 
-        remainder: input
         return value
     ]
 
@@ -1248,14 +1257,14 @@ default-combinators: make map! reduce [
                 return null
             ]
             any-string? input [
-                if remainder: find/match/case/tail input value [
+                if [# remainder]: find/match/case input value [
                     return value
                 ]
                 return null
             ]
             true [
                 assert [binary? input]
-                if remainder: find/match/case/tail input value [
+                if [# remainder]: find/match/case input value [
                     return value
                 ]
                 return null
@@ -1285,7 +1294,7 @@ default-combinators: make map! reduce [
             ]
             true [  ; Note: BITSET! acts as "byteset" here
                 ; binary or any-string input
-                if remainder: find/match/tail input value [
+                if [# remainder]: find/match input value [
                     return value
                 ]
                 return null
@@ -1545,7 +1554,7 @@ default-combinators: make map! reduce [
         return :value
     ]
 
-    'just combinator [
+    'just* combinator [
         return: "Quoted form of literal value (not matched)" [quoted!]
         'value [any-value!]
     ][
@@ -1828,7 +1837,7 @@ default-combinators: make map! reduce [
         ([^result' remainder pending]: comb state input value) else [
             return null
         ]
-        totalpending: glom totalpending pending
+        totalpending: glom totalpending spread pending
 
         comb: :(state.combinators).(quoted!)
 
@@ -1847,13 +1856,13 @@ default-combinators: make map! reduce [
                 ([^result' remainder pending]: comb state remainder quote item) else [
                     return null
                 ]
-                totalpending: glom totalpending pending
+                totalpending: glom totalpending spread pending
             ]
         ] else [
             ([^result' remainder pending]: comb state remainder result') else [
                 return null
             ]
-            totalpending: glom totalpending pending
+            totalpending: glom totalpending spread pending
         ]
         pending: totalpending
         return unmeta result'
@@ -1880,12 +1889,12 @@ default-combinators: make map! reduce [
         ([^result' input pending]: comb state input value) else [
             return null
         ]
-        totalpending: glom totalpending pending
+        totalpending: glom totalpending spread pending
         comb: :(state.combinators).(quoted!)
         ([^result' remainder pending]: comb state input result') else [
             return null
         ]
-        totalpending: glom totalpending pending
+        totalpending: glom totalpending spread pending
         pending: totalpending
         return unmeta result'
     ]
@@ -2087,7 +2096,7 @@ default-combinators: make map! reduce [
                         return null
                     ]
                 ]
-                totalpending: glom totalpending pending
+                totalpending: glom totalpending spread pending
                 parsers: next parsers
             ]
         ]
@@ -2370,7 +2379,7 @@ default-combinators: make map! reduce [
                 if temp <> @void  [
                     result': temp  ; overwrite if was visible
                 ]
-                totalpending: glom totalpending subpending
+                totalpending: glom totalpending spread subpending
             ] else [
                 result': @void  ; reset, e.g. `[false |]`
 
@@ -2525,8 +2534,8 @@ comment [combinatorize: func [
                 param: unquote param
                 r: :rules.1
                 any [
-                    not ^r
-                    find [, | ||] ^r
+                    not :r
+                    find [, | ||] :r
                 ]
                 then [
                     if not endable? in f param [
@@ -2567,8 +2576,8 @@ comment [combinatorize: func [
                 ;
                 r: :rules.1
                 any [
-                    not ^r
-                    find [, | ||] ^r
+                    not :r
+                    find [, | ||] :r
                 ]
                 then [
                     if not endable? in f param [
@@ -2724,7 +2733,7 @@ parsify: func [
                     let n: 1
                     for-each param parameters of :action [
                         if not path? param [
-                            keep compose [
+                            keep spread compose [
                                 (to word! unspaced ["param" n]) [action!]
                             ]
                             n: n + 1
@@ -2741,7 +2750,7 @@ parsify: func [
                     let n: 1
                     for-each param (parameters of :value) [
                         if not path? param [
-                            append parsers ^f.(as word! unspaced ["param" n])
+                            append parsers :f.(as word! unspaced ["param" n])
                             n: n + 1
                         ]
                     ]

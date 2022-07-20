@@ -46,7 +46,7 @@
     saved: _
     leftq: enfixed func ['x] [saved: x]
     let [a 'b ''(c)]: leftq
-    saved = just [a b '(c)]:
+    saved = the '[a b '(c)]:
 )(
     leftq: enfixed func ['x] [saved: x]
     saved: let [a 'b ''(c)]
@@ -127,7 +127,7 @@
         let x: 10
         let y: [x + z]
 
-        let foo: func [] compose [let z: 20, ((y))]
+        let foo: func [] compose [let z: 20, (spread y)]
         foo
     ]
     bar = 30

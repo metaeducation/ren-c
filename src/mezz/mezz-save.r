@@ -100,7 +100,7 @@ save: function [
                 remove try find select header 'options 'compress
             ]
             not block? try select header 'options [
-                append header compose [Options: (copy [compress])]
+                append header spread compose [Options: (copy [compress])]
             ]
             not find header.options 'compress [
                 append header.options 'compress
@@ -108,7 +108,7 @@ save: function [
         ]
 
         if length [
-            append header compose [
+            append header spread compose [
                 length: (true)  ; "uses #[true], any truthy value will work"
             ]
         ]
@@ -125,9 +125,9 @@ save: function [
     append data newline  ; MOLD does not append a newline
 
     case/all [
-        tmp: try find/tail header [checksum:] [  ; e.g. says "checksum: true"
+        tmp: try find header 'checksum: [  ; e.g. says "checksum: true"
             ; Checksum uncompressed data, if requested
-            change tmp ^(checksum-core 'crc32 data)
+            change next tmp (checksum-core 'crc32 data)
         ]
 
         compress [
@@ -144,7 +144,7 @@ save: function [
         ]
 
         length [
-            change find/tail header [length:] ^(length of data)
+            change next find header 'length: (length of data)
         ]
 
         header [

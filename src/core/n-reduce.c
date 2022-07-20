@@ -444,9 +444,7 @@ static Value(*) Finalize_Composer_Frame(
 //        >> compose [a ''(1 + 2) b]
 //        == [a ''3 b]
 //
-// 3. We use splicing semantics if the result was produced by a predicate
-//    application, or if (( )) was used.  Splicing semantics match the rules
-//    for APPEND/etc.
+// 3. Splicing semantics match the rules for APPEND/etc.
 //
 // 4. Only proxy newline flag from the template on *first* value spliced in,
 //    where it may have its own newline flag.  Not necessarily obvious; e.g.
@@ -495,7 +493,6 @@ Bounce Composer_Executor(Frame(*) f)
     enum {
         ST_COMPOSER_INITIAL_ENTRY = 0,
         ST_COMPOSER_EVAL_GROUP,
-        ST_COMPOSER_EVAL_DOUBLED_GROUP,
         ST_COMPOSER_RUNNING_PREDICATE,
         ST_COMPOSER_RECURSING_DEEP
     };
@@ -505,9 +502,6 @@ Bounce Composer_Executor(Frame(*) f)
         goto handle_current_item;
 
       case ST_COMPOSER_EVAL_GROUP :
-        goto group_result_in_out;
-
-      case ST_COMPOSER_EVAL_DOUBLED_GROUP :
       case ST_COMPOSER_RUNNING_PREDICATE :
         goto process_out;
 
@@ -544,18 +538,8 @@ Bounce Composer_Executor(Frame(*) f)
         // Don't compose at this level, but may need to walk deeply to
         // find compositions inside it if /DEEP and it's an array
     }
-    else if (Is_Any_Doubled_Group(at)) {
-        Cell(const*) inner = VAL_ARRAY_ITEM_AT(at);  // 1 item
-        assert(IS_GROUP(inner));
-        if (Match_For_Compose(inner, label)) {
-            STATE = ST_COMPOSER_EVAL_DOUBLED_GROUP;
-            match = inner;
-            match_specifier = Derive_Specifier(f_specifier, inner);
-        }
-    }
     else {  // plain compose, if match
         if (Match_For_Compose(at, label)) {
-            STATE = ST_COMPOSER_EVAL_GROUP;
             match = at;
             match_specifier = f_specifier;
         }
@@ -576,6 +560,20 @@ Bounce Composer_Executor(Frame(*) f)
         goto handle_next_item;
     }
 
+    if (Is_Nulled(predicate))
+        goto evaluate_group;
+
+    Derelativize(SPARE, cast(Cell(const*), match), match_specifier);
+    Dequotify(SPARE);  // cast was needed because there may have been quotes
+    mutable_HEART_BYTE(SPARE) = REB_GROUP;  // don't confuse with decoration
+    if (not Is_Nulled(label))
+        VAL_INDEX_RAW(SPARE) += 1;  // wasn't possibly at END
+
+    STATE = ST_COMPOSER_RUNNING_PREDICATE;
+    return CONTINUE(OUT, predicate, SPARE);
+
+  evaluate_group: { //////////////////////////////////////////////////////////
+
     // If <*> is the label and (<*> 1 + 2) is found, run just (1 + 2).
     //
     Feed(*) subfeed = Make_At_Feed_Core(match, match_specifier);
@@ -589,42 +587,27 @@ Bounce Composer_Executor(Frame(*) f)
 
     Push_Frame(OUT, subframe);
 
-    assert(  // STATE is assigned above accordingly
-        STATE == ST_COMPOSER_EVAL_GROUP
-        or STATE == ST_COMPOSER_EVAL_DOUBLED_GROUP
-    );
+    STATE = ST_COMPOSER_EVAL_GROUP;
     return CATCH_CONTINUE_SUBFRAME(subframe);
 
-} group_result_in_out: {  ////////////////////////////////////////////////////
+}} process_out: {  ///////////////////////////////////////////////////////////
 
-    if (Is_Nulled(predicate))
-        goto process_out;
-
-    if (Is_Void(OUT))
-        goto handle_next_item;  // voids not offered to predicates, by design
-
-    STATE = ST_COMPOSER_RUNNING_PREDICATE;
-    return CONTINUE(OUT, predicate, OUT);
-
-} process_out: {  ////////////////////////////////////////////////////////////
-
-    assert(  // processing depends on state we came from, don't overwrite
+    assert(
         STATE == ST_COMPOSER_EVAL_GROUP
-        or STATE == ST_COMPOSER_EVAL_DOUBLED_GROUP
         or STATE == ST_COMPOSER_RUNNING_PREDICATE
     );
 
     enum Reb_Kind group_heart = CELL_HEART(At_Frame(f));
     REBLEN group_quotes = VAL_NUM_QUOTES(At_Frame(f));
 
-    if (Is_Void(OUT)) {
-        //
-        // compose [(void)] => []
-        //
-        if (group_heart == REB_GROUP and group_quotes == 0)
-            goto handle_next_item;
+    if (Is_Splice(OUT))
+        goto push_out_spliced;
 
-        Init_Nulled(OUT);
+    if (Is_Void(OUT)) {
+        if (group_heart == REB_GROUP and group_quotes == 0)
+            goto handle_next_item;  // compose [(void)] => []
+
+        Init_Nulled(OUT);  // compose ['(void)] => [']
     }
     else
         Decay_If_Isotope(OUT);
@@ -639,11 +622,8 @@ Bounce Composer_Executor(Frame(*) f)
             or group_quotes == 0
         )  // [''(null)] => ['']
     ){
-        return FAIL(Error_Need_Non_Null_Raw());
+        return FAIL(Error_Need_Non_Null_Raw());  // [(null)] => error!
     }
-
-    if (not Is_Nulled(predicate) or STATE == ST_COMPOSER_EVAL_DOUBLED_GROUP)
-        goto push_out_spliced;
 
     goto push_out_as_is;
 
@@ -689,19 +669,8 @@ Bounce Composer_Executor(Frame(*) f)
     if (group_quotes != 0 or group_heart != REB_GROUP)
         return FAIL("Currently can only splice plain unquoted GROUP!s");
 
-    if (IS_BLANK(OUT)) {
-        //
-        // BLANK! does nothing in APPEND so do nothing here
-    }
-    else if (IS_QUOTED(OUT)) {
-        //
-        // Quoted items lose a quote level and get pushed.
-        //
-        Unquotify(Copy_Cell(PUSH(), OUT), 1);
-    }
-    else if (IS_BLOCK(OUT)) {
-        //
-        // The only splice type is BLOCK!...
+    if (Is_Splice(OUT)) {  // BLOCK! at "quoting level -1" means splice
+        Reify_Splice(OUT);
 
         Cell(const*) push_tail;
         Cell(const*) push = VAL_ARRAY_AT(&push_tail, OUT);
@@ -715,15 +684,6 @@ Bounce Composer_Executor(Frame(*) f)
             while (++push, push != push_tail)
                 Derelativize(PUSH(), push, VAL_SPECIFIER(OUT));
         }
-    }
-    else if (ANY_THE_KIND(VAL_TYPE(OUT))) {
-        //
-        // the @ types splice as is without the @
-        //
-        Plainify(Copy_Cell(PUSH(), OUT));
-    }
-    else if (not ANY_INERT(OUT)) {
-        return FAIL("COMPOSE slots that are (( )) can't be evaluative");
     }
     else {
         assert(not ANY_ARRAY(OUT));

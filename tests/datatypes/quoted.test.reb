@@ -143,9 +143,9 @@
 
 ((the ''''3) == requote add the ''''1 2)
 
-((the '''[b c d]) == requote find ''''[a b c d] [b])
+((the '''[b c d]) == requote find ''''[a b c d] spread [b])
 
-(null == requote find ''''[a b c d] [q])  ; nulls exempt
+(null == requote find ''''[a b c d] spread [q])  ; nulls exempt
 
 ((the '(1 2 3 <four>)) == requote append ''(1 2 3) <four>)
 

@@ -75,7 +75,7 @@
 
 ; Ren-C made it possible to use quoted WORD!s in place of CHAR! or TEXT! to
 ; match in strings.  This gives a cleaner look, as you drop off 3 vertical
-; tick marks from everything like ["ab"] to become just ['ab]
+; tick marks from everything like ["ab"] to become ['ab]
 [
     (did all [
         pos: parse* "abbbbbc" ['a some ['b], <here>]

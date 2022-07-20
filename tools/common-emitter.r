@@ -34,7 +34,7 @@ REBOL [
     }
 ]
 
-if not find words of :import [product] [  ; See %import-shim.r
+if not find words of :import 'product [  ; See %import-shim.r
     do load append copy system/script/path %import-shim.r
 ]
 
@@ -92,7 +92,7 @@ export cscape: function [
                 )
                 copy suffix: remove to newline
             ] (
-                keep ^ compose2 [
+                keep compose [
                     (pattern) (col) (mode) (expr) (prefix) (suffix)
                 ]
                 num: num + 1
@@ -124,7 +124,7 @@ export cscape: function [
 
             any-upper: did find/case expr charset [#"A" - #"Z"]
             any-lower: did find/case expr charset [#"a" - #"z"]
-            try keep :pattern
+            keep maybe :pattern
 
             ; With binding being case-sensitive, we lowercase the expression.
             ; Since we do the lowercasing before the load, embedded string
@@ -190,7 +190,7 @@ export cscape: function [
             ;
             indent: unspaced collect [
                 keep newline
-                try keep :prefix
+                keep maybe :prefix
             ]
             replace/all sub newline indent
 
@@ -273,7 +273,7 @@ export make-emitter: function [
 
     is-js: did parse2 stem [thru ".js" end]
 
-    e: make object! compose2 [
+    e: make object! compose [
         ;
         ; NOTE: %make-headers.r directly manipulates the buffer, because it
         ; wishes to merge #ifdef/#endif cases
@@ -377,24 +377,23 @@ export make-emitter: function [
         e/emit newline
     ]
     else [
-        e/emit mold/only compose2/deep [
-            REBOL [
-                System: "REBOL [R3] Language Interpreter and Run-time Environment"
-                Title: (title)
-                File: (stem)
-                Rights: {
-                    Copyright 2012 REBOL Technologies
-                    Copyright 2012-2018 Ren-C Open Source Contributors
-                    REBOL is a trademark of REBOL Technologies
-                }
-                License: {
-                    Licensed under the Apache License, Version 2.0.
-                    See: http://www.apache.org/licenses/LICENSE-2.0
-                }
-                (if temporary [
-                    [Note: {AUTO-GENERATED FILE - Do not modify.}]
-                ])
-            ]
+        e/emit {REBOL }  ; no COMPOSE/DEEP in bootstrap shim, yet
+        e/emit mold/only compose [
+            System: "REBOL [R3] Language Interpreter and Run-time Environment"
+            Title: (title)
+            File: (stem)
+            Rights: {
+                Copyright 2012 REBOL Technologies
+                Copyright 2012-2018 Ren-C Open Source Contributors
+                REBOL is a trademark of REBOL Technologies
+            }
+            License: {
+                Licensed under the Apache License, Version 2.0.
+                See: http://www.apache.org/licenses/LICENSE-2.0
+            }
+            (if temporary [
+                [Note: {AUTO-GENERATED FILE - Do not modify.}]
+            ])
         ]
         e/emit newline
     ]

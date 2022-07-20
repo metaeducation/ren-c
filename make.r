@@ -13,7 +13,7 @@ REBOL [
     }
 ]
 
-if not find words of :import [product] [  ; See %import-shim.r
+if not find words of :import 'product [  ; See %import-shim.r
     do load append copy system/script/path %tools/import-shim.r
 ]
 
@@ -75,7 +75,7 @@ args: parse-args system/script/args  ; either from command line or DO/ARGS
 ; now args are ordered and separated by bar:
 ; [NAME VALUE ... '| COMMAND ...]
 ;
-if (commands: find/only args '|) [
+if (commands: find args '|) [
     options: copy/part args commands
     commands: next commands
 ]
@@ -105,7 +105,7 @@ for-each [name value] options [
                 path: path+file/1
                 file: path+file/2
                 change-dir path
-                append config-stack ^(transcode read file)
+                append config-stack (transcode read file)
 
                 ; !!! LOAD has changed between bootstrap versions, for the
                 ; handling of the /HEADER.  This hacks it together by doing a
@@ -135,7 +135,7 @@ for-each [name value] options [
                 ]
                 all [
                     not empty? user-ext
-                    find/only [+ - *] user-ext/1
+                    find [+ - *] user-ext/1
                 ] then [
                     value: take user-ext
                 ]
@@ -224,7 +224,7 @@ gen-obj: func [
     ; you use something like a Windows XP-era SDK with a more modern Visual
     ; Studio compiler (e.g. 2019, which deprecated support for targeting XP).
     ;
-    append flags [<msc:/wd4917> <msc:/wd4768> <msc:/wd4091>]
+    append flags spread [<msc:/wd4917> <msc:/wd4768> <msc:/wd4091>]
 
     ; The May 2018 update of Visual Studio 2017 added a warning for when you
     ; use an #ifdef on something that is #define'd, but 0.  Then the internal
@@ -276,7 +276,7 @@ gen-obj: func [
     ; version of the standard.  Note if the particular file is third party and
     ; can only be compiled as C, we may have overridden that above.
     ;
-    insert flags opt switch standard [
+    insert flags maybe spread opt switch standard [
         'c [
             _
         ]
@@ -299,7 +299,7 @@ gen-obj: func [
         ]
         'c++98 'c++0x 'c++11 'c++14 'c++17 'c++20 'c++latest [
             cfg-cplusplus: cplusplus: true
-            compose2 [
+            compose [
                 ; Compile C files as C++.
                 ;
                 ; !!! Original code appeared to make it so that if a Visual
@@ -327,7 +327,7 @@ gen-obj: func [
                 ; when building as pre-C++11 where it was introduced, unless
                 ; you disable that warning.
                 ;
-                ((if user-config/standard = 'c++98 [<gnu:-Wno-c++0x-compat>]))
+                (if user-config/standard = 'c++98 [<gnu:-Wno-c++0x-compat>])
 
                 ; Note: The C and C++ user-config/standards do not dictate if
                 ; `char` is signed or unsigned.  If you think environments
@@ -363,9 +363,9 @@ gen-obj: func [
     ; Still we'd like to get the best information from any good ones, so
     ; they're turned off on a case-by-case basis.
     ;
-    append flags opt switch rigorous [
+    append flags spread opt switch rigorous [
         #[true] 'yes 'on 'true [
-            compose2 [
+            compose [
                 <gnu:-Werror> <msc:/WX>  ; convert warnings to errors
 
                 ; If you use pedantic in a C build on an older GNU compiler,
@@ -374,11 +374,7 @@ gen-obj: func [
                 ; way to turn this complaint off.  So don't use pedantic
                 ; warnings unless you're at c99 or higher, or C++.
                 ;
-                ((
-                    if not find/only [c gnu89] standard [
-                        <gnu:--pedantic>
-                    ]
-                ))
+                (if not find [c gnu89] standard [<gnu:--pedantic>])
 
                 <gnu:-Wextra>
                 <gnu:-Wall> <msc:/Wall>
@@ -411,7 +407,7 @@ gen-obj: func [
                 ; !!! This is only checked by default in *release* C++ builds,
                 ; because the performance and debug-stepping impact of the
                 ; template stubs when they aren't inlined is too troublesome.
-                ((
+                (
                     either all [
                         cplusplus
                         find app-config/definitions "NDEBUG"
@@ -420,7 +416,7 @@ gen-obj: func [
                     ][
                         <gnu:-Wno-cast-qual>
                     ]
-                ))
+                )
 
                 ;   'bytes' bytes padding added after construct 'member_name'
                 ;
@@ -628,14 +624,14 @@ gen-obj: func [
 
     ; Now add the flags for the project overall.
     ;
-    append flags try F
+    append flags maybe spread try F
 
     ; Now add build flags overridden by the inclusion of the specific file
     ; (e.g. third party files we don't want to edit to remove warnings from)
     ;
     if block? s [
         for-each flag next s [
-            append flags opt (switch flag [  ; weird bootstrap ELSE needs ()
+            append flags maybe spread opt (switch flag [  ; bootstrap ELSE, ()
                 <no-uninitialized> [
                     [
                         <gnu:-Wno-uninitialized>
@@ -663,23 +659,23 @@ gen-obj: func [
                     ]
                 ]
                 <no-unused-parameter> [
-                    <gnu:-Wno-unused-parameter>
+                    [<gnu:-Wno-unused-parameter>]
                 ]
                 <no-shift-negative-value> [
-                    <gnu:-Wno-shift-negative-value>
+                    [<gnu:-Wno-shift-negative-value>]
                 ]
                 <no-make-header> [
                     ;for make-header. ignoring
                     _
                 ]
                 <no-unreachable> [
-                    <msc:/wd4702>
+                    [<msc:/wd4702>]
                 ]
                 <no-hidden-local> [
-                    <msc:/wd4456>
+                    [<msc:/wd4456>]
                 ]
                 <no-constant-conditional> [
-                    <msc:/wd4127>
+                    [<msc:/wd4127>]
                 ]
 
                 #prefer-O2-optimization [
@@ -692,7 +688,7 @@ gen-obj: func [
                     _
                 ]
             ] else [
-                ensure [text! tag!] flag
+                reduce [ensure [text! tag!] flag]
             ])
         ]
         s: s/1
@@ -701,7 +697,7 @@ gen-obj: func [
     ; With the flags and settings ready, make a rebmake object and ask it
     ; to build the requested object file.
     ;
-    return make rebmake/object-file-class compose2 [
+    return make rebmake/object-file-class compose [
         assert [any [file? s path? s tuple? s word? s]]
             ; ^-- e.g. TUPLE! like `foo.o`
 
@@ -738,7 +734,7 @@ gen-obj: func [
         cflags: either empty? flags [_] [flags]
         definitions: try D
         includes: try I
-        ((if prefer-O2 [[optimization: #prefer-O2-optimization]]))
+        (if prefer-O2 [[optimization: #prefer-O2-optimization]])
     ]
 ]
 
@@ -787,17 +783,17 @@ parse-ext-build-spec: function [
     return: [object!]
     spec [block!]
 ][
-    ; !!! Note: This import does not work, e.g. it will not import the COMPOSE2
+    ; !!! Note: This import does not work, e.g. it won't import shimmed COMPOSE
     ; into a place where the spec would see it.  What we are looking to do
     ; here is an undeveloped feature, of needing a module environment to
     ; import into but also wanting to use a "base module" of definitions--a
     ; feature only available in objects.  If we could do it, it would probably
-    ; be precarious in bootstrap.  Instead, the bootstrap-shim puts COMPOSE2
-    ; and PARSE2 into the lib context.
+    ; be precarious in bootstrap.  Instead, the bootstrap-shim puts its versions
+    ; of COMPOSE and PARSE into the lib context.
     ;
-    ext: make extension-class compose2 [
+    ext: make extension-class compose [
         comment [import (join (clean-path repo-dir) %tools/bootstrap-shim.r)]
-        ((spec))
+        (spread spec)
     ]
 
     if in ext 'options [
@@ -830,7 +826,7 @@ use [extension-dir entry][
             ; !!! The specs use `repo-dir` and some other variables.
             ; Splice those in for starters, but will need deep thought.
             ;
-            insert spec compose2 [
+            insert spec spread compose [
                 repo-dir: (repo-dir)
                 system-config: (system-config)
                 user-config: (user-config)
@@ -930,8 +926,8 @@ targets: [
 target-names: make block! 16
 for-each x targets [
     if lit-word? x [
-        append target-names ^(noquote x)
-        append target-names [|]
+        append target-names (noquote x)
+        append target-names '|
     ] else [
         take/last target-names
         append target-names newline
@@ -1035,7 +1031,7 @@ CURRENT VALUE:
 
 ; dynamically fill help topics list ;-)
 replace help-topics/usage "HELP-TOPICS" ;\
-    form append (map-each x help-topics [either text? x ['|] [x]]) [all]
+    form append (map-each x help-topics [either text? x ['|] [x]]) 'all
 
 help: function [
     return: <none>
@@ -1186,7 +1182,7 @@ cfg-sanitize: false
 cfg-symbols: false
 switch user-config/debug [
     #[false] 'no 'false 'off 'none [
-        append app-config/definitions ["NDEBUG"]
+        append app-config/definitions "NDEBUG"
         app-config/debug: off
     ]
     #[true] 'yes 'true 'on [
@@ -1202,7 +1198,7 @@ switch user-config/debug [
     'symbols [ ; No asserts, just symbols.
         app-config/debug: on
         cfg-symbols: true
-        append app-config/definitions ["NDEBUG"]
+        append app-config/definitions "NDEBUG"
     ]
     'normal [
         cfg-symbols: true
@@ -1248,7 +1244,7 @@ switch user-config/debug [
         append app-config/cflags "-g"  ; for symbols
         app-config/debug: off
 
-        append app-config/definitions [
+        append app-config/definitions spread [
             "NDEBUG"  ; disable assert(), and many other general debug checks
 
             ; Include debugging features which do not in-and-of-themselves
@@ -1285,10 +1281,10 @@ cfg-cplusplus: false  ; gets set to true if linked as c++ overall
 ; Example. Mingw32 does not have access to windows console api prior to vista.
 ;
 cfg-pre-vista: false
-append app-config/definitions opt switch user-config/pre-vista [
+append app-config/definitions maybe spread opt switch user-config/pre-vista [
     #[true] 'yes 'on 'true [
         cfg-pre-vista: true
-        compose2 [
+        compose [
             "PRE_VISTA"
         ]
     ]
@@ -1301,13 +1297,13 @@ append app-config/definitions opt switch user-config/pre-vista [
 ]
 
 
-append app-config/ldflags opt switch user-config/static [
+append app-config/ldflags maybe spread opt switch user-config/static [
     _ 'no 'off 'false #[false] [
         ;pass
         _
     ]
     'yes 'on #[true] [
-        compose2 [
+        compose [
             <gnu:-static-libgcc>
             (if cfg-cplusplus [<gnu:-static-libstdc++>])
             (if cfg-sanitize [<gnu:-static-libasan>])
@@ -1322,46 +1318,26 @@ append app-config/ldflags opt switch user-config/static [
 
 ; Not quite sure what counts as system definitions (?)  Review.
 
-add-app-def: adapt specialize :append [series: app-config/definitions] [
-    value: replace/all (
-        flatten/deep reduce bind value system-definitions
-    ) blank []
-]
-add-app-cflags: adapt specialize :append [series: app-config/cflags] [
-    value: either block? value [
-        replace/all (
-            flatten/deep reduce bind value compiler-flags
-        ) blank []
-    ][
-        assert [any-string? value]
-    ]
-]
-add-app-lib: adapt specialize :append [series: app-config/libraries] [
-    value: either block? value [
-        value: flatten/deep reduce bind value system-libraries
-        map-each w flatten value [
-            make rebmake/ext-dynamic-class [
-                output: w
-            ]
-        ]
-    ][
-        assert [any-string? value]
+append app-config/definitions spread flatten/deep (
+    reduce bind (copy system-config/definitions) system-definitions
+)
+
+append app-config/cflags spread flatten/deep (  ; !!! can be string?
+    reduce bind copy system-config/cflags compiler-flags
+)
+
+append app-config/libraries spread (
+    let value: flatten/deep reduce bind copy system-config/libraries system-libraries
+    map-each w flatten value [
         make rebmake/ext-dynamic-class [
-            output: value
+            output: w
         ]
     ]
-]
+)
 
-add-app-ldflags: adapt specialize :append [series: app-config/ldflags] [
-    value: if block? value [
-        flatten/deep reduce bind value linker-flags
-    ] else [null]
-]
-
-add-app-def copy system-config/definitions
-add-app-cflags copy system-config/cflags
-add-app-lib copy system-config/libraries
-add-app-ldflags copy system-config/ldflags
+append app-config/ldflags spread flatten/deep (
+    reduce bind copy system-config/ldflags linker-flags
+)
 
 print ["definitions:" mold app-config/definitions]
 print ["includes:" mold app-config/includes]
@@ -1371,7 +1347,7 @@ print ["ldflags:" mold app-config/ldflags]
 print ["debug:" mold app-config/debug]
 print ["optimization:" mold app-config/optimization]
 
-append app-config/definitions reduce [
+append app-config/definitions spread reduce [
     unspaced ["TO_" uppercase to-text system-config/os-base "=1"]
     unspaced [
         "TO_" (uppercase replace/all to-text system-config/os-name "-" "_") "=1"
@@ -1380,11 +1356,11 @@ append app-config/definitions reduce [
 
 ; Add user settings (can be BLANK!, but should be null)
 ;
-append app-config/definitions :user-config/definitions
-append app-config/includes :user-config/includes
-append app-config/cflags :user-config/cflags
-append app-config/libraries :user-config/libraries
-append app-config/ldflags :user-config/ldflags
+append app-config/definitions maybe spread :user-config/definitions
+append app-config/includes maybe spread :user-config/includes
+append app-config/cflags maybe spread :user-config/cflags
+append app-config/libraries maybe spread :user-config/libraries
+append app-config/ldflags maybe spread :user-config/ldflags
 
 libr3-core: make rebmake/object-library-class [
     name: 'libr3-core
@@ -1401,7 +1377,7 @@ libr3-core: make rebmake/object-library-class [
     depends: map-each w file-base/core [
         gen-obj/dir w (join src-dir %core/)
     ]
-    append depends map-each w file-base/generated [
+    append depends spread map-each w file-base/generated [
         gen-obj/dir w "prep/core/"
     ]
 ]
@@ -1479,7 +1455,7 @@ add-new-obj-folders: function [
 
 
 for-each [category entries] file-base [
-    if find/only [generated made] category [
+    if find [generated made] category [
         continue  ; these categories are taken care of elsewhere
     ]
     switch type of entries [
@@ -1525,7 +1501,7 @@ for-each ext extensions [
         ; Bootstrap executable (at least on mac) had problems setting to null.
         ; Try workaround.
         ;
-        append user-config/extensions reduce [ext/name _]
+        append user-config/extensions spread reduce [ext/name _]
     ] else [
         mode: _
     ]
@@ -1560,7 +1536,7 @@ for-each [mode label] [
     print mold collect [
         for-each ext extensions [
             if ext/mode = mode [
-                keep ^(ext/name)
+                keep ext/name
             ]
         ]
     ]
@@ -1590,7 +1566,7 @@ add-project-flags: func [
             project/definitions: try D
         ]
         else [
-            append project/definitions try D
+            append project/definitions spread try D
         ]
     ]
 
@@ -1598,7 +1574,7 @@ add-project-flags: func [
         if null? :project/includes [
             project/includes: try I
         ] else [
-            append project/includes try I
+            append project/includes spread try I
         ]
     ]
     if c [
@@ -1606,7 +1582,7 @@ add-project-flags: func [
             project/cflags: try c
         ]
         else [
-            append project/cflags try c
+            append project/cflags spread try c
         ]
     ]
     if g [project/debug: g]
@@ -1681,7 +1657,9 @@ for-each ext extensions [
 
     ext-objlib: make rebmake/object-library-class [  ; #object-library
         name: ext/name
-        depends: map-each s (append reduce [ext/source] try ext/depends) [
+        depends: map-each s (
+            append reduce [ext/source] maybe spread try ext/depends
+        )[
             dep: case [
                 match [file! block!] s [
                     gen-obj/dir s (join repo-dir %extensions/)
@@ -1751,9 +1729,9 @@ for-each ext extensions [
     ;
     add-project-flags/I/D/c/O/g ext-objlib
         app-config/includes
-        compose2 [
-            ((either ext/mode = <builtin> ["REB_API"] ["REB_EXT"]))
-            ((app-config/definitions))
+        compose [
+            (either ext/mode = <builtin> ["REB_API"] ["REB_EXT"])
+            (spread app-config/definitions)
         ]
         app-config/cflags
         app-config/optimization
@@ -1771,9 +1749,9 @@ for-each ext extensions [
         ; ldflag, but this then has to be platform specific.  But generally you
         ; already need platform-specific code to know where to look.
         ;
-        append app-config/libraries try ext-objlib/libraries
-        append app-config/ldflags try ext/ldflags
-        append app-config/searches try ext/searches
+        append app-config/libraries maybe spread try ext-objlib/libraries
+        append app-config/ldflags maybe spread try ext/ldflags
+        append app-config/searches maybe spread try ext/searches
     ]
     else [
         append dynamic-ext-objlibs ext-objlib
@@ -1784,14 +1762,14 @@ for-each ext extensions [
             name: join either system-config/os-base = 'windows ["r3-"]["libr3-"]
                 lowercase to text! ext/name
             output: to file! name
-            depends: compose2 [
-                ((ext-objlib))  ; !!! Will this pull in all of extensions deps?
+            depends: compose [
+                (ext-objlib)  ; !!! Pulls in in all of extensions deps?
                 ;
                 ; (app) all dynamic extensions depend on r3, but app not ready
                 ; so the dependency is added at a later phase below
                 ;
-                ((maybe app-config/libraries))
-                ((maybe ext-objlib/libraries))
+                (maybe spread try app-config/libraries)
+                (maybe spread try ext-objlib/libraries)
             ]
             post-build-commands: either cfg-symbols [
                 null
@@ -1803,9 +1781,9 @@ for-each ext extensions [
                 ]
             ]
 
-            ldflags: compose2 [
-                ((maybe ext/ldflags))
-                ((app-config/ldflags))
+            ldflags: compose [
+                (maybe spread try ext/ldflags)
+                (maybe spread try app-config/ldflags)
 
                 ; GCC has this but Clang does not, and currently Clang is
                 ; being called through a gcc alias.  Review.
@@ -1872,7 +1850,11 @@ vars: reduce [
     ]
     make rebmake/var-class [
         name: {GIT_COMMIT}
-        default: either user-config/git-commit [user-config/git-commit][{unknown}]
+        default: either try user-config/git-commit [
+            user-config/git-commit
+        ][
+            {unknown}
+        ]
     ]
 ]
 
@@ -1880,7 +1862,13 @@ prep: make rebmake/entry-class [
     target: 'prep ; phony target
 
     commands: collect [
-        keep: adapt :keep [value: spaced :value]
+        keep: adapt :keep [
+            if block? value [
+                value: spaced value  ; old append semantics
+            ] else [
+                value: quote spaced unquote value  ; new append ^META semantics
+            ]
+        ]
 
         keep [{$(REBOL)} join tools-dir %make-natives.r]
         keep [{$(REBOL)} join tools-dir %make-headers.r]
@@ -1947,10 +1935,10 @@ prep: make rebmake/entry-class [
 app: make rebmake/application-class [
     name: 'r3-exe
     output: %r3 ;no suffix
-    depends: compose2 [
+    depends: compose [
         (libr3-core)
-        ((builtin-ext-objlibs))
-        ((app-config/libraries))
+        (spread builtin-ext-objlibs)
+        (spread app-config/libraries)
         (main)
     ]
     post-build-commands: either cfg-symbols [
@@ -1982,10 +1970,10 @@ for-each proj dynamic-libs [
 library: make rebmake/dynamic-library-class [
     name: 'libr3
     output: %libr3 ;no suffix
-    depends: compose2 [
+    depends: compose [
         (libr3-core)
-        ((builtin-ext-objlibs))
-        ((app-config/libraries))
+        (spread builtin-ext-objlibs)
+        (spread app-config/libraries)
     ]
     searches: try app-config/searches
     ldflags: try app-config/ldflags
@@ -2013,7 +2001,7 @@ t-folders: make rebmake/entry-class [
     ; Sort it so that the parent folder gets created first
     ;
     commands: map-each dir sort folders [
-        make rebmake/cmd-create-class compose2 [
+        make rebmake/cmd-create-class compose [
             file: (dir)
         ]
     ]
@@ -2035,7 +2023,7 @@ clean: make rebmake/entry-class [
 check: make rebmake/entry-class [
     target: 'check  ; phony target
 
-    depends: join dynamic-libs app
+    depends: append (copy dynamic-libs) app
 
     commands: collect [
         keep make rebmake/cmd-strip-class [

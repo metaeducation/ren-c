@@ -1,11 +1,11 @@
 ; %parse-seek.test.reb
 ;
 ; SEEK allows you to seek an arbitrary position in the input series, either
-; by integer index or by position.  It tolerates BLANK! to mean no-op.
+; by integer index or by position.  It tolerates NULL (with TRY) to mean no-op.
 ;
 ; Unlike R3-Alpha, changing the series being parsed is not allowed.
 
-("a" == parse "a" [seek (_) "a"])
+("a" == parse "a" [try seek (null) "a"])
 ("b" == parse "aaabbb" [
     "a" pos: <here> repeat 2 "a" seek (pos) repeat 2 "a" repeat 3 "b"
 ])

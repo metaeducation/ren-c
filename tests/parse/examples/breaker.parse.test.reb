@@ -10,7 +10,7 @@
             keep opt between <here> ["$(" (capturing: true) | <end>]
             :(if capturing '[
                 inner: between <here> ")"
-                keep (^ as word! inner)
+                keep (as word! inner)
             ])
         ]]
     ])

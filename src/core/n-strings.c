@@ -149,6 +149,7 @@ DECLARE_NATIVE(delimit)
 
         if (IS_BLANK(OUT)) {  // BLANK! acts as space
             Append_Codepoint(mo->series, ' ');
+            pending = false;
         }
         else if (IS_ISSUE(OUT)) {  // do not delimit (unified w/char), see [2]
             Form_Value(mo, OUT);
@@ -165,7 +166,7 @@ DECLARE_NATIVE(delimit)
                 Move_Cell(SPARE, OUT);
                 if (rebRunThrows(
                     OUT,  // <-- output cell
-                    Lib(APPEND), Lib(COPY), EMPTY_TEXT, rebQ(SPARE)
+                    Lib(APPEND), Lib(COPY), EMPTY_TEXT, Lib(SPREAD), rebQ(SPARE)
                 )){
                     Drop_Mold(mo);
                     Drop_Frame(f);

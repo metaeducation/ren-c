@@ -83,7 +83,7 @@ with-tcc: no
 pre-vista: no
 
 
-git-commit: _
+git-commit: null
 
 includes: null
 definitions: null

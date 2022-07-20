@@ -6,7 +6,7 @@
 
 ; Splicing vs. non
 ;
-([[a b] * a b] = compose [([a b]) * (([a b]))])
+([[a b] * a b] = compose [([a b]) * (spread [a b])])
 
 ; Preserve one element rule vs. tolerate vaporization.  ~null~ isotopes are
 ; treated the same by the compose site as pure NULL.
@@ -36,17 +36,12 @@
 )
 ([#[false]] = compose [(~false~)])
 
-; BLANK!s are as-is in the single form, but vanish in the spliced form, and
-; other rules are just generally the append rules for the type.  Evaluative
-; types can't be spliced.
-;
-([_ *] = compose [(_) * ((_))])
-(['a * a] = compose [(the 'a) * ((the 'a))])
+([_ * _] = compose [(_) * ((_))])
+([a * 'a] = compose [(the a) * (the 'a)])
 ([1020 * 304] = compose [(1020) * ((304))])
-([@ae * ae] = compose [(@ae) * ((@ae))])
+([@ae * @ae] = compose [(@ae) * ((@ae))])
 
-([(group) * <bad>] = compose [(the (group)) * <bad>])
-(error? trap [compose [<ok> * ((the (group)))]])
+([(group) * <good>] = compose [(the (group)) * <good>])
 
 
 (
@@ -80,7 +75,7 @@
 )
 (
     blk: []
-    same? blk first compose [((reduce [blk]))]
+    same? blk first compose [(spread reduce [blk])]
 )
 (
     blk: []
@@ -89,7 +84,7 @@
 ; recursion
 (
     num: 1
-    [num 1] = compose [num ((compose [(num)]))]
+    [num 1] = compose [num (spread compose [(num)])]
 )
 ; infinite recursion
 (
@@ -110,7 +105,10 @@
 
 (
     block: [a b c]
-    [splice: a b c only: [a b c]] = compose [splice: ((block)) only: (block)]
+    [splice-me: a b c only: [a b c]] = compose [
+        splice-me: (spread block)
+        only: (block)
+    ]
 )
 
 ; COMPOSE with pattern, beginning tests
@@ -128,7 +126,9 @@
 (
     [(left alone) [c b a] c b a ((left alone))]
     = compose <$> [
-        (left alone) (<$> reverse copy [a b c]) ((<$> reverse copy [a b c]))
+        (left alone)
+        (<$> reverse copy [a b c])
+        (<$> spread reverse copy [a b c])
         ((left alone))
     ]
 )
@@ -213,7 +213,7 @@
 [
     ([<a> ~null~ <b>] = apply :compose [
         [<a> (if true [null]) <b>]
-        /predicate chain [:reify :quote]
+        /predicate chain [:eval :reify]
     ])
     (error? trap [compose [<a> (~)]])
 ]
@@ -241,15 +241,4 @@
 ; More tests of crazy quoting depths needed, as it's tricky.
 [
     (['''''''] = compose ['''''''(if false [<a>])])
-]
-
-; Void slots are not offered to predicates
-[
-    ([] = compose/predicate [()] x -> [fail "Not called"])
-
-    ; !!! should this be reconsidered for predicates which say they are willing
-    ; to take <void>?  This would possibly break intents like REIFY unless
-    ; REIFY had a version that did not take voids.
-    ;
-    ([] = compose/predicate [()] [^x [<void>]] -> [fail "Call?"])
 ]

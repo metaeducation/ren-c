@@ -138,8 +138,8 @@ load-header: function [
         return 'bad-header
     ]
 
-    if try find hdr.options just content [
-        append hdr compose [content (data)]  ; as of start of header
+    if try find hdr.options 'content [
+        append hdr spread compose [content (data)]  ; as of start of header
     ]
 
     if 10 = rest.1 [rest: next rest, line: me + 1]  ; skip LF
@@ -167,7 +167,7 @@ load-header: function [
         ; This feature needs redesign if it's to be kept, but switching it
         ; to use TRAP with the bad idea for now.
         ;
-        if try find hdr.options just compress [
+        if try find hdr.options 'compress [
             rest: catch [
                 trap [
                     ; Raw bits.  whitespace *could* be tolerated; if
@@ -193,7 +193,7 @@ load-header: function [
         data: transcode data  ; decode embedded script
         rest: skip data 2  ; !!! what is this skipping ("hdr.length" ??)
 
-        if find try hdr.options just compress [  ; script encoded only
+        if find try hdr.options 'compress [  ; script encoded only
             rest: attempt [gunzip first rest] else [
                 return 'bad-compress
             ]
@@ -257,8 +257,8 @@ load: func [
         fail "Use LOAD-EXTENSION to load extensions (at least for now)"
     ]
 
-    if not find [unbound rebol] ^type [
-        if find system.options.file-types ^type [
+    if not find [unbound rebol] type [
+        if find system.options.file-types type [
             return decode type :data
         ]
 
@@ -447,7 +447,7 @@ import*: func [
             return source  ; no name, so just do the RESOLVE to get variables
         ]
         let mod: (try select/skip system.modules name 2) else [
-            append system.modules :[name source]  ; not in module list, add it
+            append system.modules spread :[name source]  ; not in mod list, add
             product: ~registered~
             return source
         ]
@@ -504,8 +504,8 @@ import*: func [
     match [file! url! the-word! tag!] source then [
         source: clean-path source
         dir: as text! source
-        let file: find-last/tail dir slash
-        assert [file]
+        let [before file]: find-last dir slash
+        assert [before]
         dir: as (type of source) copy/part dir file
     ]
 
@@ -615,7 +615,7 @@ import*: func [
     ensure module! mod
 
     if is-module and (name) [
-        append system.modules :[name mod]
+        append system.modules spread :[name mod]
     ]
 
     === RESTORE SYSTEM.SCRIPT AND THE DIRECTORY IF THEY WERE CHANGED ===
@@ -653,7 +653,7 @@ export*: func [
 
     if set-word [
         set set-word args: take args
-        append exports ^(as word! set-word)
+        append exports (as word! set-word)
         return get/any 'args
     ]
 
@@ -682,7 +682,7 @@ export*: func [
             ]
             items: next items
         ]
-        append exports ^word
+        append exports word
     ]
 
     return none  ; !!! Return the exported words list?

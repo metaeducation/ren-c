@@ -6,16 +6,16 @@ includes: [
     %prep/extensions/time
 ]
 
-depends: compose2 [
-    ((switch system-config/os-base [
+depends: compose [
+    (switch system-config/os-base [
         'Windows [
-            [
+            spread [
                 [%time/time-windows.c]
             ]
         ]
     ] else [
-        [
+        spread [
             [%time/time-posix.c]
         ]
-    ]))
+    ])
 ]

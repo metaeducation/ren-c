@@ -347,7 +347,7 @@ parse-asn: func [
                     data: skip data old-size
                 ]
                 if zero? size [
-                    keep/line ^ compose/deep [
+                    keep/line compose/deep [
                         (tag) [
                             (either constructed ["constructed"] ["primitive"])
                             (index)
@@ -365,7 +365,7 @@ parse-asn: func [
                 switch class [
                     @universal [
                         val: copy/part data size
-                        keep/line ^ compose/deep [
+                        keep/line compose/deep [
                             (tag) [
                                 (either constructed ["constructed"] ["primitive"])
                                 (index)
@@ -376,7 +376,7 @@ parse-asn: func [
                     ]
 
                     @context-specific [
-                        keep/line ^ compose/deep [(tag) [(val) (size)]]
+                        keep/line compose/deep [(tag) [(val) (size)]]
                         parse-asn copy/part data size  ; !!! ensures valid?
                     ]
                 ]
@@ -409,10 +409,10 @@ make-state-updater: func [
     parse transdialect [
         some [
             left: state-rule '-> right: [
-                subparse block! [opt some state-rule, <input>]
-                | collect keep state-rule
+                subparse block! [opt some state-rule, <subinput>]
+                | across state-rule  ; ACROSS because we want BLOCK! (length 1)
             ]
-            (append transitions :[left right])
+            (append transitions spread :[left right])
         ]
     ]
 

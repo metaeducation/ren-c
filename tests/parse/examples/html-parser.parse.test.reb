@@ -26,7 +26,7 @@
                 "</" thru ">" stop
                 |
                 "<" name: across to ">" <any>
-                keep ^(load-value name) opt keep ^rule
+                keep (load-value name) opt keep rule
                 |
                 str: across to "<" keep (str)
             ]
@@ -44,7 +44,7 @@
                 |
                 "</" thru ">" stop
                 |
-                keep ^ to-word/ [between "<" ">"], opt keep ^rule
+                keep to-word/ [between "<" ">"], opt keep rule
                 |
                 keep across to "<"  ; may be end tag or new start tag
             ]

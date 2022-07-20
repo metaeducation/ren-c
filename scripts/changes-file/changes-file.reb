@@ -88,11 +88,11 @@ make-changes-block: function [
     for-each c commits [
         if notable? commit: load c [
             comment [  ; !!! This was commented out, why?
-                append commit compose [
+                append commit spread compose [
                     date: (load first split commit.date-string space)
                 ]
             ]
-            append commit compose [date: (12-12-2012)]
+            append commit spread compose [date: (12-12-2012)]
 
             add-change make change! commit
         ]
@@ -114,13 +114,19 @@ parse-credits-for-authors: function [  ; used as switch in github-user-name
             opt some [
                 {**} copy author: to {**} {**} newline
                 [{-} | {*}] space {[} copy github-name: to {](https://github.com/} (
-                    keep compose/deep [(author) [(github-name)]]
+                    keep spread compose/deep [
+                        (author) [(github-name)]
+                    ]
 
                     ; some cases use space trimmed author
-                    keep compose/deep [(trim/all copy author) [(github-name)]]
+                    keep spread compose/deep [
+                        (trim/all copy author) [(github-name)]
+                    ]
 
                     ; some cases github username was used for author
-                    keep compose/deep [(next github-name) [(github-name)]]
+                    keep spread compose/deep [
+                        (next github-name) [(github-name)]
+                    ]
                 )
                 | skip
             ]
@@ -152,14 +158,14 @@ notable?: function [
         | "Deprecate"                (category: 'Deprecated)
         | "Security"                 (category: 'Security)
     ] end]
-    append c compose [type: just (category)]
+    append c spread compose [type: just (category)]
 
     ; record any bug#NNNN or CC (CureCode) found
     cc: make block! 0
     parse3 text [
         opt some [
               "bug#" copy cc-num: some numbers (
-                append c [type: 'Fixed]  ; it's a bug fix!
+                append c spread [type: 'Fixed]  ; it's a bug fix!
                 append cc to-integer cc-num
               )
             | ["cc " | "cc"]
@@ -168,7 +174,7 @@ notable?: function [
             | skip
         ]
     ]
-    if not empty? cc [append c compose [cc: (cc)]]
+    if not empty? cc [append c spread compose [cc: (cc)]]
 
     ; if find commit in our cherry-pick map then apply logic / meta info
     if cherry-value: select cherry-pick c.commit [

@@ -61,7 +61,7 @@ REBOL [
     }
 ]
 
-if not find words of :import [product] [  ; See %import-shim.r
+if not find words of :import 'product [  ; See %import-shim.r
     do load append copy system/script/path %import-shim.r
 ]
 
@@ -98,7 +98,7 @@ gather-natives: func [
             all [
                 %.c = suffix? file
             ][
-                append all-protos extract-native-protos file
+                append all-protos spread (extract-native-protos file)
             ]
         ]
     ]

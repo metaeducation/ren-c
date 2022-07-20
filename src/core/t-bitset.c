@@ -609,12 +609,14 @@ REBTYPE(Bitset)
 
       case SYM_SELECT: {
         INCLUDE_PARAMS_OF_SELECT;
+        Unquotify_Dont_Expect_Meta(ARG(value));
+
         UNUSED(PAR(series));  // covered by `v`
 
         UNUSED(REF(reverse));  // Deprecated https://forum.rebol.info/t/1126
         UNUSED(REF(last));  // ...a HIJACK in %mezz-legacy errors if used
 
-        if (REF(part) or REF(skip) or REF(tail) or REF(match))
+        if (REF(part) or REF(skip) or WANTED(tail) or REF(match))
             fail (Error_Bad_Refines_Raw());
 
         if (not Check_Bits(VAL_BITSET(v), ARG(value), did REF(case)))
@@ -628,6 +630,8 @@ REBTYPE(Bitset)
 
       case SYM_APPEND:  // Accepts: #"a" "abc" [1 - 10] [#"a" - #"z"] etc.
       case SYM_INSERT: {
+        Unquotify_Dont_Expect_Meta(D_ARG(2));
+
         REBVAL *arg = D_ARG(2);
         if (IS_NULLED_OR_BLANK(arg))
             return COPY(v);  // don't fail on read only if it would be a no-op

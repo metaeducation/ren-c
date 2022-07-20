@@ -36,7 +36,7 @@ parse3 cnt [
         ;
         "|" copy name to "|" (
             if code-2 [
-                append iso-639-table compose [
+                append iso-639-table spread compose [
                     (to text! code-2) (to text! name)
                 ]
             ]

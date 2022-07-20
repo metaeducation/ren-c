@@ -225,7 +225,7 @@ DECLARE_NATIVE(the_p)
 
 
 //
-//  just: native [
+//  just*: native [  ; deprecate temporarily due to isotopic block methodoloy
 //
 //  "Returns quoted eversion of value passed in without evaluation"
 //
@@ -235,14 +235,14 @@ DECLARE_NATIVE(the_p)
 //      /soft "Evaluate if a GET-GROUP!, GET-WORD!, or GET-PATH!"
 //  ]
 //
-DECLARE_NATIVE(just)
+DECLARE_NATIVE(just_p)
 //
 // Note: This could be defined as `chain [:the | :quote]`.  However, it can be
 // needed early in the boot (before REDESCRIBE is available), and it is also
 // something that needs to perform well due to common use.  Having it be its
 // own native is probably worthwhile.
 {
-    INCLUDE_PARAMS_OF_THE;
+    INCLUDE_PARAMS_OF_JUST_P;
 
     REBVAL *v = ARG(value);
 
@@ -426,23 +426,30 @@ DECLARE_NATIVE(unmeta)
 
 
 //
-//  splice: native [
+//  spread: native [
 //
 //  {Make block arguments splice}
 //
-//      return: "Isotope of BLOCK! (e.g. quote level -1, nicknamed 'a splice')"
-//          []  ; isotopic block!
-//      array [<opt> any-array!]
+//      return: "Isotope of BLOCK! or unquoted value"
+//          [<opt> any-value!]
+//      array [<opt> quoted! any-array!]
 //  ]
 //
-DECLARE_NATIVE(splice)
+DECLARE_NATIVE(spread)
+//
+// !!! The name SPREAD is being chosen because it is more uncommon than splice,
+// and there is no particular contention for its design.  SPLICE may be a more
+// complex operation.
 {
-    INCLUDE_PARAMS_OF_SPLICE;
+    INCLUDE_PARAMS_OF_SPREAD;
 
     REBVAL *v = ARG(array);
 
     if (Is_Nulled(v))
-        return nullptr;  // Put TRY on the APPEND or whatever, not SPLICE
+        return nullptr;  // Put TRY on the APPEND or whatever, not SPREAD
+
+    if (IS_QUOTED(v))
+        return Unquotify(Copy_Cell(OUT, v), 1);
 
     return Splicify(Copy_Cell(OUT, v));
 }

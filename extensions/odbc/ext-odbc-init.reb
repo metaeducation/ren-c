@@ -185,12 +185,12 @@ sqlform: func [
         ]
 
         the-word! the-tuple! the-path! [  ; !!! Should THE-PATH be allowed?
-            append/only parameters [^ #]: get value
+            append parameters [^ #]: get value
             "?"
         ]
 
         the-group! [
-            append/only parameters ^ do as block! value
+            append parameters do as block! value
             "?"
         ]
 
@@ -246,7 +246,7 @@ odbc-execute: func [
         print ["** PARAMETERS:" mold parameters]
     ]
 
-    return insert statement compose [(query) ((parameters))]
+    return insert statement spread compose [(query) ((parameters))]
 ]
 
 export [odbc-execute]

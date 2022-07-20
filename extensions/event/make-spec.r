@@ -4,20 +4,20 @@ name: 'Event
 source: %event/mod-event.c
 includes: [%prep/extensions/event]
 
-depends: compose2 [
+depends: compose [
     %event/t-event.c
 
-    ((switch system-config/os-base [
+    (switch system-config/os-base [
         'Windows [
-            [
+            spread [
                 [%event/event-windows.c]
             ]
         ]
     ] else [
-        [
+        spread [
             [%event/event-posix.c]
         ]
-    ]))
+    ])
 ]
 
 libraries: try switch system-config/os-base [

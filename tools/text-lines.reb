@@ -22,8 +22,8 @@ decode-lines: func [
     line-prefix [text! block!] {Usually "**" or "//". Matched using parse.}
     indent [text! block!] {Usually "  ". Matched using parse.}
 ] [
-    let pattern: compose2/only [(line-prefix)]
-    if not empty? indent [append pattern compose2/only [opt (indent)]]
+    let pattern: compose [(line-prefix)]
+    if not empty? indent [append pattern compose [opt (indent)]]
 
     let [pos rest]
     let line-rule: [
@@ -93,7 +93,7 @@ for-each-line: func [
     while [not tail? text] [
         let eol: any [find text newline, tail of text]
 
-        set record compose2 [
+        set record compose [
             position (text) length (subtract index of eol index of text)
         ]
         text: next eol

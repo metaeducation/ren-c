@@ -315,16 +315,18 @@ find: generic [
 
     return: "position found, else null - logic true if non-positional find"
         [<opt> any-series! logic!]
+    tail: "Returns the end of the found data"
+        [<opt> any-series!]
+
     series [
         <try> any-series! any-context! map! bitset! typeset!
     ]
-    pattern [<try> any-value!]
+    ^pattern [<try> any-value!]
     /part "Limits the search to a given length or position"
         [any-number! any-series! pair!]
     /case "Characters are case-sensitive"
     /skip "Treat the series as records of fixed size"
         [integer!]
-    /tail "Returns the end of the series"
     /match "Performs comparison and returns the tail of the match"
     /reverse "Deprecated: https://forum.rebol.info/t/1126"
     /last "Deprecated: https://forum.rebol.info/t/1126"
@@ -334,14 +336,15 @@ select: generic [
     {Searches for a value; returns the value that follows, else null}
 
     return: [<opt> any-value!]
+    tail: []  ; for frame compatibility with FIND
+
     series [<try> any-series! any-context! map!]
-    value [<try> any-value!]
+    ^value [<try> any-value!]
     /part "Limits the search to a given length or position"
         [any-number! any-series! pair!]
     /case "Characters are case-sensitive"
     /skip "Treat the series as records of fixed size"
         [integer!]
-    /tail  ; for frame compatibility with FIND
     /match  ; for frame compatibility with FIND
     /reverse "Deprecated: https://forum.rebol.info/t/1126"
     /last "Deprecated: https://forum.rebol.info/t/1126"
@@ -441,8 +444,8 @@ insert: generic [
         integer!]  ; !!! INSERT returns INTEGER! in ODBC, review this
     series "At position (modified)"
         [<blackhole> any-series! port! map! object! bitset! port!]
-    value "What to insert (NULL produces TRY-interceptible failure if no-op)"
-        [<opt> any-value!]
+    ^value "What to insert (isotopic blocks will splice, e.g. SPREAD)"
+        [<void> any-value!]
     /part "Limits to a given length or position"
         [any-number! any-series! pair!]
     /dup "Duplicates the insert a specified number of times"
@@ -459,8 +462,8 @@ append: generic [
     return: [any-series! port! map! object! module! bitset!]
     series "Any position (modified)"
         [<blackhole> any-series! port! map! object! module! bitset!]
-    value "What to append (NULL produces TRY-interceptible failure if no-op)"
-        [<opt> any-value!]
+    ^value "What to append (isotopic blocks will splice, e.g. SPREAD)"
+        [<void> any-value!]
     /part "Limits to a given length or position"
         [any-number! any-series! pair!]
     /dup "Duplicates the insert a specified number of times"
@@ -477,8 +480,8 @@ change: generic [
     return: [any-series! port!]
     series "At position (modified)"
         [<blackhole> any-series! port!]
-    value "The new value (NULL produces TRY-interceptible failure if no-op)"
-        [<opt> any-value!]
+    ^value "The new value (isotopic blocks will splice, e.g. SPREAD)"
+        [<void> any-value!]
     /part "Limits the amount to change to a given length or position"
         [any-number! any-series! pair!]
     /dup "Duplicates the change a specified number of times"

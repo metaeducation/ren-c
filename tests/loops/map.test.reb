@@ -17,7 +17,7 @@
 
 ; PATH! is immutable, but MAP should work on it
 (
-    [a 1 b 1 c 1] = map x each 'a/b/c [reduce [x 1]]
+    [a 1 b 1 c 1] = map x each 'a/b/c [spread reduce [x 1]]
 )
 
 ; BLANK! is legal for slots you don't want to name variables for:
@@ -46,19 +46,19 @@
         return count: count + 1
     ]
     [[1 2] [3 4] [5]]  = map [a b] :make-one-thru-five [
-        only compose [(a) (maybe b)]
+        compose [(a) (maybe b)]
     ]
 )
 
-; MAP splices by default, uses APPEND rules for QUOTED!s and blanks, etc.
+; MAP uses APPEND rules, so SPREAD works
 [
-    ([1 <haha!> 2 <haha!> 3 <haha!>] = map x each [1 2 3] [reduce [x <haha!>]])
-    ([1 <haha!> 2 <haha!> 3 <haha!>] = map x each [1 2 3] [:[x <haha!>]])
+    ([1 <haha!> 2 <haha!>] = map x each [1 2] [spread reduce [x <haha!>]])
+    ([1 <haha!> 2 <haha!>] = map x each [1 2] [spread :[x <haha!>]])
 
-    ([[1 <haha!>] [2 <haha!>]] = map x each [1 2] [only :[x <haha!>]])
-    ([[1 <haha!>] [2 <haha!>] [3 <haha!>]] = map x each [1 2 3] ^[:[x <haha!>]])
+    ([[1 <haha!>] [2 <haha!>]] = map x each [1 2] [:[x <haha!>]])
+    (['[1 <haha!>] '[2 <haha!>]] = map x each [1 2] ^[:[x <haha!>]])
 
     ; void opts out, as a twist on APPEND's rule disallowing it.
     ;
-    ([1 <haha!> 3 <haha!>] = map x each [1 2 3] [if x <> 2 :[x <haha!>]])
+    ([[1 <haha!>] [3 <haha!>]] = map x each [1 2 3] [if x <> 2 :[x <haha!>]])
 ]

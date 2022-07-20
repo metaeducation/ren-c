@@ -42,7 +42,7 @@ extend: func [
     word [any-word!]
     val [<opt> any-value!]
 ][
-    append obj reduce [to-set-word word :val]
+    append obj spread reduce [to-set-word word :val]
     return :val
 ]
 
@@ -76,16 +76,16 @@ array: func [
     block: make block! size
     case [
         block? rest [
-            repeat size [append block ^(array/initial rest :initial)]
+            repeat size [append block (array/initial rest :initial)]
         ]
         any-series? :initial [
-            repeat size [append block ^(copy/deep initial)]
+            repeat size [append block (copy/deep initial)]
         ]
         action? :initial [
-            repeat size [append block ^(initial/)]  ; Called every time
+            repeat size [append block (initial/)]  ; Called every time
         ]
     ] else [
-        append/dup block ^initial size
+        append/dup block initial size
     ]
     return block
 ]
@@ -95,85 +95,52 @@ replace: function [
     {Replaces a search value with the replace value within the target series}
 
     return: [any-series!]
+    tail: "Tail position after last replacement"
+        [any-series!]
+
     target "Series to replace within (modified)"
         [any-series!]
-    pattern "Value to be replaced (converted if necessary)"
-        [<opt> any-value!]
-    replacement "Value to replace with (called each time if a function)"
-        [<opt> any-value!]
+    ^pattern' "Value to be replaced (converted if necessary)"
+        [<void> any-value!]
+    ^replacement' "Value to replace with (called each time if a function)"
+        [<void> any-value!]
 
     ; !!! Note these refinments alias ALL, CASE, TAIL natives!
     /all "Replace all occurrences"
     /case "Case-sensitive replacement"
-    /tail "Return target after the last replacement position"
-
-    ; Consider adding an /any refinement to use find/any, once that works.
 ][
-    if null? :pattern [return target]
+    if @void = pattern' [return target]
 
     all_REPLACE: all
     all: :lib.all
     case_REPLACE: case
     case: :lib.case
-    tail_REPLACE: tail
-    tail: :lib.tail
 
-    save-target: target
+    pos: target
 
-    ; !!! These conversions being missing seems a problem with FIND the native
-    ; as a holdover from pre-open-source Rebol when mezzanine development
-    ; had no access to source (?).  Correct answer is likely to fix FIND:
-    ;
-    ;    >> find "abcdef" <cde>
-    ;    >> == "cdef" ; should probably be null
-    ;
-    ;    >> find "ab<cde>f" <cde>
-    ;    == "cde>f" ; should be "<cde>f"
-    ;
-    ; Note that if a FORM actually happens inside of FIND, it could wind up
-    ; happening repeatedly in the /ALL case if that happens.
-
-    len: 1 unless case [
-        ; leave bitset patterns as-is regardless of target type, len = 1
-        bitset? :pattern [1]
-
-        any-string? target [
-            if not text? :pattern [pattern: form :pattern]
-            length of :pattern
-        ]
-
-        binary? target [
-            ; Target is binary, pattern is not, make pattern a binary
-            if not binary? :pattern [pattern: to-binary :pattern]
-            length of :pattern
-        ]
-
-        any-array? :pattern [length of :pattern]
-    ]
-
-    while [pos: apply :find [target :pattern, /case case_REPLACE]] [
-        either action? :replacement [
+    while [pos: apply :find [
+        pos
+        unmeta pattern'
+        /tail 'tail
+        /case case_REPLACE
+    ]][
+        all [quoted? replacement', action? unmeta replacement'] then [
             ;
             ; If arity-0 action, value gets replacement and pos discarded
             ; If arity-1 action, pos will be argument to replacement
             ; If arity > 1, end of block will cause an error
             ;
-            value: replacement pos
-
-            ; Note: ACTION! parameter couldn't be passed as enfix ("no such
-            ; thing as enfix actions, just bindings").  So REPLACEMENT can't
-            ; quote backwards and (for instance) fetch value...but it *could*
-            ; quote pos and find out it's called `pos` (for instance).
-        ][
-            value: :replacement  ; inert value, might be null
+            value': ^ reeval (unmeta replacement') pos
+        ] else [
+            value': :replacement'  ; inert value, might be null
         ]
 
-        target: change/part pos :value len
+        pos: change/part pos (unmeta value') tail
 
         if not all_REPLACE [break]
     ]
 
-    return either tail_REPLACE [target] [save-target]
+    return target
 ]
 
 
@@ -209,8 +176,8 @@ reword: function [
 
     out: make (type of source) length of source
 
-    prefix: _
-    suffix: _
+    prefix: null
+    suffix: null
     case [
         null? escape [prefix: "$"]  ; refinement not used, so use default
 
@@ -278,19 +245,19 @@ reword: function [
                 fail ["Invalid keyword type:" keyword]
             ]
 
-            keep compose/deep <*> [
+            keep spread compose/deep <*> [
                 (<*> if match [integer! word!] keyword [
                     to-text keyword  ; `parse "a1" ['a '1]` illegal for now
                 ] else [
                     keyword
                 ])
 
-                ((<*> suffix))
+                (<*> maybe suffix)
 
                 (keyword-match: '(<*> keyword))
             ]
 
-            keep/line [|]
+            keep/line '|
         ]
         keep [false]  ; add failure if no match, instead of removing last |
     ]
@@ -385,7 +352,7 @@ extract: function [
     index: default '1
     out: make (type of series) len
     iterate-skip series width [
-        append out try ^(pick series index)
+        append out try (pick series index)
     ]
     return out
 ]
@@ -428,13 +395,13 @@ collect*: func [
 ][
     let out: null
     let keeper: specialize* (  ; SPECIALIZE to hide series argument
-        enclose* :append lambda [  ; Derive from APPEND for /ONLY /LINE /DUP
+        enclose* :append lambda [  ; Derive from APPEND for /LINE /DUP
             f [frame!]
             <with> out
         ][
-            opt if not blank? :f.value [  ; BLANK! is not collected
+            if f.value <> @void [  ; (META) can't collect voids
                 f.series: out: default [make block! 16]  ; no null return now
-                :f.value  ; ELIDE leaves as result
+                unmeta f.value  ; ELIDE leaves as result
                 elide do f  ; would invalidate f.value (hence ELIDE)
             ]
         ]
@@ -519,7 +486,7 @@ format: function [
     ]
 
     ; Provided enough rules? If not, append rest:
-    if not tail? values [append out values]
+    if not tail? values [append out spread values]
     return head of out
 ]
 
@@ -570,15 +537,15 @@ split: function [
                 [
                     repeat (count) [
                         copy series [repeat (piece-size) skip] (
-                            keep ^series
+                            keep series
                         )
                     ]
-                    copy series to <end> (keep ^series)
+                    copy series to <end> (keep series)
                 ]
             ] else [
                 [opt some [
                     copy series [skip, repeat (size - 1) opt skip] (
-                        keep ^series
+                        keep series
                     )
                 ]]
             ]
@@ -592,7 +559,7 @@ split: function [
                 opt some [not <end> [
                     mk1: <here>
                     opt some [mk2: <here>, [dlm | <end>] break | skip]
-                    (keep ^ copy/part mk1 mk2)
+                    (keep copy/part mk1 mk2)
                 ]]
                 <end>
             ]
@@ -602,7 +569,7 @@ split: function [
         [
             some [not <end> [
                 copy mk1: [to @dlm | to <end>]
-                (keep ^mk1)
+                (keep mk1)
                 opt thru @dlm
             ]]
         ]
@@ -613,7 +580,7 @@ split: function [
     ; or where the dlm was a char/string/charset and it was the last char
     ; (so we want to append an empty field that the above rule misses).
     ;
-    fill-val: does [copy either any-array? series [just []] [""]]
+    fill-val: does [copy either any-array? series [[]] [""]]
     add-fill-val: does [append result fill-val]
     if integer? dlm [
         if into [
@@ -633,7 +600,7 @@ split: function [
             bitset! [did find dlm try last series]
             char! [dlm = last series]
             text! tag! word! [
-                (find series ^dlm) and (empty? find-last/tail series ^dlm)
+                (find series dlm) and (empty? [# @]: find-last series dlm)
             ]
             block! [false]
         ] then fill -> [

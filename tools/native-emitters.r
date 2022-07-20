@@ -16,7 +16,7 @@ REBOL [
     Needs: 2.100.100
 ]
 
-if not find words of :import [product] [  ; See %import-shim.r
+if not find words of :import 'product [  ; See %import-shim.r
     do load append copy system/script/path %import-shim.r
 ]
 
@@ -79,7 +79,7 @@ export extract-native-protos: func [
                 replace/all proto "//  " {}
                 replace/all proto "//" {}
 
-                keep make native-info! compose2 [
+                keep make native-info! compose [
                     proto: (proto)
                     name: (name)
                     exported: (exported)
@@ -133,29 +133,29 @@ export emit-include-params-macro: function [
         ;
         paramlist: collect [  ; no PARSE COLLECT in bootstrap exe :-(
             assert [text? spec/1]
-            keep ^ spec/1
+            keep spec/1
             spec: my next
 
             assert [spec/1 = the return:]
-            keep ^ spec/1
+            keep spec/1
             spec: my next
 
             assert [text? spec/1]  ; description
-            keep ^ spec/1
+            keep spec/1
             spec: my next
 
             assert [block? spec/1]  ; type spec
-            keep ^ spec/1
+            keep spec/1
             spec: my next
 
-            keep [
+            keep spread [
                 remainder: [<opt> any-series!]
 
                 state [frame!]
                 input [any-series!]
             ]
 
-            keep spec
+            keep spread spec
         ]
     ]
 

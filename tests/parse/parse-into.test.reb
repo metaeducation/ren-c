@@ -54,7 +54,7 @@
     did all [
         [some some some] == parse [| | some some some | | |] [
             content: between some '| some '|
-            subparse (content) [x: collect [some keep ^['some]]]
+            subparse (content) [x: collect [some keep ['some]]]
         ]
         x = [some some some]
     ]
