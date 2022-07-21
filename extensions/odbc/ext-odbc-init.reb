@@ -133,7 +133,7 @@ sys.util.make-scheme [
             sql [text! word! block!]
                 {SQL statement or catalog, parameter blocks are reduced first}
         ][
-            return insert-odbc port.locals reduce compose [((sql))]
+            return insert-odbc port.locals reduce compose [(spread sql)]
         ]
 
         copy: function [port [port!] /part [integer!]] [
@@ -202,9 +202,11 @@ sqlform: func [
         ]
 
         meta-group! [
-            any [
-                try as text! do as block! value
+            let product': ^ eval as block! value
+            if @void = product' [
                 {}
+            ] else [
+                as text! unquote product'
             ]
         ]
     ]
@@ -246,7 +248,7 @@ odbc-execute: func [
         print ["** PARAMETERS:" mold parameters]
     ]
 
-    return insert statement spread compose [(query) ((parameters))]
+    return insert statement spread compose [(query) (spread parameters)]
 ]
 
 export [odbc-execute]

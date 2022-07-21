@@ -1187,7 +1187,12 @@ DECLARE_NATIVE(insert_odbc)
         "switch type of first", rebQ(ARG(sql)), "[",
             "lit-word! [true]",  // like Rebol2: 'tables, 'columns, 'types
             "text! [false]",
-        "] else [fail {SQL dialect must start with WORD! or TEXT! value}]"
+        "] else [",
+            "fail [",
+                "{SQL dialect must start with WORD! or TEXT! value}",
+                "mold", rebQ(ARG(sql)),
+            "]",
+        "]"
     );
 
     if (get_catalog) {
