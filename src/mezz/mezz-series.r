@@ -328,7 +328,7 @@ move: func [
     part: take/part source part
     insert either to [at head of source offset] [
         lib.skip source offset
-    ] part
+    ] either any-array? source [spread part] [part]
 ]
 
 
