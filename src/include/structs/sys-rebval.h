@@ -159,9 +159,7 @@
 #define mutable_QUOTE_BYTE(v)       mutable_THIRD_BYTE(WRITABLE(v)->header)
 
 #define QUOTE_255           255
-#define FAILURE_255         QUOTE_255  // special value for failure ERROR!
-#define ISOTOPE_255         QUOTE_255  // special value for isotope BAD-WORD!
-#define SPLICE_255          QUOTE_255  // special value for splice BLOCK!
+#define ISOTOPE_255         QUOTE_255  // special value for failure ERROR!
 
 #define MAX_QUOTE_DEPTH     254  // highest legal quoting level
 

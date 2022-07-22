@@ -221,7 +221,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
                 // treat any failure as if it could have been thrown from
                 // anywhere, so it is bubbled up as a throw.
                 //
-                Reify_Failure(OUT);
+                Reify_Isotope(OUT);
                 Init_Thrown_With_Label(
                     FRAME,
                     Lib(NULL),  // no "thrown value"
@@ -231,7 +231,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
             }
 
             if (Get_Frame_Flag(FRAME, META_RESULT))
-                Reify_Failure(OUT);
+                Reify_Isotope(OUT);
         }
         else if (Get_Frame_Flag(FRAME, META_RESULT)) {
             Clear_Stale_Flag(OUT);  // see [1]

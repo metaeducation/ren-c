@@ -3131,7 +3131,7 @@ DECLARE_NATIVE(transcode)
         // returning NULL, but if there's an error it will not be intercepted.
         //
         if (Is_Failure(OUT)) {
-            Reify_Failure(OUT);
+            Reify_Isotope(OUT);
             Move_Cell(ARG(relax), OUT);
         }
         else

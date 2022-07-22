@@ -1683,18 +1683,17 @@ DECLARE_NATIVE(map)
 
     Decay_If_Isotope(SPARE);
 
-    if (Is_Isotope(SPARE)) {
-        Init_Error(SPARE, Error_Bad_Isotope(SPARE));
-        Init_Thrown_With_Label(FRAME, SPARE, Lib(NULL));
-        goto finalize_map;
-    }
-
     if (Is_Splice(SPARE)) {
-        Reify_Splice(SPARE);
+        Reify_Isotope(SPARE);
         Cell(const*) tail;
         Cell(const*) v = VAL_ARRAY_AT(&tail, SPARE);
         for (; v != tail; ++v)
             Derelativize(PUSH(), v, VAL_SPECIFIER(SPARE));
+    }
+    else if (Is_Isotope(SPARE)) {
+        Init_Error(SPARE, Error_Bad_Isotope(SPARE));
+        Init_Thrown_With_Label(FRAME, SPARE, Lib(NULL));
+        goto finalize_map;
     }
     else if (Is_Nulled(SPARE)) {
         fail (Error_Need_Non_Null_Raw());

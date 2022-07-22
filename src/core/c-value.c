@@ -171,22 +171,12 @@ void Probe_Cell_Print_Helper(
         Append_Ascii(mo->series, "; void");
     }
     else if (Is_Isotope(v)) {
-        Append_Codepoint(mo->series, '~');
-        Symbol(const*) label = try_unwrap(VAL_ISOTOPE_LABEL(v));
-        if (label) {
-            Append_Spelling(mo->series, label);
-            Append_Codepoint(mo->series, '~');
-        }
+        DECLARE_LOCAL(reified);
+        Copy_Cell(reified, v);
+        Mold_Value(mo, reified);
         Append_Ascii(mo->series, "  ; isotope");
     }
-    else if (Is_Failure(v)) {
-        Append_Ascii(mo->series, "!!! FAILURE !!!\n");
-        DECLARE_LOCAL (temp);
-        Copy_Cell(temp, v);
-        Reify_Failure(temp);
-        Mold_Value(mo, v);
-    }
-    else if (Is_Nulled(v)) {
+    if (Is_Nulled(v)) {
         Append_Ascii(mo->series, "; null");
     }
     else

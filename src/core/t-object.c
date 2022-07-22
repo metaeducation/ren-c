@@ -900,6 +900,34 @@ Context(*) Copy_Context_Extra_Managed(
 }
 
 
+// !!! There are lots of new ideas being tried out, and BLOCK! isotopes are
+// certainly an odd piece of the puzzle--on top of the many existing oddities.
+// This factors out some shared work.
+//
+static void Mold_Isotope_For_Object(REB_MOLD *mo, Value(const*) var) {
+    if (Is_Word_Isotope(var)) {
+        Append_Codepoint(mo->series, '~');
+        Symbol(const*) label = try_unwrap(VAL_ISOTOPE_LABEL(var));
+        if (label) {
+            Append_Spelling(mo->series, label);
+            Append_Codepoint(mo->series, '~');
+        }
+    }
+    else if (Is_Splice(var)) {
+        DECLARE_LOCAL (reified);
+        Unrelativize(reified, var);
+        Reify_Isotope(reified);
+        mutable_HEART_BYTE(reified) = REB_GET_BLOCK;
+        Mold_Value(mo, reified);
+    }
+    else {
+        // !!! ERROR! isotopes can't be stored in variables.
+        //
+        assert(!"Unknown isotope class");
+    }
+}
+
+
 //
 //  MF_Context: C
 //
@@ -951,12 +979,7 @@ void MF_Context(REB_MOLD *mo, noquote(Cell(const*)) v, bool form)
             Append_Ascii(mo->series, ": ");
 
             if (Is_Isotope(e.var)) {
-                Append_Codepoint(mo->series, '~');
-                Symbol(const*) label = try_unwrap(VAL_ISOTOPE_LABEL(e.var));
-                if (label) {
-                    Append_Spelling(mo->series, label);
-                    Append_Codepoint(mo->series, '~');
-                }
+                fail (Error_Bad_Isotope(e.var));  // can't FORM isotopes
             }
             else if (not Is_Nulled(e.var) and not IS_BLANK(e.var))
                 Mold_Value(mo, e.var);
@@ -995,18 +1018,7 @@ void MF_Context(REB_MOLD *mo, noquote(Cell(const*)) v, bool form)
         Append_Codepoint(mo->series, ' ');
 
         if (Is_Isotope(e.var)) {
-            //
-            // Mold_Value() rejects isotopes.  Do it manually.  (Service
-            // routine Mold_Bad_Word_Isotope_Ok() might be useful?  Calling
-            // it Mold_Isotope() would be confusing because the isotope
-            // status would be lost).
-            //
-            Append_Ascii(s, "~");
-            Symbol(const*) label = try_unwrap(VAL_ISOTOPE_LABEL(e.var));
-            if (label) {
-                Append_Spelling(s, label);
-                Append_Ascii(s, "~");
-            }
+            Mold_Isotope_For_Object(mo, e.var);
         }
         else if (Is_Nulled(e.var))
             Append_Ascii(s, "'");  // `field: '` would evaluate to null

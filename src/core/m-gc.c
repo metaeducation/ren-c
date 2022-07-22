@@ -430,11 +430,7 @@ static void Propagate_All_GC_Marks(void)
                     panic (a);
             }
 
-            if (Is_Isotope(v)) {
-                //
-                // BAD-WORD! isotopes may not exist in blocks, they can only be
-                // in objects/frames.
-                //
+            if (Is_Isotope(v)) {  // only legal in objects/frames
                 assert(IS_VARLIST(a) or IS_PATCH(a));
             }
           #endif

@@ -124,11 +124,7 @@ export console!: make object! [
         ; We use SET instead of a SET-WORD! here to avoid caching the action
         ; name as "last-result", so it should keep the name it had before.
         ;
-        if block? v [
-            set 'last-result ~spread~  ; thinking being done on this...
-        ] else [
-            set 'last-result unmeta v
-        ]
+        set 'last-result unmeta v
 
         === DISPLAY NULL AS IF IT WERE A COMMENT, AS IT HAS NO VALUE ===
 

@@ -241,13 +241,10 @@ void Do_After_Action_Checks_Debug(Frame(*) f) {
     // !!! PG_Dispatcher() should do this, so every phase gets checked.
     //
   #if DEBUG_NATIVE_RETURNS
-    if (Is_Failure(f->out)) {
+    if (not Is_Stale(f->out) and Is_Isotope(f->out)) {
         //
-        // Trampoline handles this, see FRAME_FLAG_FAILURE_RESULT_OK
-    }
-    else if (Is_Splice(f->out)) {
-        //
-        // This suggests "Is_Isotope()" might have to subsume splices.
+        // Isotopes not currently checked for by return conventions, so they
+        // are always legal... this includes failures.  Review premise.
     }
     else if (ACT_HAS_RETURN(phase)) {
         const REBKEY *key = ACT_KEYS_HEAD(phase);

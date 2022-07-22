@@ -2367,7 +2367,7 @@ DECLARE_NATIVE(blackhole_q)
     REBVAL *v = ARG(optional);
     Meta_Unquotify(v);
 
-    if (Is_Isotope(v)) {
+    if (Is_Word_Isotope(v)) {
         if (VAL_ISOTOPE_ID(v) == SYM_BLACKHOLE)
             return Init_True(OUT);
         return Init_False(OUT);

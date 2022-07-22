@@ -238,11 +238,8 @@ DECLARE_NATIVE(panic)
     }
     else {  // interpret reason as a message
       if (Is_Isotope(v)) {
-            Symbol(const*) label = try_unwrap(VAL_ISOTOPE_LABEL(v));
-            if (label)
-                p = STR_UTF8(label);
-            else
-                p = Canon(UNSET);
+            assert(!"Called PANIC without /VALUE on isotope");
+            p = v;
         }
         else if (IS_TEXT(v)) {
             p = VAL_UTF8_AT(v);

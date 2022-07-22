@@ -628,15 +628,7 @@ DECLARE_NATIVE(definitional_return)
     // take [<opt> any-value!] as its argument, and then report the error
     // itself...implicating the frame (in a way parallel to this native).
     //
-    if (Is_Failure(v)) {
-        //
-        // allow, so you can definitionally fail
-    }
-    else if (Is_Splice(v)) {
-        //
-        // allow for now, but this needs a better answer in typechecking
-    }
-    else if (Is_Isotope(v)) {
+    if (Is_Isotope(v)) {
         //
         // allow, so that you can say `return ~xxx~` in functions whose spec
         // is written as `return: []`

@@ -126,7 +126,7 @@ inline static REBVAL *Init_Isotope_Untracked(
 #define Init_Isotope(out,label) \
     Init_Isotope_Untracked(TRACK(out), (label))
 
-inline static bool Is_Isotope(Cell(const*) v) {
+inline static bool Is_Word_Isotope(Cell(const*) v) {
     if (QUOTE_BYTE(v) != ISOTOPE_255)
         return false;
 
@@ -137,6 +137,14 @@ inline static bool Is_Isotope(Cell(const*) v) {
     return false;
 }
 
+inline static bool Is_Isotope(Cell(const*) v) {
+    if (QUOTE_BYTE(v) != ISOTOPE_255)
+        return false;
+
+    assert(HEART_BYTE(v) != REB_NULL);
+    return true;
+}
+
 inline static bool Reify_Isotope(Cell(*) v) {
     assert(Is_Isotope(v));
     mutable_QUOTE_BYTE(v) = 0;
@@ -144,20 +152,19 @@ inline static bool Reify_Isotope(Cell(*) v) {
 }
 
 inline static Cell(*) Isotopify(Cell(*) v) {
-    assert(IS_BAD_WORD(v) and QUOTE_BYTE(v) == 0);
     mutable_QUOTE_BYTE(v) = ISOTOPE_255;
     return v;
 }
 
 inline static option(Symbol(const*)) VAL_ISOTOPE_LABEL(Cell(const*) v) {
-    assert(Is_Isotope(v));
+    assert(Is_Word_Isotope(v));
     assert(HEART_BYTE_UNCHECKED(v) == REB_BAD_WORD);
 
     return cast(Symbol(const*), VAL_NODE1(v));
 }
 
 inline static OPT_SYMID VAL_ISOTOPE_ID(Cell(const*) v) {
-    assert(Is_Isotope(v));
+    assert(Is_Word_Isotope(v));
     assert(HEART_BYTE_UNCHECKED(v) == REB_BAD_WORD);
 
     if (not VAL_NODE1(v))
@@ -172,7 +179,7 @@ inline static bool Is_Isotope_With_Id(
 ){
     assert(id != SYM_0);  // SYM_0 means unknown, not e.g. Is_None()
 
-    if (not Is_Isotope(v))
+    if (not Is_Word_Isotope(v))
         return false;
 
     return id == cast(enum Reb_Symbol_Id, VAL_ISOTOPE_ID(v));
@@ -210,7 +217,7 @@ inline static bool Is_Isotope_With_Id(
 #define Init_Meta_Of_None(out)      Init_Bad_Word((out), nullptr)
 
 inline static bool Is_None(Cell(const*) v)
-  { return Is_Isotope(v) and VAL_BAD_WORD_LABEL(v) == nullptr; }
+  { return Is_Word_Isotope(v) and VAL_BAD_WORD_LABEL(v) == nullptr; }
 
 inline static bool Is_Meta_Of_None(Cell(const*) v)
   { return IS_BAD_WORD(v) and VAL_BAD_WORD_LABEL(v) == nullptr; }
@@ -315,7 +322,7 @@ inline static bool Is_Meta_Of_End(Cell(const*) v)
 inline static REBVAL *Init_Blackhole(Cell(*) out);  // defined in %sys-token.h
 
 inline static Cell(*) Decay_If_Isotope(Cell(*) v) {
-    if (not Is_Isotope(v))
+    if (not Is_Word_Isotope(v))
         return v;
 
     switch (VAL_ISOTOPE_ID(v)) {
@@ -334,7 +341,7 @@ inline static Cell(*) Decay_If_Isotope(Cell(*) v) {
 }
 
 inline static const REBVAL *Pointer_To_Decayed(const REBVAL *v) {
-    if (not Is_Isotope(v))
+    if (not Is_Word_Isotope(v))
         return v;
 
     switch (VAL_ISOTOPE_ID(v)) {
@@ -355,7 +362,7 @@ inline static const REBVAL *Pointer_To_Decayed(const REBVAL *v) {
 inline static const REBVAL *rebPointerToDecayed(const REBVAL *v) {
     if (v == nullptr)
         return v;  // API tolerance
-    if (not Is_Isotope(v)) {
+    if (not Is_Word_Isotope(v)) {
         assert(not Is_Nulled(v));  // API speaks nullptr, not nulled cells
         return v;
     }
@@ -366,7 +373,7 @@ inline static const REBVAL *rebPointerToDecayed(const REBVAL *v) {
 }
 
 inline static Cell(*) Isotopify_If_Falsey(Cell(*) v) {
-    if (Is_Isotope(v))
+    if (Is_Word_Isotope(v))
         return v;  // already an isotope (would trigger asserts on IS_X tests)
     if (Is_Nulled(v))
         Init_Isotope(v, Canon(NULL));

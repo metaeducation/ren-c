@@ -950,11 +950,11 @@ Context(*) Error_Bad_Word_Get(
     // Don't want the error message to have an isotope version as argument, as
     // they're already paying for an error regarding the state.
     //
-    DECLARE_LOCAL (bad_word);
-    Copy_Cell(bad_word, SPECIFIC(isotope));
-    Reify_Isotope(bad_word);
+    DECLARE_LOCAL (reified);
+    Copy_Cell(reified, SPECIFIC(isotope));
+    Reify_Isotope(reified);
 
-    return Error_Bad_Word_Get_Raw(target, bad_word);
+    return Error_Bad_Word_Get_Raw(target, reified);
 }
 
 
@@ -1128,13 +1128,7 @@ Context(*) Error_Isotope_Arg(Frame(*) f, const REBPAR *param)
     //
     REBVAL *arg = FRM_ARG(f, index);
     Copy_Cell(PUSH(), arg);
-
-    if (Is_Isotope(arg))
-        Reify_Isotope(TOP);
-    else {
-        assert(Is_Splice(arg));
-        Reify_Splice(TOP);
-    }
+    Reify_Isotope(TOP);
 
     return Error_Isotope_Arg_Raw(label, param_name, TOP);
 }
@@ -1420,11 +1414,11 @@ Context(*) Error_On_Port(enum Reb_Symbol_Id id_sym, REBVAL *port, REBINT err_cod
 Context(*) Error_Bad_Isotope(Cell(const*) isotope) {
     assert(Is_Isotope(isotope));
 
-    DECLARE_LOCAL (bad_word);
-    Copy_Cell(bad_word, SPECIFIC(isotope));
-    Reify_Isotope(bad_word);
+    DECLARE_LOCAL (reified);
+    Copy_Cell(reified, SPECIFIC(isotope));
+    Reify_Isotope(reified);
 
-    return Error_Bad_Isotope_Raw(bad_word);
+    return Error_Bad_Isotope_Raw(reified);
 }
 
 
