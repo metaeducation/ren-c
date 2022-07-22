@@ -1402,6 +1402,9 @@ DECLARE_NATIVE(try)
 
     REBVAL *v = ARG(optional);
 
+    if (Is_Meta_Of_Void(v) or Is_Nulled(v))
+        return Init_Nulled(OUT);
+
     if (IS_ERROR(v)) {
         ERROR_VARS *vars = ERR_VARS(VAL_CONTEXT(v));
         if (
@@ -1412,9 +1415,6 @@ DECLARE_NATIVE(try)
         }
         return FAIL(VAL_CONTEXT(v));
     }
-
-    if (Is_Nulled(v) or Is_Meta_Of_Void(v))
-        return Init_Nulled(OUT);
 
     Meta_Unquotify(v);
     Decay_If_Isotope(v);  // !!! this decays isotopes, should it?

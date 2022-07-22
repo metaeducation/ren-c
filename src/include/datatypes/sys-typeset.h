@@ -379,7 +379,10 @@ inline static bool Typecheck_Including_Constraints(
     enum Reb_Kind kind;
 
     if (VAL_PARAM_CLASS(param) == PARAM_CLASS_META) {
-        if (IS_BAD_WORD(v)) {
+        if (Is_Meta_Of_Void(v)) {
+            return true;
+        }
+        else if (IS_BAD_WORD(v)) {
             return true;  // all META parameters take BAD-WORD!
         }
         else if (Is_Nulled(v)) {

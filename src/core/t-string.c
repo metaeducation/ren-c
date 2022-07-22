@@ -858,7 +858,7 @@ REBTYPE(String)
         UNUSED(PAR(series));
 
         Value(*) arg = ARG(value);
-        assert(not Is_Nulled(arg));
+        assert(VAL_TYPE_UNCHECKED(arg) != REB_NULL);
         if (Is_Meta_Of_Void(arg))
             Init_Nulled(arg);
 

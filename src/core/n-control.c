@@ -239,7 +239,7 @@ DECLARE_NATIVE(did_1)  // see TO-C-NAME
 
     Value(*) in = ARG(optional);
 
-    if (Is_Nulled(in) or Is_Meta_Of_Void(in))
+    if (Is_Meta_Of_Void(in) or Is_Nulled(in))
         return Init_False(OUT);
 
     if (REF(decay) and Is_Meta_Of_Null_Isotope(in))
@@ -266,7 +266,7 @@ DECLARE_NATIVE(didnt)
 
     Value(*) in = ARG(optional);
 
-    if (Is_Nulled(in) or Is_Meta_Of_Void(in))
+    if (Is_Meta_Of_Void(in) or Is_Nulled(in))
         return Init_True(OUT);
 
     if (REF(decay) and Is_Meta_Of_Null_Isotope(in))
@@ -300,17 +300,17 @@ DECLARE_NATIVE(then)  // see `tweak :then 'defer on` in %base-defs.r
     Value(*) in = ARG(optional);
     Value(*) branch = ARG(branch);
 
-    if (IS_ERROR(in)) {  // ^META error represents definitional failure, skip
-        Copy_Cell(OUT, in);
-        return Failurize(OUT);
-    }
-
     if (
-        Is_Nulled(in)  // soft failure signal
-        or Is_Meta_Of_Void(in)  // meta parameter, e.g. input was true void
+        Is_Meta_Of_Void(in)  // meta parameter, e.g. input was true void
+        or Is_Nulled(in)  // soft failure signal
         or (REF(decay) and Is_Meta_Of_Null_Isotope(in))  // null isotope
     ){
         return VOID;
+    }
+
+    if (IS_ERROR(in)) {  // ^META error represents definitional failure, skip
+        Copy_Cell(OUT, in);
+        return Failurize(OUT);
     }
 
     return DELEGATE_BRANCH(OUT, branch, Meta_Unquotify(in));  // unmeta, see [1]
@@ -351,16 +351,16 @@ DECLARE_NATIVE(also)  // see `tweak :also 'defer on` in %base-defs.r
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    if (IS_ERROR(in)) {  // ^META error represents definitional failure, skip
-        Copy_Cell(OUT, in);
-        return Failurize(OUT);
-    }
+    if (Is_Meta_Of_Void(in))
+        return VOID;  // telegraph invisible intent
 
     if (Is_Nulled(in))
         return nullptr;  // telegraph pure null
 
-    if (Is_Meta_Of_Void(in))
-        return VOID;  // telegraph invisible intent
+    if (IS_ERROR(in)) {  // ^META error represents definitional failure, skip
+        Copy_Cell(OUT, in);
+        return Failurize(OUT);
+    }
 
     if (REF(decay) and Is_Meta_Of_Null_Isotope(in))
         return Init_Isotope(OUT, Canon(NULL));  // telegraph null isotope
@@ -417,22 +417,21 @@ DECLARE_NATIVE(else)  // see `tweak :else 'defer on` in %base-defs.r
     Value(*) in = ARG(optional);
     Value(*) branch = ARG(branch);
 
-    if (IS_ERROR(in)) {  // ^META error represents definitional failure, skip
-        Copy_Cell(OUT, in);
-        return Failurize(OUT);
+    if (Is_Meta_Of_Void(in)) {  // isotope, must be tested first
+        assert(Is_Void(SPARE));  // branch argument is SPARE for void, see [2]
     }
-
-    if (Is_Nulled(in)) {
+    else if (Is_Nulled(in)) {
         Init_Nulled(SPARE);
     }
-    else if (Is_Meta_Of_Void(in)) {
-        assert(Is_Void(SPARE));  // branch argument is SPARE for void, see [2]
+    else if (REF(decay) and Is_Meta_Of_Null_Isotope(in)) {
+        Init_Null_Isotope(SPARE);  // action branch decays if non-meta, see [3]
     }
     else if (IS_BLOCK(in)) {
         return Splicify(Copy_Cell(OUT, in));
     }
-    else if (REF(decay) and Is_Meta_Of_Null_Isotope(in)) {
-        Init_Null_Isotope(SPARE);  // action branch decays if non-meta, see [3]
+    else if (IS_ERROR(in)) {  // ^META error is definitional failure, skip
+        Copy_Cell(OUT, in);
+        return Failurize(OUT);
     }
     else
         return COPY(Meta_Unquotify(in));  // unquotify to pass thru, see [4]

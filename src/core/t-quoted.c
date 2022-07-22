@@ -405,11 +405,11 @@ DECLARE_NATIVE(unmeta)
 
     REBVAL *v = ARG(value);
 
-    if (Is_Nulled(v))
-        return nullptr;  // ^(null) => null, so the reverse must be true
-
     if (Is_Meta_Of_Void(v))
         return VOID;  // ^-- see explanation
+
+    if (Is_Nulled(v))
+        return nullptr;  // ^(null) => null, so the reverse must be true
 
     if (IS_BAD_WORD(v)) {
         Isotopify(v);
@@ -422,6 +422,27 @@ DECLARE_NATIVE(unmeta)
     // Now remove the level of meta the user was asking for.
     //
     return UNMETA(v);
+}
+
+
+//
+//  unget: native [
+//
+//  {Interim tool for emulating future GET-WORD!/GET-TUPLE! semantics}
+//
+//      return: [<opt> <void> any-value!]
+//      'var "Quoted for convenience"
+//          [word! tuple!]
+//  ]
+//
+DECLARE_NATIVE(unget)
+{
+    INCLUDE_PARAMS_OF_UNGET;
+
+    if (Get_Var_Core_Throws(SPARE, GROUPS_OK, ARG(var), SPECIFIED))
+        return THROWN;
+
+    return UNMETA(SPARE);
 }
 
 
@@ -471,6 +492,14 @@ DECLARE_NATIVE(maybe)
 
     REBVAL *v = ARG(optional);
 
+    if (
+        Is_Meta_Of_Void(v)
+        or Is_Nulled(v) or Is_Meta_Of_Null_Isotope(v)
+        or Is_Meta_Of_None(v)
+    ){
+        return VOID;
+    }
+
     if (IS_ERROR(v)) {  // fold in TRY behavior as well
         ERROR_VARS *vars = ERR_VARS(VAL_CONTEXT(v));
         if (
@@ -480,14 +509,6 @@ DECLARE_NATIVE(maybe)
             return VOID;
         }
         return FAIL(VAL_CONTEXT(v));
-    }
-
-    if (
-        Is_Nulled(v) or Is_Meta_Of_Null_Isotope(v)
-        or Is_Meta_Of_Void(v)
-        or Is_Meta_Of_None(v)
-    ){
-        return VOID;
     }
 
     Move_Cell(OUT, v);
