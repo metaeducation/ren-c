@@ -37,7 +37,7 @@
 ; https://forum.rebol.info/t/justifiable-asymmetry-to-on-block/751
 ;
 ([a b c d/e/f] = append copy [a b c] 'd/e/f)
-('a/b/c/d/e = join 'a/b/c [/ d/e])
+('a/b/c/d/e = join 'a/b/c spread [/ d/e])
 ('(a b c d/e/f) = append copy '(a b c) 'd/e/f)
 (did trap ['a/b/c/d/e/f = join 'a/b/c '(d e f)])
 ('a/b/c/d/e/f = join 'a/b/c/ 'd/e/f)

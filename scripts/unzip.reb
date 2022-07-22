@@ -153,7 +153,7 @@ zip-entry: func [
     ; interpreted based on the OS of origin--can't say Amiga :-(
     ;
     assert [wanted? 'central-dir-entry]  ; currently expects you request it
-    central-dir-entry: join binary! reduce [
+    central-dir-entry: make binary! [
         central-file-sig
         #{1E}  ; version of zip spec this encoder speaks (#{1E}=3.0)
         #{03}  ; OS of origin: 0=DOS, 3=Unix, 7=Mac, 1=Amiga...
@@ -179,7 +179,7 @@ zip-entry: func [
 
     ; local file entry
     ;
-    return join binary! reduce [
+    return make binary! [
         local-file-sig
         #{0A00}  ; version (both Mac OS Zip and Linux Zip put #{0A00})
         #{0000}  ; flags
@@ -207,7 +207,7 @@ to-path-file: func [
         return value
     ]
     value: decode-url value
-    return join %"" reduce [value.host "/" value.path value.target]
+    return join %"" spread reduce [value.host "/" value.path value.target]
 ]
 
 zip: func [
@@ -295,7 +295,7 @@ zip: func [
         offset: me + length of file-entry
     ]
 
-    append where join binary! reduce [
+    append where make binary! [
         central-directory
         end-of-central-sig
         #{0000}  ; disk num

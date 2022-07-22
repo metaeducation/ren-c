@@ -103,7 +103,7 @@ tool-for-host: func [
         ;
         ; !!! Review the 4.9 non-sequitur in this older method.  What's that?
         ;
-        join ndk-root reduce [
+        join ndk-root spread reduce [
              %toolchains/ (abi) "-4.9" "/prebuilt/"
                 (host) "/" %bin/
                     (abi) -gcc
@@ -124,7 +124,7 @@ tool-for-host: func [
             abi: 'armv7a-linux-androideabi
         ]
 
-        join ndk-root reduce [
+        join ndk-root spread reduce [
             %toolchains/llvm/prebuilt/ (host) "/" %bin/
                 (abi) (android-api-level) "-clang"
         ]
@@ -263,13 +263,13 @@ sysroot-for-link: func [
             ;
             ; Old convention: linker sysroot lives in %platforms/
             ;
-            join ndk-root reduce [
+            join ndk-root spread reduce [
                 %platforms/ "android-" (android-api-level) "/" "arch-arm"
             ]
         ][
             ; New convention: linker sysroot lives in %toolchains/llvm/
             ;
-            join ndk-root reduce [
+            join ndk-root spread reduce [
                 %toolchains/llvm/prebuilt/ (host) "/" %sysroot/
             ]
         ])

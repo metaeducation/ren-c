@@ -142,6 +142,8 @@ DECLARE_NATIVE(make)
 
 
     Bounce b = hook(frame_, kind, parent, arg);  // might throw, fail...
+    if (b == BOUNCE_DELEGATE)
+        return b;  // !!! Doesn't check result if continuation used, review
     if (b == BOUNCE_THROWN)
         return b;
     REBVAL *r = Value_From_Bounce(b);

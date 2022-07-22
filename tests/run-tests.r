@@ -38,7 +38,7 @@ flags: pick [
 
 check: checksum 'sha1 to binary! mold system.build
 
-log-file-prefix: join %r collect [
+log-file-prefix: join %r spread collect [
     for i length of version: system.version [
         keep "_"
         keep version.(i)

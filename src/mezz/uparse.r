@@ -2848,7 +2848,7 @@ parse*: func [
     ; We put an implicit PHASE bracketing the whole of UPARSE* so that the
     ; <delay> groups will be executed.
     ;
-    rules: :['phase rules]
+    rules: reduce ['phase rules]
 
     ; !!! Red has a /PART feature and so in order to run the tests pertaining
     ; to that we go ahead and fake it.  Actually implementing /PART would be

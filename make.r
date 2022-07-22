@@ -1364,7 +1364,7 @@ append app-config/ldflags maybe spread :user-config/ldflags
 
 libr3-core: make rebmake/object-library-class [
     name: 'libr3-core
-    definitions: join ["REB_API"] app-config/definitions
+    definitions: join ["REB_API"] spread app-config/definitions
 
     ; might be modified by the generator, thus copying
     includes: join app-config/includes %prep/core
@@ -1385,7 +1385,7 @@ libr3-core: make rebmake/object-library-class [
 main: make libr3-core [
     name: 'main
 
-    definitions: join ["REB_CORE"] app-config/definitions
+    definitions: join ["REB_CORE"] spread app-config/definitions
     includes: join app-config/includes %prep/main  ; generator may modify
     cflags: copy app-config/cflags  ; generator may modify
 
@@ -1776,7 +1776,7 @@ for-each ext extensions [
             ][
                 reduce [
                     make rebmake/cmd-strip-class [
-                        file: join output :rebmake/target-platform/dll-suffix
+                        file: join output try rebmake/target-platform/dll-suffix
                     ]
                 ]
             ]
@@ -1796,7 +1796,7 @@ for-each ext extensions [
         ;
         add-project-flags/I/D/c/O/g ext-proj
             app-config/includes
-            join ["REB_EXT"] app-config/definitions
+            join ["REB_EXT"] spread app-config/definitions
             app-config/cflags
             app-config/optimization
             app-config/debug
@@ -1905,7 +1905,7 @@ prep: make rebmake/entry-class [
                 ; functions to make available with `tcc_add_symbol()`)
                 ;
                 hook-script: file-to-local/full (
-                    join repo-dir reduce [
+                    join repo-dir spread reduce [
                         "extensions/" (ext/directory) (ext/hook)
                     ]
                 )
@@ -1946,7 +1946,7 @@ app: make rebmake/application-class [
     ][
         reduce [
             make rebmake/cmd-strip-class [
-                file: join output :rebmake/target-platform/exe-suffix
+                file: join output try rebmake/target-platform/exe-suffix
             ]
         ]
     ]
@@ -2014,7 +2014,7 @@ clean: make rebmake/entry-class [
         make rebmake/cmd-delete-class [file: %objs/]
         make rebmake/cmd-delete-class [file: %prep/]
         make rebmake/cmd-delete-class [
-            file: join %r3 :rebmake/target-platform/exe-suffix
+            file: join %r3 try rebmake/target-platform/exe-suffix
         ]
         make rebmake/cmd-delete-class [file: %libr3.*]
     ]
@@ -2027,11 +2027,11 @@ check: make rebmake/entry-class [
 
     commands: collect [
         keep make rebmake/cmd-strip-class [
-            file: join app/output :rebmake/target-platform/exe-suffix
+            file: join app/output try rebmake/target-platform/exe-suffix
         ]
         for-each s dynamic-libs [
             keep make rebmake/cmd-strip-class [
-                file: join s/output :rebmake/target-platform/dll-suffix
+                file: join s/output try rebmake/target-platform/dll-suffix
             ]
         ]
     ]

@@ -185,7 +185,7 @@ for-each info all-protos [
 === {EMIT THE INCLUDE_PARAMS_OF_XXX MACROS FOR THE EXTENSION NATIVES} ===
 
 e1: make-emitter "Module C Header File Preface" (
-    join output-dir reduce ["tmp-mod-" (l-m-name) ".h"]
+    join output-dir spread reduce ["tmp-mod-" (l-m-name) ".h"]
 )
 
 e1/emit {

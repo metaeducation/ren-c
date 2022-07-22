@@ -55,15 +55,18 @@ last: redescribe [
 ; inefficient.  However, it's easier to work it out as a userspace routine
 ; to figure out exactly what it should do, and make it a native later.
 ;
-; !!! Should JOIN implicitly reduce?  Rebol2's did.
+; Historically, Redbol JOIN would implicitly reduce block arguments, and assume
+; blocks should also be spliced.  Both aspects are removed from this JOIN, to
+; bring it in line with the "as-is" defaults, and make it more useful for
+; working with PATH!.
 ;
 ; JOIN does "path & tuple calculus" and makes sure the slashes or dots are
 ; correct:
 ;
-;     >> join path! [a b c]
+;     >> join 'a spread [b c]
 ;     ** Error: you can't stick a to b without a /, nor b to c without a /
 ;
-;     >> join path! [a/ b / c]
+;     >> join 'a/ spread [b / c]
 ;     == a/b/c
 ;
 ; Note: `join ':a [b c]` => `:a/b/c` or `join [a] '/b/c` => [a]/b/c` may seem
@@ -84,52 +87,32 @@ join: function [
         any-sequence!
         port! map! object! module! bitset!
     ]
-    value [
-        <opt> quoted! block! path! tuple!
-        text! url! issue! file! binary! integer!  ; !!! ANY-INERT is missing
-    ]
+    ^value [<void> any-value!]
 ][
-    if null? value [
+    if @void = value [
         return copy base
-    ]
-    if (not block? value) or (all [not any-sequence? base, any-sequence? value]) [
-        value: quote value  ; implicitly make safe for SPREAD (unquotes)
-    ]
-
-    type: type of base  ; to set output type back to original if transformed
-
-    if type = datatype! [
-        type: base
-        base: case [
-            find any-sequence! type [[]]
-            find any-array! type [[]]
-            find any-string! type [""]
-            type = issue! [""]
-            type = binary! [#{}]
-
-            fail ["Invalid datatype for JOIN:" type]
-        ]
     ]
 
     ; !!! This doesn't do any "slash calculus" on URLs or files, e.g. to stop
     ; the append of two slashes in a row.  That is done by the MAKE-FILE code,
     ; and should be reviewed if it belongs here too.
     ;
-    if find :[url! issue! file!] type [
-        return as type append (to text! base) spread value
+    if match [url! issue! any-string!] base [
+        return as (type of base) append (to text! base) spread value
     ]
 
-    if not find any-sequence! type [
-        return as type append (copy base) spread value
+    if not any-sequence? base [
+        return append (copy base) spread value
     ]
 
-    base: to block! base  ; copies
+    sep: either any-path? base ['/] ['.]
+    type: type of base  ; to set output type back to original
+    base: to block! base  ; TO operation copies
 
     if not block? value [
         value: reduce [unquote value]  ; !!! should FOR-EACH take quoted?
     ]
 
-    sep: either find any-path! type ['/] ['.]
     for-each item value [  ; !!! or REDUCE-EACH, for implicit reduce...?
         if blank? item [
             continue  ; old-rule, skips blanks

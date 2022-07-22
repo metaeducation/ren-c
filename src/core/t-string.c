@@ -896,8 +896,8 @@ REBTYPE(String)
             if (not IS_QUOTED(arg))
                 fail (ARG(value));
             Unquotify(arg, 1);  // remove "^META" level
-            if (ANY_ARRAY(arg) or ANY_SEQUENCE(arg))
-                fail (ARG(value));
+            if (ANY_ARRAY(arg))
+                fail (ARG(value));  // error on `append "abc" [d e]` w/o SPREAD
         }
 
         VAL_INDEX_RAW(v) = Modify_String_Or_Binary(  // does read-only check

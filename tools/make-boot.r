@@ -789,7 +789,7 @@ nats: collect [
     ]
 ]
 
-symbol-strings: join binary! collect [
+symbol-strings: to binary! reduce collect [  ; no bootstrap MAKE BINARY!
     for-each word syms-words [
         spelling: to text! word
         keep head change copy #{00} length of spelling

@@ -10,9 +10,9 @@
 ;
 ; https://forum.rebol.info/t/rejoin-ugliness-and-the-usefulness-of-tests/248
 
-('a/b/c = join 'a/b [/c])
+('a/b/c = join 'a/b '/c)
 ('a/b/c = join path! [a/b /c])
-('a/b/c/d = join path! :['a/b '/c '/d])
+('a/b/c/d = join path! reduce ['a/b '/c '/d])
 
 (error? trap [join path! [a b]])
 
@@ -76,5 +76,5 @@
 
 [
     https://github.com/metaeducation/ren-c/issues/1085
-    (#a30bc = join #a :[10 + 20 "b" #c])
+    (#a30bc = join #a reduce [10 + 20 "b" #c])
 ]

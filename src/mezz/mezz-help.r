@@ -279,14 +279,13 @@ help: function [
                 replace/all item a b
             ]
 
-            browse join https://github.com/gchiu/reboldocs/blob/master/ :[
-                item %.MD
+            browse to url! compose [
+                https://github.com/gchiu/reboldocs/blob/master/ (item) .MD
             ]
         ] else [
             remove back tail of item  ; it's a DATATYPE!, so remove the !
-            browse join http://www.rebol.com/r3/docs/datatypes/ reduce [
-                item
-                tmp: %.html
+            browse to url! compose [
+                http://www.rebol.com/r3/docs/datatypes/ (item) .html
             ]
         ]
     ]

@@ -202,41 +202,16 @@ Bounce MAKE_Binary(
         return Init_Binary(OUT, Make_Binary(Int32s(def, 0)));
     }
 
-    if (IS_BLOCK(def)) {
-        //
-        // The construction syntax for making binaries preloaded with an
-        // offset into the data is #[binary [#{0001} 2]].
-        //
-        // !!! R3-Alpha make definitions didn't have to be a single value
-        // (they are for compatibility between construction syntax and MAKE
-        // in Ren-C).  So the positional syntax was #[binary! #{0001} 2]...
-        // while #[binary [#{0001} 2]] would join the pieces together in order
-        // to produce #{000102}.  That behavior is not available in Ren-C.
-
-        REBLEN len;
-        Cell(const*) at = VAL_ARRAY_LEN_AT(&len, def);
-        if (len != 2)
-            goto bad_make;
-
-        Cell(const*) first = at;
-        if (not IS_BINARY(first))
-            goto bad_make;
-
-        Cell(const*) index = at + 1;
-        if (not IS_INTEGER(index))
-            goto bad_make;
-
-        REBINT i = Int32(index) - 1 + VAL_INDEX(first);
-        if (i < 0 or i > cast(REBINT, VAL_LEN_AT(first)))
-            goto bad_make;
-
-        return Init_Series_Cell_At(OUT, REB_BINARY, VAL_SERIES(first), i);
+    if (IS_BLOCK(def)) {  // was construction syntax, #[binary [#{0001} 2]]
+        rebPushContinuation(
+            OUT,
+            FRAME_MASK_NONE,
+            Lib(TO), Lib(BINARY_X), Lib(REDUCE), rebQ(def)  // quote 4 lifetime
+        );
+        return BOUNCE_DELEGATE;
     }
 
     return MAKE_TO_Binary_Common(frame_, def);
-
-  bad_make:
-    return FAIL(Error_Bad_Make(REB_BINARY, def));
 }
 
 

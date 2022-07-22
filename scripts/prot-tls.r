@@ -412,7 +412,7 @@ make-state-updater: func [
                 subparse block! [opt some state-rule, <subinput>]
                 | across state-rule  ; ACROSS because we want BLOCK! (length 1)
             ]
-            (append transitions spread :[left right])
+            (append transitions spread reduce [left right])
         ]
     ]
 
@@ -512,7 +512,7 @@ client-hello: func [
     random/seed now/time/precise
     repeat 28 [append ctx.client-random (random-secure 256) - 1]
 
-    let cs-data: join binary! map-each item cipher-suites [
+    let cs-data: make binary! map-each item cipher-suites [
         maybe match binary! item
     ]
 
@@ -712,7 +712,7 @@ client-key-exchange: func [
             )
 
             ; we use the 65-byte uncompressed format to send our key back
-            key-data: join binary! reduce [
+            key-data: make binary! [
                 #{04}
                 ctx.ecdh-keypair.public-key.x
                 ctx.ecdh-keypair.public-key.y
@@ -843,7 +843,7 @@ finished: func [
     ctx.seq-num-w: 0
 
     let seed: if ctx.version < 1.2 [
-        join binary! reduce [
+        make binary! [
             checksum 'md5 ctx.handshake-messages
             checksum 'sha1 ctx.handshake-messages
         ]
@@ -855,7 +855,7 @@ finished: func [
         checksum/method ctx.handshake-messages ctx.prf-method
     ]
 
-    return join binary! reduce [
+    return make binary! [
         #{14}       ; protocol message type (20=Finished)
         #{00 00 0c} ; protocol message length (12 bytes)
 
@@ -898,7 +898,7 @@ encrypt-data: func [
     ; Message Authentication Code
     ; https://tools.ietf.org/html/rfc5246#section-6.2.3.1
     ;
-    let MAC: checksum/method/key join binary! reduce [
+    let MAC: checksum/method/key make binary! [
         to-8bin ctx.seq-num-w               ; sequence number (64-bit int)
         type                                ; msg type
         ctx.ver-bytes                       ; version
@@ -1407,7 +1407,7 @@ parse-messages: func [
                     <finished> [
                         ctx.seq-num-r: 0
                         let seed: if ctx.version < 1.2 [
-                            join binary! reduce [
+                            make binary! [
                                 checksum 'md5 ctx.handshake-messages
                                 checksum 'sha1 ctx.handshake-messages
                             ]
@@ -1445,7 +1445,7 @@ parse-messages: func [
                 let skip-amount: either ctx.encrypted? [
                     let mac: copy/part skip data len + 4 ctx.hash-size
 
-                    let mac-check: checksum/method/key join binary! reduce [
+                    let mac-check: checksum/method/key make binary! [
                         to-8bin ctx.seq-num-r   ; 64-bit sequence number
                         #{16}                   ; msg type
                         ctx.ver-bytes           ; version
@@ -1480,7 +1480,7 @@ parse-messages: func [
             ]
             let len: length of msg-obj.content
             let mac: copy/part skip data len ctx.hash-size
-            let mac-check: checksum/method/key join binary! reduce [
+            let mac-check: checksum/method/key make binary! [
                 to-8bin ctx.seq-num-r   ; sequence number (64-bit int in R3)
                 #{17}                   ; msg type
                 ctx.ver-bytes           ; version
@@ -1541,7 +1541,7 @@ prf: func [
     ;
     ; PRF(secret, label, seed) = P_<hash>(secret, label + seed)
     ;
-    seed: join binary! reduce [label seed]
+    seed: make binary! [label seed]
 
     if ctx.version < 1.2 [
         ;
@@ -1972,7 +1972,7 @@ sys.util.make-scheme [
                 scheme: 'tcp
                 host: port.spec.host
                 port-id: port.spec.port-id
-                ref: join tcp:// reduce [host ":" port-id]
+                ref: join tcp:// spread reduce [host ":" port-id]
             ]
 
             port.data: port.state.port-data

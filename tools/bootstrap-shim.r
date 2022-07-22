@@ -304,7 +304,10 @@ spread: lib/func [x [<opt> block!]] [
 ]
 
 append: lib/func [series value [<opt> any-value!] /line <local> only] [
-    if object? series [
+    any [
+        object? series
+        map? series
+    ] then [
         all [
             block? value
             #splice! = (first value)
@@ -325,6 +328,12 @@ append: lib/func [series value [<opt> any-value!] /line <local> only] [
             ]
             if #splice! = (first value) [
                 value: second value
+                if not any-array? series [  ; itemwise appends for strings/etc.
+                    for-each item value [
+                        append series item
+                    ]
+                    return series
+                ]
                 only: _
             ]
         ]
@@ -344,6 +353,12 @@ insert: lib/func [series value [<opt> any-value!] /line <local> only] [
             ]
             if #splice! = (first value) [
                 value: second value
+                if not any-array? series [  ; itemwise appends for strings/etc.
+                    for-each item value [
+                        series: insert series item
+                    ]
+                    return series
+                ]
                 only: _
             ]
         ]
@@ -363,6 +378,9 @@ change: lib/func [series value [<opt> any-value!] /line <local> only] [
             ]
             if #splice! = (first value) [
                 value: second value
+                if not any-array? series [
+                    fail ["CHANGE to SPLICE not currently in shim"]
+                ]
                 only: _
             ]
         ]
@@ -670,31 +688,16 @@ mutable: lib/func [x [any-value!]] [
 ]
 
 
-; Historical JOIN reduced.  Modern JOIN does not; it is more nuanced, and
-; does consistency checking on joins of tuples and paths.
+; Historical JOIN reduced.  Modern JOIN does not; one of the big justifications
+; of its existence is the assembly of PATH! and TUPLE! which are immutable
+; and can't use normal APPEND.
 ;
-join: func [base value [<opt> any-value!] <local>] [
-    if null? :value [return copy base]
-
-    base: switch base [
-        binary! [copy #{}]
-        text! [copy ""]
-        block! [copy []]
-    ] else [
-        copy :base
-    ]
-
-    any [
-        find any-inert! type of :value
-        blank? :value
-        block? :value
-    ] else [
-        fail/where ["Cannot join" :value "onto array"] 'value
-    ]
-
-    ; Dumb version; just append the value.
-    ;
-    lib/append base :value  ; splice by default version
+; It obeys the "as-is" by default rule, so that `join 'a/b [c]` will give the
+; predictable outcome of `a/b/[c]`.  This means that SPREAD must be used to
+; get the splicing semantics, and plain `join "ab" [c]` is an error.
+;
+join: lib/func [base value [<opt> any-value!]] [
+    append copy base :value  ; shim APPEND, that offers SPLICE behavior
 ]
 
 ; https://forum.rebol.info/t/has-hasnt-worked-rethink-construct/1058

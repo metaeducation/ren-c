@@ -60,25 +60,23 @@ input: does [
 
 repend: func [<local> dummy] [
     fail @dummy [
-        "REPEND is just `adapt :append [value: reduce :value]`, but is not"
-        "provided in the box.  Note you can say `append data :[1 + 2 3 + 4]`"
-        "and the GET-BLOCK! will reduce, or use `append data reduce stuff`"
+        "REPEND is just `adapt :append [value: reduce :value]`, and is not"
+        "provided in the box."
     ]
 ]
 
 remold: func [<local> dummy] [
     fail @dummy [
         "REMOLD is just `adapt :mold [value: reduce :value]`, but is not"
-        "provided in the box.  Note you can say `mold :[1 + 2 3 + 4]`"
-        "and the GET-BLOCK! will reduce, or use `mold reduce stuff`"
+        "provided in the box."
     ]
 ]
 
 rejoin: func [<local> dummy] [
     fail @dummy [
         "REJOIN is replaced in textual sceanarios by UNSPACED, but in more"
-        "general cases by the now-non-reducing JOIN, which accepts datatypes"
-        "as a first parameter, e.g. `join binary! :[{ABC} 1 + 2 3 + 4]`"
+        "general cases by JOIN, which accepts datatypes as a first parameter,"
+        "e.g. `join binary! spread [{ABC} 1 + 2 3 + 4]`"
         https://forum.rebol.info/t/rejoin-ugliness-and-the-usefulness-of-tests/
     ]
 ]

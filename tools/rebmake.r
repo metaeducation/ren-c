@@ -1493,7 +1493,7 @@ makefile: make generator-class [
                     ]
                     append buf gen-rule make entry-class [
                         target: dep/output
-                        depends: join objs map-each ddep dep/depends [
+                        depends: join objs spread map-each ddep dep/depends [
                             if ddep/class <> #object-library [ddep]
                         ]
                         commands: append reduce [dep/command] maybe (
@@ -1650,7 +1650,7 @@ export execution: make generator-class [
                 ]
                 run-target make entry-class [
                     target: project/output
-                    depends: join project/depends objs
+                    depends: join project/depends spread objs
                     commands: reduce [project/command]
                 ]
             ]

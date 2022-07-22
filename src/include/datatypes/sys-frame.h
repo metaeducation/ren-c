@@ -41,13 +41,12 @@
 //
 inline static bool ANY_ESCAPABLE_GET(Cell(const*) v) {
     //
-    // !!! Note: GET-BLOCK! is used to mean reduce, e.g.
+    // !!! Note: GET-BLOCK! is earmarked for isotope generation.
     //
-    //     >> if true :[1 + 2 10 + 20]
-    //     == [3 30]
+    //     >> append [a b c] :[d e]
+    //     == [a b c d e]
     //
-    // This is a useful enough concept in branching that it makes more sense
-    // than "escaping a block", whatever that would be.
+    // Makes more sense than "escaping a block", whatever that would be.
     //
     return IS_GET_GROUP(v) or IS_GET_WORD(v)
         or IS_GET_PATH(v) or IS_GET_TUPLE(v);

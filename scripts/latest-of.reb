@@ -241,7 +241,7 @@ latest-of: func [
     if not find/case build-variants variant [
         fail ["Build variant must be one of:" mold build-variants]
     ]
-    let suffix: if variant = 'release [null] else [join "-" as text! variant]
+    let suffix: if variant = 'release [null] else [join "-" variant]
 
 
     === DEFAULT COMMIT TO THE LAST GREEN-LIT HASH ===

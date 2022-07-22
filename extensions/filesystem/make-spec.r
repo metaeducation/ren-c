@@ -330,9 +330,9 @@ if os = 'QNX [
 
 uv-depends: map-each tuple uv-sources [  ; WORD! in bootstrap
     file: if os = 'Windows [
-        join %filesystem/libuv/src/win/ to file! tuple
+        join %filesystem/libuv/src/win/ tuple
     ] else [
-        join %filesystem/libuv/src/unix/ to file! tuple
+        join %filesystem/libuv/src/unix/ tuple
     ]
     compose [(file) #no-c++ (spread uv-nowarn)]
 ]
@@ -351,7 +351,7 @@ append uv-depends spread map-each tuple [  ; WORD! in bootstrap
     version.c
 ][
     compose [
-        (join %filesystem/libuv/src/ to file! tuple) #no-c++ (spread uv-nowarn)
+        (join %filesystem/libuv/src/ tuple) #no-c++ (spread uv-nowarn)
     ]
 ]
 

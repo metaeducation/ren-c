@@ -681,7 +681,7 @@ sys.util.make-scheme [
                 )
                 host: port.spec.host
                 port-id: port.spec.port-id
-                ref: join tcp:// reduce [host ":" port-id]
+                ref: join tcp:// spread reduce [host ":" port-id]
             ]
             conn.locals: port
             open conn
