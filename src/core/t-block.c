@@ -916,9 +916,6 @@ REBTYPE(Array)
         INCLUDE_PARAMS_OF_FIND; // must be same as select
         UNUSED(PAR(series));
 
-        UNUSED(REF(reverse));  // Deprecated https://forum.rebol.info/t/1126
-        UNUSED(REF(last));  // ...a HIJACK in %mezz-legacy errors if used
-
         REBVAL *pattern = ARG(pattern);
 
         if (Is_Nulled(pattern))

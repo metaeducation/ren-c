@@ -206,8 +206,8 @@ prin: function [
 forever: :cycle
 
 
-hijack :find adapt copy :find [
-    if reverse or (last) [
+find: adapt (augment :find [/reverse /last]) [
+    if reverse or last [
         fail @reverse [
             {/REVERSE and /LAST on FIND have been deprecated.  Use FIND-LAST}
             {or FIND-REVERSE specializations: https://forum.rebol.info/t/1126}

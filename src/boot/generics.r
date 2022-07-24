@@ -328,8 +328,6 @@ find: generic [
     /skip "Treat the series as records of fixed size"
         [integer!]
     /match "Performs comparison and returns the tail of the match"
-    /reverse "Deprecated: https://forum.rebol.info/t/1126"
-    /last "Deprecated: https://forum.rebol.info/t/1126"
 ]
 
 select: generic [
@@ -346,8 +344,6 @@ select: generic [
     /skip "Treat the series as records of fixed size"
         [integer!]
     /match  ; for frame compatibility with FIND
-    /reverse "Deprecated: https://forum.rebol.info/t/1126"
-    /last "Deprecated: https://forum.rebol.info/t/1126"
 ]
 
 

@@ -916,9 +916,6 @@ REBTYPE(String)
         INCLUDE_PARAMS_OF_FIND;
         Unquotify_Dont_Expect_Meta(ARG(pattern));
 
-        UNUSED(REF(reverse));  // Deprecated https://forum.rebol.info/t/1126
-        UNUSED(REF(last));  // ...a HIJACK in %mezz-legacy errors if used
-
         UNUSED(PAR(series));
 
         Flags flags = (

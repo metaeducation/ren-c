@@ -613,9 +613,6 @@ REBTYPE(Bitset)
 
         UNUSED(PAR(series));  // covered by `v`
 
-        UNUSED(REF(reverse));  // Deprecated https://forum.rebol.info/t/1126
-        UNUSED(REF(last));  // ...a HIJACK in %mezz-legacy errors if used
-
         if (REF(part) or REF(skip) or WANTED(tail) or REF(match))
             fail (Error_Bad_Refines_Raw());
 

@@ -452,9 +452,6 @@ REBTYPE(Binary)
         INCLUDE_PARAMS_OF_FIND;
         UNUSED(PAR(series));  // covered by `v`
 
-        UNUSED(REF(reverse));  // Deprecated https://forum.rebol.info/t/1126
-        UNUSED(REF(last));  // ...a HIJACK in %mezz-legacy errors if used
-
         REBVAL *pattern = ARG(pattern);
         Unquotify_Dont_Expect_Meta(pattern);
 

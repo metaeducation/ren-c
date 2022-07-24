@@ -1256,8 +1256,6 @@ REBTYPE(Context)
       case SYM_SELECT: {
         INCLUDE_PARAMS_OF_SELECT;
         UNUSED(ARG(series));  // extracted as `c`
-        UNUSED(ARG(reverse));
-        UNUSED(ARG(last));
 
         if (REF(part) or REF(skip) or WANTED(tail) or REF(match))
             fail (Error_Bad_Refines_Raw());

@@ -786,9 +786,6 @@ void Find_Image(Frame(*) frame_)
 
     Unquotify_Dont_Expect_Meta(ARG(pattern));
 
-    UNUSED(REF(reverse));  // Deprecated https://forum.rebol.info/t/1126
-    UNUSED(REF(last));  // ...a HIJACK in %mezz-legacy errors if used
-
     REBVAL *value = ARG(series);
     REBVAL *arg = ARG(pattern);
     REBLEN index = VAL_IMAGE_POS(arg);
