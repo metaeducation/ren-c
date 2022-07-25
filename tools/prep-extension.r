@@ -65,7 +65,7 @@ file-name: path+file/2
 
 ; Assume we start up in the directory where build products are being made
 ;
-output-dir: join what-dir reduce [%prep/ in-dir]
+output-dir: join what-dir spread reduce [%prep/ in-dir]
 
 src: join repo-dir src
 

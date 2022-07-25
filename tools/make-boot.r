@@ -734,7 +734,7 @@ for-each section [boot-base boot-system-util boot-mezz] [
     append/line s "["
     for-each file first mezz-files [  ; doesn't use LOAD to strip
         gather: either section = 'boot-system-util ['sys-toplevel] [null]
-        text: stripload/gather join %../mezz/ file try gather
+        text: stripload/gather (join %../mezz/ file) try gather
         append/line s text
     ]
     append/line s "_"  ; !!! would <section-done> be better?

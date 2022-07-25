@@ -1946,7 +1946,7 @@ app: make rebmake/application-class [
     ][
         reduce [
             make rebmake/cmd-strip-class [
-                file: join output try rebmake/target-platform/exe-suffix
+                file: join output maybe rebmake/target-platform/exe-suffix
             ]
         ]
     ]
@@ -2014,7 +2014,7 @@ clean: make rebmake/entry-class [
         make rebmake/cmd-delete-class [file: %objs/]
         make rebmake/cmd-delete-class [file: %prep/]
         make rebmake/cmd-delete-class [
-            file: join %r3 try rebmake/target-platform/exe-suffix
+            file: join %r3 maybe rebmake/target-platform/exe-suffix
         ]
         make rebmake/cmd-delete-class [file: %libr3.*]
     ]
@@ -2027,11 +2027,11 @@ check: make rebmake/entry-class [
 
     commands: collect [
         keep make rebmake/cmd-strip-class [
-            file: join app/output try rebmake/target-platform/exe-suffix
+            file: join app/output maybe rebmake/target-platform/exe-suffix
         ]
         for-each s dynamic-libs [
             keep make rebmake/cmd-strip-class [
-                file: join s/output try rebmake/target-platform/dll-suffix
+                file: join s/output maybe rebmake/target-platform/dll-suffix
             ]
         ]
     ]
