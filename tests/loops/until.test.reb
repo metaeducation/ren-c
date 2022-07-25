@@ -44,7 +44,7 @@
 (
     x: [2 4 6 8 7 9 11 30]
     did all [
-        7 = until/predicate [take x] chain [:even? | :not]
+        7 = until/predicate [take x] chain [:even?, :not]
         x = [9 11 30]
     ]
 )(

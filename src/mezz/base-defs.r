@@ -69,7 +69,7 @@ probe: func* [
 ;
 ; https://forum.rebol.info/t/moving-enfixedness-back-into-the-action/1156
 ;
-enfixed: chain* reduce [:copy, :enfix]
+enfixed: chain* reduce [:copy :enfix]
 
 
 ; Pre-decaying specializations for DID, DIDN'T, THEN, ELSE, ALSO
@@ -310,19 +310,6 @@ adapt: enclose :adapt* lambda [f] [
 ]
 
 chain: enclose :chain* lambda [f] [
-    ;
-    ; !!! Historically CHAIN supported | for "pipe" but it was really just an
-    ; expression barrier.  Review this idea, but for now let it work in a
-    ; dialect way by replacing with commas.
-    ;
-    f.pipeline: map-each x f.pipeline [
-        either :x = '| [
-            ',
-        ][
-            :x
-        ]
-    ]
-
     ; don't cache name via SET-WORD!
     set let pipeline1 pick (f.pipeline: reduce :f.pipeline) 1
     inherit-meta do f :pipeline1
@@ -431,7 +418,7 @@ requote: reframer lambda [
 next: specialize :skip [offset: 1]
 back: specialize :skip [offset: -1]
 
-bound?: chain [specialize :reflect [property: 'binding] | :value?]
+bound?: chain [specialize :reflect [property: 'binding], :value?]
 
 unspaced: specialize :delimit [delimiter: null]
 spaced: specialize :delimit [delimiter: space]

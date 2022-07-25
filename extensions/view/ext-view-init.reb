@@ -31,7 +31,6 @@ request-dir: chain [
             dir: lib.replace/all file-to-local dir "/" "//"
         ]
     ]
-        |
     func [result] [
         if result [
             return to-rebol-file result

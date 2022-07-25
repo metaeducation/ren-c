@@ -425,8 +425,7 @@ collect: redescribe [
     {Evaluate body, and return block of values collected via KEEP function.
     Returns empty block if nothing KEEPed.}
 ] chain [
-    :collect*
-        |
+    :collect*,
     specialize :else [branch: [copy []]]
 ]
 

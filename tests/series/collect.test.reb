@@ -59,10 +59,8 @@
                 ]
                 (as group! body)
             ]
-        ]
-            |
-        :spaced
-            |
+        ],
+        :spaced,
         specialize* :else [branch: [copy ""]]
     ] true)
 

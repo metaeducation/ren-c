@@ -196,7 +196,6 @@
 
            comment {fall through to base}
         ]
-            |
         lambda [x] [
             if x = "base done" [
                 <success>

@@ -298,8 +298,7 @@ load-value: redescribe [
     {Do a LOAD of a single value}
 ](
     chain [
-        :load
-            |
+        :load,
         lambda [x] [
             assert [block? x]
             if 1 <> length of x [

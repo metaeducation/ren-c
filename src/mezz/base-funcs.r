@@ -594,7 +594,7 @@ tweak :so 'postpone on
 
 
 ; Rare case where a `?` variant is useful, to avoid BAD-WORD! on falsey matches
-match?: chain [:match | :value?]
+match?: chain [:match :value?]
 
 
 was: enfixed redescribe [
@@ -851,7 +851,7 @@ count-down: redescribe [
 lock-of: redescribe [
     "If value is already locked, return it...otherwise CLONE it and LOCK it."
 ](
-    chain [specialize :copy [deep: #] | :freeze]
+    chain [specialize :copy [deep: #], :freeze]
 )
 
 eval-all: func [

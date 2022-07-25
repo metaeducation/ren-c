@@ -78,7 +78,7 @@
     ])
 ]
 
-(error? trap [reduce/predicate [null] chain [:null? | :non]])
+(error? trap [reduce/predicate [null] chain [:null?, :non]])
 
 ; Voids are never offered in today's REDUCE
 ; https://forum.rebol.info/t/should-void-be-offered-to-predicates-for-reduce-any-all-etc/1872

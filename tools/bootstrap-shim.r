@@ -482,8 +482,7 @@ collect*: lib/func [  ; variant giving NULL if no actual material kept
 ]
 
 collect: chain [  ; Gives empty block instead of null if no keeps
-    :collect*
-        |
+    :collect*  ; note: does not support , in bootstrap build
     specialize 'else [branch: [copy []]]
 ]
 

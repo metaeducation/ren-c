@@ -60,7 +60,7 @@ if 1 = 1 [run-this] else [run-that]
 
 >> add-one: func [x] [x + 1]
 
->> mp-ad-ad: chain [:multiply | :add-one | :add-one]
+>> mp-ad-ad: chain [:multiply :add-one :add-one]
 
 >> mp-ad-ad 10 20
 == 202
@@ -126,10 +126,10 @@ foo takes 3 and then 7
     c 3
 ]
 
->> find m 'b            
+>> find m 'b
 == true
 
->> find m 'd 
+>> find m 'd
 == false
 
 ```
