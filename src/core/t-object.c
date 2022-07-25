@@ -526,9 +526,11 @@ Bounce MAKE_Frame(
     if (IS_VARARGS(arg)) {
         Frame(*) f_varargs;
         Feed(*) feed;
+        bool allocated_feed;
         if (Is_Frame_Style_Varargs_May_Fail(&f_varargs, arg)) {
             assert(Is_Action_Frame(f_varargs));
             feed = f_varargs->feed;
+            allocated_feed = false;
         }
         else {
             REBVAL *shared;
@@ -536,6 +538,7 @@ Bounce MAKE_Frame(
                 fail ("Expected BLOCK!-style varargs");  // shouldn't happen
 
             feed = Make_At_Feed_Core(shared, SPECIFIED);
+            allocated_feed = true;
         }
 
         bool error_on_deferred = true;
@@ -547,6 +550,9 @@ Bounce MAKE_Frame(
         )){
             return BOUNCE_THROWN;
         }
+
+        if (allocated_feed)
+            Free_Feed(feed);
 
         return OUT;
     }
