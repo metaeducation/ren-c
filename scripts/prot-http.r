@@ -418,15 +418,6 @@ do-redirect: func [
         new-uri.host = spec.host
         new-uri.port-id = spec.port-id
     ]
-    then [
-        spec.path: new-uri.path
-
-        ; We need to reset tcp connection here before doing a redirect
-        ;
-        close port.state.connection
-        open port.state.connection
-        do-request port
-    ]
     else [
         fail make error! [
             type: 'Access
@@ -438,6 +429,24 @@ do-redirect: func [
             ]
         ]
     ]
+
+    spec.path: new-uri.path
+
+    ; We need to reset tcp connection here before doing a redirect.  !!! Why?
+    ;
+    close port.state.connection
+    open port.state.connection
+    connect port.state.connection
+
+    ; !!! The original code for DO-REQUEST would return the information for
+    ; the request, while clearing out the port data.  This would leave nothing
+    ; to be returned by the initiating DO-REQUEST...which wants to return the
+    ; information, and clear out the port data.  (Redirects weren't part of
+    ; the original scheme code, and were grafted on afterwards.)
+    ;
+    let data: do-request port
+    assert [blank? port.data]
+    port.data: data
 ]
 
 read-body: function [
