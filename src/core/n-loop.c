@@ -832,7 +832,8 @@ static bool Try_Loop_Each_Next(Value(const*) iterator, Context(*) vars_ctx)
           case REB_PORT:
           case REB_MODULE:
           case REB_FRAME: {
-            if (var)
+            if (var) {
+                assert(les->u.evars.index != 0);
                 Init_Any_Word_Bound(
                     var,
                     REB_WORD,
@@ -840,6 +841,7 @@ static bool Try_Loop_Each_Next(Value(const*) iterator, Context(*) vars_ctx)
                     VAL_CONTEXT(les->data),
                     les->u.evars.index
                 );
+            }
 
             if (CTX_LEN(vars_ctx) == 1) {
                 //

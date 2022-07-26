@@ -916,13 +916,12 @@ void Rebind_Values_Deep(
             INIT_VAL_WORD_BINDING(v, to);
 
             if (binder) {
-                INIT_VAL_WORD_INDEX(
-                    v,
-                    Get_Binder_Index_Else_0(
-                        unwrap(binder),
-                        VAL_WORD_SYMBOL(v)
-                    )
+                REBLEN index = Get_Binder_Index_Else_0(
+                    unwrap(binder),
+                    VAL_WORD_SYMBOL(v)
                 );
+                assert(index != 0);
+                INIT_VAL_WORD_INDEX(v, index);
             }
         }
         else if (IS_ACTION(v)) {

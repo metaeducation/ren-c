@@ -776,6 +776,7 @@ Array(*) Context_To_Array(Cell(const*) context, REBINT mode)
 
     while (Did_Advance_Evars(&e)) {
         if (mode & 1) {
+            assert(e.index != 0);
             Init_Any_Word_Bound(
                 PUSH(),
                 (mode & 2) ? REB_SET_WORD : REB_WORD,

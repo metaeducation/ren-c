@@ -429,6 +429,7 @@ bool Specialize_Action_Throws(
                 //
                 // It's still partial...
                 //
+                assert(VAL_WORD_INDEX(ordered) != 0);
                 Init_Pushable_Refinement_Bound(
                     Alloc_Tail_Array(partials),
                     KEY_SYMBOL(CTX_KEY(exemplar, VAL_WORD_INDEX(ordered))),

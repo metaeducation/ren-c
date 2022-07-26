@@ -405,8 +405,9 @@ inline static REBVAL* Unrelativize(Cell(*) out, Cell(const*) v) {
     Unrelativize(Alloc_Value(), (v))
 
 inline static void Unbind_Any_Word(Cell(*) v) {
-    INIT_VAL_WORD_INDEX(v, 0);
-    INIT_VAL_WORD_BINDING(v, nullptr);
+    assert(ANY_WORDLIKE(v));
+    VAL_WORD_INDEX_U32(v) = 0;
+    mutable_BINDING(v) = nullptr;
 }
 
 inline static Context(*) VAL_WORD_CONTEXT(const REBVAL *v) {

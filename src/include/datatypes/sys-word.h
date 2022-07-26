@@ -38,6 +38,7 @@ inline static OPT_SYMID VAL_WORD_ID(noquote(Cell(const*)) v) {
 
 inline static void INIT_VAL_WORD_INDEX(Cell(*) v, REBLEN i) {
     assert(ANY_WORDLIKE(v));
+    assert(i != 0);
     VAL_WORD_INDEX_U32(v) = i;
 }
 
@@ -69,6 +70,8 @@ inline static REBVAL *Init_Any_Word_Bound_Untracked(
     Array(*) binding,  // spelling determined by linked-to thing
     REBLEN index  // must be 1 if LET patch (INDEX_ATTACHED)
 ){
+    assert(index != 0);
+
     Reset_Cell_Header_Untracked(out, type, CELL_FLAG_FIRST_IS_NODE);
     mutable_BINDING(out) = binding;
     VAL_WORD_INDEX_U32(out) = index;
