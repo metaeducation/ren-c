@@ -722,7 +722,12 @@ static void Mark_Guarded_Nodes(void)
     const Node* *np = SER_HEAD(const Node*, GC_Guarded);
     REBLEN n = SER_USED(GC_Guarded);
     for (; n > 0; --n, ++np) {
-        if (Is_Node_A_Cell(*np)) {
+        if (*cast(const Byte*, *np) == PREP_SIGNAL_BYTE) {
+            //
+            // We allow you to protect a "fresh" cell, e.g. one that's 0 bytes
+            // in its header.
+        }
+        else if (Is_Node_A_Cell(*np)) {
             //
             // !!! What if someone tried to GC_GUARD a managed paired REBSER?
             //

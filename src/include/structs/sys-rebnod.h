@@ -500,6 +500,11 @@ union Reb_Header {
     FLAG_LEFT_BIT(7)
 #define NODE_BYTEMASK_0x01_CELL 0x01
 
+// See Prep_Cell() for the idea that all zero bytes can be used to initialize
+// cells to being considered void.  This helps keep track of places that
+// react to that.
+//
+#define PREP_SIGNAL_BYTE 0
 
 // There are two special invalid bytes in UTF8 which have a leading "110"
 // bit pattern, which are freed nodes.  These two patterns are for freed series
