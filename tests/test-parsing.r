@@ -143,9 +143,9 @@ export collect-tests: function [
             ; the feature will shape up to be, but there were stray tags,
             ; so just collect them... nothing looks at them right now.
             ;
-            set item tag! [
+            set item tag! (
                 append flags item
-            ]
+            )
             |
             ; The test dialect should probably let you reference a file from
             ; another file, to sub-factor tests.  Right now the top level
@@ -165,14 +165,14 @@ export collect-tests: function [
                 keep @collect-tests
                 keep body
             )
-        ] else [
-            append into spread reduce [
-                'dialect
-                spaced [
-                    newline
-                    {"failed, line/col:} (text-location-of pos) {"}
-                    newline
-                ]
+        ]  ; ends OPT SOME
+    ] else [  ; ends PARSE
+        append into spread reduce [
+            'dialect
+            spaced [
+                newline
+                {"failed, line/col:} (line of pos) {"}  ; no column, parsed
+                newline
             ]
         ]
     ]]
