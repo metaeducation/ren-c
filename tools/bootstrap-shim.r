@@ -98,23 +98,6 @@ trap [
 
     export strip-commas-and-null-apostrophes: x -> [x]  ; not needed
 
-    ; !!! The %make-spec.r processing for extension specs does something
-    ; complex, loading files that are implied as deriving some members.  These
-    ; files would ideally be modules and able to import, but the inheritance
-    ; makes this complex...so binding the bootstrap-shim doesn't work.  It is
-    ; experimental territory for new Ren-C, and making a shim version would
-    ; be even shakier...so just export the shimmed version of COMPOSE to LIB
-    ; so %make-spec.r sees it.
-    ;
-    ; !!! Actually, the code in make-spec.r should see all the new definitions
-    ; for things like APPEND and such.  But COMPOSE was the big one.  Rethink.
-
-    append lib spread compose [  ; new COMPOSE with new APPEND in bootstrap...
-        load-all: (:load)
-        compose: (:compose)
-        spread: (:spread)
-    ]
-
     quit
 ]
 
