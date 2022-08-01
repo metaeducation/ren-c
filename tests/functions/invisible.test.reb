@@ -459,7 +459,7 @@
     )
 ]
 
-nihil: func* [
+(nihil: func* [
     {Arity-0 COMMENT}
 
     return: <void> {Evaluator will skip result}
@@ -469,7 +469,7 @@ nihil: func* [
     ; evaluator ordering for no reason.  It should be tested elsewhere.
     ;
     ; https://github.com/metaeducation/ren-c/issues/581#issuecomment-562875470
-]
+], true)
 
 (@void = ^ void)
 (@void = ^ void/light)
