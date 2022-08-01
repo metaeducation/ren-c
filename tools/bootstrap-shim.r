@@ -247,13 +247,6 @@ decay: func [v [<opt> any-value!]] [
 ]
 
 
-|: lib/func [] [
-    fail/where [
-        "| is replaced by COMMA! for expression barriers"
-        "Unfortunately this means there's no expression barrier in bootstrap"
-    ] 'return
-]
-
 ; !!! This isn't perfect, but it should work for the cases in rebmake
 ;
 load-value: :load

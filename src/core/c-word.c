@@ -301,6 +301,7 @@ Symbol(const*) Intern_UTF8_Managed_Core(
             or utf8[i] == '.'
             or utf8[i] == '<'
             or utf8[i] == '>'
+            or utf8[i] == '|'
         ){
             Set_Subclass_Flag(SYMBOL, s, ESCAPE_IN_SEQUENCE);
             continue;

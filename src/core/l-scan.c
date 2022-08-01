@@ -1081,6 +1081,109 @@ static enum Reb_Token Maybe_Locate_Token_May_Push_Mold(
         return TOKEN_AT;
     }
 
+    // If we hit a vertical bar we know we are trying to scan a WORD! (which
+    // may become transformed into a SET-WORD! or similar).  Typically this is
+    // a WORD! which is being scanned as the content between two vertical bars.
+    // But there are exceptions to this:
+    //
+    // * We want tokens comprised solely of vertical bars to be able to stand
+    //   alone as WORD!s.  So |, ||, ||| etc. are their actual representation
+    //   -unless- they are in PATH!s or TUPLE!s, where they must be escaped
+    //   (e.g. as |\||)
+    //
+    // * Other symbols when standing alone like |> want to not require escapes,
+    //   so it makes a difference if you see (|>) as |> vs. (|>|) as >.
+    //
+    if (*cp == '|') {
+        Push_Mold(mo);  // buffer to write escaped form, e.g. \| => |
+        bool all_arrow_chars = true;  // won't use buffer with standalone words
+
+        while (true) {
+            ++cp;
+
+            if (*cp == '|') {
+                if (not all_arrow_chars) {  // this is end of escaped
+                    ss->end = cp + 1;
+                    return TOKEN_ESCAPED_WORD;  // knows to look in mold buffer
+                }
+                if (cp[1] != '<' && cp[1] != '>'
+                    && cp[1] != '-' && cp[1] != '+'
+                    && cp[1] != '=' && cp[1] != '|'
+                ){
+                    assert(mo->series != nullptr);
+                    ss->end = cp + 1;
+                    return TOKEN_ESCAPED_WORD;  // e.g. |<>|
+                }
+                if (mo->series != nullptr)
+                    Drop_Mold(mo);  // unescaped | means it can't be escaped
+                continue;
+            }
+
+            if (*cp == '\\') {
+                if (mo->series == nullptr) {  // dropped mold due to plain |
+                    *error = Error_User("Can't mix | and \\| in same token");
+                    return TOKEN_0;
+                }
+                ++cp;
+                if (*cp != '|') {
+                    *error = Error_User("Backslashes only for escaping | ATM");
+                    return TOKEN_0;
+                }
+                all_arrow_chars = false;  // now we're escaping
+                Append_Codepoint(mo->series, '|');
+                continue;
+            }
+
+            if (all_arrow_chars) {  // seeing non-| for first time
+                if (
+                    *cp == '<' || *cp == '>'
+                    || *cp == '-' || *cp == '+'
+                    || *cp == '='
+                ){
+                    if (mo->series != nullptr)
+                        Append_Codepoint(mo->series, *cp);
+                    continue;
+                }
+
+                if (
+                    LEX_CLASS_DELIMIT == GET_LEX_CLASS(*cp)
+                    and *cp != '.'  // we treat |.| as WORD! of period
+                    and *cp != '/'  // we treat |/| as WORD! of slash
+                ){
+                    ss->end = cp;  // something like `|)` or `|||,`
+                    if (mo->series != nullptr)
+                        Drop_Mold(mo);  // does not use mold buffer
+                    return TOKEN_WORD;
+                }
+
+                // here we could be at something like ||: which is not valid
+                // (because we give priority to |:|)
+
+                if (mo->series == nullptr) {  // saw more than one | before char
+                   *error = Error_User(
+                        "Must escape words starting with | if not standalone"
+                    );
+                   return TOKEN_0;
+                }
+            }
+
+            if (*cp == '\n') {
+                *error = Error_User("Newlines not permitted in WORD! atm");
+                return TOKEN_0;
+            }
+            if (*cp == '\0') {
+                *error = Error_User("End of string scanning escaped WORD!");
+                return TOKEN_0;
+            }
+
+            all_arrow_chars = false;
+
+            Codepoint c;
+            cp = Back_Scan_UTF8_Char(&c, cp, nullptr);  // incremented in loop
+            Append_Codepoint(mo->series, c);
+        }
+    }
+
     enum Reb_Token token;  // only set if falling through to `scan_word`
 
     // Up-front, do a check for "arrow words".  This test bails out if any
@@ -1265,39 +1368,7 @@ static enum Reb_Token Maybe_Locate_Token_May_Push_Mold(
         }
 
       case LEX_CLASS_SPECIAL:
-        if (GET_LEX_VALUE(*cp) == LEX_SPECIAL_BAR) {  // unusual word
-            ++cp;
-
-            // !!! we assume that |, ||, ||| etc. have been handled by the
-            // "arrow words".  If we are seeing anything here, it means it
-            // didn't fit that pattern... so |a b| etc.
-
-            for (; *cp != '|'; ++cp) {
-                if (IS_LEX_WORD_OR_NUMBER(*cp))
-                    continue;
-                if (
-                    *cp == ':'
-                    or *cp == '$'
-                    or *cp == '%'
-                    or *cp == '@'
-                    or *cp == '^'
-                ){
-                    continue;  // limit set of other things for now
-                }
-                if (*cp == ' ')
-                    continue;
-
-                ss->end = cp;
-                *error = Error_Syntax(ss, TOKEN_WORD);
-                return TOKEN_0;
-            }
-            ss->end = cp + 1;
-            if (IS_LEX_DELIMIT(cp[1]) or cp[1] == ':')
-                return TOKEN_ESCAPED_WORD;
-
-            *error = Error_Syntax(ss, TOKEN_WORD);
-            return TOKEN_0;
-        }
+        assert(GET_LEX_VALUE(*cp) != LEX_SPECIAL_BAR);  // weird word, handled
 
         if (GET_LEX_VALUE(*cp) == LEX_SPECIAL_SEMICOLON) {  // begin comment
             while (not ANY_CR_LF_END(*cp))
@@ -1453,6 +1524,7 @@ static enum Reb_Token Maybe_Locate_Token_May_Push_Mold(
             goto prescan_word;
 
           case LEX_SPECIAL_BAR:
+            assert(false);  // doesn't currently happen, scanned separately
             token = TOKEN_WORD;
             goto prescan_word;
 
@@ -2017,11 +2089,16 @@ Bounce Scanner_Executor(Frame(*) f) {
 
       case TOKEN_ESCAPED_WORD:
         assert(bp[0] == '|' and bp[len - 1] == '|');
-        len -= 2;
-        ++bp;
-        goto scan_word;
+        Init_Word(
+            PUSH(),
+            Intern_UTF8_Managed(
+                BIN_AT(mo->series, mo->base.size),
+                BIN_LEN(mo->series) - mo->base.size
+            )
+        );
+        Drop_Mold(mo);
+        break;
 
-    scan_word:
       case TOKEN_WORD:
         if (len == 0)
             return FAIL(Error_Syntax(ss, level->token));

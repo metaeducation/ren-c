@@ -870,8 +870,8 @@ eval-all: func [
 ; to allow longer runs of evaluation.  "Invisible functions" (those which
 ; `return: <void>`) permit a more flexible version of the mechanic.
 
-<|: tweak copy :eval-all 'postpone on
-|>: tweak enfixed :shove 'postpone on
+|<\||: tweak copy :eval-all 'postpone on  ; e.g. <|
+|\|>|: tweak enfixed :shove 'postpone on  ; e.g. |>
 
 
 meth: enfixed func [

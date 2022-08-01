@@ -176,14 +176,14 @@ elide: func* [
 ; the old `|`, so that the barrier-making properties of a usermode entity can
 ; stay tested.  But outside of testing, use `,` instead.
 ;
-||: lambda [
+|\|\||: lambda [  ; e.g. ||
     "Expression barrier - invisible so it vanishes, but blocks evaluation"
 ][
 ]
 
-tweak :|| 'barrier on
+tweak :|\|\|| 'barrier on
 
-|||: func* [
+|\|\|\||: func* [  ; e.g. |||
     {Inertly consumes all subsequent data, evaluating to previous result.}
 
     return: <void>
