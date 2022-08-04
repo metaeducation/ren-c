@@ -166,7 +166,8 @@ DECLARE_NATIVE(delimit)
                 Move_Cell(SPARE, OUT);
                 if (rebRunThrows(
                     OUT,  // <-- output cell
-                    Lib(APPEND), Lib(COPY), EMPTY_TEXT, Lib(SPREAD), rebQ(SPARE)
+                    Canon(APPEND), Canon(COPY), EMPTY_TEXT,
+                        Canon(SPREAD), rebQ(SPARE)
                 )){
                     Drop_Mold(mo);
                     Drop_Frame(f);

@@ -1140,7 +1140,7 @@ static void Handle_Mark_Rule(
         Quotify(Derelativize(OUT, rule, specifier), 1);
         if (rebRunThrows(
             temp,  // <-- output cell
-            Lib(SET), OUT, ARG(position)
+            Canon(SET), OUT, ARG(position)
         )){
             fail (Error_No_Catch_For_Throw(FRAME));
         }
@@ -1661,10 +1661,13 @@ DECLARE_NATIVE(subparse)
                         if (not IS_BLOCK(OUT))
                             fail ("SPREAD only works with BLOCK! in PARSE3");
 
-                        rebElide(Lib(APPEND), ARG(collection), Lib(SPREAD), rebQ(OUT));
+                        rebElide(
+                            Canon(APPEND), ARG(collection),
+                                Canon(SPREAD), rebQ(OUT)
+                        );
                     }
                     else
-                        rebElide(Lib(APPEND), ARG(collection), rebQ(OUT));
+                        rebElide(Canon(APPEND), ARG(collection), rebQ(OUT));
 
                     RESET(OUT);  // since we didn't throw, put it back
 
@@ -2699,7 +2702,7 @@ DECLARE_NATIVE(parse3_p)
     if (ANY_SEQUENCE(input)) {
         if (rebRunThrows(
             SPARE,  // <-- output cell
-            Lib(AS), Lib(BLOCK_X), rebQ(input)
+            Canon(AS), Canon(BLOCK_X), rebQ(input)
         )){
             return THROWN;
         }
@@ -2708,7 +2711,7 @@ DECLARE_NATIVE(parse3_p)
     else if (IS_URL(input)) {
         if (rebRunThrows(
             SPARE,  // <-- output cell
-            Lib(AS), Lib(TEXT_X), input
+            Canon(AS), Canon(TEXT_X), input
         )){
             return THROWN;
         }

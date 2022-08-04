@@ -591,7 +591,7 @@ DECLARE_NATIVE(what_dir)
         fail (current_path);
     }
 
-    return rebValue(Lib(COPY), Lib(TRY), current_path);  // caller mutates, copy
+    return rebValue(Canon(TRY), Canon(COPY), current_path);  // caller mutates
 }
 
 

@@ -113,7 +113,7 @@ DECLARE_NATIVE(write_stdout)
     if (IS_ISSUE(v)) {
         bool threw = rebRunThrows(
             SPARE,  // <-- output cell
-            Lib(AS), Lib(TEXT_X), v
+            Canon(AS), Canon(TEXT_X), v
         );
         assert(not threw);
         UNUSED(threw);

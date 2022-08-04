@@ -338,7 +338,7 @@ static void Push_Composer_Frame(
     Value(const*) adjusted = nullptr;
     if (ANY_PATH(arraylike)) {  // allow sequences, see [1]
         Derelativize(out, arraylike, specifier);
-        adjusted = rebValue(Lib(AS), Lib(BLOCK_X), rebQ(out));
+        adjusted = rebValue(Canon(AS), Canon(BLOCK_X), rebQ(out));
     }
 
     Frame(*) subframe = Make_Frame_At_Core(

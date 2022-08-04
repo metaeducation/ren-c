@@ -1209,7 +1209,7 @@ Bounce Evaluator_Executor(Frame(*) f)
         mutable_HEART_BYTE(SPARE) = REB_BLOCK;
         if (rebRunThrows(
             OUT,  // <-- output cell
-            Lib(REDUCE), SPARE
+            Canon(REDUCE), SPARE
         )){
             goto return_thrown;
         }

@@ -1003,3 +1003,44 @@ DECLARE_NATIVE(apply)
 
     return DELEGATE_MAYBE_STALE(OUT, frame, END);
 }}
+
+
+// From %c-eval.c -- decide if this should be shared or otherwise.
+//
+#define Make_Action_Subframe(parent) \
+    Make_Frame((parent)->feed, \
+        FRAME_FLAG_MAYBE_STALE | FRAME_FLAG_FAILURE_RESULT_OK \
+        | ((parent)->flags.bits \
+            & (EVAL_EXECUTOR_FLAG_FULFILLING_ARG \
+                | EVAL_EXECUTOR_FLAG_DIDNT_LEFT_QUOTE_TUPLE)))
+
+
+
+//
+//  run: native [
+//
+//  {Invoke an ACTION! inline as if it had been invoked via a WORD!}
+//
+//      return: [<opt> <void> any-value!]
+//      action [action!]
+//      args [<opt> <void> any-value! <variadic>]
+//  ]
+//
+DECLARE_NATIVE(run)
+{
+    INCLUDE_PARAMS_OF_RUN;
+
+    Value(*) action = ARG(action);
+    UNUSED(ARG(args));  // uses internal mechanisms to act variadic
+
+    Frame(*) subframe = Make_Action_Subframe(frame_);
+    Push_Frame(OUT, subframe);
+    Push_Action(
+        subframe,
+        VAL_ACTION(action),
+        VAL_ACTION_BINDING(action)
+    );
+    Begin_Prefix_Action(subframe, VAL_ACTION_LABEL(action));
+
+    return DELEGATE_SUBFRAME (subframe);
+}

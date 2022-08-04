@@ -710,7 +710,7 @@ void Init_Loop_Each(Value(*) iterator, Value(*) data)
     //
     assert(not Is_Api_Value(data));  // we will free API handles
     if (ANY_SEQUENCE(data)) {
-        data = rebValue(Lib(AS), Lib(BLOCK_X), rebQ(data));
+        data = rebValue(Canon(AS), Canon(BLOCK_X), rebQ(data));
         rebUnmanage(data);
     }
 
@@ -1867,7 +1867,7 @@ DECLARE_NATIVE(for)
         rebPushContinuation(
             OUT,  // <-- output cell
             FRAME_FLAG_MAYBE_STALE,
-            Lib(FOR_EACH), ARG(vars), rebQ(value), body
+            Canon(FOR_EACH), ARG(vars), rebQ(value), body
         );
         return BOUNCE_DELEGATE;
     }

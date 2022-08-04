@@ -206,7 +206,8 @@ Bounce MAKE_Binary(
         rebPushContinuation(
             OUT,
             FRAME_MASK_NONE,
-            Lib(TO), Lib(BINARY_X), Lib(REDUCE), rebQ(def)  // quote 4 lifetime
+            Canon(TO), Canon(BINARY_X),
+                Canon(REDUCE), rebQ(def)  // rebQ() copies cell, survives frame
         );
         return BOUNCE_DELEGATE;
     }

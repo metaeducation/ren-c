@@ -281,7 +281,7 @@ DECLARE_NATIVE(fail)
     PROBE(ARG(blame));
     PROBE(ARG(where));
 
-    rebElide(Lib(WRITE_STDOUT), Lib(DELIMIT), Lib(SPACE), ARG(reason));
+    rebElide(Canon(WRITE_STDOUT), Canon(DELIMIT), Canon(SPACE), ARG(reason));
   #endif
 
     panic (ARG(reason));

@@ -173,7 +173,7 @@ REBVAL *Lookup_Socket_Synchronously(
     assert(IS_TEXT(hostname));
     const char *hostname_utf8 = cs_cast(VAL_UTF8_AT(hostname));
     char *port_number_utf8 = rebSpell(
-        Lib(FORM), rebI(sock->remote_port_number)
+        Canon(FORM), rebI(sock->remote_port_number)
     );
 
     // !!! You can leave the "hints" argument as nullptr.  But this is what

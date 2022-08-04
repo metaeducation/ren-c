@@ -160,10 +160,11 @@ inline static Value(const*) Check_Variadic_Feed_Cell(Feed(*) feed) {
 inline static option(Value(const*)) Try_Reify_Variadic_Feed_Series(
     Feed(*) feed
 ){
-    Array(*) inst1 = ARR(m_cast(void*, feed->p));
+    REBSER* s = SER(m_cast(void*, feed->p));
 
-    switch (SER_FLAVOR(inst1)) {
+    switch (SER_FLAVOR(s)) {
       case FLAVOR_INSTRUCTION_SPLICE: {
+        Array(*) inst1 = ARR(s);
         REBVAL *single = SPECIFIC(ARR_SINGLE(inst1));
         if (IS_BLANK(single)) {
             GC_Kill_Series(inst1);
@@ -183,7 +184,8 @@ inline static option(Value(const*)) Try_Reify_Variadic_Feed_Series(
         break; }
 
       case FLAVOR_API: {
-        //
+        Array(*) inst1 = ARR(s);
+
         // We usually get the API *cells* passed to us, not the singular
         // array holding them.  But the rebR() function will actually
         // flip the "release" flag and then return the existing API handle
@@ -208,6 +210,26 @@ inline static option(Value(const*)) Try_Reify_Variadic_Feed_Series(
         rebRelease(single);  // *is* the instruction
         break; }
 
+        // This lets you use a symbol and it assumes you want a WORD!.  If all
+        // you have is an isotopic ACTION! available, this means Canon(WORD)
+        // can be cheaper than rebM(Lib(WORD)) for the action, especially if
+        // the ->gotten field is set up.  Using words can also be more clear
+        // in debugging than putting the actions themselves.
+        //
+      case FLAVOR_SYMBOL: {
+        if (feed->context) {
+            assert(CTX_TYPE(feed->context) == REB_MODULE);
+            Init_Any_Word_Attached(
+                &feed->fetched, REB_WORD, SYM(s), feed->context
+            );
+            // !!! Should we speed it up by setting feed->gotten here, if it's
+            // bound into Lib?  Would it be overwritten by nullptr?
+        } else
+            Init_Any_Word(&feed->fetched, REB_WORD, SYM(s));
+
+        feed->p = &feed->fetched;
+        break; }
+
       default:
         //
         // Besides instructions, other series types aren't currenlty
@@ -218,7 +240,7 @@ inline static option(Value(const*)) Try_Reify_Variadic_Feed_Series(
         // but it's important in several APIs to emphasize a value gives
         // phase information, while archetypes do not.
         //
-        panic (inst1);
+        panic (feed->p);
     }
 
     return cast(const REBVAL*, feed->p);

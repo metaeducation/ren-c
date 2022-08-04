@@ -259,7 +259,7 @@ Bounce Pending_Native_Dispatcher(Frame(*) f) {
     // user context for now).
     //
     // We could also use something like MOD_VAR() to get SYM_COMPILE out of
-    // the TCC module, so a parallel to Lib(COMPILE) for extension contexts.
+    // the TCC module, so a parallel to Canon(COMPILE) for extension contexts.
     //
     rebElide("compile [", rebQ(action), "]");
     //

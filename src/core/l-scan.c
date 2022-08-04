@@ -2433,7 +2433,7 @@ Bounce Scanner_Executor(Frame(*) f) {
             PUSH_GC_GUARD(array);
             if (rebRunThrows(
                 SPARE,  // can't write to movable stack location
-                Lib(MAKE),  // will not work during boot!
+                Canon(MAKE),  // will not work during boot!
                 SPECIFIC(ARR_AT(array, 0)),
                 rebQ(SPECIFIC(ARR_AT(array, 1)))  // e.g. ACTION! as WORD!
             )){

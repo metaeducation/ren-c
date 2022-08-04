@@ -856,7 +856,7 @@ void Pick_From_Gob(
         DECLARE_LOCAL(temp);
         if (rebRunThrows(
             temp,  // <-- output cell
-            Lib(PICK),
+            Canon(PICK),
                 "@", SPECIFIC(ARR_AT(gob, IDX_GOB_PANE)),
                 "@", SPECIFIC(picker)
         )){
@@ -956,7 +956,7 @@ REBTYPE(Gob)
 
         if (IS_INTEGER(picker)) {
             rebElide(
-                Lib(POKE),
+                Canon(POKE),
                     "@", SPECIFIC(ARR_AT(gob, IDX_GOB_PANE)),
                     "@", SPECIFIC(picker)
             );

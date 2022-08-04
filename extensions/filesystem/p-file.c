@@ -530,7 +530,7 @@ Bounce File_Actor(Frame(*) frame_, REBVAL *port, Symbol(const*) verb)
         if (REF(deep) or REF(types))
             fail (Error_Bad_Refines_Raw());
 
-        return rebValue("applique", Lib(READ), "[",
+        return rebValue(Canon(APPLIQUE), Canon(READ), "[",
             "source:", port,
             "part:", rebQ(REF(part)),
         "]"); }
