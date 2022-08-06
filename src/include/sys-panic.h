@@ -25,10 +25,10 @@
 // user's control could fix or work around the issue, hence the main goal is
 // to provide the most diagnostic information possible to devleopers.
 //
-// The best thing to do is to pass in whatever REBVAL* or REBSER* subclass
-// (including Array(*), Context(*), Action(*)...) is the most useful "smoking gun":
+// The best thing to do is to pass in whatever Cell or Series subclass
+// (including Array(*), Context(*), Action(*)...) is a useful "smoking gun":
 //
-//     if (VAL_TYPE(value) == REB_BAD_WORD)
+//     if (VAL_TYPE(value) == REB_QUASI)
 //         panic (value);  // debug build points out this file and line
 //
 //     if (ARR_LEN(array) < 2)

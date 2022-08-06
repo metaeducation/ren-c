@@ -99,7 +99,7 @@ inline static option(va_list*) FEED_VAPTR(Feed(*) feed) {
 // in which case it makes a pure null...so this can be leveraged in API calls.
 //
 inline static void Handle_Feed_Nullptr(Feed(*) feed) {
-    Init_Bad_Word(&feed->fetched, Canon(NULL));
+    Init_Quasi_Word(&feed->fetched, Canon(NULL));
     feed->p = &feed->fetched;
 
     assert(FEED_SPECIFIER(feed) == SPECIFIED);  // !!! why assert this?

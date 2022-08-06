@@ -203,7 +203,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
     if (Get_Frame_Flag(FRAME, ABRUPT_FAILURE)) {
         assert(Get_Frame_Flag(FRAME, NOTIFY_ON_ABRUPT_FAILURE));
         assert(r == BOUNCE_THROWN);
-        assert(IS_ERROR(VAL_THROWN_LABEL(FRAME)));
+        assert(Is_Meta_Of_Failure(VAL_THROWN_LABEL(FRAME)));
     }
 
   // 1. There may be some optimization possible here if the flag controlling
@@ -358,7 +358,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
             assert(Get_Frame_Flag(FRAME, NOTIFY_ON_ABRUPT_FAILURE));
             Clear_Frame_Flag(FRAME, NOTIFY_ON_ABRUPT_FAILURE);
             Clear_Frame_Flag(FRAME, ABRUPT_FAILURE);
-            assert(IS_ERROR(VAL_THROWN_LABEL(FRAME)));
+            assert(Is_Meta_Of_Failure(VAL_THROWN_LABEL(FRAME)));
             Context(*) ctx = VAL_CONTEXT(VAL_THROWN_LABEL(FRAME));
             CATCH_THROWN(SPARE, FRAME);
             fail (ctx);
@@ -441,7 +441,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
     Init_Thrown_With_Label(  // Error is non-definitional, see [1]
         FRAME,
         Lib(NULL),  // no "thrown value"
-        CTX_ARCHETYPE(e)  // only the ERROR! as a label
+        Quasify(Copy_Cell(SPARE, CTX_ARCHETYPE(e)))  // label w/quasified ERROR!
     );
 
     if (Not_Frame_Flag(FRAME, NOTIFY_ON_ABRUPT_FAILURE)) {

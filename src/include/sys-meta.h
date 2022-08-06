@@ -52,6 +52,10 @@ inline static bool Is_Failure(Cell(const*) v)
   { return HEART_BYTE_UNCHECKED(v) == REB_ERROR
     and QUOTE_BYTE_UNCHECKED(v) == ISOTOPE_255; }
 
+inline static bool Is_Meta_Of_Failure(Cell(const*) v)
+  { return HEART_BYTE_UNCHECKED(v) == REB_ERROR
+    and QUOTE_BYTE_UNCHECKED(v) == QUASI_1; }
+
 
 inline static Value(*) Failurize(Cell(*) v) {
     assert(IS_ERROR(v) and QUOTE_BYTE(v) == 0);
@@ -70,6 +74,24 @@ inline static Value(*) Splicify(Cell(*) v) {
     mutable_QUOTE_BYTE(v) = ISOTOPE_255;
     return VAL(v);
 }
+
+inline static bool Is_Meta_Of_Splice(Cell(const*) v)
+  { return HEART_BYTE_UNCHECKED(v) == REB_BLOCK
+    and QUOTE_BYTE_UNCHECKED(v) == QUASI_1; }
+
+inline static REBVAL *Unquasify(REBVAL *v) {
+    assert(QUOTE_BYTE(v) == QUASI_1);
+    mutable_QUOTE_BYTE(v) = 0;
+    return v;
+}
+
+inline static REBVAL *Quasify(REBVAL *v) {
+    assert(QUOTE_BYTE(v) == 0);
+    assert(not Is_Nulled(v) and not Is_Void(v));
+    mutable_QUOTE_BYTE(v) = QUASI_1;
+    return v;
+}
+
 
 
 //=//// ISOTOPIC QUOTING ///////////////////////////////////////////////////=//
@@ -93,7 +115,7 @@ inline static Cell(*) Isotopic_Quote(Cell(*) v) {
 
 inline static Cell(*) Isotopic_Unquote(Cell(*) v) {
     assert(not Is_Nulled(v));  // use Meta_Unquotify() instead
-    if (QUOTE_BYTE(v) == 0)
+    if (QUOTE_BYTE(v) == QUASI_1)
         Isotopify(v);
     else
         Unquotify_Core(v, 1);
@@ -129,7 +151,7 @@ inline static Cell(*) Meta_Quotify(Cell(*) v) {
 inline static Cell(*) Meta_Unquotify(Cell(*) v) {
     if (Is_Nulled(v))
         return v;  // do nothing
-    if (IS_ERROR(v))
+    if (Is_Meta_Of_Failure(v))
         fail (VAL_CONTEXT(v));  // too dangerous to create failure easily
     return Isotopic_Unquote(v);
 }
@@ -155,9 +177,7 @@ inline static Bounce Native_Unmeta_Result(Frame(*) frame_, const REBVAL *v) {
         return BOUNCE_VOID;
     if (Is_Meta_Of_End(v))
         fail ("END not processed by UNMETA at this time");
-    if (IS_ERROR(v))
-        return Failurize(Copy_Cell(frame_->out, v));
-    if (IS_BLOCK(v))
-        return Splicify(Copy_Cell(frame_->out, v));
+    if (Is_Meta_Of_Failure(v))
+        return Failurize(Unquasify(Copy_Cell(frame_->out, v)));
     return Meta_Unquotify(Copy_Cell(frame_->out, v));
 }

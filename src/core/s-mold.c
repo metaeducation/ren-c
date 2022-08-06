@@ -452,7 +452,15 @@ void Mold_Or_Form_Value(REB_MOLD *mo, Cell(const*) v, bool form)
     for (i = 0; i < depth; ++i)
         Append_Ascii(mo->series, "'");
 
-    Mold_Or_Form_Cell(mo, VAL_UNESCAPED(v), form);
+    if (QUOTE_BYTE(v) & QUASI_1) {
+        Append_Codepoint(mo->series, '~');
+        if (HEART_BYTE(v) != REB_BLANK) {
+            Mold_Or_Form_Cell(mo, VAL_UNESCAPED(v), form);
+            Append_Codepoint(mo->series, '~');
+        }
+    }
+    else
+        Mold_Or_Form_Cell(mo, VAL_UNESCAPED(v), form);
 }
 
 

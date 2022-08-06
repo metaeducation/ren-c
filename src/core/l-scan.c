@@ -1001,7 +1001,7 @@ static enum Reb_Token Maybe_Locate_Token_May_Push_Mold(
             // We don't call Handle_Feed_Nullptr() because we don't need the
             // cell in f->feed->fetched.
             //
-            Init_Bad_Word(PUSH(), Canon(NULL));
+            Init_Meta_Of_Null_Isotope(PUSH());
             if (Get_Executor_Flag(SCAN, f, NEWLINE_PENDING)) {
                 Clear_Executor_Flag(SCAN, f, NEWLINE_PENDING);
                 Set_Cell_Flag(TOP, NEWLINE_BEFORE);
@@ -1991,11 +1991,11 @@ Bounce Scanner_Executor(Frame(*) f) {
       case TOKEN_BAD_WORD: {  // a non-isotope bad-word
         assert(*bp == '~');
         if (len == 1)
-            Init_Bad_Word(PUSH(), nullptr);
+            Init_Meta_Of_None(PUSH());
         else {
             assert(bp[len - 1] == '~');
             Symbol(const*) label = Intern_UTF8_Managed(bp + 1, len - 2);
-            Init_Bad_Word(PUSH(), label);
+            Init_Quasi_Word(PUSH(), label);
         }
         break; }
 
@@ -2017,7 +2017,7 @@ Bounce Scanner_Executor(Frame(*) f) {
       case TOKEN_CARET:
         assert(*bp == '^');
         if (IS_LEX_ANY_SPACE(*ep) or *ep == ']' or *ep == ')') {
-            Init_Any_Word_Untracked(PUSH(), REB_WORD, Canon(CARET_1));
+            Init_Word(PUSH(), Canon(CARET_1));
             break;
         }
         goto token_prefixable_sigil;
@@ -2025,7 +2025,7 @@ Bounce Scanner_Executor(Frame(*) f) {
       case TOKEN_AT:
         assert(*bp == '@');
         if (IS_LEX_ANY_SPACE(*ep) or *ep == ']' or *ep == ')') {
-            Init_Any_Word_Untracked(PUSH(), REB_WORD, Canon(AT_1));
+            Init_Word(PUSH(), Canon(AT_1));
             break;
         }
         goto token_prefixable_sigil;
@@ -2548,10 +2548,7 @@ Bounce Scanner_Executor(Frame(*) f) {
                 break;
 
               case SYM_UNSET:  // !!! Should be under a LEGACY flag...
-                //
-                // BAD-WORD!s are put in blocks, are "friendly" non-isotopes.
-                //
-                Init_Bad_Word(PUSH(), Canon(UNSET));
+                Init_Quasi_Word(PUSH(), Canon(UNSET));
                 break;
 
               default: {

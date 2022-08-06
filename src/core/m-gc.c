@@ -471,7 +471,7 @@ void Reify_Variadic_Feed_As_Array_Feed(
 
     if (Not_End(At_Feed(feed))) {
         if (truncated)
-            Init_Bad_Word(PUSH(), Canon(OPTIMIZED_OUT));
+            Init_Quasi_Word(PUSH(), Canon(OPTIMIZED_OUT));
 
         do {
             Derelativize(PUSH(), At_Feed(feed), FEED_SPECIFIER(feed));
@@ -508,7 +508,7 @@ void Reify_Variadic_Feed_As_Array_Feed(
         Finalize_Variadic_Feed(feed);
 
         if (truncated) {
-            Init_Bad_Word(PUSH(), Canon(OPTIMIZED_OUT));
+            Init_Quasi_Word(PUSH(), Canon(OPTIMIZED_OUT));
 
             Array(*) a = Pop_Stack_Values_Core(base, SERIES_FLAG_MANAGED);
             Init_Array_Cell_At(FEED_SINGLE(feed), REB_BLOCK, a, 2);

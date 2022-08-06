@@ -54,6 +54,16 @@
     (VAL_TYPE(v) == REB_QUOTED)  // Note: QUOTE_BYTE() of 255 means isotope
 
 
+//=//// QUASI /////////////////////////////////////////////////////////////=//
+//
+// "Quasi" values look like ~xxx~.  These can also be quoted (but once they
+// are, they will report their main type as being QUOTED!)  This is why the
+// quote byte adds 2 for each quote level, not 1--to multiplex the "quasi bit"
+//
+#define IS_QUASI(v) \
+    (VAL_TYPE(v) == REB_QUASI)  // runs through other checks in debug build
+
+
 //=//// BINDABILITY ///////////////////////////////////////////////////////=//
 //
 // Note that an "in-situ" QUOTED! (not a REB_QUOTED kind byte, but using
@@ -101,15 +111,15 @@ inline static bool ANY_INERT_KIND(Byte k) {
 // to raise errors.  Rather than saying:
 //
 //     if (Is_End(v)) { fail ("end"); }
-//     if (IS_BAD_WORD(v)) { fail ("void"); }
-//     if (IS_NULL(v)) { fail ("null"); }
+//     if (Is_Void(v)) { fail ("void"); }
+//     if (Is_Nulled(v)) { fail ("null"); }
 //     CommonCaseStuff(v);
 //
 // This can be collapsed down to one test in the common case, with:
 //
 //     if (IS_NULLED_OR_VOID_OR_END(v)) {
 //        if (Is_End(v)) { fail ("end"); }
-//        if (IS_BAD_WORD(v)) { fail {"void"); }
+//        if (Is_Void(v)) { fail {"void"); }
 //        fail ("null");
 //     }
 //     CommonCaseStuff(v);

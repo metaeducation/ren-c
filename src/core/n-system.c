@@ -74,7 +74,7 @@ DECLARE_NATIVE(quit)
         // that we might not editorialize...as it means we can't distinguish
         // `quit ~quit~` at the catch site.
         //
-        Init_Isotope(v, Canon(QUIT));
+        Init_Word_Isotope(v, Canon(QUIT));
     }
     else
         Meta_Unquotify(v);

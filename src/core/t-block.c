@@ -932,7 +932,8 @@ REBTYPE(Array)
             flags |= AM_FIND_ONLY;
             len = 1;
         }
-        else if (IS_BLOCK(pattern)) {
+        else if (Is_Meta_Of_Splice(pattern)) {
+            Unquasify(pattern);
             VAL_ARRAY_LEN_AT(&len, pattern);
         }
         else
@@ -1035,10 +1036,12 @@ REBTYPE(Array)
             //     == [~null~ *]
             //
             if (Is_Nulled(arg))
-                Init_Bad_Word(arg, Canon(NULL));
+                Init_Meta_Of_Null_Isotope(arg);
         }
-        else if (IS_BLOCK(arg))  // not quoted to ^META parameter, so isotope
+        else if (Is_Meta_Of_Splice(arg)) {
             flags |= AM_SPLICE;
+            Unquasify(arg);
+        }
         else
             fail ("Only Isotope for APPEND/INSERT/CHANGE must is SPLICE");
 
@@ -1503,8 +1506,12 @@ DECLARE_NATIVE(glom)
     if (Is_Nulled(result))
         return COPY(accumulator);
 
-    if (IS_BLOCK(result)) {  // ANY_ARRAY inert, or just BLOCK!?
+    if (IS_QUASI(result)) {
+        if (not Is_Meta_Of_Splice(result))
+            fail ("Only isotopes accepted by GLOM are BLOCK! for splicing");
+
         splice = true;
+        Unquasify(result);
     }
     else {
         Unquotify(result, 1);

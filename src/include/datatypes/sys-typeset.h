@@ -379,31 +379,22 @@ inline static bool Typecheck_Including_Constraints(
     enum Reb_Kind kind;
 
     if (VAL_PARAM_CLASS(param) == PARAM_CLASS_META) {
-        if (Is_Meta_Of_Void(v)) {
-            return true;
-        }
-        else if (IS_BAD_WORD(v)) {
-            return true;  // all META parameters take BAD-WORD!
-        }
-        else if (Is_Nulled(v)) {
+        //
+        // !!! Most bets here are off now since meta can be any type
+        //
+        if (Is_Nulled(v)) {
             kind = REB_NULL;  // meaningful to check <opt> for ^META
         }
-        else if (IS_THE_WORD(v)) {
-            return true;  // for @void and @end
-        }
-        else if (IS_ERROR(v)) {
-            return true;  // new definitional error concept
-        }
-        else if (IS_BLOCK(v)) {
-            return true;  // new splicing array concept
-        }
-        else {
-            assert(IS_QUOTED(v));  // must be quoted otherwise
+        else if (IS_QUOTED(v)) {  // must be quoted otherwise
             if (VAL_NUM_QUOTES(v) > 1)
                 kind = REB_QUOTED;
+            else if (QUOTE_BYTE(v) & QUASI_1)
+                kind = REB_QUASI;
             else
                 kind = CELL_HEART(VAL_UNESCAPED(v));
         }
+        else
+            return true;  // let everything else pass
     }
     else {
         kind = Is_End(v) ? REB_0_END : VAL_TYPE(v);

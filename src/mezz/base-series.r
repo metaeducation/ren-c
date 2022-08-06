@@ -98,18 +98,24 @@ join: function [
     ; and should be reviewed if it belongs here too.
     ;
     if match [url! issue! any-string!] base [
-        return as (type of base) append (to text! base) spread value
+        return as (type of base) append (to text! base) unmeta value
     ]
 
     if not any-sequence? base [
-        return append (copy base) spread value
+        return append (copy base) unmeta value
     ]
 
     sep: either any-path? base ['/] ['.]
     type: type of base  ; to set output type back to original
     base: to block! base  ; TO operation copies
 
-    if not block? value [
+    if quasi? value [
+        value: unquasi value
+        if not block? value [
+            fail "JOIN only accepts SPLICE blocks as ^META parameters"
+        ]
+    ]
+    else [
         value: reduce [unquote value]  ; !!! should FOR-EACH take quoted?
     ]
 

@@ -911,26 +911,18 @@ Context(*) Copy_Context_Extra_Managed(
 // This factors out some shared work.
 //
 static void Mold_Isotope_For_Object(REB_MOLD *mo, Value(const*) var) {
-    if (Is_Word_Isotope(var)) {
-        Append_Codepoint(mo->series, '~');
-        Symbol(const*) label = try_unwrap(VAL_ISOTOPE_LABEL(var));
-        if (label) {
-            Append_Spelling(mo->series, label);
-            Append_Codepoint(mo->series, '~');
-        }
-    }
-    else if (Is_Splice(var)) {
-        DECLARE_LOCAL (reified);
-        Unrelativize(reified, var);
-        Reify_Isotope(reified);
-        mutable_HEART_BYTE(reified) = REB_GET_BLOCK;
-        Mold_Value(mo, reified);
-    }
-    else {
-        // !!! ERROR! isotopes can't be stored in variables.
-        //
-        assert(!"Unknown isotope class");
-    }
+    assert(not Is_Failure(var));  // error isotopes can't be saved in variables
+
+    Append_Codepoint(mo->series, '~');
+    if (Is_None(var))
+        return;
+
+    DECLARE_LOCAL (reified);
+    Unrelativize(reified, var);
+    Reify_Isotope(reified);
+    Mold_Value(mo, reified);
+
+    Append_Codepoint(mo->series, '~');
 }
 
 
@@ -1214,8 +1206,10 @@ REBTYPE(Context)
             return COPY(context);
         }
 
-        if (not IS_BLOCK(arg))  // unquoted BLOCK! means parameter was splice
+        if (not Is_Meta_Of_Splice(arg))
             fail (arg);
+
+        Unquasify(arg);
 
         Append_Vars_To_Context_From_Block(context, arg);
         return COPY(context); }

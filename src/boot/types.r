@@ -338,23 +338,19 @@ action      "an invokable Rebol subroutine"
             action      +       +       [branch]
 
 
-; BAD-WORD! is not inert, because it needs to become "unfriendly" when it is
-; evaluated.
-;
-; !!! Because it does not have a binding, it is not an actual WORD!.  There
-; could be questions about whether it should be more wordlike, or if there
-; should be BAD-BLOCK! ~[]~ and it should fit into a bigger set of types :-/
-
-bad-word    "value which evaluates to a form that triggers errors on access"
-            bad-word     +       +       []
-
-
 ; ============================================================================
-; QUOTED "PSEUDOTYPE"
+; QUOTED and QUASI "PSEUDOTYPES"
 ; ============================================================================
+
+; The REB_QUOTED and REB_QUASI enum values never appear in the HEART_BYTE() of
+; a cell.  These are synthesized datatypes when the QUOTE_BYTE() contains
+; nonzero values.
 ;
-; No instances of QUOTED! as the REB_QUOTED datatype exist.  Quotedness is
-; conveyed by the QUOTE_BYTE in the header being non-zero.
+; Neither are inert...QUASI! becomes isotopic when evaluated, and QUOTED!
+; removes one level of quoting.
+
+quasi       "value which evaluates to a form that triggers errors on access"
+            quasi       +       -       []
 
 quoted     "container for arbitrary levels of quoting"
             quoted       +       -      [branch]

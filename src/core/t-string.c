@@ -892,7 +892,10 @@ REBTYPE(String)
         // However it will not try to FORM blocks or other arrays; it only
         // accepts isotopic blocks to imply "append each item individually".
         //
-        if (not IS_BLOCK(arg) and not Is_Nulled(arg)) {  // not a splice
+        if (Is_Meta_Of_Splice(arg)) {
+            Unquasify(arg);
+        }
+        else if (not Is_Nulled(arg)) {  // e.g. wasn't VOID incoming
             if (not IS_QUOTED(arg))
                 fail (ARG(value));
             Unquotify(arg, 1);  // remove "^META" level

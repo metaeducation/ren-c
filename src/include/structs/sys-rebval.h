@@ -145,9 +145,12 @@
 
 //=//// BITS 16-23: QUOTING DEPTH BYTE ("QUOTE") //////////////////////////=//
 //
-// Cells can be quote-escaped up to 255 levels.  So a cell's underlying "HEART"
-// can report it as something like a REB_WORD, but if this byte is nonzero
-// it will answer in the VAL_TYPE() that it is REB_QUOTED.  This has the
+// Cells can be quote-escaped up to 126 levels.  Because the low bit of the
+// quoting byte is reserved for whether the value is "QUASI!", hence each
+// quoting level effectively adds 2 to the quote byte.
+//
+// A cell's underlying "HEART" can report it as something like a REB_WORD, but
+// if the quoting byte is > 1 VAL_TYPE() says it is REB_QUOTED.  This has the
 // potential to cause confusion in the internals.  But the type system is used
 // to check at compile-time so that different views of the same cell don't
 // get conflated.  See `noquote(Cell(const*))` for some of that mechanic.
@@ -158,10 +161,10 @@
 #define QUOTE_BYTE(v)               THIRD_BYTE(READABLE(v)->header)
 #define mutable_QUOTE_BYTE(v)       mutable_THIRD_BYTE(WRITABLE(v)->header)
 
-#define QUOTE_255           255
-#define ISOTOPE_255         QUOTE_255  // special value for failure ERROR!
+#define QUASI_1             1
+#define ISOTOPE_255         255  // Also QUASI (anything with QUASI_1 bit is)
 
-#define MAX_QUOTE_DEPTH     254  // highest legal quoting level
+#define MAX_QUOTE_DEPTH     126  // highest legal quoting level
 
 
 //=//// BITS 24-31: CELL FLAGS ////////////////////////////////////////////=//

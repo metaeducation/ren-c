@@ -129,7 +129,7 @@ DECLARE_NATIVE(breakpoint_p)
     // return *either* a value or no-value...if breakpoint were variadic, it
     // could splice in a value in place of what comes after it.
     //
-    if (not IS_BAD_WORD(SPARE))
+    if (not Is_Quasi_Word(SPARE))
         fail ("BREAKPOINT is invisible, can't RESUME/WITH code (use PAUSE)");
 
     return VOID;

@@ -308,9 +308,9 @@ DECLARE_NATIVE(then)  // see `tweak :then 'defer on` in %base-defs.r
         return VOID;
     }
 
-    if (IS_ERROR(in)) {  // ^META error represents definitional failure, skip
+    if (Is_Meta_Of_Failure(in)) {  // definitional failure, skip
         Copy_Cell(OUT, in);
-        return Failurize(OUT);
+        return Failurize(Unquasify(OUT));  // Meta_Unquotify() won't pass ATM
     }
 
     return DELEGATE_BRANCH(OUT, branch, Meta_Unquotify(in));  // unmeta, see [1]
@@ -357,13 +357,14 @@ DECLARE_NATIVE(also)  // see `tweak :also 'defer on` in %base-defs.r
     if (Is_Nulled(in))
         return nullptr;  // telegraph pure null
 
-    if (IS_ERROR(in)) {  // ^META error represents definitional failure, skip
+    if (Is_Meta_Of_Failure(in)) {  // definitional failure, skip
         Copy_Cell(OUT, in);
+        Unquasify(OUT);
         return Failurize(OUT);
     }
 
     if (REF(decay) and Is_Meta_Of_Null_Isotope(in))
-        return Init_Isotope(OUT, Canon(NULL));  // telegraph null isotope
+        return Init_Null_Isotope(OUT);  // telegraph null isotope
 
     STATE = ST_ALSO_RUNNING_BRANCH;
     return CONTINUE(SPARE, branch, Meta_Unquotify(in));
@@ -426,12 +427,9 @@ DECLARE_NATIVE(else)  // see `tweak :else 'defer on` in %base-defs.r
     else if (REF(decay) and Is_Meta_Of_Null_Isotope(in)) {
         Init_Null_Isotope(SPARE);  // action branch decays if non-meta, see [3]
     }
-    else if (IS_BLOCK(in)) {
-        return Splicify(Copy_Cell(OUT, in));
-    }
-    else if (IS_ERROR(in)) {  // ^META error is definitional failure, skip
+    else if (Is_Meta_Of_Failure(in)) {  // definitional failure, skip
         Copy_Cell(OUT, in);
-        return Failurize(OUT);
+        return Failurize(Unquasify(OUT));  // Meta_Unquotify() won't pass on ATM
     }
     else
         return COPY(Meta_Unquotify(in));  // unquotify to pass thru, see [4]

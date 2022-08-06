@@ -210,8 +210,8 @@ DECLARE_NATIVE(the_p)
 
     REBVAL *v = ARG(value);
 
-    if (IS_BAD_WORD(v)) {
-        if (VAL_BAD_WORD_ID(v) == SYM_NULL)
+    if (Is_Quasi_Word(v)) {
+        if (VAL_WORD_ID(v) == SYM_NULL)
             Init_Nulled(OUT);
         else
             fail ("@ and THE* only accept BAD-WORD! of ~NULL~ to make NULL");
@@ -290,10 +290,10 @@ DECLARE_NATIVE(quote)
 //
 //  meta: native [
 //
-//  {Turns BAD-WORD! isotopes into plain BAD-WORD!, ignores NULL, quotes rest}
+//  {Turns isotopes into QUASI! forms, passes through NULL, adds quote to rest}
 //
 //      return: "Will be invisible if input is purely invisible (see META*)"
-//          [<void> <opt> quoted! bad-word! error! block!]
+//          [<void> <opt> quoted! quasi! error! block! blank!]
 //      ^optional [<void> <opt> any-value!]
 //  ]
 //
@@ -315,7 +315,7 @@ DECLARE_NATIVE(meta)
 //
 //  {Behavior of ^^ symbol, gives ~void~ BAD-WORD! vs. passing through voids}
 //
-//      return: [<opt> quoted! bad-word! the-word! error! block!]
+//      return: [<opt> quoted! quasi! the-word! error! block! blank!]
 //      ^optional [<opt> <void> <fail> any-value!]
 //  ]
 //
@@ -362,13 +362,57 @@ DECLARE_NATIVE(unquote)
 
 
 //
+//  quasi: native [
+//
+//  {Constructs a quasi form of the evaluated argument}
+//
+//      return: [quasi!]
+//      value "Any non-QUOTED! value"
+//          [any-value!]  ; there isn't an any-nonquoted! typeset
+//  ]
+//
+DECLARE_NATIVE(quasi)
+{
+    INCLUDE_PARAMS_OF_QUASI;
+
+    Value(*) v = ARG(value);
+
+    if (IS_QUOTED(v))
+        fail ("QUOTED! values do not have QUASI! forms");
+
+    Copy_Cell(OUT, v);
+    return Quasify(OUT);
+}
+
+
+//
+//  unquasi: native [
+//
+//  {Remove QUASI! wrapper from the argument}
+//
+//      return: "Value with quasi state removed"
+//          [<opt> any-value!]
+//      value [quasi!]
+//  ]
+//
+DECLARE_NATIVE(unquasi)
+{
+    INCLUDE_PARAMS_OF_UNQUASI;
+
+    REBVAL *v = ARG(value);
+    Unquasify(Copy_Cell(OUT, v));
+    return OUT;
+}
+
+
+//
 //  unmeta: native [
 //
-//  {Variant of UNQUOTE that also accepts BAD-WORD! to make isotopes}
+//  {Variant of UNQUOTE that also accepts QUASI! to make isotopes}
 //
 //      return: [<opt> <void> any-value!]
 //      ^value "Taken as ^META for passthru tolerance of pure and isotope void"
-//          [<opt> <void> quoted! the-word! bad-word! error! block!]
+//          [<opt> <void> quoted! the-word! quasi! error! block! blank!]
 //  ]
 //
 DECLARE_NATIVE(unmeta)
@@ -411,7 +455,7 @@ DECLARE_NATIVE(unmeta)
     if (Is_Nulled(v))
         return nullptr;  // ^(null) => null, so the reverse must be true
 
-    if (IS_BAD_WORD(v)) {
+    if (IS_QUASI(v)) {
         Isotopify(v);
         fail (Error_Bad_Isotope(v));  // no other isotopes valid for the trick
     }
@@ -477,6 +521,23 @@ DECLARE_NATIVE(spread)
 
 
 //
+//  splice?: native [
+//
+//  "Tells you if argument is a splice (isotopic block)"
+//
+//      return: [logic!]
+//      ^optional [<opt> <void> <fail> any-value!]
+//  ]
+//
+DECLARE_NATIVE(splice_q)
+{
+    INCLUDE_PARAMS_OF_SPLICE_Q;
+
+    return Init_Logic(OUT, Is_Meta_Of_Splice(ARG(optional)));
+}
+
+
+//
 //  maybe: native [
 //
 //  {If argument is null or none, make it void (also pass through voids)}
@@ -500,7 +561,7 @@ DECLARE_NATIVE(maybe)
         return VOID;
     }
 
-    if (IS_ERROR(v)) {  // fold in TRY behavior as well
+    if (Is_Meta_Of_Failure(v)) {  // fold in TRY behavior as well
         ERROR_VARS *vars = ERR_VARS(VAL_CONTEXT(v));
         if (
             IS_WORD(&vars->id)
@@ -569,6 +630,23 @@ DECLARE_NATIVE(quoted_q)
     INCLUDE_PARAMS_OF_QUOTED_Q;
 
     return Init_Logic(OUT, VAL_TYPE(ARG(optional)) == REB_QUOTED);
+}
+
+
+//
+//  quasi?: native [
+//
+//  {Tells you if the argument is QUASI! or not}
+//
+//      return: [logic!]
+//      optional [<opt> any-value!]
+//  ]
+//
+DECLARE_NATIVE(quasi_q)
+{
+    INCLUDE_PARAMS_OF_QUASI_Q;
+
+    return Init_Logic(OUT, VAL_TYPE(ARG(optional)) == REB_QUASI);
 }
 
 

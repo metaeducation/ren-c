@@ -123,7 +123,6 @@ uint32_t Hash_Value(Cell(const*) cell)
       case REB_NULL:
         panic ("Cannot hash NULL");  // nulls can't be values or keys in MAP!s
 
-      case REB_BAD_WORD:
       case REB_BLANK:
         hash = 0;
         break;

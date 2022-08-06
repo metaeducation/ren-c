@@ -26,34 +26,14 @@
 
 
 //
-//  MF_Bad_word: C
-//
-// Bad words have a label to help make it clearer why an ornery error-like
-// value would be existing.
-//
-void MF_Bad_word(REB_MOLD *mo, noquote(Cell(const*)) v, bool form)
-{
-    UNUSED(form); // no distinction between MOLD and FORM
-
-    Append_Codepoint(mo->series, '~');
-
-    String(const*) label = try_unwrap(VAL_BAD_WORD_LABEL(v));
-    if (label) {
-        Append_Utf8(mo->series, STR_UTF8(label), STR_SIZE(label));
-        Append_Codepoint(mo->series, '~');
-    }
-}
-
-
-//
-//  MAKE_Bad_word: C
+//  MAKE_Quasi: C
 //
 // Can be created from a label.
 //
 // !!! How to create an isotope form of a BAD-WORD! in usermode, without
 // having to run an evaluation on a bad-word?  `make-isotope`?
 //
-Bounce MAKE_Bad_word(
+Bounce MAKE_Quasi(
     Frame(*) frame_,
     enum Reb_Kind kind,
     option(const REBVAL*) parent,
@@ -62,52 +42,45 @@ Bounce MAKE_Bad_word(
     assert(not parent);
     UNUSED(parent);
 
-    if (IS_WORD(arg))
-        return Init_Bad_Word(OUT, VAL_WORD_SYMBOL(arg));
+    if (Is_Nulled(arg) or IS_QUOTED(arg))
+        return FAIL(Error_Bad_Make(kind, arg));
 
-    return FAIL(Error_Bad_Make(kind, arg));
+    // !!! Should it allow things that are already QUASI! (?)  This does, but
+    // Quasify() does ont.
+
+    Copy_Cell(OUT, arg);
+    mutable_QUOTE_BYTE(OUT) = QUASI_1;
+    return OUT;
 }
 
 
 //
-//  TO_Bad_word: C
+//  TO_Quasi: C
 //
 // TO is disallowed, e.g. you can't TO convert an integer of 0 to a blank.
 //
-Bounce TO_Bad_word(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *data) {
+Bounce TO_Quasi(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *data) {
     return FAIL(Error_Bad_Make(kind, data));
 }
 
 
 //
-//  CT_Bad_word: C
+//  CT_Quasi: C
 //
-// To make BAD-WORD! more useful, the spellings are used in comparison.  This
-// makes this code very similar to CT_Word(), so it is shared.
-//
-REBINT CT_Bad_word(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
+REBINT CT_Quasi(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
 {
-    Symbol(const*) label_a = try_unwrap(VAL_BAD_WORD_LABEL(a));
-    Symbol(const*) label_b = try_unwrap(VAL_BAD_WORD_LABEL(b));
-
-    if (label_a == nullptr) {
-        if (label_b != nullptr)
-            return -1;
-        return 0;
-    }
-    else if (label_b == nullptr)
-        return 1;
-
-    return Compare_Spellings(label_a, label_b, strict);
+    UNUSED(a); UNUSED(b); UNUSED(strict);
+    assert(!"CT_Quasi should never be called");
+    return 0;
 }
 
 
 //
 //  REBTYPE: C
 //
-REBTYPE(Bad_word)
+REBTYPE(Quasi)
 {
-    REBVAL *bad_word = D_ARG(1);
+    REBVAL *quasi = D_ARG(1);
 
     switch (ID_OF_SYMBOL(verb)) {
       case SYM_REFLECT: {
@@ -116,11 +89,11 @@ REBTYPE(Bad_word)
 
         switch (VAL_WORD_ID(ARG(property))) {
           case SYM_LABEL: {
-            Symbol(const*) label = try_unwrap(VAL_BAD_WORD_LABEL(bad_word));
-            if (label == nullptr)
-                return nullptr;  // "soft failure" safer than blank!, use TRY
-
-            return Init_Word(OUT, label); }
+            if (Is_Meta_Of_None(quasi))
+                return nullptr;
+            if (Is_Quasi_Word(quasi))
+                return Unquasify(Copy_Cell(OUT, quasi));
+            fail ("QUASI! form has no label (WIP for REBTYPE(quasi))"); }
 
           default:
             break;
@@ -137,7 +110,7 @@ REBTYPE(Bad_word)
         UNUSED(REF(deep));
         UNUSED(REF(types));
 
-        return COPY(bad_word); }
+        return COPY(quasi); }
 
       default: break;
     }

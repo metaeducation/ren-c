@@ -992,7 +992,7 @@ DECLARE_NATIVE(get)
         steps = nullptr;  // no GROUP! evals
 
     if (Get_Var_Core_Throws(OUT, steps, source, SPECIFIED)) {
-        assert(steps or IS_ERROR(VAL_THROWN_LABEL(frame_)));  // see [1]
+        assert(steps or Is_Meta_Of_Failure(VAL_THROWN_LABEL(frame_)));  // see [1]
         return THROWN;
     }
 
@@ -1378,7 +1378,7 @@ DECLARE_NATIVE(set)
         Meta_Unquotify(v);
 
     if (Set_Var_Core_Throws(OUT, steps, target, SPECIFIED, v)) {
-        assert(steps or IS_ERROR(VAL_THROWN_LABEL(frame_)));  // see [3]
+        assert(steps or Is_Meta_Of_Failure(VAL_THROWN_LABEL(frame_)));  // see [3]
         return THROWN;
     }
 
@@ -1405,7 +1405,7 @@ DECLARE_NATIVE(try)
     if (Is_Meta_Of_Void(v) or Is_Nulled(v))
         return Init_Nulled(OUT);
 
-    if (IS_ERROR(v)) {
+    if (Is_Meta_Of_Failure(v)) {
         ERROR_VARS *vars = ERR_VARS(VAL_CONTEXT(v));
         if (
             IS_WORD(&vars->id)
@@ -1448,11 +1448,11 @@ DECLARE_NATIVE(opt)
     Meta_Unquotify(v);
     Decay_If_Isotope(v);
 
-    if (IS_BLANK(v))
-        return nullptr;
-
     if (Is_Isotope(v))
         fail (Error_Bad_Isotope(v));
+
+    if (IS_BLANK(v))
+        return nullptr;
 
     // !!! Experimental: opting a null gives you an isotope.  You generally
     // don't put OPT on expressions you believe can be null, so this permits
@@ -2340,7 +2340,7 @@ DECLARE_NATIVE(void)
 //  "Tells you if argument is void"
 //
 //      return: [logic!]
-//      ^optional [<opt> <void> any-value!]
+//      ^optional [<opt> <void> <fail> any-value!]
 //  ]
 //
 DECLARE_NATIVE(void_q)
@@ -2494,13 +2494,13 @@ DECLARE_NATIVE(reify)
     REBVAL *v = ARG(optional);
 
     if (Is_Nulled(v))
-        return Init_Bad_Word(OUT, Canon(NULL));
+        return Init_Meta_Of_Null_Isotope(OUT);
 
     if (Is_Meta_Of_Void(v))
-        return Init_Bad_Word(OUT, Canon(VOID));
+        return Init_Meta_Of_Void_Isotope(OUT);
 
-    if (IS_BAD_WORD(v))  // e.g. the input was an isotope form
-        return COPY(v);
+    if (IS_QUASI(v))  // e.g. the input was an isotope form
+        return COPY(v);  // give back the quasi form
 
     assert(IS_QUOTED(v));
     return COPY(Unquotify(v, 1));

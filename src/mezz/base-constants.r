@@ -62,3 +62,5 @@ blank: _   ; e.g. sometimes `return blank` reads better than `return _`
 ; feels a bit like "sending things to `/dev/null`".
 ;
 blackhole: #
+
+bad-word!: quasi!  ; !!! temporary

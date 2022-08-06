@@ -1170,7 +1170,7 @@ Context(*) Error_No_Catch_For_Throw(Frame(*) frame_)
     DECLARE_LOCAL (arg);
     CATCH_THROWN(arg, frame_);
 
-    if (IS_ERROR(label)) {  // what would have been fail()
+    if (Is_Meta_Of_Failure(label)) {  // what would have been fail()
         assert(Is_Nulled(arg));
         return VAL_CONTEXT(label);
     }
@@ -1427,7 +1427,7 @@ Context(*) Error_Bad_Isotope(Cell(const*) isotope) {
 //
 Context(*) Error_Bad_Void(void) {
     DECLARE_LOCAL (void_word);
-    Init_Bad_Word(void_word, Canon(VOID));
+    Init_Meta_Of_Void(void_word);
 
     return Error_Bad_Isotope_Raw(void_word);
 }

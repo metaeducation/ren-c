@@ -389,8 +389,8 @@ void Join_Binary_In_Byte_Buf(const REBVAL *blk, REBINT limit)
           case REB_BLANK:
             break;
 
-          case REB_BAD_WORD:
-            if (VAL_BAD_WORD_ID(val) == SYM_NULL)
+          case REB_QUASI:
+            if (Is_Meta_Of_Null_Isotope(val))
                 break;  // since we're just joining, allow ~null~ to work
             fail (Error_Bad_Value(val));
 

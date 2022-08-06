@@ -25,8 +25,8 @@
 // it can be used as a placeholder for a value that will be filled in at
 // some later time--spanning an evaluation.
 //
-// Although the low-level type used to store these cells is REB_BAD_WORD, it
-// will panic if you try to test it with IS_BAD_WORD(), and will also refuse
+// Although the low-level type used to store these cells is a "none" isotope,
+// it will panic if you try to test it with Is_None(), and will also refuse
 // VAL_TYPE() checks.  The only way to check if something IS_TRASH() is in the
 // debug build, and hence should only appear in asserts.
 //
@@ -36,36 +36,6 @@
 //
 
 
-// !!! Originally this function lived in the %sys-bad-word.h file, and was
-// forward declared only in the #if (! DEBUG_UNREADABLE_TRASH) case.  While
-// this worked most of the time, older MinGW cross compilers seemed to have a
-// problem with that forward inline declaration.  So just define it here.
-// Be sure to re-run the MinGW CI Builds if you rearrange this...
-//
-inline static REBVAL *Init_Bad_Word_Untracked(
-    Cell(*) out,
-    option(Symbol(const*)) label,
-    Flags flags
-){
-    Reset_Cell_Header_Untracked(
-        out,
-        REB_BAD_WORD,
-        CELL_FLAG_FIRST_IS_NODE | flags
-    );
-
-    // Due to being evaluator active and not wanting to disrupt the order in
-    // %types.r, bad words claim to be bindable...but set the binding to null.
-    // See %sys-ordered.h for more on all the rules that make this so.
-    //
-    mutable_BINDING(out) = nullptr;
-
-    INIT_VAL_NODE1(out, label);
-  #ifdef ZERO_UNUSED_CELL_FIELDS
-    PAYLOAD(Any, out).second.trash = ZEROTRASH;
-  #endif
-    return cast(REBVAL*, out);
-}
-
 
 #if DEBUG_UNREADABLE_TRASH
     //
@@ -73,10 +43,13 @@ inline static REBVAL *Init_Bad_Word_Untracked(
     // Will trip up any access attempts via READABLE(), but can be overwritten
 
     #define Init_Trash_Untracked(out) \
-        Init_Bad_Word_Untracked((out), nullptr, CELL_FLAG_STALE)
+        Init_Blank_Untracked( \
+            (out), FLAG_QUOTE_BYTE(ISOTOPE_255) | CELL_FLAG_STALE)
 
     inline static bool IS_TRASH(Cell(const*) v) {
-        if (CELL_HEART_UNCHECKED(v) != REB_BAD_WORD)
+        if (CELL_HEART_UNCHECKED(v) != REB_BLANK)
+            return false;
+        if (QUOTE_BYTE_UNCHECKED(v) != ISOTOPE_255)
             return false;
         return did (v->header.bits & CELL_FLAG_STALE);
     }
@@ -84,7 +57,7 @@ inline static REBVAL *Init_Bad_Word_Untracked(
     // Release Build Behavior: Looks just like an unset (`~` isotope)
 
     #define Init_Trash_Untracked(out) \
-        Init_Bad_Word_Untracked((out), nullptr, CELL_MASK_NONE)
+        Init_Blank_Untracked((out), FLAG_QUOTE_BYTE(ISOTOPE_255))
 
     #define IS_TRASH(v) false  // should constant-fold out clauses in optimizer
 #endif

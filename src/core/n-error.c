@@ -84,10 +84,11 @@ DECLARE_NATIVE(trap)
         return nullptr;
     }
 
-    if (not IS_ERROR(VAL_THROWN_LABEL(FRAME)))  // CATCH for non-ERROR! throws
+    if (not Is_Meta_Of_Failure(VAL_THROWN_LABEL(FRAME)))  // non-ERROR! throws
         return BOUNCE_THROWN;
 
     Copy_Cell(OUT, VAL_THROWN_LABEL(FRAME));
+    Unquasify(OUT);
     CATCH_THROWN(SPARE, FRAME);
     assert(Is_Nulled(SPARE));  // all error throws are null-valued
 
@@ -116,10 +117,28 @@ DECLARE_NATIVE(except)
     Value(*) v = ARG(optional);
     Value(*) branch = ARG(branch);
 
-    if (not IS_ERROR(v))
+    if (not Is_Meta_Of_Failure(v))
         return UNMETA(v);
 
+    Unquasify(v);  // meta failures are ~QUASI-ERROR!~, branch wants ERROR!
     return DELEGATE_BRANCH(OUT, branch, v);
+}
+
+
+//
+//  failure?: native [
+//
+//  "Tells you if argument is a failure, but does not raise it"
+//
+//      return: [logic!]
+//      ^optional [<opt> <void> <fail> any-value!]
+//  ]
+//
+DECLARE_NATIVE(failure_q)
+{
+    INCLUDE_PARAMS_OF_FAILURE_Q;
+
+    return Init_Logic(OUT, Is_Meta_Of_Failure(ARG(optional)));
 }
 
 

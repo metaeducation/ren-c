@@ -733,7 +733,7 @@ static Array(*) Gob_To_Array(REBGOB *gob)
         // Gobs used none (blank) historically.
         //
         if (Is_Nulled(slot))
-            Init_Bad_Word(slot, Canon(NULL));
+            Init_Quasi_Word(slot, Canon(NULL));
     }
 
     return arr;

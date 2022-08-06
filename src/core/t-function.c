@@ -296,7 +296,7 @@ REBTYPE(Action)
         );
 
         Array(*) details = ACT_DETAILS(proxy);
-        Init_Bad_Word(ARR_AT(details, 1), Canon(COPY));  // dummy ~copy~
+        Init_Quasi_Word(ARR_AT(details, 1), Canon(COPY));  // dummy ~copy~
 
         Context(*) meta = ACT_META(act);
         assert(ACT_META(proxy) == nullptr);

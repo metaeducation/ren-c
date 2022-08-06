@@ -84,7 +84,6 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
     switch (heart) {
       case REB_0_VOID:
       case REB_NULL:
-      case REB_BAD_WORD:
       case REB_BLANK:
       case REB_COMMA:
         break;

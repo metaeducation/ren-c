@@ -45,9 +45,10 @@ inline static void INIT_VAL_WORD_INDEX(Cell(*) v, REBLEN i) {
 inline static REBVAL *Init_Any_Word_Untracked(
     Cell(*) out,
     enum Reb_Kind kind,
-    Symbol(const*) sym
+    Symbol(const*) sym,
+    Flags flags
 ){
-    Reset_Cell_Header_Untracked(out, kind, CELL_FLAG_FIRST_IS_NODE);
+    Reset_Cell_Header_Untracked(out, kind, flags | CELL_FLAG_FIRST_IS_NODE);
     VAL_WORD_INDEX_U32(out) = 0;
     mutable_BINDING(out) = nullptr;
     INIT_VAL_WORD_SYMBOL(out, sym);
@@ -56,7 +57,7 @@ inline static REBVAL *Init_Any_Word_Untracked(
 }
 
 #define Init_Any_Word(out,kind,spelling) \
-    Init_Any_Word_Untracked(TRACK(out), (kind), (spelling))
+    Init_Any_Word_Untracked(TRACK(out), (kind), (spelling), CELL_MASK_NONE)
 
 #define Init_Word(out,str)          Init_Any_Word((out), REB_WORD, (str))
 #define Init_Get_Word(out,str)      Init_Any_Word((out), REB_GET_WORD, (str))

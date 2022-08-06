@@ -352,7 +352,7 @@ extract: function [
     index: default '1
     out: make (type of series) len
     iterate-skip series width [
-        append out try (pick series index)
+        append out maybe (pick series index)
     ]
     return out
 ]
@@ -399,7 +399,7 @@ collect*: func [
             f [frame!]
             <with> out
         ][
-            if f.value <> @void [  ; (META) can't collect voids
+            if not void? unget f.value [  ; (META) can't collect voids
                 f.series: out: default [make block! 16]  ; no null return now
                 unmeta f.value  ; ELIDE leaves as result
                 elide do f  ; would invalidate f.value (hence ELIDE)

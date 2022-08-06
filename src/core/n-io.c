@@ -40,7 +40,7 @@ DECLARE_NATIVE(form)
     INCLUDE_PARAMS_OF_FORM;
 
     REBVAL *v = ARG(value);
-    if (IS_BAD_WORD(v))
+    if (Is_Quasi_Word(v))
         fail (ARG(value));
 
     return Init_Text(OUT, Copy_Form_Value(v, 0));

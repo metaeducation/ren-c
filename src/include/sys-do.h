@@ -113,9 +113,18 @@ inline static Bounce Run_Generic_Dispatch_Core(
     Frame(*) f,
     Symbol(const*) verb
 ){
-    GENERIC_HOOK *hook = IS_QUOTED(first_arg)
-        ? &T_Quoted  // a few things like COPY are supported by QUOTED!
-        : Generic_Hook_For_Type_Of(first_arg);
+    GENERIC_HOOK *hook;
+    switch (QUOTE_BYTE(first_arg)) {
+      case 0:
+        hook = Generic_Hook_For_Type_Of(first_arg);
+        break;
+      case QUASI_1:
+        hook = &T_Quasi;
+        break;
+      default:
+        hook = &T_Quoted;  // a few things like COPY are supported by QUOTED!
+        break;
+    }
 
     Bounce r = hook(f, verb);  // Note that QUOTED! has its own hook & handling
     if (r == BOUNCE_UNHANDLED)  // convenience for error handling

@@ -674,8 +674,10 @@ REBTYPE(Map)
         if (Is_Nulled(value))
             return COPY(map);  // don't fail on read only if it would be a no-op
 
-        if (not IS_BLOCK(value))
+        if (not Is_Meta_Of_Splice(value))
             fail ("Appending to MAP! only accepts a splice block of key/value");
+
+        Unquasify(value);
 
         REBMAP *m = VAL_MAP_ENSURE_MUTABLE(map);
 

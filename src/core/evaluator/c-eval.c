@@ -507,14 +507,40 @@ Bounce Evaluator_Executor(Frame(*) f)
     // fast tests like ANY_INERT() and IS_NULLED_OR_VOID_OR_END() has shown
     // to reduce performance in practice.  The compiler does the right thing.
 
-    if (QUOTE_BYTE_UNCHECKED(f_current) != 0) {
-        //
-        // Evaluation of a QUOTED! simply removes one level of quoting
-        //
-        Derelativize(OUT, f_current, f_specifier);
-        Unquotify(OUT, 1);
-    }
-    else switch (CELL_HEART_UNCHECKED(f_current)) {  // unchecked to see REB_0
+    switch (QUOTE_BYTE_UNCHECKED(f_current)) {
+
+      //=//// QUASI! //////////////////////////////////////////////////////=//
+      //
+      // QUASI! forms will produce an isotope when evaluated of whatever it is
+      // containing:
+      //
+      //     >> bar: ~whatever~
+      //     == ~whatever~  ; isotope
+      //
+      //     >> bar
+      //     ** Error: bar is a ~whatever~ isotope
+      //
+      // To bypass the error, use GET/ANY.
+      //
+      // Note: Some isotopes will decay automatically in variable assignment:
+      // ~null~, ~false~, ~blank~, and ~blackhole~ isotopes.  But all of
+      // them can exist transiently in evaluation.
+      //
+
+    case QUASI_1:
+      Derelativize(OUT, f_current, f_specifier);
+      Isotopify(OUT);
+      break;
+
+    default:  // quote byte > 1, e.g. QUOTED!
+      //
+      // Evaluation of a QUOTED! simply removes one level of quoting
+      //
+      Derelativize(OUT, f_current, f_specifier);
+      Unquotify(OUT, 1);
+      break;
+
+    case 0: switch (CELL_HEART_UNCHECKED(f_current)) {  // unchecked for REB_0
 
       case REB_0_END:
         assert(Is_End(f_current));  // should be END, not void
@@ -1552,7 +1578,7 @@ Bounce Evaluator_Executor(Frame(*) f)
         //
         Copy_Cell(SPARE, Data_Stack_At(BASELINE->stack_base + 1));
         if (IS_BLANK(SPARE))
-            Init_Isotope(OUT, Canon(BLANK));
+            Init_Word_Isotope(OUT, Canon(BLANK));
         else {
             if (ANY_META_KIND(VAL_TYPE(Data_Stack_At(BASELINE->stack_base + 1)))) {
                 if (Is_Stale(OUT))
@@ -1619,7 +1645,7 @@ Bounce Evaluator_Executor(Frame(*) f)
       case REB_META_BLOCK:
         Inertly_Derelativize_Inheriting_Const(OUT, f_current, f->feed);
         mutable_HEART_BYTE(OUT) = REB_BLOCK;
-        mutable_QUOTE_BYTE(OUT) = 1;
+        Quotify(OUT, 1);
         break;
 
 
@@ -1660,42 +1686,6 @@ Bounce Evaluator_Executor(Frame(*) f)
         goto inert;
 
 
-    //=//// BAD-WORD! //////////////////////////////////////////////////////=//
-    //
-    // Two different forms of BAD-WORD!s can be put into variables.  The plain
-    // form can be produced by quoting, and it is safe to fetch via WORD!:
-    //
-    //     >> foo: '~whatever~
-    //     == ~whatever~
-    //
-    //     >> foo
-    //     == ~whatever~
-    //
-    // The other form arises from evaluation, and are called "isotopes".  If
-    // you try to access these from a variable, you will get an error:
-    //
-    //     >> bar: ~whatever~
-    //     == ~whatever~  ; isotope
-    //
-    //     >> bar
-    //     ** Error: bar is a ~whatever~ isotope
-    //
-    // To bypass the error, use GET/ANY.
-    //
-    // Note that some special isotopes will "decay" when written to variables,
-    // to produce ordinary safe values.
-
-      case REB_BAD_WORD:
-        //
-        // Note: Some isotopes will decay automatically in variable assignment:
-        // ~null~, ~false~, ~blank~, and ~blackhole~ isotopes.  But all of
-        // them can exist transiently in evaluation.
-        //
-        Derelativize(OUT, f_current, f_specifier);
-        Isotopify(OUT);
-        break;
-
-
     //=///////////////////////////////////////////////////////////////////=//
     //
     // Treat all the other NOT Is_Bindable() types as inert
@@ -1729,7 +1719,7 @@ Bounce Evaluator_Executor(Frame(*) f)
 
       default:
         panic (f_current);
-    }
+    }}
 
   //=//// END MAIN SWITCH STATEMENT ///////////////////////////////////////=//
 

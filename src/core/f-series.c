@@ -459,9 +459,6 @@ REBINT Cmp_Value(Cell(const*) sval, Cell(const*) tval, bool strict)
         assert(CT_Blank(s, t, strict) == 0);
         return 0;  // shortcut call to comparison
 
-      case REB_BAD_WORD:
-        return CT_Bad_word(s, t, strict);
-
       case REB_HANDLE:
         return CT_Handle(s, t, strict);
 

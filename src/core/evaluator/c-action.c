@@ -982,25 +982,15 @@ Bounce Action_Executor(Frame(*) f)
             and Is_Blackhole(ARG)  // v-- e.g. <blackhole> param
         ){
             Set_Executor_Flag(ACTION, f, TYPECHECK_ONLY);
-            Init_Isotope(OUT, Canon(BLACKHOLE));
+            Init_Word_Isotope(OUT, Canon(BLACKHOLE));
             continue;
         }
 
         if (PARAM_CLASS_META == VAL_PARAM_CLASS(PARAM)) {
-            if (
-                kind != REB_BAD_WORD
-                and kind != REB_NULL
-                and kind != REB_BLANK
-                and kind != REB_THE_WORD  // @end or @void
-                and kind != REB_QUOTED
-                and kind != REB_ERROR  // special annotation to allow?
-                and kind != REB_BLOCK
-            ){
-                fail (
-                    "^META arguments only:"
-                        " [<null> bad-word! the-word! quoted! block!]"
-                );
-            }
+            //
+            // !!! Now that everything is isotopic, there needs to be a new
+            // policy on checking here.
+            //
         }
 
         if (GET_PARAM_FLAG(PARAM, CONST))

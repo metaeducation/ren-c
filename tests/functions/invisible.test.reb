@@ -472,7 +472,6 @@
 ], true)
 
 (@void = ^ void)
-(@void = ^ void/light)
 
 (
     e: trap [1 + 2 (comment "stale") + 3]

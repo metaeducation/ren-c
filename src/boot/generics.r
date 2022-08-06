@@ -583,7 +583,7 @@ read: generic [
         block!  ; READ/LINES returned BLOCK!
         port!  ; asynchronous READ on PORT!s returned the PORT!
         tuple!  ; READ/DNS returned tuple!
-        bad-word!  ; !!! If READ is Ctrl-C'd in nonhaltable API calls, ATM
+        quasi!  ; !!! If READ is Ctrl-C'd in nonhaltable API calls, ATM
     ]
     source [port! file! url! block!]
     /part "Partial read a given number of units (source relative)"

@@ -77,37 +77,16 @@
 inline static REBVAL *Init_Any_Word_Untracked(
     Cell(*) out,
     enum Reb_Kind kind,
-    Symbol(const*) sym
+    Symbol(const*) sym,
+    Flags flags
 );
 
+inline static bool Is_Quasi_Word(Cell(const*) v)
+  { return IS_QUASI(v) and HEART_BYTE_UNCHECKED(v) == REB_WORD; }
 
-// Note: Init_Bad_Word_Untracked() forward-declared in %sys-trash.h
-
-#define Init_Bad_Word(out,sym) \
-    Init_Bad_Word_Untracked(TRACK(out), (sym), CELL_MASK_NONE)
-
-inline static option(Symbol(const*)) VAL_BAD_WORD_LABEL_UNCHECKED(
-    noquote(Cell(const*)) v
-){
-    return cast(Symbol(const*), VAL_NODE1(v));
-}
-
-inline static option(Symbol(const*)) VAL_BAD_WORD_LABEL(
-    noquote(Cell(const*)) v
-){
-    assert(CELL_HEART(v) == REB_BAD_WORD);
-    assert(Get_Cell_Flag(v, FIRST_IS_NODE));
-    return cast(Symbol(const*), VAL_NODE1(v));
-}
-
-inline static OPT_SYMID VAL_BAD_WORD_ID(Cell(const*) v) {
-    assert(IS_BAD_WORD(v));
-    assert(Get_Cell_Flag(v, FIRST_IS_NODE));
-    if (not VAL_NODE1(v))
-        return cast(OPT_SYMID, SYM_0);
-
-    return ID_OF_SYMBOL(cast(Symbol(const*), VAL_NODE1(v)));
-}
+#define Init_Quasi_Word(out,sym) \
+    Init_Any_Word_Untracked( \
+        TRACK(out), REB_WORD, (sym), FLAG_QUOTE_BYTE(QUASI_1))
 
 
 //=//// BAD-WORD! ISOTOPES (just called "isotopes" for short) //////////////=//
@@ -116,24 +95,30 @@ inline static OPT_SYMID VAL_BAD_WORD_ID(Cell(const*) v) {
 // is evaluated.  These cannot live in blocks, and most are "unfriendly" and
 // cannot be passed as normal parameters...you have to use ^META ones.
 
-inline static REBVAL *Init_Isotope_Untracked(
+inline static REBVAL *Init_Word_Isotope_Untracked(
     Cell(*) out,
     option(Symbol(const*)) label
 ){
-    return Init_Bad_Word_Untracked(out, label, FLAG_QUOTE_BYTE(ISOTOPE_255));
+    return Init_Any_Word_Untracked(
+        out, REB_WORD, label, FLAG_QUOTE_BYTE(ISOTOPE_255)
+    );
 }
 
-#define Init_Isotope(out,label) \
-    Init_Isotope_Untracked(TRACK(out), (label))
+#define Init_Word_Isotope(out,label) \
+    Init_Word_Isotope_Untracked(TRACK(out), (label))
 
 inline static bool Is_Word_Isotope(Cell(const*) v) {
     if (QUOTE_BYTE(v) != ISOTOPE_255)
         return false;
 
-    if (HEART_BYTE(v) == REB_BAD_WORD)
+    if (HEART_BYTE(v) == REB_WORD)
         return true;
 
-    assert(HEART_BYTE(v) == REB_ERROR or HEART_BYTE(v) == REB_BLOCK);
+    assert(
+        HEART_BYTE(v) == REB_ERROR
+        or HEART_BYTE(v) == REB_BLOCK
+        or HEART_BYTE(v) == REB_BLANK
+    );
     return false;
 }
 
@@ -147,7 +132,7 @@ inline static bool Is_Isotope(Cell(const*) v) {
 
 inline static bool Reify_Isotope(Cell(*) v) {
     assert(Is_Isotope(v));
-    mutable_QUOTE_BYTE(v) = 0;
+    mutable_QUOTE_BYTE(v) = QUASI_1;
     return true;
 }
 
@@ -156,16 +141,16 @@ inline static Cell(*) Isotopify(Cell(*) v) {
     return v;
 }
 
-inline static option(Symbol(const*)) VAL_ISOTOPE_LABEL(Cell(const*) v) {
+inline static Symbol(const*) VAL_ISOTOPE_LABEL(Cell(const*) v) {
     assert(Is_Word_Isotope(v));
-    assert(HEART_BYTE_UNCHECKED(v) == REB_BAD_WORD);
+    assert(HEART_BYTE_UNCHECKED(v) == REB_WORD);
 
     return cast(Symbol(const*), VAL_NODE1(v));
 }
 
 inline static OPT_SYMID VAL_ISOTOPE_ID(Cell(const*) v) {
     assert(Is_Word_Isotope(v));
-    assert(HEART_BYTE_UNCHECKED(v) == REB_BAD_WORD);
+    assert(HEART_BYTE_UNCHECKED(v) == REB_WORD);
 
     if (not VAL_NODE1(v))
         return cast(OPT_SYMID, SYM_0);
@@ -213,14 +198,17 @@ inline static bool Is_Isotope_With_Id(
 //
 #define NONE_ISOTOPE                c_cast(const REBVAL*, &PG_None_Isotope)
 
-#define Init_None(out)              Init_Isotope((out), nullptr)
-#define Init_Meta_Of_None(out)      Init_Bad_Word((out), nullptr)
+#define Init_None(out) \
+    Init_Blank_Untracked(TRACK(out), FLAG_QUOTE_BYTE(ISOTOPE_255))
+
+#define Init_Meta_Of_None(out) \
+    Init_Blank_Untracked(TRACK(out), FLAG_QUOTE_BYTE(QUASI_1))
 
 inline static bool Is_None(Cell(const*) v)
-  { return Is_Word_Isotope(v) and VAL_BAD_WORD_LABEL(v) == nullptr; }
+  { return Is_Isotope(v) and HEART_BYTE_UNCHECKED(v) == REB_BLANK; }
 
 inline static bool Is_Meta_Of_None(Cell(const*) v)
-  { return IS_BAD_WORD(v) and VAL_BAD_WORD_LABEL(v) == nullptr; }
+  { return IS_QUASI(v) and HEART_BYTE_UNCHECKED(v) == REB_BLANK; }
 
 
 //=//// VOID ISOTOPES AND VOID META STATE (@void) /////////////////////////=//
@@ -240,15 +228,15 @@ inline static bool Is_Meta_Of_None(Cell(const*) v)
 // True void is @void to distinguish it.
 //
 
-#define Init_Void_Isotope(out)              Init_Isotope((out), Canon(VOID))
-#define Is_Void_Isotope(v)                  Is_Isotope_With_Id(v, SYM_VOID)
-#define Init_Meta_Of_Void_Isotope(out)      Init_Bad_Word((out), Canon(VOID))
+#define Init_Void_Isotope(out)            Init_Word_Isotope((out), Canon(VOID))
+#define Is_Void_Isotope(v)                Is_Isotope_With_Id(v, SYM_VOID)
+#define Init_Meta_Of_Void_Isotope(out)    Init_Quasi_Word((out), Canon(VOID))
 
 inline static bool Is_Meta_Of_Void_Isotope(Cell(const*) v)
-  { return IS_BAD_WORD(v) and VAL_BAD_WORD_LABEL(v) == Canon(VOID); }
+  { return Is_Quasi_Word(v) and VAL_WORD_SYMBOL(v) == Canon(VOID); }
 
 #define Init_Meta_Of_Void(out) \
-    Init_Any_Word_Untracked(TRACK(out), REB_THE_WORD, Canon(VOID))
+    Init_Any_Word_Untracked(TRACK(out), REB_THE_WORD, Canon(VOID), CELL_MASK_NONE)
 
 inline static bool Is_Meta_Of_Void(Cell(const*) v)
   { return IS_THE_WORD(v) and VAL_WORD_SYMBOL(v) == Canon(VOID); }
@@ -284,12 +272,12 @@ inline static bool Is_Meta_Of_Void(Cell(const*) v)
 // it has actually gotten much easier with ^(...) behaviors.)
 //
 
-#define Init_Null_Isotope(out)              Init_Isotope((out), Canon(NULL))
-#define Is_Null_Isotope(v)                  Is_Isotope_With_Id(v, SYM_NULL)
-#define Init_Meta_Of_Null_Isotope(out)      Init_Bad_Word((out), Canon(NULL))
+#define Init_Null_Isotope(out)            Init_Word_Isotope((out), Canon(NULL))
+#define Is_Null_Isotope(v)                Is_Isotope_With_Id(v, SYM_NULL)
+#define Init_Meta_Of_Null_Isotope(out)    Init_Quasi_Word((out), Canon(NULL))
 
 inline static bool Is_Meta_Of_Null_Isotope(Cell(const*) v)
-  { return IS_BAD_WORD(v) and VAL_BAD_WORD_LABEL(v) == Canon(NULL); }
+  { return Is_Quasi_Word(v) and VAL_WORD_SYMBOL(v) == Canon(NULL); }
 
 
 //=//// END OF INPUT META STATE (@END THE-WORD!) //////////////////////////=//
@@ -302,16 +290,16 @@ inline static bool Is_Meta_Of_Null_Isotope(Cell(const*) v)
 // are reified and thus exist...which means their ^META state has to take
 // the ~end~ BAD-WORD!.
 
-#define Init_End_Isotope(out)              Init_Isotope((out), Canon(END))
+#define Init_End_Isotope(out)              Init_Word_Isotope((out), Canon(END))
 #define Is_End_Isotope(v)                  Is_Isotope_With_Id(v, SYM_END)
-#define Init_Meta_Of_End_Isotope(out)      Init_Bad_Word((out), Canon(END))
+#define Init_Meta_Of_End_Isotope(out)      Init_Quasi_Word((out), Canon(END))
 
 inline static bool Is_Meta_Of_End_Isotope(Cell(const*) v)
-  { return IS_BAD_WORD(v) and VAL_BAD_WORD_LABEL(v) == Canon(END); }
+  { return Is_Quasi_Word(v) and VAL_WORD_SYMBOL(v) == Canon(END); }
 
 
 #define Init_Meta_Of_End(out) \
-    Init_Any_Word_Untracked(TRACK(out), REB_THE_WORD, Canon(END))
+    Init_Any_Word_Untracked(TRACK(out), REB_THE_WORD, Canon(END), CELL_MASK_NONE)
 
 inline static bool Is_Meta_Of_End(Cell(const*) v)
   { return IS_THE_WORD(v) and VAL_WORD_SYMBOL(v) == Canon(END); }
@@ -373,14 +361,14 @@ inline static const REBVAL *rebPointerToDecayed(const REBVAL *v) {
 }
 
 inline static Cell(*) Isotopify_If_Falsey(Cell(*) v) {
-    if (Is_Word_Isotope(v))
+    if (Is_Isotope(v))
         return v;  // already an isotope (would trigger asserts on IS_X tests)
     if (Is_Nulled(v))
-        Init_Isotope(v, Canon(NULL));
+        Init_Null_Isotope(v);
     else if (IS_BLANK(v))
-        Init_Isotope(v, Canon(BLANK));
+        Init_Word_Isotope(v, Canon(BLANK));
     else if (IS_LOGIC(v) and VAL_LOGIC(v) == false)
-        Init_Isotope(v, Canon(FALSE));
+        Init_Word_Isotope(v, Canon(FALSE));
     return v;
 }
 

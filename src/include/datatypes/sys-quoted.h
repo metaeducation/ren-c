@@ -50,11 +50,11 @@ inline static void Unbind_Any_Word(Cell(*) v);  // forward define
 
 inline static REBLEN VAL_QUOTED_DEPTH(Cell(const*) v) {
     assert(IS_QUOTED(v));
-    return QUOTE_BYTE(READABLE(v));
+    return QUOTE_BYTE(READABLE(v)) >> 1;
 }
 
 inline static REBLEN VAL_NUM_QUOTES(Cell(const*) v) {
-    return QUOTE_BYTE(READABLE(v));
+    return QUOTE_BYTE(READABLE(v)) >> 1;
 }
 
 
@@ -68,9 +68,9 @@ inline static Cell(*) Quotify_Core(
         return v;
 
     if (VAL_NUM_QUOTES(v) + depth >  MAX_QUOTE_DEPTH)
-        fail ("Quoting Depth of 255 Exceeded");
+        fail ("Quoting Depth of 126 Exceeded");
 
-    mutable_QUOTE_BYTE(v) += depth;
+    mutable_QUOTE_BYTE(v) += (depth << 1);
     return v;
 }
 
@@ -97,7 +97,7 @@ inline static Cell(*) Unquotify_Core(Cell(*) v, REBLEN unquotes) {
     if (unquotes > VAL_NUM_QUOTES(v))
         fail ("Attempt to set quoting level of value to less than 0");
 
-    mutable_QUOTE_BYTE(v) -= unquotes;
+    mutable_QUOTE_BYTE(v) -= (unquotes << 1);
     return v;
 }
 
@@ -129,7 +129,7 @@ inline static void Unquotify_Dont_Expect_Meta(Cell(*) v) {
 
 inline static REBLEN Dequotify(Cell(*) v) {
     REBLEN depth = VAL_NUM_QUOTES(v);
-    mutable_QUOTE_BYTE(v) = 0;
+    mutable_QUOTE_BYTE(v) &= QUASI_1;  // take away quote levels, leave QUASI!
     return depth;
 }
 

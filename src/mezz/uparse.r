@@ -292,7 +292,10 @@ default-combinators: make map! reduce [
             remainder: input  ; succeed on parse failure but don't advance input
             return heavy null  ; "heavy null" result (plain NULL is failure)
         ]
-        if (error? result') and (result'.id = 'try-if-null-meant) [
+        all [
+            failure? unget result'
+            (unquasi result').id = 'try-if-null-meant
+        ] then [
             remainder: input
             return heavy null  ; intercepting special error counts too
         ]
@@ -312,7 +315,7 @@ default-combinators: make map! reduce [
         if (not quoted? result') or (not any-array? result': unquote result') [
             fail "SPREAD only accepts ANY-ARRAY!"
         ]
-        return unmeta result'  ; was unquoted above
+        return spread result'  ; was unquoted above
     ]
 
     'not combinator [
@@ -624,10 +627,6 @@ default-combinators: make map! reduce [
             return null
         ]
 
-        if bad-word? replacement' [
-            fail "Cannot CHANGE to isotope"
-        ]
-
         ; CHANGE returns tail, use as new remainder
         ;
         remainder: change/part input (unmeta replacement') remainder
@@ -657,10 +656,6 @@ default-combinators: make map! reduce [
     ][
         ([^insertion' #]: parser input) else [  ; remainder ignored
             return null
-        ]
-
-        if bad-word? insertion' [
-            fail "Cannot INSERT isotope"
         ]
 
         remainder: insert input (unmeta insertion')
@@ -718,13 +713,13 @@ default-combinators: make map! reduce [
             return null
         ]
         if where = '~null~ [  ; e.g. was a plain NULL, isotoped by combinator
-            return unmeta make error! [
+            return fail make error! [
                 message: [{Call should use TRY if NULL intended, gives:} :arg1]
                 id: 'try-if-null-meant
                 arg1: null
             ]
         ]
-        if bad-word? where [
+        if quasi? where [
             fail "Cannot SEEK to isotope"
         ]
         where: my unquote
@@ -1014,10 +1009,7 @@ default-combinators: make map! reduce [
         ([^result' remainder subpending]: parser input) else [
             return null
         ]
-        if bad-word? result' [
-            fail ["Cannot KEEP a" result' "isotope"]
-        ]
-        if result' = @void [  ; pure void
+        if void? unget result' [  ; pure void
             pending: null
             return ~null~  ; succeed but return null isotope (?)
         ]
@@ -1031,12 +1023,12 @@ default-combinators: make map! reduce [
         ; used instead--though copies of blocks would be needed either way.
         ;
         case [
-            quoted? :result' [  ; unmeta'd result asked to be kept literally
+            quoted? result' [  ; unmeta'd result asked to be kept literally
                 pending: glom subpending result'  ; retain meta quote as signal
             ]
-            block? :result' [
+            splice? unget result' [
                 subpending: default [copy []]  ; !!! optimize empty results?
-                for-each item result' [
+                for-each item unquasi result' [
                     ;
                     ; We quote to signal that this pending item targets COLLECT.
                     ;
@@ -1047,7 +1039,7 @@ default-combinators: make map! reduce [
             fail "Incorrect KEEP (not value or SPREAD)"
         ]
 
-        return unmeta result'
+        return unget result'
     ]
 
     === GATHER AND EMIT ===
@@ -1849,7 +1841,7 @@ default-combinators: make map! reduce [
             ; Splice-match semantics for @((thing)), match the block itemwise.
             ; Experimental feature with weird syntax...
             ;
-            if (not quoted? result') or (not block? unmeta result') [
+            if (not quoted? result') or (not splice? unget result') [
                 fail "Inline matching @((...)) requires BLOCK! for the moment"
             ]
             for-each item unmeta result' [
@@ -2373,10 +2365,10 @@ default-combinators: make map! reduce [
             ; maybe expression can vanish.
             ;
             (^ eval f) then temp -> [
-                if error? temp [  ; !!! Rethink when right moment for errors is
-                    fail temp
+                if failure? unget temp [
+                    fail unquasi temp  ; !!! Rethink right moment for errors
                 ]
-                if temp <> @void  [
+                if not void? unget temp [
                     result': temp  ; overwrite if was visible
                 ]
                 totalpending: glom totalpending spread subpending

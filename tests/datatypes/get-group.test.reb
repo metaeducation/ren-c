@@ -30,11 +30,11 @@
 ; you need to use something like ATTEMPT.
 [
     (
-        e: ^ (1 + 2 fail "handled")
+        e: unquasi ^ (1 + 2 fail "handled")
         e.message = "handled"
     )
     (
-        e: ^(1 + 2 fail "handled")
+        e: unquasi ^(1 + 2 fail "handled")
         e.message = "handled"
     )
     (
@@ -45,7 +45,7 @@
     )
     (
         e: trap [
-            ^(fail "unhandled" 1 + 2)
+            unquasi ^(fail "unhandled" 1 + 2)
         ]
         e.message = "unhandled"
     )

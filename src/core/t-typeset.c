@@ -339,7 +339,7 @@ Array(*) Typeset_To_Array(const REBVAL *tset)
                 // support in the 64-bit representation for individual
                 // custom types.  So all custom types typecheck together.
                 //
-                Init_Bad_Word(PUSH(), Canon(CUSTOM_X));
+                Init_Quasi_Word(PUSH(), Canon(CUSTOM_X));
             }
             else
                 Init_Builtin_Datatype(PUSH(), cast(enum Reb_Kind, n));

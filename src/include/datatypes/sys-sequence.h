@@ -99,7 +99,9 @@ inline static bool Is_Valid_Sequence_Element(
 ){
     assert(ANY_SEQUENCE_KIND(sequence_kind));
 
-    enum Reb_Kind k = VAL_TYPE(v);
+    // QUASI! cases are legal, to support e.g. `~/home/Projects/ren-c/README.md`
+    //
+    enum Reb_Kind k = IS_QUASI(v) ? CELL_HEART(v) : VAL_TYPE(v);
     if (
         k == REB_BLANK
         or k == REB_INTEGER
@@ -108,7 +110,6 @@ inline static bool Is_Valid_Sequence_Element(
         or k == REB_TEXT
         or k == REB_TAG
         or k == REB_WORD
-        or k == REB_BAD_WORD  // legal, e.g. `~/home/Projects/ren-c/README.md`
     ){
         return true;
     }

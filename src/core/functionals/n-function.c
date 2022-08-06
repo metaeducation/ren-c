@@ -609,7 +609,8 @@ DECLARE_NATIVE(definitional_return)
         goto skip_type_check;
     }
 
-    if (IS_ERROR(v)) {
+    if (Is_Meta_Of_Failure(v)) {
+        Unquasify(v);
         Failurize(v);  // Meta_Unquotify won't do this, it fail()'s
         goto skip_type_check;
     }

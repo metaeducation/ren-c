@@ -335,9 +335,9 @@ REBTYPE(Word)
                 return OUT;  // found variable actually in module.
 
             if (MOD_VAR(Lib_Context, VAL_WORD_SYMBOL(v), true))
-                return Init_Bad_Word(OUT, Canon(INHERITED));
+                return Init_Quasi_Word(OUT, Canon(INHERITED));
 
-            return Init_Bad_Word(OUT, Canon(ATTACHED)); }
+            return Init_Quasi_Word(OUT, Canon(ATTACHED)); }
 
           case SYM_ATTACH: {  // hack it up...
             if (not IS_WORD_BOUND(v))

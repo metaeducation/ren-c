@@ -646,7 +646,7 @@ static void Init_Contexts_Object(void)
     // is wrong if it's used during boot.
     //
     const char *label = "startup-mezz-not-finished-yet";
-    Init_Bad_Word(
+    Init_Word_Isotope(
         Get_System(SYS_CONTEXTS, CTX_USER),
         Intern_UTF8_Managed(cb_cast(label), strsize(label))
     );

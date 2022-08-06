@@ -727,7 +727,7 @@ attempt: func [
 ][
     last': the ~
     reduce-each ^result' code [
-        if error? result' [return null]
+        if (quasi? result') and (error? unquasi result') [return null]
         if @void = result' [continue]
         last': result'
     ]
@@ -1028,7 +1028,7 @@ fail: func [
     ; you typically can only trap/catch errors that come from a function you
     ; directly called.
     ;
-    return unmeta ensure error! error
+    return unmeta quasi ensure error! error
 ]
 
 

@@ -2679,7 +2679,7 @@ DECLARE_NATIVE(subparse)
 //  "Parse series according to grammar rules"
 //
 //      return: "TBD: parse product, currently either ~parsed~ or NULL"
-//          [<opt> bad-word! any-series!]
+//          [<opt> quasi! any-series!]
 //
 //      input "Input series to parse"
 //          [<try> any-series! any-sequence! url!]
