@@ -1106,16 +1106,15 @@ static enum Reb_Token Maybe_Locate_Token_May_Push_Mold(
                     ss->end = cp + 1;
                     return TOKEN_ESCAPED_WORD;  // knows to look in mold buffer
                 }
+                if (mo->series != nullptr)
+                    Drop_Mold(mo);  // unescaped | means it can't be escaped
                 if (cp[1] != '<' && cp[1] != '>'
                     && cp[1] != '-' && cp[1] != '+'
                     && cp[1] != '=' && cp[1] != '|'
                 ){
-                    assert(mo->series != nullptr);
                     ss->end = cp + 1;
-                    return TOKEN_ESCAPED_WORD;  // e.g. |<>|
+                    return TOKEN_WORD;
                 }
-                if (mo->series != nullptr)
-                    Drop_Mold(mo);  // unescaped | means it can't be escaped
                 continue;
             }
 
