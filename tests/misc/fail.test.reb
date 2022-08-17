@@ -54,3 +54,21 @@
         ]
     )
 ]
+
+; Multi-returns which aren't writing to a variable should be willing to
+; tolerate an arbitrary result coming out.
+[
+    (failure? [#]: fail "hi")
+]
+
+; A ^META'd failure still does a lookahead step for enfix, and if that step
+; does not need to lookahead it should respect the meta'd status and not
+; raise an error.
+[
+    (
+        did all [
+            (failure? unmeta [^x]: fail "hi" void)
+            failure? unget x
+        ]
+    )
+]

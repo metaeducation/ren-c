@@ -1527,11 +1527,12 @@ Bounce Evaluator_Executor(Frame(*) f)
         assert(STATE == ST_EVALUATOR_SET_BLOCK_RIGHTSIDE);
         frame_->u.eval.stackindex_circled = stackindex_circled;
 
+        REBVAL* main = Data_Stack_At(BASELINE->stack_base + 1);
         if (
-            IS_META_WORD(Data_Stack_At(BASELINE->stack_base + 1))
-            or IS_META_TUPLE(Data_Stack_At(BASELINE->stack_base + 1))
+            IS_META_WORD(main) or IS_META_TUPLE(main)
+            or Is_Blackhole(main) or IS_BLANK(main)
         ){
-            Set_Frame_Flag(sub, FAILURE_RESULT_OK);
+            Set_Frame_Flag(sub, FAILURE_RESULT_OK);  // logic repeated below
         }
 
         FRM_STATE_BYTE(sub) = ST_ACTION_TYPECHECKING;
@@ -1571,6 +1572,14 @@ Bounce Evaluator_Executor(Frame(*) f)
                 | EVAL_EXECUTOR_FLAG_INERT_OPTIMIZATION  // tolerate enfix late
                 | FRAME_FLAG_MAYBE_STALE;  // won't be, but avoids RESET()
 
+            REBVAL* main = Data_Stack_At(BASELINE->stack_base + 1);
+            if (
+                IS_META_WORD(main) or IS_META_TUPLE(main)
+                or Is_Blackhole(main) or IS_BLANK(main)
+            ){
+                flags |= FRAME_FLAG_FAILURE_RESULT_OK;  // logic repeated above
+            }
+
             Frame(*) subframe = Make_Frame(f->feed, flags);
             Push_Frame(OUT, subframe);  // offer potential enfix previous OUT
 
@@ -1598,8 +1607,17 @@ Bounce Evaluator_Executor(Frame(*) f)
         // needs more thinking (e.g. what if they throw?)
         //
         Copy_Cell(SPARE, Data_Stack_At(BASELINE->stack_base + 1));
-        if (IS_BLANK(SPARE))
-            Init_Word_Isotope(OUT, Canon(BLANK));
+        if (IS_BLANK(SPARE)) {
+            //
+            // Had to allow failure for ([_]: fail "a" except [...]), but if
+            // there was no except to handle it then a desire to suppress the
+            // result means it should fail.
+            //
+            // !!! Review if it should actually force a raised error.
+            //
+            if (not Is_Failure(OUT))
+                Init_None(OUT);  // "uninteresting result"
+        }
         else {
             if (ANY_META_KIND(VAL_TYPE(Data_Stack_At(BASELINE->stack_base + 1)))) {
                 if (Is_Stale(OUT))

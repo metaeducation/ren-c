@@ -102,17 +102,19 @@
 ]
 
 ; Opting out of a primary return result can't (currently) be detected by the
-; callee, but it will give a blank isotope back instead of the actual result.
+; callee, but it will give a none isotope back instead of the actual result.
 [(
     did all [
-        '~blank~ = ^ [_ rest]: transcode "abc def"
+        none? [_ rest]: transcode "abc def"
         rest = " def"
     ]
 )(
     did all [
-        '~blank~ = ^ [(_) rest]: transcode "abc def"
+        none? [(_) rest]: transcode "abc def"
         rest = " def"
     ]
+)(
+    failure? [_]: fail "a"
 )]
 
 ; The META-XXX! types can be used to ask for variables to be raised to a meta
