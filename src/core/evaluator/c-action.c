@@ -449,8 +449,10 @@ Bounce Action_Executor(Frame(*) f)
                 break;
 
               case PARAM_CLASS_META: {
-                Reify_Eval_Out_Meta(OUT);
-                Copy_Cell(ARG, OUT);
+                if (Is_Void(OUT))
+                    Init_Meta_Of_Void(ARG);
+                else
+                    Meta_Quotify(Copy_Cell(ARG, OUT));
                 if (Get_Cell_Flag(OUT, UNEVALUATED))
                     Set_Cell_Flag(ARG, UNEVALUATED);
                 break; }
