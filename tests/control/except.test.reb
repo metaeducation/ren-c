@@ -21,3 +21,6 @@
     ]
     e.message = "foo"
 )
+(
+    void? (void except e -> [<unused>])
+)
