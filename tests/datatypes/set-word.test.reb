@@ -51,6 +51,4 @@
         2 = (x: comment "Hi" 2)
         unset? 'x
     ]
-)(
-    bad-word? ^ x: lib.print "Hi"  ; generally you shouldn't use PRINT
 )]

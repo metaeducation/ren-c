@@ -217,7 +217,7 @@
     FLAG_LEFT_BIT(26)
 
 
-//=//// CELL_FLAG_UNEVALUATED /////////////////////////////////////////////=//
+//=//// CELL_FLAG_UNEVALUATED, CELL_FLAG_SCANT_EVALUATED_ISOTOPE //////////=//
 //
 // Some functions wish to be sensitive to whether or not their argument came
 // as a literal in source or as a product of an evaluation.  While all values
@@ -235,8 +235,11 @@
 // while still tolerating `item: [a b c] | if item [print "it's an item"]`.
 // That has a lot of impact for the new user experience.
 //
-#define CELL_FLAG_UNEVALUATED \
+#define CELL_FLAG_27 \
     FLAG_LEFT_BIT(27)
+
+#define CELL_FLAG_UNEVALUATED CELL_FLAG_27
+#define CELL_FLAG_SCANT_EVALUATED_ISOTOPE CELL_FLAG_27
 
 
 //=//// CELL_FLAG_NOTE ////////////////////////////////////////////////////=//

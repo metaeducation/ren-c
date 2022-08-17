@@ -77,7 +77,7 @@
     (void? eval [comment "HI"])
 
     (
-        x: (1 + 2 y: eval [comment "HI"])
+        set/any 'x (1 + 2 y: eval [comment "HI"])
         did all [
             unset? 'x
             unset? 'y

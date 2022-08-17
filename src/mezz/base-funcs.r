@@ -460,7 +460,7 @@ redescribe [
 unset: redescribe [
     {Clear the value of a word to an unset isotope (in its current context)}
 ](
-    specialize :set [value: ~]  ; tricky case, but supported!
+    specialize :set [value: ~, any: #]  ; tricky case, but supported!
 )
 
 unset?: func [

@@ -526,10 +526,15 @@ Bounce Evaluator_Executor(Frame(*) f)
       // ~null~, ~false~, ~blank~, and ~blackhole~ isotopes.  But all of
       // them can exist transiently in evaluation.
       //
+      // 1. You can never have a truly "unevaluated" isotope cell.  So the flag
+      //    would never be set on isotopes naturally.  This uses it to tell
+      //    the SET-WORD! in the evaluator that things like (x: ~) should
+      //    be allowed, when indirect products like (x: print "hi") are not.
 
     case QUASI_1:
       Derelativize(OUT, f_current, f_specifier);
       Isotopify(OUT);
+      Set_Cell_Flag(OUT, SCANT_EVALUATED_ISOTOPE);  // see [1]
       break;
 
     default:  // quote byte > 1, e.g. QUOTED!
@@ -742,6 +747,14 @@ Bounce Evaluator_Executor(Frame(*) f)
             Init_None(OUT);
         }
         else {
+            if (
+                Is_Isotope(OUT)
+                and Not_Cell_Flag(OUT, SCANT_EVALUATED_ISOTOPE)  // from QUASI!
+                and Pointer_To_Decayed(OUT) == OUT  // don't corrupt OUT
+            ){
+                fail (Error_Bad_Isotope(OUT));
+            }
+
             if (REB_ACTION == VAL_TYPE_UNCHECKED(OUT))  // isotopes ok
                 INIT_VAL_ACTION_LABEL(OUT, VAL_WORD_SYMBOL(f_current));
 
@@ -1105,6 +1118,14 @@ Bounce Evaluator_Executor(Frame(*) f)
             if (IS_ACTION(OUT))
                 INIT_VAL_ACTION_LABEL(OUT, VAL_WORD_SYMBOL(v));
             */
+
+            if (
+                Is_Isotope(OUT)
+                and Not_Cell_Flag(OUT, UNEVALUATED)  // see QUASI! handling
+                and Pointer_To_Decayed(OUT) == OUT  // don't corrupt out
+            ){
+                fail (Error_Bad_Isotope(OUT));
+            }
 
             if (Set_Var_Core_Throws(
                 SPARE,

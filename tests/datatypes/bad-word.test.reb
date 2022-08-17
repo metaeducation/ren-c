@@ -34,8 +34,8 @@
         bad: load-value str
         assert [bad-word? bad]
         assert [word = label of bad]
-        isotope: do str
-        assert [bad = ^isotope]
+        isotope: ^ do str
+        assert [bad = isotope]
     ]
     true
 )

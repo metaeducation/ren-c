@@ -971,7 +971,7 @@ bool Get_Path_Push_Refinements_Throws(
 //
 //      source "Word or path to get, or block of PICK steps"
 //          [<try> any-word! any-sequence! any-group! the-block!]
-//      /any "Do not error on BAD-WORD! isotopes"
+//      /any "Do not error on isotopes"
 //  ]
 //
 DECLARE_NATIVE(get)
@@ -1337,6 +1337,7 @@ void Set_Var_May_Fail(
 //      target "Word or path (# means ignore assignment, just return value)"
 //          [blackhole! any-word! any-sequence! any-group! any-block!]
 //      ^value [<opt> <void> any-value!]
+//      /any "Do not error on isotopes"
 //  ]
 //
 DECLARE_NATIVE(set)
@@ -1376,6 +1377,9 @@ DECLARE_NATIVE(set)
         Init_None(v);  // can't store the void--no reified form, see [2]
     else
         Meta_Unquotify(v);
+
+    if (not REF(any) and Is_Isotope(v) and Pointer_To_Decayed(v) == v)
+        fail ("Use SET/ANY to set variables to an isotope");
 
     if (Set_Var_Core_Throws(OUT, steps, target, SPECIFIED, v)) {
         assert(steps or Is_Meta_Of_Failure(VAL_THROWN_LABEL(frame_)));  // see [3]

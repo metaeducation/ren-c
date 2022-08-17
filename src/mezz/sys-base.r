@@ -169,13 +169,13 @@ module: func [
         ;
         assert [block? body]
 
-        product: do body
+        set/any 'product do body
         quitting: false
     ]
     then ^arg-to-quit -> [
         if wanted? 'quitting [
             quitting: true
-            product: unmeta arg-to-quit
+            set/any 'product unmeta arg-to-quit
         ] else [
             product: ~quit~  ; don't give distinction in result
         ]
