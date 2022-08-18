@@ -865,10 +865,10 @@ Bounce Evaluator_Executor(Frame(*) f)
 
       } group_result_in_spare: {  ////////////////////////////////////////////
 
-        if (not Is_Void(SPARE))
-            Move_Cell(OUT, SPARE);
+        if (Is_Void(SPARE))
+            Mark_Eval_Out_Voided(OUT);  // asserts it's stale
         else
-            assert(Is_Stale(OUT));
+            Move_Cell(OUT, SPARE);
 
         STATE = ST_EVALUATOR_INITIAL_ENTRY;
         break; }

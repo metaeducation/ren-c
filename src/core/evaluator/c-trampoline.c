@@ -370,8 +370,10 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
             and VAL_ACTION(label) == VAL_ACTION(Lib(UNWIND))
             and TG_Unwind_Frame == FRAME  // may be inaccessible, see [2]
         ){
-            if (Is_Void(&TG_Thrown_Arg))
+            if (Is_Void(&TG_Thrown_Arg)) {
                 CATCH_THROWN(SPARE, FRAME);  // act invisibily
+                Mark_Eval_Out_Voided(OUT);
+            }
             else
                 CATCH_THROWN(OUT, FRAME);  // overwrite output
 
