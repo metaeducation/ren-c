@@ -193,7 +193,7 @@ file-type?: function [
 ][
     return all [
         pos: try find system.options.file-types suffix-of file
-        try first find pos word!
+        try first find pos matches word!
     ]
 ]
 

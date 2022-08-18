@@ -84,7 +84,7 @@ func: func* [
     ;
     all [
         not gather
-        not find spec tag!
+        not find spec matches tag!
         return func* spec body
     ]
 

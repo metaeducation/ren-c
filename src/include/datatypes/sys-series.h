@@ -1392,7 +1392,6 @@ enum act_modify_mask {
 };
 
 enum act_find_mask {
-    AM_FIND_ONLY = 1 << 0,
     AM_FIND_CASE = 1 << 1,
     AM_FIND_MATCH = 1 << 2
 };

@@ -373,23 +373,20 @@ Bounce TO_Array(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg) {
 // !!! Comment said "Final Parameters: tail - tail position, match - sequence,
 // SELECT - (value that follows)".  It's not clear what this meant.
 //
+// 1. The choice is made that looking for an empty block should match any
+//    position (e.g. "there are infinitely many empty blocks spliced in at
+//    any block location").  This choice gives an "always matches" option for
+//    the pattern to complement the "never matches" option of NULL.
+//
 REBINT Find_In_Array(
+    Length* len,
     Array(const*) array,
     REBLEN index_unsigned, // index to start search
     REBLEN end_unsigned, // ending position
     Cell(const*) target,
-    REBLEN len, // length of target
     Flags flags, // see AM_FIND_XXX
     REBINT skip // skip factor
 ){
-    // If not in an "/ONLY" mode, then looking for an empty block should match
-    // any position (there are infinitely many empty blocks spliced in at
-    // any block location).
-    //
-    if (not (flags & AM_FIND_ONLY) and (len == 0)) {
-        return index_unsigned;
-    }
-
     REBINT index = index_unsigned;  // skip can be negative, tested >= 0
     REBINT end = end_unsigned;
 
@@ -401,35 +398,13 @@ REBINT Find_In_Array(
     else
         start = index;
 
-    // Optimized find word in block
-    //
-    if (ANY_WORD(target)) {
-        for (; index >= start and index < end; index += skip) {
-            Cell(const*) item = ARR_AT(array, index);
-            Symbol(const*) target_symbol = VAL_WORD_SYMBOL(target);
-            if (ANY_WORD(item)) {
-                if (flags & AM_FIND_CASE) { // Must be same type and spelling
-                    if (
-                        VAL_WORD_SYMBOL(item) == target_symbol
-                        and VAL_TYPE(item) == VAL_TYPE(target)
-                    ){
-                        return index;
-                    }
-                }
-                else { // Can be different type or differently cased spelling
-                    if (Are_Synonyms(VAL_WORD_SYMBOL(item), target_symbol))
-                        return index;
-                }
-            }
-            if (flags & AM_FIND_MATCH)
-                break;
-        }
-        return NOT_FOUND;
-    }
+    // match a block against a block
 
-    // Match a block against a block
-    //
-    if (ANY_ARRAY(target) and not (flags & AM_FIND_ONLY)) {
+    if (Is_Splice(target)) {
+        *len = VAL_LEN_AT(target);
+        if (*len == 0)  // empty block matches any position, see [1]
+            return index_unsigned;
+
         for (; index >= start and index < end; index += skip) {
             Cell(const*) item_tail = ARR_TAIL(array);
             Cell(const*) item = ARR_AT(array, index);
@@ -448,7 +423,7 @@ REBINT Find_In_Array(
                 ){
                     break;
                 }
-                if (++count >= len)
+                if (++count >= *len)
                     return index;
             }
             if (flags & AM_FIND_MATCH)
@@ -457,33 +432,58 @@ REBINT Find_In_Array(
         return NOT_FOUND;
     }
 
-    // Find a datatype in block
-    //
-    if (IS_DATATYPE(target) or IS_TYPESET(target)) {
+    // Find instances of datatype(s) in block
+
+    if (Is_Matcher(target)) {
+        *len = 1;
+
         for (; index >= start and index < end; index += skip) {
             Cell(const*) item = ARR_AT(array, index);
 
-            if (IS_DATATYPE(target)) {
-                if (VAL_TYPE(item) == VAL_TYPE_KIND(target))
-                    return index;
-                if (
-                    IS_DATATYPE(item)
-                    and VAL_TYPE_KIND(item) == VAL_TYPE_KIND(target)
-                ){
-                    return index;
+            if (Matcher_Matches(target, item))
+                return index;
+
+            if (flags & AM_FIND_MATCH)
+                break;
+        }
+        return NOT_FOUND;
+    }
+
+    if (Is_Isotope(target))
+        fail ("Only Isotopes Supported by FIND are MATCHES and SPREAD");
+
+    if (IS_DATATYPE(target) or IS_TYPESET(target))
+        fail (
+            "FIND temporarily not taking DATATYPE! / TYPESET!, use MATCHES"
+            " see https://forum.rebol.info/t/1881"
+        );
+
+    if (Is_Nulled(target)) {  // never match, see [1]
+        *len = 0;
+        return NOT_FOUND;
+    }
+
+    *len = 1;
+
+    // Optimized find word in block
+
+    if (ANY_WORD(target)) {
+        for (; index >= start and index < end; index += skip) {
+            Cell(const*) item = ARR_AT(array, index);
+            Symbol(const*) target_symbol = VAL_WORD_SYMBOL(target);
+            if (ANY_WORD(item)) {
+                if (flags & AM_FIND_CASE) { // Must be same type and spelling
+                    if (
+                        VAL_WORD_SYMBOL(item) == target_symbol
+                        and VAL_TYPE(item) == VAL_TYPE(target)
+                    ){
+                        return index;
+                    }
                 }
-            }
-            else if (IS_TYPESET(target)) {
-                if (TYPE_CHECK(target, VAL_TYPE(item)))
-                    return index;
-                if (
-                    IS_DATATYPE(item)
-                    and TYPE_CHECK(target, VAL_TYPE_KIND(item))
-                ){
-                    return index;
+                else { // Can be different type or differently cased spelling
+                    if (Are_Synonyms(VAL_WORD_SYMBOL(item), target_symbol))
+                        return index;
                 }
-                if (IS_TYPESET(item) and EQUAL_TYPESET(item, target))
-                    return index;
             }
             if (flags & AM_FIND_MATCH)
                 break;
@@ -926,18 +926,7 @@ REBTYPE(Array)
             | (REF(case) ? AM_FIND_CASE : 0)
         );
 
-        REBLEN len;
-        if (IS_QUOTED(pattern)) {
-            Unquotify(pattern, 1);
-            flags |= AM_FIND_ONLY;
-            len = 1;
-        }
-        else if (Is_Meta_Of_Splice(pattern)) {
-            Unquasify(pattern);
-            VAL_ARRAY_LEN_AT(&len, pattern);
-        }
-        else
-            fail ("Only Isotope supported by FIND/SELECT is SPLICE");
+        Meta_Unquotify(pattern);
 
         REBLEN limit = Part_Tail_May_Modify_Index(array, ARG(part));
 
@@ -953,8 +942,9 @@ REBTYPE(Array)
         else
             skip = 1;
 
+        Length len;
         REBINT find = Find_In_Array(
-            arr, index, limit, pattern, len, flags, skip
+            &len, arr, index, limit, pattern, flags, skip
         );
 
         if (find == NOT_FOUND)

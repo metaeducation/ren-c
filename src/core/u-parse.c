@@ -183,7 +183,7 @@ enum parse_flags {
     //
     // They are unified in Ren-C, with the overlap asserted.
     //
-    PF_FIND_ONLY = 1 << 0,
+    PF_0 = 1 << 0,
     PF_FIND_CASE = 1 << 1,
     PF_FIND_MATCH = 1 << 2,
 
@@ -210,12 +210,11 @@ enum parse_flags {
 STATIC_ASSERT(PF_MAX <= INT32_MAX);  // needs to fit in VAL_INTEGER()
 
 // Note: clang complains if `cast(int, ...)` used here, though gcc doesn't
-STATIC_ASSERT((int)AM_FIND_ONLY == (int)PF_FIND_ONLY);
 STATIC_ASSERT((int)AM_FIND_CASE == (int)PF_FIND_CASE);
 STATIC_ASSERT((int)AM_FIND_MATCH == (int)PF_FIND_MATCH);
 
 #define PF_FIND_MASK \
-    (PF_FIND_ONLY | PF_FIND_CASE | PF_FIND_MATCH)
+    (PF_FIND_CASE | PF_FIND_MATCH)
 
 #define PF_STATE_MASK (~PF_FIND_MASK & ~PF_ONE_RULE & ~PF_REDBOL)
 
@@ -1051,30 +1050,36 @@ static REBIXO To_Thru_Non_Block_Rule(
         if (IS_QUOTED(rule)) {  // make `'[foo bar]` match `[foo bar]`
             Derelativize(temp, rule, P_RULE_SPECIFIER);
             rule = Unquotify(temp, 1);
-            find_flags |= AM_FIND_ONLY;  // !!! Is this implied?
         }
         else if (IS_THE_WORD(rule)) {
             bool any = false;
             Get_Var_May_Fail(temp, rule, P_RULE_SPECIFIER, any);
             rule = temp;
-            find_flags |= AM_FIND_ONLY;  // !!! Is this implied?
+        }
+        else if (IS_DATATYPE(rule) or IS_TYPESET(rule)) {
+            Derelativize(temp, rule, P_RULE_SPECIFIER);
+            Quasify(temp);
+            Meta_Unquotify(temp);
+            rule = temp;
         }
 
+        Length len;
         REBINT i = Find_In_Array(
+            &len,
             ARR(P_INPUT),
             P_POS,
             ARR_LEN(ARR(P_INPUT)),
             rule,
-            1,
             find_flags,
             1
         );
+        assert(len == 1);
 
         if (i == NOT_FOUND)
             return END_FLAG;
 
         if (is_thru)
-            return cast(REBLEN, i) + 1;
+            return cast(REBLEN, i) + len;
 
         return cast(REBLEN, i);
     }

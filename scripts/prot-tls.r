@@ -1881,13 +1881,14 @@ sys.util.make-scheme [
 
                 suite: _
 
-                cipher-suite: does [first find suite word!]
+                cipher-suite: does [first find suite matches word!]
 
-                key-method: does [first find suite tag!]
+                key-method: does [first find suite matches tag!]
 
-                hash-method: does [to word! first find suite issue!]
+                hashspec: does [find suite matches issue!]
+                hash-method: does [to word! first hashspec]
                 hash-size: does [
-                    select (ensure block! second find suite issue!) 'size
+                    select (ensure block! second hashspec) 'size
                 ]
 
                 ; TLS 1.2 includes the pseudorandom function as part of its
@@ -1911,17 +1912,16 @@ sys.util.make-scheme [
                     either hash-method = 'sha384 ['sha384] ['sha256]
                 ]
 
-                crypt-method: does [first find suite the-word!]
+                cryptspec: does [find suite matches the-word!]
+                crypt-method: does [first cryptspec]
                 crypt-size: does [
-                    select (ensure block! second find suite the-word!) 'size
+                    select (ensure block! second cryptspec) 'size
                 ]
                 block-size: does [
-                    try select (
-                        ensure block! second find suite the-word!
-                    ) 'block
+                    try select (ensure block! second cryptspec) 'block
                 ]
                 iv-size: does [
-                    try select (ensure block! second find suite the-word!) 'iv
+                    try select (ensure block! second cryptspec) 'iv
                 ]
 
                 client-crypt-key: _

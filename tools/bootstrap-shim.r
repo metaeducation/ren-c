@@ -279,6 +279,10 @@ spread: lib/func [x [<opt> block!]] [
     if :x [reduce [#splice! x]]
 ]
 
+matches: lib/func [x [<opt> datatype! typeset! block!]] [
+    if :x [if block? x [make typeset! x] else [x]]
+]
+
 append: lib/func [series value [<opt> any-value!] /line <local> only] [
     any [
         object? series

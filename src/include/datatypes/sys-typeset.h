@@ -178,6 +178,28 @@ inline static void CLEAR_ALL_TYPESET_BITS(Cell(*) v) {
     VAL_TYPESET_LOW_BITS(v) = 0;
 }
 
+// isotopic type matcher (e.g. used by FIND, SWITCH)
+
+inline static bool Is_Matcher(Cell(const*) v) {
+    if (QUOTE_BYTE(v) != ISOTOPE_255)
+        return false;
+    return HEART_BYTE(v) == REB_DATATYPE or HEART_BYTE(v) == REB_TYPESET;
+}
+
+inline static bool Matcher_Matches(Cell(const*) matcher, Cell(const*) v) {
+    assert(Is_Matcher(matcher));
+    if (HEART_BYTE(matcher) == REB_DATATYPE) {
+        if (VAL_TYPE(v) == VAL_TYPE_KIND(matcher))
+            return true;
+    }
+    else {
+        assert(HEART_BYTE(matcher) == REB_TYPESET);
+        if (TYPE_CHECK(matcher, VAL_TYPE(v)))
+            return true;
+    }
+    return false;
+}
+
 
 //=//// PARAMETER TYPESET PROPERTIES ///////////////////////////////////////=//
 

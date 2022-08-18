@@ -79,6 +79,8 @@ inline static bool Is_Meta_Of_Splice(Cell(const*) v)
   { return HEART_BYTE_UNCHECKED(v) == REB_BLOCK
     and QUOTE_BYTE_UNCHECKED(v) == QUASI_1; }
 
+
+
 inline static REBVAL *Unquasify(REBVAL *v) {
     assert(QUOTE_BYTE(v) == QUASI_1);
     mutable_QUOTE_BYTE(v) = UNQUOTED_0;

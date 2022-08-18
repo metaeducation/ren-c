@@ -1158,9 +1158,19 @@ DECLARE_NATIVE(switch)
         goto reached_end;  // nothing left, so drop frame and return
 
     if (Is_Nulled(predicate)) {
-        const bool strict = false;
-        if (0 != Compare_Modify_Values(left, SPARE, strict))  // modify, see [2]
-            goto next_switch_step;
+        Decay_If_Isotope(SPARE);
+        if (Is_Matcher(SPARE)) {
+            if (not Matcher_Matches(SPARE, left))
+                goto next_switch_step;
+        }
+        else if (Is_Isotope(SPARE)) {
+            fail (Error_Bad_Isotope(SPARE));
+        }
+        else {
+            const bool strict = false;  // v-- modify, see [2]
+            if (0 != Compare_Modify_Values(left, SPARE, strict))
+                goto next_switch_step;
+        }
     }
     else {
         // `switch x .greater? [10 [...]]` acts like `case [x > 10 [...]]

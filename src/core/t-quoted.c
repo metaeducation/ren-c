@@ -500,7 +500,7 @@ DECLARE_NATIVE(spread)
 {
     INCLUDE_PARAMS_OF_SPREAD;
 
-    REBVAL *v = ARG(array);
+    Value(*) v = ARG(array);
 
     if (Is_Nulled(v))
         return nullptr;  // Put TRY on the APPEND or whatever, not SPREAD
@@ -508,7 +508,39 @@ DECLARE_NATIVE(spread)
     if (IS_QUOTED(v))
         return Unquotify(Copy_Cell(OUT, v), 1);
 
-    return Splicify(Copy_Cell(OUT, v));
+    assert(IS_BLOCK(v));
+    return UNMETA(Quasify(v));
+}
+
+
+//
+//  matches: native [
+//
+//  {Create isotopic pattern to signal a desire to test types non-literally}
+//
+//      return: "Isotope of DATATYPE! or TYPESET!"
+//          [<opt> any-value!]
+//      types [<opt> datatype! typeset! block!]
+//  ]
+//
+DECLARE_NATIVE(matches)
+{
+    INCLUDE_PARAMS_OF_MATCHES;
+
+    Value(*) v = ARG(types);
+
+    if (Is_Nulled(v))
+        return nullptr;  // Put TRY on the FIND or whatever, not MATCHES
+
+    if (IS_DATATYPE(v) or IS_TYPESET(v))
+        return UNMETA(Quasify(v));
+
+    assert(IS_BLOCK(v));
+    if (rebRunThrows(OUT, Canon(MAKE), Canon(TYPESET_X), v))
+        return THROWN;
+
+    assert(IS_TYPESET(OUT));
+    return Meta_Unquotify(Quasify(OUT));
 }
 
 
