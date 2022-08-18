@@ -284,15 +284,14 @@ inline static bool Is_Meta_Of_Null_Isotope(Cell(const*) v)
   { return Is_Quasi_Word(v) and VAL_WORD_SYMBOL(v) == Canon(NULL); }
 
 
-//=//// END OF INPUT META STATE (@END THE-WORD!) //////////////////////////=//
-//
-// Reaching an end of input is something some functions want to be able to
-// handle.  The @end meta state is reserved for this purpose.
+//=//// END OF INPUT ISOTOPE //////////////////////////////////////////////=//
 //
 // The ~end~ isotope is used in function frames as a signal that the frame
-// slot has hit an end.  But this creates a situation where ~end~ isotopes
-// are reified and thus exist...which means their ^META state has to take
-// the ~end~ BAD-WORD!.
+// slot has hit an end.  It is converted during function calling to a void.
+//
+// If a slot takes both a <void> and <end>, there's not currently a way to
+// tell the difference.  At one point there was an "endish" property whereby
+// they could be distinguished via the unevaluated bit.
 
 #define Init_End_Isotope(out)              Init_Word_Isotope((out), Canon(END))
 #define Is_End_Isotope(v)                  Is_Isotope_With_Id(v, SYM_END)
@@ -300,13 +299,6 @@ inline static bool Is_Meta_Of_Null_Isotope(Cell(const*) v)
 
 inline static bool Is_Meta_Of_End_Isotope(Cell(const*) v)
   { return Is_Quasi_Word(v) and VAL_WORD_SYMBOL(v) == Canon(END); }
-
-
-#define Init_Meta_Of_End(out) \
-    Init_Any_Word_Untracked(TRACK(out), REB_THE_WORD, Canon(END), CELL_MASK_NONE)
-
-inline static bool Is_Meta_Of_End(Cell(const*) v)
-  { return IS_THE_WORD(v) and VAL_WORD_SYMBOL(v) == Canon(END); }
 
 
 //=//// ISOTOPIC DECAY /////////////////////////////////////////////////////=//

@@ -379,11 +379,11 @@ inline static bool Typecheck_Including_Constraints(
     enum Reb_Kind kind;
 
     if (VAL_PARAM_CLASS(param) == PARAM_CLASS_META) {
+        if (Is_Meta_Of_Void(v))  // e.g. NULL
+            return true;
+
         if (IS_QUASI(v))
             return true;  // currently no isotopic typecheck
-
-        if (Is_Meta_Of_Void(v) or Is_Meta_Of_End(v))
-            return true;  // temporary exceptions @end
 
         if (not IS_QUOTED(v))
             return false;

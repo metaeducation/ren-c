@@ -94,8 +94,8 @@ DECLARE_NATIVE(break)
 //  "Throws control back to top of loop for next iteration."
 //
 //      return: []  ; !!! notation for divergent function?
-//      ^value "If provided, act as if loop body finished with this value"
-//          [<end> <opt> any-value!]
+//      ^value "Act as if loop body finished with this value"
+//          [<end> <void> any-value!]
 //  ]
 //
 DECLARE_NATIVE(continue)
@@ -108,11 +108,8 @@ DECLARE_NATIVE(continue)
 
     Value(*) v = ARG(value);
 
-    if (Is_Meta_Of_Void(v) or Is_Meta_Of_End(v))
-        RESET(v);  // Treat CONTINUE same as CONTINUE VOID
-    else if (Is_Meta_Of_Null(v)) {
-        Init_Null_Isotope(v);  // Pure NULL is reserved for BREAK
-    }
+    if (Is_Meta_Of_Void(v))
+        RESET(v);  // CONTINUE and CONTINUE VOID act the same
     else
         Meta_Unquotify(v);
 
@@ -576,8 +573,8 @@ DECLARE_NATIVE(for_skip)
 //  {End the current iteration of CYCLE and return a value (nulls allowed)}
 //
 //      return: []  ; !!! Notation for divergent functions?s
-//      ^value "If no argument is provided, assume ~void~ isotope"
-//          [<opt> <end> any-value!]
+//      ^value "If no argument is provided, STOP acts like STOP VOID"
+//          [<opt> <void> <end> any-value!]
 //  ]
 //
 DECLARE_NATIVE(stop)
@@ -588,8 +585,8 @@ DECLARE_NATIVE(stop)
 
     Value(*) v = ARG(value);
 
-    if (Is_Meta_Of_Void(v) or Is_Meta_Of_End(v))
-        RESET(v);  // Treat STOP the same as STOP VOID
+    if (Is_Meta_Of_Void(v))
+        RESET(v);
     else
         Meta_Unquotify(v);
 
@@ -2056,12 +2053,11 @@ DECLARE_NATIVE(while)
 //
 // 4. If someone writes:
 //
-//        flag: true, while [flag] [flag: false, continue null]
+//        flag: true, while [flag] [flag: false, null]
 //
 //    We don't want that to evaluate to NULL--because NULL is reserved for
-//    signaling BREAK.  So the result of a body with a CONTINUE in it will be
-//    turned from null to a ~null~ isotope.  Similarly, void results are
-//    reserved for when the body never runs--so they're turned into none (~)
+//    signaling BREAK.  Similarly, void results are reserved for when the body
+//    never runs--so they're turned into none (~)
 {
     INCLUDE_PARAMS_OF_WHILE;
 

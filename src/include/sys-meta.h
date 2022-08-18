@@ -171,8 +171,6 @@ inline static Bounce Native_Unmeta_Result(Frame(*) frame_, const REBVAL *v) {
     assert(Is_Stale_Void(&TG_Thrown_Arg));
     if (Is_Meta_Of_Void(v))
         return BOUNCE_VOID;
-    if (Is_Meta_Of_End(v))
-        fail ("END not processed by UNMETA at this time");
     if (Is_Meta_Of_Failure(v))
         return Failurize(Unquasify(Copy_Cell(frame_->out, v)));
     return Meta_Unquotify(Copy_Cell(frame_->out, v));

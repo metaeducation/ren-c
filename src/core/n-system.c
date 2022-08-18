@@ -61,10 +61,8 @@ DECLARE_NATIVE(quit)
 
     REBVAL *v = ARG(value);
 
-    if (
-        Is_Meta_Of_Void(v)  // (quit if false [<unused>])
-        or Is_Meta_Of_End(v)  // (quit)
-    ){
+    if (Is_Meta_Of_Void(v)) {  // e.g. QUIT VOID or QUIT
+        //
         // This returns an isotope if there is no arg, and labels it ~quit~
         // It's a pretty good generic signal of what happened if there's not
         // some explicit handling.

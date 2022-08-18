@@ -920,7 +920,7 @@ Bounce Action_Executor(Frame(*) f)
                     fail (Error_No_Arg(f->label, KEY_SYMBOL(KEY)));
 
                 if (VAL_PARAM_CLASS(PARAM) == PARAM_CLASS_META)
-                    Init_Meta_Of_End(ARG);  // signal "true end"
+                    Init_Meta_Of_Void(ARG);  // signal "true end"
                 else
                     Init_Nulled(ARG);  // we must conflate (or raise error?)
                 continue; }

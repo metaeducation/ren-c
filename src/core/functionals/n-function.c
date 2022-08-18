@@ -522,7 +522,7 @@ DECLARE_NATIVE(unwind)
     REBVAL *level = ARG(level);
     REBVAL *v = ARG(result);
 
-    if (Is_Meta_Of_Void(v) or Is_Meta_Of_End(v))
+    if (Is_Meta_Of_Void(v))
         RESET(v);
     else
         Meta_Unquotify(v);
@@ -595,10 +595,7 @@ DECLARE_NATIVE(definitional_return)
     const REBPAR *param = ACT_PARAMS_HEAD(target_fun);
     assert(KEY_SYM(ACT_KEYS_HEAD(target_fun)) == SYM_RETURN);
 
-    if (
-        Is_Meta_Of_Void(v)  // `return comment "hi"`, `return void`
-        or Is_Meta_Of_End(v)  // plain `return` with no arguments--act as void
-    ){
+    if (Is_Meta_Of_Void(v)) {  // RETURN VOID or just RETURN
         if (NOT_PARAM_FLAG(param, VANISHABLE))
             fail (Error_Bad_Invisible(f));
 
