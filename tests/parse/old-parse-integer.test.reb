@@ -16,8 +16,8 @@
     (
         x: ~
         did all [
-            @void = parse "a" ["a" x: ^[0 "b"]]
-            @void = x
+            void' = parse "a" ["a" x: ^[0 "b"]]
+            void' = x
         ]
     )
 

@@ -725,13 +725,13 @@ attempt: func [
     code [block!]
     <local> last'
 ][
-    last': the ~
+    last': none'
     reduce-each ^result' code [
-        if (quasi? result') and (error? unquasi result') [return null]
-        if @void = result' [continue]
+        if failure? unget result' [return null]
+        if void? unget result' [continue]
         last': result'
     ]
-    return unmeta last'
+    return unget last'
 ]
 
 entrap: func [

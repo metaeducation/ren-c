@@ -399,7 +399,7 @@ default-combinators: make map! reduce [
     ][
         append state.loops binding of 'return
 
-        last-result': @void
+        last-result': void'
 
         cycle [
             [# pos]: condition-parser input except [
@@ -414,7 +414,7 @@ default-combinators: make map! reduce [
             ; we do want to update the position and last result on success.
             ;
             [^result' pos]: body-parser input except [
-                last-result': '~
+                last-result': none'
                 continue
             ]
             input: pos
@@ -432,11 +432,11 @@ default-combinators: make map! reduce [
     ][
         append state.loops binding of 'return
 
-        last-result': @void
+        last-result': void'
 
         cycle [
             [^result' pos]: parser input except [
-                last-result': '~
+                last-result': none'
                 continue
             ]
             input: pos
@@ -488,7 +488,7 @@ default-combinators: make map! reduce [
         parser [<end> action!]
         <local> f result'
     ][
-        result': '~  ; default `[stop]` return value as none isotope
+        result': none'  ; default `[stop]` returns none
         if :parser [  ; parser argument is optional
             [^result' input]: parser input except e -> [
                 return fail e
@@ -1363,7 +1363,7 @@ default-combinators: make map! reduce [
             fail "GET-GROUP! evaluated to NULL"  ; no NULL rules, mistake?
         ]
 
-        if r = @void [  ; like [:(if false [...])] or [:(comment "hi")]
+        if void? unget r [  ; like [:(if false [...])] or [:(comment "hi")]
             pending: null
             remainder: input
             return void
@@ -1607,7 +1607,7 @@ default-combinators: make map! reduce [
                 return void  ; `[repeat (_) rule]` is a no-op
             ]
             issue! [
-                if times' <> the '# [
+                if times' <> meta # [
                     fail ["REPEAT takes ISSUE! of # to act like MAYBE SOME"]
                 ]
                 min: 0, max: #
@@ -1636,7 +1636,7 @@ default-combinators: make map! reduce [
 
         append state.loops binding of 'return
 
-        result': @void  ; `repeat (0) <any>` => void intent
+        result': void'  ; `repeat (0) <any>` => void intent
 
         count-up i max [  ; will count infinitely if max is #
             ;
@@ -2250,7 +2250,7 @@ default-combinators: make map! reduce [
 
         totalpending: null  ; can become GLOM'd into a BLOCK!
 
-        result': @void  ; default result is void
+        result': void'  ; default result is void
 
         while [not same? rules limit] [
             if state.verbose [
@@ -2348,7 +2348,7 @@ default-combinators: make map! reduce [
                 ]
                 totalpending: glom totalpending spread subpending
             ] else [
-                result': @void  ; reset, e.g. `[false |]`
+                result': void'  ; reset, e.g. `[false |]`
 
                 try free totalpending  ; proactively release memory
                 totalpending: null
@@ -2878,7 +2878,7 @@ parse*: func [
         return null  ; full parse was requested but tail was not reached
     ]
 
-    if synthesized' = @void [
+    if void? unget synthesized' [
         ;
         ; We can't return "invisible intent" and still convey that the parse
         ; succeeded.  So a UPARSE that succeeds is a bit like a branch that

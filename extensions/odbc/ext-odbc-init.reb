@@ -203,7 +203,7 @@ sqlform: func [
 
         meta-group! [
             let product': ^ eval as block! value
-            if @void = product' [
+            if void? unget product' [
                 {}
             ] else [
                 as text! unquote product'

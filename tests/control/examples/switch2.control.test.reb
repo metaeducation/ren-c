@@ -13,7 +13,7 @@ switch2: func [
     <local> more found result' condition branch
 ][
     found: false
-    result': @void
+    result': void'
     more: true
 
     return parse cases [cycle [

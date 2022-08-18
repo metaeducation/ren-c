@@ -4,12 +4,12 @@
 
 [
     (did all  [
-        @void = parse "" [synthesized: ^[]]
-        @void = synthesized
+        void' = parse "" [synthesized: ^[]]
+        void' = synthesized
     ])
     (did all  [
-        @void = parse "" [synthesized: ^[comment "hi"]]
-        @void = synthesized
+        void' = parse "" [synthesized: ^[comment "hi"]]
+        void' = synthesized
     ])
     (did all  [
         '~void~ == parse "" [synthesized: ^[(~void~)]]

@@ -10,10 +10,10 @@
 ; META the word propagates invisibility vs. give back '~void~ like ^ does
 ;
 (void? (meta comment "a"))
-((the '@void) = ^(^ comment "a"))
+((quote void') = ^(^ comment "a"))
 
 (void? meta eval [comment "a"])
-((the '@void) = ^(^ eval [comment "a"]))
+((quote void') = ^(^ eval [comment "a"]))
 
 ; !!! At one time, comment mechanics allowed comments to be enfix such that
 ; they ran as part of the previous evaluation.  This is no longer the case,
@@ -64,13 +64,13 @@
     1 = do [1 elide "a"]
 )
 (
-    @void = ^ do [elide "a"]
+    void' = ^ do [elide "a"]
 )
 (
-    @void = ^ eval [elide "a"]
+    void' = ^ eval [elide "a"]
 )
 (void? elide "a")
-(@void = ^ elide "a")
+(void' = ^ elide "a")
 
 
 (
@@ -471,7 +471,7 @@
     ; https://github.com/metaeducation/ren-c/issues/581#issuecomment-562875470
 ], true)
 
-(@void = ^ void)
+(void' = ^ void)
 
 (
     e: trap [1 + 2 (comment "stale") + 3]

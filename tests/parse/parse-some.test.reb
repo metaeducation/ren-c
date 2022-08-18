@@ -140,7 +140,7 @@
 [
     ('~null~ = ^ parse "a" ["a" opt some "b"])
     ('~null~ = ^ parse "a" ["a" [opt "b"]])
-    (@void = parse "a" ["a" ^[maybe some "b"]])
+    (void' = parse "a" ["a" ^[maybe some "b"]])
 ]
 
 ; This test works in Rebol2 even if it starts `i: 0`, presumably a bug.

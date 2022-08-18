@@ -21,7 +21,7 @@ destructure: func [
     /multi "Run multiple branches"
     <local> result' set-word rule pattern branch combinators
 ][
-    result': @void
+    result': void'
     combinators: copy default-combinators
     parse dialect [while [not <end>] [
         set-word: set-word!, rule: block! (
@@ -34,7 +34,7 @@ destructure: func [
                 branch
             ) also ^r' -> [
                 if not multi [
-                    return unmeta r'
+                    return unget r'
                 ]
                 result': r'
             ]

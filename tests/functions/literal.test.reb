@@ -10,7 +10,7 @@
     (null = detector null)
     ('~null~ = detector if true [null])
 
-    (@void = detector (comment "hi"))
+    (void' = detector (comment "hi"))
     (@end = detector)
 
     (did left-detector: enfixed :detector)

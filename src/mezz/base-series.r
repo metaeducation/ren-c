@@ -89,7 +89,7 @@ join: function [
     ]
     ^value [<void> any-value!]
 ][
-    if @void = value [
+    if void? unget value [
         return copy base
     ]
 

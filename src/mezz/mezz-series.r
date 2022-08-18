@@ -109,7 +109,7 @@ replace: function [
     /all "Replace all occurrences"
     /case "Case-sensitive replacement"
 ][
-    if @void = pattern' [return target]
+    if void? unget pattern' [return target]
 
     all_REPLACE: all
     all: :lib.all

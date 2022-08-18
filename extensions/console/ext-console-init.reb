@@ -150,15 +150,13 @@ export console!: make object! [
 
         === DISPLAY VOID AS IF IT WERE A COMMENT, ALSO ===
 
-        if v = @void [  ; true void's ^META state
+        if v = void' [  ; true void's ^META state
             ;
             ; There are isotope states of ~void~, but they are used as
             ; placeholders in frames that receive void parameters.  When a
             ; frame is executed, those isotopes are interpreted as true void
             ; states since as isotopes they cannot be actually used in frame
             ; slots.
-            ;
-            ; So the @void signal portrays the actual state of a void.
             ;
             print "; void (decays to none)"
             return none
@@ -755,7 +753,7 @@ ext-console-impl: func [
 
     === HANDLE RESULT FROM EXECUTION OF CODE ON USER'S BEHALF ===
 
-    if result = @void [
+    if result = void' [
         ;
         ; !!! You can get nothing from an empty string, and having that print
         ; out "; void" is somewhat pedantic if you're just hitting enter to
@@ -764,7 +762,7 @@ ext-console-impl: func [
         ;    >>
         ;    ; void
         ;
-        ; But we do want this:
+        ; But we do want this, for reasons explained in PRINT-RESULT:
         ;
         ;     >> comment "hi"
         ;     ; void
