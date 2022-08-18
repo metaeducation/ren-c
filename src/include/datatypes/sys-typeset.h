@@ -379,22 +379,21 @@ inline static bool Typecheck_Including_Constraints(
     enum Reb_Kind kind;
 
     if (VAL_PARAM_CLASS(param) == PARAM_CLASS_META) {
-        //
-        // !!! Most bets here are off now since meta can be any type
-        //
-        if (Is_Nulled(v)) {
-            kind = REB_NULL;  // meaningful to check <opt> for ^META
-        }
-        else if (IS_QUOTED(v)) {  // must be quoted otherwise
-            if (VAL_NUM_QUOTES(v) > 1)
-                kind = REB_QUOTED;
-            else if (QUOTE_BYTE(v) & QUASI_1)
-                kind = REB_QUASI;
-            else
-                kind = CELL_HEART(VAL_UNESCAPED(v));
-        }
+        if (IS_QUASI(v))
+            return true;  // currently no isotopic typecheck
+
+        if (Is_Meta_Of_Void(v) or Is_Meta_Of_End(v))
+            return true;  // temporary exceptions @end
+
+        if (not IS_QUOTED(v))
+            return false;
+
+        if (VAL_NUM_QUOTES(v) > 1)
+            kind = REB_QUOTED;
+        else if (QUOTE_BYTE(v) & QUASI_1)
+            kind = REB_QUASI;
         else
-            return true;  // let everything else pass
+            kind = CELL_HEART(VAL_UNESCAPED(v));
     }
     else {
         kind = Is_End(v) ? REB_0_END : VAL_TYPE(v);

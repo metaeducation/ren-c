@@ -235,11 +235,15 @@ inline static bool Is_Meta_Of_None(Cell(const*) v)
 inline static bool Is_Meta_Of_Void_Isotope(Cell(const*) v)
   { return Is_Quasi_Word(v) and VAL_WORD_SYMBOL(v) == Canon(VOID); }
 
-#define Init_Meta_Of_Void(out) \
-    Init_Any_Word_Untracked(TRACK(out), REB_THE_WORD, Canon(VOID), CELL_MASK_NONE)
+#define Init_Meta_Of_Void(out)       Init_Nulled(out)
+#define Is_Meta_Of_Void(v)           Is_Nulled(v)
 
-inline static bool Is_Meta_Of_Void(Cell(const*) v)
-  { return IS_THE_WORD(v) and VAL_WORD_SYMBOL(v) == Canon(VOID); }
+
+#define Init_Meta_Of_Null(out) \
+    Init_Nulled_Untracked(TRACK(out), FLAG_QUOTE_BYTE(ONEQUOTE_2))
+
+inline static bool Is_Meta_Of_Null(Cell(const*) v)
+  { return HEART_BYTE(v) == REB_NULL and QUOTE_BYTE(v) == ONEQUOTE_2; }
 
 
 //=//// NULL ISOTOPE (unfriendly ~null~) ///////////////////////////////////=//

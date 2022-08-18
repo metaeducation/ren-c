@@ -110,7 +110,7 @@ DECLARE_NATIVE(continue)
 
     if (Is_Meta_Of_Void(v) or Is_Meta_Of_End(v))
         RESET(v);  // Treat CONTINUE same as CONTINUE VOID
-    else if (Is_Nulled(v)) {
+    else if (Is_Meta_Of_Null(v)) {
         Init_Null_Isotope(v);  // Pure NULL is reserved for BREAK
     }
     else

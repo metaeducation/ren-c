@@ -143,14 +143,10 @@ inline static Cell(*) Isotopic_Unquote(Cell(*) v) {
 // BAD-WORD! of ~void~.  It is done by ^ and the the REB_META_XXX family.
 
 inline static Cell(*) Meta_Quotify(Cell(*) v) {
-    if (VAL_TYPE_UNCHECKED(v) == REB_NULL)
-        return v;  // as-is
     return Isotopic_Quote(v);
 }
 
 inline static Cell(*) Meta_Unquotify(Cell(*) v) {
-    if (Is_Nulled(v))
-        return v;  // do nothing
     if (Is_Meta_Of_Failure(v))
         fail (VAL_CONTEXT(v));  // too dangerous to create failure easily
     return Isotopic_Unquote(v);

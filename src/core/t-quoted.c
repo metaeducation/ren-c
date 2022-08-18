@@ -290,11 +290,10 @@ DECLARE_NATIVE(quote)
 //
 //  meta: native [
 //
-//  {Turns isotopes into QUASI! forms, passes through NULL, adds quote to rest}
+//  {VOID -> NULL, isotopes -> QUASI!, adds a quote to rest (behavior of ^^)}
 //
-//      return: "Will be invisible if input is purely invisible (see META*)"
-//          [<void> <opt> quoted! quasi! error! block! blank!]
-//      ^optional [<void> <opt> any-value!]
+//      return: [<opt> quoted! quasi!]
+//      ^optional [<void> <opt> <fail> any-value!]
 //  ]
 //
 DECLARE_NATIVE(meta)
@@ -303,9 +302,6 @@ DECLARE_NATIVE(meta)
 
     REBVAL *v = ARG(optional);
 
-    if (Is_Meta_Of_Void(v))
-        return VOID;  // see META* for non-passthru of ~void~ isotope
-
     return COPY(v);  // argument was already ^META, no need to Meta_Quotify()
 }
 
@@ -313,10 +309,10 @@ DECLARE_NATIVE(meta)
 //
 //  meta*: native [
 //
-//  {Behavior of ^^ symbol, gives ~void~ BAD-WORD! vs. passing through voids}
+//  {META variant that passes through VOID and NULL, and doesn't take failures}
 //
-//      return: [<opt> quoted! quasi! the-word! error! block! blank!]
-//      ^optional [<opt> <void> <fail> any-value!]
+//      return: [<opt> <void> quoted! quasi!]
+//      ^optional [<opt> <void> any-value!]
 //  ]
 //
 DECLARE_NATIVE(meta_p)
@@ -324,6 +320,12 @@ DECLARE_NATIVE(meta_p)
     INCLUDE_PARAMS_OF_META_P;
 
     REBVAL *v = ARG(optional);
+
+    if (Is_Meta_Of_Void(v))
+        return VOID;
+
+    if (Is_Meta_Of_Null(v))
+        return nullptr;
 
     return COPY(v);  // argument was ^META, so no need to Meta_Quotify()
 }
@@ -411,53 +413,43 @@ DECLARE_NATIVE(unquasi)
 //  {Variant of UNQUOTE that also accepts QUASI! to make isotopes}
 //
 //      return: [<opt> <void> any-value!]
-//      ^value "Taken as ^META for passthru tolerance of pure and isotope void"
-//          [<opt> <void> quoted! the-word! quasi! error! block! blank!]
+//      value [<opt> quoted! quasi!]
 //  ]
 //
 DECLARE_NATIVE(unmeta)
-//
-// Note: It is weird to accept isotopes as input to an UNMETA operation, as it
-// is not possible to produce them with a META operation.  But the asymmetric
-// choice to accept meta states representing ~void~ isotopes is pragmatic.
-// (This errors on other isotopes.)
-//
-// Consider what FOR-BOTH would need to do in order to please UNMETA here:
-//
-//      for-both: lambda ['var blk1 blk2 body] [
-//          unmeta all [
-//              '~void~  ; <-- this is the nuisance we want to avoid
-//              meta for-each (var) blk1 body
-//              meta for-each (var) blk2 body
-//          ]
-//      ]
-//
-// The loop has converted values into the ^META domain so that they can be used
-// with the ALL.  The components can opt out if neither loop runs a body,
-// which effectively would render it to act like `all []`.  In this case we
-// are seeking to generate a ~void~ isotope result...but the ALL will itself
-// yield a non-META ~void~ isotope in the all-opt-out scenario.  A "pure"
-// version of UNMETA would not take a ^META argument and error in this case.
-//
-// Having to work around it by slipping a quoted ~void~ BAD-WORD! into the mix
-// is busywork, when UNMETA can simply return the ~void~ isotope the empty ALL
-// gave it instead of erroring for the sake of "purity".  (There is a similar
-// compromise in META, which is what allows it to take the MAYBE result of pure
-// invisibility and pass it through vs. returning BLANK! like `^` does.)
 {
     INCLUDE_PARAMS_OF_UNMETA;
 
     REBVAL *v = ARG(value);
 
-    if (Is_Meta_Of_Void(v))
-        return VOID;  // ^-- see explanation
+    return UNMETA(v);
+}
 
-    if (Is_Nulled(v))
-        return nullptr;  // ^(null) => null, so the reverse must be true
+
+//
+//  unmeta*: native [
+//
+//  {Variant of UNMETA that passes thru VOID and NULL}
+//
+//      return: [<opt> <void> any-value!]
+//      ^value [<opt> <void> quoted! quasi!]
+//  ]
+//
+DECLARE_NATIVE(unmeta_p)
+{
+    INCLUDE_PARAMS_OF_UNMETA_P;
+
+    REBVAL *v = ARG(value);
+
+    if (Is_Meta_Of_Void(v))
+        return VOID;
+
+    if (Is_Meta_Of_Null(v))
+        return nullptr;
 
     if (IS_QUASI(v)) {
         Isotopify(v);
-        fail (Error_Bad_Isotope(v));  // no other isotopes valid for the trick
+        fail (Error_Bad_Isotope(v));  // isotopes not allowed as input
     }
 
     assert(IS_QUOTED(v));  // handling the invisibility detour is done now...
@@ -555,7 +547,7 @@ DECLARE_NATIVE(maybe)
 
     if (
         Is_Meta_Of_Void(v)
-        or Is_Nulled(v) or Is_Meta_Of_Null_Isotope(v)
+        or Is_Meta_Of_Null(v) or Is_Meta_Of_Null_Isotope(v)
         or Is_Meta_Of_None(v)
     ){
         return VOID;

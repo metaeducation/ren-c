@@ -39,8 +39,8 @@
 #define Is_Nulled(v) \
     (VAL_TYPE(v) == REB_NULL)
 
-inline static REBVAL *Init_Nulled_Untracked(Cell(*) out) {
-    Reset_Cell_Header_Untracked(out, REB_NULL, CELL_MASK_NONE);
+inline static REBVAL *Init_Nulled_Untracked(Cell(*) out, Flags flags) {
+    Reset_Cell_Header_Untracked(out, REB_NULL, flags);
 
   #ifdef ZERO_UNUSED_CELL_FIELDS
     EXTRA(Any, out).trash = ZEROTRASH;
@@ -52,7 +52,7 @@ inline static REBVAL *Init_Nulled_Untracked(Cell(*) out) {
 }
 
 #define Init_Nulled(out) \
-    Init_Nulled_Untracked(TRACK(out))
+    Init_Nulled_Untracked(TRACK(out), CELL_MASK_NONE)
 
 
 // To help ensure full nulled cells don't leak to the API, the variadic

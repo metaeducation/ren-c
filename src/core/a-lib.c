@@ -1136,7 +1136,7 @@ REBVAL *RL_rebEntrapInterruptible(
         return v;
     }
 
-    if (Init_Nulled(v)) {  // tolerate isotopes
+    if (Is_Nulled(v)) {  // tolerate isotopes
         rebRelease(v);
         return nullptr;  // No NULLED API cells, see notes on NULLIFY_NULLED()
     }

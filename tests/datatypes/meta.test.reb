@@ -1,13 +1,12 @@
 ; %meta.test.reb
 ;
-; Operator whose evaluator behavior is like QUOTE, but it distinguishes
-; the internal NULL isotope state from plain NULL (which quote does not)
+; Operator whose evaluator behavior is like QUOTE, but accepts isotopes/void
 
 ((the '3) = ^ 1 + 2)
 
 ('~null~ = ^ if true [null])
 
-(null = ^ null)
+(null' = ^ null)
 
 ; The comment "Hi" does not vanish and result in a meta of 3...only one step
 ; is taken in evaluating arguments to functions.  You must put invisibles in

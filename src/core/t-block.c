@@ -918,7 +918,7 @@ REBTYPE(Array)
 
         REBVAL *pattern = ARG(pattern);
 
-        if (Is_Nulled(pattern))
+        if (Is_Meta_Of_Null(pattern))
             return nullptr;  // BLANK! in, NULL out
 
         Flags flags = (
@@ -1486,7 +1486,7 @@ DECLARE_NATIVE(glom)
     //
     bool splice = false;
 
-    if (Is_Nulled(result))
+    if (Is_Meta_Of_Null(result))
         return COPY(accumulator);
 
     if (IS_QUASI(result)) {

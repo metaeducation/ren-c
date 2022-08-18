@@ -119,7 +119,7 @@ export console!: make object! [
     print-result: meth [
         return: <none>
         ^v "Value (done with meta parameter to discern isotope status)"
-            [<opt> any-value!]
+            [<opt> <void> any-value!]
     ][
         ; We use SET instead of a SET-WORD! here to avoid caching the action
         ; name as "last-result", so it should keep the name it had before.
@@ -129,7 +129,7 @@ export console!: make object! [
 
         === DISPLAY NULL AS IF IT WERE A COMMENT, AS IT HAS NO VALUE ===
 
-        if v = null [
+        if v = null' [
             ;
             ; Key to NULL's purpose is that it lacks any value representation,
             ; and only exists as an evaluation product you can store in a
@@ -150,7 +150,7 @@ export console!: make object! [
 
         === DISPLAY VOID AS IF IT WERE A COMMENT, ALSO ===
 
-        if v = void' [  ; true void's ^META state
+        if v = void' [
             ;
             ; There are isotope states of ~void~, but they are used as
             ; placeholders in frames that receive void parameters.  When a
@@ -164,7 +164,7 @@ export console!: make object! [
 
         === ISOTOPE BAD WORDS (^META v parameter means they look plain) ===
 
-        if v = '~ [  ; "none" isotope, don't show
+        if v = none' [  ; don't show "none" (e.g. BLANK! isotopes)
             ;
             ; The "none" state represents the contents of an unset variable.
             ; It is also used by commands like HELP that want to keep the focus
@@ -206,7 +206,7 @@ export console!: make object! [
             ~false~ "false"
             ~blank~ "blank"
             ~blackhole~ "#"
-        ] ^v [
+        ] v [
             ; An unstable isotope will decay to an ordinary value.  We make
             ; a note that they are unstable to help ground users when they see
             ; behaviors that might appear confusing:
@@ -223,7 +223,7 @@ export console!: make object! [
             return none
         ]
 
-        if bad-word? v [  ; all other isotopes
+        if quasi? v [  ; all other isotopes
             ;
             ; All other isotope bad words display with an "isotope" annotation.
             ;

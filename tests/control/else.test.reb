@@ -84,7 +84,7 @@
     (catch ['~null~ also ^x -> [throw (x = the '~null~)]])
 
     (~null~ *else x -> [null = x])
-    (null *else ^x -> [null = x])
+    (null *else ^x -> [null' = x])
     (~null~ *else ^x -> ['~null~ = x])
 ]
 

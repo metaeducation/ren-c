@@ -53,12 +53,12 @@
 ; isotopes out of NULL and passes everything else through.  But it's what it
 ; was called.
 [
-    (null = ^ null)
+    (null' = ^ null)
     ('~null~ = ^ heavy null)
 
     (x: heavy 10, 10 = x)
-    (x: heavy null, null = ^ x)
-    (x: heavy null, null = ^ :x)
+    (x: heavy null, null' = ^ x)
+    (x: heavy null, null' = ^ :x)
 
     (304 = (null then [1020] else [304]))
     (1020 = (heavy null then [1020] else [304]))

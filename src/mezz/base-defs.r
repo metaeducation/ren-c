@@ -27,15 +27,15 @@ REBOL [
 
 c-break-debug: :c-debug-break  ; easy to mix up
 
-|^|: :meta*
+|^|: :meta
 |@|: :the*
 
 ; These are faster than clear versions (e.g. `(meta void) = ^ expr`) and
 ; clearer than compressed forms (like '' for quote null)
 ;
-void': @void
+void': null
 null': the '
-none': '~
+none': the ~
 
 eval: :evaluate  ; shorthands should be synonyms, too confusing otherwise
 

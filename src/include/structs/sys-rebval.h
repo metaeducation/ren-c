@@ -163,6 +163,7 @@
 
 #define QUASI_1             1
 #define ISOTOPE_255         255  // Also QUASI (anything with QUASI_1 bit is)
+#define ONEQUOTE_2          2  // non-QUASI state of having one quote level
 
 #define MAX_QUOTE_DEPTH     126  // highest legal quoting level
 

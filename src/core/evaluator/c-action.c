@@ -969,10 +969,15 @@ Bounce Action_Executor(Frame(*) f)
 
         enum Reb_Kind kind = VAL_TYPE(ARG);
 
-        if (
+        if ((
             (kind == REB_NULL)
+            and VAL_PARAM_CLASS(PARAM) != PARAM_CLASS_META
             and GET_PARAM_FLAG(PARAM, NEED_TRY_IF_NULL)  // e.g. <try> param
-        ){
+        ) or (
+            Is_Meta_Of_Null(ARG)
+            and VAL_PARAM_CLASS(PARAM) == PARAM_CLASS_META
+            and GET_PARAM_FLAG(PARAM, NEED_TRY_IF_NULL)  // e.g. <try> param
+        )){
             Set_Executor_Flag(ACTION, f, TYPECHECK_ONLY);
             Init_Error(OUT, Error_Try_If_Null_Meant_Raw(Lib(NULL)));
             Failurize(OUT);

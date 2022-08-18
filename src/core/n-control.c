@@ -239,7 +239,7 @@ DECLARE_NATIVE(did_1)  // see TO-C-NAME
 
     Value(*) in = ARG(optional);
 
-    if (Is_Meta_Of_Void(in) or Is_Nulled(in))
+    if (Is_Meta_Of_Void(in) or Is_Meta_Of_Null(in))
         return Init_False(OUT);
 
     if (REF(decay) and Is_Meta_Of_Null_Isotope(in))
@@ -266,7 +266,7 @@ DECLARE_NATIVE(didnt)
 
     Value(*) in = ARG(optional);
 
-    if (Is_Meta_Of_Void(in) or Is_Nulled(in))
+    if (Is_Meta_Of_Void(in) or Is_Meta_Of_Null(in))
         return Init_True(OUT);
 
     if (REF(decay) and Is_Meta_Of_Null_Isotope(in))
@@ -302,7 +302,7 @@ DECLARE_NATIVE(then)  // see `tweak :then 'defer on` in %base-defs.r
 
     if (
         Is_Meta_Of_Void(in)  // meta parameter, e.g. input was true void
-        or Is_Nulled(in)  // soft failure signal
+        or Is_Meta_Of_Null(in)  // soft failure signal
         or (REF(decay) and Is_Meta_Of_Null_Isotope(in))  // null isotope
     ){
         return VOID;
@@ -354,7 +354,7 @@ DECLARE_NATIVE(also)  // see `tweak :also 'defer on` in %base-defs.r
     if (Is_Meta_Of_Void(in))
         return VOID;  // telegraph invisible intent
 
-    if (Is_Nulled(in))
+    if (Is_Meta_Of_Null(in))
         return nullptr;  // telegraph pure null
 
     if (Is_Meta_Of_Failure(in)) {  // definitional failure, skip
@@ -421,7 +421,7 @@ DECLARE_NATIVE(else)  // see `tweak :else 'defer on` in %base-defs.r
     if (Is_Meta_Of_Void(in)) {  // isotope, must be tested first
         assert(Is_Void(SPARE));  // branch argument is SPARE for void, see [2]
     }
-    else if (Is_Nulled(in)) {
+    else if (Is_Meta_Of_Null(in)) {
         Init_Nulled(SPARE);
     }
     else if (REF(decay) and Is_Meta_Of_Null_Isotope(in)) {

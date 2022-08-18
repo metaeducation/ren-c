@@ -7,7 +7,7 @@
     (did detector: lambda [^x [<opt> <end> <void> any-value!]] [x])
 
     ((the '10) = detector 10)
-    (null = detector null)
+    (null' = detector null)
     ('~null~ = detector if true [null])
 
     (void' = detector (comment "hi"))

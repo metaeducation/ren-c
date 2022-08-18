@@ -39,13 +39,13 @@
     (void' = (10 + 20 ^(eval [])))
     (void' = (10 + 20 ^(eval [comment "hi"])))
     (void' = (10 + 20 ^(eval make frame! :void)))
-    (didn't ^(eval [null]))
+    (null' = ^(eval [null]))
     ('~null~ = ^(eval [if true [null]]))
 
     (30 = (10 + 20 eval []))
     (30 = (10 + 20 eval [comment "hi"]))
     (30 = (10 + 20 eval make frame! :void))
-    (didn't ^(eval [null]))
+    (null' = ^(eval [null]))
     ('~null~ = ^ eval [heavy null])
     ('~null~ = ^ eval [if true [null]])
 
@@ -55,10 +55,10 @@
     (void' = ^ eval make frame! :void)
     (void' = ^ do :void)
 
-    (didn't ^ eval [null])
-    (didn't ^(eval [null]))
-    (didn't ^ (eval [null]))
-    (didn't meta eval [null])
+    (null' = ^ eval [null])
+    (null' = ^(eval [null]))
+    (null' = ^ (eval [null]))
+    (null' = meta eval [null])
 
     ('~null~ = ^ eval [heavy null])
     ('~null~ = ^(eval [heavy null]))

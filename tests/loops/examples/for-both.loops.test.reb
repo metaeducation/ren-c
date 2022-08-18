@@ -45,62 +45,24 @@
 [
     (
         for-both: func ['var blk1 blk2 body] [
-            return unmeta all [
-                meta for-each (var) blk1 body
-                meta for-each (var) blk2 body
+            return unmeta* all [
+                meta* for-each (var) blk1 body
+                meta* for-each (var) blk2 body
             ]
-        ]  ; Note: light-void isotopes do not decay by default, can be returned
+        ]
 
         true
     )
 
-    ; ^-- While the above leverages many clever design nuances, there are two
-    ; "tricks" which this example specifically inspired that it uses.
-    ;
-    ; <<< TRICK #1: META PASSES THROUGH VOIDS >>>
-    ;
-    ; Note that this uses META and not `^` (a.k.a. META*)  The reason is that
-    ; it wants to pass through voids:
-    ;
-    ;     >> 1 + 2 ^ comment "hi"
-    ;     == ~void~  ; <-- the true result, e.g. what the ^META arg would be
+    ; ^-- Note that this uses META* and not META (a.k.a. `^`)  The reason is
+    ; that it wants to leave voids and nulls as-is:
     ;
     ;     >> 1 + 2 meta comment "hi"
+    ;     ; null  <-- the true result, e.g. what the ^META arg would be
+    ;
+    ;     >> 1 + 2 meta* comment "hi"
     ;     == 3  ; <-- what we want in situations like this
     ;
-    ; It gives a better composability of parts, because otherwise there would
-    ; have to be a refinement to META called /MAYBE (or something of the sort)
-    ; in order to trigger that nuance.  Here it lets us erase the result for
-    ; loops that do not run, which is nice and elegant.
-    ;
-    ; <<< TRICK #2: META/UNMETA PASS THROUGH ~VOID~ ISOTOPES >>>
-    ;
-    ; We are pushing the values into the ^META domain so that things like false
-    ; and blank will have quotes on them, and thus be thruthy.  Hence they will
-    ; not short-circuit the ALL--only the NULL meta result will.  That has the
-    ; behavior we're looking for.
-    ;
-    ; But if both loops opt out and become invisible, then you effectively
-    ; are running `all []` which gives a ~void~ isotope.  That's usually what
-    ; you want...but we want to UNMETA the product.  And isotopes are not
-    ; ^META values (you never get an isotope from running META).
-    ;
-    ; To get the result we wanted, we actually would need the reduced case as
-    ; `all ['~void~]` so that `unmeta all ['~void~]` isn't passing an isotope
-    ; to UNMETA, and gives back the void isotope we need.  But that sucks:
-    ;
-    ;       for-both: func ['var blk1 blk2 body] [
-    ;           unmeta all [
-    ;               '~void~  ; <--- aaaargh, ugly!
-    ;               meta for-each :(var) blk1 body
-    ;               meta for-each :(var) blk2 body
-    ;           ]
-    ;       ]
-    ;
-    ; But that's what we'd need if UNMETA was going to be a stickler and have
-    ; its argument be a plain non-^META parameter.  Tweaking it to pass through
-    ; the void intent is worth it!  So the WORD! forms do not do the full
-    ; meta that the caret forms do (available as META*/UNMETA*)
 
 
     ; If you're the sort to throw softballs, this would be the only case you
@@ -191,6 +153,6 @@
     ; esoteric feature anyway...more useful to have a form of MAYBE that can
     ; let the last loop iteration signal a desire for overall erasure.
 
-    ('~ = ^ for-both x [1 2] [3 4] [if x > 2 [continue] x * 10])
-    ('~ = ^ for-both x [1 2] [3 4] [comment "Maintain invariant!"])
+    (none? for-both x [1 2] [3 4] [if x > 2 [continue] x * 10])
+    (none? for-both x [1 2] [3 4] [comment "Maintain invariant!"])
 ]

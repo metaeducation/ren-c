@@ -1359,9 +1359,7 @@ default-combinators: make map! reduce [
         ; !!! The rules of what are allowed or not when triggering through
         ; WORD!s likely apply here.  Should it all be repeated?
 
-        r: (^ eval value) else [
-            fail "GET-GROUP! evaluated to NULL"  ; no NULL rules, mistake?
-        ]
+        r: ^ eval value
 
         if void? unget r [  ; like [:(if false [...])] or [:(comment "hi")]
             pending: null
@@ -1369,7 +1367,11 @@ default-combinators: make map! reduce [
             return void
         ]
 
-        if bad-word? r [
+        if null? unget r [
+            fail "GET-GROUP! evaluated to NULL"  ; no NULL rules, mistake?
+        ]
+
+        if quasi? r [
             if r = '~null~ [
                 fail "GET-GROUP! evaluated to ~NULL~ isotope"  ; also mistake?
             ]

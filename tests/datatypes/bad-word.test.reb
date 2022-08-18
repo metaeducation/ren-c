@@ -255,11 +255,11 @@
     ((the '''a) = reify the '''a)
 ]
 
-; UNMETA works on void, but not other "isotopic" forms as a trick
+; UNMETA* works on void, but not other "isotopic" forms as a trick
 [
-    (void? unmeta void)
+    (void? unmeta* void)
     (
-        e: trap [unmeta ~foo~]
+        e: trap [unmeta* ~foo~]
         e.id = 'bad-isotope
     )
 ]

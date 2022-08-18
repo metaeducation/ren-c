@@ -1406,7 +1406,7 @@ DECLARE_NATIVE(try)
 
     REBVAL *v = ARG(optional);
 
-    if (Is_Meta_Of_Void(v) or Is_Nulled(v))
+    if (Is_Meta_Of_Void(v) or Is_Meta_Of_Null(v))
         return Init_Nulled(OUT);
 
     if (Is_Meta_Of_Failure(v)) {
@@ -2397,7 +2397,7 @@ DECLARE_NATIVE(heavy) {
     if (Is_Meta_Of_Void(v))
         return VOID;
 
-    if (Is_Nulled(v))
+    if (Is_Meta_Of_Null(v))
         return Init_Null_Isotope(OUT);
 
     return COPY(Meta_Unquotify(v));
@@ -2497,7 +2497,7 @@ DECLARE_NATIVE(reify)
 
     REBVAL *v = ARG(optional);
 
-    if (Is_Nulled(v))
+    if (Is_Meta_Of_Null(v))
         return Init_Meta_Of_Null_Isotope(OUT);
 
     if (Is_Meta_Of_Void(v))

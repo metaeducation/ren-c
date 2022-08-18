@@ -996,8 +996,6 @@ void Startup_Core(void)
 
     PG_Boot_Phase = BOOT_MEZZ;
 
-    REBVAL *error;
-
  //=//// BASE STARTUP ////////////////////////////////////////////////////=//
 
     // The code in "base" is the lowest level of initialization written as
@@ -1007,18 +1005,14 @@ void Startup_Core(void)
     // that are easier to write in usermode than in C (like inheriting HELP
     // information).
 
-    error = rebEntrap(
+    rebElide(
         //
         // Code is already interned to Lib_Context by TRANSCODE.  Create
         // actual variables for top-level SET-WORD!s only, and run.
         //
         "bind/only/set", &boot->base, Lib_Context_Value,
-        "do", &boot->base,  // ENSURE not available yet (but returns blank)
-
-        "null"  // falsey for `if (error)`
+        "do", &boot->base  // ENSURE not available yet (but returns blank)
     );
-    if (error)
-        panic (error);
 
   //=//// SYSTEM.UTIL STARTUP /////////////////////////////////////////////=//
 
@@ -1038,7 +1032,7 @@ void Startup_Core(void)
     Init_Context_Cell(Sys_Util_Module, REB_MODULE, util);
     ensureNullptr(Sys_Context) = VAL_CONTEXT(Sys_Util_Module);
 
-    error = rebEntrap(
+    rebElide(
         //
         // The scan of the boot block interned everything to Lib_Context, but
         // we want to overwrite that with the Sys_Context here.
@@ -1058,12 +1052,8 @@ void Startup_Core(void)
             "Name: 'System",  // this is MAKE OBJECT!, not MODULE, must quote
             "Exports: [module load load-value decode encode encoding-of]",
         "]",
-        "sys.util.import*", Lib_Context_Value, Sys_Util_Module,
-
-        "null"  // falsey for `if (error)`
+        "sys.util.import*", Lib_Context_Value, Sys_Util_Module
     );
-    if (error)
-        panic (error);
 
     // !!! It was a stated goal at one point that it should be possible to
     // protect the entire system object and still run the interpreter.  That
@@ -1073,7 +1063,7 @@ void Startup_Core(void)
 
   //=//// MEZZ STARTUP /////////////////////////////////////////////////////=//
 
-    error = rebEntrap(
+    rebElide(
         //
         // The code is already bound non-specifically to the Lib_Context during
         // scanning.
@@ -1086,12 +1076,8 @@ void Startup_Core(void)
         // Create actual variables for top-level SET-WORD!s only, and run.
         //
         "bind/only/set", SPECIFIC(&boot->mezz), Lib_Context_Value,
-        "do", SPECIFIC(&boot->mezz),
-
-        "null"  // falsey for `if (error)`
+        "do", SPECIFIC(&boot->mezz)
     );
-    if (error)
-        panic (error);
 
   //=//// MAKE USER CONTEXT ////////////////////////////////////////////////=//
 
@@ -1104,13 +1090,9 @@ void Startup_Core(void)
     // Doing this as a proper module creation gives us IMPORT and INTERN (as
     // well as EXPORT...?  When do you export from the user context?)
     //
-    error = rebEntrap(
+    rebElide(
         "system.contexts.user: module [Name: User] []"
-
-        "null"  // falsey for `if (error)`
     );
-    if (error)
-        panic (error);
 
     ensureNullptr(User_Context_Value) = Copy_Cell(
         Alloc_Value(),

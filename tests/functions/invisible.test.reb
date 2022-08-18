@@ -9,10 +9,10 @@
 
 ; META the word propagates invisibility vs. give back '~void~ like ^ does
 ;
-(void? (meta comment "a"))
+(void' = (meta comment "a"))
 ((quote void') = ^(^ comment "a"))
 
-(void? meta eval [comment "a"])
+(void' = meta eval [comment "a"])
 ((quote void') = ^(^ eval [comment "a"]))
 
 ; !!! At one time, comment mechanics allowed comments to be enfix such that
@@ -415,7 +415,7 @@
     (<test> = (<test> vanish-if-odd 1))
 
     (vanish-if-even: func [return: [<void> integer!] y] [
-       return maybe unmeta ^(vanish-if-odd y + 1)  ; could use UNMETA/VOID
+       return maybe unmeta ^(vanish-if-odd y + 1)
     ] true)
 
     (<test> = (<test> vanish-if-even 2))
