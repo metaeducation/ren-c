@@ -858,9 +858,6 @@ REBTYPE(String)
         UNUSED(PAR(series));
 
         Value(*) arg = ARG(value);
-        assert(VAL_TYPE_UNCHECKED(arg) != REB_NULL);
-        if (Is_Meta_Of_Void(arg))
-            Init_Nulled(arg);
 
         REBLEN len; // length of target
         if (ID_OF_SYMBOL(verb) == SYM_CHANGE)
@@ -871,7 +868,7 @@ REBTYPE(String)
         // Note that while inserting or appending NULL is a no-op, CHANGE with
         // a /PART can actually erase data.
         //
-        if (Is_Nulled(arg) and len == 0) {
+        if (Is_Meta_Of_Void(arg) and len == 0) {
             if (id == SYM_APPEND) // append always returns head
                 VAL_INDEX_RAW(v) = 0;
             return COPY(v);  // don't fail on read only if would be a no-op
@@ -892,16 +889,20 @@ REBTYPE(String)
         // However it will not try to FORM blocks or other arrays; it only
         // accepts isotopic blocks to imply "append each item individually".
         //
-        if (Is_Meta_Of_Splice(arg)) {
+        if (Is_Meta_Of_Void(arg)) {
+            Init_Nulled(arg);
+        }
+        else if (Is_Meta_Of_Splice(arg)) {
             Unquasify(arg);
         }
-        else if (not Is_Nulled(arg)) {  // e.g. wasn't VOID incoming
-            if (not IS_QUOTED(arg))
-                fail (ARG(value));
+        else if (IS_QUOTED(arg)) {  // e.g. wasn't VOID incoming
             Unquotify(arg, 1);  // remove "^META" level
+            assert(not Is_Nulled(arg));  // not an <opt> parameter
             if (ANY_ARRAY(arg))
                 fail (ARG(value));  // error on `append "abc" [d e]` w/o SPREAD
         }
+        else
+            fail (ARG(value));
 
         VAL_INDEX_RAW(v) = Modify_String_Or_Binary(  // does read-only check
             v,

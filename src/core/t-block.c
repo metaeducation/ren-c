@@ -991,9 +991,6 @@ REBTYPE(Array)
         UNUSED(PAR(series));
 
         Value(*) arg = ARG(value);
-        assert(VAL_TYPE_UNCHECKED(arg) != REB_NULL);
-        if (Is_Meta_Of_Void(arg))
-            Init_Nulled(arg);
 
         REBLEN len; // length of target
         if (id == SYM_CHANGE)
@@ -1001,10 +998,10 @@ REBTYPE(Array)
         else
             len = Part_Limit_Append_Insert(ARG(part));
 
-        // Note that while inserting or appending NULL is a no-op, CHANGE with
+        // Note that while inserting or appending VOID is a no-op, CHANGE with
         // a /PART can actually erase data.
         //
-        if (Is_Nulled(arg) and len == 0) {
+        if (Is_Meta_Of_Void(arg) and len == 0) {
             if (id == SYM_APPEND)  // append always returns head
                 VAL_INDEX_RAW(array) = 0;
             return COPY(array);  // don't fail on read only if would be a no-op
@@ -1017,26 +1014,12 @@ REBTYPE(Array)
 
         Copy_Cell(OUT, array);
 
-        if (Is_Nulled(arg)) {
-            // handled before mutability check
+        if (Is_Meta_Of_Void(arg)) {
+            Init_Nulled(arg);
         }
         else if (IS_QUOTED(arg)) {
             Unquotify(arg, 1);
-
-            // There is an exemption made here:
-            //
-            //     >> append [a b c] the '
-            //     == [a b c ~null~]
-            //
-            // The reasons for doing this are beyond the scope of this comment,
-            // but it is intentional--as a better option than being either a
-            // no-op or an error.  See writing on why this is done:
-            //
-            //     >> compose [(null) * ((null))]
-            //     == [~null~ *]
-            //
-            if (Is_Nulled(arg))
-                Init_Meta_Of_Null_Isotope(arg);
+            assert(not Is_Nulled(arg));  // not <opt> in typecheck
         }
         else if (Is_Meta_Of_Splice(arg)) {
             flags |= AM_SPLICE;
