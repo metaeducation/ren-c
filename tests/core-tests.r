@@ -217,6 +217,7 @@
 %parse/parse-across.test.reb
 %parse/parse-action.test.reb
 %parse/parse-ahead.test.reb
+%parse/parse-any.test.reb
 %parse/parse-between.test.reb
 %parse/parse-bitset.test.reb
 %parse/parse-binary.test.reb

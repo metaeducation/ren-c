@@ -4,19 +4,13 @@
 ; a list of alternative rules.  This can be more convenient than having to make
 ; a rule block that has the alternatives separated by `|`, which has difficult
 ; issues to resolve on the edges.
-;
-; It's necessary to put the BLOCK! in a group, because a plain BLOCK! already
-; has semantics in UPARSE.  For any to receive it literally and do its own form
-; of processing, it has to be a rule product.
 
 ("b" = parse "ab" [some any (["a" "b"])])
 (null = parse "abc" [some any (["a" "b"])])
 
 (3 = parse ["foo" <baz> 3] [some any ([tag! integer! text!])])
 
-; Alternative notation: use a THE-BLOCK!
+("b" = parse "ab" [some any ["a" "b"]])
+(null = parse "abc" [some any ["a" "b"]])
 
-("b" = parse "ab" [some any @["a" "b"]])
-(null = parse "abc" [some any @["a" "b"]])
-
-(3 = parse ["foo" <baz> 3] [some any @[tag! integer! text!]])
+(3 = parse ["foo" <baz> 3] [some any [tag! integer! text!]])
