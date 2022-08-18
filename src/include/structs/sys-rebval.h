@@ -161,6 +161,7 @@
 #define QUOTE_BYTE(v)               THIRD_BYTE(READABLE(v)->header)
 #define mutable_QUOTE_BYTE(v)       mutable_THIRD_BYTE(WRITABLE(v)->header)
 
+#define UNQUOTED_0          0
 #define QUASI_1             1
 #define ISOTOPE_255         255  // Also QUASI (anything with QUASI_1 bit is)
 #define ONEQUOTE_2          2  // non-QUASI state of having one quote level
@@ -235,6 +236,12 @@
 // something like `if [x > 2] [print "true"]` vs. `if x > 2 [print "true"]`,
 // while still tolerating `item: [a b c] | if item [print "it's an item"]`.
 // That has a lot of impact for the new user experience.
+//
+// You can never have a truly "unevaluated" isotope cell.  So the UNEVALUATED
+// flag would never be set on isotopes naturally.  Instead it's used by a
+// direct QUASI! evaluation for SCANT_EVALUATED_ISOTOPE, to inform SET-WORD!
+// in the evaluator that things like (x: ~) should be allowed, when indirect
+// products like (x: print "hi") are not.
 //
 #define CELL_FLAG_27 \
     FLAG_LEFT_BIT(27)

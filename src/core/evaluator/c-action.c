@@ -914,7 +914,10 @@ Bounce Action_Executor(Frame(*) f)
             if (Is_None(ARG)) {  // e.g. (~) isotope, unspecialized
                 Init_Nulled(ARG);
             }
-            else switch (VAL_ISOTOPE_ID(ARG)) {
+            else if (not Is_Word_Isotope(ARG)) {
+                fail (Error_Isotope_Arg(f, PARAM));
+            }
+            else switch (VAL_WORD_ID(ARG)) {
               case SYM_END: {
                 if (NOT_PARAM_FLAG(PARAM, ENDABLE))
                     fail (Error_No_Arg(f->label, KEY_SYMBOL(KEY)));
@@ -1067,7 +1070,7 @@ Bounce Action_Executor(Frame(*) f)
     if (Get_Executor_Flag(ACTION, f, TYPECHECK_ONLY)) {  // <try>, <blackhole>
         assert(
             Is_Failure(OUT)
-            or Is_Isotope_With_Id(OUT, SYM_BLACKHOLE)
+            or Is_Word_Isotope_With_Id(OUT, SYM_BLACKHOLE)
         );
         goto skip_output_check;
     }

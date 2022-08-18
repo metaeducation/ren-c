@@ -169,7 +169,7 @@ Array(*) Startup_Generics(const REBVAL *boot_generics)
     DECLARE_LOCAL (discarded);
     if (Do_Any_Array_At_Throws(discarded, boot_generics, SPECIFIED))
         panic (discarded);
-    if (not Is_Isotope_With_Id(discarded, SYM_DONE))
+    if (not Is_Word_Isotope_With_Id(discarded, SYM_DONE))
         panic (discarded);
 
     // Sanity check the symbol transformation

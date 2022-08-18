@@ -294,7 +294,7 @@ inline static bool Is_Specialized(const REBPAR *param) {
         HEART_BYTE_UNCHECKED(param) == REB_TYPESET  // no assert on isotope
         and VAL_PARAM_CLASS(param) != PARAM_CLASS_0  // non-parameter typeset
     ){
-        assert(QUOTE_BYTE(param) == 0);  // no quoted parameters
+        assert(QUOTE_BYTE(param) == UNQUOTED_0);  // no quoted parameters
         if (Get_Cell_Flag(param, VAR_MARKED_HIDDEN))
             assert(!"Unspecialized parameter is marked hidden!");
         return false;

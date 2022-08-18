@@ -527,7 +527,7 @@ inline static Cell(const*) VAL_SEQUENCE_AT(
         if (sequence != store)
             Copy_Cell(store, CELL_TO_VAL(sequence));
         mutable_HEART_BYTE(store) = REB_WORD;
-        mutable_QUOTE_BYTE(store) = 0;  // quote is actually "on" the sequence
+        mutable_QUOTE_BYTE(store) = UNQUOTED_0;  // quote is "on" the sequence
         return store; }
 
       case FLAVOR_ARRAY : {  // uncompressed sequence

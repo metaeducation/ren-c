@@ -509,7 +509,7 @@ Bounce Evaluator_Executor(Frame(*) f)
 
     switch (QUOTE_BYTE_UNCHECKED(f_current)) {
 
-      //=//// QUASI! //////////////////////////////////////////////////////=//
+      //=//// QUASI!  and QUOTED! //////////////////////////////////////////=//
       //
       // QUASI! forms will produce an isotope when evaluated of whatever it is
       // containing:
@@ -522,30 +522,20 @@ Bounce Evaluator_Executor(Frame(*) f)
       //
       // To bypass the error, use GET/ANY.
       //
-      // Note: Some isotopes will decay automatically in variable assignment:
-      // ~null~, ~false~, ~blank~, and ~blackhole~ isotopes.  But all of
-      // them can exist transiently in evaluation.
-      //
-      // 1. You can never have a truly "unevaluated" isotope cell.  So the flag
-      //    would never be set on isotopes naturally.  This uses it to tell
-      //    the SET-WORD! in the evaluator that things like (x: ~) should
-      //    be allowed, when indirect products like (x: print "hi") are not.
+      // QUOTED! forms simply evaluate to remove one level of quoting.
 
     case QUASI_1:
       Derelativize(OUT, f_current, f_specifier);
-      Isotopify(OUT);
-      Set_Cell_Flag(OUT, SCANT_EVALUATED_ISOTOPE);  // see [1]
+      mutable_QUOTE_BYTE(OUT) = ISOTOPE_255;
+      Set_Cell_Flag(OUT, SCANT_EVALUATED_ISOTOPE);  // see flag comments
       break;
 
-    default:  // quote byte > 1, e.g. QUOTED!
-      //
-      // Evaluation of a QUOTED! simply removes one level of quoting
-      //
+    default:  // e.g. QUOTED!
       Derelativize(OUT, f_current, f_specifier);
-      Unquotify(OUT, 1);
+      Unquotify(OUT, 1);  // asserts it is not an isotope
       break;
 
-    case 0: switch (CELL_HEART_UNCHECKED(f_current)) {  // unchecked for REB_0
+    case UNQUOTED_0: switch (CELL_HEART_UNCHECKED(f_current)) {
 
       case REB_0_END:
         assert(Is_End(f_current));  // should be END, not void
@@ -1620,10 +1610,10 @@ Bounce Evaluator_Executor(Frame(*) f)
         }
         else {
             if (ANY_META_KIND(VAL_TYPE(Data_Stack_At(BASELINE->stack_base + 1)))) {
-                if (Is_Stale(OUT))
+                if (Is_Stale(OUT) or Is_Void(OUT))
                     Init_Meta_Of_Void(OUT);
                 else
-                    Reify_Eval_Out_Meta(OUT);
+                    Meta_Quotify(OUT);
 
                 Set_Var_May_Fail(SPARE, SPECIFIED, OUT);
             }

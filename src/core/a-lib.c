@@ -1862,7 +1862,7 @@ REBVAL *RL_rebRescueWith(
     }
     else if (
         rescuer == nullptr
-        and QUOTE_BYTE(result) == 0
+        and QUOTE_BYTE(result) == UNQUOTED_0
         and HEART_BYTE(result) == REB_ERROR
     ){
         // Analogous to how TRAP works, if you don't have a handler for the
@@ -2019,7 +2019,7 @@ const REBINS *RL_rebQUOTING(const void *p)
     }
 
     Cell(*) v = ARR_SINGLE(a);
-    Isotopic_Quote(v);
+    Meta_Quotify(v);
     return a;
 }
 
@@ -2059,13 +2059,15 @@ const REBINS *RL_rebUNQUOTING(const void *p)
     }
 
     Cell(*) v = ARR_SINGLE(a);
-    if (Is_Nulled(v))
-        fail ("Cannot unquote NULL");
+    if (
+        QUOTE_BYTE(v) == UNQUOTED_0
+        or QUOTE_BYTE(v) == QUASI_1
+        or QUOTE_BYTE(v) == ISOTOPE_255
+    ){
+        fail ("rebUNQUOTING()/rebU() can only unquote QUOTED! values");
+    }
 
-    if (Is_Isotope(v))
-        fail ("Cannot unquote isotopes");
-
-    Isotopic_Unquote(v);
+    Unquotify(v, 1);
     return a;
 }
 

@@ -571,7 +571,7 @@ static void Init_System_Object(
     DECLARE_LOCAL (result);
     if (Do_Any_Array_At_Throws(result, boot_sysobj_spec, SPECIFIED))
         panic (result);
-    if (not Is_Isotope_With_Id(result, SYM_DONE))
+    if (not Is_Word_Isotope_With_Id(result, SYM_DONE))
         panic (result);
 
     // Init_Action_Meta_Shim() made Root_Action_Meta as a bootstrap hack

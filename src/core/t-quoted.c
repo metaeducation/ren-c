@@ -448,7 +448,7 @@ DECLARE_NATIVE(unmeta_p)
         return nullptr;
 
     if (IS_QUASI(v)) {
-        Isotopify(v);
+        Meta_Unquotify(v);
         fail (Error_Bad_Isotope(v));  // isotopes not allowed as input
     }
 

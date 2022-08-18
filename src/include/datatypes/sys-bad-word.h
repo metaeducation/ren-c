@@ -20,14 +20,10 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// BAD-WORD!s carry symbols like WORD!s do, but are rendered like `~void~` or
-// `~`.  They are designed to cover some edge cases in representation.
-//
-// But there's an additional twist on bad words, which is that when they are
-// put into a variable they can be stored in either a normal state or an
-// "isotope" state.  They are transitioned into the isotope state by evaluation
-// which leads to "pricklier" behaviors...such as not being able to be
-// retrieved through ordinary WORD! fetches.
+// All datatypes (besides QUOTED!, VOID and NULL) have an "isotopic" form as
+// well as a "quasi" form.  The quasi form will evaluate to the isotopic form,
+// and the isotopic form is expressly prohibited from being put in arrays,
+// while also causing errors if accessed from plain word fetches.
 //
 //     >> nice: first [~foo~]
 //     == ~foo~
@@ -51,27 +47,40 @@
 //     >> ^mean
 //     == ~foo~
 //
-// This enables shifting into a kind of "meta" domain, where whatever "weird"
-// condition the isotope was attempting to capture and warn about can be
-// handled literally.  Code that isn't expecting such strange circumstances
-// can error if they ever happen, while more sensitive code can be adapted to
-// cleanly handle the intents that they care about.
+// Isotopes are foundational in covering edge cases in representation which
+// plague Rebol2 and Red.  They enable shifting into a "non-literal" domain,
+// where whatever "weird" condition the isotope was attempting to capture can
+// be handled without worrying about conflating with more literal usages.
+// A good example is addressing the splicing intent for blocks:
+//
+//     >> append [a b c] [d e]
+//     == [a b c [d e]]
+//
+//     >> append [a b c] ~[d e]~
+//     == [a b c d e]
+//
+//     >> append [a b c] '~[d e]~
+//     == [a b c ~[d e]~]
+//
+// As demonstrated, the reified QUASI! form and the "ghostly" isotopic form
+// work in concert to solve the problem.
+//
+// A special parameter convention must be used to receive isotopes.  Code that
+// isn't expecting such strange circumstances can error if they ever happen,
+// while more sensitive code can be adapted to cleanly handle the intents that
+// they care about.
 //
 //=//// NOTES //////////////////////////////////////////////////////////////=//
 //
-// * The isotope states of several BAD-WORD!s have specific meaning to the
-//   system...such as `~`, ~void~, and ~null~.  Each are described in below.
+// * The isotope states of several WORD!s have specific meaning to the
+//   system...such as ~void~, and ~null~.  Each are described in below.
 //
-// * Normal BAD-WORD!s are truthy.  There's a reason for this, because it
+// * QUASI! states are truthy.  There's a reason for this, because it
 //   allows operations in the ^META domain to easily use functions like ALL
-//   and ANY on the meta values, with NULL being the only falsey meta state.
+//   and ANY on the meta values.  (See the FOR-BOTH example.)
 //
 // * Isotopes forms are neither true nor false...they must be decayed or
 //   handled in some other way, for instance DID/DIDN'T or THEN/ELSE.
-//
-// * See %sys-trash.h for a special case of a cell that will trigger panics
-//   if it is ever read in the debug build, but is just an ordinary BAD-WORD!
-//   of ~trash~ in the release build.
 //
 
 inline static REBVAL *Init_Any_Word_Untracked(
@@ -80,6 +89,9 @@ inline static REBVAL *Init_Any_Word_Untracked(
     Symbol(const*) sym,
     Flags flags
 );
+
+inline static OPT_SYMID VAL_WORD_ID(noquote(Cell(const*)) v);
+
 
 inline static bool Is_Quasi_Word(Cell(const*) v)
   { return IS_QUASI(v) and HEART_BYTE_UNCHECKED(v) == REB_WORD; }
@@ -107,26 +119,14 @@ inline static REBVAL *Init_Word_Isotope_Untracked(
 #define Init_Word_Isotope(out,label) \
     Init_Word_Isotope_Untracked(TRACK(out), (label))
 
-inline static bool Is_Word_Isotope(Cell(const*) v) {
-    if (QUOTE_BYTE(v) != ISOTOPE_255)
-        return false;
-
-    if (HEART_BYTE(v) == REB_WORD)
-        return true;
-
-    assert(
-        HEART_BYTE(v) == REB_ERROR
-        or HEART_BYTE(v) == REB_BLOCK
-        or HEART_BYTE(v) == REB_BLANK
-    );
-    return false;
-}
+inline static bool Is_Word_Isotope(Cell(const*) v)
+  { return QUOTE_BYTE(v) == ISOTOPE_255 and HEART_BYTE(v) == REB_WORD; }
 
 inline static bool Is_Isotope(Cell(const*) v) {
     if (QUOTE_BYTE(v) != ISOTOPE_255)
         return false;
 
-    assert(HEART_BYTE(v) != REB_NULL);
+    assert(HEART_BYTE(v) != REB_0 and HEART_BYTE(v) != REB_NULL);
     return true;
 }
 
@@ -136,29 +136,7 @@ inline static bool Reify_Isotope(Cell(*) v) {
     return true;
 }
 
-inline static Cell(*) Isotopify(Cell(*) v) {
-    mutable_QUOTE_BYTE(v) = ISOTOPE_255;
-    return v;
-}
-
-inline static Symbol(const*) VAL_ISOTOPE_LABEL(Cell(const*) v) {
-    assert(Is_Word_Isotope(v));
-    assert(HEART_BYTE_UNCHECKED(v) == REB_WORD);
-
-    return cast(Symbol(const*), VAL_NODE1(v));
-}
-
-inline static OPT_SYMID VAL_ISOTOPE_ID(Cell(const*) v) {
-    assert(Is_Word_Isotope(v));
-    assert(HEART_BYTE_UNCHECKED(v) == REB_WORD);
-
-    if (not VAL_NODE1(v))
-        return cast(OPT_SYMID, SYM_0);
-
-    return ID_OF_SYMBOL(cast(Symbol(const*), VAL_NODE1(v)));
-}
-
-inline static bool Is_Isotope_With_Id(
+inline static bool Is_Word_Isotope_With_Id(
     Cell(const*) v,
     enum Reb_Symbol_Id id  // want to take ID instead of canon, faster check!
 ){
@@ -167,7 +145,7 @@ inline static bool Is_Isotope_With_Id(
     if (not Is_Word_Isotope(v))
         return false;
 
-    return id == cast(enum Reb_Symbol_Id, VAL_ISOTOPE_ID(v));
+    return id == cast(enum Reb_Symbol_Id, VAL_WORD_ID(v));
 }
 
 
@@ -181,8 +159,7 @@ inline static bool Is_Isotope_With_Id(
 //
 //  * Quick way to unset variables, simply `(var: ~)`
 //
-// But since we have to talk about what it is, we call it "none".  Unlike
-// ~void~ or ~end~ isotopes, it is reified and can appear in variables.
+// But since we have to talk about what it is, we call it "none".
 //
 // It is also the default RETURN for when you just write something like
 // `func [return: <none>] [...]`.  It represents the intention of not having a
@@ -205,13 +182,13 @@ inline static bool Is_Isotope_With_Id(
     Init_Blank_Untracked(TRACK(out), FLAG_QUOTE_BYTE(QUASI_1))
 
 inline static bool Is_None(Cell(const*) v)
-  { return Is_Isotope(v) and HEART_BYTE_UNCHECKED(v) == REB_BLANK; }
+  { return Is_Isotope(v) and HEART_BYTE(v) == REB_BLANK; }
 
 inline static bool Is_Meta_Of_None(Cell(const*) v)
-  { return IS_QUASI(v) and HEART_BYTE_UNCHECKED(v) == REB_BLANK; }
+  { return IS_QUASI(v) and HEART_BYTE(v) == REB_BLANK; }
 
 
-//=//// VOID ISOTOPES AND VOID META STATE (@void) /////////////////////////=//
+//=//// VOID ISOTOPES AND VOID META STATE (NULL) //////////////////////////=//
 //
 // Void states are actually just CELL_FLAG_OUT_NOTE_VOIDED on top of
 // an empty cell, to indicate something that has "invisible intent" but did
@@ -224,12 +201,12 @@ inline static bool Is_Meta_Of_None(Cell(const*) v)
 //     == ~  ; isotope (none, e.g. x is unset)
 //
 // The isotope state exists to be used in frames as a signal of void intent,
-// but since it is reified it lays claim to the BAD-WORD! ~void~ when ^META'd.
-// True void is @void to distinguish it.
+// but since it is reified it lays claim to the QUASI-WORD! ~void~ when ^META'd.
+// True void has a ^META of NULL to distinguish it.
 //
 
 #define Init_Void_Isotope(out)            Init_Word_Isotope((out), Canon(VOID))
-#define Is_Void_Isotope(v)                Is_Isotope_With_Id(v, SYM_VOID)
+#define Is_Void_Isotope(v)                Is_Word_Isotope_With_Id(v, SYM_VOID)
 #define Init_Meta_Of_Void_Isotope(out)    Init_Quasi_Word((out), Canon(VOID))
 
 inline static bool Is_Meta_Of_Void_Isotope(Cell(const*) v)
@@ -263,7 +240,8 @@ inline static bool Is_Meta_Of_Null(Cell(const*) v)
 // seemed sketchy at first, but with ^(...) acting as a "detector" for those
 // who need to know the difference, it has become a holistic solution.
 //
-// The "decay" of NULL isotopes occurs on variable retrieval.  Hence:
+// The "decay" of NULL isotopes occurs on variable assignment, and is seen
+// on future fetches.  Hence:
 //
 //     >> x: if true [null]
 //     == ~null~  ; isotope
@@ -277,7 +255,7 @@ inline static bool Is_Meta_Of_Null(Cell(const*) v)
 //
 
 #define Init_Null_Isotope(out)            Init_Word_Isotope((out), Canon(NULL))
-#define Is_Null_Isotope(v)                Is_Isotope_With_Id(v, SYM_NULL)
+#define Is_Null_Isotope(v)                Is_Word_Isotope_With_Id(v, SYM_NULL)
 #define Init_Meta_Of_Null_Isotope(out)    Init_Quasi_Word((out), Canon(NULL))
 
 inline static bool Is_Meta_Of_Null_Isotope(Cell(const*) v)
@@ -294,7 +272,7 @@ inline static bool Is_Meta_Of_Null_Isotope(Cell(const*) v)
 // they could be distinguished via the unevaluated bit.
 
 #define Init_End_Isotope(out)              Init_Word_Isotope((out), Canon(END))
-#define Is_End_Isotope(v)                  Is_Isotope_With_Id(v, SYM_END)
+#define Is_End_Isotope(v)                  Is_Word_Isotope_With_Id(v, SYM_END)
 #define Init_Meta_Of_End_Isotope(out)      Init_Quasi_Word((out), Canon(END))
 
 inline static bool Is_Meta_Of_End_Isotope(Cell(const*) v)
@@ -309,7 +287,7 @@ inline static Cell(*) Decay_If_Isotope(Cell(*) v) {
     if (not Is_Word_Isotope(v))
         return v;
 
-    switch (VAL_ISOTOPE_ID(v)) {
+    switch (VAL_WORD_ID(v)) {
       case SYM_NULL :
         return Init_Nulled(v);
       case SYM_BLANK :
@@ -328,7 +306,7 @@ inline static const REBVAL *Pointer_To_Decayed(const REBVAL *v) {
     if (not Is_Word_Isotope(v))
         return v;
 
-    switch (VAL_ISOTOPE_ID(v)) {
+    switch (VAL_WORD_ID(v)) {
       case SYM_NULL :
         return Lib(NULL);
       case SYM_FALSE :
@@ -350,8 +328,8 @@ inline static const REBVAL *rebPointerToDecayed(const REBVAL *v) {
         assert(not Is_Nulled(v));  // API speaks nullptr, not nulled cells
         return v;
     }
-    if (VAL_ISOTOPE_ID(v) == SYM_NULL)
-      return nullptr;
+    if (VAL_WORD_ID(v) == SYM_NULL)
+        return nullptr;
 
     return Pointer_To_Decayed(v);
 }

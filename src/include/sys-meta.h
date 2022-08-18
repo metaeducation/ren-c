@@ -58,7 +58,7 @@ inline static bool Is_Meta_Of_Failure(Cell(const*) v)
 
 
 inline static Value(*) Failurize(Cell(*) v) {
-    assert(IS_ERROR(v) and QUOTE_BYTE(v) == 0);
+    assert(IS_ERROR(v) and QUOTE_BYTE(v) == UNQUOTED_0);
     Force_Location_Of_Error(VAL_CONTEXT(v), TOP_FRAME);  // ideally already set
     mutable_QUOTE_BYTE(v) = ISOTOPE_255;
     return VAL(v);
@@ -70,7 +70,7 @@ inline static bool Is_Splice(Cell(const*) v)
 
 
 inline static Value(*) Splicify(Cell(*) v) {
-    assert(IS_BLOCK(v) and QUOTE_BYTE(v) == 0);
+    assert(IS_BLOCK(v) and QUOTE_BYTE(v) == UNQUOTED_0);
     mutable_QUOTE_BYTE(v) = ISOTOPE_255;
     return VAL(v);
 }
@@ -81,12 +81,12 @@ inline static bool Is_Meta_Of_Splice(Cell(const*) v)
 
 inline static REBVAL *Unquasify(REBVAL *v) {
     assert(QUOTE_BYTE(v) == QUASI_1);
-    mutable_QUOTE_BYTE(v) = 0;
+    mutable_QUOTE_BYTE(v) = UNQUOTED_0;
     return v;
 }
 
 inline static REBVAL *Quasify(REBVAL *v) {
-    assert(QUOTE_BYTE(v) == 0);
+    assert(QUOTE_BYTE(v) == UNQUOTED_0);
     assert(not Is_Nulled(v) and not Is_Void(v));
     mutable_QUOTE_BYTE(v) = QUASI_1;
     return v;
@@ -105,7 +105,15 @@ inline static REBVAL *Quasify(REBVAL *v) {
 // to deal with this problem.  But rebQ() in the API does, as does the idea
 // of "literalization".
 
-inline static Cell(*) Isotopic_Quote(Cell(*) v) {
+
+//=//// META QUOTING ///////////////////////////////////////////////////////=//
+
+
+// Meta quoting is a superset of plain quoting.  It has the twist that it can
+// quote isotopes to produce QUASI! values.  This is done by META (alias ^)
+// and the REB_META_XXX family of values (like ^WORD, ^TU.P.LE...)
+
+inline static Cell(*) Meta_Quotify(Cell(*) v) {
     if (Is_Isotope(v)) {
         Reify_Isotope(v);  // ...make it "friendly" now...
         return v;
@@ -113,43 +121,14 @@ inline static Cell(*) Isotopic_Quote(Cell(*) v) {
     return Quotify(v, 1);  // a non-isotope winds up quoted
 }
 
-inline static Cell(*) Isotopic_Unquote(Cell(*) v) {
-    assert(not Is_Nulled(v));  // use Meta_Unquotify() instead
-    if (QUOTE_BYTE(v) == QUASI_1)
-        Isotopify(v);
-    else
-        Unquotify_Core(v, 1);
-    return v;
-}
-
-// It's easiest to write the isotopic general forms by doing a single isotopic
-// step, and then N - 1 non-isotopic steps.
-
-#if CPLUSPLUS_11
-    inline static REBVAL *Isotopic_Quote(REBVAL *v)
-      { return SPECIFIC(Isotopic_Quote(cast(Cell(*), v))); }
-
-    inline static REBVAL *Isotopic_Unquote(REBVAL *v)
-      { return SPECIFIC(Isotopic_Unquote(cast(Cell(*), v))); }
-#endif
-
-
-//=//// META QUOTING ///////////////////////////////////////////////////////=//
-
-
-// Meta quoting is almost exactly like isotopic quoting, but it has a twist
-// that NULL does not become a single tick mark (') but rather it stays as
-// NULL.  It also translates emptiness (e.g. an END marker) into an isotope
-// BAD-WORD! of ~void~.  It is done by ^ and the the REB_META_XXX family.
-
-inline static Cell(*) Meta_Quotify(Cell(*) v) {
-    return Isotopic_Quote(v);
-}
-
 inline static Cell(*) Meta_Unquotify(Cell(*) v) {
     if (Is_Meta_Of_Failure(v))
         fail (VAL_CONTEXT(v));  // too dangerous to create failure easily
-    return Isotopic_Unquote(v);
+    if (QUOTE_BYTE(v) == QUASI_1)
+        mutable_QUOTE_BYTE(v) = ISOTOPE_255;
+    else
+        Unquotify_Core(v, 1);
+    return v;
 }
 
 #if CPLUSPLUS_11
@@ -160,12 +139,6 @@ inline static Cell(*) Meta_Unquotify(Cell(*) v) {
         { return SPECIFIC(Meta_Unquotify(cast(Cell(*), v))); }
 #endif
 
-inline static REBVAL *Reify_Eval_Out_Meta(REBVAL *out) {
-    if (Is_Void(out))
-        return Init_Meta_Of_Void(out);
-
-    return Meta_Quotify(out);
-}
 
 inline static Bounce Native_Unmeta_Result(Frame(*) frame_, const REBVAL *v) {
     assert(Is_Stale_Void(&TG_Thrown_Arg));

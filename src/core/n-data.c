@@ -2372,7 +2372,7 @@ DECLARE_NATIVE(blackhole_q)
     Meta_Unquotify(v);
 
     if (Is_Word_Isotope(v)) {
-        if (VAL_ISOTOPE_ID(v) == SYM_BLACKHOLE)
+        if (VAL_WORD_ID(v) == SYM_BLACKHOLE)
             return Init_True(OUT);
         return Init_False(OUT);
     }

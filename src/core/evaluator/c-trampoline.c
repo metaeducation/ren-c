@@ -235,7 +235,10 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
         }
         else if (Get_Frame_Flag(FRAME, META_RESULT)) {
             Clear_Stale_Flag(OUT);  // see [1]
-            Reify_Eval_Out_Meta(OUT);
+            if (Is_Void(OUT))
+                Init_Meta_Of_Void(OUT);
+            else
+                Meta_Quotify(OUT);
         }
         else if (Get_Frame_Flag(FRAME, BRANCH)) {
             Clear_Stale_Flag(OUT);  // also, see [1]
