@@ -26,19 +26,21 @@
     ][
         [^result1' remainder1]: parser1 input
         [^result2' remainder2]: parser2 input
-        if null? result2' [  ; parser2 didn't succeed
-            if null? result1' [return null]  ; neither succeeded
+        if failure? unget result2' [  ; parser2 didn't succeed
+            if failure? unget result1' [
+                return unget result1'  ; neither succeeded
+            ]
         ] else [  ; parser2 succeeded
             any [
-                null? result1'
+                failure? unget result1'
                 (index of remainder1) < (index of remainder2)
             ] then [
                 remainder: remainder2
-                return unmeta result2'
+                return unget result2'
             ]
         ]
         remainder: remainder1
-        return unmeta result1'
+        return unget result1'
     ]
     true
 )
@@ -196,11 +198,13 @@
     ][
         [^result1' remainder1 pending1]: parser1 input
         [^result2' remainder2 pending2]: parser2 input
-        if null? result2' [  ; parser2 didn't succeed
-            if null? result1' [return null]  ; neither succeeded
+        if failure? unget result2' [  ; parser2 didn't succeed
+            if failure? unget result1' [
+                return unget result1'  ; neither succeeded
+            ]
         ] else [  ; parser2 succeeded
             any [
-                null? result1'
+                failure? unget result1'
                 (index of remainder1) < (index of remainder2)
             ] then [
                 remainder: remainder2

@@ -11,7 +11,7 @@
         return: "Result of one evaluation step"
             [<opt> any-value!]
     ][
-        if tail? input [return null]
+        if tail? input [return fail "PARSE-EVALUATE attempted at series tail"]
 
         return [# remainder]: evaluate input
     ]
