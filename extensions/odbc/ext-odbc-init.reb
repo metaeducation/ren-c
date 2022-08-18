@@ -35,7 +35,7 @@ database-prototype: context [
 statement-prototype: context [
     database: ~
     hstmt: '  ; SQLHSTMT
-    string: _
+    string: null
     titles: ~
     columns: '
 ]

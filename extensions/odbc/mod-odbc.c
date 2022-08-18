@@ -1207,7 +1207,7 @@ DECLARE_NATIVE(insert_odbc)
         //
         use_cache = rebUnboxLogic(
             "strict-equal? first", ARG(sql),
-                "ensure [text! blank!] pick", statement, "'string"
+                "ensure [<opt> text!] pick", statement, "'string"
         );
 
         REBLEN sql_index = 1;
