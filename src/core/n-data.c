@@ -938,20 +938,26 @@ bool Get_Path_Push_Refinements_Throws(
             if (Eval_Value_Throws(temp, at, derived))
                 return true;
 
-            Move_Cell(safe, temp);
-            Decay_If_Isotope(safe);
-            if (Is_Isotope(safe))
-                fail (Error_Bad_Isotope(safe));
+            if (Is_Void(temp))
+                continue;  // just skip it (voids are ignored, NULLs error)
 
-            at = safe;
+            at = Pointer_To_Decayed(temp);
+            if (Is_Isotope(at))
+                fail (Error_Bad_Isotope(at));
         }
-        if (Is_Nulled(at) or IS_BLANK(at)) {
-            // just skip it
+
+        // Note: NULL not supported intentionally, could represent an accident
+        // User is expected to do `maybe var` to show they know it's null
+
+        if (IS_BLANK(at)) {
+            // This is needed e.g. for append/dup/ to work, just skip it
         }
         else if (IS_WORD(at))
             Init_Pushed_Refinement(PUSH(), VAL_WORD_SYMBOL(at));
-        else if (IS_PATH(at) and IS_REFINEMENT(at))
+        else if (IS_PATH(at) and IS_REFINEMENT(at)) {
+            // Not strictly necessary, but kind of neat to allow
             Init_Pushed_Refinement(PUSH(), VAL_REFINEMENT_SYMBOL(at));
+        }
         else
             fail (at);
     }
