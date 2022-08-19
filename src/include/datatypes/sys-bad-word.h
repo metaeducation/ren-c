@@ -194,11 +194,11 @@ inline static bool Is_Meta_Of_None(Cell(const*) v)
 // an empty cell, to indicate something that has "invisible intent" but did
 // not actually vanish.
 //
-//     >> x: ~void~
-//     ; void (decays to none)
+//     >> x: if false [fail ~unreachable~]
+//     ; void (decays to null)
 //
-//     >> get/any 'x
-//     == ~  ; isotope (none, e.g. x is unset)
+//     >> x
+//     ; null
 //
 // The isotope state exists to be used in frames as a signal of void intent,
 // but since it is reified it lays claim to the QUASI-WORD! ~void~ when ^META'd.
@@ -214,7 +214,8 @@ inline static bool Is_Meta_Of_Void_Isotope(Cell(const*) v)
 
 #define Init_Meta_Of_Void(out)       Init_Nulled(out)
 #define Is_Meta_Of_Void(v)           Is_Nulled(v)
-
+#define Init_Decayed_Void(out)       Init_Nulled(out)
+#define DECAYED_VOID_CELL            Lib(NULL)
 
 #define Init_Meta_Of_Null(out) \
     Init_Nulled_Untracked(TRACK(out), FLAG_QUOTE_BYTE(ONEQUOTE_2))
@@ -303,6 +304,9 @@ inline static Cell(*) Decay_If_Isotope(Cell(*) v) {
 }
 
 inline static const REBVAL *Pointer_To_Decayed(const REBVAL *v) {
+    if (Is_Void(v))
+        return Lib(NULL);
+
     if (not Is_Word_Isotope(v))
         return v;
 
@@ -321,17 +325,14 @@ inline static const REBVAL *Pointer_To_Decayed(const REBVAL *v) {
     }
 }
 
-inline static const REBVAL *rebPointerToDecayed(const REBVAL *v) {
+inline static const REBVAL *rebPointerToDecayed(const REBVAL *v) {  // unused?
     if (v == nullptr)
         return v;  // API tolerance
-    if (not Is_Word_Isotope(v)) {
-        assert(not Is_Nulled(v));  // API speaks nullptr, not nulled cells
-        return v;
-    }
-    if (VAL_WORD_ID(v) == SYM_NULL)
-        return nullptr;
 
-    return Pointer_To_Decayed(v);
+    Value(const*) decayed = Pointer_To_Decayed(v);
+    if (decayed == v)
+        return v;
+    return decayed == Lib(NULL) ? nullptr : decayed;
 }
 
 inline static Cell(*) Isotopify_If_Falsey(Cell(*) v) {

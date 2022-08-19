@@ -1354,9 +1354,6 @@ DECLARE_NATIVE(set)
 //        >> set 'x match logic! false
 //        == ~false~  ; isotope
 //
-//    The exception is ~void~ isotopes, which have no reified form, and are
-//    returned as none (~) isotopes.
-//
 // 3. Plain POKE can't throw (e.g. from a GROUP!) because it won't evaluate
 //    them.  However, we can get errors.  Confirm we only are raising errors
 //    unless steps_out were passed.
@@ -1374,7 +1371,7 @@ DECLARE_NATIVE(set)
         steps = nullptr;  // no GROUP! evals
 
     if (Is_Meta_Of_Void(v))
-        Init_None(v);  // can't store the void--no reified form, see [2]
+        Init_Decayed_Void(v);  // can't store the void in a variable
     else
         Meta_Unquotify(v);
 

@@ -295,7 +295,7 @@ compile: func [
         ;
         4 = fourth system.version [  ; Linux
             lddir: "lib"
-            triplet: try if 40 = fifth system.version [  ; 64-bit
+            triplet: if 40 = fifth system.version [  ; 64-bit
                 "x86_64-linux-gnu"
             ]
             insert config.library-path spread compose [

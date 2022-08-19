@@ -65,7 +65,7 @@
 (
     i: 0
     parse "a." [
-        some [thru "a" (i: i + 1 j: try if i > 1 [<end> <any>]) j]
+        some [thru "a" (i: i + 1 j: if i > 1 [<end> <any>]) j]
     ]
     i == 1
 )

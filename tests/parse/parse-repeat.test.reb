@@ -65,7 +65,7 @@
 ; a ~void~ isotope, as do 0-iteration REPEAT and INTEGER! rules.
 [
     ("a" = parse "a" ["a" repeat (0) "b"])
-    (void' = parse "a" ["a" ^[repeat (0) "b"]])
+    ('~null~ = parse "a" ["a" ^[repeat (0) "b"]])
 ]
 
 ; Conventional ranges

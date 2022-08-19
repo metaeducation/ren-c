@@ -72,3 +72,23 @@
         ]
     )
 ]
+
+; Non-^META cases should be able to get away with fail + except if it doesn't
+; actually try to do the assignment.
+[
+    (null? until [x: fail "hi" except [break]])
+    (null? until [[x]: fail "hi" except [break]])
+    (
+        did all [
+            true = until [x: fail "hi" except [true]]
+            x = true
+        ]
+    )
+    (did all [
+        true = until [[x]: fail "hi" except [true]]
+        x = true
+    ])
+
+    (e: 1020, did all [(trap [e: fail "hi"]).message = "hi", e = 1020])
+    (e: 1020, did all [(trap [[e]: fail "hi"]).message = "hi", e = 1020])
+]

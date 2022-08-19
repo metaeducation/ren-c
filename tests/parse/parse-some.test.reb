@@ -140,7 +140,7 @@
 [
     ('~null~ = ^ parse "a" ["a" opt some "b"])
     ('~null~ = ^ parse "a" ["a" [opt "b"]])
-    (void' = parse "a" ["a" ^[maybe some "b"]])
+    ('~null~ = ^ parse "a" ["a" ^[maybe some "b"]])
 ]
 
 ; This test works in Rebol2 even if it starts `i: 0`, presumably a bug.
@@ -159,11 +159,11 @@
 [#1268 (
     i: 0
     <infinite?> = catch [
-        parse "a" [maybe some [(i: i + 1) (if i > 100 [throw <infinite?>])]]
+        parse "a" [maybe some [(i: i + 1, if i > 100 [throw <infinite?>])]]
     ]
 )(
     i: 0
-    parse "a" [maybe some [(i: i + 1 j: try if i = 2 [[false]]) j]]
+    parse "a" [maybe some [(i: i + 1, j: if i = 2 [[false]]) j]]
     i == 2
 )]
 

@@ -325,26 +325,26 @@
 (
     x: <overwritten>
     did all [
-        none? (<discarded> x: ())
-        unset? 'x
+        <kept> = (<kept> x: ())
+        null? x
     ]
 )(
     x: <overwritten>
     did all [
-        none? (<discarded> x: comment "hi")
-        unset? 'x
+        <kept> = (<kept> x: comment "hi")
+        null? x
     ]
 )(
     obj: make object! [x: <overwritten>]
     did all [
-        none? (<discarded> obj.x: comment "hi")
-        unset? 'obj.x
+        <kept> = (<kept> obj.x: comment "hi")
+        null? obj.x
     ]
 )(
     obj: make object! [x: <overwritten>]
     did all [
-        none? (<discarded> obj.x: ())
-        unset? 'obj.x
+        <kept> = (<kept> obj.x: ())
+        null? obj.x
     ]
 )
 
@@ -475,5 +475,5 @@
 
 (
     e: trap [1 + 2 (comment "stale") + 3]
-    e.id = 'no-arg
+    e.id = 'bad-isotope
 )

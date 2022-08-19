@@ -158,7 +158,7 @@ export console!: make object! [
             ; states since as isotopes they cannot be actually used in frame
             ; slots.
             ;
-            print "; void (decays to none)"
+            print "; void (decays to null)"
             return none
         ]
 
@@ -185,7 +185,7 @@ export console!: make object! [
             ; number of parts, and helps `~` earn its name of "none".
             ;
             ;     >> x: if false [<a>]
-            ;     == ~void~  ; isotope (decays to none)
+            ;     == ~void~  ; isotope
             ;
             ;     >> x: decay if false [<a>]
             ;

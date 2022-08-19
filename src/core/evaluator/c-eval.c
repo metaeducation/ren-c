@@ -144,20 +144,35 @@ STATIC_ASSERT(
 //
 //////////////////////////////////////////////////////////////////////////////
 //
-// 1. Using a SET-XXX! means you always have at least two elements; it's like
+// 1. Note that any enfix quoting operators that would quote backwards to see
+//    the `x:` would have intercepted it during a lookahead...pre-empting any
+//    of this code.
+//
+// 2. Using a SET-XXX! means you always have at least two elements; it's like
 //    an arity-1 function.  `1 + x: whatever ...`.  This overrides the no
 //    lookahead behavior flag right up front.
 //
-// 2. Beyond the trick for `>-`, output should not be visible to the assign:
+// 3. If the evaluation step doesn't produce any output, we want the variable
+//    to be set to NULL, but the voidness to propagate:
 //
-//     >> (1 + 2 x: comment "x should not be three")
-//     == ~  ; isotope
+//        >> 1 + 2 x: comment "hi"
+//        == 3
 //
-//    So all rightward evaluations set the output to end.  Note that any
-//    enfix quoting operators that would quote backwards to see the `x:` would
-//    have intercepted it during a lookahead...pre-empting any of this code.
+//        >> x
+//        == null
 //
-// 3. If current is pointing into the lookback buffer or the fetched value,
+//    Originally this would unset x, and propagate a none.  But once isotope
+//    assignments were disallowed, that ruined `x: y: if condition [...]`
+//    where we want `x = y` after that.  Cases like `return [# result]: ...`
+//    presented a challenge for how not naming a variable would want to
+//    preserve the value, so turning voids to nones didn't feel good there.
+//    The general `x: case [...]` being able to leave X as NULL after no
+//    match was also a persuasion point, along with the tight link between
+//    NULL and VOID by triggering ELSE and linked by ^META state.  In the
+//    balance it is simply too good to worry about the potentially misleading
+//    state of X after the assignment.  So it was changed.
+//
+// 4. If current is pointing into the lookback buffer or the fetched value,
 //    it will not work to hold onto this pointer while evaluating the right
 //    hand side.  The old stackless build wrote current into the spare and
 //    restored it in the state switch().  Did this ever happen?
@@ -173,13 +188,14 @@ inline static Frame(*) Maybe_Rightward_Continuation_Needed(Frame(*) f)
     if (Is_End(f_next))  // `do [x:]`, `do [o.x:]`, etc. are illegal
         fail (Error_Need_Non_End(f_current));
 
-    Clear_Feed_Flag(f->feed, NO_LOOKAHEAD);  // always >= 2 elements, see [1]
+    Clear_Feed_Flag(f->feed, NO_LOOKAHEAD);  // always >= 2 elements, see [2]
 
-    RESET(OUT);  // all SET-XXX! overwrite out, see [2]
+    assert(Is_Stale(OUT));  // SET-XXX! may need to be invisible, see [3]
 
     Flags flags =
         EVAL_EXECUTOR_FLAG_SINGLE_STEP  // v-- if f was fulfilling, we are
-        | (f->flags.bits & EVAL_EXECUTOR_FLAG_FULFILLING_ARG);
+        | (f->flags.bits & EVAL_EXECUTOR_FLAG_FULFILLING_ARG)
+        | FRAME_FLAG_MAYBE_STALE;
 
     if (Did_Init_Inert_Optimize_Complete(OUT, f->feed, &flags))
         return nullptr;  // If eval not hooked, ANY-INERT! may not need a frame
@@ -190,7 +206,7 @@ inline static Frame(*) Maybe_Rightward_Continuation_Needed(Frame(*) f)
     );
     Push_Frame(OUT, subframe);
 
-    assert(f_current != &f->feed->lookback);  // are these possible?  see [3]
+    assert(f_current != &f->feed->lookback);  // are these possible?  see [4]
     assert(f_current != &f->feed->fetched);
 
     return subframe;
@@ -732,19 +748,17 @@ Bounce Evaluator_Executor(Frame(*) f)
 
       } set_word_rightside_in_out: {  ////////////////////////////////////////
 
-        if (Is_Void(OUT)) {  // unset variable, see [1]
-            Init_None(Sink_Word_May_Fail(f_current, f_specifier));
-            Init_None(OUT);
+        if (Is_Stale(OUT)) {
+            Init_Decayed_Void(Sink_Word_May_Fail(f_current, f_specifier));
+        }
+        else if (
+            Is_Isotope(OUT)
+            and Not_Cell_Flag(OUT, SCANT_EVALUATED_ISOTOPE)  // from QUASI!
+            and Pointer_To_Decayed(OUT) == OUT  // don't corrupt OUT
+        ){
+            fail (Error_Bad_Isotope(OUT));
         }
         else {
-            if (
-                Is_Isotope(OUT)
-                and Not_Cell_Flag(OUT, SCANT_EVALUATED_ISOTOPE)  // from QUASI!
-                and Pointer_To_Decayed(OUT) == OUT  // don't corrupt OUT
-            ){
-                fail (Error_Bad_Isotope(OUT));
-            }
-
             if (REB_ACTION == VAL_TYPE_UNCHECKED(OUT))  // isotopes ok
                 INIT_VAL_ACTION_LABEL(OUT, VAL_WORD_SYMBOL(f_current));
 
@@ -752,11 +766,11 @@ Bounce Evaluator_Executor(Frame(*) f)
                 Sink_Word_May_Fail(f_current, f_specifier),
                 Pointer_To_Decayed(OUT)
             );
-        }
 
-        if (f_next_gotten)  // cache can tamper with lookahead, see [2]
-            if (VAL_WORD_SYMBOL(f_next) == VAL_WORD_SYMBOL(f_current))
-                f_next_gotten = nullptr;
+            if (f_next_gotten)  // cache can tamper with lookahead, see [2]
+                if (VAL_WORD_SYMBOL(f_next) == VAL_WORD_SYMBOL(f_current))
+                    f_next_gotten = nullptr;
+        }
 
         STATE = ST_EVALUATOR_INITIAL_ENTRY;
         break; }
@@ -1091,32 +1105,30 @@ Bounce Evaluator_Executor(Frame(*) f)
 
       } set_tuple_rightside_in_out: {  ///////////////////////////////////////
 
-        if (Is_Void(OUT)) {  // ^-- also see REB_SET_WORD
+        /*  // !!! Should we figure out how to cache a label in the cell?
+        if (IS_ACTION(OUT))
+            INIT_VAL_ACTION_LABEL(OUT, VAL_WORD_SYMBOL(v));
+        */
+
+        if (Is_Stale(OUT)) {
             if (Set_Var_Core_Throws(
                 SPARE,
                 GROUPS_OK,
                 f_current,
                 f_specifier,
-                NONE_ISOTOPE
+                DECAYED_VOID_CELL
             )){
                 goto return_thrown;
             }
-            Init_None(OUT);  // propagate none (same as SET-WORD!, SET)
+        }
+        else if (
+            Is_Isotope(OUT)
+            and Not_Cell_Flag(OUT, UNEVALUATED)  // see QUASI! handling
+            and Pointer_To_Decayed(OUT) == OUT  // don't corrupt out
+        ){
+            fail (Error_Bad_Isotope(OUT));
         }
         else {
-            /*  // !!! Should we figure out how to cache a label in the cell?
-            if (IS_ACTION(OUT))
-                INIT_VAL_ACTION_LABEL(OUT, VAL_WORD_SYMBOL(v));
-            */
-
-            if (
-                Is_Isotope(OUT)
-                and Not_Cell_Flag(OUT, UNEVALUATED)  // see QUASI! handling
-                and Pointer_To_Decayed(OUT) == OUT  // don't corrupt out
-            ){
-                fail (Error_Bad_Isotope(OUT));
-            }
-
             if (Set_Var_Core_Throws(
                 SPARE,
                 GROUPS_OK,
@@ -1127,6 +1139,7 @@ Bounce Evaluator_Executor(Frame(*) f)
                 goto return_thrown;
             }
         }
+
         STATE = ST_EVALUATOR_INITIAL_ENTRY;
         break; }
 
@@ -1284,14 +1297,17 @@ Bounce Evaluator_Executor(Frame(*) f)
       case REB_SET_BLOCK: {
         assert(Not_Feed_Flag(f->feed, NEXT_ARG_FROM_OUT));
 
-        // As with the other SET-XXX! variations, we don't want to be able to
-        // see what's to the left of the assignment in the case of the right
-        // hand side vanishing:
+        // As with the other SET-XXX! variations, we may need to continue
+        // what is to the left of the assignment if the right hand side
+        // winds up vanishing.
         //
         //     >> (10 [x]: comment "we don't want this to be 10")
-        //     ** This should be an error.
+        //     == 10
         //
-        RESET(OUT);
+        //     >> x
+        //     ; null
+        //
+        assert(Is_Stale(OUT));
 
         // We pre-process the SET-BLOCK! first, because we are going to
         // advance the feed in order to build a frame for the following code.
@@ -1467,6 +1483,8 @@ Bounce Evaluator_Executor(Frame(*) f)
             error_on_deferred
         );
 
+        Set_Frame_Flag(sub, FAILURE_RESULT_OK);  // may pass to except
+
         if (Is_Throwing(sub)) {
             Drop_Frame(sub);
             Drop_Data_Stack_To(BASELINE->stack_base);
@@ -1517,14 +1535,6 @@ Bounce Evaluator_Executor(Frame(*) f)
         assert(STATE == ST_EVALUATOR_SET_BLOCK_RIGHTSIDE);
         frame_->u.eval.stackindex_circled = stackindex_circled;
 
-        REBVAL* main = Data_Stack_At(BASELINE->stack_base + 1);
-        if (
-            IS_META_WORD(main) or IS_META_TUPLE(main)
-            or Is_Blackhole(main) or IS_BLANK(main)
-        ){
-            Set_Frame_Flag(sub, FAILURE_RESULT_OK);  // logic repeated below
-        }
-
         FRM_STATE_BYTE(sub) = ST_ACTION_TYPECHECKING;
         return CATCH_CONTINUE_SUBFRAME(sub);
 
@@ -1560,15 +1570,8 @@ Bounce Evaluator_Executor(Frame(*) f)
                 EVAL_EXECUTOR_FLAG_SINGLE_STEP
                 | FLAG_STATE_BYTE(ST_EVALUATOR_LOOKING_AHEAD)
                 | EVAL_EXECUTOR_FLAG_INERT_OPTIMIZATION  // tolerate enfix late
-                | FRAME_FLAG_MAYBE_STALE;  // won't be, but avoids RESET()
-
-            REBVAL* main = Data_Stack_At(BASELINE->stack_base + 1);
-            if (
-                IS_META_WORD(main) or IS_META_TUPLE(main)
-                or Is_Blackhole(main) or IS_BLANK(main)
-            ){
-                flags |= FRAME_FLAG_FAILURE_RESULT_OK;  // logic repeated above
-            }
+                | FRAME_FLAG_MAYBE_STALE  // won't be, but avoids RESET()
+                | FRAME_FLAG_FAILURE_RESULT_OK;  // might pass OUT to EXCEPT
 
             Frame(*) subframe = Make_Frame(f->feed, flags);
             Push_Frame(OUT, subframe);  // offer potential enfix previous OUT
@@ -1608,27 +1611,38 @@ Bounce Evaluator_Executor(Frame(*) f)
             if (not Is_Failure(OUT))
                 Init_None(OUT);  // "uninteresting result"
         }
-        else {
-            if (ANY_META_KIND(VAL_TYPE(Data_Stack_At(BASELINE->stack_base + 1)))) {
-                if (Is_Stale(OUT) or Is_Void(OUT))
-                    Init_Meta_Of_Void(OUT);
-                else
-                    Meta_Quotify(OUT);
+        else if (Is_Blackhole(SPARE)) {
+            // pass through everything (even failures), e.g. no assignment
+        }
+        else if (ANY_META_KIND(VAL_TYPE(SPARE))) {
+            if (Is_Stale(OUT) or Is_Void(OUT))
+                Init_Meta_Of_Void(OUT);
+            else
+                Meta_Quotify(OUT);
 
-                Set_Var_May_Fail(SPARE, SPECIFIED, OUT);
-            }
-            else if (Is_Stale(OUT)) {
-                Set_Var_May_Fail(
-                    SPARE, SPECIFIED,
-                    NONE_ISOTOPE  // !!! Should we go with ~void~ isotope?
-                );
-            }
-            else {  // ordinary assignment
-                Set_Var_May_Fail(
-                    SPARE, SPECIFIED,
-                    Pointer_To_Decayed(OUT)  // still want to return isotope
-                );
-            }
+            Set_Var_May_Fail(SPARE, SPECIFIED, OUT);
+        }
+        else if (Is_Stale(OUT) or Is_Void(OUT)) {
+            Set_Var_May_Fail(
+                SPARE, SPECIFIED,
+                DECAYED_VOID_CELL
+            );
+        }
+        else if (Is_Failure(OUT)) {
+            fail (VAL_CONTEXT(OUT));
+        }
+        else if (
+            Is_Isotope(OUT)
+            and Not_Cell_Flag(OUT, SCANT_EVALUATED_ISOTOPE)  // from QUASI!
+            and Pointer_To_Decayed(OUT) == OUT  // don't corrupt OUT
+        ){
+            fail (Error_Bad_Isotope(OUT));
+        }
+        else {  // regular assignment
+            Set_Var_May_Fail(
+                SPARE, SPECIFIED,
+                Pointer_To_Decayed(OUT)
+            );
         }
 
         // Function machinery did the proxying.  If a return element was

@@ -276,9 +276,9 @@ gen-obj: func [
     ; version of the standard.  Note if the particular file is third party and
     ; can only be compiled as C, we may have overridden that above.
     ;
-    insert flags maybe spread opt switch standard [
+    insert flags spread switch standard [
         'c [
-            _
+            []  ; empty for spread
         ]
         'gnu89 'c99 'gnu99 'c11 [
             reduce [
@@ -363,7 +363,7 @@ gen-obj: func [
     ; Still we'd like to get the best information from any good ones, so
     ; they're turned off on a case-by-case basis.
     ;
-    append flags spread opt switch rigorous [
+    append flags spread switch rigorous [
         #[true] 'yes 'on 'true [
             compose [
                 <gnu:-Werror> <msc:/WX>  ; convert warnings to errors
@@ -616,7 +616,7 @@ gen-obj: func [
             ]
         ]
         _ #[false] 'no 'off 'false [
-            _
+            []  ; empty for SPREAD
         ]
 
         fail ["RIGOROUS [yes no \logic!\] not" (rigorous)]
@@ -1281,7 +1281,7 @@ cfg-cplusplus: false  ; gets set to true if linked as c++ overall
 ; Example. Mingw32 does not have access to windows console api prior to vista.
 ;
 cfg-pre-vista: false
-append app-config/definitions maybe spread opt switch user-config/pre-vista [
+append app-config/definitions maybe spread switch user-config/pre-vista [
     #[true] 'yes 'on 'true [
         cfg-pre-vista: true
         compose [
@@ -1290,17 +1290,17 @@ append app-config/definitions maybe spread opt switch user-config/pre-vista [
     ]
     _ #[false] 'no 'off 'false [
         cfg-pre-vista: false
-        _
+        []  ; empty for spread
     ]
 
     fail ["PRE-VISTA [yes no \logic!\] not" (user-config/pre-vista)]
 ]
 
 
-append app-config/ldflags maybe spread opt switch user-config/static [
+append app-config/ldflags maybe spread switch user-config/static [
     _ 'no 'off 'false #[false] [
         ;pass
-        _
+        []
     ]
     'yes 'on #[true] [
         compose [

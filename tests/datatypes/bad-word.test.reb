@@ -62,22 +62,22 @@
 (
     x: <overwritten>
     did all [
-        '~ = ^ x: do []
-        '~ = ^x
+        void' = ^ x: do []
+        null' = ^x
     ]
 )
 (
     x: 10
     did all [
-        '~ = ^ x: eval []
-        unset? 'x
+        void' = ^ x: eval []
+        null? x
     ]
 )
 (
     x: 10
     did all [
         10 maybe x: eval []
-        unset? 'x
+        null? x
     ]
 )
 
@@ -227,8 +227,8 @@
     (
         a: 1020
         did all [
-            none? a: ()
-            unset? 'a
+            void? a: ()
+            null? a
         ]
     )
 ]

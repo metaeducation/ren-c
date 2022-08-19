@@ -148,7 +148,7 @@
 (
     i: 0
     parse3 "a." [
-        some [thru "a" (i: i + 1 j: try if i > 1 [<end> skip]) j]
+        some [thru "a" (i: i + 1, j: if i > 1 [<end> skip]) j]
     ]
     i == 1
 )
@@ -186,12 +186,12 @@
 [#1268 (
     i: 0
     <infinite?> = catch [
-        parse3 "a" [some [(i: i + 1) (if i > 100 [throw <infinite?>])]]
+        parse3 "a" [some [i: i + 1, if i > 100 [throw <infinite?>]]]
     ]
 )]
 [#1268 (
     i: 0
-    parse3 "a" [some [(i: i + 1 j: try if i = 2 [[fail]]) j]]
+    parse3 "a" [some [(i: i + 1, j: if i = 2 [[fail]]) j]]
     i == 2
 )]
 

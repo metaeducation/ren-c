@@ -75,24 +75,20 @@
     )
 ]
 
-; Invisible assignments will leave the variable's existing content alone, which
-; is a new rule being pushed through systemically.
-;
-; https://forum.rebol.info/t/1582/5
-;
-; !!! Concept being reviewed, may be a function purely of enfix MAYBE
+; Invisible assignments set the variable to NULL
+; https://forum.rebol.info/t/q-should-be-the-unevaluated-form-of-void-a-no/1915/
 (
     x: ~, y: 10
     did all [
         <result> = parse "a" [x: y: elide "a" (<result>)]
-        unset? 'x
-        unset? 'y
+        null? x
+        null? y
     ]
 )(
     obj: make object! [x: ~, y: 10]
     did all [
         <result> = parse "a" [obj.x: obj.y: elide "a" (<result>)]
-        unset? 'obj.x
-        unset? 'obj.y
+        null? obj.x
+        null? obj.y
     ]
 )

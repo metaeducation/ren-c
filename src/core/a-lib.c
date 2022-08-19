@@ -906,10 +906,10 @@ inline static void Run_Va_May_Fail(
     //
     //     REBVAL *v = rebValue("if tester", whatever, "[<a>]");
     //
-    // Conceptually we say that IF returns a "~void~ isotope", but there
-    // is no representation for them that we store via SET-WORD!/etc.  So they
-    // decay to none.  We want this convenience here (assigning `v` is like
-    // assigning a SET-WORD! in regular code.
+    // Conceptually we say that IF returns void, but there is no representation
+    // for them that we store via SET-WORD!/etc.  So they decay to NULL.  We
+    // want this convenience here (assigning `v` is like assigning a SET-WORD!
+    // in regular code).
     //
     // Also: we want cases like `rebNot(nullptr)` to work, but the variadic
     // evaluator cannot splice NULL into the feed of execution and have it

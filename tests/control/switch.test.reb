@@ -41,6 +41,14 @@
 (<fallout> = switch/all 10 [0 + 0 [<a>] 0 + 0 [<b>] <fallout>])
 
 
-; New feature for specifying comparison functions via a TUPLE!
+; New feature for specifying comparison functions
 
 (<yep> = switch/predicate 10 [20 [<nope>] 5 [<yep>]] :greater?)
+
+; New feature for doing typeset matches
+[
+    ("COOL!" = switch <asdf> [matches any-string! ["COOL!"]])
+    ("COOL!" = switch "asdf" [matches any-string! ["COOL!"]])
+
+    (void? switch 1020 [matches any-string! [fail ~unreachable~]])
+]

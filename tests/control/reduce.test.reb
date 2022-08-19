@@ -127,7 +127,7 @@
     ((the '3) = reduce-each ^x [1 + 2] [x])
 
     (
-        e: reduce-each ^x [fail "foo"] [x]
+        e: reduce-each ^x [fail "foo"] [unquasi x]
         e.message = "foo"
     )
 ]

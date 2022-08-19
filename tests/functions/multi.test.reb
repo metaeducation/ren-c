@@ -184,3 +184,11 @@
     " cd" = [item @]: transcode "ab cd"
     item = 'ab
 ])
+
+; Propagates void signals, but sets variables to null
+[
+    (did all [
+        void? [x]: comment "hi"
+        null? x
+    ])
+]

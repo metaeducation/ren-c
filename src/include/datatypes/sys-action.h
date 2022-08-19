@@ -727,7 +727,7 @@ inline static Bounce Native_None_Result(Frame(*) frame_) {
 //
 inline static REBVAL *Reify_Eval_Out_Plain(REBVAL *out) {
     if (Is_Void(out))
-        return Init_None(out);
+        return Init_Decayed_Void(out);
 
     return out;
 }

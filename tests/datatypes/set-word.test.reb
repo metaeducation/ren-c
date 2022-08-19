@@ -42,13 +42,13 @@
 [https://github.com/metaeducation/ren-c/issues/876 (
     x: 1020
     did all [
-        none? (null, x: (void))
-        none? get/any 'x
+        null? (null, x: (void))
+        null? x
     ]
 )(
     x: 1020
     did all [
         2 = (x: comment "Hi" 2)
-        unset? 'x
+        null? x
     ]
 )]

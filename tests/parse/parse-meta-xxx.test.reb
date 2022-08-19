@@ -4,11 +4,11 @@
 
 [
     (did all  [
-        void' = parse "" [synthesized: ^[]]
+        '~null~ = ^ parse "" [synthesized: ^[]]
         void' = synthesized
     ])
     (did all  [
-        void' = parse "" [synthesized: ^[comment "hi"]]
+        '~null~ = ^ parse "" [synthesized: ^[comment "hi"]]
         void' = synthesized
     ])
     (did all  [
