@@ -51,3 +51,40 @@
 ;        (if count != 1 [fail] :keep): (count: count + 1)
 ;    ]
 ;
+
+; VOID is legal in a SET-GROUP!, which helps in some interesting cases
+;
+(3 = (void): 1 + 2)
+
+; Example of an interesting use of the void case
+[
+    (returnproxy: lambda [action [action!]] [
+        enclose (augment :action [/return [word!]]) f -> [
+            (maybe f.return): do f
+        ]
+    ], true)
+
+    (
+        test: lambda [x] [x + 1000]
+        wrapper: returnproxy :test
+        did all [
+            1020 = wrapper 20
+            1020 = wrapper/return 20 'y
+            1020 = y
+        ]
+    )
+
+    (
+        test: lambda [x] [x + 1000]
+        wrapper: returnproxy :test
+
+        f: make frame! :wrapper
+        f.x: 20
+        f.return: 'out
+
+        did all [
+            1020 = do f
+            1020 = y
+        ]
+    )
+]

@@ -731,6 +731,8 @@ Bounce Evaluator_Executor(Frame(*) f)
     //    and the various complexities involved with that means we have to
     //    flush here if the symbols match.
 
+    set_blank_in_spare: ///////////////////////////////////////////////////////
+
     set_word_in_spare: ///////////////////////////////////////////////////////
 
         f_current = SPARE;
@@ -748,7 +750,10 @@ Bounce Evaluator_Executor(Frame(*) f)
 
       } set_word_rightside_in_out: {  ////////////////////////////////////////
 
-        if (Is_Stale(OUT)) {
+        if (IS_BLANK(f_current)) {
+            // happens with `(void): ...`
+        }
+        else if (Is_Stale(OUT)) {
             Init_Decayed_Void(Sink_Word_May_Fail(f_current, f_specifier));
         }
         else if (
@@ -1164,15 +1169,17 @@ Bounce Evaluator_Executor(Frame(*) f)
 
       } set_group_result_in_spare: {  ////////////////////////////////////////
 
-        if (Is_Void(SPARE))
-            fail (Error_Bad_Void());
-
         if (Is_Isotope(SPARE))
             fail (Error_Bad_Isotope(SPARE));
 
         STATE = ST_EVALUATOR_INITIAL_ENTRY;
 
         f_current = SPARE;
+
+        if (Is_Void(SPARE)) {
+            Init_Blank(SPARE);
+            goto set_blank_in_spare;
+        }
 
         switch (VAL_TYPE(SPARE)) {
           case REB_BLOCK:
