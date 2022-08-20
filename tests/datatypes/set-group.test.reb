@@ -88,3 +88,13 @@
         ]
     )
 ]
+
+; Tricks are done in EXPORT to allow you to optionally export things.  This
+; is used by Redbol at time of writing.
+[
+    (10 = (void): 10)
+    (
+        import module [Type: module] [export ten: export (void): 10]
+        ten = 10
+    )
+]

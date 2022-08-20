@@ -635,7 +635,7 @@ export*: func [
         [<opt> any-value!]
     where "Specialized for each module via EXPORT"
         [module!]
-    'set-word [<skip> set-word!]
+    'left [<skip> set-word! set-group!]
     args "`export x: ...` for single or `export [...]` for words list"
         [<opt> any-value! <variadic>]
     <local>
@@ -644,10 +644,21 @@ export*: func [
     hdr: meta-of where
     exports: ensure block! select hdr 'Exports
 
-    if set-word [
-        set set-word args: take args
-        append exports (as word! set-word)
-        return get/any 'args
+    if left [
+        if set-group? left [
+            left: ^ eval left
+            case [
+                void' = left [word: null]
+                any-word? unget left [word: as word! unget left]
+                fail "EXPORT of SET-GROUP! must be VOID or ANY-WORD!"
+            ]
+        ] else [
+            word: as word! left
+        ]
+        return (
+            (maybe word): take args
+            elide if word [append exports word]
+        )
     ]
 
     items: take args
