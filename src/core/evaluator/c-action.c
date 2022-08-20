@@ -222,6 +222,12 @@ Bounce Action_Executor(Frame(*) f)
                 );
                 Init_Void_Isotope(ARG);  // typecheck would turn ~ to NULL
             }
+            else if (
+                VAL_PARAM_CLASS(PARAM) == PARAM_CLASS_META
+                and Is_Meta_Of_Void(ARG)
+            ){
+                Init_Void_Isotope(ARG);  // !!! This is all ugly, review
+            }
 
             // continue_fulfilling is used for all params including specialized
             // which use PARAM as the specialized value.  We have to do this

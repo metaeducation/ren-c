@@ -115,7 +115,9 @@ inline static REBVAL *Quasify(REBVAL *v) {
 // quote isotopes to produce QUASI! values.  This is done by META (alias ^)
 // and the REB_META_XXX family of values (like ^WORD, ^TU.P.LE...)
 
-inline static Cell(*) Meta_Quotify(Cell(*) v) {
+inline static Value(*) Meta_Quotify(Value(*) v) {
+    if (Is_Void(v))
+        return Init_Nulled(v);
     if (Is_Isotope(v)) {
         Reify_Isotope(v);  // ...make it "friendly" now...
         return v;
@@ -123,24 +125,17 @@ inline static Cell(*) Meta_Quotify(Cell(*) v) {
     return Quotify(v, 1);  // a non-isotope winds up quoted
 }
 
-inline static Cell(*) Meta_Unquotify(Cell(*) v) {
+inline static Value(*) Meta_Unquotify(Value(*) v) {
     if (Is_Meta_Of_Failure(v))
         fail (VAL_CONTEXT(v));  // too dangerous to create failure easily
-    if (QUOTE_BYTE(v) == QUASI_1)
+    if (Is_Nulled(v))
+        RESET(v);
+    else if (QUOTE_BYTE(v) == QUASI_1)
         mutable_QUOTE_BYTE(v) = ISOTOPE_255;
     else
         Unquotify_Core(v, 1);
     return v;
 }
-
-#if CPLUSPLUS_11
-    inline static REBVAL *Meta_Quotify(REBVAL *v)
-        { return SPECIFIC(Meta_Quotify(cast(Cell(*), v))); }
-
-    inline static REBVAL *Meta_Unquotify(REBVAL *v)
-        { return SPECIFIC(Meta_Unquotify(cast(Cell(*), v))); }
-#endif
-
 
 inline static Bounce Native_Unmeta_Result(Frame(*) frame_, const REBVAL *v) {
     assert(Is_Stale_Void(&TG_Thrown_Arg));

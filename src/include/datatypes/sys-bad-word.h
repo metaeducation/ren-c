@@ -284,7 +284,10 @@ inline static bool Is_Meta_Of_End_Isotope(Cell(const*) v)
 
 inline static REBVAL *Init_Blackhole(Cell(*) out);  // defined in %sys-token.h
 
-inline static Cell(*) Decay_If_Isotope(Cell(*) v) {
+inline static Value(*) Decay_If_Isotope(Value(*) v) {
+    if (Is_Void(v))
+        return Init_Decayed_Void(v);
+
     if (not Is_Word_Isotope(v))
         return v;
 
@@ -305,7 +308,7 @@ inline static Cell(*) Decay_If_Isotope(Cell(*) v) {
 
 inline static const REBVAL *Pointer_To_Decayed(const REBVAL *v) {
     if (Is_Void(v))
-        return Lib(NULL);
+        return DECAYED_VOID_CELL;
 
     if (not Is_Word_Isotope(v))
         return v;
@@ -332,7 +335,7 @@ inline static const REBVAL *rebPointerToDecayed(const REBVAL *v) {  // unused?
     Value(const*) decayed = Pointer_To_Decayed(v);
     if (decayed == v)
         return v;
-    return decayed == Lib(NULL) ? nullptr : decayed;
+    return Is_Nulled(decayed) ? nullptr : decayed;
 }
 
 inline static Cell(*) Isotopify_If_Falsey(Cell(*) v) {

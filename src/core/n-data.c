@@ -1610,10 +1610,7 @@ DECLARE_NATIVE(identity) // sample uses: https://stackoverflow.com/q/3136338
 
     REBVAL *v = ARG(value);
 
-    if (Is_Meta_Of_Void(v))
-        return VOID;
-
-    return COPY(Meta_Unquotify(v));
+    return UNMETA(v);
 }
 
 
@@ -2401,7 +2398,7 @@ DECLARE_NATIVE(heavy) {
     if (Is_Meta_Of_Null(v))
         return Init_Null_Isotope(OUT);
 
-    return COPY(Meta_Unquotify(v));
+    return UNMETA(v);
 }
 
 
@@ -2445,17 +2442,18 @@ DECLARE_NATIVE(none) {
 //  "Turn ~null~, ~blank~ and ~false~ isotopes into their corresponding values"
 //
 //      return: [<opt> any-value!]
-//      ^optional [<opt> any-value!]
+//      ^optional [<opt> <void> any-value!]
 //  ]
 //
 DECLARE_NATIVE(decay)
 {
     INCLUDE_PARAMS_OF_DECAY;
 
-    Move_Cell(OUT, Meta_Unquotify(ARG(optional)));
-    Decay_If_Isotope(OUT);
+    Value(*) v = ARG(optional);
+    Meta_Unquotify(v);
+    Decay_If_Isotope(v);
 
-    return OUT;
+    return COPY(v);
 }
 
 

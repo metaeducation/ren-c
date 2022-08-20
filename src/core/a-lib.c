@@ -2018,7 +2018,7 @@ const REBINS *RL_rebQUOTING(const void *p)
         fail ("Unknown pointer");
     }
 
-    Cell(*) v = ARR_SINGLE(a);
+    Value(*) v = VAL(ARR_SINGLE(a));
     Meta_Quotify(v);
     return a;
 }

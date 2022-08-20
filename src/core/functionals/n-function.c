@@ -522,10 +522,7 @@ DECLARE_NATIVE(unwind)
     REBVAL *level = ARG(level);
     REBVAL *v = ARG(result);
 
-    if (Is_Meta_Of_Void(v))
-        RESET(v);
-    else
-        Meta_Unquotify(v);
+    Meta_Unquotify(v);
 
     return Init_Thrown_Unwind_Value(FRAME, level, v, frame_);
 }
