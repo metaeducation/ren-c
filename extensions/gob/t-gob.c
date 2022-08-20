@@ -1010,11 +1010,11 @@ REBTYPE(Gob)
 
     case SYM_CHANGE: {
         INCLUDE_PARAMS_OF_CHANGE;
-        UNUSED(PAR(series));  // covered by `v`
+        UNUSED(PARAM(series));  // covered by `v`
 
         REBVAL *value = ARG(value);
         if (!IS_GOB(value))
-            fail (PAR(value));
+            fail (PARAM(value));
 
         if (REF(line))
             fail (Error_Bad_Refines_Raw());
@@ -1041,7 +1041,7 @@ REBTYPE(Gob)
         // falls through
     case SYM_INSERT: {
         INCLUDE_PARAMS_OF_INSERT;
-        UNUSED(PAR(series));  // covered by `v`
+        UNUSED(PARAM(series));  // covered by `v`
 
         Cell(*) value = ARG(value);
         Unquotify_Dont_Expect_Meta(value);
@@ -1065,7 +1065,7 @@ REBTYPE(Gob)
             );  // !!!
         }
         else
-            fail (PAR(value));
+            fail (PARAM(value));
 
         Insert_Gobs(gob, value, index, len, false);
 
@@ -1079,7 +1079,7 @@ REBTYPE(Gob)
 
     case SYM_REMOVE: {
         INCLUDE_PARAMS_OF_REMOVE;
-        UNUSED(PAR(series));  // covered by `v`
+        UNUSED(PARAM(series));  // covered by `v`
 
         REBLEN len = REF(part) ? Get_Num_From_Arg(ARG(part)) : 1;
         if (index + len > tail)
@@ -1091,7 +1091,7 @@ REBTYPE(Gob)
 
     case SYM_TAKE: {
         INCLUDE_PARAMS_OF_TAKE;
-        UNUSED(PAR(series));  // covered by `v`
+        UNUSED(PARAM(series));  // covered by `v`
 
         // Pane is an ordinary array, so chain to the ordinary TAKE* code.
         // Its index is always at zero, because the GOB! instances are the

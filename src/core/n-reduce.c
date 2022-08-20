@@ -474,11 +474,11 @@ Bounce Composer_Executor(Frame(*) f)
     if (THROWING)
         return THROWN;  // no state to cleanup (just data stack, auto-cleaned)
 
-    PARAM(1, return);
-    PARAM(2, label);
-    PARAM(3, value);
-    PARAM(4, deep);
-    PARAM(5, predicate);
+    DECLARE_PARAM(1, return);
+    DECLARE_PARAM(2, label);
+    DECLARE_PARAM(3, value);
+    DECLARE_PARAM(4, deep);
+    DECLARE_PARAM(5, predicate);
 
     Frame(*) main_frame = f->u.compose.main_frame;  // the invoked COMPOSE native
 

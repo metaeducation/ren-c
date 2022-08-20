@@ -226,9 +226,9 @@ Bounce File_Actor(Frame(*) frame_, REBVAL *port, Symbol(const*) verb)
       case SYM_READ: {
         INCLUDE_PARAMS_OF_READ;
 
-        UNUSED(PAR(source));
-        UNUSED(PAR(string)); // handled in dispatcher
-        UNUSED(PAR(lines)); // handled in dispatcher
+        UNUSED(PARAM(source));
+        UNUSED(PARAM(string)); // handled in dispatcher
+        UNUSED(PARAM(lines)); // handled in dispatcher
 
         // Handle the READ %file shortcut case, where the FILE! has been
         // converted into a PORT! but has not been opened yet.
@@ -342,7 +342,7 @@ Bounce File_Actor(Frame(*) frame_, REBVAL *port, Symbol(const*) verb)
       case SYM_WRITE: {
         INCLUDE_PARAMS_OF_WRITE;
 
-        UNUSED(PAR(destination));
+        UNUSED(PARAM(destination));
 
         if (REF(seek) and REF(append))
             fail (Error_Bad_Refines_Raw());
@@ -487,7 +487,7 @@ Bounce File_Actor(Frame(*) frame_, REBVAL *port, Symbol(const*) verb)
       case SYM_OPEN: {
         INCLUDE_PARAMS_OF_OPEN;
 
-        UNUSED(PAR(spec));
+        UNUSED(PARAM(spec));
 
         Flags flags = 0;
 
@@ -525,7 +525,7 @@ Bounce File_Actor(Frame(*) frame_, REBVAL *port, Symbol(const*) verb)
 
       case SYM_COPY: {
         INCLUDE_PARAMS_OF_COPY;
-        UNUSED(PAR(value));
+        UNUSED(PARAM(value));
 
         if (REF(deep) or REF(types))
             fail (Error_Bad_Refines_Raw());
@@ -539,7 +539,7 @@ Bounce File_Actor(Frame(*) frame_, REBVAL *port, Symbol(const*) verb)
 
       case SYM_CLOSE: {
         INCLUDE_PARAMS_OF_CLOSE;
-        UNUSED(PAR(port));
+        UNUSED(PARAM(port));
 
         if (file->id == FILEHANDLE_NONE) {
             //
@@ -561,7 +561,7 @@ Bounce File_Actor(Frame(*) frame_, REBVAL *port, Symbol(const*) verb)
 
       case SYM_DELETE: {
         INCLUDE_PARAMS_OF_DELETE;
-        UNUSED(PAR(port));
+        UNUSED(PARAM(port));
 
         if (file->id != FILEHANDLE_NONE) {
             REBVAL *error = Close_File(port);
@@ -650,7 +650,7 @@ Bounce File_Actor(Frame(*) frame_, REBVAL *port, Symbol(const*) verb)
 
       case SYM_QUERY: {
         INCLUDE_PARAMS_OF_QUERY;
-        UNUSED(PAR(target));
+        UNUSED(PARAM(target));
 
         REBVAL *info = Query_File_Or_Directory(port);
         if (IS_ERROR(info)) {
@@ -674,7 +674,7 @@ Bounce File_Actor(Frame(*) frame_, REBVAL *port, Symbol(const*) verb)
       case SYM_SKIP: {
         INCLUDE_PARAMS_OF_SKIP;
 
-        UNUSED(PAR(series));
+        UNUSED(PARAM(series));
         UNUSED(REF(unbounded));  // !!! Should /UNBOUNDED behave differently?
 
         int64_t offset = VAL_INT64(ARG(offset));

@@ -872,7 +872,7 @@ REBTYPE(Array)
       case SYM_TAKE: {
         INCLUDE_PARAMS_OF_TAKE;
 
-        UNUSED(PAR(series));
+        UNUSED(PARAM(series));
         if (REF(deep))
             fail (Error_Bad_Refines_Raw());
 
@@ -914,7 +914,7 @@ REBTYPE(Array)
       case SYM_FIND:
       case SYM_SELECT: {
         INCLUDE_PARAMS_OF_FIND; // must be same as select
-        UNUSED(PAR(series));
+        UNUSED(PARAM(series));
 
         REBVAL *pattern = ARG(pattern);
 
@@ -937,7 +937,7 @@ REBTYPE(Array)
         if (REF(skip)) {
             skip = VAL_INT32(ARG(skip));
             if (skip == 0)
-                fail (PAR(skip));
+                fail (PARAM(skip));
         }
         else
             skip = 1;
@@ -978,7 +978,7 @@ REBTYPE(Array)
       case SYM_INSERT:
       case SYM_CHANGE: {
         INCLUDE_PARAMS_OF_INSERT;
-        UNUSED(PAR(series));
+        UNUSED(PARAM(series));
 
         Value(*) arg = ARG(value);
 
@@ -1051,7 +1051,7 @@ REBTYPE(Array)
 
       case SYM_COPY: {
         INCLUDE_PARAMS_OF_COPY;
-        UNUSED(PAR(value));
+        UNUSED(PARAM(value));
 
         REBU64 types = 0;
         REBLEN tail = Part_Tail_May_Modify_Index(array, ARG(part));
@@ -1197,7 +1197,7 @@ REBTYPE(Array)
 
       case SYM_SORT: {
         INCLUDE_PARAMS_OF_SORT;
-        UNUSED(PAR(series));  // covered by `v`
+        UNUSED(PARAM(series));  // covered by `v`
 
         Array(*) arr = VAL_ARRAY_ENSURE_MUTABLE(array);
 
@@ -1250,7 +1250,7 @@ REBTYPE(Array)
 
       case SYM_RANDOM: {
         INCLUDE_PARAMS_OF_RANDOM;
-        UNUSED(PAR(value));  // covered by `v`
+        UNUSED(PARAM(value));  // covered by `v`
 
         REBLEN index = VAL_INDEX(array);
 

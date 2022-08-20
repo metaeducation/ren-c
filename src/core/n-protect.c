@@ -291,7 +291,7 @@ static Bounce Protect_Unprotect_Core(Frame(*) frame_, Flags flags)
 {
     INCLUDE_PARAMS_OF_PROTECT;
 
-    UNUSED(PAR(hide)); // unused here, but processed in caller
+    UNUSED(PARAM(hide)); // unused here, but processed in caller
 
     REBVAL *value = ARG(value);
 
@@ -406,9 +406,9 @@ DECLARE_NATIVE(protect)
 
     // Avoid unused parameter warnings (core routine handles them via frame)
     //
-    UNUSED(PAR(deep));
-    UNUSED(PAR(words));
-    UNUSED(PAR(values));
+    UNUSED(PARAM(deep));
+    UNUSED(PARAM(words));
+    UNUSED(PARAM(values));
 
     Flags flags = PROT_SET;
 
@@ -440,10 +440,10 @@ DECLARE_NATIVE(unprotect)
 
     // Avoid unused parameter warnings (core handles them via frame)
     //
-    UNUSED(PAR(value));
-    UNUSED(PAR(deep));
-    UNUSED(PAR(words));
-    UNUSED(PAR(values));
+    UNUSED(PARAM(value));
+    UNUSED(PARAM(deep));
+    UNUSED(PARAM(words));
+    UNUSED(PARAM(values));
 
     if (REF(hide))
         fail ("Cannot un-hide an object field once hidden");

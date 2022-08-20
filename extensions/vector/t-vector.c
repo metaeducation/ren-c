@@ -646,7 +646,7 @@ REBTYPE(Vector)
 
     case SYM_COPY: {
         INCLUDE_PARAMS_OF_COPY;
-        UNUSED(PAR(value));  // same as `v`
+        UNUSED(PARAM(value));  // same as `v`
 
         if (REF(part) or REF(deep) or REF(types))
             fail (Error_Bad_Refines_Raw());
@@ -666,7 +666,7 @@ REBTYPE(Vector)
 
     case SYM_RANDOM: {
         INCLUDE_PARAMS_OF_RANDOM;
-        UNUSED(PAR(value));
+        UNUSED(PARAM(value));
 
         ENSURE_MUTABLE(VAL_VECTOR_BINARY(v));
 

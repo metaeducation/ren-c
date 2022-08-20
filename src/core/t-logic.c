@@ -405,7 +405,7 @@ REBTYPE(Logic)
     case SYM_RANDOM: {
         INCLUDE_PARAMS_OF_RANDOM;
 
-        UNUSED(PAR(value));
+        UNUSED(PARAM(value));
 
         if (REF(only))
             fail (Error_Bad_Refines_Raw());

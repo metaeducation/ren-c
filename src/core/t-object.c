@@ -1216,7 +1216,7 @@ REBTYPE(Context)
 
       case SYM_COPY: {  // Note: words are not copied and bindings not changed!
         INCLUDE_PARAMS_OF_COPY;
-        UNUSED(PAR(value));  // covered by `context`
+        UNUSED(PARAM(value));  // covered by `context`
 
         if (REF(part))
             fail (Error_Bad_Refines_Raw());

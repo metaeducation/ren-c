@@ -503,7 +503,7 @@ DECLARE_NATIVE(match)
         break; }
 
       default:
-        fail (PAR(test));  // all test types should be accounted for in switch
+        fail (PARAM(test));  // all test types should be accounted for in switch
     }
 
     //=//// IF IT GOT THIS FAR WITHOUT RETURNING, THE TEST MATCHED /////////=//
@@ -1423,7 +1423,7 @@ DECLARE_NATIVE(catch)
                 // !!! Should we test a typeset for illegal name types?
                 //
                 if (IS_BLOCK(candidate))
-                    fail (PAR(name));
+                    fail (PARAM(name));
 
                 Derelativize(temp1, candidate, VAL_SPECIFIER(ARG(name)));
                 Copy_Cell(temp2, label);

@@ -186,7 +186,7 @@ DECLARE_NATIVE(bind)
     }
 
     if (not ANY_ARRAYLIKE(v))  // QUOTED! could have wrapped any type
-        fail (Error_Invalid_Arg(frame_, PAR(value)));
+        fail (Error_Invalid_Arg(frame_, PARAM(value)));
 
     Cell(*) at;
     Cell(const*) tail;
@@ -2209,7 +2209,7 @@ DECLARE_NATIVE(as_text)
     REBVAL *v = ARG(value);
     Dequotify(v);  // number of incoming quotes not relevant
     if (not ANY_SERIES(v) and not ANY_WORD(v) and not ANY_PATH(v))
-        fail (PAR(value));
+        fail (PARAM(value));
 
     const REBLEN quotes = 0;  // constant folding (see AS behavior)
 

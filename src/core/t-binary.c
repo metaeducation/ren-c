@@ -389,7 +389,7 @@ REBTYPE(Binary)
       case SYM_INSERT:
       case SYM_CHANGE: {
         INCLUDE_PARAMS_OF_INSERT;  // compatible frame with APPEND, CHANGE
-        UNUSED(PAR(series));  // covered by `v`
+        UNUSED(PARAM(series));  // covered by `v`
 
         Value(*) arg = ARG(value);
 
@@ -455,7 +455,7 @@ REBTYPE(Binary)
       case SYM_SELECT:
       case SYM_FIND: {
         INCLUDE_PARAMS_OF_FIND;
-        UNUSED(PAR(series));  // covered by `v`
+        UNUSED(PARAM(series));  // covered by `v`
 
         REBVAL *pattern = ARG(pattern);
         Unquotify_Dont_Expect_Meta(pattern);
@@ -511,7 +511,7 @@ REBTYPE(Binary)
 
         Binary(*) bin = VAL_BINARY_ENSURE_MUTABLE(v);
 
-        UNUSED(PAR(series));
+        UNUSED(PARAM(series));
 
         if (REF(deep))
             fail (Error_Bad_Refines_Raw());
@@ -579,7 +579,7 @@ REBTYPE(Binary)
       case SYM_COPY: {
         INCLUDE_PARAMS_OF_COPY;
 
-        UNUSED(PAR(value));
+        UNUSED(PARAM(value));
         UNUSED(REF(deep));  // /DEEP is historically ignored on BINARY!
 
         if (REF(types))
@@ -782,7 +782,7 @@ REBTYPE(Binary)
 
       case SYM_SORT: {
         INCLUDE_PARAMS_OF_SORT;
-        UNUSED(PAR(series));
+        UNUSED(PARAM(series));
 
         if (REF(all))
             fail (Error_Bad_Refines_Raw());
@@ -810,7 +810,7 @@ REBTYPE(Binary)
         else {
             skip = Get_Num_From_Arg(ARG(skip));
             if (skip <= 0 or (len % skip != 0) or skip > len)
-                fail (PAR(skip));
+                fail (PARAM(skip));
         }
 
         Size size = 1;
@@ -834,7 +834,7 @@ REBTYPE(Binary)
       case SYM_RANDOM: {
         INCLUDE_PARAMS_OF_RANDOM;
 
-        UNUSED(PAR(value));
+        UNUSED(PARAM(value));
 
         if (REF(seed)) { // binary contents are the seed
             Size size;

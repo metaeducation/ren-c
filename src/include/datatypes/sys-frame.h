@@ -525,15 +525,15 @@ inline static Frame(*) Prep_Frame_Core(
 // are used in natives.  They capture the implicit Reb_Frame* passed to every
 // DECLARE_NATIVE ('frame_') and read the information out cleanly, like this:
 //
-//     PARAM(1, foo);
-//     PARAM(2, bar);
+//     DECLARE_PARAM(1, foo);
+//     DECLARE_PARAM(2, bar);
 //
 //     if (IS_INTEGER(ARG(foo)) and REF(bar)) { ... }
 //
-// The PARAM macro uses token pasting to name the indexes they are declaring
+// The DECLARE_PARAM macro uses token pasting to name indexes being declared as
 // `p_name` instead of just `name`.  This prevents collisions with C/C++
-// identifiers, so PARAM(case) and PARAM(new) would make `p_case` and `p_new`
-// instead of just `case` and `new` as the variable names.
+// identifiers, so DECLARE_PARAM(case) and DECLARE_PARAM(new) would make
+// `p_case` and `p_new` instead of just `case` and `new` as the variable names.
 //
 // ARG() gives a mutable pointer to the argument's cell.  REF() is typically
 // used with refinements, and gives a const reference where NULLED cells are
@@ -546,15 +546,15 @@ inline static Frame(*) Prep_Frame_Core(
 // slot for natives to hold values once they are no longer needed.
 //
 // It is also possible to get the typeset-with-symbol for a particular
-// parameter or refinement, e.g. with `PAR(foo)` or `PAR(bar)`.
+// parameter or refinement, e.g. with `PARAM(foo)` or `PARAM(bar)`.
 
-#define PARAM(n,name) \
+#define DECLARE_PARAM(n,name) \
     static const int p_##name##_ = n
 
 #define ARG(name) \
     FRM_ARG(frame_, (p_##name##_))
 
-#define PAR(name) \
+#define PARAM(name) \
     ACT_PARAM(FRM_PHASE(frame_), (p_##name##_))  // a TYPESET!
 
 #define PARAM_SYMBOL(name) \
@@ -564,7 +564,7 @@ inline static Frame(*) Prep_Frame_Core(
     NULLIFY_NULLED(ARG(name))
 
 #define WANTED(name) ( \
-    assert(VAL_PARAM_CLASS(PAR(name)) == PARAM_CLASS_OUTPUT), \
+    assert(VAL_PARAM_CLASS(PARAM(name)) == PARAM_CLASS_OUTPUT), \
         (not Is_None(ARG(name) + 1) and not IS_BLANK(ARG(name) + 1)))
 
 

@@ -280,7 +280,7 @@ DECLARE_NATIVE(quote)
         return COPY(ARG(optional));
 
     if (depth < 0)
-        fail (PAR(depth));
+        fail (PARAM(depth));
 
     Copy_Cell(OUT, ARG(optional));
     return Quotify(OUT, depth);
@@ -353,7 +353,7 @@ DECLARE_NATIVE(unquote)
     REBINT depth = (REF(depth) ? VAL_INT32(ARG(depth)) : 1);
 
     if (depth < 0)
-        fail (PAR(depth));
+        fail (PARAM(depth));
 
     if (cast(REBLEN, depth) > VAL_NUM_QUOTES(v))
         fail ("Value not quoted enough for unquote depth requested");

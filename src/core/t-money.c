@@ -263,7 +263,7 @@ REBTYPE(Money)
             else if (IS_MONEY(to))
                 Copy_Cell(temp, to);
             else
-                fail (PAR(to));
+                fail (PARAM(to));
         }
         else
             Init_Money(temp, int_to_deci(0));

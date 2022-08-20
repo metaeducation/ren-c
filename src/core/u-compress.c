@@ -483,7 +483,7 @@ DECLARE_NATIVE(deflate)
             break;
 
           default:
-            fail (PAR(envelope));
+            fail (PARAM(envelope));
         }
     }
 
@@ -532,7 +532,7 @@ DECLARE_NATIVE(inflate)
     if (REF(max)) {
         max = Int32s(ARG(max), 1);
         if (max < 0)
-            fail (PAR(max));
+            fail (PARAM(max));
     }
     else
         max = -1;
@@ -560,7 +560,7 @@ DECLARE_NATIVE(inflate)
             break;
 
           default:
-            fail (PAR(envelope));
+            fail (PARAM(envelope));
         }
     }
 

@@ -611,7 +611,7 @@ REBTYPE(Bitset)
         INCLUDE_PARAMS_OF_SELECT;
         Unquotify_Dont_Expect_Meta(ARG(value));
 
-        UNUSED(PAR(series));  // covered by `v`
+        UNUSED(PARAM(series));  // covered by `v`
 
         if (REF(part) or REF(skip) or WANTED(tail) or REF(match))
             fail (Error_Bad_Refines_Raw());
@@ -647,7 +647,7 @@ REBTYPE(Bitset)
 
       case SYM_REMOVE: {
         INCLUDE_PARAMS_OF_REMOVE;
-        UNUSED(PAR(series));  // covered by `v`
+        UNUSED(PARAM(series));  // covered by `v`
 
         Binary(*) bin = VAL_BITSET_ENSURE_MUTABLE(v);
 
@@ -655,13 +655,13 @@ REBTYPE(Bitset)
             fail (Error_Missing_Arg_Raw());
 
         if (not Set_Bits(bin, ARG(part), false))
-            fail (PAR(part));
+            fail (PARAM(part));
 
         return COPY(v); }
 
       case SYM_COPY: {
         INCLUDE_PARAMS_OF_COPY;
-        UNUSED(PAR(value));
+        UNUSED(PARAM(value));
 
         if (REF(part) or REF(deep) or REF(types))
             fail (Error_Bad_Refines_Raw());

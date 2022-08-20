@@ -391,7 +391,7 @@ DECLARE_NATIVE(of)
 
         if (not IS_WORD(SPARE)) {
             Move_Cell(prop, SPARE);
-            fail (Error_Invalid_Arg(frame_, PAR(property)));
+            fail (Error_Invalid_Arg(frame_, PARAM(property)));
         }
     }
     else

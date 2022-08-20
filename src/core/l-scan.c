@@ -3145,7 +3145,7 @@ DECLARE_NATIVE(transcode)
     else if (IS_INTEGER(line_number)) {
         start_line = VAL_INT32(line_number);
         if (start_line <= 0)
-            fail (PAR(line));  // definitional?
+            fail (PARAM(line));  // definitional?
     }
     else
         fail ("/LINE must be an INTEGER! or an ANY-WORD! integer variable");

@@ -568,7 +568,7 @@ DECLARE_NATIVE(evaluate)
         break; }
 
       default:
-        fail (PAR(source));
+        fail (PARAM(source));
     }
 
     if (WANTED(next)) {

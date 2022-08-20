@@ -159,7 +159,7 @@ Bounce Dir_Actor(Frame(*) frame_, REBVAL *port, Symbol(const*) verb)
       case SYM_READ: {
         INCLUDE_PARAMS_OF_READ;
 
-        UNUSED(PAR(source));
+        UNUSED(PARAM(source));
 
         if (REF(part) or REF(seek) or REF(string) or REF(lines))
             fail (Error_Bad_Refines_Raw());
@@ -238,7 +238,7 @@ Bounce Dir_Actor(Frame(*) frame_, REBVAL *port, Symbol(const*) verb)
       case SYM_OPEN: {
         INCLUDE_PARAMS_OF_OPEN;
 
-        UNUSED(PAR(spec));
+        UNUSED(PARAM(spec));
 
         if (REF(read) or REF(write))
             fail (Error_Bad_Refines_Raw());

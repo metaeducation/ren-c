@@ -315,7 +315,7 @@ Bounce Console_Actor(Frame(*) frame_, REBVAL *port, Symbol(const*) verb)
       case SYM_READ: {
         INCLUDE_PARAMS_OF_READ;
 
-        UNUSED(PAR(source));
+        UNUSED(PARAM(source));
 
         if (REF(part))
             fail (Error_Bad_Refines_Raw());
@@ -323,8 +323,8 @@ Bounce Console_Actor(Frame(*) frame_, REBVAL *port, Symbol(const*) verb)
         if (REF(seek))
             fail (Error_Bad_Refines_Raw());
 
-        UNUSED(PAR(string)); // handled in dispatcher
-        UNUSED(PAR(lines)); // handled in dispatcher
+        UNUSED(PARAM(string)); // handled in dispatcher
+        UNUSED(PARAM(lines)); // handled in dispatcher
 
       #if defined(REBOL_SMART_CONSOLE)
         if (Term_IO) {  // e.g. no redirection (Term_IO is null if so)

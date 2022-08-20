@@ -110,7 +110,7 @@ DECLARE_NATIVE(set_uid)
 
     switch (errno) {
       case EINVAL:
-        fail (PAR(uid));
+        fail (PARAM(uid));
 
       case EPERM:
         Fail_Permission_Denied();
@@ -141,7 +141,7 @@ DECLARE_NATIVE(set_euid)
 
     switch (errno) {
       case EINVAL:
-        fail (PAR(euid));
+        fail (PARAM(euid));
 
       case EPERM:
         Fail_Permission_Denied();
@@ -172,7 +172,7 @@ DECLARE_NATIVE(set_gid)
 
     switch (errno) {
       case EINVAL:
-        fail (PAR(gid));
+        fail (PARAM(gid));
 
       case EPERM:
         Fail_Permission_Denied();
@@ -203,7 +203,7 @@ DECLARE_NATIVE(set_egid)
 
     switch (errno) {
       case EINVAL:
-        fail (PAR(egid));
+        fail (PARAM(egid));
 
       case EPERM:
         Fail_Permission_Denied();

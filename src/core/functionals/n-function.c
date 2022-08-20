@@ -371,7 +371,7 @@ DECLARE_NATIVE(endable_q)
     REBVAL *v = ARG(parameter);
 
     if (not Did_Get_Binding_Of(SPARE, v))
-        fail (PAR(parameter));
+        fail (PARAM(parameter));
 
     if (not IS_FRAME(SPARE))
         fail ("ENDABLE? requires a WORD! bound into a FRAME! at present");
@@ -406,7 +406,7 @@ DECLARE_NATIVE(skippable_q)
     REBVAL *v = ARG(parameter);
 
     if (not Did_Get_Binding_Of(SPARE, v))
-        fail (PAR(parameter));
+        fail (PARAM(parameter));
 
     if (not IS_FRAME(SPARE))
         fail ("SKIPPABLE? requires a WORD! bound into a FRAME! at present");

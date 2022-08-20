@@ -269,7 +269,7 @@ Bounce Call_Core(Frame(*) frame_) {
         goto text_command;
     }
     else
-        fail (PAR(command));
+        fail (PARAM(command));
 
     REBU64 pid = 1020;  // avoid uninitialized warning, garbage value
     DWORD exit_code = 304;  // ...same...

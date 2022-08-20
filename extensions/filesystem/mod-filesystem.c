@@ -624,7 +624,7 @@ DECLARE_NATIVE(change_dir)
         bool success = Set_Current_Dir_Value(arg);
 
         if (not success)
-            fail (PAR(path));
+            fail (PARAM(path));
     }
 
     Copy_Cell(current_path, arg);

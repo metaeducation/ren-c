@@ -497,7 +497,7 @@ REBTYPE(Varargs)
     case SYM_TAKE: {
         INCLUDE_PARAMS_OF_TAKE;
 
-        UNUSED(PAR(series));
+        UNUSED(PARAM(series));
         if (REF(deep))
             fail (Error_Bad_Refines_Raw());
         if (REF(last))
@@ -519,7 +519,7 @@ REBTYPE(Varargs)
         StackIndex base = TOP_INDEX;
 
         if (not IS_INTEGER(ARG(part)))
-            fail (PAR(part));
+            fail (PARAM(part));
 
         REBINT limit = VAL_INT32(ARG(part));
         if (limit < 0)

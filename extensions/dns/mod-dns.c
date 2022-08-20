@@ -90,13 +90,13 @@ static Bounce DNS_Actor(Frame(*) frame_, REBVAL *port, Symbol(const*) verb)
 
       case SYM_READ: {
         INCLUDE_PARAMS_OF_READ;
-        UNUSED(PAR(source));  // covered by `port`
+        UNUSED(PARAM(source));  // covered by `port`
 
         if (REF(part) or REF(seek))
             fail (Error_Bad_Refines_Raw());
 
-        UNUSED(PAR(string)); // handled in dispatcher
-        UNUSED(PAR(lines)); // handled in dispatcher
+        UNUSED(PARAM(string)); // handled in dispatcher
+        UNUSED(PARAM(lines)); // handled in dispatcher
 
         REBVAL *host = Obj_Value(spec, STD_PORT_SPEC_NET_HOST);
 
@@ -163,7 +163,7 @@ static Bounce DNS_Actor(Frame(*) frame_, REBVAL *port, Symbol(const*) verb)
       case SYM_OPEN: {
         INCLUDE_PARAMS_OF_OPEN;
 
-        UNUSED(PAR(spec));
+        UNUSED(PARAM(spec));
 
         if (REF(new) or REF(read) or REF(write))
             fail (Error_Bad_Refines_Raw());

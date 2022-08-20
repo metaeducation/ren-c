@@ -333,7 +333,7 @@ REBTYPE(Sequence)
     if (id == SYM_RANDOM) {
         INCLUDE_PARAMS_OF_RANDOM;
 
-        UNUSED(PAR(value));
+        UNUSED(PARAM(value));
 
         if (REF(only))
             fail (Error_Bad_Refines_Raw());
@@ -407,7 +407,7 @@ REBTYPE(Sequence)
       case SYM_REVERSE: {
         INCLUDE_PARAMS_OF_REVERSE;
 
-        UNUSED(PAR(series));
+        UNUSED(PARAM(series));
 
         REBLEN temp = len;
 

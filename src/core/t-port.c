@@ -187,9 +187,9 @@ REBTYPE(Port)
     if (id == SYM_READ) {
         INCLUDE_PARAMS_OF_READ;
 
-        UNUSED(PAR(source));
-        UNUSED(PAR(part));
-        UNUSED(PAR(seek));
+        UNUSED(PARAM(source));
+        UNUSED(PARAM(part));
+        UNUSED(PARAM(seek));
 
         if (Is_Nulled(OUT))
             return nullptr;  // !!! `read dns://` returns nullptr on failure

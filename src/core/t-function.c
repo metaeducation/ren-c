@@ -266,7 +266,7 @@ REBTYPE(Action)
       case SYM_COPY: {
         INCLUDE_PARAMS_OF_COPY;
 
-        UNUSED(PAR(value));
+        UNUSED(PARAM(value));
 
         if (REF(part) or REF(types))
             fail (Error_Bad_Refines_Raw());

@@ -219,7 +219,7 @@ DECLARE_NATIVE(limit_usage)
             PG_Mem_Limit = Int64(ARG(limit));
     }
     else
-        fail (PAR(field));
+        fail (PARAM(field));
 
     return NONE;
 }

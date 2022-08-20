@@ -209,7 +209,7 @@ DECLARE_NATIVE(encode_text)
 {
     UTF_INCLUDE_PARAMS_OF_ENCODE_TEXT;
 
-    UNUSED(PAR(string));
+    UNUSED(PARAM(string));
 
     fail (".txt codec not currently implemented (what should it do?)");
 }

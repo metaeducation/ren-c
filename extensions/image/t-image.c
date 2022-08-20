@@ -643,7 +643,7 @@ Bounce Modify_Image(Frame(*) frame_, Symbol(const*) verb)
             } else if (IS_BINARY(ARG(part))) {
                 part = (VAL_INDEX(ARG(part)) - VAL_INDEX(arg)) / 4;
             } else
-                fail (PAR(part));
+                fail (PARAM(part));
             part = MAX(part, 0);
         }
         else if (IS_IMAGE(arg)) {
@@ -653,7 +653,7 @@ Bounce Modify_Image(Frame(*) frame_, Symbol(const*) verb)
             }
             else if (IS_IMAGE(ARG(part))) {
                 if (VAL_IMAGE_WIDTH(ARG(part)) == 0)
-                    fail (PAR(part));
+                    fail (PARAM(part));
 
                 part_x = VAL_IMAGE_POS(ARG(part)) - VAL_IMAGE_POS(arg);
                 part_y = part_x / VAL_IMAGE_WIDTH(ARG(part));
@@ -1271,7 +1271,7 @@ REBTYPE(Image)
 
     case SYM_REMOVE: {
         INCLUDE_PARAMS_OF_REMOVE;
-        UNUSED(PAR(series));
+        UNUSED(PARAM(series));
 
         REBSER *series = VAL_BINARY_ENSURE_MUTABLE(VAL_IMAGE_BIN(image));
 
@@ -1318,7 +1318,7 @@ REBTYPE(Image)
     case SYM_COPY: {
         INCLUDE_PARAMS_OF_COPY;
 
-        UNUSED(PAR(value));
+        UNUSED(PARAM(value));
 
         if (REF(deep))
             fail (Error_Bad_Refines_Raw());

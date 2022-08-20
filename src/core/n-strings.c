@@ -284,7 +284,7 @@ DECLARE_NATIVE(enbase)
         break;
 
       default:
-        fail (PAR(base));
+        fail (PARAM(base));
     }
 
     return Init_Text(OUT, Pop_Molded_String(mo));
@@ -970,14 +970,14 @@ DECLARE_NATIVE(to_hex)
             Form_Hex2(mo, 0);
     }
     else
-        fail (PAR(value));
+        fail (PARAM(value));
 
     // !!! Issue should be able to use string from mold buffer directly when
     // UTF-8 Everywhere unification of ANY-WORD! and ANY-STRING! is done.
     //
     assert(len == STR_SIZE(mo->series) - mo->base.size);
     if (NULL == Scan_Issue(OUT, BIN_AT(mo->series, mo->base.size), len))
-        fail (PAR(value));
+        fail (PARAM(value));
 
     Drop_Mold(mo);
     return OUT;

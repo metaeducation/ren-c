@@ -623,7 +623,7 @@ REBTYPE(Map)
         INCLUDE_PARAMS_OF_SELECT;
         Unquotify_Dont_Expect_Meta(ARG(value));
 
-        UNUSED(PAR(series));  // covered by `v`
+        UNUSED(PARAM(series));  // covered by `v`
 
         if (REF(part) or REF(skip) or WANTED(tail) or REF(match))
             fail (Error_Bad_Refines_Raw());
@@ -668,7 +668,7 @@ REBTYPE(Map)
       case SYM_INSERT:
       case SYM_APPEND: {
         INCLUDE_PARAMS_OF_INSERT;
-        UNUSED(PAR(series));
+        UNUSED(PARAM(series));
 
         REBVAL *value = ARG(value);
         if (Is_Nulled(value))
@@ -694,7 +694,7 @@ REBTYPE(Map)
 
       case SYM_COPY: {
         INCLUDE_PARAMS_OF_COPY;
-        UNUSED(PAR(value));
+        UNUSED(PARAM(value));
 
         if (REF(part))
             fail (Error_Bad_Refines_Raw());

@@ -823,13 +823,13 @@ static Bounce Transport_Actor(
       case SYM_READ: {
         INCLUDE_PARAMS_OF_READ;
 
-        UNUSED(PAR(source));
+        UNUSED(PARAM(source));
 
         if (REF(seek))
             fail (Error_Bad_Refines_Raw());
 
-        UNUSED(PAR(string)); // handled in dispatcher
-        UNUSED(PAR(lines)); // handled in dispatcher
+        UNUSED(PARAM(string)); // handled in dispatcher
+        UNUSED(PARAM(lines)); // handled in dispatcher
 
         if (sock->stream == nullptr and sock->transport != TRANSPORT_UDP)
             fail (Error_On_Port(SYM_NOT_CONNECTED, port, -15));
@@ -878,7 +878,7 @@ static Bounce Transport_Actor(
       case SYM_WRITE: {
         INCLUDE_PARAMS_OF_WRITE;
 
-        UNUSED(PAR(destination));
+        UNUSED(PARAM(destination));
 
         if (REF(seek) or REF(append) or REF(lines))
             fail (Error_Bad_Refines_Raw());

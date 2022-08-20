@@ -178,7 +178,7 @@ static Bounce Clipboard_Actor(
 
       case SYM_OPEN: {
         INCLUDE_PARAMS_OF_OPEN;
-        UNUSED(PAR(spec));
+        UNUSED(PARAM(spec));
 
         if (REF(new) or REF(read) or REF(write))
             fail (Error_Bad_Refines_Raw());

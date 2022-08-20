@@ -548,7 +548,7 @@ DECLARE_NATIVE(for_skip)
         var = Real_Var_From_Pseudo(pseudo_var);
 
         if (Is_Nulled(var))
-            fail (PAR(word));
+            fail (PARAM(word));
         if (not ANY_SERIES(var))
             fail (var);
 
@@ -1561,8 +1561,8 @@ DECLARE_NATIVE(map_each)
 {
     INCLUDE_PARAMS_OF_MAP_EACH;
 
-    UNUSED(PAR(vars));
-    UNUSED(PAR(body));
+    UNUSED(PARAM(vars));
+    UNUSED(PARAM(body));
 
     // The theory is that MAP would use a dialect on BLOCK! arguments for data
     // by default, like [1 thru 10].  But you could give it an arbitrary
@@ -1858,7 +1858,7 @@ DECLARE_NATIVE(for)
         Unquotify(value, 1);
 
         if (not (ANY_SERIES(value) or ANY_SEQUENCE(value)))
-            fail (PAR(value));
+            fail (PARAM(value));
 
         // Delegate to FOR-EACH (note: in the future this will be the other
         // way around, with FOR-EACH delegating to FOR).

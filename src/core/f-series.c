@@ -50,7 +50,7 @@ Bounce Series_Common_Action_Maybe_Unhandled(
     switch (id) {
       case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
-        UNUSED(PAR(value));  // covered by `value`
+        UNUSED(PARAM(value));  // covered by `value`
 
         OPT_SYMID property = VAL_WORD_ID(ARG(property));
         assert(property != SYM_0);
@@ -179,7 +179,7 @@ Bounce Series_Common_Action_Maybe_Unhandled(
 
       case SYM_REMOVE: {
         INCLUDE_PARAMS_OF_REMOVE;
-        UNUSED(PAR(series));  // accounted for by `value`
+        UNUSED(PARAM(series));  // accounted for by `value`
 
         ENSURE_MUTABLE(v);  // !!! Review making this extract
 

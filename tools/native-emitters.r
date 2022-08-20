@@ -179,7 +179,7 @@ export emit-include-params-macro: function [
         if (the return:) <> :paramlist/1 [
             fail [native-name "does not have a RETURN: specification"]
         ] else [
-            keep {PARAM(1, return)}
+            keep {DECLARE_PARAM(1, return)}
             keep {USED(ARG(return))}  ; Suppress warning about not using return
             n: n + 1
             paramlist: next paramlist
@@ -191,7 +191,7 @@ export emit-include-params-macro: function [
             ]
 
             param-name: as text! to word! noquote item
-            keep cscape/with {PARAM($<n>, ${param-name})} [n param-name]
+            keep cscape/with {DECLARE_PARAM($<n>, ${param-name})} [n param-name]
             n: n + 1
 
             if all [(the return:) <> :paramlist/1 set-word? item] [

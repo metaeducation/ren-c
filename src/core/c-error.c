@@ -178,7 +178,7 @@ void Assert_State_Balanced_Debug(
 // it automatically (but with no ID...the string becomes the "ID")
 //
 // If the pointer is to a function parameter of the current native (e.g. what
-// you get for PAR(name) inside a native), then it will report both the
+// you get for PARAM(name) inside a native), then it will report both the
 // parameter name and value as being implicated as a problem.  This only
 // works for the current topmost stack level.
 //

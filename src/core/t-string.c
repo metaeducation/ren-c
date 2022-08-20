@@ -826,7 +826,7 @@ REBTYPE(String)
       case SYM_REMOVE: {
         INCLUDE_PARAMS_OF_REMOVE;
 
-        UNUSED(PAR(series)); // already accounted for
+        UNUSED(PARAM(series)); // already accounted for
 
         String(*) s = VAL_STRING_ENSURE_MUTABLE(v);
 
@@ -855,7 +855,7 @@ REBTYPE(String)
       case SYM_INSERT:
       case SYM_CHANGE: {
         INCLUDE_PARAMS_OF_INSERT;
-        UNUSED(PAR(series));
+        UNUSED(PARAM(series));
 
         Value(*) arg = ARG(value);
 
@@ -920,7 +920,7 @@ REBTYPE(String)
         INCLUDE_PARAMS_OF_FIND;
         Unquotify_Dont_Expect_Meta(ARG(pattern));
 
-        UNUSED(PAR(series));
+        UNUSED(PARAM(series));
 
         Flags flags = (
             (REF(match) ? AM_FIND_MATCH : 0)
@@ -934,7 +934,7 @@ REBTYPE(String)
         if (REF(skip)) {
             skip = VAL_INT32(ARG(skip));
             if (skip == 0)
-                fail (PAR(skip));
+                fail (PARAM(skip));
         }
         else
             skip = 1;
@@ -985,7 +985,7 @@ REBTYPE(String)
 
         ENSURE_MUTABLE(v);
 
-        UNUSED(PAR(series));
+        UNUSED(PARAM(series));
 
         if (REF(deep))
             fail (Error_Bad_Refines_Raw());
@@ -1052,7 +1052,7 @@ REBTYPE(String)
       case SYM_COPY: {
         INCLUDE_PARAMS_OF_COPY;
 
-        UNUSED(PAR(value));
+        UNUSED(PARAM(value));
         UNUSED(REF(deep));  // /DEEP is historically ignored on ANY-STRING!
 
         if (REF(types))
@@ -1101,7 +1101,7 @@ REBTYPE(String)
       case SYM_SORT: {
         INCLUDE_PARAMS_OF_SORT;
 
-        UNUSED(PAR(series));
+        UNUSED(PARAM(series));
 
         String(*) str = VAL_STRING_ENSURE_MUTABLE(v);  // just ensure mutability
         UNUSED(str);  // we use the VAL_UTF8_AT() accessor, which is const
@@ -1133,7 +1133,7 @@ REBTYPE(String)
         else {
             skip = Get_Num_From_Arg(ARG(skip));
             if (skip <= 0 or len % skip != 0 or skip > len)
-                fail (PAR(skip));
+                fail (PARAM(skip));
         }
 
         // Use fast quicksort library function:
@@ -1161,7 +1161,7 @@ REBTYPE(String)
       case SYM_RANDOM: {
         INCLUDE_PARAMS_OF_RANDOM;
 
-        UNUSED(PAR(value));
+        UNUSED(PARAM(value));
 
         if (REF(seed)) { // string/binary contents are the seed
             assert(ANY_STRING(v));
