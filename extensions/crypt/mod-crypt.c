@@ -457,9 +457,8 @@ void Get_Padding_And_Hash_From_Spec(
 //
 //      return: "RSA public key object"
 //          [object!]
-//      private-key: "RSA private key object (required output)"
+//      @private-key "RSA private key object (required output)"
 //          [object!]
-//
 //      num-bits "How much data this key can encrypt (less when not [raw])"
 //          [integer!]
 //      /padding "Pad method and hash, [raw] [pkcs1-v15 #sha512] [pkcs1-v21]"

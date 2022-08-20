@@ -408,9 +408,8 @@ DECLARE_NATIVE(do)
 //
 //      return: "Value from the step"
 //          [<opt> <void> any-value!]
-//      next: "<output> Next expression position in block"
+//      @next "Next expression position in block"
 //          [any-array! varargs!]
-//
 //      source [
 //          <try>  ; useful for `try evaluate ...` scenarios when no match
 //          any-array!  ; source code in block form

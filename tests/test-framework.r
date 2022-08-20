@@ -294,9 +294,8 @@ export do-recover: func [
 
     return: "The log file that was generated"
         [file!]
-    summary: "Textual summary of the test results"
+    @summary "Textual summary of the test results"
         [text!]
-
     file [file!] {test file}
     flags [block!] {which flags to accept}
     code-checksum [binary! blank!]

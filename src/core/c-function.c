@@ -386,14 +386,16 @@ void Push_Paramlist_Quads_May_Fail(
             symbol = VAL_WORD_SYMBOL(item);
 
             if (heart == REB_SET_WORD) {
+                if (VAL_WORD_ID(item) == SYM_RETURN and not quoted) {
+                    pclass = PARAM_CLASS_RETURN;
+                }
+            }
+            else if (heart == REB_THE_WORD) {
                 //
                 // Outputs are set to refinements, because they can act like
                 // refinements and be passed the word to set.
                 //
-                if (VAL_WORD_ID(item) == SYM_RETURN and not quoted) {
-                    pclass = PARAM_CLASS_RETURN;
-                }
-                else if (not quoted) {
+                if (not quoted) {
                     if (not (*flags & MKF_RETURN)) {
                         fail (
                             "Function generator does not provide multi-RETURN"

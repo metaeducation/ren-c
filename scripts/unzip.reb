@@ -118,9 +118,8 @@ zip-entry: func [
 
     return: "local header"
         [binary!]
-    central-dir-entry: "Central Directory entry"
+    @central-dir-entry "Central Directory entry"
         [binary!]
-
     name "Name of file"
         [file!]
     date "Modification date of file"

@@ -15,7 +15,7 @@
 ; that can take advantage of the shorthand.
 
 [
-    (test: func [return: x y: z:] [
+    (test: func [x @y @z] [
         if wanted? 'y [
             y: <y-result>
         ]
@@ -93,7 +93,7 @@
 
 [
     (
-        foo: func [return: [integer!] other: [integer!] arg] [
+        foo: func [return: [integer!] @other [integer!] arg] [
             other: 10
             return 20
         ]

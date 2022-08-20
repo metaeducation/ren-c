@@ -38,9 +38,8 @@
 //
 //      return: "ERROR! if raised, else null"
 //          [<opt> error!]
-//      result: "<output> The optional result of the evaluation"
+//      @result "The optional result of the evaluation"
 //          [<opt> any-value!]
-//
 //      code "Code to execute and monitor"
 //          [block! action!]
 //  ]

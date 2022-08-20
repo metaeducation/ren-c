@@ -67,7 +67,7 @@
 
 (
     wrapped: enclose (
-        func [out: in] [out: in + 1]
+        func [@out in] [out: in + 1]
     ) f -> [
         x: f.in
         do f
@@ -78,7 +78,7 @@
 
 (
     wrapped: enclose (
-        func [out: in] [out: in + 1]
+        func [@out in] [out: in + 1]
     ) f -> [
         x: f.in
         do f

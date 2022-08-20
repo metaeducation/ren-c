@@ -159,9 +159,8 @@ DECLARE_NATIVE(write_stdout)
 //
 //      return: "Null if no more input is available, ~escape~ if aborted"
 //          [<opt> binary! bad-word!]
-//      eof: "Set to true if end of file reached"
+//      @eof "Set to true if end of file reached"
 //          [logic!]
-//
 //      size "Maximum size of input to read"
 //          [integer!]
 //  ]
@@ -186,6 +185,8 @@ DECLARE_NATIVE(read_stdin)
         )){
             return THROWN;
         }
+        Init_Logic(ARG(eof), false);  // never terminates?
+        Proxy_Multi_Returns(frame_);
         return OUT;
     }
     else  // we have a smart console but aren't using it (redirected to file?)
@@ -211,9 +212,8 @@ DECLARE_NATIVE(read_stdin)
         }
         TERM_BIN_LEN(bin, i);
 
-        if (REF(eof))
-            rebElide(Lib(SET), rebQ(ARG(eof)), rebL(eof));
-
+        Init_Logic(ARG(eof), eof);
+        Proxy_Multi_Returns(frame_);
         return Init_Binary(OUT, bin);
     }
 }
@@ -226,9 +226,8 @@ DECLARE_NATIVE(read_stdin)
 //
 //      return: "Null if no more input is available, ~escape~ if aborted"
 //          [<opt> text! bad-word!]
-//      eof: "Set to true if end of file reached"
+//      @eof "Set to true if end of file reached"
 //          [logic!]
-//
 //      /raw "Include the newline, and allow reaching end of file with no line"
 //      /hide "Mask input with a * character (not implemented)"
 //  ]
@@ -372,6 +371,7 @@ DECLARE_NATIVE(read_line)
   #endif
 
     Init_Logic(ARG(eof), eof);
+    Proxy_Multi_Returns(frame_);
     return line;
 }
 

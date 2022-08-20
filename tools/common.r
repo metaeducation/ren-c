@@ -417,8 +417,8 @@ export stripload: function [
         [text!]
     source "Code to process without LOAD (avoids bootstrap scan differences)"
         [text! file!]
-    /header "Request the header as text"
-        [word! path!]  ; would be <output>, but that's not in bootstrap r3
+    /header "<output> Request the header as text"  ; no @output in bootstrap
+        [word! path!]
     /gather "Collect what look like top-level declarations into variable"
         [word!]
 ][

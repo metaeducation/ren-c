@@ -1333,9 +1333,8 @@ DECLARE_NATIVE(default)
 //
 //      return: "Thrown value, or BLOCK! with value and name (if /NAME, /ANY)"
 //          [<opt> any-value!]
-//      result: "<output> Evaluation result (only set if not thrown)"
+//      @result "Evaluation result (only set if not thrown)"
 //          [<opt> any-value!]
-//
 //      block "Block to evaluate"
 //          [block!]
 //      /name "Catches a named throw (single name if not block)"

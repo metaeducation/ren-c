@@ -40,8 +40,8 @@ transcode-header: func [
     {Try to match a data binary! as being a script, definitional fail if not}
 
     return: [<opt> block!]
-    rest: [binary!]
-    line: [integer!]
+    @rest [binary!]
+    @line [integer!]
 
     data [binary!]
     /file [file! url!]
@@ -93,13 +93,9 @@ load-header: function [
 
     return: "header OBJECT! if present, or error WORD!"
         [<opt> object! word!]
-    body: "<output>"
-        [binary! text!]
-    line: "<output>"
-        [integer!]
-    final: "<output>"
-        [binary!]
-
+    @body [binary! text!]
+    @line [integer!]
+    @final [binary!]
     source "Source code (text! will be UTF-8 encoded)"
         [binary! text!]
     /file "Where source is being loaded from"
@@ -215,9 +211,8 @@ load: func [
 
     return: "BLOCK! if Rebol code, otherwise value(s) appropriate for codec"
         [<opt> any-value!]
-    header: "<output> Request the Rebol header object be returned as well"
+    @header "Request the Rebol header object be returned as well"
         [object!]
-
     source "Source of the information being loaded"
         [<try> file! url! tag! the-word! text! binary!]
     /type "E.g. rebol, text, markup, jpeg... (by default, auto-detected)"
@@ -395,9 +390,8 @@ import*: func [
 
     return: "Loaded module"
         [<opt> module!]
-    product: "Evaluative product of module body (only if WHERE is BLANK!)"
+    @product "Evaluative product of module body (only if WHERE is BLANK!)"
         [<opt> any-value!]
-
     where "Where to put exported definitions from SOURCE"
         [blank! module!]
     source [

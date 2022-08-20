@@ -315,9 +315,8 @@ find: generic [
 
     return: "position found, else null - logic true if non-positional find"
         [<opt> any-series! logic!]
-    tail: "Returns the end of the found data"
+    @tail "Returns the end of the found data"
         [<opt> any-series!]
-
     series [
         <try> any-series! any-context! map! bitset! typeset!
     ]
@@ -334,8 +333,7 @@ select: generic [
     {Searches for a value; returns the value that follows, else null}
 
     return: [<opt> any-value!]
-    tail: []  ; for frame compatibility with FIND
-
+    @tail []  ; for frame compatibility with FIND
     series [<try> any-series! any-context! map!]
     ^value [<try> any-value!]
     /part "Limits the search to a given length or position"

@@ -54,9 +54,8 @@ DECLARE_NATIVE(form)
 //
 //      return: "NULL if input is NULL"
 //          [<opt> text!]
-//      truncated: "<output> Whether the mold was truncated"
+//      @truncated "Whether the mold was truncated"
 //          [logic!]
-//
 //      value "The value to mold"
 //          [<opt> any-value!]
 //      /only "For a block value, mold only its contents, no outer []"

@@ -201,7 +201,7 @@ Array(*) Expanded_Combinator_Spec(const REBVAL *original)
     ++item;
 
     const Byte utf8[] =
-        "remainder: [<opt> any-series!]\n"
+        "@remainder [any-series!]\n"
         "state [frame!]\n"
         "input [any-series!]\n";
 
@@ -751,8 +751,7 @@ static bool Combinator_Param_Hook(
 //
 //      return: "Parser function taking only input, returning value + remainder"
 //          [action!]
-//      advanced: [block!]
-//
+//      @advanced [block!]
 //      c "Parser combinator taking input, but also other parameters"
 //          [action!]
 //      rules [block!]

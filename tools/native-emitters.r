@@ -120,7 +120,14 @@ export emit-include-params-macro: function [
     spec: copy find proto "["  ; make copy (we'll corupt it)
 
     replace/all spec "^^" {}
-    replace/all spec "@" {}
+
+    ; We used stripload to get the function specs, so it has @output form
+    ; parameters.  The bootstrap executable thinks that's an illegal email.
+    ; So to process these, we replace the @ with # to get ISSUE!.
+    ;
+    output-param?: :issue?
+    output-param!: issue!
+    replace/all spec "@" {#}
 
     spec: load-value spec
 
@@ -151,8 +158,8 @@ export emit-include-params-macro: function [
             keep spec/1
             spec: my next
 
-            keep spread [
-                remainder: [<opt> any-series!]
+            keep spread compose [
+                (to output-param! 'remainder) [any-series!]
 
                 state [frame!]
                 input [any-series!]
@@ -186,7 +193,7 @@ export emit-include-params-macro: function [
         ]
 
         for-each item paramlist [
-            if not match [any-word! refinement! lit-word!] item [
+            if not match [any-word! refinement! lit-word! output-param!] item [
                 continue
             ]
 
@@ -194,7 +201,7 @@ export emit-include-params-macro: function [
             keep cscape/with {DECLARE_PARAM($<n>, ${param-name})} [n param-name]
             n: n + 1
 
-            if all [(the return:) <> :paramlist/1 set-word? item] [
+            if output-param? item [
                 keep cscape/with {/* dummy output var slot $<n>) */} [n]
                 n: n + 1  ; skip slot where outputs stow their variables
             ]

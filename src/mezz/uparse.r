@@ -154,16 +154,16 @@ combinator: func [
             elide spec: my skip 3
         )
 
-        remainder: [<opt> any-series!]  ; all combinators have remainder
+        @remainder [any-series!]  ; all combinators have remainder
 
-        (if spec.1 = 'pending: [
+        (if spec.1 = '@pending [
             assert [spec.2 = [<opt> block!]]
             autopipe: false  ; they're asking to handle pending themselves
             spread reduce [spec.1 spec.2]
             elide spec: my skip 2
         ] else [
             autopipe: true  ; they didn't mention pending, handle automatically
-            spread [pending: [<opt> block!]]
+            spread [@pending [<opt> block!]]
         ])
 
         state [frame!]
@@ -757,7 +757,7 @@ default-combinators: make map! reduce [
         {Special noun-like keyword subdispatcher for TAG!s}
         return: "What the delegated-to tag returned"
             [<opt> any-value!]
-        pending: [<opt> block!]
+        @pending [<opt> block!]
         value [tag!]
         <local> comb
     ][
@@ -953,7 +953,7 @@ default-combinators: make map! reduce [
     'collect combinator [
         return: "Block of collected values"
             [<opt> block!]
-        pending: [<opt> block!]
+        @pending [<opt> block!]
         parser [action!]
         <local> subpending collected
     ][
@@ -983,7 +983,7 @@ default-combinators: make map! reduce [
     'keep combinator [
         return: "The kept value (same as input)"
             [<void> any-value!]
-        pending: [<opt> block!]
+        @pending [<opt> block!]
         parser [action!]
         <local> result' subpending
     ][
@@ -1044,7 +1044,7 @@ default-combinators: make map! reduce [
     'gather combinator [
         return: "The gathered object"
             [<opt> object!]
-        pending: [<opt> block!]
+        @pending [<opt> block!]
         parser [action!]
         <local> obj subpending
     ][
@@ -1070,7 +1070,7 @@ default-combinators: make map! reduce [
     'emit combinator [
         return: "The emitted value"
             [<opt> any-value!]
-        pending: [<opt> block!]
+        @pending [<opt> block!]
         'target [set-word! set-group!]
         parser [action!]
         <local> result'
@@ -1289,7 +1289,7 @@ default-combinators: make map! reduce [
     group! combinator [
         return: "Result of evaluating the group (invisible if <delay>)"
             [<void> <opt> any-value!]
-        pending: [<opt> block!]
+        @pending [<opt> block!]
         value [any-array!]  ; allow any array to use this "DO combinator"
     ][
         remainder: input
@@ -1309,7 +1309,7 @@ default-combinators: make map! reduce [
     'phase combinator [
         return: "Result of the parser evaluation"
             [<void> <opt> any-value!]
-        pending: [<opt> block!]
+        @pending [<opt> block!]
         parser [action!]
         <local> subpending result'
     ][
@@ -1345,7 +1345,7 @@ default-combinators: make map! reduce [
     get-group! combinator [
         return: "Result of running combinator from fetching the WORD!"
             [<opt> <void> any-value!]
-        pending: [<opt> block!]   ; we retrigger combinator; it may KEEP, etc.
+        @pending [<opt> block!]   ; we retrigger combinator; it may KEEP, etc.
 
         value [any-array!]  ; allow any array to use this "REPARSE-COMBINATOR"
         <local> r comb
@@ -1457,7 +1457,7 @@ default-combinators: make map! reduce [
     quoted! combinator [
         return: "The matched value"
             [<opt> any-value!]
-        pending: [<opt> block!]
+        @pending [<opt> block!]
         value [quoted!]
         <local> comb
     ][
@@ -1499,7 +1499,7 @@ default-combinators: make map! reduce [
 
     'lit combinator [  ; should long form be LITERALLY or LITERAL ?
         return: "Literal value" [<opt> any-value!]
-        pending: [<opt> block!]
+        @pending [<opt> block!]
         'value [any-value!]
         <local> comb
     ][
@@ -1750,7 +1750,7 @@ default-combinators: make map! reduce [
 
     '@ combinator [
         return: "Match product of result of applying rule" [<opt> any-value!]
-        pending: [<opt> block!]
+        @pending [<opt> block!]
         parser [action!]
         <local> comb result'
     ][
@@ -1762,7 +1762,7 @@ default-combinators: make map! reduce [
 
     the-word! combinator [
         return: "Literal value" [<opt> any-value!]
-        pending: [<opt> block!]
+        @pending [<opt> block!]
         value [the-word!]
         <local> comb
     ][
@@ -1772,7 +1772,7 @@ default-combinators: make map! reduce [
 
     the-path! combinator [
         return: "Literal value" [<opt> any-value!]
-        pending: [<opt> block!]
+        @pending [<opt> block!]
         value [the-word!]
         <local> comb
     ][
@@ -1782,7 +1782,7 @@ default-combinators: make map! reduce [
 
     the-tuple! combinator [
         return: "Literal value" [<opt> any-value!]
-        pending: [<opt> block!]
+        @pending [<opt> block!]
         value [the-tuple!]
         <local> comb
     ][
@@ -1792,7 +1792,7 @@ default-combinators: make map! reduce [
 
     the-group! combinator [
         return: "Literal value" [<opt> any-value!]
-        pending: [<opt> block!]
+        @pending [<opt> block!]
         value [the-group!]
         <local> result' comb totalpending single
     ][
@@ -1837,7 +1837,7 @@ default-combinators: make map! reduce [
 
     the-block! combinator [
         return: "Literal value" [<opt> any-value!]
-        pending: [<opt> block!]
+        @pending [<opt> block!]
         value [the-block!]
         <local> result' comb totalpending
     ][
@@ -1890,7 +1890,7 @@ default-combinators: make map! reduce [
 
     meta-word! combinator [
         return: "Meta quoted" [<opt> bad-word! quoted! the-word!]
-        pending: [<opt> block!]
+        @pending [<opt> block!]
         value [meta-word!]
         <local> comb
     ][
@@ -1901,7 +1901,7 @@ default-combinators: make map! reduce [
 
     meta-tuple! combinator [
         return: "Meta quoted" [<opt> bad-word! quoted! the-word!]
-        pending: [<opt> block!]
+        @pending [<opt> block!]
         value [meta-tuple!]
         <local> comb
     ][
@@ -1912,7 +1912,7 @@ default-combinators: make map! reduce [
 
     meta-path! combinator [
         return: "Meta quoted" [<opt> bad-word! quoted! the-word!]
-        pending: [<opt> block!]
+        @pending [<opt> block!]
         value [meta-path!]
         <local> comb
     ][
@@ -1923,7 +1923,7 @@ default-combinators: make map! reduce [
 
     meta-group! combinator [
         return: "Meta quoted" [<opt> bad-word! quoted! the-word!]
-        pending: [<opt> block!]
+        @pending [<opt> block!]
         value [meta-group!]
         <local> comb
     ][
@@ -1934,7 +1934,7 @@ default-combinators: make map! reduce [
 
     meta-block! combinator [
         return: "Meta quoted" [<opt> bad-word! quoted! the-word!]
-        pending: [<opt> block!]
+        @pending [<opt> block!]
         value [meta-block!]
         <local> comb
     ][
@@ -2027,7 +2027,7 @@ default-combinators: make map! reduce [
         {Run an ordinary ACTION! with parse rule products as its arguments}
         return: "The return value of the action"
             [<opt> <void> any-value!]
-        pending: [<opt> block!]
+        @pending [<opt> block!]
         value [action!]
         ; AUGMENT is used to add param1, param2, param3, etc.
         /parsers "Sneaky argument of parsers collected from arguments"
@@ -2083,7 +2083,7 @@ default-combinators: make map! reduce [
     word! combinator [
         return: "Result of running combinator from fetching the WORD!"
             [<opt> <void> any-value!]
-        pending: [<opt> block!]
+        @pending [<opt> block!]
         value [word! tuple!]
         <local> r comb
     ][
@@ -2179,7 +2179,7 @@ default-combinators: make map! reduce [
     'any combinator [
         return: "Last result value"
             [<opt> <void> any-value!]
-        pending: [<opt> block!]
+        @pending [<opt> block!]
         'arg "To catch instances of old ANY, only GROUP! and THE-BLOCK!"
             [any-value!]  ; lie and take ANY-VALUE! to report better error
         <local> result' block
@@ -2232,7 +2232,7 @@ default-combinators: make map! reduce [
     block! combinator [
         return: "Last result value"
             [<opt> <void> any-value!]
-        pending: [<opt> block!]
+        @pending [<opt> block!]
         value [block!]
         /limit "Limit of how far to consider (used by ... recursion)"
             [block!]
@@ -2439,8 +2439,7 @@ comment [combinatorize: func [
 
     return: "Parser function taking only input, returning value + remainder"
         [action!]
-    advanced: [block!]
-
+    @advanced [block!]
     combinator "Parser combinator taking input, but also other parameters"
         [action!]
     rules [block!]
@@ -2564,9 +2563,8 @@ parsify: func [
 
     return: "Parser action for input processing corresponding to a full rule"
         [action!]
-    advanced: "Rules position advanced past the elements used for the action"
+    @advanced "Rules position advanced past the elements used for the action"
         [block!]
-
     state "Parse state"
         [frame!]
     rules "Parse rules to (partially) convert to a combinator action"
@@ -2774,11 +2772,10 @@ parse*: func [
 
     return: "Synthesized value from last match rule, or NULL if rules failed"
         [<opt> any-value!]
-    furthest: "Furthest input point reached by the parse"
+    @furthest "Furthest input point reached by the parse"
         [any-series!]
-    pending: "Request unprocessed pending items (default errors if any)"
+    @pending "Request unprocessed pending items (default errors if any)"
         [<opt> block!]
-
     input "Input data"
         [<try> any-series! url! any-sequence!]
     rules "Block of parse rules"

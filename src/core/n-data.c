@@ -972,9 +972,8 @@ bool Get_Path_Push_Refinements_Throws(
 //  {Gets the value of a word or path, or block of words/paths}
 //
 //      return: [<opt> any-value!]
-//      steps: "Allow GROUP! evals, returns block of reusable PICK/POKE steps"
+//      @steps "Allow GROUP! evals, returns block of reusable PICK/POKE steps"
 //          [the-block! the-word! blank!]
-//
 //      source "Word or path to get, or block of PICK steps"
 //          [<try> any-word! any-sequence! any-group! the-block!]
 //      /any "Do not error on isotopes"
@@ -1337,9 +1336,8 @@ void Set_Var_May_Fail(
 //
 //      return: "Same value as input"
 //          [<opt> <void> any-value!]
-//      steps: "Allow GROUP! evals, returns block of reusable PICK/POKE steps"
+//      @steps "Allow GROUP! evals, returns block of reusable PICK/POKE steps"
 //          [the-block! the-word! blackhole!]
-//
 //      target "Word or path (# means ignore assignment, just return value)"
 //          [blackhole! any-word! any-sequence! any-group! any-block!]
 //      ^value [<opt> <void> any-value!]

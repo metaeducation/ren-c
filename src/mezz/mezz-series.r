@@ -95,9 +95,8 @@ replace: function [
     {Replaces a search value with the replace value within the target series}
 
     return: [any-series!]
-    tail: "Tail position after last replacement"
+    @tail "Tail position after last replacement"
         [any-series!]
-
     target "Series to replace within (modified)"
         [any-series!]
     ^pattern' "Value to be replaced (converted if necessary)"

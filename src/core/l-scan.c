@@ -3041,11 +3041,10 @@ void Shutdown_Scanner(void)
 //
 //      return: "Transcoded value (or block of values)"
 //          [<opt> any-value!]
-//      next: "<output> Translate one value and give back next position"
-//          [<opt> text! binary!]
-//      relax: "<output> Try to trap errors and skip token (toplevel only)"
-//          [<opt> error!]
-//
+//      @next "Translate one value and give back next position"
+//          [text! binary!]
+//      @relax "Try to trap errors and skip token (toplevel only)"
+//          [error!]
 //      source "If BINARY!, must be Unicode UTF-8 encoded"
 //          [text! binary!]
 //      /file "File to be associated with BLOCK!s and GROUP!s in source"

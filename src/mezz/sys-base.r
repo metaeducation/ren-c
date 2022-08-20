@@ -34,11 +34,10 @@ module: func [
     {Creates a new module}
 
     return: [module!]
-    product: "The result of running the body (~quit~ isotope if it ran QUIT)"
-        [<opt> any-value!]
-    quitting: "If requested and quitting, when true PRODUCT is QUIT's argument"
+    @product "The result of running the body (~quit~ isotope if it ran QUIT)"
+        [any-value!]
+    @quitting "If requested and quitting, when true PRODUCT is QUIT's argument"
         [logic!]
-
     spec "The header block of the module (modified)"
         [<opt> block! object!]
     body "The body of the module (all bindings will be overwritten if block)"
@@ -195,9 +194,8 @@ do*: func [
 
     return: "Final evaluative product of code or block"
         [<opt> any-value!]
-    context: "Isolated context where the evaluation was performed"
+    @context "Isolated context where the evaluation was performed"
         [module!]
-
     source "Files, urls and modules evaluate as scripts, other strings don't"
         [file! url! text! binary! tag! the-word!]
     args "Args passed as system.script.args to a script (normally a string)"
