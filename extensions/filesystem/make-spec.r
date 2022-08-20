@@ -326,7 +326,7 @@ if os = 'QNX [
 ]
 
 
-=== TRANSFORM PATHS FOR SOURCES TO FULL PATHS AND DISABLE WARNINGS ===
+=== {TRANSFORM PATHS FOR SOURCES TO FULL PATHS AND DISABLE WARNINGS} ===
 
 uv-depends: map-each tuple uv-sources [  ; WORD! in bootstrap
     file: if os = 'Windows [

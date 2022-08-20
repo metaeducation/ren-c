@@ -699,13 +699,16 @@ has: ~
 ; it could dump those remarks out...perhaps based on how many == there are.
 ; (This is a good reason for retaking ==, as that looks like a divider.)
 ;
+; Only supports strings in bootstrap, because sea of words is not in bootstrap
+; executable, so plain words here creates a bunch of variables...could confuse
+; the global state more than it already is.
+;
 ===: lib/func [
     ; note: <...> is now a TUPLE!, and : used to be "hard quote" (vs ')
-    :remarks [any-value! <...>]
+    label [text!]
+    'terminal [word!]
 ][
-    until [
-        equal? '=== take remarks
-    ]
+    assert [equal? terminal '===]
 ]
 
 const?: lib/func [x] [return false]

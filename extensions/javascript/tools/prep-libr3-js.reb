@@ -35,7 +35,7 @@ e-cwrap: make-emitter "JavaScript C Wrapper functions" (
     join output-dir %reb-lib.js
 )
 
-=== ASYNCIFY_BLACKLIST TOLERANT CWRAP ===
+=== {ASYNCIFY_BLACKLIST TOLERANT CWRAP} ===
 
 ; Emscripten's `cwrap` is based on a version of ccall which does not allow
 ; synchronous function calls in the Asyncify build while emscripten_sleep() is
@@ -189,7 +189,7 @@ e-cwrap/emit {
 }
 
 
-=== GENERATE C WRAPPER FUNCTIONS ===
+=== {GENERATE C WRAPPER FUNCTIONS} ===
 
 e-cwrap/emit {
     /* The C API uses names like rebValue().  This is because calls from the
@@ -848,7 +848,7 @@ if false [  ; Only used if DEBUG_JAVASCRIPT_SILENT_TRACE (how to know here?)
 e-cwrap/write-emitted
 
 
-=== GENERATE EMSCRIPTEN KEEPALIVE LIST ===
+=== {GENERATE EMSCRIPTEN KEEPALIVE LIST} ===
 
 ; It is possible to tell the linker what functions to keep alive via the
 ; EMSCRIPTEN_KEEPALIVE annotation.  But we don't want %rebol.h to be dependent
@@ -886,7 +886,7 @@ write (join output-dir %libr3.exports.json) json-collect [
 ]
 
 
-=== GENERATE ASYNCIFY BLACKLIST FILE ===
+=== {GENERATE ASYNCIFY BLACKLIST FILE} ===
 
 ; Asyncify has some automatic ability to determine what functions cannot be
 ; on the stack when a function may yield.  It then does not instrument these
@@ -921,7 +921,7 @@ write/lines (join output-dir %asyncify-blacklist.json) collect [
 ]
 
 
-=== GENERATE %NODE-PRELOAD.JS ===
+=== {GENERATE %NODE-PRELOAD.JS} ===
 
 ; !!! Node.js support lapsed for a time, due to no pthreads support:
 ;
