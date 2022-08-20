@@ -488,12 +488,12 @@ for-each name native-names [
 
 first-generic-sym: sym-n
 
-generic-names: copy []
-boot-generics: stripload/gather (join prep-dir %boot/tmp-generics.r) 'generic-names
-insert boot-generics "["
-append boot-generics "]"
+generic-names: load-value join prep-dir %boot/tmp-generic-names.r
+boot-generics: as text! read join prep-dir %boot/tmp-generics-stripped.r
+
 for-each name generic-names [
-    if first-generic-sym < ((add-sym/exists to-word name) else [0]) [
+    assert [word? name]
+    if first-generic-sym < ((add-sym/exists name) else [0]) [
         fail ["Generic name collision with Native or Generic found:" name]
     ]
 ]
@@ -784,8 +784,8 @@ sections: [
 ]
 
 nats: collect [
-    for-each val native-names [
-        keep cscape/with {N_${val}} 'val
+    for-each name native-names [
+        keep cscape/with {N_${name}} 'name
     ]
 ]
 

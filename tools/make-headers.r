@@ -148,7 +148,8 @@ process: function [return: <none> file] [
 ; more solid mechanism.
 
 
-boot-natives: load (join output-dir %boot/tmp-natives.r)
+native-names: copy []
+boot-natives: stripload/gather (join output-dir %boot/tmp-natives.r) 'native-names
 
 e-funcs/emit {
     /*
@@ -180,12 +181,11 @@ e-funcs/emit {
 }
 e-funcs/emit newline
 
-for-each val boot-natives [
-    if set-word? val [
-        e-funcs/emit 'val {
-            DECLARE_NATIVE(${to word! val});
-        }
-    ]
+for-each val native-names [
+    assert [word? val]
+    e-funcs/emit 'val {
+        DECLARE_NATIVE(${val});
+    }
 ]
 
 e-funcs/emit {

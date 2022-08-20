@@ -178,37 +178,25 @@ write-if-changed (join output-dir %boot/tmp-natives.r) output-buffer
 print [(length of all-protos) "natives"]
 print newline
 
-
-print "------ Generate tmp-generics.r"
-
 clear output-buffer
 
-append output-buffer {REBOL [
-    System: "REBOL [R3] Language Interpreter and Run-time Environment"
-    Title: "Action function specs"
-    Rights: {
-        Copyright 2012 REBOL Technologies
-        REBOL is a trademark of REBOL Technologies
-    }
-    License: {
-        Licensed under the Apache License, Version 2.0.
-        See: http://www.apache.org/licenses/LICENSE-2.0
-    }
-    Note: {This is a generated file.}
-]
 
-}
+=== {GENERATE PROCESSED FILES FOR GENERICS} ===
 
+generic-names: copy []
+stripped-generics: stripload/gather (join src-dir %boot/generics.r) 'generic-names
 
-append output-buffer mold/only load (join src-dir %boot/generics.r)
-
-append output-buffer unspaced [
-    newline
+write-if-changed (join output-dir %boot/tmp-generics-stripped.r) unspaced [
+    "[" newline
+    stripped-generics
     "~done~  ; C code expects evaluation to end in ~done~" newline
-    newline
+    "]" newline
 ]
 
-write-if-changed (join output-dir %boot/tmp-generics.r) output-buffer
+write-if-changed (join output-dir %boot/tmp-generic-names.r) unspaced [
+    mold generic-names
+    newline
+]
 
 
 === {EMIT INCLUDE_PARAMS_OF_XXX AUTOMATIC MACROS} ===
@@ -227,13 +215,13 @@ for-each info all-protos [
     emit-include-params-macro e-params info/proto
 ]
 
-parse2 read/string (join output-dir %boot/tmp-generics.r) [
-    thru "^/]^/"  ; skip REBOL header (closing brace flush with left)
+blockrule: ["[" any [blockrule | not "]" skip] "]"]
+
+parse2 stripped-generics [
     some newline  ; skip newlines
     opt some [
         copy proto [
-            thru ":" space "generic ["
-            thru "^/]^/"
+            thru ":" space "generic" space blockrule
         ]
         (emit-include-params-macro e-params proto)
             |

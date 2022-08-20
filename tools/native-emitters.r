@@ -111,7 +111,10 @@ export emit-include-params-macro: function [
     seen-refinement: false
 
     native-name: ~
-    parse2 proto [opt ["export" space] copy native-name to ":" to end] else [
+    parse2 proto [
+        opt some newline  ; stripload preserves newlines
+        opt ["export" space] copy native-name to ":" to end
+    ] else [
         fail "Could not extract native name in emit-include-params-macro"
     ]
     spec: copy find proto "["  ; make copy (we'll corupt it)
