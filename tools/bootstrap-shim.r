@@ -386,10 +386,23 @@ unset first [=>]
 ;
 set: specialize :lib/set [opt: true]
 
-; PRINT was changed to tolerate NEWLINE to mean print a newline only
+; PRINT was changed to tolerate NEWLINE to mean print a newline only.
 ;
-print: lib/func [value] [
-    lib/print either value == newline [""][value]
+; !!! Also, PRINT of large blobs of data is buggy.  Print line by line of
+; anything that has newlines in it.
+;
+print: lib/func [value <local> pos] [
+    if value = newline [
+        lib/print ""
+        return
+    ]
+    value: unspaced value  ; uses bootstrap shim unspaced
+    while [pos: find value newline] [
+        line: copy/part value pos
+        lib/print line
+        value: next pos
+    ]
+    lib/print value
 ]
 
 ; PARSE is being changed to a more powerful interface that returns synthesized
