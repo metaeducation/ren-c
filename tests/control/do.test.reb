@@ -245,7 +245,7 @@
     value: <overwritten>
     did all [
         null? [value @]: evaluate []  ; @ requests position after step (null)
-        unset? 'value
+        null? value
     ]
 )
 (

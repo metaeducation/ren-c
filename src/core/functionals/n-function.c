@@ -641,7 +641,8 @@ DECLARE_NATIVE(definitional_return)
 
   skip_type_check: {  ////////////////////////////////////////////////////////
 
-    Proxy_Multi_Returns(target_frame);
+    if (not Is_Failure(v))  // don't want to proxy multi-returns if failed
+        Proxy_Multi_Returns(target_frame);
 
     DECLARE_LOCAL (label);
     Copy_Cell(label, Lib(UNWIND)); // see also Make_Thrown_Unwind_Value

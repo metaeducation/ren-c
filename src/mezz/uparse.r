@@ -369,22 +369,20 @@ default-combinators: make map! reduce [
         return: "Result of last successful match"
             [<opt> any-value!]
         parser [action!]
-        <local> last-result' result' pos
+        <local> result'
     ][
         append state.loops binding of 'return
 
-        [^last-result' input]: parser input except e -> [
+        [^result' input]: parser input except e -> [
             take/last state.loops
             return fail e
         ]
         cycle [  ; if first try succeeds, we'll succeed overall--keep looping
-            [^result' pos]: parser input except [
+            [^result' input]: parser input except [
                 take/last state.loops
                 remainder: input
-                return unmeta last-result'
+                return unmeta result'
             ]
-            last-result': result'
-            input: pos
         ]
         fail ~unreachable~
     ]
@@ -395,30 +393,26 @@ default-combinators: make map! reduce [
             [<opt> <void> any-value!]
         condition-parser [action!]
         body-parser [action!]
-        <local> result' last-result' pos
+        <local> result'
     ][
         append state.loops binding of 'return
 
-        last-result': void'
+        result': void'
 
         cycle [
-            [# pos]: condition-parser input except [
+            [# input]: condition-parser input except [
                 take/last state.loops
                 remainder: input
-                return unmeta last-result'
+                return unmeta result'
             ]
-
-            input: pos
 
             ; We don't worry about the body parser's success or failure, but
-            ; we do want to update the position and last result on success.
+            ; if it fails we disregard the result
             ;
-            [^result' pos]: body-parser input except [
-                last-result': none'
+            [^result' input]: body-parser input except [
+                result': none'
                 continue
             ]
-            input: pos
-            last-result': result'
         ]
         fail ~unreachable~
     ]
@@ -428,19 +422,17 @@ default-combinators: make map! reduce [
         return: "Result of last body parser (or none if failure)"
             [<opt> any-value!]
         parser [action!]
-        <local> result' last-result' pos
+        <local> result'
     ][
         append state.loops binding of 'return
 
-        last-result': void'
+        result': void'
 
         cycle [
-            [^result' pos]: parser input except [
-                last-result': none'
+            [^result' input]: parser input except [
+                result': none'
                 continue
             ]
-            input: pos
-            last-result': result'
         ]
         fail ~unreachable~
     ]
@@ -450,19 +442,18 @@ default-combinators: make map! reduce [
         return: "Number of matches (can be 0)"
             [<opt> integer!]
         parser [action!]
-        <local> count pos
+        <local> count
     ][
         append state.loops binding of 'return
 
         count: 0
         cycle [
-            [_ pos]: parser input except [
+            [_ input]: parser input except [
                 take/last state.loops
                 remainder: input
                 return count
             ]
             count: count + 1
-            input: pos
         ]
         fail ~unreachable~
     ]
@@ -732,13 +723,13 @@ default-combinators: make map! reduce [
             [<opt> any-series!]
         parser-left [action!]
         parser-right [action!]
-        <local> start
+        <local> start limit
     ][
         [^ start]: parser-left input except e -> [
             return fail e
         ]
 
-        let limit: start
+        limit: start
         cycle [
             [^ remainder]: parser-right limit then [  ; found it
                 return copy/part start limit
@@ -918,11 +909,15 @@ default-combinators: make map! reduce [
             return fail e
         ]
 
+        if void' = subseries [
+            fail "Cannot SUPBARSE into a void"
+        ]
+
         if quasi? subseries [
             fail "Cannot SUBPARSE an isotope synthesized result"
         ]
 
-        assert [quoted? subseries]  ; no true null unless failure
+        assert [quoted? subseries]  ; could be any value
 
         ; We don't just unquote the literalizing quote from ^ that's on the
         ; value (which would indicate a plain series).  We dequote fully...so
@@ -966,10 +961,9 @@ default-combinators: make map! reduce [
             return fail e
         ]
 
-        ; subpending can be BLANK! or a block full of items that may or may
+        ; subpending can be NULL or a block full of items that may or may
         ; not be intended for COLLECT.  Right now the logic is that all QUOTED!
-        ; items are intended for collect, so extract those from the pending
-        ; array.
+        ; items are intended for collect, extract those from the pending array.
         ;
         ; !!! More often than not a COLLECT probably is going to be getting an
         ; array of all QUOTED! items.  If so, there's probably no great reason
@@ -988,17 +982,17 @@ default-combinators: make map! reduce [
 
     'keep combinator [
         return: "The kept value (same as input)"
-            [<opt> any-value!]
+            [<void> any-value!]
         pending: [<opt> block!]
         parser [action!]
-        <local> result result' subpending
+        <local> result' subpending
     ][
         [^result' remainder subpending]: parser input except e -> [
             return fail e
         ]
-        if void? unget result' [  ; pure void
+        if void? unget result' [
             pending: null
-            return ~  ; !!! Why not VOID?
+            return void
         ]
 
         ; Since COLLECT is considered the most common `pending` client, we
@@ -1063,7 +1057,7 @@ default-combinators: make map! reduce [
 
         obj: make object! collect [
             remove-each item any [subpending #] [
-                if block? :item [keep spread item, true]
+                if block? item [keep spread item, true]
             ] else [
                 ; should it error or fail if subpending was BLANK! ?
             ]
@@ -1326,7 +1320,7 @@ default-combinators: make map! reduce [
         ; Run GROUP!s in order, removing them as one goes
         ;
         remove-each item any [subpending #] [
-            if group? :item [eval item, true]
+            if group? item [eval item, true]
         ]
 
         pending: subpending
@@ -1599,7 +1593,7 @@ default-combinators: make map! reduce [
             [<opt> <void> any-value!]
         times-parser [action!]
         parser [action!]
-        <local> times' min max result' i temp-remainder
+        <local> times' min max result'
     ][
         [^times' input]: times-parser input except e -> [return fail e]
 
@@ -1648,7 +1642,7 @@ default-combinators: make map! reduce [
             ; it would overwrite the last useful result.  Instead, the GROUP!
             ; potentially returns...only do the assignment if it does not.
             ;
-            [^result' temp-remainder]: parser input except [
+            [^result' input]: parser input except [
                 take/last state.loops
                 if i <= min [  ; `<=` not `<` as this iteration failed!
                     return fail "REPEAT did not reach minimum repetitions"
@@ -1656,7 +1650,6 @@ default-combinators: make map! reduce [
                 remainder: input
                 return unmeta result'
             ]
-            input: temp-remainder  ; only overwrite input on success
         ]
 
         take/last state.loops
