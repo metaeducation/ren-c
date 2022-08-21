@@ -130,10 +130,10 @@ inline static bool Is_Isotope(Cell(const*) v) {
     return true;
 }
 
-inline static bool Reify_Isotope(Cell(*) v) {
+inline static Value(*) Reify_Isotope(Value(*) v) {
     assert(Is_Isotope(v));
     mutable_QUOTE_BYTE(v) = QUASI_1;
-    return true;
+    return v;
 }
 
 inline static bool Is_Word_Isotope_With_Id(

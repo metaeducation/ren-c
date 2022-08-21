@@ -263,7 +263,7 @@ void Set_Event_Vars(
 // Will return BLANK! if the variable is not available.
 //
 static REBVAL *Get_Event_Var(
-    Cell(*) out,
+    Value(*) out,
     noquote(Cell(const*)) v,
     Symbol(const*) symbol
 ){
@@ -312,7 +312,7 @@ static REBVAL *Get_Event_Var(
         Context(*) error = Maybe_Init_Char(out, VAL_EVENT_KEYCODE(v));
         if (error)
             fail (error);
-        return SPECIFIC(out); }
+        return out; }
 
       case SYM_FLAGS:
         if (

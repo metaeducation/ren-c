@@ -258,7 +258,7 @@ Array(*) Make_Let_Patch(
             | SERIES_FLAG_INFO_NODE_NEEDS_MARK
     );
 
-    Init_None(ARR_SINGLE(patch));  // start variable off as unset
+    Init_None(VAL(ARR_SINGLE(patch)));  // start variable off as unset
 
     // The way it is designed, the list of patches terminates in either a
     // nullptr or a context pointer that represents the specifying frame for
