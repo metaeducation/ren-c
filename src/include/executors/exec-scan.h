@@ -128,18 +128,6 @@ typedef struct rebol_scan_state {  // shared across all levels of a scan
     // scanning variadics which merge REBVAL and UTF-8 strings together...
     //
     /* const Byte* limit; */
-
-    // !!! R3-Alpha had a /RELAX mode for TRANSCODE, which offered the ability
-    // to get a partial scan with an error on a token.  An error propagating
-    // out via fail() would not allow a user to get such partial results
-    // (unless they were parameters to the error).  The feature was not really
-    // specified well...but without some more recoverable notion of state in a
-    // nested parse, only errors at the topmost level can be meaningful.  So
-    // Ren-C has this flag which is set by the scanner on failure.  A better
-    // notion would likely integrate with PARSE.  In any case, we track the
-    // depth so that a failure can potentially be recovered from at 0.
-    //
-    REBLEN depth;
 } SCAN_STATE;
 
 typedef struct rebol_scan_level {  // each array scan corresponds to a level

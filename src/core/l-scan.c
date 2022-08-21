@@ -1862,7 +1862,6 @@ void Init_Scan_Level(
     TRASH_POINTER_IF_DEBUG(ss->end);
 
     ss->file = file;
-    ss->depth = 0;
 
     // !!! Splicing REBVALs into a scan as it goes creates complexities for
     // error messages based on line numbers.  Fortunately the splice of a
@@ -2139,7 +2138,6 @@ Bounce Scanner_Executor(Frame(*) f) {
         );
         subframe->executor = &Scanner_Executor;
 
-        ++ss->depth;
         subframe->u.scan.ss = ss;
 
         // Capture current line and head of line into the starting points.
@@ -2174,8 +2172,6 @@ Bounce Scanner_Executor(Frame(*) f) {
         mutable_LINK(Filename, a) = ss->file;
         Set_Subclass_Flag(ARRAY, a, HAS_FILE_LINE_UNMASKED);
         SET_SERIES_FLAG(a, LINK_NODE_NEEDS_MARK);
-
-        --ss->depth;
 
         enum Reb_Kind kind =
             (level->token == TOKEN_GROUP_BEGIN) ? REB_GROUP : REB_BLOCK;
@@ -2426,7 +2422,6 @@ Bounce Scanner_Executor(Frame(*) f) {
         );
         subframe->executor = &Scanner_Executor;
 
-        ++ss->depth;
         subframe->u.scan.ss = ss;
 
         // Capture current line and head of line into the starting points.
@@ -2462,8 +2457,6 @@ Bounce Scanner_Executor(Frame(*) f) {
         mutable_LINK(Filename, array) = ss->file;
         Set_Subclass_Flag(ARRAY, array, HAS_FILE_LINE_UNMASKED);
         SET_SERIES_FLAG(array, LINK_NODE_NEEDS_MARK);
-
-        --ss->depth;
 
         // !!! Should the scanner be doing binding at all, and if so why
         // just Lib_Context?  Not binding would break functions entirely,
