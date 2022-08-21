@@ -239,7 +239,7 @@ Bounce MAKE_Image(
     const REBVAL *arg
 ){
     if (parent)
-        return FAIL(Error_Bad_Make_Parent(kind, unwrap(parent)));
+        return RAISE(Error_Bad_Make_Parent(kind, unwrap(parent)));
 
     if (IS_IMAGE(arg)) {
         //
@@ -288,10 +288,10 @@ Bounce MAKE_Image(
             // directly as-is...so Ren-C only supports RGBA.
 
             if (VAL_INDEX(item) != 0)
-                return FAIL("MAKE IMAGE! w/BINARY! must have binary at HEAD");
+                return RAISE("MAKE IMAGE! w/BINARY! must have binary at HEAD");
 
             if (VAL_LEN_HEAD(item) != cast(REBLEN, w * h * 4))
-                return FAIL("MAKE IMAGE! w/BINARY! needs RGBA pixels for size");
+                return RAISE("MAKE IMAGE! w/BINARY! needs RGBA pixels for size");
 
             Init_Image(OUT, VAL_BINARY(item), w, h);
             ++item;
@@ -336,10 +336,10 @@ Bounce MAKE_Image(
             goto bad_make;
 
         if (item != tail)
-            return FAIL("Too many elements in BLOCK! for MAKE IMAGE!");
+            return RAISE("Too many elements in BLOCK! for MAKE IMAGE!");
     }
     else
-        return FAIL(Error_Invalid_Type(VAL_TYPE(arg)));
+        return RAISE(Error_Invalid_Type(VAL_TYPE(arg)));
 
     return OUT;
 
@@ -356,7 +356,7 @@ Bounce TO_Image(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg)
     assert(kind == REB_CUSTOM);
     UNUSED(kind);
 
-    return FAIL(arg);
+    return RAISE(arg);
 }
 
 

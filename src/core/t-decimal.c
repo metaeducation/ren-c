@@ -151,7 +151,7 @@ Bounce MAKE_Decimal(
 ){
     assert(kind == REB_DECIMAL or kind == REB_PERCENT);
     if (parent)
-        return FAIL(Error_Bad_Make_Parent(kind, unwrap(parent)));
+        return RAISE(Error_Bad_Make_Parent(kind, unwrap(parent)));
 
     REBDEC d;
 
@@ -172,7 +172,7 @@ Bounce MAKE_Decimal(
         Size size;
         const Byte* at = VAL_BINARY_SIZE_AT(&size, arg);
         if (size < 8)
-            return FAIL(arg);
+            return RAISE(arg);
 
         Init_Decimal_Bits(OUT, at); // makes REB_DECIMAL
         d = VAL_DECIMAL(OUT);
@@ -229,14 +229,14 @@ Bounce MAKE_Decimal(
         Cell(const*) item = VAL_ARRAY_LEN_AT(&len, arg);
 
         if (len != 2)
-            return FAIL(Error_Bad_Make(kind, arg));
+            return RAISE(Error_Bad_Make(kind, arg));
 
         if (IS_INTEGER(item))
             d = cast(REBDEC, VAL_INT64(item));
         else if (IS_DECIMAL(item) || IS_PERCENT(item))
             d = VAL_DECIMAL(item);
         else
-            return FAIL(Error_Bad_Value(item));
+            return RAISE(Error_Bad_Value(item));
 
         ++item;
 
@@ -246,7 +246,7 @@ Bounce MAKE_Decimal(
         else if (IS_DECIMAL(item) || IS_PERCENT(item))
             exp = VAL_DECIMAL(item);
         else
-            return FAIL(Error_Bad_Value(item));
+            return RAISE(Error_Bad_Value(item));
 
         while (exp >= 1) {
             //
@@ -255,7 +255,7 @@ Bounce MAKE_Decimal(
             --exp;
             d *= 10.0;
             if (!FINITE(d))
-                return FAIL(Error_Overflow_Raw());
+                return RAISE(Error_Overflow_Raw());
         }
 
         while (exp <= -1) {
@@ -273,7 +273,7 @@ Bounce MAKE_Decimal(
 
   dont_divide_if_percent:
     if (!FINITE(d))
-        return FAIL(Error_Overflow_Raw());
+        return RAISE(Error_Overflow_Raw());
 
     Reset_Cell_Header_Untracked(TRACK(OUT), kind, CELL_MASK_NONE);
     VAL_DECIMAL(OUT) = d;
@@ -281,7 +281,7 @@ Bounce MAKE_Decimal(
 
   bad_make:
 
-    return FAIL(Error_Bad_Make(kind, arg));
+    return RAISE(Error_Bad_Make(kind, arg));
 }
 
 
@@ -343,7 +343,7 @@ Bounce TO_Decimal(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg)
             goto bad_to;
 
         if (VAL_INT64(denominator) == 0)
-            return FAIL(Error_Zero_Divide_Raw());
+            return RAISE(Error_Zero_Divide_Raw());
 
         d = cast(REBDEC, VAL_INT64(numerator))
             / cast(REBDEC, VAL_INT64(denominator));
@@ -370,7 +370,7 @@ Bounce TO_Decimal(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg)
   dont_divide_if_percent:
 
     if (not FINITE(d))
-        return FAIL(Error_Overflow_Raw());
+        return RAISE(Error_Overflow_Raw());
 
     Reset_Cell_Header_Untracked(TRACK(OUT), kind, CELL_MASK_NONE);
     VAL_DECIMAL(OUT) = d;
@@ -378,7 +378,7 @@ Bounce TO_Decimal(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg)
 
   bad_to:
 
-    return FAIL(Error_Bad_Cast_Raw(arg, Datatype_From_Kind(kind)));
+    return RAISE(Error_Bad_Cast_Raw(arg, Datatype_From_Kind(kind)));
 }
 
 

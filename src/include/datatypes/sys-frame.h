@@ -384,7 +384,7 @@ inline static void Drop_Frame_Core(Frame(*) f) {
 
     assert(TG_Top_Frame == f);
 
-    if (Is_Throwing(f) or (f->out and Is_Failure(f->out))) {
+    if (Is_Throwing(f) or (f->out and Is_Raised(f->out))) {
         //
         // On normal completion with a return result, we do not allow API
         // handles attached to a frame to leak--you are expected to release
@@ -432,7 +432,7 @@ inline static void Drop_Frame(Frame(*) f)
 {
     if (
         not Is_Throwing(f)
-        and not (f->out and Is_Failure(f->out))
+        and not (f->out and Is_Raised(f->out))
     ){
       #if DEBUG_BALANCE_STATE
         //
@@ -592,7 +592,7 @@ inline static Frame(*) Prep_Frame_Core(
     #define NONE        Native_None_Result(frame_)
     #define THROWN      Native_Thrown_Result(frame_)
     #define COPY(v)     Native_Copy_Result(frame_, (v))
-    #define FAIL(p)     Native_Failure_Result(frame_, (p))
+    #define RAISE(p)    Native_Raised_Result(frame_, (p))
     #define UNMETA(v)   Native_Unmeta_Result(frame_, (v))
     #define BRANCHED(v) Native_Branched_Result(frame_, (v))
 

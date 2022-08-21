@@ -384,7 +384,7 @@ Bounce MAKE_Varargs(
 ){
     assert(kind == REB_VARARGS);
     if (parent)
-        return FAIL(Error_Bad_Make_Parent(kind, unwrap(parent)));
+        return RAISE(Error_Bad_Make_Parent(kind, unwrap(parent)));
 
     // With MAKE VARARGS! on an ANY-ARRAY!, the array is the backing store
     // (shared) that the varargs interface cannot affect, but changes to
@@ -428,7 +428,7 @@ Bounce TO_Varargs(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg)
     assert(kind == REB_VARARGS);
     UNUSED(kind);
 
-    return FAIL(arg);
+    return RAISE(arg);
 }
 
 

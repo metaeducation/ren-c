@@ -362,7 +362,7 @@ Bounce MAKE_Map(
     const REBVAL *arg
 ){
     if (parent)
-        return FAIL(Error_Bad_Make_Parent(kind, unwrap(parent)));
+        return RAISE(Error_Bad_Make_Parent(kind, unwrap(parent)));
 
     if (ANY_NUMBER(arg)) {
         return Init_Map(OUT, Make_Map(Int32s(arg, 0)));
@@ -455,7 +455,7 @@ Bounce TO_Map(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg)
         return Init_Map(OUT, Copy_Map(VAL_MAP(arg), types));
     }
 
-    return FAIL(arg);
+    return RAISE(arg);
 }
 
 

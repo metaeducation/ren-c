@@ -1227,7 +1227,7 @@ REBTYPE(Fail)
 {
     UNUSED(verb);
 
-    return FAIL("Datatype does not have a dispatcher registered.");
+    return RAISE("Datatype does not have a dispatcher registered.");
 }
 
 

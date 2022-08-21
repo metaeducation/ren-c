@@ -108,7 +108,7 @@ Bounce MAKE_Array(
     const REBVAL *arg
 ){
     if (parent)
-        return FAIL(Error_Bad_Make_Parent(kind, unwrap(parent)));
+        return RAISE(Error_Bad_Make_Parent(kind, unwrap(parent)));
 
     if (IS_INTEGER(arg) or IS_DECIMAL(arg)) {
         //
@@ -286,7 +286,7 @@ Bounce MAKE_Array(
                 param += VAL_VARARGS_SIGNED_PARAM_INDEX(arg);
 
             if (TYPE_CHECK(param, REB_NULL))
-                return FAIL(Error_Null_Vararg_Array_Raw());
+                return RAISE(Error_Null_Vararg_Array_Raw());
         }
 
         StackIndex base = TOP_INDEX;
@@ -327,7 +327,7 @@ Bounce MAKE_Array(
 
   bad_make:
 
-    return FAIL(Error_Bad_Make(kind, arg));
+    return RAISE(Error_Bad_Make(kind, arg));
 }
 
 

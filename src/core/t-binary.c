@@ -173,7 +173,7 @@ static Bounce MAKE_TO_Binary_Common(Frame(*) frame_, const REBVAL *arg)
         return Init_Binary(OUT, bin); }
 
       default:
-        return FAIL(Error_Bad_Make(REB_BINARY, arg));
+        return RAISE(Error_Bad_Make(REB_BINARY, arg));
     }
 }
 

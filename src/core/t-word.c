@@ -121,7 +121,7 @@ Bounce MAKE_Word(
         const Byte* bp = Analyze_String_For_Scan(&size, arg, MAX_SCAN_WORD);
 
         if (NULL == Scan_Any_Word(OUT, kind, bp, size))
-            return FAIL(Error_Bad_Char_Raw(arg));
+            return RAISE(Error_Bad_Char_Raw(arg));
 
         return OUT;
     }
@@ -148,7 +148,7 @@ Bounce MAKE_Word(
         );
     }
 
-    return FAIL(Error_Unexpected_Type(REB_WORD, VAL_TYPE(arg)));
+    return RAISE(Error_Unexpected_Type(REB_WORD, VAL_TYPE(arg)));
 }
 
 
@@ -177,18 +177,18 @@ Bounce TO_Word(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg)
             if (IS_BLANK(item))
                 continue;
             if (not IS_WORD(item))
-                return FAIL(
+                return RAISE(
                     "Can't make ANY-WORD! from path unless it's one WORD!"
                 );
             if (not Is_Void(OUT))
-                return FAIL(
+                return RAISE(
                     "Can't make ANY-WORD! from path w/more than one WORD!"
                 );
             Derelativize(OUT, item, VAL_SEQUENCE_SPECIFIER(arg));
         }
 
         if (Is_Void(OUT))
-            return FAIL("Can't MAKE ANY-WORD! from PATH! that's all BLANK!s");
+            return RAISE("Can't MAKE ANY-WORD! from PATH! that's all BLANK!s");
 
         mutable_HEART_BYTE(OUT) = kind;
         return OUT;

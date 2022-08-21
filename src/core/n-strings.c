@@ -140,10 +140,10 @@ DECLARE_NATIVE(delimit)
         Decay_If_Isotope(OUT);  // spaced [match [logic!] false ...]
 
         if (Is_Isotope(OUT))
-            return FAIL(Error_Bad_Isotope(OUT));
+            return RAISE(Error_Bad_Isotope(OUT));
 
         if (Is_Nulled(OUT))  // catches bugs in practice, see [1]
-            return FAIL(Error_Need_Non_Null_Raw());
+            return RAISE(Error_Need_Non_Null_Raw());
 
         nothing = false;
 

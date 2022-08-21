@@ -175,7 +175,7 @@ Bounce MAKE_String(
     const REBVAL *def
 ){
     if (parent)
-        return FAIL(Error_Bad_Make_Parent(kind, unwrap(parent)));
+        return RAISE(Error_Bad_Make_Parent(kind, unwrap(parent)));
 
     if (IS_INTEGER(def)) {  // new string with given integer capacity
         //
@@ -251,7 +251,7 @@ Bounce MAKE_String(
 
   bad_make:
 
-    return FAIL(Error_Bad_Make(kind, def));
+    return RAISE(Error_Bad_Make(kind, def));
 }
 
 
@@ -269,10 +269,10 @@ Bounce TO_String(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg)
             // more about capturing an internal implementation, that falls
             // under AS ISSUE!, which could handle multi-codepoint TUPLE! too.
             //
-            return FAIL("Use AS ISSUE! to convert integer codepoint to ISSUE!");
+            return RAISE("Use AS ISSUE! to convert integer codepoint to ISSUE!");
         }
         if (IS_CHAR(arg) and VAL_CHAR(arg) == 0)
-            return FAIL(Error_Illegal_Zero_Byte_Raw());  // `#` as codepoint 0
+            return RAISE(Error_Illegal_Zero_Byte_Raw());  // `#` as codepoint 0
 
         // Fall through
     }

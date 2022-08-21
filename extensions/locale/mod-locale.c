@@ -93,7 +93,7 @@ DECLARE_NATIVE(locale)
 
     return text;
   #else
-    return FAIL("LOCALE not implemented natively for non-Windows");  // see [1]
+    return RAISE("LOCALE not implemented natively for non-Windows");  // see [1]
   #endif
 }
 

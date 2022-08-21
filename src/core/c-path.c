@@ -211,7 +211,7 @@ Bounce MAKE_Path(
     const REBVAL *arg
 ){
     if (parent)
-        return FAIL(Error_Bad_Make_Parent(kind, unwrap(parent)));
+        return RAISE(Error_Bad_Make_Parent(kind, unwrap(parent)));
 
     if (not IS_BLOCK(arg))
         fail (Error_Bad_Make(kind, arg)); // "make path! 0" has no meaning
@@ -232,7 +232,7 @@ Bounce MAKE_Path(
             continue;
 
         if (Is_Nulled(OUT))
-            return FAIL(Error_Need_Non_Null_Raw());
+            return RAISE(Error_Need_Non_Null_Raw());
 
         Move_Cell(PUSH(), OUT);
         f->baseline.stack_base += 1;  // compensate for push
@@ -246,7 +246,7 @@ Bounce MAKE_Path(
         fail (Error_Bad_Sequence_Init(OUT));
 
     if (not ANY_PATH(OUT))  // e.g. `make path! ['x]` giving us the WORD! `x`
-        return FAIL(Error_Sequence_Too_Short_Raw());
+        return RAISE(Error_Sequence_Too_Short_Raw());
 
     return OUT;
 }
@@ -330,7 +330,7 @@ Bounce TO_Sequence(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg) {
         Dequotify(OUT);  // remove quotes (should TO take a noquote(Cell(*))?)
         Plainify(OUT);  // remove any decorations like @ or :
         if (not Try_Leading_Blank_Pathify(OUT, kind))
-            return FAIL(Error_Bad_Sequence_Init(OUT));
+            return RAISE(Error_Bad_Sequence_Init(OUT));
         return OUT;
     }
 
@@ -340,7 +340,7 @@ Bounce TO_Sequence(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg) {
 
     REBLEN len = VAL_LEN_AT(arg);
     if (len < 2)
-        return FAIL(Error_Sequence_Too_Short_Raw());
+        return RAISE(Error_Sequence_Too_Short_Raw());
 
     if (len == 2) {
         Cell(const*) at = VAL_ARRAY_ITEM_AT(arg);
@@ -351,7 +351,7 @@ Bounce TO_Sequence(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg) {
             at + 1,
             VAL_SPECIFIER(arg)
         )){
-            return FAIL(Error_Bad_Sequence_Init(OUT));
+            return RAISE(Error_Bad_Sequence_Init(OUT));
         }
     }
     else {
@@ -368,12 +368,12 @@ Bounce TO_Sequence(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg) {
         Force_Series_Managed(a);
 
         if (not Try_Init_Any_Sequence_Arraylike(OUT, kind, a))
-            return FAIL(Error_Bad_Sequence_Init(OUT));
+            return RAISE(Error_Bad_Sequence_Init(OUT));
     }
 
     if (VAL_TYPE(OUT) != kind) {
         assert(VAL_TYPE(OUT) == REB_WORD);
-        return FAIL(Error_Bad_Sequence_Init(OUT));
+        return RAISE(Error_Bad_Sequence_Init(OUT));
     }
 
     return OUT;

@@ -989,7 +989,7 @@ Bounce Action_Executor(Frame(*) f)
         )){
             Set_Executor_Flag(ACTION, f, TYPECHECK_ONLY);
             Init_Error(OUT, Error_Try_If_Null_Meant_Raw(Lib(NULL)));
-            Failurize(OUT);
+            Raisify(OUT);
             continue;
         }
 
@@ -1075,7 +1075,7 @@ Bounce Action_Executor(Frame(*) f)
 
     if (Get_Executor_Flag(ACTION, f, TYPECHECK_ONLY)) {  // <try>, <blackhole>
         assert(
-            Is_Failure(OUT)
+            Is_Raised(OUT)
             or Is_Word_Isotope_With_Id(OUT, SYM_BLACKHOLE)
         );
         goto skip_output_check;
@@ -1174,13 +1174,13 @@ Bounce Action_Executor(Frame(*) f)
 } dispatch_completed: {  /////////////////////////////////////////////////////
 
   // Here we know the function finished and nothing threw past it or had an
-  // abrupt fail().  (It may have done a `return FAIL(...)`, however.)
+  // abrupt fail().  (It may have done a `return RAISE(...)`, however.)
 
   #if !defined(NDEBUG)
     Do_After_Action_Checks_Debug(f);
   #endif
 
-    if (not Is_Failure(OUT))  // !!! Should there be an R_FAIL ?
+    if (not Is_Raised(OUT))  // !!! Should there be an R_FAIL ?
         assert(f->u.action.dispatcher_base == TOP_INDEX);
 
 } skip_output_check: {  //////////////////////////////////////////////////////

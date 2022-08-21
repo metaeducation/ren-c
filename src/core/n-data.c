@@ -997,7 +997,7 @@ DECLARE_NATIVE(get)
         steps = nullptr;  // no GROUP! evals
 
     if (Get_Var_Core_Throws(OUT, steps, source, SPECIFIED)) {
-        assert(steps or Is_Meta_Of_Failure(VAL_THROWN_LABEL(frame_)));  // see [1]
+        assert(steps or Is_Meta_Of_Raised(VAL_THROWN_LABEL(frame_)));  // see [1]
         return THROWN;
     }
 
@@ -1383,7 +1383,7 @@ DECLARE_NATIVE(set)
         fail ("Use SET/ANY to set variables to an isotope");
 
     if (Set_Var_Core_Throws(OUT, steps, target, SPECIFIED, v)) {
-        assert(steps or Is_Meta_Of_Failure(VAL_THROWN_LABEL(frame_)));  // see [3]
+        assert(steps or Is_Meta_Of_Raised(VAL_THROWN_LABEL(frame_)));  // see [3]
         return THROWN;
     }
 
@@ -1410,7 +1410,7 @@ DECLARE_NATIVE(try)
     if (Is_Meta_Of_Void(v) or Is_Meta_Of_Null(v))
         return Init_Nulled(OUT);
 
-    if (Is_Meta_Of_Failure(v)) {
+    if (Is_Meta_Of_Raised(v)) {
         ERROR_VARS *vars = ERR_VARS(VAL_CONTEXT(v));
         if (
             IS_WORD(&vars->id)
@@ -1418,7 +1418,7 @@ DECLARE_NATIVE(try)
         ){
             return COPY(SPECIFIC(&vars->line + 1));
         }
-        return FAIL(VAL_CONTEXT(v));
+        return RAISE(VAL_CONTEXT(v));
     }
 
     Meta_Unquotify(v);
@@ -1944,7 +1944,7 @@ DECLARE_NATIVE(as)
         if (IS_INTEGER(v)) {
             Context(*) error = Maybe_Init_Char(OUT, VAL_UINT32(v));
             if (error)
-                return FAIL(error);
+                return RAISE(error);
             return OUT;
         }
 

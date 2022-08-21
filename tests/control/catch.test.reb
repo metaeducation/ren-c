@@ -78,10 +78,10 @@
     true
 )
 [#851
-    (error? trap [catch/quit [] fail make error! ""])
+    (error? trap [catch/quit [] raise make error! ""])
 ]
 [#851
-    (null? attempt [catch/quit [] fail make error! ""])
+    (null? attempt [catch/quit [] raise make error! ""])
 ]
 
 ; Multiple return values

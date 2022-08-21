@@ -49,11 +49,11 @@ transcode-header: func [
     <local> key hdr error
 ][
     line: 1
-    trap [
-        [key rest]: transcode/file/line data file line
-        [hdr rest error]: transcode/file/line rest file line
-    ] then e -> [
-        return fail e  ; definitional (can be suppressed by SCRIPT?)
+    [key rest]: transcode/file/line data file line except e -> [
+        return raise e
+    ]
+    [hdr rest error]: transcode/file/line rest file line except e -> [
+        return raise e
     ]
 
     return all [not error, key = 'REBOL, block? hdr] then [hdr]

@@ -124,9 +124,9 @@ Bounce MAKE_Action(
     }
 
     if (not IS_BLOCK(arg))
-        return FAIL(Error_Bad_Make(REB_ACTION, arg));
+        return RAISE(Error_Bad_Make(REB_ACTION, arg));
 
-    return FAIL("Ren-C does not MAKE ACTION! on BLOCK! (see FUNC*/FUNC)");
+    return RAISE("Ren-C does not MAKE ACTION! on BLOCK! (see FUNC*/FUNC)");
 }
 
 
@@ -142,7 +142,7 @@ Bounce TO_Action(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg)
     assert(kind == REB_ACTION);
     UNUSED(kind);
 
-    return FAIL(arg);
+    return RAISE(arg);
 }
 
 

@@ -54,15 +54,15 @@ Bounce MAKE_Library(
     assert(kind == REB_CUSTOM);
 
     if (parent)
-        return FAIL(Error_Bad_Make_Parent(kind, unwrap(parent)));
+        return RAISE(Error_Bad_Make_Parent(kind, unwrap(parent)));
 
     if (not IS_FILE(arg))
-        return FAIL(Error_Unexpected_Type(REB_FILE, VAL_TYPE(arg)));
+        return RAISE(Error_Unexpected_Type(REB_FILE, VAL_TYPE(arg)));
 
     void *fd = Open_Library(arg);
 
     if (fd == NULL)
-        return FAIL(arg);
+        return RAISE(arg);
 
     REBLIB *lib = Alloc_Singular(FLAG_FLAVOR(LIBRARY) | NODE_FLAG_MANAGED);
     Init_Trash(ARR_SINGLE(lib));  // !!! save name? other data?

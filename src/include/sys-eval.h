@@ -377,7 +377,7 @@ inline static bool Eval_Value_Core_Throws(
     Eval_Value_Core_Throws(out, FRAME_MASK_NONE, (value), (specifier))
 
 
-inline static Bounce Native_Failure_Result(Frame(*) frame_, const void *p) {
+inline static Bounce Native_Raised_Result(Frame(*) frame_, const void *p) {
     assert(Is_Stale_Void(&TG_Thrown_Arg));
 
     Context(*) error;
@@ -388,7 +388,7 @@ inline static Bounce Native_Failure_Result(Frame(*) frame_, const void *p) {
       case DETECTED_AS_SERIES: {
         error = CTX(m_cast(void*, p));
         break; }
-      case DETECTED_AS_CELL: {  // note: can be Is_Failure()
+      case DETECTED_AS_CELL: {  // note: can be Is_Raised()
         error = Error_Bad_Value(cast(const REBVAL*, p));
         break; }
       default:
@@ -402,5 +402,5 @@ inline static Bounce Native_Failure_Result(Frame(*) frame_, const void *p) {
     while (TOP_FRAME != frame_)  // cancel subframes as default behavior
         Drop_Frame_Unbalanced(TOP_FRAME);  // Note: won't seem like THROW/Fail
 
-    return Failurize(Init_Error(frame_->out, error));
+    return Raisify(Init_Error(frame_->out, error));
 }

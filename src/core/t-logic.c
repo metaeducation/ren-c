@@ -304,7 +304,7 @@ Bounce MAKE_Logic(
 ){
     assert(kind == REB_LOGIC);
     if (parent)
-        return FAIL(Error_Bad_Make_Parent(kind, unwrap(parent)));
+        return RAISE(Error_Bad_Make_Parent(kind, unwrap(parent)));
 
     // As a construction routine, MAKE takes more liberties in the
     // meaning of its parameters, so it lets zero values be false.

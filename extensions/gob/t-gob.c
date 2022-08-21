@@ -826,7 +826,7 @@ Bounce TO_Gob(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg)
     assert(kind == REB_CUSTOM);
     UNUSED(kind);
 
-    return FAIL(arg);
+    return RAISE(arg);
 }
 
 

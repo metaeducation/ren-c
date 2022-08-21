@@ -43,7 +43,7 @@ Bounce MAKE_Quasi(
     UNUSED(parent);
 
     if (Is_Nulled(arg) or IS_QUOTED(arg))
-        return FAIL(Error_Bad_Make(kind, arg));
+        return RAISE(Error_Bad_Make(kind, arg));
 
     // !!! Should it allow things that are already QUASI! (?)  This does, but
     // Quasify() does ont.
@@ -60,7 +60,7 @@ Bounce MAKE_Quasi(
 // TO is disallowed, e.g. you can't TO convert an integer of 0 to a blank.
 //
 Bounce TO_Quasi(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *data) {
-    return FAIL(Error_Bad_Make(kind, data));
+    return RAISE(Error_Bad_Make(kind, data));
 }
 
 

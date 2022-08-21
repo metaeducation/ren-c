@@ -203,7 +203,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
     if (Get_Frame_Flag(FRAME, ABRUPT_FAILURE)) {
         assert(Get_Frame_Flag(FRAME, NOTIFY_ON_ABRUPT_FAILURE));
         assert(r == BOUNCE_THROWN);
-        assert(Is_Meta_Of_Failure(VAL_THROWN_LABEL(FRAME)));
+        assert(Is_Meta_Of_Raised(VAL_THROWN_LABEL(FRAME)));
     }
 
   // 1. There may be some optimization possible here if the flag controlling
@@ -215,7 +215,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
       result_in_out:
         assert(IS_SPECIFIC(cast(Cell(*), OUT)));
 
-        if (Is_Failure(OUT)) {
+        if (Is_Raised(OUT)) {
             if (Not_Frame_Flag(FRAME, FAILURE_RESULT_OK)) {
                 //
                 // treat any failure as if it could have been thrown from
@@ -361,7 +361,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
             assert(Get_Frame_Flag(FRAME, NOTIFY_ON_ABRUPT_FAILURE));
             Clear_Frame_Flag(FRAME, NOTIFY_ON_ABRUPT_FAILURE);
             Clear_Frame_Flag(FRAME, ABRUPT_FAILURE);
-            assert(Is_Meta_Of_Failure(VAL_THROWN_LABEL(FRAME)));
+            assert(Is_Meta_Of_Raised(VAL_THROWN_LABEL(FRAME)));
             Context(*) ctx = VAL_CONTEXT(VAL_THROWN_LABEL(FRAME));
             CATCH_THROWN(SPARE, FRAME);
             fail (ctx);
@@ -409,8 +409,8 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
   //    intercepted in the same way as a definitional error can be.
   //
   //   (It was wondered if since we know what FRAME was "in control" when a
-  //    fail() occurred, if this code should put a Failure() in the output
-  //    slot...as if a `return FAIL(xxx)` occurred.  But just because we know
+  //    fail() occurred, if this code should put a Raised() in the output
+  //    slot...as if a `return RAISE(xxx)` occurred.  But just because we know
   //    what FRAME the trampoline last called does not mean every incidental
   //    error should be attributed to being "from" that frame.  That would
   //    promote any incidental error--like "out of memory", that could come

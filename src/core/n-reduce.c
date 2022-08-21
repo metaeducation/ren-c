@@ -143,10 +143,10 @@ DECLARE_NATIVE(reduce)
     Decay_If_Isotope(OUT);
 
     if (Is_Isotope(OUT))
-        return FAIL(Error_Bad_Isotope(OUT));
+        return RAISE(Error_Bad_Isotope(OUT));
 
     if (Is_Nulled(OUT))
-        return FAIL(Error_Need_Non_Null_Raw());  // error enables e.g. CURTAIL
+        return RAISE(Error_Need_Non_Null_Raw());  // error enables e.g. CURTAIL
 
     Move_Cell(PUSH(), OUT);
     SUBFRAME->baseline.stack_base += 1;  // subframe must be adjusted, see [3]
@@ -381,7 +381,7 @@ static Value(*) Finalize_Composer_Frame(
     Frame(*) composer_frame,
     Cell(const*) composee  // special handling if the output kind is a sequence
 ){
-    if (Is_Failure(out)) {
+    if (Is_Raised(out)) {
         Drop_Data_Stack_To(composer_frame->baseline.stack_base);
         return out;
     }
@@ -613,7 +613,7 @@ Bounce Composer_Executor(Frame(*) f)
         Decay_If_Isotope(OUT);
 
     if (Is_Isotope(OUT))
-        return FAIL(Error_Bad_Isotope(OUT));
+        return RAISE(Error_Bad_Isotope(OUT));
 
     if (
         Is_Nulled(OUT)
@@ -622,7 +622,7 @@ Bounce Composer_Executor(Frame(*) f)
             or group_quotes == 0
         )  // [''(null)] => ['']
     ){
-        return FAIL(Error_Need_Non_Null_Raw());  // [(null)] => error!
+        return RAISE(Error_Need_Non_Null_Raw());  // [(null)] => error!
     }
 
     goto push_out_as_is;
@@ -667,7 +667,7 @@ Bounce Composer_Executor(Frame(*) f)
     // compose [(([a b])) merges] => [a b merges]... see [3]
 
     if (group_quotes != 0 or group_heart != REB_GROUP)
-        return FAIL("Currently can only splice plain unquoted GROUP!s");
+        return RAISE("Currently can only splice plain unquoted GROUP!s");
 
     if (Is_Splice(OUT)) {  // BLOCK! at "quoting level -1" means splice
         Reify_Isotope(OUT);
@@ -697,7 +697,7 @@ Bounce Composer_Executor(Frame(*) f)
 
     // The compose stack of the nested compose is relative to *its* baseline.
 
-    if (Is_Failure(OUT)) {
+    if (Is_Raised(OUT)) {
         Drop_Data_Stack_To(SUBFRAME->baseline.stack_base);
         Drop_Frame(SUBFRAME);
         return OUT;
@@ -797,7 +797,7 @@ DECLARE_NATIVE(compose)
     Finalize_Composer_Frame(OUT, SUBFRAME, v);
     Drop_Frame(SUBFRAME);
 
-    if (Is_Failure(OUT))  // subframe was killed
+    if (Is_Raised(OUT))  // subframe was killed
         return OUT;
 
     return OUT;

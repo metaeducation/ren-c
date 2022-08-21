@@ -390,7 +390,7 @@ DECLARE_NATIVE(c_debug_break_at)
     UNUSED(ARG(relative));
     UNUSED(REF(compensate));
 
-    return FAIL(Error_Debug_Only_Raw());
+    return RAISE(Error_Debug_Only_Raw());
   #endif
 }
 

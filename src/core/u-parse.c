@@ -2806,7 +2806,7 @@ DECLARE_NATIVE(parse_accept)
 // !!! This was not created for user usage, but rather as a label for the
 // internal throw used to indicate "accept".
 {
-    return FAIL("PARSE-ACCEPT is for internal PARSE use only");
+    return RAISE("PARSE-ACCEPT is for internal PARSE use only");
 }
 
 
@@ -2823,5 +2823,5 @@ DECLARE_NATIVE(parse_reject)
 // !!! This was not created for user usage, but rather as a label for the
 // internal throw used to indicate "reject".
 {
-    return FAIL("PARSE-REJECT is for internal PARSE use only");
+    return RAISE("PARSE-REJECT is for internal PARSE use only");
 }

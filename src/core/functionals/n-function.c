@@ -603,9 +603,9 @@ DECLARE_NATIVE(definitional_return)
         goto skip_type_check;
     }
 
-    if (Is_Meta_Of_Failure(v)) {
+    if (Is_Meta_Of_Raised(v)) {
         Unquasify(v);
-        Failurize(v);  // Meta_Unquotify won't do this, it fail()'s
+        Raisify(v);  // Meta_Unquotify won't do this, it fail()'s
         goto skip_type_check;
     }
 
@@ -638,7 +638,7 @@ DECLARE_NATIVE(definitional_return)
 
   skip_type_check: {  ////////////////////////////////////////////////////////
 
-    if (not Is_Failure(v))  // don't want to proxy multi-returns if failed
+    if (not Is_Raised(v))  // don't want to proxy multi-returns if failed
         Proxy_Multi_Returns(target_frame);
 
     DECLARE_LOCAL (label);

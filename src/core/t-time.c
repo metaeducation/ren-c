@@ -352,7 +352,7 @@ Bounce MAKE_Time(
 
   bad_make:
 
-    return FAIL(Error_Bad_Make(REB_TIME, arg));
+    return RAISE(Error_Bad_Make(REB_TIME, arg));
 }
 
 

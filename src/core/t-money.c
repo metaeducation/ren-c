@@ -82,7 +82,7 @@ Bounce MAKE_Money(
 ){
     assert(kind == REB_MONEY);
     if (parent)
-        return FAIL(Error_Bad_Make_Parent(kind, unwrap(parent)));
+        return RAISE(Error_Bad_Make_Parent(kind, unwrap(parent)));
 
     switch (VAL_TYPE(arg)) {
       case REB_INTEGER:
@@ -122,7 +122,7 @@ Bounce MAKE_Money(
 
   bad_make:
 
-    return FAIL(Error_Bad_Make(REB_MONEY, arg));
+    return RAISE(Error_Bad_Make(REB_MONEY, arg));
 }
 
 

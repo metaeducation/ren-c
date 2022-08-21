@@ -1615,7 +1615,7 @@ Bounce Evaluator_Executor(Frame(*) f)
             //
             // !!! Review if it should actually force a raised error.
             //
-            if (not Is_Failure(OUT))
+            if (not Is_Raised(OUT))
                 Init_None(OUT);  // "uninteresting result"
         }
         else if (Is_Blackhole(SPARE)) {
@@ -1635,7 +1635,7 @@ Bounce Evaluator_Executor(Frame(*) f)
                 DECAYED_VOID_CELL
             );
         }
-        else if (Is_Failure(OUT)) {
+        else if (Is_Raised(OUT)) {
             fail (VAL_CONTEXT(OUT));
         }
         else if (
@@ -2052,7 +2052,7 @@ Bounce Evaluator_Executor(Frame(*) f)
   #endif
 
     if (Not_Executor_Flag(EVAL, f, SINGLE_STEP) and Not_End(f_next)) {
-        if (Is_Failure(OUT))
+        if (Is_Raised(OUT))
             fail (VAL_CONTEXT(OUT));
 
         STATE = ST_EVALUATOR_STEPPING_AGAIN;

@@ -609,7 +609,7 @@ Bounce MAKE_Error(
         Init_Text(&vars->message, Copy_String_At(arg));
     }
     else
-        return FAIL(arg);
+        return RAISE(arg);
 
     // Validate the error contents, and reconcile message template and ID
     // information with any data in the object.  Do this for the IS_STRING
@@ -647,7 +647,7 @@ Bounce MAKE_Error(
                 assert(IS_TEXT(message) or IS_BLOCK(message));
 
                 if (not Is_Nulled(&vars->message))
-                    return FAIL(Error_Invalid_Error_Raw(arg));
+                    return RAISE(Error_Invalid_Error_Raw(arg));
 
                 Copy_Cell(&vars->message, message);
             }
@@ -664,7 +664,7 @@ Bounce MAKE_Error(
                 //
                 //     make error! [type: 'script id: 'set-self]
 
-                return FAIL(Error_Invalid_Error_Raw(CTX_ARCHETYPE(e)));
+                return RAISE(Error_Invalid_Error_Raw(CTX_ARCHETYPE(e)));
             }
         }
         else {
@@ -1170,7 +1170,7 @@ Context(*) Error_No_Catch_For_Throw(Frame(*) frame_)
     DECLARE_LOCAL (arg);
     CATCH_THROWN(arg, frame_);
 
-    if (Is_Meta_Of_Failure(label)) {  // what would have been fail()
+    if (Is_Meta_Of_Raised(label)) {  // what would have been fail()
         assert(Is_Nulled(arg));
         return VAL_CONTEXT(label);
     }

@@ -11,7 +11,7 @@
         return: "Result of one evaluation step"
             [<opt> any-value!]
     ][
-        if tail? input [return fail "PARSE-EVALUATE attempted at series tail"]
+        if tail? input [return raise "PARSE-EVALUATE attempted at series tail"]
 
         return [# remainder]: evaluate input
     ]
@@ -20,8 +20,7 @@
 (
     keeper-saver: func [
         return: [block!]
-        saved: [block!]
-
+        @saved [block!]
         input [block!]
         <local> mode value
     ][

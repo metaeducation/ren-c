@@ -46,18 +46,18 @@
 //  https://forum.rebol.info/t/1833
 
 
-//=//// FAILURE STATES ////////////////////////////////////////////////////=//
+//=//// ISOTOPE STATES ////////////////////////////////////////////////////=//
 
-inline static bool Is_Failure(Cell(const*) v)
+inline static bool Is_Raised(Cell(const*) v)
   { return HEART_BYTE_UNCHECKED(v) == REB_ERROR
     and QUOTE_BYTE_UNCHECKED(v) == ISOTOPE_255; }
 
-inline static bool Is_Meta_Of_Failure(Cell(const*) v)
+inline static bool Is_Meta_Of_Raised(Cell(const*) v)
   { return HEART_BYTE_UNCHECKED(v) == REB_ERROR
     and QUOTE_BYTE_UNCHECKED(v) == QUASI_1; }
 
 
-inline static Value(*) Failurize(Cell(*) v) {
+inline static Value(*) Raisify(Cell(*) v) {
     assert(IS_ERROR(v) and QUOTE_BYTE(v) == UNQUOTED_0);
     Force_Location_Of_Error(VAL_CONTEXT(v), TOP_FRAME);  // ideally already set
     mutable_QUOTE_BYTE(v) = ISOTOPE_255;
@@ -126,7 +126,7 @@ inline static Value(*) Meta_Quotify(Value(*) v) {
 }
 
 inline static Value(*) Meta_Unquotify(Value(*) v) {
-    if (Is_Meta_Of_Failure(v))
+    if (Is_Meta_Of_Raised(v))
         fail (VAL_CONTEXT(v));  // too dangerous to create failure easily
     if (Is_Nulled(v))
         RESET(v);
@@ -141,7 +141,7 @@ inline static Bounce Native_Unmeta_Result(Frame(*) frame_, const REBVAL *v) {
     assert(Is_Stale_Void(&TG_Thrown_Arg));
     if (Is_Meta_Of_Void(v))
         return BOUNCE_VOID;
-    if (Is_Meta_Of_Failure(v))
-        return Failurize(Unquasify(Copy_Cell(frame_->out, v)));
+    if (Is_Meta_Of_Raised(v))
+        return Raisify(Unquasify(Copy_Cell(frame_->out, v)));
     return Meta_Unquotify(Copy_Cell(frame_->out, v));
 }

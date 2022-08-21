@@ -411,7 +411,7 @@ Bounce TO_Event(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg)
     assert(kind == REB_EVENT);
     UNUSED(kind);
 
-    return FAIL(arg);
+    return RAISE(arg);
 }
 
 

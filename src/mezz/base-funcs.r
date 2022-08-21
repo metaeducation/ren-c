@@ -727,7 +727,7 @@ attempt: func [
 ][
     last': none'
     reduce-each ^result' code [
-        if failure? unget result' [return null]
+        if raised? unget result' [return null]
         if void? unget result' [continue]
         last': result'
     ]
@@ -930,7 +930,7 @@ cause-error: func [
 ;
 ; Though HIJACK would have to be aware of it and preserve the rule.
 ;
-fail: func [
+raise: func [
     {Interrupts execution by reporting an error (a TRAP can intercept it).}
 
     return: []  ; !!! notation for divergent function?
@@ -941,6 +941,10 @@ fail: func [
     /where "Frame or parameter at which to indicate the error originated"
         [frame! any-word!]
 ][
+    all [error? reason, not blame, not where] then [
+        return raise* reason  ; fast shortcut
+    ]
+
     ; Ultimately we might like FAIL to use some clever error-creating dialect
     ; when passed a block, maybe something like:
     ;
@@ -1028,9 +1032,14 @@ fail: func [
     ; you typically can only trap/catch errors that come from a function you
     ; directly called.
     ;
-    return unmeta quasi ensure error! error
+    return raise* ensure error! error
 ]
 
+; Immediately fail on a raised error--do not allow ^META interception/etc.
+;
+fail: enclose :raise func [f] [
+    do f  ; FUNC so it can't drop the failure out the bottom like lambda
+]
 
 generate: func [
     {Make a generator}

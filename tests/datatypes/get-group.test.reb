@@ -26,26 +26,26 @@
     :(block) = [m o.f]
 )
 
-; Groups can pass on a failure that happens as their last slot.  Otherwise
+; Groups can pass on raised errors that happens as their last slot.  Otherwise
 ; you need to use something like ATTEMPT.
 [
     (
-        e: unquasi ^ (1 + 2 fail "handled")
+        e: unquasi ^ (1 + 2 raise "handled")
         e.message = "handled"
     )
     (
-        e: unquasi ^(1 + 2 fail "handled")
+        e: unquasi ^(1 + 2 raise "handled")
         e.message = "handled"
     )
     (
         e: trap [
-            (fail "unhandled" 1 + 2)
+            (raise "unhandled" 1 + 2)
         ]
         e.message = "unhandled"
     )
     (
         e: trap [
-            unquasi ^(fail "unhandled" 1 + 2)
+            unquasi ^(raise "unhandled" 1 + 2)
         ]
         e.message = "unhandled"
     )

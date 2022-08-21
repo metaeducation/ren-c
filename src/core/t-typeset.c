@@ -273,7 +273,7 @@ Bounce MAKE_Typeset(
 ){
     assert(kind == REB_TYPESET);
     if (parent)
-        return FAIL(Error_Bad_Make_Parent(kind, unwrap(parent)));
+        return RAISE(Error_Bad_Make_Parent(kind, unwrap(parent)));
 
     if (IS_TYPESET(arg))
         return Copy_Cell(OUT, arg);
@@ -295,7 +295,7 @@ Bounce MAKE_Typeset(
 
   bad_make:
 
-    return FAIL(Error_Bad_Make(REB_TYPESET, arg));
+    return RAISE(Error_Bad_Make(REB_TYPESET, arg));
 }
 
 

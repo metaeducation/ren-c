@@ -532,7 +532,7 @@ Bounce MAKE_Date(
 ){
     assert(kind == REB_DATE);
     if (parent)
-        return FAIL(Error_Bad_Make_Parent(kind, unwrap(parent)));
+        return RAISE(Error_Bad_Make_Parent(kind, unwrap(parent)));
 
     if (IS_DATE(arg))
         return Copy_Cell(OUT, arg);
@@ -618,7 +618,7 @@ Bounce MAKE_Date(
 
             tz = cast(REBINT, VAL_NANO(item) / (ZONE_MINS * MIN_SEC));
             if (tz < -MAX_ZONE or tz > MAX_ZONE)
-                return FAIL(Error_Out_Of_Range(item));
+                return RAISE(Error_Out_Of_Range(item));
             ++item;
 
             if (item != tail)
@@ -638,7 +638,7 @@ Bounce MAKE_Date(
 
 } bad_make: {  ///////////////////////////////////////////////////////////////
 
-    return FAIL(Error_Bad_Make(REB_DATE, arg));
+    return RAISE(Error_Bad_Make(REB_DATE, arg));
 }}
 
 

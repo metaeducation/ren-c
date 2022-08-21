@@ -114,7 +114,7 @@
         rest = " def"
     ]
 )(
-    failure? [_]: fail "a"
+    raised? [_]: raise "a"
 )]
 
 ; The META-XXX! types can be used to ask for variables to be raised to a meta

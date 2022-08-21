@@ -258,6 +258,25 @@ DECLARE_NATIVE(panic)
 
 
 //
+//  raise*: native [
+//
+//  {Version of RAISE of definitional error that only takes ERROR!}
+//
+//      return: []  ; isotope!
+//      reason [error!]
+//  ]
+//
+DECLARE_NATIVE(raise_p)
+{
+    INCLUDE_PARAMS_OF_RAISE_P;
+
+    Value(*) v = ARG(reason);
+
+    return Raisify(COPY(v));
+}
+
+
+//
 //  fail: native [
 //
 //  {Early-boot version of FAIL (overridden by more complex usermode version)}

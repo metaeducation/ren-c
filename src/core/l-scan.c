@@ -1955,7 +1955,7 @@ Bounce Scanner_Executor(Frame(*) f) {
 
     if (level->token == TOKEN_0) {  // error signal
         assert(CTX_TYPE(locate_error) == REB_ERROR);
-        return FAIL(locate_error);
+        return RAISE(locate_error);
     }
 
     if (level->token == TOKEN_END) {  // reached '\0'
@@ -1965,7 +1965,7 @@ Bounce Scanner_Executor(Frame(*) f) {
         // hit first, there was never a proper closing.
         //
         if (level->mode == ']' or level->mode == ')')
-            return FAIL(Error_Missing(level, level->mode));
+            return RAISE(Error_Missing(level, level->mode));
 
         goto done;
       }
@@ -2065,7 +2065,7 @@ Bounce Scanner_Executor(Frame(*) f) {
             ss->begin = ss->end = ep;
             break;
           #else
-            return FAIL(Error_Syntax(ss, token));
+            return RAISE(Error_Syntax(ss, token));
           #endif
         }
 
@@ -2073,7 +2073,7 @@ Bounce Scanner_Executor(Frame(*) f) {
 
       token_prefixable_sigil:
         if (level->prefix_pending != TOKEN_0)
-            return FAIL(Error_Syntax(ss, level->token));  // no "GET-GET-WORD!"
+            return RAISE(Error_Syntax(ss, level->token));  // no "GET-GET-WORD!"
 
         // !!! This is a hack to support plain colon.  It should support more
         // than one colon, but this gets a little further for now.  :-/
@@ -2100,21 +2100,21 @@ Bounce Scanner_Executor(Frame(*) f) {
 
       case TOKEN_WORD:
         if (len == 0)
-            return FAIL(Error_Syntax(ss, level->token));
+            return RAISE(Error_Syntax(ss, level->token));
 
         Init_Word(PUSH(), Intern_UTF8_Managed(bp, len));
         break;
 
       case TOKEN_ISSUE:
         if (ep != Scan_Issue(PUSH(), bp + 1, len - 1))
-            return FAIL(Error_Syntax(ss, level->token));
+            return RAISE(Error_Syntax(ss, level->token));
         break;
 
       case TOKEN_APOSTROPHE: {
         assert(*bp == '\'');  // should be `len` sequential apostrophes
 
         if (level->prefix_pending != TOKEN_0)  // can't do @'foo: or :'foo
-            return FAIL(Error_Syntax(ss, level->token));
+            return RAISE(Error_Syntax(ss, level->token));
 
         if (IS_LEX_ANY_SPACE(*ep) or *ep == ']' or *ep == ')' or *ep == ';') {
             //
@@ -2155,7 +2155,7 @@ Bounce Scanner_Executor(Frame(*) f) {
 
  child_array_scanned: {  /////////////////////////////////////////////////////
 
-        if (Is_Failure(OUT))
+        if (Is_Raised(OUT))
             goto handle_failure;
 
         Flags flags = NODE_FLAG_MANAGED;
@@ -2232,11 +2232,11 @@ Bounce Scanner_Executor(Frame(*) f) {
         }
 
         if (level->mode != '\0')  // expected e.g. `)` before the `]`
-            return FAIL(Error_Mismatch(level, level->mode, ']'));
+            return RAISE(Error_Mismatch(level, level->mode, ']'));
 
         // just a stray unexpected ']'
         //
-        return FAIL(Error_Extra(ss, ']')); }
+        return RAISE(Error_Extra(ss, ']')); }
 
       case TOKEN_GROUP_END: {
         if (level->mode == ')')
@@ -2250,11 +2250,11 @@ Bounce Scanner_Executor(Frame(*) f) {
         }
 
         if (level->mode != '\0')  // expected e.g. ']' before the ')'
-            return FAIL(Error_Mismatch(level, level->mode, ')'));
+            return RAISE(Error_Mismatch(level, level->mode, ')'));
 
         // just a stray unexpected ')'
         //
-        return FAIL(Error_Extra(ss, ')')); }
+        return RAISE(Error_Extra(ss, ')')); }
 
       case TOKEN_INTEGER:
         //
@@ -2299,17 +2299,17 @@ Bounce Scanner_Executor(Frame(*) f) {
         // Wasn't beginning of a DECIMAL!, so scan as a normal INTEGER!
         //
         if (ep != Scan_Integer(PUSH(), bp, len))
-            return FAIL(Error_Syntax(ss, level->token));
+            return RAISE(Error_Syntax(ss, level->token));
         break;
 
       case TOKEN_DECIMAL:
       case TOKEN_PERCENT:
       scan_decimal:
         if (Is_Dot_Or_Slash(*ep))
-            return FAIL(Error_Syntax(ss, level->token));  // No `1.2/abc`
+            return RAISE(Error_Syntax(ss, level->token));  // No `1.2/abc`
 
         if (ep != Scan_Decimal(PUSH(), bp, len, false))
-            return FAIL(Error_Syntax(ss, level->token));
+            return RAISE(Error_Syntax(ss, level->token));
 
         if (bp[len - 1] == '%') {
             mutable_HEART_BYTE(TOP) = REB_PERCENT;
@@ -2325,10 +2325,10 @@ Bounce Scanner_Executor(Frame(*) f) {
       case TOKEN_MONEY:
         if (Is_Dot_Or_Slash(*ep)) {  // Do not allow $1/$2
             ++ep;
-            return FAIL(Error_Syntax(ss, level->token));
+            return RAISE(Error_Syntax(ss, level->token));
         }
         if (ep != Scan_Money(PUSH(), bp, len))
-            return FAIL(Error_Syntax(ss, level->token));
+            return RAISE(Error_Syntax(ss, level->token));
         break;
 
       case TOKEN_TIME:
@@ -2337,12 +2337,12 @@ Bounce Scanner_Executor(Frame(*) f) {
             and Is_Dot_Or_Slash(level->mode)  // could be path/10: set
         ){
             if (ep - 1 != Scan_Integer(PUSH(), bp, len - 1))
-                return FAIL(Error_Syntax(ss, level->token));
+                return RAISE(Error_Syntax(ss, level->token));
             ss->end--;  // put ':' back on end but not beginning
             break;
         }
         if (ep != Scan_Time(PUSH(), bp, len))
-            return FAIL(Error_Syntax(ss, level->token));
+            return RAISE(Error_Syntax(ss, level->token));
         break;
 
       case TOKEN_DATE:
@@ -2358,18 +2358,18 @@ Bounce Scanner_Executor(Frame(*) f) {
             ss->begin = ep;  // End point extended to cover time
         }
         if (ep != Scan_Date(PUSH(), bp, len))
-            return FAIL(Error_Syntax(ss, level->token));
+            return RAISE(Error_Syntax(ss, level->token));
         break;
 
       case TOKEN_CHAR: {
         Codepoint uni;
         bp += 2;  // skip #", and subtract 1 from ep for "
         if (ep - 1 != Scan_UTF8_Char_Escapable(&uni, bp))
-            return FAIL(Error_Syntax(ss, level->token));
+            return RAISE(Error_Syntax(ss, level->token));
 
         Context(*) error = Maybe_Init_Char(PUSH(), uni);
         if (error)
-            return FAIL(error);
+            return RAISE(error);
         break; }
 
       case TOKEN_STRING:  // UTF-8 pre-scanned above, and put in MOLD_BUF
@@ -2378,27 +2378,27 @@ Bounce Scanner_Executor(Frame(*) f) {
 
       case TOKEN_BINARY:
         if (ep != Scan_Binary(PUSH(), bp, len))
-            return FAIL(Error_Syntax(ss, level->token));
+            return RAISE(Error_Syntax(ss, level->token));
         break;
 
       case TOKEN_PAIR:
         if (ep != Scan_Pair(PUSH(), bp, len))
-            return FAIL(Error_Syntax(ss, level->token));
+            return RAISE(Error_Syntax(ss, level->token));
         break;
 
       case TOKEN_FILE:
         if (ep != Scan_File(PUSH(), bp, len))
-            return FAIL(Error_Syntax(ss, level->token));
+            return RAISE(Error_Syntax(ss, level->token));
         break;
 
       case TOKEN_EMAIL:
         if (ep != Scan_Email(PUSH(), bp, len))
-            return FAIL(Error_Syntax(ss, level->token));
+            return RAISE(Error_Syntax(ss, level->token));
         break;
 
       case TOKEN_URL:
         if (ep != Scan_URL(PUSH(), bp, len))
-            return FAIL(Error_Syntax(ss, level->token));
+            return RAISE(Error_Syntax(ss, level->token));
         break;
 
       case TOKEN_TAG:
@@ -2413,7 +2413,7 @@ Bounce Scanner_Executor(Frame(*) f) {
             REB_TAG,
             STRMODE_NO_CR
         )){
-            return FAIL(Error_Syntax(ss, level->token));
+            return RAISE(Error_Syntax(ss, level->token));
         }
         break;
 
@@ -2442,7 +2442,7 @@ Bounce Scanner_Executor(Frame(*) f) {
 
   construct_scan_to_stack_finished: {  ///////////////////////////////////////
 
-        if (Is_Failure(OUT))
+        if (Is_Raised(OUT))
             goto handle_failure;
 
         Flags flags = NODE_FLAG_MANAGED;
@@ -2478,7 +2478,7 @@ Bounce Scanner_Executor(Frame(*) f) {
         if (ARR_LEN(array) == 0 or not IS_WORD(ARR_HEAD(array))) {
             DECLARE_LOCAL (temp);
             Init_Block(temp, array);
-            return FAIL(Error_Malconstruct_Raw(temp));
+            return RAISE(Error_Malconstruct_Raw(temp));
         }
 
         SYMID sym = VAL_WORD_ID(ARR_HEAD(array));
@@ -2489,7 +2489,7 @@ Bounce Scanner_Executor(Frame(*) f) {
             if (ARR_LEN(array) != 2) {
                 DECLARE_LOCAL (temp);
                 Init_Block(temp, array);
-                return FAIL(Error_Malconstruct_Raw(temp));
+                return RAISE(Error_Malconstruct_Raw(temp));
             }
 
             // !!! Having an "extensible scanner" is something that has
@@ -2516,7 +2516,7 @@ Bounce Scanner_Executor(Frame(*) f) {
                 CATCH_THROWN(OUT, frame_);
                 DECLARE_LOCAL (temp);
                 Init_Block(temp, array);
-                return FAIL(Error_Malconstruct_Raw(temp));
+                return RAISE(Error_Malconstruct_Raw(temp));
             }
             DROP_GC_GUARD(array);
 
@@ -2526,7 +2526,7 @@ Bounce Scanner_Executor(Frame(*) f) {
             if (ARR_LEN(array) != 1) {
                 DECLARE_LOCAL (temp);
                 Init_Block(temp, array);
-                return FAIL(Error_Malconstruct_Raw(temp));
+                return RAISE(Error_Malconstruct_Raw(temp));
             }
 
             // !!! Construction syntax allows the "type" slot to be one of
@@ -2554,7 +2554,7 @@ Bounce Scanner_Executor(Frame(*) f) {
               default: {
                 DECLARE_LOCAL (temp);
                 Init_Block(temp, array);
-                return FAIL(Error_Malconstruct_Raw(temp)); }
+                return RAISE(Error_Malconstruct_Raw(temp)); }
             }
         }
         break; }  // case TOKEN_CONSTRUCT
@@ -2676,7 +2676,7 @@ Bounce Scanner_Executor(Frame(*) f) {
             if (threw)  // drop failing stack before throwing
                 fail (Error_No_Catch_For_Throw(f));
 
-            if (Is_Failure(OUT))
+            if (Is_Raised(OUT))
                 return OUT;
         }
 
@@ -2732,7 +2732,7 @@ Bounce Scanner_Executor(Frame(*) f) {
             for (; stackindex != stackindex_path_head - 1; --stackindex) {
                 if (IS_EMAIL(Data_Stack_At(stackindex))) {
                     if (any_email)
-                        return FAIL(Error_Syntax(ss, level->token));
+                        return RAISE(Error_Syntax(ss, level->token));
                     any_email = true;
                 }
             }
@@ -2765,7 +2765,7 @@ Bounce Scanner_Executor(Frame(*) f) {
             stackindex_path_head - 1
         );
         if (not check)
-            return FAIL(Error_Syntax(ss, level->token));
+            return RAISE(Error_Syntax(ss, level->token));
       }
 
         assert(IS_WORD(temp) or ANY_SEQUENCE(temp));  // `/` and `...` decay
@@ -2797,13 +2797,13 @@ Bounce Scanner_Executor(Frame(*) f) {
                 IS_INTEGER(VAL_SEQUENCE_AT(temp, TOP, 0))
                 and IS_BLANK(VAL_SEQUENCE_AT(temp, TOP, 1))
             ){
-                return FAIL("`5.` currently reserved, please use 5.0");
+                return RAISE("`5.` currently reserved, please use 5.0");
             }
             if (
                 IS_BLANK(VAL_SEQUENCE_AT(temp, TOP, 0))
                 and IS_INTEGER(VAL_SEQUENCE_AT(temp, TOP, 1))
             ){
-                return FAIL("`.5` currently reserved, please use 0.5");
+                return RAISE("`.5` currently reserved, please use 0.5");
             }
         }
 
@@ -2870,11 +2870,11 @@ Bounce Scanner_Executor(Frame(*) f) {
 
     if (ss->begin and *ss->begin == ':') {  // no whitespace, interpret as SET
         if (level->prefix_pending)
-            return FAIL(Error_Syntax(ss, level->token));
+            return RAISE(Error_Syntax(ss, level->token));
 
         enum Reb_Kind kind = VAL_TYPE(TOP);
         if (not ANY_PLAIN_KIND(kind))
-            return FAIL(Error_Syntax(ss, level->token));
+            return RAISE(Error_Syntax(ss, level->token));
 
         mutable_HEART_BYTE(TOP) = SETIFY_ANY_PLAIN_KIND(kind);
 
@@ -2883,7 +2883,7 @@ Bounce Scanner_Executor(Frame(*) f) {
     else if (level->prefix_pending != TOKEN_0) {
         enum Reb_Kind kind = VAL_TYPE(TOP);
         if (not ANY_PLAIN_KIND(kind))
-            return FAIL(Error_Syntax(ss, level->token));
+            return RAISE(Error_Syntax(ss, level->token));
 
         switch (level->prefix_pending) {
           case TOKEN_COLON:
@@ -2900,7 +2900,7 @@ Bounce Scanner_Executor(Frame(*) f) {
 
           default:
             level->token = level->prefix_pending;
-            return FAIL(Error_Syntax(ss, level->token));
+            return RAISE(Error_Syntax(ss, level->token));
         }
         level->prefix_pending = TOKEN_0;
     }
@@ -2944,12 +2944,12 @@ Bounce Scanner_Executor(Frame(*) f) {
 
 } handle_failure: {  /////////////////////////////////////////////////////////
 
-    assert(Is_Failure(OUT));
+    assert(Is_Raised(OUT));
 
     if (Get_Executor_Flag(SCAN, f, KEEP_STACK_ON_FAILURE))
         Drop_Frame_Unbalanced(SUBFRAME);
     else
-        Drop_Frame(SUBFRAME);  // could `return FAIL(VAL_CONTEXT(OUT))`
+        Drop_Frame(SUBFRAME);  // could `return RAISE(VAL_CONTEXT(OUT))`
 
     return OUT;
 }}
@@ -3202,14 +3202,14 @@ DECLARE_NATIVE(transcode)
         // better implementation empowered by stackless.  Say it succeeded by
         // returning NULL, but if there's an error it will not be intercepted.
         //
-        if (Is_Failure(OUT)) {
+        if (Is_Raised(OUT)) {
             Reify_Isotope(OUT);
             Move_Cell(ARG(relax), OUT);
         }
         else
             Init_Nulled(ARG(relax));
     }
-    else if (Is_Failure(OUT)) {
+    else if (Is_Raised(OUT)) {
         Drop_Frame(SUBFRAME);  // could FAIL(VAL_CONTEXT(OUT)) instead
         return OUT;
     }

@@ -57,7 +57,7 @@ Bounce MAKE_Datatype(
     const REBVAL *arg
 ){
     if (parent)
-        return FAIL(Error_Bad_Make_Parent(kind, unwrap(parent)));
+        return RAISE(Error_Bad_Make_Parent(kind, unwrap(parent)));
 
     if (IS_URL(arg)) {
         REBVAL *custom = Datatype_From_Url(arg);
@@ -74,7 +74,7 @@ Bounce MAKE_Datatype(
 
   bad_make:
 
-    return FAIL(Error_Bad_Make(kind, arg));
+    return RAISE(Error_Bad_Make(kind, arg));
 }
 
 

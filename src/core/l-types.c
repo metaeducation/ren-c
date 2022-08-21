@@ -51,7 +51,7 @@ Bounce MAKE_Fail(
     UNUSED(parent);
     UNUSED(arg);
 
-    return FAIL("Datatype does not have a MAKE handler registered");
+    return RAISE("Datatype does not have a MAKE handler registered");
 }
 
 
@@ -74,7 +74,7 @@ Bounce MAKE_Unhooked(
     const REBVAL *type = Datatype_From_Kind(kind);
     UNUSED(type); // !!! put in error message?
 
-    return FAIL(
+    return RAISE(
         "Datatype is provided by an extension that's not currently loaded"
     );
 }
@@ -148,12 +148,12 @@ DECLARE_NATIVE(make)
         return b;
     REBVAL *r = Value_From_Bounce(b);
     if (r != nullptr) {
-        if (Is_Failure(r))
+        if (Is_Raised(r))
             return r;
         if (VAL_TYPE(r) == kind)
             return r;
     }
-    return FAIL("MAKE dispatcher did not return correct type");
+    return RAISE("MAKE dispatcher did not return correct type");
 }
 
 
@@ -234,12 +234,12 @@ DECLARE_NATIVE(to)
         fail (Error_No_Catch_For_Throw(FRAME));
     }
     REBVAL *r = Value_From_Bounce(b);
-    if (Is_Failure(r))
+    if (Is_Raised(r))
         return r;
 
     if (r == nullptr or VAL_TYPE(r) != new_kind) {
         assert(!"TO conversion did not return intended type");
-        return FAIL(Error_Invalid_Type(VAL_TYPE(r)));
+        return RAISE(Error_Invalid_Type(VAL_TYPE(r)));
     }
     return r;  // must be either OUT or an API handle
 }
@@ -256,7 +256,7 @@ REBTYPE(Unhooked)
 {
     UNUSED(verb);
 
-    return FAIL(
+    return RAISE(
         "Datatype does not have its REBTYPE() handler loaded by extension"
     );
 }
@@ -320,7 +320,7 @@ Bounce Reflect_Core(Frame(*) frame_)
     // no entry in the dispatcher table for them.
     //
     if (heart == REB_NULL)  // including escaped nulls, `''''`
-        return FAIL(Error_Try_If_Null_Meant_Raw(Lib(NULL)));
+        return RAISE(Error_Try_If_Null_Meant_Raw(Lib(NULL)));
 
     Dequotify(ARG(value));
     INIT_FRM_PHASE(frame_, VAL_ACTION(Lib(REFLECT)));  // switch to generic

@@ -516,7 +516,7 @@ Bounce MAKE_Frame(
     const REBVAL *arg
 ){
     if (parent)
-        return FAIL(Error_Bad_Make_Parent(kind, unwrap(parent)));
+        return RAISE(Error_Bad_Make_Parent(kind, unwrap(parent)));
 
     // MAKE FRAME! on a VARARGS! was an experiment designed before REFRAMER
     // existed, to allow writing things like REQUOTE.  It's still experimental
@@ -560,7 +560,7 @@ Bounce MAKE_Frame(
     StackIndex lowest_ordered_stackindex = TOP_INDEX;  // for refinements
 
     if (not IS_ACTION(arg))
-        return FAIL(Error_Bad_Make(kind, arg));
+        return RAISE(Error_Bad_Make(kind, arg));
 
     Context(*) exemplar = Make_Context_For_Action(
         arg, // being used here as input (e.g. the ACTION!)
@@ -585,7 +585,7 @@ Bounce MAKE_Frame(
 //
 Bounce TO_Frame(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg)
 {
-    return FAIL(Error_Bad_Make(kind, arg));
+    return RAISE(Error_Bad_Make(kind, arg));
 }
 
 
@@ -604,7 +604,7 @@ Bounce MAKE_Context(
 
     if (kind == REB_MODULE) {
         if (not Is_Blackhole(arg))
-            return FAIL("Currently only (MAKE MODULE! #) is allowed");
+            return RAISE("Currently only (MAKE MODULE! #) is allowed");
 
         assert(not parent);
 
@@ -659,7 +659,7 @@ Bounce MAKE_Context(
     }
 
     if (parent)
-        return FAIL(Error_Bad_Make_Parent(kind, unwrap(parent)));
+        return RAISE(Error_Bad_Make_Parent(kind, unwrap(parent)));
 
     // make object! map!
     if (IS_MAP(arg)) {
@@ -667,7 +667,7 @@ Bounce MAKE_Context(
         return Init_Context_Cell(OUT, kind, c);
     }
 
-    return FAIL(Error_Bad_Make(kind, arg));
+    return RAISE(Error_Bad_Make(kind, arg));
 }
 
 
@@ -688,7 +688,7 @@ Bounce TO_Context(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg)
         return Init_Object(OUT, VAL_CONTEXT(arg));
     }
 
-    return FAIL(Error_Bad_Make(kind, arg));
+    return RAISE(Error_Bad_Make(kind, arg));
 }
 
 
@@ -911,7 +911,7 @@ Context(*) Copy_Context_Extra_Managed(
 // This factors out some shared work.
 //
 static void Mold_Isotope_For_Object(REB_MOLD *mo, Value(const*) var) {
-    assert(not Is_Failure(var));  // error isotopes can't be saved in variables
+    assert(not Is_Raised(var));  // error isotopes can't be saved in variables
 
     Append_Codepoint(mo->series, '~');
     if (Is_None(var))

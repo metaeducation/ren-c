@@ -476,7 +476,7 @@ Bounce TO_Vector(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg)
         if (Make_Vector_Spec(OUT, arg, VAL_SPECIFIER(arg)))
             return OUT;
     }
-    return FAIL(Error_Bad_Make(kind, arg));
+    return RAISE(Error_Bad_Make(kind, arg));
 }
 
 
@@ -490,7 +490,7 @@ Bounce MAKE_Vector(
     const REBVAL *arg
 ){
     if (parent)
-        return FAIL(Error_Bad_Make_Parent(kind, unwrap(parent)));
+        return RAISE(Error_Bad_Make_Parent(kind, unwrap(parent)));
 
     if (IS_INTEGER(arg) or IS_DECIMAL(arg)) {  // e.g. `make vector! 100`
         REBINT len = Int32s(arg, 0);
@@ -512,7 +512,7 @@ Bounce MAKE_Vector(
 
   bad_make:
 
-    return FAIL(Error_Bad_Make(kind, arg));
+    return RAISE(Error_Bad_Make(kind, arg));
 }
 
 

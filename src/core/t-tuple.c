@@ -43,7 +43,7 @@ Bounce MAKE_Sequence(
 
     assert(kind == REB_TUPLE);
     if (parent)
-        return FAIL(Error_Bad_Make_Parent(kind, unwrap(parent)));
+        return RAISE(Error_Bad_Make_Parent(kind, unwrap(parent)));
 
     if (IS_TUPLE(arg))
         return Copy_Cell(OUT, arg);
@@ -86,7 +86,7 @@ Bounce MAKE_Sequence(
         for (ep = cp; len > cast(REBLEN, ep - cp); ++ep) {
             ep = Grab_Int(ep, &n);
             if (n < 0 || n > 255)
-                return FAIL(arg);
+                return RAISE(arg);
 
             *tp++ = cast(Byte, n);
             if (*ep != '.')
@@ -94,7 +94,7 @@ Bounce MAKE_Sequence(
         }
 
         if (len > cast(REBLEN, ep - cp))
-            return FAIL(arg);
+            return RAISE(arg);
 
         return Init_Tuple_Bytes(OUT, buf, size);
     }
@@ -159,13 +159,13 @@ Bounce MAKE_Sequence(
         Init_Tuple_Bytes(OUT, at, size);
     }
     else
-        return FAIL(arg);
+        return RAISE(arg);
 
     return OUT;
 
   bad_make:
 
-    return FAIL(Error_Bad_Make(REB_TUPLE, arg));
+    return RAISE(Error_Bad_Make(REB_TUPLE, arg));
 }
 
 

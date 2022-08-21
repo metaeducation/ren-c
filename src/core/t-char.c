@@ -108,7 +108,7 @@ Bounce MAKE_Issue(
         REBINT n = Int32(arg);
         Context(*) error = Maybe_Init_Char(OUT, n);
         if (error)
-            return FAIL(error);
+            return RAISE(error);
         return OUT; }
 
       case REB_BINARY: {
@@ -134,7 +134,7 @@ Bounce MAKE_Issue(
         }
         Context(*) error = Maybe_Init_Char(OUT, c);
         if (error)
-            return FAIL(error);
+            return RAISE(error);
         return OUT; }
 
       case REB_TEXT:
@@ -150,7 +150,7 @@ Bounce MAKE_Issue(
 
   bad_make:
 
-    return FAIL(Error_Bad_Make(REB_ISSUE, arg));
+    return RAISE(Error_Bad_Make(REB_ISSUE, arg));
 }
 
 
@@ -171,12 +171,12 @@ Bounce TO_Issue(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg)
         Utf8(const*) utf8 = VAL_UTF8_LEN_SIZE_AT(&len, &size, arg);
 
         if (len == 0)  // don't "accidentally" create zero-codepoint `#`
-            return FAIL(Error_Illegal_Zero_Byte_Raw());
+            return RAISE(Error_Illegal_Zero_Byte_Raw());
 
         return Init_Issue_Utf8(OUT, utf8, size, len);
     }
 
-    return FAIL(Error_Bad_Cast_Raw(arg, Datatype_From_Kind(kind)));
+    return RAISE(Error_Bad_Cast_Raw(arg, Datatype_From_Kind(kind)));
 }
 
 
@@ -436,11 +436,11 @@ REBTYPE(Issue)
     }
 
     if (chr < 0)
-        return FAIL(Error_Type_Limit_Raw(Datatype_From_Kind(REB_ISSUE)));
+        return RAISE(Error_Type_Limit_Raw(Datatype_From_Kind(REB_ISSUE)));
 
     Context(*) error = Maybe_Init_Char(OUT, cast(Codepoint, chr));
     if (error)
-        return FAIL(error);
+        return RAISE(error);
     return OUT;
 }
 

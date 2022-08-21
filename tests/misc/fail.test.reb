@@ -58,7 +58,7 @@
 ; Multi-returns which aren't writing to a variable should be willing to
 ; tolerate an arbitrary result coming out.
 [
-    (failure? [#]: fail "hi")
+    (raised? [#]: raise "hi")
 ]
 
 ; A ^META'd failure still does a lookahead step for enfix, and if that step
@@ -67,8 +67,8 @@
 [
     (
         did all [
-            (failure? unmeta [^x]: fail "hi" void)
-            failure? unget x
+            (raised? unmeta [^x]: raise "hi" void)
+            raised? unget x
         ]
     )
 ]
@@ -76,19 +76,19 @@
 ; Non-^META cases should be able to get away with fail + except if it doesn't
 ; actually try to do the assignment.
 [
-    (null? until [x: fail "hi" except [break]])
-    (null? until [[x]: fail "hi" except [break]])
+    (null? until [x: raise "hi" except [break]])
+    (null? until [[x]: raise "hi" except [break]])
     (
         did all [
-            true = until [x: fail "hi" except [true]]
+            true = until [x: raise "hi" except [true]]
             x = true
         ]
     )
     (did all [
-        true = until [[x]: fail "hi" except [true]]
+        true = until [[x]: raise "hi" except [true]]
         x = true
     ])
 
-    (e: 1020, did all [(trap [e: fail "hi"]).message = "hi", e = 1020])
-    (e: 1020, did all [(trap [[e]: fail "hi"]).message = "hi", e = 1020])
+    (e: 1020, did all [(trap [e: raise "hi"]).message = "hi", e = 1020])
+    (e: 1020, did all [(trap [[e]: raise "hi"]).message = "hi", e = 1020])
 ]

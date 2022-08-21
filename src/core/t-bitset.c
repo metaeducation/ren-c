@@ -98,11 +98,11 @@ Bounce MAKE_Bitset(
 ){
     assert(kind == REB_BITSET);
     if (parent)
-        return FAIL(Error_Bad_Make_Parent(kind, unwrap(parent)));
+        return RAISE(Error_Bad_Make_Parent(kind, unwrap(parent)));
 
     REBINT len = Find_Max_Bit(arg);
     if (len == NOT_FOUND)
-        return FAIL(arg);
+        return RAISE(arg);
 
     Binary(*) bin = Make_Bitset(cast(REBLEN, len));
     Manage_Series(bin);

@@ -51,7 +51,7 @@ Bounce MAKE_Port(
 ){
     assert(kind == REB_PORT);
     if (parent)
-        return FAIL(Error_Bad_Make_Parent(kind, unwrap(parent)));
+        return RAISE(Error_Bad_Make_Parent(kind, unwrap(parent)));
 
     assert(not Is_Nulled(arg)); // API would require NULLIFY_NULLED
 
@@ -63,7 +63,7 @@ Bounce MAKE_Port(
     }
 
     if (not IS_PORT(OUT))  // should always create a port
-        return FAIL(OUT);
+        return RAISE(OUT);
 
     return OUT;
 }
@@ -78,7 +78,7 @@ Bounce TO_Port(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg)
     UNUSED(kind);
 
     if (not IS_OBJECT(arg))
-        return FAIL(Error_Bad_Make(REB_PORT, arg));
+        return RAISE(Error_Bad_Make(REB_PORT, arg));
 
     // !!! cannot convert TO a PORT! without copying the whole context...
     // which raises the question of why convert an object to a port,

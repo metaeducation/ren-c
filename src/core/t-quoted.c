@@ -77,7 +77,7 @@ Bounce MAKE_Quoted(
 ){
     assert(kind == REB_QUOTED);
     if (parent)
-        return FAIL(Error_Bad_Make_Parent(kind, unwrap(parent)));
+        return RAISE(Error_Bad_Make_Parent(kind, unwrap(parent)));
 
     return Quotify(Copy_Cell(OUT, arg), 1);
 }
@@ -90,7 +90,7 @@ Bounce MAKE_Quoted(
 // "to" a literal.  (to quoted! [[a]] => \\a, for instance?)
 //
 Bounce TO_Quoted(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *data) {
-    return FAIL(Error_Bad_Make(kind, data));
+    return RAISE(Error_Bad_Make(kind, data));
 }
 
 
@@ -585,7 +585,7 @@ DECLARE_NATIVE(maybe)
         return VOID;
     }
 
-    if (Is_Meta_Of_Failure(v)) {  // fold in TRY behavior as well
+    if (Is_Meta_Of_Raised(v)) {  // fold in TRY behavior as well
         ERROR_VARS *vars = ERR_VARS(VAL_CONTEXT(v));
         if (
             IS_WORD(&vars->id)
@@ -593,7 +593,7 @@ DECLARE_NATIVE(maybe)
         ){
             return VOID;
         }
-        return FAIL(VAL_CONTEXT(v));
+        return RAISE(VAL_CONTEXT(v));
     }
 
     Move_Cell(OUT, v);
