@@ -158,7 +158,7 @@
     )
 
     (
-        foo: func [return: [integer!] other: [integer!]] [
+        foo: func [return: [integer!] @other [integer!]] [
             if wanted? 'other [other: 10] return 20
         ]
         did all [

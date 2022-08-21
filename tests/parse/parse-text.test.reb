@@ -8,6 +8,16 @@
 ; always match.
 ;
 
+; rule capture: efficient (doesn't require a copy if you're not using it)
+(
+    rule: "cd"
+    did all [
+        "cd" = result: parse "abcd" ["ab" rule]
+        "cdef" = append result "ef"
+        "cdef" = rule
+    ]
+)
+
 ("" = parse "" [""])
 
 ("hello" == parse ["hello"] ["hello"])

@@ -1528,16 +1528,40 @@ default-combinators: make map! reduce [
 
     === BLANK! COMBINATOR ===
 
-    ; Follows general philosophy of No-Op with BLANK-IN-NULL-out
+    ; Blanks match themselves literally in blocks.  This is particularly
+    ; helpful for recognizing things like refinement:
+    ;
+    ;     >> refinement-rule: subparse path! [_ word!]
+    ;
+    ;     >> parse [/a] [refinement-rule]
+    ;     == a
+    ;
+    ; In strings, they are matched as spaces, saving you the need to write out
+    ; the full word "space" or use an ugly abbreviation like "sp"
 
     blank! combinator [
-        return: "NULL (in isotope form)"
-            [<opt>]
+        return: "BLANK! if matched in array or space character in strings"
+            [blank! char!]
         value [blank!]
     ][
-        remainder: input
-        pending: null
-        return null
+        remainder: next input  ; if we consume an item, we'll consume just one
+        if any-array? input [
+            if input.1 = _ [
+                return _
+            ]
+            return fail "BLANK! rule found next input in array was not a blank"
+        ]
+        if any-string? input [
+            if input.1 = space [
+                return space
+            ]
+            return fail "BLANK! rule found next input in array was not space"
+        ]
+        assert [binary? input]
+        if input.1 = 32 [  ; codepoint of space, crucially single byte for test
+            return space  ; acts like if you'd written space in the rule
+        ]
+        return fail "BLANK! rule found next input in binary was not ASCII 32"
     ]
 
     === LOGIC! COMBINATOR ===

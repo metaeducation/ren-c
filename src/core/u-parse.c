@@ -531,11 +531,9 @@ static Bounce Parse_One_Rule(
     }
 
     if (pos == P_INPUT_LEN) {  // at end of input
-        if (IS_BLANK(rule) or IS_LOGIC(rule) or IS_BLOCK(rule)) {
+        if (IS_LOGIC(rule) or IS_BLOCK(rule)) {
             //
             // Only these types can *potentially* handle an END input.
-            // For instance, `parse [] [[[_ _ _]]]` should be able to match,
-            // but we have to process the block to know for sure.
         }
         else if (
             (IS_TEXT(rule) or IS_BINARY(rule))
@@ -562,9 +560,6 @@ static Bounce Parse_One_Rule(
     }
 
     switch (VAL_TYPE(rule)) {  // handle w/same behavior for all P_INPUT
-
-      case REB_BLANK:  // blank rules "match" but don't affect parse position
-        return Init_Integer(OUT, pos);
 
       case REB_LOGIC:
         if (VAL_LOGIC(rule))
@@ -1390,10 +1385,7 @@ DECLARE_NATIVE(subparse)
 
     //=//// (GROUP!) AND :(GET-GROUP!) PROCESSING /////////////////////////=//
 
-    if (IS_BLANK(rule)) {  // pre-evaluative source blanks act like SKIP
-        rule = Init_Word(P_SAVE, Canon(SKIP));
-    }
-    else if (IS_GROUP(rule) or IS_GET_GROUP(rule)) {
+    if (IS_GROUP(rule) or IS_GET_GROUP(rule)) {
 
         // Code below may jump here to re-process groups, consider:
         //
@@ -1454,17 +1446,9 @@ DECLARE_NATIVE(subparse)
     //=//// ANY-WORD!/ANY-PATH! PROCESSING ////////////////////////////////=//
 
     if (ANY_PLAIN_GET_SET_WORD(rule)) {
-        //
-        // "Source-level" blanks act as SKIP.  Quoted blanks match BLANK!
-        // elements literally.  Blanks fetched from variables act as NULL.
-        // Quoted blanks fetched from variables match literal BLANK!.
-        // https://forum.rebol.info/t/1348
-        //
-        // This handles making a literal blank act like the word! SKIP
-        //
         SYMID cmd = VAL_CMD(rule);
         if (cmd != SYM_0) {
-            if (not IS_WORD(rule) and not IS_BLANK(rule)) {
+            if (not IS_WORD(rule)) {
                 //
                 // Command but not WORD! (COPY:, :THRU)
                 //
@@ -2027,7 +2011,6 @@ DECLARE_NATIVE(subparse)
 
     switch (VAL_TYPE(rule)) {
       case REB_NULL:
-      case REB_BLANK: // if we see a blank here, it was variable-fetched
         FETCH_NEXT_RULE(f);  // handle fetched blanks same as null
         goto pre_rule;
 
@@ -2103,7 +2086,6 @@ DECLARE_NATIVE(subparse)
     while (count < maxcount) {
         assert(
             not IS_BAR(rule)
-            and not IS_BLANK(rule)
             and not IS_LOGIC(rule)
             and not IS_INTEGER(rule)
             and not IS_GROUP(rule)

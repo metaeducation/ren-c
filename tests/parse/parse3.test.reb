@@ -64,20 +64,16 @@
 (didn't parse3 [x] [[[]]])
 (did parse3 [x] [[] 'x []])
 
-; No longer contentious concept: NULL is not legal as a parse rule.
-;
-; Contentious concept: PARSE3 tried the idea that literal blank would be
-; different from fetched blank.  Literal blank means "skip" at source level,
-; but if retrieved from a variable it means the same as empty block.
-;
-; https://forum.rebol.info/t/1348
+; No longer contentious concept: NULL is not legal as a parse rule, and BLANK!
+; is matched literally in blocks...treated like a space in strings.
 [
     (error? trap [did parse3 [x] ['x null]])
-    (did parse3 [x] [blank 'x <end>])
+    (did parse3 [_ x] [blank 'x <end>])
 
-    (did parse3 [] [blank blank blank])
-    (didn't parse3 [] [_ _ _])
-    (did parse3 [x <y> "z"] [_ _ _])
+    (didn't parse3 [] [blank blank blank])
+    (did parse3 [_ _ _] [blank blank blank])
+    (did parse3 [_ _ _] [_ _ _])
+    (didn't parse3 [x <y> "z"] [_ _ _])
 
     (didn't parse3 [x <y> "z"] ['_ '_ '_])
     (did parse3 [_ _ _] ['_ '_ '_])
@@ -87,7 +83,7 @@
     )
 
     (didn't parse3 [] [[[_ _ _]]])
-    (did parse3 [] [[[blank blank blank]]])
+    (did parse3 [_ _ _] [[[blank blank blank]]])
 ]
 
 ; SET-WORD! (store current input position)

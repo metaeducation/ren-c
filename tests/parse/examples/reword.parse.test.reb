@@ -8,12 +8,12 @@
     source [any-string! binary!]
     values [map! object! block!]
     /case
-    /escape [blank! char! any-string! word! binary! block!]
+    /escape [char! any-string! word! binary! block!]
 
     <static>
 
     delimiter-types (
-        make typeset! [blank! char! any-string! word! binary!]
+        make typeset! [char! any-string! word! binary!]
     )
     keyword-types (
         make typeset! [char! any-string! integer! word! binary!]
@@ -24,8 +24,8 @@
 
     out: make (type of source) length of source
 
-    prefix: _
-    suffix: _
+    prefix: []  ; initialize with no-op rule
+    suffix: []
     case [
         null? escape [prefix: "$"]  ; refinement not used, so use default
 
@@ -35,8 +35,8 @@
 
         block? escape [
             parse escape [
-                prefix: delimiter-types
-                suffix: delimiter-types
+                prefix: [_ (null) | delimiter-types]
+                suffix: [_ (null) | delimiter-types]
             ] else [
                 fail ["Invalid /ESCAPE delimiter block" escape]
             ]
@@ -121,7 +121,7 @@
 
 ("Multiple Search and Replace" = uparse-reword/escape "Multiple Foo and Bar" [
     "Foo" "Search" "Bar" "Replace"
-] _)
+] null)
 
 ("This is that." = uparse-reword "$1 is $2." [1 "This" 2 "that"])
 
