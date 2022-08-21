@@ -1550,13 +1550,13 @@ default-combinators: make map! reduce [
     ; e.g. parse "..." [:(mode = 'read) ... | :(mode = 'write) ...]
 
     logic! combinator [
-        return: "True if success, null if failure"
-            [<opt> logic!]
+        return: "Invisible if true (signal to keep parsing)"
+            [<void>]
         value [logic!]
     ][
         if value [
             remainder: input
-            return true
+            return void
         ]
         return fail "LOGIC! of FALSE used to signal a parse failing"
     ]

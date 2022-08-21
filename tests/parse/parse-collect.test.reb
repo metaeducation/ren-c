@@ -41,7 +41,7 @@
         digit: charset "0123456789"
         [#2] = parse "123" [
             collect [some [
-                keep [v: digit, elide :(even? load-value as text! v)]
+                keep [v: digit, :(even? load-value as text! v)]
                 |
                 <any>
             ]]
@@ -51,7 +51,7 @@
         digit: charset [0 - 9]
         [2] = parse #{010203} [
             collect [some [
-                keep [v: digit, elide :(even? v)]
+                keep [v: digit, :(even? v)]
                 |
                 <any>
             ]]
@@ -375,7 +375,7 @@ https://github.com/metaeducation/ren-c/issues/935
 [
     (
         [2] = parse [1 2 3] [
-            collect [some [keep [v: integer! elide :(even? v)] | <any>]]
+            collect [some [keep [v: integer! :(even? v)] | <any>]]
         ]
     )
     (

@@ -39,7 +39,7 @@
 [
     (
         x: ~
-        #[true] == parse [2 4 6] [some [x: integer! :(even? x)]]
+        6 == parse [2 4 6] [some [x: integer! :(even? x)]]
     )
     (
         x: ~
@@ -54,7 +54,7 @@
 [
     (
         x: ~
-        #[true] == parse "246" [some [
+        "6" == parse "246" [some [
             x: across <any> :(even? load-value x)
         ]]
     )

@@ -183,7 +183,7 @@
         x: blank
         true
     )
-    (#[true] == parse #{020406} [
+    (#{06} == parse #{020406} [
         maybe some [x: across <any> :(even? first x)]
     ])
     (didn't parse #{01} [x: across <any> :(even? first x)])
