@@ -33,6 +33,12 @@
     block: my append/part/dup spread [d e f] 2 3
     [a b c d e d e d e] = block
 )
+(
+    block: copy [a b c]
+    block: my append/part/dup spread '(d e f) 2 3
+    [a b c d e d e d e] = block
+)
+
 
 ; https://forum.rebol.info/t/justifiable-asymmetry-to-on-block/751
 ;
