@@ -917,17 +917,12 @@ default-combinators: make map! reduce [
             fail "Cannot SUBPARSE an isotope synthesized result"
         ]
 
-        assert [quoted? subseries]  ; could be any value
+        subseries: my unquote
 
-        ; We don't just unquote the literalizing quote from ^ that's on the
-        ; value (which would indicate a plain series).  We dequote fully...so
-        ; we can parse INTO an arbitrarily quoted series.
-        ;
-        ; !!! This makes sense if-and-only-if the top level UPARSE will take
-        ; quoted series.  Figure out a consistent answer.
-        ;
-        if not any-series? subseries: my noquote [
-            fail "Need ANY-SERIES! datatype for use with SUBPARSE"
+        case [
+            any-series? subseries []
+            any-sequence? subseries [subseries: as block! subseries]
+            return fail "Need SERIES! or SEQUENCE! input for use with SUBPARSE"
         ]
 
         ; If the entirety of the item at the input array is matched by the

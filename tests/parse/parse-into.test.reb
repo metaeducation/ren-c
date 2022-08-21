@@ -119,3 +119,8 @@
         'a s: text! (assert [#t == parse s [repeat 4 <any>]])
     ])
 ]
+
+; Parsing ANY-SEQUENCE is allowed
+(
+    'c = parse [a//c] [subparse path! ['a _ 'c]]
+)
