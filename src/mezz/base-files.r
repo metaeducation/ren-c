@@ -25,17 +25,15 @@ info?: function [
     if file? target [
         return query target
     ]
-    trap [
-        t: write target [HEAD]
-        if only [return 'file]
-        return make object! [
-            name: target
-            size: t.2
-            date: t.3
-            type: 'url
-        ]
-    ] then [
-        return null
+
+    t: write target [HEAD] except e -> [return null]
+
+    if only [return 'file]
+    return make object! [
+        name: target
+        size: t.2
+        date: t.3
+        type: 'url
     ]
 ]
 
@@ -146,10 +144,10 @@ make-dir: func [
     for-each dir dirs [
         path: if empty? path [dir] else [join path dir]
         append path slash
-        trap [make-dir path] then (lambda e [
+        make-dir path except e -> [
             for-each dir created [attempt [delete dir]]
-            fail e
-        ])
+            return raise e
+        ]
         insert created path
     ]
     return path

@@ -1703,19 +1703,15 @@ default-combinators: make map! reduce [
             remainder: next input
             return input.1
         ][
-            any [
-                ; !!! Not all errors are recoverable in transcode, so some
-                ; actually fail vs. return an error, e.g.:
-                ;
-                ;     parse to binary! "#(" [blank!]
-                ;
-                ; So we actually need this TRAP here.  Review.
-                ;
-                trap [
-                    [item remainder @error]: transcode input
-                ]
-                value != type of :item
-            ] then [
+            [item remainder]: transcode input except e -> [return raise e]
+
+            ; If TRANSCODE knew what kind of item we were looking for, it could
+            ; shortcut this.  Since it doesn't, we might waste time and memory
+            ; doing something like transcoding a very long block, only to find
+            ; afterward it's not something like a requested integer!.  Red
+            ; has some type sniffing in their fast lexer, review relevance.
+            ;
+            if value != type of item [
                 return raise "Could not TRANSCODE the DATATYPE! from input"
             ]
             return :item

@@ -46,17 +46,17 @@ transcode-header: func [
     data [binary!]
     /file [file! url!]
 
-    <local> key hdr error
+    <local> key hdr
 ][
     line: 1
-    [key rest]: transcode/file/line data file line except e -> [
+    [key rest]: transcode/file/line data file line except e -> [  ; "REBOL"
         return raise e
     ]
-    [hdr rest error]: transcode/file/line rest file line except e -> [
+    [hdr rest]: transcode/file/line rest file line except e -> [  ; one BLOCK!
         return raise e
     ]
 
-    return all [not error, key = 'REBOL, block? hdr] then [hdr]
+    return all [key = 'REBOL, block? hdr] then [hdr]
 ]
 
 
@@ -124,9 +124,7 @@ load-header: function [
         ]
     ]
 
-    trap [
-        hdr: construct/with/only :hdr system.standard.header
-    ] then [
+    hdr: construct/with/only hdr system.standard.header except [
         return 'bad-header
     ]
 
@@ -164,21 +162,21 @@ load-header: function [
         ; to use TRAP with the bad idea for now.
         ;
         if try find hdr.options 'compress [
-            rest: catch [
-                trap [
+            rest: any [
+                attempt [
                     ; Raw bits.  whitespace *could* be tolerated; if
                     ; you know the kind of compression and are looking
                     ; for its signature (gzip is 0x1f8b)
                     ;
-                    throw gunzip/part rest end
+                    gunzip/part rest end
                 ]
-                trap [
+                attempt [
                     ; BINARY! literal ("'SCRIPT encoded").  Since it
                     ; uses transcode, leading whitespace and comments
                     ; are tolerated before the literal.
                     ;
                     [binary rest]: transcode/file/line rest file 'line
-                    throw gunzip binary
+                    gunzip binary
                 ]
                 return 'bad-compress
             ]

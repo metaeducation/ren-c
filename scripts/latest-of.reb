@@ -212,7 +212,7 @@ latest-of: func [
         ; better detection...)
         ;
         variant: default [
-            trap [test-librebol] then ['release] else ['debug]
+            if undefined? 'test-librebol ['release] else ['debug]
         ]
         to tuple! reduce [0 system.version.4 system.version.5]
     ]
