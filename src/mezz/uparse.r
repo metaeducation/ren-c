@@ -143,15 +143,19 @@ combinator: func [
         ; Get the text description if given
         (if text? spec.1 [spec.1, elide spec: my next])
 
-        ; Enforce a RETURN: definition.
-        ;
+        ; Enforce a RETURN: definition.  RETURN: [] is allowed
         (
             assert [spec.1 = 'return:]
-            assert [text? spec.2]
-            assert [block? spec.3]
+            if spec.2 = '[] [
+                spread reduce [spec.1 spec.2]
+                elide spec: my skip 2
+            ] else [
+                assert [text? spec.2]
+                assert [block? spec.3]
 
-            spread reduce [spec.1 spec.2 spec.3]
-            elide spec: my skip 3
+                spread reduce [spec.1 spec.2 spec.3]
+                elide spec: my skip 3
+            ]
         )
 
         @remainder [any-series!]  ; all combinators have remainder
@@ -295,8 +299,8 @@ default-combinators: make map! reduce [
 
     'spread combinator [
         {Return isotope form of array arguments}
-        return: "PARSER's result if it succeeds, otherwise NULL"
-            [<opt>]
+        return: "PARSER's result if it succeeds"
+            [<opt> any-value!]  ; can be isotope
         parser [action!]
         <local> result'
     ][
@@ -304,15 +308,14 @@ default-combinators: make map! reduce [
             return fail e
         ]
         if (not quoted? result') or (not any-array? result': unquote result') [
-            fail "SPREAD only accepts ANY-ARRAY!"
+            fail "SPREAD only accepts ANY-ARRAY! and QUOTED!"
         ]
         return spread result'  ; was unquoted above
     ]
 
     'not combinator [
         {Fail if the parser rule given succeeds, else continue}
-        return: "~not~ if the rule fails, NULL if it succeeds"
-            [<opt> bad-word!]
+        return: []  ; isotope!
         parser [action!]
     ][
         [# remainder]: parser input except [  ; don't care about result
@@ -325,7 +328,7 @@ default-combinators: make map! reduce [
     'ahead combinator [
         {Leave the parse position at the same location, but fail if no match}
         return: "parser result if success, NULL if failure"
-            [<opt> any-value!]
+            [<opt> <void> any-value!]
         parser [action!]
     ][
         remainder: input
@@ -335,7 +338,7 @@ default-combinators: make map! reduce [
     'further combinator [
         {Pass through the result only if the input was advanced by the rule}
         return: "parser result if it succeeded and advanced input, else NULL"
-            [<opt> any-value!]
+            [<opt> <void> any-value!]
         parser [action!]
         <local> result' pos
     ][
@@ -367,7 +370,7 @@ default-combinators: make map! reduce [
     'some combinator [
         {Run the parser argument in a loop, requiring at least one match}
         return: "Result of last successful match"
-            [<opt> any-value!]
+            [<opt> <void> any-value!]
         parser [action!]
         <local> result'
     ][
@@ -420,7 +423,7 @@ default-combinators: make map! reduce [
     'cycle combinator [
         {Run the body parser continuously in a loop until BREAK or STOP}
         return: "Result of last body parser (or none if failure)"
-            [<opt> any-value!]
+            [<opt> <void> any-value!]
         parser [action!]
         <local> result'
     ][
@@ -440,7 +443,7 @@ default-combinators: make map! reduce [
     'tally combinator [
         {Iterate a rule and count the number of times it matches}
         return: "Number of matches (can be 0)"
-            [<opt> integer!]
+            [integer!]
         parser [action!]
         <local> count
     ][
@@ -460,8 +463,7 @@ default-combinators: make map! reduce [
 
     'break combinator [
         {Break an iterated construct like SOME or REPEAT, failing the match}
-        return: "Divergent"
-            []
+        return: []  ; divergent
         <local> f
     ][
         f: take/last state.loops else [
@@ -474,8 +476,7 @@ default-combinators: make map! reduce [
 
     'stop combinator [
         {Break an iterated construct like SOME or REPEAT, succeeding the match}
-        return: "Divergent"
-            [<opt>]
+        return: []  ; divergent
         parser [<end> action!]
         <local> f result'
     ][
@@ -505,8 +506,7 @@ default-combinators: make map! reduce [
 
     'return combinator [
         {Return a value explicitly from the parse}
-        return: "Divergent"
-            [<opt>]
+        return: []  ; divergent
         parser [action!]
         <local> value'
     ][
@@ -556,7 +556,7 @@ default-combinators: make map! reduce [
     'measure combinator [
         {Get the length of a matched portion of content}
         return: "Length in series units"
-            [<opt> integer!]
+            [integer!]
         parser [action!]
         <local> start end
     ][
@@ -591,8 +591,7 @@ default-combinators: make map! reduce [
 
     'change combinator [
         {Substitute a match with new data}
-        return: "!!! TBD !!!"
-            [<opt> bad-word!]
+        return: []  ; isotope!
         parser [action!]
         replacer [action!]  ; !!! How to say result is used here?
         <local> replacement'
@@ -613,8 +612,7 @@ default-combinators: make map! reduce [
 
     'remove combinator [
         {Remove data that matches a parse rule}
-        return: "!!!TBD"
-            [<opt> bad-word!]
+        return: []  ; isotope!
         parser [action!]
     ][
         [^ remainder]: parser input except e -> [  ; first find end position
@@ -627,8 +625,7 @@ default-combinators: make map! reduce [
 
     'insert combinator [
         {Insert literal data into the input series}
-        return: "!!! TBD"
-            [<opt> bad-word!]
+        return: []  ; isotope!
         parser [action!]
         <local> insertion'
     ][
@@ -720,7 +717,7 @@ default-combinators: make map! reduce [
 
     'between combinator [
         return: "Copy of content between the left and right parsers"
-            [<opt> any-series!]
+            [any-series!]
         parser-left [action!]
         parser-right [action!]
         <local> start limit
@@ -756,7 +753,7 @@ default-combinators: make map! reduce [
     tag! combinator [
         {Special noun-like keyword subdispatcher for TAG!s}
         return: "What the delegated-to tag returned"
-            [<opt> any-value!]
+            [<opt> <void> any-value!]
         @pending [<opt> block!]
         value [tag!]
         <local> comb
@@ -780,7 +777,7 @@ default-combinators: make map! reduce [
     <end> combinator [
         {Only match if the input is at the end}
         return: "End position of the parse input"
-            [<opt> any-series!]
+            [any-series!]
     ][
         if tail? input [
             remainder: input
@@ -810,7 +807,7 @@ default-combinators: make map! reduce [
     <any> combinator [  ; historically called "SKIP"
         {Match one series item in input, succeeding so long as it's not at END}
         return: "One atom of series input"
-            [<opt> any-value!]
+            [any-value!]
     ][
         if tail? input [
             return fail "PARSE position at tail, <any> has no item to match"
@@ -830,7 +827,7 @@ default-combinators: make map! reduce [
     'across combinator [
         {Copy from the current parse position through a rule}
         return: "Copied series"
-            [<opt> any-series!]
+            [any-series!]
         parser [action!]
     ][
         [^ remainder]: parser input except e -> [
@@ -847,8 +844,7 @@ default-combinators: make map! reduce [
 
     'copy combinator [
         {Disabled combinator, included to help guide to use ACROSS}
-        return: "Divergent"
-            []
+        return: []  ; divergent
     ][
         fail [
             "Transitionally (maybe permanently?) the COPY function in UPARSE"
@@ -947,7 +943,7 @@ default-combinators: make map! reduce [
 
     'collect combinator [
         return: "Block of collected values"
-            [<opt> block!]
+            [block!]
         @pending [<opt> block!]
         parser [action!]
         <local> subpending collected
@@ -1038,7 +1034,7 @@ default-combinators: make map! reduce [
 
     'gather combinator [
         return: "The gathered object"
-            [<opt> object!]
+            [object!]
         @pending [<opt> block!]
         parser [action!]
         <local> obj subpending
@@ -1102,7 +1098,7 @@ default-combinators: make map! reduce [
 
     set-word! combinator [
         return: "The set value"
-            [<opt> any-value!]
+            [<opt> <void> any-value!]
         value [set-word!]
         parser "Failed parser will means target SET-WORD! will be unchanged"
             [action!]
@@ -1115,7 +1111,7 @@ default-combinators: make map! reduce [
 
     set-tuple! combinator [
         return: "The set value"
-            [<opt> any-value!]
+            [<opt> <void> any-value!]
         value [set-tuple!]
         parser "Failed parser will means target SET-TUPLE! will be unchanged"
             [action!]
@@ -1128,8 +1124,7 @@ default-combinators: make map! reduce [
 
     'set combinator [
         {Disabled combinator, included to help guide to use SET-WORD!}
-        return: "Divergent"
-            []
+        return: []  ; divergent
     ][
         fail [
             "The SET keyword in UPARSE is done with SET-WORD!, and if SET does"
@@ -1140,7 +1135,7 @@ default-combinators: make map! reduce [
 
     set-group! combinator [
         return: "The set value"
-            [<opt> any-value!]
+            [<opt> <void> any-value!]
         value [set-group!]
         parser "Failed parser will means target will be unchanged"
             [action!]
@@ -1163,7 +1158,7 @@ default-combinators: make map! reduce [
 
     text! combinator [
         return: "The rule series matched against (not input value)"
-            [<opt> text!]
+            [text!]
         value [text!]
     ][
         case [
@@ -1213,7 +1208,7 @@ default-combinators: make map! reduce [
 
     issue! combinator [
         return: "The token matched against (not input value)"
-            [<opt> issue!]
+            [issue!]
         value [issue!]
     ][
         case [
@@ -1249,7 +1244,7 @@ default-combinators: make map! reduce [
 
     binary! combinator [
         return: "The binary matched against (not input value)"
-            [<opt> binary!]
+            [binary!]
         value [binary!]
     ][
         case [
@@ -1401,8 +1396,7 @@ default-combinators: make map! reduce [
     ; that they don't exist.
 
     get-block! combinator [
-        return: "Undefined at this time"
-            [<opt> any-value!]
+        return: []  ; divergent
         value [get-block!]
     ][
         fail "No current meaning for GET-BLOCK! combinator"
@@ -1417,7 +1411,7 @@ default-combinators: make map! reduce [
 
     bitset! combinator [
         return: "The matched input value"
-            [<opt> char! integer!]
+            [char! integer!]
         value [bitset!]
     ][
         case [
@@ -1451,7 +1445,7 @@ default-combinators: make map! reduce [
 
     quoted! combinator [
         return: "The matched value"
-            [<opt> any-value!]
+            [any-value!]
         @pending [<opt> block!]
         value [quoted!]
         <local> comb
@@ -1493,7 +1487,7 @@ default-combinators: make map! reduce [
     ]
 
     'lit combinator [  ; should long form be LITERALLY or LITERAL ?
-        return: "Literal value" [<opt> any-value!]
+        return: "Literal value" [any-value!]
         @pending [<opt> block!]
         'value [any-value!]
         <local> comb
@@ -1698,7 +1692,7 @@ default-combinators: make map! reduce [
 
     datatype! combinator [
         return: "Matched or synthesized value"
-            [<opt> any-value!]
+            [any-value!]
         value [datatype!]
         <local> item error
     ][
@@ -1730,12 +1724,12 @@ default-combinators: make map! reduce [
 
     typeset! combinator [
         return: "Matched or synthesized value"
-            [<opt> any-value!]
+            [any-value!]
         value [typeset!]
         <local> item error
     ][
         either any-array? input [
-            if not find value try (kind of input.1) [
+            if not try find value (kind of input.1) [
                 return fail "Value at parse position did not match TYPESET!"
             ]
             remainder: next input
@@ -1768,7 +1762,7 @@ default-combinators: make map! reduce [
     ; !!! These follow a simple pattern, could generate at a higher level.
 
     '@ combinator [
-        return: "Match product of result of applying rule" [<opt> any-value!]
+        return: "Match product of result of applying rule" [any-value!]
         @pending [<opt> block!]
         parser [action!]
         <local> comb result'
@@ -1780,7 +1774,7 @@ default-combinators: make map! reduce [
     ]
 
     the-word! combinator [
-        return: "Literal value" [<opt> any-value!]
+        return: "Literal value" [any-value!]
         @pending [<opt> block!]
         value [the-word!]
         <local> comb
@@ -1790,7 +1784,7 @@ default-combinators: make map! reduce [
     ]
 
     the-path! combinator [
-        return: "Literal value" [<opt> any-value!]
+        return: "Literal value" [any-value!]
         @pending [<opt> block!]
         value [the-word!]
         <local> comb
@@ -1800,7 +1794,7 @@ default-combinators: make map! reduce [
     ]
 
     the-tuple! combinator [
-        return: "Literal value" [<opt> any-value!]
+        return: "Literal value" [any-value!]
         @pending [<opt> block!]
         value [the-tuple!]
         <local> comb
@@ -1810,7 +1804,7 @@ default-combinators: make map! reduce [
     ]
 
     the-group! combinator [
-        return: "Literal value" [<opt> any-value!]
+        return: "Literal value" [any-value!]
         @pending [<opt> block!]
         value [the-group!]
         <local> result' comb totalpending single
@@ -1855,7 +1849,7 @@ default-combinators: make map! reduce [
     ]
 
     the-block! combinator [
-        return: "Literal value" [<opt> any-value!]
+        return: "Literal value" [any-value!]
         @pending [<opt> block!]
         value [the-block!]
         <local> result' comb totalpending
@@ -1901,14 +1895,14 @@ default-combinators: make map! reduce [
     ; just be sensitive to the received type of value.
 
     '^ combinator [
-        return: "Meta quoted" [<opt> bad-word! quoted! the-word!]
+        return: "Meta quoted" [<opt> quasi! quoted!]
         parser [action!]
     ][
         return [^ remainder]: parser input
     ]
 
     meta-word! combinator [
-        return: "Meta quoted" [<opt> bad-word! quoted! the-word!]
+        return: "Meta quoted" [<opt> quasi! quoted!]
         @pending [<opt> block!]
         value [meta-word!]
         <local> comb
@@ -1919,7 +1913,7 @@ default-combinators: make map! reduce [
     ]
 
     meta-tuple! combinator [
-        return: "Meta quoted" [<opt> bad-word! quoted! the-word!]
+        return: "Meta quoted" [<opt> quasi! quoted!]
         @pending [<opt> block!]
         value [meta-tuple!]
         <local> comb
@@ -1930,7 +1924,7 @@ default-combinators: make map! reduce [
     ]
 
     meta-path! combinator [
-        return: "Meta quoted" [<opt> bad-word! quoted! the-word!]
+        return: "Meta quoted" [<opt> quasi! quoted!]
         @pending [<opt> block!]
         value [meta-path!]
         <local> comb
@@ -1941,7 +1935,7 @@ default-combinators: make map! reduce [
     ]
 
     meta-group! combinator [
-        return: "Meta quoted" [<opt> bad-word! quoted! the-word!]
+        return: "Meta quoted" [<opt> quasi! quoted!]
         @pending [<opt> block!]
         value [meta-group!]
         <local> comb
@@ -1952,7 +1946,7 @@ default-combinators: make map! reduce [
     ]
 
     meta-block! combinator [
-        return: "Meta quoted" [<opt> bad-word! quoted! the-word!]
+        return: "Meta quoted" [<opt> quasi! quoted!]
         @pending [<opt> block!]
         value [meta-block!]
         <local> comb
@@ -1975,7 +1969,7 @@ default-combinators: make map! reduce [
     'elide combinator [
         {Transform a result-bearing combinator into one that has no result}
         return: "Invisible"
-            [<void> <opt>]
+            [<void>]
         parser [action!]
     ][
         [^ remainder]: parser input except e -> [return fail e]
@@ -2011,7 +2005,7 @@ default-combinators: make map! reduce [
 
     'skip combinator [
         {Skip an integral number of items}
-        return: "Invisible" [<opt> <void>]
+        return: "Invisible" [<void>]
         parser [action!]
         <local> result
     ][
@@ -2416,8 +2410,7 @@ default-combinators: make map! reduce [
     ; processed as a rule.  For the moment it quotes it for convenience.
 
     'fail combinator [
-        return: "Divergent"
-            []
+        return: []  ; divergent
         'reason [the-block!]
         <local> e
     ][
