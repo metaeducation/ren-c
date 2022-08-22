@@ -51,8 +51,11 @@ inline static REBVAL *Init_Nulled_Untracked(Cell(*) out, Flags flags) {
     return cast(REBVAL*, out);
 }
 
+// We ensure that non-quoted, non-quasi NULL isn't written into a Cell(*) e.g.
+// for a BLOCK!... must be a Value(*), e.g. a context variable or frame output.
+//
 #define Init_Nulled(out) \
-    Init_Nulled_Untracked(TRACK(out), CELL_MASK_NONE)
+    Init_Nulled_Untracked(TRACK(ensure(Value(*), (out))), CELL_MASK_NONE)
 
 
 // To help ensure full nulled cells don't leak to the API, the variadic

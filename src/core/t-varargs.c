@@ -400,7 +400,7 @@ Bounce MAKE_Varargs(
         //
         Array(*) array1 = Alloc_Singular(NODE_FLAG_MANAGED);
         if (VAL_LEN_AT(arg) == 0)
-            Init_Stale_Void(ARR_SINGLE(array1));
+            Init_Stale_Void(VAL(ARR_SINGLE(array1)));
         else
             Copy_Cell(ARR_SINGLE(array1), arg);
 

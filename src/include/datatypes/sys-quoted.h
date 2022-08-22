@@ -113,7 +113,7 @@ inline static Cell(*) Unquotify_Core(Cell(*) v, REBLEN unquotes) {
 
 
 
-inline static void Unquotify_Dont_Expect_Meta(Cell(*) v) {
+inline static void Unquotify_Dont_Expect_Meta(Value(*) v) {
     if (Is_Meta_Of_Void(v)) {
         Init_Nulled(v);
         return;

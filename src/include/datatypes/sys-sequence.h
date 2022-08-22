@@ -378,8 +378,8 @@ inline static REBVAL *Try_Init_Any_Sequence_Pairlike_Core(
 // it's not a PATH!...because the optimizations on special cases are all
 // in this code.
 //
-inline static REBVAL *Try_Pop_Sequence_Or_Element_Or_Nulled(
-    Cell(*) out,  // will be the error-triggering value if nullptr returned
+inline static Value(*) Try_Pop_Sequence_Or_Element_Or_Nulled(
+    Value(*) out,  // will be the error-triggering value if nullptr returned
     enum Reb_Kind kind,
     StackIndex base
 ){
@@ -409,14 +409,14 @@ inline static REBVAL *Try_Pop_Sequence_Or_Element_Or_Nulled(
             }
 
             if (kind == REB_SET_PATH)
-                Setify(SPECIFIC(out));
+                Setify(out);
             else if (kind == REB_GET_PATH)
-                Getify(SPECIFIC(out));
+                Getify(out);
             else if (kind == REB_META_PATH)
-                Metafy(SPECIFIC(out));
+                Metafy(out);
         }
 
-        return cast(REBVAL*, out);  // valid path element, standing alone
+        return out;  // valid path element, standing alone
     }
 
     if (TOP_INDEX - base == 2) {  // two-element path optimization
@@ -426,7 +426,7 @@ inline static REBVAL *Try_Pop_Sequence_Or_Element_Or_Nulled(
         }
 
         Drop_Data_Stack_To(base);
-        return cast(REBVAL*, out);
+        return out;
     }
 
     // Attempt optimization for all-INTEGER! tuple or path, e.g. IP addresses
@@ -440,7 +440,7 @@ inline static REBVAL *Try_Pop_Sequence_Or_Element_Or_Nulled(
         TOP_INDEX - base
     )){
         Drop_Data_Stack_To(base);
-        return cast(REBVAL*, out);
+        return out;
     }
 
     Array(*) a = Pop_Stack_Values_Core(base, NODE_FLAG_MANAGED);
@@ -448,7 +448,7 @@ inline static REBVAL *Try_Pop_Sequence_Or_Element_Or_Nulled(
     if (not Try_Init_Any_Sequence_Arraylike(out, kind, a))
         return nullptr;
 
-    return cast(REBVAL*, out);
+    return out;
 }
 
 

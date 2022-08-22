@@ -935,7 +935,7 @@ Context(*) Error_Need_Non_End(Cell(const*) target) {
 //
 Context(*) Error_Bad_Word_Get(
     Cell(const*) target,
-    Cell(const*) isotope
+    Value(const*) isotope
 ){
     // SET calls this, and doesn't work on just SET-WORD! and SET-PATH!
     //
@@ -951,7 +951,7 @@ Context(*) Error_Bad_Word_Get(
     // they're already paying for an error regarding the state.
     //
     DECLARE_LOCAL (reified);
-    Copy_Cell(reified, SPECIFIC(isotope));
+    Copy_Cell(reified, isotope);
     Reify_Isotope(reified);
 
     return Error_Bad_Word_Get_Raw(target, reified);

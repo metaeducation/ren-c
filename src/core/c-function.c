@@ -637,7 +637,9 @@ Array(*) Pop_Paramlist_With_Meta_May_Fail(
     Symbol(const*) duplicate = nullptr;
 
   blockscope {
-    REBVAL *param = Init_Word_Isotope(ARR_HEAD(paramlist), Canon(ROOTVAR)) + 1;
+    REBVAL *param = 1 + Init_Word_Isotope(
+        VAL(ARR_HEAD(paramlist)), Canon(ROOTVAR)
+    );
     REBKEY *key = SER_HEAD(REBKEY, keylist);
 
     if (return_stackindex != 0) {

@@ -654,7 +654,7 @@ Context(*) Make_Context_Detect_Managed(
         }
     }
 
-    Cell(*) var = ARR_HEAD(varlist);
+    Value(*) var = VAL(ARR_HEAD(varlist));
     INIT_VAL_CONTEXT_ROOTVAR(var, kind, varlist);
 
     ++var;

@@ -672,7 +672,7 @@ static void Update_Error_Near_For_Line(
     if (ss->file)
         Init_File(&vars->file, ss->file);
     else
-        Init_Nulled(&vars->file);
+        Init_Nulled(VAL(&vars->file));
 
     Init_Integer(&vars->line, ss->line);
 }

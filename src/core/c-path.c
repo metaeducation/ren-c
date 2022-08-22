@@ -30,8 +30,8 @@
 //
 //  Try_Init_Any_Sequence_At_Arraylike_Core: C
 //
-REBVAL *Try_Init_Any_Sequence_At_Arraylike_Core(
-    Cell(*) out,  // NULL if array is too short, violating value otherwise
+Value(*) Try_Init_Any_Sequence_At_Arraylike_Core(
+    Value(*) out,  // NULL if array is too short, violating value otherwise
     enum Reb_Kind kind,
     Array(const*) a,
     REBSPC *specifier,

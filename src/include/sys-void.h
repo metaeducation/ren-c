@@ -75,18 +75,18 @@ inline static REBVAL *Prep_Void_Untracked(Cell(*) out) {
     TRACK(Prep_Void_Untracked(out))  // TRACK() expects REB_0, call after
 
 
-inline static bool Is_Void(const REBVAL *out) {
-    assert(not (out->header.bits & CELL_FLAG_STALE));
-    return VAL_TYPE_UNCHECKED(out) == REB_0;
+inline static bool Is_Void(Value(const*) v) {
+    assert(not (v->header.bits & CELL_FLAG_STALE));
+    return VAL_TYPE_UNCHECKED(v) == REB_0;
 }
 
-inline static bool Is_Stale_Void(Cell(const*) out) {
-    if (not (out->header.bits & CELL_FLAG_STALE))
+inline static bool Is_Stale_Void(Value(const*) v) {
+    if (not (v->header.bits & CELL_FLAG_STALE))
         return false;
-    return VAL_TYPE_UNCHECKED(out) == REB_0;
+    return VAL_TYPE_UNCHECKED(v) == REB_0;
 }
 
-inline static REBVAL *Init_Stale_Void_Untracked(Cell(*) out) {
+inline static Value(*) Init_Stale_Void_Untracked(Value(*) out) {
     Reset_Cell_Header_Untracked(out, REB_0, CELL_FLAG_STALE);
 
   #ifdef ZERO_UNUSED_CELL_FIELDS
@@ -95,7 +95,7 @@ inline static REBVAL *Init_Stale_Void_Untracked(Cell(*) out) {
     PAYLOAD(Any, out).second.trash = ZEROTRASH;
   #endif
 
-    return cast(REBVAL*, out);
+    return out;
 }
 
 #define Init_Stale_Void(out) \

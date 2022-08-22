@@ -453,7 +453,7 @@ inline static Length SER_USED(const REBSER *s) {
         // case of the stale void (a REB_0 cell marked as stale).  This will
         // fail most tests of being read.
         //
-        if (Is_Stale_Void(SER_CELL(s)))
+        if (Is_Stale_Void(VAL(SER_CELL(s))))
             return 0;
         return 1;  // Note: might be a plain void cell
     }
@@ -572,10 +572,10 @@ inline static void SET_SERIES_USED(REBSER *s, REBLEN used) {
             // we flip it over to a readable REB_0 state (a.k.a. "VOID")
 
             if (used == 0)
-                Init_Stale_Void(mutable_SER_CELL(s));
+                Init_Stale_Void(VAL(mutable_SER_CELL(s)));
             else {
                 assert(used == 1);
-                if (Is_Stale_Void(mutable_SER_CELL(s)))
+                if (Is_Stale_Void(VAL(mutable_SER_CELL(s))))
                     RESET(mutable_SER_CELL(s));
             }
         }

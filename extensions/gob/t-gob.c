@@ -554,7 +554,7 @@ static bool Did_Get_GOB_Var(
             Copy_Cell(out, GOB_CONTENT(gob));
         }
         else
-            Init_Nulled(out);
+            Init_Meta_Of_Null(out);
         break;
 
       case SYM_DRAW:
@@ -563,7 +563,7 @@ static bool Did_Get_GOB_Var(
             Copy_Cell(out, GOB_CONTENT(gob));
         }
         else
-            Init_Nulled(out);
+            Init_Meta_Of_Null(out);
         break;
 
       case SYM_TEXT:
@@ -576,7 +576,7 @@ static bool Did_Get_GOB_Var(
             Copy_Cell(out, GOB_CONTENT(gob));
         }
         else
-            Init_Nulled(out);
+            Init_Meta_Of_Null(out);
         break;
 
       case SYM_EFFECT:
@@ -585,7 +585,7 @@ static bool Did_Get_GOB_Var(
             Copy_Cell(out, GOB_CONTENT(gob));
         }
         else
-            Init_Nulled(out);
+            Init_Meta_Of_Null(out);
         break;
 
       case SYM_COLOR:
@@ -594,7 +594,7 @@ static bool Did_Get_GOB_Var(
             Copy_Cell(out, GOB_CONTENT(gob));
         }
         else
-            Init_Nulled(out);
+            Init_Meta_Of_Null(out);
         break;
 
       case SYM_ALPHA:
@@ -613,7 +613,7 @@ static bool Did_Get_GOB_Var(
         if (GOB_PARENT(gob))
             Init_Gob(out, GOB_PARENT(gob));
         else
-            Init_Nulled(out);
+            Init_Meta_Of_Null(out);
         break;
 
       case SYM_DATA: {
@@ -629,7 +629,7 @@ static bool Did_Get_GOB_Var(
         }
         else {
             assert(kind == REB_BLANK);
-            Init_Nulled(out);
+            Init_Meta_Of_Null(out);
         }
         break; }
 
@@ -728,12 +728,6 @@ static Array(*) Gob_To_Array(REBGOB *gob)
         bool known = Did_Get_GOB_Var(slot, gob, name);
         assert(known);  // should have known that sym
         UNUSED(known);
-
-        // !!! Can't have nulls in arrays.  Is using BAD-WORD! correct here?
-        // Gobs used none (blank) historically.
-        //
-        if (Is_Nulled(slot))
-            Init_Quasi_Word(slot, Canon(NULL));
     }
 
     return arr;
@@ -1043,7 +1037,7 @@ REBTYPE(Gob)
         INCLUDE_PARAMS_OF_INSERT;
         UNUSED(PARAM(series));  // covered by `v`
 
-        Cell(*) value = ARG(value);
+        Value(*) value = ARG(value);
         Unquotify_Dont_Expect_Meta(value);
 
         if (IS_NULLED_OR_BLANK(value))
@@ -1060,9 +1054,9 @@ REBTYPE(Gob)
             len = 1;
         }
         else if (IS_BLOCK(value)) {
-            value = m_cast(Cell(*),
+            value = VAL(m_cast(Cell(*),
                 VAL_ARRAY_LEN_AT(&len, KNOWN_MUTABLE(value))
-            );  // !!!
+            ));  // !!!
         }
         else
             fail (PARAM(value));

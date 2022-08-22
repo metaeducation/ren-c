@@ -108,7 +108,7 @@ inline static bool Is_Quasi_Word(Cell(const*) v)
 // cannot be passed as normal parameters...you have to use ^META ones.
 
 inline static REBVAL *Init_Word_Isotope_Untracked(
-    Cell(*) out,
+    Value(*) out,
     option(Symbol(const*)) label
 ){
     return Init_Any_Word_Untracked(
@@ -176,12 +176,13 @@ inline static bool Is_Word_Isotope_With_Id(
 #define NONE_ISOTOPE                c_cast(const REBVAL*, &PG_None_Isotope)
 
 #define Init_None(out) \
-    Init_Blank_Untracked(TRACK(out), FLAG_QUOTE_BYTE(ISOTOPE_255))
+    Init_Blank_Untracked( \
+        TRACK(ensure(Value(*), (out))), FLAG_QUOTE_BYTE(ISOTOPE_255))
 
 #define Init_Meta_Of_None(out) \
     Init_Blank_Untracked(TRACK(out), FLAG_QUOTE_BYTE(QUASI_1))
 
-inline static bool Is_None(Cell(const*) v)
+inline static bool Is_None(Value(const*) v)
   { return Is_Isotope(v) and HEART_BYTE(v) == REB_BLANK; }
 
 inline static bool Is_Meta_Of_None(Cell(const*) v)
@@ -338,7 +339,7 @@ inline static const REBVAL *rebPointerToDecayed(const REBVAL *v) {  // unused?
     return Is_Nulled(decayed) ? nullptr : decayed;
 }
 
-inline static Cell(*) Isotopify_If_Falsey(Cell(*) v) {
+inline static Value(*) Isotopify_If_Falsey(Value(*) v) {
     if (Is_Isotope(v))
         return v;  // already an isotope (would trigger asserts on IS_X tests)
     if (Is_Nulled(v))
@@ -350,7 +351,7 @@ inline static Cell(*) Isotopify_If_Falsey(Cell(*) v) {
     return v;
 }
 
-inline static Cell(*) Isotopify_If_Nulled(Cell(*) v) {
+inline static Value(*) Isotopify_If_Nulled(Value(*) v) {
     if (VAL_TYPE_UNCHECKED(v) == REB_NULL)
         Init_Null_Isotope(v);
     return v;

@@ -225,7 +225,7 @@ inline static Context(*) Context_For_Frame_May_Manage(Frame(*) f) {
 
 //=//// FRAME LABELING ////////////////////////////////////////////////////=//
 
-inline static void Get_Frame_Label_Or_Nulled(Cell(*) out, Frame(*) f) {
+inline static void Get_Frame_Label_Or_Nulled(Value(*) out, Frame(*) f) {
     assert(Is_Action_Frame(f));
     if (f->label)
         Init_Word(out, unwrap(f->label));  // WORD!, PATH!, or stored invoke
