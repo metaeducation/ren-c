@@ -2941,11 +2941,7 @@ Bounce Scanner_Executor(Frame(*) f) {
 
     assert(Is_Raised(OUT));
 
-    if (Get_Executor_Flag(SCAN, f, KEEP_STACK_ON_FAILURE))
-        Drop_Frame_Unbalanced(SUBFRAME);
-    else
-        Drop_Frame(SUBFRAME);  // could `return RAISE(VAL_CONTEXT(OUT))`
-
+    Drop_Frame(SUBFRAME);  // could `return RAISE(VAL_CONTEXT(OUT))`
     return OUT;
 }}
 
@@ -3038,8 +3034,6 @@ void Shutdown_Scanner(void)
 //          [<opt> any-value!]
 //      @next "Translate one value and give back next position"
 //          [text! binary!]
-//      @error "Return error w/o raising it, to return REST and partial result"
-//          [error!]
 //      source "If BINARY!, must be UTF-8 encoded"
 //          [text! binary!]
 //      /file "File to be associated with BLOCK!s and GROUP!s in source"
@@ -3148,8 +3142,6 @@ DECLARE_NATIVE(transcode)
         | FRAME_FLAG_ALLOCATED_FEED;
     if (WANTED(next))
         flags |= SCAN_EXECUTOR_FLAG_JUST_ONCE;
-    if (WANTED(error))
-        flags |= SCAN_EXECUTOR_FLAG_KEEP_STACK_ON_FAILURE;
 
     Frame(*) subframe = Make_Frame(feed, flags);
     subframe->executor = &Scanner_Executor;
@@ -3177,15 +3169,7 @@ DECLARE_NATIVE(transcode)
     //
     // Return a block of the results, so [1] and [[1]] in those cases.
 
-    if (WANTED(error)) {
-        if (Is_Raised(OUT)) {
-            Unquasify(Reify_Isotope(OUT));
-            Move_Cell(ARG(error), OUT);
-        }
-        else
-            Init_Nulled(ARG(error));
-    }
-    else if (Is_Raised(OUT)) {
+    if (Is_Raised(OUT)) {
         Drop_Frame(SUBFRAME);
         return OUT;  // the raised error
     }

@@ -768,7 +768,6 @@ transcode: lib/function [
     source [text! binary!]
     /next
     next-arg [word!]
-    ; /error not supported in shim... it could be
 ][
     next: lib/try :next-arg
 

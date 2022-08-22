@@ -64,18 +64,10 @@
     ]
 )
 
-; Asking for error positions is possible, at the top level only
 (
-    did all [
-        null = [value pos err]: transcode "^M^/a b c"
-        value = null
-        pos = "^M^/a b c"
-        err.id = 'illegal-cr
+    [value pos]: transcode "[^M^/ a] b c" except e -> [
+        e.id = 'illegal-cr
     ]
-)
-(
-    [value pos err]: transcode "[^M^/ a] b c"
-    err.id = 'illegal-cr
 )
 
 (did all [
@@ -121,8 +113,8 @@
     (10 = set # 10)  ; thrown away
     ([abc def] = [# _]: transcode "abc def")  ; means /NEXT is NULL
     ('abc = [# #]: transcode "abc def")  ; /NEXT is # so truthy, SET ignores
-    (null = [# # #]: transcode "3o4")
-    ('scan-invalid = pick trap [[# # _]: transcode "3o4"] 'id)
+    (raised? [# #]: transcode "3o4")
+    ('scan-invalid = pick trap [[# #]: transcode "3o4"] 'id)
 ]
 
 (
