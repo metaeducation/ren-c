@@ -3038,9 +3038,9 @@ void Shutdown_Scanner(void)
 //          [<opt> any-value!]
 //      @next "Translate one value and give back next position"
 //          [text! binary!]
-//      @relax "Try to trap errors and skip token (toplevel only)"
+//      @error "Return error w/o raising it, to return REST and partial result"
 //          [error!]
-//      source "If BINARY!, must be Unicode UTF-8 encoded"
+//      source "If BINARY!, must be UTF-8 encoded"
 //          [text! binary!]
 //      /file "File to be associated with BLOCK!s and GROUP!s in source"
 //          [file! url!]
@@ -3051,20 +3051,6 @@ void Shutdown_Scanner(void)
 //  ]
 //
 DECLARE_NATIVE(transcode)
-//
-// R3-Alpha's TRANSCODE would return a length 2 BLOCK!.  Ren-C uses multiple
-// return values, and operates in a reduced case where if you ask for only
-// one return value then it assumes you want the entire thing transcoded...
-// but if you ask for 2 it assumes you want partial and 3 assumes you would
-// like errors reported as a value instead of needing a TRAP.
-//
-// https://github.com/rebol/rebol-issues/issues/1916
-//
-// !!! See notes on SCAN_STATE->depth for explanations of why the /RELAX
-// option works only at the top level.  The /ONLY option was removed entirely,
-// as it was fairly useless...taking items out of blocks but then would wind
-// up failing when it hit the closing brace on successive calls.  A more
-// coherent notion of continuable scanner state is required.
 {
     INCLUDE_PARAMS_OF_TRANSCODE;
 
@@ -3162,7 +3148,7 @@ DECLARE_NATIVE(transcode)
         | FRAME_FLAG_ALLOCATED_FEED;
     if (WANTED(next))
         flags |= SCAN_EXECUTOR_FLAG_JUST_ONCE;
-    if (WANTED(relax))
+    if (WANTED(error))
         flags |= SCAN_EXECUTOR_FLAG_KEEP_STACK_ON_FAILURE;
 
     Frame(*) subframe = Make_Frame(feed, flags);
@@ -3191,22 +3177,17 @@ DECLARE_NATIVE(transcode)
     //
     // Return a block of the results, so [1] and [[1]] in those cases.
 
-    if (WANTED(relax)) {
-        //
-        // !!! Currently the /RELAX feature is broken, waiting on a new and
-        // better implementation empowered by stackless.  Say it succeeded by
-        // returning NULL, but if there's an error it will not be intercepted.
-        //
+    if (WANTED(error)) {
         if (Is_Raised(OUT)) {
-            Reify_Isotope(OUT);
-            Move_Cell(ARG(relax), OUT);
+            Unquasify(Reify_Isotope(OUT));
+            Move_Cell(ARG(error), OUT);
         }
         else
-            Init_Nulled(ARG(relax));
+            Init_Nulled(ARG(error));
     }
     else if (Is_Raised(OUT)) {
-        Drop_Frame(SUBFRAME);  // could FAIL(VAL_CONTEXT(OUT)) instead
-        return OUT;
+        Drop_Frame(SUBFRAME);
+        return OUT;  // the raised error
     }
 
     if (WANTED(next)) {

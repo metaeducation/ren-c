@@ -73,7 +73,7 @@
 
 //=//// SCAN_EXECUTOR_KEEP_STACK_ON_FAILURE ///////////////////////////////=//
 //
-// This is used by the /RELAX option of TRANSCODE, so that when a scanning
+// This is used by the /ERROR option of TRANSCODE, so that when a scanning
 // failure happens any in-progress values that have been pushed are left.
 //
 #define SCAN_EXECUTOR_FLAG_KEEP_STACK_ON_FAILURE \

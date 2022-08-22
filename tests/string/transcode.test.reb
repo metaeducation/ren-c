@@ -8,12 +8,6 @@
 ; load a string or binary of UTF-8 in its entirety as the sole return result.
 ; The multiple-return-awareness kicks it into a more progressive mode, so that
 ; it returns partial results and can actually give a position of an error.
-;
-; However, the /RELAX option in Ren-C for error recovery is limited to top-level
-; scanning only--as if there were any depth (such as inside a BLOCK! or GROUP!)
-; then recovery wouldn't be meaningfully possible.  The hope is to transition
-; a recovery-based scan into being done via PARSE or similar, so that a concept
-; of resumable state in a parsing heirarchy could be implemented for both.
 
 ; Default is to scan a whole block's worth of values
 ([1 [2] <3>] = transcode "1 [2] <3>")
