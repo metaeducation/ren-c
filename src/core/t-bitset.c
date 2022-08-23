@@ -630,7 +630,7 @@ REBTYPE(Bitset)
         Unquotify_Dont_Expect_Meta(D_ARG(2));
 
         REBVAL *arg = D_ARG(2);
-        if (IS_NULLED_OR_BLANK(arg))
+        if (Is_Nulled(arg))
             return COPY(v);  // don't fail on read only if it would be a no-op
 
         Binary(*) bin = VAL_BITSET_ENSURE_MUTABLE(v);

@@ -1040,7 +1040,7 @@ REBTYPE(Gob)
         Value(*) value = ARG(value);
         Unquotify_Dont_Expect_Meta(value);
 
-        if (IS_NULLED_OR_BLANK(value))
+        if (Is_Nulled(value))
             return COPY(v);  // don't fail on read only if it would be a no-op
 
         if (REF(line))

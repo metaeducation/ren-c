@@ -218,7 +218,7 @@ trim: function [
         ]
         trimmed: make (type of series) collect [
             for-each [key val] series [
-                if something? :val [keep key]
+                if not blank? :val [keep key]
             ]
         ]
         for-each [key val] series [

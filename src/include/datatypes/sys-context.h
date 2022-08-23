@@ -641,7 +641,7 @@ inline static void Deep_Freeze_Context(Context(*) c) {
 
 inline static void Force_Location_Of_Error(Context(*) error, Frame(*) where) {
     ERROR_VARS *vars = ERR_VARS(error);
-    if (IS_NULLED_OR_BLANK(&vars->where))
+    if (Is_Nulled(&vars->where))
         Set_Location_Of_Error(error, where);
 }
 

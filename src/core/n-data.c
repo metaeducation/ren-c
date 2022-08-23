@@ -2508,22 +2508,3 @@ DECLARE_NATIVE(reify)
     assert(IS_QUOTED(v));
     return COPY(Unquotify(v, 1));
 }
-
-
-//
-//  something?: native [
-//
-//  "Returns FALSE if a argument isn't BLANK! or NULL"
-//
-//      return: [logic!]
-//      value [<opt> any-value!]
-//  ]
-//
-DECLARE_NATIVE(something_q)
-//
-// !!! See remarks on `nothing?` regarding `~` and isotopes.
-{
-    INCLUDE_PARAMS_OF_SOMETHING_Q;
-
-    return Init_Logic(OUT, not IS_NULLED_OR_BLANK(ARG(value)));
-}

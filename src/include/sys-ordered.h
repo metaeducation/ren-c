@@ -47,20 +47,9 @@
 
 //=//// BINDABILITY ///////////////////////////////////////////////////////=//
 //
-// Note that an "in-situ" QUOTED! (not a REB_QUOTED kind byte, but using
-// larger REB_MAX values) is bindable if the cell it's overlaid into is
-// bindable.  It has to handle binding exactly as its contained value.
-//
-// Actual REB_QUOTEDs (used for higher escape values) have to use a separate
-// cell for storage.  The REB_QUOTED type is in the range of enum values that
-// report bindability, even if it's storing a type that uses the ->extra field
-// for something else.  This is mitigated by putting nullptr in the binding
-// field of the REB_QUOTED portion of the cell, instead of mirroring the
-// ->extra field of the contained cell...so it comes off as "specified" in
-// those cases.
-//
-// Also note that the HEART_BYTE() is what is being tested--e.g. the type
-// that the cell payload and extra actually are *for*.
+// Note that the HEART_BYTE() is what is being tested--e.g. the type that the
+// cell payload and extra actually are *for*.  QUOTED! and QUASI! indicators
+// in the quote byte do not affect it.
 
 #define IS_BINDABLE_KIND(k) \
     ((k) >= REB_OBJECT)
@@ -72,7 +61,6 @@
 //=//// INERTNESS ////////////////////////////////////////////////////////=//
 //
 // All the inert types are grouped together to make this test fast.
-//
 
 inline static bool ANY_INERT_KIND(Byte k) {
     assert(k >= REB_BLANK);  // can't call on end/null
@@ -84,32 +72,6 @@ inline static bool ANY_INERT_KIND(Byte k) {
 
 #define ANY_EVALUATIVE(v) \
     (not ANY_INERT_KIND(VAL_TYPE(v)))
-
-
-//=//// FAST END+VOID+NULL TESTING ////////////////////////////////////////=//
-//
-// There are many cases where end/void/null all have special handling or need
-// to raise errors.  Rather than saying:
-//
-//     if (Is_End(v)) { fail ("end"); }
-//     if (Is_Void(v)) { fail ("void"); }
-//     if (Is_Nulled(v)) { fail ("null"); }
-//     CommonCaseStuff(v);
-//
-// This can be collapsed down to one test in the common case, with:
-//
-//     if (IS_NULLED_OR_VOID_OR_END(v)) {
-//        if (Is_End(v)) { fail ("end"); }
-//        if (Is_Void(v)) { fail {"void"); }
-//        fail ("null");
-//     }
-//     CommonCaseStuff(v);
-
-inline static bool IS_NULLED_OR_BLANK_KIND(Byte k)
-    { return k == REB_NULL or k == REB_BLANK; }
-
-#define IS_NULLED_OR_BLANK(v) \
-    IS_NULLED_OR_BLANK_KIND(VAL_TYPE(v))
 
 
 //=//// TYPE CATEGORIES ///////////////////////////////////////////////////=//

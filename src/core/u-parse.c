@@ -1008,7 +1008,7 @@ static REBIXO To_Thru_Non_Block_Rule(
     enum Reb_Kind kind = VAL_TYPE(rule);
     assert(kind != REB_BLOCK);
 
-    if (IS_NULLED_OR_BLANK_KIND(kind))
+    if (kind == REB_BLANK)
         return P_POS;  // make it a no-op
 
     if (kind == REB_LOGIC)  // no-op if true, match failure if false
