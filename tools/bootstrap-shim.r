@@ -405,6 +405,14 @@ print: lib/func [value <local> pos] [
     lib/print value
 ]
 
+; Historically WRITE did platform line endings (CRLF) when the string had no
+; CR in it on Windows.  Ren-C's philosophy is on eliminating CRLF.
+;
+write: adapt :lib/write [
+    if lines [fail ["WRITE/LINES defective in bootstrap EXE (CR in files)"]]
+    if text? data [data: to binary! data]
+]
+
 ; PARSE is being changed to a more powerful interface that returns synthesized
 ; parse products.  So just testing for matching or not is done with PARSE?,
 ; to avoid conflating successful-but-null-bearing-parses with failure.
