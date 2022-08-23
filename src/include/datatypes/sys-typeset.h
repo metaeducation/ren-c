@@ -450,7 +450,7 @@ inline static bool Is_Typeset_Empty(noquote(Cell(const*)) param) {
     assert(CELL_HEART(param) == REB_TYPESET);
     REBU64 bits = VAL_TYPESET_LOW_BITS(param);
     bits |= cast(REBU64, VAL_TYPESET_HIGH_BITS(param)) << 32;
-    return (bits & TS_OPT_VALUE) == 0;  // e.g. `[/refine]`
+    return bits == 0;  // e.g. `[/refine]`
 }
 
 inline static bool Is_Blackhole(Cell(const*) v);  // forward decl

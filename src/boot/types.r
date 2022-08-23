@@ -173,7 +173,7 @@ event!      "user interface event"  ; %extensions/event/README.md
 ; category.
 ;
 url!        "uniform resource locator or identifier"
-            []
+            [any-utf8!]
             [url         string  string]
 
 
@@ -186,26 +186,26 @@ binary!     "series of bytes"
 <ANY-STRING!>  ; (order does not currently matter)
 
     text!       "text string series of characters"
-                [any-series!]
+                [any-series! any-utf8!]
                 [string      *       *]
 
     file!       "file name or path"
-                [any-series!]
+                [any-series! any-utf8!]
                 [string      *       *]
 
     email!      "email address"
-                [any-series!]
+                [any-series! any-utf8!]
                 [string      *       *]
 
     tag!        "markup string (HTML or XML)"
-                [any-series!]
+                [any-series! any-utf8!]
                 [string      *       *]
 
 </ANY-STRING!>  ; ISSUE! is "string-like" but not an ANY-STRING!
 
 
 issue!      "immutable codepoint or codepoint sequence"
-            []  ; !!! sequence of INTEGER?
+            [any-utf8!]
             [issue       *       *]
 
 
@@ -264,7 +264,7 @@ varargs!    "evaluator position for variable numbers of arguments"
                 [sequence    *       *]
 
     the-word!   "inert form of word"
-                [any-word!]
+                [any-word! any-utf8!]
                 [word        *       +]
 
 </ANY-THE-VALUE!>
@@ -293,7 +293,7 @@ varargs!    "evaluator position for variable numbers of arguments"
                 [sequence    *       *]
 
     word!       "evaluates a variable or action"
-                [any-word!]
+                [any-word! any-utf8!]
                 [word        *       +]
 
 </ANY-PLAIN-VALUE!>  ; contiguous with ANY-SET below matters
@@ -318,7 +318,7 @@ varargs!    "evaluator position for variable numbers of arguments"
                 [sequence    *       *]
 
     set-word!   "definition of a word's value"
-                [any-word!]
+                [any-word! any-utf8!]
                 [word        *       +]
 
 </ANY-SET-VALUE!>  ; (contiguous with ANY-GET below matters)
@@ -343,7 +343,7 @@ varargs!    "evaluator position for variable numbers of arguments"
                 [sequence    *       *]
 
     get-word!   "the value of a word (variable)"
-                [any-word!]
+                [any-word! any-utf8!]
                 [word        *       +]
 
 </ANY-GET-VALUE!>  ; (contiguous with ANY-META below matters)
@@ -368,7 +368,7 @@ varargs!    "evaluator position for variable numbers of arguments"
                 [sequence    *       *]
 
     meta-word!  "word that quotes its product or removes isotope status"
-                [any-word!]
+                [any-word! any-utf8!]
                 [word        *       +]
 
 </ANY-META-VALUE!>

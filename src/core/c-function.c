@@ -500,7 +500,7 @@ void Push_Paramlist_Quads_May_Fail(
             Init_Param(
                 param,
                 FLAG_PARAM_CLASS_BYTE(pclass),
-                TS_OPT_VALUE  // By default <opt> ANY-VALUE! is legal
+                TS_VALUE | FLAGIT_KIND(REB_NULL)  // By default NULL is legal
             );
 
             // We say they are vanishable by default, but clear this flag if
@@ -580,7 +580,7 @@ Array(*) Pop_Paramlist_With_Meta_May_Fail(
                 param,
                 FLAG_PARAM_CLASS_BYTE(PARAM_CLASS_RETURN)
                     | PARAM_FLAG_VANISHABLE,  // allows invisibility
-                TS_OPT_VALUE
+                TS_VALUE | FLAGIT_KIND(REB_NULL)  // all legal return types
             );
 
             Init_Nulled(TYPES_SLOT(TOP_INDEX));

@@ -7,7 +7,7 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2018 Ren-C Open Source Contributors
+// Copyright 2012-2022 Ren-C Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -26,21 +26,21 @@
 // detail--and the specific integer values of things like REB_BLOCK should
 // never be exposed through the API.
 //
-// These macros embed specific knowledge of the type ordering.  Basically any
-// changes to %types.r mean having to take into account fixups here.
+// Many macros are generated automatically to do the range-based checks for
+// types, but not everything is covered.  These are extra functions which
+// embed specific knowledge of the type ordering.
 //
-// !!! Review how these might be auto-generated from the table.
+//=//// NOTES /////////////////////////////////////////////////////////////=//
 //
-// !!! There was a historical linkage between the order of types and the
-// TOKEN_XXX values.  That might be interesting to exploit for an optimization
-// in the future...see notes on the tokens regarding this.
+// * Some of the tests are bitflag based.  This makes Rebol require a 64-bit
+//   integer, so tricks that would not require it for building would be good.
+//   (For instance, if all the types being tested fit in a 32-bit range.)
 //
+// * There was a historical linkage between the order of types and the
+//   TOKEN_XXX values.  That might be interesting to exploit for an
+//   optimization in the future...see notes on the tokens regarding this.
 
 
-// Some of the tests are bitflag based.  This makes Rebol require a 64-bit
-// integer, so tricks that would not require it for building would be good.
-// (For instance, if all the types being tested fit in a 32-bit range.)
-//
 #define FLAGIT_KIND(t) \
     (cast(uint_fast64_t, 1) << (t)) // makes a 64-bit bitflag
 
@@ -74,168 +74,11 @@ inline static bool ANY_INERT_KIND(Byte k) {
     (not ANY_INERT_KIND(VAL_TYPE(v)))
 
 
-//=//// TYPE CATEGORIES ///////////////////////////////////////////////////=//
-
-#define ANY_VALUE(v) \
-    (VAL_TYPE(v) != REB_NULL)
-
-inline static bool ANY_SCALAR_KIND(Byte k)  // !!! Should use TS_SCALAR?
-    { return k == REB_TUPLE or (k >= REB_LOGIC and k <= REB_PAIR); }
-
-#define ANY_SCALAR(v) \
-    ANY_SCALAR_KIND(VAL_TYPE(v))
-
-inline static bool ANY_STRING_KIND(Byte k)
-    { return k >= REB_TEXT and k <= REB_TAG; }
-
-#define ANY_STRING(v) \
-    ANY_STRING_KIND(VAL_TYPE(v))
-
-#define ANY_BINSTR_KIND_EVIL_MACRO \
-    (k >= REB_BINARY and k <= REB_TAG)
-
-
-inline static bool ANY_BINSTR_KIND(Byte k)
-    { return ANY_BINSTR_KIND_EVIL_MACRO; }
-
-#define ANY_BINSTR(v) \
-    ANY_BINSTR_KIND(VAL_TYPE(v))
-
-
-#define ANY_ARRAY_OR_SEQUENCE_KIND_EVIL_MACRO \
-    (did (FLAGIT_KIND(k) & (TS_ARRAY | TS_SEQUENCE)))
-
-inline static bool ANY_ARRAY_OR_SEQUENCE_KIND(Byte k)
-    { return ANY_ARRAY_OR_SEQUENCE_KIND_EVIL_MACRO; }
-
-#define ANY_ARRAY_OR_SEQUENCE(v) \
-    ANY_ARRAY_OR_SEQUENCE_KIND(VAL_TYPE(v))
-
-
-#define ANY_ARRAY_KIND_EVIL_MACRO \
-    (did (FLAGIT_KIND(k) & TS_ARRAY))
-
-inline static bool ANY_ARRAY_KIND(Byte k)
-    { return ANY_ARRAY_KIND_EVIL_MACRO; }
-
-#define ANY_ARRAY(v) \
-    ANY_ARRAY_KIND(VAL_TYPE(v))
-
-
-#define ANY_SEQUENCE_KIND_EVIL_MACRO \
-    (did (FLAGIT_KIND(k) & TS_SEQUENCE))
-
-inline static bool ANY_SEQUENCE_KIND(Byte k)
-    { return ANY_SEQUENCE_KIND_EVIL_MACRO; }
-
-#define ANY_SEQUENCE(v) \
-    ANY_SEQUENCE_KIND(VAL_TYPE(v))
-
-
-#define ANY_SERIES_KIND_EVIL_MACRO \
-    (k < 64 and did (FLAGIT_KIND(k) & TS_SERIES))
-
-inline static bool ANY_SERIES_KIND(Byte k)
-    { return ANY_SERIES_KIND_EVIL_MACRO; }
-
-#define ANY_SERIES(v) \
-    ANY_SERIES_KIND(VAL_TYPE(v))
-
-#define ANY_WORD_KIND_EVIL_MACRO \
-    (k < 64 and did (FLAGIT_KIND(k) & TS_WORD))
-
-inline static bool ANY_WORD_KIND(Byte k)
-    { return ANY_WORD_KIND_EVIL_MACRO; }
-
-#define ANY_WORD(v) \
-    ANY_WORD_KIND(VAL_TYPE(v))
-
-inline static bool ANY_PLAIN_GET_SET_WORD_KIND(Byte k)
-    { return k == REB_WORD or k == REB_GET_WORD or k == REB_SET_WORD; }
-
-#define ANY_PLAIN_GET_SET_WORD(v) \
-    ANY_PLAIN_GET_SET_WORD_KIND(VAL_TYPE(v))
-
-
-#define ANY_PATH_KIND_EVIL_MACRO \
-    (k < 64 and did (FLAGIT_KIND(k) & TS_PATH))
-
-inline static bool ANY_PATH_KIND(Byte k)
-    { return ANY_PATH_KIND_EVIL_MACRO; }
-
-#define ANY_PATH(v) \
-    ANY_PATH_KIND(VAL_TYPE(v))
-
-
-#define ANY_TUPLE_KIND_EVIL_MACRO \
-    (k < 64 and did (FLAGIT_KIND(k) & TS_TUPLE))
-
-inline static bool ANY_TUPLE_KIND(Byte k)
-    { return ANY_TUPLE_KIND_EVIL_MACRO; }
-
-#define ANY_TUPLE(v) \
-    ANY_TUPLE_KIND(VAL_TYPE(v))
-
-
-// Used by scanner; it figures out what kind of path something would be, then
-// switches it to a tuple if necessary.
-//
-inline static enum Reb_Kind TUPLIFY_ANY_PATH_KIND(Byte k) {
-    assert(ANY_PATH_KIND(k));
-    return cast(enum Reb_Kind, k + 1);
-}
-
-
-inline static bool ANY_BLOCK_KIND(Byte k)
-    { return k == REB_BLOCK or k == REB_GET_BLOCK
-        or k == REB_SET_BLOCK or k == REB_META_BLOCK or k == REB_THE_BLOCK; }
-
-#define ANY_BLOCK(v) \
-    ANY_BLOCK_KIND(VAL_TYPE(v))
-
-
-inline static bool ANY_GROUP_KIND(Byte k)
-    { return k == REB_GROUP or k == REB_GET_GROUP
-        or k == REB_SET_GROUP or k == REB_META_GROUP or k == REB_THE_GROUP; }
-
-#define ANY_GROUP(v) \
-    ANY_GROUP_KIND(VAL_TYPE(v))
-
-
-inline static bool ANY_CONTEXT_KIND(Byte k)
-    { return k >= REB_OBJECT and k <= REB_PORT; }
-
-#define ANY_CONTEXT(v) \
-    ANY_CONTEXT_KIND(VAL_TYPE(v))
-
-
-inline static bool ANY_NUMBER_KIND(Byte k)
-    { return k == REB_INTEGER or k == REB_DECIMAL or k == REB_PERCENT; }
-
-#define ANY_NUMBER(v) \
-    ANY_NUMBER_KIND(VAL_TYPE(v))
-
-
 //=//// XXX <=> SET-XXX! <=> GET-XXX! TRANSFORMATION //////////////////////=//
 //
 // See reasoning in %types.r on why ANY-INERT! optimization is favored over
 // putting blocks/paths/words/tuples/groups together.  It means ANY_ARRAY() is
 // slower but these tests can be faster.
-
-inline static bool ANY_THE_KIND(Byte k)
-  { return k >= REB_THE_BLOCK and k <= REB_THE_WORD; }
-
-inline static bool ANY_PLAIN_KIND(Byte k)
-  { return k >= REB_BLOCK and k <= REB_WORD; }
-
-inline static bool ANY_META_KIND(Byte k)
-  { return k >= REB_META_BLOCK and k <= REB_META_WORD; }
-
-inline static bool ANY_SET_KIND(Byte k)
-  { return k >= REB_SET_BLOCK and k <= REB_SET_WORD; }
-
-inline static bool ANY_GET_KIND(Byte k)
-  { return k >= REB_GET_BLOCK and k <= REB_GET_WORD; }
 
 inline static enum Reb_Kind PLAINIFY_ANY_GET_KIND(Byte k) {
     assert(ANY_GET_KIND(k));
@@ -270,12 +113,6 @@ inline static enum Reb_Kind METAFY_ANY_PLAIN_KIND(Byte k) {
 inline static enum Reb_Kind THEIFY_ANY_PLAIN_KIND(Byte k) {
     assert(ANY_PLAIN_KIND(k));
     return cast(enum Reb_Kind, k - 5);
-}
-
-
-inline static bool IS_ANY_SIGIL_KIND(Byte k) {
-    assert(k < REB_QUOTED);  // can't do `@''x`
-    return k >= REB_SET_BLOCK and k <= REB_META_WORD;
 }
 
 
@@ -328,14 +165,3 @@ inline static enum Reb_Kind BLOCKIFY_KIND(Byte k) {
     assert(ANY_WORD_KIND(k));
     return cast(enum Reb_Kind, k - 3);
 }
-
-
-// If a type can be used with the VAL_UTF8_XXX accessors
-
-inline static bool ANY_UTF8_KIND(Byte k) {
-    return ANY_STRING_KIND(k) or ANY_WORD_KIND(k)
-        or k == REB_ISSUE or k == REB_URL;
-}
-
-#define ANY_UTF8(v) \
-    ANY_UTF8_KIND(VAL_TYPE(v))

@@ -271,8 +271,17 @@ for-each-typerange: func [
                 starting: not (#"/" = first name*)
                 if not starting [take name*]
                 any-name!*: to word! name*
-                assert [#"!" = take/last name*]
-                assert ["any-" = take/part name* 4]
+
+                ; The name ANY-META-VALUE! is used to produce functions like
+                ; ANY_META() in the C code.  Extract relevant name part.
+                ;
+                parse2 name* [
+                    remove "any-"
+                    [[to "-value" remove "-value"] | to "!"]
+                    remove "!"
+                ] else [
+                    fail "Bad type category name"
+                ]
 
                 if starting [
                     append stack spread reduce [heart* any-name!*]
@@ -418,47 +427,55 @@ value-flagnots: compose [
 ]
 
 e-types/emit 'value-flagnots {
-    /*
-     * TYPESET DEFINITIONS (e.g. TS_ARRAY or TS_STRING)
-     */
-
-    /*
-     * Typeset for ANY-VALUE!
-     */
     #define TS_VALUE \
         ($<Delimit "&~" Value-Flagnots>)
 
-    /*
-     * Typeset for [<OPT> ANY-VALUE!] (similar to TS_VALUE but accept NULL)
-     */
-    #define TS_OPT_VALUE \
-        (TS_VALUE | FLAGIT_KIND(REB_NULL))
-
+    #define ANY_VALUE(v) \
+        (VAL_TYPE(v) != REB_NULL)
 }
 
 typeset-sets: copy []
 
+add-sym 'any-value!  ; starts the typesets, not mentioned in %types.r
+
 for-each-datatype t [
     for-each ts-name t/typesets [
-        spot: any [
-            select typeset-sets ts-name
-            first back insert tail typeset-sets spread reduce [
-                ts-name copy []
-            ]
+        if spot: select typeset-sets ts-name [
+            append spot t/name  ; not the first time we've seen this typeset
+            continue
         ]
-        append spot t/name
+
+        elide add-sym as word! unspaced ["any-" ts-name "!"]
+        append typeset-sets ts-name
+        append typeset-sets reduce [t/name]
+
+        e-types/emit newline
+        e-types/emit 'ts-name {
+            #define ANY_${TS-NAME}_KIND(k) \
+               (did (FLAGIT_KIND(k) & TS_${TS-NAME}))
+
+            #define ANY_${TS-NAME}(v) \
+                ANY_${TS-NAME}_KIND(VAL_TYPE(v))
+        }
     ]
 ]
 
 for-each-typerange tr [
+    add-sym tr/any-name!
+
     append typeset-sets spread reduce [tr/name tr/types]
+
+    e-types/emit newline
+    e-types/emit 'tr {
+        inline static bool ANY_${TR/NAME}_KIND(Byte k)
+          { return k >= $<TR/START> and k < $<TR/END>; }
+
+        #define ANY_${TR/NAME}(v) \
+            ANY_${TR/NAME}_KIND(VAL_TYPE(v))
+    }
 ]
 
-add-sym 'any-value!  ; starts the typesets, not mentioned in %types.r
-
 for-each [ts-name types] typeset-sets [
-    add-sym as word! unspaced ["any-" ts-name "!"]
-
     flagits: collect [
         for-each t-name types [
             keep cscape/with {FLAGIT_KIND(REB_${T-NAME})} 't-name

@@ -1001,7 +1001,7 @@ inline static const REBSER *VAL_SERIES(noquote(Cell(const*)) v) {
   #if !defined(NDEBUG)
     enum Reb_Kind k = CELL_HEART(v);
     assert(
-        ANY_SERIES_KIND_EVIL_MACRO
+        ANY_SERIES_KIND(k)
         or k == REB_ISSUE or k == REB_URL
         or ANY_ARRAYLIKE(v)
     );
@@ -1037,7 +1037,7 @@ inline static const REBSER *VAL_SERIES(noquote(Cell(const*)) v) {
     inline static REBIDX VAL_INDEX_UNBOUNDED(noquote(Cell(const*)) v) {
         enum Reb_Kind k = CELL_HEART(v);  // only const access if heart!
         assert(
-            ANY_SERIES_KIND_EVIL_MACRO
+            ANY_SERIES_KIND(k)
             or k == REB_ISSUE or k == REB_URL
             or ANY_ARRAYLIKE(v)
         );
@@ -1047,7 +1047,7 @@ inline static const REBSER *VAL_SERIES(noquote(Cell(const*)) v) {
     inline static REBIDX & VAL_INDEX_UNBOUNDED(Cell(*) v) {
         enum Reb_Kind k = VAL_TYPE(v);  // mutable allowed if nonquoted
         assert(
-            ANY_SERIES_KIND_EVIL_MACRO
+            ANY_SERIES_KIND(k)
             or k == REB_ISSUE or k == REB_URL
             or ANY_ARRAYLIKE(v)
         );
@@ -1066,7 +1066,7 @@ inline static REBLEN VAL_LEN_HEAD(noquote(Cell(const*)) v);  // forward decl
 inline static REBLEN VAL_INDEX(noquote(Cell(const*)) v) {
     enum Reb_Kind k = CELL_HEART(v);  // only const access if heart!
     assert(
-        ANY_SERIES_KIND_EVIL_MACRO
+        ANY_SERIES_KIND(k)
         or k == REB_ISSUE or k == REB_URL
         or ANY_ARRAYLIKE(v)
     );

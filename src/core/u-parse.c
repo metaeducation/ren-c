@@ -829,7 +829,7 @@ static REBIXO To_Thru_Block_Rule(
                 fail ("Use TUPLE! a.b.c instead of PATH! a/b/c");
 
             // Try to match it:
-            if (ANY_ARRAY_OR_SEQUENCE_KIND(P_TYPE)) {
+            if (ANY_ARRAY_KIND(P_TYPE) or ANY_SEQUENCE_KIND(P_TYPE)) {
                 if (ANY_ARRAY(rule))
                     fail (Error_Parse_Rule());
 
@@ -1445,7 +1445,7 @@ DECLARE_NATIVE(subparse)
 
     //=//// ANY-WORD!/ANY-PATH! PROCESSING ////////////////////////////////=//
 
-    if (ANY_PLAIN_GET_SET_WORD(rule)) {
+    if (IS_WORD(rule) or IS_GET_WORD(rule) or IS_SET_WORD(rule)) {
         SYMID cmd = VAL_CMD(rule);
         if (cmd != SYM_0) {
             if (not IS_WORD(rule)) {

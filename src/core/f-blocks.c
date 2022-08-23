@@ -327,7 +327,7 @@ Array(*) Copy_Rerelativized_Array_Deep_Managed(
 
         Copy_Cell_Header(dest, src);
 
-        if (ANY_ARRAY_OR_SEQUENCE(src)) {
+        if (ANY_ARRAYLIKE(src)) {
             INIT_VAL_NODE1(
                 dest,
                 Copy_Rerelativized_Array_Deep_Managed(

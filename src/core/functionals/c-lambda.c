@@ -224,7 +224,7 @@ DECLARE_NATIVE(lambda)
             pclass | param_flags,
             (param_flags & PARAM_FLAG_REFINEMENT)
                 ? 0  // lambda has no types, so only parameterless refinements
-                : TS_OPT_VALUE
+                : TS_VALUE | FLAGIT_KIND(REB_NULL)
         );
 
         Init_Nulled(PUSH());  // types (not supported)
