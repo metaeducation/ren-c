@@ -45,25 +45,6 @@
     (cast(uint_fast64_t, 1) << (t)) // makes a 64-bit bitflag
 
 
-//=//// QUOTED ////////////////////////////////////////////////////////////=//
-//
-// Testing for QUOTED! is special, as it is stored in a different byte.  But
-// it still gets a type in the enum.
-//
-#define IS_QUOTED(v) \
-    (VAL_TYPE(v) == REB_QUOTED)  // Note: QUOTE_BYTE() of 255 means isotope
-
-
-//=//// QUASI /////////////////////////////////////////////////////////////=//
-//
-// "Quasi" values look like ~xxx~.  These can also be quoted (but once they
-// are, they will report their main type as being QUOTED!)  This is why the
-// quote byte adds 2 for each quote level, not 1--to multiplex the "quasi bit"
-//
-#define IS_QUASI(v) \
-    (VAL_TYPE(v) == REB_QUASI)  // runs through other checks in debug build
-
-
 //=//// BINDABILITY ///////////////////////////////////////////////////////=//
 //
 // Note that an "in-situ" QUOTED! (not a REB_QUOTED kind byte, but using

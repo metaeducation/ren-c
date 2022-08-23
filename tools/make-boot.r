@@ -171,7 +171,7 @@ add-sym: function [
     <with> sym-n
 ][
     if pos: find syms-words as text! word [
-        if exists [return index of pos]
+        if try exists [return index of pos]
         fail ["Duplicate word specified" word]
     ]
 
@@ -189,30 +189,141 @@ add-sym: function [
 
 type-table: load %types.r
 
+for-each-datatype: func [
+    {Iterate type table by creating an object for each row}
+
+    'var "Word to set each time to the row made into an object record"
+        [word!]
+    body "Block to evaluate each time"
+        [block!]
+    <local>
+    name* description* typesets* class* make* mold* heart* completed* running*
+][
+    heart*: 0
+    parse2 type-table [some [not end
+        opt some tag!  ; <TYPE!> or </TYPE!> used by FOR-EACH-TYPERANGE
+
+        set name* word!
+        set description* text!
+        [set typesets* block! | (typesets*: [])]
+        [and block! into [
+            set class* [word! | '- | '? | quote 0]
+            set make* [word! | '* | '+ | '- | '? | quote 0]
+            set mold* [word! | '+ | '- | '? | quote 0]
+        ] (
+            name*: to text! name*
+            set var make object! [
+                name!: if #"!" = last name* [to word! name*]
+                name: (
+                    if #"!" = last name* [take/last name*]
+                    name*
+                )
+                heart: ensure integer! heart*
+                description: ensure text! description*
+                typesets: map-each any-name! typesets* [
+                    any-name!: to text! any-name!
+                    assert [#"!" = take/last any-name!]
+                    assert ["any-" = take/part any-name! 4]
+                    any-name!
+                ]
+                class: class*
+                make: make*
+                mold: mold*
+            ]
+            completed*: false
+            running*: false
+            while [true] [  ; must be in loop for BREAK or CONTINUE
+                if running* [  ; must have had a CONTINUE
+                    completed*: true
+                    break
+                ]
+                running*: true
+                do body
+                completed*: true
+                break
+            ]
+            if not completed* [return null]  ; must have asked to BREAK
+        )]
+        (heart*: heart* + 1)
+    ]] else [
+        fail "Couldn't fully parse %types.r"
+    ]
+]
+
+for-each-typerange: func [
+    {Iterate type table and create object for each <TYPE!>...</TYPE!> range}
+
+    'var "Word to set each time to the typerange as an object record"
+        [word!]
+    body "Block to evaluate each time"
+        [block!]
+    <local> name* heart* any-name!* stack types starting
+][
+    stack: copy []
+    types*: _
+
+    heart*: 0
+    while [true] [  ; need to be in loop for BREAK to work
+        parse2 type-table [some [
+            opt some [set name* tag! (
+                name*: to text! name*
+                lowercase name*
+                starting: not (#"/" = first name*)
+                if not starting [take name*]
+                any-name!*: to word! name*
+                assert [#"!" = take/last name*]
+                assert ["any-" = take/part name* 4]
+
+                if starting [
+                    append stack spread reduce [heart* any-name!*]
+                    types*: copy []
+                ] else [
+                    assert [any-name!* = take/last stack]
+                    set var make object! [
+                        name: name*
+                        any-name!: any-name!*
+                        start: ensure integer! take/last stack
+                        end: heart*
+                        types: types*
+                    ]
+                    types*: _
+                    do body  ; no support for BREAK/CONTINUE in bootstrap
+                ]
+            )]
+            [set name* word! (if types* [
+                name*: to text! name*
+                assert [#"!" = take/last name*]
+                append types* to text! name*
+            ])]
+            text!
+            block!
+            block!
+            (heart*: heart* + 1)
+        ]] else [
+            fail "Couldn't fully parse %types.r"
+        ]
+        assert [empty? stack]
+        break  ; doesn't return last value (bootstrap)
+    ]
+]
+
 e-types: make-emitter "Datatype Definitions" (
     join prep-dir %include/tmp-kinds.h
 )
 
-n: 0
-
 rebs: collect [
-    for-each-record t type-table [
-        if is-real-type: word? t/name [
-            ensure word! t/class
+    for-each-datatype t [
+        if t/heart = 0 [continue]
+
+        assert [sym-n == t/heart]  ; SYM_XXX should equal REB_XXX value
+
+        if not set? 't/name! [
+            add-sym as word! t/name
         ] else [
-            ensure issue! t/name
-            assert [t/class = 0]  ; e.g. REB_NULL
-            t/name: as text! t/name  ; TO TEXT! of ISSUE! has # in bootstrap
+            add-sym t/name!
         ]
 
-        if n <> 0 [
-            assert [sym-n == n]  ; SYM_XXX should equal REB_XXX value
-            add-sym to-word unspaced [t/name (if is-real-type ["!"])]
-        ]
-
-        keep cscape/with {REB_${T/NAME} = $<n>} [n t]
-
-        n: n + 1
+        keep cscape/with {REB_${T/NAME} = $<T/HEART>} [t]
     ]
 ]
 
@@ -233,6 +344,7 @@ e-types/emit 'rebs {
 
         /*** TYPES AND INTERNALS GENERATED FROM %TYPES.R ***/
 
+        REB_VOID = 0,
         $[Rebs],
         REB_MAX,  /* one past valid types */
 
@@ -252,6 +364,7 @@ e-types/emit 'rebs {
     /*
     * Aliases for REB_0 to clarify which purpose it is used for.
     */
+    #define REB_0 REB_VOID
     #define REB_0_END REB_0
     #define REB_0_VOID REB_0
     #define REB_0_FREE REB_0
@@ -273,35 +386,27 @@ e-types/emit {
 e-types/emit newline
 
 boot-types: copy []  ; includes internal types like REB_NULL (but not END)
-n: 0
 
-for-each-record t type-table [
-    if n != 0 [
-        append boot-types either issue? t/name [
-            to-word t/name
-        ][
-            to-word unspaced [form t/name "!"]
-        ]
+for-each-datatype t [
+    if t/heart = 0 [continue]
+
+    if unset? 't/name! [  ; internal type
+        append boot-types as word! t/name
+        continue
     ]
 
-    all [
-        not issue? t/name  ; internal type
-        t/name != 'quoted  ; see IS_QUOTED(), handled specially
-    ] then [
-        e-types/emit 't {
-            #define IS_${T/NAME}(v) \
-                (VAL_TYPE(v) == REB_${T/NAME})  /* $<n> */
-        }
-        e-types/emit newline
-    ]
+    append boot-types t/name!
 
-    n: n + 1
+    e-types/emit 't {
+        #define IS_${T/NAME}(v) \
+            (VAL_TYPE(v) == REB_${T/NAME})  /* $<T/HEART> */
+    }
+    e-types/emit newline
 ]
 
 nontypes: collect [
-    for-each-record t type-table [
-        if issue? t/name [
-            nontype: mold t/name
+    for-each-datatype t [
+        if unset? 't/name! [
             keep cscape/with {FLAGIT_KIND(REB_${AS TEXT! T/NAME})} 't
         ]
     ]
@@ -333,28 +438,34 @@ e-types/emit 'value-flagnots {
 
 typeset-sets: copy []
 
-for-each-record t type-table [
-    for-each ts t/typesets [
+for-each-datatype t [
+    for-each ts-name t/typesets [
         spot: any [
-            select typeset-sets ts
-            first back insert tail typeset-sets spread reduce [ts copy []]
+            select typeset-sets ts-name
+            first back insert tail typeset-sets spread reduce [
+                ts-name copy []
+            ]
         ]
         append spot t/name
     ]
 ]
 
+for-each-typerange tr [
+    append typeset-sets spread reduce [tr/name tr/types]
+]
+
 add-sym 'any-value!  ; starts the typesets, not mentioned in %types.r
 
-for-each [ts types] typeset-sets [
-    add-sym to-word unspaced ["any-" ts "!"]
+for-each [ts-name types] typeset-sets [
+    add-sym as word! unspaced ["any-" ts-name "!"]
 
     flagits: collect [
-        for-each t types [
-            keep cscape/with {FLAGIT_KIND(REB_${T})} 't
+        for-each t-name types [
+            keep cscape/with {FLAGIT_KIND(REB_${T-NAME})} 't-name
         ]
     ]
-    e-types/emit [flagits ts] {
-        #define TS_${TS} ($<Delimit "|" Flagits>)
+    e-types/emit [flagits ts-name] {
+        #define TS_${TS-NAME} ($<Delimit "|" Flagits>)
     }  ; !!! TS_ANY_XXX is wordy, considering TS_XXX denotes a typeset
 ]
 
@@ -415,13 +526,10 @@ hookname: enfixed func [
     ])]
 ]
 
-n: 0
 hook-list: collect [
-    for-each-record t type-table [
-        name: either issue? t/name [as text! t/name] [unspaced [t/name "!"]]
-
+    for-each-datatype t [
         keep cscape/with {
-            {  /* $<NAME> = $<n> */
+            {  /* $<T/NAME> = $<T/HEART> */
                 cast(CFUNC*, ${"T_" Hookname T 'Class}),  /* generic */
                 cast(CFUNC*, ${"CT_" Hookname T 'Class}),  /* compare */
                 cast(CFUNC*, ${"MAKE_" Hookname T 'Make}),  /* make */
@@ -429,8 +537,6 @@ hook-list: collect [
                 cast(CFUNC*, ${"MF_" Hookname T 'Mold}),  /* mold */
                 nullptr
             }} [t]
-
-        n: n + 1
     ]
 ]
 
@@ -827,7 +933,7 @@ e-bootblock/emit 'nats {
 ; Build typespecs block (in same order as datatypes table)
 
 boot-typespecs: collect [
-    for-each-record t type-table [
+    for-each-datatype t [
         keep reduce [t/description]
     ]
 ]
@@ -948,6 +1054,6 @@ e-symbols/emit 'syms-cscape {
     #define ALL_SYMS_MAX $<sym-n>
 }
 
-print [n "words + generics + errors"]
+print [sym-n "words + generics + errors"]
 
 e-symbols/write-emitted

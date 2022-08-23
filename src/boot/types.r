@@ -3,7 +3,7 @@ REBOL [
     Title: "Rebol datatypes and their related attributes"
     Rights: {
         Copyright 2012 REBOL Technologies
-        Copyright 2012-2019 Ren-C Open Source Contributors
+        Copyright 2012-2022 Ren-C Open Source Contributors
         REBOL is a trademark of REBOL Technologies
     }
     License: {
@@ -14,6 +14,8 @@ REBOL [
         This table is used to make C defines and intialization tables.
 
         !!! REVIEW IMPACT ON %sys-ordered.h ANY TIME YOU CHANGE THE ORDER !!!
+        Special ordering is used to make tests on ranges of types particularly
+        fast in common cases.  Pay close attention.
 
         name        - name of datatype (generates words)
         description - short statement of type's purpose (used by HELP)
@@ -37,11 +39,21 @@ REBOL [
         Note that if there is `somename` in the class column, that means you
         will find the ACTION! dispatch for that type in `REBTYPE(Somename)`.
     }
+    Notes: {
+      * There's no particularly fast test for ANY_ARRAY(), ANY_PATH(), or
+        ANY_WORD(), as they're less common than testing for ANY_INERT().
+
+      * ANY-SCALAR! is weird at this point, because TUPLE! may or may not be
+        fully numeric (1.2.3 vs alpha.beta.gamma).  What the typeset was for
+        was defining input types things like ADD would accept, and now that's
+        kind of gotten fuzzy.
+    }
 ]
 
 
-[name       description
-            class       make    mold    typesets]  ; makes TS_XXX
+; name      "description"
+;           [typesets]  ; makes TS_XXX
+;           [class       make    mold]
 
 ; The special 0 state of the REB_XXX enumeration was once used as a marker to
 ; indicate array termination (parallel to how '\0' terminates strings).  But
@@ -59,8 +71,9 @@ REBOL [
 ; always initialized to 0, calloc() and memset may be faster with 0.)  The
 ; alias REB_0_FREE is given to use when this is the intent for REB_0.
 
-#0          "!!! `VOID!` and `FREE!` aren't datatypes, not exposed to the user"
-            0           0       0       []
+void        "!!! `VOID!` and `FREE!` aren't datatypes, not exposed to the user"
+            []
+            [0           0       0]
 
 ; REB_NULL takes value 1, but it being 1 is less intrinsic.  It is also not
 ; a "type"...but it is falsey, hence it has to be before LOGIC! in the table.
@@ -69,69 +82,73 @@ REBOL [
 ; functions are given names like `Init_Nulled` or `Is_Nulled()`, but the
 ; type itself is simply called REB_NULL...which is distinct enough.
 
-#null       "!!! `NULL!` isn't a datatype, `null` can't be stored in blocks"
-            0           0       +       []
+null        "!!! `NULL!` isn't a datatype, `null` can't be stored in blocks"
+            []
+            [0           0       +]
 
-blank       "placeholder unit type which acts as conditionally false"
-            blank       -       +       [unit]  ; allow as `branch`?
+blank!      "placeholder unit type which acts as conditionally false"
+            [any-unit!]  ; allow as `branch`?
+            [blank       -       +]
 
-; <ANY-SCALAR>
-
-logic       "boolean true or false"
-            logic       +       +       []
+logic!      "boolean true or false"
+            []
+            [logic       +       +]
 
 ; ============================================================================
 ; BEGIN TYPES THAT ARE ALWAYS "TRUTHY" - Is_Truthy()/IS_CONDITIONALLY_TRUE()
 ; ============================================================================
 
-#bytes      "!!! `BYTES!` isn't a datatype, `heart` type  for optimizations"
-            0           0       0       []
+bytes       "!!! `BYTES!` isn't a datatype, `heart` type  for optimizations"
+            []
+            [0           0       0]
 
-decimal     "64bit floating point number (IEEE standard)"
-            decimal     *       +       [number scalar]
+decimal!    "64bit floating point number (IEEE standard)"
+            [any-number! any-scalar!]
+            [decimal     *       +]
 
-percent     "special form of decimals (used mainly for layout)"
-            decimal     *       +       [number scalar]
+percent!    "special form of decimals (used mainly for layout)"
+            [any-number! any-scalar!]
+            [decimal     *       +]
 
-money       "high precision decimals with denomination (opt)"
-            money       +       +       [scalar]
+money!      "high precision decimals with denomination (opt)"
+            [any-scalar!]
+            [money       +       +]
 
-time        "time of day or duration"
-            time        +       +       [scalar]
+time!       "time of day or duration"
+            [any-scalar!]
+            [time        +       +]
 
-date        "day, month, year, time of day, and timezone"
-            date        +       +       []
+date!       "day, month, year, time of day, and timezone"
+            []
+            [date        +       +]
 
-integer     "64 bit integer"
-            integer     +       +       [number scalar]
+integer!    "64 bit integer"
+            [any-number! any-scalar!]
+            [integer     +       +]
 
+pair!       "two dimensional point or size"
+            [any-scalar!]
+            [pair        +       +]
 
-; ============================================================================
-; BEGIN TYPES THAT NEED TO BE GC-MARKED
-; ============================================================================
-;
-; !!! Note that INTEGER! may become arbitrary precision, and thus could have
-; a node in it to mark in some cases.
+datatype!   "type of datatype"
+            []
+            [datatype    +       +]
 
-pair        "two dimensional point or size"
-            pair        +       +       [scalar]
+typeset!    "set of datatypes"
+            []
+            [typeset     +       +]
 
-; </ANY_SCALAR>
+bitset!     "set of bit flags"
+            []
+            [bitset      +       +]
 
-datatype    "type of datatype"
-            datatype    +       +       []
+map!        "name-value pairs (hash associative)"
+            []
+            [map         +       +]
 
-typeset     "set of datatypes"
-            typeset     +       +       []
-
-bitset      "set of bit flags"
-            bitset      +       +       []
-
-map         "name-value pairs (hash associative)"
-            map         +       +       []
-
-handle      "arbitrary internal object or value"
-            handle      -       +       []
+handle!     "arbitrary internal object or value"
+            []
+            [handle      -       +]
 
 
 ; This table of fundamental types is intended to be limited (less than
@@ -143,50 +160,53 @@ handle      "arbitrary internal object or value"
 ; extension (because not all builds need it).  But it reserves a type byte
 ; and fills in its entry in this table when it is loaded (hence `?`)
 
-custom      "instance of an extension-defined type"
-            -           -       -       []
+custom!     "instance of an extension-defined type"
+            []
+            [-           -       -]
 
-event       "user interface event"  ; %extensions/event/README.md
-            ?           ?       ?       []
+event!      "user interface event"  ; %extensions/event/README.md
+            []
+            [?           ?       ?]
 
 
 ; URL! has a HEART-BYTE! that is a string, but is not itself in the ANY-STRING!
 ; category.
 ;
-url         "uniform resource locator or identifier"
-            url         string  string  []
+url!        "uniform resource locator or identifier"
+            []
+            [url         string  string]
 
 
 
-; <BINARY>
-;
-;     (...we continue along in order with more ANY-SERIES! types...)
-;     (...BINARY! is alone, it's not an ANY-STRING!, just an ANY-SERIES!...)
-
-binary      "series of bytes"
-            binary      *       +       [series]  ; not an ANY-STRING!
+binary!     "series of bytes"
+            [any-series!]  ; not an ANY-STRING!
+            [binary      *       +]
 
 
-; </BINARY> (adjacent to ANY-STRING matters)
-;
-; <ANY-STRING> (order does not currently matter)
+<ANY-STRING!>  ; (order does not currently matter)
 
-text        "text string series of characters"
-            string      *       *       [series string]
+    text!       "text string series of characters"
+                [any-series!]
+                [string      *       *]
 
-file        "file name or path"
-            string      *       *       [series string]
+    file!       "file name or path"
+                [any-series!]
+                [string      *       *]
 
-email       "email address"
-            string      *       *       [series string]
+    email!      "email address"
+                [any-series!]
+                [string      *       *]
 
-tag         "markup string (HTML or XML)"
-            string      *       *       [series string]
+    tag!        "markup string (HTML or XML)"
+                [any-series!]
+                [string      *       *]
 
-issue       "immutable codepoint or codepoint sequence"
-            issue       *       *       []  ; !!! sequence of INTEGER?
+</ANY-STRING!>  ; ISSUE! is "string-like" but not an ANY-STRING!
 
-; </ANY-STRING>
+
+issue!      "immutable codepoint or codepoint sequence"
+            []  ; !!! sequence of INTEGER?
+            [issue       *       *]
 
 
 ; ============================================================================
@@ -194,148 +214,179 @@ issue       "immutable codepoint or codepoint sequence"
 ; ============================================================================
 
 
-; <ANY-CONTEXT>
+<ANY-CONTEXT!>
 
-object      "context of names with values"
-            context     *       *       [context]
+    object!     "context of names with values"
+                []
+                [context     *       *]
 
-module      "loadable context of code and data"
-            context     *       *       [context]
+    module!     "loadable context of code and data"
+                []
+                [context     *       *]
 
-error       "error context with id, arguments, and stack origin"
-            context     +       +       [context]
+    error!      "error context with id, arguments, and stack origin"
+                []
+                [context     +       +]
 
-frame       "arguments and locals of a specific action invocation"
-            frame       +       *       [context]
+    frame!      "arguments and locals of a specific action invocation"
+                []
+                [frame       +       *]
 
-port        "external series, an I/O channel"
-            port        +       context [context]
+    port!       "external series, an I/O channel"
+                []
+                [port        +       context]
 
-; </ANY-CONTEXT>
+</ANY-CONTEXT!>
 
-varargs     "evaluator position for variable numbers of arguments"
-            varargs     +       +       []
-
-
-; <ANY-THE> (order matters, see UNTHEIFY_ANY_XXX_KIND())
-
-the-block   "alternative inert form of block"
-            array       *       *       [block array series branch the-value]
-
-the-group   "inert form of group"                   ; v-- allow as `branch`?
-            array       *       *       [group array series the-value]
-
-the-path    "inert form of path"                    ; v-- allow as `branch`?
-            sequence    *       *       [path sequence the-value]
-
-the-tuple   "inert form of tuple"                   ; v-- allow as `branch`?
-            sequence    *       *       [tuple sequence scalar the-value]
-
-the-word    "inert form of word"                    ; v-- allow as `branch`?
-            word        *       +       [word the-value]
-
-; </ANY-THE>
+varargs!    "evaluator position for variable numbers of arguments"
+            []
+            [varargs     +       +]
 
 
-; <ANY-PLAIN> (order matters, see UNSETIFY_ANY_XXX_KIND())
+<ANY-THE-VALUE!>  ; (order matters, e.g. UNTHEIFY_ANY_XXX_KIND())
 
-block       "array of values that blocks evaluation unless DO is used"
-            array       *       *       [block array series branch plain-value]
+    ; Review: Should these be ANY-BRANCH! types?
 
-; ============================================================================
-; BEGIN EVALUATOR ACTIVE TYPES, SEE ANY_EVALUATIVE()
-; ============================================================================
+    the-block!  "alternative inert form of block"
+                [any-block! any-array! any-series! any-branch!]
+                [array       *       *]
 
-group       "array that evaluates expressions as an isolated group"
-            array       *       *       [group array series branch plain-value]
+    the-group!  "inert form of group"
+                [any-group! any-array! any-series!]
+                [array       *       *]
 
-path        "member or refinement selection with execution bias"
-            sequence    *       *       [path sequence plain-value]
+    the-path!   "inert form of path"
+                [any-path! any-sequence!]
+                [sequence    *       *]
 
-tuple       "member selection with inert bias"
-            sequence    *       *       [tuple sequence scalar plain-value]
+    the-tuple!  "inert form of tuple"
+                [any-tuple! any-sequence! any-scalar!]
+                [sequence    *       *]
 
-word        "evaluates a variable or action"
-            word        *       +       [word plain-value]
+    the-word!   "inert form of word"
+                [any-word!]
+                [word        *       +]
 
-; </ANY-PLAIN>
-
-
-; <ANY-SET> (order matters, see UNSETIFY_ANY_XXX_KIND())
-
-set-block   "array of values that will element-wise SET if evaluated"
-            array       *       *       [block array series set-value]
-
-set-group   "array that evaluates and runs SET on the resulting word/path"
-            array       *       *       [group array series set-value]
-
-set-path    "definition of a path's value"
-            sequence    *       *       [path sequence set-value]
-
-set-tuple   "definition of a tuple's value"
-            sequence    *       *       [tuple sequence set-value]
-
-set-word    "definition of a word's value"
-            word        *       +       [word set-value]
-
-; </ANY-SET> (contiguous with ANY-GET below matters)
+</ANY-THE-VALUE!>
 
 
-; <ANY-GET> (order matters)
+<ANY-PLAIN-VALUE!>  ; (order matters, e.g. SETIFY_ANY_PLAIN_KIND())
 
-get-block   "array of values that is reduced if evaluated"
-            array       *       *       [block array series branch get-value]
+    block!      "array of values that blocks evaluation unless DO is used"
+                [any-block! any-array! any-series! any-branch!]
+                [array       *       *]
 
-get-group   "array that evaluates and runs GET on the resulting word/path"
-            array       *       *       [group array series get-value]
+  ; ==========================================================================
+  ; BEGIN EVALUATOR ACTIVE TYPES, SEE ANY_EVALUATIVE()
+  ; ==========================================================================
 
-get-path    "the value of a path"
-            sequence    *       *       [path sequence get-value]
+    group!      "array that evaluates expressions as an isolated group"
+                [any-group! any-array! any-series! any-branch!]
+                [array       *       *]
 
-get-tuple   "the value of a tuple"
-            sequence    *       *       [tuple sequence get-value]
+    path!       "member or refinement selection with execution bias"
+                [any-path! any-sequence!]
+                [sequence    *       *]
 
-get-word    "the value of a word (variable)"
-            word        *       +       [word get-value]
+    tuple!      "member selection with inert bias"
+                [any-tuple! any-sequence! any-scalar!]  ; scalar e.g. ADD 0.0.1
+                [sequence    *       *]
 
-; </ANY-GET> (except for ISSUE!)
+    word!       "evaluates a variable or action"
+                [any-word!]
+                [word        *       +]
+
+</ANY-PLAIN-VALUE!>  ; contiguous with ANY-SET below matters
 
 
-; Right now there's no particularly fast test for ANY_ARRAY(), ANY_PATH(),
-; ANY_WORD()...due to those being less common than testing for ANY_INERT().
-; Review the decision.
+<ANY-SET-VALUE!>  ; (order matters, e.g. UNSETIFY_ANY_XXX_KIND())
 
-; <ANY-META> (order matters, see UNSETIFY_ANY_XXX_KIND())
+    set-block!  "array of values that will element-wise SET if evaluated"
+                [any-block! any-array! any-series!]
+                [array       *       *]
 
-meta-block  "block that evaluates to produce a quoted block"
-            array       *       *       [block array series meta-value branch]
+    set-group!  "array that evaluates and runs SET on the resulting word/path"
+                [any-group! any-array! any-series!]
+                [array       *       *]
 
-meta-group  "group that quotes its product or removes isotope status"
-            array       *       *       [group array series meta-value]
+    set-path!   "definition of a path's value"
+                [any-path! any-sequence!]
+                [sequence    *       *]
 
-meta-path   "path that quotes its product or removes isotope status"
-            sequence    *       *       [path sequence meta-value]
+    set-tuple!  "definition of a tuple's value"
+                [any-tuple! any-sequence!]
+                [sequence    *       *]
 
-meta-tuple  "tuple that quotes its product or removes isotope status"
-            sequence    *       *       [tuple sequence meta-value]
+    set-word!   "definition of a word's value"
+                [any-word!]
+                [word        *       +]
 
-meta-word   "word that quotes its product or removes isotope status"
-            word        *       +       [word meta-value]
+</ANY-SET-VALUE!>  ; (contiguous with ANY-GET below matters)
 
-; <ANY-META> (order matters, see UNSETIFY_ANY_XXX_KIND())
+
+<ANY-GET-VALUE!>  ; (order matters, e.g. UNGETIFY_ANY_XXX_KIND())
+
+    get-block!  "array of values that is reduced if evaluated"
+                [any-block! any-array! any-series! any-branch!]
+                [array       *       *]
+
+    get-group!  "array that evaluates and runs GET on the resulting word/path"
+                [any-group! any-array! any-series!]
+                [array       *       *]
+
+    get-path!   "the value of a path"
+                [any-path! any-sequence!]
+                [sequence    *       *]
+
+    get-tuple!  "the value of a tuple"
+                [any-tuple! any-sequence!]
+                [sequence    *       *]
+
+    get-word!   "the value of a word (variable)"
+                [any-word!]
+                [word        *       +]
+
+</ANY-GET-VALUE!>  ; (contiguous with ANY-META below matters)
+
+
+<ANY-META-VALUE!>  ; (order matters, e.g. UNMETAFY_ANY_XXX_KIND())
+
+    meta-block! "block that evaluates to produce a quoted block"
+                [any-block! any-array! any-series! any-branch!]
+                [array       *       *]
+
+    meta-group! "group that quotes its product or removes isotope status"
+                [any-group! any-array! any-series!]
+                [array       *       *]
+
+    meta-path!  "path that quotes its product or removes isotope status"
+                [any-path! any-sequence!]
+                [sequence    *       *]
+
+    meta-tuple! "tuple that quotes its product or removes isotope status"
+                [any-tuple! any-sequence!]
+                [sequence    *       *]
+
+    meta-word!  "word that quotes its product or removes isotope status"
+                [any-word!]
+                [word        *       +]
+
+</ANY-META-VALUE!>
 
 
 ; COMMA! has a high number with bindable types it's evaluative, and the
 ; desire is to make the ANY_INERT() test fast with a single comparison.
 
-comma       "separator between full evaluations (that is otherwise invisible)"
-            comma       -       +       [unit]
+comma!      "separator between full evaluations (that is otherwise invisible)"
+            [any-unit!]
+            [comma       -       +]
 
 
 ; ACTION! is the "OneFunction" type in Ren-C https://forum.rebol.info/t/596
 
-action      "an invokable Rebol subroutine"
-            action      +       +       [branch]
+action!     "an invokable Rebol subroutine"
+            [any-branch!]
+            [action      +       +]
 
 
 ; ============================================================================
@@ -349,11 +400,13 @@ action      "an invokable Rebol subroutine"
 ; Neither are inert...QUASI! becomes isotopic when evaluated, and QUOTED!
 ; removes one level of quoting.
 
-quasi       "value which evaluates to a form that triggers errors on access"
-            quasi       +       -       []
+quasi!      "value which evaluates to a form that triggers errors on access"
+            []
+            [quasi       +       -]
 
-quoted     "container for arbitrary levels of quoting"
-            quoted       +       -      [branch]
+quoted!     "container for arbitrary levels of quoting"
+            [any-branch!]
+            [quoted       +       -]
 
 
 ; This is the end of the value cell enumerations (after REB_QUOTED is REB_MAX)
