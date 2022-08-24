@@ -170,22 +170,28 @@
 #define TOP \
     cast(StackValue(*), DS_Movable_Top) // cast helps stop ++TOP, etc.
 
-// Data_Stack_At() accesses value at given stack location.  It is allowed to
-// point at a stack location that is an end, e.g. Data_Stack_At(dsp + 1),
-// because that location may be used as the start of a copy which is ultimately
-// of length 0.
+
+// 1. Use the fact that the data stack is always dynamic to avoid having to
+//    check if it is or not.
 //
-// We use the fact that the data stack is always dynamic to avoid having to
-// check if it is or not.  Although the stack can only hold fully specified
-// values, someone may also PUSH() trash and then initialize it with
-// Data_Stack_At(), so we don't check it with SPECIFIC() here.
+// 2. Although the stack can only hold fully specified values, this can be
+//    used to access slots that have been PUSH()'d but not fulfilled yet.
+//    So no validation besides writability can be done here.  (Which may be
+//    wasteful, and just letting the caller do it could make more sense.)
+//
+// 3. Access beyond the end of the stack is allowed, but only to the direct
+//    position after top.  This is used by things like Pop_Stack() which want
+//    to know the address after the content.
 //
 inline static StackValue(*) Data_Stack_At(StackIndex i) {
-    REBVAL *at = cast(REBVAL*, DS_Array->content.dynamic.data) + i;
-    assert(
-        ((at->header.bits & NODE_FLAG_CELL) and i <= (TOP_INDEX + 1))
-        or (not (SECOND_BYTE(at->header) != REB_0 and i == (TOP_INDEX + 1)))
-    );
+    REBVAL *at = cast(REBVAL*, DS_Array->content.dynamic.data) + i;  // see [1]
+
+    if (i < TOP_INDEX + 1)  // in the range of PUSH()'d cells
+        assert(WRITABLE(at));  // we can only check writability, see [2]
+    else {
+        assert(i == TOP_INDEX + 1);  // allow getting tail's address, see [3]
+        assert(Is_Fresh(at));
+    }
     return at;
 }
 
