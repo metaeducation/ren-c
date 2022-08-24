@@ -97,14 +97,12 @@ Bounce Adapter_Dispatcher(Frame(*) f)
         and VAL_INDEX(prelude) == 0
     );
 
-    STATE = ST_ADAPTER_RUNNING_PRELUDE;
+    STATE = ST_ADAPTER_RUNNING_PRELUDE;  // no definitional RETURN, see [2]
 
     return CONTINUE_CORE(  // Note: we won't catch throws or errors
         SPARE,  // Evaluate prelude into SPARE cell (result discarded, see [1])
         FRAME_MASK_NONE,  // plain result
-        prelude,  // definitional RETURN not available yet, see [2]
-        SPC(f->varlist),
-        END
+        SPC(f->varlist), prelude
     );
 
 } run_adaptee_in_same_frame: {  //////////////////////////////////////////////

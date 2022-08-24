@@ -145,9 +145,7 @@ Bounce Func_Dispatcher(Frame(*) f)
     return CONTINUE_CORE(
         SPARE,  // body evaluative result discarded, see [1]
         FRAME_MASK_NONE,  // no DISPATCHER_CATCHES, so RETURN skips, see [2]
-        body,
-        SPC(f->varlist),
-        END
+        SPC(f->varlist), body
     );
 
 } body_finished_without_returning: {  ////////////////////////////////////////

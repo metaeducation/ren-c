@@ -1256,4 +1256,30 @@
 #endif
 
 
+//=//// PREPROCESSOR ARGUMENT COUNT (w/MSVC COMPATIBILITY TWEAK) //////////=//
+//
+// While the external C API can be compiled with a C89 compiler (if you're
+// willing to put rebEND at the tail of every variadic call), the core has
+// committed to variadic macros.
+//
+// It can be useful to know the count of a __VA_ARGS__ list.  There are some
+// techniques floating around that should work in MSVC, but do not.  This
+// appears to work in MSVC.
+//
+// https://stackoverflow.com/a/5530998
+//
+// You can use this to implement optional parameters, e.g. the following will
+// invoke F_1(), F_2(), F_3() etc. based on how many parameters it receives:
+//
+//    #define F(...) PP_CONCAT(SOMETHING_, PP_NARGS(__VA_ARGS__))(__VA_ARGS__)
+
+#define PP_EXPAND(x) x  // required for MSVC in optional args, see link above
+
+#define PP_CONCAT_IMPL(A, B) A##B
+#define PP_CONCAT(A, B) PP_CONCAT_IMPL(A, B)
+
+#define PP_NARGS_IMPL(x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,N,...) N  // 0 won't work
+#define PP_NARGS(...) \
+    PP_EXPAND(PP_NARGS_IMPL(__VA_ARGS__,10,9,8,7,6,5,4,3,2,1,0))
+
 #endif  // !defined(REB_C_H_1020_0304)

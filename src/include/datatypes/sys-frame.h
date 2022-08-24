@@ -691,11 +691,12 @@ inline static bool Eval_Value_Core_Throws(
 inline static bool Pushed_Continuation(
     REBVAL *out,
     Flags flags,  // FRAME_FLAG_BRANCH, etc. for pushed frames
+    REBSPC *branch_specifier,  // before branch forces non-empty variadic call
     Cell(const*) branch,
-    REBSPC *branch_specifier,
-    const REBVAL *with  // can be same as out or not GC-safe, copied if needed
+    option(const REBVAL*) with  // can be same as out or not GC-safe, may copy
 ){
     assert(branch != out);  // it's legal for `with` to be the same as out
+    assert(with == nullptr or not Is_Api_Value(with));
 
     if (IS_GROUP(branch) or IS_GET_GROUP(branch)) {  // see [2] for GET-GROUP!
         assert(flags & FRAME_FLAG_BRANCH);  // needed for trick
@@ -706,7 +707,7 @@ inline static bool Pushed_Continuation(
             FRAME_FLAG_MAYBE_STALE | (flags & (~ FRAME_FLAG_BRANCH))
         );
         grouper->executor = &Group_Branch_Executor;  // evaluates to get branch
-        if (Is_End(with))
+        if (with == nullptr)
             Mark_Eval_Out_Stale(out);
         else if (Is_Void(with))
             RESET(out);
@@ -782,7 +783,7 @@ inline static bool Pushed_Continuation(
                 Init_None(arg);
         }
 
-        if (Not_End(with)) do {
+        if (with != nullptr) do {
             arg = First_Unspecialized_Arg(&param, f);
             if (not arg)
                 break;
@@ -852,24 +853,35 @@ inline static bool Pushed_Continuation(
 // without tampering with the result.
 //
 // Branch continuations enforce the result not being pure null or void.
+//
+// Uses variadic method to allow you to supply an argument to be passed to
+// a branch continuation if it is a function.
+//
 
-#define CONTINUE_CORE(o,flags,value,specifier,with) ( \
-    Pushed_Continuation((o), (flags), (value), (specifier), (with)), \
+#define CONTINUE_CORE_5(...) ( \
+    Pushed_Continuation(__VA_ARGS__), \
     BOUNCE_CONTINUE)  /* ^-- don't heed result: want callback, push or not */
 
-#define CONTINUE(o,value,with) \
-    CONTINUE_CORE((o), FRAME_MASK_NONE, (value), SPECIFIED, (with))
+#define CONTINUE_CORE_4(...) ( \
+    Pushed_Continuation(__VA_ARGS__, nullptr), \
+    BOUNCE_CONTINUE)  /* ^-- don't heed result: want callback, push or not */
 
-#define CATCH_CONTINUE(o,value,with) ( \
+#define CONTINUE_CORE(...) \
+    PP_CONCAT(CONTINUE_CORE_, PP_NARGS(__VA_ARGS__))(__VA_ARGS__)
+
+#define CONTINUE(out,...) \
+    CONTINUE_CORE((out), FRAME_MASK_NONE, SPECIFIED, __VA_ARGS__)
+
+#define CATCH_CONTINUE(out,...) ( \
     Set_Executor_Flag(ACTION, frame_, DISPATCHER_CATCHES), \
-    CONTINUE_CORE((o), FRAME_MASK_NONE, (value), SPECIFIED, (with)))
+    CONTINUE_CORE((out), FRAME_MASK_NONE, SPECIFIED, __VA_ARGS__))
 
-#define CONTINUE_BRANCH(o,value,with) \
-    CONTINUE_CORE((o), FRAME_FLAG_BRANCH, (value), SPECIFIED, (with))
+#define CONTINUE_BRANCH(out,...) \
+    CONTINUE_CORE((out), FRAME_FLAG_BRANCH, SPECIFIED, __VA_ARGS__)
 
-#define CATCH_CONTINUE_BRANCH(o,value,with) ( \
+#define CATCH_CONTINUE_BRANCH(out,...) ( \
     Set_Executor_Flag(ACTION, frame_, DISPATCHER_CATCHES), \
-    CONTINUE_CORE((o), FRAME_FLAG_BRANCH, (value), SPECIFIED, (with)))
+    CONTINUE_CORE((out), FRAME_FLAG_BRANCH, SPECIFIED, __VA_ARGS__))
 
 inline static Bounce Continue_Subframe_Helper(
     Frame(*) f,
@@ -908,27 +920,30 @@ inline static Bounce Continue_Subframe_Helper(
 // if the delegating frame were freed before running what's underneath it...
 // at least it could be collapsed into a more primordial state.  Review.
 
-#define DELEGATE_CORE(o,fs,branch,specifier,with) ( \
-        assert((o) == frame_->out), \
-        Pushed_Continuation( \
-            frame_->out, \
-            (fs) | (frame_->flags.bits & FRAME_FLAG_FAILURE_RESULT_OK), \
-            (branch), \
-            (specifier), \
-            (with) \
-        ) ? BOUNCE_DELEGATE \
-          : frame_->out)  // no need to give callback to delegator
+#define DELEGATE_CORE_3(o,sub_flags,...) ( \
+    assert((o) == frame_->out), \
+    Pushed_Continuation( \
+        frame_->out, \
+        (sub_flags) | (frame_->flags.bits & FRAME_FLAG_FAILURE_RESULT_OK), \
+        __VA_ARGS__  /* branch_specifier, branch, and "with" argument */ \
+    ) ? BOUNCE_DELEGATE \
+        : frame_->out)  // no need to give callback to delegator
 
+#define DELEGATE_CORE_2(out,sub_flags,...) \
+    DELEGATE_CORE_3((out), (sub_flags), __VA_ARGS__, nullptr)
 
-#define DELEGATE(o,value,with) \
-    DELEGATE_CORE(frame_->out, FRAME_MASK_NONE, (value), SPECIFIED, (with))
+#define DELEGATE_CORE(out,sub_flags,...) \
+    PP_CONCAT(DELEGATE_CORE_, PP_NARGS(__VA_ARGS__))( \
+        (out), (sub_flags), __VA_ARGS__)
 
-#define DELEGATE_BRANCH(o,branch,with) \
-    DELEGATE_CORE(frame_->out, FRAME_FLAG_BRANCH, (branch), SPECIFIED, (with))
+#define DELEGATE(out,...) \
+    DELEGATE_CORE((out), FRAME_MASK_NONE, SPECIFIED, __VA_ARGS__)
 
-#define DELEGATE_MAYBE_STALE(o,branch,with) \
-    DELEGATE_CORE( \
-        frame_->out, FRAME_FLAG_MAYBE_STALE, (branch), SPECIFIED, (with))
+#define DELEGATE_BRANCH(out,...) \
+    DELEGATE_CORE((out), FRAME_FLAG_BRANCH, SPECIFIED, __VA_ARGS__)
+
+#define DELEGATE_MAYBE_STALE(out,...) \
+    DELEGATE_CORE((out), FRAME_FLAG_MAYBE_STALE, SPECIFIED, __VA_ARGS__)
 
 #define DELEGATE_SUBFRAME(sub) ( \
     Continue_Subframe_Helper(frame_, false, (sub)), \

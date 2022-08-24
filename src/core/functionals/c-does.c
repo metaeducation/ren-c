@@ -85,7 +85,7 @@ Bounce Block_Dispatcher(Frame(*) f)
 
     if (IS_SPECIFIC(block)) {
         if (FRM_BINDING(f) == UNBOUND)
-            return DELEGATE(OUT, block, END);
+            return DELEGATE(OUT, block);
 
         // Until "virtual binding" is implemented, we would lose f->binding's
         // ability to influence any variable lookups in the block if we did
@@ -129,9 +129,8 @@ Bounce Block_Dispatcher(Frame(*) f)
     return DELEGATE_CORE(
         OUT,  // output
         FRAME_MASK_NONE,  // No MAYBE_STALE, can't be invisible.  See LAMBDA.
-        block,  // branch
-        SPC(f->varlist),  // specifier
-        END  // with
+        SPC(f->varlist),  // branch specifier
+        block  // branch
     );
 }
 

@@ -143,7 +143,7 @@ static Bounce Loop_Series_Common(
     //
     REBINT s = VAL_INDEX(start);
     if (s == end) {
-        if (Do_Branch_Throws(OUT, body, END)) {
+        if (Do_Branch_Throws(OUT, body)) {
             if (not Try_Catch_Break_Or_Continue(OUT, FRAME))
                 return THROWN;
 
@@ -169,7 +169,7 @@ static Bounce Loop_Series_Common(
             ? cast(REBINT, *state) <= end
             : cast(REBINT, *state) >= end
     ){
-        if (Do_Branch_Throws(OUT, body, END)) {
+        if (Do_Branch_Throws(OUT, body)) {
             if (not Try_Catch_Break_Or_Continue(OUT, FRAME))
                 return THROWN;
 
@@ -225,7 +225,7 @@ static Bounce Loop_Integer_Common(
     // Run only once if start is equal to end...edge case.
     //
     if (start == end) {
-        if (Do_Branch_Throws(OUT, body, END)) {
+        if (Do_Branch_Throws(OUT, body)) {
             if (not Try_Catch_Break_Or_Continue(OUT, FRAME))
                 return THROWN;
 
@@ -247,7 +247,7 @@ static Bounce Loop_Integer_Common(
         return nullptr;  // avoid infinite loops
 
     while (counting_up ? *state <= end : *state >= end) {
-        if (Do_Branch_Throws(OUT, body, END)) {
+        if (Do_Branch_Throws(OUT, body)) {
             if (not Try_Catch_Break_Or_Continue(OUT, FRAME))
                 return THROWN;
 
@@ -314,7 +314,7 @@ static Bounce Loop_Number_Common(
     // Run only once if start is equal to end...edge case.
     //
     if (s == e) {
-        if (Do_Branch_Throws(OUT, body, END)) {
+        if (Do_Branch_Throws(OUT, body)) {
             if (not Try_Catch_Break_Or_Continue(OUT, FRAME))
                 return THROWN;
 
@@ -334,7 +334,7 @@ static Bounce Loop_Number_Common(
         return VOID;  // avoid inf. loop, means never ran
 
     while (counting_up ? *state <= e : *state >= e) {
-        if (Do_Branch_Throws(OUT, body, END)) {
+        if (Do_Branch_Throws(OUT, body)) {
             if (not Try_Catch_Break_Or_Continue(OUT, FRAME))
                 return THROWN;
 
@@ -525,7 +525,7 @@ DECLARE_NATIVE(for_skip)
             VAL_INDEX_UNBOUNDED(var) = index;
         }
 
-        if (Do_Branch_Throws(OUT, ARG(body), END)) {
+        if (Do_Branch_Throws(OUT, ARG(body))) {
             if (not Try_Catch_Break_Or_Continue(OUT, FRAME))
                 return THROWN;
 
@@ -633,14 +633,14 @@ DECLARE_NATIVE(cycle)
   initial_entry: {  //////////////////////////////////////////////////////////
 
     STATE = ST_CYCLE_EVALUATING_BODY;
-    return CATCH_CONTINUE(OUT, body, END);
+    return CATCH_CONTINUE(OUT, body);
 
 } body_was_evaluated: {  /////////////////////////////////////////////////////
 
     if (THROWING)
         goto handle_thrown;
 
-    return CATCH_CONTINUE(OUT, body, END);  // no break or stop, so keep going
+    return CATCH_CONTINUE(OUT, body);  // no break or stop, so keep going
 
 } handle_thrown: {  /////////////////////////////////////////////////////////
 
@@ -648,7 +648,7 @@ DECLARE_NATIVE(cycle)
         if (Is_Breaking_Null(OUT))
             return nullptr;
 
-        return CATCH_CONTINUE(OUT, body, END);  // plain continue
+        return CATCH_CONTINUE(OUT, body);  // plain continue
     }
 
     const REBVAL *label = VAL_THROWN_LABEL(FRAME);
@@ -1037,7 +1037,7 @@ DECLARE_NATIVE(for_each)
         goto finalize_for_each;
 
     STATE = ST_FOR_EACH_RUNNING_BODY;
-    return CATCH_CONTINUE(OUT, body, END);
+    return CATCH_CONTINUE(OUT, body);
 
 } body_result_in_spare_or_threw: {  //////////////////////////////////////////
 
@@ -1146,7 +1146,7 @@ DECLARE_NATIVE(every)
         goto finalize_every;
 
     STATE = ST_EVERY_RUNNING_BODY;
-    return CATCH_CONTINUE(SPARE, body, END);
+    return CATCH_CONTINUE(SPARE, body);
 
 } body_result_in_spare: {  ///////////////////////////////////////////////////
 
@@ -1657,7 +1657,7 @@ DECLARE_NATIVE(map)
         goto finalize_map;
 
     STATE = ST_MAP_RUNNING_BODY;
-    return CATCH_CONTINUE(SPARE, body, END);  // body may be META-BLOCK!
+    return CATCH_CONTINUE(SPARE, body);  // body may be META-BLOCK!
 
 } body_result_in_spare: {  ///////////////////////////////////////////////////
 
@@ -1761,7 +1761,7 @@ DECLARE_NATIVE(repeat)
             return VOID;  // treat false as "don't run"
 
         STATE = ST_REPEAT_EVALUATING_BODY;  // true is "infinite loop"
-        return CATCH_CONTINUE_BRANCH(OUT, ARG(body), END);  // no index, see [1]
+        return CATCH_CONTINUE_BRANCH(OUT, body);  // no index, see [1]
     }
 
     if (VAL_INT64(count) <= 0)
@@ -1770,7 +1770,7 @@ DECLARE_NATIVE(repeat)
     Init_Integer(index, 1);
 
     STATE = ST_REPEAT_EVALUATING_BODY;
-    return CATCH_CONTINUE_BRANCH(OUT, ARG(body), index);
+    return CATCH_CONTINUE_BRANCH(OUT, body, index);
 
 } body_result_in_out: {  /////////////////////////////////////////////////////
 
@@ -1787,7 +1787,7 @@ DECLARE_NATIVE(repeat)
 
     if (IS_LOGIC(count)) {
         assert(VAL_LOGIC(count) == true);  // false already returned
-        return CATCH_CONTINUE_BRANCH(OUT, body, END);  // true infinite loops
+        return CATCH_CONTINUE_BRANCH(OUT, body);  // true infinite loops
     }
 
     if (VAL_INT64(count) == VAL_INT64(index))  // reached the desired count
@@ -1968,7 +1968,7 @@ DECLARE_NATIVE(until)
   initial_entry: {  //////////////////////////////////////////////////////////
 
     STATE = ST_UNTIL_EVALUATING_BODY;
-    return CATCH_CONTINUE(OUT, body, END);
+    return CATCH_CONTINUE(OUT, body);
 
 } body_result_in_out: {  /////////////////////////////////////////////////////
 
@@ -2008,7 +2008,7 @@ DECLARE_NATIVE(until)
     }
 
     STATE = ST_UNTIL_EVALUATING_BODY;
-    return CATCH_CONTINUE(OUT, body, END);  // not truthy, keep going
+    return CATCH_CONTINUE(OUT, body);  // not truthy, keep going
 }}
 
 
@@ -2074,7 +2074,7 @@ DECLARE_NATIVE(while)
   evaluate_condition: {  /////////////////////////////////////////////////////
 
     STATE = ST_WHILE_EVALUATING_CONDITION;
-    return CONTINUE(SPARE, condition, END);  // ignore BREAKs, see [2]
+    return CONTINUE(SPARE, condition);  // ignore BREAKs, see [2]
 
 } condition_was_evaluated: {  ////////////////////////////////////////////////
 

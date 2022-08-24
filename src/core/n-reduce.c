@@ -261,7 +261,7 @@ DECLARE_NATIVE(reduce_each)
     SUBFRAME->executor = &Just_Use_Out_Executor;  // pass through subframe
 
     STATE = ST_REDUCE_EACH_RUNNING_BODY;
-    return CATCH_CONTINUE_BRANCH(OUT, body, END);
+    return CATCH_CONTINUE_BRANCH(OUT, body);
 
 } body_result_in_out: {  /////////////////////////////////////////////////////
 

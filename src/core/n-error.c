@@ -70,7 +70,7 @@ DECLARE_NATIVE(trap)
         Set_Cell_Flag(code, EXPLICITLY_MUTABLE);  // see DECLARE_NATIVE(do) for why
 
     STATE = ST_TRAP_EVALUATING;
-    return CATCH_CONTINUE(OUT, code, END);
+    return CATCH_CONTINUE(OUT, code);
   }
 
   evaluation_finished: {

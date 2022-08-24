@@ -94,13 +94,18 @@ inline static bool Do_Any_Array_At_Core_Throws(
     Do_Any_Array_At_Core_Throws(out, FRAME_MASK_NONE, (any_array), (specifier))
 
 
-inline static bool Do_Branch_Throws(
+inline static bool Do_Branch_Throws(  // !!! Legacy code, should be phased out
     REBVAL *out,
-    const REBVAL *branch,
-    const REBVAL *with
+    const REBVAL *branch
 ){
-    if (not Pushed_Continuation(out, FRAME_FLAG_BRANCH, branch, SPECIFIED, with))
+    if (not Pushed_Continuation(
+        out,
+        FRAME_FLAG_BRANCH,
+        SPECIFIED, branch,
+        nullptr
+    )){
         return false;
+    }
 
     bool threw = Trampoline_With_Top_As_Root_Throws();
     Drop_Frame(TOP_FRAME);

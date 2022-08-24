@@ -62,7 +62,7 @@ Bounce Downshot_Dispatcher(Frame(*) f)  // runs until count is reached
     --VAL_INT64(n);
 
     Value(*) code = FRM_ARG(f, 2);  // skip the RETURN
-    return DELEGATE_BRANCH(OUT, code, END);
+    return DELEGATE_BRANCH(OUT, code);
 }
 
 
@@ -80,7 +80,7 @@ Bounce Upshot_Dispatcher(Frame(*) f)  // won't run until count is reached
     }
 
     Value(*) code = FRM_ARG(f, 2);  // skip the RETURN
-    return DELEGATE_BRANCH(OUT, code, END);
+    return DELEGATE_BRANCH(OUT, code);
 }
 
 

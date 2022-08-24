@@ -1004,7 +1004,7 @@ DECLARE_NATIVE(case)
     return CONTINUE_CORE(
         OUT,
         FRAME_FLAG_BRANCH,
-        branch, FRM_SPECIFIER(SUBFRAME),
+        FRM_SPECIFIER(SUBFRAME), branch,
         SPARE
     );
 
@@ -1212,8 +1212,7 @@ DECLARE_NATIVE(switch)
     return CONTINUE_CORE(
         RESET(OUT),
         FRAME_FLAG_BRANCH,
-        at, FRM_SPECIFIER(SUBFRAME),
-        END
+        FRM_SPECIFIER(SUBFRAME), at
     );
 
 } reached_end: {  ////////////////////////////////////////////////////////////
@@ -1374,7 +1373,7 @@ DECLARE_NATIVE(catch)
         fail (Error_Bad_Refines_Raw());
 
     STATE = ST_CATCH_RUNNING_CODE;
-    return CATCH_CONTINUE(OUT, ARG(block), END);
+    return CATCH_CONTINUE(OUT, ARG(block));
 
 } code_result_in_out: {  //////////////////////////////////////////////////////
 

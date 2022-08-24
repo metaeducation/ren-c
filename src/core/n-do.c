@@ -297,7 +297,7 @@ DECLARE_NATIVE(do)
 
     switch (VAL_TYPE(source)) {
       case REB_BLOCK :  // no REB_GROUP, etc...EVAL does that.  see [1]
-        return DELEGATE(OUT, source, END);
+        return DELEGATE(OUT, source);
 
       case REB_VARARGS : {
         REBVAL *position;
@@ -384,10 +384,10 @@ DECLARE_NATIVE(do)
         if (First_Unspecialized_Param(nullptr, VAL_ACTION(source)))
             fail (Error_Do_Arity_Non_Zero_Raw());  // specific error?  see [3]
 
-        return DELEGATE(OUT, source, END);
+        return DELEGATE(OUT, source);
 
       case REB_FRAME :
-        return DELEGATE(OUT, source, END);
+        return DELEGATE(OUT, source);
 
       case REB_QUOTED :
         Copy_Cell(OUT, ARG(source));
@@ -508,13 +508,13 @@ DECLARE_NATIVE(evaluate)
         if (WANTED(next))
             fail ("/NEXT Behavior not implemented for FRAME! in EVALUATE");
 
-        return DELEGATE_MAYBE_STALE(OUT, source, END);
+        return DELEGATE_MAYBE_STALE(OUT, source);
 
       case REB_ACTION: {
         if (First_Unspecialized_Param(nullptr, VAL_ACTION(source)))
             fail (Error_Do_Arity_Non_Zero_Raw());  // see notes in DO on error
 
-        return DELEGATE(OUT, source, END); }
+        return DELEGATE(OUT, source); }
 
       case REB_VARARGS : {
         assert(IS_VARARGS(source));
@@ -739,11 +739,11 @@ DECLARE_NATIVE(applique)
     );
 
     STATE = ST_APPLIQUE_RUNNING_DEF_BLOCK;
-    return CONTINUE(SPARE, def, END);  // first run block bound to frame
+    return CONTINUE(SPARE, def);  // first run block bound to frame
 
 } definition_result_in_spare: {  /////////////////////////////////////////////
 
-    return DELEGATE_MAYBE_STALE(OUT, frame, END);  // now run the frame
+    return DELEGATE_MAYBE_STALE(OUT, frame);  // now run the frame
 }}
 
 
@@ -1000,7 +1000,7 @@ DECLARE_NATIVE(apply)
 
     Clear_Frame_Flag(frame_, NOTIFY_ON_ABRUPT_FAILURE);  // necessary?
 
-    return DELEGATE_MAYBE_STALE(OUT, frame, END);
+    return DELEGATE_MAYBE_STALE(OUT, frame);
 }}
 
 
