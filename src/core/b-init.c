@@ -357,21 +357,11 @@ static void Startup_End_Node(void)
 {
     PG_End_Cell.header.bits = NODE_FLAG_NODE | NODE_FLAG_STALE;
     assert(Is_End(END));  // sanity check
-
-    assert(Is_Void(VOID_CELL));  // default all zero bits for C globals
-    Reset_Cell_Header_Untracked(
-        TRACK(&PG_Void_Cell),
-        CELL_MASK_VOID | CELL_FLAG_PROTECTED
-    );
-    assert(Is_Void(VOID_CELL));  // another readable void pattern
 }
 
 static void Shutdown_End_Node(void) {
     assert(Is_End(END));  // sanity check
     PG_End_Cell.header.bits = 0;
-
-    assert(Is_Void(VOID_CELL));
-    PG_Void_Cell.header.bits = 0;
 }
 
 
@@ -447,7 +437,18 @@ static void Init_Root_Vars(void)
 {
     // Simple isolated values, not available via lib, e.g. not Lib(TRUE) or
     // Lib(BLANK)...
+
+    assert(Is_Void(VOID_CELL));  // default all zero bits for C globals
+    Reset_Cell_Header_Untracked(
+        TRACK(&PG_Void_Cell),
+        CELL_MASK_VOID | CELL_FLAG_PROTECTED
+    );
+    assert(Is_Void(VOID_CELL));  // another readable void pattern
+
+    // Initialize NONE_ISOTOPE (must be after symbols loaded)
     //
+    Init_None(&PG_None_Isotope);  // symbol not GC'd
+
     // They should only be accessed by macros which retrieve their values
     // as `const`, to avoid the risk of accidentally changing them.  (This
     // rule is broken by some special system code which `m_cast`s them for
@@ -500,6 +501,9 @@ static void Init_Root_Vars(void)
 
 static void Shutdown_Root_Vars(void)
 {
+    assert(Is_Void(VOID_CELL));
+    PG_Void_Cell.header.bits = 0;
+
     RESET(&PG_None_Isotope);
 
     RESET(&PG_R_Thrown);
@@ -890,10 +894,6 @@ void Startup_Core(void)
 
     BOOT_BLK *boot =
         cast(BOOT_BLK*, ARR_HEAD(VAL_ARRAY_KNOWN_MUTABLE(ARR_HEAD(boot_array))));
-
-    // Initialize NONE_ISOTOPE (must be after symbols loaded)
-    //
-    Init_None(&PG_None_Isotope);  // symbol not GC'd
 
     // ID_OF_SYMBOL(), VAL_WORD_ID() and Canon(XXX) now available
 
