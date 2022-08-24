@@ -437,7 +437,7 @@ REBTYPE(Integer)
             REBDEC dec = Round_Dec(
                 cast(REBDEC, num), frame_, VAL_DECIMAL(to)
             );
-            Reset_Cell_Header_Untracked(
+            Reset_Unquoted_Header_Untracked(
                 TRACK(OUT),
                 FLAG_HEART_BYTE(VAL_TYPE(to)) | CELL_MASK_NO_NODES
             );

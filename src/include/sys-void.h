@@ -37,9 +37,10 @@
 //   unique advantage of being the 0 type to get to the void state through
 //   a single masking operation.
 //
-// * Cells are allowed to be memset() to 0 and report that they are void, for
-//  efficiency...even though they don't have NODE_FLAG_NODE or NODE_FLAG_CELL.
-
+// * Due to the needs of Detect_Rebol_Pointer(), we unfortunately can't use
+//   the optimization that a header of all 0 would be interpreted as being
+//   VOID, e.g. with a REB_NULL heart and ISOTOPE_0 set.  The reason is that
+//   this conflates with an empty UTF-8 string.
 
 #define VOID_CELL \
     c_cast(const REBVAL*, &PG_Void_Cell)
@@ -52,42 +53,58 @@ inline static Cell(*) Prep_Cell_Untracked(Cell(*) c) {
 }
 
 #define Prep_Cell(c) \
-    TRACK(Prep_Cell_Untracked(c))  // TRACK() expects REB_0, so track *after*
+    TRACK(Prep_Cell_Untracked(c))
 
 
 // Optimized Prep, with no guarantee about the prior condition of the bits.
 //
 inline static REBVAL *Prep_Stale_Void_Untracked(Cell(*) out) {
-    out->header.bits = NODE_FLAG_NODE | NODE_FLAG_CELL | CELL_FLAG_STALE;
+    ALIGN_CHECK_CELL_EVIL_MACRO(out);
+    out->header.bits = (
+        NODE_FLAG_NODE | NODE_FLAG_CELL
+            | FLAG_HEART_BYTE(REB_NULL) | FLAG_QUOTE_BYTE(ISOTOPE_0)
+            | CELL_MASK_NO_NODES | CELL_FLAG_STALE
+    );
     return cast(REBVAL*, out);
 }
 
 #define Prep_Stale_Void(out) \
-    TRACK(Prep_Stale_Void_Untracked(out))  // TRACK() expects REB_0, call after
+    TRACK(Prep_Stale_Void_Untracked(out))
 
 
 inline static REBVAL *Prep_Void_Untracked(Cell(*) out) {
-    out->header.bits = NODE_FLAG_NODE | NODE_FLAG_CELL;
+    ALIGN_CHECK_CELL_EVIL_MACRO(out);
+    out->header.bits = (
+        NODE_FLAG_NODE | NODE_FLAG_CELL
+            | FLAG_HEART_BYTE(REB_NULL) | FLAG_QUOTE_BYTE(ISOTOPE_0)
+            | CELL_MASK_NO_NODES
+    );
     return cast(REBVAL*, out);
 }
 
 #define Prep_Void(out) \
-    TRACK(Prep_Void_Untracked(out))  // TRACK() expects REB_0, call after
+    TRACK(Prep_Void_Untracked(out))
+
 
 
 inline static bool Is_Void(Value(const*) v) {
-    assert(not (v->header.bits & CELL_FLAG_STALE));
-    return VAL_TYPE_UNCHECKED(v) == REB_0;
+    return HEART_BYTE(v) == REB_NULL and QUOTE_BYTE(v) == ISOTOPE_0;
 }
 
 inline static bool Is_Stale_Void(Value(const*) v) {
     if (not (v->header.bits & CELL_FLAG_STALE))
         return false;
-    return VAL_TYPE_UNCHECKED(v) == REB_0;
+    if (HEART_BYTE_UNCHECKED(v) != REB_NULL)
+        return false;
+    return QUOTE_BYTE_UNCHECKED(v) == ISOTOPE_0;
 }
 
 inline static Value(*) Init_Stale_Void_Untracked(Value(*) out) {
-    Reset_Cell_Header_Untracked(out, CELL_MASK_VOID | CELL_FLAG_STALE);
+    Init_Cell_Header_Untracked(
+        RESET_Untracked(out),
+        FLAG_HEART_BYTE(REB_NULL) | FLAG_QUOTE_BYTE(ISOTOPE_0)
+            | CELL_MASK_NO_NODES | CELL_FLAG_STALE
+    );
 
   #ifdef ZERO_UNUSED_CELL_FIELDS
     EXTRA(Any, out).trash = ZEROTRASH;

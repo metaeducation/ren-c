@@ -353,23 +353,14 @@ void Form_Array_At(
 void MF_Fail(REB_MOLD *mo, noquote(Cell(const*)) v, bool form)
 {
     UNUSED(form);
+    UNUSED(mo);
 
-    if (CELL_HEART(v) == REB_0) {
-        //
-        // REB_0 is reserved for special purposes, and should only be molded
-        // in debug scenarios.
-        //
-    #if defined(NDEBUG)
-        UNUSED(mo);
-        panic (v);
-    #else
-        printf("!!! Request to MOLD or FORM a REB_0 value !!!\n");
-        Append_Ascii(mo->series, "!!!REB_0!!!");
-        debug_break(); // don't crash if under a debugger, just "pause"
-    #endif
-    }
-
+  #if defined(NDEBUG)
+    UNUSED(v);
     fail ("Cannot MOLD or FORM datatype.");
+  #else
+    panic(v);
+  #endif
 }
 
 
@@ -452,15 +443,15 @@ void Mold_Or_Form_Value(REB_MOLD *mo, Cell(const*) v, bool form)
     for (i = 0; i < depth; ++i)
         Append_Ascii(mo->series, "'");
 
-    if (QUOTE_BYTE(v) & QUASI_1) {
+    if (QUOTE_BYTE(v) & NONQUASI_BIT)
+        Mold_Or_Form_Cell(mo, VAL_UNESCAPED(v), form);
+    else {
         Append_Codepoint(mo->series, '~');
         if (HEART_BYTE(v) != REB_BLANK) {
             Mold_Or_Form_Cell(mo, VAL_UNESCAPED(v), form);
             Append_Codepoint(mo->series, '~');
         }
     }
-    else
-        Mold_Or_Form_Cell(mo, VAL_UNESCAPED(v), form);
 }
 
 

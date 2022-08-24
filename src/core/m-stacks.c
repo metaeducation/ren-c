@@ -41,9 +41,14 @@ void Startup_Data_Stack(REBLEN capacity)
     ensureNullptr(DS_Array) = Make_Array_Core(
         1,
         FLAG_FLAVOR(DATASTACK) | SERIES_FLAGS_NONE
-      );
-    Init_Trash(ARR_HEAD(DS_Array));
-    Set_Cell_Flag(ARR_HEAD(DS_Array), PROTECTED);
+    );
+
+    Cell(*) head = ARR_HEAD(DS_Array);
+    Init_Trash(head);
+    Set_Cell_Flag(head, PROTECTED);
+  #if DEBUG_UNREADABLE_TRASH
+    assert(IS_TRASH(head));
+  #endif
 
     // The tail marker will signal PUSH() that it has run out of space,
     // and it will perform the allocation at that time.

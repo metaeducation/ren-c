@@ -252,23 +252,20 @@ bool Matches_Fake_Type_Constraint(Cell(const*) v, enum Reb_Symbol_Id sym) {
 //
 Array(*) Startup_Datatypes(Array(*) boot_types, Array(*) boot_typespecs)
 {
-    if (ARR_LEN(boot_types) != REB_MAX - 1)  // exclude REB_0_VOID
+    if (ARR_LEN(boot_types) != REB_MAX - 1)  // exclude REB_NULL (not a type)
         panic (boot_types);  // other types/internals should have a WORD!
+
+    Array(*) catalog = Make_Array(REB_MAX - 1);
 
     Cell(const*) word_tail = ARR_TAIL(boot_types);
     Cell(*) word = ARR_HEAD(boot_types);
 
-    if (VAL_WORD_ID(word) != SYM_NULL)
-        panic (word);  // First internal byte type is NULL at 1
+    REBINT n = VAL_WORD_ID(word);
+    if (n != SYM_0 + 1)  // first symbol (SYM_NULL is something random)
+        panic (word);
 
-    Array(*) catalog = Make_Array(REB_MAX - 1);
-
-    REBINT n;
-    for (n = 1; word != word_tail; ++word, ++n) {
+    for (; word != word_tail; ++word, ++n) {
         enum Reb_Kind kind = cast(enum Reb_Kind, n);
-
-        if (kind == REB_NULL)  // Already added by Startup_Lib()
-            continue;
 
         REBVAL *value = Append_Context(Lib_Context, SPECIFIC(word), nullptr);
 
@@ -290,13 +287,13 @@ Array(*) Startup_Datatypes(Array(*) boot_types, Array(*) boot_typespecs)
             continue;
         }
 
-        Reset_Cell_Header_Untracked(
+        Reset_Unquoted_Header_Untracked(
             TRACK(value),
             FLAG_HEART_BYTE(REB_DATATYPE) | CELL_FLAG_FIRST_IS_NODE
         );
         VAL_TYPE_KIND_ENUM(value) = kind;
         INIT_VAL_TYPE_SPEC(value,
-            VAL_ARRAY(ARR_AT(boot_typespecs, n - 2))
+            VAL_ARRAY(ARR_AT(boot_typespecs, n - 1))
         );
 
         // !!! The system depends on these definitions, as they are used by

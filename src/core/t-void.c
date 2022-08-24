@@ -49,7 +49,7 @@ Bounce MAKE_Quasi(
     // Quasify() does ont.
 
     Copy_Cell(OUT, arg);
-    mutable_QUOTE_BYTE(OUT) = QUASI_1;
+    mutable_QUOTE_BYTE(OUT) = QUASI_2;
     return OUT;
 }
 

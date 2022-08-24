@@ -181,7 +181,7 @@ inline static void CLEAR_ALL_TYPESET_BITS(Cell(*) v) {
 // isotopic type matcher (e.g. used by FIND, SWITCH)
 
 inline static bool Is_Matcher(Cell(const*) v) {
-    if (QUOTE_BYTE(v) != ISOTOPE_255)
+    if (QUOTE_BYTE(v) != ISOTOPE_0)
         return false;
     return HEART_BYTE(v) == REB_DATATYPE or HEART_BYTE(v) == REB_TYPESET;
 }
@@ -316,7 +316,7 @@ inline static bool Is_Specialized(const REBPAR *param) {
         HEART_BYTE_UNCHECKED(param) == REB_TYPESET  // no assert on isotope
         and VAL_PARAM_CLASS(param) != PARAM_CLASS_0  // non-parameter typeset
     ){
-        assert(QUOTE_BYTE(param) == UNQUOTED_0);  // no quoted parameters
+        assert(QUOTE_BYTE(param) == UNQUOTED_1);  // no quoted parameters
         if (Get_Cell_Flag(param, VAR_MARKED_HIDDEN))
             assert(!"Unspecialized parameter is marked hidden!");
         return false;
@@ -328,7 +328,7 @@ inline static bool Is_Specialized(const REBPAR *param) {
 
 inline static REBVAL *Init_Typeset_Core(Cell(*) out, REBU64 bits)
 {
-    Reset_Cell_Header_Untracked(out, CELL_MASK_TYPESET);
+    Reset_Unquoted_Header_Untracked(out, CELL_MASK_TYPESET);
     VAL_PARAM_FLAGS(out) = FLAG_PARAM_CLASS_BYTE(PARAM_CLASS_0);
     VAL_TYPESET_LOW_BITS(out) = bits & cast(uint32_t, 0xFFFFFFFF);
     VAL_TYPESET_HIGH_BITS(out) = bits >> 32;
@@ -344,7 +344,7 @@ inline static REBPAR *Init_Param_Core(
     Flags param_flags,
     REBU64 bits
 ){
-    Reset_Cell_Header_Untracked(out, CELL_MASK_TYPESET);
+    Reset_Unquoted_Header_Untracked(out, CELL_MASK_TYPESET);
 
     VAL_PARAM_FLAGS(out) = param_flags;
     VAL_TYPESET_LOW_BITS(out) = bits & cast(uint32_t, 0xFFFFFFFF);
@@ -412,10 +412,10 @@ inline static bool Typecheck_Including_Constraints(
 
         if (VAL_NUM_QUOTES(v) > 1)
             kind = REB_QUOTED;
-        else if (QUOTE_BYTE(v) & QUASI_1)
-            kind = REB_QUASI;
-        else
+        else if (QUOTE_BYTE(v) & NONQUASI_BIT)
             kind = CELL_HEART(VAL_UNESCAPED(v));
+        else
+            kind = REB_QUASI;
     }
     else {
         kind = VAL_TYPE(v);

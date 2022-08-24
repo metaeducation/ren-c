@@ -25,9 +25,6 @@
 // for simplification, pending a broader review of what was needed.
 //
 // %words.r is arranged so symbols for types are at the start of the enum.
-// Note REB_0 is not a type, which lines up with SYM_0 used for symbol IDs as
-// "no symbol".  Also, NULL is not a value type, and is at REB_MAX past the
-// end of the list.
 //
 // !!! Consider renaming (or adding a synonym) to just TYPE!
 //
@@ -63,7 +60,7 @@ inline static REBVAL *Init_Builtin_Datatype(
     Cell(*) out,
     enum Reb_Kind kind
 ){
-    assert(kind > REB_0 and kind < REB_MAX);
+    assert(kind < REB_MAX);
     Copy_Cell(out, Datatype_From_Kind(kind));
     assert(VAL_TYPE_KIND(out) == kind);
     assert(Get_Cell_Flag(out, FIRST_IS_NODE));
@@ -79,7 +76,7 @@ inline static REBVAL *Init_Custom_Datatype(
     Cell(*) out,
     const REBTYP *type
 ){
-    Reset_Cell_Header_Untracked(
+    Reset_Unquoted_Header_Untracked(
         out,
         FLAG_HEART_BYTE(REB_DATATYPE)
             | CELL_FLAG_FIRST_IS_NODE | CELL_FLAG_SECOND_IS_NODE

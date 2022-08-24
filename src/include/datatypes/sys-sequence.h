@@ -234,7 +234,7 @@ inline static REBVAL *Init_Any_Sequence_Bytes(
     const Byte* data,
     Size size
 ){
-    Reset_Cell_Header_Untracked(
+    Reset_Unquoted_Header_Untracked(
         out,
         FLAG_HEART_BYTE(kind) | CELL_MASK_NO_NODES
     );
@@ -272,7 +272,7 @@ inline static REBVAL *Try_Init_Any_Sequence_All_Integers(
     if (len < 2)
         return nullptr;
 
-    Reset_Cell_Header_Untracked(
+    Reset_Unquoted_Header_Untracked(
         out,
         FLAG_HEART_BYTE(kind) | CELL_MASK_NO_NODES
     );
@@ -533,7 +533,7 @@ inline static Cell(const*) VAL_SEQUENCE_AT(
         if (sequence != store)
             Copy_Cell(store, CELL_TO_VAL(sequence));
         mutable_HEART_BYTE(store) = REB_WORD;
-        mutable_QUOTE_BYTE(store) = UNQUOTED_0;  // quote is "on" the sequence
+        mutable_QUOTE_BYTE(store) = UNQUOTED_1;  // quote is "on" the sequence
         return store; }
 
       case FLAVOR_ARRAY : {  // uncompressed sequence

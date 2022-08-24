@@ -273,7 +273,7 @@ Bounce Action_Executor(Frame(*) f)
         goto fulfill_loop_body;  // optimized out
 
       continue_fulfilling:
-        assert(not Is_Void(ARG));
+        assert(READABLE(ARG));
         if (STATE == ST_ACTION_DOING_PICKUPS) {
             if (TOP_INDEX != f->baseline.stack_base)
                 goto next_pickup;
@@ -283,7 +283,7 @@ Bounce Action_Executor(Frame(*) f)
         continue;
 
       skip_fulfilling_arg_for_now:  // the GC marks args up through ARG...
-        assert(Is_Void(ARG));
+        assert(Is_Fresh(ARG));
         continue;
 
   //=//// ACTUAL LOOP BODY ////////////////////////////////////////////////=//
@@ -1370,7 +1370,8 @@ void Push_Action(
         NODE_FLAG_NODE
             | NODE_FLAG_CELL
             | CELL_FLAG_PROTECTED  // payload/binding tweaked, but not by user
-            | CELL_MASK_FRAME;
+            | CELL_MASK_FRAME
+            | FLAG_QUOTE_BYTE(UNQUOTED_1);
     INIT_VAL_CONTEXT_VARLIST(f->rootvar, f->varlist);
 
     INIT_VAL_FRAME_PHASE(f->rootvar, act);  // FRM_PHASE()

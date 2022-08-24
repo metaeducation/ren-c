@@ -90,12 +90,7 @@ static REBI64 mark_count = 0;
     assert(SER_USED(GC_Mark_Stack) == 0)
 
 
-static void Queue_Mark_Opt_Value_Deep(Cell(const*) v);
-
-inline static void Queue_Mark_Opt_Void_Cell_Deep(Cell(const*) v) {
-    if (VAL_TYPE_UNCHECKED(v) != REB_0_VOID)  // faster than Is_Void()
-        Queue_Mark_Opt_Value_Deep(v);
-}
+static void Queue_Mark_Cell_Deep(Cell(const*) v);
 
 inline static void Queue_Mark_Maybe_Stale_Cell_Deep(Cell(*) v) {
     if (Is_Fresh(v))
@@ -115,17 +110,11 @@ inline static void Queue_Mark_Maybe_Stale_Cell_Deep(Cell(*) v) {
     v->header.bits &= (~ CELL_FLAG_STALE);
   #endif
 
-    Queue_Mark_Opt_Value_Deep(v);
+    Queue_Mark_Cell_Deep(v);
 
   #if !defined(NDEBUG)
     v->header.bits = saved_bits;
   #endif
-}
-
-inline static void Queue_Mark_Value_Deep(Cell(const*) v)
-{
-    assert(VAL_TYPE_UNCHECKED(v) != REB_NULL);  // faster than Is_Nulled()
-    Queue_Mark_Opt_Value_Deep(v);  // unreadable trash is ok
 }
 
 
@@ -154,8 +143,8 @@ static void Queue_Mark_Pairing_Deep(REBVAL *paired)
     in_mark = false;  // would assert about the recursion otherwise
   #endif
 
-    Queue_Mark_Opt_Value_Deep(paired);
-    Queue_Mark_Opt_Void_Cell_Deep(PAIRING_KEY(paired));  // QUOTED! uses void
+    Queue_Mark_Cell_Deep(paired);
+    Queue_Mark_Cell_Deep(PAIRING_KEY(paired));  // QUOTED! uses void
 
     paired->header.bits |= NODE_FLAG_MARKED;
     ++mark_count;
@@ -330,19 +319,14 @@ static void Queue_Unmarked_Accessible_Series_Deep(REBSER *s)
 
 
 //
-//  Queue_Mark_Opt_Value_Deep: C
+//  Queue_Mark_Cell_Deep: C
 //
-// If a slot is not supposed to allow END, use Queue_Mark_Opt_Value_Deep()
-// If a slot allows neither END nor NULLED cells, use Queue_Mark_Value_Deep()
-//
-static void Queue_Mark_Opt_Value_Deep(Cell(const*) cv)
+static void Queue_Mark_Cell_Deep(Cell(const*) cv)
 {
     Cell(*) v = m_cast(Cell(*), cv);  // we're the system, we can do this
 
     if (IS_TRASH(cv))  // always false in release builds (no cost)
         return;
-
-    assert(VAL_TYPE_UNCHECKED(v) != REB_0_VOID);
 
     // We mark based on the type of payload in the cell, e.g. its "unescaped"
     // form.  So if '''a fits in a WORD! (despite being a QUOTED!), we want
@@ -415,13 +399,10 @@ static void Propagate_All_GC_Marks(void)
         Cell(*) v = ARR_HEAD(a);
         Cell(const*) tail = ARR_TAIL(a);
         for (; v != tail; ++v) {
-            if (GET_SERIES_FLAG(a, DYNAMIC))
-                Queue_Mark_Opt_Value_Deep(v);
-            else
-                Queue_Mark_Opt_Void_Cell_Deep(v);
-
           #if !defined(NDEBUG)
-            //
+            if (Is_Isotope(v))  // only legal in objects/frames
+                assert(IS_VARLIST(a) or IS_PATCH(a));
+
             // Nulls are illegal in most arrays, but context varlists use
             // "nulled cells" to denote that the variable is not set.
             //
@@ -429,11 +410,9 @@ static void Propagate_All_GC_Marks(void)
                 if (not (IS_VARLIST(a) or IS_PATCH(a) or IS_PAIRLIST(a)))
                     panic (a);
             }
-
-            if (Is_Isotope(v)) {  // only legal in objects/frames
-                assert(IS_VARLIST(a) or IS_PATCH(a));
-            }
           #endif
+
+            Queue_Mark_Cell_Deep(v);
         }
 
       #if !defined(NDEBUG)
@@ -569,7 +548,7 @@ static void Mark_Root_Series(void)
                 //
                 if (not (a->leader.bits & NODE_FLAG_MANAGED)) {
                     // if it's not managed, don't mark it (don't have to?)
-                    Queue_Mark_Opt_Void_Cell_Deep(ARR_SINGLE(a));
+                    Queue_Mark_Cell_Deep(ARR_SINGLE(a));
                 }
                 else { // Note that Mark_Frame_Stack_Deep() will mark the owner
                     if (not (a->leader.bits & NODE_FLAG_MARKED)) {
@@ -595,8 +574,8 @@ static void Mark_Root_Series(void)
                     continue; // PAIR! or other value will mark it
 
                 assert(!"unmanaged pairings not believed to exist yet");
-                Queue_Mark_Opt_Value_Deep(paired);
-                Queue_Mark_Opt_Value_Deep(PAIRING_KEY(paired));
+                Queue_Mark_Cell_Deep(paired);
+                Queue_Mark_Cell_Deep(PAIRING_KEY(paired));
             }
 
             // !!! The DS_Array does not currently keep its `used` field up
@@ -645,7 +624,7 @@ static void Mark_Root_Series(void)
                 Cell(const*) item_tail = ARR_TAIL(a);
                 Cell(*) item = ARR_HEAD(a);
                 for (; item != item_tail; ++item)
-                    Queue_Mark_Value_Deep(item);
+                    Queue_Mark_Cell_Deep(item);
             }
 
             // At present, no handling for unmanaged STRING!, BINARY!, etc.
@@ -679,7 +658,7 @@ static void Mark_Data_Stack(void)
 
     REBVAL *stackval = DS_Movable_Top;
     for (; stackval != head; --stackval)  // stop before Data_Stack_At(0)
-        Queue_Mark_Value_Deep(stackval);
+        Queue_Mark_Cell_Deep(stackval);
 
     Propagate_All_GC_Marks();
 }
@@ -731,7 +710,7 @@ static void Mark_Guarded_Nodes(void)
             //
             // !!! What if someone tried to GC_GUARD a managed paired REBSER?
             //
-            Queue_Mark_Opt_Void_Cell_Deep(cast(const REBVAL*, *np));
+            Queue_Mark_Cell_Deep(cast(const REBVAL*, *np));
         }
         else  // a series
             Queue_Mark_Node_Deep(np);
@@ -767,7 +746,7 @@ static void Mark_Frame_Stack_Deep(void)
         //
         Array(*) singular = FEED_SINGULAR(f->feed);
         do {
-            Queue_Mark_Value_Deep(ARR_SINGLE(singular));
+            Queue_Mark_Cell_Deep(ARR_SINGLE(singular));
             singular = LINK(Splice, singular);
         } while (singular);
 
@@ -894,7 +873,7 @@ static void Mark_Frame_Stack_Deep(void)
                 if (key == f->u.action.key)
                     Queue_Mark_Maybe_Stale_Cell_Deep(arg);
                 else
-                    Queue_Mark_Opt_Void_Cell_Deep(arg);
+                    Queue_Mark_Cell_Deep(arg);
             }
         }
 
@@ -1231,7 +1210,7 @@ REBLEN Recycle_Core(bool shutdown, REBSER *sweeplist)
                     SET_SERIES_FLAG(patch, MARKED);
                     ++mark_count;
 
-                    Queue_Mark_Opt_Value_Deep(ARR_SINGLE(ARR(patch)));
+                    Queue_Mark_Cell_Deep(ARR_SINGLE(ARR(patch)));
 
                     // We also have to keep the word alive, but not necessarily
                     // keep all the other declarations in other modules alive.

@@ -82,7 +82,6 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
     // still can speed things up to go in order.
     //
     switch (heart) {
-      case REB_0_VOID:
       case REB_NULL:
       case REB_BLANK:
       case REB_COMMA:
@@ -130,7 +129,7 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
       case REB_DATATYPE:
         if (VAL_TYPE_SPEC(v))  // currently allowed to be null, see %types.r
             assert(Is_Marked(VAL_TYPE_SPEC(v)));
-        assert(VAL_TYPE_KIND_OR_CUSTOM(v) != REB_0);
+        assert(VAL_TYPE_KIND_OR_CUSTOM(v) != REB_NULL);
         break;
 
       case REB_TYPESET: {  // bitset bits don't need marking

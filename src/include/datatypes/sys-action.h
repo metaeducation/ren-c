@@ -131,7 +131,7 @@ inline static void INIT_BONUS_KEYSOURCE(Array(*) varlist, Node* keysource) {
 //
 
 inline static REBVAL *Init_Return_Signal_Untracked(Cell(*) out, char ch) {
-    Reset_Cell_Header_Untracked(
+    Reset_Unquoted_Header_Untracked(
         out,
         FLAG_HEART_BYTE(REB_T_RETURN_SIGNAL) | CELL_MASK_NO_NODES
     );
@@ -552,7 +552,7 @@ inline static REBVAL *Init_Action_Core(
   #endif
     Force_Series_Managed(ACT_IDENTITY(a));
 
-    Reset_Cell_Header_Untracked(out, CELL_MASK_ACTION);
+    Reset_Unquoted_Header_Untracked(out, CELL_MASK_ACTION);
     INIT_VAL_ACTION_DETAILS(out, ACT_IDENTITY(a));
     INIT_VAL_ACTION_LABEL(out, label);
     INIT_VAL_ACTION_BINDING(out, binding);
@@ -632,8 +632,8 @@ inline static bool Was_Eval_Step_Void(const REBVAL *out) {
 // CELL_FLAG_STALE set).  Review design of this.
 //
 inline static bool Is_Stale(const REBVAL *out) {
+    ASSERT_CELL_WRITABLE_EVIL_MACRO(out);
     assert(not Is_Throwing(TOP_FRAME));  // stale outs during throw means thrown
-    ASSERT_CELL_INITABLE_EVIL_MACRO(out);
 
     return did (out->header.bits & CELL_FLAG_STALE);
 }
@@ -664,7 +664,6 @@ inline static Bounce Native_Branched_Result(Frame(*) frame_, Value(*) v) {
 
 
 inline static REBVAL *Mark_Eval_Out_Voided(REBVAL *out) {
-    ASSERT_CELL_INITABLE_EVIL_MACRO(out);
     assert(Is_Stale(out));
 
     // We want void evaluations to "vanish", and so we can't overwrite what's

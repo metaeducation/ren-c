@@ -176,7 +176,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
         and Not_Frame_Flag(FRAME, MAYBE_STALE)
     ){
         if (FRAME->executor != &Just_Use_Out_Executor)  // exempt, see [1]
-            assert(VAL_TYPE_UNCHECKED(OUT) == REB_0);  // stale voids, see [2]
+            assert(Is_Fresh(OUT));  // stale is allowed, see [2]
     }
 
 { //=//// CALL THE EXECUTOR ///////////////////////////////////////////////=//

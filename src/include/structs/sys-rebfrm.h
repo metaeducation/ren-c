@@ -131,7 +131,7 @@ STATIC_ASSERT(FRAME_FLAG_7_IS_TRUE == NODE_FLAG_CELL);
 
 //=//// FRAME_FLAG_FAILURE_RESULT_OK ///////////////////////////////////////=//
 //
-// The special ISOTOPE_255 quotelevel will trip up code that isn't expecting
+// The special ISOTOPE_0 quotelevel will trip up code that isn't expecting
 // it, so most frames do not want to receive these "isotopic forms of error!"
 // This flag can be used with FRAME_FLAG_META_RESULT or without it, to say
 // that the caller is planning on dealing with the special case.

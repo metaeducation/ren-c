@@ -50,47 +50,47 @@
 
 inline static bool Is_Raised(Cell(const*) v)
   { return HEART_BYTE_UNCHECKED(v) == REB_ERROR
-    and QUOTE_BYTE_UNCHECKED(v) == ISOTOPE_255; }
+    and QUOTE_BYTE_UNCHECKED(v) == ISOTOPE_0; }
 
 inline static bool Is_Meta_Of_Raised(Cell(const*) v)
   { return HEART_BYTE_UNCHECKED(v) == REB_ERROR
-    and QUOTE_BYTE_UNCHECKED(v) == QUASI_1; }
+    and QUOTE_BYTE_UNCHECKED(v) == QUASI_2; }
 
 
 inline static Value(*) Raisify(Cell(*) v) {
-    assert(IS_ERROR(v) and QUOTE_BYTE(v) == UNQUOTED_0);
+    assert(IS_ERROR(v) and QUOTE_BYTE(v) == UNQUOTED_1);
     Force_Location_Of_Error(VAL_CONTEXT(v), TOP_FRAME);  // ideally already set
-    mutable_QUOTE_BYTE(v) = ISOTOPE_255;
+    mutable_QUOTE_BYTE(v) = ISOTOPE_0;
     return VAL(v);
 }
 
 inline static bool Is_Splice(Cell(const*) v)
   { return HEART_BYTE_UNCHECKED(v) == REB_BLOCK
-    and QUOTE_BYTE_UNCHECKED(v) == ISOTOPE_255; }
+    and QUOTE_BYTE_UNCHECKED(v) == ISOTOPE_0; }
 
 
 inline static Value(*) Splicify(Cell(*) v) {
-    assert(IS_BLOCK(v) and QUOTE_BYTE(v) == UNQUOTED_0);
-    mutable_QUOTE_BYTE(v) = ISOTOPE_255;
+    assert(IS_BLOCK(v) and QUOTE_BYTE(v) == UNQUOTED_1);
+    mutable_QUOTE_BYTE(v) = ISOTOPE_0;
     return VAL(v);
 }
 
 inline static bool Is_Meta_Of_Splice(Cell(const*) v)
   { return HEART_BYTE_UNCHECKED(v) == REB_BLOCK
-    and QUOTE_BYTE_UNCHECKED(v) == QUASI_1; }
+    and QUOTE_BYTE_UNCHECKED(v) == QUASI_2; }
 
 
 
 inline static REBVAL *Unquasify(REBVAL *v) {
-    assert(QUOTE_BYTE(v) == QUASI_1);
-    mutable_QUOTE_BYTE(v) = UNQUOTED_0;
+    assert(QUOTE_BYTE(v) == QUASI_2);
+    mutable_QUOTE_BYTE(v) = UNQUOTED_1;
     return v;
 }
 
 inline static REBVAL *Quasify(REBVAL *v) {
-    assert(QUOTE_BYTE(v) == UNQUOTED_0);
+    assert(QUOTE_BYTE(v) == UNQUOTED_1);
     assert(not Is_Nulled(v) and not Is_Void(v));
-    mutable_QUOTE_BYTE(v) = QUASI_1;
+    mutable_QUOTE_BYTE(v) = QUASI_2;
     return v;
 }
 
@@ -130,8 +130,8 @@ inline static Value(*) Meta_Unquotify(Value(*) v) {
         fail (VAL_CONTEXT(v));  // too dangerous to create failure easily
     if (Is_Nulled(v))
         RESET(v);
-    else if (QUOTE_BYTE(v) == QUASI_1)
-        mutable_QUOTE_BYTE(v) = ISOTOPE_255;
+    else if (QUOTE_BYTE(v) == QUASI_2)
+        mutable_QUOTE_BYTE(v) = ISOTOPE_0;
     else
         Unquotify_Core(v, 1);
     return v;

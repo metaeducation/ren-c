@@ -87,7 +87,7 @@ inline static REBVAL *Init_Any_Word_Untracked(
     Cell(*) out,
     enum Reb_Kind kind,
     Symbol(const*) sym,
-    Flags flags
+    Byte quote_byte
 );
 
 inline static OPT_SYMID VAL_WORD_ID(noquote(Cell(const*)) v);
@@ -97,8 +97,7 @@ inline static bool Is_Quasi_Word(Cell(const*) v)
   { return IS_QUASI(v) and HEART_BYTE_UNCHECKED(v) == REB_WORD; }
 
 #define Init_Quasi_Word(out,sym) \
-    Init_Any_Word_Untracked( \
-        TRACK(out), REB_WORD, (sym), FLAG_QUOTE_BYTE(QUASI_1))
+    Init_Any_Word_Untracked(TRACK(out), REB_WORD, (sym), QUASI_2)
 
 
 //=//// BAD-WORD! ISOTOPES (just called "isotopes" for short) //////////////=//
@@ -107,32 +106,18 @@ inline static bool Is_Quasi_Word(Cell(const*) v)
 // is evaluated.  These cannot live in blocks, and most are "unfriendly" and
 // cannot be passed as normal parameters...you have to use ^META ones.
 
-inline static REBVAL *Init_Word_Isotope_Untracked(
-    Value(*) out,
-    option(Symbol(const*)) label
-){
-    return Init_Any_Word_Untracked(
-        out, REB_WORD, label, FLAG_QUOTE_BYTE(ISOTOPE_255)
-    );
-}
-
 #define Init_Word_Isotope(out,label) \
-    Init_Word_Isotope_Untracked(TRACK(out), (label))
+    Init_Any_Word_Untracked(TRACK(out), REB_WORD, (label), ISOTOPE_0)
 
 inline static bool Is_Word_Isotope(Cell(const*) v)
-  { return QUOTE_BYTE(v) == ISOTOPE_255 and HEART_BYTE(v) == REB_WORD; }
+  { return QUOTE_BYTE(v) == ISOTOPE_0 and HEART_BYTE(v) == REB_WORD; }
 
-inline static bool Is_Isotope(Cell(const*) v) {
-    if (QUOTE_BYTE(v) != ISOTOPE_255)
-        return false;
-
-    assert(HEART_BYTE(v) != REB_0 and HEART_BYTE(v) != REB_NULL);
-    return true;
-}
+inline static bool Is_Isotope(Cell(const*) v)
+  { return QUOTE_BYTE(v) == ISOTOPE_0; }
 
 inline static Value(*) Reify_Isotope(Value(*) v) {
     assert(Is_Isotope(v));
-    mutable_QUOTE_BYTE(v) = QUASI_1;
+    mutable_QUOTE_BYTE(v) = QUASI_2;
     return v;
 }
 
@@ -176,11 +161,10 @@ inline static bool Is_Word_Isotope_With_Id(
 #define NONE_ISOTOPE                c_cast(const REBVAL*, &PG_None_Isotope)
 
 #define Init_None(out) \
-    Init_Blank_Untracked( \
-        TRACK(ensure(Value(*), (out))), FLAG_QUOTE_BYTE(ISOTOPE_255))
+    Init_Blank_Untracked(TRACK(ensure(Value(*), (out))), ISOTOPE_0)
 
 #define Init_Meta_Of_None(out) \
-    Init_Blank_Untracked(TRACK(out), FLAG_QUOTE_BYTE(QUASI_1))
+    Init_Blank_Untracked(TRACK(out), QUASI_2)
 
 inline static bool Is_None(Value(const*) v)
   { return Is_Isotope(v) and HEART_BYTE(v) == REB_BLANK; }
@@ -219,10 +203,10 @@ inline static bool Is_Meta_Of_Void_Isotope(Cell(const*) v)
 #define DECAYED_VOID_CELL            Lib(NULL)
 
 #define Init_Meta_Of_Null(out) \
-    Init_Nulled_Untracked(TRACK(out), FLAG_QUOTE_BYTE(ONEQUOTE_2))
+    Init_Nulled_Untracked(TRACK(out), ONEQUOTE_3)
 
 inline static bool Is_Meta_Of_Null(Cell(const*) v)
-  { return HEART_BYTE(v) == REB_NULL and QUOTE_BYTE(v) == ONEQUOTE_2; }
+  { return HEART_BYTE(v) == REB_NULL and QUOTE_BYTE(v) == ONEQUOTE_3; }
 
 
 //=//// NULL ISOTOPE (unfriendly ~null~) ///////////////////////////////////=//

@@ -212,7 +212,7 @@ REBI64 Int64s(const REBVAL *val, REBINT sign)
 //
 const REBVAL *Datatype_From_Kind(enum Reb_Kind kind)
 {
-    assert(kind > REB_0 and kind < REB_MAX);
+    assert(kind < REB_MAX);
     REBVAL *type = SPECIFIC(ARR_SINGLE(&PG_Lib_Patches[SYM_FROM_KIND(kind)]));
     assert(IS_DATATYPE(type));
     return type;
@@ -466,12 +466,12 @@ REBLEN Part_Limit_Append_Insert(const REBVAL *part) {
 //
 //  Add_Max: C
 //
-int64_t Add_Max(enum Reb_Kind kind_or_0, int64_t n, int64_t m, int64_t maxi)
+int64_t Add_Max(enum Reb_Kind kind_or_max, int64_t n, int64_t m, int64_t maxi)
 {
     int64_t r = n + m;
     if (r < -maxi or r > maxi) {
-        if (kind_or_0 != REB_0)
-            fail (Error_Type_Limit_Raw(Datatype_From_Kind(kind_or_0)));
+        if (kind_or_max != REB_MAX)
+            fail (Error_Type_Limit_Raw(Datatype_From_Kind(kind_or_max)));
         r = r > 0 ? maxi : -maxi;
     }
     return r;

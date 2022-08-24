@@ -13,10 +13,6 @@ REBOL [
     Purpose: {
         This table is used to make C defines and intialization tables.
 
-        !!! REVIEW IMPACT ON %sys-ordered.h ANY TIME YOU CHANGE THE ORDER !!!
-        Special ordering is used to make tests on ranges of types particularly
-        fast in common cases.  Pay close attention.
-
         name        - name of datatype (generates words)
         description - short statement of type's purpose (used by HELP)
         class       - how "generic" actions are dispatched (T_type)
@@ -40,6 +36,14 @@ REBOL [
         will find the ACTION! dispatch for that type in `REBTYPE(Somename)`.
     }
     Notes: {
+      * NULL is not a datatype, and is not included here.  It uses the special
+        heart byte of 0, which is also the heart byte of its isotopic form
+        (which is called VOID).
+
+      * Code shouldn't be dependent on the specific values of the other heart
+        bytes.  Though there are some issues related to relative ordering;
+        all such dependencies should be in %sys-ordered.h
+
       * There's no particularly fast test for ANY_ARRAY(), ANY_PATH(), or
         ANY_WORD(), as they're less common than testing for ANY_INERT().
 
@@ -56,38 +60,6 @@ REBOL [
 ;           (CELL_FLAG_XXX | CELL_FLAG_XXX)  ; makes CELL_MASK_XXX
 ;           [class       make    mold]
 
-; The special 0 state of the REB_XXX enumeration was once used as a marker to
-; indicate array termination (parallel to how '\0' terminates strings).  But
-; to save on memory usage, the concept of a full cell terminator was dropped.
-; Instead, arrays are enumerated to their tail positions:
-;
-; https://forum.rebol.info/t/1445
-;
-; But REB_0 had another use, as a "less than null" signal.  This was as the
-; the true internal representation of an evaluation that produced nothing.
-; Today we call that use REB_0_VOID.
-;
-; It's also the cell type uninitialized cells wind up with.  It's a consequence
-; of C-isms where memory initialization of zeros can be lower cost (globals
-; always initialized to 0, calloc() and memset may be faster with 0.)  The
-; alias REB_0_FREE is given to use when this is the intent for REB_0.
-
-void        "!!! `VOID!` and `FREE!` aren't datatypes, not exposed to the user"
-            (CELL_MASK_NO_NODES)
-            []
-            [0           0       0]
-
-; REB_NULL takes value 1, but it being 1 is less intrinsic.  It is also not
-; a "type"...but it is falsey, hence it has to be before LOGIC! in the table.
-; In the API, a cell isn't used but it is transformed into the language NULL.
-; To help distinguish it from C's NULL in places where it is undecorated,
-; functions are given names like `Init_Nulled` or `Is_Nulled()`, but the
-; type itself is simply called REB_NULL...which is distinct enough.
-
-null        "!!! `NULL!` isn't a datatype, `null` can't be stored in blocks"
-            (CELL_MASK_NO_NODES)
-            []
-            [0           0       +]
 
 blank!      "placeholder unit type which acts as conditionally false"
             (CELL_MASK_NO_NODES)

@@ -120,10 +120,14 @@ inline static Bounce Run_Generic_Dispatch_Core(
 ){
     GENERIC_HOOK *hook;
     switch (QUOTE_BYTE(first_arg)) {
-      case 0:
+      case ISOTOPE_0:
+        assert(false);
+        hook = nullptr;
+        break;
+      case UNQUOTED_1:
         hook = Generic_Hook_For_Type_Of(first_arg);
         break;
-      case QUASI_1:
+      case QUASI_2:
         hook = &T_Quasi;
         break;
       default:

@@ -50,8 +50,11 @@
 // for soft failure.
 //
 
-inline static REBVAL *Init_Blank_Untracked(Cell(*) out, Flags flags) {
-    Reset_Cell_Header_Untracked(out, FLAG_HEART_BYTE(REB_BLANK) | flags);
+inline static REBVAL *Init_Blank_Untracked(Cell(*) out, Byte quote_byte) {
+    Init_Cell_Header_Untracked(
+        RESET_Untracked(out),
+        FLAG_HEART_BYTE(REB_BLANK) | FLAG_QUOTE_BYTE(quote_byte)
+    );
 
   #ifdef ZERO_UNUSED_CELL_FIELDS
     EXTRA(Any, out).trash = ZEROTRASH;
@@ -63,4 +66,4 @@ inline static REBVAL *Init_Blank_Untracked(Cell(*) out, Flags flags) {
 }
 
 #define Init_Blank(out) \
-    Init_Blank_Untracked(TRACK(out), FLAG_QUOTE_BYTE(UNQUOTED_0))
+    Init_Blank_Untracked(TRACK(out), UNQUOTED_1)

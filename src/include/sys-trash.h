@@ -43,13 +43,12 @@
     // Will trip up any access attempts via READABLE(), but can be overwritten
 
     #define Init_Trash_Untracked(out) \
-        Init_Blank_Untracked( \
-            (out), FLAG_QUOTE_BYTE(ISOTOPE_255) | CELL_FLAG_STALE)
+        Set_Cell_Flag(Init_Blank_Untracked((out), ISOTOPE_0), STALE)
 
     inline static bool IS_TRASH(Cell(const*) v) {
         if (CELL_HEART_UNCHECKED(v) != REB_BLANK)
             return false;
-        if (QUOTE_BYTE_UNCHECKED(v) != ISOTOPE_255)
+        if (QUOTE_BYTE_UNCHECKED(v) != ISOTOPE_0)
             return false;
         return did (v->header.bits & CELL_FLAG_STALE);
     }
@@ -57,7 +56,7 @@
     // Release Build Behavior: Looks just like an unset (`~` isotope)
 
     #define Init_Trash_Untracked(out) \
-        Init_Blank_Untracked((out), FLAG_QUOTE_BYTE(ISOTOPE_255))
+        Init_Blank_Untracked((out), ISOTOPE_0)
 
     #define IS_TRASH(v) false  // should constant-fold out clauses in optimizer
 #endif

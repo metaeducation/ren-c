@@ -30,7 +30,7 @@
 //
 
 inline static REBVAL *Init_Logic_Core(Cell(*) out, bool flag) {
-    Reset_Cell_Header_Untracked(out, CELL_MASK_LOGIC);
+    Reset_Unquoted_Header_Untracked(out, CELL_MASK_LOGIC);
     PAYLOAD(Logic, out).flag = flag;
   #ifdef ZERO_UNUSED_CELL_FIELDS
     EXTRA(Any, out).trash = ZEROTRASH;
@@ -67,7 +67,7 @@ inline static bool VAL_LOGIC(noquote(Cell(const*)) v) {
 // Despite Rebol's C heritage, the INTEGER! 0 is purposefully not "falsey".
 
 inline static bool Is_Truthy(Cell(const*) v) {
-    assert(QUOTE_BYTE(v) != ISOTOPE_255);  // should never be passed isotopes!
+    assert(QUOTE_BYTE(v) != ISOTOPE_0);  // should never be passed isotopes!
     if (VAL_TYPE(v) > REB_LOGIC)
         return true;  // includes QUOTED! `if first ['_] [-- "this is truthy"]`
     if (IS_LOGIC(v))

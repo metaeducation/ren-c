@@ -231,7 +231,7 @@ void* Probe_Core_Debug(
         }
 
         if (*cast(const Byte*, p) == '\0')
-            Probe_Print_Helper(p, expr, "REB_0 (or NUL C String)", file, line);
+            Probe_Print_Helper(p, expr, "Empty C String", file, line);
         else {
             Probe_Print_Helper(p, expr, "C String", file, line);
             printf("\"%s\"\n", cast(const char*, p));

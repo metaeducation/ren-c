@@ -27,9 +27,6 @@ REBOL [
     }
 ]
 
-; The order of these don't matter, but getting to TRUE_VALUE and FALSE_VALUE
-; quickly is useful.
-;
 true
 false
 on
@@ -37,15 +34,13 @@ off
 yes
 no
 
+null
 blank
 blackhole
 
 newline
 space
 
-; The `sys context` and `system object` are different things, which seems a
-; bit confusing.  Review.
-;
 sys
 system
 lib

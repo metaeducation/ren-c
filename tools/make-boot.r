@@ -160,7 +160,17 @@ e-symbols: make-emitter "Symbol ID (SYMID) Enumeration Type and Values" (
 syms-words: copy []
 syms-cscape: copy []
 
-sym-n: 1  ; skip SYM_0 (null added as #1)
+; It's important for clarity and optimization that REB_NULL is 0 (with the
+; isotope byte being 0, empty memory is interpreted as isotopic NULL, e.g.
+; VOID, and that's one of many good reasons for it).
+;
+; But SYM_0 does not line up with that; it is distinctly used for symbols that
+; do not have baked-in ID numbers.
+;
+; There's no datatype for NULL anyway, so having NULL line up with Lib(0) being
+; its datatype isn't important.  It's just a random later symbol number.
+;
+sym-n: 1  ; counts up as symbols are added
 
 add-sym: function [
     {Add SYM_XXX to enumeration}
@@ -200,7 +210,7 @@ for-each-datatype: func [
     name* description* typesets* class* make* mold* heart* cellmask*
     completed* running*
 ][
-    heart*: 0
+    heart*: 1  ; NULL is 0, and is not in the type table
     parse2 type-table [some [not end
         opt some tag!  ; <TYPE!> or </TYPE!> used by FOR-EACH-TYPERANGE
 
@@ -265,7 +275,7 @@ for-each-typerange: func [
     stack: copy []
     types*: _
 
-    heart*: 0
+    heart*: 1  ; NULL is 0, and is not in the type table
     while [true] [  ; need to be in loop for BREAK to work
         parse2 type-table [some [
             opt some [set name* tag! (
@@ -326,8 +336,6 @@ e-types: make-emitter "Datatype Definitions" (
 
 rebs: collect [
     for-each-datatype t [
-        if t/heart = 0 [continue]
-
         assert [sym-n == t/heart]  ; SYM_XXX should equal REB_XXX value
 
         if not set? 't/name! [
@@ -357,7 +365,7 @@ e-types/emit 'rebs {
 
         /*** TYPES AND INTERNALS GENERATED FROM %TYPES.R ***/
 
-        REB_VOID = 0,
+        REB_NULL = 0,  /* system relies on specific 0 heart for NULL+VOID */
         $[Rebs],
         REB_MAX,  /* one past valid types */
 
@@ -373,13 +381,6 @@ e-types/emit 'rebs {
 
         REB_T_RETURN_SIGNAL  /* signals throws, etc. */
     };
-
-    /*
-    * Aliases for REB_0 to clarify which purpose it is used for.
-    */
-    #define REB_0 REB_VOID
-    #define REB_0_VOID REB_0
-    #define REB_0_FREE REB_0
 
     /*
      * While the VAL_TYPE() is a full byte, only 64 states can fit in the
@@ -408,8 +409,6 @@ for-each-datatype t [
         e-types/emit newline
     ]
 
-    if t/heart = 0 [continue]
-
     if unset? 't/name! [  ; internal type
         append boot-types as word! t/name
         continue
@@ -425,6 +424,7 @@ for-each-datatype t [
 ]
 
 nontypes: collect [
+    keep cscape {FLAGIT_KIND(REB_NULL)}
     for-each-datatype t [
         if unset? 't/name! [
             keep cscape/with {FLAGIT_KIND(REB_${AS TEXT! T/NAME})} 't
@@ -555,6 +555,17 @@ hookname: enfixed func [
 ]
 
 hook-list: collect [
+    keep cscape {
+        {  /* NULL = 0 */
+            cast(CFUNC*, nullptr),  /* generic */
+            cast(CFUNC*, nullptr),  /* compare */
+            cast(CFUNC*, nullptr),  /* make */
+            cast(CFUNC*, nullptr),  /* to */
+            cast(CFUNC*, MF_Null),  /* mold */
+            nullptr
+        }
+    }
+
     for-each-datatype t [
         keep cscape/with {
             {  /* $<T/NAME> = $<T/HEART> */

@@ -385,7 +385,7 @@ REBVAL *Init_Map(Cell(*) out, REBMAP *map)
 
     Force_Series_Managed(MAP_PAIRLIST(map));
 
-    Reset_Cell_Header_Untracked(TRACK(out), CELL_MASK_MAP);
+    Reset_Unquoted_Header_Untracked(TRACK(out), CELL_MASK_MAP);
     INIT_VAL_NODE1(out, MAP_PAIRLIST(map));
     // second payload pointer not used
 

@@ -138,7 +138,7 @@ void Expand_Context(Context(*) context, REBLEN delta)
 //  Append_Context: C
 //
 // Append a word to the context word list. Expands the list if necessary.
-// Returns the value cell for the word, which is prepped as REB_0.
+// Returns the value cell for the word, which is reset.
 //
 // If word is not nullptr, use the word sym and bind the word value, otherwise
 // use sym.  When using a word, it will be modified to be specifically bound

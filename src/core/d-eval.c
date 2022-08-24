@@ -263,10 +263,9 @@ void Do_After_Action_Checks_Debug(Frame(*) f) {
             if (NOT_PARAM_FLAG(param, VANISHABLE)) {
                 Clear_Stale_Flag(f->out);  // let VAL_TYPE() work
                 assert(!"Native code violated return type contract!\n");
-                panic (Error_Bad_Return_Type(
-                    f,
-                    Is_Void(f->out) ? REB_0_VOID : VAL_TYPE(f->out)
-                ));
+                if (Is_Void(f->out))
+                    panic (Error_Bad_Invisible(f));
+                panic (Error_Bad_Return_Type(f, VAL_TYPE(f->out)));
             }
         }
         else if (
@@ -277,10 +276,9 @@ void Do_After_Action_Checks_Debug(Frame(*) f) {
             )  // exemption, e.g. `1 comment "hi" + 2` infix non-stale
         ){
             assert(!"Native code violated return type contract!\n");
-            panic (Error_Bad_Return_Type(
-                f,
-                Is_Void(f->out) ? REB_0_VOID : VAL_TYPE(f->out)
-            ));
+            if (Is_Void(f->out))
+                panic (Error_Bad_Invisible(f));
+            panic (Error_Bad_Return_Type(f, VAL_TYPE(f->out)));
         }
     }
   #endif

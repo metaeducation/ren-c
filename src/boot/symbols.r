@@ -31,7 +31,6 @@ REBOL [
 trash  ; only release build uses (debug build uses null as label to assert)
 
 unset
-#null
 #blank
 #false
 #blackhole

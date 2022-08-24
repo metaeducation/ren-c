@@ -629,7 +629,7 @@ Bounce MAKE_Date(
     if (secs != NO_DATE_TIME)
         Normalize_Time(&secs, &day);
 
-    Reset_Cell_Header_Untracked(TRACK(OUT), CELL_MASK_DATE);
+    Reset_Unquoted_Header_Untracked(TRACK(OUT), CELL_MASK_DATE);
     VAL_DATE(OUT) = Normalize_Date(day, month, year, tz);
     PAYLOAD(Time, OUT).nanoseconds = secs;
 
@@ -1172,7 +1172,7 @@ REBTYPE(Date)
     );
 
   set_date:
-    Reset_Cell_Header_Untracked(TRACK(OUT), CELL_MASK_DATE);
+    Reset_Unquoted_Header_Untracked(TRACK(OUT), CELL_MASK_DATE);
     VAL_DATE(OUT) = date;
     PAYLOAD(Time, OUT).nanoseconds = secs; // may be NO_DATE_TIME
     if (secs == NO_DATE_TIME)
@@ -1210,7 +1210,7 @@ DECLARE_NATIVE(make_date_ymdsnz)
 {
     INCLUDE_PARAMS_OF_MAKE_DATE_YMDSNZ;
 
-    Reset_Cell_Header_Untracked(TRACK(OUT), CELL_MASK_DATE);
+    Reset_Unquoted_Header_Untracked(TRACK(OUT), CELL_MASK_DATE);
     VAL_YEAR(OUT) = VAL_INT32(ARG(year));
     VAL_MONTH(OUT) = VAL_INT32(ARG(month));
     VAL_DAY(OUT) = VAL_INT32(ARG(day));
@@ -1255,7 +1255,7 @@ DECLARE_NATIVE(make_time_sn)
 {
     INCLUDE_PARAMS_OF_MAKE_TIME_SN;
 
-    Reset_Cell_Header_Untracked(TRACK(OUT), CELL_MASK_TIME);
+    Reset_Unquoted_Header_Untracked(TRACK(OUT), CELL_MASK_TIME);
 
     REBI64 nano = Is_Nulled(ARG(nano)) ? 0 : VAL_INT64(ARG(nano));
     PAYLOAD(Time, OUT).nanoseconds

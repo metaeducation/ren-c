@@ -239,7 +239,7 @@ REBSER *Make_Set_Operation_Series(
                 if (!h) continue;
 
                 DECLARE_LOCAL (mo_value);
-                Init_Cell_Header_Untracked(TRACK(mo_value), CELL_MASK_TEXT);
+                Reset_Unquoted_Header_Untracked(TRACK(mo_value), CELL_MASK_TEXT);
                 INIT_VAL_NODE1(mo_value, mo->series);
                 VAL_INDEX_RAW(mo_value) = mo->base.index;
 
@@ -314,7 +314,10 @@ REBSER *Make_Set_Operation_Series(
                 if (!h) continue;
 
                 DECLARE_LOCAL (buf_value);
-                Init_Cell_Header_Untracked(buf_value, CELL_MASK_BINARY);
+                Reset_Unquoted_Header_Untracked(
+                    TRACK(buf_value),
+                    CELL_MASK_BINARY
+                );
                 INIT_VAL_NODE1(buf_value, buf);
                 VAL_INDEX_RAW(buf_value) = buf_start_len;
 

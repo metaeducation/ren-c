@@ -463,11 +463,11 @@ REBINT Compare_Modify_Values(Cell(*) a, Cell(*) b, bool strict)
     //
     // https://forum.rebol.info/t/1133/7
     //
-    if (VAL_NUM_QUOTES(a) != VAL_NUM_QUOTES(b))
-        return VAL_NUM_QUOTES(a) > VAL_NUM_QUOTES(b) ? 1 : -1;
+    if (QUOTE_BYTE(a) != QUOTE_BYTE(b))
+        return QUOTE_BYTE(a) > QUOTE_BYTE(b) ? 1 : -1;
 
-    Dequotify(a);  // !!! is dequotification necessary?
-    Dequotify(b);
+    mutable_QUOTE_BYTE(a) = UNQUOTED_1;
+    mutable_QUOTE_BYTE(b) = UNQUOTED_1;
 
     enum Reb_Kind ta = CELL_HEART(a);
     enum Reb_Kind tb = CELL_HEART(b);
@@ -919,7 +919,7 @@ inline static REBVAL *Init_Zeroed_Hack(Cell(*) out, enum Reb_Kind kind) {
         Init_Pair_Int(out, 0, 0);
     }
     else {
-        Reset_Cell_Header_Untracked(
+        Reset_Unquoted_Header_Untracked(
             TRACK(out), FLAG_HEART_BYTE(kind) | CELL_MASK_NO_NODES
         );
         memset(&out->extra, 0, sizeof(union Reb_Value_Extra));

@@ -161,10 +161,11 @@
 #define QUOTE_BYTE(v)               THIRD_BYTE(READABLE(v)->header)
 #define mutable_QUOTE_BYTE(v)       mutable_THIRD_BYTE(WRITABLE(v)->header)
 
-#define UNQUOTED_0          0
-#define QUASI_1             1
-#define ISOTOPE_255         255  // Also QUASI (anything with QUASI_1 bit is)
-#define ONEQUOTE_2          2  // non-QUASI state of having one quote level
+#define ISOTOPE_0           0  // Also QUASI (e.g. with NONQUASI_BIT is clear)
+#define UNQUOTED_1          1
+#define NONQUASI_BIT        1
+#define QUASI_2             2
+#define ONEQUOTE_3          3  // non-QUASI state of having one quote level
 
 #define MAX_QUOTE_DEPTH     126  // highest legal quoting level
 

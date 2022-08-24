@@ -272,8 +272,8 @@ inline static Cell(const*) CELL_TO_VAL(noquote(Cell(const*)) cell)
 
 inline static enum Reb_Kind VAL_TYPE_UNCHECKED(Cell(const*) v) {
     switch (QUOTE_BYTE_UNCHECKED(v)) {
-      case 0: return cast(enum Reb_Kind, HEART_BYTE_UNCHECKED(v));
-      case QUASI_1: return REB_QUASI;
+      case UNQUOTED_1: return cast(enum Reb_Kind, HEART_BYTE_UNCHECKED(v));
+      case QUASI_2: return REB_QUASI;
       default: return REB_QUOTED;
     }
 }
@@ -298,26 +298,20 @@ inline static enum Reb_Kind VAL_TYPE_UNCHECKED(Cell(const*) v) {
                 NODE_FLAG_NODE
                 | NODE_FLAG_CELL
             )
-            and heart_byte != REB_0
             and heart_byte < REB_MAX
-            and quote_byte != ISOTOPE_255
+            and quote_byte != ISOTOPE_0
         ){
             switch (quote_byte) {
-              case 0: return cast(enum Reb_Kind, heart_byte);
-              case QUASI_1: return REB_QUASI;
+              case UNQUOTED_1: return cast(enum Reb_Kind, heart_byte);
+              case QUASI_2: return REB_QUASI;
               default: return REB_QUOTED;
             }
         }
 
         // Give more granular errors based on specific failure
 
-        if (quote_byte == ISOTOPE_255) {
+        if (quote_byte == ISOTOPE_0) {
             printf("VAL_TYPE() called on isotope (quotelevel 255)");
-            panic_at (v, file, line);
-        }
-
-        if (heart_byte == REB_0_VOID) {
-            printf("VAL_TYPE() called on REB_0 cell (void)\n");
             panic_at (v, file, line);
         }
 
@@ -333,7 +327,7 @@ inline static enum Reb_Kind VAL_TYPE_UNCHECKED(Cell(const*) v) {
 
         assert(v->header.bits & CELL_FLAG_STALE);
 
-        if (heart_byte == REB_WORD and (quote_byte == QUASI_1)) {
+        if (heart_byte == REB_WORD and (quote_byte == QUASI_2)) {
             printf("VAL_TYPE() called on unreadable cell\n");
             panic_at (v, file, line);
         }
@@ -404,7 +398,7 @@ inline static Cell(*) RESET_Untracked(Cell(*) v) {
 #endif
 
 #define RESET(v) \
-    TRACK(RESET_Untracked(v))  // TRACK expects REB_0, so call *after* reset
+    TRACK(RESET_Untracked(v))  // could also be RESET_Untracked(TRACK(v)) ?
 
 inline static void Init_Cell_Header_Untracked(
     Cell(*) v,
@@ -420,15 +414,20 @@ inline static void Init_Cell_Header_Untracked(
     // Don't return a value to help convey the cell is likely incomplete
 }
 
-#define Reset_Cell_Header_Untracked(v,flags) \
-    Init_Cell_Header_Untracked(RESET_Untracked(v), (flags))
+inline static void Reset_Unquoted_Header_Untracked(Cell(*) v, uintptr_t flags)
+{
+    assert((flags & FLAG_QUOTE_BYTE(255)) == FLAG_QUOTE_BYTE(ISOTOPE_0));
+    RESET_Untracked(v);
+    v->header.bits |= NODE_FLAG_NODE | NODE_FLAG_CELL  // must ensure NODE+CELL
+        | flags | FLAG_QUOTE_BYTE(UNQUOTED_1);
+}
 
 inline static REBVAL *RESET_CUSTOM_CELL(
     Cell(*) out,
     REBTYP *type,
     Flags flags
 ){
-    Reset_Cell_Header_Untracked(
+    Reset_Unquoted_Header_Untracked(
         out,
         FLAG_HEART_BYTE(REB_CUSTOM) | flags
     );
@@ -644,7 +643,7 @@ inline static void Copy_Cell_Header(
     Cell(const*) v
 ){
     assert(out != v);  // usually a sign of a mistake; not worth supporting
-    assert(VAL_TYPE_UNCHECKED(v) != REB_0_VOID);
+    assert(Not_Cell_Flag(v, STALE));
 
     ASSERT_CELL_INITABLE_EVIL_MACRO(out);  // may be CELL_MASK_PREP, all 0
 
@@ -674,7 +673,7 @@ inline static Cell(*) Copy_Cell_Untracked(
     Flags copy_mask  // typically you don't copy UNEVALUATED, PROTECTED, etc
 ){
     assert(out != v);  // usually a sign of a mistake; not worth supporting
-    assert(VAL_TYPE_UNCHECKED(v) != REB_0_VOID);
+    assert(Not_Cell_Flag(v, STALE));
 
     RESET_Untracked(out);
 

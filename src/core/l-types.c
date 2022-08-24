@@ -656,7 +656,7 @@ const Byte* Scan_Decimal(
     if (cast(REBLEN, cp - bp) != len)
         return_NULL;
 
-    Reset_Cell_Header_Untracked(TRACK(out), CELL_MASK_DECIMAL);
+    Reset_Unquoted_Header_Untracked(TRACK(out), CELL_MASK_DECIMAL);
 
     char *se;
     VAL_DECIMAL(out) = strtod(s_cast(buf), &se);
@@ -751,7 +751,7 @@ const Byte* Scan_Integer(
     // Convert, check, and return:
     errno = 0;
 
-    Reset_Cell_Header_Untracked(TRACK(out), CELL_MASK_INTEGER);
+    Reset_Unquoted_Header_Untracked(TRACK(out), CELL_MASK_INTEGER);
 
     VAL_INT64(out) = CHR_TO_INT(buf);
     if (errno != 0)
@@ -988,7 +988,7 @@ const Byte* Scan_Date(
 
     // Overwriting scanned REB_TIME...
     //
-    Reset_Cell_Header_Untracked(TRACK(out), CELL_MASK_DATE);
+    Reset_Unquoted_Header_Untracked(TRACK(out), CELL_MASK_DATE);
 
     // payload.time.nanoseconds is set, may be NO_DATE_TIME, don't RESET()
 
@@ -1178,7 +1178,7 @@ const Byte* Scan_Pair(
 
     Manage_Pairing(paired);
 
-    Reset_Cell_Header_Untracked(TRACK(out), CELL_MASK_PAIR);
+    Reset_Unquoted_Header_Untracked(TRACK(out), CELL_MASK_PAIR);
     INIT_VAL_PAIR(out, paired);
     return xp;
 }

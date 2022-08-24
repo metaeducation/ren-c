@@ -1862,7 +1862,7 @@ REBVAL *RL_rebRescueWith(
     }
     else if (
         rescuer == nullptr
-        and QUOTE_BYTE(result) == UNQUOTED_0
+        and QUOTE_BYTE(result) == UNQUOTED_1
         and HEART_BYTE(result) == REB_ERROR
     ){
         // Analogous to how TRAP works, if you don't have a handler for the
@@ -2060,9 +2060,9 @@ const REBINS *RL_rebUNQUOTING(const void *p)
 
     Cell(*) v = ARR_SINGLE(a);
     if (
-        QUOTE_BYTE(v) == UNQUOTED_0
-        or QUOTE_BYTE(v) == QUASI_1
-        or QUOTE_BYTE(v) == ISOTOPE_255
+        QUOTE_BYTE(v) == UNQUOTED_1
+        or QUOTE_BYTE(v) == QUASI_2
+        or QUOTE_BYTE(v) == ISOTOPE_0
     ){
         fail ("rebUNQUOTING()/rebU() can only unquote QUOTED! values");
     }

@@ -356,7 +356,7 @@ Bounce Evaluator_Executor(Frame(*) f)
     // routines will reject it.  While we are already doing a flag masking
     // operation to add CELL_FLAG_STALE, ensure the cell carries the NODE and
     // CELL flags (we already checked that it was INITABLE()).  This promotes
-    // 0 prep cells to a readable END state for checking after the eval.
+    // 0 prep cells to a readable state for checking after the eval.
     //
     // Note that adding CELL_FLAG_STALE means the out cell won't act as the
     // input to an enfix operation.
@@ -386,7 +386,7 @@ Bounce Evaluator_Executor(Frame(*) f)
     if (Is_Frame_At_End(f))
         goto give_up_backward_quote_priority;
 
-    if (VAL_TYPE_UNCHECKED(f_next) != REB_WORD)  // right's kind - END is REB_0
+    if (VAL_TYPE_UNCHECKED(f_next) != REB_WORD)  // right's kind
         goto give_up_backward_quote_priority;
 
     assert(not f_next_gotten);  // Fetch_Next_In_Frame() cleared it
@@ -543,9 +543,9 @@ Bounce Evaluator_Executor(Frame(*) f)
       //
       // QUOTED! forms simply evaluate to remove one level of quoting.
 
-    case QUASI_1:
+    case QUASI_2:
       Derelativize(OUT, f_current, f_specifier);
-      mutable_QUOTE_BYTE(OUT) = ISOTOPE_255;
+      mutable_QUOTE_BYTE(OUT) = ISOTOPE_0;
       Set_Cell_Flag(OUT, SCANT_EVALUATED_ISOTOPE);  // see flag comments
       break;
 
@@ -554,7 +554,7 @@ Bounce Evaluator_Executor(Frame(*) f)
       Unquotify(OUT, 1);  // asserts it is not an isotope
       break;
 
-    case UNQUOTED_0: switch (CELL_HEART_UNCHECKED(f_current)) {
+    case UNQUOTED_1: switch (CELL_HEART_UNCHECKED(f_current)) {
 
     //=//// NULL //////////////////////////////////////////////////////////=//
     //

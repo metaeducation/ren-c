@@ -64,6 +64,8 @@
 //
 static void Check_Basics(void)
 {
+    STATIC_ASSERT(REB_NULL == 0);  // hard rule--optimize on it where desired
+
     //=//// CHECK REBVAL SIZE ////////////////////////////////////////////=//
 
     // The system is designed with the intent that REBVAL is 4x(32-bit) on
@@ -218,7 +220,7 @@ static void Startup_Lib(void)
         mutable_INODE(PatchContext, patch) = nullptr;  // signals unused
         mutable_LINK(NextPatch, patch) = nullptr;
         mutable_MISC(Variant, patch) = nullptr;
-        assert(Is_Fresh(ARR_SINGLE(patch)));  // REB_0
+        assert(Is_Fresh(ARR_SINGLE(patch)));
     }
 
   //=//// INITIALIZE EARLY BOOT USED VALUES ////////////////////////////////=//
@@ -419,16 +421,14 @@ static void Init_Root_Vars(void)
     // Simple isolated values, not available via lib, e.g. not Lib(TRUE) or
     // Lib(BLANK)...
 
-    assert(Is_Void(VOID_CELL));  // default all zero bits for C globals
-    Reset_Cell_Header_Untracked(
-        TRACK(&PG_Void_Cell),
-        CELL_MASK_VOID | CELL_FLAG_PROTECTED
-    );
-    assert(Is_Void(VOID_CELL));  // another readable void pattern
+    Init_Void(&PG_Void_Cell);
+    Set_Cell_Flag(&PG_Void_Cell, PROTECTED);  // prevent overwriting
+    assert(Is_Void(VOID_CELL));
 
     // Initialize NONE_ISOTOPE (must be after symbols loaded)
     //
     Init_None(&PG_None_Isotope);  // symbol not GC'd
+    Set_Cell_Flag(&PG_Void_Cell, PROTECTED);  // prevent overwriting
 
     // They should only be accessed by macros which retrieve their values
     // as `const`, to avoid the risk of accidentally changing them.  (This
@@ -684,10 +684,12 @@ void Startup_Signals(void)
     // The thrown arg is not intended to ever be around long enough to be
     // seen by the GC.
     //
-    assert(Is_Fresh(&TG_Thrown_Arg));
-    Init_Stale_Void(&TG_Thrown_Arg);
-    assert(Is_Fresh(&TG_Thrown_Label));
-    Init_Stale_Void(&TG_Thrown_Label);
+    Prep_Stale_Void(&TG_Thrown_Arg);
+    Prep_Stale_Void(&TG_Thrown_Label);
+
+    assert(Is_Stale_Void(&TG_Thrown_Arg));
+    assert(Is_Stale_Void(&TG_Thrown_Label));
+
     assert(TG_Unwind_Frame == nullptr);
 }
 

@@ -450,8 +450,7 @@ inline static Length SER_USED(const REBSER *s) {
     if (IS_SER_ARRAY(s)) {
         //
         // We report the array length as being 0 if it's the distinguished
-        // case of the stale void (a REB_0 cell marked as stale).  This will
-        // fail most tests of being read.
+        // case of the stale void (used to catch stray writes)
         //
         if (Is_Stale_Void(VAL(SER_CELL(s))))
             return 0;
@@ -567,9 +566,9 @@ inline static void SET_SERIES_USED(REBSER *s, REBLEN used) {
 
         if (IS_SER_ARRAY(s)) {
             //
-            // An unreadable REB_0 state with (CELL_FLAG_STALE) is used to
-            // indicate length 0 (the "END" state).  To bump it to length 1,
-            // we flip it over to a readable REB_0 state (a.k.a. "VOID")
+            // A void cell with (CELL_FLAG_STALE) is used to indicate length 0.
+            // To bump it to length 1, we flip it to being readable (though
+            // it is still void)
 
             if (used == 0)
                 Init_Stale_Void(VAL(mutable_SER_CELL(s)));
@@ -1145,7 +1144,7 @@ inline static REBVAL *Init_Series_Cell_At_Core(
     }
   #endif
 
-    Reset_Cell_Header_Untracked(
+    Reset_Unquoted_Header_Untracked(
         out,
         FLAG_HEART_BYTE(type) | CELL_FLAG_FIRST_IS_NODE
     );
