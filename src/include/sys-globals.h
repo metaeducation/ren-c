@@ -99,7 +99,7 @@ PVAR REB_OPTS *Reb_Opts;
 // (they'd get an error on isotope variable access)...hence it is a function.
 //
 
-PVAR REBVAL PG_End_Cell;
+PVAR REBVAL PG_Feed_At_End;  // Canon pointer; internals use instead of rebEND
 
 PVAR REBVAL PG_Void_Cell;
 

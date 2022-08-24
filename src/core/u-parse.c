@@ -111,7 +111,8 @@
     USED(ARG(position)); \
     USED(ARG(save))
 
-#define P_RULE              (At_Feed(frame_->feed) + 0)  // rvalue
+#define P_AT_END            Is_Frame_At_End(frame_)
+#define P_RULE              At_Frame(frame_)  // rvalue
 #define P_RULE_SPECIFIER    FRM_SPECIFIER(frame_)
 
 #define P_TYPE              VAL_TYPE(ARG(input))
@@ -165,7 +166,7 @@
 
 
 #define FETCH_TO_BAR_OR_END(f) \
-    while (Not_End(P_RULE) and not ( \
+    while (not P_AT_END and not ( \
         VAL_TYPE_UNCHECKED(P_RULE) == REB_WORD \
         and VAL_WORD_SYMBOL(P_RULE) == Canon(BAR_1) \
     )){ \
@@ -394,7 +395,7 @@ static void Print_Parse_Index(Frame(*) frame_) {
     // !!! Or does PARSE adjust to ensure it never is past the end, e.g.
     // when seeking a position given in a variable or modifying?
     //
-    if (Is_End(P_RULE)) {
+    if (P_AT_END) {
         if (P_POS >= cast(REBIDX, P_INPUT_LEN))
             rebElide("print {[]: ** END **}");
         else
@@ -1340,14 +1341,14 @@ DECLARE_NATIVE(subparse)
 
   pre_rule:
 
+    Cell(const*) rule = P_AT_END ? nullptr : P_RULE;
+
     /* Print_Parse_Index(f); */
     UPDATE_EXPRESSION_START(f);
 
-    Cell(const*) rule = P_RULE;  // start w/rule in block, may eval/fetch
-
     //=//// FIRST THINGS FIRST: CHECK FOR END /////////////////////////////=//
 
-    if (Is_End(rule))
+    if (rule == nullptr)
         goto do_signals;
 
     //=//// HANDLE BAR! (BEFORE GROUP!) ///////////////////////////////////=//
@@ -1440,7 +1441,7 @@ DECLARE_NATIVE(subparse)
     //
     Cell(const*) subrule = nullptr;
 
-    if (Is_End(rule))
+    if (rule == nullptr)  // means at end
         goto return_position;  // done all needed to do for end position
 
     //=//// ANY-WORD!/ANY-PATH! PROCESSING ////////////////////////////////=//
@@ -1788,7 +1789,7 @@ DECLARE_NATIVE(subparse)
                 //
               case SYM_IF: {
                 FETCH_NEXT_RULE(f);
-                if (Is_End(P_RULE))
+                if (P_AT_END)
                     fail (Error_Parse_End());
 
                 if (not IS_GROUP(P_RULE))
@@ -2030,7 +2031,7 @@ DECLARE_NATIVE(subparse)
         mincount = maxcount = Int32s(rule, 0);
 
         FETCH_NEXT_RULE(f);
-        if (Is_End(P_RULE))
+        if (P_AT_END)
             fail (Error_Parse_End());
 
         rule = Get_Parse_Value(P_SAVE, P_RULE, P_RULE_SPECIFIER);
@@ -2108,7 +2109,7 @@ DECLARE_NATIVE(subparse)
 
               case SYM_TO:
               case SYM_THRU: {
-                if (Is_End(P_RULE))
+                if (P_AT_END)
                     fail (Error_Parse_End());
 
                 if (!subrule) {  // capture only on iteration #1
@@ -2131,7 +2132,7 @@ DECLARE_NATIVE(subparse)
                 if (not IS_SER_ARRAY(P_INPUT))
                     fail (Error_Parse_Rule());  // see #2253
 
-                if (Is_End(P_RULE))
+                if (P_AT_END)
                     fail (Error_Parse_End());
 
                 if (not subrule)  // capture only on iteration #1
@@ -2174,7 +2175,7 @@ DECLARE_NATIVE(subparse)
                 break; }
 
               case SYM_INTO: {
-                if (Is_End(P_RULE))
+                if (P_AT_END)
                     fail (Error_Parse_End());
 
                 if (!subrule) {
@@ -2517,7 +2518,7 @@ DECLARE_NATIVE(subparse)
 
             if (P_FLAGS & (PF_INSERT | PF_CHANGE)) {
                 count = (P_FLAGS & PF_INSERT) ? 0 : count;
-                if (Is_End(P_RULE))
+                if (P_AT_END)
                     fail (Error_Parse_End());
 
                 // new value...comment said "CHECK FOR QUOTE!!"
@@ -2623,7 +2624,7 @@ DECLARE_NATIVE(subparse)
             SET_SERIES_LEN(P_COLLECTION, collection_tail);
 
         FETCH_TO_BAR_OR_END(f);
-        if (Is_End(P_RULE))  // no alternate rule
+        if (P_AT_END)  // no alternate rule
             goto return_null;
 
         // Jump to the alternate rule and reset input

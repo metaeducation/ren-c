@@ -71,11 +71,6 @@ void Trace_Value(
 //
 void Trace_Parse_Input(const REBVAL *str)
 {
-    if (Is_End(str)) {
-        rebElide("print {Parse Input: ** END **}");
-        return;
-    }
-
     rebElide("print [",
         "{Parse input:} mold/limit", str, "60"
     "]");

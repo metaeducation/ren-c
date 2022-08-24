@@ -82,14 +82,14 @@ inline static REBVAL *Init_Varargs_Untyped_Normal(Cell(*) out, Frame(*) f) {
 
 inline static REBVAL *Init_Varargs_Untyped_Enfix(
     Cell(*) out,
-    const REBVAL *left
+    option(Value(const*)) left
 ){
     Array(*) feed;
-    if (Is_End(left))
+    if (not left)
         feed = EMPTY_ARRAY;
     else {
         Array(*) singular = Alloc_Singular(NODE_FLAG_MANAGED);
-        Copy_Cell(ARR_SINGLE(singular), left);
+        Copy_Cell(ARR_SINGLE(singular), unwrap(left));
 
         feed = Alloc_Singular(FLAG_FLAVOR(FEED) | NODE_FLAG_MANAGED);
         Init_Block(ARR_SINGLE(feed), singular);  // index 0

@@ -121,7 +121,7 @@ DECLARE_NATIVE(shove)
 
     REBVAL *left = ARG(left);
 
-    if (Is_End(At_Frame(f)))  // shouldn't happen for WORD!/PATH! unless APPLY
+    if (Is_Frame_At_End(f))  // shouldn't be for WORD!/PATH! unless APPLY
         return COPY(ARG(left));  // ...because evaluator wants `help <-` to work
 
     // It's best for SHOVE to do type checking here, as opposed to setting
@@ -333,7 +333,7 @@ DECLARE_NATIVE(do)
         // the varargs came from.  It's still on the stack, and we don't want
         // to disrupt its state.  Use a subframe.
 
-        if (Is_End(At_Feed(f->feed))) {
+        if (Is_Frame_At_End(f)) {
             Init_None(OUT);
             return OUT;
         }
@@ -349,7 +349,7 @@ DECLARE_NATIVE(do)
                 Drop_Frame(subframe);
                 return THROWN;
             }
-        } while (Not_End(At_Feed(f->feed)));
+        } while (Not_Feed_At_End(f->feed));
 
         Drop_Frame(subframe);
 
@@ -479,7 +479,7 @@ DECLARE_NATIVE(evaluate)
             source,
             SPECIFIED
         );
-        assert(Not_End(At_Feed(feed)));
+        assert(Not_Feed_At_End(feed));
 
         Frame(*) subframe = Make_Frame(
             feed,
@@ -557,7 +557,7 @@ DECLARE_NATIVE(evaluate)
             // the varargs came from.  It's still on the stack--we don't want
             // to disrupt its state (beyond feed advancing).  Use a subframe.
 
-            if (Is_End(At_Feed(f->feed)))
+            if (Is_Frame_At_End(f))
                 return nullptr;
 
             Flags flags = EVAL_EXECUTOR_FLAG_SINGLE_STEP;
@@ -853,10 +853,10 @@ DECLARE_NATIVE(apply)
     Frame(*) f = SUBFRAME;
     EVARS *e = VAL_HANDLE_POINTER(EVARS, iterator);
 
-    Cell(const*) at = At_Frame(f);
-
-    if (Is_End(at))
+    if (Is_Frame_At_End(f))
         goto finalize_apply;
+
+    Cell(const*) at = At_Frame(f);
 
     if (IS_COMMA(at)) {
         Fetch_Next_Forget_Lookback(f);
@@ -883,9 +883,9 @@ DECLARE_NATIVE(apply)
         }
 
         Cell(const*) lookback = Lookback_While_Fetching_Next(f);  // for error
-        at = At_Frame(f);
+        at = Try_At_Frame(f);
 
-        if (Is_End(at) or IS_COMMA(at))
+        if (at == nullptr or IS_COMMA(at))
             fail (Error_Need_Non_End_Raw(rebUnrelativize(lookback)));
 
         if (IS_PATH(at) and IS_REFINEMENT(at))  // see [3]

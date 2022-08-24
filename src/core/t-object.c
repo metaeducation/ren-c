@@ -544,7 +544,7 @@ Bounce MAKE_Frame(
         bool error_on_deferred = true;
         if (Init_Frame_From_Feed_Throws(
             OUT,
-            END,
+            nullptr,
             feed,
             error_on_deferred
         )){
@@ -650,8 +650,8 @@ Bounce MAKE_Context(
     if (ANY_NUMBER(arg)) {
         Context(*) context = Make_Context_Detect_Managed(
             kind,
-            END,  // values to scan for toplevel set-words (empty)
-            END,
+            nullptr,  // values to scan for toplevel set-words (empty)
+            nullptr,
             parent_ctx
         );
 

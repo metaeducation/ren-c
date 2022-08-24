@@ -510,5 +510,11 @@ union Reb_Header {
 // bit pattern, which are freed nodes.  These two patterns are for freed series
 // and "stale cells" (see Is_Stale())
 //
+// At time of writing, the END_SIGNAL_BYTE must always be followed by a zero
+// byte.  This is easy to do with C strings (see rebEND definition).  It's
+// not strictly necessary--one byte suffices--but it's a good sanity check.
+//
 #define END_SIGNAL_BYTE 192
+STATIC_ASSERT(not (END_SIGNAL_BYTE & NODE_BYTEMASK_0x01_CELL));
+
 #define FREED_SERIES_BYTE 193

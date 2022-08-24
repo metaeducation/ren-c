@@ -76,6 +76,27 @@ void Shutdown_Data_Stack(void)
 
 
 //
+//  Startup_Feeds: C
+//
+void Startup_Feeds(void)
+{
+    PG_Feed_At_End.header.bits = NODE_FLAG_NODE | NODE_FLAG_STALE;
+
+    TG_End_Feed = Make_Array_Feed_Core(EMPTY_ARRAY, 0, SPECIFIED);
+}
+
+//
+//  Shutdown_Feeds: C
+//
+void Shutdown_Feeds(void) {
+    PG_Feed_At_End.header.bits = 0;
+
+    Free_Feed(TG_End_Feed);
+    TG_End_Feed = nullptr;
+}
+
+
+//
 //  Startup_Frame_Stack: C
 //
 // We always push one unused frame at the top of the stack.  This way, it is
@@ -93,8 +114,6 @@ void Startup_Frame_Stack(void)
     assert(IS_POINTER_TRASH_DEBUG(TG_Bottom_Frame));
     TG_Top_Frame = TG_Bottom_Frame = nullptr;
   #endif
-
-    TG_End_Feed = Make_Array_Feed_Core(EMPTY_ARRAY, 0, SPECIFIED);
 
     Frame(*) f = Make_End_Frame(
         FRAME_MASK_NONE
@@ -123,9 +142,6 @@ void Shutdown_Frame_Stack(void)
     //
     assert(IS_POINTER_TRASH_DEBUG(TG_Bottom_Frame->prior));
     TG_Bottom_Frame->prior = nullptr;
-
-    Free_Feed(TG_End_Feed);
-    TG_End_Feed = nullptr;
 
   blockscope {
     Frame(*) f = TOP_FRAME;
@@ -292,8 +308,7 @@ void Expand_Data_Stack_May_Fail(REBLEN amount)
 
     // We fill in the data stack with "GC safe trash" (which is void in the
     // release build, but will raise an alarm if VAL_TYPE() called on it in
-    // the debug build).  In order to serve as a marker for the stack slot
-    // being available, it merely must not be Is_End()...
+    // the debug build).
 
     REBVAL *cell = DS_Movable_Top;
 

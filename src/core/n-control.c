@@ -130,9 +130,9 @@ Bounce Group_Branch_Executor(Frame(*) frame_)
     if (ANY_GROUP(SPARE))
         fail (Error_Bad_Branch_Type_Raw());  // stop infinite recursion (good?)
 
-    Value(const*) with = Is_Stale(OUT) ? END : OUT;  // with is here, see [1]
+    Value(const*) with = Is_Stale(OUT) ? nullptr : OUT;  // with here, see [1]
 
-    assert(Is_End(At_Feed(FRAME->feed)));
+    assert(Is_Frame_At_End(FRAME));
     return DELEGATE_BRANCH(OUT, SPARE, with);
 }}
 
@@ -659,7 +659,7 @@ DECLARE_NATIVE(all)
 } eval_step_finished: {  /////////////////////////////////////////////////////
 
     if (Is_Stale(OUT)) {  // void steps, e.g. (comment "hi") (if false [<a>])
-        if (Is_End(At_Feed(SUBFRAME->feed)))
+        if (Is_Frame_At_End(SUBFRAME))
             goto reached_end;
 
         assert(STATE == ST_ALL_EVAL_STEP);
@@ -701,7 +701,7 @@ DECLARE_NATIVE(all)
 
     Init_True(any_matches);
 
-    if (Is_End(At_Feed(SUBFRAME->feed)))
+    if (Is_Frame_At_End(SUBFRAME))
         goto reached_end;
 
     assert(STATE == ST_ALL_EVAL_STEP);
@@ -783,7 +783,7 @@ DECLARE_NATIVE(any)
 } eval_step_finished: {  /////////////////////////////////////////////////////
 
     if (Is_Stale(OUT)) {  // void steps, e.g. (comment "hi") (if false [<a>])
-        if (Is_End(At_Feed(SUBFRAME->feed)))
+        if (Is_Frame_At_End(SUBFRAME))
             goto reached_end;
 
         assert(STATE == ST_ANY_EVAL_STEP);
@@ -823,7 +823,7 @@ DECLARE_NATIVE(any)
         return BRANCHED(OUT);  // successful ANY returns the value
     }
 
-    if (Is_End(At_Feed(SUBFRAME->feed)))
+    if (Is_Frame_At_End(SUBFRAME))
         goto reached_end;
 
     assert(STATE == ST_ANY_EVAL_STEP);
@@ -938,7 +938,7 @@ DECLARE_NATIVE(case)
 
     RESET(SPARE);  // must do before goto reached_end
 
-    if (Is_End(At_Frame(SUBFRAME)))
+    if (Is_Frame_At_End(SUBFRAME))
         goto reached_end;
 
     STATE = ST_CASE_CONDITION_EVAL_STEP;
@@ -950,7 +950,7 @@ DECLARE_NATIVE(case)
     if (Is_Void(SPARE))  // skip void expressions, see [2]
         goto handle_next_clause;
 
-    if (Is_End(At_Frame(SUBFRAME)))
+    if (Is_Frame_At_End(SUBFRAME))
         goto reached_end;  // we tolerate "fallout" from a condition
 
     if (Is_Nulled(predicate))
@@ -1135,10 +1135,10 @@ DECLARE_NATIVE(switch)
 
     RESET(SPARE);  // fallout must be reset each time
 
-    Cell(const*) at = At_Frame(SUBFRAME);
-
-    if (Is_End(at))
+    if (Is_Frame_At_End(SUBFRAME))
         goto reached_end;
+
+    Cell(const*) at = At_Frame(SUBFRAME);
 
     if (IS_BLOCK(at) or IS_ACTION(at)) {  // seen with no match in effect
         Fetch_Next_Forget_Lookback(SUBFRAME);  // just skip over it
@@ -1154,7 +1154,7 @@ DECLARE_NATIVE(switch)
     if (Is_Void(SPARE))  // skip comments or failed conditionals
         goto next_switch_step;  // see note [2] in comments for CASE
 
-    if (Is_End(At_Frame(SUBFRAME)))
+    if (Is_Frame_At_End(SUBFRAME))
         goto reached_end;  // nothing left, so drop frame and return
 
     if (Is_Nulled(predicate)) {
@@ -1194,10 +1194,10 @@ DECLARE_NATIVE(switch)
             goto next_switch_step;
     }
 
-    Cell(const*) at = At_Frame(SUBFRAME);
+    Cell(const*) at = Try_At_Frame(SUBFRAME);
 
     while (true) {  // skip ahead for BLOCK!/ACTION! to process the match
-        if (Is_End(at))
+        if (at == nullptr)
             goto reached_end;
 
         if (IS_BLOCK(at) or IS_META_BLOCK(at) or IS_ACTION(at))

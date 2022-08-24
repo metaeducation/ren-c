@@ -966,7 +966,7 @@ bool RL_rebRunCoreThrows(
     }
 
     bool too_many = (flags & EVAL_EXECUTOR_FLAG_NO_RESIDUE)
-        and Not_End(At_Feed(feed));  // feed will be freed in Drop_Frame()
+        and Not_Feed_At_End(feed);  // feed will be freed in Drop_Frame()
 
     Drop_Frame(f);  // will va_end() if not reified during evaluation
 
@@ -1023,7 +1023,7 @@ REBVAL *RL_rebTranscodeInto(
     Sync_Feed_At_Cell_Or_End_May_Fail(feed);
 
     StackIndex base = TOP_INDEX;
-    while (Not_End(At_Feed(feed))) {
+    while (Not_Feed_At_End(feed)) {
         Derelativize(PUSH(), At_Feed(feed), FEED_SPECIFIER(feed));
         Set_Cell_Flag(TOP, UNEVALUATED);
         Fetch_Next_In_Feed(feed);
@@ -2331,7 +2331,7 @@ REBVAL *RL_rebError_OS(int errnum)  // see also convenience macro rebFail_OS()
         REBVAL *message = rebTextWide(lpMsgBuf);
         LocalFree(lpMsgBuf);
 
-        error = Error(SYM_0, SYM_0, message, END);
+        error = Error(SYM_0, SYM_0, message, rebEND);
         rebRelease(message);
     }
   #elif defined(USE_STRERROR_NOT_STRERROR_R)

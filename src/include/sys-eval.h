@@ -148,7 +148,7 @@ inline static bool Did_Init_Inert_Optimize_Complete(
     Flags *flags
 ){
     assert(SECOND_BYTE(*flags) == 0);  // we might set the STATE byte
-    assert(not Is_End(At_Feed(feed)));  // would be wasting time to call
+    assert(Not_Feed_At_End(feed));  // would be wasting time to call
     assert(not (*flags & FRAME_FLAG_BRANCH));  // it's a single step
 
     if (not ANY_INERT(At_Feed(feed)))
@@ -156,7 +156,10 @@ inline static bool Did_Init_Inert_Optimize_Complete(
 
     Literal_Next_In_Feed(out, feed);
 
-    if (VAL_TYPE_UNCHECKED(At_Feed(feed)) == REB_WORD) {
+    if (
+        not Is_Feed_At_End(feed)
+        and VAL_TYPE_UNCHECKED(At_Feed(feed)) == REB_WORD
+    ){
         feed->gotten = Lookup_Word(At_Feed(feed), FEED_SPECIFIER(feed));
         if (
             not feed->gotten
@@ -324,7 +327,7 @@ inline static bool Eval_Step_In_Any_Array_At_Throws(
     assert(not (flags & EVAL_EXECUTOR_FLAG_SINGLE_STEP));  // added here
     Feed(*) feed = Make_At_Feed_Core(any_array, specifier);
 
-    if (Is_End(At_Feed(feed))) {
+    if (Is_Feed_At_End(feed)) {
         *index_out = 0xDECAFBAD;  // avoid compiler warning
         return false;
     }

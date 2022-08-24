@@ -111,7 +111,7 @@ DECLARE_NATIVE(reduce)
 
 } next_reduce_step: {  ///////////////////////////////////////////////////////
 
-    if (Is_End(At_Feed(SUBFRAME->feed)))
+    if (Is_Feed_At_End(SUBFRAME->feed))
         goto finished;
 
     if (Get_Cell_Flag(At_Feed(SUBFRAME->feed), NEWLINE_BEFORE))
@@ -238,7 +238,7 @@ DECLARE_NATIVE(reduce_each)
 
 } reduce_next: {  ////////////////////////////////////////////////////////////
 
-    if (Is_End(At_Feed(SUBFRAME->feed)))
+    if (Is_Feed_At_End(SUBFRAME->feed))
         goto finished;
 
     SUBFRAME->executor = &Evaluator_Executor;  // restore from pass through
@@ -518,10 +518,10 @@ Bounce Composer_Executor(Frame(*) f)
 
 } handle_current_item: {  ////////////////////////////////////////////////////
 
-    Cell(const*) at = At_Frame(f);
-
-    if (Is_End(at))
+    if (Is_Frame_At_End(f))
         goto finished;
+
+    Cell(const*) at = At_Frame(f);
 
     if (not ANY_ARRAYLIKE(at)) {  // won't substitute/recurse
         Derelativize(PUSH(), at, f_specifier);  // keep newline flag

@@ -28,7 +28,7 @@
 ///
 // * R3-Alpha terminated all arrays with an END! cell--much the way that
 //   C strings are terminated by '\0'.  This provided a convenient way to
-//   loop over arrays as `for (; Not_End(value); ++value)`.  But it was
+//   loop over arrays as `for (; NOT_END(value); ++value)`.  But it was
 //   redundant with the length and had cost to keep in sync...plus it also
 //   meant memory for the arrays had to be rounded up.  1 cell arrays had
 //   to go in the 2 pool, 2-cell arrays had to go in the 4 pool, etc.  Ren-C
@@ -39,13 +39,6 @@
 //   for Is_End().  Though this does run greater risk of confusing with the API
 //   usage of nullptr, and for now it's clearer to read by emphasizing END.
 //
-
-// Note: can't cast rebEND to a REBVAL*, due to alignment (it's char aligned).
-// The END can be used to pass an end signal to things that take REBVAL*
-//
-#define END \
-    c_cast(const REBVAL*, &PG_End_Cell)
-
 
 // IMPORTANT: Notice that END markers may be as short as 2 bytes long.
 //
@@ -61,13 +54,20 @@
             return false;
         }
 
-        assert(not (*bp & NODE_BYTEMASK_0x01_CELL));  // may not be full cell
-
-        assert(bp[1] == REB_0);  // true whether rebEND string, or a full cell
+        assert(bp[1] == 0);  // true whether rebEND string, or a full cell
 
         return true;
     }
 #endif
 
-#define Not_End(v) \
-    (not Is_End(v))
+#if (CPLUSPLUS_11 && DEBUG_CHECK_ENDS)
+    //
+    // The only type that should be tested for Is_End() is a void*.
+    //
+    template<typename T>
+    inline static bool Is_End(const T* v)
+      { static_assert(std::is_same<T, void>::value); }
+#endif
+
+#define Not_End(p) \
+    (not Is_End(p))

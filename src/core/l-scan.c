@@ -1009,7 +1009,7 @@ static enum Reb_Token Maybe_Locate_Token_May_Push_Mold(
         }
         else switch (Detect_Rebol_Pointer(f->feed->p)) {
           case DETECTED_AS_END:
-            f->feed->p = END;  // non-cell crashes VAL_TYPE_UNCHECKED()
+            f->feed->p = &PG_Feed_At_End;
             return TOKEN_END;
 
           case DETECTED_AS_CELL: {
@@ -2972,7 +2972,7 @@ Array(*) Scan_UTF8_Managed(
     assert(utf8[size] == '\0');
     UNUSED(size);  // scanner stops at `\0` (no size limit functionality)
 
-    const void* packed[2] = {utf8, END};  // WARNING: Stack, can't trampoline!
+    const void* packed[2] = {utf8, rebEND};  // BEWARE: Stack, can't trampoline!
     Feed(*) feed = Make_Variadic_Feed(  // scanner requires variadic, see [1]
         packed, nullptr,  // va_list* as nullptr means `p` is packed, see [2]
         context,
@@ -2981,7 +2981,7 @@ Array(*) Scan_UTF8_Managed(
     Sync_Feed_At_Cell_Or_End_May_Fail(feed);
 
     StackIndex base = TOP_INDEX;
-    while (Not_End(At_Feed(feed))) {
+    while (Not_Feed_At_End(feed)) {
         Derelativize(PUSH(), At_Feed(feed), FEED_SPECIFIER(feed));
         Set_Cell_Flag(TOP, UNEVALUATED);
         Fetch_Next_In_Feed(feed);

@@ -46,21 +46,21 @@ inline static void Init_For_Vararg_End(REBVAL *out, enum Reb_Vararg_Op op) {
 inline static bool Vararg_Op_If_No_Advance_Handled(
     REBVAL *out,
     enum Reb_Vararg_Op op,
-    Cell(const*) opt_look, // the first value in the varargs input
+    option(Cell(const*)) look, // the first value in the varargs input
     REBSPC *specifier,
     enum Reb_Param_Class pclass
 ){
-    if (Is_End(opt_look)) {
+    if (not look) {
         Init_For_Vararg_End(out, op); // exhausted
         return true;
     }
 
-    if (pclass == PARAM_CLASS_NORMAL and IS_COMMA(opt_look)) {
+    if (pclass == PARAM_CLASS_NORMAL and IS_COMMA(look)) {
         Init_For_Vararg_End(out, op);  // non-quoted COMMA!
         return true;
     }
 
-    if (pclass == PARAM_CLASS_NORMAL and IS_WORD(opt_look)) {
+    if (pclass == PARAM_CLASS_NORMAL and IS_WORD(look)) {
         //
         // When a variadic argument is being TAKE-n, deferred left hand side
         // argument needs to be seen as end of variadic input.  Otherwise,
@@ -71,12 +71,9 @@ inline static bool Vararg_Op_If_No_Advance_Handled(
         // sum being variadic and tight needs to act as `(sum 1 2 3) + 4`
         //
         // Look ahead, and if actively bound see if it's to an enfix function
-        // and the rules apply.  Note the raw check is faster, no need to
-        // separately test for Is_End()
+        // and the rules apply.
 
-        const REBVAL *child_gotten = try_unwrap(
-            Lookup_Word(opt_look, specifier)
-        );
+        const REBVAL *child_gotten = try_unwrap(Lookup_Word(look, specifier));
 
         if (child_gotten and VAL_TYPE(child_gotten) == REB_ACTION) {
             if (Get_Action_Flag(VAL_ACTION(child_gotten), ENFIXED)) {
@@ -103,7 +100,7 @@ inline static bool Vararg_Op_If_No_Advance_Handled(
         if (pclass != PARAM_CLASS_HARD)
             fail (Error_Varargs_No_Look_Raw()); // hard quote only
 
-        Derelativize(out, opt_look, specifier);
+        Derelativize(out, look, specifier);
         Set_Cell_Flag(out, UNEVALUATED);
 
         return true; // only a lookahead, no need to advance
@@ -164,7 +161,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
         if (Vararg_Op_If_No_Advance_Handled(
             out,
             op,
-            Is_Stale_Void(shared) ? END : VAL_ARRAY_ITEM_AT(shared),
+            Is_Stale_Void(shared) ? nullptr : VAL_ARRAY_ITEM_AT(shared),
             Is_Stale_Void(shared) ? SPECIFIED : VAL_SPECIFIER(shared),
             pclass
         )){
@@ -202,7 +199,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
             Reify_Eval_Out_Plain(out);
 
             if (
-                Is_End(At_Feed(f_temp->feed))
+                Is_Feed_At_End(f_temp->feed)
                 or Get_Feed_Flag(f_temp->feed, BARRIER_HIT)
             ){
                 Init_Stale_Void(shared);
@@ -283,12 +280,14 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
             and (pclass != PARAM_CLASS_MEDIUM)
             and (pclass != PARAM_CLASS_HARD);
 
+        option(Cell(const*)) look = nullptr;
+        if (not hit_barrier and not Is_Frame_At_End(f))
+            look = At_Frame(f);
+
         if (Vararg_Op_If_No_Advance_Handled(
             out,
             op,
-            hit_barrier
-                ? END
-                : cast(Cell(const*) , At_Feed(f->feed)), // might be END
+            look,
             f_specifier,
             pclass
         )){
@@ -630,7 +629,7 @@ void MF_Varargs(REB_MOLD *mo, noquote(Cell(const*)) v, bool form) {
     Frame(*) f;
     REBVAL *shared;
     if (Is_Block_Style_Varargs(&shared, v)) {
-        if (Is_End(shared))
+        if (Is_Stale_Void(shared))
             Append_Ascii(mo->series, "[]");
         else if (pclass == PARAM_CLASS_HARD)
             Mold_Value(mo, shared); // full feed can be shown if hard quoted
@@ -641,7 +640,7 @@ void MF_Varargs(REB_MOLD *mo, noquote(Cell(const*)) v, bool form) {
         if (f == NULL)
             Append_Ascii(mo->series, "!!!");
         else if (
-            Is_End(At_Feed(f->feed))
+            Is_Feed_At_End(f->feed)
             or Get_Feed_Flag(f->feed, BARRIER_HIT)
         ){
             Append_Ascii(mo->series, "[]");

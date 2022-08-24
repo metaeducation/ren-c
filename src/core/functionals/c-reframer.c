@@ -148,13 +148,13 @@ Frame(*) Make_Pushed_Frame_From_Action_Feed_May_Throw(
 //
 bool Init_Invokable_From_Feed_Throws(
     REBVAL *out,
-    Cell(const*) first,  // if not END, override first value, vs. At_Feed(feed)
+    option(Cell(const*)) first,  // override first value, vs. At_Feed(feed)
     Feed(*) feed,
     bool error_on_deferred  // if not planning to keep running, can't ELSE/THEN
 ){
     assert(Not_Feed_Flag(feed, NEXT_ARG_FROM_OUT));  // not supported?
 
-    Cell(const*) v = Is_End(first) ? At_Feed(feed) : first;
+    Cell(const*) v = first ? unwrap(first) : Try_At_Feed(feed);
 
     // !!! The case of `([x]: @)` wants to make something which when it
     // evaluates becomes invisible.  There's no QUOTED! value that can do
@@ -163,7 +163,7 @@ bool Init_Invokable_From_Feed_Throws(
     // Not all callers necessarily want to tolerate an end condition, so this
     // needs review.
     //
-    if (Is_End(v)) {
+    if (v == nullptr) {  // no first, and feed was at end
         Mark_Eval_Out_Voided(out);
         return false;
     }
@@ -193,7 +193,7 @@ bool Init_Invokable_From_Feed_Throws(
     else
         Derelativize(out, v, FEED_SPECIFIER(feed));
 
-    if (Is_End(first))
+    if (not first)  // nothing passed in, so we used a feed value
         Fetch_Next_In_Feed(feed);  // we've seen it now
 
     if (not IS_ACTION(out)) {
@@ -321,7 +321,7 @@ Bounce Reframer_Dispatcher(Frame(*) f)
     bool error_on_deferred = true;
     if (Init_Invokable_From_Feed_Throws(
         SPARE,
-        END,
+        nullptr,
         f->feed,
         error_on_deferred
     )){

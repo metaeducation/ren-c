@@ -85,7 +85,7 @@ inline static REBSPC *FRM_SPECIFIER(Frame(*) f) {
 // to accurately present any errors.
 //
 inline static REBLEN FRM_INDEX(Frame(*) f) {
-    if (Is_End(At_Feed(f->feed)))
+    if (Is_Feed_At_End(f->feed))
         return ARR_LEN(FRM_ARRAY(f));
 
     assert(not FRM_IS_VARIADIC(f));
@@ -207,7 +207,10 @@ inline static option(Symbol(const*)) FRM_LABEL(Frame(*) f) {
 // are a bit "evil", they are extremely helpful for code readability.  They
 // may be #undef'd if they are causing a problem somewhere.
 
-#define At_Frame(f)     At_Feed((f)->feed)
+#define At_Frame(f)                 At_Feed((f)->feed)
+#define Try_At_Frame(f)             Try_At_Feed((f)->feed)
+#define Is_Frame_At_End(f)          Is_Feed_At_End((f)->feed)
+#define Not_Frame_At_End(f)         Not_Feed_At_End((f)->feed)
 
 #define f_specifier FEED_SPECIFIER(f->feed)
 #define f_spare FRM_SPARE(f)

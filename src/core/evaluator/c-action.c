@@ -100,7 +100,10 @@ bool Lookahead_To_Sync_Enfix_Defer_Flag(Feed(*) feed) {
 
     Clear_Feed_Flag(feed, NO_LOOKAHEAD);
 
-    if (VAL_TYPE_UNCHECKED(At_Feed(feed)) != REB_WORD)  // REB_0 is END
+    if (Is_Feed_At_End(feed))
+        return false;
+
+    if (VAL_TYPE_UNCHECKED(At_Feed(feed)) != REB_WORD)
         return false;
 
     feed->gotten = Lookup_Word(At_Feed(feed), FEED_SPECIFIER(feed));
@@ -417,7 +420,7 @@ Bounce Action_Executor(Frame(*) f)
                 // from the global empty array.
                 //
                 if (GET_PARAM_FLAG(PARAM, VARIADIC)) {
-                    Init_Varargs_Untyped_Enfix(ARG, END);
+                    Init_Varargs_Untyped_Enfix(ARG, nullptr);
                     goto continue_fulfilling;
                 }
 
@@ -604,7 +607,7 @@ Bounce Action_Executor(Frame(*) f)
 
   //=//// ERROR ON END MARKER, BAR! IF APPLICABLE /////////////////////////=//
 
-        if (Is_End(f_next)) {
+        if (Is_Frame_At_End(f)) {
             Init_End_Isotope(ARG);
             goto continue_fulfilling;
         }
@@ -619,7 +622,10 @@ Bounce Action_Executor(Frame(*) f)
         output_from_feed:
           case PARAM_CLASS_NORMAL:
           case PARAM_CLASS_META: {
-            if (Get_Feed_Flag(f->feed, BARRIER_HIT) or Is_End(f_next)) {
+            if (
+                Is_Frame_At_End(f)
+                or Get_Feed_Flag(f->feed, BARRIER_HIT)
+            ){
                 Init_End_Isotope(ARG);
                 goto continue_fulfilling;
             }
@@ -1068,7 +1074,7 @@ Bounce Action_Executor(Frame(*) f)
 
     assert(not Is_Action_Frame_Fulfilling(f));
     assert(
-        Is_End(f_next)
+        Is_Frame_At_End(f)
         or FRM_IS_VARIADIC(f)
         or IS_VALUE_IN_ARRAY_DEBUG(FEED_ARRAY(f->feed), f_next)
     );

@@ -347,25 +347,6 @@ static void Shutdown_Action_Spec_Tags(void)
 
 
 //
-//  Startup_End_Node: C
-//
-// We can't actually put an end value in the middle of a block, so we poke
-// this one into a program global.  It is not legal to bit-copy an END (you
-// always use SET_END), so we can make it unwritable.
-//
-static void Startup_End_Node(void)
-{
-    PG_End_Cell.header.bits = NODE_FLAG_NODE | NODE_FLAG_STALE;
-    assert(Is_End(END));  // sanity check
-}
-
-static void Shutdown_End_Node(void) {
-    assert(Is_End(END));  // sanity check
-    PG_End_Cell.header.bits = 0;
-}
-
-
-//
 //  Startup_Empty_Arrays: C
 //
 // Generic read-only empty array, which will be put into EMPTY_BLOCK when
@@ -829,8 +810,8 @@ void Startup_Core(void)
     Set_Random(0);
     Startup_Interning();
 
-    Startup_End_Node();
     Startup_Empty_Arrays();
+    Startup_Feeds();
 
     Startup_Collector();
     Startup_Mold(MIN_COMMON / 4);
@@ -1185,15 +1166,15 @@ void Shutdown_Core(bool clean)
     rebReleaseAndNull(&User_Context_Value);
     User_Context = nullptr;
 
+    Shutdown_Feeds();
+
     Shutdown_Frame_Stack();  // all API calls (e.g. rebRelease()) before this
     Shutdown_Api();
 
-    Shutdown_End_Node();
-
 //=//// ALL MANAGED SERIES MUST HAVE THE KEEPALIVE REFERENCES GONE NOW ////=//
 
-    const bool shutdown = true; // go ahead and free all managed series
-    Recycle_Core(shutdown, NULL);
+    const bool shutdown = true;  // go ahead and free all managed series
+    Recycle_Core(shutdown, nullptr);
 
     assert(Is_Stale_Void(&TG_Thrown_Arg));
     RESET(&TG_Thrown_Arg);

@@ -127,7 +127,7 @@ DECLARE_NATIVE(delimit)
     bool pending = false;  // pending delimiter output, *if* more non-nulls
     bool nothing = true;  // any elements seen so far have been null or blank
 
-    while (Not_End(At_Frame(f))) {
+    while (Not_Frame_At_End(f)) {
         if (Eval_Step_Throws(OUT, f)) {
             Drop_Mold(mo);
             Drop_Frame(f);
@@ -191,7 +191,7 @@ DECLARE_NATIVE(delimit)
 
             pending = true;  // note this includes empty strings, see [4]
         }
-    } while (Not_End(At_Frame(f)));
+    } while (Not_Frame_At_End(f));
 
     if (nothing) {
         Drop_Mold(mo);

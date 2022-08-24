@@ -269,9 +269,6 @@ inline static Cell(const*) CELL_TO_VAL(noquote(Cell(const*)) cell)
 // (Instead of VAL_TYPE(), use CELL_HEART() if you wish to know that the cell
 // pointer you pass in is carrying a word payload.  It disregards the quotes.)
 //
-// This has additional checks as well, that you're not using "pseudotypes"
-// or garbage, or REB_0_END (which should be checked separately with Is_End())
-//
 
 inline static enum Reb_Kind VAL_TYPE_UNCHECKED(Cell(const*) v) {
     switch (QUOTE_BYTE_UNCHECKED(v)) {
@@ -319,8 +316,8 @@ inline static enum Reb_Kind VAL_TYPE_UNCHECKED(Cell(const*) v) {
             panic_at (v, file, line);
         }
 
-        if (heart_byte == REB_0_END) {
-            printf("VAL_TYPE() called on REB_0 cell (void, end)\n");
+        if (heart_byte == REB_0_VOID) {
+            printf("VAL_TYPE() called on REB_0 cell (void)\n");
             panic_at (v, file, line);
         }
 
@@ -647,7 +644,7 @@ inline static void Copy_Cell_Header(
     Cell(const*) v
 ){
     assert(out != v);  // usually a sign of a mistake; not worth supporting
-    assert(VAL_TYPE_UNCHECKED(v) != REB_0_END);  // faster than Not_End()
+    assert(VAL_TYPE_UNCHECKED(v) != REB_0_VOID);
 
     ASSERT_CELL_INITABLE_EVIL_MACRO(out);  // may be CELL_MASK_PREP, all 0
 
@@ -677,7 +674,7 @@ inline static Cell(*) Copy_Cell_Untracked(
     Flags copy_mask  // typically you don't copy UNEVALUATED, PROTECTED, etc
 ){
     assert(out != v);  // usually a sign of a mistake; not worth supporting
-    assert(VAL_TYPE_UNCHECKED(v) != REB_0_END);  // faster than Not_End()
+    assert(VAL_TYPE_UNCHECKED(v) != REB_0_VOID);
 
     RESET_Untracked(out);
 

@@ -222,7 +222,7 @@ Bounce MAKE_Path(
 
     StackIndex base = TOP_INDEX;
 
-    while (Not_End(At_Feed(f->feed))) {
+    while (Not_Frame_At_End(f)) {
         if (Eval_Step_Throws(OUT, f)) {
             Drop_Frame(f);
             return BOUNCE_THROWN;

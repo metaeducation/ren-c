@@ -104,7 +104,7 @@ Bounce Combinator_Dispatcher(Frame(*) f)
 
     REBVAL *r = Value_From_Bounce(b);
 
-    if (r == nullptr or (not Is_End(r) and Is_Nulled(r)))
+    if (r == nullptr or Is_Nulled(r))
         return r;  // did not advance, don't update furthest
 
     // This particular parse succeeded, but did the furthest point exceed the
@@ -205,12 +205,12 @@ Array(*) Expanded_Combinator_Spec(const REBVAL *original)
         "state [frame!]\n"
         "input [any-series!]\n";
 
-    const void* packed[2] = {utf8, END};  // Warning: stack, can't Trampoline
+    const void* packed[2] = {utf8, rebEND};  // BEWARE: Stack, can't Trampoline!
 
     Feed(*) feed = Make_Variadic_Feed(packed, nullptr, nullptr, FEED_MASK_DEFAULT);
     Sync_Feed_At_Cell_Or_End_May_Fail(feed);
 
-    while (Not_End(At_Feed(feed))) {
+    while (Not_Feed_At_End(feed)) {
         Derelativize(PUSH(), At_Feed(feed), FEED_SPECIFIER(feed));
         Fetch_Next_In_Feed(feed);
     }

@@ -207,18 +207,7 @@ struct Reb_Feed_Struct {
     // !!! Review impacts on debugging; e.g. a debug mode should hold onto
     // the initial value in order to display full error messages.
     //
-    // Note: It was considered that this might be `option(Cell(const*))`
-    // if an end state, which would be faster to test than Is_End() at
-    // callsites (no dereference needd) and could also help document that
-    // a function was willing to take an "end" with `option` on an argument.
-    // But the need to `unwrap(At_Frame(f))` constantly is annoying, and the
-    // fact that the API uses nullptr to denote NULLED cells increases the
-    // risk for confusion.  Plus, Is_End() is just more clear to what is
-    // actually happening, and makes it possible to fold with HEART_BYTE()
-    // testing.  Having tried the idea of using nullptr for END here, it's
-    // definitely less clear...and may not even be faster.
-    //
-    const void *p;  // is never nullptr (ends w/END cells or rebEND)
+    const void *p;  // nullptr if feed is finished (Is_Feed_At_End())
     // Note: The specifier comes from FEED_SPECIFIER()
 
     //=//// ^-- be sure above fields align cells below to 64-bits --v /////=//

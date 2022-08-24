@@ -153,6 +153,12 @@ void Probe_Cell_Print_Helper(
   const char *file,
   int line
 ){
+    Probe_Print_Helper(p, expr, "Value", file, line);
+    if (Is_End(p)) {
+        Append_Ascii(mo->series, "; end");
+        return;
+    }
+
     const REBVAL *v = cast(const REBVAL*, p);
 
   #if DEBUG_UNREADABLE_TRASH
@@ -163,11 +169,7 @@ void Probe_Cell_Print_Helper(
     }
   #endif
 
-    Probe_Print_Helper(p, expr, "Value", file, line);
-    if (Is_End(v)) {
-        Append_Ascii(mo->series, "; end");
-    }
-    else if (Is_Void(v)) {
+    if (Is_Void(v)) {
         Append_Ascii(mo->series, "; void");
     }
     else if (Is_Isotope(v)) {

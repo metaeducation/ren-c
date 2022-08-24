@@ -246,8 +246,14 @@ DECLARE_NATIVE(new_line_q)
             }
 
             arr = f_array;
-            item = At_Feed(f->feed);
-            tail = At_Feed(f->feed) + 1;  // !!! Review
+            if (Is_Frame_At_End(f)) {
+                item = nullptr;
+                tail = nullptr;
+            }
+            else {
+                item = At_Feed(f->feed);
+                tail = At_Feed(f->feed) + 1;  // !!! Review
+            }
         }
         else if (Is_Block_Style_Varargs(&shared, pos)) {
             arr = VAL_ARRAY(shared);
@@ -262,7 +268,7 @@ DECLARE_NATIVE(new_line_q)
         item = VAL_ARRAY_AT(&tail, pos);
     }
 
-    if (item != tail and Not_End(item))  // !!! Review if END should be here
+    if (item != tail)
         return Init_Logic(OUT, Get_Cell_Flag(item, NEWLINE_BEFORE));
 
     return Init_Logic(OUT, Get_Subclass_Flag(ARRAY, arr, NEWLINE_AT_TAIL));

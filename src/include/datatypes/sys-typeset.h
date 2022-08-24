@@ -418,7 +418,7 @@ inline static bool Typecheck_Including_Constraints(
             kind = CELL_HEART(VAL_UNESCAPED(v));
     }
     else {
-        kind = Is_End(v) ? REB_0_END : VAL_TYPE(v);
+        kind = VAL_TYPE(v);
     }
 
     if (TYPE_CHECK(param, kind))

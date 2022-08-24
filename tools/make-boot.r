@@ -378,7 +378,6 @@ e-types/emit 'rebs {
     * Aliases for REB_0 to clarify which purpose it is used for.
     */
     #define REB_0 REB_VOID
-    #define REB_0_END REB_0
     #define REB_0_VOID REB_0
     #define REB_0_FREE REB_0
 

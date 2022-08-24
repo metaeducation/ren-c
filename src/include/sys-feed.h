@@ -48,12 +48,25 @@
 #define HAS_MISC_Pending        FLAVOR_FEED
 
 
+// Nullptr is used by the API to indicate null cells.  We want the frequent
+// tests for being at the end of a feed to not require a dereference, which
+// Is_End() does (because rebEND is a string literal that can be instantiated
+// at many different addresses, we have to dereference the pointer to check it)
+//
+// Instead we use a global pointer (could also be a "magic number", possibly
+// would check faster).
+//
+#define Is_Feed_At_End(feed) \
+    ((feed)->p == &PG_Feed_At_End)
+
+#define Not_Feed_At_End(feed) \
+    (not Is_Feed_At_End(feed))
+
 #define FEED_SPLICE(feed) \
     LINK(Splice, &(feed)->singular)
 
-// This contains an Is_End() marker if the next fetch should be an attempt
-// to consult the va_list (if any).  That end marker may be resident in
-// an array, or if it's a plain va_list source it may be the global END.
+// This contains a nullptr if the next fetch should be an attempt
+// to consult the va_list (if any).
 //
 #define FEED_PENDING(feed) \
     MISC(Pending, &(feed)->singular)
@@ -63,9 +76,16 @@
 #define FEED_VAPTR_POINTER(feed)    PAYLOAD(Comma, FEED_SINGLE(feed)).vaptr
 #define FEED_PACKED(feed)           PAYLOAD(Comma, FEED_SINGLE(feed)).packed
 
-#define At_Feed(feed) ( /* evil macro */ \
-    assert(Not_Feed_Flag((feed), NEEDS_SYNC)), \
-    cast(const Reb_Cell*, (feed)->p))
+inline static Cell(const*) At_Feed(Feed(*) feed) {
+    assert(Not_Feed_Flag(feed, NEEDS_SYNC));
+    assert(feed->p != &PG_Feed_At_End);
+    return cast(Cell(const*), feed->p);
+}
+
+inline static Cell(const*) Try_At_Feed(Feed(*) feed) {
+    assert(Not_Feed_Flag(feed, NEEDS_SYNC));
+    return cast(Cell(const*), feed->p);
+}
 
 inline static option(va_list*) FEED_VAPTR(Feed(*) feed) {
     assert(FEED_IS_VARIADIC(feed));
@@ -121,7 +141,7 @@ inline static void Finalize_Variadic_Feed(Feed(*) feed) {
     assert(FEED_IS_VARIADIC(feed));
     assert(FEED_PENDING(feed) == nullptr);
 
-    assert(Is_End(feed->p));  // must spool to end, regardless of throw/fail!
+    assert(Is_Feed_At_End(feed));  // must spool, regardless of throw/fail!
 
     if (FEED_VAPTR(feed))
         va_end(*unwrap(FEED_VAPTR(feed)));  // *ALL* valist get here, see [1]
@@ -172,7 +192,7 @@ inline static option(Value(const*)) Try_Reify_Variadic_Feed_Series(
         }
 
         if (IS_BLOCK(single)) {
-            feed->p = nullptr;  // will become FEED_PENDING(), ignored
+            feed->p = &PG_Feed_At_End;  // will become FEED_PENDING(), ignored
             Splice_Block_Into_Feed(feed, single);
         }
         else {
@@ -268,7 +288,7 @@ inline static void Force_Variadic_Feed_At_Cell_Or_End_May_Fail(Feed(*) feed)
     } else switch (Detect_Rebol_Pointer(feed->p)) {
 
       case DETECTED_AS_END:  // end of input (all feeds must be spooled to end)
-        feed->p = END;  // canonize to cell form for VAL_TYPE_UNCHECKED()
+        feed->p = &PG_Feed_At_End;
         break;  // va_end() handled by Free_Feed() logic
 
       case DETECTED_AS_CELL:
@@ -294,7 +314,7 @@ inline static void Force_Variadic_Feed_At_Cell_Or_End_May_Fail(Feed(*) feed)
         Array(*) reified = try_unwrap(Try_Scan_Variadic_Feed_Utf8_Managed(feed));
 
         if (not reified) {  // rebValue("", ...), see [1]
-            if (Is_End(feed->p))
+            if (Is_Feed_At_End(feed))
                 break;
             goto detect_again;
         }
@@ -302,7 +322,7 @@ inline static void Force_Variadic_Feed_At_Cell_Or_End_May_Fail(Feed(*) feed)
         // !!! for now, assume scan went to the end; ultimately it would need
         // to pass the feed in as a parameter for partial scans
         //
-        assert(Is_End(feed->p));
+        assert(Is_Feed_At_End(feed));
         Finalize_Variadic_Feed(feed);
 
         feed->p = ARR_HEAD(reified);
@@ -313,8 +333,7 @@ inline static void Force_Variadic_Feed_At_Cell_Or_End_May_Fail(Feed(*) feed)
         panic (feed->p);
     }
 
-    assert(feed->p != rebEND);  // non-cell crashes VAL_TYPE_UNCHECKED()
-    assert(Is_End(feed->p) or READABLE(cast(const Reb_Cell*, feed->p)));
+    assert(Is_Feed_At_End(feed) or READABLE(cast(const Reb_Cell*, feed->p)));
     return;
 
 } detect_again: {  ///////////////////////////////////////////////////////////
@@ -336,7 +355,7 @@ inline static void Sync_Feed_At_Cell_Or_End_May_Fail(Feed(*) feed) {
         Clear_Feed_Flag(feed, NEEDS_SYNC);
     }
     assert(feed->p != rebEND);  // non-cell crashes VAL_TYPE_UNCHECKED()
-    assert(Is_End(feed->p) or READABLE(cast(const Reb_Cell*, feed->p)));
+    assert(Is_Feed_At_End(feed) or READABLE(cast(const Reb_Cell*, feed->p)));
 }
 
 
@@ -369,7 +388,7 @@ inline static void Fetch_Next_In_Feed(Feed(*) feed) {
 
   retry_splice:
     if (FEED_PENDING(feed)) {
-        assert(Not_End(FEED_PENDING(feed)));
+        assert(FEED_PENDING(feed) != nullptr);
 
         feed->p = FEED_PENDING(feed);
         mutable_MISC(Pending, &feed->singular) = nullptr;
@@ -398,7 +417,7 @@ inline static void Fetch_Next_In_Feed(Feed(*) feed) {
             ++FEED_INDEX(feed);
         }
         else {
-            feed->p = END;
+            feed->p = &PG_Feed_At_End;
 
             // !!! At first this dropped the hold here; but that created
             // problems if you write `do code: [clear code]`, because END
@@ -426,7 +445,7 @@ inline static void Fetch_Next_In_Feed(Feed(*) feed) {
         }
     }
 
-    assert(Is_End(feed->p) or READABLE(cast(const Reb_Cell*, feed->p)));
+    assert(Is_Feed_At_End(feed) or READABLE(cast(const Reb_Cell*, feed->p)));
 }
 
 
@@ -542,7 +561,7 @@ inline static void Free_Feed(Feed(*) feed) {
     // any faster...they're usually reified into an array anyway, so
     // the frame processing the array will take the other branch.
 
-    while (Not_End(At_Feed(feed)))
+    while (Not_Feed_At_End(feed))
         Fetch_Next_In_Feed(feed);
 
     assert(FEED_PENDING(feed) == nullptr);
@@ -602,16 +621,14 @@ inline static Feed(*) Prep_Array_Feed(
 
     if (first) {
         feed->p = unwrap(first);
-        assert(Not_End(feed->p));
         Init_Array_Cell_At_Core(
             FEED_SINGLE(feed), REB_BLOCK, array, index, specifier
         );
-        assert(Not_End(At_Feed(feed)));
     }
     else {
         feed->p = ARR_AT(array, index);
         if (feed->p == ARR_TAIL(array))
-            feed->p = END;
+            feed->p = &PG_Feed_At_End;
         Init_Array_Cell_At_Core(
             FEED_SINGLE(feed), REB_BLOCK, array, index + 1, specifier
         );
@@ -623,7 +640,7 @@ inline static Feed(*) Prep_Array_Feed(
     // their time to run comes up to not be END anymore.  But if we put a
     // hold on conservatively, it won't be dropped by Free_Feed() time.
     //
-    if (Is_End(feed->p) or GET_SERIES_INFO(array, HOLD))
+    if (Is_Feed_At_End(feed) or GET_SERIES_INFO(array, HOLD))
         NOOP;  // already temp-locked
     else {
         SET_SERIES_INFO(m_cast(Array(*), array), HOLD);
@@ -631,7 +648,7 @@ inline static Feed(*) Prep_Array_Feed(
     }
 
     feed->gotten = nullptr;
-    if (Is_End(feed->p))
+    if (Is_Feed_At_End(feed))
         assert(FEED_PENDING(feed) == nullptr);
     else
         assert(READABLE(cast(const Reb_Cell*, feed->p)));

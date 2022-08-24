@@ -185,7 +185,7 @@ inline static Frame(*) Maybe_Rightward_Continuation_Needed(Frame(*) f)
         return nullptr;
     }
 
-    if (Is_End(f_next))  // `do [x:]`, `do [o.x:]`, etc. are illegal
+    if (Is_Feed_At_End(f->feed))  // `do [x:]`, `do [o.x:]`, etc. are illegal
         fail (Error_Need_Non_End(f_current));
 
     Clear_Feed_Flag(f->feed, NO_LOOKAHEAD);  // always >= 2 elements, see [2]
@@ -235,7 +235,7 @@ Bounce Evaluator_Executor(Frame(*) f)
     assert(OUT != SPARE);  // overwritten by temporary calculations
 
     if (Get_Executor_Flag(EVAL, f, NO_EVALUATIONS)) {  // see flag for rationale
-        if (Is_End(At_Feed(f->feed)))
+        if (Is_Feed_At_End(f->feed))
             return OUT;
         Derelativize(OUT, At_Feed(f->feed), FEED_SPECIFIER(f->feed));
         Set_Cell_Flag(OUT, UNEVALUATED);
@@ -370,7 +370,7 @@ Bounce Evaluator_Executor(Frame(*) f)
     // If asked to evaluate `[]` then we have now done all the work the
     // evaluator needs to do--including marking the output stale.
     //
-    if (Is_End(f_next))
+    if (Is_Frame_At_End(f))
         goto finished;
 
     f_current = Lookback_While_Fetching_Next(f);
@@ -382,6 +382,9 @@ Bounce Evaluator_Executor(Frame(*) f)
     // ^-- doesn't advance expression index: `reeval x` starts with `reeval`
 
   //=//// LOOKAHEAD FOR ENFIXED FUNCTIONS THAT QUOTE THEIR LEFT ARG ///////=//
+
+    if (Is_Frame_At_End(f))
+        goto give_up_backward_quote_priority;
 
     if (VAL_TYPE_UNCHECKED(f_next) != REB_WORD)  // right's kind - END is REB_0
         goto give_up_backward_quote_priority;
@@ -463,7 +466,7 @@ Bounce Evaluator_Executor(Frame(*) f)
     f_current = Lookback_While_Fetching_Next(f);
 
     if (
-        Is_End(f_next)  // v-- out is what used to be on left
+        Is_Feed_At_End(f->feed)  // v-- out is what used to be on left
         and (
             VAL_TYPE_UNCHECKED(OUT) == REB_WORD
             or VAL_TYPE_UNCHECKED(OUT) == REB_TUPLE
@@ -552,11 +555,6 @@ Bounce Evaluator_Executor(Frame(*) f)
       break;
 
     case UNQUOTED_0: switch (CELL_HEART_UNCHECKED(f_current)) {
-
-      case REB_0_END:
-        assert(Is_End(f_current));  // should be END, not void
-        goto finished;
-
 
     //=//// NULL //////////////////////////////////////////////////////////=//
     //
@@ -1572,7 +1570,7 @@ Bounce Evaluator_Executor(Frame(*) f)
         // feed will be in a waiting state for enfix that we can continue by
         // jumping into the evaluator at the ST_EVALUATOR_LOOKING_AHEAD state.
         //
-        if (VAL_TYPE_UNCHECKED(f_next) == REB_WORD) {  // tolerate REB_0_END
+        if (Not_Frame_At_End(f) and VAL_TYPE(f_next) == REB_WORD) {
             Flags flags =
                 EVAL_EXECUTOR_FLAG_SINGLE_STEP
                 | FLAG_STATE_BYTE(ST_EVALUATOR_LOOKING_AHEAD)
@@ -1849,12 +1847,12 @@ Bounce Evaluator_Executor(Frame(*) f)
     // enfix.  If it's necessary to dispatch an enfix function via path, then
     // a word is used to do it, like `>-` in `x: >- lib.method [...] [...]`.
 
-    switch (VAL_TYPE_UNCHECKED(f_next)) {
-      case REB_0_END:
-        assert(Is_End(f_next));  // should be END, not void
+    if (Is_Feed_At_End(f->feed)) {
         Clear_Feed_Flag(f->feed, NO_LOOKAHEAD);
         goto finished;  // hitting end is common, avoid do_next's switch()
+    }
 
+    switch (VAL_TYPE_UNCHECKED(f_next)) {
       case REB_WORD:
         break;  // need to check for lookahead
 
@@ -2051,7 +2049,10 @@ Bounce Evaluator_Executor(Frame(*) f)
     Evaluator_Exit_Checks_Debug(f);
   #endif
 
-    if (Not_Executor_Flag(EVAL, f, SINGLE_STEP) and Not_End(f_next)) {
+    if (
+        Not_Frame_At_End(f)
+        and Not_Executor_Flag(EVAL, f, SINGLE_STEP)
+    ){
         if (Is_Raised(OUT))
             fail (VAL_CONTEXT(OUT));
 

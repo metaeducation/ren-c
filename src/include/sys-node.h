@@ -280,12 +280,7 @@ inline static enum Reb_Pointer_Detect Detect_Rebol_Pointer(const void *p)
     const Byte* bp = cast(const Byte*, p);
 
     if (*bp == END_SIGNAL_BYTE) {  // reserved illegal UTF-8 byte 192
-      #if DEBUG_POISON_CELLS
-        assert(bp[1] == REB_0 or bp[1] == REB_T_POISON);  // DETECTED_AS_POISON?
-      #else
         assert(bp[1] == '\0');  // rebEND C string "\x81", terminates with '\0'
-      #endif
-
         return DETECTED_AS_END;
     }
 

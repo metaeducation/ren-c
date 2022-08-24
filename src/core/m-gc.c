@@ -469,7 +469,7 @@ void Reify_Variadic_Feed_As_Array_Feed(
 
     StackIndex base = TOP_INDEX;
 
-    if (Not_End(At_Feed(feed))) {
+    if (Not_Feed_At_End(feed)) {
         if (truncated)
             Init_Quasi_Word(PUSH(), Canon(OPTIMIZED_OUT));
 
@@ -477,7 +477,7 @@ void Reify_Variadic_Feed_As_Array_Feed(
             Derelativize(PUSH(), At_Feed(feed), FEED_SPECIFIER(feed));
             assert(not Is_Nulled(TOP));
             Fetch_Next_In_Feed(feed);
-        } while (Not_End(At_Feed(feed)));
+        } while (Not_Feed_At_End(feed));
 
         assert(TOP_INDEX != base);
         if (FEED_IS_VARIADIC(feed))  // UTF-8 scan may have finalized it
@@ -516,7 +516,7 @@ void Reify_Variadic_Feed_As_Array_Feed(
         else
             Init_Array_Cell_At(FEED_SINGLE(feed), REB_BLOCK, EMPTY_ARRAY, 1);
 
-        feed->p = END;
+        feed->p = &PG_Feed_At_End;
     }
 }
 

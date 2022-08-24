@@ -83,7 +83,7 @@ void Splice_Block_Into_Feed(Feed(*) feed, const REBVAL *splice) {
     // !!! See remarks above about this per-feed hold logic that should be
     // per-splice hold logic.  Pending whole system review of iteration.
     //
-    if (Not_End(At_Feed(feed)) and NOT_SERIES_INFO(FEED_ARRAY(feed), HOLD)) {
+    if (Not_Feed_At_End(feed) and NOT_SERIES_INFO(FEED_ARRAY(feed), HOLD)) {
         SET_SERIES_INFO(m_cast(Array(*), FEED_ARRAY(feed)), HOLD);
         Set_Feed_Flag(feed, TOOK_HOLD);
     }

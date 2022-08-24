@@ -412,11 +412,13 @@ static void Collect_Inner_Loop(
 // always pre-managed, because it may not be legal to free prior's keylist.
 //
 Keylist(*) Collect_Keylist_Managed(
-    Cell(const*) head,
-    Cell(const*) tail,
+    option(Cell(const*)) head,
+    option(Cell(const*)) tail,
     option(Context(*)) prior,
     Flags flags  // see %sys-core.h for COLLECT_ANY_WORD, etc.
 ) {
+    assert((head and tail) or (not head and not tail));
+
     struct Reb_Collector collector;
     struct Reb_Collector *cl = &collector;
 
@@ -605,8 +607,8 @@ void Rebind_Context_Deep(
 //
 Context(*) Make_Context_Detect_Managed(
     enum Reb_Kind kind,
-    Cell(const*) head,
-    Cell(const*) tail,
+    option(Cell(const*)) head,
+    option(Cell(const*)) tail,
     option(Context(*)) parent
 ) {
     assert(kind != REB_MODULE);
