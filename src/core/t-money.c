@@ -278,8 +278,7 @@ REBTYPE(Money)
                 REBDEC dec = deci_to_decimal(VAL_MONEY_AMOUNT(OUT));
                 Reset_Cell_Header_Untracked(
                     TRACK(OUT),
-                    VAL_TYPE(to),
-                    CELL_MASK_NONE
+                    FLAG_HEART_BYTE(VAL_TYPE(to)) | CELL_MASK_NO_NODES
                 );
                 VAL_DECIMAL(OUT) = dec;
                 return OUT;

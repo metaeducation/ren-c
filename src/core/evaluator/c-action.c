@@ -1364,8 +1364,7 @@ void Push_Action(
         NODE_FLAG_NODE
             | NODE_FLAG_CELL
             | CELL_FLAG_PROTECTED  // payload/binding tweaked, but not by user
-            | CELL_MASK_CONTEXT
-            | FLAG_HEART_BYTE(REB_FRAME);
+            | CELL_MASK_FRAME;
     INIT_VAL_CONTEXT_VARLIST(f->rootvar, f->varlist);
 
     INIT_VAL_FRAME_PHASE(f->rootvar, act);  // FRM_PHASE()

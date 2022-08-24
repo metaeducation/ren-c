@@ -328,7 +328,7 @@ inline static bool Is_Specialized(const REBPAR *param) {
 
 inline static REBVAL *Init_Typeset_Core(Cell(*) out, REBU64 bits)
 {
-    Reset_Cell_Header_Untracked(out, REB_TYPESET, CELL_MASK_NONE);
+    Reset_Cell_Header_Untracked(out, CELL_MASK_TYPESET);
     VAL_PARAM_FLAGS(out) = FLAG_PARAM_CLASS_BYTE(PARAM_CLASS_0);
     VAL_TYPESET_LOW_BITS(out) = bits & cast(uint32_t, 0xFFFFFFFF);
     VAL_TYPESET_HIGH_BITS(out) = bits >> 32;
@@ -344,7 +344,7 @@ inline static REBPAR *Init_Param_Core(
     Flags param_flags,
     REBU64 bits
 ){
-    Reset_Cell_Header_Untracked(out, REB_TYPESET, CELL_MASK_NONE);
+    Reset_Cell_Header_Untracked(out, CELL_MASK_TYPESET);
 
     VAL_PARAM_FLAGS(out) = param_flags;
     VAL_TYPESET_LOW_BITS(out) = bits & cast(uint32_t, 0xFFFFFFFF);

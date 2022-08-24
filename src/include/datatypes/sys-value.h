@@ -411,28 +411,30 @@ inline static Cell(*) RESET_Untracked(Cell(*) v) {
 
 inline static void Init_Cell_Header_Untracked(
     Cell(*) v,
-    enum Reb_Kind k,
-    uintptr_t extra
+    uintptr_t flags
 ){
   #if !defined(NDEBUG)
     if (not Is_Fresh(v))
         panic (v);
   #endif
     v->header.bits |= NODE_FLAG_NODE | NODE_FLAG_CELL  // must ensure NODE+CELL
-        | FLAG_HEART_BYTE(k) | extra;
+        | flags;
 
     // Don't return a value to help convey the cell is likely incomplete
 }
 
-#define Reset_Cell_Header_Untracked(v,k,extra) \
-    Init_Cell_Header_Untracked(RESET_Untracked(v), (k), (extra))
+#define Reset_Cell_Header_Untracked(v,flags) \
+    Init_Cell_Header_Untracked(RESET_Untracked(v), (flags))
 
 inline static REBVAL *RESET_CUSTOM_CELL(
     Cell(*) out,
     REBTYP *type,
     Flags flags
 ){
-    Reset_Cell_Header_Untracked(out, REB_CUSTOM, flags);
+    Reset_Cell_Header_Untracked(
+        out,
+        FLAG_HEART_BYTE(REB_CUSTOM) | flags
+    );
     EXTRA(Any, out).node = type;
     return cast(REBVAL*, out);
 }

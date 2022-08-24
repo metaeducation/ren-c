@@ -568,7 +568,7 @@ inline static Cell(*) Init_Relative_Block_At(
     Array(*) array,
     REBLEN index
 ){
-    Reset_Cell_Header_Untracked(out, REB_BLOCK, CELL_FLAG_FIRST_IS_NODE);
+    Reset_Cell_Header_Untracked(out, CELL_MASK_BLOCK);
     INIT_VAL_NODE1(out, array);
     VAL_INDEX_RAW(out) = index;
     INIT_SPECIFIER(out, action);

@@ -131,7 +131,10 @@ inline static void INIT_BONUS_KEYSOURCE(Array(*) varlist, Node* keysource) {
 //
 
 inline static REBVAL *Init_Return_Signal_Untracked(Cell(*) out, char ch) {
-    Reset_Cell_Header_Untracked(out, REB_T_RETURN_SIGNAL, CELL_MASK_NONE);
+    Reset_Cell_Header_Untracked(
+        out,
+        FLAG_HEART_BYTE(REB_T_RETURN_SIGNAL) | CELL_MASK_NO_NODES
+    );
     mutable_BINDING(out) = nullptr;
 
     PAYLOAD(Any, out).first.u = ch;
@@ -246,9 +249,6 @@ inline static bool Is_Throwing(Frame(*) frame_) {
 #define BOUNCE_SUSPEND \
     cast(Bounce, &PG_R_Suspend)
 
-
-#define CELL_MASK_ACTION \
-    (CELL_FLAG_FIRST_IS_NODE | CELL_FLAG_SECOND_IS_NODE)
 
 #define INIT_VAL_ACTION_DETAILS                         INIT_VAL_NODE1
 #define VAL_ACTION_PARTIALS_OR_LABEL(v)                 SER(VAL_NODE2(v))
@@ -552,7 +552,7 @@ inline static REBVAL *Init_Action_Core(
   #endif
     Force_Series_Managed(ACT_IDENTITY(a));
 
-    Reset_Cell_Header_Untracked(out, REB_ACTION, CELL_MASK_ACTION);
+    Reset_Cell_Header_Untracked(out, CELL_MASK_ACTION);
     INIT_VAL_ACTION_DETAILS(out, ACT_IDENTITY(a));
     INIT_VAL_ACTION_LABEL(out, label);
     INIT_VAL_ACTION_BINDING(out, binding);

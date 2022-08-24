@@ -919,7 +919,9 @@ inline static REBVAL *Init_Zeroed_Hack(Cell(*) out, enum Reb_Kind kind) {
         Init_Pair_Int(out, 0, 0);
     }
     else {
-        Reset_Cell_Header_Untracked(TRACK(out), kind, CELL_MASK_NONE);
+        Reset_Cell_Header_Untracked(
+            TRACK(out), FLAG_HEART_BYTE(kind) | CELL_MASK_NO_NODES
+        );
         memset(&out->extra, 0, sizeof(union Reb_Value_Extra));
         memset(&out->payload, 0, sizeof(union Reb_Value_Payload));
     }

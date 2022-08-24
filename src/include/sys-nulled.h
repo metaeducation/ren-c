@@ -40,7 +40,7 @@
     (VAL_TYPE(v) == REB_NULL)
 
 inline static REBVAL *Init_Nulled_Untracked(Cell(*) out, Flags flags) {
-    Reset_Cell_Header_Untracked(out, REB_NULL, flags);
+    Reset_Cell_Header_Untracked(out, FLAG_HEART_BYTE(REB_NULL) | flags);
 
   #ifdef ZERO_UNUSED_CELL_FIELDS
     EXTRA(Any, out).trash = ZEROTRASH;
@@ -55,7 +55,8 @@ inline static REBVAL *Init_Nulled_Untracked(Cell(*) out, Flags flags) {
 // for a BLOCK!... must be a Value(*), e.g. a context variable or frame output.
 //
 #define Init_Nulled(out) \
-    Init_Nulled_Untracked(TRACK(ensure(Value(*), (out))), CELL_MASK_NONE)
+    Init_Nulled_Untracked( \
+        TRACK(ensure(Value(*), (out))), FLAG_QUOTE_BYTE(UNQUOTED_0))
 
 
 // To help ensure full nulled cells don't leak to the API, the variadic

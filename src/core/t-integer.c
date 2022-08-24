@@ -438,7 +438,8 @@ REBTYPE(Integer)
                 cast(REBDEC, num), frame_, VAL_DECIMAL(to)
             );
             Reset_Cell_Header_Untracked(
-                TRACK(OUT), VAL_TYPE(to), CELL_MASK_NONE
+                TRACK(OUT),
+                FLAG_HEART_BYTE(VAL_TYPE(to)) | CELL_MASK_NO_NODES
             );
             VAL_DECIMAL(OUT) = dec;
             return OUT;

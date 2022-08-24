@@ -234,7 +234,10 @@ inline static REBVAL *Init_Any_Sequence_Bytes(
     const Byte* data,
     Size size
 ){
-    Reset_Cell_Header_Untracked(out, kind, CELL_MASK_NONE);
+    Reset_Cell_Header_Untracked(
+        out,
+        FLAG_HEART_BYTE(kind) | CELL_MASK_NO_NODES
+    );
     mutable_BINDING(out) = nullptr;  // paths are bindable, can't have garbage
 
     if (size > sizeof(PAYLOAD(Bytes, out).at_least_8) - 1) {  // too big
@@ -269,7 +272,10 @@ inline static REBVAL *Try_Init_Any_Sequence_All_Integers(
     if (len < 2)
         return nullptr;
 
-    Reset_Cell_Header_Untracked(out, kind, CELL_MASK_NONE);
+    Reset_Cell_Header_Untracked(
+        out,
+        FLAG_HEART_BYTE(kind) | CELL_MASK_NO_NODES
+    );
     mutable_BINDING(out) = nullptr;  // paths are bindable, can't be garbage
 
     PAYLOAD(Bytes, out).at_least_8[IDX_SEQUENCE_USED] = len;

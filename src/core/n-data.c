@@ -1958,8 +1958,7 @@ DECLARE_NATIVE(as)
                 //
                 Reset_Cell_Header_Untracked(
                     TRACK(OUT),
-                    REB_ISSUE,
-                    CELL_MASK_NONE
+                    FLAG_HEART_BYTE(REB_ISSUE) | CELL_MASK_NO_NODES
                 );
                 memcpy(
                     PAYLOAD(Bytes, OUT).at_least_8,

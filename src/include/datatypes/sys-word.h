@@ -48,7 +48,10 @@ inline static REBVAL *Init_Any_Word_Untracked(
     Symbol(const*) sym,
     Flags flags
 ){
-    Reset_Cell_Header_Untracked(out, kind, flags | CELL_FLAG_FIRST_IS_NODE);
+    Reset_Cell_Header_Untracked(
+        out,
+        FLAG_HEART_BYTE(kind) | flags | CELL_FLAG_FIRST_IS_NODE
+    );
     VAL_WORD_INDEX_U32(out) = 0;
     mutable_BINDING(out) = nullptr;
     INIT_VAL_WORD_SYMBOL(out, sym);
@@ -57,7 +60,8 @@ inline static REBVAL *Init_Any_Word_Untracked(
 }
 
 #define Init_Any_Word(out,kind,spelling) \
-    Init_Any_Word_Untracked(TRACK(out), (kind), (spelling), CELL_MASK_NONE)
+    Init_Any_Word_Untracked( \
+        TRACK(out), (kind), (spelling), FLAG_QUOTE_BYTE(UNQUOTED_0))
 
 #define Init_Word(out,str)          Init_Any_Word((out), REB_WORD, (str))
 #define Init_Get_Word(out,str)      Init_Any_Word((out), REB_GET_WORD, (str))
@@ -73,7 +77,10 @@ inline static REBVAL *Init_Any_Word_Bound_Untracked(
 ){
     assert(index != 0);
 
-    Reset_Cell_Header_Untracked(out, type, CELL_FLAG_FIRST_IS_NODE);
+    Reset_Cell_Header_Untracked(
+        out,
+        FLAG_HEART_BYTE(type) | CELL_FLAG_FIRST_IS_NODE
+    );
     mutable_BINDING(out) = binding;
     VAL_WORD_INDEX_U32(out) = index;
     INIT_VAL_WORD_SYMBOL(out, symbol);

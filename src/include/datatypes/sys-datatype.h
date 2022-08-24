@@ -81,8 +81,8 @@ inline static REBVAL *Init_Custom_Datatype(
 ){
     Reset_Cell_Header_Untracked(
         out,
-        REB_DATATYPE,
-        CELL_FLAG_FIRST_IS_NODE | CELL_FLAG_SECOND_IS_NODE
+        FLAG_HEART_BYTE(REB_DATATYPE)
+            | CELL_FLAG_FIRST_IS_NODE | CELL_FLAG_SECOND_IS_NODE
     );
     VAL_TYPE_KIND_ENUM(out) = REB_CUSTOM;
     INIT_VAL_TYPE_SPEC(out, EMPTY_ARRAY);

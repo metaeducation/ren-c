@@ -245,7 +245,7 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
         if (GET_SERIES_FLAG(SER(VAL_NODE1(v)), INACCESSIBLE))
             break;
 
-        assert((v->header.bits & CELL_MASK_CONTEXT) == CELL_MASK_CONTEXT);
+        assert((v->header.bits & CELL_MASK_ANY_CONTEXT) == CELL_MASK_ANY_CONTEXT);
         Context(*) context = VAL_CONTEXT(v);
         assert(Is_Marked(context));
 

@@ -188,7 +188,10 @@ inline static void INIT_VAL_CONTEXT_ROOTVAR_Core(
 ){
     assert(kind != REB_FRAME);  // use INIT_VAL_FRAME_ROOTVAR() instead
     assert(out == ARR_HEAD(varlist));
-    Reset_Cell_Header_Untracked(out, kind, CELL_MASK_CONTEXT);
+    Reset_Cell_Header_Untracked(
+        out,
+        FLAG_HEART_BYTE(kind) | CELL_MASK_ANY_CONTEXT
+    );
     INIT_VAL_CONTEXT_VARLIST(out, varlist);
     mutable_BINDING(out) = UNBOUND;  // not a frame
     INIT_VAL_FRAME_PHASE_OR_LABEL(out, nullptr);  // not a frame
@@ -211,7 +214,7 @@ inline static void INIT_VAL_FRAME_ROOTVAR_Core(
         or out == ARR_HEAD(varlist)
     );
     assert(phase != nullptr);
-    Reset_Cell_Header_Untracked(out, REB_FRAME, CELL_MASK_CONTEXT);
+    Reset_Cell_Header_Untracked(out, CELL_MASK_FRAME);
     INIT_VAL_CONTEXT_VARLIST(out, varlist);
     mutable_BINDING(out) = binding;
     INIT_VAL_FRAME_PHASE_OR_LABEL(out, phase);
@@ -753,8 +756,7 @@ inline static Context(*) Steal_Context_Vars(Context(*) c, Node* keysource) {
     REBVAL *single = cast(REBVAL*, &stub->content.fixed);
     single->header.bits =
         NODE_FLAG_NODE | NODE_FLAG_CELL
-            | FLAG_HEART_BYTE(REB_FRAME)
-            | CELL_MASK_CONTEXT;
+            | CELL_MASK_FRAME;
     INIT_VAL_CONTEXT_VARLIST(single, ARR(stub));
     INIT_VAL_FRAME_BINDING(single, VAL_FRAME_BINDING(rootvar));
 

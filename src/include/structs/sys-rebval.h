@@ -66,7 +66,7 @@
 //
 
 
-#define CELL_MASK_NONE 0
+#define CELL_MASK_NO_NODES 0  // no CELL_FLAG_FIRST_IS_NODE or SECOND_IS_NODE
 
 #define CELL_MASK_PREP 0  // considered WRITABLE()
 

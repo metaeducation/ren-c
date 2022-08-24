@@ -86,7 +86,10 @@ inline static REBVAL *Init_Issue_Utf8(
     REBLEN len  // while validating, you should have counted the codepoints
 ){
     if (size + 1 <= sizeof(PAYLOAD(Bytes, out)).at_least_8) {
-        Reset_Cell_Header_Untracked(out, REB_ISSUE, CELL_MASK_NONE);
+        Reset_Cell_Header_Untracked(
+            out,
+            FLAG_HEART_BYTE(REB_ISSUE) | CELL_MASK_NO_NODES
+        );
         memcpy(PAYLOAD(Bytes, out).at_least_8, utf8, size);
         PAYLOAD(Bytes, out).at_least_8[size] = '\0';
         EXTRA(Bytes, out).exactly_4[IDX_EXTRA_USED] = size;
@@ -107,7 +110,10 @@ inline static REBVAL *Init_Issue_Utf8(
 // this routine can be used.
 //
 inline static REBVAL *Init_Char_Unchecked_Untracked(Cell(*) out, Codepoint c) {
-    Reset_Cell_Header_Untracked(out, REB_ISSUE, CELL_MASK_NONE);
+    Reset_Cell_Header_Untracked(
+        out,
+        FLAG_HEART_BYTE(REB_ISSUE) | CELL_MASK_NO_NODES
+    );
 
     if (c == 0) {
         //

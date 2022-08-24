@@ -56,7 +56,7 @@ inline static Binary(*) VAL_BITSET(noquote(Cell(const*)) v) {
     m_cast(Binary(*), VAL_BITSET(ENSURE_MUTABLE(v)))
 
 inline static REBVAL *Init_Bitset(Cell(*) out, Binary(*) bits) {
-    Reset_Cell_Header_Untracked(out, REB_BITSET, CELL_FLAG_FIRST_IS_NODE);
+    Reset_Cell_Header_Untracked(out, CELL_MASK_BITSET);
     ASSERT_SERIES_MANAGED(bits);
     INIT_VAL_NODE1(out, bits);
     return cast(REBVAL*, out);

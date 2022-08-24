@@ -64,7 +64,7 @@
     SERIES_FLAG_24
 
 
-#define CELL_MASK_CONTEXT \
+#define CELL_MASK_ANY_CONTEXT \
     (CELL_FLAG_FIRST_IS_NODE  /* varlist */ \
         | CELL_FLAG_SECOND_IS_NODE  /* phase (for FRAME!) */)
 

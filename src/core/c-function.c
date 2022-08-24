@@ -1009,7 +1009,7 @@ Action(*) Make_Action(
         SERIES_MASK_DETAILS | NODE_FLAG_MANAGED
     );
     Cell(*) archetype = ARR_HEAD(details);
-    Reset_Cell_Header_Untracked(TRACK(archetype), REB_ACTION, CELL_MASK_ACTION);
+    Reset_Cell_Header_Untracked(TRACK(archetype), CELL_MASK_ACTION);
     INIT_VAL_ACTION_DETAILS(archetype, details);
     mutable_BINDING(archetype) = UNBOUND;
     INIT_VAL_ACTION_PARTIALS_OR_LABEL(archetype, partials);
@@ -1160,11 +1160,7 @@ void Get_Maybe_Fake_Action_Body(REBVAL *out, const REBVAL *action)
 
             // Note: clears VAL_FLAG_LINE
             //
-            Reset_Cell_Header_Untracked(
-                TRACK(slot),
-                REB_GROUP,
-                CELL_FLAG_FIRST_IS_NODE
-            );
+            Reset_Cell_Header_Untracked(TRACK(slot), CELL_MASK_GROUP);
             INIT_VAL_NODE1(slot, VAL_ARRAY(body));
             VAL_INDEX_RAW(slot) = 0;
             INIT_SPECIFIER(slot, a);  // relative binding
@@ -1175,11 +1171,7 @@ void Get_Maybe_Fake_Action_Body(REBVAL *out, const REBVAL *action)
         // Cannot give user a relative value back, so make the relative
         // body specific to a fabricated expired frame.  See #2221
 
-        Reset_Cell_Header_Untracked(
-            TRACK(out),
-            REB_BLOCK,
-            CELL_FLAG_FIRST_IS_NODE
-        );
+        Reset_Cell_Header_Untracked(TRACK(out), CELL_MASK_BLOCK);
         INIT_VAL_NODE1(out, maybe_fake_body);
         VAL_INDEX_RAW(out) = 0;
 

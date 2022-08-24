@@ -48,7 +48,7 @@
 #endif
 
 inline static REBVAL *Init_Decimal_Untracked(Cell(*) out, REBDEC dec) {
-    Reset_Cell_Header_Untracked(out, REB_DECIMAL, CELL_MASK_NONE);
+    Reset_Cell_Header_Untracked(out, CELL_MASK_DECIMAL);
     PAYLOAD(Decimal, out).dec = dec;
     return cast(REBVAL*, out);
 }
@@ -57,7 +57,7 @@ inline static REBVAL *Init_Decimal_Untracked(Cell(*) out, REBDEC dec) {
     Init_Decimal_Untracked(TRACK(out), (dec))
 
 inline static REBVAL *Init_Percent(Cell(*) out, REBDEC dec) {
-    Reset_Cell_Header_Untracked(out, REB_PERCENT, CELL_MASK_NONE);
+    Reset_Cell_Header_Untracked(out, CELL_MASK_PERCENT);
     PAYLOAD(Decimal, out).dec = dec;
     return cast(REBVAL*, out);
 }

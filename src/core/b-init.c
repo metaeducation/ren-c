@@ -361,8 +361,7 @@ static void Startup_End_Node(void)
     assert(Is_Void(VOID_CELL));  // default all zero bits for C globals
     Reset_Cell_Header_Untracked(
         TRACK(&PG_Void_Cell),
-        REB_0_VOID,
-        NODE_FLAG_NODE | NODE_FLAG_CELL | CELL_FLAG_PROTECTED
+        CELL_MASK_VOID | CELL_FLAG_PROTECTED
     );
     assert(Is_Void(VOID_CELL));  // another readable void pattern
 }

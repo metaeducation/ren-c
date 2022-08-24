@@ -197,7 +197,8 @@ for-each-datatype: func [
     body "Block to evaluate each time"
         [block!]
     <local>
-    name* description* typesets* class* make* mold* heart* completed* running*
+    name* description* typesets* class* make* mold* heart* cellmask*
+    completed* running*
 ][
     heart*: 0
     parse2 type-table [some [not end
@@ -205,7 +206,8 @@ for-each-datatype: func [
 
         set name* word!
         set description* text!
-        [set typesets* block! | (typesets*: [])]
+        [set cellmask* group!]
+        [set typesets* block!]
         [and block! into [
             set class* [word! | '- | '? | quote 0]
             set make* [word! | '* | '+ | '- | '? | quote 0]
@@ -218,6 +220,7 @@ for-each-datatype: func [
                     if #"!" = last name* [take/last name*]
                     name*
                 )
+                cellmask: cellmask*
                 heart: ensure integer! heart*
                 description: ensure text! description*
                 typesets: map-each any-name! typesets* [
@@ -305,6 +308,7 @@ for-each-typerange: func [
                 append types* to text! name*
             ])]
             text!
+            group!
             block!
             block!
             (heart*: heart* + 1)
@@ -397,6 +401,14 @@ e-types/emit newline
 boot-types: copy []  ; includes internal types like REB_NULL (but not END)
 
 for-each-datatype t [
+    if not empty? t/cellmask [
+        e-types/emit 't {
+            #define CELL_MASK_${T/NAME} \
+                (FLAG_HEART_BYTE(REB_${T/NAME}) | $<MOLD T/CELLMASK>)
+        }
+        e-types/emit newline
+    ]
+
     if t/heart = 0 [continue]
 
     if unset? 't/name! [  ; internal type

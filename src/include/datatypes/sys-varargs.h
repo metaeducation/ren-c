@@ -52,9 +52,6 @@
 //   CELL_FLAG_UNEVALUATED from the last TAKE to reflect its status.
 //
 
-#define CELL_MASK_VARARGS \
-    CELL_FLAG_SECOND_IS_NODE
-
 #define VAL_VARARGS_SIGNED_PARAM_INDEX(v) \
     PAYLOAD(Any, (v)).first.i
 
@@ -76,7 +73,7 @@ inline static void INIT_VAL_VARARGS_BINDING(
 
 
 inline static REBVAL *Init_Varargs_Untyped_Normal(Cell(*) out, Frame(*) f) {
-    Reset_Cell_Header_Untracked(out, REB_VARARGS, CELL_MASK_VARARGS);
+    Reset_Cell_Header_Untracked(out, CELL_MASK_VARARGS);
     mutable_BINDING(out) = f->varlist;  // frame-based VARARGS!
     UNUSED(VAL_VARARGS_SIGNED_PARAM_INDEX(out));
     INIT_VAL_VARARGS_PHASE(out, nullptr);  // set in typecheck
@@ -98,7 +95,7 @@ inline static REBVAL *Init_Varargs_Untyped_Enfix(
         Init_Block(ARR_SINGLE(feed), singular);  // index 0
     }
 
-    Reset_Cell_Header_Untracked(out, REB_VARARGS, CELL_MASK_VARARGS);
+    Reset_Cell_Header_Untracked(out, CELL_MASK_VARARGS);
     INIT_VAL_VARARGS_BINDING(out, feed);
     UNUSED(VAL_VARARGS_SIGNED_PARAM_INDEX(out));
     INIT_VAL_VARARGS_PHASE(out, nullptr);  // set in typecheck

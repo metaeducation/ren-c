@@ -392,7 +392,7 @@ Bounce MAKE_Event(
     if (not IS_BLOCK(arg))
         fail (Error_Unexpected_Type(REB_EVENT, VAL_TYPE(arg)));
 
-    Reset_Cell_Header_Untracked(TRACK(OUT), REB_EVENT, CELL_FLAG_FIRST_IS_NODE);
+    Reset_Cell_Header_Untracked(TRACK(OUT), CELL_MASK_EVENT);
     INIT_VAL_NODE1(OUT, nullptr);
     SET_VAL_EVENT_TYPE(OUT, SYM_NONE);  // SYM_0 shouldn't be used
     mutable_VAL_EVENT_FLAGS(OUT) = EVF_MASK_NONE;

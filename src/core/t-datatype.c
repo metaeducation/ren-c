@@ -291,7 +291,8 @@ Array(*) Startup_Datatypes(Array(*) boot_types, Array(*) boot_typespecs)
         }
 
         Reset_Cell_Header_Untracked(
-            TRACK(value), REB_DATATYPE, CELL_FLAG_FIRST_IS_NODE
+            TRACK(value),
+            FLAG_HEART_BYTE(REB_DATATYPE) | CELL_FLAG_FIRST_IS_NODE
         );
         VAL_TYPE_KIND_ENUM(value) = kind;
         INIT_VAL_TYPE_SPEC(value,

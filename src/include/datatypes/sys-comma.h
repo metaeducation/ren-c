@@ -40,7 +40,7 @@
 
 
 inline static REBVAL *Init_Comma(Cell(*) out) {
-    Reset_Cell_Header_Untracked(out, REB_COMMA, CELL_MASK_NONE);
+    Reset_Cell_Header_Untracked(out, CELL_MASK_COMMA);
 
     // Although COMMA! carries no data, it is not inert.  To make ANY_INERT()
     // fast, it's in the part of the list of bindable evaluative types.

@@ -165,7 +165,7 @@ inline static REBVAL *Init_Time_Nanoseconds(
     Cell(*) v,
     REBI64 nanoseconds
 ){
-    Reset_Cell_Header_Untracked(v, REB_TIME, CELL_MASK_NONE);
+    Reset_Cell_Header_Untracked(v, CELL_MASK_TIME);
     PAYLOAD(Time, v).nanoseconds = nanoseconds;
     return cast(REBVAL*, v);
 }

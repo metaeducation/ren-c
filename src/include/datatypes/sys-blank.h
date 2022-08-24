@@ -51,7 +51,7 @@
 //
 
 inline static REBVAL *Init_Blank_Untracked(Cell(*) out, Flags flags) {
-    Reset_Cell_Header_Untracked(out, REB_BLANK, flags);
+    Reset_Cell_Header_Untracked(out, FLAG_HEART_BYTE(REB_BLANK) | flags);
 
   #ifdef ZERO_UNUSED_CELL_FIELDS
     EXTRA(Any, out).trash = ZEROTRASH;
@@ -63,4 +63,4 @@ inline static REBVAL *Init_Blank_Untracked(Cell(*) out, Flags flags) {
 }
 
 #define Init_Blank(out) \
-    Init_Blank_Untracked(TRACK(out), CELL_MASK_NONE)
+    Init_Blank_Untracked(TRACK(out), FLAG_QUOTE_BYTE(UNQUOTED_0))

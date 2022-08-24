@@ -87,7 +87,7 @@ inline static bool Is_Stale_Void(Value(const*) v) {
 }
 
 inline static Value(*) Init_Stale_Void_Untracked(Value(*) out) {
-    Reset_Cell_Header_Untracked(out, REB_0, CELL_FLAG_STALE);
+    Reset_Cell_Header_Untracked(out, CELL_MASK_VOID | CELL_FLAG_STALE);
 
   #ifdef ZERO_UNUSED_CELL_FIELDS
     EXTRA(Any, out).trash = ZEROTRASH;

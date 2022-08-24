@@ -81,7 +81,7 @@ inline static REBVAL *Init_Pair(
     assert(ANY_NUMBER(x));
     assert(ANY_NUMBER(y));
 
-    Reset_Cell_Header_Untracked(out, REB_PAIR, CELL_FLAG_FIRST_IS_NODE);
+    Reset_Cell_Header_Untracked(out, CELL_MASK_PAIR);
     REBVAL *p = Alloc_Pairing();
     Copy_Cell(PAIRING_KEY(p), cast(const REBVAL*, x));
     Copy_Cell(p, cast(const REBVAL*, y));
@@ -91,7 +91,7 @@ inline static REBVAL *Init_Pair(
 }
 
 inline static REBVAL *Init_Pair_Int(Cell(*) out, REBI64 x, REBI64 y) {
-    Reset_Cell_Header_Untracked(out, REB_PAIR, CELL_FLAG_FIRST_IS_NODE);
+    Reset_Cell_Header_Untracked(out, CELL_MASK_PAIR);
     REBVAL *p = Alloc_Pairing();
     Init_Integer(PAIRING_KEY(p), x);
     Init_Integer(p, y);
@@ -101,7 +101,7 @@ inline static REBVAL *Init_Pair_Int(Cell(*) out, REBI64 x, REBI64 y) {
 }
 
 inline static REBVAL *Init_Pair_Dec(Cell(*) out, REBDEC x, REBDEC y) {
-    Reset_Cell_Header_Untracked(out, REB_PAIR, CELL_FLAG_FIRST_IS_NODE);
+    Reset_Cell_Header_Untracked(out, CELL_MASK_PAIR);
     REBVAL *p = Alloc_Pairing();
     Init_Decimal(PAIRING_KEY(p), x);
     Init_Decimal(p, y);
