@@ -98,9 +98,14 @@
 [
     (match+: reframer func [f [frame!] <local> p] [
         p: f.(first parameters of action of f)  ; get the first parameter
-        if do f [p]  ; evaluate to parameter if operation succeeds
+        if did do f [
+            return p
+        ] else [
+            return null
+        ] ; evaluate to parameter if operation succeeds
     ]
     true)
 
     (null = match+ parse3 "aaa" [some "b"])
+    ("aaa" = match+ parse3 "aaa" [some "a"])
 ]
