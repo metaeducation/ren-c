@@ -28,16 +28,16 @@ REBOL [
 
 
 database-prototype: context [
-    hdbc: '  ; SQLHDBC handle!
+    hdbc: _  ; SQLHDBC handle!
     statements: []  ; statement objects
 ]
 
 statement-prototype: context [
     database: ~
-    hstmt: '  ; SQLHSTMT
+    hstmt: _  ; SQLHSTMT
     string: null
     titles: ~
-    columns: '
+    columns: _
 ]
 
 export odbc-statement-of: func [

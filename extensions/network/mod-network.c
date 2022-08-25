@@ -729,12 +729,12 @@ static Bounce Transport_Actor(
             // must be set before the OS_Do_Device() call.
             //
             REBVAL *local_id = Obj_Value(spec, STD_PORT_SPEC_NET_LOCAL_ID);
-            if (IS_BLANK(local_id))
+            if (Is_Nulled(local_id))
                 sock->local_port_number = 0;  // let the system pick
             else if (IS_INTEGER(local_id))
                 sock->local_port_number = VAL_INT32(local_id);
             else
-                fail ("local-id field of PORT! spec must be BLANK!/INTEGER!");
+                fail ("local-id field of PORT! spec must be NULL or INTEGER!");
 
             // !!! R3-Alpha would open the socket using `socket()` call, and
             // then do a DNS lookup afterward if necessary.  But the right
@@ -760,7 +760,7 @@ static Bounce Transport_Actor(
 
                 Get_Tuple_Bytes(&sock->remote_ip, arg, 4);
             }
-            else if (IS_BLANK(arg)) {  // No host, must be a LISTEN socket:
+            else if (Is_Nulled(arg)) {  // No host, must be a LISTEN socket:
                 listen = true;
                 sock->local_port_number =
                     IS_INTEGER(port_id) ? VAL_INT32(port_id) : 8000;

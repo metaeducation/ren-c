@@ -227,7 +227,7 @@ static void Startup_Lib(void)
 
     // These have various applications, such as BLANK! is used during scanning
     // to build a path like `/a/b` out of an array with [_ a b] in it.  Since
-    // the scanner is also what would load code like `blank: _`, we need to
+    // the scanner is also what would load code like (blank: '_), we need to
     // seed the values to get the ball rolling.
 
     Init_Nulled(force_Lib(NULL));

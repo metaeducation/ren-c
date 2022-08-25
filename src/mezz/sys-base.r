@@ -233,5 +233,5 @@ do*: func [
     ; of times.  So what DO does is effectively flips the order of the
     ; return results of IMPORT.
     ;
-    return [context @result]: import*/args/only blank source args only
+    return [context @result]: import*/args/only _ source args only
 ]

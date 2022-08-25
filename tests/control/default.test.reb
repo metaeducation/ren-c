@@ -4,9 +4,9 @@
     x = 10
 )
 (
-    x: _  ; blank is no longer considered empty
+    x: '_  ; blank is no longer considered empty
     x: default [10]
-    x = _
+    x = '_
 )
 (
     x: 20
@@ -37,7 +37,7 @@
     ]
 )
 (
-    x: _
+    x: '_
     all [
         '_ = steal x: default [20]  ; default considers BLANK! a value
         x = '_

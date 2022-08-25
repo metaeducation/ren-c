@@ -76,7 +76,7 @@ make-http-request: func [
         {In case of text!, no escaping is performed.}
         {(eg. useful to override escaping etc.). Careful!}
     headers [block!] "Request headers (set-word! text! pairs)"
-    content [text! binary! blank!]
+    content [<opt> text! binary!]
         {Request contents (Content-Length is created automatically).}
         {Empty string not exactly like blank.}
     <local> result
@@ -129,7 +129,7 @@ do-request: function [
     port.state.mode: <doing-request>
 
     info.headers: info.response-line: info.response-parsed: port.data:
-    info.size: info.date: info.name: blank
+    info.size: info.date: info.name: _
     req: (make-http-request spec.method any [spec.path %/]
         spec.headers spec.content)
 
@@ -173,7 +173,7 @@ parse-write-dialect: function [
         [set temp: block! (spec.headers: temp) | (spec.headers: [])]
         [
             set temp: [any-string! | binary!] (spec.content: temp)
-            | (spec.content: blank)
+            | (spec.content: _)
         ]
         <end>
     ]

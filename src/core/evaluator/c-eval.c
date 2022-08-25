@@ -920,7 +920,7 @@ Bounce Evaluator_Executor(Frame(*) f)
 
       case REB_TUPLE: {
         Cell(const*) head = VAL_SEQUENCE_AT(SPARE, f_current, 0);
-        if (ANY_INERT(head)) {
+        if (IS_BLANK(head) or ANY_INERT(head)) {
             Derelativize(OUT, f_current, f_specifier);
             break;
         }
@@ -980,7 +980,7 @@ Bounce Evaluator_Executor(Frame(*) f)
 
       case REB_PATH: {
         Cell(const*) temp = VAL_SEQUENCE_AT(SPARE, f_current, 0);
-        if (ANY_INERT(temp)) {
+        if (IS_BLANK(temp) or ANY_INERT(temp)) {
             Derelativize(OUT, f_current, f_specifier);
             break;
         }
@@ -1742,9 +1742,11 @@ Bounce Evaluator_Executor(Frame(*) f)
     //
     //=///////////////////////////////////////////////////////////////////=//
 
+      case REB_BLANK:  // new behavior, evaluate to NULL
+        Init_Nulled(OUT);
+        break;
+
     inert:
-      case REB_BLANK:
-        //
       case REB_LOGIC:
       case REB_INTEGER:
       case REB_DECIMAL:

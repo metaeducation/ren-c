@@ -3,9 +3,9 @@
 (not blank? 1)
 (blank! = type of blank)
 ; literal form
-(blank = _)
+(null? _)
 [#845
-    (blank = _)
+    (blank = '_)
 ]
 
 (null = try make blank! null)
@@ -18,5 +18,5 @@
 ("_" = mold blank)
 [#1666 #1650 (
     f: does [_]
-    _ == f
+    null = f
 )]

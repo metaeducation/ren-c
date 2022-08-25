@@ -522,7 +522,7 @@ DECLARE_NATIVE(match)
     //     >> match blank! _
     //     == ~blank~  ; isotope
     //
-    //     >> decay match blank! _
+    //     >> decay match blank! '_
     //     == _
     //
     Isotopify_If_Falsey(v);

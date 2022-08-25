@@ -12,7 +12,7 @@
     ('wb == parse [wb] [the wb])
     (123 == parse [123] [the 123])
     (3 == parse [3 3] [2 the 3])
-    (_ == parse [blank] [the blank])
+    ('_ == parse [blank] [the blank])
     ('some == parse [some] [the some])
 ]
 

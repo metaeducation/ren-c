@@ -236,7 +236,7 @@
             did all [
                 [ifoo 304] == [var @]: evaluate [ignored ifoo 304]
                 var == #ignored
-                ignored == _
+                null? ignored
             ]
         ]
     )(
@@ -256,7 +256,7 @@
             did all [
                 [enifoo 304] == [var @]: evaluate [ignored enifoo 304]
                 var == #ignored
-                ignored == _
+                null? ignored
             ]
         ]
     )(
@@ -286,7 +286,7 @@
         did all [
             [304] == [var @]: evaluate [1020 enbar 304]
             var == 1020
-            enbar == _
+            null? enbar
         ]
         comment {Invisible enfix arity-0 function should run on same step}
     )
@@ -301,7 +301,7 @@
             did all [
                 [ibar 304] == [var @]: evaluate [ignored ibar 304]
                 var == #ignored
-                ignored == _
+                null? ignored
             ]
             comment {skip irrelevant (tests right on *next* step)}
         ]
@@ -322,7 +322,7 @@
             did all [
                 [enibar 304] == [var @]: evaluate [kept enibar 304]
                 var == #kept
-                kept == _
+                null? kept
             ]
         ]
     )(
@@ -334,7 +334,7 @@
             did all [
                 [304] == [var @]: evaluate [1020 enibar 304]
                 var == 1020
-                enibar == _
+                null? enibar
             ]
             comment {
                 When arguments are not skipped, the behavior should be the

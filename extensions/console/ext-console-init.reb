@@ -72,7 +72,7 @@ loud-print: redescribe [
 ; it hasn't really been worked through yet (nested REPLs?)  Review.
 ;
 export console!: make object! [
-    name: '
+    name: _
     repl: true  ; used to identify this as a console! object
     is-loaded: false  ; if true then this is a loaded (external) skin
     was-updated: false  ; if true then console! object found in loaded skin

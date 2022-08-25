@@ -1540,8 +1540,8 @@ default-combinators: make map! reduce [
     ][
         remainder: next input  ; if we consume an item, we'll consume just one
         if any-array? input [
-            if input.1 = _ [
-                return _
+            if blank? input.1 [
+                return blank
             ]
             return raise "BLANK! rule found next input in array was not a blank"
         ]

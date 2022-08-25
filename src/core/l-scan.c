@@ -996,12 +996,12 @@ static enum Reb_Token Maybe_Locate_Token_May_Push_Mold(
     // input to be processed.
     //
     while (not ss->begin) {
-        if (f->feed->p == nullptr) {  // API null
+        if (f->feed->p == nullptr) {  // API null, can't be in feed, use BLANK
             //
             // We don't call Handle_Feed_Nullptr() because we don't need the
             // cell in f->feed->fetched.
             //
-            Init_Meta_Of_Null_Isotope(PUSH());
+            Init_Blank(PUSH());
             if (Get_Executor_Flag(SCAN, f, NEWLINE_PENDING)) {
                 Clear_Executor_Flag(SCAN, f, NEWLINE_PENDING);
                 Set_Cell_Flag(TOP, NEWLINE_BEFORE);

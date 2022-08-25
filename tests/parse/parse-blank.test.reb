@@ -33,7 +33,7 @@
 (didn't parse [x <y> "z"] ['_ '_ '_])
 ('~blank~ == meta parse [_ _ _] ['_ '_ '_])
 (
-    q-blank: quote _
+    q-blank: quote '_
     '~blank~ == meta parse [_ _ _] [q-blank q-blank q-blank]
 )
 

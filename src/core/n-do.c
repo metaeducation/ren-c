@@ -191,9 +191,8 @@ DECLARE_NATIVE(shove)
         else if (IS_SET_PATH(left) or IS_SET_TUPLE(left)) {
             f->feed->gotten = nullptr;  // calling arbitrary code, may disrupt
             composed_set_path = rebValue("compose @", left);
-            REBVAL *temp = rebValue("get @", composed_set_path);
-            Copy_Cell(OUT, temp);
-            rebRelease(temp);
+            if (rebRunThrows(OUT, "get @", composed_set_path))
+                return THROWN;
         }
         else
             fail ("Left hand side must be SET-WORD! or SET-PATH!");

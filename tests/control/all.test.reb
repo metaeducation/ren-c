@@ -386,7 +386,7 @@
 (15 = all/predicate [1 + 2, 3 + 4, comment "Hi" 5 + 6, 7 + 8] :odd?)
 (15 = all/predicate [1 + 2, 3 + 4 5 + 6, 7 + 8,] chain [:even?, :not])
 
-('~blank~ = ^ all/predicate [false null _] :not)
+('~null~ = ^ all/predicate [false null _] :not)
 ('~null~ = ^ all/predicate [false _ null] :not)
 ("this is why" = (all/predicate [false _ null] :not then ["this is why"]))
 

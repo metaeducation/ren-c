@@ -260,7 +260,10 @@ DECLARE_NATIVE(console)
     // the console object was if it is being overridden.
 
     REBVAL *old_console = rebValue(":system.console");
-    Copy_Cell(ARG(old_console), old_console);
+    if (old_console == nullptr)
+        Init_Nulled(ARG(old_console));
+    else
+        Copy_Cell(ARG(old_console), old_console);
     rebRelease(old_console);
 
     if (REF(skin))

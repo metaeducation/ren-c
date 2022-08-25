@@ -116,18 +116,19 @@ inline static REBVAL *Quasify(REBVAL *v) {
 // and the REB_META_XXX family of values (like ^WORD, ^TU.P.LE...)
 
 inline static Value(*) Meta_Quotify(Value(*) v) {
-    if (Is_Isotope(v)) {
-        Reify_Isotope(v);  // ...make it "friendly" now...
-        return v;
-    }
+    if (Is_Isotope(v))
+        return Reify_Isotope(v);
+    if (Is_Nulled(v))
+        return Init_Blank(v);
     return Quotify(v, 1);  // a non-isotope winds up quoted
 }
 
 inline static Value(*) Meta_Unquotify(Value(*) v) {
+    assert(not Is_Nulled(v));  // END can't be unquotified
     if (Is_Meta_Of_Raised(v))
         fail (VAL_CONTEXT(v));  // too dangerous to create failure easily
-    if (Is_Nulled(v))
-        RESET(v);
+    if (IS_BLANK(v))
+        Init_Nulled(v);
     else if (QUOTE_BYTE(v) == QUASI_2)
         mutable_QUOTE_BYTE(v) = ISOTOPE_0;
     else

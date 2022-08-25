@@ -421,7 +421,7 @@ make-state-updater: func [
         ctx [object!]
         new [tag! issue!]
     ][
-        let old: ensure [blank! issue! tag!] ctx.mode
+        let old: ensure [<opt> issue! tag!] ctx.mode
         debug [mold old unspaced ["=" direction "=>"] mold new]
 
         let legal
@@ -1821,7 +1821,7 @@ sys.util.make-scheme [
         ]
 
         write: func [
-            return: [port! blank!]
+            return: [<opt> port!]
             port [port!]
             value [<opt> any-value!]
         ][
@@ -1835,10 +1835,10 @@ sys.util.make-scheme [
             ; !!! The "port" code from R3-Alpha (and its extensions) was not
             ; well formalized, and is slated for complete replacement.  As a
             ; patch that seems to keep a certain situation working, this will
-            ; ignore WRITE requests when the mode is blank...and print a
+            ; ignore WRITE requests when the mode is null...and print a
             ; message if some other request comes through it doesn't grok.  :-(
             ;
-            if blank? port.state.mode [
+            if not port.state.mode [
                 return port
             ]
             print ["!!! IGNORING TLS PORT MODE IN WRITE:" port.state.mode]
@@ -2045,7 +2045,7 @@ sys.util.make-scheme [
             ]
 
             debug "TLS/TCP port closed"
-            port.state: blank
+            port.state: _
             return port
         ]
 

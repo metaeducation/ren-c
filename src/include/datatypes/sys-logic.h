@@ -68,12 +68,21 @@ inline static bool VAL_LOGIC(noquote(Cell(const*)) v) {
 
 inline static bool Is_Truthy(Cell(const*) v) {
     assert(QUOTE_BYTE(v) != ISOTOPE_0);  // should never be passed isotopes!
-    if (VAL_TYPE(v) > REB_LOGIC)
-        return true;  // includes QUOTED! `if first ['_] [-- "this is truthy"]`
-    if (IS_LOGIC(v))
+    if (QUOTE_BYTE(v) != UNQUOTED_1)
+        return true;  // all QUOTED! and QUASI! types are truthy
+
+    Byte heart = HEART_BYTE(v);
+    switch (heart) {
+      case REB_NULL:
+      case REB_BLANK:
+        return false;
+
+      case REB_LOGIC:
         return VAL_LOGIC(v);
-    assert(IS_BLANK(v) or Is_Nulled(v));
-    return false;
+
+      default:
+        return true;
+    }
 }
 
 #define Is_Falsey(v) \

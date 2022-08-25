@@ -391,7 +391,7 @@ import*: func [
     @product "Evaluative product of module body (only if WHERE is BLANK!)"
         [<opt> any-value!]
     where "Where to put exported definitions from SOURCE"
-        [blank! module!]
+        [<opt> module!]
     source [
         file! url!  ; get from location, run with location as working dir
         tag!  ; load relative to system.script.path

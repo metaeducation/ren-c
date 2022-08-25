@@ -58,7 +58,7 @@ array: func [
         [any-value!]
     <local> rest block
 ][
-    initial: default [_]  ; if not specified, array will be all blanks
+    initial: default ['_]  ; if not specified, array will be all blanks
     if block? size [
         rest: next size else [
             ;
@@ -662,7 +662,7 @@ unpack: enfixed func [
         switch vars.1 [
             '... [continue]  ; ignore all other values (but must reduce all)
             (matches blank!) []  ; no assignment
-            (matches [word! tuple!]) [set vars.1 unquote val']
+            (matches [word! tuple!]) [set vars.1 unmeta val']
             (matches [meta-word! meta-tuple!]) [set vars.1 val']
         ]
         vars: my next

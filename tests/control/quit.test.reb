@@ -6,11 +6,19 @@
 
 (99 = do {do {quit 42} 99})
 
-; Returning of Rebol values from called to calling script via QUIT/WITH.
+; Returning of Rebol values from called to calling script via QUIT w/arg.
+;
+; Note: this R3-Alpha test was originally written for NONE, which would
+; round-trip in a strange way due to the #[none] molding as the word none.
+; With BLANK! now evaluating to a NULL state, this means the COMPOSE has to
+; put a quote on.  But that breaks the strange incidental object round
+; tripping, because (quit 'make object! [...]) just gives back the word
+; "make".  For the moment, bias it to the blank case since the object
+; molding is something that can't generally round trip at all.
 (
     do-script-returning: lambda [value <local> script] [
         script: %tmp-inner.reb
-        save/header script compose [quit (value)] []
+        save/header script compose [quit '(value)] []  ; see note RE: quoting
         do script
         elide delete %tmp-inner.reb
     ]
@@ -18,10 +26,10 @@
         42
         {foo}
         #{CAFE}
-        blank
+        blank  ; forces quoting in save, see note
         http://somewhere
         1900-01-30
-        make object! [x: 42]
+        ; make object! [x: 42]  ; !!! can't round-trip quoted, see note
     ][
         value = do-script-returning value
     ]

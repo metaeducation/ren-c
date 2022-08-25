@@ -53,9 +53,6 @@ min: :minimum
 max: :maximum
 abs: :absolute
 
-; Note: NULL symbol is in lib context slot 1, is initialized on boot
-blank: _   ; e.g. sometimes `return blank` reads better than `return _`
-
 ; A "blackhole" is a name for the usage of the NUL character in the sense of
 ; "truthy emptiness".  e.g. `set # 10` will not error, while `set _ 10` will.
 ; It was chosen for its looks, and since it also acts as the '\0' character it

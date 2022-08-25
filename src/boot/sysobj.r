@@ -72,7 +72,7 @@ codecs: make object! []
 
 schemes: make object! []
 
-util: '
+util: _
 
 ports: make object! [
     wait-list: []   ; List of ports to add to 'wait
@@ -105,21 +105,21 @@ locale: make object! [
 ]
 
 options: make object! [  ; Options supplied to REBOL during startup
-    bin: '          ; Path to directory where Rebol executable binary lives
-    boot: '         ; Path of executable, ie. system.options.bin/r3-exe
-    home: '         ; Path of home directory
-    resources: '    ; users resources directory (for %user.r, skins, modules etc)
-    suppress: '     ; block of user --suppress items, eg [%rebol.r %user.r %console-skin.reb]
+    bin: _          ; Path to directory where Rebol executable binary lives
+    boot: _         ; Path of executable, ie. system.options.bin/r3-exe
+    home: _         ; Path of home directory
+    resources: _    ; users resources directory (for %user.r, skins, modules etc)
+    suppress: _     ; block of user --suppress items, eg [%rebol.r %user.r %console-skin.reb]
     loaded: []      ; block with full paths to loaded start-up scripts
-    path: '         ; Where script was started or the startup dir
+    path: _         ; Where script was started or the startup dir
 
-    current-path: ' ; Current URL! or FILE! path to use for relative lookups
+    current-path: _ ; Current URL! or FILE! path to use for relative lookups
 
-    encap: '        ; The encapping data extracted
-    script: '       ; Filename of script to evaluate
-    args: '         ; Command line arguments passed to script
-    debug: '        ; debug flags
-    version: '      ; script version needed
+    encap: _        ; The encapping data extracted
+    script: _       ; Filename of script to evaluate
+    args: _         ; Command line arguments passed to script
+    debug: _        ; debug flags
+    version: _      ; script version needed
 
     dump-size: 68   ; used by dump
 
@@ -202,9 +202,9 @@ standard: make object! [
     ; with this archetype used by the REDESCRIBE Mezzanine.
     ;
     action-meta: make object! [
-        description: '
-        parameter-types: '
-        parameter-notes: '
+        description: _
+        parameter-types: _
+        parameter-notes: _
     ]
 
     ; !!! This is the template used for all errors, to which extra fields are
@@ -214,13 +214,13 @@ standard: make object! [
     ; like FILE and LINE would not conflict with parameters.
     ;
     error: make object! [
-        type: '
-        id: '
-        message: '  ; a BLOCK! template with arg substitution or just a STRING!
-        near: '
-        where: '
-        file: '
-        line: '
+        type: _
+        id: _
+        message: _  ; a BLOCK! template with arg substitution or just a STRING!
+        near: _
+        where: _
+        file: _
+        line: _
 
         ; Arguments will be allocated in the context at creation time if
         ; necessary (errors with no arguments will just have a message)
@@ -261,14 +261,14 @@ standard: make object! [
     ;
     header: make object! [
         Title: {Untitled}
-        File: '
-        Name: '
+        File: _
+        Name: _
         Type: 'script  ; !!! Is this a good default?
-        Version: '
-        Date: '
-        Author: '
-        Options: '
-        Description: '
+        Version: _
+        Date: _
+        Author: _
+        Options: _
+        Description: _
 
         ; !!! `Compress:`, `Exports:`, and `Contents:` were commented out.
         ; Exports perhaps because they only applied to modules, and would be
@@ -292,18 +292,18 @@ standard: make object! [
     ]
 
     port: make object! [ ; Port specification object
-        spec: '     ; published specification of the port
-        scheme: '   ; scheme object used for this port
-        actor: '    ; port action handler (script driven)
+        spec: _     ; published specification of the port
+        scheme: _   ; scheme object used for this port
+        actor: _    ; port action handler (script driven)
 
         ; !!! Native ports typically used raw C structs stored in a BINARY!
         ; as the `state`.  This makes that state opaque to the garbage
         ; collector, so it is a problem if REBVAL*/REBSER* are stored in it.
         ;
-        state: '    ; internal state values (private)
+        state: _    ; internal state values (private)
 
-        data: '     ; data buffer (usually binary or block)
-        locals: '   ; user-defined storage of local data
+        data: _     ; data buffer (usually binary or block)
+        locals: _   ; user-defined storage of local data
 
         ; !!! With asynchronous events, TRAP cannot be used, e.g. you can't
         ; say `trap [write...]` if the error will happen outside of the
@@ -315,7 +315,7 @@ standard: make object! [
         ; functions) could pass the error to the callback as every other such
         ; language would do.
         ;
-        error: '
+        error: _
     ]
 
     port-spec-head: make object! [
@@ -339,7 +339,7 @@ standard: make object! [
         ; This should be set to a function that takes a PORT! on listening
         ; sockets...it will be called when a new connection is made.
         ;
-        accept: '
+        accept: _
     ]
 
     port-spec-signal: make port-spec-head [

@@ -61,19 +61,14 @@ REBOL [
 ;           [class       make    mold]
 
 
-blank!      "placeholder unit type which acts as conditionally false"
-            (CELL_MASK_NO_NODES)
-            [any-unit!]  ; allow as `branch`?
-            [blank       -       +]
+; ============================================================================
+; BEGIN TYPES THAT ARE EVALUATOR INERT
+; ============================================================================
 
 logic!      "boolean true or false"
             (CELL_MASK_NO_NODES)
             []
             [logic       +       +]
-
-; ============================================================================
-; BEGIN TYPES THAT ARE ALWAYS "TRUTHY" - Is_Truthy()/IS_CONDITIONALLY_TRUE()
-; ============================================================================
 
 bytes       "!!! `BYTES!` isn't a datatype, `heart` type  for optimizations"
             (CELL_MASK_NO_NODES)
@@ -404,8 +399,15 @@ varargs!    "evaluator position for variable numbers of arguments"
 </ANY-META-VALUE!>
 
 
-; COMMA! has a high number with bindable types it's evaluative, and the
-; desire is to make the ANY_INERT() test fast with a single comparison.
+; BLANK! and COMMA! need to be evaluative, so they have higher numbers that
+; are past the non-bindable types.  We want the ANY_INERT() test to be fast
+; with a single comparison, so they have to null out their binding fields
+; in order to avoid crashing the processing since they report Is_Bindable()
+
+blank!      "placeholder unit type which acts as conditionally false"
+            (CELL_MASK_NO_NODES)
+            [any-unit!]  ; allow as `branch`?
+            [blank       -       +]
 
 comma!      "separator between full evaluations (that is otherwise invisible)"
             (CELL_MASK_NO_NODES)

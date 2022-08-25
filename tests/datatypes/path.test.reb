@@ -36,7 +36,7 @@
 )
 (
     blk: [_ 3]
-    3 == do [blk.(_)]
+    3 == do [blk.('_)]
 )
 (
     blk: [blank 3]
@@ -207,7 +207,7 @@
     e: trap [to path! [_ _]]
     e.id = 'bad-sequence-item
 )
-(the / = compose '(_)/(_))
+(the / = compose '(blank)/(blank))
 
 ; foo/ is also a length 2 PATH! in Ren-C
 (path! = type of the foo/ )

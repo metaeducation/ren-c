@@ -100,12 +100,12 @@ func: func* [
     ;
     new-spec: clear copy spec
 
-    new-body: '
-    statics: '
-    defaulters: '
+    new-body: _
+    statics: _
+    defaulters: _
     var: #dummy  ; enter PARSE with truthy state (gets overwritten)
-    loc: '
-    with-return: '
+    loc: _
+    with-return: _
 
     parse3 spec [opt some [
         '<none> (append new-spec <none>)
@@ -119,7 +119,7 @@ func: func* [
                 var: noquote var
                 case [
                     match [get-path! path!] var [
-                        if (length of var != 2) or (_ <> var.1) [
+                        if (length of var != 2) or ('_ <> var.1) [
                             fail ["Bad path in spec:" ^spec]
                         ]
                         append exclusions var.2  ; exclude args/refines
@@ -1080,12 +1080,12 @@ generate: func [
 read-lines: func [
     {Makes a generator that yields lines from a file or port}
     return: [action!]
-    src [port! file! blank!]
+    src [<opt> port! file!]
     /delimiter [binary! char! text! bitset!]
     /keep "Don't remove delimiter"
     /binary "Return BINARY instead of TEXT"
 ][
-    if blank? src [src: system.ports.input]
+    if null? src [src: system.ports.input]
     if file? src [src: open src]
 
     let pos

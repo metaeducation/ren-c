@@ -150,7 +150,7 @@
 (#[false] == do [#[false]])
 ($1 == do [$1])
 (same? :append do [:append])
-(blank? do [_])
+(null? do [_])
 (
     a-value: make object! []
     same? :a-value do reduce [:a-value]

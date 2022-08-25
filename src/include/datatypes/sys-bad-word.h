@@ -202,10 +202,10 @@ inline static bool Is_Meta_Of_Void_Isotope(Cell(const*) v)
 #define DECAYED_VOID_CELL            VOID_CELL
 
 #define Init_Meta_Of_Null(out) \
-    Init_Nulled_Untracked(TRACK(out), ONEQUOTE_3)
+    Init_Blank(out)
 
-inline static bool Is_Meta_Of_Null(Cell(const*) v)
-  { return HEART_BYTE(v) == REB_NULL and QUOTE_BYTE(v) == ONEQUOTE_3; }
+#define Is_Meta_Of_Null(v) \
+    IS_BLANK(v)
 
 
 //=//// NULL ISOTOPE (unfriendly ~null~) ///////////////////////////////////=//

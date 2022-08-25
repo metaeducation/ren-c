@@ -78,7 +78,7 @@
     (didn't parse3 [x <y> "z"] ['_ '_ '_])
     (did parse3 [_ _ _] ['_ '_ '_])
     (
-        q-blank: quote _
+        q-blank: quote '_
         did parse3 [_ _ _] [q-blank q-blank q-blank]
     )
 

@@ -56,8 +56,9 @@ inline static REBVAL *Init_Blank_Untracked(Cell(*) out, Byte quote_byte) {
         FLAG_HEART_BYTE(REB_BLANK) | FLAG_QUOTE_BYTE(quote_byte)
     );
 
+    mutable_BINDING(out) = UNBOUND;  // table position means Is_Bindable()
+
   #ifdef ZERO_UNUSED_CELL_FIELDS
-    EXTRA(Any, out).trash = ZEROTRASH;
     PAYLOAD(Any, out).first.trash = ZEROTRASH;
     PAYLOAD(Any, out).second.trash = ZEROTRASH;
   #endif

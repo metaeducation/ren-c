@@ -2491,7 +2491,7 @@ DECLARE_NATIVE(isotopify_if_falsey)
 //
 //  reify: native [
 //
-//  "Turn NULL and isotopes into plain BAD-WORD!s, pass through other values"
+//  "Turn NULL to BLANK!, isotopes to quasiforms, pass through other values"
 //
 //      return: [any-value!]
 //      ^optional [<opt> <void> any-value!]
@@ -2504,10 +2504,7 @@ DECLARE_NATIVE(reify)
     REBVAL *v = ARG(optional);
 
     if (Is_Meta_Of_Null(v))
-        return Init_Meta_Of_Null_Isotope(OUT);
-
-    if (Is_Meta_Of_Void(v))
-        return Init_Meta_Of_Void_Isotope(OUT);
+        return Init_Blank(OUT);
 
     if (IS_QUASI(v))  // e.g. the input was an isotope form
         return COPY(v);  // give back the quasi form

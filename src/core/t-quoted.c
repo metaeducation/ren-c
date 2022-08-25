@@ -177,49 +177,41 @@ DECLARE_NATIVE(the)
 //
 //  the*: native [
 //
-//  "Returns value passed in without evaluation, BUT ~null~ becomes pure NULL"
+//  "Returns value passed in without evaluation, BUT BLANK! becomes pure NULL"
 //
-//      return: "Input value, verbatim--unless /SOFT and soft quoted type"
+//      return: "If input is BLANK! then NULL, else input value, verbatim"
 //          [<opt> any-value!]
-//      'value "Does not allow BAD-WORD! arguments except for ~null~"
-//          [any-value!]
+//      'value [any-value!]
 //  ]
 //
 DECLARE_NATIVE(the_p)
 //
-// THE* is the variant assigned to @.  It does not let you use it with
-// BAD-WORD!, except for ~null~, which is transitioned to true NULL.
+// THE* is the variant assigned to @.  It turns BLANK! to NULL
 //
-//     >> @ ~null~
+//     >> @ _
 //     ; null
 //
 // This is done as a convenience for the API so people can write:
 //
-//     rebElide("append block try @", value_might_be_null);
+//     rebElide("append block maybe @", value_might_be_null);
 //
 // ...instead of:
 //
-//     rebElide("append block try", rebQ(value_might_be_null));
+//     rebElide("append block maybe", rebQ(value_might_be_null));
 //
-// Because the API machinery will put a plain `~null~` into the stream as
-// a surrogate for a NULL instead of asserting/erroring.  If you know that
-// what you are dealing with might be a BAD-WORD!, then you should use
-// rebQ() instead...
+// Because the API machinery will put a blank into the stream as a surrogate
+// for a NULL instead of asserting/erroring.
 {
     INCLUDE_PARAMS_OF_THE_P;
 
     REBVAL *v = ARG(value);
 
-    if (Is_Quasi_Word(v)) {
-        if (VAL_WORD_ID(v) == SYM_NULL)
-            Init_Nulled(OUT);
-        else
-            fail ("@ and THE* only accept BAD-WORD! of ~NULL~ to make NULL");
-    }
-    else
+    if (IS_BLANK(v))
+        Init_Nulled(OUT);
+    else {
         Copy_Cell(OUT, v);
-
-    Set_Cell_Flag(OUT, UNEVALUATED);
+        Set_Cell_Flag(OUT, UNEVALUATED);  // !!! Is this a good idea?
+    }
     return OUT;
 }
 
@@ -292,7 +284,7 @@ DECLARE_NATIVE(quote)
 //
 //  {VOID -> NULL, isotopes -> QUASI!, adds a quote to rest (behavior of ^^)}
 //
-//      return: [<opt> quoted! quasi!]
+//      return: [blank! quoted! quasi!]
 //      ^optional [<void> <opt> <fail> any-value!]
 //  ]
 //
@@ -413,7 +405,7 @@ DECLARE_NATIVE(unquasi)
 //  {Variant of UNQUOTE that also accepts QUASI! to make isotopes}
 //
 //      return: [<opt> <void> any-value!]
-//      value [quoted! quasi!]
+//      value [blank! quoted! quasi!]
 //  ]
 //
 DECLARE_NATIVE(unmeta)

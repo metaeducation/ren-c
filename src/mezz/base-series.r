@@ -147,7 +147,7 @@ join: function [
                     append base spread as block! item
                 ]
             ] else [
-                if _ = first item [
+                if blank? first item [
                     append base spread next as block! item
                 ] else [
                     append base spread as block! item
@@ -156,7 +156,7 @@ join: function [
         ] else [
             case [
                 empty? base [append base item]
-                _ = last base [change back tail base item]
+                blank? last base [change back tail base item]
                 fail @item ["Elements must be separated with" sep]
             ]
         ]

@@ -75,7 +75,7 @@
     x: 1020
     did all [
         true and (x: _) = false
-        x = _
+        null? x
     ]
 )
 (
@@ -96,7 +96,7 @@
     x: 1020
     did all [
         (<truthy>) and (x: _) = false
-        x = _
+        null? x
     ]
 )
 
@@ -109,7 +109,7 @@
     x: 1020
     did all [
         false or (x: _) = false
-        x = _
+        null? x
     ]
 )
 (
