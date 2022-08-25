@@ -73,14 +73,9 @@ inline static Bounce Init_Thrown_With_Label(  // assumes `arg` in TG_Thrown_Arg
     const REBVAL *label  // Note: is allowed to be same as `out`
 ){
     assert(Is_Stale_Void(&TG_Thrown_Arg));
-
-    if (Is_Void(arg))
-        RESET(&TG_Thrown_Arg);
-    else
-        Copy_Cell(&TG_Thrown_Arg, arg);
+    Copy_Cell(&TG_Thrown_Arg, arg);
 
     assert(Is_Stale_Void(&TG_Thrown_Label));
-
     Copy_Cell(&TG_Thrown_Label, label);
 
     Mark_Eval_Out_Stale(frame_->out);
@@ -93,13 +88,9 @@ inline static void CATCH_THROWN(
 ){
     UNUSED(frame_);
 
-    if (Is_Void(&TG_Thrown_Arg))
-        RESET(arg_out);
-    else
-        Copy_Cell(arg_out, &TG_Thrown_Arg);
+    Copy_Cell(arg_out, &TG_Thrown_Arg);
 
     Init_Stale_Void(&TG_Thrown_Arg);
-
     Init_Stale_Void(&TG_Thrown_Label);
 
     TG_Unwind_Frame = nullptr;
