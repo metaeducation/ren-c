@@ -95,7 +95,7 @@ DECLARE_NATIVE(break)
 //
 //      return: []  ; !!! notation for divergent function?
 //      ^value "Act as if loop body finished with this value"
-//          [<end> <void> any-value!]  ; CONTINUE and CONTINUE VOID are same
+//          [<end> <void> any-value!]
 //  ]
 //
 DECLARE_NATIVE(continue)
@@ -106,7 +106,11 @@ DECLARE_NATIVE(continue)
 {
     INCLUDE_PARAMS_OF_CONTINUE;
 
-    Value(*) v = Meta_Unquotify(ARG(value));
+    Value(*) v = ARG(value);
+    if (Is_Nulled(v))
+        Init_Void(v);  // CONTINUE and CONTINUE VOID act the same
+    else
+        Meta_Unquotify(v);
 
     return Init_Thrown_With_Label(FRAME, v, Lib(CONTINUE));
 }
@@ -576,7 +580,11 @@ DECLARE_NATIVE(stop)  // See CYCLE for notes about STOP
 {
     INCLUDE_PARAMS_OF_STOP;
 
-    Value(*) v = Meta_Unquotify(ARG(value));
+    Value(*) v = ARG(value);
+    if (Is_Nulled(v))
+        Init_Void(v);  // STOP acts the same as STOP VOID
+    else
+        Meta_Unquotify(v);
 
     return Init_Thrown_With_Label(FRAME, v, Lib(STOP));
 }

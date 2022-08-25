@@ -478,3 +478,13 @@
     ]
     none' = ^ f
 )]
+
+(
+    foo: lambda [^arg [<opt> <end> <void> integer!]] [arg]
+    did all [
+        (the '1020) = (foo 1020)
+        void' = (foo comment "HI")
+        null' = (foo any [1 > 2, 3 > 4])
+        null = (foo)
+    ]
+)

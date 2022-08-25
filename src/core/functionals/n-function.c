@@ -132,6 +132,7 @@ Bounce Func_Dispatcher(Frame(*) f)
     assert(KEY_SYM(ACT_KEYS_HEAD(phase)) == SYM_RETURN);
 
     REBVAL *cell = FRM_ARG(f, 1);
+    assert(Is_Void(cell));
     Init_Action(
         cell,
         VAL_ACTION(Lib(DEFINITIONAL_RETURN)),
@@ -590,14 +591,11 @@ DECLARE_NATIVE(definitional_return)
     const REBPAR *param = ACT_PARAMS_HEAD(target_fun);
     assert(KEY_SYM(ACT_KEYS_HEAD(target_fun)) == SYM_RETURN);
 
-    if (Is_Meta_Of_Void(v)) {  // RETURN VOID or just RETURN
+    if (Is_Nulled(v) or Is_Meta_Of_Void(v)) {  // RETURN VOID or just RETURN
         if (NOT_PARAM_FLAG(param, VANISHABLE))
             fail (Error_Bad_Invisible(f));
 
-        // To make sure core clients know what they are doing, Meta_Unquotify()
-        // won't make voids.  But we want to be able to return them.
-        //
-        RESET(v);
+        Init_Void(v);
         goto skip_type_check;
     }
 

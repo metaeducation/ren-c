@@ -477,3 +477,12 @@
     e: trap [1 + 2 (comment "stale") + 3]
     e.id = 'bad-isotope
 )
+
+; Functions that take voids as normal parameters receive them as unset
+(
+    foo: lambda [x [<void> integer!]] [if unset? 'x [<unset>] else [x]]
+    did all [
+        <unset> = foo comment "hi"
+        1020 = foo 1000 + 20
+    ]
+)

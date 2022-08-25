@@ -247,23 +247,6 @@ inline static bool Is_Meta_Of_Null_Isotope(Cell(const*) v)
   { return Is_Quasi_Word(v) and VAL_WORD_SYMBOL(v) == Canon(NULL); }
 
 
-//=//// END OF INPUT ISOTOPE //////////////////////////////////////////////=//
-//
-// The ~end~ isotope is used in function frames as a signal that the frame
-// slot has hit an end.  It is converted during function calling to a void.
-//
-// If a slot takes both a <void> and <end>, there's not currently a way to
-// tell the difference.  At one point there was an "endish" property whereby
-// they could be distinguished via the unevaluated bit.
-
-#define Init_End_Isotope(out)              Init_Word_Isotope((out), Canon(END))
-#define Is_End_Isotope(v)                  Is_Word_Isotope_With_Id(v, SYM_END)
-#define Init_Meta_Of_End_Isotope(out)      Init_Quasi_Word((out), Canon(END))
-
-inline static bool Is_Meta_Of_End_Isotope(Cell(const*) v)
-  { return Is_Quasi_Word(v) and VAL_WORD_SYMBOL(v) == Canon(END); }
-
-
 //=//// ISOTOPIC DECAY /////////////////////////////////////////////////////=//
 
 inline static REBVAL *Init_Blackhole(Cell(*) out);  // defined in %sys-token.h

@@ -217,21 +217,7 @@ Bounce Action_Executor(Frame(*) f)
 
           case ST_ACTION_DOING_PICKUPS:
           case ST_ACTION_FULFILLING_ARGS:
-            if (Is_Void(ARG)) {
-                assert(
-                    VAL_PARAM_CLASS(PARAM) == PARAM_CLASS_NORMAL
-                    or VAL_PARAM_CLASS(PARAM) == PARAM_CLASS_SOFT
-                    or VAL_PARAM_CLASS(PARAM) == PARAM_CLASS_MEDIUM
-                );
-                Init_Void_Isotope(ARG);  // typecheck would turn ~ to NULL
-            }
-            else if (
-                VAL_PARAM_CLASS(PARAM) == PARAM_CLASS_META
-                and Is_Meta_Of_Void(ARG)
-            ){
-                Init_Void_Isotope(ARG);  // !!! This is all ugly, review
-            }
-
+            //
             // continue_fulfilling is used for all params including specialized
             // which use PARAM as the specialized value.  We have to do this
             // work here, before calling continue_fulfilling--as it applies
@@ -389,8 +375,8 @@ Bounce Action_Executor(Frame(*) f)
         if (Get_Feed_Flag(f->feed, NEXT_ARG_FROM_OUT)) {
             Clear_Feed_Flag(f->feed, NEXT_ARG_FROM_OUT);
 
-            if (Was_Eval_Step_Void(OUT)) {
-                Init_Void_Isotope(ARG);
+            if (Was_Eval_Step_Void(OUT)) {  // stale, but with void signal
+                Init_Void(ARG);
                 goto continue_fulfilling;
             }
 
@@ -424,7 +410,10 @@ Bounce Action_Executor(Frame(*) f)
                     goto continue_fulfilling;
                 }
 
-                Init_End_Isotope(ARG);
+                if (NOT_PARAM_FLAG(PARAM, ENDABLE))
+                    fail (Error_No_Arg(f->label, KEY_SYMBOL(KEY)));
+
+                Init_Nulled(ARG);
                 goto continue_fulfilling;
             }
 
@@ -448,20 +437,13 @@ Bounce Action_Executor(Frame(*) f)
 
             normal_from_out:
               case PARAM_CLASS_NORMAL:
-                if (Is_Void(OUT))
-                    Init_Void_Isotope(ARG);
-                else {
-                    Copy_Cell(ARG, OUT);
-                    if (Get_Cell_Flag(OUT, UNEVALUATED))
-                        Set_Cell_Flag(ARG, UNEVALUATED);
-                }
+                Copy_Cell(ARG, OUT);
+                if (Get_Cell_Flag(OUT, UNEVALUATED))
+                    Set_Cell_Flag(ARG, UNEVALUATED);
                 break;
 
               case PARAM_CLASS_META: {
-                if (Is_Void(OUT))
-                    Init_Meta_Of_Void(ARG);
-                else
-                    Meta_Quotify(Copy_Cell(ARG, OUT));
+                Meta_Quotify(Copy_Cell(ARG, OUT));
                 if (Get_Cell_Flag(OUT, UNEVALUATED))
                     Set_Cell_Flag(ARG, UNEVALUATED);
                 break; }
@@ -608,7 +590,10 @@ Bounce Action_Executor(Frame(*) f)
   //=//// ERROR ON END MARKER, BAR! IF APPLICABLE /////////////////////////=//
 
         if (Is_Frame_At_End(f)) {
-            Init_End_Isotope(ARG);
+            if (NOT_PARAM_FLAG(PARAM, ENDABLE))
+                fail (Error_No_Arg(f->label, KEY_SYMBOL(KEY)));
+
+            Init_Nulled(ARG);
             goto continue_fulfilling;
         }
 
@@ -626,7 +611,10 @@ Bounce Action_Executor(Frame(*) f)
                 Is_Frame_At_End(f)
                 or Get_Feed_Flag(f->feed, BARRIER_HIT)
             ){
-                Init_End_Isotope(ARG);
+                if (NOT_PARAM_FLAG(PARAM, ENDABLE))
+                    fail (Error_No_Arg(f->label, KEY_SYMBOL(KEY)));
+
+                Init_Nulled(ARG);
                 goto continue_fulfilling;
             }
 
@@ -858,9 +846,7 @@ Bounce Action_Executor(Frame(*) f)
   //    modified.  Even though it's hidden, it may need to be typechecked
   //    again (unless it was *fully* hidden).
   //
-  // 2. Since isotopes are illegal in general (and become BAD-WORD! when
-  //    passed to ^META parmaeters), ~void~ and ~end~ isotopes are chosen as
-  //    special signals for actual void and end intent.
+  // 2. Voids are the default values from MAKE FRAME!.
   //
   // 3. We can't a-priori typecheck the variadic argument, since the values
   //    aren't calculated until the function starts running.  Instead we stamp
@@ -892,8 +878,10 @@ Bounce Action_Executor(Frame(*) f)
         if (Is_Specialized(PARAM))  // checked when specialized, see [1]
             continue;
 
-        if (VAL_PARAM_CLASS(PARAM) == PARAM_CLASS_RETURN)
-            continue;  // !!! hack
+        if (VAL_PARAM_CLASS(PARAM) == PARAM_CLASS_RETURN) {
+            assert(Is_Void(ARG));
+            continue;  // typeset is its legal return types, wants to be unset
+        }
 
         if (VAL_PARAM_CLASS(PARAM) == PARAM_CLASS_OUTPUT) {
             Value(*) var = ARG + 1;
@@ -922,40 +910,23 @@ Bounce Action_Executor(Frame(*) f)
             continue;
         }
 
-        if (Is_Isotope(ARG)) {  // some special meanings since illegal, see [2]
-            if (Is_Void(ARG)) {  // e.g. (~) isotope, unspecialized
+        if (Is_Void(ARG)) {  // e.g. (~) isotope, unspecialized, see [2]
+            if (GET_PARAM_FLAG(PARAM, REFINEMENT)) {
                 Init_Nulled(ARG);
+                continue;
             }
-            else if (not Is_Word_Isotope(ARG)) {
-                fail (Error_Isotope_Arg(f, PARAM));
+            if (NOT_PARAM_FLAG(PARAM, VANISHABLE))
+                fail (Error_Bad_Void());
+
+            if (VAL_PARAM_CLASS(PARAM) == PARAM_CLASS_META)
+                Init_Meta_Of_Void(ARG);
+            else {
+                // leave as plain void
             }
-            else switch (VAL_WORD_ID(ARG)) {
-              case SYM_END: {
-                if (NOT_PARAM_FLAG(PARAM, ENDABLE))
-                    fail (Error_No_Arg(f->label, KEY_SYMBOL(KEY)));
-
-                if (VAL_PARAM_CLASS(PARAM) == PARAM_CLASS_META)
-                    Init_Meta_Of_Void(ARG);  // signal "true end"
-                else
-                    Init_Nulled(ARG);  // we must conflate (or raise error?)
-                continue; }
-
-              case SYM_VOID: {
-                if (NOT_PARAM_FLAG(PARAM, VANISHABLE))
-                    fail (Error_Bad_Void());
-
-                if (VAL_PARAM_CLASS(PARAM) == PARAM_CLASS_META)
-                    Init_Meta_Of_Void(ARG);  // signal "true void"
-                else
-                    Init_Nulled(ARG);  // we must conflate (or raise error?)
-                continue; }
-
-              default:
-                fail (Error_Isotope_Arg(f, PARAM));
-            }
+            continue;
         }
 
-        if (Is_Splice(ARG))
+        if (Is_Isotope(ARG))  // !!! Upcoming changes will allow some isotopes
             fail (Error_Isotope_Arg(f, PARAM));
 
         if (GET_PARAM_FLAG(PARAM, VARIADIC)) {  // can't check now, see [3]
@@ -1282,6 +1253,8 @@ Bounce Action_Executor(Frame(*) f)
             for (; KEY != KEY_TAIL; ++KEY, ++ARG, ++PARAM) {
                 if (Is_Specialized(PARAM))
                     Copy_Cell(ARG, PARAM);  // must reset, see [3]
+                else if (VAL_PARAM_CLASS(PARAM) == PARAM_CLASS_RETURN)
+                    Init_Void(ARG);  // dispatcher expects unset
             }
 
             INIT_FRM_PHASE(f, redo_phase);

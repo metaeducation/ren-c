@@ -213,6 +213,14 @@ inline static bool Matcher_Matches(Cell(const*) matcher, Cell(const*) v) {
 // ordinary argument hit the end (e.g. the trick used for `>> help` when
 // the arity is 1 usually as `>> help foo`)
 //
+// NULL is used to represent the end state in all parameter types.  In the
+// case of quoted arguments, this is unambiguous--as there can be no nulls
+// in the input array to quote.  In the meta parameter case it's also not
+// ambiguous, as all other meta parameter types are either quoted or quasi.
+// With normal parameters it will collide with if the parameter can take
+// nulls... but we assume anyone bothered by that would switch to using a
+// meta parameter.
+//
 // When used on a `return:` parameter, this means invisibility is legal.
 //
 #define PARAM_FLAG_ENDABLE \
@@ -401,8 +409,8 @@ inline static bool Typecheck_Including_Constraints(
     enum Reb_Kind kind;
 
     if (VAL_PARAM_CLASS(param) == PARAM_CLASS_META) {
-        if (Is_Meta_Of_Void(v))  // e.g. NULL
-            return true;
+        if (Is_Nulled(v))
+            return GET_PARAM_FLAG(param, ENDABLE);
 
         if (IS_QUASI(v))
             return true;  // currently no isotopic typecheck
