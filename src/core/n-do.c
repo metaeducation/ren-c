@@ -297,7 +297,7 @@ DECLARE_NATIVE(do)
 
     switch (VAL_TYPE(source)) {
       case REB_BLOCK :  // no REB_GROUP, etc...EVAL does that.  see [1]
-        return DELEGATE(OUT, source);
+        return DELEGATE_MAYBE_STALE(OUT, source);
 
       case REB_VARARGS : {
         REBVAL *position;
@@ -322,7 +322,10 @@ DECLARE_NATIVE(do)
             }
 
             Init_Stale_Void(position); // convention for shared data at endpoint
-            return_non_void (OUT);
+
+            if (Is_Void(OUT))
+                return VOID;
+            return OUT;
         }
 
         Frame(*) f;
@@ -333,10 +336,8 @@ DECLARE_NATIVE(do)
         // the varargs came from.  It's still on the stack, and we don't want
         // to disrupt its state.  Use a subframe.
 
-        if (Is_Frame_At_End(f)) {
-            Init_Void(OUT);
-            return OUT;
-        }
+        if (Is_Frame_At_End(f))
+            return VOID;
 
         Frame(*) subframe = Make_Frame(
             f->feed,
@@ -384,10 +385,10 @@ DECLARE_NATIVE(do)
         if (First_Unspecialized_Param(nullptr, VAL_ACTION(source)))
             fail (Error_Do_Arity_Non_Zero_Raw());  // specific error?  see [3]
 
-        return DELEGATE(OUT, source);
+        return DELEGATE_MAYBE_STALE(OUT, source);
 
       case REB_FRAME :
-        return DELEGATE(OUT, source);
+        return DELEGATE_MAYBE_STALE(OUT, source);
 
       case REB_QUOTED :
         Copy_Cell(OUT, ARG(source));
@@ -397,7 +398,9 @@ DECLARE_NATIVE(do)
         fail (Error_Do_Arity_Non_Zero_Raw());  // https://trello.com/c/YMAb89dv
     }
 
-    return_non_void (OUT);
+    if (Is_Stale(OUT))
+        return VOID;
+    return OUT;
 }
 
 

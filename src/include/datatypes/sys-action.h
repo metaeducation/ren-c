@@ -704,15 +704,6 @@ inline static Bounce Native_None_Result(Frame(*) frame_) {
 }
 
 
-#define return_non_void(v) \
-    do { \
-        assert((v) == OUT); \
-        if (Is_Void(OUT)) \
-            return NONE; \
-        return OUT; \
-    } while (false)
-
-
 // Plain reification cannot discern "~void~ isotopes" from none isotopes.
 //
 //     >> do [comment "conflation is unavoidable"]
