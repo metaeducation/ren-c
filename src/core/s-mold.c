@@ -447,7 +447,7 @@ void Mold_Or_Form_Value(REB_MOLD *mo, Cell(const*) v, bool form)
         Mold_Or_Form_Cell(mo, VAL_UNESCAPED(v), form);
     else {
         Append_Codepoint(mo->series, '~');
-        if (HEART_BYTE(v) != REB_BLANK) {
+        if (HEART_BYTE(v) != REB_NULL) {
             Mold_Or_Form_Cell(mo, VAL_UNESCAPED(v), form);
             Append_Codepoint(mo->series, '~');
         }
