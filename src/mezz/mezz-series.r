@@ -640,19 +640,30 @@ unpack: enfixed func [
 ][
     if set-group? vars [vars: eval vars]
 
-    let result': ~
-    reduce-each val block [
-        if vars.1 = '... [  ; ignore all other values (but must reduce all)
-            continue
-        ]
+    ; Want to reduce the block ahead of time, because we don't want partial
+    ; writes to the results (if one is written, all should be)
+    ;
+    ; (Hence need to do validation on the ... for unpacking and COMPOSE the
+    ; vars list too, but this is a first step.)
+    ;
+    block: if the-block? block [
+        map-each item block [quote item]  ; should REDUCE do this for @[...] ?
+    ]
+    else [
+        reduce/predicate block :meta
+    ]
+
+    let result': null
+    for-each val' block [
+        result': default [either blank? vars.1 [void'] [val']]
         if tail? vars [
             fail "Too many values for vars in UNPACK (use ... if on purpose)"
         ]
-        if not blank? vars.1 [
-            set vars.1 unmeta ^val
-            if unset? @ result' [
-                result': ^val
-            ]
+        switch vars.1 [
+            '... [continue]  ; ignore all other values (but must reduce all)
+            (matches blank!) []  ; no assignment
+            (matches [word! tuple!]) [set vars.1 unquote val']
+            (matches [meta-word! meta-tuple!]) [set vars.1 val']
         ]
         vars: my next
     ]
@@ -662,14 +673,12 @@ unpack: enfixed func [
         ]
     ] else [
         ; We do not error on too few values (such as `[a b c]: [1 2]`) but
-        ; instead set the remaining variables (e.g. `c` above) to `~`.
-        ; There could be a refinement to choose whether to error on this case.
+        ; instead unset the remaining variables (e.g. `c` above).  There could
+        ; be a refinement to choose whether to error on this case.
         ;
         for-each var vars [  ; if not enough values for variables, unset
-            if not blank? var [
-                set var ~
-            ]
+            if not blank? var [unset var]
         ]
     ]
-    return unmeta result'
+    return unmeta any [result' void']
 ]
