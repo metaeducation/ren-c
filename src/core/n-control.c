@@ -1241,7 +1241,7 @@ DECLARE_NATIVE(switch)
 //          [set-group! set-word! set-tuple!]  ; to left of DEFAULT
 //      :branch "If target needs default, this is evaluated and stored there"
 //          [any-branch!]
-//      /predicate "Test beyond null/unset for defaulting, else NOT BLANK?"
+//      /predicate "Test for what's considered empty (default is null + void)"
 //          [action!]
 //  ]
 //
@@ -1254,8 +1254,8 @@ DECLARE_NATIVE(default)
 //    `steps` which can resolve the variable without doing more evaluations.
 //
 // 2. Usually we only want to consider variables with states that are known
-//    to mean "emptiness" as candidates for overriding.  We go with NULL and
-//    NONE (the ~ isotope, which is an unset variable.
+//    to mean "emptiness" as candidates for overriding.  So isotopes do not
+//    count as being unset.
 {
     INCLUDE_PARAMS_OF_DEFAULT;
 
@@ -1294,7 +1294,7 @@ DECLARE_NATIVE(default)
         if (not Is_Void(OUT))
             return OUT;  // consider it a "value", see [2]
     }
-    else if (not Is_Nulled(OUT) and not IS_BLANK(OUT))  // also see [2]
+    else if (not Is_Nulled(OUT))  // also see [2]
         return OUT;
 
     STATE = ST_DEFAULT_EVALUATING_BRANCH;

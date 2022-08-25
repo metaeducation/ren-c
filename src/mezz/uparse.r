@@ -1631,9 +1631,9 @@ default-combinators: make map! reduce [
                         return void  ; `[repeat ([_ _]) rule]` is a no-op
                     )
                     |
-                    min: [integer! | '_ (0)], max: [integer! | '_ | '#]
+                    min: [integer! | '_ (0)]
+                    max: [integer! | '_ (min) | '#]  ; blank means max = min
                 ]
-                max: default [min]  ; max being blank implies `max = min`
             ]
         ] else [
             fail "REPEAT combinator requires INTEGER! or [INTEGER! INTEGER!]"
