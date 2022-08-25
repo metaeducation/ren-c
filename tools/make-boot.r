@@ -882,7 +882,7 @@ for-each section [boot-base boot-system-util boot-mezz] [
         text: stripload/gather (join %../mezz/ file) try gather
         append/line s text
     ]
-    append/line s "_"  ; !!! would <section-done> be better?
+    append/line s "~done~"
     append/line s "]"
 
     mezz-files: next mezz-files

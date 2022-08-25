@@ -1017,7 +1017,7 @@ void Startup_Core(void)
         "intern* sys.util", &boot->system_util,
 
         "bind/only/set", &boot->system_util, Sys_Util_Module,
-        "ensure blank! do", &boot->system_util,
+        "if not equal? '~done~ ^ do", &boot->system_util, "[fail {sys.util}]",
 
         // SYS contains the implementation of the module machinery itself, so
         // we don't have MODULE or EXPORT available.  Do the exports manually,
