@@ -124,7 +124,7 @@
     // some debug builds.  Just a further detail callers should bear in mind.
 
     #define ASSERT_CELL_READABLE_EVIL_MACRO(c) \
-        if ( \
+        do { if ( \
             (FIRST_BYTE((c)->header) & ( \
                 NODE_BYTEMASK_0x01_CELL | NODE_BYTEMASK_0x80_NODE \
                     | NODE_BYTEMASK_0x40_STALE \
@@ -141,7 +141,7 @@
                     "see Mark_Eval_Out_Stale()\n" \
                 ); \
             panic (c); \
-        }
+        }} while (0)
 
     // Because you can't write to cells that aren't pure 0 (prep'd/calloc'd)
     // or formatted with cell and node flags, it doesn't make sense to
@@ -152,7 +152,7 @@
     // leak to the user; so this flag should only be used for internal states.
 
     #define ASSERT_CELL_WRITABLE_EVIL_MACRO(c) \
-        if ( \
+        do { if ( \
             (FIRST_BYTE((c)->header) & ( \
                 NODE_BYTEMASK_0x01_CELL | NODE_BYTEMASK_0x80_NODE \
                     | CELL_FLAG_PROTECTED \
@@ -165,7 +165,7 @@
             else \
                 printf("Protected cell passed to writing routine\n"); \
             panic (c); \
-        } \
+        }} while (0)
 
     inline static const RawCell *READABLE(const RawCell *c) {
         ASSERT_CELL_READABLE_EVIL_MACRO(c);  // ^-- should this be a template?
@@ -643,10 +643,9 @@ inline static void Copy_Cell_Header(
     Cell(const*) v
 ){
     assert(out != v);  // usually a sign of a mistake; not worth supporting
-    assert(Not_Cell_Flag(v, STALE));
+    ASSERT_CELL_READABLE_EVIL_MACRO(v);  // allow copy void object vars
 
-    ASSERT_CELL_INITABLE_EVIL_MACRO(out);  // may be CELL_MASK_PREP, all 0
-
+    ASSERT_CELL_INITABLE_EVIL_MACRO(out);  // may be CELL_MASK_FRESH, all 0
     out->header.bits &= CELL_MASK_PERSIST;
     out->header.bits |= NODE_FLAG_NODE | NODE_FLAG_CELL  // ensure NODE+CELL
         | (v->header.bits & CELL_MASK_COPY);
@@ -673,7 +672,7 @@ inline static Cell(*) Copy_Cell_Untracked(
     Flags copy_mask  // typically you don't copy UNEVALUATED, PROTECTED, etc
 ){
     assert(out != v);  // usually a sign of a mistake; not worth supporting
-    assert(Not_Cell_Flag(v, STALE));
+    ASSERT_CELL_READABLE_EVIL_MACRO(v);  // allow copy void object vars
 
     RESET_Untracked(out);
 
