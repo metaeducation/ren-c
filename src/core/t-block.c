@@ -851,8 +851,7 @@ REBTYPE(Array)
 
         Array(*) mut_arr = VAL_ARRAY_ENSURE_MUTABLE(array);
         Cell(*) at = ARR_AT(mut_arr, n);
-        Move_Cell(at, setval);
-        Init_None(setval);  // can't leave ARG slots RESET()
+        Copy_Cell(at, setval);
 
         return nullptr; }  // Array(*) is still fine, caller need not update
 

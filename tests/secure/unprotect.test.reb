@@ -4,96 +4,97 @@
     value: copy original: [1 + 2 + 3]
     protect value
     unprotect value
-    not error? trap [insert value 4]
+    [1 + 2 + 3] = insert value 4
 )]
 (
     value: copy original: [1 + 2 + 3]
     protect value
     unprotect value
-    not error? trap [append value 4]
+    [1 + 2 + 3 4] = append value 4
+
 )
 (
     value: copy original: [1 + 2 + 3]
     protect value
     unprotect value
-    not error? trap [change value 4]
+    [+ 2 + 3] = change value 4
 )
 (
     value: copy original: [1 + 2 + 3]
     protect value
     unprotect value
-    not error? trap [poke value 1 4]
+    4 = poke value 1 4
 )
 (
     value: copy original: [1 + 2 + 3]
     protect value
     unprotect value
-    not error? trap [remove/part value 1]
+    [+ 2 + 3] = remove/part value 1
 )
 (
     value: copy original: [1 + 2 + 3]
     protect value
     unprotect value
-    not error? trap [take value]
+    1 = take value
 )
 (
     value: copy original: [1 + 2 + 3]
     protect value
     unprotect value
-    not error? trap [reverse value]
+    [3 + 2 + 1] = reverse value
 )
 (
     value: copy original: [1 + 2 + 3]
     protect value
     unprotect value
-    not error? trap [clear value]
+    []  = clear value
 )
 ; string
 (
     value: copy original: {1 + 2 + 3}
     protect value
     unprotect value
-    not error? trap [insert value 4]
+    {1 + 2 + 3} = insert value 4
 )
 (
     value: copy original: {1 + 2 + 3}
     protect value
     unprotect value
-    not error? trap [append value 4]
+    {1 + 2 + 34} = append value 4
 )
 (
     value: copy original: {1 + 2 + 3}
     protect value
     unprotect value
-    not error? trap [change value 4]
+    { + 2 + 3} = change value 4
 )
 (
     value: copy original: {1 + 2 + 3}
     protect value
     unprotect value
-    not error? trap [poke value 1 4]
+    4 = poke value 1 4
 )
 (
     value: copy original: {1 + 2 + 3}
     protect value
     unprotect value
-    not error? trap [remove/part value 1]
+    { + 2 + 3} = remove/part value 1
 )
 (
     value: copy original: {1 + 2 + 3}
     protect value
     unprotect value
-    not error? trap [take value]
+    #1 = take value
 )
 (
     value: copy original: {1 + 2 + 3}
     protect value
     unprotect value
-    not error? trap [reverse value]
+    {3 + 2 + 1} = reverse value
 )
 (
     value: copy original: {1 + 2 + 3}
     protect value
     unprotect value
-    not error? trap [clear value]
+    {} = clear value
 )

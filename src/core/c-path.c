@@ -170,6 +170,7 @@ DECLARE_NATIVE(poke)
 
     UNUSED(ARG(picker));
     REBVAL *location = ARG(location);
+    REBVAL *v = ARG(value);
 
     // !!! Here we are assuming frame compatibility of POKE with POKE*.
     // This would be more formalized if we were writing this in usermode and
@@ -193,7 +194,7 @@ DECLARE_NATIVE(poke)
     if (r != nullptr and not REF(immediate))
         fail ("POKE of immediate won't change value, use /IMMEDIATE if okay");
 
-    return COPY(ARG(value));  // return the value we got in
+    return COPY(v);  // return the value we got in
 }
 
 
