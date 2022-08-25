@@ -557,6 +557,8 @@ inline static Frame(*) Prep_Frame_Core(
 #define ARG(name) \
     FRM_ARG(frame_, (p_##name##_))
 
+#define LOCAL ARG  // documentation only (assert local param?)
+
 #define PARAM(name) \
     ACT_PARAM(FRM_PHASE(frame_), (p_##name##_))  // a TYPESET!
 

@@ -46,21 +46,17 @@ probe: func* [
         [<opt> <void> any-value!]
     ^value' [<opt> <void> any-value!]
 ][
-    ; Remember this is early in the boot so many things not defined
-    write-stdout switch type of value' [
-        null ["; null"]
-        blank! ["; void"]
-        bad-word! [unspaced [mold value' space space "; isotope"]]
-    ] else [
-        let value: unmeta value'
-        mold :value
-    ]
+    ; Remember this is early in the boot, so many things not defined.
 
+    write-stdout switch value' [
+        null' ["; null"]
+        void' ["; void"]
+        (matches quasi!) [unspaced [mold value' space space "; isotope"]]
+    ] else [
+        mold unmeta value'
+    ]
     write-stdout newline
 
-    ; Need to wait until the last minute and unquote the original value because
-    ; some isotopes (~null~, ~void~, ~false~) decay if assigned to a variable.
-    ;
     return unmeta value'
 ]
 

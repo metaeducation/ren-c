@@ -1058,6 +1058,7 @@ DECLARE_NATIVE(case)
 //      /all "Evaluate all matches (not just first one)"
 //      /predicate "Binary switch-processing action (default is EQUAL?)"
 //          [action!]
+//      <local> scratch
 //  ]
 //
 DECLARE_NATIVE(switch)
@@ -1075,19 +1076,14 @@ DECLARE_NATIVE(switch)
 //
 //    https://forum.rebol.info/t/match-in-rust-vs-switch/1835
 //
-// 2. It's okay that we are letting the comparison change `value` here, because
-//    equality is supposed to be transitive.  So if it changes 0.01 to 1% in
+// 2. At one point it was allowed to corrupt the value during comparison, due
+//    to the idea equality was transitive.  So if it changes 0.01 to 1% in
 //    order to compare it, anything 0.01 would have compared equal to so
-//    will 1%.  (That's the idea, anyway, required for `a = b` and `b = c` to
-//    properly imply `a = c`.)
+//    will 1%.  (Would be required for `a = b` and `b = c` to properly imply
+//    `a = c`.)
 //
-//    !!! This means fallout can be modified from its intent.  Rather than copy
-//    here, this is a reminder to review the mechanism by which equality is
-//    determined--and why it has to mutate.
-//
-//     !!! A branch composed into the switch cases block may want to see the
-//     un-mutated condition value.
-//
+//    ...HOWEVER... this mutated the branch fallout, and quote removals were
+//    distorting comparisons.  So it copies the cell into a scratch location.
 {
     INCLUDE_PARAMS_OF_SWITCH;
 
@@ -1167,8 +1163,9 @@ DECLARE_NATIVE(switch)
             fail (Error_Bad_Isotope(SPARE));
         }
         else {
-            const bool strict = false;  // v-- modify, see [2]
-            if (0 != Compare_Modify_Values(left, SPARE, strict))
+            const bool strict = false;
+            Copy_Cell(LOCAL(scratch), left);
+            if (0 != Compare_Modify_Values(LOCAL(scratch), SPARE, strict))
                 goto next_switch_step;
         }
     }
