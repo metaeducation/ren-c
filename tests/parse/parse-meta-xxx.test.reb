@@ -4,15 +4,15 @@
 
 [
     (did all  [
-        '~null~ = ^ parse "" [synthesized: ^[]]
+        '~ = parse "" [synthesized: ^[]]
         void' = synthesized
     ])
     (did all  [
-        '~null~ = ^ parse "" [synthesized: ^[comment "hi"]]
+        '~ = parse "" [synthesized: ^[comment "hi"]]
         void' = synthesized
     ])
     (did all  [
-        '~void~ == parse "" [synthesized: ^[(~void~)]]
+        '~void~ = parse "" [synthesized: ^[(~void~)]]
         '~void~ = synthesized
     ])
     ('~friendly~ = parse [~friendly~] [bad-word!])

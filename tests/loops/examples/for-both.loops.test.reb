@@ -153,6 +153,6 @@
     ; esoteric feature anyway...more useful to have a form of MAYBE that can
     ; let the last loop iteration signal a desire for overall erasure.
 
-    (none? for-both x [1 2] [3 4] [if x > 2 [continue] x * 10])
-    (none? for-both x [1 2] [3 4] [comment "Maintain invariant!"])
+    ('~void~ = ^ for-both x [1 2] [3 4] [if x > 2 [continue] x * 10])
+    ('~void~ = ^ for-both x [1 2] [3 4] [comment "Maintain invariant!"])
 ]

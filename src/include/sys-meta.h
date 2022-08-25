@@ -89,7 +89,7 @@ inline static REBVAL *Unquasify(REBVAL *v) {
 
 inline static REBVAL *Quasify(REBVAL *v) {
     assert(QUOTE_BYTE(v) == UNQUOTED_1);
-    assert(not Is_Nulled(v) and not Is_Void(v));
+    assert(not Is_Void(v));  // null is quasi'd to produce ~ (a.k.a. NONE)
     mutable_QUOTE_BYTE(v) = QUASI_2;
     return v;
 }
@@ -116,8 +116,6 @@ inline static REBVAL *Quasify(REBVAL *v) {
 // and the REB_META_XXX family of values (like ^WORD, ^TU.P.LE...)
 
 inline static Value(*) Meta_Quotify(Value(*) v) {
-    if (Is_Void(v))
-        return Init_Nulled(v);
     if (Is_Isotope(v)) {
         Reify_Isotope(v);  // ...make it "friendly" now...
         return v;

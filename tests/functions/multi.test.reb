@@ -105,12 +105,12 @@
 ; callee, but it will give a none isotope back instead of the actual result.
 [(
     did all [
-        none? [_ rest]: transcode "abc def"
+        void? [_ rest]: transcode "abc def"
         rest = " def"
     ]
 )(
     did all [
-        none? [(_) rest]: transcode "abc def"
+        void? [(_) rest]: transcode "abc def"
         rest = " def"
     ]
 )(
@@ -189,6 +189,6 @@
 [
     (did all [
         void? [x]: comment "hi"
-        null? x
+        unset? 'x
     ])
 ]

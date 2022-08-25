@@ -2,13 +2,11 @@
 
 (not bad-word? 1)
 
-; Labeled BAD-WORD!s can be literal, or created from WORD!
 (
-    v: make bad-word! 'labeled
+    v: make quasi! 'labeled
     did all [
-        bad-word? v
+        quasi? v
         '~labeled~ = v
-        'labeled = label of v
     ]
 )
 
@@ -19,21 +17,13 @@
 ;
 (did first [~void~])
 
-; Plain ~ is a BAD-WORD!, but its spelling is nullptr.  It thus cannot be made
-; into a WORD!.
-[
-    (bad-word? first [~])
-    (null = label of '~)
-    ; !!! Add tests here when WORD!/BAD-WORD! conversions via AS and TO allowed
-]
-
 (
     valid: ["~abc~" "~a|b~"]
     for-each str valid [
         word: parse str [to-word/ between '~ '~]
         bad: load-value str
-        assert [bad-word? bad]
-        assert [word = label of bad]
+        assert [quasi? bad]
+        assert [word = unquasi bad]
         isotope: ^ do str
         assert [bad = isotope]
     ]
@@ -63,21 +53,21 @@
     x: <overwritten>
     did all [
         void' = ^ x: do []
-        null' = ^x
+        void' = ^x
     ]
 )
 (
     x: 10
     did all [
         void' = ^ x: eval []
-        null? x
+        unset? 'x
     ]
 )
 (
     x: 10
     did all [
         10 maybe x: eval []
-        null? x
+        unset? 'x
     ]
 )
 
@@ -100,13 +90,13 @@
 
     (none? foo)
 
-    ('~ = ^ applique :foo [])
+    (none' = ^ applique :foo [])
     (none? applique :foo [])
 
-    ('~ = ^ eval :foo)
+    (none' = ^ eval :foo)
     (none? eval :foo)
 
-    ('~ = ^ do :foo)
+    (none' = ^ do :foo)
 ]
 
 ; Explicit return of VOID is also invisible
@@ -143,17 +133,20 @@
 
 [(
     foo: func [return: <none>] []
-    '~ = ^ foo
+    none' = ^ foo
 )(
     data: [a b c]
     f: func [return: <none>] [append data spread [1 2 3]]
-    '~ = ^ f
+    none' = ^ f
 )]
 
-; `~` isotope is the type of locals before they are assigned
+; locals are void before they are assigned
 (
+    f: func [<local> loc] [return get/any 'loc]
+    void? f
+)(
     f: func [<local> loc] [return reify get/any 'loc]
-    f = '~
+    f = '~void~
 )(
     f: func [<local> loc] [return ^loc]
     f = '~
@@ -228,7 +221,7 @@
         a: 1020
         did all [
             void? a: ()
-            null? a
+            unset? 'a
         ]
     )
 ]

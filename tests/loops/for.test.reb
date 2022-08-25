@@ -47,7 +47,7 @@
 (
     success: true
     did all [
-        none? for i each [1] [continue, success: false]
+        '~void~ = ^ for i each [1] [continue, success: false]
         success
     ]
 )

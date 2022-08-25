@@ -43,12 +43,12 @@
     x: 1020
     did all [
         null? (null, x: (void))
-        null? x
+        unset? 'x
     ]
 )(
     x: 1020
     did all [
         2 = (x: comment "Hi" 2)
-        null? x
+        unset? 'x
     ]
 )]

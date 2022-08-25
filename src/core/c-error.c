@@ -818,7 +818,7 @@ Context(*) Make_Error_Managed_Core(
                 }
                 else if (Is_End(p)) {
                     assert(!"Not enough arguments in Make_Error_Managed()");
-                    Init_None(var);
+                    Init_Void(var);
                 }
                 else if (IS_RELATIVE(cast(Cell(const*), p))) {
                     //
@@ -1174,9 +1174,6 @@ Context(*) Error_No_Catch_For_Throw(Frame(*) frame_)
         assert(Is_Nulled(arg));
         return VAL_CONTEXT(label);
     }
-
-    if (Is_Void(arg))
-        Init_None(arg);
 
     return Error_No_Catch_Raw(arg, label);
 }

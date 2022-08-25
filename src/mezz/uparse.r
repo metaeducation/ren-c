@@ -2885,7 +2885,7 @@ parse*: func [
         ; runs.  You lose the void, and it collapses to none.  So invisibility
         ; has to stay inside the UPARSE ruleverse.
         ;
-        return ~  ; Need something nothing-like but that won't trigger an ELSE
+        return ~void~  ; Need to trigger an else
     ]
 
     return isotopify-if-falsey unmeta synthesized'

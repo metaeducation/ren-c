@@ -215,7 +215,8 @@
         [<a> (if true [null]) <b>]
         /predicate chain [:eval :reify]
     ])
-    (error? trap [compose [<a> (~)]])
+    (error? trap [compose [<a> (~void~)]])
+    ([<a>] = compose [<a> (~)])  ; exception made for pure void
 ]
 
 [

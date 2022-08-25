@@ -120,7 +120,7 @@ enum Reb_Spec_Mode {
 //  Finalize_Param_Quad: C
 //
 void Finalize_Param_Quad(enum Reb_Symbol_Id* dummy_sym) {
-    if (Is_None(PARAM_SLOT(TOP_INDEX)))
+    if (Is_Void(PARAM_SLOT(TOP_INDEX)))
         return;  // local (VAL_PARAM_CLASS() will fail)
 
     assert(Not_Cell_Flag(PARAM_SLOT(TOP_INDEX), STACK_NOTE_SEALED));
@@ -145,7 +145,7 @@ void Finalize_Param_Quad(enum Reb_Symbol_Id* dummy_sym) {
         Init_Nulled(NOTES_SLOT(TOP_INDEX));
 
         StackValue(*) param = PARAM_SLOT(TOP_INDEX);
-        Init_None(param);
+        Init_Void(param);
         Set_Cell_Flag(param, STACK_NOTE_SEALED);
         break; }
 
@@ -486,7 +486,7 @@ void Push_Paramlist_Quads_May_Fail(
         // But Is_Param_Endable() indicates <end>.
 
         if (local) {
-            Init_None(param);
+            Init_Void(param);
         }
         else if (refinement) {
             Init_Param(

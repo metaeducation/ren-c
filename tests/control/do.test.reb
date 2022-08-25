@@ -77,10 +77,11 @@
     (void? eval [comment "HI"])
 
     (
+        y: <overwritten>
         x: (1 + 2 y: eval [comment "HI"])
         did all [
             x = 3
-            null? y
+            unset? 'y
         ]
     )
 ]
@@ -198,7 +199,7 @@
     a-value: "1"
     1 == do :a-value
 )
-(null? do "")
+(void? do "")
 (1 = do "1")
 (3 = do "1 2 3")
 
@@ -245,7 +246,7 @@
     value: <overwritten>
     did all [
         null? [value @]: evaluate []  ; @ requests position after step (null)
-        null? value
+        unset? 'value
     ]
 )
 (

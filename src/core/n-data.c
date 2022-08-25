@@ -168,7 +168,7 @@ DECLARE_NATIVE(bind)
         // not in context, bind/new means add it if it's not.
         //
         if (REF(new) or (IS_SET_WORD(v) and REF(set))) {
-            Init_None(Append_Context(VAL_CONTEXT(context), v, nullptr));
+            Init_Void(Append_Context(VAL_CONTEXT(context), v, nullptr));
             return COPY(v);
         }
 
@@ -971,7 +971,7 @@ bool Get_Path_Push_Refinements_Throws(
 //
 //  {Gets the value of a word or path, or block of words/paths}
 //
-//      return: [<opt> any-value!]
+//      return: [<opt> <void> any-value!]
 //      @steps "Allow GROUP! evals, returns block of reusable PICK/POKE steps"
 //          [the-block! the-word! blank!]
 //      source "Word or path to get, or block of PICK steps"
@@ -996,17 +996,21 @@ DECLARE_NATIVE(get)
     else
         steps = nullptr;  // no GROUP! evals
 
-    if (Get_Var_Core_Throws(OUT, steps, source, SPECIFIED)) {
+    if (Get_Var_Core_Throws(SPARE, steps, source, SPECIFIED)) {
         assert(steps or Is_Meta_Of_Raised(VAL_THROWN_LABEL(frame_)));  // see [1]
         return THROWN;
     }
 
     if (not REF(any))
-        if (Is_Isotope(OUT))
-            fail (Error_Bad_Word_Get(source, OUT));
+        if (Is_Isotope(SPARE))
+            fail (Error_Bad_Word_Get(source, SPARE));
 
     Proxy_Multi_Returns(frame_);
-    return OUT;
+
+    if (Is_Void(SPARE))
+        return VOID;
+
+    return COPY(SPARE);
 }
 
 
@@ -1192,7 +1196,7 @@ bool Set_Var_Core_Updater_Throws(
 
     DECLARE_LOCAL (writeback);
     PUSH_GC_GUARD(writeback);
-    Init_None(writeback);  // needs to be GC safe
+    Init_Void(writeback);  // needs to be GC safe
 
     PUSH_GC_GUARD(temp);
 
@@ -1375,20 +1379,24 @@ DECLARE_NATIVE(set)
         steps = nullptr;  // no GROUP! evals
 
     if (Is_Meta_Of_Void(v))
-        Init_Decayed_Void(v);  // can't store the void in a variable
-    else
+        Init_Decayed_Void(v);  // (x: void) is legal, so is (set 'x void)
+    else {
         Meta_Unquotify(v);
 
-    if (not REF(any) and Is_Isotope(v) and Pointer_To_Decayed(v) == v)
-        fail ("Use SET/ANY to set variables to an isotope");
+        if (not REF(any) and Is_Isotope(v) and Pointer_To_Decayed(v) == v)
+            fail ("Use SET/ANY to set variables to an isotope");
+    }
 
-    if (Set_Var_Core_Throws(OUT, steps, target, SPECIFIED, v)) {
+    if (Set_Var_Core_Throws(SPARE, steps, target, SPECIFIED, v)) {
         assert(steps or Is_Meta_Of_Raised(VAL_THROWN_LABEL(frame_)));  // see [3]
         return THROWN;
     }
 
     Proxy_Multi_Returns(frame_);
-    return COPY(v);  // result does not decay unless void, see [2]
+    if (Is_Void(v))
+        return VOID;
+
+    return COPY(v);  // result does not decay, see [2]
 }
 
 
@@ -2307,7 +2315,7 @@ DECLARE_NATIVE(wanted_q)
         goto not_output_parameter;
 
     Value(*) var = CTX_VAR(VAL_CONTEXT(SPARE), index + 1);
-    if (Is_None(var) or IS_BLANK(var))
+    if (Is_Void(var) or IS_BLANK(var))
         return Init_False(OUT);
 
     assert(IS_WORD(var) or IS_TUPLE(var) or Is_Blackhole(var));

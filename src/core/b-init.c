@@ -425,11 +425,6 @@ static void Init_Root_Vars(void)
     Set_Cell_Flag(&PG_Void_Cell, PROTECTED);  // prevent overwriting
     assert(Is_Void(VOID_CELL));
 
-    // Initialize NONE_ISOTOPE (must be after symbols loaded)
-    //
-    Init_None(&PG_None_Isotope);  // symbol not GC'd
-    Set_Cell_Flag(&PG_Void_Cell, PROTECTED);  // prevent overwriting
-
     // They should only be accessed by macros which retrieve their values
     // as `const`, to avoid the risk of accidentally changing them.  (This
     // rule is broken by some special system code which `m_cast`s them for
@@ -484,8 +479,6 @@ static void Shutdown_Root_Vars(void)
 {
     assert(Is_Void(VOID_CELL));
     PG_Void_Cell.header.bits = 0;
-
-    RESET(&PG_None_Isotope);
 
     RESET(&PG_R_Thrown);
     RESET(&PG_R_Void);

@@ -365,7 +365,7 @@ DECLARE_NATIVE(reframer_p)
         ARG(shim),
         base,
         &binder,
-        NONE_ISOTOPE
+        VOID_CELL
     );
 
     option(Context(*)) error = nullptr;  // can't fail() with binder in effect
@@ -447,7 +447,7 @@ DECLARE_NATIVE(reframer_p)
     // takes a void and giving it ~pending~; would make bugs more obvious.
     //
     REBVAL *var = CTX_VAR(exemplar, param_index);
-    assert(Is_None(var));
+    assert(Is_Void(var));
     Copy_Cell(var, CTX_ARCHETYPE(exemplar));
 
     // Make action with enough space to store the implementation phase and

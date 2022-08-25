@@ -295,9 +295,9 @@ static bool Subparse_Throws(
 
     // Locals in frame would be void on entry if called by action dispatch.
     //
-    Init_None(ARG(num_quotes));
-    Init_None(ARG(position));
-    Init_None(ARG(save));
+    Init_Void(ARG(num_quotes));
+    Init_Void(ARG(position));
+    Init_Void(ARG(save));
 
     // !!! By calling the subparse native here directly from its C function
     // vs. going through the evaluator, we don't get the opportunity to do
@@ -1266,7 +1266,7 @@ DECLARE_NATIVE(subparse)
     // But we save the number of quotes in a local variable.  This way we can
     // put the quotes back on whenever doing a COPY etc.
     //
-    assert(Is_None(ARG(num_quotes)));
+    assert(Is_Void(ARG(num_quotes)));
     Init_Integer(ARG(num_quotes), VAL_NUM_QUOTES(ARG(input)));
     Dequotify(ARG(input));
 
@@ -1278,7 +1278,7 @@ DECLARE_NATIVE(subparse)
         VAL_INDEX_RAW(ARG(input)) = VAL_LEN_HEAD(ARG(input));
     }
 
-    assert(Is_None(ARG(position)));
+    assert(Is_Void(ARG(position)));
     Copy_Cell(ARG(position), ARG(input));
 
     // Every time we hit an alternate rule match (with |), we have to reset

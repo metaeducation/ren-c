@@ -182,7 +182,7 @@
 [#1268 (
     i: 0
     <infinite?> = catch [
-        parse3 "a" [some [i: i + 1, if i > 100 [throw <infinite?>]]]
+        parse3 "a" [some [(i: i + 1, if i > 100 [throw <infinite?>])]]
     ]
 )]
 [#1268 (

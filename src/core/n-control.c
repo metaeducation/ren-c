@@ -1291,7 +1291,7 @@ DECLARE_NATIVE(default)
     }
 
     if (Is_Isotope(OUT)) {
-        if (not Is_None(OUT))
+        if (not Is_Void(OUT))
             return OUT;  // consider it a "value", see [2]
     }
     else if (not Is_Nulled(OUT) and not IS_BLANK(OUT))  // also see [2]

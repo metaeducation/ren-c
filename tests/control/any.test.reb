@@ -14,8 +14,8 @@
     (
         x: <overwritten>
         did all [
-            void? x: any []  ; void assignment propagates void
-            null? x  ; void assignments set variables to null
+            void? x: any []
+            unset? 'x
         ]
     )
     (<didn't> = if didn't any [] [<didn't>])

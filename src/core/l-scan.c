@@ -1990,7 +1990,7 @@ Bounce Scanner_Executor(Frame(*) f) {
       case TOKEN_BAD_WORD: {  // a non-isotope bad-word
         assert(*bp == '~');
         if (len == 1)
-            Init_Meta_Of_None(PUSH());
+            Init_Meta_Of_Void(PUSH());
         else {
             assert(bp[len - 1] == '~');
             Symbol(const*) label = Intern_UTF8_Managed(bp + 1, len - 2);

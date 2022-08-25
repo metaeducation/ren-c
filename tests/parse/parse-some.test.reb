@@ -119,8 +119,8 @@
 )
 
 [
-    (none? parse [] [maybe some 'a])
-    ('~ = ^(parse [] [maybe some 'b]))
+    ('~void~ = ^ parse [] [maybe some 'a])
+    ('~void~ = ^(parse [] [maybe some 'b]))
     ('a == parse [a] [maybe some 'a])
     (didn't parse [a] [maybe some 'b])
     ('a == parse [a] [maybe some 'b <any>])
@@ -140,7 +140,7 @@
 [
     ('~null~ = ^ parse "a" ["a" opt some "b"])
     ('~null~ = ^ parse "a" ["a" [opt "b"]])
-    ('~null~ = ^ parse "a" ["a" ^[maybe some "b"]])
+    (''~ = ^ parse "a" ["a" ^[maybe some "b"]])
 ]
 
 ; This test works in Rebol2 even if it starts `i: 0`, presumably a bug.
@@ -169,8 +169,8 @@
 
 
 [
-    (none? parse "" [maybe some #a])
-    (none? parse "" [maybe some #b])
+    ('~void~ = ^ parse "" [maybe some #a])
+    ('~void~ = ^ parse "" [maybe some #b])
     (#a == parse "a" [maybe some #a])
     (didn't parse "a" [maybe some #b])
     (#a == parse "a" [maybe some #b <any>])
@@ -188,8 +188,8 @@
     ])
     (didn't parse #{01} [x: across <any> :(even? first x)])
     (didn't parse #{0105} [some [x: across <any> :(even? first x)]])
-    (none? parse #{} [maybe some #{0A}])
-    ('~ = ^ parse #{} [maybe some #{0B}])
+    ('~void~ = ^ parse #{} [maybe some #{0A}])
+    ('~void~ = ^ parse #{} [maybe some #{0B}])
     (#{0A} == parse #{0A} [maybe some #{0A}])
     (didn't parse #{0A} [maybe some #{0B}])
     (10 == parse #{0A} [maybe some #{0B} <any>])

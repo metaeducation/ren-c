@@ -42,7 +42,7 @@
 (
     sum: 0
     did all [
-        '~ = ^ every x [1 2 7] [
+        '~void~ = ^ every x [1 2 7] [
             sum: me + x
             if x = 7 [continue]  ; Doesn't force NULL return, drops the 2
             x
@@ -54,9 +54,9 @@
 (void' = ^ every x [] [fail ~unreachable~])
 
 
-('~ = ^ every x [1 2 3 4] [maybe if odd? x [x]])
+('~void~ = ^ every x [1 2 3 4] [maybe if odd? x [x]])
 (
-    none? every x [1 2 3 4] [if odd? x [x]]
+    '~void~ = ^ every x [1 2 3 4] [if odd? x [x]]
 )
 
-('~ = ^ every x [1 2 3 4] [comment "heavy"])
+('~void~ = ^ every x [1 2 3 4] [comment "heavy"])

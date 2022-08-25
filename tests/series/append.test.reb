@@ -147,7 +147,7 @@
     ([a b c '] = append [a b c] quote null)
 
     (
-        [a b c] = append [a b c] ^(null)
+        [a b c '] = append [a b c] ^(null)
     )
 ]
 

@@ -87,7 +87,7 @@ static void Append_Vars_To_Context_From_Block(REBVAL *context, REBVAL *block)
 
     StackValue(*) new_word = Data_Stack_At(collector.stack_base) + first_new_index;
     for (; new_word != TOP + 1; ++new_word)
-        Init_None(Append_Context(c, nullptr, VAL_WORD_SYMBOL(new_word)));
+        Init_Void(Append_Context(c, nullptr, VAL_WORD_SYMBOL(new_word)));
   }
   }  // end the non-module part
 
@@ -101,7 +101,7 @@ static void Append_Vars_To_Context_From_Block(REBVAL *context, REBVAL *block)
             var = MOD_VAR(c, symbol, strict);
             if (not var) {
                 var = Append_Context(c, nullptr, symbol);
-                Init_None(var);
+                Init_Void(var);
             }
         }
         else {
@@ -131,7 +131,7 @@ static void Append_Vars_To_Context_From_Block(REBVAL *context, REBVAL *block)
         }
 
         if (word + 1 == tail) {
-            Init_None(var);
+            Init_Void(var);
             break;  // fix bug#708
         }
         else
@@ -914,7 +914,7 @@ static void Mold_Isotope_For_Object(REB_MOLD *mo, Value(const*) var) {
     assert(not Is_Raised(var));  // error isotopes can't be saved in variables
 
     Append_Codepoint(mo->series, '~');
-    if (Is_None(var))
+    if (Is_Void(var))
         return;
 
     DECLARE_LOCAL (reified);
@@ -1124,6 +1124,8 @@ REBTYPE(Context)
         if (not var)
             fail (Error_Bad_Pick_Raw(picker));
 
+        if (Is_Void(var))
+            return VOID;  // GET/ANY will allow, PICK and SELECT won't
         return Copy_Cell(OUT, var); }
 
 
@@ -1201,7 +1203,7 @@ REBTYPE(Context)
                 VAL_WORD_SYMBOL(arg),
                 strict
             )){
-                Init_None(Append_Context(c, nullptr, VAL_WORD_SYMBOL(arg)));
+                Init_Void(Append_Context(c, nullptr, VAL_WORD_SYMBOL(arg)));
             }
             return COPY(context);
         }

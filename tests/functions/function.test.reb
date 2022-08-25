@@ -476,5 +476,5 @@
         use [x] [return none]
         42
     ]
-    '~ = ^ f
+    none' = ^ f
 )]

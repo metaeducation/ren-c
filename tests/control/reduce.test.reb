@@ -11,7 +11,7 @@
 [#1760 ; unwind functions should stop evaluation
     (null? repeat 1 [reduce [break]])
 ]
-('~ = ^ repeat 1 [reduce [continue]])
+('~void~ = ^ repeat 1 [reduce [continue]])
 (1 = catch [reduce [throw 1]])
 ([a 1] = catch/name [reduce [throw/name 1 'a]] 'a)
 (1 = reeval func [return: [integer!]] [reduce [return 1 2] 2])
@@ -127,7 +127,7 @@
     ((the '3) = reduce-each ^x [1 + 2] [x])
 
     (
-        e: reduce-each ^x [fail "foo"] [unquasi x]
+        e: reduce-each ^x [raise "foo"] [unquasi x]
         e.message = "foo"
     )
 ]

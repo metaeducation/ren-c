@@ -103,8 +103,6 @@ PVAR REBVAL PG_Feed_At_End;  // Canon pointer; internals use instead of rebEND
 
 PVAR REBVAL PG_Void_Cell;
 
-PVAR REBVAL PG_None_Isotope;
-
 // These are special return values that can be checked easily by pointer.  They
 // could be checked even faster if they were fake immediate values, like
 // (REBVAL*)0x00000010...but that is not standard C.

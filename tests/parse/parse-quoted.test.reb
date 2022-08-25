@@ -19,7 +19,7 @@
 ;
 
 [
-    (none? parse [] [])
+    ('~void~ = ^ parse [] [])
     ('a == parse [a] ['a])
     (didn't parse [a] ['b])
     ('b == parse [a b] ['a 'b])

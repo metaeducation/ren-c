@@ -75,20 +75,20 @@
     )
 ]
 
-; Invisible assignments set the variable to NULL
+; Void assignments unset the variable
 ; https://forum.rebol.info/t/q-should-be-the-unevaluated-form-of-void-a-no/1915/
 (
     x: ~, y: 10
     did all [
         <result> = parse "a" [x: y: elide "a" (<result>)]
-        null? x
-        null? y
+        unset? 'x
+        unset? 'y
     ]
 )(
     obj: make object! [x: ~, y: 10]
     did all [
         <result> = parse "a" [obj.x: obj.y: elide "a" (<result>)]
-        null? obj.x
-        null? obj.y
+        unset? 'obj.x
+        unset? 'obj.y
     ]
 )

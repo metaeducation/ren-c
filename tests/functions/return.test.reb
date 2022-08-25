@@ -56,7 +56,7 @@
 )
 (
     f1: func [return: <none>] [return none]
-    '~ = ^ f1
+    none' = ^ f1
 )
 [#1515 ; the "result" of a none return should not be assignable
     (a: 1 reeval func [return: <none>] [a: return none] :a =? 1)

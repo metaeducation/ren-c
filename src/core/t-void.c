@@ -83,24 +83,7 @@ REBTYPE(Quasi)
     REBVAL *quasi = D_ARG(1);
 
     switch (ID_OF_SYMBOL(verb)) {
-      case SYM_REFLECT: {
-        INCLUDE_PARAMS_OF_REFLECT;
-        UNUSED(ARG(value)); // taken care of by `bad_word` above.
-
-        switch (VAL_WORD_ID(ARG(property))) {
-          case SYM_LABEL: {
-            if (Is_Meta_Of_None(quasi))
-                return nullptr;
-            if (Is_Quasi_Word(quasi))
-                return Unquasify(Copy_Cell(OUT, quasi));
-            fail ("QUASI! form has no label (WIP for REBTYPE(quasi))"); }
-
-          default:
-            break;
-        }
-        break; }
-
-      case SYM_COPY: { // since `copy/deep [1 _ 2]` is legal, allow `copy _`
+      case SYM_COPY: { // since `copy/deep [1 ~ 2]` is legal, allow `copy ~`
         INCLUDE_PARAMS_OF_COPY;
         UNUSED(ARG(value)); // already referenced as `unit`
 

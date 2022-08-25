@@ -66,7 +66,7 @@ void Bind_Values_Inner_Loop(
                 INIT_VAL_WORD_INDEX(v, 1);
             }
             else if (type_bit & add_midstream_types) {
-                Init_None(Append_Context(context, v, nullptr));
+                Init_Void(Append_Context(context, v, nullptr));
             }
           }
           else {
@@ -258,7 +258,7 @@ Array(*) Make_Let_Patch(
             | SERIES_FLAG_INFO_NODE_NEEDS_MARK
     );
 
-    Init_None(VAL(ARR_SINGLE(patch)));  // start variable off as unset
+    Init_Void(VAL(ARR_SINGLE(patch)));  // start variable off as unset
 
     // The way it is designed, the list of patches terminates in either a
     // nullptr or a context pointer that represents the specifying frame for
@@ -291,7 +291,7 @@ Array(*) Make_Let_Patch(
 //  {Dynamically add a new binding into the stream of evaluation}
 //
 //      return: "Expression result if SET form, else gives the new vars"
-//          [<opt> any-value!]
+//          [<opt> <void> any-value!]
 //      'vars "Variable(s) to create, GROUP!s must evaluate to BLOCK! or WORD!"
 //          [word! block! set-word! set-block! group! set-group!]
 //      :expression "Optional Expression to assign"
@@ -570,7 +570,8 @@ DECLARE_NATIVE(let)
     Flags flags =
         EVAL_EXECUTOR_FLAG_SINGLE_STEP
         | FLAG_STATE_BYTE(ST_EVALUATOR_REEVALUATING)
-        | (f->flags.bits & EVAL_EXECUTOR_FLAG_FULFILLING_ARG);
+        | (f->flags.bits & EVAL_EXECUTOR_FLAG_FULFILLING_ARG)
+        | FRAME_FLAG_MAYBE_STALE;
 
     Frame(*) subframe = Make_Frame(FRAME->feed, flags);
     subframe->u.eval.current = SPARE;
@@ -603,7 +604,9 @@ DECLARE_NATIVE(let)
     REBSPC *bindings = VAL_SPECIFIER(bindings_holder);
     mutable_BINDING(FEED_SINGLE(f->feed)) = bindings;
 
-    assert(not Is_Stale(OUT));
+    if (Is_Stale(OUT))
+        return VOID;
+
     return OUT;
 }}
 
@@ -1091,7 +1094,7 @@ Context(*) Virtual_Bind_Deep_To_New_Context(
             // with something.  But this code is shared with USE, so the user
             // can get their hands on the variable.  Can't be trash.
             //
-            Init_None(var);
+            Init_Void(var);
 
             assert(rebinding); // shouldn't get here unless we're rebinding
 

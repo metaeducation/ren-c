@@ -125,7 +125,7 @@ inline static bool Is_Word_Isotope_With_Id(
     Cell(const*) v,
     enum Reb_Symbol_Id id  // want to take ID instead of canon, faster check!
 ){
-    assert(id != SYM_0);  // SYM_0 means unknown, not e.g. Is_None()
+    assert(id != SYM_0);
 
     if (not Is_Word_Isotope(v))
         return false;
@@ -158,7 +158,6 @@ inline static bool Is_Word_Isotope_With_Id(
 // and you couldn't write `print [...] else [...]` if it would be sometimes
 // invisible and sometimes not.
 //
-#define NONE_ISOTOPE                c_cast(const REBVAL*, &PG_None_Isotope)
 
 #define Init_None(out) \
     Init_Blank_Untracked(TRACK(ensure(Value(*), (out))), ISOTOPE_0)
@@ -175,12 +174,12 @@ inline static bool Is_Meta_Of_None(Cell(const*) v)
 
 //=//// VOID ISOTOPES AND VOID META STATE (NULL) //////////////////////////=//
 //
-// Void states are actually just CELL_FLAG_OUT_NOTE_VOIDED on top of
-// an empty cell, to indicate something that has "invisible intent" but did
-// not actually vanish.
+// Note that the test for void can be special as CELL_FLAG_OUT_NOTE_VOIDED on
+// top of an empty cell, to indicate something that has "invisible intent" but
+// did not actually vanish.
 //
 //     >> x: if false [fail ~unreachable~]
-//     ; void (decays to null)
+//     ; void
 //
 //     >> x
 //     ; null
@@ -197,10 +196,10 @@ inline static bool Is_Meta_Of_None(Cell(const*) v)
 inline static bool Is_Meta_Of_Void_Isotope(Cell(const*) v)
   { return Is_Quasi_Word(v) and VAL_WORD_SYMBOL(v) == Canon(VOID); }
 
-#define Init_Meta_Of_Void(out)       Init_Nulled(out)
-#define Is_Meta_Of_Void(v)           Is_Nulled(v)
-#define Init_Decayed_Void(out)       Init_Nulled(out)
-#define DECAYED_VOID_CELL            Lib(NULL)
+#define Init_Meta_Of_Void(out)       Init_Quasi_Null(out)
+#define Is_Meta_Of_Void(v)           Is_Quasi_Null(v)
+#define Init_Decayed_Void(out)       Init_Void(out)
+#define DECAYED_VOID_CELL            VOID_CELL
 
 #define Init_Meta_Of_Null(out) \
     Init_Nulled_Untracked(TRACK(out), ONEQUOTE_3)
@@ -270,9 +269,6 @@ inline static bool Is_Meta_Of_End_Isotope(Cell(const*) v)
 inline static REBVAL *Init_Blackhole(Cell(*) out);  // defined in %sys-token.h
 
 inline static Value(*) Decay_If_Isotope(Value(*) v) {
-    if (Is_Void(v))
-        return Init_Decayed_Void(v);
-
     if (not Is_Word_Isotope(v))
         return v;
 
@@ -292,9 +288,6 @@ inline static Value(*) Decay_If_Isotope(Value(*) v) {
 }
 
 inline static const REBVAL *Pointer_To_Decayed(const REBVAL *v) {
-    if (Is_Void(v))
-        return DECAYED_VOID_CELL;
-
     if (not Is_Word_Isotope(v))
         return v;
 

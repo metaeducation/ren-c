@@ -145,7 +145,7 @@ void Proxy_Multi_Returns(Frame(*) f)
 
         Value(*) var = ARG + 1;
 
-        if (Is_None(var) or IS_BLANK(var) or Is_Blackhole(var)) {
+        if (Is_Void(var) or IS_BLANK(var) or Is_Blackhole(var)) {
             // no writeback
         }
         else if (IS_META_WORD(var) or IS_META_TUPLE(var)) {
@@ -167,7 +167,7 @@ static void Bump_Specialized_Output_Aside(Frame(*) f) {
         fail (Error_Bad_Isotope(ARG));
 
     Value(*) var = ARG + 1;  // hidden local for variable
-    assert(Is_None(var));  // should not have been bumped into yet!
+    assert(Is_Void(var));  // should not have been bumped into yet!
 
     if (Is_Nulled(ARG) or IS_BLANK(ARG)) {  // not requested
         Init_Blank(var);
@@ -184,7 +184,7 @@ static void Bump_Specialized_Output_Aside(Frame(*) f) {
     else
         fail ("OUTPUT: parameters must be SET-table targets");
 
-    Init_None(ARG);
+    Init_Void(ARG);
 
     ++KEY, ++PARAM, ++ARG;  // with for included, skip past `var`
 }
@@ -380,7 +380,7 @@ Bounce Action_Executor(Frame(*) f)
 
         if (pclass == PARAM_CLASS_RETURN) {
             assert(STATE != ST_ACTION_DOING_PICKUPS);
-            Init_None(ARG);
+            Init_Void(ARG);
             goto continue_fulfilling;
         }
 
@@ -887,7 +887,7 @@ Bounce Action_Executor(Frame(*) f)
     PARAM = ACT_PARAMS_HEAD(FRM_PHASE(f));
 
     for (; KEY != KEY_TAIL; ++KEY, ++PARAM, ++ARG) {
-        assert(not Is_Void(ARG));
+        assert(READABLE(ARG));
 
         if (Is_Specialized(PARAM))  // checked when specialized, see [1]
             continue;
@@ -897,12 +897,12 @@ Bounce Action_Executor(Frame(*) f)
 
         if (VAL_PARAM_CLASS(PARAM) == PARAM_CLASS_OUTPUT) {
             Value(*) var = ARG + 1;
-            if (Is_None(var)) {  // no variable proxied in, can accept one here
-                if (Is_None(ARG)) {
+            if (Is_Void(var)) {  // no variable proxied in, can accept one here
+                if (Is_Void(ARG)) {
                     // leave alone
                 }
                 else if (VAL_TYPE_UNCHECKED(ARG) == REB_NULL) {
-                    Init_None(ARG);  // Can we avoid NULL happening?
+                    Init_Void(ARG);  // Can we avoid NULL happening?
                 }
                 else
                     Bump_Specialized_Output_Aside(f);
@@ -914,7 +914,7 @@ Bounce Action_Executor(Frame(*) f)
                     or IS_META_WORD(var) or IS_META_TUPLE(var)
                 );
 
-                if (not Is_None(ARG))
+                if (not Is_Void(ARG))
                     fail ("Frame filled with variable in spoken-for output");
 
                 ++KEY, ++PARAM, ++ARG;
@@ -923,7 +923,7 @@ Bounce Action_Executor(Frame(*) f)
         }
 
         if (Is_Isotope(ARG)) {  // some special meanings since illegal, see [2]
-            if (Is_None(ARG)) {  // e.g. (~) isotope, unspecialized
+            if (Is_Void(ARG)) {  // e.g. (~) isotope, unspecialized
                 Init_Nulled(ARG);
             }
             else if (not Is_Word_Isotope(ARG)) {
@@ -1130,6 +1130,7 @@ Bounce Action_Executor(Frame(*) f)
 
     if (b == OUT) {  // common case, made fastest
         assert(not Is_Stale(OUT));
+        assert(not Is_Void(OUT));  // must `return VOID` (C_VOID) for voidness
         Clear_Cell_Flag(OUT, UNEVALUATED);
     }
     else if (b == nullptr) {  // API and internal code can both return `nullptr`

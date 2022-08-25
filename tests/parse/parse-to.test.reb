@@ -52,7 +52,7 @@
 [(
     "" = parse "abc" [to <end>]
 )(
-    none? parse "abc" [elide to <end>]  ; ornery none
+    '~void~ = ^ parse "abc" [elide to <end>]
 )(
     "b" = parse "aaabbb" [thru "b" elide to <end>]
 )(

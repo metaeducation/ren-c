@@ -46,4 +46,4 @@
     out = [1 2 3]
 )
 
-(none? for-each x [1 2 3] [maybe if x != 3 [x]])
+('~void~ = ^ for-each x [1 2 3] [maybe if x != 3 [x]])

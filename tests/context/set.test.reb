@@ -2,16 +2,16 @@
 [#1763
     (
         a: <before>
-        [_] = [a]: unpack inert reduce/predicate [null] :try
-        blank? :a
+        '~null~ = [a]: unpack inert reduce/predicate [null] :reify
+        '~null~ = a
     )
 ]
 (
     a: <a-before>
     b: <b-before>
-    [2 _] = [a b]: unpack inert reduce/predicate [2 null] :try
+    2 = [a b]: unpack inert reduce/predicate [2 null] :reify
     a = 2
-    blank? :b
+    '~null~ = b
 )
 (x: make object! [a: 1] all [error? trap [set x reduce [()]] x.a = 1])
 (x: make object! [a: 1 b: 2] all [error? trap [set x reduce [3 ()]] x.a = 1])

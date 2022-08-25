@@ -30,7 +30,7 @@
     1 = f1
 )
 ; Test that arity-0 return stops the loop
-('~ = ^ reeval func [return: <none>] [cycle [return none]])
+(none? reeval func [return: <none>] [cycle [return none]])
 ; Test that errors do not stop the loop and errors can be returned
 (
     num: 0
@@ -62,7 +62,7 @@
 ; Unlike loops with ordinary termination conditions, CYCLE can return a
 ; value with STOP.  Plain STOP is not conflated with BREAK.
 ;
-('~ = ^ cycle [stop])
+('~void~ = ^ cycle [stop])
 (10 = cycle [stop 10])
 ('~null~ = ^ cycle [stop null])  ; allowed
 (null = cycle [break])

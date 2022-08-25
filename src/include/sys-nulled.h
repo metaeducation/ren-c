@@ -39,6 +39,9 @@
 #define Is_Nulled(v) \
     (VAL_TYPE(v) == REB_NULL)
 
+inline static bool Is_Quasi_Null(Cell(const*) v)
+  { return QUOTE_BYTE(v) == QUASI_2 and HEART_BYTE(v) == REB_NULL; }
+
 inline static REBVAL *Init_Nulled_Untracked(Cell(*) out, Byte quote_byte) {
     Init_Cell_Header_Untracked(
         RESET_Untracked(out),
@@ -60,6 +63,9 @@ inline static REBVAL *Init_Nulled_Untracked(Cell(*) out, Byte quote_byte) {
 //
 #define Init_Nulled(out) \
     Init_Nulled_Untracked(TRACK(ensure(Value(*), (out))), UNQUOTED_1)
+
+#define Init_Quasi_Null(out) \
+    Init_Nulled_Untracked((out), QUASI_2)
 
 #define Init_Void(out) \
     Init_Nulled_Untracked(TRACK(ensure(Value(*), (out))), ISOTOPE_0)

@@ -326,30 +326,30 @@
     x: <overwritten>
     did all [
         <kept> = (<kept> x: ())
-        null? x
+        unset? 'x
     ]
 )(
     x: <overwritten>
     did all [
         <kept> = (<kept> x: comment "hi")
-        null? x
+        unset? 'x
     ]
 )(
     obj: make object! [x: <overwritten>]
     did all [
         <kept> = (<kept> obj.x: comment "hi")
-        null? obj.x
+        unset? 'obj.x
     ]
 )(
     obj: make object! [x: <overwritten>]
     did all [
         <kept> = (<kept> obj.x: ())
-        null? obj.x
+        unset? 'obj.x
     ]
 )
 
-(none? (if true [] else [<else>]))
-('~ = ^(if true [comment <true-branch>] else [<else>]))
+('~void~ = ^ (if true [] else [<else>]))
+('~void~ = ^(if true [comment <true-branch>] else [<else>]))
 
 (1 = all [1 elide <vaporize>])
 (1 = any [1 elide <vaporize>])

@@ -5,7 +5,7 @@
 ; can generate a new series, as well as pick one out of a block.
 
 [
-    (none? parse [[]] [subparse any-series! []])
+    ('~void~ = ^ parse [[]] [subparse any-series! []])
     ('a == parse [[a]] [subparse any-series! ['a]])
     ('c == parse [b [a] c] ['b subparse any-series! ['a] 'c])
     (#a == parse ["a"] [subparse any-series! [#a]])

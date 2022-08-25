@@ -544,15 +544,17 @@ Bounce Evaluator_Executor(Frame(*) f)
       // QUOTED! forms simply evaluate to remove one level of quoting.
 
     case QUASI_2:
-      Derelativize(OUT, f_current, f_specifier);
-      mutable_QUOTE_BYTE(OUT) = ISOTOPE_0;
-      Set_Cell_Flag(OUT, SCANT_EVALUATED_ISOTOPE);  // see flag comments
-      break;
+        if (Is_Meta_Of_Void(f_current))
+            break;  // the `~` just vaporizes, leaves output as-is
+        Derelativize(OUT, f_current, f_specifier);
+        mutable_QUOTE_BYTE(OUT) = ISOTOPE_0;
+        Set_Cell_Flag(OUT, SCANT_EVALUATED_ISOTOPE);  // see flag comments
+        break;
 
     default:  // e.g. QUOTED!
-      Derelativize(OUT, f_current, f_specifier);
-      Unquotify(OUT, 1);  // asserts it is not an isotope
-      break;
+        Derelativize(OUT, f_current, f_specifier);
+        Unquotify(OUT, 1);  // asserts it is not an isotope
+        break;
 
     case UNQUOTED_1: switch (CELL_HEART_UNCHECKED(f_current)) {
 
@@ -1167,9 +1169,6 @@ Bounce Evaluator_Executor(Frame(*) f)
 
       } set_group_result_in_spare: {  ////////////////////////////////////////
 
-        if (Is_Isotope(SPARE))
-            fail (Error_Bad_Isotope(SPARE));
-
         STATE = ST_EVALUATOR_INITIAL_ENTRY;
 
         f_current = SPARE;
@@ -1178,6 +1177,9 @@ Bounce Evaluator_Executor(Frame(*) f)
             Init_Blank(SPARE);
             goto set_blank_in_spare;
         }
+
+        if (Is_Isotope(SPARE))
+            fail (Error_Bad_Isotope(SPARE));
 
         switch (VAL_TYPE(SPARE)) {
           case REB_BLOCK:
@@ -1525,9 +1527,9 @@ Bounce Evaluator_Executor(Frame(*) f)
             StackValue(*) at = Data_Stack_At(stackindex_output);
             ++stackindex_output;
 
-            assert(Is_None(arg) or Is_Nulled(arg));
+            assert(Is_Void(arg) or Is_Nulled(arg));
 
-            Init_None(arg);
+            Init_Void(arg);
 
             Copy_Cell(var, at);
             ++key, ++arg, ++param;
@@ -1614,7 +1616,7 @@ Bounce Evaluator_Executor(Frame(*) f)
             // !!! Review if it should actually force a raised error.
             //
             if (not Is_Raised(OUT))
-                Init_None(OUT);  // "uninteresting result"
+                Init_Void(OUT);  // "uninteresting result"
         }
         else if (Is_Blackhole(SPARE)) {
             // pass through everything (even failures), e.g. no assignment

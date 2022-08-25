@@ -152,13 +152,12 @@ export console!: make object! [
 
         if v = void' [
             ;
-            ; There are isotope states of ~void~, but they are used as
-            ; placeholders in frames that receive void parameters.  When a
-            ; frame is executed, those isotopes are interpreted as true void
-            ; states since as isotopes they cannot be actually used in frame
-            ; slots.
+            ; True void is not to be confused with the isotope of the WORD!
+            ; void (e.g. ~void~).  The word isotopes are made by conditionals
+            ; when they take a branch but the branch produces void, e.g.
+            ; `if true [comment "this makes a ~void~ isotope"]`.
             ;
-            print "; void (decays to null)"
+            print "; void"
             return none
         ]
 

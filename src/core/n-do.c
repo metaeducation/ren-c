@@ -334,7 +334,7 @@ DECLARE_NATIVE(do)
         // to disrupt its state.  Use a subframe.
 
         if (Is_Frame_At_End(f)) {
-            Init_None(OUT);
+            Init_Void(OUT);
             return OUT;
         }
 
@@ -724,7 +724,7 @@ DECLARE_NATIVE(applique)
         action,
         STACK_BASE,  // lowest_ordered_dsp of refinements to weave in
         nullptr,  // no binder needed
-        NONE_ISOTOPE  // seen as unspecialized by ST_ACTION_TYPECHECKING
+        VOID_CELL  // seen as unspecialized by ST_ACTION_TYPECHECKING
     );
     Manage_Series(CTX_VARLIST(exemplar));
     Init_Frame(frame, exemplar, VAL_ACTION_LABEL(action));
@@ -988,7 +988,7 @@ DECLARE_NATIVE(apply)
     while (Did_Advance_Evars(e)) {  // convert unspecialized to none, see [6]
         if (VAL_TYPE_UNCHECKED(e->var) == REB_TAG)  // skip over isotopes
             if (VAL_SERIES(e->var) == VAL_SERIES(Root_Unspecialized_Tag))
-                Init_None(e->var);
+                Init_Void(e->var);
 
         /* Remove_Binder_Index(&binder, KEY_SYMBOL(e.key)); */
     }

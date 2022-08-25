@@ -370,7 +370,7 @@ DECLARE_NATIVE(unquote)
 //
 //      return: [quasi!]
 //      value "Any non-QUOTED! value"
-//          [any-value!]  ; there isn't an any-nonquoted! typeset
+//          [<opt> any-value!]  ; there isn't an any-nonquoted! typeset
 //  ]
 //
 DECLARE_NATIVE(quasi)
@@ -413,7 +413,7 @@ DECLARE_NATIVE(unquasi)
 //  {Variant of UNQUOTE that also accepts QUASI! to make isotopes}
 //
 //      return: [<opt> <void> any-value!]
-//      value [<opt> quoted! quasi!]
+//      value [quoted! quasi!]
 //  ]
 //
 DECLARE_NATIVE(unmeta)

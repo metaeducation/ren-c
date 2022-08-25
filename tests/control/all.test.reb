@@ -15,7 +15,7 @@
         x: <overwritten>
         did all [
             void? x: all []
-            (null? x)
+            unset? 'x
         ]
     )
     (void? if did all [] [<did>])

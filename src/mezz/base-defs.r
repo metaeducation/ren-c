@@ -33,9 +33,9 @@ c-break-debug: :c-debug-break  ; easy to mix up
 ; These are faster than clear versions (e.g. `(meta void) = ^ expr`) and
 ; clearer than compressed forms (like '' for quote null)
 ;
-void': null
+void': meta void
 null': the '
-none': the ~
+none': meta none
 
 eval: :evaluate  ; shorthands should be synonyms, too confusing otherwise
 

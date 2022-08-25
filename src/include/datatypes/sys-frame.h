@@ -570,7 +570,7 @@ inline static Frame(*) Prep_Frame_Core(
 
 #define WANTED(name) ( \
     assert(VAL_PARAM_CLASS(PARAM(name)) == PARAM_CLASS_OUTPUT), \
-        (not Is_None(ARG(name) + 1) and not IS_BLANK(ARG(name) + 1)))
+        (not Is_Void(ARG(name) + 1) and not IS_BLANK(ARG(name) + 1)))
 
 
 // Quick access functions from natives (or compatible functions that name a
@@ -761,7 +761,7 @@ inline static bool Pushed_Continuation(
             if (Is_Specialized(param))
                 Copy_Cell(arg, param);
             else
-                Init_None(arg);
+                Init_Void(arg);
         }
 
         arg = First_Unspecialized_Arg(&param, f);
@@ -785,7 +785,7 @@ inline static bool Pushed_Continuation(
             if (Is_Specialized(param))
                 Copy_Cell(arg, param);
             else
-                Init_None(arg);
+                Init_Void(arg);
         }
 
         if (with != nullptr) do {

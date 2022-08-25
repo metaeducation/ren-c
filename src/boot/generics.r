@@ -349,7 +349,7 @@ pick*: generic [
     {Low-level hook for PICK, used also by PATH! and GET-PATH!}
 
     return: "PICK: the retrieved value"
-        [<opt> any-value!]
+        [<opt> <void> any-value!]  ; PICK doesn't return void, but GET can
     location "Target value"
         [any-value!]
     picker "Field or index to use"

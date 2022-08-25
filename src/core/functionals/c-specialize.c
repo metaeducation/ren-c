@@ -216,7 +216,7 @@ Context(*) Make_Context_For_Action(
         action,
         lowest_ordered_stackindex,
         binder,
-        NONE_ISOTOPE
+        VOID_CELL
     );
 
     Manage_Series(CTX_VARLIST(exemplar));  // !!! was needed before, review
@@ -759,7 +759,7 @@ Action(*) Alloc_Action_From_Exemplar(
         // https://forum.rebol.info/t/default-values-and-make-frame/1412
         // https://forum.rebol.info/t/1413
         //
-        if (Is_None(arg)) {
+        if (Is_Void(arg)) {
             assert(IS_TYPESET(param));
             Copy_Cell(arg, param);
             continue;
