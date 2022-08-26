@@ -154,10 +154,6 @@ void Probe_Cell_Print_Helper(
   int line
 ){
     Probe_Print_Helper(p, expr, "Value", file, line);
-    if (Is_End(p)) {
-        Append_Ascii(mo->series, "; end");
-        return;
-    }
 
     const REBVAL *v = cast(const REBVAL*, p);
 

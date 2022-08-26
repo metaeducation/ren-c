@@ -36,6 +36,41 @@
 // to keep it within a certain boundary of complexity.
 
 
+//=//// VARIADIC FEED END SIGNAL //////////////////////////////////////////=//
+//
+// The API uses C's 0-valued nullptr for the purpose of representing null
+// value handles.  So `rebValue("any [", value, "10]", nullptr)` can't be used
+// to signal the end of input.  We use instead a pointer to a 2-byte sequence
+// that's easy to create on a local stack in C and WebAssembly: the 2-bytes
+// of 192 followed by 0.  The C string literal "\xC0" creates it, and is
+// defined as rebEND...which is automatically added to the tail of calls to
+// things like rebValue via a variadic macro.  (See rebEND for more info.)
+
+#if (! DEBUG_CHECK_ENDS)
+    #define Is_End(p) \
+        (((const Byte*)(p))[0] == END_SIGNAL_BYTE)  // Note: needs (p) parens!
+#else
+    inline static bool Is_End(const void *p) {
+        const Byte* bp = cast(const Byte*, p);
+        if (*bp != END_SIGNAL_BYTE) {
+            assert(*bp & NODE_BYTEMASK_0x01_CELL);
+            return false;
+        }
+        assert(bp[1] == 0);  // not strictly necessary, but rebEND is 2 bytes
+        return true;
+    }
+
+  #if CPLUSPLUS_11
+    template<typename T>  // should only test void* for ends
+    inline static bool Is_End(const T* v)
+      { static_assert(std::is_same<T, void>::value); }
+  #endif
+#endif
+
+#define Not_End(p) \
+    (not Is_End(p))
+
+
 #define FEED_SINGULAR(feed)     ARR(&(feed)->singular)
 #define FEED_SINGLE(feed)       mutable_SER_CELL(&(feed)->singular)
 

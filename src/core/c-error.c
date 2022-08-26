@@ -802,44 +802,42 @@ Context(*) Make_Error_Managed_Core(
         Cell(const*) msg_item = VAL_ARRAY_AT(&msg_tail, message);
 
         for (; msg_item != msg_tail; ++msg_item) {
-            if (IS_GET_WORD(msg_item)) {
-                Symbol(const*) symbol = VAL_WORD_SYMBOL(msg_item);
-                REBVAL *var = Append_Context(error, nullptr, symbol);
+            if (not IS_GET_WORD(msg_item))
+                continue;
 
-                const void *p = va_arg(*vaptr, const void*);
+            Symbol(const*) symbol = VAL_WORD_SYMBOL(msg_item);
+            REBVAL *var = Append_Context(error, nullptr, symbol);
 
-                if (p == nullptr) {
-                    //
-                    // !!! Should variadic error take `nullptr` instead of
-                    // "nulled cells"?
-                    //
-                    assert(!"nullptr passed to Make_Error_Managed_Core()");
-                    Init_Nulled(var);
-                }
-                else if (Is_End(p)) {
-                    assert(!"Not enough arguments in Make_Error_Managed()");
-                    Init_Void(var);
-                }
-                else if (IS_RELATIVE(cast(Cell(const*), p))) {
-                    //
-                    // Originally, relative values triggered assertions here.
-                    // But specific values aren't always available to present
-                    // error messages on, and even when they are it might be
-                    // a pain to get the specifier tunneled through.  So we
-                    // just "unrelativize" the values now--and try to use the
-                    // effort that would be spent derelativizing better ways.
-                    //
-                    Cell(const*) relative = cast(Cell(const*), p);
-                    Unrelativize(var, relative);
-                }
-                else {
-                    // !!! Since some values are being unrelativized, should
-                    // *all* error arguments be unrelativized?  Might that
-                    // even be better for errors, to not "leak" bindings?
-                    //
-                    const REBVAL *arg = cast(const REBVAL*, p);
-                    Copy_Cell(var, arg);
-                }
+            const void *p = va_arg(*vaptr, const void*);
+
+            if (p == nullptr) {
+                //
+                // !!! Should variadic error take `nullptr` instead of
+                // "nulled cells"?
+                //
+                assert(!"nullptr passed to Make_Error_Managed_Core()");
+                Init_Nulled(var);
+            }
+            else switch (Detect_Rebol_Pointer(p)) {
+              case DETECTED_AS_END :
+                assert(!"Not enough arguments in Make_Error_Managed()");
+                Init_Word_Isotope(var, Canon(END));
+                break;
+
+              case DETECTED_AS_CELL : {
+                //
+                // It's too much effort to force callers to pass SPECIFIC
+                // values--so strip off the binding.  (We could preserve it
+                // in those cases it was specified, but that could set up
+                // the wrong expectations that the system is trying.)
+                //
+                Cell(const*) v = cast(Cell(const*), p);
+                Unrelativize(var, v);
+                break; }
+
+              default:
+                assert(false);
+                fail ("Bad pointer passed to Error()");
             }
         }
     }
