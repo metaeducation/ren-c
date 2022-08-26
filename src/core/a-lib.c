@@ -441,6 +441,23 @@ uintptr_t RL_rebTick(void)
 //=////////////////////////////////////////////////////////////////////////=//
 
 
+// rebNull is a #define of `(REBVAL*)0`
+//
+// See notes in %rebol.h about why NOT to use ordinary `#define NULL 0` !
+// But C++ nullptr (or shim) should be used instead if available.
+
+
+//
+//  rebVoid: RL_API
+//
+REBVAL *RL_rebVoid(void)
+{
+    ENTER_API;
+
+    return Init_Void(Alloc_Value());
+}
+
+
 //
 //  rebNone: RL_API
 //
@@ -918,7 +935,6 @@ inline static void Run_Va_May_Fail(
     // several places in the system (e.g. normal arguments).  Here is another
     // place the tolerance is extended to.
 
-    Reify_Eval_Out_Plain(out);
     Decay_If_Isotope(out);
 }
 

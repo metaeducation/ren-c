@@ -702,25 +702,3 @@ inline static Bounce Native_None_Result(Frame(*) frame_) {
     assert(Is_Stale_Void(&TG_Thrown_Arg));
     return Init_None(frame_->out);
 }
-
-
-// Plain reification cannot discern "~void~ isotopes" from none isotopes.
-//
-//     >> do [comment "conflation is unavoidable"]
-//     == ~  ; isotope
-//
-//     >> do [~]
-//     == ~  ; isotope
-//
-// Functions that want to do this discernment have to handle stale situations
-// explicitly.  See ANY and ALL for examples.
-//
-inline static REBVAL *Reify_Eval_Out_Plain(REBVAL *out) {
-    if (Is_Void(out))
-        return Init_Decayed_Void(out);
-
-    return out;
-}
-
-#define Reify_Stale_Plain_Branch(out) \
-    Isotopify_If_Nulled(Reify_Eval_Out_Plain(out))

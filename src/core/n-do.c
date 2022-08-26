@@ -354,7 +354,6 @@ DECLARE_NATIVE(do)
         Drop_Frame(subframe);
 
         Clear_Stale_Flag(OUT);
-        Reify_Eval_Out_Plain(OUT);
         break; }
 
       case REB_THE_WORD : goto do_string;

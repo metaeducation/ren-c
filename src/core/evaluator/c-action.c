@@ -1110,7 +1110,10 @@ Bounce Action_Executor(Frame(*) f)
     else if (Is_Bounce_A_Value(b)) {
         REBVAL *r = Value_From_Bounce(b);
         assert(Is_Api_Value(r));
-        Copy_Cell(OUT, r);
+        if (Is_Void(r))
+            assert(Is_Stale(OUT));  // pure API shouldn't be able to write OUT
+        else
+            Copy_Cell(OUT, r);
         Release_Api_Value_If_Unmanaged(r);
     }
     else switch (VAL_RETURN_SIGNAL(b)) {  // it's a "pseudotype" instruction

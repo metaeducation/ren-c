@@ -196,8 +196,6 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
                 return true;
             }
 
-            Reify_Eval_Out_Plain(out);
-
             if (
                 Is_Feed_At_End(f_temp->feed)
                 or Get_Feed_Flag(f_temp->feed, BARRIER_HIT)
