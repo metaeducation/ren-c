@@ -60,7 +60,7 @@ inline static REBVAL *Init_Integer_Untracked(Cell(*) out, REBI64 i64) {
 }
 
 #define Init_Integer(out,i64) \
-    Init_Integer_Untracked(TRACK(out), (i64))
+    TRACK(Init_Integer_Untracked((out), (i64)))
 
 inline static int32_t VAL_INT32(noquote(Cell(const*)) v) {
     if (VAL_INT64(v) > INT32_MAX or VAL_INT64(v) < INT32_MIN)

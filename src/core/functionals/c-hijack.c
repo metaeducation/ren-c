@@ -255,10 +255,12 @@ DECLARE_NATIVE(hijack)
             = cast(CFUNC*, &Hijacker_Dispatcher);
     }
 
+    Clear_Cell_Flag(ACT_ARCHETYPE(victim), PROTECTED);  // changing on purpose
     Copy_Cell(  // move the archetype into the 0 slot of victim's identity
         ACT_ARCHETYPE(victim),
         ACT_ARCHETYPE(hijacker)
     );
+    Set_Cell_Flag(ACT_ARCHETYPE(victim), PROTECTED);  // restore invariant
 
     return Init_Action(  // don't bother returning copy of original, see [3]
         OUT,

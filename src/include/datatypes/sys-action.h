@@ -145,7 +145,7 @@ inline static REBVAL *Init_Return_Signal_Untracked(Cell(*) out, char ch) {
 }
 
 #define Init_Return_Signal(out,ch) \
-    Init_Return_Signal_Untracked(TRACK(out), (ch))
+    TRACK(Init_Return_Signal_Untracked((out), (ch)))
 
 inline static bool Is_Bounce_A_Value(Bounce b)
   { return HEART_BYTE(cast(REBVAL*, b)) != REB_T_RETURN_SIGNAL; }
@@ -176,7 +176,7 @@ inline static bool Is_Throwing(Frame(*) frame_) {
     // only be able to return *true* to a throw request if there are no
     // frames above on the stack.
     //
-    if (not Is_Stale_Void(&TG_Thrown_Arg)) {
+    if (not Is_Cell_Erased(&TG_Thrown_Arg)) {
         /*assert(frame_ == TOP_FRAME);*/  // forget even that check
         UNUSED(frame_);  // currently only used for debug build check
         return true;
@@ -561,7 +561,7 @@ inline static REBVAL *Init_Action_Core(
 }
 
 #define Init_Action(out,a,label,binding) \
-    Init_Action_Core(TRACK(out), (a), (label), (binding))
+    TRACK(Init_Action_Core((out), (a), (label), (binding)))
 
 
 enum {
@@ -646,7 +646,7 @@ inline static REBVAL *Maybe_Move_Cell(REBVAL *out, REBVAL *v) {
 }
 
 inline static Bounce Native_Thrown_Result(Frame(*) frame_) {
-    assert(not Is_Stale_Void(&TG_Thrown_Arg));
+    assert(THROWING);
     Mark_Eval_Out_Stale(frame_->out);
     return BOUNCE_THROWN;
 }
@@ -693,12 +693,12 @@ inline static REBVAL *Mark_Eval_Out_Voided(REBVAL *out) {
 }
 
 inline static Bounce Native_Void_Result(Frame(*) frame_) {
-    assert(Is_Stale_Void(&TG_Thrown_Arg));
+    assert(not THROWING);
     Mark_Eval_Out_Voided(frame_->out);
     return BOUNCE_VOID;
 }
 
 inline static Bounce Native_None_Result(Frame(*) frame_) {
-    assert(Is_Stale_Void(&TG_Thrown_Arg));
+    assert(not THROWING);
     return Init_None(frame_->out);
 }

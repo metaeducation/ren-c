@@ -42,8 +42,11 @@
     // Debug behavior: `~` isotope with the CELL_FLAG_STALE set
     // Will trip up any access attempts via READABLE(), but can be overwritten
 
-    #define Init_Trash_Untracked(out) \
-        Set_Cell_Flag(Init_Blank_Untracked((out), ISOTOPE_0), STALE)
+    inline static Value(*) Init_Trash_Untracked(Cell(*) v) {
+        Init_Blank_Untracked(v, ISOTOPE_0);
+        Set_Cell_Flag(v, STALE);
+        return cast(Value(*), v);
+    }
 
     inline static bool IS_TRASH(Cell(const*) v) {
         if (CELL_HEART_UNCHECKED(v) != REB_BLANK)
@@ -62,4 +65,4 @@
 #endif
 
 #define Init_Trash(out) \
-    Init_Trash_Untracked(TRACK(out))
+    TRACK(Init_Trash_Untracked((out)))

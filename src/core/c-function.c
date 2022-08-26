@@ -615,11 +615,13 @@ Array(*) Pop_Paramlist_With_Meta_May_Fail(
         num_slots,
         SERIES_MASK_PARAMLIST
     );
+    SET_SERIES_LEN(paramlist, num_slots);
 
     Keylist(*) keylist = Make_Series(Keylist,
         (num_slots - 1),  // - 1 archetype
         SERIES_MASK_KEYLIST | NODE_FLAG_MANAGED
     );
+    SET_SERIES_USED(keylist, num_slots - 1);  // no terminator
     mutable_LINK(Ancestor, keylist) = keylist;  // chain ends with self
 
     if (flags & MKF_HAS_RETURN)
@@ -701,10 +703,8 @@ Array(*) Pop_Paramlist_With_Meta_May_Fail(
         ++param;
     }
 
-    SET_SERIES_LEN(paramlist, num_slots);
     Manage_Series(paramlist);
 
-    SET_SERIES_USED(keylist, num_slots - 1);  // no terminator
     INIT_BONUS_KEYSOURCE(paramlist, keylist);
     mutable_MISC(VarlistMeta, paramlist) = nullptr;
     mutable_LINK(Patches, paramlist) = nullptr;
@@ -771,6 +771,8 @@ Array(*) Pop_Paramlist_With_Meta_May_Fail(
             num_slots,
             SERIES_MASK_VARLIST | NODE_FLAG_MANAGED
         );
+        SET_SERIES_LEN(types_varlist, num_slots);
+
         mutable_MISC(VarlistMeta, types_varlist) = nullptr;
         mutable_LINK(Patches, types_varlist) = nullptr;
         INIT_CTX_KEYLIST_SHARED(CTX(types_varlist), keylist);
@@ -803,8 +805,6 @@ Array(*) Pop_Paramlist_With_Meta_May_Fail(
             ++param;
         }
 
-        SET_SERIES_LEN(types_varlist, num_slots);
-
         Init_Object(
             CTX_VAR(*meta, STD_ACTION_META_PARAMETER_TYPES),
             CTX(types_varlist)
@@ -818,6 +818,8 @@ Array(*) Pop_Paramlist_With_Meta_May_Fail(
             num_slots,
             SERIES_MASK_VARLIST | NODE_FLAG_MANAGED
         );
+        SET_SERIES_LEN(notes_varlist, num_slots);
+
         mutable_MISC(VarlistMeta, notes_varlist) = nullptr;
         mutable_LINK(Patches, notes_varlist) = nullptr;
         INIT_CTX_KEYLIST_SHARED(CTX(notes_varlist), keylist);
@@ -849,8 +851,6 @@ Array(*) Pop_Paramlist_With_Meta_May_Fail(
             ++dest;
             ++param;
         }
-
-        SET_SERIES_LEN(notes_varlist, num_slots);
 
         Init_Object(
             CTX_VAR(*meta, STD_ACTION_META_PARAMETER_NOTES),
@@ -904,7 +904,6 @@ Array(*) Make_Paramlist_Managed_May_Fail(
     Flags *flags  // flags may be modified to carry additional information
 ){
     StackIndex base = TOP_INDEX;
-    assert(TOP == Data_Stack_At(base));
 
     StackIndex return_stackindex = 0;
 
@@ -1008,6 +1007,8 @@ Action(*) Make_Action(
         details_capacity,  // leave room for archetype
         SERIES_MASK_DETAILS | NODE_FLAG_MANAGED
     );
+    SET_SERIES_LEN(details, details_capacity);
+
     Cell(*) archetype = ARR_HEAD(details);
     Reset_Unquoted_Header_Untracked(TRACK(archetype), CELL_MASK_ACTION);
     INIT_VAL_ACTION_DETAILS(archetype, details);
@@ -1019,8 +1020,6 @@ Action(*) Make_Action(
   #endif
 
     // Leave rest of the cells in the capacity uninitialized (caller fills in)
-    //
-    SET_SERIES_LEN(details, details_capacity);
 
     mutable_LINK_DISPATCHER(details) = cast(CFUNC*, dispatcher);
     mutable_MISC(DetailsMeta, details) = nullptr;  // caller can fill in

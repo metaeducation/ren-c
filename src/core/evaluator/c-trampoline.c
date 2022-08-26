@@ -73,7 +73,7 @@
 #if DEBUG_COUNT_TICKS  // <-- THIS IS VERY USEFUL, SEE UPDATE_TICK_DEBUG()
 
     //      *** DON'T COMMIT THIS v-- KEEP IT AT ZERO! ***
-    Tick TG_break_at_tick =      0;
+    Tick TG_break_at_tick =        0;
     //      *** DON'T COMMIT THIS --^ KEEP IT AT ZERO! ***
 
 #endif  // ^-- SERIOUSLY: READ ABOUT C-DEBUG-BREAK AND PLACES TICKS ARE STORED
@@ -176,7 +176,11 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
         and Not_Frame_Flag(FRAME, MAYBE_STALE)
     ){
         if (FRAME->executor != &Just_Use_Out_Executor)  // exempt, see [1]
-            assert(Is_Fresh(OUT));  // stale is allowed, see [2]
+            assert(
+                Is_Cell_Erased(OUT)
+                or Is_Stale_Void(OUT)  // stale ok, see [2]
+                or Is_Void(OUT)
+            );
     }
 
 { //=//// CALL THE EXECUTOR ///////////////////////////////////////////////=//

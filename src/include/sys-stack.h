@@ -186,11 +186,19 @@
 inline static StackValue(*) Data_Stack_At(StackIndex i) {
     REBVAL *at = cast(REBVAL*, DS_Array->content.dynamic.data) + i;  // see [1]
 
-    if (i < TOP_INDEX + 1)  // in the range of PUSH()'d cells
-        assert(WRITABLE(at));  // we can only check writability, see [2]
+    if (i == 0) {
+        assert(Is_Cell_Poisoned(at));
+    }
+    else if (i < TOP_INDEX + 1) {  // in the range of PUSH()'d cells
+        if (not Is_Cell_Erased(at))
+            ASSERT_CELL_READABLE_EVIL_MACRO(at);
+    }
     else {
         assert(i == TOP_INDEX + 1);  // allow getting tail's address, see [3]
-        assert(Is_Fresh(at));
+
+      #if DEBUG_POISON_DROPPED_STACK_CELLS
+        assert(Is_Cell_Poisoned(at));
+      #endif
     }
     return at;
 }
@@ -221,12 +229,17 @@ inline static StackValue(*) PUSH(void) {
   #if DEBUG_EXTANT_STACK_POINTERS
     assert(TG_Stack_Outstanding == 0);  // push may disrupt any extant values
   #endif
+
     ++DS_Index;
     ++DS_Movable_Top;
     if (DS_Movable_Top == DS_Movable_Tail)
         Expand_Data_Stack_May_Fail(STACK_EXPAND_BASIS);
-    else
-        assert(Is_Fresh(DS_Movable_Top));
+
+  #if DEBUG_POISON_DROPPED_STACK_CELLS
+    assert(Is_Cell_Poisoned(DS_Movable_Top));
+  #endif
+
+    Erase_Cell(DS_Movable_Top);
     return DS_Movable_Top;
 }
 
@@ -242,7 +255,11 @@ inline static void DROP(void) {
   #if DEBUG_EXTANT_STACK_POINTERS
     assert(TG_Stack_Outstanding == 0);  // in the future, pop may disrupt
   #endif
-    RESET(TOP);
+
+  #if DEBUG_POISON_DROPPED_STACK_CELLS
+    Poison_Cell(DS_Movable_Top);
+  #endif
+
     --DS_Index;
     --DS_Movable_Top;
 }

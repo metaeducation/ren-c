@@ -161,8 +161,8 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
         if (Vararg_Op_If_No_Advance_Handled(
             out,
             op,
-            Is_Stale_Void(shared) ? nullptr : VAL_ARRAY_ITEM_AT(shared),
-            Is_Stale_Void(shared) ? SPECIFIED : VAL_SPECIFIER(shared),
+            Is_Cell_Poisoned(shared) ? nullptr : VAL_ARRAY_ITEM_AT(shared),
+            Is_Cell_Poisoned(shared) ? SPECIFIED : VAL_SPECIFIER(shared),
             pclass
         )){
             goto type_check_and_return;
@@ -200,7 +200,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
                 Is_Feed_At_End(f_temp->feed)
                 or Get_Feed_Flag(f_temp->feed, BARRIER_HIT)
             ){
-                Init_Stale_Void(shared);
+                Poison_Cell(shared);
             }
             else {
                 // The indexor is "prefetched", so though the temp_frame would
@@ -251,10 +251,10 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
         }
 
         if (
-            not Is_Stale_Void(shared)
+            not Is_Cell_Poisoned(shared)
             and VAL_INDEX(shared) >= VAL_LEN_HEAD(shared)
         ){
-            Init_Stale_Void(shared);  // signal end to all varargs sharing value
+            Poison_Cell(shared);  // signal end to all varargs sharing value
         }
     }
     else if (Is_Frame_Style_Varargs_May_Fail(&f, vararg)) {
@@ -397,7 +397,7 @@ Bounce MAKE_Varargs(
         //
         Array(*) array1 = Alloc_Singular(NODE_FLAG_MANAGED);
         if (VAL_LEN_AT(arg) == 0)
-            Init_Stale_Void(VAL(ARR_SINGLE(array1)));
+            Poison_Cell(ARR_SINGLE(array1));
         else
             Copy_Cell(ARR_SINGLE(array1), arg);
 
@@ -627,7 +627,7 @@ void MF_Varargs(REB_MOLD *mo, noquote(Cell(const*)) v, bool form) {
     Frame(*) f;
     REBVAL *shared;
     if (Is_Block_Style_Varargs(&shared, v)) {
-        if (Is_Stale_Void(shared))
+        if (Is_Cell_Poisoned(shared))
             Append_Ascii(mo->series, "[]");
         else if (pclass == PARAM_CLASS_HARD)
             Mold_Value(mo, shared); // full feed can be shown if hard quoted

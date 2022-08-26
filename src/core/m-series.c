@@ -346,12 +346,10 @@ Byte* Reset_Buffer(REBSER *buf, REBLEN len)
 void Assert_Series_Term_Core(const REBSER *s)
 {
     if (IS_SER_ARRAY(s)) {
-      #if DEBUG_TERM_ARRAYS
+      #if DEBUG_POISON_SERIES_TAILS
         if (GET_SERIES_FLAG(s, DYNAMIC)) {
             Cell(const*) tail = ARR_TAIL(ARR(s));
-            if (not (tail->header.bits & NODE_FLAG_CELL))
-                panic (s);
-            if (not IS_CELL_FREE(tail))
+            if (not Is_Cell_Poisoned(tail))
                 panic (tail);
         }
       #endif
@@ -363,7 +361,7 @@ void Assert_Series_Term_Core(const REBSER *s)
                 panic (s);
         }
         else {
-          #if !defined(NDEBUG)
+          #if DEBUG_POISON_SERIES_TAILS
             if (*tail != BINARY_BAD_UTF8_TAIL_BYTE && *tail != '\0')
                 panic (s);
           #endif

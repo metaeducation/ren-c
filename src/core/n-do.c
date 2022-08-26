@@ -320,7 +320,7 @@ DECLARE_NATIVE(do)
                 return THROWN;
             }
 
-            Init_Stale_Void(position); // convention for shared data at endpoint
+            Erase_Cell(position); // convention for shared data at endpoint
 
             if (Is_Void(OUT))
                 return VOID;

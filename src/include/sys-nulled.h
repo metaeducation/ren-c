@@ -62,13 +62,13 @@ inline static REBVAL *Init_Nulled_Untracked(Cell(*) out, Byte quote_byte) {
 // for a BLOCK!... must be a Value(*), e.g. a context variable or frame output.
 //
 #define Init_Nulled(out) \
-    Init_Nulled_Untracked(TRACK(ensure(Value(*), (out))), UNQUOTED_1)
+    TRACK(Init_Nulled_Untracked(ensure(Value(*), (out)), UNQUOTED_1))
 
 #define Init_Quasi_Null(out) \
-    Init_Nulled_Untracked((out), QUASI_2)
+    TRACK(Init_Nulled_Untracked((out), QUASI_2))
 
 #define Init_Void(out) \
-    Init_Nulled_Untracked(TRACK(ensure(Value(*), (out))), ISOTOPE_0)
+    TRACK(Init_Nulled_Untracked(ensure(Value(*), (out)), ISOTOPE_0))
 
 
 // To help ensure full nulled cells don't leak to the API, the variadic

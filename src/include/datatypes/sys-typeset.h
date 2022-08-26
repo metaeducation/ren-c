@@ -344,7 +344,7 @@ inline static REBVAL *Init_Typeset_Core(Cell(*) out, REBU64 bits)
 }
 
 #define Init_Typeset(out,bits) \
-    Init_Typeset_Core(TRACK(out), (bits))
+    TRACK(Init_Typeset_Core((out), (bits)))
 
 
 inline static REBPAR *Init_Param_Core(
@@ -366,7 +366,7 @@ inline static REBPAR *Init_Param_Core(
 }
 
 #define Init_Param(out,param_flags,bits) \
-    Init_Param_Core(TRACK(out), (param_flags), (bits))
+    TRACK(Init_Param_Core((out), (param_flags), (bits)))
 
 
 inline static REBVAL *Refinify(REBVAL *v);  // forward declaration

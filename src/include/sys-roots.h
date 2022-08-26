@@ -134,10 +134,20 @@ inline static REBVAL *Alloc_Value(void)
     // Giving the cell itself NODE_FLAG_ROOT lets a REBVAL* be discerned as
     // either an API handle or not.  The flag is not copied by Copy_Cell().
     //
+    // We get back an "erased cell" (header bits are 0, INITABLE() but not
+    // READABLE() or WRITABLE()).  In order to add NODE_FLAG_ROOT we must
+    // also give it NODE_FLAG_NODE and NODE_FLAG_CELL, otherwise the nonzero
+    // status of just NODE_FLAG_ROOT would render it non-INITABLE().
+    //
+    // We add CELL_FLAG_STALE because if we did not, this value would be
+    // considered "good to go"...and we want to catch cases where it is not
+    // meaningfully assigned.
+    //
     REBVAL *v = SPECIFIC(ARR_SINGLE(a));
-
-    assert(Is_Stale_Void(v));  // see above, trash could trip up Recycle()
-    v->header.bits |= NODE_FLAG_ROOT;  // it's stale (can't use Set_Cell_FlagS)
+    assert(Is_Cell_Erased(v));
+    v->header.bits = NODE_FLAG_NODE
+        | NODE_FLAG_CELL | NODE_FLAG_ROOT | NODE_FLAG_STALE;
+    assert(Is_Stale_Void(v));
 
     // We link the API handle into a doubly linked list maintained by the
     // topmost frame at the time the allocation happens.  This frame will

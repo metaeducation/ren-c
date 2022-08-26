@@ -279,7 +279,7 @@ inline static bool Eval_Step_In_Subframe_Throws(
     Flags flags
 ){
     if (not (flags & FRAME_FLAG_MAYBE_STALE))
-        assert(Is_Fresh(out));
+        assert(Is_Cell_Erased(out) or Is_Stale_Void(out) or Is_Void(out));
 
     assert(flags & EVAL_EXECUTOR_FLAG_SINGLE_STEP);
 
@@ -322,7 +322,7 @@ inline static bool Eval_Step_In_Any_Array_At_Throws(
     REBSPC *specifier,
     Flags flags
 ){
-    assert(Is_Fresh(out));
+    assert(Is_Cell_Erased(out));
 
     assert(not (flags & EVAL_EXECUTOR_FLAG_SINGLE_STEP));  // added here
     Feed(*) feed = Make_At_Feed_Core(any_array, specifier);
@@ -381,7 +381,7 @@ inline static bool Eval_Value_Core_Throws(
 
 
 inline static Bounce Native_Raised_Result(Frame(*) frame_, const void *p) {
-    assert(Is_Stale_Void(&TG_Thrown_Arg));
+    assert(not THROWING);
 
     Context(*) error;
     switch (Detect_Rebol_Pointer(p)) {

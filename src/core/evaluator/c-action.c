@@ -269,7 +269,7 @@ Bounce Action_Executor(Frame(*) f)
         continue;
 
       skip_fulfilling_arg_for_now:  // the GC marks args up through ARG...
-        assert(Is_Fresh(ARG));
+        assert(Is_Cell_Erased(ARG));
         continue;
 
   //=//// ACTUAL LOOP BODY ////////////////////////////////////////////////=//
@@ -762,8 +762,8 @@ Bounce Action_Executor(Frame(*) f)
         goto continue_fulfilling;
     }
 
-  #if DEBUG_TERM_ARRAYS
-    assert(IS_CELL_FREE(ARG));  // arg can otherwise point to any arg cell
+  #if DEBUG_POISON_SERIES_TAILS
+    assert(Is_Cell_Poisoned(ARG));  // arg can otherwise point to any arg cell
   #endif
 
     // There may have been refinements that were skipped because the
@@ -805,7 +805,7 @@ Bounce Action_Executor(Frame(*) f)
             goto fulfill_and_any_pickups_done;
         }
 
-        if (not Is_Fresh(ARG)) {
+        if (not Is_Cell_Erased(ARG)) {
             assert(Is_Nulled(ARG));
             RESET(ARG);
         }
@@ -1342,7 +1342,7 @@ void Push_Action(
     }
 
     f->rootvar = cast(REBVAL*, s->content.dynamic.data);
-    USED(Prep_Cell(f->rootvar));  // want the tracking info, overwriting header
+    USED(Erase_Cell(f->rootvar));  // want the tracking info, overwriting header
     f->rootvar->header.bits =
         NODE_FLAG_NODE
             | NODE_FLAG_CELL
@@ -1364,20 +1364,16 @@ void Push_Action(
     Cell(*) tail = ARR_TAIL(f->varlist);
     Cell(*) prep = f->rootvar + 1;
     for (; prep < tail; ++prep)
-        USED(Prep_Cell(prep));
+        USED(Erase_Cell(prep));
 
-  #if DEBUG_POISON_CELLS  // poison cells past usable range
-  blockscope {
+  #if DEBUG_POISON_EXCESS_CAPACITY  // poison cells past usable range
     prep = ARR_AT(f->varlist, s->content.dynamic.rest - 1);
-    for (; prep >= tail; --prep) {
-        USED(Prep_Cell(prep));  // gets tracking info
-        prep->header.bits = CELL_MASK_POISON;
-    }
-  }
+    for (; prep >= tail; --prep)
+        Poison_Cell(prep);  // unreadable + unwritable
   #endif
 
-  #if DEBUG_TERM_ARRAYS  // expects cell is trash (e.g. a cell) not poison
-    SET_CELL_FREE(Prep_Cell(ARR_TAIL(f->varlist)));
+  #if DEBUG_POISON_SERIES_TAILS  // expects cell is trash (e.g. a cell) not poison
+    Poison_Cell(ARR_TAIL(f->varlist));
   #endif
 
     // Each layer of specialization of a function can only add specializations

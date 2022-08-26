@@ -32,28 +32,29 @@
 //
 void Startup_Data_Stack(REBLEN capacity)
 {
-    // Start the data stack out with just one element in it, and make it an
-    // unreadable trash in the debug build.  This helps avoid accidental
-    // reads and is easy to notice when it is overwritten.  It also means
-    // that indices into the data stack can be unsigned (no need for -1 to
-    // mean empty, because 0 can)
+    // Start the data stack out with just one element in it, and poison it
+    // (unreadable/unwritable).  This helps avoid accidental accesses in the
+    // debug build.  It also means that indices into the data stack can be
+    // unsigned (no need for -1 to mean empty, because 0 can)
+    //
+    // We could start it off as a dynamic allocation, but by letting it be
+    // a singular array and then expanding it here it's a chance to test out
+    // that logic early in the boot.
     //
     ensureNullptr(DS_Array) = Make_Array_Core(
         1,
         FLAG_FLAVOR(DATASTACK) | SERIES_FLAGS_NONE
     );
+    SET_SERIES_LEN(DS_Array, 1);
+    assert(NOT_SERIES_FLAG(DS_Array, DYNAMIC));
 
     Cell(*) head = ARR_HEAD(DS_Array);
+    assert(Is_Cell_Erased(head));  // non-dynamic array, length 1 indicator
     Init_Trash(head);
-    Set_Cell_Flag(head, PROTECTED);
-  #if DEBUG_UNREADABLE_TRASH
-    assert(IS_TRASH(head));
-  #endif
 
     // The tail marker will signal PUSH() that it has run out of space,
     // and it will perform the allocation at that time.
     //
-    SET_SERIES_LEN(DS_Array, 1);
     DS_Movable_Tail = ARR_TAIL(DS_Array);
 
     // Reuse the expansion logic that happens on a PUSH() to get the
@@ -64,6 +65,9 @@ void Startup_Data_Stack(REBLEN capacity)
     Expand_Data_Stack_May_Fail(capacity);
 
     DROP();  // drop the hypothetical thing that triggered the expand
+
+    assert(GET_SERIES_FLAG(DS_Array, DYNAMIC));
+    Poison_Cell(ARR_HEAD(DS_Array));  // new head
 }
 
 
@@ -73,7 +77,7 @@ void Startup_Data_Stack(REBLEN capacity)
 void Shutdown_Data_Stack(void)
 {
     assert(TOP_INDEX == 0);
-    assert(IS_TRASH(ARR_HEAD(DS_Array)));
+    assert(Is_Cell_Poisoned(ARR_HEAD(DS_Array)));
 
     Free_Unmanaged_Series(DS_Array);
     DS_Array = nullptr;
@@ -311,22 +315,20 @@ void Expand_Data_Stack_May_Fail(REBLEN amount)
     //
     DS_Movable_Top = cast(REBVAL*, ARR_AT(DS_Array, DS_Index));
 
-    // We fill in the data stack with "GC safe trash" (which is void in the
-    // release build, but will raise an alarm if VAL_TYPE() called on it in
-    // the debug build).
-
-    REBVAL *cell = DS_Movable_Top;
-
     REBLEN len_new = len_old + amount;
+    SET_SERIES_LEN(DS_Array, len_new);
+
+  #if DEBUG_POISON_DROPPED_STACK_CELLS
+    REBVAL *poison = DS_Movable_Top;
     REBLEN n;
-    for (n = len_old; n < len_new; ++n, ++cell)
-        Prep_Cell(cell);
+    for (n = len_old; n < len_new; ++n, ++poison)
+        Poison_Cell(poison);
+    assert(poison == ARR_TAIL(DS_Array));
+  #endif
 
     // Update the end marker to serve as the indicator for when the next
     // stack push would need to expand.
     //
-    SET_SERIES_LEN(DS_Array, len_new);
-    assert(cell == ARR_TAIL(DS_Array));
     DS_Movable_Tail = ARR_TAIL(DS_Array);
 
     // Note: this used to ASSERT_ARRAY(DS_Array), which doesn't make sense
@@ -349,6 +351,7 @@ Array(*) Pop_Stack_Values_Core(StackIndex base, Flags flags)
 
     Length len = TOP_INDEX - base;
     Array(*) a = Make_Array_Core(len, flags);
+    SET_SERIES_LEN(a, len);
 
     Count count = 0;
     Value(*) src = Data_Stack_At(base + 1);  // not const, will be RESET()
@@ -361,10 +364,12 @@ Array(*) Pop_Stack_Values_Core(StackIndex base, Flags flags)
             assert(IS_VARLIST(a));  // usually not legal
         }
 
-        Move_Cell_Untracked(dest, src, CELL_MASK_COPY);
-    }
+        Copy_Cell_Untracked(dest, src, CELL_MASK_COPY);
 
-    SET_SERIES_LEN(a, len);
+      #if DEBUG_POISON_DROPPED_STACK_CELLS
+        Poison_Cell(src);
+      #endif
+    }
 
     DS_Index -= len;
     DS_Movable_Top -= len;

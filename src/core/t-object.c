@@ -787,6 +787,11 @@ Context(*) Copy_Context_Extra_Managed(
         SERIES_MASK_VARLIST | NODE_FLAG_MANAGED,
         nullptr // original_array, N/A because LINK()/MISC() used otherwise
     );
+    if (CTX_TYPE(original) == REB_MODULE)
+        SET_SERIES_USED(varlist, 1);  // all variables linked from word table
+    else
+        SET_SERIES_LEN(varlist, CTX_LEN(original) + 1);
+
     Cell(*) dest = ARR_HEAD(varlist);
 
     // The type information and fields in the rootvar (at head of the varlist)
@@ -805,8 +810,6 @@ Context(*) Copy_Context_Extra_Managed(
         // duplicating those links.
 
         assert(extra == 0);
-
-        SET_SERIES_USED(varlist, 1);
 
         if (CTX_META(original)) {
             mutable_MISC(VarlistMeta, varlist) = Copy_Context_Shallow_Managed(
@@ -864,7 +867,6 @@ Context(*) Copy_Context_Extra_Managed(
         Clonify(dest, flags, types);
     }
 
-    SET_SERIES_LEN(varlist, CTX_LEN(original) + 1);
     varlist->leader.bits |= SERIES_MASK_VARLIST;
 
     Context(*) copy = CTX(varlist); // now a well-formed context

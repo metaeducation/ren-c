@@ -297,7 +297,6 @@ Bounce MAKE_Decimal(
 //
 Bounce TO_Decimal(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg)
 {
-    assert(Is_Fresh(OUT));
     assert(kind == REB_DECIMAL or kind == REB_PERCENT);
 
     REBDEC d;

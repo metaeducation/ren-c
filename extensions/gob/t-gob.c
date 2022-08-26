@@ -77,6 +77,7 @@ REBGOB *Make_Gob(void)
             | SERIES_FLAG_LINK_NODE_NEEDS_MARK
             | SERIES_FLAG_MISC_NODE_NEEDS_MARK
     );
+    SET_SERIES_LEN(a, IDX_GOB_MAX);
 
     SET_GOB_PARENT(a, nullptr);  // in LINK(), is a Node*, GC must mark
     SET_GOB_OWNER(a, nullptr);  // in MISC(), is a Node*, GC must mark
@@ -96,7 +97,6 @@ REBGOB *Make_Gob(void)
     Init_XYF(ARR_AT(a, IDX_GOB_TYPE_AND_OLD_SIZE), 0, 0);
     GOB_TYPE(a) = GOBT_NONE;
 
-    SET_SERIES_LEN(a, IDX_GOB_MAX);
     return a;  // REBGOB is-an Array(*)
 }
 
@@ -280,9 +280,9 @@ static void Insert_Gobs(
         }
     }
 
-  #if DEBUG_TERM_ARRAYS
+  #if DEBUG_POISON_SERIES_TAILS
     if (GET_SERIES_FLAG(pane, DYNAMIC))
-        SET_CELL_FREE(ARR_TAIL(pane));
+        Poison_Cell(ARR_TAIL(pane));
   #endif
 
     Init_Block(ARR_AT(gob, IDX_GOB_PANE), pane);  // maybe already set

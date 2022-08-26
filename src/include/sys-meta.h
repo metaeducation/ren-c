@@ -137,7 +137,7 @@ inline static Value(*) Meta_Unquotify(Value(*) v) {
 }
 
 inline static Bounce Native_Unmeta_Result(Frame(*) frame_, const REBVAL *v) {
-    assert(Is_Stale_Void(&TG_Thrown_Arg));
+    assert(not THROWING);
     if (Is_Meta_Of_Void(v))
         return BOUNCE_VOID;
     if (Is_Meta_Of_Raised(v))

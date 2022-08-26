@@ -951,7 +951,7 @@ inline static REBVAL *Derelativize_Untracked(
 #endif
 
 #define Derelativize(dest,v,specifier) \
-    Derelativize_Untracked(TRACK(dest), (v), (specifier))
+    TRACK(Derelativize_Untracked((dest), (v), (specifier)))
 
 
 //=////////////////////////////////////////////////////////////////////////=//

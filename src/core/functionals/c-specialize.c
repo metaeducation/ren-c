@@ -95,6 +95,8 @@ Context(*) Make_Context_For_Action_Push_Partials(
 
     REBLEN num_slots = ACT_NUM_PARAMS(act) + 1;  // +1 is for CTX_ARCHETYPE()
     Array(*) varlist = Make_Array_Core(num_slots, SERIES_MASK_VARLIST);
+    SET_SERIES_LEN(varlist, num_slots);
+
     INIT_CTX_KEYLIST_SHARED(CTX(varlist), ACT_KEYLIST(act));
 
     Cell(*) rootvar = ARR_HEAD(varlist);
@@ -126,7 +128,7 @@ Context(*) Make_Context_For_Action_Push_Partials(
     REBLEN index = 1;  // used to bind REFINEMENT! values to parameter slots
 
     for (; key != tail; ++key, ++param, ++arg, ++index) {
-        Prep_Cell(arg);
+        Erase_Cell(arg);
 
         if (Is_Specialized(param)) {  // includes locals
             Copy_Cell(arg, param);
@@ -184,7 +186,6 @@ Context(*) Make_Context_For_Action_Push_Partials(
         goto continue_unspecialized;
     }
 
-    SET_SERIES_LEN(varlist, num_slots);
     mutable_MISC(VarlistMeta, varlist) = nullptr;
     mutable_LINK(Patches, varlist) = nullptr;
 

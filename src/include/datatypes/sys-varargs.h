@@ -122,7 +122,7 @@ inline static bool Is_Block_Style_Varargs(
     Array(*) array1 = binding;
     *shared_out = cast(REBVAL*, ARR_SINGLE(array1));
     assert(
-        Is_Stale_Void(*shared_out)
+        Is_Cell_Poisoned(*shared_out)
         or (IS_SPECIFIC(cast(Cell(*), *shared_out)) and IS_BLOCK(*shared_out))
     );
 

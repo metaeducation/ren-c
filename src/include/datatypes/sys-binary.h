@@ -104,7 +104,7 @@ inline static Binary(*) Make_Binary_Core(REBLEN capacity, Flags flags)
         capacity + 1,
         FLAG_FLAVOR(BINARY) | flags
     );
-  #if !defined(NDEBUG)
+  #if DEBUG_POISON_SERIES_TAILS
     *SER_HEAD(Byte, s) = BINARY_BAD_UTF8_TAIL_BYTE;  // reserve for '\0'
   #endif
     return BIN(s);

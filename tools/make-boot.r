@@ -375,10 +375,6 @@ e-types/emit 'rebs {
         * to get a couple more states at a slight performance cost)
         */
 
-      #if DEBUG_POISON_CELLS
-        REB_T_POISON,  /* simulate lack of GC safety */
-      #endif
-
         REB_T_RETURN_SIGNAL  /* signals throws, etc. */
     };
 

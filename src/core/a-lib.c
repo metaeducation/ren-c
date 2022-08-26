@@ -2531,6 +2531,8 @@ REBVAL *RL_rebCollateExtension_internal(
     int dispatchers_len
 ){
     Array(*) a = Make_Array(IDX_COLLATOR_MAX);  // details
+    SET_SERIES_LEN(a, IDX_COLLATOR_MAX);
+
     Init_Handle_Cdata(
         ARR_AT(a, IDX_COLLATOR_SCRIPT),
         m_cast(Byte*, script_compressed),  // !!! by contract, don't change!
@@ -2545,7 +2547,6 @@ REBVAL *RL_rebCollateExtension_internal(
         dispatchers,
         dispatchers_len
     );
-    SET_SERIES_LEN(a, IDX_COLLATOR_MAX);
 
     return Init_Block(Alloc_Value(), a);
 }

@@ -585,10 +585,10 @@ Node* Try_Find_Containing_Node_Debug(const void *p)
 //
 REBVAL *Alloc_Pairing(void) {
     REBVAL *paired = cast(REBVAL*, Alloc_Pooled(PAIR_POOL));  // 2x REBVAL size
-    Prep_Cell(paired);
+    Erase_Cell(paired);
 
     REBVAL *key = PAIRING_KEY(paired);
-    Prep_Cell(key);
+    Erase_Cell(key);
 
     return paired;
 }
@@ -761,7 +761,7 @@ void Expand_Series(REBSER *s, REBLEN index, REBLEN delta)
             // but when it is this will be useful.
             //
             for (index = 0; index < delta; index++)
-                Prep_Cell(ARR_AT(ARR(s), index));
+                Erase_Cell(ARR_AT(ARR(s), index));
         }
       #endif
         ASSERT_SERIES_TERM_IF_NEEDED(s);
@@ -782,13 +782,15 @@ void Expand_Series(REBSER *s, REBLEN index, REBLEN delta)
         // separately with TERM_SERIES (in case it reaches an implicit
         // termination that is not a full-sized cell).
 
+        UNPOISON_SERIES_TAIL(s);
         memmove(
             SER_DATA(s) + start + extra,
             SER_DATA(s) + start,
             size - start
         );
+        Set_Series_Used_Internal(s, used_old + delta);
+        POISON_SERIES_TAIL(s);
 
-        SET_SERIES_USED(s, used_old + delta);
         assert(
             not was_dynamic or (
                 SER_TOTAL(s) > ((SER_USED(s) + SER_BIAS(s)) * wide)
@@ -804,12 +806,9 @@ void Expand_Series(REBSER *s, REBLEN index, REBLEN delta)
             // ->rest), as well as just making sure old data which was in
             // the expanded region doesn't get left over on accident.
             //
-            // !!! The unsettable feature is not currently implemented, but
-            // when it is this will be useful.
-            //
             while (delta != 0) {
                 --delta;
-                Prep_Cell(ARR_AT(ARR(s), index + delta));
+                Erase_Cell(ARR_AT(ARR(s), index + delta));
             }
         }
       #endif
@@ -918,6 +917,7 @@ void Expand_Series(REBSER *s, REBLEN index, REBLEN delta)
   #endif
 
     assert(NOT_SERIES_FLAG(s, MARKED));
+    TERM_SERIES_IF_NECESSARY(s);  // code will not copy terminator over
 }
 
 
@@ -1269,19 +1269,16 @@ void Assert_Pointer_Detection_Working(void)
 
     // The use of the "free" bit on cells is to mark them as "stale", e.g. not
     // usable as the left hand side of an enfix operation in the evaluator
-    // (but still a known value that can fall out).  This state is "poisoned"
-    // and only a limited number of operations can deal with it.  They should
-    // never leak out to the broader system.
+    // (but still a known value that can fall out).  It is not readable, and
+    // detection conflates it with UTF-8 strings.
     //
     // But the actual specific "freed series byte" has NODE_FLAG_CELL set
     //
-  #if DEBUG_POISON_CELLS
     DECLARE_LOCAL (stale_cell);
     stale_cell->header.bits =
         NODE_FLAG_NODE | CELL_FLAG_STALE | NODE_FLAG_CELL
-        | FLAG_HEART_BYTE(REB_T_POISON);
-    assert(Detect_Rebol_Pointer(stale_cell) == DETECTED_AS_UTF8);  // conflated
-  #endif
+        | FLAG_HEART_BYTE(REB_BLANK);
+    assert(Detect_Rebol_Pointer(WRITABLE(stale_cell)) == DETECTED_AS_UTF8);
 
     assert(Detect_Rebol_Pointer(rebEND) == DETECTED_AS_END);
 

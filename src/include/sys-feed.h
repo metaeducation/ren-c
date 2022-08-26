@@ -590,14 +590,14 @@ inline static Feed(*) Prep_Feed_Common(void* preallocated, Flags flags) {
     feed->tick = TG_tick;
   #endif
 
-    Init_Trash(Prep_Cell(&feed->fetched));
-    Init_Trash(Prep_Cell(&feed->lookback));
+    Init_Trash(Erase_Cell(&feed->fetched));
+    Init_Trash(Erase_Cell(&feed->lookback));
 
     Stub* s = Prep_Stub(
         &feed->singular,  // preallocated
         NODE_FLAG_NODE | FLAG_FLAVOR(FEED)
     );
-    Prep_Cell(FEED_SINGLE(feed));
+    Erase_Cell(FEED_SINGLE(feed));
     mutable_LINK(Splice, s) = nullptr;
     mutable_MISC(Pending, s) = nullptr;
 

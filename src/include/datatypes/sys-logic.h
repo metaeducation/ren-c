@@ -39,7 +39,7 @@ inline static REBVAL *Init_Logic_Core(Cell(*) out, bool flag) {
 }
 
 #define Init_Logic(out,flag) \
-    Init_Logic_Core(TRACK(out), (flag))
+    TRACK(Init_Logic_Core((out), (flag)))
 
 #define Init_True(out)      Init_Logic((out), true)
 #define Init_False(out)     Init_Logic((out), false)

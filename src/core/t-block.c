@@ -59,7 +59,7 @@ DECLARE_NATIVE(only_p)  // https://forum.rebol.info/t/1182/11
 
     Array(*) a = Alloc_Singular(NODE_FLAG_MANAGED);  // semi-efficient, see [1]
     if (Is_Nulled(v))
-        assert(ARR_LEN(a) == 0);  // singulars initialize empty
+        SET_SERIES_LEN(a, 0);  // singulars initialize at length 1
     else
         Copy_Cell(ARR_SINGLE(a), ARG(value));
     return Init_Block(OUT, a);
@@ -1340,8 +1340,8 @@ DECLARE_NATIVE(blockify)
     if (Is_Nulled(v)) {
         // leave empty
     } else {
-        Copy_Cell(ARR_HEAD(a), v);
         SET_SERIES_LEN(a, 1);
+        Copy_Cell(ARR_HEAD(a), v);
     }
     return Init_Block(OUT, Freeze_Array_Shallow(a));
 }
@@ -1373,8 +1373,8 @@ DECLARE_NATIVE(groupify)
     if (Is_Nulled(v)) {
         // leave empty
     } else {
-        Copy_Cell(ARR_HEAD(a), v);
         SET_SERIES_LEN(a, 1);
+        Copy_Cell(ARR_HEAD(a), v);
     }
     return Init_Group(OUT, Freeze_Array_Shallow(a));
 }
@@ -1404,8 +1404,8 @@ DECLARE_NATIVE(enblock)
     if (Is_Nulled(v)) {
         // leave empty
     } else {
-        Copy_Cell(ARR_HEAD(a), v);
         SET_SERIES_LEN(a, 1);
+        Copy_Cell(ARR_HEAD(a), v);
     }
     return Init_Block(OUT, Freeze_Array_Shallow(a));
 }
@@ -1435,8 +1435,8 @@ DECLARE_NATIVE(engroup)
     if (Is_Nulled(v)) {
         // leave empty
     } else {
-        Copy_Cell(ARR_HEAD(a), v);
         SET_SERIES_LEN(a, 1);
+        Copy_Cell(ARR_HEAD(a), v);
     }
     return Init_Group(OUT, Freeze_Array_Shallow(a));
 }
@@ -1494,8 +1494,8 @@ DECLARE_NATIVE(glom)
             return COPY(result);  // see note: index may be nonzero
 
         Array(*) a = Make_Array_Core(1, SERIES_FLAG_MANAGED);
-        Copy_Cell(ARR_HEAD(a), result);  // we know it was inert or quoted
         SET_SERIES_LEN(a, 1);
+        Copy_Cell(ARR_HEAD(a), result);  // we know it was inert or quoted
         return Init_Block(OUT, a);
     }
 
@@ -1535,7 +1535,7 @@ DECLARE_NATIVE(glom)
 
         assert(ARR_LEN(a) == a_len + r_len);  // EXPAND_SERIES_TAIL sets
 
-     #if DEBUG_TERM_ARRAYS  // need trash at tail with this debug setting
+     #if DEBUG_POISON_SERIES_TAILS  // need trash at tail with this debug setting
         TERM_SERIES_IF_NECESSARY(a);
      #endif
 
@@ -1571,6 +1571,7 @@ void Assert_Array_Core(Array(const*) a)
     REBLEN i;
     REBLEN len = ARR_LEN(a);
     for (i = 0; i < len; ++i, ++item) {
+        ASSERT_CELL_READABLE_EVIL_MACRO(item);
         if (VAL_TYPE_UNCHECKED(item) >= REB_MAX) {
             printf("Invalid VAL_TYPE() at index %d\n", cast(int, i));
             panic (a);
@@ -1580,9 +1581,9 @@ void Assert_Array_Core(Array(const*) a)
     if (GET_SERIES_FLAG(a, DYNAMIC)) {
         REBLEN rest = SER_REST(a);
 
-      #if DEBUG_TERM_ARRAYS
+      #if DEBUG_POISON_SERIES_TAILS
         assert(rest > 0 and rest > i);
-        if (NOT_SERIES_FLAG(a, FIXED_SIZE) and not IS_CELL_FREE(item))
+        if (NOT_SERIES_FLAG(a, FIXED_SIZE) and not Is_Cell_Poisoned(item))
             panic (item);
         ++item;
         rest = rest - 1;
@@ -1590,7 +1591,7 @@ void Assert_Array_Core(Array(const*) a)
 
         for (; i < rest; ++i, ++item) {
             const bool unwritable = (
-                (item->header.bits != CELL_MASK_PREP)
+                (item->header.bits != CELL_MASK_0)
                 and not (item->header.bits & NODE_FLAG_CELL)
             );
             if (GET_SERIES_FLAG(a, FIXED_SIZE)) {

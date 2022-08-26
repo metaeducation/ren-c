@@ -163,13 +163,15 @@ void Probe_Cell_Print_Helper(
 
   #if DEBUG_UNREADABLE_TRASH
     if (IS_TRASH(v)) {  // Is_Nulled() asserts on trash
-        Probe_Print_Helper(p, expr, "Value", file, line);
         Append_Ascii(mo->series, "~trash~");
         return;
     }
   #endif
 
-    if (Is_Void(v)) {
+    if (Is_Cell_Poisoned(v)) {
+        Append_Ascii(mo->series, "**POISONED CELL**");
+    }
+    else if (Is_Void(v)) {
         Append_Ascii(mo->series, "; void");
     }
     else if (Is_Isotope(v)) {
@@ -231,7 +233,12 @@ void* Probe_Core_Debug(
         }
 
         if (*cast(const Byte*, p) == '\0')
-            Probe_Print_Helper(p, expr, "Empty C String", file, line);
+            Probe_Print_Helper(
+                p,
+                expr,
+                "Erased Cell (or Empty C String)",
+                file, line
+              );
         else {
             Probe_Print_Helper(p, expr, "C String", file, line);
             printf("\"%s\"\n", cast(const char*, p));

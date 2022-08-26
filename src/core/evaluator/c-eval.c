@@ -231,7 +231,6 @@ Bounce Evaluator_Executor(Frame(*) f)
         return THROWN;  // no state to clean up
 
     assert(TOP_INDEX >= BASELINE->stack_base);  // e.g. REDUCE accrues
-    assert(INITABLE(OUT));  // all invisible will preserve output
     assert(OUT != SPARE);  // overwritten by temporary calculations
 
     if (Get_Executor_Flag(EVAL, f, NO_EVALUATIONS)) {  // see flag for rationale
@@ -303,7 +302,7 @@ Bounce Evaluator_Executor(Frame(*) f)
 
             Set_Feed_Flag(f->feed, NEXT_ARG_FROM_OUT);
 
-            assert(Is_Fresh(SPARE));
+            assert(Is_Void(SPARE));
             goto process_action;
         }
 
@@ -351,16 +350,18 @@ Bounce Evaluator_Executor(Frame(*) f)
 
     assert(Not_Feed_Flag(f->feed, NEXT_ARG_FROM_OUT));
 
-    // OUT might be merely "prepped" in which case the header is all 0 bits.
+    // OUT might be erased, e.g. the header is all 0 bits (CELL_MASK_0).
     // This is considered INITABLE() but not WRITABLE(), so the Set_Cell_Flag()
     // routines will reject it.  While we are already doing a flag masking
     // operation to add CELL_FLAG_STALE, ensure the cell carries the NODE and
     // CELL flags (we already checked that it was INITABLE()).  This promotes
-    // 0 prep cells to a readable state for checking after the eval.
+    // erased cells to a stale void state.
     //
     // Note that adding CELL_FLAG_STALE means the out cell won't act as the
     // input to an enfix operation.
     //
+    if (not Is_Cell_Erased(OUT))
+        assert(WRITABLE(OUT));
     OUT->header.bits |= (
         NODE_FLAG_NODE | NODE_FLAG_CELL | CELL_FLAG_STALE
     );

@@ -93,7 +93,7 @@ static REBI64 mark_count = 0;
 static void Queue_Mark_Cell_Deep(Cell(const*) v);
 
 inline static void Queue_Mark_Maybe_Stale_Cell_Deep(Cell(*) v) {
-    if (Is_Fresh(v))
+    if (Is_Cell_Erased(v))
         return;
 
     // !!! CELL_FLAG_STALE generally makes cells write-only (unreadable).  So
@@ -640,25 +640,24 @@ static void Mark_Root_Series(void)
 //
 //  Mark_Data_Stack: C
 //
-// The data stack logic is that it is contiguous values with no END markers
-// except at the array end.  Bumping up against that END signal is how the
-// stack knows when it needs to grow.
-//
-// But every drop of the stack doesn't overwrite the dropped value.  Since the
-// values are not END markers, they are considered fine as far as a Not_End()
-// test is concerned to indicate unused capacity.  So the values are good
-// for the testing purpose, yet the GC doesn't want to consider those to be
-// "live" references.  So rather than to a full Queue_Mark_Array_Deep() on
-// the capacity of the data stack's underlying array, it begins at TOP.
+// The data stack usually has unused capacity in its array allocation.  But
+// it only marks the live cells--not all the way to the tail.  The unused
+// cells can just have garbage unless DEBUG_POISON_DROPPED_STACK_CELLS.
 //
 static void Mark_Data_Stack(void)
 {
     Cell(const*) head = ARR_HEAD(DS_Array);
-    assert(IS_TRASH(head));  // Data_Stack_At(0) is deliberately invalid
+    assert(Is_Cell_Poisoned(head));  // Data_Stack_At(0) is deliberately invalid
 
     REBVAL *stackval = DS_Movable_Top;
     for (; stackval != head; --stackval)  // stop before Data_Stack_At(0)
         Queue_Mark_Cell_Deep(stackval);
+
+  #if DEBUG_POISON_DROPPED_STACK_CELLS
+    stackval = DS_Movable_Top + 1;
+    for (; stackval != ARR_TAIL(DS_Array); ++stackval)
+        assert(Is_Cell_Poisoned(stackval));
+  #endif
 
     Propagate_All_GC_Marks();
 }
@@ -867,7 +866,7 @@ static void Mark_Frame_Stack_Deep(void)
             // the output slot for some other frame's f->out...which is a case
             // where transient RESET() can also leave voids in slots.)
             //
-            if (Is_Fresh(arg))
+            if (Is_Cell_Erased(arg))
                 assert(f->u.action.key != tail);
             else {
                 if (key == f->u.action.key)

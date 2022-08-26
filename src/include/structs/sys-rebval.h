@@ -68,7 +68,7 @@
 
 #define CELL_MASK_NO_NODES 0  // no CELL_FLAG_FIRST_IS_NODE or SECOND_IS_NODE
 
-#define CELL_MASK_PREP 0  // considered WRITABLE()
+#define CELL_MASK_0 0  // considered INITABLE() but not WRITABLE()/READABLE()
 
 
 // The Get_Cell_Flag()/etc. macros splice together CELL_FLAG_ with the text
@@ -81,7 +81,7 @@
 // IMPORTANT: The marked flag is a property of the cell location and not of
 // the value...so writing a new value into the cell will not update the
 // status of its mark.  It must be manually turned off once turned on, or
-// the cell must be reformatted entirely with Prep_Cell().
+// the cell must be reformatted entirely with Erase_Cell().
 //
 // * VAR_MARKED_HIDDEN -- This uses the NODE_FLAG_MARKED bit on args in
 //   action frames, and in particular specialization uses it to denote which
@@ -374,10 +374,11 @@
 #define CELL_MASK_ALL \
     ~cast(Flags, 0)
 
-#if DEBUG_POISON_CELLS
-    #define CELL_MASK_POISON \
-        (FLAG_HEART_BYTE(REB_T_POISON) | FLAG_HEART_BYTE(REB_T_POISON))
-#endif
+// The poison mask has NODE_FLAG_CELL but no NODE_FLAG_NODE, so it does
+// not allow a RESET()...it has to be ERASE()'d.
+//
+#define CELL_MASK_POISON \
+    (NODE_FLAG_CELL)
 
 
 //=//// CELL's `EXTRA` FIELD DEFINITION ///////////////////////////////////=//
@@ -722,7 +723,7 @@ union Reb_Value_Payload { //=/////////////// ACTUAL PAYLOAD DEFINITION ////=//
         ~Reb_Value () {
             assert(
                 (this->header.bits & (NODE_FLAG_NODE | NODE_FLAG_CELL))
-                or this->header.bits == CELL_MASK_PREP
+                or this->header.bits == CELL_MASK_0
             );
         }
       #endif

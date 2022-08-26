@@ -220,7 +220,8 @@ static void Startup_Lib(void)
         mutable_INODE(PatchContext, patch) = nullptr;  // signals unused
         mutable_LINK(NextPatch, patch) = nullptr;
         mutable_MISC(Variant, patch) = nullptr;
-        assert(Is_Fresh(ARR_SINGLE(patch)));
+        assert(Is_Cell_Poisoned(ARR_SINGLE(patch)));
+        TRACK(Erase_Cell(ARR_SINGLE(patch)));  // Lib(XXX) unreadable until set
     }
 
   //=//// INITIALIZE EARLY BOOT USED VALUES ////////////////////////////////=//
@@ -230,10 +231,10 @@ static void Startup_Lib(void)
     // the scanner is also what would load code like (blank: '_), we need to
     // seed the values to get the ball rolling.
 
-    Init_Nulled(force_Lib(NULL));
+    Set_Cell_Flag(Init_Nulled(force_Lib(NULL)), PROTECTED);
     assert(Is_Falsey(Lib(NULL)) and Is_Nulled(Lib(NULL)));
 
-    Init_Blank(force_Lib(BLANK));
+    Set_Cell_Flag(Init_Blank(force_Lib(BLANK)), PROTECTED);
     assert(Is_Falsey(Lib(BLANK)) and IS_BLANK(Lib(BLANK)));
 
     // !!! Rebol is firm on TRUE and FALSE being WORD!s, as opposed to the
@@ -368,9 +369,9 @@ static void Startup_Empty_Arrays(void)
     //
   blockscope {
     Array(*) a = Make_Array_Core(2, NODE_FLAG_MANAGED);
+    SET_SERIES_LEN(a, 2);
     Init_Blank(ARR_AT(a, 0));
     Init_Blank(ARR_AT(a, 1));
-    SET_SERIES_LEN(a, 2);
     Freeze_Array_Deep(a);
     PG_2_Blanks_Array = a;
   }
@@ -677,11 +678,8 @@ void Startup_Signals(void)
     // The thrown arg is not intended to ever be around long enough to be
     // seen by the GC.
     //
-    Prep_Stale_Void(&TG_Thrown_Arg);
-    Prep_Stale_Void(&TG_Thrown_Label);
-
-    assert(Is_Stale_Void(&TG_Thrown_Arg));
-    assert(Is_Stale_Void(&TG_Thrown_Label));
+    assert(Is_Cell_Erased(&TG_Thrown_Arg));
+    assert(Is_Cell_Erased(&TG_Thrown_Label));
 
     assert(TG_Unwind_Frame == nullptr);
 }
@@ -1171,10 +1169,8 @@ void Shutdown_Core(bool clean)
     const bool shutdown = true;  // go ahead and free all managed series
     Recycle_Core(shutdown, nullptr);
 
-    assert(Is_Stale_Void(&TG_Thrown_Arg));
-    RESET(&TG_Thrown_Arg);
-    assert(Is_Stale_Void(&TG_Thrown_Label));
-    RESET(&TG_Thrown_Label);
+    assert(Is_Cell_Erased(&TG_Thrown_Arg));
+    assert(Is_Cell_Erased(&TG_Thrown_Label));
     assert(TG_Unwind_Frame == nullptr);
 
     Shutdown_Mold();

@@ -25,25 +25,26 @@
 // looking at the cell in a watchlist.  It is also reported by panic().
 //
 
-// With cells that are known not to be API cells (e.g. no CELL_MASK_PERSIST set)
-// then they can be cleared with a memset() to 0, and represent writable
-// locations.  But RESET() should only be used when it is known that the cell
-// bits are completely uninitialized.
-//
-// Is_Fresh(v) checks for either state, by only looking at the kind/heart bytes
-// and allows the cell to not carry NODE_FLAG_NODE or NODE_FLAG_CELL.
-//
-// !!! This might be safer if NODE_FLAG_CELL was in the reverse sense, so at
-// least then we could check it's not a REBSER.
-//
-#define Is_Fresh(v) \
-    (0 == ((v)->header.bits & (FLAG_HEART_BYTE(255) | FLAG_QUOTE_BYTE(255))))
 
 #if DEBUG_TRACK_EXTEND_CELLS  // assume DEBUG_COUNT_TICKS
 
     #define TOUCH_CELL(c) \
         ((c)->touch = TG_tick)
 
+  #if CPLUSPLUS_11
+    template<typename T>
+    inline static T Track_Cell_Debug(
+        T v,  // polymorphism allows Cell(*) or Value(*) or StackValue(*)
+        const char *file,
+        int line
+    ){
+        v->file = file;
+        v->line = line;
+        v->tick = TG_tick;
+        v->touch = 0;
+        return v;
+    }
+  #else
     inline static Cell(*) Track_Cell_Debug(
         Cell(*) v,
         const char *file,
@@ -54,19 +55,6 @@
         v->tick = TG_tick;
         v->touch = 0;
         return cast(REBVAL*, v);
-    }
-
-  #if CPLUSPLUS_11
-    inline static REBVAL *Track_Cell_Debug(
-        REBVAL *v,
-        const char *file,
-        int line
-    ){
-        v->file = file;
-        v->line = line;
-        v->tick = TG_tick;
-        v->touch = 0;
-        return v;
     }
   #endif
 

@@ -97,7 +97,7 @@ inline static bool Is_Quasi_Word(Cell(const*) v)
   { return IS_QUASI(v) and HEART_BYTE_UNCHECKED(v) == REB_WORD; }
 
 #define Init_Quasi_Word(out,sym) \
-    Init_Any_Word_Untracked(TRACK(out), REB_WORD, (sym), QUASI_2)
+    TRACK(Init_Any_Word_Untracked((out), REB_WORD, (sym), QUASI_2))
 
 
 //=//// BAD-WORD! ISOTOPES (just called "isotopes" for short) //////////////=//
@@ -107,7 +107,7 @@ inline static bool Is_Quasi_Word(Cell(const*) v)
 // cannot be passed as normal parameters...you have to use ^META ones.
 
 #define Init_Word_Isotope(out,label) \
-    Init_Any_Word_Untracked(TRACK(out), REB_WORD, (label), ISOTOPE_0)
+    TRACK(Init_Any_Word_Untracked((out), REB_WORD, (label), ISOTOPE_0))
 
 inline static bool Is_Word_Isotope(Cell(const*) v)
   { return QUOTE_BYTE(v) == ISOTOPE_0 and HEART_BYTE(v) == REB_WORD; }
@@ -160,10 +160,10 @@ inline static bool Is_Word_Isotope_With_Id(
 //
 
 #define Init_None(out) \
-    Init_Blank_Untracked(TRACK(ensure(Value(*), (out))), ISOTOPE_0)
+    TRACK(Init_Blank_Untracked((ensure(Value(*), (out))), ISOTOPE_0))
 
 #define Init_Meta_Of_None(out) \
-    Init_Blank_Untracked(TRACK(out), QUASI_2)
+    TRACK(Init_Blank_Untracked((out), QUASI_2))
 
 inline static bool Is_None(Value(const*) v)
   { return Is_Isotope(v) and HEART_BYTE(v) == REB_BLANK; }
@@ -345,7 +345,7 @@ inline static REBVAL *Move_Cell_Untracked(
 }
 
 #define Move_Cell(out,v) \
-    Move_Cell_Untracked(TRACK(out), (v), CELL_MASK_COPY)
+    TRACK(Move_Cell_Untracked((out), (v), CELL_MASK_COPY))
 
 #define Move_Cell_Core(out,v,cell_mask) \
-    Move_Cell_Untracked(TRACK(out), (v), (cell_mask))
+    TRACK(Move_Cell_Untracked((out), (v), (cell_mask)))

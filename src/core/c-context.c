@@ -255,7 +255,7 @@ REBVAR *Append_Context(
     //
     EXPAND_SERIES_TAIL(CTX_VARLIST(context), 1);
 
-    Cell(*) value = Prep_Cell(ARR_LAST(CTX_VARLIST(context)));
+    Cell(*) value = Erase_Cell(ARR_LAST(CTX_VARLIST(context)));
 
     if (not any_word)
         assert(symbol);
@@ -957,16 +957,16 @@ void Assert_Context_Core(Context(*) c)
         if (not IS_SYMBOL(*key))
             panic (*key);
 
-      #if DEBUG_TERM_ARRAYS
-        if (IS_CELL_FREE(var)) {
+      #if DEBUG_POISON_SERIES_TAILS
+        if (Is_Cell_Poisoned(var)) {
             printf("** Early var end at index: %d\n", cast(int, n));
             panic (c);
         }
       #endif
     }
 
-  #if DEBUG_TERM_ARRAYS
-    if (not IS_CELL_FREE(var)) {
+  #if DEBUG_POISON_SERIES_TAILS
+    if (not Is_Cell_Poisoned(var)) {
         printf("** Missing var end at index: %d\n", cast(int, n));
         panic (var);
     }

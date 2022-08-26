@@ -385,8 +385,8 @@ Special internal defines used by RT, not Host-Kit developers:
     #define DEBUG_UNREADABLE_TRASH DEBUG
 #endif
 
-#if !defined(DEBUG_POISON_CELLS)
-    #define DEBUG_POISON_CELLS DEBUG
+#if !defined(DEBUG_POISON_EXCESS_CAPACITY)
+    #define DEBUG_POISON_EXCESS_CAPACITY DEBUG
 #endif
 
 #if !defined(DEBUG_BALANCE_STATE)
@@ -697,11 +697,11 @@ Special internal defines used by RT, not Host-Kit developers:
 // usually marked at their tails (unlike R3-Alpha which used END! cells to
 // terminate)...but the residual functionality helps catch overruns.
 //
-#if !defined(DEBUG_TERM_ARRAYS)
+#if !defined(DEBUG_POISON_SERIES_TAILS)
   #if defined(__SANITIZE_ADDRESS__)
-    #define DEBUG_TERM_ARRAYS 0  // *not* when sanitized
+    #define DEBUG_POISON_SERIES_TAILS 0  // *not* when sanitized
   #else
-    #define DEBUG_TERM_ARRAYS DEBUG
+    #define DEBUG_POISON_SERIES_TAILS DEBUG
   #endif
 #endif
 
@@ -720,6 +720,10 @@ Special internal defines used by RT, not Host-Kit developers:
 
 #if !defined(UNUSUAL_REBVAL_SIZE)  // sizeof(REBVAL)*2 may be > sizeof(REBSER)
     #define UNUSUAL_REBVAL_SIZE DEBUG_TRACK_EXTEND_CELLS
+#endif
+
+#if !defined(DEBUG_POISON_DROPPED_STACK_CELLS)
+    #define DEBUG_POISON_DROPPED_STACK_CELLS DEBUG
 #endif
 
 

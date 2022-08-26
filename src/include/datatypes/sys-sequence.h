@@ -352,9 +352,9 @@ inline static REBVAL *Try_Init_Any_Sequence_Pairlike_Core(
         2,
         NODE_FLAG_MANAGED  // optimize "pairlike"
     );
+    SET_SERIES_LEN(a, 2);
     Derelativize(ARR_AT(a, 0), v1, specifier);
     Derelativize(ARR_AT(a, 1), v2, specifier);
-    SET_SERIES_LEN(a, 2);
     Freeze_Array_Shallow(a);
 
     Init_Block(out, a);

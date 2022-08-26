@@ -450,9 +450,9 @@ inline static Length SER_USED(const REBSER *s) {
     if (IS_SER_ARRAY(s)) {
         //
         // We report the array length as being 0 if it's the distinguished
-        // case of the stale void (used to catch stray writes)
+        // case of a poisoned cell (added benefit: catches stray writes)
         //
-        if (Is_Stale_Void(VAL(SER_CELL(s))))
+        if (Is_Cell_Poisoned(SER_CELL(s)))
             return 0;
         return 1;  // Note: might be a plain void cell
     }
@@ -541,78 +541,8 @@ inline static Byte* SER_DATA_AT(Byte w, const_if_c REBSER *s, REBLEN i) {
 // debug build sets binary-sized series tails to this byte to make sure that
 // they are formally terminated if they need to be.
 //
-#if !defined(NDEBUG)
+#if DEBUG_POISON_SERIES_TAILS
     #define BINARY_BAD_UTF8_TAIL_BYTE 0xFE
-#endif
-
-// !!! Review if SERIES_FLAG_FIXED_SIZE should be calling this routine.  At
-// the moment, fixed size series merely can't expand, but it might be more
-// efficient if they didn't use any "appending" operators to get built.
-//
-inline static void SET_SERIES_USED(REBSER *s, REBLEN used) {
-    if (GET_SERIES_FLAG(s, DYNAMIC)) {
-        s->content.dynamic.used = used;
-
-        // !!! See notes on TERM_SERIES_IF_NEEDED() for how array termination
-        // is slated to be a debug feature only.
-        //
-      #if DEBUG_TERM_ARRAYS
-        if (IS_SER_ARRAY(s))
-            SET_CELL_FREE(SER_AT(Reb_Cell, s, used));
-      #endif
-    }
-    else {
-        assert(used < sizeof(s->content));
-
-        if (IS_SER_ARRAY(s)) {
-            //
-            // A void cell with (CELL_FLAG_STALE) is used to indicate length 0.
-            // To bump it to length 1, we flip it to being readable (though
-            // it is still void)
-
-            if (used == 0)
-                Init_Stale_Void(VAL(mutable_SER_CELL(s)));
-            else {
-                assert(used == 1);
-                if (Is_Stale_Void(VAL(mutable_SER_CELL(s))))
-                    RESET(mutable_SER_CELL(s));
-            }
-        }
-        else
-            mutable_USED_BYTE(s) = used;
-    }
-
-  #if !defined(NDEBUG)
-    if (SER_WIDE(s) == 1) {  // presume BINARY! or ANY-STRING! (?)
-        Byte* tail = SER_AT(Byte, s, used);
-        *tail = BINARY_BAD_UTF8_TAIL_BYTE;  // make missing terminator obvious
-    }
-  #endif
-
-  #if DEBUG_UTF8_EVERYWHERE
-    //
-    // Low-level series mechanics will manipulate the used field, but that's
-    // at the byte level.  The higher level string mechanics must be used on
-    // strings.
-    //
-    if (IS_NONSYMBOL_STRING(s)) {
-        s->misc.length = 0xDECAFBAD;
-        TOUCH_STUB_IF_DEBUG(s);
-    }
-  #endif
-}
-
-// See TERM_STRING_LEN_SIZE() for the code that maintains string invariants,
-// including the '\0' termination (this routine will corrupt the tail byte
-// in the debug build to catch violators.)
-//
-inline static void SET_SERIES_LEN(REBSER *s, REBLEN len) {
-    assert(not IS_SER_UTF8(s));  // use _LEN_SIZE
-    SET_SERIES_USED(s, len);
-}
-
-#if CPLUSPLUS_11  // catch cases when calling on String(*) directly
-    inline static void SET_SERIES_LEN(String(*) s, REBLEN len) = delete;
 #endif
 
 
@@ -653,6 +583,94 @@ inline static Byte* SER_DATA_LAST(size_t wide, const_if_c REBSER *s) {
     ((SER_USED(s) + (n) + 1) <= SER_REST(s))
 
 
+#if DEBUG_POISON_SERIES_TAILS
+    inline static void Poison_Or_Unpoison_Tail_Debug(REBSER *s, bool poison) {
+        if (SER_WIDE(s) == 1) {  // presume BINARY! or ANY-STRING! (?)
+            Byte* tail = SER_TAIL(Byte, s);
+            if (poison)
+                *tail = BINARY_BAD_UTF8_TAIL_BYTE;
+            else {
+                /* Doesn't seem there's any invariant here--improve over time.
+                assert(*tail == BINARY_BAD_UTF8_TAIL_BYTE or *tail == '\0');
+                */
+            }
+        }
+        else if (IS_SER_ARRAY(s) and GET_SERIES_FLAG(s, DYNAMIC)) {
+            Reb_Cell* tail = SER_AT(Reb_Cell, s, s->content.dynamic.used);
+            if (poison)
+                Poison_Cell(tail);
+            else {
+                assert(Is_Cell_Poisoned(tail));
+                Erase_Cell(tail);
+            }
+        }
+    }
+
+    #define POISON_SERIES_TAIL(s)   Poison_Or_Unpoison_Tail_Debug((s), true)
+    #define UNPOISON_SERIES_TAIL(s) Poison_Or_Unpoison_Tail_Debug((s), false)
+#else
+    #define POISON_SERIES_TAIL(s) NOOP
+    #define UNPOISON_SERIES_TAIL(s) NOOP
+#endif
+
+// !!! Review if SERIES_FLAG_FIXED_SIZE should be calling this routine.  At
+// the moment, fixed size series merely can't expand, but it might be more
+// efficient if they didn't use any "appending" operators to get built.
+//
+inline static void Set_Series_Used_Internal(REBSER *s, REBLEN used) {
+    if (GET_SERIES_FLAG(s, DYNAMIC))
+        s->content.dynamic.used = used;
+    else {
+        assert(used < sizeof(s->content));
+
+        if (IS_SER_ARRAY(s)) {  // content taken up by cell, no room for length
+            if (used == 0)
+                Poison_Cell(mutable_SER_CELL(s));  // poison cell means 0 used
+            else {
+                assert(used == 1);  // any non-poison will mean length 1
+                if (not Is_Cell_Poisoned(SER_CELL(s))) {
+                    // it was already length 1, leave the cell alone
+                } else
+                    Erase_Cell(mutable_SER_CELL(s));
+            }
+        }
+        else
+            mutable_USED_BYTE(s) = used;
+    }
+
+  #if DEBUG_UTF8_EVERYWHERE
+    //
+    // Low-level series mechanics will manipulate the used field, but that's
+    // at the byte level.  The higher level string mechanics must be used on
+    // strings.
+    //
+    if (IS_NONSYMBOL_STRING(s)) {
+        s->misc.length = 0xDECAFBAD;
+        TOUCH_STUB_IF_DEBUG(s);
+    }
+  #endif
+}
+
+inline static void SET_SERIES_USED(REBSER *s, REBLEN used) {
+    UNPOISON_SERIES_TAIL(s);
+    Set_Series_Used_Internal(s, used);
+    POISON_SERIES_TAIL(s);
+}
+
+// See TERM_STRING_LEN_SIZE() for the code that maintains string invariants,
+// including the '\0' termination (this routine will corrupt the tail byte
+// in the debug build to catch violators.)
+//
+inline static void SET_SERIES_LEN(REBSER *s, REBLEN len) {
+    assert(not IS_SER_UTF8(s));  // use _LEN_SIZE
+    SET_SERIES_USED(s, len);
+}
+
+#if CPLUSPLUS_11  // catch cases when calling on String(*) directly
+    inline static void SET_SERIES_LEN(String(*) s, REBLEN len) = delete;
+#endif
+
+
 //
 // Optimized expand when at tail (but, does not reterminate)
 //
@@ -688,14 +706,14 @@ inline static void TERM_SERIES_IF_NECESSARY(REBSER *s)
         if (IS_SER_UTF8(s))
             *SER_TAIL(Byte, s) = '\0';
         else {
-          #if !defined(NDEBUG)
+          #if DEBUG_POISON_SERIES_TAILS
             *SER_TAIL(Byte, s) = BINARY_BAD_UTF8_TAIL_BYTE;
           #endif
         }
     }
     else if (GET_SERIES_FLAG(s, DYNAMIC) and IS_SER_ARRAY(s)) {
-      #if DEBUG_TERM_ARRAYS
-        SET_CELL_FREE(SER_TAIL(Reb_Cell, s));
+      #if DEBUG_POISON_SERIES_TAILS
+        Poison_Cell(SER_TAIL(Reb_Cell, s));
       #endif
     }
 }
@@ -704,9 +722,8 @@ inline static void TERM_SERIES_IF_NECESSARY(REBSER *s)
     #define ASSERT_SERIES_TERM_IF_NEEDED(s) \
         NOOP
 #else
-    inline static void ASSERT_SERIES_TERM_IF_NEEDED(const REBSER *s) {
+    #define ASSERT_SERIES_TERM_IF_NEEDED(s) \
         Assert_Series_Term_Core(s);
-    }
 #endif
 
 // Just a No-Op note to point out when a series may-or-may-not be terminated

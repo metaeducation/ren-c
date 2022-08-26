@@ -61,7 +61,7 @@ inline static REBVAL *Init_Any_Word_Untracked(
 }
 
 #define Init_Any_Word(out,kind,spelling) \
-    Init_Any_Word_Untracked(TRACK(out), (kind), (spelling), UNQUOTED_1)
+    TRACK(Init_Any_Word_Untracked((out), (kind), (spelling), UNQUOTED_1))
 
 #define Init_Word(out,str)          Init_Any_Word((out), REB_WORD, (str))
 #define Init_Get_Word(out,str)      Init_Any_Word((out), REB_GET_WORD, (str))
@@ -101,8 +101,8 @@ inline static REBVAL *Init_Any_Word_Bound_Untracked(
 }
 
 #define Init_Any_Word_Bound(out,type,symbol,context,index) \
-    Init_Any_Word_Bound_Untracked(TRACK(out), \
-            (type), (symbol), CTX_VARLIST(context), (index))
+    TRACK(Init_Any_Word_Bound_Untracked((out), \
+            (type), (symbol), CTX_VARLIST(context), (index)))
 
 inline static REBVAL *Init_Any_Word_Patched(  // e.g. LET or MODULE! var
     Cell(*) out,
@@ -119,8 +119,8 @@ inline static REBVAL *Init_Any_Word_Patched(  // e.g. LET or MODULE! var
 }
 
 #define Init_Any_Word_Attached(out,type,symbol,module) \
-    Init_Any_Word_Bound_Untracked(TRACK(out), \
-            (type), (symbol), CTX_VARLIST(module), INDEX_ATTACHED)
+    TRACK(Init_Any_Word_Bound_Untracked((out), \
+            (type), (symbol), CTX_VARLIST(module), INDEX_ATTACHED))
 
 // Helper calls strsize() so you can more easily use literals at callsite.
 // (Better to call Intern_UTF8_Managed() with the size if you know it.)

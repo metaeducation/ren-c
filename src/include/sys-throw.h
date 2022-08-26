@@ -63,7 +63,7 @@
 
 inline static const REBVAL *VAL_THROWN_LABEL(Frame(*) frame_) {
     UNUSED(frame_);
-    assert(not Is_Stale_Void(&TG_Thrown_Label));
+    assert(not Is_Cell_Erased(&TG_Thrown_Label));
     return &TG_Thrown_Label;
 }
 
@@ -72,11 +72,15 @@ inline static Bounce Init_Thrown_With_Label(  // assumes `arg` in TG_Thrown_Arg
     const REBVAL *arg,
     const REBVAL *label  // Note: is allowed to be same as `out`
 ){
-    assert(Is_Stale_Void(&TG_Thrown_Arg));
+    assert(not THROWING);
+
+    assert(Is_Cell_Erased(&TG_Thrown_Arg));
     Copy_Cell(&TG_Thrown_Arg, arg);
 
-    assert(Is_Stale_Void(&TG_Thrown_Label));
+    assert(Is_Cell_Erased(&TG_Thrown_Label));
     Copy_Cell(&TG_Thrown_Label, label);
+
+    assert(THROWING);
 
     Mark_Eval_Out_Stale(frame_->out);
     return BOUNCE_THROWN;
@@ -88,10 +92,14 @@ inline static void CATCH_THROWN(
 ){
     UNUSED(frame_);
 
+    assert(THROWING);
+
     Copy_Cell(arg_out, &TG_Thrown_Arg);
 
-    Init_Stale_Void(&TG_Thrown_Arg);
-    Init_Stale_Void(&TG_Thrown_Label);
+    Erase_Cell(&TG_Thrown_Arg);
+    Erase_Cell(&TG_Thrown_Label);
+
+    assert(not THROWING);
 
     TG_Unwind_Frame = nullptr;
 }

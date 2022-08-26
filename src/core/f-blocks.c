@@ -47,14 +47,13 @@ Array(*) Copy_Array_At_Extra_Shallow(
     len -= index;
 
     Array(*) copy = Make_Array_For_Copy(len + extra, flags, original);
+    SET_SERIES_LEN(copy, len);
 
     Cell(const*) src = ARR_AT(original, index);
     Cell(*) dest = ARR_HEAD(copy);
     REBLEN count = 0;
     for (; count < len; ++count, ++dest, ++src)
         Derelativize(dest, src, specifier);
-
-    SET_SERIES_LEN(copy, len);
 
     return copy;
 }
@@ -81,14 +80,13 @@ Array(*) Copy_Array_At_Max_Shallow(
         max = ARR_LEN(original) - index;
 
     Array(*) copy = Make_Array_For_Copy(max, flags, original);
+    SET_SERIES_LEN(copy, max);
 
     REBLEN count = 0;
     Cell(const*) src = ARR_AT(original, index);
     Cell(*) dest = ARR_HEAD(copy);
     for (; count < max; ++count, ++src, ++dest)
         Derelativize(dest, src, specifier);
-
-    SET_SERIES_LEN(copy, max);
 
     return copy;
 }
@@ -108,6 +106,7 @@ Array(*) Copy_Values_Len_Extra_Shallow_Core(
     Flags flags
 ){
     Array(*) a = Make_Array_Core(len + extra, flags);
+    SET_SERIES_LEN(a, len);
 
     REBLEN count = 0;
     Cell(const*) src = head;
@@ -123,7 +122,6 @@ Array(*) Copy_Values_Len_Extra_Shallow_Core(
         Derelativize(dest, src, specifier);
     }
 
-    SET_SERIES_LEN(a, len);
     return a;
 }
 
@@ -267,6 +265,7 @@ Array(*) Copy_Array_Core_Managed(
         flags | NODE_FLAG_MANAGED,
         original
     );
+    SET_SERIES_LEN(copy, len);
 
     Cell(const*) src = ARR_AT(original, index);
     Cell(*) dest = ARR_HEAD(copy);
@@ -278,8 +277,6 @@ Array(*) Copy_Array_Core_Managed(
             deep_types
         );
     }
-
-    SET_SERIES_LEN(copy, len);
 
     return copy;
 }
@@ -370,7 +367,7 @@ Cell(*) Alloc_Tail_Array(Array(*) a)
     // !!! There is not yet a guarantee in the arrays that cells which get
     // truncated will be empty.  This needs to happen.
     //
-    // assert(Is_Fresh(last));  // Should not have held series references/etc.
+    // assert(Is_Cell_Erased(last));  // Should not have held series references/etc.
     RESET(last);
     return last;
 }

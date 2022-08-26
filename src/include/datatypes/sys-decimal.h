@@ -54,7 +54,7 @@ inline static REBVAL *Init_Decimal_Untracked(Cell(*) out, REBDEC dec) {
 }
 
 #define Init_Decimal(out,dec) \
-    Init_Decimal_Untracked(TRACK(out), (dec))
+    TRACK(Init_Decimal_Untracked((out), (dec)))
 
 inline static REBVAL *Init_Percent(Cell(*) out, REBDEC dec) {
     Reset_Unquoted_Header_Untracked(out, CELL_MASK_PERCENT);
@@ -63,4 +63,4 @@ inline static REBVAL *Init_Percent(Cell(*) out, REBDEC dec) {
 }
 
 #define Init_Percent(out,dec) \
-    Init_Percent_Untracked(TRACK(out), (dec))
+    TRACK(Init_Percent_Untracked((out), (dec)))

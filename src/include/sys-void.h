@@ -46,30 +46,14 @@
     c_cast(const REBVAL*, &PG_Void_Cell)
 
 
-inline static Cell(*) Prep_Cell_Untracked(Cell(*) c) {
+inline static Cell(*) Erase_Cell_Untracked(Cell(*) c) {
     ALIGN_CHECK_CELL_EVIL_MACRO(c);
-    c->header.bits = CELL_MASK_PREP;
+    c->header.bits = CELL_MASK_0;
     return c;
 }
 
-#define Prep_Cell(c) \
-    TRACK(Prep_Cell_Untracked(c))
-
-
-// Optimized Prep, with no guarantee about the prior condition of the bits.
-//
-inline static REBVAL *Prep_Stale_Void_Untracked(Cell(*) out) {
-    ALIGN_CHECK_CELL_EVIL_MACRO(out);
-    out->header.bits = (
-        NODE_FLAG_NODE | NODE_FLAG_CELL
-            | FLAG_HEART_BYTE(REB_NULL) | FLAG_QUOTE_BYTE(ISOTOPE_0)
-            | CELL_MASK_NO_NODES | CELL_FLAG_STALE
-    );
-    return cast(REBVAL*, out);
-}
-
-#define Prep_Stale_Void(out) \
-    TRACK(Prep_Stale_Void_Untracked(out))
+#define Erase_Cell(c) \
+    TRACK(Erase_Cell_Untracked(c))
 
 
 inline static REBVAL *Prep_Void_Untracked(Cell(*) out) {
@@ -98,22 +82,3 @@ inline static bool Is_Stale_Void(Value(const*) v) {
         return false;
     return QUOTE_BYTE_UNCHECKED(v) == ISOTOPE_0;
 }
-
-inline static Value(*) Init_Stale_Void_Untracked(Value(*) out) {
-    Init_Cell_Header_Untracked(
-        RESET_Untracked(out),
-        FLAG_HEART_BYTE(REB_NULL) | FLAG_QUOTE_BYTE(ISOTOPE_0)
-            | CELL_MASK_NO_NODES | CELL_FLAG_STALE
-    );
-
-  #ifdef ZERO_UNUSED_CELL_FIELDS
-    EXTRA(Any, out).trash = ZEROTRASH;
-    PAYLOAD(Any, out).first.trash = ZEROTRASH;
-    PAYLOAD(Any, out).second.trash = ZEROTRASH;
-  #endif
-
-    return out;
-}
-
-#define Init_Stale_Void(out) \
-    Init_Stale_Void_Untracked(TRACK(out))

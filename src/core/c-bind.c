@@ -861,6 +861,7 @@ Array(*) Copy_And_Bind_Relative_Deep_Managed(
     // Currently we start by making a shallow copy and then adjust it
 
     copy = Make_Array_For_Copy(len, flags, original);
+    SET_SERIES_LEN(copy, len);
 
     Cell(const*) src = ARR_AT(original, index);
     Cell(*) dest = ARR_HEAD(copy);
@@ -874,8 +875,6 @@ Array(*) Copy_And_Bind_Relative_Deep_Managed(
             relative
         );
     }
-
-    SET_SERIES_LEN(copy, len);
   }
 
   blockscope {  // Reset binding table, see notes above regarding locals

@@ -94,7 +94,7 @@ inline static Cell(*) ARR_LAST(const_if_c Array(*) a)
 
 inline static Cell(*) ARR_SINGLE(const_if_c Array(*) a) {
     assert(NOT_SERIES_FLAG(a, DYNAMIC));
-    return cast(Cell(*), &a->content.fixed);
+    return mutable_SER_CELL(a);
 }
 
 #if CPLUSPLUS_11
@@ -112,7 +112,7 @@ inline static Cell(*) ARR_SINGLE(const_if_c Array(*) a) {
 
     inline static Cell(const*) ARR_SINGLE(Array(const*) a) {
         assert(NOT_SERIES_FLAG(a, DYNAMIC));
-        return cast(const Reb_Cell*, &a->content.fixed);
+        return SER_CELL(a);
     }
 #endif
 
@@ -167,26 +167,24 @@ inline static void Prep_Array(
         //
         REBLEN n;
         for (n = 0; n < a->content.dynamic.rest; ++n, ++prep)
-            Prep_Cell(prep);
+            Erase_Cell(prep);
 
-      #if DEBUG_TERM_ARRAYS  // allocation deliberately oversized by 1
-        SET_CELL_FREE(ARR_AT(a, a->content.dynamic.rest - 1));
+      #if DEBUG_POISON_SERIES_TAILS  // allocation deliberately oversized by 1
+        Poison_Cell(ARR_AT(a, a->content.dynamic.rest - 1));
       #endif
     }
     else {
         REBLEN n;
         for (n = 0; n < capacity; ++n, ++prep)
-            Prep_Cell(prep);  // have to prep cells in useful capacity
+            Erase_Cell(prep);  // have to prep cells in useful capacity
 
         // If an array isn't expandable, let the release build not worry
         // about the bits in the excess capacity.  But poison them in
         // the debug build.
         //
-      #if DEBUG_POISON_CELLS
-        for (; n < a->content.dynamic.rest; ++n, ++prep) {
-            USED(TRACK(prep));
-            prep->header.bits = CELL_MASK_POISON;  // unwritable + unreadable
-        }
+      #if DEBUG_POISON_EXCESS_CAPACITY
+        for (; n < a->content.dynamic.rest; ++n, ++prep)
+            Poison_Cell(prep);  // unreadable + unwritable
       #endif
     }
 }
@@ -200,9 +198,9 @@ inline static Array(*) Make_Array_Core_Into(
     REBLEN capacity,
     Flags flags
 ){
-  #if DEBUG_TERM_ARRAYS
-    if (capacity > 1 or (flags & SERIES_FLAG_DYNAMIC))  // space for term
-        capacity += 1;  // account for cell needed for terminator (END)
+  #if DEBUG_POISON_SERIES_TAILS  // non-dynamic arrays poisoned by bit pattern
+    if (capacity > 1 or (flags & SERIES_FLAG_DYNAMIC))
+        capacity += 1;  // account for space needed for poison cell
   #endif
 
     REBSER *s = Make_Series_Into(preallocated, capacity, flags);
@@ -211,12 +209,12 @@ inline static Array(*) Make_Array_Core_Into(
     if (GET_SERIES_FLAG(s, DYNAMIC)) {
         Prep_Array(ARR(s), capacity);
 
-      #if DEBUG_TERM_ARRAYS
-        SET_CELL_FREE(ARR_HEAD(ARR(s)));
+      #if DEBUG_POISON_SERIES_TAILS
+        Poison_Cell(ARR_HEAD(ARR(s)));
       #endif
     }
     else {
-        Prep_Stale_Void(mutable_SER_CELL(s));  // optimized prep for 0 length
+        Poison_Cell(mutable_SER_CELL(s));  // optimized prep for 0 length
     }
 
     // Arrays created at runtime default to inheriting the file and line
@@ -303,7 +301,9 @@ inline static Array(*) Make_Array_For_Copy(
 //
 inline static Array(*) Alloc_Singular(Flags flags) {
     assert(not (flags & SERIES_FLAG_DYNAMIC));
-    return Make_Array_Core(1, flags | SERIES_FLAG_FIXED_SIZE);
+    Array(*) a = Make_Array_Core(1, flags | SERIES_FLAG_FIXED_SIZE);
+    Erase_Cell(mutable_SER_CELL(a));  // poison means length 0, erased length 1
+    return a;
 }
 
 #define Append_Value(a,v) \

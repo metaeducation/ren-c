@@ -340,8 +340,8 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
     // If a throw was being processed up the stack when the error was raised,
     // then it had the thrown argument set.
     //
-    Init_Stale_Void(&TG_Thrown_Arg);
-    Init_Stale_Void(&TG_Thrown_Label);
+    Erase_Cell(&TG_Thrown_Arg);
+    Erase_Cell(&TG_Thrown_Label);
 
   #if REBOL_FAIL_JUST_ABORTS
     panic (nullptr);  // all branches need to do something, this never happens

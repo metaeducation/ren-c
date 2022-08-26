@@ -1454,13 +1454,12 @@ DECLARE_NATIVE(catch)
 
     if (REF(name) or REF(any)) {
         Array(*) a = Make_Array(2);
-
+        SET_SERIES_LEN(a, 2);
         Copy_Cell(ARR_AT(a, 0), label); // throw name
         CATCH_THROWN(ARR_AT(a, 1), frame_); // thrown value--may be null!
-        if (Is_Nulled(ARR_AT(a, 1)))
-            SET_SERIES_LEN(a, 1); // trim out null value (illegal in block)
-        else
-            SET_SERIES_LEN(a, 2);
+        if (Is_Nulled(ARR_AT(a, 1)))  // can't put null in blocks...
+            Init_Blank(ARR_AT(a, 1));  // !!! review: use multi-return instead!
+
         return Init_Block(OUT, a);
     }
 

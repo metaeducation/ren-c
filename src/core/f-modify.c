@@ -204,9 +204,9 @@ REBLEN Modify_Array(
         Set_Cell_Flag(ARR_HEAD(dst_arr), NEWLINE_BEFORE);
     }
 
-  #if DEBUG_TERM_ARRAYS
+  #if DEBUG_POISON_SERIES_TAILS
     if (GET_SERIES_FLAG(dst_arr, DYNAMIC))
-        SET_CELL_FREE(ARR_TAIL(dst_arr));
+        Poison_Cell(ARR_TAIL(dst_arr));
   #endif
 
     ASSERT_ARRAY(dst_arr);

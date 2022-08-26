@@ -490,8 +490,6 @@ inline static void SET_SIGNAL(Flags f) { // used in %sys-series.h
     cast(void, Eval_Signals &= ~(f))
 
 
-#include "sys-trash.h"  // doesn't need SYMID (%sys-bad-word.h does)
-
 #include "datatypes/sys-series.h"
 #include "datatypes/sys-array.h"  // Array(*) used by UTF-8 string bookmarks
 
@@ -534,6 +532,7 @@ inline static REBVAR *Force_Lib_Var(SYMID id) {
 #include "sys-nulled.h"  // not a datatype, but it is exposed to the user
 
 #include "datatypes/sys-blank.h"
+#include "sys-trash.h"
 #include "datatypes/sys-comma.h"
 
 #include "datatypes/sys-integer.h"

@@ -141,7 +141,7 @@ inline static REBVAL *Init_Char_Unchecked_Untracked(Cell(*) out, Codepoint c) {
 }
 
 #define Init_Char_Unchecked(out,c) \
-    Init_Char_Unchecked_Untracked(TRACK(out), (c))
+    TRACK(Init_Char_Unchecked_Untracked((out), (c)))
 
 inline static Context(*) Maybe_Init_Char_Untracked(Cell(*) out, Codepoint c) {
     if (c > MAX_UNI) {

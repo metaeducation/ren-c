@@ -305,7 +305,9 @@ REBTYPE(Action)
         if (Get_Action_Flag(act, IS_NATIVE))
             Set_Action_Flag(proxy, IS_NATIVE);
 
+        Clear_Cell_Flag(ACT_ARCHETYPE(proxy), PROTECTED);  // intentional change
         Copy_Cell(ACT_ARCHETYPE(proxy), ACT_ARCHETYPE(act));
+        Set_Cell_Flag(ACT_ARCHETYPE(proxy), PROTECTED);  // restore invariant
 
         return Init_Action(
             OUT,

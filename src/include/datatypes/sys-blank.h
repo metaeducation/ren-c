@@ -67,4 +67,4 @@ inline static REBVAL *Init_Blank_Untracked(Cell(*) out, Byte quote_byte) {
 }
 
 #define Init_Blank(out) \
-    Init_Blank_Untracked(TRACK(out), UNQUOTED_1)
+    TRACK(Init_Blank_Untracked((out), UNQUOTED_1))

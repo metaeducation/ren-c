@@ -1879,6 +1879,7 @@ DECLARE_NATIVE(as)
             switch (SER_FLAVOR(SER(node1))) {
               case FLAVOR_SYMBOL: {
                 Array(*) a = Make_Array_Core(2, NODE_FLAG_MANAGED);
+                SET_SERIES_LEN(a, 2);
                 if (Get_Cell_Flag(v, REFINEMENT_LIKE)) {
                     Init_Blank(ARR_AT(a, 0));
                     Copy_Cell(ARR_AT(a, 1), v);
@@ -1889,7 +1890,6 @@ DECLARE_NATIVE(as)
                     mutable_HEART_BYTE(ARR_AT(a, 0)) = REB_WORD;
                     Init_Blank(ARR_AT(a, 1));
                 }
-                SET_SERIES_LEN(a, 2);
                 Init_Block(v, a);
                 break; }
 

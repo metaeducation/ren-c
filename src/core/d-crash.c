@@ -291,17 +291,20 @@ DECLARE_NATIVE(fail)
 {
     INCLUDE_PARAMS_OF_FAIL;
 
+    Value(*) reason = ARG(reason);
+    Value(*) blame = ARG(blame);
+    Value(*) where = ARG(where);
+
   #if defined(NDEBUG)
-    UNUSED(ARG(blame));
-    UNUSED(ARG(where));
+    UNUSED(blame);
+    UNUSED(where);
   #else
     printf("!!! Early-Boot FAIL, called fail: native [], not fail: func []\n");
-    PROBE(ARG(reason));
-    PROBE(ARG(blame));
-    PROBE(ARG(where));
+    PROBE(blame);
+    PROBE(where);
 
-    rebElide(Canon(WRITE_STDOUT), Canon(DELIMIT), Canon(SPACE), ARG(reason));
+    rebElide(Canon(WRITE_STDOUT), Canon(DELIMIT), Canon(SPACE), reason);
   #endif
 
-    panic (ARG(reason));
+    panic (reason);
 }
