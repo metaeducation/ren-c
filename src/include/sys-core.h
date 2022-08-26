@@ -433,7 +433,6 @@ inline static void INIT_BINDING_MAY_MANAGE(
 #include "sys-track.h"
 #include "datatypes/sys-value.h"  // these defines don't need series accessors
 
-#include "sys-void.h"  // not really a datatype either
 
 enum rebol_signals {
     //
@@ -529,6 +528,7 @@ inline static REBVAR *Force_Lib_Var(SYMID id) {
 //=//// CONTINUE VALUE TYPES ///////////////////////////////////////////////=//
 
 #include "sys-nulled.h"  // not a datatype, but it is exposed to the user
+#include "sys-void.h"  // not really a datatype either
 
 #include "datatypes/sys-blank.h"
 #include "sys-trash.h"

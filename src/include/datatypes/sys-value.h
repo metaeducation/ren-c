@@ -113,9 +113,6 @@
 // CELL_FLAG_STALE, helps make this check useful.
 //
 
-#define Is_Cell_Erased(v) \
-    ((v)->header.bits == CELL_MASK_0)
-
 #if DEBUG_CELL_WRITABILITY
     //
     // In the debug build, functions aren't inlined, and the overhead actually
@@ -357,11 +354,6 @@ inline static enum Reb_Kind VAL_TYPE_UNCHECKED(Cell(const*) v) {
 // as well as some flags that are reserved for system purposes.  These are
 // the NODE_FLAG_XXX and CELL_FLAG_XXX flags, that work on any cell.
 //
-// (A previous concept where cells could use some of the header bits to carry
-// more data that wouldn't fit in the "extra" or "payload" is deprecated.
-// If those three pointers are not enough for the data a type needs, then it
-// has to use an additional allocation and point to that.)
-//
 
 #define Get_Cell_Flag(v,name) \
     ((READABLE(v)->header.bits & CELL_FLAG_##name) != 0)
@@ -376,18 +368,69 @@ inline static enum Reb_Kind VAL_TYPE_UNCHECKED(Cell(const*) v) {
     (WRITABLE(v)->header.bits &= ~CELL_FLAG_##name)
 
 
-//=//// CELL "POISONING" //////////////////////////////////////////////////=//
+// See notes on ALIGN_SIZE regarding why we check this, and when it does and
+// does not apply (some platforms need this invariant for `double` to work).
+//
+// This is another case where the debug build doesn't inline functions.
+// Run the risk of repeating macro args to speed up this critical check.
+//
+#if (! DEBUG_MEMORY_ALIGN)
+    #define ALIGN_CHECK_CELL_EVIL_MACRO(c)    NOOP
+#else
+    #define ALIGN_CHECK_CELL_EVIL_MACRO(c) \
+        if (cast(uintptr_t, (c)) % ALIGN_SIZE != 0) { \
+            printf( \
+                "Cell address %p not aligned to %d bytes\n", \
+                cast(const void*, (c)), \
+                cast(int, ALIGN_SIZE) \
+            ); \
+            panic (c); \
+        }
+#endif
 
+
+//=//// CELL "ERASING" ////////////////////////////////////////////////////=//
+//
+// To help be robust, the code ensures that NODE_FLAG_NODE and NODE_FLAG_CELL
+// are set in the header of a memory slot before reading or writing info for
+// a cell.  But an exception is made for efficiency that allows initialization
+// in the case of a header that is all zeros.  This pattern is efficiently
+// produced by memset(), and global memory for a C program is initialized to
+// all zeros to protect leakage from other processes...so it's good to be
+// able to take advantage of it where possible.
+//
+// Note that an erased cell is INITABLE(), but not READABLE() or WRITABLE().
+
+inline static Cell(*) Erase_Cell_Untracked(Cell(*) c) {
+    ALIGN_CHECK_CELL_EVIL_MACRO(c);
+    c->header.bits = CELL_MASK_0;
+    return c;
+}
+
+#define Erase_Cell(c) \
+    TRACK(Erase_Cell_Untracked(c))
+
+#define Is_Cell_Erased(v) \
+    ((v)->header.bits == CELL_MASK_0)
+
+
+//=//// CELL "POISONING" //////////////////////////////////////////////////=//
+//
 // Poisoning is used in the spirit of things like Address Sanitizer to block
 // reading or writing locations such as beyond the allocated memory of an
 // array series.  It leverages the checks done by READABLE(), WRITABLE() and
 // INITABLE() that get coverage for cell operations.
 //
-// To stop reading but not stop writing, use "TRASHING" cells instead.
+// Another use for the poisoned state is in an optimized array representation
+// that fits 0 or 1 cells into the series node itself.  Since the cell lives
+// where the content tracking information would usually be, there's no length.
+// Hence the presence of a poison cell in the slot indicates length 0.
 //
-// This will defeat Detect_Rebol_Pointer(), so it will not realize the value
-// is a cell any longer.  Hence poisoned cells should (perhaps obviously) not
-// be passed to API functions--as they'd appear to be UTF-8 strings.
+// * To stop reading but not stop writing, use "TRASHING" cells instead.
+//
+// * This will defeat Detect_Rebol_Pointer(), so it will not realize the value
+//   is a cell any longer.  Hence poisoned cells should (perhaps obviously) not
+//   be passed to API functions--as they'd appear to be UTF-8 strings.
 
 #define Poison_Cell(v) \
     (TRACK(Erase_Cell(v))->header.bits = CELL_MASK_POISON)
@@ -443,26 +486,6 @@ inline static REBVAL *RESET_CUSTOM_CELL(
     return cast(REBVAL*, out);
 }
 
-
-// See notes on ALIGN_SIZE regarding why we check this, and when it does and
-// does not apply (some platforms need this invariant for `double` to work).
-//
-// This is another case where the debug build doesn't inline functions.
-// Run the risk of repeating macro args to speed up this critical check.
-//
-#if (! DEBUG_MEMORY_ALIGN)
-    #define ALIGN_CHECK_CELL_EVIL_MACRO(c)    NOOP
-#else
-    #define ALIGN_CHECK_CELL_EVIL_MACRO(c) \
-        if (cast(uintptr_t, (c)) % ALIGN_SIZE != 0) { \
-            printf( \
-                "Cell address %p not aligned to %d bytes\n", \
-                cast(const void*, (c)), \
-                cast(int, ALIGN_SIZE) \
-            ); \
-            panic (c); \
-        }
-#endif
 
 
 //=////////////////////////////////////////////////////////////////////////=//

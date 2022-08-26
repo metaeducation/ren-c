@@ -6,7 +6,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2012-2020 Ren-C Open Source Contributors
+// Copyright 2012-2022 Ren-C Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -34,6 +34,11 @@
 // are to represent an "optional" value, there must be a special bit pattern
 // used to mark them as not containing any value at all.  These are called
 // "nulled cells" and marked by means of their HEART_BYTE being REB_NULL.
+//
+//=//// NOTES /////////////////////////////////////////////////////////////=//
+//
+// * NULL has an isotopic form called VOID, which closely relates the two.
+//   see %sys-void.h.
 //
 
 #define Is_Nulled(v) \

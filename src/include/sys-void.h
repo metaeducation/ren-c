@@ -26,34 +26,27 @@
 // or IS_WORD().  So tests on values must be guarded with Is_Void() to tolerate
 // them...or the HEART_BYTE() lower-level accessors must be used.
 //
-// Another use for the VOID cell state is in an optimized array representation
-// that fits 0 or 1 cells into the series node itself.  Since the cell lives
-// where the content tracking information would usually be, there's no length.
-// Hence the presence of an VOID cell in the slot indicates length 0.
-//
 //=//// NOTES /////////////////////////////////////////////////////////////=//
 //
 // * The main way to get VOIDs is through a call to RESET().  This uses the
 //   unique advantage of being the 0 type to get to the void state through
 //   a single masking operation.
 //
-// * Due to the needs of Detect_Rebol_Pointer(), we unfortunately can't use
-//   the optimization that a header of all 0 would be interpreted as being
-//   VOID, e.g. with a REB_NULL heart and ISOTOPE_0 set.  The reason is that
-//   this conflates with an empty UTF-8 string.
+// * A cell with all its header bits 0 (Erased_Cell, CELL_MASK_0) is very
+//   close to being a VOID.  Its HEART_BYTE() is 0 for REB_NULL, and its
+//   QUOTE_BYTE() is ISOTOPE_0 to say it is an isotope.  However, it can't
+//   be a valid cell from the API perspective because Detect_Rebol_Pointer()
+//   would see the `\0` first byte, and that's a legal empty UTF-8 C string.
+//
+// * There is still leverage from the near overlap with erased cells...because
+//   the evaluator will set NODE_FLAG_NODE and NODE_FLAG_CELL along with
+//   CELL_FLAG_STALE on the output cells it receives.  Hence a fresh cell
+//   such as one from DECLARE_LOCAL() doesn't need any extra preparation
+//   beyond being erased in order to be interpreted as a stale void on output.
+//
 
 #define VOID_CELL \
     c_cast(const REBVAL*, &PG_Void_Cell)
-
-
-inline static Cell(*) Erase_Cell_Untracked(Cell(*) c) {
-    ALIGN_CHECK_CELL_EVIL_MACRO(c);
-    c->header.bits = CELL_MASK_0;
-    return c;
-}
-
-#define Erase_Cell(c) \
-    TRACK(Erase_Cell_Untracked(c))
 
 
 inline static REBVAL *Prep_Void_Untracked(Cell(*) out) {
