@@ -149,9 +149,9 @@ do-request: function [
     ]
 
     ; The port data has been accrued for the client and can be given back
-    ; directly, not as a copy.  If the port data is BLANK!, this returns NULL.
+    ; directly, not as a copy.  STEAL returns PORT.DATA value before reset.
     ;
-    return (opt port.data, elide port.data: _)
+    return steal port.data: _
 ]
 
 ; if a no-redirect keyword is found in the write dialect after 'headers then

@@ -33,19 +33,15 @@ assert: func* [
     ; there was no idea of a "debug mode"
 ]
 
-steal: func* [
+steal: lambda [
     {Return a variable's value prior to an assignment, then do the assignment}
 
-    return: [<opt> any-value!]
-        {Value of the following SET-WORD! or SET-PATH! before assignment}
-    evaluation [<opt> any-value! <variadic>]
-        {Used to take the assigned value}
-    'look [set-word! set-path! <variadic>]
+    evaluation "Takes assigned value (variadic enables STEAL X: DEFAULT [...])"
+        [<opt> any-value! <variadic>]
+    'look [set-word! set-tuple! <variadic>]
 ][
-    return (
-        get first look  ; returned value
-        elide take evaluation
-    )
+    get first look  ; returned value
+    elide take evaluation
 ]
 
 assert [null = binding of :return]  ; it's archetypal, nowhere to return to
