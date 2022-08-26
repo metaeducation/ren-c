@@ -233,7 +233,7 @@ Bounce Series_Common_Action_Maybe_Unhandled(
                     ? cast(REBVAL*, nullptr)  // C++98 ambiguous w/o cast
                     : ARG(value2),
                 sop_flags,
-                did REF(case),
+                REF(case),
                 REF(skip) ? Int32s(ARG(skip), 1) : 1
             )
         ); }

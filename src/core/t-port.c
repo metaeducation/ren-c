@@ -53,8 +53,6 @@ Bounce MAKE_Port(
     if (parent)
         return RAISE(Error_Bad_Make_Parent(kind, unwrap(parent)));
 
-    assert(not Is_Nulled(arg)); // API would require NULLIFY_NULLED
-
     if (rebRunThrows(
         OUT,  // <-- output cell
         SysUtil(MAKE_PORT_P), rebQ(arg)

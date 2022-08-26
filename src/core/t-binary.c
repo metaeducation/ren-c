@@ -819,7 +819,7 @@ REBTYPE(Binary)
             size *= skip;
         }
 
-        if (did REF(reverse))
+        if (REF(reverse))
             thunk |= CC_FLAG_REVERSE;
 
         reb_qsort_r(
@@ -847,7 +847,7 @@ REBTYPE(Binary)
             if (index >= tail)
                 return Init_Blank(OUT);
 
-            index += cast(REBLEN, Random_Int(did REF(secure)))
+            index += cast(REBLEN, Random_Int(REF(secure)))
                 % (tail - index);
             Binary(const*) bin = VAL_BINARY(v);
             return Init_Integer(OUT, *BIN_AT(bin, index));  // PICK
@@ -855,7 +855,7 @@ REBTYPE(Binary)
 
         Binary(*) bin = VAL_BINARY_ENSURE_MUTABLE(v);
 
-        bool secure = did REF(secure);
+        bool secure = REF(secure);
         REBLEN n;
         for (n = BIN_LEN(bin) - index; n > 1;) {
             REBLEN k = index + cast(REBLEN, Random_Int(secure)) % n;

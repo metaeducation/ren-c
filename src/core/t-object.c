@@ -1272,7 +1272,7 @@ REBTYPE(Context)
         REBLEN n = Find_Symbol_In_Context(
             context,
             VAL_WORD_SYMBOL(pattern),
-            did REF(case)
+            REF(case)
         );
         if (n == 0)
             return nullptr;

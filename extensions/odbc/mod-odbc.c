@@ -1184,13 +1184,13 @@ DECLARE_NATIVE(insert_odbc)
     bool use_cache = false;
 
     bool get_catalog = rebUnboxLogic(
-        "switch type of first", rebQ(ARG(sql)), "[",
+        "switch type of first", ARG(sql), "[",
             "lit-word! [true]",  // like Rebol2: 'tables, 'columns, 'types
             "text! [false]",
         "] else [",
             "fail [",
                 "{SQL dialect must start with WORD! or TEXT! value}",
-                "mold", rebQ(ARG(sql)),
+                "mold", ARG(sql),
             "]",
         "]"
     );
@@ -1597,7 +1597,7 @@ DECLARE_NATIVE(copy_odbc)
     // compares-0 based row against num_rows, so -1 is chosen to never match
     // and hence mean "as many rows as available"
     //
-    SQLLEN num_rows = rebUnbox("any [@", REF(part), "-1]");
+    SQLLEN num_rows = rebUnbox("any [@", ARG(part), "-1]");
 
     REBVAL *results = rebValue(
         "make block!", rebI(num_rows == -1 ? 10 : num_rows)

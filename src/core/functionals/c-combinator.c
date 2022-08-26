@@ -670,7 +670,7 @@ static bool Combinator_Param_Hook(
         // combinators, e.g. TEXT!.  Otherwise a combinator can have an
         // argument named value for other purposes.
         //
-        Copy_Cell(var, REF(value));
+        Copy_Cell(var, ARG(value));
     }
     else switch (VAL_PARAM_CLASS(param)) {
       case PARAM_CLASS_HARD: {

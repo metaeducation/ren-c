@@ -568,7 +568,7 @@ inline static Frame(*) Prep_Frame_Core(
     KEY_SYMBOL(ACT_KEY(FRM_PHASE(frame_), (p_##name##_)))
 
 #define REF(name) \
-    NULLIFY_NULLED(ARG(name))
+    (not Is_Nulled(ARG(name)))
 
 #define WANTED(name) ( \
     assert(VAL_PARAM_CLASS(PARAM(name)) == PARAM_CLASS_OUTPUT), \

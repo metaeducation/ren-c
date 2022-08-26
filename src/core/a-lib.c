@@ -86,6 +86,16 @@
 static bool PG_Api_Initialized = false;
 
 
+// The API tolerates internal cells that are Is_Nulled(), but all handles that
+// are Is_Api_Value() mustn't be nulled.  nullptr is the only currency exposed
+// to the clients of the API for NULL.
+//
+inline static const REBVAL *NULLIFY_NULLED(const REBVAL *cell) {
+  return VAL_TYPE(cell) == REB_NULL
+      ? cast(REBVAL*, nullptr)  // C++98 ambiguous w/o cast
+      : cell;
+}
+
 //
 // ENTER_API macro
 //
@@ -2027,7 +2037,8 @@ const REBINS *RL_rebQUOTING(const void *p)
 
       handle_cell:
       case DETECTED_AS_CELL: {
-        const REBVAL *v = Copy_Cell(Alloc_Value(), cast(const REBVAL*, p));
+        Value(const*) at = Check_Variadic_Feed_Cell(p);
+        Value(*) v = Copy_Cell(Alloc_Value(), at);
         a = Singular_From_Cell(v);
         Set_Subclass_Flag(API, a, RELEASE);
         break; }

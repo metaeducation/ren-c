@@ -112,7 +112,7 @@ DECLARE_NATIVE(cosine)
 {
     INCLUDE_PARAMS_OF_COSINE;
 
-    REBDEC dval = cos(Trig_Value(ARG(angle), did REF(radians), COSINE));
+    REBDEC dval = cos(Trig_Value(ARG(angle), REF(radians), COSINE));
     if (fabs(dval) < DBL_EPSILON)
         dval = 0.0;
 
@@ -135,7 +135,7 @@ DECLARE_NATIVE(sine)
 {
     INCLUDE_PARAMS_OF_SINE;
 
-    REBDEC dval = sin(Trig_Value(ARG(angle), did REF(radians), SINE));
+    REBDEC dval = sin(Trig_Value(ARG(angle), REF(radians), SINE));
     if (fabs(dval) < DBL_EPSILON)
         dval = 0.0;
 
@@ -158,7 +158,7 @@ DECLARE_NATIVE(tangent)
 {
     INCLUDE_PARAMS_OF_TANGENT;
 
-    REBDEC dval = Trig_Value(ARG(angle), did REF(radians), TANGENT);
+    REBDEC dval = Trig_Value(ARG(angle), REF(radians), TANGENT);
     if (Eq_Decimal(fabs(dval), PI / 2.0))
         fail (Error_Overflow_Raw());
 
@@ -181,7 +181,7 @@ DECLARE_NATIVE(arccosine)
 {
     INCLUDE_PARAMS_OF_ARCCOSINE;
 
-    Arc_Trans(OUT, ARG(cosine), did REF(radians), COSINE);
+    Arc_Trans(OUT, ARG(cosine), REF(radians), COSINE);
     return OUT;
 }
 
@@ -201,7 +201,7 @@ DECLARE_NATIVE(arcsine)
 {
     INCLUDE_PARAMS_OF_ARCSINE;
 
-    Arc_Trans(OUT, ARG(sine), did REF(radians), SINE);
+    Arc_Trans(OUT, ARG(sine), REF(radians), SINE);
     return OUT;
 }
 
@@ -221,7 +221,7 @@ DECLARE_NATIVE(arctangent)
 {
     INCLUDE_PARAMS_OF_ARCTANGENT;
 
-    Arc_Trans(OUT, ARG(tangent), did REF(radians), TANGENT);
+    Arc_Trans(OUT, ARG(tangent), REF(radians), TANGENT);
     return OUT;
 }
 

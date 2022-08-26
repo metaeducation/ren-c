@@ -143,7 +143,7 @@ DECLARE_NATIVE(native)
     INCLUDE_PARAMS_OF_NATIVE;
 
     Value(*) spec = ARG(spec);
-    bool is_combinator = did REF(combinator);
+    bool is_combinator = REF(combinator);
 
     if (not PG_Next_Native_Dispatcher)
         fail ("NATIVE is for internal use during boot and extension loading");

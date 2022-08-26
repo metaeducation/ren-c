@@ -636,7 +636,7 @@ REBTYPE(Map)
             SPECIFIED,
             nullptr,  // nullptr indicates it will only search, not modify
             SPECIFIED,
-            did REF(case)
+            REF(case)
         );
 
         if (n == 0)
@@ -659,7 +659,7 @@ REBTYPE(Map)
             SPECIFIED,
             ARG(value),  // non-null indicates it will modify, vs. just search
             SPECIFIED,
-            did REF(case)
+            REF(case)
         );
         UNUSED(n);
 

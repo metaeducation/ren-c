@@ -593,7 +593,7 @@ DECLARE_NATIVE(freeze)
     // don't want to say that here, so hold off on the feature.
     //
     REBSER *locker = nullptr;
-    Force_Value_Frozen_Core(ARG(value), did REF(deep), locker);
+    Force_Value_Frozen_Core(ARG(value), REF(deep), locker);
 
     return COPY(ARG(value));
 }

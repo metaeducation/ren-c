@@ -426,7 +426,7 @@ REBTYPE(Logic)
             fail ("LOGIC! random seed currently not implemented");
         }
 
-        if (Random_Int(did REF(secure)) & 1)
+        if (Random_Int(REF(secure)) & 1)
             return Init_True(OUT);
         return Init_False(OUT); }
 

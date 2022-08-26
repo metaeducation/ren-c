@@ -342,7 +342,7 @@ REBTYPE(Sequence)
             fail (Error_Bad_Refines_Raw());
         for (; len > 0; len--, vp++) {
             if (*vp)
-                *vp = cast(Byte, Random_Int(did REF(secure)) % (1 + *vp));
+                *vp = cast(Byte, Random_Int(REF(secure)) % (1 + *vp));
         }
         return Init_Tuple_Bytes(OUT, buf, len);
     }

@@ -464,7 +464,7 @@ REBTYPE(Integer)
         }
         if (num == 0)
             fail (ARG(value));
-        return Init_Integer(OUT, Random_Range(num, did REF(secure))); }
+        return Init_Integer(OUT, Random_Range(num, REF(secure))); }
 
     default:
         break;

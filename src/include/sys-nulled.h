@@ -74,20 +74,6 @@ inline static REBVAL *Init_Nulled_Untracked(Cell(*) out, Byte quote_byte) {
     TRACK(Init_Nulled_Untracked((out), QUASI_2))
 
 
-// To help ensure full nulled cells don't leak to the API, the variadic
-// interface only accepts nullptr.  Any internal code with a REBVAL* that may
-// be a "nulled cell" must translate any such cells to nullptr.
-//
-inline static const REBVAL *NULLIFY_NULLED(const REBVAL *cell) {
-  return VAL_TYPE(cell) == REB_NULL
-      ? cast(REBVAL*, nullptr)  // C++98 ambiguous w/o cast
-      : cell;
-}
-
-inline static const REBVAL *REIFY_NULL(const REBVAL *cell)
-  { return cell == nullptr ? Lib(NULL) : cell; }
-
-
 // We test for null on an arbitrary result that may be an isotope.  Since we
 // don't have generic isotope handling we usually just pass them through, so
 // the unchecked type test for null is done first.  But plain Is_Nulled() will

@@ -235,7 +235,7 @@ DECLARE_NATIVE(shove)
         }
         else if (IS_SET_PATH(left) or IS_SET_TUPLE(left)) {
             f->feed->gotten = nullptr;  // calling arbitrary code, may disrupt
-            rebElide("set @", composed_set_path, "@", NULLIFY_NULLED(OUT));
+            rebElide("set @", composed_set_path, "@", OUT);
             rebRelease(composed_set_path);
         }
         else
@@ -371,7 +371,7 @@ DECLARE_NATIVE(do)
             FRAME_FLAG_MAYBE_STALE,
             SysUtil(DO_P),
                 source,
-                rebQ(REF(args)),
+                rebQ(ARG(args)),
                 REF(only) ? Lib(TRUE) : Lib(FALSE)
         );
         return BOUNCE_DELEGATE; }

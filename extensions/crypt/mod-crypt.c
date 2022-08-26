@@ -223,11 +223,11 @@ DECLARE_NATIVE(checksum)
     // table depend on the config settings (see %mbedtls-rebol-config.h)
     //
     char *method_name = rebTrySpell(
-        "all [@", REF(method), "@", REF(settings), "] then [",
+        "all [@", ARG(method), "@", ARG(settings), "] then [",
             "fail {Specify SETTINGS or /METHOD for CHECKSUM, not both}",
         "]",
         "try uppercase try to text! any [",
-            "@", REF(method), "@", REF(settings),
+            "@", ARG(method), "@", ARG(settings),
         "]"
     );
     if (method_name == nullptr)
@@ -291,7 +291,7 @@ DECLARE_NATIVE(checksum)
     }
 
     rebJumps (
-        "fail [{Unknown CHECKSUM method:}", rebQ(ARG(method)), "]"
+        "fail [{Unknown CHECKSUM method:} @", ARG(method), "]"
     );
 
   found_tls_info: {
@@ -474,7 +474,7 @@ DECLARE_NATIVE(rsa_generate_keypair)
     if (not REF(padding))
         padding_spec = rebValue("[pkcs1-v15]");  // mbedtls_init() uses, no hash
     else
-        padding_spec = rebValue(REF(padding));  // easier to just free it
+        padding_spec = rebValue(ARG(padding));  // easier to just free it
 
     int padding;
     mbedtls_md_type_t hash;
@@ -1664,7 +1664,7 @@ DECLARE_NATIVE(ecdh_shared_secret)
         "]",
         "if", rebI(num_bytes * 2), "!= length of bin [",
             "fail [{Public BINARY! must be}", rebI(num_bytes * 2),
-                "{bytes total for}", rebQ(ARG(group)), "]",
+                "{bytes total for} @", ARG(group), "]",
         "]",
         "bin",
     "]");
@@ -1707,7 +1707,7 @@ DECLARE_NATIVE(ecdh_shared_secret)
     rebElide(
         "if", rebI(num_bytes), "!= length of", ARG(private), "[",
             "fail [{Size of PRIVATE key must be}",
-                rebI(num_bytes), "{for}", rebQ(ARG(group)), "]"
+                rebI(num_bytes), "{for} @", ARG(group), "]"
         "]",
         ARG(private)
     );

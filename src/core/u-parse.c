@@ -1340,7 +1340,7 @@ DECLARE_NATIVE(subparse)
     // The input index is not advanced here, but may be changed by
     // a GET-WORD variable.
 
-  pre_rule:
+  pre_rule: ;  // next line is declaration, need semicolon
 
     Cell(const*) rule = P_AT_END ? nullptr : P_RULE;
 

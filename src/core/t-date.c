@@ -1101,7 +1101,7 @@ REBTYPE(Date)
             if (REF(only))
                 fail (Error_Bad_Refines_Raw());
 
-            const bool secure = did REF(secure);
+            const bool secure = REF(secure);
 
             if (REF(seed)) {
                 //

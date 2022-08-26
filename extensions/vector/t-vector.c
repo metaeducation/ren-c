@@ -673,7 +673,7 @@ REBTYPE(Vector)
         if (REF(seed) or REF(only))
             fail (Error_Bad_Refines_Raw());
 
-        Shuffle_Vector(v, did REF(secure));
+        Shuffle_Vector(v, REF(secure));
         return COPY(v); }
 
     default:

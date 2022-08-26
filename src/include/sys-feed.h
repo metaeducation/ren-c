@@ -146,19 +146,14 @@ inline static option(va_list*) FEED_VAPTR(Feed(*) feed) {
 
 
 // When we see nullptr in the valist, we make a compromise of convenience,
-// where a ~null~ BAD-WORD! is put in the feed.  We've told a lie, but if
-// evaluated it will produce a ~null~ isotope...which will decay to a pure
-// null if assigned to a variable.
+// where BLANK! is used.  We've told a lie, but if evaluated it will produce
+// NULL, which will decay to a pure null if assigned to a variable.
 //
-// Also: the `@` operator is tweaked to not accept BAD-WORD! except for ~null~,
-// in which case it makes a pure null...so this can be leveraged in API calls.
+// Also: the `@` operator is tweaked to turn BLANK! into null.  So this can
+// be leveraged in API calls.
 //
-inline static void Handle_Feed_Nullptr(Feed(*) feed) {
-    Init_Quasi_Word(&feed->fetched, Canon(NULL));
-    feed->p = &feed->fetched;
-
-    assert(FEED_SPECIFIER(feed) == SPECIFIED);  // !!! why assert this?
-}
+#define FEED_NULL_SUBSTITUTE_CELL \
+    Lib(BLANK)
 
 
 // 1. The va_end() is taken care of here; all code--regardless of throw or
@@ -191,16 +186,21 @@ inline static void Finalize_Variadic_Feed(Feed(*) feed) {
 // A cell pointer in a variadic feed should be fine to use directly, because
 // all such "spliced" cells should be specific.
 //
-inline static Value(const*) Check_Variadic_Feed_Cell(Feed(*) feed) {
-    const REBVAL *cell = cast(const REBVAL*, feed->p);
-    assert(not IS_RELATIVE(cast(Cell(const*), cell)));
+inline static Value(const*) Check_Variadic_Feed_Cell(const void *p) {
+    Cell(const*) cell = cast(Cell(const*), p);
+    assert(not IS_RELATIVE(cell));
 
-    assert(FEED_SPECIFIER(feed) == SPECIFIED);
+    // Used by rebQUOTING, so isotopes are tolerated
+    //
+    if (Is_Isotope(cell))
+        return VAL(cell);
 
-    if (Is_Nulled(cell))  // API enforces use of C's nullptr (0) for NULL
-        assert(!"NULLED cell API leak, see NULLIFY_NULLED() in C source");
+    if (Is_Nulled(cell)) {  // API enforces use of C's nullptr (0) for NULL
+        assert(not Is_Api_Value(cell));  // but internal cells can be nulled
+        return FEED_NULL_SUBSTITUTE_CELL;  // ...they are converted to blanks
+    }
 
-    return cell;
+    return VAL(cell);
 }
 
 
@@ -318,7 +318,7 @@ inline static void Force_Variadic_Feed_At_Cell_Or_End_May_Fail(Feed(*) feed)
 
     if (not feed->p) {  // libRebol's NULL (prohibited as an Is_Nulled() CELL)
 
-        Handle_Feed_Nullptr(feed);
+        feed->p = FEED_NULL_SUBSTITUTE_CELL;
 
     } else switch (Detect_Rebol_Pointer(feed->p)) {
 
@@ -327,7 +327,8 @@ inline static void Force_Variadic_Feed_At_Cell_Or_End_May_Fail(Feed(*) feed)
         break;  // va_end() handled by Free_Feed() logic
 
       case DETECTED_AS_CELL:
-        Check_Variadic_Feed_Cell(feed);
+        assert(FEED_SPECIFIER(feed) == SPECIFIED);
+        Check_Variadic_Feed_Cell(feed->p);
         break;
 
       case DETECTED_AS_SERIES:  // e.g. rebQ, rebU, or a rebR() handle

@@ -1098,9 +1098,9 @@ REBTYPE(Gob)
         return rebValue(
             "applique :take [",
                 "series: at", rebQ(pane), rebI(index + 1),
-                "part:", REF(part),
-                "deep:", REF(deep),
-                "last:", REF(last),
+                "part:", ARG(part),
+                "deep:", ARG(deep),
+                "last:", ARG(last),
             "]"
         ); }
 

@@ -1201,9 +1201,9 @@ REBTYPE(Array)
         Array(*) arr = VAL_ARRAY_ENSURE_MUTABLE(array);
 
         struct sort_flags flags;
-        flags.cased = did REF(case);
-        flags.reverse = did REF(reverse);
-        flags.all = did REF(all);  // !!! not used?
+        flags.cased = REF(case);
+        flags.reverse = REF(reverse);
+        flags.all = REF(all);  // !!! not used?
 
         REBVAL *cmp = ARG(compare);  // null if no /COMPARE
         if (IS_ACTION(cmp)) {
@@ -1262,7 +1262,7 @@ REBTYPE(Array)
 
             Init_Integer(
                 ARG(seed),
-                1 + (Random_Int(did REF(secure))
+                1 + (Random_Int(REF(secure))
                     % (VAL_LEN_HEAD(array) - index))
             );
 
@@ -1276,7 +1276,7 @@ REBTYPE(Array)
         }
 
         Array(*) arr = VAL_ARRAY_ENSURE_MUTABLE(array);
-        Shuffle_Array(arr, VAL_INDEX(array), did REF(secure));
+        Shuffle_Array(arr, VAL_INDEX(array), REF(secure));
         return COPY(array); }
 
     // !!! The ability to transform some BLOCK!s into PORT!s for some actions

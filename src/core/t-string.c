@@ -1175,7 +1175,7 @@ REBTYPE(String)
         if (REF(only)) {
             if (index >= tail)
                 return nullptr;
-            index += cast(REBLEN, Random_Int(did REF(secure)))
+            index += cast(REBLEN, Random_Int(REF(secure)))
                 % (tail - index);
 
             return Init_Char_Unchecked(
@@ -1189,7 +1189,7 @@ REBTYPE(String)
         if (not Is_String_Definitely_ASCII(str))
             fail ("UTF-8 Everywhere: String shuffle temporarily unavailable");
 
-        bool secure = did REF(secure);
+        bool secure = REF(secure);
 
         REBLEN n;
         for (n = STR_LEN(str) - index; n > 1;) {

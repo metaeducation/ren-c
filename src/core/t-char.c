@@ -427,7 +427,7 @@ REBTYPE(Issue)
         if (chr == 0)
             break;
         chr = cast(Codepoint,
-            1 + cast(REBLEN, Random_Int(did REF(secure)) % chr)
+            1 + cast(REBLEN, Random_Int(REF(secure)) % chr)
         );
         break; }
 

@@ -704,7 +704,7 @@ REBTYPE(Time)
                 Set_Random(secs);
                 return nullptr;
             }
-            secs = Random_Range(secs / SEC_SEC, did REF(secure)) * SEC_SEC;
+            secs = Random_Range(secs / SEC_SEC, REF(secure)) * SEC_SEC;
             return Init_Time_Nanoseconds(OUT, secs); }
 
           default:

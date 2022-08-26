@@ -997,10 +997,7 @@ static enum Reb_Token Maybe_Locate_Token_May_Push_Mold(
     //
     while (not ss->begin) {
         if (f->feed->p == nullptr) {  // API null, can't be in feed, use BLANK
-            //
-            // We don't call Handle_Feed_Nullptr() because we don't need the
-            // cell in f->feed->fetched.
-            //
+            assert(IS_BLANK(FEED_NULL_SUBSTITUTE_CELL));
             Init_Blank(PUSH());
             if (Get_Executor_Flag(SCAN, f, NEWLINE_PENDING)) {
                 Clear_Executor_Flag(SCAN, f, NEWLINE_PENDING);
@@ -1013,8 +1010,12 @@ static enum Reb_Token Maybe_Locate_Token_May_Push_Mold(
             return TOKEN_END;
 
           case DETECTED_AS_CELL: {
-            Value(const*) cell = Check_Variadic_Feed_Cell(f->feed);
-            Copy_Cell(PUSH(), cell);
+            assert(FEED_SPECIFIER(f->feed) == SPECIFIED);
+            Value(const*) at = Check_Variadic_Feed_Cell(f->feed->p);
+            if (Is_Nulled(at))
+                Init_Meta_Of_Null_Isotope(PUSH());  // can't push nulls
+            else
+                Copy_Cell(PUSH(), at);
             if (Get_Executor_Flag(SCAN, f, NEWLINE_PENDING)) {
                 Clear_Executor_Flag(SCAN, f, NEWLINE_PENDING);
                 Set_Cell_Flag(TOP, NEWLINE_BEFORE);

@@ -616,7 +616,7 @@ REBTYPE(Bitset)
         if (REF(part) or REF(skip) or WANTED(tail) or REF(match))
             fail (Error_Bad_Refines_Raw());
 
-        if (not Check_Bits(VAL_BITSET(v), ARG(value), did REF(case)))
+        if (not Check_Bits(VAL_BITSET(v), ARG(value), REF(case)))
             return nullptr;
         return Init_True(OUT); }
 

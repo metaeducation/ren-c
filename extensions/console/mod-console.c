@@ -315,8 +315,8 @@ DECLARE_NATIVE(console)
         "ext-console-impl",  // action! that takes 4 args, run it
             rebQ(code),  // group! or block! executed prior (or blank!)
             rebQ(metaresult),  // prior result quoted, or error (or blank!)
-            "did", rebQ(REF(resumable)),
-            rebQ(REF(skin))
+            rebL(REF(resumable)),
+            ARG(skin)  // if null, feed makes BLANK!, evals to null again
     );
 
     /*rebRelease(code);

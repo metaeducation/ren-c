@@ -79,7 +79,7 @@ DECLARE_NATIVE(stats)
     if (REF(show))
         Dump_Pools();
 
-    return Init_Integer(OUT, Inspect_Series(did REF(show)));
+    return Init_Integer(OUT, Inspect_Series(REF(show)));
   #else
     UNUSED(REF(show));
     UNUSED(ARG(pool));

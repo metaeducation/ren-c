@@ -486,7 +486,7 @@ DECLARE_NATIVE(unbind)
         Cell(const*) tail;
         Cell(*) at = VAL_ARRAY_AT_ENSURE_MUTABLE(&tail, word);
         option(Context(*)) context = nullptr;
-        Unbind_Values_Core(at, tail, context, did REF(deep));
+        Unbind_Values_Core(at, tail, context, REF(deep));
     }
 
     return COPY(word);

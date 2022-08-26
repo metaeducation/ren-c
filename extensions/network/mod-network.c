@@ -921,7 +921,7 @@ static Bounce Transport_Actor(
         // this as an angle on efficiency.
         //
         rebreq->binary = rebValue(
-            "as binary! copy/part", data, rebQ(REF(part))
+            "as binary! copy/part", data, rebQ(ARG(part))
         );
         rebUnmanage(rebreq->binary);  // otherwise would be seen as a leak
 

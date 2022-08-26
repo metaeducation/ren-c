@@ -343,7 +343,7 @@ inline static enum Reb_Kind VAL_TYPE_UNCHECKED(Cell(const*) v) {
         // Give more granular errors based on specific failure
 
         if (quote_byte == ISOTOPE_0) {
-            printf("VAL_TYPE() called on isotope (quotelevel 255)");
+            printf("VAL_TYPE() called on isotope (QUOTE_BYTE() of 0)");
             panic_at (v, file, line);
         }
 

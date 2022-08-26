@@ -532,7 +532,7 @@ Bounce File_Actor(Frame(*) frame_, REBVAL *port, Symbol(const*) verb)
 
         return rebValue(Canon(APPLIQUE), Canon(READ), "[",
             "source:", port,
-            "part:", rebQ(REF(part)),
+            "part:", rebQ(ARG(part)),
         "]"); }
 
     //=//// CLOSE //////////////////////////////////////////////////////////=//
