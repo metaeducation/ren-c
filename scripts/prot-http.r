@@ -38,22 +38,20 @@ REBOL [
 
 digit: charset [#"0" - #"9"]
 alpha: charset [#"a" - #"z" #"A" - #"Z"]
-idate-to-date: lambda [date [text!]] [
-    parse3 date [
-        5 skip
-        copy day: 2 digit
+idate-to-date: lambda [idate [text!]] [
+    parse idate [
+        skip 5
+        day: across [digit digit]
         space
-        copy month: 3 alpha
+        month: across [alpha alpha alpha]
         space
-        copy year: 4 digit
+        year: across [digit digit digit digit]
         space
-        copy time: to space
-        space
-        copy zone: to <end>
+        time: between <here> space
+        zone: ["GMT" (copy "+0") | between <here> <end>]
     ] else [
-        fail ["Invalid idate:" date]
+        fail ["Invalid idate:" idate]
     ]
-    if zone = "GMT" [zone: copy "+0"]
     to date! unspaced [day "-" month "-" year "/" time zone]
 ]
 
@@ -165,16 +163,13 @@ parse-write-dialect: function [
     block [block!]
 ][
     spec: port.spec
-    parse3 block [
-        opt ['headers (spec.debug: true)]
-        opt ['no-redirect (spec.follow: 'ok)]
-        [set temp: word! (spec.method: temp) | (spec.method: 'post)]
-        opt [set temp: [file! | url!] (spec.path: temp)]
-        [set temp: block! (spec.headers: temp) | (spec.headers: [])]
-        [
-            set temp: [any-string! | binary!] (spec.content: temp)
-            | (spec.content: _)
-        ]
+    parse block [
+        spec.debug: opt ['headers (true)]
+        spec.follow: opt ['no-redirect ('ok)]
+        spec.method: [word! | ('post)]
+        spec.path: opt [file! | url!]
+        spec.headers: [block! | ([])]
+        spec.content: opt [any-string! | binary!]
         <end>
     ]
 ]
