@@ -755,90 +755,85 @@
 #endif
 
 
-//=//// OPTIONAL POINTER TRICK ////////////////////////////////////////////=//
+//=//// OPTIONAL TRICK FOR TYPES THAT TEST AGAINST 0 //////////////////////=//
 //
-// There are some pointers in the system which can be `nullptr` and others
-// that are not.  To make it clear when a pointer must be tested for null,
-// this gives an annotation that will work in special builds.
+// This is a light wrapper class that provides limited functionality in the
+// vein of `std::optional` and Rust's `Option`:
 //
-// This is similar to `std::optional` and Rust's `Option` (and uses the Rust
-// term `unwrap` to get access to the "contained" pointer).  However, it
-// just uses `nullptr` for the none state (instead of `std::nullopt` or a
-// `None` type).  Construction and comparison are also more lenient, allowing
+//     option(char*) abc = "abc";
+//     option(char*) xxx = nullptr;
+//
+//     char* s1 = abc;                  // **compile time error
+//     option(char*) s2 = abc;          // legal
+//
+//     char* s3 = unwrap(xxx);          // **runtime error
+//     char* s4 = try_unwrap(xxx);      // gets nullptr out
+//
+// Rather than invent a new nothing state (like `std::nullopt`) this just uses
+// nullptr.  Construction and comparison are also more lenient, allowing
 // direct comparison to the contained pointer type.
 //
-// It uses Rust's naming in order to stay out of the way of C++ codebases that
-// do `using std::optional;`  These are also macros, so they can be redefined
-// out of the way even further if needed.
+// 1. This needs special handling in %make-headers.r to recognize the format.
+//    See the `typemacro_parentheses` rule.
 //
-// Note: This needs special handling in %make-headers.r to recognize the
-// format.  See the `typemacro_parentheses` rule.
+// 2. We want to be able to default construct structures with members that are
+//    option(), so we can't provide custom default constructor code.
+//
+// 3. While the combinatorics may seem excessive with repeating the equality
+//    and inequality operators, this is the way std::optional does it too.
 //
 #if DEBUG_CHECK_OPTIONALS
-    //
-    // Trying to use `std::optional` is more trouble than it's worth; we'd
-    // have to deal with the `nullopt` state which overlaps `nullptr`,
-    // and there's all kinds of issues the moment you derive from it.
-    // Just write a simple class specific to the purpose instead.
-    //
-    template<typename TP>
-    struct optional_pointer {
-        static_assert(
-            std::is_pointer<TP>::value,
-            "The intended use of Ren-C's option() is with pointers only"
-        );
-        typedef typename std::remove_pointer<TP>::type T;
+    template<typename T>
+    struct OptionWrapper {
+        T wrapped;
 
-        T* p;
+        OptionWrapper () = default;  // garbage, or 0 if global, see [2]
 
-        // C++ won't let you default construct objects without a default
-        // constructor.  To be C compatible, it cannot have behavior.
-        //
-        optional_pointer () = default;  // garbage (or 0 if in global scope)
+        template <typename U>
+        OptionWrapper (U something) : wrapped (something) {}
 
         template <typename X>
-        optional_pointer (X p) : p (p) {}
+        OptionWrapper (OptionWrapper<X> other) : wrapped (other.wrapped) {}
 
-        template <typename X>
-        optional_pointer (optional_pointer<X> op) : p (op.p) {}
-
-        T* unwrap_helper() const {
-            assert(p != nullptr);  // asserts only on DEBUG_CHECK_OPTIONALS
-            return p;
+        T unwrap_helper() const {
+            assert(wrapped != 0);  // works with nullptr, or integers/enums
+            return wrapped;
         }
 
-        operator bool() const { return p != nullptr; }
+        operator uintptr_t() const  // so it works in switch() statements
+          { return cast(uintptr_t, wrapped); }
+
+        explicit operator T()  // must be an *explicit* cast
+          { return wrapped; }
     };
 
-    // Ugly combinatorics.  But yes, it's how std::optional does it too.
+    template<typename L, typename R>
+    bool operator==(OptionWrapper<L> left, OptionWrapper<R> right)
+        { return left.wrapped == right.wrapped; }
 
     template<typename L, typename R>
-    bool operator==(optional_pointer<L> left, optional_pointer<R> right)
-        { return left.p == right.p; }
+    bool operator==(OptionWrapper<L> left, R right)
+        { return left.wrapped == right; }
 
     template<typename L, typename R>
-    bool operator==(optional_pointer<L> left, R right)
-        { return left.p == right; }
+    bool operator==(L left, OptionWrapper<R> right)
+        { return left == right.wrapped; }
 
     template<typename L, typename R>
-    bool operator==(L left, optional_pointer<R> right)
-        { return left == right.p; }
+    bool operator!=(OptionWrapper<L> left, OptionWrapper<R> right)
+        { return left.wrapped != right.wrapped; }
 
     template<typename L, typename R>
-    bool operator!=(optional_pointer<L> left, optional_pointer<R> right)
-        { return left.p != right.p; }
+    bool operator!=(OptionWrapper<L> left, R right)
+        { return left.wrapped != right; }
 
     template<typename L, typename R>
-    bool operator!=(optional_pointer<L> left, R right)
-        { return left.p != right; }
+    bool operator!=(L left, OptionWrapper<R> right)
+        { return left != right.wrapped; }
 
-    template<typename L, typename R>
-    bool operator!=(L left, optional_pointer<R> right)
-        { return left != right.p; }
-
-    #define option(TP) optional_pointer<TP>
+    #define option(T) OptionWrapper<T>
     #define unwrap(v) (v).unwrap_helper()
-    #define try_unwrap(v) (v).p
+    #define try_unwrap(v) (v).wrapped
 #else
     #define option(T) T
     #define unwrap(v) (v)
@@ -937,14 +932,14 @@
 
     #if DEBUG_CHECK_OPTIONALS
         template<class P>
-        inline static void TRASH_POINTER_IF_DEBUG(optional_pointer<P> &p) {
-            p = reinterpret_cast<P>(static_cast<uintptr_t>(0xDECAFBAD));
+        inline static void TRASH_POINTER_IF_DEBUG(OptionWrapper<P> &p) {
+            p.wrapped = reinterpret_cast<P>(static_cast<uintptr_t>(0xDECAFBAD));
         }
 
         template<class P>
-        inline static bool IS_POINTER_TRASH_DEBUG(optional_pointer<P> &p) {
-            return (
-                p.p == reinterpret_cast<P>(static_cast<uintptr_t>(0xDECAFBAD))
+        inline static bool IS_POINTER_TRASH_DEBUG(OptionWrapper<P> &p) {
+            return p.wrapped == (
+                reinterpret_cast<P>(static_cast<uintptr_t>(0xDECAFBAD))
             );
         }
     #endif

@@ -469,7 +469,7 @@ gen-obj: func [
                 <gnu:-Wno-conversion> <gnu:-Wno-strict-overflow>
                 ;<gnu:-Wstrict-overflow=5>
 
-                ; Warning about std::is_pod<optional_pointer<const Reb_Value*>>
+                ; Warning about std::is_pod<OptionWrapper<const Reb_Value*>>
                 ; having a different answer in different versions, affects the
                 ; UNUSED() variable trashing in debug build, not a big issue.
                 ;
