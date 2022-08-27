@@ -929,8 +929,8 @@ bool Get_Path_Push_Refinements_Throws(
     REBLEN len = VAL_SEQUENCE_LEN(path) - 1;
     for (; len != 0; --len) {
         Cell(const*) at = VAL_SEQUENCE_AT(safe, path, len);
+        DECLARE_LOCAL (temp);
         if (IS_GROUP(at)) {
-            DECLARE_LOCAL (temp);
             REBSPC *derived = Derive_Specifier(
                 path_specifier,
                 at
