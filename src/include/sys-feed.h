@@ -186,18 +186,19 @@ inline static void Finalize_Variadic_Feed(Feed(*) feed) {
 // A cell pointer in a variadic feed should be fine to use directly, because
 // all such "spliced" cells should be specific.
 //
-inline static Value(const*) Check_Variadic_Feed_Cell(const void *p) {
-    Cell(const*) cell = cast(Cell(const*), p);
+inline static Value(const*) Reified_Variadic_Feed_Cell(Feed(*) feed) {
+    Cell(const*) cell = cast(Cell(const*), feed->p);
     assert(not IS_RELATIVE(cell));
-
-    // Used by rebQUOTING, so isotopes are tolerated
-    //
-    if (Is_Isotope(cell))
-        return VAL(cell);
 
     if (Is_Nulled(cell)) {  // API enforces use of C's nullptr (0) for NULL
         assert(not Is_Api_Value(cell));  // but internal cells can be nulled
         return FEED_NULL_SUBSTITUTE_CELL;  // ...they are converted to blanks
+    }
+
+    if (Is_Isotope(cell)) {  // @ will turn these back into isotopes
+        feed->p = Copy_Cell(&feed->fetched, SPECIFIC(cell));
+        mutable_QUOTE_BYTE(&feed->fetched) = QUASI_2;
+        return VAL(&feed->fetched);
     }
 
     return VAL(cell);
@@ -328,7 +329,6 @@ inline static void Force_Variadic_Feed_At_Cell_Or_End_May_Fail(Feed(*) feed)
 
       case DETECTED_AS_CELL:
         assert(FEED_SPECIFIER(feed) == SPECIFIED);
-        Check_Variadic_Feed_Cell(feed->p);
         break;
 
       case DETECTED_AS_SERIES:  // e.g. rebQ, rebU, or a rebR() handle

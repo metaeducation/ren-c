@@ -2021,12 +2021,12 @@ const REBINS *RL_rebQUOTING(const void *p)
 {
     ENTER_API;
 
+    Array(*) a;
+
     if (p == nullptr) {
-        p = Lib(NULL);
+        p = Lib(NULL);  // not FEED_NULL_SUBSTITUTE_CELL, or we'd quote BLANK!
         goto handle_cell;
     }
-
-    Array(*) a;
 
     switch (Detect_Rebol_Pointer(p)) {
       case DETECTED_AS_SERIES: {
@@ -2037,7 +2037,7 @@ const REBINS *RL_rebQUOTING(const void *p)
 
       handle_cell:
       case DETECTED_AS_CELL: {
-        Value(const*) at = Check_Variadic_Feed_Cell(p);
+        Value(const*) at = cast(Value(const*), p);
         Value(*) v = Copy_Cell(Alloc_Value(), at);
         a = Singular_From_Cell(v);
         Set_Subclass_Flag(API, a, RELEASE);

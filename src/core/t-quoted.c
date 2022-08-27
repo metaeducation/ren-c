@@ -186,10 +186,17 @@ DECLARE_NATIVE(the)
 //
 DECLARE_NATIVE(the_p)
 //
-// THE* is the variant assigned to @.  It turns BLANK! to NULL
+// THE* is the variant assigned to @.  It turns BLANK! to NULL, and QUASI!
+// forms into isotopes, but passes through all other values:
 //
 //     >> @ _
 //     ; null
+//
+//     >> @ ~[1 2 3]~
+//     == ~[1 2 3]~  ; isotope
+//
+//     >> @ abc
+//     == abc
 //
 // This is done as a convenience for the API so people can write:
 //
@@ -201,13 +208,22 @@ DECLARE_NATIVE(the_p)
 //
 // Because the API machinery will put a blank into the stream as a surrogate
 // for a NULL instead of asserting/erroring.
+//
+// The reason it isotopifies things is that the belief is that this will
+// be more likely to generate something that will raise attention if it's not
+// actually correct--otherwise the auto-reification would be more troublesome.
 {
     INCLUDE_PARAMS_OF_THE_P;
 
     REBVAL *v = ARG(value);
 
-    if (IS_BLANK(v))
+    if (IS_BLANK(v)) {
         Init_Nulled(OUT);
+    }
+    else if (IS_QUASI(v)) {
+        Copy_Cell(OUT, v);
+        mutable_QUOTE_BYTE(OUT) = ISOTOPE_0;
+    }
     else {
         Copy_Cell(OUT, v);
         Set_Cell_Flag(OUT, UNEVALUATED);  // !!! Is this a good idea?
