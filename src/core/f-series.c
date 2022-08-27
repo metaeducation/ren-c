@@ -310,8 +310,8 @@ REBINT Compare_Arrays_At_Indexes(
 //
 REBINT Cmp_Value(Cell(const*) sval, Cell(const*) tval, bool strict)
 {
-    REBLEN squotes = VAL_NUM_QUOTES(sval);
-    REBLEN tquotes = VAL_NUM_QUOTES(tval);
+    Byte squotes = QUOTE_BYTE(sval);
+    Byte tquotes = QUOTE_BYTE(tval);
     if (squotes != tquotes)
         return squotes > tquotes ? 1 : -1;
 

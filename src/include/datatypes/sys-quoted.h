@@ -115,17 +115,6 @@ inline static Cell(*) Unquotify_Core(Cell(*) v, REBLEN unquotes) {
 #endif
 
 
-
-inline static void Unquotify_Dont_Expect_Meta(Value(*) v) {
-    if (Is_Meta_Of_Void(v)) {
-        Init_Nulled(v);
-        return;
-    }
-    if (not IS_QUOTED(v))
-        fail (v);
-    Unquotify(v, 1);
-}
-
 #define VAL_UNESCAPED(v) \
     x_cast(noquote(Cell(const*)), (v))
 

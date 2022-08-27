@@ -917,15 +917,13 @@ REBTYPE(Array)
 
         REBVAL *pattern = ARG(pattern);
 
-        if (Is_Meta_Of_Null(pattern))
-            return nullptr;  // BLANK! in, NULL out
+        if (Is_Void(pattern))
+            return nullptr;  // VOID in, NULL out
 
         Flags flags = (
             (REF(match) ? AM_FIND_MATCH : 0)
             | (REF(case) ? AM_FIND_CASE : 0)
         );
-
-        Meta_Unquotify(pattern);
 
         REBLEN limit = Part_Tail_May_Modify_Index(array, ARG(part));
 
@@ -990,7 +988,7 @@ REBTYPE(Array)
         // Note that while inserting or appending VOID is a no-op, CHANGE with
         // a /PART can actually erase data.
         //
-        if (Is_Meta_Of_Void(arg) and len == 0) {
+        if (Is_Void(arg) and len == 0) {
             if (id == SYM_APPEND)  // append always returns head
                 VAL_INDEX_RAW(array) = 0;
             return COPY(array);  // don't fail on read only if would be a no-op
@@ -1003,19 +1001,17 @@ REBTYPE(Array)
 
         Copy_Cell(OUT, array);
 
-        if (Is_Meta_Of_Void(arg)) {
-            Init_Nulled(arg);
+        if (Is_Void(arg)) {
+            // not necessarily a no-op (e.g. CHANGE can erase)
         }
-        else if (IS_QUOTED(arg)) {
-            Unquotify(arg, 1);
+        else if (Is_Splice(arg)) {
+            flags |= AM_SPLICE;
+            mutable_QUOTE_BYTE(arg) = UNQUOTED_1;  // make plain block
+        }
+        else {
+            assert(not Is_Isotope(arg));  // only ~block!~ in typecheck
             assert(not Is_Nulled(arg));  // not <opt> in typecheck
         }
-        else if (Is_Meta_Of_Splice(arg)) {
-            flags |= AM_SPLICE;
-            Unquasify(arg);
-        }
-        else
-            fail ("Only Isotope for APPEND/INSERT/CHANGE must is SPLICE");
 
         if (REF(part))
             flags |= AM_PART;

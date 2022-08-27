@@ -46,15 +46,11 @@ REBLEN Modify_Array(
     Cell(const*) src_rel;
     REBSPC *specifier;
 
-    if (sym == SYM_CHANGE and Is_Nulled(src_val)) {
-        //
-        // Tweak requests to CHANGE to a null to be a deletion; basically
-        // what happens with an empty block.
-        //
+    if (sym == SYM_CHANGE and Is_Void(src_val)) {
         flags |= AM_SPLICE;
-        src_val = EMPTY_BLOCK;
+        src_val = EMPTY_BLOCK;  // CHANGE to void acts same as with empty block
     }
-    else if (Is_Nulled(src_val) or dups <= 0) {
+    else if (Is_Void(src_val) or dups <= 0) {
         //
         // If they are effectively asking for "no action" then all we have
         // to do is return the natural index result for the operation.
@@ -269,7 +265,7 @@ REBLEN Modify_String_Or_Binary(
         dst_len_old = STR_LEN(STR(dst_ser));
     }
 
-    if (Is_Nulled(src)) {  // no-op, unless CHANGE, where it means delete
+    if (Is_Void(src)) {  // no-op, unless CHANGE, where it means delete
         if (sym == SYM_APPEND)
             return 0;  // APPEND returns index at head
         else if (sym == SYM_INSERT)

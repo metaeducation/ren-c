@@ -609,7 +609,8 @@ REBTYPE(Bitset)
 
       case SYM_SELECT: {
         INCLUDE_PARAMS_OF_SELECT;
-        Unquotify_Dont_Expect_Meta(ARG(value));
+        if (Is_Isotope(ARG(value)))
+            fail (ARG(value));
 
         UNUSED(PARAM(series));  // covered by `v`
 
@@ -627,11 +628,12 @@ REBTYPE(Bitset)
 
       case SYM_APPEND:  // Accepts: #"a" "abc" [1 - 10] [#"a" - #"z"] etc.
       case SYM_INSERT: {
-        Unquotify_Dont_Expect_Meta(D_ARG(2));
-
         REBVAL *arg = D_ARG(2);
-        if (Is_Nulled(arg))
+        if (Is_Void(arg))
             return COPY(v);  // don't fail on read only if it would be a no-op
+
+        if (Is_Isotope(arg))
+            fail (arg);
 
         Binary(*) bin = VAL_BITSET_ENSURE_MUTABLE(v);
 

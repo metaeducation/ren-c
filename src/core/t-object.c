@@ -1190,14 +1190,17 @@ REBTYPE(Context)
 
       case SYM_APPEND: {
         REBVAL *arg = D_ARG(2);
-        if (Is_Nulled(arg))
+        if (Is_Void(arg))
             return COPY(context);  // don't fail on R/O if it would be a no-op
 
         ENSURE_MUTABLE(context);
         if (not IS_OBJECT(context) and not IS_MODULE(context))
             return BOUNCE_UNHANDLED;
 
-        if (VAL_NUM_QUOTES(arg) == 1 and ANY_WORD_KIND(CELL_HEART(arg))) {
+        if (Is_Splice(arg)) {
+            mutable_QUOTE_BYTE(arg) = UNQUOTED_1;  // make plain block
+        }
+        else if (ANY_WORD(arg)) {
             // Add an unset word: `append context 'some-word`
             const bool strict = true;
             if (0 == Find_Symbol_In_Context(
@@ -1209,11 +1212,8 @@ REBTYPE(Context)
             }
             return COPY(context);
         }
-
-        if (not Is_Meta_Of_Splice(arg))
+        else
             fail (arg);
-
-        Unquasify(arg);
 
         Append_Vars_To_Context_From_Block(context, arg);
         return COPY(context); }
@@ -1265,7 +1265,9 @@ REBTYPE(Context)
             fail (Error_Bad_Refines_Raw());
 
         REBVAL *pattern = ARG(value);
-        Unquotify_Dont_Expect_Meta(pattern);
+        if (Is_Isotope(pattern))
+            fail (pattern);
+
         if (not IS_WORD(pattern))
             return nullptr;
 

@@ -784,8 +784,6 @@ void Find_Image(Frame(*) frame_)
 {
     INCLUDE_PARAMS_OF_FIND;
 
-    Unquotify_Dont_Expect_Meta(ARG(pattern));
-
     REBVAL *value = ARG(series);
     REBVAL *arg = ARG(pattern);
     REBLEN index = VAL_IMAGE_POS(arg);
@@ -1300,15 +1298,16 @@ REBTYPE(Image)
     case SYM_APPEND:
     case SYM_INSERT:
     case SYM_CHANGE: {
-        Unquotify_Dont_Expect_Meta(D_ARG(2));
-
-        if (Is_Nulled(D_ARG(2))) {
+        if (Is_Void(D_ARG(2))) {
             if (id == SYM_APPEND) // append returns head position
                 VAL_IMAGE_POS(image) = 0;
             return COPY(image); // don't fail on read only if it would be a no-op
         }
-        ENSURE_MUTABLE(image);
 
+        if (Is_Isotope(D_ARG(2)))
+            fail (D_ARG(2));
+
+        ENSURE_MUTABLE(image);
         return Modify_Image(frame_, verb); }
 
     case SYM_FIND:

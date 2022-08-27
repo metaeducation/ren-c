@@ -402,7 +402,7 @@ REBTYPE(Binary)
         // Note that while inserting or appending VOID is a no-op, CHANGE with
         // a /PART can actually erase data.
         //
-        if (Is_Meta_Of_Void(arg) and len == 0) {
+        if (Is_Void(arg) and len == 0) {
             if (id == SYM_APPEND) // append always returns head
                 VAL_INDEX_RAW(v) = 0;
             return COPY(v);  // don't fail on read only if would be a no-op
@@ -426,20 +426,17 @@ REBTYPE(Binary)
         // quoted that should give molding semantics, so quoted blocks include
         // their brackets.  Review.
         //
-        if (Is_Meta_Of_Void(arg)) {
-            Init_Nulled(arg);
+        if (Is_Void(arg)) {
+            // not necessarily a no-op (e.g. CHANGE can erase)
         }
-        else if (Is_Meta_Of_Splice(arg)) {
-            Unquasify(arg);
+        else if (Is_Splice(arg)) {
+            mutable_QUOTE_BYTE(arg) = UNQUOTED_1;  // make plain block
         }
-        else if (IS_QUOTED(arg)) {
-            Unquotify(arg, 1);  // remove "^META" level
+        else {
             assert(not Is_Nulled(arg));  // not an <opt> parameter
             if (ANY_ARRAY(arg) or ANY_SEQUENCE(arg))
                 fail (ARG(value));
         }
-        else
-            fail (ARG(value));
 
         VAL_INDEX_RAW(v) = Modify_String_Or_Binary(
             v,
@@ -458,7 +455,8 @@ REBTYPE(Binary)
         UNUSED(PARAM(series));  // covered by `v`
 
         REBVAL *pattern = ARG(pattern);
-        Unquotify_Dont_Expect_Meta(pattern);
+        if (Is_Isotope(pattern))
+            fail (pattern);
 
         Flags flags = (
             (REF(match) ? AM_FIND_MATCH : 0)

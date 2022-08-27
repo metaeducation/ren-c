@@ -868,7 +868,7 @@ REBTYPE(String)
         // Note that while inserting or appending NULL is a no-op, CHANGE with
         // a /PART can actually erase data.
         //
-        if (Is_Meta_Of_Void(arg) and len == 0) {
+        if (Is_Void(arg) and len == 0) {
             if (id == SYM_APPEND) // append always returns head
                 VAL_INDEX_RAW(v) = 0;
             return COPY(v);  // don't fail on read only if would be a no-op
@@ -889,20 +889,19 @@ REBTYPE(String)
         // However it will not try to FORM blocks or other arrays; it only
         // accepts isotopic blocks to imply "append each item individually".
         //
-        if (Is_Meta_Of_Void(arg)) {
-            Init_Nulled(arg);
+        if (Is_Void(arg)) {
+            // not necessarily a no-op (e.g. CHANGE can erase)
         }
-        else if (Is_Meta_Of_Splice(arg)) {
-            Unquasify(arg);
+        else if (Is_Splice(arg)) {
+            mutable_QUOTE_BYTE(arg) = UNQUOTED_1;
         }
-        else if (IS_QUOTED(arg)) {  // e.g. wasn't VOID incoming
-            Unquotify(arg, 1);  // remove "^META" level
+        else {
+            assert(not Is_Isotope(arg));  //
             assert(not Is_Nulled(arg));  // not an <opt> parameter
+
             if (ANY_ARRAY(arg))
                 fail (ARG(value));  // error on `append "abc" [d e]` w/o SPREAD
         }
-        else
-            fail (ARG(value));
 
         VAL_INDEX_RAW(v) = Modify_String_Or_Binary(  // does read-only check
             v,
@@ -918,7 +917,8 @@ REBTYPE(String)
       case SYM_SELECT:
       case SYM_FIND: {
         INCLUDE_PARAMS_OF_FIND;
-        Unquotify_Dont_Expect_Meta(ARG(pattern));
+        if (Is_Isotope(ARG(pattern)))
+            fail (ARG(pattern));
 
         UNUSED(PARAM(series));
 

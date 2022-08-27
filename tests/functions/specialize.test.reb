@@ -52,7 +52,7 @@
 (
     f: make frame! :append
     f.series: copy [a b c]
-    f.value: quote [d e f]
+    f.value: [d e f]
     [a b c [d e f]] = do f
 )
 (

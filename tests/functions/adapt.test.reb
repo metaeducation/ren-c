@@ -20,7 +20,7 @@
         series: v
     ]
     adapted-append-v: adapt :append-v [
-        value: meta to integer! unmeta value
+        value: to integer! value
     ]
     adapted-append-v "10"
     adapted-append-v "20"

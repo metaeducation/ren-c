@@ -17,8 +17,8 @@ onlify: func [
             /only "Use value literally (don't splice blocks or unquote)"
         ]
     ) compose/deep [
-        all [not only, any-array? series, any-array? unquote (param)] then [
-            (param): as block! unquote (param)
+        all [not only, any-array? series, any-array? (param)] then [
+            set/any '(param) spread (param)
         ]
         ; ...fall through to normal handling
     ]
@@ -57,7 +57,7 @@ true)
 (
     f: make frame! :append/only
     f.series: copy [a b c]
-    f.value: quote [d e f]  ; ^META
+    f.value: [d e f]
     [a b c [d e f]] = do f
 )
 

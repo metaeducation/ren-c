@@ -621,7 +621,8 @@ REBTYPE(Map)
 
       case SYM_SELECT: {
         INCLUDE_PARAMS_OF_SELECT;
-        Unquotify_Dont_Expect_Meta(ARG(value));
+        if (Is_Isotope(ARG(value)))
+            fail (ARG(value));
 
         UNUSED(PARAM(series));  // covered by `v`
 
@@ -671,13 +672,13 @@ REBTYPE(Map)
         UNUSED(PARAM(series));
 
         REBVAL *value = ARG(value);
-        if (Is_Nulled(value))
+        if (Is_Void(value))
             return COPY(map);  // don't fail on read only if it would be a no-op
 
-        if (not Is_Meta_Of_Splice(value))
+        if (not Is_Splice(value))
             fail ("Appending to MAP! only accepts a splice block of key/value");
 
-        Unquasify(value);
+        mutable_QUOTE_BYTE(value) = UNQUOTED_1;
 
         REBMAP *m = VAL_MAP_ENSURE_MUTABLE(map);
 

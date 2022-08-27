@@ -398,9 +398,9 @@ collect*: func [
             f [frame!]
             <with> out
         ][
-            if not void? unget f.value [  ; (META) can't collect voids
+            if not unset? 'f.value [  ; can't collect voids
                 f.series: out: default [make block! 16]  ; no null return now
-                unmeta f.value  ; ELIDE leaves as result
+                get/any 'f.value  ; ELIDE leaves as result
                 elide do f  ; would invalidate f.value (hence ELIDE)
             ]
         ]

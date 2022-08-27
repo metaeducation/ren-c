@@ -290,6 +290,12 @@ inline static bool Matcher_Matches(Cell(const*) matcher, Cell(const*) v) {
 #define PARAM_FLAG_WANT_FAILURES \
     FLAG_LEFT_BIT(20)
 
+#define PARAM_FLAG_ISOTOPES_OKAY \
+    FLAG_LEFT_BIT(21)
+
+#define PARAM_FLAG_NO_ISOTOPE_DECAY \
+    FLAG_LEFT_BIT(21)
+
 
 #define SET_PARAM_FLAG(v,name) \
     (VAL_PARAM_FLAGS(v) |= PARAM_FLAG_##name)

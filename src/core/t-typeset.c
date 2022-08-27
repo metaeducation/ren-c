@@ -141,19 +141,33 @@ bool Add_Typeset_Bits_Core(
     Cell(const*) maybe_word = head;
     for (; maybe_word != tail; ++maybe_word) {
         Cell(const*) item;
+        if (IS_QUASI(maybe_word)) {
+            if (HEART_BYTE(maybe_word) != REB_WORD)
+                fail ("QUASI! must be of WORD! in typeset spec");
+
+            // We suppress isotopic decay on the parameter only if it actually
+            // requests seeing isotopic words, potentially transitively.
+            //
+            switch (VAL_WORD_ID(maybe_word)) {
+              case SYM_WORD_X :
+              case SYM_ANY_WORD_X :
+              case SYM_ANY_VALUE_X :
+              case SYM_ANY_UTF8_X :
+                SET_PARAM_FLAG(typeset, ISOTOPES_OKAY);
+                SET_PARAM_FLAG(typeset, NO_ISOTOPE_DECAY);
+                break;
+
+              default:
+                SET_PARAM_FLAG(typeset, ISOTOPES_OKAY);
+                break;
+            }
+            continue;
+        }
+
         if (IS_WORD(maybe_word))
             item = Lookup_Word_May_Fail(maybe_word, specifier);
         else
             item = maybe_word;  // wasn't variable
-
-        if (IS_TUPLE(item)) {
-            //
-            // !!! This previously called rebUnboxLogic() with "equal?" to check
-            // for the <...> signal for variadics, which is now an odd tuple.
-            // The problem is that you can't call the evaluator while pushing
-            // parameters and typesets to the stack, since the typeset is
-            // in a stack variable.  Review.
-        }
 
         if (IS_TAG(item)) {
             bool strict = false;
@@ -408,7 +422,8 @@ REBTYPE(Typeset)
             fail (Error_Bad_Refines_Raw());
 
         REBVAL *pattern = ARG(pattern);
-        Unquotify_Dont_Expect_Meta(pattern);
+        if (Is_Isotope(pattern))
+            fail (pattern);
 
         if (not IS_DATATYPE(pattern))
             fail (pattern);

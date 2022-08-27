@@ -1038,9 +1038,10 @@ REBTYPE(Gob)
         UNUSED(PARAM(series));  // covered by `v`
 
         Value(*) value = ARG(value);
-        Unquotify_Dont_Expect_Meta(value);
+        if (Is_Isotope(value))
+            fail (value);
 
-        if (Is_Nulled(value))
+        if (Is_Void(value))
             return COPY(v);  // don't fail on read only if it would be a no-op
 
         if (REF(line))
@@ -1112,7 +1113,8 @@ REBTYPE(Gob)
         goto set_index;
 
     case SYM_FIND:
-        Unquotify_Dont_Expect_Meta(D_ARG(2));
+        if (Is_Isotope(D_ARG(2)))
+            fail (D_ARG(2));
 
         if (IS_GOB(D_ARG(2))) {
             index = Find_Gob(gob, VAL_GOB(D_ARG(2)));

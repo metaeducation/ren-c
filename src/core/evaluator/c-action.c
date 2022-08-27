@@ -926,8 +926,11 @@ Bounce Action_Executor(Frame(*) f)
             continue;
         }
 
-        if (Is_Isotope(ARG))  // !!! Upcoming changes will allow some isotopes
+        if (Is_Isotope(ARG)) {
+            if (GET_PARAM_FLAG(PARAM, ISOTOPES_OKAY))
+                continue;
             fail (Error_Isotope_Arg(f, PARAM));
+        }
 
         if (GET_PARAM_FLAG(PARAM, VARIADIC)) {  // can't check now, see [3]
             if (not IS_VARARGS(ARG))  // argument itself is always VARARGS!

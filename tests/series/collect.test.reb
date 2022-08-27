@@ -30,7 +30,7 @@
                 line: #
                 part: null
             ][
-                value: quote try spaced unquote :value
+                value: try spaced :value
             ]
             (as group! body)
         ]
@@ -55,7 +55,7 @@
                     line: null
                     part: null
                 ][
-                    value: quote try unspaced unquote :value
+                    value: try unspaced :value
                 ]
                 (as group! body)
             ]
