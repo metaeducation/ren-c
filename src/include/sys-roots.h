@@ -65,7 +65,6 @@
 // releasing the handle...so beware using FLAVOR_API for detection.
 //
 inline static bool Is_Api_Value(Cell(const*) v) {
-    assert(v->header.bits & NODE_FLAG_CELL);
     return did (v->header.bits & NODE_FLAG_ROOT);
 }
 
@@ -127,27 +126,19 @@ inline static void Unlink_Api_Handle_From_Frame(Array(*) a)
 //
 inline static REBVAL *Alloc_Value(void)
 {
-    Array(*) a = Alloc_Singular(
-        FLAG_FLAVOR(API) |  NODE_FLAG_ROOT | NODE_FLAG_MANAGED
+    Array(*) a = Make_Array_Core(
+        1,
+        FLAG_FLAVOR(API)
+            |  NODE_FLAG_ROOT | NODE_FLAG_MANAGED | SERIES_FLAG_FIXED_SIZE
     );
 
     // Giving the cell itself NODE_FLAG_ROOT lets a REBVAL* be discerned as
     // either an API handle or not.  The flag is not copied by Copy_Cell().
     //
-    // We get back an "erased cell" (header bits are 0, INITABLE() but not
-    // READABLE() or WRITABLE()).  In order to add NODE_FLAG_ROOT we must
-    // also give it NODE_FLAG_NODE and NODE_FLAG_CELL, otherwise the nonzero
-    // status of just NODE_FLAG_ROOT would render it non-INITABLE().
-    //
-    // We add CELL_FLAG_STALE because if we did not, this value would be
-    // considered "good to go"...and we want to catch cases where it is not
-    // meaningfully assigned.
+    // This is still tolerated as a "fresh" state for purposes of init.
     //
     REBVAL *v = SPECIFIC(ARR_SINGLE(a));
-    assert(Is_Cell_Erased(v));
-    v->header.bits = NODE_FLAG_NODE
-        | NODE_FLAG_CELL | NODE_FLAG_ROOT | NODE_FLAG_STALE;
-    assert(Is_Stale_Void(v));
+    v->header.bits = CELL_MASK_0_ROOT;  // not readable, but still "fresh"
 
     // We link the API handle into a doubly linked list maintained by the
     // topmost frame at the time the allocation happens.  This frame will
@@ -164,11 +155,11 @@ inline static void Free_Value(REBVAL *v)
     assert(Is_Api_Value(v));
 
     Array(*) a = Singular_From_Cell(v);
-    RESET(ARR_SINGLE(a));
 
     if (GET_SERIES_FLAG(a, MANAGED))
         Unlink_Api_Handle_From_Frame(a);
 
+    Poison_Cell(ARR_SINGLE(a));  // has to be last (removes NODE_FLAG_ROOT)
     GC_Kill_Series(a);
 }
 

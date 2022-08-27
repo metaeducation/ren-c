@@ -51,9 +51,10 @@
 //
 
 inline static REBVAL *Init_Blank_Untracked(Cell(*) out, Byte quote_byte) {
-    Init_Cell_Header_Untracked(
-        RESET_Untracked(out),
-        FLAG_HEART_BYTE(REB_BLANK) | FLAG_QUOTE_BYTE(quote_byte)
+    FRESHEN_CELL_EVIL_MACRO(out);
+    out->header.bits |= (
+        NODE_FLAG_NODE | NODE_FLAG_CELL
+          | CELL_MASK_BLANK | FLAG_QUOTE_BYTE(quote_byte)
     );
 
     mutable_BINDING(out) = UNBOUND;  // table position means Is_Bindable()

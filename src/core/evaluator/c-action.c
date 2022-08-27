@@ -184,7 +184,7 @@ static void Bump_Specialized_Output_Aside(Frame(*) f) {
     else
         fail ("OUTPUT: parameters must be SET-table targets");
 
-    Init_Void(ARG);
+    RESET(ARG);
 
     ++KEY, ++PARAM, ++ARG;  // with for included, skip past `var`
 }
@@ -366,7 +366,7 @@ Bounce Action_Executor(Frame(*) f)
 
         if (pclass == PARAM_CLASS_RETURN) {
             assert(STATE != ST_ACTION_DOING_PICKUPS);
-            Init_Void(ARG);
+            Finalize_Void(ARG);
             goto continue_fulfilling;
         }
 
@@ -376,7 +376,7 @@ Bounce Action_Executor(Frame(*) f)
             Clear_Feed_Flag(f->feed, NEXT_ARG_FROM_OUT);
 
             if (Was_Eval_Step_Void(OUT)) {  // stale, but with void signal
-                Init_Void(ARG);
+                Finalize_Void(ARG);
                 goto continue_fulfilling;
             }
 
@@ -890,7 +890,7 @@ Bounce Action_Executor(Frame(*) f)
                     // leave alone
                 }
                 else if (VAL_TYPE_UNCHECKED(ARG) == REB_NULL) {
-                    Init_Void(ARG);  // Can we avoid NULL happening?
+                    RESET(ARG);  // Can we avoid NULL happening?
                 }
                 else
                     Bump_Specialized_Output_Aside(f);
@@ -1257,7 +1257,7 @@ Bounce Action_Executor(Frame(*) f)
                 if (Is_Specialized(PARAM))
                     Copy_Cell(ARG, PARAM);  // must reset, see [3]
                 else if (VAL_PARAM_CLASS(PARAM) == PARAM_CLASS_RETURN)
-                    Init_Void(ARG);  // dispatcher expects unset
+                    RESET(ARG);  // dispatcher expects unset
             }
 
             INIT_FRM_PHASE(f, redo_phase);

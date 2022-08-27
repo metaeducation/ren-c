@@ -307,13 +307,15 @@ inline static void Push_Frame(
     //
     f->out = out;
 
-    // For convenience, the frame output is always reset to a void if stale
+    // For convenience, the frame output is always reset to "Fresh" if stale
     // values are not wanted.  The operation is very fast (just clears bits
     // out of the header) and this keeps callers from needing to worry about
     // it--or dealing with asserts that they hadn't done it.
     //
-    if (Not_Frame_Flag(f, MAYBE_STALE))
-        RESET(out);
+    if (Not_Frame_Flag(f, MAYBE_STALE)) {
+        FRESHEN_CELL_EVIL_MACRO(out);
+        USED(TRACK(out));  // don't pass to evil macro (would repeat tracking)
+    }
 
   #if DEBUG_EXPIRED_LOOKBACK
     f->stress = nullptr;
@@ -761,7 +763,7 @@ inline static bool Pushed_Continuation(
             if (Is_Specialized(param))
                 Copy_Cell(arg, param);
             else
-                Init_Void(arg);
+                Finalize_Void(arg);
         }
 
         arg = First_Unspecialized_Arg(&param, f);
@@ -785,7 +787,7 @@ inline static bool Pushed_Continuation(
             if (Is_Specialized(param))
                 Copy_Cell(arg, param);
             else
-                Init_Void(arg);
+                Finalize_Void(arg);
         }
 
         if (with != nullptr) do {

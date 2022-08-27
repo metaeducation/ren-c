@@ -422,7 +422,7 @@ static void Init_Root_Vars(void)
     // Simple isolated values, not available via lib, e.g. not Lib(TRUE) or
     // Lib(BLANK)...
 
-    Init_Void(&PG_Void_Cell);
+    Finalize_Void(&PG_Void_Cell);
     Set_Cell_Flag(&PG_Void_Cell, PROTECTED);  // prevent overwriting
     assert(Is_Void(VOID_CELL));
 
@@ -478,17 +478,16 @@ static void Init_Root_Vars(void)
 
 static void Shutdown_Root_Vars(void)
 {
-    assert(Is_Void(VOID_CELL));
-    PG_Void_Cell.header.bits = 0;
+    Erase_Cell(&PG_Void_Cell);
 
-    RESET(&PG_R_Thrown);
-    RESET(&PG_R_Void);
-    RESET(&PG_R_Redo_Unchecked);
-    RESET(&PG_R_Redo_Checked);
-    RESET(&PG_R_Unhandled);
-    RESET(&PG_R_Continuation);
-    RESET(&PG_R_Delegation);
-    RESET(&PG_R_Suspend);
+    Erase_Cell(&PG_R_Thrown);
+    Erase_Cell(&PG_R_Void);
+    Erase_Cell(&PG_R_Redo_Unchecked);
+    Erase_Cell(&PG_R_Redo_Checked);
+    Erase_Cell(&PG_R_Unhandled);
+    Erase_Cell(&PG_R_Continuation);
+    Erase_Cell(&PG_R_Delegation);
+    Erase_Cell(&PG_R_Suspend);
 
     rebReleaseAndNull(&Root_Empty_Text);
     rebReleaseAndNull(&Root_Empty_Block);

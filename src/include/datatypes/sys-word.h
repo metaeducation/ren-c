@@ -48,9 +48,10 @@ inline static REBVAL *Init_Any_Word_Untracked(
     Symbol(const*) sym,
     Byte quote_byte
 ){
-    Init_Cell_Header_Untracked(
-        RESET_Untracked(out),
-        FLAG_HEART_BYTE(kind) | FLAG_QUOTE_BYTE(quote_byte)
+    FRESHEN_CELL_EVIL_MACRO(out);
+    out->header.bits |= (
+        NODE_FLAG_NODE | NODE_FLAG_CELL
+            | FLAG_HEART_BYTE(kind) | FLAG_QUOTE_BYTE(quote_byte)
             | CELL_FLAG_FIRST_IS_NODE
     );
     VAL_WORD_INDEX_U32(out) = 0;

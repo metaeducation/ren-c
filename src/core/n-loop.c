@@ -108,7 +108,7 @@ DECLARE_NATIVE(continue)
 
     Value(*) v = ARG(value);
     if (Is_Nulled(v))
-        Init_Void(v);  // CONTINUE and CONTINUE VOID act the same
+        RESET(v);  // CONTINUE and CONTINUE VOID act the same
     else
         Meta_Unquotify(v);
 
@@ -582,7 +582,7 @@ DECLARE_NATIVE(stop)  // See CYCLE for notes about STOP
 
     Value(*) v = ARG(value);
     if (Is_Nulled(v))
-        Init_Void(v);  // STOP acts the same as STOP VOID
+        RESET(v);  // STOP acts the same as STOP VOID
     else
         Meta_Unquotify(v);
 

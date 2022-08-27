@@ -351,17 +351,15 @@ Bounce Evaluator_Executor(Frame(*) f)
     assert(Not_Feed_Flag(f->feed, NEXT_ARG_FROM_OUT));
 
     // OUT might be erased, e.g. the header is all 0 bits (CELL_MASK_0).
-    // This is considered INITABLE() but not WRITABLE(), so the Set_Cell_Flag()
+    // This is considered FRESH() but not WRITABLE(), so the Set_Cell_Flag()
     // routines will reject it.  While we are already doing a flag masking
     // operation to add CELL_FLAG_STALE, ensure the cell carries the NODE and
-    // CELL flags (we already checked that it was INITABLE()).  This promotes
+    // CELL flags (we already checked that it was FRESH()).  This promotes
     // erased cells to a stale void state.
     //
     // Note that adding CELL_FLAG_STALE means the out cell won't act as the
     // input to an enfix operation.
     //
-    if (not Is_Cell_Erased(OUT))
-        assert(WRITABLE(OUT));
     OUT->header.bits |= (
         NODE_FLAG_NODE | NODE_FLAG_CELL | CELL_FLAG_STALE
     );
@@ -755,7 +753,7 @@ Bounce Evaluator_Executor(Frame(*) f)
             // happens with `(void): ...`
         }
         else if (Is_Stale(OUT)) {
-            Init_Decayed_Void(Sink_Word_May_Fail(f_current, f_specifier));
+            RESET(Sink_Word_May_Fail(f_current, f_specifier));
         }
         else if (
             Is_Isotope(OUT)
@@ -1122,7 +1120,7 @@ Bounce Evaluator_Executor(Frame(*) f)
                 GROUPS_OK,
                 f_current,
                 f_specifier,
-                DECAYED_VOID_CELL
+                VOID_CELL
             )){
                 goto return_thrown;
             }
@@ -1530,7 +1528,7 @@ Bounce Evaluator_Executor(Frame(*) f)
 
             assert(Is_Void(arg) or Is_Nulled(arg));
 
-            Init_Void(arg);
+            RESET(arg);  // !!! Can we stop nulls, to avoid RESET()?
 
             Copy_Cell(var, at);
             ++key, ++arg, ++param;
@@ -1617,23 +1615,23 @@ Bounce Evaluator_Executor(Frame(*) f)
             // !!! Review if it should actually force a raised error.
             //
             if (not Is_Raised(OUT))
-                Init_Void(OUT);  // "uninteresting result"
+                Init_None(OUT);  // can't be void (we overwrote the cell)
         }
         else if (Is_Blackhole(SPARE)) {
             // pass through everything (even failures), e.g. no assignment
         }
         else if (ANY_META_KIND(VAL_TYPE(SPARE))) {
-            if (Is_Stale(OUT) or Is_Void(OUT))
+            if (Is_Stale(OUT))
                 Init_Meta_Of_Void(OUT);
             else
                 Meta_Quotify(OUT);
 
             Set_Var_May_Fail(SPARE, SPECIFIED, OUT);
         }
-        else if (Is_Stale(OUT) or Is_Void(OUT)) {
+        else if (Is_Stale(OUT)) {
             Set_Var_May_Fail(
                 SPARE, SPECIFIED,
-                DECAYED_VOID_CELL
+                VOID_CELL
             );
         }
         else if (Is_Raised(OUT)) {

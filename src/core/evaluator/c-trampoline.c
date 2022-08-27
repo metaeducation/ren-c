@@ -176,11 +176,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
         and Not_Frame_Flag(FRAME, MAYBE_STALE)
     ){
         if (FRAME->executor != &Just_Use_Out_Executor)  // exempt, see [1]
-            assert(
-                Is_Cell_Erased(OUT)
-                or Is_Stale_Void(OUT)  // stale ok, see [2]
-                or Is_Void(OUT)
-            );
+            ASSERT_CELL_FRESH_EVIL_MACRO(OUT);
     }
 
 { //=//// CALL THE EXECUTOR ///////////////////////////////////////////////=//

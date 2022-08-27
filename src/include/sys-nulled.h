@@ -48,9 +48,10 @@ inline static bool Is_Quasi_Null(Cell(const*) v)
   { return QUOTE_BYTE(v) == QUASI_2 and HEART_BYTE(v) == REB_NULL; }
 
 inline static REBVAL *Init_Nulled_Untracked(Cell(*) out, Byte quote_byte) {
-    Init_Cell_Header_Untracked(
-        RESET_Untracked(out),
-        FLAG_HEART_BYTE(REB_NULL) | FLAG_QUOTE_BYTE(quote_byte)
+    FRESHEN_CELL_EVIL_MACRO(out);
+    out->header.bits |= (
+        NODE_FLAG_NODE | NODE_FLAG_CELL
+            | FLAG_HEART_BYTE(REB_NULL) | FLAG_QUOTE_BYTE(quote_byte)
             | CELL_MASK_NO_NODES
     );
 
@@ -71,9 +72,6 @@ inline static REBVAL *Init_Nulled_Untracked(Cell(*) out, Byte quote_byte) {
 
 #define Init_Quasi_Null(out) \
     TRACK(Init_Nulled_Untracked((out), QUASI_2))
-
-#define Init_Void(out) \
-    TRACK(Init_Nulled_Untracked(ensure(Value(*), (out)), ISOTOPE_0))
 
 
 // To help ensure full nulled cells don't leak to the API, the variadic

@@ -31,11 +31,11 @@
 // The scanning code in R3-Alpha used NULL to return failure during the scan
 // of a value, possibly leaving the value itself in an incomplete or invalid
 // state.  Rather than write stray incomplete values into these spots, Ren-C
-// puts it back to a "reset" cell.
+// puts it back to an erased cell.
 //
 
 #define return_NULL \
-    do { RESET(out); return NULL; } while (1)
+    do { Erase_Cell(out); return nullptr; } while (1)
 
 
 //

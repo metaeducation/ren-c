@@ -93,7 +93,7 @@ static REBI64 mark_count = 0;
 static void Queue_Mark_Cell_Deep(Cell(const*) v);
 
 inline static void Queue_Mark_Maybe_Stale_Cell_Deep(Cell(*) v) {
-    if (Is_Cell_Erased(v))
+    if (Is_Cell_Erased(v) or v->header.bits == CELL_MASK_0_ROOT)
         return;
 
     // !!! CELL_FLAG_STALE generally makes cells write-only (unreadable).  So

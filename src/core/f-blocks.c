@@ -363,12 +363,7 @@ Cell(*) Alloc_Tail_Array(Array(*) a)
     EXPAND_SERIES_TAIL(a, 1);
     SET_SERIES_LEN(a, ARR_LEN(a));
     Cell(*) last = ARR_LAST(a);
-    //
-    // !!! There is not yet a guarantee in the arrays that cells which get
-    // truncated will be empty.  This needs to happen.
-    //
-    // assert(Is_Cell_Erased(last));  // Should not have held series references/etc.
-    RESET(last);
+    assert(Is_Cell_Erased(last));
     return last;
 }
 

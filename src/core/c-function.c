@@ -145,7 +145,7 @@ void Finalize_Param_Quad(enum Reb_Symbol_Id* dummy_sym) {
         Init_Nulled(NOTES_SLOT(TOP_INDEX));
 
         StackValue(*) param = PARAM_SLOT(TOP_INDEX);
-        Init_Void(param);
+        Finalize_Void(param);
         Set_Cell_Flag(param, STACK_NOTE_SEALED);
         break; }
 
@@ -486,7 +486,7 @@ void Push_Paramlist_Quads_May_Fail(
         // But Is_Param_Endable() indicates <end>.
 
         if (local) {
-            Init_Void(param);
+            Finalize_Void(param);
         }
         else if (refinement) {
             Init_Param(

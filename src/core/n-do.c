@@ -989,7 +989,7 @@ DECLARE_NATIVE(apply)
     while (Did_Advance_Evars(e)) {  // convert unspecialized to none, see [6]
         if (VAL_TYPE_UNCHECKED(e->var) == REB_TAG)  // skip over isotopes
             if (VAL_SERIES(e->var) == VAL_SERIES(Root_Unspecialized_Tag))
-                Init_Void(e->var);
+                RESET(e->var);
 
         /* Remove_Binder_Index(&binder, KEY_SYMBOL(e.key)); */
     }

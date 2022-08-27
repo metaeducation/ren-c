@@ -87,7 +87,9 @@ static void Append_Vars_To_Context_From_Block(REBVAL *context, REBVAL *block)
 
     StackValue(*) new_word = Data_Stack_At(collector.stack_base) + first_new_index;
     for (; new_word != TOP + 1; ++new_word)
-        Init_Void(Append_Context(c, nullptr, VAL_WORD_SYMBOL(new_word)));
+        Finalize_Void(
+            Append_Context(c, nullptr, VAL_WORD_SYMBOL(new_word))
+        );
   }
   }  // end the non-module part
 
@@ -101,7 +103,7 @@ static void Append_Vars_To_Context_From_Block(REBVAL *context, REBVAL *block)
             var = MOD_VAR(c, symbol, strict);
             if (not var) {
                 var = Append_Context(c, nullptr, symbol);
-                Init_Void(var);
+                Finalize_Void(var);
             }
         }
         else {
@@ -131,7 +133,7 @@ static void Append_Vars_To_Context_From_Block(REBVAL *context, REBVAL *block)
         }
 
         if (word + 1 == tail) {
-            Init_Void(var);
+            Finalize_Void(var);
             break;  // fix bug#708
         }
         else
@@ -1205,7 +1207,9 @@ REBTYPE(Context)
                 VAL_WORD_SYMBOL(arg),
                 strict
             )){
-                Init_Void(Append_Context(c, nullptr, VAL_WORD_SYMBOL(arg)));
+                Finalize_Void(
+                    Append_Context(c, nullptr, VAL_WORD_SYMBOL(arg))
+                );
             }
             return COPY(context);
         }

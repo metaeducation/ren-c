@@ -254,8 +254,10 @@ inline static bool Eval_Step_Throws(
     assert(Not_Feed_Flag(f->feed, NO_LOOKAHEAD));
     assert(Get_Executor_Flag(EVAL, f, SINGLE_STEP));
 
-    if (Not_Frame_Flag(f, MAYBE_STALE))
-        RESET(out);
+    if (Not_Frame_Flag(f, MAYBE_STALE)) {
+        FRESHEN_CELL_EVIL_MACRO(out);
+        USED(TRACK(out));  // don't pass to evil macro (would repeat tracking)
+    }
 
     assert(f->executor == &Evaluator_Executor);
 

@@ -198,8 +198,6 @@ inline static bool Is_Meta_Of_Void_Isotope(Cell(const*) v)
 
 #define Init_Meta_Of_Void(out)       Init_Quasi_Null(out)
 #define Is_Meta_Of_Void(v)           Is_Quasi_Null(v)
-#define Init_Decayed_Void(out)       Init_Void(out)
-#define DECAYED_VOID_CELL            VOID_CELL
 
 #define Init_Meta_Of_Null(out) \
     Init_Blank(out)
@@ -333,7 +331,7 @@ inline static REBVAL *Move_Cell_Untracked(
     Flags copy_mask
 ){
     Copy_Cell_Untracked(out, v, copy_mask);  // Move_Cell() adds track to `out`
-    RESET_Untracked(v);  // not useful to track and just implicate Move_Cell()
+    FRESHEN_CELL_EVIL_MACRO(v);  // track to here not useful
 
   #if DEBUG_TRACK_EXTEND_CELLS  // `out` has tracking info we can use
     v->file = out->file;

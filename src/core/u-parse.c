@@ -260,6 +260,7 @@ static bool Subparse_Throws(
     assert(ANY_SERIES_KIND(CELL_HEART(input)));
 
     Push_Frame(out, f);  // checks for C stack overflow
+    Finalize_Void(out);
     Push_Action(f, VAL_ACTION(Lib(SUBPARSE)), UNBOUND);
 
     Begin_Prefix_Action(f, Canon(SUBPARSE));
@@ -295,9 +296,9 @@ static bool Subparse_Throws(
 
     // Locals in frame would be void on entry if called by action dispatch.
     //
-    Init_Void(ARG(num_quotes));
-    Init_Void(ARG(position));
-    Init_Void(ARG(save));
+    Finalize_Void(ARG(num_quotes));
+    Finalize_Void(ARG(position));
+    Finalize_Void(ARG(save));
 
     // !!! By calling the subparse native here directly from its C function
     // vs. going through the evaluator, we don't get the opportunity to do

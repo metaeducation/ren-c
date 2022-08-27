@@ -168,7 +168,9 @@ DECLARE_NATIVE(bind)
         // not in context, bind/new means add it if it's not.
         //
         if (REF(new) or (IS_SET_WORD(v) and REF(set))) {
-            Init_Void(Append_Context(VAL_CONTEXT(context), v, nullptr));
+            Finalize_Void(
+                Append_Context(VAL_CONTEXT(context), v, nullptr)
+            );
             return COPY(v);
         }
 
@@ -1196,7 +1198,7 @@ bool Set_Var_Core_Updater_Throws(
 
     DECLARE_LOCAL (writeback);
     PUSH_GC_GUARD(writeback);
-    Init_Void(writeback);  // needs to be GC safe
+    Finalize_Void(writeback);  // needs to be GC safe
 
     PUSH_GC_GUARD(temp);
 
@@ -1379,7 +1381,7 @@ DECLARE_NATIVE(set)
         steps = nullptr;  // no GROUP! evals
 
     if (Is_Meta_Of_Void(v))
-        Init_Decayed_Void(v);  // (x: void) is legal, so is (set 'x void)
+        RESET(v);  // (x: void) is legal, so is (set 'x void)
     else {
         Meta_Unquotify(v);
 

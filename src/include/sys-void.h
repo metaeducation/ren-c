@@ -63,6 +63,39 @@ inline static REBVAL *Prep_Void_Untracked(Cell(*) out) {
     TRACK(Prep_Void_Untracked(out))
 
 
+// For reasons of both efficiency and semantics, initializing voids is only
+// allowed into cells that have no content (e.g. their memory started out at
+// zero, they were cleared with Erase_Cell(), or they've been RESET()).
+//
+// The efficiency reason is that it avoids needing to mask out the bits that
+// are not in CELL_MASK_PERSIST.  The semantic reason is that you typically
+// do not want voids to be overwriting content, because they represent
+// "nothingness" and need special handling to *avoid* overwriting things:
+//
+//    >> 1 + 2 void
+//    == 3  ; good to make it harder to accidentally overwrite the 3
+//
+// (Exceptions to this behavior would be when things like variable cells are
+// being overwritten to become unset, e.g. `x: 10, x: ~` should not leave
+// the 10 in the variable cell...but overwrite it with void.)
+//
+inline static Value(*) Finalize_Void_Untracked(Value(*) out) {
+    ASSERT_CELL_FRESH_EVIL_MACRO(out);  // can bitwise OR, need node+cell flags
+    assert(
+        HEART_BYTE_UNCHECKED(out) == 0
+        and QUOTE_BYTE_UNCHECKED(out) == 0
+    );
+    out->header.bits |= (
+        NODE_FLAG_NODE | NODE_FLAG_CELL  // might already be set, might not...
+            /* | FLAG_HEART_BYTE(REB_NULL) */  // already 0
+            /* | FLAG_QUOTE_BYTE(ISOTOPE_0) */  // already 0
+    );
+    return out;
+}
+
+#define Finalize_Void(out) \
+    TRACK(Finalize_Void_Untracked(out))
+
 
 inline static bool Is_Void(Value(const*) v) {
     return HEART_BYTE(v) == REB_NULL and QUOTE_BYTE(v) == ISOTOPE_0;
@@ -75,3 +108,14 @@ inline static bool Is_Stale_Void(Value(const*) v) {
         return false;
     return QUOTE_BYTE_UNCHECKED(v) == ISOTOPE_0;
 }
+
+
+inline static REBVAL* Reset_Cell_Untracked(Cell(*) v) {
+    ASSERT_CELL_WRITABLE_EVIL_MACRO(v);
+    v->header.bits &= NODE_FLAG_NODE | NODE_FLAG_CELL | CELL_MASK_PERSIST;
+    return cast(REBVAL*, v);
+}
+
+#define RESET(v) \
+    TRACK(Reset_Cell_Untracked(v))
+        // ^-- track AFTER reset, so you can diagnose cell origin in WRITABLE()

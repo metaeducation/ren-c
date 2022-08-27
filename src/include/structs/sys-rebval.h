@@ -68,8 +68,8 @@
 
 #define CELL_MASK_NO_NODES 0  // no CELL_FLAG_FIRST_IS_NODE or SECOND_IS_NODE
 
-#define CELL_MASK_0 0  // considered INITABLE() but not WRITABLE()/READABLE()
-
+#define CELL_MASK_0 0  // considered "Fresh" but not WRITABLE()/READABLE()
+#define CELL_MASK_0_ROOT NODE_FLAG_ROOT  // same (but for API cells)
 
 // The Get_Cell_Flag()/etc. macros splice together CELL_FLAG_ with the text
 // you pass in (token pasting).  Since it does this, alias NODE_FLAG_XXX to

@@ -57,7 +57,7 @@
 
 #define rebRunThrows(out,...) \
     rebRunCoreThrows( \
-        RESET(out), \
+        (out), \
         EVAL_EXECUTOR_FLAG_SINGLE_STEP | EVAL_EXECUTOR_FLAG_NO_RESIDUE, \
         __VA_ARGS__ \
     )

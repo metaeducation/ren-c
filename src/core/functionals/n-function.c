@@ -595,7 +595,7 @@ DECLARE_NATIVE(definitional_return)
         if (NOT_PARAM_FLAG(param, VANISHABLE))
             fail (Error_Bad_Invisible(f));
 
-        Init_Void(v);
+        RESET(v);
         goto skip_type_check;
     }
 

@@ -441,7 +441,7 @@ uintptr_t RL_rebTick(void)
 //=////////////////////////////////////////////////////////////////////////=//
 
 
-// rebNull is a #define of `(REBVAL*)0`
+// rebNull is a #define of `(REBVAL*)0` in %rebol.h, so no API entry point
 //
 // See notes in %rebol.h about why NOT to use ordinary `#define NULL 0` !
 // But C++ nullptr (or shim) should be used instead if available.
@@ -454,7 +454,9 @@ REBVAL *RL_rebVoid(void)
 {
     ENTER_API;
 
-    return Init_Void(Alloc_Value());
+    REBVAL* v = Alloc_Value();  // just has NODE_FLAG_ROOT, counts as "fresh"
+    Finalize_Void(v);
+    return v;
 }
 
 

@@ -252,7 +252,7 @@ DECLARE_NATIVE(reduce_each)
 
     if (Is_Void(SPARE)) {
         if (Is_Stale(OUT))
-            Init_Void(OUT);
+            Init_None(OUT);
         goto reduce_next;
     }
 
