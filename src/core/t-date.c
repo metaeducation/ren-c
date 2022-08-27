@@ -1024,7 +1024,7 @@ REBTYPE(Date)
 
         Cell(const*) picker = ARG(picker);
 
-        REBVAL *setval = Meta_Unquotify(ARG(value));
+        REBVAL *setval = ARG(value);
 
         Pick_Or_Poke_Date(nullptr, v, picker, setval);
 

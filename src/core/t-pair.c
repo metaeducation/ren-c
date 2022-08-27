@@ -235,7 +235,7 @@ REBTYPE(Pair)
         Cell(const*) picker = ARG(picker);
         REBINT n = Index_From_Picker_For_Pair(v, picker);
 
-        REBVAL *setval = Meta_Unquotify(ARG(value));
+        REBVAL *setval = ARG(value);
 
         if (not IS_INTEGER(setval) and not IS_DECIMAL(setval))
             return BOUNCE_UNHANDLED;

@@ -445,7 +445,7 @@ REBTYPE(Event)
         INCLUDE_PARAMS_OF_POKE_P;
         UNUSED(ARG(location));
 
-        Cell(const*) picker = Meta_Unquotify(ARG(picker));
+        Cell(const*) picker = ARG(picker);
         if (not IS_WORD(picker))
             return BOUNCE_UNHANDLED;
 

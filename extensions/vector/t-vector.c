@@ -623,7 +623,7 @@ REBTYPE(Vector)
 
         Cell(const*) picker = ARG(picker);
 
-        REBVAL *setval = Meta_Unquotify(ARG(value));
+        REBVAL *setval = ARG(value);
 
         Poke_Vector_Fail_If_Read_Only(v, picker, setval);
         return nullptr; }

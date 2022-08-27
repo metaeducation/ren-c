@@ -503,7 +503,7 @@ REBTYPE(Time)
 
         Cell(const*) picker = ARG(picker);
 
-        REBVAL *setval = Meta_Unquotify(ARG(value));
+        REBVAL *setval = ARG(value);
 
         Poke_Time_Immediate(time, picker, setval);
         return COPY(time);  // caller needs to update their time bits

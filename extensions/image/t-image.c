@@ -1164,7 +1164,7 @@ REBTYPE(Image)
 
         Cell(const*) picker = ARG(picker);
 
-        REBVAL *setval = Meta_Unquotify(ARG(value));
+        REBVAL *setval = ARG(value);
 
         Poke_Image_Fail_If_Read_Only(image, picker, setval);
         return nullptr; }

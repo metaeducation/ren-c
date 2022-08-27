@@ -835,10 +835,13 @@ REBTYPE(Array)
 
         Cell(const*) picker = ARG(picker);
 
-        REBVAL *setval = Meta_Unquotify(ARG(value));
+        REBVAL *setval = ARG(value);
 
         if (Is_Isotope(setval))
             fail (Error_Bad_Isotope(setval));  // can't put in blocks
+
+        if (Is_Nulled(setval))
+            fail (Error_Need_Non_Null_Raw());  // also can't put in blocks
 
         // !!! If we are jumping here from getting updated bits, then
         // if the block isn't immutable or locked from modification, the

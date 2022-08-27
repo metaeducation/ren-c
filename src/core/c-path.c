@@ -154,7 +154,7 @@ DECLARE_NATIVE(pick)
 //          {(modified)}
 //      picker [<try> any-value!]
 //          {Index offset, symbol, or other value to use as index}
-//      ^value [<opt> any-value!]
+//      value [<opt> any-value! ~any-value!~]
 //          {The new value}
 //      /immediate "Allow modification even if it will not mutate location"
 //  ]
@@ -171,6 +171,8 @@ DECLARE_NATIVE(poke)
     UNUSED(ARG(picker));
     REBVAL *location = ARG(location);
     REBVAL *v = ARG(value);
+
+    Set_Cell_Flag(v, PROTECTED);  // want to return as final result
 
     // !!! Here we are assuming frame compatibility of POKE with POKE*.
     // This would be more formalized if we were writing this in usermode and

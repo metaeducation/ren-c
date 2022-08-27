@@ -1125,7 +1125,7 @@ REBTYPE(Context)
         Cell(const*) picker = ARG(picker);
         Symbol(const*) symbol = Symbol_From_Picker(context, picker);
 
-        REBVAL *setval = Meta_Unquotify(ARG(value));
+        REBVAL *setval = ARG(value);
 
         REBVAL *var = TRY_VAL_CONTEXT_MUTABLE_VAR(context, symbol);
         if (not var)
@@ -1145,7 +1145,7 @@ REBTYPE(Context)
         Cell(const*) picker = ARG(picker);
         Symbol(const*) symbol = Symbol_From_Picker(context, picker);
 
-        REBVAL *setval = Meta_Unquotify(ARG(value));
+        REBVAL *setval = ARG(value);
 
         REBVAR *var = m_cast(REBVAR*, TRY_VAL_CONTEXT_VAR(context, symbol));
         if (not var)

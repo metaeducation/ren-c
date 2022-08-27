@@ -573,7 +573,7 @@ REBTYPE(Bitset)
 
         Cell(const*) picker = ARG(picker);
 
-        REBVAL *setval = Meta_Unquotify(ARG(value));
+        REBVAL *setval = ARG(value);
 
         Binary(*) bset = BIN(VAL_BITSET_ENSURE_MUTABLE(v));
         if (not Set_Bits(

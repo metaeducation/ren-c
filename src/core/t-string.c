@@ -781,7 +781,7 @@ REBTYPE(String)
         if (not Did_Get_Series_Index_From_Picker(&n, v, picker))
             fail (Error_Out_Of_Range(picker));
 
-        REBVAL *setval = Meta_Unquotify(ARG(value));
+        REBVAL *setval = ARG(value);
 
         Codepoint c;
         if (IS_CHAR(setval)) {

@@ -946,7 +946,7 @@ REBTYPE(Gob)
         // PAIR! dispatch not mucking with frame fields like ARG(location).
         //
 
-        REBVAL *setval = Meta_Unquotify(ARG(value));
+        REBVAL *setval = ARG(value);
 
         if (IS_INTEGER(picker)) {
             rebElide(

@@ -366,8 +366,8 @@ poke*: generic [
         [any-value!]
     picker "The property to update"
         [any-value!]
-    ^value "Value to POKE"
-        [<opt> <void> any-value!]
+    value "Value to POKE"
+        [<opt> <void> any-value! ~any-value!~]
 ]
 
 
@@ -380,7 +380,7 @@ protect*: generic [
         [any-value!]
     picker "The property to update (e.g. object field)"
         [any-value!]
-    ^value "Protection signal, currently [PROTECT UNPROTECT HIDE]"
+    value "Protection signal, currently [PROTECT UNPROTECT HIDE]"
         [word!]
 ]
 

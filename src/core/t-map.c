@@ -775,7 +775,12 @@ REBTYPE(Map)
         //
         bool strict = false;
 
-        REBVAL *setval = Meta_Unquotify(ARG(value));
+        REBVAL *setval = ARG(value);
+
+        if (Is_Isotope(setval))
+            fail (Error_Bad_Isotope(setval));  // !!! disallow in MAP! ?
+
+        // Note: NULL is interpreted as "remove from map"
 
         REBINT n = Find_Map_Entry(
             VAL_MAP_ENSURE_MUTABLE(map),  // modified
