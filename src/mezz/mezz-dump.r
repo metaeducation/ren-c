@@ -35,9 +35,10 @@ dump: function [
     ]
 
     val-to-text: function [return: [text!] ^val [<opt> any-value!]] [
-        return case [
-            null? val ["; null"]
-            bad-word? val [unspaced [mold val space space "; isotope"]]
+        return switch val [
+            null' ["; null"]
+            void' ["; void"]
+            (matches quasi!) [unspaced [mold val space space "; isotope"]]
 
             (elide val: unquote val)
 
@@ -89,7 +90,7 @@ dump: function [
 
     case [
         swp: match [set-word! set-path!] :value [  ; `dump x: 1 + 2`
-            result: evaluate/next extra (the pos:)
+            result: evaluate/next extra (to word! the pos:)
             set swp :result
             print [swp, result]
         ]
@@ -97,7 +98,7 @@ dump: function [
         b: match block! :value [
             while [not tail? b] [
                 if swp: match [set-word! set-path!] :b.1 [  ; `dump [x: 1 + 2]`
-                    result: evaluate/next b (the b:)
+                    result: evaluate/next b (to word! the b:)
                     print [swp, result]
                 ] else [
                     dump-one b.1
@@ -131,18 +132,12 @@ dump-to-newline: adapt :dump [
         ; Mutate VARARGS! into a BLOCK!, with passed-in value at the head
         ;
         value: reduce [:value]
-        while [any [
+        while [all [
             not new-line? extra
-            tail? extra
-            '| = extra.1
+            not tail? extra
+            ', <> extra.1
         ]] [
-            append value extra.1
-            all [
-                match [block! group!] :extra.1
-                contains-newline :extra.1
-                break
-            ]
-            take extra
+            append value take extra
         ]
         extra: make varargs! []  ; don't allow more takes
     ]
