@@ -558,7 +558,7 @@ void Startup_Symbols(void)
     //
     PG_Symbol_Canons[SYM_0].leader.bits = SERIES_FLAG_FREE;
 
-    SYMID id = cast(SYMID, cast(REBLEN, SYM_0 + 1));  // SYMID for debug watch
+    SymId id = cast(SymId, cast(REBLEN, SYM_0 + 1));  // SymId for debug watch
 
     // We assume no symbols will be larger than 256 characters, so instead
     // of delimiting them in the data we length-prefix them with a byte.
@@ -581,9 +581,9 @@ void Startup_Symbols(void)
         //
         assert(SECOND_UINT16(canon->info) == 0);
         SET_SECOND_UINT16(canon->info, id);
-        assert(Same_Nonzero_Symid(ID_OF_SYMBOL(canon), id));
+        assert(id == unwrap(ID_OF_SYMBOL(canon)));
 
-        id = cast(SYMID, cast(REBLEN, id) + 1);
+        id = cast(SymId, cast(REBLEN, id) + 1);
     }
 
     rebFree(bytes);

@@ -698,12 +698,12 @@ DECLARE_NATIVE(inherit_meta)
     }
 
     REBLEN which = 0;
-    SYMID syms[] = {SYM_PARAMETER_NOTES, SYM_PARAMETER_TYPES, SYM_0};
+    option(SymId) syms[] = {SYM_PARAMETER_NOTES, SYM_PARAMETER_TYPES, SYM_0};
 
-    for (; syms[which] != SYM_0; ++which) {
+    for (; syms[which] != 0; ++which) {
         REBVAL *val1 = Select_Symbol_In_Context(
             CTX_ARCHETYPE(m1),
-            Canon_Symbol(syms[which])
+            Canon_Symbol(unwrap(syms[which]))
         );
         if (not val1 or Is_Nulled(val1) or Is_Void(val1))
             continue;  // nothing to inherit from
@@ -714,7 +714,7 @@ DECLARE_NATIVE(inherit_meta)
 
         REBVAL *val2 = Select_Symbol_In_Context(
             CTX_ARCHETYPE(m2),
-            Canon_Symbol(syms[which])
+            Canon_Symbol(unwrap(syms[which]))
         );
         if (not val2)
             continue;

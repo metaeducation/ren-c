@@ -551,7 +551,7 @@ REBTYPE(Bitset)
 {
     REBVAL *v = D_ARG(1);
 
-    SYMID sym = ID_OF_SYMBOL(verb);
+    option(SymId) sym = ID_OF_SYMBOL(verb);
     switch (sym) {
 
     //=//// PICK* (see %sys-pick.h for explanation) ////////////////////////=//
@@ -590,7 +590,7 @@ REBTYPE(Bitset)
         INCLUDE_PARAMS_OF_REFLECT;
         UNUSED(ARG(value)); // covered by `v`
 
-        SYMID property = VAL_WORD_ID(ARG(property));
+        option(SymId) property = VAL_WORD_ID(ARG(property));
         switch (property) {
           case SYM_LENGTH:
             return Init_Integer(v, BIN_LEN(VAL_BITSET(v)) * 8);

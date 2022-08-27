@@ -297,8 +297,7 @@ REBTYPE(Word)
         INCLUDE_PARAMS_OF_REFLECT;
 
         UNUSED(ARG(value));
-        SYMID property = VAL_WORD_ID(ARG(property));
-        assert(property != SYM_0);
+        option(SymId) property = VAL_WORD_ID(ARG(property));
 
         switch (property) {
           case SYM_LENGTH: {  // byte size stored, but not # of codepoints

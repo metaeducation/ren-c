@@ -270,7 +270,7 @@ REBTYPE(Integer)
 
     REBI64 arg;
 
-    SYMID id = ID_OF_SYMBOL(verb);
+    option(SymId) id = ID_OF_SYMBOL(verb);
 
     // !!! This used to rely on IS_BINARY_ACT, which is no longer available
     // in the symbol based dispatch.  Consider doing another way.

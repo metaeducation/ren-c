@@ -82,7 +82,7 @@ Bounce Event_Actor(Frame(*) frame_, REBVAL *port, Symbol(const*) verb)
         INCLUDE_PARAMS_OF_REFLECT;
 
         UNUSED(ARG(value)); // implicit in port
-        SYMID property = VAL_WORD_ID(ARG(property));
+        SymId property = VAL_WORD_ID(ARG(property));
         assert(property != SYM_0);
 
         switch (property) {

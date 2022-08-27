@@ -153,7 +153,7 @@ e-version/write-emitted
 ; recompiled with changes to the core.  These symbols aren't in libRebol,
 ; however, so it only affects clients of the core API for now.
 
-e-symbols: make-emitter "Symbol ID (SYMID) Enumeration Type and Values" (
+e-symbols: make-emitter "Symbol ID (SymId) Enumeration Type and Values" (
     join prep-dir %include/tmp-symid.h
 )
 
@@ -1077,14 +1077,12 @@ e-symbols/emit 'syms-cscape {
      * tried to do with RE_XXX numbers, which fluctuated and were of dubious
      * benefit when symbol comparison is available).
      *
-     * Note: SYM_0 is not a symbol of the string "0".  It's the "SYM" constant
-     * that is returned for any interning that *does not have* a compile-time
-     * constant assigned to it.  Since VAL_WORD_ID() will return SYM_0 for
-     * all user (and extension) defined words, don't try to check equality
-     * with `VAL_WORD_ID(word1) == VAL_WORD_ID(word2)`.
+     * Note: Any interning that *does not have* a compile-time constant
+     * assigned to it will have a symbol ID of 0.  See option(SymId) for how
+     * potential bugs like `VAL_WORD_ID(a) == VAL_WORD_ID(b)` are mitigated
+     * by preventing such comparisons.
      */
     enum Reb_Symbol_Id {
-        SYM_0 = 0,
         $(Syms-Cscape),
     };
 

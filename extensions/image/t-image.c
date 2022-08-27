@@ -589,7 +589,7 @@ Bounce Modify_Image(Frame(*) frame_, Symbol(const*) verb)
     if (w == 0)
         return COPY(value);
 
-    SYMID sym = ID_OF_SYMBOL(verb);
+    option(SymId) sym = ID_OF_SYMBOL(verb);
     if (sym == SYM_APPEND) {
         index = tail;
         sym = SYM_INSERT;
@@ -1141,7 +1141,7 @@ REBTYPE(Image)
     if (index > tail)
         index = tail;
 
-    SYMID id = ID_OF_SYMBOL(verb);
+    option(SymId) id = ID_OF_SYMBOL(verb);
 
     switch (id) {
 
@@ -1174,8 +1174,7 @@ REBTYPE(Image)
         INCLUDE_PARAMS_OF_REFLECT;
 
         UNUSED(ARG(value)); // accounted for by image above
-        SYMID property = VAL_WORD_ID(ARG(property));
-        assert(property != SYM_0);
+        option(SymId) property = VAL_WORD_ID(ARG(property));
 
         switch (property) {
         case SYM_HEAD:

@@ -65,11 +65,11 @@ Bounce MAKE_Datatype(
             return Copy_Cell(OUT, custom);
     }
     if (IS_WORD(arg)) {
-        SYMID sym = VAL_WORD_ID(arg);
-        if (sym == SYM_0 or sym >= SYM_FROM_KIND(REB_MAX))
+        option(SymId) sym = VAL_WORD_ID(arg);
+        if (not sym or sym >= SYM_FROM_KIND(REB_MAX))
             goto bad_make;
 
-        return Init_Builtin_Datatype(OUT, KIND_FROM_SYM(sym));
+        return Init_Builtin_Datatype(OUT, KIND_FROM_SYM(unwrap(sym)));
     }
 
   bad_make:
@@ -115,7 +115,7 @@ REBTYPE(Datatype)
     switch (ID_OF_SYMBOL(verb)) {
 
     case SYM_REFLECT: {
-        SYMID sym = VAL_WORD_ID(arg);
+        option(SymId) sym = VAL_WORD_ID(arg);
         if (sym == SYM_SPEC) {
             //
             // The "type specs" were loaded as an array, but this reflector
@@ -206,7 +206,7 @@ REBVAL *Datatype_From_Url(const REBVAL *url) {
 // unconstrained form of the type matches), PARSE recognizes the symbol and
 // enforces it.
 //
-static void Startup_Fake_Type_Constraint(SYMID sym)
+static void Startup_Fake_Type_Constraint(SymId sym)
 {
     Init_Meta_Word(Force_Lib_Var(sym), Canon_Symbol(sym));
 }
@@ -261,7 +261,7 @@ Array(*) Startup_Datatypes(Array(*) boot_types, Array(*) boot_typespecs)
     Cell(*) word = ARR_HEAD(boot_types);
 
     REBINT n = VAL_WORD_ID(word);
-    if (n != SYM_0 + 1)  // first symbol (SYM_NULL is something random)
+    if (n != SYM_LOGIC_X)  // first symbol (SYM_NULL is something random)
         panic (word);
 
     for (; word != word_tail; ++word, ++n) {

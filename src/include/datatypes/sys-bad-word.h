@@ -90,7 +90,7 @@ inline static REBVAL *Init_Any_Word_Untracked(
     Byte quote_byte
 );
 
-inline static OPT_SYMID VAL_WORD_ID(noquote(Cell(const*)) v);
+inline static option(SymId) VAL_WORD_ID(noquote(Cell(const*)) v);
 
 
 inline static bool Is_Quasi_Word(Cell(const*) v)
@@ -129,16 +129,13 @@ inline static Value(*) Reify(Value(*) v) {
     return v;
 }
 
-inline static bool Is_Word_Isotope_With_Id(
-    Cell(const*) v,
-    enum Reb_Symbol_Id id  // want to take ID instead of canon, faster check!
-){
-    assert(id != SYM_0);
+inline static bool Is_Word_Isotope_With_Id(Cell(const*) v, SymId id) {
+    assert(id != 0);
 
     if (not Is_Word_Isotope(v))
         return false;
 
-    return id == cast(enum Reb_Symbol_Id, VAL_WORD_ID(v));
+    return id == VAL_WORD_ID(v);
 }
 
 

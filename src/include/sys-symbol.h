@@ -91,87 +91,10 @@
     SERIES_FLAG_26
 
 
-#if defined(NDEBUG) || (! CPLUSPLUS_11)
-    //
-    // Trivial definition for C build or release builds: symbols are just a C
-    // enum value and an OPT_SYMID acts just like a SYMID.
-    //
-    typedef enum Reb_Symbol_Id SYMID;
-    typedef enum Reb_Symbol_Id OPT_SYMID;
-#else
-    struct SYMID;
+inline static option(SymId) ID_OF_SYMBOL(Symbol(const*) s)
+  { return cast(SymId, SECOND_UINT16(s->info)); }
 
-    struct OPT_SYMID {  // may only be converted to SYMID, no comparisons
-        enum Reb_Symbol_Id n;
-        OPT_SYMID (const SYMID& sym);
-        bool operator==(enum Reb_Symbol_Id other) const
-          { return n == other; }
-        bool operator!=(enum Reb_Symbol_Id other) const
-          { return n != other; }
-
-        bool operator==(OPT_SYMID &&other) const = delete;
-        bool operator!=(OPT_SYMID &&other) const = delete;
-
-        operator unsigned int() const  // so it works in switch() statements
-          { return cast(unsigned int, n); }
-
-        explicit operator enum Reb_Symbol_Id()  // must be an *explicit* cast
-          { return n; }
-    };
-
-    struct SYMID {  // acts like a REBOL_Symbol with no OPT_SYMID compares
-        enum Reb_Symbol_Id n;
-        SYMID () {}
-        SYMID (int n) : n (cast(enum Reb_Symbol_Id, n)) {}
-        SYMID (OPT_SYMID opt_sym) : n (opt_sym.n) {}
-
-        operator unsigned int() const  // so it works in switch() statements
-          { return cast(unsigned int, n); }
-
-        explicit operator enum Reb_Symbol_Id() {  // must be an *explicit* cast
-            assert(n != SYM_0);
-            return n;
-        }
-
-        bool operator>=(enum Reb_Symbol_Id other) const {
-            assert(other != SYM_0);
-            return n >= other;
-        }
-        bool operator<=(enum Reb_Symbol_Id other) const {
-            assert(other != SYM_0);
-            return n <= other;
-        }
-        bool operator>(enum Reb_Symbol_Id other) const {
-            assert(other != SYM_0);
-            return n > other;
-        }
-        bool operator<(enum Reb_Symbol_Id other) const {
-            assert(other != SYM_0);
-            return n < other;
-        }
-        bool operator==(enum Reb_Symbol_Id other) const
-          { return n == other; }
-        bool operator!=(enum Reb_Symbol_Id other) const
-          { return n != other; }
-
-        bool operator==(SYMID &other) const = delete;  // may be SYM_0
-        void operator!=(SYMID &other) const = delete;  // ...same
-        bool operator==(const OPT_SYMID &other) const = delete;  // ...same
-        void operator!=(const OPT_SYMID &other) const = delete;  // ...same
-    };
-
-    inline OPT_SYMID::OPT_SYMID(const SYMID &sym) : n (sym.n) {}
-#endif
-
-inline static bool Same_Nonzero_Symid(SYMID a, SYMID b) {
-    assert(a != SYM_0 and b != SYM_0);
-    return cast(REBLEN, a) == cast(REBLEN, b);
-}
-
-inline static OPT_SYMID ID_OF_SYMBOL(Symbol(const*) s)
-  { return cast(SYMID, SECOND_UINT16(s->info)); }
-
-inline static Symbol(const*) Canon_Symbol(SYMID symid) {
+inline static Symbol(const*) Canon_Symbol(SymId symid) {
     assert(cast(REBLEN, symid) != 0);
     assert(cast(REBLEN, symid) < ALL_SYMS_MAX);
     return &PG_Symbol_Canons[symid];

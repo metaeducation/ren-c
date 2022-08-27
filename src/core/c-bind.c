@@ -1064,7 +1064,7 @@ Context(*) Virtual_Bind_Deep_To_New_Context(
 
     Symbol(const*) duplicate = nullptr;
 
-    SYMID dummy_sym = SYM_DUMMY1;
+    SymId dummy_sym = SYM_DUMMY1;
 
     REBLEN index = 1;
     while (index <= num_vars) {
@@ -1075,7 +1075,7 @@ Context(*) Virtual_Bind_Deep_To_New_Context(
                 fail ("Current limitation: only up to 9 BLANK! keys");
 
             symbol = Canon_Symbol(dummy_sym);
-            dummy_sym = cast(SYMID, cast(int, dummy_sym) + 1);
+            dummy_sym = cast(SymId, cast(int, dummy_sym) + 1);
 
             REBVAR *var = Append_Context(c, symbol);
             Init_Blank(var);

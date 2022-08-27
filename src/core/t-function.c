@@ -321,7 +321,7 @@ REBTYPE(Action)
         UNUSED(ARG(value));
 
         REBVAL *property = ARG(property);
-        SYMID sym = VAL_WORD_ID(property);
+        option(SymId) sym = VAL_WORD_ID(property);
         switch (sym) {
           case SYM_BINDING: {
             if (Did_Get_Binding_Of(OUT, action))

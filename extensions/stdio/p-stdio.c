@@ -301,7 +301,7 @@ Bounce Console_Actor(Frame(*) frame_, REBVAL *port, Symbol(const*) verb)
         INCLUDE_PARAMS_OF_REFLECT;
         UNUSED(ARG(value)); // implied by `port`
 
-        SYMID property = VAL_WORD_ID(ARG(property));
+        option(SymId) property = VAL_WORD_ID(ARG(property));
         switch (property) {
           case SYM_OPEN_Q:
             return Init_True(OUT);  // stdio port always open

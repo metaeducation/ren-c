@@ -805,7 +805,7 @@ REBTYPE(Array)
 
     REBSPC *specifier = VAL_SPECIFIER(array);
 
-    SYMID id = ID_OF_SYMBOL(verb);
+    option(SymId) id = ID_OF_SYMBOL(verb);
 
     switch (id) {
 

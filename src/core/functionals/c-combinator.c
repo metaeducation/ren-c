@@ -634,7 +634,7 @@ static bool Combinator_Param_Hook(
     UNUSED(REF(path));  // used by caller of hook
     UNUSED(ARG(advanced));  // used by caller of hook
 
-    SYMID symid = KEY_SYM(key);
+    option(SymId) symid = KEY_SYM(key);
 
     if (symid == SYM_INPUT or symid == SYM_REMAINDER) {
         //

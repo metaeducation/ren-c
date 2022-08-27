@@ -75,9 +75,7 @@ static Bounce DNS_Actor(Frame(*) frame_, REBVAL *port, Symbol(const*) verb)
         INCLUDE_PARAMS_OF_REFLECT;
         UNUSED(ARG(value));  // covered by `port`
 
-        SYMID property = VAL_WORD_ID(ARG(property));
-        assert(property != SYM_0);
-
+        option(SymId) property = VAL_WORD_ID(ARG(property));
         switch (property) {
           case SYM_OPEN_Q:
             fail ("DNS 'ports' do not currently support OPEN?, only READ");

@@ -670,7 +670,7 @@ void Pick_Or_Poke_Date(
     Cell(const*) picker,
     option(const REBVAL*) opt_poke
 ){
-    SYMID sym;
+    option(SymId) sym;
     if (IS_WORD(picker)) {
         sym = VAL_WORD_ID(picker); // error later if SYM_0 or not a match
     }
@@ -995,7 +995,7 @@ REBTYPE(Date)
     REBVAL *v = D_ARG(1);
     assert(IS_DATE(v));
 
-    SYMID id = ID_OF_SYMBOL(verb);
+    option(SymId) id = ID_OF_SYMBOL(verb);
 
     REBYMD date = VAL_DATE(v);
     REBLEN day = VAL_DAY(v) - 1;

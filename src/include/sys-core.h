@@ -176,7 +176,9 @@
 // and some are only forward declared.  See notes in %structs/README.md
 //
 
-#include "reb-defs.h"  // basic typedefs like Byte
+#include "tmp-symid.h"  // small integer IDs for words (e.g. SYM_THRU, SYM_ON)
+
+#include "reb-defs.h"  // basic typedefs like Byte (wraps symbol IDs as SymId)
 
 #include "structs/sys-rebnod.h"
 #include "mem-pools.h"
@@ -262,7 +264,7 @@ typedef struct Reb_Enum_Vars EVARS;
 //
 // See %make/make-headers.r for the generation of this list.
 //
-#include "tmp-symid.h"  // small integer IDs for words (e.g. SYM_THRU, SYM_ON)
+
 #include "tmp-internals.h"
 
 
@@ -496,7 +498,7 @@ inline static void SET_SIGNAL(Flags f) { // used in %sys-series.h
 
 #include "sys-symbol.h"
 
-inline static const REBVAR *Try_Lib_Var(SYMID id) {
+inline static const REBVAR *Try_Lib_Var(SymId id) {
     assert(id < LIB_SYMS_MAX);
 
     // !!! We allow a "removed state", in case modules implement a
@@ -511,7 +513,7 @@ inline static const REBVAR *Try_Lib_Var(SYMID id) {
 #define Lib(name) \
     Try_Lib_Var(SYM_##name)
 
-inline static REBVAR *Force_Lib_Var(SYMID id) {
+inline static REBVAR *Force_Lib_Var(SymId id) {
     REBVAR *var = m_cast(REBVAR*, Try_Lib_Var(id));
     if (var)
         return var;
@@ -545,11 +547,11 @@ inline static REBVAR *Force_Lib_Var(SYMID id) {
 #include "datatypes/sys-datatype.h"  // uses BIN()
 
 #include "datatypes/sys-char.h"  // use Init_Integer() for bad codepoint error
-#include "datatypes/sys-string.h"  // SYMID needed for typesets
+#include "datatypes/sys-string.h"  // SymId needed for typesets
 
 #include "datatypes/sys-logic.h"
 
-#include "datatypes/sys-bad-word.h"  // SYMID needed
+#include "datatypes/sys-bad-word.h"  // SymId needed
 
 #include "datatypes/sys-pair.h"
 #include "datatypes/sys-quoted.h"  // pairings for storage, void used as well

@@ -1054,7 +1054,7 @@ REBTYPE(Context)
     REBVAL *context = D_ARG(1);
     Context(*) c = VAL_CONTEXT(context);
 
-    OPT_SYMID symid = ID_OF_SYMBOL(verb);
+    option(SymId) symid = ID_OF_SYMBOL(verb);
 
     // !!! The PORT! datatype wants things like LENGTH OF to give answers
     // based on the content of the port, not the number of fields in the
@@ -1073,7 +1073,7 @@ REBTYPE(Context)
         UNUSED(ARG(value));  // covered by `v`
 
         REBVAL *property = ARG(property);
-        SYMID prop = VAL_WORD_ID(property);
+        option(SymId) prop = VAL_WORD_ID(property);
 
         switch (prop) {
           case SYM_LENGTH: // !!! Should this be legal?
@@ -1288,14 +1288,14 @@ REBTYPE(Frame)
     REBVAL *frame = D_ARG(1);
     Context(*) c = VAL_CONTEXT(frame);
 
-    OPT_SYMID symid = ID_OF_SYMBOL(verb);
+    option(SymId) symid = ID_OF_SYMBOL(verb);
 
     switch (symid) {
       case SYM_REFLECT : {
         INCLUDE_PARAMS_OF_REFLECT;
         UNUSED(ARG(value));  // covered by `frame`
 
-        SYMID prop = VAL_WORD_ID(ARG(property));
+        option(SymId) prop = VAL_WORD_ID(ARG(property));
 
         if (prop == SYM_LABEL) {
             //

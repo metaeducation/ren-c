@@ -316,7 +316,7 @@ REBTYPE(Binary)
     REBINT index = cast(REBINT, VAL_INDEX(v));
     REBINT tail = cast(REBINT, VAL_LEN_HEAD(v));
 
-    SYMID id = ID_OF_SYMBOL(verb);
+    option(SymId) id = ID_OF_SYMBOL(verb);
 
     switch (id) {
 

@@ -311,14 +311,14 @@ inline static REBVAR *MOD_VAR(Context(*) c, Symbol(const*) sym, bool strict) {
     // Note: Call Lib() macro directly if you have a SYM in hand vs. a canon.
     //
     if (c == Lib_Context) {
-        SYMID id = ID_OF_SYMBOL(sym);
-        if (id != SYM_0 and id < LIB_SYMS_MAX) {
+        option(SymId) id = ID_OF_SYMBOL(sym);
+        if (id != 0 and id < LIB_SYMS_MAX) {
             //
             // !!! We need to consider the strictness here, with case sensitive
             // binding we can't be sure it's a match.  :-/  For this moment
             // hope lib doesn't have two-cased variations of anything.
             //
-            return m_cast(REBVAR*, Try_Lib_Var(id));
+            return m_cast(REBVAR*, Try_Lib_Var(unwrap(id)));
         }
     }
 

@@ -480,7 +480,7 @@ REBTYPE(Time)
 
     REBI64 secs = VAL_NANO(time);
 
-    SYMID id = ID_OF_SYMBOL(verb);
+    option(SymId) id = ID_OF_SYMBOL(verb);
 
     if (id == SYM_PICK_P) {
 

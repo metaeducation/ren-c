@@ -41,7 +41,7 @@
 // their own reduce before trying to make a typeset out of a block?
 //
 const struct {
-    SYMID sym;
+    option(SymId) sym;
     REBU64 bits;
 } Typesets[] = {
     {SYM_ANY_VALUE_X, TS_VALUE},
@@ -96,7 +96,7 @@ void Startup_Typesets(void)
     REBINT n;
     for (n = 0; Typesets[n].sym != 0; n++) {
         Init_Typeset(PUSH(), Typesets[n].bits);
-        Copy_Cell(Force_Lib_Var(Typesets[n].sym), TOP);
+        Copy_Cell(Force_Lib_Var(unwrap(Typesets[n].sym)), TOP);
     }
 
     // !!! Why does the system access the typesets through Lib_Context, vs.

@@ -175,7 +175,7 @@ DECLARE_NATIVE(native)
 // that this manual construction actually matches the definition in the file.
 //
 static void Init_Action_Meta_Shim(void) {
-    SYMID field_syms[3] = {
+    SymId field_syms[3] = {
         SYM_DESCRIPTION, SYM_PARAMETER_TYPES, SYM_PARAMETER_NOTES
     };
     Context(*) meta = Alloc_Context_Core(REB_OBJECT, 4, NODE_FLAG_MANAGED);

@@ -469,7 +469,7 @@ STATIC_ASSERT(SERIES_INFO_0_IS_FALSE == NODE_FLAG_NODE);
     mutable_SECOND_BYTE(SER_INFO(s))
 
 
-//=//// BITS 16-31 ARE SYMID FOR SYMBOLS //////////////////////////////////=//
+//=//// BITS 16-31 ARE SymId FOR SYMBOLS //////////////////////////////////=//
 //
 // These bits are currently unused by other types.  One reason to avoid using
 // them is the concept that the INFO slot will be used to hold locking info

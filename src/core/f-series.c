@@ -46,14 +46,13 @@ Bounce Series_Common_Action_Maybe_Unhandled(
 
     Flags sop_flags;  // "SOP_XXX" Set Operation Flags
 
-    SYMID id = ID_OF_SYMBOL(verb);
+    option(SymId) id = ID_OF_SYMBOL(verb);
     switch (id) {
       case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
         UNUSED(PARAM(value));  // covered by `value`
 
-        OPT_SYMID property = VAL_WORD_ID(ARG(property));
-        assert(property != SYM_0);
+        option(SymId) property = VAL_WORD_ID(ARG(property));
 
         switch (property) {
           case SYM_INDEX:

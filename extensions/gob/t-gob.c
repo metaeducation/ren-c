@@ -27,7 +27,7 @@
 #include "reb-gob.h"
 
 const struct {
-    SYMID sym;
+    option(SymId) sym;
     uintptr_t flags;
 } Gob_Flag_Words[] = {
     {SYM_RESIZE,      GOBF_RESIZE},
@@ -314,9 +314,12 @@ static Array(*) Gob_Flags_To_Array(REBGOB *gob)
     Array(*) a = Make_Array(3);
 
     REBINT i;
-    for (i = 0; Gob_Flag_Words[i].sym != SYM_0; ++i) {
+    for (i = 0; Gob_Flag_Words[i].sym != 0; ++i) {
         if (GET_GOB_FLAG(gob, Gob_Flag_Words[i].flags))
-            Init_Word(Alloc_Tail_Array(a), Canon_Symbol(Gob_Flag_Words[i].sym));
+            Init_Word(
+                Alloc_Tail_Array(a),
+                Canon_Symbol(unwrap(Gob_Flag_Words[i].sym))
+            );
     }
 
     return a;
@@ -328,12 +331,12 @@ static Array(*) Gob_Flags_To_Array(REBGOB *gob)
 //
 static void Set_Gob_Flag(REBGOB *gob, Symbol(const*) name)
 {
-    SYMID sym = ID_OF_SYMBOL(name);
-    if (sym == SYM_0) return; // !!! fail?
+    option(SymId) sym = ID_OF_SYMBOL(name);
+    if (not sym) return; // !!! fail?
 
     REBINT i;
-    for (i = 0; Gob_Flag_Words[i].sym != SYM_0; ++i) {
-        if (Same_Nonzero_Symid(sym, Gob_Flag_Words[i].sym)) {
+    for (i = 0; Gob_Flag_Words[i].sym != 0; ++i) {
+        if (Gob_Flag_Words[i].sym == unwrap(sym)) {
             REBLEN flag = Gob_Flag_Words[i].flags;
             SET_GOB_FLAG(gob, flag);
             //handle mutual exclusive states
@@ -685,12 +688,12 @@ static void Set_GOB_Vars(
 static Array(*) Gob_To_Array(REBGOB *gob)
 {
     Array(*) arr = Make_Array(10);
-    SYMID words[] = {SYM_OFFSET, SYM_SIZE, SYM_ALPHA, SYM_0};
+    option(SymId) syms[] = {SYM_OFFSET, SYM_SIZE, SYM_ALPHA, SYM_0};
     Cell(*) vals[3];
 
     REBINT n;
-    for (n = 0; words[n] != SYM_0; ++n) {
-        Init_Set_Word(Alloc_Tail_Array(arr), Canon_Symbol(words[n]));
+    for (n = 0; syms[n] != 0; ++n) {
+        Init_Set_Word(Alloc_Tail_Array(arr), Canon_Symbol(unwrap(syms[n])));
         vals[n] = Alloc_Tail_Array(arr);
     }
 
@@ -701,7 +704,7 @@ static Array(*) Gob_To_Array(REBGOB *gob)
     if (!GOB_TYPE(gob)) return arr;
 
     if (GOB_CONTENT(gob)) {
-        SYMID sym;
+        SymId sym;
         switch (GOB_TYPE(gob)) {
         case GOBT_COLOR:
             sym = SYM_COLOR;
@@ -968,8 +971,7 @@ REBTYPE(Gob)
         INCLUDE_PARAMS_OF_REFLECT;
 
         UNUSED(ARG(value)); // covered by `val`
-        SYMID property = VAL_WORD_ID(ARG(property));
-        assert(property != SYM_0);
+        option(SymId) property = VAL_WORD_ID(ARG(property));
 
         switch (property) {
         case SYM_HEAD:

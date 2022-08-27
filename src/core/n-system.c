@@ -206,7 +206,7 @@ DECLARE_NATIVE(limit_usage)
 {
     INCLUDE_PARAMS_OF_LIMIT_USAGE;
 
-    SYMID sym = VAL_WORD_ID(ARG(field));
+    option(SymId) sym = VAL_WORD_ID(ARG(field));
 
     // !!! comment said "Only gets set once"...why?
     //

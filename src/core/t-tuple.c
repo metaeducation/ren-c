@@ -193,7 +193,7 @@ REBTYPE(Sequence)
     UNUSED(all_byte_sized_ints);
     Byte* vp = buf;
 
-    SYMID id = ID_OF_SYMBOL(verb);
+    option(SymId) id = ID_OF_SYMBOL(verb);
 
     // !!! This used to depend on "IS_BINARY_ACT", a concept that does not
     // exist any longer with symbol-based action dispatch.  Patch with more

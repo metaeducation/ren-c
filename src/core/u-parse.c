@@ -227,8 +227,8 @@ STATIC_ASSERT((int)AM_FIND_MATCH == (int)PF_FIND_MATCH);
 // !!! This and other efficiency tricks from R3-Alpha should be reviewed to
 // see if they're really the best option.
 //
-inline static SYMID VAL_CMD(Cell(const*) v) {
-    SYMID sym = VAL_WORD_ID(v);
+inline static option(SymId) VAL_CMD(Cell(const*) v) {
+    option(SymId) sym = VAL_WORD_ID(v);
     if (sym >= SYM_SET and sym <= SYM_END)
         return sym;
     return SYM_0;
@@ -788,9 +788,9 @@ static REBIXO To_Thru_Block_Rule(
             }
 
             if (IS_WORD(rule)) {
-                SYMID cmd = VAL_CMD(rule);
+                option(SymId) cmd = VAL_CMD(rule);
 
-                if (cmd != SYM_0) {
+                if (cmd) {
                     if (cmd == SYM_END) {
                         if (VAL_INDEX(iter) >= P_INPUT_LEN)
                             return P_INPUT_LEN;
@@ -1448,8 +1448,8 @@ DECLARE_NATIVE(subparse)
     //=//// ANY-WORD!/ANY-PATH! PROCESSING ////////////////////////////////=//
 
     if (IS_WORD(rule) or IS_GET_WORD(rule) or IS_SET_WORD(rule)) {
-        SYMID cmd = VAL_CMD(rule);
-        if (cmd != SYM_0) {
+        option(SymId) cmd = VAL_CMD(rule);
+        if (cmd) {
             if (not IS_WORD(rule)) {
                 //
                 // Command but not WORD! (COPY:, :THRU)
@@ -2096,7 +2096,7 @@ DECLARE_NATIVE(subparse)
         REBIXO i;  // temp index point
 
         if (IS_WORD(rule)) {  // could be literal BLANK!, now SYM_SKIP
-            SYMID cmd = VAL_CMD(rule);
+            option(SymId) cmd = VAL_CMD(rule);
 
             switch (cmd) {
               case SYM_SKIP:

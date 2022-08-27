@@ -31,7 +31,7 @@
 //
 
 
-inline static OPT_SYMID VAL_WORD_ID(noquote(Cell(const*)) v) {
+inline static option(SymId) VAL_WORD_ID(noquote(Cell(const*)) v) {
     assert(PG_Symbol_Canons[0].leader.bits == SERIES_FLAG_FREE);
     return ID_OF_SYMBOL(VAL_WORD_SYMBOL(v));
 }

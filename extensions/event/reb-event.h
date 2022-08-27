@@ -42,9 +42,9 @@
 
 
 #define VAL_EVENT_TYPE(v) \
-    cast(SYMID, FIRST_UINT16(EXTRA(Any, (v)).u))
+    cast(SymId, FIRST_UINT16(EXTRA(Any, (v)).u))
 
-inline static void SET_VAL_EVENT_TYPE(REBVAL *v, SYMID sym) {
+inline static void SET_VAL_EVENT_TYPE(REBVAL *v, SymId sym) {
     SET_FIRST_UINT16(EXTRA(Any, (v)).u, sym);
 }
 
@@ -133,7 +133,7 @@ inline static void SET_VAL_EVENT_Y(REBVAL *v, uint16_t y) {
 // can only have one or the other.
 
 #define VAL_EVENT_KEYSYM(v) \
-    cast(SYMID, FIRST_UINT16(VAL_EVENT_DATA(v)))
+    cast(SymId, FIRST_UINT16(VAL_EVENT_DATA(v)))
 
 #define SET_VAL_EVENT_KEYSYM(v,keysym) \
     SET_FIRST_UINT16(VAL_EVENT_DATA(v), (keysym))

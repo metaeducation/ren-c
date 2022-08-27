@@ -633,7 +633,7 @@ REBTYPE(Vector)
         INCLUDE_PARAMS_OF_REFLECT;
         UNUSED(ARG(value));  // same as `v`
 
-        SYMID property = VAL_WORD_ID(ARG(property));
+        option(SymId) property = VAL_WORD_ID(ARG(property));
         switch (property) {
           case SYM_LENGTH:
             return Init_Integer(OUT, VAL_VECTOR_LEN_AT(v));

@@ -179,8 +179,7 @@ Bounce File_Actor(Frame(*) frame_, REBVAL *port, Symbol(const*) verb)
         INCLUDE_PARAMS_OF_REFLECT;
 
         UNUSED(ARG(value)); // implicitly comes from `port`
-        SYMID property = VAL_WORD_ID(ARG(property));
-        assert(property != SYM_0);
+        option(SymId) property = VAL_WORD_ID(ARG(property));
 
         switch (property) {
           case SYM_OFFSET:

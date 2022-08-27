@@ -77,11 +77,11 @@ static bool Set_Event_Var(REBVAL *event, Cell(const*) word, const REBVAL *val)
         if (not IS_WORD(val))
             return false;
 
-        SYMID id = VAL_WORD_ID(val);
-        if (id == SYM_0)  // !!! ...but for now, only symbols
+        option(SymId) id = VAL_WORD_ID(val);
+        if (not id)  // !!! ...but for now, only symbols
             fail ("EVENT! only takes types that are compile-time symbols");
 
-        SET_VAL_EVENT_TYPE(event, id);
+        SET_VAL_EVENT_TYPE(event, unwrap(id));
         return true; }
 
       case SYM_PORT:
@@ -135,8 +135,8 @@ static bool Set_Event_Var(REBVAL *event, Cell(const*) word, const REBVAL *val)
             SET_VAL_EVENT_KEYSYM(event, SYM_NONE);
         }
         else if (IS_WORD(val) or IS_QUOTED_WORD(val)) {
-            SYMID sym = VAL_WORD_ID(val);  // ...has to be symbol (for now)
-            if (sym == SYM_0)
+            option(SymId) sym = VAL_WORD_ID(val);  // ...has to be symbol
+            if (not sym)
                 fail ("EVENT! only takes keys that are compile-time symbols");
 
             SET_VAL_EVENT_KEYSYM(event, sym);
@@ -272,7 +272,7 @@ static REBVAL *Get_Event_Var(
         if (VAL_EVENT_TYPE(v) == SYM_NONE)  // !!! Should this ever happen?
             return nullptr;
 
-        SYMID typesym = VAL_EVENT_TYPE(v);
+        SymId typesym = VAL_EVENT_TYPE(v);
         return Init_Word(out, Canon_Symbol(typesym)); }
 
       case SYM_PORT: {
@@ -422,7 +422,7 @@ REBTYPE(Event)
 {
     REBVAL *event = D_ARG(1);
 
-    SYMID id = ID_OF_SYMBOL(verb);
+    option(SymId) id = ID_OF_SYMBOL(verb);
 
     if (id == SYM_PICK_P) {
 
@@ -471,7 +471,7 @@ void MF_Event(REB_MOLD *mo, noquote(Cell(const*)) v, bool form)
     UNUSED(form);
 
     REBLEN field;
-    SYMID fields[] = {
+    option(SymId) fields[] = {
         SYM_TYPE, SYM_PORT, SYM_GOB, SYM_OFFSET, SYM_KEY,
         SYM_FLAGS, SYM_CODE, SYM_DATA, SYM_0
     };
@@ -482,13 +482,13 @@ void MF_Event(REB_MOLD *mo, noquote(Cell(const*)) v, bool form)
 
     DECLARE_LOCAL (var); // declare outside loop (has init code)
 
-    for (field = 0; fields[field] != SYM_0; field++) {
-        if (not Get_Event_Var(var, v, Canon_Symbol(fields[field])))
+    for (field = 0; fields[field] != 0; field++) {
+        if (not Get_Event_Var(var, v, Canon_Symbol(unwrap(fields[field]))))
             continue;
 
         New_Indented_Line(mo);
 
-        String(const*) canon = Canon_Symbol(fields[field]);
+        String(const*) canon = Canon_Symbol(unwrap(fields[field]));
         Append_Utf8(mo->series, STR_UTF8(canon), STR_SIZE(canon));
         Append_Ascii(mo->series, ": ");
         if (IS_WORD(var))

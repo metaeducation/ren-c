@@ -2475,7 +2475,7 @@ Bounce Scanner_Executor(Frame(*) f) {
             return RAISE(Error_Malconstruct_Raw(temp));
         }
 
-        SYMID sym = VAL_WORD_ID(ARR_HEAD(array));
+        option(SymId) sym = VAL_WORD_ID(ARR_HEAD(array));
         if (
             IS_KIND_SYM(sym)
             or sym == SYM_IMAGE_X

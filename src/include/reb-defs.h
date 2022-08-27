@@ -274,6 +274,31 @@ enum Reb_Param_Class {
 };
 
 
+//=//// SYMBOL IDs ////////////////////////////////////////////////////////=//
+//
+// Built-in symbols get a hardcoded integer number that can be used in the
+// C code--for instance in switch() statements.  However, any symbols which
+// are not in the hardcoded table have a symbol ID of 0.
+//
+// We want to avoid bugs that can happen when you say things like:
+//
+//     if (VAL_WORD_ID(a) == VAL_WORD_ID(b)) { ... }
+//
+// So we wrap the enum into an option(), which the C++ build is able to do
+// added type checking on.  It also prohibits comparisons unless you unwrap
+// the values, which in debug builds has a runtime check of non-zeroness.
+//
+
+typedef enum Reb_Symbol_Id SymId;
+
+#define SYM_0 \
+    cast(option(SymId), cast(enum Reb_Symbol_Id, 0))
+
+#if DEBUG_CHECK_OPTIONALS && CPLUSPLUS_11
+    bool operator==(option(SymId)& a, option(SymId)& b) = delete;
+    void operator!=(option(SymId)& a, option(SymId)& b) = delete;
+#endif
+
 
 //=//// STRING MODES //////////////////////////////////////////////////////=//
 //

@@ -102,7 +102,7 @@ REBTYPE(Port)
     REBVAL *port = D_ARG(1);
     assert(IS_PORT(port));
 
-    SYMID id = ID_OF_SYMBOL(verb);
+    option(SymId) id = ID_OF_SYMBOL(verb);
 
     enum {
         ST_TYPE_PORT_INITIAL_ENTRY = 0,
@@ -235,7 +235,7 @@ REBTYPE(Url)
 {
     REBVAL *url = D_ARG(1);
 
-    SYMID id = ID_OF_SYMBOL(verb);
+    option(SymId) id = ID_OF_SYMBOL(verb);
     if (id == SYM_COPY) {
         //
         // https://forum.rebol.info/t/copy-and-port/1699

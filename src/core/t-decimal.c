@@ -477,7 +477,7 @@ REBTYPE(Decimal)
 
     REBDEC d1 = VAL_DECIMAL(val);
 
-    SYMID id = ID_OF_SYMBOL(verb);
+    option(SymId) id = ID_OF_SYMBOL(verb);
 
     // !!! This used to use IS_BINARY_ACT() which is no longer available with
     // symbol-based dispatch.  Consider doing this another way.

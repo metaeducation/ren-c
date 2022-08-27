@@ -277,8 +277,8 @@ Bounce Reflect_Core(Frame(*) frame_)
     REBVAL *v = ARG(value);
     enum Reb_Kind heart = CELL_HEART(v);
 
-    switch (VAL_WORD_ID(ARG(property))) {
-      case SYM_0:
+    option(SymId) symid = VAL_WORD_ID(ARG(property));
+    if (not symid) {
         //
         // If a word wasn't in %words.r, it has no integer SYM.  There is
         // no way for a built-in reflector to handle it...since they just
@@ -286,7 +286,9 @@ Bounce Reflect_Core(Frame(*) frame_)
         // idea will be necessary.
         //
         fail (Error_Cannot_Reflect(heart, ARG(property)));
+    }
 
+    switch (symid) {
       case SYM_KIND: // simpler answer, low-level datatype (e.g. QUOTED!)
         if (Is_Nulled(v))
             return nullptr;

@@ -706,8 +706,7 @@ static Bounce Transport_Actor(
             INCLUDE_PARAMS_OF_REFLECT;
 
             UNUSED(ARG(value));  // covered by `port`
-            SYMID property = VAL_WORD_ID(ARG(property));
-            assert(property != SYM_0);
+            option(SymId) property = VAL_WORD_ID(ARG(property));
 
             switch (property) {
               case SYM_OPEN_Q:
@@ -795,8 +794,7 @@ static Bounce Transport_Actor(
         INCLUDE_PARAMS_OF_REFLECT;
 
         UNUSED(ARG(value)); // covered by `port`
-        SYMID property = VAL_WORD_ID(ARG(property));
-        assert(property != SYM_0);
+        option(SymId) property = VAL_WORD_ID(ARG(property));
 
         switch (property) {
           case SYM_LENGTH: {

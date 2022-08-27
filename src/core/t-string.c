@@ -747,7 +747,7 @@ REBTYPE(String)
     REBVAL *v = D_ARG(1);
     assert(ANY_STRING(v));
 
-    SYMID id = ID_OF_SYMBOL(verb);
+    option(SymId) id = ID_OF_SYMBOL(verb);
 
     REBLEN index = VAL_INDEX(v);
     REBLEN tail = VAL_LEN_HEAD(v);
