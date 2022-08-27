@@ -690,6 +690,9 @@ Special internal defines used by RT, not Host-Kit developers:
   #endif
 #endif
 
+#if !defined(DEBUG_PROTECT_FEED_CELLS)
+    #define DEBUG_PROTECT_FEED_CELLS DEBUG
+#endif
 
 
 // In order to make sure that a good mix of debug settings get tested, this

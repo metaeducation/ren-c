@@ -403,7 +403,12 @@ inline static void Sync_Feed_At_Cell_Or_End_May_Fail(Feed(*) feed) {
 inline static void Fetch_Next_In_Feed(Feed(*) feed) {
     assert(Not_Feed_Flag(feed, NEEDS_SYNC));
 
+  #if DEBUG_PROTECT_FEED_CELLS
+    feed->fetched.header.bits &= (~ CELL_FLAG_PROTECTED);  // temp unprotect
+  #endif
+
     assert(Not_End(feed->p));  // should test for end before fetching again
+    TRASH_POINTER_IF_DEBUG(feed->p);
 
     // The NEXT_ARG_FROM_OUT flag is a trick used by frames, which must be
     // careful about the management of the trick.  It's put on the feed
@@ -480,6 +485,11 @@ inline static void Fetch_Next_In_Feed(Feed(*) feed) {
         }
     }
 
+  #if DEBUG_PROTECT_FEED_CELLS
+    if (Not_Feed_At_End(feed) and not Is_Cell_Erased(&feed->fetched))
+        Set_Cell_Flag(&feed->fetched, PROTECTED);
+  #endif
+
     assert(Is_Feed_At_End(feed) or READABLE(cast(const Reb_Cell*, feed->p)));
 }
 
@@ -514,11 +524,7 @@ inline static Cell(const*) Lookback_While_Fetching_Next(Frame(*) f) {
     //
     Cell(const*) lookback;
     if (f->feed->p == &f->feed->fetched) {
-        Move_Cell_Core(
-            &f->feed->lookback,
-            SPECIFIC(&f->feed->fetched),
-            CELL_MASK_ALL
-        );
+        Copy_Cell(&f->feed->lookback, SPECIFIC(&f->feed->fetched));
         lookback = &f->feed->lookback;
     }
     else
@@ -625,8 +631,8 @@ inline static Feed(*) Prep_Feed_Common(void* preallocated, Flags flags) {
     feed->tick = TG_tick;
   #endif
 
-    Init_Trash(Erase_Cell(&feed->fetched));
-    Init_Trash(Erase_Cell(&feed->lookback));
+    Erase_Cell(&feed->fetched);
+    Erase_Cell(&feed->lookback);
 
     Stub* s = Prep_Stub(
         &feed->singular,  // preallocated
