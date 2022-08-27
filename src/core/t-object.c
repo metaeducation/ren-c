@@ -908,26 +908,6 @@ Context(*) Copy_Context_Extra_Managed(
 }
 
 
-// !!! There are lots of new ideas being tried out, and BLOCK! isotopes are
-// certainly an odd piece of the puzzle--on top of the many existing oddities.
-// This factors out some shared work.
-//
-static void Mold_Isotope_For_Object(REB_MOLD *mo, Value(const*) var) {
-    assert(not Is_Raised(var));  // error isotopes can't be saved in variables
-
-    Append_Codepoint(mo->series, '~');
-    if (Is_Void(var))
-        return;
-
-    DECLARE_LOCAL (reified);
-    Unrelativize(reified, var);
-    Reify_Isotope(reified);
-    Mold_Value(mo, reified);
-
-    Append_Codepoint(mo->series, '~');
-}
-
-
 //
 //  MF_Context: C
 //
@@ -1018,10 +998,15 @@ void MF_Context(REB_MOLD *mo, noquote(Cell(const*)) v, bool form)
         Append_Codepoint(mo->series, ' ');
 
         if (Is_Isotope(e.var)) {
-            Mold_Isotope_For_Object(mo, e.var);
+            assert(not Is_Raised(e.var));  // can't be saved in variables
+
+            DECLARE_LOCAL (reified);
+            Unrelativize(reified, e.var);
+            Quasify_Isotope(reified);  // will become QUASI!...
+            Mold_Value(mo, reified);  // ...hence molds as `~xxx~`
         }
         else if (Is_Nulled(e.var))
-            Append_Ascii(s, "'");  // `field: '` would evaluate to null
+            Append_Ascii(s, "_");  // `field: _` would evaluate to null
         else {
             // We want the molded object to be able to "round trip" back to the
             // state it's in based on reloading the values.  Currently this is

@@ -1683,7 +1683,7 @@ DECLARE_NATIVE(map)
     Decay_If_Isotope(SPARE);
 
     if (Is_Splice(SPARE)) {
-        Reify_Isotope(SPARE);
+        Quasify_Isotope(SPARE);
         Cell(const*) tail;
         Cell(const*) v = VAL_ARRAY_AT(&tail, SPARE);
         for (; v != tail; ++v)

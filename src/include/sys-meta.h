@@ -117,7 +117,7 @@ inline static REBVAL *Quasify(REBVAL *v) {
 
 inline static Value(*) Meta_Quotify(Value(*) v) {
     if (Is_Isotope(v))
-        return Reify_Isotope(v);
+        return Quasify_Isotope(v);
     if (Is_Nulled(v))
         return Init_Blank(v);
     return Quotify(v, 1);  // a non-isotope winds up quoted

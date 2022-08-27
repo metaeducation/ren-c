@@ -950,7 +950,7 @@ Context(*) Error_Bad_Word_Get(
     //
     DECLARE_LOCAL (reified);
     Copy_Cell(reified, isotope);
-    Reify_Isotope(reified);
+    Quasify_Isotope(reified);
 
     return Error_Bad_Word_Get_Raw(target, reified);
 }
@@ -1126,7 +1126,7 @@ Context(*) Error_Isotope_Arg(Frame(*) f, const REBPAR *param)
     //
     REBVAL *arg = FRM_ARG(f, index);
     Copy_Cell(PUSH(), arg);
-    Reify_Isotope(TOP);
+    Quasify_Isotope(TOP);
 
     return Error_Isotope_Arg_Raw(label, param_name, TOP);
 }
@@ -1408,7 +1408,7 @@ Context(*) Error_Bad_Isotope(Cell(const*) isotope) {
 
     DECLARE_LOCAL (reified);
     Copy_Cell(reified, SPECIFIC(isotope));
-    Reify_Isotope(reified);
+    Quasify_Isotope(reified);
 
     return Error_Bad_Isotope_Raw(reified);
 }

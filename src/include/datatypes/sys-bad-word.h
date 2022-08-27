@@ -115,7 +115,7 @@ inline static bool Is_Word_Isotope(Cell(const*) v)
 inline static bool Is_Isotope(Cell(const*) v)
   { return QUOTE_BYTE(v) == ISOTOPE_0; }
 
-inline static Value(*) Reify_Isotope(Value(*) v) {
+inline static Value(*) Quasify_Isotope(Value(*) v) {
     assert(Is_Isotope(v));
     mutable_QUOTE_BYTE(v) = QUASI_2;
     return v;

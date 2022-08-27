@@ -670,7 +670,7 @@ Bounce Composer_Executor(Frame(*) f)
         return RAISE("Currently can only splice plain unquoted GROUP!s");
 
     if (Is_Splice(OUT)) {  // BLOCK! at "quoting level -1" means splice
-        Reify_Isotope(OUT);
+        Quasify_Isotope(OUT);
 
         Cell(const*) push_tail;
         Cell(const*) push = VAL_ARRAY_AT(&push_tail, OUT);

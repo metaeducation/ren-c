@@ -172,7 +172,7 @@ void Probe_Cell_Print_Helper(
     }
     else if (Is_Isotope(v)) {
         DECLARE_LOCAL(reified);
-        Reify_Isotope(Copy_Cell(reified, v));
+        Quasify_Isotope(Copy_Cell(reified, v));
         Mold_Value(mo, reified);
         Append_Ascii(mo->series, "  ; isotope");
     }
