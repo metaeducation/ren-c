@@ -399,16 +399,21 @@ static void Propagate_All_GC_Marks(void)
         Cell(*) v = ARR_HEAD(a);
         Cell(const*) tail = ARR_TAIL(a);
         for (; v != tail; ++v) {
-          #if !defined(NDEBUG)
-            if (Is_Isotope(v))  // only legal in objects/frames
-                assert(IS_VARLIST(a) or IS_PATCH(a));
+          #if DEBUG
+            switch (QUOTE_BYTE_UNCHECKED(v)) {
+              case ISOTOPE_0:  // isotopes only legal in objects/frames/modules
+                if (not (IS_VARLIST(a) or IS_PATCH(a)))
+                    panic (v);
+                break;
 
-            // Nulls are illegal in most arrays, but context varlists use
-            // "nulled cells" to denote that the variable is not set.
-            //
-            if (VAL_TYPE_UNCHECKED(v) == REB_NULL) {
-                if (not (IS_VARLIST(a) or IS_PATCH(a) or IS_PAIRLIST(a)))
-                    panic (a);
+              case UNQUOTED_1:  // nulls indicate absence of values from MAP!
+                if (HEART_BYTE_UNCHECKED(v) == REB_NULL)
+                    if (not (IS_VARLIST(a) or IS_PATCH(a) or IS_PAIRLIST(a)))
+                        panic (v);
+                break;
+
+              default:
+                 break;
             }
           #endif
 
