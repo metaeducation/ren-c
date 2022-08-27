@@ -203,7 +203,6 @@ export console!: make object! [
         if let d: select [
             ~null~ "null"
             ~false~ "false"
-            ~blank~ "blank"
             ~blackhole~ "#"
         ] v [
             ; An unstable isotope will decay to an ordinary value.  We make

@@ -86,7 +86,7 @@ load-until-blank: function [
 ] [
     wsp: compose [some (charset { ^-})]
 
-    res: _  ; !!! collect as SET-WORD!s for locals, evolving...
+    res: '_  ; !!! collect as SET-WORD!s for locals, evolving...
     rebol-value: parsing-at x [
         ;
         ; !!! SET-BLOCK! not bootstrap
@@ -240,7 +240,7 @@ export proto-parser: context [
             all [  ; note: not LOGIC!, a series
                 lines: attempt [decode-lines lines {//} { }]
                 data: load-until-blank lines
-                data: attempt [
+                if decay data [ data: attempt [
                     ;
                     ; !!! The recognition of Rebol-styled comment headers
                     ; originally looked for SET-WORD!, but the syntax for
@@ -263,7 +263,7 @@ export proto-parser: context [
                     ] else [
                         false
                     ]
-                ]
+                ] ]
                 try position ; Success.
             ]
         ]

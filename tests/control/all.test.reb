@@ -332,7 +332,7 @@
 (
     success: true
     all [blank success: false]
-    success
+    success = false
 )
 ; evaluation continues otherwise
 (

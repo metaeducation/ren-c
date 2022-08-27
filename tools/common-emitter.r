@@ -93,7 +93,8 @@ export cscape: function [
                 copy suffix: remove to newline
             ] (
                 keep compose [
-                    (pattern) (col) (mode) (expr) (prefix) (suffix)
+                    (reify pattern) (col) (mode) (expr)
+                    (reify prefix) (reify suffix)
                 ]
                 num: num + 1
                 num-text: to text! num
@@ -115,12 +116,12 @@ export cscape: function [
             ; SET no longer takes BLOCK!, and bootstrap executable doesn't have
             ; SET-BLOCK! so no UNPACK.
             ;
-            pattern: opt item/1
+            pattern: decay item/1
             col: item/2
             mode: item/3
             expr: item/4
-            prefix: opt item/5
-            suffix: opt item/6
+            prefix: decay item/5
+            suffix: decay item/6
 
             any-upper: did find/case expr charset [#"A" - #"Z"]
             any-lower: did find/case expr charset [#"a" - #"z"]
@@ -306,7 +307,7 @@ export make-emitter: function [
             data: take data
             switch type of data [
                 text! [
-                    append buf-emit cscape/with data noquote opt context
+                    append buf-emit cscape/with data noquote decay context
                 ]
                 char! [
                     append buf-emit data

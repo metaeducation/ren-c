@@ -128,7 +128,7 @@ pkg-config: func [  ; !!! Note: Does not appear to be used
         fail ["Unsupported pkg-config word:" var]
     ]
 
-    let x: run-command spaced reduce [pkg opt lib]
+    let x: run-command spaced reduce [pkg decay lib]
 
     if not dlm [
         return x
@@ -151,10 +151,10 @@ pkg-config: func [  ; !!! Note: Does not appear to be used
 
 platform-class: make object! [
     name: ~
-    exe-suffix: '
-    dll-suffix: '
-    archive-suffix: '  ;static library
-    obj-suffix: '
+    exe-suffix: ~
+    dll-suffix: ~
+    archive-suffix: ~  ;static library
+    obj-suffix: ~
 
     gen-cmd-create: ~
     gen-cmd-delete: ~
@@ -167,6 +167,7 @@ unknown-platform: make platform-class [
 
 posix: make platform-class [
     name: 'POSIX
+    exe-suffix: ""
     dll-suffix: ".so"
     obj-suffix: ".o"
     archive-suffix: ".a"
@@ -194,7 +195,7 @@ posix: make platform-class [
         cmd [object!]
     ][
         if let tool: any [:cmd/strip :default-strip] [
-            let b: ensure block! tool/commands/params cmd/file opt cmd/options
+            let b: ensure block! tool/commands/params cmd/file decay cmd/options
             assert [1 = length of b]
             return b/1
         ]
@@ -734,9 +735,9 @@ ld: make linker-class [
         /debug [logic!]
     ][
         let suffix: either try dynamic [
-            try target-platform/dll-suffix
+            target-platform/dll-suffix
         ][
-            try target-platform/exe-suffix
+            target-platform/exe-suffix
         ]
         return spaced collect [
             keep any [(try file-to-local/pass try exec-file) "gcc"]
@@ -927,9 +928,9 @@ link: make linker-class [
         /debug [logic!]
     ][
         let suffix: either try dynamic [
-            try target-platform/dll-suffix
+            target-platform/dll-suffix
         ][
-            try target-platform/exe-suffix
+            target-platform/exe-suffix
         ]
         return spaced collect [
             keep any [(try file-to-local/pass try exec-file) "link"]
@@ -1205,7 +1206,7 @@ generator-class: make object! [
         ]
     ]
 
-    reify: meth [
+    do-substitutions: meth [
         {Substitute variables in the command with its value}
         {(will recursively substitute if the value has variables)}
 
@@ -1297,15 +1298,16 @@ generator-class: make object! [
         return: <none>
         project [object!]
     ][
-        if not let suffix: find reduce [
-            #application (:target-platform/exe-suffix else [_])
-            #dynamic-library (:target-platform/dll-suffix else [_])
-            #static-library (:target-platform/archive-suffix else [_])
-            #object-library (:target-platform/archive-suffix else [_])
-            #object-file (:target-platform/obj-suffix else [_])
-        ] project/class [return none]
-
-        suffix: opt second suffix
+        assert [project/class]
+        let suffix: decay switch project/class [
+            #application [target-platform/exe-suffix]
+            #dynamic-library [target-platform/dll-suffix]
+            #static-library [target-platform/archive-suffix]
+            #object-library [target-platform/archive-suffix]
+            #object-file [target-platform/obj-suffix]
+        ] else [
+            return none
+        ]
 
         case [
             null? project/output [
@@ -1604,12 +1606,12 @@ export execution: make generator-class [
                 ] [return] ;TODO: Check the timestamp to see if it needs to be updated
                 either block? target/commands [
                     for-each cmd target/commands [
-                        cmd: reify cmd
+                        cmd: do-substitutions cmd
                         print ["Running:" cmd]
                         call/shell cmd
                     ]
                 ][
-                    let cmd: reify target/commands
+                    let cmd: do-substitutions target/commands
                     print ["Running:" cmd]
                     call/shell cmd
                 ]

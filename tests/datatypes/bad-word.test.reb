@@ -146,7 +146,7 @@
     void? f
 )(
     f: func [<local> loc] [return reify get/any 'loc]
-    f = '~void~
+    f = '~
 )(
     f: func [<local> loc] [return ^loc]
     f = '~
@@ -241,7 +241,7 @@
 ; other values.
 [
     ('~foo~ = reify ~foo~)
-    ('~null~ = reify null)
+    ('_ = reify null)
     ('~null~ = reify ~null~)
 
     (10 = reify 10)

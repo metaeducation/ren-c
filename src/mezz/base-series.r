@@ -124,7 +124,7 @@ join: function [
             continue  ; old-rule, skips blanks
         ]
         any [
-            find any-sequence! kind of item
+            any-sequence? item
             item = '.  ; !!! REVIEW
             item = '/
         ] then [
@@ -137,12 +137,12 @@ join: function [
                         append base blank
                     ]
                 ]
-                (last base) and (first item) [
+                (not blank? last base) and (not blank? first item) [
                     fail @item [
                         "Elements must be separated with" sep
                     ]
                 ]
-                (not last base) and (first item) [
+                (blank? last base) and (not blank? first item) [
                     take/last base
                     append base spread as block! item
                 ]

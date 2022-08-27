@@ -515,15 +515,15 @@ DECLARE_NATIVE(match)
     //     >> if match [integer! logic!] value [print "Won't run :-("]
     //     ; null  <-- this would be a bad result!
     //
-    // So successful matching of falsey values will give back ~false~, ~blank~,
+    // So successful matching of falsey values will give back ~false~,
     // or ~null~ isotopes.  This can be consciously turned back into their
     // original values with DECAY, which happens automatically in assignments.
     //
-    //     >> match blank! _
-    //     == ~blank~  ; isotope
+    //     >> match [<opt>] null
+    //     == ~null~  ; isotope
     //
-    //     >> decay match blank! '_
-    //     == _
+    //     >> decay match [<opt>] null
+    //     ; null
     //
     Isotopify_If_Falsey(v);
 

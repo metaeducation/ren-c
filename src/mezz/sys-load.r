@@ -161,7 +161,7 @@ load-header: function [
         ; This feature needs redesign if it's to be kept, but switching it
         ; to use TRAP with the bad idea for now.
         ;
-        if try find hdr.options 'compress [
+        if decay try find hdr.options 'compress [
             rest: any [
                 attempt [
                     ; Raw bits.  whitespace *could* be tolerated; if

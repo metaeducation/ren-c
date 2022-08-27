@@ -35,7 +35,7 @@ import <systems.r>
 change-dir join repo-dir %src/boot/
 
 args: parse-args system/script/args  ; either from command line or DO/ARGS
-config: config-system try get 'args/OS_ID
+config: config-system any [get 'args/OS_ID '_]
 
 first-rebol-commit: "19d4f969b4f5c1536f24b023991ec11ee6d5adfb"
 

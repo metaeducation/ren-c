@@ -1403,7 +1403,7 @@ DECLARE_NATIVE(set)
 //
 //  try: native [
 //
-//  {Turn null parameter failures and pure void to NULL}
+//  {Suppress failure from raised errors or VOID, by returning NULL}
 //
 //      return: [<opt> any-value!]
 //      ^optional [<opt> <void> <fail> any-value!]
@@ -1433,48 +1433,6 @@ DECLARE_NATIVE(try)
     Decay_If_Isotope(v);  // !!! this decays isotopes, should it?
 
     return COPY(v);  // !!! also tolerates other isotopes, should it?
-}
-
-
-//
-//  opt: native [
-//
-//  {Convert blanks to nulls, pass through most other values (See Also: TRY)}
-//
-//      return: "null on blank, ~null~ if input was NULL, or original value"
-//          [<opt> any-value!]
-//      ^optional [<opt> <void> any-value!]
-//  ]
-//
-DECLARE_NATIVE(opt)
-{
-    INCLUDE_PARAMS_OF_OPT;
-
-    REBVAL *v = ARG(optional);
-
-    if (Is_Meta_Of_Void(v))
-        return nullptr;  // so you can say `x: opt if condition [...]`
-
-    if (Is_Meta_Of_None(v))
-        return nullptr;  // handy for `opt switch x [1 [if false [<a>]]` cases
-
-    Meta_Unquotify(v);
-    Decay_If_Isotope(v);
-
-    if (Is_Isotope(v))
-        fail (Error_Bad_Isotope(v));
-
-    if (IS_BLANK(v))
-        return nullptr;
-
-    // !!! Experimental: opting a null gives you an isotope.  You generally
-    // don't put OPT on expressions you believe can be null, so this permits
-    // creating a likely error in those cases.  To get around it, OPT TRY
-    //
-    if (Is_Nulled(v))
-        return Init_Null_Isotope(OUT);
-
-    return COPY(v);
 }
 
 
@@ -2446,19 +2404,33 @@ DECLARE_NATIVE(none) {
 //
 //  decay: native [
 //
-//  "Turn ~null~, ~blank~ and ~false~ isotopes into their corresponding values"
+//  "Turn quasiforms into their isotopes, and BLANK! into NULL"
 //
-//      return: [<opt> any-value!]
-//      ^optional [<opt> <void> any-value!]
+//      return: [<opt> any-value! ~any-value!~]
+//      value [<opt> <void> any-value! ~any-value!~]
 //  ]
 //
 DECLARE_NATIVE(decay)
 {
     INCLUDE_PARAMS_OF_DECAY;
 
-    Value(*) v = ARG(optional);
-    Meta_Unquotify(v);
-    Decay_If_Isotope(v);
+    Value(*) v = ARG(value);
+
+    if (Is_Nulled(v))  // !!! Is passthru a good idea as default?
+        return nullptr;
+
+    if (Is_Isotope(v)) {  // currently includes VOID (again, is passthru good?)
+        Copy_Cell(OUT, v);
+        Decay_If_Isotope(OUT);
+        return OUT;
+    }
+
+    if (IS_BLANK(v) or IS_QUASI(v)) {
+        Copy_Cell(OUT, v);
+        Meta_Unquotify(OUT);
+        Decay_If_Isotope(OUT);  // !!! Review general idea of this decay
+        return OUT;
+    }
 
     return COPY(v);
 }
@@ -2467,7 +2439,7 @@ DECLARE_NATIVE(decay)
 //
 //  isotopify-if-falsey: native [
 //
-//  "Turn NULL, BLANK! and #[false] into their corresponding isotopes"
+//  "Turn NULL and #[false] into their corresponding isotopes"
 //
 //      return: [<opt> <void> any-value!]
 //      ^optional [<opt> any-value!]
@@ -2494,21 +2466,14 @@ DECLARE_NATIVE(isotopify_if_falsey)
 //  "Turn NULL to BLANK!, isotopes to quasiforms, pass through other values"
 //
 //      return: [any-value!]
-//      ^optional [<opt> <void> any-value!]
+//      value [<opt> <void> any-value! ~any-value!~]
 //  ]
 //
 DECLARE_NATIVE(reify)
 {
     INCLUDE_PARAMS_OF_REIFY;
 
-    REBVAL *v = ARG(optional);
+    REBVAL *v = ARG(value);
 
-    if (Is_Meta_Of_Null(v))
-        return Init_Blank(OUT);
-
-    if (IS_QUASI(v))  // e.g. the input was an isotope form
-        return COPY(v);  // give back the quasi form
-
-    assert(IS_QUOTED(v));
-    return COPY(Unquotify(v, 1));
+    return Reify(Copy_Cell(OUT, v));
 }

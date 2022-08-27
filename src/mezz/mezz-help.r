@@ -52,7 +52,7 @@ description-of: function [
     return: [<opt> text!]
     v [<try> any-value!]
 ][
-    return opt switch type of reify get/any 'v [
+    return switch type of v [
         bad-word! [null]
         any-array! [spaced ["array of length:" length of v]]
         image! [spaced ["size:" v.size]]
@@ -69,7 +69,7 @@ description-of: function [
         object! [mold words of v]
         typeset! [mold make block! v]
         port! [mold reduce [v.spec.title v.spec.ref]]
-    ]
+    ] else [null]
 ]
 
 browse: function [

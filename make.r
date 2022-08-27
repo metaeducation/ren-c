@@ -178,7 +178,7 @@ if try commands [user-config/target: load commands]
 
 === {MODULES AND EXTENSIONS} ===
 
-system-config: config-system user-config/os-id
+system-config: config-system reify user-config/os-id
 rebmake/set-target-platform system-config/os-base
 
 to-obj-path: func [
@@ -994,7 +994,7 @@ NOTES:^/
 'os-id unspaced [ {=== OS-ID ===^/
 CURRENT OS:^/
     }
-    indent mold config-system user-config/os-id
+    indent mold config-system reify user-config/os-id
     {^/
 LIST:^/
     OS-ID:  OS-NAME:}
@@ -1501,12 +1501,13 @@ for-each ext extensions [
         ; Bootstrap executable (at least on mac) had problems setting to null.
         ; Try workaround.
         ;
-        append user-config/extensions spread reduce [ext/name _]
+        append user-config/extensions spread reduce [ext/name '_]
     ] else [
-        mode: _
+        mode: '_
     ]
+
     switch mode [
-        _  ; Currently the default is built in.  Shouldn't be!
+        '_  ; Currently the default is built in.  Shouldn't be!
         '+ [
             ext/mode: <builtin>
         ]
@@ -1523,7 +1524,7 @@ for-each ext extensions [
     ]
 ]
 for-each [name val] user-config/extensions [
-    if not blank? val [
+    if not val [
         fail [{Unrecognized extension name:} name]
     ]
 ]
@@ -2014,7 +2015,7 @@ clean: make rebmake/entry-class [
         make rebmake/cmd-delete-class [file: %objs/]
         make rebmake/cmd-delete-class [file: %prep/]
         make rebmake/cmd-delete-class [
-            file: join %r3 maybe rebmake/target-platform/exe-suffix
+            file: join %r3 rebmake/target-platform/exe-suffix
         ]
         make rebmake/cmd-delete-class [file: %libr3.*]
     ]

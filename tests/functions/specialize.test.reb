@@ -19,10 +19,10 @@
         true
     )
 
-    ([/A ~null~ /B 10 /C 20] = fooBC 10 20)
+    ([/A _ /B 10 /C 20] = fooBC 10 20)
     ([/A 30 /B 10 /C 20] = fooBC/A 10 20 30)
 
-    ([/A ~null~ /B 20 /C 10] = fooCB 10 20)
+    ([/A _ /B 20 /C 10] = fooCB 10 20)
     ([/A 30 /B 20 /C 10] = fooCB/A 10 20 30)
 
     (error? trap [fooBC/B 1 2 3 4 5 6])

@@ -25,16 +25,16 @@
 )
 
 (didn't parse [x] ['x blank])
-('~blank~ = ^ parse [x _] ['x _])
+('_ = parse [x _] ['x _])
 ([] == parse [x] [opt blank 'x <end>])
 
 (didn't parse [] [blank blank blank])
 
 (didn't parse [x <y> "z"] ['_ '_ '_])
-('~blank~ == meta parse [_ _ _] ['_ '_ '_])
+('_ == parse [_ _ _] ['_ '_ '_])
 (
     q-blank: quote '_
-    '~blank~ == meta parse [_ _ _] [q-blank q-blank q-blank]
+    '_ == parse [_ _ _] [q-blank q-blank q-blank]
 )
 
 [

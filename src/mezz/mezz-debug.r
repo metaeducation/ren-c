@@ -50,9 +50,8 @@ verify: function [
                 id: 'assertion-failure
                 arg1: compose [
                     (spread copy/part conditions pos) ** (case [
-                        bad-word? result' [result']  ; isotope
-                        null? result' [the null]
-                        blank? unquote result' [the blank]
+                        quasi? result' [result']  ; isotope
+                        null' = result' [the null]
                         false = unquote result' [the false]
                     ])
                 ]

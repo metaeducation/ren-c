@@ -74,7 +74,6 @@ inline static bool Is_Truthy(Cell(const*) v) {
     Byte heart = HEART_BYTE(v);
     switch (heart) {
       case REB_NULL:
-      case REB_BLANK:
         return false;
 
       case REB_LOGIC:

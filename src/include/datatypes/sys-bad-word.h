@@ -121,6 +121,14 @@ inline static Value(*) Reify_Isotope(Value(*) v) {
     return v;
 }
 
+inline static Value(*) Reify(Value(*) v) {
+    if (Is_Nulled(v))
+        Init_Blank(v);
+    else if (Is_Isotope(v))  // currently includes void
+        mutable_QUOTE_BYTE(v) = QUASI_2;
+    return v;
+}
+
 inline static bool Is_Word_Isotope_With_Id(
     Cell(const*) v,
     enum Reb_Symbol_Id id  // want to take ID instead of canon, faster check!
@@ -302,8 +310,6 @@ inline static Value(*) Isotopify_If_Falsey(Value(*) v) {
         return v;  // already an isotope (would trigger asserts on IS_X tests)
     if (Is_Nulled(v))
         Init_Null_Isotope(v);
-    else if (IS_BLANK(v))
-        Init_Word_Isotope(v, Canon(BLANK));
     else if (IS_LOGIC(v) and VAL_LOGIC(v) == false)
         Init_Word_Isotope(v, Canon(FALSE));
     return v;

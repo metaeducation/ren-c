@@ -1591,7 +1591,7 @@ Bounce Evaluator_Executor(Frame(*) f)
         StackIndex stackindex_circled = frame_->u.eval.stackindex_circled;
 
         // Take care of the SET for the main result.  For the moment, if you
-        // asked to opt out of the main result this will give you a ~blank~
+        // asked to opt out of the main result this will give you a ~none~
         // isotope...but there is not currently any way for the invoked
         // routine to be aware that the caller opted out of the return.
         //

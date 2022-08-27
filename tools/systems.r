@@ -514,7 +514,7 @@ use [
             integer? platform-number
             any [
                 word? build-label
-                blank? build-label
+                not build-label
             ]
             tuple? id
             all [

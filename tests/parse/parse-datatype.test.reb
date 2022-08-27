@@ -103,7 +103,7 @@
 ]
 
 [https://github.com/red/red/issues/4678
-    ('~blank~ = meta parse to binary! "_" [blank!])
+    ('_ = parse to binary! "_" [blank!])
 
     (didn't parse to binary! "#(" [blank!])
     (didn't parse to binary! "(" [blank!])

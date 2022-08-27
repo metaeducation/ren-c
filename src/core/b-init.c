@@ -235,7 +235,7 @@ static void Startup_Lib(void)
     assert(Is_Falsey(Lib(NULL)) and Is_Nulled(Lib(NULL)));
 
     Set_Cell_Flag(Init_Blank(force_Lib(BLANK)), PROTECTED);
-    assert(Is_Falsey(Lib(BLANK)) and IS_BLANK(Lib(BLANK)));
+    assert(Is_Truthy(Lib(BLANK)) and IS_BLANK(Lib(BLANK)));
 
     // !!! Rebol is firm on TRUE and FALSE being WORD!s, as opposed to the
     // literal forms of logical true and false.  Not only does this frequently

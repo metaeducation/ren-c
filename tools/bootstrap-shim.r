@@ -189,11 +189,24 @@ to-logic: func [return: [logic!] optional [<opt> any-value!]] [
     to logic! :optional
 ]
 
-opt: func [v [<opt> any-value!]] [
-    if null? :v [fail/where "OPT on NULL" 'v]
+
+; We don't have isotopes in the bootstrap build.  But if a branch produces
+; NULL it will yield a "VOID!" (kind of like a BAD-WORD! of ~void~)  Turn these
+; into NULL, and trust that the current build will catch cases of something
+; like a PRINT being turned into a NULL.
+;
+decay: func [v [<opt> any-value!]] [
+    if void? :v [return null]
     if blank? :v [return null]
     :v
 ]
+reify: func [v [<opt> any-value!]] [
+    if void? :v [return _]
+    if null? :v [return _]
+    :v
+]
+opt: ~  ; replaced by DECAY word
+
 
 ; The safety aspect of new TRY isn't really worth attempting to emulate in the
 ; bootstrap shim.  So the <try> parameters are simply "null in, null out" with
@@ -234,16 +247,6 @@ null?: lib/func [
         return lib/null? get take look
     ]
     return lib/null? take* args
-]
-
-; We don't have isotopes in the bootstrap build.  But if a branch produces
-; NULL it will yield a "VOID!" (kind of like a BAD-WORD! of ~void~)  Turn these
-; into NULL, and trust that the current build will catch cases of something
-; like a PRINT being turned into a NULL.
-;
-decay: func [v [<opt> any-value!]] [
-    if void? :v [return null]
-    :v
 ]
 
 

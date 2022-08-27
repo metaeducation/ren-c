@@ -89,7 +89,7 @@
     ("a" == parse "aaaaaaa" [repeat ([_ _]) "b", maybe some "a"])
     ("a" == parse "aaaaaaaaaaaaaaaaaaa" [repeat ([_ _]) "b", maybe some "a"])
     ("a" == parse "aa" [repeat ([_ _]) "b", maybe some "a"])
-    ('~void~ = parse "" [repeat ([_ _]) "b", maybe some "a"])
+    ('~void~ = ^parse "" [repeat ([_ _]) "b", maybe some "a"])
 ]
 
 ; Minimum but no maximum

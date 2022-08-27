@@ -17,7 +17,7 @@
 (null = match :even? 3)
 
 
-('~blank~ = ^ match blank! _)
+('_ = ^ match blank! _)
 (null = match blank! 10)
 (null = match blank! false)
 
@@ -30,7 +30,7 @@
 ; tolerant and NULL-reactive, and also can be used with THEN and ELSE.
 [
     ('~null~ = ^ match null null)
-    ('~blank~ = ^ match blank! blank)
+    ('_ = match blank! blank)
     (true = match logic! true)
     ('~false~ = ^ match logic! false)
 ]

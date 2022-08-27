@@ -50,7 +50,7 @@
 )(
     x: [1 "hi" <foo> _ <bar> "baz" 2]
     did all [
-        blank? until/predicate [take x] :not
+        blank? until/predicate [take x] z -> [not decay z]
         x = [<bar> "baz" 2]
     ]
 )(

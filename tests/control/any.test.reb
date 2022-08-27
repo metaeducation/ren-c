@@ -337,8 +337,7 @@
 )
 (
     success: false
-    any [blank success: true]
-    success
+    blank = any [blank success: true]
 )
 ; RETURN stops evaluation
 (
@@ -403,11 +402,12 @@
 ]
 
 ; When used with @ blocks, ANY will treat the block as already reduced
+; With all values becoming truthy, this is only really useful with a predicate.
 [
     (void? any @[])
     (1 = any @[1 + 2])
-    (null = any @[#[false] _])
-    (null = any inert reduce [false blank])
+    ('_ = any @[#[false] _])
+    ('_ = any inert reduce [false blank])
     ('false = any @[false])  ; just the word, and words are truthy
 ]
 

@@ -1945,11 +1945,11 @@ DECLARE_NATIVE(until)
 // 3. While some cases may want to decay isotopes for convenience, this is
 //    not such a case.  Imagine:
 //
-//        until [match blank! get-queue-item]
+//        until [match [<opt>] get-queue-item]
 //
-//    The likely intent is that BLANK! is supposed to stop the loop, and return
-//    a BLANK! value.  Erroring on the ~blank~ isotope draws attention to the
-//    problem, so they know to use DID MATCH or CATCH/THROW the blank.
+//    The likely intent is that null is supposed to stop the loop.  Erroring
+//    on the ~null~ isotope draws attention to the problem, so they know to
+//    use DID MATCH or CATCH/THROW the null.
 {
     INCLUDE_PARAMS_OF_UNTIL;
 
