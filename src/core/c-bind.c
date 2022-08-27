@@ -66,7 +66,7 @@ void Bind_Values_Inner_Loop(
                 INIT_VAL_WORD_INDEX(v, 1);
             }
             else if (type_bit & add_midstream_types) {
-                Finalize_Void(Append_Context(context, v, nullptr));
+                Finalize_Void(Append_Context_Bind_Word(context, v));
             }
           }
           else {
@@ -90,7 +90,7 @@ void Bind_Values_Inner_Loop(
                 //
                 // Word is not in context, so add it if option is specified
                 //
-                Append_Context(context, v, nullptr);
+                Append_Context_Bind_Word(context, v);
                 Add_Binder_Index(binder, symbol, VAL_WORD_INDEX(v));
             }
           }
@@ -1077,7 +1077,7 @@ Context(*) Virtual_Bind_Deep_To_New_Context(
             symbol = Canon_Symbol(dummy_sym);
             dummy_sym = cast(SYMID, cast(int, dummy_sym) + 1);
 
-            REBVAL *var = Append_Context(c, nullptr, symbol);
+            REBVAR *var = Append_Context(c, symbol);
             Init_Blank(var);
             Set_Cell_Flag(var, BIND_NOTE_REUSE);
             Set_Cell_Flag(var, PROTECTED);
@@ -1086,7 +1086,7 @@ Context(*) Virtual_Bind_Deep_To_New_Context(
         }
         else if (IS_WORD(item)) {
             symbol = VAL_WORD_SYMBOL(item);
-            REBVAL *var = Append_Context(c, nullptr, symbol);
+            REBVAR *var = Append_Context(c, symbol);
 
             // !!! For loops, nothing should be able to be aware of this
             // synthesized variable until the loop code has initialized it
@@ -1125,7 +1125,7 @@ Context(*) Virtual_Bind_Deep_To_New_Context(
             symbol = VAL_WORD_SYMBOL(VAL_UNESCAPED(item));
 
           blockscope {
-            REBVAL *var = Append_Context(c, nullptr, symbol);
+            REBVAL *var = Append_Context(c, symbol);
             Derelativize(var, item, specifier);
             Set_Cell_Flag(var, BIND_NOTE_REUSE);
             Set_Cell_Flag(var, PROTECTED);

@@ -181,9 +181,7 @@ static void Init_Action_Meta_Shim(void) {
     Context(*) meta = Alloc_Context_Core(REB_OBJECT, 4, NODE_FLAG_MANAGED);
     REBLEN i = 1;
     for (; i != 4; ++i)
-        Init_Nulled(
-            Append_Context(meta, nullptr, Canon_Symbol(field_syms[i - 1]))
-        );
+        Init_Nulled(Append_Context(meta, Canon_Symbol(field_syms[i - 1])));
 
     Root_Action_Meta = Init_Object(Alloc_Value(), meta);
     Force_Value_Frozen_Deep(Root_Action_Meta);
@@ -242,7 +240,7 @@ Array(*) Startup_Natives(const REBVAL *boot_natives)
     ++PG_Next_Native_Dispatcher;
 
     Init_Action(
-        Append_Context(Lib_Context, nullptr, Canon(NATIVE)),
+        Append_Context(Lib_Context, Canon(NATIVE)),
         the_native_action,
         Canon(NATIVE),  // label
         UNBOUND

@@ -521,7 +521,7 @@ Context(*) Alloc_Context_From_Map(const REBMAP *map)
 
     for (; mval != mval_tail; mval += 2) {  // note mval must not be END
         if (ANY_WORD(mval) and not Is_Nulled(mval + 1)) {
-            REBVAL *var = Append_Context(c, nullptr, VAL_WORD_SYMBOL(mval));
+            REBVAL *var = Append_Context(c, VAL_WORD_SYMBOL(mval));
             Copy_Cell(var, SPECIFIC(mval + 1));
         }
     }

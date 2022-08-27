@@ -515,7 +515,7 @@ inline static REBVAR *Force_Lib_Var(SYMID id) {
     REBVAR *var = m_cast(REBVAR*, Try_Lib_Var(id));
     if (var)
         return var;
-    return Append_Context(Lib_Context, nullptr, Canon_Symbol(id));
+    return Append_Context(Lib_Context, Canon_Symbol(id));
 }
 
 #define force_Lib(name) \

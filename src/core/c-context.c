@@ -134,9 +134,6 @@ void Expand_Context(Context(*) context, REBLEN delta)
 }
 
 
-//
-//  Append_Context: C
-//
 // Append a word to the context word list. Expands the list if necessary.
 // Returns the value cell for the word, which is reset.
 //
@@ -144,10 +141,10 @@ void Expand_Context(Context(*) context, REBLEN delta)
 // use sym.  When using a word, it will be modified to be specifically bound
 // to this context after the operation.
 //
-REBVAR *Append_Context(
+static REBVAR* Append_Context_Core(
     Context(*) context,
-    option(Cell(*)) any_word,  // binding modified (Note: quoted words allowed)
-    option(Symbol(const*)) symbol
+    Symbol(const*) symbol,
+    option(Cell(*)) any_word  // binding modified (Note: quoted words allowed)
 ) {
     if (CTX_TYPE(context) == REB_MODULE) {
         //
@@ -160,9 +157,7 @@ REBVAR *Append_Context(
 
         SYMID id = SYM_0;
         if (context == Lib_Context)
-            id = symbol ?
-                ID_OF_SYMBOL(unwrap(symbol))
-                : VAL_WORD_ID(unwrap(any_word));
+            id = ID_OF_SYMBOL(symbol);
 
         Array(*) patch;
         if (id != SYM_0 and id <= LIB_SYMS_MAX) {
@@ -210,15 +205,10 @@ REBVAR *Append_Context(
 
         // We circularly link the variable into the list of hitches so that you
         // can find the spelling again.
-        //
-        if (any_word) {
-            assert(symbol == nullptr);
-            symbol = VAL_WORD_SYMBOL(unwrap(any_word));
-        }
 
         // skip over binding-related hitches
         //
-        REBSER *updating = m_cast(Raw_Symbol*, unwrap(symbol));
+        REBSER *updating = m_cast(Raw_Symbol*, symbol);
         while (GET_SERIES_FLAG(SER(node_MISC(Hitch, updating)), BLACK))
             updating = SER(node_MISC(Hitch, updating));
 
@@ -244,12 +234,7 @@ REBVAR *Append_Context(
     // also check that redundant keys aren't getting added here.
     //
     EXPAND_SERIES_TAIL(keylist, 1);  // updates the used count
-    Init_Key(
-        SER_LAST(REBKEY, keylist),
-        symbol
-            ? cast(const Raw_Symbol*, unwrap(symbol))
-            : VAL_WORD_SYMBOL(VAL_UNESCAPED(unwrap(any_word)))
-    );
+    Init_Key(SER_LAST(REBKEY, keylist), symbol);
 
     // Add a slot to the var list
     //
@@ -257,20 +242,32 @@ REBVAR *Append_Context(
 
     Cell(*) value = Erase_Cell(ARR_LAST(CTX_VARLIST(context)));
 
-    if (not any_word)
-        assert(symbol);
-    else {
-        // We want to not just add a key/value pairing to the context, but we
-        // want to bind a word while we are at it.  Make sure symbol is valid.
-        //
-        assert(not symbol);
-
+    if (any_word) {
         REBLEN len = CTX_LEN(context);  // length we just bumped
         INIT_VAL_WORD_BINDING(unwrap(any_word), context);
         INIT_VAL_WORD_INDEX(unwrap(any_word), len);
     }
 
     return cast(REBVAR*, value);  // location we just added (void cell)
+}
+
+
+//
+//  Append_Context_Bind_Word: C
+//
+REBVAR* Append_Context_Bind_Word(
+    Context(*) context,
+    Cell(*) any_word  // binding modified (Note: quoted words allowed)
+){
+    return Append_Context_Core(context, VAL_WORD_SYMBOL(any_word), any_word);
+}
+
+//
+//  Apend_Context: C
+//
+REBVAR* Append_Context(Context(*) context, Symbol(const*) symbol)
+{
+    return Append_Context_Core(context, symbol, nullptr);
 }
 
 

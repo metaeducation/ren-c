@@ -645,9 +645,7 @@ inline static option(REBSER*) Get_Word_Container(
             ){
                 *index_out = INDEX_ATTACHED;
                 return Singular_From_Cell(
-                    Finalize_Void(
-                        Append_Context(CTX(binding), nullptr, symbol)
-                    )
+                    Finalize_Void(Append_Context(CTX(binding), symbol))
                 );
             }
 

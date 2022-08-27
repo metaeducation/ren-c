@@ -87,9 +87,7 @@ static void Append_Vars_To_Context_From_Block(REBVAL *context, REBVAL *block)
 
     StackValue(*) new_word = Data_Stack_At(collector.stack_base) + first_new_index;
     for (; new_word != TOP + 1; ++new_word)
-        Finalize_Void(
-            Append_Context(c, nullptr, VAL_WORD_SYMBOL(new_word))
-        );
+        Finalize_Void(Append_Context(c, VAL_WORD_SYMBOL(new_word)));
   }
   }  // end the non-module part
 
@@ -102,7 +100,7 @@ static void Append_Vars_To_Context_From_Block(REBVAL *context, REBVAL *block)
             bool strict = true;
             var = MOD_VAR(c, symbol, strict);
             if (not var) {
-                var = Append_Context(c, nullptr, symbol);
+                var = Append_Context(c, symbol);
                 Finalize_Void(var);
             }
         }
@@ -839,7 +837,7 @@ Context(*) Copy_Context_Extra_Managed(
 
             for (; patch != *psym; patch = SER(node_MISC(Hitch, patch))) {
                 if (original == INODE(PatchContext, patch)) {
-                    REBVAL *var = Append_Context(copy, nullptr, *psym);
+                    REBVAL *var = Append_Context(copy, *psym);
                     Copy_Cell(var, SPECIFIC(ARR_SINGLE(ARR(patch))));
                     break;
                 }
@@ -1207,9 +1205,7 @@ REBTYPE(Context)
                 VAL_WORD_SYMBOL(arg),
                 strict
             )){
-                Finalize_Void(
-                    Append_Context(c, nullptr, VAL_WORD_SYMBOL(arg))
-                );
+                Finalize_Void(Append_Context(c, VAL_WORD_SYMBOL(arg)));
             }
             return COPY(context);
         }

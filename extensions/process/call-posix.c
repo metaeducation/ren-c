@@ -947,12 +947,9 @@ Bounce Call_Core(Frame(*) frame_) {
     if (REF(info)) {
         Context(*) info = Alloc_Context(REB_OBJECT, 2);
 
-        Init_Integer(Append_Context(info, nullptr, Canon(ID)), forked_pid);
+        Init_Integer(Append_Context(info, Canon(ID)), forked_pid);
         if (REF(wait))
-            Init_Integer(
-                Append_Context(info, nullptr, Canon(EXIT_CODE)),
-                exit_code
-            );
+            Init_Integer(Append_Context(info, Canon(EXIT_CODE)), exit_code);
 
         return Init_Object(OUT, info);
     }

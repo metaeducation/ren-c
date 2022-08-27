@@ -806,7 +806,7 @@ Context(*) Make_Error_Managed_Core(
                 continue;
 
             Symbol(const*) symbol = VAL_WORD_SYMBOL(msg_item);
-            REBVAL *var = Append_Context(error, nullptr, symbol);
+            REBVAL *var = Append_Context(error, symbol);
 
             const void *p = va_arg(*vaptr, const void*);
 

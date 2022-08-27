@@ -168,9 +168,7 @@ DECLARE_NATIVE(bind)
         // not in context, bind/new means add it if it's not.
         //
         if (REF(new) or (IS_SET_WORD(v) and REF(set))) {
-            Finalize_Void(
-                Append_Context(VAL_CONTEXT(context), v, nullptr)
-            );
+            Finalize_Void(Append_Context_Bind_Word(VAL_CONTEXT(context), v));
             return COPY(v);
         }
 
@@ -1520,7 +1518,7 @@ DECLARE_NATIVE(resolve)
             RESET(dest);
         }
         else {
-            dest = Append_Context(where, nullptr, symbol);
+            dest = Append_Context(where, symbol);
         }
 
         Copy_Cell(dest, src);

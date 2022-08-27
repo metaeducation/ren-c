@@ -267,7 +267,7 @@ Array(*) Startup_Datatypes(Array(*) boot_types, Array(*) boot_typespecs)
     for (; word != word_tail; ++word, ++n) {
         enum Reb_Kind kind = cast(enum Reb_Kind, n);
 
-        REBVAL *value = Append_Context(Lib_Context, SPECIFIC(word), nullptr);
+        REBVAL *value = Append_Context_Bind_Word(Lib_Context, SPECIFIC(word));
 
         if (kind == REB_BYTES) {
             Init_Word_Isotope(value, Canon(BYTES));
