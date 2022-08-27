@@ -217,9 +217,9 @@
         } \
     } while (0)
 
-    inline static const RawCell *READABLE(const RawCell *c) {
+    inline static Cell(const*) READABLE(const RawCell *c) {
         ASSERT_CELL_READABLE_EVIL_MACRO(c);  // ^-- should this be a template?
-        return c;
+        return cast(Cell(const*), c);
     }
 
     inline static Cell(*) WRITABLE(Cell(*) c) {
@@ -304,76 +304,27 @@ inline static Cell(const*) CELL_TO_VAL(noquote(Cell(const*)) cell)
 
 inline static enum Reb_Kind VAL_TYPE_UNCHECKED(Cell(const*) v) {
     switch (QUOTE_BYTE_UNCHECKED(v)) {
-      case UNQUOTED_1: return cast(enum Reb_Kind, HEART_BYTE_UNCHECKED(v));
-      case QUASI_2: return REB_QUASI;
-      default: return REB_QUOTED;
+      case ISOTOPE_0:
+        if (HEART_BYTE_UNCHECKED(v) == REB_NULL)
+            return REB_VOID;
+        return REB_ISOTOPE;
+
+      case UNQUOTED_1:
+        return cast(enum Reb_Kind, HEART_BYTE_UNCHECKED(v));
+
+      case QUASI_2:
+        return REB_QUASI;
+
+      default:
+        return REB_QUOTED;
     }
 }
 
 #if defined(NDEBUG)
     #define VAL_TYPE VAL_TYPE_UNCHECKED
 #else
-    inline static enum Reb_Kind VAL_TYPE_Debug(
-        Cell(const*) v,  // can't be used on noquote(Cell(const*))
-        const char *file,
-        int line
-    ){
-        Byte heart_byte = HEART_BYTE_UNCHECKED(v);
-        Byte quote_byte = QUOTE_BYTE_UNCHECKED(v);
-
-        if (
-            (v->header.bits & (
-                NODE_FLAG_NODE
-                | NODE_FLAG_CELL
-                | CELL_FLAG_STALE
-            )) == (
-                NODE_FLAG_NODE
-                | NODE_FLAG_CELL
-            )
-            and heart_byte < REB_MAX
-            and quote_byte != ISOTOPE_0
-        ){
-            switch (quote_byte) {
-              case UNQUOTED_1: return cast(enum Reb_Kind, heart_byte);
-              case QUASI_2: return REB_QUASI;
-              default: return REB_QUOTED;
-            }
-        }
-
-        // Give more granular errors based on specific failure
-
-        if (quote_byte == ISOTOPE_0) {
-            printf("VAL_TYPE() called on isotope (QUOTE_BYTE() of 0)");
-            panic_at (v, file, line);
-        }
-
-        if (heart_byte >= REB_MAX) {
-            printf("VAL_TYPE() on pseudotype/garbage (use HEART_BYTE())\n");
-            panic_at (v, file, line);
-        }
-
-        if (not (v->header.bits & NODE_FLAG_CELL)) {
-            printf("VAL_TYPE() called on non-cell\n");
-            panic_at (v, file, line);
-        }
-
-        assert(v->header.bits & CELL_FLAG_STALE);
-
-        if (heart_byte == REB_WORD and (quote_byte == QUASI_2)) {
-            printf("VAL_TYPE() called on unreadable cell\n");
-            panic_at (v, file, line);
-        }
-
-        printf(
-            "VAL_TYPE() called on cell with CELL_FLAG_STALE\n"
-            "It may be valid but just having access to it limited\n"
-            "see Mark_Eval_Out_Stale()\n"
-        );
-        panic_at (v, file, line);
-    }
-
     #define VAL_TYPE(v) \
-        VAL_TYPE_Debug((v), __FILE__, __LINE__)
+        VAL_TYPE_UNCHECKED(READABLE(v))
 #endif
 
 
