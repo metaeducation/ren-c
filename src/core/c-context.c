@@ -413,9 +413,7 @@ Keylist(*) Collect_Keylist_Managed(
     option(Cell(const*)) tail,
     option(Context(*)) prior,
     Flags flags  // see %sys-core.h for COLLECT_ANY_WORD, etc.
-) {
-    assert((head and tail) or (not head and not tail));
-
+){
     struct Reb_Collector collector;
     struct Reb_Collector *cl = &collector;
 
@@ -427,7 +425,10 @@ Keylist(*) Collect_Keylist_Managed(
         assert(not duplicate);  // context should have had all unique keys
     }
 
-    Collect_Inner_Loop(cl, head, tail);
+    if (head)
+        Collect_Inner_Loop(cl, unwrap(head), unwrap(tail));
+    else
+        assert(not tail);
 
     Count num_collected = TOP_INDEX - cl->stack_base;
 

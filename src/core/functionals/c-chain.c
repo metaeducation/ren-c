@@ -77,7 +77,7 @@ Frame(*) Push_Downshifted_Frame(REBVAL *out, Frame(*) f) {
     f->varlist = &PG_Inaccessible_Series;  // trash?  nullptr?
     f->rootvar = nullptr;
     TRASH_POINTER_IF_DEBUG(f->executor);  // caller must set
-    TRASH_OPTION_IF_DEBUG(f->label);
+    TRASH_POINTER_IF_DEBUG(f->label);
 
     sub->u.action.dispatcher_base = f->u.action.dispatcher_base;
 

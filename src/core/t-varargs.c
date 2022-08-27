@@ -46,14 +46,16 @@ inline static void Init_For_Vararg_End(REBVAL *out, enum Reb_Vararg_Op op) {
 inline static bool Vararg_Op_If_No_Advance_Handled(
     REBVAL *out,
     enum Reb_Vararg_Op op,
-    option(Cell(const*)) look, // the first value in the varargs input
+    option(Cell(const*)) opt_look, // the first value in the varargs input
     REBSPC *specifier,
     enum Reb_Param_Class pclass
 ){
-    if (not look) {
+    if (not opt_look) {
         Init_For_Vararg_End(out, op); // exhausted
         return true;
     }
+
+    Cell(const*) look = unwrap(opt_look);
 
     if (pclass == PARAM_CLASS_NORMAL and IS_COMMA(look)) {
         Init_For_Vararg_End(out, op);  // non-quoted COMMA!

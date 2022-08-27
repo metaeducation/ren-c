@@ -274,9 +274,9 @@ inline static option(Value(const*)) Try_Reify_Variadic_Feed_Series(
         //
       case FLAVOR_SYMBOL: {
         if (feed->context) {
-            assert(CTX_TYPE(feed->context) == REB_MODULE);
+            assert(CTX_TYPE(unwrap(feed->context)) == REB_MODULE);
             Init_Any_Word_Attached(
-                &feed->fetched, REB_WORD, SYM(s), feed->context
+                &feed->fetched, REB_WORD, SYM(s), unwrap(feed->context)
             );
             // !!! Should we speed it up by setting feed->gotten here, if it's
             // bound into Lib?  Would it be overwritten by nullptr?

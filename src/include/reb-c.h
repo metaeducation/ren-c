@@ -794,7 +794,7 @@
         // C++ won't let you default construct objects without a default
         // constructor.  To be C compatible, it cannot have behavior.
         //
-        optional_pointer () {}  // garbage (or nullptr if in global scope)
+        optional_pointer () = default;  // garbage (or 0 if in global scope)
 
         template <typename X>
         optional_pointer (X p) : p (p) {}
@@ -896,20 +896,8 @@
 
 #ifdef NDEBUG
     #define TRASH_POINTER_IF_DEBUG(p)       NOOP
-    #define TRASH_OPTION_IF_DEBUG(o)      NOOP
     #define TRASH_CFUNC_IF_DEBUG(T,p)       NOOP
 #else
-    #if DEBUG_CHECK_OPTIONALS
-        #define TRASH_OPTION_IF_DEBUG(o) \
-            TRASH_POINTER_IF_DEBUG((o).p)
-
-        #define IS_OPTION_TRASH_DEBUG(o) \
-            IS_POINTER_TRASH_DEBUG((o).p)
-    #else
-        #define TRASH_OPTION_IF_DEBUG TRASH_POINTER_IF_DEBUG
-        #define IS_OPTION_TRASH_DEBUG IS_POINTER_TRASH_DEBUG
-    #endif
-
     #if defined(__cplusplus) // needed even if not C++11
         template<class T>
         inline static void TRASH_POINTER_IF_DEBUG(T* &p) {
@@ -947,7 +935,21 @@
             );
         }
 
-      #if CPLUSPLUS_11
+    #if DEBUG_CHECK_OPTIONALS
+        template<class P>
+        inline static void TRASH_POINTER_IF_DEBUG(optional_pointer<P> &p) {
+            p = reinterpret_cast<P>(static_cast<uintptr_t>(0xDECAFBAD));
+        }
+
+        template<class P>
+        inline static bool IS_POINTER_TRASH_DEBUG(optional_pointer<P> &p) {
+            return (
+                p.p == reinterpret_cast<P>(static_cast<uintptr_t>(0xDECAFBAD))
+            );
+        }
+    #endif
+
+    #if CPLUSPLUS_11
         template<class P>
         inline static void TRASH_POINTER_IF_DEBUG(Never_Null<P> &p) {
             p = reinterpret_cast<P>(static_cast<uintptr_t>(0xDECAFBAD));

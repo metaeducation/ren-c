@@ -559,7 +559,7 @@ const Byte* Scan_Item_Push_Mold(
             --bp;
         }
         else if (c >= 0x80) { // Accept UTF8 encoded char:
-            if (not (bp = Back_Scan_UTF8_Char(&c, bp, 0)))
+            if (not (bp = Back_Scan_UTF8_Char(&c, bp, nullptr)))
                 return nullptr;
         }
         else if (opt_invalids and strchr(cs_cast(opt_invalids), c)) {
@@ -1855,7 +1855,7 @@ void Init_Scan_Level(
     SCAN_STATE *ss,
     String(const*) file,
     REBLIN line,
-    option(const Byte* bp)
+    option(const Byte*) bp
 ){
     level->ss = ss;
 

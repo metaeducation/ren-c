@@ -1421,7 +1421,7 @@ void Begin_Action_Core(
     PARAM = ACT_PARAMS_HEAD(ORIGINAL);
     ARG = f->rootvar + 1;
 
-    assert(IS_OPTION_TRASH_DEBUG(f->label));  // ACTION! makes valid
+    assert(IS_POINTER_TRASH_DEBUG(f->label));  // ACTION! makes valid
     assert(not label or IS_SYMBOL(unwrap(label)));
     f->label = label;
   #if DEBUG_FRAME_LABELS  // helpful for looking in the debugger
@@ -1558,7 +1558,7 @@ void Drop_Action(Frame(*) f) {
     TRASH_POINTER_IF_DEBUG(ORIGINAL); // action is no longer running
     f->executor = nullptr;  // so GC won't see this frame as Action GC
 
-    TRASH_OPTION_IF_DEBUG(f->label);
+    TRASH_POINTER_IF_DEBUG(f->label);
   #if DEBUG_FRAME_LABELS
     TRASH_POINTER_IF_DEBUG(f->label_utf8);
   #endif
