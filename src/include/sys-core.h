@@ -143,7 +143,7 @@
 // Current focus on avoiding dependencies on printf() are at the object and
 // linker level, where in general it's more direct to examine bloat.
 //
-#if !defined(NDEBUG) || DEBUG_PRINTF_FAIL_LOCATIONS
+#if !defined(NDEBUG) || DEBUG_PRINTF_FAIL_LOCATIONS || DEBUG_HAS_PROBE
     //
     // Debug builds may use printf() and such liberally (helps to debug the
     // Ren-C I/O system itself!)
