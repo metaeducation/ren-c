@@ -850,7 +850,7 @@ void Pick_From_Gob(
     Cell(const*) picker
 ){
     if (IS_INTEGER(picker)) {
-        DECLARE_LOCAL(temp);
+        DECLARE_LOCAL (temp);
         if (rebRunThrows(
             temp,  // <-- output cell
             Canon(PICK),

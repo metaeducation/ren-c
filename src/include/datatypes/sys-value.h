@@ -758,19 +758,16 @@ inline static REBVAL *Constify(REBVAL *v) {
 
 
 //
-// Rather than allow a REBVAL to be declared plainly as a local variable in
+// Rather than allow Cell storage to be declared plainly as a local variable in
 // a C function, this macro provides a generic "constructor-like" hook.
-// This faciliates the differentiation of cell lifetimes (API vs. stack),
-// as well as cell protection states.  It can also be useful for debugging
-// scenarios, for knowing where cells are initialized.
 //
 // Note: because this will run instructions, a routine should avoid doing a
-// DECLARE_LOCAL inside of a loop.  It should be at the outermost scope of
+// DECLARE_LOCAL() inside of a loop.  It should be at the outermost scope of
 // the function.
 //
-// !!! REBVAL on the C stack cannot be preserved in stackless, and they also
-// cannot have their cell RESET() when a fail() occurs.  This means these are
-// likely to be converted to API allocated cells.
+// !!! Cells on the C stack can't be preserved across stackless continuations.
+// Rather than using DECLARE_LOCAL(), natives should use <local> in their spec
+// to define cells that are part of the frame, and access them via LOCAL().
 //
 #define DECLARE_LOCAL(name) \
     REBVAL name##_cell; \

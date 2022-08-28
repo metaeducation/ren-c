@@ -339,10 +339,20 @@ inline static void Push_Frame(
             continue;
         if (GET_SERIES_FLAG(ftemp->varlist, INACCESSIBLE))
             continue; // Encloser_Dispatcher() reuses args from up stack
-        assert(
+        if (
             f->out < FRM_ARGS_HEAD(ftemp)
             or f->out >= FRM_ARGS_HEAD(ftemp) + FRM_NUM_ARGS(ftemp)
-        );
+        ){
+            continue;
+        }
+        // Allow evaluations into native LOCAL() cells (presume that we will
+        // not expose these to the user).
+        //
+        Action(*) phase = FRM_PHASE(ftemp);
+        assert(Get_Action_Flag(phase, IS_NATIVE));
+        assert(f->out == FRM_ARG(ftemp, f->out - FRM_ARGS_HEAD(ftemp) + 1));
+        REBPAR* param = ACT_PARAM(phase, f->out - FRM_ARGS_HEAD(ftemp) + 1);
+        assert(Is_Specialized(param));
     }
   #endif
 

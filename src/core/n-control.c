@@ -848,6 +848,7 @@ DECLARE_NATIVE(any)
 //      /all "Do not stop after finding first logically true case"
 //      /predicate "Unary case-processing action (default is DID)"
 //          [action!]
+//      <local> discarded
 //  ]
 //
 DECLARE_NATIVE(case)
@@ -894,7 +895,7 @@ DECLARE_NATIVE(case)
     REBVAL *cases = ARG(cases);
     REBVAL *predicate = ARG(predicate);
 
-    REBVAL *spare_backup = ARG(return);
+    REBVAL *discarded = LOCAL(discarded);  // slot to write unused results to
 
     enum {
         ST_CASE_INITIAL_ENTRY = 0,
@@ -915,7 +916,7 @@ DECLARE_NATIVE(case)
         goto predicate_result_in_spare;
 
       case ST_CASE_DISCARDING_GET_GROUP :
-        goto restore_spare_from_backup;
+        goto check_discarded_product_was_branch;
 
       case ST_CASE_RUNNING_BRANCH :
         goto branch_result_in_out;
@@ -956,12 +957,9 @@ DECLARE_NATIVE(case)
     if (Is_Nulled(predicate))
         goto processed_result_in_spare;
 
-    DECLARE_LOCAL (temp);
-    Move_Cell(temp, SPARE);
-
     STATE = ST_CASE_RUNNING_PREDICATE;
     SUBFRAME->executor = &Just_Use_Out_Executor;
-    return CONTINUE(SPARE, predicate, temp);
+    return CONTINUE(SPARE, predicate, SPARE);  // with == out is legal
 
 } predicate_result_in_spare: {  //////////////////////////////////////////////
 
@@ -986,17 +984,16 @@ DECLARE_NATIVE(case)
             // GET-GROUP! run even on no-match (see IF), but result discarded
         }
 
-        Frame(*) discarder = Make_Frame_At_Core(
+        Frame(*) sub = Make_Frame_At_Core(
             branch,  // turning into feed drops cell type, :(...) not special
             FRM_SPECIFIER(SUBFRAME),
             FRAME_MASK_NONE
         );
-        Move_Cell(spare_backup, SPARE);  // need to save SPARE for fallout
 
         STATE = ST_CASE_DISCARDING_GET_GROUP;
         SUBFRAME->executor = &Just_Use_Out_Executor;
-        Push_Frame(SPARE, discarder);
-        return CONTINUE_SUBFRAME(discarder);
+        Push_Frame(discarded, sub);
+        return CONTINUE_SUBFRAME(sub);
     }
 
     STATE = ST_CASE_RUNNING_BRANCH;
@@ -1008,12 +1005,11 @@ DECLARE_NATIVE(case)
         SPARE
     );
 
-} restore_spare_from_backup: {  //////////////////////////////////////////////
+} check_discarded_product_was_branch: {  /////////////////////////////////////
 
-    if (not (FLAGIT_KIND(VAL_TYPE(SPARE)) & TS_BRANCH))
-        fail (Error_Bad_Value_Raw(SPARE));  // like IF, see [3]
+    if (not (FLAGIT_KIND(VAL_TYPE(discarded)) & TS_BRANCH))
+        fail (Error_Bad_Value_Raw(discarded));  // like IF, see [3]
 
-    Move_Cell(SPARE, spare_backup);
     goto handle_next_clause;
 
 } branch_result_in_out: {  ///////////////////////////////////////////////////
@@ -1091,6 +1087,8 @@ DECLARE_NATIVE(switch)
     REBVAL *predicate = ARG(predicate);
     REBVAL *cases = ARG(cases);
 
+    Value(*) scratch = LOCAL(scratch);
+
     enum {
         ST_SWITCH_INITIAL_ENTRY = 0,
         ST_SWITCH_EVALUATING_RIGHT,
@@ -1164,8 +1162,8 @@ DECLARE_NATIVE(switch)
         }
         else {
             const bool strict = false;
-            Copy_Cell(LOCAL(scratch), left);
-            if (0 != Compare_Modify_Values(LOCAL(scratch), SPARE, strict))
+            Copy_Cell(scratch, left);
+            if (0 != Compare_Modify_Values(scratch, SPARE, strict))
                 goto next_switch_step;
         }
     }
@@ -1173,21 +1171,15 @@ DECLARE_NATIVE(switch)
         // `switch x .greater? [10 [...]]` acts like `case [x > 10 [...]]
         // The ARG(value) passed in is the left/first argument to compare.
         //
-        // !!! We'd like to run this faster, so we aim to be able to
-        // reuse this frame...hence SPARE should not be expected to
-        // survive across this point.
-        //
-        DECLARE_LOCAL (temp);
         if (rebRunThrows(
-            temp,  // <-- output cell
+            scratch,  // <-- output cell
             predicate,
                 rebQ(left),  // first arg (left hand side if infix)
                 rebQ(SPARE)  // second arg (right hand side if infix)
         )){
-            Move_Cell(OUT, temp);
             return BOUNCE_THROWN;  // aborts subframe
         }
-        if (Is_Falsey(temp))
+        if (Is_Falsey(scratch))
             goto next_switch_step;
     }
 

@@ -259,12 +259,8 @@ DECLARE_NATIVE(console)
     // nested sessions which might have a different skin.  So save whatever
     // the console object was if it is being overridden.
 
-    REBVAL *old_console = rebValue(":system.console");
-    if (old_console == nullptr)
-        Init_Nulled(ARG(old_console));
-    else
-        Copy_Cell(ARG(old_console), old_console);
-    rebRelease(old_console);
+    if (rebRunThrows(LOCAL(old_console), ":system.console"))
+        panic (LOCAL(old_console));
 
     if (REF(skin))
         rebElide("system.console: _");  // !!! needed for now
