@@ -425,7 +425,7 @@ jobs:
               ]
           ]
           for-each url list [
-              filename: second split-path url
+              filename: split-path url
               write filename (read url)
           ]
 

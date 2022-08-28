@@ -198,7 +198,7 @@ import: enfix func [
         return :ret
     ]
 
-    path+file: split-path f
+    path+file: lib/split-path f
 
     assert [#"/" <> first path+file/1]  ; should be relative
     assert [#"%" <> first path+file/1]  ; accidental `import <%foo.r>`

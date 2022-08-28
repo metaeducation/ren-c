@@ -101,10 +101,8 @@ for-each [name value] options [
             ;
             config-stack: copy []
             while [:config] [
-                path+file: split-path config
-                path: path+file/1
-                file: path+file/2
-                change-dir path
+                file: split-path/dir config 'dir
+                change-dir dir
                 append config-stack (transcode read file)
 
                 ; !!! LOAD has changed between bootstrap versions, for the
@@ -637,7 +635,7 @@ gen-obj: func [
     ;
     if block? s [
         for-each flag next s [
-            append flags maybe spread opt (switch flag [  ; bootstrap ELSE, ()
+            append flags maybe spread decay (switch flag [  ; bootstrap ELSE, ()
                 <no-uninitialized> [
                     [
                         <gnu:-Wno-uninitialized>
@@ -1451,7 +1449,7 @@ add-new-obj-folders: function [
         ]
 
         for-each obj lib [
-            dir: first split-path obj/output
+            split-path/dir obj/output 'dir
             if not find folders dir [
                 append folders dir
             ]
@@ -1478,7 +1476,7 @@ for-each [category entries] file-base [
                         ; assume taken care of
                     ]
                     path! [
-                        dir: first split-path to file! entry
+                        split-path/dir to file! entry 'dir
                         if not find folders dir [
                             append folders join %objs/ dir
                         ]

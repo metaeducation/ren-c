@@ -154,7 +154,7 @@ export collect-tests: function [
             set item file! (
                 let referenced-file: item
 
-                change-dir first split-path file
+                change-dir maybe [_ @]: split-path file
                 collect-tests/into referenced-file into
                 change-dir current-dir
             )

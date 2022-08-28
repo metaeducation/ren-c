@@ -263,7 +263,7 @@ export make-emitter: function [
 
     print unspaced [{Generating "} title {" (via } by {)}]
 
-    stem: second split-path file
+    stem: split-path file
 
     temporary: to-logic any [
         try temporary

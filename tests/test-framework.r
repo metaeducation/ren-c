@@ -250,7 +250,7 @@ process-tests: function [
                 ; relative the directory where the test is running.  So
                 ; we CHANGE-DIR to the test file's path.
                 ;
-                change-dir first split-path test-file
+                change-dir [_ @]: split-path test-file
             )
                 |
             'dialect set value: text! (  ; bad parse of test file itself

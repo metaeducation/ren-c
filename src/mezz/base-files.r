@@ -197,9 +197,10 @@ file-type?: function [
 
 split-path: func [
     {Splits and returns directory path and file as a block}
-    return: [block!]
+    return: [<opt> file!]
+    @dir [<opt> file! url!]
     target [file! url!]
-    <local> dir pos text
+    <local> pos text
 ][
     text: as text! target
     pos: _
@@ -208,11 +209,12 @@ split-path: func [
         pos: <here>, opt some [thru "/" [end | pos: <here>]] (
             all [
                 empty? dir: copy/part text (at head of text index of pos),
-                dir: %./
+                dir: %"./"
             ]
             all [find [%. %..] pos: to file! pos insert tail of pos "/"]
         )
         end
     ]
-    return reduce [(as type of target dir) pos]
+    dir: as type of target dir
+    return pos
 ]

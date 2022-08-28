@@ -1014,3 +1014,15 @@ select: lib/func [
     if null? :series [return null]
     lib/select :series :value
 ]
+
+split-path: lib/func [  ; interface changed to multi-return in new Ren-C
+    return: [file!]
+    in [file! url!]
+    /dir  ; no multi-return, simulate it
+    darg [word!]
+    <local> path+file
+][
+    dir+file: lib/split-path in
+    if dir [set darg decay first dir+file]
+    return decay second dir+file
+]

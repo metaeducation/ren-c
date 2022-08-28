@@ -349,7 +349,7 @@ list-dir: function [
             if greater? length of l 60 [print l clear l]
         ] else [
             info: get (words of query file)
-            change info second split-path info/1
+            change info split-path info/1
             printf [i 16 -8 #" " 24 #" " 6] info
             if all [r, dir? file] [
                 list-dir/l/r/i :file join i "    "

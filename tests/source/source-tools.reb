@@ -426,7 +426,7 @@ list: context [
             item: null
         ] else [
             any [
-                did parse3 second split-path item ["tmp-" to <end>]
+                did parse3 split-path item ["tmp-" ...]
                 not find extensions extension-of item
             ] then [
                 item: null

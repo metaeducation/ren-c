@@ -463,9 +463,11 @@ main-startup: func [
         ]
         take argv
     ]
-    o.bin: if o.boot [
-        first split-path o.boot
-    ] else [null]
+    if o.boot [
+        [_ o.bin]: split-path o.boot
+    ] else [
+        o.bin: null
+    ]
 
     let param-or-die: func [
         {Take --option argv and then check if param arg is present, else die}
@@ -731,7 +733,7 @@ main-startup: func [
             slash = first first script-path []      ; absolute
             %./ = first script-path [script-path.1: o.path]   ; curr dir
         ] else [
-            insert first script-path o.path ; relative
+            insert script-path o.path ; relative
         ]
     ]
 
