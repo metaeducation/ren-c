@@ -474,7 +474,7 @@ ext-console-impl: func [
     return: "Code for C caller to sandbox, exit status, RESUME code, or hook"
         [block! group! integer! meta-group! handle!]  ; RETURN is hooked below!
     prior "BLOCK! or GROUP! that last invocation of HOST-CONSOLE requested"
-        [blank! block! group!]
+        [<opt> block! group!]
     result "^META result from evaluating PRIOR, or non-quoted error"
         [<opt> any-value!]
     resumable "Is the RESUME function allowed to exit this console"

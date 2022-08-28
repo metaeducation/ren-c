@@ -284,7 +284,7 @@ DECLARE_NATIVE(console)
         goto provoked;
     }
     else {
-        Init_Blank(code);
+        Init_Nulled(code);
         rebRunThrows(metaresult, "'~startup~");  // signal starting
     }
 
@@ -309,8 +309,8 @@ DECLARE_NATIVE(console)
     REBVAL *metacode;  // Note: goto would cross initialization
     metacode = rebEntrap(
         "ext-console-impl",  // action! that takes 4 args, run it
-            rebQ(code),  // group! or block! executed prior (or blank!)
-            rebQ(metaresult),  // prior result quoted, or error (or blank!)
+            rebQ(code),  // group! or block! executed prior (or null)
+            rebQ(metaresult),  // prior result quoted, or error (or null)
             rebL(REF(resumable)),
             ARG(skin)  // if null, feed makes BLANK!, evals to null again
     );
