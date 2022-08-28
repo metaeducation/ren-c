@@ -883,6 +883,7 @@ json-collect: func [
 
 write (join output-dir %libr3.exports.json) json-collect [
     for-each-api [keep unspaced ["RL_" name]]
+    keep "malloc"  ; !!! Started requiring, did not before (?)
 ]
 
 
