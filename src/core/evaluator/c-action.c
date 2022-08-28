@@ -163,9 +163,6 @@ void Proxy_Multi_Returns(Frame(*) f)
 
 
 static void Bump_Specialized_Output_Aside(Frame(*) f) {
-    if (Is_Isotope(ARG))
-        fail (Error_Bad_Isotope(ARG));
-
     Value(*) var = ARG + 1;  // hidden local for variable
     assert(Is_Void(var));  // should not have been bumped into yet!
 
@@ -185,8 +182,6 @@ static void Bump_Specialized_Output_Aside(Frame(*) f) {
         fail ("OUTPUT: parameters must be SET-table targets");
 
     RESET(ARG);
-
-    ++KEY, ++PARAM, ++ARG;  // with for included, skip past `var`
 }
 
 
@@ -223,8 +218,10 @@ Bounce Action_Executor(Frame(*) f)
             // work here, before calling continue_fulfilling--as it applies
             // only when parameters are being evaluated (hence PARAMs)
             //
-            if (VAL_PARAM_CLASS(PARAM) == PARAM_CLASS_OUTPUT)  // must move
+            if (VAL_PARAM_CLASS(PARAM) == PARAM_CLASS_OUTPUT) {  // must move
                 Bump_Specialized_Output_Aside(f);
+                ++KEY, ++PARAM, ++ARG;  // with for included, skip past `var`
+            }
 
             goto continue_fulfilling;
 
@@ -286,8 +283,10 @@ Bounce Action_Executor(Frame(*) f)
         //
         if (Is_Specialized(PARAM)) {  // specialized includes local
             Copy_Cell(ARG, PARAM);
-            if (Get_Cell_Flag(PARAM, PARAM_NOTE_SPECIALIZED_OUTPUT))
+            if (Get_Cell_Flag(PARAM, PARAM_NOTE_SPECIALIZED_OUTPUT)) {
                 Bump_Specialized_Output_Aside(f);
+                ++KEY, ++PARAM, ++ARG;  // with for included, skip past `var`
+            }
 
             goto continue_fulfilling;
         }
@@ -350,7 +349,7 @@ Bounce Action_Executor(Frame(*) f)
 
         if (GET_PARAM_FLAG(PARAM, REFINEMENT)) {
             assert(STATE != ST_ACTION_DOING_PICKUPS);  // jump lower
-            Init_Nulled(ARG);  // null means refinement not used
+            Finalize_Void(ARG);  // may be filled by a pickup
             goto continue_fulfilling;
         }
 
@@ -904,14 +903,18 @@ Bounce Action_Executor(Frame(*) f)
 
                 if (not Is_Void(ARG))
                     fail ("Frame filled with variable in spoken-for output");
-
-                ++KEY, ++PARAM, ++ARG;
             }
+            assert(not Is_Nulled(var));
+            ++KEY, ++PARAM, ++ARG;  // with for included, skip past `var`
             continue;
         }
 
         if (Is_Void(ARG)) {  // e.g. (~) isotope, unspecialized, see [2]
             if (GET_PARAM_FLAG(PARAM, REFINEMENT)) {
+                Init_Nulled(ARG);
+                continue;
+            }
+            if (GET_PARAM_FLAG(PARAM, SKIPPABLE)) {
                 Init_Nulled(ARG);
                 continue;
             }

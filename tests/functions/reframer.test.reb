@@ -8,16 +8,15 @@
 ; the built frame matches what we'd expect by building manually.
 (
     f1: make frame! :append
-    f1.return: null
+    assert [unset? 'f1.return]
     f1.series: [a b c]
-    f1.value: meta <d>
-    f1.part: null
-    f1.dup: null
-    f1.line: null
+    f1.value: <d>
+    assert [unset? 'f1.part]
+    assert [unset? 'f1.dup]
+    assert [unset? 'f1.line]
 
     mirror: reframer lambda [f [frame!]] [f]
     f2: mirror append [a b c] <d>
-    f2.return: null
     f1 = f2
 )
 
