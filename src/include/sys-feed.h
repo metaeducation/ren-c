@@ -186,22 +186,28 @@ inline static void Finalize_Variadic_Feed(Feed(*) feed) {
 // A cell pointer in a variadic feed should be fine to use directly, because
 // all such "spliced" cells should be specific.
 //
-inline static Value(const*) Reified_Variadic_Feed_Cell(Feed(*) feed) {
+inline static Value(const*) Copy_Reified_Variadic_Feed_Cell(
+    Cell(*) out,
+    Feed(*) feed
+){
+    assert(FEED_SPECIFIER(feed) == SPECIFIED);  // why?
+
     Cell(const*) cell = cast(Cell(const*), feed->p);
     assert(not IS_RELATIVE(cell));
 
     if (Is_Nulled(cell)) {  // API enforces use of C's nullptr (0) for NULL
         assert(not Is_Api_Value(cell));  // but internal cells can be nulled
-        return FEED_NULL_SUBSTITUTE_CELL;  // ...they are converted to blanks
+        assert(IS_BLANK(FEED_NULL_SUBSTITUTE_CELL));
+        return Init_Blank(out);  // ...they are converted to blanks
     }
 
     if (Is_Isotope(cell)) {  // @ will turn these back into isotopes
-        feed->p = Copy_Cell(&feed->fetched, SPECIFIC(cell));
-        mutable_QUOTE_BYTE(&feed->fetched) = QUASI_2;
-        return VAL(&feed->fetched);
+        Copy_Cell(out, SPECIFIC(cell));
+        mutable_QUOTE_BYTE(out) = QUASI_2;
+        return VAL(out);
     }
 
-    return VAL(cell);
+    return Copy_Cell(out, cast(Value(const*), cell));
 }
 
 
@@ -261,8 +267,8 @@ inline static option(Value(const*)) Try_Reify_Variadic_Feed_Series(
         // this more convoluted.  Review.
 
         REBVAL *single = SPECIFIC(ARR_SINGLE(inst1));
-        Copy_Cell(&feed->fetched, single);
-        feed->p = &feed->fetched;
+        feed->p = single;
+        feed->p = Copy_Reified_Variadic_Feed_Cell(&feed->fetched, feed);
         rebRelease(single);  // *is* the instruction
         break; }
 

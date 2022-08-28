@@ -1010,12 +1010,7 @@ static enum Reb_Token Maybe_Locate_Token_May_Push_Mold(
             return TOKEN_END;
 
           case DETECTED_AS_CELL: {
-            assert(FEED_SPECIFIER(f->feed) == SPECIFIED);
-            Value(const*) at = Reified_Variadic_Feed_Cell(f->feed);
-            if (Is_Nulled(at))
-                Init_Meta_Of_Null_Isotope(PUSH());  // can't push nulls
-            else
-                Copy_Cell(PUSH(), at);
+            Copy_Reified_Variadic_Feed_Cell(PUSH(), f->feed);
             if (Get_Executor_Flag(SCAN, f, NEWLINE_PENDING)) {
                 Clear_Executor_Flag(SCAN, f, NEWLINE_PENDING);
                 Set_Cell_Flag(TOP, NEWLINE_BEFORE);
