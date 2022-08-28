@@ -537,12 +537,8 @@ static bool Did_Set_GOB_Var(REBGOB *gob, Cell(const*) word, const REBVAL *val)
 // Returns true if the field name is a known GOB! property.  `out` may be set
 // to a NULL cell even for known fields, if not applicable to this GOB!'s type.
 //
-static bool Did_Get_GOB_Var(
-    Cell(*) out,
-    REBGOB *gob,
-    Cell(const*) word
-){
-    switch (VAL_WORD_ID(word)) {
+static bool Did_Get_GOB_Var(Value(*) out, REBGOB *gob, SymId id) {
+    switch (id) {
       case SYM_OFFSET:
         Init_Pair_Dec(out, GOB_X(gob), GOB_Y(gob));
         break;
@@ -557,7 +553,7 @@ static bool Did_Get_GOB_Var(
             Copy_Cell(out, GOB_CONTENT(gob));
         }
         else
-            Init_Meta_Of_Null(out);
+            Init_Nulled(out);
         break;
 
       case SYM_DRAW:
@@ -566,7 +562,7 @@ static bool Did_Get_GOB_Var(
             Copy_Cell(out, GOB_CONTENT(gob));
         }
         else
-            Init_Meta_Of_Null(out);
+            Init_Nulled(out);
         break;
 
       case SYM_TEXT:
@@ -579,7 +575,7 @@ static bool Did_Get_GOB_Var(
             Copy_Cell(out, GOB_CONTENT(gob));
         }
         else
-            Init_Meta_Of_Null(out);
+            Init_Nulled(out);
         break;
 
       case SYM_EFFECT:
@@ -588,7 +584,7 @@ static bool Did_Get_GOB_Var(
             Copy_Cell(out, GOB_CONTENT(gob));
         }
         else
-            Init_Meta_Of_Null(out);
+            Init_Nulled(out);
         break;
 
       case SYM_COLOR:
@@ -597,7 +593,7 @@ static bool Did_Get_GOB_Var(
             Copy_Cell(out, GOB_CONTENT(gob));
         }
         else
-            Init_Meta_Of_Null(out);
+            Init_Nulled(out);
         break;
 
       case SYM_ALPHA:
@@ -616,7 +612,7 @@ static bool Did_Get_GOB_Var(
         if (GOB_PARENT(gob))
             Init_Gob(out, GOB_PARENT(gob));
         else
-            Init_Meta_Of_Null(out);
+            Init_Nulled(out);
         break;
 
       case SYM_DATA: {
@@ -632,7 +628,7 @@ static bool Did_Get_GOB_Var(
         }
         else {
             assert(kind == REB_BLANK);
-            Init_Meta_Of_Null(out);
+            Init_Nulled(out);
         }
         break; }
 
@@ -687,21 +683,19 @@ static void Set_GOB_Vars(
 //
 static Array(*) Gob_To_Array(REBGOB *gob)
 {
-    Array(*) arr = Make_Array(10);
-    option(SymId) syms[] = {SYM_OFFSET, SYM_SIZE, SYM_ALPHA, SYM_0};
-    Cell(*) vals[3];
+    StackIndex base = TOP_INDEX;
 
-    REBINT n;
-    for (n = 0; syms[n] != 0; ++n) {
-        Init_Set_Word(Alloc_Tail_Array(arr), Canon_Symbol(unwrap(syms[n])));
-        vals[n] = Alloc_Tail_Array(arr);
-    }
+    Init_Set_Word(PUSH(), Canon(OFFSET));
+    Init_Pair_Dec(PUSH(), GOB_X(gob), GOB_Y(gob));
 
-    Init_Pair_Dec(vals[0], GOB_X(gob), GOB_Y(gob));
-    Init_Pair_Dec(vals[1], GOB_W(gob), GOB_H(gob));
-    Init_Integer(vals[2], GOB_ALPHA(gob));
+    Init_Set_Word(PUSH(), Canon(SIZE));
+    Init_Pair_Dec(PUSH(), GOB_W(gob), GOB_H(gob));
 
-    if (!GOB_TYPE(gob)) return arr;
+    Init_Set_Word(PUSH(), Canon(ALPHA));
+    Init_Integer(PUSH(), GOB_ALPHA(gob));
+
+    if (!GOB_TYPE(gob))
+        return Pop_Stack_Values(base);
 
     if (GOB_CONTENT(gob)) {
         SymId sym;
@@ -726,14 +720,15 @@ static Array(*) Gob_To_Array(REBGOB *gob)
             fail ("Unknown GOB! type");
         }
 
-        REBVAL *name = Init_Set_Word(Alloc_Tail_Array(arr), Canon_Symbol(sym));
-        Cell(*) slot = Alloc_Tail_Array(arr);
-        bool known = Did_Get_GOB_Var(slot, gob, name);
+        Init_Set_Word(PUSH(), Canon_Symbol(sym));
+        bool known = Did_Get_GOB_Var(PUSH(), gob, sym);
         assert(known);  // should have known that sym
         UNUSED(known);
+
+        Reify(TOP);  // can't have nulls in arrays
     }
 
-    return arr;
+    return Pop_Stack_Values(base);
 }
 
 
@@ -862,7 +857,8 @@ void Pick_From_Gob(
         Move_Cell(out, temp);
     }
     else if (IS_WORD(picker)) {
-        if (not Did_Get_GOB_Var(out, gob, picker))
+        option(SymId) id = VAL_WORD_ID(picker);
+        if (not id or not Did_Get_GOB_Var(out, gob, unwrap(id)))
             fail (picker);
     }
     else

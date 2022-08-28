@@ -279,8 +279,8 @@ inline static void Drop_Data_Stack_To(StackIndex i) {
 // ARRAY_FLAG_IS_DETAILS or ARRAY_FLAG_IS_VARLIST--you don't want to do
 // this, because the ->link and ->misc fields have other uses.
 //
-#define Pop_Stack_Values(dsp) \
-    Pop_Stack_Values_Core((dsp), ARRAY_MASK_HAS_FILE_LINE)
+#define Pop_Stack_Values(base) \
+    Pop_Stack_Values_Core((base), ARRAY_MASK_HAS_FILE_LINE)
 
 
 //=////////////////////////////////////////////////////////////////////////=//
