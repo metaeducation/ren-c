@@ -68,6 +68,27 @@ if set? 'import-shim-loaded [  ; already ran this shim
     fail "Recursive loading %import-shim.r is flaky, check 'import-shim-loaded"
 ]
 
+
+; Commit #8994d23 circa Dec 2018 has sporadic problems printing large chunks
+; (in certain mediums, e.g. to the VSCode integrated terminal).  Replace PRINT
+; as early as possible in the boot process with one that uses smaller chunks.
+; This seems to avoid the issue.
+;
+prin3-buggy: :lib/prin
+print: lib/print: lib/func [value <local> pos] [
+    if value = newline [  ; new: allow newline, to mean print newline only
+        prin3-buggy newline
+        return
+    ]
+    value: spaced value  ; uses bootstrap shim spaced (once available)
+    while [true] [
+        prin3-buggy copy/part value 256
+        if tail? value: skip value 256 [break]
+    ]
+    prin3-buggy newline
+]
+
+
 ; Standardize the directory to be wherever the command line was invoked from,
 ; and NOT where the script invoked (e.g. %make.r) is located.
 ;
@@ -193,9 +214,8 @@ import: enfix func [
 
     f: as file! f
 
-    ret: :already-imported/(f)
-    if not null? :ret [
-        return :ret
+    if ret: select already-imported f [
+        return ret
     ]
 
     path+file: lib/split-path f

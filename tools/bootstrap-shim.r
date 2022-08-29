@@ -6,7 +6,7 @@ REBOL [
         Rebol 3 Language Interpreter and Run-time Environment
         "Ren-C" branch @ https://github.com/metaeducation/ren-c
 
-        Copyright 2012-2021 Ren-C Open Source Contributors
+        Copyright 2012-2022 Ren-C Open Source Contributors
         REBOL is a trademark of REBOL Technologies
     }
     License: {
@@ -14,9 +14,11 @@ REBOL [
         See: http://www.apache.org/licenses/LICENSE-2.0
     }
     Purpose: {
-        Ren-C "officially" supports two executables for doing a bootstrap
-        build.  One is a frozen "stable" version (`8994d23`) which was
-        committed circa Dec-2018:
+        Ren-C "officially" supports two executables for doing the pre-build
+        process, which generates needed header files and other artifacts.
+
+        One EXE that can be used is a frozen "stable" version (`8994d23`) which
+        was committed circa Dec-2018:
 
         https://github.com/metaeducation/ren-c/commit/dcc4cd03796ba2a422310b535cf01d2d11e545af
 
@@ -31,14 +33,13 @@ REBOL [
         operations, like ADAPT, CHAIN, SPECIALIZE, and ENCLOSE.
     }
     Notes: {
-        * Version 8994d23 does not allow WORD!-access of NULL, because the null
-        state was conflated with the "unset" state at that time.  This is
-        not something that can be overridden by a shim.  So the easiest way
-        to do `null? var` in a forward-compatible way is `null? :var`, but
-        if the intent is on a variable that would be considered actually
-        "unset" in modern versions then use `unset?` (it will be null though)
+      * When running under the bootstrap EXE, this shim does not use EXPORT
+        via the %import-shim.r method--it modifies the user context directly.
+        Under the new EXE (which has a real IMPORT) it has to do EXPORT for
+        a few minor backwards compatibility tweaks--for things that could not
+        be done forward compatibly by the shim (at least not easily).
 
-        * There was an issue with the Linux bootstrap executable not working
+      * There was an issue with the Linux bootstrap executable not working
         on GitHub Actions, due to some strange issue with the binary and the
         container.  Rebuilding with a newer version of GCC seemed to resolve
         that, but Linux executables compiled circa 2018 in the wild may not
@@ -389,24 +390,6 @@ unset first [=>]
 ;
 set: specialize :lib/set [opt: true]
 
-; PRINT was changed to tolerate NEWLINE to mean print a newline only.
-;
-; !!! Also, PRINT of large blobs of data is buggy.  Print line by line of
-; anything that has newlines in it.
-;
-print: lib/func [value <local> pos] [
-    if value = newline [
-        lib/print ""
-        return
-    ]
-    value: unspaced value  ; uses bootstrap shim unspaced
-    while [pos: find value newline] [
-        line: copy/part value pos
-        lib/print line
-        value: next pos
-    ]
-    lib/print value
-]
 
 ; Historically WRITE did platform line endings (CRLF) when the string had no
 ; CR in it on Windows.  Ren-C's philosophy is on eliminating CRLF.
