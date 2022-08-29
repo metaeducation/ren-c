@@ -30,9 +30,10 @@
 //
 //  "Converts a value to a human-readable string."
 //
-//      return: [text!]
-//      value "The value to form (currently errors on BAD-WORD!)"
-//          [<try> any-value!]
+//      return: "Returns void if input is void, null if the input is null"
+//          [<void> <opt> text!]
+//      value "The value to form (currently errors on isotopes)"
+//          [<void> <opt> any-value!]
 //  ]
 //
 DECLARE_NATIVE(form)
@@ -40,6 +41,11 @@ DECLARE_NATIVE(form)
     INCLUDE_PARAMS_OF_FORM;
 
     REBVAL *v = ARG(value);
+    if (Is_Void(v))
+        return VOID;
+    if (Is_Nulled(v))
+        return nullptr;
+
     if (Is_Quasi_Word(v))
         fail (ARG(value));
 
@@ -50,14 +56,13 @@ DECLARE_NATIVE(form)
 //
 //  mold: native [
 //
-//  "Converts a value to a REBOL-readable string."
+//  "Converts value to a REBOL-readable string"
 //
-//      return: "NULL if input is NULL"
-//          [<opt> text!]
+//      return: "Returns void if input is void, null if input is null"
+//          [<opt> <void> text!]
 //      @truncated "Whether the mold was truncated"
 //          [logic!]
-//      value "The value to mold"
-//          [<opt> any-value!]
+//      value [<opt> <void> any-value!]
 //      /only "For a block value, mold only its contents, no outer []"
 //      /all "Use construction syntax"
 //      /flat "No indentation"
@@ -70,7 +75,8 @@ DECLARE_NATIVE(mold)
     INCLUDE_PARAMS_OF_MOLD;
 
     REBVAL *v = ARG(value);
-
+    if (Is_Void(v))
+        return VOID;
     if (Is_Nulled(v))
         return nullptr;
 
