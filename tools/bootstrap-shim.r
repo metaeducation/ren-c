@@ -46,7 +46,7 @@ REBOL [
     }
 ]
 
-; The snapshotted Ren-C existed before <try> was legal to mark on arguments.
+; The snapshotted Ren-C existed before <maybe> was legal to mark on arguments.
 ; See if this causes an error, and if so assume it's the old Ren-C, not a
 ; new one...?
 ;
@@ -56,7 +56,7 @@ REBOL [
 ; obvious reward.)
 ;
 trap [
-    func [i [<try> integer!]] [...]  ; modern interpreter or already shimmed
+    func [i [<maybe> integer!]] [...]  ; modern interpreter or already shimmed
     if in (pick system 'options) 'redbol-paths [
         system.options.redbol-paths: true
     ]
@@ -64,7 +64,7 @@ trap [
     ; Fall through to the body of this file, we are shimming version ~8994d23
 ] else [
     trap [
-        lib/func [i [<try> integer!]] [...]
+        lib/func [i [<maybe> integer!]] [...]
     ] then [
         ;
         ; Old bootstrap executables that are already shimmed should not do
@@ -209,7 +209,7 @@ opt: ~  ; replaced by DECAY word
 
 
 ; The safety aspect of new TRY isn't really worth attempting to emulate in the
-; bootstrap shim.  So the <try> parameters are simply "null in, null out" with
+; bootstrap shim.  So the <maybe> parameters are simply "null in, null out" with
 ; no requirement that a TRY be on the callsite.
 ;
 ; However, NULL word/path fetches cause errors in the bootstrap shim.  While
@@ -219,7 +219,7 @@ opt: ~  ; replaced by DECAY word
 ;
 ; This results in putting TRY in places that are superfluous for the current
 ; build on WORD! and PATH!, and then the current build needs TRY on the results
-; of <try> functions that the bootstrap build does not.  So it's a kind of
+; of <maybe> functions that the bootstrap build does not.  So it's a kind of
 ; "try inflation", but since TRY is a no-op on null variable fetches in the
 ; current build this seems a reasonable enough mitigation strategy for now.
 ;
@@ -523,7 +523,7 @@ let: lib/func [
 
 
 modernize-action: lib/function [
-    "Account for <try> annotation, refinements as own arguments"
+    "Account for <maybe> annotation, refinements as own arguments"
     return: [block!]
     spec [block!]
     body [block!]
@@ -621,11 +621,11 @@ modernize-action: lib/function [
                     continue
                 ]
 
-                ; Substitute <opt> for any <try> found, and save some code
+                ; Substitute <opt> for any <maybe> found, and save some code
                 ; to inject for that parameter to return null if it's null
                 ;
-                if lib/find (lib/try match block! spec/1) <try> [
-                    keep/only replace copy spec/1 <try> <opt>
+                if lib/find (lib/try match block! spec/1) <maybe> [
+                    keep/only replace copy spec/1 <maybe> <opt>
                     lib/append tryers compose [
                         if null? (as get-word! w) [return null]
                     ]

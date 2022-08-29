@@ -112,7 +112,7 @@ DECLARE_NATIVE(mold)
 //  "Boot-only implementation of WRITE-STDOUT (HIJACK'd by STDIO module)"
 //
 //      return: <none>
-//      value [<try> text! char! binary!]
+//      value [<maybe> text! char! binary!]
 //          "Text to write, if a STRING! or CHAR! is converted to OS format"
 //  ]
 //

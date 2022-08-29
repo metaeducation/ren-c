@@ -431,6 +431,7 @@ an: lambda [
     {Prepends the correct "a" or "an" to a string, based on leading character}
     value <local> s
 ][
+    if null? value [fail @value]
     head of insert (s: form value) either (find "aeiou" s.1) ["an "] ["a "]
 ]
 
@@ -606,7 +607,7 @@ print: func* [
     return: "NULL if blank input or effectively empty block, else none"
         [<opt> bad-word!]
     line "Line of text or block, blank or [] has NO output, newline allowed"
-        [<try> char! text! block! quoted!]
+        [<maybe> char! text! block! quoted!]
 ][
     if char? line [
         if line <> newline [

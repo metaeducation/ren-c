@@ -182,7 +182,7 @@ combinator: func [
         ; we receive in will automatically bubble up their pending contents in
         ; order of being called.
 
-        (maybe spread try if autopipe '[
+        (spread if autopipe '[
             let f: binding of 'return
 
             pending: null
@@ -1422,14 +1422,14 @@ default-combinators: make map! reduce [
                 ]
             ]
             any-string? input [
-                if try pick value input.1 [
+                if pick value maybe input.1 [
                     remainder: next input
                     return input.1
                 ]
             ]
             true [
                 assert [binary? input]
-                if try pick value input.1 [
+                if pick value maybe input.1 [
                     remainder: next input
                     return input.1
                 ]
@@ -1725,7 +1725,7 @@ default-combinators: make map! reduce [
         <local> item error
     ][
         either any-array? input [
-            if not try find value (kind of input.1) [
+            if not find value maybe (kind of input.1) [
                 return raise "Value at parse position did not match TYPESET!"
             ]
             remainder: next input
@@ -2358,7 +2358,7 @@ default-combinators: make map! reduce [
             ] else [
                 result': void'  ; reset, e.g. `[false |]`
 
-                try free totalpending  ; proactively release memory
+                free maybe totalpending  ; proactively release memory
                 totalpending: null
 
                 ; If we fail a match, we skip ahead to the next alternate rule
@@ -2789,7 +2789,7 @@ parse*: func [
     @pending "Request unprocessed pending items (default errors if any)"
         [<opt> block!]
     input "Input data"
-        [<try> any-series! url! any-sequence!]
+        [<maybe> any-series! url! any-sequence!]
     rules "Block of parse rules"
         [block!]
 
@@ -2938,7 +2938,7 @@ match-parse: (comment [redescribe [  ; redescribe not working at the moment (?)
 ;
 using: func [
     return: <none>  ; should it return a value?  (e.g. the object?)
-    obj [<try> object!]
+    obj [<maybe> object!]
 ][
     add-use-object (binding of 'obj) obj
 ]

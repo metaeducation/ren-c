@@ -5,8 +5,8 @@
 [
     (for-parallel: lambda [
         vars [block!]
-        blk1 [<try> block!]
-        blk2 [<try> block!]
+        blk1 [<maybe> block!]
+        blk2 [<maybe> block!]
         body [block!]
     ][
         while [(not empty? blk1) or (not empty? blk2)] [  ; null and [] EMPTY?
@@ -20,8 +20,8 @@
 
             ; Now ELIDE the increment, so body evaluation above is result
             ;
-            elide blk1: try next blk1
-            elide blk2: try next blk2
+            elide blk1: next maybe blk1
+            elide blk2: next maybe blk2
         ]
     ], true)
 

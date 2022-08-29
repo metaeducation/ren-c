@@ -75,9 +75,6 @@ REBINT CT_Blank(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
 //
 //  REBTYPE: C
 //
-// While generics like SELECT are able to dispatch on BLANK! and return NULL,
-// they do so by not running at all...see PARAM_FLAG_NEED_TRY_IF_NULL.
-//
 REBTYPE(Blank)
 {
     switch (ID_OF_SYMBOL(verb)) {
@@ -85,16 +82,6 @@ REBTYPE(Blank)
         INCLUDE_PARAMS_OF_REFLECT;
         UNUSED(ARG(value)); // taken care of by `unit` above.
 
-        // !!! REFLECT can't use PARAM_FLAG_NEED_TRY_IF_NULL, due to the special
-        // case of TYPE OF...where a BLANK! in needs to provide BLANK! the
-        // datatype out.  Also, there currently exist "reflectors" that
-        // return LOGIC!, e.g. TAIL?...and logic cannot blindly return null:
-        //
-        // https://forum.rebol.info/t/954
-        //
-        // So for the moment, we just ad-hoc return nullptr for some that
-        // R3-Alpha returned NONE! for.  Review.
-        //
         switch (VAL_WORD_ID(ARG(property))) {
           case SYM_INDEX:
           case SYM_LENGTH:

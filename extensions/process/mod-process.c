@@ -337,7 +337,7 @@ DECLARE_NATIVE(terminate)
 //      return: "String the variable was set to, or null if not set"
 //          [<opt> text!]
 //      variable "Name of variable to get (case-insensitive in Windows)"
-//          [<try> text! word!]
+//          [<maybe> text! word!]
 //  ]
 //
 DECLARE_NATIVE(get_env)
@@ -448,7 +448,7 @@ DECLARE_NATIVE(get_env)
 //
 //      return: "Returns same value passed in"
 //          [<opt> text!]
-//      variable [<try> text! word!]
+//      variable [<maybe> text! word!]
 //          "Variable to set (case-insensitive in Windows)"
 //      value [<opt> text!]
 //          "Value to set the variable to, or NULL to unset it"

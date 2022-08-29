@@ -330,7 +330,7 @@ DECLARE_NATIVE(c_debug_tick)
 //  {Break at known evaluation point (only use when running under C debugger}
 //
 //      return: [<opt>]
-//      tick [<try> integer!]
+//      tick [<maybe> integer!]
 //          {Get from PANIC, Frame.tick, REBSER.tick, REBVAL.extra.tick}
 //      /relative
 //          {TICK parameter represents a count relative to the current tick}

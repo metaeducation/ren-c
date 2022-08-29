@@ -39,7 +39,7 @@ export to-c-name: function [
 
     return: [<opt> text!]
     value "Will be converted to text (via UNSPACED if BLOCK!)"
-        [<try> text! block! word!]
+        [<maybe> text! block! word!]
     /scope "[#global #local #prefixed] see http://stackoverflow.com/q/228783/"
         [issue!]
 ][

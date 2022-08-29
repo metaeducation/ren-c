@@ -308,15 +308,13 @@ static void Init_Action_Spec_Tags(void)
     ensureNullptr(Root_Variadic_Tag) = Make_Locked_Tag("variadic");
     ensureNullptr(Root_Opt_Tag) = Make_Locked_Tag("opt");
     ensureNullptr(Root_End_Tag) = Make_Locked_Tag("end");
+    ensureNullptr(Root_Maybe_Tag) = Make_Locked_Tag("maybe");
     ensureNullptr(Root_Blackhole_Tag) = Make_Locked_Tag("blackhole");
     ensureNullptr(Root_Local_Tag) = Make_Locked_Tag("local");
     ensureNullptr(Root_Skip_Tag) = Make_Locked_Tag("skip");
     ensureNullptr(Root_Const_Tag) = Make_Locked_Tag("const");
     ensureNullptr(Root_Void_Tag) = Make_Locked_Tag("void");
     ensureNullptr(Root_Fail_Tag) = Make_Locked_Tag("fail");
-    ensureNullptr(Root_Try_Tag) = Make_Locked_Tag("try");
-
-    ensureNullptr(Root_Blank_Tag) = Make_Locked_Tag("blank");  // !!! deprecated
 
     // Used by SPECIALIZE as a unique identity for telling what's been
     // specialized and what hasn't.
@@ -333,15 +331,13 @@ static void Shutdown_Action_Spec_Tags(void)
     rebReleaseAndNull(&Root_Variadic_Tag);
     rebReleaseAndNull(&Root_Opt_Tag);
     rebReleaseAndNull(&Root_End_Tag);
+    rebReleaseAndNull(&Root_Maybe_Tag);
     rebReleaseAndNull(&Root_Blackhole_Tag);
     rebReleaseAndNull(&Root_Local_Tag);
     rebReleaseAndNull(&Root_Skip_Tag);
     rebReleaseAndNull(&Root_Const_Tag);
     rebReleaseAndNull(&Root_Void_Tag);
     rebReleaseAndNull(&Root_Fail_Tag);
-    rebReleaseAndNull(&Root_Try_Tag);
-
-    rebReleaseAndNull(&Root_Blank_Tag);  // !!! deprecated
 
     rebReleaseAndNull(&Root_Unspecialized_Tag);
 

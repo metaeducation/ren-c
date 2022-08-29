@@ -910,6 +910,12 @@ Bounce Action_Executor(Frame(*) f)
         }
 
         if (Is_Void(ARG)) {  // e.g. (~) isotope, unspecialized, see [2]
+            if (GET_PARAM_FLAG(PARAM, NOOP_IF_VOID)  // e.g. <maybe> param
+            ){
+                Set_Executor_Flag(ACTION, f, TYPECHECK_ONLY);
+                Init_Nulled(OUT);
+                continue;
+            }
             if (GET_PARAM_FLAG(PARAM, REFINEMENT)) {
                 Init_Nulled(ARG);
                 continue;
@@ -960,21 +966,6 @@ Bounce Action_Executor(Frame(*) f)
         }
 
         enum Reb_Kind kind = VAL_TYPE(ARG);
-
-        if ((
-            (kind == REB_NULL)
-            and VAL_PARAM_CLASS(PARAM) != PARAM_CLASS_META
-            and GET_PARAM_FLAG(PARAM, NEED_TRY_IF_NULL)  // e.g. <try> param
-        ) or (
-            Is_Meta_Of_Null(ARG)
-            and VAL_PARAM_CLASS(PARAM) == PARAM_CLASS_META
-            and GET_PARAM_FLAG(PARAM, NEED_TRY_IF_NULL)  // e.g. <try> param
-        )){
-            Set_Executor_Flag(ACTION, f, TYPECHECK_ONLY);
-            Init_Error(OUT, Error_Try_If_Null_Meant_Raw(Lib(NULL)));
-            Raisify(OUT);
-            continue;
-        }
 
         if (
             GET_PARAM_FLAG(PARAM, NOOP_IF_BLACKHOLE)
@@ -1056,9 +1047,9 @@ Bounce Action_Executor(Frame(*) f)
         or IS_VALUE_IN_ARRAY_DEBUG(FEED_ARRAY(f->feed), f_next)
     );
 
-    if (Get_Executor_Flag(ACTION, f, TYPECHECK_ONLY)) {  // <try>, <blackhole>
+    if (Get_Executor_Flag(ACTION, f, TYPECHECK_ONLY)) {  // <maybe>, <blackhole>
         assert(
-            Is_Raised(OUT)
+            Is_Nulled(OUT)
             or Is_Word_Isotope_With_Id(OUT, SYM_BLACKHOLE)
         );
         goto skip_output_check;
@@ -1172,7 +1163,7 @@ Bounce Action_Executor(Frame(*) f)
 
 } skip_output_check: {  //////////////////////////////////////////////////////
 
-  // This is where things get jumped to if you pass a <try> argument a
+  // This is where things get jumped to if you pass a <maybe> argument a
   // BLANK! and it wants to jump past all the processing and return, or if
   // a frame just wants argument fulfillment and no execution.
   //

@@ -187,11 +187,8 @@ bool Add_Typeset_Bits_Core(
                 SET_PARAM_FLAG(typeset, ENDABLE);
                 TYPE_SET(typeset, REB_NULL);  // end always null, see param flag
             }
-            else if (0 == CT_String(item, Root_Blank_Tag, strict)) {
-                fail ("<blank> tag replaced with <try> tag");
-            }
-            else if (0 == CT_String(item, Root_Try_Tag, strict)) {
-                SET_PARAM_FLAG(typeset, NEED_TRY_IF_NULL);
+            else if (0 == CT_String(item, Root_Maybe_Tag, strict)) {
+                SET_PARAM_FLAG(typeset, NOOP_IF_VOID);
             }
             else if (0 == CT_String(item, Root_Blackhole_Tag, strict)) {
                 SET_PARAM_FLAG(typeset, NOOP_IF_BLACKHOLE);

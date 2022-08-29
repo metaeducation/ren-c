@@ -495,9 +495,9 @@ DECLARE_NATIVE(unget)
 //
 //  {Make block arguments splice}
 //
-//      return: "Isotope of BLOCK! or unquoted value"
-//          [<opt> any-value!]
-//      array [<opt> quoted! any-array!]
+//      return: "Isotope of BLOCK! or unquoted value (passthru null and void)"
+//          [<opt> <void> any-value!]
+//      array [<opt> <void> quoted! any-array!]
 //  ]
 //
 DECLARE_NATIVE(spread)
@@ -509,9 +509,10 @@ DECLARE_NATIVE(spread)
     INCLUDE_PARAMS_OF_SPREAD;
 
     Value(*) v = ARG(array);
-
+    if (Is_Void(v))
+        return VOID;
     if (Is_Nulled(v))
-        return nullptr;  // Put TRY on the APPEND or whatever, not SPREAD
+        return nullptr;
 
     if (IS_QUOTED(v))
         return Unquotify(Copy_Cell(OUT, v), 1);

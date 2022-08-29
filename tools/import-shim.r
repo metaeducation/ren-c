@@ -59,7 +59,7 @@ Rebol [
 already-imported: make map! []  ; avoid importing things twice
 
 trap [
-    func [x [<try> integer!]] []  ; use <try> as litmus test for newish EXE
+    func [x [<maybe> integer!]] []  ; use <maybe> as litmus test for newish EXE
 ] else [
     quit  ; assume modern IMPORT/EXPORT, don't need hacks
 ]

@@ -447,7 +447,7 @@ DECLARE_NATIVE(else)  // see `tweak :else 'defer on` in %base-defs.r
 //          [<opt> any-value!]
 //      test "Typeset or arity-1 filter function"
 //          [<opt> logic! action! block! datatype! typeset!]
-//      value [<opt> any-value!]
+//      value [<maybe> <opt> any-value!]
 //  ]
 //
 DECLARE_NATIVE(match)

@@ -526,8 +526,8 @@ REBVAL *Setify(REBVAL *out) {  // called on stack values; can't call evaluator
 //
 //  {If possible, convert a value to a SET-XXX! representation}
 //
-//      return: [set-word! set-path! set-tuple! set-group! set-block!]
-//      value [<try> any-value!]
+//      return: [<opt> set-word! set-path! set-tuple! set-group! set-block!]
+//      value [<maybe> any-value!]
 //  ]
 //
 DECLARE_NATIVE(setify)
@@ -572,8 +572,8 @@ REBVAL *Getify(REBVAL *out) {  // called on stack values; can't call evaluator
 //
 //  {If possible, convert a value to a GET-XXX! representation}
 //
-//      return: [get-word! get-path! get-tuple! get-group! get-block!]
-//      value [<try> any-value!]
+//      return: [<opt> get-word! get-path! get-tuple! get-group! get-block!]
+//      value [<maybe> any-value!]
 //  ]
 //
 DECLARE_NATIVE(getify)
@@ -618,8 +618,8 @@ REBVAL *Metafy(REBVAL *out) {  // called on stack values; can't call evaluator
 //
 //  {If possible, convert a value to a META-XXX! representation}
 //
-//      return: [meta-word! meta-path! meta-tuple! meta-group! meta-block!]
-//      value [<try> any-value!]
+//      return: [<opt> meta-word! meta-path! meta-tuple! meta-group! meta-block!]
+//      value [<maybe> any-value!]
 //  ]
 //
 DECLARE_NATIVE(metafy)
@@ -664,8 +664,8 @@ REBVAL *Theify(REBVAL *out) {  // called on stack values; can't call evaluator
 //
 //  {If possible, convert a value to a THE-XXX! representation}
 //
-//      return: [the-word! the-path! the-tuple! the-group! the-block!]
-//      value [<try> any-value!]
+//      return: [<opt> the-word! the-path! the-tuple! the-group! the-block!]
+//      value [<maybe> any-value!]
 //  ]
 //
 DECLARE_NATIVE(inert)
@@ -714,8 +714,8 @@ REBVAL *Plainify(REBVAL *out) {
 //
 //  {Convert a value into its plain representation}
 //
-//      return: [any-value!]
-//      value [<try> any-value!]
+//      return: [<opt> any-value!]
+//      value [<maybe> any-value!]
 //  ]
 //
 DECLARE_NATIVE(plain)

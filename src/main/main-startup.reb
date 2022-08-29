@@ -376,7 +376,7 @@ main-startup: func [
 
         return: "Null if not found"
             [<opt> file!]
-        dir [<try> text!]
+        dir [<maybe> text!]
     ][
         return all [
             not empty? dir
@@ -749,7 +749,7 @@ main-startup: func [
     ;
     all [
         o.bin
-        not try find o.suppress %rebol.reb
+        not find maybe o.suppress %rebol.reb
         elide (loud-print ["Checking for rebol.reb file in" o.bin])
         exists? join o.bin %rebol.reb
     ] then [

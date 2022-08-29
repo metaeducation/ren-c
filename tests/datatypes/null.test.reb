@@ -32,20 +32,6 @@
     ]
 )
 
-; NULL has no visual representation, so FORM errors on it
-; Users are expected to triage the NULL to vaporize, error, or find some
-; way to represent it "out of band" in their target medium.
-;
-; MOLD was reviewed and deemed to be better without this protection than with.
-; (It may be reviewed an decided the same for FORM)
-(
-    null = mold null
-)
-(
-    e: trap [form null]
-    'try-if-null-meant = e.id
-)
-
 ; The specific role of ~null~ isotopes is to be reactive with THEN and not
 ; ELSE, so that failed branches may be purposefully NULL.
 ;

@@ -436,7 +436,7 @@ compiler-class: make object! [
     ;check if the compiler is available
     check: meth [
         return: [logic!]
-        path [<try> any-string!]
+        path [<maybe> any-string!]
     ][
         fail ~tbd~
     ]

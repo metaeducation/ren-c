@@ -53,7 +53,7 @@ array: func [
     return: "Generated block or null if blank input"
         [block!]
     size "Size or block of sizes for each dimension"
-        [<try> integer! block!]
+        [<maybe> integer! block!]
     /initial "Initial value (will be called each time if a function)"
         [any-value!]
     <local> rest block
@@ -390,7 +390,7 @@ collect*: func [
     return: "Result block, or null if no KEEPs (prevent nulls with KEEP [])"
         [<opt> block!]
     body "Block to evaluate"
-        [<try> block!]
+        [<maybe> block!]
 ][
     let out: null
     let keeper: specialize* (  ; SPECIALIZE to hide series argument
@@ -509,7 +509,7 @@ split: function [
         [block! integer! char! bitset! text! tag! word!]
     /into "If dlm is integer, split in n pieces (vs. pieces of length n)"
 ][
-    (try parse3 (match block! dlm) [some integer!]) then [
+    (parse3 (maybe match block! dlm) [some integer!]) then [
         return map-each len dlm [
             if len <= 0 [
                 series: skip series negate len
@@ -595,7 +595,7 @@ split: function [
         ; implied empty field after it, which we add here.
         ;
         switch type of dlm [
-            bitset! [did find dlm try last series]
+            bitset! [did find dlm maybe last series]
             char! [dlm = last series]
             text! tag! word! [
                 (find series dlm) and (empty? [# @]: find-last series dlm)

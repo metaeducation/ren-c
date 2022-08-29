@@ -342,7 +342,7 @@ redescribe: func [
             fail [{archetype META-OF doesn't have DESCRIPTION slot} meta]
         ]
 
-        if notes: try select meta 'parameter-notes [
+        if notes: select meta 'parameter-notes [
             if not any-context? notes [  ; !!! Sometimes OBJECT!, else FRAME!
                 fail [{PARAMETER-NOTES in META-OF is not a FRAME!} notes]
             ]
@@ -800,7 +800,7 @@ count-up: func [
     "Loop the body, setting a word from 1 up to the end value given"
     return: [<opt> any-value!]
     'var [word!]
-    limit [<try> integer! issue!]
+    limit [<maybe> integer! issue!]
     body [block!]
     <local> start end result'
 ][
@@ -956,7 +956,7 @@ raise: func [
     ; !!! PATH! doesn't do BINDING OF, and in the general case it couldn't
     ; tell you where it resolved to without evaluating, just do WORD! for now.
     ;
-    let frame: try match frame! try binding of match the-word! :blame
+    let frame: match frame! maybe binding of maybe match the-word! blame
 
     let error: switch type of :reason [
         error! [reason]

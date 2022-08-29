@@ -49,7 +49,7 @@ exists?: func [
         return info?/only target
     ]
 
-    return try select decay attempt [query target] 'type
+    return select maybe decay attempt [query target] 'type
 ]
 
 size-of: size?: function [
@@ -190,8 +190,8 @@ file-type?: function [
     file [file! url!]
 ][
     return all [
-        pos: try find system.options.file-types suffix-of file
-        try first find pos matches word!
+        pos: find system.options.file-types maybe suffix-of file
+        first maybe find pos matches word!
     ]
 ]
 

@@ -121,7 +121,7 @@ contains-newline: function [return: [logic!] pos [block! group!]] [
             ]
         ] then [return true]
 
-        pos: try next pos
+        pos: next pos
     ]
     return false
 ]
@@ -208,12 +208,9 @@ summarize-obj: function [
     return: "Block of short lines (fitting in roughly 80 columns)"
         [<opt> block!]
     obj [object! port! module!]
-    /match "Include only fields that match a string or datatype"
+    /pattern "Include only fields that match a string or datatype"
         [text! datatype!]
 ][
-    pattern: match
-    match: :lib.match
-
     form-pad: lambda [
         {Form a value with fixed size (space padding follows)}
         val
@@ -224,11 +221,11 @@ summarize-obj: function [
         val
     ]
 
-    wild: try to-logic try find (match text! :pattern) "*"
+    wild: to-logic find maybe (match text! maybe pattern) "*"
 
     return collect [
         for-each [word val] obj [
-            if not set? 'val [continue]  ; don't consider unset fields
+            if unset? 'val [continue]  ; don't consider unset fields
 
             type: type of reify get/any 'val
 
@@ -255,7 +252,7 @@ summarize-obj: function [
                 fail @pattern
             ]
 
-            if desc: try description-of reify get/any 'val [
+            if desc: description-of reify get/any 'val [
                 if 48 < length of desc [
                     desc: append copy/part desc 45 "..."
                 ]

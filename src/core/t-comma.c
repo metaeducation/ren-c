@@ -69,29 +69,6 @@ REBINT CT_Comma(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
 REBTYPE(Comma)
 {
     switch (ID_OF_SYMBOL(verb)) {
-      case SYM_REFLECT: {
-        INCLUDE_PARAMS_OF_REFLECT;
-        UNUSED(ARG(value)); // taken care of by `unit` above.
-
-        // !!! REFLECT can't use PARAM_FLAG_NEED_TRY_IF_NULL, due to the special
-        // case of TYPE OF...where a BLANK! in needs to provide BLANK! the
-        // datatype out.  Also, there currently exist "reflectors" that
-        // return LOGIC!, e.g. TAIL?...and logic cannot blindly return null:
-        //
-        // https://forum.rebol.info/t/954
-        //
-        // So for the moment, we just ad-hoc return nullptr for some that
-        // R3-Alpha returned NONE! for.  Review.
-        //
-        switch (VAL_WORD_ID(ARG(property))) {
-          case SYM_INDEX:
-          case SYM_LENGTH:
-            return nullptr;
-
-          default: break;
-        }
-        break; }
-
       case SYM_COPY: { // since `copy/deep [1 , 2]` is legal, allow `copy ,`
         INCLUDE_PARAMS_OF_COPY;
         UNUSED(ARG(value));

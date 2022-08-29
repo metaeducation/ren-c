@@ -174,7 +174,7 @@ make-file-tuple-parts: func [
             fail ["Unknown tuple component type"]
         ]
 
-        if try find text "/" [
+        if find maybe text "/" [
             fail embedded-file-slash-error text
         ]
 
@@ -240,8 +240,8 @@ make-file-path-parts: func [
 make-file: func [
     {Create a FILE! using the file path specification dialect}
 
-    return: [file!]
-    def [<try> word! path! tuple! block!]
+    return: [<opt> file!]
+    def [<maybe> word! path! tuple! block!]
     /predicate [action!]
     <local> result
 ][

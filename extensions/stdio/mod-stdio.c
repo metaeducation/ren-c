@@ -92,7 +92,7 @@ DECLARE_NATIVE(startup_p)
 //  "Write text to standard output, or raw BINARY! (for control codes / CGI)"
 //
 //      return: <none>
-//      value [<try> text! char! binary!]
+//      value [<maybe> text! char! binary!]
 //          "Text to write, if a STRING! or CHAR! is converted to OS format"
 //  ]
 //

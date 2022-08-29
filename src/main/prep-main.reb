@@ -87,7 +87,7 @@ for-each file reduce [
 ; (This organization lets us separate the moment of loading from the moment
 ; of running, in case that were interesting.)
 ;
-append/line buf ":main-startup"  ; w/o newline, `[...]:main-startup`
+append/line buf ":main-startup"
 
 
 ; It's helpful to have an uncompressed readable copy of the bundled and

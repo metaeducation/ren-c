@@ -252,15 +252,14 @@ inline static bool Matcher_Matches(Cell(const*) matcher, Cell(const*) v) {
 #define PARAM_FLAG_PREDICATE \
     FLAG_LEFT_BIT(12)
 
-// Parameters can be marked such that if they are null, the action will not
-// be run at all.  This is done via the `<try>` annotation, which indicates
-// a special error will be raised that TRY (and MAYBE) will intercept, if it
-// arises out of the direct call being made (e.g. a definitional failure)
+// Parameters can be marked such that if they are void, the action will not
+// be run at all.  This is done via the `<maybe>` annotation.  The action
+// will have its frame fulfilled, but not run.
 //
-#define PARAM_FLAG_NEED_TRY_IF_NULL \
+#define PARAM_FLAG_NOOP_IF_VOID \
     FLAG_LEFT_BIT(13)
 
-// Similar to <try>, the <blackhole> annotation causes a function to be a
+// Similar to <maybe>, the <blackhole> annotation causes a function to be a
 // no-op if that parameter is a `#`, and makes the overall function return a
 // `#` back.  Finer-grained control is needed by some functions, e.g. SET
 // which is willing to take a blackhole! as a target, but wants to return

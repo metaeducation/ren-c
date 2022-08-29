@@ -8,11 +8,11 @@
     (blank = '_)
 ]
 
-(null = try make blank! null)
+(null = make blank! maybe null)
 (error? trap [make blank! [a b c]])
 
-(null? try to blank! null)  ; TO's universal protocol for blank 2nd argument
-(null? try to null 1)  ; TO's universal protocol for blank 1st argument
+(null? to blank! maybe null)  ; TO's universal protocol for void 2nd argument
+(null? to maybe null 1)  ; TO's universal protocol for blank 1st argument
 (error? trap [to blank! 1])  ; no other types allow "conversion" to blank
 
 ("_" = mold blank)

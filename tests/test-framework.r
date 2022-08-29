@@ -58,7 +58,7 @@ run-single-test: func [
     case [
         error [
             spaced ["error" any [
-                try to text! error.id
+                to text! maybe error.id
                 error.message
                 "(unknown)"
             ]]

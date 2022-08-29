@@ -132,7 +132,7 @@ load-header: function [
         return 'bad-header
     ]
 
-    if try find hdr.options 'content [
+    if find maybe hdr.options 'content [
         append hdr spread compose [content (data)]  ; as of start of header
     ]
 
@@ -161,7 +161,7 @@ load-header: function [
         ; This feature needs redesign if it's to be kept, but switching it
         ; to use TRAP with the bad idea for now.
         ;
-        if decay try find hdr.options 'compress [
+        if decay find maybe hdr.options 'compress [
             rest: any [
                 attempt [
                     ; Raw bits.  whitespace *could* be tolerated; if
@@ -212,7 +212,7 @@ load: func [
     @header "Request the Rebol header object be returned as well"
         [object!]
     source "Source of the information being loaded"
-        [<try> file! url! tag! the-word! text! binary!]
+        [<maybe> file! url! tag! the-word! text! binary!]
     /type "E.g. rebol, text, markup, jpeg... (by default, auto-detected)"
         [word!]
 
@@ -264,7 +264,7 @@ load: func [
 
     if word? header [cause-error 'syntax header source]
 
-    ensure [<opt> object!] header
+    ensure [object!] header: default [make object! []]
     ensure [binary! block! text!] data
 
     ; Convert code to block, insert header if requested
@@ -278,8 +278,8 @@ load: func [
 
     all [
         'unbound != type
-        'module != try select header 'type
-        not try find (try select header 'options) [unbound]
+        'module != select header 'type
+        not find maybe (select header 'options) [unbound]
     ] then [
         data: intern* system.contexts.user data
     ]
@@ -318,7 +318,7 @@ load-value: redescribe [
 
 adjust-url-for-raw: func [
     return: [<opt> url!]
-    url [<try> url!]
+    url [<maybe> url!]
 ][
     let text: to text! url  ; URL! may become immutable, try thinking ahead
 
@@ -422,9 +422,10 @@ import*: func [
         ; should maybe ban it as well (or at least make it inconvenient).  But
         ; do it for the moment since that is how it has worked in the past.
         ;
-        let exports: try select (meta-of ensure module! unmeta :value) 'exports
+        ensure module! unmeta value
+        let exports: select (maybe meta-of unmeta value) 'exports
         if exports [
-            resolve where (unmeta :value) exports
+            resolve where unmeta value exports
         ]
     ]
 
@@ -437,7 +438,7 @@ import*: func [
             product: ~nameless~
             return source  ; no name, so just do the RESOLVE to get variables
         ]
-        let mod: (try select/skip system.modules name 2) else [
+        let mod: (select/skip system.modules name 2) else [
             append system.modules spread :[name source]  ; not in mod list, add
             product: ~registered~
             return source
@@ -454,7 +455,7 @@ import*: func [
 
     ; If URL is decorated source (syntax highlighting, etc.) get raw form.
     ;
-    (try adjust-url-for-raw match url! :source) then adjusted -> [
+    (adjust-url-for-raw maybe match url! :source) then adjusted -> [
         source: adjusted  ; !!! https://forum.rebol.info/t/1582/6
     ]
 
@@ -525,8 +526,8 @@ import*: func [
         ]
     ]
 
-    let name: try select hdr 'name
-    (try select/skip system.modules name 2) then cached -> [
+    let name: select maybe hdr 'name
+    (select/skip system.modules maybe name 2) then cached -> [
         product: ~cached~
         return cached
     ]
@@ -546,9 +547,9 @@ import*: func [
     let original-script: system.script
 
     system.script: make system.standard.script compose [
-        title: try select hdr 'title
+        title: select maybe hdr 'title
         header: hdr
-        parent: :original-script
+        parent: original-script
         path: dir
         args: '(:args)  ; variable same name as field, trips up binding
     ]
@@ -561,7 +562,7 @@ import*: func [
         ;
         ; !!! Should there be a post-script-hook?
         ;
-        try script-pre-load-hook is-module hdr
+        (script-pre-load-hook/ is-module hdr)
     ]
 
     === CHANGE WORKING DIRECTORY TO MODULE'S DIRECTORY (IF IT'S A MODULE) ===
@@ -584,7 +585,7 @@ import*: func [
     ; looked up relative to the current directory.)
 
     let original-path: what-dir
-    if where and (dir) [  ; IMPORT
+    if where and dir [  ; IMPORT
         change-dir dir
     ]
 

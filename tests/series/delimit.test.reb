@@ -90,5 +90,5 @@
     (",a," = delimit/head/tail "," "a")
 
     (null = delimit/head/tail "," [void])
-    (null = try delimit/head/tail "," null)
+    (null = delimit/head/tail "," void)
 ]

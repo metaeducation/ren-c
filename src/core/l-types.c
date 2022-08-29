@@ -85,12 +85,12 @@ Bounce MAKE_Unhooked(
 //
 //  {Constructs or allocates the specified datatype.}
 //
-//      return: "Constructed value"
-//          [any-value!]
-//      type "The datatype or parent value to construct from"
-//          [<try> meta-word! any-value!]
-//      def "Definition or size of the new value (binding may be modified)"
-//          [<try> any-value!]
+//      return: [<opt> any-value!]
+//          "Constructed value, or null if BLANK! input"
+//      type [<maybe> meta-word! any-value!]
+//          {The datatype or parent value to construct from}
+//      def [<maybe> any-value!]
+//          {Definition or size of the new value (binding may be modified)}
 //  ]
 //
 DECLARE_NATIVE(make)
@@ -190,10 +190,10 @@ Bounce TO_Unhooked(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 //
 //  {Converts to a specified datatype, copying any underying data}
 //
-//      return: "VALUE converted to TYPE"
+//      return: "VALUE converted to TYPE, null if type or value are blank"
 //          [<opt> any-value!]
-//      type [<try> datatype! meta-word!]
-//      value [<try> any-value!]
+//      type [<maybe> datatype! meta-word!]
+//      value [<maybe> any-value!]
 //  ]
 //
 DECLARE_NATIVE(to)
@@ -317,13 +317,6 @@ Bounce Reflect_Core(Frame(*) frame_)
         break;
     }
 
-    // !!! The reflector for TYPE is universal and so it is allowed on nulls,
-    // but in general actions should not allow null first arguments...there's
-    // no entry in the dispatcher table for them.
-    //
-    if (heart == REB_NULL)  // including escaped nulls, `''''`
-        return RAISE(Error_Try_If_Null_Meant_Raw(Lib(NULL)));
-
     Dequotify(ARG(value));
     INIT_FRM_PHASE(frame_, VAL_ACTION(Lib(REFLECT)));  // switch to generic
     return BOUNCE_CONTINUE;
@@ -337,7 +330,7 @@ Bounce Reflect_Core(Frame(*) frame_)
 //
 //      return: [<opt> any-value!]
 //      value "Accepts NULL so REFLECT () 'TYPE can be returned as NULL"
-//          [<opt> any-value!]
+//          [<maybe> <opt> any-value!]
 //      property [word!]
 //          "Such as: type, length, spec, body, words, values, title"
 //  ]
@@ -362,7 +355,7 @@ DECLARE_NATIVE(reflect_native)
 //      'property "Will be escapable, ':property (bootstrap permitting)"
 //          [word! get-word! get-path! get-group!]
 //      value "Accepts null so TYPE OF NULL can be returned as null"
-//          [<opt> any-value!]
+//          [<maybe> <opt> any-value!]
 //  ]
 //
 DECLARE_NATIVE(of)

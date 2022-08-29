@@ -5,7 +5,7 @@
 ; reverse case currently...)
 
 [#473 (
-    null? try find null 1
+    null? find maybe null 1
 )]
 (null? find [] 1)
 (

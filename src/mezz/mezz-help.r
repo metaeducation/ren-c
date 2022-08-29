@@ -18,16 +18,16 @@ spec-of: function [
     return: [block!]
     action [action!]
 ][
-    meta: match object! meta-of :action
+    meta: (match object! meta-of :action) else [return [~bad-spec~]]
 
     return collect [
-        keep/line maybe ensure [<opt> text!] try select meta 'description
+        keep/line maybe ensure [<opt> text!] select meta 'description
 
-        types: ensure [<opt> frame! object!] try select meta 'parameter-types
-        notes: ensure [<opt> frame! object!] try select meta 'parameter-notes
+        types: ensure [<opt> frame! object!] select meta 'parameter-types
+        notes: ensure [<opt> frame! object!] select meta 'parameter-notes
 
-        return-type: ensure [<opt> block!] try select types 'return
-        return-note: ensure [<opt> text!] try select notes 'return
+        return-type: ensure [<opt> block!] select maybe types 'return
+        return-note: ensure [<opt> text!] select maybe notes 'return
 
         if return-type or return-note [
             keep spread compose [
@@ -38,8 +38,8 @@ spec-of: function [
         for-each param parameters of :action [
             keep spread compose [
                 (param)
-                    (maybe try select types param)
-                    (maybe try select notes param)
+                    (maybe select maybe types param)
+                    (maybe select maybe notes param)
             ]
         ]
     ]
@@ -50,33 +50,33 @@ description-of: function [
     {One-line summary of a value's purpose}
 
     return: [<opt> text!]
-    v [<try> any-value!]
+    v [<maybe> any-value!]
 ][
-    return switch type of v [
+    return decay (switch type of :v [
         bad-word! [null]
         any-array! [spaced ["array of length:" length of v]]
         image! [spaced ["size:" v.size]]
         datatype! [
             spec: ensure object! spec of v  ; "type specs" need simplifying
-            copy spec.title
+            copy maybe spec.title
         ]
         action! [
             if meta: meta-of :v [
-                try copy try get 'meta.description
-            ]
+                copy maybe get 'meta.description
+            ] else [null]
         ]
         gob! [spaced ["offset:" v.offset "size:" v.size]]
         object! [mold words of v]
         typeset! [mold make block! v]
         port! [mold reduce [v.spec.title v.spec.ref]]
-    ] else [null]
+    ] else [null])
 ]
 
 browse: function [
     "stub function for browse* in extensions/process/ext-process-init.reb"
 
     return: <none>
-    location [<try> url! file!]
+    location [<maybe> url! file!]
 ][
     print "Browse needs redefining"
 ]
@@ -202,7 +202,7 @@ help: function [
         text! [
             ; HELP "TEXT" wildcard searches things w/"TEXT" in their name
 
-            if types: summarize-obj/match make-libuser :topic [
+            if types: summarize-obj/pattern make-libuser :topic [
                 print "Found these related words:"
                 for-each line sort types [
                     print line
@@ -247,10 +247,11 @@ help: function [
         ; same, and could be distinct from `HELP :(1)` or `HELP :[1]` etc.
         ; For the moment, it just tells you the type.
 
-        if free? :topic [
-            print ["is a freed" mold type of :topic]
-        ] else [
-            print [mold topic "is" an mold type of :topic]
+        print collect [
+            if not free? :topic [keep mold topic]
+            keep "is"
+            if free? :topic [keep "a *freed*"]
+            keep any [mold type of :topic, "NULL"]
         ]
         return none
     ]
@@ -291,7 +292,7 @@ help: function [
     ]
 
     if datatype? :value [
-        if instances: summarize-obj/match make-libuser :value [
+        if instances: summarize-obj/pattern make-libuser :value [
             print ["Found these" (uppercase form topic) "words:"]
             for-each line instances [
                 print line
@@ -304,7 +305,10 @@ help: function [
 
     if not action? :value [
         print collect [
-            keep [(uppercase mold topic) "is" an (mold type of :value)]
+            keep [
+                (uppercase mold topic)
+                "is" an any [mold type of :value, "NULL"]
+            ]
             if free? :value [
                 keep "that has been FREEd"
             ] else [
@@ -353,25 +357,25 @@ help: function [
     ] else [
         print [
             _ _ _ _ (uppercase mold topic)
-                maybe form args, maybe form refinements
+                form maybe args, form maybe refinements
         ]
     ]
 
-    meta: meta-of :value
+    meta: meta-of :value else '[]  ; so SELECT just returns NULL
 
     print newline
 
     print "DESCRIPTION:"
-    print [_ _ _ _ (try select meta 'description) else ["(undocumented)"]]
+    print [_ _ _ _ (select meta 'description) else ["(undocumented)"]]
     print [_ _ _ _ (uppercase mold topic) {is an ACTION!}]
 
     print-args: [list /indent-words] -> [
         for-each param list [
-            types: ensure [<opt> block!] (try
-                select (try select meta 'parameter-types) to-word noquote param
+            types: ensure [<opt> block!] (
+                select (maybe select meta 'parameter-types) to-word noquote param
             )
             note: ensure [<opt> text!] (try
-                select (try select meta 'parameter-notes) to-word noquote param
+                select (maybe select meta 'parameter-notes) to-word noquote param
             )
 
             print [_ _ _ _ param (if types [mold types])]
@@ -385,8 +389,8 @@ help: function [
     ; that isn't intended for use as a definitional return is a return type.
     ; The concepts are still being fleshed out.
     ;
-    return-type: try select try select meta 'parameter-types 'return
-    return-note: try select try select meta 'parameter-notes 'return
+    return-type: select maybe select meta 'parameter-types 'return
+    return-note: select maybe select meta 'parameter-notes 'return
 
     print newline
     print [
@@ -444,7 +448,10 @@ source: function [
             print f
         ]
         not action? :f [
-            print [name "is" an mold type of :f "and not an ACTION!"]
+            print [
+                name "is" an any [mold type of :f, "NULL"]
+                "and not an ACTION!"
+            ]
         ]
     ] then [
         return none

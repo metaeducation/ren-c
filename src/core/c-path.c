@@ -116,7 +116,7 @@ Value(*) Try_Init_Any_Sequence_At_Arraylike_Core(
 //      return: [<opt> any-value!]
 //          {Picked value, or null if picker can't fulfill the request}
 //      location [any-value!]
-//      picker [<try> any-value!]
+//      picker [<maybe> any-value!]
 //          {Index offset, symbol, or other value to use as index}
 //  ]
 //
@@ -152,7 +152,7 @@ DECLARE_NATIVE(pick)
 //          {Same as value}
 //      location [any-value!]
 //          {(modified)}
-//      picker [<try> any-value!]
+//      picker [<maybe> any-value!]
 //          {Index offset, symbol, or other value to use as index}
 //      value [<opt> any-value! ~any-value!~]
 //          {The new value}
