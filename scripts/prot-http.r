@@ -168,10 +168,10 @@ parse-write-dialect: function [
 ][
     spec: port.spec
     parse block [
-        spec.debug: opt ['headers (true)]
-        spec.follow: opt ['no-redirect ('ok)]
+        opt ['headers (spec.debug: true)]  ; may leave debug as-is
+        opt ['no-redirect (spec.follow: 'ok)]  ; may leave follow as-is
         spec.method: [word! | ('post)]
-        spec.path: opt [file! | url!]
+        opt [spec.path: [file! | url!]]
         spec.headers: [block! | ([])]
         spec.content: opt [any-string! | binary!]
         <end>
@@ -444,7 +444,7 @@ do-redirect: func [
     ; the original scheme code, and were grafted on afterwards.)
     ;
     let data: do-request port
-    assert [blank? port.data]
+    assert [null? port.data]
     port.data: data
 ]
 
