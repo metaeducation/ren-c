@@ -711,7 +711,7 @@ Special internal defines used by RT, not Host-Kit developers:
   #if defined(__SANITIZE_ADDRESS__)
     #define DEBUG_CHECK_ENDS 0  // *not* when sanitized
   #else
-    #define DEBUG_CHECK_ENDS DEBUG
+    #define DEBUG_CHECK_ENDS (CPLUSPLUS_11 && DEBUG) ? 1 : 0
   #endif
 #endif
 

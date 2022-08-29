@@ -50,7 +50,12 @@
     #define Is_End(p) \
         (((const Byte*)(p))[0] == END_SIGNAL_BYTE)  // Note: needs (p) parens!
 #else
-    inline static bool Is_End(const void *p) {
+    template<typename T>  // should only test const void* for ends
+    inline static bool Is_End(T* p) {
+        static_assert(
+            std::is_same<T, const void>::value,
+            "Is_End() is not designed to operate on Cell(), Series(), etc."
+        );
         const Byte* bp = cast(const Byte*, p);
         if (*bp != END_SIGNAL_BYTE) {
             assert(*bp & NODE_BYTEMASK_0x01_CELL);
@@ -59,12 +64,6 @@
         assert(bp[1] == 0);  // not strictly necessary, but rebEND is 2 bytes
         return true;
     }
-
-  #if CPLUSPLUS_11
-    template<typename T>  // should only test void* for ends
-    inline static bool Is_End(const T* v)
-      { static_assert(std::is_same<T, void>::value); }
-  #endif
 #endif
 
 #define Not_End(p) \
