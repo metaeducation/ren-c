@@ -910,7 +910,7 @@ bool Get_Path_Push_Refinements_Throws(
         if (Get_Var_Core_Throws(out, steps, safe, SPECIFIED))
             return true;
 
-        if (Is_Isotope(out))
+        if (Is_Isotope(out) and not redbol)  // need for GET/ANY 'OBJ/UNDEF
             fail (Error_Bad_Word_Get(path, out));
 
         return false;  // refinements pushed by Redbol-adjusted Get_Var()
