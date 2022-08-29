@@ -143,7 +143,11 @@ do-request: function [
     net-log/C as text! req  ; Note: may contain CR (can't use TO TEXT!)
 
     if port.state and (port.spec.method = 'HEAD) [
-        return reduce in port.state.info [name size date]
+        ;
+        ; !!! Is the name always guaranteed to be non-NULL?  The size and date
+        ; seem to be null, and name can come back as %"/"
+        ;
+        return reduce in port.state.info [name, reify size, reify date]
     ]
 
     ; The port data has been accrued for the client and can be given back
