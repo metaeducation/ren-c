@@ -25,7 +25,7 @@
 
     (
         tcopy: copy t
-        replace tcopy braille _
+        replace tcopy braille void
         (length of tcopy) = (tlen - length of braille)
     )
 
