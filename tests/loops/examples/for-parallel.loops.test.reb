@@ -9,7 +9,7 @@
         blk2 [<try> block!]
         body [block!]
     ][
-        while [(not empty? blk1) or (not empty? blk2)] [  ; _ and [] are EMPTY?
+        while [(not empty? blk1) or (not empty? blk2)] [  ; null and [] EMPTY?
             ;
             ; Use the cool UNPACK facility to set the variables:
             ; https://forum.rebol.info/t/1634
@@ -20,8 +20,8 @@
 
             ; Now ELIDE the increment, so body evaluation above is result
             ;
-            elide blk1: ((try next blk1) else '_)
-            elide blk2: ((try next blk2) else '_)
+            elide blk1: try next blk1
+            elide blk2: try next blk2
         ]
     ], true)
 
