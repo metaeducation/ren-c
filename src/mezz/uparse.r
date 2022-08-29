@@ -2347,6 +2347,10 @@ default-combinators: make map! reduce [
             ;
             let temp: ^ eval f
             if not raised? unget temp [
+                if unset? 'pos [
+                    print mold/limit rules 200
+                    fail "Combinator did not set remainder"
+                ]
                 if not void? unget temp [
                     result': temp  ; overwrite if was visible
                 ]
@@ -2798,7 +2802,7 @@ parse*: func [
 
     /verbose "Print some additional debug information"
 
-    <local> loops
+    <local> loops synthesized'
 ][
     ; PATH!s, TUPLE!s, and URL!s are read only and don't have indices.  But we
     ; want to be able to parse them, so make them read-only series aliases:
@@ -2859,9 +2863,15 @@ parse*: func [
     ;
     f.pending: let subpending
 
-    let synthesized': ^ eval f except [
-        assert [empty? state.loops]
-        return null  ; match failure (as opposed to success, w/null result)
+    trap [
+        synthesized': ^ eval f except [
+            assert [empty? state.loops]
+            return null  ; match failure (vs. success, w/null result)
+        ]
+    ] then e -> [
+        print "!!! HARD FAIL DURING PARSE !!!"
+        print mold/limit state.rules 200
+        fail e
     ]
 
     assert [empty? state.loops]
