@@ -138,7 +138,7 @@ REBTYPE(Datatype)
 
             for (; key != key_tail; ++key, ++var) {
                 if (item == item_tail)
-                    Init_Blank(var);
+                    Init_Nulled(var);
                 else {
                     // typespec array does not contain relative values
                     //
