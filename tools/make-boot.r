@@ -95,10 +95,7 @@ args: any [
     fail "No platform specified."
 ]
 
-product: to-word any [
-    try get 'args/PRODUCT
-    "core"
-]
+product: to-word any [get 'args/PRODUCT "core"]
 
 platform-data: context [type: 'windows]
 build: context [features: [help-strings]]
@@ -182,7 +179,7 @@ add-sym: function [
     <with> sym-n
 ][
     if pos: find syms-words as text! word [
-        if try exists [return index of pos]
+        if exists [return index of pos]
         fail ["Duplicate word specified" word]
     ]
 
@@ -676,7 +673,7 @@ at-value: func ['field] [return next find boot-sysobj to-set-word field]
 
 boot-sysobj: load strip-commas-and-null-apostrophes read/string %sysobj.r
 change (at-value version) version
-change (at-value commit) either try git-commit [git-commit] ['null]
+change (at-value commit) maybe git-commit  ; no-op if no git-commit
 change (at-value build) now/utc
 change (at-value product) (quote to word! product)  ; want it to be quoted
 
@@ -878,8 +875,10 @@ for-each section [boot-base boot-system-util boot-mezz] [
     set section s: make text! 20000
     append/line s "["
     for-each file first mezz-files [  ; doesn't use LOAD to strip
-        gather: either section = 'boot-system-util ['sys-toplevel] [null]
-        text: stripload/gather (join %../mezz/ file) try gather
+        gather:  [null]
+        text: stripload/gather (
+            join %../mezz/ file
+        ) if section = 'boot-system-util ['sys-toplevel]
         append/line s text
     ]
     append/line s "~done~"

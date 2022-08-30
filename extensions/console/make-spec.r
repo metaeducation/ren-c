@@ -7,7 +7,7 @@ includes: [
     %prep/extensions/console  ; for %tmp-mod-console.h
 ]
 
-libraries: try switch system-config/os-base [
+libraries: switch system-config/os-base [
     'Windows [
         ;
         ; Note: shell32 actually needed for CommandLineToArgvW(), which makes
@@ -20,4 +20,4 @@ libraries: try switch system-config/os-base [
         ;
         [%shell32 %user32]
     ]
-]
+] else [null]

@@ -386,7 +386,7 @@ for-each-api [
     ]
 
     if is-variadic [
-        if try js-param-types [
+        if js-param-types [
             print cscape/with
             "!!! WARNING! !!! Skipping mixed variadic function $<Name> !!!"
             api
@@ -484,7 +484,7 @@ for-each-api [
             reb.$<No-Reb-Name> = cwrap_tolerant(  /* vs. R3Module.cwrap() */
                 'RL_$<Name>',
                 $<Js-Returns>, [
-                    $(Try Js-Param-Types),
+                    $(Maybe Js-Param-Types),
                 ]
             )
         } api

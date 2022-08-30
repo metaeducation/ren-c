@@ -105,15 +105,21 @@ trap [
 
 ;=== THESE REMAPPINGS ARE OKAY TO USE IN THE BOOTSTRAP SHIM ITSELF ===
 
-set '~ :null  ; most similar behavior to bad-word isotope available
-none: :void  ; again, most similar thing
+set '~ :null3  ; most similar behavior to bad-word isotope available
+none: :void3  ; again, most similar thing
 
 ; Done is used as a signal in the boot files that the expected end is reached.
 ; This is a BAD-WORD! in modern Ren-C, but a plain word in the bootstrap EXE.
 ; Must use SET because even though we don't run this in modern Ren-C, the file
 ; gets scanned...and `~done~:` would be invalid.
 ;
-set '~done~ :null
+set '~done~ :void3
+
+null?: :blank?
+null: blank
+
+void?: :null3?
+void: :null
 
 repeat: :loop
 
@@ -129,7 +135,7 @@ compose: func3 [block [block!] /deep <local> result pos product count] [
         ]
 
         product: do pos/1
-        all [
+        all3 [
             block? :product
             #splice! = first product
         ] then [
@@ -137,13 +143,22 @@ compose: func3 [block [block!] /deep <local> result pos product count] [
             ;
             pos: change3/part pos second product 1
         ] else [
-            if null? :product [
+            case3 [
                 ;
                 ; Permit NULL but only in bootstrap build (as it has no pure
                 ; void and null is the product of non-branch conditionals).
                 ; Trust current build to catch errors.
                 ;
-                change3/part pos null 1
+                null3? :product [
+                    change3/part pos null3 1
+                ]
+                void3? :product [  ; e.g. compose [(if true [null])]
+                    comment [change3/part pos null 1]  ; we *could* support it
+                    fail/where "#[void] compose found, disabled" 'return
+                ]
+                blank? :product [
+                    fail/where "COMPOSE blanks with SPREAD [_]" 'return
+                ]
             ] else [
                 change3/only pos :product
                 pos: next pos
@@ -153,41 +168,81 @@ compose: func3 [block [block!] /deep <local> result pos product count] [
     return result
 ]
 
+isotopify-blanks: func3 [x [<opt> any-value!]] [
+    lib3/if blank? :x [return void3]
+    :x
+]
+null3-to-blank: func3 [x [<opt> any-value!]] [
+    lib3/if null3? :x [return blank]
+    :x
+]
+
+any: chain [:any3 :null3-to-blank]
+all: chain [:all3 :null3-to-blank]
+get: chain [:lib3/get :null3-to-blank]
+find: chain [
+    adapt :find3 [
+        if blank? value [
+            fail "Can't FIND a NULL (BLANK! in shim), use MAYBE"
+        ]
+    ]
+    :null3-to-blank
+]
+select: chain [
+    adapt :select3 [
+        if blank? value [
+            fail "Can't SELECT a NULL (BLANK! in shim), use MAYBE"
+        ]
+    ]
+    :null3-to-blank
+]
+
+if: chain [:lib3/if :isotopify-blanks]
+case: chain [:lib3/case :isotopify-blanks]
+switch: chain [:lib3/switch :isotopify-blanks]
+
+; Used to be `false and [print "TRUE" false]` would avoid running the right
+; hand side, but a GROUP! would be run.  That was deemed ugly, so group
+; now short-circuits.
+;
+and: enfix :lib3/and [assert [not block? right] right: as block! :right]
+or: enfix :lib3/or [assert [not block? right] right: as block! :right]
+
+else: enfix chain [
+    adapt :lib3/else [if blank? :optional [optional: null3]]
+    ; we don't isotopify blanks to simulate isotopic null via shim blank null
+]
+then: enfix chain [
+    adapt :lib3/then [if blank? :optional [optional: null3]]
+    :isotopify-blanks
+]
+also: enfix adapt :lib3/also [if blank? :optional [optional: null3]]
+
+
 ; Modern DO is more limited in giving back "void intent" so it doesn't go
 ; well in situations like `map-each code blocks-of-code [do code]`...because
 ; situations that would have returned NULL and opted out don't opt out.
 ; You are supposed to use EVAL for that.
 ;
-reeval: :eval
+reeval: chain [:reeval3 :null3-to-blank]
 eval: :do
 
-; We don't have the distinctions between NULL and "unsets" in the bootstrap
-; build.  But make them distinct at the source level.
-
-null: enfix func3 [:left [<skip> set-word!]] [
-    if :left [unset3 left]
-    lib/null
-]
 
 did: func3 [return: [logic!] optional [<opt> any-value!]] [
-    any [
-        blank? :optional
-        logic? :optional
-    ] then [
-        fail/where [
-            "DID semantics changing, only tests for NULL, fixup"
-        ] 'optional
+    not any [
+        blank? :optional  ; acts like NULL
+        null3? :optional  ; acts like VOID
     ]
-    not null? :optional
 ]
 
-didn't: func3 [return: [logic!] optional [<opt> any-value!]] [
-    null? :optional
-]
+didn't: chain [:did :not]
 
 to-logic: func3 [return: [logic!] optional [<opt> any-value!]] [
-    if null? :optional [return false]
-    to logic! :optional
+    case [
+        null3? :optional [fail "Can't turn void (null proxied) TO-LOGIC"]
+        blank? :optional [false]
+        true [to logic! :optional]
+    ]
 ]
 
 
@@ -197,8 +252,9 @@ to-logic: func3 [return: [logic!] optional [<opt> any-value!]] [
 ; like a PRINT being turned into a NULL.
 ;
 decay: func3 [v [<opt> any-value!]] [
-    if void? :v [return null]
-    if blank? :v [return null]
+    assert [not null3? :v]
+    if void3? :v [return blank]  ; e.g. null (blank is null)
+    if blank? :v [return blank]
     :v
 ]
 reify: func3 [v [<opt> any-value!]] [
@@ -207,48 +263,7 @@ reify: func3 [v [<opt> any-value!]] [
     :v
 ]
 opt: ~  ; replaced by DECAY word
-
-
-; The safety aspect of new TRY isn't really worth attempting to emulate in the
-; bootstrap shim.  So the <maybe> parameters are simply "null in, null out" with
-; no requirement that a TRY be on the callsite.
-;
-; However, NULL word/path fetches cause errors in the bootstrap shim.  While
-; we can avoid the use of NULL and just use BLANK! for various opt-out
-; purposes in bootstrap, some variables are best initialized to null... so
-; we adapt TRY so it's variadic and works around fetch errors for WORD!/PATH!.
-;
-; This results in putting TRY in places that are superfluous for the current
-; build on WORD! and PATH!, and then the current build needs TRY on the results
-; of <maybe> functions that the bootstrap build does not.  So it's a kind of
-; "try inflation", but since TRY is a no-op on null variable fetches in the
-; current build this seems a reasonable enough mitigation strategy for now.
-;
-try: func3 [
-    :look [<...> any-value!]  ; <...> old variadic notation
-    args [<...> <opt> any-value!]  ; <...> old variadic notation
-][
-    all [
-        match [path! word!] first look
-        not match action! get first look
-    ] then [
-        return get take look
-    ]
-    return take* args
-]
-
-null?: func3 [
-    :look [<...> any-value!]  ; <...> old variadic notation
-    args [<...> <opt> any-value!]  ; <...> old variadic notation
-][
-    all [
-        match [path! word!] first look
-        not match action! get first look
-    ] then [
-        return lib/null? get take look
-    ]
-    return lib/null? take* args
-]
+try: ~  ; reviewing uses
 
 
 ; !!! This isn't perfect, but it should work for the cases in rebmake
@@ -256,9 +271,24 @@ null?: func3 [
 load-value: :load
 load-all: :load/all
 
-maybe: :try  ; for use in compose, to new semantics... leave NULL alone
+maybe: enfix func3 [
+    :left [<skip> set-word!]
+    v [<opt> any-value!]
+][
+    if :left [
+        assert [set-word? left]
+        if not null3? :v [
+            set left :v
+        ] else [
+            set 'v get left
+        ]
+    ]
+    if null? :v [return null3]
+    if blank? :v [return null3]
+    :v
+]
 
-the: :quote  ; Renamed due to the QUOTED! datatype
+the: :the3  ; Renamed due to the QUOTED! datatype
 quote: func3 [x [<opt> any-value!]] [
     switch type of x [
         null [the ()]
@@ -279,8 +309,12 @@ any-inert!: make typeset! [
     any-string! binary! char! any-context! time! date! any-number! object!
 ]
 
-spread: func3 [x [<opt> block!]] [
-    if :x [reduce [#splice! x]]
+spread: func3 [x [<opt> blank! block!]] [
+    case [
+        null? :x [return null]
+        blank? :x [return blank]
+        true [reduce [#splice! x]]
+    ]
 ]
 
 matches: func3 [x [<opt> datatype! typeset! block!]] [
@@ -303,8 +337,8 @@ append: func3 [series value [<opt> any-value!] /line <local> only] [
 
     only: 'only
     case [
-        null? :value []
-        void? :value [fail/where "APPEND of VOID! disallowed" 'value]
+        null3? :value []
+        void3? :value [fail/where "APPEND of VOID! disallowed" 'value]
         blank? :value [fail/where "APPEND blanks with [_] only" 'value]
         block? :value [
             if find3 value void! [
@@ -328,8 +362,8 @@ append: func3 [series value [<opt> any-value!] /line <local> only] [
 insert: func3 [series value [<opt> any-value!] /line <local> only] [
     only: 'only
     case [
-        null? :value []
-        void? :value [fail/where "INSERT of VOID! disallowed" 'value]
+        null3? :value []
+        void3? :value [fail/where "INSERT of VOID! disallowed" 'value]
         blank? :value [fail/where "INSERT blanks with [_] only" 'value]
         block? :value [
             if find3 value void! [
@@ -353,8 +387,8 @@ insert: func3 [series value [<opt> any-value!] /line <local> only] [
 change: func3 [series value [<opt> any-value!] /line <local> only] [
     only: 'only
     case [
-        null? :value []
-        void? :value [fail/where "CHANGE of VOID! disallowed" 'value]
+        null3? :value []
+        void3? :value [fail/where "CHANGE of VOID! disallowed" 'value]
         blank? :value [fail/where "CHANGE blanks with [_] only" 'value]
         block? :value [
             if find3 value void! [
@@ -447,10 +481,11 @@ enfixed: enfix :enfix
 ; not have /ONLY.  So redo it here in the shim.
 ;
 collect*: func3 [  ; variant giving NULL if no actual material kept
-    return: [<opt> block!]
+    return: [blank! block!]  ; actually BLANK! acts like <opt>, but FUNC3
     body [block!]
     <local> out keeper
 ][
+    out: _
     keeper: specialize (  ; SPECIALIZE to remove series argument
         enclose 'append func3 [f [frame!] <with> out] [  ; gets /LINE, /DUP
             if null? :f/value [return null]  ; doesn't "count" as collected
@@ -484,11 +519,11 @@ collect-lets: func3 [
         case [
             item/1 = 'let [
                 item: next item
-                if match [set-word! word! block!] item/1 [
+                if match3 [set-word! word! block!] item/1 [
                     lib/append lets item/1
                 ]
             ]
-            value? match [block! group!] item/1 [
+            match3 [block! group!] item/1 [
                 lib/append lets collect-lets item/1
             ]
         ]
@@ -516,20 +551,18 @@ modernize-action: function3 [
     tryers: copy []
     proxiers: copy []
 
-    spec: lib/collect [  ; Note: offers KEEP/ONLY
-        keep []  ; so bootstrap COLLECT won't be NULL if no KEEPs
-
+    spec: collect3 [  ; Note: offers KEEP/ONLY
         while [not tail? spec] [
             if tag? spec/1 [
                 last-refine-word: _
-                keep/only spec/1
+                keep3/only spec/1
                 spec: my next
                 continue
             ]
 
             if refinement? spec/1 [  ; REFINEMENT! is a word in this r3
                 last-refine-word: as word! spec/1
-                keep/only spec/1
+                keep3/only spec/1
 
                 ; Feed through any TEXT!s following the PATH!
                 ;
@@ -537,26 +570,26 @@ modernize-action: function3 [
                     if (tail? spec: my next) [break]
                     text? spec/1
                 ][
-                    keep/only spec/1
+                    keep3/only spec/1
                 ]
 
                 ; If there's a block specifying argument types, we need to
                 ; have a fake proxying parameter.
 
                 if not block? spec/1 [
-                    lib/append proxiers compose [  ; turn blank to null
-                        (as set-word! last-refine-word)
-                            lib/opt (as get-word! last-refine-word)
-                    ]
+                    ; append3 proxiers compose3 [  ; no longer turn blank->null
+                    ;    (as set-word! last-refine-word)
+                    ;        (as get-word! last-refine-word)
+                    ;]
                     continue
                 ]
 
                 proxy: as word! unspaced [last-refine-word "-arg"]
-                keep/only proxy
-                keep/only spec/1
+                keep3/only proxy
+                keep3/only spec/1
 
-                lib/append proxiers compose [
-                    (as set-word! last-refine-word) (as get-word! proxy)
+                append3 proxiers compose [
+                    (as set-word! last-refine-word) lib3/try (as get-word! proxy)
                     set (as lit-word! proxy) void
                 ]
                 spec: my next
@@ -565,13 +598,13 @@ modernize-action: function3 [
 
             ; Find ANY-WORD!s (args/locals)
             ;
-            if w: match any-word! spec/1 [
+            if w: match3 any-word! spec/1 [
                 ;
                 ; Transform the escapable argument convention, to line up
                 ; GET-WORD! with things that are escaped by GET-WORD!s
                 ; https://forum.rebol.info/t/1433
                 ;
-                keep case [
+                keep3 case [
                     lit-word? w [to get-word! w]
                     get-word? w [to lit-word! w]
                     true [w]
@@ -589,17 +622,17 @@ modernize-action: function3 [
                     if (tail? spec: my next) [break]
                     text? spec/1
                 ][
-                    keep/only spec/1
+                    keep3/only spec/1
                 ]
 
                 if spec/1 = <none> [  ; new semantics: <none> -> ~none~
-                    keep/only <void>  ; old cue for returning garbage
+                    keep3/only <void>  ; old cue for returning garbage
                     spec: my next
                     continue
                 ]
 
                 if spec/1 = <void> [
-                    keep/only []  ; old cue for invisibility
+                    keep3/only []  ; old cue for invisibility
                     spec: my next
                     continue
                 ]
@@ -607,17 +640,19 @@ modernize-action: function3 [
                 ; Substitute <opt> for any <maybe> found, and save some code
                 ; to inject for that parameter to return null if it's null
                 ;
-                if lib/find (lib/try match block! spec/1) <maybe> [
-                    keep/only replace copy spec/1 <maybe> <opt>
-                    lib/append tryers compose [
-                        if null? (as get-word! w) [return null]
+                if types: match3 block! spec/1 [
+                    types: copy types
+                    if find3 types <opt> [  ; <opt> first (<maybe> is real opt)
+                        replace types <opt> 'blank!
                     ]
-                    spec: my next
-                    continue
-                ]
-
-                if lib/find (lib/try match block! spec/1) <variadic> [
-                    keep/only replace copy spec/1 <variadic> <...>
+                    if find3 types <maybe> [
+                        replace types <maybe> <opt>
+                        append3 tryers compose [  ; splices
+                            if null3? (as get-word! w) [return _]
+                        ]
+                    ]
+                    replace types <variadic> <...>
+                    keep3/only types
                     spec: my next
                     continue
                 ]
@@ -627,7 +662,7 @@ modernize-action: function3 [
                 continue
             ]
 
-            keep/only spec/1
+            keep3/only spec/1
             spec: my next
         ]
     ]
@@ -636,13 +671,13 @@ modernize-action: function3 [
     ; We approximate it by searching the body for LET followed by SET-WORD!
     ; or WORD! and add that to locals.
     ;
-    lib/append spec <local>
-    lib/append spec collect-lets body
+    append3 spec <local>
+    append3 spec collect-lets body  ; append3 splices blocks without /ONLY
 
-    body: compose [  ; new COMPOSE, with SPREAD
-        (spread tryers)
-        (spread proxiers)
-        (as group! body)
+    body: compose3 [  ; splices
+        (tryers)
+        (proxiers)
+        (as group! body)  ; compose3 does not splice groups--just blocks
     ]
     return reduce [spec body]
 ]
@@ -650,9 +685,36 @@ modernize-action: function3 [
 func: adapt :func3 [set [spec body] modernize-action spec body]
 function: adapt :function3 [set [spec body] modernize-action spec body]
 
+; Bootstrap MATCH was designed very strangely as a variadic for some since
+; dropped features.  But it seems to not be able to be CHAIN'd or ADAPTed
+; due to that quirky interface.  It's simple, just rewrite it.
+;
+match: func [
+    return: [<opt> any-value!]
+    types [block! datatype! typeset!]
+    value [<maybe> any-value!]
+][
+    case [
+        datatype? types [types: make typeset! reduce [types]]  ; circuitious :-(
+        block? types [types: make typeset! types]
+    ]
+    if find3 types type of value [return value]
+    return _
+]
+
+
 meth: enfixed adapt :lib/meth [set [spec body] modernize-action spec body]
 method: func3 [] [
     fail/where "METHOD deprecated temporarily, use METH" 'return
+]
+
+for-each: func [  ; add opt-out ability with <maybe>
+    return: [<opt> any-value!]
+    'vars [word! lit-word! block!]
+    data [<maybe> any-series! any-context! map! datatype! action!]
+    body [block!]
+][
+    return for-each3 (vars) data body else [_]
 ]
 
 trim: adapt :trim [  ; there's a bug in TRIM/AUTO in 8994d23
@@ -810,13 +872,12 @@ split: function3 [
 ; Unfortunately, bootstrap delimit treated "" as not wanting a delimiter.
 ; Also it didn't have the "literal BLANK!s are space characters" behavior.
 ;
-delimit: func3 [
+delimit: func [
     return: [<opt> text!]
-    delimiter [<opt> blank! char! text!]
-    line [blank! text! block!]
+    delimiter [<opt> char! text!]
+    line [<maybe> text! block!]
     <local> text value pending anything
 ][
-    if blank? line [return null]
     if text? line [return copy line]
 
     text: copy ""
@@ -868,9 +929,10 @@ spaced: specialize :delimit [delimiter: space]
 
 noquote: func3 [x [<opt> any-value!]] [
     switch type of :x [
-        lit-word! [to word! x]
-        lit-path! [to path! x]
-    ] else [:x]
+        lit-word! [return to word! x]
+        lit-path! [return to path! x]
+    ]
+    :x
 ]
 
 

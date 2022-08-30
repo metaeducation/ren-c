@@ -33,7 +33,7 @@ export parsing-at: func [
     /end {Drop the default tail check (allows evaluation at the tail).}
 ][
     return use [result position][
-        block: compose [try (as group! block)]
+        block: compose [reify (as group! block)]
         if not end [
             block: compose [decay either not tail? (word) (block) [_]]
         ]

@@ -147,11 +147,11 @@ emit-proto: func [return: <none> proto] [
         ]
     ]
 
-    ; Note: Cannot set object fields directly from PARSE, tried it :-(
+    ; Note: Cannot set object fields directly from R3-Alpha PARSE in Bootstrap
     ; https://github.com/rebol/rebol-issues/issues/2317
     ;
     append api-objects make object! compose [
-        spec: try match block! third header  ; Rebol metadata API comment
+        spec: match block! third header  ; Rebol metadata API comment
         name: (ensure text! name)
         returns: (ensure text! trim/tail returns)
         paramlist: (ensure block! paramlist)
@@ -199,10 +199,7 @@ c89-variadic-inlines: make block! length of api-objects
 c++-variadic-inlines: make block! length of api-objects
 
 for-each api api-objects [do in api [
-    all [
-        try spec
-        find spec #noreturn
-    ] then [
+    if spec and (find spec #noreturn) [
         assert [returns = "void"]
         opt-dead-end: "DEAD_END;"
         opt-noreturn: "ATTRIBUTE_NO_RETURN"
@@ -216,20 +213,20 @@ for-each api api-objects [do in api [
     make-c-proxy: function [
         return: [text!]
         /inline
-        <with> returns wrapper-params
+        <with> returns wrapper-params proxied-args
     ][
-        inline: either try inline ["_inline"] [null]
-
         returns: default ["void"]
+        inline: either inline ["_inline"] [""]
 
         wrapper-params: default ["void"]
+        proxied-args: default [""]
 
         return cscape/with {
-            $<TRY OPT-NORETURN>
-            inline static $<Returns> $<Name>$<try inline>($<Try Wrapper-Params>) {
-                $<Try Opt-Va-Start>
-                $<try opt-return> LIBREBOL_PREFIX($<Name>)($<Try Proxied-Args>);
-                $<TRY OPT-DEAD-END>
+            $<MAYBE OPT-NORETURN>
+            inline static $<Returns> $<Name>$<inline>($<Wrapper-Params>) {
+                $<Maybe Opt-Va-Start>
+                $<maybe opt-return> LIBREBOL_PREFIX($<Name>)($<Proxied-Args>);
+                $<MAYBE OPT-DEAD-END>
             }
         } compose [
             wrapper-params  ; "global" where locals undefined, must be first
@@ -240,19 +237,20 @@ for-each api api-objects [do in api [
 
     make-c++-proxy: function [
         return: [text!]
-        <with> returns wrapper-params
+        <with> returns wrapper-params proxied-args
     ][
         returns: default ["void"]
 
         wrapper-params: default ["void"]
+        proxied-args: default [""]
 
         return cscape/with {
             template <typename... Ts>
-            $<TRY OPT-NORETURN>
-            inline static $<Returns> $<Name>($<Try Wrapper-Params>) {
+            $<MAYBE OPT-NORETURN>
+            inline static $<Returns> $<Name>($<Wrapper-Params>) {
                 LIBREBOL_PACK_CPP_ARGS;
-                $<try opt-return> LIBREBOL_PREFIX($<Name>)($<Try Proxied-Args>);
-                $<TRY OPT-DEAD-END>
+                $<maybe opt-return> LIBREBOL_PREFIX($<Name>)($<Proxied-Args>);
+                $<MAYBE OPT-DEAD-END>
             }
         } compose [
             wrapper-params  ; "global" where locals undefined, must be first

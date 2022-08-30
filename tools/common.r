@@ -211,7 +211,7 @@ export binary-to-c: function [
         ]
 
         take/last out  ; drop the last space
-        if any [not data, empty? try data] [
+        if empty? data [
             take/last out  ; lose that last comma
         ]
         append out newline  ; newline after each group, and at end
@@ -423,7 +423,7 @@ export stripload: function [
     ; Currently this is only used by the SYS context in order to generate top
     ; #define constants for easy access to the functions there.
     ;
-    if try gather [
+    if gather [
         append (ensure block! get gather) spread collect [
             for-next t text [
                 newline-pos: find t newline else [tail text]
@@ -450,7 +450,7 @@ export stripload: function [
         ]
     ]
 
-    if try header [
+    if header [
         if not hdr: copy/part (next find text "[") (find text "^/]") [
             fail ["Couldn't locate header in STRIPLOAD of" file]
         ]

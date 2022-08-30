@@ -93,8 +93,8 @@ export cscape: function [
                 copy suffix: remove to newline
             ] (
                 keep compose [
-                    (reify pattern) (col) (mode) (expr)
-                    (reify prefix) (reify suffix)
+                    (pattern else [spread [_]]) (col) (mode) (expr)
+                    (prefix else [spread [_]]) (suffix else [spread [_]])
                 ]
                 num: num + 1
                 num-text: to text! num
@@ -146,8 +146,11 @@ export cscape: function [
                     bind code item
                 ]
             ]
-            sub: do code
-            assert [not blank? try sub]  ; has been converted to nulls, use TRY
+            if null? sub: do code [  ; shim null, e.g. blank!
+                print mold template
+                print mold code
+                fail "Substitution can't be NULL (shim BLANK!)"
+            ]
 
             sub: decay switch mode [  ; still want to make sure mode is good
                 #cname [
@@ -156,21 +159,21 @@ export cscape: function [
                     ; are prefixed, like `cscape {SYM_${...}}`.  But if there
                     ; is no prefix, then the check might be helpful.  Review.
                     ;
-                    try to-c-name/scope try sub #prefixed
+                    to-c-name/scope :sub #prefixed  ; can vanish
                 ]
                 #unspaced [
                     case [
-                        null? try sub [null]
+                        unset? 'sub [_]
                         block? sub [unspaced sub]
                     ] else [
                         form sub
                     ]
                 ]
                 #delimit [
-                    either try sub [
+                    if set? 'sub [
                         delimit (unspaced [maybe :suffix newline]) sub
-                    ][
-                        null
+                    ] else [
+                        _
                     ]
                 ]
                 fail ["Invalid CSCAPE mode:" mode]
@@ -266,7 +269,7 @@ export make-emitter: function [
     stem: split-path file
 
     temporary: to-logic any [
-        try temporary
+        temporary
         did parse2 stem ["tmp-" to end]
     ]
 
@@ -307,7 +310,7 @@ export make-emitter: function [
             data: take data
             switch type of data [
                 text! [
-                    append buf-emit cscape/with data noquote decay context
+                    append buf-emit cscape/with data maybe noquote context
                 ]
                 char! [
                     append buf-emit data
@@ -330,7 +333,7 @@ export make-emitter: function [
                 fail "tab character passed to emit"
             ]
 
-            if try tabbed [
+            if tabbed [
                 replace/all buf-emit spaced-tab tab
             ]
 

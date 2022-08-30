@@ -54,7 +54,6 @@ Rebol [
         avoiding recursion solves the issue: run %import-shim.r only once.
     }
 ]
-
 already-imported: make map! []  ; avoid importing things twice
 
 trap [
@@ -114,22 +113,50 @@ print: lib3/print: lib3/func [value <local> pos] [
 ; compatible variations.  But it's not obvious to a reader that something like
 ; `lib/func` isn't the same as `func`.  These names help point it out what's
 ; happening more clearly (the 3 in the name means "sorta like R3-Alpha")
+;
+; 1. THIS IS WEIRD TO WORK AROUND BOOTSTRAP EXE'S UNRELIABLE CONTEXT EXPANSION.
+;    When you do things like `system/contexts/user/(word): does ["hi"]` it
+;    causes crashes sometimes, and having the load process see SET-WORD!s at
+;    the top level seems to work around it.
+;
+;    (Using SET-WORD!s here also helps searchability if you're looking for
+;    where `find3: ...` is set.)
+;
+; 2. To load the import shim you need `if not find words of import 'product`,
+;    and this means that we have to tolerate IF and FIND having a double
+;    meaning.  Also, having to type IF3 everywhere would be annoying.
 
-libuser: system/contexts/user
+aliases: lib/eval func [:item [any-value! <...>]] [  ; very weird, see [1]
+    collect [while [item/1 != #end] [keep/only take item]]
+    ]
+    null3?: null?: *
+    null3: null: *
+    void3?: void?: *
+    void3: void: *
+    find3: find: <conflated>  ; see [2]
+    if3: if: <conflated>  ; see [2]
+    the3: quote: *
+    reeval3: eval: *
+    func3: func: *
+    function3: function: *
+    unset3: unset: *
+    append3: append: *
+    change3: change: *
+    insert3: insert: *
+    compose3: compose: *
+    select3: select: *
+    split-path3: split-path: *
+    local-to-file3: local-to-file: *
+    file-to-local3: file-to-local: *
+    any3: any: *
+    all3: all: *
+    case3: case: *
+    switch3: switch: *
+    maybe3: maybe: *
+    match3: match: *
+    for-each3: for-each: *
 
-find3: :lib3/find  ; used in incantation magic for import shim...can't undefine
-
-for-each [alias shim] [  ; SET-WORD! including 3 for easy search on `xxx3: ...`
-    func3: *
-    function3: *
-    unset3: *
-    append3: * change3: * insert3: *
-    compose3: *
-    select3: *
-    split-path3: *
-    local-to-file3: * file-to-local3: *
-
-    collect3: (adapt :lib3/collect [
+    collect3: collect: (adapt :lib3/collect [  ; to make KEEP3 obvious
         body: lib3/compose [
             keep3: :keep  ; help point out keep3 will splice blocks, has /ONLY
             keep []  ; bootstrap workaround: force block result even w/no keeps
@@ -137,22 +164,22 @@ for-each [alias shim] [  ; SET-WORD! including 3 for easy search on `xxx3: ...`
             (body)  ; compose3 will splice the body in here
         ]
     ])
-][
-    lib3/parse to text! alias [copy name to "3" (name: to word! name)]
+#end
 
-    if shim = '* [
-        set alias (get in lib3 name)
-    ] else [
-        set alias do shim
+lib3/for-each [alias name shim] aliases [
+    set alias either group? shim [
+        do shim
+    ][
+        get (in lib3 name)
     ]
+
+    if shim = <conflated> [continue]  ; allow usage e.g. of IF before shim IF
 
     ; Manually expanding contexts this way seems a bit buggy in bootstrap EXE
     ; Appending the word first, and setting via a PATH! seems okay.
     ;
     error: spaced [(mold name) "not shimmed yet, see" as word! (mold alias)]
-    lib3/append system/contexts/user 'name
-    recycle
-    system/contexts/user/(name): lib3/func [] lib3/compose [
+    set name lib3/func [] lib3/compose [
         fail/where (error) 'return
     ]
 ]
@@ -227,7 +254,7 @@ strip-commas-and-null-apostrophes: func3 [
             "}" (if <B> = last pushed [take/last pushed])
             |
             {"} (
-                case [
+                case3 [
                     <Q> = last pushed [take/last pushed]
                     empty? pushed [append3 pushed <Q>]
                 ]
@@ -300,7 +327,7 @@ import: enfix func3 [
     assert [#"/" <> first path+file/1]  ; should be relative
     assert [#"%" <> first path+file/1]  ; accidental `import <%foo.r>`
 
-    new-script-path: append3 copy any [
+    new-script-path: append3 copy any3 [
         system/script/path system/options/path
     ] path+file/1
 

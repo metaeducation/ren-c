@@ -172,7 +172,7 @@ repo-dir: relative-to-path repo-dir output-dir
 
 === {PROCESS COMMANDS} ===
 
-if try commands [user-config/target: load commands]
+if commands [user-config/target: load commands]
 
 
 === {MODULES AND EXTENSIONS} ===
@@ -629,7 +629,7 @@ gen-obj: func [
 
     ; Now add the flags for the project overall.
     ;
-    append flags maybe spread try F
+    append flags maybe spread F
 
     ; Now add build flags overridden by the inclusion of the specific file
     ; (e.g. third party files we don't want to edit to remove warnings from)
@@ -671,7 +671,7 @@ gen-obj: func [
                 ]
                 <no-make-header> [
                     ;for make-header. ignoring
-                    _
+                    []
                 ]
                 <no-unreachable> [
                     [<msc:/wd4702>]
@@ -685,12 +685,12 @@ gen-obj: func [
 
                 #prefer-O2-optimization [
                     prefer-O2: true
-                    _
+                    []
                 ]
 
                 #no-c++ [
                     standard: 'c
-                    _
+                    []
                 ]
             ] else [
                 reduce [ensure [text! tag!] flag]
@@ -737,8 +737,8 @@ gen-obj: func [
                 join %main/ to file! (last ensure path! s)
             ] [s]
         cflags: either empty? flags [_] [flags]
-        definitions: try D
-        includes: try I
+        definitions: D
+        includes: I
         (if prefer-O2 [[optimization: #prefer-O2-optimization]])
     ]
 ]
@@ -1060,7 +1060,7 @@ help: function [
 
 ; process help: {-h | -help | --help} [TOPIC]
 
-if try commands [  ; old-form ITERATE expects NULL
+if commands [
     iterate commands [
         if find ["-h" "-help" "--help"] commands/1 [
             help commands/2
@@ -1568,27 +1568,27 @@ add-project-flags: func [
     ]
 
     if D [
-        if null? try project/definitions [
-            project/definitions: try D
+        if null? project/definitions [
+            project/definitions: D
         ]
         else [
-            append project/definitions spread try D
+            append project/definitions spread D
         ]
     ]
 
     if I [
-        if null? :project/includes [
-            project/includes: try I
+        if null? project/includes [
+            project/includes: I
         ] else [
-            append project/includes spread try I
+            append project/includes spread I
         ]
     ]
     if c [
-        if null? :project/cflags [
-            project/cflags: try c
+        if null? project/cflags [
+            project/cflags: c
         ]
         else [
-            append project/cflags spread try c
+            append project/cflags spread c
         ]
     ]
     if g [project/debug: g]
@@ -1613,7 +1613,7 @@ calculate-sequence: function [
 ][
     if integer? ext/sequence [return ext/sequence]
     if ext/visited [fail ["circular dependency on" ext]]
-    if null? try ext/requires [ext/sequence: 0 return ext/sequence]
+    if null? ext/requires [ext/sequence: 0 return ext/sequence]
     ext/visited: true
     seq: 0
     if word? ext/requires [ext/requires: reduce [ext/requires]]
@@ -1664,7 +1664,7 @@ for-each ext extensions [
     ext-objlib: make rebmake/object-library-class [  ; #object-library
         name: ext/name
         depends: map-each s (
-            append reduce [ext/source] maybe spread try ext/depends
+            append reduce [ext/source] maybe spread ext/depends
         )[
             dep: case [
                 match [file! block!] s [
@@ -1678,12 +1678,13 @@ for-each ext extensions [
                     ; #object-library has already been taken care of above
                     ; if s/class = #object-library [s]
                 ]
-                (elide dump s)
+            ] else [
+                dump s
                 fail [type of s "can't be a dependency of a module"]
             ]
         ]
         libraries: all [
-            try ext/libraries
+            ext/libraries
             map-each lib ext/libraries [
                 case [
                     file? lib [
@@ -1701,10 +1702,10 @@ for-each ext extensions [
             ]
         ]
 
-        includes: try ext/includes
-        definitions: try ext/definitions
-        cflags: try ext/cflags
-        searches: try ext/searches
+        includes: ext/includes
+        definitions: ext/definitions
+        cflags: ext/cflags
+        searches: ext/searches
     ]
 
     ; %prep-extensions.r creates a temporary .c file which contains the
@@ -1719,9 +1720,9 @@ for-each ext extensions [
     append ext-objlib/depends gen-obj/dir/I/D/F
         ext-init-source
         unspaced ["prep/extensions/" ext-name-lower "/"]
-        try ext/includes
-        try ext/definitions
-        try ext/cflags
+        maybe ext/includes
+        maybe ext/definitions
+        maybe ext/cflags
 
     ; Here we graft things like the global debug settings and optimization
     ; flags onto the extension.  This also lets it find the core include files
@@ -1744,7 +1745,7 @@ for-each ext extensions [
         app-config/debug
 
     if ext/mode = <builtin> [
-        append builtin-ext-objlibs try ext-objlib
+        append builtin-ext-objlibs maybe ext-objlib
 
         ; While you can have varied compiler switches in effect for individual
         ; C files to make OBJs, you only get one set of linker settings to make
@@ -1755,9 +1756,9 @@ for-each ext extensions [
         ; ldflag, but this then has to be platform specific.  But generally you
         ; already need platform-specific code to know where to look.
         ;
-        append app-config/libraries maybe spread try ext-objlib/libraries
-        append app-config/ldflags maybe spread try ext/ldflags
-        append app-config/searches maybe spread try ext/searches
+        append app-config/libraries maybe spread ext-objlib/libraries
+        append app-config/ldflags maybe spread ext/ldflags
+        append app-config/searches maybe spread ext/searches
     ]
     else [
         append dynamic-ext-objlibs ext-objlib
@@ -1774,22 +1775,21 @@ for-each ext extensions [
                 ; (app) all dynamic extensions depend on r3, but app not ready
                 ; so the dependency is added at a later phase below
                 ;
-                (maybe spread try app-config/libraries)
-                (maybe spread try ext-objlib/libraries)
+                (maybe spread app-config/libraries)
+                (maybe spread ext-objlib/libraries)
             ]
-            post-build-commands: either cfg-symbols [
-                null
-            ][
+            post-build-commands: all [
+                not cfg-symbols
                 reduce [
                     make rebmake/cmd-strip-class [
-                        file: join output try rebmake/target-platform/dll-suffix
+                        file: join output maybe rebmake/target-platform/dll-suffix
                     ]
                 ]
             ]
 
             ldflags: compose [
-                (maybe spread try ext/ldflags)
-                (maybe spread try app-config/ldflags)
+                (maybe spread ext/ldflags)
+                (maybe spread app-config/ldflags)
 
                 ; GCC has this but Clang does not, and currently Clang is
                 ; being called through a gcc alias.  Review.
@@ -1856,11 +1856,7 @@ vars: reduce [
     ]
     make rebmake/var-class [
         name: {GIT_COMMIT}
-        default: either try user-config/git-commit [
-            user-config/git-commit
-        ][
-            {unknown}
-        ]
+        default: any [user-config/git-commit {unknown}]
     ]
 ]
 
@@ -1957,13 +1953,13 @@ app: make rebmake/application-class [
         ]
     ]
 
-    searches: try app-config/searches
-    ldflags: try app-config/ldflags
-    cflags: try app-config/cflags
+    searches: app-config/searches
+    ldflags: app-config/ldflags
+    cflags: app-config/cflags
     optimization: app-config/optimization
     debug: app-config/debug
-    includes: try app-config/includes
-    definitions: try app-config/definitions
+    includes: app-config/includes
+    definitions: app-config/definitions
 ]
 
 ; Now that app is created, make it a dependency of all the dynamic libs
@@ -1981,13 +1977,13 @@ library: make rebmake/dynamic-library-class [
         (spread builtin-ext-objlibs)
         (spread app-config/libraries)
     ]
-    searches: try app-config/searches
-    ldflags: try app-config/ldflags
-    cflags: try app-config/cflags
+    searches: app-config/searches
+    ldflags: app-config/ldflags
+    cflags: app-config/cflags
     optimization: app-config/optimization
     debug: app-config/debug
-    includes: try app-config/includes
-    definitions: try app-config/definitions
+    includes: app-config/includes
+    definitions: app-config/definitions
 ]
 
 top: make rebmake/entry-class [

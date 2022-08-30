@@ -202,9 +202,7 @@ export analyse: context [
                             ]
                             same? position proto-parser.parse-position
                         ] else [
-                            line: try (
-                                text-line-of proto-parser.parse-position
-                            )
+                            line: text-line-of proto-parser.parse-position
                             append
                                 non-std-func-space: default [copy []]
                                 line  ; should it be appending BLANK! ?
@@ -231,7 +229,7 @@ export analyse: context [
                         proto-parser.proto-arg-1
                         <> to-c-name/scope name #prefixed
                     )[
-                        line: try text-line-of proto-parser.parse-position
+                        line: text-line-of proto-parser.parse-position
                         emit <id-mismatch> [
                             (mold proto-parser.data.1) (file) (line)
                         ]
@@ -248,7 +246,7 @@ export analyse: context [
                                 "RL_" to word! proto-parser.data.1
                             ])
                     ] else [
-                        line: try text-line-of proto-parser.parse-position
+                        line: text-line-of proto-parser.parse-position
                         emit <id-mismatch> [
                             (mold proto-parser.data.1) (file) (line)
                         ]
@@ -307,7 +305,7 @@ export analyse: context [
         ; Identify line termination.
 
         all [
-            position: try find data #{0a}
+            position: find data #{0a}
             1 < index of position
             13 = first back position
         ] also [

@@ -91,7 +91,7 @@ load-until-blank: function [
         ;
         ; !!! SET-BLOCK! not bootstrap
         ;
-        attempt [transcode/next x 'res] else [res: blank]
+        attempt [transcode/next x 'res] else [res: _]
         res
     ]
 
@@ -103,12 +103,12 @@ load-until-blank: function [
         to end
     ]
 
-    return parse2 text rule then [
+    return decay (parse2 text rule then [  ; bootstrap EXE needs group here
         values: load copy/part text position
         reduce [values position]
     ] else [
-        blank
-    ]
+        _
+    ])
 ]
 
 
@@ -232,7 +232,7 @@ export proto-parser: context [
                 data: attempt [
                     if set-word? first data/1 [data/1] else [false]
                 ]
-                try position ; Success.
+                position ; Success.
             ]
         ]
 
@@ -240,7 +240,7 @@ export proto-parser: context [
             all [  ; note: not LOGIC!, a series
                 lines: attempt [decode-lines lines {//} { }]
                 data: load-until-blank lines
-                if decay data [ data: attempt [
+                if data [ data: attempt [
                     ;
                     ; !!! The recognition of Rebol-styled comment headers
                     ; originally looked for SET-WORD!, but the syntax for
@@ -264,7 +264,7 @@ export proto-parser: context [
                         false
                     ]
                 ] ]
-                try position ; Success.
+                position ; Success.
             ]
         ]
 

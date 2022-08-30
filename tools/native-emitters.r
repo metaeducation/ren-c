@@ -171,7 +171,7 @@ export emit-include-params-macro: function [
     ]
 
     n: 1
-    items: try collect* [
+    items: collect* [
         ;
         ; All natives *should* specify a `return:`, because it's important
         ; to document what the return types are (and HELP should show it).
@@ -209,9 +209,9 @@ export emit-include-params-macro: function [
         ]
     ]
 
-    prefix: all [try ext unspaced [ext "_"]]
+    prefix: all [ext unspaced [ext "_"]]
     e/emit [prefix native-name items] {
-        #define ${TRY PREFIX}INCLUDE_PARAMS_OF_${NATIVE-NAME} \
+        #define ${MAYBE PREFIX}INCLUDE_PARAMS_OF_${NATIVE-NAME} \
             $[Items]; \
             assert(GET_SERIES_INFO(frame_->varlist, HOLD))
     }
