@@ -186,8 +186,7 @@
 ;
 ("abcdef" = append/part "abc" #defghi 3)
 
-; Appending to a BLACKHOLE! returns a blackhole isotope.
+; Appending to a void returns null
 [
-    ('~blackhole~ = meta append # "abc")
-    (blackhole? append # "abc")
+    (null = append void "abc")
 ]

@@ -1210,7 +1210,7 @@ DECLARE_NATIVE(every)
 //      :vars "Word or block of words to set each time, no new var if quoted"
 //          [blank! word! lit-word! block! group!]
 //      data "The series to traverse (modified)"
-//          [<blackhole> any-series!]
+//          [<maybe> any-series!]
 //      body "Block to evaluate (return TRUE to remove)"
 //          [<const> block!]
 //  ]

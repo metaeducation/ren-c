@@ -259,16 +259,7 @@ inline static bool Matcher_Matches(Cell(const*) matcher, Cell(const*) v) {
 #define PARAM_FLAG_NOOP_IF_VOID \
     FLAG_LEFT_BIT(13)
 
-// Similar to <maybe>, the <blackhole> annotation causes a function to be a
-// no-op if that parameter is a `#`, and makes the overall function return a
-// `#` back.  Finer-grained control is needed by some functions, e.g. SET
-// which is willing to take a blackhole! as a target, but wants to return
-// the argument being set to:
-//
-//      >> set # 10
-//      == 10  ; had we used <blackhole> this would be #
-//
-#define PARAM_FLAG_NOOP_IF_BLACKHOLE \
+#define PARAM_FLAG_14 \
     FLAG_LEFT_BIT(14)
 
 #define PARAM_FLAG_CONST \

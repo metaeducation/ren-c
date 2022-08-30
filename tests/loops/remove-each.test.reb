@@ -168,7 +168,7 @@
     b-was-null
 )
 
-; You can opt out of the series input with a "blackhole"
+; You can opt out of the series input with a void
 (
-    '~blackhole~ = ^ remove-each x # [true]
+    null = remove-each x void [true]
 )

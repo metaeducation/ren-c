@@ -110,7 +110,6 @@
 
 ; Test for "blackhole" functionality
 [
-    (10 = set # 10)  ; thrown away
     ([abc def] = [# _]: transcode "abc def")  ; means /NEXT is NULL
     ('abc = [# #]: transcode "abc def")  ; /NEXT is # so truthy, SET ignores
     (raised? [# #]: transcode "3o4")

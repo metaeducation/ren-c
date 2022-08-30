@@ -35,3 +35,6 @@
 ;(
 ;    [1 2 3 4 5 6] = set [a 'b :c d: /e ^f] [1 2 3 4 5 6]
 ;)
+
+(10 = set void 10)
+(null = get void)

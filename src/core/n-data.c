@@ -553,10 +553,10 @@ bool Get_Var_Push_Refinements_Throws(
         return false;
     }
 
-    if (IS_BLANK(var)) {
+    if (Is_Void(var)) {
         Init_Nulled(out);  // "blank in, null out" get variable convention
         if (steps_out and steps_out != GROUPS_OK)
-            Init_Blank(unwrap(steps_out));
+            Init_Nulled(unwrap(steps_out));
         return false;
     }
 
@@ -973,9 +973,9 @@ bool Get_Path_Push_Refinements_Throws(
 //
 //      return: [<opt> <void> any-value!]
 //      @steps "Allow GROUP! evals, returns block of reusable PICK/POKE steps"
-//          [the-block! the-word! blank!]
+//          [<opt> the-word! the-block!]
 //      source "Word or path to get, or block of PICK steps"
-//          [<maybe> any-word! any-sequence! any-group! the-block!]
+//          [<void> any-word! any-sequence! any-group! the-block!]
 //      /any "Do not error on isotopes"
 //  ]
 //
@@ -1066,9 +1066,9 @@ bool Set_Var_Core_Updater_Throws(
         var_specifier = SPECIFIED;
     }
 
-    if (Is_Blackhole(var)) {
+    if (Is_Void(var)) {
         if (steps_out and steps_out != GROUPS_OK)
-            Init_Blackhole(unwrap(steps_out));
+            Init_Nulled(unwrap(steps_out));
         return false;
     }
 
@@ -1341,9 +1341,9 @@ void Set_Var_May_Fail(
 //      return: "Same value as input"
 //          [<opt> <void> any-value!]
 //      @steps "Allow GROUP! evals, returns block of reusable PICK/POKE steps"
-//          [the-block! the-word! blackhole!]
-//      target "Word or path (# means ignore assignment, just return value)"
-//          [blackhole! any-word! any-sequence! any-group! any-block!]
+//          [<opt> the-word! the-block!]
+//      target "Word or tuple, or calculated sequence steps (from GET)"
+//          [<void> any-word! any-sequence! any-group! the-block!]
 //      ^value [<opt> <void> any-value!]
 //      /any "Do not error on isotopes"
 //  ]
@@ -2321,10 +2321,10 @@ DECLARE_NATIVE(void_q)
 //
 //  blackhole?: native [
 //
-//  "Tells you if argument is a blackhole (#) or ~blackhole~ isotope"
+//  "Tells you if argument is a blackhole (#)"
 //
 //      return: [logic!]
-//      ^optional [<opt> any-value!]
+//      optional [any-value!]
 //  ]
 //
 DECLARE_NATIVE(blackhole_q)
@@ -2332,16 +2332,10 @@ DECLARE_NATIVE(blackhole_q)
     INCLUDE_PARAMS_OF_BLACKHOLE_Q;
 
     REBVAL *v = ARG(optional);
-    Meta_Unquotify(v);
-
-    if (Is_Word_Isotope(v)) {
-        if (VAL_WORD_ID(v) == SYM_BLACKHOLE)
-            return Init_True(OUT);
-        return Init_False(OUT);
-    }
 
     return Init_Logic(OUT, Is_Blackhole(v));
 }
+
 
 //
 //  heavy: native [

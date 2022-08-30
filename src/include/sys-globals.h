@@ -130,7 +130,6 @@ PVAR REBVAL *Root_Variadic_Tag; // marks variadic argument <variadic>
 PVAR REBVAL *Root_Opt_Tag; // marks optional argument (can be NULL)
 PVAR REBVAL *Root_End_Tag; // marks endable argument (NULL if at end of input)
 PVAR REBVAL *Root_Maybe_Tag; // passing void won't run the action, return null
-PVAR REBVAL *Root_Blackhole_Tag; // marks that passing `#` won't run the action
 PVAR REBVAL *Root_Local_Tag; // marks beginning of a list of "pure locals"
 PVAR REBVAL *Root_Skip_Tag; // marks a hard quote as "skippable" if wrong type
 PVAR REBVAL *Root_Const_Tag; // pass a CONST version of the input argument

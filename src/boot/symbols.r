@@ -33,7 +33,6 @@ trash  ; only release build uses (debug build uses null as label to assert)
 unset
 #blank
 #false
-#blackhole
 
 #void
 #none

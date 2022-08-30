@@ -967,15 +967,6 @@ Bounce Action_Executor(Frame(*) f)
 
         enum Reb_Kind kind = VAL_TYPE(ARG);
 
-        if (
-            GET_PARAM_FLAG(PARAM, NOOP_IF_BLACKHOLE)
-            and Is_Blackhole(ARG)  // v-- e.g. <blackhole> param
-        ){
-            Set_Executor_Flag(ACTION, f, TYPECHECK_ONLY);
-            Init_Word_Isotope(OUT, Canon(BLACKHOLE));
-            continue;
-        }
-
         if (PARAM_CLASS_META == VAL_PARAM_CLASS(PARAM)) {
             //
             // !!! Now that everything is isotopic, there needs to be a new
@@ -1047,11 +1038,8 @@ Bounce Action_Executor(Frame(*) f)
         or IS_VALUE_IN_ARRAY_DEBUG(FEED_ARRAY(f->feed), f_next)
     );
 
-    if (Get_Executor_Flag(ACTION, f, TYPECHECK_ONLY)) {  // <maybe>, <blackhole>
-        assert(
-            Is_Nulled(OUT)
-            or Is_Word_Isotope_With_Id(OUT, SYM_BLACKHOLE)
-        );
+    if (Get_Executor_Flag(ACTION, f, TYPECHECK_ONLY)) {  // <maybe>
+        assert(Is_Nulled(OUT));
         goto skip_output_check;
     }
 

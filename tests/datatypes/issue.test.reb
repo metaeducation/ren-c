@@ -59,24 +59,3 @@
     ]
     true
 )
-
-; BLACKHOLE! is a feature for opting out of mutating operations.  It uses a
-; "blackhole-in, isotope out" strategy that parallels "blank-in, null out"
-;
-(blackhole? #)
-(blackhole? ~blackhole~)
-(
-    runs: 0
-
-    add-period: func [x [<blackhole> text!]] [
-        runs: me + 1
-        return append x "."
-    ]
-
-    did all [
-        "Hello World." = add-period "Hello World"
-        runs = 1
-        '~blackhole~ = meta add-period #  ; shouldn't run ADD-PERIOD body
-        runs = 1
-    ]
-)

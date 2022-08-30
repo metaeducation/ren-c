@@ -97,11 +97,11 @@ inline static Value(*) Finalize_Void_Untracked(Value(*) out) {
     TRACK(Finalize_Void_Untracked(out))
 
 
-inline static bool Is_Void(Value(const*) v) {
+inline static bool Is_Void(Cell(const*) v) {
     return HEART_BYTE(v) == REB_NULL and QUOTE_BYTE(v) == ISOTOPE_0;
 }
 
-inline static bool Is_Stale_Void(Value(const*) v) {
+inline static bool Is_Stale_Void(Cell(const*) v) {
     if (not (v->header.bits & CELL_FLAG_STALE))
         return false;
     if (HEART_BYTE_UNCHECKED(v) != REB_NULL)

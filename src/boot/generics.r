@@ -437,7 +437,7 @@ insert: generic [
         [any-series! port! map! object! bitset! port!
         integer!]  ; !!! INSERT returns INTEGER! in ODBC, review this
     series "At position (modified)"
-        [<blackhole> any-series! port! map! object! bitset! port!]
+        [<maybe> any-series! port! map! object! bitset! port!]
     value "What to insert (isotopic blocks will splice, e.g. SPREAD)"
         [<void> any-value! ~block!~]
     /part "Limits to a given length or position"
@@ -455,7 +455,7 @@ append: generic [
 
     return: [any-series! port! map! object! module! bitset!]
     series "Any position (modified)"
-        [<blackhole> any-series! port! map! object! module! bitset!]
+        [<maybe> any-series! port! map! object! module! bitset!]
     value "What to append (isotopic blocks will splice, e.g. SPREAD)"
         [<void> any-value! ~block!~]
     /part "Limits to a given length or position"
@@ -473,7 +473,7 @@ change: generic [
 
     return: [any-series! port!]
     series "At position (modified)"
-        [<blackhole> any-series! port!]
+        [<maybe> any-series! port!]
     value "The new value (isotopic blocks will splice, e.g. SPREAD)"
         [<void> any-value! ~block!~]
     /part "Limits the amount to change to a given length or position"
@@ -488,7 +488,7 @@ remove: generic [
 
     return: [any-series! map! port! bitset!]
     series "At position (modified)"
-        [<blackhole> any-series! map! port! bitset!]
+        [<maybe> any-series! map! port! bitset!]
     /part "Removes multiple elements or to a given position"
         [any-number! any-series! pair! char!]
 ]
@@ -498,7 +498,7 @@ clear: generic [
 
     return: [any-series! port! map! bitset!]
     series "At position (modified)"
-        [<blackhole> any-series! port! map! bitset!]
+        [<maybe> any-series! port! map! bitset!]
 ]
 
 swap: generic [
@@ -514,7 +514,7 @@ reverse: generic [
 
     return: [any-series! any-sequence! pair!]
     series "At position (modified)"
-        [<blackhole> any-series! any-sequence! pair!]
+        [<maybe> any-series! any-sequence! pair!]
     /part "Limits to a given length or position"
         [any-number! any-series!]
 ]
@@ -523,7 +523,7 @@ sort: generic [
     {Sorts a series; default sort order is ascending}
 
     return: [any-series!]
-    series "<blackhole> At position (modified)"
+    series "<maybe> At position (modified)"
         [any-series!]
     /case "Case sensitive sort"
     /skip "Treat the series as records of fixed size"

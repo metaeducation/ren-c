@@ -486,3 +486,19 @@
         1020 = foo 1000 + 20
     ]
 )
+
+(
+    num-runs: 0
+
+    add-period: func [x [<maybe> text!]] [
+        num-runs: me + 1
+        return append x "."
+    ]
+
+    did all [
+        "Hello World." = add-period "Hello World"
+        num-runs = 1
+        null = add-period void  ; shouldn't run ADD-PERIOD body
+        num-runs = 1
+    ]
+)
