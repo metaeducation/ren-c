@@ -108,6 +108,56 @@ print: lib3/print: lib3/func [value <local> pos] [
 ]
 
 
+=== {GIVE SHORT NAMES THAT CALL OUT BOOTSTRAP EXE'S VERSIONS OF FUNCTIONS} ===
+
+; The shims use the functions in the bootstrap EXE's lib to make forwards
+; compatible variations.  But it's not obvious to a reader that something like
+; `lib/func` isn't the same as `func`.  These names help point it out what's
+; happening more clearly (the 3 in the name means "sorta like R3-Alpha")
+
+libuser: system/contexts/user
+
+find3: :lib3/find  ; used in incantation magic for import shim...can't undefine
+
+for-each [alias shim] [  ; SET-WORD! including 3 for easy search on `xxx3: ...`
+    func3: *
+    function3: *
+    unset3: *
+    append3: * change3: * insert3: *
+    compose3: *
+    select3: *
+    split-path3: *
+    local-to-file3: * file-to-local3: *
+
+    collect3: (adapt :lib3/collect [
+        body: lib3/compose [
+            keep3: :keep  ; help point out keep3 will splice blocks, has /ONLY
+            keep []  ; bootstrap workaround: force block result even w/no keeps
+            lib3/unset 'keep
+            (body)  ; compose3 will splice the body in here
+        ]
+    ])
+][
+    lib3/parse to text! alias [copy name to "3" (name: to word! name)]
+
+    if shim = '* [
+        set alias (get in lib3 name)
+    ] else [
+        set alias do shim
+    ]
+
+    ; Manually expanding contexts this way seems a bit buggy in bootstrap EXE
+    ; Appending the word first, and setting via a PATH! seems okay.
+    ;
+    error: spaced [(mold name) "not shimmed yet, see" as word! (mold alias)]
+    lib3/append system/contexts/user 'name
+    recycle
+    system/contexts/user/(name): lib3/func [] lib3/compose [
+        fail/where (error) 'return
+    ]
+]
+
+
 === {STANDARDIZE DIRECTORY TO WHERE THE COMMAND LINE WAS INVOKED FROM} ===
 
 ; Typically if any filenames are passed to a script, those paths should be
@@ -121,7 +171,9 @@ print: lib3/print: lib3/func [value <local> pos] [
 change-dir system/options/path
 
 
-export: func [
+=== {EXPORT} ===
+
+export: func3 [
     "%import-shim.r variant of EXPORT which just puts the definition into LIB"
 
     :set-word [<skip> set-word!]  ; old style unescapable literal
@@ -132,7 +184,7 @@ export: func [
 ][
     if :set-word [
         args: take args
-        lib/append system/contexts/user reduce [  ; splices blocks by default
+        append3 system/contexts/user reduce [  ; splices blocks by default
             set-word (set set-word :args)
         ]
         return get 'args
@@ -148,13 +200,13 @@ export: func [
         if not word? :word [  ; no type checking in shim via BLOCK!s
             fail "EXPORT only exports block of words in bootstrap shim"
         ]
-        lib/append system/contexts/user reduce [  ; splices blocks by default
+        append3 system/contexts/user reduce [  ; splices blocks by default
             word get word
         ]
     ]
 ]
 
-strip-commas-and-null-apostrophes: func [
+strip-commas-and-null-apostrophes: func3 [
     {Remove the comma-space sequence from the non-string portions of the code}
     source [text!]
     <local> pushed rule
@@ -170,14 +222,14 @@ strip-commas-and-null-apostrophes: func [
             |
             {^^"}  ; (actually `^"`) escaped quote, never count
             |
-            "{" (if <Q> != last pushed [append pushed <B>])
+            "{" (if <Q> != last pushed [append3 pushed <B>])
             |
             "}" (if <B> = last pushed [take/last pushed])
             |
             {"} (
                 case [
                     <Q> = last pushed [take/last pushed]
-                    empty? pushed [append pushed <Q>]
+                    empty? pushed [append3 pushed <Q>]
                 ]
             )
             |
@@ -193,15 +245,14 @@ strip-commas-and-null-apostrophes: func [
         end
     ]
 
-    ; NOTE: This is PARSE2 but bootstrap-shim may not be loaded when this is
-    ; called.  use LIB/PARSE to be safe (it's bootstrap exe's version)
-    ;
-    lib/parse source rule else [fail "STRIP-COMMAS did not work"]
+    lib3/parse source rule else [  ; PARSE2 shim may not be loaded yet
+        fail "STRIP-COMMAS did not work"
+    ]
     return source
 ]
 
-old-do: :lib/do
-do: lib/do: enclose :lib/do func [f <local> old-dir] [
+old-do: :lib3/do
+do: lib3/do: enclose :lib3/do func3 [f <local> old-dir] [
     old-dir: _
     if file? :f.source [
         ;
@@ -216,9 +267,8 @@ do: lib/do: enclose :lib/do func [f <local> old-dir] [
     elide if old-dir [change-dir old-dir]
 ]
 
-first-import: true
 
-import: enfix func [
+import: enfix func3 [
     "%import-shim.r variant of IMPORT which acts like DO and loads only once"
 
     :set-word [<skip> set-word!]
@@ -241,16 +291,16 @@ import: enfix func [
 
     f: as file! f
 
-    if ret: select already-imported f [
+    if ret: select3 already-imported f [
         return ret
     ]
 
-    path+file: lib/split-path f
+    path+file: split-path3 f
 
     assert [#"/" <> first path+file/1]  ; should be relative
     assert [#"%" <> first path+file/1]  ; accidental `import <%foo.r>`
 
-    new-script-path: append copy any [
+    new-script-path: append3 copy any [
         system/script/path system/options/path
     ] path+file/1
 
@@ -269,10 +319,10 @@ import: enfix func [
 
     code: read/string second path+file
 
-    if find code "Type: 'Module" [
+    if find3 code "Type: 'Module" [
         fail "Old tick-style module definition, use `Type: module` instead"
     ]
-    if find code "Type: module" [
+    if find3 code "Type: module" [
         replace code "Type: module" ""
     ]
 
@@ -302,14 +352,14 @@ import: enfix func [
     return ret
 ]
 
-lib.import: sys.import: func [
+lib3/import: sys/import: func3 [
     module [word! file! url! text! binary! module! block! tag!]
     /version ver [tuple!]
     /no-share
     /no-lib
     /no-user
 ][
-    fail ["Bootstrap must use %import-shim.r's IMPORT, not call LIB/IMPORT"]
+    fail ["Bootstrap must use %import-shim.r's IMPORT, not call LIB3/IMPORT"]
 ]
 
 import-shim-loaded: true

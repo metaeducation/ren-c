@@ -65,7 +65,7 @@ trap [
     ; Fall through to the body of this file, we are shimming version ~8994d23
 ] else [
     trap [
-        lib/func [i [<maybe> integer!]] [...]
+        func3 [i [<maybe> integer!]] [...]
     ] then [
         ;
         ; Old bootstrap executables that are already shimmed should not do
@@ -117,7 +117,7 @@ set '~done~ :null
 
 repeat: :loop
 
-compose: lib/func [block [block!] /deep <local> result pos product count] [
+compose: func3 [block [block!] /deep <local> result pos product count] [
     if deep [
         fail/where "COMPOSE bootstrap shim doesn't recurse, yet" 'block
     ]
@@ -135,7 +135,7 @@ compose: lib/func [block [block!] /deep <local> result pos product count] [
         ] then [
             ; Doing the change can insert more than one item, update pos
             ;
-            pos: lib/change/part pos second product 1
+            pos: change3/part pos second product 1
         ] else [
             if null? :product [
                 ;
@@ -143,9 +143,9 @@ compose: lib/func [block [block!] /deep <local> result pos product count] [
                 ; void and null is the product of non-branch conditionals).
                 ; Trust current build to catch errors.
                 ;
-                lib/change/part pos null 1
+                change3/part pos null 1
             ] else [
-                lib/change/only pos :product
+                change3/only pos :product
                 pos: next pos
             ]
         ]
@@ -164,12 +164,12 @@ eval: :do
 ; We don't have the distinctions between NULL and "unsets" in the bootstrap
 ; build.  But make them distinct at the source level.
 
-null: enfix lib/func [:left [<skip> set-word!]] [
-    if :left [lib/unset left]
+null: enfix func3 [:left [<skip> set-word!]] [
+    if :left [unset3 left]
     lib/null
 ]
 
-did: func [return: [logic!] optional [<opt> any-value!]] [
+did: func3 [return: [logic!] optional [<opt> any-value!]] [
     any [
         blank? :optional
         logic? :optional
@@ -181,11 +181,11 @@ did: func [return: [logic!] optional [<opt> any-value!]] [
     not null? :optional
 ]
 
-didn't: func [return: [logic!] optional [<opt> any-value!]] [
+didn't: func3 [return: [logic!] optional [<opt> any-value!]] [
     null? :optional
 ]
 
-to-logic: func [return: [logic!] optional [<opt> any-value!]] [
+to-logic: func3 [return: [logic!] optional [<opt> any-value!]] [
     if null? :optional [return false]
     to logic! :optional
 ]
@@ -196,12 +196,12 @@ to-logic: func [return: [logic!] optional [<opt> any-value!]] [
 ; into NULL, and trust that the current build will catch cases of something
 ; like a PRINT being turned into a NULL.
 ;
-decay: func [v [<opt> any-value!]] [
+decay: func3 [v [<opt> any-value!]] [
     if void? :v [return null]
     if blank? :v [return null]
     :v
 ]
-reify: func [v [<opt> any-value!]] [
+reify: func3 [v [<opt> any-value!]] [
     if void? :v [return _]
     if null? :v [return _]
     :v
@@ -224,7 +224,7 @@ opt: ~  ; replaced by DECAY word
 ; "try inflation", but since TRY is a no-op on null variable fetches in the
 ; current build this seems a reasonable enough mitigation strategy for now.
 ;
-try: lib/func [
+try: func3 [
     :look [<...> any-value!]  ; <...> old variadic notation
     args [<...> <opt> any-value!]  ; <...> old variadic notation
 ][
@@ -237,7 +237,7 @@ try: lib/func [
     return take* args
 ]
 
-null?: lib/func [
+null?: func3 [
     :look [<...> any-value!]  ; <...> old variadic notation
     args [<...> <opt> any-value!]  ; <...> old variadic notation
 ][
@@ -259,7 +259,7 @@ load-all: :load/all
 maybe: :try  ; for use in compose, to new semantics... leave NULL alone
 
 the: :quote  ; Renamed due to the QUOTED! datatype
-quote: lib/func [x [<opt> any-value!]] [
+quote: func3 [x [<opt> any-value!]] [
     switch type of x [
         null [the ()]
         word! [to lit-word! x]
@@ -279,15 +279,15 @@ any-inert!: make typeset! [
     any-string! binary! char! any-context! time! date! any-number! object!
 ]
 
-spread: lib/func [x [<opt> block!]] [
+spread: func3 [x [<opt> block!]] [
     if :x [reduce [#splice! x]]
 ]
 
-matches: lib/func [x [<opt> datatype! typeset! block!]] [
+matches: func3 [x [<opt> datatype! typeset! block!]] [
     if :x [if block? x [make typeset! x] else [x]]
 ]
 
-append: lib/func [series value [<opt> any-value!] /line <local> only] [
+append: func3 [series value [<opt> any-value!] /line <local> only] [
     any [
         object? series
         map? series
@@ -298,7 +298,7 @@ append: lib/func [series value [<opt> any-value!] /line <local> only] [
         ] else [
             fail/where "Bootstrap shim for OBJECT! only APPENDs SPLICEs" 'return
         ]
-        return lib/append series second value
+        return append3 series second value
     ]
 
     only: 'only
@@ -307,7 +307,7 @@ append: lib/func [series value [<opt> any-value!] /line <local> only] [
         void? :value [fail/where "APPEND of VOID! disallowed" 'value]
         blank? :value [fail/where "APPEND blanks with [_] only" 'value]
         block? :value [
-            if lib/find value void! [
+            if find3 value void! [
                 fail/where "APPEND of BLOCK! w/VOID! disallowed" 'value
             ]
             if #splice! = (first value) [
@@ -322,17 +322,17 @@ append: lib/func [series value [<opt> any-value!] /line <local> only] [
             ]
         ]
     ]
-    lib/append/(only)/(line) series :value
+    append3/(only)/(line) series :value
 ]
 
-insert: lib/func [series value [<opt> any-value!] /line <local> only] [
+insert: func3 [series value [<opt> any-value!] /line <local> only] [
     only: 'only
     case [
         null? :value []
         void? :value [fail/where "INSERT of VOID! disallowed" 'value]
         blank? :value [fail/where "INSERT blanks with [_] only" 'value]
         block? :value [
-            if lib/find value void! [
+            if find3 value void! [
                 fail/where "INSERT of BLOCK! w/VOID! disallowed"
             ]
             if #splice! = (first value) [
@@ -347,17 +347,17 @@ insert: lib/func [series value [<opt> any-value!] /line <local> only] [
             ]
         ]
     ]
-    lib/insert/(only)/(line) series :value
+    insert3/(only)/(line) series :value
 ]
 
-change: lib/func [series value [<opt> any-value!] /line <local> only] [
+change: func3 [series value [<opt> any-value!] /line <local> only] [
     only: 'only
     case [
         null? :value []
         void? :value [fail/where "CHANGE of VOID! disallowed" 'value]
         blank? :value [fail/where "CHANGE blanks with [_] only" 'value]
         block? :value [
-            if lib/find value void! [
+            if find3 value void! [
                 fail/where "CHANGE of BLOCK! w/VOID! disallowed" 'value
             ]
             if #splice! = (first value) [
@@ -369,7 +369,7 @@ change: lib/func [series value [<opt> any-value!] /line <local> only] [
             ]
         ]
     ]
-    lib/change/(only)/(line) series :value
+    change3/(only)/(line) series :value
 ]
 
 
@@ -383,8 +383,8 @@ change: lib/func [series value [<opt> any-value!] /line <local> only] [
 ; and a notion that ENFIX is applied to SET-WORD!s not ACTION!s (which was
 ; later overturned), remapping lambda to `->` is complicated.
 ;
-do compose [(to set-word! first [->]) enfix :lambda]
-unset first [=>]
+do compose3 [(to set-word! first [->]) enfix :lambda]
+unset3 first [=>]
 
 ; SET was changed to accept BAD-WORD! isotopes
 ;
@@ -403,7 +403,7 @@ write: adapt :lib/write [
 ; parse products.  So just testing for matching or not is done with PARSE?,
 ; to avoid conflating successful-but-null-bearing-parses with failure.
 ;
-parse2: func [series rules] [
+parse2: func3 [series rules] [
     ;
     ; Make it so that if the rules end in `|| <input>` then the parse will
     ; return the input.
@@ -446,13 +446,13 @@ enfixed: enfix :enfix
 ; wanting to change that, we also want KEEP to be based on the new rules and
 ; not have /ONLY.  So redo it here in the shim.
 ;
-collect*: lib/func [  ; variant giving NULL if no actual material kept
+collect*: func3 [  ; variant giving NULL if no actual material kept
     return: [<opt> block!]
     body [block!]
     <local> out keeper
 ][
     keeper: specialize (  ; SPECIALIZE to remove series argument
-        enclose 'append lib/func [f [frame!] <with> out] [  ; gets /LINE, /DUP
+        enclose 'append func3 [f [frame!] <with> out] [  ; gets /LINE, /DUP
             if null? :f/value [return null]  ; doesn't "count" as collected
 
             f/series: out: default [make block! 16]  ; won't return null now
@@ -463,7 +463,7 @@ collect*: lib/func [  ; variant giving NULL if no actual material kept
         series: <replaced>
     ]
 
-    lib/eval lib/func [keep [action!] <with> return] body :keeper
+    lib/eval func3 [keep [action!] <with> return] body :keeper
 
     :out
 ]
@@ -474,7 +474,7 @@ collect: chain [  ; Gives empty block instead of null if no keeps
 ]
 
 
-collect-lets: lib/func [
+collect-lets: func3 [
     return: [block!]
     array [block! group!]
     <local> lets
@@ -497,7 +497,7 @@ collect-lets: lib/func [
 ]
 
 
-let: lib/func [
+let: func3 [
     return: []  ; [] was old-style invisibility
     :look [any-value! <...>]  ; old-style variadic
 ][
@@ -505,7 +505,7 @@ let: lib/func [
 ]
 
 
-modernize-action: lib/function [
+modernize-action: function3 [
     "Account for <maybe> annotation, refinements as own arguments"
     return: [block!]
     spec [block!]
@@ -647,11 +647,11 @@ modernize-action: lib/function [
     return reduce [spec body]
 ]
 
-func: adapt :lib/func [set [spec body] modernize-action spec body]
-function: adapt :lib/function [set [spec body] modernize-action spec body]
+func: adapt :func3 [set [spec body] modernize-action spec body]
+function: adapt :function3 [set [spec body] modernize-action spec body]
 
 meth: enfixed adapt :lib/meth [set [spec body] modernize-action spec body]
-method: lib/func [] [
+method: func3 [] [
     fail/where "METHOD deprecated temporarily, use METH" 'return
 ]
 
@@ -663,7 +663,7 @@ trim: adapt :trim [  ; there's a bug in TRIM/AUTO in 8994d23
     ]
 ]
 
-mutable: lib/func [x [any-value!]] [
+mutable: func3 [x [any-value!]] [
     ;
     ; Some cases which did not notice immutability in the bootstrap build
     ; now do, e.g. MAKE OBJECT! on a block that you LOAD.  This is a no-op
@@ -682,14 +682,14 @@ mutable: lib/func [x [any-value!]] [
 ; predictable outcome of `a/b/[c]`.  This means that SPREAD must be used to
 ; get the splicing semantics, and plain `join "ab" [c]` is an error.
 ;
-join: lib/func [base value [<opt> any-value!]] [
+join: func3 [base value [<opt> any-value!]] [
     append copy base :value  ; shim APPEND, that offers SPLICE behavior
 ]
 
 ; https://forum.rebol.info/t/has-hasnt-worked-rethink-construct/1058
 has: ~
 
-const?: lib/func [x] [return false]
+const?: func3 [x] [return false]
 
 call*: adapt 'call [
     if block? command [command: compose command]
@@ -723,7 +723,7 @@ find-last: specialize :find [
 ; So augment the READ with a bit more information.
 ;
 lib-read: copy :lib/read
-lib/read: read: enclose :lib-read lib/function [f [frame!]] [
+lib/read: read: enclose :lib-read function3 [f [frame!]] [
     saved-source: :f/source
     if e: trap [bin: do f] [
         parse2 e/message [
@@ -741,7 +741,7 @@ lib/read: read: enclose :lib-read lib/function [f [frame!]] [
     bin
 ]
 
-transcode: lib/function [
+transcode: function3 [
     return: [<opt> any-value!]
     source [text! binary!]
     /next
@@ -772,7 +772,7 @@ transcode: lib/function [
     return values
 ]
 
-split: lib/function [
+split: function3 [
     return: [block!]
     series [any-series!]
     dlm "Split size, delimiter(s) (if all integer block), or block rule(s)"
@@ -810,7 +810,7 @@ split: lib/function [
 ; Unfortunately, bootstrap delimit treated "" as not wanting a delimiter.
 ; Also it didn't have the "literal BLANK!s are space characters" behavior.
 ;
-delimit: lib/func [
+delimit: func3 [
     return: [<opt> text!]
     delimiter [<opt> blank! char! text!]
     line [blank! text! block!]
@@ -866,7 +866,7 @@ unspaced: specialize :delimit [delimiter: _]
 spaced: specialize :delimit [delimiter: space]
 
 
-noquote: lib/func [x [<opt> any-value!]] [
+noquote: func3 [x [<opt> any-value!]] [
     switch type of :x [
         lit-word! [to word! x]
         lit-path! [to path! x]
@@ -887,7 +887,7 @@ noquote: lib/func [x [<opt> any-value!]] [
 ; Temporarily make falsey matches just return true for duration of the zip.
 ; Also, make PRINT accept FILE! and TEXT! so the /VERBOSE option will work.
 ;
-zip: enclose :zip lib/function [f] [
+zip: enclose :zip function3 [f] [
     old-match: :match
     old-print: :print
 
@@ -904,7 +904,7 @@ zip: enclose :zip lib/function [f] [
     ;    ]
     ;]
 
-    lib/match: lib/func [type value [<opt> any-value!] <local> answer] [
+    lib/match: func3 [type value [<opt> any-value!] <local> answer] [
         if bad-word? set* 'answer old-match type value [
             return true
         ]
@@ -924,7 +924,7 @@ zip: enclose :zip lib/function [f] [
 ;
 ; https://forum.rebol.info/t/1813
 ;
-apply: lib/function [
+apply: function3 [
     action [action!]
     args [block!]
 ][
@@ -960,36 +960,34 @@ apply: lib/function [
     do f
 ]
 
-local-to-file-old: :lib/local-to-file
-local-to-file: lib/local-to-file: lib/func [path [<opt> text! file!] /pass /dir] [
+local-to-file: lib/local-to-file: func3 [path [<opt> text! file!] /pass /dir] [
     path: default [_]
-    local-to-file-old/(pass)/(dir) path
+    local-to-file3/(pass)/(dir) path
 ]
 
-file-to-local-old: :lib/file-to-local
-file-to-local: lib/file-to-local: lib/func [
+file-to-local: lib/file-to-local: func3 [
     path [<opt> text! file!] /pass /full /no-tail-slash /wild
 ][
     path: default [_]
-    file-to-local-old/(pass)/(full)/(no-tail-slash)/(wild) path
+    file-to-local3/(pass)/(full)/(no-tail-slash)/(wild) path
 ]
 
-select: lib/func [
+select: func3 [
     series [<opt> any-series! any-context! map!]
     value [any-value!]
 ][
     if null? :series [return null]
-    lib/select :series :value
+    select3 :series :value
 ]
 
-split-path: lib/func [  ; interface changed to multi-return in new Ren-C
+split-path: func3 [  ; interface changed to multi-return in new Ren-C
     return: [file!]
     in [file! url!]
     /dir  ; no multi-return, simulate it
     darg [word!]
     <local> path+file
 ][
-    dir+file: lib/split-path in
+    dir+file: split-path3 in
     if dir [set darg decay first dir+file]
     return decay second dir+file
 ]
