@@ -118,11 +118,8 @@ void Shutdown_Feeds(void) {
 //
 void Startup_Frame_Stack(void)
 {
-  #if !defined(NDEBUG) // see Startup_Trash_Debug() for explanation
-    assert(IS_POINTER_TRASH_DEBUG(TG_Top_Frame));
-    assert(IS_POINTER_TRASH_DEBUG(TG_Bottom_Frame));
-    TG_Top_Frame = TG_Bottom_Frame = nullptr;
-  #endif
+    assert(TG_Top_Frame == nullptr);
+    assert(TG_Bottom_Frame == nullptr);
 
     Frame(*) f = Make_End_Frame(
         FRAME_MASK_NONE

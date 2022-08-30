@@ -689,12 +689,8 @@ void Startup_Signals(void)
     // Any variables that should be trashed up front should do so here.
     //
     static void Startup_Trash_Debug(void) {
-        assert(not TG_Top_Frame);
-        TRASH_POINTER_IF_DEBUG(TG_Top_Frame);
-        assert(not TG_Bottom_Frame);
-        TRASH_POINTER_IF_DEBUG(TG_Bottom_Frame);
-
-        // ...add more on a case-by-case basis if the case seems helpful...
+        //
+        // !!! TBD: Identify global option(...) state.
     }
 #endif
 
