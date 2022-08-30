@@ -362,12 +362,10 @@ application-class: make project-class [
 
     command: meth [return: [text!]] [
         let ld: any [linker, default-linker]
-        return ld/command/debug
-            output
-            maybe depends
-            maybe searches
-            maybe ldflags
-            debug
+        return apply :ld/command [
+            output, depends, searches, ldflags
+            /debug debug
+        ]
     ]
 
 ]
@@ -390,11 +388,10 @@ dynamic-library-class: make project-class [
         default-linker
     ][
         let l: any [linker, default-linker]
-        return l/command/dynamic
-            output
-            maybe depends
-            maybe searches
-            maybe ldflags
+        return apply :l/command [
+            output, depends, searches, ldflags
+            /dynamic true
+        ]
     ]
 ]
 

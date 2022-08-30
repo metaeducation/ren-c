@@ -1717,12 +1717,13 @@ for-each ext extensions [
     ext-init-source: as file! unspaced [
         "tmp-mod-" ext-name-lower "-init.c"
     ]
-    append ext-objlib/depends gen-obj/dir/I/D/F
+    append ext-objlib/depends apply :gen-obj [
         ext-init-source
-        unspaced ["prep/extensions/" ext-name-lower "/"]
-        maybe ext/includes
-        maybe ext/definitions
-        maybe ext/cflags
+        /dir unspaced ["prep/extensions/" ext-name-lower "/"]
+        /I ext/includes
+        /D ext/definitions
+        /F ext/cflags
+    ]
 
     ; Here we graft things like the global debug settings and optimization
     ; flags onto the extension.  This also lets it find the core include files
@@ -1734,15 +1735,17 @@ for-each ext extensions [
     ;
     ; We add a #define of either REB_API or REB_EXT based on if it's a DLL
     ;
-    add-project-flags/I/D/c/O/g ext-objlib
-        app-config/includes
-        compose [
+    apply :add-project-flags [
+        ext-objlib
+        /I app-config/includes
+        /D compose [
             (either ext/mode = <builtin> ["REB_API"] ["REB_EXT"])
             (spread app-config/definitions)
         ]
-        app-config/cflags
-        app-config/optimization
-        app-config/debug
+        /c app-config/cflags
+        /O app-config/optimization
+        /g app-config/debug
+    ]
 
     if ext/mode = <builtin> [
         append builtin-ext-objlibs maybe ext-objlib
@@ -1800,12 +1803,14 @@ for-each ext extensions [
 
         ; !!! It's not clear if this is really needed (?)
         ;
-        add-project-flags/I/D/c/O/g ext-proj
-            app-config/includes
-            join ["REB_EXT"] spread app-config/definitions
-            app-config/cflags
-            app-config/optimization
-            app-config/debug
+        apply :add-project-flags [
+            ext-proj
+            /I app-config/includes
+            /D join ["REB_EXT"] spread app-config/definitions
+            /c app-config/cflags
+            /O app-config/optimization
+            /g app-config/debug
+        ]
 
         append dynamic-libs ext-proj  ; need to add app as a dependency later
     ]

@@ -1012,10 +1012,18 @@ apply: function3 [
             not :pos/2
             refinement? pos/2
         ] then [  ; doesn't take an argument, set it to the logical next value
-            f/(to word! :pos/1): :result
+            if blank? :result [
+                f/(to word! pos/1): null3
+            ] else [
+                f/(to word! pos/1): :result
+            ]
         ] else [  ; takes an arg, so set refinement to true and set NEXT param
-            f/(to word! :pos/1): true
-            f/(to word! :pos/2): :result
+            f/(to word! pos/1): true
+            if blank? :result [
+                f/(to word! pos/2): null3
+            ] else [
+                f/(to word! pos/2): :result
+            ]
         ]
     ]
 
