@@ -1341,7 +1341,7 @@ REBTYPE(Frame)
             return Init_File(OUT, file); }
 
           case SYM_LINE: {
-            REBLIN line = FRM_LINE(f);
+            LineNumber line = FRM_LINE(f);
             if (line == 0)
                 return nullptr;
             return Init_Integer(OUT, line); }

@@ -1849,7 +1849,7 @@ void Init_Scan_Level(
     SCAN_LEVEL *level,
     SCAN_STATE *ss,
     String(const*) file,
-    REBLIN line,
+    LineNumber line,
     option(const Byte*) bp
 ){
     level->ss = ss;
@@ -3108,7 +3108,7 @@ DECLARE_NATIVE(transcode)
     else
         line_number = ARG(line);
 
-    REBLIN start_line;
+    LineNumber start_line;
     if (Is_Nulled(line_number)) {
         start_line = 1;
     }
@@ -3255,7 +3255,7 @@ const Byte* Scan_Any_Word(
 ) {
     SCAN_STATE ss;
     String(const*) file = ANONYMOUS;
-    const REBLIN start_line = 1;
+    const LineNumber start_line = 1;
 
     Frame(*) f = Make_End_Frame(FRAME_MASK_NONE);  // note: no feed `context`
     SCAN_LEVEL *level = &f->u.scan;
@@ -3357,7 +3357,7 @@ option(Array(*)) Try_Scan_Variadic_Feed_Utf8_Managed(Feed(*) feed)
 
     SCAN_LEVEL *level = &f->u.scan;
     SCAN_STATE ss;
-    const REBLIN start_line = 1;
+    const LineNumber start_line = 1;
     Init_Scan_Level(
         level,
         &ss,

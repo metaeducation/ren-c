@@ -113,7 +113,7 @@ inline static const char* FRM_FILE_UTF8(Frame(*) f) {
     return str ? STR_UTF8(str) : "~anonymous~";
 }
 
-inline static int FRM_LINE(Frame(*) f) {
+inline static LineNumber FRM_LINE(Frame(*) f) {
     if (FRM_IS_VARIADIC(f))
         return 0;
     if (Not_Subclass_Flag(ARRAY, FRM_ARRAY(f), HAS_FILE_LINE_UNMASKED))

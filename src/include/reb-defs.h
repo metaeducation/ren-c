@@ -76,7 +76,7 @@ typedef int64_t REBI64; // 64 bit integer
 typedef uint64_t REBU64; // 64 bit unsigned integer
 typedef float REBD32; // 32 bit decimal
 typedef double REBDEC; // 64 bit decimal
-typedef uintptr_t REBLIN; // type used to store line numbers in Rebol files
+typedef uintptr_t LineNumber; // type used to store line numbers in Rebol files
 typedef uintptr_t Tick; // type the debug build uses for evaluator "ticks"
 
 

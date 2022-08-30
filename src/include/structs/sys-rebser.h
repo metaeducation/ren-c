@@ -667,7 +667,7 @@ union Reb_Stub_Misc {
     // platforms...or have some kind of "extended line" flag which interprets
     // it as a dynamic allocation otherwise to get more bits.
     //
-    REBLIN line;
+    LineNumber line;
 
     // Under UTF-8 everywhere, strings are byte-sized...so the series "used"
     // is actually counting *bytes*, not logical character codepoint units.

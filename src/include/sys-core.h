@@ -157,6 +157,26 @@
     //
     // So when writing information you intend to be flushed before a potential
     // crash, be sure to fflush(), regardless of using `\n` or not.
+
+    // The "right" way in C99 to print out things like uintptr_t is to use
+    // weird type specifiers from <inttypes.h>, which looks like:
+    //
+    //     uintptr_t p = SOME_VALUE;
+    //     printf("Here's a pointer for you: %" PRIxPTR "\n", p);
+    //
+    // So if a uintptr_t is being used to represent an integer, we'd use
+    // `PRIuPTR`.  You get compiler warnings otherwise.
+    //
+    // *or you can just cast it to int and lose precision*.  But since printf()
+    // is only included in debug builds, that loss of precision could wind up
+    // being a problem in what's being diagnosed.  :-/  So we use it.
+    //
+  #if CPLUSPLUS_11
+    #include <cinttypes>  // GCC requires to get macros, MSVC doesn't
+  #else
+    #define __STDC_FORMAT_MACROS
+    #include "inttypes.h"
+  #endif
 #endif
 
 
@@ -532,7 +552,6 @@ inline static REBVAR *Force_Lib_Var(SymId id) {
 #include "sys-nulled.h"  // not a datatype, but it is exposed to the user
 #include "sys-void.h"  // not really a datatype either
 
-#include "datatypes/sys-blank.h"
 #include "sys-trash.h"
 #include "datatypes/sys-comma.h"
 

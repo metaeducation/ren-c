@@ -121,7 +121,7 @@ void Dump_Stack(Frame(*) f)
     else
         label = STR_UTF8(unwrap(f->label));
 
-    printf("LABEL: %s @ FILE: %s @ LINE: %d\n",
+    printf("LABEL: %s @ FILE: %s @ LINE: %" PRIuPTR "\n",  // uintptr_t format
         label,
         FRM_FILE_UTF8(f),
         FRM_LINE(f)

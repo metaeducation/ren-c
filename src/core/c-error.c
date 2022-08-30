@@ -506,7 +506,7 @@ void Set_Location_Of_Error(
 
     if (f != BOTTOM_FRAME) {  // found a frame with file and line information
         String(const*) file = LINK(Filename, FRM_ARRAY(f));
-        REBLIN line = FRM_ARRAY(f)->misc.line;
+        LineNumber line = FRM_ARRAY(f)->misc.line;
 
         if (file)
             Init_File(&vars->file, file);

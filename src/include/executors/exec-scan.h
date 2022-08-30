@@ -117,7 +117,7 @@ typedef struct rebol_scan_state {  // shared across all levels of a scan
 
     const Raw_String* file;  // currently scanning (or anonymous)
 
-    REBLIN line;  // line number where current scan position is
+    LineNumber line;  // line number where current scan position is
     const Byte* line_head;  // pointer to head of current line (for errors)
 
     // The "limit" feature was not implemented, scanning just stopped at '\0'.
