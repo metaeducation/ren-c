@@ -135,9 +135,13 @@ void Push_Redo_Action_Frame(REBVAL *out, Frame(*) f1, const REBVAL *run)
 
     Shutdown_Evars(&e);
 
+    Flags flags = FRAME_FLAG_MAYBE_STALE;
+    if (Get_Frame_Flag(f1, FAILURE_RESULT_OK))
+        flags |= FRAME_FLAG_FAILURE_RESULT_OK;  // inherit failure tolerance
+
     DECLARE_LOCAL (block);
     Init_Block(block, normals);
-    Frame(*) f2 = Make_Frame_At(block, FRAME_FLAG_MAYBE_STALE);
+    Frame(*) f2 = Make_Frame_At(block, flags);
     f2->baseline.stack_base = base;
 
     Push_Frame(out, f2);

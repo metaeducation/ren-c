@@ -6,13 +6,13 @@
 ; a known network resource, to check that the returned bytes are actually
 ; correct.)
 
-[#1613 (
+[#1613
     ; !!! Note that returning a WORD! from a function ending in ? is not seen
     ; as a good practice, and will likely change.
     ;
-    'file = exists? http://www.rebol.com/index.html
-)]
+    ('file = exists? http://www.rebol.com/index.html)
+    (null = exists? http://example.com/fhqwhgads.mp3)
+]
 
 (binary? read http://example.com)
 (binary? read https://example.com)
-

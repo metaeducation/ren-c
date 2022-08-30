@@ -136,7 +136,8 @@ do-request: function [
 
     read port.state.connection  ; read some data from the TCP port
     until [
-        check-response port  ; see if it was enough, if not it asks for more
+        check-response port except e -> [return raise e]  ; see if it was enough
+        ; if not it asks for more
         (port.state.mode = <ready>) or (port.state.mode = <close>)
     ]
 
@@ -329,7 +330,9 @@ check-response: function [
                     ]]
                     in headers 'Location
                 ] also [
-                    do-redirect port headers.location headers
+                    do-redirect port headers.location headers except e -> [
+                        return raise e
+                    ]
                 ] else [
                     fail make error! [
                         type: 'Access
@@ -351,27 +354,27 @@ check-response: function [
             ]
         ]
         'unauthorized [
-            fail make-http-error "Authentication not supported yet"
+            return raise make-http-error "Authentication not supported yet"
         ]
         'client-error
         'server-error [
-            fail make-http-error ["Server error: " line]
+            return raise make-http-error ["Server error: " line]
         ]
         'not-modified [
             state.mode: <ready>
         ]
         'use-proxy [
-            fail make-http-error "Proxies not supported yet"
+            return raise make-http-error "Proxies not supported yet"
         ]
         'proxy-auth [
-            fail (make-http-error
+            return raise (make-http-error
                 "Authentication and proxies not supported yet")
         ]
         'no-content [
             state.mode: <ready>
         ]
         'version-not-supported [
-            fail make-http-error "HTTP response version not supported"
+            return raise make-http-error "HTTP response version not supported"
         ]
     ]
 ]
@@ -443,7 +446,7 @@ do-redirect: func [
     ; information, and clear out the port data.  (Redirects weren't part of
     ; the original scheme code, and were grafted on afterwards.)
     ;
-    let data: do-request port
+    let data: do-request port except e -> [return raise e]
     assert [null? port.data]
     port.data: data
 ]
@@ -611,7 +614,7 @@ sys.util.make-scheme [
                 close?: true
             ]
 
-            data: do-request port
+            data: do-request port except e -> [return raise e]
             assert [find [<ready> <close>] port.state.mode]
 
             if close? [
@@ -660,7 +663,7 @@ sys.util.make-scheme [
             ]
 
             parse-write-dialect port value
-            data: do-request port
+            data: do-request port except e -> [return raise e]
             assert [find [<ready> <close>] port.state.mode]
 
             if close? [
