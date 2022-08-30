@@ -18,8 +18,9 @@ if not find words of :import 'product [  ; See %import-shim.r
     do load append copy system/script/path %import-shim.r
 ]
 
-import <common.r>
 import <bootstrap-shim.r>
+
+import <common.r>
 import <common-parsers.r>
 import <common-emitter.r>
 

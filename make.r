@@ -18,6 +18,7 @@ if not find words of :import 'product [  ; See %import-shim.r
 ]
 
 import <tools/bootstrap-shim.r>
+
 import <tools/common.r>  ; Note: sets up `repo-dir`
 import <tools/systems.r>
 

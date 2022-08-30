@@ -39,8 +39,8 @@ if not find words of :import 'product [  ; See %import-shim.r
 ]
 
 import <bootstrap-shim.r>
-import <common.r>  ; for REPO-DIR
 
+import <common.r>  ; for REPO-DIR
 import <systems.r>  ; for BOOT-VERSION
 
 export cscape: function [

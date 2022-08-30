@@ -27,6 +27,7 @@ if not find words of :import 'product [  ; See %import-shim.r
 ]
 
 import <bootstrap-shim.r>
+
 import <common.r>
 import <common-emitter.r>
 
