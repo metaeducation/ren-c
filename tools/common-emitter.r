@@ -178,6 +178,13 @@ export cscape: function [
                 ]
                 fail ["Invalid CSCAPE mode:" mode]
             ]
+            assert [not void? sub]  ; turned to "null" by now (shim's BLANK!)
+
+            ; We want to recognize lines that had substitutions that all
+            ; vanished, and remove them (distinctly from lines left empty
+            ; on purpose in the template.  We need to put some kind of signal
+            ; to get that behavior.
+            ;
             sub: default [copy "/* _ */"]  ; replaced in post phase
 
             case [
@@ -211,32 +218,44 @@ export cscape: function [
     ; whitespace is all that ends up on them.  If the user doesn't want the
     ; intelligence, they should use "".
     ;
+    ; !!! REMOVE was buggy and unpredictable in R3-Alpha PARSE, and the
+    ; bootstrap executable inherited that.  Collect a list of lines to kill
+    ; and do it in a phase after the parse.  (Probably just don't use PARSE.)
+    ;
+    kill-lines: copy []
     parse2 string [
-        (nonwhite: removed: false) start-line:  ; <here>
+        (allwhite: true) start-line:  ; <here>
         opt some [
             space
             |
             newline
             [
-                ; IF deprecated in Ren-C, but :(...) with logic not available
-                ; in the bootstrap build.
+                ; PARSE arity-1 IF deprecated in Ren-C, but :(...) with logic
+                ; not available in the bootstrap build.
                 ;
-                if (to-logic all [not nonwhite, removed])
-
-                :start-line  ; seek
-                remove thru [newline | end]
+                end-line:  ; <here>
+                (if allwhite and (end-line != next start-line) [
+                    insert kill-lines start-line  ; back to front for delete
+                    insert kill-lines end-line
+                ])
+            ]
+            (allwhite: true) start-line:  ; <here>
+            |
+            [
+                "/* _ */"
                 |
+                (allwhite: false)  ; has something not a newline or space in it
                 skip
             ]
-            (nonwhite: removed: false) start-line:  ; <here>
-            |
-            remove "/* _ */" (removed: true) opt remove space
-            |
-            (nonwhite: true)
-            skip
         ]
         end
     ]
+
+    for-each [start end] kill-lines [
+        remove/part start end
+    ]
+
+    replace/all string "/* _ */" ""
 
     return string
 ]

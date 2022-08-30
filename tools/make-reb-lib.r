@@ -208,7 +208,7 @@ for-each api api-objects [do in api [
         opt-noreturn: _
     ]
 
-    opt-return: either returns != "void" ["return"] [null]
+    opt-return_: either returns != "void" ["return "] [null]  ; has space
 
     make-c-proxy: function [
         return: [text!]
@@ -216,16 +216,16 @@ for-each api api-objects [do in api [
         <with> returns wrapper-params proxied-args
     ][
         returns: default ["void"]
-        inline: either inline ["_inline"] [""]
+        _inline: either inline ["_inline"] [""]
 
         wrapper-params: default ["void"]
         proxied-args: default [""]
 
         return cscape/with {
             $<MAYBE OPT-NORETURN>
-            inline static $<Returns> $<Name>$<inline>($<Wrapper-Params>) {
+            inline static $<Returns> $<Name>$<_inline>($<Wrapper-Params>) {
                 $<Maybe Opt-Va-Start>
-                $<maybe opt-return> LIBREBOL_PREFIX($<Name>)($<Proxied-Args>);
+                $<maybe opt-return_>LIBREBOL_PREFIX($<Name>)($<Proxied-Args>);
                 $<MAYBE OPT-DEAD-END>
             }
         } compose [
@@ -249,7 +249,7 @@ for-each api api-objects [do in api [
             $<MAYBE OPT-NORETURN>
             inline static $<Returns> $<Name>($<Wrapper-Params>) {
                 LIBREBOL_PACK_CPP_ARGS;
-                $<maybe opt-return> LIBREBOL_PREFIX($<Name>)($<Proxied-Args>);
+                $<maybe opt-return_>LIBREBOL_PREFIX($<Name>)($<Proxied-Args>);
                 $<MAYBE OPT-DEAD-END>
             }
         } compose [
