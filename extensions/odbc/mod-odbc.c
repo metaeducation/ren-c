@@ -1496,7 +1496,7 @@ REBVAL *ODBC_Column_To_Rebol_Value(COLUMN *col)
                 stamp->hour * 3600 + stamp->minute * 60 + stamp->second
             ),  // seconds
             rebI(fraction),  // billionths of a second (nanoseconds)
-            "_"  // timezone (leave blank)
+            "_"  // timezone (null)
         ")"); }
 
     // SQL_BINARY, SQL_VARBINARY, and SQL_LONGVARBINARY were all requested
