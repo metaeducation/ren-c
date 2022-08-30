@@ -423,7 +423,7 @@ back: specialize :skip [offset: -1]
 
 bound?: chain [specialize :reflect [property: 'binding], :value?]
 
-unspaced: specialize :delimit [delimiter: null]
+unspaced: specialize :delimit [delimiter: _]
 spaced: specialize :delimit [delimiter: space]
 newlined: specialize :delimit [delimiter: newline, tail: #]
 

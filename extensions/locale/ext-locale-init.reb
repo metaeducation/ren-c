@@ -459,7 +459,7 @@ if 'Windows <> first system.platform [
         <local> env-lang lang territory
     ][
         env-lang: get-env "LANG" else [return null]  ; e.g. "en_US.UTF-8"
-        territory: null
+        territory: _
 
         letter: charset [#"a" - #"z" #"A" - #"Z"]
         parse env-lang [

@@ -421,13 +421,13 @@ list: context [
         if equal? #"/" last item [
             contents: read %% (repo-dir)/(item)
             insert queue spread map-each x contents [join item x]
-            item: null
+            item: _
         ] else [
             any [
                 did parse3 split-path item ["tmp-" ...]
                 not find extensions extension-of item
             ] then [
-                item: null
+                item: _
             ]
         ]
 

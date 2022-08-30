@@ -49,14 +49,14 @@
 ; NULL in them causing an error in REDUCE/COMPOSE type situations
 [(
     ver: 1.2.3
-    date: null
+    date: _
 
     x: spaced [curtail spaced ["Version:" ver] curtail spaced ["Date:" date]]
     x = "Version: 1.2.3"
 )
 (
-    a: 1, b: null, c: 3
-    date: null
+    a: 1, b: _, c: 3
+    date: _
     get-ver: func [] [to tuple! reduce [a b c]]
 
     e: trap [

@@ -185,7 +185,7 @@ combinator: func [
         (spread if autopipe '[
             let f: binding of 'return
 
-            pending: null
+            pending: _
             let in-args: false
             for-each [key val] f [
                 if not in-args [
@@ -693,7 +693,7 @@ default-combinators: make map! reduce [
             return raise make error! [
                 message: [{Call should use TRY if NULL intended, gives:} :arg1]
                 id: 'try-if-null-meant
-                arg1: null
+                arg1: _
             ]
         ]
         if quasi? where [
@@ -982,7 +982,7 @@ default-combinators: make map! reduce [
             return raise e
         ]
         if void? unget result' [
-            pending: null
+            pending: _
             return void
         ]
 
@@ -1292,7 +1292,7 @@ default-combinators: make map! reduce [
             return void
         ]
 
-        pending: null
+        pending: _
         return eval value  ; !!! Pass on definitional failure?
     ]
 
@@ -1346,7 +1346,7 @@ default-combinators: make map! reduce [
         r: ^ eval value
 
         if void? unget r [  ; like [:(if false [...])] or [:(comment "hi")]
-            pending: null
+            pending: _
             remainder: input
             return void
         ]
@@ -1461,7 +1461,7 @@ default-combinators: make map! reduce [
         if any-array? input [
             if :input.1 = unquote value [
                 remainder: next input
-                pending: null
+                pending: _
                 return unquote value
             ]
             return raise "Value at parse position wasn't unquote of QUOTED! item"
@@ -2054,7 +2054,7 @@ default-combinators: make map! reduce [
         ; !!! We cannot use the autopipe mechanism because the hooked combinator
         ; does not see the augmented frame.  Have to do it manually.
         ;
-        totalpending: null
+        totalpending: _
 
         let f: make frame! :value
         for-each param (parameters of action of f) [
@@ -2137,7 +2137,7 @@ default-combinators: make map! reduce [
                 fail "LIT-WORD! hack only works with array inputs"
             ]
             all [quoted? input.1, word? unquote input.1] then [
-                pending: null
+                pending: _
                 remainder: next input
                 return unquote input.1
             ] else [
@@ -2149,7 +2149,7 @@ default-combinators: make map! reduce [
                 fail "LIT-PATH! hack only works with array inputs"
             ]
             all [quoted? input.1, path? unquote input.1] then [
-                pending: null
+                pending: _
                 remainder: next input
                 return unquote input.1
             ] else [
@@ -2252,7 +2252,7 @@ default-combinators: make map! reduce [
         limit: default [tail of rules]
         pos: input
 
-        totalpending: null  ; can become GLOM'd into a BLOCK!
+        totalpending: _  ; can become GLOM'd into a BLOCK!
 
         result': void'  ; default result is void
 
@@ -2359,7 +2359,7 @@ default-combinators: make map! reduce [
                 result': void'  ; reset, e.g. `[false |]`
 
                 free maybe totalpending  ; proactively release memory
-                totalpending: null
+                totalpending: _
 
                 ; If we fail a match, we skip ahead to the next alternate rule
                 ; by looking for an `|`, resetting the input position to where
@@ -2381,7 +2381,7 @@ default-combinators: make map! reduce [
                     ]
                 ] else [
                     if (not thru) or (tail? input) [
-                        remainder: null
+                        remainder: _
                         return raise "BLOCK! combinator at tail or not thru"
                     ]
                     rules: value
@@ -2514,7 +2514,7 @@ comment [combinatorize: func [
                     if not endable? in f param [
                         fail "Too few parameters for combinator"
                     ]
-                    f.(param): null
+                    f.(param): _
                 ]
                 else [
                     ; We also allow skippable parameters, so that legacy
@@ -2528,7 +2528,7 @@ comment [combinatorize: func [
                         skippable? in f param
                         not find (exemplar of action of f).(param) kind of :r
                     ] then [
-                        f.(param): null
+                        f.(param): _
                     ]
                     else [
                         f.(param): :r
@@ -2556,7 +2556,7 @@ comment [combinatorize: func [
                     if not endable? in f param [
                         fail "Too few parameters for combinator"
                     ]
-                    f.(param): null
+                    f.(param): _
                 ]
                 else [
                     f.(param): [# rules]: parsify state rules
@@ -2840,7 +2840,7 @@ parse*: func [
     if wanted? 'furthest [
         furthest: input
     ] else [
-        furthest: null  ; all [state.furthest...] first check for if updating
+        furthest: _  ; all [state.furthest...] first check for if updating
     ]
 
     ; Each UPARSE operation can have a different set of combinators in

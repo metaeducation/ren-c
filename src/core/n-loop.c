@@ -1247,7 +1247,7 @@ DECLARE_NATIVE(remove_each)
 //
 // 5. We do not want to decay isotopes, e.g. if someone tried to say:
 //
-//        remove-each x [...] [n: null, ..., match [logic! integer!] false]
+//        remove-each x [...] [n: _, ..., match [logic! integer!] false]
 //
 //    The ~false~ isotope protects from having a condition you thought should
 //    be truthy come back #[false] and be falsey.

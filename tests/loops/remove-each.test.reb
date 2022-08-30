@@ -67,7 +67,7 @@
     block: copy [1 2 3 4 5]
     remove-each [a b] block [
         if a = 5 [
-            b-was-null: null? :b
+            b-was-null: _? :b
         ]
     ]
     b-was-null

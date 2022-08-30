@@ -11,14 +11,13 @@
 (not null? 1)
 
 ; Early designs for NULL did not let you get or set them from plain WORD!
-; Responsibility for kind of "ornery-ness" this shifted to BAD-WORD! isotopes,
-; as NULL took on increasing roles as the "true NONE!" and became the value for
+; Responsibility for kind of "ornery-ness" this shifted to isotopes, as NULL
+; took on increasing roles as the "true NONE!" and became the value for
 ; unused refinements.
-;
 (
     a: ~
     did all [
-        null? a: null
+        null? a: _
         null? a
         null = a
     ]

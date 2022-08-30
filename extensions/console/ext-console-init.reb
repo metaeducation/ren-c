@@ -386,7 +386,7 @@ start-console: func [
     loud-print "Starting console..."
     loud-print newline
     let proto-skin: match object! skin else [make console! []]
-    let skin-error: null
+    let skin-error: _
 
     all [
         skin-file

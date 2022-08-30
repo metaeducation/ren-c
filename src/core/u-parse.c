@@ -2727,7 +2727,7 @@ DECLARE_NATIVE(parse3_p)
         DECLARE_LOCAL (specific);
         Derelativize(specific, rules_at + 1, P_RULE_SPECIFIER);
         return rebValue(
-            "let temp: null",
+            "let temp: _",
             "let f: copy", CTX_ARCHETYPE(frame_ctx),
             "f.rules: [temp: collect", specific, "]",
             "do f",

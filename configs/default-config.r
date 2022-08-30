@@ -83,13 +83,13 @@ with-tcc: no
 pre-vista: no
 
 
-git-commit: null
+git-commit: _
 
-includes: null
-definitions: null
-cflags: null
-libraries: null
-ldflags: null
+includes: _
+definitions: _
+cflags: _
+libraries: _
+ldflags: _
 
 main: _
 

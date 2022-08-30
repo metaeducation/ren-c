@@ -41,7 +41,7 @@ config: config-system any [get 'args/OS_ID '_]
 first-rebol-commit: "19d4f969b4f5c1536f24b023991ec11ee6d5adfb"
 
 if args/GIT_COMMIT = "unknown" [
-    git-commit: null
+    git-commit: _
 ] else [
     git-commit: args/GIT_COMMIT
     if (length of git-commit) != (length of first-rebol-commit) [

@@ -346,7 +346,7 @@ main-startup: func [
             fail
         ]
     ] else [
-        system.options.boot: null
+        system.options.boot: _
     ]
 
     === HELPER FUNCTIONS ===
@@ -466,7 +466,7 @@ main-startup: func [
     if o.boot [
         [_ o.bin]: split-path o.boot
     ] else [
-        o.bin: null
+        o.bin: _
     ]
 
     let param-or-die: func [

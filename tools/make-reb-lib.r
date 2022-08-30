@@ -204,8 +204,8 @@ for-each api api-objects [do in api [
         opt-dead-end: "DEAD_END;"
         opt-noreturn: "ATTRIBUTE_NO_RETURN"
     ] else [
-        opt-dead-end: null
-        opt-noreturn: null
+        opt-dead-end: _
+        opt-noreturn: _
     ]
 
     opt-return: either returns != "void" ["return"] [null]
@@ -299,7 +299,7 @@ for-each api api-objects [do in api [
         append c++-variadic-inlines make-c++-proxy
     ]
     else [
-        opt-va-start: null
+        opt-va-start: _
 
         wrapper-params: delimit ", " map-each [type var] paramlist [
             spaced [type var]

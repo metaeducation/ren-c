@@ -750,18 +750,18 @@ extension-class: make object! [
 
     mode: _  ; [<builtin> <dynamic>] or unused
 
-    modules: null
-    source: null  ; main script
-    depends: null  ; additional C files compiled in
-    requires: null  ; it might require other extensions
+    modules: _
+    source: _  ; main script
+    depends: _  ; additional C files compiled in
+    requires: _  ; it might require other extensions
 
-    includes: null
-    definitions: null
-    cflags: null
+    includes: _
+    definitions: _
+    cflags: _
 
-    searches: null
-    libraries: null
-    ldflags: null
+    searches: _
+    libraries: _
+    ldflags: _
 
     hook: _  ; FILE! of extension-specific Rebol script to run during rebmake
 

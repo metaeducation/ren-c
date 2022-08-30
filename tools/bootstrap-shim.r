@@ -995,7 +995,7 @@ apply: function3 [
 
     ; Get all the normal parameters applied
     ;
-    result: null
+    result: _
     while [all [:params/1, not refinement? :params/1]] [
         args: evaluate/set args 'result
         f/(to word! :params/1): :result

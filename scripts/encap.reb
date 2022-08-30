@@ -540,7 +540,7 @@ pe-format: context [
 
     buf: ~
     u16: u32: uintptr: ~
-    err: null
+    err: _
     fail-at: ~
 
     u16-le: [copy buf 2 skip (u16: debin [LE + 2] buf)]
@@ -805,7 +805,7 @@ pe-format: context [
     ]
 
     reset: does [
-        err: null
+        err: _
         fail-at: ~
         start-of-section-header: ~
         end-of-section-header: ~

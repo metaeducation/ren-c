@@ -343,8 +343,8 @@ export make-emitter: function [
 
             ; For clarity/simplicity, emitters are not reused.
             ;
-            file: null
-            buf-emit: null
+            file: _
+            buf-emit: _
         ]
     ]
 

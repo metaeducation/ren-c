@@ -110,8 +110,8 @@ lines-exceeding: func [  ; !!! Doesn't appear used, except in tests (?)
     line-length [integer!]
     text [text!]
 ] [
-    let line-list: null
-    let line: null
+    let line-list: _
+    let line: _
     let [eol bol]
 
     count-line-rule: [

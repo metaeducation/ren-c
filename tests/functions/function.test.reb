@@ -285,7 +285,7 @@
         medium: func [':x <with> got] [got: :x, return 1000]
         Lmedium: enfixed :medium
 
-        got: null
+        got: _
         test: lambda [expr [block!]] [
             got: '~trash~
             compose [(do expr), (:got)]
@@ -321,7 +321,7 @@
         soft: lambda [:x <with> got] [got: :x, 1000]
         Lsoft: enfixed :soft
 
-        got: null
+        got: _
         test: func [expr [block!]] [
             got: '~trash~
             return compose [(do expr), (:got)]

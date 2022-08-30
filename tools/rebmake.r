@@ -304,11 +304,11 @@ project-class: make object! [
     name: _
     id: _
     type: _  ;  dynamic, static, object or application
-    depends: null  ; a dependency could be a library, object file
-    output: null  ; file path
-    basename: null   ; output without extension part
+    depends: _  ; a dependency could be a library, object file
+    output: _  ; file path
+    basename: _   ; output without extension part
     generated?: false
-    implib: null  ; Windows exe/lib with exported symbols generates implib file
+    implib: _  ; Windows exe/lib with exported symbols generates implib file
 
     post-build-commands: _  ; commands to run after the "build" command
 
@@ -320,9 +320,9 @@ project-class: make object! [
     ; _not_ from project to project.
     ; They will be applied _in addition_ to the obj-file level settings
     ;
-    includes: null
-    definitions: null
-    cflags: null
+    includes: _
+    definitions: _
+    cflags: _
 
     ; These can be inherited from project to obj-files and will be overwritten
     ; at the obj-file level
@@ -338,13 +338,13 @@ solution-class: make project-class [
 ext-dynamic-class: make object! [
     class: #dynamic-extension
     output: _
-    flags: null  ;static?
+    flags: _  ;static?
 ]
 
 ext-static-class: make object! [
     class: #static-extension
     output: _
-    flags: null  ;static?
+    flags: _  ;static?
 ]
 
 application-class: make project-class [
@@ -353,8 +353,8 @@ application-class: make project-class [
     generated?: false
 
     linker: _
-    searches: null
-    ldflags: null
+    searches: _
+    ldflags: _
 
     link: meth [return: <none>] [
         linker/link output depends ldflags
@@ -378,8 +378,8 @@ dynamic-library-class: make project-class [
     generated?: false
     linker: _
 
-    searches: null
-    ldflags: null
+    searches: _
+    ldflags: _
     link: meth [return: <none>] [
         linker/link output depends ldflags
     ]
@@ -413,7 +413,7 @@ compiler-class: make object! [
     name: _
     id: _ ;flag prefix
     version: _
-    exec-file: null
+    exec-file: _
     compile: meth [
         return: <none>
         output [file!]
@@ -723,7 +723,7 @@ ld: make linker-class [
     ;
     name: 'ld
     version: _
-    exec-file: null
+    exec-file: _
     id: "gnu"
     command: meth [
         return: [text!]
@@ -832,7 +832,7 @@ ld: make linker-class [
 llvm-link: make linker-class [
     name: 'llvm-link
     version: _
-    exec-file: null
+    exec-file: _
     id: "llvm"
     command: meth [
         return: [text!]
@@ -917,7 +917,7 @@ link: make linker-class [
     name: 'link
     id: "msc"
     version: _
-    exec-file: null
+    exec-file: _
     command: meth [
         return: [text!]
         output [file!]
@@ -1013,7 +1013,7 @@ strip-class: make object! [
     class: #strip
     name: _
     id: _  ; flag prefix
-    exec-file: null
+    exec-file: _
     options: _
     commands: meth [
         return: [block!]
@@ -1046,16 +1046,16 @@ strip: make strip-class [
 object-file-class: make object! [
     class: #object-file
     compiler: _
-    cflags: null
-    definitions: null
+    cflags: _
+    definitions:
     source: ~
     output: ~
     basename: _  ; output without extension part
     optimization: _
     debug: _
-    includes: null
+    includes: _
     generated?: false
-    depends: null
+    depends: _
 
     compile: meth [return: <none>] [
         compiler/compile

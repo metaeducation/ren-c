@@ -327,8 +327,8 @@ redescribe: func [
         {(modified) Action whose description is to be updated.}
 ][
     let meta: meta-of :value
-    let notes: null
-    let description: null
+    let notes: _
+    let description: _
 
     ; For efficiency, objects are only created on demand by hitting the
     ; required point in the PARSE.  Hence `redescribe [] :foo` will not tamper
@@ -441,7 +441,7 @@ redescribe: func [
         notes
         every [param note] notes [null? :note]
     ] then [
-        meta.parameter-notes: null
+        meta.parameter-notes: _
     ]
 
     return :value  ; should have updated the meta
