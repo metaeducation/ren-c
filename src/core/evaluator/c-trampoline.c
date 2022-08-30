@@ -172,7 +172,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
         assert(Is_Throwing(FRAME));
     }
     else if (
-        STATE == 0  // can't read STATE when ABRUPT_FAILURE flag is set
+        STATE == STATE_0  // can't read STATE when ABRUPT_FAILURE flag is set
         and Not_Frame_Flag(FRAME, MAYBE_STALE)
     ){
         if (FRAME->executor != &Just_Use_Out_Executor)  // exempt, see [1]
@@ -251,7 +251,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
             Clear_Stale_Flag(OUT);  // again, see [1]
 
         if (Get_Frame_Flag(FRAME, ROOT_FRAME)) {
-            STATE = 0;  // !!! Frame gets reused, review
+            STATE = STATE_0;  // !!! Frame gets reused, review
             CLEANUP_BEFORE_EXITING_TRAP_BLOCK;
             return TOP_FRAME->out;
         }
@@ -279,7 +279,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
   // 1. It's legal for a frame to implement itself in terms of another frame
   //    that is compatible.  This could have a separate signal, but for now
   //    it's done as BOUNCE_CONTINUE.  Since that delegation may be to an
-  //    INITIAL_ENTRY state, 0 needs to be legal.
+  //    INITIAL_ENTRY state, the zero STATE_0 needs to be allowed.
   //
   // 2. If a frame besides the one that we ran is above on the stack, then
   //    the frame is using that continuation to get a result it is interested

@@ -95,7 +95,7 @@ Bounce Group_Branch_Executor(Frame(*) frame_)
         return THROWN;
 
     enum {
-        ST_GROUP_BRANCH_INITIAL_ENTRY = 0,
+        ST_GROUP_BRANCH_INITIAL_ENTRY = STATE_0,
         ST_GROUP_BRANCH_RUNNING_GROUP
     };
 
@@ -339,7 +339,7 @@ DECLARE_NATIVE(also)  // see `tweak :also 'defer on` in %base-defs.r
     Value(*) branch = ARG(branch);
 
     enum {
-        ST_ALSO_INITIAL_ENTRY = 0,
+        ST_ALSO_INITIAL_ENTRY = STATE_0,
         ST_ALSO_RUNNING_BRANCH
     };
 
@@ -625,7 +625,7 @@ DECLARE_NATIVE(all)
     Value(*) condition;  // will be found in OUT or SPARE
 
     enum {
-        ST_ALL_INITIAL_ENTRY = 0,
+        ST_ALL_INITIAL_ENTRY = STATE_0,
         ST_ALL_EVAL_STEP,
         ST_ALL_PREDICATE
     };
@@ -749,7 +749,7 @@ DECLARE_NATIVE(any)
     Value(*) condition;  // could point to OUT or SPARE
 
     enum {
-        ST_ANY_INITIAL_ENTRY = 0,
+        ST_ANY_INITIAL_ENTRY = STATE_0,
         ST_ANY_EVAL_STEP,
         ST_ANY_PREDICATE
     };
@@ -898,7 +898,7 @@ DECLARE_NATIVE(case)
     REBVAL *discarded = LOCAL(discarded);  // slot to write unused results to
 
     enum {
-        ST_CASE_INITIAL_ENTRY = 0,
+        ST_CASE_INITIAL_ENTRY = STATE_0,
         ST_CASE_CONDITION_EVAL_STEP,
         ST_CASE_RUNNING_PREDICATE,
         ST_CASE_DISCARDING_GET_GROUP,
@@ -1090,7 +1090,7 @@ DECLARE_NATIVE(switch)
     Value(*) scratch = LOCAL(scratch);
 
     enum {
-        ST_SWITCH_INITIAL_ENTRY = 0,
+        ST_SWITCH_INITIAL_ENTRY = STATE_0,
         ST_SWITCH_EVALUATING_RIGHT,
         ST_SWITCH_RUNNING_BRANCH
     };
@@ -1258,7 +1258,7 @@ DECLARE_NATIVE(default)
     REBVAL *steps = ARG(return);  // reuse slot to save resolved steps, see [1]
 
     enum {
-        ST_DEFAULT_INITIAL_ENTRY = 0,
+        ST_DEFAULT_INITIAL_ENTRY = STATE_0,
         ST_DEFAULT_GETTING_TARGET,
         ST_DEFAULT_RUNNING_PREDICATE,
         ST_DEFAULT_EVALUATING_BRANCH
@@ -1340,7 +1340,7 @@ DECLARE_NATIVE(catch)
     INCLUDE_PARAMS_OF_CATCH;
 
     enum {
-        ST_CATCH_INITIAL_ENTRY = 0,
+        ST_CATCH_INITIAL_ENTRY = STATE_0,
         ST_CATCH_RUNNING_CODE
     };
 

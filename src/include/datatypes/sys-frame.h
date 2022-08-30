@@ -182,9 +182,6 @@ inline static option(Symbol(const*)) FRM_LABEL(Frame(*) f) {
 #endif
 
 
-#define FLAG_STATE_BYTE(state) \
-    FLAG_SECOND_BYTE(state)
-
 
 // ARGS is the parameters and refinements
 // 1-based indexing into the arglist (0 slot is for FRAME! value)

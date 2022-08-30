@@ -111,7 +111,7 @@ Bounce Func_Dispatcher(Frame(*) f)
     Frame(*) frame_ = f;  // so we can use OUT
 
     enum {
-        ST_FUNC_INITIAL_ENTRY = 0,
+        ST_FUNC_INITIAL_ENTRY = STATE_0,
         ST_FUNC_BODY_EXECUTING
     };
 

@@ -445,7 +445,7 @@ DECLARE_NATIVE(evaluate)
     REBVAL *source = ARG(source);  // may be only GC reference, don't lose it!
 
     enum {
-        ST_EVALUATE_INITIAL_ENTRY = 0,
+        ST_EVALUATE_INITIAL_ENTRY = STATE_0,
         ST_EVALUATE_SINGLE_STEPPING
     };
 
@@ -705,7 +705,7 @@ DECLARE_NATIVE(applique)
     Value(*) frame = ARG(return);  // reuse as GC-safe cell for FRAME!
 
     enum {
-        ST_APPLIQUE_INITIAL_ENTRY = 0,
+        ST_APPLIQUE_INITIAL_ENTRY = STATE_0,
         ST_APPLIQUE_RUNNING_DEF_BLOCK
     };
 
@@ -800,7 +800,7 @@ DECLARE_NATIVE(apply)
     REBPAR *param;  // (same)
 
     enum {
-        ST_APPLY_INITIAL_ENTRY = 0,
+        ST_APPLY_INITIAL_ENTRY = STATE_0,
         ST_APPLY_LABELED_EVAL_STEP,
         ST_APPLY_UNLABELED_EVAL_STEP
     };

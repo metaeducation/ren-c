@@ -105,7 +105,7 @@ REBTYPE(Port)
     option(SymId) id = ID_OF_SYMBOL(verb);
 
     enum {
-        ST_TYPE_PORT_INITIAL_ENTRY = 0,
+        ST_TYPE_PORT_INITIAL_ENTRY = STATE_0,
         ST_TYPE_PORT_RUNNING_ACTOR
     };
 
@@ -285,5 +285,6 @@ REBTYPE(Url)
     Move_Cell(D_ARG(1), port);
     rebRelease(port);
 
+    assert(STATE == STATE_0);  // retriggered frame must act like initial entry
     return BOUNCE_CONTINUE;
 }

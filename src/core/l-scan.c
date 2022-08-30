@@ -1913,7 +1913,7 @@ Bounce Scanner_Executor(Frame(*) f) {
     TRASH_POINTER_IF_DEBUG(ep);
 
     enum {
-        ST_SCANNER_INITIAL_ENTRY = 0,
+        ST_SCANNER_INITIAL_ENTRY = STATE_0,
         ST_SCANNER_SCANNING_CHILD_ARRAY,
         ST_SCANNER_SCANNING_CONSTRUCT
     };
@@ -3053,7 +3053,7 @@ DECLARE_NATIVE(transcode)
     REBVAL *ss_buffer = ARG(return);  // kept as a BINARY!, gets GC'd
 
     enum {
-        ST_TRANSCODE_INITIAL_ENTRY = 0,
+        ST_TRANSCODE_INITIAL_ENTRY = STATE_0,
         ST_TRANSCODE_SCANNING
     };
 

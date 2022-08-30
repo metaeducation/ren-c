@@ -389,7 +389,7 @@ DECLARE_NATIVE(let)
     REBVAL *bindings_holder = ARG(return);
 
     enum {
-        ST_LET_INITIAL_ENTRY = 0,
+        ST_LET_INITIAL_ENTRY = STATE_0,
         ST_LET_EVAL_STEP
     };
 

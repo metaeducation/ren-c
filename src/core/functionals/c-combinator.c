@@ -363,7 +363,7 @@ DECLARE_NATIVE(opt_combinator)
     UNUSED(ARG(state));  // combinator implicit
 
     enum {
-        ST_OPT_COMBINATOR_INITIAL_ENTRY = 0,
+        ST_OPT_COMBINATOR_INITIAL_ENTRY = STATE_0,
         ST_OPT_COMBINATOR_RUNNING_PARSER
     };
 
@@ -491,7 +491,7 @@ DECLARE_NATIVE(some_combinator)
     );
 
     enum {
-        ST_SOME_COMBINATOR_INITIAL_ENTRY = 0,
+        ST_SOME_COMBINATOR_INITIAL_ENTRY = STATE_0,
         ST_SOME_COMBINATOR_FIRST_PARSER_RUN,
         ST_SOME_COMBINATOR_LATER_PARSER_RUN
     };
@@ -574,7 +574,7 @@ DECLARE_NATIVE(further_combinator)
     UNUSED(ARG(state));
 
     enum {
-        ST_FURTHER_COMBINATOR_INITIAL_ENTRY = 0,
+        ST_FURTHER_COMBINATOR_INITIAL_ENTRY = STATE_0,
         ST_FURTHER_COMBINATOR_RUNNING_PARSER
     };
 

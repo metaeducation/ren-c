@@ -78,7 +78,7 @@ Bounce Adapter_Dispatcher(Frame(*) f)
     assert(ARR_LEN(details) == IDX_ADAPTER_MAX);
 
     enum {
-        ST_ADAPTER_INITIAL_ENTRY = 0,
+        ST_ADAPTER_INITIAL_ENTRY = STATE_0,
         ST_ADAPTER_RUNNING_PRELUDE
     };
 

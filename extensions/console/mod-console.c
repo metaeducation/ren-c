@@ -238,7 +238,7 @@ DECLARE_NATIVE(console)
     REBVAL *metaresult = SPARE;  // what we got from running code requests
 
     enum {
-        ST_CONSOLE_INITIAL_ENTRY = 0,
+        ST_CONSOLE_INITIAL_ENTRY = STATE_0,
         ST_CONSOLE_RUNNING_REQUEST
     };
 

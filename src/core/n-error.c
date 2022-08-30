@@ -55,7 +55,7 @@ DECLARE_NATIVE(trap)
     REBVAL *code = ARG(code);
 
     enum {
-        ST_TRAP_INITIAL_ENTRY = 0,
+        ST_TRAP_INITIAL_ENTRY = STATE_0,
         ST_TRAP_EVALUATING
     };
 

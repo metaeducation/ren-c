@@ -1044,7 +1044,7 @@ Bounce Action_Executor(Frame(*) f)
     }
 
     RESET(SPARE);  // tiny cost (one bit clear) but worth it, see [3]
-    STATE = 0;  // reset to zero for each phase
+    STATE = STATE_0;  // reset to zero for each phase
 
     f_next_gotten = nullptr;  // arbitrary code changes fetched variables
 

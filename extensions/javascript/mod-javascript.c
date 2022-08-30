@@ -321,7 +321,7 @@ static struct Reb_Promise_Info *PG_Promises;  // Singly-linked list
 
 
 enum Reb_Native_State {
-    ST_JS_NATIVE_INITIAL_ENTRY = 0,
+    ST_JS_NATIVE_INITIAL_ENTRY = STATE_0,
     ST_JS_NATIVE_RUNNING,
     ST_JS_NATIVE_SUSPENDED,
     ST_JS_NATIVE_RESOLVED,

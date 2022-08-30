@@ -141,7 +141,7 @@ Bounce Chainer_Dispatcher(Frame(*) f)
         return THROWN;
 
     enum {
-        ST_CHAINER_INITIAL_ENTRY = 0,
+        ST_CHAINER_INITIAL_ENTRY = STATE_0,
         ST_CHAINER_RUNNING_SUBFUNCTION
     };
 

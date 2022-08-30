@@ -565,7 +565,7 @@ inline static REBVAL *Init_Action_Core(
 
 
 enum {
-    ST_ACTION_INITIAL_ENTRY = 0,
+    ST_ACTION_INITIAL_ENTRY = STATE_0,
 
     ST_ACTION_FULFILLING_ARGS = 100,  // weird number if dispatcher gets it
 

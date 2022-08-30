@@ -118,6 +118,13 @@ STATIC_ASSERT(FRAME_FLAG_7_IS_TRUE == NODE_FLAG_CELL);
 // One byte's worth is used to encode a "frame state" that can be used by
 // natives or dispatchers, e.g. to encode which step they are on.
 //
+// By default, when a frame is initialized its state byte will be 0.  This
+// lets the executing code know that it's getting control for the first time.
+
+#define FLAG_STATE_BYTE(state) \
+    FLAG_SECOND_BYTE(state)
+
+#define STATE_0 0  // use macro vs. just hardcoding 0 around the system
 
 #undef FRAME_FLAG_8
 #undef FRAME_FLAG_9
@@ -240,7 +247,8 @@ STATIC_ASSERT(31 < 32);  // otherwise FRAME_FLAG_XXX too high
 // trick.  This made the callsites much more noisy, so FRAME_MASK_NONE is used
 // solely to help call out places that don't have other flags.
 //
-#define FRAME_MASK_NONE 0
+#define FRAME_MASK_NONE \
+    FLAG_STATE_BYTE(STATE_0)  // note that the 0 state is implicit most places
 
 
 #define Set_Frame_Flag(f,name) \

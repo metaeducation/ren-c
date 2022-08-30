@@ -62,7 +62,7 @@ DECLARE_NATIVE(reduce)
     Value(*) predicate = ARG(predicate);
 
     enum {
-        ST_REDUCE_INITIAL_ENTRY = 0,
+        ST_REDUCE_INITIAL_ENTRY = STATE_0,
         ST_REDUCE_EVAL_STEP,
         ST_REDUCE_RUNNING_PREDICATE
     };
@@ -200,7 +200,7 @@ DECLARE_NATIVE(reduce_each)
     Value(*) body = ARG(body);
 
     enum {
-        ST_REDUCE_EACH_INITIAL_ENTRY = 0,
+        ST_REDUCE_EACH_INITIAL_ENTRY = STATE_0,
         ST_REDUCE_EACH_REDUCING_STEP,
         ST_REDUCE_EACH_RUNNING_BODY
     };
@@ -491,7 +491,7 @@ Bounce Composer_Executor(Frame(*) f)
     assert(Is_Nulled(predicate) or IS_ACTION(predicate));
 
     enum {
-        ST_COMPOSER_INITIAL_ENTRY = 0,
+        ST_COMPOSER_INITIAL_ENTRY = STATE_0,
         ST_COMPOSER_EVAL_GROUP,
         ST_COMPOSER_RUNNING_PREDICATE,
         ST_COMPOSER_RECURSING_DEEP
@@ -769,7 +769,7 @@ DECLARE_NATIVE(compose)
     UNUSED(ARG(predicate));
 
     enum {
-        ST_COMPOSE_INITIAL_ENTRY = 0,
+        ST_COMPOSE_INITIAL_ENTRY = STATE_0,
         ST_COMPOSE_COMPOSING
     };
 

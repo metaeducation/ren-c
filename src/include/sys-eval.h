@@ -98,7 +98,7 @@
 // sure the expected frame variables for that state are initialized.
 //
 enum {
-    ST_EVALUATOR_INITIAL_ENTRY = 0,
+    ST_EVALUATOR_INITIAL_ENTRY = STATE_0,
 
     ST_EVALUATOR_STEPPING_AGAIN,
 

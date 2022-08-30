@@ -622,7 +622,7 @@ DECLARE_NATIVE(cycle)
     Value(*) body = ARG(body);
 
     enum {
-        ST_CYCLE_INITIAL_ENTRY = 0,
+        ST_CYCLE_INITIAL_ENTRY = STATE_0,
         ST_CYCLE_EVALUATING_BODY
     };
 
@@ -1011,7 +1011,7 @@ DECLARE_NATIVE(for_each)
     Value(*) iterator = ARG(return);  // reuse to hold Loop_Each_State
 
     enum {
-        ST_FOR_EACH_INITIAL_ENTRY = 0,
+        ST_FOR_EACH_INITIAL_ENTRY = STATE_0,
         ST_FOR_EACH_RUNNING_BODY
     };
 
@@ -1120,7 +1120,7 @@ DECLARE_NATIVE(every)
     Value(*) iterator = ARG(return);  // place to store iteration state
 
     enum {
-        ST_EVERY_INITIAL_ENTRY = 0,
+        ST_EVERY_INITIAL_ENTRY = STATE_0,
         ST_EVERY_RUNNING_BODY
     };
 
@@ -1617,7 +1617,7 @@ DECLARE_NATIVE(map)
     Value(*) iterator = ARG(return);  // reuse to hold Loop_Each_State
 
     enum {
-        ST_MAP_INITIAL_ENTRY = 0,
+        ST_MAP_INITIAL_ENTRY = STATE_0,
         ST_MAP_RUNNING_BODY
     };
 
@@ -1750,7 +1750,7 @@ DECLARE_NATIVE(repeat)
     Value(*) index = SPARE;  // use spare cell to hold current index
 
     enum {
-        ST_REPEAT_INITIAL_ENTRY = 0,
+        ST_REPEAT_INITIAL_ENTRY = STATE_0,
         ST_REPEAT_EVALUATING_BODY
     };
 
@@ -1829,7 +1829,7 @@ DECLARE_NATIVE(for)
     REBVAL *body = ARG(body);
 
     enum {
-        ST_FOR_INITIAL_ENTRY = 0,
+        ST_FOR_INITIAL_ENTRY = STATE_0,
         ST_FOR_RUNNING_BODY
     };
 
@@ -1959,7 +1959,7 @@ DECLARE_NATIVE(until)
     Value(*) condition;  // can point to OUT or SPARE
 
     enum {
-        ST_UNTIL_INITIAL_ENTRY = 0,
+        ST_UNTIL_INITIAL_ENTRY = STATE_0,
         ST_UNTIL_EVALUATING_BODY,
         ST_UNTIL_RUNNING_PREDICATE
     };
@@ -2065,7 +2065,7 @@ DECLARE_NATIVE(while)
     Value(*) body = ARG(body);
 
     enum {
-        ST_WHILE_INITIAL_ENTRY = 0,
+        ST_WHILE_INITIAL_ENTRY = STATE_0,
         ST_WHILE_EVALUATING_CONDITION,
         ST_WHILE_EVALUATING_BODY
     };
