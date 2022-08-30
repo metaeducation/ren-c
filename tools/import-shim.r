@@ -21,38 +21,37 @@ Rebol [
         doesn't let them act as expression barriers but can help readability.
         Additionally it turns lone quotes into the word `null`.
     }
-    Notes: {
-        * DO no longer changes the working directory to system.script.path,
-          so to include this it should say this magic incantation:
+    Usage: {
+        DO no longer changes the working directory to system.script.path,
+        so to include this it should say this magic incantation:
 
             if not find words of import 'product [
                 do load append copy system/script/path %import-shim.r
             ]
 
-          This helps standardize the following rules between the new and the
-          old bootstrap executable:
+        This helps standardize the following rules between the new and the
+        old bootstrap executable:
 
             https://github.com/metaeducation/rebol-issues/issues/2374
+    }
+    Notes: {
+      * DO LOAD is used instead of DO to avoid the legacy behavior of changing
+        to the directory of %import-shim.r when running a FILE! (vs. a BLOCK!)
+        This also keeps it from resetting the directory when the DO is over,
+        so we can CHANGE-DIR from this shim to compensate for the changing
+        into the calling script's directory...making it appear that the
+        command line processing never switched the dir in the first place.
 
-          A couple of points...  :-(
+      * APPEND is used instead of JOIN because the bootstrap executable
+        semantically considers JOIN to be mutating.  The decision on this was
+        that JOIN would be non-mutating but also non-reducing.  But the
+        bootstrap-shim.r can't be imported until after the import-shim.r, so
+        using APPEND is the clearest alternative.)
 
-          LOAD is used so that the DO does not have the legacy behavior of
-          changing to the directory of %import-shim.r, because it's just doing
-          a BLOCK!.  This also keeps it from resetting the directory when the
-          DO is over, so we can CHANGE-DIR in this script to compensate for
-          the changing into the script directory...making it appear that the
-          command line processing never switched the dir in the first place.
-
-          APPEND is used instead of JOIN because the bootstrap executable
-          semantically considers JOIN to be mutating.  The decision on this
-          was that JOIN would be non-mutating but also non-reducing.  But the
-          bootstrap-shim.r can't be imported until after the import-shim.r, so
-          using APPEND is the clearest alternative.)
-
-          There seems to be flakiness on recursive DO in the bootstrap EXE.
-          So having multi-inclusion handled inside this script isn't an option,
-          because READs and other things start panic'ing randomly.  It seems
-          avoiding recursion solves the issue.
+      * There seems to be flakiness on recursive DO in the bootstrap EXE.
+        So having multi-inclusion handled inside this script isn't an option,
+        because READs and other things start panic'ing randomly.  It seems
+        avoiding recursion solves the issue: run %import-shim.r only once.
     }
 ]
 
@@ -68,14 +67,34 @@ if set? 'import-shim-loaded [  ; already ran this shim
     fail "Recursive loading %import-shim.r is flaky, check 'import-shim-loaded"
 ]
 
+lib3: lib
+
+; Simple "divider-style" thing for remarks.  At a certain verbosity level,
+; it could dump those remarks out...perhaps based on how many == there are.
+; (This is a good reason for retaking ==, as that looks like a divider.)
+;
+; Only supports strings in bootstrap, because sea of words is not in bootstrap
+; executable, so plain words here creates a bunch of variables...could confuse
+; the global state more than it already is.
+;
+===: lib3/func [
+    ; note: <...> is now a TUPLE!, and : used to be "hard quote" (vs ')
+    label [text!]
+    'terminal [word!]
+][
+    assert [equal? terminal '===]
+]
+
+
+=== {WORKAROUND FOR BUGGY PRINT IN BOOTSTRAP EXECUTABLE} ===
 
 ; Commit #8994d23 circa Dec 2018 has sporadic problems printing large chunks
 ; (in certain mediums, e.g. to the VSCode integrated terminal).  Replace PRINT
 ; as early as possible in the boot process with one that uses smaller chunks.
 ; This seems to avoid the issue.
 ;
-prin3-buggy: :lib/prin
-print: lib/print: lib/func [value <local> pos] [
+prin3-buggy: :lib3/prin
+print: lib3/print: lib3/func [value <local> pos] [
     if value = newline [  ; new: allow newline, to mean print newline only
         prin3-buggy newline
         return
@@ -89,10 +108,18 @@ print: lib/print: lib/func [value <local> pos] [
 ]
 
 
-; Standardize the directory to be wherever the command line was invoked from,
-; and NOT where the script invoked (e.g. %make.r) is located.
+=== {STANDARDIZE DIRECTORY TO WHERE THE COMMAND LINE WAS INVOKED FROM} ===
+
+; Typically if any filenames are passed to a script, those paths should be
+; interpreted relative to what directory the user was in when they invoked
+; the program.  Historical Rebol changed the directory to the directory of the
+; running script--which throws this off.
 ;
+; Here we change the directory back to where it was when the script was
+; started, which is compatible with the current EXE's behavior.
+
 change-dir system/options/path
+
 
 export: func [
     "%import-shim.r variant of EXPORT which just puts the definition into LIB"
