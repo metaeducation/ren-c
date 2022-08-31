@@ -573,7 +573,7 @@ so: enfixed func [
     feed [<opt> <end> any-value! <variadic>]
 ][
     if not condition [
-        fail @condition make error! [
+        fail 'condition make error! [
             type: 'Script
             id: 'assertion-failure
             arg1: compose [(condition) so]
@@ -598,7 +598,7 @@ was: enfixed redescribe [
 ](
     lambda [left [<opt> any-value!] right [<opt> any-value!]] [
         if :left != :right [
-            fail @return make error! [
+            fail 'return make error! [
                 type: 'Script
                 id: 'assertion-failure
                 arg1: compose [(:left) is (:right)]
@@ -706,7 +706,7 @@ find-last: redescribe [
 ](
     adapt :find-reverse [
         if not any-series? series [
-            fail @series "Can only use FIND-LAST on ANY-SERIES!"
+            fail 'series "Can only use FIND-LAST on ANY-SERIES!"
         ]
 
         series: tail of series  ; can't use plain TAIL due to /TAIL refinement
@@ -931,7 +931,7 @@ raise: func [
 
     return: []  ; !!! notation for divergent function?
     'blame "Point to variable or parameter to blame"
-        [<skip> the-word! the-path!]
+        [<skip> quoted!]
     reason "ERROR! value, ID, URL, message text, or failure spec"
         [<end> error! word! path! url! text! block!]
     /where "Frame or parameter at which to indicate the error originated"
@@ -939,6 +939,11 @@ raise: func [
 ][
     all [error? reason, not blame, not where] then [
         return raise* reason  ; fast shortcut
+    ]
+    if blame [
+        blame: (match [word! tuple!] unquote blame) else [
+            fail "Quoted blame for error must be WORD! or TUPLE!)"
+        ]
     ]
 
     ; Ultimately we might like FAIL to use some clever error-creating dialect

@@ -138,7 +138,7 @@ join: function [
                     ]
                 ]
                 (not blank? last base) and (not blank? first item) [
-                    fail @item [
+                    fail 'item [
                         "Elements must be separated with" sep
                     ]
                 ]
@@ -157,7 +157,7 @@ join: function [
             case [
                 empty? base [append base item]
                 blank? last base [change back tail base item]
-                fail @item ["Elements must be separated with" sep]
+                fail 'item ["Elements must be separated with" sep]
             ]
         ]
     ]

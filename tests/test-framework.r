@@ -112,7 +112,7 @@ run-test-cluster: func [
     ;
     let isolate: module null [
         print: lambda [x] [
-            fail @x "Don't use PRINT in tests"
+            fail 'x "Don't use PRINT in tests"
         ]
     ]
 

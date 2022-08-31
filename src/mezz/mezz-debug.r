@@ -45,7 +45,7 @@ verify: function [
                 reaction = '~ignore~
             ]
         ] else [
-            fail @conditions make error! [
+            fail 'conditions make error! [
                 type: 'Script
                 id: 'assertion-failure
                 arg1: compose [

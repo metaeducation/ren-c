@@ -17,7 +17,7 @@ REBOL [
 ]
 
 loop: function [] [
-    fail @return [
+    fail 'return [
         "Short word LOOP is reserved for a generalized looping dialect:"
         https://forum.rebol.info/t/common-lisp-loop-and-iterate/1878
     ]
@@ -30,7 +30,7 @@ loop: function [] [
 ; https://forum.rebol.info/t/rethinking-auto-gathered-set-word-locals/1150
 ;
 method: func [/dummy] [
-    fail @dummy [
+    fail 'dummy [
         {The distinction between FUNC vs. FUNCTION, and METH vs. METHOD was}
         {the gathering of SET-WORD! as locals.  This behavior led to many}
         {problems with gathering irrelevant locals in the frame (e.g. any}
@@ -43,7 +43,7 @@ method: func [/dummy] [
 
 
 REBOL: function [] [
-    fail @return [
+    fail 'return [
         "The REBOL [] header of a script must be interpreted by LOAD (and"
         "functions like DO).  It cannot be executed directly."
     ]
@@ -51,7 +51,7 @@ REBOL: function [] [
 
 
 input: does [
-    fail @return [
+    fail 'return [
         "Use ASK TEXT! or READ-LINE vs INPUT (consider using ASK dialect):"
         https://forum.rebol.info/t/1124
     ]
@@ -59,21 +59,21 @@ input: does [
 
 
 repend: func [<local> dummy] [
-    fail @dummy [
+    fail 'dummy [
         "REPEND is just `adapt :append [value: reduce :value]`, and is not"
         "provided in the box."
     ]
 ]
 
 remold: func [<local> dummy] [
-    fail @dummy [
+    fail 'dummy [
         "REMOLD is just `adapt :mold [value: reduce :value]`, but is not"
         "provided in the box."
     ]
 ]
 
 rejoin: func [<local> dummy] [
-    fail @dummy [
+    fail 'dummy [
         "REJOIN is replaced in textual sceanarios by UNSPACED, but in more"
         "general cases by JOIN, which accepts datatypes as a first parameter,"
         "e.g. `join binary! spread [{ABC} 1 + 2 3 + 4]`"
@@ -208,7 +208,7 @@ forever: :cycle
 
 find: adapt (augment :find [/reverse /last]) [
     if reverse or last [
-        fail @reverse [
+        fail 'reverse [
             {/REVERSE and /LAST on FIND have been deprecated.  Use FIND-LAST}
             {or FIND-REVERSE specializations: https://forum.rebol.info/t/1126}
         ]
