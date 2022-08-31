@@ -29,6 +29,8 @@ REBOL [
 ;
 script-pre-load-hook: ~
 
+rescue: :lib.rescue  ; during boot the LIB native RESCUE is moved here
+lib.rescue: ~   ; forcing long name of SYS.UTIL.RESCUE hints it is dangerous
 
 module: func [
     {Creates a new module}

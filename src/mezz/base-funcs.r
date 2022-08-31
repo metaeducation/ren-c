@@ -717,27 +717,26 @@ attempt: func [
     {Evaluate a block and returns result or NULL if an expression fails}
 
     return: "Returns NULL on failure (-or- if last evaluative result is NULL)"
-        [<opt> any-value!]
+        [<opt> <void> any-value!]
+    @error [error!]
     code [block!]
-    <local> last'
 ][
-    last': none'
-    reduce-each ^result' code [
-        if raised? unget result' [return null]
-        if void? unget result' [continue]
-        last': result'
-    ]
-    return unget last'
+    if error? error: entrap code [return null]
+    return (unmeta error, elide error: ~)
 ]
 
-entrap: func [
-    {If evaluation raises an error, return ERROR!...otherwise the ^META result}
+trap: func [
+    {If evaluation raises an error, return it, otherwise NULL}
 
     return: [<opt> any-value!]
-    code [block! action!]
-    <local> result
+    @result [<opt> any-value!]
+    code [block!]
 ][
-    return any [[# ^result]: trap code, result]
+    if error? result: entrap code [
+        return (result, elide result: ~)
+    ]
+    set/any 'result unmeta result
+    return null
 ]
 
 reduce*: redescribe [

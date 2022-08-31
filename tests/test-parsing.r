@@ -186,7 +186,7 @@ export collect-logs: function [
         {collect the logged results here (modified)}
     log-file [file!]
 ][
-    trap [log-contents: read log-file] then [
+    log-contents: read log-file except [
         fail ["Unable to read " mold log-file]
     ]
 

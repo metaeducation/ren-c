@@ -54,7 +54,7 @@ run-single-test: func [
 ][
     log [mold code]
 
-    let [error result]: trap as block! code
+    let [error result]: sys.util.rescue as block! code
     case [
         error [
             spaced ["error" any [
@@ -182,9 +182,11 @@ run-test-cluster: func [
         ;
         if group-pos <> pos [
             let code: copy/part pos group-pos
-            trap [
-                log [mold code newline]
-                fail "out-of-GROUP disabled: https://forum.rebol.info/t/1680/"
+            log [mold code newline]
+
+            fail "out-of-GROUP disabled: https://forum.rebol.info/t/1680/"
+
+            sys.util.rescue [
                 do code  ; result of DO is discarded
             ] then error -> [
                 ;
@@ -260,21 +262,23 @@ process-tests: function [
                 |
             'collect-tests set body: block! (
                 log ["@collect-tests" space mold body]
-                trap [
-                    let [# collected]: module null compose/deep [collect [
-                        let keep-test: adapt :keep [
-                            if not block? :value [
-                                fail "KEEP-TEST takes BLOCK! (acts as GROUP!)"
-                            ]
-                            value: quote as group! value
-                        ]
-                        keep: ~
-                        (as group! body)
-                    ]]
 
-                    ; COLLECTED should just be a BLOCK! of groups now.
-                    ;
-                    let flags: []
+                let [# collected]: module null compose/deep [collect [
+                    let keep-test: adapt :keep [
+                        if not block? :value [
+                            fail "KEEP-TEST takes BLOCK! (acts as GROUP!)"
+                        ]
+                        value: quote as group! value
+                    ]
+                    keep: ~
+                    (as group! body)
+                ]]
+
+                ; COLLECTED should just be a BLOCK! of groups now.
+                ;
+                let flags: []
+
+                sys.util.rescue [
                     handler flags collected
                 ]
                 then error -> [

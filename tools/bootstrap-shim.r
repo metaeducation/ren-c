@@ -65,7 +65,7 @@ trap [
     ; Fall through to the body of this file, we are shimming version ~8994d23
 ] else [
     trap [
-        func3 [i [<maybe> integer!]] [...]
+        func [i [<maybe> integer!]] [...]
     ] then [
         ;
         ; Old bootstrap executables that are already shimmed should not do
