@@ -41,7 +41,7 @@
     a == #{00}
 )
 
-('bad-pick = pick trap [pick #{00} 'x] 'id)
+~bad-pick~ !! (pick #{00} 'x)
 
 
 [#1791

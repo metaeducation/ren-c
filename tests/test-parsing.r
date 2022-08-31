@@ -113,9 +113,21 @@ export collect-tests: function [
             ; Put it in a BLOCK! to denote that it should run in an isolated
             ; context, but all by itself.
             ;
-            set item group! (
+            ; Also, accommodate new feature, marking an expected error ID, e.g.
+            ;
+            ;    ~bad-pick~ !! (pick #{00} 'x)
+            [
+                set expected: quasi! ['!! | (fail "!! must follow ~error-id~")]
+                |
+                (expected: _)
+            ]
+            set group: group! (
                 keep flags, flags: copy []
-                keep/line :[item]  ; one isolated group
+
+                ; Treat a top level group (...) as if you wrote [(...)].
+                ; Put it in a block, along with its optional expected error ID.
+                ;
+                keep/line reduce [(maybe expected) (if expected '!!) group]
             )
             |
             ; A BLOCK! groups together several tests that rely on common

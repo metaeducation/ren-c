@@ -51,10 +51,24 @@ run-single-test: func [
     return: <none>
     code "Code GROUP! from test file, assumed bound into isolated module"
         [group!]
+    expected-id [<opt> word!]
 ][
+    assert [expected-id <> '!!!]  ; dialecting mistake, vs. ???, easy to make
+
     log [mold code]
 
     let [error result]: sys.util.rescue as block! code
+
+    all [
+        error
+        expected-id
+        (all [not error.id, expected-id = '???]) or (error.id = expected-id)
+    ] then [
+        successes: me + 1
+        log reduce [space {"correct failure:"} quote quasi expected-id newline]
+        return
+    ]
+
     case [
         error [
             spaced ["error" any [
@@ -131,23 +145,11 @@ run-test-cluster: func [
     ; Everything else will be executed and its results discarded.  This
     ; permits sharing, cleanup, and opens many other possibilities.
     ;
-    ;    [
-    ;        port: (open %something.txt)  ; group not line start--not a test
-    ;        foo: func [x] [return x + 1]  ; not a test
-    ;
-    ;        (2 = foo 1)  ; a test--result is checked and logged
-    ;        (3 = foo 2)  ; a test--result is checked and logged
-    ;        (port? port)  ; a test--result is checked and logged
-    ;
-    ;        close port  ; not a test
-    ;    ]
-    ;
-    ; !!! Right now all the GROUP! tests are run in the same module as the
     ; cluster, but ideally they would run in a module per-group that just
     ; *inherited* from the cluster.  Hopefully modules will be able to do
     ; things like that in the "near future"(tm).
     ;
-    for-next pos cluster [
+    parse cluster [while not <end> [
         ;
         ; !!! Skip any ISSUE! or URL!, as this style has been used:
         ;
@@ -155,76 +157,22 @@ run-test-cluster: func [
         ;        2 = 1 + 1
         ;     )]
         ;
-        ; This test style does not put the GROUP! on its own line.  So if we
-        ; encounter a GROUP! in such a state we consider it a test.
-        ;
-        while [not tail? pos] [
-            match [url! issue!] pos.1 else [break]
-            pos: next pos
-        ]
+        opt some [url! | issue!]
 
-        ; If we're at a GROUP! then assume it's a test, otherwise look ahead
-        ; for the next GROUP! that starts a line.
-        ;
-        group-pos: if group? pos.1 [pos] else [catch [
-            for-next p pos [
-                if (group? p.1) and (new-line? p) [
-                    throw p
-                ]
-            ]
-        ]]
+        (expected-id: _)  ; default is expecting a true result, not error w/id
 
-        ; Run any code that's between pos and the next group.  Note that
-        ; GROUP-POS as NULL will opt out of the refinement and copy to end.
-        ;
-        ; !!! Temporary disabled:
-        ; https://forum.rebol.info/t/1680
-        ;
-        if group-pos <> pos [
-            let code: copy/part pos group-pos
-            log [mold code newline]
-
-            fail "out-of-GROUP disabled: https://forum.rebol.info/t/1680/"
-
-            sys.util.rescue [
-                do code  ; result of DO is discarded
-            ] then error -> [
-                ;
-                ; If common code for a cluster fails, the error is logged and
-                ; no more tests in the cluster are run.
-                ;
-                log ["Error in cluster code:" mold error newline]
-                return
+        opt [
+            expected-id: quasi! [(expected-id: unquasi expected-id)
+                '!! ahead group!
+                | (fail "QUASI! must be followed by !! and a GROUP!")
             ]
         ]
-
-        ; If we didn't find another group, we just ran all the code.  Done!
-        ;
-        if not group-pos [
-            break
+        [
+            group: group!
+            | (fail "GROUP! expected in tests")
         ]
-
-        pos: group-pos
-
-        ; There's a newline-starting GROUP! at group-pos.  Run it as a test,
-        ; and advance the position.
-        ;
-        ; We tolerate tests that aren't on new lines, but abut a previous test.
-        ;
-        ;     [(
-        ;         304 = 300 + 4
-        ;     )(  ; <-- this group has a newline internally, not externally
-        ;         1020 = 1000 + 20
-        ;     )]
-        ;
-        ; It's kind of ugly to do that, but many tests did it before the new
-        ; test facilities were available.  We'll try and improve things.
-        ;
-        while [group? pos.1] [
-            run-single-test pos.1
-            pos: next pos
-        ]
-    ]
+        (run-single-test group expected-id)
+    ]]
 ]
 
 
