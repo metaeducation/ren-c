@@ -562,7 +562,7 @@ import*: func [
         ;
         ; !!! Should there be a post-script-hook?
         ;
-        (script-pre-load-hook/ is-module hdr)
+        script-pre-load-hook/ [is-module hdr]
     ]
 
     === CHANGE WORKING DIRECTORY TO MODULE'S DIRECTORY (IF IT'S A MODULE) ===

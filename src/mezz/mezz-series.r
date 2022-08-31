@@ -82,7 +82,7 @@ array: func [
             repeat size [append block (copy/deep initial)]
         ]
         action? :initial [
-            repeat size [append block (initial/)]  ; Called every time
+            repeat size [append block initial/ []]  ; Called every time
         ]
     ] else [
         append/dup block initial size

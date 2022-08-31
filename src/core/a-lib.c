@@ -2054,6 +2054,21 @@ const REBINS *RL_rebQUOTING(const void *p)
 
 
 //
+//  rebDERELATIVIZE: C
+//
+// This is stylized like an API, but actually not exported--it uses internal
+// types.  This makes an cell that will last through a call and be freed.
+//
+const REBINS* rebDERELATIVIZE(Cell(const*) cell, REBSPC* specifier)
+{
+    Value(*) v = Derelativize(Alloc_Value(), cell, specifier);
+    Array(*) a = Singular_From_Cell(v);
+    Set_Subclass_Flag(API, a, RELEASE);
+    return a;
+}
+
+
+//
 //  rebUNQUOTING: RL_API
 //
 // This is #defined as rebU.

@@ -984,6 +984,13 @@ Bounce Evaluator_Executor(Frame(*) f)
             break;
         }
 
+        temp = VAL_SEQUENCE_AT(
+            SPARE,
+            f_current,
+            VAL_SEQUENCE_LEN(f_current) - 1
+        );
+        bool applying = IS_BLANK(temp);  // terminal slash is APPLY
+
         // The frame captures the stack pointer, and since refinements are
         // pushed we want to capture it before that point (so it knows the
         // refinements are for it).
@@ -1022,9 +1029,23 @@ Bounce Evaluator_Executor(Frame(*) f)
         if (Get_Action_Flag(VAL_ACTION(SPARE), ENFIXED))
             fail ("Use `>-` to shove left enfix operands into PATH!s");
 
-        Push_Action(subframe, VAL_ACTION(SPARE), VAL_ACTION_BINDING(SPARE));
-        Begin_Prefix_Action(subframe, VAL_ACTION_LABEL(SPARE));
-        goto process_action; }
+        if (not applying) {
+            Push_Action(subframe, VAL_ACTION(SPARE), VAL_ACTION_BINDING(SPARE));
+            Begin_Prefix_Action(subframe, VAL_ACTION_LABEL(SPARE));
+            goto process_action;
+        }
+
+        if (Is_Frame_At_End(f))
+            fail ("Terminal-Slash Action Invocation Needs APPLY argument");
+
+        STATE = ST_EVALUATOR_RUNNING_ACTION;  // bounces back to do lookahead
+        rebPushContinuation(
+            OUT,
+            FRAME_FLAG_MAYBE_STALE,
+            Lib(APPLY), rebQ(SPARE), rebDERELATIVIZE(f_next, f_specifier)
+        );
+        Fetch_Next_Forget_Lookback(f);
+        return BOUNCE_CONTINUE; }
 
 
     //=//// SET-PATH! /////////////////////////////////////////////////////=//

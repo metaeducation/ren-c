@@ -144,3 +144,10 @@
     ([(1 + 2) 7] = apply :compose [[(1 + 2) (<*> 3 + 4)] /label <*>])
     ([(1 + 2) 7] = apply :compose [[(1 + 2) (<*> 3 + 4)] /label first [<*>]])
 ]
+
+; APPLY is called by the evaluator when it gets a slash-terminated path that
+; is followed by a BLOCK!
+[
+    ([a b c [d e] [d e]] = append/ [[a b c] [d e] /dup 2])
+    (e: trap [mold/ 1], e.id = 'expect-arg)
+]
