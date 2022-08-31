@@ -698,7 +698,7 @@ inline static Bounce Native_Void_Result(Frame(*) frame_) {
     return BOUNCE_VOID;
 }
 
-inline static Bounce Native_None_Result(Frame(*) frame_) {
+inline static Bounce Native_None_Result_Untracked(Frame(*) frame_) {
     assert(not THROWING);
-    return Init_None(frame_->out);
+    return Init_None_Untracked(frame_->out);
 }

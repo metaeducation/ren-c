@@ -164,8 +164,11 @@ inline static bool Is_Word_Isotope_With_Id(Cell(const*) v, SymId id) {
 // invisible and sometimes not.
 //
 
+#define Init_None_Untracked(out) \
+    Init_Blank_Untracked((ensure(Value(*), (out))), ISOTOPE_0)
+
 #define Init_None(out) \
-    TRACK(Init_Blank_Untracked((ensure(Value(*), (out))), ISOTOPE_0))
+    TRACK(Init_None_Untracked(out))
 
 #define Init_Meta_Of_None(out) \
     TRACK(Init_Blank_Untracked((out), QUASI_2))
