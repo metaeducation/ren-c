@@ -133,22 +133,20 @@ browse*: func [
 ][
     print "Opening web browser..."
 
+    if file? location [
+        location: file-to-local location  ; local format is a string
+    ]
+
     ; Note that GET-OS-BROWSERS uses the Windows registry convention of having
     ; %1 be what needs to be substituted.  This may not be ideal, it was just
     ; easy to do rather than have to add processing on the C side.  Review.
     ;
     for-each template get-os-browsers [
-        let command: replace/all (copy template) "%1" either file? location [
-            file-to-local location
-        ][
-            location
+        let command: replace/all (copy template) "%1" location
+        call/shell command except [  ; CALL is synchronous by default
+            continue  ; just keep trying
         ]
-        trap [
-            call/shell command  ; open with no /WAIT, so don't use CALL*
-            return none
-        ] then [
-            ; Just keep trying
-        ]
+        return none
     ]
     fail "Could not open web browser"
 ]

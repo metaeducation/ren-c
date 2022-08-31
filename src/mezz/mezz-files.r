@@ -247,20 +247,21 @@ ask: function [
         ;
         if empty? line [continue]
 
-        e: trap [return to type line]
+        return (to type line except e -> [
+            ;
+            ; !!! The error trapped during the conversion may contain more
+            ; useful information than just saying "** Invalid input".  But
+            ; there's no API for a "light" printing of errors.  Scrub out all
+            ; the extra information from the error so it isn't as verbose.
+            ;
+            e.file: _
+            e.line: _
+            e.where: _
+            e.near: _
+            print [e]
 
-        ; !!! The actual error trapped during the conversion may contain more
-        ; useful information than just saying "** Invalid input".  But there's
-        ; no API for a "light" printing of errors.  Scrub out all the extra
-        ; information from the error so it isn't as verbose.
-        ;
-        e.file: _
-        e.line: _
-        e.where: _
-        e.near: _
-        print [e]
-
-        ; Keep cycling...
+            continue  ; Keep cycling, bypasses the RETURN (...)
+        ])
     ]
 ]
 

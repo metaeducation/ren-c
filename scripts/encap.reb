@@ -1005,11 +1005,7 @@ pe-format: context [
         /header "Return only the section header"
         /data "Return only the section data"
     ][
-        trap [
-            parse-exe exe-data
-        ] then err -> [
-            return null
-        ]
+        parse-exe exe-data except [return null]
 
         ; Check if there's section name conflicts
 
@@ -1309,9 +1305,7 @@ get-encap: func [
     rebol-path "The executable to search for the encap information in"
         [file!]
 ][
-    trap [
-        read/part rebol-path 1
-    ] then e -> [
+    read/part rebol-path 1 except e -> [
         print [e]
         print ["Can't check for embedded code in Rebol path:" rebol-path]
         return null

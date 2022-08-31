@@ -393,9 +393,7 @@ start-console: func [
         o.resources
         exists? skin-file: join o.resources skin-file
     ] then [
-        trap [
-            let new-skin: do load skin-file
-
+        let new-skin: do (load skin-file) then [
             ; if loaded skin returns console! object then use as prototype
             all [
                 object? new-skin
@@ -409,8 +407,8 @@ start-console: func [
             proto-skin.is-loaded: true
             proto-skin.name: default ["loaded"]
             append o.loaded skin-file
-
-        ] then e -> [
+        ]
+        except e -> [
             skin-error: e  ; show error later if `--verbose`
             proto-skin.name: "error"
         ]
@@ -825,15 +823,9 @@ ext-console-impl: func [
         return <prompt>
     ]
 
-    let code
-    trap [
-        ; Note LOAD now makes BLOCK! even for a single item,
-        ; e.g. `load "word"` => `[word]`
-        ;
-        code: transcode/where (delimit newline result) sys.contexts.user
-        assert [block? code]
-
-    ] then error -> [
+    code: (
+        transcode/where (delimit newline result) sys.contexts.user
+    ) except error -> [
         ;
         ; If loading the string gave back an error, check to see if it
         ; was the kind of error that comes from having partial input
@@ -874,6 +866,8 @@ ext-console-impl: func [
         emit [system.console.print-error (<*> error)]
         return <prompt>
     ]
+
+    assert [block? code]
 
     === HANDLE CODE THAT HAS BEEN SUCCESSFULLY LOADED ===
 

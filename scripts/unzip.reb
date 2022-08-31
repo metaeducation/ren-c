@@ -526,9 +526,7 @@ unzip: function [
                         throw blank
                     ]
                     data: copy/part data compressed-size
-                    trap [
-                        data: inflate/max data uncompressed-size
-                    ] then [
+                    data: inflate/max data uncompressed-size except [
                         info "-> failed [deflate]"
                         throw blank
                     ]
