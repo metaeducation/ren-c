@@ -41,6 +41,19 @@
 ]
 
 (
-    block: [some stuff]
-    'stuff = parse [some stuff some stuff] [repeat (2) @((block))]
+    block: [a b]
+    ^(spread [a b]) = ^ parse [a b a b] [repeat 2 @(spread block)]
+)
+(
+    block: [a b]
+    [a b] = parse [[a b] [a b]] [repeat 2 @(block)]
+)
+
+(
+    [a b c 1 2 3]
+    == append [a b c] parse [1 2 3] [block! | spread across some integer!]
+)
+(
+    [a b c [1 2 3]]
+    == append [a b c] parse [[1 2 3]] [block! | spread across some integer!]
 )

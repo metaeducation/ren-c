@@ -1447,7 +1447,7 @@ default-combinators: make map! reduce [
         return: "The matched value"
             [any-value!]
         @pending [<opt> block!]
-        value [quoted!]
+        value [quoted! quasi!]
         <local> comb
     ][
         ; Review: should it be legal to say:
@@ -1459,12 +1459,30 @@ default-combinators: make map! reduce [
         ; also be chosen to match)...but NULL rules are errors.
         ;
         if any-array? input [
-            if :input.1 = unquote value [
+            if quoted? value [
+                if input.1 <> unquote value [
+                    return raise [
+                        "Value at parse position wasn't unquote of QUOTED! item"
+                    ]
+                ]
                 remainder: next input
                 pending: _
                 return unquote value
             ]
-            return raise "Value at parse position wasn't unquote of QUOTED! item"
+            if not splice? unget value [
+                fail "Only isotope matched against array content is splice"
+            ]
+            for-each item unquasi value [
+                if input.1 <> item [
+                    return raise [
+                        "Value at input position didn't match splice element"
+                    ]
+                ]
+                input: next input
+            ]
+            remainder: input
+            pending: _
+            return unmeta value
         ]
 
         if any-string? input [
@@ -1815,31 +1833,16 @@ default-combinators: make map! reduce [
 
         comb: :(state.combinators).(quoted!)
 
-        all [
-            length of value = 1
-            group? single: first value
-            length of single = 1
-        ] then [
-            ; Splice-match semantics for @((thing)), match the block itemwise.
-            ; Experimental feature with weird syntax...
-            ;
-            if (not quoted? result') or (not splice? unget result') [
-                fail "Inline matching @((...)) requires BLOCK! for the moment"
-            ]
-            for-each item unmeta result' [
-                [^result' remainder pending]: comb state remainder quote item
-                    except e -> [
-                        return raise e
-                    ]
-                totalpending: glom totalpending spread pending
-            ]
-        ] else [
-            [^result' remainder pending]: comb state remainder result'
-                except e -> [
-                    return raise e
-                ]
-            totalpending: glom totalpending spread pending
+        if (not quoted? result') and (not splice? unget result') [
+            fail "Inline matching @(...) requires plain value or splice"
         ]
+
+        [^result' remainder pending]: comb state remainder result'
+            except e -> [
+                return raise e
+            ]
+
+        totalpending: glom totalpending spread pending
         pending: totalpending
         return unmeta result'
     ]
