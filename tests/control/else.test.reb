@@ -113,27 +113,27 @@
 
     (do [] else [true])
     (void? do [] then [fail ~reachable~])
+]
 
-    [
-        (foo: func [] [return void], true)
-        (foo else [true])
-        (1020 = (1000 + 20 foo then [fail [~unreachable~]]))
-    ]
+[
+    (foo: func [] [return void], true)
+    (foo else [true])
+    (1020 = (1000 + 20 foo then [fail [~unreachable~]]))
+]
 
-    [
-        (foo: lambda [] [if false [~ignore~]], true)
-        (foo else [true])
-        (1020 = (1000 + 20 foo then [fail [~unreachable~]]))
-    ]
+[
+    (foo: lambda [] [if false [~ignore~]], true)
+    (foo else [true])
+    (1020 = (1000 + 20 foo then [fail [~unreachable~]]))
+]
 
-    ; !!! This one is a tricky case, because LAMBDA wants to use DELEGATE.
-    ; Before the delegation it has to be in a state that feeds a stale value
-    ; without the transient void signal.  At the end of the block, it needs
-    ; something to transition it to void.  Where to put the responsibility
-    ; is not quite clear... punt on it for now.
-    [
-        (foo: lambda [] [], true)
-        (foo else [true])
-        (1020 = (1000 + 20 foo then [fail [~unreachable~]]))
-    ]
+; !!! This one is a tricky case, because LAMBDA wants to use DELEGATE.
+; Before the delegation it has to be in a state that feeds a stale value
+; without the transient void signal.  At the end of the block, it needs
+; something to transition it to void.  Where to put the responsibility
+; is not quite clear... punt on it for now.
+[
+    (foo: lambda [] [], true)
+    (foo else [true])
+    (1020 = (1000 + 20 foo then [fail [~unreachable~]]))
 ]
