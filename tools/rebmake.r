@@ -755,7 +755,7 @@ ld: make linker-class [
                 keep unspaced [output :suffix]
             ]
 
-            for-each search (map-files-to-local maybe searches) [
+            for-each search (maybe map-files-to-local maybe searches) [
                 keep unspaced ["-L" search]
             ]
 

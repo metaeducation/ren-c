@@ -599,7 +599,23 @@ modernize-action: function3 [
             ; Find ANY-WORD!s (args/locals)
             ;
             if w: match3 any-word! spec/1 [
-                ;
+                if set-word? w [
+                    assert [w = first [return:]]
+                    keep3 spec/1, spec: my next
+                    if <none> = spec/1 [keep3 <void>, spec: my next]
+                    if tail? spec [continue]
+                    if text? spec/1 [keep3 spec/1, spec: my next]
+                    if block? spec/1 [
+                        keep3/only append3 copy spec/1 [
+                            <opt> blank!  ; e.g. <maybe> may return "null" blank
+                        ]
+                        spec: my next
+                    ]
+                    if tail? spec [continue]
+                    if text? spec/1 [keep3 spec/1 spec: my next]
+                    continue
+                ]
+
                 ; Transform the escapable argument convention, to line up
                 ; GET-WORD! with things that are escaped by GET-WORD!s
                 ; https://forum.rebol.info/t/1433
