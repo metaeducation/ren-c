@@ -637,6 +637,13 @@ Bounce Action_Executor(Frame(*) f)
   //=//// HARD QUOTED ARG-OR-REFINEMENT-ARG ///////////////////////////////=//
 
           case PARAM_CLASS_HARD:
+            //
+            // !!! Need to think about how cases like `source ||` or `help ||`
+            // are supposed to act.  They set the "barrier hit" and then we
+            // get here...if we don't clear the flag, then the presence of
+            // a non-void causes a later assert.  Review.
+            //
+            Clear_Feed_Flag(f->feed, BARRIER_HIT);
             if (NOT_PARAM_FLAG(PARAM, SKIPPABLE))
                 Literal_Next_In_Frame(ARG, f);  // CELL_FLAG_UNEVALUATED
             else {
