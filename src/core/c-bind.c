@@ -571,7 +571,8 @@ DECLARE_NATIVE(let)
         EVAL_EXECUTOR_FLAG_SINGLE_STEP
         | FLAG_STATE_BYTE(ST_EVALUATOR_REEVALUATING)
         | (f->flags.bits & EVAL_EXECUTOR_FLAG_FULFILLING_ARG)
-        | FRAME_FLAG_MAYBE_STALE;
+        | FRAME_FLAG_MAYBE_STALE
+        | (f->flags.bits & FRAME_FLAG_FAILURE_RESULT_OK);
 
     Frame(*) subframe = Make_Frame(FRAME->feed, flags);
     subframe->u.eval.current = SPARE;

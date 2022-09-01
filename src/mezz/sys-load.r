@@ -117,11 +117,17 @@ load-header: function [
     === TRY TO MATCH PATTERN OF "REBOL [...]" ===
 
     let [hdr rest 'line]: transcode-header/file data file else [
+        ;
+        ; TRANSCODE didn't detect REBOL [...], but it didn't see anything it
+        ; thought was invalid Rebol tokens either.
+        ;
         return either required ['no-header] [
             body: data
             final: tail of data
             return null  ; no header object
         ]
+    ] except e -> [  ; TRANSCODE choked, wasn't valid at all
+        return raise e
     ]
 
     hdr: construct/with/only hdr system.standard.header except [
@@ -260,7 +266,7 @@ load: func [
 
     ensure [text! binary!] data
 
-    [header data line]: load-header/file data file
+    [header data line]: load-header/file data file except e -> [return raise e]
 
     if word? header [cause-error 'syntax header source]
 
@@ -271,7 +277,7 @@ load: func [
 
     if not block? data [
         assert [match [binary! text!] data]  ; UTF-8
-        data: transcode/file/line data file 'line
+        data: transcode/file/line data file 'line except e -> [return raise e]
     ]
 
     ; Bind code to user context
@@ -292,12 +298,17 @@ load-value: redescribe [
 ](
     chain [
         :load,
-        lambda [x] [
-            assert [block? x]
-            if 1 <> length of x [
-                fail ["LOAD-VALUE got length" length of x "block, not 1"]
+        lambda [^x [<fail> block!]] [
+            either raised? unget x [
+                unget x
+            ][
+                x: unget x
+                assert [block? x]
+                if 1 <> length of x [
+                    fail ["LOAD-VALUE got length" length of x "block, not 1"]
+                ]
+                first x
             ]
-            first x
         ]
     ]
 )

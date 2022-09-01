@@ -57,10 +57,10 @@ enum {
 // entry to Process_Action().  The ability is also used by RESKINNED.
 //
 Frame(*) Push_Downshifted_Frame(REBVAL *out, Frame(*) f) {
-    Frame(*) sub = Make_Frame(
-        f->feed,
-        ACTION_EXECUTOR_FLAG_IN_DISPATCH | FRAME_FLAG_MAYBE_STALE
-    );
+    Flags flags = ACTION_EXECUTOR_FLAG_IN_DISPATCH | FRAME_FLAG_MAYBE_STALE;
+    flags |= f->flags.bits & FRAME_FLAG_FAILURE_RESULT_OK;
+
+    Frame(*) sub = Make_Frame(f->feed, flags);
     Push_Frame(out, sub);
     assert(sub->varlist == nullptr);
     sub->varlist = f->varlist;
@@ -185,6 +185,8 @@ Bounce Chainer_Dispatcher(Frame(*) f)
 } run_next_in_chain: {  //////////////////////////////////////////////////////
 
     Frame(*) sub = SUBFRAME;
+    if (Get_Frame_Flag(f, FAILURE_RESULT_OK))
+        assert(Get_Frame_Flag(sub, FAILURE_RESULT_OK));
 
     if (sub->varlist and NOT_SERIES_FLAG(sub->varlist, MANAGED))
         GC_Kill_Series(sub->varlist);

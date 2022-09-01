@@ -12,3 +12,23 @@
     mp-normal: chain [:mp-ad-ad, :sub-one, :sub-one]
     200 = (mp-normal 10 20)
 )
+
+(
+    metaraise: chain [:raise :meta]
+    e: metaraise ~test~
+    all [
+        quasi? e
+        error? e: unquasi e
+        e.id = 'test
+    ]
+)
+
+(
+    metatranscode: chain [:transcode :meta]
+    e: metatranscode "1&e"
+    all [
+        quasi? e
+        error? e: unquasi e
+        e.id = 'scan-invalid
+    ]
+)

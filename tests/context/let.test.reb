@@ -286,3 +286,40 @@
 )
 
 ; TBD: At some point, test cases like `let [x 'x]: <whatever>`
+
+[
+    (
+        x: <x>
+        all [
+            quasi? e: ^ let x: raise ~test~
+            error? e: unquasi e
+            e.id = 'test
+            unset? 'x  ; the LET is still in effect
+        ]
+        assert [x = <x>]
+    )
+    (
+        a: <a>
+        b: <b>
+        all [
+            quasi? e: ^ let ['a b]: raise ~test~
+            error? e: unquasi e
+            e.id = 'test
+            a = <a>  ; exempted from let
+            unset? 'b
+        ]
+        assert [a = <a>]
+        assert [b = <b>]
+    )
+    (
+        x: <x>
+        all [
+            e: sys.util.rescue [
+                let x: raise ~test~
+            ]
+            error? e
+            e.id = 'test
+            x = <x>
+        ]
+    )
+]
