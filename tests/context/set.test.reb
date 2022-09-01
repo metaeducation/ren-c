@@ -51,3 +51,12 @@
 
 (10 = set void 10)
 (null = get void)
+
+(
+    e: ^ set 'x raise ~test~
+    all [
+        quasi? e
+        error? e: unquasi e
+        e.id = 'test
+    ]
+)

@@ -1344,7 +1344,7 @@ void Set_Var_May_Fail(
 //          [<opt> the-word! the-block!]
 //      target "Word or tuple, or calculated sequence steps (from GET)"
 //          [<void> any-word! any-sequence! any-group! the-block!]
-//      ^value [<opt> <void> any-value!]
+//      ^value [<opt> <void> <fail> any-value!]  ; tunnels failure
 //      /any "Do not error on isotopes"
 //  ]
 //
@@ -1371,6 +1371,11 @@ DECLARE_NATIVE(set)
     REBVAL *steps = ARG(steps);
     REBVAL *target = ARG(target);
     REBVAL *v = ARG(value);
+
+    if (Is_Meta_Of_Raised(v)) {
+        mutable_QUOTE_BYTE(v) = UNQUOTED_1;
+        return RAISE(v);
+    }
 
     if (WANTED(steps)) {
         // can't tell if GROUPS_OK would be sufficient, see [1]
