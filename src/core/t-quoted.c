@@ -177,20 +177,20 @@ DECLARE_NATIVE(the)
 //
 //  the*: native [
 //
-//  "Returns value passed in without evaluation, BUT BLANK! becomes pure NULL"
+//  "Returns value passed in without evaluation, but QUASI! become isotopes"
 //
-//      return: "If input is BLANK! then NULL, else input value, verbatim"
+//      return: "If input is QUASI! then isotope, else input value, verbatim"
 //          [<opt> any-value!]
 //      'value [any-value!]
 //  ]
 //
 DECLARE_NATIVE(the_p)
 //
-// THE* is the variant assigned to @.  It turns BLANK! to NULL, and QUASI!
-// forms into isotopes, but passes through all other values:
+// THE* is the variant assigned to @.  It turns QUASI! forms into isotopes,
+// but passes through all other values:
 //
-//     >> @ _
-//     ; null
+//     >> @ ~_~
+//     == ~_~  ; isotope
 //
 //     >> @ ~[1 2 3]~
 //     == ~[1 2 3]~  ; isotope
@@ -206,8 +206,8 @@ DECLARE_NATIVE(the_p)
 //
 //     rebElide("append block maybe", rebQ(value_might_be_null));
 //
-// Because the API machinery will put a blank into the stream as a surrogate
-// for a NULL instead of asserting/erroring.
+// Because the API machinery puts FEED_NULL_SUBSTITUTE_CELL into the stream as
+// a surrogate for a NULL instead of asserting/erroring.
 //
 // The reason it isotopifies things is that the belief is that this will
 // be more likely to generate something that will raise attention if it's not
@@ -217,12 +217,13 @@ DECLARE_NATIVE(the_p)
 
     REBVAL *v = ARG(value);
 
-    if (IS_BLANK(v)) {
-        Init_Nulled(OUT);
-    }
-    else if (IS_QUASI(v)) {
-        Copy_Cell(OUT, v);
-        mutable_QUOTE_BYTE(OUT) = ISOTOPE_0;
+    if (IS_QUASI(v)) {
+        if (HEART_BYTE(v) == REB_BLANK)
+            Init_Nulled(OUT);  // for `rebElide("@", nullptr, "else [...]");`
+        else {
+            Copy_Cell(OUT, v);
+            mutable_QUOTE_BYTE(OUT) = ISOTOPE_0;
+        }
     }
     else {
         Copy_Cell(OUT, v);
@@ -588,7 +589,7 @@ DECLARE_NATIVE(maybe)
 
     if (
         Is_Meta_Of_Void(v)
-        or Is_Meta_Of_Null(v) or Is_Meta_Of_Null_Isotope(v)
+        or Is_Meta_Of_Null(v) or Is_Meta_Of_Blank_Isotope(v)
         or Is_Meta_Of_None(v)
     ){
         return VOID;

@@ -302,8 +302,8 @@ DECLARE_NATIVE(console)
     //
     // !!! We use rebQ() here and not "@" due to the current behavior of
     // @ which will make BAD-WORD!s into isotopes.  That behavior is to
-    // help with treatment of ~null~, but perhaps it should be exclusive
-    // to ~null~.  Either way, rebQ() would be needed if the distinction
+    // help with treatment of ~_~, but perhaps it should be exclusive
+    // to ~_~.  Either way, rebQ() would be needed if the distinction
     // were to be important.
     //
     REBVAL *metacode;  // Note: goto would cross initialization

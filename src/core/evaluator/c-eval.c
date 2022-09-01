@@ -575,10 +575,9 @@ Bounce Evaluator_Executor(Frame(*) f)
     //     bool is_null = rebUnboxLogic("null?", v);  // should be rebQ(v)
     //
     // But what it does as a compromise is it will make the spliced values
-    // into ~null~ BAD-WORD!s.  This will sometimes work out due to decay
-    // (though not the above case, as NULL? will error when passed isotopes).
-    // Yet a convenience is supplied by making the @ operator turn ~null~
-    // BAD-WORD!s into proper nulls:
+    // into ~_~ QUASI!-BLANK!s.  This usually works out in decay.  Further
+    // convenience is supplied by making the @ operator turn QUASI! values
+    // into their isotopic forms:
     //
     //     bool is_null = rebUnboxLogic("null?", rebQ(v));
     //     bool is_null = rebUnboxLogic("null? @", v);  // equivalent, shorter
@@ -1769,8 +1768,9 @@ Bounce Evaluator_Executor(Frame(*) f)
     //
     //=///////////////////////////////////////////////////////////////////=//
 
-      case REB_BLANK:  // new behavior, evaluate to NULL
-        Init_Nulled(OUT);
+      case REB_BLANK:  // new behavior, evaluate to NULL isotope
+        Init_Blank_Isotope(OUT);
+        Set_Cell_Flag(OUT, SCANT_EVALUATED_ISOTOPE);  // see flag comments
         break;
 
     inert:

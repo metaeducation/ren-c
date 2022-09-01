@@ -277,6 +277,8 @@ strip-commas-and-null-apostrophes: func3 [
     ]
     return source
 ]
+protect 'strip-commas-and-null-apostrophes  ; was getting overwritten once
+
 
 old-do: :lib3/do
 do: lib3/do: enclose :lib3/do func3 [f <local> old-dir] [

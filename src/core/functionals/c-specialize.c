@@ -383,7 +383,7 @@ bool Specialize_Action_Throws(
 
         // !!! Technically speaking, if you are trying to implement the ^META
         // parameter convention, SPECIALIZE does it too late here.  The intent
-        // of ~null~ isotope vs. NULL is lost...at least in theory, because
+        // of ~_~ isotope vs. NULL is lost...at least in theory, because
         // variables don't store the null isotope state.  The "core" way to
         // do this is MAKE FRAME! (specialize could be written in usermode
         // with that).  But as a higher-level tool, specialize can make the

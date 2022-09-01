@@ -35,7 +35,9 @@ yes
 no
 
 null
+quoted-null
 blank
+quasi-blank
 blackhole
 
 newline

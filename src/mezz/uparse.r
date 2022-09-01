@@ -1356,8 +1356,8 @@ default-combinators: make map! reduce [
         ]
 
         if quasi? r [
-            if r = '~null~ [
-                fail "GET-GROUP! evaluated to ~NULL~ isotope"  ; also mistake?
+            if r = '~_~ [
+                fail "GET-GROUP! evaluated to ~_~ isotope"  ; also mistake?
             ]
 
             fail ["Bad isotope from GET-GROUP!" r]  ; fail all other isotopes

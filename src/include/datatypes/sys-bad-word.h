@@ -136,19 +136,9 @@ inline static bool Is_Word_Isotope_With_Id(Cell(const*) v, SymId id) {
 }
 
 
-// The `~` isotope is chosen in particular by the system to represent variables
-// that have not been assigned.  It has many benefits over choosing `~unset~`:
+//=//// "NONE" ISOTOPE (Empty BLOCK! Isotope) /////////////////////////////=//
 //
-//  * Reduces noise in FRAME! to see which variables specialized
-//
-//  * Less chance for confusion since UNSET? takes a variable; if it were named
-//    ~unset~ people would likely expect `(unset? ~unset~)` to work.
-//
-//  * Quick way to unset variables, simply `(var: ~)`
-//
-// But since we have to talk about what it is, we call it "none".
-//
-// It is also the default RETURN for when you just write something like
+// This is the default RETURN for when you just write something like
 // `func [return: <none>] [...]`.  It represents the intention of not having a
 // return value, but reserving the right to not be treated as invisible, so
 // that if one ever did imagine an interesting value for it to return, the
@@ -161,20 +151,35 @@ inline static bool Is_Word_Isotope_With_Id(Cell(const*) v, SymId id) {
 // invisible and sometimes not.
 //
 
+inline static Value(*) Init_Empty_Pack_Untracked(
+    Cell(*) out,
+    Byte quote_byte
+){
+    Init_Block(out, EMPTY_ARRAY);
+    mutable_QUOTE_BYTE(out) = quote_byte;
+    return cast(Value(*), out);
+}
+
 #define Init_None_Untracked(out) \
-    Init_Blank_Untracked((ensure(Value(*), (out))), ISOTOPE_0)
+    Init_Empty_Pack_Untracked((ensure(Value(*), (out))), ISOTOPE_0)
 
 #define Init_None(out) \
     TRACK(Init_None_Untracked(out))
 
 #define Init_Meta_Of_None(out) \
-    TRACK(Init_Blank_Untracked((out), QUASI_2))
+    TRACK(Init_Empty_Pack_Untracked((out), QUASI_2))
 
-inline static bool Is_None(Value(const*) v)
-  { return Is_Isotope(v) and HEART_BYTE(v) == REB_BLANK; }
+inline static bool Is_None(Value(const*) v) {
+    if (QUOTE_BYTE(v) != ISOTOPE_0 or HEART_BYTE(v) != REB_BLOCK)
+        return false;
+    return VAL_LEN_AT(v) == 0;
+}
 
-inline static bool Is_Meta_Of_None(Cell(const*) v)
-  { return IS_QUASI(v) and HEART_BYTE(v) == REB_BLANK; }
+inline static bool Is_Meta_Of_None(Cell(const*) v) {
+    if (QUOTE_BYTE(v) != QUASI_2 or HEART_BYTE(v) != REB_BLOCK)
+        return false;
+    return VAL_LEN_AT(v) == 0;
+}
 
 
 //=//// EMPTY SPLICE (Empty GROUP! Isotope) ///////////////////////////////=//
@@ -214,85 +219,20 @@ inline static Value(*) Init_Empty_Splice_Untracked(Value(*) out) {
         == FLAG_QUOTE_BYTE(QUASI_1) | FLAG_HEART_BYTE(REB_GROUP))
 
 
-//=//// NULL ISOTOPE (unfriendly ~null~) ///////////////////////////////////=//
-//
-// There was considerable deliberation about how to handle branches that
-// actually want to return NULL without triggering ELSE:
-//
-//     >> if true [null] else [print "Don't want this to print"]
-//     ; null (desired result)
-//
-// Making branch results NULL if-and-only-if the branch ran would mean having
-// to distort the result.
-//
-// The ultimate solution to this was to introduce a slight variant of NULL
-// which would be short-lived (e.g. "decay" to a normal NULL) but carry the
-// additional information that it was an intended branch result.  This
-// seemed sketchy at first, but with ^(...) acting as a "detector" for those
-// who need to know the difference, it has become a holistic solution.
-//
-// The "decay" of NULL isotopes occurs on variable assignment, and is seen
-// on future fetches.  Hence:
-//
-//     >> x: if true [null]
-//     == ~null~  ; isotope
-//
-//     >> x
-//     ; null
-//
-// As with the natural concept of radiation, working with NULL isotopes can
-// be tricky, and should be avoided by code that doesn't need to do it.  (But
-// it has actually gotten much easier with ^(...) behaviors.)
-//
-
-#define Init_Null_Isotope(out)            Init_Word_Isotope((out), Canon(NULL))
-#define Is_Null_Isotope(v)                Is_Word_Isotope_With_Id(v, SYM_NULL)
-#define Init_Meta_Of_Null_Isotope(out)    Init_Quasi_Word((out), Canon(NULL))
-
-inline static bool Is_Meta_Of_Null_Isotope(Cell(const*) v)
-  { return Is_Quasi_Word(v) and VAL_WORD_SYMBOL(v) == Canon(NULL); }
-
-
 //=//// ISOTOPIC DECAY /////////////////////////////////////////////////////=//
 
 inline static REBVAL *Init_Blackhole(Cell(*) out);  // defined in %sys-token.h
 
 inline static Value(*) Decay_If_Isotope(Value(*) v) {
-    if (not Is_Word_Isotope(v))
-        return v;
-
-    switch (VAL_WORD_ID(v)) {
-      case SYM_NULL :
+    if (Is_Blank_Isotope(v))
         return Init_Nulled(v);
-      case SYM_BLANK :
-        return Init_Blank(v);
-      case SYM_FALSE :
-        return Init_False(v);
-      case SYM_BLACKHOLE :
-        return Init_Blackhole(v);
-
-      default:
-        return v;
-    }
+    return v;
 }
 
 inline static const REBVAL *Pointer_To_Decayed(const REBVAL *v) {
-    if (not Is_Word_Isotope(v))
-        return v;
-
-    switch (VAL_WORD_ID(v)) {
-      case SYM_NULL :
+    if (Is_Blank_Isotope(v))
         return Lib(NULL);
-      case SYM_FALSE :
-        return Lib(FALSE);
-      case SYM_BLANK :
-        return Lib(BLANK);
-      case SYM_BLACKHOLE :
-        return Lib(BLACKHOLE);
-
-      default:
-        return v;
-    }
+    return v;
 }
 
 inline static const REBVAL *rebPointerToDecayed(const REBVAL *v) {  // unused?
@@ -309,7 +249,7 @@ inline static Value(*) Isotopify_If_Falsey(Value(*) v) {
     if (Is_Isotope(v))
         return v;  // already an isotope (would trigger asserts on IS_X tests)
     if (Is_Nulled(v))
-        Init_Null_Isotope(v);
+        Init_Blank_Isotope(v);
     else if (IS_LOGIC(v) and VAL_LOGIC(v) == false)
         Init_Word_Isotope(v, Canon(FALSE));
     return v;
@@ -317,7 +257,7 @@ inline static Value(*) Isotopify_If_Falsey(Value(*) v) {
 
 inline static Value(*) Isotopify_If_Nulled(Value(*) v) {
     if (VAL_TYPE_UNCHECKED(v) == REB_NULL)
-        Init_Null_Isotope(v);
+        Init_Blank_Isotope(v);
     return v;
 }
 

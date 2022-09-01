@@ -383,8 +383,8 @@
     /predicate chain [:odd?, :not]
 ])
 
-('~null~ = ^ any/predicate [1 _ 2] :not)
-('~null~ = ^ any/predicate [1 null 2] :not)
+('~_~ = ^ any/predicate [1 _ 2] :not)
+('~_~ = ^ any/predicate [1 null 2] :not)
 ("this is why" = (any/predicate [1 null 2] :not then ["this is why"]))
 
 (10 = any [(10 elide "stale")])

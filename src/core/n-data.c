@@ -2360,7 +2360,7 @@ DECLARE_NATIVE(heavy) {
         return VOID;
 
     if (Is_Meta_Of_Null(v))
-        return Init_Null_Isotope(OUT);
+        return Init_Blank_Isotope(OUT);
 
     return UNMETA(v);
 }

@@ -73,7 +73,7 @@
     (
         x: ~
         did all [
-            '~null~ == meta parse [1] [x: [integer! opt text!]]
+            '~_~ == meta parse [1] [x: [integer! opt text!]]
             x = null
         ]
     )
@@ -81,7 +81,7 @@
     (
         x: ~
         did all [
-            '~null~ == meta parse [1] [integer! x: [(null)]]
+            '~_~ == meta parse [1] [integer! x: [(null)]]
             x = null
         ]
     )
@@ -107,7 +107,7 @@
 ; trigger ELSE, but match failures do.
 ;
 ; !!! Is it worth it to add a way to do something like ^[...] block rules to
-; say you don't want the ~null~ isotope, or does that just confuse things?  Is
+; say you don't want the ~_~ isotope, or does that just confuse things?  Is
 ; it better to just rig that up from the outside?
 ;
 ;     parse data rules then result -> [

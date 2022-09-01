@@ -997,8 +997,8 @@ static enum Reb_Token Maybe_Locate_Token_May_Push_Mold(
     //
     while (not ss->begin) {
         if (f->feed->p == nullptr) {  // API null, can't be in feed, use BLANK
-            assert(IS_BLANK(FEED_NULL_SUBSTITUTE_CELL));
-            Init_Blank(PUSH());
+            assert(Is_Meta_Of_Blank_Isotope(FEED_NULL_SUBSTITUTE_CELL));
+            Init_Meta_Of_Blank_Isotope(PUSH());
             if (Get_Executor_Flag(SCAN, f, NEWLINE_PENDING)) {
                 Clear_Executor_Flag(SCAN, f, NEWLINE_PENDING);
                 Set_Cell_Flag(TOP, NEWLINE_BEFORE);
@@ -1608,11 +1608,14 @@ static enum Reb_Token Maybe_Locate_Token_May_Push_Mold(
 
           case LEX_SPECIAL_TILDE: {
             ++cp;  // look at what comes after ~
-            if (cp[0] == '(' and cp[1] == ')' and cp[2] == '~') {
-                //
+            if (
+                (cp[0] == '(' and cp[1] == ')' and cp[2] == '~')
+                or
+                (cp[0] == '[' and cp[1] == ']' and cp[2] == '~')
+            ){
                 // !!! Scanning of QUASI! forms needs to be generalized.  This
-                // is a stopgap measure just to get scanning of ~()~ working,
-                // as that is an important element now.
+                // is a stopgap measure just to get scanning of ~()~ and ~[]~,
+                // as that is an important element in design experiments now.
                 //
                 ss->end = cp += 3;
                 return TOKEN_BAD_WORD;
@@ -2000,6 +2003,12 @@ Bounce Scanner_Executor(Frame(*) f) {
             assert(bp[len - 1] == '~');
             if (len == 4 and bp[1] == '(' and bp[2] == ')') {  // ~()~
                 Meta_Quotify(Init_Empty_Splice(PUSH()));  // !!! hacked in...
+            }
+            else if (len == 4 and bp[1] == '[' and bp[2] == ']') {  // ~[]~
+                Init_Meta_Of_None(PUSH());
+            }
+            else if (len == 3 and bp[1] == '_') {  // ~_~
+                Init_Meta_Of_Blank_Isotope(PUSH());
             }
             else {
                 Symbol(const*) label = Intern_UTF8_Managed(bp + 1, len - 2);

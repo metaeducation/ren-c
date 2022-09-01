@@ -111,7 +111,7 @@ join: function [
 
     if quasi? value [
         if not splice? unget value [
-            fail "JOIN only accepts SPLICE blocks as ^META parameters"
+            fail "JOIN only accepts SPLICE blocks as ^^META parameters"
         ]
         value: unquasi value
     ]

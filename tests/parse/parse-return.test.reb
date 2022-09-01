@@ -26,7 +26,7 @@
 
 ; Successful RETURN of NULL will be turned into an isotope.
 (
-    '~null~ = ^ parse "aaa" [return (null)]
+    '~_~ = ^ parse "aaa" [return (null)]
 )
 
 ; Trying to return a failing rule is like any other non-match, won't take

@@ -347,7 +347,7 @@ void Push_Parser_Subframe(
 //
 //  {If supplied parser fails, succeed anyway without advancing the input}
 //
-//      return: "PARSER's result if it succeeds, otherwise ~null~ isotope"
+//      return: "PARSER's result if it succeeds, otherwise ~_~ isotope"
 //          [any-value!]
 //      parser [action!]
 //  ]
@@ -390,7 +390,7 @@ DECLARE_NATIVE(opt_combinator)
         return OUT;  // so return its result (note: may be null *isotope*)
 
     Set_Var_May_Fail(remainder, SPECIFIED, input);  // convey no progress made
-    return Init_Null_Isotope(OUT);  // ...but still, non-NULL for success
+    return Init_Blank_Isotope(OUT);  // ...but still, non-NULL for success
 }}
 
 

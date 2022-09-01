@@ -145,14 +145,15 @@ inline static option(va_list*) FEED_VAPTR(Feed(*) feed) {
 
 
 // When we see nullptr in the valist, we make a compromise of convenience,
-// where BLANK! is used.  We've told a lie, but if evaluated it will produce
-// NULL, which will decay to a pure null if assigned to a variable.
+// where it is replaced with a QUASI!-BLANK! is used.  We've told a lie, but
+// if evaluated it will produce a blank isotope, which acts like NULL for
+// many purposes...and will decay to a pure null if assigned to a variable.
 //
-// Also: the `@` operator is tweaked to turn BLANK! into null.  So this can
-// be leveraged in API calls.
+// Also: the `@` operator is tweaked to turn QUASI!s into their isotopic
+// forms.  So this can be leveraged in API calls.
 //
 #define FEED_NULL_SUBSTITUTE_CELL \
-    Lib(BLANK)
+    Lib(QUASI_BLANK)
 
 
 // 1. The va_end() is taken care of here; all code--regardless of throw or
@@ -196,8 +197,8 @@ inline static Value(const*) Copy_Reified_Variadic_Feed_Cell(
 
     if (Is_Nulled(cell)) {  // API enforces use of C's nullptr (0) for NULL
         assert(not Is_Api_Value(cell));  // but internal cells can be nulled
-        assert(IS_BLANK(FEED_NULL_SUBSTITUTE_CELL));
-        return Init_Blank(out);  // ...they are converted to blanks
+        assert(Is_Meta_Of_Blank_Isotope(FEED_NULL_SUBSTITUTE_CELL));
+        return Init_Meta_Of_Blank_Isotope(out);  // reduces to blank isotope
     }
 
     if (Is_Isotope(cell)) {  // @ will turn these back into isotopes

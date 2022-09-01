@@ -106,7 +106,7 @@
 (1 = if not false [1])
 
 (void' = ^ if not true [1])
-('~null~ = ^ if not false [null])
+('~_~ = ^ if not false [null])
 
 (error? if not false [trap [1 / 0]])
 

@@ -45,22 +45,21 @@
 ]
 
 
-; === PREDICATES ===
-;
-; Predicates influence the handling of NULLs, which become ~null~ by default
-
 ~need-non-null~ !! (
     reduce [null]
 )
 ([] = reduce [maybe null])
 
 ~need-non-null~ !! (
-    reduce [~null~]
+    reduce [~_~]
 )
-([] = reduce [maybe ~null~])
+([] = reduce [maybe ~_~])
 
 
 ([] = reduce [void])
+
+
+; === PREDICATES ===
 
 ; There was a bug pertaining to trying to set the new line flag on the output
 ; in the case of a non-existent null, test that.
@@ -86,11 +85,11 @@
 ([3 300] = reduce/predicate [1 + 2 if false [10 + 20] 100 + 200] :maybe)
 
 ([3 _ 300] = reduce/predicate [1 + 2 if true [null] 100 + 200] :try)
-([3 ~null~ 300] = reduce/predicate [1 + 2 if true [null] 100 + 200] :reify)
+([3 _ 300] = reduce/predicate [1 + 2 if true [null] 100 + 200] :reify)
 ([3 300] = reduce/predicate [1 + 2 if true [null] 100 + 200] :maybe)
 
 ([3 _ 300] = reduce/predicate [1 + 2 null 100 + 200] :try)
-([3 ~null~ 300] = reduce/predicate [1 + 2 null 100 + 200] :reify)
+([3 _ 300] = reduce/predicate [1 + 2 null 100 + 200] :reify)
 ([3 300] = reduce/predicate [1 + 2 null 100 + 200] :maybe)
 
 ; REDUCE* is a specialization of REDUCE with MAYBE

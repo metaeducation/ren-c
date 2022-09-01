@@ -101,12 +101,12 @@
     ])
 
     ; It's not possible to return a "pure NULL" otherwise.  But the existence
-    ; of ~null~ isotopes permit a non-break-signaling construct that carries
+    ; of ~_~ isotopes permit a non-break-signaling construct that carries
     ; semantic intent of a null, and will decay to it upon variable assignment.
 
     ([1 2 3 4] = collect [
         assert [did all [
-            '~null~ = meta result: for-both x [1 2] [3 4] [
+            '~_~ = meta result: for-both x [1 2] [3 4] [
                 keep x
                 null
             ]

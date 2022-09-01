@@ -137,3 +137,46 @@ inline static REBVAL *Init_Nothing_Untracked(
 
 #define Init_Blank(out) \
     TRACK(Init_Blank_Untracked((out), UNQUOTED_1))
+
+
+//=//// BLANK! ISOTOPE (THEN-triggering NULL) /////////////////////////////=//
+//
+// There was considerable deliberation about how to handle branches that
+// actually want to return NULL without triggering ELSE:
+//
+//     >> if true [null] else [print "Don't want this to print"]
+//     ; null (desired result)
+//
+// Making branch results NULL if-and-only-if the branch ran would mean having
+// to distort the result.
+//
+// The ultimate solution to this was to introduce a slight variant of NULL
+// which would be short-lived (e.g. "decay" to a normal NULL) but carry the
+// additional information that it was an intended branch result.  This
+// seemed sketchy at first, but with ^(...) acting as a "detector" for those
+// who need to know the difference, it has become a holistic solution.
+//
+// The "decay" of BLANK! isotopes occurs on variable assignment, and is seen
+// on future fetches.  Hence:
+//
+//     >> x: if true [null]
+//     == ~_~  ; isotope (decays to null)
+//
+//     >> x
+//     ; null
+//
+// As with the natural concept of radiation, working with BLANK! isotopes can
+// be tricky, and should be avoided by code that doesn't need to do it.
+//
+
+#define Init_Blank_Isotope(out) \
+    TRACK(Init_Blank_Untracked((ensure(Value(*), (out))), ISOTOPE_0))
+
+inline static bool Is_Blank_Isotope(Cell(const*) v)
+  { return QUOTE_BYTE(v) == ISOTOPE_0 and HEART_BYTE(v) == REB_BLANK; }
+
+#define Init_Meta_Of_Blank_Isotope(out) \
+    TRACK(Init_Blank_Untracked((out), QUASI_2))
+
+inline static bool Is_Meta_Of_Blank_Isotope(Cell(const*) v)
+  { return IS_QUASI(v) and HEART_BYTE(v) == REB_BLANK; }

@@ -58,15 +58,10 @@ REBOL [
 ;
 trap [
     func [i [<maybe> integer!]] [...]  ; modern interpreter or already shimmed
-    if in (pick system 'options) 'redbol-paths [
-        system.options.redbol-paths: true
-    ]
 ] then [
     ; Fall through to the body of this file, we are shimming version ~8994d23
 ] else [
-    trap [
-        func [i [<maybe> integer!]] [...]
-    ] then [
+    if not in (pick system 'options) 'redbol-paths [  ; old shim'd interpreter
         ;
         ; Old bootstrap executables that are already shimmed should not do
         ; tweaks for the modern import.  Otherwise, export load-all: would
@@ -75,6 +70,8 @@ trap [
         ;
         quit
     ]
+
+    system.options.redbol-paths: true  ; new interpreter, make it act older
 
     === {TWEAKS SO MODERN REN-C DOESN'T ACT TOO MODERN} ===
 

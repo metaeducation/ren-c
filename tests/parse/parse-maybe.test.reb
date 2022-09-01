@@ -47,7 +47,7 @@
 (did all [
     "b" == parse "bbb" [
         (x: 10, y: 20)
-        y: x: maybe (~null~)  ; !!! TBD: align with `maybe if true [null]`
+        y: x: maybe (~_~)  ; !!! TBD: align with `maybe if true [null]`
         some "b"
     ]
     unset? 'x

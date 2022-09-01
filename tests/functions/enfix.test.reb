@@ -49,10 +49,10 @@
         true
     )
 
-    ([~null~ "hi"] = skippy "hi")
+    ([~_~ "hi"] = skippy "hi")
     ([10 "hi"] = skippy 10 "hi")
 
-    ([~null~ "hi"] = lefty "hi")
+    ([~_~ "hi"] = lefty "hi")
     ([1 "hi"] = 1 lefty "hi")
 
     ; Enfixed skipped left arguments mean that a function will not be executed
@@ -63,7 +63,7 @@
         did all [
             <tag> = evaluate/next block 'block
             [lefty "hi"] = block
-            [~null~ "hi"] = evaluate/next block 'block
+            [~_~ "hi"] = evaluate/next block 'block
             [] = block
         ]
     )
@@ -77,12 +77,12 @@
         did all [
             1 = evaluate/next block 'block
             [lefty "hi"] = block
-            [~null~ "hi"] = evaluate/next block 'block
+            [~_~ "hi"] = evaluate/next block 'block
             [] = block
         ]
     )
 
-    ([~null~ "hi"] = any [false blank lefty "hi"])
+    ([~_~ "hi"] = any [false blank lefty "hi"])
 ]
 
 

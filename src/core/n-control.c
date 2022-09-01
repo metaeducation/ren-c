@@ -32,13 +32,12 @@
 //    over void results and let the previous evaluation "drop out".
 //    See %sys-void.h for more information about this mechanic.)
 //
-// * If a branch *does* run--and its evaluation happens to produce NULL--then
-//   conditionals designed to be used with branching (like IF or CASE) will
-//   return a special "isotope" form of the BAD-WORD! of ~null~.  It's called
-//   an "isotope" because it will "decay" into a regular NULL when assigned
-//   to a variable.  But so long as it doesn't decay, then constructs like
-//   ELSE and THEN consider it distinct from NULL, and hence a signal that a
-//   branch actually ran.
+// * If a branch *does* run--and its evaluation happens to produce VOID or
+//   NULL, then special isotopes are returned: either a zero-lenght GROUP!
+//   isotope for void, or a BLANK! isotope for NULL.  This way THEN runs
+//   instead of ELSE.  Although this does mean there is some conflation of
+//   the results, the conflated values have properties that mostly align with
+//   what their intent was--so it works about as well as it can.
 //
 //   (See %sys-bad-word.h for more details about isotopes.)
 //
@@ -211,7 +210,7 @@ DECLARE_NATIVE(either)
 //      return: [logic!]
 //      ^optional "Argument to test"
 //          [<opt> <void> any-value!]
-//      /decay "Pre-decay ~null~ isotope input to NULL"
+//      /decay "Pre-decay ~_~ isotope input to NULL"
 //  ]
 //
 DECLARE_NATIVE(did_1)  // see TO-C-NAME
@@ -242,7 +241,7 @@ DECLARE_NATIVE(did_1)  // see TO-C-NAME
     if (Is_Meta_Of_Void(in) or Is_Meta_Of_Null(in))
         return Init_False(OUT);
 
-    if (REF(decay) and Is_Meta_Of_Null_Isotope(in))
+    if (REF(decay) and Is_Meta_Of_Blank_Isotope(in))
         return Init_False(OUT);
 
     return Init_True(OUT);
@@ -257,7 +256,7 @@ DECLARE_NATIVE(did_1)  // see TO-C-NAME
 //      return: [logic!]
 //      ^optional "Argument to test"
 //          [<opt> <void> any-value!]
-//      /decay "Pre-decay ~null~ isotope input to NULL"
+//      /decay "Pre-decay ~_~ isotope input to NULL"
 //  ]
 //
 DECLARE_NATIVE(didnt)
@@ -269,7 +268,7 @@ DECLARE_NATIVE(didnt)
     if (Is_Meta_Of_Void(in) or Is_Meta_Of_Null(in))
         return Init_True(OUT);
 
-    if (REF(decay) and Is_Meta_Of_Null_Isotope(in))
+    if (REF(decay) and Is_Meta_Of_Blank_Isotope(in))
         return Init_True(OUT);
 
     return Init_False(OUT);
@@ -287,7 +286,7 @@ DECLARE_NATIVE(didnt)
 //          [<opt> <void> <fail> any-value!]
 //      :branch "If arity-1 ACTION!, receives value that triggered branch"
 //          [any-branch!]
-//      /decay "Pre-decay ~null~ isotope input to NULL"
+//      /decay "Pre-decay ~_~ isotope input to NULL"
 //  ]
 //
 DECLARE_NATIVE(then)  // see `tweak :then 'defer on` in %base-defs.r
@@ -303,7 +302,7 @@ DECLARE_NATIVE(then)  // see `tweak :then 'defer on` in %base-defs.r
     if (
         Is_Meta_Of_Void(in)  // meta parameter, e.g. input was true void
         or Is_Meta_Of_Null(in)  // soft failure signal
-        or (REF(decay) and Is_Meta_Of_Null_Isotope(in))  // null isotope
+        or (REF(decay) and Is_Meta_Of_Blank_Isotope(in))  // null isotope
     ){
         return VOID;
     }
@@ -328,7 +327,7 @@ DECLARE_NATIVE(then)  // see `tweak :then 'defer on` in %base-defs.r
 //          [<opt> <void> <fail> any-value!]
 //      :branch "If arity-1 ACTION!, receives value that triggered branch"
 //          [any-branch!]
-//      /decay "Pre-decay ~null~ isotope input to NULL"
+//      /decay "Pre-decay ~_~ isotope input to NULL"
 //  ]
 //
 DECLARE_NATIVE(also)  // see `tweak :also 'defer on` in %base-defs.r
@@ -363,8 +362,8 @@ DECLARE_NATIVE(also)  // see `tweak :also 'defer on` in %base-defs.r
         return Raisify(OUT);
     }
 
-    if (REF(decay) and Is_Meta_Of_Null_Isotope(in))
-        return Init_Null_Isotope(OUT);  // telegraph null isotope
+    if (REF(decay) and Is_Meta_Of_Blank_Isotope(in))
+        return Init_Blank_Isotope(OUT);  // telegraph null isotope
 
     STATE = ST_ALSO_RUNNING_BRANCH;
     return CONTINUE(SPARE, branch, Meta_Unquotify(in));
@@ -385,7 +384,7 @@ DECLARE_NATIVE(also)  // see `tweak :also 'defer on` in %base-defs.r
 //      ^optional "<deferred argument> Run branch if this is null"
 //          [<opt> <void> <fail> any-value!]
 //      :branch [any-branch!]
-//      /decay "Pre-decay ~null~ isotope input to NULL"
+//      /decay "Pre-decay ~_~ isotope input to NULL"
 //  ]
 //
 DECLARE_NATIVE(else)  // see `tweak :else 'defer on` in %base-defs.r
@@ -406,7 +405,7 @@ DECLARE_NATIVE(else)  // see `tweak :else 'defer on` in %base-defs.r
 //
 // 3. Since the input is a ^META parameter, meta-of-null signals null isotope
 //    was the input.  When /DECAY is specified we trigger running the branch.
-//    (branch execution decays ~null~ isotopes to NULL for non-meta actions,
+//    (branch execution decays ~_~ isotopes to NULL for non-meta actions,
 //    but ^META actions will see that it was an isotope)
 //
 // 4. The input is a ^META parameter in order to react to voids and tolerate
@@ -424,8 +423,8 @@ DECLARE_NATIVE(else)  // see `tweak :else 'defer on` in %base-defs.r
     else if (Is_Meta_Of_Null(in)) {
         Init_Nulled(SPARE);
     }
-    else if (REF(decay) and Is_Meta_Of_Null_Isotope(in)) {
-        Init_Null_Isotope(SPARE);  // action branch decays if non-meta, see [3]
+    else if (REF(decay) and Is_Meta_Of_Blank_Isotope(in)) {
+        Init_Blank_Isotope(SPARE);  // action branch decays if non-meta, see [3]
     }
     else if (Is_Meta_Of_Raised(in)) {  // definitional failure, skip
         Copy_Cell(OUT, in);
@@ -516,11 +515,11 @@ DECLARE_NATIVE(match)
     //     ; null  <-- this would be a bad result!
     //
     // So successful matching of falsey values will give back ~false~,
-    // or ~null~ isotopes.  This can be consciously turned back into their
+    // or ~_~ isotopes.  This can be consciously turned back into their
     // original values with DECAY, which happens automatically in assignments.
     //
     //     >> match [<opt>] null
-    //     == ~null~  ; isotope
+    //     == ~_~  ; isotope
     //
     //     >> decay match [<opt>] null
     //     ; null
@@ -666,6 +665,8 @@ DECLARE_NATIVE(all)
         return CONTINUE_SUBFRAME(SUBFRAME);
     }
 
+    Decay_If_Isotope(OUT);
+
     if (not Is_Nulled(predicate)) {
         SUBFRAME->executor = &Just_Use_Out_Executor;  // tunnel thru, see [4]
 
@@ -789,6 +790,8 @@ DECLARE_NATIVE(any)
         assert(STATE == ST_ANY_EVAL_STEP);
         return CONTINUE_SUBFRAME(SUBFRAME);
     }
+
+    Decay_If_Isotope(OUT);
 
     if (not Is_Nulled(predicate)) {
         SUBFRAME->executor = &Just_Use_Out_Executor;  // tunnel thru, see [4]

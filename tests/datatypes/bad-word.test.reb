@@ -169,7 +169,7 @@
 ; MATCH will match a bad-word! as-is, but falsey inputs produce isotopes
 [
     (''~preserved~ = ^ match bad-word! '~preserved~)
-    ('~null~ = ^ match null null)
+    ('~_~ = ^ match null null)
 ]
 
 ; ~quit~ is the label of the BAD-WORD! isotope you get by default from QUIT.
@@ -240,7 +240,7 @@
 [
     ('~foo~ = reify ~foo~)
     ('_ = reify null)
-    ('~null~ = reify ~null~)
+    ('_ = reify ~_~)  ; is this correct?  Should a refinement control it?
 
     (10 = reify 10)
     ((the '''a) = reify the '''a)

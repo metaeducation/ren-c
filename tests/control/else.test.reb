@@ -67,35 +67,35 @@
 )
 
 (
-    <isotope> = (~null~ then [<isotope>])
+    <isotope> = (~_~ then [<isotope>])
 )
 
-; Although branches can be triggered by ~null~ isotopes, if functions ask to
+; Although branches can be triggered by ~_~ isotopes, if functions ask to
 ; receive the value it is decayed, so they do not have to be ^META.  But if
 ; they *are* meta then the true state is passed through.
 [
-    (~null~ then x -> [x = null])
-    (~null~ then ^x -> [x = the ~null~])
-    ('~null~ then x -> [x = the ~null~])
-    ('~null~ then ^x -> [x = the '~null~])
+    (~_~ then x -> [x = null])
+    (~_~ then ^x -> [x = the ~_~])
+    ('~_~ then x -> [x = the ~_~])
+    ('~_~ then ^x -> [x = the '~_~])
 
-    (catch [~null~ also x -> [throw (x = null)]])
-    (catch [~null~ also ^x -> [throw (x = the ~null~)]])
-    (catch ['~null~ also ^x -> [throw (x = the '~null~)]])
+    (catch [~_~ also x -> [throw (x = null)]])
+    (catch [~_~ also ^x -> [throw (x = the ~_~)]])
+    (catch ['~_~ also ^x -> [throw (x = the '~_~)]])
 
-    (~null~ *else x -> [null = x])
+    (~_~ *else x -> [null = x])
     (null *else ^x -> [null' = x])
-    (~null~ *else ^x -> ['~null~ = x])
+    (~_~ *else ^x -> ['~_~ = x])
 ]
 
-; Variant forms react to ~null~ isotopes as if they were null.  This can be
+; Variant forms react to ~_~ isotopes as if they were null.  This can be
 ; useful in chaining scenarios.
 ;
 ; https://forum.rebol.info/t/why-then-and-else-are-mutually-exclusive/1080/9
 [
-    (~null~ *then [fail "shouldn't run"] else [true])
-    (~null~ *also [fail "shouldn't run"] *else [true])
-    (~null~ *else [true])
+    (~_~ *then [fail "shouldn't run"] else [true])
+    (~_~ *also [fail "shouldn't run"] *else [true])
+    (~_~ *else [true])
 ]
 
 ; Void handling is distinct from the error case with nothing on the left.

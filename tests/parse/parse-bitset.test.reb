@@ -89,7 +89,7 @@
     "a" = parse "a" ["a" maybe some cset]
 )(
     cset: charset [# - #"^(FE)"]
-    '~null~ = ^ parse "a" ["a" opt some cset]
+    '~_~ = ^ parse "a" ["a" opt some cset]
 )(
     cset: charset [# - #"^(FF)"]
     "a" = parse "a" ["a" maybe some cset]

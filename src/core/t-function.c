@@ -214,7 +214,7 @@ REBTYPE(Action)
           }
 
         REBVAL *picker = ARG(picker);
-        if (Is_Null_Isotope(picker) or IS_BLANK(picker))
+        if (Is_Blank_Isotope(picker) or IS_BLANK(picker))
             return COPY(action);
 
         Symbol(const*) symbol;

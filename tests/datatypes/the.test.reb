@@ -25,17 +25,22 @@
 [
    ('x = the x)
    ('(a b c) = the (a b c))
-   ('~null~ = the ~null~)
+   ('~_~ = the ~_~)
 ]
 
-; @ runs the action THE*, and has special case behavior that ~null~ becomes
-; plain null.  Other BAD-WORD!s are errors.  This is useful in the API as it
-; splices plain ~NULL~ BAD-WORD! into slots where nullptr was passed, so you
-; can avoid having to use rebQ() on arguments (so long as you know they are
-; not generally BAD-WORD!s otherwise, in which case you have to.)
+; @ runs the action THE*, and has special case behavior that QUASI! forms
+; become isotopic forms.  This is useful in the API as it splices ~_~ QUASI!
+; values into slots where nullptr was passed, which become their isotopes,
+; that decay to NULL most places.  So can avoid having to use rebQ() on
+; arguments that you aren't intending as QUASI!.  The good part is that if
+; you do this in error, you'll probably find out--since the quasiforms will
+; not be silently accepted most places.
 [
    ('x = @ x)
    ('(a b c) = @ (a b c))
-   (null = @ ~null~)
-   (error? trap [@ ~something~])
+   (
+      assert ['~_~ = ^ x: @ ~_~]
+      x = null
+   )
+   ('~something~ ^ @ ~something~)
 ]

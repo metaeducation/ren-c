@@ -61,7 +61,7 @@
         ; !!! Note that RETURN's parameter is done with the ^-convention.  This
         ; is an implementation detail that affects code that subverts the
         ; traditional calling mode.  But SPECIALIZE tries to meta-quotify it,
-        ; even though that can't work for everything (at least not for a ~Null~
+        ; even though that can't work for everything (at least not for a ~_~
         ; isotope)
         ;
         return-5: specialize :return [value: 5]
@@ -169,14 +169,14 @@
         true
     )
 
-    ([/A ~null~ /B word] = (word foob ||))
-    ([/A ~null~ /B ~null~] = (<not a word> foob ||))
+    ([/A _ /B word] = (word foob ||))
+    ([/A _ /B _] = (<not a word> foob ||))
     ([/A 20 /B word] = (word ->- foob/a 20))
 
     (comment [
         {Currently SHOVE and <skip> don't work together, maybe shouldn't}
         https://github.com/metaeducation/ren-c/issues/909
-        [/A 20 /B ~null~] = (<not a word> ->- foob/a 20)
+        [/A 20 /B _] = (<not a word> ->- foob/a 20)
     ] true)
 ]
 

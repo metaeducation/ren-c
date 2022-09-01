@@ -47,12 +47,8 @@ DECLARE_NATIVE(delimit)
 // If all the items in the block are null, or no items are found, this will
 // return a nulled value.
 //
-//
 // 1. Erroring on NULL has been found to catch real bugs in practice.  It also
-//    enables clever constructs like CURTAIL.  You can reify nulls as ~null~:
-//
-//        >> spaced [reify null "a" if true [null]]
-//        == "~null~ a"
+//    enables clever constructs like CURTAIL.
 //
 // 2. CHAR! suppresses the delimiter logic.  Hence:
 //

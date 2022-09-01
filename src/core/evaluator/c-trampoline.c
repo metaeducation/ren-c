@@ -245,7 +245,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
             if (Is_Void(OUT))
                 Init_Empty_Splice(OUT);
             else if (VAL_TYPE_UNCHECKED(OUT) == REB_NULL)
-                Init_Null_Isotope(OUT);
+                Init_Blank_Isotope(OUT);
         }
         else if (Not_Frame_Flag(FRAME, MAYBE_STALE))
             Clear_Stale_Flag(OUT);  // again, see [1]

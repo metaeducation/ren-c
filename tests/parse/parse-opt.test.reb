@@ -1,11 +1,13 @@
 ; %parse-opt.test.reb
 ;
 ; OPT is a rare case of an "abbreviation" being used, but it's a common
-; enough word (opt out).  It returns a ~null~ isotope on success.
+; enough word (opt out).  It passes through the synthesized product of the
+; parser it calls on success, but on failure it synthesizes NULL and continues
+; the parse rules from the current position.
 
 [
-    ('~null~ == meta parse [] [opt blank])
-    ('~null~ == meta parse [] [opt 'a])
+    ('~_~ == meta parse [] [opt blank])
+    ('~_~ == meta parse [] [opt 'a])
     ('a == parse [a] [opt 'a])
     ('a == parse [a] [opt 'b 'a])
     ('a == parse [a] [opt ['a]])
@@ -18,8 +20,8 @@
 ]
 
 [
-    ('~null~ == meta parse "" [opt blank])
-    ('~null~ == meta parse "" [opt #a])
+    ('~_~ == meta parse "" [opt blank])
+    ('~_~ == meta parse "" [opt #a])
     (#a == parse "a" [opt #a])
     (#a == parse "a" [opt #b #a])
     (#a == parse "a" [opt [#a]])
@@ -32,8 +34,8 @@
 ]
 
 [
-    ('~null~ == meta parse #{} [opt blank])
-    ('~null~ == meta parse #{} [opt #{0A}])
+    ('~_~ == meta parse #{} [opt blank])
+    ('~_~ == meta parse #{} [opt #{0A}])
     (#{0A} == parse #{0A} [opt #{0A}])
     (#{0A} == parse #{0A} [opt #{0B} #{0A}])
     (#{0A} == parse #{0A} [opt [#{0A}]])

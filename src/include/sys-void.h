@@ -125,5 +125,16 @@ inline static REBVAL* Reset_Cell_Untracked(Cell(*) v) {
     TRACK(Reset_Cell_Untracked(v))
         // ^-- track AFTER reset, so you can diagnose cell origin in WRITABLE()
 
+
+// The `~` isotope is chosen in particular by the system to represent variables
+// that have not been assigned.  It has many benefits over choosing `~unset~`:
+//
+//  * Reduces noise in FRAME! to see which variables specialized
+//
+//  * Less chance for confusion since UNSET? takes a variable; if it were named
+//    ~unset~ people would likely expect `(unset? ~unset~)` to work.
+//
+//  * Quick way to unset variables, simply `(var: ~)`
+
 #define Init_Meta_Of_Void(out)       Init_Quasi_Null(out)
 #define Is_Meta_Of_Void(v)           Is_Quasi_Null(v)

@@ -345,18 +345,25 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
         return false;
     }
 
-    if (param and not TYPE_CHECK(param, VAL_TYPE(out))) {
-        //
-        // !!! Array-based varargs only store the parameter list they are
-        // stamped with, not the frame.  This is because storing non-reified
-        // types in payloads is unsafe...only safe to store Frame(*) in a
-        // binding.  So that means only one frame can be pointed to per
-        // vararg.  Revisit the question of how to give better errors.
-        //
-        if (not vararg_frame)
-            fail (out);
+    Decay_If_Isotope(out);
 
-        fail (Error_Arg_Type(unwrap(vararg_frame), key, VAL_TYPE(out)));
+    if (param) {
+        if (Is_Isotope(out))
+            fail (Error_Bad_Isotope(out));
+
+        if (not TYPE_CHECK(param, VAL_TYPE(out))) {
+            //
+            // !!! Array-based varargs only store the parameter list they are
+            // stamped with, not the frame.  This is because storing non-reified
+            // types in payloads is unsafe...only safe to store Frame(*) in a
+            // binding.  So that means only one frame can be pointed to per
+            // vararg.  Revisit the question of how to give better errors.
+            //
+            if (not vararg_frame)
+                fail (out);
+
+            fail (Error_Arg_Type(unwrap(vararg_frame), key, VAL_TYPE(out)));
+        }
     }
 
     if (arg) {

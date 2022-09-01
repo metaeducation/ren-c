@@ -943,6 +943,12 @@ Bounce Action_Executor(Frame(*) f)
         }
 
         if (Is_Isotope(ARG)) {
+            if (Is_Blank_Isotope(ARG)) {
+                Init_Nulled(ARG);
+                if (not TYPE_CHECK(PARAM, REB_NULL))
+                    fail (Error_Arg_Type(f, KEY, REB_NULL));
+                continue;
+            }
             if (GET_PARAM_FLAG(PARAM, ISOTOPES_OKAY))
                 continue;
             fail (Error_Isotope_Arg(f, PARAM));

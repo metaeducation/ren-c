@@ -54,7 +54,7 @@
 //
 // NULL splice in top level of rebValue()
 //
-// !!! Appears no longer used; pure NULL now always splices as ~null~ BAD-WORD!
+// !!! Appears no longer used; pure NULL now always splices as ~_~ QUASI!
 // That's probably a bad idea.
 //
 #define SCAN_EXECUTOR_FLAG_NULLEDS_LEGAL \

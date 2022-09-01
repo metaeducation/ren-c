@@ -8,11 +8,11 @@
 ;
 ([[a b] * a b] = compose [([a b]) * (spread [a b])])
 
-; Preserve one element rule vs. tolerate vaporization.  ~null~ isotopes are
+; Preserve one element rule vs. tolerate vaporization.  ~_~ isotopes are
 ; treated the same by the compose site as pure NULL.
 ;
-([~null~ *] = compose [(reify null) * ((maybe null))])
-([~null~ *] = compose [(reify ~null~) * ((maybe ~null~))])
+([_ *] = compose [(reify null) * (maybe null)])
+([_ *] = compose [(reify ~_~) * (maybe ~_~)])
 
 ; Voids vaporize regardless of form.
 
@@ -20,8 +20,6 @@
 ([* <ok>] = compose [(void) * <ok>])
 ([<ok> *] = compose [<ok> * ((void))])
 
-; Isotopes raise errors if they are non-decaying.  For the moment, NULL gives
-; a bad ~null~ isotope error as well (should likely be a different error)
 
 ~bad-isotope~ !! (
     compose [(~none~) * <ok>]
@@ -30,11 +28,11 @@
     compose [(null) * <ok>]
 )
 ~need-non-null~ !! (
-    compose [(~null~) * <ok>]
+    compose [(~_~) * <ok>]
 )
 ([#[false]] = compose [(~false~)])
 
-([_ * _] = compose [(_) * ((_))])
+([_ * _] = compose [('_) * ('_)])
 ([a * 'a] = compose [(the a) * (the 'a)])
 ([1020 * 304] = compose [(1020) * ((304))])
 ([@ae * @ae] = compose [(@ae) * ((@ae))])
@@ -209,7 +207,7 @@
 
 ; isotopes besides splices are not legal in compose, but you can reify them
 [
-    ([<a> ~null~ <b>] = apply :compose [
+    ([<a> _ <b>] = apply :compose [
         [<a> (if true [null]) <b>]
         /predicate chain [:eval :reify]
     ])

@@ -1360,7 +1360,7 @@ DECLARE_NATIVE(remove_each)
         }
         else if (Is_Nulled(OUT)) {  // don't remove
             keep = true;
-            Init_Null_Isotope(OUT);  // NULL reserved for BREAK signal
+            Init_Blank_Isotope(OUT);  // NULL reserved for BREAK signal
         }
         else if (Is_Blackhole(OUT)) {  // do remove
             keep = false;
@@ -1947,7 +1947,7 @@ DECLARE_NATIVE(until)
 //        until [match [<opt>] get-queue-item]
 //
 //    The likely intent is that null is supposed to stop the loop.  Erroring
-//    on the ~null~ isotope draws attention to the problem, so they know to
+//    on the ~_~ isotope draws attention to the problem, so they know to
 //    use DID MATCH or CATCH/THROW the null.
 {
     INCLUDE_PARAMS_OF_UNTIL;

@@ -942,7 +942,7 @@ inline static void Run_Va_May_Fail(
     //
     // Also: we want cases like `rebNot(nullptr)` to work, but the variadic
     // evaluator cannot splice NULL into the feed of execution and have it
-    // be convertible into an array.  The ~null~ BAD-WORD! provides a
+    // be convertible into an array.  The QUASI-BLANK! of ~_~ provides a
     // compromise, and it evaluates to an isotope that decays to a regular null
     // several places in the system (e.g. normal arguments).  Here is another
     // place the tolerance is extended to.
@@ -2021,12 +2021,10 @@ const REBINS *RL_rebQUOTING(const void *p)
 {
     ENTER_API;
 
-    Array(*) a;
+    if (p == nullptr)
+        return Lib(QUOTED_NULL);  // precooked quoted null
 
-    if (p == nullptr) {
-        p = Lib(NULL);  // not FEED_NULL_SUBSTITUTE_CELL, or we'd quote BLANK!
-        goto handle_cell;
-    }
+    Array(*) a;
 
     switch (Detect_Rebol_Pointer(p)) {
       case DETECTED_AS_SERIES: {
@@ -2035,9 +2033,11 @@ const REBINS *RL_rebQUOTING(const void *p)
             fail ("Can't quote instructions (besides rebR())");
         break; }
 
-      handle_cell:
       case DETECTED_AS_CELL: {
         Value(const*) at = cast(Value(const*), p);
+        if (Is_Nulled(at))
+            return Lib(QUOTED_NULL);  // don't want to make blank via meta
+
         Value(*) v = Copy_Cell(Alloc_Value(), at);
         a = Singular_From_Cell(v);
         Set_Subclass_Flag(API, a, RELEASE);

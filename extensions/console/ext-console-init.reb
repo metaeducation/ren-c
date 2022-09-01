@@ -178,22 +178,17 @@ export console!: make object! [
             return none
         ]
 
-        if let d: select [
-            ~null~ "null"
-            ~false~ "false"
-        ] v [
-            ; An unstable isotope will decay to an ordinary value.  We make
-            ; a note that they are unstable to help ground users when they see
-            ; behaviors that might appear confusing:
+        if v = '~_~ [
             ;
-            ;     >> x: match logic! false
-            ;     == ~false~  ; isotope (decays to false)
+            ; BLANK! isotopes are "unstable" and will decay to a null.  This
+            ; is an important behavior because they come back from conditionals
+            ; with NULL branches:
             ;
-            ;     >> get/any 'x
-            ;     == #[false]
+            ;     >> if true [null]
+            ;     == ~_~  ; isotope (decays to null)
             ;
             print unspaced [
-                result _ mold v _ _ {;} _ {isotope} _ "(" {decays to} _ d ")"
+                result _ mold v _ {; isotope  (decays to null)}
             ]
             return none
         ]

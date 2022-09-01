@@ -135,11 +135,9 @@
     ]
 )]
 
-; OPT SOME that never actually has a succeeding rule gives back a match that
-; is a ~null~ isotope, which decays to null
 [
-    ('~null~ = ^ parse "a" ["a" opt some "b"])
-    ('~null~ = ^ parse "a" ["a" [opt "b"]])
+    ('~_~ = ^ parse "a" ["a" opt some "b"])
+    ('~_~ = ^ parse "a" ["a" [opt "b"]])
     (''~ = ^ parse "a" ["a" ^[maybe some "b"]])
 ]
 
