@@ -394,7 +394,9 @@ inline static Bounce Native_Raised_Result(Frame(*) frame_, const void *p) {
         error = CTX(m_cast(void*, p));
         break; }
       case DETECTED_AS_CELL: {  // note: can be Is_Raised()
-        error = Error_Bad_Value(cast(const REBVAL*, p));
+        Value(const*) cell = cast(const REBVAL*, p);
+        assert(IS_ERROR(cell));
+        error = VAL_CONTEXT(cell);
         break; }
       default:
         assert(false);

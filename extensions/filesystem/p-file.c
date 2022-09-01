@@ -313,7 +313,7 @@ Bounce File_Actor(Frame(*) frame_, REBVAL *port, Symbol(const*) verb)
         }
 
         if (result and IS_ERROR(result))
-            fail (result);
+            return RAISE(result);
 
         assert(result == nullptr or IS_BINARY(result));
         return result; }
@@ -687,7 +687,9 @@ Bounce File_Actor(Frame(*) frame_, REBVAL *port, Symbol(const*) verb)
             // range unless you use /UNBOUNDED, no similar solution exists
             // for ports since they all share the index.
             //
-            fail (Error_Out_Of_Range(rebValue(rebI(offset + file->offset))));
+            return RAISE(
+                Error_Out_Of_Range(rebValue(rebI(offset + file->offset)))
+            );
         }
 
         file->offset += offset;
