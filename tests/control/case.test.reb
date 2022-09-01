@@ -45,11 +45,9 @@
     void? case [false (reduce ['add 1 2])]
 )
 
-(
-    error? trap [
-        case [
-            true add 1 2  ; branch slots must be BLOCK!, ACTION!, softquote
-        ]
+~bad-branch-type~ !! (
+    case [
+        true add 1 2  ; branch slots must be BLOCK!, ACTION!, softquote
     ]
 )
 
@@ -130,19 +128,11 @@
 (<b> = case/predicate [1 [<a>] 2 [<b>]] :even?)
 (<b> = case/predicate [1 = 1 [<a>]] :not else [<b>])
 
-; Errors on bad branches
-(
-    e: trap [case [true #bad]]
-    e.id = 'bad-branch-type
-)
+~bad-branch-type~ !! (case [true #bad])
 
 (1 = case [(void) true [1]])
 
-; Isotopes in conditions should cause errors
-(
-    e: trap [case [~isotope~ [print "Causes error"]]]
-    e.id = 'bad-isotope
-)
+~bad-isotope~ !! (case [~isotope~ [print "Causes error"]])
 
 ; GET-GROUP! branches will be evaluated unconditionally, but their branches
 ; are not run if the condition was false.

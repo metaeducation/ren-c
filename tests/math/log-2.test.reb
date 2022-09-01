@@ -6,5 +6,6 @@
 (-2 = log-2 0.25)
 (3 = log-2 8)
 (-3 = log-2 0.125)
-(error? trap [log-2 0])
-(error? trap [log-2 -1])
+
+~positive~ !! (log-2 0)
+~positive~ !! (log-2 -1)

@@ -181,9 +181,10 @@
     num = 10
 )
 ; infinite recursion
-(
+
+~stack-overflow~ !! (
     blk: [cfor i 1 1 1 blk]
-    error? trap blk
+    do blk
 )
 ; local variable changeability - this is how it works in R3
 (
@@ -196,65 +197,59 @@
         ]
     ]
 )
+
 ; local variable type safety
-(
+~no-arg~ !! (
     test: false
-    error? trap [
-        cfor i 1 2 [
-            either test [i == 2] [
-                test: true
-                i: false
-            ]
+    cfor i 1 2 [
+        either test [i == 2] [
+            test: true
+            i: false
         ]
     ]
 )
+
 ; CFOR should not bind 'self
 [#1529
     (same? 'self cfor i 1 1 1 ['self])
 ]
 
-[#1136 (
-    e: trap [
+[#1136
+    ~overflow~ !! (
         num: 0
         cfor i 9223372036854775806 9223372036854775807 2 [
             num: num + 1
             either num > 1 [break] [true]
         ]
+    )
+]
+
+~overflow~ !! (
+    num: 0
+    cfor i -9223372036854775807 -9223372036854775808 -2 [
+        num: num + 1
+        either num > 1 [break] [true]
     ]
-    e.id = 'overflow
-)]
-(
-    e: trap [
-        num: 0
-        cfor i -9223372036854775807 -9223372036854775808 -2 [
-            num: num + 1
-            either num > 1 [break] [true]
-        ]
-    ]
-    e.id = 'overflow
 )
 
-[#1994 (
-    e: trap [
+[#1994
+    ~overflow~ !! (
         num: 0
         cfor i 9223372036854775806 9223372036854775807 9223372036854775807 [
             num: num + 1
             if num <> 1 [break]
             true
         ]
+    )
+]
+
+~overflow~ !! (
+    num: 0
+    cfor i -9223372036854775807 -9223372036854775808 -9223372036854775808 [
+        num: num + 1
+        if num <> 1 [break]
+        true
     ]
-    e.id = 'overflow
-)]
-(
-    e: trap [
-        num: 0
-        cfor i -9223372036854775807 -9223372036854775808 -9223372036854775808 [
-            num: num + 1
-            if num <> 1 [break]
-            true
-        ]
-    ]
-    e.id = 'overflow
 )
 
 [#1993

@@ -10,9 +10,8 @@
     ]
 )
 
-; Error Tests
-(
-    'dup-vars = (trap [augment func [x] [return x] [x]]).id
+~dup-vars~ !! (
+    augment (func [x] [return x]) [x]
 )
 
 

@@ -7,5 +7,6 @@
 (-2 = log-10 0.01)
 (3 = log-10 1000)
 (-3 = log-10 0.001)
-(error? trap [log-10 0])
-(error? trap [log-10 -1])
+
+~positive~ !! (log-10 0)
+~positive~ !! (log-10 -1)

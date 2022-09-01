@@ -194,7 +194,9 @@
     (didn't parse #{0A} [maybe some #{0B}])
     (10 == parse #{0A} [maybe some #{0B} <any>])
     (#{0B} == parse #{0A0B0A0B} [maybe some [#{0B} | #{0A}]])
-    (error? trap [parse #{} [ahead]])
+
+    ~???~ !! (parse #{} [ahead])
+
     (didn't parse #{0A} [maybe some #{0A} #{0A}])
     (1 == parse #{01} [ahead [#{0A} | #"^A"] <any>])
 ]

@@ -6,9 +6,9 @@
     ("foo" == to text! gunzip #{1F8B0800EF46BE4C00034BCBCF07002165738C03000000})
 ]
 [#3
-    (error? trap [inflate #{AAAAAAAAAAAAAAAAAAAA}])
+    ~bad-compression~ !! (inflate #{AAAAAAAAAAAAAAAAAAAA})
 ]
 
-(error? trap [inflate/adler #{AAAAAAAAAAAAAAAAAAAA}])
+~bad-parameter~ !! (inflate/adler #{AAAAAAAAAAAAAAAAAAAA})
 
-(error? trap [gunzip #{AAAAAAAAAAAAAAAAAAAA}])
+~???~ !! (gunzip #{AAAAAAAAAAAAAAAAAAAA})

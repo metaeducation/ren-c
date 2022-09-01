@@ -86,7 +86,7 @@ true)
             specialize :apo/only []
         ]
     ][
-        is-bad: me and ('bad-parameter = (trap [do code]).id)
+        is-bad: me and ('bad-parameter = (sys.util.rescue [do code]).id)
     ]
 
     is-bad

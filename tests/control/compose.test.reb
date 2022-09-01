@@ -22,17 +22,15 @@
 
 ; Isotopes raise errors if they are non-decaying.  For the moment, NULL gives
 ; a bad ~null~ isotope error as well (should likely be a different error)
-(
-    e: trap [compose [(~none~) * <ok>]]
-    e.id = 'bad-isotope
+
+~bad-isotope~ !! (
+    compose [(~none~) * <ok>]
 )
-(
-    e: trap [compose [(null) * <ok>]]
-    e.id = 'need-non-null
+~need-non-null~ !! (
+    compose [(null) * <ok>]
 )
-(
-    e: trap [compose [(~null~) * <ok>]]
-    e.id = 'need-non-null
+~need-non-null~ !! (
+    compose [(~null~) * <ok>]
 )
 ([#[false]] = compose [(~false~)])
 
@@ -158,8 +156,8 @@
 ; getify or setify things that aren't guaranteed to succeed (e.g. a string
 ; might have spaces in it, and can't be turned into a SET-WORD!)
 ;
-(error? trap [[x:] = compose [(#x):]])
-(error? trap [[x:] = compose [("x"):]])
+~???~ !! ([x:] = compose [(#x):])
+~???~ !! ([x:] = compose [("x"):])
 
 ([x/y:] = compose [( 'x/y ):])
 ([x/y:] = compose [( 'x/y: ):])

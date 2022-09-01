@@ -26,9 +26,9 @@
     blk: reduce [:abs 2]
     2 == blk.(:abs)
 )
-(
+~bad-sequence-item~ !! (
     blk: reduce [charset "a" 3]
-    'bad-sequence-item = (trap [to path! reduce ['blk charset "a"]]).id
+    to path! reduce ['blk charset "a"]
 )
 (
     blk: [[] 3]
@@ -144,10 +144,12 @@
     'a/a = mutable 'a/a
 )
 
-[#71 (
-    a: "abcd"
-    error? trap [a.x]
-)]
+[#71
+    ~bad-pick~ !! (
+        a: "abcd"
+        a.x
+    )
+]
 
 [#1820 ; Word USER can't be selected with path syntax
     (
@@ -156,7 +158,7 @@
     )
 ]
 [#1977
-    (f: func [/r] [1] error? trap [do load-value "f/r/%"])
+    ~scan-invalid~ !! (f: func [/r] [1], do load-value "f/r/%")
 ]
 
 ; path evaluation order
@@ -173,8 +175,8 @@
 ; PATH! beginning with an inert item will itself be inert
 ;
 [
-    ('bad-sequence-item = (trap [to path! [/ref inement path]]).id)
-    ('bad-sequence-item = (trap [to path! [/refinement 2]]).id)
+    ~bad-sequence-item~ !! (to path! [/ref inement path])
+    ~bad-sequence-item~ !! (to path! [/refinement 2])
     ((/refinement).2 = 'refinement)
     (r: /refinement, r.2 = 'refinement)
 ][
@@ -203,9 +205,9 @@
 
 ; / is a length 2 PATH! in Ren-C
 (word! = type of the /)
-(
-    e: trap [to path! [_ _]]
-    e.id = 'bad-sequence-item
+
+~bad-sequence-item~ !! (
+    to path! [_ _]
 )
 (the / = compose '(blank)/(blank))
 

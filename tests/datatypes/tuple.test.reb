@@ -9,14 +9,13 @@
 (1.2.3 = to tuple! [1 2 3])
 ;(1x2 = to tuple! [1 2])  ; !!! TBD when unified with pairs
 
-(error? trap [load "1."])  ; !!! Reserved
-(error? trap [load ".1"])  ; !!! Reserved
+(error? sys.util.rescue [load "1."])  ; !!! Reserved
+(error? sys.util.rescue [load ".1"])  ; !!! Reserved
 ;(.1 = to tuple! [_ 1])  ; No representation due to reservation
 ;(1. = to tuple! [1 _])  ; No representation due to reservation
 
-(
-    e: trap [to tuple! [_ _]]
-    e.id = 'bad-sequence-item
+~bad-sequence-item~ !! (
+    to tuple! [_ _]
 )
 
 ("1.2.3" = mold 1.2.3)

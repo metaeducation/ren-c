@@ -31,7 +31,10 @@
 ; Math operations should only work on single characters
 [
     (#a + 1 = #b)
-    ('cannot-use = (trap [#aa + 1]).id)
+
+    ~cannot-use~ !! (
+        #aa + 1
+    )
 ]
 
 
@@ -212,13 +215,11 @@
 (254 = subtract #"^(ff)" #"^(01)")
 (0 = subtract #"^(ff)" #"^(ff)")
 
-(
-    e: trap [NUL - 1]
-    e.id = 'type-limit
+~type-limit~ !! (
+    NUL - 1
 )
-(
-    e: trap [NUL + -1]
-    e.id = 'type-limit
+~type-limit~ !! (
+    NUL + -1
 )
 
 (#"Ā" = add #"^(01)" #"^(ff)")
@@ -265,8 +266,8 @@
 
 
 [#1043
-    (error? trap [make char! #{}])
-    (error? trap [make char! ""])
+    ~bad-make-arg~ !! (make char! #{})
+    ~???~ !! (make char! "")
 ]
 
 

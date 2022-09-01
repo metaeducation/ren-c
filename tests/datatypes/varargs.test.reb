@@ -14,8 +14,9 @@
 )
 
 ; leaked VARARGS! cannot be accessed after call is over
-(
-    error? trap [take reeval (foo: lambda [x [integer! <variadic>]] [x])]
+;
+~frame-not-on-stack~ !! (
+    take reeval (foo: lambda [x [integer! <variadic>]] [x])
 )
 
 (
@@ -84,9 +85,9 @@
     )
 
     ([] = do [soft])
-    (
+    ~bad-word-get~ !! (
         a: ~end~
-        (trap [a soft]).id = 'bad-word-get
+        (a soft)
     )
     ([7] = do [:(1 + 2) :(3 + 4) soft])
 ][
@@ -102,9 +103,9 @@
     )
 
     ([] = do [hard])
-    (
+    ~bad-word-get~ !! (
         a: ~end~
-        (trap [a hard]).id = 'bad-word-get
+        (a hard)
     )
     ([(3 + 4)] = do [(1 + 2) (3 + 4) hard])
 ]

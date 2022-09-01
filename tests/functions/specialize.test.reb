@@ -25,10 +25,10 @@
     ([/A _ /B 20 /C 10] = fooCB 10 20)
     ([/A 30 /B 20 /C 10] = fooCB/A 10 20 30)
 
-    (error? trap [fooBC/B 1 2 3 4 5 6])
-    (error? trap [fooBC/C 1 2 3 4 5 6])
-    (error? trap [fooCB/B 1 2 3 4 5 6])
-    (error? trap [fooCB/C 1 2 3 4 5 6])
+    ~bad-parameter~ !! (fooBC/B 1 2 3 4 5 6)
+    ~bad-parameter~ !! (fooBC/C 1 2 3 4 5 6)
+    ~bad-parameter~ !! (fooCB/B 1 2 3 4 5 6)
+    ~bad-parameter~ !! (fooCB/C 1 2 3 4 5 6)
 ]
 
 (
@@ -139,7 +139,7 @@
             specialize :flp/pass []
         ]
     ][
-        is-bad: me and ('bad-parameter = (trap [do code]).id)
+        is-bad: me and ('bad-parameter = (sys.util.rescue [do code]).id)
     ]
 
     is-bad

@@ -43,4 +43,4 @@
 ; !!! What to do about out-of-range seeks?  It was tolerated historically but
 ; seems to be a poor practice.  It's an error at the moment.
 ;
-(error? trap [parse "abcd" [seek (128)]])
+~index-out-of-range~ !! (parse "abcd" [seek (128)])

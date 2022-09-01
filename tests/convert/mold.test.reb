@@ -17,17 +17,17 @@
     text? mold a
 )]
 ; deep nested block mold
-[#876 (
-    n: 1
-    catch [forever [
-        a: copy []
-        if error? trap [
+[#876
+    ~stack-overflow~ !! (
+        n: 1
+        catch [forever [
+            a: copy []
             repeat n [a: append copy [] a]
             mold a
-        ] [throw true]
-        n: n * 2
-    ]]
-)]
+            n: n * 2
+        ]]
+    )
+]
 [#719
     ("()" = mold the ())
 ]

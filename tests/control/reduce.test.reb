@@ -49,15 +49,13 @@
 ;
 ; Predicates influence the handling of NULLs, which become ~null~ by default
 
-(
-    e: trap [reduce [null]]
-    e.id = 'need-non-null
+~need-non-null~ !! (
+    reduce [null]
 )
 ([] = reduce [maybe null])
 
-(
-    e: trap [reduce [~null~]]
-    e.id = 'need-non-null
+~need-non-null~ !! (
+    reduce [~null~]
 )
 ([] = reduce [maybe ~null~])
 
@@ -78,7 +76,7 @@
     ])
 ]
 
-(error? trap [reduce/predicate [null] chain [:null?, :non]])
+~no-arg~ !! (reduce/predicate [null] chain [:null?, :non])
 
 ; Voids are never offered in today's REDUCE
 ; https://forum.rebol.info/t/should-void-be-offered-to-predicates-for-reduce-any-all-etc/1872
@@ -117,7 +115,7 @@
     ([1 + 2] = collect [reduce-each x @[1 + 2] [keep x]])
 
     (
-        e: trap [reduce-each x [1 + 2] [fail "foo"]]
+        e: trap [reduce-each x [1 + 2] [raise "foo"]]
         e.message = "foo"
     )
 ]

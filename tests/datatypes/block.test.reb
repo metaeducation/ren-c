@@ -28,17 +28,14 @@
 (
     [1] = copy/part tail [1] -2147483648
 )
-(
-    e: trap [copy/part tail [1] -2147483649]
-    (error? e) and (e.id = 'out-of-range)
+~out-of-range~ !! (
+    copy/part tail [1] -2147483649
 )
-(
-    e: trap [[1] = copy/part tail of [1] -9223372036854775808]
-    (error? e) and (e.id = 'out-of-range)
+~out-of-range~ !! (
+    copy/part tail of [1] -9223372036854775808
 )
-(
-    e: trap [[] = copy/part [] 9223372036854775807]
-    (error? e) and (e.id = 'out-of-range)
+~out-of-range~ !! (
+    copy/part [] 9223372036854775807
 )
 
 ; Making a block from an action will iterate the action until it gives null

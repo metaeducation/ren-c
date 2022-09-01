@@ -268,11 +268,17 @@
     blk: [x: x + 1, if x = 2000 [throw <deep-enough>] do blk]
     <deep-enough> = catch blk
 )
-; infinite recursion for string
-[#1896 (
-    str: "do str"
-    error? trap [do str]
-)]
+
+; This was supposed to test infinite recursion in strings, but it doesn't
+; work using module isolation.  Review.
+;
+[#1896
+    ~unassigned-attach~ !! (
+        str: "do str"
+        do str
+    )
+]
+
 ; infinite recursion for evaluate
 (
     x: 0

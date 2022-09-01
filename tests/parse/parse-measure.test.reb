@@ -14,9 +14,9 @@
 
 ; Seeking back in the input causes an error, but seeking ahead is ok.
 ;
-(error? trap [
+~???~ !! (
     parse "abbbc" [pos: <here>, "a", measure [some "b" seek (pos)]]
-])
+)
 (4 = parse "abbbc" [
     ahead [thru "c" pos: <here>]
     "a" measure [some "b" seek (pos)]

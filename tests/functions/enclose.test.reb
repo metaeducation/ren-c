@@ -76,7 +76,7 @@
     110 = wrapped 10
 )
 
-(
+~bad-pick~ !! (
     wrapped: enclose (
         func [@out in] [out: in + 1]
     ) f -> [
@@ -84,6 +84,6 @@
         do f
         f.in
     ]
-    e: trap [wrapped 10]
-    e.id = 'bad-pick
+
+    wrapped 10
 )

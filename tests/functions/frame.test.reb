@@ -20,7 +20,7 @@
     f: make frame! :append
     f.series: 1  ; not a valid APPEND target
     f.value: <ae>
-    e: trap [do f]
+    e: sys.util.rescue [do f]
     did all [
         e.id = 'expect-arg
         e.arg1 = 'append

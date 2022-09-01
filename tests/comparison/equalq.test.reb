@@ -124,11 +124,11 @@
 
 ; Reflexivity for past-tail blocks
 ; Error in R2, but not R3-Alpha.  Error again in Ren-C.  (SAME? allowed)
-(
+;
+~index-out-of-range~ !! (
     a-value: tail of [1]
     clear head of a-value
-    e: trap [equal? a-value a-value]
-    e.id = 'index-out-of-range
+    equal? a-value a-value
 )
 
 ; Reflexivity for cyclic blocks
@@ -138,17 +138,27 @@
     equal? a-value a-value
 )
 ; Comparison of cyclic blocks
+
 ; NOTE: The stackoverflow will likely trigger in valgrind an error such as:
 ; "Warning: client switching stacks?  SP change: 0xffec17f68 --> 0xffefff860"
 ; "         to suppress, use: --max-stackframe=4094200 or greater"
-[#1049 (
-    a-value: copy []
-    insert a-value a-value
-    b-value: copy []
-    insert b-value b-value
-    error? trap [equal? a-value b-value]
-    true
-)]
+;
+; EQUAL? has not yet been migrated to a stackless approach, which would
+; mitigate that error and make it a policy decision on how many dynamic
+; stack frames to allocate.
+;
+; https://forum.rebol.info/t/stackless-is-here-today-now/1844
+;
+[#1049
+    ~stack-overflow~ !! (
+        a-value: copy []
+        insert a-value a-value
+        b-value: copy []
+        insert b-value b-value
+        equal? a-value b-value
+    )
+]
+
 (not equal? [] blank)
 (equal? equal? [] blank equal? blank [])
 ; block! vs. group!
@@ -369,27 +379,27 @@
 (equal? 2-Jul-2009 2-Jul-2009)
 
 ; date! doesn't ignore time portion
-('invalid-compare = pick trap [
+~invalid-compare~ !! (
     not equal? 2-Jul-2009 2-Jul-2009/22:20
-] 'id)
-('invalid-compare = pick trap [
+)
+~invalid-compare~ !! (
     equal? equal? 2-Jul-2009 2-Jul-2009/22:20 equal? 2-Jul-2009/22:20 2-Jul-2009
-] 'id)
+)
 
 ; R3-Alpha considered date! missing time and zone = 00:00:00+00:00.  But
 ; in Ren-C, dates without a time are semantically distinct from a date with
 ; a time at midnight.
 ;
-('invalid-compare = pick trap [
+~invalid-compare~ !! (
     equal? 2-Jul-2009 2-Jul-2009/00:00:00+00:00
-] 'id)
+)
 
-('invalid-compare = pick trap [
+~invalid-compare~ !! (
     equal? equal? 2-Jul-2009 2-Jul-2009/00:00 equal? 2-Jul-2009/00:00 2-Jul-2009
-] 'id)
-('invalid-compare = pick trap [
+)
+~invalid-compare~ !! (
     equal? 2-Jul-2009/22:20 2-Jul-2009/20:20-2:00
-] 'id)
+)
 
 (equal? 00:00 00:00)
 ; time! missing components are 0
@@ -627,8 +637,11 @@
 ; No structural equivalence for port!
 ; Error in R2 (could be fixed).
 (not equal? make port! http:// make port! http://)
-[#859 (
-    a: copy the ()
-    insert a a
-    error? trap [do a]
-)]
+
+[#859
+    ~expect-arg~ !! (
+        a: copy the ()
+        insert a a
+        do a
+    )
+]

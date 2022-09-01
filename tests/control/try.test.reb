@@ -1,9 +1,24 @@
 ; functions/control/try.r
-(
+;
+; Note: This file is testing the error trapping functions.  So don't change
+; the calls to TRAP here into test dialect calls:
+;
+;      ~dont-do-this~ !! (
+;         warn "DON'T USE THIS TEST PATTERN HERE!"
+;      )
+;
+; Annotations like #trap are used here to act as a reminder not to remove the
+; traps from the test.
+
+#trap (
     e: trap [1 / 0]
     e.id = 'zero-divide
 )
-(
+#trap (
+    e: trap [e: 1 / 0]
+    e.id = 'zero-divide
+)
+#trap (
     success: true
     error? trap [
         1 / 0
@@ -11,51 +26,91 @@
     ]
     success
 )
-(
+#rescue (
     success: true
     f1: does [
         1 / 0
         success: false
     ]
-    error? trap [f1]
+    error? sys.util.rescue [f1]
     success
 )
 [#822
-    (trap [make error! ""] then [<branch-not-run>] else [true])
+    #trap (
+        trap [make error! ""] then [<branch-not-run>] else [true]
+    )
 ]
-(trap [fail make error! ""] then [true])
-(trap [1 / 0] then :error?)
-(trap [1 / 0] then e -> [error? e])
-(trap [] then (func [e] [return <handler-not-run>]) else [true])
+#rescue (
+    sys.util.rescue [fail make error! ""] then [true]
+)
+#trap (
+    trap [1 / 0] then :error?
+)
+#trap (
+    trap [1 / 0] then e -> [error? e]
+)
+#trap (
+    trap [] then (func [e] [return <handler-not-run>]) else [true]
+)
 [#1514
-    (error? trap [trap [1 / 0] then :add])
+    #trap (
+        error? sys.util.rescue [trap [1 / 0] then :add]
+    )
 ]
 
-[#1506 (
-    10 = reeval func [return: [integer!]] [trap [return 10] 20]
-)]
+[#1506
+    #trap (
+        10 = reeval func [return: [integer!]] [trap [return 10] 20]
+    )
+]
 
 ; ENTRAP (similar to TRAP but single result, ^META result if not an error)
 
-(void' = entrap [])
-(null' = entrap [null])
-((the '3) = entrap [1 + 2])
-((the '[b c]) = entrap [skip [a b c] 1])
-('no-arg = (entrap [the]).id)
+#entrap (
+    void' = entrap []
+)
+#entrap (
+    null' = entrap [null]
+)
+#entrap (
+    (the '3) = entrap [1 + 2]
+)
+#entrap (
+    (the '[b c]) = entrap [skip [a b c] 1]
+)
+#entrap (
+    'zero-divide = (entrap [1 / 0]).id
+)
 
 
 ; Multiple return values
-(
-    [e v]: trap [10 + 20]
-    did all [
-        null? e
-        v = 30
+#trap (
+    a: <a>
+    b: <b>
+    [a b]: trap [10 + 20]
+    all [
+        null? a
+        b = 30
     ]
 )
-(
-    [e v]: trap [fail "Hello"]
-    did all [
+#trap (
+    a: <a>
+    b: <b>
+    [a b]: trap [raise ~something~]  ; trap before assign attempt
+    all [
+        error? a
+        a.id = 'something
+        unset? 'b
+    ]
+)
+#trap (
+    a: <a>
+    b: <b>
+    e: trap [[a b]: raise ~something~]  ; trap after assign attempt
+    all [
         error? e
-        undefined? 'v
+        e.id = 'something
+        a = <a>
+        b = <b>
     ]
 )

@@ -48,7 +48,8 @@
 
 ; REDO type checking test
 ; (args and refinements must pass function's type checking)
-(
+;
+~expect-arg~ !! (
     foo: func [return: [tag!] n i [integer!]] [
         if n = 0 [
             return <success>  ; impossible for this case
@@ -58,8 +59,7 @@
         redo 'return
     ]
 
-    e: trap [foo 100 1020]
-    e.id = 'expect-arg
+    foo 100 1020
 )
 
 ; REDO phase test

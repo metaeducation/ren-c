@@ -100,7 +100,7 @@
 
 ; Void handling is distinct from the error case with nothing on the left.
 [
-    (trap [else [~unused~]] then e -> [e.id = 'no-arg])
+    (sys.util.rescue [else [~unused~]] then e -> [e.id = 'no-arg])
 
     (void else [true])
     (1020 = (1000 + 20 void then [fail ~unreachable~]))

@@ -203,8 +203,9 @@
         true
     )
 
-    (did trap [o.i: 1])
-    (did trap [set? 'o.i])
-    (did trap [unset? 'o.i])
+    ~bad-pick~ !! (o.i: 1)
+    ~bad-pick~ !! (set? 'o.i)
+    ~bad-pick~ !! (unset? 'o.i)
+
     (null = in o 'i)
 ]

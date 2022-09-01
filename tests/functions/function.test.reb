@@ -6,7 +6,8 @@
 (action? does [])
 
 ; !!! literal form no longer supported
-(error? trap [load "#[action! [[] []]]"])
+;
+~malconstruct~ !! (load "#[action! [[] []]]")
 
 ; return-less return value tests
 (
@@ -122,7 +123,7 @@
 )
 (
     f: does [_]
-    blank? f
+    null? f
 )
 (
     a-value: make object! []
@@ -213,14 +214,15 @@
         2
     ]
 )
-; "error out" of a function
-(
+
+~zero-divide~ !! (
     error? trap [
-        f: does [1 / 0 2]
+        f: does [1 / 0 2]  ; "error out" of a function
         f
         2
     ]
 )
+
 ; BREAK out leaves a "running" function in a "clean" state
 (
     1 = repeat 1 [
@@ -361,26 +363,34 @@
 
 ; In Ren-C's specific binding, a function-local word that escapes the
 ; function's extent cannot be used when re-entering the same function later
-(
+;
+; !!! Review: Fix these tests.
+
+~expect-arg~ !! (
     f: func [code value] [return either blank? code ['value] [do code]]
     f-value: f blank blank
-    error? trap [f compose [2 * (f-value)] 21]  ; re-entering same function
+    f compose [2 * (f-value)] 21  ; re-entering same function
 )
-(
+~expect-arg~ !! (
     f: func [code value] [return either blank? code ['value] [do code]]
     g: func [code value] [return either blank? code ['value] [do code]]
     f-value: f blank blank
-    error? trap [g compose [2 * (f-value)] 21]  ; re-entering different function
+    g compose [2 * (f-value)] 21  ; re-entering different function
 )
-[#19 ; but duplicate specializations currently not legal in Ren-C
-    (
-    f: func [/r [integer!]] [return x]
-    error? trap [2 == f/r/r 1 2]
+
+[#19
+    ~bad-parameter~ !! (
+        f: func [/r [integer!]] [return x]
+        2 == f/r/r 1 2  ; Review: could be a syntax for variadic refinements?
     )
 ]
+
 [#27
-    (error? trap [(type of) 1])
+    ~unassigned-attach~ !! (
+        error? trap [(type of) 1]
+    )
 ]
+
 ; inline function test
 [#1659 (
     f: does :(reduce [does [true]])
@@ -406,17 +416,17 @@
         1 = f 2
     ]
 )
-[#2025 (
-    ; ensure x and y are unset from previous tests, as the test here
-    ; is trying to cause an error...
-    unset 'x
-    unset 'y
+[#2025
+    ~unassigned-attach~ !! (
+        assert [unset? 'x, unset? 'y]
 
-    body: [return x + y]
-    f: func [x] body
-    g: func [y] body
-    error? trap [f 1]
-)]
+        body: [return x + y]
+        f: func [x] body
+        g: func [y] body
+        (f 1)
+    )
+]
+
 [#2044 (
     o: make object! [f: func [x] [return 'x]]
     p: make o []
@@ -452,18 +462,12 @@
 )
 
 ; Duplicate arguments or refinements.
-(
-    error? trap [func [a b a] [return 0]]
-)
-(
-    error? trap [function [a b a] [return 0]]
-)
-(
-    error? trap [func [/test /test] [return 0]]
-)
-(
-    error? trap [function [/test /test] [return 0]]
-)
+[
+    ~dup-vars~ !! (func [a b a] [return 0])
+    ~dup-vars~ !! (function [a b a] [return 0])
+    ~dup-vars~ !! (func [/test /test] [return 0])
+    ~dup-vars~ !! (function [/test /test] [return 0])
+]
 
 ; /LOCAL is an ordinary refinement in Ren-C
 (

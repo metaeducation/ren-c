@@ -57,20 +57,24 @@
 ; be many more tests and philosophies written up of what the semantics are,
 ; especially when it comes to BINARY! and ANY-STRING! mixtures.  These tests
 ; are better than nothing...
-(
-    catchar: #"🐱"
-    #🐱 == parse #{F09F90B1} [catchar]
-)(
-    cattext: "🐱"
-    "🐱" == parse #{F09F90B1} [cattext]
-)(
-    catbin: #{F09F90B1}
-    e: trap [parse "🐱" [catbin]]
-    'find-string-binary = e.id
-)(
-    catchar: #"🐱"
-    #🐱 == parse "🐱" [catchar]
-)
+[
+    (
+        catchar: #"🐱"
+        #🐱 == parse #{F09F90B1} [catchar]
+    )
+    (
+        cattext: "🐱"
+        "🐱" == parse #{F09F90B1} [cattext]
+    )
+    ~find-string-binary~ !! (
+        catbin: #{F09F90B1}
+        parse "🐱" [catbin]
+    )
+    (
+        catchar: #"🐱"
+        #🐱 == parse "🐱" [catchar]
+    )
+]
 
 [
     (

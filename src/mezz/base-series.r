@@ -214,7 +214,7 @@ trim: function [
     ;
     if any-context? series [
         if any [head_TRIM tail_TRIM auto lines all_TRIM with] [
-            fail "Invalid refinements for TRIM of ANY-CONTEXT!"
+            fail ~bad-refines~
         ]
         trimmed: make (type of series) collect [
             for-each [key val] series [
@@ -234,7 +234,7 @@ trim: function [
                 ; Note: /WITH might be able to work, e.g. if it were a MAP!
                 ; or BLOCK! of values to remove.
                 ;
-                fail "Invalid refinements for TRIM of ANY-ARRAY!"
+                fail ~bad-refines~
             ]
             rule: blank!
 
@@ -257,7 +257,7 @@ trim: function [
                     any [auto head_TRIM tail_TRIM lines]
                 ]
             ][
-                fail "Invalid refinements for TRIM of STRING!"
+                fail ~bad-refines~
             ]
 
             rule: case [
@@ -272,7 +272,7 @@ trim: function [
 
         binary? series [
             if any [auto lines] [
-                fail "Invalid refinements for TRIM of BINARY!"
+                fail ~bad-refines~
             ]
 
             rule: case [

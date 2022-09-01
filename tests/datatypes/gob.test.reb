@@ -55,9 +55,11 @@
     true
 )
 
-[#301 (
-    'expect-val = pick trap [make gob! [path.size: 10x10]] 'id
-)]
+[#301
+    ~expect-val~ !! (
+        pick trap [make gob! [path.size: 10x10]] 'id
+    )
+]
 
 [#203 (
     g: make gob! 10x20

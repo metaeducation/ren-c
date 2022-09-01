@@ -34,11 +34,10 @@
 ; check path construction.  As a ground-zero example of usefulness, when
 ; filling in a TUPLE! segment you can't put paths in it.
 [
-    (
+    ~embedded-file-slash~ !! (
         extension: "txt/bad"
 
-        e: trap [%% a/b.(extension)]
-        e.id = 'embedded-file-slash
+        %% a/b.(extension)
     )
 ]
 
@@ -57,17 +56,11 @@
     (%/b/c = %% [(if false ['a]) /b/c])
     (%a/b/c = %% [(if true ['a]) /b/c])
 
-    (
-        e: trap [
-            %% [(if true ['a/b/]) /b/c]
-        ]
-        e.id = 'doubled-file-slash
+    ~doubled-file-slash~ !! (
+        %% [(if true ['a/b/]) /b/c]
     )
 
-    (
-        e: trap [
-            %% [(if true ["a/b/"]) /b/c]
-        ]
-        e.id = 'embedded-file-slash
+    ~embedded-file-slash~ !! (
+        %% [(if true ["a/b/"]) /b/c]
     )
 ]

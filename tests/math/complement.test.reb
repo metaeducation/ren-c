@@ -31,6 +31,7 @@
 ; bitset
 (not find complement charset "b" #"b")
 (did find complement charset "a" #"b")
+
 (
     a: make bitset! #{0000000000000000000000000000000000000000000000000000000000000000}
     a == complement complement a

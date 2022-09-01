@@ -32,7 +32,7 @@
 )
 ; "error out" of USE
 (
-    error? trap [
+    error? sys.util.rescue [
         use [a] [1 / 0]
         2
     ]
@@ -48,8 +48,8 @@
 
 ; USE shares mechanics with FOR-EACH and hence does not allow expansion.
 ; This particular nuance with 'SELF from #2076 thus no longer arises
-(
+;
+~locked-series~ !! (
     o: binding of use [x] ['x]
-    e: trap [append o 'self]
-    e.id = 'locked-series
+    append o 'self
 )

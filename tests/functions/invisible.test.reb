@@ -22,14 +22,11 @@
 ;
 ; https://forum.rebol.info/t/1582
 
-(
+~bad-isotope~ !! (
     pos: ~
-    e: trap [
-        val: evaluate/next [
-            1 + comment "a" comment "b" 2 * 3 fail "too far"
-        ] 'pos
-    ]
-    e.id = 'bad-isotope
+    val: evaluate/next [
+        1 + comment "a" comment "b" 2 * 3 fail "too far"
+    ] 'pos
 )
 (
     pos: ~
@@ -73,11 +70,8 @@
 (void' = ^ elide "a")
 
 
-(
-    e: trap [
-        evaluate evaluate [1 elide "a" + elide "b" 2 * 3 fail "too far"]
-    ]
-    e.id = 'expect-arg
+~expect-arg~ !! (
+    evaluate evaluate [1 elide "a" + elide "b" 2 * 3 fail "too far"]
 )
 (
     code: [1 elide "a" elide "b" + 2 * 3 fail "too far"]
@@ -103,12 +97,9 @@
 
     did all [x = 9, y = 9]
 )
-(
+~bad-isotope~ !! (
     x: ~
-    e: trap [
-        x: 1 + elide (y: 10) 2 * 3  ; non-interstitial, no longer legal
-    ]
-    e.id = 'bad-isotope
+    x: 1 + elide (y: 10) 2 * 3  ; non-interstitial, no longer legal
 )
 
 ; ONCE-BAR was an experiment created to see if it could be done, and was
@@ -148,7 +139,7 @@
     true)
 
     (7 = (1 + 2 |1| 3 + 4))
-    (error? trap [1 + 2 |1| 3 + 4 5 + 6])
+    ~???~ !! (1 + 2 |1| 3 + 4 5 + 6)
 ]
 
 (
@@ -208,15 +199,15 @@
         true
     )
 
-    ('no-arg = (trap [right-normal ||]).id)
+    ~no-arg~ !! (right-normal ||)
     (null? do [right-normal* ||])
     (null? do [right-normal*])
 
-    ('no-arg = (trap [|| left-normal]).id)
+    ~no-arg~ !! (|| left-normal)
     (null? do [|| left-normal*])
     (null? do [left-normal*])
 
-    ('no-arg = (trap [|| left-defer]).id)
+    ~no-arg~ !! (|| left-defer)
     (null? do [|| left-defer*])
     (null? do [left-defer*])
 
@@ -228,8 +219,8 @@
     ; quotes when there is nothing to their right means you now get errors.
     ; It's not clear what the best behavior is, so punting for now.
     ;
-    ('literal-left-tuple = (trap [<bug> 'left-soft = do [|| left-soft]]).id)
-    ('literal-left-tuple = (trap [<bug> 'left-soft* = do [|| left-soft*]]).id)
+    ~literal-left-tuple~ !! (<bug> 'left-soft = do [|| left-soft])
+    ~literal-left-tuple~ !! (<bug> 'left-soft* = do [|| left-soft*])
     (null? do [left-soft*])
 
     ('|| = do [right-hard ||])
@@ -238,8 +229,8 @@
 
     ; !!! See notes above.
     ;
-    ('literal-left-tuple = (trap [<bug> 'left-hard = do [|| left-hard]]).id)
-    ('literal-left-tuple = (trap [<bug> 'left-hard* = do [|| left-hard*]]).id)
+    ~literal-left-tuple~ !! (<bug> 'left-hard = do [|| left-hard])
+    ~literal-left-tuple~ !! (<bug> 'left-hard* = do [|| left-hard*])
     (null? do [left-hard*])
 ]
 
@@ -306,8 +297,8 @@
     ; quotes when there is nothing to their right means you now get errors.
     ; It's not clear what the best behavior is, so punting for now.
     ;
-    ('literal-left-tuple = (trap [<bug> 'left-soft = do [|| left-soft]]).id)
-    ('literal-left-tuple = (trap [<bug> 'left-soft* = do [|| left-soft*]]).id)
+    ~literal-left-tuple~ !! (<bug> 'left-soft = do [|| left-soft])
+    ~literal-left-tuple~ !! (<bug> 'left-soft* = do [|| left-soft*])
     (null? do [left-soft*])
 
     ('|| = do [right-hard ||])
@@ -316,8 +307,8 @@
 
     ; !!! See notes above.
     ;
-    ('literal-left-tuple = (trap [<bug> 'left-hard = do [|| left-hard]]).id)
-    ('literal-left-tuple = (trap [<bug> 'left-hard* = do [|| left-hard*]]).id)
+    ~literal-left-tuple~ !! (<bug> 'left-hard = do [|| left-hard])
+    ~literal-left-tuple~ !! (<bug> 'left-hard* = do [|| left-hard*])
     (null? do [left-hard*])
 ]
 
@@ -391,15 +382,11 @@
 ;
 ; https://forum.rebol.info/t/permissive-group-invisibility/1153
 ;
-(
-    e: trap [() 1 + () 2 = () 3]
-    e.id = 'bad-isotope
+~bad-isotope~ !! (
+    () 1 + () 2 = () 3
 )
-(
-    e: trap [
-        (comment "one") 1 + (comment "two") 2 = (comment "three") 3
-    ]
-    e.id = 'bad-isotope
+~bad-isotope~ !! (
+    (comment "one") 1 + (comment "two") 2 = (comment "three") 3
 )
 
 ; "Opportunistic Invisibility" means that functions can treat invisibility as
@@ -434,15 +421,13 @@
         no-spec: func [x] [return]
         <test> = (<test> no-spec 10)
     )
-    (
+    ~bad-invisible~ !! (
         int-spec: func [return: [integer!] x] [return void]
-        e: trap [int-spec 10]
-        e.id = 'bad-invisible
+        int-spec 10
     )
-    (
+    ~bad-invisible~ !! (
         int-spec: func [return: [integer!] x] [return]
-        e: trap [int-spec 10]
-        e.id = 'bad-invisible
+        int-spec 10
     )
 
     (
@@ -473,9 +458,8 @@
 
 (void' = ^ void)
 
-(
-    e: trap [1 + 2 (comment "stale") + 3]
-    e.id = 'bad-isotope
+~bad-isotope~ !! (
+    1 + 2 (comment "stale") + 3
 )
 
 ; Functions that take voids as normal parameters receive them as unset

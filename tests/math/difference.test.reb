@@ -20,11 +20,7 @@
         difference make typeset! [decimal! integer!] make typeset! [integer!]
 )]
 
-[#1822 (
-    did all [
-        'invalid-compare = pick trap [
-            12:00 = difference 13-1-2011/12:00 13-1-2011
-        ] 'id
-        12:00 = difference 13-1-2011/12:00 13-1-2011/0:0
-    ]
-)]
+[#1822
+    ~invalid-compare~ !! (12:00 = difference 13-1-2011/12:00 13-1-2011)
+    (12:00 = difference 13-1-2011/12:00 13-1-2011/0:0)
+]

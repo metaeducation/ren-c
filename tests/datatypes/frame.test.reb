@@ -29,9 +29,9 @@
         f.series = [a b c <d>]
         f.value = <d>
         [a b c <d> <d>] = do f
-        'stale-frame = pick trap [do f] 'id
-        'bad-pick = pick trap [f.series] 'id
-        'bad-pick = pick trap [f.value] 'id
+        'stale-frame = pick sys.util.rescue [do f] 'id
+        'bad-pick = pick sys.util.rescue [f.series] 'id
+        'bad-pick = pick sys.util.rescue [f.value] 'id
     ]
 )
 
@@ -54,9 +54,8 @@
     )
 
     (f-outside.public = 1020)  ; public values visible externally
-    (
-        e: trap [f-outside.private]
-        'bad-pick = e.id  ; private not visible in external view
+    ~bad-pick~ !! (
+        f-outside.private  ; private not visible in external view
     )
 
     (f-inside.public = 1020)  ; public values still visible internally
@@ -87,15 +86,13 @@
     )
 
     (f-outside-adapt.public = 1020)
-    (
-        e: trap [f-outside-adapt.private]
-        'bad-pick = e.id
+    ~bad-pick~ !! (
+        f-outside-adapt.private
     )
 
     (f-inside-prelude.public = 1020)
-    (
-        e: trap [f-inside-prelude.private]
-        'bad-pick = e.id
+    ~bad-pick~ !! (
+        f-inside-prelude.private
     )
 
     (f-inside-foo.public = 1020)
@@ -140,9 +137,8 @@
 
     (f-inside-foo.public = 1020)
     (f-inside-foo.private = 304)  ; not reused!
-    (
-        e: trap [f-inside-foo.additional]
-        'bad-pick = e.id
+    ~bad-pick~ !! (
+        f-inside-foo.additional
     )
 ]
 

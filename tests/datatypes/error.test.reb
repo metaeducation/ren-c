@@ -16,7 +16,7 @@
 ;
 (a: 1 error? trap [a: 1 / 0] :a =? 1)
 (a: 1 error? trap [set 'a 1 / 0] :a =? 1)
-(a: 1 error? trap [set/opt 'a 1 / 0] :a =? 1)
+(a: 1 error? trap [set/any 'a 1 / 0] :a =? 1)
 
 [#2190 (
     e: trap [
@@ -143,10 +143,7 @@
     e1.near = e2.near
 )
 
-(
-    e: trap [1 / 0]
-    e.id = 'zero-divide
-)
+~zero-divide~ !! (1 / 0)
 
 ; #60, #1135
 ; This tests the NEAR positioning, though really only a few elements of

@@ -56,17 +56,12 @@
         append b.1 "x"
         append b 'z
         a = [<xx> #y z]
-    )(
+    )
+    ~series-frozen~ !! (
         b: blockify a: <x>
         append a "x"  ; string contents are mutable, if they were initially
-        did all [
-            b = [<xx>]
-            trap [
-                append b 'z  ; block doesn't truly "exist", can't append
-            ] then e -> [
-                e.id = 'series-frozen
-            ]
-        ]
+        assert [b = [<xx>]]
+        append b 'z
     )
     ([] = blockify null)
     ([] = blockify [])

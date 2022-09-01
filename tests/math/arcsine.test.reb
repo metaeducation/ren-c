@@ -19,5 +19,6 @@
 ((pi / -2) = arcsine/radians -1)
 ((1e-12 / (arcsine 1e-12)) = (pi / 180))
 ((1e-9 / (arcsine/radians 1e-9)) = 1.0)
-(error? trap [arcsine 1.1])
-(error? trap [arcsine -1.1])
+
+~overflow~ !! (arcsine 1.1)
+~overflow~ !! (arcsine -1.1)

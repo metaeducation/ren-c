@@ -33,10 +33,9 @@
 (
     invalid: ["~~" "~~~" "~a" "~~~a"]
     for-each str invalid [
-        e: trap [
-            load-value str
+        load-value str except e -> [
+            assert [e.id = 'scan-invalid]
         ]
-        assert [e.id = 'scan-invalid]
     ]
     true
 )
@@ -164,7 +163,7 @@
 ; would demand some kind of prior declaration of intent to use the name).
 ;
 (did all [
-    e: trap [get/any 'asiieiajiaosdfbjakbsjxbjkchasdf]
+    e: sys.util.rescue [get/any 'asiieiajiaosdfbjakbsjxbjkchasdf]
     e.id = 'unassigned-attach
     e.arg1 = 'asiieiajiaosdfbjakbsjxbjkchasdf
 ])
@@ -207,16 +206,15 @@
     foo: '~foo~
     did parse3 [~foo~ ~foo~] [some foo]
 )
-(
+~bad-word-get~ !! (
     foo: ~foo~
-    e: trap [
-        parse3 [~foo~ ~foo~] [some foo]
-    ]
-    e.id = 'bad-word-get
+    parse3 [~foo~ ~foo~] [some foo]
 )
 
 [#68 https://github.com/metaeducation/ren-c/issues/876
-    ('need-non-end = (trap [a:]).id)
+    ~need-non-end~ !! (
+        a:
+    )
     (
         a: 1020
         did all [
@@ -227,13 +225,15 @@
 ]
 
 
-(error? trap [a: ~none~, a])
+~bad-word-get~ !! (
+    a: ~none~
+    a
+)
 (not error? trap [set 'a '~none~])
 
-(
+~bad-word-get~ !! (
     a-value: ~none~
-    e: trap [a-value]
-    e.id = 'bad-word-get
+    a-value
 )
 
 
@@ -251,8 +251,7 @@
 ; UNMETA* works on void, but not other "isotopic" forms as a trick
 [
     (void? unmeta* void)
-    (
-        e: trap [unmeta* ~foo~]
-        e.id = 'bad-isotope
+    ~bad-isotope~ !! (
+        unmeta* ~foo~
     )
 ]

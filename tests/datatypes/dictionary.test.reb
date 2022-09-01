@@ -20,8 +20,11 @@
     null? m.c
 )
 (m: make map! [a 1 b 2] m.c: 3 3 == m.c)
+
 ; Maps contain key/value pairs and must be created from blocks of even length.
-(error? trap [make map! [1]])
+;
+~index-out-of-range~ !! (error? trap [make map! [1]])
+
 (empty? clear make map! [a 1 b 2])
 [#1930 (
     m: make map! 8
@@ -64,16 +67,16 @@
     (50 = select/case m #"C")
     (60 = select/case m #"c")
 
-    ('conflicting-key = (trap [m.AA]).id)
-    ('conflicting-key = (trap [m.aa]).id)
-    ('conflicting-key = (trap [select m <BB>]).id)
-    ('conflicting-key = (trap [select m <bb>]).id)
-    ('conflicting-key = (trap [m.(#"C")]).id)
-    ('conflicting-key = (trap [m.(#"c")]).id)
+    ~conflicting-key~ !! (m.AA)
+    ~conflicting-key~ !! (m.aa)
+    ~conflicting-key~ !! (select m <BB>)
+    ~conflicting-key~ !! (select m <bb>)
+    ~conflicting-key~ !! (m.(#"C"))
+    ~conflicting-key~ !! (m.(#"c"))
 
-    ('conflicting-key = (trap [put m 'Aa 70]).id)
-    ('conflicting-key = (trap [m.(<Bb>): 80]).id)
-    ('conflicting-key = (trap [m.(#"C"): 90]).id)
+    ~conflicting-key~ !! (put m 'Aa 70)
+    ~conflicting-key~ !! (m.(<Bb>): 80)
+    ~conflicting-key~ !! (m.(#"C"): 90)
 
     (
         put/case m 'Aa 100
@@ -115,17 +118,17 @@
     (3 = select/case m the '''a)
     (4 = select/case m the ''''a)
 
-    ((trap [select m the a]).id = 'conflicting-key)
-    ((trap [m.(the a)]).id = 'conflicting-key)
+    ~conflicting-key~ !! (select m the a)
+    ~conflicting-key~ !! (m.(the a))
 
-    ((trap [select m the ''''a]).id = 'conflicting-key)
-    ((trap [m.(the ''''a)]).id = 'conflicting-key)
+    ~conflicting-key~ !! (select m the ''''a)
+    ~conflicting-key~ !! (m.(the ''''a))
 
     ('II = m.(the ''[x y]))
     ('IIII = m.(the ''''[m n o p]))
 
-    ((trap [append noquote b2 'z]).id = 'series-auto-locked)
-    ((trap [append noquote b4 'q]).id = 'series-auto-locked)
+    ~series-auto-locked~ !! (append noquote b2 'z)
+    ~series-auto-locked~ !! (append noquote b4 'q)
 ]
 
 

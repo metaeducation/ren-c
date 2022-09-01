@@ -31,6 +31,7 @@
 )
 ; Test that arity-0 return stops the loop
 (none? reeval func [return: <none>] [cycle [return none]])
+
 ; Test that errors do not stop the loop and errors can be returned
 (
     num: 0
@@ -42,6 +43,7 @@
     ]
     all [error? e, num = 10]
 )
+
 ; Recursion check
 (
     num1: 0

@@ -13,16 +13,17 @@
     a: [ < ]
     a = load-value mold a
 )]
-(error? trap [load "1xyz#"])
+
+~scan-invalid~ !! (load "1xyz#")
 
 ; LOAD/NEXT removed, see #1703
 ;
-(error? trap [load/next "1"])
+~bad-parameter~ !! (load/next "1")
 
 
 [#1122 (
     any [
-        error? trap [load "9999999999999999999"]
+        error? sys.util.rescue [load "9999999999999999999"]
         greater? load-value "9999999999999999999" load-value "9223372036854775807"
     ]
 )]
@@ -36,15 +37,13 @@
      ]
 )
 
-[#1421 (
-    did all [
-        error? trap [load "[a<]"]
-        error? trap [load "[a>]"]
-        error? trap [load "[a+<]"]
-        error? trap [load "[1<]"]
-        error? trap [load "[+a<]"]
-    ]
-)]
+[#1421
+    ~scan-invalid~ !! (load "[a<]")
+    ~scan-invalid~ !! (load "[a>]")
+    ~scan-invalid~ !! (load "[a+<]")
+    ~scan-invalid~ !! (load "[1<]")
+    ~scan-invalid~ !! (load "[+a<]")
+]
 
 ([] = load " ")
 ([1] = load "1")

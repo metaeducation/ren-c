@@ -47,14 +47,16 @@
 
 
 ; BAD-WORD! isotopes cause an error, plain BAD-WORD! matches literal BAD-WORDs
-(
-    foo: ~none~
-    e: trap [parse3 "a" [foo]]
-    e.id = 'bad-word-get
-)(
-    foo: '~none~
-    did parse3 [~none~] [foo <end>]
-)
+[
+    ~bad-word-get~ !! (
+        foo: ~none~
+        parse3 "a" [foo]
+    )
+    (
+        foo: '~none~
+        did parse3 [~none~] [foo <end>]
+    )
+]
 
 ; Empty block case handling
 
@@ -64,10 +66,11 @@
 (didn't parse3 [x] [[[]]])
 (did parse3 [x] [[] 'x []])
 
-; No longer contentious concept: NULL is not legal as a parse rule, and BLANK!
-; is matched literally in blocks...treated like a space in strings.
+; No longer contentious concept: NULL is not legal as a parse rule.
+;
+; BLANK! behavior is still contentious at time of writing.
 [
-    (error? trap [did parse3 [x] ['x null]])
+    ~no-value~ !! (did parse3 [x] ['x null])
     (did parse3 [_ x] [blank 'x <end>])
 
     (didn't parse3 [] [blank blank blank])
@@ -168,10 +171,12 @@
 
 ; self-invoking rule
 
-[#1672 (
-    a: [a]
-    error? trap [parse3 [] a]
-)]
+[#1672
+    ~stack-overflow~ !! (
+        a: [a]
+        error? trap [parse3 [] a]
+    )
+]
 
 ; repetition
 
@@ -237,9 +242,9 @@
 
 ; self-modifying rule, not legal in Ren-C if it's during the parse
 
-(error? trap [
+~series-held~ !! (
     didn't parse3 "abcd" rule: ["ab" (remove back tail of rule) "cd"]
-])
+)
 
 [https://github.com/metaeducation/ren-c/issues/377 (
     o: make object! [a: 1]
@@ -259,7 +264,7 @@
 
 ; INTO is not legal if a string parse is already running
 ;
-(error? trap [parse3 "aa" [into ["a" "a"]]])
+~parse-rule~ !! (parse3 "aa" [into ["a" "a"]])
 
 
 ; Should return the same series type as input (Rebol2 did not do this)
@@ -365,20 +370,24 @@
 ; be many more tests and philosophies written up of what the semantics are,
 ; especially when it comes to BINARY! and ANY-STRING! mixtures.  These tests
 ; are better than nothing...
-(
-    catchar: #"🐱"
-    did parse3 #{F09F90B1} [catchar]
-)(
-    cattext: "🐱"
-    did parse3 #{F09F90B1} [cattext]
-)(
-    catbin: #{F09F90B1}
-    e: trap [did parse3 "🐱" [catbin]]
-    'find-string-binary = e.id
-)(
-    catchar: #"🐱"
-    did parse3 "🐱" [catchar]
-)
+[
+    (
+        catchar: #"🐱"
+        did parse3 #{F09F90B1} [catchar]
+    )
+    (
+        cattext: "🐱"
+        did parse3 #{F09F90B1} [cattext]
+    )
+    ~find-string-binary~ !! (
+        catbin: #{F09F90B1}
+        did parse3 "🐱" [catbin]
+    )
+    (
+        catchar: #"🐱"
+        did parse3 "🐱" [catchar]
+    )
+]
 
 [
     (
@@ -523,7 +532,7 @@
     ]
 )(
     x: <before>
-    e: trap [
+    e: sys.util.rescue [
         did parse3 ["a" "b" 1] [set x some text! integer!]
     ]
     did all [

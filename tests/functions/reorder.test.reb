@@ -30,7 +30,7 @@
 
 ; All required arguments must be mentioned in the ordering.
 (
-    e: trap [reorder :append [series]]
+    e: sys.util.rescue [reorder :append [series]]
     did all [
         e.id = 'no-arg
         e.arg1 = 'append
@@ -46,7 +46,7 @@
 
 ; Naming a refinement more than once is an error
 (
-    e: trap [reorder :append [series value series]]
+    e: sys.util.rescue [reorder :append [series value series]]
     did all [
         e.id = 'bad-parameter
         e.arg1 = 'series
@@ -55,7 +55,7 @@
 
 ; Unrecognized parameters cause errors
 (
-    e: trap [reorder :append [series value fhqwhgads]]
+    e: sys.util.rescue [reorder :append [series value fhqwhgads]]
     did all [
         e.id = 'bad-parameter
         e.arg1 = 'fhqwhgads

@@ -53,7 +53,7 @@
 )
 (
     block: copy [1 2 3 4]
-    trap [
+    sys.util.rescue [
         remove-each i block [
             if i = 3 [fail "midstream failure"]
             true
@@ -67,7 +67,7 @@
     block: copy [1 2 3 4 5]
     remove-each [a b] block [
         if a = 5 [
-            b-was-null: _? :b
+            b-was-null: null? :b
         ]
     ]
     b-was-null
@@ -97,7 +97,7 @@
 )
 (
     string: copy "1234"
-    trap [
+    sys.util.rescue [
         remove-each i string [
             if i = #"3" [fail "midstream failure"]
             true
@@ -148,7 +148,7 @@
 )
 (
     binary: copy #{01020304}
-    trap [
+    sys.util.rescue [
         remove-each i binary [
             if i = 3 [fail "midstream failure"]
             true

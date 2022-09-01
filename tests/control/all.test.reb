@@ -7,10 +7,9 @@
 [
     (void? all [])
     (void' = ^ all [])
-    (
-        e: trap [if all [] [<safety>]]
-        e.id = 'bad-isotope
-    )
+
+    ~bad-isotope~ !! (if all [] [<safety>])
+
     (
         x: <overwritten>
         did all [
@@ -411,5 +410,5 @@
 ;         print "We want to avoid this printing, motivate use of DID MATCH"
 ;     ]
 ;
-('bad-isotope = pick trap [all [match logic! false]] 'id)
-(#[true] = all [did match logic! false])
+~bad-isotope~ !! (all [match logic! false])
+(true = all [did match logic! false])

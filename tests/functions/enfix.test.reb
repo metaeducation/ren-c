@@ -4,11 +4,11 @@
 (true = enfixed? :+)
 
 (enfixed? :+)
-(error? trap [enfixed? 1])
+~expect-arg~ !! (enfixed? 1)
 (action? get '+)
 
 ; #1934
-(error? trap [do reduce [1 get '+ 2]])
+~no-arg~ !! (do reduce [1 get '+ 2])
 (3 = do reduce [:+ 1 2])
 
 
@@ -128,10 +128,10 @@
         true
     )
 
-    ((trap [o.i left-the]).id = 'literal-left-tuple)
+    ~literal-left-tuple~ !! (o.i left-the)
     (o.i ->- left-the = 'o.i)
 
-    ((trap [o.f left-the]).id = 'literal-left-tuple)
+    ~literal-left-tuple~ !! (o.f left-the)
     (o.f ->- left-the = 'o.f)
 ]
 
@@ -173,18 +173,21 @@
 (7 = (add 1 2 ->- lib.* 3))
 (7 = (add 1 2 >- lib.* 3))
 
-((trap [10 ->- lib.= 5 + 5]).id = 'expect-arg)
-((trap [10 >- lib.= 5 + 5]).id = 'expect-arg)
+~expect-arg~ !! (10 ->- lib.= 5 + 5)
+~expect-arg~ !! (10 >- lib.= 5 + 5)
 (10 >-- lib.= 5 + 5)
 
-((trap [add 1 + 2 >- multiply 3]).id = 'no-arg)
+~no-arg~ !! (
+    add 1 + 2 >- multiply 3
+)
 (
     x: add 1 + 2 3 + 4 >- multiply 5
     x = 38
 )
 (-38 = (negate x: add 1 + 2 3 + 4 >- multiply 5))
-(
-    (trap [divide negate x: add 1 + 2 3 + 4 >- multiply 5]).id = 'no-arg
+
+~no-arg~ !! (
+    divide negate x: add 1 + 2 3 + 4 >- multiply 5
 )
 (-1 = (divide negate x: add 1 + 2 3 + 4  2 >- multiply 5))
 

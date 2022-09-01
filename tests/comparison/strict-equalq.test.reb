@@ -91,12 +91,10 @@
     strict-equal? a-value a-value
 )
 
-; error for past-tail blocks
-(
+~index-out-of-range~ !! (  ; error for past-tail blocks
     a-value: tail of [1]
     clear head of a-value
-    e: trap [strict-equal? a-value a-value]
-    e.id = 'index-out-of-range
+    strict-equal? a-value a-value
 )
 
 ; reflexivity for cyclic blocks
@@ -105,15 +103,18 @@
     insert a-value a-value
     strict-equal? a-value a-value
 )
+
 ; comparison of cyclic blocks
-[#1049 (
-    a-value: copy []
-    insert a-value a-value
-    b-value: copy []
-    insert b-value b-value
-    error? trap [strict-equal? a-value b-value]
-    true
-)]
+[#1049
+    ~stack-overflow~ !! (
+        a-value: copy []
+        insert a-value a-value
+        b-value: copy []
+        insert b-value b-value
+        strict-equal? a-value b-value
+    )
+]
+
 (not strict-equal? [] blank)
 ; symmetry
 (equal? strict-equal? [] blank strict-equal? blank [])
@@ -274,19 +275,19 @@
 ; symmetry
 (equal? strict-equal? 10% + 10% + 10% 30% strict-equal? 30% 10% + 10% + 10%)
 
-('invalid-compare = pick trap [strict-equal? 2-Jul-2009 2-Jul-2009/22:20] 'id)
-('invalid-compare = pick trap [
+~invalid-compare~ !! (strict-equal? 2-Jul-2009 2-Jul-2009/22:20)
+~invalid-compare~ !! (
     equal? strict-equal? 2-Jul-2009 2-Jul-2009/22:20 strict-equal? 2-Jul-2009/22:20 2-Jul-2009
-] 'id)
-('invalid-compare = pick trap [
+)
+~invalid-compare~ !! (
     strict-equal? 2-Jul-2009 2-Jul-2009/00:00:00+00:00
-] 'id)
-('invalid-compare = pick trap [
+)
+~invalid-compare~ !! (
     equal? strict-equal? 2-Jul-2009 2-Jul-2009/00:00 strict-equal? 2-Jul-2009/00:00 2-Jul-2009
-] 'id)
-('invalid-compare = pick trap [
+)
+~invalid-compare~ !! (
     strict-equal? 2-Jul-2009/22:20 2-Jul-2009/20:20-2:00
-] 'id)
+)
 
 ; time!
 (strict-equal? 00:00 00:00)

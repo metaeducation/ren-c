@@ -19,17 +19,17 @@
 [
     (did s: copy {})
 
-    (error? trap [trim/auto/head s])
-    (error? trap [trim/auto/tail s])
-    (error? trap [trim/auto/lines s])
-    (error? trap [trim/auto/all s])
-    (error? trap [trim/all/head s])
-    (error? trap [trim/all/tail s])
-    (error? trap [trim/all/lines s])
-    (error? trap [trim/auto/with s {*}])
-    (error? trap [trim/head/with s {*}])
-    (error? trap [trim/tail/with s {*}])
-    (error? trap [trim/lines/with s {*}])
+    ~bad-refines~ !! (trim/auto/head s)
+    ~bad-refines~ !! (trim/auto/tail s)
+    ~bad-refines~ !! (trim/auto/lines s)
+    ~bad-refines~ !! (trim/auto/all s)
+    ~bad-refines~ !! (trim/all/head s)
+    ~bad-refines~ !! (trim/all/tail s)
+    ~bad-refines~ !! (trim/all/lines s)
+    ~bad-refines~ !! (trim/auto/with s {*})
+    ~bad-refines~ !! (trim/head/with s {*})
+    ~bad-refines~ !! (trim/tail/with s {*})
+    ~bad-refines~ !! (trim/lines/with s {*})
 
     (s = {})
 ]

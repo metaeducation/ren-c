@@ -2,10 +2,8 @@
 (get-word? first [:a])
 (not get-word? 1)
 (get-word! = type of first [:a])
-(
-    ; context-less get-word
-    e: trap [do make block! ":a"]
-    e.id = 'not-bound
+~not-bound~ !! (
+    do make block! ":a"  ; context-less get-word
 )
 
 ; R3-Alpha and Red permit GET-WORD! access to subvert unsetness.  But Ren-C
@@ -13,7 +11,7 @@
 ; suppress the execution of functions.
 (
     unset 'a
-    e: trap [:a]
+    e: sys.util.rescue [:a]
     did all [
        'bad-word-get = e.id
        ':a = e.arg1

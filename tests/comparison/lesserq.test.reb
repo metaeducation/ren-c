@@ -196,10 +196,8 @@
 (not (0.0.255 < 0.0.1))
 (not (0.0.255 < 0.0.255))
 
-[#1151 (
-    did all [
-        error? trap [maximum-of [1 %]]
-        error? trap [greater? [a] "a"]
-        error? trap [lesser? [a] "a"]
-    ]
-)]
+[#1151
+    ~invalid-compare~ !! (maximum-of [1 %])
+    ~invalid-compare~ !! (greater? [a] "a")
+    ~invalid-compare~ !! (lesser? [a] "a")
+]

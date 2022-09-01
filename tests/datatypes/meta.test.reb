@@ -22,7 +22,5 @@
 ((the '3) = ^(comment "Hi" 1 + 2))
 
 ; !!! Is this the best behavior, or should it return META VOID ?
-(
-    e: trap [^]
-    e.id = 'no-arg
-)
+;
+~no-arg~ !! (^)

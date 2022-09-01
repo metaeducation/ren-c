@@ -81,7 +81,7 @@ https://github.com/metaeducation/ren-c/commit/e57c147465f3ed47f297e7a3ce3bb03196
     ("Foo" = echoer #{466F6F} "")
     (#{466F6F} = echoer "Foo" #{})
     (#{DECAFBAD} = echoer #{DECAFBAD} #{})
-    (error? trap [#{DECAFBAD} = echoer #{DECAFBAD} ""])
+    ~bad-utf8~ !! (#{DECAFBAD} = echoer #{DECAFBAD} "")
 ]
 
 ; Both unix and windows echo text back, so this is a good test of the shell

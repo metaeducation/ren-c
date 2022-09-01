@@ -37,7 +37,7 @@ utrim: function [
     ;
     if any-context? series [
         if any [head_TRIM tail_TRIM auto lines all_TRIM with] [
-            fail "Invalid refinements for utrim of ANY-CONTEXT!"
+            fail ~bad-refines~
         ]
         trimmed: make (type of series) collect [
             for-each [key val] series [
@@ -57,7 +57,7 @@ utrim: function [
                 ; Note: /WITH might be able to work, e.g. if it were a MAP!
                 ; or BLOCK! of values to remove.
                 ;
-                fail "Invalid refinements for utrim of ANY-ARRAY!"
+                fail ~bad-refines~
             ]
             rule: blank!
 
@@ -80,7 +80,7 @@ utrim: function [
                     any [auto head_TRIM tail_TRIM lines]
                 ]
             ][
-                fail "Invalid refinements for utrim of STRING!"
+                fail ~bad-refines~
             ]
 
             rule: case [
@@ -200,17 +200,17 @@ true)
 
     (did s: copy {})
 
-    (error? trap [utrim/auto/head s])
-    (error? trap [utrim/auto/tail s])
-    (error? trap [utrim/auto/lines s])
-    (error? trap [utrim/auto/all s])
-    (error? trap [utrim/all/head s])
-    (error? trap [utrim/all/tail s])
-    (error? trap [utrim/all/lines s])
-    (error? trap [utrim/auto/with s {*}])
-    (error? trap [utrim/head/with s {*}])
-    (error? trap [utrim/tail/with s {*}])
-    (error? trap [utrim/lines/with s {*}])
+    ~bad-refines~ !! (utrim/auto/head s)
+    ~bad-refines~ !! (utrim/auto/tail s)
+    ~bad-refines~ !! (utrim/auto/lines s)
+    ~bad-refines~ !! (utrim/auto/all s)
+    ~bad-refines~ !! (utrim/all/head s)
+    ~bad-refines~ !! (utrim/all/tail s)
+    ~bad-refines~ !! (utrim/all/lines s)
+    ~bad-refines~ !! (utrim/auto/with s {*})
+    ~bad-refines~ !! (utrim/head/with s {*})
+    ~bad-refines~ !! (utrim/tail/with s {*})
+    ~bad-refines~ !! (utrim/lines/with s {*})
 
     (s = {})
 

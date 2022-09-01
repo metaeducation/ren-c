@@ -11,12 +11,10 @@
 ; BLOCK! value, or a variable called B which is changeable holding an immutable
 ; BLOCK! value...
 
-; Basic WORD! protection
-(
+~protected-word~ !! (
     b: 10
     protect 'b
-    e: trap [b: 20]
-    e.id = 'protected-word
+    b: 20
 )
 
 
@@ -65,12 +63,14 @@
 ; TESTS FOR TEMPORARY EVALUATION HOLDS
 ; These should elaborated on, and possibly be in their own file.  Simple tests
 ; for now.
+[
+    ~series-held~ !! (do code: [clear code])
 
-('series-held = pick trap [do code: [clear code]] 'id)
-(
-    obj: make object! [x: 10]
-    'series-held = pick trap [do code: [obj.x: (clear code recycle 20)]] 'id
-)
+    ~series-held~ !! (
+        obj: make object! [x: 10]
+        do code: [obj.x: (clear code recycle 20)]
+    )
+]
 
 
 ; HIDDEN VARIABLES SHOULD STAY HIDDEN

@@ -16,7 +16,7 @@
     (10 = length of make vector! 10.5)
 ]
 [#1213
-    (error? trap [make vector! -1])
+    ~out-of-range~ !! (make vector! -1)
 ]
 (0 = first make vector! [integer! 32])
 

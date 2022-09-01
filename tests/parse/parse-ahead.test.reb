@@ -4,13 +4,13 @@
 ; UPARSE and Red use--it makes more sense.
 
 [
-    (error? trap [parse [] [ahead]])
+    ~???~ !! (parse [] [ahead])
     ('a == parse [a] [ahead 'a 'a])
     (1 == parse [1] [ahead [block! | integer!] <any>])
 ]
 
 [
-    (error? trap [parse "" [ahead]])
+    ~???~ !! (parse "" [ahead])
     (#a == parse "a" [ahead #a #a])
     (#1 == parse "1" [ahead [#a | #1] <any>])
 ]

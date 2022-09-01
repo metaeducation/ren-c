@@ -1,6 +1,7 @@
 ; functions/series/pick.r
-<64bit>
-(error? trap [pick at [1 2 3 4 5] 3 -9223372036854775808])
+
+<64bit> ~out-of-range~ !! (pick at [1 2 3 4 5] 3 -9223372036854775808)
+
 (null? pick at [1 2 3 4 5] 3 -2147483648)
 (null? pick at [1 2 3 4 5] 3 -2147483647)
 (null? pick at [1 2 3 4 5] 3 -3)
@@ -12,11 +13,13 @@
 (5 = pick at [1 2 3 4 5] 3 3)
 (null? pick at [1 2 3 4 5] 3 4)
 (null? pick at [1 2 3 4 5] 3 2147483647)
-<64bit>
-(error? trap [pick at [1 2 3 4 5] 3 9223372036854775807])
+
+<64bit> ~out-of-range~ !! (pick at [1 2 3 4 5] 3 9223372036854775807)
+
 ; string
-<64bit>
-(error? trap [pick at "12345" 3 -9223372036854775808])
+
+<64bit> ~out-of-range~ !! (pick at "12345" 3 -9223372036854775808)
+
 (null? pick at "12345" 3 -2147483648)
 (null? pick at "12345" 3 -2147483647)
 (null? pick at "12345" 3 -3)
@@ -30,8 +33,8 @@
 (#"5" = pick at "12345" 3 3)
 (null? pick at "12345" 3 4)
 (null? pick at "12345" 3 2147483647)
-<64bit>
-(error? trap [pick at "12345" 3 9223372036854775807])
+
+<64bit> ~out-of-range~ !! (pick at "12345" 3 9223372036854775807)
 
 [#2312 (
     data: [<a> <b>]

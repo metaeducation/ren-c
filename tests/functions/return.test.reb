@@ -26,7 +26,7 @@
 ]
 
 (a: 1 reeval func [return: [integer!]] [set 'a return 2] a = 1)
-(a: 1 reeval func [return: [integer!]] [set/opt 'a return 2] a = 1)
+(a: 1 reeval func [return: [integer!]] [set/any 'a return 2] a = 1)
 
 [#1509 ; the "result" of return should not be passable to functions
     (a: 1 reeval func [return: [integer!]] [a: error? return 2] a = 1)
@@ -62,7 +62,7 @@
     (a: 1 reeval func [return: <none>] [a: return none] :a =? 1)
 ]
 (a: 1 reeval func [return: <none>] [set 'a return none] :a =? 1)
-(a: 1 reeval func [return: <none>] [set/opt 'a return none] :a =? 1)
+(a: 1 reeval func [return: <none>] [set/any 'a return none] :a =? 1)
 [#1509 ; the "result" of a none return should not be passable to functions
     (a: 1 reeval func [return: <none>] [a: error? return none] :a =? 1)
 ]

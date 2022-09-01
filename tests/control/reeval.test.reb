@@ -88,12 +88,10 @@
     a-value: make port! http://
     port? reeval :a-value
 )
-(
+~need-non-end~ !! (
     a-value: first [a.b:]
-    all [
-        set-tuple? :a-value
-        error? trap [reeval :a-value]  ; no value to assign after it...
-    ]
+    assert [set-tuple? :a-value]
+    (reeval :a-value)  ; no value to assign after it...
 )
 (
     a-value: make tag! ""

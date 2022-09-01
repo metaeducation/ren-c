@@ -14,8 +14,17 @@
 
 [https://github.com/red/red/issues/4101
     ('a/b == parse [a/b] ['a/b])
-    (error? trap [parse [a/b] [a/b]])
-    (error? trap [parse [a b c] [change repeat 3 word! d/e]])
-    (error? trap [parse [a/b c d] [remove a/b]])
-    (error? trap [parse [c d] [insert a/b repeat 2 word!]])
+
+    ~bad-word-get~ !! (
+        parse [a/b] [a/b]
+    )
+    ~unassigned-attach~ !! (
+        parse [a b c] [change repeat 3 word! d/e]
+    )
+    ~bad-word-get~ !! (
+        parse [a/b c d] [remove a/b]
+    )
+    ~bad-word-get~ !! (
+        parse [c d] [insert a/b repeat 2 word!]
+    )
 ]

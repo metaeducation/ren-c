@@ -22,9 +22,9 @@
 (7 = all [1 + 2, 3 + 4])
 
 ; Commas during argument gathering look like end of input
-(
-    e: trap [all [1 +, 2 3 + 4]]
-    e.id = 'no-arg
+;
+~no-arg~ !! (
+    all [1 +, 2 3 + 4]
 )
 
 ; Commas are invisible and hence do not erase an evaluation value
@@ -52,9 +52,8 @@
 ; PARSE reorganization.
 ;
 ("aaabbb" = parse3 "aaabbb" [some "a", some "b"])
-(
-    e: trap ["aaabbb" = parse3 "aaabbb" [some, "a" some "b"]]
-    e.id = 'expression-barrier
+~expression-barrier~ !! (
+    "aaabbb" = parse3 "aaabbb" [some, "a" some "b"]
 )
 
 ; Commas are "hard delimiters", so they won't be picked up in URL!

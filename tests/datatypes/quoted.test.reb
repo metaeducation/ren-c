@@ -217,7 +217,10 @@
         (make bitset! 16)
         (make image! 10x20)
         (make vector! [integer! 32 100])
-        (make map! [m a p !])
+
+        ; https://github.com/rebol/rebol-issues/issues/2340
+        ; (make map! [m a p !])
+
         (make varargs! [var args])
         (make object! [obj: {ect}])
         (make frame! :append)

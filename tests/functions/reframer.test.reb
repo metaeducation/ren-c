@@ -47,27 +47,26 @@
 
 ; Test of using REFRAMER to make it possible to omit clauses when they have
 ; NULL in them causing an error in REDUCE/COMPOSE type situations
-[(
-    ver: 1.2.3
-    date: _
+[
+    (
+        ver: 1.2.3
+        date: _
 
-    x: spaced [curtail spaced ["Version:" ver] curtail spaced ["Date:" date]]
-    x = "Version: 1.2.3"
-)
-(
-    a: 1, b: _, c: 3
-    date: _
-    get-ver: func [] [to tuple! reduce [a b c]]
+        x: spaced [
+            curtail spaced ["Version:" ver] curtail spaced ["Date:" date]
+        ]
+        x = "Version: 1.2.3"
+    )
 
-    e: trap [
+    ~need-non-null~ !! (
+        a: 1, b: _, c: 3
+        date: _
+        get-ver: func [] [to tuple! reduce [a b c]]
+
         spaced [
             curtail spaced ["Version:" get-ver]
             curtail spaced ["Date:" date]
         ]
-    ]
-    e.id = 'need-non-null
-)
-(
-    void? curtail compose [benefit of no nulls! (find [a b c] 'd)]
-)
+    )
+    (void? curtail compose [benefit of no nulls! (find [a b c] 'd)])
 ]

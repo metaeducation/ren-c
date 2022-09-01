@@ -19,26 +19,24 @@
 (date? 1-Jan-0000/0:00)
 
 ; extreme behaviour
-(
-    did any [
-        error? trap [date-d: 1-Jan-0000 - 1]
-        date-d = load-value mold date-d
-    ]
-)
-(
-    did any [
-        error? trap [date-d: 31-Dec-16383 + 1]
-        date-d = load-value mold date-d
-    ]
-)
+[
+    ~type-limit~ !! (
+        date-d: 1-Jan-0000 - 1
+    )
+    ~type-limit~ !! (
+        date-d: 31-Dec-16383 + 1
+    )
+]
 
-[#1250 (
-    did all [
-        error? trap [load "1/11--00"]
-        error? trap [load "1/11--0"]
-        (load-value "1-11-0") = (load-value "1-11-00")
-    ]
-)]
+[#1250
+    ~scan-invalid~ !! (
+        load "1/11--00"
+    )
+    ~scan-invalid~ !! (
+        load "1/11--0"
+    )
+    ((load-value "1-11-0") = (load-value "1-11-00"))
+]
 
 [#213 (
     d: 28-Mar-2019/17:25:40-4:00
@@ -118,8 +116,8 @@
     ; comparison machinery can't tell if you're doing a test for equality or
     ; otherwise because it is only returning -1, 0, or 1 at this time.
     ;
-    ('invalid-compare = pick trap [equal? date-110 date-100] 'id)
-    ('invalid-compare = pick trap [equal? date-111 date-100] 'id)
+    ~invalid-compare~ !! (equal? date-110 date-100)
+    ~invalid-compare~ !! (equal? date-111 date-100)
 
     ;
     ; Math
@@ -127,27 +125,28 @@
     (0 = subtract date-111 date-111)
     (0 = subtract date-110 date-110)
     (0 = subtract date-100 date-100)
-    ('invalid-compare = pick trap [subtract date-111 date-110] 'id)
-    ('invalid-compare = pick trap [subtract date-110 date-100] 'id)
+    ~invalid-compare~ !! (subtract date-111 date-110)
+    ~invalid-compare~ !! (subtract date-110 date-100)
 
     (0:00 = difference date-111 date-111)
     (0:00 = difference date-110 date-110)
-    ('invalid-compare = pick trap [difference date-111 date-110] 'id)
-    ('invalid-compare = pick trap [difference date-110 date-100] 'id)
-    ('invalid-compare = pick trap [difference date-100 date-100] 'id)
+    ~invalid-compare~ !! (difference date-111 date-110)
+    ~invalid-compare~ !! (difference date-110 date-100)
+    ~invalid-compare~ !! (difference date-100 date-100)
 
     (date-100 <= date-100)
     (date-110 <= date-110)
     (date-111 <= date-111)
-    ('invalid-compare = pick trap [date-111 <= date-110] 'id)
-    ('invalid-compare = pick trap [date-110 <= date-100] 'id)
+    ~invalid-compare~ !! (date-111 <= date-110)
+    ~invalid-compare~ !! (date-110 <= date-100)
 
     ;
     ; Mappings
 
     (date-111.utc.zone = 0:00)
-    (error? trap [date-110.utc])
-    (error? trap [date-100.utc])
+
+    ~???~ !! (date-110.utc)
+    ~???~ !! (date-100.utc)
 
     ; Brett had written this test assuming there was a /LOCAL refinement on
     ; dates, but this does not exist in Rebol2, R3-Alpha, or Red.  We assume

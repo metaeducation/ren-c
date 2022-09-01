@@ -124,9 +124,8 @@
 ; mutable bindings would have an effect.  You can second-guess it.
 ; https://forum.rebol.info/t/765/2
 [
-    (
-        e: trap [bind use [x] [x: 10, [x + 1]] make object! [x: 20]]
-        e.id = 'const-value
+    ~const-value~ !! (
+        bind use [x] [x: 10, [x + 1]] make object! [x: 20]
     )
 
     ; It tried to warn you that the X binding wouldn't be updated... but
@@ -141,9 +140,9 @@
     ; https://forum.rebol.info/t/1062/4
     ;
     (11 = eval bind use [x] [x: 10, '(x + 1)] make object! [x: 20])
-    (
-        e: trap [bind use [x] [x: 10, the (x + 1)] make object! [x: 20]]
-        e.id = 'const-value
+
+    ~const-value~ !! (
+        bind use [x] [x: 10, the (x + 1)] make object! [x: 20]
     )
 ]
 

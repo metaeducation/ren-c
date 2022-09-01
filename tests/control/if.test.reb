@@ -31,8 +31,10 @@
 (if make bitset! "" [true])
 
 ; literal blocks illegal as condition in Ren-C, but evaluation products ok
-(error? trap [if [] [true]])
-(if identity [] [true])
+[
+    ~block-conditional~ !! (if [] [true])
+    (if identity [] [true])
+]
 
 ; datatype
 (if blank! [true])
@@ -85,10 +87,11 @@
 (1 = if true [if true [1]])
 
 ; infinite recursion
-(
-    blk: [if true blk]
-    error? trap blk
-)
+(<deep-enough> = catch [
+    depth: 0
+    blk: [depth: me + 1, if depth = 1000 [throw <deep-enough>], if true (blk)]
+    do blk
+])
 
 (
     success: false

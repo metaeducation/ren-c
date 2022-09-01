@@ -46,7 +46,7 @@
 
 ; ENSURE is a version of MATCH that fails vs. returning NULL on no match
 [
-    (error? trap [ensure action! 10])
+    ~???~ !! (ensure action! 10)
     (10 = ensure integer! 10)
 ]
 
@@ -67,23 +67,23 @@
 ; PROHIBIT is an inverted version of ENSURE, where it must not match
 ; probably needs a better name, even ENSURE-NOT is likely clearer
 [
-    (error? trap [prohibit action! :append])
+    ~???~ !! (prohibit action! :append)
     (10 = prohibit action! 10)
 
-    (error? trap [prohibit integer! 10])
+    ~???~ !! (prohibit integer! 10)
     (:append = prohibit integer! :append)
 
     (10 = prohibit null 10)
 
-    (error? trap [prohibit null null])
-    (error? trap [prohibit logic! false])
+    ~???~ !! (prohibit null null)
+    ~???~ !! (prohibit logic! false)
 ]
 
 
 ; MUST is an optimized form of NON NULL
 [
     ("bc" = must find "abc" "b")
-    (error? trap [must find "abc" "q"])
+    ~???~ !! (must find "abc" "q")
 ]
 
 

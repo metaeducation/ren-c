@@ -7,10 +7,9 @@
 ; it to vanish completely.
 [
     (void? any [])
-    (
-        e: trap [if any [] [<safety>]]
-        e.id = 'bad-isotope
-    )
+
+    ~bad-isotope~ !! (if any [] [<safety>])
+
     (
         x: <overwritten>
         did all [
@@ -417,5 +416,5 @@
 ;         print "We want to avoid this printing, motivate use of DID MATCH"
 ;     ]
 ;
-('bad-isotope = pick trap [any [match logic! false]] 'id)
-(#[true] = any [did match logic! false])
+~bad-isotope~ !! (any [match logic! false])
+(true = any [did match logic! false])

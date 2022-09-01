@@ -1,9 +1,6 @@
 ; functions/context/bind.r
 
-(
-    e: trap [do make block! ":a"]
-    e.id = 'not-bound
-)
+~not-bound~ !! (do make block! ":a")
 
 [#50
     (null? binding of to word! "zzz")

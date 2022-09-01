@@ -45,7 +45,7 @@
     (6000 = (three 10 20 30))
     (6000 = (two-30 10 20))
 
-    (error? trap [three/unavailable 10 20 30])
+    ~bad-parameter~ !! (three/unavailable 10 20 30)
 
     (240000 = (three/available 10 20 30 40))
 

@@ -61,8 +61,9 @@
 (((pi * 3) / 4) = arccosine/radians (square-root 2) / -2)
 (120 = arccosine -0.5)
 (((pi * 2) / 3) = arccosine/radians -0.5)
-(error? trap [arccosine 1.1])
-(error? trap [arccosine -1.1])
+
+~overflow~ !! (arccosine 1.1)
+~overflow~ !! (arccosine -1.1)
 
 
 ; GROUP! for the right clause, short circuit.

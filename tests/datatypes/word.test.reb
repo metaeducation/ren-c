@@ -148,10 +148,9 @@
     a-value: 0.0.0
     same? :a-value a-value
 )
-(
+~bad-word-get~ !! (
     a-value: ~none~
-    e: trap [a-value]
-    e.id = 'bad-word-get
+    a-value
 )
 (
     a-value: 'a

@@ -12,19 +12,19 @@
 ; way of raising errors, it would have to raise an error anyway.
 ; This is convenient for throwaway code.
 [
-    (e: trap [fail], e.id = 'unknown-error)
-    (e: trap [case [false [x] false [y] fail]], e.id = 'unknown-error)
+    ~unknown-error~ !! (fail)
+    ~unknown-error~ !! (case [false [x] false [y] fail])
 ]
 
 
 ; A simple FAIL with a string message will be a generic error ID
 ;
-(e: trap [fail "hello"], (e.id = null) and (e.message = "hello"))
+(e: sys.util.rescue [fail "hello"], (e.id = null) and (e.message = "hello"))
 
 
-; Failing instead with a WORD! will make the error have that ID
+; Failing instead with a quasi-WORD! will make the error have that ID
 ;
-(e: trap [fail 'some-error-id], e.id = 'some-error-id)
+(e: sys.util.rescue [fail ~some-error-id~], e.id = 'some-error-id)
 
 
 ; FAIL can be given a QUOTED! of a parameter to blame.  This gives a
@@ -36,7 +36,7 @@
     (
         foo: func [x] [fail 'x]
 
-        e: trap [foo 10]
+        e: sys.util.rescue [foo 10]
         did all [
             e.id = 'invalid-arg
             e.arg1 = 'foo
@@ -47,7 +47,7 @@
     )(
         foo: func [x] [fail 'x "error reason"]
 
-        e: trap [foo 10]
+        e: sys.util.rescue [foo 10]
         did all [
             e.id = null  ; no longer an invalid arg error
             [foo 10] = copy/part e.near 2  ; still implicates callsite

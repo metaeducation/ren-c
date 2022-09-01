@@ -13,7 +13,7 @@
 
 ; BLOCK! remove tests from %parse-test.red
 [
-    (error? trap [parse [] [remove]])
+    ~???~ !! (parse [] [remove])
     (didn't parse [] [remove <any>])
     (
         blk: [a]
@@ -38,7 +38,7 @@
         not-ws: complement ws
         true
     )
-    (error? trap [parse "" [remove]])
+    ~???~ !! (parse "" [remove])
     (didn't parse "" [remove <any>])
     (
         str: "a"
@@ -94,7 +94,7 @@
         not-ws: complement ws
         true
     )
-    (error? trap [parse #{} [remove]])
+    ~???~ !! (parse #{} [remove])
     (didn't parse #{} [remove <any>])
     (
         bin: #{0A}

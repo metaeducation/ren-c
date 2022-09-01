@@ -34,15 +34,15 @@
     ]
     num = 10
 )
+
 ; local variable type safety
-(
+
+~invalid-type~ !! (
     test: false
-    error? trap [
-        count-up i 2 [
-            either test [i == 2] [
-                test: true
-                i: false
-            ]
+    count-up i 2 [
+        either test [i == 2] [
+            test: true
+            i: false
         ]
     ]
 )
@@ -77,7 +77,7 @@
 ; where # means "count effectively forever"...though it can really only
 ; count up to maxint in the current implementation.
 [
-    (null = try count-up i null [fail "should not run"])
+    (null = count-up i void [fail "should not run"])
     (<infinite> = catch [count-up i # [if i = 500 [throw <infinite>]]])
 ]
 

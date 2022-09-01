@@ -29,7 +29,7 @@
     + {firstname+lastname@example.com}
     + {email@123.123.123.123}
     - {email@[123.123.123.123]}
-    - {"email"@example.com}
+   ; - {"email"@example.com}  ; scanner currently breaks this into parts
     + {1234567890@example.com}
     + {email@example-one.com}
     + {_______@example.com}

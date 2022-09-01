@@ -42,13 +42,13 @@
 
 ; #{00} bytes are illegal in strings regardless of /RELAX or /STRICT
 [
-    ('illegal-zero-byte = pick trap [to text! #{00}] 'id)
-    ('illegal-zero-byte = pick trap [to-text #{00}] 'id)
-    ('illegal-zero-byte = pick trap [to-text/relax #{00}] 'id)
+    ~illegal-zero-byte~ !! (to text! #{00})
+    ~illegal-zero-byte~ !! (to-text #{00})
+    ~illegal-zero-byte~ !! (to-text/relax #{00})
 
-    ('illegal-zero-byte = pick trap [as text! #{00}] 'id)
-    ('illegal-zero-byte = pick trap [as-text #{00}] 'id)
-    ('illegal-zero-byte = pick trap [as-text/strict #{00}] 'id)
+    ~illegal-zero-byte~ !! (as text! #{00})
+    ~illegal-zero-byte~ !! (as-text #{00})
+    ~illegal-zero-byte~ !! (as-text/strict #{00})
 ]
 
 ; Ren-C DELINE allows either all LF or all CR LF
@@ -141,5 +141,3 @@
         ]
     )
 ]
-
-

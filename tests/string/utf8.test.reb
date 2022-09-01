@@ -102,31 +102,34 @@ https://github.com/metaeducation/ren-c/issues/817
     (append b #{C9A8}
     t = "ƈօʊʀֆօռǟɢɢօռɨ")
 
-    (e: trap [insert b #{E08080}]
-    e.id = 'bad-utf8-bin-edit)
+    ~bad-utf8-bin-edit~ !! (
+        trap [insert b #{E08080}]
+    )
 
-    (b: as binary! const "test"
-    e: trap [append b 1]
-    e.id = 'const-value)
+    ~const-value~ !! (
+        b: as binary! const "test"
+        append b 1
+    )
 ]
 
 ; AS aliasing of BINARY! as TEXT! can only be done on mutable binaries
 https://github.com/metaeducation/ren-c/issues/817
 [
-    (b: #{64C990E1B49A64C9905A64C4B15A}
-    t: as text! b
-    t = "dɐᴚdɐZdıZ"
-    e: trap [append b #{E08080}]
-    e.id = 'bad-utf8-bin-edit)
-
-    (b: #{64C990E1B49A64C9905A64C4B15A}
-    append b #{E08080}
-    e: trap [as text! b]
-    e.id = 'bad-utf8
+    ~bad-utf8-bin-edit~ !! (
+        b: #{64C990E1B49A64C9905A64C4B15A}
+        t: as text! b
+        t = "dɐᴚdɐZdıZ"
+        append b #{E08080}
     )
-    (
-        e: trap [as text! const #{64C990E1B49A64C9905A64C4B15A}]
-        e.id = 'alias-constrains
+
+    ~bad-utf8~ !! (
+        b: #{64C990E1B49A64C9905A64C4B15A}
+        append b #{E08080}
+        as text! b
+    )
+
+    ~alias-constrains~ !! (
+        as text! const #{64C990E1B49A64C9905A64C4B15A}
     )
 ]
 

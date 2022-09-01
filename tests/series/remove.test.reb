@@ -57,13 +57,13 @@
         true
     )
 
-    ('bad-utf8-bin-edit = pick trap [take/part bin 2] 'id)
+    ~bad-utf8-bin-edit~ !! (pick trap [take/part bin 2])
     (str = {Tæke Pært})
 
     ((as binary! "Tæ") = take/part bin 3)
     (str = "ke Pært")
 
-    ('bad-utf8-bin-edit = pick trap [take/part bin 5] 'id)
+    ~bad-utf8-bin-edit~ !! (pick trap [take/part bin 5])
     (str = "ke Pært")
 
     ((as binary! "ke Pæ") = take/part bin 6)

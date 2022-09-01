@@ -67,11 +67,17 @@
 [https://github.com/red/red/issues/4318
     (
         x4318: 0
-        did all [
-            error? trap [parse [] [x4318: across]]
-            error? trap [parse [] [x4318:]]
-            zero? x4318
+        error? sys.util.rescue [
+            parse [] [x4318: across]
         ]
+        zero? x4318
+    )
+    (
+        x4318: 0
+        error? sys.util.rescue [
+            parse [] [x4318:]
+        ]
+        zero? x4318
     )
 ]
 

@@ -28,14 +28,12 @@
 
 ; Giving too many arguments is an error
 [
-    (did all [
-        e: trap [apply :append [[a b c] spread [d e] [f g]]]
-        e.id = 'apply-too-many
-    ])
-    (did all [
-        e: trap [apply :append [/value spread [d e] [a b c] [f g]]]
-        e.id = 'apply-too-many
-    ])
+    ~apply-too-many~ !! (
+        apply :append [[a b c] spread [d e] [f g]]
+    )
+    ~apply-too-many~ !! (
+        apply :append [/value spread [d e] [a b c] [f g]]
+    )
 ]
 
 ; You can use commas so long as they are at interstitial positions
@@ -44,29 +42,30 @@
     ([a b c d e d e] = apply :append [/dup 2, [a b c] spread [d e]])
 
     (did all [
-        e: trap [
+        e: sys.util.rescue [
             [a b c d e d e] = apply :append [/dup, 2 [a b c] spread [d e]]
-            e.arg1 = 'need-non-end
-            e.arg2 = '/dup
         ]
+        e.arg1 = 'need-non-end
+        e.arg2 = '/dup
+
     ])
 ]
 
 ; If you specify a refinement, there has to be a value after it
 [
     (did all [
-        e: trap [
+        e: sys.util.rescue [
             [a b c d e d e] = apply :append [/dup /part 1 [a b c] spread [d e]]
-            e.arg1 = 'need-non-end
-            e.arg2 = '/dup
         ]
+        e.arg1 = 'need-non-end
+        e.arg2 = '/dup
     ])
     (did all [
-        e: trap [
+        e: sys.util.rescue [
             [a b c d e d e] = apply :append [[a b c] spread [d e] /dup]
-            e.arg1 = 'need-non-end
-            e.arg2 = '/dup
         ]
+        e.arg1 = 'need-non-end
+        e.arg2 = '/dup
     ])
 ]
 
@@ -77,7 +76,7 @@
     (
         non-detector: lambda [arg] [arg]
         did all [
-            e: trap [apply :non-detector [~baddie~]]
+            e: sys.util.rescue [apply :non-detector [~baddie~]]
             e.id = 'isotope-arg
             e.arg1 = 'non-detector
             e.arg2 = 'arg
@@ -105,7 +104,7 @@
     (null = apply :testme [/refine false])
 
     (did all [
-        e: trap [apply :testme [/refine #garbage]]
+        e: sys.util.rescue [apply :testme [/refine #garbage]]
         e.id = 'bad-argless-refine
         e.arg1 = '/refine
     ])
@@ -149,5 +148,6 @@
 ; is followed by a BLOCK!
 [
     ([a b c [d e] [d e]] = append/ [[a b c] [d e] /dup 2])
-    (e: trap [mold/ 1], e.id = 'expect-arg)
+
+    ~expect-arg~ !! (mold/ 1)
 ]

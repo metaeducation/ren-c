@@ -85,8 +85,8 @@
     ]
     num = 10
 )
-(
-    error? trap [for [:x] each [] []]
+~bad-value~ !! (
+    for [:x] each [] []
 )
 
 ; A LIT-WORD! does not create a new variable or binding, but a WORD! does
@@ -116,45 +116,50 @@
 ;
 ; !!! Note that because FOR-EACH soft quotes, the COMPOSE would be interpreted
 ; as the loop variable if you didn't put it in parentheses!
-[#2273 (
-    x: 10
-    obj1: make object! [x: 20]
-    obj2: make object! [x: 30]
-    sum: 0
-    did all [
-        error? trap [for [x x] each [1 2 3 4] [sum: sum + x]]
-        error? trap [
-            for :(compose [  ; see above
-                x (bind the 'x obj1)
-            ]) each [
-                1 2 3 4
-            ][
-                sum: sum + x
-            ]
+[#2273
+    (
+        x: 10
+        obj1: make object! [x: 20]
+        obj2: make object! [x: 30]
+        sum: 0
+        true
+    )
+    ~dup-vars~ !! (
+        for [x x] each [1 2 3 4] [sum: sum + x]
+    )
+    ~dup-vars~ !! (
+        for :(compose [  ; see above
+            x (bind the 'x obj1)
+        ]) each [
+            1 2 3 4
+        ][
+            sum: sum + x
         ]
-        error? trap [
-            for :(compose [  ; see above
-                (bind the 'x obj2) x
-            ]) each [
-                1 2 3 4
-            ][
-                sum: sum + x
-            ]
+    )
+    ~dup-vars~ !! (
+        for :(compose [  ; see above
+            (bind the 'x obj2) x
+        ]) each [
+            1 2 3 4
+        ][
+            sum: sum + x
         ]
-        not error? trap [
-            for :(compose [  ; see above
-                (bind the 'x obj1) (bind the 'x obj2)
-            ]) each [
-                1 2 3 4
-            ][
-                sum: sum + obj1.x + obj2.x
-            ]
+    )
+    (
+        for :(compose [  ; see above
+            (bind the 'x obj1) (bind the 'x obj2)
+        ]) each [
+            1 2 3 4
+        ][
+            sum: sum + obj1.x + obj2.x
         ]
-        sum = 10
-        obj1.x = 3
-        obj2.x = 4
-    ]
-)]
+        all [
+            sum = 10
+            obj1.x = 3
+            obj2.x = 4
+        ]
+    )
+]
 
 
 ; Series being enumerated are locked during the FOR-EACH, and this lock
@@ -173,7 +178,7 @@
 )(
     block: copy [a b c]
     all [
-        e: trap [
+        e: sys.util.rescue [
             for item each block [
                 append block <failure>
             ]
@@ -209,4 +214,4 @@
 ; on trying to use 3 variables to enumerate an object originates from the
 ; C stack when FOR-EACH's dispatcher is on the stack.
 ;
-(error? trap [for-each [x y z] make object! [key: <value>] []])
+~???~ !! (for-each [x y z] make object! [key: <value>] [])

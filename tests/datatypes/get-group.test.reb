@@ -27,7 +27,7 @@
 )
 
 ; Groups can pass on raised errors that happens as their last slot.  Otherwise
-; you need to use something like ATTEMPT.
+; you need to use SYS.UTIL.RESCUE... it's not a definitional error.
 [
     (
         e: unquasi ^ (1 + 2 raise "handled")
@@ -38,13 +38,13 @@
         e.message = "handled"
     )
     (
-        e: trap [
+        e: sys.util.rescue [
             (raise "unhandled" 1 + 2)
         ]
         e.message = "unhandled"
     )
     (
-        e: trap [
+        e: sys.util.rescue [
             unquasi ^(raise "unhandled" 1 + 2)
         ]
         e.message = "unhandled"

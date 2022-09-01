@@ -57,18 +57,32 @@
         2
     ]
 )
-; recursive behaviour
-(2 = either true [either false [1] [2]] [])
-(1 = either false [] [either true [1] [2]])
-; infinite recursion
-(
-    blk: [either true blk []]
-    error? trap blk
-)
-(
-    blk: [either false [] blk]
-    error? trap blk
-)
+
+[
+    ; Recursive behavior
+
+    (2 = either true [either false [1] [2]] [])
+    (1 = either false [] [either true [1] [2]])
+
+    ; Infinite recursion
+
+    (<deep-enough> = catch [
+        depth: 0
+        do blk: [
+            depth: me + 1
+            if depth = 1000 [throw <deep-enough>]
+            either true (blk) []
+        ]
+    ])
+    (<deep-enough> = catch [
+        depth: 0
+        do blk: [
+            depth: me + 1
+            if depth = 1000 [throw <deep-enough>]
+            either false [] (blk)
+        ]
+    ])
+]
 
 [
     ; This exercises "deferred typechecking"; even though it passes through a
@@ -86,7 +100,7 @@
 
     (takes-2-logics ('~none~) = '~none~ false)
 
-    ('expect-arg = (trap [takes-2-logics true infix-voider true false]).id)
+    ~expect-arg~ !! (takes-2-logics true infix-voider true false)
 ]
 
 ; Soft Quoted Branching

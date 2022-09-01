@@ -2,15 +2,15 @@
 
 ; DEHEX no longer tolerates non %xx or %XX patterns with % in source data
 ;
-(error? trap ["a%b" = dehex "a%b"])
-(error? trap ["a%~b" = dehex "a%~b"])
+(error? sys.util.rescue ["a%b" = dehex "a%b"])
+(error? sys.util.rescue ["a%~b" = dehex "a%~b"])
 
 ; !!! Strings don't tolerate NUL, so should you be able to DEHEX a BINARY!
 ; and get something like "a%00b" from it?  That would not enforce the rest
 ; of the BINARY! being UTF-8 and seems like it could be a bad idea.
-(
-    e: trap [dehex "a%00b"]
-    e.id = 'illegal-zero-byte
+;
+~illegal-zero-byte~ !! (
+    dehex "a%00b"
 )
 
 ("a b" = dehex "a%20b")

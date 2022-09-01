@@ -11,13 +11,14 @@
 ; !!! The test system uses TRANSCODE to get past strings with illegal content.
 ; That runs into trouble when trying to literally depict strings which should
 ; not be able to load.  Use BINARY! to depict.
-(
-    e: trap [transcode #{225E4022}]  ; byte sequence for ^^@ in quotes
-    e.id = 'illegal-zero-byte
-)(
-    e: trap [transcode #{225E2830302922}]  ; byte sequence for ^^(00) in quotes
-    e.id = 'illegal-zero-byte
-)
+[
+    ~illegal-zero-byte~ !! (
+        transcode #{225E4022}  ; byte sequence for ^^@ in quotes
+    )
+    ~illegal-zero-byte~ !! (
+        transcode #{225E2830302922}  ; byte sequence for ^^(00) in quotes
+    )
+]
 
 ("^A" = "^(01)")
 ("^B" = "^(02)")
@@ -168,7 +169,7 @@
 
 
 [#207
-    ('illegal-zero-byte = (trap [to text! as issue! 0]).id)
+    ~illegal-zero-byte~ !! (trap [to text! as issue! 0])
 ]
 
 [#2280 (  ; Byte-Order-Mark ("BOM") deprecated in UTF-8, don't hide it
@@ -179,10 +180,13 @@
     ]
 )]
 
-[(
-    str: "abc"
-    'illegal-zero-byte = pick trap [str.2: 0] 'id
-)(
-    str: "abc"
-    'illegal-zero-byte = pick trap [str.2: make char! 0] 'id
-)]
+[
+    ~illegal-zero-byte~ !! (
+        str: "abc"
+        str.2: 0
+    )
+    ~illegal-zero-byte~ !! (
+        str: "abc"
+        str.2: make char! 0
+    )
+]

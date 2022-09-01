@@ -66,10 +66,10 @@
 ; the ~false~ isotope to a plain #[false], and did not break the loop.  The
 ; error helps you realize something is wrong...
 [
+    ~bad-isotope~ !! (
+        until [match [logic!] false]
+    )
     (
-        e: trap [until [match [logic!] false]]
-        e.id = 'bad-isotope
-    )(
         true = until [did match logic! false]
     )
 ]

@@ -49,10 +49,10 @@
 ; https://github.com/qpdf/qpdf/issues/562
 ;
 ; So now it's a check that there *is* an error.
-(
+;
+~bad-compression~ !! (
     corrupt: read %../fixtures/corrupt-zdeflated.bin
     assert [326 = length of corrupt]
 
-    e: trap [zinflate corrupt]
-    e.id = 'bad-compression
+    zinflate corrupt
 )

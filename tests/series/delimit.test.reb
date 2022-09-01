@@ -70,7 +70,7 @@
     )
 
     (
-        e: trap [spaced ["Hello" ~baddie~ "World"]]
+        e: sys.util.rescue [spaced ["Hello" ~baddie~ "World"]]
         did all [
             e.id = 'bad-isotope
             e.arg1 = '~baddie~

@@ -108,8 +108,8 @@
             (0 = offset of p)
             (elide skip p 100)
             (100 = offset of p)
-            (e: trap [read p], e.id = 'out-of-range)
-            (e: trap [read/part p 100], e.id = 'out-of-range)
+            (trap [read p] then e -> [e.id = 'out-of-range])
+            (trap [read/part p 100] then e -> [e.id = 'out-of-range])
 
             (elide skip p -100)
             (0 = offset of p)
@@ -125,7 +125,7 @@
             ; territory must either error or clip.  For now, be conservative
             ; and clip.
             ;
-            (e: trap [elide skip p -100], e.id = 'out-of-range)
+            (trap [skip p -100] then e -> [e.id = 'out-of-range])
         ]
         elide close p
     )
