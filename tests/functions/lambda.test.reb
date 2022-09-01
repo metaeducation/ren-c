@@ -14,13 +14,13 @@
     ('~baddie~ = if true [~baddie~] then ^x -> [x])
 
     (
-        tester: ^x -> [if x = '~void~ [<void>] else [<nonvoid>]]
+        tester: ^x -> [if x = '~()~ [<void>] else [<nonvoid>]]
         <void> = tester comment "this should work"
     )
 
     ; this is true of funcs with no type specs on arguments as well
     (
-        tester: func [^x] [if x = '~void~ [<void>] else [<nonvoid>]]
+        tester: func [^x] [if x = '~()~ [<void>] else [<nonvoid>]]
         <void> = tester comment "this should work"
     )
 ]

@@ -63,7 +63,7 @@
     x: default [1020]
     x = 1020
 )(
-    x: second [~void~ ~]  ; plain BAD-WORD!
+    x: second [~()~ ~]  ; plain QUASI! of void
     x: default [1020]
     x = '~
 )(

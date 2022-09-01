@@ -55,12 +55,12 @@
 [
     ('~null~ = ^ if true [null])
     ('~null~ = ^ if true [heavy null])
-    ('~void~ = ^ if true [])
+    ('~()~ = ^ if true [])
     ('~custom~ = ^ if true [~custom~])
     (''~custom~ = ^ if true ['~custom~])
 
-    (void' <> ^ ~void~)  ; tests for isotopes
-    (not void' = ^ first [~void~])  ; plain BAD-WORD!s do not count
+    (void' <> ^ ~()~)  ; tests for isotopes
+    (not void' = first [~()~])  ; plain QUASI!s do not count
     (not void' = ^ 'void)  ; ...nor do words, strings, etc
 
     ; Because ^[] forms replaced @[] forms, there are some stale references

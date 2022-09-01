@@ -57,7 +57,6 @@
     )
 ]
 
-; ~void~ isotopes are considered vaporizations, other isotopes are errors
 [
     ("Hello World" = spaced ["Hello" void "World"])
     ("Hello World" = spaced ["Hello" if false ["Cruel"] "World"])

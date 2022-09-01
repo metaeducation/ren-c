@@ -1483,6 +1483,8 @@ DECLARE_NATIVE(glom)
 
         splice = true;
         Unquasify(result);
+        assert(HEART_BYTE(result) == REB_GROUP);
+        mutable_HEART_BYTE(result) = REB_BLOCK;  // interface is for blocks
     }
     else {
         Unquotify(result, 1);

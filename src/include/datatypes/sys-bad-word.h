@@ -72,9 +72,6 @@
 //
 //=//// NOTES //////////////////////////////////////////////////////////////=//
 //
-// * The isotope states of several WORD!s have specific meaning to the
-//   system...such as ~void~, and ~null~.  Each are described in below.
-//
 // * QUASI! states are truthy.  There's a reason for this, because it
 //   allows operations in the ^META domain to easily use functions like ALL
 //   and ANY on the meta values.  (See the FOR-BOTH example.)
@@ -180,21 +177,23 @@ inline static bool Is_Meta_Of_None(Cell(const*) v)
   { return IS_QUASI(v) and HEART_BYTE(v) == REB_BLANK; }
 
 
-//=//// VOID ISOTOPES AND VOID META STATE (NULL) //////////////////////////=//
+//=//// EMPTY SPLICE (Empty GROUP! Isotope) ///////////////////////////////=//
 //
-// Note that the test for void can be special as CELL_FLAG_OUT_NOTE_VOIDED on
-// top of an empty cell, to indicate something that has "invisible intent" but
-// did not actually vanish.
+// The empty splice is exploited for its property of having void-like behavior
+// while not being void...hence it can propagate "void intent" out of a branch
+// even though the branch runs.
 //
-//     >> x: if false [fail ~unreachable~]
-//     ; void
+//     >> if false [<a>]
+//     ; void (will trigger ELSE)
 //
-//     >> x
-//     ; null
+//     >> if true []
+//     == ~()~  ; isotope (will trigger THEN, not ELSE)
 //
-// The isotope state exists to be used in frames as a signal of void intent,
-// but since it is reified it lays claim to the QUASI-WORD! ~void~ when ^META'd.
-// True void has a ^META of NULL to distinguish it.
+//     >> append [a b c] if false [<a>]
+//     == [a b c]
+//
+//     >> append [a b c] if true []
+//     == [a b c]
 //
 
 #define Init_Void_Isotope(out)            Init_Word_Isotope((out), Canon(VOID))

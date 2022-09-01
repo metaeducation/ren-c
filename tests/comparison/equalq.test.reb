@@ -566,20 +566,6 @@
         ]
 )]
 
-; VOID is legal to test with equality (as is UNSET! in R3-Alpha/Red)
-[
-    (equal? '~void~ '~void~)
-    (not-equal? '~void~ blank)
-    (not-equal? blank '~void~)
-    (equal? (equal? blank '~void~) (equal? '~void~ blank))
-    (not ('~void~ = blank))
-    ('~void~ <> blank)
-    (not (blank = '~void~))
-    (blank != '~void~)
-    ('~void~ = '~void~)
-    (not ('~void~ != '~void~))
-    (equal? (blank = '~void~) ('~void~ = blank))
-]
 
 ; NULL is legal to test with equality (as is UNSET! in R3-Alpha/Red)
 [

@@ -12,8 +12,8 @@
         void' = synthesized
     ])
     (did all  [
-        '~void~ = parse "" [synthesized: ^[(~void~)]]
-        '~void~ = synthesized
+        '~()~ = parse "" [synthesized: ^[(~()~)]]
+        '~()~ = synthesized
     ])
     ('~friendly~ = parse [~friendly~] [bad-word!])
 ]

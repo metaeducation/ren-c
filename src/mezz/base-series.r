@@ -110,10 +110,10 @@ join: function [
     base: to block! base  ; TO operation copies
 
     if quasi? value [
-        value: unquasi value
-        if not block? value [
+        if not splice? unget value [
             fail "JOIN only accepts SPLICE blocks as ^META parameters"
         ]
+        value: unquasi value
     ]
     else [
         value: reduce [unquote value]  ; !!! should FOR-EACH take quoted?

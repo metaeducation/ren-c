@@ -25,11 +25,11 @@
 #include "sys-core.h"
 
 
-static void Append_Vars_To_Context_From_Block(REBVAL *context, REBVAL *block)
+static void Append_Vars_To_Context_From_Group(REBVAL *context, REBVAL *block)
 {
     Context(*) c = VAL_CONTEXT(context);
 
-    assert(IS_BLOCK(block));
+    assert(IS_GROUP(block));
 
     Cell(const*) tail;
     Cell(const*) item = VAL_ARRAY_AT(&tail, block);
@@ -1183,7 +1183,7 @@ REBTYPE(Context)
             return BOUNCE_UNHANDLED;
 
         if (Is_Splice(arg)) {
-            mutable_QUOTE_BYTE(arg) = UNQUOTED_1;  // make plain block
+            mutable_QUOTE_BYTE(arg) = UNQUOTED_1;  // make plain group
         }
         else if (ANY_WORD(arg)) {
             // Add an unset word: `append context 'some-word`
@@ -1200,7 +1200,7 @@ REBTYPE(Context)
         else
             fail (arg);
 
-        Append_Vars_To_Context_From_Block(context, arg);
+        Append_Vars_To_Context_From_Group(context, arg);
         return COPY(context); }
 
       case SYM_COPY: {  // Note: words are not copied and bindings not changed!

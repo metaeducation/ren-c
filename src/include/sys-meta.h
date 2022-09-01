@@ -65,18 +65,18 @@ inline static Value(*) Raisify(Cell(*) v) {
 }
 
 inline static bool Is_Splice(Cell(const*) v)
-  { return HEART_BYTE_UNCHECKED(v) == REB_BLOCK
+  { return HEART_BYTE_UNCHECKED(v) == REB_GROUP
     and QUOTE_BYTE_UNCHECKED(v) == ISOTOPE_0; }
 
 
 inline static Value(*) Splicify(Cell(*) v) {
-    assert(IS_BLOCK(v) and QUOTE_BYTE(v) == UNQUOTED_1);
+    assert(IS_GROUP(v) and QUOTE_BYTE(v) == UNQUOTED_1);
     mutable_QUOTE_BYTE(v) = ISOTOPE_0;
     return VAL(v);
 }
 
 inline static bool Is_Meta_Of_Splice(Cell(const*) v)
-  { return HEART_BYTE_UNCHECKED(v) == REB_BLOCK
+  { return HEART_BYTE_UNCHECKED(v) == REB_GROUP
     and QUOTE_BYTE_UNCHECKED(v) == QUASI_2; }
 
 

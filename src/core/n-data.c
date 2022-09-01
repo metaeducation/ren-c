@@ -2288,7 +2288,7 @@ DECLARE_NATIVE(wanted_q)
 //
 //  void: native [
 //
-//  "0-arity comment (use ~void~ to make translucent isotopes)"
+//  "0-arity comment, vanishes (see also: ~()~ to make empty splices)"
 //
 //      return: [<void>]
 //  ]

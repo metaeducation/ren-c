@@ -3,7 +3,7 @@
 ; Most languages consider variadic AND operations in the spirit of ALL to
 ; be truthy if there are no items.  While it may have a minor advantage in
 ; some cases, many more benefits arise from being able to let it count as
-; a kind of "non-vote", as a ~void~ isotope.
+; a kind of "non-vote", as a void.
 [
     (void? all [])
     (void' = ^ all [])
@@ -390,7 +390,7 @@
 ("this is why" = (all/predicate [false _ null] :not then ["this is why"]))
 
 
-; ALL returns an ~void~ isotope when contents completely erase
+; ALL returns void when contents completely erase
 [
     ("A" = all ["A", maybe all [comment "hi", maybe eval []]])
 ]

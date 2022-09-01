@@ -876,7 +876,7 @@ DECLARE_NATIVE(case)
 // 4. Last evaluation will "fall out" if there is no branch:
 //
 //        >> case [false [<a>] false [<b>]]
-//        == ~void~  ; isotope
+//        ; void
 //
 //        >> case [false [<a>] false [<b>] 10 + 20]
 //        == 30

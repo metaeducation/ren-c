@@ -2891,14 +2891,8 @@ parse*: func [
         return null  ; full parse was requested but tail was not reached
     ]
 
-    if void? unget synthesized' [
-        ;
-        ; We can't return "invisible intent" and still convey that the parse
-        ; succeeded.  So a UPARSE that succeeds is a bit like a branch that
-        ; runs.  You lose the void, and it collapses to none.  So invisibility
-        ; has to stay inside the UPARSE ruleverse.
-        ;
-        return ~void~  ; Need to trigger an else
+    if void? unget synthesized' [  ; successful parse synthesized a void
+        return ~()~  ; empty splice triggers THEN, while still being voidlike
     ]
 
     return isotopify-if-falsey unmeta synthesized'

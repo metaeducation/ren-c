@@ -137,7 +137,7 @@
     flag: true
     <complete> = catch [
         while [true] [
-            ~void~
+            ~()~
             if flag [flag: false, continue]
             if false [fail]
             throw <complete>

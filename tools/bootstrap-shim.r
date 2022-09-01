@@ -247,7 +247,7 @@ to-logic: func3 [return: [logic!] optional [<opt> any-value!]] [
 
 
 ; We don't have isotopes in the bootstrap build.  But if a branch produces
-; NULL it will yield a "VOID!" (kind of like a BAD-WORD! of ~void~)  Turn these
+; NULL it will yield a "VOID!" (kind of like a QUASI! of ~void~)  Turn these
 ; into NULL, and trust that the current build will catch cases of something
 ; like a PRINT being turned into a NULL.
 ;

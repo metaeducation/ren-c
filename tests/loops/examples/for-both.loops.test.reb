@@ -73,7 +73,7 @@
     ])
 
     ; Saves result from second loop output, due to MAYBE/META vanishing on the
-    ; ~void~ isotope produced by contract when FOR-EACH does not run.
+    ; ~()~ isotope produced by contract when FOR-EACH does not run.
 
     ([1 2] = collect [
         assert [20 = for-both x [1 2] [] [keep x, x * 10]]
@@ -114,10 +114,10 @@
         ]]
     ])
 
-    ; Contract of returning ~void~ isotope is preserved when no loop bodies
-    ; run, as both FOR-EACH inside the ALL have their ~void~ isotopes erased
+    ; Contract of returning ~()~ isotope is preserved when no loop bodies
+    ; run, as both FOR-EACH inside the ALL have their ~()~ isotopes erased
     ; and effectively leave behind an `all []`.  Ren-C's working definition
-    ; (motivated by this kind of example) is that should produce a ~void~
+    ; (motivated by this kind of example) is that should produce a ~()~
     ; isotope.  Technical reasons besides this scenario lead it to be favorable
     ; for UNMETA to be willing to take isotopes and return them as-is instead
     ; of raising an error, and that plays to our advantage here.
@@ -153,6 +153,6 @@
     ; esoteric feature anyway...more useful to have a form of MAYBE that can
     ; let the last loop iteration signal a desire for overall erasure.
 
-    ('~void~ = ^ for-both x [1 2] [3 4] [if x > 2 [continue] x * 10])
-    ('~void~ = ^ for-both x [1 2] [3 4] [comment "Maintain invariant!"])
+    ('~()~ = ^ for-both x [1 2] [3 4] [if x > 2 [continue] x * 10])
+    ('~()~ = ^ for-both x [1 2] [3 4] [comment "Maintain invariant!"])
 ]

@@ -81,7 +81,7 @@
     ("a" == parse "aaaaaaa" [repeat (_) "b", maybe some "a"])
     ("a" == parse "aaaaaaaaaaaaaaaaaaa" [repeat (_) "b", maybe some "a"])
     ("a" == parse "aa" [repeat (_) "b", maybe some "a"])
-    ('~void~ = ^ parse "" [repeat (_) "b", maybe some "a"])
+    ('~()~ = ^ parse "" [repeat (_) "b", maybe some "a"])
 ]
 
 ; Opt out completely, block form
@@ -89,7 +89,7 @@
     ("a" == parse "aaaaaaa" [repeat ([_ _]) "b", maybe some "a"])
     ("a" == parse "aaaaaaaaaaaaaaaaaaa" [repeat ([_ _]) "b", maybe some "a"])
     ("a" == parse "aa" [repeat ([_ _]) "b", maybe some "a"])
-    ('~void~ = ^parse "" [repeat ([_ _]) "b", maybe some "a"])
+    ('~()~ = ^parse "" [repeat ([_ _]) "b", maybe some "a"])
 ]
 
 ; Minimum but no maximum
@@ -113,7 +113,7 @@
     ("a" == parse "aaaaaaa" [repeat (#) "a"])
     ("a" == parse "aaaaaaaaaaaaaaaaaaa" [repeat (#) "a"])
     ("a" == parse "aa" [repeat (#) "a"])
-    ('~void~ = ^ parse "" [repeat (#) "a"])
+    ('~()~ = ^ parse "" [repeat (#) "a"])
 ]
 
 ; No minimum or maximum (MAYBE SOME equivalent), block form
@@ -121,5 +121,5 @@
     ("a" == parse "aaaaaaa" [repeat ([_ #]) "a"])
     ("a" == parse "aaaaaaaaaaaaaaaaaaa" [repeat ([_ #]) "a"])
     ("a" == parse "aa" [repeat ([_ #]) "a"])
-    ('~void~ = ^ parse "" [repeat ([_ #]) "a"])
+    ('~()~ = ^ parse "" [repeat ([_ #]) "a"])
 ]

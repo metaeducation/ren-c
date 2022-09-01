@@ -7,7 +7,7 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2018 Ren-C Open Source Contributors
+// Copyright 2012-2022 Ren-C Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information
@@ -40,16 +40,6 @@
 //
 //=//// NOTES ////////////////////////////////////////////////////////////=//
 //
-// * The usermode EVALUATE action is able to avoid overwriting the previous
-//   value if the final evaluation step has nothing in it.  That's based on
-//   the ability exposed here through the "Maybe_Stale" variations of the
-//   Eval_XXX() routines.
-//
-// * The usermode REEVAL function chooses to make `reeval comment "hi"` ~void~
-//   rather than to raise an error.  However, the non-"Maybe_Stale" versions
-//   of code here have another option...which is to give the result as END.
-//   Currently this is what all the Eval_Step() routines which aren't stale
-//   preserving do--but Eval_Value_Throws() will error.
 //
 
 

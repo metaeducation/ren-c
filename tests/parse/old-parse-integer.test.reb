@@ -10,7 +10,7 @@
 ("a" == parse "aa" [2 "a"])
 
 ; Plain loops that never actually runs the body gives back a match that is
-; a ~void~ isotope, as do 0-iteration REPEAT and INTEGER! rules.
+; a ~()~ isotope, as do 0-iteration REPEAT and INTEGER! rules.
 [
     ("a" = parse "a" ["a" 0 "b"])
     (

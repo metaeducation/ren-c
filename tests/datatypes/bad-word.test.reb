@@ -10,12 +10,10 @@
     ]
 )
 
-; BAD-WORD!s were initially neither true nor false, but this came to be the
-; role of the isotopic forms.  Having BAD-WORD! be truthy along with QUOTED!
-; means that NULL is the only falsey result from a ^META operation, which is
-; useful for writing stylized code (see %for-both.test.reb)
+; QUASI!s were initially neither true nor false, but this came to be the
+; role of the isotopic forms.
 ;
-(did first [~void~])
+(did first [~()~])
 
 (
     valid: ["~abc~" "~a|b~"]
@@ -118,15 +116,15 @@
     (3 = (1 + 2 foo))
 ]
 
-; The ~void~ isotope can be used as a synonym for VOID
+; !!! Should the ~()~ isotope be usable as a synonym for VOID?
 [
-    (did foo: func [return: [<opt> <void> any-value!]] [return ~void~])
+    (did foo: func [return: [<opt> <void> any-value!]] [return ~()~])
 
     (not void? foo)
-    ('~void~ = ^ foo)
+    ('~()~ = ^ foo)
 
-    ('~void~ = ^ applique :foo [])
-    ('~void~ = ^ do :foo)
+    ('~()~ = ^ applique :foo [])
+    ('~()~ = ^ do :foo)
 ]
 
 

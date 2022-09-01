@@ -1608,6 +1608,15 @@ static enum Reb_Token Maybe_Locate_Token_May_Push_Mold(
 
           case LEX_SPECIAL_TILDE: {
             ++cp;  // look at what comes after ~
+            if (cp[0] == '(' and cp[1] == ')' and cp[2] == '~') {
+                //
+                // !!! Scanning of QUASI! forms needs to be generalized.  This
+                // is a stopgap measure just to get scanning of ~()~ working,
+                // as that is an important element now.
+                //
+                ss->end = cp += 3;
+                return TOKEN_BAD_WORD;
+            }
             if (IS_LEX_DELIMIT(*cp)) {  // lone ~ is okay
                 ss->end = cp;
                 return TOKEN_BAD_WORD;
@@ -1989,8 +1998,13 @@ Bounce Scanner_Executor(Frame(*) f) {
             Init_Meta_Of_Void(PUSH());
         else {
             assert(bp[len - 1] == '~');
-            Symbol(const*) label = Intern_UTF8_Managed(bp + 1, len - 2);
-            Init_Quasi_Word(PUSH(), label);
+            if (len == 4 and bp[1] == '(' and bp[2] == ')') {  // ~()~
+                Meta_Quotify(Init_Empty_Splice(PUSH()));  // !!! hacked in...
+            }
+            else {
+                Symbol(const*) label = Intern_UTF8_Managed(bp + 1, len - 2);
+                Init_Quasi_Word(PUSH(), label);
+            }
         }
         break; }
 

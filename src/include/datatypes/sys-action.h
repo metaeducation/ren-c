@@ -667,7 +667,7 @@ inline static REBVAL *Mark_Eval_Out_Voided(REBVAL *out) {
     assert(Is_Stale(out));
 
     // We want void evaluations to "vanish", and so we can't overwrite what's
-    // sitting in the output cell with a "~void~ isotope".
+    // sitting in the output cell with a "void isotope".
     //
     //    1 + 2 comment "how would we return 3 if comment overwrites it?"
     //
@@ -679,8 +679,8 @@ inline static REBVAL *Mark_Eval_Out_Voided(REBVAL *out) {
     //
     // When the IF runs it leaves the 3 in the output cell, marked with
     // the translucent bit.  But it clears the stale bit so that it reports
-    // a new result is available.  Yet the ELSE wants to get a ~void~ isotope
-    // as its input--not the 3!
+    // a new result is available.  Yet the ELSE wants to get meta-void
+    // as its input (e.g. ~)--not the meta 3 ('3)!
     //
     // So enfix as well as many operations need to check the voided bit
     // first, before assuming a stale value is unusable.  The way this is

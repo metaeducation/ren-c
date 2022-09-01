@@ -29,7 +29,7 @@
 [#2246 (
     '~null~ = ^ case [true [null]]  ; indicates branch was taken (vs. null)
 )(
-    '~void~ = ^ case [true []]
+    '~()~ = ^ case [true []]
 )]
 
 (

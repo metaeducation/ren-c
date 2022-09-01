@@ -151,12 +151,6 @@ export console!: make object! [
         === DISPLAY VOID AS IF IT WERE A COMMENT, ALSO ===
 
         if v = void' [
-            ;
-            ; True void is not to be confused with the isotope of the WORD!
-            ; void (e.g. ~void~).  The word isotopes are made by conditionals
-            ; when they take a branch but the branch produces void, e.g.
-            ; `if true [comment "this makes a ~void~ isotope"]`.
-            ;
             print "; void"
             return none
         ]
@@ -165,33 +159,17 @@ export console!: make object! [
 
         if v = none' [  ; don't show "none" (e.g. BLANK! isotopes)
             ;
-            ; The "none" state represents the contents of an unset variable.
-            ; It is also used by commands like HELP that want to keep the focus
-            ; on what they are printing out, without an `== xxx` evaluated
-            ; result showing up.  Functions that need a handy way of returning
-            ; an "uninteresting" result, such as PRINT, use it too.
+            ; The "none" state is used by commands like HELP that want to keep
+            ; the focus on what they are printing out, without an `== xxx`
+            ; evaluated result showing up.  Functions that need a handy way of
+            ; returning an "uninteresting" result, such as PRINT, use it too.
             ;
-            ; Note: It was considered to use a different state for this, with
-            ; a name like `~quiet~`...to get this behavior:
-            ;
-            ;      >> print "returns ~quiet~ isotope, no output"
-            ;
-            ;      >> get/any 'some-unset-var
-            ;      == ~  ; isotope
-            ;
-            ; But something feels more intrinsically coherent about not showing
-            ; an isotope which has no associated string.  It reduces the total
-            ; number of parts, and helps `~` earn its name of "none".
-            ;
-            ;     >> x: if false [<a>]
-            ;     == ~void~  ; isotope
-            ;
-            ;     >> x: decay if false [<a>]
-            ;
-            ; This gives the slightly weird dichotomy that "none" and "void"
+            ; This gives a slightly weird dichotomy that "none" and "void"
             ; are distinct states, but we don't print the "value-bearing" one:
             ;
-            ;      >> maybe if false [<a>]
+            ;      >> ~none~
+            ;
+            ;      >> ()
             ;      ; void
             ;
             ; But doing it the other way around would force functions like

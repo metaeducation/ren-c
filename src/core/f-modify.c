@@ -447,7 +447,7 @@ REBLEN Modify_String_Or_Binary(
 
         goto binary_limit_accounted_for;
     }
-    else if (IS_BLOCK(src)) {
+    else if (IS_GROUP(src)) {
         //
         // !!! For APPEND and INSERT, the /PART should apply to *block* units,
         // and not character units from the generated string.

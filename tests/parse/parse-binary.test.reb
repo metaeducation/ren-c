@@ -5,7 +5,7 @@
 
 ; General BINARY! matching
 [
-    ('~void~ = ^ parse #{} [])
+    ('~()~ = ^ parse #{} [])
 
     (#{0A} == parse #{0A} [#{0A}])
     (#"^/" == parse #{0A} [#"^/"])

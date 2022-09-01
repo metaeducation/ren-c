@@ -20,5 +20,5 @@
 )
 
 [#1124 (
-    [~void~ 10 20] = unique reduce ['~void~ '~void~ '~void~ 10 20]
+    [~thing~ 10 20] = unique reduce ['~thing~ '~thing~ '~thing~ 10 20]
 )]

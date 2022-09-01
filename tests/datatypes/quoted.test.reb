@@ -241,7 +241,7 @@
         ("try library here")
         _
         |
-        ~void~
+        ~()~
     ][
         lit-item: quote get/any 'item
 
@@ -273,7 +273,7 @@
 
 (
     did all [
-        bad-word? x: '~void~
-        bad-word? get/any 'x
+        quasi? x: '~()~
+        quasi? get/any 'x
     ]
 )

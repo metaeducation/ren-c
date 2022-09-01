@@ -7,8 +7,6 @@
 (void? comment "a")
 (void? (comment "a"))
 
-; META the word propagates invisibility vs. give back '~void~ like ^ does
-;
 (void' = (meta comment "a"))
 ((quote void') = ^(^ comment "a"))
 
@@ -339,8 +337,8 @@
     ]
 )
 
-('~void~ = ^ (if true [] else [<else>]))
-('~void~ = ^(if true [comment <true-branch>] else [<else>]))
+('~()~ = ^ (if true [] else [<else>]))
+('~()~ = ^(if true [comment <true-branch>] else [<else>]))
 
 (1 = all [1 elide <vaporize>])
 (1 = any [1 elide <vaporize>])

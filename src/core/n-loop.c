@@ -56,8 +56,7 @@ bool Try_Catch_Break_Or_Continue(Value(*) out, Frame(*) frame_)
         //
         // !!! Continue with no argument acts the same as asking
         // for CONTINUE void (the form with an argument).  This makes sense
-        // in cases like MAP-EACH (one wants a continue to not add any value,
-        // as opposed to some ~void~ BAD-WORD!)  Other loops may vary.
+        // in cases like MAP-EACH (one wants a continue to not add any value)
         //
         CATCH_THROWN(out, frame_);
         assert(VAL_TYPE_UNCHECKED(out) != REB_NULL);

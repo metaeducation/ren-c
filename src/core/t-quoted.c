@@ -517,7 +517,7 @@ DECLARE_NATIVE(spread)
     if (IS_QUOTED(v))
         return Unquotify(Copy_Cell(OUT, v), 1);
 
-    mutable_HEART_BYTE(v) = REB_BLOCK;
+    mutable_HEART_BYTE(v) = REB_GROUP;
     return UNMETA(Quasify(v));
 }
 

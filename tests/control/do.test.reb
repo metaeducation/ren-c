@@ -1,8 +1,6 @@
 ; functions/control/do.r
 
-; By default, DO will not be invisible.  You get an "ornery" return result
-; of ~void~ isotope to help remind you that you are not seeing the whole
-; picture.  Returning NULL might seem "friendlier" but it is misleading.
+; !!! Should DO be able to return void?
 [
     (void' = ^(do []))
     (void' = ^ (eval []))

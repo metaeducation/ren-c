@@ -207,13 +207,13 @@
 ; ([-30 70] = compose /negate [(10 + 20) ((30 + 40))])
 
 
-; isotopes are not legal in compose, but you can reify them
+; isotopes besides splices are not legal in compose, but you can reify them
 [
     ([<a> ~null~ <b>] = apply :compose [
         [<a> (if true [null]) <b>]
         /predicate chain [:eval :reify]
     ])
-    (error? trap [compose [<a> (~void~)]])
+    ([<a>] = compose [<a> (~()~)])
     ([<a>] = compose [<a> (~)])  ; exception made for pure void
 ]
 
