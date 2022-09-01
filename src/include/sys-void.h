@@ -124,3 +124,6 @@ inline static REBVAL* Reset_Cell_Untracked(Cell(*) v) {
 #define RESET(v) \
     TRACK(Reset_Cell_Untracked(v))
         // ^-- track AFTER reset, so you can diagnose cell origin in WRITABLE()
+
+#define Init_Meta_Of_Void(out)       Init_Quasi_Null(out)
+#define Is_Meta_Of_Void(v)           Is_Quasi_Null(v)

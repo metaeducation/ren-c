@@ -185,3 +185,13 @@
 [
     (null = append void "abc")
 ]
+
+; The behavior of conditionals returning ~()~ isotopes on empty branches
+; leads to a useful interaction with blocks, while retaining the reactivity
+; of a true branch product with THEN, and false giving void runs ELSE.
+[
+    ((^ spread []) = ^ if true [])
+    (void? if false [<a>])
+    ([a b c] = append [a b c] if true [])
+    ([a b c] = append [a b c] if false [<a>])
+]

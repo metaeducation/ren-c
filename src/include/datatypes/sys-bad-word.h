@@ -196,21 +196,22 @@ inline static bool Is_Meta_Of_None(Cell(const*) v)
 //     == [a b c]
 //
 
-#define Init_Void_Isotope(out)            Init_Word_Isotope((out), Canon(VOID))
-#define Is_Void_Isotope(v)                Is_Word_Isotope_With_Id(v, SYM_VOID)
-#define Init_Meta_Of_Void_Isotope(out)    Init_Quasi_Word((out), Canon(VOID))
+inline static Value(*) Init_Empty_Splice_Untracked(Value(*) out) {
+    Init_Group(out, EMPTY_ARRAY);
+    mutable_QUOTE_BYTE(out) = ISOTOPE_0;
+    return out;
+}
 
-inline static bool Is_Meta_Of_Void_Isotope(Cell(const*) v)
-  { return Is_Quasi_Word(v) and VAL_WORD_SYMBOL(v) == Canon(VOID); }
+#define Init_Empty_Splice(out) \
+    TRACK(Init_Empty_Splice_Untracked(out))
 
-#define Init_Meta_Of_Void(out)       Init_Quasi_Null(out)
-#define Is_Meta_Of_Void(v)           Is_Quasi_Null(v)
+#define Is_Empty_Splice(v) \
+    ((READABLE(v)->header.bits & FLAG_QUOTE_BYTE(255) & FLAG_HEART_BYTE(255)) \
+        == FLAG_QUOTE_BYTE(ISOTOPE_0) | FLAG_HEART_BYTE(REB_GROUP))
 
-#define Init_Meta_Of_Null(out) \
-    Init_Blank(out)
-
-#define Is_Meta_Of_Null(v) \
-    IS_BLANK(v)
+#define Is_Meta_Of_Empty_Splice(v) \
+    ((READABLE(v)->header.bits & FLAG_QUOTE_BYTE(255) & FLAG_HEART_BYTE(255)) \
+        == FLAG_QUOTE_BYTE(QUASI_1) | FLAG_HEART_BYTE(REB_GROUP))
 
 
 //=//// NULL ISOTOPE (unfriendly ~null~) ///////////////////////////////////=//

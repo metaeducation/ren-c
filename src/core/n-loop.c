@@ -152,7 +152,7 @@ static Bounce Loop_Series_Common(
                 return nullptr;
 
             if (Is_Void(OUT))  // CONTINUE w/no argument
-                Init_Void_Isotope(OUT);
+                Init_Empty_Splice(OUT);
         }
         return OUT;
     }
@@ -178,7 +178,7 @@ static Bounce Loop_Series_Common(
                 return nullptr;
 
             if (Is_Void(OUT))  // CONTINUE w/no argument
-                Init_Void_Isotope(OUT);
+                Init_Empty_Splice(OUT);
         }
         if (
             VAL_TYPE(var) != VAL_TYPE(start)
@@ -234,7 +234,7 @@ static Bounce Loop_Integer_Common(
                 return nullptr;
 
             if (Is_Void(OUT))  // CONTINUE w/no argument
-                Init_Void_Isotope(OUT);
+                Init_Empty_Splice(OUT);
         }
         return BRANCHED(OUT);
     }
@@ -256,7 +256,7 @@ static Bounce Loop_Integer_Common(
                 return nullptr;
 
             if (Is_Void(OUT))  // CONTINUE w/no argument
-                Init_Void_Isotope(OUT);
+                Init_Empty_Splice(OUT);
         }
 
         if (not IS_INTEGER(var))
@@ -323,7 +323,7 @@ static Bounce Loop_Number_Common(
                 return nullptr;
 
             if (Is_Void(OUT))  // CONTINUE w/no argument
-                Init_Void_Isotope(OUT);
+                Init_Empty_Splice(OUT);
         }
         return BRANCHED(OUT);
     }
@@ -343,7 +343,7 @@ static Bounce Loop_Number_Common(
                 return nullptr;
 
             if (Is_Void(OUT))  // CONTINUE w/no argument
-                Init_Void_Isotope(OUT);
+                Init_Empty_Splice(OUT);
         }
 
         if (not IS_DECIMAL(var))
@@ -534,7 +534,7 @@ DECLARE_NATIVE(for_skip)
                 return nullptr;
 
             if (Is_Void(OUT))  // CONTINUE w/no argument
-                Init_Void_Isotope(OUT);
+                Init_Empty_Splice(OUT);
         }
 
         // Modifications to var are allowed, to another ANY-SERIES! value.
@@ -660,7 +660,7 @@ DECLARE_NATIVE(cycle)
         CATCH_THROWN(OUT, FRAME);  // Unlike BREAK, STOP takes an arg--see [1]
 
         if (Is_Void(OUT))  // STOP with no arg, void usually reserved, see [2]
-            return Init_Void_Isotope(OUT);
+            return Init_Empty_Splice(OUT);
 
         Isotopify_If_Nulled(OUT);  // NULL usually reserved for BREAK, see [2]
         return OUT;
@@ -1055,7 +1055,7 @@ DECLARE_NATIVE(for_each)
     }
 
     if (Is_Void(OUT))
-        Init_Void_Isotope(OUT);  // void breaks loop composability, see [1]
+        Init_Empty_Splice(OUT);  // void breaks loop composability, see [1]
     else
         Isotopify_If_Nulled(OUT);  // NULL is reserved for BREAK
 
@@ -1166,7 +1166,7 @@ DECLARE_NATIVE(every)
     }
 
     if (Is_Void(SPARE) or (IS_META_BLOCK(body) and Is_Meta_Of_Void(SPARE))) {
-        Init_Void_Isotope(OUT);  // forget OUT for loop composition, see [1]
+        Init_Empty_Splice(OUT);  // forget OUT for loop composition, see [1]
         goto next_iteration;  // ...but void does not NULL-lock output
     }
 
@@ -1787,7 +1787,7 @@ DECLARE_NATIVE(repeat)
             return nullptr;
 
         if (Is_Void(OUT))  // CONTINUE w/no argument
-            Init_Void_Isotope(OUT);
+            Init_Empty_Splice(OUT);
     }
 
     if (IS_LOGIC(count)) {
@@ -1898,7 +1898,7 @@ DECLARE_NATIVE(for)
             return nullptr;
 
         if (Is_Void(OUT))  // CONTINUE w/no argument
-            Init_Void_Isotope(OUT);
+            Init_Empty_Splice(OUT);
     }
 
     REBVAL *var = CTX_VAR(VAL_CONTEXT(vars), 1);  // not movable, see #2274
@@ -2109,7 +2109,7 @@ DECLARE_NATIVE(while)
             return nullptr;
 
         if (Is_Void(OUT))  // CONTINUE with no argument
-            Init_Void_Isotope(OUT);
+            Init_Empty_Splice(OUT);
     }
 
     goto evaluate_condition;

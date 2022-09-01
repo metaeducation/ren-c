@@ -118,6 +118,11 @@ inline static REBVAL *Init_Nothing_Untracked(
 #define Init_Quasi_Null(out) \
     TRACK(Init_Nulled_Untracked((out), QUASI_2))
 
+#define Init_Meta_Of_Null(out) \
+    Init_Blank(out)
+
+#define Is_Meta_Of_Null(v) \
+    IS_BLANK(v)
 
 // We test for null on an arbitrary result that may be an isotope.  Since we
 // don't have generic isotope handling we usually just pass them through, so
