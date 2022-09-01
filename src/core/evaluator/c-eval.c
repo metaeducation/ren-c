@@ -195,7 +195,8 @@ inline static Frame(*) Maybe_Rightward_Continuation_Needed(Frame(*) f)
     Flags flags =
         EVAL_EXECUTOR_FLAG_SINGLE_STEP  // v-- if f was fulfilling, we are
         | (f->flags.bits & EVAL_EXECUTOR_FLAG_FULFILLING_ARG)
-        | FRAME_FLAG_MAYBE_STALE;
+        | FRAME_FLAG_MAYBE_STALE
+        | FRAME_FLAG_FAILURE_RESULT_OK;  // trap [e: transcode "1&aa"] works
 
     if (Did_Init_Inert_Optimize_Complete(OUT, f->feed, &flags))
         return nullptr;  // If eval not hooked, ANY-INERT! may not need a frame
@@ -755,6 +756,9 @@ Bounce Evaluator_Executor(Frame(*) f)
         else if (Is_Stale(OUT)) {
             RESET(Sink_Word_May_Fail(f_current, f_specifier));
         }
+        else if (Is_Raised(OUT)) {
+            // Don't assign, but let (trap [a: transcode "1&aa"]) work
+        }
         else if (
             Is_Isotope(OUT)
             and Not_Cell_Flag(OUT, SCANT_EVALUATED_ISOTOPE)  // from QUASI!
@@ -763,7 +767,7 @@ Bounce Evaluator_Executor(Frame(*) f)
             fail (Error_Bad_Isotope(OUT));
         }
         else {
-            if (REB_ACTION == VAL_TYPE_UNCHECKED(OUT))  // isotopes ok
+            if (IS_ACTION(OUT))  // !!! Review: When to update labels?
                 INIT_VAL_ACTION_LABEL(OUT, VAL_WORD_SYMBOL(f_current));
 
             Copy_Cell(
@@ -1145,6 +1149,9 @@ Bounce Evaluator_Executor(Frame(*) f)
             )){
                 goto return_thrown;
             }
+        }
+        else if (Is_Raised(OUT)) {
+            // Don't assign, but let (trap [a.b: transcode "1&aa"]) work
         }
         else if (
             Is_Isotope(OUT)
@@ -1656,7 +1663,7 @@ Bounce Evaluator_Executor(Frame(*) f)
             );
         }
         else if (Is_Raised(OUT)) {
-            fail (VAL_CONTEXT(OUT));
+            // Don't assign, but let (trap [[a b]: transcode "1&aa"]) work
         }
         else if (
             Is_Isotope(OUT)
@@ -1676,7 +1683,7 @@ Bounce Evaluator_Executor(Frame(*) f)
         // "circled" then it becomes the overall return.  (This will be put
         // in as part of the function machinery behavior also, soon.)
         //
-        if (stackindex_circled != 0) {
+        if (not Is_Raised(OUT) and stackindex_circled != 0) {
             Copy_Cell(SPARE, Data_Stack_At(stackindex_circled));  // stable
             Get_Var_May_Fail(  // (PICK* can be methodized, hence SPARE stable)
                 OUT,
