@@ -19,136 +19,43 @@
     e.id = 'protected-word
 )
 
-; block
-[#1748 (
-    value: copy original: [1 + 2 + 3]
-    protect value
-    all [
-        error? trap [insert value 4]
-        equal? value original
-    ]
-)]
-(
-    value: copy original: [1 + 2 + 3]
-    protect value
-    all [
-        error? trap [append value 4]
-        equal? value original
-    ]
-)
-(
-    value: copy original: [1 + 2 + 3]
-    protect value
-    all [
-        error? trap [change value 4]
-        equal? value original
-    ]
-)
-(
-    value: copy original: [1 + 2 + 3]
-    protect value
-    all [
-        error? trap [poke value 1 4]
-        equal? value original
-    ]
-)
-(
-    value: copy original: [1 + 2 + 3]
-    protect value
-    all [
-        error? trap [remove/part value 1]
-        equal? value original
-    ]
-)
-(
-    value: copy original: [1 + 2 + 3]
-    protect value
-    all [
-        error? trap [take value]
-        equal? value original
-    ]
-)
-(
-    value: copy original: [1 + 2 + 3]
-    protect value
-    all [
-        error? trap [reverse value]
-        equal? value original
-    ]
-)
-(
-    value: copy original: [1 + 2 + 3]
-    protect value
-    all [
-        error? trap [clear value]
-        equal? value original
-    ]
-)
-; string
-(
-    value: copy original: {1 + 2 + 3}
-    protect value
-    all [
-        error? trap [insert value 4]
-        equal? value original
-    ]
-)
-(
-    value: copy original: {1 + 2 + 3}
-    protect value
-    all [
-        error? trap [append value 4]
-        equal? value original
-    ]
-)
-(
-    value: copy original: {1 + 2 + 3}
-    protect value
-    all [
-        error? trap [change value 4]
-        equal? value original
-    ]
-)
-(
-    value: copy original: {1 + 2 + 3}
-    protect value
-    all [
-        error? trap [poke value 1 4]
-        equal? value original
-    ]
-)
-(
-    value: copy original: {1 + 2 + 3}
-    protect value
-    all [
-        error? trap [remove/part value 1]
-        equal? value original
-    ]
-)
-(
-    value: copy original: {1 + 2 + 3}
-    protect value
-    all [
-        error? trap [take value]
-        equal? value original
-    ]
-)
-(
-    value: copy original: {1 + 2 + 3}
-    protect value
-    all [
-        error? trap [reverse value]
-        equal? value original
-    ]
-)
-(
-    value: copy original: {1 + 2 + 3}
-    protect value
-    all [
-        error? trap [clear value]
-        equal? value original
-    ]
-)
+
+[#1748
+    (
+        rescue-protected?: func [code [block!]] [
+            for-each original [
+                [1 + 2 + 3]
+                {1 + 2 + 3}
+                #{01FF02FF03}
+            ][
+                protect value: copy original
+                sys.util.rescue code then e -> [
+                    any [
+                        e.id <> 'series-protected
+                        not equal? value original
+                    ][
+                        ; print ["Original:" mold original]
+                        ; print ["Value:" mold value]
+                        ; print ["Code:" print mold code]
+                        fail e
+                    ]
+                ]
+            ]
+            return true
+        ]
+        true
+    )
+
+    (rescue-protected? [insert value 4])
+    (rescue-protected? [append value 4])
+    (rescue-protected? [change value 4])
+    (rescue-protected? [poke value 1 4])
+    (rescue-protected? [remove/part value 1])
+    (rescue-protected? [take value])
+    (rescue-protected? [reverse value])
+    (rescue-protected? [clear value])
+]
+
 [#1764
     (unset 'blk protect/deep 'blk true)
     (unprotect 'blk true)
