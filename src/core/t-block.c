@@ -679,22 +679,20 @@ static REBINT Try_Get_Array_Index_From_Picker(
 
 
 //
-//  Pick_Block: C
+//  Did_Pick_Block: C
 //
-// Fills out with void if no pick.
+// Fills out with NULL if no pick.
 //
-Cell(*) Pick_Block(REBVAL *out, const REBVAL *block, Cell(const*) picker)
+bool Did_Pick_Block(REBVAL *out, const REBVAL *block, Cell(const*) picker)
 {
     REBINT n = Get_Num_From_Arg(picker);
     n += VAL_INDEX(block) - 1;
-    if (n < 0 or cast(REBLEN, n) >= VAL_LEN_HEAD(block)) {
-        Init_Nulled(out);
-        return NULL;
-    }
+    if (n < 0 or cast(REBLEN, n) >= VAL_LEN_HEAD(block))
+        return false;
 
-    Cell(const*) slot = VAL_ARRAY_AT_HEAD(block, n);
+    Cell(const*) slot = ARR_AT(VAL_ARRAY(block), n);
     Derelativize(out, slot, VAL_SPECIFIER(block));
-    return out;
+    return true;
 }
 
 
@@ -1265,12 +1263,8 @@ REBTYPE(Array)
                     % (VAL_LEN_HEAD(array) - index))
             );
 
-            Cell(*) slot = Pick_Block(OUT, array, ARG(seed));
-            if (Is_Nulled(OUT)) {
-                assert(slot);
-                UNUSED(slot);
+            if (not Did_Pick_Block(OUT, array, ARG(seed)))
                 return nullptr;
-            }
             return Inherit_Const(OUT, array);
         }
 

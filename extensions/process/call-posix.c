@@ -285,9 +285,9 @@ Bounce Call_Core(Frame(*) frame_) {
         assert(argc != 0);  // usermode layer checks this
         argv = rebAllocN(char*, (argc + 1));
 
+        Cell(const*) param = VAL_ARRAY_ITEM_AT(block);
         int i;
-        for (i = 0; i < argc; i ++) {
-            Cell(const*) param = VAL_ARRAY_AT_HEAD(block, i);
+        for (i = 0; i < argc; ++param, ++i) {
             if (not IS_TEXT(param))  // usermode layer ensures FILE! converted
                 fail (PARAM(command));
             argv[i] = rebSpell(SPECIFIC(param));

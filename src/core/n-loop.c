@@ -1315,7 +1315,7 @@ DECLARE_NATIVE(remove_each)
             if (ANY_ARRAY(data))
                 Derelativize(
                     var,
-                    VAL_ARRAY_AT_HEAD(data, index),
+                    ARR_AT(VAL_ARRAY(data), index),
                     VAL_SPECIFIER(data)
                 );
             else if (IS_BINARY(data)) {

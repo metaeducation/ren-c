@@ -38,7 +38,7 @@
 //=//// NOTES /////////////////////////////////////////////////////////////=//
 //
 //  * In R3-Alpha, there was a full-sized cell at the end of every array that
-//    would hold an END signal--much like a strin  terminator.  Ren-C does not
+//    would hold an END signal--much like a string terminator.  Ren-C does not
 //    terminate arrays but relies on the known length, in order to save on
 //    space.  This also avoids the cost of keeping the terminator up to date
 //    as the array grows or resizes.
@@ -136,20 +136,8 @@ inline static REBLEN ARR_LEN(Array(const*) a)
 
 
 
-//
-// REBVAL cells cannot be written to unless they carry CELL_FLAG_CELL, and
-// have been "formatted" to convey their lifetime (stack or array).  This
-// helps debugging, but is also important information needed by Copy_Cell()
-// for deciding if the lifetime of a target cell requires the "reification"
-// of any temporary referenced structures into ones managed by the GC.
-//
-// Performance-wise, the prep process requires writing one `uintptr_t`-sized
-// header field per cell.  For fully optimum efficiency, clients filling
-// arrays can initialize the bits as part of filling in cells vs. using
-// Prep_Array.  This is done by the evaluator when building the f->varlist for
-// a frame (it's walking the parameters anyway).  However, this is usually
-// not necessary--and sacrifices generality for code that wants to work just
-// as well on stack values and heap values.
+// See READABLE(), WRITABLE() and related functions for an explanation of the
+// bits that have to be formatted in cell headers to be legal to use.
 //
 inline static void Prep_Array(
     Array(*) a,
@@ -453,20 +441,6 @@ inline static Cell(const*) VAL_ARRAY_AT(
     return at;
 }
 
-inline static Cell(const*) VAL_ARRAY_AT_HEAD_T(
-    option(Cell(const*)*) tail_out,
-    noquote(Cell(const*)) v
-){
-    Array(const*) arr = VAL_ARRAY(v);
-    REBIDX i = VAL_INDEX_RAW(v);  // VAL_ARRAY() already checks it's series
-    Cell(const*) at = ARR_AT(arr, i);
-    if (tail_out) {  // inlining should remove this if() for no tail
-        REBLEN len = ARR_LEN(arr);
-        *unwrap(tail_out) = at + len;
-    }
-    return at;
-}
-
 inline static Cell(const*) VAL_ARRAY_ITEM_AT(noquote(Cell(const*)) v) {
     Cell(const*) tail;
     Cell(const*) item = VAL_ARRAY_AT(&tail, v);
@@ -497,27 +471,6 @@ inline static Cell(const*) VAL_ARRAY_ITEM_AT(noquote(Cell(const*)) v) {
 #define VAL_ARRAY_TAIL(v) \
   ARR_TAIL(VAL_ARRAY(v))
 
-
-// !!! VAL_ARRAY_AT_HEAD() is a leftover from the old definition of
-// VAL_ARRAY_AT().  Unlike SKIP in Rebol, this definition did *not* take
-// the current index position of the value into account.  It rather extracted
-// the array, counted from the head, and disregarded the index entirely.
-//
-// The best thing to do with it is probably to rewrite the use cases to
-// not need it.  But at least "AT HEAD" helps communicate what the equivalent
-// operation in Rebol would be...and you know it's not just giving back the
-// head because it's taking an index.  So  it looks weird enough to suggest
-// looking here for what the story is.
-//
-inline static Cell(const*) VAL_ARRAY_AT_HEAD(
-    Cell(const*) v,
-    REBLEN n
-){
-    Array(const*) a = VAL_ARRAY(v);  // debug build checks it's ANY-ARRAY!
-    if (n > ARR_LEN(a))
-        fail (Error_Index_Out_Of_Range_Raw());
-    return ARR_AT(a, (n));
-}
 
 //=//// ANY-ARRAY! INITIALIZER HELPERS ////////////////////////////////////=//
 //

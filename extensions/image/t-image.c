@@ -64,24 +64,20 @@ void Set_Pixel_Tuple(Byte* dp, Cell(const*) tuple)
 
 
 //
-//  Array_Has_Non_Tuple: C
+//  Try_Find_Non_Tuple_In_Array: C
 //
-// Checks the given ANY-ARRAY! REBVAL from its current index position to
-// the end to see if any of its contents are not TUPLE!.  If so, returns
-// true and `index_out` will contain the index position from the head of
-// the array of the non-tuple.  Otherwise returns false.
+// Searches array from current index, returns non-tuple cell if found.
 //
-bool Array_Has_Non_Tuple(REBLEN *index_out, Cell(const*) blk)
+static option(Cell(const*)) Try_Find_Non_Tuple_In_Array(Cell(const*) any_array)
 {
-    assert(ANY_ARRAY(blk));
+    Cell(const*) tail;
+    Cell(const*) v = VAL_ARRAY_AT(&tail, any_array);
 
-    REBLEN len = VAL_LEN_HEAD(blk);
-    *index_out = VAL_INDEX(blk);
-    for (; *index_out < len; (*index_out)++)
-        if (not IS_TUPLE(VAL_ARRAY_AT_HEAD(blk, *index_out)))
-            return true;
+    for (; v != tail; ++v)
+        if (not IS_TUPLE(v))
+            return v;
 
-    return false;
+    return nullptr;
 }
 
 
@@ -322,9 +318,9 @@ Bounce MAKE_Image(
         else if (IS_BLOCK(item)) {
             Init_Image_Black_Opaque(OUT, w, h);  // inefficient, overwritten
 
-            REBLEN bad_index;
-            if (Array_Has_Non_Tuple(&bad_index, item))
-                fail (Error_Bad_Value(VAL_ARRAY_AT_HEAD(item, bad_index)));
+            Cell(const*) non_tuple = Try_Find_Non_Tuple_In_Array(item);
+            if (non_tuple)
+                fail (Error_Bad_Value(non_tuple));
 
             Byte* ip = VAL_IMAGE_HEAD(OUT);  // image pointer
 
@@ -582,7 +578,6 @@ Bounce Modify_Image(Frame(*) frame_, Symbol(const*) verb)
 
     REBLEN index = VAL_IMAGE_POS(value);
     REBLEN tail = VAL_IMAGE_LEN_HEAD(value);
-    REBLEN n;
     Byte* ip;
 
     REBINT w = VAL_IMAGE_WIDTH(value);
@@ -600,9 +595,11 @@ Bounce Modify_Image(Frame(*) frame_, Symbol(const*) verb)
 
     bool only = false;
 
-    // Validate that block arg is all tuple values:
-    if (IS_BLOCK(arg) && Array_Has_Non_Tuple(&n, arg))
-        fail (Error_Bad_Value(VAL_ARRAY_AT_HEAD(arg, n)));
+    if (IS_BLOCK(arg)) {
+        Cell(const*) non_tuple = Try_Find_Non_Tuple_In_Array(arg);
+        if (non_tuple)
+            fail (Error_Bad_Value(non_tuple));
+    }
 
     REBINT dup = 1;
     REBINT dup_x = 0;

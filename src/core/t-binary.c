@@ -901,17 +901,17 @@ DECLARE_NATIVE(enbin)
             "fail {First element of ENBIN settings must be BE or LE}",
         "]"
     );
-    REBLEN index = VAL_INDEX(settings);
     bool no_sign = rebUnboxLogic(
         "switch second", settings, "[",
             "'+ [true] '+/- [false]",
             "fail {Second element of ENBIN settings must be + or +/-}",
         "]"
     );
-    Cell(const*) third = VAL_ARRAY_AT_HEAD(settings, index + 2);
-    if (not IS_INTEGER(third))
-        fail ("Third element of ENBIN settings must be an integer}");
-    REBINT num_bytes = VAL_INT32(third);
+    REBINT num_bytes = rebUnboxInteger(
+        "(match integer! third", settings, ") else [",
+            "fail {Third element of ENBIN settings must be an integer}",
+        "]"
+    );
     if (num_bytes <= 0)
         fail ("Size for ENBIN encoding must be at least 1");
     rebRelease(settings);
@@ -1010,7 +1010,6 @@ DECLARE_NATIVE(debin)
             "fail {First element of DEBIN settings must be BE or LE}",
         "]"
     );
-    REBLEN index = VAL_INDEX(settings);
     bool no_sign = rebUnboxLogic(
         "switch second", settings, "[",
             "'+ [true] '+/- [false]",
@@ -1021,10 +1020,11 @@ DECLARE_NATIVE(debin)
     if (arity == 2)
         num_bytes = bin_size;
     else {
-        Cell(const*) third = VAL_ARRAY_AT_HEAD(settings, index + 2);
-        if (not IS_INTEGER(third))
-            fail ("Third element of DEBIN settings must be an integer}");
-        num_bytes = VAL_INT32(third);
+        num_bytes = rebUnboxInteger(
+            "(match integer! third", settings, ") else [",
+                "fail {Third element of DEBIN settings must be an integer}",
+            "]"
+        );
         if (bin_size != num_bytes)
             fail ("Input binary is longer than number of bytes to DEBIN");
     }
