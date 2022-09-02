@@ -305,7 +305,7 @@ export do-recover: func [
                     ; Test filenames appear in the log, %x.test.reb
                     "%" (
                         next-position: _  ; !!! for SET-WORD! gather
-                        [value next-position]: transcode position
+                        [value next-position]: transcode/one position
                     )
                     seek (next-position)
                         |

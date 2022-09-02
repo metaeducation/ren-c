@@ -972,11 +972,12 @@ bool Get_Path_Push_Refinements_Throws(
 //  {Gets the value of a word or path, or block of words/paths}
 //
 //      return: [<opt> <void> any-value!]
-//      @steps "Allow GROUP! evals, returns block of reusable PICK/POKE steps"
-//          [<opt> the-word! the-block!]
+//      @steps "Reusable PICK/POKE steps"
+//          [<opt> the-word! the-tuple! the-block!]
 //      source "Word or path to get, or block of PICK steps"
 //          [<void> any-word! any-sequence! any-group! the-block!]
 //      /any "Do not error on isotopes"
+//      /groups "Allow GROUP! Evaluations"
 //  ]
 //
 DECLARE_NATIVE(get)
@@ -987,12 +988,11 @@ DECLARE_NATIVE(get)
 {
     INCLUDE_PARAMS_OF_GET;
 
-    REBVAL *steps = ARG(steps);
     REBVAL *source = ARG(source);
 
-    if (WANTED(steps)) {
-        // see note in SET, we can't tell if GROUPS_OK would be sufficient
-    }
+    REBVAL *steps;
+    if (REF(groups))
+        steps = ARG(steps);
     else
         steps = nullptr;  // no GROUP! evals
 
@@ -1340,21 +1340,16 @@ void Set_Var_May_Fail(
 //
 //      return: "Same value as input"
 //          [<opt> <void> any-value!]
-//      @steps "Allow GROUP! evals, returns block of reusable PICK/POKE steps"
-//          [<opt> the-word! the-block!]
+//      @steps "Reusable PICK/POKE steps"
+//          [<opt> the-word! the-tuple! the-block!]
 //      target "Word or tuple, or calculated sequence steps (from GET)"
 //          [<void> any-word! any-sequence! any-group! the-block!]
 //      ^value [<opt> <void> <fail> any-value!]  ; tunnels failure
 //      /any "Do not error on isotopes"
+//      /groups "Allow GROUP! Evaluations"
 //  ]
 //
 DECLARE_NATIVE(set)
-//
-// 1. Internally we have an optimization for allowing you to say evaluations
-//    with groups are okay, but you don't actually plan to use the steps.
-//    But we aren't told if something is ~wanted~ vs. ~wanted-in-a-variable~
-//    so we can't special-case with GROUPS_OK.  Review revealing this nuance
-//    via a distinct state.
 //
 // 2. While the written value would decay if an isotope, the overall return
 //    result is the same as was passed in:
@@ -1368,7 +1363,6 @@ DECLARE_NATIVE(set)
 {
     INCLUDE_PARAMS_OF_SET;
 
-    REBVAL *steps = ARG(steps);
     REBVAL *target = ARG(target);
     REBVAL *v = ARG(value);
 
@@ -1377,9 +1371,9 @@ DECLARE_NATIVE(set)
         return RAISE(v);
     }
 
-    if (WANTED(steps)) {
-        // can't tell if GROUPS_OK would be sufficient, see [1]
-    }
+    REBVAL *steps;
+    if (REF(groups))
+        steps = ARG(steps);
     else
         steps = nullptr;  // no GROUP! evals
 
@@ -2246,48 +2240,6 @@ DECLARE_NATIVE(none_q)
 
     return Init_Logic(OUT, Is_Meta_Of_None(ARG(optional)));
 }
-
-
-//
-//  wanted?: native [
-//
-//  "Tells you if a multi-return output parameter is wanted by the caller"
-//
-//      return: [logic!]
-//      output [word! tuple!]
-//  ]
-//
-DECLARE_NATIVE(wanted_q)
-{
-    INCLUDE_PARAMS_OF_WANTED_Q;
-
-    Value(*) output = ARG(output);
-
-    goto initial_entry;
-
-  initial_entry: {  //////////////////////////////////////////////////////////
-
-    if (not Did_Get_Binding_Of(SPARE, output) or not IS_FRAME(SPARE))
-        goto not_output_parameter;
-
-    Action(*) phase = VAL_FRAME_PHASE(SPARE);
-
-    Index index = VAL_WORD_INDEX(output);
-    REBPAR* param = ACT_PARAM(phase, index);
-    if (VAL_PARAM_CLASS(param) != PARAM_CLASS_OUTPUT)
-        goto not_output_parameter;
-
-    Value(*) var = CTX_VAR(VAL_CONTEXT(SPARE), index + 1);
-    if (Is_Void(var) or IS_BLANK(var))
-        return Init_False(OUT);
-
-    assert(IS_WORD(var) or IS_TUPLE(var) or Is_Blackhole(var));
-    return Init_True(OUT);
-
-} not_output_parameter: {  ///////////////////////////////////////////////////
-
-    fail ("WANTED? can only be used on output parameters");
-}}
 
 
 //

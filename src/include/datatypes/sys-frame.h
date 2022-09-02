@@ -577,10 +577,6 @@ inline static Frame(*) Prep_Frame_Core(
 #define REF(name) \
     (not Is_Nulled(ARG(name)))
 
-#define WANTED(name) ( \
-    assert(VAL_PARAM_CLASS(PARAM(name)) == PARAM_CLASS_OUTPUT), \
-        (not Is_Void(ARG(name) + 1) and not IS_BLANK(ARG(name) + 1)))
-
 
 // Quick access functions from natives (or compatible functions that name a
 // Reb_Frame pointer `frame_`) to get some of the common public fields.

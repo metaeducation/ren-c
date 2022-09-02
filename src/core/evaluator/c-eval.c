@@ -1828,7 +1828,7 @@ Bounce Evaluator_Executor(Frame(*) f)
     // We're sitting at what "looks like the end" of an evaluation step.
     // But we still have to consider enfix.  e.g.
     //
-    //    [pos val]: evaluate [1 + 2 * 3]
+    //    [val pos]: evaluate/next [1 + 2 * 3]
     //
     // We want that to give a position of [] and `val = 9`.  The evaluator
     // cannot just dispatch on REB_INTEGER in the switch() above, give you 1,
@@ -1843,7 +1843,7 @@ Bounce Evaluator_Executor(Frame(*) f)
     // Note that invisible functions have to be considered in the lookahead
     // also.  Consider this case:
     //
-    //    [pos val]: evaluate [1 + 2 * comment ["hi"] 3 4 / 5]
+    //    [val pos]: evaluate/rest [1 + 2 * comment ["hi"] 3 4 / 5]
     //
     // We want `val = 9`, with `pos = [4 / 5]`.  To do this, we
     // can't consider an evaluation finished until all the "invisibles" have

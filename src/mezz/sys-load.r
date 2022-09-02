@@ -49,10 +49,10 @@ transcode-header: func [
     <local> key hdr
 ][
     line: 1
-    [key rest]: transcode/file/line data file line except e -> [  ; "REBOL"
+    [key rest]: transcode/one/file/line data file line except e -> [  ; "REBOL"
         return raise e
     ]
-    [hdr rest]: transcode/file/line rest file line except e -> [  ; one BLOCK!
+    [hdr rest]: transcode/one/file/line rest file line except e -> [  ; BLOCK!
         return raise e
     ]
 
@@ -181,7 +181,7 @@ load-header: function [
                     ; uses transcode, leading whitespace and comments
                     ; are tolerated before the literal.
                     ;
-                    [binary rest]: transcode/file/line rest file 'line
+                    [binary rest]: transcode/one/file/line rest file 'line
                     gunzip binary
                 ]
                 return 'bad-compress

@@ -1370,10 +1370,8 @@ DECLARE_NATIVE(catch)
 } code_result_in_out: {  //////////////////////////////////////////////////////
 
     if (not THROWING) {
-        if (WANTED(result)) {
-            Copy_Cell(ARG(result), OUT);
-            Proxy_Multi_Returns(frame_);
-        }
+        Copy_Cell(ARG(result), OUT);
+        Proxy_Multi_Returns(frame_);
 
         return nullptr;  // no throw means just return null
     }

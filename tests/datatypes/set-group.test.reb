@@ -37,7 +37,7 @@
     o: make object! [rest: ~]
     block: [value o.rest]
     did all [
-        10 = (block): transcode "10 20"
+        10 = (block): transcode/one "10 20"
         10 = value
         o.rest = " 20"
     ]

@@ -613,8 +613,9 @@ REBTYPE(Bitset)
             fail (ARG(value));
 
         UNUSED(PARAM(series));  // covered by `v`
+        UNUSED(PARAM(tail));  // no feature for tail output
 
-        if (REF(part) or REF(skip) or WANTED(tail) or REF(match))
+        if (REF(part) or REF(skip) or REF(match))
             fail (Error_Bad_Refines_Raw());
 
         if (not Check_Bits(VAL_BITSET(v), ARG(value), REF(case)))

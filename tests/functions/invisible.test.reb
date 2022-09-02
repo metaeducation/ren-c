@@ -73,7 +73,7 @@
 )
 (
     code: [1 elide "a" elide "b" + 2 * 3 fail "too far"]
-    pos: [_ @]: evaluate [_ @]: evaluate code
+    pos: [_ @]: evaluate [_ @]: evaluate/next code
     pos = [elide "b" + 2 * 3 fail "too far"]
 )
 (

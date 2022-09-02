@@ -234,7 +234,7 @@
     success
 )
 (
-    [value b]: evaluate [1 2]
+    [value b]: evaluate/next [1 2]
     did all [
         1 = value
         [2] = b
@@ -243,12 +243,12 @@
 (
     value: <overwritten>
     did all [
-        null? [value @]: evaluate []  ; @ requests position after step (null)
+        null? [value @]: evaluate/next []  ; @ requests po after step (null)
         unset? 'value
     ]
 )
 (
-    [value #]: evaluate [trap [1 / 0]]
+    [value #]: evaluate/next [trap [1 / 0]]
     error? value
 )
 (

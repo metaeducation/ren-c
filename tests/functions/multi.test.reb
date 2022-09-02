@@ -16,12 +16,8 @@
 
 [
     (test: func [x @y @z] [
-        if wanted? 'y [
-            y: <y-result>
-        ]
-        if wanted? 'z [
-            z: <z-result>
-        ]
+        y: <y-result>
+        z: <z-result>
 
         return 304
     ]
@@ -114,12 +110,12 @@
 ; ultimately did become void.
 [(
     did all [
-        none? [_ rest]: transcode "abc def"
+        none? [_ rest]: transcode/one "abc def"
         rest = " def"
     ]
 )(
     did all [
-        none? [(_) rest]: transcode "abc def"
+        none? [(_) rest]: transcode/one "abc def"
         rest = " def"
     ]
 )(
@@ -132,14 +128,14 @@
     (
         a: b: ~
         did all [
-            (the 'A) = [^a ^b]: transcode "A B"
+            (the 'A) = [^a ^b]: transcode/one "A B"
             a = the 'A
             b = the '{ B}
         ]
     )(
         a: b: ~
         did all [
-            (the 'A) = [^ ^b]: transcode "A B"
+            (the 'A) = [^ ^b]: transcode/one "A B"
             ^a = '~
             b = the '{ B}
         ]
@@ -152,7 +148,7 @@
     (
         value: rest: ~
         did all [
-            <item!> = [value rest]: transcode "ab cd" then [<item!>]
+            <item!> = [value rest]: transcode/one "ab cd" then [<item!>]
             value = <item!>
             rest = " cd"
         ]
@@ -160,7 +156,7 @@
     (
         value: rest: ~
         did all [
-            <item!> = ([value rest]: transcode "ab cd") then [<item!>]
+            <item!> = ([value rest]: transcode/one "ab cd") then [<item!>]
             value = 'ab
             rest = " cd"
         ]
@@ -168,7 +164,8 @@
 
     (
         foo: func [return: [integer!] @other [integer!]] [
-            if wanted? 'other [other: 10] return 20
+            other: 10
+            return 20
         ]
         did all [
             '~weird~ = [^x y]: foo then [~weird~]
@@ -190,7 +187,7 @@
 ; You can use a @ without a variable to get a return result
 ;
 (did all [
-    " cd" = [item @]: transcode "ab cd"
+    " cd" = [item @]: transcode/one "ab cd"
     item = 'ab
 ])
 

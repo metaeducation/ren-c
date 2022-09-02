@@ -409,7 +409,7 @@ DECLARE_NATIVE(do)
 //
 //      return: "Value from the step"
 //          [<opt> <void> any-value!]
-//      @next "Next expression position in block"
+//      @rest "Next expression position in block"
 //          [any-array! varargs!]
 //      source [
 //          <maybe>  ; useful for `evaluate try ...` scenarios when no match
@@ -418,6 +418,7 @@ DECLARE_NATIVE(do)
 //          frame!
 //          varargs!  ; simulates as if frame! or block! is being executed
 //      ]
+//      /next "Do one step of evaluation"
 //  ]
 //
 DECLARE_NATIVE(evaluate)
@@ -441,7 +442,7 @@ DECLARE_NATIVE(evaluate)
 {
     INCLUDE_PARAMS_OF_EVALUATE;
 
-    REBVAL *next = ARG(next);
+    REBVAL *rest = ARG(rest);
     REBVAL *source = ARG(source);  // may be only GC reference, don't lose it!
 
     enum {
@@ -469,8 +470,8 @@ DECLARE_NATIVE(evaluate)
 
     if (ANY_ARRAY(source)) {
         if (VAL_LEN_AT(source) == 0) {  // `evaluate []` is invisible intent
-            if (WANTED(next)) {
-                Init_Nulled(ARG(next));
+            if (REF(next)) {
+                Init_Nulled(rest);
                 Proxy_Multi_Returns(frame_);
             }
             return VOID;
@@ -488,7 +489,7 @@ DECLARE_NATIVE(evaluate)
         );
         Push_Frame(OUT, subframe);
 
-        if (not WANTED(next))  // plain evaluation to end, maybe invisible
+        if (not REF(next))  // plain evaluation to end, maybe invisible
             return DELEGATE_SUBFRAME(subframe);
 
         Set_Frame_Flag(subframe, TRAMPOLINE_KEEPALIVE);  // to ask how far it got
@@ -506,7 +507,7 @@ DECLARE_NATIVE(evaluate)
         // LET bindings can be preserved.  Binding is still a mess when it
         // comes to questions like backtracking in blocks, so review.
         //
-        if (WANTED(next))
+        if (REF(next))
             fail ("/NEXT Behavior not implemented for FRAME! in EVALUATE");
 
         return DELEGATE_MAYBE_STALE(OUT, source);
@@ -571,8 +572,8 @@ DECLARE_NATIVE(evaluate)
         fail (PARAM(source));
     }
 
-    if (WANTED(next)) {
-        Copy_Cell(next, source);
+    if (REF(next)) {
+        Copy_Cell(rest, source);
         Proxy_Multi_Returns(frame_);
     }
 
@@ -584,8 +585,8 @@ DECLARE_NATIVE(evaluate)
 } single_step_result_in_out: {  //////////////////////////////////////////////
 
     VAL_INDEX_UNBOUNDED(source) = FRM_INDEX(SUBFRAME);  // new index
-    if (WANTED(next)) {
-        Copy_Cell(ARG(next), source);
+    if (REF(next)) {
+        Copy_Cell(rest, source);
         Proxy_Multi_Returns(frame_);
     }
 

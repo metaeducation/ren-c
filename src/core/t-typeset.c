@@ -203,6 +203,9 @@ bool Add_Typeset_Bits_Core(
             else if (0 == CT_String(item, Root_Fail_Tag, strict)) {
                 SET_PARAM_FLAG(typeset, WANT_FAILURES);
             }
+            else if (0 == CT_String(item, Root_Pack_Tag, strict)) {
+                SET_PARAM_FLAG(typeset, WANT_PACKS);
+            }
             else if (0 == CT_String(item, Root_Skip_Tag, strict)) {
                 if (VAL_PARAM_CLASS(typeset) != PARAM_CLASS_HARD)
                     fail ("Only hard-quoted parameters are <skip>-able");
@@ -409,10 +412,11 @@ REBTYPE(Typeset)
       case SYM_FIND: {
         INCLUDE_PARAMS_OF_FIND;
         UNUSED(ARG(series));  // covered by `v`
+        UNUSED(ARG(tail));  // not supported
 
         UNUSED(REF(case));  // !!! tolerate, even though ignored?
 
-        if (REF(part) or REF(skip) or WANTED(tail) or REF(match))
+        if (REF(part) or REF(skip) or REF(match))
             fail (Error_Bad_Refines_Raw());
 
         REBVAL *pattern = ARG(pattern);

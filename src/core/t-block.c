@@ -953,11 +953,10 @@ REBTYPE(Array)
         UNUSED(find);
 
         if (id == SYM_FIND) {
-            if (WANTED(tail)) {
-                Copy_Cell(ARG(tail), array);
-                VAL_INDEX_RAW(ARG(tail)) = ret + len;
-                Proxy_Multi_Returns(frame_);
-            }
+            Copy_Cell(ARG(tail), array);
+            VAL_INDEX_RAW(ARG(tail)) = ret + len;
+            Proxy_Multi_Returns(frame_);
+
             Copy_Cell(OUT, array);
             VAL_INDEX_RAW(OUT) = ret;
             return OUT;

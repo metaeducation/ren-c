@@ -174,12 +174,8 @@ module: func [
         quitting: false
     ]
     then ^arg-to-quit -> [
-        if wanted? 'quitting [
-            quitting: true
-            set/any 'product unmeta arg-to-quit
-        ] else [
-            product: ~quit~  ; don't give distinction in result
-        ]
+        quitting: true
+        set/any 'product unmeta arg-to-quit
     ]
 
     return mod

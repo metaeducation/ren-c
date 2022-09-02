@@ -481,15 +481,14 @@ REBTYPE(Binary)
             return nullptr;
 
         if (id == SYM_FIND) {
-            if (WANTED(tail)) {
-                Init_Series_Cell_At(
-                    ARG(tail),
-                    REB_BINARY,
-                    VAL_BINARY(v),
-                    ret + size
-                );
-                Proxy_Multi_Returns(frame_);
-            }
+            Init_Series_Cell_At(
+                ARG(tail),
+                REB_BINARY,
+                VAL_BINARY(v),
+                ret + size
+            );
+            Proxy_Multi_Returns(frame_);
+
             return Init_Series_Cell_At(
                 OUT,
                 REB_BINARY,

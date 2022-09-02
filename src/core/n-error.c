@@ -72,10 +72,8 @@ DECLARE_NATIVE(rescue)
 
   evaluation_finished: {
     if (not THROWING) {
-        if (WANTED(result)) {
-            Copy_Cell(ARG(result), OUT);
-            Proxy_Multi_Returns(frame_);
-        }
+        Copy_Cell(ARG(result), OUT);
+        Proxy_Multi_Returns(frame_);
         return nullptr;
     }
 

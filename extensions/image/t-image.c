@@ -780,6 +780,7 @@ Bounce Modify_Image(Frame(*) frame_, Symbol(const*) verb)
 void Find_Image(Frame(*) frame_)
 {
     INCLUDE_PARAMS_OF_FIND;
+    UNUSED(PARAM(tail));  // not supported
 
     REBVAL *value = ARG(series);
     REBVAL *arg = ARG(pattern);
@@ -851,9 +852,6 @@ void Find_Image(Frame(*) frame_)
         }
         n++;
     }
-    else
-        if (WANTED(tail))
-            ++n;  // !!! not implemented, but would increment n
 
     VAL_IMAGE_POS(value) = n;
     return;

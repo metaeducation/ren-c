@@ -952,15 +952,14 @@ REBTYPE(String)
         UNUSED(find);
 
         if (id == SYM_FIND) {
-            if (WANTED(tail)) {
-                Init_Series_Cell_At(
-                    ARG(tail),
-                    VAL_TYPE(v),
-                    VAL_SERIES(v),
-                    ret + len
-                );
-                Proxy_Multi_Returns(frame_);
-            }
+            Init_Series_Cell_At(
+                ARG(tail),
+                VAL_TYPE(v),
+                VAL_SERIES(v),
+                ret + len
+            );
+            Proxy_Multi_Returns(frame_);
+
             return Init_Series_Cell_At(
                 OUT,
                 VAL_TYPE(v),

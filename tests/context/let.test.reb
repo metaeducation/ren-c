@@ -60,7 +60,7 @@
     value: <value>
     pos: <pos>
     result: do [
-        let [value 'pos]: transcode "[first item] #residue"
+        let [value 'pos]: transcode/one "[first item] #residue"
         reduce [value pos]
     ]
     did all [
@@ -78,7 +78,7 @@
     pos: <pos>
     word: 'value
     result: do [
-        let [(word) 'pos]: transcode "[first item] #residue"
+        let [(word) 'pos]: transcode/one "[first item] #residue"
         reduce [value pos]
     ]
     did all [
@@ -236,10 +236,10 @@
 ; BLANK! and ISSUE! should be legal in LET.
 [(
     var: #  ; v-- second result is discarded, but request did partial transcode
-    'abc = let [# (var)]: transcode "abc def"
+    'abc = let [# (var)]: transcode/one "abc def"
 )(
     var: _  ; opting out of second result, hence full transcode
-    [abc def] = let [# (var)]: transcode "abc def"
+    [abc def] = let [# (var)]: transcode/one "abc def"
 )]
 
 ; This is all very shaky and speculative, and missing any semblance of

@@ -28,19 +28,19 @@
 ; by value...
 (
     did all [
-        1 = [value pos]: transcode "1 [2] <3>"
+        1 = [value pos]: transcode/one "1 [2] <3>"
         value = 1
         pos = " [2] <3>"
 
-        [2] = [value pos]: transcode pos
+        [2] = [value pos]: transcode/one pos
         value = [2]
         pos = " <3>"
 
-        <3> = [value pos]: transcode pos
+        <3> = [value pos]: transcode/one pos
         value = <3>
         pos = ""
 
-        null = [value pos]: transcode pos
+        null = [value pos]: transcode/one pos
         value = null
         pos = ""
     ]
@@ -65,7 +65,7 @@
 )
 
 (
-    [value pos]: transcode "[^M^/ a] b c" except e -> [
+    [value pos]: transcode/one "[^M^/ a] b c" except e -> [
         e.id = 'illegal-cr
     ]
 )
@@ -79,7 +79,7 @@
     str: "Cat😺: [😺 😺] (😺)"
 
     did all [
-        'Cat😺: = [value pos]: transcode str
+        'Cat😺: = [value pos]: transcode/one str
         set-word? value
         value = 'Cat😺:
         pos = " [😺 😺] (😺)"
@@ -96,7 +96,7 @@
     bin =  #{436174F09F98BA3A205BF09F98BA20F09F98BA5D2028F09F98BA29}
 
     did all [
-        'Cat😺: = [value pos]: transcode bin
+        'Cat😺: = [value pos]: transcode/one bin
         set-word? value
         value = 'Cat😺:
         pos = #{205BF09F98BA20F09F98BA5D2028F09F98BA29}
@@ -111,13 +111,13 @@
 ; Test for "blackhole" functionality
 [
     ([abc def] = [# _]: transcode "abc def")  ; means /NEXT is NULL
-    ('abc = [# #]: transcode "abc def")  ; /NEXT is # so truthy, SET ignores
-    (raised? [# #]: transcode "3o4")
-    ('scan-invalid = pick trap [[# #]: transcode "3o4"] 'id)
+    ('abc = [# #]: transcode/one "abc def")  ; /NEXT is # so truthy, SET ignores
+    (raised? [# #]: transcode/one "3o4")
+    ('scan-invalid = pick trap [[# #]: transcode/one "3o4"] 'id)
 ]
 
 (
-    [v p]: transcode to binary! "7-Feb-2021/23:00"
+    [v p]: transcode/one to binary! "7-Feb-2021/23:00"
     [7-Feb-2021/23:00 #{}] = reduce [v p]
 )
 

@@ -1721,7 +1721,7 @@ default-combinators: make map! reduce [
             remainder: next input
             return input.1
         ][
-            [item remainder]: transcode input except e -> [return raise e]
+            [item remainder]: transcode/one input except e -> [return raise e]
 
             ; If TRANSCODE knew what kind of item we were looking for, it could
             ; shortcut this.  Since it doesn't, we might waste time and memory
@@ -1750,7 +1750,7 @@ default-combinators: make map! reduce [
             return input.1
         ][
             any [
-                [item remainder error]: transcode input
+                [item remainder]: transcode/one input
                 not find value (type of :item)
             ] then [
                 return raise "Could not TRANSCODE item from TYPESET! from input"
@@ -2789,8 +2789,6 @@ parse*: func [
         [<opt> any-value!]
     @furthest "Furthest input point reached by the parse"
         [any-series!]
-    @pending "Request unprocessed pending items (default errors if any)"
-        [<opt> block!]
     input "Input data"
         [<maybe> any-series! url! any-sequence!]
     rules "Block of parse rules"
@@ -2840,11 +2838,7 @@ parse*: func [
     ; The COMBINATOR definition makes a function which is hooked with code
     ; that will mark the furthest point reached by any match.
     ;
-    if wanted? 'furthest [
-        furthest: input
-    ] else [
-        furthest: _  ; all [state.furthest...] first check for if updating
-    ]
+    furthest: input
 
     ; Each UPARSE operation can have a different set of combinators in
     ; effect.  So it's necessary to need to have some way to get at that
@@ -2879,12 +2873,11 @@ parse*: func [
 
     assert [empty? state.loops]
 
-    if wanted? 'pending [
-        pending: subpending
-    ] else [
-        all [subpending, not empty? subpending] then [
-            fail "Residual items accumulated in pending array"
-        ]
+    ; If you want to get the pending items, a <pop-pending> combinator could be
+    ; used to do that.
+    ;
+    all [subpending, not empty? subpending] then [
+        fail "Residual items accumulated in pending array"
     ]
 
     all [fully, not tail? pos] then [

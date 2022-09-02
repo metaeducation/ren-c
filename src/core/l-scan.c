@@ -3051,10 +3051,11 @@ void Shutdown_Scanner(void)
 //
 //      return: "Transcoded value (or block of values)"
 //          [<opt> any-value!]
-//      @next "Translate one value and give back next position"
+//      @rest "Remainder of input after transcoding (series tail if not /ONE)"
 //          [text! binary!]
 //      source "If BINARY!, must be UTF-8 encoded"
 //          [text! binary!]
+//      /one "Translate one value and give back next position"
 //      /file "File to be associated with BLOCK!s and GROUP!s in source"
 //          [file! url!]
 //      /line "Line number for start of scan, word variable will be updated"
@@ -3159,7 +3160,8 @@ DECLARE_NATIVE(transcode)
         FRAME_FLAG_TRAMPOLINE_KEEPALIVE  // query pending newline
         | FRAME_FLAG_FAILURE_RESULT_OK  // want to pass on definitional error
         | FRAME_FLAG_ALLOCATED_FEED;
-    if (WANTED(next))
+
+    if (REF(one))
         flags |= SCAN_EXECUTOR_FLAG_JUST_ONCE;
 
     Frame(*) subframe = Make_Frame(feed, flags);
@@ -3193,7 +3195,7 @@ DECLARE_NATIVE(transcode)
         return OUT;  // the raised error
     }
 
-    if (WANTED(next)) {
+    if (REF(one)) {
         if (TOP_INDEX == STACK_BASE)
             Init_Nulled(OUT);
         else {
@@ -3227,35 +3229,33 @@ DECLARE_NATIVE(transcode)
     // Return the input BINARY! or TEXT! advanced by how much the transcode
     // operation consumed.
     //
-    if (WANTED(next)) {
-        REBVAL *rest = ARG(next);  // use return as scratch slot
-        Copy_Cell(rest, source);
+    REBVAL *rest = ARG(rest);
+    Copy_Cell(rest, source);
 
-        if (IS_BINARY(source)) {
-            Binary(const*) bin = VAL_BINARY(source);
-            if (ss->begin)
-                VAL_INDEX_UNBOUNDED(rest) = ss->begin - BIN_HEAD(bin);
-            else
-                VAL_INDEX_UNBOUNDED(rest) = BIN_LEN(bin);
-        }
-        else {
-            assert(IS_TEXT(source));
+    if (IS_BINARY(source)) {
+        Binary(const*) bin = VAL_BINARY(source);
+        if (ss->begin)
+            VAL_INDEX_UNBOUNDED(rest) = ss->begin - BIN_HEAD(bin);
+        else
+            VAL_INDEX_UNBOUNDED(rest) = BIN_LEN(bin);
+    }
+    else {
+        assert(IS_TEXT(source));
 
-            // !!! The scanner does not currently keep track of how many
-            // codepoints it went past, it only advances bytes.  But the TEXT!
-            // we're returning here needs a codepoint-based index.
-            //
-            // Count characters by going backwards from the byte position of
-            // the finished scan until the byte we started at is found.
-            //
-            // (It would probably be better if the scanner kept count, though
-            // maybe that would make it slower when this isn't needed?)
-            //
-            if (ss->begin)
-                VAL_INDEX_RAW(rest) += Num_Codepoints_For_Bytes(bp, ss->begin);
-            else
-                VAL_INDEX_RAW(rest) += BIN_TAIL(VAL_STRING(source)) - bp;
-        }
+        // !!! The scanner does not currently keep track of how many
+        // codepoints it went past, it only advances bytes.  But the TEXT!
+        // we're returning here needs a codepoint-based index.
+        //
+        // Count characters by going backwards from the byte position of
+        // the finished scan until the byte we started at is found.
+        //
+        // (It would probably be better if the scanner kept count, though
+        // maybe that would make it slower when this isn't needed?)
+        //
+        if (ss->begin)
+            VAL_INDEX_RAW(rest) += Num_Codepoints_For_Bytes(bp, ss->begin);
+        else
+            VAL_INDEX_RAW(rest) += BIN_TAIL(VAL_STRING(source)) - bp;
     }
 
     Proxy_Multi_Returns(frame_);

@@ -625,8 +625,9 @@ REBTYPE(Map)
             fail (ARG(value));
 
         UNUSED(PARAM(series));  // covered by `v`
+        UNUSED(PARAM(tail));  // returning tail not supported
 
-        if (REF(part) or REF(skip) or WANTED(tail) or REF(match))
+        if (REF(part) or REF(skip) or REF(match))
             fail (Error_Bad_Refines_Raw());
 
         const REBMAP *m = VAL_MAP(map);
