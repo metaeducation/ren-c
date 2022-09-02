@@ -64,11 +64,11 @@ void Set_Pixel_Tuple(Byte* dp, Cell(const*) tuple)
 
 
 //
-//  Try_Find_Non_Tuple_In_Array: C
+//  Find_Non_Tuple_In_Array: C
 //
 // Searches array from current index, returns non-tuple cell if found.
 //
-static option(Cell(const*)) Try_Find_Non_Tuple_In_Array(Cell(const*) any_array)
+static option(Cell(const*)) Find_Non_Tuple_In_Array(Cell(const*) any_array)
 {
     Cell(const*) tail;
     Cell(const*) v = VAL_ARRAY_AT(&tail, any_array);
@@ -318,9 +318,9 @@ Bounce MAKE_Image(
         else if (IS_BLOCK(item)) {
             Init_Image_Black_Opaque(OUT, w, h);  // inefficient, overwritten
 
-            Cell(const*) non_tuple = Try_Find_Non_Tuple_In_Array(item);
+            option(Cell(const*)) non_tuple = Find_Non_Tuple_In_Array(item);
             if (non_tuple)
-                fail (Error_Bad_Value(non_tuple));
+                fail (Error_Bad_Value(unwrap(non_tuple)));
 
             Byte* ip = VAL_IMAGE_HEAD(OUT);  // image pointer
 
@@ -596,9 +596,9 @@ Bounce Modify_Image(Frame(*) frame_, Symbol(const*) verb)
     bool only = false;
 
     if (IS_BLOCK(arg)) {
-        Cell(const*) non_tuple = Try_Find_Non_Tuple_In_Array(arg);
+        option(Cell(const*)) non_tuple = Find_Non_Tuple_In_Array(arg);
         if (non_tuple)
-            fail (Error_Bad_Value(non_tuple));
+            fail (Error_Bad_Value(unwrap(non_tuple)));
     }
 
     REBINT dup = 1;

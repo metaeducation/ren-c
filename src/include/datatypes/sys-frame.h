@@ -602,10 +602,10 @@ inline static Frame(*) Prep_Frame_Core(
     #define STACK_BASE \
         (assert(Is_Action_Frame(frame_)), frame_->u.action.dispatcher_base)
 
-    #define VOID        Native_Void_Result(frame_)
-    #define NONE        (TRACK(OUT), Native_None_Result_Untracked(FRAME))
+    #define VOID        Native_Void_Result(TRACK(OUT), frame_)
+    #define NONE        (Native_None_Result_Untracked(TRACK(OUT), frame_))
     #define THROWN      Native_Thrown_Result(frame_)
-    #define COPY(v)     (TRACK(OUT), Native_Copy_Result_Untracked(FRAME, (v)))
+    #define COPY(v)     (Native_Copy_Result_Untracked(TRACK(OUT), frame_, (v)))
     #define RAISE(p)    Native_Raised_Result(frame_, (p))
     #define UNMETA(v)   Native_Unmeta_Result(frame_, (v))
     #define BRANCHED(v) Native_Branched_Result(frame_, (v))

@@ -692,13 +692,23 @@ inline static REBVAL *Mark_Eval_Out_Voided(REBVAL *out) {
     return out;
 }
 
-inline static Bounce Native_Void_Result(Frame(*) frame_) {
+inline static Bounce Native_Void_Result(
+    Value(*) out,  // have to pass; comma at callsite -> "operand has no effect"
+    Frame(*) frame_
+){
+    assert(out == frame_->out);
+    UNUSED(out);
     assert(not THROWING);
     Mark_Eval_Out_Voided(frame_->out);
     return BOUNCE_VOID;
 }
 
-inline static Bounce Native_None_Result_Untracked(Frame(*) frame_) {
+inline static Bounce Native_None_Result_Untracked(
+    Value(*) out,  // have to pass; comma at callsite -> "operand has no effect"
+    Frame(*) frame_
+){
+    assert(out == frame_->out);
+    UNUSED(out);
     assert(not THROWING);
     return Init_None_Untracked(frame_->out);
 }
