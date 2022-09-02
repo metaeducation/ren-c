@@ -160,3 +160,44 @@ inline static bool IS_THE(Cell(const*) v) {
         return false;
     return VAL_WORD_SYMBOL(v) == Canon(AT_1);
 }
+
+// !!! Temporary workaround for what was IS_META_WORD() (now not its own type)
+//
+inline static bool IS_QUOTED_WORD(Cell(const*) v) {
+    return VAL_NUM_QUOTES(v) == 1
+        and CELL_HEART(VAL_UNESCAPED(v)) == REB_WORD;
+}
+
+
+#define Init_Word_Isotope(out,label) \
+    TRACK(Init_Any_Word_Untracked((out), REB_WORD, (label), ISOTOPE_0))
+
+inline static bool Is_Word_Isotope(Cell(const*) v)
+  { return QUOTE_BYTE(v) == ISOTOPE_0 and HEART_BYTE(v) == REB_WORD; }
+
+
+inline static bool Is_Word_Isotope_With_Id(Cell(const*) v, SymId id) {
+    assert(id != 0);
+
+    if (not Is_Word_Isotope(v))
+        return false;
+
+    return id == VAL_WORD_ID(v);
+}
+
+inline static bool Is_Quasi_Word(Cell(const*) v)
+  { return IS_QUASI(v) and HEART_BYTE_UNCHECKED(v) == REB_WORD; }
+
+#define Init_Quasi_Word(out,sym) \
+    TRACK(Init_Any_Word_Untracked((out), REB_WORD, (sym), QUASI_2))
+
+
+inline static Value(*) Isotopify_If_Falsey(Value(*) v) {
+    if (Is_Isotope(v))
+        return v;  // already an isotope (would trigger asserts on IS_X tests)
+    if (Is_Nulled(v))
+        Init_Blank_Isotope(v);
+    else if (IS_LOGIC(v) and VAL_LOGIC(v) == false)
+        Init_Word_Isotope(v, Canon(FALSE));
+    return v;
+}

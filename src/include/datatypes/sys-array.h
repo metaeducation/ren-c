@@ -552,3 +552,120 @@ inline static Cell(*) Init_Relative_Block_At(
 
 
 #undef LINK_FILENAME_HACK  // later files shoul use LINK(Filename, x)
+
+
+// Checks if ANY-GROUP! is like ((...)), useful for dialects--though the
+// uses of this have all been replaced at time of writing.
+//
+// https://forum.rebol.info/t/doubled-groups-as-a-dialecting-tool/1893
+//
+inline static bool Is_Any_Doubled_Group(noquote(Cell(const*)) group) {
+    assert(ANY_GROUP_KIND(CELL_HEART(group)));
+    Cell(const*) tail;
+    Cell(const*) inner = VAL_ARRAY_AT(&tail, group);
+    if (inner + 1 != tail)  // should be exactly one item
+        return false;
+    return IS_GROUP(inner);  // if true, it's a ((...)) GROUP!
+}
+
+
+//=//// ISOTOPE STATES ////////////////////////////////////////////////////=//
+
+
+//=//// "NONE" ISOTOPE (Empty BLOCK! Isotope) /////////////////////////////=//
+//
+// This is the default RETURN for when you just write something like
+// `func [return: <none>] [...]`.  It represents the intention of not having a
+// return value, but reserving the right to not be treated as invisible, so
+// that if one ever did imagine an interesting value for it to return, the
+// callsites wouldn't have assumed it was invisible.
+//
+// Even a function like PRINT has a potentially interesting return value,
+// given that it channels through NULL if the print content vaporized and
+// it printed nothing (not even a newline).  This lets you use it with ELSE,
+// and you couldn't write `print [...] else [...]` if it would be sometimes
+// invisible and sometimes not.
+//
+
+inline static Value(*) Init_Empty_Pack_Untracked(
+    Cell(*) out,
+    Byte quote_byte
+){
+    Init_Block(out, EMPTY_ARRAY);
+    mutable_QUOTE_BYTE(out) = quote_byte;
+    return cast(Value(*), out);
+}
+
+#define Init_None_Untracked(out) \
+    Init_Empty_Pack_Untracked((ensure(Value(*), (out))), ISOTOPE_0)
+
+#define Init_None(out) \
+    TRACK(Init_None_Untracked(out))
+
+#define Init_Meta_Of_None(out) \
+    TRACK(Init_Empty_Pack_Untracked((out), QUASI_2))
+
+inline static bool Is_None(Value(const*) v) {
+    if (QUOTE_BYTE(v) != ISOTOPE_0 or HEART_BYTE(v) != REB_BLOCK)
+        return false;
+    return ARR_LEN(VAL_ARRAY(v)) == 0;
+}
+
+inline static bool Is_Meta_Of_None(Cell(const*) v) {
+    if (QUOTE_BYTE(v) != QUASI_2 or HEART_BYTE(v) != REB_BLOCK)
+        return false;
+    return ARR_LEN(VAL_ARRAY(v)) == 0;
+}
+
+
+//=//// EMPTY SPLICE (Empty GROUP! Isotope) ///////////////////////////////=//
+//
+// The empty splice is exploited for its property of having void-like behavior
+// while not being void...hence it can propagate "void intent" out of a branch
+// even though the branch runs.
+//
+//     >> if false [<a>]
+//     ; void (will trigger ELSE)
+//
+//     >> if true []
+//     == ~()~  ; isotope (will trigger THEN, not ELSE)
+//
+//     >> append [a b c] if false [<a>]
+//     == [a b c]
+//
+//     >> append [a b c] if true []
+//     == [a b c]
+//
+
+inline static Value(*) Init_Empty_Splice_Untracked(Value(*) out) {
+    Init_Group(out, EMPTY_ARRAY);
+    mutable_QUOTE_BYTE(out) = ISOTOPE_0;
+    return out;
+}
+
+#define Init_Empty_Splice(out) \
+    TRACK(Init_Empty_Splice_Untracked(out))
+
+#define Is_Empty_Splice(v) \
+    ((READABLE(v)->header.bits & FLAG_QUOTE_BYTE(255) & FLAG_HEART_BYTE(255)) \
+        == FLAG_QUOTE_BYTE(ISOTOPE_0) | FLAG_HEART_BYTE(REB_GROUP))
+
+#define Is_Meta_Of_Empty_Splice(v) \
+    ((READABLE(v)->header.bits & FLAG_QUOTE_BYTE(255) & FLAG_HEART_BYTE(255)) \
+        == FLAG_QUOTE_BYTE(QUASI_1) | FLAG_HEART_BYTE(REB_GROUP))
+
+
+inline static bool Is_Splice(Cell(const*) v)
+  { return HEART_BYTE_UNCHECKED(v) == REB_GROUP
+    and QUOTE_BYTE_UNCHECKED(v) == ISOTOPE_0; }
+
+
+inline static Value(*) Splicify(Cell(*) v) {
+    assert(IS_GROUP(v) and QUOTE_BYTE(v) == UNQUOTED_1);
+    mutable_QUOTE_BYTE(v) = ISOTOPE_0;
+    return VAL(v);
+}
+
+inline static bool Is_Meta_Of_Splice(Cell(const*) v)
+  { return HEART_BYTE_UNCHECKED(v) == REB_GROUP
+    and QUOTE_BYTE_UNCHECKED(v) == QUASI_2; }

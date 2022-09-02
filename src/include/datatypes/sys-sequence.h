@@ -706,3 +706,10 @@ inline static Symbol(const*) VAL_REFINEMENT_SYMBOL(
     assert(IS_REFINEMENT_CELL(v));
     return SYM(VAL_NODE1(v));
 }
+
+// !!! Temporary workaround for what was IS_META_PATH() (now not its own type)
+//
+inline static bool IS_QUOTED_PATH(Cell(const*) v) {
+    return VAL_NUM_QUOTES(v) == 1
+        and CELL_HEART(v) == REB_PATH;
+}

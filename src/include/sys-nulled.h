@@ -180,3 +180,32 @@ inline static bool Is_Blank_Isotope(Cell(const*) v)
 
 inline static bool Is_Meta_Of_Blank_Isotope(Cell(const*) v)
   { return IS_QUASI(v) and HEART_BYTE(v) == REB_BLANK; }
+
+
+inline static Value(*) Decay_If_Isotope(Value(*) v) {
+    if (Is_Blank_Isotope(v))
+        return Init_Nulled(v);
+    return v;
+}
+
+inline static const REBVAL *Pointer_To_Decayed(const REBVAL *v) {
+    if (Is_Blank_Isotope(v))
+        return Lib(NULL);
+    return v;
+}
+
+inline static const REBVAL *rebPointerToDecayed(const REBVAL *v) {  // unused?
+    if (v == nullptr)
+        return v;  // API tolerance
+
+    Value(const*) decayed = Pointer_To_Decayed(v);
+    if (decayed == v)
+        return v;
+    return Is_Nulled(decayed) ? nullptr : decayed;
+}
+
+inline static Value(*) Isotopify_If_Nulled(Value(*) v) {
+    if (VAL_TYPE_UNCHECKED(v) == REB_NULL)
+        Init_Blank_Isotope(v);
+    return v;
+}

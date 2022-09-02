@@ -702,3 +702,10 @@ inline static Bounce Native_None_Result_Untracked(Frame(*) frame_) {
     assert(not THROWING);
     return Init_None_Untracked(frame_->out);
 }
+
+inline static Bounce Native_Unmeta_Result(Frame(*) frame_, const REBVAL *v) {
+    assert(not THROWING);
+    if (Is_Meta_Of_Void(v))
+        return BOUNCE_VOID;
+    return Meta_Unquotify(Copy_Cell(frame_->out, v));
+}

@@ -738,6 +738,39 @@ inline static Cell(*) Copy_Cell_Untracked(
     TRACK(Copy_Cell_Untracked((out), (v), (copy_mask)))
 
 
+//=//// CELL MOVEMENT //////////////////////////////////////////////////////=//
+
+// Moving a cell invalidates the old location.  This idea is a potential
+// prelude to being able to do some sort of reference counting on series based
+// on the cells that refer to them tracking when they are overwritten.  One
+// advantage would be being able to leave the reference counting as-is.
+//
+// In the meantime, this just does a Copy + RESET.
+
+inline static REBVAL *Move_Cell_Untracked(
+    Cell(*) out,
+    REBVAL *v,
+    Flags copy_mask
+){
+    Copy_Cell_Untracked(out, v, copy_mask);  // Move_Cell() adds track to `out`
+    FRESHEN_CELL_EVIL_MACRO(v);  // track to here not useful
+
+  #if DEBUG_TRACK_EXTEND_CELLS  // `out` has tracking info we can use
+    v->file = out->file;
+    v->line = out->line;
+    v->tick = TG_tick;
+  #endif
+
+    return cast(REBVAL*, out);
+}
+
+#define Move_Cell(out,v) \
+    TRACK(Move_Cell_Untracked((out), (v), CELL_MASK_COPY))
+
+#define Move_Cell_Core(out,v,cell_mask) \
+    TRACK(Move_Cell_Untracked((out), (v), (cell_mask)))
+
+
 // !!! Super primordial experimental `const` feature.  Concept is that various
 // operations have to be complicit (e.g. SELECT or FIND) in propagating the
 // constness from the input series to the output value.  const input always

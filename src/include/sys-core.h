@@ -570,8 +570,6 @@ inline static REBVAR *Force_Lib_Var(SymId id) {
 
 #include "datatypes/sys-logic.h"
 
-#include "datatypes/sys-bad-word.h"  // SymId needed
-
 #include "datatypes/sys-pair.h"
 #include "datatypes/sys-quoted.h"  // pairings for storage, void used as well
 
@@ -580,8 +578,7 @@ inline static REBVAR *Force_Lib_Var(SymId id) {
 #include "datatypes/sys-action.h"
 #include "datatypes/sys-typeset.h"  // needed for keys in contexts
 #include "datatypes/sys-context.h"  // needs actions for FRAME! contexts
-
-#include "sys-meta.h"  // needs context for ERROR!, BAD-WORD!, QUOTED!
+#include "datatypes/sys-error.h"
 
 #include "datatypes/sys-word.h"  // needs to know about QUOTED! for binding
 
