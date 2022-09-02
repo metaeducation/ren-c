@@ -163,7 +163,7 @@ STATIC_ASSERT(
 //
 //    Originally this would unset x, and propagate a none.  But once isotope
 //    assignments were disallowed, that ruined `x: y: if condition [...]`
-//    where we want `x = y` after that.  Cases like `return [# result]: ...`
+//    where we want `x = y` after that.  Cases like `return [@ result]: ...`
 //    presented a challenge for how not naming a variable would want to
 //    preserve the value, so turning voids to nones didn't feel good there.
 //    The general `x: case [...]` being able to leave X as NULL after no
@@ -1440,22 +1440,6 @@ Bounce Evaluator_Executor(Frame(*) f)
             if (IS_BLANK(item)) {
                 Init_Blank(PUSH());
             }
-            else if (Is_Blackhole(item)) {
-                //
-                // !!! If someone writes `[... @(#) ...]: ...`, then there is
-                // a problem if it's not the first slot; as the function needs
-                // a variable location to write the result to.  For now, just
-                // fabricate a LET variable.
-                //
-                if (TOP_INDEX == BASELINE->stack_base or not IS_THE_GROUP(check))
-                    Init_Blackhole(PUSH());
-                else {
-                    REBVAL *let = rebValue("let temp");
-                    assert(IS_WORD(let));
-                    Move_Cell(PUSH(), let);
-                    rebRelease(let);
-                }
-            }
             else if (
                 IS_WORD(item)
                 or IS_PATH(item)
@@ -1464,7 +1448,7 @@ Bounce Evaluator_Executor(Frame(*) f)
                 Derelativize(PUSH(), item, item_specifier);
             }
             else
-                fail ("SET-BLOCK! elements are WORD/PATH/TUPLE/BLANK/ISSUE");
+                fail ("SET-BLOCK! items are (@THE, ^META) WORD/TUPLE or BLANK");
 
             if (IS_THE_GROUP(check))
                 stackindex_circled = TOP_INDEX;
@@ -1617,16 +1601,7 @@ Bounce Evaluator_Executor(Frame(*) f)
 
         StackIndex stackindex_circled = frame_->u.eval.stackindex_circled;
 
-        // Take care of the SET for the main result.  For the moment, if you
-        // asked to opt out of the main result this will give you a ~none~
-        // isotope...but there is not currently any way for the invoked
-        // routine to be aware that the caller opted out of the return.
-        //
-        // !!! Could there be a way of a function indicating it was willing
-        // to accept RETURN being not requested, somehow?  It would be unsafe
-        // having it be NULL as `return` would be a no-op, but if it were an
-        // isotope like `~unrequested~` then that could be tested for by
-        // a particular kind of routine...
+        // Take care of the SET for the main result.
         //
         // !!! Move the main result set part off the stack and into the spare
         // in case there are GROUP! evaluations in the assignment; though that
@@ -1634,17 +1609,6 @@ Bounce Evaluator_Executor(Frame(*) f)
         //
         Copy_Cell(SPARE, Data_Stack_At(BASELINE->stack_base + 1));
         if (IS_BLANK(SPARE)) {
-            //
-            // Had to allow failure for ([_]: fail "a" except [...]), but if
-            // there was no except to handle it then a desire to suppress the
-            // result means it should fail.
-            //
-            // !!! Review if it should actually force a raised error.
-            //
-            if (not Is_Raised(OUT))
-                Init_None(OUT);  // can't be void (we overwrote the cell)
-        }
-        else if (Is_Blackhole(SPARE)) {
             // pass through everything (even failures), e.g. no assignment
         }
         else if (ANY_META_KIND(VAL_TYPE(SPARE))) {

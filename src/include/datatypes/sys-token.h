@@ -206,8 +206,8 @@ inline static Context(*) Maybe_Init_Char_Untracked(Cell(*) out, Codepoint c) {
 // it is also length 0.
 //
 
-inline static REBVAL *Init_Blackhole(Cell(*) out)
-  { return Init_Char_Unchecked(out, 0); }
+#define Init_Blackhole(out) \
+    Init_Char_Unchecked((out), 0)
 
 inline static bool Is_Blackhole(Cell(const*) v) {
     if (not IS_CHAR(v))

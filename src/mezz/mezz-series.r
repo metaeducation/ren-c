@@ -598,7 +598,7 @@ split: function [
             bitset! [did find dlm maybe last series]
             char! [dlm = last series]
             text! tag! word! [
-                (find series dlm) and (empty? [# @]: find-last series dlm)
+                (find series dlm) and (empty? [_ @]: find-last series dlm)
             ]
             block! [false]
         ] then fill -> [

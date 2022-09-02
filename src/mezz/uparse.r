@@ -318,7 +318,7 @@ default-combinators: make map! reduce [
         return: []  ; isotope!
         parser [action!]
     ][
-        [# remainder]: parser input except [  ; don't care about result
+        [@ remainder]: parser input except [  ; don't care about result
             remainder: input  ; parser failed, so NOT reports success
             return ~not~  ; clearer than returning NULL
         ]
@@ -403,7 +403,7 @@ default-combinators: make map! reduce [
         result': void'
 
         cycle [
-            [# input]: condition-parser input except [
+            [^ input]: condition-parser input except [
                 take/last state.loops
                 remainder: input
                 return unmeta result'
@@ -451,7 +451,7 @@ default-combinators: make map! reduce [
 
         count: 0
         cycle [
-            [_ input]: parser input except [
+            [^ input]: parser input except [
                 take/last state.loops
                 remainder: input
                 return count
@@ -510,7 +510,7 @@ default-combinators: make map! reduce [
         parser [action!]
         <local> value'
     ][
-        [^value' #]: parser input except e -> [
+        [^value' _]: parser input except e -> [
             return raise e
         ]
 
@@ -600,7 +600,7 @@ default-combinators: make map! reduce [
             return raise e
         ]
 
-        [^replacement' #]: replacer input except e -> [
+        [^replacement' _]: replacer input except e -> [
             return raise e
         ]
 
@@ -629,7 +629,7 @@ default-combinators: make map! reduce [
         parser [action!]
         <local> insertion'
     ][
-        [^insertion' #]: parser input except e -> [  ; remainder ignored
+        [^insertion' _]: parser input except e -> [  ; remainder ignored
             return raise e
         ]
 
@@ -647,7 +647,7 @@ default-combinators: make map! reduce [
         <local> result'
     ][
         cycle [
-            [^result' #]: parser input except [
+            [^result' _]: parser input except [
                 if tail? input [  ; could be `to <end>`, so check tail *after*
                     return raise "TO did not find desired pattern"
                 ]
@@ -762,7 +762,7 @@ default-combinators: make map! reduce [
             fail ["No TAG! Combinator registered for" value]
         ]
 
-        return [# remainder pending]: comb state input
+        return [@ remainder pending]: comb state input
     ]
 
     <here> combinator [
@@ -1220,14 +1220,14 @@ default-combinators: make map! reduce [
                 return raise "Value at parse position does not match ISSUE!"
             ]
             any-string? input [
-                if [# remainder]: find/match/case input value [
+                if [@ remainder]: find/match/case input value [
                     return value
                 ]
                 return raise "String at parse position does not match ISSUE!"
             ]
             true [
                 assert [binary? input]
-                if [# remainder]: find/match/case input value [
+                if [@ remainder]: find/match/case input value [
                     return value
                 ]
                 return raise "Binary at parse position does not match ISSUE!"
@@ -1257,7 +1257,7 @@ default-combinators: make map! reduce [
             ]
             true [  ; Note: BITSET! acts as "byteset" here
                 ; binary or any-string input
-                if [# remainder]: find/match input value [
+                if [@ remainder]: find/match input value [
                     return value
                 ]
                 return raise "Content at parse position does not match BINARY!"
@@ -1380,7 +1380,7 @@ default-combinators: make map! reduce [
         ; arguments here, but this should have better errors if the datatype
         ; combinator takes arguments.
         ;
-        return [# remainder pending]: comb state input :r
+        return [@ remainder pending]: comb state input :r
     ]
 
     === GET-BLOCK! COMBINATOR ===
@@ -1494,14 +1494,14 @@ default-combinators: make map! reduce [
             value: append copy {} unquote value
 
             comb: :(state.combinators).(text!)
-            return [# remainder pending]: comb state input value
+            return [@ remainder pending]: comb state input value
         ]
 
         assert [binary? input]
 
         value: to binary! unquote value
         comb: :(state.combinators).(binary!)
-        return [# remainder pending]: comb state input value
+        return [@ remainder pending]: comb state input value
     ]
 
     'lit combinator [  ; should long form be LITERALLY or LITERAL ?
@@ -1514,7 +1514,7 @@ default-combinators: make map! reduce [
         ; of ['''x] may be clarifying when trying to match ''x (for instance)
 
         comb: :(state.combinators).(quoted!)
-        return [# remainder pending]: comb state input ^value
+        return [@ remainder pending]: comb state input ^value
     ]
 
     === NON-ADVANCING OPERATORS ===
@@ -1784,7 +1784,7 @@ default-combinators: make map! reduce [
         [^result' remainder]: parser input except e -> [return raise e]
 
         comb: :(state.combinators).(quoted!)
-        return [# remainder pending]: comb state remainder result'
+        return [@ remainder pending]: comb state remainder result'
     ]
 
     the-word! combinator [
@@ -1794,7 +1794,7 @@ default-combinators: make map! reduce [
         <local> comb
     ][
         comb: :(state.combinators).(quoted!)
-        return [# remainder pending]: comb state input quote get value
+        return [@ remainder pending]: comb state input quote get value
     ]
 
     the-path! combinator [
@@ -1804,7 +1804,7 @@ default-combinators: make map! reduce [
         <local> comb
     ][
         comb: :(state.combinators).(quoted!)
-        return [# remainder pending]: comb state input quote get value
+        return [@ remainder pending]: comb state input quote get value
     ]
 
     the-tuple! combinator [
@@ -1814,7 +1814,7 @@ default-combinators: make map! reduce [
         <local> comb
     ][
         comb: :(state.combinators).(quoted!)
-        return [# remainder pending]: comb state input quote get value
+        return [@ remainder pending]: comb state input quote get value
     ]
 
     the-group! combinator [
@@ -2008,7 +2008,7 @@ default-combinators: make map! reduce [
         parser [action!]
         <local> result
     ][
-        [result #]: parser input except e -> [return raise e]
+        [result _]: parser input except e -> [return raise e]
 
         if blank? :result [
             remainder: input
@@ -2069,7 +2069,7 @@ default-combinators: make map! reduce [
                         return raise e
                     ]
                 ] else [
-                    f.(param): [# input pending]: parsers.1 input except e -> [
+                    f.(param): [@ input pending]: parsers.1 input except e -> [
                         return raise e
                     ]
                 ]
@@ -2168,7 +2168,7 @@ default-combinators: make map! reduce [
         ; arguments here, but this should have better errors if the datatype
         ; combinator takes arguments.
         ;
-        return [# remainder pending]: comb state input :r
+        return [@ remainder pending]: comb state input :r
     ]
 
     === NEW-STYLE ANY COMBINATOR ===
@@ -2338,7 +2338,7 @@ default-combinators: make map! reduce [
 
                 rules: sublimit else [tail of rules]
             ] else [
-                f: make frame! [# rules]: parsify state rules
+                f: make frame! [@ rules]: parsify state rules
             ]
 
             f.input: pos
@@ -2562,7 +2562,7 @@ comment [combinatorize: func [
                     f.(param): _
                 ]
                 else [
-                    f.(param): [# rules]: parsify state rules
+                    f.(param): [@ rules]: parsify state rules
                 ]
             ]
         ]
@@ -2614,7 +2614,7 @@ parsify: func [
                 ; rules to produce a parser instance.  This is the common case.
                 ;
                 if comb: match action! :value [
-                    return [# advanced]: combinatorize :comb rules state
+                    return [@ advanced]: combinatorize :comb rules state
                 ]
 
                 ; Ordinary data values are dispatched to the combinator for
@@ -2636,7 +2636,7 @@ parsify: func [
                 ;
                 comb: select state.combinators type of :value
                 return (
-                    [# advanced]: combinatorize/value :comb rules state :value
+                    [@ advanced]: combinatorize/value :comb rules state :value
                 )
             ]
 
@@ -2653,7 +2653,7 @@ parsify: func [
             ;
             if comb: match action! :value [
                 if combinator? :comb [
-                    return [# advanced]: combinatorize :comb rules state
+                    return [@ advanced]: combinatorize :comb rules state
                 ]
 
                 let name: uppercase to text! r
@@ -2673,7 +2673,7 @@ parsify: func [
             ; non-erroring behavior is desired.)
             ;
             comb: select state.combinators word!
-            return [# advanced]: combinatorize/value :comb rules state r
+            return [@ advanced]: combinatorize/value :comb rules state r
         ]
 
         path? :r [
@@ -2731,13 +2731,13 @@ parsify: func [
                     ]
                 ]
 
-                return [# advanced]:
+                return [@ advanced]:
                         combinatorize/value :comb rules state :action
             ]
 
             let word: ensure word! first r
             if comb: select state.combinators word [
-                return [# advanced]: combinatorize/path :comb rules state r
+                return [@ advanced]: combinatorize/path :comb rules state r
             ]
 
             ; !!! Originally this would just say "unknown combinator" at this
@@ -2762,7 +2762,7 @@ parsify: func [
         fail ["Unhandled type in PARSIFY:" kind of :r "-" mold :r]
     ]
 
-    return [# advanced]: combinatorize/value :comb rules state r
+    return [@ advanced]: combinatorize/value :comb rules state r
 ]
 
 

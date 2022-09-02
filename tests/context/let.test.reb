@@ -236,10 +236,10 @@
 ; BLANK! and ISSUE! should be legal in LET.
 [(
     var: #  ; v-- second result is discarded, but request did partial transcode
-    'abc = let [# (var)]: transcode/one "abc def"
+    'abc = let [_ (var)]: transcode/one "abc def"
 )(
     var: _  ; opting out of second result, hence full transcode
-    [abc def] = let [# (var)]: transcode/one "abc def"
+    [abc def] = let [_ (var)]: transcode/one "abc def"
 )]
 
 ; This is all very shaky and speculative, and missing any semblance of

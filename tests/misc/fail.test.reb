@@ -58,7 +58,7 @@
 ; Multi-returns which aren't writing to a variable should be willing to
 ; tolerate an arbitrary result coming out.
 [
-    (raised? [#]: raise "hi")
+    (raised? [@]: raise "hi")
 ]
 
 ; A ^META'd failure still does a lookahead step for enfix, and if that step

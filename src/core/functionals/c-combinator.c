@@ -727,7 +727,7 @@ static bool Combinator_Param_Hook(
             if (rebRunThrows(SPARE, "let temp"))
                 assert(!"LET failed");
             REBVAL *parser = rebValue(
-                "[#", SPARE, "]: parsify", ARG(state), ARG(rules)
+                "[@", SPARE, "]: parsify", ARG(state), ARG(rules)
             );
             bool any = false;
             Get_Var_May_Fail(ARG(rules), SPARE, SPECIFIED, any);

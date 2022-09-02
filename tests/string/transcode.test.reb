@@ -108,12 +108,11 @@
     ]
 )
 
-; Test for "blackhole" functionality
 [
-    ([abc def] = [# _]: transcode "abc def")  ; means /NEXT is NULL
-    ('abc = [# #]: transcode/one "abc def")  ; /NEXT is # so truthy, SET ignores
-    (raised? [# #]: transcode/one "3o4")
-    ('scan-invalid = pick trap [[# #]: transcode/one "3o4"] 'id)
+    ([abc def] = [_ _]: transcode "abc def")
+    ('abc = [_ _]: transcode/one "abc def")
+    (raised? [_ _]: transcode/one "3o4")
+    ('scan-invalid = pick trap [[_ _]: transcode/one "3o4"] 'id)
 ]
 
 (

@@ -169,9 +169,6 @@ static void Bump_Specialized_Output_Aside(Frame(*) f) {
     if (Is_Nulled(ARG) or IS_BLANK(ARG)) {  // not requested
         Init_Blank(var);
     }
-    else if (Is_Blackhole(ARG)) {  // requested with no variable
-        Init_Blackhole(var);
-    }
     else if (
         IS_WORD(ARG) or IS_TUPLE(ARG)
         or IS_META_WORD(ARG) or IS_META_TUPLE(ARG)

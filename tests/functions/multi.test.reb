@@ -79,7 +79,7 @@
     )(
         a: b: c: _
         did all [
-            <z-result> = [a b @(#)]: test 1020
+            <z-result> = [a b @(void)]: test 1020
             a = 304
             b = <y-result>
             c = null
@@ -93,7 +93,7 @@
             other: 10
             return 20
         ]
-        null? until [[# #]: foo break]
+        null? until [[@ _]: foo break]
     )
 ]
 
@@ -115,7 +115,7 @@
     ]
 )(
     did all [
-        none? [(_) rest]: transcode/one "abc def"
+        none? [(void) rest]: transcode/one "abc def"
         rest = " def"
     ]
 )(
