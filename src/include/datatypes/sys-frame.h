@@ -706,7 +706,7 @@ inline static bool Pushed_Continuation(
     option(const REBVAL*) with  // can be same as out or not GC-safe, may copy
 ){
     assert(branch != out);  // it's legal for `with` to be the same as out
-    assert(with == nullptr or not Is_Api_Value(unwrap(with)));
+    assert(not with or unwrap(with) == out or not Is_Api_Value(unwrap(with)));
 
     if (IS_GROUP(branch) or IS_GET_GROUP(branch)) {  // see [2] for GET-GROUP!
         assert(flags & FRAME_FLAG_BRANCH);  // needed for trick
