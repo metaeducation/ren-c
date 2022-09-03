@@ -703,16 +703,6 @@ inline static Bounce Native_Void_Result(
     return BOUNCE_VOID;
 }
 
-inline static Bounce Native_None_Result_Untracked(
-    Value(*) out,  // have to pass; comma at callsite -> "operand has no effect"
-    Frame(*) frame_
-){
-    assert(out == frame_->out);
-    UNUSED(out);
-    assert(not THROWING);
-    return Init_None_Untracked(frame_->out);
-}
-
 inline static Bounce Native_Unmeta_Result(Frame(*) frame_, const REBVAL *v) {
     assert(not THROWING);
     if (Is_Meta_Of_Void(v))

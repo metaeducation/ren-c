@@ -119,13 +119,49 @@ export console!: make object! [
     print-result: meth [
         return: <none>
         ^v "Value (done with meta parameter to discern isotope status)"
-            [<opt> <void> any-value!]
+            [<opt> <void> <pack> any-value!]
     ][
         ; We use SET instead of a SET-WORD! here to avoid caching the action
         ; name as "last-result", so it should keep the name it had before.
         ; (also it gives us the /ANY option to save isotopes!)
         ;
-        set/any 'last-result unmeta v
+        ; !!! This keeps the last-result in ^META form, because some meta
+        ; forms must be unpacked otherwise they'll cause an error:
+        ;
+        ;     >> ^ pack [pack [1 2] 3]
+        ;     == ~[~['1 '2]~ '3]~
+        ;
+        ; That's a valid representation of a meta of a parameter pack with a
+        ; parameter pack in its first slot.  But you can't UNMETA that and
+        ; assign it to a single variable--it will cause an error.  It must
+        ; unpacked:
+        ;
+        ;     >> [a b]: pack [pack [1 2] 3]
+        ;     == 1
+        ;
+        ;     >> [^a b]: pack [pack [1 2] 3]
+        ;     == ~['1 '2]~
+        ;
+        set 'last-result v
+
+        === UNPACK FIRST VALUE IF IN A "PACK" ===
+
+        ; Functions can return block isotopes which represent multiple returns.
+        ; If the user really wants to see this, they can explicitly do a
+        ; meta on it.
+
+        if pack? unget v [
+            v: unquasi v
+            if 0 = length of v [
+                print unspaced [
+                    result _ mold quasi v _ {; isotope  (decays to null)}
+                ]
+                return
+            ]
+
+            print ["; first of pack with" length of v "items"]
+            v: (first v) else [null']  ; items in pack are ^META'd
+        ]
 
         === DISPLAY NULL AS IF IT WERE A COMMENT, AS IT HAS NO VALUE ===
 

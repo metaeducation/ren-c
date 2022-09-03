@@ -945,8 +945,11 @@ REBTYPE(Array)
             &len, arr, index, limit, pattern, flags, skip
         );
 
-        if (find == NOT_FOUND)
-            return nullptr;
+        if (find == NOT_FOUND) {
+            Init_Nulled(OUT);
+            Init_Nulled(ARG(tail));
+            return Proxy_Multi_Returns(frame_);
+        }
 
         REBLEN ret = cast(REBLEN, find);
         assert(ret <= limit);
@@ -955,11 +958,11 @@ REBTYPE(Array)
         if (id == SYM_FIND) {
             Copy_Cell(ARG(tail), array);
             VAL_INDEX_RAW(ARG(tail)) = ret + len;
-            Proxy_Multi_Returns(frame_);
 
             Copy_Cell(OUT, array);
             VAL_INDEX_RAW(OUT) = ret;
-            return OUT;
+
+            return Proxy_Multi_Returns(frame_);
         }
         else {
             ret += len;

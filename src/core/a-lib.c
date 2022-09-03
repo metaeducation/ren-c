@@ -1001,6 +1001,7 @@ bool RL_rebRunCoreThrows(
     if (too_many)
         fail (Error_Apply_Too_Many_Raw());
 
+    Decay_If_Isotope(out);
     return false;
 }
 
@@ -1099,6 +1100,8 @@ void RL_rebPushContinuation(
 //
 //     rebMeta(...) => rebValue("meta", ...")
 //
+// Will return parameter packs as-is.
+//
 REBVAL *RL_rebMeta(const void *p, va_list *vaptr)
 {
     ENTER_API;
@@ -1108,10 +1111,7 @@ REBVAL *RL_rebMeta(const void *p, va_list *vaptr)
     if (Run_Va_Throws(v, interruptible, FRAME_FLAG_META_RESULT, p, vaptr))
         fail (Error_No_Catch_For_Throw(TOP_FRAME));  // panic?
 
-    if (Is_Nulled(v)) {
-        rebRelease(v);
-        return nullptr;  // No NULLED API cells, see notes on NULLIFY_NULLED()
-    }
+    assert(not Is_Nulled(v));  // meta operations do not produce NULL
 
     return v;  // caller must rebRelease()
 }
@@ -1135,7 +1135,14 @@ REBVAL *RL_rebEntrap(const void *p, va_list *vaptr)
         return v;
     }
 
+    if (Is_Meta_Of_Pack(v)) {
+        Meta_Unquotify(v);
+        Decay_If_Isotope(v);
+        Meta_Quotify(v);
+    }
+
     if (Is_Nulled(v)) {  // tolerate isotopes
+        assert(!"Meta values are not supposed to be NULL");
         rebRelease(v);
         return nullptr;  // No NULLED API cells, see notes on NULLIFY_NULLED()
     }
@@ -1164,7 +1171,14 @@ REBVAL *RL_rebEntrapInterruptible(
         return v;
     }
 
+    if (Is_Meta_Of_Pack(v)) {
+        Meta_Unquotify(v);
+        Decay_If_Isotope(v);
+        Meta_Quotify(v);
+    }
+
     if (Is_Nulled(v)) {  // tolerate isotopes
+        assert(!"Meta values are not supposed to be NULL");
         rebRelease(v);
         return nullptr;  // No NULLED API cells, see notes on NULLIFY_NULLED()
     }

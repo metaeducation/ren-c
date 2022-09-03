@@ -26,9 +26,8 @@
         2
     ]
 )]
-; "error out" of make object!
-(
-    error? trap [
+~zero-divide~ !! (
+    error? trap [  ; not a plain throw-type error, won't TRAP
         make object! [1 / 0]
         2
     ]

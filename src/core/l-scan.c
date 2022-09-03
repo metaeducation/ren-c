@@ -3258,8 +3258,7 @@ DECLARE_NATIVE(transcode)
             VAL_INDEX_RAW(rest) += BIN_TAIL(VAL_STRING(source)) - bp;
     }
 
-    Proxy_Multi_Returns(frame_);
-    return OUT;
+    return Proxy_Multi_Returns(frame_);
 }}
 
 

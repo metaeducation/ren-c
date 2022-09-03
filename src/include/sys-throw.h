@@ -103,3 +103,29 @@ inline static void CATCH_THROWN(
 
     TG_Unwind_Frame = nullptr;
 }
+
+
+// When you're sure that the value isn't going to be consumed by a multireturn
+// then use this to get the first value unmeta'd
+//
+inline static Value(*) Decay_If_Isotope(Value(*) v) {
+    if (Is_Stale(v))
+        return v;
+
+    if (Is_Blank_Isotope(v))
+        return Init_Nulled(v);
+
+    if (Is_Pack(v)) {  // iterate until result is not multi-return, see [1]
+        Cell(const*) pack_meta_tail;
+        Cell(const*) pack_meta_at = VAL_ARRAY_AT(&pack_meta_tail, v);
+        if (pack_meta_at == pack_meta_tail)
+            return Init_None(v);  // Error?  Null?
+        Derelativize(v, pack_meta_at, VAL_SPECIFIER(v));
+        Meta_Unquotify(v);
+        if (Is_Pack(v))
+            fail (Error_Bad_Isotope(v));  // need more granular unpacking
+        return v;
+    }
+
+    return v;
+}

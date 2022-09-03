@@ -83,9 +83,9 @@
     )
 
     (
-        loaded: load/header (
+        [loaded header]: load (
             save/header/compress blank data [Title: "my code"] true
-        ) 'header  ; use non SET-BLOCK! form for variation
+        )
         did all [
             header.title = "my code"
             header.options = [compress]
@@ -119,7 +119,7 @@
     )
 
     (
-        loaded: load/header #{
+        [loaded header]: load #{
             5245424F4C205B0A202020205469746C653A20226D7920636F6465220A202020
             204F7074696F6E733A205B636F6D70726573735D0A5D0A3634237B0A48347349
             4141414141414141436A4E554D4E517A556A4130734449795546417153533075

@@ -154,18 +154,18 @@ Bounce Func_Dispatcher(Frame(*) f)
     const REBPAR *param = ACT_PARAMS_HEAD(FRM_PHASE(f));
 
     if (NOT_PARAM_FLAG(param, RETURN_TYPECHECKED)) {
-        Proxy_Multi_Returns(f);
-        return NONE;  // none falls out of FUNC by default
+        Init_None(OUT);  // none falls out of FUNC by default
+        return Proxy_Multi_Returns(f);
     }
 
     if (GET_PARAM_FLAG(param, RETURN_VOID)) {
-        Proxy_Multi_Returns(f);
-        return VOID;  // void, regardless of body result, see [3]
+        // void, regardless of body result, see [3]
+        return Proxy_Multi_Returns(f);;
     }
 
     if (GET_PARAM_FLAG(param, RETURN_NONE)) {
-        Proxy_Multi_Returns(f);
-        return NONE;  // none, regardless of body result, see [3]
+        Init_None(OUT);  // none, regardless of body result, see [3]
+        return Proxy_Multi_Returns(f);
     }
 
     fail ("Functions with RETURN: in spec must use RETURN to typecheck");
@@ -534,7 +534,8 @@ DECLARE_NATIVE(unwind)
 //
 //      return: []  ; !!! notation for "divergent?"
 //      ^value "If no argument is given, result will act like RETURN VOID"
-//          [<end> <opt> <void> <fail> any-value!]
+//          [<end> <opt> <void> <fail> <pack> any-value!]
+//      /forward "Pass on parameter packs, vs. just the first pack item"
 //  ]
 //
 DECLARE_NATIVE(definitional_return)
@@ -624,6 +625,9 @@ DECLARE_NATIVE(definitional_return)
         // allow, so that you can say `return ~xxx~` in functions whose spec
         // is written as `return: []`
 
+        if (Is_Pack(v) and not REF(forward))
+            Decay_If_Isotope(v);
+
         if (GET_PARAM_FLAG(param, RETURN_NONE) and not Is_None(v))
             fail ("If RETURN: <none> is in a function spec, RETURN NONE only");
     }
@@ -634,12 +638,12 @@ DECLARE_NATIVE(definitional_return)
 
   skip_type_check: {  ////////////////////////////////////////////////////////
 
-    if (not Is_Raised(v))  // don't want to proxy multi-returns if failed
-        Proxy_Multi_Returns(target_frame);
-
     DECLARE_LOCAL (label);
     Copy_Cell(label, Lib(UNWIND)); // see also Make_Thrown_Unwind_Value
     TG_Unwind_Frame = target_frame;
+
+    if (not Is_Raised(v))  // don't want to proxy multi-returns on failure
+        Proxy_Multi_Returns_Core(target_frame, v);
 
     return Init_Thrown_With_Label(FRAME, v, label);
   }

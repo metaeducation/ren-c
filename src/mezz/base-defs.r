@@ -44,7 +44,7 @@ probe: func* [
 
     return: "Same as the input value"
         [<opt> <void> any-value!]
-    ^value' [<opt> <void> any-value!]
+    ^value' [<opt> <void> <pack> <fail> any-value!]
 ][
     ; Remember this is early in the boot, so many things not defined.
 
@@ -57,7 +57,7 @@ probe: func* [
     ]
     write-stdout newline
 
-    return unmeta value'
+    return/forward unmeta value'
 ]
 
 ??: :probe  ; shorthand to use in debug sessions, not intended to be committed
@@ -239,7 +239,7 @@ pointfree*: func* [
             blank! == type of :block.1 [block: skip block 1]
 
             match word! p.1 [
-                if not (block: [var @]: evaluate/next block) [
+                if not (var: evaluate/next block 'block, block) [
                     break  ; ran out of args, assume remaining unspecialized
                 ]
                 frame.(p.1): get/any 'var

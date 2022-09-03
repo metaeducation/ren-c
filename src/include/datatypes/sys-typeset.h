@@ -284,7 +284,10 @@ inline static bool Matcher_Matches(Cell(const*) matcher, Cell(const*) v) {
     FLAG_LEFT_BIT(21)
 
 #define PARAM_FLAG_NO_ISOTOPE_DECAY \
-    FLAG_LEFT_BIT(21)
+    FLAG_LEFT_BIT(22)
+
+#define PARAM_FLAG_WANT_PACKS \
+    FLAG_LEFT_BIT(23)
 
 
 #define SET_PARAM_FLAG(v,name) \

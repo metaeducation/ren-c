@@ -27,14 +27,14 @@
         greater? load-value "9999999999999999999" load-value "9223372036854775807"
     ]
 )]
-; R2 bug
+
 (
-     x: 1
-     x: load/header "" 'header
-     did all [
+    x: ~
+    [x header]: load ""
+    all [
         x = []
         null? header
-     ]
+    ]
 )
 
 [#1421
@@ -52,7 +52,7 @@
 ([1 2 3] = load/type "1 2 3" null)
 ([1 2 3] = load "rebol [] 1 2 3")
 (
-    d: load/header "rebol [] 1 2 3" 'header
+    [d header]: load "rebol [] 1 2 3" 'header
     all [
         object? header
         [1 2 3] = d

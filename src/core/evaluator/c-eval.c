@@ -335,10 +335,6 @@ Bounce Evaluator_Executor(Frame(*) f)
         STATE = ST_EVALUATOR_INITIAL_ENTRY;
         goto set_block_rightside_result_in_out;
 
-      case ST_EVALUATOR_SET_BLOCK_LOOKAHEAD:
-        STATE = ST_EVALUATOR_INITIAL_ENTRY;
-        goto set_block_lookahead_result_in_out;
-
       default:
         assert(false);
     }
@@ -760,20 +756,22 @@ Bounce Evaluator_Executor(Frame(*) f)
         else if (Is_Raised(OUT)) {
             // Don't assign, but let (trap [a: transcode "1&aa"]) work
         }
-        else if (
-            Is_Isotope(OUT)
-            and Not_Cell_Flag(OUT, SCANT_EVALUATED_ISOTOPE)  // from QUASI!
-            and Pointer_To_Decayed(OUT) == OUT  // don't corrupt OUT
-        ){
-            fail (Error_Bad_Isotope(OUT));
-        }
         else {
+            Decay_If_Isotope(OUT);
+
+            if (
+                Is_Isotope(OUT)
+                and Not_Cell_Flag(OUT, SCANT_EVALUATED_ISOTOPE)  // from QUASI!
+            ){
+                fail (Error_Bad_Isotope(OUT));
+            }
+
             if (IS_ACTION(OUT))  // !!! Review: When to update labels?
                 INIT_VAL_ACTION_LABEL(OUT, VAL_WORD_SYMBOL(f_current));
 
             Copy_Cell(
                 Sink_Word_May_Fail(f_current, f_specifier),
-                Pointer_To_Decayed(OUT)
+                OUT
             );
 
             if (f_next_gotten)  // cache can tamper with lookahead, see [2]
@@ -1154,20 +1152,22 @@ Bounce Evaluator_Executor(Frame(*) f)
         else if (Is_Raised(OUT)) {
             // Don't assign, but let (trap [a.b: transcode "1&aa"]) work
         }
-        else if (
-            Is_Isotope(OUT)
-            and Not_Cell_Flag(OUT, UNEVALUATED)  // see QUASI! handling
-            and Pointer_To_Decayed(OUT) == OUT  // don't corrupt out
-        ){
-            fail (Error_Bad_Isotope(OUT));
-        }
         else {
+            Decay_If_Isotope(OUT);
+
+            if (
+                Is_Isotope(OUT)
+                and Not_Cell_Flag(OUT, UNEVALUATED)  // see QUASI! handling
+            ){
+                fail (Error_Bad_Isotope(OUT));
+            }
+
             if (Set_Var_Core_Throws(
                 SPARE,
                 GROUPS_OK,
                 f_current,
                 f_specifier,
-                Pointer_To_Decayed(OUT)
+                OUT
             )){
                 goto return_thrown;
             }
@@ -1329,93 +1329,72 @@ Bounce Evaluator_Executor(Frame(*) f)
 
     set_block_common: ////////////////////////////////////////////////////////
 
+      // 1. As with the other SET-XXX! variations, we may need to continue
+      //    what is to the left of the assignment if the right hand vanishes.
+      //
+      //        >> (10 [x y]: multi-vanisher ...)
+      //        == 10
+      //
+      //    But since multi-returns write to the output slot, they have to be
+      //    crafty and incorporate stale values into their multireturn.
+      //
+      // 2. We pre-process the SET-BLOCK! first and collect the variables to
+      //    write on the stack.  (It makes more sense for any GROUP!s in the
+      //    set-block to be evaluated on the left before the right.)
+      //
+      //    !!! Should the block be locked while the advancement happens?  It
+      //    wouldn't need to be since everything is on the stack before code
+      //    is run on the right...but it might reduce confusion.
+      //
+      // 3. @xxx indicates a desire for a "circled" result.  By default, the
+      //    ordinary return result will be returned.  (While checking we set
+      //    dsp_circled when we see `[@ ...]: ...` to give an error if more
+      //    than one return were circled.)
+      //
+      // 4. ^xxx indicate a desire to get a "meta" result.
+      //
+      //    !!! How to circle a ^META result?  Should it be legal to write
+      //    ^(@) or @(^) and not call into the evaluator so those cases do
+      //    not fail on missing arguments?  Will "weird words" allow ^@ or
+      //    @^ to be interpreted unambiguously?
+      //
+      //    !!! The multi-return mechanism doesn't allow an arbitrary number
+      //    of meta steps, just one.  Should you be able to say ^(^(x)) or
+      //    something like that to add more?  :-/
+      //
+
       case REB_SET_BLOCK: {
         assert(Not_Feed_Flag(f->feed, NEXT_ARG_FROM_OUT));
 
-        // As with the other SET-XXX! variations, we may need to continue
-        // what is to the left of the assignment if the right hand side
-        // winds up vanishing.
-        //
-        //     >> (10 [x]: comment "we don't want this to be 10")
-        //     == 10
-        //
-        //     >> x
-        //     ; null
-        //
-        assert(Is_Stale(OUT));
-
-        // We pre-process the SET-BLOCK! first, because we are going to
-        // advance the feed in order to build a frame for the following code.
-        // It makes more sense for any GROUP!s to be evaluated on the left
-        // before on the right, so push the results to the stack.
-        //
-        // !!! Should the block be locked while the advancement happens?  It
-        // wouldn't need to be since everything is on the stack before code
-        // is run on the right...but it might reduce confusion.
+        assert(Is_Stale(OUT));  // see [1]
 
         if (VAL_LEN_AT(f_current) == 0)
             fail ("SET-BLOCK! must not be empty for now.");
 
-        StackIndex stackindex_circled = 0;  // which pushed is main return
-
-      blockscope {
         Cell(const*) tail;
         Cell(const*) check = VAL_ARRAY_AT(&tail, f_current);
         REBSPC *check_specifier = Derive_Specifier(f_specifier, f_current);
 
         TRASH_POINTER_IF_DEBUG(f_current);  // might be SPARE, we use it now
 
-        for (; tail != check; ++check) {
-            //
-            // THE-XXX! types are used to mark which result should be the
-            // overall return of the expression.  But a GROUP! can't resolve
-            // to that and make the decision, so handle it up front.
-            //
-            if (IS_THE(check)) {
-                if (stackindex_circled != 0) {
-                  too_many_circled:
-                    fail ("Can't circle more than one multi-return result");
-                }
-                REBVAL *let = rebValue("let temp");  // have to fabricate var
-                Move_Cell(PUSH(), let);
-                rebRelease(let);
-                stackindex_circled = TOP_INDEX;
-                continue;
-            }
+        StackIndex stackindex_circled = 0;
+
+        for (; tail != check; ++check) {  // push variables first, see [2]
             if (
-                IS_THE_WORD(check)
-                or IS_THE_PATH(check)
-                or IS_THE_TUPLE(check)
+                // @xxx is indicator of circled result, see [3]
+                //
+                IS_THE(check) or IS_THE_WORD(check) or IS_THE_TUPLE(check)
             ){
                 if (stackindex_circled != 0)
-                    goto too_many_circled;
+                    fail ("Can't circle more than one multi-return result");
                 Derelativize(PUSH(), check, check_specifier);
-                Plainify(TOP);
-                stackindex_circled = TOP_INDEX;
-                continue;
-            }
-
-            // Carets indicate a desire to get a "meta" result.
-            //
-            // !!! The multi-return mechanism doesn't allow an arbitrary number
-            // of meta steps, just one.  Should you be able to say ^(^(x)) or
-            // something like that to add more?  :-/
-            //
-            // !!! Should both @(^) and ^(@) be allowed?
-            //
-            if (IS_META(check)) {
-                if (stackindex_circled != 0)
-                    goto too_many_circled;
-                REBVAL *let = rebValue("let temp, '^temp");  // have to fabricate var
-                Move_Cell(PUSH(), let);
-                rebRelease(let);
                 stackindex_circled = TOP_INDEX;
                 continue;
             }
             if (
-                IS_META_WORD(check)
-                or IS_META_PATH(check)
-                or IS_META_TUPLE(check)
+                // ^xxx is indicator of a ^META result, see [4]
+                //
+                IS_META(check) or IS_META_WORD(check) or IS_META_TUPLE(check)
             ){
                 Derelativize(PUSH(), check, check_specifier);
                 continue;
@@ -1443,222 +1422,170 @@ Bounce Evaluator_Executor(Frame(*) f)
                 Init_Blank(PUSH());
             }
             else if (
-                IS_WORD(item)
-                or IS_PATH(item)
-                or IS_TUPLE(item)
+                IS_WORD(item) or IS_TUPLE(item)
             ){
                 Derelativize(PUSH(), item, item_specifier);
             }
             else
                 fail ("SET-BLOCK! items are (@THE, ^META) WORD/TUPLE or BLANK");
 
-            if (IS_THE_GROUP(check))
+            if (IS_THE_GROUP(check)) {
+                Theify(TOP);
                 stackindex_circled = TOP_INDEX;
+            }
             else if (IS_META_GROUP(check))
                 Metafy(TOP);
         }
 
-        // By default, the ordinary return result will be returned.  Indicate
-        // this with dsp_circled = 0, as if no circling were active.  (We had
-        // to set it to nonzero in the case of `[@ ...]: ...` to give an error
-        // if more than one return were circled.)
-        //
-        if (stackindex_circled == BASELINE->stack_base + 1)
-            stackindex_circled = 0;
-     }
+        if (stackindex_circled == 0)
+            stackindex_circled = BASELINE->stack_base + 1;  // main, see [3]
 
-        StackIndex base = TOP_INDEX;
+        frame_->u.eval.stackindex_circled = stackindex_circled;  // remember it
 
-        // Build a frame for the function call by fulfilling its arguments.
-        // The function will be in a state that it can be called, but not
-        // invoked yet.
-        //
-        STATE = ST_EVALUATOR_SET_BLOCK_RIGHTSIDE;  // reeval messes f_specifier
-        DECLARE_LOCAL (action);
-        if (Get_Var_Push_Refinements_Throws(
-            action,
-            GROUPS_OK,
-            f_next,
-            f_specifier
-        )){
-            Drop_Data_Stack_To(BASELINE->stack_base);
-            goto return_thrown;
-        }
+        Frame(*) sub = Maybe_Rightward_Continuation_Needed(f);
+        if (not sub)
+            goto set_block_rightside_result_in_out;
 
-        // We haven't ruled out other things on the right of SET-BLOCK!, but
-        // nothing yet...
-        //
-        if (not IS_ACTION(action))
-            fail ("SET-BLOCK! is only allowed to have ACTION! on right ATM.");
-
-        Fetch_Next_Forget_Lookback(f);
-
-        bool error_on_deferred = false;
-        Frame(*) sub = Make_Pushed_Frame_From_Action_Feed_May_Throw(
-            OUT,
-            action,
-            f->feed,
-            base,
-            error_on_deferred
-        );
-
-        Set_Frame_Flag(sub, FAILURE_RESULT_OK);  // may pass to except
-
-        if (Is_Throwing(sub)) {
-            Drop_Frame(sub);
-            Drop_Data_Stack_To(BASELINE->stack_base);
-            goto return_thrown;
-        }
-
-        // Now we want to enumerate through the outputs, and fill them with
-        // words/paths/_/# from the data stack.  Note the first slot is set
-        // from the "primary" output so it doesn't go in a slot.
-        //
-        StackIndex stackindex_output = BASELINE->stack_base + 2;
-
-      blockscope {
-        sub->executor = &Action_Executor;
-
-        Begin_Prefix_Action(sub, VAL_ACTION_LABEL(action));
-
-        const REBKEY *key_tail = sub->u.action.key_tail;
-        const REBKEY *key = sub->u.action.key;
-        Value(*) arg = sub->u.action.arg;
-        const REBPAR *param = sub->u.action.param;
-
-        for (; key != key_tail; ++key, ++arg, ++param) {
-            if (stackindex_output == TOP_INDEX + 1)
-                break;  // no more outputs requested
-            if (Is_Specialized(param))
-                continue;
-            if (VAL_PARAM_CLASS(param) != PARAM_CLASS_OUTPUT)
-                continue;
-
-            Value(*) var = arg + 1;
-
-            StackValue(*) at = Data_Stack_At(stackindex_output);
-            ++stackindex_output;
-
-            assert(Is_Void(arg) or Is_Nulled(arg));
-
-            RESET(arg);  // !!! Can we stop nulls, to avoid RESET()?
-
-            Copy_Cell(var, at);
-            ++key, ++arg, ++param;
-        }
-      }
-
-        // Now run the frame...no need to preserve OUT (always overwritten on
-        // an assignment)
-        //
-        assert(STATE == ST_EVALUATOR_SET_BLOCK_RIGHTSIDE);
-        frame_->u.eval.stackindex_circled = stackindex_circled;
-
-        FRM_STATE_BYTE(sub) = ST_ACTION_TYPECHECKING;
+        STATE = ST_EVALUATOR_SET_BLOCK_RIGHTSIDE;
         return CATCH_CONTINUE_SUBFRAME(sub);
 
     } set_block_rightside_result_in_out: {  //////////////////////////////////
 
-        // We called arbitrary code, so we have to toss the cache (in case
-        // e.g. ELSE comes next and it got redefined to 3 or something)
-        //
-        f_next_gotten = nullptr;
+      // 1. On definitional errors we don't assign variables, yet we pass the
+      //    raised error through.  That permits code like this to work:
+      //
+      //        trap [[a b]: transcode "1&aa"]
+      //
+      // 2. We enumerate from left to right in the SET-BLOCK!, with the "main"
+      //    being the first assigned to any variables.  This has the benefit
+      //    that if any of the multi-returns were marked as "circled" then the
+      //    overwrite of the returned OUT for the whole evaluation will happen
+      //    *after* the original OUT was captured into any desired variable.
 
-        // Now we have to look ahead in case there is enfix code afterward.
-        // We want parity, for instance:
-        //
-        //    >> x: find "abc" 'b then [10]
-        //    == 10
-        //
-        //    >> x
-        //    == 10
-        //
-        //    >> [y]: find "abc" 'b then [10]
-        //    == 10
-        //
-        //    >> y
-        //    == 10
-        //
-        // But at this point we've only run the FIND part, so we'd just have
-        // "bc" in the output.  We used `error_on_deferred` as false, so the
-        // feed will be in a waiting state for enfix that we can continue by
-        // jumping into the evaluator at the ST_EVALUATOR_LOOKING_AHEAD state.
-        //
-        if (Not_Frame_At_End(f) and VAL_TYPE(f_next) == REB_WORD) {
-            Flags flags =
-                EVAL_EXECUTOR_FLAG_SINGLE_STEP
-                | FLAG_STATE_BYTE(ST_EVALUATOR_LOOKING_AHEAD)
-                | EVAL_EXECUTOR_FLAG_INERT_OPTIMIZATION  // tolerate enfix late
-                | FRAME_FLAG_MAYBE_STALE  // won't be, but avoids RESET()
-                | FRAME_FLAG_FAILURE_RESULT_OK;  // might pass OUT to EXCEPT
+        if (Is_Raised(OUT))  // don't assign variables, see [1]
+            goto set_block_drop_stack_and_continue;
 
-            Frame(*) subframe = Make_Frame(f->feed, flags);
-            Push_Frame(OUT, subframe);  // offer potential enfix previous OUT
-
-            STATE = ST_EVALUATOR_SET_BLOCK_LOOKAHEAD;
-            return CATCH_CONTINUE_SUBFRAME(subframe);
-        }
-
-    } set_block_lookahead_result_in_out: {  //////////////////////////////////
-
+        StackIndex stackindex_outvar = BASELINE->stack_base + 1;  // see [2]
         StackIndex stackindex_circled = frame_->u.eval.stackindex_circled;
 
-        // Take care of the SET for the main result.
-        //
-        // !!! Move the main result set part off the stack and into the spare
-        // in case there are GROUP! evaluations in the assignment; though that
-        // needs more thinking (e.g. what if they throw?)
-        //
-        Copy_Cell(SPARE, Data_Stack_At(BASELINE->stack_base + 1));
-        if (IS_BLANK(SPARE)) {
-            // pass through everything (even failures), e.g. no assignment
+        Value(*) outvar = SCRATCH;  // stable location
+
+        Cell(const*) pack_meta_at = nullptr;  // pack block items are ^META'd
+        Cell(const*) pack_meta_tail = nullptr;
+        REBSPC* pack_specifier = nullptr;
+        if (Is_Stale(OUT)) {
+            if (
+                QUOTE_BYTE_UNCHECKED(OUT) == ISOTOPE_0
+                and HEART_BYTE_UNCHECKED(OUT) == REB_BLOCK
+            ){
+                // Assume the pack subsumed a stale output cell in order to
+                // become stale.  For now, we lose the propagation ability
+                // for multireturn chaining by changing out from the stale
+                // pack, but just try and get it booting.
+                //
+                OUT->header.bits &= (~ CELL_FLAG_STALE);
+                pack_meta_at = VAL_ARRAY_AT(&pack_meta_tail, OUT);
+                pack_specifier = VAL_SPECIFIER(OUT);
+                Derelativize(OUT, pack_meta_at, pack_specifier);
+                Set_Cell_Flag(OUT, STALE);
+                ++ pack_meta_at;
+            }
+            goto set_block_handle_out;
         }
-        else if (ANY_META_KIND(VAL_TYPE(SPARE))) {
-            if (Is_Stale(OUT))
-                Init_Meta_Of_Void(OUT);
-            else
+        else if (Is_Pack(OUT)) {  // isotopic block
+            pack_meta_at = VAL_ARRAY_AT(&pack_meta_tail, OUT);
+            pack_specifier = VAL_SPECIFIER(OUT);
+        }
+        else {  // OUT needs special handling (e.g. stale checks)
+          set_block_handle_out :
+
+            Copy_Cell(outvar, Data_Stack_At(stackindex_outvar));
+
+            if (IS_META(outvar)) {  // skip writing, but tolerate isotopes
                 Meta_Quotify(OUT);
+            }
+            if (IS_META_WORD(outvar) or IS_META_TUPLE(outvar)) {
+                if (Is_Stale(OUT)) {
+                    Init_Meta_Of_Void(SPARE);
+                    Set_Var_May_Fail(outvar, SPECIFIED, SPARE);
+                }
+                else {
+                    Meta_Quotify(OUT);
+                    Set_Var_May_Fail(outvar, SPECIFIED, OUT);
+                }
+            }
+            else if (Is_Stale(OUT)) {
+                if (not IS_BLANK(outvar) and not IS_THE(outvar))
+                    Set_Var_May_Fail(outvar, SPECIFIED, VOID_CELL);
+            }
+            else if (Is_Isotope(OUT)) {
+                fail (Error_Bad_Isotope(OUT));
+            }
+            else if (IS_BLANK(outvar) or IS_THE(outvar)) {
+            }
+            else if (IS_WORD(outvar) or IS_TUPLE(outvar)) {
+                Set_Var_May_Fail(outvar, SPECIFIED, OUT);
+            }
+            else
+                assert(false);
 
-            Set_Var_May_Fail(SPARE, SPECIFIED, OUT);
+            ++ stackindex_outvar;
+
+            // Don't need to handle "circling (it's already in out, if it
+            // needs to be...and will be overwritten if it doesn't)
         }
-        else if (Is_Stale(OUT)) {
-            Set_Var_May_Fail(
-                SPARE, SPECIFIED,
-                VOID_CELL
-            );
-        }
-        else if (Is_Raised(OUT)) {
-            // Don't assign, but let (trap [[a b]: transcode "1&aa"]) work
-        }
-        else if (
-            Is_Isotope(OUT)
-            and Not_Cell_Flag(OUT, SCANT_EVALUATED_ISOTOPE)  // from QUASI!
-            and Pointer_To_Decayed(OUT) == OUT  // don't corrupt OUT
+
+        for (
+            ;
+            stackindex_outvar != TOP_INDEX + 1;
+            ++stackindex_outvar, ++pack_meta_at
         ){
-            fail (Error_Bad_Isotope(OUT));
-        }
-        else {  // regular assignment
-            Set_Var_May_Fail(
-                SPARE, SPECIFIED,
-                Pointer_To_Decayed(OUT)
-            );
-        }
+            if (pack_meta_at == pack_meta_tail)
+                fail ("Not enough values for multi-return");
 
-        // Function machinery did the proxying.  If a return element was
-        // "circled" then it becomes the overall return.  (This will be put
-        // in as part of the function machinery behavior also, soon.)
-        //
-        if (not Is_Raised(OUT) and stackindex_circled != 0) {
-            Copy_Cell(SPARE, Data_Stack_At(stackindex_circled));  // stable
-            Get_Var_May_Fail(  // (PICK* can be methodized, hence SPARE stable)
-                OUT,
-                SPARE,
-                SPECIFIED,
-                true  // any
-            );
-        }
+            Copy_Cell(outvar, Data_Stack_At(stackindex_outvar));
 
-        Drop_Data_Stack_To(BASELINE->stack_base);
+            Derelativize(SPARE, pack_meta_at, pack_specifier);
+
+            if (IS_META(outvar)) {  // skip writing, but tolerate isotopes
+                 // leave as meta the way it came in
+                 goto circled_check;
+            }
+            else if (IS_META_WORD(outvar) or IS_META_TUPLE(outvar)) {
+                 Set_Var_May_Fail(outvar, SPECIFIED, SPARE);  // came in meta'd
+                 goto circled_check;
+            }
+
+            Meta_Unquotify(SPARE);
+            Decay_If_Isotope(SPARE);  // if pack in slot, resolve it
+
+            if (Is_Isotope(SPARE) and not Is_Void(SPARE)) {  // can't assign
+                fail (Error_Bad_Isotope(SPARE));
+            }
+            else if (IS_BLANK(outvar) or IS_THE(outvar)) {  // skip writing
+            }
+            else if (
+                IS_WORD(outvar) or IS_TUPLE(outvar)
+                or IS_THE_WORD(outvar) or IS_THE_TUPLE(outvar)
+            ){
+                Set_Var_May_Fail(outvar, SPECIFIED, SPARE);
+            }
+            else
+                assert(false);
+
+          circled_check :
+
+            if (stackindex_circled == stackindex_outvar) {
+                assert(
+                    stackindex_circled == BASELINE->stack_base + 1
+                    or IS_THE(outvar)
+                    or IS_THE_WORD(outvar)
+                    or IS_THE_TUPLE(outvar)
+                );
+                if (not Is_Void(SPARE))
+                    Copy_Cell(OUT, SPARE);
+            }
+        }
 
         // We've just changed the values of variables, and these variables
         // might be coming up next.  Consider:
@@ -1672,6 +1599,9 @@ Bounce Evaluator_Executor(Frame(*) f)
         //
         f_next_gotten = nullptr;
 
+    } set_block_drop_stack_and_continue: {  //////////////////////////////////
+
+        Drop_Data_Stack_To(BASELINE->stack_base);  // drop writeback variables
         break; }
 
 
@@ -1794,7 +1724,7 @@ Bounce Evaluator_Executor(Frame(*) f)
     // We're sitting at what "looks like the end" of an evaluation step.
     // But we still have to consider enfix.  e.g.
     //
-    //    [val pos]: evaluate/next [1 + 2 * 3]
+    //    val: evaluate/next [1 + 2 * 3] 'pos
     //
     // We want that to give a position of [] and `val = 9`.  The evaluator
     // cannot just dispatch on REB_INTEGER in the switch() above, give you 1,

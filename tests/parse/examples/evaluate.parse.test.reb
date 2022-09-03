@@ -13,7 +13,7 @@
     ][
         if tail? input [return raise "PARSE-EVALUATE attempted at series tail"]
 
-        return [_ remainder]: evaluate/next input
+        return evaluate/next input 'remainder
     ]
     true)
 

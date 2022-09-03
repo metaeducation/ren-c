@@ -29,17 +29,19 @@
         return: [<opt> any-value!]
         f [frame!]
         <static> indent (0)
+        <local> result' remainder subpending
     ][
         let input: f.input  ; save to use after DO F
         let name: f.value
 
         indent: me + 1
-        let result': ^(do f)
+        [^result' remainder subpending]: eval f except e -> [
+            indent: me - 1
+            return raise e
+        ]
         indent: me - 1
 
-        if null? result' [return null]
-
-        let consumed: copy/part input f.remainder
+        let consumed: copy/part input remainder
 
         let subpending: any [f.pending, copy []]
 
@@ -60,8 +62,7 @@
             ])
         ]
 
-        f.pending: subpending
-        return unmeta result'
+        return/forward pack [unmeta result' remainder subpending]
     ]
 
     tracked-combinators: copy default-combinators

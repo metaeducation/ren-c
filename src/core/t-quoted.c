@@ -302,7 +302,7 @@ DECLARE_NATIVE(quote)
 //  {VOID -> NULL, isotopes -> QUASI!, adds a quote to rest (behavior of ^^)}
 //
 //      return: [blank! quoted! quasi!]
-//      ^optional [<void> <opt> <fail> any-value!]
+//      ^optional [<void> <opt> <fail> <pack> any-value!]
 //  ]
 //
 DECLARE_NATIVE(meta)
@@ -321,7 +321,7 @@ DECLARE_NATIVE(meta)
 //  {META variant that passes through VOID and NULL, and doesn't take failures}
 //
 //      return: [<opt> <void> quoted! quasi!]
-//      ^optional [<opt> <void> any-value!]
+//      ^optional [<opt> <void> <pack> any-value!]
 //  ]
 //
 DECLARE_NATIVE(meta_p)
@@ -524,6 +524,54 @@ DECLARE_NATIVE(spread)
 
 
 //
+//  pack: native [
+//
+//  {Create a pack of arguments from an array}
+//
+//      return: "Isotope of BLOCK! or unquoted value (passthru null and void)"
+//          [<opt> <void> any-value!]
+//      array [<opt> <void> quoted! the-block! block!]
+//  ]
+//
+DECLARE_NATIVE(pack)
+//
+// We create a new array for a pack, because we need to turn each item into
+// its meta form.  But for literal packs, this could be optimized with a
+// "pretend everything in the block is quoted" flag.
+{
+    INCLUDE_PARAMS_OF_PACK;
+
+    Value(*) v = ARG(array);
+    if (Is_Void(v))
+        return VOID;
+    if (Is_Nulled(v))
+        return nullptr;
+
+    if (IS_QUOTED(v))
+        return Unquotify(Copy_Cell(OUT, v), 1);
+
+    if (IS_THE_BLOCK(v)) {
+        Cell(const*) tail;
+        Cell(const*) at = VAL_ARRAY_AT(&tail, v);
+        for (; at != tail; ++at)
+            Quotify(Derelativize(PUSH(), at, VAL_SPECIFIER(v)), 1);
+
+        return Init_Pack(OUT, Pop_Stack_Values(BASELINE->stack_base));
+    }
+
+    assert(IS_BLOCK(v));
+    if (rebRunThrows(SPARE,
+        Canon(QUASI), Canon(COLLECT), "[", Canon(REDUCE_EACH), "^x", v,
+            "[if raised? unget x [throw unquasi x], keep x]",
+        "]"
+    )){
+        return THROWN;
+    }
+    return UNMETA(SPARE);
+}
+
+
+//
 //  matches: native [
 //
 //  {Create isotopic pattern to signal a desire to test types non-literally}
@@ -560,7 +608,7 @@ DECLARE_NATIVE(matches)
 //  "Tells you if argument is a splice (isotopic block)"
 //
 //      return: [logic!]
-//      ^optional [<opt> <void> <fail> any-value!]
+//      ^optional [<opt> <void> <fail> <pack> any-value!]
 //  ]
 //
 DECLARE_NATIVE(splice_q)
@@ -568,6 +616,23 @@ DECLARE_NATIVE(splice_q)
     INCLUDE_PARAMS_OF_SPLICE_Q;
 
     return Init_Logic(OUT, Is_Meta_Of_Splice(ARG(optional)));
+}
+
+
+//
+//  pack?: native [
+//
+//  "Tells you if argument is a parameter pack (isotopic block)"
+//
+//      return: [logic!]
+//      ^optional [<opt> <void> <fail> <pack> any-value!]
+//  ]
+//
+DECLARE_NATIVE(pack_q)
+{
+    INCLUDE_PARAMS_OF_PACK_Q;
+
+    return Init_Logic(OUT, Is_Meta_Of_Pack(ARG(optional)));
 }
 
 

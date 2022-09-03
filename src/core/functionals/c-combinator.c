@@ -810,12 +810,12 @@ DECLARE_NATIVE(combinatorize)
     Action(*) parser = Make_Action_From_Exemplar(s.ctx);
     DROP_GC_GUARD(s.ctx);
 
-    Proxy_Multi_Returns(frame_);
-
-    return Init_Action(  // note: MAKE ACTION! copies the context, this won't
+    Init_Action(  // note: MAKE ACTION! copies the context, this won't
         OUT,
         parser,
         VAL_ACTION_LABEL(ARG(c)),
         VAL_ACTION_BINDING(ARG(c))
     );
+
+    return Proxy_Multi_Returns(frame_);
 }

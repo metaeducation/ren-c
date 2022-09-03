@@ -73,8 +73,8 @@ DECLARE_NATIVE(rescue)
   evaluation_finished: {
     if (not THROWING) {
         Copy_Cell(ARG(result), OUT);
-        Proxy_Multi_Returns(frame_);
-        return nullptr;
+        Init_Nulled(OUT);
+        return Proxy_Multi_Returns(frame_);
     }
 
     if (not Is_Meta_Of_Raised(VAL_THROWN_LABEL(FRAME)))  // non-ERROR! throws
@@ -85,7 +85,7 @@ DECLARE_NATIVE(rescue)
     CATCH_THROWN(SPARE, FRAME);
     assert(Is_Nulled(SPARE));  // all error throws are null-valued
 
-    return BRANCHED(OUT);
+    return Proxy_Multi_Returns(frame_);  // BRANCHED
   }
 }
 
@@ -182,7 +182,7 @@ DECLARE_NATIVE(entrap)  // wrapped as multi-return versions TRAP and ATTEMPT
 //      return: "Non-failure input, or product of processing failure"
 //          [<opt> <void> any-value!]
 //      ^optional "<deferred argument> Run branch if this is definitional fail"
-//          [<opt> <void> <fail> any-value!]
+//          [<opt> <void> <fail> <pack> any-value!]
 //      :branch "If arity-1 ACTION!, receives value that triggered branch"
 //          [any-branch!]
 //  ]

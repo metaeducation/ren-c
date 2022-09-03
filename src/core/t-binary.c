@@ -477,8 +477,11 @@ REBTYPE(Binary)
             &size, v, tail, pattern, flags, skip
         );
 
-        if (ret >= cast(REBLEN, tail))
-            return nullptr;
+        if (ret >= cast(REBLEN, tail)) {
+            Init_Nulled(OUT);
+            Init_Nulled(ARG(tail));
+            return Proxy_Multi_Returns(frame_);
+        }
 
         if (id == SYM_FIND) {
             Init_Series_Cell_At(
@@ -487,14 +490,13 @@ REBTYPE(Binary)
                 VAL_BINARY(v),
                 ret + size
             );
-            Proxy_Multi_Returns(frame_);
-
-            return Init_Series_Cell_At(
+            Init_Series_Cell_At(
                 OUT,
                 REB_BINARY,
                 VAL_BINARY(v),
                 ret
             );
+            return Proxy_Multi_Returns(frame_);
         }
 
         ret++;

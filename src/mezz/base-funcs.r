@@ -464,7 +464,7 @@ unset?: func [
     return: [logic!]
     var [word! path! tuple!]
 ][
-    return '~ = ^ get/any var
+    return void? get/any var
 ]
 
 set?: func [
@@ -472,7 +472,7 @@ set?: func [
     return: [logic!]
     var [word! path! tuple!]
 ][
-    return '~ <> ^ get/any var
+    return not void? get/any var
 ]
 
 

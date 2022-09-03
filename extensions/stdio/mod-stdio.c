@@ -186,8 +186,7 @@ DECLARE_NATIVE(read_stdin)
             return THROWN;
         }
         Init_Logic(ARG(eof), false);  // never terminates?
-        Proxy_Multi_Returns(frame_);
-        return OUT;
+        return Proxy_Multi_Returns(frame_);
     }
     else  // we have a smart console but aren't using it (redirected to file?)
   #endif
@@ -213,8 +212,8 @@ DECLARE_NATIVE(read_stdin)
         TERM_BIN_LEN(bin, i);
 
         Init_Logic(ARG(eof), eof);
-        Proxy_Multi_Returns(frame_);
-        return Init_Binary(OUT, bin);
+        Init_Binary(OUT, bin);
+        return Proxy_Multi_Returns(frame_);
     }
 }
 
@@ -371,8 +370,9 @@ DECLARE_NATIVE(read_line)
   #endif
 
     Init_Logic(ARG(eof), eof);
-    Proxy_Multi_Returns(frame_);
-    return line;
+    Copy_Cell(OUT, line);
+    rebRelease(line);
+    return Proxy_Multi_Returns(frame_);
 }
 
 

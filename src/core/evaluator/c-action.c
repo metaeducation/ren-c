@@ -125,14 +125,27 @@ bool Lookahead_To_Sync_Enfix_Defer_Flag(Feed(*) feed) {
 
 
 //
-//  Proxy_Multi_Returns: C
+//  Proxy_Multi_Returns_Core: C
 //
 // This code has to be factored out because RETURN uses it before it does an
 // UNWIND.  We already force type checking through the returns, so this (along
 // with any typechecking) should also be done.
 //
-void Proxy_Multi_Returns(Frame(*) f)
+Bounce Proxy_Multi_Returns_Core(Frame(*) f, Value(*) v)
 {
+    StackIndex base = TOP_INDEX;
+
+    bool stale;
+    if (Is_Stale(v)) {  // need to preserve stale flag
+        v->header.bits &= (~ CELL_FLAG_STALE);
+        Meta_Quotify(Copy_Cell(PUSH(), v));  // preserve hidden value
+        stale = true;  // we'll mark it stale again
+    }
+    else {
+        Meta_Quotify(Copy_Cell(PUSH(), v));
+        stale = false;
+    }
+
     KEY = ACT_KEYS(&KEY_TAIL, f->u.action.original);
     PARAM = ACT_PARAMS_HEAD(f->u.action.original);
     ARG = FRM_ARGS_HEAD(f);
@@ -143,42 +156,19 @@ void Proxy_Multi_Returns(Frame(*) f)
         if (VAL_PARAM_CLASS(PARAM) != PARAM_CLASS_OUTPUT)
             continue;
 
-        Value(*) var = ARG + 1;
-
-        if (Is_Void(var) or IS_BLANK(var) or Is_Blackhole(var)) {
-            // no writeback
-        }
-        else if (IS_META_WORD(var) or IS_META_TUPLE(var)) {
-            Meta_Quotify(ARG);
-            Set_Var_May_Fail(var, SPECIFIED, ARG);
-        }
-        else {
-            assert(IS_WORD(var) or IS_TUPLE(var));
-            Set_Var_May_Fail(var, SPECIFIED, ARG);
-        }
-
-        ++KEY; ++PARAM; ++ARG;
+        Meta_Quotify(Copy_Cell(PUSH(), ARG));
     }
-}
 
-
-static void Bump_Specialized_Output_Aside(Frame(*) f) {
-    Value(*) var = ARG + 1;  // hidden local for variable
-    assert(Is_Void(var));  // should not have been bumped into yet!
-
-    if (Is_Nulled(ARG) or IS_BLANK(ARG)) {  // not requested
-        Init_Blank(var);
-    }
-    else if (
-        IS_WORD(ARG) or IS_TUPLE(ARG)
-        or IS_META_WORD(ARG) or IS_META_TUPLE(ARG)
-    ){
-        Move_Cell(var, ARG);
-    }
+    if (TOP_INDEX == base + 1)  // no multi return values
+        DROP();
     else
-        fail ("OUTPUT: parameters must be SET-table targets");
+        Init_Pack(v, Pop_Stack_Values(base));
 
-    RESET(ARG);
+    if (stale) {
+        Set_Cell_Flag(v, STALE);
+        return VOID;
+    }
+    return v;
 }
 
 
@@ -209,15 +199,16 @@ Bounce Action_Executor(Frame(*) f)
 
           case ST_ACTION_DOING_PICKUPS:
           case ST_ACTION_FULFILLING_ARGS:
-            //
-            // continue_fulfilling is used for all params including specialized
-            // which use PARAM as the specialized value.  We have to do this
-            // work here, before calling continue_fulfilling--as it applies
-            // only when parameters are being evaluated (hence PARAMs)
-            //
-            if (VAL_PARAM_CLASS(PARAM) == PARAM_CLASS_OUTPUT) {  // must move
-                Bump_Specialized_Output_Aside(f);
-                ++KEY, ++PARAM, ++ARG;  // with for included, skip past `var`
+            if (NOT_PARAM_FLAG(PARAM, WANT_PACKS)) {
+                if (VAL_PARAM_CLASS(PARAM) == PARAM_CLASS_META) {
+                    if (Is_Meta_Of_Pack(ARG)) {
+                        Meta_Unquotify(ARG);
+                        Decay_If_Isotope(ARG);
+                        Meta_Quotify(ARG);
+                    }
+                }
+                else if (Is_Pack(ARG))
+                    Decay_If_Isotope(ARG);
             }
 
             goto continue_fulfilling;
@@ -280,11 +271,6 @@ Bounce Action_Executor(Frame(*) f)
         //
         if (Is_Specialized(PARAM)) {  // specialized includes local
             Copy_Cell(ARG, PARAM);
-            if (Get_Cell_Flag(PARAM, PARAM_NOTE_SPECIALIZED_OUTPUT)) {
-                Bump_Specialized_Output_Aside(f);
-                ++KEY, ++PARAM, ++ARG;  // with for included, skip past `var`
-            }
-
             goto continue_fulfilling;
         }
 
@@ -360,7 +346,7 @@ Bounce Action_Executor(Frame(*) f)
 
         // The return function is filled in by the dispatchers that provide it.
 
-        if (pclass == PARAM_CLASS_RETURN) {
+        if (pclass == PARAM_CLASS_RETURN or pclass == PARAM_CLASS_OUTPUT) {
             assert(STATE != ST_ACTION_DOING_PICKUPS);
             Finalize_Void(ARG);
             goto continue_fulfilling;
@@ -427,11 +413,6 @@ Bounce Action_Executor(Frame(*) f)
                 Init_Varargs_Untyped_Enfix(ARG, OUT);
             }
             else switch (pclass) {
-              case PARAM_CLASS_OUTPUT:
-                assert(!"PARAM_CLASS_OUTPUT being set via NEXT_ARG_FROM_OUT");
-                goto normal_from_out;  // this had handling here, why?
-
-            normal_from_out:
               case PARAM_CLASS_NORMAL:
                 Copy_Cell(ARG, OUT);
                 if (Get_Cell_Flag(OUT, UNEVALUATED))
@@ -439,7 +420,10 @@ Bounce Action_Executor(Frame(*) f)
                 break;
 
               case PARAM_CLASS_META: {
-                Meta_Quotify(Copy_Cell(ARG, OUT));
+                Copy_Cell(ARG, OUT);
+                if (Is_Pack(ARG) and NOT_PARAM_FLAG(PARAM, WANT_PACKS))
+                    Decay_If_Isotope(ARG);
+                Meta_Quotify(ARG);
                 if (Get_Cell_Flag(OUT, UNEVALUATED))
                     Set_Cell_Flag(ARG, UNEVALUATED);
                 break; }
@@ -881,36 +865,23 @@ Bounce Action_Executor(Frame(*) f)
         if (Is_Specialized(PARAM))  // checked when specialized, see [1]
             continue;
 
-        if (VAL_PARAM_CLASS(PARAM) == PARAM_CLASS_RETURN) {
+        if (
+            VAL_PARAM_CLASS(PARAM) == PARAM_CLASS_RETURN
+            or VAL_PARAM_CLASS(PARAM) == PARAM_CLASS_OUTPUT
+        ){
             assert(Is_Void(ARG));
             continue;  // typeset is its legal return types, wants to be unset
         }
 
-        if (VAL_PARAM_CLASS(PARAM) == PARAM_CLASS_OUTPUT) {
-            Value(*) var = ARG + 1;
-            if (Is_Void(var)) {  // no variable proxied in, can accept one here
-                if (Is_Void(ARG)) {
-                    // leave alone
+        if (NOT_PARAM_FLAG(PARAM, WANT_PACKS)) {
+            if (VAL_PARAM_CLASS(PARAM) == PARAM_CLASS_META) {
+                if (HEART_BYTE(ARG) == REB_BLOCK and QUOTE_BYTE(ARG) == REB_QUASI) {
+                    Meta_Unquotify(ARG);
+                    Decay_If_Isotope(ARG);
                 }
-                else if (VAL_TYPE_UNCHECKED(ARG) == REB_NULL) {
-                    RESET(ARG);  // Can we avoid NULL happening?
-                }
-                else
-                    Bump_Specialized_Output_Aside(f);
             }
-            else {  // variable already proxied in
-                assert(
-                    IS_BLANK(var) or Is_Blackhole(var)
-                    or IS_WORD(var) or IS_TUPLE(var)
-                    or IS_META_WORD(var) or IS_META_TUPLE(var)
-                );
-
-                if (not Is_Void(ARG))
-                    fail ("Frame filled with variable in spoken-for output");
-            }
-            assert(not Is_Nulled(var));
-            ++KEY, ++PARAM, ++ARG;  // with for included, skip past `var`
-            continue;
+            else
+                Decay_If_Isotope(ARG);
         }
 
         if (Is_Void(ARG)) {  // e.g. (~) isotope, unspecialized, see [2]
@@ -940,12 +911,6 @@ Bounce Action_Executor(Frame(*) f)
         }
 
         if (Is_Isotope(ARG)) {
-            if (Is_Blank_Isotope(ARG)) {
-                Init_Nulled(ARG);
-                if (not TYPE_CHECK(PARAM, REB_NULL))
-                    fail (Error_Arg_Type(f, KEY, REB_NULL));
-                continue;
-            }
             if (GET_PARAM_FLAG(PARAM, ISOTOPES_OKAY))
                 continue;
             fail (Error_Isotope_Arg(f, PARAM));

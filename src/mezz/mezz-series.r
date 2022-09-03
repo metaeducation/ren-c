@@ -117,10 +117,9 @@ replace: function [
 
     pos: target
 
-    while [pos: apply :find [
+    while [[pos tail]: apply :find [
         pos
         unmeta pattern'
-        /tail 'tail
         /case case_REPLACE
     ]][
         all [quoted? replacement', action? unmeta replacement'] then [

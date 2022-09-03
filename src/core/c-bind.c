@@ -608,6 +608,9 @@ DECLARE_NATIVE(let)
     if (Is_Stale(OUT))
         return VOID;
 
+    if (Is_Pack(OUT))
+        Decay_If_Isotope(OUT);
+
     return OUT;
 }}
 

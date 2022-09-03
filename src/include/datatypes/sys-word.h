@@ -201,3 +201,32 @@ inline static Value(*) Isotopify_If_Falsey(Value(*) v) {
         Init_Word_Isotope(v, Canon(FALSE));
     return v;
 }
+
+
+#define Init_None_Untracked(out) \
+    Init_Any_Word_Untracked((out), REB_WORD, Canon(NONE), ISOTOPE_0)
+
+#define Init_None(out) \
+    TRACK(Init_None_Untracked(out))
+
+#define Init_Meta_Of_None(out) \
+    TRACK(Init_Any_Word_Untracked((out), REB_WORD, Canon(NONE), QUASI_2))
+
+#define Is_None(v) \
+    Is_Word_Isotope_With_Id((v), SYM_NONE)
+
+inline static bool Is_Meta_Of_None(Cell(const*) v) {
+    if (QUOTE_BYTE(v) != QUASI_2 or HEART_BYTE(v) != REB_WORD)
+        return false;
+    return VAL_WORD_ID(v) == SYM_NONE;
+}
+
+inline static Bounce Native_None_Result_Untracked(
+    Value(*) out,  // have to pass; comma at callsite -> "operand has no effect"
+    Frame(*) frame_
+){
+    assert(out == frame_->out);
+    UNUSED(out);
+    assert(not THROWING);
+    return Init_None_Untracked(frame_->out);
+}

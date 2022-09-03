@@ -270,10 +270,10 @@ load: func [
 
     if word? header [cause-error 'syntax header source]
 
-    ensure [object!] header: default [make object! []]
+    ensure [<opt> object!] header
     ensure [binary! block! text!] data
 
-    ; Convert code to block, insert header if requested
+    ; Convert code to block
 
     if not block? data [
         assert [match [binary! text!] data]  ; UTF-8
@@ -284,13 +284,13 @@ load: func [
 
     all [
         'unbound != type
-        'module != select header 'type
-        not find maybe (select header 'options) [unbound]
+        'module != select maybe header 'type
+        not find maybe (select maybe header 'options) [unbound]
     ] then [
         data: intern* system.contexts.user data
     ]
 
-    return :data
+    return data
 ]
 
 load-value: redescribe [
@@ -613,7 +613,7 @@ import*: func [
     ; from the unfinished R3-Alpha module system, and its decade of atrophy
     ; that happened after that...
 
-    let [mod 'product quitting]: module/into/file/line hdr code into file line
+    let [mod '^product quitting]: module/into/file/line hdr code into file line
 
     ensure module! mod
 
@@ -631,8 +631,10 @@ import*: func [
     === PROPAGATE QUIT IF REQUESTED, OR RETURN MODULE ===
 
     if quitting and only [
-        quit get/any 'product  ; "rethrow" the QUIT if DO/ONLY
+        quit unget product  ; "rethrow" the QUIT if DO/ONLY
     ]
+
+    set/any 'product unget product
 
     return mod
 ]

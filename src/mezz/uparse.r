@@ -127,13 +127,13 @@ combinator: func [
             if state.verbose [
                 print ["RESULT':" (mold result' else ["NULL"])]
             ]
-            all [  ; success, so mark state.furthest
-                state.furthest
-                (index? f.remainder) > (index? state.furthest)
-            ] then [
-                state.furthest: f.remainder
-            ]
-            return unmeta result'
+            ;all [  ; success, so mark state.furthest
+            ;    state.furthest
+            ;    (index? f.remainder) > (index? state.furthest)
+            ;] then [
+            ;    state.furthest: f.remainder
+            ;]
+            return/forward unmeta result'
         ]
     )
 ][
@@ -202,18 +202,31 @@ combinator: func [
                     ;
                     f.(key): enclose (augment :val [/modded]) func [
                         f2
-                        <local> result' subpending
+                        <local> result' remainder subpending
                     ][
-                        f2.pending: 'subpending
-                        result': ^ eval f2 except e -> [return raise e]
+                        [^result' remainder subpending]: eval f2 except e -> [
+                            return raise e
+                        ]
                         pending: glom pending spread subpending
-                        return unmeta result'
+                        return/forward pack [
+                            ;
+                            ; !!! pack wants to preserve invisibility but this
+                            ; wrecks commas.  should there be "comma isotopes?"
+                            ;
+                            (unmeta result') remainder subpending
+                        ]
                     ]
                 ]
             ]
         ])
 
-        return (as group! body)
+        ; Default to forwarding return.  This can be stopped by using any
+        ; operation that filters out block isotopes (packs)... just don't
+        ; return one of those and no multireturn forwarding will happen.
+        ;
+        return: :return/forward
+
+        (as group! body)
 
         ; If the body does not return and falls through here, the function
         ; will fail as it has a RETURN: that needs to be used to type check
@@ -722,20 +735,20 @@ default-combinators: make map! reduce [
         parser-right [action!]
         <local> start limit
     ][
-        [^ start]: parser-left input except e -> [
+        [^ start]: (parser-left input) except e -> [
             return raise e
         ]
 
         limit: start
         cycle [
-            [^ remainder]: parser-right limit then [  ; found it
-                return copy/part start limit
-            ] except e -> [
+            [^ remainder]: (parser-right limit) except e -> [
                 if tail? limit [  ; remainder of null
                     return raise e
                 ]
                 limit: next limit
+                continue  ; don't try to assign the `[^ remainder]:`
             ]
+            return copy/part start limit
         ]
         fail ~unreachable~
     ]
@@ -981,6 +994,11 @@ default-combinators: make map! reduce [
         [^result' remainder subpending]: parser input except e -> [
             return raise e
         ]
+        if pack? unget result' [  ; KEEP picks first pack item
+            result': (first unquasi result') else [  ; empty pack, ~[]~
+                fail "Can't KEEP NULL"
+            ]
+        ]
         if void? unget result' [
             pending: _
             return void
@@ -1174,10 +1192,9 @@ default-combinators: make map! reduce [
             ; no isolated value to capture.  Should we copy it?
 
             any-string? input [
-                apply :find [
+                [_ remainder]: apply :find [
                     input value
                     /match true
-                    /tail 'remainder
                     /case state.case
                 ] else [
                     return raise "String at parse position does not match TEXT!"
@@ -1185,10 +1202,9 @@ default-combinators: make map! reduce [
             ]
             true [
                 assert [binary? input]
-                apply :find [
+                [_ remainder]: apply :find [
                     input value
                     /match true
-                    /tail 'remainder
                     /case state.case
                 ] else [
                     return raise "Binary at parse position does not match TEXT!"
@@ -2249,7 +2265,7 @@ default-combinators: make map! reduce [
         /limit "Limit of how far to consider (used by ... recursion)"
             [block!]
         /thru "Keep trying rule until end of block"
-        <local> rules pos result' f sublimit totalpending subpending
+        <local> rules pos result' f sublimit totalpending subpending temp
     ][
         rules: value  ; alias for clarity
         limit: default [tail of rules]
@@ -2342,14 +2358,9 @@ default-combinators: make map! reduce [
             ]
 
             f.input: pos
-            f.remainder: 'pos
-            f.pending: 'subpending
 
-            ; Note: This can't be `eval f then ^temp -> [...]` because the
-            ; maybe expression can vanish.
-            ;
-            let temp: ^ eval f
-            if not raised? unget temp [
+            if not error? temp: entrap f [
+                [^temp pos subpending]: unmeta temp
                 if unset? 'pos [
                     print mold/limit rules 200
                     fail "Combinator did not set remainder"
@@ -2786,9 +2797,7 @@ parse*: func [
     {Process as much of the input as parse rules consume (see also PARSE)}
 
     return: "Synthesized value from last match rule, or NULL if rules failed"
-        [<opt> any-value!]
-    @furthest "Furthest input point reached by the parse"
-        [any-series!]
+        [<opt> <void> any-value!]
     input "Input data"
         [<maybe> any-series! url! any-sequence!]
     rules "Block of parse rules"
@@ -2797,13 +2806,12 @@ parse*: func [
     /combinators "List of keyword and datatype handlers used for this parse"
         [map!]
     /case "Do case-sensitive matching"
-    /fully "Return NULL if the end of series is not reached"
     /part "FAKE /PART FEATURE - runs on a copy of the series!"
         [integer! any-series!]
 
     /verbose "Print some additional debug information"
 
-    <local> loops synthesized'
+    <local> loops furthest synthesized' remainder pending
 ][
     ; PATH!s, TUPLE!s, and URL!s are read only and don't have indices.  But we
     ; want to be able to parse them, so make them read-only series aliases:
@@ -2852,18 +2860,11 @@ parse*: func [
     f.state: state
     f.input: input
     f.value: rules
-    f.remainder: let pos
 
-    ; !!! When we get to the end here, success is kind of the only moment when
-    ; we can know it's okay to run the "only if this completely succeeds" stuff
-    ; if there's not some other checkpoint.
-    ;
-    f.pending: let subpending
-
-    trap [
-        synthesized': ^ eval f except [
+    sys.util.rescue [
+        [^synthesized' remainder pending]: eval f except e -> [
             assert [empty? state.loops]
-            return null  ; match failure (vs. success, w/null result)
+            return raise e  ; wrappers catch
         ]
     ] then e -> [
         print "!!! HARD FAIL DURING PARSE !!!"
@@ -2876,25 +2877,29 @@ parse*: func [
     ; If you want to get the pending items, a <pop-pending> combinator could be
     ; used to do that.
     ;
-    all [subpending, not empty? subpending] then [
+    if not empty? pending [
         fail "Residual items accumulated in pending array"
     ]
 
-    all [fully, not tail? pos] then [
-        return null  ; full parse was requested but tail was not reached
+    if not tail? remainder [
+        return raise "Tail of input was not reached"
     ]
 
-    if void? unget synthesized' [  ; successful parse synthesized a void
-        return ~()~  ; empty splice triggers THEN, while still being voidlike
-    ]
-
-    return isotopify-if-falsey unmeta synthesized'
+    return/forward unget synthesized'
 ]
 
 parse: (comment [redescribe [  ; redescribe not working at the moment (?)
     {Process input in the parse dialect, must match to end (see also UPARSE*)}
 ] ]
-    :parse*/fully
+    enclose :parse* func [f <local> synthesized'] [
+        [^synthesized']: do f except [
+            return null
+        ]
+        if void? unget synthesized' [  ; successful parse synthesized a void
+            return ~()~  ; empty splice runs THEN while still being voidlike
+        ]
+        return isotopify-if-falsey unmeta synthesized'
+    ]
 )
 
 sys.util.parse: :parse  ; !!! expose UPARSE to SYS.UTIL module, hack...
@@ -2913,7 +2918,7 @@ match-parse: (comment [redescribe [  ; redescribe not working at the moment (?)
     ; But if someone changed the meaning of <input> with different /COMBINATORS
     ; that would not work.  This method will work regardless.
     ;
-    enclose :parse*/fully func [f [frame!]] [
+    enclose :parse* func [f [frame!]] [
         let input: f.input  ; DO FRAME! invalidates args; cache for returning
 
         return all [^ eval f, input]

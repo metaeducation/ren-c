@@ -219,7 +219,7 @@ emit: func [
         ]
         else [
             let result
-            if [^result' @code]: evaluate/next code [
+            if ([^result']: evaluate/next code 'code, code) [
                 if void? unget result' [continue]  ; invisible
                 append ctx.msg ensure binary! unget result'
             ]

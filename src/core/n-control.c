@@ -283,7 +283,7 @@ DECLARE_NATIVE(didnt)
 //      return: "null if input is null, or branch result"
 //          [<opt> <void> any-value!]
 //      ^optional "<deferred argument> Run branch if this is not null"
-//          [<opt> <void> <fail> any-value!]
+//          [<opt> <void> <fail> <pack> any-value!]
 //      :branch "If arity-1 ACTION!, receives value that triggered branch"
 //          [any-branch!]
 //      /decay "Pre-decay ~_~ isotope input to NULL"
@@ -299,10 +299,20 @@ DECLARE_NATIVE(then)  // see `tweak :then 'defer on` in %base-defs.r
     Value(*) in = ARG(optional);
     Value(*) branch = ARG(branch);
 
+    Cell(const*) test_meta;
+    if (Is_Meta_Of_Pack(in)) {
+        Cell(const*) pack_meta_tail;
+        test_meta = VAL_ARRAY_AT(&pack_meta_tail, in);
+        if (test_meta == pack_meta_tail)
+            fail ("THEN and ELSE don't know what to do with ~[]~ packs");
+    }
+    else
+        test_meta = in;
+
     if (
-        Is_Meta_Of_Void(in)  // meta parameter, e.g. input was true void
-        or Is_Meta_Of_Null(in)  // soft failure signal
-        or (REF(decay) and Is_Meta_Of_Blank_Isotope(in))  // null isotope
+        Is_Meta_Of_Void(test_meta)  // meta parameter, e.g. input was true void
+        or Is_Meta_Of_Null(test_meta)  // soft failure signal
+        or (REF(decay) and Is_Meta_Of_Blank_Isotope(test_meta))  // null isotope
     ){
         return VOID;
     }
@@ -382,7 +392,7 @@ DECLARE_NATIVE(also)  // see `tweak :also 'defer on` in %base-defs.r
 //      return: "Input value if not null, or branch result"
 //          [<opt> <void> any-value!]
 //      ^optional "<deferred argument> Run branch if this is null"
-//          [<opt> <void> <fail> any-value!]
+//          [<opt> <void> <fail> <pack> any-value!]
 //      :branch [any-branch!]
 //      /decay "Pre-decay ~_~ isotope input to NULL"
 //  ]
@@ -417,16 +427,26 @@ DECLARE_NATIVE(else)  // see `tweak :else 'defer on` in %base-defs.r
     Value(*) in = ARG(optional);
     Value(*) branch = ARG(branch);
 
-    if (Is_Meta_Of_Void(in)) {  // isotope, must be tested first
+    Cell(const*) test_meta;
+    if (Is_Meta_Of_Pack(in)) {
+        Cell(const*) pack_meta_tail;
+        test_meta = VAL_ARRAY_AT(&pack_meta_tail, in);
+        if (test_meta == pack_meta_tail)
+            fail ("THEN and ELSE don't know what to do with ~[]~ packs");
+    }
+    else
+        test_meta = in;
+
+    if (Is_Meta_Of_Void(test_meta)) {  // isotope, must be tested first
         assert(Is_Void(SPARE));  // branch argument is SPARE for void, see [2]
     }
-    else if (Is_Meta_Of_Null(in)) {
+    else if (Is_Meta_Of_Null(test_meta)) {
         Init_Nulled(SPARE);
     }
-    else if (REF(decay) and Is_Meta_Of_Blank_Isotope(in)) {
+    else if (REF(decay) and Is_Meta_Of_Blank_Isotope(test_meta)) {
         Init_Blank_Isotope(SPARE);  // action branch decays if non-meta, see [3]
     }
-    else if (Is_Meta_Of_Raised(in)) {  // definitional failure, skip
+    else if (Is_Meta_Of_Raised(test_meta)) {  // definitional failure, skip
         Copy_Cell(OUT, in);
         return Raisify(Unquasify(OUT));  // Meta_Unquotify() won't pass on ATM
     }
@@ -1371,9 +1391,8 @@ DECLARE_NATIVE(catch)
 
     if (not THROWING) {
         Copy_Cell(ARG(result), OUT);
-        Proxy_Multi_Returns(frame_);
-
-        return nullptr;  // no throw means just return null
+        Init_Nulled(OUT); // no throw means just return null
+        return Proxy_Multi_Returns(frame_);
     }
 
     const REBVAL *label = VAL_THROWN_LABEL(FRAME);

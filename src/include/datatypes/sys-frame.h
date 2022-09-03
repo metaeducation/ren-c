@@ -616,6 +616,10 @@ inline static Frame(*) Prep_Frame_Core(
     #define BASELINE   (&frame_->baseline)
 #endif
 
+#define Proxy_Multi_Returns(f) \
+    Proxy_Multi_Returns_Core((f), frame_->out)
+
+
 
 // !!! Numbered arguments got more complicated with the idea of moving the
 // definitional returns into the first slot (if applicable).  This makes it
@@ -803,16 +807,15 @@ inline static bool Pushed_Continuation(
             if (not arg)
                 break;
 
+            Copy_Cell(arg, unwrap(with));  // do not decay, see [4]
+
+            if (NOT_PARAM_FLAG(param, WANT_PACKS))
+                Decay_If_Isotope(arg);
+
             if (VAL_PARAM_CLASS(param) == PARAM_CLASS_META) {
-                Copy_Cell(arg, unwrap(with));  // do not decay, see [4]
                 Meta_Quotify(arg);
                 break;
             }
-
-            Copy_Cell(
-                arg,
-                Pointer_To_Decayed(unwrap(with))  // normal decay, see [4]
-            );
 
             if (Is_Isotope(arg))
                 fail ("Can't pass isotope to non-META parameter");

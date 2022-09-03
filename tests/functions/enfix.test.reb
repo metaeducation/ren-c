@@ -215,14 +215,14 @@
         foo: func [] [
             fail "foo should not run, it's prefix and runs on *next* step"]
         did all [
-            [foo 304] == [var @]: evaluate/next [1020 foo 304]
-            var == 1020
+            1020 == evaluate/next [1020 foo 304] 'pos`
+            pos == [foo 304]
         ]
     )(
         enfoo: enfixed func [] [return <enfoo>]
         did all [
-            [304] == [var @]: evaluate/next [1020 enfoo 304]
-            var == <enfoo>
+            <enfoo> == evaluate/next [1020 enfoo 304] 'pos
+            pos = [304]
         ]
         comment "0-arity function, but enfixed so runs in *same* step"
     )
@@ -257,7 +257,8 @@
                 return #ignored
             ]
             did all [
-                [enifoo 304] == [var @]: evaluate/next [ignored enifoo 304]
+                var: evaluate/next [ignored enifoo 304] 'pos
+                pos = [enifoo 304]
                 var == #ignored
                 null? ignored
             ]
@@ -266,7 +267,8 @@
         enifoo: enfixed lambda ['i [<skip> integer!]] [compose '<enifoo>/(i)]
         did all [
             did all [
-                [304] == [var @]: evaluate/next [1020 enifoo 304]
+                var: evaluate/next [1020 enifoo 304] 'pos
+                pos = [304]
                 var == '<enifoo>/1020
             ]
             comment {
@@ -279,7 +281,8 @@
     (
         bar: func [return: <void>] [bar: _]
         did all [
-            [bar 304] == [var @]: evaluate/next [1020 bar 304]
+            var: evaluate/next [1020 bar 304] 'pos
+            pos = [bar 304]
             var == 1020
             action? :bar
         ]
@@ -287,7 +290,8 @@
     )(
         enbar: enfixed func [left] [enbar: _, return left]
         did all [
-            [304] == [var @]: evaluate/next [1020 enbar 304]
+            var: evaluate/next [1020 enbar 304] 'pos
+            pos = [304]
             var == 1020
             null? enbar
         ]
@@ -302,7 +306,8 @@
                 return #ignored
             ]
             did all [
-                [ibar 304] == [var @]: evaluate/next [ignored ibar 304]
+                var: evaluate/next [ignored ibar 304] 'pos
+                pos = [ibar 304]
                 var == #ignored
                 null? ignored
             ]
@@ -323,7 +328,8 @@
                 return #kept
             ]
             did all [
-                [enibar 304] == [var @]: evaluate/next [kept enibar 304]
+                var: evaluate/next [kept enibar 304]
+                pos = [enibar 304]
                 var == #kept
                 null? kept
             ]
@@ -335,7 +341,8 @@
         ]
         did all [
             did all [
-                [304] == [var @]: evaluate/next [1020 enibar 304]
+                var: evaluate/next [1020 enibar 304]
+                pos = [304]
                 var == 1020
                 null? enibar
             ]

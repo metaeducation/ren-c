@@ -482,7 +482,8 @@ void RunPromise(void)
             // But what if it doesn't pay attention to it and release it?
             // It could cause leaks.
             //
-            REBVAL *result = rebValue("unmeta @", rebR(metaresult));
+            REBVAL *result = rebValue("unmeta", rebQ(metaresult));
+            rebRelease(metaresult);
             rebUnmanage(result);
 
             EM_ASM(

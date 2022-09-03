@@ -234,7 +234,7 @@
     success
 )
 (
-    [value b]: evaluate/next [1 2]
+    value: evaluate [1 2] 'b
     did all [
         1 = value
         [2] = b
@@ -248,7 +248,7 @@
     ]
 )
 (
-    [value #]: evaluate/next [trap [1 / 0]]
+    value: evaluate/next [trap [1 / 0]]
     error? value
 )
 (

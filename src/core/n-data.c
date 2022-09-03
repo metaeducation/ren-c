@@ -642,6 +642,7 @@ bool Get_Var_Push_Refinements_Throws(
                     return true;
                 }
                 Move_Cell(PUSH(), out);
+                Decay_If_Isotope(TOP);
 
                 // By convention, picker steps quote the first item if it was a
                 // GROUP!.  It has to be somehow different because `('a).b` is
@@ -941,7 +942,7 @@ bool Get_Path_Push_Refinements_Throws(
             if (Is_Void(temp))
                 continue;  // just skip it (voids are ignored, NULLs error)
 
-            at = Pointer_To_Decayed(temp);
+            at = Decay_If_Isotope(temp);
             if (Is_Isotope(at))
                 fail (Error_Bad_Isotope(at));
         }
@@ -1005,12 +1006,10 @@ DECLARE_NATIVE(get)
         if (Is_Isotope(SPARE))
             fail (Error_Bad_Word_Get(source, SPARE));
 
-    Proxy_Multi_Returns(frame_);
+    if (not Is_Void(SPARE))
+        Copy_Cell(OUT, SPARE);
 
-    if (Is_Void(SPARE))
-        return VOID;
-
-    return COPY(SPARE);
+    return Proxy_Multi_Returns(frame_);
 }
 
 
@@ -1050,6 +1049,10 @@ bool Set_Var_Core_Updater_Throws(
     const REBVAL *setval,  // e.g. f->out (in the evaluator, right hand side)
     const REBVAL *updater
 ){
+    assert(not Is_Blank_Isotope(setval));
+    assert(not Is_Pack(setval));
+    assert(not Is_Raised(setval));
+
     // Note: `steps_out` can be equal to `out` can be equal to `target`
 
     DECLARE_LOCAL (temp);  // target might be same as out (e.g. spare)
@@ -1072,12 +1075,6 @@ bool Set_Var_Core_Updater_Throws(
         return false;
     }
 
-    // !!! Review decaying strategy--it seems that we should assert the caller
-    // has already decayed it to avoid doing it twice, or paying for it when
-    // the caller knows they don't have a decaying isotope.
-    //
-    const REBVAL *decayed = Pointer_To_Decayed(setval);
-
     if (ANY_WORD(var)) {
 
       set_target:
@@ -1087,7 +1084,7 @@ bool Set_Var_Core_Updater_Throws(
             // Shortcut past POKE for WORD! (though this subverts hijacking,
             // review that case.)
             //
-            Copy_Cell(Sink_Word_May_Fail(var, var_specifier), decayed);
+            Copy_Cell(Sink_Word_May_Fail(var, var_specifier), setval);
         }
         else {
             // !!! This is a hack to try and get things working for PROTECT*.
@@ -1099,7 +1096,7 @@ bool Set_Var_Core_Updater_Throws(
             PUSH_GC_GUARD(temp);
             if (rebRunThrows(
                 out,  // <-- output cell
-                updater, "binding of", temp, temp, rebQ(decayed)
+                updater, "binding of", temp, temp, rebQ(setval)
             )){
                 DROP_GC_GUARD(temp);
                 fail (Error_No_Catch_For_Throw(TOP_FRAME));
@@ -1250,7 +1247,7 @@ bool Set_Var_Core_Updater_Throws(
     const void *ins = rebQ(cast(REBVAL*, Data_Stack_At(stackindex)));
     if (rebRunThrows(
         out,  // <-- output cell
-        updater, temp, ins, rebQ(decayed)
+        updater, temp, ins, rebQ(setval)
     )){
         DROP_GC_GUARD(temp);
         DROP_GC_GUARD(writeback);
@@ -1263,7 +1260,7 @@ bool Set_Var_Core_Updater_Throws(
 
     if (not Is_Nulled(out)) {
         Move_Cell(writeback, out);
-        decayed = writeback;  // e.g. decayed setval
+        setval = writeback;
 
         --stackindex_top;
 
@@ -1276,7 +1273,7 @@ bool Set_Var_Core_Updater_Throws(
 
         Copy_Cell(
             Sink_Word_May_Fail(Data_Stack_At(base + 1), SPECIFIED),
-            decayed
+            setval
         );
     }
   }
@@ -1381,8 +1378,10 @@ DECLARE_NATIVE(set)
         RESET(v);  // (x: void) is legal, so is (set 'x void)
     else {
         Meta_Unquotify(v);
+        if (Is_Blank_Isotope(v))
+            Init_Nulled(v);
 
-        if (not REF(any) and Is_Isotope(v) and Pointer_To_Decayed(v) == v)
+        if (not REF(any) and Is_Isotope(v))
             fail ("Use SET/ANY to set variables to an isotope");
     }
 
@@ -1391,11 +1390,10 @@ DECLARE_NATIVE(set)
         return THROWN;
     }
 
-    Proxy_Multi_Returns(frame_);
-    if (Is_Void(v))
-        return VOID;
+    if (not Is_Void(v))
+        Copy_Cell(OUT, v);  // result does not decay, see [2]
 
-    return COPY(v);  // result does not decay, see [2]
+    return Proxy_Multi_Returns(frame_);
 }
 
 

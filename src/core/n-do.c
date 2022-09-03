@@ -409,8 +409,6 @@ DECLARE_NATIVE(do)
 //
 //      return: "Value from the step"
 //          [<opt> <void> any-value!]
-//      @rest "Next expression position in block"
-//          [any-array! varargs!]
 //      source [
 //          <maybe>  ; useful for `evaluate try ...` scenarios when no match
 //          any-array!  ; source code in block form
@@ -419,11 +417,20 @@ DECLARE_NATIVE(do)
 //          varargs!  ; simulates as if frame! or block! is being executed
 //      ]
 //      /next "Do one step of evaluation"
+//          [word! tuple!]  ; !!! does not use multi-return, see 1
 //  ]
 //
 DECLARE_NATIVE(evaluate)
 //
-// 1. We want EVALUATE to treat all ANY-ARRAY! the same.  (e.g. a ^[1 + 2] just
+// 1. Having a function like EVALUATE itself be multi-return is a pain, as
+//    it is trying to return a result that can itself be a multi-return.
+//    This is the nature of anything that does proxying.  It's *technically*
+//    possible for a caller to pick parameter packs out of parameter packs,
+//    but inconvenient.  Especially considering that stepwise evaluation is
+//    going to be done on some kind of "evaluator state"--not just a block,
+//    that state should be updated.
+//
+// 2. We want EVALUATE to treat all ANY-ARRAY! the same.  (e.g. a ^[1 + 2] just
 //    does the same thing as [1 + 2] and gives 3, not '3)  Rather than mutate
 //    the cell to plain BLOCK! and pass it to CONTINUE_CORE(), we initialize
 //    a feed from the array directly.
@@ -442,7 +449,7 @@ DECLARE_NATIVE(evaluate)
 {
     INCLUDE_PARAMS_OF_EVALUATE;
 
-    REBVAL *rest = ARG(rest);
+    REBVAL *rest_var = ARG(next);
     REBVAL *source = ARG(source);  // may be only GC reference, don't lose it!
 
     enum {
@@ -470,14 +477,13 @@ DECLARE_NATIVE(evaluate)
 
     if (ANY_ARRAY(source)) {
         if (VAL_LEN_AT(source) == 0) {  // `evaluate []` is invisible intent
-            if (REF(next)) {
-                Init_Nulled(rest);
-                Proxy_Multi_Returns(frame_);
-            }
-            return VOID;
+            if (REF(next))
+                rebElide(Canon(SET), rebQ(rest_var), nullptr);
+
+            return Proxy_Multi_Returns(frame_);
         }
 
-        Feed(*) feed = Make_At_Feed_Core(  // use feed, see [1]
+        Feed(*) feed = Make_At_Feed_Core(  // use feed, see [2]
             source,
             SPECIFIED
         );
@@ -572,32 +578,26 @@ DECLARE_NATIVE(evaluate)
         fail (PARAM(source));
     }
 
-    if (REF(next)) {
-        Copy_Cell(rest, source);
-        Proxy_Multi_Returns(frame_);
-    }
+    if (REF(next))
+        rebElide(Canon(SET), rebQ(rest_var), source);
 
     if (Is_Void(SPARE))
         return VOID;
-
-    return SPARE;
+    return COPY(SPARE);
 
 } single_step_result_in_out: {  //////////////////////////////////////////////
 
-    VAL_INDEX_UNBOUNDED(source) = FRM_INDEX(SUBFRAME);  // new index
-    if (REF(next)) {
-        Copy_Cell(rest, source);
-        Proxy_Multi_Returns(frame_);
-    }
-
     REBSPC *specifier = FRM_SPECIFIER(SUBFRAME);
+    VAL_INDEX_UNBOUNDED(source) = FRM_INDEX(SUBFRAME);  // new index
+    Drop_Frame(SUBFRAME);
+
     INIT_BINDING_MAY_MANAGE(source, specifier);  // integrate LETs, see [6]
 
-    Drop_Frame(SUBFRAME);
+    if (REF(next))
+        rebElide(Canon(SET), rebQ(rest_var), source);
 
     if (Is_Stale(OUT))
         return VOID;
-
     return OUT;
 }}
 
@@ -754,7 +754,7 @@ DECLARE_NATIVE(applique)
 //
 //  {Invoke an ACTION! with all required arguments specified}
 //
-//      return: [<opt> any-value!]
+//      return: [<opt> <void> any-value!]
 //      action [action!]
 //      args "Arguments and Refinements, e.g. [arg1 arg2 /ref refine1]"
 //          [block!]

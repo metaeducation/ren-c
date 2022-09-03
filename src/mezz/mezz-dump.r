@@ -46,7 +46,7 @@ dump: function [
         ] else [
             trunc: ~
             append (
-                mold/limit/truncated :val system.options.dump-size 'trunc
+                [@ trunc]: mold/limit :val system.options.dump-size
             ) if trunc ["..."]
         ]
     ]
@@ -57,7 +57,7 @@ dump: function [
             text! [  ; good for longer labeling when you need spaces/etc.
                 print unspaced [
                     elide trunc: ~
-                    mold/limit/truncated item system.options.dump-size 'trunc
+                    [@ trunc]: mold/limit item system.options.dump-size
                     if trunc ["..."]
                 ]
             ]

@@ -203,8 +203,9 @@ export emit-include-params-macro: function [
             n: n + 1
 
             if output-param? item [
-                keep cscape/with {/* dummy output var slot $<n>) */} [n]
-                n: n + 1  ; skip slot where outputs stow their variables
+                ;
+                ; Used to be special handling here...but that's not needed
+                ; currently.  What might be done?
             ]
         ]
     ]

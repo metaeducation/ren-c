@@ -944,8 +944,11 @@ REBTYPE(String)
             &len, v, tail, ARG(pattern), flags, skip
         );
 
-        if (find == NOT_FOUND)
-            return nullptr;
+        if (find == NOT_FOUND) {
+            Init_Nulled(OUT);
+            Init_Nulled(ARG(tail));
+            return Proxy_Multi_Returns(frame_);
+        }
 
         REBLEN ret = cast(REBLEN, find);
         assert(ret <= cast(REBLEN, tail));
@@ -958,14 +961,13 @@ REBTYPE(String)
                 VAL_SERIES(v),
                 ret + len
             );
-            Proxy_Multi_Returns(frame_);
-
-            return Init_Series_Cell_At(
+            Init_Series_Cell_At(
                 OUT,
                 VAL_TYPE(v),
                 VAL_SERIES(v),
                 ret
             );
+            return Proxy_Multi_Returns(frame_);
         }
 
         assert(id == SYM_SELECT);

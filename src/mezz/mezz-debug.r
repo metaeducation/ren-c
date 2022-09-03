@@ -21,7 +21,7 @@ verify: function [
         [block! action!]
     <local> pos result'
 ][
-    while [[^result' @pos]: evaluate/next conditions] [
+    while [[^result']: evaluate/next conditions 'pos, pos] [
         any [
             void? unget result'  ; vanished
             non bad-word! result' then [to-logic unquote result']

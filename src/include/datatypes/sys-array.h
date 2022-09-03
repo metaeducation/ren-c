@@ -572,7 +572,14 @@ inline static bool Is_Any_Doubled_Group(noquote(Cell(const*)) group) {
 //=//// ISOTOPE STATES ////////////////////////////////////////////////////=//
 
 
-//=//// "NONE" ISOTOPE (Empty BLOCK! Isotope) /////////////////////////////=//
+//=//// "PACKS" (BLOCK! Isotopes) /////////////////////////////////////////=//
+//
+// BLOCK! isotopes are exploited as a mechanism for bundling values in a way
+// that they can be passed around as a single value.  They are leveraged in
+// particular for multi-return.
+//
+// An empty "pack" of a ~[]~ isotope is given the special name of "NONE" and
+// is the return result of functions that have no interesting return value.
 //
 // This is the default RETURN for when you just write something like
 // `func [return: <none>] [...]`.  It represents the intention of not having a
@@ -587,34 +594,29 @@ inline static bool Is_Any_Doubled_Group(noquote(Cell(const*)) group) {
 // invisible and sometimes not.
 //
 
-inline static Value(*) Init_Empty_Pack_Untracked(
+inline static Value(*) Init_Pack_Untracked(
     Cell(*) out,
-    Byte quote_byte
+    Byte quote_byte,
+    Array(*) a
 ){
-    Init_Block(out, EMPTY_ARRAY);
+    Init_Block(out, a);
     mutable_QUOTE_BYTE(out) = quote_byte;
     return cast(Value(*), out);
 }
 
-#define Init_None_Untracked(out) \
-    Init_Empty_Pack_Untracked((ensure(Value(*), (out))), ISOTOPE_0)
+#define Init_Pack(out,a) \
+    TRACK(Init_Pack_Untracked((out), ISOTOPE_0, (a)))
 
-#define Init_None(out) \
-    TRACK(Init_None_Untracked(out))
-
-#define Init_Meta_Of_None(out) \
-    TRACK(Init_Empty_Pack_Untracked((out), QUASI_2))
-
-inline static bool Is_None(Value(const*) v) {
-    if (QUOTE_BYTE(v) != ISOTOPE_0 or HEART_BYTE(v) != REB_BLOCK)
-        return false;
-    return ARR_LEN(VAL_ARRAY(v)) == 0;
+inline static bool Is_Pack(Value(const*) v) {
+    if (QUOTE_BYTE(v) == ISOTOPE_0 and HEART_BYTE(v) == REB_BLOCK)
+        return true;  // breakpoint opportunity for pack debugging
+    return false;
 }
 
-inline static bool Is_Meta_Of_None(Cell(const*) v) {
-    if (QUOTE_BYTE(v) != QUASI_2 or HEART_BYTE(v) != REB_BLOCK)
-        return false;
-    return ARR_LEN(VAL_ARRAY(v)) == 0;
+inline static bool Is_Meta_Of_Pack(Value(const*) v) {
+    if (QUOTE_BYTE(v) == QUASI_2 and HEART_BYTE(v) == REB_BLOCK)
+        return true;  // breakpoint opportunity for pack debugging
+    return false;
 }
 
 

@@ -117,45 +117,6 @@ enum Reb_Spec_Mode {
 
 
 //
-//  Finalize_Param_Quad: C
-//
-void Finalize_Param_Quad(enum Reb_Symbol_Id* dummy_sym) {
-    if (Is_Void(PARAM_SLOT(TOP_INDEX)))
-        return;  // local (VAL_PARAM_CLASS() will fail)
-
-    assert(Not_Cell_Flag(PARAM_SLOT(TOP_INDEX), STACK_NOTE_SEALED));
-
-    switch (VAL_PARAM_CLASS(
-        cast(REBPAR*, cast(REBVAL*, PARAM_SLOT(TOP_INDEX)))
-    )){
-      // We get an extra slot in the paramlist for each output.  This way the
-      // frame has a cell to store a WORD!/TUPLE! in that it will write back
-      // to at the end of the function.
-      //
-      case PARAM_CLASS_OUTPUT: {
-        PUSH_SLOTS();
-
-        if (*dummy_sym == SYM_DUMMY9)
-            fail ("Current limit of 9 multi-return outs per func");
-
-        Init_Word(KEY_SLOT(TOP_INDEX), Canon_Symbol(*dummy_sym));
-        *dummy_sym = cast(enum Reb_Symbol_Id, cast(int, *dummy_sym) + 1);
-
-        Init_Nulled(TYPES_SLOT(TOP_INDEX));
-        Init_Nulled(NOTES_SLOT(TOP_INDEX));
-
-        StackValue(*) param = PARAM_SLOT(TOP_INDEX);
-        Finalize_Void(param);
-        Set_Cell_Flag(param, STACK_NOTE_SEALED);
-        break; }
-
-      default:
-        break;
-    }
-}
-
-
-//
 //  Push_Paramlist_Quads_May_Fail: C
 //
 // This is an implementation routine for Make_Paramlist_Managed_May_Fail().
@@ -173,10 +134,6 @@ void Push_Paramlist_Quads_May_Fail(
     enum Reb_Spec_Mode mode = SPEC_MODE_NORMAL;
 
     bool refinement_seen = false;
-
-    enum Reb_Symbol_Id dummy_sym = SYM_DUMMY1;
-
-    StackIndex base = TOP_INDEX;
 
     Cell(const*) tail;
     Cell(const*) value = VAL_ARRAY_AT(&tail, spec);
@@ -403,7 +360,7 @@ void Push_Paramlist_Quads_May_Fail(
                     }
 
                     refinement = true;  // sets PARAM_FLAG_REFINEMENT
-                    pclass = PARAM_CLASS_OUTPUT;  // Finalize adds local after
+                    pclass = PARAM_CLASS_OUTPUT;
                 }
             }
             else {
@@ -467,9 +424,6 @@ void Push_Paramlist_Quads_May_Fail(
 
         // Pushing description values for a new named element...
 
-        if (TOP_INDEX != base)
-            Finalize_Param_Quad(&dummy_sym);
-
         PUSH_SLOTS();
 
         Init_Word(KEY_SLOT(TOP_INDEX), symbol);
@@ -521,9 +475,6 @@ void Push_Paramlist_Quads_May_Fail(
             }
         }
     }
-
-    if (TOP_INDEX != base)
-        Finalize_Param_Quad(&dummy_sym);
 }
 
 

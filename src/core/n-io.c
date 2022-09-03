@@ -77,8 +77,10 @@ DECLARE_NATIVE(mold)
     REBVAL *v = ARG(value);
     if (Is_Void(v))
         return VOID;
-    if (Is_Nulled(v))
-        return nullptr;
+    if (Is_Nulled(v)) {
+        Init_Nulled(OUT);
+        return Proxy_Multi_Returns(frame_);
+    }
 
     DECLARE_MOLD (mo);
     if (REF(all))
@@ -101,8 +103,8 @@ DECLARE_NATIVE(mold)
 
     Init_Logic(ARG(truncated), did (mo->opts & MOLD_FLAG_WAS_TRUNCATED));
 
-    Proxy_Multi_Returns(frame_);
-    return Init_Text(OUT, popped);
+    Init_Text(OUT, popped);
+    return Proxy_Multi_Returns(frame_);
 }
 
 
