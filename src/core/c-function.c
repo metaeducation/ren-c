@@ -202,7 +202,7 @@ void Push_Paramlist_Quads_May_Fail(
                 or IS_TEXT(notes)  // !!! we overwrite, but should we append?
             );
 
-            if (Is_None(KEY_SLOT(TOP_INDEX))) {
+            if (Is_Word_Isotope_With_Id(KEY_SLOT(TOP_INDEX), SYM_KEY)) {
                 // no keys seen yet, act as description
                 Init_Text(notes, Copy_String_At(item));
                 *flags |= MKF_HAS_DESCRIPTION;
@@ -254,8 +254,8 @@ void Push_Paramlist_Quads_May_Fail(
     //=//// BLOCK! OF TYPES TO MAKE TYPESET FROM (PLUS PARAMETER TAGS) ////=//
 
         if (IS_BLOCK(item)) {
-            if (Is_None(KEY_SLOT(TOP_INDEX)))  // early, `func [[integer!] {!}]`
-                fail (Error_Bad_Func_Def_Raw(item));
+            if (Is_Word_Isotope_With_Id(KEY_SLOT(TOP_INDEX), SYM_KEY))
+                fail (Error_Bad_Func_Def_Raw(item));   // `func [[integer!]]`
 
             StackValue(*) types = TYPES_SLOT(TOP_INDEX);
 
@@ -917,7 +917,7 @@ Array(*) Make_Paramlist_Managed_May_Fail(
     // the function description--it will be extracted from the slot before
     // it is turned into a rootkey for param_notes.
     //
-    Init_None(KEY_SLOT(TOP_INDEX));  // signal for no parameters pushed
+    Init_Word_Isotope(KEY_SLOT(TOP_INDEX), Canon(KEY));  // signal no pushes yet
     Init_Trash(PARAM_SLOT(TOP_INDEX));  // not used at all
     Init_Trash(TYPES_SLOT(TOP_INDEX));  // not used at all
     Init_Nulled(NOTES_SLOT(TOP_INDEX));  // overwritten if description
