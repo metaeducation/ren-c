@@ -81,6 +81,20 @@
 #entrap (
     'zero-divide = (entrap [1 / 0]).id
 )
+#entrap (
+    f: make frame! lambda [] [raise ~test~]
+    did all [
+        error? e: entrap f
+        e.id = 'test
+    ]
+)
+#entrap (
+    f: make frame! lambda [] [1000 + 20]
+    did all [
+        quoted? q: entrap f
+        1020 = unquote q
+    ]
+)
 
 
 ; Multiple return values

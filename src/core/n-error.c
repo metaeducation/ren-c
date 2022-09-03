@@ -98,7 +98,7 @@ DECLARE_NATIVE(rescue)
 //      return: "ERROR! if raised, else the ^META of the result"
 //          [error! quasi! quoted! blank!]
 //      code "Code to execute and monitor"
-//          [block!]
+//          [block! frame!]
 //  ]
 //
 DECLARE_NATIVE(entrap)  // wrapped as multi-return versions TRAP and ATTEMPT
@@ -128,16 +128,28 @@ DECLARE_NATIVE(entrap)  // wrapped as multi-return versions TRAP and ATTEMPT
     if (Not_Cell_Flag(code, CONST))
         Set_Cell_Flag(code, EXPLICITLY_MUTABLE);  // see DECLARE_NATIVE(do)
 
-    Frame(*) sub = Make_Frame_At(
-        code,  // REB_BLOCK or REB_GROUP
-        EVAL_EXECUTOR_FLAG_SINGLE_STEP
-            | FRAME_FLAG_ALLOCATED_FEED
-            | FRAME_FLAG_TRAMPOLINE_KEEPALIVE  // reused for each step
-            | FRAME_FLAG_MAYBE_STALE
-            | FRAME_FLAG_FAILURE_RESULT_OK  // we're trapping it
-            | FRAME_FLAG_META_RESULT
-    );
-    Push_Frame(OUT, sub);
+    Flags flags =
+        FRAME_FLAG_TRAMPOLINE_KEEPALIVE  // reused for each step
+        | FRAME_FLAG_MAYBE_STALE
+        | FRAME_FLAG_FAILURE_RESULT_OK  // we're trapping it
+        | FRAME_FLAG_META_RESULT;
+
+    Frame(*) sub;
+    if (IS_BLOCK(code)) {
+        sub = Make_Frame_At(
+            code,  // REB_BLOCK or REB_GROUP
+            flags
+                | EVAL_EXECUTOR_FLAG_SINGLE_STEP
+                | FRAME_FLAG_ALLOCATED_FEED
+        );
+        Push_Frame(OUT, sub);
+    }
+    else {
+        bool pushed = Pushed_Continuation(OUT, flags, SPECIFIED, code, nullptr);
+        assert(pushed);
+        UNUSED(pushed);
+        sub = TOP_FRAME;
+    }
 
     STATE = ST_ENTRAP_EVALUATING;
     return CONTINUE_SUBFRAME(sub);  // not a CATCH_CONTINUE; throws passthru
@@ -196,7 +208,7 @@ DECLARE_NATIVE(except)
 //  "Tells you if argument is a failure, but does not raise it"
 //
 //      return: [logic!]
-//      ^optional [<opt> <void> <fail> any-value!]
+//      ^optional [<opt> <void> <fail> <pack> any-value!]
 //  ]
 //
 DECLARE_NATIVE(raised_q)
