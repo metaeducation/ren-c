@@ -952,7 +952,7 @@ DECLARE_NATIVE(apply)
         if (VAL_PARAM_CLASS(param) == PARAM_CLASS_META)
             Init_Meta_Of_Void(var);
         else
-            Init_Empty_Splice(var);
+            Init_Heavy_Void(var);
     }
     else if (  // help convert logic for no-arg refinement, see [5]
         VAL_TYPE_UNCHECKED(SPARE) == REB_LOGIC  // let isotopes pass

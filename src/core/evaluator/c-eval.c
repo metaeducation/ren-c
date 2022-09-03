@@ -1494,6 +1494,13 @@ Bounce Evaluator_Executor(Frame(*) f)
         }
         else if (Is_Pack(OUT)) {  // isotopic block
             pack_meta_at = VAL_ARRAY_AT(&pack_meta_tail, OUT);
+
+            if (pack_meta_at == pack_meta_tail) {
+                assert(Is_Heavy_Null(OUT));
+                Init_Nulled(OUT);
+                goto set_block_handle_out;
+            }
+
             pack_specifier = VAL_SPECIFIER(OUT);
         }
         else {  // OUT needs special handling (e.g. stale checks)

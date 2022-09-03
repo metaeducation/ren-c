@@ -671,8 +671,12 @@ DECLARE_NATIVE(maybe)
         return RAISE(VAL_CONTEXT(v));
     }
 
+    if (Is_Meta_Of_Heavy_Void(v))
+        return VOID;
+
     Move_Cell(OUT, v);
     Meta_Unquotify(OUT);
+
     Decay_If_Isotope(OUT);
     return OUT;
 }

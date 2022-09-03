@@ -36,6 +36,16 @@
 //
 // Returning false means the throw was neither BREAK nor CONTINUE.
 //
+// 1. On a "void" continue, it may seem tempting to drop out the last result:
+//
+//        for-each x [1 2 3] [if x = 3 [continue] x]  => 2  ; would be bad
+//
+//    But our goal is that a loop which never runs its body be distinguishable
+//    from one that has CONTINUE'd each body.  Unless those are allowed to be
+//    indistinguishable, loop compositions that work don't work.  So instead:
+//
+//        for-each x [1 2 3] [if x != 3 [x]]  =>  ~()~ isotope
+//
 bool Try_Catch_Break_Or_Continue(Value(*) out, Frame(*) frame_)
 {
     const Value(*) label = VAL_THROWN_LABEL(frame_);
@@ -59,7 +69,8 @@ bool Try_Catch_Break_Or_Continue(Value(*) out, Frame(*) frame_)
         // in cases like MAP-EACH (one wants a continue to not add any value)
         //
         CATCH_THROWN(out, frame_);
-        assert(VAL_TYPE_UNCHECKED(out) != REB_NULL);
+        assert(not Is_Nulled(out));  // heavy null is OK
+        assert(not Is_Void(out));  // heavy void is OK, not plain, see [1]
         return true;
     }
 
@@ -94,7 +105,7 @@ DECLARE_NATIVE(break)
 //
 //      return: []  ; !!! notation for divergent function?
 //      ^value "Act as if loop body finished with this value"
-//          [<end> <void> any-value!]
+//          [<end> <void> <opt> any-value!]
 //  ]
 //
 DECLARE_NATIVE(continue)
@@ -110,6 +121,11 @@ DECLARE_NATIVE(continue)
         RESET(v);  // CONTINUE and CONTINUE VOID act the same
     else
         Meta_Unquotify(v);
+
+    if (Is_Void(v))
+        Init_Heavy_Void(v);
+    else if (Is_Nulled(v))
+        Init_Heavy_Null(v);
 
     return Init_Thrown_With_Label(FRAME, v, Lib(CONTINUE));
 }
@@ -150,9 +166,6 @@ static Bounce Loop_Series_Common(
 
             if (Is_Breaking_Null(OUT))
                 return nullptr;
-
-            if (Is_Void(OUT))  // CONTINUE w/no argument
-                Init_Empty_Splice(OUT);
         }
         return OUT;
     }
@@ -176,10 +189,8 @@ static Bounce Loop_Series_Common(
 
             if (Is_Breaking_Null(OUT))
                 return nullptr;
-
-            if (Is_Void(OUT))  // CONTINUE w/no argument
-                Init_Empty_Splice(OUT);
         }
+
         if (
             VAL_TYPE(var) != VAL_TYPE(start)
             or VAL_SERIES(var) != VAL_SERIES(start)
@@ -232,9 +243,6 @@ static Bounce Loop_Integer_Common(
 
             if (Is_Breaking_Null(OUT))
                 return nullptr;
-
-            if (Is_Void(OUT))  // CONTINUE w/no argument
-                Init_Empty_Splice(OUT);
         }
         return BRANCHED(OUT);
     }
@@ -254,9 +262,6 @@ static Bounce Loop_Integer_Common(
 
             if (Is_Breaking_Null(OUT))
                 return nullptr;
-
-            if (Is_Void(OUT))  // CONTINUE w/no argument
-                Init_Empty_Splice(OUT);
         }
 
         if (not IS_INTEGER(var))
@@ -321,9 +326,6 @@ static Bounce Loop_Number_Common(
 
             if (Is_Breaking_Null(OUT))
                 return nullptr;
-
-            if (Is_Void(OUT))  // CONTINUE w/no argument
-                Init_Empty_Splice(OUT);
         }
         return BRANCHED(OUT);
     }
@@ -341,9 +343,6 @@ static Bounce Loop_Number_Common(
 
             if (Is_Breaking_Null(OUT))
                 return nullptr;
-
-            if (Is_Void(OUT))  // CONTINUE w/no argument
-                Init_Empty_Splice(OUT);
         }
 
         if (not IS_DECIMAL(var))
@@ -532,9 +531,6 @@ DECLARE_NATIVE(for_skip)
 
             if (Is_Breaking_Null(OUT))
                 return nullptr;
-
-            if (Is_Void(OUT))  // CONTINUE w/no argument
-                Init_Empty_Splice(OUT);
         }
 
         // Modifications to var are allowed, to another ANY-SERIES! value.
@@ -660,9 +656,11 @@ DECLARE_NATIVE(cycle)
         CATCH_THROWN(OUT, FRAME);  // Unlike BREAK, STOP takes an arg--see [1]
 
         if (Is_Void(OUT))  // STOP with no arg, void usually reserved, see [2]
-            return Init_Empty_Splice(OUT);
+            return Init_Heavy_Void(OUT);
 
-        Isotopify_If_Nulled(OUT);  // NULL usually reserved for BREAK, see [2]
+        if (Is_Nulled(OUT))
+            return Init_Heavy_Null(OUT);  // NULL usually for BREAK, see [2]
+
         return OUT;
     }
 
@@ -990,16 +988,6 @@ void Shutdown_Loop_Each(Value(*) iterator)
 //  ]
 //
 DECLARE_NATIVE(for_each)
-//
-// 1. On a "void" continue, it may seem tempting to drop out the last result:
-//
-//        for-each x [1 2 3] [if x = 3 [continue] x]  => 2  ; would be bad
-//
-//    But our goal is that a loop which never runs its body be distinguishable
-//    from one that has CONTINUE'd each body.  Unless those are allowed to be
-//    indistinguishable, loop compositions that work don't work.  So instead:
-//
-//        for-each x [1 2 3] [if x != 3 [x]]  =>  none (~) isotope
 {
     INCLUDE_PARAMS_OF_FOR_EACH;
 
@@ -1042,7 +1030,7 @@ DECLARE_NATIVE(for_each)
         goto finalize_for_each;
 
     STATE = ST_FOR_EACH_RUNNING_BODY;
-    return CATCH_CONTINUE(OUT, body);
+    return CATCH_CONTINUE_BRANCH(OUT, body);
 
 } body_result_in_spare_or_threw: {  //////////////////////////////////////////
 
@@ -1053,11 +1041,6 @@ DECLARE_NATIVE(for_each)
         if (Is_Breaking_Null(OUT))
             goto finalize_for_each;
     }
-
-    if (Is_Void(OUT))
-        Init_Empty_Splice(OUT);  // void breaks loop composability, see [1]
-    else
-        Isotopify_If_Nulled(OUT);  // NULL is reserved for BREAK
 
     goto next_iteration;
 
@@ -1165,8 +1148,12 @@ DECLARE_NATIVE(every)
         }
     }
 
-    if (Is_Void(SPARE) or (IS_META_BLOCK(body) and Is_Meta_Of_Void(SPARE))) {
-        Init_Empty_Splice(OUT);  // forget OUT for loop composition, see [1]
+    if (
+        Is_Void(SPARE)
+        or Is_Heavy_Void(SPARE)
+        or (IS_META_BLOCK(body) and Is_Meta_Of_Void(SPARE))
+    ){
+        Init_Heavy_Void(OUT);  // forget OUT for loop composition, see [1]
         goto next_iteration;  // ...but void does not NULL-lock output
     }
 
@@ -1785,9 +1772,6 @@ DECLARE_NATIVE(repeat)
 
         if (Is_Breaking_Null(OUT))
             return nullptr;
-
-        if (Is_Void(OUT))  // CONTINUE w/no argument
-            Init_Empty_Splice(OUT);
     }
 
     if (IS_LOGIC(count)) {
@@ -1896,9 +1880,6 @@ DECLARE_NATIVE(for)
 
         if (Is_Breaking_Null(OUT))
             return nullptr;
-
-        if (Is_Void(OUT))  // CONTINUE w/no argument
-            Init_Empty_Splice(OUT);
     }
 
     REBVAL *var = CTX_VAR(VAL_CONTEXT(vars), 1);  // not movable, see #2274
@@ -2107,9 +2088,6 @@ DECLARE_NATIVE(while)
 
         if (Is_Breaking_Null(OUT))
             return nullptr;
-
-        if (Is_Void(OUT))  // CONTINUE with no argument
-            Init_Empty_Splice(OUT);
     }
 
     goto evaluate_condition;

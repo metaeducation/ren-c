@@ -1378,7 +1378,7 @@ DECLARE_NATIVE(set)
         RESET(v);  // (x: void) is legal, so is (set 'x void)
     else {
         Meta_Unquotify(v);
-        if (Is_Blank_Isotope(v))
+        if (Is_Blank_Isotope(v) or Is_Heavy_Null(v))
             Init_Nulled(v);
 
         if (not REF(any) and Is_Isotope(v))
@@ -1611,7 +1611,7 @@ DECLARE_NATIVE(free)
 //
 //      return: "Returns false if value wouldn't be FREEable (e.g. LOGIC!)"
 //          [logic!]
-//      value [any-value!]
+//      value [<opt> <void> any-value!]
 //  ]
 //
 DECLARE_NATIVE(free_q)
@@ -1619,6 +1619,9 @@ DECLARE_NATIVE(free_q)
     INCLUDE_PARAMS_OF_FREE_Q;
 
     REBVAL *v = ARG(value);
+
+    if (Is_Void(v) or Is_Nulled(v))
+        return Init_False(OUT);
 
     // All freeable values put their freeable series in the payload's "first".
     //
@@ -2310,7 +2313,7 @@ DECLARE_NATIVE(heavy) {
         return VOID;
 
     if (Is_Meta_Of_Null(v))
-        return Init_Blank_Isotope(OUT);
+        return Init_Heavy_Null(OUT);
 
     return UNMETA(v);
 }

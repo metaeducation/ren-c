@@ -104,3 +104,20 @@
 (
     '~ugly~ = ^ catch [throw ~ugly~]
 )
+
+; ELSE/THEN reactivity
+[
+    (null = catch [throw null])
+    (<caught> = catch [throw null] then [<caught>])
+    (null = catch [null])
+    (null = catch [null] then [fail])
+    (<uncaught> = catch [null] else [<uncaught>])
+    (<uncaught> = catch [null] then [fail] else [<uncaught>])
+
+    (void? maybe catch [throw void])
+    (<caught> = catch [throw void] then [<caught>])
+    (void? maybe catch [void])
+    (void? maybe catch [void] then [fail])
+    (<uncaught> = catch [void] else [<uncaught>])
+    (<uncaught> = catch [void] then [fail] else [<uncaught>])
+]

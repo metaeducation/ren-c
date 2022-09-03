@@ -569,30 +569,42 @@ inline static bool Is_Any_Doubled_Group(noquote(Cell(const*)) group) {
 }
 
 
-//=//// ISOTOPE STATES ////////////////////////////////////////////////////=//
+inline static bool Is_Empty_Any_Array(Cell(const*) v) {
+    Length len = ARR_LEN(VAL_ARRAY(v));
+    return len == 0 or VAL_INDEX(v) >= len;
+}
 
 
 //=//// "PACKS" (BLOCK! Isotopes) /////////////////////////////////////////=//
 //
 // BLOCK! isotopes are exploited as a mechanism for bundling values in a way
 // that they can be passed around as a single value.  They are leveraged in
-// particular for multi-return.
+// particular for multi-return, because a SET-WORD! will unpack only the
+// first item, while a SET-BLOCK! will unpack others.
 //
-// An empty "pack" of a ~[]~ isotope is given the special name of "NONE" and
-// is the return result of functions that have no interesting return value.
+//      >> pack [<a> <b>]
+//      == ~['<a> '<b>]~  ; isotope
 //
-// This is the default RETURN for when you just write something like
-// `func [return: <none>] [...]`.  It represents the intention of not having a
-// return value, but reserving the right to not be treated as invisible, so
-// that if one ever did imagine an interesting value for it to return, the
-// callsites wouldn't have assumed it was invisible.
+//      >> x: pack [<a> <b>]
+//      == <a>
 //
-// Even a function like PRINT has a potentially interesting return value,
-// given that it channels through NULL if the print content vaporized and
-// it printed nothing (not even a newline).  This lets you use it with ELSE,
-// and you couldn't write `print [...] else [...]` if it would be sometimes
-// invisible and sometimes not.
+//      >> [x y]: pack [<a> <b>]
+//      == <a>
 //
+//      >> x
+//      == <a>
+//
+//      >> y
+//      == <b>
+//
+
+#define Is_Pack(v) \
+  ((READABLE(v)->header.bits & (FLAG_QUOTE_BYTE(255) | FLAG_HEART_BYTE(255))) \
+    == (FLAG_QUOTE_BYTE(ISOTOPE_0) | FLAG_HEART_BYTE(REB_BLOCK)))
+
+#define Is_Meta_Of_Pack(v) \
+  ((READABLE(v)->header.bits & (FLAG_QUOTE_BYTE(255) | FLAG_HEART_BYTE(255))) \
+    == (FLAG_QUOTE_BYTE(QUASI_2) | FLAG_HEART_BYTE(REB_BLOCK)))
 
 inline static Value(*) Init_Pack_Untracked(
     Cell(*) out,
@@ -607,20 +619,99 @@ inline static Value(*) Init_Pack_Untracked(
 #define Init_Pack(out,a) \
     TRACK(Init_Pack_Untracked((out), ISOTOPE_0, (a)))
 
-inline static bool Is_Pack(Value(const*) v) {
-    if (QUOTE_BYTE(v) == ISOTOPE_0 and HEART_BYTE(v) == REB_BLOCK)
-        return true;  // breakpoint opportunity for pack debugging
-    return false;
+#define Init_Empty_Pack(out) \
+    Init_Pack((out), EMPTY_ARRAY)
+
+#define Init_Meta_of_Empty_Pack(out) \
+    TRACK(Init_Pack_Untracked((out), QUASI_2, EMPTY_ARRAY))
+
+inline static bool Is_Empty_Pack(Cell(const*) v)
+  { return Is_Pack(v) and Is_Empty_Any_Array(v); }
+
+inline static bool Is_Meta_Of_Empty_Pack(Cell(const*) v)
+  { return Is_Meta_Of_Pack(v) and Is_Empty_Any_Array(v); }
+
+
+//=//// "HEAVY NULLS" (Empty BLOCK! Isotope Packs) ////////////////////////=//
+//
+// An empty "pack" of a ~[]~ isotope is used for the special concept of a
+// "heavy null".  This is something that will act like NULL in almost all
+// contexts, except that things like THEN will consider it to have been the
+// product of a "taken branch".
+//
+//     >> x: ~[]~
+//     ; null
+//
+//     >> if true [null]
+//     == ~[]~  ; isotope
+//
+//     >> if true [null] else [print "This won't run"]
+//     == ~[]~  ; isotope
+//
+// ("Heavy Voids" are an analogous concept for VOID.)
+
+#define Init_Heavy_Null             Init_Empty_Pack
+#define Is_Heavy_Null               Is_Empty_Pack
+
+inline static Value(*) Isotopify_If_Nulled(Value(*) v) {
+    if (VAL_TYPE_UNCHECKED(v) == REB_NULL)
+        Init_Heavy_Null(v);
+    return v;
 }
 
-inline static bool Is_Meta_Of_Pack(Value(const*) v) {
-    if (QUOTE_BYTE(v) == QUASI_2 and HEART_BYTE(v) == REB_BLOCK)
-        return true;  // breakpoint opportunity for pack debugging
-    return false;
+
+//=//// "SPLICES" (GROUP! Isotopes) ///////////////////////////////////////=//
+//
+// Group isotopes are understood by routines like APPEND/INSERT/CHANGE to
+// mean that you intend to splice their content (the default is to append
+// as-is, which is changed from Rebol2/Red).  The typical way of making these
+// isotopes is the SPREAD function.
+//
+//    >> append [a b c] [d e]
+//    == [a b c] [d e]
+//
+//    >> spread [d e]
+//    == ~(d e)~  ; isotope
+//
+//    >> append [a b c] ~(d e)~
+//    == [a b c d e]
+//
+
+#define Is_Splice(v) \
+  ((READABLE(v)->header.bits & (FLAG_QUOTE_BYTE(255) | FLAG_HEART_BYTE(255))) \
+    == (FLAG_QUOTE_BYTE(ISOTOPE_0) | FLAG_HEART_BYTE(REB_GROUP)))
+
+#define Is_Meta_Of_Splice(v) \
+  ((READABLE(v)->header.bits & (FLAG_QUOTE_BYTE(255) | FLAG_HEART_BYTE(255))) \
+    == (FLAG_QUOTE_BYTE(QUASI_2) | FLAG_HEART_BYTE(REB_GROUP)))
+
+inline static Value(*) Splicify(Cell(*) v) {
+    assert(ANY_ARRAY(v) and QUOTE_BYTE(v) == UNQUOTED_1);
+    mutable_QUOTE_BYTE(v) = ISOTOPE_0;
+    mutable_HEART_BYTE(v) = REB_GROUP;
+    return VAL(v);
 }
 
+inline static Value(*) Init_Splice_Untracked(Value(*) out, Array(*) a) {
+    Init_Group(out, a);
+    mutable_QUOTE_BYTE(out) = ISOTOPE_0;
+    return out;
+}
 
-//=//// EMPTY SPLICE (Empty GROUP! Isotope) ///////////////////////////////=//
+#define Init_Splice(out,a) \
+    TRACK(Init_Splice_Untracked((out), (a)))
+
+#define Init_Empty_Splice(out) \
+    Init_Splice((out), EMPTY_ARRAY)
+
+inline static bool Is_Empty_Splice(Cell(const*) v)
+  { return Is_Splice(v) and Is_Empty_Any_Array(v); }
+
+inline static bool Is_Meta_Of_Empty_Splice(Cell(const*) v)
+  { return Is_Meta_Of_Splice(v) and Is_Empty_Any_Array(v); }
+
+
+//=//// "HEAVY VOIDS" (Empty GROUP! Isotope Splices) //////////////////////=//
 //
 // The empty splice is exploited for its property of having void-like behavior
 // while not being void...hence it can propagate "void intent" out of a branch
@@ -638,36 +729,8 @@ inline static bool Is_Meta_Of_Pack(Value(const*) v) {
 //     >> append [a b c] if true []
 //     == [a b c]
 //
+// ("Heavy Nulls" are an analogous concept for NULL.)
 
-inline static Value(*) Init_Empty_Splice_Untracked(Value(*) out) {
-    Init_Group(out, EMPTY_ARRAY);
-    mutable_QUOTE_BYTE(out) = ISOTOPE_0;
-    return out;
-}
-
-#define Init_Empty_Splice(out) \
-    TRACK(Init_Empty_Splice_Untracked(out))
-
-#define Is_Empty_Splice(v) \
-    ((READABLE(v)->header.bits & FLAG_QUOTE_BYTE(255) & FLAG_HEART_BYTE(255)) \
-        == FLAG_QUOTE_BYTE(ISOTOPE_0) | FLAG_HEART_BYTE(REB_GROUP))
-
-#define Is_Meta_Of_Empty_Splice(v) \
-    ((READABLE(v)->header.bits & FLAG_QUOTE_BYTE(255) & FLAG_HEART_BYTE(255)) \
-        == FLAG_QUOTE_BYTE(QUASI_1) | FLAG_HEART_BYTE(REB_GROUP))
-
-
-inline static bool Is_Splice(Cell(const*) v)
-  { return HEART_BYTE_UNCHECKED(v) == REB_GROUP
-    and QUOTE_BYTE_UNCHECKED(v) == ISOTOPE_0; }
-
-
-inline static Value(*) Splicify(Cell(*) v) {
-    assert(IS_GROUP(v) and QUOTE_BYTE(v) == UNQUOTED_1);
-    mutable_QUOTE_BYTE(v) = ISOTOPE_0;
-    return VAL(v);
-}
-
-inline static bool Is_Meta_Of_Splice(Cell(const*) v)
-  { return HEART_BYTE_UNCHECKED(v) == REB_GROUP
-    and QUOTE_BYTE_UNCHECKED(v) == QUASI_2; }
+#define Init_Heavy_Void         Init_Empty_Splice
+#define Is_Heavy_Void           Is_Empty_Splice
+#define Is_Meta_Of_Heavy_Void   Is_Meta_Of_Empty_Splice

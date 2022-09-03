@@ -4,7 +4,7 @@
 
 ((the '3) = ^ 1 + 2)
 
-('~_~ = ^ if true [null])
+('~[]~ = ^ if true [null])
 
 (null' = ^ null)
 

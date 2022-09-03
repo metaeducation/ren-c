@@ -25,7 +25,7 @@
 [
    ('x = the x)
    ('(a b c) = the (a b c))
-   ('~_~ = the ~_~)
+   ('~[]~ = the ~[]~)
 ]
 
 ; @ runs the action THE*, and has special case behavior that QUASI! forms
@@ -39,7 +39,7 @@
    ('x = @ x)
    ('(a b c) = @ (a b c))
    (
-      assert ['~_~ = ^ x: @ ~_~]
+      assert ['~[]~ = ^ x: @ ~[]~]
       x = null
    )
    ('~something~ ^ @ ~something~)

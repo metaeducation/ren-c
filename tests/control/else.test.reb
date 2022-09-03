@@ -83,9 +83,9 @@
     (catch [~_~ also ^x -> [throw (x = the ~_~)]])
     (catch ['~_~ also ^x -> [throw (x = the '~_~)]])
 
-    (~_~ *else x -> [null = x])
+    (~[]~ *else x -> [null = x])
     (null *else ^x -> [null' = x])
-    (~_~ *else ^x -> ['~_~ = x])
+    (~[]~ *else ^x -> ['~[]~ = x])
 ]
 
 ; Variant forms react to ~_~ isotopes as if they were null.  This can be

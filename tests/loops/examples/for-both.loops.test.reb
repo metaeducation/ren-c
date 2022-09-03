@@ -106,7 +106,7 @@
 
     ([1 2 3 4] = collect [
         assert [did all [
-            '~_~ = meta result: for-both x [1 2] [3 4] [
+            '~[]~ = meta result: for-both x [1 2] [3 4] [
                 keep x
                 null
             ]

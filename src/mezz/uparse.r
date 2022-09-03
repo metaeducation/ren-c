@@ -2895,10 +2895,11 @@ parse: (comment [redescribe [  ; redescribe not working at the moment (?)
         [^synthesized']: do f except [
             return null
         ]
-        if void? unget synthesized' [  ; successful parse synthesized a void
-            return ~()~  ; empty splice runs THEN while still being voidlike
+        switch synthesized' [
+            '~ [return/forward ~()~]
+            '_ [return/forward ~[]~]
         ]
-        return isotopify-if-falsey unmeta synthesized'
+        return/forward unmeta synthesized'
     ]
 )
 

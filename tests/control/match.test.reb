@@ -29,7 +29,7 @@
 ; But can still be tested for with DID and DIDN'T since they are isotope
 ; tolerant and NULL-reactive, and also can be used with THEN and ELSE.
 [
-    ('~_~ = ^ match null null)
+    ('~[]~ = ^ match null null)
     ('_ = match blank! blank)
     (true = match logic! true)
     ('~false~ = ^ match logic! false)

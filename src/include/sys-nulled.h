@@ -180,10 +180,3 @@ inline static bool Is_Blank_Isotope(Cell(const*) v)
 
 inline static bool Is_Meta_Of_Blank_Isotope(Cell(const*) v)
   { return IS_QUASI(v) and HEART_BYTE(v) == REB_BLANK; }
-
-
-inline static Value(*) Isotopify_If_Nulled(Value(*) v) {
-    if (VAL_TYPE_UNCHECKED(v) == REB_NULL)
-        Init_Blank_Isotope(v);
-    return v;
-}

@@ -196,12 +196,24 @@ inline static Value(*) Isotopify_If_Falsey(Value(*) v) {
     if (Is_Isotope(v))
         return v;  // already an isotope (would trigger asserts on IS_X tests)
     if (Is_Nulled(v))
-        Init_Blank_Isotope(v);
+        Init_Heavy_Null(v);
     else if (IS_LOGIC(v) and VAL_LOGIC(v) == false)
         Init_Word_Isotope(v, Canon(FALSE));
     return v;
 }
 
+//=//// "NONE" WORD! ISOTOPE //////////////////////////////////////////////=//
+//
+// This is the default RETURN for when you just write something like
+// `func [return: <none>] [...]`.  It represents the intention of not having a
+// return value, but reserving the right to not be treated as invisible, so
+// that if one ever did imagine an interesting value for it to return, the
+// callsites wouldn't have assumed it was invisible.
+//
+// (Even a function like PRINT has a potentially interesting return value,
+// given that it channels through NULL if the print content vaporized and
+// it printed nothing (not even a newline).  This lets you use it with ELSE,
+// e.g. `print [...] else [...]`)
 
 #define Init_None_Untracked(out) \
     Init_Any_Word_Untracked((out), REB_WORD, Canon(NONE), ISOTOPE_0)

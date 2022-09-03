@@ -36,6 +36,7 @@ no
 
 null
 quoted-null
+quasi-null
 blank
 quasi-blank
 blackhole

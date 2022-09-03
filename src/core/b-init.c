@@ -249,6 +249,9 @@ static void Startup_Lib(void)
         and Is_Meta_Of_Blank_Isotope(Lib(QUASI_BLANK))
     );
 
+    Set_Cell_Flag(Init_Meta_Of_Void(force_Lib(QUASI_NULL)), PROTECTED);
+    assert(Is_Truthy(Lib(QUASI_NULL)) and Is_Meta_Of_Void(Lib(QUASI_NULL)));
+
     // !!! Rebol is firm on TRUE and FALSE being WORD!s, as opposed to the
     // literal forms of logical true and false.  Not only does this frequently
     // lead to confusion, but there's not consensus on what a good literal form

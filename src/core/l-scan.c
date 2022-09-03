@@ -2005,7 +2005,7 @@ Bounce Scanner_Executor(Frame(*) f) {
                 Meta_Quotify(Init_Empty_Splice(PUSH()));  // !!! hacked in...
             }
             else if (len == 4 and bp[1] == '[' and bp[2] == ']') {  // ~[]~
-                Init_Meta_Of_None(PUSH());
+                Meta_Quotify(Init_Empty_Pack(PUSH()));
             }
             else if (len == 3 and bp[1] == '_') {  // ~_~
                 Init_Meta_Of_Blank_Isotope(PUSH());

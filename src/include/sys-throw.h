@@ -118,8 +118,10 @@ inline static Value(*) Decay_If_Isotope(Value(*) v) {
     if (Is_Pack(v)) {  // iterate until result is not multi-return, see [1]
         Cell(const*) pack_meta_tail;
         Cell(const*) pack_meta_at = VAL_ARRAY_AT(&pack_meta_tail, v);
-        if (pack_meta_at == pack_meta_tail)
-            return Init_None(v);  // Error?  Null?
+        if (pack_meta_at == pack_meta_tail) {
+            assert(Is_Heavy_Null(v));
+            return Init_Nulled(v);  // Special behavior: ~[]~ becomes null
+        }
         Derelativize(v, pack_meta_at, VAL_SPECIFIER(v));
         Meta_Unquotify(v);
         if (Is_Pack(v))

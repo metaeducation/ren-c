@@ -19,7 +19,7 @@
 )(
     x: ~
     did all [
-        '~_~ == meta parse [] [x: [opt integer!]]
+        '~[]~ == meta parse [] [x: [opt integer!]]
         x = null
     ]
 )(
@@ -31,7 +31,7 @@
 )(
     x: ~
     did all [
-        '~_~ == meta parse [] [x: opt [integer!]]
+        '~[]~ == meta parse [] [x: opt [integer!]]
         x = null
     ]
 )

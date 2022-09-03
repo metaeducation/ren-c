@@ -303,8 +303,14 @@ DECLARE_NATIVE(then)  // see `tweak :then 'defer on` in %base-defs.r
     if (Is_Meta_Of_Pack(in)) {
         Cell(const*) pack_meta_tail;
         test_meta = VAL_ARRAY_AT(&pack_meta_tail, in);
-        if (test_meta == pack_meta_tail)
-            fail ("THEN and ELSE don't know what to do with ~[]~ packs");
+        if (test_meta == pack_meta_tail) {
+            //
+            // Special case: `if true [null]` creates a ~[]~ pack as a signal
+            // of nullness that does -not- trigger an else (while NULL itself
+            // and a pack with meta-null, e.g. ~[_]~, will trigger ELSE)
+            //
+            test_meta = in;  // we'll be passing the ~[]~ isotope to branch
+        }
     }
     else
         test_meta = in;
@@ -431,8 +437,14 @@ DECLARE_NATIVE(else)  // see `tweak :else 'defer on` in %base-defs.r
     if (Is_Meta_Of_Pack(in)) {
         Cell(const*) pack_meta_tail;
         test_meta = VAL_ARRAY_AT(&pack_meta_tail, in);
-        if (test_meta == pack_meta_tail)
-            fail ("THEN and ELSE don't know what to do with ~[]~ packs");
+        if (test_meta == pack_meta_tail) {
+            //
+            // Special case: `if true [null]` creates a ~[]~ pack as a signal
+            // of nullness that does -not- trigger an else (while NULL itself
+            // and a pack with meta-null, e.g. ~[_]~, will trigger ELSE)
+            //
+            return COPY(Meta_Unquotify(in));
+        }
     }
     else
         test_meta = in;
@@ -1385,7 +1397,7 @@ DECLARE_NATIVE(catch)
         fail (Error_Bad_Refines_Raw());
 
     STATE = ST_CATCH_RUNNING_CODE;
-    return CATCH_CONTINUE(OUT, ARG(block));
+    return CATCH_CONTINUE_BRANCH(OUT, ARG(block));
 
 } code_result_in_out: {  //////////////////////////////////////////////////////
 
@@ -1492,7 +1504,7 @@ DECLARE_NATIVE(catch)
 //
 //      return: []  ; !!! notation for divergent function?
 //      ^value "Value returned from catch"
-//          [<opt> any-value!]
+//          [<opt> <void> any-value!]
 //      /name "Throws to a named catch"
 //          [word! action! object!]
 //  ]
@@ -1507,7 +1519,16 @@ DECLARE_NATIVE(throw)
     INCLUDE_PARAMS_OF_THROW;
 
     REBVAL *v = ARG(value);
-    Meta_Unquotify(v);
+
+    if (Is_Nulled(v))
+        RESET(v);  // CONTINUE and CONTINUE VOID act the same
+    else
+        Meta_Unquotify(v);
+
+    if (Is_Void(v))
+        Init_Heavy_Void(v);
+    else if (Is_Nulled(v))
+        Init_Heavy_Null(v);
 
     return Init_Thrown_With_Label(FRAME, v, ARG(name));  // name can be nulled
 }
