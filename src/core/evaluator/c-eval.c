@@ -1029,8 +1029,10 @@ Bounce Evaluator_Executor(Frame(*) f)
         //
         // Plus with GROUP!s in a path, their evaluations can't be undone.
         //
-        if (Get_Action_Flag(VAL_ACTION(SPARE), ENFIXED))
+        if (Get_Action_Flag(VAL_ACTION(SPARE), ENFIXED)) {
+            Drop_Data_Stack_To(BASELINE->stack_base);
             fail ("Use `>-` to shove left enfix operands into PATH!s");
+        }
 
         if (not applying) {
             Push_Action(subframe, VAL_ACTION(SPARE), VAL_ACTION_BINDING(SPARE));
