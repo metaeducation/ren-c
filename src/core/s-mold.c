@@ -319,14 +319,14 @@ void Form_Array_At(
     REBINT n;
     for (n = 0; n < len;) {
         Cell(const*) item = ARR_AT(array, index + n);
-        REBVAL *wval = nullptr;
+        option(Value(*)) wval = nullptr;
         if (context and (IS_WORD(item) or IS_GET_WORD(item))) {
             wval = Select_Symbol_In_Context(
                 CTX_ARCHETYPE(unwrap(context)),
                 VAL_WORD_SYMBOL(item)
             );
             if (wval)
-                item = wval;
+                item = unwrap(wval);
         }
         Mold_Or_Form_Value(mo, item, wval == nullptr);
         n++;

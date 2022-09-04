@@ -864,8 +864,10 @@ REBLEN Find_Symbol_In_Context(
 // Search a context's keylist looking for the given symbol, and return the
 // value for the word.  Return NULL if the symbol is not found.
 //
-REBVAL *Select_Symbol_In_Context(Cell(const*) context, Symbol(const*) symbol)
-{
+option(Value(*)) Select_Symbol_In_Context(
+    Cell(const*) context,
+    Symbol(const*) symbol
+){
     const bool strict = false;
     REBLEN n = Find_Symbol_In_Context(context, symbol, strict);
     if (n == 0)

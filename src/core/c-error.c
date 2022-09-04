@@ -628,28 +628,28 @@ Bounce MAKE_Error(
         Context(*) categories = VAL_CONTEXT(Get_System(SYS_CATALOG, CAT_ERRORS));
 
         // Find correct category for TYPE: (if any)
-        REBVAL *category = Select_Symbol_In_Context(
+        option(Value(*)) category = Select_Symbol_In_Context(
             CTX_ARCHETYPE(categories),
             VAL_WORD_SYMBOL(&vars->type)
         );
 
         if (category) {
-            assert(IS_OBJECT(category));
+            assert(IS_OBJECT(unwrap(category)));
 
             // Find correct message for ID: (if any)
 
-            REBVAL *message = Select_Symbol_In_Context(
-                category,
+            option(Value(*)) message = Select_Symbol_In_Context(
+                unwrap(category),
                 VAL_WORD_SYMBOL(&vars->id)
             );
 
             if (message) {
-                assert(IS_TEXT(message) or IS_BLOCK(message));
+                assert(IS_TEXT(unwrap(message)) or IS_BLOCK(unwrap(message)));
 
                 if (not Is_Nulled(&vars->message))
                     return RAISE(Error_Invalid_Error_Raw(arg));
 
-                Copy_Cell(&vars->message, message);
+                Copy_Cell(&vars->message, unwrap(message));
             }
             else {
                 // At the moment, we don't let the user make a user-ID'd

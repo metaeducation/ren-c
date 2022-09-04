@@ -689,26 +689,27 @@ DECLARE_NATIVE(inherit_meta)
     // By default, inherit description (though ideally, they should have
     // changed it to explain why it's different).
     //
-    REBVAL *description2 = Select_Symbol_In_Context(
+    option(Value(*)) description2 = Select_Symbol_In_Context(
         CTX_ARCHETYPE(m2),
         Canon(DESCRIPTION)
     );
-    if (Is_Nulled(description2)) {
-        REBVAL *description1 = Select_Symbol_In_Context(
+    if (description2 and Is_Nulled(unwrap(description2))) {
+        option(Value(*)) description1 = Select_Symbol_In_Context(
             CTX_ARCHETYPE(m1),
             Canon(DESCRIPTION)
         );
-        Copy_Cell(description2, description1);
+        if (description1)
+            Copy_Cell(unwrap(description2), unwrap(description1));
     }
 
     REBLEN which = 0;
     option(SymId) syms[] = {SYM_PARAMETER_NOTES, SYM_PARAMETER_TYPES, SYM_0};
 
     for (; syms[which] != 0; ++which) {
-        REBVAL *val1 = Select_Symbol_In_Context(
+        Value(*) val1 = try_unwrap(Select_Symbol_In_Context(
             CTX_ARCHETYPE(m1),
             Canon_Symbol(unwrap(syms[which]))
-        );
+        ));
         if (not val1 or Is_Nulled(val1) or Is_Void(val1))
             continue;  // nothing to inherit from
         if (not ANY_CONTEXT(val1))
@@ -716,10 +717,10 @@ DECLARE_NATIVE(inherit_meta)
 
         Context(*) ctx1 = VAL_CONTEXT(val1);
 
-        REBVAL *val2 = Select_Symbol_In_Context(
+        Value(*) val2 = try_unwrap(Select_Symbol_In_Context(
             CTX_ARCHETYPE(m2),
             Canon_Symbol(unwrap(syms[which]))
-        );
+        ));
         if (not val2)
             continue;
 
@@ -745,12 +746,12 @@ DECLARE_NATIVE(inherit_meta)
             if (not Is_Void(e.var) and not Is_Nulled(e.var))
                 continue;  // already set to something
 
-            REBVAL *slot = Select_Symbol_In_Context(
+            option(Value(*)) slot = Select_Symbol_In_Context(
                 CTX_ARCHETYPE(ctx1),
                 KEY_SYMBOL(e.key)
             );
             if (slot)
-                Copy_Cell(e.var, slot);
+                Copy_Cell(e.var, unwrap(slot));
             else
                 Init_Nulled(e.var);  // don't want to leave as `~` isotope
         }
