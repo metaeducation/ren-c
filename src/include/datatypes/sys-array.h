@@ -652,6 +652,8 @@ inline static bool Is_Meta_Of_Empty_Pack(Cell(const*) v)
 
 #define Init_Heavy_Null             Init_Empty_Pack
 #define Is_Heavy_Null               Is_Empty_Pack
+#define Is_Meta_Of_Heavy_Null       Is_Meta_Of_Empty_Pack
+#define Init_Meta_Of_Heavy_Null     Init_Meta_Of_Empty_Pack
 
 inline static Value(*) Isotopify_If_Nulled(Value(*) v) {
     if (VAL_TYPE_UNCHECKED(v) == REB_NULL)

@@ -540,10 +540,27 @@ Bounce Evaluator_Executor(Frame(*) f)
       // To bypass the error, use GET/ANY.
       //
       // QUOTED! forms simply evaluate to remove one level of quoting.
+      //
+      // 1. `~` is the meta of the void state, which is non-valued in nature.
+      //    As such, there is no "void isotope"...if there was, then it would
+      //    overwrite evaluative products and not be useful.
+      //
+      // 2. The desire to make only quasiforms decay via the @ operator means
+      //    that plain apostrophe is taken to mean literal quoted null, e.g.
+      //
+      //        >> @ '
+      //        == '
+      //
+      //    This means a quasiform is needed by @ to make NULL and ~_~ is
+      //    chosen as that form.  Behavior duplicated here for consistency.
 
     case QUASI_2:
         if (Is_Meta_Of_Void(f_current))
-            break;  // the `~` just vaporizes, leaves output as-is
+            break;  // the `~` just vaporizes, leaves output as-is, see [1]
+        if (Is_Meta_Of_Blank_Isotope(f_current)) {
+            Init_Nulled(OUT);  // pure null compromise for API, see [2]
+            break;
+        }
         Derelativize(OUT, f_current, f_specifier);
         mutable_QUOTE_BYTE(OUT) = ISOTOPE_0;
         Set_Cell_Flag(OUT, SCANT_EVALUATED_ISOTOPE);  // see flag comments

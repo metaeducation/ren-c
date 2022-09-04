@@ -115,11 +115,18 @@ inline static REBVAL *Init_Nothing_Untracked(
 #define Init_Nulled(out) \
     TRACK(Init_Nulled_Untracked(ensure(Value(*), (out)), UNQUOTED_1))
 
+#define Init_Quoted_Null(out) \
+    TRACK(Init_Nulled_Untracked(ensure(Value(*), (out)), ONEQUOTE_3))
+
 #define Init_Quasi_Null(out) \
     TRACK(Init_Nulled_Untracked((out), QUASI_2))
 
 #define Init_Meta_Of_Null(out) \
     Init_Blank(out)
+
+#define Is_Quoted_Null(v) \
+  ((READABLE(v)->header.bits & (FLAG_QUOTE_BYTE(255) | FLAG_HEART_BYTE(255))) \
+    == (FLAG_QUOTE_BYTE(ONEQUOTE_3) | FLAG_HEART_BYTE(REB_NULL)))
 
 #define Is_Meta_Of_Null(v) \
     IS_BLANK(v)
