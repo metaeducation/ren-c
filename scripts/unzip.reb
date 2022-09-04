@@ -567,7 +567,7 @@ unzip: function [
                             make-dir/deep %%(where)/(name)
                         ]
                     ][
-                        [path file]: unpack split-path name
+                        [file path]: split-path name
                         if not exists? %% (where)/(path) [
                             make-dir/deep %% (where)/(path)
                         ]

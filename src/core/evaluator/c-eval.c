@@ -1284,10 +1284,8 @@ Bounce Evaluator_Executor(Frame(*) f)
     // The most useful evaluative operation for GET-BLOCK! was deemed to be
     // a REDUCE.  This does not correspond to what one would think of as an
     // "itemwise get" of a block as GET of BLOCK! acted in historical Rebol.
-    // But most usages of that have been superseded by the UNPACK operation.
     //
-    // The existence of GET-BLOCK! means that operations like "REPEND" are not
-    // necessary, as it's very easy for users to ask for blocks to be reduced.
+    // Note that GET-BLOCK! is available as a branch type, `if true :[a b]`
 
       case REB_GET_BLOCK: {
         Derelativize(SPARE, f_current, f_specifier);

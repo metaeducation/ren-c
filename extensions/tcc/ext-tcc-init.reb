@@ -584,7 +584,7 @@ c99: func [
             fail [
                 elide trunc: ~
                 "Could not parse C99 command line at:"
-                append mold/limit/truncated last-pos 40 'trunc if trunc ["..."]
+                append [@ trunc]: (mold/limit last-pos 40) if trunc ["..."]
             ]
         ]
     ]

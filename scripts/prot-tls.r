@@ -467,15 +467,15 @@ client-hello: func [
 ][
     version: default '[1.0 1.2]
 
-    [ctx.min-version ctx.max-version]: unpack case [
+    [ctx.min-version ctx.max-version]: case [
         decimal? version [
-            [version version]
+            pack [version version]
         ]
         block? version [
-            parse3 version [decimal! decimal!] else [
+            parse version [decimal! decimal!] else [
                 fail "BLOCK! /VERSION must be two DECIMAL! (min ver, max ver)"
             ]
-            version
+            pack version
         ]
     ]
     let min-ver-bytes: select version-to-bytes ctx.min-version else [

@@ -1,14 +1,86 @@
 ; %unpack.test.reb
 ;
-; UNPACK replaces the idiom of SET of a BLOCK! that you REDUCE, in
-; order to work around issues related to states that cannot be put
-; into blocks (BAD-WORD! isotopes and NULL).  It unifies the REDUCE
-; with the operation.
+; Prior to the creation of isotopic-BLOCK!-packs, this function was created
+; to replace the idiom of using SET on a BLOCK! that you REDUCE.  It used
+; enfix to relate a SET-BLOCK! on the left to reduced expressions on the right,
+; to work around issues related to states that cannot be put into blocks
+; (e.g. isotopes and NULL).
+;
+; This was then achieved in a generalized fashion in the evaluator with the
+; isotopic blocks, and their intrinsic relationship with SET-BLOCK!.
+;
+; The old code is kept here just as a test that exercises some features (and
+; as a demonstration that usermode enfix is quite powerful for implementing
+; dialecting multi-returns for those who want something different from
+;
+; Note: The original SET facility was agnostic about what kind of word it
+; was setting.  See #1745.
+;
+;    Rebol2>> set [a 'b :c d: /e ^f] [1 2 3 4 5 6]
+;    == [1 2 3 4 5 6]
+;
+; This wasn't supported by UNPACK-OLD, and SET-BLOCK! also has a more
+; dialected notion of what the words represent.
+
+
+[(unpack-old: enfixed func [
+    {Unpack a BLOCK! of values and store each in a variable}
+    return: [<opt> <void> any-value!]
+    'vars [set-block! set-group!]
+    block "Reduced if normal [block], but values used as-is if @[block]"
+        [block! the-block!]
+][
+    if set-group? vars [vars: eval vars]
+
+    ; Want to reduce the block ahead of time, because we don't want partial
+    ; writes to the results (if one is written, all should be)
+    ;
+    ; (Hence need to do validation on the ... for unpacking and COMPOSE the
+    ; vars list too, but this is a first step.)
+    ;
+    block: if the-block? block [
+        map-each item block [quote item]  ; should REDUCE do this for @[...] ?
+    ]
+    else [
+        reduce/predicate block :meta
+    ]
+
+    let result': void'
+    for-each val' block [
+        if result' = void' [
+            result': either blank? vars.1 [void'] [val']
+        ]
+        if tail? vars [
+            fail "Too many values for vars in UNPACK (use ... if on purpose)"
+        ]
+        switch vars.1 [
+            '... [continue]  ; ignore all other values (but must reduce all)
+            (matches blank!) []  ; no assignment
+            (matches [word! tuple!]) [set vars.1 unmeta val']
+            (matches [meta-word! meta-tuple!]) [set vars.1 val']
+        ]
+        vars: my next
+    ]
+    if vars.1 = '... [
+        if not last? vars [
+            fail "... must appear only at the tail of UNPACK variable list"
+        ]
+    ] else [
+        ; We do not error on too few values (such as `[a b c]: [1 2]`) but
+        ; instead unset the remaining variables (e.g. `c` above).  There could
+        ; be a refinement to choose whether to error on this case.
+        ;
+        for-each var vars [  ; if not enough values for variables, unset
+            if not blank? var [unset var]
+        ]
+    ]
+    return unmeta any [result' void']
+], true)
 
 (
     a: b: ~bad~
     did all [
-        3 = [a b]: unpack [1 + 2 3 + 4]
+        3 = [a b]: unpack-old [1 + 2 3 + 4]
         a = 3
         b = 7
     ]
@@ -17,7 +89,7 @@
 (
     a: b: ~bad~
     did all [
-        1 = [a b c]: unpack @[1 + 2]
+        1 = [a b c]: unpack-old @[1 + 2]
         a = 1
         b = '+
         c = 2
@@ -27,8 +99,44 @@
 ; ... is used to indicate willingness to discard extra values
 (
     did all [
-        1 = [a b ...]: unpack @[1 2 3 4 5]
+        1 = [a b ...]: unpack-old @[1 2 3 4 5]
         a = 1
         b = 2
     ]
 )
+
+(
+    a: <before>
+    '_ = [a]: unpack-old inert reduce/predicate [null] :reify
+    '_ = a
+)
+(
+    a: <a-before>
+    b: <b-before>
+    2 = [a b]: unpack-old inert reduce/predicate [2 null] :reify
+    a = 2
+    '_ = b
+)
+
+(a: 1 b: _ [b]: unpack-old inert [a] b = 'a)
+
+(
+    a: 10
+    b: 20
+    did all [blank = [a b]: unpack-old @[_ _], blank? a, blank? b]
+)
+(
+    a: 10
+    b: 20
+    c: 30
+    [a b c]: unpack-old [_ 99]
+    did all [null? a, b = 99, ^c = '~]
+)
+
+(
+    a: 10
+    b: 20
+    c: 30
+    [a b c]: unpack-old [_ 99]
+    did all [null? a, b = 99, ^c = '~]
+)]

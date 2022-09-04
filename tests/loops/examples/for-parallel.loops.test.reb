@@ -10,11 +10,7 @@
         body [block!]
     ][
         while [(not empty? blk1) or (not empty? blk2)] [  ; null and [] EMPTY?
-            ;
-            ; Use the cool UNPACK facility to set the variables:
-            ; https://forum.rebol.info/t/1634
-            ;
-            (vars): unpack [(try first blk1) (try first blk2)]
+            (vars): pack [(first maybe blk1) (first maybe blk2)]
 
             do body  ; BREAK from body break the outer while, it returns NULL
 
