@@ -73,20 +73,11 @@ module: func [
         ; !!! Historically, the `Name:` and `Type:` fields would tolerate
         ; either a quoted word or plain word.  Now only WORD! is tolerated.
         ;
-        ; !!! Regarding BLANK!: the system.standard.header has NULL for missing
-        ; fields.  So the point of their existence is just to standardize the
-        ; order, and save on repeated keylist definitions.  Is tolerating
-        ; BLANK! as a kind of "TBD" for fields you might want but don't want
-        ; to specify yet a useful feature?  This could lead to opting out
-        ; errors more than anything.  But generically prohibiting BLANK!
-        ; doesn't seem like a good idea in case it has meaning for custom
-        ; header fields.  :-/
-        ;
         for-each [var types] [  ; !!! `in spec` doesn't work here, why not?
-            spec.name [<opt> word! blank!]
+            spec.name [<opt> word!]
             spec.type [word!]  ; default is `script` from system.standard.header
-            spec.version [<opt> tuple! blank!]
-            spec.options [<opt> block! blank!]
+            spec.version [<opt> tuple!]
+            spec.options [<opt> block!]
         ][
             (match types get var) else [
                 fail ["Module" var "must be in" mold types "- not" ^(get var)]
