@@ -242,10 +242,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
         }
         else if (Get_Frame_Flag(FRAME, BRANCH)) {
             Clear_Stale_Flag(OUT);  // also, see [1]
-            if (Is_Void(OUT))
-                Init_Heavy_Void(OUT);
-            else if (Is_Nulled(OUT))
-                Init_Heavy_Null(OUT);
+            Debranch_Output(OUT);  // make heavy voids, clear ELSE/THEN methods
         }
         else if (Not_Frame_Flag(FRAME, MAYBE_STALE))
             Clear_Stale_Flag(OUT);  // again, see [1]
@@ -263,10 +260,10 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
         //
         if (Get_Frame_Flag(FRAME, TRAMPOLINE_KEEPALIVE)) {
             FRAME = FRAME->prior;
-            assert(FRAME != TOP_FRAME);  // sanity check (*not* the top of stack)
+            assert(FRAME != TOP_FRAME);  // sanity check (*not* top of stack)
         }
         else {
-            assert(FRAME == TOP_FRAME);  // sanity check (is the top of the stack)
+            assert(FRAME == TOP_FRAME);  // sanity check (is top of the stack)
             Drop_Frame(FRAME);
             FRAME = TOP_FRAME;
         }
@@ -324,7 +321,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
     //    has a notable use by RETURN from a FUNC, which considers its type
     //    checking to be finished so it can skip past the Action_Executor().
     //
-    //    !!! Using BOUNCE_THROWN makes it possible for the UNWIND to be offered to
+    //    !!! Using BOUNCE_THROWN makes it possible for UNWIND to be offered to
     //    dispatchers that catch throws.  This is used for instance in MACRO,
     //    which intercepts the UNWIND issued by RETURN, because it doesn't want
     //    to actually return the block (it wants to splice it).  But that may
@@ -394,7 +391,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
 
         if (FRAME->executor == &Just_Use_Out_Executor) {
             if (Get_Frame_Flag(FRAME, TRAMPOLINE_KEEPALIVE))
-                FRAME = FRAME->prior;  // hack, don't let it be aborted, see [3]
+                FRAME = FRAME->prior;  // don't let it be aborted, see [3]
         }
 
         goto bounce_on_trampoline;  // executor will see the throw
@@ -403,7 +400,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
     assert(!"executor(f) not OUT, BOUNCE_THROWN, or BOUNCE_CONTINUE");
     panic (cast(void*, r));
 
-} ON_ABRUPT_FAILURE(Context(*) e) {  ////////////////////////////////////////////
+} ON_ABRUPT_FAILURE(Context(*) e) {  /////////////////////////////////////////
 
   // 1. An abrupt fail(...) is treated as a "thrown error", which can not be
   //    intercepted in the same way as a definitional error can be.

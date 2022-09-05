@@ -211,7 +211,7 @@ issue!      "immutable codepoint or codepoint sequence"
 <ANY-CONTEXT!>
 
     object!     "context of names with values"
-                (CELL_FLAG_FIRST_IS_NODE | CELL_FLAG_SECOND_IS_NODE)
+    ~lazy~      (CELL_FLAG_FIRST_IS_NODE | CELL_FLAG_SECOND_IS_NODE)
                 []
                 [context     *       *]
 

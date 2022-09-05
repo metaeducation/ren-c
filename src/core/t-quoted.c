@@ -420,6 +420,34 @@ DECLARE_NATIVE(unquasi)
 
 
 //
+//  isotopic: native [
+//
+//  {Give the isotopic form of the plain argument (same as UNMETA QUASI)}
+//
+//      return: []  ; isotope!
+//      value "Any non-QUOTED!, non-QUASI value"
+//          [<opt> any-value!]  ; there isn't an any-nonquoted! typeset
+//  ]
+//
+DECLARE_NATIVE(isotopic)
+{
+    INCLUDE_PARAMS_OF_ISOTOPIC;
+
+    Value(*) v = ARG(value);
+
+    if (IS_QUOTED(v))
+        fail ("QUOTED! values have no isotopic form (isotopes are quoted -1");
+
+    if (IS_QUASI(v))  // Review: Allow this?
+        fail ("QUASI! values can be made isotopic with UNMETA");
+
+    Copy_Cell(OUT, v);
+    mutable_QUOTE_BYTE(OUT) = ISOTOPE_0;
+    return OUT;
+}
+
+
+//
 //  unmeta: native [
 //
 //  {Variant of UNQUOTE that also accepts QUASI! to make isotopes}
@@ -527,6 +555,43 @@ DECLARE_NATIVE(spread)
 
 
 //
+//  lazy: native [
+//
+//  {Make objects lazy}
+//
+//      return: "Isotope of OBJECT! or unquoted value (passthru null and void)"
+//          [<opt> <void> any-value!]
+//      object "Will do MAKE OBJECT! on BLOCK!"
+//          [<opt> <void> quoted! object! block!]
+//  ]
+//
+DECLARE_NATIVE(lazy)
+{
+    INCLUDE_PARAMS_OF_LAZY;
+
+    Value(*) v = ARG(object);
+    if (Is_Void(v))
+        return VOID;
+    if (Is_Nulled(v))
+        return nullptr;
+
+    if (IS_QUOTED(v))
+        return Unquotify(Copy_Cell(OUT, v), 1);
+
+    if (IS_BLOCK(v)) {
+        if (rebRunThrows(OUT, Canon(MAKE), Canon(OBJECT_X), v))
+            return THROWN;
+    }
+    else
+        Copy_Cell(OUT, v);
+
+    assert(IS_OBJECT(OUT));
+    mutable_QUOTE_BYTE(OUT) = ISOTOPE_0;
+    return OUT;
+}
+
+
+//
 //  pack: native [
 //
 //  {Create a pack of arguments from an array}
@@ -619,6 +684,23 @@ DECLARE_NATIVE(splice_q)
     INCLUDE_PARAMS_OF_SPLICE_Q;
 
     return Init_Logic(OUT, Is_Meta_Of_Splice(ARG(optional)));
+}
+
+
+//
+//  lazy?: native [
+//
+//  "Tells you if argument is a lazy value (isotopic object)"
+//
+//      return: [logic!]
+//      ^optional [<opt> <void> <fail> <pack> any-value!]
+//  ]
+//
+DECLARE_NATIVE(lazy_q)
+{
+    INCLUDE_PARAMS_OF_LAZY_Q;
+
+    return Init_Logic(OUT, Is_Meta_Of_Lazy(ARG(optional)));
 }
 
 

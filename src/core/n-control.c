@@ -202,6 +202,195 @@ DECLARE_NATIVE(either)
 }
 
 
+//=//// "THENABLE" FACILITIES: LAZY THEN AND ELSE /////////////////////////=//
+//
+// The conventional sense of THEN and ELSE are tied to whether a result is
+// "nothing" or not, where NULL and VOID are the nothing states.
+//
+//    >> if false [<not run>]
+//    ; void
+//
+//    >> if false [<not run>] else [print "ELSE triggered by voidness"]
+//    ELSE triggered by voidness
+//
+// But this mechanical notion is augmented by a methodization concept, which
+// bears some similarity to "thenable" objects in JavaScript:
+//
+// https://stackoverflow.com/q/59492809/
+//
+// 1. The input is a ^META parameter in order to react to voids and tolerate
+//    isotopes.  But we don't want to actually return a quoted version of the
+//    input if branches don't run, so unmeta them.
+//
+// 2. THEN and ELSE want to pass on contents of a multi-return pack to
+//    branches if applicable.  But the decision on whether it's a THEN or
+//    ELSE case comes from the first parameter in the pack.
+//
+// 3. Special case: `if true [null]` creates a ~[]~ pack as a signal of
+//    nullness that does -not- trigger an else (while NULL itself in a pack,
+//    ^META'd as blank, e.g. ~[_]~, will trigger ELSE normally)
+//
+// 4. A lazy object with a THEN or ELSE method should have that handled here.
+//    But if those methods aren't present, should it be reified or passed
+//    as-is to the THEN branch, which may be able to take it as ^META and
+//    not reify it?
+//
+// 5. It is legal for a lazy object to have both THEN and ELSE handlers.
+//    This is useful for instance if it wants to guarantee that at least one
+//    of the tests is done (e.g. if it would reify to an error if the usage
+//    did not demonstrate consciousness of the failure one way or another.)
+//
+//    This means a THEN method might not want to run a branch at all, and
+//    instead run some code as a reaction to the knowledge that a THEN test
+//    was performed.  Such cases should not be forced to a "branch was taken"
+//    result, so an exception is made for the THEN hook when both a THEN and
+//    ELSE hook are provided.
+//
+// 6. If only a THEN or an ELSE branch is received, then a desire for
+//    "full control" is not assumed, and it is safer to make sure they don't
+//    accidentally wind up returning something from a THEN which could
+//    itself trigger an ELSE (for instance).
+//
+
+enum {
+    ST_THENABLE_INITIAL_ENTRY = STATE_0,
+    ST_THENABLE_REIFYING_SPARE,
+    ST_THENABLE_RUNNING_BRANCH,
+    ST_THENABLE_REJECTING_INPUT
+};
+
+static Bounce Then_Else_Isotopic_Object_Helper(
+    Frame(*) frame_,
+    bool then  // true when doing a THEN
+){
+    INCLUDE_PARAMS_OF_THEN;  // assume frame compatibility w/ELSE
+
+    Value(*) in = ARG(optional);
+    Value(*) branch = ARG(branch);
+
+    Meta_Unquotify(in);  // see [1]
+
+    if (Is_Raised(in)) {  // definitional failure, skip
+        STATE = ST_THENABLE_REJECTING_INPUT;
+        return Copy_Cell(OUT, in);
+    }
+
+    if (Is_Pack(in)) {
+        Cell(const*) pack_meta_tail;
+        Cell(const*) pack_meta_at = VAL_ARRAY_AT(&pack_meta_tail, in);
+        if (pack_meta_at == pack_meta_tail) {
+            assert(Is_Heavy_Null(in));  // special case, see [3]
+            Init_Nulled(in);
+            goto take_branch_if_then;
+        }
+        if (Is_Meta_Of_Null(pack_meta_at))
+            goto handle_null;
+        else if (Is_Meta_Of_Void(pack_meta_at))
+            goto handle_void;
+
+        if (Is_Meta_Of_Lazy(pack_meta_at))
+            fail ("Lazy objects in packs not supported in THEN/ELSE ATM");
+
+        goto take_branch_if_then;
+    }
+
+    if (not Is_Lazy(in))
+        goto test_not_pack_and_not_lazy;
+
+    goto handle_lazy_object;
+
+  handle_lazy_object: {  /////////////////////////////////////////////////////
+
+    option(Value(*)) then_hook = Select_Symbol_In_Context(in, Canon(THEN));
+    if (then_hook and Is_Void(unwrap(then_hook)))
+        then_hook = nullptr;  // can be unset by Debranch_Output()
+
+    option(Value(*)) else_hook = Select_Symbol_In_Context(in, Canon(ELSE));
+    if (else_hook and Is_Void(unwrap(else_hook)))
+        else_hook = nullptr;  // can be unset by Debranch_Output()
+
+    if (not then_hook and not else_hook) {  // !!! should it always take THEN?
+        if (not Pushed_Reifying_Frame(  // fails if no reify method, see [4]
+            SPARE,
+            in,
+            FRAME_FLAG_META_RESULT
+        )){
+            Copy_Cell(in, SPARE);  // cheap reification... (e.g. quoted)
+            Meta_Unquotify(in);  // see [1]
+            assert(STATE == ST_THENABLE_INITIAL_ENTRY);
+            assert(not Is_Isotope(in));
+            goto test_not_pack_and_not_lazy;
+        }
+
+        STATE = ST_THENABLE_REIFYING_SPARE;  // will call helper again
+        return CONTINUE_SUBFRAME(TOP_FRAME);
+    }
+
+    Value(*) hook;
+    if (then) {
+        if (not then_hook) {
+            STATE = ST_THENABLE_REJECTING_INPUT;
+            return Copy_Cell(OUT, in);  // pass lazy object thru to ELSEs
+        }
+        hook = unwrap(then_hook);
+    }
+    else {
+        if (not else_hook) {
+            STATE = ST_THENABLE_REJECTING_INPUT;
+            return Copy_Cell(OUT, in);  // pass lazy object thru to THENs (?)
+        }
+        hook = unwrap(else_hook);
+    }
+
+    STATE = ST_THENABLE_RUNNING_BRANCH;
+
+    if (then_hook and else_hook)  // THEN is likely passthru if both
+        return DELEGATE(OUT, hook, branch);  // not DELEGATE_BRANCH, see [5]
+
+    if (not IS_ACTION(hook))  // if not full control, assume must use BRANCH
+        fail ("non-ACTION! found in THEN or ELSE method of lazy object");
+
+    return DELEGATE_BRANCH(OUT, hook, branch);  // BRANCH for safety, see [6]
+
+} test_not_pack_and_not_lazy: {  /////////////////////////////////////////////
+
+    assert(not Is_Lazy(in) and not Is_Pack(in));
+
+    if (Is_Void(in) or (REF(decay) and Is_Heavy_Void(in))) {
+      handle_void:
+        if (then) {
+            STATE = ST_THENABLE_REJECTING_INPUT;
+            if (Is_Pack(in))
+                return Copy_Cell(OUT, in);
+            return VOID;  // then of void, don't want to write to output cell
+        }
+        STATE = ST_THENABLE_RUNNING_BRANCH;
+        return DELEGATE_BRANCH(OUT, branch, in);  // else of void
+    }
+
+    if (Is_Nulled(in) or (REF(decay) and Is_Heavy_Null(in))) {
+      handle_null:
+        if (then) {
+            STATE = ST_THENABLE_REJECTING_INPUT;
+            return Copy_Cell(OUT, in);  // then of null, may be pack
+        }
+        STATE = ST_THENABLE_RUNNING_BRANCH;
+        return DELEGATE_BRANCH(OUT, branch, in);  // else of null
+    }
+
+} take_branch_if_then: {  ////////////////////////////////////////////////////
+
+    assert(not Is_Void(in));  // but null is a possibility, see [2]
+
+    if (not then) {
+        STATE = ST_THENABLE_REJECTING_INPUT;
+        return Copy_Cell(OUT, in);  // passthru, see [4]
+    }
+    STATE = ST_THENABLE_RUNNING_BRANCH;
+    return DELEGATE_BRANCH(OUT, branch, in);  // then branch, takes arg
+}}
+
+
 //
 //  did: native [
 //
@@ -209,11 +398,12 @@ DECLARE_NATIVE(either)
 //
 //      return: [logic!]
 //      ^optional "Argument to test"
-//          [<opt> <void> any-value!]
+//          [<opt> <void> <pack> any-value!]
 //      /decay "Pre-decay ~_~ isotope input to NULL"
+//      <local> branch  ; for frame compatibility with THEN/ELSE/ALSO
 //  ]
 //
-DECLARE_NATIVE(did_1)  // see TO-C-NAME
+DECLARE_NATIVE(did_1)  // see TO-C-NAME for why the "_1" is needed
 //
 // DID exists as a complement to isotopes to help solve conflation of falsey
 // values with conditional tests.  One example:
@@ -237,15 +427,62 @@ DECLARE_NATIVE(did_1)  // see TO-C-NAME
     INCLUDE_PARAMS_OF_DID_1;
 
     Value(*) in = ARG(optional);
+    USED(ARG(decay));  // used by helper
+    USED(ARG(branch));
 
-    if (Is_Meta_Of_Void(in) or Is_Meta_Of_Null(in))
-        return Init_False(OUT);
+    switch (STATE) {
+      case ST_THENABLE_INITIAL_ENTRY :
+        goto initial_entry;
 
-    if (REF(decay) and Is_Meta_Of_Blank_Isotope(in))
-        return Init_False(OUT);
+      case ST_THENABLE_REIFYING_SPARE :
+        Copy_Cell(in, SPARE);
+        goto reifying_input;  // multiple reifications may be needed
 
-    return Init_True(OUT);
-}
+      case ST_THENABLE_RUNNING_BRANCH :
+        goto return_true;
+
+      default :
+        assert(false);
+    }
+
+  initial_entry: {  //////////////////////////////////////////////////////////
+
+    Quotify(Quasify(Init_Word(ARG(branch), Canon(DID_1))), 1);  // see [1]
+
+    goto reifying_input;
+
+} reifying_input: {  /////////////////////////////////////////////////////////
+
+    bool then = true;
+    Bounce bounce = Then_Else_Isotopic_Object_Helper(frame_, then);
+
+    switch (STATE) {
+      case ST_THENABLE_REIFYING_SPARE:  // needs another reify step
+        assert(bounce == BOUNCE_CONTINUE);
+        break;
+
+      case ST_THENABLE_REJECTING_INPUT:
+        assert(bounce == OUT or bounce == BOUNCE_VOID);
+        bounce = Init_False(OUT);
+        break;
+
+      case ST_THENABLE_RUNNING_BRANCH:
+        if (bounce == OUT)  // was a cheap branch, didn't need to run
+            goto return_true;
+        assert(bounce == BOUNCE_DELEGATE);
+        bounce = BOUNCE_CONTINUE;  // let resolve code run, but we want TRUE
+        break;
+
+      default:
+        assert(false);
+    }
+
+    return bounce;
+
+} return_true: {  ////////////////////////////////////////////////////////////
+
+    return Init_True(OUT);  // can't trust branch product, see [1]
+}}
 
 
 //
@@ -257,6 +494,7 @@ DECLARE_NATIVE(did_1)  // see TO-C-NAME
 //      ^optional "Argument to test"
 //          [<opt> <void> any-value!]
 //      /decay "Pre-decay ~_~ isotope input to NULL"
+//      <local> branch  ; for frame compatibility with THEN/ELSE/ALSO
 //  ]
 //
 DECLARE_NATIVE(didnt)
@@ -264,6 +502,8 @@ DECLARE_NATIVE(didnt)
     INCLUDE_PARAMS_OF_DIDNT;
 
     Value(*) in = ARG(optional);
+    USED(ARG(decay));  // used by helper
+    USED(ARG(branch));
 
     if (Is_Meta_Of_Void(in) or Is_Meta_Of_Null(in))
         return Init_True(OUT);
@@ -284,52 +524,76 @@ DECLARE_NATIVE(didnt)
 //          [<opt> <void> any-value!]
 //      ^optional "<deferred argument> Run branch if this is not null"
 //          [<opt> <void> <fail> <pack> any-value!]
+//      /decay "Pre-decay ~_~ isotope input to NULL"
 //      :branch "If arity-1 ACTION!, receives value that triggered branch"
 //          [any-branch!]
-//      /decay "Pre-decay ~_~ isotope input to NULL"
 //  ]
 //
 DECLARE_NATIVE(then)  // see `tweak :then 'defer on` in %base-defs.r
-//
-// 1. We received the left hand side as ^meta, so it's quoted in order to be
-//    isotope-tolerant.  If passed to a branch action, unquote back to normal.
 {
     INCLUDE_PARAMS_OF_THEN;
 
     Value(*) in = ARG(optional);
-    Value(*) branch = ARG(branch);
+    USED(ARG(branch));  // used by helper
+    USED(ARG(decay));
 
-    Cell(const*) test_meta;
-    if (Is_Meta_Of_Pack(in)) {
-        Cell(const*) pack_meta_tail;
-        test_meta = VAL_ARRAY_AT(&pack_meta_tail, in);
-        if (test_meta == pack_meta_tail) {
-            //
-            // Special case: `if true [null]` creates a ~[]~ pack as a signal
-            // of nullness that does -not- trigger an else (while NULL itself
-            // and a pack with meta-null, e.g. ~[_]~, will trigger ELSE)
-            //
-            test_meta = in;  // we'll be passing the ~[]~ isotope to branch
-        }
-    }
-    else
-        test_meta = in;
+    switch (STATE) {
+      case ST_THENABLE_INITIAL_ENTRY :
+        goto reifying_input;
 
-    if (
-        Is_Meta_Of_Void(test_meta)  // meta parameter, e.g. input was true void
-        or Is_Meta_Of_Null(test_meta)  // soft failure signal
-        or (REF(decay) and Is_Meta_Of_Blank_Isotope(test_meta))  // null isotope
-    ){
-        return VOID;
+      case ST_THENABLE_REIFYING_SPARE :
+        Copy_Cell(in, SPARE);
+        goto reifying_input;
+
+      default : assert(false);
     }
 
-    if (Is_Meta_Of_Raised(in)) {  // definitional failure, skip
-        Copy_Cell(OUT, in);
-        return Raisify(Unquasify(OUT));  // Meta_Unquotify() won't pass ATM
+  reifying_input: {  /////////////////////////////////////////////////////////
+
+    bool then = true;
+    Bounce bounce = Then_Else_Isotopic_Object_Helper(frame_, then);
+    return bounce;
+}}
+
+
+//
+//  else: enfix native [
+//
+//  {If input is not null, return that value, otherwise evaluate the branch}
+//
+//      return: "Input value if not null, or branch result"
+//          [<opt> <void> any-value!]
+//      ^optional "<deferred argument> Run branch if this is null"
+//          [<opt> <void> <fail> <pack> any-value!]
+//      /decay "Pre-decay ~_~ isotope input to NULL"
+//      :branch [any-branch!]
+//  ]
+//
+DECLARE_NATIVE(else)  // see `tweak :else 'defer on` in %base-defs.r
+{
+    INCLUDE_PARAMS_OF_ELSE;
+
+    Value(*) in = ARG(optional);
+    USED(ARG(branch));  // used by helper
+    USED(ARG(decay));
+
+    switch (STATE) {
+      case ST_THENABLE_INITIAL_ENTRY :
+        goto reifying_input;
+
+      case ST_THENABLE_REIFYING_SPARE :
+        Copy_Cell(in, SPARE);
+        goto reifying_input;
+
+      default : assert(false);
     }
 
-    return DELEGATE_BRANCH(OUT, branch, Meta_Unquotify(in));  // unmeta, see [1]
-}
+  reifying_input: {  /////////////////////////////////////////////////////////
+
+    bool then = false;
+    Bounce bounce = Then_Else_Isotopic_Object_Helper(frame_, then);
+    return bounce;
+}}
 
 
 //
@@ -341,9 +605,9 @@ DECLARE_NATIVE(then)  // see `tweak :then 'defer on` in %base-defs.r
 //          [<opt> <void> any-value!]
 //      ^optional "<deferred argument> Run branch if this is not null"
 //          [<opt> <void> <fail> any-value!]
+//      /decay "Pre-decay ~_~ isotope input to NULL"
 //      :branch "If arity-1 ACTION!, receives value that triggered branch"
 //          [any-branch!]
-//      /decay "Pre-decay ~_~ isotope input to NULL"
 //  ]
 //
 DECLARE_NATIVE(also)  // see `tweak :also 'defer on` in %base-defs.r
@@ -388,85 +652,6 @@ DECLARE_NATIVE(also)  // see `tweak :also 'defer on` in %base-defs.r
 
     return COPY(in);  // in argument has already been Meta_Unquotify()'d
 }}
-
-
-//
-//  else: enfix native [
-//
-//  {If input is not null, return that value, otherwise evaluate the branch}
-//
-//      return: "Input value if not null, or branch result"
-//          [<opt> <void> any-value!]
-//      ^optional "<deferred argument> Run branch if this is null"
-//          [<opt> <void> <fail> <pack> any-value!]
-//      :branch [any-branch!]
-//      /decay "Pre-decay ~_~ isotope input to NULL"
-//  ]
-//
-DECLARE_NATIVE(else)  // see `tweak :else 'defer on` in %base-defs.r
-//
-// 1. ELSE is not reactive to "nothing" isotopes (~) by design:
-//
-//        >> if true [print "branch ran", if false [<a>]]
-//        == ~  ; isotope
-//
-//        >> if true [print "branch ran, if false [<a>]] else [<b>]
-//        == ~  ; isotope
-//
-// 2. We want to convey the notion that a branch is pure void.  In usermode,
-//    this can only be done with ^META parameters.  But in the implementation,
-//    the SPARE and OUT cells can "cheat" by using the void state.  (It would
-//    not be legal to make ARG(in) VOID and pass it to the branch, and the
-//    GC would error).  Void is the default state of the spare cell.
-//
-// 3. Since the input is a ^META parameter, meta-of-null signals null isotope
-//    was the input.  When /DECAY is specified we trigger running the branch.
-//    (branch execution decays ~_~ isotopes to NULL for non-meta actions,
-//    but ^META actions will see that it was an isotope)
-//
-// 4. The input is a ^META parameter in order to react to voids and tolerate
-//    isotopes.  But we don't want to actually return a quoted version of the
-//    input if the ELSE doesn't run, so unmeta it.
-{
-    INCLUDE_PARAMS_OF_ELSE;  // ELSE reacts to null and void, not none, see [1]
-
-    Value(*) in = ARG(optional);
-    Value(*) branch = ARG(branch);
-
-    Cell(const*) test_meta;
-    if (Is_Meta_Of_Pack(in)) {
-        Cell(const*) pack_meta_tail;
-        test_meta = VAL_ARRAY_AT(&pack_meta_tail, in);
-        if (test_meta == pack_meta_tail) {
-            //
-            // Special case: `if true [null]` creates a ~[]~ pack as a signal
-            // of nullness that does -not- trigger an else (while NULL itself
-            // and a pack with meta-null, e.g. ~[_]~, will trigger ELSE)
-            //
-            return COPY(Meta_Unquotify(in));
-        }
-    }
-    else
-        test_meta = in;
-
-    if (Is_Meta_Of_Void(test_meta)) {  // isotope, must be tested first
-        assert(Is_Void(SPARE));  // branch argument is SPARE for void, see [2]
-    }
-    else if (Is_Meta_Of_Null(test_meta)) {
-        Init_Nulled(SPARE);
-    }
-    else if (REF(decay) and Is_Meta_Of_Blank_Isotope(test_meta)) {
-        Init_Blank_Isotope(SPARE);  // action branch decays if non-meta, see [3]
-    }
-    else if (Is_Meta_Of_Raised(test_meta)) {  // definitional failure, skip
-        Copy_Cell(OUT, in);
-        return Raisify(Unquasify(OUT));  // Meta_Unquotify() won't pass on ATM
-    }
-    else
-        return COPY(Meta_Unquotify(in));  // unquotify to pass thru, see [4]
-
-    return DELEGATE_BRANCH(OUT, branch, SPARE);
-}
 
 
 //
@@ -982,6 +1167,8 @@ DECLARE_NATIVE(case)
     return CONTINUE_SUBFRAME(SUBFRAME);  // one step to pass predicate, see [1]
 
 } condition_result_in_spare: {  //////////////////////////////////////////////
+
+    Decay_If_Isotope(SPARE);
 
     if (Is_Void(SPARE))  // skip void expressions, see [2]
         goto handle_next_clause;
@@ -1531,4 +1718,59 @@ DECLARE_NATIVE(throw)
         Init_Heavy_Null(v);
 
     return Init_Thrown_With_Label(FRAME, v, ARG(name));  // name can be nulled
+}
+
+
+//
+//  Debranch_Output: C
+//
+// When a branch runs, it specifically wants to remove signals that are used
+// by THEN and ELSE.  This means NULL and VOID can't stay as those states:
+//
+//     >> if true [null] else [print "Otherwise you'd get this :-("]
+//     Otherwise you'd get this :-(  ; <-- BAD!
+//
+// See notes about "Heavy Null" and "Heavy Void" for how the variations carry
+// some behaviors of the types, while not being technically void or null.
+//
+void Debranch_Output(Value(*) out) {
+    if (Is_Lazy(out)) {
+        //
+        // We don't have to fully reify the object, we just need to make sure
+        // its THEN and ELSE fields are unset.
+        //
+        Symbol(const*) syms[2] = {Canon(ELSE), Canon(THEN)};
+        int i;
+        for (i = 0; i < 2; ++i) {
+            option(Value(*)) hook = Select_Symbol_In_Context(out, syms[i]);
+            if (hook)
+                RESET(unwrap(hook));
+        }
+    }
+    else if (Is_Void(out))
+        Init_Heavy_Void(out);
+    else if (Is_Nulled(out))
+        Init_Heavy_Null(out);
+}
+
+
+//
+//  Pushed_Reifying_Frame: C
+//
+bool Pushed_Reifying_Frame(Value(*) out, Value(const*) obj, Flags flags) {
+    option(Value(*)) reify = Select_Symbol_In_Context(obj, Canon(REIFY));
+    if (not reify)
+        fail ("Asked to reify lazy object with no REIFY method");
+
+    bool pushed = Pushed_Continuation(
+        out,
+        flags,
+        SPECIFIED,
+        unwrap(reify),
+        nullptr  // no argument to reify--must answer in isolation
+    );
+    if (not pushed)
+        return false;
+
+    return true;
 }

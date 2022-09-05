@@ -875,7 +875,7 @@ Bounce Action_Executor(Frame(*) f)
 
         if (NOT_PARAM_FLAG(PARAM, WANT_PACKS)) {
             if (VAL_PARAM_CLASS(PARAM) == PARAM_CLASS_META) {
-                if (HEART_BYTE(ARG) == REB_BLOCK and QUOTE_BYTE(ARG) == REB_QUASI) {
+                if (Is_Meta_Of_Pack(ARG)) {
                     Meta_Unquotify(ARG);
                     Decay_If_Isotope(ARG);
                 }

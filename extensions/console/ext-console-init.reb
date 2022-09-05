@@ -144,6 +144,19 @@ export console!: make object! [
         ;
         set 'last-result v
 
+        === REIFY IF A "LAZY" VALUE ===
+
+        if lazy? unget v [
+            v: unquasi v
+            if in v 'reify [
+                print ["; reify of lazy object with" mold words of v]
+                v: ^ do v.reify
+            ] else [
+                print ["; no reify in lazy object with" mold words of v]
+                v: quasi v
+            ]
+        ]
+
         === UNPACK FIRST VALUE IF IN A "PACK" ===
 
         ; Functions can return block isotopes which represent multiple returns.

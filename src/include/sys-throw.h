@@ -105,6 +105,8 @@ inline static void CATCH_THROWN(
 }
 
 
+inline static void Drop_Frame(Frame(*) f);
+
 // When you're sure that the value isn't going to be consumed by a multireturn
 // then use this to get the first value unmeta'd
 //
@@ -112,8 +114,20 @@ inline static Value(*) Decay_If_Isotope(Value(*) v) {
     if (Is_Stale(v))
         return v;
 
+    if (not Is_Isotope(v))
+        return v;
+
     if (Is_Blank_Isotope(v))
         return Init_Nulled(v);
+
+    if (Is_Lazy(v)) {
+        if (not Pushed_Reifying_Frame(v, v, FRAME_MASK_NONE))
+            return v;  // cheap reification
+        if (Trampoline_With_Top_As_Root_Throws())
+            fail (Error_No_Catch_For_Throw(TOP_FRAME));
+        Drop_Frame(TOP_FRAME);
+        return v;
+    }
 
     if (Is_Pack(v)) {  // iterate until result is not multi-return, see [1]
         Cell(const*) pack_meta_tail;
