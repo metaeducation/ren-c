@@ -444,7 +444,11 @@ void* Probe_Core_Debug(
 void Probe(const void *p)
   { Probe_Core_Debug(p, "C debug", "N/A", 0); }
 
-void Where(Frame(*) f) {
+
+//
+//  Where_Core_Debug: C
+//
+void Where_Core_Debug(Frame(*) f) {
     if (FEED_IS_VARIADIC(f->feed))
         Reify_Variadic_Feed_As_Array_Feed(f->feed, false);
 
@@ -474,5 +478,8 @@ void Where(Frame(*) f) {
     printf("%s\n\n", BIN_AT(mo->series, mo->base.size));
     Drop_Mold(mo);
 }
+
+void Where(Frame(*) f)
+  { Where_Core_Debug(f); }
 
 #endif  // DEBUG_HAS_PROBE

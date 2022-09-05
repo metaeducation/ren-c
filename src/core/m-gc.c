@@ -502,6 +502,8 @@ void Reify_Variadic_Feed_As_Array_Feed(
 
         feed->p = &PG_Feed_At_End;
     }
+
+    assert(FEED_INDEX(feed) <= cast(Index, ARR_LEN(FEED_ARRAY(feed))));
 }
 
 

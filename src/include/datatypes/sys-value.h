@@ -97,6 +97,10 @@
         #define PROBE(v) \
             Probe_Core_Debug((v), #v, __FILE__, __LINE__)  // returns void*
     #endif
+
+    #define WHERE(f) \
+        Where_Core_Debug(f)
+
 #elif !defined(NDEBUG) // don't cause compile time error on PROBE()
     #define PROBE(v) \
         do { \

@@ -262,6 +262,7 @@ void Mold_Array_At(
 
     Cell(const*) item_tail = ARR_TAIL(a);
     Cell(const*) item = ARR_AT(a, index);
+    assert(item <= item_tail);
     while (item != item_tail) {
         if (Get_Cell_Flag(item, NEWLINE_BEFORE)) {
            if (not indented and (sep[1] != '\0')) {
