@@ -205,7 +205,7 @@ for-each-datatype: func [
     body "Block to evaluate each time"
         [block!]
     <local>
-    name* description* typesets* class* make* mold* heart* cellmask*
+    name* isoname* description* typesets* class* make* mold* heart* cellmask*
     completed* running*
 ][
     heart*: 1  ; NULL is 0, and is not in the type table
@@ -214,6 +214,7 @@ for-each-datatype: func [
 
         set name* word!
         set description* text!
+        [set isoname* quasi! | (isoname*: null)]
         [set cellmask* group!]
         [set typesets* block!]
         [and block! into [
@@ -238,6 +239,7 @@ for-each-datatype: func [
                     any-name!
                 ]
                 class: class*
+                isoname: either isoname* [unquasi isoname*] [null]
                 make: make*
                 mold: mold*
             ]
@@ -316,6 +318,7 @@ for-each-typerange: func [
                 append types* to text! name*
             ])]
             text!
+            opt quasi!
             group!
             block!
             block!
@@ -519,6 +522,22 @@ e-types/emit {
     #define TS_CLONE \
         (TS_SERIES & ~TS_NOT_COPIED) // currently same as TS_NOT_COPIED
 }
+e-types/emit newline
+
+for-each-datatype t [
+    if not t/isoname [continue]  ; no special name for isotopic form
+
+    e-types/emit 't {
+        #define Is_$<Propercase To Text! T/Isoname>(v) \
+            ((READABLE(v)->header.bits & (FLAG_QUOTE_BYTE(255) | FLAG_HEART_BYTE(255))) \
+                == (FLAG_QUOTE_BYTE(ISOTOPE_0) | FLAG_HEART_BYTE(REB_$<T/NAME>)))
+
+        #define Is_Meta_Of_$<Propercase To Text! T/Isoname>(v) \
+        ((READABLE(v)->header.bits & (FLAG_QUOTE_BYTE(255) | FLAG_HEART_BYTE(255))) \
+            == (FLAG_QUOTE_BYTE(QUASI_2) | FLAG_HEART_BYTE(REB_$<T/NAME>)))
+    }
+    e-types/emit newline
+]
 
 e-types/write-emitted
 

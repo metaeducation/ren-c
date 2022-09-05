@@ -598,14 +598,6 @@ inline static bool Is_Empty_Any_Array(Cell(const*) v) {
 //      == <b>
 //
 
-#define Is_Pack(v) \
-  ((READABLE(v)->header.bits & (FLAG_QUOTE_BYTE(255) | FLAG_HEART_BYTE(255))) \
-    == (FLAG_QUOTE_BYTE(ISOTOPE_0) | FLAG_HEART_BYTE(REB_BLOCK)))
-
-#define Is_Meta_Of_Pack(v) \
-  ((READABLE(v)->header.bits & (FLAG_QUOTE_BYTE(255) | FLAG_HEART_BYTE(255))) \
-    == (FLAG_QUOTE_BYTE(QUASI_2) | FLAG_HEART_BYTE(REB_BLOCK)))
-
 inline static Value(*) Init_Pack_Untracked(
     Cell(*) out,
     Byte quote_byte,
@@ -678,14 +670,6 @@ inline static Value(*) Isotopify_If_Nulled(Value(*) v) {
 //    >> append [a b c] ~(d e)~
 //    == [a b c d e]
 //
-
-#define Is_Splice(v) \
-  ((READABLE(v)->header.bits & (FLAG_QUOTE_BYTE(255) | FLAG_HEART_BYTE(255))) \
-    == (FLAG_QUOTE_BYTE(ISOTOPE_0) | FLAG_HEART_BYTE(REB_GROUP)))
-
-#define Is_Meta_Of_Splice(v) \
-  ((READABLE(v)->header.bits & (FLAG_QUOTE_BYTE(255) | FLAG_HEART_BYTE(255))) \
-    == (FLAG_QUOTE_BYTE(QUASI_2) | FLAG_HEART_BYTE(REB_GROUP)))
 
 inline static Value(*) Splicify(Cell(*) v) {
     assert(ANY_ARRAY(v) and QUOTE_BYTE(v) == UNQUOTED_1);

@@ -278,7 +278,7 @@ varargs!    "evaluator position for variable numbers of arguments"
 <ANY-PLAIN-VALUE!>  ; (order matters, e.g. SETIFY_ANY_PLAIN_KIND())
 
     block!      "array of values that blocks evaluation unless DO is used"
-                (CELL_FLAG_FIRST_IS_NODE)
+    ~pack~      (CELL_FLAG_FIRST_IS_NODE)
                 [any-block! any-array! any-series! any-branch!]
                 [array       *       *]
 
@@ -287,7 +287,7 @@ varargs!    "evaluator position for variable numbers of arguments"
   ; ==========================================================================
 
     group!      "array that evaluates expressions as an isolated group"
-                (CELL_FLAG_FIRST_IS_NODE)
+    ~splice~    (CELL_FLAG_FIRST_IS_NODE)
                 [any-group! any-array! any-series! any-branch!]
                 [array       *       *]
 

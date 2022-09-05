@@ -198,6 +198,23 @@ if: chain [:lib3/if :isotopify-blanks]
 case: chain [:lib3/case :isotopify-blanks]
 switch: chain [:lib3/switch :isotopify-blanks]
 
+quasi!: word!  ; conflated, but can work in a very limited sense
+quasi?: func3 [v <local> spelling] [
+    if not word? v [return false]
+    spelling: as text! v
+    if #"~" <> first spelling [return false]
+    if #"~" <> last spelling [return false]
+    return true
+]
+unquasi: func3 [v <local> spelling] [
+    assert [quasi? v]
+    spelling: to text! v
+    assert [#"~" = take spelling]
+    assert [#"~" = take/last spelling]
+    return as word! spelling
+]
+
+
 ; Used to be `false and [print "TRUE" false]` would avoid running the right
 ; hand side, but a GROUP! would be run.  That was deemed ugly, so group
 ; now short-circuits.
