@@ -162,7 +162,7 @@ static REBVAR* Append_Context_Core(
             id = SYM_0;
 
         Array(*) patch;
-        if (id and id <= LIB_SYMS_MAX) {
+        if (id and id < LIB_SYMS_MAX) {
             //
             // Low symbol IDs are all in PG_Lib_Patches for fast access, and
             // were created as a continguous array of memory in Startup_Lib().
