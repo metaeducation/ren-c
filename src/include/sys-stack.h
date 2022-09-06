@@ -85,8 +85,15 @@
 
 #else
 
+    // Concession is made when the GC is disabled (e.g. during a PROBE()) to
+    // not report the problem unless it would cause a crash, e.g. an actual
+    // case of pushing across a stack expansion.
+    //
     #define ASSERT_NO_DATA_STACK_POINTERS_EXTANT() \
-        assert(TG_Stack_Outstanding == 0);
+        do { if (TG_Stack_Outstanding != 0) { \
+            if (not GC_Disabled or DS_Movable_Top == DS_Movable_Tail) \
+                assert(!"PUSH() while StackValue(*) pointers are extant"); \
+        } } while (0)
 
     struct Reb_Stack_Value_Ptr {
         REBVAL *v;
@@ -226,9 +233,7 @@ inline static StackValue(*) Data_Stack_At(StackIndex i) {
 // Note: DS_Movable_Top is just TOP, but accessing TOP asserts on ENDs
 //
 inline static StackValue(*) PUSH(void) {
-  #if DEBUG_EXTANT_STACK_POINTERS
-    assert(TG_Stack_Outstanding == 0);  // push may disrupt any extant values
-  #endif
+    ASSERT_NO_DATA_STACK_POINTERS_EXTANT();
 
     ++DS_Index;
     ++DS_Movable_Top;
@@ -252,9 +257,7 @@ inline static StackValue(*) PUSH(void) {
 //
 
 inline static void DROP(void) {
-  #if DEBUG_EXTANT_STACK_POINTERS
-    assert(TG_Stack_Outstanding == 0);  // in the future, pop may disrupt
-  #endif
+    ASSERT_NO_DATA_STACK_POINTERS_EXTANT();
 
   #if DEBUG_POISON_DROPPED_STACK_CELLS
     Poison_Cell(DS_Movable_Top);
@@ -265,9 +268,8 @@ inline static void DROP(void) {
 }
 
 inline static void Drop_Data_Stack_To(StackIndex i) {
-  #if DEBUG_EXTANT_STACK_POINTERS
-    assert(TG_Stack_Outstanding == 0);  // in the future, pop may disrupt
-  #endif
+    ASSERT_NO_DATA_STACK_POINTERS_EXTANT();
+
     assert(TOP_INDEX >= i);
     while (TOP_INDEX != i)
         DROP();
