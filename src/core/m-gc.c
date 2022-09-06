@@ -402,14 +402,18 @@ static void Propagate_All_GC_Marks(void)
           #if DEBUG
             switch (QUOTE_BYTE_UNCHECKED(v)) {
               case ISOTOPE_0:  // isotopes only legal in objects/frames/modules
-                if (not (IS_VARLIST(a) or IS_PATCH(a)))
+                if (not (IS_VARLIST(a) or IS_LET(a) or IS_PATCH(a)))
                     panic (v);
                 break;
 
               case UNQUOTED_1:  // nulls indicate absence of values from MAP!
                 if (HEART_BYTE_UNCHECKED(v) == REB_NULL)
-                    if (not (IS_VARLIST(a) or IS_PATCH(a) or IS_PAIRLIST(a)))
+                    if (not (
+                        IS_VARLIST(a) or IS_LET(a) or IS_PATCH(a)
+                        or IS_PAIRLIST(a)
+                    )){
                         panic (v);
+                    }
                 break;
 
               default:

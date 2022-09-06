@@ -205,7 +205,6 @@ static void Startup_Lib(void)
             &PG_Lib_Patches[i],
             1,
             FLAG_FLAVOR(PATCH)  // checked when setting INODE(PatchContext)
-            | PATCH_FLAG_LET
             | NODE_FLAG_MANAGED
             //
             // Note: While it may seem that context keeps the lib alive and
@@ -218,8 +217,8 @@ static void Startup_Lib(void)
         );
 
         mutable_INODE(PatchContext, patch) = nullptr;  // signals unused
-        mutable_LINK(NextPatch, patch) = nullptr;
-        mutable_MISC(Variant, patch) = nullptr;
+        mutable_LINK(PatchReserved, patch) = nullptr;
+        mutable_MISC(PatchHitch, patch) = nullptr;
         assert(Is_Cell_Poisoned(ARR_SINGLE(patch)));
         TRACK(Erase_Cell(ARR_SINGLE(patch)));  // Lib(XXX) unreadable until set
     }
@@ -293,7 +292,8 @@ static void Shutdown_Lib(void)
         // the freeing process happened.  Should all nodes be zeroed?
         //
         mutable_INODE(PatchContext, patch) = nullptr;
-        mutable_MISC(Variant, patch) = nullptr;
+        mutable_LINK(PatchReserved, patch) = nullptr;
+        mutable_MISC(PatchHitch, patch) = nullptr;
     }
 
     rebReleaseAndNull(&Lib_Context_Value);

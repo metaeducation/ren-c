@@ -265,7 +265,7 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
                     assert(VAL_FRAME_BINDING(v) == FRM_BINDING(f));
             }
             else
-                assert(IS_PATCH(Singular_From_Cell(v)));
+                assert(IS_LET(Singular_From_Cell(v)));
         }
 
         if (PAYLOAD(Any, v).second.node) {
@@ -394,7 +394,7 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
                 else
                     assert(index != 0 and index != INDEX_ATTACHED);
             }
-            else if (IS_PATCH(BINDING(v)))
+            else if (IS_LET(BINDING(v)))
                 assert(index == 1 or index == INDEX_ATTACHED);
             else
                 assert(index != 0);

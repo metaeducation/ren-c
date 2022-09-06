@@ -1100,29 +1100,30 @@ void Decay_Series(REBSER *s)
 
       case FLAVOR_PATCH: {
         //
-        // Remove patch from circularly linked list of variants.
-        // (if it's the last one, this winds up making no meaningful change)
+        // This is a variable definition for a module.  It is a member of a
+        // circularly-linked list that goes through the other variables of the
+        // same name in other modules...with the name itself as a symbol
+        // being in that circular list.  Remove this patch from that list.
         //
-        // Note: If this is a LET, the chain should be to other examples
-        // of the LET.  However, if it's a variable definition for a module,
-        // then it will circle back to the symbol for the variable.  This
-        // means it may hit a Symbol(*) or may not in this encircling.
-        //
-        // !!! This feature only is happening with the variable definitions
-        // for modules at the moment; the other feature is on hold.
-        //
-        REBSER *temp = MISC(Variant, s);
-        if (temp != nullptr) {
-            //
-            // This is a module variable patch.
-            //
-            while (node_MISC(Variant, temp) != s) {
-                temp = SER(node_MISC(Variant, temp));
-                assert(IS_PATCH(temp) or IS_SYMBOL(temp));
-            }
-            node_MISC(Variant, temp) = node_MISC(Variant, s);
+        REBSER *temp = MISC(PatchHitch, s);
+        while (node_MISC(Hitch, temp) != s) {
+            temp = SER(node_MISC(Hitch, temp));
+            assert(IS_PATCH(temp) or IS_SYMBOL(temp));
         }
+        node_MISC(Hitch, temp) = node_MISC(Hitch, s);
         break; }
+
+      case FLAVOR_LET:
+        assert(IS_SYMBOL(INODE(LetSymbol, s)));
+        break;
+
+      case FLAVOR_USE:
+        //
+        // At one point, this would remove the USE from a linked list of
+        // "variants" which were other examples of the USE.  That feature was
+        // removed for the moment.
+        //
+        break;
 
       case FLAVOR_HANDLE: {
         Cell(*) v = ARR_SINGLE(ARR(s));

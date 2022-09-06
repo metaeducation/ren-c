@@ -62,7 +62,7 @@ enum {
 //
 Bounce Lambda_Dispatcher(Frame(*) f)
 //
-// 1. We have to use Make_Or_Reuse_Patch() here, because it could be the case
+// 1. We have to use Make_Or_Reuse_Use() here, because it could be the case
 //    that a higher level wrapper used the frame and virtually bound it.
 //
 // 2. Currently, since we are evaluating the block with its own virtual
@@ -83,7 +83,7 @@ Bounce Lambda_Dispatcher(Frame(*) f)
 
     SET_SERIES_FLAG(f->varlist, MANAGED);  // not manually tracked...
 
-    REBSPC *specifier = Make_Or_Reuse_Patch(  // may reuse, see [1]
+    REBSPC *specifier = Make_Or_Reuse_Use(  // may reuse, see [1]
         CTX(f->varlist),
         VAL_SPECIFIER(block),  // redundant with feed, see [2]
         REB_WORD

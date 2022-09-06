@@ -242,9 +242,6 @@
 // markable node.  This "INODE" is accessed via macros in the same way as the
 // LINK() and MISC() macros (described in the section above):
 //
-//      REBPAT *patch = MISC(Variant, patch);  // reads info.node
-//      mutable_MISC(Variant, patch) = patch;
-//
 
 #if (! CPLUSPLUS_11)
     #define SER_INFO(s) \
@@ -1118,7 +1115,7 @@ inline static void INIT_SPECIFIER(Cell(*) v, const void *p) {
             IS_DETAILS(binding)  // relative
             or IS_VARLIST(binding)  // specific
             or (
-                ANY_ARRAY(v) and IS_PATCH(binding)  // virtual
+                ANY_ARRAY(v) and (IS_LET(binding) or IS_USE(binding)) // virtual
             ) or (
                 IS_VARARGS(v) and NOT_SERIES_FLAG(binding, DYNAMIC)
             )  // varargs from MAKE VARARGS! [...], else is a varlist

@@ -284,20 +284,17 @@ void* Probe_Core_Debug(
         Probe_Print_Helper(p, expr, "Pairlist", file, line);
         break;
 
-      case FLAVOR_PATCH: {
-        if (Not_Subclass_Flag(PATCH, s, LET)) {
-            Probe_Print_Helper(p, expr, "non-LET Patch", file, line);
-            break;
-        }
-        REBSER *link = SER(node_LINK(Node, s));
-        if (link and FLAVOR_VARLIST == SER_FLAVOR(link))
-            Probe_Print_Helper(p, expr, "Module Item Patch", file, line);
-        else {
-            // LINK(NextPatch) is the next specifier in the LET patch chain
-            // it can potentially be none.
-            //
-            Probe_Print_Helper(p, expr, "LET Patch", file, line);
-        }
+      case FLAVOR_PATCH:
+        Probe_Print_Helper(p, expr, "Module Item Patch", file, line);
+        break;
+
+      case FLAVOR_LET: {
+        Probe_Print_Helper(p, expr, "LET single variable", file, line);
+        Append_Spelling(mo->series, INODE(LetSymbol, s));
+        break; }
+
+      case FLAVOR_USE: {
+        Probe_Print_Helper(p, expr, "Virtual Bind USE", file, line);
         break; }
 
       case FLAVOR_HITCH:

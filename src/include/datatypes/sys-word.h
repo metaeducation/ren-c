@@ -93,9 +93,9 @@ inline static REBVAL *Init_Any_Word_Bound_Untracked(
             assert(symbol == *CTX_KEY(CTX(binding), index));
     }
     else {
-        assert(Get_Subclass_Flag(PATCH, binding, LET));
+        assert(IS_LET(binding) or IS_PATCH(binding));
         assert(index == INDEX_PATCHED);
-        assert(symbol == INODE(PatchSymbol, binding));
+        assert(symbol == INODE(LetSymbol, binding));
     }
 
     return cast(REBVAL*, out);
@@ -113,7 +113,7 @@ inline static REBVAL *Init_Any_Word_Patched(  // e.g. LET or MODULE! var
     return Init_Any_Word_Bound_Untracked(
         out,
         type,
-        INODE(PatchSymbol, patch),
+        INODE(LetSymbol, patch),
         patch,
         INDEX_PATCHED
     );

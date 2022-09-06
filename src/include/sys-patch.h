@@ -40,7 +40,7 @@
 // the same object (or pattern of objects).  Not only does that cut down on
 // load for the GC, it also means that it's more likely that a cache lookup
 // in a word can be reused.  So the LINK() field of a patch is used to make
-// a list of "Variants" of a patch with a different "NextPatch".
+// a list of "Variants" of a patch with a different "NextLet".
 //
 // Being able to find if there are any existing variants for a context when
 // all you have in hand is a context is important.  Rather than make a global
@@ -80,7 +80,7 @@
         if (not a)
             return SPECIFIED;
 
-        if (IS_PATCH(a))
+        if (IS_LET(a) or IS_USE(a))
             return cast(REBSPC*, a);  // virtual bind
 
         // While an ANY-WORD! can be bound specifically to an arbitrary
@@ -98,7 +98,7 @@
 // Shared routine that handles linking the patch into the context's variant
 // list, and bumping the meta out of the misc into the misc if needed.
 //
-inline static Array(*) Make_Patch_Core(
+inline static Array(*) Make_Use_Core(
     Array(*) binding,  // must be a varlist or a LET patch
     REBSPC *next,
     enum Reb_Kind kind,
@@ -116,13 +116,13 @@ inline static Array(*) Make_Patch_Core(
         }
     }
     else
-        assert(Get_Subclass_Flag(PATCH, binding, LET));
+        assert(IS_LET(binding));
 
     // It's possible for a user to try and doubly virtual bind things...but
     // for the moment assume it only happens on accident and alert us to it.
     // Over the long run, this needs to be legal, though.
     //
-    if (next and IS_PATCH(next)) {
+    if (next and IS_USE(next)) {
         assert(BINDING(ARR_SINGLE(next)) != binding);
     }
 
@@ -146,7 +146,7 @@ inline static Array(*) Make_Patch_Core(
     //   because the standard error object starts life as an object.  (This
     //   mechanism needs revisiting, but it's just another reason.)
     //
-    Array(*) patch = Alloc_Singular(
+    Array(*) use = Alloc_Singular(
         //
         // INODE is not used yet (likely application: symbol for patches that
         // represent lets).  Consider uses in patches that represent objects.
@@ -156,7 +156,7 @@ inline static Array(*) Make_Patch_Core(
         // with different chains underneath them...and shouldn't keep that
         // alternate version alive.  So no SERIES_FLAG_MISC_NODE_NEEDS_MARK.
         //
-        FLAG_FLAVOR(PATCH)
+        FLAG_FLAVOR(USE)
             | NODE_FLAG_MANAGED
             | SERIES_FLAG_LINK_NODE_NEEDS_MARK
     );
@@ -168,50 +168,47 @@ inline static Array(*) Make_Patch_Core(
         // of telling the historical order.  Punt on figuring out the answer
         // for it and just let virtual binds see the latest situation.
         //
-        Init_Context_Cell(ARR_SINGLE(patch), REB_MODULE, CTX(binding));
+        Init_Context_Cell(ARR_SINGLE(use), REB_MODULE, CTX(binding));
     }
     else {
         Init_Any_Word_Bound_Untracked(
-            TRACK(ARR_SINGLE(patch)),
+            TRACK(ARR_SINGLE(use)),
             kind,
             IS_VARLIST(binding)
                 ? KEY_SYMBOL(CTX_KEY(CTX(binding), 1))  // arbitrary word
-                : INODE(PatchSymbol, binding),
+                : INODE(LetSymbol, binding),
             binding,
             1  // arbitrary word (used to use CTX_LEN())
         );
     }
 
-    // The way it is designed, the list of patches terminates in either a
+    // The way it is designed, the list of use/lets terminates in either a
     // nullptr or a context pointer that represents the specifying frame for
     // the chain.  So we can simply point to the existing specifier...whether
-    // it is a patch, a frame context, or nullptr.
+    // it is a use, a let, a frame context, or nullptr.
     //
-    mutable_LINK(NextPatch, patch) = next;
+    mutable_LINK(NextUse, use) = next;
 
-    // A circularly linked list of variations of this patch with different
-    // NextPatch() dta is maintained, to assist in avoiding creating
+    // A circularly linked list of variations of this use with different
+    // NextVirtual() data is maintained, to assist in avoiding creating
     // unnecessary duplicates.  Decay_Series() will remove this patch from the
     // list when it is being GC'd.
     //
     // !!! This feature was removed for the moment, see notes on Variant.
     //
-    mutable_MISC(Variant, patch) = nullptr;
+    mutable_MISC(Variant, use) = nullptr;
 
-    // The LINK field is only used in LET patches for the symbol, so no
-    // purpose found for the non-LET patches yet.
-    //
-    mutable_INODE(PatchSymbol, patch) = nullptr;
+    mutable_INODE(UseReserved, use) = nullptr;  // no application yet
 
-    return patch;
+    return use;
 }
 
 
-#define Make_Or_Reuse_Patch(ctx,next,kind) \
-    Make_Patch_Core(CTX_VARLIST(ctx), (next), (kind), true)
+#define Make_Or_Reuse_Use(ctx,next,kind) \
+    Make_Use_Core(CTX_VARLIST(ctx), (next), (kind), true)
 
-#define Make_Original_Patch(ctx,next,kind) \
-    Make_Patch_Core(CTX_VARLIST(ctx), (next), (kind), false)  // unused
+#define Make_Original_Use(ctx,next,kind) \
+    Make_Use_Core(CTX_VARLIST(ctx), (next), (kind), false)  // unused
 
 
 //
@@ -245,7 +242,7 @@ inline static void Virtual_Bind_Patchify(
     //
     INIT_BINDING_MAY_MANAGE(
         any_array,
-        Make_Or_Reuse_Patch(ctx, VAL_SPECIFIER(any_array), kind)
+        Make_Or_Reuse_Use(ctx, VAL_SPECIFIER(any_array), kind)
     );
     Constify(any_array);
 }

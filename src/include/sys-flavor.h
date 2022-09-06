@@ -66,12 +66,25 @@ enum Reb_Stub_Flavor {
 
     FLAVOR_PAIRLIST,
 
+    // A "patch" is a container for a single variable for a context.  Rather
+    // than live in the context directly, it stands on its own.  Modules are
+    // made up of patches vs. using the packed array VARLIST of frames and
+    // contexts.
+    //
+    FLAVOR_PATCH,
+
     // The concept of "Virtual Binding" is that instances of ANY-ARRAY! values
     // can carry along a collection of contexts that override the bindings of
     // words that are encountered.  This collection is done by means of
-    // "patches" that make a linked list of overrides.
+    // "lets" that make a linked list of overrides.
     //
-    FLAVOR_PATCH,
+    FLAVOR_LET,
+
+    // A "use" is a request in a virtual binding chain to make an object's
+    // fields visible virtually in the code.  LETs can also be in the chain,
+    // and a frame varlist is also allowed to temrinate it.
+    //
+    FLAVOR_USE,
 
     // A FLAVOR_HITCH is an ephemeral element which is chained into the
     // "hitch" list on a symbol, when that symbol is being bound.  Currently
@@ -190,6 +203,8 @@ inline static size_t Wide_For_Flavor(enum Reb_Stub_Flavor flavor) {
 
 #define IS_KEYLIST(s)           (SER_FLAVOR(s) == FLAVOR_KEYLIST)
 
+#define IS_LET(s)               (SER_FLAVOR(s) == FLAVOR_LET)
+#define IS_USE(s)               (SER_FLAVOR(s) == FLAVOR_USE)
 #define IS_PATCH(s)             (SER_FLAVOR(s) == FLAVOR_PATCH)
 #define IS_VARLIST(s)           (SER_FLAVOR(s) == FLAVOR_VARLIST)
 #define IS_PAIRLIST(s)          (SER_FLAVOR(s) == FLAVOR_PAIRLIST)

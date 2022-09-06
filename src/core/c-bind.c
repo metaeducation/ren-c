@@ -235,53 +235,35 @@ REBLEN Try_Bind_Word(Cell(const*) context, REBVAL *word)
 // archetypal form of that context...because the only value cell in the
 // singular array is taken for the variable content itself.
 //
+// 1. The way it is designed, the list of lets terminates in either a nullptr
+//    or a context pointer that represents the specifying frame for the chain.
+//    So we can simply point to the existing specifier...whether it is a let,
+//    a use, a frame context, or nullptr.
+//
 Array(*) Make_Let_Patch(
     Symbol(const*) symbol,
     REBSPC *specifier
 ){
-    // We create a virtual binding patch to link into the binding.  The
-    // difference with this patch is that its singular value is the value
-    // of a new variable.
-
-    Array(*) patch = Alloc_Singular(
-        //
-        // LINK is the symbol that the virtual binding matches.
-        //
-        // MISC is a node, but it's used for linking patches to variants
-        // with different chains underneath them...and shouldn't keep that
-        // alternate version alive.  So no SERIES_FLAG_MISC_NODE_NEEDS_MARK.
-        //
-        FLAG_FLAVOR(PATCH)
-            | PATCH_FLAG_LET
+    Array(*) let = Alloc_Singular(  // payload is one variable
+        FLAG_FLAVOR(LET)
             | NODE_FLAG_MANAGED
-            | SERIES_FLAG_LINK_NODE_NEEDS_MARK
-            | SERIES_FLAG_INFO_NODE_NEEDS_MARK
+            | SERIES_FLAG_LINK_NODE_NEEDS_MARK  // link to next virtual bind
+            | SERIES_FLAG_INFO_NODE_NEEDS_MARK  // inode of symbol
     );
 
-    Finalize_Void(VAL(ARR_SINGLE(patch)));  // start variable as unset
+    Finalize_Void(VAL(ARR_SINGLE(let)));  // start variable as unset
 
-    // The way it is designed, the list of patches terminates in either a
-    // nullptr or a context pointer that represents the specifying frame for
-    // the chain.  So we can simply point to the existing specifier...whether
-    // it is a patch, a frame context, or nullptr.
-    //
-    assert(not specifier or GET_SERIES_FLAG(specifier, MANAGED));
-    mutable_LINK(NextPatch, patch) = specifier;
+    if (specifier) {
+        assert(IS_LET(specifier) or IS_USE(specifier) or IS_VARLIST(specifier));
+        assert(GET_SERIES_FLAG(specifier, MANAGED));
+    }
+    mutable_LINK(NextLet, let) = specifier;  // linked list, see [1]
 
-    // A circularly linked list of variations of this patch with different
-    // NextPatch() data is maintained, to assist in avoiding creating
-    // unnecessary duplicates.  But since this is an absolutely new instance
-    // (from a LET) we won't find any existing chains for this.
-    //
-    // !!! This feature is on hold for the moment.
-    //
-    mutable_MISC(Variant, patch) = nullptr;
+    node_MISC(LetReserved, let) = nullptr;  // not currently used
 
-    // Store the symbol so the patch knows it.
-    //
-    mutable_INODE(PatchSymbol, patch) = symbol;
+    mutable_INODE(LetSymbol, let) = symbol;  // surrogate for context "key"
 
-    return patch;
+    return let;
 }
 
 
@@ -588,7 +570,7 @@ DECLARE_NATIVE(let)
 
     REBSPC *bindings = VAL_SPECIFIER(bindings_holder);
 
-    if (f_specifier and IS_PATCH(f_specifier)) { // add bindings, see [7]
+    if (f_specifier and IS_LET(f_specifier)) { // add bindings, see [7]
         bindings = Merge_Patches_May_Reuse(f_specifier, bindings);
         mutable_BINDING(bindings_holder) = bindings;
     }
@@ -633,16 +615,14 @@ DECLARE_NATIVE(add_let_binding) {
 
     if (f_specifier)
         SET_SERIES_FLAG(f_specifier, MANAGED);
-    REBSPC *patch = Make_Let_Patch(VAL_WORD_SYMBOL(ARG(word)), f_specifier);
+    REBSPC *let = Make_Let_Patch(VAL_WORD_SYMBOL(ARG(word)), f_specifier);
 
-    // !!! Should Make_Let_Patch() return an reset cell?
-    //
-    Move_Cell(ARR_SINGLE(patch), ARG(value));
+    Move_Cell(ARR_SINGLE(let), ARG(value));
 
-    mutable_BINDING(FEED_SINGLE(f->feed)) = patch;
+    mutable_BINDING(FEED_SINGLE(f->feed)) = let;
 
     Move_Cell(OUT, ARG(word));
-    INIT_VAL_WORD_BINDING(OUT, patch);
+    INIT_VAL_WORD_BINDING(OUT, let);
     INIT_VAL_WORD_INDEX(OUT, 1);
 
     return OUT;
@@ -669,9 +649,9 @@ DECLARE_NATIVE(add_use_object) {
     if (f_specifier)
         SET_SERIES_FLAG(f_specifier, MANAGED);
 
-    REBSPC *patch = Make_Or_Reuse_Patch(ctx, f_specifier, REB_WORD);
+    REBSPC *use = Make_Or_Reuse_Use(ctx, f_specifier, REB_WORD);
 
-    mutable_BINDING(FEED_SINGLE(f->feed)) = patch;
+    mutable_BINDING(FEED_SINGLE(f->feed)) = use;
 
     return NONE;
 }

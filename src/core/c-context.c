@@ -195,14 +195,6 @@ static REBVAR* Append_Context_Core(
             // to the context in order to "delete" variables?
             //
             | SERIES_FLAG_INFO_NODE_NEEDS_MARK  // mark context through cache
-
-            // Not technically a "LET" but this is checked by the binding
-            // machinery at the moment as the only patch form you can use
-            // as the binding of a word.  It's a little different since it
-            // holds a context instead of a key in LINK()...and you have to
-            // walk the circular links to find the symbol if you need it.
-            //
-            | PATCH_FLAG_LET
         );
 
         // We circularly link the variable into the list of hitches so that you

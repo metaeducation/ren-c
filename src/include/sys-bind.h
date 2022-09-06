@@ -373,7 +373,8 @@ inline static void INIT_VAL_WORD_BINDING(Cell(*) v, const REBSER *binding) {
         assert(
             IS_DETAILS(binding)  // relative
             or IS_VARLIST(binding)  // specific
-            or IS_PATCH(binding)  // let
+            or IS_LET(binding)  // let
+            or IS_PATCH(binding)  // module variable
         );
     }
     else
@@ -413,8 +414,11 @@ inline static void Unbind_Any_Word(Cell(*) v) {
 inline static Context(*) VAL_WORD_CONTEXT(const REBVAL *v) {
     assert(IS_WORD_BOUND(v));
     Array(*) binding = VAL_WORD_BINDING(v);
-    if (SER_FLAVOR(binding) == FLAVOR_PATCH)
+    if (IS_PATCH(binding))
         binding = CTX_VARLIST(INODE(PatchContext, binding));
+    else if (IS_LET(binding))
+        fail ("LET variables have no context at this time");
+
     assert(
         GET_SERIES_FLAG(binding, MANAGED) or
         not Is_Action_Frame_Fulfilling(FRM(BONUS(KeySource, binding)))
@@ -488,7 +492,7 @@ inline static option(REBSER*) Get_Word_Container(
 
     REBSER *binding = VAL_WORD_BINDING(any_word);
 
-    if (specifier == SPECIFIED or not IS_PATCH(specifier))
+    if (specifier == SPECIFIED or not (IS_LET(specifier) or IS_USE(specifier)))
         goto not_virtually_bound;
 
   blockscope {
@@ -505,8 +509,8 @@ inline static option(REBSER*) Get_Word_Container(
     // wortwhile?
     //
     do {
-        if (Get_Subclass_Flag(PATCH, specifier, LET)) {
-            if (INODE(PatchSymbol, specifier) == symbol) {
+        if (IS_LET(specifier)) {
+            if (INODE(LetSymbol, specifier) == symbol) {
                 *index_out = INDEX_PATCHED;
                 return specifier;
             }
@@ -526,7 +530,7 @@ inline static option(REBSER*) Get_Word_Container(
         Array(*) overbind;  // avoid goto-past-initialization warning
         overbind = ARR(BINDING(ARR_SINGLE(specifier)));
         if (not IS_VARLIST(overbind)) {  // a patch-formed LET overload
-            if (INODE(PatchSymbol, overbind) == symbol) {
+            if (INODE(LetSymbol, overbind) == symbol) {
                 *index_out = 1;
                 return overbind;
             }
@@ -572,7 +576,7 @@ inline static option(REBSER*) Get_Word_Container(
         }
       }
       skip_miss_patch:
-        specifier = NextPatch(specifier);
+        specifier = NextVirtual(specifier);
     } while (
         specifier and not IS_VARLIST(specifier)
     );
@@ -589,13 +593,8 @@ inline static option(REBSER*) Get_Word_Container(
     if (binding == UNBOUND)
         return nullptr;  // once no virtual bind found, no binding is unbound
 
-    if (IS_PATCH(binding)) {
-        //
-        // LET BINDING: Directly bound to a LET variable.  This happens when
-        // a word that is bound to a LET gets copied so it's not virtual.
-        //
-        assert(Get_Subclass_Flag(PATCH, binding, LET));
-        *index_out = 1;  // !!! lie, review
+    if (IS_LET(binding) or IS_PATCH(binding)) {  // points direct to variable
+        *index_out = INDEX_PATCHED;
         return binding;
     }
 
@@ -753,7 +752,7 @@ inline static const REBVAL *Lookup_Word_May_Fail(
             fail (Error_Not_Bound_Raw(any_word));
         fail (Error_Unassigned_Attach_Raw(any_word));
     }
-    if (IS_PATCH(s))
+    if (IS_LET(s) or IS_PATCH(s))
         return SPECIFIC(ARR_SINGLE(ARR(s)));
     Context(*) c = CTX(s);
     if (GET_SERIES_FLAG(CTX_VARLIST(c), INACCESSIBLE))
@@ -772,7 +771,7 @@ inline static option(const REBVAL*) Lookup_Word(
     );
     if (not s)
         return nullptr;
-    if (IS_PATCH(s))
+    if (IS_LET(s) or IS_PATCH(s))
         return SPECIFIC(ARR_SINGLE(ARR(s)));
     Context(*) c = CTX(s);
     if (GET_SERIES_FLAG(CTX_VARLIST(c), INACCESSIBLE))
@@ -805,7 +804,7 @@ inline static REBVAL *Lookup_Mutable_Word_May_Fail(
         fail (Error_Not_Bound_Raw(any_word));
 
     REBVAL *var;
-    if (IS_PATCH(s))
+    if (IS_LET(s) or IS_PATCH(s))
         var = SPECIFIC(ARR_SINGLE(ARR(s)));
     else {
         Context(*) c = CTX(s);
@@ -986,14 +985,14 @@ inline static REBVAL *Derelativize_Untracked(
 //
 inline static Node** SPC_FRAME_CTX_ADDRESS(REBSPC *specifier)
 {
-    assert(IS_PATCH(specifier));
+    assert(IS_LET(specifier) or IS_USE(specifier));
     while (
-        NextPatch(specifier) != nullptr
-        and not IS_VARLIST(NextPatch(specifier))
+        NextVirtual(specifier) != nullptr
+        and not IS_VARLIST(NextVirtual(specifier))
     ){
-        specifier = NextPatch(specifier);
+        specifier = NextVirtual(specifier);
     }
-    return &node_LINK(NextPatch, specifier);
+    return &node_LINK(NextLet, specifier);
 }
 
 inline static option(Context(*)) SPC_FRAME_CTX(REBSPC *specifier)
@@ -1019,8 +1018,8 @@ inline static Array(*) Merge_Patches_May_Reuse(
     Array(*) parent,
     Array(*) child
 ){
-    assert(IS_PATCH(parent));
-    assert(IS_PATCH(child));
+    assert(IS_USE(parent) or IS_LET(parent));
+    assert(IS_USE(child) or IS_LET(child));
 
     // Case of already incorporating.  Came up with:
     //
@@ -1030,8 +1029,8 @@ inline static Array(*) Merge_Patches_May_Reuse(
     // resides on the [3] block.  But then feed generation for [3] tries to
     // apply the Y virtual link again.  !!! Review if that's just inefficient.
     //
-    if (NextPatch(parent) == child) {
-        Set_Subclass_Flag(PATCH, parent, REUSED);
+    if (NextVirtual(parent) == child) {
+        Set_Subclass_Flag(USE, parent, REUSED);
         return parent;
     }
 
@@ -1040,13 +1039,18 @@ inline static Array(*) Merge_Patches_May_Reuse(
     //
     Array(*) next;
     bool was_next_reused;
-    if (NextPatch(parent) == nullptr or IS_VARLIST(NextPatch(parent))) {
+    if (NextVirtual(parent) == nullptr or IS_VARLIST(NextVirtual(parent))) {
         next = child;
         was_next_reused = true;
     }
     else {
-        next = Merge_Patches_May_Reuse(NextPatch(parent), child);
-        was_next_reused = Get_Subclass_Flag(PATCH, next, REUSED);
+        next = Merge_Patches_May_Reuse(NextVirtual(parent), child);
+        if (IS_USE(next))
+            was_next_reused = Get_Subclass_Flag(USE, next, REUSED);
+        else {
+            assert(IS_LET(next));
+            was_next_reused = false;
+        }
     }
 
     // If we have to make a new patch due to non-reuse, then we cannot make
@@ -1062,7 +1066,7 @@ inline static Array(*) Merge_Patches_May_Reuse(
     //
     Array(*) binding;
     enum Reb_Kind kind;
-    if (Get_Subclass_Flag(PATCH, parent, LET)) {
+    if (IS_LET(parent)) {
         binding = parent;
 
         // !!! LET bindings do not have anywhere to put the subclass info of
@@ -1081,7 +1085,7 @@ inline static Array(*) Merge_Patches_May_Reuse(
         kind = VAL_TYPE(ARR_SINGLE(parent));
     }
 
-    return Make_Patch_Core(
+    return Make_Use_Core(
         binding,
         next,
         kind,
@@ -1115,7 +1119,7 @@ inline static REBSPC *Derive_Specifier_Core(
         return &PG_Inaccessible_Series;
 
     if (specifier == SPECIFIED) {  // no override being requested
-        assert(old == UNBOUND or IS_VARLIST(old) or IS_PATCH(old));
+        assert(old == UNBOUND or IS_VARLIST(old) or IS_LET(old) or IS_USE(old));
         return old;  // so give back what was the array was holding
     }
 
@@ -1128,7 +1132,7 @@ inline static REBSPC *Derive_Specifier_Core(
         // when it wasn't actually useful...and it taxes the GC.  Drop if
         // possible.
         //
-        if (not IS_PATCH(specifier))
+        if (not IS_LET(specifier) and not IS_USE(specifier))
             return SPECIFIED;
 
         return specifier;  // so just propagate the incoming specifier
@@ -1139,7 +1143,7 @@ inline static REBSPC *Derive_Specifier_Core(
     // in the release build.
 
     if (specifier == old) {  // a no-op, specifier was already applied
-        assert(IS_VARLIST(specifier) or IS_PATCH(specifier));
+        assert(IS_VARLIST(specifier) or IS_LET(specifier) or IS_USE(specifier));
         return specifier;
     }
 
@@ -1192,7 +1196,7 @@ inline static REBSPC *Derive_Specifier_Core(
         // We can only pass thru the incoming specifier if it is compatible.
         // Otherwise we need a new specifier that folds in the binding.
         //
-        assert(IS_PATCH(specifier));
+        assert(IS_LET(specifier) or IS_USE(specifier));
 
         // !!! This case of a match could be handled by the swap below, but
         // break it out separately for now for the sake of asserts.
@@ -1226,9 +1230,9 @@ inline static REBSPC *Derive_Specifier_Core(
     //
     // !!! How do we make sure this doesn't make a circularly linked list?
 
-    assert(IS_PATCH(old));
+    assert(IS_LET(old) or IS_USE(old));
 
-    if (not IS_PATCH(specifier)) {
+    if (not IS_LET(specifier) and not IS_USE(specifier)) {
         assert(IS_VARLIST(specifier));
         return old;  // The binding can be disregarded on this value
     }
@@ -1263,7 +1267,7 @@ inline static REBSPC *Derive_Specifier_Core(
             assert(derived_ctx == specifier_ctx);
         }
         else {
-            assert(IS_PATCH(old));
+            assert(IS_LET(old) or IS_USE(old));
 
             Context(*) binding_ctx = try_unwrap(SPC_FRAME_CTX(old));
             if (binding_ctx == UNSPECIFIED) {
