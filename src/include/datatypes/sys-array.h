@@ -158,7 +158,7 @@ inline static void Prep_Array(
             Erase_Cell(prep);
 
       #if DEBUG_POISON_SERIES_TAILS  // allocation deliberately oversized by 1
-        Poison_Cell(ARR_AT(a, a->content.dynamic.rest - 1));
+        Poison_Cell(prep - 1);
       #endif
     }
     else {

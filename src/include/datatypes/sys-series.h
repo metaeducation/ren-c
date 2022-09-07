@@ -494,6 +494,8 @@ inline static Byte* SER_DATA_AT(Byte w, const_if_c REBSER *s, REBLEN i) {
     //
     assert(NOT_SERIES_FLAG(s, INACCESSIBLE));
 
+    assert(i <= SER_USED(s));
+
     return ((w) * (i)) + ( // v-- inlining of SER_DATA
         GET_SERIES_FLAG(s, DYNAMIC)
             ? cast(Byte*, s->content.dynamic.data)

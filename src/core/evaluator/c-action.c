@@ -1327,12 +1327,11 @@ void Push_Action(
         USED(Erase_Cell(prep));
 
   #if DEBUG_POISON_EXCESS_CAPACITY  // poison cells past usable range
-    prep = ARR_AT(f->varlist, s->content.dynamic.rest - 1);
-    for (; prep >= tail; --prep)
+    for (; prep < f->rootvar + s->content.dynamic.rest; ++prep)
         Poison_Cell(prep);  // unreadable + unwritable
   #endif
 
-  #if DEBUG_POISON_SERIES_TAILS  // expects cell is trash (e.g. a cell) not poison
+  #if DEBUG_POISON_SERIES_TAILS  // redundant if excess capacity poisoned
     Poison_Cell(ARR_TAIL(f->varlist));
   #endif
 
