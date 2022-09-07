@@ -239,3 +239,15 @@
         ]
     )
 ]
+
+; Slashes represent optional return parameters
+[
+    ~???~ !! ([a b]: 10)
+    (
+        all [
+            10 = [a /b]: 10
+            a = 10
+            b = null
+        ]
+    )
+]

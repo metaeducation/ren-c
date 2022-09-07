@@ -132,6 +132,16 @@ STATIC_ASSERT(
 #endif
 
 
+// When a SET-BLOCK! is being processed for multi-returns, it may encounter
+// leading-blank paths as in ([foo /bar]: 10).  Once the work of extracting
+// the real variable from the path is done and pushed to the stack, this bit
+// is used to record that the variable was optional.  This makes it easier
+// for the phase after the right hand side is evaluated--vs. making it pick
+// apart the path again.
+//
+#define CELL_FLAG_STACK_NOTE_OPTIONAL CELL_FLAG_NOTE
+
+
 //
 // SET-WORD! and SET-TUPLE! want to do roughly the same thing as the first step
 // of their evaluation.  They evaluate the right hand side into f->out.
@@ -1399,11 +1409,57 @@ Bounce Evaluator_Executor(Frame(*) f)
         StackIndex stackindex_circled = 0;
 
         for (; tail != check; ++check) {  // push variables first, see [2]
-            bool isotopes_ok = IS_QUASI(check);  // quasi has meaning
-            UNUSED(isotopes_ok);  // not needed in this phase
             if (IS_QUOTED(check))
                 fail ("QUOTED! not currently permitted in SET-BLOCK!s");
+
+            bool isotopes_ok = IS_QUASI(check);  // quasi has meaning
             enum Reb_Kind heart = CELL_HEART(check);
+
+            bool is_optional;
+            if (
+                heart == REB_PATH
+                and VAL_SEQUENCE_LEN(check) == 2
+                and IS_BLANK(VAL_SEQUENCE_AT(SCRATCH, check, 0))
+            ){
+                is_optional = true;  // leading slash means optional
+                GET_SEQUENCE_AT(
+                    SCRATCH,
+                    check,
+                    check_specifier,
+                    1
+                );
+                heart = CELL_HEART(SCRATCH);
+            }
+            else {
+                is_optional = false;  // no leading slash means required
+                Derelativize(SCRATCH, check, check_specifier);
+            }
+
+            if (
+                heart == REB_GROUP
+                or heart == REB_THE_GROUP
+                or heart == REB_META_GROUP
+            ){
+                if (Do_Any_Array_At_Throws(SPARE, SCRATCH, SPECIFIED)) {
+                    Drop_Data_Stack_To(BASELINE->stack_base);
+                    goto return_thrown;
+                }
+                if (heart == REB_THE_GROUP)
+                    Theify(SPARE);  // transfer @ decoration to product
+                else if (heart == REB_META_GROUP)
+                    Metafy(SPARE);  // transfer ^ decoration to product
+
+                heart = CELL_HEART(SPARE);
+                Copy_Cell(PUSH(), SPARE);
+            }
+            else
+                Copy_Cell(PUSH(), SCRATCH);
+
+            if (is_optional)  // so next phase won't worry about leading slash
+                Set_Cell_Flag(TOP, STACK_NOTE_OPTIONAL);
+
+            if (isotopes_ok and not IS_QUASI(TOP))
+                Quasify(TOP);  // keep this as signal for isotopes ok
 
             if (
                 // @xxx is indicator of circled result, see [3]
@@ -1414,7 +1470,6 @@ Bounce Evaluator_Executor(Frame(*) f)
             ){
                 if (stackindex_circled != 0)
                     fail ("Can't circle more than one multi-return result");
-                Derelativize(PUSH(), check, check_specifier);
                 stackindex_circled = TOP_INDEX;
                 continue;
             }
@@ -1425,46 +1480,13 @@ Bounce Evaluator_Executor(Frame(*) f)
                 or heart == REB_META_WORD
                 or heart == REB_META_TUPLE
             ){
-                Derelativize(PUSH(), check, check_specifier);
                 continue;
             }
 
-            Cell(const*) item;
-            REBSPC *item_specifier;
-            if (
-                heart == REB_GROUP
-                or heart == REB_THE_GROUP
-                or heart == REB_META_GROUP
-            ){
-                if (Do_Any_Array_At_Throws(SPARE, check, check_specifier)) {
-                    Drop_Data_Stack_To(BASELINE->stack_base);
-                    goto return_thrown;
-                }
-                item = SPARE;
-                item_specifier = SPECIFIED;
-                heart = CELL_HEART(item);
-            }
-            else {
-                item = check;
-                item_specifier = check_specifier;
-            }
-            if (heart == REB_BLANK) {
-                Init_Blank(PUSH());
-            }
-            else if (
-                heart == REB_WORD or heart == REB_TUPLE
-            ){
-                Derelativize(PUSH(), item, item_specifier);
-            }
-            else
-                fail ("SET-BLOCK! items are (@THE, ^META) WORD/TUPLE or BLANK");
+            if (heart == REB_BLANK or heart == REB_WORD or heart == REB_TUPLE)
+                continue;  // check this *after* special WORD! checks!
 
-            if (heart == REB_THE_GROUP) {
-                Theify(TOP);
-                stackindex_circled = TOP_INDEX;
-            }
-            else if (heart == REB_META_GROUP)
-                Metafy(TOP);
+            fail ("SET-BLOCK! items are (@THE, ^META) WORD/TUPLE or BLANK");
         }
 
         if (stackindex_circled == 0)
@@ -1536,19 +1558,24 @@ Bounce Evaluator_Executor(Frame(*) f)
         else {  // OUT needs special handling (e.g. stale checks)
           set_block_handle_out :
 
-            Copy_Cell(var, Data_Stack_At(stackindex_var));
+            Value(*) stack_var = Data_Stack_At(stackindex_var);
 
-            assert(not IS_QUOTED(var));
-            bool isotopes_ok = IS_QUASI(var);  // quasi has meaning
-            enum Reb_Kind var_heart = CELL_HEART(var);
+            assert(not IS_QUOTED(stack_var));
+            bool isotopes_ok = IS_QUASI(stack_var);  // quasi has meaning
+            enum Reb_Kind var_heart = CELL_HEART(stack_var);
+
+            bool is_optional = Get_Cell_Flag(stack_var, STACK_NOTE_OPTIONAL);
+            Copy_Cell(var, stack_var);
 
             if (
                 var_heart == REB_WORD
                 and VAL_WORD_SYMBOL(var) == Canon(CARET_1)
             ){
                 Meta_Quotify(OUT);  // skip writing, but tolerate isotopes
+                goto skip_circle_check;
             }
-            else if (
+
+            if (
                 var_heart == REB_META_WORD
                 or var_heart == REB_META_TUPLE
             ){
@@ -1560,8 +1587,13 @@ Bounce Evaluator_Executor(Frame(*) f)
                     Meta_Quotify(OUT);
                     Set_Var_May_Fail(var, SPECIFIED, OUT);
                 }
+                goto skip_circle_check;
             }
-            else if (Is_Stale(OUT)) {
+
+            if (Is_Stale(OUT) and is_optional)
+                Init_Nulled(OUT);
+
+            if (Is_Stale(OUT)) {
                 if (var_heart == REB_BLANK or (
                         var_heart == REB_WORD
                         and VAL_WORD_SYMBOL(var) == Canon(AT_1)
@@ -1594,6 +1626,8 @@ Bounce Evaluator_Executor(Frame(*) f)
             else
                 assert(false);
 
+          skip_circle_check:
+
             ++ stackindex_var;
 
             // Don't need to handle "circling (it's already in out, if it
@@ -1605,16 +1639,23 @@ Bounce Evaluator_Executor(Frame(*) f)
             stackindex_var != TOP_INDEX + 1;
             ++stackindex_var, ++pack_meta_at
         ){
-            if (pack_meta_at == pack_meta_tail)
-                fail ("Not enough values for multi-return");
+            Value(*) stack_var = Data_Stack_At(stackindex_var);
 
-            Copy_Cell(var, Data_Stack_At(stackindex_var));
+            assert(not IS_QUOTED(stack_var));
+            bool isotopes_ok = IS_QUASI(stack_var);  // quasi has meaning
+            enum Reb_Kind var_heart = CELL_HEART(stack_var);
 
-            assert(not IS_QUOTED(var));
-            bool isotopes_ok = IS_QUASI(var);  // quasi has meaning
-            enum Reb_Kind var_heart = CELL_HEART(var);
+            bool is_optional = Get_Cell_Flag(stack_var, STACK_NOTE_OPTIONAL);
+            Copy_Cell(var, stack_var);
 
-            Derelativize(SPARE, pack_meta_at, pack_specifier);
+            if (pack_meta_at == pack_meta_tail) {
+                if (is_optional)
+                    Init_Meta_Of_Null(SPARE);
+                else
+                    fail ("Not enough values for required multi-return");
+            }
+            else
+                Derelativize(SPARE, pack_meta_at, pack_specifier);
 
             if (
                 var_heart == REB_WORD
@@ -1634,6 +1675,9 @@ Bounce Evaluator_Executor(Frame(*) f)
 
             Meta_Unquotify(SPARE);
             Decay_If_Isotope(SPARE);  // if pack in slot, resolve it
+
+            if (Is_Void(SPARE) and is_optional)
+                Init_Nulled(SPARE);
 
             if (Is_Isotope(SPARE) and not isotopes_ok) {  // can't assign
                 fail (Error_Bad_Isotope(SPARE));
