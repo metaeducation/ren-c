@@ -83,6 +83,8 @@
 
 #define frame_ f  // for OUT, SPARE, STATE macros
 
+#define SCRATCH cast(Value(*), &(f->u.eval.scratch))
+
 // We make the macro for getting specifier a bit more complex here, to
 // account for reevaluation.
 //

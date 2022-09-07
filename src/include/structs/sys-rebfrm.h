@@ -336,10 +336,7 @@ typedef Executor Dispatcher;  // sub-dispatched in Action_Executor()
     struct Reb_Frame
 #endif
 {
-    //
     // These are FRAME_FLAG_XXX or'd together--see their documentation above.
-    // A Reb_Header is used so that it can implicitly terminate `cell`, if
-    // that comes in useful (e.g. there's an apparent END after cell)
     //
     // Note: In order to use the memory pools, this must be in first position,
     // and it must not have the NODE_FLAG_STALE bit set when in use.
@@ -371,6 +368,25 @@ typedef Executor Dispatcher;  // sub-dispatched in Action_Executor()
     // space for things other than evaluation.)
     //
     Reb_Cell spare;
+
+    // Each executor subclass can store specialized information in the frame.
+    // We place it here up top where we've been careful to make sure the
+    // `spare` is on a (2 * sizeof(uintptr_t)) alignment, in case there are
+    // things in the state that also require alignment (e.g. the eval state
+    // uses its space for an extra "scratch" GC-safe cell)
+    //
+  union {
+    struct Reb_Eval_Executor_State eval;
+
+    struct Reb_Action_Executor_State action;
+
+    struct {
+        Frame(*) main_frame;
+        bool changed;
+    } compose;
+
+    struct rebol_scan_level scan;
+  } u;
 
     // !!! The "executor" is an experimental new concept in the frame world,
     // for who runs the continuation.  This was controlled with flags before,
@@ -422,19 +438,6 @@ typedef Executor Dispatcher;  // sub-dispatched in Action_Executor()
     //
     Array(*) varlist;
     REBVAL *rootvar; // cache of CTX_ARCHETYPE(varlist) if varlist is not null
-
-  union {
-    struct Reb_Eval_Executor_State eval;
-
-    struct Reb_Action_Executor_State action;
-
-    struct {
-        Frame(*) main_frame;
-        bool changed;
-    } compose;
-
-    struct rebol_scan_level scan;
-  } u;
 
     // The "baseline" is a digest of the state of global variables at the
     // beginning of a frame evaluation.  An example of one of the things the

@@ -137,6 +137,16 @@ STATIC_ASSERT(EVAL_EXECUTOR_FLAG_FULFILLING_ARG == DETAILS_FLAG_IS_BARRIER);
 
 
 struct Reb_Eval_Executor_State {
+    //
+    // Unlike actions (which have as many GC-protected locals as they want
+    // to make in a frame), the evaluator has only the SPARE.  It makes things
+    // much more convenient to use the space where the action executor would
+    // be putting things like [arg param key key_tail] for an extra GC-safe
+    // slot to be used.  The GC explicitly checks for Eval_Executor() to know
+    // if this needs to be marked.
+    //
+    RawCell scratch;  // raw vs. C++ class so memset() can clear the state
+
     Cell(const*) current;
     option(const REBVAL*) current_gotten;
 

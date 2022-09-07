@@ -796,6 +796,12 @@ static void Mark_Frame_Stack_Deep(void)
         Queue_Mark_Maybe_Stale_Cell_Deep(&f->feed->lookback);
         Queue_Mark_Maybe_Stale_Cell_Deep(&f->spare);
 
+        if (f->executor == &Evaluator_Executor) {
+            if (not Is_Cell_Erased(&f->u.eval.scratch))  // extra GC-safe cell
+                Queue_Mark_Cell_Deep(cast(Cell(*), &f->u.eval.scratch));
+            goto propagate_and_continue;
+        }
+
         if (not Is_Action_Frame(f)) {
             //
             // Consider something like `eval copy '(recycle)`, because

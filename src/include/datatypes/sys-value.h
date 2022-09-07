@@ -381,10 +381,10 @@ inline static enum Reb_Kind VAL_TYPE_UNCHECKED(Cell(const*) v) {
 //
 // Note that an erased cell is FRESH(), but not READABLE() or WRITABLE().
 
-inline static Cell(*) Erase_Cell_Untracked(Cell(*) c) {
+inline static Cell(*) Erase_Cell_Untracked(RawCell* c) {
     ALIGN_CHECK_CELL_EVIL_MACRO(c);
     c->header.bits = CELL_MASK_0;
-    return c;
+    return cast(Cell(*), c);
 }
 
 #define Erase_Cell(c) \

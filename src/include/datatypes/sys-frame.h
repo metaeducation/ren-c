@@ -483,6 +483,13 @@ inline static Frame(*) Prep_Frame_Core(
 
     TRASH_IF_DEBUG(f->u);  // fills with garbage bytes in debug build
 
+    // !!! Recycling is done in the trampoline before the frame gets a chance
+    // to run.  So it's hard for the GC to know if it's okay to mark the
+    // scratch cell.  We cheaply erase the cell in case it stays as the
+    // evaluator executor (it's just writing a single zero).  Review.
+    //
+    Erase_Cell(&f->u.eval.scratch);
+
     TRASH_POINTER_IF_DEBUG(f->label);
   #if DEBUG_FRAME_LABELS
     TRASH_POINTER_IF_DEBUG(f->label_utf8);
