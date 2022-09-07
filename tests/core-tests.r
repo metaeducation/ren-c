@@ -18,7 +18,6 @@
 %api/librebol.test.reb
 
 %datatypes/action.test.reb
-%datatypes/bad-word.test.reb
 %datatypes/binary.test.reb
 %datatypes/bitset.test.reb
 %datatypes/blank.test.reb
@@ -54,6 +53,7 @@
 %datatypes/path.test.reb
 %datatypes/percent.test.reb
 %datatypes/port.test.reb
+%datatypes/quasi.test.reb
 %datatypes/quoted.test.reb
 %datatypes/refinement.test.reb
 %datatypes/set-block.test.reb

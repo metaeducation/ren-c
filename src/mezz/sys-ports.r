@@ -110,7 +110,7 @@ make-port*: function [
     ;
     overloads: copy []
     for-each [key val] spec [
-        if not any [bad-word? ^val, null? :val, blank? :val] [
+        if not any [quasi? ^val, null? :val, blank? :val] [
             append overloads spread :[to set-word! key get 'val]  ; override
         ]
     ]

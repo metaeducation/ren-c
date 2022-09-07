@@ -687,7 +687,7 @@ export*: func [
         items: next items
 
         (types: match block! :items.1) then [
-            if bad-word? ^val [  ; !!! assume type block means no isotopes
+            if quasi? ^val [  ; !!! assume type block means no isotopes
                 fail [{EXPORT given} types {for} word {but it is} ^val]
             ]
             (find (make typeset! types) kind of :val) else [

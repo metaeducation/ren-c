@@ -188,7 +188,7 @@ const Byte Lex_Map[256] =
     /* 7B {   */    LEX_DELIMIT|LEX_DELIMIT_LEFT_BRACE,
     /* 7C |   */    LEX_SPECIAL|LEX_SPECIAL_BAR,
     /* 7D }   */    LEX_DELIMIT|LEX_DELIMIT_RIGHT_BRACE,
-    /* 7E ~   */    LEX_SPECIAL|LEX_SPECIAL_TILDE,
+    /* 7E ~   */    LEX_DELIMIT|LEX_DELIMIT_TILDE,
     /* 7F DEL */    LEX_DEFAULT,
 
     /* Odd Control Chars */
@@ -1354,6 +1354,11 @@ static enum Reb_Token Maybe_Locate_Token_May_Push_Mold(
             }
             return TOKEN_COMMA;
 
+          case LEX_DELIMIT_TILDE:
+            assert(*cp == '~');
+            ss->end = cp + 1;
+            return TOKEN_TILDE;
+
           case LEX_DELIMIT_UTF8_ERROR:
             *error = Error_Syntax(ss, TOKEN_WORD);
             return TOKEN_0;
@@ -1605,46 +1610,6 @@ static enum Reb_Token Maybe_Locate_Token_May_Push_Mold(
             }
             token = TOKEN_MONEY;
             goto prescan_subsume_up_to_one_dot;
-
-          case LEX_SPECIAL_TILDE: {
-            ++cp;  // look at what comes after ~
-            if (
-                (cp[0] == '(' and cp[1] == ')' and cp[2] == '~')
-                or
-                (cp[0] == '[' and cp[1] == ']' and cp[2] == '~')
-            ){
-                // !!! Scanning of QUASI! forms needs to be generalized.  This
-                // is a stopgap measure just to get scanning of ~()~ and ~[]~,
-                // as that is an important element in design experiments now.
-                //
-                ss->end = cp += 3;
-                return TOKEN_BAD_WORD;
-            }
-            if (IS_LEX_DELIMIT(*cp)) {  // lone ~ is okay
-                ss->end = cp;
-                return TOKEN_BAD_WORD;
-            }
-            if (*cp == '~') {  // `~~` and `~~~a` etc are not legal
-                while (not IS_LEX_DELIMIT(*cp))
-                    ++cp;
-                ss->end = cp;
-                *error = Error_Syntax(ss, TOKEN_BAD_WORD);
-                return TOKEN_0;
-            }
-            if (*cp == ':') {  // !!! Error here on `~:`, or would it anyway?
-                ss->end = cp;
-                *error = Error_Syntax(ss, TOKEN_BAD_WORD);
-                return TOKEN_0;
-            }
-            for (; *cp != '~'; ++cp) {
-                if (IS_LEX_DELIMIT(*cp)) {
-                    ss->end = cp;
-                    *error = Error_Syntax(ss, TOKEN_BAD_WORD);  // `[return ~a]`
-                    return TOKEN_0;
-                }
-            }
-            ss->end = cp + 1;
-            return TOKEN_BAD_WORD; }
 
           default:
             *error = Error_Syntax(ss, TOKEN_WORD);
@@ -1953,6 +1918,7 @@ Bounce Scanner_Executor(Frame(*) f) {
 
     level->quotes_pending = 0;
     level->prefix_pending = TOKEN_0;
+    level->quasi_pending = false;
 
 } loop: {  //////////////////////////////////////////////////////////////////
 
@@ -1994,28 +1960,6 @@ Bounce Scanner_Executor(Frame(*) f) {
       case TOKEN_BLANK:
         Init_Blank(PUSH());
         break;
-
-      case TOKEN_BAD_WORD: {  // a non-isotope bad-word
-        assert(*bp == '~');
-        if (len == 1)
-            Init_Meta_Of_Void(PUSH());
-        else {
-            assert(bp[len - 1] == '~');
-            if (len == 4 and bp[1] == '(' and bp[2] == ')') {  // ~()~
-                Meta_Quotify(Init_Empty_Splice(PUSH()));  // !!! hacked in...
-            }
-            else if (len == 4 and bp[1] == '[' and bp[2] == ']') {  // ~[]~
-                Meta_Quotify(Init_Empty_Pack(PUSH()));
-            }
-            else if (len == 3 and bp[1] == '_') {  // ~_~
-                Init_Meta_Of_Blank_Isotope(PUSH());
-            }
-            else {
-                Symbol(const*) label = Intern_UTF8_Managed(bp + 1, len - 2);
-                Init_Quasi_Word(PUSH(), label);
-            }
-        }
-        break; }
 
       case TOKEN_COMMA:
         if (level->mode == '/' or level->mode == '.') {
@@ -2134,8 +2078,14 @@ Bounce Scanner_Executor(Frame(*) f) {
         if (level->prefix_pending != TOKEN_0)  // can't do @'foo: or :'foo
             return RAISE(Error_Syntax(ss, level->token));
 
-        if (IS_LEX_ANY_SPACE(*ep) or *ep == ']' or *ep == ')' or *ep == ';') {
-            //
+        if (level->quasi_pending)  // can't do ~'foo~, no quoted quasiforms
+            return RAISE(Error_Syntax(ss, level->token));
+
+        if (
+            IS_LEX_ANY_SPACE(*ep)
+            or *ep == ']' or *ep == ')'
+            or *ep == ';'
+        ){
             // If we have something like ['''] there won't be another token
             // push coming along to apply the quotes to, so quote a null.
             // This also applies to comments.
@@ -2145,6 +2095,34 @@ Bounce Scanner_Executor(Frame(*) f) {
         }
         else
             level->quotes_pending = len;  // apply quoting to next token
+        goto loop; }
+
+      case TOKEN_TILDE: {
+        assert(*bp == '~');  // should be `len` sequential apostrophes
+
+        if (level->prefix_pending != TOKEN_0)  // can't do @~foo:~ or :~foo~
+            return RAISE(Error_Syntax(ss, level->token));
+
+        assert(not level->quasi_pending);
+
+        if (*ep == '~')
+            return RAISE(Error_Syntax(ss, level->token));
+
+        if (
+            IS_LEX_ANY_SPACE(*ep)
+            or *ep == ']' or *ep == ')'
+            or *ep == ';'
+            or (*ep == ',' and ep[1] != '~')  // (x: ~, y: 10) isn't quasi-comma
+        ){
+            // If we have something like [~] there won't be another token
+            // push coming along to apply the quotes to, so quasi a null.
+            // This also applies to comments.
+            //
+            Init_Meta_Of_Void(PUSH());
+            break;
+        }
+        else
+            level->quasi_pending = true;  // apply quasi to next token
         goto loop; }
 
       case TOKEN_GROUP_BEGIN:
@@ -2919,6 +2897,14 @@ Bounce Scanner_Executor(Frame(*) f) {
         level->prefix_pending = TOKEN_0;
     }
 
+    if (level->quasi_pending) {
+        if (*ss->begin != '~')
+            return RAISE(Error_Syntax(ss, TOKEN_TILDE));
+        ++ss->begin;
+        Quasify(TOP);
+        level->quasi_pending = false;
+    }
+
     if (level->quotes_pending != 0) {
         //
         // Transform the topmost value on the stack into a QUOTED!, to
@@ -2951,6 +2937,7 @@ Bounce Scanner_Executor(Frame(*) f) {
 
     assert(level->quotes_pending == 0);
     assert(level->prefix_pending == TOKEN_0);
+    assert(level->quasi_pending == false);
 
     // Note: ss->newline_pending may be true; used for ARRAY_NEWLINE_AT_TAIL
 

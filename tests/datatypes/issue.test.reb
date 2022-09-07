@@ -35,7 +35,7 @@
 ; in the ISSUE! for convenience as a CHAR! representation.
 (
     for-each x [  ; TEXT! values are tested as *invalid* issues
-        #~ #`
+        {#~} #`
         #1 #2 #3 #4 #5 #6 #7 #8 #9 #1 #0 #- #=
         #! #@ ## #$ #% {#^^} #& #* {#(} {#)} #_ #+  ; caret used for escaping
         "#{" "#}" #|  ; #{xx} will become "ISSUE!" when BINARY! is &{xx}

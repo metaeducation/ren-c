@@ -1,6 +1,6 @@
-; bad-word.test.reb
+; quasi.test.reb
 
-(not bad-word? 1)
+(not quasi? 1)
 
 (
     v: make quasi! 'labeled

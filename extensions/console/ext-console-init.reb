@@ -639,7 +639,7 @@ ext-console-impl: func [
         if '~quit~ = ^result.arg1 [
             return 0  ; plain QUIT with no argument, treat it as success
         ]
-        if bad-word? ^result.arg1 [
+        if quasi? ^result.arg1 [
             return 1  ; treat all other QUIT with isotopes as generic error
         ]
         return switch type of :result.arg1 [

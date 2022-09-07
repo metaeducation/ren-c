@@ -25,7 +25,7 @@
 (
     for-each w words of lib [
         dump w
-        if bad-word? ^(get/any w) [continue]
+        if quasi? ^(get/any w) [continue]
         if action? get w
             (compose/deep [assert [none? help (w)]])
         else [

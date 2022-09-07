@@ -77,7 +77,7 @@ run-single-test: func [
                 "(unknown)"
             ]]
         ]
-        bad-word? ^result [
+        quasi? ^result [
             "test returned" (mold ^result) "(isotope)"
         ]
         null? :result [

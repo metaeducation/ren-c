@@ -997,7 +997,7 @@ zip: enclose :zip function3 [f] [
     ;]
 
     lib/match: func3 [type value [<opt> any-value!] <local> answer] [
-        if bad-word? set* 'answer old-match type value [
+        if quasi? set* 'answer old-match type value [
             return true
         ]
         return get 'answer

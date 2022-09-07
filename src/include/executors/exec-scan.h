@@ -149,5 +149,6 @@ typedef struct rebol_scan_level {  // each array scan corresponds to a level
     REBLEN quotes_pending;
     enum Reb_Token token;
     enum Reb_Token prefix_pending;
+    bool quasi_pending;
 
 } SCAN_LEVEL;

@@ -89,12 +89,8 @@ help: function [
         "WORD! whose value to explain, or other HELP target (try HELP HELP)"
     /doc "Open web browser to related documentation."
 ][
-    if bad-word? ^topic [
-        ;
-        ; !!! This should lead to a web page that offers help on the nature
-        ; of specific void usages.
-        ;
-        print [mold get/any 'topic "is an error-inducing BAD-WORD! value"]
+    if quasi? ^topic [  ; !!! Review: What should this do?
+        print [mold get/any 'topic "is an QUASI! value"]
         return none
     ]
 

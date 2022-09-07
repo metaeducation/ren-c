@@ -488,7 +488,6 @@ reeval func* [
         ]
     ]
 ]
-    bad-word?:
     blank?:
     comma?:
     logic?:

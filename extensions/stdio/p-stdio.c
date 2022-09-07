@@ -93,7 +93,7 @@ REBVAL *Read_Line(STD_TERM *t)
             );
         }
 
-        if (rebUnboxLogic("bad-word?", rebQ(e)))  // e.g. ~halt~
+        if (rebUnboxLogic("quasi?", rebQ(e)))  // e.g. ~halt~
             return e;
 
         if (rebUnboxLogic("@", e, "= newline")) {

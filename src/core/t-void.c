@@ -28,10 +28,7 @@
 //
 //  MAKE_Quasi: C
 //
-// Can be created from a label.
-//
-// !!! How to create an isotope form of a BAD-WORD! in usermode, without
-// having to run an evaluation on a bad-word?  `make-isotope`?
+// See also ISOTOPIC for making isotopes.
 //
 Bounce MAKE_Quasi(
     Frame(*) frame_,
@@ -42,11 +39,11 @@ Bounce MAKE_Quasi(
     assert(not parent);
     UNUSED(parent);
 
-    if (Is_Nulled(arg) or IS_QUOTED(arg))
+    if (IS_QUOTED(arg))  // QUOTED! competes for quote byte with quasiform
         return RAISE(Error_Bad_Make(kind, arg));
 
     // !!! Should it allow things that are already QUASI! (?)  This does, but
-    // Quasify() does ont.
+    // Quasify() does not.
 
     Copy_Cell(OUT, arg);
     mutable_QUOTE_BYTE(OUT) = QUASI_2;

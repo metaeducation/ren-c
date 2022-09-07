@@ -38,7 +38,6 @@ enum Reb_Token {
     TOKEN_END,
     TOKEN_NEWLINE,
     TOKEN_BLANK,
-    TOKEN_BAD_WORD,
     TOKEN_COMMA,
     TOKEN_COLON,
     TOKEN_CARET,
@@ -58,6 +57,7 @@ enum Reb_Token {
     TOKEN_DATE,
     TOKEN_CHAR,
     TOKEN_APOSTROPHE,
+    TOKEN_TILDE,
     TOKEN_STRING,
     TOKEN_BINARY,
     TOKEN_PAIR,
@@ -113,6 +113,7 @@ enum LEX_DELIMIT_ENUM {
     LEX_DELIMIT_DOUBLE_QUOTE,       /* 22 " */
     LEX_DELIMIT_SLASH,              /* 2F / - date, path, file */
     LEX_DELIMIT_PERIOD,             /* 2E . - decimal, tuple, file */
+    LEX_DELIMIT_TILDE,              /* 7E ~ - used only by QUASI! */
 
     LEX_DELIMIT_UTF8_ERROR,
 
@@ -184,8 +185,6 @@ enum LEX_SPECIAL_ENUM {             /* The order is important! */
     LEX_SPECIAL_POUND,              /* 23 # - hex number */
     LEX_SPECIAL_DOLLAR,             /* 24 $ - money */
     LEX_SPECIAL_SEMICOLON,          /* 3B ; - comment */
-
-    LEX_SPECIAL_TILDE,              /* 7E ~ - used only by BAD-WORD! */
 
     // LEX_SPECIAL_WORD is not a LEX_VALUE() of anything in LEX_CLASS_SPECIAL,
     // it is used to set a flag by Prescan_Token().

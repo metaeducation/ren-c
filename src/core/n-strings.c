@@ -363,6 +363,7 @@ DECLARE_NATIVE(enhex)
                   case LEX_DELIMIT_SLASH:
                   case LEX_DELIMIT_PERIOD:
                   case LEX_DELIMIT_COMMA:
+                  case LEX_DELIMIT_TILDE:
                     goto leave_as_is;
 
                   case LEX_DELIMIT_SPACE:  // includes control characters
@@ -391,7 +392,6 @@ DECLARE_NATIVE(enhex)
                   case LEX_SPECIAL_POUND:
                   case LEX_SPECIAL_DOLLAR:
                   case LEX_SPECIAL_SEMICOLON:
-                  case LEX_SPECIAL_TILDE:
                     goto leave_as_is;
 
                   case LEX_SPECIAL_WORD:

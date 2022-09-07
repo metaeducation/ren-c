@@ -108,7 +108,6 @@ const char * const Token_Names[] = {
     "end-of-script",
     "newline",
     "blank",
-    "bad-word",
     "comma",
     "colon",
     "caret",
@@ -128,6 +127,7 @@ const char * const Token_Names[] = {
     "date",
     "char",
     "apostrophe",
+    "tilde",
     "string",
     "binary",
     "pair",
@@ -139,7 +139,7 @@ const char * const Token_Names[] = {
     "tag",
     "path",
     "construct",
-    NULL
+    nullptr
 };
 
 
