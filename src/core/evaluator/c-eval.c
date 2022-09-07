@@ -555,8 +555,10 @@ Bounce Evaluator_Executor(Frame(*) f)
       //    chosen as that form.  Behavior duplicated here for consistency.
 
     case QUASI_2:
-        if (Is_Meta_Of_Void(f_current))
+        if (Is_Meta_Of_Void(f_current)) {
+            Mark_Eval_Out_Voided(OUT);  // so things like (~ then [...]) work
             break;  // the `~` just vaporizes, leaves output as-is, see [1]
+        }
         if (Is_Meta_Of_Blank_Isotope(f_current)) {
             Init_Nulled(OUT);  // pure null compromise for API, see [2]
             break;

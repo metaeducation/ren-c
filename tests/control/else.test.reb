@@ -66,9 +66,17 @@
     ]
 )
 
+; This is a by-product of the wish to make it so (@ <SOME-QUASI!>) can produce
+; a true NULL, for use with the API...and that this provoking quasivalue be
+; something the API puts in automatically when a nullptr is given as input.
+; Generation of quasiblanks is considered less useful, and preservation of
+; QUOTED! nulls is considered important to not undermine the QUOTED! type.
+; See @ for further reasoning--this may be revisited
 (
-    <isotope> = (~_~ then [<isotope>])
+    null? (~_~ then [fail ~unreachable~])
 )
+
+(<hello> = <hello> ~ then [<isotope>])
 
 ; Although branches can be triggered by ~_~ isotopes, if functions ask to
 ; receive the value it is decayed, so they do not have to be ^META.  But if
