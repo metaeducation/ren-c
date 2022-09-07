@@ -81,3 +81,6 @@
     ; tuple! right-pads with 0
     (equal? 1.0.0.0.0.0.0 1.0.0)
 ] true)
+
+(null = pick 'a/b 1000)
+(null = pick 'a/b 0)

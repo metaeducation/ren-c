@@ -196,15 +196,10 @@ Bounce MAKE_Decimal(
         if (VAL_SEQUENCE_LEN(arg) != 2)
             goto bad_make;
 
-        DECLARE_LOCAL (temp1);  // decompress path from cell into values
-        DECLARE_LOCAL (temp2);
-        Cell(const*) num = VAL_SEQUENCE_AT(temp1, arg, 0);
-        Cell(const*) den = VAL_SEQUENCE_AT(temp2, arg, 1);
-
         DECLARE_LOCAL (numerator);
         DECLARE_LOCAL (denominator);
-        Derelativize(numerator, num, VAL_SEQUENCE_SPECIFIER(arg));
-        Derelativize(denominator, den, VAL_SEQUENCE_SPECIFIER(arg));
+        GET_SEQUENCE_AT(numerator, arg, VAL_SEQUENCE_SPECIFIER(arg), 0);
+        GET_SEQUENCE_AT(denominator, arg, VAL_SEQUENCE_SPECIFIER(arg), 1);
         PUSH_GC_GUARD(numerator);  // might be GROUP!, so (1.2)/4
         PUSH_GC_GUARD(denominator);
 

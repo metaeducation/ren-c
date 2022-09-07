@@ -548,6 +548,52 @@ inline static Cell(const*) VAL_SEQUENCE_AT(
     }
 }
 
+inline static Value(*) GET_SEQUENCE_AT(
+    Value(*) out,
+    noquote(Cell(const*)) sequence,
+    REBSPC* specifier,
+    REBLEN n
+){
+    assert(out != sequence);
+    assert(ANY_SEQUENCE_KIND(CELL_HEART(sequence)));
+
+    if (Not_Cell_Flag(sequence, SEQUENCE_HAS_NODE)) {  // compressed bytes
+        assert(n < PAYLOAD(Bytes, sequence).at_least_8[IDX_SEQUENCE_USED]);
+        return Init_Integer(out, PAYLOAD(Bytes, sequence).at_least_8[n + 1]);
+    }
+
+    const Node* node1 = VAL_NODE1(sequence);
+    if (Is_Node_A_Cell(node1)) {  // test if it's a pairing
+        assert(false);  // these don't exist yet
+        return nullptr;  // compressed 2-element sequence
+    }
+
+    switch (SER_FLAVOR(SER(node1))) {
+      case FLAVOR_SYMBOL : {  // compressed single WORD! sequence
+        assert(n < 2);
+        if (Get_Cell_Flag(sequence, REFINEMENT_LIKE) ? n == 0 : n != 0)
+            return Init_Blank(out);
+
+        // Because the cell is being viewed as a PATH!, we cannot view it as
+        // a WORD! also unless we fiddle the bits at a new location.
+        //
+        Derelativize(out, cast(Cell(const*), sequence), specifier);
+        mutable_HEART_BYTE(out) = REB_WORD;
+        mutable_QUOTE_BYTE(out) = UNQUOTED_1;  // quote is "on" the sequence
+        return out; }
+
+      case FLAVOR_ARRAY : {  // uncompressed sequence
+        Array(const*) a = ARR(VAL_NODE1(sequence));
+        assert(ARR_LEN(a) >= 2);
+        assert(Is_Array_Frozen_Shallow(a));
+        return Derelativize(out, ARR_AT(a, n), specifier); }  // aread only
+
+      default :
+        assert(false);
+        DEAD_END;
+    }
+}
+
 inline static Byte VAL_SEQUENCE_BYTE_AT(
     noquote(Cell(const*)) sequence,
     REBLEN n

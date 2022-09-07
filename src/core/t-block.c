@@ -340,10 +340,11 @@ Bounce TO_Array(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg) {
         REBLEN len = VAL_SEQUENCE_LEN(arg);
         REBLEN i;
         for (i = 0; i < len; ++i) {
-            Derelativize(
+            GET_SEQUENCE_AT(
                 PUSH(),
-                VAL_SEQUENCE_AT(OUT, arg, i),  // use out as scratch space
-                VAL_SEQUENCE_SPECIFIER(arg)
+                arg,
+                VAL_SEQUENCE_SPECIFIER(arg),
+                i
             );
         }
         return Init_Array_Cell(OUT, kind, Pop_Stack_Values(base));

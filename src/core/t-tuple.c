@@ -396,13 +396,11 @@ REBTYPE(Sequence)
         else
             fail (picker);
 
-        REBSPC *specifier = VAL_SEQUENCE_SPECIFIER(sequence);
-        Cell(const*) at = VAL_SEQUENCE_AT(SPARE, sequence, n);
-
         if (n < 0 or n >= cast(REBINT, VAL_SEQUENCE_LEN(sequence)))
             return nullptr;
 
-        return Derelativize(OUT, at, specifier); }
+        GET_SEQUENCE_AT(OUT, sequence, VAL_SEQUENCE_SPECIFIER(sequence), n);
+        return OUT; }
 
       case SYM_REVERSE: {
         INCLUDE_PARAMS_OF_REVERSE;
