@@ -777,23 +777,29 @@ ext-console-impl: func [
 
     if group? prior [
         ;
-        ; RESULT has been ^META'd...but it could be pure NULL.  We can't
-        ; compose pure NULL into a block, so we compose it with a quote...
-        ; it decays to just a single apostrophe (') which will evaluate to
-        ; pure NULL so PRINT-RESULT's argument can preserve the distinction.
+        ; This weird way of calling PRINT-RESULT originates from when some
+        ; issues with ^META and VOID were not fully worked out.  It should no
+        ; longer be necessary and can just call normally.  But it provoked a
+        ; binding bug so it's being kept here for now as a reminder to tend
+        ; to the issue.
         ;
-        ; We also build a raw frame to call SYSTEM.CONSOLE.PRINT-RESULT.  We
-        ; could use a convention where we pass it already meta'd results in
-        ; order to avoid losing the distinction between pure void and a void
-        ; isotope...but it's nice to have its interface contract be non-meta
-        ; (in case people want to call it directly.)  So here a low-level frame
-        ; is built to avoid lossiness.
+        ; !!! There is a binding issue where a LET patch running in a non
+        ; function will get tweaked in response to seeing a frame context,
+        ; so the LET chain will end with that frame context.  You can get
+        ; this simply by `foo: func [] [return []]` and then having that
+        ; block result cause the frame for FOO that's on [] in the result
+        ; get poked into the LET F virtual bind element.  But once that's
+        ; there, it causes contention with code composed in with binding
+        ; from another function...such as `system.console.print-gap` if that
+        ; array has its own binding on it.  Putting this code in a group
+        ; to limit the LET binding is a lousy workaround for the general
+        ; issue--but it needs deeper thought.
         ;
-        emit [
+        emit [(  ; <-- GROUP! needed for binding bug, review
             let f: make frame! :system.console.print-result
             f.v: '(<*> result)  ; avoid conflating pure void and void isotope
             do f
-        ]
+        )]
         return <prompt>
     ]
 

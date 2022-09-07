@@ -1184,6 +1184,20 @@ inline static REBSPC *Derive_Specifier_Core(
 
     if (IS_VARLIST(old)) {
         //
+        // !!! It's very frequent now with heavy nulls and heavy voids, as
+        // arrays injecting their bindings in places where arrays were not
+        // before.  This entire thing needs a rewrite.
+
+        if (  // !!! hack out heavy null and heavy void cases, for now
+            VAL_LEN_AT(any_array) == 1
+            and (
+                Is_Meta_Of_Null(VAL_ARRAY_ITEM_AT(any_array))
+                or Is_Meta_Of_Void(VAL_ARRAY_ITEM_AT(any_array))
+            )
+        ){
+            return old;
+        }
+
         // If the specifier is only for providing resolutions of variables in
         // functions, an array specified by a frame isn't going to need that.
         // This is kind of like dealing with something specified.
@@ -1221,6 +1235,8 @@ inline static REBSPC *Derive_Specifier_Core(
         // Patch resolves to a binding, and it's an incompatible one.  If
         // this happens, we have to copy the whole chain.  Is this possible?
         // Haven't come up with a situation that forces it yet.
+        //
+        // !!! See above about heavy null and void exacerbating this.
 
         panic ("Incompatible patch bindings; if you hit this, report it.");
     }
