@@ -1057,7 +1057,9 @@ bool Set_Var_Core_Updater_Throws(
 
     DECLARE_LOCAL (temp);  // target might be same as out (e.g. spare)
 
-    if (ANY_GROUP(var)) {  // !!! SET-GROUP! makes sense, but GET-GROUP!?
+    enum Reb_Kind varheart = CELL_HEART(var);
+
+    if (ANY_GROUP_KIND(varheart)) {  // !!! maybe SET-GROUP!, but GET-GROUP!?
         if (not steps_out)
             fail (Error_Bad_Get_Group_Raw(var));
 
@@ -1075,7 +1077,7 @@ bool Set_Var_Core_Updater_Throws(
         return false;
     }
 
-    if (ANY_WORD(var)) {
+    if (ANY_WORD_KIND(varheart)) {
 
       set_target:
 
@@ -1092,7 +1094,7 @@ bool Set_Var_Core_Updater_Throws(
             // as BINDING OF is reviewed in terms of answers for LET.
             //
             Derelativize(temp, var, var_specifier);
-            Quotify(temp, 1);
+            mutable_QUOTE_BYTE(temp) = ONEQUOTE_3;
             PUSH_GC_GUARD(temp);
             if (rebRunThrows(
                 out,  // <-- output cell
@@ -1123,7 +1125,7 @@ bool Set_Var_Core_Updater_Throws(
     // GROUP! by value).  These evaluations should only be allowed if the
     // caller has asked us to return steps.
 
-    if (ANY_SEQUENCE(var)) {
+    if (ANY_SEQUENCE_KIND(varheart)) {
         if (Not_Cell_Flag(var, SEQUENCE_HAS_NODE))  // compressed byte form
             fail (var);
 

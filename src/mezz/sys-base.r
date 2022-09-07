@@ -183,8 +183,6 @@ do*: func [
 
     return: "Final evaluative product of code or block"
         [<opt> any-value!]
-    @context "Isolated context where the evaluation was performed"
-        [module!]
     source "Files, urls and modules evaluate as scripts, other strings don't"
         [file! url! text! binary! tag! the-word!]
     args "Args passed as system.script.args to a script (normally a string)"
@@ -222,5 +220,5 @@ do*: func [
     ; of times.  So what DO does is effectively flips the order of the
     ; return results of IMPORT.
     ;
-    return [context @result]: import*/args/only _ source args only
+    return [_ ~@result~]: import*/args/only _ source args only
 ]

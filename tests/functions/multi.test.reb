@@ -198,3 +198,44 @@
         unset? 'x
     ])
 ]
+
+; QUASI! values in SET-BLOCK! allow for isotopic assignments
+[
+    ~bad-isotope~ !! (
+        [x]: ~test~
+    )
+    (
+        [~x~]: ~test~
+        ^x = '~test~
+    )
+    ~bad-isotope~ !! (
+        [x y]: pack [1 ~test~]
+    )
+    (
+        all [
+            1 = [x ~y~]: pack [1 ~test~]
+            x = 1
+            ^y = '~test~
+        ]
+    )
+    (
+        all [
+            '~test~ = ^ [x ~@y~]: pack [1 ~test~]
+            x = 1
+            ^y = '~test~
+        ]
+    )
+    ~bad-isotope~ !! (
+        let [x]: ~test~
+    )
+    (
+        x: <outside>
+        all [
+            all [
+                '~test~ = ^ let [~x~]: ~test~
+                ^x = '~test~
+            ]
+            x = <outside>
+        ]
+    )
+]

@@ -1397,10 +1397,18 @@ Bounce Evaluator_Executor(Frame(*) f)
         StackIndex stackindex_circled = 0;
 
         for (; tail != check; ++check) {  // push variables first, see [2]
+            bool isotopes_ok = IS_QUASI(check);  // quasi has meaning
+            UNUSED(isotopes_ok);  // not needed in this phase
+            if (IS_QUOTED(check))
+                fail ("QUOTED! not currently permitted in SET-BLOCK!s");
+            enum Reb_Kind heart = CELL_HEART(check);
+
             if (
                 // @xxx is indicator of circled result, see [3]
                 //
-                IS_THE(check) or IS_THE_WORD(check) or IS_THE_TUPLE(check)
+                (heart == REB_WORD and VAL_WORD_SYMBOL(check) == Canon(AT_1))
+                or heart == REB_THE_WORD
+                or heart == REB_THE_TUPLE
             ){
                 if (stackindex_circled != 0)
                     fail ("Can't circle more than one multi-return result");
@@ -1411,7 +1419,9 @@ Bounce Evaluator_Executor(Frame(*) f)
             if (
                 // ^xxx is indicator of a ^META result, see [4]
                 //
-                IS_META(check) or IS_META_WORD(check) or IS_META_TUPLE(check)
+                (heart == REB_WORD and VAL_WORD_SYMBOL(check) == Canon(CARET_1))
+                or heart == REB_META_WORD
+                or heart == REB_META_TUPLE
             ){
                 Derelativize(PUSH(), check, check_specifier);
                 continue;
@@ -1420,9 +1430,9 @@ Bounce Evaluator_Executor(Frame(*) f)
             Cell(const*) item;
             REBSPC *item_specifier;
             if (
-                IS_GROUP(check)
-                or IS_THE_GROUP(check)
-                or IS_META_GROUP(check)
+                heart == REB_GROUP
+                or heart == REB_THE_GROUP
+                or heart == REB_META_GROUP
             ){
                 if (Do_Any_Array_At_Throws(SPARE, check, check_specifier)) {
                     Drop_Data_Stack_To(BASELINE->stack_base);
@@ -1430,27 +1440,28 @@ Bounce Evaluator_Executor(Frame(*) f)
                 }
                 item = SPARE;
                 item_specifier = SPECIFIED;
+                heart = CELL_HEART(item);
             }
             else {
                 item = check;
                 item_specifier = check_specifier;
             }
-            if (IS_BLANK(item)) {
+            if (heart == REB_BLANK) {
                 Init_Blank(PUSH());
             }
             else if (
-                IS_WORD(item) or IS_TUPLE(item)
+                heart == REB_WORD or heart == REB_TUPLE
             ){
                 Derelativize(PUSH(), item, item_specifier);
             }
             else
                 fail ("SET-BLOCK! items are (@THE, ^META) WORD/TUPLE or BLANK");
 
-            if (IS_THE_GROUP(check)) {
+            if (heart == REB_THE_GROUP) {
                 Theify(TOP);
                 stackindex_circled = TOP_INDEX;
             }
-            else if (IS_META_GROUP(check))
+            else if (heart == REB_META_GROUP)
                 Metafy(TOP);
         }
 
@@ -1482,10 +1493,10 @@ Bounce Evaluator_Executor(Frame(*) f)
         if (Is_Raised(OUT))  // don't assign variables, see [1]
             goto set_block_drop_stack_and_continue;
 
-        StackIndex stackindex_outvar = BASELINE->stack_base + 1;  // see [2]
+        StackIndex stackindex_var = BASELINE->stack_base + 1;  // see [2]
         StackIndex stackindex_circled = frame_->u.eval.stackindex_circled;
 
-        Value(*) outvar = SCRATCH;  // stable location
+        Value(*) var = SCRATCH;  // stable location
 
         Cell(const*) pack_meta_at = nullptr;  // pack block items are ^META'd
         Cell(const*) pack_meta_tail = nullptr;
@@ -1523,37 +1534,65 @@ Bounce Evaluator_Executor(Frame(*) f)
         else {  // OUT needs special handling (e.g. stale checks)
           set_block_handle_out :
 
-            Copy_Cell(outvar, Data_Stack_At(stackindex_outvar));
+            Copy_Cell(var, Data_Stack_At(stackindex_var));
 
-            if (IS_META(outvar)) {  // skip writing, but tolerate isotopes
-                Meta_Quotify(OUT);
+            assert(not IS_QUOTED(var));
+            bool isotopes_ok = IS_QUASI(var);  // quasi has meaning
+            enum Reb_Kind var_heart = CELL_HEART(var);
+
+            if (
+                var_heart == REB_WORD
+                and VAL_WORD_SYMBOL(var) == Canon(CARET_1)
+            ){
+                Meta_Quotify(OUT);  // skip writing, but tolerate isotopes
             }
-            if (IS_META_WORD(outvar) or IS_META_TUPLE(outvar)) {
+            else if (
+                var_heart == REB_META_WORD
+                or var_heart == REB_META_TUPLE
+            ){
                 if (Is_Stale(OUT)) {
                     Init_Meta_Of_Void(SPARE);
-                    Set_Var_May_Fail(outvar, SPECIFIED, SPARE);
+                    Set_Var_May_Fail(var, SPECIFIED, SPARE);
                 }
                 else {
                     Meta_Quotify(OUT);
-                    Set_Var_May_Fail(outvar, SPECIFIED, OUT);
+                    Set_Var_May_Fail(var, SPECIFIED, OUT);
                 }
             }
             else if (Is_Stale(OUT)) {
-                if (not IS_BLANK(outvar) and not IS_THE(outvar))
-                    Set_Var_May_Fail(outvar, SPECIFIED, VOID_CELL);
+                if (var_heart == REB_BLANK or (
+                        var_heart == REB_WORD
+                        and VAL_WORD_SYMBOL(var) == Canon(AT_1)
+                    )
+                 ){
+                    // ignore the void
+                 }
+                 else {
+                    Set_Var_May_Fail(var, SPECIFIED, VOID_CELL);
+                 }
             }
-            else if (Is_Isotope(OUT)) {
+            else if (Is_Isotope(OUT) and not isotopes_ok) {
                 fail (Error_Bad_Isotope(OUT));
             }
-            else if (IS_BLANK(outvar) or IS_THE(outvar)) {
+            else if (
+                var_heart == REB_BLANK  // [_ ...]:
+                or (
+                    var_heart == REB_WORD
+                    and VAL_WORD_SYMBOL(var) == Canon(AT_1)  // [@ ...]:
+                )
+            ){
+                // no assignment
             }
-            else if (IS_WORD(outvar) or IS_TUPLE(outvar)) {
-                Set_Var_May_Fail(outvar, SPECIFIED, OUT);
+            else if (
+                var_heart == REB_WORD or var_heart == REB_TUPLE
+                or var_heart == REB_THE_WORD or var_heart == REB_THE_TUPLE
+            ){
+                Set_Var_May_Fail(var, SPECIFIED, OUT);
             }
             else
                 assert(false);
 
-            ++ stackindex_outvar;
+            ++ stackindex_var;
 
             // Don't need to handle "circling (it's already in out, if it
             // needs to be...and will be overwritten if it doesn't)
@@ -1561,50 +1600,70 @@ Bounce Evaluator_Executor(Frame(*) f)
 
         for (
             ;
-            stackindex_outvar != TOP_INDEX + 1;
-            ++stackindex_outvar, ++pack_meta_at
+            stackindex_var != TOP_INDEX + 1;
+            ++stackindex_var, ++pack_meta_at
         ){
             if (pack_meta_at == pack_meta_tail)
                 fail ("Not enough values for multi-return");
 
-            Copy_Cell(outvar, Data_Stack_At(stackindex_outvar));
+            Copy_Cell(var, Data_Stack_At(stackindex_var));
+
+            assert(not IS_QUOTED(var));
+            bool isotopes_ok = IS_QUASI(var);  // quasi has meaning
+            enum Reb_Kind var_heart = CELL_HEART(var);
 
             Derelativize(SPARE, pack_meta_at, pack_specifier);
 
-            if (IS_META(outvar)) {  // skip writing, but tolerate isotopes
+            if (
+                var_heart == REB_WORD
+                and VAL_WORD_SYMBOL(var) == Canon(CARET_1)
+            ){
                  // leave as meta the way it came in
                  goto circled_check;
             }
-            else if (IS_META_WORD(outvar) or IS_META_TUPLE(outvar)) {
-                 Set_Var_May_Fail(outvar, SPECIFIED, SPARE);  // came in meta'd
+
+            if (
+                var_heart == REB_META_WORD
+                or var_heart == REB_META_TUPLE
+            ){
+                 Set_Var_May_Fail(var, SPECIFIED, SPARE);  // came in meta'd
                  goto circled_check;
             }
 
             Meta_Unquotify(SPARE);
             Decay_If_Isotope(SPARE);  // if pack in slot, resolve it
 
-            if (Is_Isotope(SPARE) and not Is_Void(SPARE)) {  // can't assign
+            if (Is_Isotope(SPARE) and not isotopes_ok) {  // can't assign
                 fail (Error_Bad_Isotope(SPARE));
             }
-            else if (IS_BLANK(outvar) or IS_THE(outvar)) {  // skip writing
+            else if (
+                var_heart == REB_BLANK  // [_ ...]:
+                or (
+                    var_heart == REB_WORD
+                    and VAL_WORD_SYMBOL(var) == Canon(AT_1)  // [@ ...]:
+                )
+            ){
             }
             else if (
-                IS_WORD(outvar) or IS_TUPLE(outvar)
-                or IS_THE_WORD(outvar) or IS_THE_TUPLE(outvar)
+                var_heart == REB_WORD or var_heart == REB_TUPLE
+                or var_heart == REB_THE_WORD or var_heart == REB_THE_TUPLE
             ){
-                Set_Var_May_Fail(outvar, SPECIFIED, SPARE);
+                Set_Var_May_Fail(var, SPECIFIED, SPARE);
             }
             else
                 assert(false);
 
           circled_check :
 
-            if (stackindex_circled == stackindex_outvar) {
+            if (stackindex_circled == stackindex_var) {
                 assert(
                     stackindex_circled == BASELINE->stack_base + 1
-                    or IS_THE(outvar)
-                    or IS_THE_WORD(outvar)
-                    or IS_THE_TUPLE(outvar)
+                    or (
+                        var_heart == REB_WORD
+                        and VAL_WORD_SYMBOL(var) == Canon(AT_1)
+                    )
+                    or var_heart == REB_THE_WORD
+                    or var_heart == REB_THE_TUPLE
                 );
                 if (not Is_Void(SPARE))
                     Copy_Cell(OUT, SPARE);

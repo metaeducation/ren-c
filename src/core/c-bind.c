@@ -400,7 +400,10 @@ DECLARE_NATIVE(let)
         if (Do_Any_Array_At_Throws(SPARE, vars, SPECIFIED))
             return THROWN;
 
-        switch (VAL_TYPE(SPARE)) {  // need to type check eval product
+        if (IS_QUOTED(SPARE))  // should (let 'x: <whatever>) be legal? see [3]
+            fail ("QUOTED! escapes not supported at top level of LET");
+
+        switch (CELL_HEART(SPARE)) {  // QUASI! states mean isotopes ok
           case REB_WORD:
           case REB_BLOCK:
             if (IS_SET_GROUP(vars))
@@ -413,9 +416,6 @@ DECLARE_NATIVE(let)
                 // Allow `(set-word):` to ignore "redundant colon", see [2]
             }
             break;
-
-          case REB_QUOTED:  // should (let 'x: <whatever>) be legal? see [3]
-            fail ("QUOTED! escapes not supported at top level of LET");
 
           default:
             fail ("LET GROUP! limited to WORD! and BLOCK!");  // see [4]
@@ -435,19 +435,20 @@ DECLARE_NATIVE(let)
     if (bindings and NOT_SERIES_FLAG(bindings, MANAGED))
         SET_SERIES_FLAG(bindings, MANAGED);  // natives don't always manage
 
-    if (IS_WORD(vars) or IS_SET_WORD(vars)) {
+    if (CELL_HEART(vars) == REB_WORD or CELL_HEART(vars) == REB_SET_WORD) {
         Symbol(const*) symbol = VAL_WORD_SYMBOL(vars);
         bindings = Make_Let_Patch(symbol, bindings);
 
         REBVAL *where;
-        if (IS_SET_WORD(vars)) {
+        if (CELL_HEART(vars) == REB_SET_WORD) {
             STATE = ST_LET_EVAL_STEP;
             where = SPARE;
         }
         else
             where = OUT;
 
-        Init_Any_Word(where, VAL_TYPE(vars), symbol);
+        Copy_Cell_Header(where, vars);  // keep QUASI! state and word/setword
+        INIT_VAL_WORD_SYMBOL(where, symbol);
         INIT_VAL_WORD_BINDING(where, bindings);
         INIT_VAL_WORD_INDEX(where, INDEX_ATTACHED);
 
@@ -485,7 +486,7 @@ DECLARE_NATIVE(let)
                 altered = true;
             }
 
-            switch (VAL_TYPE(temp)) {
+            switch (CELL_HEART(temp)) {  // permit QUASI!
               case REB_ISSUE:  // is multi-return opt-in for dialect, passthru
               case REB_BLANK:  // is multi-return opt-out for dialect, passthru
                 Derelativize(PUSH(), temp, temp_specifier);
@@ -547,7 +548,7 @@ DECLARE_NATIVE(let)
         goto update_feed_binding;
     }
 
-    assert(IS_SET_WORD(SPARE) or IS_SET_BLOCK(SPARE));
+    assert(CELL_HEART(SPARE) == REB_SET_WORD or IS_SET_BLOCK(SPARE));
 
     Flags flags =
         EVAL_EXECUTOR_FLAG_SINGLE_STEP

@@ -57,7 +57,7 @@ run-single-test: func [
 
     log [mold code]
 
-    let [error result]: sys.util.rescue as block! code
+    let [error ~result~]: sys.util.rescue as block! code
 
     all [
         error
