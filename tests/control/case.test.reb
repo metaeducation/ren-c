@@ -20,16 +20,16 @@
     void? case []  ; empty case block is legal (e.g. as COMPOSE product)
 )
 (
-    '~[]~ = ^ case [
+    '~[_]~ = ^ case [
         true [null]  ; turned to isotope so ELSE won't run
         false [1 + 2]
     ]
 )
 
 [#2246 (
-    '~[]~ = ^ case [true [null]]  ; indicates branch was taken (vs. null)
+    '~[_]~ = ^ case [true [null]]  ; indicates branch was taken (vs. null)
 )(
-    '~()~ = ^ case [true []]
+    '~[~]~ = ^ case [true []]
 )]
 
 (

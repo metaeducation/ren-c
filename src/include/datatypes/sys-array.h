@@ -569,12 +569,6 @@ inline static bool Is_Any_Doubled_Group(noquote(Cell(const*)) group) {
 }
 
 
-inline static bool Is_Empty_Any_Array(Cell(const*) v) {
-    Length len = ARR_LEN(VAL_ARRAY(v));
-    return len == 0 or VAL_INDEX(v) >= len;
-}
-
-
 //=//// "PACKS" (BLOCK! Isotopes) /////////////////////////////////////////=//
 //
 // BLOCK! isotopes are exploited as a mechanism for bundling values in a way
@@ -611,48 +605,6 @@ inline static Value(*) Init_Pack_Untracked(
 #define Init_Pack(out,a) \
     TRACK(Init_Pack_Untracked((out), ISOTOPE_0, (a)))
 
-#define Init_Empty_Pack(out) \
-    Init_Pack((out), EMPTY_ARRAY)
-
-#define Init_Meta_of_Empty_Pack(out) \
-    TRACK(Init_Pack_Untracked((out), QUASI_2, EMPTY_ARRAY))
-
-inline static bool Is_Empty_Pack(Cell(const*) v)
-  { return Is_Pack(v) and Is_Empty_Any_Array(v); }
-
-inline static bool Is_Meta_Of_Empty_Pack(Cell(const*) v)
-  { return Is_Meta_Of_Pack(v) and Is_Empty_Any_Array(v); }
-
-
-//=//// "HEAVY NULLS" (Empty BLOCK! Isotope Packs) ////////////////////////=//
-//
-// An empty "pack" of a ~[]~ isotope is used for the special concept of a
-// "heavy null".  This is something that will act like NULL in almost all
-// contexts, except that things like THEN will consider it to have been the
-// product of a "taken branch".
-//
-//     >> x: ~[]~
-//     ; null
-//
-//     >> if true [null]
-//     == ~[]~  ; isotope
-//
-//     >> if true [null] else [print "This won't run"]
-//     == ~[]~  ; isotope
-//
-// ("Heavy Voids" are an analogous concept for VOID.)
-
-#define Init_Heavy_Null             Init_Empty_Pack
-#define Is_Heavy_Null               Is_Empty_Pack
-#define Is_Meta_Of_Heavy_Null       Is_Meta_Of_Empty_Pack
-#define Init_Meta_Of_Heavy_Null     Init_Meta_Of_Empty_Pack
-
-inline static Value(*) Isotopify_If_Nulled(Value(*) v) {
-    if (VAL_TYPE_UNCHECKED(v) == REB_NULL)
-        Init_Heavy_Null(v);
-    return v;
-}
-
 
 //=//// "SPLICES" (GROUP! Isotopes) ///////////////////////////////////////=//
 //
@@ -686,37 +638,3 @@ inline static Value(*) Init_Splice_Untracked(Value(*) out, Array(*) a) {
 
 #define Init_Splice(out,a) \
     TRACK(Init_Splice_Untracked((out), (a)))
-
-#define Init_Empty_Splice(out) \
-    Init_Splice((out), EMPTY_ARRAY)
-
-inline static bool Is_Empty_Splice(Cell(const*) v)
-  { return Is_Splice(v) and Is_Empty_Any_Array(v); }
-
-inline static bool Is_Meta_Of_Empty_Splice(Cell(const*) v)
-  { return Is_Meta_Of_Splice(v) and Is_Empty_Any_Array(v); }
-
-
-//=//// "HEAVY VOIDS" (Empty GROUP! Isotope Splices) //////////////////////=//
-//
-// The empty splice is exploited for its property of having void-like behavior
-// while not being void...hence it can propagate "void intent" out of a branch
-// even though the branch runs.
-//
-//     >> if false [<a>]
-//     ; void (will trigger ELSE)
-//
-//     >> if true []
-//     == ~()~  ; isotope (will trigger THEN, not ELSE)
-//
-//     >> append [a b c] if false [<a>]
-//     == [a b c]
-//
-//     >> append [a b c] if true []
-//     == [a b c]
-//
-// ("Heavy Nulls" are an analogous concept for NULL.)
-
-#define Init_Heavy_Void         Init_Empty_Splice
-#define Is_Heavy_Void           Is_Empty_Splice
-#define Is_Meta_Of_Heavy_Void   Is_Meta_Of_Empty_Splice

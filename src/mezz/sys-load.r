@@ -193,7 +193,7 @@ load-header: function [
         data: transcode data  ; decode embedded script
         rest: skip data 2  ; !!! what is this skipping ("hdr.length" ??)
 
-        if find try hdr.options 'compress [  ; script encoded only
+        if find maybe hdr.options 'compress [  ; script encoded only
             rest: attempt [gunzip first rest] else [
                 return 'bad-compress
             ]

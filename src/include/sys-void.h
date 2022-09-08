@@ -138,3 +138,50 @@ inline static REBVAL* Reset_Cell_Untracked(Cell(*) v) {
 
 #define Init_Meta_Of_Void(out)       Init_Quasi_Null(out)
 #define Is_Meta_Of_Void(v)           Is_Quasi_Null(v)
+
+
+//=//// "HEAVY VOIDS" (BLOCK! Isotope Pack with `~` in it) ////////////////=//
+//
+// This is a way of making it so that branches which evaluate to void can
+// carry the void intent, while being in a parameter pack--which is not
+// considered a candidate for running ELSE branches:
+//
+//     >> if false [<a>]
+//     ; void (will trigger ELSE)
+//
+//     >> if true []
+//     == ~[~]~  ; isotope (will trigger THEN, not ELSE)
+//
+//     >> append [a b c] if false [<a>]
+//     == [a b c]
+//
+//     >> append [a b c] if true []
+//     == [a b c]
+//
+// ("Heavy Nulls" are an analogous concept for NULL.)
+//
+// Note: Before parameter packs were created, this was done with empty splices
+// as ~()~, due to having similar behavior to voids when used with things like
+// APPEND.  However, once parameter packs were allowed to represent voids in
+// any of their arguments...it was less of a stretch to say that this was
+// simply a parameter pack with a void in it.
+//
+
+#define Init_Heavy_Void(out) \
+    Init_Pack((out), PG_1_Tilde_Array)
+
+inline static bool Is_Heavy_Void(Cell(const*) v) {
+    if (not Is_Pack(v))
+        return false;
+    Cell(const*) tail;
+    Cell(const*) at = VAL_ARRAY_AT(&tail, v);
+    return (tail == at + 1) and Is_Meta_Of_Void(at);
+}
+
+inline static bool Is_Meta_Of_Heavy_Void(Cell(const*) v) {
+    if (not Is_Meta_Of_Pack(v))
+        return false;
+    Cell(const*) tail;
+    Cell(const*) at = VAL_ARRAY_AT(&tail, v);
+    return (tail == at + 1) and Is_Meta_Of_Void(at);
+}

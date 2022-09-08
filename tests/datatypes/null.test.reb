@@ -39,7 +39,7 @@
 ; was called, in line with the idea of "heavy isotopes".
 [
     (null' = ^ null)
-    ('~[]~ = ^ heavy null)
+    ('~[_]~ = ^ heavy null)
 
     (x: heavy 10, 10 = x)
     (x: heavy null, null' = ^ x)
@@ -52,9 +52,9 @@
 ; Conditionals return VOID on failure, and ~_~ isotope on a branch that
 ; executes and evaluates to either NULL or ~_~ isotope.
 [
-    ('~[]~ = ^ if true [null])
-    ('~[]~ = ^ if true [heavy null])
-    ('~()~ = ^ if true [])
+    ('~[_]~ = ^ if true [null])
+    ('~[_]~ = ^ if true [heavy null])
+    ('~[~]~ = ^ if true [])
     ('~custom~ = ^ if true [~custom~])
     (''~custom~ = ^ if true ['~custom~])
 
@@ -63,7 +63,7 @@
     (not void' = ^ 'void)  ; ...nor do words, strings, etc
 
     ('_ = if true ^[null])
-    ('~[]~ = if true ^[heavy null])
+    ('~[_]~ = if true ^[heavy null])
     ('~ = if true ^[])
     ('~custom~ = if true ^[~custom~])
     (''~custom~ = if true ^['~custom~])

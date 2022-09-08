@@ -276,17 +276,18 @@ static Bounce Then_Else_Isotopic_Object_Helper(
     }
 
     if (Is_Pack(in)) {
+        if (Is_Heavy_Null(in) or Is_Heavy_Void(in)) {
+            Init_Nulled(in);
+            goto take_branch_if_then;
+        }
         Cell(const*) pack_meta_tail;
         Cell(const*) pack_meta_at = VAL_ARRAY_AT(&pack_meta_tail, in);
         if (pack_meta_at == pack_meta_tail) {
-            assert(Is_Heavy_Null(in));  // special case, see [3]
             Init_Nulled(in);
             goto take_branch_if_then;
         }
         if (Is_Meta_Of_Null(pack_meta_at))
             goto handle_null;
-        else if (Is_Meta_Of_Void(pack_meta_at))
-            goto handle_void;
 
         if (Is_Meta_Of_Lazy(pack_meta_at))
             fail ("Lazy objects in packs not supported in THEN/ELSE ATM");
@@ -357,7 +358,6 @@ static Bounce Then_Else_Isotopic_Object_Helper(
     assert(not Is_Lazy(in) and not Is_Pack(in));
 
     if (Is_Void(in) or (REF(decay) and Is_Heavy_Void(in))) {
-      handle_void:
         if (then) {
             STATE = ST_THENABLE_REJECTING_INPUT;
             if (Is_Pack(in))

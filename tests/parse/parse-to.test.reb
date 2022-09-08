@@ -52,7 +52,7 @@
 [(
     "" = parse "abc" [to <end>]
 )(
-    '~()~ = ^ parse "abc" [elide to <end>]
+    '~[~]~ = ^ parse "abc" [elide to <end>]
 )(
     "b" = parse "aaabbb" [thru "b" elide to <end>]
 )(

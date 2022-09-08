@@ -169,7 +169,7 @@
 ; MATCH will match a bad-word! as-is, but falsey inputs produce isotopes
 [
     (''~preserved~ = ^ match bad-word! '~preserved~)
-    ('~[]~ = ^ match null null)
+    ('~[_]~ = ^ match null null)
 ]
 
 ; ~quit~ is the label of the BAD-WORD! isotope you get by default from QUIT.

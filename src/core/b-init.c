@@ -373,6 +373,22 @@ static void Startup_Empty_Arrays(void)
     PG_Empty_Array = Make_Array_Core(0, NODE_FLAG_MANAGED);
     Freeze_Array_Deep(PG_Empty_Array);
 
+  blockscope {
+    Array(*) a = Make_Array_Core(1, NODE_FLAG_MANAGED);
+    SET_SERIES_LEN(a, 1);
+    Init_Blank(ARR_AT(a, 0));
+    Freeze_Array_Deep(a);
+    PG_1_Blank_Array = a;
+  }
+
+  blockscope {
+    Array(*) a = Make_Array_Core(1, NODE_FLAG_MANAGED);
+    SET_SERIES_LEN(a, 1);
+    Init_Meta_Of_Void(ARR_AT(a, 0));
+    Freeze_Array_Deep(a);
+    PG_1_Tilde_Array = a;
+  }
+
     // "Empty" PATH!s that look like `/` are actually a WORD! cell format
     // under the hood.  This allows them to have bindings and do double-duty
     // for actions like division or other custom purposes.  But when they
@@ -468,6 +484,18 @@ static void Init_Root_Vars(void)
       );
     Force_Value_Frozen_Deep(Root_2_Blanks_Block);
 
+    ensureNullptr(Root_Heavy_Null) = Init_Block(
+        Alloc_Value(),
+        PG_1_Blank_Array
+      );
+    Force_Value_Frozen_Deep(Root_Heavy_Null);
+
+    ensureNullptr(Root_Heavy_Void) = Init_Block(
+        Alloc_Value(),
+        PG_1_Tilde_Array
+      );
+    Force_Value_Frozen_Deep(Root_Heavy_Void);
+
     // Note: rebText() can't run yet, review.
     //
     String(*) nulled_uni = Make_String(1);
@@ -503,6 +531,8 @@ static void Shutdown_Root_Vars(void)
     rebReleaseAndNull(&Root_Empty_Text);
     rebReleaseAndNull(&Root_Empty_Block);
     rebReleaseAndNull(&Root_2_Blanks_Block);
+    rebReleaseAndNull(&Root_Heavy_Null);
+    rebReleaseAndNull(&Root_Heavy_Void);
     rebReleaseAndNull(&Root_Empty_Binary);
 }
 

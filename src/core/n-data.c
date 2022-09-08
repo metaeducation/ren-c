@@ -2300,7 +2300,7 @@ DECLARE_NATIVE(blackhole_q)
 //
 //  heavy: native [
 //
-//  {Make the heavy form of NULL (passes through all other values)}
+//  {Make the heavy form of NULL or VOID (passes through all other values)}
 //
 //      return: [<void> <opt> any-value!]
 //      ^optional [<opt> <void> any-value!]
@@ -2312,7 +2312,7 @@ DECLARE_NATIVE(heavy) {
     REBVAL *v = ARG(optional);
 
     if (Is_Meta_Of_Void(v))
-        return VOID;
+        return Init_Heavy_Void(OUT);
 
     if (Is_Meta_Of_Null(v))
         return Init_Heavy_Null(OUT);
@@ -2324,7 +2324,7 @@ DECLARE_NATIVE(heavy) {
 //
 //  light: native [
 //
-//  {Make the light form of NULL (passes through all other values)}
+//  {Make the light form of NULL or VOID (passes through all other values)}
 //
 //      return: [<opt> any-value!]
 //      ^optional [<opt> any-value!]
@@ -2343,7 +2343,7 @@ DECLARE_NATIVE(light) {
 //
 //  none: native [
 //
-//  {Make the "unfriendly" `~` isotope (variables holding it are called UNSET?)}
+//  {Less noisy way to make the ~none~ WORD! isotope (not displayed by console)}
 //
 //      return: []
 //  ]

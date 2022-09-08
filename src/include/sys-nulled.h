@@ -187,3 +187,50 @@ inline static bool Is_Blank_Isotope(Cell(const*) v)
 
 inline static bool Is_Meta_Of_Blank_Isotope(Cell(const*) v)
   { return IS_QUASI(v) and HEART_BYTE(v) == REB_BLANK; }
+
+
+//=//// "HEAVY NULLS" (BLOCK! Isotope Pack with `_` in it) ////////////////=//
+//
+// An "pack" of a ~[_]~ isotope is used for the concept of a "heavy null".
+// This is something that will act like "pure" NULL in almost all contexts,
+// except that things like THEN will consider it to have been the product of
+// a "taken branch".
+//
+//     >> x: ~[_]~
+//     ; null
+//
+//     >> if true [null]
+//     == ~[_]~  ; isotope
+//
+//     >> if true [null] else [print "This won't run"]
+//     == ~[_]~  ; isotope
+//
+// ("Heavy Voids" are an analogous concept for VOID.)
+
+#define Init_Heavy_Null(out) \
+    Init_Pack((out), PG_1_Blank_Array)
+
+#define Init_Meta_Of_Heavy_Null(out) \
+    TRACK(Init_Pack_Untracked((out), QUASI_2, (a)))
+
+inline static bool Is_Heavy_Null(Cell(const*) v) {
+    if (not Is_Pack(v))
+        return false;
+    Cell(const*) tail;
+    Cell(const*) at = VAL_ARRAY_AT(&tail, v);
+    return (tail == at + 1) and Is_Meta_Of_Null(at);
+}
+
+inline static bool Is_Meta_Of_Heavy_Null(Cell(const*) v) {
+    if (not Is_Meta_Of_Pack(v))
+        return false;
+    Cell(const*) tail;
+    Cell(const*) at = VAL_ARRAY_AT(&tail, v);
+    return (tail == at + 1) and Is_Meta_Of_Null(at);
+}
+
+inline static Value(*) Isotopify_If_Nulled(Value(*) v) {
+    if (VAL_TYPE_UNCHECKED(v) == REB_NULL)
+        Init_Heavy_Null(v);
+    return v;
+}

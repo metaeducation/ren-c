@@ -147,7 +147,12 @@ PVAR REBVAL *Root_Empty_Binary; // read-only #{}
 PVAR REBVAL *Root_Empty_Block; // read-only []
 PVAR REBVAL *Root_2_Blanks_Block;  // read-only [_ _]
 PVAR Array(*) PG_Empty_Array; // optimization of VAL_ARRAY(Root_Empty_Block)
+PVAR Array(*) PG_1_Blank_Array;  // singular array used by heavy nulls ~[_]~
+PVAR Array(*) PG_1_Tilde_Array;  // singular array used by heavy voids ~[~]~
 PVAR Array(*) PG_2_Blanks_Array;  // surrogate array used by `/` paths
+
+PVAR REBVAL *Root_Heavy_Null;  // isotopic block containing a blank
+PVAR REBVAL *Root_Heavy_Void;  // isotopic block containing a quasi null
 
 PVAR Raw_Array PG_Inaccessible_Series;  // singular inaccessible varlist
 
