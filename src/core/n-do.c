@@ -266,6 +266,7 @@ DECLARE_NATIVE(shove)
 //          frame!  ; acts like APPLY (voids are optionals, not unspecialized)
 //          varargs!  ; simulates as if frame! or block! is being executed
 //          quoted!  ; removes quote level
+//          quasi!  ; returns as isotope
 //      ]
 //      /args "Sets system.script.args if doing a script (usually a TEXT!)"
 //          [any-value!]
@@ -388,9 +389,9 @@ DECLARE_NATIVE(do)
       case REB_FRAME :
         return DELEGATE_MAYBE_STALE(OUT, source);
 
+      case REB_QUASI :
       case REB_QUOTED :
-        Copy_Cell(OUT, ARG(source));
-        return Unquotify(OUT, 1);  // !!! delegate to offer a debug step?
+        return UNMETA(source);  // !!! delegate to offer a debug step?
 
       default :
         fail (Error_Do_Arity_Non_Zero_Raw());  // https://trello.com/c/YMAb89dv
