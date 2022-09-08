@@ -132,7 +132,7 @@ make-dir: func [
             remove back tail of path ; trailing slash
         ]
     ][
-        if not [@ end]: find-last path slash [
+        if (not [@ /end]: find-last path slash) [
             end: path
         ]
         insert dirs copy end
@@ -198,9 +198,8 @@ file-type?: function [
 split-path: func [
     {Splits and returns directory path and file as a block}
     return: [<opt> file!]
-    @dir [<opt> file! url!]
     target [file! url!]
-    <local> pos text
+    <local> pos text dir
 ][
     text: as text! target
     pos: _
@@ -216,5 +215,5 @@ split-path: func [
         end
     ]
     dir: as type of target dir
-    return pos
+    return/forward pack [pos dir]
 ]

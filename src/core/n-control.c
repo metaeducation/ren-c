@@ -226,9 +226,10 @@ DECLARE_NATIVE(either)
 //    branches if applicable.  But the decision on whether it's a THEN or
 //    ELSE case comes from the first parameter in the pack.
 //
-// 3. Special case: `if true [null]` creates a ~[]~ pack as a signal of
-//    nullness that does -not- trigger an else (while NULL itself in a pack,
-//    ^META'd as blank, e.g. ~[_]~, will trigger ELSE normally)
+// 3. With the exception of ~[_]~ and ~[~]~ when /DECAY is used, a "pack"
+//    (isotopic block) will always run a THEN and not an ELSE.  If a function
+//    wants to tweak this, it needs to return a lazy object with customized
+//    then/else behavior that otherwise reifies to a pack.
 //
 // 4. A lazy object with a THEN or ELSE method should have that handled here.
 //    But if those methods aren't present, should it be reified or passed
@@ -275,28 +276,8 @@ static Bounce Then_Else_Isotopic_Object_Helper(
         return Copy_Cell(OUT, in);
     }
 
-    if (Is_Pack(in)) {
-        if (Is_Heavy_Null(in) or Is_Heavy_Void(in)) {
-            Init_Nulled(in);
-            goto take_branch_if_then;
-        }
-        Cell(const*) pack_meta_tail;
-        Cell(const*) pack_meta_at = VAL_ARRAY_AT(&pack_meta_tail, in);
-        if (pack_meta_at == pack_meta_tail) {
-            Init_Nulled(in);
-            goto take_branch_if_then;
-        }
-        if (Is_Meta_Of_Null(pack_meta_at))
-            goto handle_null;
-
-        if (Is_Meta_Of_Lazy(pack_meta_at))
-            fail ("Lazy objects in packs not supported in THEN/ELSE ATM");
-
-        goto take_branch_if_then;
-    }
-
-    if (not Is_Lazy(in))
-        goto test_not_pack_and_not_lazy;
+    if (not Is_Lazy(in))  // Packs run THEN, including ~[_]~ and ~[~]~, see [3]
+        goto test_not_lazy;
 
     goto handle_lazy_object;
 
@@ -320,7 +301,7 @@ static Bounce Then_Else_Isotopic_Object_Helper(
             Meta_Unquotify(in);  // see [1]
             assert(STATE == ST_THENABLE_INITIAL_ENTRY);
             assert(not Is_Isotope(in));
-            goto test_not_pack_and_not_lazy;
+            goto test_not_lazy;
         }
 
         STATE = ST_THENABLE_REIFYING_SPARE;  // will call helper again
@@ -353,9 +334,9 @@ static Bounce Then_Else_Isotopic_Object_Helper(
 
     return DELEGATE_BRANCH(OUT, hook, branch);  // BRANCH for safety, see [6]
 
-} test_not_pack_and_not_lazy: {  /////////////////////////////////////////////
+} test_not_lazy: {  //////////////////////////////////////////////////////////
 
-    assert(not Is_Lazy(in) and not Is_Pack(in));
+    assert(not Is_Lazy(in));
 
     if (Is_Void(in) or (REF(decay) and Is_Heavy_Void(in))) {
         if (then) {
@@ -369,7 +350,6 @@ static Bounce Then_Else_Isotopic_Object_Helper(
     }
 
     if (Is_Nulled(in) or (REF(decay) and Is_Heavy_Null(in))) {
-      handle_null:
         if (then) {
             STATE = ST_THENABLE_REJECTING_INPUT;
             return Copy_Cell(OUT, in);  // then of null, may be pack
@@ -377,10 +357,6 @@ static Bounce Then_Else_Isotopic_Object_Helper(
         STATE = ST_THENABLE_RUNNING_BRANCH;
         return DELEGATE_BRANCH(OUT, branch, in);  // else of null
     }
-
-} take_branch_if_then: {  ////////////////////////////////////////////////////
-
-    assert(not Is_Void(in));  // but null is a possibility, see [2]
 
     if (not then) {
         STATE = ST_THENABLE_REJECTING_INPUT;

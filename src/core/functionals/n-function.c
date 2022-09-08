@@ -642,7 +642,7 @@ DECLARE_NATIVE(definitional_return)
     Copy_Cell(label, Lib(UNWIND)); // see also Make_Thrown_Unwind_Value
     TG_Unwind_Frame = target_frame;
 
-    if (not Is_Raised(v))  // don't want to proxy multi-returns on failure
+    if (not Is_Raised(v) and not Is_Nulled(v) and not Is_Void(v))
         Proxy_Multi_Returns_Core(target_frame, v);
 
     return Init_Thrown_With_Label(FRAME, v, label);

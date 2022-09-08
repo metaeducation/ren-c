@@ -27,55 +27,51 @@
 
 
 //
-//  rescue: native [
+//  enrescue: native [
 //
 //  {Sandbox code to intercept failures at ANY depth (including typos)}
 //
-//      return: "ERROR! if raised, else null"
-//          [<opt> error!]
-//      @result "The optional result of the evaluation"
-//          [<opt> any-value!]
+//      return: "ERROR! if raised, else ^META of the result"
+//          [error! quoted! quasi! blank!]
 //      code "Code to sandbox and monitor"
 //          [block! action!]
 //  ]
 //
-DECLARE_NATIVE(rescue)
+DECLARE_NATIVE(enrescue)
 //
 // Note: During boot, this operation is removed from LIB and moved to the
-// system utilities, so it is typically called as SYS.UTIL.RESCUE.  The reason
+// system utilities, so it is typically called as SYS.UTIL.ENRESCUE.  Reason
 // is to help raise awareness of the risks involved with using this function,
 // because it's dangerous to react to these errors (or suppress them) due to
 // how little you know about what actually happened.
 {
-    INCLUDE_PARAMS_OF_RESCUE;
+    INCLUDE_PARAMS_OF_ENRESCUE;
 
     REBVAL *code = ARG(code);
 
     enum {
-        ST_TRAP_INITIAL_ENTRY = STATE_0,
-        ST_TRAP_EVALUATING
+        ST_ENRESCUE_INITIAL_ENTRY = STATE_0,
+        ST_ENRESCUE_EVALUATING
     };
 
     switch (STATE) {
-      case ST_TRAP_INITIAL_ENTRY: goto initial_entry;
-      case ST_TRAP_EVALUATING: goto evaluation_finished;
+      case ST_ENRESCUE_INITIAL_ENTRY: goto initial_entry;
+      case ST_ENRESCUE_EVALUATING: goto evaluation_finished;
       default: assert(false);
     }
 
-  initial_entry: {
+  initial_entry: {  //////////////////////////////////////////////////////////
+
     if (Not_Cell_Flag(code, CONST))
         Set_Cell_Flag(code, EXPLICITLY_MUTABLE);  // see DECLARE_NATIVE(do) for why
 
-    STATE = ST_TRAP_EVALUATING;
+    STATE = ST_ENRESCUE_EVALUATING;
     return CATCH_CONTINUE(OUT, code);
-  }
 
-  evaluation_finished: {
-    if (not THROWING) {
-        Copy_Cell(ARG(result), OUT);
-        Init_Nulled(OUT);
-        return Proxy_Multi_Returns(frame_);
-    }
+} evaluation_finished: {  ////////////////////////////////////////////////////
+
+    if (not THROWING)  // successful result
+        return Meta_Quotify(OUT);
 
     if (not Is_Meta_Of_Raised(VAL_THROWN_LABEL(FRAME)))  // non-ERROR! throws
         return BOUNCE_THROWN;
@@ -85,7 +81,7 @@ DECLARE_NATIVE(rescue)
     CATCH_THROWN(SPARE, FRAME);
     assert(Is_Nulled(SPARE));  // all error throws are null-valued
 
-    return Proxy_Multi_Returns(frame_);  // BRANCHED
+    return OUT;
   }
 }
 

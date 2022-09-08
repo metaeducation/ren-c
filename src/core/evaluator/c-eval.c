@@ -1544,15 +1544,25 @@ Bounce Evaluator_Executor(Frame(*) f)
             }
             goto set_block_handle_out;
         }
-        else if (Is_Pack(OUT)) {  // isotopic block
-            pack_meta_at = VAL_ARRAY_AT(&pack_meta_tail, OUT);
 
-            if (pack_meta_at == pack_meta_tail) {
-                assert(Is_Heavy_Null(OUT));
-                Init_Nulled(OUT);
-                goto set_block_handle_out;
+        if (Is_Lazy(OUT)) {
+            //
+            // A Lazy Object has a methodization moment here to turn itself
+            // into multiple values--potentially a pack.  Ultimately we'd
+            // want to be stackless about the reification, but for now make
+            // it easy.
+            //
+            if (Pushed_Reifying_Frame(OUT, OUT, FRAME_MASK_NONE)) {
+                if (Trampoline_With_Top_As_Root_Throws())
+                    fail (Error_No_Catch_For_Throw(TOP_FRAME));
+                Drop_Frame(TOP_FRAME);
             }
+            if (Is_Lazy(OUT))  // Lazy -> Lazy not allowed, Lazy -> Pack is ok
+                fail ("Lazy Object Reified to Lazy Object: Not Allowed");
+        }
 
+        if (Is_Pack(OUT)) {  // isotopic block
+            pack_meta_at = VAL_ARRAY_AT(&pack_meta_tail, OUT);
             pack_specifier = VAL_SPECIFIER(OUT);
         }
         else {  // OUT needs special handling (e.g. stale checks)

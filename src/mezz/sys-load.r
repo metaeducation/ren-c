@@ -49,14 +49,17 @@ transcode-header: func [
     <local> key hdr
 ][
     line: 1
-    [key rest]: transcode/one/file/line data file line except e -> [  ; "REBOL"
+    [key /rest]: transcode/one/file/line data file line except e -> [  ; "REBOL"
         return raise e
     ]
-    [hdr rest]: transcode/one/file/line rest file line except e -> [  ; BLOCK!
+    if not rest [
+        return/forward heavy null
+    ]
+    [hdr /rest]: transcode/one/file/line rest file line except e -> [  ; BLOCK!
         return raise e
     ]
 
-    return all [key = 'REBOL, block? hdr] then [hdr]
+    return/forward heavy all [key = 'REBOL, block? hdr] then [hdr]
 ]
 
 
@@ -116,7 +119,11 @@ load-header: function [
 
     === TRY TO MATCH PATTERN OF "REBOL [...]" ===
 
-    let [hdr rest 'line]: transcode-header/file data file else [
+    let [hdr rest 'line]: transcode-header/file data file except e -> [
+        return raise e  ; TRANSCODE choked, wasn't valid at all
+    ]
+
+    if not hdr [
         ;
         ; TRANSCODE didn't detect REBOL [...], but it didn't see anything it
         ; thought was invalid Rebol tokens either.
@@ -124,10 +131,8 @@ load-header: function [
         return either required ['no-header] [
             body: data
             final: tail of data
-            return null  ; no header object
+            return/forward heavy null  ; no header object, keep multireturn
         ]
-    ] except e -> [  ; TRANSCODE choked, wasn't valid at all
-        return raise e
     ]
 
     hdr: construct/with/only hdr system.standard.header except [

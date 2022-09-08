@@ -133,6 +133,12 @@ bool Lookahead_To_Sync_Enfix_Defer_Flag(Feed(*) feed) {
 //
 Bounce Proxy_Multi_Returns_Core(Frame(*) f, Value(*) v)
 {
+    if (Is_Stale(v))
+        return VOID;
+
+    if (Is_Nulled(v))
+        return v;
+
     StackIndex base = TOP_INDEX;
 
     bool stale;

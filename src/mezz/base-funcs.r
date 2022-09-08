@@ -729,14 +729,32 @@ trap: func [
     {If evaluation raises an error, return it, otherwise NULL}
 
     return: [<opt> any-value!]
-    @result [<opt> any-value!]
     code [block!]
 ][
+    return match error! entrap code
+]
+
+trap+: func [
+    {Experimental variation of TRAP using THENable mechanics}
+
+    return: [<opt> any-value!]
+    code [block!]
+    <local> result
+][
+    ; If you return a pure NULL with the desire of triggering ELSE, that does
+    ; not allow you to return more values.  This uses a lazy object that will
+    ; run a THEN branch on error, but then an ELSE branch with the returned
+    ; value on non-error...or reify to a pack with NULL for the error and
+    ; the result.
+    ;
     if error? result: entrap code [
-        return (result, elide result: ~)
+        return/forward pack [result null]
     ]
-    set/any 'result unmeta result
-    return null
+
+    return isotopic make object! [
+        else: branch -> [(heavy unmeta :result) then (:branch)]
+        reify: [pack [null unmeta result]]
+    ]
 ]
 
 reduce*: redescribe [

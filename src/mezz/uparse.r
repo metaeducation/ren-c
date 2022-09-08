@@ -224,7 +224,12 @@ combinator: func [
         ; operation that filters out block isotopes (packs)... just don't
         ; return one of those and no multireturn forwarding will happen.
         ;
-        return: :return/forward
+        return: adapt :return/forward [
+            case [  ; avoid multireturn squashing behavior on null returns
+                value = null' [value: '~[_]~]
+                value = void' [value: '~[~]~]
+            ]
+        ]
 
         (as group! body)
 
@@ -1236,17 +1241,21 @@ default-combinators: make map! reduce [
                 return raise "Value at parse position does not match ISSUE!"
             ]
             any-string? input [
-                if [@ remainder]: find/match/case input value [
-                    return value
+                [_ remainder]: find/match/case input value else [
+                    return raise [
+                        "String at parse position does not match ISSUE!"
+                    ]
                 ]
-                return raise "String at parse position does not match ISSUE!"
+                return value
             ]
             true [
                 assert [binary? input]
-                if [@ remainder]: find/match/case input value [
-                    return value
+                [_ remainder]: find/match/case input value else [
+                    return raise [
+                        "Binary at parse position does not match ISSUE!"
+                    ]
                 ]
-                return raise "Binary at parse position does not match ISSUE!"
+                return value
             ]
         ]
     ]
@@ -1273,10 +1282,12 @@ default-combinators: make map! reduce [
             ]
             true [  ; Note: BITSET! acts as "byteset" here
                 ; binary or any-string input
-                if [@ remainder]: find/match input value [
-                    return value
+                [_ remainder]: find/match input value else [
+                    return raise [
+                        "Content at parse position does not match BINARY!"
+                    ]
                 ]
-                return raise "Content at parse position does not match BINARY!"
+                return value
             ]
         ]
     ]
@@ -2861,7 +2872,7 @@ parse*: func [
     f.input: input
     f.value: rules
 
-    sys.util.rescue [
+    sys.util.rescue+ [
         [^synthesized' remainder pending]: eval f except e -> [
             assert [empty? state.loops]
             return raise e  ; wrappers catch
@@ -2895,10 +2906,12 @@ parse: (comment [redescribe [  ; redescribe not working at the moment (?)
         [^synthesized']: do f except [
             return null
         ]
-        switch synthesized' [
-            '~ [return/forward ~()~]
-            '_ [return/forward ~[]~]
-        ]
+
+        ; The specialized RETURN inside of COMBINATOR avoids these cases, by
+        ; specifically doing RETURN/FORWARD of ~[_]~ or ~[~]~.
+        ;
+        assert [synthesized' != null', synthesized' != void']
+
         return/forward unmeta synthesized'
     ]
 )

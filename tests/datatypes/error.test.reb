@@ -18,13 +18,14 @@
 (a: 1 error? trap [set 'a 1 / 0] :a =? 1)
 (a: 1 error? trap [set/any 'a 1 / 0] :a =? 1)
 
-[#2190 (
-    e: trap [
-        catch/quit [attempt [catch/quit [1 / 0]]]
-        quit 127
-    ]
-    e.id = 'zero-divide
-)]
+[#2190
+    ~zero-divide~ !! (
+        e: trap [
+            catch/quit [attempt [catch/quit [1 / 0]]]
+            quit 127
+        ]
+    )
+]
 
 ; error types that should be predefined
 
@@ -138,8 +139,8 @@
 
 ; are error reports for DO and EVALUATE consistent?
 (
-    e1: trap [do [1 / 0]]
-    e2: trap [evaluate [1 / 0]]
+    e1: sys.util.rescue [do [1 / 0]]
+    e2: sys.util.rescue [evaluate [1 / 0]]
     e1.near = e2.near
 )
 
