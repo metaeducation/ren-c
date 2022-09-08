@@ -541,9 +541,9 @@ inline static Cell(*) Init_Relative_Block_At(
 
     inline static void ASSERT_SERIES(const REBSER *s) {
         if (IS_SER_ARRAY(s))
-            Assert_Array_Core(ARR(s));
+            Assert_Array_Core(ARR(s));  // calls Assert_Series_Basics_Core()
         else
-            Assert_Series_Core(s);
+            Assert_Series_Basics_Core(s);
     }
 
     #define IS_VALUE_IN_ARRAY_DEBUG(a,v) \

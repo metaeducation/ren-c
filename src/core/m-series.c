@@ -371,9 +371,9 @@ void Assert_Series_Term_Core(const REBSER *s)
 
 
 //
-//  Assert_Series_Core: C
+//  Assert_Series_Basics_Core: C
 //
-void Assert_Series_Core(const REBSER *s)
+void Assert_Series_Basics_Core(const REBSER *s)
 {
     if (IS_FREE_NODE(s))
         panic (s);

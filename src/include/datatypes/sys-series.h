@@ -319,7 +319,7 @@ inline static void SER_SUB_BIAS(REBSER *s, REBLEN b) {
     s->content.dynamic.bonus.bias -= b << 16;
 }
 
-inline static REBLEN SER_REST(const REBSER *s) {
+inline static Length SER_REST(const REBSER *s) {
     if (GET_SERIES_FLAG(s, DYNAMIC))
         return s->content.dynamic.rest;
 

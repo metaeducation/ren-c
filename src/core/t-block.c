@@ -1549,45 +1549,40 @@ DECLARE_NATIVE(glom)
 }
 
 
-#if !defined(NDEBUG)
+#if DEBUG
 
 //
 //  Assert_Array_Core: C
 //
 void Assert_Array_Core(Array(const*) a)
 {
-    // Basic integrity checks (series is not marked free, etc.)  Note that
-    // we don't use ASSERT_SERIES the macro here, because that checks to
-    // see if the series is an array...and if so, would call this routine
-    //
-    Assert_Series_Core(a);
+    Assert_Series_Basics_Core(a);  // not marked free, etc.
 
     if (not IS_SER_ARRAY(a))
         panic (a);
 
     Cell(const*) item = ARR_HEAD(a);
-    REBLEN i;
-    REBLEN len = ARR_LEN(a);
-    for (i = 0; i < len; ++i, ++item) {
-        ASSERT_CELL_READABLE_EVIL_MACRO(item);
-        if (VAL_TYPE_UNCHECKED(item) >= REB_MAX) {
-            printf("Invalid VAL_TYPE() at index %d\n", cast(int, i));
+    Offset n;
+    Length len = ARR_LEN(a);
+    for (n = 0; n < len; ++n, ++item) {
+        if (HEART_BYTE(item) >= REB_MAX) {  // checks READABLE()
+            printf("Invalid HEART_BYTE() at index %d\n", cast(int, n));
             panic (a);
         }
     }
 
     if (GET_SERIES_FLAG(a, DYNAMIC)) {
-        REBLEN rest = SER_REST(a);
+        Length rest = SER_REST(a);
 
       #if DEBUG_POISON_SERIES_TAILS
-        assert(rest > 0 and rest > i);
+        assert(rest > 0 and rest > n);
         if (NOT_SERIES_FLAG(a, FIXED_SIZE) and not Is_Cell_Poisoned(item))
             panic (item);
         ++item;
         rest = rest - 1;
       #endif
 
-        for (; i < rest; ++i, ++item) {
+        for (; n < rest; ++n, ++item) {
             const bool unwritable = (
                 (item->header.bits != CELL_MASK_0)
                 and not (item->header.bits & NODE_FLAG_CELL)
