@@ -2900,19 +2900,38 @@ parse*: func [
 ]
 
 parse: (comment [redescribe [  ; redescribe not working at the moment (?)
-    {Process input in the parse dialect, must match to end (see also UPARSE*)}
+    {Process input in the parse dialect, pure NULL on failure}
 ] ]
-    enclose :parse* func [f <local> synthesized'] [
-        [^synthesized']: do f except [
+    enclose :parse* func [f] [
+        return/forward heavy (do f except [
             return null
-        ]
+        ])
+    ]
+)
 
-        ; The specialized RETURN inside of COMBINATOR avoids these cases, by
-        ; specifically doing RETURN/FORWARD of ~[_]~ or ~[~]~.
-        ;
-        assert [synthesized' != null', synthesized' != void']
-
-        return/forward unmeta synthesized'
+parse+: (comment [redescribe [  ; redescribe not working at the moment (?)
+    {Process input in the parse dialect, passes error to ELSE}
+] ]
+    enclose :parse* func [f <local> obj] [
+        return/forward heavy (do f except e -> [
+            ;
+            ; Providing both a THEN and an ELSE is interpreted as allowing
+            ; the THEN clause to run, and passing through the object with
+            ; the ELSE clause intact.  In this case it is used so that having
+            ; a THEN is considered sufficient observation to defuse raising
+            ; an error on an unobserved parse failure.
+            ;
+            obj: make object! compose [
+                then: [
+                    reify: null'  ; defuse unchecked error
+                    obj.then: ~  ; don't let this hook get called again
+                    lazy obj  ; leave REIFY and ELSE available
+                ]
+                else: '(branch -> [if e (:branch)])
+                reify: '([raise e])
+            ]
+            return lazy obj
+        ])
     ]
 )
 
