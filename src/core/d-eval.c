@@ -67,7 +67,7 @@ void Dump_Frame_Location(Cell(const*) v, Frame(*) f)
     if (Is_Feed_At_End(f->feed)) {
         printf("...then Dump_Frame_Location() is at end of array\n");
         if (not v) { // well, that wasn't informative
-            if (not f->prior)
+            if (f->prior == BOTTOM_FRAME)
                 printf("...and no parent frame, so you're out of luck\n");
             else {
                 printf("...dumping parent in case that's more useful?\n");
