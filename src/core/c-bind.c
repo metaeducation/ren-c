@@ -493,7 +493,9 @@ DECLARE_NATIVE(let)
                 break;
 
               case REB_WORD:
-              case REB_SET_WORD: {
+              case REB_SET_WORD:
+              case REB_META_WORD:
+              case REB_THE_WORD: {
                 Derelativize(PUSH(), temp, temp_specifier);
                 Symbol(const*) symbol = VAL_WORD_SYMBOL(temp);
                 bindings = Make_Let_Patch(symbol, bindings);

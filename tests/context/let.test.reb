@@ -323,3 +323,15 @@
         ]
     )
 ]
+
+; LET should permit ^META in SET-BLOCK!
+[
+    (all [
+        (the '10) = let [^x]: 10
+        x = the '10
+    ])
+    (all [
+        20 = let [x @y]: pack [10 20]
+        y = 20
+    ])
+]
