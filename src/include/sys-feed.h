@@ -396,7 +396,6 @@ inline static void Sync_Feed_At_Cell_Or_End_May_Fail(Feed(*) feed) {
         Force_Variadic_Feed_At_Cell_Or_End_May_Fail(feed);
         Clear_Feed_Flag(feed, NEEDS_SYNC);
     }
-    assert(feed->p != rebEND);  // non-cell crashes VAL_TYPE_UNCHECKED()
     assert(Is_Feed_At_End(feed) or READABLE(cast(const Reb_Cell*, feed->p)));
 }
 
