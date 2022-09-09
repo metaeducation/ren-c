@@ -1549,16 +1549,17 @@ Bounce Evaluator_Executor(Frame(*) f)
             pack_specifier = VAL_SPECIFIER(OUT);
         }
         else {  // OUT needs special handling (e.g. stale checks)
-          set_block_handle_out :
+          set_block_handle_out: ;  // need ; since next line is declaration
 
-            Value(*) stack_var = Data_Stack_At(stackindex_var);
+            bool is_optional = Get_Cell_Flag(
+                Data_Stack_At(stackindex_var),
+                STACK_NOTE_OPTIONAL
+            );
+            Copy_Cell(var, Data_Stack_At(stackindex_var));
 
-            assert(not IS_QUOTED(stack_var));
-            bool isotopes_ok = IS_QUASI(stack_var);  // quasi has meaning
-            enum Reb_Kind var_heart = CELL_HEART(stack_var);
-
-            bool is_optional = Get_Cell_Flag(stack_var, STACK_NOTE_OPTIONAL);
-            Copy_Cell(var, stack_var);
+            assert(not IS_QUOTED(var));
+            bool isotopes_ok = IS_QUASI(var);  // quasi has meaning
+            enum Reb_Kind var_heart = CELL_HEART(var);
 
             if (
                 var_heart == REB_WORD
@@ -1633,14 +1634,15 @@ Bounce Evaluator_Executor(Frame(*) f)
             stackindex_var != TOP_INDEX + 1;
             ++stackindex_var, ++pack_meta_at
         ){
-            Value(*) stack_var = Data_Stack_At(stackindex_var);
+            bool is_optional = Get_Cell_Flag(
+                Data_Stack_At(stackindex_var),
+                STACK_NOTE_OPTIONAL
+            );
+            Copy_Cell(var, Data_Stack_At(stackindex_var));  // stable for SET
 
-            assert(not IS_QUOTED(stack_var));
-            bool isotopes_ok = IS_QUASI(stack_var);  // quasi has meaning
-            enum Reb_Kind var_heart = CELL_HEART(stack_var);
-
-            bool is_optional = Get_Cell_Flag(stack_var, STACK_NOTE_OPTIONAL);
-            Copy_Cell(var, stack_var);
+            assert(not IS_QUOTED(var));
+            bool isotopes_ok = IS_QUASI(var);  // quasi has meaning
+            enum Reb_Kind var_heart = CELL_HEART(var);
 
             if (pack_meta_at == pack_meta_tail) {
                 if (is_optional)
