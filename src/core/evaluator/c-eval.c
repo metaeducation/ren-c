@@ -1603,17 +1603,18 @@ Bounce Evaluator_Executor(Frame(*) f)
             if (Is_Stale(OUT) and is_optional)
                 Init_Nulled(OUT);
 
+            if (
+                var_heart == REB_WORD
+                and VAL_WORD_SYMBOL(var) == Canon(AT_1)
+            ){
+                goto skip_circle_check;  // raised errors already checked
+            }
+
+            if (var_heart == REB_BLANK)
+                goto skip_circle_check;
+
             if (Is_Stale(OUT)) {
-                if (var_heart == REB_BLANK or (
-                        var_heart == REB_WORD
-                        and VAL_WORD_SYMBOL(var) == Canon(AT_1)
-                    )
-                 ){
-                    // ignore the void
-                 }
-                 else {
-                    Set_Var_May_Fail(var, SPECIFIED, VOID_CELL);
-                 }
+                Set_Var_May_Fail(var, SPECIFIED, VOID_CELL);
             }
             else if (Is_Isotope(OUT) and not isotopes_ok) {
                 fail (Error_Bad_Isotope(OUT));
@@ -1684,21 +1685,29 @@ Bounce Evaluator_Executor(Frame(*) f)
             }
 
             Meta_Unquotify(SPARE);
-            Decay_If_Isotope(SPARE);  // if pack in slot, resolve it
+
+            if (
+                var_heart == REB_WORD
+                and VAL_WORD_SYMBOL(var) == Canon(AT_1)  // [@ ...]:
+            ){
+                // Allow pass-thru of any isotope (don't need ~@~)
+                goto circled_check;
+            }
+
+            if (not isotopes_ok)
+                Decay_If_Isotope(SPARE);  // if pack in slot, resolve it
+
+            if (Is_Raised(SPARE))  // don't hide raised errors if not @
+                fail (VAL_CONTEXT(SPARE));
+
+            if (var_heart == REB_BLANK)  // [_ ...]:
+                goto circled_check;
 
             if (Is_Void(SPARE) and is_optional)
                 Init_Nulled(SPARE);
 
             if (Is_Isotope(SPARE) and not isotopes_ok) {  // can't assign
                 fail (Error_Bad_Isotope(SPARE));
-            }
-            else if (
-                var_heart == REB_BLANK  // [_ ...]:
-                or (
-                    var_heart == REB_WORD
-                    and VAL_WORD_SYMBOL(var) == Canon(AT_1)  // [@ ...]:
-                )
-            ){
             }
             else if (
                 var_heart == REB_WORD or var_heart == REB_TUPLE

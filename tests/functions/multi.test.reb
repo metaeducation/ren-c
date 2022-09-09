@@ -251,3 +251,16 @@
         ]
     )
 ]
+
+; Using @ or _ allows passthru of isotopes
+[
+    ~bad-isotope~ !! (
+        [x]: spread [a b c]
+    )
+    (
+        ('~(a b c)~) = ^ [@]: spread [a b c]
+    )
+    (
+        not raised? [_]: spread [a b c]  ; definitive behavior TBD
+    )
+]
