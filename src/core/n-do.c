@@ -62,6 +62,8 @@ DECLARE_NATIVE(reeval)
         EVAL_EXECUTOR_FLAG_SINGLE_STEP
         | FRAME_FLAG_MAYBE_STALE;
 
+    Mark_Eval_Out_Stale(OUT);
+
     if (Reevaluate_In_Subframe_Throws(
         OUT,  // reeval :comment "this should leave old input"
         frame_,
