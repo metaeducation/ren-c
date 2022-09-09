@@ -728,6 +728,10 @@ Special internal defines used by RT, not Host-Kit developers:
     #define DEBUG_POISON_DROPPED_STACK_CELLS DEBUG
 #endif
 
+#if !defined(DEBUG_ERASE_ALLOC_TAIL_CELLS)
+    #define DEBUG_ERASE_ALLOC_TAIL_CELLS DEBUG
+#endif
+
 
 // It can be very difficult in release builds to know where a fail came
 // from.  This arises in pathological cases where an error only occurs in

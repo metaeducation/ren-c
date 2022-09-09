@@ -363,7 +363,14 @@ Cell(*) Alloc_Tail_Array(Array(*) a)
     EXPAND_SERIES_TAIL(a, 1);
     SET_SERIES_LEN(a, ARR_LEN(a));
     Cell(*) last = ARR_LAST(a);
-    assert(Is_Cell_Erased(last));
+
+  #if DEBUG_ERASE_ALLOC_TAIL_CELLS
+    if (not Is_Cell_Erased(last)) {
+        assert(WRITABLE(last));
+        Erase_Cell(last);  // helps ensure new values written
+    }
+  #endif
+
     return last;
 }
 
