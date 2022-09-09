@@ -158,16 +158,16 @@ combinator: func [
             ]
         )
 
-        @remainder [any-series!]  ; all combinators have remainder
+        /remainder [any-series!]  ; all combinators have remainder
 
         (if spec.1 = '@pending [
             assert [spec.2 = [<opt> block!]]
             autopipe: false  ; they're asking to handle pending themselves
-            spread reduce [spec.1 spec.2]
+            spread reduce [/pending spec.2]
             elide spec: my skip 2
         ] else [
             autopipe: true  ; they didn't mention pending, handle automatically
-            spread [@pending [<opt> block!]]
+            spread [/pending [<opt> block!]]
         ])
 
         state [frame!]
@@ -224,10 +224,16 @@ combinator: func [
         ; operation that filters out block isotopes (packs)... just don't
         ; return one of those and no multireturn forwarding will happen.
         ;
+        ; ** Currently parsers unify RETURN where a failure is done with
+        ; an `return raise`.  Should this instead be ACCEPT and REJECT, as
+        ; local functions to the combinator, so that you can ACCEPT a failure
+        ; from something like a GROUP! (and remove need for RAISE with the
+        ; return?)  Or RETURN ACCEPT and RETURN REJECT to make it clearer,
+        ; where ACCEPT makes a pack and REJECT does RAISE?
+        ;
         return: adapt :return/forward [
-            case [  ; avoid multireturn squashing behavior on null returns
-                value = null' [value: '~[_]~]
-                value = void' [value: '~[~]~]
+            if not raised? unget value [  ; errors mean combinator failure
+                value: ^ pack [unmeta value remainder pending]
             ]
         ]
 
