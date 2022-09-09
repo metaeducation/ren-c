@@ -42,9 +42,11 @@
 #include "reb-config.h"
 
 #include <stdlib.h> // size_t and other types used in rebol.h
+#include <assert.h>
+
 #include "pstdint.h" // polyfill <stdint.h> for pre-C99/C++11 compilers
 #include "pstdbool.h" // polyfill <stdbool.h> for pre-C99/C++11 compilers
-#include "rebol.h"
+#include "reb-c.h"
 
 #include "tmp-constants.h" // need the extern definitions
 
