@@ -86,6 +86,13 @@ inline static Bounce Init_Thrown_With_Label(  // assumes `arg` in TG_Thrown_Arg
     return BOUNCE_THROWN;
 }
 
+// When errors are put in the throw state, they are the label--not the value.
+//
+inline static Bounce Init_Thrown_Error(Frame(*) frame, Value(const*) error) {
+    assert(IS_ERROR(error));
+    return Init_Thrown_With_Label((frame), Lib(NULL), (error));
+}
+
 inline static void CATCH_THROWN(
     Cell(*) arg_out,
     Frame(*) frame_

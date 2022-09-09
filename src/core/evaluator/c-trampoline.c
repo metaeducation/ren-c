@@ -203,7 +203,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
     if (Get_Frame_Flag(FRAME, ABRUPT_FAILURE)) {
         assert(Get_Frame_Flag(FRAME, NOTIFY_ON_ABRUPT_FAILURE));
         assert(r == BOUNCE_THROWN);
-        assert(Is_Meta_Of_Raised(VAL_THROWN_LABEL(FRAME)));
+        assert(IS_ERROR(VAL_THROWN_LABEL(FRAME)));
     }
 
   // 1. There may be some optimization possible here if the flag controlling
@@ -221,12 +221,8 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
                 // treat any failure as if it could have been thrown from
                 // anywhere, so it is bubbled up as a throw.
                 //
-                Quasify_Isotope(OUT);
-                Init_Thrown_With_Label(
-                    FRAME,
-                    Lib(NULL),  // no "thrown value"
-                    OUT  // only the ERROR! as a label
-                );
+                mutable_QUOTE_BYTE(OUT) = UNQUOTED_1;
+                Init_Thrown_Error(FRAME, OUT);
                 goto thrown;
             }
 
@@ -358,7 +354,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
             assert(Get_Frame_Flag(FRAME, NOTIFY_ON_ABRUPT_FAILURE));
             Clear_Frame_Flag(FRAME, NOTIFY_ON_ABRUPT_FAILURE);
             Clear_Frame_Flag(FRAME, ABRUPT_FAILURE);
-            assert(Is_Meta_Of_Raised(VAL_THROWN_LABEL(FRAME)));
+            assert(IS_ERROR(VAL_THROWN_LABEL(FRAME)));
             Context(*) ctx = VAL_CONTEXT(VAL_THROWN_LABEL(FRAME));
             CATCH_THROWN(SPARE, FRAME);
             fail (ctx);
@@ -440,11 +436,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
         Drop_Frame(TOP_FRAME);  // will call va_end() if variadic frame
     }
 
-    Init_Thrown_With_Label(  // Error is non-definitional, see [1]
-        FRAME,
-        Lib(NULL),  // no "thrown value"
-        Quasify(Copy_Cell(SPARE, CTX_ARCHETYPE(e)))  // label w/quasified ERROR!
-    );
+    Init_Thrown_Error(FRAME, CTX_ARCHETYPE(e));  // non-definitional, see [1]
 
     if (Not_Frame_Flag(FRAME, NOTIFY_ON_ABRUPT_FAILURE)) {
         if (Get_Frame_Flag(FRAME, ROOT_FRAME)) {

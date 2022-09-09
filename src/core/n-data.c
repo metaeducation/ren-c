@@ -998,7 +998,7 @@ DECLARE_NATIVE(get)
         steps = nullptr;  // no GROUP! evals
 
     if (Get_Var_Core_Throws(SPARE, steps, source, SPECIFIED)) {
-        assert(steps or Is_Meta_Of_Raised(VAL_THROWN_LABEL(frame_)));  // see [1]
+        assert(steps or IS_ERROR(VAL_THROWN_LABEL(frame_)));  // see [1]
         return THROWN;
     }
 
@@ -1388,7 +1388,7 @@ DECLARE_NATIVE(set)
     }
 
     if (Set_Var_Core_Throws(SPARE, steps, target, SPECIFIED, v)) {
-        assert(steps or Is_Meta_Of_Raised(VAL_THROWN_LABEL(frame_)));  // see [3]
+        assert(steps or IS_ERROR(VAL_THROWN_LABEL(frame_)));  // see [3]
         return THROWN;
     }
 

@@ -1168,7 +1168,7 @@ Context(*) Error_No_Catch_For_Throw(Frame(*) frame_)
     DECLARE_LOCAL (arg);
     CATCH_THROWN(arg, frame_);
 
-    if (Is_Meta_Of_Raised(label)) {  // what would have been fail()
+    if (IS_ERROR(label)) {  // what would have been fail()
         assert(Is_Nulled(arg));
         return VAL_CONTEXT(label);
     }

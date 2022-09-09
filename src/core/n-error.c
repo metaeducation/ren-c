@@ -73,11 +73,10 @@ DECLARE_NATIVE(enrescue)
     if (not THROWING)  // successful result
         return Meta_Quotify(OUT);
 
-    if (not Is_Meta_Of_Raised(VAL_THROWN_LABEL(FRAME)))  // non-ERROR! throws
+    if (not IS_ERROR(VAL_THROWN_LABEL(FRAME)))  // non-ERROR! throws
         return BOUNCE_THROWN;
 
     Copy_Cell(OUT, VAL_THROWN_LABEL(FRAME));
-    Unquasify(OUT);
     CATCH_THROWN(SPARE, FRAME);
     assert(Is_Nulled(SPARE));  // all error throws are null-valued
 
