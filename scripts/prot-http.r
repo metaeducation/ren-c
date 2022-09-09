@@ -334,7 +334,7 @@ check-response: function [
                         return raise e
                     ]
                 ] else [
-                    fail make error! [
+                    return raise make error! [
                         type: 'Access
                         id: 'Protocol
                         arg1: "Redirect requires manual intervention"
@@ -421,7 +421,12 @@ do-redirect: func [
         new-uri.port-id = spec.port-id
     ]
     else [
-        fail make error! [
+        ; !!! @gchiu's pharmac relies on EXISTS? answering false for this
+        ; case, which means not being a hard FAIL.  It's technically a wrong
+        ; answer--and redirects were never reasonably articulated in R3-Alpha
+        ; http, so it all needs a redesign if this is to be useful.
+        ;
+        return raise make error! [
             type: 'Access
             id: 'Protocol
             arg1: "Redirect to other host - requires custom handling"
