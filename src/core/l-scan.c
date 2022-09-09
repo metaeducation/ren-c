@@ -1978,7 +1978,7 @@ Bounce Scanner_Executor(Frame(*) f) {
 
       case TOKEN_CARET:
         assert(*bp == '^');
-        if (IS_LEX_ANY_SPACE(*ep) or *ep == ']' or *ep == ')') {
+        if (IS_LEX_ANY_SPACE(*ep) or *ep == '~' or *ep == ']' or *ep == ')') {
             Init_Word(PUSH(), Canon(CARET_1));
             break;
         }
@@ -1986,7 +1986,7 @@ Bounce Scanner_Executor(Frame(*) f) {
 
       case TOKEN_AT:
         assert(*bp == '@');
-        if (IS_LEX_ANY_SPACE(*ep) or *ep == ']' or *ep == ')') {
+        if (IS_LEX_ANY_SPACE(*ep) or *ep == '~' or *ep == ']' or *ep == ')') {
             Init_Word(PUSH(), Canon(AT_1));
             break;
         }

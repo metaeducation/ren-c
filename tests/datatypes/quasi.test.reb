@@ -249,3 +249,18 @@
         unmeta* ~foo~
     )
 ]
+
+; Special transcode cases (review: should be part of larger table-driven
+; approach)
+[
+    (all [
+        x: transcode/one "~@~"
+        quasi? x
+        '@ = unquasi x
+    ])
+    (all [
+        x: transcode/one "~^^~"
+        quasi? x
+        '^ = unquasi x
+    ])
+]
