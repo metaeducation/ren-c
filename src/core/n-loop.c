@@ -1667,10 +1667,10 @@ DECLARE_NATIVE(map)
         }
     }
 
-    if (Is_Void(SPARE) or (IS_META_BLOCK(body) and Is_Meta_Of_Void(SPARE)))
-        goto next_iteration;  // okay to skip
-
     Decay_If_Isotope(SPARE);
+
+    if (Is_Void(SPARE))
+        goto next_iteration;  // okay to skip
 
     if (Is_Splice(SPARE)) {
         Quasify_Isotope(SPARE);

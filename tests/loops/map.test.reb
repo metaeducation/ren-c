@@ -62,3 +62,9 @@
     ;
     ([[1 <haha!>] [3 <haha!>]] = map x each [1 2 3] [if x <> 2 :[x <haha!>]])
 ]
+
+; ^META blocks collect the meta variation of the evaluation, including voids
+[
+    (['1 ~ '3] = map x each [1 2 3] ^[if x <> 2 [x]])
+    (['1 ~[~]~ '3] = map x each [1 2 3] ^[if x = 2 [void] else [x]])
+]
