@@ -655,7 +655,7 @@ modernize-action: function3 [
                     keep3/only spec/1
                 ]
 
-                if spec/1 = <none> [  ; new semantics: <none> -> ~none~
+                if spec/1 = <none> [  ; new semantics: <none> -> ~[]~
                     keep3/only <void>  ; old cue for returning garbage
                     spec: my next
                     continue

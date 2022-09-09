@@ -22,7 +22,7 @@
 
 
 ~bad-isotope~ !! (
-    compose [(~none~) * <ok>]
+    compose [(~bad~) * <ok>]
 )
 ~need-non-null~ !! (
     compose [(null) * <ok>]

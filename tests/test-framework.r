@@ -57,7 +57,7 @@ run-single-test: func [
 
     log [mold code]
 
-    let [error ~result~]: sys.util.rescue+ as block! code
+    let [error ^result]: sys.util.rescue+ as block! code
 
     all [
         error
@@ -77,14 +77,22 @@ run-single-test: func [
                 "(unknown)"
             ]]
         ]
-        quasi? ^result [
-            "test returned" (mold ^result) "(isotope)"
+
+        '~[]~ = result [
+            "test returned empty pack ~[]~ isotope"  ; ~result~ would error
         ]
+        (elide if pack? unget result [result: first unquasi result])
+
+        quasi? result [
+            "test returned isotope:" (mold/limit result 40)
+        ]
+        (elide result: unget result)
+
         null? :result [
             "test returned null"
         ]
         not logic? :result [
-            spaced ["was" (an type of :result) ", not logic!"]
+            spaced ["was" (mold type of :result) ", not logic!"]
         ]
         not :result [
             "test returned #[false]"

@@ -157,42 +157,57 @@ export console!: make object! [
             ]
         ]
 
-        === UNPACK FIRST VALUE IF IN A "PACK" ===
+        === UNPACK FIRST VALUE IN "PACKS" (OUTPUT *NOTHING* IF LENGTH 0) ===
 
         ; Functions can return block isotopes which represent multiple returns.
-        ; If the user really wants to see this, they can explicitly do a
-        ; meta on it.
+        ; Only the first output is printed--but with a comment saying that it
+        ; was in a pack.  This hints the user to do a ^META on the value to
+        ; see the complete pack.
+        ;
+        ; 0-length packs (~[]~ a.k.a. "none") are treated specially by the
+        ; console, and print no output.  This is used by commands like HELP
+        ; that want to keep the focus on what they are printing out, without
+        ; an `== xxx` evaluated result showing up.  Functions that need a way
+        ; of returning an "uninteresting" result, such as PRINT, use it too.
+        ;
+        ; This gives a slightly weird dichotomy that "none" and "void"
+        ; are distinct states, but we don't print the "value-bearing" one:
+        ;
+        ;      >> none
+        ;
+        ;      >> ()
+        ;      ; void
+        ;
+        ; But doing it the other way around would force functions like HELP to
+        ; be invisible, and that's not desirable.
 
         if pack? unget v [
             v: unquasi v
-            if 0 = length of v [
-                print unspaced [
-                    result _ mold quasi v _ {; isotope  (decays to null)}
-                ]
-                return
+
+            if 0 = length of v [  ; 0-length pack prints nothing, see above
+                return none
             ]
 
-            print ["; first of pack with" length of v "items"]
-            v: (first v) else [null']  ; items in pack are ^META'd
+            print ["; first in pack of length" length of v]
+            v: first v  ; items in pack are ^META'd
         ]
 
         === DISPLAY NULL AS IF IT WERE A COMMENT, AS IT HAS NO VALUE ===
 
+        ; Key to NULL's purpose is that it lacks any value representation, and
+        ; only exists as an evaluation product you can store in a variable.
+        ; So there's nothing we can print like `== null` (which would look
+        ; like the WORD! null), and no special syntax exists for them...
+        ; that's by design.
+        ;
+        ; It might seem that giving *no* output would be the most natural case
+        ; for such a situation.  But it provides more grounding to show
+        ; *something*, so we are tricky here in the text medium and display a
+        ; line in comment form, without the ==.  It has settled into being a
+        ; good compromise for the situation...helping to ground users in what
+        ; is going on.
+
         if v = null' [
-            ;
-            ; Key to NULL's purpose is that it lacks any value representation,
-            ; and only exists as an evaluation product you can store in a
-            ; variable.  So there's nothing we can print like `== null` (which
-            ; would look like the WORD! null), and no special syntax exists for
-            ; them...that's by design.
-            ;
-            ; It might seem that giving *no* output would be the most natural
-            ; case for such a situation.  But it provides more grounding to
-            ; show *something*, so we are tricky here in the text medium and
-            ; display a line in comment form, without the ==.  It has settled
-            ; into being a good compromise for the situation...helping to
-            ; ground users in what is going on.
-            ;
             print "; null"
             return none
         ]
@@ -205,27 +220,6 @@ export console!: make object! [
         ]
 
         === ISOTOPE BAD WORDS (^META v parameter means they look plain) ===
-
-        if v = none' [  ; don't show "none" (e.g. BLANK! isotopes)
-            ;
-            ; The "none" state is used by commands like HELP that want to keep
-            ; the focus on what they are printing out, without an `== xxx`
-            ; evaluated result showing up.  Functions that need a handy way of
-            ; returning an "uninteresting" result, such as PRINT, use it too.
-            ;
-            ; This gives a slightly weird dichotomy that "none" and "void"
-            ; are distinct states, but we don't print the "value-bearing" one:
-            ;
-            ;      >> ~none~
-            ;
-            ;      >> ()
-            ;      ; void
-            ;
-            ; But doing it the other way around would force functions like
-            ; HELP to be invisible, and that's not desirable.
-            ;
-            return none
-        ]
 
         if v = '~_~ [
             ;

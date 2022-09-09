@@ -185,3 +185,46 @@ inline static bool Is_Meta_Of_Heavy_Void(Cell(const*) v) {
     Cell(const*) at = VAL_ARRAY_AT(&tail, v);
     return (tail == at + 1) and Is_Meta_Of_Void(at);
 }
+
+
+//=//// "NONE" (empty BLOCK! Isotope Pack, ~[]~) //////////////////////////=//
+//
+// This is the default RETURN for when you just write something like
+// `func [return: <none>] [...]`.  It represents the intention of not having a
+// return value, but reserving the right to not be treated as invisible, so
+// that if one ever did imagine an interesting value for it to return, the
+// callsites wouldn't have assumed it was invisible.
+//
+// (Even a function like PRINT has a potentially interesting return value,
+// given that it channels through NULL if the print content vaporized and
+// it printed nothing (not even a newline).  This lets you use it with ELSE,
+// e.g. `print [...] else [...]`)
+//
+// It sensibly uses a parameter pack of length 0, to say there are no values.
+// Hence it is an error to try to assign them (to SET-WORD!, SET-BLOCK!, etc.)
+//
+
+#define Init_None_Untracked(out) \
+    Init_Pack_Untracked((out), ISOTOPE_0, EMPTY_ARRAY)
+
+#define Init_None(out) \
+    TRACK(Init_None_Untracked(out))
+
+#define Init_Meta_Of_None(out) \
+    TRACK(Init_Pack_Untracked((out), QUASI_2, EMPTY_ARRAY))
+
+inline static bool Is_None(Cell(const*) v) {
+    if (not Is_Pack(v))
+        return false;
+    Cell(const*) tail;
+    Cell(const*) at = VAL_ARRAY_AT(&tail, v);
+    return tail == at;
+}
+
+inline static bool Is_Meta_Of_None(Cell(const*) v) {
+    if (not Is_Meta_Of_Pack(v))
+        return false;
+    Cell(const*) tail;
+    Cell(const*) at = VAL_ARRAY_AT(&tail, v);
+    return tail == at;
+}

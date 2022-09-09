@@ -836,11 +836,11 @@ count-up: func [
         limit
     ]
     return cycle [
-        [^result']: cfor :var start end 1 body else [
+        result': ^ cfor :var start end 1 body else [
             return null  ; a BREAK was encountered
         ]
         if limit <> # [
-            stop unmeta result'  ; the limit was actually reached
+            stop/forward unmeta result'  ; the limit was actually reached
         ]
         ; otherwise keep going...
         end: end + 100

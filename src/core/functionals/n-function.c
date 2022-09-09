@@ -625,7 +625,7 @@ DECLARE_NATIVE(definitional_return)
         // allow, so that you can say `return ~xxx~` in functions whose spec
         // is written as `return: []`
 
-        if (Is_Pack(v) and not REF(forward))
+        if (Is_Pack(v) and not Is_None(v) and not REF(forward))
             Decay_If_Isotope(v);
 
         if (GET_PARAM_FLAG(param, RETURN_NONE) and not Is_None(v))

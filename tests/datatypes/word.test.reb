@@ -149,7 +149,7 @@
     same? :a-value a-value
 )
 ~bad-word-get~ !! (
-    a-value: ~none~
+    a-value: ~bad~
     a-value
 )
 (

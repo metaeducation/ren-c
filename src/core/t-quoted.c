@@ -728,24 +728,39 @@ DECLARE_NATIVE(pack_q)
 //
 //      return: "Value (if it's anything other than the states being checked)"
 //          [<opt> <void> any-value!]
-//      ^optional [<opt> <void> <fail> any-value!]
+//      ^optional [<opt> <void> <fail> <pack> any-value!]
 //  ]
 //
 DECLARE_NATIVE(maybe)
+//
+// 1. !!! Should MAYBE of a parameter pack be willing to twist that parameter
+//    pack, e.g. with a NULL in the first slot--into one with a void in the
+//    first slot?  Currently this does not, meaning you can't say
+//
+//        [a b]: maybe multi-return
+//
+//    ...and leave the `b` element left untouched.  Review.
 {
     INCLUDE_PARAMS_OF_MAYBE;
 
     REBVAL *v = ARG(optional);
+    Meta_Unquotify(v);
 
-    if (
-        Is_Meta_Of_Void(v)
-        or Is_Meta_Of_Null(v) or Is_Meta_Of_Blank_Isotope(v)
-        or Is_Meta_Of_None(v)
-    ){
+    if (Is_None(v))  // !!! Should MAYBE be tolerant of NONE?
         return VOID;
-    }
 
-    if (Is_Meta_Of_Raised(v)) {  // fold in TRY behavior as well
+    Decay_If_Isotope(v);  // question about decay, see [1]
+
+    if (Is_Void(v))
+        return VOID;  // passthru
+
+    if (Is_Nulled(v))
+        return VOID;  // main purpose of function: NULL => VOID
+
+    if (Is_Blank_Isotope(v))  // !!! does this make sense?
+        return VOID;
+
+    if (Is_Raised(v)) {  // !!! fold in TRY behavior as well?
         ERROR_VARS *vars = ERR_VARS(VAL_CONTEXT(v));
         if (
             IS_WORD(&vars->id)
@@ -756,14 +771,7 @@ DECLARE_NATIVE(maybe)
         return RAISE(VAL_CONTEXT(v));
     }
 
-    if (Is_Meta_Of_Heavy_Void(v))
-        return VOID;
-
-    Move_Cell(OUT, v);
-    Meta_Unquotify(OUT);
-
-    Decay_If_Isotope(OUT);
-    return OUT;
+    return COPY(v);
 }
 
 

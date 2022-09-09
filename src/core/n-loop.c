@@ -568,7 +568,8 @@ DECLARE_NATIVE(for_skip)
 //
 //      return: []  ; !!! Notation for divergent functions?s
 //      ^value "If no argument is provided, STOP acts like STOP VOID"
-//          [<opt> <void> <end> any-value!]
+//          [<opt> <void> <end> <pack> <fail> any-value!]
+//      /forward "Don't unpack multi-return values"
 //  ]
 //
 DECLARE_NATIVE(stop)  // See CYCLE for notes about STOP
@@ -580,6 +581,9 @@ DECLARE_NATIVE(stop)  // See CYCLE for notes about STOP
         RESET(v);  // STOP acts the same as STOP VOID
     else
         Meta_Unquotify(v);
+
+    if (not REF(forward))
+        Decay_If_Isotope(v);
 
     return Init_Thrown_With_Label(FRAME, v, Lib(STOP));
 }

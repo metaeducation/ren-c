@@ -46,15 +46,15 @@
 ]
 
 
-; BAD-WORD! isotopes cause an error, plain BAD-WORD! matches literal BAD-WORDs
+; WORD! isotopes cause an error, plain QUASI-WORD! matches literal QUASI-WORD!s
 [
     ~bad-word-get~ !! (
-        foo: ~none~
+        foo: ~bad~
         parse3 "a" [foo]
     )
     (
-        foo: '~none~
-        did parse3 [~none~] [foo <end>]
+        foo: '~bad~
+        did parse3 [~bad~] [foo <end>]
     )
 ]
 

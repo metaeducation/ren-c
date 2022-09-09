@@ -709,3 +709,13 @@ inline static Bounce Native_Unmeta_Result(Frame(*) frame_, const REBVAL *v) {
         return BOUNCE_VOID;
     return Meta_Unquotify(Copy_Cell(frame_->out, v));
 }
+
+inline static Bounce Native_None_Result_Untracked(
+    Value(*) out,  // have to pass; comma at callsite -> "operand has no effect"
+    Frame(*) frame_
+){
+    assert(out == frame_->out);
+    UNUSED(out);
+    assert(not THROWING);
+    return Init_None_Untracked(frame_->out);
+}

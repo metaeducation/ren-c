@@ -39,10 +39,6 @@
 )
 
 
-; Functions are able to return VOID as "invisible".  But to avoid wantonly
-; creating variant arity situations in code, generic function execution tools
-; like DO or APPLIQUE return ~none~ isotopes when given empty blocks...unless
-; they are in a ^META context.
 ; https://forum.rebol.info/t/what-should-do-do/1426
 ;
 (void? do [])
@@ -224,13 +220,13 @@
 
 
 ~bad-word-get~ !! (
-    a: ~none~
+    a: ~bad~
     a
 )
-(not error? trap [set 'a '~none~])
+(not error? trap [set 'a '~bad~])
 
 ~bad-word-get~ !! (
-    a-value: ~none~
+    a-value: ~bad~
     a-value
 )
 

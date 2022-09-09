@@ -93,12 +93,12 @@
     (
         takes-2-logics: func [x [logic!] y [logic!]] [return x]
         infix-voider: enfixed func [return: [bad-word!] x y] [
-            return '~none~
+            return '~bad~
         ]
         true
     )
 
-    (takes-2-logics ('~none~) = '~none~ false)
+    (takes-2-logics ('~bad~) = '~bad~ false)
 
     ~expect-arg~ !! (takes-2-logics true infix-voider true false)
 ]

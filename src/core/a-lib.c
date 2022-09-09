@@ -915,7 +915,18 @@ static bool Run_Va_Throws(
     return threw;
 }
 
-inline static void Run_Va_May_Fail(
+
+// This version of the variadic run does not do isotope decay, because that
+// errors on empty parameter packs ("none"), e.g. ~[]~ isotopes.  It would be
+// deceptive to have that unpack and conflate as any other state (including
+// void and null, which have specific meanings).  So it simply won't.
+//
+// An API like rebValue() or rebUnboxLogic() thus won't handle ~[]~, and you
+// need to use rebMeta() to get the parameter pack and understand its nature,
+// or use rebElide() and say it doesn't matter.  (or just find a way in the
+// executed code passed to not have it evaluate to none)
+//
+inline static void Run_Va_No_Decay_May_Fail(
     REBVAL *out,
     const void *p,  // first pointer (may be END, nullptr means NULLED)
     va_list *vaptr  // va_end() handled by feed for all cases (throws, fails)
@@ -930,22 +941,18 @@ inline static void Run_Va_May_Fail(
         //
         fail (Error_No_Catch_For_Throw(TOP_FRAME));
     }
+}
 
-    // It's convenient to be able to write:
-    //
-    //     REBVAL *v = rebValue("if tester", whatever, "[<a>]");
-    //
-    // Conceptually we say that IF returns void, but there is no representation
-    // for them that we store via SET-WORD!/etc.  So they decay to NULL.  We
-    // want this convenience here (assigning `v` is like assigning a SET-WORD!
-    // in regular code).
-    //
-    // Also: we want cases like `rebNot(nullptr)` to work, but the variadic
-    // evaluator cannot splice NULL into the feed of execution and have it
-    // be convertible into an array.  The QUASI-BLANK! of ~_~ provides a
-    // compromise, and it evaluates to an isotope that decays to a regular null
-    // several places in the system (e.g. normal arguments).  Here is another
-    // place the tolerance is extended to.
+// This is the decaying form.  Decaying is done for convenience in the basic
+// APIs just as if you'd tried to do a SET-WORD!...so you don't have to worry
+// about multi-return packs etc.
+//
+inline static void Run_Va_May_Fail(
+    REBVAL *out,
+    const void *p,  // first pointer (may be END, nullptr means NULLED)
+    va_list *vaptr  // va_end() handled by feed for all cases (throws, fails)
+){
+    Run_Va_No_Decay_May_Fail(out, p, vaptr);
 
     Decay_If_Isotope(out);
 }
@@ -1215,12 +1222,15 @@ REBVAL *RL_rebQuote(const void *p, va_list *vaptr)
 // Variant of rebValue() which assumes you don't need the result.  This saves on
 // allocating an API handle, or the caller needing to manage its lifetime.
 //
+// It also means that if the product is something like a ~[]~ isotope ("none")
+// that is not an issue.
+//
 void RL_rebElide(const void *p, va_list *vaptr)
 {
     ENTER_API;
 
     DECLARE_LOCAL (elided);
-    Run_Va_May_Fail(elided, p, vaptr);  // calls va_end()
+    Run_Va_No_Decay_May_Fail(elided, p, vaptr);  // calls va_end()
 }
 
 

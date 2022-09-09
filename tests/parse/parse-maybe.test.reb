@@ -57,7 +57,7 @@
 (did all [
     "b" == parse "bbb" [
         (x: 10, y: 20)
-        y: x: maybe (~)  ; Isotopic ~none~ not conflated w/invisible
+        y: x: maybe (~)  ; Isotopic ~ is invisible
         some "b"
     ]
     '~ = ^ get/any 'x

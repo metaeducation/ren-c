@@ -1050,7 +1050,7 @@ bool Set_Var_Core_Updater_Throws(
     const REBVAL *updater
 ){
     assert(not Is_Blank_Isotope(setval));
-    assert(not Is_Pack(setval));
+    /*assert(not Is_Pack(setval));*/  // !!! all isotopes likely becoming legal
     assert(not Is_Raised(setval));
 
     // Note: `steps_out` can be equal to `out` can be equal to `target`
@@ -1343,7 +1343,7 @@ void Set_Var_May_Fail(
 //          [<opt> the-word! the-tuple! the-block!]
 //      target "Word or tuple, or calculated sequence steps (from GET)"
 //          [<void> any-word! any-sequence! any-group! the-block!]
-//      ^value [<opt> <void> <fail> any-value!]  ; tunnels failure
+//      ^value [<opt> <void> <fail> <pack> any-value!]  ; tunnels failure
 //      /any "Do not error on isotopes"
 //      /groups "Allow GROUP! Evaluations"
 //  ]
@@ -2234,7 +2234,7 @@ DECLARE_NATIVE(null_q)
 //  "Tells you if argument is a ~ isotope (not a ~ BAD-WORD!)"
 //
 //      return: [logic!]
-//      ^optional [<opt> <void> any-value!]
+//      ^optional [<opt> <void> <pack> <fail> any-value!]
 //  ]
 //
 DECLARE_NATIVE(none_q)
@@ -2267,7 +2267,7 @@ DECLARE_NATIVE(void)
 //  "Tells you if argument is void"
 //
 //      return: [logic!]
-//      ^optional [<opt> <void> <fail> any-value!]
+//      ^optional [<opt> <void> <fail> <pack> any-value!]
 //  ]
 //
 DECLARE_NATIVE(void_q)
@@ -2303,7 +2303,7 @@ DECLARE_NATIVE(blackhole_q)
 //  {Make the heavy form of NULL or VOID (passes through all other values)}
 //
 //      return: [<void> <opt> any-value!]
-//      ^optional [<opt> <void> any-value!]
+//      ^optional [<opt> <void> <pack> any-value!]
 //  ]
 //
 DECLARE_NATIVE(heavy) {
@@ -2327,7 +2327,7 @@ DECLARE_NATIVE(heavy) {
 //  {Make the light form of NULL or VOID (passes through all other values)}
 //
 //      return: [<opt> any-value!]
-//      ^optional [<opt> any-value!]
+//      ^optional [<opt> <void> <pack> any-value!]
 //  ]
 //
 DECLARE_NATIVE(light) {
