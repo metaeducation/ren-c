@@ -141,16 +141,7 @@ Bounce Proxy_Multi_Returns_Core(Frame(*) f, Value(*) v)
 
     StackIndex base = TOP_INDEX;
 
-    bool stale;
-    if (Is_Stale(v)) {  // need to preserve stale flag
-        v->header.bits &= (~ CELL_FLAG_STALE);
-        Meta_Quotify(Copy_Cell(PUSH(), v));  // preserve hidden value
-        stale = true;  // we'll mark it stale again
-    }
-    else {
-        Meta_Quotify(Copy_Cell(PUSH(), v));
-        stale = false;
-    }
+    Meta_Quotify(Copy_Cell(PUSH(), v));
 
     KEY = ACT_KEYS(&KEY_TAIL, f->u.action.original);
     PARAM = ACT_PARAMS_HEAD(f->u.action.original);
@@ -170,10 +161,6 @@ Bounce Proxy_Multi_Returns_Core(Frame(*) f, Value(*) v)
     else
         Init_Pack(v, Pop_Stack_Values(base));
 
-    if (stale) {
-        Set_Cell_Flag(v, STALE);
-        return VOID;
-    }
     return v;
 }
 

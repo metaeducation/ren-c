@@ -1525,25 +1525,8 @@ Bounce Evaluator_Executor(Frame(*) f)
         Cell(const*) pack_meta_at = nullptr;  // pack block items are ^META'd
         Cell(const*) pack_meta_tail = nullptr;
         REBSPC* pack_specifier = nullptr;
-        if (Is_Stale(OUT)) {
-            if (
-                QUOTE_BYTE_UNCHECKED(OUT) == ISOTOPE_0
-                and HEART_BYTE_UNCHECKED(OUT) == REB_BLOCK
-            ){
-                // Assume the pack subsumed a stale output cell in order to
-                // become stale.  For now, we lose the propagation ability
-                // for multireturn chaining by changing out from the stale
-                // pack, but just try and get it booting.
-                //
-                OUT->header.bits &= (~ CELL_FLAG_STALE);
-                pack_meta_at = VAL_ARRAY_AT(&pack_meta_tail, OUT);
-                pack_specifier = VAL_SPECIFIER(OUT);
-                Derelativize(OUT, pack_meta_at, pack_specifier);
-                Set_Cell_Flag(OUT, STALE);
-                ++ pack_meta_at;
-            }
+        if (Is_Stale(OUT))
             goto set_block_handle_out;
-        }
 
         if (Is_Lazy(OUT)) {
             //
@@ -1730,8 +1713,7 @@ Bounce Evaluator_Executor(Frame(*) f)
                     or var_heart == REB_THE_WORD
                     or var_heart == REB_THE_TUPLE
                 );
-                if (not Is_Void(SPARE))
-                    Copy_Cell(OUT, SPARE);
+                Copy_Cell(OUT, SPARE);  // !!! may write void, need new method
             }
         }
 
