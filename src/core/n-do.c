@@ -58,9 +58,7 @@ DECLARE_NATIVE(reeval)
 
     bool enfix = IS_ACTION(v) and Get_Action_Flag(VAL_ACTION(v), ENFIXED);
 
-    Flags flags =
-        EVAL_EXECUTOR_FLAG_SINGLE_STEP
-        | FRAME_FLAG_MAYBE_STALE;
+    Flags flags = FRAME_FLAG_MAYBE_STALE;
 
     Mark_Eval_Out_Stale(OUT);
 
@@ -221,7 +219,7 @@ DECLARE_NATIVE(shove)
         OUT,
         frame_,
         shovee,
-        EVAL_EXECUTOR_FLAG_SINGLE_STEP | FRAME_FLAG_MAYBE_STALE,
+        FRAME_FLAG_MAYBE_STALE,
         enfix
     )){
         rebRelease(composed_set_path);  // ok if nullptr
@@ -341,23 +339,13 @@ DECLARE_NATIVE(do)
         if (Is_Frame_At_End(f))
             return VOID;
 
-        Frame(*) subframe = Make_Frame(
+        Frame(*) sub = Make_Frame(
             f->feed,
-            EVAL_EXECUTOR_FLAG_SINGLE_STEP | FRAME_FLAG_MAYBE_STALE
+            FRAME_MASK_NONE
         );
-
-        Push_Frame(OUT, subframe);
-        do {
-            if (Eval_Step_Throws(OUT, subframe)) {
-                Drop_Frame(subframe);
-                return THROWN;
-            }
-        } while (Not_Feed_At_End(f->feed));
-
-        Drop_Frame(subframe);
-
-        Clear_Stale_Flag(OUT);
-        break; }
+        sub->executor = &Array_Executor;
+        Push_Frame(OUT, sub);
+        return DELEGATE_SUBFRAME(sub); }
 
       case REB_THE_WORD : goto do_string;
       case REB_BINARY : goto do_string;
@@ -396,12 +384,10 @@ DECLARE_NATIVE(do)
         return UNMETA(source);  // !!! delegate to offer a debug step?
 
       default :
-        fail (Error_Do_Arity_Non_Zero_Raw());  // https://trello.com/c/YMAb89dv
+        break;
     }
 
-    if (Is_Stale(OUT))
-        return VOID;
-    return OUT;
+    fail (Error_Do_Arity_Non_Zero_Raw());  // https://trello.com/c/YMAb89dv
 }
 
 
@@ -498,11 +484,12 @@ DECLARE_NATIVE(evaluate)
         );
         Push_Frame(OUT, subframe);
 
-        if (not REF(next))  // plain evaluation to end, maybe invisible
+        if (not REF(next)) {  // plain evaluation to end, maybe invisible
+            subframe->executor = &Array_Executor;
             return DELEGATE_SUBFRAME(subframe);
+        }
 
         Set_Frame_Flag(subframe, TRAMPOLINE_KEEPALIVE);  // to ask how far it got
-        Set_Executor_Flag(EVAL, subframe, SINGLE_STEP);
 
         STATE = ST_EVALUATE_SINGLE_STEPPING;
         return CONTINUE_SUBFRAME(subframe);
@@ -571,7 +558,7 @@ DECLARE_NATIVE(evaluate)
             if (Is_Frame_At_End(f))
                 return nullptr;
 
-            Flags flags = EVAL_EXECUTOR_FLAG_SINGLE_STEP;
+            Flags flags = FRAME_MASK_NONE;
             if (Eval_Step_In_Subframe_Throws(SPARE, f, flags))
                 return THROWN;
         }
@@ -842,7 +829,7 @@ DECLARE_NATIVE(apply)
 
     Frame(*) f = Make_Frame_At(
         args,
-        EVAL_EXECUTOR_FLAG_SINGLE_STEP | FRAME_FLAG_TRAMPOLINE_KEEPALIVE
+        FRAME_FLAG_TRAMPOLINE_KEEPALIVE
     );
     Push_Frame(SPARE, f);
 

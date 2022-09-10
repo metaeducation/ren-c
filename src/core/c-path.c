@@ -219,7 +219,7 @@ Bounce MAKE_Path(
     if (not IS_BLOCK(arg))
         fail (Error_Bad_Make(kind, arg)); // "make path! 0" has no meaning
 
-    Frame(*) f = Make_Frame_At(arg, EVAL_EXECUTOR_FLAG_SINGLE_STEP);
+    Frame(*) f = Make_Frame_At(arg, FRAME_MASK_NONE);
 
     Push_Frame(OUT, f);
 

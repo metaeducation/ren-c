@@ -591,9 +591,7 @@ Bounce Action_Executor(Frame(*) f)
                 goto continue_fulfilling;
             }
 
-            Flags flags =
-                EVAL_EXECUTOR_FLAG_SINGLE_STEP
-                | EVAL_EXECUTOR_FLAG_FULFILLING_ARG;
+            Flags flags = EVAL_EXECUTOR_FLAG_FULFILLING_ARG;
             if (pclass == PARAM_CLASS_META) {
                 flags |= FRAME_FLAG_META_RESULT;
                 if (GET_PARAM_FLAG(PARAM, WANT_FAILURES))
@@ -692,8 +690,7 @@ Bounce Action_Executor(Frame(*) f)
                 // and it knows to get the arg from there.
 
                 Flags flags =
-                    EVAL_EXECUTOR_FLAG_SINGLE_STEP
-                    | EVAL_EXECUTOR_FLAG_FULFILLING_ARG
+                    EVAL_EXECUTOR_FLAG_FULFILLING_ARG
                     | FLAG_STATE_BYTE(ST_EVALUATOR_LOOKING_AHEAD)
                     | EVAL_EXECUTOR_FLAG_INERT_OPTIMIZATION
                     | FRAME_FLAG_MAYBE_STALE;  // won't be, but avoids RESET()

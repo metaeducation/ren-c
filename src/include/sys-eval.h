@@ -90,8 +90,6 @@
 enum {
     ST_EVALUATOR_INITIAL_ENTRY = STATE_0,
 
-    ST_EVALUATOR_STEPPING_AGAIN,
-
     ST_EVALUATOR_LOOKING_AHEAD,
     ST_EVALUATOR_REEVALUATING,
     ST_EVALUATOR_GET_WORD,
@@ -242,7 +240,6 @@ inline static bool Eval_Step_Throws(
     Frame(*) f
 ){
     assert(Not_Feed_Flag(f->feed, NO_LOOKAHEAD));
-    assert(Get_Executor_Flag(EVAL, f, SINGLE_STEP));
 
     if (Not_Frame_Flag(f, MAYBE_STALE)) {
         FRESHEN_CELL_EVIL_MACRO(out);
@@ -272,8 +269,6 @@ inline static bool Eval_Step_In_Subframe_Throws(
 ){
     if (not (flags & FRAME_FLAG_MAYBE_STALE))
         assert(Is_Cell_Erased(out) or Is_Stale_Void(out) or Is_Void(out));
-
-    assert(flags & EVAL_EXECUTOR_FLAG_SINGLE_STEP);
 
     if (Did_Init_Inert_Optimize_Complete(out, f->feed, &flags))
         return false;  // If eval not hooked, ANY-INERT! may not need a frame
@@ -316,7 +311,6 @@ inline static bool Eval_Step_In_Any_Array_At_Throws(
 ){
     assert(Is_Cell_Erased(out));
 
-    assert(not (flags & EVAL_EXECUTOR_FLAG_SINGLE_STEP));  // added here
     Feed(*) feed = Make_At_Feed_Core(any_array, specifier);
 
     if (Is_Feed_At_End(feed)) {
@@ -326,7 +320,7 @@ inline static bool Eval_Step_In_Any_Array_At_Throws(
 
     Frame(*) f = Make_Frame(
         feed,
-        flags | FRAME_FLAG_ALLOCATED_FEED | EVAL_EXECUTOR_FLAG_SINGLE_STEP
+        flags | FRAME_FLAG_ALLOCATED_FEED
     );
 
     Push_Frame(out, f);

@@ -117,6 +117,7 @@ Bounce Group_Branch_Executor(Frame(*) frame_)
             & (~ FRAME_FLAG_MAYBE_STALE)  // undo tricks, see [2]
     );
     Push_Frame(SPARE, evaluator);
+    evaluator->executor = &Array_Executor;
 
     Clear_Frame_Flag(FRAME, ALLOCATED_FEED);
     FRAME->feed = TG_End_Feed;  // feed consumed by subframe
@@ -835,8 +836,7 @@ DECLARE_NATIVE(all)
         return VOID;
 
     Flags flags =
-        EVAL_EXECUTOR_FLAG_SINGLE_STEP
-        | FRAME_FLAG_MAYBE_STALE
+        FRAME_FLAG_MAYBE_STALE
         | FRAME_FLAG_TRAMPOLINE_KEEPALIVE;
 
     if (IS_THE_BLOCK(block))
@@ -961,8 +961,7 @@ DECLARE_NATIVE(any)
         return VOID;
 
     Flags flags =
-        EVAL_EXECUTOR_FLAG_SINGLE_STEP
-        | FRAME_FLAG_MAYBE_STALE
+        FRAME_FLAG_MAYBE_STALE
         | FRAME_FLAG_TRAMPOLINE_KEEPALIVE;
 
     if (IS_THE_BLOCK(block))
@@ -1124,7 +1123,7 @@ DECLARE_NATIVE(case)
 
     Frame(*) f = Make_Frame_At(
         cases,
-        EVAL_EXECUTOR_FLAG_SINGLE_STEP | FRAME_FLAG_TRAMPOLINE_KEEPALIVE
+        FRAME_FLAG_TRAMPOLINE_KEEPALIVE
     );
 
     Push_Frame(SPARE, f);
@@ -1187,6 +1186,7 @@ DECLARE_NATIVE(case)
             FRM_SPECIFIER(SUBFRAME),
             FRAME_MASK_NONE
         );
+        sub->executor = &Array_Executor;
 
         STATE = ST_CASE_DISCARDING_GET_GROUP;
         SUBFRAME->executor = &Just_Use_Out_Executor;
@@ -1317,8 +1317,7 @@ DECLARE_NATIVE(switch)
 
     Frame(*) subframe = Make_Frame_At(
         cases,
-        EVAL_EXECUTOR_FLAG_SINGLE_STEP
-            | FRAME_FLAG_TRAMPOLINE_KEEPALIVE
+        FRAME_FLAG_TRAMPOLINE_KEEPALIVE
     );
 
     Push_Frame(SPARE, subframe);

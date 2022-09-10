@@ -800,7 +800,6 @@ DECLARE_NATIVE(maybe_a)
         OUT,
         frame_,
         FRAME_FLAG_MAYBE_STALE
-            | EVAL_EXECUTOR_FLAG_SINGLE_STEP
     )){
         return THROWN;
     }

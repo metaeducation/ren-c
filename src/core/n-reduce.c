@@ -102,8 +102,7 @@ DECLARE_NATIVE(reduce)
 
     Frame(*) subframe = Make_Frame_At(
         v,  // REB_BLOCK or REB_GROUP
-        EVAL_EXECUTOR_FLAG_SINGLE_STEP
-            | FRAME_FLAG_ALLOCATED_FEED
+        FRAME_FLAG_ALLOCATED_FEED
             | FRAME_FLAG_TRAMPOLINE_KEEPALIVE  // reused for each step
     );
     Push_Frame(OUT, subframe);
@@ -214,9 +213,7 @@ DECLARE_NATIVE(reduce_each)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    Flags flags =
-        EVAL_EXECUTOR_FLAG_SINGLE_STEP
-        | FRAME_FLAG_TRAMPOLINE_KEEPALIVE;
+    Flags flags = FRAME_FLAG_TRAMPOLINE_KEEPALIVE;
 
     if (IS_META_WORD(vars)) {  // Note: gets converted to object in next step
         flags |= FRAME_FLAG_META_RESULT | FRAME_FLAG_FAILURE_RESULT_OK;
@@ -584,6 +581,7 @@ Bounce Composer_Executor(Frame(*) f)
         subfeed,  // used subfeed so we could skip the label if there was one
         FRAME_FLAG_ALLOCATED_FEED
     );
+    subframe->executor = &Array_Executor;
 
     Push_Frame(OUT, subframe);
 

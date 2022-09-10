@@ -112,17 +112,9 @@ STATIC_ASSERT(EVAL_EXECUTOR_FLAG_FULFILLING_ARG == DETAILS_FLAG_IS_BARRIER);
     FRAME_FLAG_29
 
 
-//=//// EVAL_EXECUTOR_FLAG_SINGLE_STEP ////////////////////////////////////=//
+//=//// EVAL_EXECUTOR_FLAG_30 /////////////////////////////////////////////=//
 //
-// !!! This is a revival of an old idea that a frame flag would hold the state
-// of whether to do to the end or not.  The reason that idea was scrapped was
-// because if the Eval() routine was hooked (e.g. by a stepwise debugger)
-// then the hook would be unable to see successive calls to Eval() if it
-// didn't return and make another call.  That no longer applies, since it
-// always has to return in stackless to the Trampoline, so running to end by
-// default is a convenience with no real different effect in evaluator returns.
-//
-#define EVAL_EXECUTOR_FLAG_SINGLE_STEP \
+#define EVAL_EXECUTOR_FLAG_30 \
     FRAME_FLAG_30
 
 

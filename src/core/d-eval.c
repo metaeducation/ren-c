@@ -320,7 +320,7 @@ void Evaluator_Exit_Checks_Debug(Frame(*) f) {
             | FRAME_FLAG_META_RESULT
             | FRAME_FLAG_FAILURE_RESULT_OK
             | EVAL_EXECUTOR_FLAG_FULFILLING_ARG
-            | EVAL_EXECUTOR_FLAG_SINGLE_STEP | EVAL_EXECUTOR_FLAG_NO_RESIDUE
+            | EVAL_EXECUTOR_FLAG_NO_RESIDUE
         );
 
         if (filtered != 0) {

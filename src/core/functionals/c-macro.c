@@ -145,7 +145,7 @@ Bounce Macro_Dispatcher(Frame(*) f)
 
     Frame(*) reeval_frame = Make_Frame(
         f->feed,
-        EVAL_EXECUTOR_FLAG_SINGLE_STEP  // inherit?
+        FRAME_MASK_NONE
     );
 
     Push_Frame(OUT, reeval_frame);
@@ -222,7 +222,7 @@ DECLARE_NATIVE(inline)
 
     Frame(*) reeval_frame = Make_Frame(
         frame_->feed,
-        EVAL_EXECUTOR_FLAG_SINGLE_STEP  // inherit?
+        FRAME_MASK_NONE
     );
     Push_Frame(OUT, reeval_frame);
     return DELEGATE_SUBFRAME(reeval_frame);

@@ -204,9 +204,8 @@ inline static Frame(*) Maybe_Rightward_Continuation_Needed(Frame(*) f)
 
     assert(Is_Stale(OUT));  // SET-XXX! may need to be invisible, see [3]
 
-    Flags flags =
-        EVAL_EXECUTOR_FLAG_SINGLE_STEP  // v-- if f was fulfilling, we are
-        | (f->flags.bits & EVAL_EXECUTOR_FLAG_FULFILLING_ARG)
+    Flags flags =  // v-- if f was fulfilling, we are
+        (f->flags.bits & EVAL_EXECUTOR_FLAG_FULFILLING_ARG)
         | FRAME_FLAG_MAYBE_STALE
         | FRAME_FLAG_FAILURE_RESULT_OK;  // trap [e: transcode "1&aa"] works
 
@@ -224,6 +223,60 @@ inline static Frame(*) Maybe_Rightward_Continuation_Needed(Frame(*) f)
 
     return subframe;
 }
+
+
+//
+//  Array_Executor: C
+//
+// An array executor simply calls the evaluator executor consecutively, and
+// if the output is void then it does not overwrite the previous output.
+//
+Bounce Array_Executor(Frame(*) f)
+{
+    enum {
+        ST_ARRAY_INITIAL_ENTRY = STATE_0,
+        ST_ARRAY_STEPPING
+    };
+
+    if (THROWING)
+        return THROWN;  // no state to clean up
+
+    switch (STATE) {
+      case ST_ARRAY_INITIAL_ENTRY:
+        goto initial_entry;
+
+      case ST_ARRAY_STEPPING:
+        goto step_result_in_spare;
+
+      default: assert(false);
+    }
+
+  initial_entry: {  //////////////////////////////////////////////////////////
+
+    Frame(*) sub = Make_Frame(
+        f->feed,
+        FRAME_FLAG_FAILURE_RESULT_OK
+            | FRAME_FLAG_TRAMPOLINE_KEEPALIVE
+    );
+    Push_Frame(SPARE, sub);
+    STATE = ST_ARRAY_STEPPING;
+    return CATCH_CONTINUE_SUBFRAME(sub);
+
+} step_result_in_spare: {  ///////////////////////////////////////////////////
+
+    if (not Is_Void(SPARE)) {
+        if (Is_Raised(OUT))  // don't let raised errors vanish
+            fail (VAL_CONTEXT(OUT));
+
+        Move_Cell(OUT, SPARE);
+    }
+
+    if (Not_Frame_At_End(SUBFRAME))
+        return BOUNCE_CONTINUE;
+
+    Drop_Frame(SUBFRAME);
+    return OUT;
+}}
 
 
 //
@@ -279,9 +332,6 @@ Bounce Evaluator_Executor(Frame(*) f)
         Sync_Feed_At_Cell_Or_End_May_Fail(f->feed);
         TRASH_POINTER_IF_DEBUG(f_current);
         /*TRASH_POINTER_IF_DEBUG(f_current_gotten);*/  // trash option() ptrs?
-        break;
-
-      case ST_EVALUATOR_STEPPING_AGAIN:  // when not single stepping
         goto new_expression;
 
       case ST_EVALUATOR_LOOKING_AHEAD:
@@ -757,7 +807,7 @@ Bounce Evaluator_Executor(Frame(*) f)
     //    and the various complexities involved with that means we have to
     //    flush here if the symbols match.
 
-    set_blank_in_spare: ///////////////////////////////////////////////////////
+    set_void_in_spare: ///////////////////////////////////////////////////////
 
     set_word_in_spare: ///////////////////////////////////////////////////////
 
@@ -776,8 +826,8 @@ Bounce Evaluator_Executor(Frame(*) f)
 
       } set_word_rightside_in_out: {  ////////////////////////////////////////
 
-        if (IS_BLANK(f_current)) {
-            // happens with `(void): ...`
+        if (Is_Void(f_current)) {
+            // can happen with SET-GROUP! e.g. `(void): ...`, current in spare
         }
         else if (Is_Stale(OUT)) {
             RESET(Sink_Word_May_Fail(f_current, f_specifier));
@@ -897,18 +947,15 @@ Bounce Evaluator_Executor(Frame(*) f)
             f_current,
             f_specifier,
             FRAME_FLAG_FAILURE_RESULT_OK
+                | FRAME_FLAG_MAYBE_STALE
         );
-        Push_Frame(RESET(SPARE), subframe);
+        Push_Frame(OUT, subframe);
+        subframe->executor = &Array_Executor;
 
         STATE = ST_EVALUATOR_RUNNING_GROUP;  // must target spare, see [2]
         return CATCH_CONTINUE_SUBFRAME(subframe);
 
       } group_result_in_spare: {  ////////////////////////////////////////////
-
-        if (Is_Void(SPARE))
-            Mark_Eval_Out_Voided(OUT);  // asserts it's stale
-        else
-            Move_Cell(OUT, SPARE);
 
         STATE = ST_EVALUATOR_INITIAL_ENTRY;
         break; }
@@ -929,6 +976,7 @@ Bounce Evaluator_Executor(Frame(*) f)
             FRAME_FLAG_META_RESULT | FRAME_FLAG_FAILURE_RESULT_OK
         );
         Push_Frame(OUT, subframe);
+        subframe->executor = &Array_Executor;
 
         STATE = ST_EVALUATOR_RUNNING_META_GROUP;
         return CATCH_CONTINUE_SUBFRAME(subframe); }
@@ -1222,6 +1270,7 @@ Bounce Evaluator_Executor(Frame(*) f)
             FRAME_MASK_NONE
         );
         Push_Frame(RESET(SPARE), subframe);
+        subframe->executor = &Array_Executor;
 
         STATE = ST_EVALUATOR_RUNNING_SET_GROUP;
         return CATCH_CONTINUE_SUBFRAME(subframe);
@@ -1232,10 +1281,8 @@ Bounce Evaluator_Executor(Frame(*) f)
 
         f_current = SPARE;
 
-        if (Is_Void(SPARE)) {
-            Init_Blank(SPARE);
-            goto set_blank_in_spare;
-        }
+        if (Is_Void(SPARE))
+            goto set_void_in_spare;
 
         if (Is_Isotope(SPARE))
             fail (Error_Bad_Isotope(SPARE));
@@ -2107,17 +2154,6 @@ Bounce Evaluator_Executor(Frame(*) f)
   #if !defined(NDEBUG)
     Evaluator_Exit_Checks_Debug(f);
   #endif
-
-    if (
-        Not_Frame_At_End(f)
-        and Not_Executor_Flag(EVAL, f, SINGLE_STEP)
-    ){
-        if (Is_Raised(OUT))
-            fail (VAL_CONTEXT(OUT));
-
-        STATE = ST_EVALUATOR_STEPPING_AGAIN;
-        return BOUNCE_CONTINUE;  // go through trampoline, for debug hooking
-    }
 
     return OUT;
 

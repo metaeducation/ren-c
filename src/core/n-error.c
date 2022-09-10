@@ -134,7 +134,6 @@ DECLARE_NATIVE(entrap)  // wrapped as multi-return versions TRAP and ATTEMPT
         sub = Make_Frame_At(
             code,  // REB_BLOCK or REB_GROUP
             flags
-                | EVAL_EXECUTOR_FLAG_SINGLE_STEP
                 | FRAME_FLAG_ALLOCATED_FEED
         );
         Push_Frame(OUT, sub);

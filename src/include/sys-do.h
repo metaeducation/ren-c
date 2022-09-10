@@ -58,7 +58,7 @@
 #define rebRunThrows(out,...) \
     rebRunCoreThrows( \
         (out), \
-        EVAL_EXECUTOR_FLAG_SINGLE_STEP | EVAL_EXECUTOR_FLAG_NO_RESIDUE, \
+        EVAL_EXECUTOR_FLAG_NO_RESIDUE, \
         __VA_ARGS__ \
     )
 
@@ -86,6 +86,7 @@ inline static bool Do_Any_Array_At_Core_Throws(
     REBSPC *specifier
 ){
     Frame(*) f = Make_Frame_At_Core(any_array, specifier, flags);
+    f->executor = &Array_Executor;
 
     return Trampoline_Throws(out, f);
 }

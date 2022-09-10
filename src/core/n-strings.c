@@ -102,7 +102,7 @@ DECLARE_NATIVE(delimit)
         return Init_Text(OUT, Pop_Molded_String(mo));
     }
 
-    Flags flags = EVAL_EXECUTOR_FLAG_SINGLE_STEP;
+    Flags flags = FRAME_MASK_NONE;
     if (IS_THE_BLOCK(ARG(line)))
         flags |= EVAL_EXECUTOR_FLAG_NO_EVALUATIONS;
     else

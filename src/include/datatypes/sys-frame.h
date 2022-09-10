@@ -757,6 +757,7 @@ inline static bool Pushed_Continuation(
             Set_Frame_Flag(f, META_RESULT);
             Set_Frame_Flag(f, FAILURE_RESULT_OK);
         }
+        f->executor = &Array_Executor;
 
         Push_Frame(out, f);
         goto pushed_continuation; }  // trampoline manages FRAME_FLAG_BRANCH atm.

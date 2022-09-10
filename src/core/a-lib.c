@@ -906,6 +906,7 @@ static bool Run_Va_Throws(
         feed,
         FRAME_FLAG_ALLOCATED_FEED | flags
     );
+    f->executor = &Array_Executor;
 
     bool threw = Trampoline_Throws(out, f);
 
@@ -985,8 +986,6 @@ bool RL_rebRunCoreThrows(
         Get_Context_From_Stack(),
         FEED_MASK_DEFAULT
     );
-
-    assert(flags & EVAL_EXECUTOR_FLAG_SINGLE_STEP);
 
     Frame(*) f = Make_Frame(
         feed,
