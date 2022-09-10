@@ -758,26 +758,12 @@ DECLARE_NATIVE(must)  // `must x` is a faster synonym for `non null x`
 //          [block! the-block!]
 //      /predicate "Test for whether an evaluation passes (default is DID)"
 //          [action!]
+//      <local> scratch
 //  ]
 //
 DECLARE_NATIVE(all)
 //
-// 1. ALL takes advantage of the tricky mechanics of "void" in the system, so
-//    that void evaluations can be vanished without requiring saving a copy of
-//    the previous output to drop out.  For instance:
-//
-//        >> check1: true, check2: false
-//
-//        >> all [if check1 [<kept>], if check2 [<dropped>]]
-//        == <kept>
-//
-//    When the second IF begins running, the <kept> value is in the OUT cell.
-//    Condition fails, so it uses `return VOID` to set CELL_FLAG_NOTE_VOIDED on
-//    the OUT cell--but without overwriting it.  The void step is skipped,
-//    and then Clear_Void_Flag() is called at the end of the loop to clear
-//    CELL_FLAG_VOIDED and un-hide the <kept> result.
-//
-// 2. Historicall there has been controversy over what should be done about
+// 1. Historically there has been controversy over what should be done about
 //    (all []) and (any []).  Languages that have variadic short-circuiting
 //    AND + OR operations typically empty AND-ing is truthy while empty OR-ing
 //    is falsey.
@@ -788,22 +774,12 @@ DECLARE_NATIVE(all)
 //    of how useful it is, see the loop wrapper FOR-BOTH.  Other behaviors
 //    can be forced with (all [... null]) or (any [true ...])
 //
-// 3. When the ALL starts, the OUT cell is stale and may contain any value
-//    produced by a previous evaluation.  But we use FRAME_FLAG_MAYBE_STALE
-//    and may be skipping stale evaluations from inside the ALL:
-//
-//        >> <foo> all [<bar> comment "<bar> will be stale, due to comment"]
-//        == <bar>  ; e.g. we don't want <foo>
-//
-//    So the stale flag alone is not enough information to know if the output
-//    cell should be marked non-stale.  So we use `any_matches`.
-//
-// 4. The predicate-running condition gets pushed over the "keepalive" stepper,
+// 2. The predicate-running condition gets pushed over the "keepalive" stepper,
 //    but we don't want the stepper to take a step before coming back to us.
 //    Temporarily patch out the Evaluator_Executor() so we get control back
 //    without that intermediate step.
 //
-// 5. The only way a falsey evaluation should make it to the end is if a
+// 3. The only way a falsey evaluation should make it to the end is if a
 //    predicate let it pass.  Don't want that to trip up `if all` so make it
 //    an isotope...but this way `(all/predicate [null] :not?) then [<runs>]`
 {
@@ -812,10 +788,9 @@ DECLARE_NATIVE(all)
     Value(*) block = ARG(block);
     Value(*) predicate = ARG(predicate);
 
-    Value(*) any_matches = ARG(return);  // reuse return cell for flag, see [3]
-    Init_False(any_matches);
+    Value(*) scratch = ARG(scratch);
 
-    Value(*) condition;  // will be found in OUT or SPARE
+    Value(*) condition;  // will be found in OUT or scratch
 
     enum {
         ST_ALL_INITIAL_ENTRY = STATE_0,
@@ -825,8 +800,8 @@ DECLARE_NATIVE(all)
 
     switch (STATE) {
       case ST_ALL_INITIAL_ENTRY: goto initial_entry;
-      case ST_ALL_EVAL_STEP: goto eval_step_finished;
-      case ST_ALL_PREDICATE: goto predicate_result_in_spare;
+      case ST_ALL_EVAL_STEP: goto eval_step_result_in_spare;
+      case ST_ALL_PREDICATE: goto predicate_result_in_scratch;
       default: assert(false);
     }
 
@@ -835,22 +810,22 @@ DECLARE_NATIVE(all)
     if (VAL_LEN_AT(block) == 0)
         return VOID;
 
-    Flags flags =
-        FRAME_FLAG_MAYBE_STALE
-        | FRAME_FLAG_TRAMPOLINE_KEEPALIVE;
+    RESET(OUT);  // default to void if all conditions vaporize, see [1]
+
+    Flags flags = FRAME_FLAG_TRAMPOLINE_KEEPALIVE;
 
     if (IS_THE_BLOCK(block))
         flags |= EVAL_EXECUTOR_FLAG_NO_EVALUATIONS;
 
     Frame(*) subframe = Make_Frame_At(block, flags);
-    Push_Frame(OUT, subframe);
+    Push_Frame(SPARE, subframe);
 
     STATE = ST_ALL_EVAL_STEP;
     return CONTINUE_SUBFRAME(subframe);
 
-} eval_step_finished: {  /////////////////////////////////////////////////////
+} eval_step_result_in_spare: {  //////////////////////////////////////////////
 
-    if (Is_Stale(OUT)) {  // void steps, e.g. (comment "hi") (if false [<a>])
+    if (Is_Void(SPARE)) {  // void steps, e.g. (comment "hi") (if false [<a>])
         if (Is_Frame_At_End(SUBFRAME))
             goto reached_end;
 
@@ -858,29 +833,29 @@ DECLARE_NATIVE(all)
         return CONTINUE_SUBFRAME(SUBFRAME);
     }
 
-    Decay_If_Isotope(OUT);
+    Decay_If_Isotope(SPARE);
 
     if (not Is_Nulled(predicate)) {
-        SUBFRAME->executor = &Just_Use_Out_Executor;  // tunnel thru, see [4]
+        SUBFRAME->executor = &Just_Use_Out_Executor;  // tunnel thru, see [2]
 
         STATE = ST_ALL_PREDICATE;
-        return CONTINUE(SPARE, predicate, OUT);
+        return CONTINUE(scratch, predicate, SPARE);
     }
 
-    condition = OUT;  // without predicate, `condition` is same as evaluation
+    condition = SPARE;  // without predicate, `condition` is same as evaluation
     goto process_condition;
 
-} predicate_result_in_spare: {  //////////////////////////////////////////////
+} predicate_result_in_scratch: {  ////////////////////////////////////////////
 
-    if (Is_Void(SPARE))  // !!! Should void predicate results signal opt-out?
+    if (Is_Void(scratch))  // !!! Should void predicate results signal opt-out?
         fail (Error_Bad_Void());
 
-    Isotopify_If_Falsey(OUT);  // predicates can approve "falseys", see [5]
+    Isotopify_If_Falsey(SPARE);  // predicates can approve "falseys", see [3]
 
-    SUBFRAME->executor = &Evaluator_Executor;  // done tunneling, see [4]
+    SUBFRAME->executor = &Evaluator_Executor;  // done tunneling, see [2]
     STATE = ST_ALL_EVAL_STEP;
 
-    condition = SPARE;
+    condition = scratch;
     goto process_condition;  // with predicate, `condition` is predicate result
 
 } process_condition: {  //////////////////////////////////////////////////////
@@ -893,22 +868,21 @@ DECLARE_NATIVE(all)
         return nullptr;
     }
 
-    Init_True(any_matches);
+    Move_Cell(OUT, SPARE);
 
     if (Is_Frame_At_End(SUBFRAME))
         goto reached_end;
 
     assert(STATE == ST_ALL_EVAL_STEP);
-    return CONTINUE_SUBFRAME(SUBFRAME);  // leave OUT as stale value
+    return CONTINUE_SUBFRAME(SUBFRAME);
 
 } reached_end: {  ////////////////////////////////////////////////////////////
 
     Drop_Frame(SUBFRAME);
 
-    if (not VAL_LOGIC(any_matches))  // can't use Is_Stale(OUT), see [3]
+    if (Is_Void(OUT))
         return VOID;
 
-    Clear_Stale_Flag(OUT);  // un-hide values "underneath" void, again see [1]
     return BRANCHED(OUT);
 }}
 
@@ -931,9 +905,9 @@ DECLARE_NATIVE(any)
 // 1. Don't let ANY return something falsey, but using an isotope means that
 //    it can work with DID/THEN
 //
-// 4. See ALL[4]
+// 2. See ALL[2]
 //
-// Note: See ALL for more comments (ANY is very similar)
+// 3. See ALL[3]
 {
     INCLUDE_PARAMS_OF_ANY;
 
@@ -960,9 +934,7 @@ DECLARE_NATIVE(any)
     if (VAL_LEN_AT(block) == 0)
         return VOID;
 
-    Flags flags =
-        FRAME_FLAG_MAYBE_STALE
-        | FRAME_FLAG_TRAMPOLINE_KEEPALIVE;
+    Flags flags = FRAME_FLAG_TRAMPOLINE_KEEPALIVE;
 
     if (IS_THE_BLOCK(block))
         flags |= EVAL_EXECUTOR_FLAG_NO_EVALUATIONS;
@@ -975,7 +947,7 @@ DECLARE_NATIVE(any)
 
 } eval_step_finished: {  /////////////////////////////////////////////////////
 
-    if (Is_Stale(OUT)) {  // void steps, e.g. (comment "hi") (if false [<a>])
+    if (Is_Void(OUT)) {  // void steps, e.g. (comment "hi") (if false [<a>])
         if (Is_Frame_At_End(SUBFRAME))
             goto reached_end;
 
@@ -986,7 +958,7 @@ DECLARE_NATIVE(any)
     Decay_If_Isotope(OUT);
 
     if (not Is_Nulled(predicate)) {
-        SUBFRAME->executor = &Just_Use_Out_Executor;  // tunnel thru, see [4]
+        SUBFRAME->executor = &Just_Use_Out_Executor;  // tunnel thru, see [2]
 
         STATE = ST_ANY_PREDICATE;
         return CONTINUE(SPARE, predicate, OUT);
@@ -1000,9 +972,9 @@ DECLARE_NATIVE(any)
     if (Is_Void(SPARE))  // !!! Should void predicate results signal opt-out?
         fail (Error_Bad_Void());
 
-    Isotopify_If_Falsey(OUT);  // predicates can approve "falseys", see [5]
+    Isotopify_If_Falsey(OUT);  // predicates can approve "falseys", see [3]
 
-    SUBFRAME->executor = &Evaluator_Executor;  // done tunneling, see [4]
+    SUBFRAME->executor = &Evaluator_Executor;  // done tunneling, see [2]
     STATE = ST_ANY_EVAL_STEP;
 
     condition = SPARE;
@@ -1022,6 +994,7 @@ DECLARE_NATIVE(any)
         goto reached_end;
 
     assert(STATE == ST_ANY_EVAL_STEP);
+    RESET(OUT);
     return CONTINUE_SUBFRAME(SUBFRAME);
 
 } reached_end: {  ////////////////////////////////////////////////////////////
