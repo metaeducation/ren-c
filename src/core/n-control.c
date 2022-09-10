@@ -439,7 +439,7 @@ DECLARE_NATIVE(did_1)  // see TO-C-NAME for why the "_1" is needed
         break;
 
       case ST_THENABLE_REJECTING_INPUT:
-        assert(bounce == OUT or bounce == BOUNCE_VOID);
+        assert(bounce == OUT);
         bounce = Init_False(OUT);
         break;
 

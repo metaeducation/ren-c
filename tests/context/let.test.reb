@@ -335,3 +335,8 @@
         y = 20
     ])
 ]
+
+; Invisible LETs should be invisible
+[
+    (3 = (1 + 2 let x: ~))
+]

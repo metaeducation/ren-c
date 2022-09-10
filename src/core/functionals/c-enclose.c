@@ -193,7 +193,7 @@ Bounce Encloser_Dispatcher(Frame(*) f)
     REBVAL *rootcopy = Copy_Cell(SPARE, rootvar);
     INIT_VAL_FRAME_PHASE_OR_LABEL(SPARE, VAL_ACTION_LABEL(inner));
 
-    return DELEGATE_MAYBE_STALE(OUT, outer, rootcopy);
+    return DELEGATE(OUT, outer, rootcopy);
 }
 
 

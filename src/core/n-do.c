@@ -297,7 +297,7 @@ DECLARE_NATIVE(do)
 
     switch (VAL_TYPE(source)) {
       case REB_BLOCK :  // no REB_GROUP, etc...EVAL does that.  see [1]
-        return DELEGATE_MAYBE_STALE(OUT, source);
+        return DELEGATE(OUT, source);
 
       case REB_VARARGS : {
         REBVAL *position;
@@ -374,10 +374,10 @@ DECLARE_NATIVE(do)
         if (First_Unspecialized_Param(nullptr, VAL_ACTION(source)))
             fail (Error_Do_Arity_Non_Zero_Raw());  // specific error?  see [3]
 
-        return DELEGATE_MAYBE_STALE(OUT, source);
+        return DELEGATE(OUT, source);
 
       case REB_FRAME :
-        return DELEGATE_MAYBE_STALE(OUT, source);
+        return DELEGATE(OUT, source);
 
       case REB_QUASI :
       case REB_QUOTED :
@@ -506,7 +506,7 @@ DECLARE_NATIVE(evaluate)
         if (REF(next))
             fail ("/NEXT Behavior not implemented for FRAME! in EVALUATE");
 
-        return DELEGATE_MAYBE_STALE(OUT, source);
+        return DELEGATE(OUT, source);
 
       case REB_ACTION: {
         if (First_Unspecialized_Param(nullptr, VAL_ACTION(source)))
@@ -735,7 +735,7 @@ DECLARE_NATIVE(applique)
 
 } definition_result_in_spare: {  /////////////////////////////////////////////
 
-    return DELEGATE_MAYBE_STALE(OUT, frame);  // now run the frame
+    return DELEGATE(OUT, frame);  // now run the frame
 }}
 
 
@@ -992,7 +992,7 @@ DECLARE_NATIVE(apply)
 
     Clear_Frame_Flag(frame_, NOTIFY_ON_ABRUPT_FAILURE);  // necessary?
 
-    return DELEGATE_MAYBE_STALE(OUT, frame);
+    return DELEGATE(OUT, frame);
 }}
 
 

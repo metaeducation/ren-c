@@ -206,7 +206,6 @@ inline static Frame(*) Maybe_Rightward_Continuation_Needed(Frame(*) f)
 
     Flags flags =  // v-- if f was fulfilling, we are
         (f->flags.bits & EVAL_EXECUTOR_FLAG_FULFILLING_ARG)
-        | FRAME_FLAG_MAYBE_STALE
         | FRAME_FLAG_FAILURE_RESULT_OK;  // trap [e: transcode "1&aa"] works
 
     if (Did_Init_Inert_Optimize_Complete(OUT, f->feed, &flags))
@@ -829,7 +828,7 @@ Bounce Evaluator_Executor(Frame(*) f)
         if (Is_Void(f_current)) {
             // can happen with SET-GROUP! e.g. `(void): ...`, current in spare
         }
-        else if (Is_Stale(OUT)) {
+        else if (Is_Void(OUT)) {
             RESET(Sink_Word_May_Fail(f_current, f_specifier));
         }
         else if (Is_Raised(OUT)) {
@@ -1217,7 +1216,7 @@ Bounce Evaluator_Executor(Frame(*) f)
             INIT_VAL_ACTION_LABEL(OUT, VAL_WORD_SYMBOL(v));
         */
 
-        if (Is_Stale(OUT)) {
+        if (Is_Void(OUT)) {
             if (Set_Var_Core_Throws(
                 SPARE,
                 GROUPS_OK,

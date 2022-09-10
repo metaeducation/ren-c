@@ -1051,7 +1051,6 @@ Bounce Action_Executor(Frame(*) f)
 
     if (b == OUT) {  // common case, made fastest
         assert(not Is_Stale(OUT));
-        assert(not Is_Void(OUT));  // must `return VOID` (C_VOID) for voidness
         Clear_Cell_Flag(OUT, UNEVALUATED);
     }
     else if (b == nullptr) {  // API and internal code can both return `nullptr`
@@ -1081,10 +1080,6 @@ Bounce Action_Executor(Frame(*) f)
 
       case C_THROWN:
         goto handle_thrown_maybe_redo;
-
-      case C_VOID :
-        assert(Is_Stale(OUT));  // The invisible output is always in f->out.
-        break;
 
       case C_REDO_UNCHECKED:
         Clear_Executor_Flag(ACTION, f, IN_DISPATCH);

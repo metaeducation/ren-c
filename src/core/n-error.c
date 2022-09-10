@@ -125,7 +125,6 @@ DECLARE_NATIVE(entrap)  // wrapped as multi-return versions TRAP and ATTEMPT
 
     Flags flags =
         FRAME_FLAG_TRAMPOLINE_KEEPALIVE  // reused for each step
-        | FRAME_FLAG_MAYBE_STALE
         | FRAME_FLAG_FAILURE_RESULT_OK  // we're trapping it
         | FRAME_FLAG_META_RESULT;
 

@@ -555,7 +555,6 @@ DECLARE_NATIVE(let)
     Flags flags =
         FLAG_STATE_BYTE(ST_EVALUATOR_REEVALUATING)
         | (f->flags.bits & EVAL_EXECUTOR_FLAG_FULFILLING_ARG)
-        | FRAME_FLAG_MAYBE_STALE
         | (f->flags.bits & FRAME_FLAG_FAILURE_RESULT_OK);
 
     Frame(*) subframe = Make_Frame(FRAME->feed, flags);
@@ -588,9 +587,6 @@ DECLARE_NATIVE(let)
 
     REBSPC *bindings = VAL_SPECIFIER(bindings_holder);
     mutable_BINDING(FEED_SINGLE(f->feed)) = bindings;
-
-    if (Is_Stale(OUT))
-        return VOID;
 
     if (Is_Pack(OUT))
         Decay_If_Isotope(OUT);

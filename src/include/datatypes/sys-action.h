@@ -187,15 +187,6 @@ inline static bool Is_Throwing(Frame(*) frame_) {
 #define THROWING Is_Throwing(frame_)
 
 
-// It is also used by path dispatch when it has taken performing a SET-PATH!
-// into its own hands, but doesn't want to bother saying to move the value
-// into the output slot...instead leaving that to the evaluator (as a
-// SET-PATH! should always evaluate to what was just set)
-//
-#define C_VOID 'V'
-#define BOUNCE_VOID \
-    cast(Bounce, &PG_R_Void)
-
 // If Eval_Core gets back an REB_R_REDO from a dispatcher, it will re-execute
 // the f->phase in the frame.  This function may be changed by the dispatcher
 // from what was originally called.
@@ -701,21 +692,19 @@ inline static REBVAL *Mark_Eval_Out_Voided(REBVAL *out) {
     return out;
 }
 
-inline static Bounce Native_Void_Result(
+inline static Bounce Native_Void_Result_Untracked(
     Value(*) out,  // have to pass; comma at callsite -> "operand has no effect"
     Frame(*) frame_
 ){
     assert(out == frame_->out);
     UNUSED(out);
     assert(not THROWING);
-    Mark_Eval_Out_Voided(frame_->out);
-    return BOUNCE_VOID;
+    Reset_Cell_Untracked(frame_->out);
+    return frame_->out;
 }
 
 inline static Bounce Native_Unmeta_Result(Frame(*) frame_, const REBVAL *v) {
     assert(not THROWING);
-    if (Is_Meta_Of_Void(v))
-        return BOUNCE_VOID;
     return Meta_Unquotify(Copy_Cell(frame_->out, v));
 }
 

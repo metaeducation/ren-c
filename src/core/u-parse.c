@@ -449,6 +449,7 @@ static Cell(const*) Get_Parse_Value(
     return cell;
 }
 
+#define BOUNCE_PARSE_GROUP_VAPORIZED nullptr
 
 //
 //  Process_Group_For_Parse: C
@@ -484,7 +485,7 @@ Bounce Process_Group_For_Parse(
         P_POS = P_INPUT_LEN;
 
     if (not inject or Is_Void(cell))  // even GET-GROUP! discards voids
-        return BOUNCE_VOID;
+        return BOUNCE_PARSE_GROUP_VAPORIZED;
 
     return cell;
 }
@@ -519,7 +520,7 @@ static Bounce Parse_One_Rule(
         if (b == BOUNCE_THROWN)
             return THROWN;
 
-        if (b == BOUNCE_VOID) {  // !!! Should this be legal?
+        if (b == BOUNCE_PARSE_GROUP_VAPORIZED) {  // !!! Should this be legal?
             assert(pos <= P_INPUT_LEN);  // !!! Process_Group ensures
             return Init_Integer(OUT, pos);
         }
@@ -781,7 +782,7 @@ static REBIXO To_Thru_Block_Rule(
                 if (b == BOUNCE_THROWN)
                     return THROWN_FLAG;
 
-                if (b == BOUNCE_VOID)
+                if (b == BOUNCE_PARSE_GROUP_VAPORIZED)
                     continue;
 
                 rule = Value_From_Bounce(b);
@@ -1404,7 +1405,7 @@ DECLARE_NATIVE(subparse)
         if (b == BOUNCE_THROWN)
             return THROWN;
 
-        if (b == BOUNCE_VOID) {  // was a (...), or null-bearing :(...)
+        if (b == BOUNCE_PARSE_GROUP_VAPORIZED) {  // (...) or void :(...)
             FETCH_NEXT_RULE(f);  // ignore result and go on to next rule
             goto pre_rule;
         }

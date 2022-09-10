@@ -1852,7 +1852,7 @@ DECLARE_NATIVE(for)
         //
         rebPushContinuation(
             OUT,  // <-- output cell
-            FRAME_FLAG_MAYBE_STALE,
+            FRAME_MASK_NONE,
             Canon(FOR_EACH), ARG(vars), rebQ(value), body
         );
         return BOUNCE_DELEGATE;

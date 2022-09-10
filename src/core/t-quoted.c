@@ -776,42 +776,6 @@ DECLARE_NATIVE(maybe)
 
 
 //
-//  maybe+: native [
-//
-//  {Special Test: Potential future of a MAYBE Intrinsic}
-//
-//      return: "Value (if it's anything other than void)"
-//          [<opt> <void> any-value!]
-//  ]
-//
-DECLARE_NATIVE(maybe_a)
-//
-// !!! One aspect of the implementation of translucency is that functions like
-// IF do not actually overwrite the output cell when they don't run their
-// branch (nor WHILE if they don't run their body, etc.)
-//
-// Something interesting about that is that we could implement MAYBE as
-// writing its argument directly onto its output, and looking for if it was
-// stale or not.  This implements that experiment.
-{
-    INCLUDE_PARAMS_OF_MAYBE_A;
-
-    if (Eval_Step_In_Subframe_Throws(
-        OUT,
-        frame_,
-        FRAME_FLAG_MAYBE_STALE
-    )){
-        return THROWN;
-    }
-
-    if (Is_Stale(OUT))
-        return VOID;
-
-    return OUT;
-}
-
-
-//
 //  quoted?: native [
 //
 //  {Tells you if the argument is QUOTED! or not}

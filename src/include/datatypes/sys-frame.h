@@ -605,7 +605,7 @@ inline static Frame(*) Prep_Frame_Core(
     #define STACK_BASE \
         (assert(Is_Action_Frame(frame_)), frame_->u.action.dispatcher_base)
 
-    #define VOID        Native_Void_Result(TRACK(OUT), frame_)
+    #define VOID        Native_Void_Result_Untracked(TRACK(OUT), frame_)
     #define NONE        (Native_None_Result_Untracked(TRACK(OUT), frame_))
     #define THROWN      Native_Thrown_Result(frame_)
     #define COPY(v)     (Native_Copy_Result_Untracked(TRACK(OUT), frame_, (v)))
@@ -960,9 +960,6 @@ inline static Bounce Continue_Subframe_Helper(
 
 #define DELEGATE_BRANCH(out,...) \
     DELEGATE_CORE((out), FRAME_FLAG_BRANCH, SPECIFIED, __VA_ARGS__)
-
-#define DELEGATE_MAYBE_STALE(out,...) \
-    DELEGATE_CORE((out), FRAME_FLAG_MAYBE_STALE, SPECIFIED, __VA_ARGS__)
 
 #define DELEGATE_SUBFRAME(sub) ( \
     Continue_Subframe_Helper(frame_, false, (sub)), \
