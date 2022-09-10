@@ -391,12 +391,13 @@ requote: reframer lambda [
 ; (It's still up in the air whether DOES has different semantics or not.)
 ;
 ->: enfixed lambda [
-    :words "Names of arguments (will not be type checked)"
-        [<end> word! lit-word! meta-word! refinement! block!]
+    'words "Names of arguments (will not be type checked)"
+        [<skip> word! lit-word! meta-word! refinement! block! group!]
     body "Code to execute"
         [block!]
 ][
-    lambda try words body
+    if group? words [words: eval words]
+    lambda words body
 ]
 
 

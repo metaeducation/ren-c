@@ -128,7 +128,7 @@ Bounce Lambda_Unoptimized_Dispatcher(Frame(*) frame_)
 //
 //      return: [action!]
 //      spec "Names of arguments (will not be type checked)"
-//          [blank! word! lit-word! meta-word! refinement! block!]
+//          [<opt> word! lit-word! meta-word! refinement! block!]
 //      body "Code to execute"
 //          [<const> block!]
 //  ]
@@ -165,46 +165,49 @@ DECLARE_NATIVE(lambda)
         item_tail = item + 1;
     }
     else {
-        assert(IS_BLANK(spec));
+        assert(Is_Nulled(spec));
         item_specifier = SPECIFIED;
         item = nullptr;
         item_tail = nullptr;
     }
 
-    Init_None(PUSH());  // key slot (signal for no pushes)
-    Init_Trash(PUSH());  // unused
-    Init_Trash(PUSH());  // unused
-    Init_Nulled(PUSH());  // description slot
+    PUSH_SLOTS();
+
+    Init_Word_Isotope(KEY_SLOT(TOP_INDEX), Canon(KEY));
+    Init_Trash(PARAM_SLOT(TOP_INDEX));  // unused
+    Init_Trash(TYPES_SLOT(TOP_INDEX));  // unused
+    Init_Nulled(NOTES_SLOT(TOP_INDEX));  // overwritten if description
 
     for (; item != item_tail; ++item) {
-        Derelativize(PUSH(), item, item_specifier);
+        PUSH_SLOTS();
+
+        Value(*) key_slot = KEY_SLOT(TOP_INDEX);
+        Derelativize(key_slot, item, item_specifier);
 
         // First in quad needs to be a WORD!, after pclass extracted...
         //
         Flags param_flags = PARAM_FLAG_VANISHABLE;
         enum Reb_Param_Class pclass;
-        if (IS_WORD(TOP))
+        if (IS_WORD(key_slot))
             pclass = PARAM_CLASS_NORMAL;
-        else if (IS_META_WORD(TOP)) {
+        else if (IS_META_WORD(key_slot)) {
             pclass = PARAM_CLASS_META;
-            Symbol(const*) symbol = VAL_WORD_SYMBOL(TOP);
-            Init_Word(TOP, symbol);
+            mutable_HEART_BYTE(key_slot) = REB_WORD;
         }
-        else if (IS_GET_WORD(TOP)) {
+        else if (IS_GET_WORD(key_slot)) {
             pclass = PARAM_CLASS_SOFT;
-            Symbol(const*) symbol = VAL_WORD_SYMBOL(TOP);
-            Init_Word(TOP, symbol);
+            mutable_HEART_BYTE(key_slot) = REB_WORD;
         }
-        else if (IS_QUOTED(TOP)) {
-            Unquotify(TOP, 1);
-            if (not IS_WORD(TOP))
+        else if (IS_QUOTED(key_slot)) {
+            Unquotify(key_slot, 1);
+            if (not IS_WORD(key_slot))
                 fail (item);
             pclass = PARAM_CLASS_HARD;
         }
-        else if (IS_PATH(TOP) and IS_REFINEMENT(TOP)) {
+        else if (IS_PATH(key_slot) and IS_REFINEMENT(key_slot)) {
             pclass = PARAM_CLASS_NORMAL;
-            Symbol(const*) symbol = VAL_REFINEMENT_SYMBOL(TOP);
-            Init_Word(TOP, symbol);
+            Symbol(const*) symbol = VAL_REFINEMENT_SYMBOL(key_slot);
+            Init_Word(key_slot, symbol);
             param_flags |= PARAM_FLAG_REFINEMENT;
         }
         else if (IS_SET_WORD(item) and VAL_WORD_ID(item) == SYM_RETURN) {
@@ -219,15 +222,15 @@ DECLARE_NATIVE(lambda)
         }
 
         Init_Param(
-            PUSH(),
+            PARAM_SLOT(TOP_INDEX),
             pclass | param_flags,
             (param_flags & PARAM_FLAG_REFINEMENT)
                 ? 0  // lambda has no types, so only parameterless refinements
                 : TS_VALUE | FLAGIT_KIND(REB_NULL)
         );
 
-        Init_Nulled(PUSH());  // types (not supported)
-        Init_Nulled(PUSH());  // notes (not supported)
+        Init_Nulled(TYPES_SLOT(TOP_INDEX));  // types (not supported)
+        Init_Nulled(NOTES_SLOT(TOP_INDEX));  // notes (not supported)
     }
 
     if (not optimizable) {

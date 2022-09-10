@@ -107,15 +107,6 @@ enum Reb_Spec_Mode {
 };
 
 
-#define KEY_SLOT(dsp)       Data_Stack_At((dsp) - 3)
-#define PARAM_SLOT(dsp)     Data_Stack_At((dsp) - 2)
-#define TYPES_SLOT(dsp)     Data_Stack_At((dsp) - 1)
-#define NOTES_SLOT(dsp)     Data_Stack_At(dsp)
-
-#define PUSH_SLOTS() \
-    do { PUSH(); PUSH(); PUSH(); PUSH(); } while (0)
-
-
 //
 //  Push_Paramlist_Quads_May_Fail: C
 //

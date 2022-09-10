@@ -376,6 +376,15 @@ enum {
 };
 
 
+#define KEY_SLOT(dsp)       Data_Stack_At((dsp) - 3)
+#define PARAM_SLOT(dsp)     Data_Stack_At((dsp) - 2)
+#define TYPES_SLOT(dsp)     Data_Stack_At((dsp) - 1)
+#define NOTES_SLOT(dsp)     Data_Stack_At(dsp)
+
+#define PUSH_SLOTS() \
+    do { PUSH(); PUSH(); PUSH(); PUSH(); } while (0)
+
+
 inline static Symbol(const*) KEY_SYMBOL(const REBKEY *key)
   { return *key; }
 
