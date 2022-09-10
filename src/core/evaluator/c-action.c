@@ -350,11 +350,6 @@ Bounce Action_Executor(Frame(*) f)
         if (Get_Feed_Flag(f->feed, NEXT_ARG_FROM_OUT)) {
             Clear_Feed_Flag(f->feed, NEXT_ARG_FROM_OUT);
 
-            if (Was_Eval_Step_Void(OUT)) {  // stale, but with void signal
-                Finalize_Void(ARG);
-                goto continue_fulfilling;
-            }
-
             if (Is_Stale(OUT)) {
                 //
                 // Something like `lib.help left-lit` is allowed to work,
@@ -389,6 +384,11 @@ Bounce Action_Executor(Frame(*) f)
                     fail (Error_No_Arg(f->label, KEY_SYMBOL(KEY)));
 
                 Init_Nulled(ARG);
+                goto continue_fulfilling;
+            }
+
+            if (Is_Void(OUT)) {  // stale, but with void signal
+                Finalize_Void(ARG);
                 goto continue_fulfilling;
             }
 

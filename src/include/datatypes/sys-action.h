@@ -604,24 +604,14 @@ enum {
 //
 inline static void Mark_Eval_Out_Stale(REBVAL *out) {
     out->header.bits |= CELL_FLAG_STALE;  // note: used by throw also
-    out->header.bits &= (~ CELL_FLAG_OUT_NOTE_VOIDED);
 }
 
-inline static void Clear_Void_Flag(REBVAL *out) {
-    assert(not Is_Throwing(TOP_FRAME));  // stale outs during throw means thrown
-    out->header.bits &= (~ CELL_FLAG_OUT_NOTE_VOIDED);
-}
 
 // Must handle the Translucent and Invisible cases before clearing stale.
 //
 inline static void Clear_Stale_Flag(REBVAL *out) {
     assert(not Is_Throwing(TOP_FRAME));  // stale outs during throw means thrown
-    out->header.bits &= ~ (CELL_FLAG_STALE | CELL_FLAG_OUT_NOTE_VOIDED);
-}
-
-inline static bool Was_Eval_Step_Void(const REBVAL *out) {
-    assert(not Is_Throwing(TOP_FRAME));  // stale outs during throw means thrown
-    return did (out->header.bits & CELL_FLAG_OUT_NOTE_VOIDED);
+    out->header.bits &= ~ (CELL_FLAG_STALE);
 }
 
 
@@ -662,35 +652,6 @@ inline static Bounce Native_Branched_Result(Frame(*) frame_, Value(*) v) {
     return frame_->out;
 }
 
-
-inline static REBVAL *Mark_Eval_Out_Voided(REBVAL *out) {
-    assert(Is_Stale(out));
-
-    // We want void evaluations to "vanish", and so we can't overwrite what's
-    // sitting in the output cell with a "void isotope".
-    //
-    //    1 + 2 comment "how would we return 3 if comment overwrites it?"
-    //
-    // But we have to leave some kind of indicator that an evaluation step
-    // produced a void, because it needs to be reified as input to things
-    // like ^META enfix operators.
-    //
-    //     1 + 2 if false [<skip>] else x => [print ["Shouldn't be 3!" x]]
-    //
-    // When the IF runs it leaves the 3 in the output cell, marked with
-    // the translucent bit.  But it clears the stale bit so that it reports
-    // a new result is available.  Yet the ELSE wants to get meta-void
-    // as its input (e.g. ~)--not the meta 3 ('3)!
-    //
-    // So enfix as well as many operations need to check the voided bit
-    // first, before assuming a stale value is unusable.  The way this is
-    // kept from having too many accidents is that the functions enforce that
-    // you can't test for an eval product being void until you've checked for
-    // staleness first.
-    //
-    out->header.bits |= CELL_FLAG_OUT_NOTE_VOIDED;
-    return out;
-}
 
 inline static Bounce Native_Void_Result_Untracked(
     Value(*) out,  // have to pass; comma at callsite -> "operand has no effect"

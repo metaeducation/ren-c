@@ -175,8 +175,8 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
         STATE == STATE_0  // can't read STATE when ABRUPT_FAILURE flag is set
         and Not_Frame_Flag(FRAME, MAYBE_STALE)
     ){
-        if (FRAME->executor != &Just_Use_Out_Executor)  // exempt, see [1]
-            ASSERT_CELL_FRESH_EVIL_MACRO(OUT);
+     /*   if (FRAME->executor != &Just_Use_Out_Executor)  // exempt, see [1]
+            ASSERT_CELL_FRESH_EVIL_MACRO(OUT); */
     }
 
 { //=//// CALL THE EXECUTOR ///////////////////////////////////////////////=//
@@ -366,13 +366,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
             and VAL_ACTION(label) == VAL_ACTION(Lib(UNWIND))
             and TG_Unwind_Frame == FRAME  // may be inaccessible, see [2]
         ){
-            if (Is_Void(&TG_Thrown_Arg)) {
-                CATCH_THROWN(SPARE, FRAME);  // act invisibily
-                Mark_Eval_Out_Voided(OUT);
-            }
-            else
-                CATCH_THROWN(OUT, FRAME);  // overwrite output
-
+            CATCH_THROWN(OUT, FRAME);
             goto result_in_out;
         }
 

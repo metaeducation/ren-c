@@ -600,11 +600,7 @@ Bounce Evaluator_Executor(Frame(*) f)
       //
       // QUOTED! forms simply evaluate to remove one level of quoting.
       //
-      // 1. `~` is the meta of the void state, which is non-valued in nature.
-      //    As such, there is no "void isotope"...if there was, then it would
-      //    overwrite evaluative products and not be useful.
-      //
-      // 2. The desire to make only quasiforms decay via the @ operator means
+      // 1. The desire to make only quasiforms decay via the @ operator means
       //    that plain apostrophe is taken to mean literal quoted null, e.g.
       //
       //        >> @ '
@@ -614,12 +610,8 @@ Bounce Evaluator_Executor(Frame(*) f)
       //    chosen as that form.  Behavior duplicated here for consistency.
 
     case QUASI_2:
-        if (Is_Meta_Of_Void(f_current)) {
-            Mark_Eval_Out_Voided(OUT);  // so things like (~ then [...]) work
-            break;  // the `~` just vaporizes, leaves output as-is, see [1]
-        }
         if (Is_Meta_Of_Blank_Isotope(f_current)) {
-            Init_Nulled(OUT);  // pure null compromise for API, see [2]
+            Init_Nulled(OUT);  // pure null compromise for API, see [1]
             break;
         }
         Derelativize(OUT, f_current, f_specifier);

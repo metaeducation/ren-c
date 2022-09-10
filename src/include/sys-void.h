@@ -97,11 +97,6 @@ inline static Value(*) Finalize_Void_Untracked(Value(*) out) {
     TRACK(Finalize_Void_Untracked(out))
 
 
-// Note: Some tests for void internal to the evaluator react to the flag
-// CELL_FLAG_OUT_NOTE_VOIDED vs. looking at the heart byte.  This is because
-// the cell may be remembering a value from a previous evaluation in case it
-// needs it, while void is bein used as the left input to an enfix operation.
-//
 inline static bool Is_Void(Cell(const*) v) {
     return HEART_BYTE(v) == REB_NULL and QUOTE_BYTE(v) == ISOTOPE_0;
 }

@@ -164,7 +164,7 @@ bool Init_Invokable_From_Feed_Throws(
     // needs review.
     //
     if (v == nullptr) {  // no first, and feed was at end
-        Mark_Eval_Out_Voided(out);
+        RESET(out);
         return false;
     }
 
