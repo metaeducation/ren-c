@@ -191,12 +191,6 @@ STATIC_ASSERT(
 //
 inline static Frame(*) Maybe_Rightward_Continuation_Needed(Frame(*) f)
 {
-    if (Get_Feed_Flag(f->feed, NEXT_ARG_FROM_OUT))  {  // e.g. `10 -> x:`
-        Clear_Feed_Flag(f->feed, NEXT_ARG_FROM_OUT);
-        Clear_Cell_Flag(f->out, UNEVALUATED);  // this helper counts as eval
-        return nullptr;
-    }
-
     if (Is_Feed_At_End(f->feed))  // `do [x:]`, `do [o.x:]`, etc. are illegal
         fail (Error_Need_Non_End(f_current));
 
@@ -362,14 +356,11 @@ Bounce Evaluator_Executor(Frame(*) f)
             Begin_Enfix_Action(subframe, VAL_ACTION_LABEL(f_current));
                 // ^-- invisibles cache NO_LOOKAHEAD
 
-            Set_Feed_Flag(f->feed, NEXT_ARG_FROM_OUT);
-
             assert(Is_Void(SPARE));
             goto process_action;
         }
 
-        if (Not_Feed_Flag(f->feed, NEXT_ARG_FROM_OUT))
-            Mark_Eval_Out_Stale(OUT);
+        Mark_Eval_Out_Stale(OUT);
 
         f_current_gotten = nullptr;  // !!! allow/require to be passe in?
         goto evaluate; }
@@ -405,8 +396,6 @@ Bounce Evaluator_Executor(Frame(*) f)
   new_expression:
 
   //=//// START NEW EXPRESSION ////////////////////////////////////////////=//
-
-    assert(Not_Feed_Flag(f->feed, NEXT_ARG_FROM_OUT));
 
     // OUT might be erased, e.g. the header is all 0 bits (CELL_MASK_0).
     // This is considered FRESH() but not WRITABLE(), so the Set_Cell_Flag()
@@ -512,7 +501,7 @@ Bounce Evaluator_Executor(Frame(*) f)
     // Lookback args are fetched from OUT, then copied into an arg slot.
     // Put the backwards quoted value into OUT.
     //
-    Derelativize(OUT, f_current, f_specifier);  // for NEXT_ARG_FROM_OUT
+    Derelativize(OUT, f_current, f_specifier);  // for FULFILLING_ENFIX
     Set_Cell_Flag(OUT, UNEVALUATED);  // so lookback knows it was quoted
 
     // We skip over the word that invoked the action (e.g. ->-, OF, =>).
@@ -532,25 +521,23 @@ Bounce Evaluator_Executor(Frame(*) f)
         // We make a special exemption for left-stealing arguments, when
         // they have nothing to their right.  They lose their priority
         // and we run the left hand side with them as a priority instead.
-        // This lets us do e.g. `(just =>)` or `help of`
+        // This lets us do e.g. `(the ->)` or `help of`
         //
-        // Swap it around so that what we had put in OUT goes back to being in
-        // the lookback cell and can be used as current.  Then put what was
-        // current into OUT so it can be consumed as the first parameter of
-        // whatever that was.
+        // Swap it around so that what we had put in OUT goes to being in
+        // SPARE and used as current.
 
-        Move_Cell(&f->feed->lookback, OUT);
+        Move_Cell(SPARE, OUT);
+
         Derelativize(OUT, f_current, f_specifier);
         Set_Cell_Flag(OUT, UNEVALUATED);
 
-        // leave *next at END
-        f_current = &f->feed->lookback;
-        f_current_gotten = nullptr;
+        Set_Executor_Flag(EVAL, f, DIDNT_LEFT_QUOTE_TUPLE);
 
-        Set_Executor_Flag(EVAL, f, DIDNT_LEFT_QUOTE_TUPLE);  // better error msg
-        Set_Feed_Flag(f->feed, NEXT_ARG_FROM_OUT);  // literal right op is arg
+        if (IS_WORD(SPARE))
+            goto word_in_spare;
 
-        goto give_up_backward_quote_priority;  // run PATH!/WORD! normal
+        assert(IS_TUPLE(SPARE));
+        goto tuple_in_spare;
     }
   }
 
@@ -565,8 +552,6 @@ Bounce Evaluator_Executor(Frame(*) f)
         VAL_ACTION_BINDING(unwrap(f_current_gotten))
     );
     Begin_Enfix_Action(subframe, VAL_WORD_SYMBOL(f_current));
-
-    Set_Feed_Flag(f->feed, NEXT_ARG_FROM_OUT);
 
     goto process_action; }
 
@@ -685,12 +670,7 @@ Bounce Evaluator_Executor(Frame(*) f)
         );
         Begin_Prefix_Action(subframe, VAL_ACTION_LABEL(f_current));
 
-        // We'd like `10 >- = 5 + 5` to work, and to do so it reevaluates in
-        // a new frame, but has to run the `=` as "getting its next arg from
-        // the output slot, but not being run in an enfix mode".
-        //
-        if (Not_Feed_Flag(subframe->feed, NEXT_ARG_FROM_OUT))
-            Mark_Eval_Out_Stale(subframe->out);
+        Mark_Eval_Out_Stale(subframe->out);
 
         goto process_action; }
 
@@ -727,9 +707,17 @@ Bounce Evaluator_Executor(Frame(*) f)
     // enfix here when there was nothing to the left, so cases like `(+ 1 2)`
     // or in "stale" left hand situations like `10 comment "hi" + 20`.
 
+      word_in_spare:  ////////////////////////////////////////////////////////
+
+        f_current = SPARE;
+        f_current_gotten = Lookup_Word_May_Fail(f_current, f_specifier);
+        goto word_common;
+
       case REB_WORD:
         if (not f_current_gotten)
             f_current_gotten = Lookup_Word_May_Fail(f_current, f_specifier);
+
+      word_common: ///////////////////////////////////////////////////////////
 
         if (VAL_TYPE_UNCHECKED(unwrap(f_current_gotten)) == REB_ACTION) {
             Action(*) action = VAL_ACTION(unwrap(f_current_gotten));
@@ -750,15 +738,24 @@ Bounce Evaluator_Executor(Frame(*) f)
 
             Context(*) binding = VAL_ACTION_BINDING(unwrap(f_current_gotten));
             Symbol(const*) label = VAL_WORD_SYMBOL(f_current);  // use WORD!
-            bool enfixed = Get_Action_Flag(action, ENFIXED);
+            bool enfixed;
+            if (Get_Executor_Flag(EVAL, f, DIDNT_LEFT_QUOTE_TUPLE)) {
+                if (Get_Action_Flag(action, ENFIXED)) {
+                    assert(false);  // !!! want OUT as *right* hand side...
+                    enfixed = true;
+                }
+                else
+                    enfixed = true;  // not enfix, but act as OUT is first arg
+
+                Clear_Executor_Flag(EVAL, f, DIDNT_LEFT_QUOTE_TUPLE);
+            }
+            else
+                enfixed = Get_Action_Flag(action, ENFIXED);
 
             Frame(*) subframe = Make_Action_Subframe(f);
             Push_Frame(OUT, subframe);
             Push_Action(subframe, action, binding);
             Begin_Action_Core(subframe, label, enfixed);
-
-            if (enfixed)
-                Set_Feed_Flag(f->feed, NEXT_ARG_FROM_OUT);
 
             goto process_action;
         }
@@ -988,18 +985,26 @@ Bounce Evaluator_Executor(Frame(*) f)
     // WORD! and GET-WORD!, and will error...directing you use GET/ANY if
     // fetching isotopes is what you actually intended.
 
+      tuple_in_spare:  ///////////////////////////////////////////////////////
+
+        f_current = SPARE;
+        TRASH_POINTER_IF_DEBUG(f_current_gotten);
+        goto tuple_common;
+
+      tuple_common:  /////////////////////////////////////////////////////////
+
       case REB_TUPLE: {
-        Cell(const*) head = VAL_SEQUENCE_AT(SPARE, f_current, 0);
+        Cell(const*) head = VAL_SEQUENCE_AT(SCRATCH, f_current, 0);
         if (IS_BLANK(head) or ANY_INERT(head)) {
             Derelativize(OUT, f_current, f_specifier);
             break;
         }
 
-        if (Get_Var_Core_Throws(SPARE, GROUPS_OK, f_current, f_specifier))
+        if (Get_Var_Core_Throws(SCRATCH, GROUPS_OK, f_current, f_specifier))
             goto return_thrown;
 
-        if (VAL_TYPE_UNCHECKED(SPARE) == REB_ACTION) {  // uncheck for isotopes
-            Action(*) act = VAL_ACTION(SPARE);
+        if (VAL_TYPE_UNCHECKED(SCRATCH) == REB_ACTION) {
+            Action(*) act = VAL_ACTION(SCRATCH);
 
             // PATH! dispatch is costly and can error in more ways than WORD!:
             //
@@ -1015,17 +1020,17 @@ Bounce Evaluator_Executor(Frame(*) f)
             Push_Frame(OUT, subframe);
             Push_Action(
                 subframe,
-                VAL_ACTION(SPARE),
-                VAL_ACTION_BINDING(SPARE)
+                VAL_ACTION(SCRATCH),
+                VAL_ACTION_BINDING(SCRATCH)
             );
-            Begin_Prefix_Action(subframe, VAL_ACTION_LABEL(SPARE));
+            Begin_Prefix_Action(subframe, VAL_ACTION_LABEL(SCRATCH));
             goto process_action;
         }
 
-        if (Is_Isotope(SPARE))  // we test *after* action (faster common case)
-            fail (Error_Bad_Word_Get(f_current, SPARE));
+        if (Is_Isotope(SCRATCH))  // we test *after* action (faster common case)
+            fail (Error_Bad_Word_Get(f_current, SCRATCH));
 
-        Move_Cell(OUT, SPARE);  // won't move CELL_FLAG_UNEVALUATED
+        Move_Cell(OUT, SCRATCH);  // won't move CELL_FLAG_UNEVALUATED
         break; }
 
 
@@ -1431,8 +1436,6 @@ Bounce Evaluator_Executor(Frame(*) f)
       //
 
       case REB_SET_BLOCK: {
-        assert(Not_Feed_Flag(f->feed, NEXT_ARG_FROM_OUT));
-
         assert(Is_Stale(OUT));  // see [1]
 
         if (VAL_LEN_AT(f_current) == 0)
@@ -1931,12 +1934,9 @@ Bounce Evaluator_Executor(Frame(*) f)
     // opportunity to quote left because it has no argument...and instead
     // retriggers and lets x run.
 
-    if (Get_Feed_Flag(f->feed, NEXT_ARG_FROM_OUT)) {
-        if (Get_Executor_Flag(EVAL, f, DIDNT_LEFT_QUOTE_TUPLE))
-            fail (Error_Literal_Left_Tuple_Raw());
+    if (Get_Executor_Flag(EVAL, f, DIDNT_LEFT_QUOTE_TUPLE))
+        fail (Error_Literal_Left_Tuple_Raw());
 
-        assert(!"Unexpected lack of use of NEXT_ARG_FROM_OUT");
-    }
 
   //=//// IF NOT A WORD!, IT DEFINITELY STARTS A NEW EXPRESSION ///////////=//
 
@@ -2133,8 +2133,6 @@ Bounce Evaluator_Executor(Frame(*) f)
 
     Fetch_Next_Forget_Lookback(f);  // advances next
 
-    Set_Feed_Flag(f->feed, NEXT_ARG_FROM_OUT);
-
     goto process_action; }
 
   finished:
@@ -2147,7 +2145,6 @@ Bounce Evaluator_Executor(Frame(*) f)
     //     o.f left-the  ; want error suggesting >- here, need flag for that
     //
     Clear_Executor_Flag(EVAL, f, DIDNT_LEFT_QUOTE_TUPLE);
-    assert(Not_Feed_Flag(f->feed, NEXT_ARG_FROM_OUT));  // must be consumed
 
   #if !defined(NDEBUG)
     Evaluator_Exit_Checks_Debug(f);

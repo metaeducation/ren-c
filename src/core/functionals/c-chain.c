@@ -205,10 +205,8 @@ Bounce Chainer_Dispatcher(Frame(*) f)
     Push_Action(sub, VAL_ACTION(chained), VAL_ACTION_BINDING(chained));
 
     Begin_Prefix_Action(sub, VAL_ACTION_LABEL(chained));
-    assert(Not_Feed_Flag(sub->feed, NEXT_ARG_FROM_OUT));
-    Set_Feed_Flag(sub->feed, NEXT_ARG_FROM_OUT);  // act like infix, see [4]
 
-    FRM_STATE_BYTE(sub) = ST_ACTION_INITIAL_ENTRY;  // maybe zeroed (or not)?
+    FRM_STATE_BYTE(sub) = ST_ACTION_FULFILLING_ENFIX_FROM_OUT;  // see [4]
     Clear_Executor_Flag(ACTION, sub, DISPATCHER_CATCHES);
     Clear_Executor_Flag(ACTION, sub, IN_DISPATCH);
     Clear_Frame_Flag(sub, NOTIFY_ON_ABRUPT_FAILURE);

@@ -569,6 +569,13 @@ enum {
 
     ST_ACTION_FULFILLING_ARGS = 100,  // weird number if dispatcher gets it
 
+    // Using the state byte to convey the next argument should come from OUT
+    // serves an additional purpose, because STATE_0 would mean that OUT has
+    // to be stale.  This allows the caller to subvert that rule as well as
+    // have the enfix-from-out signal without needing a separate flag.
+    //
+    ST_ACTION_FULFILLING_ENFIX_FROM_OUT,
+
     // If actions are invoked via path and use refinements in a different
     // order from how they appear in the frame's parameter definition, then the
     // arguments at the callsite can't be gathered in sequence.  Revisiting

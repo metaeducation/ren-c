@@ -176,6 +176,7 @@
 ~expect-arg~ !! (10 ->- lib.= 5 + 5)
 ~expect-arg~ !! (10 >- lib.= 5 + 5)
 (10 >-- lib.= 5 + 5)
+(10 >- = (5 + 5))
 
 ~no-arg~ !! (
     add 1 + 2 >- multiply 3

@@ -415,8 +415,6 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
 
     Set_Frame_Flag(FRAME, ABRUPT_FAILURE);
 
-    Clear_Feed_Flag(FRAME->feed, NEXT_ARG_FROM_OUT);  // !!! stops asserts
-
     while (TOP_FRAME != FRAME) {  // drop idle frames above the fail
         assert(Not_Frame_Flag(TOP_FRAME, NOTIFY_ON_ABRUPT_FAILURE));
         assert(Not_Frame_Flag(TOP_FRAME, ROOT_FRAME));

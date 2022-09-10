@@ -147,8 +147,6 @@ static void Evaluator_Shared_Checks_Debug(Frame(*) f)
         assert(NOT_SERIES_FLAG(f->varlist, INACCESSIBLE));
     }
 
-    assert(Not_Feed_Flag(f->feed, NEXT_ARG_FROM_OUT));  // new expression
-
     //=//// ^-- ABOVE CHECKS *ALWAYS* APPLY ///////////////////////////////=//
 
     if (Is_Feed_At_End(f->feed))

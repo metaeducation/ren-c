@@ -89,7 +89,7 @@ STATIC_ASSERT(FEED_FLAG_1_IS_FALSE == NODE_FLAG_STALE);
     FLAG_LEFT_BIT(4)
 
 
-//=//// FEED_FLAG_NEXT_ARG_FROM_OUT ///////////////////////////////////////=//
+//=//// FEED_FLAG_5 ///////////////////////////////////////////////////////=//
 //
 // When processing something like enfix, the output cell of a frame is the
 // place to look for the "next" value.  This setting has to be managed
@@ -100,7 +100,7 @@ STATIC_ASSERT(FEED_FLAG_1_IS_FALSE == NODE_FLAG_STALE);
 // flags are running short.  Once this setting is on a feed, it has to be
 // consumed or there will be an error.
 //
-#define FEED_FLAG_NEXT_ARG_FROM_OUT \
+#define FEED_FLAG_5 \
     FLAG_LEFT_BIT(5)
 
 

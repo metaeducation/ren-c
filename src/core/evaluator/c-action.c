@@ -188,6 +188,10 @@ Bounce Action_Executor(Frame(*) f)
 
         switch (STATE) {
           case ST_ACTION_INITIAL_ENTRY:
+            STATE = ST_ACTION_FULFILLING_ARGS;
+            goto fulfill;
+
+          case ST_ACTION_FULFILLING_ENFIX_FROM_OUT:
             goto fulfill;
 
           case ST_ACTION_DOING_PICKUPS:
@@ -228,7 +232,6 @@ Bounce Action_Executor(Frame(*) f)
     assert(TOP_INDEX >= f->baseline.stack_base);  // paths push refinements
 
     assert(STATE != ST_ACTION_DOING_PICKUPS);
-    STATE = ST_ACTION_FULFILLING_ARGS;
 
     for (; KEY != KEY_TAIL; ++KEY, ++ARG, ++PARAM) {
 
@@ -347,8 +350,8 @@ Bounce Action_Executor(Frame(*) f)
 
   //=//// HANDLE IF NEXT ARG IS IN OUT SLOT (e.g. ENFIX, CHAIN) ///////////=//
 
-        if (Get_Feed_Flag(f->feed, NEXT_ARG_FROM_OUT)) {
-            Clear_Feed_Flag(f->feed, NEXT_ARG_FROM_OUT);
+        if (STATE == ST_ACTION_FULFILLING_ENFIX_FROM_OUT) {
+            STATE = ST_ACTION_FULFILLING_ARGS;
 
             if (Is_Stale(OUT)) {
                 //
@@ -985,14 +988,11 @@ Bounce Action_Executor(Frame(*) f)
     f->u.action.original = save_original;  // ...er, mostly.  see [1]
     f->u.action.dispatcher_base = TOP_INDEX;
 
-    if (Get_Feed_Flag(f->feed, NEXT_ARG_FROM_OUT)) {
+    if (STATE == ST_ACTION_FULFILLING_ENFIX_FROM_OUT) {  // can happen, see [2]
         if (Get_Executor_Flag(ACTION, f, DIDNT_LEFT_QUOTE_TUPLE))  // see notes
             fail (Error_Literal_Left_Tuple_Raw());
-    }
 
-    if (Get_Feed_Flag(f->feed, NEXT_ARG_FROM_OUT)) {  // can happen, see [2]
         assert(Get_Executor_Flag(ACTION, f, RUNNING_ENFIX));
-        Clear_Feed_Flag(f->feed, NEXT_ARG_FROM_OUT);
         Mark_Eval_Out_Stale(OUT);
     }
 
@@ -1117,8 +1117,8 @@ Bounce Action_Executor(Frame(*) f)
   //
   // NOTE: Anything that calls fail() must do so before Drop_Action()!
   //
-  // 1. !!! This used to assert that there was no NEXT_ARG_FROM_OUT flag
-  //    set, but this can actually happen, e.g.:
+  // 1. !!! This used to assert rather than fail, but it turns out this can
+  //    actually happen:
   //
   //      >> left-soft: enfixed func ['x [word!]] [return x]
   //      >> (|| left-soft)
@@ -1145,7 +1145,7 @@ Bounce Action_Executor(Frame(*) f)
   //      o: make object! [f: does [1]]
   //      o.f left-the  ; want error suggesting -> here, need flag for that
 
-    if (Get_Feed_Flag(f->feed, NEXT_ARG_FROM_OUT))
+    if (STATE == ST_ACTION_FULFILLING_ENFIX_FROM_OUT)
         fail ("Left lookback toward thing that took no args, look at later");
 
     Clear_Executor_Flag(ACTION, f, DIDNT_LEFT_QUOTE_TUPLE);  // for why, see [2]
@@ -1371,17 +1371,9 @@ void Begin_Action_Core(
 
     if (enfix) {
         //
-        // While FEED_FLAG_NEXT_ARG_FROM_OUT is set only during the first
+        // While ST_ACTION_FULFILLING_ARG_FROM_OUT is set only during the first
         // argument of an enfix call, ACTION_EXECUTOR_FLAG_RUNNING_ENFIX is
         // set for the whole duration.
-        //
-        // Note: We do not set NEXT_ARG_FROM_OUT here, because that flag is
-        // checked to be clear by Fetch_Next_In_Feed(), which changes the
-        // value in the feed *and* checks to make sure NEXT_ARG_FROM_OUT is
-        // not set.  This winds up being a problem if the caller is using the
-        // current value in feed for something like the label passed in here,
-        // and intends to call Fetch_Next_In_Feed() as the next step.  So
-        // the caller must set it.
         //
         Set_Executor_Flag(ACTION, f, RUNNING_ENFIX);
 
@@ -1390,6 +1382,8 @@ void Begin_Action_Core(
         // *after* the existing flag state has been captured for invisibles.
         //
         Clear_Feed_Flag(f->feed, NO_LOOKAHEAD);
+
+        FRM_STATE_BYTE(f) = ST_ACTION_FULFILLING_ENFIX_FROM_OUT;
     }
 }
 

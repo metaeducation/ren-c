@@ -416,13 +416,6 @@ inline static void Fetch_Next_In_Feed(Feed(*) feed) {
     assert(Not_End(feed->p));  // should test for end before fetching again
     TRASH_POINTER_IF_DEBUG(feed->p);
 
-    // The NEXT_ARG_FROM_OUT flag is a trick used by frames, which must be
-    // careful about the management of the trick.  It's put on the feed
-    // and not the frame in order to catch cases where it slips by, so this
-    // assert is important.
-    //
-    assert(Not_Feed_Flag(feed, NEXT_ARG_FROM_OUT));
-
     // We are changing "Feed_At()", and thus by definition any ->gotten value
     // will be invalid.  It might be "wasteful" to always set this to null,
     // especially if it's going to be overwritten with the real fetch...but

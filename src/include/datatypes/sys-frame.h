@@ -364,16 +364,6 @@ inline static void Push_Frame(
     f->prior = TG_Top_Frame;
     TG_Top_Frame = f;
 
-    // If the frame is trying to use the NEXT_ARG_FROM_OUT trick, then it
-    // means the feed needs to keep the same output cell in a subframe to
-    // reuse that feed.
-    if (
-        Get_Feed_Flag(f->feed, NEXT_ARG_FROM_OUT)
-        and f->prior->feed == f->feed
-    ){
-        assert(f->out == f->prior->out);
-    }
-
     assert(IS_POINTER_TRASH_DEBUG(f->alloc_value_list));
     f->alloc_value_list = f;  // doubly link list, terminates in `f`
 }

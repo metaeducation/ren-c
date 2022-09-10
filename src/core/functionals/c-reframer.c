@@ -152,8 +152,6 @@ bool Init_Invokable_From_Feed_Throws(
     Feed(*) feed,
     bool error_on_deferred  // if not planning to keep running, can't ELSE/THEN
 ){
-    assert(Not_Feed_Flag(feed, NEXT_ARG_FROM_OUT));  // not supported?
-
     Cell(const*) v = first ? unwrap(first) : Try_At_Feed(feed);
 
     // !!! The case of `([x]: @)` wants to make something which when it
