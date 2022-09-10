@@ -213,15 +213,29 @@ DECLARE_NATIVE(shove)
             Set_Cell_Flag(OUT, UNEVALUATED);
     }
 
-    Set_Feed_Flag(frame_->feed, NEXT_ARG_FROM_OUT);
+    // !!! Originally this used a REEVAL technique to say that the frame's
+    // feed got its "next arg from out".  That feed flag had many problematic
+    // issues--you could skip checking for it, and it was speaking relative
+    // to "some frame".  Since then, splicing experiments were made for
+    // macros--and although those features are in flux, it's a better approach
+    // for use in this kind of feature.
+    //
+    Array(*) a = Make_Array(2);
+    SET_SERIES_USED(a, 2);
+    if (enfix) {
+        Quotify(Move_Cell(ARR_AT(a, 0), OUT), 1);
+        Move_Cell(ARR_AT(a, 1), shovee);
+    }
+    else {
+        Move_Cell(ARR_AT(a, 0), shovee);
+        Quotify(Move_Cell(ARR_AT(a, 1), OUT), 1);
+    }
+    Init_Block(SPARE, a);
+    Splice_Block_Into_Feed(frame_->feed, SPARE);
 
-    if (Reevaluate_In_Subframe_Throws(
-        OUT,
-        frame_,
-        shovee,
-        FRAME_FLAG_MAYBE_STALE,
-        enfix
-    )){
+    Frame(*) sub = Make_Frame(frame_->feed, FRAME_MASK_NONE);
+
+    if (Trampoline_Throws(OUT, sub)) {
         rebRelease(composed_set_path);  // ok if nullptr
         return THROWN;
     }

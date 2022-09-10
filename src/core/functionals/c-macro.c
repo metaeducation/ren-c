@@ -97,9 +97,6 @@ Bounce Macro_Dispatcher(Frame(*) f)
 {
     Frame(*) frame_ = f;  // for RETURN macros
 
-    if (Get_Action_Flag(FRM_PHASE(frame_), ENFIXED))
-        fail ("ENFIX MACRO not yet supported");
-
     Action(*) phase = FRM_PHASE(f);
     Array(*) details = ACT_DETAILS(phase);
     Cell(*) body = ARR_AT(details, IDX_DETAILS_1);  // code to run

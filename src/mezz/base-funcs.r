@@ -547,21 +547,24 @@ curtail: reframer func [
 
 
 ; The -- and ++ operators were deemed too "C-like", so ME was created to allow
-; `some-var: me + 1` or `some-var: me / 2` in a generic way.  They share code
-; with SHOVE, so it's folded into the implementation of that.
+; `some-var: me + 1` or `some-var: me / 2` in a generic way.  Once they shared
+; code with SHOVE, but are currently done using macro due to unfinished binding
+; semantics in SHOVE pertaining to fetched values.
 
 me: enfixed redescribe [
     {Update variable using it as the left hand argument to an enfix operator}
 ](
-    ; /ENFIX so `x: 1, x: me + 1 * 10` is 20, not 11
-    ;
-    specialize :shove/set [prefix: false]
+    macro ['left [set-word! set-tuple!] 'right [word! tuple! path!]] [
+        :[left, plain left, right]
+    ]
 )
 
 my: enfixed redescribe [
     {Update variable using it as the first argument to a prefix operator}
 ](
-    specialize :shove/set [prefix: true]
+    macro ['left [set-word! set-tuple!] 'right [word! tuple! path!]] [
+        :[left, right, plain left]
+    ]
 )
 
 so: enfixed func [

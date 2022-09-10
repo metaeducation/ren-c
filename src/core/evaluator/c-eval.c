@@ -1951,7 +1951,15 @@ Bounce Evaluator_Executor(Frame(*) f)
 
     switch (VAL_TYPE_UNCHECKED(f_next)) {
       case REB_WORD:
+        if (not f_next_gotten)
+            f_next_gotten = Lookup_Word(f_next, FEED_SPECIFIER(f->feed));
+        else
+            assert(f_next_gotten == Lookup_Word(f_next, FEED_SPECIFIER(f->feed)));
         break;  // need to check for lookahead
+
+      case REB_ACTION:
+        f_next_gotten = SPECIFIC(f_next);
+        break;
 
       default:
         Clear_Feed_Flag(f->feed, NO_LOOKAHEAD);
@@ -1963,10 +1971,6 @@ Bounce Evaluator_Executor(Frame(*) f)
     // First things first, we fetch the WORD! (if not previously fetched) so
     // we can see if it looks up to any kind of ACTION! at all.
 
-    if (not f_next_gotten)
-        f_next_gotten = Lookup_Word(f_next, FEED_SPECIFIER(f->feed));
-    else
-        assert(f_next_gotten == Lookup_Word(f_next, FEED_SPECIFIER(f->feed)));
 
   //=//// NEW EXPRESSION IF UNBOUND, NON-FUNCTION, OR NON-ENFIX ///////////=//
 
@@ -2122,7 +2126,10 @@ Bounce Evaluator_Executor(Frame(*) f)
     Frame(*) subframe = Make_Action_Subframe(f);
     Push_Frame(OUT, subframe);
     Push_Action(subframe, enfixed, VAL_ACTION_BINDING(unwrap(f_next_gotten)));
-    Begin_Enfix_Action(subframe, VAL_WORD_SYMBOL(f_next));
+    Begin_Enfix_Action(
+        subframe,
+        IS_ACTION(f_next) ? VAL_ACTION_LABEL(f_next) : VAL_WORD_SYMBOL(f_next)
+    );
 
     Fetch_Next_Forget_Lookback(f);  // advances next
 
