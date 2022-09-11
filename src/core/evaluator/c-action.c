@@ -413,14 +413,14 @@ Bounce Action_Executor(Frame(*) f)
 
             if (Is_Void(OUT)) {  // e.g. ((void) else [...])
                 Finalize_Void(ARG);
-                RESET(OUT);
+                FRESHEN(OUT);
                 goto continue_fulfilling;
             }
 
             if (GET_PARAM_FLAG(PARAM, VARIADIC)) {  // non-empty is ok, see [4]
                 assert(not Is_Void(OUT));
                 Init_Varargs_Untyped_Enfix(ARG, OUT);
-                RESET(OUT);
+                FRESHEN(OUT);
             }
             else switch (pclass) {
               case PARAM_CLASS_NORMAL:
@@ -453,7 +453,7 @@ Bounce Action_Executor(Frame(*) f)
                 if (ANY_ESCAPABLE_GET(OUT)) {
                     if (Eval_Value_Throws(ARG, OUT, SPECIFIED))
                         goto handle_thrown_maybe_redo;
-                    RESET(OUT);
+                    FRESHEN(OUT);
                 }
                 else {
                     Move_Cell(ARG, OUT);
@@ -679,7 +679,7 @@ Bounce Action_Executor(Frame(*) f)
                     EVAL_EXECUTOR_FLAG_FULFILLING_ARG
                     | FLAG_STATE_BYTE(ST_EVALUATOR_LOOKING_AHEAD)
                     | EVAL_EXECUTOR_FLAG_INERT_OPTIMIZATION
-                    | FRAME_FLAG_MAYBE_STALE;  // won't be, but avoids RESET()
+                    | FRAME_FLAG_MAYBE_STALE;  // won't be, but avoids FRESHEN()
 
                 Frame(*) subframe = Make_Frame(f->feed, flags);
                 Push_Frame(ARG, subframe);
@@ -770,7 +770,7 @@ Bounce Action_Executor(Frame(*) f)
 
         if (not Is_Cell_Erased(ARG)) {
             assert(Is_Nulled(ARG));
-            RESET(ARG);
+            FRESHEN(ARG);
         }
 
         STATE = ST_ACTION_DOING_PICKUPS;
@@ -829,7 +829,7 @@ Bounce Action_Executor(Frame(*) f)
 
     assert(STATE == ST_ACTION_TYPECHECKING);
 
-    RESET(OUT);
+    FRESHEN(OUT);
 
     KEY = ACT_KEYS(&KEY_TAIL, FRM_PHASE(f));
     ARG = FRM_ARGS_HEAD(f);
@@ -960,8 +960,7 @@ Bounce Action_Executor(Frame(*) f)
   //
   // 3. Resetting the spare cell here has a slight cost, but stops leaks of
   //    internal processing to actions.  It means that any attempts to read
-  //    the spare cell will give an assert, but also means the cell is fresh
-  //    and ready to use (e.g. to target of an Eval_Maybe_Stale() operation).
+  //    the spare cell will give an assert.
 
     assert(Not_Executor_Flag(ACTION, f, IN_DISPATCH));
     Set_Executor_Flag(ACTION, f, IN_DISPATCH);
@@ -976,7 +975,7 @@ Bounce Action_Executor(Frame(*) f)
             fail (Error_Literal_Left_Tuple_Raw());
 
         assert(Get_Executor_Flag(ACTION, f, RUNNING_ENFIX));
-        RESET(OUT);
+        FRESHEN(OUT);
     }
 
     assert(not Is_Action_Frame_Fulfilling(f));
@@ -991,7 +990,7 @@ Bounce Action_Executor(Frame(*) f)
         goto skip_output_check;
     }
 
-    RESET(SPARE);  // tiny cost (one bit clear) but worth it, see [3]
+    FRESHEN(SPARE);  // tiny cost (one bit clear) but worth it, see [3]
     STATE = STATE_0;  // reset to zero for each phase
 
     f_next_gotten = nullptr;  // arbitrary code changes fetched variables

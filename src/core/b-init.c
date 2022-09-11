@@ -275,7 +275,7 @@ static void Shutdown_Lib(void)
 {
     // !!! Since the PG_Lib_Patches are REBSER that live outside the pools,
     // the Shutdown_GC() will not kill them off.  We want to make sure the
-    // variables are RESET() and that the patches look empty in case the
+    // variables are FRESHEN() and that the patches look empty in case the
     // Startup() gets called again.
     //
     for (REBLEN i = 1; i < LIB_SYMS_MAX; ++i) {
@@ -284,7 +284,7 @@ static void Shutdown_Lib(void)
         if (INODE(PatchContext, patch) == nullptr)
             continue;  // was never initialized !!! should it not be in lib?
 
-        Erase_Cell(ARR_SINGLE(patch));  // may be PROTECTED, can't RESET()
+        Erase_Cell(ARR_SINGLE(patch));  // may be PROTECTED, can't FRESHEN()
         Decay_Series(patch);
 
         // !!! Typically nodes aren't zeroed out when they are freed.  Since
@@ -613,7 +613,7 @@ static void Init_System_Object(
     // Create SYSTEM.CODECS object
     //
     Init_Object(
-        RESET(Get_System(SYS_CODECS, 0)),
+        FRESHEN(Get_System(SYS_CODECS, 0)),
         Alloc_Context_Core(REB_OBJECT, 10, NODE_FLAG_MANAGED)
     );
 

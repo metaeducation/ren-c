@@ -1470,7 +1470,7 @@ DECLARE_NATIVE(resolve)
         REBVAL *dest = MOD_VAR(where, symbol, strict);
         if (dest != nullptr) {
             // Fail if found?
-            RESET(dest);
+            FRESHEN(dest);
         }
         else {
             dest = Append_Context(where, symbol);

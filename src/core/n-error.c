@@ -165,8 +165,6 @@ DECLARE_NATIVE(entrap)  // wrapped as multi-return versions TRAP and ATTEMPT
 
     if (not Is_Void(SPARE))
         Move_Cell(OUT, SPARE);
-    else
-        RESET(SPARE);
 
     if (Is_Frame_At_End(SUBFRAME))
         goto finished;

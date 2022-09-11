@@ -281,7 +281,7 @@ inline static void Free_Frame_Internal(Frame(*) f) {
 
 
 inline static void Push_Frame(
-    REBVAL *out,  // type check prohibits passing `unstable` cells for output
+    Value(*) out,  // typecheck prohibits passing `unstable` Cell(*) for output
     Frame(*) f
 ){
     // All calls through to Eval_Core() are assumed to happen at the same C
@@ -303,14 +303,6 @@ inline static void Push_Frame(
     // slot at all times; use null until first eval call if needed
     //
     f->out = out;
-
-    // For convenience, the frame output is always reset to "Fresh" if stale
-    // values are not wanted.  The operation is very fast (just clears bits
-    // out of the header) and this keeps callers from needing to worry about
-    // it--or dealing with asserts that they hadn't done it.
-    //
-    if (Not_Frame_Flag(f, MAYBE_STALE))
-        RESET(out);
 
   #if DEBUG_EXPIRED_LOOKBACK
     f->stress = nullptr;
@@ -394,7 +386,7 @@ inline static void Drop_Frame_Core(Frame(*) f) {
         while (n != f) {
             Raw_Array* a = ARR(n);
             n = LINK(ApiNext, a);
-            RESET(ARR_SINGLE(a));
+            FRESHEN(ARR_SINGLE(a));
             GC_Kill_Series(a);
         }
         TRASH_POINTER_IF_DEBUG(f->alloc_value_list);
@@ -717,7 +709,7 @@ inline static bool Pushed_Continuation(
         );
         grouper->executor = &Group_Branch_Executor;  // evaluates to get branch
         if (with == nullptr)
-            RESET(out);
+            FRESHEN(out);
         else
             Copy_Cell(out, unwrap(with));  // need lifetime preserved
         Push_Frame(out, grouper);

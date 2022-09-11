@@ -175,8 +175,7 @@ inline static bool Did_Init_Inert_Optimize_Complete(
             //
             if (Not_Feed_Flag(feed, NO_LOOKAHEAD)) {
                 *flags |=
-                    FRAME_FLAG_MAYBE_STALE  // won't be, but avoids RESET()
-                    | FLAG_STATE_BYTE(ST_EVALUATOR_LOOKING_AHEAD)
+                    FLAG_STATE_BYTE(ST_EVALUATOR_LOOKING_AHEAD)  // no FRESHEN()
                     | EVAL_EXECUTOR_FLAG_INERT_OPTIMIZATION;
                 return false;
             }
@@ -190,9 +189,8 @@ inline static bool Did_Init_Inert_Optimize_Complete(
                 goto optimized;  // don't look back, yield the lookahead
 
             *flags |=
-                FLAG_STATE_BYTE(ST_EVALUATOR_LOOKING_AHEAD)
-                | EVAL_EXECUTOR_FLAG_INERT_OPTIMIZATION
-                | FRAME_FLAG_MAYBE_STALE;  // won't be, but avoids RESET()
+                FLAG_STATE_BYTE(ST_EVALUATOR_LOOKING_AHEAD)  // no FRESHEN()
+                | EVAL_EXECUTOR_FLAG_INERT_OPTIMIZATION;
             return false;
         }
 
@@ -212,8 +210,7 @@ inline static bool Did_Init_Inert_Optimize_Complete(
         }
 
         *flags |=
-            FRAME_FLAG_MAYBE_STALE  // won't be, but avoids RESET()
-            | FLAG_STATE_BYTE(ST_EVALUATOR_LOOKING_AHEAD)
+            FLAG_STATE_BYTE(ST_EVALUATOR_LOOKING_AHEAD)  // no FRESHEN()
             | EVAL_EXECUTOR_FLAG_INERT_OPTIMIZATION;
         return false;  // do normal enfix handling
     }
@@ -240,9 +237,6 @@ inline static bool Eval_Step_Throws(
     Frame(*) f
 ){
     assert(Not_Feed_Flag(f->feed, NO_LOOKAHEAD));
-
-    if (Not_Frame_Flag(f, MAYBE_STALE))
-        RESET(out);
 
     assert(f->executor == &Evaluator_Executor);
 

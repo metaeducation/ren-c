@@ -311,7 +311,7 @@ bool Specialize_Action_Throws(
             return true;
         }
 
-        RESET(out);
+        FRESHEN(out);
     }
 
     const REBKEY *tail;

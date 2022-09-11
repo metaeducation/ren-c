@@ -132,8 +132,7 @@
 //
 // Fresh cells can occur "naturally" (from memset() or other 0 memory), be
 // made manually with Erase_Cell(), or an already initialized cell can have
-// its CELL_MASK_PERSIST portions wiped out with RESET() which will make it
-// appear as a void.
+// its CELL_MASK_PERSIST portions wiped out with FRESHEN().
 //
 // Note that if CELL_FLAG_PROTECTED is set on a cell, it will not be considered
 // fresh for initialization.  So the flag must be cleared or the cell erased
@@ -447,13 +446,13 @@ inline static REBVAL *RESET_CUSTOM_CELL(
     return cast(REBVAL*, out);
 }
 
-inline static REBVAL* Reset_Cell_Untracked(Cell(*) v) {
+inline static REBVAL* Freshen_Cell_Untracked(Cell(*) v) {
     FRESHEN_CELL_EVIL_MACRO(v);
     return cast(REBVAL*, v);
 }
 
-#define RESET(v) \
-    TRACK(Reset_Cell_Untracked(v))
+#define FRESHEN(v) \
+    TRACK(Freshen_Cell_Untracked(v))
         // ^-- track AFTER reset, so you can diagnose cell origin in WRITABLE()
 
 

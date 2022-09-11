@@ -948,6 +948,8 @@ DECLARE_NATIVE(apply)
             Init_Meta_Of_Void(var);
         else
             Init_Heavy_Void(var);
+
+        FRESHEN(SPARE);
     }
     else if (  // help convert logic for no-arg refinement, see [5]
         VAL_TYPE_UNCHECKED(SPARE) == REB_LOGIC  // let isotopes pass
@@ -958,14 +960,15 @@ DECLARE_NATIVE(apply)
             Init_Blackhole(var);
         else
             Init_Nulled(var);
+
+        FRESHEN(SPARE);
     }
     else {
-        Copy_Cell(var, SPARE);
+        Move_Cell(var, SPARE);
         if (VAL_PARAM_CLASS(param) == PARAM_CLASS_META)
             Meta_Quotify(var);
     }
 
-    RESET(SPARE);
     goto handle_next_item;
 
 } finalize_apply: {  /////////////////////////////////////////////////////////

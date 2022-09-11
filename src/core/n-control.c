@@ -830,7 +830,6 @@ DECLARE_NATIVE(all)
             goto reached_end;
 
         assert(STATE == ST_ALL_EVAL_STEP);
-        RESET(SPARE);
         return CONTINUE_SUBFRAME(SUBFRAME);
     }
 
@@ -953,7 +952,6 @@ DECLARE_NATIVE(any)
             goto reached_end;
 
         assert(STATE == ST_ANY_EVAL_STEP);
-        RESET(OUT);
         return CONTINUE_SUBFRAME(SUBFRAME);
     }
 
@@ -996,7 +994,6 @@ DECLARE_NATIVE(any)
         goto reached_end;
 
     assert(STATE == ST_ANY_EVAL_STEP);
-    RESET(OUT);
     return CONTINUE_SUBFRAME(SUBFRAME);
 
 } reached_end: {  ////////////////////////////////////////////////////////////
@@ -1108,7 +1105,7 @@ DECLARE_NATIVE(case)
 
 } handle_next_clause: {  /////////////////////////////////////////////////////
 
-    RESET(SPARE);  // must do before goto reached_end
+    FRESHEN(SPARE);  // must do before goto reached_end
 
     if (Is_Frame_At_End(SUBFRAME))
         goto reached_end;
@@ -1303,7 +1300,7 @@ DECLARE_NATIVE(switch)
 
 } next_switch_step: {  ///////////////////////////////////////////////////////
 
-    RESET(SPARE);  // fallout must be reset each time
+    FRESHEN(SPARE);  // fallout must be reset each time
 
     if (Is_Frame_At_End(SUBFRAME))
         goto reached_end;
@@ -1375,7 +1372,7 @@ DECLARE_NATIVE(switch)
     STATE = ST_SWITCH_RUNNING_BRANCH;
     SUBFRAME->executor = &Just_Use_Out_Executor;
     return CONTINUE_CORE(
-        RESET(OUT),
+        FRESHEN(OUT),
         FRAME_FLAG_BRANCH,
         FRM_SPECIFIER(SUBFRAME), at
     );
@@ -1662,7 +1659,7 @@ DECLARE_NATIVE(throw)
     REBVAL *v = ARG(value);
 
     if (Is_Nulled(v))
-        RESET(v);  // CONTINUE and CONTINUE VOID act the same
+        Init_Void(v);  // CONTINUE and CONTINUE VOID act the same
     else
         Meta_Unquotify(v);
 
@@ -1698,7 +1695,7 @@ void Debranch_Output(Value(*) out) {
         for (i = 0; i < 2; ++i) {
             option(Value(*)) hook = Select_Symbol_In_Context(out, syms[i]);
             if (hook)
-                RESET(unwrap(hook));
+                Init_Void(unwrap(hook));
         }
     }
     else if (Is_Void(out))

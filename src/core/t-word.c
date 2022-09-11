@@ -166,7 +166,7 @@ Bounce TO_Word(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg)
     // a generalization of "refinement paths"
     //
     if (IS_PATH(arg) or IS_TUPLE(arg)) {
-        RESET(OUT);
+        FRESHEN(OUT);
 
         DECLARE_LOCAL (temp);
 
@@ -180,14 +180,14 @@ Bounce TO_Word(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg)
                 return RAISE(
                     "Can't make ANY-WORD! from path unless it's one WORD!"
                 );
-            if (not Is_Void(OUT))
+            if (not Is_Fresh(OUT))
                 return RAISE(
                     "Can't make ANY-WORD! from path w/more than one WORD!"
                 );
             Derelativize(OUT, item, VAL_SEQUENCE_SPECIFIER(arg));
         }
 
-        if (Is_Void(OUT))
+        if (Is_Fresh(OUT))
             return RAISE("Can't MAKE ANY-WORD! from PATH! that's all BLANK!s");
 
         mutable_HEART_BYTE(OUT) = kind;

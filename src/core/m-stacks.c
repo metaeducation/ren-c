@@ -123,7 +123,7 @@ void Startup_Frame_Stack(void)
 
     Frame(*) f = Make_End_Frame(
         FRAME_MASK_NONE
-            | FRAME_FLAG_MAYBE_STALE  // avoids RESET(f->out), as it's nullptr
+            | FRAME_FLAG_MAYBE_STALE  // avoids FRESHEN(f->out), as it's nullptr
     );
 
     Push_Frame(nullptr, f);
@@ -351,7 +351,7 @@ Array(*) Pop_Stack_Values_Core(StackIndex base, Flags flags)
     SET_SERIES_LEN(a, len);
 
     Count count = 0;
-    Value(*) src = Data_Stack_At(base + 1);  // not const, will be RESET()
+    Value(*) src = Data_Stack_At(base + 1);  // not const, will be FRESHEN()
     Cell(*) dest = ARR_HEAD(a);
     for (; count < len; ++count, ++src, ++dest) {
         if (

@@ -502,7 +502,7 @@ inline static void Fetch_Next_In_Feed(Feed(*) feed) {
 inline static Cell(const*) Lookback_While_Fetching_Next(Frame(*) f) {
   #if DEBUG_EXPIRED_LOOKBACK
     if (feed->stress) {
-        RESET(feed->stress);
+        FRESHEN(feed->stress);
         free(feed->stress);
         feed->stress = nullptr;
     }

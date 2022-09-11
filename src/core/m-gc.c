@@ -767,7 +767,7 @@ static void Mark_Frame_Stack_Deep(void)
         // f->out can be nullptr at the moment, when a frame is created that
         // can ask for a different output each evaluation.
         //
-        if (f->out)  // output is allowed to be RESET()
+        if (f->out)  // output is allowed to be FRESHEN()
             Queue_Mark_Maybe_Fresh_Cell_Deep(f->out);
 
         // Frame temporary cell should always contain initialized bits, as
@@ -856,7 +856,7 @@ static void Mark_Frame_Stack_Deep(void)
             //
             // (Note that when key == f->u.action.key, that means that arg is
             // the output slot for some other frame's f->out...which is a case
-            // where transient RESET() can also leave voids in slots.)
+            // where transient FRESHEN() can also leave voids in slots.)
             //
             if (Is_Cell_Erased(arg))
                 assert(f->u.action.key != tail);

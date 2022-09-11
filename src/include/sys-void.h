@@ -56,7 +56,7 @@ inline static REBVAL *Prep_Void_Untracked(Cell(*) out) {
 
 // For reasons of both efficiency and semantics, initializing voids is only
 // allowed into cells that have no content (e.g. their memory started out at
-// zero, they were cleared with Erase_Cell(), or they've been RESET()).
+// zero, they were cleared with Erase_Cell(), or they've been FRESHEN()).
 //
 // The efficiency reason is that it avoids needing to mask out the bits that
 // are not in CELL_MASK_PERSIST.  The semantic reason is that you typically

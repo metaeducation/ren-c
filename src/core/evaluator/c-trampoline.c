@@ -178,12 +178,9 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
         assert(Get_Frame_Flag(FRAME, NOTIFY_ON_ABRUPT_FAILURE));
         assert(Is_Throwing(FRAME));
     }
-    else if (
-        STATE == STATE_0  // can't read STATE when ABRUPT_FAILURE flag is set
-        and Not_Frame_Flag(FRAME, MAYBE_STALE)
-    ){
+    else if (STATE == STATE_0) {  // can't read STATE if ABRUPT_FAILURE
         if (FRAME->executor != &Just_Use_Out_Executor)  // exempt, see [1]
-            ASSERT_CELL_FRESH_EVIL_MACRO(OUT);
+            FRESHEN(OUT);
     }
 
 { //=//// CALL THE EXECUTOR ///////////////////////////////////////////////=//

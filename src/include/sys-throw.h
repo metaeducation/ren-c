@@ -82,7 +82,7 @@ inline static Bounce Init_Thrown_With_Label(  // assumes `arg` in TG_Thrown_Arg
 
     assert(THROWING);
 
-    RESET(frame_->out);
+    FRESHEN(frame_->out);
     return BOUNCE_THROWN;
 }
 

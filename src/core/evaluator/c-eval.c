@@ -267,10 +267,8 @@ Bounce Array_Executor(Frame(*) f)
         Move_Cell(OUT, SPARE);
     }
 
-    if (Not_Frame_At_End(SUBFRAME)) {
-        RESET(SPARE);
+    if (Not_Frame_At_End(SUBFRAME))
         return BOUNCE_CONTINUE;
-    }
 
     Drop_Frame(SUBFRAME);
     return OUT;
@@ -362,7 +360,7 @@ Bounce Evaluator_Executor(Frame(*) f)
             goto process_action;
         }
 
-        RESET(OUT);
+        FRESHEN(OUT);
 
         f_current_gotten = nullptr;  // !!! allow/require to be passe in?
         goto evaluate; }
@@ -556,7 +554,7 @@ Bounce Evaluator_Executor(Frame(*) f)
     // fast tests like ANY_INERT() and IS_NULLED_OR_VOID_OR_END() has shown
     // to reduce performance in practice.  The compiler does the right thing.
 
-    assert(Is_Fresh(OUT));  // not technically necessary to RESET() header
+    assert(Is_Fresh(OUT));  // but set if jump to [word_common:, tuple_common:]
 
     switch (QUOTE_BYTE_UNCHECKED(f_current)) {
 
@@ -651,9 +649,6 @@ Bounce Evaluator_Executor(Frame(*) f)
     // Most action evaluations are triggered from a WORD! or PATH! case.
 
       case REB_ACTION: {
-        assert(Is_Fresh(OUT));
-        RESET(OUT);
-
         Frame(*) subframe = Make_Action_Subframe(f);
         Push_Frame(OUT, subframe);
         Push_Action(
@@ -721,7 +716,7 @@ Bounce Evaluator_Executor(Frame(*) f)
                     if (Get_Executor_Flag(EVAL, f, FULFILLING_ARG)) {
                         Clear_Feed_Flag(f->feed, NO_LOOKAHEAD);
                         Set_Feed_Flag(f->feed, DEFERRING_ENFIX);
-                        RESET(OUT);
+                        FRESHEN(OUT);
                         goto finished;
                     }
                 }
@@ -1243,7 +1238,7 @@ Bounce Evaluator_Executor(Frame(*) f)
             f_specifier,
             FRAME_MASK_NONE
         );
-        Push_Frame(RESET(SPARE), subframe);
+        Push_Frame(SPARE, subframe);
         subframe->executor = &Array_Executor;
 
         STATE = ST_EVALUATOR_RUNNING_SET_GROUP;
@@ -1310,7 +1305,6 @@ Bounce Evaluator_Executor(Frame(*) f)
             or STATE == ST_EVALUATOR_META_PATH_OR_META_TUPLE
         );
 
-        RESET(OUT);  // !!! Not needed, should there be debug only TRASH()
         if (Get_Var_Core_Throws(OUT, GROUPS_OK, f_current, f_specifier))
             goto return_thrown;
 

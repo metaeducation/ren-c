@@ -100,7 +100,7 @@ Frame(*) Make_Pushed_Frame_From_Action_Feed_May_Throw(
         FRAME_FLAG_MAYBE_STALE  // fulfill only added below
     );
     f->baseline.stack_base = base;  // incorporate refinements
-    RESET(out);
+    FRESHEN(out);
     Push_Frame(out, f);
 
     if (error_on_deferred)  // can't deal with ELSE/THEN, see [1]
@@ -162,7 +162,7 @@ bool Init_Invokable_From_Feed_Throws(
     // needs review.
     //
     if (v == nullptr) {  // no first, and feed was at end
-        RESET(out);
+        FRESHEN(out);
         return false;
     }
 

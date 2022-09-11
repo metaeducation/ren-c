@@ -33,7 +33,7 @@ inline static void Init_For_Vararg_End(REBVAL *out, enum Reb_Vararg_Op op) {
     if (op == VARARG_OP_TAIL_Q)
         Init_True(out);
     else
-        RESET(out);
+        FRESHEN(out);
 }
 
 
@@ -453,7 +453,7 @@ REBTYPE(Varargs)
         switch (property) {
         case SYM_TAIL_Q: {
             if (Do_Vararg_Op_Maybe_End_Throws(
-                RESET(OUT),
+                FRESHEN(OUT),
                 VARARG_OP_TAIL_Q,
                 value
             )){
@@ -481,7 +481,7 @@ REBTYPE(Varargs)
             fail (Error_Varargs_No_Look_Raw());
 
         if (Do_Vararg_Op_Maybe_End_Throws(
-            RESET(OUT),
+            FRESHEN(OUT),
             VARARG_OP_FIRST,
             value
         )){
@@ -505,7 +505,7 @@ REBTYPE(Varargs)
 
         if (not REF(part)) {
             if (Do_Vararg_Op_Maybe_End_Throws(
-                RESET(OUT),
+                FRESHEN(OUT),
                 VARARG_OP_TAKE,
                 value
             )){
@@ -527,7 +527,7 @@ REBTYPE(Varargs)
 
         while (limit-- > 0) {
             if (Do_Vararg_Op_Maybe_End_Throws(
-                RESET(OUT),
+                FRESHEN(OUT),
                 VARARG_OP_TAKE,
                 value
             )){

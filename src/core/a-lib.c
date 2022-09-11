@@ -1899,7 +1899,7 @@ REBVAL *RL_rebRescueWith(
     //
     Frame(*) dummy = Make_End_Frame(
         FRAME_MASK_NONE
-            | FRAME_FLAG_MAYBE_STALE  // avoids RESET(dummy->out), as it's null
+            | FRAME_FLAG_MAYBE_STALE  // avoids FRESHEN(dummy->out), as it's null
     );
 
     Push_Frame(nullptr, dummy);

@@ -602,7 +602,7 @@ inline static REBVAL *Maybe_Move_Cell(REBVAL *out, REBVAL *v) {
 
 inline static Bounce Native_Thrown_Result(Frame(*) frame_) {
     assert(THROWING);
-    RESET(frame_->out);
+    FRESHEN(frame_->out);
     return BOUNCE_THROWN;
 }
 

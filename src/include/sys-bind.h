@@ -838,7 +838,7 @@ inline static REBVAL *Sink_Word_May_Fail(
     REBSPC *specifier
 ){
     REBVAL *var = Lookup_Mutable_Word_May_Fail(any_word, specifier);
-    return RESET(var);
+    return FRESHEN(var);
 }
 
 

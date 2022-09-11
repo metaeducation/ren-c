@@ -127,10 +127,8 @@ DECLARE_NATIVE(reduce)
     if (Is_Nulled(predicate))  // default is no processing
         goto process_out;
 
-    if (Is_Void(OUT)) {  // voids aren't offered to predicates, by design
-        RESET(OUT);
+    if (Is_Void(OUT))  // voids aren't offered to predicates, by design
         goto next_reduce_step;  // reduce skips over voids
-    }
 
     SUBFRAME->executor = &Just_Use_Out_Executor;
     STATE = ST_REDUCE_RUNNING_PREDICATE;
@@ -138,10 +136,8 @@ DECLARE_NATIVE(reduce)
 
 } process_out: {  ////////////////////////////////////////////////////////////
 
-    if (Is_Void(OUT)) {
-        RESET(OUT);  // evaluator expects fresh cell
+    if (Is_Void(OUT))
         goto next_reduce_step;  // void results are skipped by reduce
-    }
 
     Decay_If_Isotope(OUT);
 
@@ -243,8 +239,6 @@ DECLARE_NATIVE(reduce_each)
         goto finished;
 
     SUBFRAME->executor = &Evaluator_Executor;  // restore from pass through
-
-    RESET(SPARE);
 
     STATE = ST_REDUCE_EACH_REDUCING_STEP;
     return CONTINUE_SUBFRAME(SUBFRAME);
@@ -734,7 +728,7 @@ Bounce Composer_Executor(Frame(*) f)
 
     assert(Get_Frame_Flag(f, TRAMPOLINE_KEEPALIVE));  // caller needs, see [5]
 
-    return RESET(OUT);  // signal finished, but avoid leaking temp evaluations
+    return FRESHEN(OUT);  // signal finished, but avoid leaking temp evaluations
 }}
 
 

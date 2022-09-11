@@ -363,7 +363,7 @@
 
 // The poison mask has NODE_FLAG_CELL but no NODE_FLAG_NODE, so it is not
 // READABLE(), and it is CELL_FLAG_PROTECTED so it's not WRITABLE() and nor
-// can it be RESET().  It has to be ERASE()'d.
+// can it be FRESHEN().  It has to be ERASE()'d.
 //
 #define CELL_MASK_POISON \
     (NODE_FLAG_CELL | CELL_FLAG_PROTECTED)
