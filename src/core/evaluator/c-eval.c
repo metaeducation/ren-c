@@ -1522,15 +1522,6 @@ Bounce Evaluator_Executor(Frame(*) f)
         if (Is_Raised(OUT))  // don't assign variables, see [1]
             goto set_block_drop_stack_and_continue;
 
-        StackIndex stackindex_var = BASELINE->stack_base + 1;  // see [2]
-        StackIndex stackindex_circled = frame_->u.eval.stackindex_circled;
-
-        Value(*) var = SCRATCH;  // stable location
-
-        Cell(const*) pack_meta_at = nullptr;  // pack block items are ^META'd
-        Cell(const*) pack_meta_tail = nullptr;
-        REBSPC* pack_specifier = nullptr;
-
         if (Is_Lazy(OUT)) {
             //
             // A Lazy Object has a methodization moment here to turn itself
@@ -1547,80 +1538,24 @@ Bounce Evaluator_Executor(Frame(*) f)
                 fail ("Lazy Object Reified to Lazy Object: Not Allowed");
         }
 
+        Cell(const*) pack_meta_at = nullptr;  // pack block items are ^META'd
+        Cell(const*) pack_meta_tail = nullptr;
+        REBSPC* pack_specifier = nullptr;
+
         if (Is_Pack(OUT)) {  // isotopic block
             pack_meta_at = VAL_ARRAY_AT(&pack_meta_tail, OUT);
             pack_specifier = VAL_SPECIFIER(OUT);
         }
-        else {  // !!! These branches need unifying now
-            bool is_optional = Get_Cell_Flag(
-                Data_Stack_At(stackindex_var),
-                STACK_NOTE_OPTIONAL
-            );
-            Copy_Cell(var, Data_Stack_At(stackindex_var));
+        else {
+            Meta_Quotify(OUT);  // standardize to align with pack items
 
-            assert(not IS_QUOTED(var));
-            bool isotopes_ok = IS_QUASI(var);  // quasi has meaning
-            enum Reb_Kind var_heart = CELL_HEART(var);
-
-            if (
-                var_heart == REB_WORD
-                and VAL_WORD_SYMBOL(var) == Canon(CARET_1)
-            ){
-                Meta_Quotify(OUT);  // skip writing, but tolerate isotopes
-                goto skip_circle_check;
-            }
-
-            if (
-                var_heart == REB_META_WORD
-                or var_heart == REB_META_TUPLE
-            ){
-                Meta_Quotify(OUT);
-                Set_Var_May_Fail(var, SPECIFIED, OUT);
-
-                goto skip_circle_check;
-            }
-
-            if (Is_Void(OUT) and is_optional)
-                Init_Nulled(OUT);
-
-            if (
-                var_heart == REB_WORD
-                and VAL_WORD_SYMBOL(var) == Canon(AT_1)
-            ){
-                goto skip_circle_check;  // raised errors already checked
-            }
-
-            if (var_heart == REB_BLANK)
-                goto skip_circle_check;
-
-            if (Is_Isotope(OUT) and not Is_Void(OUT) and not isotopes_ok) {
-                fail (Error_Bad_Isotope(OUT));
-            }
-            else if (
-                var_heart == REB_BLANK  // [_ ...]:
-                or (
-                    var_heart == REB_WORD
-                    and VAL_WORD_SYMBOL(var) == Canon(AT_1)  // [@ ...]:
-                )
-            ){
-                // no assignment
-            }
-            else if (
-                var_heart == REB_WORD or var_heart == REB_TUPLE
-                or var_heart == REB_THE_WORD or var_heart == REB_THE_TUPLE
-            ){
-                Set_Var_May_Fail(var, SPECIFIED, OUT);
-            }
-            else
-                assert(false);
-
-          skip_circle_check:
-
-            ++ stackindex_var;
-
-            // Don't need to handle "circling (it's already in out, if it
-            // needs to be...and will be overwritten if it doesn't)
+            pack_meta_at = OUT;
+            pack_meta_tail = OUT + 1;  // not a valid location, just a tail
+            pack_specifier = nullptr;
         }
+
+        StackIndex stackindex_var = BASELINE->stack_base + 1;  // see [2]
+        StackIndex stackindex_circled = frame_->u.eval.stackindex_circled;
 
         for (
             ;
@@ -1631,7 +1566,9 @@ Bounce Evaluator_Executor(Frame(*) f)
                 Data_Stack_At(stackindex_var),
                 STACK_NOTE_OPTIONAL
             );
-            Copy_Cell(var, Data_Stack_At(stackindex_var));  // stable for SET
+
+            Value(*) var = SCRATCH;  // stable location, safe across SET of var
+            Copy_Cell(var, Data_Stack_At(stackindex_var));
 
             assert(not IS_QUOTED(var));
             bool isotopes_ok = IS_QUASI(var);  // quasi has meaning
@@ -1708,7 +1645,7 @@ Bounce Evaluator_Executor(Frame(*) f)
                     or var_heart == REB_THE_WORD
                     or var_heart == REB_THE_TUPLE
                 );
-                Copy_Cell(OUT, SPARE);  // !!! may write void, need new method
+                Copy_Cell(OUT, SPARE);  // Note: might be void
             }
         }
 
