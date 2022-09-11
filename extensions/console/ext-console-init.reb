@@ -872,13 +872,17 @@ ext-console-impl: func [
                 ; transcripts, potentially to replay them without running
                 ; program output or evaluation results.
                 ;
-                write-stdout unspaced [unclosed "\" _ _]
+                ; *Note this is not running in a continuation at present*,
+                ; so the WRITE-STDOUT can only be done via the EMIT.
+                ;
+                emit [write-stdout unspaced [unclosed "\" _ _]]
+
                 emit [reduce [  ; reduce will runs in sandbox
                     (<*> spread result)  ; splice previous inert literal lines
                     system.console.input-hook  ; hook to run in sandbox
                 ]]
 
-                return block!
+                return block!  ; documents expected type of the REDUCE product
             ]
         ]
 
