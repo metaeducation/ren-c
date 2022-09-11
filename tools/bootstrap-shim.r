@@ -116,7 +116,7 @@ null?: :blank?
 null: blank
 
 void?: :null3?
-void: :null
+void: :null3
 
 repeat: :loop
 
