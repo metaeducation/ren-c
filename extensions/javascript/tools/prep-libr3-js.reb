@@ -37,17 +37,27 @@ e-cwrap: make-emitter "JavaScript C Wrapper functions" (
 
 === {ASYNCIFY_BLACKLIST TOLERANT CWRAP} ===
 
-; Emscripten's `cwrap` is based on a version of ccall which does not allow
-; synchronous function calls in the Asyncify build while emscripten_sleep() is
-; in effect.  However, this is an overly conservative assert when the function
-; is on the blacklist and known to not yield:
+; !!! This is a clone of code you would get if you said:
+;
+;    emcc ... -s "DEFAULT_LIBRARY_FUNCS_TO_INCLUDE=['ccall', 'cwrap']" ...
+;
+; The reason it was cloned long ago was that  Emscripten's `cwrap` was based on
+; a version of ccall which did not allow synchronous function calls in the
+; while emscripten_sleep() is in effect.  This is an overly conservative assert
+; when the function is on the blacklist and known to not yield:
 ;
 ; https://github.com/emscripten-core/emscripten/issues/9412
 ;
-; Until that's resolved, we can't use cwrap()/ccall().  So for the moment
-; we copy the code directly from %preamble.js...minus that assert:
+; So the code was copied from %preamble.js...minus that assert:
 ;
 ; https://github.com/emscripten-core/emscripten/blob/incoming/src/preamble.js
+;
+; Years later, Ren-C runs "stacklessly" and can suspend itself--meaning it
+; no longer needs Asyncify to do yields.  But while the Ren-C core is able
+; to do its own yields, it may become interesting to compile in library code
+; from other sources that does not have that ability.  So code that was put
+; together to make the Asyncify approach work is not being thrown out in a
+; kneejerk fashion...in case it someday becomes useful.
 ;
 ; Note: In actuality, there's no preprocessor on this file as on preamble.js
 ; so this has to either keep or drop *all* of the code under `#if` directives,
@@ -58,6 +68,16 @@ e-cwrap: make-emitter "JavaScript C Wrapper functions" (
 ; dodge `cwrap`/`ccall` altogether and just by-hand wrap the routines.
 ;
 e-cwrap/emit {
+
+  // Returns the C function with a specified identifier (for C++, you need to do manual name mangling)
+    function getCFunc(ident) {
+        var func = Module['_' + ident]; // closure exported function
+   /* #if ASSERTIONS
+        assert(func, 'Cannot call unknown function ' + ident + ', make sure it is exported');
+      #endif */
+        return func;
+    }
+
     function ccall_tolerant(ident, returnType, argTypes, args, opts) {
       // For fast lookup of conversion functions
       var toC = {

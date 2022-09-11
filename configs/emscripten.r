@@ -19,6 +19,14 @@ REBOL [
     }
 
     Notes: {
+      * EMCC Command-Line Options List
+        https://emscripten.org/docs/tools_reference/emcc.html
+
+      * Variables present when JS Compiler runs, set with `-sOPTION1=VALUE1`
+        https://github.com/emscripten-core/emscripten/blob/main/src/settings.js
+
+      * EMCC_DEBUG is an environment variable for diagnostic output
+
       * It's possible to use Emscripten to build Wasm code for a runtime that
         does not have any JavaScript.  This is the STANDALONE_WEBASSEMBLY
         option, but it lacks several features that are accomplished better
@@ -28,7 +36,7 @@ REBOL [
       * There is special binding glue which implements the libRebol API in
         Emscripten, so that functions like reb.Value(...) are available to
         JavaScript in the build.  See %prep-libr3-js.reb for that somewhat
-        intriacate glue.
+        intricate glue.
     }
 ]
 
@@ -132,12 +140,6 @@ extensions: make map! compose [
     View -
 ]
 
-
-; emcc command-line options:
-; https://kripken.github.io/emscripten-site/docs/tools_reference/emcc.html
-; https://github.com/kripken/emscripten/blob/incoming/src/settings.js
-;
-; Note environment variable EMCC_DEBUG for diagnostic output
 
 cflags: compose [
     (spread switch abrupt-failure-model [
@@ -299,25 +301,23 @@ ldflags: compose [
     ;
     {-s EXPORTED_FUNCTIONS=@prep/include/libr3.exports.json}
 
-    ; The EXPORTED_"RUNTIME"_METHODS are referring to JavaScript helper
-    ; functions that Emscripten provides that make it easier to call C code.
-    ; You don't need them to call C functions with integer arguments.  But
-    ; you'll probably want them if you're going to do things like transform
-    ; from JavaScript strings into an allocated UTF-8 string on the heap
-    ; that is visible to C (allocateUTF8).  See:
+    ; The EXPORTED_"RUNTIME"_METHODS are referring to functions built into
+    ; Emscripten which you can use.  Several seem to link by default, like:
     ;
-    ; https://emscripten.org/docs/porting/connecting_cpp_and_javascript/Interacting-with-code.html
+    ; * lengthBytesUTF8()
+    ; * stringToUTF8()
+    ; * UTF8ToString()
+    ; * stackAlloc()
+    ; * writeArrayToMemory()
+    ; * stackRestore()
+    ;
+    ; (Once this included `ccall`, `cwrap`, etc. but those aren't runtime
+    ; but "library" now.  See DEFAULT_LIBRARY_FUNCS_TO_INCLUDE for those...)
     ;
     ; The documentation claims a `--pre-js` or `--post-js` script that uses
     ; internal methods will auto-export them since the linker "sees" it.  But
     ; that doesn't seem to be the case (and wouldn't be the case for anything
     ; called from EM_ASM() in the C anyway).  So list them explicitly here.
-    ;
-    ; !!! For the moment (and possible future) we do not use ccall and cwrap
-    ; because they do not heed ASYNCIFY_BLACKLIST to know when it would
-    ; be safe to call a wrapped function during emscripten_sleep():
-    ;
-    ; https://github.com/emscripten-core/emscripten/issues/9412
     ;
     ; ENV is an object which represents the initial environment for getenv()
     ; calls.  This is used to set up configuration options for the C code that
@@ -326,7 +326,27 @@ ldflags: compose [
     ; one must export it (or ENV is a function stub that raises an error).
     ;
     {-s "EXPORTED_RUNTIME_METHODS=['ENV']"}
-    ; {-s "EXPORTED_RUNTIME_METHODS=['ccall', 'cwrap', 'allocateUTF8']"}
+
+    ; These are functions in Emscripten that make it easier to call C code.
+    ; You don't need them to call C functions with integer arguments.  But
+    ; you'll probably want them if you're going to do things like transform
+    ; from JavaScript strings into an allocated UTF-8 string on the heap.
+    ;
+    ; https://emscripten.org/docs/porting/connecting_cpp_and_javascript/Interacting-with-code.html
+    ;
+    ; !!! Prior to Ren-C being "stackless", there were some issues regarding
+    ; calling wrapped functions during emscripten_sleep()--where conservative
+    ; Emscripten asserts were blocking forms of reentrancy that should have
+    ; been allowed.  But it did not heed ASYNCIFY_BLACKLIST:
+    ;
+    ; https://github.com/emscripten-core/emscripten/issues/9412
+    ;
+    ; Consequently, Ren-C had a manually-copied version of ccall and cwrap.
+    ; Stackless is here to stay--so the copies aren't necessary--but the code
+    ; is kept as it is to show what flexibilities in wrapping there are in
+    ; case future questions come up.
+    ;
+    ;{-s "DEFAULT_LIBRARY_FUNCS_TO_INCLUDE=['ccall', 'cwrap']"}
 
     ; SAFE_HEAP=1 once didn't work with WASM; does now, but may not be useful:
     ; https://github.com/kripken/emscripten/issues/4474
