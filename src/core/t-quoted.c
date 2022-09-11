@@ -518,6 +518,13 @@ DECLARE_NATIVE(unget)
     if (Get_Var_Core_Throws(SPARE, GROUPS_OK, ARG(var), SPECIFIED))
         return THROWN;
 
+    if (
+        not IS_BLANK(SPARE)
+        and QUOTE_BYTE(SPARE) <= UNQUOTED_1  // QUASI_2 can be UNMETA'd
+    ){
+        fail ("Unquoted or isotopic values cannot be UNMETA'd");
+    }
+
     return UNMETA(SPARE);
 }
 
@@ -630,7 +637,7 @@ DECLARE_NATIVE(pack)
     assert(IS_BLOCK(v));
     if (rebRunThrows(SPARE,
         Canon(QUASI), Canon(COLLECT), "[", Canon(REDUCE_EACH), "^x", v,
-            "[if raised? unget x [throw unquasi x], keep x]",
+            "[keep x]",
         "]"
     )){
         return THROWN;
