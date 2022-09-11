@@ -133,8 +133,8 @@ bool Lookahead_To_Sync_Enfix_Defer_Flag(Feed(*) feed) {
 //
 Bounce Proxy_Multi_Returns_Core(Frame(*) f, Value(*) v)
 {
-    if (Is_Stale(v))
-        return VOID;
+    if (Is_Void(v))
+        return v;
 
     if (Is_Nulled(v))
         return v;
@@ -218,9 +218,9 @@ Bounce Action_Executor(Frame(*) f)
         }
     }
 
-    if (Get_Executor_Flag(ACTION, f, DELEGATE_CONTROL)) {
+    if (Get_Executor_Flag(ACTION, f, DELEGATE_CONTROL)) {  // delegation done
         Clear_Executor_Flag(ACTION, f, DELEGATE_CONTROL);
-        goto dispatch_completed;  // the dispatcher didn't want a callback
+        goto check_output;  // since it's done, return type should be checked
     }
 
     goto dispatch_phase;  // STATE byte belongs to dispatcher after fulfill
@@ -350,35 +350,56 @@ Bounce Action_Executor(Frame(*) f)
 
   //=//// HANDLE IF NEXT ARG IS IN OUT SLOT (e.g. ENFIX, CHAIN) ///////////=//
 
+    // 1. Seeing a fresh  output slot could mean that there was really
+    //    "nothing" to the left:
+    //
+    //        (else [...])
+    //
+    //    -or- it could be a consequence of being in a cell where arguments
+    //    are gathering; e.g. the `+` here will perceive "nothing":
+    //
+    //        if + 2 [...]
+    //
+    // 2. Something like `lib.help left-lit` is allowed to work, but if it was
+    //    just `obj/int-value left-lit` then the path evaluation won...but
+    //    LEFT-LIT still gets run.  It appears it has nothing to its left, but
+    //    since we remembered what happened we can give an informative error
+    //    instead of a perplexing one.
+    //
+    // 3. If an enfixed function finds it has a variadic in its first slot,
+    //    then nothing available on the left is o.k.  It means we have to put
+    //    a VARARGS! in that argument slot which will react with TRUE to TAIL?,
+    //    so feed it from the global empty array.
+    //
+    // 4. Enfix functions with variadics on the left can also deal with a
+    //    single value.  An unevaluated is stored into an array-form variadic,
+    //    so the user can do 0 or 1 TAKEs of it.
+    //
+    //    !!! It be evaluated when they TAKE (it if it's an evaluative arg),
+    //    but not if they don't.  Should failing to TAKE be seen as an error?
+    //    Failing to take first gives out-of-order evaluation.
+    //
+    // 5. This can happen e.g. with `x: 10 | x >- the`.  We raise an error in
+    //    this case, while still allowing `10 >- the` to work, so people don't
+    //    have to go out of their way rethinking operators if it could just
+    //    work out for inert types.
+    //
+    // 6. SOFT permits f->out to not carry the UNEVALUATED flag--enfixed
+    //    operations which have evaluations on their left are treated as if
+    //    they were in a GROUP!.  This is important to `1 + 2 ->- lib.* 3`
+    //    being 9, while also allowing `1 + x: ->- lib.default [...]` to work.
+    //
+    // 7. MEDIUM escapability means that it only allows the escape of one unit.
+    //    Thus when reaching this point, it must carry the UENEVALUATED FLAG.
+
         if (STATE == ST_ACTION_FULFILLING_ENFIX_FROM_OUT) {
             STATE = ST_ACTION_FULFILLING_ARGS;
 
-            if (Is_Stale(OUT)) {
-                //
-                // Something like `lib.help left-lit` is allowed to work,
-                // but if it were just `obj/int-value left-lit` then the
-                // path evaluation won...but LEFT-LIT still gets run.
-                // It appears it has nothing to its left, but since we
-                // remembered what happened we can give an informative
-                // error message vs. a perplexing one.
-                //
+            if (Is_Fresh(OUT)) {  // "nothing" to left, but see [1]
                 if (Get_Executor_Flag(ACTION, f, DIDNT_LEFT_QUOTE_TUPLE))
-                    fail (Error_Literal_Left_Tuple_Raw());
+                    fail (Error_Literal_Left_Tuple_Raw());  // see [2]
 
-                // Seeing an END in the output slot could mean that there
-                // was really "nothing" to the left, or it could be a
-                // consequence of a frame being in an argument gathering
-                // mode, e.g. the `+` here will perceive "nothing":
-                //
-                //     if + 2 [...]
-                //
-                // If an enfixed function finds it has a variadic in its
-                // first slot, then nothing available on the left is o.k.
-                // It means we have to put a VARARGS! in that argument
-                // slot which will react with TRUE to TAIL?, so feed it
-                // from the global empty array.
-                //
-                if (GET_PARAM_FLAG(PARAM, VARIADIC)) {
+                if (GET_PARAM_FLAG(PARAM, VARIADIC)) {  // empty is ok, see [3]
                     Init_Varargs_Untyped_Enfix(ARG, nullptr);
                     goto continue_fulfilling;
                 }
@@ -390,74 +411,41 @@ Bounce Action_Executor(Frame(*) f)
                 goto continue_fulfilling;
             }
 
-            if (Is_Void(OUT)) {  // stale, but with void signal
+            if (Is_Void(OUT)) {  // e.g. ((void) else [...])
                 Finalize_Void(ARG);
+                RESET(OUT);
                 goto continue_fulfilling;
             }
 
-            if (GET_PARAM_FLAG(PARAM, VARIADIC)) {
-                //
-                // Stow unevaluated cell into an array-form variadic, so
-                // the user can do 0 or 1 TAKEs of it.
-                //
-                // !!! It be evaluated when they TAKE (it if it's an
-                // evaluative arg), but not if they don't.  Should failing
-                // to TAKE be seen as an error?  Failing to take first
-                // gives out-of-order evaluation.
-                //
+            if (GET_PARAM_FLAG(PARAM, VARIADIC)) {  // non-empty is ok, see [4]
                 assert(not Is_Void(OUT));
                 Init_Varargs_Untyped_Enfix(ARG, OUT);
+                RESET(OUT);
             }
             else switch (pclass) {
               case PARAM_CLASS_NORMAL:
-                Copy_Cell(ARG, OUT);
-                if (Get_Cell_Flag(OUT, UNEVALUATED))
-                    Set_Cell_Flag(ARG, UNEVALUATED);
+                Move_Cell(ARG, OUT);
                 break;
 
               case PARAM_CLASS_META: {
-                Copy_Cell(ARG, OUT);
+                Move_Cell(ARG, OUT);
                 if (Is_Pack(ARG) and NOT_PARAM_FLAG(PARAM, WANT_PACKS))
                     Decay_If_Isotope(ARG);
                 Meta_Quotify(ARG);
-                if (Get_Cell_Flag(OUT, UNEVALUATED))
-                    Set_Cell_Flag(ARG, UNEVALUATED);
                 break; }
 
-              case PARAM_CLASS_HARD:
-                if (Not_Cell_Flag(OUT, UNEVALUATED)) {
-                    //
-                    // This can happen e.g. with `x: 10 | x >- lit`.  We
-                    // raise an error in this case, while still allowing
-                    // `10 >- lit` to work, so people don't have to go
-                    // out of their way rethinking operators if it could
-                    // just work out for inert types.
-                    //
-                    fail (Error_Evaluative_Quote_Raw());
-                }
+              case PARAM_CLASS_HARD:  // PARAM_FLAG_SKIPPABLE in pre-lookback
+                if (Not_Cell_Flag(OUT, UNEVALUATED))  // `x: 10 | x >- the`
+                    fail (Error_Evaluative_Quote_Raw());  // see [5]
 
-                // PARAM_FLAG_SKIPPABLE accounted for in pre-lookback
-
-                Copy_Cell(ARG, OUT);
-                Set_Cell_Flag(ARG, UNEVALUATED);
+                Move_Cell(ARG, OUT);
+                assert(Get_Cell_Flag(ARG, UNEVALUATED));  // move preserves
                 break;
 
-              case PARAM_CLASS_SOFT:
-                //
-                // SOFT permits f->out to not carry the UNEVALUATED
-                // flag--enfixed operations which have evaluations on
-                // their left are treated as if they were in a GROUP!.
-                // This is important to `1 + 2 ->- lib.* 3` being 9, while
-                // also allowing `1 + x: ->- lib.default [...]` to work.
-                //
+              case PARAM_CLASS_SOFT:  // can carry UNEVALUATED, see [6]
                 goto escapable;
 
-              case PARAM_CLASS_MEDIUM:
-                //
-                // MEDIUM escapability means that it only allows the escape
-                // of one unit.  Thus when reaching this point, it must carry
-                // the UENEVALUATED FLAG.
-                //
+              case PARAM_CLASS_MEDIUM:  // must carry UNEVALUATED, see [7]
                 assert(Get_Cell_Flag(OUT, UNEVALUATED));
                 goto escapable;
 
@@ -465,9 +453,10 @@ Bounce Action_Executor(Frame(*) f)
                 if (ANY_ESCAPABLE_GET(OUT)) {
                     if (Eval_Value_Throws(ARG, OUT, SPECIFIED))
                         goto handle_thrown_maybe_redo;
+                    RESET(OUT);
                 }
                 else {
-                    Copy_Cell(ARG, OUT);
+                    Move_Cell(ARG, OUT);
                     Set_Cell_Flag(ARG, UNEVALUATED);
                 }
                 break;
@@ -494,13 +483,7 @@ Bounce Action_Executor(Frame(*) f)
                 }
             }
 
-            // We are expiring the output cell here because we have "used up"
-            // the output result.  We don't know at this moment if the
-            // function going to behave invisibly.  If it does, then we have
-            // to *un-expire* the enfix invisible flag (!)
-            //
-            Mark_Eval_Out_Stale(OUT);
-
+            assert(Is_Fresh(OUT));  // output should have been "used up"
             goto continue_fulfilling;
         }
 
@@ -797,7 +780,7 @@ Bounce Action_Executor(Frame(*) f)
 } fulfill_and_any_pickups_done: {  ///////////////////////////////////////////
 
     if (Get_Executor_Flag(ACTION, f, FULFILL_ONLY)) {  // no typecheck
-        assert(Is_Stale(OUT));  // didn't touch out
+        assert(Is_Fresh(OUT));  // didn't touch out
         goto skip_output_check;
     }
 
@@ -846,7 +829,7 @@ Bounce Action_Executor(Frame(*) f)
 
     assert(STATE == ST_ACTION_TYPECHECKING);
 
-    Mark_Eval_Out_Stale(OUT);
+    RESET(OUT);
 
     KEY = ACT_KEYS(&KEY_TAIL, FRM_PHASE(f));
     ARG = FRM_ARGS_HEAD(f);
@@ -993,7 +976,7 @@ Bounce Action_Executor(Frame(*) f)
             fail (Error_Literal_Left_Tuple_Raw());
 
         assert(Get_Executor_Flag(ACTION, f, RUNNING_ENFIX));
-        Mark_Eval_Out_Stale(OUT);
+        RESET(OUT);
     }
 
     assert(not Is_Action_Frame_Fulfilling(f));
@@ -1050,7 +1033,7 @@ Bounce Action_Executor(Frame(*) f)
     Bounce b = (*dispatcher)(f);
 
     if (b == OUT) {  // common case, made fastest
-        assert(not Is_Stale(OUT));
+        assert(not Is_Fresh(OUT));  // must write output, even if just void
         Clear_Cell_Flag(OUT, UNEVALUATED);
     }
     else if (b == nullptr) {  // API and internal code can both return `nullptr`
@@ -1059,10 +1042,7 @@ Bounce Action_Executor(Frame(*) f)
     else if (Is_Bounce_A_Value(b)) {
         REBVAL *r = Value_From_Bounce(b);
         assert(Is_Api_Value(r));
-        if (Is_Void(r))
-            assert(Is_Stale(OUT));  // pure API shouldn't be able to write OUT
-        else
-            Copy_Cell(OUT, r);
+        Copy_Cell(OUT, r);
         Release_Api_Value_If_Unmanaged(r);
     }
     else switch (VAL_RETURN_SIGNAL(b)) {  // it's a "pseudotype" instruction
@@ -1097,7 +1077,9 @@ Bounce Action_Executor(Frame(*) f)
         assert(!"Invalid pseudotype returned from action dispatcher");
     }
 
-} dispatch_completed: {  /////////////////////////////////////////////////////
+    goto check_output;
+
+} check_output: {  ///////////////////////////////////////////////////////////
 
   // Here we know the function finished and nothing threw past it or had an
   // abrupt fail().  (It may have done a `return RAISE(...)`, however.)
@@ -1202,7 +1184,7 @@ Bounce Action_Executor(Frame(*) f)
                 if (Is_Specialized(PARAM))
                     Copy_Cell(ARG, PARAM);  // must reset, see [3]
                 else if (VAL_PARAM_CLASS(PARAM) == PARAM_CLASS_RETURN)
-                    RESET(ARG);  // dispatcher expects unset
+                    Init_Void(ARG);  // dispatcher expects unset
             }
 
             INIT_FRM_PHASE(f, redo_phase);

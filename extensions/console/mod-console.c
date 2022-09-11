@@ -389,7 +389,7 @@ DECLARE_NATIVE(console)
     Set_Executor_Flag(ACTION, frame_, DISPATCHER_CATCHES);
 
     rebPushContinuation(
-        RESET(metaresult),  // aka SPARE
+        metaresult,  // aka SPARE
         FRAME_FLAG_META_RESULT,
         group
     );

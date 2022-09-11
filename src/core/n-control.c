@@ -130,7 +130,7 @@ Bounce Group_Branch_Executor(Frame(*) frame_)
     if (ANY_GROUP(SPARE))
         fail (Error_Bad_Branch_Type_Raw());  // stop infinite recursion (good?)
 
-    Value(const*) with = Is_Stale(OUT) ? nullptr : OUT;  // with here, see [1]
+    Value(const*) with = Is_Fresh(OUT) ? nullptr : OUT;  // with here, see [1]
 
     assert(Is_Frame_At_End(FRAME));
     return DELEGATE_BRANCH(OUT, SPARE, with);
@@ -810,7 +810,7 @@ DECLARE_NATIVE(all)
     if (VAL_LEN_AT(block) == 0)
         return VOID;
 
-    RESET(OUT);  // default to void if all conditions vaporize, see [1]
+    Finalize_Void(OUT);  // default to void if all conditions vaporize, see [1]
 
     Flags flags = FRAME_FLAG_TRAMPOLINE_KEEPALIVE;
 
@@ -830,6 +830,7 @@ DECLARE_NATIVE(all)
             goto reached_end;
 
         assert(STATE == ST_ALL_EVAL_STEP);
+        RESET(SPARE);
         return CONTINUE_SUBFRAME(SUBFRAME);
     }
 
@@ -868,7 +869,7 @@ DECLARE_NATIVE(all)
         return nullptr;
     }
 
-    Move_Cell(OUT, SPARE);
+    Move_Cell(OUT, SPARE);  // leaves SPARE as fresh...good for next step
 
     if (Is_Frame_At_End(SUBFRAME))
         goto reached_end;
@@ -952,6 +953,7 @@ DECLARE_NATIVE(any)
             goto reached_end;
 
         assert(STATE == ST_ANY_EVAL_STEP);
+        RESET(OUT);
         return CONTINUE_SUBFRAME(SUBFRAME);
     }
 
@@ -1101,7 +1103,8 @@ DECLARE_NATIVE(case)
 
     Push_Frame(SPARE, f);
 
-    assert(Is_Void(SPARE));  // spare starts out as void
+    assert(Is_Fresh(OUT));  // out starts as fresh
+    assert(Is_Fresh(SPARE));  // spare starts out as fresh
 
 } handle_next_clause: {  /////////////////////////////////////////////////////
 
@@ -1194,18 +1197,18 @@ DECLARE_NATIVE(case)
 
 } reached_end: {  ////////////////////////////////////////////////////////////
 
-    assert(REF(all) or Is_Stale(OUT));  // never ran a branch, or running /ALL
+    assert(REF(all) or Is_Fresh(OUT));  // never ran a branch, or running /ALL
 
     Drop_Frame(SUBFRAME);
 
-    if (not Is_Void(SPARE)) {  // prioritize fallout result, see [4]
+    if (not Is_Fresh(SPARE)) {  // prioritize fallout result, see [4]
         Isotopify_If_Nulled(SPARE);
         Move_Cell(OUT, SPARE);
         return BRANCHED(OUT);
     }
 
-    if (Is_Stale(OUT))  // none of the clauses of an /ALL ran a branch
-        return VOID;
+    if (Is_Fresh(OUT))  // none of the clauses of an /ALL ran a branch
+        return Finalize_Void(OUT);
 
     return BRANCHED(OUT);
 }}
@@ -1284,6 +1287,9 @@ DECLARE_NATIVE(switch)
     }
 
   initial_entry: {  //////////////////////////////////////////////////////////
+
+    assert(Is_Fresh(SPARE));  // initial condition
+    assert(Is_Fresh(OUT));  // if no writes to out performed, we act void
 
     if (IS_BLOCK(left) and Get_Cell_Flag(left, UNEVALUATED))
         fail (Error_Block_Switch_Raw(left));  // `switch [x] [...]` safeguard
@@ -1376,17 +1382,17 @@ DECLARE_NATIVE(switch)
 
 } reached_end: {  ////////////////////////////////////////////////////////////
 
-    assert(REF(all) or Is_Stale(OUT));
+    assert(REF(all) or Is_Fresh(OUT));
 
     Drop_Frame(SUBFRAME);
 
-    if (not Is_Void(SPARE)) {  // see remarks in CASE on fallout prioritization
+    if (not Is_Fresh(SPARE)) {  // see remarks in CASE on fallout prioritization
         Move_Cell(OUT, SPARE);
         return BRANCHED(OUT);
     }
 
-    if (Is_Stale(OUT))  // no fallout, and no branches ran
-        return VOID;
+    if (Is_Fresh(OUT))  // no fallout, and no branches ran
+        return Finalize_Void(OUT);
 
     return BRANCHED(OUT);
 }}

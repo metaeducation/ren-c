@@ -594,48 +594,6 @@ enum {
 };
 
 
-// This indicates that an evaluation step didn't add any new output, but it
-// does not overwrite the contents of the out cell.  This allows the evaluator
-// to leave a value in the output slot even if there is trailing invisible
-// evaluation to be done, such as in `all [1 + 2 elide print "Hi"]`.  Something
-// like ALL wants to hold onto the 3 without needing to cache it in some
-// other location between steps.
-//
-// Stale out cells lie and use the CELL_FLAG_STALE in order to generate asserts
-// if they are observed in the stale state, without going through the proper
-// functions to reveal the content.  This helps accidental usage ,such as being
-// the left side input for enfix: `(1 comment "hi" + 2)` is not legal.
-//
-// Note: The garbage collector knows explicitly that it's okay for frame output
-// slots to have the CELL_FLAG_STALE bit set; it's not usually legal.
-//
-inline static void Mark_Eval_Out_Stale(REBVAL *out) {
-    out->header.bits |= CELL_FLAG_STALE;  // note: used by throw also
-}
-
-
-// Must handle the Translucent and Invisible cases before clearing stale.
-//
-inline static void Clear_Stale_Flag(REBVAL *out) {
-    assert(not Is_Throwing(TOP_FRAME));  // stale outs during throw means thrown
-    out->header.bits &= ~ (CELL_FLAG_STALE);
-}
-
-
-// !!! We want a freshly prep'd cell to count as stale, e.g. if a construct does
-// a RESET() and then decides never to call Eval() into the cell at all.  But
-// we also want fresh cells to be all 0 for fast memset().  (Fresh cells get
-// their unreadability from not having NODE_FLAG_NODE set, not from having
-// CELL_FLAG_STALE set).  Review design of this.
-//
-inline static bool Is_Stale(const REBVAL *out) {
-    ASSERT_CELL_WRITABLE_EVIL_MACRO(out);
-    assert(not Is_Throwing(TOP_FRAME));  // stale outs during throw means thrown
-
-    return did (out->header.bits & CELL_FLAG_STALE);
-}
-
-
 inline static REBVAL *Maybe_Move_Cell(REBVAL *out, REBVAL *v) {
     if (v == out)
         return out;
@@ -644,7 +602,7 @@ inline static REBVAL *Maybe_Move_Cell(REBVAL *out, REBVAL *v) {
 
 inline static Bounce Native_Thrown_Result(Frame(*) frame_) {
     assert(THROWING);
-    Mark_Eval_Out_Stale(frame_->out);
+    RESET(frame_->out);
     return BOUNCE_THROWN;
 }
 
@@ -667,8 +625,7 @@ inline static Bounce Native_Void_Result_Untracked(
     assert(out == frame_->out);
     UNUSED(out);
     assert(not THROWING);
-    Reset_Cell_Untracked(frame_->out);
-    return frame_->out;
+    return Init_Void_Untracked(frame_->out);
 }
 
 inline static Bounce Native_Unmeta_Result(Frame(*) frame_, const REBVAL *v) {

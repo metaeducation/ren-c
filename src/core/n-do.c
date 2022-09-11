@@ -58,9 +58,7 @@ DECLARE_NATIVE(reeval)
 
     bool enfix = IS_ACTION(v) and Get_Action_Flag(VAL_ACTION(v), ENFIXED);
 
-    Flags flags = FRAME_FLAG_MAYBE_STALE;
-
-    Mark_Eval_Out_Stale(OUT);
+    Flags flags = FRAME_MASK_NONE;
 
     if (Reevaluate_In_Subframe_Throws(
         OUT,  // reeval :comment "this should leave old input"
@@ -71,9 +69,6 @@ DECLARE_NATIVE(reeval)
     )){
         return THROWN;
     }
-
-    if (Is_Stale(OUT))
-        return VOID;
 
     return OUT;
 }
@@ -239,8 +234,6 @@ DECLARE_NATIVE(shove)
         rebRelease(composed_set_path);  // ok if nullptr
         return THROWN;
     }
-
-    assert(not Is_Stale(OUT));  // !!! can this happen?
 
     if (REF(set)) {
         if (IS_SET_WORD(left)) {
@@ -483,6 +476,7 @@ DECLARE_NATIVE(evaluate)
             if (REF(next))
                 rebElide(Canon(SET), rebQ(rest_var), nullptr);
 
+            Init_Void(OUT);  // !!! Callers not prepared for more ornery result
             return Proxy_Multi_Returns(frame_);
         }
 
@@ -494,7 +488,7 @@ DECLARE_NATIVE(evaluate)
 
         Frame(*) subframe = Make_Frame(
             feed,
-            FRAME_FLAG_ALLOCATED_FEED | FRAME_FLAG_MAYBE_STALE
+            FRAME_FLAG_ALLOCATED_FEED
         );
         Push_Frame(OUT, subframe);
 
@@ -585,8 +579,6 @@ DECLARE_NATIVE(evaluate)
     if (REF(next))
         rebElide(Canon(SET), rebQ(rest_var), source);
 
-    if (Is_Void(SPARE))
-        return VOID;
     return COPY(SPARE);
 
 } single_step_result_in_out: {  //////////////////////////////////////////////
@@ -600,8 +592,6 @@ DECLARE_NATIVE(evaluate)
     if (REF(next))
         rebElide(Canon(SET), rebQ(rest_var), source);
 
-    if (Is_Stale(OUT))
-        return VOID;
     return OUT;
 }}
 
@@ -913,6 +903,7 @@ DECLARE_NATIVE(apply)
             or GET_PARAM_FLAG(e->param, REFINEMENT)
             or GET_PARAM_FLAG(e->param, SKIPPABLE)
         ){
+            Init_Void(e->var);  // TBD: RETURN will be a pure local
             continue;  // skippable only requested by name, see [4]
         }
         if (
@@ -994,7 +985,7 @@ DECLARE_NATIVE(apply)
     while (Did_Advance_Evars(e)) {  // convert unspecialized to none, see [6]
         if (VAL_TYPE_UNCHECKED(e->var) == REB_TAG)  // skip over isotopes
             if (VAL_SERIES(e->var) == VAL_SERIES(Root_Unspecialized_Tag))
-                RESET(e->var);
+                Init_Void(e->var);
 
         /* Remove_Binder_Index(&binder, KEY_SYMBOL(e.key)); */
     }

@@ -92,29 +92,9 @@ static REBI64 mark_count = 0;
 
 static void Queue_Mark_Cell_Deep(Cell(const*) v);
 
-inline static void Queue_Mark_Maybe_Stale_Cell_Deep(Cell(*) v) {
-    if (Is_Cell_Erased(v) or v->header.bits == CELL_MASK_0_ROOT)
-        return;
-
-    // !!! CELL_FLAG_STALE generally makes cells write-only (unreadable).  So
-    // most cell functions--including the GC--will choke when it is set.  But
-    // in frame outputs we use this to an advantage when holding a value that
-    // can "fall out" of an evaluation despite being stale.
-    //
-    // Fiddling the bits during GC is lame, but it would undermine the purpose
-    // to try and make an _Unchecked() version of the GC that tolerated this.
-    // It's only for debug builds, so don't fret over doing this the easy way.
-    //
-  #if !defined(NDEBUG)
-    uintptr_t saved_bits = v->header.bits;
-    v->header.bits &= (~ CELL_FLAG_STALE);
-  #endif
-
-    Queue_Mark_Cell_Deep(v);
-
-  #if !defined(NDEBUG)
-    v->header.bits = saved_bits;
-  #endif
+inline static void Queue_Mark_Maybe_Fresh_Cell_Deep(Cell(*) v) {
+    if (not Is_Fresh(v))
+        Queue_Mark_Cell_Deep(v);
 }
 
 
@@ -567,12 +547,12 @@ static void Mark_Root_Series(void)
                         ++mark_count;
 
                         // Like frame cells or locals, API cells can be
-                        // evaluation targets.  They should only be stale if
+                        // evaluation targets.  They should only be fresh if
                         // they are targeted by some frame's f->out.
                         //
                         // !!! Should we verify this?
                         //
-                        Queue_Mark_Maybe_Stale_Cell_Deep(ARR_SINGLE(a));
+                        Queue_Mark_Maybe_Fresh_Cell_Deep(ARR_SINGLE(a));
                     }
                 }
 
@@ -787,20 +767,15 @@ static void Mark_Frame_Stack_Deep(void)
         // f->out can be nullptr at the moment, when a frame is created that
         // can ask for a different output each evaluation.
         //
-        // We use the CELL_FLAG_STALE bit to mark outputs stale, to avoid
-        // accidental usage of them by enfix or other operations.  So we need
-        // to use an unchecked version of the mark.  Throw in the checks that
-        // should work...
-        //
-        if (f->out)
-            Queue_Mark_Maybe_Stale_Cell_Deep(f->out);
+        if (f->out)  // output is allowed to be RESET()
+            Queue_Mark_Maybe_Fresh_Cell_Deep(f->out);
 
         // Frame temporary cell should always contain initialized bits, as
         // Make_Frame() sets it up and no one is supposed to trash it.
         //
-        Queue_Mark_Maybe_Stale_Cell_Deep(&f->feed->fetched);
-        Queue_Mark_Maybe_Stale_Cell_Deep(&f->feed->lookback);
-        Queue_Mark_Maybe_Stale_Cell_Deep(&f->spare);
+        Queue_Mark_Maybe_Fresh_Cell_Deep(&f->feed->fetched);
+        Queue_Mark_Maybe_Fresh_Cell_Deep(&f->feed->lookback);
+        Queue_Mark_Maybe_Fresh_Cell_Deep(&f->spare);
 
         if (f->executor == &Evaluator_Executor) {
             if (not Is_Cell_Erased(&f->u.eval.scratch))  // extra GC-safe cell
@@ -887,7 +862,7 @@ static void Mark_Frame_Stack_Deep(void)
                 assert(f->u.action.key != tail);
             else {
                 if (key == f->u.action.key)
-                    Queue_Mark_Maybe_Stale_Cell_Deep(arg);
+                    Queue_Mark_Maybe_Fresh_Cell_Deep(arg);
                 else
                     Queue_Mark_Cell_Deep(arg);
             }
@@ -1176,8 +1151,8 @@ REBLEN Recycle_Core(bool shutdown, REBSER *sweeplist)
     // was in a thrown state.  There's no particular reason to enforce that
     // in stackless, so it has been relaxed.
     //
-    Queue_Mark_Maybe_Stale_Cell_Deep(&TG_Thrown_Arg);
-    Queue_Mark_Maybe_Stale_Cell_Deep(&TG_Thrown_Label);
+    Queue_Mark_Maybe_Fresh_Cell_Deep(&TG_Thrown_Arg);
+    Queue_Mark_Maybe_Fresh_Cell_Deep(&TG_Thrown_Label);
     Propagate_All_GC_Marks();
 
     // MARKING PHASE: the "root set" from which we determine the liveness

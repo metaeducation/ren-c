@@ -120,13 +120,14 @@ DECLARE_NATIVE(entrap)  // wrapped as multi-return versions TRAP and ATTEMPT
 
   initial_entry: {  /////////////////////////////////////////////////////////
 
+    Init_Void(OUT);  // default if all evaluations produce void
+
     if (Not_Cell_Flag(code, CONST))
         Set_Cell_Flag(code, EXPLICITLY_MUTABLE);  // see DECLARE_NATIVE(do)
 
     Flags flags =
         FRAME_FLAG_TRAMPOLINE_KEEPALIVE  // reused for each step
-        | FRAME_FLAG_FAILURE_RESULT_OK  // we're trapping it
-        | FRAME_FLAG_META_RESULT;
+        | FRAME_FLAG_FAILURE_RESULT_OK;  // we're trapping it
 
     Frame(*) sub;
     if (IS_BLOCK(code)) {
@@ -135,10 +136,16 @@ DECLARE_NATIVE(entrap)  // wrapped as multi-return versions TRAP and ATTEMPT
             flags
                 | FRAME_FLAG_ALLOCATED_FEED
         );
-        Push_Frame(OUT, sub);
+        Push_Frame(SPARE, sub);
     }
     else {
-        bool pushed = Pushed_Continuation(OUT, flags, SPECIFIED, code, nullptr);
+        bool pushed = Pushed_Continuation(
+            SPARE,
+            flags,
+            SPECIFIED,
+            code,
+            nullptr
+        );
         assert(pushed);
         UNUSED(pushed);
         sub = TOP_FRAME;
@@ -149,11 +156,17 @@ DECLARE_NATIVE(entrap)  // wrapped as multi-return versions TRAP and ATTEMPT
 
 } eval_step_result_in_out: {  ////////////////////////////////////////////////
 
-    if (Is_Meta_Of_Raised(OUT)) {
+    if (Is_Raised(SPARE)) {
         Drop_Frame(SUBFRAME);
+        Move_Cell(OUT, SPARE);
         mutable_QUOTE_BYTE(OUT) = UNQUOTED_1;  // change isotope error to plain
-        return BRANCHED(OUT);  // leave multi-return result unset
+        return BRANCHED(OUT);
     }
+
+    if (not Is_Void(SPARE))
+        Move_Cell(OUT, SPARE);
+    else
+        RESET(SPARE);
 
     if (Is_Frame_At_End(SUBFRAME))
         goto finished;
@@ -163,7 +176,7 @@ DECLARE_NATIVE(entrap)  // wrapped as multi-return versions TRAP and ATTEMPT
 } finished: {  ///////////////////////////////////////////////////////////////
 
     Drop_Frame(SUBFRAME);
-    return OUT;  // ^META result
+    return Meta_Quotify(OUT);  // ^META result, may be initial void state
 }}
 
 

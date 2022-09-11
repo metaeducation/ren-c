@@ -260,7 +260,8 @@ static bool Subparse_Throws(
     assert(ANY_SERIES_KIND(CELL_HEART(input)));
 
     Push_Frame(out, f);  // checks for C stack overflow
-    Finalize_Void(out);
+    assert(Is_Fresh(out));
+
     Push_Action(f, VAL_ACTION(Lib(SUBPARSE)), UNBOUND);
 
     Begin_Prefix_Action(f, Canon(SUBPARSE));
@@ -513,7 +514,7 @@ static Bounce Parse_One_Rule(
 ){
     USE_PARAMS_OF_SUBPARSE;
 
-    assert(Is_Void(OUT));
+    assert(Is_Fresh(OUT));
 
     if (IS_GROUP(rule) or IS_GET_GROUP(rule)) {
         Bounce b = Process_Group_For_Parse(frame_, SPARE, rule);
@@ -1296,7 +1297,7 @@ DECLARE_NATIVE(subparse)
     REBLEN collection_tail = P_COLLECTION ? ARR_LEN(P_COLLECTION) : 0;
     UNUSED(ARG(collection));  // implicitly accessed as P_COLLECTION
 
-    assert(Is_Void(OUT));  // invariant provided by parse3
+    assert(Is_Fresh(OUT));  // invariant provided by parse3
 
   #if !defined(NDEBUG)
     //
@@ -1523,7 +1524,7 @@ DECLARE_NATIVE(subparse)
                 if (not IS_GROUP(P_RULE))
                     fail ("Old PARSE REPEAT requires GROUP! for times count");
 
-                assert(Is_Void(OUT));
+                assert(Is_Fresh(OUT));
                 if (Eval_Value_Throws(OUT, P_RULE, P_RULE_SPECIFIER))
                     goto return_thrown;
 
@@ -1673,7 +1674,7 @@ DECLARE_NATIVE(subparse)
                     Frame(*) subframe = Make_Frame(f->feed, FRAME_MASK_NONE);
 
                     bool interrupted;
-                    assert(Is_Void(OUT));  // invariant until finished
+                    assert(Is_Fresh(OUT));  // invariant until finished
                     bool threw = Subparse_Throws(
                         &interrupted,
                         OUT,
@@ -1945,7 +1946,7 @@ DECLARE_NATIVE(subparse)
             Frame(*) subframe = Make_Frame(f->feed, FRAME_MASK_NONE);
 
             bool interrupted;
-            assert(Is_Void(OUT));  // invariant until finished
+            assert(Is_Fresh(OUT));  // invariant until finished
             bool threw = Subparse_Throws(
                 &interrupted,
                 OUT,

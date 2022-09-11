@@ -100,7 +100,7 @@ Frame(*) Make_Pushed_Frame_From_Action_Feed_May_Throw(
         FRAME_FLAG_MAYBE_STALE  // fulfill only added below
     );
     f->baseline.stack_base = base;  // incorporate refinements
-    Mark_Eval_Out_Stale(out);
+    RESET(out);
     Push_Frame(out, f);
 
     if (error_on_deferred)  // can't deal with ELSE/THEN, see [1]
@@ -116,7 +116,7 @@ Frame(*) Make_Pushed_Frame_From_Action_Feed_May_Throw(
     if (Trampoline_With_Top_As_Root_Throws())
         return f;
 
-    assert(Is_Stale(f->out));  // should only have gathered arguments
+    assert(Is_Fresh(f->out));  // should only have gathered arguments
 
     assert(  // !!! new flag, see [2]
         Not_Subclass_Flag(VARLIST, f->varlist, FRAME_HAS_BEEN_INVOKED)

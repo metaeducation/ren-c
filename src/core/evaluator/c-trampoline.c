@@ -104,6 +104,13 @@ Bounce Just_Use_Out_Executor(Frame(*) f)
 #define frame_ (TG_Jump_List->frame)
 
 
+inline static void Clear_Fresh_Flag(REBVAL *out) {
+    assert(not Is_Throwing(TOP_FRAME));  // fresh out during throw means thrown
+    if (Is_Fresh(out))
+        Finalize_Void(out);
+}
+
+
 //
 //  Trampoline_From_Top_Maybe_Root: C
 //
@@ -175,8 +182,8 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
         STATE == STATE_0  // can't read STATE when ABRUPT_FAILURE flag is set
         and Not_Frame_Flag(FRAME, MAYBE_STALE)
     ){
-     /*   if (FRAME->executor != &Just_Use_Out_Executor)  // exempt, see [1]
-            ASSERT_CELL_FRESH_EVIL_MACRO(OUT); */
+        if (FRAME->executor != &Just_Use_Out_Executor)  // exempt, see [1]
+            ASSERT_CELL_FRESH_EVIL_MACRO(OUT);
     }
 
 { //=//// CALL THE EXECUTOR ///////////////////////////////////////////////=//
@@ -230,18 +237,15 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
                 Quasify_Isotope(OUT);
         }
         else if (Get_Frame_Flag(FRAME, META_RESULT)) {
-            Clear_Stale_Flag(OUT);  // see [1]
-            if (Is_Void(OUT))
-                Init_Meta_Of_Void(OUT);
-            else
-                Meta_Quotify(OUT);
+            Clear_Fresh_Flag(OUT);  // see [1]
+            Meta_Quotify(OUT);
         }
         else if (Get_Frame_Flag(FRAME, BRANCH)) {
-            Clear_Stale_Flag(OUT);  // also, see [1]
+            Clear_Fresh_Flag(OUT);  // also, see [1]
             Debranch_Output(OUT);  // make heavy voids, clear ELSE/THEN methods
         }
         else if (Not_Frame_Flag(FRAME, MAYBE_STALE))
-            Clear_Stale_Flag(OUT);  // again, see [1]
+            Clear_Fresh_Flag(OUT);  // again, see [1]
 
         if (Get_Frame_Flag(FRAME, ROOT_FRAME)) {
             STATE = STATE_0;  // !!! Frame gets reused, review

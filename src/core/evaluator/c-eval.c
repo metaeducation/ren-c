@@ -196,8 +196,6 @@ inline static Frame(*) Maybe_Rightward_Continuation_Needed(Frame(*) f)
 
     Clear_Feed_Flag(f->feed, NO_LOOKAHEAD);  // always >= 2 elements, see [2]
 
-    assert(Is_Stale(OUT));  // SET-XXX! may need to be invisible, see [3]
-
     Flags flags =  // v-- if f was fulfilling, we are
         (f->flags.bits & EVAL_EXECUTOR_FLAG_FULFILLING_ARG)
         | FRAME_FLAG_FAILURE_RESULT_OK;  // trap [e: transcode "1&aa"] works
@@ -246,6 +244,11 @@ Bounce Array_Executor(Frame(*) f)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
+    Finalize_Void(OUT);  // default if all void outputs
+
+    if (Is_Feed_At_End(f->feed))
+        return OUT;
+
     Frame(*) sub = Make_Frame(
         f->feed,
         FRAME_FLAG_FAILURE_RESULT_OK
@@ -264,8 +267,10 @@ Bounce Array_Executor(Frame(*) f)
         Move_Cell(OUT, SPARE);
     }
 
-    if (Not_Frame_At_End(SUBFRAME))
+    if (Not_Frame_At_End(SUBFRAME)) {
+        RESET(SPARE);
         return BOUNCE_CONTINUE;
+    }
 
     Drop_Frame(SUBFRAME);
     return OUT;
@@ -307,10 +312,7 @@ Bounce Evaluator_Executor(Frame(*) f)
     //
     if (Get_Feed_Flag(f->feed, BARRIER_HIT)) {
         if (Get_Executor_Flag(EVAL, f, FULFILLING_ARG)) {
-            if (Get_Frame_Flag(f, MAYBE_STALE))
-                Mark_Eval_Out_Stale(OUT);
-            else
-                assert(Is_Void(OUT));
+            assert(Is_Fresh(OUT));
             return OUT;
         }
         Clear_Feed_Flag(f->feed, BARRIER_HIT);  // not an argument, clear flag
@@ -360,12 +362,12 @@ Bounce Evaluator_Executor(Frame(*) f)
             goto process_action;
         }
 
-        Mark_Eval_Out_Stale(OUT);
+        RESET(OUT);
 
         f_current_gotten = nullptr;  // !!! allow/require to be passe in?
         goto evaluate; }
 
-      case ST_EVALUATOR_RUNNING_GROUP : goto group_result_in_spare;
+      case ST_EVALUATOR_RUNNING_GROUP : goto group_result_in_out;
 
       case ST_EVALUATOR_RUNNING_META_GROUP :
         STATE = ST_EVALUATOR_INITIAL_ENTRY;
@@ -396,20 +398,6 @@ Bounce Evaluator_Executor(Frame(*) f)
   new_expression:
 
   //=//// START NEW EXPRESSION ////////////////////////////////////////////=//
-
-    // OUT might be erased, e.g. the header is all 0 bits (CELL_MASK_0).
-    // This is considered FRESH() but not WRITABLE(), so the Set_Cell_Flag()
-    // routines will reject it.  While we are already doing a flag masking
-    // operation to add CELL_FLAG_STALE, ensure the cell carries the NODE and
-    // CELL flags (we already checked that it was FRESH()).  This promotes
-    // erased cells to a stale void state.
-    //
-    // Note that adding CELL_FLAG_STALE means the out cell won't act as the
-    // input to an enfix operation.
-    //
-    OUT->header.bits |= (
-        NODE_FLAG_NODE | NODE_FLAG_CELL | CELL_FLAG_STALE
-    );
 
     UPDATE_EXPRESSION_START(f);  // !!! See FRM_INDEX() for caveats
 
@@ -568,6 +556,8 @@ Bounce Evaluator_Executor(Frame(*) f)
     // fast tests like ANY_INERT() and IS_NULLED_OR_VOID_OR_END() has shown
     // to reduce performance in practice.  The compiler does the right thing.
 
+    assert(Is_Fresh(OUT));  // not technically necessary to RESET() header
+
     switch (QUOTE_BYTE_UNCHECKED(f_current)) {
 
       //=//// QUASI!  and QUOTED! //////////////////////////////////////////=//
@@ -661,6 +651,9 @@ Bounce Evaluator_Executor(Frame(*) f)
     // Most action evaluations are triggered from a WORD! or PATH! case.
 
       case REB_ACTION: {
+        assert(Is_Fresh(OUT));
+        RESET(OUT);
+
         Frame(*) subframe = Make_Action_Subframe(f);
         Push_Frame(OUT, subframe);
         Push_Action(
@@ -669,8 +662,6 @@ Bounce Evaluator_Executor(Frame(*) f)
             VAL_ACTION_BINDING(f_current)
         );
         Begin_Prefix_Action(subframe, VAL_ACTION_LABEL(f_current));
-
-        Mark_Eval_Out_Stale(subframe->out);
 
         goto process_action; }
 
@@ -817,9 +808,6 @@ Bounce Evaluator_Executor(Frame(*) f)
         if (Is_Void(f_current)) {
             // can happen with SET-GROUP! e.g. `(void): ...`, current in spare
         }
-        else if (Is_Void(OUT)) {
-            RESET(Sink_Word_May_Fail(f_current, f_specifier));
-        }
         else if (Is_Raised(OUT)) {
             // Don't assign, but let (trap [a: transcode "1&aa"]) work
         }
@@ -828,6 +816,7 @@ Bounce Evaluator_Executor(Frame(*) f)
 
             if (
                 Is_Isotope(OUT)
+                and not Is_Void(OUT)  // void assignments allowed ATM
                 and Not_Cell_Flag(OUT, SCANT_EVALUATED_ISOTOPE)  // from QUASI!
             ){
                 fail (Error_Bad_Isotope(OUT));
@@ -935,7 +924,6 @@ Bounce Evaluator_Executor(Frame(*) f)
             f_current,
             f_specifier,
             FRAME_FLAG_FAILURE_RESULT_OK
-                | FRAME_FLAG_MAYBE_STALE
         );
         Push_Frame(OUT, subframe);
         subframe->executor = &Array_Executor;
@@ -943,7 +931,7 @@ Bounce Evaluator_Executor(Frame(*) f)
         STATE = ST_EVALUATOR_RUNNING_GROUP;  // must target spare, see [2]
         return CATCH_CONTINUE_SUBFRAME(subframe);
 
-      } group_result_in_spare: {  ////////////////////////////////////////////
+      } group_result_in_out: {  //////////////////////////////////////////////
 
         STATE = ST_EVALUATOR_INITIAL_ENTRY;
         break; }
@@ -1119,7 +1107,7 @@ Bounce Evaluator_Executor(Frame(*) f)
         STATE = ST_EVALUATOR_RUNNING_ACTION;  // bounces back to do lookahead
         rebPushContinuation(
             OUT,
-            FRAME_FLAG_MAYBE_STALE,
+            FRAME_MASK_NONE,
             Lib(APPLY), rebQ(SPARE), rebDERELATIVIZE(f_next, f_specifier)
         );
         Fetch_Next_Forget_Lookback(f);
@@ -1213,18 +1201,7 @@ Bounce Evaluator_Executor(Frame(*) f)
             INIT_VAL_ACTION_LABEL(OUT, VAL_WORD_SYMBOL(v));
         */
 
-        if (Is_Void(OUT)) {
-            if (Set_Var_Core_Throws(
-                SPARE,
-                GROUPS_OK,
-                f_current,
-                f_specifier,
-                VOID_CELL
-            )){
-                goto return_thrown;
-            }
-        }
-        else if (Is_Raised(OUT)) {
+        if (Is_Raised(OUT)) {
             // Don't assign, but let (trap [a.b: transcode "1&aa"]) work
         }
         else {
@@ -1232,6 +1209,7 @@ Bounce Evaluator_Executor(Frame(*) f)
 
             if (
                 Is_Isotope(OUT)
+                and not Is_Void(OUT)  // void assignments allowed ATM
                 and Not_Cell_Flag(OUT, UNEVALUATED)  // see QUASI! handling
             ){
                 fail (Error_Bad_Isotope(OUT));
@@ -1401,14 +1379,8 @@ Bounce Evaluator_Executor(Frame(*) f)
 
     set_block_common: ////////////////////////////////////////////////////////
 
-      // 1. As with the other SET-XXX! variations, we may need to continue
-      //    what is to the left of the assignment if the right hand vanishes.
-      //
-      //        >> (10 [x y]: multi-vanisher ...)
-      //        == 10
-      //
-      //    But since multi-returns write to the output slot, they have to be
-      //    crafty and incorporate stale values into their multireturn.
+      // 1. Empty SET-BLOCK! are not supported, although it could be argued
+      //    that an empty set-block could receive a NONE (~[]~) pack.
       //
       // 2. We pre-process the SET-BLOCK! first and collect the variables to
       //    write on the stack.  (It makes more sense for any GROUP!s in the
@@ -1436,9 +1408,7 @@ Bounce Evaluator_Executor(Frame(*) f)
       //
 
       case REB_SET_BLOCK: {
-        assert(Is_Stale(OUT));  // see [1]
-
-        if (VAL_LEN_AT(f_current) == 0)
+        if (VAL_LEN_AT(f_current) == 0)  // not supported, see [1]
             fail ("SET-BLOCK! must not be empty for now.");
 
         Cell(const*) tail;
@@ -1566,8 +1536,6 @@ Bounce Evaluator_Executor(Frame(*) f)
         Cell(const*) pack_meta_at = nullptr;  // pack block items are ^META'd
         Cell(const*) pack_meta_tail = nullptr;
         REBSPC* pack_specifier = nullptr;
-        if (Is_Stale(OUT))
-            goto set_block_handle_out;
 
         if (Is_Lazy(OUT)) {
             //
@@ -1589,9 +1557,7 @@ Bounce Evaluator_Executor(Frame(*) f)
             pack_meta_at = VAL_ARRAY_AT(&pack_meta_tail, OUT);
             pack_specifier = VAL_SPECIFIER(OUT);
         }
-        else {  // OUT needs special handling (e.g. stale checks)
-          set_block_handle_out: ;  // need ; since next line is declaration
-
+        else {  // !!! These branches need unifying now
             bool is_optional = Get_Cell_Flag(
                 Data_Stack_At(stackindex_var),
                 STACK_NOTE_OPTIONAL
@@ -1614,18 +1580,13 @@ Bounce Evaluator_Executor(Frame(*) f)
                 var_heart == REB_META_WORD
                 or var_heart == REB_META_TUPLE
             ){
-                if (Is_Stale(OUT)) {
-                    Init_Meta_Of_Void(SPARE);
-                    Set_Var_May_Fail(var, SPECIFIED, SPARE);
-                }
-                else {
-                    Meta_Quotify(OUT);
-                    Set_Var_May_Fail(var, SPECIFIED, OUT);
-                }
+                Meta_Quotify(OUT);
+                Set_Var_May_Fail(var, SPECIFIED, OUT);
+
                 goto skip_circle_check;
             }
 
-            if (Is_Stale(OUT) and is_optional)
+            if (Is_Void(OUT) and is_optional)
                 Init_Nulled(OUT);
 
             if (
@@ -1638,10 +1599,7 @@ Bounce Evaluator_Executor(Frame(*) f)
             if (var_heart == REB_BLANK)
                 goto skip_circle_check;
 
-            if (Is_Stale(OUT)) {
-                Set_Var_May_Fail(var, SPECIFIED, VOID_CELL);
-            }
-            else if (Is_Isotope(OUT) and not isotopes_ok) {
+            if (Is_Isotope(OUT) and not Is_Void(OUT) and not isotopes_ok) {
                 fail (Error_Bad_Isotope(OUT));
             }
             else if (

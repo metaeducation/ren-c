@@ -211,23 +211,6 @@ void* Probe_Core_Debug(
     }
     else switch (Detect_Rebol_Pointer(p)) {
       case DETECTED_AS_UTF8:
-        if (
-            (*cast(const Byte*, p) & NODE_BYTEMASK_0x80_NODE)
-            and (*cast(const Byte*, p) & NODE_BYTEMASK_0x01_CELL)
-        ){
-            printf("Wacky UTF-8 String or Stale Cell (assuming stale cell)\n");
-            REBVAL *v = cast(REBVAL*, m_cast(void*, p));
-            v->header.bits &= ~CELL_FLAG_STALE;
-            if (Is_Void(v)) {
-                Append_Ascii(mo->series, "; void");
-            }
-            else {
-                Probe_Cell_Print_Helper(mo, p, expr, file, line);
-            }
-            v->header.bits |= CELL_FLAG_STALE;
-            goto cleanup;
-        }
-
         if (*cast(const Byte*, p) == '\0')
             Probe_Print_Helper(
                 p,
@@ -235,6 +218,17 @@ void* Probe_Core_Debug(
                 "Erased Cell (or Empty C String)",
                 file, line
               );
+        else if (
+            (*cast(const Byte*, p) & NODE_BYTEMASK_0x80_NODE)
+            and (*cast(const Byte*, p) & NODE_BYTEMASK_0x01_CELL)
+        ){
+            if (not (*cast(const Byte*, p) & NODE_BYTEMASK_0x40_STALE)) {
+                printf("!!! Non-FREE'd alias of cell with UTF-8 !!!");
+                panic (p);  // hopefully you merely debug-probed garbage memory
+            }
+            Probe_Print_Helper(p, expr, "C String (or free cell)", file, line);
+            printf("\"%s\"\n", cast(const char*, p));
+        }
         else {
             Probe_Print_Helper(p, expr, "C String", file, line);
             printf("\"%s\"\n", cast(const char*, p));

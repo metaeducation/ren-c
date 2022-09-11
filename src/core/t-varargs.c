@@ -334,7 +334,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
 
   type_check_and_return:;
 
-    if (Is_Void(out))
+    if (Is_Fresh(out))
         return false;
 
     if (op == VARARG_OP_TAIL_Q) {
@@ -488,8 +488,8 @@ REBTYPE(Varargs)
             assert(false); // VARARG_OP_FIRST can't throw
             return THROWN;
         }
-        if (Is_Void(OUT))
-           Init_Nulled(OUT);
+        if (Is_Fresh(OUT))
+            Init_Nulled(OUT);
 
         return OUT; }
 
@@ -511,7 +511,7 @@ REBTYPE(Varargs)
             )){
                 return THROWN;
             }
-            if (Is_Void(OUT))
+            if (Is_Fresh(OUT))
                 return Init_Nulled(OUT);
             return OUT;
         }

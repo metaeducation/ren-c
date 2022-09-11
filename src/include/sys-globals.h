@@ -183,7 +183,7 @@ PVAR REBDEV *PG_Device_List;  // Linked list of R3-Alpha-style "devices"
 // The thrown label was once tunneled through the frame output cell, with the
 // idea that this would help avoid confusion by thinking there was an actual
 // valid result in the output.  Better means came along later of avoiding
-// confusion using CELL_FLAG_STALE--and not overwriting the output cell made
+// confusion using reset cells--and not overwriting the output cell made
 // it possible to do UNWIND throws that could be invisible.
 //
 // The frame to unwind to is something that could be slipped into the binding

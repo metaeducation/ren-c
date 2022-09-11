@@ -147,11 +147,14 @@
 // machinery that relies upon this for mixing UTF-8, cells, and series in
 // variadic API calls).
 //
-// Also, readable cells don't have CELL_FLAG_STALE set.  This is an important
-// tool in the implementation of void in the evaluator--which keeps a result
-// in a frame's output cell but hides it from subsequent evaluations.  Then
-// if that evaluation doesn't produce anything, the cell can be unhidden and
-// be the overall product.
+// Also, readable cells don't have NODE_FLAG_FREE set.  At one time the
+// evaluator would start off by marking all cells with this bit in order to
+// track that the output had not been assigned.  This helped avoid spurious
+// reads and differentiated `(void) else [...]` from `(else [...])`.  But
+// it required a bit being added and removed, so it was replaced with the
+// concept of "freshness" removing NODE_FLAG_NODE and NODE_FLAG_CELL to get
+// the effect with less overhead.  So NODE_FLAG_FREE is now used in a more
+// limited sense to get "poisoning"--a cell you can't read or write.
 //
 // [WRITABILITY]
 //
@@ -161,6 +164,9 @@
 // based on writability...e.g. a cell that's already been initialized and can
 // have its properties manipulated.
 
+#define Is_Fresh(c) \
+    (((c)->header.bits & (~ CELL_MASK_PERSIST)) == 0)
+
 #if DEBUG_CELL_WRITABILITY
 
   // These macros are "evil", because in the debug build, functions aren't
@@ -169,18 +175,8 @@
   // wrap in READABLE() and WRITABLE() functions for higher-level callers
   // that don't mind the cost.
 
-    #define ASSERT_CELL_FRESH_EVIL_MACRO(c) do {  /* EVIL! see above */ \
-        if ( \
-            (c)->header.bits != CELL_MASK_0 \
-            and (c)->header.bits != CELL_MASK_0_ROOT \
-        ){ \
-            assert( \
-                ((c)->header.bits & ( \
-                    (~ CELL_MASK_PERSIST)  | CELL_FLAG_PROTECTED \
-                        | NODE_FLAG_NODE | NODE_FLAG_CELL \
-                )) == (NODE_FLAG_NODE | NODE_FLAG_CELL) \
-            ); \
-        } \
+    #define ASSERT_CELL_FRESH_EVIL_MACRO(c) do {  /* someday may be EVIL! */ \
+        assert(Is_Fresh(c)); \
     } while (0)
 
     #define ASSERT_CELL_READABLE_EVIL_MACRO(c) do {  /* EVIL! see above */ \
@@ -198,7 +194,6 @@
                 printf( \
                     "ASSERT_CELL_READABLE() on CELL_FLAG_STALE cell\n" \
                     "Maybe valid but just has access to it limited\n" \
-                    "see Mark_Eval_Out_Stale()\n" \
                 ); \
             panic (c); \
         } \
@@ -426,8 +421,8 @@ inline static Cell(*) Erase_Cell_Untracked(RawCell* c) {
 //=//// CELL HEADERS AND PREPARATION //////////////////////////////////////=//
 
 #define FRESHEN_CELL_EVIL_MACRO(v) do { \
-    v->header.bits &= CELL_MASK_PERSIST; \
-    ASSERT_CELL_FRESH_EVIL_MACRO(v);  /* ensures not CELL_FLAG_PROTECTED */ \
+    assert(not ((v)->header.bits & CELL_FLAG_PROTECTED)); \
+    (v)->header.bits &= CELL_MASK_PERSIST;  /* Note: no CELL or NODE flags */ \
 } while (0)
 
 
@@ -451,6 +446,15 @@ inline static REBVAL *RESET_CUSTOM_CELL(
     EXTRA(Any, out).node = type;
     return cast(REBVAL*, out);
 }
+
+inline static REBVAL* Reset_Cell_Untracked(Cell(*) v) {
+    FRESHEN_CELL_EVIL_MACRO(v);
+    return cast(REBVAL*, v);
+}
+
+#define RESET(v) \
+    TRACK(Reset_Cell_Untracked(v))
+        // ^-- track AFTER reset, so you can diagnose cell origin in WRITABLE()
 
 
 
@@ -768,8 +772,10 @@ inline static REBVAL *Move_Cell_Untracked(
     return cast(REBVAL*, out);
 }
 
+#define CELL_MASK_MOVE (CELL_MASK_COPY | CELL_FLAG_UNEVALUATED)
+
 #define Move_Cell(out,v) \
-    TRACK(Move_Cell_Untracked((out), (v), CELL_MASK_COPY))
+    TRACK(Move_Cell_Untracked((out), (v), CELL_MASK_MOVE))
 
 #define Move_Cell_Core(out,v,cell_mask) \
     TRACK(Move_Cell_Untracked((out), (v), (cell_mask)))

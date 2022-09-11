@@ -284,7 +284,7 @@ static void Shutdown_Lib(void)
         if (INODE(PatchContext, patch) == nullptr)
             continue;  // was never initialized !!! should it not be in lib?
 
-        RESET(ARR_SINGLE(patch));
+        Erase_Cell(ARR_SINGLE(patch));  // may be PROTECTED, can't RESET()
         Decay_Series(patch);
 
         // !!! Typically nodes aren't zeroed out when they are freed.  Since

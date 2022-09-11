@@ -82,7 +82,7 @@ inline static Bounce Init_Thrown_With_Label(  // assumes `arg` in TG_Thrown_Arg
 
     assert(THROWING);
 
-    Mark_Eval_Out_Stale(frame_->out);
+    RESET(frame_->out);
     return BOUNCE_THROWN;
 }
 
@@ -118,9 +118,6 @@ inline static void Drop_Frame(Frame(*) f);
 // then use this to get the first value unmeta'd
 //
 inline static Value(*) Decay_If_Isotope(Value(*) v) {
-    if (Is_Stale(v))
-        return v;
-
     if (not Is_Isotope(v))
         return v;
 

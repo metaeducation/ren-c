@@ -997,17 +997,14 @@ DECLARE_NATIVE(get)
     else
         steps = nullptr;  // no GROUP! evals
 
-    if (Get_Var_Core_Throws(SPARE, steps, source, SPECIFIED)) {
+    if (Get_Var_Core_Throws(OUT, steps, source, SPECIFIED)) {
         assert(steps or IS_ERROR(VAL_THROWN_LABEL(frame_)));  // see [1]
         return THROWN;
     }
 
     if (not REF(any))
-        if (Is_Isotope(SPARE))
-            fail (Error_Bad_Word_Get(source, SPARE));
-
-    if (not Is_Void(SPARE))
-        Copy_Cell(OUT, SPARE);
+        if (Is_Isotope(OUT))
+            fail (Error_Bad_Word_Get(source, OUT));
 
     return Proxy_Multi_Returns(frame_);
 }
@@ -1376,14 +1373,16 @@ DECLARE_NATIVE(set)
     else
         steps = nullptr;  // no GROUP! evals
 
-    if (Is_Meta_Of_Void(v))
-        RESET(v);  // (x: void) is legal, so is (set 'x void)
+    Meta_Unquotify(v);
+
+    if (Is_Void(v)) {
+        // (x: void) is legal, so is (set 'x void)
+    }
     else {
-        Meta_Unquotify(v);
         if (Is_Blank_Isotope(v) or Is_Heavy_Null(v))
             Init_Nulled(v);
 
-        if (not REF(any) and Is_Isotope(v))
+        if (not REF(any) and Is_Isotope(v) and not Is_Void(v))
             fail ("Use SET/ANY to set variables to an isotope");
     }
 
@@ -1392,8 +1391,7 @@ DECLARE_NATIVE(set)
         return THROWN;
     }
 
-    if (not Is_Void(v))
-        Copy_Cell(OUT, v);  // result does not decay, see [2]
+    Copy_Cell(OUT, v);  // result does not decay, see [2]
 
     return Proxy_Multi_Returns(frame_);
 }

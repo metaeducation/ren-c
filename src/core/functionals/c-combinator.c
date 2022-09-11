@@ -605,9 +605,6 @@ DECLARE_NATIVE(further_combinator)
     if (VAL_INDEX(SPARE) <= VAL_INDEX(input))
         return nullptr;  // the rule matched but did not advance the input
 
-    if (Is_Stale(OUT))
-        return VOID;
-
     return OUT;
 }}
 

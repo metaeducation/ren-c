@@ -241,10 +241,8 @@ inline static bool Eval_Step_Throws(
 ){
     assert(Not_Feed_Flag(f->feed, NO_LOOKAHEAD));
 
-    if (Not_Frame_Flag(f, MAYBE_STALE)) {
-        FRESHEN_CELL_EVIL_MACRO(out);
-        USED(TRACK(out));  // don't pass to evil macro (would repeat tracking)
-    }
+    if (Not_Frame_Flag(f, MAYBE_STALE))
+        RESET(out);
 
     assert(f->executor == &Evaluator_Executor);
 
@@ -268,7 +266,7 @@ inline static bool Eval_Step_In_Subframe_Throws(
     Flags flags
 ){
     if (not (flags & FRAME_FLAG_MAYBE_STALE))
-        assert(Is_Cell_Erased(out) or Is_Stale_Void(out) or Is_Void(out));
+        assert(Is_Fresh(out));
 
     if (Did_Init_Inert_Optimize_Complete(out, f->feed, &flags))
         return false;  // If eval not hooked, ANY-INERT! may not need a frame

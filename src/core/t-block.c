@@ -301,7 +301,7 @@ Bounce MAKE_Array(
                 return BOUNCE_THROWN;
             }
 
-            if (Is_Void(OUT))
+            if (Is_Fresh(OUT))
                 break;
 
             Move_Cell(PUSH(), OUT);

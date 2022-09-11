@@ -231,7 +231,7 @@ Bounce MAKE_Path(
             return BOUNCE_THROWN;
         }
 
-        if (Is_Stale(OUT))
+        if (Is_Void(OUT))
             continue;
 
         if (Is_Nulled(OUT))

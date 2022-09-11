@@ -118,7 +118,7 @@ DECLARE_NATIVE(continue)
 
     Value(*) v = ARG(value);
     if (Is_Nulled(v))
-        RESET(v);  // CONTINUE and CONTINUE VOID act the same
+        Init_Void(v);  // CONTINUE and CONTINUE VOID act the same
     else
         Meta_Unquotify(v);
 
@@ -208,7 +208,7 @@ static Bounce Loop_Series_Common(
         *state += bump;
     }
 
-    if (Is_Stale(OUT))
+    if (Is_Fresh(OUT))
         return VOID;
 
     return BRANCHED(OUT);
@@ -351,7 +351,7 @@ static Bounce Loop_Number_Common(
         *state += b;
     }
 
-    if (Is_Stale(OUT))
+    if (Is_Fresh(OUT))
         return VOID;
 
     return BRANCHED(OUT);
@@ -554,7 +554,7 @@ DECLARE_NATIVE(for_skip)
         VAL_INDEX_UNBOUNDED(var) += skip;
     }
 
-    if (Is_Stale(OUT))
+    if (Is_Fresh(OUT))
         return VOID;
 
     return BRANCHED(OUT);
@@ -578,7 +578,7 @@ DECLARE_NATIVE(stop)  // See CYCLE for notes about STOP
 
     Value(*) v = ARG(value);
     if (Is_Nulled(v))
-        RESET(v);  // STOP acts the same as STOP VOID
+        Init_Void(v);  // STOP acts the same as STOP VOID
     else
         Meta_Unquotify(v);
 
@@ -1055,7 +1055,7 @@ DECLARE_NATIVE(for_each)
     if (THROWING)
         return THROWN;
 
-    if (Is_Stale(OUT))
+    if (Is_Fresh(OUT))
         return VOID;
 
     return OUT;
@@ -1170,7 +1170,7 @@ DECLARE_NATIVE(every)
     if (Is_Falsey(SPARE)) {
         Init_Nulled(OUT);
     }
-    else if (Is_Stale(OUT) or VAL_TYPE_UNCHECKED(OUT) != REB_NULL) {
+    else if (Is_Fresh(OUT) or VAL_TYPE_UNCHECKED(OUT) != REB_NULL) {
         Move_Cell(OUT, SPARE);  // will overwrite a none, e.g. from void
     }
 
@@ -1183,7 +1183,7 @@ DECLARE_NATIVE(every)
     if (THROWING)
         return THROWN;
 
-    if (Is_Stale(OUT))
+    if (Is_Fresh(OUT))
         return VOID;
 
     return OUT;
@@ -1622,6 +1622,8 @@ DECLARE_NATIVE(map)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
+    assert(Is_Fresh(OUT));  // output only written during MAP if BREAK hit
+
     if (IS_ACTION(data)) {
         // treat as a generator
     }
@@ -1699,7 +1701,7 @@ DECLARE_NATIVE(map)
     if (THROWING)
         return THROWN;  // automatically drops to baseline
 
-    if (not Is_Stale(OUT)) {  // only modifies on break
+    if (not Is_Fresh(OUT)) {  // only modifies on break
         assert(Is_Nulled(OUT));  // BREAK, so *must* return null
         Drop_Data_Stack_To(STACK_BASE);
         return nullptr;
@@ -2075,7 +2077,7 @@ DECLARE_NATIVE(while)
         fail (Error_Bad_Isotope(SPARE));
 
     if (Is_Falsey(SPARE)) {  // falsey condition => return last body result
-        if (Is_Stale(OUT))
+        if (Is_Fresh(OUT))
             return VOID;  // body never ran, so no result to return!
 
         return BRANCHED(OUT);  // see [4]

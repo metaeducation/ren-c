@@ -309,10 +309,8 @@ inline static void Push_Frame(
     // out of the header) and this keeps callers from needing to worry about
     // it--or dealing with asserts that they hadn't done it.
     //
-    if (Not_Frame_Flag(f, MAYBE_STALE)) {
-        FRESHEN_CELL_EVIL_MACRO(out);
-        USED(TRACK(out));  // don't pass to evil macro (would repeat tracking)
-    }
+    if (Not_Frame_Flag(f, MAYBE_STALE))
+        RESET(out);
 
   #if DEBUG_EXPIRED_LOOKBACK
     f->stress = nullptr;
@@ -463,7 +461,7 @@ inline static Frame(*) Prep_Frame_Core(
     f->flags.bits = flags | FRAME_FLAG_0_IS_TRUE | FRAME_FLAG_7_IS_TRUE;
 
     f->feed = feed;
-    Prep_Void(&f->spare);
+    Erase_Cell(&f->spare);
     TRASH_POINTER_IF_DEBUG(f->out);
 
     f->varlist = nullptr;
@@ -719,7 +717,7 @@ inline static bool Pushed_Continuation(
         );
         grouper->executor = &Group_Branch_Executor;  // evaluates to get branch
         if (with == nullptr)
-            Mark_Eval_Out_Stale(out);
+            RESET(out);
         else
             Copy_Cell(out, unwrap(with));  // need lifetime preserved
         Push_Frame(out, grouper);

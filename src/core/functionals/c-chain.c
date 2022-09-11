@@ -218,9 +218,6 @@ Bounce Chainer_Dispatcher(Frame(*) f)
 
     Drop_Frame(SUBFRAME);
 
-    if (Is_Stale(OUT))
-        return VOID;
-
     return OUT;
 }}
 

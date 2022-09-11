@@ -353,20 +353,20 @@
 //
 
 #define CELL_MASK_PERSIST \
-    (NODE_FLAG_NODE | NODE_FLAG_CELL | NODE_FLAG_MANAGED | NODE_FLAG_ROOT \
-        | NODE_FLAG_MARKED | CELL_FLAG_PROTECTED)
+    (NODE_FLAG_MANAGED | NODE_FLAG_ROOT | NODE_FLAG_MARKED)
 
 #define CELL_MASK_COPY \
-    ~(CELL_MASK_PERSIST | CELL_FLAG_NOTE | CELL_FLAG_UNEVALUATED)
+    ~(CELL_MASK_PERSIST | CELL_FLAG_NOTE | CELL_FLAG_UNEVALUATED | CELL_FLAG_PROTECTED)
 
 #define CELL_MASK_ALL \
     ~cast(Flags, 0)
 
-// The poison mask has NODE_FLAG_CELL but no NODE_FLAG_NODE, so it does
-// not allow a RESET()...it has to be ERASE()'d.
+// The poison mask has NODE_FLAG_CELL but no NODE_FLAG_NODE, so it is not
+// READABLE(), and it is CELL_FLAG_PROTECTED so it's not WRITABLE() and nor
+// can it be RESET().  It has to be ERASE()'d.
 //
 #define CELL_MASK_POISON \
-    (NODE_FLAG_CELL)
+    (NODE_FLAG_CELL | CELL_FLAG_PROTECTED)
 
 
 //=//// CELL's `EXTRA` FIELD DEFINITION ///////////////////////////////////=//

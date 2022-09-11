@@ -142,7 +142,7 @@ Bounce Func_Dispatcher(Frame(*) f)
 
     STATE = ST_FUNC_BODY_EXECUTING;
 
-    assert(Is_Void(SPARE));
+    assert(Is_Fresh(SPARE));
     return CONTINUE_CORE(
         SPARE,  // body evaluative result discarded, see [1]
         FRAME_MASK_NONE,  // no DISPATCHER_CATCHES, so RETURN skips, see [2]
@@ -160,7 +160,8 @@ Bounce Func_Dispatcher(Frame(*) f)
 
     if (GET_PARAM_FLAG(param, RETURN_VOID)) {
         // void, regardless of body result, see [3]
-        return Proxy_Multi_Returns(f);;
+        Init_Void(OUT);
+        return Proxy_Multi_Returns(f);
     }
 
     if (GET_PARAM_FLAG(param, RETURN_NONE)) {
@@ -596,7 +597,7 @@ DECLARE_NATIVE(definitional_return)
         if (NOT_PARAM_FLAG(param, VANISHABLE))
             fail (Error_Bad_Invisible(f));
 
-        RESET(v);
+        Init_Void(v);
         goto skip_type_check;
     }
 

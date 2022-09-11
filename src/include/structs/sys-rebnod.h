@@ -508,7 +508,7 @@ union Reb_Header {
 
 // There are two special invalid bytes in UTF8 which have a leading "110"
 // bit pattern, which are freed nodes.  These two patterns are for freed series
-// and "stale cells" (see Is_Stale())
+// and "unreadable cells"
 //
 // At time of writing, the END_SIGNAL_BYTE must always be followed by a zero
 // byte.  This is easy to do with C strings (see rebEND definition).  It's

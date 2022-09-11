@@ -20,17 +20,9 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// VOID reprsents a state which is "more empty than NULL".  Some slots
-// (such as the output slot of a frame) will tolerate this marker, but they
-// are illegal most places...and will assert on typical tests like IS_BLOCK()
-// or IS_WORD().  So tests on values must be guarded with Is_Void() to tolerate
-// them...or the HEART_BYTE() lower-level accessors must be used.
+// VOID is the isotopic state of NULL.  It represents the idea of "no value".
 //
 //=//// NOTES /////////////////////////////////////////////////////////////=//
-//
-// * The main way to get VOIDs is through a call to RESET().  This uses the
-//   unique advantage of being the 0 type to get to the void state through
-//   a single masking operation.
 //
 // * A cell with all its header bits 0 (Erased_Cell, CELL_MASK_0) is very
 //   close to being a VOID.  Its HEART_BYTE() is 0 for REB_NULL, and its
@@ -39,10 +31,9 @@
 //   would see the `\0` first byte, and that's a legal empty UTF-8 C string.
 //
 // * There is still leverage from the near overlap with erased cells...because
-//   the evaluator will set NODE_FLAG_NODE and NODE_FLAG_CELL along with
-//   CELL_FLAG_STALE on the output cells it receives.  Hence a fresh cell
-//   such as one from DECLARE_LOCAL() doesn't need any extra preparation
-//   beyond being erased in order to be interpreted as a stale void on output.
+//   it only takes a single masking operation to add NODE_FLAG_NODE and
+//   NODE_FLAG_CELL to make a valid void...in theory.  However, for debug
+//   purposes, it may be desirable to add additional info to the cell.
 //
 
 #define VOID_CELL \
@@ -101,24 +92,12 @@ inline static bool Is_Void(Cell(const*) v) {
     return HEART_BYTE(v) == REB_NULL and QUOTE_BYTE(v) == ISOTOPE_0;
 }
 
-inline static bool Is_Stale_Void(Cell(const*) v) {
-    if (not (v->header.bits & CELL_FLAG_STALE))
-        return false;
-    if (HEART_BYTE_UNCHECKED(v) != REB_NULL)
-        return false;
-    return QUOTE_BYTE_UNCHECKED(v) == ISOTOPE_0;
-}
+#define Init_Void_Untracked(out) \
+    Init_Nothing_Untracked((out), REB_NULL, ISOTOPE_0)
 
+#define Init_Void(out) \
+    TRACK(Init_Void_Untracked(out))
 
-inline static REBVAL* Reset_Cell_Untracked(Cell(*) v) {
-    ASSERT_CELL_WRITABLE_EVIL_MACRO(v);
-    v->header.bits &= NODE_FLAG_NODE | NODE_FLAG_CELL | CELL_MASK_PERSIST;
-    return cast(REBVAL*, v);
-}
-
-#define RESET(v) \
-    TRACK(Reset_Cell_Untracked(v))
-        // ^-- track AFTER reset, so you can diagnose cell origin in WRITABLE()
 
 
 // The `~` isotope is chosen in particular by the system to represent variables

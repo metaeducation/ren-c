@@ -238,7 +238,7 @@ void Do_After_Action_Checks_Debug(Frame(*) f) {
     // !!! PG_Dispatcher() should do this, so every phase gets checked.
     //
   #if DEBUG_NATIVE_RETURNS
-    if (not Is_Stale(f->out) and Is_Isotope(f->out)) {
+    if (Is_Isotope(f->out)) {
         //
         // Isotopes not currently checked for by return conventions, so they
         // are always legal... this includes failures.  Review premise.
@@ -248,7 +248,7 @@ void Do_After_Action_Checks_Debug(Frame(*) f) {
         const REBPAR *param = ACT_PARAMS_HEAD(phase);
         assert(KEY_SYM(key) == SYM_RETURN);
 
-        if (Is_Stale(f->out) or Is_Void(f->out)) {
+        if (Is_Void(f->out)) {
             //
             // If a function is void, it left whatever was in the output
             // from before it ran.  So there's no correspondence to the return
@@ -259,7 +259,6 @@ void Do_After_Action_Checks_Debug(Frame(*) f) {
             // return result we are passing through!
 
             if (NOT_PARAM_FLAG(param, VANISHABLE)) {
-                Clear_Stale_Flag(f->out);  // let VAL_TYPE() work
                 assert(!"Native code violated return type contract!\n");
                 if (Is_Void(f->out))
                     panic (Error_Bad_Invisible(f));
