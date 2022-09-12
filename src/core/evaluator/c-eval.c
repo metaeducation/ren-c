@@ -269,8 +269,8 @@ Bounce Array_Executor(Frame(*) f)
         Move_Cell(OUT, SPARE);
 
     if (Not_Frame_At_End(SUBFRAME)) {
-        if (Is_Raised(SPARE))  // promote errors to failure on step, see [1]
-            fail (VAL_CONTEXT(SPARE));
+        if (Is_Raised(OUT))  // promote errors to failure on step, see [1]
+            fail (VAL_CONTEXT(OUT));
 
         Restart_Evaluator_Frame(SUBFRAME);
         return BOUNCE_CONTINUE;

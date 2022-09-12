@@ -429,6 +429,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
         Drop_Frame(TOP_FRAME);  // will call va_end() if variadic frame
     }
 
+    FRESHEN_MOVED_CELL_EVIL_MACRO(OUT);  // avoid sweep error under rug assert
     Init_Thrown_Error(FRAME, CTX_ARCHETYPE(e));  // non-definitional, see [1]
 
     if (Not_Frame_Flag(FRAME, NOTIFY_ON_ABRUPT_FAILURE)) {

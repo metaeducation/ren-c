@@ -419,7 +419,21 @@ inline static Cell(*) Erase_Cell_Untracked(RawCell* c) {
 
 //=//// CELL HEADERS AND PREPARATION //////////////////////////////////////=//
 
+// 1. In order to avoid the accidental ignoring of raised errors, they must
+//    be deliberately suppressed vs. overwritten.
+//
+// 2. The requirement for suppression does not apply to a cell that is being
+//    erased after having been moved, because it's the new cell that takes
+//    over the "hot potato" of the error.
+
 #define FRESHEN_CELL_EVIL_MACRO(v) do { \
+    if (HEART_BYTE_UNCHECKED(v) == REB_ERROR)  /* must suppress, see [1] */ \
+        assert(QUOTE_BYTE_UNCHECKED(v) != ISOTOPE_0);\
+    assert(not ((v)->header.bits & CELL_FLAG_PROTECTED)); \
+    (v)->header.bits &= CELL_MASK_PERSIST;  /* Note: no CELL or NODE flags */ \
+} while (0)
+
+#define FRESHEN_MOVED_CELL_EVIL_MACRO(v) do {  /* no suppress, see [2] */ \
     assert(not ((v)->header.bits & CELL_FLAG_PROTECTED)); \
     (v)->header.bits &= CELL_MASK_PERSIST;  /* Note: no CELL or NODE flags */ \
 } while (0)
@@ -760,7 +774,7 @@ inline static REBVAL *Move_Cell_Untracked(
     Flags copy_mask
 ){
     Copy_Cell_Untracked(out, v, copy_mask);  // Move_Cell() adds track to `out`
-    FRESHEN_CELL_EVIL_MACRO(v);  // track to here not useful
+    FRESHEN_MOVED_CELL_EVIL_MACRO(v);  // track to here not useful
 
   #if DEBUG_TRACK_EXTEND_CELLS  // `out` has tracking info we can use
     v->file = out->file;
