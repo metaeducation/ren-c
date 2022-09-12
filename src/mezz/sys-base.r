@@ -216,7 +216,7 @@ do*: func [
     {SYS: Called by system for DO on datatypes that require special handling}
 
     return: "Final evaluative product of code or block"
-        [<opt> any-value!]
+        [<opt> <void> any-value!]
     source "Files, urls and modules evaluate as scripts, other strings don't"
         [file! url! text! binary! tag! the-word!]
     args "Args passed as system.script.args to a script (normally a string)"
