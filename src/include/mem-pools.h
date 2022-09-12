@@ -74,7 +74,7 @@ enum Mem_Pool_Specs {
     MEM_MID_POOLS = MEM_SMALL_POOLS + 4,
     MEM_BIG_POOLS = MEM_MID_POOLS + 4, // larger pools
     STUB_POOL = MEM_BIG_POOLS,
-  #if UNUSUAL_REBVAL_SIZE
+  #if UNUSUAL_CELL_SIZE
     PAIR_POOL,
   #else
     PAIR_POOL = STUB_POOL,

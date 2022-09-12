@@ -720,8 +720,8 @@ Special internal defines used by RT, not Host-Kit developers:
     #define DEBUG_TRACK_EXTEND_CELLS 0
 #endif
 
-#if !defined(UNUSUAL_REBVAL_SIZE)  // sizeof(REBVAL)*2 may be > sizeof(REBSER)
-    #define UNUSUAL_REBVAL_SIZE DEBUG_TRACK_EXTEND_CELLS
+#if !defined(UNUSUAL_CELL_SIZE)  // sizeof(Cell)*2 may be > sizeof(Stub)
+    #define UNUSUAL_CELL_SIZE DEBUG_TRACK_EXTEND_CELLS
 #endif
 
 #if !defined(DEBUG_POISON_DROPPED_STACK_CELLS)

@@ -996,7 +996,7 @@ static Count Sweep_Series(void)
     }
   }
 
-  #if UNUSUAL_REBVAL_SIZE  // pairing pool is separate in this case, see [2]
+  #if UNUSUAL_CELL_SIZE  // pairing pool is separate in this case, see [2]
   blockscope {
     Segment* seg = Mem_Pools[PAIR_POOL].segments;
 

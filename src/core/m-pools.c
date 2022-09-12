@@ -221,7 +221,7 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 
     DEF_POOL(sizeof(REBSER), 4096), // Series headers
 
-  #if UNUSUAL_REBVAL_SIZE  // sizeof(REBVAL)*2 != sizeof(REBSER)
+  #if UNUSUAL_CELL_SIZE  // sizeof(REBVAL)*2 != sizeof(REBSER)
     DEF_POOL(sizeof(REBVAL) * 2, 16),  // Pairings, PAIR_POOL
   #endif
 

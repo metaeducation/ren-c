@@ -66,9 +66,9 @@ static void Check_Basics(void)
 {
     STATIC_ASSERT(REB_NULL == 0);  // hard rule--optimize on it where desired
 
-    //=//// CHECK REBVAL SIZE ////////////////////////////////////////////=//
+    //=//// CHECK CELL SIZE ///////////////////////////////////////////////=//
 
-    // The system is designed with the intent that REBVAL is 4x(32-bit) on
+    // The system is designed with the intent that a cell is 4x(32-bit) on
     // 32-bit platforms and 4x(64-bit) on 64-bit platforms.  It's a critical
     // performance point.  For the moment we consider it to be essential
     // enough that the system that it refuses to run if not true.
@@ -77,18 +77,18 @@ static void Check_Basics(void)
     // it's an even multiple of ALIGN_SIZE--it may still work.  For instance:
     // the DEBUG_TRACK_EXTEND_CELLS mode doubles the cell size to carry the
     // file, line, and tick of their initialization (or last TOUCH_CELL()).
-    // Define UNUSUAL_REBVAL_SIZE to bypass this check.
+    // Define UNUSUAL_CELL_SIZE to bypass this check.
 
-    size_t sizeof_REBVAL = sizeof(REBVAL);  // in variable avoids warning
+    size_t sizeof_CELL = sizeof(RawCell);  // in variable avoids warning
 
-  #if UNUSUAL_REBVAL_SIZE
-    if (sizeof_REBVAL % ALIGN_SIZE != 0)
-        panic ("size of REBVAL does not evenly divide by ALIGN_SIZE");
+  #if UNUSUAL_CELL_SIZE
+    if (sizeof_CELL % ALIGN_SIZE != 0)
+        panic ("size of cell does not evenly divide by ALIGN_SIZE");
   #else
-    if (sizeof_REBVAL != sizeof(void*) * 4)
-        panic ("size of REBVAL is not sizeof(void*) * 4");
+    if (sizeof_CELL != sizeof(void*) * 4)
+        panic ("size of cell is not sizeof(void*) * 4");
 
-    size_t sersize = sizeof(REBVAL) * 2;
+    size_t sersize = sizeof(RawCell) * 2;
 
     #if DEBUG_SERIES_ORIGINS || DEBUG_COUNT_TICKS
       sersize += sizeof(void*) * 2;
