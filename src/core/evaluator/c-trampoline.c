@@ -82,14 +82,24 @@
 //
 //  Just_Use_Out_Executor: C
 //
-// This is a simplistic executor that can be used in cases that hold frames
-// alive on the stack and want to be bypassed, or if it's easier to push a
-// "no-op" frame than to special-case handling of not pushing a frame.
+// The "Just_Use_Out_Executor()" is never actually called, but it's a state
+// for the trampoline to check that's more obvious than `nullptr` in the
+// executor slot.
 //
-// Note: The branch continuations consider the "no frame necessary for
-// QUOTED!s or BLANK!s to be worth it to special-case, vs. pushing this.
+// Optimized builds could use nullptr instead.
 //
 Bounce Just_Use_Out_Executor(Frame(*) f)
+  { panic (f->out); }
+
+
+//
+//  Delegated_Executor: C
+//
+// Similar to the Just_Use_Out_Executor, this is a special executor which is
+// replaced as the executor when DELEGATE() is used outside of Action_Executor.
+// (When actions run, it wants a call back to check the return type.)
+//
+Bounce Delegated_Executor(Frame(*) f)
 {
     if (Is_Throwing(f))
         return BOUNCE_THROWN;
@@ -154,6 +164,8 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
 
     ASSERT_NO_DATA_STACK_POINTERS_EXTANT();
 
+    assert(FRAME->executor != &Just_Use_Out_Executor);  // drops skip, see [1]
+
     Bounce r;
 
   #if !defined(NDEBUG)  // Total_Eval_Cycles is periodically reconciled
@@ -179,8 +191,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
         assert(Is_Throwing(FRAME));
     }
     else if (STATE == STATE_0) {  // can't read STATE if ABRUPT_FAILURE
-        if (FRAME->executor != &Just_Use_Out_Executor)  // exempt, see [1]
-            FRESHEN(OUT);
+        FRESHEN(OUT);
     }
 
 { //=//// CALL THE EXECUTOR ///////////////////////////////////////////////=//
@@ -265,6 +276,9 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
             FRAME = TOP_FRAME;
         }
 
+        while (FRAME->executor == &Just_Use_Out_Executor)
+            FRAME = FRAME->prior;  // fast skip, allow Is_Fresh() output
+
         goto bounce_on_trampoline;  // some pending frame now has a result
     }
 
@@ -289,6 +303,9 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
             assert(STATE != 0);  // otherwise state enforced nonzero, see [2]
 
         FRAME = TOP_FRAME;
+        while (FRAME->executor == &Just_Use_Out_Executor)
+            FRAME = FRAME->prior;  // !!! Should this use a special BOUNCE?
+
         goto bounce_on_trampoline;
     }
 
@@ -299,7 +316,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
         // tail call situations.
         //
         STATE = DELEGATE_255;  // maintain non-zero invariant
-        FRAME->executor = &Just_Use_Out_Executor;  // whatever frames make
+        FRAME->executor = &Delegated_Executor;
 
         FRAME = TOP_FRAME;
         goto bounce_on_trampoline;
