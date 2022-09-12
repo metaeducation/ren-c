@@ -222,6 +222,11 @@ inline static Frame(*) Maybe_Rightward_Continuation_Needed(Frame(*) f)
 // An array executor simply calls the evaluator executor consecutively, and
 // if the output is void then it does not overwrite the previous output.
 //
+// 1. An idea was tried once where the error was not raised until a step was
+//    shown to be non-void.  This would allow a void evaluation to come after
+//    a raised error and the error could still fall out.  But this meant that
+//    errors could not prevent a next step from happening.
+//
 Bounce Array_Executor(Frame(*) f)
 {
     enum {
@@ -260,14 +265,13 @@ Bounce Array_Executor(Frame(*) f)
 
 } step_result_in_spare: {  ///////////////////////////////////////////////////
 
-    if (not Is_Void(SPARE)) {
-        if (Is_Raised(OUT))  // don't let raised errors vanish
-            fail (VAL_CONTEXT(OUT));
-
+    if (not Is_Void(SPARE))
         Move_Cell(OUT, SPARE);
-    }
 
     if (Not_Frame_At_End(SUBFRAME)) {
+        if (Is_Raised(SPARE))  // promote errors to failure on step, see [1]
+            fail (VAL_CONTEXT(SPARE));
+
         Restart_Evaluator_Frame(SUBFRAME);
         return BOUNCE_CONTINUE;
     }
