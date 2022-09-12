@@ -1004,12 +1004,6 @@ Bounce Evaluator_Executor(Frame(*) f)
         );
         bool applying = IS_BLANK(temp);  // terminal slash is APPLY
 
-        // The frame captures the stack pointer, and since refinements are
-        // pushed we want to capture it before that point (so it knows the
-        // refinements are for it).
-        //
-        Frame(*) subframe = Make_Action_Subframe(f);
-        Push_Frame(OUT, subframe);
 
         if (Get_Path_Push_Refinements_Throws(
             SPARE,
@@ -1017,7 +1011,6 @@ Bounce Evaluator_Executor(Frame(*) f)
             f_current,
             f_specifier
         )){
-            Drop_Frame(subframe);
             goto return_thrown;
         }
 
@@ -1027,7 +1020,6 @@ Bounce Evaluator_Executor(Frame(*) f)
             // the future.  You aren't supposed to use PATH! to get field
             // access...just action execution.
             //
-            Drop_Frame(subframe);
             Move_Cell(OUT, SPARE);
             break;
         }
@@ -1045,8 +1037,12 @@ Bounce Evaluator_Executor(Frame(*) f)
         }
 
         if (not applying) {
-            Push_Action(subframe, VAL_ACTION(SPARE), VAL_ACTION_BINDING(SPARE));
-            Begin_Prefix_Action(subframe, VAL_ACTION_LABEL(SPARE));
+            Frame(*) sub = Make_Action_Subframe(f);
+            sub->baseline.stack_base = BASELINE->stack_base;  // refinements
+
+            Push_Frame(OUT, sub);
+            Push_Action(sub, VAL_ACTION(SPARE), VAL_ACTION_BINDING(SPARE));
+            Begin_Prefix_Action(sub, VAL_ACTION_LABEL(SPARE));
             goto process_action;
         }
 
