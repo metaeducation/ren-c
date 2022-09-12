@@ -218,7 +218,10 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
         assert(not Is_Fresh(OUT));
         assert(IS_SPECIFIC(cast(Cell(*), OUT)));
 
-        if (Is_Raised(OUT)) {
+        if (Get_Frame_Flag(FRAME, META_RESULT)) {
+            Meta_Quotify(OUT);
+        }
+        else if (Is_Raised(OUT)) {
             if (Not_Frame_Flag(FRAME, FAILURE_RESULT_OK)) {
                 //
                 // treat any failure as if it could have been thrown from
@@ -228,12 +231,6 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
                 Init_Thrown_Error(FRAME, OUT);
                 goto thrown;
             }
-
-            if (Get_Frame_Flag(FRAME, META_RESULT))
-                Quasify_Isotope(OUT);
-        }
-        else if (Get_Frame_Flag(FRAME, META_RESULT)) {
-            Meta_Quotify(OUT);
         }
         else if (Get_Frame_Flag(FRAME, BRANCH)) {
             Debranch_Output(OUT);  // make heavy voids, clear ELSE/THEN methods

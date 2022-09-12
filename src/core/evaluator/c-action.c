@@ -580,8 +580,6 @@ Bounce Action_Executor(Frame(*) f)
             Flags flags = EVAL_EXECUTOR_FLAG_FULFILLING_ARG;
             if (pclass == PARAM_CLASS_META) {
                 flags |= FRAME_FLAG_META_RESULT;
-                if (GET_PARAM_FLAG(PARAM, WANT_FAILURES))
-                    flags |= FRAME_FLAG_FAILURE_RESULT_OK;
             }
 
             if (Did_Init_Inert_Optimize_Complete(ARG, f->feed, &flags))
@@ -859,6 +857,17 @@ Bounce Action_Executor(Frame(*) f)
                 Decay_If_Isotope(ARG);
         }
 
+        if (NOT_PARAM_FLAG(PARAM, WANT_FAILURES)) {
+            if (VAL_PARAM_CLASS(PARAM) == PARAM_CLASS_META) {
+                if (Is_Meta_Of_Raised(ARG))
+                    fail (VAL_CONTEXT(ARG));
+            }
+            else {
+                if (Is_Raised(ARG))
+                    fail (VAL_CONTEXT(ARG));
+            }
+        }
+
         if (Is_Void(ARG)) {  // e.g. (~) isotope, unspecialized, see [2]
             if (GET_PARAM_FLAG(PARAM, NOOP_IF_VOID)  // e.g. <maybe> param
             ){
@@ -874,8 +883,12 @@ Bounce Action_Executor(Frame(*) f)
                 Init_Nulled(ARG);
                 continue;
             }
-            if (NOT_PARAM_FLAG(PARAM, VANISHABLE))
+            if (
+                NOT_PARAM_FLAG(PARAM, VANISHABLE)
+                and NOT_PARAM_FLAG(PARAM, ISOTOPES_OKAY)
+            ){
                 fail (Error_Bad_Void());
+            }
 
             if (VAL_PARAM_CLASS(PARAM) == PARAM_CLASS_META)
                 Init_Meta_Of_Void(ARG);
