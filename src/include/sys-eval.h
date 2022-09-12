@@ -89,26 +89,14 @@
 //
 enum {
     ST_EVALUATOR_INITIAL_ENTRY = STATE_0,
-    ST_EVALUATOR_EVALUATING,
 
-    ST_EVALUATOR_LOOKING_AHEAD,
-    ST_EVALUATOR_REEVALUATING,
-    ST_EVALUATOR_GET_WORD,
-    ST_EVALUATOR_META_WORD,
-    ST_EVALUATOR_PATH_OR_TUPLE,
-    ST_EVALUATOR_META_PATH_OR_META_TUPLE,
+    // The evaluator uses REB_XXX types of the current cell being processed
+    // for the STATE byte in those cases.  This is helpful for knowing what
+    // the mode of an evaluator frame is, and makes the value on hand for
+    // easy use in the "hot" frame header location.
 
-    ST_EVALUATOR_RUNNING_GROUP,
-    ST_EVALUATOR_RUNNING_META_GROUP,
-    ST_EVALUATOR_RUNNING_SET_GROUP,
-
-    ST_EVALUATOR_SET_WORD_RIGHTSIDE,
-    ST_EVALUATOR_SET_TUPLE_RIGHTSIDE,
-
-    ST_EVALUATOR_RUNNING_ACTION,
-
-    ST_EVALUATOR_SET_BLOCK_RIGHTSIDE,
-    ST_EVALUATOR_SET_BLOCK_LOOKAHEAD
+    ST_EVALUATOR_LOOKING_AHEAD = 100,
+    ST_EVALUATOR_REEVALUATING
 };
 
 inline static void Restart_Evaluator_Frame(Frame(*) f) {

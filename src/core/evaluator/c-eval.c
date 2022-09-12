@@ -327,9 +327,6 @@ Bounce Evaluator_Executor(Frame(*) f)
         Sync_Feed_At_Cell_Or_End_May_Fail(f->feed);
         TRASH_POINTER_IF_DEBUG(f_current);
         TRASH_POINTER_IF_DEBUG(f_current_gotten);
-      #if DEBUG
-        STATE = ST_EVALUATOR_EVALUATING;  // no continuations without changing
-      #endif
         goto new_expression;
 
       case ST_EVALUATOR_LOOKING_AHEAD:
@@ -370,22 +367,28 @@ Bounce Evaluator_Executor(Frame(*) f)
         f_current_gotten = nullptr;  // !!! allow/require to be passe in?
         goto evaluate; }
 
-      case ST_EVALUATOR_RUNNING_GROUP : goto group_result_in_out;
-
-      case ST_EVALUATOR_RUNNING_META_GROUP :
+      case REB_GROUP :
+      case REB_GET_GROUP :
         goto lookahead;
 
-      case ST_EVALUATOR_RUNNING_SET_GROUP : goto set_group_result_in_spare;
-
-      case ST_EVALUATOR_SET_WORD_RIGHTSIDE : goto set_word_rightside_in_out;
-
-      case ST_EVALUATOR_SET_TUPLE_RIGHTSIDE : goto set_tuple_rightside_in_out;
-
-      case ST_EVALUATOR_RUNNING_ACTION :
+      case REB_META_GROUP :
         goto lookahead;
 
-      case ST_EVALUATOR_SET_BLOCK_RIGHTSIDE:
+      case REB_SET_GROUP :
+        goto set_group_result_in_spare;
+
+      case REB_SET_WORD :
+        goto set_word_rightside_in_out;
+
+      case REB_SET_PATH :
+      case REB_SET_TUPLE :
+        goto set_generic_rightside_in_out;
+
+      case REB_SET_BLOCK :
         goto set_block_rightside_result_in_out;
+
+      case REB_ACTION :
+        goto lookahead;
 
       default:
         assert(false);
@@ -521,10 +524,13 @@ Bounce Evaluator_Executor(Frame(*) f)
 
         Set_Executor_Flag(EVAL, f, DIDNT_LEFT_QUOTE_TUPLE);
 
-        if (IS_WORD(SPARE))
+        if (IS_WORD(SPARE)) {
+            STATE = REB_WORD;
             goto word_in_spare;
+        }
 
         assert(IS_TUPLE(SPARE));
+        STATE = REB_TUPLE;
         goto tuple_in_spare;
     }
   }
@@ -555,51 +561,17 @@ Bounce Evaluator_Executor(Frame(*) f)
     // Subverting the jump table optimization with specialized branches for
     // fast tests like ANY_INERT() and IS_NULLED_OR_VOID_OR_END() has shown
     // to reduce performance in practice.  The compiler does the right thing.
+    //
+    // 1. Left quoting constructs may jump to `word_common:` or `tuple_common:`
+    //    labels, and OUT carries
+    //
+    // 2. The Evaluator Executor's state bytes are a superset of the VAL_TYPE
+    //    of processed values.  Using the state byte to stor
+    //
 
-    assert(Is_Fresh(OUT));  // but set if jump to [word_common:, tuple_common:]
+    assert(Is_Fresh(OUT));  // except see [1]
 
-    switch (QUOTE_BYTE_UNCHECKED(f_current)) {
-
-      //=//// QUASI!  and QUOTED! //////////////////////////////////////////=//
-      //
-      // QUASI! forms will produce an isotope when evaluated of whatever it is
-      // containing:
-      //
-      //     >> bar: ~whatever~
-      //     == ~whatever~  ; isotope
-      //
-      //     >> bar
-      //     ** Error: bar is a ~whatever~ isotope
-      //
-      // To bypass the error, use GET/ANY.
-      //
-      // QUOTED! forms simply evaluate to remove one level of quoting.
-      //
-      // 1. The desire to make only quasiforms decay via the @ operator means
-      //    that plain apostrophe is taken to mean literal quoted null, e.g.
-      //
-      //        >> @ '
-      //        == '
-      //
-      //    This means a quasiform is needed by @ to make NULL and ~_~ is
-      //    chosen as that form.  Behavior duplicated here for consistency.
-
-    case QUASI_2:
-        if (Is_Meta_Of_Blank_Isotope(f_current)) {
-            Init_Nulled(OUT);  // pure null compromise for API, see [1]
-            break;
-        }
-        Derelativize(OUT, f_current, f_specifier);
-        mutable_QUOTE_BYTE(OUT) = ISOTOPE_0;
-        Set_Cell_Flag(OUT, SCANT_EVALUATED_ISOTOPE);  // see flag comments
-        break;
-
-    default:  // e.g. QUOTED!
-        Derelativize(OUT, f_current, f_specifier);
-        Unquotify(OUT, 1);  // asserts it is not an isotope
-        break;
-
-    case UNQUOTED_1: switch (CELL_HEART_UNCHECKED(f_current)) {
+    switch ((STATE = VAL_TYPE(f_current))) {  // type doubles as state, see [2]
 
     //=//// NULL //////////////////////////////////////////////////////////=//
     //
@@ -679,7 +651,7 @@ Bounce Evaluator_Executor(Frame(*) f)
         // Gather args and execute function (the arg gathering makes nested
         // eval calls that lookahead, but no lookahead after the action runs)
         //
-        STATE = ST_EVALUATOR_RUNNING_ACTION;
+        STATE = REB_ACTION;
         return CATCH_CONTINUE_SUBFRAME(TOP_FRAME); }
 
 
@@ -793,11 +765,12 @@ Bounce Evaluator_Executor(Frame(*) f)
     set_word_common: /////////////////////////////////////////////////////////
 
       case REB_SET_WORD: {
+        assert(STATE == REB_SET_WORD);
+
         Frame(*) subframe = Maybe_Rightward_Continuation_Needed(f);
         if (not subframe)
             goto set_word_rightside_in_out;
 
-        STATE = ST_EVALUATOR_SET_WORD_RIGHTSIDE;
         return CATCH_CONTINUE_SUBFRAME(subframe);
 
       } set_word_rightside_in_out: {  ////////////////////////////////////////
@@ -847,19 +820,7 @@ Bounce Evaluator_Executor(Frame(*) f)
     // https://forum.rebol.info/t/1301
 
       case REB_META_WORD:
-        STATE = ST_EVALUATOR_META_WORD;
-        goto process_get_word;
-
       case REB_GET_WORD:
-        STATE = ST_EVALUATOR_GET_WORD;
-        goto process_get_word;
-
-      process_get_word:
-        assert(
-            STATE == ST_EVALUATOR_META_WORD
-            or STATE == ST_EVALUATOR_GET_WORD
-        );
-
         if (not f_current_gotten)
             f_current_gotten = Lookup_Word_May_Fail(f_current, f_specifier);
 
@@ -869,7 +830,7 @@ Bounce Evaluator_Executor(Frame(*) f)
         // !!! All isotopic decay should have already happened.
         // Lookup_Word() should be asserting this!
 
-        if (STATE == ST_EVALUATOR_META_WORD)
+        if (STATE == REB_META_WORD)
             Meta_Quotify(OUT);
         else {
             if (Is_Isotope(OUT))
@@ -923,12 +884,7 @@ Bounce Evaluator_Executor(Frame(*) f)
         Push_Frame(OUT, subframe);
         subframe->executor = &Array_Executor;
 
-        STATE = ST_EVALUATOR_RUNNING_GROUP;  // must target spare, see [2]
-        return CATCH_CONTINUE_SUBFRAME(subframe);
-
-      } group_result_in_out: {  //////////////////////////////////////////////
-
-        break; }
+        return CATCH_CONTINUE_SUBFRAME(subframe); }
 
 
     //=//// META-GROUP! ///////////////////////////////////////////////////=//
@@ -948,7 +904,6 @@ Bounce Evaluator_Executor(Frame(*) f)
         Push_Frame(OUT, subframe);
         subframe->executor = &Array_Executor;
 
-        STATE = ST_EVALUATOR_RUNNING_META_GROUP;
         return CATCH_CONTINUE_SUBFRAME(subframe); }
 
 
@@ -1098,7 +1053,7 @@ Bounce Evaluator_Executor(Frame(*) f)
         if (Is_Frame_At_End(f))
             fail ("Terminal-Slash Action Invocation Needs APPLY argument");
 
-        STATE = ST_EVALUATOR_RUNNING_ACTION;  // bounces back to do lookahead
+        STATE = REB_ACTION;  // bounces back to do lookahead
         rebPushContinuation(
             OUT,
             FRAME_MASK_NONE,
@@ -1181,14 +1136,15 @@ Bounce Evaluator_Executor(Frame(*) f)
     generic_set_common: //////////////////////////////////////////////////////
 
       case REB_SET_TUPLE: {
+        assert(STATE == REB_SET_TUPLE or STATE == REB_SET_PATH);
+
         Frame(*) subframe = Maybe_Rightward_Continuation_Needed(f);
         if (not subframe)
-            goto set_tuple_rightside_in_out;
+            goto set_generic_rightside_in_out;
 
-        STATE = ST_EVALUATOR_SET_TUPLE_RIGHTSIDE;
         return CATCH_CONTINUE_SUBFRAME(subframe);
 
-      } set_tuple_rightside_in_out: {  ///////////////////////////////////////
+      } set_generic_rightside_in_out: {  /////////////////////////////////////
 
         /*  // !!! Should we figure out how to cache a label in the cell?
         if (IS_ACTION(OUT))
@@ -1239,28 +1195,29 @@ Bounce Evaluator_Executor(Frame(*) f)
         Push_Frame(SPARE, subframe);
         subframe->executor = &Array_Executor;
 
-        STATE = ST_EVALUATOR_RUNNING_SET_GROUP;
         return CATCH_CONTINUE_SUBFRAME(subframe);
 
       } set_group_result_in_spare: {  ////////////////////////////////////////
 
-        f_current = SPARE;
-
-        if (Is_Void(SPARE))
+        switch (VAL_TYPE(SPARE)) {
+          case REB_VOID :
+            STATE = REB_SET_WORD;
             goto set_void_in_spare;
 
-        if (Is_Isotope(SPARE))
-            fail (Error_Bad_Isotope(SPARE));
-
-        switch (VAL_TYPE(SPARE)) {
-          case REB_BLOCK:
+          case REB_BLOCK :
+            STATE = REB_SET_BLOCK;
             goto set_block_in_spare;
 
-          case REB_WORD:
+          case REB_WORD :
+            STATE = REB_SET_WORD;
             goto set_word_in_spare;
 
-          case REB_TUPLE:
+          case REB_TUPLE :
+            STATE = REB_SET_TUPLE;
             goto set_tuple_in_spare;
+
+          case REB_ISOTOPE :
+            fail (Error_Bad_Isotope(SPARE));
 
           default:
             fail ("Unknown type for use in SET-GROUP!");
@@ -1286,21 +1243,8 @@ Bounce Evaluator_Executor(Frame(*) f)
 
       case REB_META_PATH:
       case REB_META_TUPLE:
-        STATE = ST_EVALUATOR_META_PATH_OR_META_TUPLE;
-        goto eval_path_or_tuple;
-
       case REB_GET_PATH:
       case REB_GET_TUPLE:
-        STATE = ST_EVALUATOR_PATH_OR_TUPLE;
-        goto eval_path_or_tuple;
-
-      eval_path_or_tuple:
-
-        assert(
-            STATE == ST_EVALUATOR_PATH_OR_TUPLE
-            or STATE == ST_EVALUATOR_META_PATH_OR_META_TUPLE
-        );
-
         if (Get_Var_Core_Throws(OUT, GROUPS_OK, f_current, f_specifier))
             goto return_thrown;
 
@@ -1310,9 +1254,10 @@ Bounce Evaluator_Executor(Frame(*) f)
         /* assert(Not_Cell_Flag(OUT, CELL_FLAG_UNEVALUATED)); */
         Clear_Cell_Flag(OUT, UNEVALUATED);
 
-        if (STATE == ST_EVALUATOR_META_PATH_OR_META_TUPLE)
+        if (STATE == REB_META_PATH or STATE == REB_META_TUPLE)
             Meta_Quotify(OUT);
         else {
+            assert(STATE == REB_GET_PATH or STATE == REB_GET_TUPLE);
             if (Is_Isotope(OUT))
                 fail (Error_Bad_Word_Get(f_current, OUT));
         }
@@ -1397,6 +1342,8 @@ Bounce Evaluator_Executor(Frame(*) f)
       //
 
       case REB_SET_BLOCK: {
+        assert(STATE == REB_SET_BLOCK);
+
         if (VAL_LEN_AT(f_current) == 0)  // not supported, see [1]
             fail ("SET-BLOCK! must not be empty for now.");
 
@@ -1498,7 +1445,6 @@ Bounce Evaluator_Executor(Frame(*) f)
         if (not sub)
             goto set_block_rightside_result_in_out;
 
-        STATE = ST_EVALUATOR_SET_BLOCK_RIGHTSIDE;
         return CATCH_CONTINUE_SUBFRAME(sub);
 
     } set_block_rightside_result_in_out: {  //////////////////////////////////
@@ -1747,11 +1693,54 @@ Bounce Evaluator_Executor(Frame(*) f)
         break;
 
 
+      //=//// QUASI! //////////////////////////////////////////////////////=//
+      //
+      // QUASI! forms will produce an isotope when evaluated of whatever it is
+      // containing:
+      //
+      //     >> bar: ~whatever~
+      //     == ~whatever~  ; isotope
+      //
+      //     >> bar
+      //     ** Error: bar is a ~whatever~ isotope
+      //
+      // To bypass the error, use GET/ANY.
+
+      case REB_QUASI:
+        if (Is_Meta_Of_Blank_Isotope(f_current)) {
+            Init_Nulled(OUT);  // pure null compromise for API, see [1]
+            break;
+        }
+        Derelativize(OUT, f_current, f_specifier);
+        mutable_QUOTE_BYTE(OUT) = ISOTOPE_0;
+        Set_Cell_Flag(OUT, SCANT_EVALUATED_ISOTOPE);  // see flag comments
+        break;
+
+
+      //=//// QUOTED! /////////////////////////////////////////////////////=//
+      //
+      // QUOTED! forms simply evaluate to remove one level of quoting.
+      //
+      // 1. The desire to make only quasiforms decay via the @ operator means
+      //    that plain apostrophe is taken to mean literal quoted null, e.g.
+      //
+      //        >> @ '
+      //        == '
+      //
+      //    This means a quasiform is needed by @ to make NULL and ~_~ is
+      //    chosen as that form.  Behavior duplicated here for consistency.
+
+      case REB_QUOTED:
+        Derelativize(OUT, f_current, f_specifier);
+        Unquotify(OUT, 1);  // asserts it is not an isotope
+        break;
+
+
     //=//// GARBAGE (pseudotypes or otherwise //////////////////////////////=//
 
       default:
         panic (f_current);
-    }}
+    }
 
   //=//// END MAIN SWITCH STATEMENT ///////////////////////////////////////=//
 
