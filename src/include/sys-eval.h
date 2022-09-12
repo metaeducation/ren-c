@@ -89,6 +89,7 @@
 //
 enum {
     ST_EVALUATOR_INITIAL_ENTRY = STATE_0,
+    ST_EVALUATOR_EVALUATING,
 
     ST_EVALUATOR_LOOKING_AHEAD,
     ST_EVALUATOR_REEVALUATING,
@@ -110,6 +111,10 @@ enum {
     ST_EVALUATOR_SET_BLOCK_LOOKAHEAD
 };
 
+inline static void Restart_Evaluator_Frame(Frame(*) f) {
+    assert(f->executor == &Evaluator_Executor);
+    FRM_STATE_BYTE(f) = STATE_0;
+}
 
 #define Init_Pushed_Refinement(out,symbol) \
     Init_Any_Word((out), REB_THE_WORD, symbol)

@@ -267,8 +267,10 @@ Bounce Array_Executor(Frame(*) f)
         Move_Cell(OUT, SPARE);
     }
 
-    if (Not_Frame_At_End(SUBFRAME))
+    if (Not_Frame_At_End(SUBFRAME)) {
+        Restart_Evaluator_Frame(SUBFRAME);
         return BOUNCE_CONTINUE;
+    }
 
     Drop_Frame(SUBFRAME);
     return OUT;
@@ -324,7 +326,10 @@ Bounce Evaluator_Executor(Frame(*) f)
       case ST_EVALUATOR_INITIAL_ENTRY:
         Sync_Feed_At_Cell_Or_End_May_Fail(f->feed);
         TRASH_POINTER_IF_DEBUG(f_current);
-        /*TRASH_POINTER_IF_DEBUG(f_current_gotten);*/  // trash option() ptrs?
+        TRASH_POINTER_IF_DEBUG(f_current_gotten);
+      #if DEBUG
+        STATE = ST_EVALUATOR_EVALUATING;  // no continuations without changing
+      #endif
         goto new_expression;
 
       case ST_EVALUATOR_LOOKING_AHEAD:
@@ -368,7 +373,6 @@ Bounce Evaluator_Executor(Frame(*) f)
       case ST_EVALUATOR_RUNNING_GROUP : goto group_result_in_out;
 
       case ST_EVALUATOR_RUNNING_META_GROUP :
-        STATE = ST_EVALUATOR_INITIAL_ENTRY;
         goto lookahead;
 
       case ST_EVALUATOR_RUNNING_SET_GROUP : goto set_group_result_in_spare;
@@ -378,11 +382,9 @@ Bounce Evaluator_Executor(Frame(*) f)
       case ST_EVALUATOR_SET_TUPLE_RIGHTSIDE : goto set_tuple_rightside_in_out;
 
       case ST_EVALUATOR_RUNNING_ACTION :
-        STATE = ST_EVALUATOR_INITIAL_ENTRY;
         goto lookahead;
 
       case ST_EVALUATOR_SET_BLOCK_RIGHTSIDE:
-        STATE = ST_EVALUATOR_INITIAL_ENTRY;
         goto set_block_rightside_result_in_out;
 
       default:
@@ -830,7 +832,6 @@ Bounce Evaluator_Executor(Frame(*) f)
                     f_next_gotten = nullptr;
         }
 
-        STATE = ST_EVALUATOR_INITIAL_ENTRY;
         break; }
 
 
@@ -875,7 +876,6 @@ Bounce Evaluator_Executor(Frame(*) f)
                 fail (Error_Bad_Word_Get(f_current, OUT));
         }
 
-        STATE = ST_EVALUATOR_INITIAL_ENTRY;
         break;
 
 
@@ -928,7 +928,6 @@ Bounce Evaluator_Executor(Frame(*) f)
 
       } group_result_in_out: {  //////////////////////////////////////////////
 
-        STATE = ST_EVALUATOR_INITIAL_ENTRY;
         break; }
 
 
@@ -1221,7 +1220,6 @@ Bounce Evaluator_Executor(Frame(*) f)
             }
         }
 
-        STATE = ST_EVALUATOR_INITIAL_ENTRY;
         break; }
 
 
@@ -1245,8 +1243,6 @@ Bounce Evaluator_Executor(Frame(*) f)
         return CATCH_CONTINUE_SUBFRAME(subframe);
 
       } set_group_result_in_spare: {  ////////////////////////////////////////
-
-        STATE = ST_EVALUATOR_INITIAL_ENTRY;
 
         f_current = SPARE;
 
@@ -1321,7 +1317,6 @@ Bounce Evaluator_Executor(Frame(*) f)
                 fail (Error_Bad_Word_Get(f_current, OUT));
         }
 
-        STATE = ST_EVALUATOR_INITIAL_ENTRY;
         break;
 
 

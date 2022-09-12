@@ -123,7 +123,7 @@ DECLARE_NATIVE(delimit)
     bool pending = false;  // pending delimiter output, *if* more non-nulls
     bool nothing = true;  // any elements seen so far have been null or blank
 
-    while (Not_Frame_At_End(f)) {
+    for (; Not_Frame_At_End(f); Restart_Evaluator_Frame(f)) {
         if (Eval_Step_Throws(OUT, f)) {
             Drop_Mold(mo);
             Drop_Frame(f);

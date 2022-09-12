@@ -120,6 +120,7 @@ DECLARE_NATIVE(reduce)
 
     SUBFRAME->executor = &Evaluator_Executor;
     STATE = ST_REDUCE_EVAL_STEP;
+    Restart_Evaluator_Frame(SUBFRAME);
     return CONTINUE_SUBFRAME(SUBFRAME);
 
 } reduce_step_result_in_out: {  //////////////////////////////////////////////
@@ -241,6 +242,7 @@ DECLARE_NATIVE(reduce_each)
     SUBFRAME->executor = &Evaluator_Executor;  // restore from pass through
 
     STATE = ST_REDUCE_EACH_REDUCING_STEP;
+    Restart_Evaluator_Frame(SUBFRAME);
     return CONTINUE_SUBFRAME(SUBFRAME);
 
 } reduce_step_output_in_spare: {  ////////////////////////////////////////////

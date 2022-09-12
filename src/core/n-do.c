@@ -890,6 +890,7 @@ DECLARE_NATIVE(apply)
         Init_Integer(ARG(index), index);
 
         STATE = ST_APPLY_LABELED_EVAL_STEP;
+        Restart_Evaluator_Frame(SUBFRAME);
         return CATCH_CONTINUE_SUBFRAME(SUBFRAME);
     }
 
@@ -915,6 +916,7 @@ DECLARE_NATIVE(apply)
     }
 
     STATE = ST_APPLY_UNLABELED_EVAL_STEP;
+    Restart_Evaluator_Frame(SUBFRAME);
     return CATCH_CONTINUE_SUBFRAME(SUBFRAME);
 
 } labeled_step_result_in_spare: {  ///////////////////////////////////////////

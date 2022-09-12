@@ -830,6 +830,7 @@ DECLARE_NATIVE(all)
             goto reached_end;
 
         assert(STATE == ST_ALL_EVAL_STEP);
+        Restart_Evaluator_Frame(SUBFRAME);
         return CONTINUE_SUBFRAME(SUBFRAME);
     }
 
@@ -874,6 +875,7 @@ DECLARE_NATIVE(all)
         goto reached_end;
 
     assert(STATE == ST_ALL_EVAL_STEP);
+    Restart_Evaluator_Frame(SUBFRAME);
     return CONTINUE_SUBFRAME(SUBFRAME);
 
 } reached_end: {  ////////////////////////////////////////////////////////////
@@ -952,6 +954,7 @@ DECLARE_NATIVE(any)
             goto reached_end;
 
         assert(STATE == ST_ANY_EVAL_STEP);
+        Restart_Evaluator_Frame(SUBFRAME);
         return CONTINUE_SUBFRAME(SUBFRAME);
     }
 
@@ -994,6 +997,7 @@ DECLARE_NATIVE(any)
         goto reached_end;
 
     assert(STATE == ST_ANY_EVAL_STEP);
+    Restart_Evaluator_Frame(SUBFRAME);
     return CONTINUE_SUBFRAME(SUBFRAME);
 
 } reached_end: {  ////////////////////////////////////////////////////////////
@@ -1112,6 +1116,7 @@ DECLARE_NATIVE(case)
 
     STATE = ST_CASE_CONDITION_EVAL_STEP;
     SUBFRAME->executor = &Evaluator_Executor;
+    Restart_Evaluator_Frame(SUBFRAME);
     return CONTINUE_SUBFRAME(SUBFRAME);  // one step to pass predicate, see [1]
 
 } condition_result_in_spare: {  //////////////////////////////////////////////
@@ -1314,6 +1319,7 @@ DECLARE_NATIVE(switch)
 
     STATE = ST_SWITCH_EVALUATING_RIGHT;
     SUBFRAME->executor = &Evaluator_Executor;
+    Restart_Evaluator_Frame(SUBFRAME);
     return CONTINUE_SUBFRAME(SUBFRAME);  // no direct predicate call, see [1]
 
 } right_result_in_spare: {  //////////////////////////////////////////////////

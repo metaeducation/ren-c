@@ -169,6 +169,7 @@ DECLARE_NATIVE(entrap)  // wrapped as multi-return versions TRAP and ATTEMPT
     if (Is_Frame_At_End(SUBFRAME))
         goto finished;
 
+    Restart_Evaluator_Frame(SUBFRAME);
     return CONTINUE_SUBFRAME(SUBFRAME);
 
 } finished: {  ///////////////////////////////////////////////////////////////

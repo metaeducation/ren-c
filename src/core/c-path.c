@@ -225,7 +225,7 @@ Bounce MAKE_Path(
 
     StackIndex base = TOP_INDEX;
 
-    while (Not_Frame_At_End(f)) {
+    for (; Not_Frame_At_End(f); Restart_Evaluator_Frame(f)) {
         if (Eval_Step_Throws(OUT, f)) {
             Drop_Frame(f);
             return BOUNCE_THROWN;

@@ -1096,6 +1096,7 @@ void RL_rebPushContinuation(
 
     Frame(*) f = Make_Frame_At(block, flags);
     Push_Frame(out, f);
+    f->executor = &Array_Executor;
 }
 
 
