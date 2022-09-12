@@ -312,8 +312,7 @@ void Evaluator_Exit_Checks_Debug(Frame(*) f) {
         // any case they are okay if they are set.
         //
         filtered &= ~ (
-            FRAME_FLAG_MAYBE_STALE
-            | FRAME_FLAG_BRANCH
+            FRAME_FLAG_BRANCH
             | FRAME_FLAG_META_RESULT
             | FRAME_FLAG_FAILURE_RESULT_OK
             | EVAL_EXECUTOR_FLAG_FULFILLING_ARG

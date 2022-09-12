@@ -84,22 +84,15 @@
 //
 // 2. The Trampoline has some sanity checking asserts that try to stop you
 //    from making mistakes.  Because this does something weird to use the
-//    OUT cell as `with` the FRAME_FLAG_BRANCH was taken off at the callsite
-//    and the FRAME_FLAG_MAYBE_STALE added.  Reverse that here, passing through
-//    any other flags.
+//    OUT cell as `with` the FRAME_FLAG_BRANCH was taken off at the callsite.
 //
 Bounce Group_Branch_Executor(Frame(*) frame_)
 {
     if (THROWING)
         return THROWN;
 
-    enum {
-        ST_GROUP_BRANCH_INITIAL_ENTRY = STATE_0,
-        ST_GROUP_BRANCH_RUNNING_GROUP
-    };
-
     switch (STATE) {
-      case ST_GROUP_BRANCH_INITIAL_ENTRY :
+      case ST_GROUP_BRANCH_ENTRY_DONT_ERASE_OUT :
         goto initial_entry;
 
       case ST_GROUP_BRANCH_RUNNING_GROUP :
@@ -112,9 +105,8 @@ Bounce Group_Branch_Executor(Frame(*) frame_)
 
     Frame(*) evaluator = Make_Frame(
         FRAME->feed,
-        (FRAME->flags.bits  // still state byte 0
+        ((FRAME->flags.bits & (~ FLAG_STATE_BYTE(255)))  // take out state 1
             | FRAME_FLAG_BRANCH)
-            & (~ FRAME_FLAG_MAYBE_STALE)  // undo tricks, see [2]
     );
     Push_Frame(SPARE, evaluator);
     evaluator->executor = &Array_Executor;
@@ -133,7 +125,7 @@ Bounce Group_Branch_Executor(Frame(*) frame_)
     Value(const*) with = Is_Fresh(OUT) ? nullptr : OUT;  // with here, see [1]
 
     assert(Is_Frame_At_End(FRAME));
-    return DELEGATE_BRANCH(OUT, SPARE, with);
+    return DELEGATE_BRANCH(OUT, SPARE, with);  // couldn't do (OUT, OUT, SPARE)
 }}
 
 

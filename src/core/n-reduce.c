@@ -730,7 +730,7 @@ Bounce Composer_Executor(Frame(*) f)
 
     assert(Get_Frame_Flag(f, TRAMPOLINE_KEEPALIVE));  // caller needs, see [5]
 
-    return FRESHEN(OUT);  // signal finished, but avoid leaking temp evaluations
+    return Init_Void(OUT);  // signal finished, avoid leaking temp evaluations
 }}
 
 

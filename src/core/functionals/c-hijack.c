@@ -135,7 +135,7 @@ void Push_Redo_Action_Frame(REBVAL *out, Frame(*) f1, const REBVAL *run)
 
     Shutdown_Evars(&e);
 
-    Flags flags = FRAME_FLAG_MAYBE_STALE;
+    Flags flags = FRAME_MASK_NONE;
     if (Get_Frame_Flag(f1, FAILURE_RESULT_OK))
         flags |= FRAME_FLAG_FAILURE_RESULT_OK;  // inherit failure tolerance
 

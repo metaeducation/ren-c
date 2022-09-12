@@ -117,7 +117,7 @@ STATIC_ASSERT(
 
 #define Make_Action_Subframe(parent) \
     Make_Frame((parent)->feed, \
-        FRAME_FLAG_MAYBE_STALE | FRAME_FLAG_FAILURE_RESULT_OK \
+        FRAME_FLAG_FAILURE_RESULT_OK \
         | ((parent)->flags.bits \
             & (EVAL_EXECUTOR_FLAG_FULFILLING_ARG \
                 | EVAL_EXECUTOR_FLAG_DIDNT_LEFT_QUOTE_TUPLE)))
@@ -324,10 +324,7 @@ Bounce Evaluator_Executor(Frame(*) f)
     //
     switch (STATE) {
       case ST_EVALUATOR_INITIAL_ENTRY:
-        Sync_Feed_At_Cell_Or_End_May_Fail(f->feed);
-        TRASH_POINTER_IF_DEBUG(f_current);
-        TRASH_POINTER_IF_DEBUG(f_current_gotten);
-        goto new_expression;
+        goto initial_entry;
 
       case ST_EVALUATOR_LOOKING_AHEAD:
         goto lookahead;
@@ -398,23 +395,26 @@ Bounce Evaluator_Executor(Frame(*) f)
     Evaluator_Expression_Checks_Debug(f);
   #endif
 
-  new_expression:
+  initial_entry: {  //////////////////////////////////////////////////////////
 
-  //=//// START NEW EXPRESSION ////////////////////////////////////////////=//
+  // This starts a new expression.
+
+    Sync_Feed_At_Cell_Or_End_May_Fail(f->feed);
+    TRASH_POINTER_IF_DEBUG(f_current);
+    TRASH_POINTER_IF_DEBUG(f_current_gotten);
 
     UPDATE_EXPRESSION_START(f);  // !!! See FRM_INDEX() for caveats
 
-    // If asked to evaluate `[]` then we have now done all the work the
-    // evaluator needs to do--including marking the output stale.
-    //
-    if (Is_Frame_At_End(f))
+    if (Is_Frame_At_End(f)) {
+        Finalize_Void(OUT);
         goto finished;
+    }
 
     f_current = Lookback_While_Fetching_Next(f);
     f_current_gotten = f_next_gotten;
     f_next_gotten = nullptr;
 
-  evaluate: ;  // meaningful semicolon--subsequent macro may declare things
+} evaluate: ;  // meaningful semicolon--subsequent macro may declare things
 
     // ^-- doesn't advance expression index: `reeval x` starts with `reeval`
 
@@ -605,7 +605,8 @@ Bounce Evaluator_Executor(Frame(*) f)
     //
     // A comma is a lightweight looking expression barrier.
 
-       case REB_COMMA:
+      case REB_COMMA:
+        Finalize_Void(OUT);
         if (Get_Executor_Flag(EVAL, f, FULFILLING_ARG)) {
             Clear_Feed_Flag(f->feed, NO_LOOKAHEAD);
             Set_Feed_Flag(f->feed, BARRIER_HIT);
@@ -2019,6 +2020,7 @@ Bounce Evaluator_Executor(Frame(*) f)
     Evaluator_Exit_Checks_Debug(f);
   #endif
 
+    assert(not Is_Fresh(OUT));  // should have been assigned
     return OUT;
 
   return_thrown:

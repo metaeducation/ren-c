@@ -114,13 +114,6 @@ Bounce Delegated_Executor(Frame(*) f)
 #define frame_ (TG_Jump_List->frame)
 
 
-inline static void Clear_Fresh_Flag(REBVAL *out) {
-    assert(not Is_Throwing(TOP_FRAME));  // fresh out during throw means thrown
-    if (Is_Fresh(out))
-        Finalize_Void(out);
-}
-
-
 //
 //  Trampoline_From_Top_Maybe_Root: C
 //
@@ -154,8 +147,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
 
   // 1. The Just_Use_Out_Executor() exists vs. using something like nullptr
   //    for the executor just to make it more obvously intentional that a
-  //    passthru is intended.  Having it maintain a state byte would be
-  //    additional overhead.  (Review in light of use of nonzero for GC
+  //    passthru is intended.  (Review in light of use of nonzero for GC
   //    and bookkeeping purposes; e.g. could STATE of 255 mean Just_Use_Out?)
   //
   // 2. Stale voids are allowed because they are used by Alloc_Value() and
@@ -221,13 +213,9 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
         assert(IS_ERROR(VAL_THROWN_LABEL(FRAME)));
     }
 
-  // 1. There may be some optimization possible here if the flag controlling
-  //    whether you wanted to keep the stale flag was also using the same
-  //    EVAL_FLAG bit as the CELL_FLAG for stale.  It's tricky since for
-  //    series nodes that's the bit for being free.
-
     if (r == OUT) {
       result_in_out:
+        assert(not Is_Fresh(OUT));
         assert(IS_SPECIFIC(cast(Cell(*), OUT)));
 
         if (Is_Raised(OUT)) {
@@ -245,20 +233,15 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
                 Quasify_Isotope(OUT);
         }
         else if (Get_Frame_Flag(FRAME, META_RESULT)) {
-            Clear_Fresh_Flag(OUT);  // see [1]
             Meta_Quotify(OUT);
         }
         else if (Get_Frame_Flag(FRAME, BRANCH)) {
-            Clear_Fresh_Flag(OUT);  // also, see [1]
             Debranch_Output(OUT);  // make heavy voids, clear ELSE/THEN methods
         }
-        else if (Not_Frame_Flag(FRAME, MAYBE_STALE))
-            Clear_Fresh_Flag(OUT);  // again, see [1]
 
-        if (Get_Frame_Flag(FRAME, ROOT_FRAME)) {
-            STATE = STATE_0;  // !!! Frame gets reused, review
-            CLEANUP_BEFORE_EXITING_TRAP_BLOCK;
-            return TOP_FRAME->out;
+        if (Get_Frame_Flag(FRAME, ROOT_FRAME)) {  // may keepalive subframes
+            CLEANUP_BEFORE_EXITING_TRAP_BLOCK;  // switches FRAME pointer...
+            return TOP_FRAME->out;  // ...so return what's now TOP_FRAME->out
         }
 
         // Some natives and executors want to be able to leave a pushed frame

@@ -57,7 +57,7 @@ enum {
 // entry to Process_Action().  The ability is also used by RESKINNED.
 //
 Frame(*) Push_Downshifted_Frame(REBVAL *out, Frame(*) f) {
-    Flags flags = ACTION_EXECUTOR_FLAG_IN_DISPATCH | FRAME_FLAG_MAYBE_STALE;
+    Flags flags = ACTION_EXECUTOR_FLAG_IN_DISPATCH;
     flags |= f->flags.bits & FRAME_FLAG_FAILURE_RESULT_OK;
 
     Frame(*) sub = Make_Frame(f->feed, flags);

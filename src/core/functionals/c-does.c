@@ -128,7 +128,7 @@ Bounce Block_Dispatcher(Frame(*) f)
 
     return DELEGATE_CORE(
         OUT,  // output
-        FRAME_MASK_NONE,  // No MAYBE_STALE, can't be invisible.  See LAMBDA.
+        FRAME_MASK_NONE,
         SPC(f->varlist),  // branch specifier
         block  // branch
     );

@@ -252,15 +252,8 @@ inline static bool Eval_Step_In_Subframe_Throws(
     Frame(*) f,
     Flags flags
 ){
-    if (not (flags & FRAME_FLAG_MAYBE_STALE))
-        assert(Is_Fresh(out));
-
     if (Did_Init_Inert_Optimize_Complete(out, f->feed, &flags))
         return false;  // If eval not hooked, ANY-INERT! may not need a frame
-
-    // We need the MAYBE_STALE flag to get Eval_Core() to tolerate the
-    // preload of inert data.  So we're responsible for clearing the flag if
-    // the caller didn't actually want stale data.
 
     Frame(*) subframe = Make_Frame(f->feed, flags);
 

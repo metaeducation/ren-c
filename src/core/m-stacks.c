@@ -108,27 +108,23 @@ void Shutdown_Feeds(void) {
 //
 //  Startup_Frame_Stack: C
 //
-// We always push one unused frame at the top of the stack.  This way, it is
-// not necessary for unused frames to check if `f->prior` is null; it may be
-// assumed that it never is.
+// 1. We always push one unused frame at the top of the stack.  This way, it
+//    is not necessary for unused frames to check if `f->prior` is null; it
+//    may be assumed that it never is.
 //
-// Also: since frames are needed to track API handles, this permits making
-// API handles for things that come into existence at boot and aren't freed
-// until shutdown, as they attach to this frame.
+// 2. Also: since frames are needed to track API handles, this permits making
+//    API handles for things that come into existence at boot and aren't freed
+//    until shutdown, as they attach to this frame.
 //
 void Startup_Frame_Stack(void)
 {
     assert(TG_Top_Frame == nullptr);
     assert(TG_Bottom_Frame == nullptr);
 
-    Frame(*) f = Make_End_Frame(
-        FRAME_MASK_NONE
-            | FRAME_FLAG_MAYBE_STALE  // avoids FRESHEN(f->out), as it's nullptr
-    );
+    Frame(*) f = Make_End_Frame(FRAME_MASK_NONE);  // ensure f->prior, see [1]
+    Push_Frame(nullptr, f);  // global API handles attach here, see [2]
 
-    Push_Frame(nullptr, f);
-
-    TRASH_POINTER_IF_DEBUG(f->prior); // help catch enumeration past BOTTOM_FRAME
+    TRASH_POINTER_IF_DEBUG(f->prior);  // catches enumeration past BOTTOM_FRAME
     TG_Bottom_Frame = f;
 
     assert(TOP_FRAME == f and BOTTOM_FRAME == f);
@@ -138,27 +134,25 @@ void Startup_Frame_Stack(void)
 //
 //  Shutdown_Frame_Stack: C
 //
+// 1. To stop enumerations from using nullptr to stop the walk, and not count
+//    the bottom frame as a "real stack level", it had a trash pointer put
+//    in the debug build.  Restore it to a typical null before the drop.
+//
+// 2. There's a Catch-22 on checking the balanced state for outstanding
+//    manual series allocations, e.g. it can't check *before* the mold buffer
+//    is freed because it would look like it was a leaked series, but it
+//    can't check *after* because the mold buffer balance check would crash.
+//
 void Shutdown_Frame_Stack(void)
 {
     assert(TOP_FRAME == BOTTOM_FRAME);
 
-    // To stop enumerations from using nullptr to stop the walk, and not count
-    // the bottom frame as a "real stack level", it had a trash pointer put
-    // in the debug build.  Restore it to a typical null before the drop.
-    //
-    assert(IS_POINTER_TRASH_DEBUG(TG_Bottom_Frame->prior));
+    assert(IS_POINTER_TRASH_DEBUG(TG_Bottom_Frame->prior));  // trash, see [1]
     TG_Bottom_Frame->prior = nullptr;
 
   blockscope {
     Frame(*) f = TOP_FRAME;
-
-    // There's a Catch-22 on checking the balanced state for outstanding
-    // manual series allocations, e.g. it can't check *before* the mold buffer
-    // is freed because it would look like it was a leaked series, but it
-    // can't check *after* because the mold buffer balance check would crash.
-    //
-    Drop_Frame_Core(f); // can't be Drop_Frame() or Drop_Frame_Unbalanced()
-
+    Drop_Frame_Core(f);  // can't Drop_Frame()/Drop_Frame_Unbalanced(), see [2]
     assert(not TOP_FRAME);
   }
 

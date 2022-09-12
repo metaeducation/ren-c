@@ -201,16 +201,9 @@ STATIC_ASSERT(FRAME_FLAG_7_IS_TRUE == NODE_FLAG_CELL);
     FLAG_LEFT_BIT(21)
 
 
-//=//// FRAME_FLAG_MAYBE_STALE /////////////////////////////////////////////=//
+//=//// FRAME_FLAG_22 /////////////////////////////////////////////////////=//
 //
-// This is a flag that is passed to the evaluation to indicate that it should
-// not assert if it finds a value in the ouput cell already.  But also that
-// it should not clear the stale flag at the end of the evaluation--because
-// the caller may wish to know whether a new value was written or not.  See
-// ALL for an optimized use of this property (to avoid needing to write to
-// a scratch cell in order to reverse the effects of a void evaluation step).
-//
-#define FRAME_FLAG_MAYBE_STALE \
+#define FRAME_FLAG_22 \
     FLAG_LEFT_BIT(22)
 
 

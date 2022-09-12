@@ -91,7 +91,7 @@ Bounce Lambda_Dispatcher(Frame(*) f)
 
     return DELEGATE_CORE(
         OUT,
-        FRAME_FLAG_MAYBE_STALE,
+        FRAME_MASK_NONE,
         specifier,  // block's specifier
         block
     );
@@ -114,7 +114,7 @@ Bounce Lambda_Unoptimized_Dispatcher(Frame(*) frame_)
 
     return DELEGATE_CORE(
         OUT,  // output
-        FRAME_FLAG_MAYBE_STALE,  // flags
+        FRAME_MASK_NONE,  // flags
         SPC(FRAME->varlist),  // branch specifier
         body  // branch
     );

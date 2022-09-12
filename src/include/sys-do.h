@@ -42,17 +42,6 @@
 //
 //=//// NOTES //////////////////////////////////////////////////////////////=//
 //
-// * Unlike single stepping, the stale flag from Do_XXX_Maybe_Stale() isn't
-//   generally all that useful.  That's because heeding the stale flag after
-//   multiple steps usually doesn't make any real sense.  If someone writes:
-//
-//        (1 + 2 if true [x] else [y] comment "hello")
-//
-//   ...what kind of actionability is there on the fact that the last step
-//   vanished, if that's the only think you know?  For this reason, you'll
-//   get an assert if you preload a frame with any values unless you use
-//   the FRAME_FLAG_MAYBE_STALE option on the frame.
-//
 
 
 #define rebRunThrows(out,...) \

@@ -1887,6 +1887,10 @@ REBVAL *RL_rebRescue(
 // for C code as the protected code and the handler).  More similar to
 // Ruby's rescue2 operation.
 //
+// 1. We want API allocations via rebValue() or rebMalloc() that occur in the
+//    body of the C function for the rebRescue() to be automatically cleaned
+//    up in the case of an error.  There must be a frame to attach them to.
+//
 REBVAL *RL_rebRescueWith(
     REBDNG *dangerous,  // !!! pure C function only if not using throw/catch!
     REBRSC *rescuer,  // errors in the rescuer function will *not* be caught
@@ -1894,16 +1898,8 @@ REBVAL *RL_rebRescueWith(
 ){
     ENTER_API;
 
-    // We want API allocations via rebValue() or rebMalloc() that occur in the
-    // body of the C function for the rebRescue() to be automatically cleaned
-    // up in the case of an error.  There must be a frame to attach them to.
-    //
-    Frame(*) dummy = Make_End_Frame(
-        FRAME_MASK_NONE
-            | FRAME_FLAG_MAYBE_STALE  // avoids FRESHEN(dummy->out), as it's null
-    );
-
-    Push_Frame(nullptr, dummy);
+    Frame(*) dummy = Make_End_Frame(FRAME_MASK_NONE);
+    Push_Frame(nullptr, dummy);  // for owning API cells, see [1]
 
   TRAP_BLOCK_IN_CASE_OF_ABRUPT_FAILURE {  ////////////////////////////////////
 
@@ -1948,12 +1944,7 @@ REBVAL *RL_rebRescueWith(
         }
     }
 
-    // !!! To abstract how the system deals with exception handling, the
-    // rebRescue() routine started being used in lieu of PUSH_TRAP/DROP_TRAP
-    // internally to the system.  Some of these system routines accumulate
-    // stack state, so Drop_Frame_Unbalanced() must be used.
-    //
-    Drop_Frame_Unbalanced(dummy);
+    Drop_Frame(dummy);  // Drop_Frame_Unbalanced() if for some internal uses
 
     CLEANUP_BEFORE_EXITING_TRAP_BLOCK;
     return result;

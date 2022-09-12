@@ -122,8 +122,7 @@ DECLARE_NATIVE(entrap)  // wrapped as multi-return versions TRAP and ATTEMPT
 
     Init_Void(OUT);  // default if all evaluations produce void
 
-    if (Not_Cell_Flag(code, CONST))
-        Set_Cell_Flag(code, EXPLICITLY_MUTABLE);  // see DECLARE_NATIVE(do)
+    Tweak_Non_Const_To_Explicitly_Mutable(code);  // see comments on function
 
     Flags flags =
         FRAME_FLAG_TRAMPOLINE_KEEPALIVE  // reused for each step

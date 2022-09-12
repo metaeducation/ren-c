@@ -676,10 +676,9 @@ Bounce Action_Executor(Frame(*) f)
                 // and it knows to get the arg from there.
 
                 Flags flags =
-                    EVAL_EXECUTOR_FLAG_FULFILLING_ARG
-                    | FLAG_STATE_BYTE(ST_EVALUATOR_LOOKING_AHEAD)
-                    | EVAL_EXECUTOR_FLAG_INERT_OPTIMIZATION
-                    | FRAME_FLAG_MAYBE_STALE;  // won't be, but avoids FRESHEN()
+                    FLAG_STATE_BYTE(ST_EVALUATOR_LOOKING_AHEAD)  // no FRESHEN()
+                    | EVAL_EXECUTOR_FLAG_FULFILLING_ARG
+                    | EVAL_EXECUTOR_FLAG_INERT_OPTIMIZATION;
 
                 Frame(*) subframe = Make_Frame(f->feed, flags);
                 Push_Frame(ARG, subframe);
@@ -780,7 +779,7 @@ Bounce Action_Executor(Frame(*) f)
 } fulfill_and_any_pickups_done: {  ///////////////////////////////////////////
 
     if (Get_Executor_Flag(ACTION, f, FULFILL_ONLY)) {  // no typecheck
-        assert(Is_Fresh(OUT));  // didn't touch out
+        Finalize_Void(OUT);  // didn't touch out, should be fresh
         goto skip_output_check;
     }
 

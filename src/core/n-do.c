@@ -366,7 +366,7 @@ DECLARE_NATIVE(do)
 
         rebPushContinuation(
             OUT,  // <-- output cell
-            FRAME_FLAG_MAYBE_STALE,
+            FRAME_MASK_NONE,
             SysUtil(DO_P),
                 source,
                 rebQ(ARG(args)),
@@ -1010,7 +1010,7 @@ DECLARE_NATIVE(apply)
 //
 #define Make_Action_Subframe(parent) \
     Make_Frame((parent)->feed, \
-        FRAME_FLAG_MAYBE_STALE | FRAME_FLAG_FAILURE_RESULT_OK \
+        FRAME_FLAG_FAILURE_RESULT_OK \
         | ((parent)->flags.bits \
             & (EVAL_EXECUTOR_FLAG_FULFILLING_ARG \
                 | EVAL_EXECUTOR_FLAG_DIDNT_LEFT_QUOTE_TUPLE)))

@@ -646,6 +646,11 @@ inline static bool Eval_Value_Core_Throws(
     REBSPC *specifier
 );
 
+enum {
+    ST_GROUP_BRANCH_ENTRY_DONT_ERASE_OUT = 1,  // STATE_0 erases OUT
+    ST_GROUP_BRANCH_RUNNING_GROUP
+};
+
 // Conveniences for returning a continuation.  The concept is that when a
 // BOUNCE_CONTINUE comes back via the C `return` for a native, that native's
 // C stack variables are all gone.  But the heap-allocated Rebol frame stays
@@ -701,11 +706,11 @@ inline static bool Pushed_Continuation(
 
     if (IS_GROUP(branch) or IS_GET_GROUP(branch)) {  // see [2] for GET-GROUP!
         assert(flags & FRAME_FLAG_BRANCH);  // needed for trick
-        assert(not (flags & FRAME_FLAG_MAYBE_STALE));  // OUT used as WITH
         Frame(*) grouper = Make_Frame_At_Core(
             branch,
             branch_specifier,
-            FRAME_FLAG_MAYBE_STALE | (flags & (~ FRAME_FLAG_BRANCH))
+            (flags & (~ FRAME_FLAG_BRANCH))
+                | FLAG_STATE_BYTE(ST_GROUP_BRANCH_ENTRY_DONT_ERASE_OUT)
         );
         grouper->executor = &Group_Branch_Executor;  // evaluates to get branch
         if (with == nullptr)
@@ -713,7 +718,7 @@ inline static bool Pushed_Continuation(
         else
             Copy_Cell(out, unwrap(with));  // need lifetime preserved
         Push_Frame(out, grouper);
-        return true;  // don't do pushed_continuation, may reset out
+        goto pushed_continuation;
     }
 
     switch (VAL_TYPE(branch)) {
