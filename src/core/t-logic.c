@@ -137,8 +137,12 @@ inline static bool Do_Logic_Right_Side_Throws(
     REBVAL *out,
     const REBVAL *right
 ){
-    if (IS_GROUP(right))
-        return Do_Any_Array_At_Throws(out, right, SPECIFIED);
+    if (IS_GROUP(right)) {
+        if (Do_Any_Array_At_Throws(out, right, SPECIFIED))
+            return true;
+        Decay_If_Isotope(out);
+        return false;
+    }
 
     assert(IS_WORD(right) or IS_TUPLE(right));
 
