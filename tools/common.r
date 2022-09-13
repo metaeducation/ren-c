@@ -442,6 +442,7 @@ export stripload: function [
                     not find str "}"
                     not find str {"}
                     not find str "/"
+                    not find str "."  ; tuple assign is not a top-level decl
                 ] then [
                     keep as word! str
                 ]
