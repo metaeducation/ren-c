@@ -124,3 +124,11 @@
         :do = :do-before
     ]
 )
+
+; !!! This was the only R3-Alpha RESOLVE test relating to a bug with usage
+; of both the /EXTEND and /ONLY refinements.  Those refinements do not exist
+; at the time of writing, and the function has been renamed to PROXY-EXPORTS
+;
+[#2017
+    (get in proxy-exports (module [] []) (module [] [a: true]) [a] 'a)
+]

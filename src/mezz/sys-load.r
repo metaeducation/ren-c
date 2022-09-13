@@ -439,9 +439,9 @@ import*: func [
         ; do it for the moment since that is how it has worked in the past.
         ;
         ensure module! unmeta value
-        let exports: select (maybe meta-of unmeta value) 'exports
-        if exports [
-            resolve where unmeta value exports
+        if where [
+            let exports: select (maybe meta-of unmeta value) 'exports
+            proxy-exports where (unmeta value) (maybe exports)
         ]
     ]
 

@@ -1428,7 +1428,7 @@ DECLARE_NATIVE(try)
 
 
 //
-//  resolve: native [
+//  proxy-exports: native [
 //
 //  {Copy context by setting values in the target from those in the source.}
 //
@@ -1440,9 +1440,32 @@ DECLARE_NATIVE(try)
 //          [<maybe> block!]
 //  ]
 //
-DECLARE_NATIVE(resolve)
+DECLARE_NATIVE(proxy_exports)
+//
+// PROXY-EXPORTS is a renaming of what remains of the R3-Alpha concept of
+// "RESOLVE" (a word that has been repurposed).  It was a function that was
+// theoretically somewhat simple...that it would let you give a list of words
+// that you wanted to transfer the keys of from one context to another.  In
+// practice there are a lot of variant behaviors, regarding whether you want
+// to add keys that don't exist yet or only update variables that are common
+// between the two contexts.
+//
+// Historically this was offered for ANY-CONTEXT!.  But its only notable use
+// was as the mechanism by which the IMPORT command would transfer the
+// variables named by the `Exports:` block of a module to the module that was
+// doing the importing.  Some of the most convoluted code dealt with managing
+// the large growing indexes of modules as items were added.
+//
+// Ren-C's "Sea of Words" model means MODULE! leverages the existing hash table
+// for global symbols.  The binding tables and complex mechanics are thus not
+// necessary for that purpose.  So at time of writing, PROXY-EXPORTS has been
+// pared back as what remains of "RESOLVE", and only works on MODULE!.
+//
+// Longer term it seems that PROXY-EXPORTS should be folded into a more
+// traditional EXTEND primitive, perhaps with a /WORDS refinement to take a
+// BLOCK! of words.
 {
-    INCLUDE_PARAMS_OF_RESOLVE;
+    INCLUDE_PARAMS_OF_PROXY_EXPORTS;
 
     Context(*) where = VAL_CONTEXT(ARG(where));
     Context(*) source = VAL_CONTEXT(ARG(source));
