@@ -815,12 +815,8 @@ Bounce Evaluator_Executor(Frame(*) f)
 
     //=//// GET-WORD! /////////////////////////////////////////////////////=//
     //
-    // A GET-WORD! does no dispatch on functions.  It will fetch other values
-    // as normal, but will error on unfriendly BAD-WORD!.
-    //
-    // This handling matches Rebol2 behavior, choosing to break with R3-Alpha
-    // and Red which will give back "UNSET!" if you use a GET-WORD!.  The
-    // mechanics of @word are a completely new approach.
+    // A GET-WORD! gives you the contents of a variable as-is, with no
+    // dispatch on functions.  This includes isotopes.
     //
     // https://forum.rebol.info/t/1301
 
@@ -832,16 +828,8 @@ Bounce Evaluator_Executor(Frame(*) f)
         Copy_Cell(OUT, unwrap(f_current_gotten));
         assert(Not_Cell_Flag(OUT, UNEVALUATED));
 
-        // !!! All isotopic decay should have already happened.
-        // Lookup_Word() should be asserting this!
-
         if (STATE == REB_META_WORD)
             Meta_Quotify(OUT);
-        else {
-            if (Is_Isotope(OUT))
-                fail (Error_Bad_Word_Get(f_current, OUT));
-        }
-
         break;
 
 
