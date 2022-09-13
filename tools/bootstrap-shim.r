@@ -79,6 +79,25 @@ trap [
         fail/where "Use PARSE2 in Bootstrap Process, not UPARSE/PARSE" 'return
     ]
 
+    ; Bootstrap EXE doesn't support multi-returns so SPLIT-PATH takes a /DIR
+    ; refinement of a variable to write to.
+    ;
+    export split-path: enclose (augment :split-path [/dir [word!]]) f -> [
+        let dir: f.dir
+        let results: unquasi ^ do f  ; no [...]: in bootstrap load of this file
+        set maybe dir unmeta second results
+        unmeta first results
+    ]
+
+    export transcode: enclose (augment :transcode [/next [word!]]) func [f] [
+        let next: f.next  ; note: contention with NEXT series verb
+        f.one: if next [make issue! 0]  ; # is invalid issue in bootstrap
+        let result: ^ (do f except e -> [return raise e])
+        if result = null' [return null]
+        set maybe next unmeta second unquasi result
+        return unmeta first unquasi result
+    ]
+
     ; LOAD changed to have no /ALL, so it always enforces getting a block.
     ; But LOAD-VALUE comes in the box to load a single value.
     ;

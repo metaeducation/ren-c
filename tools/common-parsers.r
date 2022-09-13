@@ -22,6 +22,8 @@ REBOL [
     }
 ]
 
+import <bootstrap-shim.r>
+
 c-lexical: import <c-lexicals.r>
 import <text-lines.reb>
 import <parsing-tools.reb>
