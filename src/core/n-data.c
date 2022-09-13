@@ -1362,10 +1362,10 @@ DECLARE_NATIVE(set)
     REBVAL *target = ARG(target);
     REBVAL *v = ARG(value);
 
-    if (Is_Meta_Of_Raised(v)) {
-        mutable_QUOTE_BYTE(v) = UNQUOTED_1;
-        return RAISE(v);
-    }
+    Meta_Unquotify(v);
+
+    if (Is_Raised(v))
+        return COPY(v);
 
     REBVAL *steps;
     if (REF(groups))
@@ -1373,16 +1373,10 @@ DECLARE_NATIVE(set)
     else
         steps = nullptr;  // no GROUP! evals
 
-    Meta_Unquotify(v);
+    if (not REF(any)) {
+        Decay_If_Isotope(v);
 
-    if (Is_Void(v)) {
-        // (x: void) is legal, so is (set 'x void)
-    }
-    else {
-        if (Is_Blank_Isotope(v) or Is_Heavy_Null(v))
-            Init_Nulled(v);
-
-        if (not REF(any) and Is_Isotope(v) and not Is_Void(v))
+        if (Is_Isotope(v) and not Is_Void(v))
             fail ("Use SET/ANY to set variables to an isotope");
     }
 
