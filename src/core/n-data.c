@@ -2209,7 +2209,7 @@ DECLARE_NATIVE(aliases_q)
 //  "Tells you if the argument is not a value"
 //
 //      return: [logic!]
-//      optional [<opt> any-value!]
+//      optional [<opt> any-value! ~any-value!~]
 //  ]
 //
 DECLARE_NATIVE(null_q)
