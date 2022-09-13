@@ -22,17 +22,12 @@
 (null = match blank! false)
 
 
-; Falsey things are turned to BAD-WORD! isotopes in order to avoid cases like:
-;
-;     if match logic! flag [...]
-;
-; But can still be tested for with DID and DIDN'T since they are isotope
-; tolerant and NULL-reactive, and also can be used with THEN and ELSE.
+; Falsey things are wrapped in single-unit packs so they will trigger THEN.
 [
     ('~[_]~ = ^ match null null)
     ('_ = match blank! blank)
     (true = match logic! true)
-    ('~false~ = ^ match logic! false)
+    ('~['#[false]]~ = ^ match logic! false)
 ]
 
 [
@@ -108,4 +103,28 @@
 
     (null = match+ parse3 "aaa" [some "b"])
     ("aaa" = match+ parse3 "aaa" [some "a"])
+]
+
+; You can shoot yourself in the foot if you use MATCH as a test of falsey
+; things and then use an IF conditionally on them.  Attempts to try and make
+; this safe compromise the generality, so users are encouraged to make a
+; wrapper and use that if they're in the group of people who feel the cure
+; is not worse than the disease.
+[
+    (smatch: enclose (augment :match [/unsafe]) func [f [frame!]] [
+        if f.unsafe [return do f]
+        let result': ^ do f
+        any [
+            result' = '~['#[false]]~
+            result' = '~[_]~
+        ] then [
+            return raise ~falsey-match~
+        ]
+        return unmeta result'
+    ],
+    true)
+
+    (true = smatch logic! true)
+    ~falsey-match~ !! (smatch logic! false)
+    ~falsey-match~ !! (smatch [<opt>] null)
 ]

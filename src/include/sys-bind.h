@@ -1191,16 +1191,14 @@ inline static REBSPC *Derive_Specifier_Core(
         if (  // !!! hack out heavy null and heavy void cases, for now
             VAL_LEN_AT(any_array) == 1
             and (
-                Is_Meta_Of_Null(VAL_ARRAY_ITEM_AT(any_array))
-                or Is_Meta_Of_Void(VAL_ARRAY_ITEM_AT(any_array))
+                Is_Heavy_Null(VAL_ARRAY_ITEM_AT(any_array))
+                or Is_Heavy_Void(VAL_ARRAY_ITEM_AT(any_array))
+                or Is_Heavy_False(VAL_ARRAY_ITEM_AT(any_array))
             )
         ){
             return old;
         }
-
-        if (QUOTE_BYTE(any_array) > UNQUOTED_1)
-            return old;  // !!! another hack, allows splicing in feeds
-
+        
         // If the specifier is only for providing resolutions of variables in
         // functions, an array specified by a frame isn't going to need that.
         // This is kind of like dealing with something specified.

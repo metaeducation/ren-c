@@ -410,11 +410,5 @@
     ('false = any @[false])  ; just the word, and words are truthy
 ]
 
-; Isotopes should raise errors vs. decay:
-;
-;     if not any [match logic! false] [  ; the match returns ~false~ isotope
-;         print "We want to avoid this printing, motivate use of DID MATCH"
-;     ]
-;
-~bad-isotope~ !! (any [match logic! false])
+(not any [match logic! false])
 (true = any [did match logic! false])

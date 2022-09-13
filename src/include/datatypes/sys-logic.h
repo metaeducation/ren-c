@@ -110,3 +110,23 @@ inline static bool Is_Conditional_True(const REBVAL *v) {
 
 #define Is_Conditional_False(v) \
     (not Is_Conditional_True(v))
+
+
+inline static bool Is_Meta_Of_False(Cell(const*) v) {
+    return (
+        QUOTE_BYTE(v) == QUASI_2
+        and HEART_BYTE(v) == REB_LOGIC
+        and not VAL_LOGIC(v)
+    );
+}
+
+#define Init_Heavy_False(out) \
+    Init_Pack((out), PG_1_Meta_False_Array)
+
+inline static bool Is_Heavy_False(Cell(const*) v) {
+    if (not Is_Pack(v))
+        return false;
+    Cell(const*) tail;
+    Cell(const*) at = VAL_ARRAY_AT(&tail, v);
+    return (tail == at + 1) and Is_Meta_Of_False(at);
+}

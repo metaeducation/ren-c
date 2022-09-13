@@ -198,6 +198,6 @@ inline static Value(*) Isotopify_If_Falsey(Value(*) v) {
     if (Is_Nulled(v))
         Init_Heavy_Null(v);
     else if (IS_LOGIC(v) and VAL_LOGIC(v) == false)
-        Init_Word_Isotope(v, Canon(FALSE));
+        Init_Heavy_False(v);
     return v;
 }
