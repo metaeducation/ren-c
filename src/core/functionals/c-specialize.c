@@ -257,17 +257,13 @@ bool Specialize_Action_Throws(
     // will be on the stack (including any we are adding "virtually", from
     // the current TOP_INDEX down to the lowest_ordered_dsp).
     //
-    // All unspecialized slots (including partials) will be a unique tag
-    // identity, specific to SPECIALIZE.  This allows a full spectrum of
-    // specialization values, including even to `~` isotopes.
-    //
     Context(*) exemplar = Make_Context_For_Action_Push_Partials(
         specializee,
         lowest_ordered_stackindex,
         def ?
             &binder
             : cast(struct Reb_Binder*, nullptr),  // C++98 ambiguous w/o cast
-        Root_Unspecialized_Tag  // is checked for by *identity*, not value!
+        VOID_CELL
     );
     Manage_Series(CTX_VARLIST(exemplar)); // destined to be managed, guarded
 
@@ -327,10 +323,8 @@ bool Specialize_Action_Throws(
             continue;
 
         if (GET_PARAM_FLAG(param, REFINEMENT)) {
-            if (
-                IS_TAG(arg)
-                and VAL_SERIES(arg) == VAL_SERIES(Root_Unspecialized_Tag)
-            ){
+            if (Is_Void(arg)) {
+                //
                 // Undefined refinements not explicitly marked hidden are
                 // still candidates for usage at the callsite.
 
@@ -343,19 +337,14 @@ bool Specialize_Action_Throws(
 
         // It's an argument, either a normal one or a refinement arg.
 
-        if (
-            VAL_TYPE_UNCHECKED(arg) == REB_TAG  // tolerate isotopes
-            and VAL_SERIES(arg) == VAL_SERIES(Root_Unspecialized_Tag)
-        ){
+        if (Is_Void(arg))
             goto unspecialized_arg;
-        }
 
         goto specialized_arg_with_check;
 
       unspecialized_arg:
 
-        assert(IS_TAG(arg));
-        assert(VAL_SERIES(arg) == VAL_SERIES(Root_Unspecialized_Tag));
+        assert(Is_Void(arg));
         assert(IS_TYPESET(param));
         Copy_Cell(arg, param);
         continue;

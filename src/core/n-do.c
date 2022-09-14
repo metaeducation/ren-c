@@ -824,7 +824,7 @@ DECLARE_NATIVE(apply)
         action,
         STACK_BASE, // lowest_ordered_dsp of refinements to weave in
         nullptr /* &binder */,
-        Root_Unspecialized_Tag  // is checked for by *identity*, not value!
+        VOID_CELL
     );
     Manage_Series(CTX_VARLIST(exemplar)); // Putting into a frame
     Init_Frame(frame, exemplar, VAL_ACTION_LABEL(action));  // GC guarded
@@ -871,12 +871,8 @@ DECLARE_NATIVE(apply)
 
         var = CTX_VAR(VAL_CONTEXT(frame), index);
 
-        if (not (
-            IS_TAG(var)  // we asked all unspecialized slots to hold this tag
-            and VAL_SERIES(var) == VAL_SERIES(Root_Unspecialized_Tag)
-        )){
+        if (not Is_Void(var))
             fail (Error_Bad_Parameter_Raw(rebUnrelativize(at)));
-        }
 
         Cell(const*) lookback = Lookback_While_Fetching_Next(f);  // for error
         at = Try_At_Frame(f);
@@ -907,12 +903,8 @@ DECLARE_NATIVE(apply)
             Init_Void(e->var);  // TBD: RETURN will be a pure local
             continue;  // skippable only requested by name, see [4]
         }
-        if (
-            IS_TAG(e->var)
-            and VAL_SERIES(e->var) == VAL_SERIES(Root_Unspecialized_Tag)
-        ){
+        if (Is_Void(e->var))
             break;
-        }
     }
 
     STATE = ST_APPLY_UNLABELED_EVAL_STEP;
@@ -985,17 +977,6 @@ DECLARE_NATIVE(apply)
     }
 
     Drop_Frame(SUBFRAME);
-
-    Init_Evars(e, frame);
-    while (Did_Advance_Evars(e)) {  // convert unspecialized to none, see [6]
-        if (VAL_TYPE_UNCHECKED(e->var) == REB_TAG)  // skip over isotopes
-            if (VAL_SERIES(e->var) == VAL_SERIES(Root_Unspecialized_Tag))
-                Init_Void(e->var);
-
-        /* Remove_Binder_Index(&binder, KEY_SYMBOL(e.key)); */
-    }
-    /* SHUTDOWN_BINDER(&binder); */
-    Shutdown_Evars(e);
 
     FREE(EVARS, e);
     Init_Trash(iterator);

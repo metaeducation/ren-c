@@ -456,7 +456,15 @@ redescribe [
 unset: redescribe [
     {Clear the value of a word to an unset isotope (in its current context)}
 ](
-    specialize :set [value: ~, any: #]  ; tricky case, but supported!
+    ; Note: efforts were made at one time to permit specializing to void, by
+    ; having it fill the frame with unique series identity.  This was deemed
+    ; overkill once void had better workarounds--here we specialize to an
+    ; isotopic block pack that will decay due to not using /ANY.
+    ;
+    specialize :set [
+        set/any 'value: ~[~]~
+        any: _
+    ]
 )
 
 unset?: func [

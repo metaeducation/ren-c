@@ -137,8 +137,6 @@ PVAR REBVAL *Root_Fail_Tag;  // meta parameters that want failures
 PVAR REBVAL *Root_Pack_Tag;  // meta parameters that want failures
 
 
-PVAR REBVAL *Root_Unspecialized_Tag;  // unique unspecialized slot identity
-
 PVAR REBVAL *Root_Here_Tag;  // https://forum.rebol.info/t/1558/5
 
 PVAR REBVAL *Root_Empty_Text; // read-only ""

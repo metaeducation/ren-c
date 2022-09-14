@@ -305,14 +305,14 @@ load-value: redescribe [
         :load,
         lambda [^x [<fail> block!]] [
             either raised? unget x [
-                unget x
+                unget x  ; pipe error
             ][
                 x: unget x
-                assert [block? x]
-                if 1 <> length of x [
-                    fail ["LOAD-VALUE got length" length of x "block, not 1"]
+                either 1 = length of ensure block! x [
+                    first x
+                ][
+                    raise ["LOAD-VALUE got length" length of x "block, not 1"]
                 ]
-                first x
             ]
         ]
     ]
