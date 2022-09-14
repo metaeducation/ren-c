@@ -110,12 +110,12 @@
 ; ultimately did become void.
 [(
     did all [
-        none? [_ rest]: transcode/one "abc def"
+        'abc = [_ rest]: transcode/one "abc def"
         rest = " def"
     ]
 )(
     did all [
-        none? [(void) rest]: transcode/one "abc def"
+        'abc = [(void) rest]: transcode/one "abc def"
         rest = " def"
     ]
 )(

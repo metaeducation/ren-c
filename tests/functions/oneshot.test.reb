@@ -16,5 +16,5 @@
     ]
 )(
     once: oneshot
-    '~[]~ = ^ once [null]
+    '~[_]~ = ^ once [null]
 )

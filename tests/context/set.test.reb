@@ -36,13 +36,24 @@
     b: 20
     did all [blank = [a b]: pack @[_ _], blank? a, blank? b]
 )
+~???~ !! (
+    a: 10
+    b: 20
+    c: 30
+    [a b c]: pack [_ 99]  ; too few values in pack
+)
 (
     a: 10
     b: 20
     c: 30
-    [a b c]: pack [_ 99]
-    did all [null? a, b = 99, ^c = '~]
+    all [
+        null? [a b /c]: pack [_ 99]  ; /c marks it optional
+        null? a
+        b = 99
+        c = null
+    ]
 )
+
 
 (10 = set void 10)
 (null = get void)

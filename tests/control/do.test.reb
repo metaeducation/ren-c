@@ -188,7 +188,13 @@
 (0.0.0 == do [0.0.0])
 (void' = ^ do [()])
 ('a == do ['a])
-(error? trap [do trap [1 / 0] 1])
+
+; !!! At time of writing, DO of an ERROR! is like FAIL; it is not definitional,
+; and can only be caught with SYS.UTIL.RESCUE.  Should it be?  Or should a
+; DO of an ERROR! just make it into a definitional error?
+;
+~zero-divide~ !! (error? trap [do trap [1 / 0] 1])
+
 (
     a-value: first [(2)]
     2 == do as block! :a-value

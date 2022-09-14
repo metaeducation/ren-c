@@ -44,8 +44,8 @@
 
 [
     (
-        for-both: func ['var blk1 blk2 body] [
-            return unmeta* all [
+        for-both: lambda ['var blk1 blk2 body] [
+            unmeta* all [
                 meta* for-each (var) blk1 body
                 meta* for-each (var) blk2 body
             ]
@@ -72,14 +72,14 @@
         assert [40 = for-both x [1 2] [3 4] [keep x, x * 10]]
     ])
 
-    ; Saves result from second loop output, due to MAYBE/META vanishing on the
-    ; ~()~ isotope produced by contract when FOR-EACH does not run.
+    ; Saves result from second loop output, due to META* vanishing on the
+    ; void produced by contract when FOR-EACH does not run.
 
     ([1 2] = collect [
         assert [20 = for-both x [1 2] [] [keep x, x * 10]]
     ])
 
-    ; The all-important support of BREAK... META of NULL remains NULL, and
+    ; The all-important support of BREAK... META* of NULL remains NULL, and
     ; is falsey to short circuit the ALL.
 
     ([1] = collect [
@@ -101,12 +101,22 @@
     ])
 
     ; It's not possible to return a "pure NULL" otherwise.  But the existence
-    ; of ~_~ isotopes permit a non-break-signaling construct that carries
+    ; of ~[_]~ isotopes permit a non-break-signaling construct that carries
     ; semantic intent of a null, and will decay to it upon variable assignment.
 
     ([1 2 3 4] = collect [
         assert [did all [
-            '~[]~ = meta result: for-both x [1 2] [3 4] [
+            '~[_]~ = result': ^ for-both x [1 2] [3 4] [
+                keep x
+                null
+            ]
+            result' = '~[_]~
+        ]]
+    ])
+
+    ([1 2 3 4] = collect [
+        assert [did all [
+            null = result: for-both x [1 2] [3 4] [
                 keep x
                 null
             ]
@@ -153,6 +163,6 @@
     ; esoteric feature anyway...more useful to have a form of MAYBE that can
     ; let the last loop iteration signal a desire for overall erasure.
 
-    ('~()~ = ^ for-both x [1 2] [3 4] [if x > 2 [continue] x * 10])
-    ('~()~ = ^ for-both x [1 2] [3 4] [comment "Maintain invariant!"])
+    ('~[~]~ = ^ for-both x [1 2] [3 4] [if x > 2 [continue] x * 10])
+    ('~[~]~ = ^ for-both x [1 2] [3 4] [comment "Maintain invariant!"])
 ]

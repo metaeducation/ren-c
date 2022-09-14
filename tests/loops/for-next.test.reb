@@ -46,4 +46,4 @@
     out = [1 2 3]
 )
 
-('~()~ = ^ for-each x [1 2 3] [maybe if x != 3 [x]])
+('~[~]~ = ^ for-each x [1 2 3] [maybe if x != 3 [x]])

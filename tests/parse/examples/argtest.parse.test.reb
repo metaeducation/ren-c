@@ -32,7 +32,7 @@
         else [
             return null
         ]
-        return reduce [access-dir port root-dir verbose]
+        return reduce/predicate [access-dir port root-dir verbose] :reify
     ])
 
     ([_ _ _ 2] = argtest ["-v"])
