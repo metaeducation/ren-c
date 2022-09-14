@@ -99,9 +99,9 @@ compile: func [
 
     let b: settings
     while [not tail? b] [
-        var: (select config try match word! key: b.1) else [
+        var: get ((in config match word! key: b.1) else [
             fail [{COMPILE/OPTIONS parameter} key {is not supported}]
-        ]
+        ])
         b: next b
         if tail? b [
             fail [{Missing argument to} key {in COMPILE}]
@@ -165,7 +165,7 @@ compile: func [
     ; which is a standard setting.
 
     config.runtime-path: default [any [
-        local-to-file try get-env "CONFIG_TCCDIR"  ; (backslashes on windows)
+        local-to-file maybe get-env "CONFIG_TCCDIR"  ; (backslashes on windows)
 
         ; !!! Guessing is probably a good idea in the long term, but in the
         ; short term it just creates unpredictability.  Avoid for now.
@@ -483,13 +483,13 @@ c99: func [
     let outtype: _  ; default will be EXE (also overridden if `-c` or `-E`)
 
     let settings: collect [
-        let option-no-arg-rule: [copy option: to [space | <end>] (
+        let option-no-arg-rule: [option: across to [space | <end>] (
             keep spread compose [options (option)]
         )]
 
         let option
         let option-with-arg-rule: [
-            opt space copy option: to [space | <end>] (
+            opt space option: across to [space | <end>] (
                 ;
                 ; If you do something like `option {-DSTDIO_H="stdio.h"}, TCC
                 ; seems to process it like `-DSTDIO_H=stdio.h` which won't
@@ -529,17 +529,17 @@ c99: func [
             option-no-arg-rule
             |
             "-I"  ; add directory to search for #include files
-            opt space copy temp: to [space | <end>] (
+            opt space temp: across to [space | <end>] (
                 keep spread compose [include-path (temp)]
             )
             |
             "-L"  ; add directory to search for library files
-            opt space copy temp: to [space | <end>] (
+            opt space temp: across to [space | <end>] (
                 keep spread compose [library-path (temp)]
             )
             |
             "-l"  ; add library (-llibrary means search for "liblibrary.a")
-            opt space copy temp: to [space | <end>] (
+            opt space temp: across to [space | <end>] (
                 keep spread compose [library (temp)]
             )
             |
@@ -547,7 +547,7 @@ c99: func [
             option-with-arg-rule
             |
             "-o"  ; output file (else default should be "a.out")
-            opt space copy outfile: to [space | <end>] (  ; overwrites a.out
+            opt space outfile: across to [space | <end>] (  ; overwrites a.out
                 keep spread compose [output-file (outfile)]
             )
             |
@@ -568,10 +568,10 @@ c99: func [
             |
             "-rdynamic"  ; !!! Again, not POSIX
             |
-            copy filename: [
+            filename: across [
                 some [
                     nonspacedot
-                    | ahead "." not ahead known-extension-rule skip
+                    | ahead "." not ahead known-extension-rule skip 1
                 ]
                 known-extension-rule
             ] (
@@ -604,7 +604,7 @@ c99: func [
             ]
             'OBJ [
                 if infile != <multi> [
-                    parse3 copy infile [to [".c" end] change ".c" ".o"] else [
+                    parse copy infile [to [".c" <end>] change ".c" ".o"] else [
                         fail "Input file must end in `.c` for use with -c"
                     ]
                 ]
@@ -670,7 +670,7 @@ bootstrap: func [
     let status: lib.call [
         (system.options.boot) make.r
             "config=configs/bootstrap.r"
-            ((if options [system.options.args]))
+            (if options [spread system.options.args])
     ]
     if status != 0 [
         fail ["BOOTSTRAP command failed with exit status:" status]

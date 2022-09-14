@@ -168,7 +168,7 @@ static void Process_Text_Helper(
     const char *label
 ){
     REBVAL *text = rebValue(
-        "opt ensure [blank! text!] select", config, "as word!", rebT(label)
+        "ensure [<opt> text!] select", config, "as word!", rebT(label)
     );
 
     if (text) {
