@@ -131,8 +131,21 @@ static void Error_Reporting_Hook(
     assert(cast(REBVAL*, opaque) == EMPTY_BLOCK);
     UNUSED(opaque);
 
+    REBVAL *message = rebText(msg_utf8);
+
+    // TCC added a warning for potential missing returns.  But their checking
+    // is not great, and also at time of writing in 2022 they haven't bumped
+    // the version reported by __TINYC__ since 2017...so you can't tell when
+    // you can use _Noreturn or not.  Rather than force you to disable all
+    // warnings, we filter out this one.
+    //
+    if (rebDid("find", message, "{warning: function might return no value}")) {
+        rebRelease(message);
+        return;
+    }
+
     rebJumps ("fail [",
-        "{TCC errors/warnings, '-w' to stop warnings:}", rebT(msg_utf8),
+        "{TCC errors/warnings, '-w' to stop warnings:}", rebR(message),
     "]");
 }
 

@@ -413,7 +413,7 @@ e-lib/emit 'ver {
     #ifndef __has_builtin
         #define __has_builtin(x) 0
     #endif
-    #if !defined(GCC_VERSION_AT_LEAST)  /* !!! duplicated in %reb-config.h */
+    #if !defined(GCC_VERSION_AT_LEAST)  /* !!! duplicated in %reb-c.h */
         #ifdef __GNUC__
             #define GCC_VERSION_AT_LEAST(m, n) \
                 (__GNUC__ > (m) || (__GNUC__ == (m) && __GNUC_MINOR__ >= (n)))
@@ -426,12 +426,20 @@ e-lib/emit 'ver {
      * !!! _Noreturn was introduced in C11, but prior to that (including C99)
      * there was no standard way of doing it.  If we didn't mark APIs which
      * don't return with this, there'd be warnings in the calling code.
+     *
+     * 1. TCC added a _Noreturn and noreturn in 2019 (at first doing nothing,
+     *    but then got an implementation).  Unfortunately they haven't bumped
+     *    the version reported by __TINYC__ since 2017, so there's no easy
+     *    detection of the availability (and TCC apt packages can be old).
+     *    So use newer TCCs in C11 mode or do `-DATTRIBUTE_NO_RETURN=_Noreturn`
      */
-    #if !defined(ATTRIBUTE_NO_RETURN)  /* !!! duplicated in %reb-config.h */
+    #if !defined(ATTRIBUTE_NO_RETURN)
         #if defined(__clang__) || GCC_VERSION_AT_LEAST(2, 5)
             #define ATTRIBUTE_NO_RETURN __attribute__ ((noreturn))
         #elif defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L
             #define ATTRIBUTE_NO_RETURN _Noreturn
+        #elif defined(__TINYC__)
+            #define ATTRIBUTE_NO_RETURN  /* _Noreturn unreliable, see [1] */
         #elif defined(_MSC_VER)
             #define ATTRIBUTE_NO_RETURN __declspec(noreturn)
         #else
