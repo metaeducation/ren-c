@@ -255,14 +255,13 @@
 ; Collecting non-array series fragments
 [
     (did all [
-        pos: parse* "aaabbb" [x: collect [keep [across some "a"]] <here>]
+        pos: parse- "aaabbb" [x: collect [keep [across some "a"]]]
         "bbb" = pos
         x = ["aaa"]
     ])
     (did all [
-        pos: parse* "aaabbbccc" [
+        pos: parse- "aaabbbccc" [
             x: collect [keep [across some "a"] some "b" keep [across some "c"]]
-            <here>
         ]
         "" = pos
         x = ["aaa" "ccc"]
@@ -272,13 +271,12 @@
 ; "Backtracking" (more tests needed!)
 [
     (did all [
-        pos: parse* [1 2 3] [
+        pos: parse- [1 2 3] [
             x: collect [
                 keep integer! keep integer! keep text!
                 |
                 keep integer! keep spread across some integer!
             ]
-            <here>
         ]
         [] = pos
         x = [1 2 3]
@@ -316,25 +314,23 @@
 ; input series or a match rule.
 [
     (did all [
-        pos: parse* [1 2 3] [
+        pos: parse- [1 2 3] [
             x: collect [
                 keep integer!
                 keep spread (second [A [<pick> <me>] B])
                 keep integer!
             ]
-            <here>
         ]
         [3] = pos
         x = [1 <pick> <me> 2]
     ])
     (did all [
-        pos: parse* [1 2 3] [
+        pos: parse- [1 2 3] [
             x: collect [
                 keep integer!
                 keep (second [A [<pick> <me>] B])
                 keep integer!
             ]
-            <here>
         ]
         [3] = pos
         x = [1 [<pick> <me>] 2]

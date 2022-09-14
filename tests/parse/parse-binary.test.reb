@@ -5,7 +5,7 @@
 
 ; General BINARY! matching
 [
-    ('~()~ = ^ parse #{} [])
+    ('~[~]~ = ^ parse #{} [])
 
     (#{0A} == parse #{0A} [#{0A}])
     (#"^/" == parse #{0A} [#"^/"])
@@ -115,7 +115,7 @@
     (#{0A} == parse #{0A0A0B0A0B0B0B0A} [some [#{0A} | #{0B}]])
     (didn't parse #{0A0A0B0A0B0B0B0A} [some [#{0A} | #"^L"]])
     (#{0A} == parse #{0A0A} [some [#{0A}]])
-    ('~[]~ = ^ parse #{0A0A} [some [#{0A}] opt some [#{0B}]])
+    ('~[_]~ = ^ parse #{0A0A} [some [#{0A}] opt some [#{0B}]])
     (#{0B} == parse #{0A0A0B0B} [repeat 2 #{0A} repeat 2 #{0B}])
     (didn't parse #{0A0A0B0B} [repeat 2 #{0A} repeat 3 #{0B}])
     (#{0B} == parse #{0A0A0B0B} [some #{0A} some #{0B}])

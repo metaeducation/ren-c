@@ -150,7 +150,7 @@ utrim: function [
     ;
     indent: #  ; by default, remove all indentation (opt in to the REPEAT)
     if auto [
-        parse* series [
+        parse- series [
             ; Don't count empty lines, (e.g. utrim/auto {^/^/^/    asdf})
             opt remove [some LF]
 

@@ -119,8 +119,8 @@
 )
 
 [
-    ('~()~ = ^ parse [] [maybe some 'a])
-    ('~()~ = ^(parse [] [maybe some 'b]))
+    ('~[~]~ = ^ parse [] [maybe some 'a])
+    ('~[~]~ = ^(parse [] [maybe some 'b]))
     ('a == parse [a] [maybe some 'a])
     (didn't parse [a] [maybe some 'b])
     ('a == parse [a] [maybe some 'b <any>])
@@ -136,8 +136,8 @@
 )]
 
 [
-    ('~[]~ = ^ parse "a" ["a" opt some "b"])
-    ('~[]~ = ^ parse "a" ["a" [opt "b"]])
+    ('~[_]~ = ^ parse "a" ["a" opt some "b"])
+    ('~[_]~ = ^ parse "a" ["a" [opt "b"]])
     (''~ = ^ parse "a" ["a" ^[maybe some "b"]])
 ]
 
@@ -167,8 +167,8 @@
 
 
 [
-    ('~()~ = ^ parse "" [maybe some #a])
-    ('~()~ = ^ parse "" [maybe some #b])
+    ('~[~]~ = ^ parse "" [maybe some #a])
+    ('~[~]~ = ^ parse "" [maybe some #b])
     (#a == parse "a" [maybe some #a])
     (didn't parse "a" [maybe some #b])
     (#a == parse "a" [maybe some #b <any>])

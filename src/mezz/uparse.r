@@ -2915,6 +2915,16 @@ parse: (comment [redescribe [  ; redescribe not working at the moment (?)
     ]
 )
 
+parse-: (comment [redescribe [  ; redescribe not working at the moment (?)
+    {Process input in the parse dialect, return how far reached}
+] ]
+    enclose :parse* func [f] [
+        f.rules: compose [(f.rules) || return <here>]
+        return do f except [return null]
+    ]
+)
+
+
 parse+: (comment [redescribe [  ; redescribe not working at the moment (?)
     {Process input in the parse dialect, passes error to ELSE}
 ] ]

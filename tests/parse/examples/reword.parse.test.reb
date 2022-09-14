@@ -115,13 +115,13 @@
         (append out a)  ; finalize output - transfer any remainder verbatim
     ]
 
-    apply :parse* [source rule, /case case_REWORD] else [fail]  ; why fail?
+    apply :parse- [source rule, /case case_REWORD] else [fail]  ; why fail?
     return out
 ])
 
 ("Multiple Search and Replace" = uparse-reword/escape "Multiple Foo and Bar" [
     "Foo" "Search" "Bar" "Replace"
-] null)
+] "")
 
 ("This is that." = uparse-reword "$1 is $2." [1 "This" 2 "that"])
 
