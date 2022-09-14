@@ -749,9 +749,6 @@ REBTYPE(String)
 
     option(SymId) id = ID_OF_SYMBOL(verb);
 
-    REBLEN index = VAL_INDEX(v);
-    REBLEN tail = VAL_LEN_HEAD(v);
-
     switch (id) {
 
     //=//// PICK* (see %sys-pick.h for explanation) ////////////////////////=//
@@ -835,6 +832,10 @@ REBTYPE(String)
             limit = Part_Len_May_Modify_Index(v, ARG(part));
         else
             limit = 1;
+
+        REBLEN index = VAL_INDEX(v);  // Part calculation may have changed!
+        REBLEN tail = VAL_LEN_HEAD(v);
+
         if (index >= tail or limit == 0)
             return COPY(v);
 
@@ -927,8 +928,7 @@ REBTYPE(String)
             | (REF(case) ? AM_FIND_CASE : 0)
         );
 
-        if (REF(part))
-            tail = Part_Tail_May_Modify_Index(v, ARG(part));
+        REBLEN tail = Part_Tail_May_Modify_Index(v, ARG(part));
 
         REBINT skip;
         if (REF(skip)) {
@@ -1001,6 +1001,8 @@ REBTYPE(String)
 
         // Note that /PART can change index
 
+        REBLEN tail = VAL_LEN_HEAD(v);
+
         if (REF(last)) {
             if (len > tail) {
                 VAL_INDEX_RAW(v) = 0;
@@ -1016,8 +1018,6 @@ REBTYPE(String)
             return Init_Any_String(OUT, VAL_TYPE(v), Make_String(0));
         }
 
-        index = VAL_INDEX(v);
-
         // if no /PART, just return value, else return string
         //
         if (REF(part))
@@ -1030,6 +1030,9 @@ REBTYPE(String)
 
       case SYM_CLEAR: {
         String(*) s = VAL_STRING_ENSURE_MUTABLE(v);
+
+        REBLEN index = VAL_INDEX(v);
+        REBLEN tail = VAL_LEN_HEAD(v);
 
         if (index >= tail)
             return COPY(v);  // clearing after available data has no effect
@@ -1077,6 +1080,9 @@ REBTYPE(String)
 
         String(*) v_str = VAL_STRING_ENSURE_MUTABLE(v);
         String(*) arg_str = VAL_STRING_ENSURE_MUTABLE(arg);
+
+        REBLEN index = VAL_INDEX(v);
+        REBLEN tail = VAL_LEN_HEAD(v);
 
         if (index < tail and VAL_INDEX(arg) < VAL_LEN_HEAD(arg)) {
             Codepoint v_c = GET_CHAR_AT(v_str, VAL_INDEX(v));
@@ -1172,6 +1178,9 @@ REBTYPE(String)
             Set_Random(crc32_z(0L, utf8, utf8_size));
             return NONE;
         }
+
+        REBLEN index = VAL_INDEX(v);
+        REBLEN tail = VAL_LEN_HEAD(v);
 
         if (REF(only)) {
             if (index >= tail)

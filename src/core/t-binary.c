@@ -311,11 +311,6 @@ REBTYPE(Binary)
     REBVAL *v = D_ARG(1);
     assert(IS_BINARY(v));
 
-    // Common setup code for all actions:
-    //
-    REBINT index = cast(REBINT, VAL_INDEX(v));
-    REBINT tail = cast(REBINT, VAL_LEN_HEAD(v));
-
     option(SymId) id = ID_OF_SYMBOL(verb);
 
     switch (id) {
@@ -463,8 +458,7 @@ REBTYPE(Binary)
             | (REF(case) ? AM_FIND_CASE : 0)
         );
 
-        if (REF(part))
-            tail = Part_Tail_May_Modify_Index(v, ARG(part));
+        REBINT tail = Part_Tail_May_Modify_Index(v, ARG(part));
 
         REBINT skip;
         if (REF(skip))
@@ -525,6 +519,8 @@ REBTYPE(Binary)
 
         // Note that /PART can change index
 
+        REBINT tail = cast(REBINT, VAL_LEN_HEAD(v));
+
         if (REF(last)) {
             if (tail - len < 0) {
                 VAL_INDEX_RAW(v) = 0;
@@ -540,8 +536,6 @@ REBTYPE(Binary)
 
             return Init_Series_Cell(OUT, VAL_TYPE(v), Make_Binary(0));
         }
-
-        index = VAL_INDEX(v);
 
         // if no /PART, just return value, else return string
         //
@@ -559,6 +553,9 @@ REBTYPE(Binary)
 
       case SYM_CLEAR: {
         Binary(*) bin = VAL_BINARY_ENSURE_MUTABLE(v);
+
+        REBINT tail = cast(REBINT, VAL_LEN_HEAD(v));
+        REBINT index = cast(REBINT, VAL_INDEX(v));
 
         if (index >= tail)
             return COPY(v); // clearing after available data has no effect
@@ -754,6 +751,9 @@ REBTYPE(Binary)
         Byte* v_at = VAL_BINARY_AT_ENSURE_MUTABLE(v);
         Byte* arg_at = VAL_BINARY_AT_ENSURE_MUTABLE(arg);
 
+        REBINT tail = cast(REBINT, VAL_LEN_HEAD(v));
+        REBINT index = cast(REBINT, VAL_INDEX(v));
+
         if (index < tail and VAL_INDEX(arg) < VAL_LEN_HEAD(arg)) {
             Byte temp = *v_at;
             *v_at = *arg_at;
@@ -841,6 +841,9 @@ REBTYPE(Binary)
             Set_Random(crc32_z(0L, data, size));
             return NONE;
         }
+
+        REBINT tail = cast(REBINT, VAL_LEN_HEAD(v));
+        REBINT index = cast(REBINT, VAL_INDEX(v));
 
         if (REF(only)) {
             if (index >= tail)

@@ -69,3 +69,39 @@
     ((as binary! "ke Pæ") = take/part bin 6)
     (str = "rt")
 ]
+
+; Negative /PART should work the same as positive /PART
+[
+    (
+        string: "abcdef"
+        remove/part (skip string 4) (skip string 2)
+        string = "abef"
+    )
+    (
+        string: "abcdef"
+        remove/part (skip string 2) (skip string 4)
+        string = "abef"
+    )
+
+    (
+        block: [a b c d e f]
+        remove/part (skip block 4) (skip block 2)
+        block = [a b e f]
+    )
+    (
+        block: [a b c d e f]
+        remove/part (skip block 2) (skip block 4)
+        block = [a b e f]
+    )
+
+    (
+        binary: #{ABCDEF}
+        remove/part (skip binary 2) (skip binary 1)
+        binary = #{ABEF}
+    )
+    (
+        binary: #{ABCDEF}
+        remove/part (skip binary 1) (skip binary 2)
+        binary = #{ABEF}
+    )
+]
