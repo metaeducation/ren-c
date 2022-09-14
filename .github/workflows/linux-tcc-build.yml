@@ -281,9 +281,15 @@ jobs:
     # Then BOOTSTRAP will make a %build/ directory underneath that, where
     # the build products will be put.
     #
+    # Note: We use /CHEAT because the built-in ZIP is based on UPARSE and has
+    # a high per-item cost at time of writing.  It's rather slow, and gets
+    # exercised elsewhere.  This just uses CALL to the unzip executable vs.
+    # UNZIP, so that the results of the test can be observed faster.
+    #
     - name: Use R3 We Built to Download Source Over HTTPS, Unzip, and Compile!
       run: |
-        ./r3-with-tcc --do "bootstrap/options" -- debug=$DEBUG extensions="TCC +"
+        ./r3-with-tcc --do "bootstrap/cheat/options" \
+            -- debug=$DEBUG extensions="TCC +"
         echo "R3TWO=$(pwd)/ren-c-master/build/r3" >> $GITHUB_ENV
 
 
@@ -302,12 +308,12 @@ jobs:
     # not have to see it.
     #
     # Also, in order to build user natives, one of the headers used by the
-    # process needs to be `librebol.h`.  We don't use a fixed version in the
+    # process needs to be `rebol.h`.  We don't use a fixed version in the
     # `tccencap` that BOOTSTRAP from the web, because we'd like an up to the
     # minute version from the build we just made.
     #
     # The long-term answer to this is for that encapping process to include
-    # the librebol.h and the precise libtcc files from the build.  So a test
+    # the rebol.h and the precise libtcc files from the build.  So a test
     # like this would effectively be using the file it just made, just like
     # we are doing here.
     #

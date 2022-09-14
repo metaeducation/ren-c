@@ -638,6 +638,7 @@ bootstrap: func [
     {Download Rebol sources from GitHub and build using TCC}
     return: <none>
     /options "Use system.options.ARGS to get additional make.r options"
+    /cheat "Use CALL to do the download and unzip vs. internal (faster)"
 ][
     ; We fetch the .ZIP file of the master branch from GitHub.  Note that this
     ; actually contains a subdirectory called `ren-c-master` which the
@@ -645,7 +646,13 @@ bootstrap: func [
     ;
     let zipped-url: https://codeload.github.com/metaeducation/ren-c/zip/master
     print ["Downloading and Unzipping Source From:" zipped-url]
-    unzip/quiet %. zipped-url
+    if cheat [
+        write %master.zip (read zipped-url)
+        call [unzip master.zip]
+    ]
+    else [
+        unzip/quiet %. zipped-url
+    ]
 
     ; We'd like to bundle the contents of the CONFIG_TCCDIR into the
     ; executable as part of the build process for the TCC extension.  The
