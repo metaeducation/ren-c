@@ -130,7 +130,7 @@ void Push_Redo_Action_Frame(REBVAL *out, Frame(*) f1, const REBVAL *run)
         // another good reason this should probably be done another way.  It
         // also loses information about the const bit.
         //
-        Quotify(Append_Value(normals, e.var), 1);
+        Meta_Quotify(Append_Value(normals, e.var));
     }
 
     Shutdown_Evars(&e);
