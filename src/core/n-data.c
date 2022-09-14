@@ -569,7 +569,7 @@ bool Get_Var_Push_Refinements_Throws(
             // set the steps out *first* before overwriting out
             //
             Derelativize(unwrap(steps_out), var, var_specifier);
-            mutable_HEART_BYTE(unwrap(steps_out)) = REB_WORD;
+            mutable_HEART_BYTE(unwrap(steps_out)) = REB_THE_WORD;
         }
 
         Copy_Cell(out, Lookup_Word_May_Fail(var, var_specifier));
@@ -968,14 +968,43 @@ bool Get_Path_Push_Refinements_Throws(
 
 
 //
+//  resolve: native [
+//
+//  {Produce an invariant array structure for doing multiple GET or SET from}
+//
+//      return: [the-word! the-tuple! the-block!]
+//      @value [<opt> <void> any-value!]
+//      source [any-word! any-sequence! any-group!]
+//  ]
+//
+DECLARE_NATIVE(resolve)
+//
+// Note: Originally, resolving was something done by GET to give you an
+// optional parameter out.  This complicated the multi-return situation in the
+// cases of wanting to return NULL or GET a multi-return itself (with /ANY).
+// It's now a separate operation, but the fact that you've already navigated
+// the path means that it's cheap enough to give back the thing retrieved.
+{
+    INCLUDE_PARAMS_OF_RESOLVE;
+
+    Value(*) source = ARG(source);
+
+    if (Get_Var_Core_Throws(SPARE, OUT, source, SPECIFIED))
+        return THROWN;
+
+    Move_Cell(ARG(value), SPARE);  // should be able to eval direct, review
+
+    return Proxy_Multi_Returns(frame_);
+}
+
+
+//
 //  get: native [
 //
 //  {Gets the value of a word or path, or block of words/paths}
 //
 //      return: [<opt> <void> any-value!]
-//      @steps "Reusable PICK/POKE steps"
-//          [<opt> the-word! the-tuple! the-block!]
-//      source "Word or path to get, or block of PICK steps"
+//      source "Word or tuple to get, or block of PICK steps (see RESOLVE)"
 //          [<void> any-word! any-sequence! any-group! the-block!]
 //      /any "Do not error on isotopes"
 //      /groups "Allow GROUP! Evaluations"
@@ -993,7 +1022,7 @@ DECLARE_NATIVE(get)
 
     REBVAL *steps;
     if (REF(groups))
-        steps = ARG(steps);
+        steps = GROUPS_OK;
     else
         steps = nullptr;  // no GROUP! evals
 
@@ -1046,10 +1075,6 @@ bool Set_Var_Core_Updater_Throws(
     const REBVAL *setval,  // e.g. f->out (in the evaluator, right hand side)
     const REBVAL *updater
 ){
-    assert(not Is_Blank_Isotope(setval));
-    /*assert(not Is_Pack(setval));*/  // !!! all isotopes likely becoming legal
-    assert(not Is_Raised(setval));
-
     // Note: `steps_out` can be equal to `out` can be equal to `target`
 
     DECLARE_LOCAL (temp);  // target might be same as out (e.g. spare)
@@ -1336,8 +1361,6 @@ void Set_Var_May_Fail(
 //
 //      return: "Same value as input"
 //          [<opt> <void> any-value!]
-//      @steps "Reusable PICK/POKE steps"
-//          [<opt> the-word! the-tuple! the-block!]
 //      target "Word or tuple, or calculated sequence steps (from GET)"
 //          [<void> any-word! any-sequence! any-group! the-block!]
 //      ^value [<opt> <void> <fail> <pack> any-value!]  ; tunnels failure
@@ -1347,13 +1370,7 @@ void Set_Var_May_Fail(
 //
 DECLARE_NATIVE(set)
 //
-// 2. While the written value would decay if an isotope, the overall return
-//    result is the same as was passed in:
-//
-//        >> set 'x match logic! false
-//        == ~false~  ; isotope
-//
-// 3. Plain POKE can't throw (e.g. from a GROUP!) because it won't evaluate
+// 1. Plain POKE can't throw (e.g. from a GROUP!) because it won't evaluate
 //    them.  However, we can get errors.  Confirm we only are raising errors
 //    unless steps_out were passed.
 {
@@ -1369,7 +1386,7 @@ DECLARE_NATIVE(set)
 
     REBVAL *steps;
     if (REF(groups))
-        steps = ARG(steps);
+        steps = GROUPS_OK;
     else
         steps = nullptr;  // no GROUP! evals
 
@@ -1381,13 +1398,11 @@ DECLARE_NATIVE(set)
     }
 
     if (Set_Var_Core_Throws(SPARE, steps, target, SPECIFIED, v)) {
-        assert(steps or IS_ERROR(VAL_THROWN_LABEL(frame_)));  // see [3]
+        assert(steps or IS_ERROR(VAL_THROWN_LABEL(frame_)));  // see [1]
         return THROWN;
     }
 
-    Copy_Cell(OUT, v);  // result does not decay, see [2]
-
-    return Proxy_Multi_Returns(frame_);
+    return Copy_Cell(OUT, v);
 }
 
 
