@@ -113,13 +113,13 @@ sys.util.make-scheme [
             return: <none>
             port [port!]
         ][
-            if try get try in (statement: port.locals) 'hstmt [
+            if get maybe in (statement: port.locals) 'hstmt [
                 remove find head statement.database.statements port
                 close-statement statement
                 return none
             ]
 
-            if try get try in (connection: port.locals) 'hdbc [
+            if get maybe in (connection: port.locals) 'hdbc [
                 for-each stmt-port connection.statements [close stmt-port]
                 clear connection.statements
                 close-connection connection
@@ -248,7 +248,10 @@ odbc-execute: func [
         print ["** PARAMETERS:" mold parameters]
     ]
 
-    return insert statement spread compose [(query) (spread parameters)]
+    ; !!! This INSERT takes a BLOCK!, not spread--this all ties into questions
+    ; about the wisdom of reusing these verbs the way R3-Alpha did.
+    ;
+    return insert statement compose [(query) (spread parameters)]
 ]
 
 export [odbc-execute]
