@@ -41,6 +41,7 @@ call*: adapt :call-internal* [
                 switch type of arg [
                     text! [arg]  ; pass through as is
                     file! [file-to-local arg]
+                    url! [as text! arg]
                     word! [as text! arg]
                     path! [to text! arg]
                     tuple! [to text! arg]
