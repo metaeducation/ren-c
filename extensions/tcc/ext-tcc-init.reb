@@ -147,14 +147,13 @@ compile: func [
     ]
 
     config.output-type: default ['MEMORY]
-    all [
-        config.output-type <> 'MEMORY
-        not config.output-file
-    ] then [
-        fail "If OUTPUT-TYPE is not 'MEMORY then OUTPUT-FILE must be set"
-    ]
 
-    config.output-file: my file-to-local/full
+    if config.output-type <> 'MEMORY [
+        if not config.output-file [
+            fail "If OUTPUT-TYPE is not 'MEMORY then OUTPUT-FILE must be set"
+        ]
+        config.output-file: my file-to-local/full
+    ]
 
     ; !!! The pending concept is that there are embedded files in the TCC
     ; extension, and these files are extracted to the local filesystem in
