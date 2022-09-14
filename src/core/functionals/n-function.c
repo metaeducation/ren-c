@@ -499,7 +499,7 @@ Bounce Init_Thrown_Unwind_Value(
 //      level "Frame, action, or index to exit from"
 //          [frame! action! integer!]
 //      ^result "Result for enclosing state"
-//          [<opt> <end> any-value!]
+//          [<opt> <end> <fail> <pack> any-value!]
 //  ]
 //
 DECLARE_NATIVE(unwind)
