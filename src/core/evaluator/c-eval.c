@@ -622,10 +622,13 @@ Bounce Evaluator_Executor(Frame(*) f)
     //=//// ACTION! ///////////////////////////////////////////////////////=//
     //
     // If an action makes it to the SWITCH statement, that means it is either
-    // literally an action value in the array (`do compose [1 (:+) 2]`) or is
+    // literally an action value in the array (`do compose [(:add) 1 2]`) or is
     // being retriggered via REEVAL.
     //
-    // Most action evaluations are triggered from a WORD! or PATH! case.
+    // (Most action evaluations are triggered from a WORD! or PATH! case.)
+    //
+    // 1. If an enfix action is run at this moment, it will not have a left
+    //    hand side argument.
 
       case REB_ACTION: {
         Frame(*) subframe = Make_Action_Subframe(f);
@@ -635,7 +638,9 @@ Bounce Evaluator_Executor(Frame(*) f)
             VAL_ACTION(f_current),
             VAL_ACTION_BINDING(f_current)
         );
-        Begin_Prefix_Action(subframe, VAL_ACTION_LABEL(f_current));
+        bool enfix = Get_Action_Flag(VAL_ACTION(f_current), ENFIXED);
+        assert(Is_Fresh(OUT));  // so nothing on left, see [1]
+        Begin_Action_Core(subframe, VAL_ACTION_LABEL(f_current), enfix);
 
         goto process_action; }
 

@@ -8,8 +8,8 @@
 (action? get '+)
 
 ; #1934
-~no-arg~ !! (do reduce [1 get '+ 2])
-(3 = do reduce [:+ 1 2])
+(3 = do reduce [1 get '+ 2])
+~no-arg~ !! (do reduce [:+ 1 2])
 
 
 (
