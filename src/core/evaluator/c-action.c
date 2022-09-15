@@ -903,6 +903,11 @@ Bounce Action_Executor(Frame(*) f)
             }
         }
 
+        if (Is_True(ARG) or Is_False(ARG)) {
+            if (TYPE_CHECK(PARAM, REB_LOGIC))
+                continue;
+        }
+
         if (Is_Isotope(ARG) and not Is_Nulled(ARG)) {
             if (GET_PARAM_FLAG(PARAM, ISOTOPES_OKAY))
                 continue;

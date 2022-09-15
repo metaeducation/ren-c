@@ -22,7 +22,7 @@
     ][
         assert [length = length of issue]
         assert [size = size of issue]
-        assert [(char? issue) == (1 = length of issue)]
+        assert [(char? issue) = (1 = length of issue)]
         assert [issue = copy issue]
     ]
     true

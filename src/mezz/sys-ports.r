@@ -33,7 +33,7 @@ make-port*: function [
 
     switch type of spec [
         file! [
-            name: pick [dir file] dir? spec
+            name: either (dir? spec) 'dir 'file
             spec: make object! [
                 scheme: name
                 ref: spec

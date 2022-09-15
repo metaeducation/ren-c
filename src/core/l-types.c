@@ -288,6 +288,14 @@ Bounce Reflect_Core(Frame(*) frame_)
         fail (Error_Cannot_Reflect(heart, ARG(property)));
     }
 
+    Decay_If_Isotope(v);
+
+    if (IS_LOGIC(v) and symid == SYM_KIND)
+        return Init_Builtin_Datatype(OUT, REB_LOGIC);
+
+    if (Is_Isotope(v) and not Is_Nulled(v))
+        fail (Error_Bad_Isotope(v));
+
     switch (symid) {
       case SYM_KIND: // simpler answer, low-level datatype (e.g. QUOTED!)
         if (Is_Nulled(v))
@@ -310,7 +318,8 @@ Bounce Reflect_Core(Frame(*) frame_)
         //
         // If the escaping count of the value is zero, this returns it as is.
         //
-        return Quotify(OUT, VAL_NUM_QUOTES(v));
+        mutable_QUOTE_BYTE(OUT) = QUOTE_BYTE(v);  //  !!! likely temporary
+        return OUT;
 
       case SYM_QUOTES:
         return Init_Integer(OUT, VAL_NUM_QUOTES(v));
@@ -333,7 +342,7 @@ Bounce Reflect_Core(Frame(*) frame_)
 //
 //      return: [<opt> any-value!]
 //      value "Accepts NULL so REFLECT () 'TYPE can be returned as NULL"
-//          [<maybe> <opt> any-value!]
+//          [<maybe> <opt> any-value! ~any-value!~]
 //      property [word!]
 //          "Such as: type, length, spec, body, words, values, title"
 //  ]
@@ -358,7 +367,7 @@ DECLARE_NATIVE(reflect_native)
 //      'property "Will be escapable, ':property (bootstrap permitting)"
 //          [word! get-word! get-path! get-group!]
 //      value "Accepts null so TYPE OF NULL can be returned as null"
-//          [<maybe> <opt> any-value!]
+//          [<maybe> <opt> any-value! ~any-value!~]
 //  ]
 //
 DECLARE_NATIVE(of)

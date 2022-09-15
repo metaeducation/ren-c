@@ -50,7 +50,7 @@ enum {
 //  typecheck-internal?: native [
 //
 //      return: [logic!]
-//      optional [<opt> <void> any-value!]
+//      optional [<opt> <void> any-value! logic!]
 //  ]
 //
 DECLARE_NATIVE(typecheck_internal_q)

@@ -96,7 +96,7 @@ DECLARE_NATIVE(nand_q)
 //
 //      return: "true if value is NOT a LOGIC! false, BLANK!, or NULL"
 //          [logic!]
-//      optional [<opt> any-value!]
+//      optional [<opt> any-value! logic!]
 //  ]
 //
 DECLARE_NATIVE(to_logic)
@@ -114,7 +114,7 @@ DECLARE_NATIVE(to_logic)
 //
 //      return: "Only LOGIC!'s FALSE, BLANK!, and NULL return TRUE"
 //          [logic!]
-//      optional [<opt> any-value!]
+//      optional [<opt> any-value! logic!]
 //  ]
 //
 DECLARE_NATIVE(not_1)  // see TO-C-NAME
@@ -161,7 +161,7 @@ inline static bool Do_Logic_Right_Side_Throws(
 //  {Boolean AND, right hand side must be in GROUP! to allow short-circuit}
 //
 //      return: [logic!]
-//      left [<opt> any-value!]
+//      left [<opt> any-value! logic!]
 //      'right "Right is evaluated if left is true"
 //          [group! tuple! word!]
 //  ]
@@ -192,7 +192,7 @@ DECLARE_NATIVE(and_1)  // see TO-C-NAME
 //  {Boolean OR, right hand side must be in GROUP! to allow short-circuit}
 //
 //      return: [logic!]
-//      left [<opt> any-value!]
+//      left [<opt> any-value! logic!]
 //      'right "Right is evaluated if left is false"
 //          [group! tuple! word!]
 //  ]
@@ -223,7 +223,7 @@ DECLARE_NATIVE(or_1)  // see TO-C-NAME
 //  {Boolean XOR (operation cannot be short-circuited)}
 //
 //      return: [logic!]
-//      left [<opt> any-value!]
+//      left [<opt> any-value! logic!]
 //      'right "Always evaluated"
 //          [group! tuple! word!]
 //  ]
@@ -290,10 +290,9 @@ DECLARE_NATIVE(unless)
 REBINT CT_Logic(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
 {
     UNUSED(strict);
-
-    if (VAL_LOGIC(a) == VAL_LOGIC(b))
-        return 0;
-    return VAL_LOGIC(a) ? 1 : -1;  // only one is true
+    UNUSED(a);
+    UNUSED(b);
+    panic ("LOGIC! type no longer concretely exists");
 }
 
 
@@ -364,16 +363,10 @@ inline static bool Math_Arg_For_Logic(REBVAL *arg)
 //
 void MF_Logic(REB_MOLD *mo, noquote(Cell(const*)) v, bool form)
 {
-    if (not form)
-        Append_Ascii(mo->series, "#[");
-
-    if (VAL_LOGIC(v))
-        Append_Spelling(mo->series, Canon(TRUE));
-    else
-        Append_Spelling(mo->series, Canon(FALSE));
-
-    if (not form)
-        Append_Ascii(mo->series, "]");
+    UNUSED(mo);
+    UNUSED(v);
+    UNUSED(form);
+    panic ("LOGIC! type no longer concretely exists");
 }
 
 

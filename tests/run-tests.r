@@ -23,10 +23,8 @@ import %test-framework.r
 
 === SET UP FLAGS FOR WHICH TESTS TO RUN ===
 
-flags: pick [
-    [<64bit> <r3only> <r3>]
-    [<32bit> <r2only>]
-] not blank? in system 'catalog
+flags: [<64bit> <r3only> <r3>]
+; [<32bit> <r2only>]
 
 
 === CALCULATE INTERPRETER CHECKSUM ===

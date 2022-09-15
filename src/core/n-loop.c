@@ -1161,12 +1161,6 @@ DECLARE_NATIVE(every)
         goto next_iteration;  // ...but void does not NULL-lock output
     }
 
-    if (Is_Isotope(SPARE)) {  // don't decay isotopes, see [2]
-        Init_Error(SPARE, Error_Bad_Isotope(SPARE));
-        Init_Thrown_With_Label(FRAME, SPARE, Lib(NULL));
-        goto finalize_every;
-    }
-
     if (Is_Falsey(SPARE)) {
         Init_Nulled(OUT);
     }
@@ -1340,18 +1334,18 @@ DECLARE_NATIVE(remove_each)
         if (Is_Void(OUT)) {
             keep = true;  // treat same as logic false (e.g. don't remove)
         }
-        else if (Is_Isotope(OUT)) {  // don't decay isotopes, see [5]
-            threw = true;
-            Init_Error(SPARE, Error_Bad_Isotope(OUT));
-            Init_Thrown_With_Label(FRAME, Lib(NULL), SPARE);
-            goto finalize_remove_each;
-        }
         else if (IS_LOGIC(OUT)) {  // pure logic required, see [6]
             keep = not VAL_LOGIC(OUT);
         }
         else if (Is_Nulled(OUT)) {  // don't remove
             keep = true;
             Init_Heavy_Null(OUT);  // NULL reserved for BREAK signal
+        }
+        else if (Is_Isotope(OUT)) {  // don't decay isotopes, see [5]
+            threw = true;
+            Init_Error(SPARE, Error_Bad_Isotope(OUT));
+            Init_Thrown_With_Label(FRAME, Lib(NULL), SPARE);
+            goto finalize_remove_each;
         }
         else if (Is_Blackhole(OUT)) {  // do remove
             keep = false;
@@ -1993,9 +1987,6 @@ DECLARE_NATIVE(until)
 } test_condition: {  /////////////////////////////////////////////////////////
 
     if (not Is_Void(condition)) {  // skip voids, see [2]
-        if (Is_Isotope(condition))
-            fail (Error_Bad_Isotope(condition));  // all isotopes fail, see [3]
-
         if (Is_Truthy(condition))
             return BRANCHED(OUT);  // truthy result, return value!
     }

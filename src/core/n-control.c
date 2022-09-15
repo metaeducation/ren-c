@@ -135,8 +135,8 @@ Bounce Group_Branch_Executor(Frame(*) frame_)
 //  {When TO LOGIC! CONDITION is true, execute branch}
 //
 //      return: "void if branch not run, otherwise branch result"
-//          [<opt> <void> any-value!]
-//      condition [<opt> any-value!]
+//          [<opt> <void> any-value! logic!]
+//      condition [<opt> any-value! logic!]
 //      :branch "If arity-1 ACTION!, receives the evaluated condition"
 //          [any-branch!]
 //  ]
@@ -174,7 +174,7 @@ DECLARE_NATIVE(if)
 //
 //      return: [<opt> any-value!]
 //          "Returns null if either branch returns null (unlike IF...ELSE)"
-//      condition [<opt> any-value!]
+//      condition [<opt> any-value! logic!]
 //      :true-branch "If arity-1 ACTION!, receives the evaluated condition"
 //          [any-branch!]
 //      :false-branch
@@ -629,10 +629,10 @@ DECLARE_NATIVE(also)  // see `tweak :also 'defer on` in %base-defs.r
 //  {Check value using tests (match types, TRUE or FALSE, or filter action)}
 //
 //      return: "Input if it matched, NULL if it did not (isotope if falsey)"
-//          [<opt> any-value!]
+//          [<opt> any-value! logic!]
 //      test "Typeset or arity-1 filter function"
 //          [<opt> logic! action! block! datatype! typeset!]
-//      value [<maybe> <opt> any-value!]
+//      value [<maybe> <opt> any-value! logic!]
 //  ]
 //
 DECLARE_NATIVE(match)
@@ -1448,9 +1448,6 @@ DECLARE_NATIVE(default)
     return CONTINUE(SPARE, branch, OUT);
 
 } predicate_result_in_spare: {  //////////////////////////////////////////////
-
-    if (Is_Isotope(SPARE))
-        fail (Error_Bad_Isotope(SPARE));
 
     if (Is_Truthy(SPARE))
         return OUT;

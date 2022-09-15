@@ -1337,7 +1337,7 @@ bool RL_rebTruthy(const void *p, va_list *vaptr)
     DECLARE_LOCAL (condition);
     Run_Va_May_Fail(condition, p, vaptr);  // calls va_end()
 
-    return Is_Truthy(condition);  // will fail() on isotopes
+    return Is_Truthy(condition);  // will fail() on (most) isotopes
 }
 
 

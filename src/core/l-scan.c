@@ -2530,11 +2530,11 @@ Bounce Scanner_Executor(Frame(*) f) {
                 break;
 
               case SYM_FALSE:
-                Init_False(PUSH());
+                Init_Quasi_Word(PUSH(), Canon(FALSE));
                 break;
 
               case SYM_TRUE:
-                Init_True(PUSH());
+                Init_Quasi_Word(PUSH(), Canon(TRUE));
                 break;
 
               case SYM_UNSET:  // !!! Should be under a LEGACY flag...

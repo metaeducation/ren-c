@@ -370,7 +370,7 @@ DECLARE_NATIVE(do)
             SysUtil(DO_P),
                 source,
                 rebQ(ARG(args)),
-                REF(only) ? Lib(TRUE) : Lib(FALSE)
+                REF(only) ? rebQ(Lib(TRUE)) : rebQ(Lib(FALSE))
         );
         return BOUNCE_DELEGATE; }
 

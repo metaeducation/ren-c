@@ -24,7 +24,8 @@ verify: function [
     while [[^result']: evaluate/next conditions 'pos, pos] [
         any [
             void? unget result'  ; vanished
-            non bad-word! result' then [to-logic unquote result']
+            '~true~ = result'  ; truthy
+            non quasi! result' then [result' <> null']
 
             if :handler [  ; may or may-not take two arguments
                 reaction: ^ if block? :handler [
@@ -50,9 +51,9 @@ verify: function [
                 id: 'assertion-failure
                 arg1: compose [
                     (spread copy/part conditions pos) ** (case [
-                        quasi? result' [result']  ; isotope
-                        null' = result' [the null]
-                        false = unquote result' [the false]
+                        null' = result' ["; null"]
+                        '~false~ = result' ['~false~]  ; isotopic false
+                        bad-word? result' [result']  ; non-~true~ isotope
                     ])
                 ]
             ]

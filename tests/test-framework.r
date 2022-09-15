@@ -66,7 +66,13 @@ run-single-test: func [
     ] then [
         successes: me + 1
         log reduce [space {"correct failure:"} quote quasi expected-id newline]
-        return
+        return none
+    ]
+
+    if result = '~true~ [
+        successes: me + 1
+        log reduce [space {"succeeded"} newline]
+        return none
     ]
 
     case [
@@ -83,6 +89,10 @@ run-single-test: func [
         ]
         (elide if pack? unget result [result: first unquasi result])
 
+        result = '~false~ [
+            "test returned #[false]"
+        ]
+
         quasi? result [
             "test returned isotope:" (mold/limit result 40)
         ]
@@ -91,18 +101,12 @@ run-single-test: func [
         null? :result [
             "test returned null"
         ]
-        not logic? :result [
+        true [
             spaced ["was" (mold type of :result) ", not logic!"]
-        ]
-        not :result [
-            "test returned #[false]"
         ]
     ] then message -> [
         test-failures: me + 1
         log reduce [space {"failed, } message {"} newline]
-    ] else [
-        successes: me + 1
-        log reduce [space {"succeeded"} newline]
     ]
 ]
 

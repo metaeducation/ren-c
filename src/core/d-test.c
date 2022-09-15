@@ -66,7 +66,7 @@ DECLARE_NATIVE(test_librebol)
     Set_Cell_Flag(Init_Integer(PUSH(), 1), NEWLINE_BEFORE);
     int i = rebUnboxInteger("1 +", rebI(2));
 
-    Init_Logic(PUSH(), i == 3);  // ^-- see NOTICE
+    Meta_Quotify(Init_Logic(PUSH(), i == 3));  // ^-- see NOTICE
   }
 
   blockscope {
@@ -76,7 +76,7 @@ DECLARE_NATIVE(test_librebol)
     Node* getter_node = cast(Node*, cast(void*, getter));
     bool equal = rebUnboxLogic("{Hello} = @", getter_node);
 
-    Init_Logic(PUSH(), equal);  // ^-- see NOTICE
+    Meta_Quotify(Init_Logic(PUSH(), equal));  // ^-- see NOTICE
   }
 
   blockscope {
@@ -100,7 +100,7 @@ DECLARE_NATIVE(test_librebol)
     Set_Cell_Flag(Init_Integer(PUSH(), 5), NEWLINE_BEFORE);
     bool is_null = rebUnboxLogic("null? @", nullptr);
 
-    Init_Logic(PUSH(), is_null);
+    Meta_Quotify(Init_Logic(PUSH(), is_null));
   }
 
     return Init_Block(OUT, Pop_Stack_Values(base));

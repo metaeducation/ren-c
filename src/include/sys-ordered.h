@@ -67,6 +67,12 @@ inline static bool ANY_INERT_KIND(Byte k) {
     return k <= REB_BLOCK;
 }
 
+inline static bool ANY_VALUE_KIND(Byte k)
+  { return k != REB_NULL and k != REB_LOGIC; }
+
+#define ANY_VALUE(v) \
+    ANY_VALUE_KIND(VAL_TYPE(v))
+
 #define ANY_INERT(v) \
     ANY_INERT_KIND(VAL_TYPE(v))
 

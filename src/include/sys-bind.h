@@ -786,7 +786,7 @@ inline static const REBVAL *Get_Word_May_Fail(
     REBSPC *specifier
 ){
     const REBVAL *var = Lookup_Word_May_Fail(any_word, specifier);
-    if (Is_Isotope(var))
+    if (Is_Isotope(var) and not IS_LOGIC(var))
         fail (Error_Bad_Word_Get(any_word, var));
 
     return Copy_Cell(out, var);

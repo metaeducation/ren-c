@@ -382,14 +382,6 @@ static void Startup_Empty_Arrays(void)
     PG_1_Quoted_Void_Array = a;
   }
 
-  blockscope {
-    Array(*) a = Make_Array_Core(1, NODE_FLAG_MANAGED);
-    SET_SERIES_LEN(a, 1);
-    Meta_Quotify(Init_False(ARR_AT(a, 0)));
-    Freeze_Array_Deep(a);
-    PG_1_Meta_False_Array = a;
-  }
-
     // "Empty" PATH!s that look like `/` are actually a WORD! cell format
     // under the hood.  This allows them to have bindings and do double-duty
     // for actions like division or other custom purposes.  But when they
@@ -862,6 +854,14 @@ void Startup_Core(void)
     Startup_Api();
 
     Startup_Symbols();
+
+  blockscope {
+    Array(*) a = Make_Array_Core(1, NODE_FLAG_MANAGED);
+    SET_SERIES_LEN(a, 1);
+    Meta_Quotify(Init_False(ARR_AT(a, 0)));
+    Freeze_Array_Deep(a);
+    PG_1_Meta_False_Array = a;
+  }
 
 //=//// CREATE GLOBAL OBJECTS /////////////////////////////////////////////=//
 

@@ -1389,14 +1389,12 @@ default-combinators: make map! reduce [
         ]
 
         if quasi? r [
-            if r = '~_~ [
-                fail "GET-GROUP! evaluated to ~_~ isotope"  ; also mistake?
+            if not find [~true~ ~false~] r [
+                fail ["Bad isotope from GET-GROUP!" r]  ; fail other isotopes
             ]
-
-            fail ["Bad isotope from GET-GROUP!" r]  ; fail all other isotopes
         ]
 
-        r: unquote r
+        r: unmeta r
 
         if integer? :r [
             fail [value "can't be INTEGER!, use REPEAT" :["(" value ")"]]

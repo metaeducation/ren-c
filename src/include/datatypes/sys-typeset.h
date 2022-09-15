@@ -411,6 +411,9 @@ inline static bool Typecheck_Including_Constraints(
         if (Is_Nulled(v))
             return GET_PARAM_FLAG(param, ENDABLE);
 
+        if (Is_Isotope(v))
+            return false;
+
         if (IS_QUASI(v))
             return true;  // currently no isotopic typecheck
 
@@ -425,6 +428,13 @@ inline static bool Typecheck_Including_Constraints(
             kind = REB_QUASI;
     }
     else {
+        if (Is_Isotope(v) and not Is_Nulled(v) and not IS_LOGIC(v)) {
+            if (VAL_PARAM_CLASS(param) == PARAM_CLASS_RETURN)
+                return true;  // !!! type checking should be applied
+
+            return GET_PARAM_FLAG(param, ISOTOPES_OKAY);
+        }
+
         kind = VAL_TYPE(v);
     }
 

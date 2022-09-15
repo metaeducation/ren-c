@@ -29,24 +29,33 @@
 //   notation...but render them ambiguously as the words `true` and `false`.
 //
 
-inline static REBVAL *Init_Logic_Core(Cell(*) out, bool flag) {
-    Reset_Unquoted_Header_Untracked(out, CELL_MASK_LOGIC);
-    PAYLOAD(Logic, out).flag = flag;
-  #ifdef ZERO_UNUSED_CELL_FIELDS
-    EXTRA(Any, out).trash = ZEROTRASH;
-  #endif
-    return cast(REBVAL*, out);
+#define Init_Word_Isotope(out,label) \
+    TRACK(Init_Any_Word_Untracked((out), REB_WORD, (label), ISOTOPE_0))
+
+inline static bool Is_Word_Isotope(Cell(const*) v);
+
+inline static bool Is_Word_Isotope_With_Id(Cell(const*) v, SymId id);
+
+#define Init_True(out)      Init_Word_Isotope((out), Canon(TRUE))
+#define Init_False(out)     Init_Word_Isotope((out), Canon(FALSE))
+
+#define Is_True(out)        Is_Word_Isotope_With_Id((out), SYM_TRUE)
+#define Is_False(out)       Is_Word_Isotope_With_Id((out), SYM_FALSE)
+
+#undef IS_LOGIC
+inline static bool IS_LOGIC(Cell(const*) v) {
+    return Is_True(v) or Is_False(v);
 }
 
 #define Init_Logic(out,flag) \
-    TRACK(Init_Logic_Core((out), (flag)))
+    Init_Word_Isotope((out), (flag) ? Canon(TRUE) : Canon(FALSE))
 
-#define Init_True(out)      Init_Logic((out), true)
-#define Init_False(out)     Init_Logic((out), false)
-
-inline static bool VAL_LOGIC(noquote(Cell(const*)) v) {
-    assert(CELL_HEART(v) == REB_LOGIC);
-    return PAYLOAD(Logic, v).flag;
+inline static bool VAL_LOGIC(Cell(const*) v) {
+    if (Is_True(v))
+        return true;
+    if (Is_False(v))
+        return false;
+    fail ("Attempt to test VAL_LOGIC() on non-LOGIC!");
 }
 
 
@@ -70,23 +79,18 @@ inline static bool Is_Truthy(Cell(const*) v) {
     if (QUOTE_BYTE(v) == ISOTOPE_0) {
         if (HEART_BYTE(v) == REB_BLANK)  // blank isotope is null, falsey
             return false;
-        fail (Error_Bad_Isotope(v));
+        if (IS_LOGIC(v))
+            return VAL_LOGIC(v);
+        fail (Error_Bad_Isotope(v));  // !!! special error?
     }
 
     if (QUOTE_BYTE(v) != UNQUOTED_1)
         return true;  // all QUOTED! and QUASI! types are truthy
 
-    Byte heart = HEART_BYTE(v);
-    switch (heart) {
-      case REB_VOID:
+    if (HEART_BYTE(v) == REB_VOID)
         fail (Error_Bad_Void());  // void is neither truthy nor falsey
 
-      case REB_LOGIC:
-        return VAL_LOGIC(v);
-
-      default:
-        return true;
-    }
+    return true;  // all other non-isotopic values are truthy
 }
 
 #define Is_Falsey(v) \

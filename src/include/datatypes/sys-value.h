@@ -300,6 +300,8 @@ inline static Cell(const*) CELL_TO_VAL(noquote(Cell(const*)) cell)
 // pointer you pass in is carrying a word payload.  It disregards the quotes.)
 //
 
+inline static option(SymId) VAL_WORD_ID(noquote(Cell(const*)) v);
+
 inline static enum Reb_Kind VAL_TYPE_UNCHECKED(Cell(const*) v) {
     switch (QUOTE_BYTE_UNCHECKED(v)) {
       case ISOTOPE_0:
@@ -307,6 +309,10 @@ inline static enum Reb_Kind VAL_TYPE_UNCHECKED(Cell(const*) v) {
             return REB_NULL;
         if (HEART_BYTE_UNCHECKED(v) == REB_VOID)
             return REB_NIHIL;
+        if (HEART_BYTE_UNCHECKED(v) == REB_WORD) {
+            if (VAL_WORD_ID(v) == SYM_TRUE or VAL_WORD_ID(v) == SYM_FALSE)
+                return REB_LOGIC;  // !!! Temporary compatibility
+        }
         return REB_ISOTOPE;
 
       case UNQUOTED_1:
