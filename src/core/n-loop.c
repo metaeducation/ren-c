@@ -1538,7 +1538,7 @@ DECLARE_NATIVE(remove_each)
 //      :vars "Word or block of words to set each time, no new var if quoted"
 //          [blank! word! lit-word! block! group!]
 //      data "The series to traverse"
-//          [<maybe> any-series! any-sequence! action!]
+//          [<maybe> any-series! any-sequence! action! any-context!]
 //      body "Block to evaluate each time (result will be kept literally)"
 //          [<const> block!]
 //  ]
@@ -1633,9 +1633,10 @@ DECLARE_NATIVE(map)
         or not (
             ANY_SERIES(Unquotify(data, 1))
             or ANY_PATH(data)  // has been unquoted
+            or ANY_CONTEXT(data)
         )
     ){
-        fail ("MAP only supports one-level QUOTED! series/path for the moment");
+        fail ("MAP only supports one-level QUOTED! series/path/context ATM");
     }
 
     Context(*) pseudo_vars_ctx = Virtual_Bind_Deep_To_New_Context(
