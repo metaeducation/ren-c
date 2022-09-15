@@ -220,7 +220,7 @@
     FLAG_LEFT_BIT(26)
 
 
-//=//// CELL_FLAG_UNEVALUATED, CELL_FLAG_SCANT_EVALUATED_ISOTOPE //////////=//
+//=//// CELL_FLAG_UNEVALUATED /////////////////////////////////////////////=//
 //
 // Some functions wish to be sensitive to whether or not their argument came
 // as a literal in source or as a product of an evaluation.  While all values
@@ -238,17 +238,10 @@
 // while still tolerating `item: [a b c] | if item [print "it's an item"]`.
 // That has a lot of impact for the new user experience.
 //
-// You can never have a truly "unevaluated" isotope cell.  So the UNEVALUATED
-// flag would never be set on isotopes naturally.  Instead it's used by a
-// direct QUASI! evaluation for SCANT_EVALUATED_ISOTOPE, to inform SET-WORD!
-// in the evaluator that things like (x: ~) should be allowed, when indirect
-// products like (x: print "hi") are not.
-//
 #define CELL_FLAG_27 \
     FLAG_LEFT_BIT(27)
 
 #define CELL_FLAG_UNEVALUATED CELL_FLAG_27
-#define CELL_FLAG_SCANT_EVALUATED_ISOTOPE CELL_FLAG_27
 
 
 //=//// CELL_FLAG_NOTE ////////////////////////////////////////////////////=//

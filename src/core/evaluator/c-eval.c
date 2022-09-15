@@ -730,8 +730,12 @@ Bounce Evaluator_Executor(Frame(*) f)
             goto process_action;
         }
 
-        if (Is_Isotope(unwrap(f_current_gotten)))  // checked second
+        if (
+            Is_Isotope(unwrap(f_current_gotten))  // checked second
+            and not Is_Isotope_Get_Friendly(unwrap(f_current_gotten))
+        ){
             fail (Error_Bad_Word_Get(f_current, unwrap(f_current_gotten)));
+        }
 
         Copy_Cell(OUT, unwrap(f_current_gotten));  // no CELL_FLAG_UNEVALUATED
         break;
@@ -794,13 +798,8 @@ Bounce Evaluator_Executor(Frame(*) f)
         else {
             Decay_If_Isotope(OUT);
 
-            if (
-                Is_Isotope(OUT)
-                and not Is_Void(OUT)  // void assignments allowed ATM
-                and Not_Cell_Flag(OUT, SCANT_EVALUATED_ISOTOPE)  // from QUASI!
-            ){
+            if (Is_Isotope(OUT) and not Is_Isotope_Set_Friendly(OUT))
                 fail (Error_Bad_Isotope(OUT));
-            }
 
             if (IS_ACTION(OUT))  // !!! Review: When to update labels?
                 INIT_VAL_ACTION_LABEL(OUT, VAL_WORD_SYMBOL(f_current));
@@ -962,8 +961,12 @@ Bounce Evaluator_Executor(Frame(*) f)
             goto process_action;
         }
 
-        if (Is_Isotope(SCRATCH))  // we test *after* action (faster common case)
+        if (
+            Is_Isotope(SCRATCH)  // we test *after* action (faster common case)
+            and not Is_Isotope_Get_Friendly(SCRATCH)
+        ){
             fail (Error_Bad_Word_Get(f_current, SCRATCH));
+        }
 
         Move_Cell(OUT, SCRATCH);  // won't move CELL_FLAG_UNEVALUATED
         break; }
@@ -1151,13 +1154,8 @@ Bounce Evaluator_Executor(Frame(*) f)
         else {
             Decay_If_Isotope(OUT);
 
-            if (
-                Is_Isotope(OUT)
-                and not Is_Void(OUT)  // void assignments allowed ATM
-                and Not_Cell_Flag(OUT, UNEVALUATED)  // see QUASI! handling
-            ){
+            if (Is_Isotope(OUT) and not Is_Isotope_Set_Friendly(OUT))
                 fail (Error_Bad_Isotope(OUT));
-            }
 
             if (Set_Var_Core_Throws(
                 SPARE,
@@ -1556,7 +1554,10 @@ Bounce Evaluator_Executor(Frame(*) f)
             if (Is_Void(SPARE) and is_optional)
                 Init_Nulled(SPARE);
 
-            if (Is_Isotope(SPARE) and not isotopes_ok) {  // can't assign
+            if (
+                Is_Isotope(SPARE) and not Is_Isotope_Set_Friendly(SPARE)
+                and not isotopes_ok  // ([~var~]: ...) acts as a SET/ANY
+            ){
                 fail (Error_Bad_Isotope(SPARE));
             }
             else if (
@@ -1663,7 +1664,6 @@ Bounce Evaluator_Executor(Frame(*) f)
 
       case REB_BLANK:  // new behavior, evaluate to NULL isotope
         Init_Blank_Isotope(OUT);
-        Set_Cell_Flag(OUT, SCANT_EVALUATED_ISOTOPE);  // see flag comments
         break;
 
     inert:
@@ -1707,7 +1707,6 @@ Bounce Evaluator_Executor(Frame(*) f)
         }
         Derelativize(OUT, f_current, f_specifier);
         mutable_QUOTE_BYTE(OUT) = ISOTOPE_0;
-        Set_Cell_Flag(OUT, SCANT_EVALUATED_ISOTOPE);  // see flag comments
         break;
 
 

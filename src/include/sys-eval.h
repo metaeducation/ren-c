@@ -82,6 +82,34 @@
 #endif
 
 
+// A "set friendly" isotope is one that allows assignment via SET-WORD!
+// without any special considerations.  The allowance of WORD! isotopes started
+// so that ~true~ and ~false~ could be implemented as isotopes, but a decision
+// to also permit the void state to assign easily was made as well--so that
+// a variable could easily be unset with (var: ~)
+//
+inline static bool Is_Isotope_Set_Friendly(Cell(const*) v) {
+    assert(Is_Isotope(v));
+    return (
+        HEART_BYTE(v) == REB_WORD
+        or HEART_BYTE(v) == REB_NULL  // void is the isotopic state of NULL
+    );
+}
+
+// Like with set-friendliness, get-friendliness relates to what can be done
+// with plain WORD! access regarding isotopes.  Since ~true~ and ~false~
+// isotopes are the currency of "logic" now, they have to be legal...so this
+// is opened up to the entire class of isotopic words.  But unlike in
+// assignment, isotopic nulls (voids) are not made friendly--this raises the
+// bar to constructing true invisibility, as those variables are what are
+// considered to be "unset".
+//
+inline static bool Is_Isotope_Get_Friendly(Cell(const*) v) {
+    assert(Is_Isotope(v));
+    return HEART_BYTE(v) == REB_WORD;
+}
+
+
 // The evaluator publishes its internal states in this header file, so that
 // a frame can be made with e.g. `FLAG_STATE_BYTE(ST_EVALUATOR_REEVALUATING)`
 // to start in various points of the evaluation process.  When doing so, be
