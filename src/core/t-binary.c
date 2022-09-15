@@ -387,6 +387,7 @@ REBTYPE(Binary)
         UNUSED(PARAM(series));  // covered by `v`
 
         Value(*) arg = ARG(value);
+        assert(not Is_Nulled(arg));  // not an <opt> parameter
 
         REBLEN len; // length of target
         if (id == SYM_CHANGE)
@@ -425,13 +426,13 @@ REBTYPE(Binary)
             // not necessarily a no-op (e.g. CHANGE can erase)
         }
         else if (Is_Splice(arg)) {
-            mutable_QUOTE_BYTE(arg) = UNQUOTED_1;  // make plain block
+            mutable_QUOTE_BYTE(arg) = UNQUOTED_1;  // make plain group
         }
-        else {
-            assert(not Is_Nulled(arg));  // not an <opt> parameter
-            if (ANY_ARRAY(arg) or ANY_SEQUENCE(arg))
-                fail (ARG(value));
+        else if (Is_Isotope(arg)) {  // only ~group!~ in typecheck
+            fail (Error_Bad_Isotope(arg));  // ...but that doesn't filter yet
         }
+        else if (ANY_ARRAY(arg) or ANY_SEQUENCE(arg))
+            fail (ARG(value));
 
         VAL_INDEX_RAW(v) = Modify_String_Or_Binary(
             v,

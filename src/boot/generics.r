@@ -320,7 +320,7 @@ find: generic [
     series [
         <maybe> any-series! any-context! map! bitset! typeset!
     ]
-    pattern [<maybe> any-value! ~block!~ ~typeset!~ ~datatype!~]
+    pattern [<maybe> any-value! ~group!~ ~typeset!~ ~datatype!~]
     /part "Limits the search to a given length or position"
         [any-number! any-series! pair!]
     /case "Characters are case-sensitive"
@@ -335,7 +335,7 @@ select: generic [
     return: [<opt> any-value!]
     @tail []  ; for frame compatibility with FIND
     series [<maybe> any-series! any-context! map!]
-    value [<maybe> any-value! ~block!~ ~typeset!~ ~datatype!~]
+    value [<maybe> any-value! ~group!~ ~typeset!~ ~datatype!~]
     /part "Limits the search to a given length or position"
         [any-number! any-series! pair!]
     /case "Characters are case-sensitive"
@@ -438,8 +438,8 @@ insert: generic [
         integer!]  ; !!! INSERT returns INTEGER! in ODBC, review this
     series "At position (modified)"
         [<maybe> any-series! port! map! object! bitset! port!]
-    value "What to insert (isotopic blocks will splice, e.g. SPREAD)"
-        [<void> any-value! ~block!~]
+    value "What to insert (isotopic groups will splice, e.g. SPREAD)"
+        [<void> any-value! ~group!~]
     /part "Limits to a given length or position"
         [any-number! any-series! pair!]
     /dup "Duplicates the insert a specified number of times"
@@ -456,8 +456,8 @@ append: generic [
     return: [any-series! port! map! object! module! bitset!]
     series "Any position (modified)"
         [<maybe> any-series! port! map! object! module! bitset!]
-    value "What to append (isotopic blocks will splice, e.g. SPREAD)"
-        [<void> any-value! ~block!~]
+    value "What to append (isotopic groups will splice, e.g. SPREAD)"
+        [<void> any-value! ~group!~]
     /part "Limits to a given length or position"
         [any-number! any-series! pair!]
     /dup "Duplicates the insert a specified number of times"
@@ -474,8 +474,8 @@ change: generic [
     return: [any-series! port!]
     series "At position (modified)"
         [<maybe> any-series! port!]
-    value "The new value (isotopic blocks will splice, e.g. SPREAD)"
-        [<void> any-value! ~block!~]
+    value "The new value (isotopic groups will splice, e.g. SPREAD)"
+        [<void> any-value! ~group!~]
     /part "Limits the amount to change to a given length or position"
         [any-number! any-series! pair!]
     /dup "Duplicates the change a specified number of times"

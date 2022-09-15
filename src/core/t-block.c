@@ -982,6 +982,7 @@ REBTYPE(Array)
         UNUSED(PARAM(series));
 
         Value(*) arg = ARG(value);
+        assert(not Is_Nulled(arg));  // not <opt> in typecheck
 
         REBLEN len; // length of target
         if (id == SYM_CHANGE)
@@ -1010,12 +1011,10 @@ REBTYPE(Array)
         }
         else if (Is_Splice(arg)) {
             flags |= AM_SPLICE;
-            mutable_QUOTE_BYTE(arg) = UNQUOTED_1;  // make plain block
+            mutable_QUOTE_BYTE(arg) = UNQUOTED_1;  // make plain group
         }
-        else {
-            assert(not Is_Isotope(arg));  // only ~block!~ in typecheck
-            assert(not Is_Nulled(arg));  // not <opt> in typecheck
-        }
+        else if (Is_Isotope(arg))  // only ~group!~ in typecheck
+            fail (Error_Bad_Isotope(arg));  // ...but that doesn't filter yet
 
         if (REF(part))
             flags |= AM_PART;

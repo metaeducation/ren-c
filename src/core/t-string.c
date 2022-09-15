@@ -859,6 +859,7 @@ REBTYPE(String)
         UNUSED(PARAM(series));
 
         Value(*) arg = ARG(value);
+        assert(not Is_Nulled(arg));  // not an <opt> parameter
 
         REBLEN len; // length of target
         if (ID_OF_SYMBOL(verb) == SYM_CHANGE)
@@ -896,13 +897,11 @@ REBTYPE(String)
         else if (Is_Splice(arg)) {
             mutable_QUOTE_BYTE(arg) = UNQUOTED_1;
         }
-        else {
-            assert(not Is_Isotope(arg));  //
-            assert(not Is_Nulled(arg));  // not an <opt> parameter
-
-            if (ANY_ARRAY(arg))
-                fail (ARG(value));  // error on `append "abc" [d e]` w/o SPREAD
+        else if (Is_Isotope(arg)) {  // only ~group!~ in typecheck
+            fail (Error_Bad_Isotope(arg));  // ...but that doesn't filter yet
         }
+        else if (ANY_ARRAY(arg))
+            fail (ARG(value));  // error on `append "abc" [d e]` w/o SPREAD
 
         VAL_INDEX_RAW(v) = Modify_String_Or_Binary(  // does read-only check
             v,
