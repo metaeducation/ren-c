@@ -133,7 +133,7 @@ sys.util.make-scheme [
             sql [text! word! block!]
                 {SQL statement or catalog, parameter blocks are reduced first}
         ][
-            return insert-odbc port.locals reduce compose [(spread sql)]
+            return insert-odbc port.locals blockify sql
         ]
 
         copy: function [port [port!] /part [integer!]] [
