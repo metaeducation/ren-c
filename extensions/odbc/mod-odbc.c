@@ -1715,7 +1715,8 @@ DECLARE_NATIVE(copy_odbc)
             }
 
             REBVAL *temp = ODBC_Column_To_Rebol_Value(col);
-            rebElide("append", record, rebR(temp));
+            rebElide("append", record, rebQ(temp));  // Q because blank => NULL
+            rebRelease(temp);
         }
 
         rebElide("append", results, rebR(record));
