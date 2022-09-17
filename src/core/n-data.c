@@ -2444,20 +2444,27 @@ DECLARE_NATIVE(isotopify_if_falsey)
     return Move_Cell(OUT, v);
 }
 
+
 //
 //  reify: native [
 //
-//  "Turn NULL to BLANK!, isotopes to quasiforms, pass through other values"
+//  "Turn NULL to BLANK!, make isotopes plain, pass thru other values"
 //
 //      return: [any-value!]
-//      value [<opt> <void> any-value! ~any-value!~]
+//      value [<opt> any-value! ~any-value!~]
 //  ]
 //
 DECLARE_NATIVE(reify)
+//
+// 1. REIFY of a VOID is not something currently supported.  If it were, then
+//    it would probably be better to make it a `~` instead of a BLANK!.
 {
     INCLUDE_PARAMS_OF_REIFY;
 
     REBVAL *v = ARG(value);
+
+    if (Is_Void(v))  // see 1
+        fail ("REIFY of VOID is currently undefined (needs motivating case)");
 
     return Reify(Copy_Cell(OUT, v));
 }
