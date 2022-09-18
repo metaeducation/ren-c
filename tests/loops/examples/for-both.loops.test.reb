@@ -54,6 +54,10 @@
         true
     )
 
+    ; ^-- This is a LAMBDA instead of a FUNCTION so that no RETURN is needed
+    ; (the result "drops out" the bottom of lambdas, and there is no RETURN
+    ; definition in effect).
+    ;
     ; ^-- Note that this uses META* and not META (a.k.a. `^`)  The reason is
     ; that it wants to leave voids and nulls as-is:
     ;
@@ -124,12 +128,12 @@
         ]]
     ])
 
-    ; Contract of returning ~()~ isotope is preserved when no loop bodies
-    ; run, as both FOR-EACH inside the ALL have their ~()~ isotopes erased
+    ; The contract of returning VOID is preserved when no loop bodies
+    ; run, as both FOR-EACH inside the ALL have their contributions erased
     ; and effectively leave behind an `all []`.  Ren-C's working definition
-    ; (motivated by this kind of example) is that should produce a ~()~
-    ; isotope.  Technical reasons besides this scenario lead it to be favorable
-    ; for UNMETA to be willing to take isotopes and return them as-is instead
+    ; (motivated by this kind of example) is that should produce a VOID
+    ; as well.  Technical reasons besides this scenario lead it to be favorable
+    ; for UNMETA* to be willing to take VOID and return it as-is instead
     ; of raising an error, and that plays to our advantage here.
 
     (void? for-both x [] [] [fail "Body Never Runs"])
@@ -155,13 +159,12 @@
     ; FOR-BOTH provides a proof of why this is true:
     ;
     ;     >> for-each x [1 2] [if x = 2 [continue]]
-    ;     == ~  ; nothing isotope  <= NOT 1
+    ;     == ~[~]~  ; isotope
     ;
-    ; Isotopic void is reserved for "loop didn't run", and we do not want
+    ; Plain void is reserved for "loop didn't run", and we do not want
     ; a loop that consists of just CONTINUE to lie and say the body of the
-    ; loop didn't run.  It forces our hand to this answer.  It would be an
-    ; esoteric feature anyway...more useful to have a form of MAYBE that can
-    ; let the last loop iteration signal a desire for overall erasure.
+    ; loop didn't run.  It forces our hand to put a void in a pack--to still
+    ; convey a void intent, but not truly be a void for ELSE/THEN purposes.
 
     ('~[~]~ = ^ for-both x [1 2] [3 4] [if x > 2 [continue] x * 10])
     ('~[~]~ = ^ for-both x [1 2] [3 4] [comment "Maintain invariant!"])
