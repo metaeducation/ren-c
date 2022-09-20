@@ -529,7 +529,7 @@ sort: generic [
     /skip "Treat the series as records of fixed size"
         [integer!]
     /compare "Comparator offset, block or action"
-        [integer! block! action!]
+        [integer! block! action! ~action!~]
     /part "Sort only part of a series (by length or position)"
         [any-number! any-series!]
     /all "Compare all fields"

@@ -1205,6 +1205,7 @@ REBTYPE(Array)
         flags.all = REF(all);  // !!! not used?
 
         REBVAL *cmp = ARG(compare);  // null if no /COMPARE
+        Decay_If_Activation(cmp);
         if (IS_ACTION(cmp)) {
             flags.comparator = cmp;
             flags.offset = 0;
