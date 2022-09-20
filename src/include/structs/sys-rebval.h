@@ -401,7 +401,7 @@ struct Reb_Date_Extra  // see %sys-time.h
 
 struct Reb_Typeset_Extra  // see %sys-typeset.h
 {
-    uint_fast32_t high_bits;  // 64 typeflags, can't all fit in payload second
+    Flags param_flags;  // PARAM_FLAG_XXX and VAL_PARAM_CLASS for param typeset
 };
 
 union Reb_Any {  // needed to beat strict aliasing, used in payload

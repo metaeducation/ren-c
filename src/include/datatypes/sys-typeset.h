@@ -83,16 +83,16 @@ inline static SymId VAL_TYPE_SYM(noquote(Cell(const*)) v) {
 
 
 #define VAL_TYPESET_PARAM_CLASS_BYTE(v) \
-    FIRST_BYTE(PAYLOAD(Any, (v)).first.u)
+    FIRST_BYTE(EXTRA(Typeset, (v)).param_flags)
 
 #define mutable_VAL_TYPESET_PARAM_CLASS_BYTE(v) \
-    mutable_FIRST_BYTE(PAYLOAD(Any, (v)).first.u)
+    mutable_FIRST_BYTE(EXTRA(Typeset, (v)).param_flags)
 
 #define VAL_TYPESET_LOW_BITS(v) \
     PAYLOAD(Any, (v)).second.u32
 
 #define VAL_TYPESET_HIGH_BITS(v) \
-    EXTRA(Typeset, (v)).high_bits
+    PAYLOAD(Any, (v)).first.u32
 
 inline static bool TYPE_CHECK(noquote(Cell(const*)) v, Byte n) {
     assert(CELL_HEART(v) == REB_TYPESET);
@@ -203,7 +203,7 @@ inline static bool Matcher_Matches(Cell(const*) matcher, Cell(const*) v) {
 
 //=//// PARAMETER TYPESET PROPERTIES ///////////////////////////////////////=//
 
-#define VAL_PARAM_FLAGS(v)           PAYLOAD(Any, (v)).first.u
+#define VAL_PARAM_FLAGS(v)           EXTRA(Typeset, (v)).param_flags
 #define FLAG_PARAM_CLASS_BYTE(b)     FLAG_FIRST_BYTE(b)
 
 
