@@ -98,7 +98,7 @@ run-single-test: func [
         ]
         (elide result: unget result)
 
-        null? :result [
+        null? result [
             "test returned null"
         ]
         true [

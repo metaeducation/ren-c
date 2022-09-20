@@ -82,14 +82,14 @@ DECLARE_NATIVE(test_librebol)
   blockscope {
     Set_Cell_Flag(Init_Integer(PUSH(), 3), NEWLINE_BEFORE);
     REBVAL *macro = rebValue("macro [x] [[append x first]]");
-    REBVAL *mtest1 = rebValue(macro, "[1 2 3]", "[d e f]");
+    REBVAL *mtest1 = rebValue(rebRUN(macro), "[1 2 3]", "[d e f]");
     Copy_Cell(PUSH(), mtest1);  // ^-- see NOTICE
     rebRelease(mtest1);
 
     Set_Cell_Flag(Init_Integer(PUSH(), 4), NEWLINE_BEFORE);
     REBVAL *numbers = rebValue("[1 2 3]");
     REBVAL *letters = rebValue("[d e f]");
-    REBVAL *mtest2 = rebValue(macro, rebR(numbers), rebR(letters));
+    REBVAL *mtest2 = rebValue(rebRUN(macro), rebR(numbers), rebR(letters));
     Copy_Cell(PUSH(), mtest2);  // ^-- see NOTICE
     rebRelease(mtest2);
 

@@ -373,7 +373,7 @@ DECLARE_NATIVE(do)
         rebPushContinuation(
             OUT,  // <-- output cell
             FRAME_MASK_NONE,
-            SysUtil(DO_P),
+            rebRUN(SysUtil(DO_P)),
                 source,
                 rebQ(ARG(args)),
                 REF(only) ? rebQ(Lib(TRUE)) : rebQ(Lib(FALSE))

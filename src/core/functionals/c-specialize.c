@@ -757,7 +757,11 @@ Action(*) Alloc_Action_From_Exemplar(
             continue;
         }
 
-        if (GET_PARAM_FLAG(param, REFINEMENT))
+        if (Is_Isotope(arg)) {
+            if (NOT_PARAM_FLAG(param, ISOTOPES_OKAY))
+                fail (Error_Bad_Isotope(arg));
+        }
+        else if (GET_PARAM_FLAG(param, REFINEMENT))
             Typecheck_Refinement(key, param, arg);
         else
             Typecheck_Including_Constraints(param, arg);

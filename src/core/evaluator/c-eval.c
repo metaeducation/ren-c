@@ -1054,7 +1054,7 @@ Bounce Evaluator_Executor(Frame(*) f)
         rebPushContinuation(
             OUT,
             FRAME_MASK_NONE,
-            Lib(APPLY), rebQ(SPARE), rebDERELATIVIZE(f_next, f_specifier)
+            Canon(APPLY), rebQ(SPARE), rebDERELATIVIZE(f_next, f_specifier)
         );
         Fetch_Next_Forget_Lookback(f);
         return BOUNCE_CONTINUE; }
