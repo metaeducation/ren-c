@@ -1250,6 +1250,7 @@ Bounce Evaluator_Executor(Frame(*) f)
             Meta_Quotify(OUT);
         else {
             assert(STATE == REB_GET_PATH or STATE == REB_GET_TUPLE);
+
             if (Is_Isotope(OUT) and not Is_Isotope_Get_Friendly(OUT))
                 fail (Error_Bad_Word_Get(f_current, OUT));
         }
