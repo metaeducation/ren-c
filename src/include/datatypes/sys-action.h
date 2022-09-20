@@ -273,7 +273,7 @@ inline static void INIT_VAL_ACTION_BINDING(
     Cell(*) v,
     Context(*) binding
 ){
-    assert(IS_ACTION(v));
+    assert(CELL_HEART(v) == REB_ACTION);
     mutable_BINDING(v) = binding;
 }
 
@@ -641,4 +641,48 @@ inline static Bounce Native_None_Result_Untracked(
     UNUSED(out);
     assert(not THROWING);
     return Init_None_Untracked(frame_->out);
+}
+
+
+//=//// ACTIVATIONS (ACTION! Isotopes) /////////////////////////////////////=//
+//
+// Isotopic forms of actions exist for a couple of reasons.  They are the form
+// that when stored in a variable leads to implicit execution by a reference
+// from a WORD!...while non-isotopic ACTION! is inert.  This means you cannot
+// accidentally run a function with the following code:
+//
+//     for-each item block [print ["The type of item is" type of item]]
+//
+// That reference to ITEM is guaranteed to not be the isotopic form, since it
+// is enumerating over a block.  Various places in the system are geared for
+// making it more difficult to assign isotopic actions accidentally.
+//
+// The other big reason is for a "non-literal" distinction in parameters.
+// Historically, functions like REPLACE have chosen to run functions to
+// calculate what the replacement should be.  However, that ruled out the
+// ability to replace actual function instances--and doing otherwise would
+// require extra parameterization.  This lets the isotopic state serve as
+// the signal that the function should be invoked, and not searched for.
+//
+
+#define Init_Activation(out,a,label,binding) \
+    Activatify(Init_Action_Core(TRACK(out), (a), (label), (binding)))
+
+#define Is_Meta_Of_Activation(v)                        IS_ACTION(v)
+
+inline static bool Is_Activation(Cell(const*) v)
+  { return HEART_BYTE_UNCHECKED(v) == REB_ACTION
+    and (QUOTE_BYTE_UNCHECKED(v) == ISOTOPE_0); }
+
+
+inline static Value(*) Activatify(Cell(*) v) {
+    assert(IS_ACTION(v) and QUOTE_BYTE(v) == UNQUOTED_1);
+    mutable_QUOTE_BYTE(v) = ISOTOPE_0;
+    return VAL(v);
+}
+
+inline static Cell(*) Decay_If_Activation(Cell(*) v) {
+    if (Is_Activation(v))
+        mutable_QUOTE_BYTE(v) = UNQUOTED_1;
+    return v;
 }

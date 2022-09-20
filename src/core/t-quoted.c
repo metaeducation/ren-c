@@ -722,6 +722,44 @@ DECLARE_NATIVE(pack_q)
 
 
 //
+//  activation?: native [
+//
+//  "Tells you if argument is an activation (isotopic action)"
+//
+//      return: [logic!]
+//      ^optional [<opt> <void> <fail> <pack> any-value!]
+//  ]
+//
+DECLARE_NATIVE(activation_q)
+{
+    INCLUDE_PARAMS_OF_ACTIVATION_Q;
+
+    return Init_Logic(OUT, Is_Meta_Of_Activation(ARG(optional)));
+}
+
+
+
+//
+//  runs: native [
+//
+//  {Make actions run when fetched through word access}
+//
+//      return: [~action!~]
+//      action [<maybe> action! ~action!~]
+//  ]
+//
+DECLARE_NATIVE(runs)
+{
+    INCLUDE_PARAMS_OF_RUNS;
+
+    REBVAL *v = ARG(action);
+    Copy_Cell(OUT, v);  // may or may not be isotope
+    mutable_QUOTE_BYTE(OUT) = ISOTOPE_0;  // now it's known to be an isotope
+    return OUT;
+}
+
+
+//
 //  maybe: native [
 //
 //  {If argument is null or none, make it void (also pass through voids)}

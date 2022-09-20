@@ -2181,6 +2181,55 @@ const void *RL_rebINLINE(const REBVAL *v)
 
 
 //
+//  rebRUN: RL_API
+//
+// If a REBVAL* holds an isotope, this will convert it to a regular action
+// so that it runs inline.  If it were ^META'd then it would produce a
+// QUASI!-action, that would just evaluate to an isotope.  Something like a
+// rebREIFY would also work, but it would not do type checking.
+//
+const REBINS *RL_rebRUN(const void *p)
+{
+    ENTER_API;
+
+    if (p == nullptr)
+        fail ("rebRUN() received nullptr");
+
+    Array(*) a;
+
+    switch (Detect_Rebol_Pointer(p)) {
+      case DETECTED_AS_SERIES: {
+        a = m_cast(Array(*), cast(Array(const*), p));
+        if (Not_Subclass_Flag(API, a, RELEASE))
+            fail ("Can't quote instructions (besides rebR())");
+        break; }
+
+      case DETECTED_AS_CELL: {
+        Value(const*) at = cast(Value(const*), p);
+        if (Is_Nulled(at))
+            fail ("rebRUN() received null cell");
+
+        Value(*) v = Copy_Cell(Alloc_Value(), at);
+        a = Singular_From_Cell(v);
+        Set_Subclass_Flag(API, a, RELEASE);
+        break; }
+
+      default:
+        fail ("Unknown pointer");
+    }
+
+    Value(*) v = VAL(ARR_SINGLE(a));
+    if (Is_Activation(v))
+        mutable_QUOTE_BYTE(v) = UNQUOTED_1;
+    else if (not IS_ACTION(v))
+        fail ("rebRUN() only accepts ACTION! or ACTION! isotopes");
+
+    return a;
+}
+
+
+
+//
 //  rebManage: RL_API
 //
 // The "friendliest" default for the API is to assume you want handles to be

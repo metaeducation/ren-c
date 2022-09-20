@@ -359,7 +359,7 @@ DECLARE_NATIVE(unload_extension)
    if (shutdown_action == nullptr)
         return NONE;
 
-   rebElide(shutdown_action);
+   rebElide(rebRUN(shutdown_action));
 
    return NONE;
 }

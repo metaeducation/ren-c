@@ -699,7 +699,7 @@ bool Get_Var_Push_Refinements_Throws(
         const void *ins = rebQ(cast(REBVAL*, Data_Stack_At(stackindex)));
         if (rebRunThrows(
             out,  // <-- output cell
-            Lib(PICK_P), temp, ins
+            Canon(PICK_P), temp, ins
         )){
             Drop_Data_Stack_To(base);
             DROP_GC_GUARD(temp);
@@ -1274,7 +1274,7 @@ bool Set_Var_Core_Updater_Throws(
     const void *ins = rebQ(cast(REBVAL*, Data_Stack_At(stackindex)));
     if (rebRunThrows(
         out,  // <-- output cell
-        updater, temp, ins, rebQ(setval)
+        rebRUN(updater), temp, ins, rebQ(setval)
     )){
         DROP_GC_GUARD(temp);
         DROP_GC_GUARD(writeback);
