@@ -668,13 +668,6 @@ inline static Bounce Native_None_Result_Untracked(
 #define Init_Activation(out,a,label,binding) \
     Activatify(Init_Action_Core(TRACK(out), (a), (label), (binding)))
 
-#define Is_Meta_Of_Activation(v)                        IS_ACTION(v)
-
-inline static bool Is_Activation(Cell(const*) v)
-  { return HEART_BYTE_UNCHECKED(v) == REB_ACTION
-    and (QUOTE_BYTE_UNCHECKED(v) == ISOTOPE_0); }
-
-
 inline static Value(*) Activatify(Cell(*) v) {
     assert(IS_ACTION(v) and QUOTE_BYTE(v) == UNQUOTED_1);
     mutable_QUOTE_BYTE(v) = ISOTOPE_0;

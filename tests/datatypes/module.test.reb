@@ -121,7 +121,7 @@
     did all [
         3 = test
         <override> = catch [m.do "1 + 2"]
-        :do = :do-before
+        ^do = ^do-before
     ]
 )
 

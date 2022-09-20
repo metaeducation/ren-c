@@ -417,10 +417,10 @@ comma!      "separator between full evaluations (that is otherwise invisible)"
 
 ; ACTION! is the "OneFunction" type in Ren-C https://forum.rebol.info/t/596
 
-action!     "an invokable Rebol subroutine"
-            (CELL_FLAG_FIRST_IS_NODE | CELL_FLAG_SECOND_IS_NODE)
-            [any-branch!]
-            [action      +       +]
+action!       "an invokable Rebol subroutine"
+~activation~  (CELL_FLAG_FIRST_IS_NODE | CELL_FLAG_SECOND_IS_NODE)
+              [any-branch!]
+              [action      +       +]
 
 
 ; ============================================================================

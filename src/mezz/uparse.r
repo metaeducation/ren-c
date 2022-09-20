@@ -2729,7 +2729,7 @@ parsify: func [
                 ; combinator with AUGMENT for each argument (parser1, parser2
                 ; parser3).
                 ;
-                comb: adapt (augment comb collect [
+                comb: reify adapt (augment comb collect [
                     let n: 1
                     for-each param parameters of action [
                         if not path? param [
@@ -2757,12 +2757,12 @@ parsify: func [
                 ]
 
                 return [@ advanced]:
-                        combinatorize/value :comb rules state :action
+                        combinatorize/value comb rules state action
             ]
 
             let word: ensure word! first r
             if comb: select state.combinators word [
-                return [@ advanced]: combinatorize/path :comb rules state r
+                return [@ advanced]: combinatorize/path comb rules state r
             ]
 
             ; !!! Originally this would just say "unknown combinator" at this
@@ -2787,7 +2787,7 @@ parsify: func [
         fail ["Unhandled type in PARSIFY:" kind of r "-" mold r]
     ]
 
-    return [@ advanced]: combinatorize/value :comb rules state r
+    return [@ advanced]: combinatorize/value comb rules state r
 ]
 
 
