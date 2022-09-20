@@ -66,13 +66,13 @@ probe: func* [
 ; The pattern `foo: enfix function [...] [...]` is probably more common than
 ; enfixing an existing function, e.g. `foo: enfix :add`.  Hence making a
 ; COPY of the ACTION! identity is probably a waste.  It may be better to go
-; with mutability-by-default, so `foo: enfix copy :add` would avoid the
+; with mutability-by-default, so `foo: enfix copy reify :add` would avoid the
 ; mutation.  However, it could also be that the function spec dialect gets
 ; a means to specify enfixedness.  See:
 ;
 ; https://forum.rebol.info/t/moving-enfixedness-back-into-the-action/1156
 ;
-enfixed: chain* reduce [reify :copy, reify :enfix]
+enfixed: chain* reduce [reify :reify, reify :copy, reify :enfix]
 
 
 ; Pre-decaying specializations for DID, DIDN'T, THEN, ELSE, ALSO
@@ -297,18 +297,18 @@ pointfree*: func* [
 ;
 
 enclose: enclose* :enclose* lambda [f] [  ; uses low-level ENCLOSE* to make
-    set let inner f.inner  ; don't cache name via SET-WORD!
+    set let inner reify :f.inner  ; don't cache name via SET-WORD!
     inherit-meta (do f) inner
 ]
 inherit-meta enclose :enclose*  ; needed since we used ENCLOSE*
 
 specialize: enclose :specialize* lambda [f] [  ; now we have high-level ENCLOSE
-    set let action f.action  ; don't cache name via SET-WORD!
+    set let action reify :f.action  ; don't cache name via SET-WORD!
     inherit-meta (do f) action
 ]
 
 adapt: enclose :adapt* lambda [f] [
-    set let action f.action
+    set let action reify :f.action
     inherit-meta do f action
 ]
 
@@ -319,18 +319,18 @@ chain: enclose :chain* lambda [f] [
 ]
 
 augment: enclose :augment* lambda [f] [
-    set let action f.action  ; don't cache name via SET-WORD!
+    set let action reify :f.action  ; don't cache name via SET-WORD!
     let spec: f.spec
     inherit-meta/augment (do f) action spec
 ]
 
 reframer: enclose :reframer* lambda [f] [
-    set let shim f.shim  ; don't cache name via SET-WORD!
+    set let shim reify :f.shim  ; don't cache name via SET-WORD!
     inherit-meta (do f) shim
 ]
 
 reorder: enclose :reorder* lambda [f] [
-    set let action f.action  ; don't cache name via SET-WORD!
+    set let action reify :f.action  ; don't cache name via SET-WORD!
     inherit-meta (do f) action
 ]
 
@@ -468,7 +468,7 @@ empty?: func* [
 ]
 
 
-reeval func* [
+run func* [
     {Make fast type testing functions (variadic to quote "top-level" words)}
     return: <none>
     'set-words [<variadic> set-word! tag!]

@@ -411,7 +411,7 @@ typedef Executor Dispatcher;  // sub-dispatched in Action_Executor()
     // the label may not be known.  Mechanics with labeling try to make sure
     // that *some* name is known, but a few cases can't be, e.g.:
     //
-    //     reeval func [x] [print "This function never got a label"]
+    //     run func [x] [print "This function never got a label"]
     //
     // The evaluator only enforces that the symbol be set during function
     // calls--in the release build, it is allowed to be garbage otherwise.

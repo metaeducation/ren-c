@@ -34,7 +34,7 @@
 //      value "GROUP! and BLOCK! evaluate each item, single values evaluate"
 //          [any-value!]
 //      /predicate "Applied after evaluation, default is IDENTITY"
-//          [action!]
+//          [action! ~action!~]
 //  ]
 //
 DECLARE_NATIVE(reduce)
@@ -86,6 +86,9 @@ DECLARE_NATIVE(reduce)
 
     if (ANY_INERT(v))
         return COPY(v);  // save time if it's something like a TEXT!
+
+    if (REF(predicate))
+        Decay_If_Activation(predicate);
 
     Frame(*) subframe = Make_End_Frame(
         FLAG_STATE_BYTE(ST_EVALUATOR_REEVALUATING)
@@ -141,7 +144,6 @@ DECLARE_NATIVE(reduce)
         goto next_reduce_step;  // void results are skipped by reduce
 
     Decay_If_Isotope(OUT);
-    Decay_If_Activation(OUT);
 
     if (Is_Nulled(OUT))
         return RAISE(Error_Need_Non_Null_Raw());  // error enables e.g. CURTAIL
@@ -624,10 +626,8 @@ Bounce Composer_Executor(Frame(*) f)
 
         // [''(void)] => ['']
     }
-    else {
+    else
         Decay_If_Isotope(OUT);
-        Decay_If_Activation(OUT);
-    }
 
     if (Is_Isotope(OUT))
         return RAISE(Error_Bad_Isotope(OUT));
@@ -756,7 +756,7 @@ Bounce Composer_Executor(Frame(*) f)
 //          [blackhole! any-array! any-sequence! any-word! action!]
 //      /deep "Compose deeply into nested arrays"
 //      /predicate "Function to run on composed slots (default: META)"
-//          [action!]
+//          [action! ~action!~]
 //  ]
 //
 //  ; Note: /INTO is intentionally no longer supported
@@ -770,10 +770,10 @@ DECLARE_NATIVE(compose)
     INCLUDE_PARAMS_OF_COMPOSE;
 
     Value(*) v = ARG(value);
+    Value(*) predicate = ARG(predicate);
 
     UNUSED(ARG(label));  // options used by Composer_Executor() via main_frame
     UNUSED(ARG(deep));
-    UNUSED(ARG(predicate));
 
     enum {
         ST_COMPOSE_INITIAL_ENTRY = STATE_0,
@@ -793,6 +793,9 @@ DECLARE_NATIVE(compose)
 
     if (ANY_WORD(v) or IS_ACTION(v))
         return COPY(v);  // makes it easier to `set compose target`
+
+    if (REF(predicate))
+        Decay_If_Activation(predicate);
 
     Push_Composer_Frame(OUT, frame_, v, VAL_SPECIFIER(v));
 

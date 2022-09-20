@@ -124,7 +124,7 @@
 (null? any [null])
 ('a == any ['a])
 ; two values
-(:abs = any [false :abs])
+((reify :abs) = any [false reify :abs])
 (
     a-value: #{}
     same? a-value any [false a-value]
@@ -155,7 +155,7 @@
 )
 (
     a-value: does []
-    same? :a-value any [false :a-value]
+    same? reify :a-value any [false reify :a-value]
 )
 (
     a-value: first [:a]
@@ -180,7 +180,7 @@
 (true = any [false true])
 (null? any [false false])
 ($1 == any [false $1])
-(same? :append any [false :append])
+(same? reify :append any [false reify :append])
 (null? any [false _])
 (
     a-value: make object! []
@@ -252,7 +252,7 @@
 )
 (
     a-value: does []
-    same? :a-value any [:a-value false]
+    same? reify :a-value any [reify :a-value false]
 )
 (
     a-value: first [:a]
@@ -276,7 +276,7 @@
 )
 (true = any [true false])
 ($1 == any [$1 false])
-(same? :append any [:append false])
+(same? reify :append any [reify :append false])
 (null? any [_ false])
 (
     a-value: make object! []

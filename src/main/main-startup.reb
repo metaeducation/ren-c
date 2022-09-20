@@ -309,7 +309,7 @@ main-startup: func [
     ; useful to know that is what happened (and it demonstrates the ability
     ; to hook it, just to remind us that we can).
     ;
-    hijack :panic adapt (copy :panic) [
+    hijack :panic adapt (copy reify :panic) [
         print "PANIC ACTION! is being triggered from a usermode call"
         print mold reason
         ;

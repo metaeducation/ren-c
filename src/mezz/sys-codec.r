@@ -44,9 +44,9 @@ register-codec*: func [
         ; here, or be another parameter, or...?
 
         suffixes: '(suffixes)
-        identify?: (^ runs identify?)
-        decode: (^ runs decode)
-        encode: (^ runs encode)
+        identify?: (^ runs maybe identify?)
+        decode: (^ runs maybe decode)
+        encode: (^ runs maybe encode)
     ]
 
     append system.codecs spread reduce [(to set-word! name) codec]

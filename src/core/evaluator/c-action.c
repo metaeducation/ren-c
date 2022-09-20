@@ -963,8 +963,11 @@ Bounce Action_Executor(Frame(*) f)
         if (KEY_SYM(KEY) == SYM_RETURN)
             continue;  // !!! let whatever go for now
 
-        if (not Typecheck_Including_Constraints(PARAM, ARG))
+        if (not Typecheck_Including_Constraints(PARAM, ARG)) {
+            if (Is_Isotope(ARG))
+                fail (Error_Bad_Isotope(ARG));
             fail (Error_Arg_Type(f, KEY, kind));
+        }
     }
 
   // Action arguments now gathered, begin dispatching

@@ -807,12 +807,8 @@ inline static bool Pushed_Continuation(
                 break;
             }
 
-            if (Is_Isotope(arg) and NOT_PARAM_FLAG(param, ISOTOPES_OKAY)) {
-                if (Is_Activation(arg))
-                    Decay_If_Activation(arg);
-                else
-                    fail ("Can't pass isotope to non-META parameter");
-            }
+            if (Is_Isotope(arg) and NOT_PARAM_FLAG(param, ISOTOPES_OKAY))
+                fail ("Can't pass isotope to non-META parameter");
         } while (0);
 
         Push_Frame(out, f);

@@ -495,7 +495,7 @@ DECLARE_NATIVE(didnt)
 //          [<opt> <void> <fail> <pack> any-value!]
 //      /decay "Pre-decay ~_~ isotope input to NULL"
 //      :branch "If arity-1 ACTION!, receives value that triggered branch"
-//          [any-branch!]
+//          [any-branch! ~action!~]
 //  ]
 //
 DECLARE_NATIVE(then)  // see `tweak :then 'defer on` in %base-defs.r
@@ -503,6 +503,7 @@ DECLARE_NATIVE(then)  // see `tweak :then 'defer on` in %base-defs.r
     INCLUDE_PARAMS_OF_THEN;
 
     Value(*) in = ARG(optional);
+    Decay_If_Activation(ARG(branch));
     USED(ARG(branch));  // used by helper
     USED(ARG(decay));
 
@@ -535,7 +536,7 @@ DECLARE_NATIVE(then)  // see `tweak :then 'defer on` in %base-defs.r
 //      ^optional "<deferred argument> Run branch if this is null"
 //          [<opt> <void> <fail> <pack> any-value!]
 //      /decay "Pre-decay ~_~ isotope input to NULL"
-//      :branch [any-branch!]
+//      :branch [any-branch! ~action!~]
 //  ]
 //
 DECLARE_NATIVE(else)  // see `tweak :else 'defer on` in %base-defs.r
@@ -543,6 +544,7 @@ DECLARE_NATIVE(else)  // see `tweak :else 'defer on` in %base-defs.r
     INCLUDE_PARAMS_OF_ELSE;
 
     Value(*) in = ARG(optional);
+    Decay_If_Activation(ARG(branch));
     USED(ARG(branch));  // used by helper
     USED(ARG(decay));
 
@@ -576,7 +578,7 @@ DECLARE_NATIVE(else)  // see `tweak :else 'defer on` in %base-defs.r
 //          [<opt> <void> <fail> any-value!]
 //      /decay "Pre-decay ~_~ isotope input to NULL"
 //      :branch "If arity-1 ACTION!, receives value that triggered branch"
-//          [any-branch!]
+//          [any-branch! ~action!~]
 //  ]
 //
 DECLARE_NATIVE(also)  // see `tweak :also 'defer on` in %base-defs.r
@@ -585,6 +587,7 @@ DECLARE_NATIVE(also)  // see `tweak :also 'defer on` in %base-defs.r
 
     Value(*) in = ARG(optional);
     Value(*) branch = ARG(branch);
+    Decay_If_Activation(ARG(branch));
 
     enum {
         ST_ALSO_INITIAL_ENTRY = STATE_0,
@@ -749,7 +752,7 @@ DECLARE_NATIVE(must)  // `must x` is a faster synonym for `non null x`
 //      block "Block of expressions, @[block] will be treated inertly"
 //          [block! the-block!]
 //      /predicate "Test for whether an evaluation passes (default is DID)"
-//          [action!]
+//          [action! ~action!~]
 //      <local> scratch
 //  ]
 //
@@ -801,6 +804,9 @@ DECLARE_NATIVE(all)
 
     if (VAL_LEN_AT(block) == 0)
         return VOID;
+
+    if (REF(predicate))
+        Decay_If_Activation(predicate);
 
     Finalize_Void(OUT);  // default to void if all conditions vaporize, see [1]
 
@@ -888,7 +894,7 @@ DECLARE_NATIVE(all)
 //      block "Block of expressions, @[block] will be treated inertly"
 //          [block! the-block!]
 //      /predicate "Test for whether an evaluation passes (default is DID)"
-//          [action!]
+//          [action! ~action!~]
 //  ]
 //
 DECLARE_NATIVE(any)
@@ -924,6 +930,9 @@ DECLARE_NATIVE(any)
 
     if (VAL_LEN_AT(block) == 0)
         return VOID;
+
+    if (REF(predicate))
+        Decay_If_Activation(predicate);
 
     Flags flags = FRAME_FLAG_TRAMPOLINE_KEEPALIVE;
 
@@ -1004,7 +1013,7 @@ DECLARE_NATIVE(any)
 //          [block!]
 //      /all "Do not stop after finding first logically true case"
 //      /predicate "Unary case-processing action (default is DID)"
-//          [action!]
+//          [action! ~action!~]
 //      <local> discarded
 //  ]
 //
@@ -1082,6 +1091,9 @@ DECLARE_NATIVE(case)
     }
 
   initial_entry: {  //////////////////////////////////////////////////////////
+
+    if (REF(predicate))
+        Decay_If_Activation(predicate);
 
     Frame(*) f = Make_Frame_At(
         cases,
@@ -1212,7 +1224,7 @@ DECLARE_NATIVE(case)
 //          [block!]
 //      /all "Evaluate all matches (not just first one)"
 //      /predicate "Binary switch-processing action (default is EQUAL?)"
-//          [action!]
+//          [action! ~action!~]
 //      <local> scratch
 //  ]
 //
@@ -1275,6 +1287,9 @@ DECLARE_NATIVE(switch)
 
     assert(Is_Fresh(SPARE));  // initial condition
     assert(Is_Fresh(OUT));  // if no writes to out performed, we act void
+
+    if (REF(predicate))
+        Decay_If_Activation(predicate);
 
     if (IS_BLOCK(left) and Get_Cell_Flag(left, UNEVALUATED))
         fail (Error_Block_Switch_Raw(left));  // `switch [x] [...]` safeguard
@@ -1393,7 +1408,7 @@ DECLARE_NATIVE(switch)
 //      :branch "If target needs default, this is evaluated and stored there"
 //          [any-branch!]
 //      /predicate "Test for what's considered empty (default is null + void)"
-//          [action!]
+//          [action! ~action!~]
 //  ]
 //
 DECLARE_NATIVE(default)
@@ -1437,6 +1452,7 @@ DECLARE_NATIVE(default)
         return THROWN;
 
     if (not Is_Nulled(predicate)) {
+        Decay_If_Activation(predicate);
         STATE = ST_DEFAULT_RUNNING_PREDICATE;
         return CONTINUE(SPARE, predicate, OUT);
     }

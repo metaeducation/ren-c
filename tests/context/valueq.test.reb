@@ -15,7 +15,7 @@
 (true == set? 'set?)
 
 [#1914 (
-    set? reeval lambda [x] ['x] blank
+    set? run lambda [x] ['x] blank
 )(
-    set? reeval func [x] [return 'x] blank
+    set? run func [x] [return 'x] blank
 )]

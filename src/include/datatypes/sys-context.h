@@ -457,7 +457,7 @@ inline static Context(*) VAL_FRAME_BINDING(noquote(Cell(const*)) v) {
 // archetype.  Hence the value cell is storing a name to be used with the
 // action when it is extracted from the frame.  That's why this works:
 //
-//     >> f: make frame! :append
+//     >> f: make frame! reify :append
 //     >> label of f
 //     == append  ; useful in debug stack traces if you `do f`
 //

@@ -1039,7 +1039,7 @@ apply: function3 [
     action [action!]
     args [block!]
 ][
-    f: make frame! :action
+    f: make frame! reify :action
     params: words of :action
 
     ; Get all the normal parameters applied

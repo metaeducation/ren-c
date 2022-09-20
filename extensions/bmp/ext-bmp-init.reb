@@ -7,6 +7,6 @@ REBOL [
 ]
 
 sys.util.register-codec* 'bmp %.bmp
-    :identify-bmp?
-    :decode-bmp
-    :encode-bmp
+    reify :identify-bmp?
+    reify :decode-bmp
+    reify :encode-bmp

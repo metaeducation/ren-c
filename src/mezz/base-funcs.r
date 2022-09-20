@@ -323,9 +323,11 @@ redescribe: func [
         {The input action, with its description now updated.}
     spec [block!]
         {Either a string description, or a spec block (without types).}
-    action [action!]
+    action [action! ~action!~]
         {(modified) Action whose description is to be updated.}
 ][
+    action: reify :action
+
     let meta: meta-of :action
     let notes: _
     let description: _
@@ -890,7 +892,7 @@ eval-all: func [
 ; to allow longer runs of evaluation.  "Invisible functions" (those which
 ; `return: <void>`) permit a more flexible version of the mechanic.
 
-|<\||: runs tweak copy :eval-all 'postpone on
+|<\||: runs tweak copy reify :eval-all 'postpone on
 |\|>|: runs tweak enfixed :shove 'postpone on
 
 
@@ -907,7 +909,7 @@ meth: enfix func [
         fail [member "must be bound to an ANY-CONTEXT! to use METHOD"]
     ]
     return set member runs bind (  ; !!! BIND doesn't take ACTION! as isotope
-        apply :func [
+        reify apply :func [
             compose [(spread spec) <in> (context)]
             body
             /gather gather

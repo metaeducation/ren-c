@@ -1322,7 +1322,7 @@ REBTYPE(Frame)
             // GC'd if all the frames pointing to them were expired but still
             // referenced somewhere.
             //
-            return Init_Activation(
+            return Init_Action(
                 OUT,
                 VAL_FRAME_PHASE(frame),  // just a Action(*), no binding
                 VAL_FRAME_LABEL(frame),

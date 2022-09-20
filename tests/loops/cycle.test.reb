@@ -30,7 +30,7 @@
     1 = f1
 )
 ; Test that arity-0 return stops the loop
-(none? reeval func [return: <none>] [cycle [return none]])
+(none? reeval reify func [return: <none>] [cycle [return none]])
 
 ; Test that errors do not stop the loop and errors can be returned
 (

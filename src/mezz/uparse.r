@@ -2095,11 +2095,11 @@ default-combinators: make map! reduce [
                 ensure action! parsers.1
                 if meta-word? param [
                     param: to word! param
-                    f.(param): [^ input pending]: parsers.1 input except e -> [
+                    f.(param): [^ input pending]: (run parsers.1 input) except e -> [
                         return raise e
                     ]
                 ] else [
-                    f.(param): [@ input pending]: parsers.1 input except e -> [
+                    f.(param): [@ input pending]: (run parsers.1 input) except e -> [
                         return raise e
                     ]
                 ]
@@ -2368,7 +2368,7 @@ default-combinators: make map! reduce [
 
                 rules: sublimit else [tail of rules]
             ] else [
-                f: make frame! [@ rules]: parsify state rules
+                f: make frame! reify [@ rules]: parsify state rules
             ]
 
             f.input: pos
@@ -2734,7 +2734,7 @@ parsify: func [
                     for-each param parameters of action [
                         if not path? param [
                             keep spread compose [
-                                (to word! unspaced ["param" n]) [action!]
+                                (to word! unspaced ["param" n]) [~action!~]
                             ]
                             n: n + 1
                         ]
@@ -2750,7 +2750,7 @@ parsify: func [
                     let n: 1
                     for-each param (parameters of value) [
                         if not path? param [
-                            append parsers f.(as word! unspaced ["param" n])
+                            append parsers reify :f.(as word! unspaced ["param" n])
                             n: n + 1
                         ]
                     ]

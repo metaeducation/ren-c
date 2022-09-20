@@ -7,6 +7,6 @@ REBOL [
 ]
 
 sys.util.register-codec* 'jpeg [%.jpg %jpeg]
-    :identify-jpeg?
-    :decode-jpeg
+    reify :identify-jpeg?
+    reify :decode-jpeg
     _  ; currently no JPG encoder

@@ -685,7 +685,7 @@ DECLARE_NATIVE(redo)
 //  {Invoke an ACTION! with all required arguments specified}
 //
 //      return: [<opt> <void> any-value!]
-//      action [action!]
+//      action [action! ~action!~]
 //      def "Frame definition block (will be bound and evaluated)"
 //          [block!]
 //  ]
@@ -755,7 +755,7 @@ DECLARE_NATIVE(applique)
 //  {Invoke an ACTION! with all required arguments specified}
 //
 //      return: [<opt> <void> any-value!]
-//      action [action!]
+//      action [action! ~action!~]
 //      args "Arguments and Refinements, e.g. [arg1 arg2 /ref refine1]"
 //          [block!]
 //      <local> frame index
@@ -1010,7 +1010,7 @@ DECLARE_NATIVE(apply)
 //  {Invoke an ACTION! inline as if it had been invoked via a WORD!}
 //
 //      return: [<opt> <void> any-value!]
-//      action [action!]
+//      action [action! ~action!~]
 //      args [<opt> <void> any-value! <variadic>]
 //  ]
 //

@@ -657,9 +657,9 @@ DECLARE_NATIVE(definitional_return)
 //  {Copy help information from the original function to the derived function}
 //
 //      return: "Same as derived (assists in efficient chaining)"
-//          [action!]
-//      derived [action!]
-//      original [action!]
+//          [~action!~]
+//      derived [action! ~action!~]
+//      original [action! ~action!~]
 //      /augment "Additional spec information to scan"
 //          [block!]
 //  ]
@@ -669,13 +669,15 @@ DECLARE_NATIVE(inherit_meta)
     INCLUDE_PARAMS_OF_INHERIT_META;
 
     REBVAL *derived = ARG(derived);
+    mutable_QUOTE_BYTE(derived) = ISOTOPE_0;  // ensure return is isotope
+
     const REBVAL *original = ARG(original);
 
     UNUSED(ARG(augment));  // !!! not yet implemented
 
     Context(*) m1 = ACT_META(VAL_ACTION(original));
     if (not m1)  // nothing to copy
-        return Activatify(COPY(ARG(derived)));
+        return COPY(ARG(derived));
 
     // Often the derived function won't have its own meta information yet.  But
     // if it was created via an AUGMENT, it will have some...only the notes
@@ -760,5 +762,5 @@ DECLARE_NATIVE(inherit_meta)
         Shutdown_Evars(&e);
     }
 
-    return Activatify(COPY(ARG(derived)));
+    return COPY(ARG(derived));
 }

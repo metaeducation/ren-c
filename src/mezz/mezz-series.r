@@ -410,8 +410,7 @@ collect*: func [
     ; use LAMBDA for binding work of connecting KEEP with the keeper function
     ; (Doesn't have or enforce RETURN)
     ;
-    body: compose [keep: runs keep (as group! body)]
-    run lambda [keep [action!]] body :keeper
+    run lambda [keep [~action!~]] body :keeper
 
     return out  ; might be null if no KEEPs that kept anything yet
 ]

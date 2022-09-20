@@ -204,9 +204,9 @@ Bounce Encloser_Dispatcher(Frame(*) f)
 //
 //      return: [action!]
 //      inner "Action that a FRAME! will be built for, then passed to OUTER"
-//          [action!]
+//          [action! ~action!~]
 //      outer "Gets a FRAME! for INNER before invocation, can DO it (or not)"
-//          [action!]
+//          [action! ~action!~]
 //  ]
 //
 DECLARE_NATIVE(enclose_p)  // see extended definition ENCLOSE in %base-defs.r
@@ -215,6 +215,9 @@ DECLARE_NATIVE(enclose_p)  // see extended definition ENCLOSE in %base-defs.r
 
     REBVAL *inner = ARG(inner);
     REBVAL *outer = ARG(outer);
+
+    mutable_QUOTE_BYTE(inner) = UNQUOTED_1;  // if isotope, make normal
+    mutable_QUOTE_BYTE(outer) = UNQUOTED_1;
 
     // The new function has the same interface as `inner`
     //

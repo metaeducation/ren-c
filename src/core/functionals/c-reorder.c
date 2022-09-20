@@ -91,8 +91,8 @@ Bounce Reorderer_Dispatcher(Frame(*) f) {
 //
 //  {Create variation of a function with its arguments reordered}
 //
-//      return: [action!]
-//      action [action!]
+//      return: [~action!~]
+//      action [action! ~action!~]
 //      ordering "Parameter WORD!s, all required parameters must be mentioned"
 //          [block!]
 //  ]

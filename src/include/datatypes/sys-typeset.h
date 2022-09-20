@@ -385,21 +385,6 @@ inline static bool Typecheck_Including_Constraints(
     const REBPAR *param,
     Cell(const*) v
 ){
-    if (VAL_PARAM_CLASS(param) == PARAM_CLASS_RETURN) {
-        if (Is_Isotope(v)) {
-            //
-            // The strategy is that you can return any "mean" bad-word you
-            // like from a function, as it's nearly as problematic as raising
-            // a return type checking error.  This helps keep BAD-WORD! in the
-            // spec for actually returning the "friendly" isotopes as values,
-            // which would be things you want to support with ANY-TYPE!.  And
-            // it means `return: []` works with `return ~xxx~`, which is the
-            // default for RETURN with no arguments.
-            //
-            return true;
-        }
-    }
-
     // We do an adjustment of the argument to accommodate meta parameters,
     // which check the unquoted type.  But what's built for the frame must be
     // quoted--e.g. MAKE FRAME! or specialized, since isotopes can't be passed
@@ -507,6 +492,9 @@ inline static void Typecheck_Refinement(
         if (not Is_Blackhole(arg))
             fail (Error_Bad_Argless_Refine(key));
     }
-    else if (not Typecheck_Including_Constraints(param, arg))
+    else if (not Typecheck_Including_Constraints(param, arg)) {
+        if (Is_Isotope(arg))
+            fail (Error_Bad_Isotope(arg));
         fail (Error_Invalid_Type(VAL_TYPE(arg)));
+    }
 }

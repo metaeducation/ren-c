@@ -42,7 +42,7 @@
 )
 (
     append-10: specialize :append [value: 10]
-    f: make frame! :append-10
+    f: make frame! reify :append-10
     f.series: copy [a b c]
 
     comment {COPY before DO allows reuse of F, only the copy is "stolen"}
@@ -50,7 +50,7 @@
     [a b c 10 10] = do f
 )
 (
-    f: make frame! :append
+    f: make frame! reify :append
     f.series: copy [a b c]
     f.value: [d e f]
     [a b c [d e f]] = do f
@@ -172,7 +172,7 @@
 
 (
     ap10d: specialize :append/dup [value: 10]
-    f: make frame! :ap10d
+    f: make frame! reify :ap10d
     f.series: copy [a b c]
     did all [
         [a b c 10] = do copy f
@@ -209,7 +209,7 @@
 (
     data: [a b c]
 
-    f: make frame! :append
+    f: make frame! reify :append
     f.series: data
 
     apd: make action! f

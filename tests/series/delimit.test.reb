@@ -64,7 +64,7 @@
 
     ("HelloWorld" = unspaced ["Hello" void "World"])
     (
-        f: make frame! :void
+        f: make frame! reify :void
         "HelloWorld" = unspaced ["Hello" eval f "World"]
     )
 

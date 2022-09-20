@@ -60,7 +60,7 @@
 
 [#1506
     #trap (
-        10 = reeval func [return: [integer!]] [trap [return 10] 20]
+        10 = reeval reify func [return: [integer!]] [trap [return 10] 20]
     )
 ]
 

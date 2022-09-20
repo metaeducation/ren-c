@@ -341,9 +341,9 @@ Bounce Reframer_Dispatcher(Frame(*) f)
 //
 //  {Make a function that manipulates an invocation at the callsite}
 //
-//      return: [action!]
+//      return: [~action!~]
 //      shim "The action that has a FRAME! (or QUOTED!) argument to supply"
-//          [action!]
+//          [action! ~action!~]
 //      /parameter "Shim parameter receiving the frame--defaults to last"
 //          [word!]
 //  ]
@@ -351,6 +351,8 @@ Bounce Reframer_Dispatcher(Frame(*) f)
 DECLARE_NATIVE(reframer_p)
 {
     INCLUDE_PARAMS_OF_REFRAMER_P;
+
+    mutable_QUOTE_BYTE(ARG(shim)) = UNQUOTED_1;  // remove isotope if present
 
     Action(*) shim = VAL_ACTION(ARG(shim));
     option(Symbol(const*)) label = VAL_ACTION_LABEL(ARG(shim));

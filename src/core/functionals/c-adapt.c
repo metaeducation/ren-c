@@ -123,7 +123,7 @@ Bounce Adapter_Dispatcher(Frame(*) f)
 //
 //      return: [action!]
 //      action "Function to be run after the prelude is complete"
-//          [action!]
+//          [action! ~action!~]
 //      prelude "Code to run in constructed frame before adaptee runs"
 //          [block!]
 //  ]
@@ -133,6 +133,7 @@ DECLARE_NATIVE(adapt_p)  // see extended definition ADAPT in %base-defs.r
     INCLUDE_PARAMS_OF_ADAPT_P;
 
     REBVAL *adaptee = ARG(action);
+    mutable_QUOTE_BYTE(adaptee) = UNQUOTED_1;  // remove isotope status
 
     // !!! There was code here which would hide it so adapted code had no
     // access to the locals.  That requires creating a new paramlist.  Is

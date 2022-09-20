@@ -78,7 +78,7 @@
         test: lambda [x] [x + 1000]
         wrapper: returnproxy :test
 
-        f: make frame! :wrapper
+        f: make frame! reify :wrapper
         f.x: 20
         f.return: 'out
 

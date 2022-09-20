@@ -202,9 +202,9 @@ Bounce Hijacker_Dispatcher(Frame(*) frame_)
 //      return: "The hijacked action value, null if self-hijack (no-op)"
 //          [<opt> action!]
 //      victim "Action whose references are to be affected"
-//          [action!]
-//      hijacker "The action to run in its place"
-//          [action!]
+//          [action! ~action!~]
+//      hijacker "The  action to run in its place"
+//          [action! ~action!~]
 //  ]
 //
 DECLARE_NATIVE(hijack)
@@ -228,10 +228,10 @@ DECLARE_NATIVE(hijack)
 //    restore the behavior.  Because you can make such a copy yourself if
 //    you intend to put the behavior back:
 //
-//        foo-saved: copy :foo
+//        foo-saved: copy reify :foo
 //        hijack :foo :bar
 //        ...
-//        hijack :foo :foo-saved
+//        hijack :foo foo-saved
 //
 //    Making such a copy in this routine would be wasteful if it wasn't used.
 //

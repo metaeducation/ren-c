@@ -322,11 +322,6 @@ bool Specialize_Action_Throws(
         if (Is_Specialized(param))
             continue;
 
-        if (Is_Activation(arg)) {
-            if (NOT_PARAM_FLAG(param, ISOTOPES_OKAY))
-                Decay_If_Activation(arg);
-        }
-
         if (GET_PARAM_FLAG(param, REFINEMENT)) {
             if (Is_Nihil(arg)) {
                 //
@@ -462,7 +457,7 @@ bool Specialize_Action_Throws(
 //
 //      return: [action!]
 //      action "Function whose parameters will be set to fixed values"
-//          [action!]
+//          [action! ~action!~]
 //      def "Definition for FRAME! fields for args and refinements"
 //          [block!]
 //  ]
@@ -757,11 +752,7 @@ Action(*) Alloc_Action_From_Exemplar(
             continue;
         }
 
-        if (Is_Isotope(arg)) {
-            if (NOT_PARAM_FLAG(param, ISOTOPES_OKAY))
-                fail (Error_Bad_Isotope(arg));
-        }
-        else if (GET_PARAM_FLAG(param, REFINEMENT))
+        if (GET_PARAM_FLAG(param, REFINEMENT))
             Typecheck_Refinement(key, param, arg);
         else
             Typecheck_Including_Constraints(param, arg);

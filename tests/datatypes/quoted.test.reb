@@ -223,7 +223,7 @@
 
         (make varargs! [var args])
         (make object! [obj: {ect}])
-        (make frame! :append)
+        (make frame! reify :append)
         (make error! "error")
         (port: open http://example.com)
         #[true]

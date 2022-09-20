@@ -242,9 +242,8 @@ make-scheme: function [
                 block? args
                 block? body
             ]
-            append actor spread reduce [
-                name (reeval op args body) ; add action! to object! w/name
-            ]
+            append actor name: to word! name  ; !!! use EXTEND-style operation?
+            actor.(name): reeval op args body ; add action! to object! w/name
         ]
         scheme.actor: actor
     ]

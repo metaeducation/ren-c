@@ -156,8 +156,8 @@
 
 ; Slightly more complex version...use functions
 (
-    block1: reeval func [] [let x: 10, [x + y]]
-    block2: reeval func [] compose/deep [let y: 20, [(block1)]]
+    block1: run func [] [let x: 10, [x + y]]
+    block2: run func [] compose/deep [let y: 20, [(block1)]]
     30 = do first block2
 )
 

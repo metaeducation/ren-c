@@ -188,7 +188,7 @@ DECLARE_NATIVE(entrap)  // wrapped as multi-return versions TRAP and ATTEMPT
 //      ^optional "<deferred argument> Run branch if this is definitional fail"
 //          [<opt> <void> <fail> <pack> any-value!]
 //      :branch "If arity-1 ACTION!, receives value that triggered branch"
-//          [any-branch!]
+//          [any-branch! ~action!~]
 //  ]
 //
 DECLARE_NATIVE(except)
@@ -197,6 +197,7 @@ DECLARE_NATIVE(except)
 
     Value(*) v = ARG(optional);
     Value(*) branch = ARG(branch);
+    Decay_If_Activation(ARG(branch));
 
     if (not Is_Meta_Of_Raised(v))
         return UNMETA(v);

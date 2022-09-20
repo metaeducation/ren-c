@@ -803,7 +803,7 @@ ext-console-impl: func [
         ; issue--but it needs deeper thought.
         ;
         emit [(  ; <-- GROUP! needed for binding bug, review
-            let f: make frame! :system.console.print-result
+            let f: make frame! reify :system.console.print-result
             f.v: '(<*> result)  ; avoid conflating pure void and void isotope
             do f
         )]

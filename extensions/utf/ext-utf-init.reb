@@ -20,20 +20,20 @@ REBOL [
 (sys.util.register-codec*
     'text
     %.txt
-    :identify-text?
-    :decode-text
-    :encode-text)
+    reify :identify-text?
+    reify :decode-text
+    reify :encode-text)
 
 (sys.util.register-codec*
     'utf-16le
     %.txt
-    :identify-utf16le?
-    :decode-utf16le
-    :encode-utf16le)
+    reify :identify-utf16le?
+    reify :decode-utf16le
+    reify :encode-utf16le)
 
 (sys.util.register-codec*
     'utf-16be
     %.txt
-    :identify-utf16be?
-    :decode-utf16be
-    :encode-utf16be)
+    reify :identify-utf16be?
+    reify :decode-utf16be
+    reify :encode-utf16be)

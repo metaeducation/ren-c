@@ -1153,7 +1153,7 @@ bool Set_Var_Core_Updater_Throws(
             PUSH_GC_GUARD(temp);
             if (rebRunThrows(
                 out,  // <-- output cell
-                updater, "binding of", temp, temp, rebQ(setval)
+                rebRUN(updater), "binding of", temp, temp, rebQ(setval)
             )){
                 DROP_GC_GUARD(temp);
                 fail (Error_No_Catch_For_Throw(TOP_FRAME));
@@ -1574,8 +1574,7 @@ DECLARE_NATIVE(enfixed_q)
 //  {For making enfix functions, e.g `+: enfixed :add` (copies)}
 //
 //      return: [action!]
-//      action "Action to operate on (can be isotopic)"
-//          [action!]
+//      action [action! ~action!~]
 //  ]
 //
 DECLARE_NATIVE(enfix)
@@ -1592,7 +1591,9 @@ DECLARE_NATIVE(enfix)
 
     Set_Action_Flag(VAL_ACTION(action), ENFIXED);
 
-    return COPY(Activatify(action));
+    Copy_Cell(OUT, action);  // may or may not be an isotope
+    mutable_QUOTE_BYTE(OUT) = ISOTOPE_0;  // now it's guaranteed isotope
+    return OUT;
 }
 
 
