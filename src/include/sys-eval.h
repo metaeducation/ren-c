@@ -92,8 +92,9 @@ inline static bool Is_Isotope_Set_Friendly(Cell(const*) v) {
     assert(Is_Isotope(v));
     return (
         HEART_BYTE(v) == REB_BLANK  // null is the isotopic state of blank
-        or HEART_BYTE(v) == REB_WORD
+        or HEART_BYTE(v) == REB_WORD  // used e.g. for ~true~ and ~false~
         or HEART_BYTE(v) == REB_VOID  // nihil is the isotopic state of void
+        or HEART_BYTE(v) == REB_ACTION  // !!! Temporary just to boot
     );
 }
 
@@ -189,7 +190,7 @@ inline static bool Did_Init_Inert_Optimize_Complete(
         feed->gotten = Lookup_Word(At_Feed(feed), FEED_SPECIFIER(feed));
         if (
             not feed->gotten
-            or REB_ACTION != VAL_TYPE_UNCHECKED(unwrap(feed->gotten))
+            or not Is_Activation(unwrap(feed->gotten))
         ){
             Clear_Feed_Flag(feed, NO_LOOKAHEAD);
             goto optimized;  // not action

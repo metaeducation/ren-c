@@ -266,7 +266,7 @@ DECLARE_NATIVE(hijack)
     );
     Set_Cell_Flag(ACT_ARCHETYPE(victim), PROTECTED);  // restore invariant
 
-    return Init_Action(  // don't bother returning copy of original, see [3]
+    return Init_Activation(  // don't bother returning copy of original, see [3]
         OUT,
         victim,
         VAL_ACTION_LABEL(ARG(victim)),  // MISC(victim_paramlist).meta? see [4]

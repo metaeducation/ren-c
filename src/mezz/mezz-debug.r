@@ -77,7 +77,7 @@ verify: function [
 ; override a system-wide assert in this way should be examined, and perhaps
 ; copies of the function made at layer boundaries.
 ;
-native-assert: copy :assert
+native-assert: runs copy reify :assert
 hijack :assert :verify
 
 
@@ -85,11 +85,11 @@ delta-time: function [
     {Returns the time it takes to evaluate the block}
     block [block!]
 ][
-    timer: :lib.now/precise  ; Note: NOW comes from an Extension
+    timer: reify :lib.now/precise  ; Note: NOW comes from an Extension
     results: reduce reduce [  ; resolve word lookups first, run fetched items
-        :timer
-        :elide :do :block
-        :timer
+        timer
+        (reify :elide) (reify :do) block
+        timer
     ]
     return difference results.2 results.1
 ]

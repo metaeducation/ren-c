@@ -160,12 +160,12 @@ body-of: specialize :reflect [property: 'body]
 ; https://trello.com/c/DVXmdtIb
 ;
 index?: specialize :reflect [property: 'index]
-offset?: :offset-of
-sign?: :sign-of
-suffix?: :suffix-of
-length?: :length-of
-head: :head-of
-tail: :tail-of
+offset?: runs :offset-of
+sign?: runs :sign-of
+suffix?: runs :suffix-of
+length?: runs :length-of
+head: runs :head-of
+tail: runs :tail-of
 
 comment [
     ; !!! Less common cases still linger as question mark routines that
@@ -188,12 +188,12 @@ prin: function [
     return: <none>
     value [<opt> any-value!]
 ][
-    write-stdout switch type of :value [
+    write-stdout switch type of value [
         null [return]
         text! char! [value]
         block! [spaced value]
     ] else [
-        form :value
+        form value
     ]
 ]
 
@@ -203,7 +203,7 @@ prin: function [
 ; permanence.  It also is unique among loop constructs by supporting a value
 ; return via STOP, since it has no "normal" loop termination condition.
 ;
-forever: :cycle
+forever: runs :cycle
 
 
 find: adapt (augment :find [/reverse /last]) [

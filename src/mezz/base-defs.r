@@ -25,7 +25,7 @@ REBOL [
 
 ; Start with basic debugging
 
-c-break-debug: :c-debug-break  ; easy to mix up
+c-break-debug: runs :c-debug-break  ; easy to mix up
 
 |^|: :meta
 |@|: :the*
@@ -60,7 +60,7 @@ probe: func* [
     return/forward unmeta value'
 ]
 
-??: :probe  ; shorthand to use in debug sessions, not intended to be committed
+??: runs :probe  ; shorthand for debug sessions, not intended to be committed
 
 
 ; The pattern `foo: enfix function [...] [...]` is probably more common than
@@ -72,15 +72,15 @@ probe: func* [
 ;
 ; https://forum.rebol.info/t/moving-enfixedness-back-into-the-action/1156
 ;
-enfixed: chain* reduce [:copy :enfix]
+enfixed: chain* reduce [reify :copy, reify :enfix]
 
 
 ; Pre-decaying specializations for DID, DIDN'T, THEN, ELSE, ALSO
 ;
 ; https://forum.rebol.info/t/why-then-and-else-are-mutually-exclusive/1080/9
 ;
-did*: :did/decay
-didn't*: :didn't/decay
+did*: runs :did/decay
+didn't*: runs :didn't/decay
 *then: enfixed :then/decay
 *also: enfixed :also/decay
 *else: enfixed :else/decay
@@ -112,7 +112,7 @@ tweak :*else 'defer on
 
 ; SET OPERATORS
 
-not+: :bitwise-not
+not+: runs :bitwise-not
 and+: enfixed :bitwise-and
 or+: enfixed :bitwise-or
 xor+: enfixed :bitwise-xor
@@ -141,8 +141,8 @@ and-not+: enfixed :bitwise-and-not
 ; being unused as a result.  Compromise `=>` just to reinforce what is lost
 ; by not retraining: https://forum.rebol.info/t/349/11
 ;
-equal-or-greater?: :greater-or-equal?
-lesser-or-equal?: :equal-or-lesser?
+equal-or-greater?: runs :greater-or-equal?
+lesser-or-equal?: runs :equal-or-lesser?
 =>: enfixed :equal-or-greater?
 <=: enfixed :lesser-or-equal?
 
@@ -199,7 +199,7 @@ tweak :|\|\|| 'barrier on
 ; EACH will ultimately be a generator, but for now it acts as QUOTE so it can
 ; be used with `map x each [a b c] [...]` and give you x as a, then b, then c.
 ;
-each: :quote
+each: runs :quote
 
 ; !!! While POINTFREE is being experimented with in its design, it is being
 ; designed in usermode.  It would be turned into an optimized native when it
@@ -221,11 +221,11 @@ pointfree*: func* [
     ;
     ; We prune out any unused refinements for convenience.
     ;
-    params: map-each w parameters of :action [
+    params: map-each w parameters of action [
         match [word! lit-word! get-word!] w  ; !!! what about skippable params?
     ]
 
-    frame: make frame! get 'action  ; use GET to avoid :action name cache
+    frame: make frame! action
 
     ; Step through the block we are given--first looking to see if there is
     ; a BLANK! in the slot where a parameter was accepted.  If it is blank,
@@ -236,7 +236,7 @@ pointfree*: func* [
     for-skip p params 1 [
         case [
             ; !!! Have to use STRICT-EQUAL?, else '_ says type equal to blank
-            blank! == type of :block.1 [block: skip block 1]
+            blank! == type of block.1 [block: skip block 1]
 
             match word! p.1 [
                 if not (var: evaluate/next block 'block, block) [
@@ -247,15 +247,15 @@ pointfree*: func* [
 
             all [
                 match lit-word! p.1
-                match [group! get-word! get-path!] :block.1
+                match [group! get-word! get-path!] block.1
             ][
-                frame.(p.1): reeval :block.1
+                frame.(p.1): reeval block.1
                 block: skip block 1  ; NEXT not defined yet
             ]
 
             ; Note: DEFAULT not defined yet
             true [  ; hard literal argument or non-escaped soft literal
-                frame.(p.1): :block.1
+                frame.(p.1): block.1
                 block: skip block 1  ; NEXT not defined yet
             ]
         ]
@@ -268,7 +268,7 @@ pointfree*: func* [
     ; We now create an action out of the frame.  NULL parameters are taken as
     ; being unspecialized and gathered at the callsite.
     ;
-    return make action! :frame
+    return runs make action! frame
 ]
 
 
@@ -297,41 +297,41 @@ pointfree*: func* [
 ;
 
 enclose: enclose* :enclose* lambda [f] [  ; uses low-level ENCLOSE* to make
-    set let inner :f.inner  ; don't cache name via SET-WORD!
-    inherit-meta do f :inner
+    set let inner f.inner  ; don't cache name via SET-WORD!
+    inherit-meta (do f) inner
 ]
-inherit-meta :enclose :enclose*  ; needed since we used ENCLOSE*
+inherit-meta enclose :enclose*  ; needed since we used ENCLOSE*
 
 specialize: enclose :specialize* lambda [f] [  ; now we have high-level ENCLOSE
-    set let action :f.action  ; don't cache name via SET-WORD!
-    inherit-meta do f :action
+    set let action f.action  ; don't cache name via SET-WORD!
+    inherit-meta (do f) action
 ]
 
 adapt: enclose :adapt* lambda [f] [
-    set let action :f.action
-    inherit-meta do f :action
+    set let action f.action
+    inherit-meta do f action
 ]
 
 chain: enclose :chain* lambda [f] [
     ; don't cache name via SET-WORD!
-    set let pipeline1 pick (f.pipeline: reduce :f.pipeline) 1
-    inherit-meta do f :pipeline1
+    set let pipeline1 pick (f.pipeline: reduce/predicate f.pipeline :reify) 1
+    inherit-meta (do f) pipeline1
 ]
 
 augment: enclose :augment* lambda [f] [
-    set let action :f.action  ; don't cache name via SET-WORD!
-    let spec: :f.spec
-    inherit-meta/augment do f :action spec
+    set let action f.action  ; don't cache name via SET-WORD!
+    let spec: f.spec
+    inherit-meta/augment (do f) action spec
 ]
 
 reframer: enclose :reframer* lambda [f] [
-    set let shim :f.shim  ; don't cache name via SET-WORD!
-    inherit-meta do f :shim
+    set let shim f.shim  ; don't cache name via SET-WORD!
+    inherit-meta (do f) shim
 ]
 
 reorder: enclose :reorder* lambda [f] [
-    set let action :f.action  ; don't cache name via SET-WORD!
-    inherit-meta do f :action
+    set let action f.action  ; don't cache name via SET-WORD!
+    inherit-meta (do f) action
 ]
 
 ; !!! The native R3-Alpha parse functionality doesn't have parity with UPARSE's
@@ -339,11 +339,11 @@ reorder: enclose :reorder* lambda [f] [
 ; UPARSE's design when it hardens.  For now these routines provide some amount
 ; of interface parity with UPARSE.
 ;
-parse3: :parse3*/fully  ; could be more complex definition (UPARSE is!)
+parse3: runs :parse3*/fully  ; could be more complex definition (UPARSE is!)
 
 ; The PARSE name has been taken by what was UPARSE.
 
-parse2: :parse3*/redbol/fully
+parse2: runs :parse3*/redbol/fully
 
 ; The lower-level pointfree function separates out the action it takes, but
 ; the higher level one uses a block.  Specialize out the action, and then
@@ -351,8 +351,7 @@ parse2: :parse3*/redbol/fully
 ;
 pointfree: specialize* (enclose :pointfree* lambda [f] [
     set let action f.action: (match action! any [  ; don't SET-WORD! cache name
-        if match [word! path!] :f.block.1 [get compose f.block.1]
-        :f.block.1
+        if match [word! path!] f.block.1 [reify get/any f.block.1]
     ]) else [
         fail "POINTFREE requires ACTION! argument at head of block"
     ]
@@ -360,9 +359,9 @@ pointfree: specialize* (enclose :pointfree* lambda [f] [
     ; rest of block is invocation by example
     f.block: skip f.block 1  ; Note: NEXT not defined yet
 
-    inherit-meta do f :action  ; don't SET-WORD! cache name
+    inherit-meta (do f) action  ; don't SET-WORD! cache name
 ])[
-    action: :panic/value  ; gets overwritten, best to make it something mean
+    action: reify :panic/value  ; overwritten, best to make it something mean
 ]
 
 
@@ -401,7 +400,7 @@ requote: reframer lambda [
 ]
 
 
-<-: enfixed func* [
+<-: enfix func* [
     {Declare action by example instantiation, missing args left unspecialized}
 
     return: [action!]
@@ -422,7 +421,6 @@ requote: reframer lambda [
 next: specialize :skip [offset: 1]
 back: specialize :skip [offset: -1]
 
-bound?: chain [specialize :reflect [property: 'binding], :value?]
 
 unspaced: specialize :delimit [delimiter: _]
 spaced: specialize :delimit [delimiter: space]
@@ -480,10 +478,10 @@ reeval func* [
     while [<end> != set-word: take set-words] [
         type-name: copy as text! set-word
         change back tail of type-name "!"  ; change ? at tail to !
-        tester: typechecker (get bind (as word! type-name) set-word)
-        set set-word :tester
+        tester: reify typechecker (get bind (as word! type-name) set-word)
+        set set-word runs tester
 
-        set-meta :tester make system.standard.action-meta [
+        set-meta tester make system.standard.action-meta [
             description: spaced [{Returns TRUE if the value is} an type-name]
             return-type: [logic!]
         ]
@@ -565,40 +563,43 @@ reeval func* [
     <end>
 
 
+bound?: chain [specialize :reflect [property: 'binding], :value?]
+
+
 ; Note: `LIT-WORD!: UNEVAL WORD!` and `LIT-PATH!: UNEVAL PATH!` is actually
 ; set up in %b-init.c.  Also LIT-WORD! and LIT-PATH! are handled specially in
 ; %words.r for bootstrap compatibility as a parse keyword.
 
 lit-word?: func* [return: [logic!] value [<opt> any-value!]] [
     return to-logic all [
-        quoted? :value
+        quoted? value
         word! = type of unquote value
     ]
 ]
 to-lit-word: func* [return: [quoted!] value [any-value!]] [
-    return quote to word! noquote :value
+    return quote to word! noquote value
 ]
 lit-path?: func* [return: [logic!] value [<opt> any-value!]] [
     return to-logic all [
-        quoted? :value
+        quoted? value
         path! = type of unquote value
     ]
 ]
 to-lit-path: func* [return: [quoted!] value [any-value!]] [
-    return quote to path! noquote :value
+    return quote to path! noquote value
 ]
 
 refinement?: func* [return: [logic!] value [<opt> any-value!]] [
     return to-logic all [
-        path? :value
+        path? value
         2 = length of value
-        blank? :value.1
-        word? :value.2
+        blank? value.1
+        word? value.2
     ]
 ]
 
 char?: func* [return: [logic!] value [<opt> any-value!]] [
-    return (issue? :value) and (1 >= length of value)
+    return (issue? value) and (1 >= length of value)
 ]
 
 print: func* [
@@ -677,5 +678,5 @@ ok?: func* [
 
 ; Convenient alternatives for readability
 ;
-neither?: :nand?
-both?: :and?
+neither?: runs :nand?
+both?: runs :and?

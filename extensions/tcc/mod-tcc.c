@@ -371,7 +371,7 @@ DECLARE_NATIVE(make_native)
     Init_Blank(ARR_AT(details, IDX_TCC_NATIVE_STATE)); // no TCC_State, yet...
 
     Set_Action_Flag(native, IS_NATIVE);
-    return Init_Action(OUT, native, ANONYMOUS, UNBOUND);
+    return Init_Activation(OUT, native, ANONYMOUS, UNBOUND);
 }
 
 

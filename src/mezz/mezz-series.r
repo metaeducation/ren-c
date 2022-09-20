@@ -111,9 +111,9 @@ replace: function [
     if void? unget pattern' [return target]
 
     all_REPLACE: all
-    all: :lib.all
+    all: runs :lib.all
     case_REPLACE: case
-    case: :lib.case
+    case: runs :lib.case
 
     pos: target
 
@@ -130,7 +130,7 @@ replace: function [
             ;
             value': ^ reeval (unmeta replacement') pos
         ] else [
-            value': :replacement'  ; inert value, might be null
+            value': replacement'  ; inert value, might be null
         ]
 
         pos: change/part pos (unmeta value') tail
@@ -169,8 +169,8 @@ reword: function [
         make typeset! [char! any-string! integer! word! binary!]
     )
 ][
-    case_REWORD: if case [#] else [null]
-    case: :lib.case
+    case_REWORD: case
+    case: runs :lib.case
 
     out: make (type of source) length of source
 
@@ -365,18 +365,18 @@ alter: func [
     /case "Case-sensitive comparison"
 ][
     case_ALTER: case
-    case: :lib.case
+    case: runs :lib.case
 
     if bitset? series [
-        if find series :value [
-            remove/part series :value
+        if find series value [
+            remove/part series value
             return false
         ]
-        append series :value
+        append series value
         return true
     ]
-    if remove apply :find [series :value, /case case_ALTER] [
-        append series :value
+    if remove apply :find [series value, /case case_ALTER] [
+        append series value
         return true
     ]
     return false
@@ -410,9 +410,10 @@ collect*: func [
     ; use LAMBDA for binding work of connecting KEEP with the keeper function
     ; (Doesn't have or enforce RETURN)
     ;
-    reeval lambda [keep [action!]] body :keeper
+    body: compose [keep: runs keep (as group! body)]
+    run lambda [keep [action!]] body :keeper
 
-    return :out  ; might be null if no non-BLANK! KEEPs yet
+    return out  ; might be null if no KEEPs that kept anything yet
 ]
 
 

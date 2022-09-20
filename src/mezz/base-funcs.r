@@ -323,10 +323,10 @@ redescribe: func [
         {The input action, with its description now updated.}
     spec [block!]
         {Either a string description, or a spec block (without types).}
-    value [action!]
+    action [action!]
         {(modified) Action whose description is to be updated.}
 ][
-    let meta: meta-of :value
+    let meta: meta-of :action
     let notes: _
     let description: _
 
@@ -336,7 +336,7 @@ redescribe: func [
     ; only manipulate the description.
 
     let on-demand-meta: does [
-        meta: default [set-meta :value copy system.standard.action-meta]
+        meta: default [set-meta action copy system.standard.action-meta]
 
         if not in meta 'description [
             fail [{archetype META-OF doesn't have DESCRIPTION slot} meta]
@@ -347,7 +347,7 @@ redescribe: func [
                 fail [{PARAMETER-NOTES in META-OF is not a FRAME!} notes]
             ]
 
-            all [frame? notes, :value <> (action of notes)] then [
+            all [frame? notes, action <> (action of notes)] then [
                 fail [{PARAMETER-NOTES in META-OF frame mismatch} notes]
             ]
         ]
@@ -424,7 +424,7 @@ redescribe: func [
                             fail [param {doesn't match word type of} actual]
                         ]
 
-                        notes/(as word! param): if note = {} [null] else [note]
+                        notes/(as word! param): if note = {} [~] else [note]
                     ]
                 ]
             )]
@@ -439,12 +439,12 @@ redescribe: func [
     ;
     all [
         notes
-        every [param note] notes [null? :note]
+        every [param note] notes [nihil? :note]
     ] then [
         meta.parameter-notes: _
     ]
 
-    return :value  ; should have updated the meta
+    return runs action  ; should have updated the meta
 ]
 
 
@@ -646,13 +646,11 @@ gunzip: redescribe [
 ensure: redescribe [
     {Pass through value if it matches test, otherwise trigger a FAIL}
 ](
-    ; MATCH returns isotopes for BLANK!, #[false], and if the input is a
-    ; NULL but matches the test via <opt>.  We take advantage of the unique
-    ; meaning of NULL coming back from MATCH to know if the test failed...
-    ; and then use DECAY to turn the isotopes back to their meanings.
+    ; MATCH returns a pack (isotopic block) vs. NULL if the input is NULL
+    ; and matches NULL.  This is not reactive with ELSE
     ;
     enclose :match lambda [f] [
-        let value: :f.value  ; DO makes frame arguments unavailable
+        let value: f.value  ; DO makes frame arguments unavailable
         decay (do f else [
             ; !!! Can't use FAIL/WHERE until we can implicate the callsite.
             ;
@@ -660,7 +658,7 @@ ensure: redescribe [
             ;
             fail [
                 "ENSURE failed with argument of type"
-                    type of :value else ["NULL"]
+                    type of value else ["NULL"]
             ]
         ])
     ]
@@ -670,8 +668,8 @@ non: redescribe [
     {Pass through value if it *doesn't* match test, else null (e.g. MATCH/NOT)}
 ](
     enclose :match lambda [f] [
-        let value: :f.value  ; DO makes frame arguments unavailable
-        decay do f then [null] else [:value]
+        let value: f.value  ; DO makes frame arguments unavailable
+        decay (do f then [null] else [value])
     ]
 )
 
@@ -679,7 +677,7 @@ prohibit: redescribe [
     {Pass through value if it *doesn't* match test, else fail (e.g. ENSURE/NOT)}
 ](
     enclose :match lambda [f] [
-        let value: :f.value  ; DO makes frame arguments unavailable
+        let value: f.value  ; DO makes frame arguments unavailable
         do f then [
             ; !!! Can't use FAIL/WHERE until we can implicate the callsite.
             ;
@@ -690,7 +688,7 @@ prohibit: redescribe [
                     type of :value else ["NULL"]
             ]
         ]
-        :value
+        value
     ]
 )
 
@@ -769,7 +767,7 @@ trap+: func [
 reduce*: redescribe [
     "REDUCE a block but vaporize NULL Expressions"
 ](
-    specialize :reduce [predicate: :maybe]
+    specialize :reduce [predicate: reify :maybe]
 )
 
 for-next: redescribe [
@@ -892,11 +890,11 @@ eval-all: func [
 ; to allow longer runs of evaluation.  "Invisible functions" (those which
 ; `return: <void>`) permit a more flexible version of the mechanic.
 
-|<\||: tweak copy :eval-all 'postpone on  ; e.g. <|
-|\|>|: tweak enfixed :shove 'postpone on  ; e.g. |>
+|<\||: runs tweak copy :eval-all 'postpone on
+|\|>|: runs tweak enfixed :shove 'postpone on
 
 
-meth: enfixed func [
+meth: enfix func [
     {FUNC variant that creates an ACTION! implicitly bound in a context}
 
     return: [action!]
@@ -908,7 +906,7 @@ meth: enfixed func [
     let context: binding of member else [
         fail [member "must be bound to an ANY-CONTEXT! to use METHOD"]
     ]
-    return set member bind (
+    return set member runs bind (  ; !!! BIND doesn't take ACTION! as isotope
         apply :func [
             compose [(spread spec) <in> (context)]
             body
@@ -924,7 +922,7 @@ cause-error: func [
     err-id [word!]
     args
 ][
-    args: blockify :args  ; make sure it's a block
+    args: blockify args  ; make sure it's a block
 
     ; Filter out functional values:
     iterate args [

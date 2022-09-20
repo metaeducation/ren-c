@@ -139,7 +139,7 @@ load-header: function [
         return 'bad-header
     ]
 
-    (match [<opt> block!] :hdr.options) else [
+    (match [<opt> block!] hdr.options) else [
         return 'bad-header
     ]
 
@@ -652,7 +652,7 @@ export*: func [
         [module!]
     'left [<skip> set-word! set-group!]
     args "`export x: ...` for single or `export [...]` for words list"
-        [<opt> any-value! <variadic>]
+        [<opt> any-value! ~any-value!~ <variadic>]
     <local>
         hdr exports val word types items
 ][
@@ -676,11 +676,12 @@ export*: func [
         )
     ]
 
-    items: take args
-    if group? :items [items: do items]
-    if not block? :items [
+    items: ^ take args
+    if group? unmeta items [items: do unmeta items]
+    if not block? unmeta items [
         fail "EXPORT must be of form `export x: ...` or `export [...]`"
     ]
+    items: unmeta items
 
     while [not tail? items] [
         val: get/any word: match word! items.1 else [
@@ -693,10 +694,10 @@ export*: func [
             if quasi? ^val [  ; !!! assume type block means no isotopes
                 fail [{EXPORT given} types {for} word {but it is} ^val]
             ]
-            (find (make typeset! types) kind of :val) else [
+            (find (make typeset! types) kind of val) else [
                 fail [
                     {EXPORT expected} word {to be in} ^types
-                    {but it was} (mold kind of :val) else ["null"]
+                    {but it was} (mold kind of val) else ["null"]
                 ]
             ]
             items: next items

@@ -955,7 +955,7 @@ DECLARE_NATIVE(js_native)
         &cleanup_js_object
     );
 
-    return Init_Action(OUT, native, ANONYMOUS, UNBOUND);
+    return Init_Activation(OUT, native, ANONYMOUS, UNBOUND);
 }
 
 

@@ -112,7 +112,7 @@ Bounce Macro_Dispatcher(Frame(*) f)
     // can't unwind a macro frame to make it return an arbitrary result.
     //
     REBVAL *cell = FRM_ARG(f, 1);
-    Init_Action(
+    Init_Activation(
         cell,
         VAL_ACTION(Lib(DEFINITIONAL_RETURN)),
         Canon(RETURN),  // relabel (the RETURN in lib is a dummy action)
@@ -180,7 +180,7 @@ DECLARE_NATIVE(macro)
         SET_PARAM_FLAG(param, VANISHABLE);  // dispatcher is invisible
     }
 
-    return Init_Action(OUT, macro, ANONYMOUS, UNBOUND);
+    return Init_Activation(OUT, macro, ANONYMOUS, UNBOUND);
 }
 
 

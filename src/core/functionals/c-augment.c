@@ -23,7 +23,7 @@
 // frame, adding new parameters.  It does so without affecting the execution:
 //
 //     >> foo-x: func [x [integer!]] [print ["x is" x]]
-//     >> foo-xy: augment :foo-x [y [integer!]]
+//     >> foo-xy: augment ^foo-x [y [integer!]]
 //
 //     >> foo-x 10
 //     x is 10
@@ -38,7 +38,7 @@
 // is only useful when combined with something like ADAPT or ENCLOSE... to
 // inject in phases of code at a higher level that see these parameters:
 //
-//     >> foo-xy: adapt (augment :foo-x [y [integer!]]) [print ["y is" y]]
+//     >> foo-xy: adapt (augment ^foo-x [y [integer!]]) [print ["y is" y]]
 //
 //     >> foo-xy 10 20
 //     y is 20
@@ -171,5 +171,5 @@ DECLARE_NATIVE(augment_p)  // see extended definition AUGMENT in %base-defs.r
     //
     mutable_LINK(Ancestor, ACT_KEYLIST(augmentated)) = ACT_KEYLIST(augmentee);
 
-    return Init_Action(OUT, augmentated, label, UNBOUND);
+    return Init_Activation(OUT, augmentated, label, UNBOUND);
 }

@@ -37,8 +37,8 @@ mold64: function [
 ][
     base: system.options.binary-base
     system.options.binary-base: 64
-    data: mold :data
-    system.options.binary-base: :base
+    data: mold data
+    system.options.binary-base: base
     return data
 ]
 
@@ -59,7 +59,7 @@ save: function [
 ][
     ; Recover common natives for words used as refinements.
     all_SAVE: all
-    all: :lib.all
+    all: runs :lib.all
 
     ; Special datatypes use codecs directly (e.g. PNG image file):
     all [

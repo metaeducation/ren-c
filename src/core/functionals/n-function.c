@@ -133,7 +133,7 @@ Bounce Func_Dispatcher(Frame(*) f)
 
     REBVAL *cell = FRM_ARG(f, 1);
     assert(Is_Nihil(cell));
-    Init_Action(
+    Init_Activation(
         cell,
         VAL_ACTION(Lib(DEFINITIONAL_RETURN)),
         Canon(RETURN),  // relabel (the RETURN in lib is a dummy action)
@@ -347,7 +347,7 @@ DECLARE_NATIVE(func_p)
         1 + IDX_DETAILS_1  // archetype and one array slot (will be filled)
     );
 
-    return Init_Action(OUT, func, ANONYMOUS, UNBOUND);
+    return Init_Activation(OUT, func, ANONYMOUS, UNBOUND);
 }
 
 
@@ -640,7 +640,7 @@ DECLARE_NATIVE(definitional_return)
   skip_type_check: {  ////////////////////////////////////////////////////////
 
     DECLARE_LOCAL (label);
-    Copy_Cell(label, Lib(UNWIND)); // see also Make_Thrown_Unwind_Value
+    Copy_Cell(label, Lib(UNWIND)); // see Make_Thrown_Unwind_Value
     TG_Unwind_Frame = target_frame;
 
     if (not Is_Raised(v) and not Is_Nulled(v) and not Is_Void(v))
@@ -675,7 +675,7 @@ DECLARE_NATIVE(inherit_meta)
 
     Context(*) m1 = ACT_META(VAL_ACTION(original));
     if (not m1)  // nothing to copy
-        return COPY(ARG(derived));
+        return Activatify(COPY(ARG(derived)));
 
     // Often the derived function won't have its own meta information yet.  But
     // if it was created via an AUGMENT, it will have some...only the notes
@@ -760,5 +760,5 @@ DECLARE_NATIVE(inherit_meta)
         Shutdown_Evars(&e);
     }
 
-    return COPY(ARG(derived));
+    return Activatify(COPY(ARG(derived)));
 }

@@ -49,9 +49,9 @@ lf: LF:    newline
 
 ; Function synonyms
 
-min: :minimum
-max: :maximum
-abs: :absolute
+min: runs :minimum
+max: runs :maximum
+abs: runs :absolute
 
 ; A "blackhole" is a name for the usage of the NUL character in the sense of
 ; "truthy emptiness".  e.g. `set # 10` will not error, while `set _ 10` will.

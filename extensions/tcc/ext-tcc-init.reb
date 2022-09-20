@@ -64,7 +64,7 @@ compile: func [
     ; being available in some builds.  It gets added to lib but is somehow not
     ; available here.  This is a bug to look into.
     ;
-    get-env: :lib.get-env
+    get-env: runs :lib.get-env
 
     if 0 = length of compilables [
         fail ["COMPILABLES must have at least one element"]

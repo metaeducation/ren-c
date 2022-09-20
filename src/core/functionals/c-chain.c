@@ -271,5 +271,5 @@ DECLARE_NATIVE(chain_p)  // see extended definition CHAIN in %base-defs.r
     Force_Value_Frozen_Deep(pipeline);
     Copy_Cell(ARR_AT(ACT_DETAILS(chain), IDX_CHAINER_PIPELINE), pipeline);
 
-    return Init_Action(out, chain, VAL_ACTION_LABEL(first), UNBOUND);
+    return Init_Activation(out, chain, VAL_ACTION_LABEL(first), UNBOUND);
 }

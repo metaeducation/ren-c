@@ -736,13 +736,14 @@ bool Get_Var_Core_Throws(
         out, steps_out, var, var_specifier
     );
     if (TOP_INDEX != base) {
-        assert(IS_ACTION(out) and not threw);
+        assert(Is_Activation(out) and not threw);
         //
         // !!! Note: passing EMPTY_BLOCK here for the def causes problems;
         // that needs to be looked into.
         //
         DECLARE_LOCAL (action);
         Move_Cell(action, out);
+        Decay_If_Activation(action);
         return Specialize_Action_Throws(out, action, nullptr, base);
     }
     return threw;
@@ -806,9 +807,18 @@ bool Get_Path_Push_Refinements_Throws(
 
         // !!! `a/` should error if it's not an action...
         //
-        Get_Word_May_Fail(out, path, path_specifier);
-        if (not IS_ACTION(out))
-            fail (Error_Inert_With_Slashed_Raw());
+        const REBVAL *val = Lookup_Word_May_Fail(path, path_specifier);
+        if (Is_Isotope(val)) {
+            if (not Is_Activation(val))
+                fail (Error_Bad_Word_Get(path, val));
+            Copy_Cell(out, val);
+        }
+        else {
+            if (not IS_ACTION(val))
+                fail (Error_Inert_With_Slashed_Raw());
+            Copy_Cell(out, val);
+            Activatify(out);
+        }
         return false; }
 
       case FLAVOR_ARRAY : {}
@@ -839,7 +849,14 @@ bool Get_Path_Push_Refinements_Throws(
         REBSPC *derived = Derive_Specifier(path_specifier, path);
         if (Eval_Value_Throws(out, head, derived))
             return true;
-        if (not IS_ACTION(out))
+
+        if (Is_Activation(out))
+            NOOP;  // it's good
+        else if (Is_Isotope(out))
+            fail (Error_Bad_Isotope(out));
+        else if (IS_ACTION(out))
+            Activatify(out);
+        else
             fail ("Head of PATH! did not evaluate to an ACTION!");
     }
     else if (IS_TUPLE(head)) {
@@ -863,8 +880,15 @@ bool Get_Path_Push_Refinements_Throws(
         if (Get_Var_Core_Throws(out, steps, head, derived))
             return true;
 
-        if (not IS_ACTION(out))
-            fail ("TUPLE! must resolve to an action if head of PATH!");
+        if (Is_Isotope(out)) {
+            if (not Is_Activation(out))
+                fail (Error_Bad_Isotope(out));
+        }
+        else if (IS_ACTION(out)) {
+            Activatify(out);
+        }
+        else
+            fail ("TUPLE! must resolve to an action isotope if head of PATH!");
     }
     else if (IS_WORD(head)) {
         REBSPC *derived = Derive_Specifier(path_specifier, path);
@@ -873,15 +897,16 @@ bool Get_Path_Push_Refinements_Throws(
             derived
         );
 
+        // Under the new thinking, PATH! is only used to invoke actions.
+        //
+        if (Is_Activation(lookup)) {
+            Copy_Cell(out, lookup);
+            goto activation_in_out;
+        }
+
         if (Is_Isotope(lookup))
             fail (Error_Bad_Word_Get(head, lookup));
 
-        // Under the new thinking, PATH! is only used to invoke actions.
-        //
-        if (IS_ACTION(lookup)) {
-            Copy_Cell(out, lookup);
-            goto action_in_out;
-        }
 
         Derelativize(safe, path, path_specifier);
         mutable_HEART_BYTE(safe) = REB_TUPLE;
@@ -912,6 +937,9 @@ bool Get_Path_Push_Refinements_Throws(
         if (Get_Var_Core_Throws(out, steps, safe, SPECIFIED))
             return true;
 
+        if (Is_Activation(out))
+            return false;  // activated actions are ok
+
         if (Is_Isotope(out) and not redbol)  // need for GET/ANY 'OBJ/UNDEF
             fail (Error_Bad_Word_Get(path, out));
 
@@ -920,9 +948,9 @@ bool Get_Path_Push_Refinements_Throws(
     else
         fail (head);  // what else could it have been?
 
-  action_in_out:
+  activation_in_out:
 
-    assert(IS_ACTION(out));
+    assert(Is_Activation(out));
 
     // We push the remainder of the path in *reverse order* as words to act
     // as refinements to the function.  The action execution machinery will
@@ -1079,6 +1107,8 @@ bool Set_Var_Core_Updater_Throws(
     // Note: `steps_out` can be equal to `out` can be equal to `target`
 
     assert(not Is_Isotope(setval) or Is_Isotope_Stable(setval));
+
+    assert(Is_Activation(updater));  // we will use rebM() on it
 
     DECLARE_LOCAL (temp);  // target might be same as out (e.g. spare)
 
@@ -1258,7 +1288,7 @@ bool Set_Var_Core_Updater_Throws(
         const void *ins = rebQ(cast(REBVAL*, Data_Stack_At(stackindex)));
         if (rebRunThrows(
             out,  // <-- output cell
-            Lib(PICK_P), temp, ins
+            Canon(PICK_P), temp, ins
         )){
             DROP_GC_GUARD(temp);
             DROP_GC_GUARD(writeback);
@@ -1272,6 +1302,7 @@ bool Set_Var_Core_Updater_Throws(
     Move_Cell(temp, out);
     Quotify(temp, 1);
     const void *ins = rebQ(cast(REBVAL*, Data_Stack_At(stackindex)));
+    assert(Is_Activation(updater));
     if (rebRunThrows(
         out,  // <-- output cell
         rebRUN(updater), temp, ins, rebQ(setval)
@@ -1543,7 +1574,8 @@ DECLARE_NATIVE(enfixed_q)
 //  {For making enfix functions, e.g `+: enfixed :add` (copies)}
 //
 //      return: [action!]
-//      action [action!]
+//      action "Action to operate on (can be isotopic)"
+//          [action!]
 //  ]
 //
 DECLARE_NATIVE(enfix)
@@ -1560,7 +1592,7 @@ DECLARE_NATIVE(enfix)
 
     Set_Action_Flag(VAL_ACTION(action), ENFIXED);
 
-    return COPY(action);
+    return COPY(Activatify(action));
 }
 
 

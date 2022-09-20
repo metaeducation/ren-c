@@ -110,7 +110,7 @@ bool Lookahead_To_Sync_Enfix_Defer_Flag(Feed(*) feed) {
 
     if (
         not feed->gotten
-        or VAL_TYPE_UNCHECKED(unwrap(feed->gotten)) != REB_ACTION
+        or not Is_Activation(unwrap(feed->gotten))
     ){
         return false;
     }
@@ -911,7 +911,11 @@ Bounce Action_Executor(Frame(*) f)
         if (Is_Isotope(ARG) and not Is_Nulled(ARG)) {
             if (GET_PARAM_FLAG(PARAM, ISOTOPES_OKAY))
                 continue;
-            fail (Error_Isotope_Arg(f, PARAM));
+
+            if (Is_Activation(ARG))
+                Decay_If_Activation(ARG);
+            else
+                fail (Error_Isotope_Arg(f, PARAM));
         }
 
         if (GET_PARAM_FLAG(PARAM, VARIADIC)) {  // can't check now, see [3]
@@ -973,7 +977,7 @@ Bounce Action_Executor(Frame(*) f)
   //    It's also needed to keep f->original.  Think about how to improve.
   //
   // 2. This happens if you have something intending to act as enfix but
-  //    that does not consume arguments, e.g. `x: enfixed func [] []`.  An
+  //    that does not consume arguments, e.g. `x: enfix func [] []`.  An
   //    enfixed function with no arguments might sound dumb, but it allows
   //    a 0-arity function to run in the same evaluation step as the left
   //    hand side.  This is how expression work (see `|:`)
@@ -1123,7 +1127,7 @@ Bounce Action_Executor(Frame(*) f)
   // 1. !!! This used to assert rather than fail, but it turns out this can
   //    actually happen:
   //
-  //      >> left-soft: enfixed func ['x [word!]] [return x]
+  //      >> left-soft: enfix func ['x [word!]] [return x]
   //      >> (|| left-soft)
   //
   //    The LEFT-SOFT looked back, and would have been able to take the ||

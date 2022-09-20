@@ -149,6 +149,12 @@ DECLARE_NATIVE(shove)
     else
         Copy_Cell(shovee, SPECIFIC(At_Frame(f)));
 
+    if (Is_Activation(shovee)) {
+        Decay_If_Activation(shovee);  // allow ACTION! to be run
+    }
+    else if (Is_Isotope(shovee))
+        fail (Error_Bad_Isotope(shovee));
+
     if (not IS_ACTION(shovee) and not ANY_SET_KIND(VAL_TYPE(shovee)))
         fail ("SHOVE's immediate right must be ACTION! or SET-XXX! type");
 

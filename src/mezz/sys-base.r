@@ -164,20 +164,22 @@ module: func [
     ; would omit them.  But since MODULE is not that complex to write,
     ; probably better to have such cases use MAKE MODULE! instead of MODULE.
     ;
-    append mod spread compose [
-        import: (specialize :sys.util.import* [where: mod])
-        intern: (specialize :intern* [where: mod])
+    append mod 'import
+    mod.import: specialize :sys.util.import* [where: mod]
 
-        ; If you DO a file, it doesn't get an EXPORT operation...only modules.
-        ;
-        export: (if spec and (spec.type = 'Module) [
-            specialize :sys.util.export* [where: mod]
-        ] else [
-            specialize :fail [reason: [
-                {Scripts must be invoked via IMPORT to get EXPORT, not DO:}
-                (file else ["<was run as text!/binary!>"])
-            ]]
-        ])
+    append mod 'intern
+    mod.intern: specialize :intern* [where: mod]
+
+    ; If you DO a file, it doesn't get an EXPORT operation...only modules.
+    ;
+    append mod 'export
+    mod.export: if spec and (spec.type = 'Module) [
+        specialize :sys.util.export* [where: mod]
+    ] else [
+        specialize :fail [reason: [
+            {Scripts must be invoked via IMPORT to get EXPORT, not DO:}
+            (file else ["<was run as text!/binary!>"])
+        ]]
     ]
 
     if object? mixin [bind body mixin]

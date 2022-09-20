@@ -79,6 +79,7 @@ inline static Bounce Init_Thrown_With_Label(  // assumes `arg` in TG_Thrown_Arg
 
     assert(Is_Cell_Erased(&TG_Thrown_Label));
     Copy_Cell(&TG_Thrown_Label, label);
+    Decay_If_Activation(&TG_Thrown_Label);
 
     assert(THROWING);
 

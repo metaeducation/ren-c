@@ -322,6 +322,11 @@ bool Specialize_Action_Throws(
         if (Is_Specialized(param))
             continue;
 
+        if (Is_Activation(arg)) {
+            if (NOT_PARAM_FLAG(param, ISOTOPES_OKAY))
+                Decay_If_Activation(arg);
+        }
+
         if (GET_PARAM_FLAG(param, REFINEMENT)) {
             if (Is_Nihil(arg)) {
                 //
@@ -444,7 +449,7 @@ bool Specialize_Action_Throws(
     );
     assert(CTX_KEYLIST(exemplar) == ACT_KEYLIST(unspecialized));
 
-    Init_Action(out, specialized, VAL_ACTION_LABEL(specializee), UNBOUND);
+    Init_Activation(out, specialized, VAL_ACTION_LABEL(specializee), UNBOUND);
 
     return false;  // code block did not throw
 }
@@ -663,7 +668,7 @@ static bool Last_Param_Hook(
 // This can be somewhat complex in the worst case:
 //
 //     >> foo: func [/a [block!] /b [block!] /c [block!] /d [block!]] [...]
-//     >> foo-d: :foo/d
+//     >> foo-d: runs :foo/d
 //
 // This means that the last parameter (D) is actually the first of FOO-D.
 //

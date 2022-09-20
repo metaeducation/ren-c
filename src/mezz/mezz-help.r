@@ -416,7 +416,7 @@ source: function [
     return: <none>
     'arg [word! path! action! tag!]
 ][
-    switch type of :arg [
+    switch type of arg [
         tag! [
             f: copy "unknown tag"
             for-each location words of system.locale.library [
@@ -436,11 +436,11 @@ source: function [
         ]
     ] else [
         name: "anonymous"
-        f: :arg
+        f: arg
     ]
 
     case [
-        match [text! url!] :f [
+        match [text! url!] f [
             print f
         ]
         not action? :f [
@@ -458,7 +458,7 @@ source: function [
     ; from combining the the META-OF information.
 
     write-stdout unspaced [
-        mold name ":" _ "make action! [" _ mold spec-of :f
+        mold name ":" _ "make action! [" _ mold spec-of f
     ]
 
     ; While all interfaces as far as invocation is concerned has been unified
@@ -466,7 +466,7 @@ source: function [
     ; some kind of displayable "source" would have to depend on the dispatcher
     ; used.  For the moment, BODY OF hands back limited information.  Review.
     ;
-    switch type of (body: body of :f) [
+    switch type of (body: body of f) [
         block! [  ; FUNC, FUNCTION, PROC, PROCEDURE or (DOES of a BLOCK!)
             print [mold body "]"]
         ]

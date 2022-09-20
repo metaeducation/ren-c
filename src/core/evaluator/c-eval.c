@@ -435,7 +435,7 @@ Bounce Evaluator_Executor(Frame(*) f)
 
     if (
         not f_next_gotten
-        or REB_ACTION != VAL_TYPE_UNCHECKED(unwrap(f_next_gotten))
+        or not Is_Activation(unwrap(f_next_gotten))
     ){
         goto give_up_backward_quote_priority;  // note only ACTION! is ENFIXED
     }
@@ -689,7 +689,7 @@ Bounce Evaluator_Executor(Frame(*) f)
 
       word_common: ///////////////////////////////////////////////////////////
 
-        if (VAL_TYPE_UNCHECKED(unwrap(f_current_gotten)) == REB_ACTION) {
+        if (Is_Activation(unwrap(f_current_gotten))) {
             Action(*) action = VAL_ACTION(unwrap(f_current_gotten));
 
             if (Get_Action_Flag(action, ENFIXED)) {
@@ -937,7 +937,7 @@ Bounce Evaluator_Executor(Frame(*) f)
         if (Get_Var_Core_Throws(SCRATCH, GROUPS_OK, f_current, f_specifier))
             goto return_thrown;
 
-        if (VAL_TYPE_UNCHECKED(SCRATCH) == REB_ACTION) {
+        if (Is_Activation(SCRATCH)) {
             Action(*) act = VAL_ACTION(SCRATCH);
 
             // PATH! dispatch is costly and can error in more ways than WORD!:
@@ -1015,7 +1015,7 @@ Bounce Evaluator_Executor(Frame(*) f)
             goto return_thrown;
         }
 
-        if (not IS_ACTION(SPARE)) {
+        if (not Is_Activation(SPARE)) {
             //
             // !!! This is legacy support, which will be done another way in
             // the future.  You aren't supposed to use PATH! to get field
@@ -1248,12 +1248,8 @@ Bounce Evaluator_Executor(Frame(*) f)
 
         if (STATE == REB_META_PATH or STATE == REB_META_TUPLE)
             Meta_Quotify(OUT);
-        else {
+        else
             assert(STATE == REB_GET_PATH or STATE == REB_GET_TUPLE);
-
-            if (Is_Isotope(OUT) and not Is_Isotope_Get_Friendly(OUT))
-                fail (Error_Bad_Word_Get(f_current, OUT));
-        }
 
         break;
 
@@ -1837,7 +1833,7 @@ Bounce Evaluator_Executor(Frame(*) f)
 
     if (
         not f_next_gotten
-        or REB_ACTION != VAL_TYPE_UNCHECKED(unwrap(f_next_gotten))
+        or not Is_Activation(unwrap(f_next_gotten))
         or Not_Action_Flag(VAL_ACTION(unwrap(f_next_gotten)), ENFIXED)
     ){
       lookback_quote_too_late: // run as if starting new expression

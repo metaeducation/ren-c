@@ -888,27 +888,7 @@ void Rebind_Values_Deep(
 ) {
     Cell(*) v = head;
     for (; v != tail; ++v) {
-        if (Is_Isotope(v))
-            continue;
-
-        if (ANY_ARRAYLIKE(v)) {
-            Cell(const*) sub_tail;
-            Cell(*) sub_at = VAL_ARRAY_AT_MUTABLE_HACK(&sub_tail, v);
-            Rebind_Values_Deep(sub_at, sub_tail, from, to, binder);
-        }
-        else if (ANY_WORDLIKE(v) and BINDING(v) == from) {
-            INIT_VAL_WORD_BINDING(v, to);
-
-            if (binder) {
-                REBLEN index = Get_Binder_Index_Else_0(
-                    unwrap(binder),
-                    VAL_WORD_SYMBOL(v)
-                );
-                assert(index != 0);
-                INIT_VAL_WORD_INDEX(v, index);
-            }
-        }
-        else if (IS_ACTION(v)) {
+        if (Is_Activation(v)) {
             //
             // !!! This is a new take on R3-Alpha's questionable feature of
             // deep copying function bodies and rebinding them when a
@@ -939,6 +919,25 @@ void Rebind_Values_Deep(
                     // Could be bound to a reified frame context, or just
                     // to some other object not related to this derivation.
                 }
+            }
+        }
+        else if (Is_Isotope(v))
+            NOOP;
+        else if (ANY_ARRAYLIKE(v)) {
+            Cell(const*) sub_tail;
+            Cell(*) sub_at = VAL_ARRAY_AT_MUTABLE_HACK(&sub_tail, v);
+            Rebind_Values_Deep(sub_at, sub_tail, from, to, binder);
+        }
+        else if (ANY_WORDLIKE(v) and BINDING(v) == from) {
+            INIT_VAL_WORD_BINDING(v, to);
+
+            if (binder) {
+                REBLEN index = Get_Binder_Index_Else_0(
+                    unwrap(binder),
+                    VAL_WORD_SYMBOL(v)
+                );
+                assert(index != 0);
+                INIT_VAL_WORD_INDEX(v, index);
             }
         }
     }

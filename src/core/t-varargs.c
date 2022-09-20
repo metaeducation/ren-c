@@ -77,7 +77,7 @@ inline static bool Vararg_Op_If_No_Advance_Handled(
 
         const REBVAL *child_gotten = try_unwrap(Lookup_Word(look, specifier));
 
-        if (child_gotten and VAL_TYPE(child_gotten) == REB_ACTION) {
+        if (child_gotten and Is_Activation(child_gotten)) {
             if (Get_Action_Flag(VAL_ACTION(child_gotten), ENFIXED)) {
                 if (
                     pclass == PARAM_CLASS_NORMAL or
@@ -345,10 +345,11 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
     Decay_If_Isotope(out);
 
     if (param) {
-        if (not Is_Nulled(out) and Is_Isotope(out))
-            fail (Error_Bad_Isotope(out));
-
-        if (not TYPE_CHECK(param, VAL_TYPE(out))) {
+        if (not Is_Nulled(out) and Is_Isotope(out)) {
+            if (NOT_PARAM_FLAG(param, ISOTOPES_OKAY))
+                fail (Error_Bad_Isotope(out));
+        }
+        else if (not TYPE_CHECK(param, VAL_TYPE(out))) {
             //
             // !!! Array-based varargs only store the parameter list they are
             // stamped with, not the frame.  This is because storing non-reified

@@ -132,5 +132,5 @@ DECLARE_NATIVE(n_shot)
     );
     Init_Integer(ARR_AT(ACT_DETAILS(n_shot), IDX_ONESHOT_COUNTER), n);
 
-    return Init_Action(OUT, n_shot, ANONYMOUS, UNBOUND);
+    return Init_Activation(OUT, n_shot, ANONYMOUS, UNBOUND);
 }

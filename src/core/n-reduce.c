@@ -141,6 +141,7 @@ DECLARE_NATIVE(reduce)
         goto next_reduce_step;  // void results are skipped by reduce
 
     Decay_If_Isotope(OUT);
+    Decay_If_Activation(OUT);
 
     if (Is_Nulled(OUT))
         return RAISE(Error_Need_Non_Null_Raw());  // error enables e.g. CURTAIL
@@ -623,8 +624,10 @@ Bounce Composer_Executor(Frame(*) f)
 
         // [''(void)] => ['']
     }
-    else
+    else {
         Decay_If_Isotope(OUT);
+        Decay_If_Activation(OUT);
+    }
 
     if (Is_Isotope(OUT))
         return RAISE(Error_Bad_Isotope(OUT));

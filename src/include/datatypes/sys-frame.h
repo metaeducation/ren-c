@@ -704,6 +704,9 @@ inline static bool Pushed_Continuation(
     assert(branch != out);  // it's legal for `with` to be the same as out
     assert(not with or unwrap(with) == out or not Is_Api_Value(unwrap(with)));
 
+    if (Is_Activation(branch))
+        goto handle_action;
+
     if (IS_GROUP(branch) or IS_GET_GROUP(branch)) {  // see [2] for GET-GROUP!
         assert(flags & FRAME_FLAG_BRANCH);  // needed for trick
         Frame(*) grouper = Make_Frame_At_Core(
@@ -771,6 +774,7 @@ inline static bool Pushed_Continuation(
         Push_Frame(out, f);
         goto pushed_continuation; }
 
+    handle_action:
       case REB_ACTION : {
         Frame(*) f = Make_End_Frame(
             FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING) | flags
@@ -801,6 +805,13 @@ inline static bool Pushed_Continuation(
             if (VAL_PARAM_CLASS(param) == PARAM_CLASS_META) {
                 Meta_Quotify(arg);
                 break;
+            }
+
+            if (Is_Isotope(arg) and NOT_PARAM_FLAG(param, ISOTOPES_OKAY)) {
+                if (Is_Activation(arg))
+                    Decay_If_Activation(arg);
+                else
+                    fail ("Can't pass isotope to non-META parameter");
             }
         } while (0);
 

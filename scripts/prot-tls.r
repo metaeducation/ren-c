@@ -172,7 +172,7 @@ cipher-suites: compose [
 
 === SUPPORT FUNCTIONS ===
 
-debug: (comment [:print] blank)
+debug: (comment [runs :print] blank)
 
 ; !!! There was a /SECURE refinement to RANDOM, which implemented the
 ; following after generating the REBI64 into a tmp variable:
@@ -997,7 +997,7 @@ parse-protocol: func [
 ]
 
 
-grab: enfixed func [
+grab: enfix func [
     {Extracts N bytes from a BINARY!, and also updates its position}
 
     return: "BINARY! (or INTEGER! if GRAB-INT enclosure is used)"

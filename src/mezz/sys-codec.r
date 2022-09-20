@@ -44,9 +44,9 @@ register-codec*: func [
         ; here, or be another parameter, or...?
 
         suffixes: '(suffixes)
-        identify?: (^ :identify?)
-        decode: (^ :decode)
-        encode: (^ :encode)
+        identify?: (^ runs identify?)
+        decode: (^ runs decode)
+        encode: (^ runs encode)
     ]
 
     append system.codecs spread reduce [(to set-word! name) codec]
@@ -87,8 +87,7 @@ decode: function [
 ][
     all [
         cod: select system.codecs type
-        f: :cod.decode
-        (data: f data)
+        (data: cod.decode data)
     ] else [
         cause-error 'access 'no-codec type
     ]
@@ -108,8 +107,7 @@ encode: function [
 ][
     all [
         cod: select system.codecs type
-        f: :cod.encode
-        (data: f data)
+        (data: cod.encode data)
     ] else [
         cause-error 'access 'no-codec type
     ]
@@ -125,8 +123,7 @@ encoding-of: function [
 ][
     for-each [name codec] system.codecs [
         if all [
-            f: :codec.identify?
-            (f data)
+            (codec.identify? data)
         ][
             return name
         ]

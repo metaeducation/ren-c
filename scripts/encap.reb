@@ -572,7 +572,7 @@ pe-format: context [
             [word! block!]
     ][
         let words: skip
-        skip: :lib.skip
+        skip: runs :lib.skip
 
         let def: make block! 1
         let find-a-word: func [

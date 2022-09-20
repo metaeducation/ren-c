@@ -11,14 +11,14 @@ REBOL [
     }
 ]
 
-ls: ensure action! :list-dir
-pwd: ensure action! :what-dir
+ls: runs :list-dir
+pwd: runs :what-dir
 
 rm: does [
     fail "Use DELETE, not RM (Rebol REMOVE is different, shell dialect coming)"
 ]
 
-mkdir: ensure action! :make-dir
+mkdir: runs :make-dir
 
 cd: func [
     "Change directory (shell shortcut function)."
@@ -28,7 +28,7 @@ cd: func [
     'path [<end> file! word! path! tuple! text!]
         "Accepts %file, :variables and just words (as dirs)"
 ][
-    switch type of :path [
+    switch type of path [
         null []
         file! [change-dir path]
         text! [
@@ -50,7 +50,7 @@ more: lambda [
     'file "Accepts %file and also just words (as file names)"
         [file! word! path! text!]
 ][
-    print deline to-text read switch type of :file [
+    print deline to-text read switch type of file [
         file! [file]
         text! [local-to-file file]
         word! path! [to-file file]

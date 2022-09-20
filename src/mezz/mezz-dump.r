@@ -42,7 +42,7 @@ dump: function [
 
             (elide val: unquote val)
 
-            object? :val [unspaced ["make object! [" (summarize-obj val) "]"]]
+            object? val [unspaced ["make object! [" (summarize-obj val) "]"]]
         ] else [
             trunc: ~
             append (
@@ -95,7 +95,7 @@ dump: function [
             print [swp, result]
         ]
 
-        b: match block! :value [
+        b: match block! value [
             while [not tail? b] [
                 if swp: match [set-word! set-path!] :b.1 [  ; `dump [x: 1 + 2]`
                     result: evaluate/next b (to word! the b:)
@@ -107,7 +107,7 @@ dump: function [
             ]
         ]
     ] else [
-        dump-one :value
+        dump-one value
     ]
 ]
 
@@ -143,7 +143,7 @@ dump-to-newline: adapt :dump [
     ]
 ]
 
-dumps: enfixed function [
+dumps: enfix function [
     {Fast generator for dumping function that uses assigned name for prefix}
 
     return: [action!]
@@ -184,7 +184,7 @@ dumps: enfixed function [
             ]
         ]
     ]
-    return set name :d
+    return set name runs :d
 ]
 
 ; Handy specialization for dumping, prefer to DUMP when doing temp output
@@ -230,7 +230,7 @@ summarize-obj: function [
             type: type of reify get/any 'val
 
             str: if match [object!] type [
-                spaced [word, words of :val]
+                spaced [word, words of val]
             ] else [
                 form word
             ]
@@ -280,7 +280,7 @@ summarize-obj: function [
 ; Notice that if line breaks occur internal to an element on the line, that
 ; is detected, and lets that element be the last commented element.
 ;
-**: enfixed function [
+**: enfix function [
     {Comment until end of line, or end of current BLOCK!/GROUP!}
 
     return: <void>

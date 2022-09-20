@@ -244,7 +244,7 @@ DECLARE_NATIVE(lambda)
             1 + IDX_DETAILS_1  // archetype and one array slot (will be filled)
         );
 
-        return Init_Action(OUT, lambda, ANONYMOUS, UNBOUND);
+        return Init_Activation(OUT, lambda, ANONYMOUS, UNBOUND);
     }
 
     Context(*) meta;  // reuses Pop_Paramlist(), see [1]
@@ -267,5 +267,5 @@ DECLARE_NATIVE(lambda)
     Array(*) details = ACT_DETAILS(lambda);
     Copy_Cell(ARR_AT(details, IDX_LAMBDA_BLOCK), body);
 
-    return Init_Action(OUT, lambda, ANONYMOUS, UNBOUND);
+    return Init_Activation(OUT, lambda, ANONYMOUS, UNBOUND);
 }

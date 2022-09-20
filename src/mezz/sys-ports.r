@@ -213,7 +213,7 @@ make-port*: function [
     ]
 ]
 
-decode-url: :*parse-url.decode-url  ; wrapped in context, expose main function
+decode-url: runs :*parse-url.decode-url  ; wrapped in context, expose function
 
 ;-- Native Schemes -----------------------------------------------------------
 
@@ -233,15 +233,12 @@ make-scheme: function [
     if not scheme.name [cause-error 'access 'no-scheme-name scheme]
 
     ; If actor is block build a non-contextual actor object:
-    if block? :scheme.actor [
+    if block? scheme.actor [
         actor: make object! (length of scheme.actor) / 4
         for-each [name op args body] scheme.actor [
-            ; !!! Comment here said "Maybe PARSE is better here", though
-            ; knowing would depend on understanding precisely what the goal
-            ; is in only allowing FUNC vs. alternative function generators.
             assert [
                 set-word? name
-                find [func lambda function] op
+                find [func lambda function] op  ; why'd R3-Alpha constrain this?
                 block? args
                 block? body
             ]
@@ -252,8 +249,8 @@ make-scheme: function [
         scheme.actor: actor
     ]
 
-    match [object! handle!] :scheme.actor else [
-        fail ["Scheme actor" :scheme.name "can't be" type of :scheme.actor]
+    match [object! handle!] scheme.actor else [
+        fail ["Scheme actor" scheme.name "can't be" type of scheme.actor]
     ]
 
     append system.schemes spread reduce [scheme.name scheme]

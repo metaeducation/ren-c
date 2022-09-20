@@ -158,7 +158,7 @@ DECLARE_NATIVE(native)
         PG_Currently_Loading_Module
     );
 
-    return Init_Action(OUT, native, ANONYMOUS, UNBOUND);
+    return Init_Activation(OUT, native, ANONYMOUS, UNBOUND);
 }
 
 
@@ -239,7 +239,7 @@ Array(*) Startup_Natives(const REBVAL *boot_natives)
     );
     ++PG_Next_Native_Dispatcher;
 
-    Init_Action(
+    Init_Activation(
         Append_Context(Lib_Context, Canon(NATIVE)),
         the_native_action,
         Canon(NATIVE),  // label
@@ -278,10 +278,10 @@ Array(*) Startup_Natives(const REBVAL *boot_natives)
 
     assert(PG_Next_Native_Dispatcher == Native_C_Funcs + Num_Natives);
 
-    if (not IS_ACTION(Lib(GENERIC)))
+    if (not Is_Activation(Lib(GENERIC)))
         panic (Lib(GENERIC));
 
-    if (not IS_ACTION(Lib(PARSE_REJECT)))
+    if (not Is_Activation(Lib(PARSE_REJECT)))
         panic (Lib(PARSE_REJECT));
   #endif
 

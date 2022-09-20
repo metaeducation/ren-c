@@ -251,7 +251,7 @@ main-startup: func [
         state "Describes the RESULT that the next call to HOST-CONSOLE gets"
             [integer! tag! group! datatype!]
         <with> instruction prior
-        <local> return-to-c (:return)  ; capture HOST-CONSOLE's RETURN
+        <local> return-to-c (runs :return)  ; capture HOST-CONSOLE's RETURN
     ][
         switch state [
             <start-console> [
@@ -282,7 +282,7 @@ main-startup: func [
                 emit [fail ~unreachable~]
             ]
         ] then [
-            return-to-c instruction
+            run return-to-c instruction
         ]
 
         return-to-c switch type of state [
@@ -390,7 +390,7 @@ main-startup: func [
         return: [<opt> file!]
     ][
         let get-env: if select system.modules 'Process [
-            :system.modules.Process.get-env
+            runs :system.modules.Process.get-env
         ] else [
             loud-print [
                 "Interpreter not built with GET-ENV, can't detect HOME dir" LF
@@ -437,7 +437,7 @@ main-startup: func [
         o.resources: resources-dir
     ]
 
-    sys.util.script-pre-load-hook: :host-script-pre-load
+    sys.util.script-pre-load-hook: runs :host-script-pre-load
 
     let do-string: _  ; will be set if a string is given with --do
 

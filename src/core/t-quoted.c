@@ -242,7 +242,7 @@ DECLARE_NATIVE(the_p)
 //
 DECLARE_NATIVE(just_p)
 //
-// Note: This could be defined as `chain [:the :quote]`.  However, it can be
+// Note: This could be defined as `chain [^the, ^quote]`.  However, it can be
 // needed early in the boot (before REDESCRIBE is available), and it is also
 // something that needs to perform well due to common use.  Having it be its
 // own native is probably worthwhile.
@@ -485,7 +485,8 @@ DECLARE_NATIVE(unmeta_p)
         fail (Error_Bad_Isotope(v));  // isotopes not allowed as input
     }
 
-    assert(IS_QUOTED(v));  // handling the invisibility detour is done now...
+    // handling the invisibility detour is done now...
+
     Unquotify(v, 1);  // drop quote level caused by ^META parameter convention
 
     // Now remove the level of meta the user was asking for.

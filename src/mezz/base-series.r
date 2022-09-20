@@ -199,12 +199,12 @@ trim: function [
     /with "Same as /all, but removes specific characters"
         [char! text! binary! integer! block! bitset!]
 ][
-    tail_TRIM: :tail
-    tail: :lib.tail
-    head_TRIM: :head
-    head: :lib.head
-    all_TRIM: :all
-    all: :lib.all
+    tail_TRIM: tail
+    tail: runs :lib.tail
+    head_TRIM: head
+    head: runs :lib.head
+    all_TRIM: all
+    all: runs :lib.all
 
     ; ACTION!s in the new object will still refer to fields in the original
     ; object.  That was true in R3-Alpha as well.  Fixing this would require

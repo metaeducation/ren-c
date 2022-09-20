@@ -269,7 +269,7 @@ export console!: make object! [
         set 'v unquote v  ; Avoid SET-WORD!--would cache action names as "v"
 
         case [
-            free? :v [
+            free? v [
                 ;
                 ; Molding a freed value would cause an error...which is
                 ; usually okay (you shouldn't be working with freed series)
@@ -279,7 +279,7 @@ export console!: make object! [
                 print-error make error! "Series data unavailable due to FREE"
             ]
 
-            port? :v [
+            port? v [
                 ; PORT!s are returned by many operations on files, to
                 ; permit chaining.  They contain many fields so their
                 ; molding is excessive, and there's not a ton to learn
@@ -304,7 +304,7 @@ export console!: make object! [
     print-warning: meth [return: <none> s] [print [warning reduce s]]
 
     print-error: meth [return: <none> e [error!]] [
-        if :e.file = 'tmp-boot.r [
+        if e.file = 'tmp-boot.r [
             e.file: e.line: _  ; errors in console showed this, junk
         ]
         print [e]
@@ -534,7 +534,7 @@ ext-console-impl: func [
         state "Describes the RESULT that the next call to HOST-CONSOLE gets"
             [integer! tag! group! datatype! meta-group! handle!]
         <with> instruction prior
-        <local> return-to-c (:return)  ; capture HOST-CONSOLE's RETURN
+        <local> return-to-c (runs :return)  ; capture HOST-CONSOLE's RETURN
     ][
         switch state [
             <prompt> [
@@ -626,9 +626,9 @@ ext-console-impl: func [
     ; https://en.wikipedia.org/wiki/Exit_status
 
     all [
-        error? :result
+        error? result
         result.id = 'no-catch
-        :result.arg2 = :quit  ; throw's /NAME
+        result.arg2 = reify :quit  ; throw's /NAME
     ] then [
         if '~quit~ = ^result.arg1 [
             return 0  ; plain QUIT with no argument, treat it as success
@@ -636,8 +636,8 @@ ext-console-impl: func [
         if quasi? ^result.arg1 [
             return 1  ; treat all other QUIT with isotopes as generic error
         ]
-        return switch type of :result.arg1 [
-            logic! [either :result.arg1 [0] [1]]  ; logic true is success
+        return switch type of result.arg1 [
+            logic! [either result.arg1 [0] [1]]  ; logic true is success
 
             integer! [result.arg1]  ; Note: may be too big for status range
 
@@ -652,9 +652,9 @@ ext-console-impl: func [
     ; Note: Escape is handled during input gathering by a dedicated signal.
 
     all [
-        error? :result
+        error? result
         result.id = 'no-catch
-        :result.arg2 = :halt  ; throw's /NAME
+        result.arg2 = reify :halt  ; throw's /NAME
     ] then [
         if find directives #quit-if-halt [
             return 128 + 2 ; standard cancellation exit status for bash
@@ -692,11 +692,11 @@ ext-console-impl: func [
 
     all [
         in lib 'resume
-        error? :result
+        error? result
         result.id = 'no-catch
-        :result.arg2 = :lib.resume  ; throw's /NAME
+        result.arg2 = reify :lib.resume  ; throw's /NAME
     ] then [
-        assert [match [meta-group! handle!] :result.arg1]
+        assert [match [meta-group! handle!] result.arg1]
         if not resumable [
             e: make error! "Can't RESUME top-level CONSOLE (use QUIT to exit)"
             e.near: result.near
@@ -704,19 +704,19 @@ ext-console-impl: func [
             emit [system.console.print-error (<*> e)]
             return <prompt>
         ]
-        return :result.arg1
+        return result.arg1
     ]
 
-    if error? :result [  ; all other errors
+    if error? result [  ; all other errors
         ;
         ; Errors can occur during MAIN-STARTUP, before the system.CONSOLE has
         ; a chance to be initialized (it may *never* be initialized if the
         ; interpreter is being called non-interactively from the shell).
         ;
         if object? system.console [
-            emit [system.console.print-error (<*> :result)]
+            emit [system.console.print-error (<*> result)]
         ] else [
-            emit [print [(<*> :result)]]
+            emit [print [(<*> result)]]
         ]
         if find directives #die-if-error [
             return <die>

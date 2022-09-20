@@ -11,7 +11,7 @@ REBOL [
     }
 ]
 
-decode-url: :sys.util.decode-url
+decode-url: runs :sys.util.decode-url
 
 
 clean-path: func [
