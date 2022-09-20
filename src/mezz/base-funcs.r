@@ -153,7 +153,7 @@ func: func* [
             ]
             defaulters: default [copy []]
             append defaulters spread compose [
-                (var): default '(eval other.1)
+                (var): default '(eval other.1)  ; !!! meta?
             ]
         )
     |
@@ -167,7 +167,7 @@ func: func* [
             if other [
                 defaulters: default [copy []]
                 append defaulters spread compose [  ; always sets
-                    (var): '(eval other)
+                    (var): (meta eval other)
                 ]
             ]
         )]
