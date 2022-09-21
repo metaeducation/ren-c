@@ -859,10 +859,17 @@ DECLARE_NATIVE(all)
 
 } process_condition: {  //////////////////////////////////////////////////////
 
-    if (Is_Falsey(condition)) {  // errors on most isotopes (but not null)
+    if (Is_Activation(condition) or Is_Splice(condition))
+        goto update_out_from_spare;  // current exceptions (maybe more?)
+
+    if (Is_Falsey(condition)) {
         Drop_Frame(SUBFRAME);
         return nullptr;
     }
+
+    goto update_out_from_spare;
+
+} update_out_from_spare: {  //////////////////////////////////////////////////
 
     Move_Cell(OUT, SPARE);  // leaves SPARE as fresh...good for next step
 
@@ -983,10 +990,11 @@ DECLARE_NATIVE(any)
 
 } process_condition: {  //////////////////////////////////////////////////////
 
-    if (Is_Truthy(condition)) {  // errors on most isotopes (but not null)
-        Drop_Frame(SUBFRAME);
-        return BRANCHED(OUT);  // successful ANY returns the value
-    }
+    if (Is_Activation(condition) or Is_Splice(condition))
+        goto return_out;  // current exceptions (maybe more?)
+
+    if (Is_Truthy(condition))
+        goto return_out;
 
     if (Is_Frame_At_End(SUBFRAME))
         goto reached_end;
@@ -994,6 +1002,11 @@ DECLARE_NATIVE(any)
     assert(STATE == ST_ANY_EVAL_STEP);
     Restart_Evaluator_Frame(SUBFRAME);
     return CONTINUE_SUBFRAME(SUBFRAME);
+
+} return_out: {  /////////////////////////////////////////////////////////////
+
+    Drop_Frame(SUBFRAME);
+    return BRANCHED(OUT);  // successful ANY returns the value
 
 } reached_end: {  ////////////////////////////////////////////////////////////
 

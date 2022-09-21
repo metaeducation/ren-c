@@ -406,3 +406,6 @@
 
 (not all [match logic! false])
 (true = all [did match logic! false])
+
+
+(^(spread [d e]) = ^(all [1 < 2, 3 < 4, spread [d e]]))

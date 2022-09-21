@@ -412,3 +412,5 @@
 
 (not any [match logic! false])
 (true = any [did match logic! false])
+
+(^append = ^(any [1 > 2, :append, 3 > 4]))
