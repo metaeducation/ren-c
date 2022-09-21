@@ -133,7 +133,7 @@ aliases: lib/eval func [:item [any-value! <...>]] [  ; very weird, see [1]
     null3: null: *
     void3?: void?: *
     void3: void: *
-    find3: find: <conflated>  ; see [2]
+    find3: find: *
     if3: if: <conflated>  ; see [2]
     the3: quote: *
     reeval3: eval: *
@@ -303,19 +303,17 @@ import: enfix func3 [
     :set-word [<skip> set-word!]
     f [tag!]  ; help catch mistakes, all bootstrap uses TAG!
 
-    ; !!! The new import has a PRODUCT: output, but WORDS OF only returns
-    ; words in modern Ren-C...whereas they were decorated in historical Rebol.
-    ; Make the signal the argument to an old-style refinement so the WORDS OF
-    ; will make it look like a plain word for the check.
+    ; !!! The new import has an /INTO option; add it even though we don't
+    ; support it here to serve as a signal the shim was applied.
     ;
-    /trick product "Signal that the shim has been applied"
+    /into "Signal that the shim has been applied"
 
     ; NOTE: LET is unavailable (we have not run the bootstrap shim yet)
     ;
     <local> ret path+file old-dir old-system-script code new-script-path
 ][
-    if trick [
-        fail "/PRODUCT not actually available, just makes IMPORT look modern"
+    if into [
+        fail "/INTO not actually available, just makes IMPORT look modern"
     ]
 
     f: as file! f

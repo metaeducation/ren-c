@@ -13,7 +13,7 @@ REBOL [
     Purpose: "Recursive READ strategies."
 ]
 
-if not find words of :import 'product [  ; See %import-shim.r
+if trap [:import/into] [  ; See %import-shim.r
     do load append copy system/script/path %import-shim.r
 ]
 
