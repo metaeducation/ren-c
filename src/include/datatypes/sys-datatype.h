@@ -47,87 +47,92 @@
 // !!! Consider renaming (or adding a synonym) to just TYPE!
 //
 
+inline static bool IS_KIND_SYM(option(SymId) id)
+  { return id != 0 and id < cast(SymId, REB_MAX); }
 
-#define VAL_TYPE_KIND_ENUM(v) \
-    EXTRA(Datatype, (v)).kind
+inline static enum Reb_Kind KIND_FROM_SYM(SymId s) {
+    assert(IS_KIND_SYM(s));
+    return cast(enum Reb_Kind, cast(int, (s)));
+}
+
+#define SYM_FROM_KIND(k) \
+    cast(SymId, cast(enum Reb_Kind, (k)))
+
+
+#define VAL_TYPE_SYMBOL(v) \
+    SYM(PAYLOAD(Any, (v)).first.node)
+
+#define INIT_VAL_TYPE_SYMBOL(v,sym) \
+    (PAYLOAD(Any, (v)).first.node = (sym))
 
 inline static enum Reb_Kind VAL_TYPE_KIND_OR_CUSTOM(noquote(Cell(const*)) v) {
     assert(CELL_HEART(v) == REB_DATATYPE);
-    return VAL_TYPE_KIND_ENUM(v);
+    option(SymId) id = ID_OF_SYMBOL(VAL_TYPE_SYMBOL(v));
+    if (id == SYM_0 or unwrap(id) >= REB_MAX)
+        return REB_CUSTOM;
+    return cast(enum Reb_Kind, unwrap(id));
 }
 
 inline static enum Reb_Kind VAL_TYPE_KIND(noquote(Cell(const*)) v) {
     assert(CELL_HEART(v) == REB_DATATYPE);
-    enum Reb_Kind k = VAL_TYPE_KIND_ENUM(v);
+    enum Reb_Kind k = VAL_TYPE_KIND_OR_CUSTOM(v);
     assert(k != REB_CUSTOM);
     return k;
 }
 
-#define INIT_VAL_TYPE_HOOKS             INIT_VAL_NODE2
-#define VAL_TYPE_CUSTOM(v)              BIN(VAL_NODE2(v))
+inline static REBTYP* VAL_TYPE_CUSTOM(noquote(Cell(const*)) v) {
+    assert(CELL_HEART(v) == REB_DATATYPE);
+    assert(VAL_TYPE_KIND_OR_CUSTOM(v) == REB_CUSTOM);
+
+    int i;
+    for (i = 0; i < 5; ++i) {
+        CFUNC** hooklist = cast(CFUNC**,
+            m_cast(Byte*, SER_DATA(PG_Extension_Types[i]))
+        );
+        SYMBOL_HOOK* hook = cast(SYMBOL_HOOK*, hooklist[IDX_SYMBOL_HOOK]);
+        Symbol(const*) sym = hook();
+        if (sym == nullptr)
+            continue;
+        if (Are_Synonyms(sym, VAL_TYPE_SYMBOL(v)))
+            return PG_Extension_Types[i];
+    }
+    fail ("VAL_TYPE_CUSTOM() could not find custom hooks for type");
+}
 
 
 // Built in types have their specs initialized from data in the boot block.
 // We can quickly find them in the lib context, because the types take up
 // the early 64-ish symbol IDs in lib, so just use kind as an index.
 //
-inline static REBVAL *Init_Builtin_Datatype(
+inline static REBVAL *Init_Builtin_Datatype_Untracked(
     Cell(*) out,
     enum Reb_Kind kind
 ){
     assert(kind < REB_MAX);
-    Copy_Cell(out, Datatype_From_Kind(kind));
-    assert(VAL_TYPE_KIND(out) == kind);
-    assert(Not_Cell_Flag(out, FIRST_IS_NODE));
-    assert(Not_Cell_Flag(out, SECOND_IS_NODE));  // only custom types have
+
+    Reset_Unquoted_Header_Untracked(out, CELL_MASK_DATATYPE);
+    INIT_VAL_TYPE_SYMBOL(out, Canon_Symbol(SYM_FROM_KIND(kind)));
+
     return cast(REBVAL*, out);
 }
+
+#define Init_Builtin_Datatype(out,kind) \
+    TRACK(Init_Builtin_Datatype_Untracked((out), (kind)))
 
 
 // Custom types have to be registered by extensions.  They are identified by
 // a URL, so that there is a way of MAKE-ing them.
 //
-inline static REBVAL *Init_Custom_Datatype(
-    Cell(*) out,
-    const REBTYP *type
-){
-    Reset_Unquoted_Header_Untracked(
-        out,
-        FLAG_HEART_BYTE(REB_DATATYPE)
-            | CELL_FLAG_SECOND_IS_NODE
-    );
-    VAL_TYPE_KIND_ENUM(out) = REB_CUSTOM;
-    INIT_VAL_TYPE_HOOKS(out, type);
+inline static REBVAL *Init_Datatype_Untracked(Cell(*) out, Symbol(const*) sym)
+{
+    Reset_Unquoted_Header_Untracked(out, CELL_MASK_DATATYPE);
+    INIT_VAL_TYPE_SYMBOL(out, sym);
     return cast(REBVAL*, out);
 }
 
+#define Init_Datatype(out,sym) \
+    TRACK(Init_Datatype_Untracked((out), (sym)))
 
-//=//// TYPE HOOK ACCESS //////////////////////////////////////////////////=//
-//
-// Built-in types identify themselves as one of ~64 fundamental "kinds".  This
-// occupies a byte in the header (64 is chosen as a limit currently in order
-// to be used with 64-bit typesets, but this is due for change).
-//
-// Extension types all use the same builtin-type in their header: REB_CUSTOM.
-// However, some bits in the cell must be surrendered in order for the full
-// type to be expressed.  They have to sacrifice their "Extra" bits.
-//
-// For efficiency, what's put in the extra is what would be like that type's
-// row in the `Builtin_Type_Hooks` if it had been built-in.  These table
-// rows are speculatively implemented as an untyped array of CFUNC* which is
-// null terminated (vs. a struct with typed fields) so that the protocol can
-// be expanded without breaking strict aliasing.
-//
-
-enum Reb_Type_Hook_Index {
-    IDX_GENERIC_HOOK,
-    IDX_COMPARE_HOOK,
-    IDX_MAKE_HOOK,
-    IDX_TO_HOOK,
-    IDX_MOLD_HOOK,
-    IDX_HOOK_NULLPTR,  // see notes on why null termination convention
-    IDX_HOOKS_MAX
-};
 
 
 // This table is generated from %types.r - the actual table is located in
@@ -146,12 +151,17 @@ enum Reb_Type_Hook_Index {
 extern CFUNC* Builtin_Type_Hooks[REB_MAX][IDX_HOOKS_MAX];
 
 
+// The datatype only knows a symbol.  Have to look that symbol up to get the
+// list of hooks registered by the extension providing the custom type.
+//
 inline static CFUNC** VAL_TYPE_HOOKS(noquote(Cell(const*)) type) {
     assert(CELL_HEART(type) == REB_DATATYPE);
     enum Reb_Kind k = VAL_TYPE_KIND_OR_CUSTOM(type);
     if (k != REB_CUSTOM)
         return Builtin_Type_Hooks[k];
-    return cast(CFUNC**, m_cast(Byte*, SER_DATA(VAL_TYPE_CUSTOM(type))));
+
+    REBTYP* custom = VAL_TYPE_CUSTOM(type);
+    return cast(CFUNC**, m_cast(Byte*, SER_DATA(custom)));
 }
 
 inline static CFUNC** HOOKS_FOR_TYPE_OF(noquote(Cell(const*)) v) {
@@ -160,6 +170,9 @@ inline static CFUNC** HOOKS_FOR_TYPE_OF(noquote(Cell(const*)) v) {
         return Builtin_Type_Hooks[k];
     return cast(CFUNC**, m_cast(Byte*, SER_DATA(CELL_CUSTOM_TYPE(v))));
 }
+
+#define Symbol_Hook_For_Type_Of(v) \
+    cast(SYMBOL_HOOK*, HOOKS_FOR_TYPE_OF(v)[IDX_SYMBOL_HOOK])
 
 #define Generic_Hook_For_Type_Of(v) \
     cast(GENERIC_HOOK*, HOOKS_FOR_TYPE_OF(v)[IDX_GENERIC_HOOK])
@@ -178,13 +191,3 @@ inline static CFUNC** HOOKS_FOR_TYPE_OF(noquote(Cell(const*)) v) {
 
 #define Mold_Or_Form_Hook_For_Type_Of(v) \
     cast(MOLD_HOOK*, HOOKS_FOR_TYPE_OF(v)[IDX_MOLD_HOOK])
-
-
-// !!! Transitional hack to facilitate construction syntax `#[image! [...]]`
-// Whether or not LOAD itself should be able to work with extension types is
-// an open question...for now, not ruling out the idea...but the design is
-// not there for an "extensible scanner".
-//
-#define Make_Hook_For_Image() \
-    cast(MAKE_HOOK*, \
-        VAL_TYPE_HOOKS(ARR_AT(PG_Extension_Types, 1))[IDX_MAKE_HOOK])

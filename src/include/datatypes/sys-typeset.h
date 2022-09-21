@@ -41,41 +41,6 @@
 
 #define TS_NOTHING 0
 
-inline static bool IS_KIND_SYM(option(SymId) id)
-  { return id != 0 and id < cast(SymId, REB_MAX); }
-
-inline static enum Reb_Kind KIND_FROM_SYM(SymId s) {
-    assert(IS_KIND_SYM(s));
-    return cast(enum Reb_Kind, cast(int, (s)));
-}
-
-#define SYM_FROM_KIND(k) \
-    cast(SymId, cast(enum Reb_Kind, (k)))
-
-inline static SymId VAL_TYPE_SYM(noquote(Cell(const*)) v) {
-    //
-    // !!! The extension type list is limited to a finite set as a first step
-    // of generalizing the approach.  Bridge compatibility for things like
-    // molding the type with some built-in symbols.
-    //
-    enum Reb_Kind k = VAL_TYPE_KIND_OR_CUSTOM(v);
-    if (k != REB_CUSTOM)
-        return SYM_FROM_KIND(k);
-
-    Cell(*) ext = ARR_HEAD(PG_Extension_Types);
-    REBTYP *t = VAL_TYPE_CUSTOM(v);
-    if (t == VAL_TYPE_CUSTOM(ext + 0))
-        return SYM_LIBRARY_X;
-    if (t == VAL_TYPE_CUSTOM(ext + 1))
-        return SYM_IMAGE_X;
-    if (t == VAL_TYPE_CUSTOM(ext + 2))
-        return SYM_VECTOR_X;
-    if (t == VAL_TYPE_CUSTOM(ext + 3))
-        return SYM_GOB_X;
-    assert(t == VAL_TYPE_CUSTOM(ext + 4));
-    return SYM_STRUCT_X;
-}
-
 
 //=//// TYPESET BITS //////////////////////////////////////////////////////=//
 //

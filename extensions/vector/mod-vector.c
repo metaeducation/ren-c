@@ -32,6 +32,10 @@
 
 REBTYP *EG_Vector_Type;  // (E)xtension (G)lobal
 
+Symbol(const*) S_Vector(void) {
+    return Canon(VECTOR_X);
+}
+
 //
 //  startup*: native [
 //
@@ -50,6 +54,7 @@ DECLARE_NATIVE(startup_p)
    EG_Vector_Type = Hook_Datatype(
         "http://datatypes.rebol.info/vector",
         "compact scalar array",
+        &S_Vector,
         &T_Vector,
         &CT_Vector,
         &MAKE_Vector,

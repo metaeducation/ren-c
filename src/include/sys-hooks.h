@@ -84,6 +84,11 @@ typedef Bounce (TO_HOOK)(Frame(*) frame_, enum Reb_Kind, const REBVAL*);
 typedef void (MOLD_HOOK)(REB_MOLD *mo, noquote(Cell(const*)) v, bool form);
 
 
+// Just requests what symbol a custom datatype wants to use for its type
+//
+typedef Symbol(const*) (SYMBOL_HOOK)(void);
+
+
 //
 // PER-TYPE GENERIC HOOKS: e.g. for `append value x` or `select value y`
 //

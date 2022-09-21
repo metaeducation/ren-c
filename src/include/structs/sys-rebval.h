@@ -389,11 +389,6 @@
 
 struct Reb_Character_Extra { Codepoint codepoint; };  // see %sys-char.h
 
-struct Reb_Datatype_Extra  // see %sys-datatype.h
-{
-    enum Reb_Kind kind;
-};
-
 struct Reb_Date_Extra  // see %sys-time.h
 {
     REBYMD ymdz;  // month/day/year/zone (time payload *may* hold nanoseconds)
@@ -463,7 +458,6 @@ union Reb_Value_Extra { //=/////////////////// ACTUAL EXTRA DEFINITION ////=//
 
     struct Reb_Character_Extra Character;
     const Node* Binding;  // see %sys-bind.h
-    struct Reb_Datatype_Extra Datatype;
     struct Reb_Date_Extra Date;
     struct Reb_Typeset_Extra Typeset;
 

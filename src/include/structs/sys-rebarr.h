@@ -60,6 +60,35 @@ typedef Raw_Array REBGOB;
 typedef Raw_Array REBSTU;
 typedef Raw_Array REBFLD;
 
+
+//=//// TYPE HOOK ACCESS //////////////////////////////////////////////////=//
+//
+// Built-in types identify themselves as one of ~64 fundamental "kinds".  This
+// occupies a byte in the header (64 is chosen as a limit currently in order
+// to be used with 64-bit typesets, but this is due for change).
+//
+// Extension types all use the same builtin-type in their header: REB_CUSTOM.
+// However, some bits in the cell must be surrendered in order for the full
+// type to be expressed.  They have to sacrifice their "Extra" bits.
+//
+// For efficiency, what's put in the extra is what would be like that type's
+// row in the `Builtin_Type_Hooks` if it had been built-in.  These table
+// rows are speculatively implemented as an untyped array of CFUNC* which is
+// null terminated (vs. a struct with typed fields) so that the protocol can
+// be expanded without breaking strict aliasing.
+//
+
+enum Reb_Type_Hook_Index {
+    IDX_SYMBOL_HOOK,
+    IDX_GENERIC_HOOK,
+    IDX_COMPARE_HOOK,
+    IDX_MAKE_HOOK,
+    IDX_TO_HOOK,
+    IDX_MOLD_HOOK,
+    IDX_HOOK_NULLPTR,  // see notes on why null termination convention
+    IDX_HOOKS_MAX
+};
+
 typedef Raw_Binary REBTYP;  // Rebol Type (list of hook function pointers)
 
 

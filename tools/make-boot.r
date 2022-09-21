@@ -574,6 +574,7 @@ hookname: enfixed func [
 hook-list: collect [
     keep cscape {
         {  /* VOID = 0 */
+            cast(CFUNC*, nullptr),  /* symbol */
             cast(CFUNC*, nullptr),  /* generic */
             cast(CFUNC*, nullptr),  /* compare */
             cast(CFUNC*, nullptr),  /* make */
@@ -586,6 +587,7 @@ hook-list: collect [
     for-each-datatype t [
         keep cscape/with {
             {  /* $<T/NAME> = $<T/HEART> */
+                nullptr,  /* symbol */
                 cast(CFUNC*, ${"T_" Hookname T 'Class}),  /* generic */
                 cast(CFUNC*, ${"CT_" Hookname T 'Class}),  /* compare */
                 cast(CFUNC*, ${"MAKE_" Hookname T 'Make}),  /* make */

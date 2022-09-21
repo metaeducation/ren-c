@@ -127,6 +127,11 @@ REBTYPE(Library)
 }
 
 
+Symbol(const*) S_Library(void) {
+    return Canon(LIBRARY_X);
+}
+
+
 //
 //  startup*: native [
 //
@@ -145,6 +150,7 @@ DECLARE_NATIVE(startup_p)
     EG_Library_Type = Hook_Datatype(
         "http://datatypes.rebol.info/library",
         "external library reference",
+        &S_Library,
         &T_Library,
         &CT_Library,
         &MAKE_Library,

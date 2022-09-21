@@ -138,7 +138,7 @@ Bounce MAKE_Word(
       }
     }
     else if (IS_DATATYPE(arg)) {
-        return Init_Any_Word(OUT, kind, Canon_Symbol(VAL_TYPE_SYM(arg)));
+        return Init_Any_Word(OUT, kind, VAL_TYPE_SYMBOL(arg));
     }
     else if (IS_LOGIC(arg)) {
         return Init_Any_Word(

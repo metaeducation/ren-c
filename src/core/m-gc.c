@@ -656,6 +656,18 @@ static void Mark_Data_Stack(void)
     Propagate_All_GC_Marks();
 }
 
+//
+//  Mark_Extension_Types: C
+//
+static void Mark_Extension_Types(void)
+{
+    int i;
+    for (i = 0; i < 5; ++i)
+        Queue_Mark_Node_Deep(cast(const Node**, &PG_Extension_Types[i]));
+
+    Propagate_All_GC_Marks();
+}
+
 
 //
 //  Mark_Symbol_Series: C
@@ -1170,6 +1182,8 @@ REBLEN Recycle_Core(bool shutdown, REBSER *sweeplist)
         Propagate_All_GC_Marks();
 
         Mark_Data_Stack();
+
+        Mark_Extension_Types();
 
         Mark_Guarded_Nodes();
 

@@ -31,6 +31,10 @@
 
 REBTYP *EG_Image_Type = nullptr;
 
+Symbol(const*) S_Image(void) {
+    return Canon(IMAGE_X);
+}
+
 //
 //  startup*: native [
 //
@@ -51,6 +55,7 @@ DECLARE_NATIVE(startup_p)
     EG_Image_Type = Hook_Datatype(
         "http://datatypes.rebol.info/image",
         "RGB image with alpha channel",
+        &S_Image,
         &T_Image,
         &CT_Image,
         &MAKE_Image,

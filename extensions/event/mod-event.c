@@ -36,6 +36,11 @@ extern void Shutdown_Events(void);
 extern bool Wait_Milliseconds_Interrupted(unsigned int millisec);
 
 
+Symbol(const*) S_Event(void) {
+    return Canon(EVENT_X);
+}
+
+
 //
 //  startup*: native [  ; Note: DO NOT EXPORT!
 //
@@ -59,6 +64,7 @@ DECLARE_NATIVE(startup_p)
     // a degree of freedom that we have.
 
     const enum Reb_Kind k = REB_EVENT;
+    Builtin_Type_Hooks[k][IDX_SYMBOL_HOOK] = cast(CFUNC*, &S_Event);
     Builtin_Type_Hooks[k][IDX_GENERIC_HOOK] = cast(CFUNC*, &T_Event);
     Builtin_Type_Hooks[k][IDX_COMPARE_HOOK] = cast(CFUNC*, &CT_Event);
     Builtin_Type_Hooks[k][IDX_MAKE_HOOK] = cast(CFUNC*, &MAKE_Event);

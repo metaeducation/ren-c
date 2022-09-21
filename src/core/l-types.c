@@ -262,6 +262,15 @@ REBTYPE(Unhooked)
 }
 
 
+//
+//  S_Unhooked: C
+//
+Symbol(const*) S_Unhooked(void)
+{
+    return nullptr;
+}
+
+
 // !!! Some reflectors are more general and apply to all types (e.g. TYPE)
 // while others only apply to some types (e.g. LENGTH or HEAD only to series,
 // or perhaps things like PORT! that wish to act like a series).  This
@@ -304,12 +313,15 @@ Bounce Reflect_Core(Frame(*) frame_)
 
       case SYM_TYPE: // higher order-answer, may build structured result
         if (Is_Nulled(v))  // not a real "datatype"
-            return nullptr;  // `null = type of null`
+            Init_Nulled(OUT);  // `null = type of null`
+        else if (heart == REB_CUSTOM) {
+            SYMBOL_HOOK* hook = Symbol_Hook_For_Type_Of(v);
+            Symbol(const*) sym = hook();
+            if (sym == nullptr)
+                fail ("Cannot reflect TYPE due to unloaded extension");
 
-        if (heart == REB_CUSTOM)
-            Init_Custom_Datatype(OUT, CELL_CUSTOM_TYPE(v));
-        else if (heart == REB_VOID)
-            Init_Word(OUT, Canon(VOID));  // !!! hack e.g. (type of the ')
+            Init_Datatype(OUT, sym);
+        }
         else
             Init_Builtin_Datatype(OUT, heart);
 

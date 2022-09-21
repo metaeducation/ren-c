@@ -32,6 +32,11 @@
 
 REBTYP *EG_Gob_Type = nullptr;  // (E)xtension (G)lobal
 
+Symbol(const*) S_Gob(void) {
+    return Canon(GOB_X);
+}
+
+
 //
 //  startup*: native [
 //
@@ -52,6 +57,7 @@ DECLARE_NATIVE(startup_p)
     EG_Gob_Type = Hook_Datatype(
         "http://datatypes.rebol.info/gob",
         "graphical object",
+        &S_Gob,
         &T_Gob,
         &CT_Gob,
         &MAKE_Gob,

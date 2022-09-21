@@ -111,7 +111,7 @@ pair!       "two dimensional point or size"
             [pair        +       +]
 
 datatype!   "type of datatype"
-            ()
+            (CELL_FLAG_FIRST_IS_NODE)
             []
             [datatype    +       +]
 

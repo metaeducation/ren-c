@@ -2455,76 +2455,16 @@ Bounce Scanner_Executor(Frame(*) f) {
         Set_Subclass_Flag(ARRAY, array, HAS_FILE_LINE_UNMASKED);
         SET_SERIES_FLAG(array, LINK_NODE_NEEDS_MARK);
 
-        // !!! Should the scanner be doing binding at all, and if so why
-        // just Lib_Context?  Not binding would break functions entirely,
-        // but they can't round-trip anyway.  See #2262.
-        //
-        Bind_Values_All_Deep(
-            ARR_HEAD(array),
-            ARR_TAIL(array),
-            Lib_Context_Value
-        );
-
         if (ARR_LEN(array) == 0 or not IS_WORD(ARR_HEAD(array))) {
             DECLARE_LOCAL (temp);
             Init_Block(temp, array);
             return RAISE(Error_Malconstruct_Raw(temp));
         }
 
-        option(SymId) sym = VAL_WORD_ID(ARR_HEAD(array));
-        if (
-            IS_KIND_SYM(sym)
-            or sym == SYM_IMAGE_X
-        ){
-            if (ARR_LEN(array) != 2) {
-                DECLARE_LOCAL (temp);
-                Init_Block(temp, array);
-                return RAISE(Error_Malconstruct_Raw(temp));
-            }
+        Symbol(const*) symbol = VAL_WORD_SYMBOL(ARR_HEAD(array));
 
-            // !!! Having an "extensible scanner" is something that has
-            // not been designed.  So the syntax `#[image! [...]]` for
-            // loading images doesn't have a strategy now that image is
-            // not baked in.  It adds to the concerns the scanner already
-            // has about evaluation, etc.  However, there are tests based
-            // on this...so we keep them loading and working for now.
-
-            // !!! As written today, MAKE may call into the evaluator, and
-            // hence a GC may be triggered.  Performing evaluations during
-            // the scanner is a questionable idea, but at the very least
-            // `array` must be guarded, and a data stack cell can't be
-            // used as the destination...because a raw pointer into the
-            // data stack could go bad on any PUSH() or DROP().
-            //
-            PUSH_GC_GUARD(array);
-            if (rebRunThrows(
-                SPARE,  // can't write to movable stack location
-                Canon(MAKE),  // will not work during boot!
-                SPECIFIC(ARR_AT(array, 0)),
-                rebQ(SPECIFIC(ARR_AT(array, 1)))  // e.g. ACTION! as WORD!
-            )){
-                CATCH_THROWN(OUT, frame_);
-                DECLARE_LOCAL (temp);
-                Init_Block(temp, array);
-                return RAISE(Error_Malconstruct_Raw(temp));
-            }
-            DROP_GC_GUARD(array);
-
-            Copy_Cell(PUSH(), SPARE);
-        }
-        else {
-            if (ARR_LEN(array) != 1) {
-                DECLARE_LOCAL (temp);
-                Init_Block(temp, array);
-                return RAISE(Error_Malconstruct_Raw(temp));
-            }
-
-            // !!! Construction syntax allows the "type" slot to be one of
-            // the literals #[false], #[true]... along with legacy #[none]
-            // while the legacy #[unset] is no longer possible (but
-            // could load some kind of erroring function value)
-            //
-            switch (sym) {
+        if (ARR_LEN(array) == 1) {  // #[none], #[true], #[false], #[unset]
+            switch (ID_OF_SYMBOL(symbol)) {
               case SYM_NONE:  // !!! Should be under a LEGACY flag...
                 Init_Blank(PUSH());
                 break;
@@ -2546,6 +2486,42 @@ Bounce Scanner_Executor(Frame(*) f) {
                 Init_Block(temp, array);
                 return RAISE(Error_Malconstruct_Raw(temp)); }
             }
+        }
+        else if (ARR_LEN(array) == 2) {  // #[xxx! [...]], #[xxx! yyy!], etc.
+            //
+            // !!! At one time, Ren-C attempted to merge "construction syntax"
+            // with MAKE, so that `#[xxx! [...]]` matched `make xxx! [...]`.
+            // But the whole R3-Alpha concept was flawed, as round-tripping
+            // structures neglected binding...and the scanner is just supposed
+            // to be making a data structure.
+            //
+            // Hence this doesn't really work in any general sense.  It is
+            // here as a placeholder that has some legacy instances of a few
+            // cases that work (like IMAGE! can construct itself from the
+            // information passed in a BLOCK! this way).
+
+            Init_Datatype(ARR_HEAD(array), symbol);  // unbound, no xxx! lookup
+
+            PUSH_GC_GUARD(array);
+            if (rebRunThrows(
+                SPARE,  // can't write to movable stack location
+                Canon(MAKE),  // will not work during boot!
+                SPECIFIC(ARR_AT(array, 0)),
+                rebQ(SPECIFIC(ARR_AT(array, 1)))  // e.g. ACTION! as WORD!
+            )){
+                CATCH_THROWN(OUT, frame_);
+                DECLARE_LOCAL (temp);
+                Init_Block(temp, array);
+                return RAISE(Error_Malconstruct_Raw(temp));
+            }
+            DROP_GC_GUARD(array);
+
+            Copy_Cell(PUSH(), SPARE);
+        }
+        else {
+            DECLARE_LOCAL (temp);
+            Init_Block(temp, array);
+            return RAISE(Error_Malconstruct_Raw(temp));
         }
         break; }  // case TOKEN_CONSTRUCT
 

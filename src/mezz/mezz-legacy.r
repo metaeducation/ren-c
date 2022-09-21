@@ -93,13 +93,13 @@ rejoin: func [<local> dummy] [
 ; hook to run a script).  Until then, define here.  (Note these types won't
 ; be usable for anything but identity comparisons until the extension loads.)
 
-image!: make datatype! http://datatypes.rebol.info/image
+image!: make datatype! @image!
 image?: typechecker image!
-vector!: make datatype! http://datatypes.rebol.info/vector
+vector!: make datatype! @vector!
 vector?: typechecker vector!
-gob!: make datatype! http://datatypes.rebol.info/gob
+gob!: make datatype! @gob!
 gob?: typechecker gob!
-struct!: make datatype! http://datatypes.rebol.info/struct
+struct!: make datatype! @struct!
 struct?: typechecker struct!
 
 ; LIBRARY! is a bit different, because it may not be feasible to register it
@@ -107,7 +107,7 @@ struct?: typechecker struct!
 ; doesn't really need all 3 cell fields, so it gives up being in the base
 ; types list for types that need it.
 ;
-library!: make datatype! http://datatypes.rebol.info/library
+library!: make datatype! @library!
 library?: typechecker library!
 
 
