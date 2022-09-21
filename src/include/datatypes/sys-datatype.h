@@ -20,11 +20,29 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Note: R3-Alpha's notion of a datatype has not been revisited very much in
-// Ren-C.  The unimplemented UTYPE! user-defined type concept was removed
-// for simplification, pending a broader review of what was needed.
+// Rebol2/Red/R3-Alpha have a notion of a distinct DATATYPE! type, which can
+// appear in blocks.  However it never really had a reified lexical form, so
+// they would default to looking like WORD!s
 //
-// %words.r is arranged so symbols for types are at the start of the enum.
+//    r3-alpha>> reduce [integer! block!]
+//    == [integer! block!]
+//
+// You would have to use something like MOLD/ALL to reveal a LOAD-able syntax
+// that would get you a DATATYPE! and not a WORD!:
+//
+//    r3-alpha>> mold/all reduce [integer! block!]
+//    == "[#[datatype! integer!] #[datatype! block!]]"
+//
+// Ren-C's approach is to say datatypes can't be directly represented in a
+// block, but rather that they are isotopes...and must be transformed at
+// least slightly (through META, REIFY, or otherwise) in order to be put into
+// a block.  But those representations need not be uniquely dedicated to
+// datatypes, and the lexical types can be applied for other purposes.
+//
+//=//// NOTES /////////////////////////////////////////////////////////////=//
+//
+// * %words.r is arranged so symbols for the fundamental types are at the
+//   start of the enumeration.
 //
 // !!! Consider renaming (or adding a synonym) to just TYPE!
 //
@@ -45,9 +63,6 @@ inline static enum Reb_Kind VAL_TYPE_KIND(noquote(Cell(const*)) v) {
     return k;
 }
 
-#define INIT_VAL_TYPE_SPEC              INIT_VAL_NODE1
-#define VAL_TYPE_SPEC(v)                ARR(VAL_NODE1(v))
-
 #define INIT_VAL_TYPE_HOOKS             INIT_VAL_NODE2
 #define VAL_TYPE_CUSTOM(v)              BIN(VAL_NODE2(v))
 
@@ -63,7 +78,7 @@ inline static REBVAL *Init_Builtin_Datatype(
     assert(kind < REB_MAX);
     Copy_Cell(out, Datatype_From_Kind(kind));
     assert(VAL_TYPE_KIND(out) == kind);
-    assert(Get_Cell_Flag(out, FIRST_IS_NODE));
+    assert(Not_Cell_Flag(out, FIRST_IS_NODE));
     assert(Not_Cell_Flag(out, SECOND_IS_NODE));  // only custom types have
     return cast(REBVAL*, out);
 }
@@ -79,10 +94,9 @@ inline static REBVAL *Init_Custom_Datatype(
     Reset_Unquoted_Header_Untracked(
         out,
         FLAG_HEART_BYTE(REB_DATATYPE)
-            | CELL_FLAG_FIRST_IS_NODE | CELL_FLAG_SECOND_IS_NODE
+            | CELL_FLAG_SECOND_IS_NODE
     );
     VAL_TYPE_KIND_ENUM(out) = REB_CUSTOM;
-    INIT_VAL_TYPE_SPEC(out, EMPTY_ARRAY);
     INIT_VAL_TYPE_HOOKS(out, type);
     return cast(REBVAL*, out);
 }
@@ -90,12 +104,9 @@ inline static REBVAL *Init_Custom_Datatype(
 
 //=//// TYPE HOOK ACCESS //////////////////////////////////////////////////=//
 //
-// Built-in types identify themselves as one of 64 fundamental "kinds".  When
-// that kind is combined with up to 3 levels of quoting, it uses up a byte
-// in the cell's header.  To access behaviors for that type, it is looked
-// up in the `Builtin_Type_Hooks` under their index.  Then, the entire rest
-// of the cell's bits--the "Payload" and the "Extra"--are available for the
-// data portion of the cell.
+// Built-in types identify themselves as one of ~64 fundamental "kinds".  This
+// occupies a byte in the header (64 is chosen as a limit currently in order
+// to be used with 64-bit typesets, but this is due for change).
 //
 // Extension types all use the same builtin-type in their header: REB_CUSTOM.
 // However, some bits in the cell must be surrendered in order for the full

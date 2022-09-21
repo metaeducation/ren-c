@@ -113,46 +113,20 @@ REBTYPE(Datatype)
     REBVAL *arg = D_ARG(2);
 
     switch (ID_OF_SYMBOL(verb)) {
+      case SYM_REFLECT:
+        //
+        // !!! This used to support SPEC OF for datatypes, coming from strings
+        // that are built into the executable from the information in %types.r.
+        // It was removed when DATATYPE! no longer existed as its own reified
+        // type with a pointer in the cell for such information.
+        //
+        // But generally speaking, help information of this nature seems like
+        // something that shouldn't be built into the core, but an optional
+        // part of the help system...covered by usermode code.
+        //
+        fail (Error_Cannot_Reflect(VAL_TYPE(type), arg));
 
-    case SYM_REFLECT: {
-        option(SymId) sym = VAL_WORD_ID(arg);
-        if (sym == SYM_SPEC) {
-            //
-            // The "type specs" were loaded as an array, but this reflector
-            // wants to give back an object.  Combine the array with the
-            // standard object that mirrors its field order.
-            //
-            Context(*) context = Copy_Context_Shallow_Managed(
-                VAL_CONTEXT(Get_System(SYS_STANDARD, STD_TYPE_SPEC))
-            );
-
-            assert(CTX_TYPE(context) == REB_OBJECT);
-
-            const REBKEY *key_tail;
-            const REBKEY *key = CTX_KEYS(&key_tail, context);
-
-            REBVAR *var = CTX_VARS_HEAD(context);
-
-            Cell(const*) item_tail = ARR_TAIL(VAL_TYPE_SPEC(type));
-            Cell(*) item = ARR_HEAD(VAL_TYPE_SPEC(type));
-
-            for (; key != key_tail; ++key, ++var) {
-                if (item == item_tail)
-                    Init_Nulled(var);
-                else {
-                    // typespec array does not contain relative values
-                    //
-                    Derelativize(var, item, SPECIFIED);
-                    ++item;
-                }
-            }
-
-            return Init_Object(OUT, context);
-        }
-
-        fail (Error_Cannot_Reflect(VAL_TYPE(type), arg)); }
-
-    default:
+      default:
         break;
     }
 
@@ -252,6 +226,8 @@ bool Matches_Fake_Type_Constraint(Cell(const*) v, enum Reb_Symbol_Id sym) {
 //
 Array(*) Startup_Datatypes(Array(*) boot_types, Array(*) boot_typespecs)
 {
+    UNUSED(boot_typespecs);  // not currently used
+
     if (ARR_LEN(boot_types) != REB_MAX - 1)  // exclude REB_NULL (not a type)
         panic (boot_types);  // other types/internals should have a WORD!
 
@@ -289,12 +265,9 @@ Array(*) Startup_Datatypes(Array(*) boot_types, Array(*) boot_typespecs)
 
         Reset_Unquoted_Header_Untracked(
             TRACK(value),
-            FLAG_HEART_BYTE(REB_DATATYPE) | CELL_FLAG_FIRST_IS_NODE
+            FLAG_HEART_BYTE(REB_DATATYPE)
         );
         VAL_TYPE_KIND_ENUM(value) = kind;
-        INIT_VAL_TYPE_SPEC(value,
-            VAL_ARRAY(ARR_AT(boot_typespecs, n - 1))
-        );
 
         // !!! The system depends on these definitions, as they are used by
         // Get_Type and Type_Of.  Lock it for safety...though consider an
