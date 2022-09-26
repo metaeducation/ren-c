@@ -394,6 +394,11 @@ struct Reb_Date_Extra  // see %sys-time.h
     REBYMD ymdz;  // month/day/year/zone (time payload *may* hold nanoseconds)
 };
 
+struct Reb_Datatype_Extra  // see %sys-datatype.h
+{
+    Byte quotedness;  // like quote_byte, but for the described datatype
+};
+
 struct Reb_Typeset_Extra  // see %sys-typeset.h
 {
     Flags param_flags;  // PARAM_FLAG_XXX and VAL_PARAM_CLASS for param typeset
@@ -460,6 +465,8 @@ union Reb_Value_Extra { //=/////////////////// ACTUAL EXTRA DEFINITION ////=//
     const Node* Binding;  // see %sys-bind.h
     struct Reb_Date_Extra Date;
     struct Reb_Typeset_Extra Typeset;
+
+    struct Reb_Datatype_Extra Datatype;
 
     union Reb_Any Any;
     union Reb_Bytes_Extra Bytes;

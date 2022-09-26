@@ -2500,7 +2500,8 @@ Bounce Scanner_Executor(Frame(*) f) {
             // cases that work (like IMAGE! can construct itself from the
             // information passed in a BLOCK! this way).
 
-            Init_Datatype(ARR_HEAD(array), symbol);  // unbound, no xxx! lookup
+            Init_Datatype(ARR_HEAD(array), symbol, UNQUOTED_1);
+                // ^-- unbound, no xxx! lookup
 
             PUSH_GC_GUARD(array);
             if (rebRunThrows(

@@ -67,6 +67,7 @@ state
 ; (e.g. BODY OF SOME-FUNCTION)
 ;
 type
+type*
 kind
 quotes
 index

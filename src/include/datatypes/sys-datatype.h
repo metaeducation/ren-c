@@ -62,8 +62,14 @@ inline static enum Reb_Kind KIND_FROM_SYM(SymId s) {
 #define VAL_TYPE_SYMBOL(v) \
     SYM(PAYLOAD(Any, (v)).first.node)
 
+#define VAL_TYPE_QUOTEDNESS(v) \
+    EXTRA(Datatype, (v)).quotedness
+
 #define INIT_VAL_TYPE_SYMBOL(v,sym) \
     (PAYLOAD(Any, (v)).first.node = (sym))
+
+#define INIT_VAL_TYPE_QUOTEDNESS(v,qbyte) \
+    (EXTRA(Datatype, (v)).quotedness = (qbyte))
 
 inline static enum Reb_Kind VAL_TYPE_KIND_OR_CUSTOM(noquote(Cell(const*)) v) {
     assert(CELL_HEART(v) == REB_DATATYPE);
@@ -109,11 +115,7 @@ inline static REBVAL *Init_Builtin_Datatype_Untracked(
     enum Reb_Kind kind
 ){
     assert(kind < REB_MAX);
-
-    Reset_Unquoted_Header_Untracked(out, CELL_MASK_DATATYPE);
-    INIT_VAL_TYPE_SYMBOL(out, Canon_Symbol(SYM_FROM_KIND(kind)));
-
-    return cast(REBVAL*, out);
+    return Copy_Cell(out, Try_Lib_Var(cast(SymId, kind)));
 }
 
 #define Init_Builtin_Datatype(out,kind) \
@@ -123,15 +125,28 @@ inline static REBVAL *Init_Builtin_Datatype_Untracked(
 // Custom types have to be registered by extensions.  They are identified by
 // a URL, so that there is a way of MAKE-ing them.
 //
-inline static REBVAL *Init_Datatype_Untracked(Cell(*) out, Symbol(const*) sym)
-{
+inline static REBVAL *Init_Datatype_Untracked(
+    Cell(*) out,
+    Symbol(const*) sym,
+    Byte quotedness
+){
+    assert(quotedness != ISOTOPE_0);  // isotopes have no type
+
+    if (quotedness == UNQUOTED_1) {  // pre-made type may be available
+        option(SymId) id = ID_OF_SYMBOL(sym);
+        if (id and id < REB_MAX)
+            return Init_Builtin_Datatype(out, cast(enum Reb_Kind, id));
+    }
+
     Reset_Unquoted_Header_Untracked(out, CELL_MASK_DATATYPE);
     INIT_VAL_TYPE_SYMBOL(out, sym);
+    INIT_VAL_TYPE_QUOTEDNESS(out, quotedness);
+
     return cast(REBVAL*, out);
 }
 
-#define Init_Datatype(out,sym) \
-    TRACK(Init_Datatype_Untracked((out), (sym)))
+#define Init_Datatype(out,sym,qbyte) \
+    TRACK(Init_Datatype_Untracked((out), (sym), (qbyte)))
 
 
 

@@ -32,6 +32,11 @@ REBINT CT_Datatype(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict
 {
     UNUSED(strict);
 
+    if (VAL_TYPE_QUOTEDNESS(a) != VAL_TYPE_QUOTEDNESS(b))
+        return VAL_TYPE_QUOTEDNESS(a) > VAL_TYPE_QUOTEDNESS(b)
+            ? 1
+            : -1;
+
     if (VAL_TYPE_KIND_OR_CUSTOM(a) != VAL_TYPE_KIND_OR_CUSTOM(b))
         return VAL_TYPE_KIND_OR_CUSTOM(a) > VAL_TYPE_KIND_OR_CUSTOM(b)
             ? 1
@@ -67,7 +72,7 @@ Bounce MAKE_Datatype(
     // gets passed in here in that case.
     //
     if (IS_THE_WORD(arg) or IS_WORD(arg))
-        return Init_Datatype(OUT, VAL_WORD_SYMBOL(arg));
+        return Init_Datatype(OUT, VAL_WORD_SYMBOL(arg), UNQUOTED_1);
 
     return RAISE(Error_Bad_Make(kind, arg));
 }
@@ -84,15 +89,25 @@ Bounce TO_Datatype(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg) {
 //
 //  MF_Datatype: C
 //
+// !!! Today's datatype is not actually an ANY-BLOCK!, but wants to render
+// as one.  To avoid writing duplicate code, we synthesize the block that would
+// be avaliable to us if types were actually implemented via arrays...so that
+// the quotedness/quasiness renders correctly.
+//
 void MF_Datatype(REB_MOLD *mo, noquote(Cell(const*)) v, bool form)
 {
-    if (not form)
-        Pre_Mold_All(mo, v);  // e.g. `#[datatype!`
+    Array(*) a = Alloc_Singular(NODE_FLAG_MANAGED);
+    Init_Word(ARR_SINGLE(a), VAL_TYPE_SYMBOL(v));
+    mutable_QUOTE_BYTE(ARR_SINGLE(a)) = VAL_TYPE_QUOTEDNESS(v);
 
-    Append_Spelling(mo->series, VAL_TYPE_SYMBOL(v));
+    DECLARE_LOCAL (temp);
+    Init_Block(temp, a);
 
-    if (not form)
-        End_Mold_All(mo);  // e.g. `]`
+    Append_Codepoint(mo->series, '&');
+
+    PUSH_GC_GUARD(temp);
+    Mold_Or_Form_Value(mo, temp, form);
+    DROP_GC_GUARD(temp);
 }
 
 
@@ -257,7 +272,16 @@ Array(*) Startup_Datatypes(Array(*) boot_types, Array(*) boot_typespecs)
             continue;
         }
 
-        Init_Builtin_Datatype(value, kind);
+        // !!! Currently datatypes are just molded specially to look like an
+        // ANY-BLOCK! type, so they seem like &[integer] or &['word].  But the
+        // idea is that they will someday actually be blocks, so having some
+        // read-only copies of the common types remade would save on series
+        // allocations.  We pre-build the types into the lib slots in an
+        // anticipation of that change.
+        //
+        Reset_Unquoted_Header_Untracked(TRACK(value), CELL_MASK_DATATYPE);
+        INIT_VAL_TYPE_SYMBOL(value, Canon_Symbol(SYM_FROM_KIND(kind)));
+        INIT_VAL_TYPE_QUOTEDNESS(value, UNQUOTED_1);
 
         // !!! The system depends on these definitions, as they are used by
         // Get_Type and Type_Of.  Lock it for safety...though consider an

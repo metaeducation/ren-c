@@ -284,54 +284,65 @@ Bounce Reflect_Core(Frame(*) frame_)
     INCLUDE_PARAMS_OF_REFLECT;
 
     REBVAL *v = ARG(value);
+
+    option(SymId) id = VAL_WORD_ID(ARG(property));
+
+    if (id != SYM_TYPE_P)
+        Decay_If_Isotope(v);
+
     enum Reb_Kind heart = CELL_HEART(v);
 
-    option(SymId) symid = VAL_WORD_ID(ARG(property));
-    if (not symid) {
+    if (id == SYM_TYPE_P or id == SYM_TYPE) {
+        Byte quote_byte = QUOTE_BYTE(v);
+
+        bool quasify = false;
+        if (quote_byte == ISOTOPE_0) {
+            if (Is_Nulled(v))
+                return nullptr;
+
+            if (id != SYM_TYPE_P)
+                fail ("Use TYPE* and not TYPE on isotopes (if intentional)");
+            quasify = true;
+            quote_byte = QUASI_2;  // we'll return ~&[~xxx~]~
+        }
+
+        if (heart == REB_CUSTOM) {
+            SYMBOL_HOOK* hook = Symbol_Hook_For_Type_Of(v);
+            Symbol(const*) sym = hook();
+            if (sym == nullptr)
+                fail ("Cannot reflect TYPE due to unloaded extension");
+
+            Init_Datatype(OUT, sym, quote_byte);
+        }
+        else
+            Init_Datatype(OUT, Canon_Symbol(cast(SymId, heart)), quote_byte);
+
+        if (quasify)
+            Quasify(OUT);
+        return OUT;
+    }
+
+    if (Is_Isotope(v) and not Is_Nulled(v))
+        fail (Error_Bad_Isotope(v));  // only TYPE* will allow isotopes
+
+    if (not id) {
         //
         // If a word wasn't in %words.r, it has no integer SYM.  There is
         // no way for a built-in reflector to handle it...since they just
         // operate on SYMs in a switch().  Longer term, a more extensible
         // idea will be necessary.
         //
-        fail (Error_Cannot_Reflect(heart, ARG(property)));
+        fail (Error_Cannot_Reflect(CELL_HEART(v), ARG(property)));
     }
 
-    Decay_If_Isotope(v);
-
-    if (IS_LOGIC(v) and symid == SYM_KIND)
-        return Init_Builtin_Datatype(OUT, REB_LOGIC);
-
-    if (Is_Isotope(v) and not Is_Nulled(v))
-        fail (Error_Bad_Isotope(v));
-
-    switch (symid) {
+    switch (id) {
       case SYM_KIND: // simpler answer, low-level datatype (e.g. QUOTED!)
         if (Is_Nulled(v))
             return nullptr;
         return Init_Builtin_Datatype(OUT, VAL_TYPE(v));
 
+      case SYM_TYPE_P:
       case SYM_TYPE: // higher order-answer, may build structured result
-        if (Is_Nulled(v))  // not a real "datatype"
-            Init_Nulled(OUT);  // `null = type of null`
-        else if (heart == REB_CUSTOM) {
-            SYMBOL_HOOK* hook = Symbol_Hook_For_Type_Of(v);
-            Symbol(const*) sym = hook();
-            if (sym == nullptr)
-                fail ("Cannot reflect TYPE due to unloaded extension");
-
-            Init_Datatype(OUT, sym);
-        }
-        else
-            Init_Builtin_Datatype(OUT, heart);
-
-        // `type of just '''[a b c]` is `'''#[block!]`.  Until datatypes get
-        // a firm literal notation, you can say `quote quote block!`
-        //
-        // If the escaping count of the value is zero, this returns it as is.
-        //
-        mutable_QUOTE_BYTE(OUT) = QUOTE_BYTE(v);  //  !!! likely temporary
-        return OUT;
 
       case SYM_QUOTES:
         return Init_Integer(OUT, VAL_NUM_QUOTES(v));
@@ -355,7 +366,7 @@ Bounce Reflect_Core(Frame(*) frame_)
 //
 //      return: [<opt> any-value!]
 //      value "Accepts NULL so REFLECT () 'TYPE can be returned as NULL"
-//          [<maybe> <opt> any-value! ~any-value!~]
+//          [<maybe> <opt> <pack> <fail> any-value! ~any-value!~]
 //      property [word!]
 //          "Such as: type, length, spec, body, words, values, title"
 //  ]
@@ -380,7 +391,7 @@ DECLARE_NATIVE(reflect_native)
 //      'property "Will be escapable, ':property (bootstrap permitting)"
 //          [word! get-word! get-path! get-group!]
 //      value "Accepts null so TYPE OF NULL can be returned as null"
-//          [<maybe> <opt> any-value! ~any-value!~]
+//          [<maybe> <opt> <pack> <fail> any-value! ~any-value!~]
 //  ]
 //
 DECLARE_NATIVE(of)
