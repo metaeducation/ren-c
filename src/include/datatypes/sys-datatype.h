@@ -74,7 +74,7 @@ inline static enum Reb_Kind KIND_FROM_SYM(SymId s) {
 inline static enum Reb_Kind VAL_TYPE_KIND_OR_CUSTOM(noquote(Cell(const*)) v) {
     assert(CELL_HEART(v) == REB_DATATYPE);
     option(SymId) id = ID_OF_SYMBOL(VAL_TYPE_SYMBOL(v));
-    if (id == SYM_0 or unwrap(id) >= REB_MAX)
+    if (id == SYM_0 or unwrap(id) >= cast(SymId, REB_MAX))
         return REB_CUSTOM;
     return cast(enum Reb_Kind, unwrap(id));
 }
@@ -135,7 +135,7 @@ inline static REBVAL *Init_Datatype_Untracked(
     if (quotedness == UNQUOTED_1) {  // pre-made type may be available
         option(SymId) id = ID_OF_SYMBOL(sym);
         if (id and id < REB_MAX)
-            return Init_Builtin_Datatype(out, cast(enum Reb_Kind, id));
+            return Init_Builtin_Datatype(out, cast(enum Reb_Kind, unwrap(id)));
     }
 
     Reset_Unquoted_Header_Untracked(out, CELL_MASK_DATATYPE);

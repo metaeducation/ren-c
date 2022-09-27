@@ -663,7 +663,9 @@ static void Mark_Extension_Types(void)
 {
     int i;
     for (i = 0; i < 5; ++i)
-        Queue_Mark_Node_Deep(cast(const Node**, &PG_Extension_Types[i]));
+        Queue_Mark_Node_Deep(
+            cast(const Node**, c_cast(const REBTYP**, &PG_Extension_Types[i]))
+        );
 
     Propagate_All_GC_Marks();
 }
