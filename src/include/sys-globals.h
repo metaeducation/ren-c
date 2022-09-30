@@ -122,8 +122,6 @@ PVAR REBVAL PG_R_Suspend;
 // by the same mechanism they use.  This means they can be initialized at
 // the appropriate moment during the boot, one at a time.
 
-PVAR REBVAL *Root_Typesets;
-
 PVAR REBVAL *Root_None_Tag; // used with RETURN: <none> to suppress results
 PVAR REBVAL *Root_With_Tag; // overrides locals gathering (can disable RETURN)
 PVAR REBVAL *Root_Variadic_Tag; // marks variadic argument <variadic>

@@ -46,8 +46,6 @@ REBINT CT_Typeset(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
 //
 void Startup_Typesets(void)
 {
-    StackIndex catalog_base = TOP_INDEX;
-
     REBINT id;
     for (id = SYM_ANY_VALUE_X; id != SYM_DATATYPES; ++id) {
         REBINT n = id - SYM_ANY_VALUE_X;
@@ -67,17 +65,11 @@ void Startup_Typesets(void)
             );
         }
 
-        Init_Typeset(PUSH(), Pop_Stack_Values_Core(base, NODE_FLAG_MANAGED));
-        Copy_Cell(Force_Lib_Var(cast(SymId, id)), TOP);
+        Array(*) a = Pop_Stack_Values_Core(base, NODE_FLAG_MANAGED);
+        Init_Typeset(Force_Lib_Var(cast(SymId, id)), a);
     }
 
     assert(Typesets[id - SYM_ANY_VALUE_X] == 0);  // table ends in zero
-
-    // !!! Why does the system access the typesets through Lib_Context, vs.
-    // using the Root_Typesets?
-    //
-    Root_Typesets = Init_Block(Alloc_Value(), Pop_Stack_Values(catalog_base));
-    Force_Value_Frozen_Deep(Root_Typesets);
 }
 
 
@@ -86,8 +78,6 @@ void Startup_Typesets(void)
 //
 void Shutdown_Typesets(void)
 {
-    rebRelease(Root_Typesets);
-    Root_Typesets = NULL;
 }
 
 
