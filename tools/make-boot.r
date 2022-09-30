@@ -293,7 +293,7 @@ for-each-typerange: func [
                 ;
                 parse2 name* [
                     remove "any-"
-                    [[to "-value" remove "-value"] | to "!"]
+                    to "!"  ; once dropped -VALUE from e.g. ANY-META-VALUE!
                     remove "!"
                 ] else [
                     fail "Bad type category name"
@@ -457,7 +457,7 @@ for-each-datatype t [
             continue
         ]
 
-        elide add-sym as word! unspaced ["any-" ts-name "!"]
+        add-sym as word! unspaced ["any-" ts-name "!"]
         append typeset-sets ts-name
         append typeset-sets reduce [t/name]
 
@@ -476,6 +476,8 @@ for-each-typerange tr [
     add-sym tr/any-name!
 
     append typeset-sets spread reduce [tr/name tr/types]
+
+    name: copy tr/name
 
     e-types/emit newline
     e-types/emit 'tr {
@@ -608,6 +610,39 @@ e-hooks/emit 'hook-list {
 }
 
 e-hooks/write-emitted
+
+
+=== {SYMBOL-TO-TYPESET-BITS MAPPING TABLE} ===
+
+; The typesets for things like ANY-BLOCK! etc. are specified in the %types.r
+; table, and turned into 64-bit bitsets.
+
+e-typesets: make-emitter "Built-in Typesets" (
+    join prep-dir %core/tmp-typesets.c
+)
+
+
+e-typesets/emit {
+    #include "sys-core.h"
+}
+
+e-typesets/emit {
+    const SymToBits Typesets[] = ^{
+        {SYM_ANY_VALUE_X, TS_VALUE},
+}
+
+for-each [ts-name types] typeset-sets [
+    e-typesets/emit 'ts-name {
+        {SYM_ANY_${TS-NAME}_X, TS_${TS-NAME}},
+    }
+]
+
+e-typesets/emit {
+        {SYM_0, 0}
+    ^};
+}
+
+e-typesets/write-emitted
 
 
 === {SYMBOLS FOR LIB-WORDS.R} ===

@@ -26,51 +26,6 @@
 
 
 //
-// symbol-to-typeset-bits mapping table
-//
-// NOTE: Order of symbols is important, because this is used to build a
-// list of typeset word symbols ordered relative to their symbol #,
-// which lays out the legal unbound WORD! values you can use during
-// a MAKE TYPESET! (bound words will be looked up as variables to see
-// if they contain a DATATYPE! or a typeset, but general reduction is
-// not performed on the block passed in.)
-//
-// !!! Is it necessary for MAKE TYPESET! to allow unbound words at all,
-// or should the typesets be required to be in bound variables?  Should
-// clients be asked to pass in only datatypes and typesets, hence doing
-// their own reduce before trying to make a typeset out of a block?
-//
-const struct {
-    option(SymId) sym;
-    REBU64 bits;
-} Typesets[] = {
-    {SYM_ANY_VALUE_X, TS_VALUE},
-    {SYM_ANY_WORD_X, TS_WORD},
-    {SYM_ANY_PATH_X, TS_PATH},
-    {SYM_ANY_NUMBER_X, TS_NUMBER},
-    {SYM_ANY_SCALAR_X, TS_SCALAR},
-    {SYM_ANY_SEQUENCE_X, TS_SEQUENCE},
-    {SYM_ANY_GROUP_X, TS_GROUP},
-    {SYM_ANY_BLOCK_X, TS_BLOCK},
-    {SYM_ANY_PATH_X, TS_PATH},
-    {SYM_ANY_TUPLE_X, TS_TUPLE},
-    {SYM_ANY_SERIES_X, TS_SERIES},
-    {SYM_ANY_STRING_X, TS_STRING},
-    {SYM_ANY_CONTEXT_X, TS_CONTEXT},
-    {SYM_ANY_ARRAY_X, TS_ARRAY},
-    {SYM_ANY_BRANCH_X, TS_BRANCH},
-
-    {SYM_ANY_THE_VALUE_X, TS_THE},
-    {SYM_ANY_PLAIN_VALUE_X, TS_PLAIN},
-    {SYM_ANY_SET_VALUE_X, TS_SET},
-    {SYM_ANY_GET_VALUE_X, TS_GET},
-    {SYM_ANY_META_VALUE_X, TS_META},
-
-    {SYM_0, 0}
-};
-
-
-//
 //  CT_Typeset: C
 //
 REBINT CT_Typeset(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)

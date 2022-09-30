@@ -80,6 +80,18 @@ inline static bool ANY_VALUE_KIND(Byte k)
     (not ANY_INERT_KIND(VAL_TYPE(v)))
 
 
+//=//// SHORTHANDS ////////////////////////////////////////////////////////=//
+//
+// Easier to define these than to try and write code for the exceptions when
+// you want them (sometimes you want `value`, sometimes you don't)
+//
+
+#define ANY_GET_KIND ANY_GET_VALUE_KIND
+#define ANY_SET_KIND ANY_SET_VALUE_KIND
+#define ANY_META_KIND ANY_META_VALUE_KIND
+#define ANY_PLAIN_KIND ANY_PLAIN_VALUE_KIND
+
+
 //=//// XXX <=> SET-XXX! <=> GET-XXX! TRANSFORMATION //////////////////////=//
 //
 // See reasoning in %types.r on why ANY-INERT! optimization is favored over

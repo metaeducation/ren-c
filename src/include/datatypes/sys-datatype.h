@@ -149,6 +149,10 @@ inline static REBVAL *Init_Datatype_Untracked(
     TRACK(Init_Datatype_Untracked((out), (sym), (qbyte)))
 
 
+// Another table generated from %types.r for builtin typesets
+//
+extern const SymToBits Typesets[];
+
 
 // This table is generated from %types.r - the actual table is located in
 // %tmp-dispatch.c and linked in only once.

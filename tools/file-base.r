@@ -232,6 +232,7 @@ core: [
 generated: [
     tmp-boot-block.c
     tmp-type-hooks.c
+    tmp-typesets.c
 ]
 
 made: [
