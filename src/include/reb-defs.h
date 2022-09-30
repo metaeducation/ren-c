@@ -299,11 +299,6 @@ typedef enum Reb_Symbol_Id SymId;
     void operator!=(option(SymId)& a, option(SymId)& b) = delete;
 #endif
 
-typedef struct {
-    option(SymId) sym;
-    REBU64 bits;
-} SymToBits;
-
 
 //=//// STRING MODES //////////////////////////////////////////////////////=//
 //

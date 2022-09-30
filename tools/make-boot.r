@@ -627,18 +627,18 @@ e-typesets/emit {
 }
 
 e-typesets/emit {
-    const SymToBits Typesets[] = ^{
-        {SYM_ANY_VALUE_X, TS_VALUE},
+    const REBU64 Typesets[] = ^{
+        TS_VALUE,  /* any-value! */
 }
 
 for-each [ts-name types] typeset-sets [
     e-typesets/emit 'ts-name {
-        {SYM_ANY_${TS-NAME}_X, TS_${TS-NAME}},
+        TS_${TS-NAME},  /* any-${ts-name}! */
     }
 ]
 
 e-typesets/emit {
-        {SYM_0, 0}
+        0
     ^};
 }
 

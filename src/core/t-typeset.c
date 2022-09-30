@@ -48,12 +48,14 @@ void Startup_Typesets(void)
 {
     StackIndex catalog_base = TOP_INDEX;
 
-    REBINT n;
-    for (n = 0; Typesets[n].sym != 0; n++) {
+    REBINT id;
+    for (id = SYM_ANY_VALUE_X; id != SYM_DATATYPES; ++id) {
+        REBINT n = id - SYM_ANY_VALUE_X;
+
         StackIndex base = TOP_INDEX;
         REBINT kind;
         for (kind = 0; kind < REB_MAX; ++kind) {
-            if (not (Typesets[n].bits & FLAGIT_KIND(kind)))
+            if (not (Typesets[n] & FLAGIT_KIND(kind)))
                 continue;
 
             Init_Any_Word_Bound(
@@ -66,8 +68,10 @@ void Startup_Typesets(void)
         }
 
         Init_Typeset(PUSH(), Pop_Stack_Values_Core(base, NODE_FLAG_MANAGED));
-        Copy_Cell(Force_Lib_Var(unwrap(Typesets[n].sym)), TOP);
+        Copy_Cell(Force_Lib_Var(cast(SymId, id)), TOP);
     }
+
+    assert(Typesets[id - SYM_ANY_VALUE_X] == 0);  // table ends in zero
 
     // !!! Why does the system access the typesets through Lib_Context, vs.
     // using the Root_Typesets?

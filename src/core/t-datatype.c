@@ -252,7 +252,9 @@ Array(*) Startup_Datatypes(Array(*) boot_types, Array(*) boot_typespecs)
     for (; word != word_tail; ++word, ++n) {
         enum Reb_Kind kind = cast(enum Reb_Kind, n);
 
-        REBVAL *value = Append_Context_Bind_Word(Lib_Context, SPECIFIC(word));
+        assert(Canon_Symbol(cast(SymId, kind)) == VAL_WORD_SYMBOL(word));
+
+        Value(*) value = Force_Lib_Var(cast(SymId, kind));
 
         if (kind == REB_BYTES) {
             Init_Word_Isotope(value, Canon(BYTES));

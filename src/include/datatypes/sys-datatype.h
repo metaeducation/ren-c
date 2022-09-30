@@ -151,7 +151,7 @@ inline static REBVAL *Init_Datatype_Untracked(
 
 // Another table generated from %types.r for builtin typesets
 //
-extern const SymToBits Typesets[];
+extern const REBU64 Typesets[];
 
 
 // This table is generated from %types.r - the actual table is located in

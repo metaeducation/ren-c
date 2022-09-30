@@ -39,9 +39,6 @@
 //
 
 
-#define TS_NOTHING 0
-
-
 //=//// TYPESET BITS //////////////////////////////////////////////////////=//
 //
 // Operations when typeset is done with a bitset (currently all typesets)
@@ -77,8 +74,16 @@ inline static bool TYPE_CHECK(noquote(Cell(const*)) typeset, Cell(const*) v) {
         Value(const*) item;
         if (not IS_WORD(var))
             item = var;
-        else
+        else {
+            option(SymId) id = VAL_WORD_ID(var);  // builtin typeset optimized
+            if (id and (id >= SYM_ANY_VALUE_X and id < SYM_DATATYPES)) {
+                REBU64 bits = Typesets[cast(int, id) - SYM_ANY_VALUE_X];
+                if (bits & FLAGIT_KIND(VAL_TYPE(v)))
+                    return true;
+                continue;
+            }
             item = Lookup_Word_May_Fail(var, SPECIFIED);
+        }
 
         if (IS_TYPESET(item)) {
             if (TYPE_CHECK(item, v))  // !!! Should cycle protect
