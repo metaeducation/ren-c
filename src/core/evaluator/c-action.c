@@ -904,7 +904,7 @@ Bounce Action_Executor(Frame(*) f)
         }
 
         if (Is_True(ARG) or Is_False(ARG)) {
-            if (TYPE_CHECK(PARAM, REB_LOGIC))
+            if (TYPE_CHECK(PARAM, ARG))
                 continue;
         }
 

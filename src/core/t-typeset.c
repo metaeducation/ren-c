@@ -91,18 +91,33 @@ REBINT CT_Typeset(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
 //
 void Startup_Typesets(void)
 {
-    StackIndex base = TOP_INDEX;
+    StackIndex catalog_base = TOP_INDEX;
 
     REBINT n;
     for (n = 0; Typesets[n].sym != 0; n++) {
-        Init_Typeset(PUSH(), Typesets[n].bits);
+        StackIndex base = TOP_INDEX;
+        REBINT kind;
+        for (kind = 0; kind < REB_MAX; ++kind) {
+            if (not (Typesets[n].bits & FLAGIT_KIND(kind)))
+                continue;
+
+            Init_Any_Word_Bound(
+                PUSH(),
+                REB_WORD,
+                Canon_Symbol(cast(SymId, kind)),
+                Lib_Context,
+                INDEX_ATTACHED  // !!! should this be INDEX_PATCHED?
+            );
+        }
+
+        Init_Typeset(PUSH(), Pop_Stack_Values_Core(base, NODE_FLAG_MANAGED));
         Copy_Cell(Force_Lib_Var(unwrap(Typesets[n].sym)), TOP);
     }
 
     // !!! Why does the system access the typesets through Lib_Context, vs.
     // using the Root_Typesets?
     //
-    Root_Typesets = Init_Block(Alloc_Value(), Pop_Stack_Values(base));
+    Root_Typesets = Init_Block(Alloc_Value(), Pop_Stack_Values(catalog_base));
     Force_Value_Frozen_Deep(Root_Typesets);
 }
 
@@ -130,13 +145,14 @@ void Shutdown_Typesets(void)
 // will act as WORD!.  Also, is essentially having "keywords" and should be
 // reviewed to see if anything actually used it.
 //
-bool Add_Typeset_Bits_Core(
-    REBPAR *typeset,
+Array(*) Add_Typeset_Bits_Core(
+    Flags* flags,
     Cell(const*) head,
     Cell(const*) tail,
     REBSPC *specifier
-) {
-    assert(IS_TYPESET(typeset));
+){
+    StackIndex base = TOP_INDEX;
+    *flags = 0;
 
     Cell(const*) maybe_word = head;
     for (; maybe_word != tail; ++maybe_word) {
@@ -153,12 +169,12 @@ bool Add_Typeset_Bits_Core(
               case SYM_ANY_WORD_X :
               case SYM_ANY_VALUE_X :
               case SYM_ANY_UTF8_X :
-                SET_PARAM_FLAG(typeset, ISOTOPES_OKAY);
-                SET_PARAM_FLAG(typeset, NO_ISOTOPE_DECAY);
+                *flags |= PARAM_FLAG_ISOTOPES_OKAY;
+                *flags |= PARAM_FLAG_NO_ISOTOPE_DECAY;
                 break;
 
               default:
-                SET_PARAM_FLAG(typeset, ISOTOPES_OKAY);
+                *flags |= PARAM_FLAG_ISOTOPES_OKAY;
                 break;
             }
             continue;
@@ -181,78 +197,62 @@ bool Add_Typeset_Bits_Core(
                 // core sources were changed to `<variadic>`, asking users
                 // to shuffle should only be done once (when final is known).
                 //
-                SET_PARAM_FLAG(typeset, VARIADIC);
+                *flags |= PARAM_FLAG_VARIADIC;
             }
             else if (0 == CT_String(item, Root_End_Tag, strict)) {
-                SET_PARAM_FLAG(typeset, ENDABLE);
-                TYPE_SET(typeset, REB_NULL);  // end always null, see param flag
+                *flags |= PARAM_FLAG_ENDABLE;
+                Init_Any_Word_Bound(
+                    PUSH(),
+                    REB_WORD,
+                    Canon(NULL),
+                    Lib_Context,
+                    INDEX_ATTACHED
+                );
             }
             else if (0 == CT_String(item, Root_Maybe_Tag, strict)) {
-                SET_PARAM_FLAG(typeset, NOOP_IF_VOID);
+                *flags |= PARAM_FLAG_NOOP_IF_VOID;
             }
             else if (0 == CT_String(item, Root_Opt_Tag, strict)) {
-                //
-                // !!! Review if this makes sense to allow with MAKE TYPESET!
-                // instead of just function specs.
-                //
-                TYPE_SET(typeset, REB_NULL);
+                Init_Any_Word_Bound(
+                    PUSH(),
+                    REB_WORD,
+                    Canon(NULL),
+                    Lib_Context,
+                    INDEX_ATTACHED
+                );
             }
             else if (0 == CT_String(item, Root_Void_Tag, strict)) {
-                SET_PARAM_FLAG(typeset, VANISHABLE);
+                *flags |= PARAM_FLAG_VANISHABLE;
             }
             else if (0 == CT_String(item, Root_Fail_Tag, strict)) {
-                SET_PARAM_FLAG(typeset, WANT_FAILURES);
+                *flags |= PARAM_FLAG_WANT_FAILURES;
             }
             else if (0 == CT_String(item, Root_Pack_Tag, strict)) {
-                SET_PARAM_FLAG(typeset, WANT_PACKS);
+                *flags |= PARAM_FLAG_WANT_PACKS;
             }
             else if (0 == CT_String(item, Root_Skip_Tag, strict)) {
-                if (VAL_PARAM_CLASS(typeset) != PARAM_CLASS_HARD)
-                    fail ("Only hard-quoted parameters are <skip>-able");
+               /* if (VAL_PARAM_CLASS(typeset) != PARAM_CLASS_HARD)
+                    fail ("Only hard-quoted parameters are <skip>-able"); */
 
-                SET_PARAM_FLAG(typeset, SKIPPABLE);
-                SET_PARAM_FLAG(typeset, ENDABLE); // skip => null
-                TYPE_SET(typeset, REB_NULL);  // null if specialized
+                *flags |= PARAM_FLAG_SKIPPABLE;
+                *flags |= PARAM_FLAG_ENDABLE; // skip => null
+                Init_Any_Word_Bound(
+                    PUSH(),
+                    REB_WORD,
+                    Canon(NULL),
+                    Lib_Context,
+                    INDEX_ATTACHED
+                );
             }
             else if (0 == CT_String(item, Root_Const_Tag, strict)) {
-                SET_PARAM_FLAG(typeset, CONST);
+                *flags |= PARAM_FLAG_CONST;
             }
         }
-        else if (IS_DATATYPE(item)) {
-            //
-            // !!! For the moment, all REB_CUSTOM types are glommed
-            // together into the same typeset test.  Doing better will
-            // involve a redesign of typesets from R3-Alpha's 64 bits.
-            //
-            TYPE_SET(typeset, VAL_TYPE_KIND_OR_CUSTOM(item));
-        }
-        else if (IS_TYPESET(item)) {
-            VAL_TYPESET_LOW_BITS(typeset) |= VAL_TYPESET_LOW_BITS(item);
-            VAL_TYPESET_HIGH_BITS(typeset) |= VAL_TYPESET_HIGH_BITS(item);
+        else if (IS_DATATYPE(item) or IS_TYPESET(item)) {
+            Derelativize(PUSH(), maybe_word, specifier);
         }
         else if (IS_META_WORD(item)) {  // see Startup_Fake_Type_Constraint()
-            switch (VAL_WORD_ID(item)) {
-              case SYM_CHAR_X:
-              case SYM_BLACKHOLE_X:
-                TYPE_SET(typeset, REB_ISSUE);
-                break;
-
-              case SYM_LIT_WORD_X:
-              case SYM_LIT_PATH_X:
-                TYPE_SET(typeset, REB_QUOTED);
-                break;
-
-              case SYM_REFINEMENT_X:
-                TYPE_SET(typeset, REB_PATH);
-                break;
-
-              case SYM_PREDICATE_X:
-                SET_PARAM_FLAG(typeset, PREDICATE);
-                break;
-
-              default:
-                fail ("Unknown fake type constraint!");
-            }
+            Derelativize(PUSH(), maybe_word, specifier);
         }
         else
             fail (Error_Bad_Value(maybe_word));
@@ -261,7 +261,7 @@ bool Add_Typeset_Bits_Core(
         // things that aren't recognized here (!)
     }
 
-    return true;
+    return Pop_Stack_Values_Core(base, NODE_FLAG_MANAGED);
 }
 
 
@@ -287,11 +287,14 @@ Bounce MAKE_Typeset(
     Cell(const*) tail;
     Cell(const*) at = VAL_ARRAY_AT(&tail, arg);
     Init_Typeset(OUT, 0);
-    Add_Typeset_Bits_Core(
-        cast_PAR(OUT),
-        at,
-        tail,
-        VAL_SPECIFIER(arg)
+    Flags flags;
+    INIT_VAL_TYPESET_ARRAY(OUT,
+        Add_Typeset_Bits_Core(
+            &flags,
+            at,
+            tail,
+            VAL_SPECIFIER(arg)
+        )
     );
     return OUT;
   }
@@ -323,33 +326,7 @@ Bounce TO_Typeset(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg)
 //
 Array(*) Typeset_To_Array(const REBVAL *tset)
 {
-    StackIndex base = TOP_INDEX;
-
-    REBINT n;
-    for (n = 1; n < REB_MAX; ++n) {
-        if (TYPE_CHECK(tset, cast(enum Reb_Kind, n))) {
-            if (n == REB_NULL) {
-                //
-                // !!! NULL is used in parameter list typesets to indicate
-                // that they can take optional values.  Hence this can occur
-                // in typesets coming from ACTION!
-                //
-                Copy_Cell(PUSH(), Root_Opt_Tag);
-            }
-            else if (n == REB_CUSTOM) {
-                //
-                // !!! Among TYPESET!'s many design weaknesses, there is no
-                // support in the 64-bit representation for individual
-                // custom types.  So all custom types typecheck together.
-                //
-                Init_Quasi_Word(PUSH(), Canon(CUSTOM_X));
-            }
-            else
-                Init_Builtin_Datatype(PUSH(), cast(enum Reb_Kind, n));
-        }
-    }
-
-    return Pop_Stack_Values(base);
+    return Copy_Array_Shallow(VAL_TYPESET_ARRAY(tset), SPECIFIED);
 }
 
 
@@ -358,44 +335,17 @@ Array(*) Typeset_To_Array(const REBVAL *tset)
 //
 void MF_Typeset(REB_MOLD *mo, noquote(Cell(const*)) v, bool form)
 {
-    REBINT n;
-
     if (not form) {
         Pre_Mold(mo, v);  // #[typeset! or make typeset!
-        Append_Codepoint(mo->series, '[');
     }
 
-    // Convert bits to type name strings.  Note that "endability" and
-    // "optionality" are not really good fits for things in a typeset, as no
-    // "type" exists for their bits.  However, you can get them if you say
-    // `TYPESETS OF` on an action.  This should be thought about.
-
-    if (TYPE_CHECK(v, REB_NULL))
-        Append_Ascii(mo->series, "<opt> ");
-
-    // !!! What about PARAM_FLAG_SKIPPABLE and other parameter properties, that
-    // don't really fit into "types", but you can get with TYPESETS OF action?
-
-    for (n = REB_NULL + 1; n < REB_MAX; n++) {
-        enum Reb_Kind kind = cast(enum Reb_Kind, n);
-        if (TYPE_CHECK(v, kind)) {
-            if (kind == REB_CUSTOM) {
-                //
-                // !!! Typesets have not been worked out yet to handle type
-                // checking for custom datatypes, as they only support 64 bits
-                // of information at the moment.  Hack around it for now.
-                //
-                Append_Ascii(mo->series, "#[datatype! custom!]");
-            }
-            else
-                Mold_Value(mo, Datatype_From_Kind(kind));
-            Append_Codepoint(mo->series, ' ');
-        }
-    }
-    Trim_Tail(mo, ' ');
+    DECLARE_LOCAL(temp);
+    Init_Group(temp, VAL_TYPESET_ARRAY(v));
+    PUSH_GC_GUARD(temp);
+    Mold_Or_Form_Value(mo, temp, form);
+    DROP_GC_GUARD(temp);
 
     if (not form) {
-        Append_Codepoint(mo->series, ']');
         End_Mold(mo);
     }
 }
@@ -426,56 +376,18 @@ REBTYPE(Typeset)
         if (not IS_DATATYPE(pattern))
             fail (pattern);
 
-        if (TYPE_CHECK(v, VAL_TYPE_KIND(pattern)))
+        if (TYPE_CHECK(v, pattern))
             return Init_True(OUT);
 
         return nullptr; }
 
       case SYM_UNIQUE:
-        return COPY(v);  // typesets unique by definition
-
       case SYM_INTERSECT:
       case SYM_UNION:
       case SYM_DIFFERENCE:
-      case SYM_EXCLUDE: {
-        REBVAL *arg = D_ARG(2);
-
-        if (IS_DATATYPE(arg))
-            Init_Typeset(arg, FLAGIT_KIND(VAL_TYPE(arg)));
-        else if (not IS_TYPESET(arg))
-            fail (arg);
-
-        switch (ID_OF_SYMBOL(verb)) {
-          case SYM_UNION:
-            VAL_TYPESET_LOW_BITS(v) |= VAL_TYPESET_LOW_BITS(arg);
-            VAL_TYPESET_HIGH_BITS(v) |= VAL_TYPESET_HIGH_BITS(arg);
-            break;
-
-          case SYM_INTERSECT:
-            VAL_TYPESET_LOW_BITS(v) &= VAL_TYPESET_LOW_BITS(arg);
-            VAL_TYPESET_HIGH_BITS(v) &= VAL_TYPESET_HIGH_BITS(arg);
-            break;
-
-          case SYM_DIFFERENCE:
-            VAL_TYPESET_LOW_BITS(v) ^= VAL_TYPESET_LOW_BITS(arg);
-            VAL_TYPESET_HIGH_BITS(v) ^= VAL_TYPESET_HIGH_BITS(arg);
-            break;
-
-          case SYM_EXCLUDE:
-            VAL_TYPESET_LOW_BITS(v) &= ~VAL_TYPESET_LOW_BITS(arg);
-            VAL_TYPESET_HIGH_BITS(v) &= ~VAL_TYPESET_HIGH_BITS(arg);
-            break;
-
-          default:
-            assert(false);
-        }
-
-        return COPY(v); }
-
-      case SYM_COMPLEMENT: {
-        VAL_TYPESET_LOW_BITS(v) = ~VAL_TYPESET_LOW_BITS(v);
-        VAL_TYPESET_HIGH_BITS(v) = ~VAL_TYPESET_HIGH_BITS(v);
-        return COPY(v); }
+      case SYM_EXCLUDE:
+      case SYM_COMPLEMENT:
+        fail ("TYPESET! INTERSECT/UNION/etc. currently disabled");
 
       case SYM_COPY:
         return COPY(v);

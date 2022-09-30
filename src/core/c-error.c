@@ -1046,7 +1046,7 @@ Context(*) Error_Not_Varargs(
         honest_param,
         FLAG_PARAM_CLASS_BYTE(PARAM_CLASS_NORMAL)
             | PARAM_FLAG_VARIADIC,
-        TS_NOTHING
+        nullptr
     );
     UNUSED(honest_param);  // !!! pass to Error_Arg_Type(?)
 

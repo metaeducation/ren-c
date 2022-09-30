@@ -576,7 +576,6 @@ inline static REBVAR *Force_Lib_Var(SymId id) {
 #include "sys-stack.h"
 
 #include "datatypes/sys-action.h"
-#include "datatypes/sys-typeset.h"  // needed for keys in contexts
 #include "datatypes/sys-context.h"  // needs actions for FRAME! contexts
 #include "datatypes/sys-error.h"
 
@@ -586,6 +585,9 @@ inline static REBVAR *Force_Lib_Var(SymId id) {
 
 #include "sys-patch.h"
 #include "sys-bind.h" // needs PUSH() and TOP from %sys-stack.h
+
+#include "datatypes/sys-typeset.h"  // needed for keys in contexts
+
 #include "datatypes/sys-token.h"
 #include "datatypes/sys-sequence.h"  // also needs PUSH()
 

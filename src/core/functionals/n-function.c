@@ -633,7 +633,7 @@ DECLARE_NATIVE(definitional_return)
             fail ("If RETURN: <none> is in a function spec, RETURN NONE only");
     }
     else {
-        if (not TYPE_CHECK(param, VAL_TYPE(v)))
+        if (not TYPE_CHECK(param, v))
             fail (Error_Bad_Return_Type(target_frame, VAL_TYPE(v)));
     }
 

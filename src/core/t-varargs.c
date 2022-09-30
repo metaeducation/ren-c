@@ -349,7 +349,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
             if (NOT_PARAM_FLAG(param, ISOTOPES_OKAY))
                 fail (Error_Bad_Isotope(out));
         }
-        else if (not TYPE_CHECK(param, VAL_TYPE(out))) {
+        else if (not TYPE_CHECK(param, out)) {
             //
             // !!! Array-based varargs only store the parameter list they are
             // stamped with, not the frame.  This is because storing non-reified

@@ -1212,14 +1212,8 @@ REBTYPE(Context)
             fail (Error_Bad_Refines_Raw());
 
         REBU64 types = 0;
-        if (REF(types)) {
-            if (IS_DATATYPE(ARG(types)))
-                types = FLAGIT_KIND(VAL_TYPE_KIND(ARG(types)));
-            else {
-                types |= VAL_TYPESET_LOW_BITS(ARG(types));
-                types |= cast(REBU64, VAL_TYPESET_HIGH_BITS(ARG(types))) << 32;
-            }
-        }
+        if (REF(types))
+            fail ("COPY/TYPES is currently disabled");
         else if (REF(deep))
             types = TS_STD_SERIES;
 

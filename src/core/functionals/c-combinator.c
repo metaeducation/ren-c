@@ -690,7 +690,7 @@ static bool Combinator_Param_Hook(
         else {
             if (
                 GET_PARAM_FLAG(param, SKIPPABLE)
-                and not TYPE_CHECK(param, VAL_TYPE(item))
+                and not TYPE_CHECK(param, item)
             ){
                 Init_Nulled(var);
             }

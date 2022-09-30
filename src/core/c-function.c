@@ -107,6 +107,18 @@ enum Reb_Spec_Mode {
 };
 
 
+static void Finalize_Param(Value(*) param) {
+    if (VAL_TYPESET_ARRAY(param) != nullptr)
+        return;
+
+    if (GET_PARAM_FLAG(param, REFINEMENT)) {  // implies no callsite argument
+        INIT_VAL_TYPESET_ARRAY(param, EMPTY_ARRAY);
+    }
+    else {  // implies anything is legal (that isn't an isotope)
+        INIT_VAL_TYPESET_ARRAY(param, VAL_TYPESET_ARRAY(Lib(ANY_VALUE_X)));
+    }
+}
+
 //
 //  Push_Paramlist_Quads_May_Fail: C
 //
@@ -182,7 +194,7 @@ void Push_Paramlist_Quads_May_Fail(
 
                 // Fake as if they said []
                 //
-                CLEAR_ALL_TYPESET_BITS(param);
+                assert(VAL_TYPESET_ARRAY(param) == nullptr);
                 continue;
             }
             else if (0 == CT_String(item, Root_Void_Tag, strict)) {
@@ -190,7 +202,7 @@ void Push_Paramlist_Quads_May_Fail(
                 // Fake as if they said [<void>] !!! make more efficient
                 //
                 StackValue(*) param = PARAM_SLOT(TOP_INDEX);
-                CLEAR_ALL_TYPESET_BITS(param);
+                assert(VAL_TYPESET_ARRAY(param) == nullptr);
                 SET_PARAM_FLAG(param, RETURN_VOID);
                 SET_PARAM_FLAG(param, ENDABLE);
                 continue;
@@ -205,6 +217,11 @@ void Push_Paramlist_Quads_May_Fail(
             if (Is_Word_Isotope_With_Id(KEY_SLOT(TOP_INDEX), SYM_KEY))
                 fail (Error_Bad_Func_Def_Raw(item));   // `func [[integer!]]`
 
+            REBSPC* derived = Derive_Specifier(VAL_SPECIFIER(spec), item);
+
+            bool was_refinement;
+
+          blockscope {
             StackValue(*) types = TYPES_SLOT(TOP_INDEX);
 
             if (IS_BLOCK(types))  // too many, `func [x [integer!] [blank!]]`
@@ -228,6 +245,9 @@ void Push_Paramlist_Quads_May_Fail(
             if (mode != SPEC_MODE_NORMAL)  // <local> <with>
                 fail (Error_Bad_Func_Def_Raw(item));
 
+            // Turn block into typeset for parameter at current index.
+            // Leaves VAL_TYPESET_SYM as-is.
+
             StackValue(*) param = PARAM_SLOT(TOP_INDEX);
 
             // By default parameters can be passed void, but if a block spec
@@ -238,7 +258,8 @@ void Push_Paramlist_Quads_May_Fail(
             if (Is_Specialized(cast(REBPAR*, cast(REBVAL*, param))))
                 continue;
 
-            REBSPC* derived = Derive_Specifier(VAL_SPECIFIER(spec), item);
+            was_refinement = GET_PARAM_FLAG(param, REFINEMENT);
+
             Init_Block(
                 types,
                 Copy_Array_At_Deep_Managed(
@@ -247,22 +268,23 @@ void Push_Paramlist_Quads_May_Fail(
                     derived
                 )
             );
-
-            // Turn block into typeset for parameter at current index.
-            // Leaves VAL_TYPESET_SYM as-is.
-
-            bool was_refinement = GET_PARAM_FLAG(param, REFINEMENT);
-            VAL_TYPESET_LOW_BITS(param) = 0;
-            VAL_TYPESET_HIGH_BITS(param) = 0;
+          }
 
             Cell(const*) types_tail;
             Cell(const*) types_at = VAL_ARRAY_AT(&types_tail, item);
-            Add_Typeset_Bits_Core(
-                cast_PAR(param),
+            Flags param_flags;
+            Array(*) a = Add_Typeset_Bits_Core(
+                &param_flags,
                 types_at,
                 types_tail,
                 derived
             );
+
+            StackValue(*) param = PARAM_SLOT(TOP_INDEX);
+            VAL_PARAM_FLAGS(param) |= param_flags;
+            assert(VAL_TYPESET_ARRAY(param) == nullptr);
+            INIT_VAL_TYPESET_ARRAY(param, a);
+
             if (was_refinement)
                 SET_PARAM_FLAG(param, REFINEMENT);
 
@@ -438,14 +460,14 @@ void Push_Paramlist_Quads_May_Fail(
                 param,
                 FLAG_PARAM_CLASS_BYTE(pclass)
                     | PARAM_FLAG_REFINEMENT,  // must preserve if type block
-                TS_NOTHING
+                nullptr
             );
         }
         else {
             Init_Param(
                 param,
                 FLAG_PARAM_CLASS_BYTE(pclass),
-                TS_VALUE | FLAGIT_KIND(REB_NULL)  // By default NULL is legal
+                nullptr
             );
 
             // We say they are vanishable by default, but clear this flag if
@@ -522,7 +544,7 @@ Array(*) Pop_Paramlist_With_Meta_May_Fail(
                 param,
                 FLAG_PARAM_CLASS_BYTE(PARAM_CLASS_RETURN)
                     | PARAM_FLAG_VANISHABLE,  // allows invisibility
-                TS_VALUE | FLAGIT_KIND(REB_NULL)  // all legal return types
+                nullptr
             );
 
             Init_Nulled(TYPES_SLOT(TOP_INDEX));
@@ -591,6 +613,7 @@ Array(*) Pop_Paramlist_With_Meta_May_Fail(
         Init_Key(key, VAL_WORD_SYMBOL(KEY_SLOT(return_stackindex)));
         ++key;
 
+        Finalize_Param(cast(REBVAL*, PARAM_SLOT(return_stackindex)));
         Copy_Cell(param, PARAM_SLOT(return_stackindex));
         ++param;
     }
@@ -600,6 +623,7 @@ Array(*) Pop_Paramlist_With_Meta_May_Fail(
         Symbol(const*) symbol = VAL_WORD_SYMBOL(KEY_SLOT(stackindex));
 
         StackValue(*) slot = PARAM_SLOT(stackindex);
+
         assert(Not_Cell_Flag(slot, VAR_MARKED_HIDDEN));  // use NOTE_SEALED
 
         // "Sealed" parameters do not count in the binding.  See AUGMENT for
@@ -617,6 +641,9 @@ Array(*) Pop_Paramlist_With_Meta_May_Fail(
             hidden = true;
         }
         else {
+            if (not Is_Specialized(cast(REBPAR*, cast(REBVAL*, slot))))
+                Finalize_Param(cast(REBVAL*, slot));
+
             if (not Try_Add_Binder_Index(&binder, symbol, 1020))
                 duplicate = symbol;
 
@@ -992,7 +1019,8 @@ Action(*) Make_Action(
 
     const REBPAR *first = First_Unspecialized_Param(nullptr, act);
     if (first) {
-        switch (VAL_PARAM_CLASS(first)) {
+        enum Reb_Param_Class pclass = VAL_PARAM_CLASS(first);
+        switch (pclass) {
           case PARAM_CLASS_RETURN:
           case PARAM_CLASS_OUTPUT:
           case PARAM_CLASS_NORMAL:

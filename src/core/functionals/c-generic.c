@@ -110,13 +110,19 @@ DECLARE_NATIVE(generic)
     // the generic actions they can handle.  So for the moment, we just say
     // that any custom type will have its action dispatcher run--and it's
     // up to the handler to give an error if there's a problem.  This works,
-    // but it limits discoverability of types in HELP.  A better answeer would
+    // but it limits discoverability of types in HELP.  A better answer would
     // be able to inventory which types had registered generic dispatchers
     // and list the appropriate types from HELP.
     //
     REBPAR *param = m_cast(REBPAR*, ACT_PARAMS_HEAD(generic));
     if (ACT_HAS_RETURN(generic)) {
-        TYPE_SET(param, REB_CUSTOM);
+        Init_Any_Word_Bound(
+            Alloc_Tail_Array(m_cast(Array(*), VAL_TYPESET_ARRAY(param))),
+            REB_WORD,
+            Canon(CUSTOM_X),
+            Lib_Context,
+            INDEX_ATTACHED
+        );
         ++param;
     }
     while (
@@ -125,7 +131,13 @@ DECLARE_NATIVE(generic)
     ){
         ++param;
     }
-    TYPE_SET(param, REB_CUSTOM);
+    Init_Any_Word_Bound(
+        Alloc_Tail_Array(m_cast(Array(*), VAL_TYPESET_ARRAY(param))),
+        REB_WORD,
+        Canon(CUSTOM_X),
+        Lib_Context,
+        INDEX_ATTACHED
+    );
 
     Set_Action_Flag(generic, IS_NATIVE);
 

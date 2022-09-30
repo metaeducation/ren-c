@@ -224,9 +224,7 @@ DECLARE_NATIVE(lambda)
         Init_Param(
             PARAM_SLOT(TOP_INDEX),
             pclass | param_flags,
-            (param_flags & PARAM_FLAG_REFINEMENT)
-                ? 0  // lambda has no types, so only parameterless refinements
-                : TS_VALUE | FLAGIT_KIND(REB_NULL)
+            nullptr
         );
 
         Init_Nulled(TYPES_SLOT(TOP_INDEX));  // types (not supported)

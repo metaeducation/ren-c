@@ -640,7 +640,7 @@ static Bounce Parse_One_Rule(
             return BOUNCE_UNHANDLED;
 
           case REB_TYPESET:
-            if (TYPE_CHECK(rule, VAL_TYPE(item)))
+            if (TYPE_CHECK(rule, item))
                 return Init_Integer(OUT, pos + 1);  // type was in typeset
             return BOUNCE_UNHANDLED;
 

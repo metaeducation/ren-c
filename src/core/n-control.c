@@ -675,7 +675,7 @@ DECLARE_NATIVE(match)
 
       case REB_TYPESET:
       test_is_typeset:
-        if (not TYPE_CHECK(test, VAL_TYPE(v)))
+        if (not TYPE_CHECK(test, v))
             return nullptr;
         break;
 

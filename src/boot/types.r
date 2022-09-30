@@ -116,7 +116,7 @@ datatype!   "type of datatype"
             [datatype    +       +]
 
 typeset!    "set of datatypes"
-            (CELL_MASK_NO_NODES)
+            (CELL_FLAG_FIRST_IS_NODE)
             []
             [typeset     +       +]
 

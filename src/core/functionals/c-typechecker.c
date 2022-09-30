@@ -116,7 +116,7 @@ Bounce Typeset_Checker_Dispatcher(Frame(*) frame_)
 
     assert(KEY_SYM(ACT_KEY(FRM_PHASE(f), 1)) == SYM_RETURN);  // skip arg 1
 
-    return Init_Logic(OUT, TYPE_CHECK(typeset, VAL_TYPE(FRM_ARG(f, 2))));
+    return Init_Logic(OUT, TYPE_CHECK(typeset, FRM_ARG(f, 2)));
 }
 
 

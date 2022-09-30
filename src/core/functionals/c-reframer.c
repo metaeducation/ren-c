@@ -399,7 +399,7 @@ DECLARE_NATIVE(reframer_p)
     // Make sure the parameter is able to accept FRAME! arguments (the type
     // checking will ultimately use the same slot we overwrite here!)
     //
-    if (not TYPE_CHECK(param, REB_FRAME)) {
+/*    if (not TYPE_CHECK(param, REB_FRAME)) {
         DECLARE_LOCAL (label_word);
         if (label)
             Init_Word(label_word, unwrap(label));
@@ -415,7 +415,7 @@ DECLARE_NATIVE(reframer_p)
             param_word
         );
         goto cleanup_binder;
-    }
+    } */
   }
 
   cleanup_binder: {

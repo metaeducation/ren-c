@@ -53,74 +53,65 @@
 #define mutable_VAL_TYPESET_PARAM_CLASS_BYTE(v) \
     mutable_FIRST_BYTE(EXTRA(Typeset, (v)).param_flags)
 
-#define VAL_TYPESET_LOW_BITS(v) \
-    PAYLOAD(Any, (v)).second.u32
+inline static Array(const*) VAL_TYPESET_ARRAY(noquote(Cell(const*)) v) {
+    assert(HEART_BYTE(v) == REB_TYPESET);
 
-#define VAL_TYPESET_HIGH_BITS(v) \
-    PAYLOAD(Any, (v)).first.u32
-
-inline static bool TYPE_CHECK(noquote(Cell(const*)) v, Byte n) {
-    assert(CELL_HEART(v) == REB_TYPESET);
-
-    if (n < 32)
-        return did (VAL_TYPESET_LOW_BITS(v) & FLAGIT_KIND(n));
-
-    assert(n < REB_MAX or n == REB_NULL);
-    return did (VAL_TYPESET_HIGH_BITS(v) & FLAGIT_KIND(n - 32));
+    Array(const*) a = ARR(VAL_NODE1(v));
+    if (a != nullptr and GET_SERIES_FLAG(a, INACCESSIBLE))
+        fail (Error_Series_Data_Freed_Raw());
+    return a;
 }
 
-inline static bool TYPE_CHECK_BITS(noquote(Cell(const*)) v, REBU64 bits) {
-    assert(CELL_HEART(v) == REB_TYPESET);
+#define INIT_VAL_TYPESET_ARRAY(v, a) \
+    INIT_VAL_NODE1((v), (a))
 
-    uint_fast32_t low = bits & cast(uint32_t, 0xFFFFFFFF);
-    if (low & VAL_TYPESET_LOW_BITS(v))
-        return true;
 
-    uint_fast32_t high = bits >> 32;
-    if (high & VAL_TYPESET_HIGH_BITS(v))
-        return true;
+inline static bool TYPE_CHECK(noquote(Cell(const*)) typeset, Cell(const*) v) {
+    assert(CELL_HEART(typeset) == REB_TYPESET);
+
+    Array(const*) a = VAL_TYPESET_ARRAY(typeset);  // values all specified
+    Value(const*) var = SPECIFIC(ARR_HEAD(a));
+    Value(const*) tail = SPECIFIC(ARR_TAIL(a));
+
+    for (; var != tail; ++var) {
+        Value(const*) item;
+        if (not IS_WORD(var))
+            item = var;
+        else
+            item = Lookup_Word_May_Fail(var, SPECIFIED);
+
+        if (IS_TYPESET(item)) {
+            if (TYPE_CHECK(item, v))  // !!! Should cycle protect
+                return true;
+            continue;
+        }
+
+        if (Is_Word_Isotope_With_Id(item, SYM_CUSTOM)) {
+            if (VAL_TYPE(v) == REB_CUSTOM)
+                return true;
+            continue;
+        }
+
+        if (Is_Nulled(item)) { // null looks up to NULL
+            if (Is_Nulled(v))
+                return true;
+            continue;
+        }
+
+        if (IS_META_WORD(item)) {  // "fake type constraint"
+            if (Matches_Fake_Type_Constraint(v, unwrap(VAL_WORD_ID(item))))
+                return true;
+            continue;
+        }
+
+        assert(IS_DATATYPE(item));
+        if (VAL_TYPE_KIND(item) == VAL_TYPE(v))
+            return true;
+    }
 
     return false;
 }
 
-inline static bool TYPE_CHECK_EXACT_BITS(
-    noquote(Cell(const*)) v,
-    REBU64 bits
-){
-    assert(CELL_HEART(v) == REB_TYPESET);
-
-    uint_fast32_t low = bits & cast(uint32_t, 0xFFFFFFFF);
-    if (low != VAL_TYPESET_LOW_BITS(v))
-        return false;
-
-    uint_fast32_t high = bits >> 32;
-    if (high != VAL_TYPESET_HIGH_BITS(v))
-        return false;
-
-    return true;
-}
-
-inline static void TYPE_SET(Cell(*) v, Byte n) {
-    assert(IS_TYPESET(v));
-
-    if (n < 32) {
-        VAL_TYPESET_LOW_BITS(v) |= FLAGIT_KIND(n);
-        return;
-    }
-    assert(n < REB_MAX or n == REB_NULL);
-    VAL_TYPESET_HIGH_BITS(v) |= FLAGIT_KIND(n - 32);
-}
-
-inline static void TYPE_CLEAR(Cell(*) v, Byte n) {
-    assert(IS_TYPESET(v));
-
-    if (n < 32) {
-        VAL_TYPESET_HIGH_BITS(v) &= ~FLAGIT_KIND(n);
-        return;
-    }
-    assert(n < REB_MAX or n == REB_NULL);
-    VAL_TYPESET_HIGH_BITS(v) &= ~FLAGIT_KIND(n - 32);
-}
 
 inline static bool EQUAL_TYPESET(
     noquote(Cell(const*)) v1,
@@ -129,19 +120,9 @@ inline static bool EQUAL_TYPESET(
     assert(CELL_HEART(v1) == REB_TYPESET);
     assert(CELL_HEART(v2) == REB_TYPESET);
 
-    if (VAL_TYPESET_LOW_BITS(v1) != VAL_TYPESET_LOW_BITS(v2))
-        return false;
-    if (VAL_TYPESET_HIGH_BITS(v1) != VAL_TYPESET_HIGH_BITS(v2))
-        return false;
-    return true;
+    fail ("Typeset equality test currently disabled");
 }
 
-inline static void CLEAR_ALL_TYPESET_BITS(Cell(*) v) {
-    assert(VAL_TYPE(v) == REB_TYPESET);
-
-    VAL_TYPESET_HIGH_BITS(v) = 0;
-    VAL_TYPESET_LOW_BITS(v) = 0;
-}
 
 // isotopic type matcher (e.g. used by FIND, SWITCH)
 
@@ -159,7 +140,7 @@ inline static bool Matcher_Matches(Cell(const*) matcher, Cell(const*) v) {
     }
     else {
         assert(HEART_BYTE(matcher) == REB_TYPESET);
-        if (TYPE_CHECK(matcher, VAL_TYPE(v)))
+        if (TYPE_CHECK(matcher, v))
             return true;
     }
     return false;
@@ -298,12 +279,13 @@ inline static bool Is_Specialized(const REBPAR *param) {
 
 // Parameter class should be PARAM_CLASS_0 unless typeset in func paramlist.
 
-inline static REBVAL *Init_Typeset_Core(Cell(*) out, REBU64 bits)
+inline static REBVAL *Init_Typeset_Core(Cell(*) out, Array(const*) array)
 {
     Reset_Unquoted_Header_Untracked(out, CELL_MASK_TYPESET);
+    if (array)
+        ASSERT_SERIES_MANAGED(array);
+    INIT_VAL_TYPESET_ARRAY(out, array);
     VAL_PARAM_FLAGS(out) = FLAG_PARAM_CLASS_BYTE(PARAM_CLASS_0);
-    VAL_TYPESET_LOW_BITS(out) = bits & cast(uint32_t, 0xFFFFFFFF);
-    VAL_TYPESET_HIGH_BITS(out) = bits >> 32;
     return cast(REBVAL*, out);
 }
 
@@ -314,13 +296,14 @@ inline static REBVAL *Init_Typeset_Core(Cell(*) out, REBU64 bits)
 inline static REBPAR *Init_Param_Core(
     Cell(*) out,
     Flags param_flags,
-    REBU64 bits
+    Array(const*) array
 ){
     Reset_Unquoted_Header_Untracked(out, CELL_MASK_TYPESET);
+    if (array)
+        ASSERT_SERIES_MANAGED(array);
 
     VAL_PARAM_FLAGS(out) = param_flags;
-    VAL_TYPESET_LOW_BITS(out) = bits & cast(uint32_t, 0xFFFFFFFF);
-    VAL_TYPESET_HIGH_BITS(out) = bits >> 32;
+    INIT_VAL_TYPESET_ARRAY(out, array);
 
     REBPAR *param = cast(REBPAR*, cast(REBVAL*, out));
     assert(VAL_PARAM_CLASS(param) != PARAM_CLASS_0);  // must set
@@ -388,7 +371,7 @@ inline static bool Typecheck_Including_Constraints(
         kind = VAL_TYPE(v);
     }
 
-    if (TYPE_CHECK(param, kind))
+    if (TYPE_CHECK(param, v))
         return true;
 
     if (kind == REB_VOID and GET_PARAM_FLAG(param, VANISHABLE))
@@ -417,10 +400,7 @@ inline static bool Typecheck_Including_Constraints(
 
 
 inline static bool Is_Typeset_Empty(noquote(Cell(const*)) param) {
-    assert(CELL_HEART(param) == REB_TYPESET);
-    REBU64 bits = VAL_TYPESET_LOW_BITS(param);
-    bits |= cast(REBU64, VAL_TYPESET_HIGH_BITS(param)) << 32;
-    return bits == 0;  // e.g. `[/refine]`
+    return ARR_LEN(VAL_TYPESET_ARRAY(param)) == 0;  // e.g. `[/refine]`
 }
 
 inline static bool Is_Blackhole(Cell(const*) v);  // forward decl

@@ -489,7 +489,7 @@ Bounce Evaluator_Executor(Frame(*) f)
     //
     if (Get_Action_Flag(enfixed, SKIPPABLE_FIRST)) {
         const REBPAR *first = First_Unspecialized_Param(nullptr, enfixed);
-        if (not TYPE_CHECK(first, kind_current))  // left's kind
+        if (not TYPE_CHECK(first, f_current))  // left's kind
             goto give_up_backward_quote_priority;
     }
 
