@@ -233,8 +233,8 @@ static void Startup_Lib(void)
     Set_Cell_Flag(Init_Nulled(force_Lib(NULL)), PROTECTED);
     assert(Is_Falsey(Lib(NULL)) and Is_Nulled(Lib(NULL)));
 
-    Set_Cell_Flag(Init_Quoted_Null(force_Lib(QUOTED_NULL)), PROTECTED);
-    assert(Is_Truthy(Lib(QUOTED_NULL)) and Is_Quoted_Null(Lib(QUOTED_NULL)));
+    Set_Cell_Flag(Quotify(Init_Nulled(force_Lib(QUOTED_NULL)), 1), PROTECTED);
+    assert(Is_Truthy(Lib(QUOTED_NULL)));
 
     Set_Cell_Flag(Init_Blank(force_Lib(BLANK)), PROTECTED);
     assert(Is_Truthy(Lib(BLANK)) and IS_BLANK(Lib(BLANK)));

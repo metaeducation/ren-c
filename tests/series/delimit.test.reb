@@ -91,11 +91,3 @@
     (null = delimit/head/tail "," [void])
     (null = delimit/head/tail "," void)
 ]
-
-; BLANK! goes through an isotopic state that can be intercepted by enfix
-[
-    (
-        leftq: enfix lambda ['b [blank!]] ["BLANK!"]
-        "HelloBLANK!World" = unspaced ["Hello" _ leftq "World"]
-    )
-]

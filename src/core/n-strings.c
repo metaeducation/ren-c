@@ -124,6 +124,14 @@ DECLARE_NATIVE(delimit)
     bool nothing = true;  // any elements seen so far have been null or blank
 
     for (; Not_Frame_At_End(f); Restart_Evaluator_Frame(f)) {
+        if (IS_BLANK(At_Frame(f))) {
+            Append_Codepoint(mo->series, ' ');
+            pending = false;
+            nothing = false;
+            Fetch_Next_Forget_Lookback(f);
+            continue;
+        }
+
         if (Eval_Step_Throws(OUT, f)) {
             Drop_Mold(mo);
             Drop_Frame(f);
@@ -133,21 +141,17 @@ DECLARE_NATIVE(delimit)
         if (Is_Void(OUT))  // spaced [maybe null], spaced [if false [<a>]], etc
             continue;  // vaporize
 
-        if (Is_Blank_Isotope(OUT))
-            Init_Blank(OUT);  // want to treat evaluated blanks as spaces here
-        else {
-            Decay_If_Isotope(OUT);  // spaced [match [logic!] false ...]
+        Decay_If_Isotope(OUT);  // spaced [match [logic!] false ...]
 
-            if (Is_Isotope(OUT))
-                return RAISE(Error_Bad_Isotope(OUT));
-        }
+        if (Is_Isotope(OUT))
+            return RAISE(Error_Bad_Isotope(OUT));
 
         if (Is_Nulled(OUT))  // catches bugs in practice, see [1]
             return RAISE(Error_Need_Non_Null_Raw());
 
         nothing = false;
 
-        if (IS_BLANK(OUT)) {  // BLANK! acts as space (could have been isotope)
+        if (IS_BLANK(OUT)) {  // BLANK! acts as space
             Append_Codepoint(mo->series, ' ');
             pending = false;
         }

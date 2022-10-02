@@ -218,9 +218,6 @@ DECLARE_NATIVE(the_p)
     REBVAL *v = ARG(value);
 
     if (IS_QUASI(v)) {
-        if (HEART_BYTE(v) == REB_NULL)  // e.g. VOID
-            fail ("Trying `@ ~`, would be void, explain why you need this!");
-
         if (HEART_BYTE(v) == REB_BLANK)
             Init_Nulled(OUT);  // for `rebElide("@", nullptr, "else [...]");`
         else {
