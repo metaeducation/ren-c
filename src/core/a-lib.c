@@ -465,7 +465,7 @@ REBVAL *RL_rebVoid(void)
     ENTER_API;
 
     REBVAL* v = Alloc_Value();  // just has NODE_FLAG_ROOT, counts as "fresh"
-    Finalize_Void(v);
+    Init_Void(v);
     return v;
 }
 
@@ -2037,7 +2037,7 @@ const REBINS *RL_rebQUOTING(const void *p)
     ENTER_API;
 
     if (p == nullptr)
-        return Lib(QUOTED_NULL);  // precooked quoted null
+        return Lib(QUASI_BLANK);  // precooked meta null
 
     Array(*) a;
 
@@ -2051,7 +2051,7 @@ const REBINS *RL_rebQUOTING(const void *p)
       case DETECTED_AS_CELL: {
         Value(const*) at = cast(Value(const*), p);
         if (Is_Nulled(at))
-            return Lib(QUOTED_NULL);  // don't want to make blank via meta
+            return Lib(QUASI_BLANK);  // don't want to make blank via meta
 
         Value(*) v = Copy_Cell(Alloc_Value(), at);
         a = Singular_From_Cell(v);

@@ -550,9 +550,9 @@ REBINT Compare_Modify_Values(Cell(*) a, Cell(*) b, bool strict)
 
     enum Reb_Kind kind = VAL_TYPE(a);
 
-    if (kind == REB_NULL) {
-        assert(VAL_TYPE(b) == REB_NULL);
-        return 0;  // nulls always equal
+    if (kind == REB_VOID) {
+        assert(VAL_TYPE(b) == REB_VOID);
+        return 0;  // voids always equal
     }
 
     // At this point, the types should match...e.g. be able to be passed to

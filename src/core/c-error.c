@@ -1290,7 +1290,7 @@ Context(*) Error_Arg_Type(
         // it's confusing to say that the original function didn't take that
         // type--it was on its interface.  A different message is needed.
         //
-        if (actual == REB_NULL)
+        if (actual == REB_VOID or actual == REB_NULL)
             return Error_Phase_No_Arg_Raw(label, param_word);
 
         return Error_Phase_Bad_Arg_Type_Raw(
@@ -1300,7 +1300,7 @@ Context(*) Error_Arg_Type(
         );
     }
 
-    if (actual == REB_NULL)  // no Datatype_From_Kind()
+    if (actual == REB_VOID or actual == REB_NULL)  // no Datatype_From_Kind()
         return Error_Arg_Required_Raw(label, param_word);
 
     return Error_Expect_Arg_Raw(

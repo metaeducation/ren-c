@@ -431,7 +431,7 @@ void Push_Paramlist_Quads_May_Fail(
         // But Is_Param_Endable() indicates <end>.
 
         if (local) {
-            Finalize_Void(param);
+            Finalize_Nihil(param);
         }
         else if (refinement) {
             Init_Param(

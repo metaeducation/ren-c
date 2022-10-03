@@ -303,8 +303,10 @@ inline static Cell(const*) CELL_TO_VAL(noquote(Cell(const*)) cell)
 inline static enum Reb_Kind VAL_TYPE_UNCHECKED(Cell(const*) v) {
     switch (QUOTE_BYTE_UNCHECKED(v)) {
       case ISOTOPE_0:
-        if (HEART_BYTE_UNCHECKED(v) == REB_NULL)
-            return REB_VOID;
+        if (HEART_BYTE_UNCHECKED(v) == REB_BLANK)
+            return REB_NULL;
+        if (HEART_BYTE_UNCHECKED(v) == REB_VOID)
+            return REB_NIHIL;
         return REB_ISOTOPE;
 
       case UNQUOTED_1:

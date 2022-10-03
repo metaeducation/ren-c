@@ -26,14 +26,14 @@
 
 
 //
-//  MF_Null: C
+//  MF_Void: C
 //
-// Prior to generalized quoting, NULL did not have a rendering function and
+// Prior to generalized quoting, VOID did not have a rendering function and
 // it was considered an error to try and mold them.  When quoting arrived,
-// escaped NULL was renderable as its ticks, followed by nothing.  This is
+// escaped VOID was renderable as its ticks, followed by nothing.  This is
 // the "nothing" part, saving on a special-case for that.
 //
-void MF_Null(REB_MOLD *mo, noquote(Cell(const*)) v, bool form)
+void MF_Void(REB_MOLD *mo, noquote(Cell(const*)) v, bool form)
 {
     UNUSED(mo);
     UNUSED(form);

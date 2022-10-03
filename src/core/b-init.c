@@ -64,7 +64,7 @@
 //
 static void Check_Basics(void)
 {
-    STATIC_ASSERT(REB_NULL == 0);  // hard rule--optimize on it where desired
+    STATIC_ASSERT(REB_VOID == 0);  // hard rule--optimize on it where desired
 
     //=//// CHECK CELL SIZE ///////////////////////////////////////////////=//
 
@@ -233,8 +233,8 @@ static void Startup_Lib(void)
     Set_Cell_Flag(Init_Nulled(force_Lib(NULL)), PROTECTED);
     assert(Is_Falsey(Lib(NULL)) and Is_Nulled(Lib(NULL)));
 
-    Set_Cell_Flag(Quotify(Init_Nulled(force_Lib(QUOTED_NULL)), 1), PROTECTED);
-    assert(Is_Truthy(Lib(QUOTED_NULL)));
+    Set_Cell_Flag(Init_Quoted_Void(force_Lib(QUOTED_VOID)), PROTECTED);
+    assert(Is_Truthy(Lib(QUOTED_VOID)));
 
     Set_Cell_Flag(Init_Blank(force_Lib(BLANK)), PROTECTED);
     assert(Is_Truthy(Lib(BLANK)) and IS_BLANK(Lib(BLANK)));
@@ -248,8 +248,8 @@ static void Startup_Lib(void)
         and Is_Quasi_Blank(Lib(QUASI_BLANK))
     );
 
-    Set_Cell_Flag(Init_Meta_Of_Void(force_Lib(QUASI_NULL)), PROTECTED);
-    assert(Is_Truthy(Lib(QUASI_NULL)) and Is_Meta_Of_Void(Lib(QUASI_NULL)));
+    Set_Cell_Flag(Init_Quasi_Void(force_Lib(QUASI_VOID)), PROTECTED);
+    assert(Is_Truthy(Lib(QUASI_VOID)) and Is_Meta_Of_Nihil(Lib(QUASI_VOID)));
 
     // !!! Rebol is firm on TRUE and FALSE being WORD!s, as opposed to the
     // literal forms of logical true and false.  Not only does this frequently
@@ -450,6 +450,10 @@ static void Init_Root_Vars(void)
     // Simple isolated values, not available via lib, e.g. not Lib(TRUE) or
     // Lib(BLANK)...
 
+    Finalize_Nihil(&PG_Nihil_Cell);
+    Set_Cell_Flag(&PG_Nihil_Cell, PROTECTED);  // prevent overwriting
+    assert(Is_Nihil(NIHIL_CELL));
+
     Finalize_Void(&PG_Void_Cell);
     Set_Cell_Flag(&PG_Void_Cell, PROTECTED);  // prevent overwriting
     assert(Is_Void(VOID_CELL));
@@ -523,6 +527,7 @@ static void Init_Root_Vars(void)
 
 static void Shutdown_Root_Vars(void)
 {
+    Erase_Cell(&PG_Nihil_Cell);
     Erase_Cell(&PG_Void_Cell);
 
     Erase_Cell(&PG_R_Thrown);

@@ -82,7 +82,7 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
     // still can speed things up to go in order.
     //
     switch (heart) {
-      case REB_NULL:
+      case REB_VOID:
       case REB_BLANK:
       case REB_COMMA:
         break;

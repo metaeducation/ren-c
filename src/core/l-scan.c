@@ -2087,11 +2087,11 @@ Bounce Scanner_Executor(Frame(*) f) {
             or *ep == ';'
         ){
             // If we have something like ['''] there won't be another token
-            // push coming along to apply the quotes to, so quote a null.
+            // push coming along to apply the quotes to, so quote a void.
             // This also applies to comments.
             //
             assert(level->quotes_pending == 0);
-            Quotify(Init_Nulled(PUSH()), len);
+            Quotify(Init_Void(PUSH()), len);
         }
         else
             level->quotes_pending = len;  // apply quoting to next token
@@ -2118,7 +2118,7 @@ Bounce Scanner_Executor(Frame(*) f) {
             // push coming along to apply the quotes to, so quasi a null.
             // This also applies to comments.
             //
-            Init_Meta_Of_Void(PUSH());
+            Init_Quasi_Void(PUSH());
             break;
         }
         else

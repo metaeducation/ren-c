@@ -12,12 +12,12 @@
 
 ; No-op rule of empty block should always match.
 [
-    ('~[~]~ = ^ parse "" [])
-    ('~[~]~ = ^ parse "" [[]])
-    ('~[~]~ = ^ parse "" [[[]]])
+    ('~[']~ = ^ parse "" [])
+    ('~[']~ = ^ parse "" [[]])
+    ('~[']~ = ^ parse "" [[[]]])
 
-    ('~[~]~ = ^ parse [] [])
-    ('~[~]~ = ^ parse [] [[[]]])
+    ('~[']~ = ^ parse [] [])
+    ('~[']~ = ^ parse [] [[[]]])
     (null = parse [x] [])
     (null = parse [x] [[[]]])
     ('x = parse [x] [[] 'x []])

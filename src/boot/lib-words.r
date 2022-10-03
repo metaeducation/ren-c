@@ -35,8 +35,8 @@ yes
 no
 
 null
-quoted-null
-quasi-null
+quoted-void
+quasi-void
 blank
 quasi-blank
 blackhole

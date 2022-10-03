@@ -100,7 +100,7 @@ inline static bool TYPE_CHECK(noquote(Cell(const*)) v, Byte n) {
     if (n < 32)
         return did (VAL_TYPESET_LOW_BITS(v) & FLAGIT_KIND(n));
 
-    assert(n < REB_MAX);
+    assert(n < REB_MAX or n == REB_NULL);
     return did (VAL_TYPESET_HIGH_BITS(v) & FLAGIT_KIND(n - 32));
 }
 
@@ -142,7 +142,7 @@ inline static void TYPE_SET(Cell(*) v, Byte n) {
         VAL_TYPESET_LOW_BITS(v) |= FLAGIT_KIND(n);
         return;
     }
-    assert(n < REB_MAX);
+    assert(n < REB_MAX or n == REB_NULL);
     VAL_TYPESET_HIGH_BITS(v) |= FLAGIT_KIND(n - 32);
 }
 
@@ -153,7 +153,7 @@ inline static void TYPE_CLEAR(Cell(*) v, Byte n) {
         VAL_TYPESET_HIGH_BITS(v) &= ~FLAGIT_KIND(n);
         return;
     }
-    assert(n < REB_MAX);
+    assert(n < REB_MAX or n == REB_NULL);
     VAL_TYPESET_HIGH_BITS(v) &= ~FLAGIT_KIND(n - 32);
 }
 
@@ -432,6 +432,9 @@ inline static bool Typecheck_Including_Constraints(
     }
 
     if (TYPE_CHECK(param, kind))
+        return true;
+
+    if (kind == REB_VOID and GET_PARAM_FLAG(param, VANISHABLE))
         return true;
 
     // !!! Predicates check more complex properties than just the kind, and

@@ -8,7 +8,7 @@
 [
     (void? any [])
 
-    ~bad-isotope~ !! (if any [] [<safety>])
+    ~arg-required~ !! (if any [] [<safety>])
 
     (
         x: <overwritten>

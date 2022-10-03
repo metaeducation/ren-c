@@ -451,8 +451,8 @@ REBINT Cmp_Value(Cell(const*) sval, Cell(const*) tval, bool strict)
         /* return VAL_LIBRARY(s) - VAL_LIBRARY(t); */
         fail ("Temporary disablement of CUSTOM! comparisons");
 
-      case REB_NULL: // !!! should nulls be allowed at this level?
-        return 0;  // nulls always equal to each other
+      case REB_VOID: // !!! should voids be allowed at this level?
+        return 0;  // voids always equal to each other
 
       case REB_BLANK:
         assert(CT_Blank(s, t, strict) == 0);

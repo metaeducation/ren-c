@@ -36,22 +36,25 @@
 //   purposes, it may be desirable to add additional info to the cell.
 //
 
+#define NIHIL_CELL \
+    c_cast(const REBVAL*, &PG_Nihil_Cell)
+
 #define VOID_CELL \
     c_cast(const REBVAL*, &PG_Void_Cell)
 
 
-inline static REBVAL *Prep_Void_Untracked(Cell(*) out) {
+inline static REBVAL *Prep_Nihil_Untracked(Cell(*) out) {
     ALIGN_CHECK_CELL_EVIL_MACRO(out);
     out->header.bits = (
         NODE_FLAG_NODE | NODE_FLAG_CELL
-            | FLAG_HEART_BYTE(REB_NULL) | FLAG_QUOTE_BYTE(ISOTOPE_0)
+            | FLAG_HEART_BYTE(REB_VOID) | FLAG_QUOTE_BYTE(ISOTOPE_0)
             | CELL_MASK_NO_NODES
     );
     return cast(REBVAL*, out);
 }
 
-#define Prep_Void(out) \
-    TRACK(Prep_Void_Untracked(out))
+#define Prep_Nihil(out) \
+    TRACK(Prep_Nihil_Untracked(out))
 
 
 // For reasons of both efficiency and semantics, initializing voids is only
@@ -70,6 +73,39 @@ inline static REBVAL *Prep_Void_Untracked(Cell(*) out) {
 // being overwritten to become unset, e.g. `x: 10, x: ~` should not leave
 // the 10 in the variable cell...but overwrite it with void.)
 //
+inline static Value(*) Finalize_Nihil_Untracked(Value(*) out) {
+    ASSERT_CELL_FRESH_EVIL_MACRO(out);  // can bitwise OR, need node+cell flags
+    assert(
+        HEART_BYTE_UNCHECKED(out) == 0
+        and QUOTE_BYTE_UNCHECKED(out) == 0
+    );
+    out->header.bits |= (
+        NODE_FLAG_NODE | NODE_FLAG_CELL  // might already be set, might not...
+            /* | FLAG_HEART_BYTE(REB_VOID) */  // already 0
+            /* | FLAG_QUOTE_BYTE(ISOTOPE_0) */  // already 0
+    );
+    return out;
+}
+
+#define Finalize_Nihil(out) \
+    TRACK(Finalize_Nihil_Untracked(out))
+
+
+
+inline static bool Is_Nihil(Cell(const*) v) {
+    return HEART_BYTE(v) == REB_VOID and QUOTE_BYTE(v) == ISOTOPE_0;
+}
+
+#define Init_Nihil_Untracked(out) \
+    Init_Nothing_Untracked((out), REB_VOID, ISOTOPE_0)
+
+#define Init_Nihil(out) \
+    TRACK(Init_Nihil_Untracked(out))
+
+
+
+
+
 inline static Value(*) Finalize_Void_Untracked(Value(*) out) {
     ASSERT_CELL_FRESH_EVIL_MACRO(out);  // can bitwise OR, need node+cell flags
     assert(
@@ -78,8 +114,8 @@ inline static Value(*) Finalize_Void_Untracked(Value(*) out) {
     );
     out->header.bits |= (
         NODE_FLAG_NODE | NODE_FLAG_CELL  // might already be set, might not...
-            /* | FLAG_HEART_BYTE(REB_NULL) */  // already 0
-            /* | FLAG_QUOTE_BYTE(ISOTOPE_0) */  // already 0
+            /* | FLAG_HEART_BYTE(REB_VOID) */  // already 0
+            | FLAG_QUOTE_BYTE(UNQUOTED_1)
     );
     return out;
 }
@@ -87,17 +123,27 @@ inline static Value(*) Finalize_Void_Untracked(Value(*) out) {
 #define Finalize_Void(out) \
     TRACK(Finalize_Void_Untracked(out))
 
-
 inline static bool Is_Void(Cell(const*) v) {
-    return HEART_BYTE(v) == REB_NULL and QUOTE_BYTE(v) == ISOTOPE_0;
+    return HEART_BYTE(v) == REB_VOID and QUOTE_BYTE(v) == UNQUOTED_1;
 }
 
 #define Init_Void_Untracked(out) \
-    Init_Nothing_Untracked((out), REB_NULL, ISOTOPE_0)
+    Init_Nothing_Untracked((out), REB_VOID, UNQUOTED_1)
 
 #define Init_Void(out) \
     TRACK(Init_Void_Untracked(out))
 
+#define Init_Quoted_Void(out) \
+    TRACK(Init_Nothing_Untracked((out), REB_VOID, ONEQUOTE_3))
+
+inline static bool Is_Quoted_Void(Cell(const*) v)
+  { return QUOTE_BYTE(v) == ONEQUOTE_3 and HEART_BYTE(v) == REB_VOID; }
+
+#define Init_Quasi_Void(out) \
+    TRACK(Init_Nothing_Untracked((out), REB_VOID, QUASI_2))
+
+inline static bool Is_Quasi_Void(Cell(const*) v)
+  { return QUOTE_BYTE(v) == QUASI_2 and HEART_BYTE(v) == REB_VOID; }
 
 
 // The `~` isotope is chosen in particular by the system to represent variables
@@ -110,8 +156,12 @@ inline static bool Is_Void(Cell(const*) v) {
 //
 //  * Quick way to unset variables, simply `(var: ~)`
 
-#define Init_Meta_Of_Void(out)       Init_Quasi_Void(out)
-#define Is_Meta_Of_Void(v)           Is_Quasi_Void(v)
+#define Init_Meta_Of_Void(out)       Init_Quoted_Void(out)
+#define Is_Meta_Of_Void(v)           Is_Quoted_Void(v)
+
+
+#define Init_Meta_Of_Nihil(out)      Init_Quasi_Void(out)
+#define Is_Meta_Of_Nihil(v)          Is_Quasi_Void(v)
 
 
 //=//// "HEAVY VOIDS" (BLOCK! Isotope Pack with `~` in it) ////////////////=//

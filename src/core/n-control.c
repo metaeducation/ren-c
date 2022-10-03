@@ -853,10 +853,7 @@ DECLARE_NATIVE(all)
 
 } process_condition: {  //////////////////////////////////////////////////////
 
-    if (Is_Isotope(condition))
-        fail (Error_Bad_Isotope(condition));
-
-    if (Is_Falsey(condition)) {
+    if (Is_Falsey(condition)) {  // errors on most isotopes (but not null)
         Drop_Frame(SUBFRAME);
         return nullptr;
     }
@@ -977,10 +974,7 @@ DECLARE_NATIVE(any)
 
 } process_condition: {  //////////////////////////////////////////////////////
 
-    if (Is_Isotope(condition))
-        fail (Error_Bad_Isotope(condition));
-
-    if (Is_Truthy(condition)) {
+    if (Is_Truthy(condition)) {  // errors on most isotopes (but not null)
         Drop_Frame(SUBFRAME);
         return BRANCHED(OUT);  // successful ANY returns the value
     }
@@ -1137,10 +1131,7 @@ DECLARE_NATIVE(case)
 
 } processed_result_in_spare: {  //////////////////////////////////////////////
 
-    if (Is_Isotope(SPARE))
-        fail (Error_Bad_Isotope(SPARE));
-
-    bool matched = Is_Truthy(SPARE);
+    bool matched = Is_Truthy(SPARE);  // errors on most isotopes
 
     Cell(const*) branch = Lookback_While_Fetching_Next(SUBFRAME);
 
@@ -1328,9 +1319,6 @@ DECLARE_NATIVE(switch)
             if (not Matcher_Matches(SPARE, left))
                 goto next_switch_step;
         }
-        else if (Is_Isotope(SPARE)) {
-            fail (Error_Bad_Isotope(SPARE));
-        }
         else {
             const bool strict = false;
             Copy_Cell(scratch, left);
@@ -1453,12 +1441,8 @@ DECLARE_NATIVE(default)
         return CONTINUE(SPARE, predicate, OUT);
     }
 
-    if (Is_Isotope(OUT)) {
-        if (not Is_Void(OUT))
-            return OUT;  // consider it a "value", see [2]
-    }
-    else if (not Is_Nulled(OUT))  // also see [2]
-        return OUT;
+    if (not Is_Nihil(OUT) and not Is_Nulled(OUT))
+        return OUT;  // consider it a "value", see [2]
 
     STATE = ST_DEFAULT_EVALUATING_BRANCH;
     return CONTINUE(SPARE, branch, OUT);

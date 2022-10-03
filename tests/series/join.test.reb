@@ -24,12 +24,12 @@
 
 (':a/b = join get-path! [_ _ a / b _ _])
 
-; BLANK! is not a no-op, because you still get a copy made for ANY-SERIES!
+; VOID is not a no-op, because you still get a copy made for ANY-SERIES!
 (
     input: "abc"
     output: ~
     did all [
-        input = output: join input _
+        input = output: join input void
         not same? input output
     ]
 )

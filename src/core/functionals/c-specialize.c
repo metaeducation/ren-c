@@ -217,7 +217,7 @@ Context(*) Make_Context_For_Action(
         action,
         lowest_ordered_stackindex,
         binder,
-        VOID_CELL
+        NIHIL_CELL
     );
 
     Manage_Series(CTX_VARLIST(exemplar));  // !!! was needed before, review
@@ -263,7 +263,7 @@ bool Specialize_Action_Throws(
         def ?
             &binder
             : cast(struct Reb_Binder*, nullptr),  // C++98 ambiguous w/o cast
-        VOID_CELL
+        NIHIL_CELL
     );
     Manage_Series(CTX_VARLIST(exemplar)); // destined to be managed, guarded
 
@@ -323,7 +323,7 @@ bool Specialize_Action_Throws(
             continue;
 
         if (GET_PARAM_FLAG(param, REFINEMENT)) {
-            if (Is_Void(arg)) {
+            if (Is_Nihil(arg)) {
                 //
                 // Undefined refinements not explicitly marked hidden are
                 // still candidates for usage at the callsite.
@@ -337,14 +337,14 @@ bool Specialize_Action_Throws(
 
         // It's an argument, either a normal one or a refinement arg.
 
-        if (Is_Void(arg))
+        if (Is_Nihil(arg))
             goto unspecialized_arg;
 
         goto specialized_arg_with_check;
 
       unspecialized_arg:
 
-        assert(Is_Void(arg));
+        assert(Is_Nihil(arg));
         assert(IS_TYPESET(param));
         Copy_Cell(arg, param);
         continue;
@@ -746,7 +746,7 @@ Action(*) Alloc_Action_From_Exemplar(
         // https://forum.rebol.info/t/default-values-and-make-frame/1412
         // https://forum.rebol.info/t/1413
         //
-        if (Is_Void(arg)) {
+        if (Is_Nihil(arg)) {
             assert(IS_TYPESET(param));
             Copy_Cell(arg, param);
             continue;

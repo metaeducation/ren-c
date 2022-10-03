@@ -158,14 +158,14 @@ e-symbols: make-emitter "Symbol ID (SymId) Enumeration Type and Values" (
 syms-words: copy []
 syms-cscape: copy []
 
-; It's important for clarity and optimization that REB_NULL is 0 (with the
-; isotope byte being 0, empty memory is interpreted as isotopic NULL, e.g.
-; VOID, and that's one of many good reasons for it).
+; It's important for clarity and optimization that REB_VOID is 0 (with the
+; isotope byte being 0, empty memory is interpreted as isotopic VOID, e.g.
+; state of an unset variable, and that's one of many good reasons for it).
 ;
 ; But SYM_0 does not line up with that; it is distinctly used for symbols that
 ; do not have baked-in ID numbers.
 ;
-; There's no datatype for NULL anyway, so having NULL line up with Lib(0) being
+; There's no datatype for VOID anyway, so having VOID line up with Lib(0) being
 ; its datatype isn't important.  It's just a random later symbol number.
 ;
 sym-n: 1  ; counts up as symbols are added
@@ -208,7 +208,7 @@ for-each-datatype: func [
     name* isoname* description* typesets* class* make* mold* heart* cellmask*
     completed* running*
 ][
-    heart*: 1  ; NULL is 0, and is not in the type table
+    heart*: 1  ; VOID is 0, and is not in the type table
     parse2 type-table [some [not end
         opt some tag!  ; <TYPE!> or </TYPE!> used by FOR-EACH-TYPERANGE
 
@@ -224,7 +224,10 @@ for-each-datatype: func [
         ] (
             name*: to text! name*
             set var make object! [
-                name!: if #"!" = last name* [to word! name*]
+                name!: all [
+                    #"!" = last name*
+                    to word! name*
+                ]
                 name: (
                     if #"!" = last name* [take/last name*]
                     name*
@@ -275,7 +278,7 @@ for-each-typerange: func [
     stack: copy []
     types*: _
 
-    heart*: 1  ; NULL is 0, and is not in the type table
+    heart*: 1  ; VOID is 0, and is not in the type table
     while [true] [  ; need to be in loop for BREAK to work
         parse2 type-table [some [
             opt some [set name* tag! (
@@ -339,7 +342,7 @@ rebs: collect [
     for-each-datatype t [
         assert [sym-n == t/heart]  ; SYM_XXX should equal REB_XXX value
 
-        if not set? 't/name! [
+        if not t/name! [
             add-sym as word! t/name
         ] else [
             add-sym t/name!
@@ -366,12 +369,13 @@ e-types/emit 'rebs {
 
         /*** TYPES AND INTERNALS GENERATED FROM %TYPES.R ***/
 
-        REB_NULL = 0,  /* system relies on specific 0 heart for NULL+VOID */
+        REB_VOID = 0,  /* system relies on specific 0 heart for VOID */
         $[Rebs],
         REB_MAX,  /* one past valid types */
 
+        REB_NULL,  /* similar--but not conflated with isotopes */
         REB_ISOTOPE,  /* not a "type", but can answer VAL_TYPE() */
-        REB_VOID,  /* similar--but not conflated with isotopes */
+        REB_NIHIL,
 
         /*
         * Invalid type bytes can currently be used for other purposes.  (If
@@ -398,7 +402,7 @@ e-types/emit {
 }
 e-types/emit newline
 
-boot-types: copy []  ; includes internal types like REB_NULL (but not END)
+boot-types: copy []  ; includes internal types like REB_VOID (but not END)
 
 for-each-datatype t [
     if not empty? t/cellmask [
@@ -409,7 +413,7 @@ for-each-datatype t [
         e-types/emit newline
     ]
 
-    if unset? 't/name! [  ; internal type
+    if not t/name! [  ; internal type
         append boot-types as word! t/name
         continue
     ]
@@ -424,9 +428,9 @@ for-each-datatype t [
 ]
 
 nontypes: collect [
-    keep cscape {FLAGIT_KIND(REB_NULL)}
+    keep cscape {FLAGIT_KIND(REB_VOID)}
     for-each-datatype t [
-        if unset? 't/name! [
+        if not t/name! [
             keep cscape/with {FLAGIT_KIND(REB_${AS TEXT! T/NAME})} 't
         ]
     ]
@@ -440,9 +444,6 @@ value-flagnots: compose [
 e-types/emit 'value-flagnots {
     #define TS_VALUE \
         ($<Delimit "&~" Value-Flagnots>)
-
-    #define ANY_VALUE(v) \
-        (VAL_TYPE(v) != REB_NULL)
 }
 
 typeset-sets: copy []
@@ -572,12 +573,12 @@ hookname: enfixed func [
 
 hook-list: collect [
     keep cscape {
-        {  /* NULL = 0 */
+        {  /* VOID = 0 */
             cast(CFUNC*, nullptr),  /* generic */
             cast(CFUNC*, nullptr),  /* compare */
             cast(CFUNC*, nullptr),  /* make */
             cast(CFUNC*, nullptr),  /* to */
-            cast(CFUNC*, MF_Null),  /* mold */
+            cast(CFUNC*, MF_Void),  /* mold */
             nullptr
         }
     }

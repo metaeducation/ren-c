@@ -644,7 +644,7 @@ inline static option(REBSER*) Get_Word_Container(
             ){
                 *index_out = INDEX_ATTACHED;
                 return Singular_From_Cell(
-                    Finalize_Void(Append_Context(CTX(binding), symbol))
+                    Finalize_Nihil(Append_Context(CTX(binding), symbol))
                 );
             }
 
@@ -1198,7 +1198,7 @@ inline static REBSPC *Derive_Specifier_Core(
         ){
             return old;
         }
-        
+
         // If the specifier is only for providing resolutions of variables in
         // functions, an array specified by a frame isn't going to need that.
         // This is kind of like dealing with something specified.

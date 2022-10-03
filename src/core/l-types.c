@@ -295,10 +295,13 @@ Bounce Reflect_Core(Frame(*) frame_)
         return Init_Builtin_Datatype(OUT, VAL_TYPE(v));
 
       case SYM_TYPE: // higher order-answer, may build structured result
-        if (heart == REB_NULL)  // not a real "datatype"
-            Init_Nulled(OUT);  // `null = type of null`
-        else if (heart == REB_CUSTOM)
+        if (Is_Nulled(v))  // not a real "datatype"
+            return nullptr;  // `null = type of null`
+
+        if (heart == REB_CUSTOM)
             Init_Custom_Datatype(OUT, CELL_CUSTOM_TYPE(v));
+        else if (heart == REB_VOID)
+            Init_Word(OUT, Canon(VOID));  // !!! hack e.g. (type of the ')
         else
             Init_Builtin_Datatype(OUT, heart);
 

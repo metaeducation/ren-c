@@ -91,7 +91,7 @@ trap [
 
     export transcode: enclose (augment :transcode [/next [word!]]) func [f] [
         let next: f.next  ; note: contention with NEXT series verb
-        f.one: if next [make issue! 0]  ; # is invalid issue in bootstrap
+        f.one: all [next make issue! 0]  ; # is invalid issue in bootstrap
         let result: ^ (do f except e -> [return raise e])
         if result = null' [return null]
         set maybe next unmeta second unquasi result

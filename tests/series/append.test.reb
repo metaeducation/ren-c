@@ -139,7 +139,7 @@
 
     ([a b c '[3 d e]] = append [a b c] ^ compose [(1 + 2) d e])
 
-    ([a b c '] = append [a b c] quote null)
+    ([a b c '] = append [a b c] quote void)
 
     (
         [a b c _] = append [a b c] ^(null)
@@ -190,7 +190,7 @@
 ; leads to a useful interaction with blocks, while retaining the reactivity
 ; of a true branch product with THEN, and false giving void runs ELSE.
 [
-    ('~[~]~ = ^ if true [])
+    ('~[']~ = ^ if true [])
     (void? if false [<a>])
     ([a b c] = append [a b c] if true [])
     ([a b c] = append [a b c] if false [<a>])

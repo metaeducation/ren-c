@@ -183,7 +183,7 @@ DECLARE_NATIVE(delimit)
             }
         }
         else {
-            if (pending)
+            if (pending and REF(delimiter))
                 Form_Value(mo, delimiter);
 
             if (IS_QUOTED(OUT)) {

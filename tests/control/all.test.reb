@@ -8,13 +8,13 @@
     (void? all [])
     (void' = ^ all [])
 
-    ~bad-isotope~ !! (if all [] [<safety>])
+    ~arg-required~ !! (if all [] [<safety>])
 
     (
         x: <overwritten>
         did all [
             void? x: all []
-            unset? 'x
+            void? :x
         ]
     )
     (void? if did all [] [<did>])

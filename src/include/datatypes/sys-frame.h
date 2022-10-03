@@ -761,7 +761,7 @@ inline static bool Pushed_Continuation(
             if (Is_Specialized(param))
                 Copy_Cell(arg, param);
             else
-                Finalize_Void(arg);
+                Finalize_Nihil(arg);
         }
 
         arg = First_Unspecialized_Arg(&param, f);
@@ -785,7 +785,7 @@ inline static bool Pushed_Continuation(
             if (Is_Specialized(param))
                 Copy_Cell(arg, param);
             else
-                Finalize_Void(arg);
+                Finalize_Nihil(arg);
         }
 
         if (with) do {
@@ -802,9 +802,6 @@ inline static bool Pushed_Continuation(
                 Meta_Quotify(arg);
                 break;
             }
-
-            if (Is_Isotope(arg))
-                fail ("Can't pass isotope to non-META parameter");
         } while (0);
 
         Push_Frame(out, f);

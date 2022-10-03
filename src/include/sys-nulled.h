@@ -53,14 +53,14 @@
 //
 
 inline static const Raw_String* VAL_NULLED_FILE(noquote(Cell(const*)) v) {
-    assert(HEART_BYTE(v) == REB_NULL or HEART_BYTE(v) == REB_BLANK);
+    assert(HEART_BYTE(v) == REB_VOID or HEART_BYTE(v) == REB_BLANK);
     return SYM(VAL_NODE1(v));
 }
 inline static void INIT_VAL_NULLED_FILE(Cell(*) v, String(const*) file)
   { INIT_VAL_NODE1(v, file); }
 
 inline static LineNumber VAL_NULLED_LINE(noquote(Cell(const*)) v) {
-    assert(HEART_BYTE(v) == REB_NULL or HEART_BYTE(v) == REB_BLANK);
+    assert(HEART_BYTE(v) == REB_VOID or HEART_BYTE(v) == REB_BLANK);
     return PAYLOAD(Any, v).second.i;
 }
 inline static void INIT_VAL_NULLED_LINE(Cell(*) v, LineNumber line)
@@ -103,14 +103,14 @@ inline static REBVAL *Init_Nothing_Untracked(
     return cast(REBVAL*, out);
 }
 
-#define Init_Nulled_Untracked(out,quote_byte) \
-    Init_Nothing_Untracked((out), REB_NULL, (quote_byte))
+#define Init_Blank_Untracked(out,quote_byte) \
+    Init_Nothing_Untracked((out), REB_BLANK, (quote_byte))
 
 // We ensure that non-quoted, non-quasi NULL isn't written into a Cell(*) e.g.
 // for a BLOCK!... must be a Value(*), e.g. a context variable or frame output.
 //
 #define Init_Nulled(out) \
-    TRACK(Init_Nulled_Untracked(ensure(Value(*), (out)), UNQUOTED_1))
+    TRACK(Init_Blank_Untracked(ensure(Value(*), (out)), ISOTOPE_0))
 
 #define Init_Meta_Of_Null(out) \
     Init_Blank(out)
@@ -126,18 +126,9 @@ inline static REBVAL *Init_Nothing_Untracked(
 #define Is_Breaking_Null(out) \
     (VAL_TYPE_UNCHECKED(out) == REB_NULL)
 
-#define Init_Blank_Untracked(out,quote_byte) \
-    Init_Nothing_Untracked((out), REB_BLANK, (quote_byte))
-
 #define Init_Blank(out) \
     TRACK(Init_Blank_Untracked((out), UNQUOTED_1))
 
-
-#define Init_Quasi_Void(out) \
-    TRACK(Init_Nothing_Untracked((out), REB_NULL, QUASI_2))
-
-inline static bool Is_Quasi_Void(Cell(const*) v)
-  { return QUOTE_BYTE(v) == QUASI_2 and HEART_BYTE(v) == REB_NULL; }
 
 
 //=//// BLANK! ISOTOPE (THEN-triggering NULL) /////////////////////////////=//

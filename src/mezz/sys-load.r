@@ -567,7 +567,7 @@ import*: func [
         header: hdr
         parent: original-script
         path: dir
-        args: '(:args)  ; variable same name as field, trips up binding
+        args: (^ :args)  ; variable same name as field, trips up binding
     ]
 
     if (set? 'script-pre-load-hook) and (match [file! url!] source) [

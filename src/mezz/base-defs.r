@@ -31,7 +31,7 @@ c-break-debug: :c-debug-break  ; easy to mix up
 |@|: :the*
 
 ; These are faster than clear versions (e.g. `(meta void) = ^ expr`) and
-; clearer than compressed forms (like '' for quote null)
+; clearer than compressed forms (like '' for quote void)
 ;
 void': meta void
 null': meta null

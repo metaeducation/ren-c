@@ -190,7 +190,7 @@ DECLARE_NATIVE(the_p)
 // but passes through all other values:
 //
 //     >> @ ~_~
-//     == ~_~  ; isotope
+//     == ~_~  ; isotope (null)
 //
 //     >> @ ~[1 2 3]~
 //     == ~[1 2 3]~  ; isotope
@@ -217,13 +217,9 @@ DECLARE_NATIVE(the_p)
 
     REBVAL *v = ARG(value);
 
-    if (IS_QUASI(v)) {
-        if (HEART_BYTE(v) == REB_BLANK)
-            Init_Nulled(OUT);  // for `rebElide("@", nullptr, "else [...]");`
-        else {
-            Copy_Cell(OUT, v);
-            mutable_QUOTE_BYTE(OUT) = ISOTOPE_0;
-        }
+    if (IS_QUASI(v)) {  // for `rebElide("@", nullptr, "else [...]");`
+        Copy_Cell(OUT, v);
+        mutable_QUOTE_BYTE(OUT) = ISOTOPE_0;
     }
     else {
         Copy_Cell(OUT, v);
@@ -273,8 +269,8 @@ DECLARE_NATIVE(just_p)
 //  {Constructs a quoted form of the evaluated argument}
 //
 //      return: "Quoted value (if depth = 0, may not be quoted)"
-//          [<opt> any-value!]
-//      optional [<opt> any-value!]
+//          [<void> any-value!]
+//      optional [<void> any-value!]
 //      /depth "Number of quoting levels to apply (default 1)"
 //          [integer!]
 //  ]
@@ -824,6 +820,10 @@ DECLARE_NATIVE(noquote)
     INCLUDE_PARAMS_OF_NOQUOTE;
 
     REBVAL *v = ARG(optional);
+
+    if (Is_Nulled(v))
+        return nullptr;
+
     Unquotify(v, VAL_NUM_QUOTES(v));
     return COPY(v);
 }

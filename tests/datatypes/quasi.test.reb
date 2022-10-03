@@ -53,14 +53,14 @@
     x: 10
     did all [
         void' = ^ x: eval []
-        unset? 'x
+        void? :x
     ]
 )
 (
     x: 10
     did all [
         10 maybe x: eval []
-        unset? 'x
+        void? :x
     ]
 )
 
@@ -133,10 +133,10 @@
     none' = ^ f
 )]
 
-; locals are void before they are assigned
+; locals are unset before they are assigned
 (
     f: func [<local> loc] [return get/any 'loc]
-    void? f
+    nihil? f
 )(
     f: func [<local> loc] [return reify get/any 'loc]
     f = '~
@@ -213,7 +213,7 @@
         a: 1020
         did all [
             void? a: ()
-            unset? 'a
+            void? :a
         ]
     )
 ]
@@ -234,9 +234,9 @@
 ; REIFY is used to make isotopes into the non-isotope form, pass through all
 ; other values.
 [
-    ('~foo~ = reify ~foo~)
+    ('foo = reify ~foo~)
     ('_ = reify null)
-    ('_ = reify ~_~)  ; is this correct?  Should a refinement control it?
+    ('_ = reify ~_~)
 
     (10 = reify 10)
     ((the '''a) = reify the '''a)

@@ -449,12 +449,8 @@ void RunPromise(void)
         Context(*) error = Error_No_Catch_For_Throw(TOP_FRAME);
         Init_Error(metaresult, error);
     }
-    else {
-        if (Is_Void(metaresult))
-            Init_Meta_Of_Void(metaresult);
-        else
-            Meta_Quotify(metaresult);
-    }
+    else
+        Meta_Quotify(metaresult);
 
     Drop_Frame(TOP_FRAME);
 

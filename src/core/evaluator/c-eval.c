@@ -601,7 +601,7 @@ Bounce Evaluator_Executor(Frame(*) f)
     //     bool is_null = rebUnboxLogic("null?", rebQ(v));
     //     bool is_null = rebUnboxLogic("null? @", v);  // equivalent, shorter
 
-      case REB_NULL:
+      case REB_VOID:
         fail (Error_Evaluate_Null_Raw());
 
 
@@ -1250,7 +1250,7 @@ Bounce Evaluator_Executor(Frame(*) f)
             Meta_Quotify(OUT);
         else {
             assert(STATE == REB_GET_PATH or STATE == REB_GET_TUPLE);
-            if (Is_Isotope(OUT))
+            if (Is_Isotope(OUT) and not Is_Isotope_Get_Friendly(OUT))
                 fail (Error_Bad_Word_Get(f_current, OUT));
         }
 
@@ -1701,10 +1701,6 @@ Bounce Evaluator_Executor(Frame(*) f)
       // To bypass the error, use GET/ANY.
 
       case REB_QUASI:
-        if (Is_Quasi_Blank(f_current)) {
-            Init_Nulled(OUT);  // pure null compromise for API, see [1]
-            break;
-        }
         Derelativize(OUT, f_current, f_specifier);
         mutable_QUOTE_BYTE(OUT) = ISOTOPE_0;
         break;
@@ -1712,16 +1708,9 @@ Bounce Evaluator_Executor(Frame(*) f)
 
       //=//// QUOTED! /////////////////////////////////////////////////////=//
       //
-      // QUOTED! forms simply evaluate to remove one level of quoting.
+      // QUOTED! forms simply evaluate to remove one level of quoting.  The
+      // reduced case of a single ' produces a void.
       //
-      // 1. The desire to make only quasiforms decay via the @ operator means
-      //    that plain apostrophe is taken to mean literal quoted null, e.g.
-      //
-      //        >> @ '
-      //        == '
-      //
-      //    This means a quasiform is needed by @ to make NULL and ~_~ is
-      //    chosen as that form.  Behavior duplicated here for consistency.
 
       case REB_QUOTED:
         Derelativize(OUT, f_current, f_specifier);

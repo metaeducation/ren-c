@@ -193,6 +193,7 @@ inline static Value(*) Quasify_Isotope(Value(*) v) {
 
 inline static Value(*) Reify(Value(*) v) {
     assert(not Is_Void(v));  // if VOID were UNQUOTED_1 it would be NULL :-/
+    assert(not Is_Nihil(v));
     if (Is_Nulled(v))
         Init_Blank(v);
     else if (Is_Isotope(v))  // includes void ("null isotope")

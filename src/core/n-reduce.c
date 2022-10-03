@@ -142,11 +142,11 @@ DECLARE_NATIVE(reduce)
 
     Decay_If_Isotope(OUT);
 
-    if (Is_Isotope(OUT))
-        return RAISE(Error_Bad_Isotope(OUT));
-
     if (Is_Nulled(OUT))
         return RAISE(Error_Need_Non_Null_Raw());  // error enables e.g. CURTAIL
+
+    if (Is_Isotope(OUT))
+        return RAISE(Error_Bad_Isotope(OUT));
 
     Move_Cell(PUSH(), OUT);
     SUBFRAME->baseline.stack_base += 1;  // subframe must be adjusted, see [3]
@@ -600,27 +600,20 @@ Bounce Composer_Executor(Frame(*) f)
     if (Is_Splice(OUT))
         goto push_out_spliced;
 
+    if (Is_Nulled(OUT))
+        return RAISE(Error_Need_Non_Null_Raw());  // [(null)] => error!
+
     if (Is_Void(OUT)) {
         if (group_heart == REB_GROUP and group_quotes == 0)
             goto handle_next_item;  // compose [(void)] => []
 
-        Init_Nulled(OUT);  // compose ['(void)] => [']
+        // [''(void)] => ['']
     }
     else
         Decay_If_Isotope(OUT);
 
     if (Is_Isotope(OUT))
         return RAISE(Error_Bad_Isotope(OUT));
-
-    if (
-        Is_Nulled(OUT)
-        and (
-            group_heart != REB_GROUP
-            or group_quotes == 0
-        )  // [''(null)] => ['']
-    ){
-        return RAISE(Error_Need_Non_Null_Raw());  // [(null)] => error!
-    }
 
     goto push_out_as_is;
 
@@ -629,9 +622,9 @@ Bounce Composer_Executor(Frame(*) f)
     // compose [(1 + 2) inserts as-is] => [3 inserts as-is]
     // compose [([a b c]) unmerged] => [[a b c] unmerged]
 
-    if (Is_Nulled(OUT)) {
+    if (Is_Void(OUT)) {
         assert(group_quotes != 0);  // handled above
-        Init_Nulled(PUSH());
+        Init_Void(PUSH());
     }
     else
         Copy_Cell(PUSH(), OUT);  // can't stack eval direct
@@ -666,7 +659,7 @@ Bounce Composer_Executor(Frame(*) f)
     if (group_quotes != 0 or group_heart != REB_GROUP)
         return RAISE("Currently can only splice plain unquoted GROUP!s");
 
-    if (Is_Splice(OUT)) {  // BLOCK! at "quoting level -1" means splice
+    if (Is_Splice(OUT)) {  // GROUP! at "quoting level -1" means splice
         Quasify_Isotope(OUT);
 
         Cell(const*) push_tail;

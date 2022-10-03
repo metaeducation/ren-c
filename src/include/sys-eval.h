@@ -91,8 +91,9 @@
 inline static bool Is_Isotope_Set_Friendly(Cell(const*) v) {
     assert(Is_Isotope(v));
     return (
-        HEART_BYTE(v) == REB_WORD
-        or HEART_BYTE(v) == REB_NULL  // void is the isotopic state of NULL
+        HEART_BYTE(v) == REB_BLANK  // null is the isotopic state of blank
+        or HEART_BYTE(v) == REB_WORD
+        or HEART_BYTE(v) == REB_VOID  // nihil is the isotopic state of void
     );
 }
 
@@ -106,7 +107,7 @@ inline static bool Is_Isotope_Set_Friendly(Cell(const*) v) {
 //
 inline static bool Is_Isotope_Get_Friendly(Cell(const*) v) {
     assert(Is_Isotope(v));
-    return HEART_BYTE(v) == REB_WORD;
+    return HEART_BYTE(v) == REB_WORD or HEART_BYTE(v) == REB_BLANK;
 }
 
 

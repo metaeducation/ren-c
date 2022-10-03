@@ -163,17 +163,17 @@ export cscape: function [
                 ]
                 #unspaced [
                     case [
-                        unset? 'sub [_]
+                        void? :sub [_]
                         block? sub [unspaced sub]
                     ] else [
                         form sub
                     ]
                 ]
                 #delimit [
-                    if set? 'sub [
-                        delimit (unspaced [maybe :suffix newline]) sub
-                    ] else [
+                    if void? :sub [
                         _
+                    ] else [
+                        delimit (unspaced [maybe :suffix newline]) sub
                     ]
                 ]
                 fail ["Invalid CSCAPE mode:" mode]

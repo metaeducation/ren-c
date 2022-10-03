@@ -47,7 +47,7 @@
 (
     success: true
     did all [
-        '~[~]~ = ^ for i each [1] [continue, success: false]
+        '~[']~ = ^ for i each [1] [continue, success: false]
         success
     ]
 )

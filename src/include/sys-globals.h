@@ -101,6 +101,7 @@ PVAR REB_OPTS *Reb_Opts;
 
 PVAR REBVAL PG_Feed_At_End;  // Canon pointer; internals use instead of rebEND
 
+PVAR REBVAL PG_Nihil_Cell;
 PVAR REBVAL PG_Void_Cell;
 
 // These are special return values that can be checked easily by pointer.  They

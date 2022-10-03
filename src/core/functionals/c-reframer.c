@@ -116,7 +116,7 @@ Frame(*) Make_Pushed_Frame_From_Action_Feed_May_Throw(
     if (Trampoline_With_Top_As_Root_Throws())
         return f;
 
-    assert(Is_Void(f->out));  // should only have gathered arguments
+    assert(Is_Nihil(f->out));  // should only have gathered arguments
 
     assert(  // !!! new flag, see [2]
         Not_Subclass_Flag(VARLIST, f->varlist, FRAME_HAS_BEEN_INVOKED)
@@ -363,7 +363,7 @@ DECLARE_NATIVE(reframer_p)
         ARG(shim),
         base,
         &binder,
-        VOID_CELL
+        NIHIL_CELL
     );
 
     option(Context(*)) error = nullptr;  // can't fail() with binder in effect
@@ -445,7 +445,7 @@ DECLARE_NATIVE(reframer_p)
     // takes a void and giving it ~pending~; would make bugs more obvious.
     //
     REBVAL *var = CTX_VAR(exemplar, param_index);
-    assert(Is_Void(var));
+    assert(Is_Nihil(var));
     Copy_Cell(var, CTX_ARCHETYPE(exemplar));
 
     // Make action with enough space to store the implementation phase and

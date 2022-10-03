@@ -102,8 +102,8 @@
 )
 
 
-(null? ')
-(null? do ['])
+(void? ')
+(void? do ['])
 (['] = reduce [''])
 ([''] = reduce ['''])
 ([' '' ''' ''''] = reduce ['' ''' '''' '''''])
@@ -123,7 +123,7 @@
 
 ; No quote levels is legal for QUOTE to add also, if /DEPTH is 0
 [
-    (null = quote/depth null 0)
+    (void = quote/depth void 0)
     (<x> = quote/depth <x> 0)
 ]
 

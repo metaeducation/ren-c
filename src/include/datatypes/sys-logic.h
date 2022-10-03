@@ -67,17 +67,19 @@ inline static bool VAL_LOGIC(noquote(Cell(const*)) v) {
 // Despite Rebol's C heritage, the INTEGER! 0 is purposefully not "falsey".
 
 inline static bool Is_Truthy(Cell(const*) v) {
-    if (QUOTE_BYTE(v) == ISOTOPE_0)
+    if (QUOTE_BYTE(v) == ISOTOPE_0) {
+        if (HEART_BYTE(v) == REB_BLANK)  // blank isotope is null, falsey
+            return false;
         fail (Error_Bad_Isotope(v));
+    }
 
-    assert(QUOTE_BYTE(v) != ISOTOPE_0);  // should never be passed isotopes!
     if (QUOTE_BYTE(v) != UNQUOTED_1)
         return true;  // all QUOTED! and QUASI! types are truthy
 
     Byte heart = HEART_BYTE(v);
     switch (heart) {
-      case REB_NULL:
-        return false;
+      case REB_VOID:
+        fail (Error_Bad_Void());  // void is neither truthy nor falsey
 
       case REB_LOGIC:
         return VAL_LOGIC(v);

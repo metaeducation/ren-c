@@ -87,7 +87,7 @@ static void Append_Vars_To_Context_From_Group(REBVAL *context, REBVAL *block)
 
     StackValue(*) new_word = Data_Stack_At(collector.stack_base) + first_new_index;
     for (; new_word != TOP + 1; ++new_word)
-        Finalize_Void(Append_Context(c, VAL_WORD_SYMBOL(new_word)));
+        Finalize_Nihil(Append_Context(c, VAL_WORD_SYMBOL(new_word)));
   }
   }  // end the non-module part
 
@@ -101,7 +101,7 @@ static void Append_Vars_To_Context_From_Group(REBVAL *context, REBVAL *block)
             var = MOD_VAR(c, symbol, strict);
             if (not var) {
                 var = Append_Context(c, symbol);
-                Finalize_Void(var);
+                Finalize_Nihil(var);
             }
         }
         else {
@@ -131,7 +131,7 @@ static void Append_Vars_To_Context_From_Group(REBVAL *context, REBVAL *block)
         }
 
         if (word + 1 == tail) {
-            Finalize_Void(var);
+            Finalize_Nihil(var);
             break;  // fix bug#708
         }
         else
@@ -997,7 +997,10 @@ void MF_Context(REB_MOLD *mo, noquote(Cell(const*)) v, bool form)
         Mold_Value(mo, set_word);
         Append_Codepoint(mo->series, ' ');
 
-        if (Is_Isotope(e.var)) {
+        if (Is_Nulled(e.var)) {
+            Append_Ascii(s, "_");  // `field: _` would evaluate to null
+        }
+        else if (Is_Isotope(e.var)) {
             assert(not Is_Raised(e.var));  // can't be saved in variables
 
             DECLARE_LOCAL (reified);
@@ -1005,8 +1008,6 @@ void MF_Context(REB_MOLD *mo, noquote(Cell(const*)) v, bool form)
             Quasify_Isotope(reified);  // will become QUASI!...
             Mold_Value(mo, reified);  // ...hence molds as `~xxx~`
         }
-        else if (Is_Nulled(e.var))
-            Append_Ascii(s, "_");  // `field: _` would evaluate to null
         else {
             // We want the molded object to be able to "round trip" back to the
             // state it's in based on reloading the values.  Currently this is
@@ -1193,7 +1194,7 @@ REBTYPE(Context)
                 VAL_WORD_SYMBOL(arg),
                 strict
             )){
-                Finalize_Void(Append_Context(c, VAL_WORD_SYMBOL(arg)));
+                Finalize_Nihil(Append_Context(c, VAL_WORD_SYMBOL(arg)));
             }
             return COPY(context);
         }

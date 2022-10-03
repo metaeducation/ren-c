@@ -193,8 +193,6 @@ inline static bool Is_Quasi_Word(Cell(const*) v)
 
 
 inline static Value(*) Isotopify_If_Falsey(Value(*) v) {
-    if (Is_Isotope(v))
-        return v;  // already an isotope (would trigger asserts on IS_X tests)
     if (Is_Nulled(v))
         Init_Heavy_Null(v);
     else if (IS_LOGIC(v) and VAL_LOGIC(v) == false)

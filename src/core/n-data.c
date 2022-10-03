@@ -168,7 +168,7 @@ DECLARE_NATIVE(bind)
         // not in context, bind/new means add it if it's not.
         //
         if (REF(new) or (IS_SET_WORD(v) and REF(set))) {
-            Finalize_Void(Append_Context_Bind_Word(VAL_CONTEXT(context), v));
+            Finalize_Nihil(Append_Context_Bind_Word(VAL_CONTEXT(context), v));
             return COPY(v);
         }
 
@@ -433,8 +433,9 @@ bool Did_Get_Binding_Of(REBVAL *out, const REBVAL *v)
 DECLARE_NATIVE(value_q)
 {
     INCLUDE_PARAMS_OF_VALUE_Q;
+    enum Reb_Kind kind = VAL_TYPE(ARG(optional));
 
-    return Init_Logic(OUT, ANY_VALUE(ARG(optional)));
+    return Init_Logic(OUT, kind != REB_VOID and kind < REB_MAX);
 }
 
 
@@ -765,7 +766,7 @@ void Get_Var_May_Fail(
         fail (Error_No_Catch_For_Throw(TOP_FRAME));
 
     if (not any)
-        if (Is_Isotope(out))
+        if (Is_Isotope(out) and not Is_Isotope_Get_Friendly(out))
             fail (Error_Bad_Word_Get(source, out));
 }
 
@@ -1032,7 +1033,7 @@ DECLARE_NATIVE(get)
     }
 
     if (not REF(any))
-        if (Is_Isotope(OUT))
+        if (Is_Isotope(OUT) and not Is_Isotope_Get_Friendly(OUT))
             fail (Error_Bad_Word_Get(source, OUT));
 
     return Proxy_Multi_Returns(frame_);
@@ -1217,7 +1218,7 @@ bool Set_Var_Core_Updater_Throws(
 
     DECLARE_LOCAL (writeback);
     PUSH_GC_GUARD(writeback);
-    Finalize_Void(writeback);  // needs to be GC safe
+    Finalize_Nihil(writeback);  // needs to be GC safe
 
     PUSH_GC_GUARD(temp);
 
@@ -1393,7 +1394,7 @@ DECLARE_NATIVE(set)
     if (not REF(any)) {
         Decay_If_Isotope(v);
 
-        if (Is_Isotope(v) and not Is_Void(v))
+        if (Is_Isotope(v) and not Is_Isotope_Set_Friendly(v))
             fail ("Use SET/ANY to set variables to an isotope");
     }
 
@@ -2247,7 +2248,7 @@ DECLARE_NATIVE(aliases_q)
 //  "Tells you if the argument is not a value"
 //
 //      return: [logic!]
-//      optional [<opt> any-value! ~any-value!~]
+//      optional [<opt> <void> any-value! ~any-value!~]
 //  ]
 //
 DECLARE_NATIVE(null_q)
@@ -2292,6 +2293,21 @@ DECLARE_NATIVE(void)
 
 
 //
+//  nihil: native [
+//
+//  "returns the value used to represent an unset variable"
+//
+//      return: []
+//  ]
+//
+DECLARE_NATIVE(nihil)
+{
+    INCLUDE_PARAMS_OF_NIHIL;
+
+    return Init_Nihil(OUT);
+}
+
+//
 //  void?: native [
 //
 //  "Tells you if argument is void"
@@ -2305,6 +2321,23 @@ DECLARE_NATIVE(void_q)
     INCLUDE_PARAMS_OF_VOID_Q;
 
     return Init_Logic(OUT, Is_Meta_Of_Void(ARG(optional)));
+}
+
+
+//
+//  nihil?: native [
+//
+//  "Tells you if argument is nihil"
+//
+//      return: [logic!]
+//      ^optional [<opt> <void> <fail> <pack> any-value!]
+//  ]
+//
+DECLARE_NATIVE(nihil_q)
+{
+    INCLUDE_PARAMS_OF_NIHIL_Q;
+
+    return Init_Logic(OUT, Is_Meta_Of_Nihil(ARG(optional)));
 }
 
 
@@ -2403,13 +2436,16 @@ DECLARE_NATIVE(decay)
     if (Is_Nulled(v))  // !!! Is passthru a good idea as default?
         return nullptr;
 
+    if (IS_BLANK(v))
+        return nullptr;
+
     if (Is_Isotope(v)) {  // currently includes VOID (again, is passthru good?)
         Copy_Cell(OUT, v);
         Decay_If_Isotope(OUT);
         return OUT;
     }
 
-    if (IS_BLANK(v) or IS_QUASI(v)) {
+    if (IS_QUASI(v)) {
         Copy_Cell(OUT, v);
         Meta_Unquotify(OUT);
         Decay_If_Isotope(OUT);  // !!! Review general idea of this decay
@@ -2465,6 +2501,9 @@ DECLARE_NATIVE(reify)
 
     if (Is_Void(v))  // see 1
         fail ("REIFY of VOID is currently undefined (needs motivating case)");
+
+    if (Is_Nihil(v))  // see 1
+        fail ("REIFY of NIHIL is currently undefined (needs motivating case)");
 
     return Reify(Copy_Cell(OUT, v));
 }

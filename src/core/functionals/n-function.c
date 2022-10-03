@@ -132,7 +132,7 @@ Bounce Func_Dispatcher(Frame(*) f)
     assert(KEY_SYM(ACT_KEYS_HEAD(phase)) == SYM_RETURN);
 
     REBVAL *cell = FRM_ARG(f, 1);
-    assert(Is_Void(cell));
+    assert(Is_Nihil(cell));
     Init_Action(
         cell,
         VAL_ACTION(Lib(DEFINITIONAL_RETURN)),

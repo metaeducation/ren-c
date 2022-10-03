@@ -212,7 +212,7 @@
         /predicate chain [:eval :reify]
     ])
     ([<a>] = compose [<a> (~()~)])
-    ([<a>] = compose [<a> (~)])  ; exception made for pure void
+    ([<a>] = compose [<a> (')])  ; exception made for pure void
 ]
 
 [

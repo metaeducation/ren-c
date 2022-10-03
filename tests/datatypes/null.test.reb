@@ -54,7 +54,7 @@
 [
     ('~[_]~ = ^ if true [null])
     ('~[_]~ = ^ if true [heavy null])
-    ('~[~]~ = ^ if true [])
+    ('~[']~ = ^ if true [])
     ('~custom~ = ^ if true [~custom~])
     (''~custom~ = ^ if true ['~custom~])
 

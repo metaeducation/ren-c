@@ -2074,9 +2074,6 @@ DECLARE_NATIVE(while)
     if (Is_Void(SPARE))
         goto evaluate_condition;  // skip body, see [3]
 
-    if (Is_Isotope(SPARE))
-        fail (Error_Bad_Isotope(SPARE));
-
     if (Is_Falsey(SPARE)) {  // falsey condition => return last body result
         if (Is_Fresh(OUT))
             return VOID;  // body never ran, so no result to return!

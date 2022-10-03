@@ -654,7 +654,7 @@ Context(*) Make_Context_Detect_Managed(
     ++var;
 
     for (; len > 0; --len, ++var)  // [0] is rootvar (context), already done
-        Init_Nulled(var);
+        Init_Nihil(var);
 
     if (parent) {
         //
@@ -666,7 +666,7 @@ Context(*) Make_Context_Detect_Managed(
         REBVAL *src = CTX_VARS(&src_tail, unwrap(parent));
         for (; src != src_tail; ++dest, ++src) {
             Flags flags = NODE_FLAG_MANAGED;  // !!! Review, what flags?
-            assert(Is_Nulled(dest));
+            assert(Is_Nihil(dest));
             Copy_Cell(dest, src);
             Clonify(dest, flags, TS_CLONE);
         }

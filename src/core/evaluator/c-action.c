@@ -328,7 +328,7 @@ Bounce Action_Executor(Frame(*) f)
 
         if (GET_PARAM_FLAG(PARAM, REFINEMENT)) {
             assert(STATE != ST_ACTION_DOING_PICKUPS);  // jump lower
-            Finalize_Void(ARG);  // may be filled by a pickup
+            Finalize_Nihil(ARG);  // may be filled by a pickup
             goto continue_fulfilling;
         }
 
@@ -344,7 +344,7 @@ Bounce Action_Executor(Frame(*) f)
 
         if (pclass == PARAM_CLASS_RETURN or pclass == PARAM_CLASS_OUTPUT) {
             assert(STATE != ST_ACTION_DOING_PICKUPS);
-            Finalize_Void(ARG);
+            Finalize_Nihil(ARG);
             goto continue_fulfilling;
         }
 
@@ -411,14 +411,8 @@ Bounce Action_Executor(Frame(*) f)
                 goto continue_fulfilling;
             }
 
-            if (Is_Void(OUT)) {  // e.g. ((void) else [...])
-                Finalize_Void(ARG);
-                FRESHEN(OUT);
-                goto continue_fulfilling;
-            }
-
             if (GET_PARAM_FLAG(PARAM, VARIADIC)) {  // non-empty is ok, see [4]
-                assert(not Is_Void(OUT));
+                assert(not Is_Nihil(OUT));
                 Init_Varargs_Untyped_Enfix(ARG, OUT);
                 FRESHEN(OUT);
             }
@@ -777,7 +771,7 @@ Bounce Action_Executor(Frame(*) f)
 } fulfill_and_any_pickups_done: {  ///////////////////////////////////////////
 
     if (Get_Executor_Flag(ACTION, f, FULFILL_ONLY)) {  // no typecheck
-        Finalize_Void(OUT);  // didn't touch out, should be fresh
+        Finalize_Nihil(OUT);  // didn't touch out, should be fresh
         goto skip_output_check;
     }
 
@@ -842,7 +836,7 @@ Bounce Action_Executor(Frame(*) f)
             VAL_PARAM_CLASS(PARAM) == PARAM_CLASS_RETURN
             or VAL_PARAM_CLASS(PARAM) == PARAM_CLASS_OUTPUT
         ){
-            assert(Is_Void(ARG));
+            assert(Is_Nihil(ARG));
             continue;  // typeset is its legal return types, wants to be unset
         }
 
@@ -868,9 +862,8 @@ Bounce Action_Executor(Frame(*) f)
             }
         }
 
-        if (Is_Void(ARG)) {  // e.g. (~) isotope, unspecialized, see [2]
-            if (GET_PARAM_FLAG(PARAM, NOOP_IF_VOID)  // e.g. <maybe> param
-            ){
+        if (Is_Nihil(ARG)) {  // e.g. (~) isotope, unspecialized, see [2]
+            if (GET_PARAM_FLAG(PARAM, NOOP_IF_VOID)) {  // e.g. <maybe> param
                 Set_Executor_Flag(ACTION, f, TYPECHECK_ONLY);
                 Init_Nulled(OUT);
                 continue;
@@ -887,7 +880,7 @@ Bounce Action_Executor(Frame(*) f)
                 NOT_PARAM_FLAG(PARAM, VANISHABLE)
                 and NOT_PARAM_FLAG(PARAM, ISOTOPES_OKAY)
             ){
-                fail (Error_Bad_Void());
+                fail (Error_Bad_Isotope(ARG));
             }
 
             if (VAL_PARAM_CLASS(PARAM) == PARAM_CLASS_META)
@@ -898,7 +891,19 @@ Bounce Action_Executor(Frame(*) f)
             continue;
         }
 
-        if (Is_Isotope(ARG)) {
+        if (Is_Void(ARG)) {
+            if (GET_PARAM_FLAG(PARAM, NOOP_IF_VOID)) {  // e.g. <maybe> param
+                Set_Executor_Flag(ACTION, f, TYPECHECK_ONLY);
+                Init_Nulled(OUT);
+                continue;
+            }
+            if (GET_PARAM_FLAG(PARAM, REFINEMENT)) {
+                Init_Nulled(ARG);
+                continue;
+            }
+        }
+
+        if (Is_Isotope(ARG) and not Is_Nulled(ARG)) {
             if (GET_PARAM_FLAG(PARAM, ISOTOPES_OKAY))
                 continue;
             fail (Error_Isotope_Arg(f, PARAM));
@@ -1195,7 +1200,7 @@ Bounce Action_Executor(Frame(*) f)
                 if (Is_Specialized(PARAM))
                     Copy_Cell(ARG, PARAM);  // must reset, see [3]
                 else if (VAL_PARAM_CLASS(PARAM) == PARAM_CLASS_RETURN)
-                    Init_Void(ARG);  // dispatcher expects unset
+                    Init_Nihil(ARG);  // dispatcher expects unset
             }
 
             INIT_FRM_PHASE(f, redo_phase);

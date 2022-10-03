@@ -345,7 +345,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
     Decay_If_Isotope(out);
 
     if (param) {
-        if (Is_Isotope(out))
+        if (not Is_Nulled(out) and Is_Isotope(out))
             fail (Error_Bad_Isotope(out));
 
         if (not TYPE_CHECK(param, VAL_TYPE(out))) {
