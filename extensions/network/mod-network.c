@@ -122,22 +122,13 @@ REBVAL *Open_Socket(const REBVAL *port)
 }
 
 
- void on_close(uv_handle_t *handle) {
-     bool *finished = cast(bool*, handle->data);
-     *finished = true;
- }
+void on_close(uv_handle_t *handle) {
+    bool *finished = cast(bool*, handle->data);
+    *finished = true;
+}
 
-
-//
-//  Close_Socket: C
-//
-REBVAL *Close_Socket(const REBVAL *port)
-{
-    SOCKREQ *sock = Sock_Of_Port(port);
-
-    REBVAL *error = nullptr;
-
-    if (sock->stream) {  // R3-Alpha allowed closing closed sockets
+static void Close_Sock_If_Needed(SOCKREQ* sock) {
+    if (sock->stream) {
         bool finished;
         sock->tcp.data = &finished;
         uv_close(cast(uv_handle_t*, &sock->tcp), on_close);
@@ -149,6 +140,26 @@ REBVAL *Close_Socket(const REBVAL *port)
         sock->stream = nullptr;
         sock->modes = 0;
     }
+}
+
+static void cleanup_sockreq(const REBVAL *v) {
+    SOCKREQ* sock = VAL_HANDLE_POINTER(SOCKREQ, v);
+    Close_Sock_If_Needed(sock);
+    FREE(SOCKREQ, sock);
+}
+
+
+//
+//  Close_Socket: C
+//
+REBVAL *Close_Socket(const REBVAL *port)
+{
+    SOCKREQ* sock = Sock_Of_Port(port);
+
+    REBVAL *error = nullptr;
+
+    // Note: R3-Alpha allowed closing closed sockets
+    Close_Sock_If_Needed(sock);
 
     return error;
 }
@@ -336,10 +347,10 @@ void on_new_connection(uv_stream_t *server, int status) {
     Init_Nulled(CTX_VAR(client, STD_PORT_DATA));  // just to be sure
 
     REBVAL *c_state = CTX_VAR(client, STD_PORT_STATE);
-    Binary(*) bin = Make_Binary(sizeof(SOCKREQ));
-    Init_Binary(c_state, bin);
-    memset(BIN_HEAD(bin), 0, sizeof(SOCKREQ));
-    TERM_BIN_LEN(bin, sizeof(SOCKREQ));
+    SOCKREQ* sock = TRY_ALLOC(SOCKREQ);
+    memset(sock, 0, sizeof(SOCKREQ));
+
+    Init_Handle_Cdata_Managed(c_state, sock, sizeof(SOCKREQ), &cleanup_sockreq);
 
     SOCKREQ *sock_new = Sock_Of_Port(CTX_ARCHETYPE(client));
 
@@ -675,7 +686,7 @@ static Bounce Transport_Actor(
 
     SOCKREQ *sock;
     REBVAL *state = CTX_VAR(ctx, STD_PORT_STATE);
-    if (IS_BINARY(state)) {
+    if (IS_HANDLE(state)) {
         sock = Sock_Of_Port(port);
         assert(sock->transport == transport);
     }
@@ -684,12 +695,14 @@ static Bounce Transport_Actor(
         // things compatible while ripping out the devreq code this must too.
         //
         assert(Is_Nulled(state));
-        Binary(*) bin = Make_Binary(sizeof(SOCKREQ));
-        Init_Binary(state, bin);
-        memset(BIN_HEAD(bin), 0, sizeof(SOCKREQ));
-        TERM_BIN_LEN(bin, sizeof(SOCKREQ));
-
-        sock = Sock_Of_Port(port);
+        sock = TRY_ALLOC(SOCKREQ);
+        memset(sock, 0, sizeof(SOCKREQ));
+        Init_Handle_Cdata_Managed(
+            state,
+            sock,
+            sizeof(SOCKREQ),
+            &cleanup_sockreq
+        );
         sock->transport = transport;
         sock->stream = nullptr;
 

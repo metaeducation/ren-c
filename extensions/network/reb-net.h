@@ -74,7 +74,7 @@ typedef struct Reb_Sock_Port_State SOCKREQ;
 inline static SOCKREQ *Sock_Of_Port(const REBVAL *port)
 {
     REBVAL *state = CTX_VAR(VAL_CONTEXT(port), STD_PORT_STATE);
-    return cast(SOCKREQ*, VAL_BINARY_AT_ENSURE_MUTABLE(state));
+    return VAL_HANDLE_POINTER(SOCKREQ, state);
 }
 
 
