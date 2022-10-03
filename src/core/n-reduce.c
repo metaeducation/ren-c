@@ -145,14 +145,28 @@ DECLARE_NATIVE(reduce)
     if (Is_Nulled(OUT))
         return RAISE(Error_Need_Non_Null_Raw());  // error enables e.g. CURTAIL
 
-    if (Is_Isotope(OUT))
+    if (Is_Splice(OUT)) {
+        Cell(const*) tail;
+        Cell(const*) at = VAL_ARRAY_AT(&tail, OUT);
+        bool newline = Get_Cell_Flag(v, NEWLINE_BEFORE);
+        for (; at != tail; ++at) {
+            Derelativize(PUSH(), at, VAL_SPECIFIER(OUT));
+            SUBFRAME->baseline.stack_base += 1;  // see [3]
+            if (newline) {
+                Set_Cell_Flag(TOP, NEWLINE_BEFORE);  // see [2]
+                newline = false;
+            }
+        }
+    }
+    else if (Is_Isotope(OUT))
         return RAISE(Error_Bad_Isotope(OUT));
+    else {
+        Move_Cell(PUSH(), OUT);
+        SUBFRAME->baseline.stack_base += 1;  // see [3]
 
-    Move_Cell(PUSH(), OUT);
-    SUBFRAME->baseline.stack_base += 1;  // subframe must be adjusted, see [3]
-
-    if (Get_Cell_Flag(v, NEWLINE_BEFORE))  // propagate cached newline, see [2]
-        Set_Cell_Flag(TOP, NEWLINE_BEFORE);
+        if (Get_Cell_Flag(v, NEWLINE_BEFORE))  // see [2]
+            Set_Cell_Flag(TOP, NEWLINE_BEFORE);
+    }
 
     goto next_reduce_step;
 

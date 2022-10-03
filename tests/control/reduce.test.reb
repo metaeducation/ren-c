@@ -128,3 +128,8 @@
         e.message = "foo"
     )
 ]
+
+; SPREAD is honored by REDUCE
+[
+    ([1 2 3 4] = reduce [1 if true [spread [2 3]] 4])
+]
