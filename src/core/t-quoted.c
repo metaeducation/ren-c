@@ -297,7 +297,7 @@ DECLARE_NATIVE(quote)
 //
 //  {VOID -> NULL, isotopes -> QUASI!, adds a quote to rest (behavior of ^^)}
 //
-//      return: [blank! quoted! quasi!]
+//      return: [quoted! quasi!]
 //      ^optional [<void> <opt> <fail> <pack> any-value!]
 //  ]
 //
@@ -342,9 +342,9 @@ DECLARE_NATIVE(meta_p)
 //  {Remove quoting levels from the evaluated argument}
 //
 //      return: "Value with quotes removed"
-//          [<opt> any-value!]
-//      value "Any value allowed in case /DEPTH is 0"
-//          [<opt> any-value!]
+//          [<void> any-value!]
+//      value "Void allowed in case input is void and /DEPTH is 0"
+//          [<void> any-value!]
 //      /depth "Number of quoting levels to remove (default 1)"
 //          [integer!]
 //  ]

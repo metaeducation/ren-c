@@ -145,9 +145,9 @@ inline static option(va_list*) FEED_VAPTR(Feed(*) feed) {
 
 
 // When we see nullptr in the valist, we make a compromise of convenience,
-// where it is replaced with a QUASI!-BLANK! is used.  We've told a lie, but
-// if evaluated it will produce a blank isotope, which acts like NULL for
-// many purposes...and will decay to a pure null if assigned to a variable.
+// where it is replaced with a QUASI!-BLANK!.  We've told a lie, but if
+// evaluated it will produce a blank isotope, e.g. NULL.  If not evaluated it
+// will stand out as unusual.
 //
 // Also: the `@` operator is tweaked to turn QUASI!s into their isotopic
 // forms.  So this can be leveraged in API calls.

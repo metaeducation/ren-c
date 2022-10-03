@@ -31,14 +31,10 @@
 // So there is no `isRebolNull()` API.
 //
 // But that's the API.  Internally, cells are the currency used, and if they
-// are to represent an "optional" value, there must be a special bit pattern
-// used to mark them as not containing any value at all.  These are called
-// "nulled cells" and marked by means of their HEART_BYTE being REB_NULL.
+// are to represent an "optional" value, they must have a bit pattern.  So
+// NULL is the isotopic form of BLANK!.
 //
 //=//// NOTES /////////////////////////////////////////////////////////////=//
-//
-// * NULL has an isotopic form called VOID, which closely relates the two.
-//   see %sys-void.h.
 //
 // * BLANK! are a kind of "reified" form of nothingness, that evaluate
 //   to NULL, and use the same payload structure
@@ -52,18 +48,18 @@
 //   about where the null came from.  BLANK!s and VOID get this too.
 //
 
-inline static const Raw_String* VAL_NULLED_FILE(noquote(Cell(const*)) v) {
+inline static const Raw_String* VAL_NOTHING_FILE(noquote(Cell(const*)) v) {
     assert(HEART_BYTE(v) == REB_VOID or HEART_BYTE(v) == REB_BLANK);
     return SYM(VAL_NODE1(v));
 }
-inline static void INIT_VAL_NULLED_FILE(Cell(*) v, String(const*) file)
+inline static void INIT_VAL_NOTHING_FILE(Cell(*) v, String(const*) file)
   { INIT_VAL_NODE1(v, file); }
 
-inline static LineNumber VAL_NULLED_LINE(noquote(Cell(const*)) v) {
+inline static LineNumber VAL_NOTHING_LINE(noquote(Cell(const*)) v) {
     assert(HEART_BYTE(v) == REB_VOID or HEART_BYTE(v) == REB_BLANK);
     return PAYLOAD(Any, v).second.i;
 }
-inline static void INIT_VAL_NULLED_LINE(Cell(*) v, LineNumber line)
+inline static void INIT_VAL_NOTHING_LINE(Cell(*) v, LineNumber line)
   { PAYLOAD(Any, v).second.i = line; }
 
 
@@ -92,74 +88,26 @@ inline static REBVAL *Init_Nothing_Untracked(
     mutable_BINDING(out) = nullptr;
 
     if (TOP_FRAME) {
-        INIT_VAL_NULLED_LINE(out, FRM_LINE(TOP_FRAME));
-        INIT_VAL_NULLED_FILE(out, FRM_FILE(TOP_FRAME));
+        INIT_VAL_NOTHING_LINE(out, FRM_LINE(TOP_FRAME));
+        INIT_VAL_NOTHING_FILE(out, FRM_FILE(TOP_FRAME));
     }
     else {
-        INIT_VAL_NULLED_LINE(out, 0);
-        INIT_VAL_NULLED_FILE(out, nullptr);
+        INIT_VAL_NOTHING_LINE(out, 0);
+        INIT_VAL_NOTHING_FILE(out, nullptr);
     }
 
     return cast(REBVAL*, out);
 }
 
+
+//=//// BLANK! ////////////////////////////////////////////////////////////=//
+//
+
 #define Init_Blank_Untracked(out,quote_byte) \
     Init_Nothing_Untracked((out), REB_BLANK, (quote_byte))
 
-// We ensure that non-quoted, non-quasi NULL isn't written into a Cell(*) e.g.
-// for a BLOCK!... must be a Value(*), e.g. a context variable or frame output.
-//
-#define Init_Nulled(out) \
-    TRACK(Init_Blank_Untracked(ensure(Value(*), (out)), ISOTOPE_0))
-
-#define Init_Meta_Of_Null(out) \
-    Init_Blank(out)
-
-#define Is_Meta_Of_Null(v) \
-    IS_BLANK(v)
-
-// We test for null on an arbitrary result that may be an isotope.  Since we
-// don't have generic isotope handling we usually just pass them through, so
-// the unchecked type test for null is done first.  But plain Is_Nulled() will
-// assert on isotopes.  Make the code look friendlier with this simple macro.
-//
-#define Is_Breaking_Null(out) \
-    (VAL_TYPE_UNCHECKED(out) == REB_NULL)
-
 #define Init_Blank(out) \
     TRACK(Init_Blank_Untracked((out), UNQUOTED_1))
-
-
-
-//=//// BLANK! ISOTOPE (THEN-triggering NULL) /////////////////////////////=//
-//
-// There was considerable deliberation about how to handle branches that
-// actually want to return NULL without triggering ELSE:
-//
-//     >> if true [null] else [print "Don't want this to print"]
-//     ; null (desired result)
-//
-// Making branch results NULL if-and-only-if the branch ran would mean having
-// to distort the result.
-//
-// The ultimate solution to this was to introduce a slight variant of NULL
-// which would be short-lived (e.g. "decay" to a normal NULL) but carry the
-// additional information that it was an intended branch result.  This
-// seemed sketchy at first, but with ^(...) acting as a "detector" for those
-// who need to know the difference, it has become a holistic solution.
-//
-// The "decay" of BLANK! isotopes occurs on variable assignment, and is seen
-// on future fetches.  Hence:
-//
-//     >> x: if true [null]
-//     == ~_~  ; isotope (decays to null)
-//
-//     >> x
-//     ; null
-//
-// As with the natural concept of radiation, working with BLANK! isotopes can
-// be tricky, and should be avoided by code that doesn't need to do it.
-//
 
 #define Init_Quasi_Blank(out) \
     TRACK(Init_Blank_Untracked((out), QUASI_2))
@@ -167,6 +115,24 @@ inline static REBVAL *Init_Nothing_Untracked(
 inline static bool Is_Quasi_Blank(Cell(const*) v)
   { return IS_QUASI(v) and HEART_BYTE(v) == REB_BLANK; }
 
+
+//=//// NULL //////////////////////////////////////////////////////////////=//
+//
+// 1. We ensure that non-quoted, non-quasi NULL isn't written into a Cell(*)
+//    e.g. for a BLOCK!... must be a Value(*), e.g. a context variable or
+//    frame output.
+
+#define Init_Nulled(out) \
+    TRACK(Init_Blank_Untracked(ensure(Value(*), (out)), ISOTOPE_0))  // see [1]
+
+#define Is_Breaking_Null(out) \
+    (VAL_TYPE_UNCHECKED(out) == REB_NULL)
+
+#define Init_Meta_Of_Null(out) \
+    Init_Quasi_Blank(out)
+
+#define Is_Meta_Of_Null(v) \
+    Is_Quasi_Blank(v)
 
 
 //=//// "HEAVY NULLS" (BLOCK! Isotope Pack with `_` in it) ////////////////=//
@@ -188,7 +154,7 @@ inline static bool Is_Quasi_Blank(Cell(const*) v)
 // ("Heavy Voids" are an analogous concept for VOID.)
 
 #define Init_Heavy_Null(out) \
-    Init_Pack((out), PG_1_Blank_Array)
+    Init_Pack((out), PG_1_Quasi_Blank_Array)
 
 #define Init_Meta_Of_Heavy_Null(out) \
     TRACK(Init_Pack_Untracked((out), QUASI_2, (a)))

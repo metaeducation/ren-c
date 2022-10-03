@@ -369,17 +369,17 @@ static void Startup_Empty_Arrays(void)
   blockscope {
     Array(*) a = Make_Array_Core(1, NODE_FLAG_MANAGED);
     SET_SERIES_LEN(a, 1);
-    Init_Blank(ARR_AT(a, 0));
+    Init_Quasi_Blank(ARR_AT(a, 0));
     Freeze_Array_Deep(a);
-    PG_1_Blank_Array = a;
+    PG_1_Quasi_Blank_Array = a;
   }
 
   blockscope {
     Array(*) a = Make_Array_Core(1, NODE_FLAG_MANAGED);
     SET_SERIES_LEN(a, 1);
-    Init_Meta_Of_Void(ARR_AT(a, 0));
+    Init_Quoted_Void(ARR_AT(a, 0));
     Freeze_Array_Deep(a);
-    PG_1_Tilde_Array = a;
+    PG_1_Quoted_Void_Array = a;
   }
 
   blockscope {
@@ -490,13 +490,13 @@ static void Init_Root_Vars(void)
 
     ensureNullptr(Root_Heavy_Null) = Init_Block(
         Alloc_Value(),
-        PG_1_Blank_Array
+        PG_1_Quasi_Blank_Array
       );
     Force_Value_Frozen_Deep(Root_Heavy_Null);
 
     ensureNullptr(Root_Heavy_Void) = Init_Block(
         Alloc_Value(),
-        PG_1_Tilde_Array
+        PG_1_Quoted_Void_Array
       );
     Force_Value_Frozen_Deep(Root_Heavy_Void);
 

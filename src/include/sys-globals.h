@@ -145,8 +145,8 @@ PVAR REBVAL *Root_Empty_Binary; // read-only #{}
 PVAR REBVAL *Root_Empty_Block; // read-only []
 PVAR REBVAL *Root_2_Blanks_Block;  // read-only [_ _]
 PVAR Array(*) PG_Empty_Array; // optimization of VAL_ARRAY(Root_Empty_Block)
-PVAR Array(*) PG_1_Blank_Array;  // singular array used by heavy nulls ~[_]~
-PVAR Array(*) PG_1_Tilde_Array;  // singular array used by heavy voids ~[~]~
+PVAR Array(*) PG_1_Quasi_Blank_Array;  // used by heavy nulls ~[~_~]~
+PVAR Array(*) PG_1_Quoted_Void_Array;  // used by heavy voids ~[']~
 PVAR Array(*) PG_1_Meta_False_Array;  // used by heavy false ~['#[false]]~
 PVAR Array(*) PG_2_Blanks_Array;  // surrogate array used by `/` paths
 

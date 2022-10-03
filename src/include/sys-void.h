@@ -164,7 +164,7 @@ inline static bool Is_Quasi_Void(Cell(const*) v)
 #define Is_Meta_Of_Nihil(v)          Is_Quasi_Void(v)
 
 
-//=//// "HEAVY VOIDS" (BLOCK! Isotope Pack with `~` in it) ////////////////=//
+//=//// "HEAVY VOIDS" (BLOCK! Isotope Pack with ['] in it) ////////////////=//
 //
 // This is a way of making it so that branches which evaluate to void can
 // carry the void intent, while being in a parameter pack--which is not
@@ -174,7 +174,7 @@ inline static bool Is_Quasi_Void(Cell(const*) v)
 //     ; void (will trigger ELSE)
 //
 //     >> if true []
-//     == ~[~]~  ; isotope (will trigger THEN, not ELSE)
+//     == ~[']~  ; isotope (will trigger THEN, not ELSE)
 //
 //     >> append [a b c] if false [<a>]
 //     == [a b c]
@@ -192,7 +192,7 @@ inline static bool Is_Quasi_Void(Cell(const*) v)
 //
 
 #define Init_Heavy_Void(out) \
-    Init_Pack((out), PG_1_Tilde_Array)
+    Init_Pack((out), PG_1_Quoted_Void_Array)
 
 inline static bool Is_Heavy_Void(Cell(const*) v) {
     if (not Is_Pack(v))

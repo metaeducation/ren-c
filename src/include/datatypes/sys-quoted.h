@@ -192,11 +192,9 @@ inline static Value(*) Quasify_Isotope(Value(*) v) {
 }
 
 inline static Value(*) Reify(Value(*) v) {
-    assert(not Is_Void(v));  // if VOID were UNQUOTED_1 it would be NULL :-/
+    assert(not Is_Void(v));
     assert(not Is_Nihil(v));
-    if (Is_Nulled(v))
-        Init_Blank(v);
-    else if (Is_Isotope(v))  // includes void ("null isotope")
+    if (QUOTE_BYTE(v) == ISOTOPE_0)  // includes void ("null isotope")
         mutable_QUOTE_BYTE(v) = UNQUOTED_1;
     return v;
 }
@@ -217,9 +215,7 @@ inline static Value(*) Reify(Value(*) v) {
 //
 
 inline static Value(*) Meta_Quotify(Value(*) v) {
-    if (Is_Nulled(v))
-        return Init_Blank(v);
-    if (Is_Isotope(v)) {  // includes voids
+    if (QUOTE_BYTE(v) == ISOTOPE_0) {
         mutable_QUOTE_BYTE(v) = QUASI_2;
         return v;
     }
@@ -227,12 +223,9 @@ inline static Value(*) Meta_Quotify(Value(*) v) {
 }
 
 inline static Value(*) Meta_Unquotify(Value(*) v) {
-    assert(not Is_Nulled(v));  // END can't be unquotified
-    if (IS_BLANK(v))
-        Init_Nulled(v);
-    else if (IS_QUASI(v))  // includes ~
-        mutable_QUOTE_BYTE(v) = ISOTOPE_0;  // e.g. ~ produces VOID here
+    if (QUOTE_BYTE(v) == QUASI_2)
+        mutable_QUOTE_BYTE(v) = ISOTOPE_0;
     else
-        Unquotify_Core(v, 1);
+        Unquotify_Core(v, 1);  // will assert the input is quoted
     return v;
 }

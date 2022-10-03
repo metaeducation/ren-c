@@ -411,9 +411,6 @@ inline static bool Typecheck_Including_Constraints(
         if (Is_Nulled(v))
             return GET_PARAM_FLAG(param, ENDABLE);
 
-        if (IS_BLANK(v))  // meta of null
-            return true;
-
         if (IS_QUASI(v))
             return true;  // currently no isotopic typecheck
 
