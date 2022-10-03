@@ -67,11 +67,8 @@ inline static bool VAL_LOGIC(noquote(Cell(const*)) v) {
 // Despite Rebol's C heritage, the INTEGER! 0 is purposefully not "falsey".
 
 inline static bool Is_Truthy(Cell(const*) v) {
-    if (QUOTE_BYTE(v) == ISOTOPE_0) {
-        if (Is_Blank_Isotope(v))  // let blank isotopes be treated as falsey
-            return false;
+    if (QUOTE_BYTE(v) == ISOTOPE_0)
         fail (Error_Bad_Isotope(v));
-    }
 
     assert(QUOTE_BYTE(v) != ISOTOPE_0);  // should never be passed isotopes!
     if (QUOTE_BYTE(v) != UNQUOTED_1)

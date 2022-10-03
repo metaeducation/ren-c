@@ -390,7 +390,7 @@ DECLARE_NATIVE(opt_combinator)
         return OUT;  // so return its result (note: may be null *isotope*)
 
     Set_Var_May_Fail(remainder, SPECIFIED, input);  // convey no progress made
-    return Init_Blank_Isotope(OUT);  // ...but still, non-NULL for success
+    return Init_Heavy_Null(OUT);  // ...but still, non-NULL for success
 }}
 
 

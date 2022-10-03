@@ -1351,7 +1351,7 @@ DECLARE_NATIVE(remove_each)
         }
         else if (Is_Nulled(OUT)) {  // don't remove
             keep = true;
-            Init_Blank_Isotope(OUT);  // NULL reserved for BREAK signal
+            Init_Heavy_Null(OUT);  // NULL reserved for BREAK signal
         }
         else if (Is_Blackhole(OUT)) {  // do remove
             keep = false;

@@ -121,9 +121,6 @@ inline static Value(*) Decay_If_Isotope(Value(*) v) {
     if (not Is_Isotope(v))
         return v;
 
-    if (Is_Blank_Isotope(v))
-        return Init_Nulled(v);
-
     if (Is_Lazy(v)) {
         if (not Pushed_Reifying_Frame(v, v, FRAME_MASK_NONE))
             return v;  // cheap reification

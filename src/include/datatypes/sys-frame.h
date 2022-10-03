@@ -724,7 +724,7 @@ inline static bool Pushed_Continuation(
     switch (VAL_TYPE(branch)) {
       case REB_BLANK:
         if (flags & FRAME_FLAG_BRANCH)
-            Init_Blank_Isotope(out);
+            Init_Heavy_Null(out);
         else
             Init_Nulled(out);
         goto just_use_out;
@@ -732,7 +732,7 @@ inline static bool Pushed_Continuation(
       case REB_QUOTED:
         Unquotify(Derelativize(out, branch, branch_specifier), 1);
         if (Is_Nulled(out) and (flags & FRAME_FLAG_BRANCH))
-            Init_Blank_Isotope(out);
+            Init_Heavy_Null(out);
         goto just_use_out;
 
       case REB_META_BLOCK:

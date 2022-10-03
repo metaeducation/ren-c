@@ -1663,7 +1663,7 @@ Bounce Evaluator_Executor(Frame(*) f)
     //=///////////////////////////////////////////////////////////////////=//
 
       case REB_BLANK:  // new behavior, evaluate to NULL isotope
-        Init_Blank_Isotope(OUT);
+        Init_Nulled(OUT);
         break;
 
     inert:
@@ -1701,7 +1701,7 @@ Bounce Evaluator_Executor(Frame(*) f)
       // To bypass the error, use GET/ANY.
 
       case REB_QUASI:
-        if (Is_Meta_Of_Blank_Isotope(f_current)) {
+        if (Is_Quasi_Blank(f_current)) {
             Init_Nulled(OUT);  // pure null compromise for API, see [1]
             break;
         }

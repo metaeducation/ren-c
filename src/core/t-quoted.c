@@ -761,9 +761,6 @@ DECLARE_NATIVE(maybe)
     if (Is_Nulled(v))
         return VOID;  // main purpose of function: NULL => VOID
 
-    if (Is_Blank_Isotope(v))  // !!! does this make sense?
-        return VOID;
-
     if (Is_Raised(v)) {  // !!! fold in TRY behavior as well?
         ERROR_VARS *vars = ERR_VARS(VAL_CONTEXT(v));
         if (

@@ -110,8 +110,8 @@ inline static bool Is_Void(Cell(const*) v) {
 //
 //  * Quick way to unset variables, simply `(var: ~)`
 
-#define Init_Meta_Of_Void(out)       Init_Quasi_Null(out)
-#define Is_Meta_Of_Void(v)           Is_Quasi_Null(v)
+#define Init_Meta_Of_Void(out)       Init_Quasi_Void(out)
+#define Is_Meta_Of_Void(v)           Is_Quasi_Void(v)
 
 
 //=//// "HEAVY VOIDS" (BLOCK! Isotope Pack with `~` in it) ////////////////=//

@@ -70,9 +70,6 @@ inline static void INIT_VAL_NULLED_LINE(Cell(*) v, LineNumber line)
 #define Is_Nulled(v) \
     (VAL_TYPE(v) == REB_NULL)
 
-inline static bool Is_Quasi_Null(Cell(const*) v)
-  { return QUOTE_BYTE(v) == QUASI_2 and HEART_BYTE(v) == REB_NULL; }
-
 inline static String(const*) FRM_FILE(Frame(*) f);
 inline static LineNumber FRM_LINE(Frame(*) f);
 
@@ -115,9 +112,6 @@ inline static REBVAL *Init_Nothing_Untracked(
 #define Init_Nulled(out) \
     TRACK(Init_Nulled_Untracked(ensure(Value(*), (out)), UNQUOTED_1))
 
-#define Init_Quasi_Null(out) \
-    TRACK(Init_Nulled_Untracked((out), QUASI_2))
-
 #define Init_Meta_Of_Null(out) \
     Init_Blank(out)
 
@@ -137,6 +131,13 @@ inline static REBVAL *Init_Nothing_Untracked(
 
 #define Init_Blank(out) \
     TRACK(Init_Blank_Untracked((out), UNQUOTED_1))
+
+
+#define Init_Quasi_Void(out) \
+    TRACK(Init_Nothing_Untracked((out), REB_NULL, QUASI_2))
+
+inline static bool Is_Quasi_Void(Cell(const*) v)
+  { return QUOTE_BYTE(v) == QUASI_2 and HEART_BYTE(v) == REB_NULL; }
 
 
 //=//// BLANK! ISOTOPE (THEN-triggering NULL) /////////////////////////////=//
@@ -169,17 +170,12 @@ inline static REBVAL *Init_Nothing_Untracked(
 // be tricky, and should be avoided by code that doesn't need to do it.
 //
 
-#define Init_Blank_Isotope(out) \
-    TRACK(Init_Blank_Untracked((ensure(Value(*), (out))), ISOTOPE_0))
-
-inline static bool Is_Blank_Isotope(Cell(const*) v)
-  { return QUOTE_BYTE(v) == ISOTOPE_0 and HEART_BYTE(v) == REB_BLANK; }
-
-#define Init_Meta_Of_Blank_Isotope(out) \
+#define Init_Quasi_Blank(out) \
     TRACK(Init_Blank_Untracked((out), QUASI_2))
 
-inline static bool Is_Meta_Of_Blank_Isotope(Cell(const*) v)
+inline static bool Is_Quasi_Blank(Cell(const*) v)
   { return IS_QUASI(v) and HEART_BYTE(v) == REB_BLANK; }
+
 
 
 //=//// "HEAVY NULLS" (BLOCK! Isotope Pack with `_` in it) ////////////////=//

@@ -197,8 +197,8 @@ inline static Value(const*) Copy_Reified_Variadic_Feed_Cell(
 
     if (Is_Nulled(cell)) {  // API enforces use of C's nullptr (0) for NULL
         assert(not Is_Api_Value(cell));  // but internal cells can be nulled
-        assert(Is_Meta_Of_Blank_Isotope(FEED_NULL_SUBSTITUTE_CELL));
-        return Init_Meta_Of_Blank_Isotope(out);  // reduces to blank isotope
+        assert(Is_Quasi_Blank(FEED_NULL_SUBSTITUTE_CELL));
+        return Init_Quasi_Blank(out);  // reduces to blank isotope
     }
 
     if (Is_Isotope(cell)) {  // @ will turn these back into isotopes

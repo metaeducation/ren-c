@@ -477,7 +477,7 @@ DECLARE_NATIVE(didnt)
     if (Is_Meta_Of_Void(in) or Is_Meta_Of_Null(in))
         return Init_True(OUT);
 
-    if (REF(decay) and Is_Meta_Of_Blank_Isotope(in))
+    if (REF(decay) and Is_Quasi_Blank(in))
         return Init_True(OUT);
 
     return Init_False(OUT);
@@ -611,8 +611,8 @@ DECLARE_NATIVE(also)  // see `tweak :also 'defer on` in %base-defs.r
         return Raisify(OUT);
     }
 
-    if (REF(decay) and Is_Meta_Of_Blank_Isotope(in))
-        return Init_Blank_Isotope(OUT);  // telegraph null isotope
+    if (REF(decay) and Is_Meta_Of_Heavy_Null(in))
+        return Init_Heavy_Null(OUT);  // telegraph null isotope
 
     STATE = ST_ALSO_RUNNING_BRANCH;
     return CONTINUE(SPARE, branch, Meta_Unquotify(in));

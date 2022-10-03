@@ -240,12 +240,12 @@ static void Startup_Lib(void)
     assert(Is_Truthy(Lib(BLANK)) and IS_BLANK(Lib(BLANK)));
 
     Set_Cell_Flag(
-        Init_Meta_Of_Blank_Isotope(force_Lib(QUASI_BLANK)),
+        Init_Quasi_Blank(force_Lib(QUASI_BLANK)),
         PROTECTED
     );
     assert(
         Is_Truthy(Lib(QUASI_BLANK))
-        and Is_Meta_Of_Blank_Isotope(Lib(QUASI_BLANK))
+        and Is_Quasi_Blank(Lib(QUASI_BLANK))
     );
 
     Set_Cell_Flag(Init_Meta_Of_Void(force_Lib(QUASI_NULL)), PROTECTED);
