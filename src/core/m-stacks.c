@@ -8,7 +8,7 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2017 Ren-C Open Source Contributors
+// Copyright 2012-2022 Ren-C Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -30,7 +30,7 @@
 //
 //  Startup_Data_Stack: C
 //
-void Startup_Data_Stack(REBLEN capacity)
+void Startup_Data_Stack(Length capacity)
 {
     // Start the data stack out with just one element in it, and poison it
     // (unreadable/unwritable).  This helps avoid accidental accesses in the
@@ -263,9 +263,8 @@ Context(*) Get_Context_From_Stack(void)
 //
 //  Expand_Data_Stack_May_Fail: C
 //
-// The data stack maintains an invariant that you may never push an END to it.
-// So each push looks to see if it's pushing to a cell that contains an END
-// and if so requests an expansion.
+// The data stack is expanded when the pushed pointer matches the known tail
+// of the allocated space.
 //
 // WARNING: This will invalidate any extant pointers to REBVALs living in
 // the stack.  It is for this reason that stack access should be done by
@@ -321,18 +320,13 @@ void Expand_Data_Stack_May_Fail(REBLEN amount)
     // stack push would need to expand.
     //
     DS_Movable_Tail = ARR_TAIL(DS_Array);
-
-    // Note: this used to ASSERT_ARRAY(DS_Array), which doesn't make sense
-    // as it's about the most invalid array there is; with special marking
-    // taken care of in the GC.  It has its own subtype: FLAVOR_DATASTACK
 }
 
 
 //
 //  Pop_Stack_Values_Core: C
 //
-// Pops computed values from the stack to make a new ARRAY.  Takes advantage
-// of Move_Cell(), leaving the stack cells "fresh" for reuse on next push.
+// Pops computed values from the stack to make a new ARRAY.
 //
 // !!! How can we pass in callsite file/line for tracking info?
 //
@@ -350,12 +344,12 @@ Array(*) Pop_Stack_Values_Core(StackIndex base, Flags flags)
     for (; count < len; ++count, ++src, ++dest) {
         if (
             Is_Isotope(src)
-            or VAL_TYPE_UNCHECKED(src) == REB_NULL  // allow unreadable trash
+            or VAL_TYPE_UNCHECKED(src) == REB_VOID  // allow unreadable trash
         ){
             assert(IS_VARLIST(a) and Is_Isotope_Stable(src));  // legal if so
         }
 
-        Copy_Cell_Untracked(dest, src, CELL_MASK_COPY);
+        Move_Cell_Untracked(dest, src, CELL_MASK_MOVE);
 
       #if DEBUG_POISON_DROPPED_STACK_CELLS
         Poison_Cell(src);

@@ -1555,6 +1555,8 @@ DECLARE_NATIVE(glom)
 //
 void Assert_Array_Core(Array(const*) a)
 {
+    assert(SER_FLAVOR(a) != FLAVOR_DATASTACK);  // has special handling
+
     Assert_Series_Basics_Core(a);  // not marked free, etc.
 
     if (not IS_SER_ARRAY(a))
