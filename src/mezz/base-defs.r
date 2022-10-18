@@ -620,7 +620,7 @@ print: func* [
         line: mold unquote line
     ]
 
-    return write-stdout (try spaced line) then [
+    return write-stdout (maybe spaced line) then [
         write-stdout newline
     ] else [none]
 ]
