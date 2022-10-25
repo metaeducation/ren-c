@@ -352,7 +352,7 @@ Array(*) Pop_Stack_Values_Core(StackIndex base, Flags flags)
             Is_Isotope(src)
             or VAL_TYPE_UNCHECKED(src) == REB_NULL  // allow unreadable trash
         ){
-            assert(IS_VARLIST(a));  // usually not legal
+            assert(IS_VARLIST(a) and Is_Isotope_Stable(src));  // legal if so
         }
 
         Copy_Cell_Untracked(dest, src, CELL_MASK_COPY);

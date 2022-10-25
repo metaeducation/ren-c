@@ -382,7 +382,10 @@ static void Propagate_All_GC_Marks(void)
           #if DEBUG
             switch (QUOTE_BYTE_UNCHECKED(v)) {
               case ISOTOPE_0:  // isotopes only legal in objects/frames/modules
-                if (not (IS_VARLIST(a) or IS_LET(a) or IS_PATCH(a)))
+                if (IS_VARLIST(a) or IS_LET(a) or IS_PATCH(a)) {
+                    if (Is_Isotope_Unstable(v))
+                        panic (v);
+                } else
                     panic (v);
                 break;
 

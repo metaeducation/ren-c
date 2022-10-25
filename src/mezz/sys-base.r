@@ -195,12 +195,12 @@ module: func [
         ;
         assert [block? body]
 
-        set/any 'product do body
+        set/any 'product ^ do body  ; can't set variable to none/etc.
         quitting: false
     ]
     then ^arg-to-quit -> [
         quitting: true
-        set/any 'product unmeta arg-to-quit
+        set/any 'product unmeta arg-to-quit  ; !!! meta convention?
     ]
 
     return mod

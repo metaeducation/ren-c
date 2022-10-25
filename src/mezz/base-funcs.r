@@ -454,17 +454,15 @@ redescribe [
 
 
 unset: redescribe [
-    {Clear the value of a word to an unset isotope (in its current context)}
+    {Clear the value of a word to the unset state (in its current context)}
 ](
-    ; Note: efforts were made at one time to permit specializing to void, by
-    ; having it fill the frame with unique series identity.  This was deemed
-    ; overkill once void had better workarounds--here we specialize to an
-    ; isotopic block pack that will decay due to not using /ANY.
+    ; SPECIALIZE glosses over ^META states, so it can't be used for fancy
+    ; specializations involving unstable isotopes or the unset state.  We
+    ; go lower to the FRAME! level to pass a ~ isotope as ^META.
     ;
-    specialize :set [
-        set/any 'value: ~[~]~
-        any: _
-    ]
+    let f: make frame! :set
+    f.value: meta ~
+    make action! :f
 )
 
 unset?: func [

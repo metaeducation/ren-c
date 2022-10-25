@@ -1078,6 +1078,8 @@ bool Set_Var_Core_Updater_Throws(
 ){
     // Note: `steps_out` can be equal to `out` can be equal to `target`
 
+    assert(not Is_Isotope(setval) or Is_Isotope_Stable(setval));
+
     DECLARE_LOCAL (temp);  // target might be same as out (e.g. spare)
 
     enum Reb_Kind varheart = CELL_HEART(var);
@@ -1381,6 +1383,7 @@ DECLARE_NATIVE(set)
     REBVAL *v = ARG(value);
 
     Meta_Unquotify(v);
+    Decay_If_Isotope(v);
 
     if (Is_Raised(v))
         return COPY(v);
@@ -1392,8 +1395,6 @@ DECLARE_NATIVE(set)
         steps = nullptr;  // no GROUP! evals
 
     if (not REF(any)) {
-        Decay_If_Isotope(v);
-
         if (Is_Isotope(v) and not Is_Isotope_Set_Friendly(v))
             fail ("Use SET/ANY to set variables to an isotope");
     }
