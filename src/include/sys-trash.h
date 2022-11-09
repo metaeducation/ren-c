@@ -6,7 +6,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2012-2021 Ren-C Open Source Contributors
+// Copyright 2012-2022 Ren-C Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -25,41 +25,51 @@
 // it can be used as a placeholder for a value that will be filled in at
 // some later time--spanning an evaluation.
 //
-// Although the low-level type used to store these cells is a "none" isotope,
-// it will panic if you try to test it with Is_None(), and will also refuse
-// VAL_TYPE() checks.  The only way to check if something IS_TRASH() is in the
-// debug build, and hence should only appear in asserts.
+// Although the low-level type used to store these cells is a quasi-void (~),
+// it will panic if you try to test it and will also refuse VAL_TYPE() checks.
+// The only way to check if something IS_TRASH() is in the debug build, and
+// hence should only appear in asserts.
 //
 // This is useful anytime a placeholder is needed in a slot temporarily where
 // the code knows it's supposed to come back and fill in the correct thing
 // later.  The panics help make sure it is never actually read.
 //
-
+//=//// NOTES /////////////////////////////////////////////////////////////=//
+//
+// * While an isotope form might seem more desirable to draw more attention
+//   in the release build, trash cells can be used in blocks.  It would break
+//   more invariants and possibly cause more damage for isotopes to appear
+//   in those places, so a quasiform is used.
+//
+// * Something more obvious like the word ~trash~ might be better, but there
+//   were some bootstrap issues with trash cells being created before the
+//   symbol table was made.  If that's reviewed, then this might be changed.
+//
 
 
 #if DEBUG_UNREADABLE_TRASH
     //
-    // Debug behavior: `~` isotope with the CELL_FLAG_STALE set
+    // Debug behavior: `~` with the CELL_FLAG_STALE set
     // Will trip up any access attempts via READABLE(), but can be overwritten
 
-    inline static Value(*) Init_Trash_Untracked(Cell(*) v) {
-        Init_Blank_Untracked(v, ISOTOPE_0);
-        Set_Cell_Flag(v, STALE);
-        return cast(Value(*), v);
+    inline static Value(*) Init_Trash_Untracked(Cell(*) out) {
+        Init_Nothing_Untracked(out, REB_VOID, QUASI_2);
+        Set_Cell_Flag(out, STALE);
+        return cast(Value(*), out);
     }
 
     inline static bool IS_TRASH(Cell(const*) v) {
-        if (CELL_HEART_UNCHECKED(v) != REB_BLANK)
+        if (CELL_HEART_UNCHECKED(v) != REB_VOID)
             return false;
-        if (QUOTE_BYTE_UNCHECKED(v) != ISOTOPE_0)
+        if (QUOTE_BYTE_UNCHECKED(v) != QUASI_2)
             return false;
         return did (v->header.bits & CELL_FLAG_STALE);
     }
 #else
-    // Release Build Behavior: Looks just like an unset (`~` isotope)
+    // Release Build Behavior: Looks just like a meta-nihil (`~` value)
 
     #define Init_Trash_Untracked(out) \
-        Init_Blank_Untracked((out), ISOTOPE_0)
+        Init_Nothing_Untracked((out), REB_VOID, QUASI_2)
 
     #define IS_TRASH(v) false  // should constant-fold out clauses in optimizer
 #endif

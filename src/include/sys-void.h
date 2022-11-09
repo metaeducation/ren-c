@@ -20,19 +20,30 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// VOID is the isotopic state of NULL.  It represents the idea of "no value".
+// VOID represents the idea of "no value".  Although it is like an isotope in
+// the sense that it cannot be put in a block, it is not itself considered to
+// be an isotope...and operations that try to add it will be no-ops:
+//
+//     >> comment "hi"
+//     ; void
+//
+//     >> append [a b c] comment "hi"
+//     == [a b c]
+//
+// But void does have an isotopic form, which is more unfriendly and used to
+// represent unset variables...tentatively called NIHIL.
 //
 //=//// NOTES /////////////////////////////////////////////////////////////=//
 //
 // * A cell with all its header bits 0 (Erased_Cell, CELL_MASK_0) is very
-//   close to being a VOID.  Its HEART_BYTE() is 0 for REB_NULL, and its
+//   close to being a NIHIL.  Its HEART_BYTE() is 0 for REB_VOID, and its
 //   QUOTE_BYTE() is ISOTOPE_0 to say it is an isotope.  However, it can't
 //   be a valid cell from the API perspective because Detect_Rebol_Pointer()
 //   would see the `\0` first byte, and that's a legal empty UTF-8 C string.
 //
 // * There is still leverage from the near overlap with erased cells...because
 //   it only takes a single masking operation to add NODE_FLAG_NODE and
-//   NODE_FLAG_CELL to make a valid void...in theory.  However, for debug
+//   NODE_FLAG_CELL to make a valid nihil...in theory.  However, for debug
 //   purposes, it may be desirable to add additional info to the cell.
 //
 
@@ -43,14 +54,14 @@
     c_cast(const REBVAL*, &PG_Void_Cell)
 
 
-inline static REBVAL *Prep_Nihil_Untracked(Cell(*) out) {
+inline static REBVAL *Prep_Nihil_Untracked(Value(*) out) {
     ALIGN_CHECK_CELL_EVIL_MACRO(out);
     out->header.bits = (
         NODE_FLAG_NODE | NODE_FLAG_CELL
             | FLAG_HEART_BYTE(REB_VOID) | FLAG_QUOTE_BYTE(ISOTOPE_0)
             | CELL_MASK_NO_NODES
     );
-    return cast(REBVAL*, out);
+    return out;
 }
 
 #define Prep_Nihil(out) \
@@ -101,8 +112,6 @@ inline static bool Is_Nihil(Cell(const*) v) {
 
 #define Init_Nihil(out) \
     TRACK(Init_Nihil_Untracked(out))
-
-
 
 
 
