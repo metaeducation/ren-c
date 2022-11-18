@@ -67,13 +67,13 @@ inline static bool TYPE_CHECK(noquote(Cell(const*)) typeset, Cell(const*) v) {
     assert(CELL_HEART(typeset) == REB_TYPESET);
 
     Array(const*) a = VAL_TYPESET_ARRAY(typeset);  // values all specified
-    Value(const*) var = SPECIFIC(ARR_HEAD(a));
-    Value(const*) tail = SPECIFIC(ARR_TAIL(a));
+    Cell(const*) var = ARR_HEAD(a);  // don't use SPECIFIC() yet, may be tail!
+    Cell(const*) tail = ARR_TAIL(a);
 
     for (; var != tail; ++var) {
         Value(const*) item;
         if (not IS_WORD(var))
-            item = var;
+            item = SPECIFIC(var);
         else {
             option(SymId) id = VAL_WORD_ID(var);  // builtin typeset optimized
             if (id and (id >= SYM_ANY_VALUE_X and id < SYM_DATATYPES)) {
