@@ -314,6 +314,8 @@ Bounce Reflect_Core(Frame(*) frame_)
 
             Init_Datatype(OUT, sym, quote_byte);
         }
+        else if (heart == REB_VOID)
+            Init_Datatype(OUT, Canon(VOID), quote_byte);  // !!! hack
         else
             Init_Datatype(OUT, Canon_Symbol(cast(SymId, heart)), quote_byte);
 
