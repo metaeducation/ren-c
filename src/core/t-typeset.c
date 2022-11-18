@@ -78,6 +78,11 @@ void Startup_Typesets(void)
 //
 void Shutdown_Typesets(void)
 {
+    int i;
+    for (i = 0; i < 5; ++i) {
+        const REBTYP** custom = c_cast(const REBTYP**, &PG_Extension_Types[i]);
+        *custom = nullptr;  // managed binary node, remove reference
+    }
 }
 
 
