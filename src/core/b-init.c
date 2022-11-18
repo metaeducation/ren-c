@@ -240,12 +240,12 @@ static void Startup_Lib(void)
     assert(Is_Truthy(Lib(BLANK)) and IS_BLANK(Lib(BLANK)));
 
     Set_Cell_Flag(
-        Init_Quasi_Blank(force_Lib(QUASI_BLANK)),
+        Init_Quasi_Null(force_Lib(QUASI_NULL)),
         PROTECTED
     );
     assert(
-        Is_Truthy(Lib(QUASI_BLANK))
-        and Is_Quasi_Blank(Lib(QUASI_BLANK))
+        Is_Truthy(Lib(QUASI_NULL))
+        and Is_Quasi_Null(Lib(QUASI_NULL))
     );
 
     Set_Cell_Flag(Init_Quasi_Void(force_Lib(QUASI_VOID)), PROTECTED);
@@ -369,9 +369,9 @@ static void Startup_Empty_Arrays(void)
   blockscope {
     Array(*) a = Make_Array_Core(1, NODE_FLAG_MANAGED);
     SET_SERIES_LEN(a, 1);
-    Init_Quasi_Blank(ARR_AT(a, 0));
+    Init_Quasi_Null(ARR_AT(a, 0));
     Freeze_Array_Deep(a);
-    PG_1_Quasi_Blank_Array = a;
+    PG_1_Quasi_Null_Array = a;
   }
 
   blockscope {
@@ -482,7 +482,7 @@ static void Init_Root_Vars(void)
 
     ensureNullptr(Root_Heavy_Null) = Init_Block(
         Alloc_Value(),
-        PG_1_Quasi_Blank_Array
+        PG_1_Quasi_Null_Array
       );
     Force_Value_Frozen_Deep(Root_Heavy_Null);
 
@@ -858,7 +858,7 @@ void Startup_Core(void)
   blockscope {
     Array(*) a = Make_Array_Core(1, NODE_FLAG_MANAGED);
     SET_SERIES_LEN(a, 1);
-    Meta_Quotify(Init_False(ARR_AT(a, 0)));
+    Init_Quasi_Word(ARR_AT(a, 0), Canon(FALSE));
     Freeze_Array_Deep(a);
     PG_1_Meta_False_Array = a;
   }

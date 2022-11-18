@@ -176,9 +176,6 @@ void Probe_Cell_Print_Helper(
         Mold_Value(mo, reified);
         Append_Ascii(mo->series, "  ; isotope");
     }
-    else if (Is_Nulled(v)) {
-        Append_Ascii(mo->series, "; null");
-    }
     else
         Mold_Value(mo, v);
 }

@@ -188,57 +188,44 @@ export console!: make object! [
                 return none
             ]
 
+            for-each item v [
+                any [quoted? item, quasi? item] else [
+                    print "!!! MALFORMED PARAMETER PACK, NOT QUOTED/QUASI !!!"
+                    print mold quasi v
+                    return none
+                ]
+            ]
+
             print ["; first in pack of length" length of v]
             v: first v  ; items in pack are ^META'd
         ]
 
-        === DISPLAY NULL AS IF IT WERE A COMMENT, AS IT HAS NO VALUE ===
+        === DISPLAY VOID AS IF IT WERE A COMMENT ===
 
-        ; Key to NULL's purpose is that it lacks any value representation, and
-        ; only exists as an evaluation product you can store in a variable.
-        ; So there's nothing we can print like `== null` (which would look
-        ; like the WORD! null), and no special syntax exists for them...
+        ; VOID lacks any representation, and is supposed to just vaporize.
+        ; So there's nothing we can print like `== void` (which would look
+        ; like the WORD! void), and no special syntax exists for them...
         ; that's by design.
         ;
         ; It might seem that giving *no* output would be the most natural case
-        ; for such a situation.  But it provides more grounding to show
-        ; *something*, so we are tricky here in the text medium and display a
-        ; line in comment form, without the ==.  It has settled into being a
-        ; good compromise for the situation...helping to ground users in what
-        ; is going on.
-
-        if v = null' [
-            print "; null"
-            return none
-        ]
-
-        === DISPLAY VOID AS IF IT WERE A COMMENT, ALSO ===
+        ; for such a situation.  See above for why ~[]~ isotopes are used for
+        ; suppressing output instead.
+        ;
+        ; Hence it's more grounding to print *something*.  So we are tricky
+        ; here in the text medium and display a line in comment form, without
+        ; the ==.  It has settled into being a good compromise.
 
         if v = void' [
             print "; void"
             return none
         ]
 
-        === ISOTOPE BAD WORDS (^META v parameter means they look plain) ===
+        === ISOTOPES (^META v parameter means they are quasiforms) ===
 
-        if v = '~_~ [
+        if quasi? v [
             ;
-            ; BLANK! isotopes are "unstable" and will decay to a null.  This
-            ; is an important behavior because they come back from conditionals
-            ; with NULL branches:
-            ;
-            ;     >> if true [null]
-            ;     == ~_~  ; isotope (decays to null)
-            ;
-            print unspaced [
-                result _ mold v _ {; isotope  (decays to null)}
-            ]
-            return none
-        ]
-
-        if quasi? v [  ; all other isotopes
-            ;
-            ; All other isotope bad words display with an "isotope" annotation.
+            ; Isotopes don't technically have "a representation", but the
+            ; historical console behavior is to add a comment annotation.
             ;
             ;     >> do [~something~]
             ;     == ~something~  ; isotope
@@ -249,7 +236,7 @@ export console!: make object! [
             ;     >> first [~something~]
             ;     == ~something~
             ;
-            ; That's the plain form.  Those kinds of bad-words are received
+            ; That's the plain form.  Those quasiforms are received
             ; quoted by this routine like other ordinary values; this case is
             ; just for the isotopes.
             ;
@@ -257,15 +244,9 @@ export console!: make object! [
             return none
         ]
 
-        === ISOTOPIC BLOCKS AND OTHER TYPES (NEW!) ===
-
-        if not quoted? v [
-            print "; isotope"
-            v: quote v  ; print normally
-        ]
-
         === "ORDINARY" VALUES (^META v parameter means they get quoted) ===
 
+        assert [quoted? v]
         set 'v unquote v  ; Avoid SET-WORD!--would cache action names as "v"
 
         case [

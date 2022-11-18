@@ -122,39 +122,61 @@ inline static bool Is_Quasi_Blank(Cell(const*) v)
 //    e.g. for a BLOCK!... must be a Value(*), e.g. a context variable or
 //    frame output.
 
+#define Init_Word_Isotope(out,label) \
+    TRACK(Init_Any_Word_Untracked(ensure(Value(*), (out)), REB_WORD, \
+            (label), ISOTOPE_0))
+
+#define Init_Quasi_Word(out,label) \
+    TRACK(Init_Any_Word_Untracked((out), REB_WORD, (label), QUASI_2))
+
+inline static bool Is_Word_Isotope(Cell(const*) v);
+
+inline static bool Is_Word_Isotope_With_Id(Cell(const*) v, SymId id);
+
 #define Init_Nulled(out) \
-    TRACK(Init_Blank_Untracked(ensure(Value(*), (out)), ISOTOPE_0))  // see [1]
+    Init_Word_Isotope((out), Canon(NULL))
+
+#define Init_Quasi_Null(out) \
+    Init_Quasi_Word((out), Canon(NULL))
+
+inline bool Is_Quasi_Null(Cell(const*) v) {
+    if (not IS_QUASI(v))
+        return false;
+    if (HEART_BYTE(v) != REB_WORD)
+        return false;
+    return VAL_WORD_ID(v) == SYM_NULL;
+}
 
 #define Is_Breaking_Null(out) \
     (VAL_TYPE_UNCHECKED(out) == REB_NULL)
 
 #define Init_Meta_Of_Null(out) \
-    Init_Quasi_Blank(out)
+    Init_Quasi_Null(out)
 
 #define Is_Meta_Of_Null(v) \
-    Is_Quasi_Blank(v)
+    Is_Quasi_Null(v)
 
 
-//=//// "HEAVY NULLS" (BLOCK! Isotope Pack with `_` in it) ////////////////=//
+//=//// "HEAVY NULLS" (BLOCK! Isotope Pack with `~null~` in it) ///////////=//
 //
-// An "pack" of a ~[_]~ isotope is used for the concept of a "heavy null".
+// An "pack" of a ~[~null~]~ isotope is used for the concept of a "heavy null".
 // This is something that will act like "pure" NULL in almost all contexts,
 // except that things like THEN will consider it to have been the product of
 // a "taken branch".
 //
-//     >> x: ~[_]~
-//     ; null
+//     >> x: ~[~null~]~
+//     == ~null~  ; isotope
 //
 //     >> if true [null]
-//     == ~[_]~  ; isotope
+//     == ~[~null~]~  ; isotope
 //
 //     >> if true [null] else [print "This won't run"]
-//     == ~[_]~  ; isotope
+//     == ~[~null~]~  ; isotope
 //
 // ("Heavy Voids" are an analogous concept for VOID.)
 
 #define Init_Heavy_Null(out) \
-    Init_Pack((out), PG_1_Quasi_Blank_Array)
+    Init_Pack((out), PG_1_Quasi_Null_Array)
 
 #define Init_Meta_Of_Heavy_Null(out) \
     TRACK(Init_Pack_Untracked((out), QUASI_2, (a)))

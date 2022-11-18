@@ -1929,7 +1929,7 @@ DECLARE_NATIVE(until)
 //        until [match [<opt>] get-queue-item]
 //
 //    The likely intent is that null is supposed to stop the loop.  Erroring
-//    on the ~_~ isotope draws attention to the problem, so they know to
+//    on the ~null~ isotope draws attention to the problem, so they know to
 //    use DID MATCH or CATCH/THROW the null.
 {
     INCLUDE_PARAMS_OF_UNTIL;

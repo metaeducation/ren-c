@@ -153,7 +153,7 @@ inline static option(va_list*) FEED_VAPTR(Feed(*) feed) {
 // forms.  So this can be leveraged in API calls.
 //
 #define FEED_NULL_SUBSTITUTE_CELL \
-    Lib(QUASI_BLANK)
+    Lib(QUASI_NULL)
 
 
 // 1. The va_end() is taken care of here; all code--regardless of throw or
@@ -195,11 +195,8 @@ inline static Value(const*) Copy_Reified_Variadic_Feed_Cell(
     Cell(const*) cell = cast(Cell(const*), feed->p);
     assert(not IS_RELATIVE(cell));
 
-    if (Is_Nulled(cell)) {  // API enforces use of C's nullptr (0) for NULL
+    if (Is_Nulled(cell))  // API enforces use of C's nullptr (0) for NULL
         assert(not Is_Api_Value(cell));  // but internal cells can be nulled
-        assert(Is_Quasi_Blank(FEED_NULL_SUBSTITUTE_CELL));
-        return Init_Quasi_Blank(out);  // reduces to blank isotope
-    }
 
     if (Is_Isotope(cell)) {  // @ will turn these back into isotopes
         Copy_Cell(out, SPECIFIC(cell));

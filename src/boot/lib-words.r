@@ -38,7 +38,7 @@ null
 quoted-void
 quasi-void
 blank
-quasi-blank
+quasi-null
 blackhole
 
 newline

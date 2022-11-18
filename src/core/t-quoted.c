@@ -189,8 +189,8 @@ DECLARE_NATIVE(the_p)
 // THE* is the variant assigned to @.  It turns QUASI! forms into isotopes,
 // but passes through all other values:
 //
-//     >> @ ~_~
-//     == ~_~  ; isotope (null)
+//     >> @ ~null~
+//     == ~null~  ; isotope
 //
 //     >> @ ~[1 2 3]~
 //     == ~[1 2 3]~  ; isotope
@@ -207,7 +207,7 @@ DECLARE_NATIVE(the_p)
 //     rebElide("append block maybe", rebQ(value_might_be_null));
 //
 // Because the API machinery puts FEED_NULL_SUBSTITUTE_CELL into the stream as
-// a surrogate for a NULL instead of asserting/erroring.
+// a surrogate for a nullptr instead of asserting/erroring.
 //
 // The reason it isotopifies things is that the belief is that this will
 // be more likely to generate something that will raise attention if it's not

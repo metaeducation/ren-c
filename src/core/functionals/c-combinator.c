@@ -347,7 +347,7 @@ void Push_Parser_Subframe(
 //
 //  {If supplied parser fails, succeed anyway without advancing the input}
 //
-//      return: "PARSER's result if it succeeds, otherwise ~_~ isotope"
+//      return: "PARSER's result if it succeeds, otherwise ~null~ isotope"
 //          [any-value!]
 //      parser [action!]
 //  ]

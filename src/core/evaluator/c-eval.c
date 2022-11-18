@@ -594,7 +594,7 @@ Bounce Evaluator_Executor(Frame(*) f)
     //     bool is_null = rebUnboxLogic("null?", v);  // should be rebQ(v)
     //
     // But what it does as a compromise is it will make the spliced values
-    // into ~_~ QUASI!-BLANK!s.  This usually works out in decay.  Further
+    // into ~null~ quasiforms.  This usually works out in decay.  Further
     // convenience is supplied by making the @ operator turn QUASI! values
     // into their isotopic forms:
     //

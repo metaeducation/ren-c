@@ -390,8 +390,6 @@ void Join_Binary_In_Byte_Buf(const REBVAL *blk, REBINT limit)
             break;
 
           case REB_QUASI:
-            if (Is_Quasi_Blank(val))
-                break;  // since we're just joining, allow ~_~ to work
             fail (Error_Bad_Value(val));
 
           case REB_INTEGER:

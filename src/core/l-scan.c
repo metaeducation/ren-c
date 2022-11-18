@@ -997,8 +997,8 @@ static enum Reb_Token Maybe_Locate_Token_May_Push_Mold(
     //
     while (not ss->begin) {
         if (f->feed->p == nullptr) {  // API null, can't be in feed, use BLANK
-            assert(Is_Quasi_Blank(FEED_NULL_SUBSTITUTE_CELL));
-            Init_Quasi_Blank(PUSH());
+            assert(Is_Quasi_Null(FEED_NULL_SUBSTITUTE_CELL));
+            Init_Quasi_Null(PUSH());
             if (Get_Executor_Flag(SCAN, f, NEWLINE_PENDING)) {
                 Clear_Executor_Flag(SCAN, f, NEWLINE_PENDING);
                 Set_Cell_Flag(TOP, NEWLINE_BEFORE);

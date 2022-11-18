@@ -2037,7 +2037,7 @@ const REBINS *RL_rebQUOTING(const void *p)
     ENTER_API;
 
     if (p == nullptr)
-        return Lib(QUASI_BLANK);  // precooked meta null
+        return FEED_NULL_SUBSTITUTE_CELL;  // precooked meta null
 
     Array(*) a;
 
@@ -2050,8 +2050,10 @@ const REBINS *RL_rebQUOTING(const void *p)
 
       case DETECTED_AS_CELL: {
         Value(const*) at = cast(Value(const*), p);
-        if (Is_Nulled(at))
-            return Lib(QUASI_BLANK);  // don't want to make blank via meta
+        if (Is_Nulled(at)) {
+            assert(not Is_Api_Value(at));  // only internals use nulled cells
+            return FEED_NULL_SUBSTITUTE_CELL;  // reified substitute
+        }
 
         Value(*) v = Copy_Cell(Alloc_Value(), at);
         a = Singular_From_Cell(v);

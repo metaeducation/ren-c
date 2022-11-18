@@ -368,7 +368,7 @@ static Bounce Then_Else_Isotopic_Object_Helper(
 //      return: [logic!]
 //      ^optional "Argument to test"
 //          [<opt> <void> <pack> any-value!]
-//      /decay "Pre-decay ~_~ isotope input to NULL"
+//      /decay "Pre-decay ~null~ isotope input to NULL"
 //      <local> branch  ; for frame compatibility with THEN/ELSE/ALSO
 //  ]
 //
@@ -462,7 +462,7 @@ DECLARE_NATIVE(did_1)  // see TO-C-NAME for why the "_1" is needed
 //      return: [logic!]
 //      ^optional "Argument to test"
 //          [<opt> <void> any-value!]
-//      /decay "Pre-decay ~_~ isotope input to NULL"
+//      /decay "Pre-decay ~null~ isotope input to NULL"
 //      <local> branch  ; for frame compatibility with THEN/ELSE/ALSO
 //  ]
 //
@@ -477,7 +477,7 @@ DECLARE_NATIVE(didnt)
     if (Is_Meta_Of_Void(in) or Is_Meta_Of_Null(in))
         return Init_True(OUT);
 
-    if (REF(decay) and Is_Quasi_Blank(in))
+    if (REF(decay) and Is_Quasi_Null(in))
         return Init_True(OUT);
 
     return Init_False(OUT);
@@ -493,7 +493,7 @@ DECLARE_NATIVE(didnt)
 //          [<opt> <void> any-value!]
 //      ^optional "<deferred argument> Run branch if this is not null"
 //          [<opt> <void> <fail> <pack> any-value!]
-//      /decay "Pre-decay ~_~ isotope input to NULL"
+//      /decay "Pre-decay ~null~ isotope input to NULL"
 //      :branch "If arity-1 ACTION!, receives value that triggered branch"
 //          [any-branch! ~action!~]
 //  ]
@@ -535,7 +535,7 @@ DECLARE_NATIVE(then)  // see `tweak :then 'defer on` in %base-defs.r
 //          [<opt> <void> any-value!]
 //      ^optional "<deferred argument> Run branch if this is null"
 //          [<opt> <void> <fail> <pack> any-value!]
-//      /decay "Pre-decay ~_~ isotope input to NULL"
+//      /decay "Pre-decay ~null~ isotope input to NULL"
 //      :branch [any-branch! ~action!~]
 //  ]
 //
@@ -576,7 +576,7 @@ DECLARE_NATIVE(else)  // see `tweak :else 'defer on` in %base-defs.r
 //          [<opt> <void> any-value!]
 //      ^optional "<deferred argument> Run branch if this is not null"
 //          [<opt> <void> <fail> any-value!]
-//      /decay "Pre-decay ~_~ isotope input to NULL"
+//      /decay "Pre-decay ~null~ isotope input to NULL"
 //      :branch "If arity-1 ACTION!, receives value that triggered branch"
 //          [any-branch! ~action!~]
 //  ]
@@ -704,14 +704,14 @@ DECLARE_NATIVE(match)
     //     ; null  <-- this would be a bad result!
     //
     // So successful matching of falsey values will give back ~false~,
-    // or ~_~ isotopes.  This can be consciously turned back into their
+    // or ~null~ isotopes.  This can be consciously turned back into their
     // original values with DECAY, which happens automatically in assignments.
     //
     //     >> match [<opt>] null
-    //     == ~_~  ; isotope
+    //     == ~[~null~]~  ; isotope
     //
     //     >> decay match [<opt>] null
-    //     ; null
+    //     == ~null~
     //
     Isotopify_If_Falsey(v);
 

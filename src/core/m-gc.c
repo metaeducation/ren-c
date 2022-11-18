@@ -446,7 +446,8 @@ void Reify_Variadic_Feed_As_Array_Feed(
 
         do {
             Derelativize(PUSH(), At_Feed(feed), FEED_SPECIFIER(feed));
-            assert(not Is_Nulled(TOP));
+            assert(not Is_Void(TOP));
+            assert(not Is_Isotope(TOP));
             Fetch_Next_In_Feed(feed);
         } while (Not_Feed_At_End(feed));
 

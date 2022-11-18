@@ -169,9 +169,6 @@ inline static bool IS_QUOTED_WORD(Cell(const*) v) {
 }
 
 
-#define Init_Word_Isotope(out,label) \
-    TRACK(Init_Any_Word_Untracked((out), REB_WORD, (label), ISOTOPE_0))
-
 inline static bool Is_Word_Isotope(Cell(const*) v)
   { return QUOTE_BYTE(v) == ISOTOPE_0 and HEART_BYTE(v) == REB_WORD; }
 
@@ -187,10 +184,6 @@ inline static bool Is_Word_Isotope_With_Id(Cell(const*) v, SymId id) {
 
 inline static bool Is_Quasi_Word(Cell(const*) v)
   { return IS_QUASI(v) and HEART_BYTE_UNCHECKED(v) == REB_WORD; }
-
-#define Init_Quasi_Word(out,sym) \
-    TRACK(Init_Any_Word_Untracked((out), REB_WORD, (sym), QUASI_2))
-
 
 inline static Value(*) Isotopify_If_Falsey(Value(*) v) {
     if (Is_Nulled(v))

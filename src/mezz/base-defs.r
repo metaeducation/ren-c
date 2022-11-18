@@ -49,7 +49,6 @@ probe: func* [
     ; Remember this is early in the boot, so many things not defined.
 
     write-stdout switch value' [
-        null' ["; null"]
         void' ["; void"]
         (matches quasi!) [unspaced [mold value' space space "; isotope"]]
     ] else [

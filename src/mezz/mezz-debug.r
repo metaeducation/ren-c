@@ -51,7 +51,7 @@ verify: function [
                 id: 'assertion-failure
                 arg1: compose [
                     (spread copy/part conditions pos) ** (case [
-                        null' = result' ["; null"]
+                        null' = result' ['~null~]
                         '~false~ = result' ['~false~]  ; isotopic false
                         bad-word? result' [result']  ; non-~true~ isotope
                     ])

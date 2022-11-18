@@ -36,7 +36,6 @@ dump: function [
 
     val-to-text: function [return: [text!] ^val [<opt> any-value!]] [
         return switch val [
-            null' ["; null"]
             void' ["; void"]
             (matches quasi!) [unspaced [mold val space space "; isotope"]]
 

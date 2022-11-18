@@ -29,13 +29,6 @@
 //   notation...but render them ambiguously as the words `true` and `false`.
 //
 
-#define Init_Word_Isotope(out,label) \
-    TRACK(Init_Any_Word_Untracked((out), REB_WORD, (label), ISOTOPE_0))
-
-inline static bool Is_Word_Isotope(Cell(const*) v);
-
-inline static bool Is_Word_Isotope_With_Id(Cell(const*) v, SymId id);
-
 #define Init_True(out)      Init_Word_Isotope((out), Canon(TRUE))
 #define Init_False(out)     Init_Word_Isotope((out), Canon(FALSE))
 
@@ -77,7 +70,7 @@ inline static bool VAL_LOGIC(Cell(const*) v) {
 
 inline static bool Is_Truthy(Cell(const*) v) {
     if (QUOTE_BYTE(v) == ISOTOPE_0) {
-        if (HEART_BYTE(v) == REB_BLANK)  // blank isotope is null, falsey
+        if (Is_Nulled(v))  // blank isotope is null, falsey
             return false;
         if (IS_LOGIC(v))
             return VAL_LOGIC(v);
