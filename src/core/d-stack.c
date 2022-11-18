@@ -124,7 +124,8 @@ REBVAL *Init_Near_For_Frame(Cell(*) out, Frame(*) f)
     Cell(const*) tail = ARR_TAIL(FRM_ARRAY(f));
     Cell(const*) item = ARR_AT(FRM_ARRAY(f), start);
     for (; item != tail and count < 6; ++item, ++count) {
-        assert(not Is_Nulled(item));  // can't be in arrays, API won't splice
+        assert(not Is_Void(item));  // can't be in arrays, API won't splice
+        assert(not Is_Isotope(item));  // can't be in arrays, API won't splice
         Derelativize(PUSH(), item, f_specifier);
 
         if (count == FRM_INDEX(f) - start - 1) {

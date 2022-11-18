@@ -85,7 +85,7 @@ inline static REBVAL *Init_Varargs_Untyped_Enfix(
     option(Value(const*)) left
 ){
     Array(*) feed;
-    if (not left)
+    if (not left or Is_Void(unwrap(left)))
         feed = EMPTY_ARRAY;
     else {
         Array(*) singular = Alloc_Singular(NODE_FLAG_MANAGED);
