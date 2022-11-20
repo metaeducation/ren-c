@@ -597,7 +597,7 @@ Bounce Action_Executor(Frame(*) f)
             if (NOT_PARAM_FLAG(PARAM, SKIPPABLE))
                 Literal_Next_In_Frame(ARG, f);  // CELL_FLAG_UNEVALUATED
             else {
-                if (not Typecheck_Including_Constraints(PARAM, f_next)) {
+                if (not TYPE_CHECK(PARAM, f_next)) {
                     assert(GET_PARAM_FLAG(PARAM, ENDABLE));
                     Init_Nulled(ARG);  // not FRAME_FLAG_BARRIER_HIT
                     goto continue_fulfilling;

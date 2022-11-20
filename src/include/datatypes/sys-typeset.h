@@ -352,14 +352,12 @@ inline static bool IS_PREDICATE(Cell(const*) v);  // forward decl
 //
 inline static bool Typecheck_Including_Constraints(
     const REBPAR *param,
-    Cell(const*) v
+    Cell(*) v  // need mutability for ^META check
 ){
     // We do an adjustment of the argument to accommodate meta parameters,
-    // which check the unquoted type.  But what's built for the frame must be
-    // quoted--e.g. MAKE FRAME! or specialized, since isotopes can't be passed
-    // legally in frames.
+    // which check the unquoted type.
     //
-    enum Reb_Kind kind;
+    bool unquoted = false;
 
     if (VAL_PARAM_CLASS(param) == PARAM_CLASS_META) {
         if (Is_Nulled(v))
@@ -374,29 +372,27 @@ inline static bool Typecheck_Including_Constraints(
         if (not IS_QUOTED(v))
             return false;
 
-        if (VAL_NUM_QUOTES(v) > 1)
-            kind = REB_QUOTED;
-        else if (QUOTE_BYTE(v) & NONQUASI_BIT)
-            kind = CELL_HEART(VAL_UNESCAPED(v));
-        else
-            kind = REB_QUASI;
+        Unquotify(v, 1);  // temporary adjustment (easiest option)
+        unquoted = true;
     }
-    else {
-        if (Is_Isotope(v) and not Is_Nulled(v) and not IS_LOGIC(v)) {
-            if (VAL_PARAM_CLASS(param) == PARAM_CLASS_RETURN)
-                return true;  // !!! type checking should be applied
+    else
+        unquoted = false;
 
-            return GET_PARAM_FLAG(param, ISOTOPES_OKAY);
-        }
+    if (Is_Isotope(v) and not Is_Nulled(v) and not IS_LOGIC(v)) {
+        if (VAL_PARAM_CLASS(param) == PARAM_CLASS_RETURN)
+            goto return_true;  // !!! type checking should be applied
 
-        kind = VAL_TYPE(v);
+        if (GET_PARAM_FLAG(param, ISOTOPES_OKAY))
+            goto return_true;
+
+        goto return_false;
     }
 
     if (TYPE_CHECK(param, v))
-        return true;
+        goto return_true;
 
-    if (kind == REB_VOID and GET_PARAM_FLAG(param, VANISHABLE))
-        return true;
+    if (Is_Void(v) and GET_PARAM_FLAG(param, VANISHABLE))
+        goto return_true;
 
     // !!! Predicates check more complex properties than just the kind, and
     // so will mess up on meta parameters.  All of this needs review, but
@@ -407,16 +403,28 @@ inline static bool Typecheck_Including_Constraints(
 
     if (
         GET_PARAM_FLAG(param, REFINEMENT)
-        and kind == REB_PATH
+        and IS_PATH(v)
         and IS_REFINEMENT(v)
     ){
-        return true;
+        goto return_true;
     }
 
     if (GET_PARAM_FLAG(param, PREDICATE) and IS_PREDICATE(v))
-        return true;
+        goto return_true;
+
+  return_false:
+
+    if (unquoted)
+        Quotify(v, 1);
 
     return false;
+
+  return_true:
+
+    if (unquoted)
+        Quotify(v, 1);
+
+    return true;
 }
 
 

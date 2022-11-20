@@ -806,9 +806,6 @@ inline static bool Pushed_Continuation(
                 Meta_Quotify(arg);
                 break;
             }
-
-            if (Is_Isotope(arg) and NOT_PARAM_FLAG(param, ISOTOPES_OKAY))
-                fail ("Can't pass isotope to non-META parameter");
         } while (0);
 
         Push_Frame(out, f);
