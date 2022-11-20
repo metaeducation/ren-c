@@ -430,7 +430,7 @@ for-each-datatype t [
 nontypes: collect [
     keep cscape {FLAGIT_KIND(REB_VOID)}
     for-each-datatype t [
-        any [not t/name! t/name! = 'logic!] then [
+        any [not t/name!] then [
             keep cscape/with {FLAGIT_KIND(REB_${AS TEXT! T/NAME})} 't
         ]
     ]
