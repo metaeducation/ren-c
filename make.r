@@ -1518,22 +1518,20 @@ for-each [category entries] file-base [
 ; is built into the executable) or `*` (built as dll or so dynamically, and
 ; can be selectively loaded by the interpreter).
 ;
-; This translates to an ext/mode of <builtin>, <dynamic>, or blank.
+; This translates to an ext/mode of <builtin>, <dynamic>, or null.
 
-assert [map? user-config/extensions]
 for-each ext extensions [
     if mode: select user-config/extensions ext/name [
         ;
         ; Bootstrap executable (at least on mac) had problems setting to null.
         ; Try workaround.
         ;
-        append user-config/extensions spread reduce [ext/name '_]
+        append user-config/extensions spread reduce [ext/name #recognized]
     ] else [
-        mode: '_
+        mode: '+  ; Currently the default is built in.  Shouldn't be!
     ]
 
     switch mode [
-        '_  ; Currently the default is built in.  Shouldn't be!
         '+ [
             ext/mode: <builtin>
         ]
@@ -1544,13 +1542,14 @@ for-each ext extensions [
             ext/mode: <dynamic>
         ]
         '- [
-            ext/mode: _
+            ext/mode: null
         ]
         fail ["Unrecognized extension mode:" mold mode]
     ]
 ]
+
 for-each [name val] user-config/extensions [
-    if not val [
+    if val <> #recognized [
         fail [{Unrecognized extension name:} name]
     ]
 ]
