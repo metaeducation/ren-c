@@ -1370,7 +1370,7 @@ print ["includes:" mold app-config/includes]
 print ["libraries:" mold app-config/libraries]
 print ["cflags:" mold app-config/cflags]
 print ["ldflags:" mold app-config/ldflags]
-print ["debug:" mold app-config/debug]
+print ["debug:" logic-to-word app-config/debug]
 print ["optimization:" mold app-config/optimization]
 
 append app-config/definitions spread reduce [
@@ -1920,7 +1920,7 @@ prep: make rebmake/entry-class [
                     fail "ext/source must be BLOCK! or FILE!"
                 ]]
                 unspaced [{OS_ID=} system-config/id]
-                unspaced [{USE_LIBREBOL=} ext/use-librebol]
+                unspaced [{USE_LIBREBOL=} logic-to-word ext/use-librebol]
             ]
 
             if ext/hook [

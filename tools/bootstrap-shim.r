@@ -304,6 +304,10 @@ try: ~  ; reviewing uses
 load-value: :load
 load-all: :load/all
 
+logic-to-word: func3 [logic [logic!]] [
+    either logic ['true] ['false]
+]
+
 maybe: enfix func3 [
     :left [<skip> set-word!]
     v [<opt> any-value!]

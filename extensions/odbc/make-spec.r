@@ -34,12 +34,13 @@ libraries: switch system-config/os-base [
 ] else [
     ; On some systems (32-bit Ubuntu 12.04), odbc requires ltdl
     ;
+    assert [logic? user-config/odbc-requires-ltdl]
     append copy [%odbc] maybe all [
-        not find [no false off _ #[false]] user-config/odbc-requires-ltdl
+        not user-config/odbc-requires-ltdl
         %ltdl
     ]
 ]
 
 options: [
-    odbc-requires-ltdl [word! logic! blank!] ()
+    odbc-requires-ltdl [logic!] ()
 ]

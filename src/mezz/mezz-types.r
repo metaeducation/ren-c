@@ -52,3 +52,5 @@ use [word] [
 ; want a 2-element path with a blank at the head that looks like a refinement
 ;
 to-refinement: runs :to-path
+
+logic-to-word: lambda [logic [logic!]] [either logic 'true 'false]
