@@ -592,9 +592,9 @@ Bounce MAKE_Error(
         //
         // String argument to MAKE ERROR! makes a custom error from user:
         //
-        //     code: _  ; default is null
-        //     type: _
-        //     id: _
+        //     code: null  ; default is null
+        //     type: null
+        //     id: null
         //     message: "whatever the string was"
         //
         // Minus the message, this is the default state of root_error.

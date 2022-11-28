@@ -36,12 +36,12 @@ import <systems.r>
 change-dir join repo-dir %src/boot/
 
 args: parse-args system/script/args  ; either from command line or DO/ARGS
-config: config-system any [get 'args/OS_ID '_]
+config: config-system get 'args/OS_ID
 
 first-rebol-commit: "19d4f969b4f5c1536f24b023991ec11ee6d5adfb"
 
 if args/GIT_COMMIT = "unknown" [
-    git-commit: _
+    git-commit: null
 ] else [
     git-commit: args/GIT_COMMIT
     if (length of git-commit) != (length of first-rebol-commit) [
@@ -276,7 +276,7 @@ for-each-typerange: func [
     <local> name* heart* any-name!* stack types starting
 ][
     stack: copy []
-    types*: _
+    types*: null
 
     heart*: 1  ; VOID is 0, and is not in the type table
     while [true] [  ; need to be in loop for BREAK to work
@@ -311,7 +311,7 @@ for-each-typerange: func [
                         end: heart*
                         types: types*
                     ]
-                    types*: _
+                    types*: null
                     do body  ; no support for BREAK/CONTINUE in bootstrap
                 ]
             )]

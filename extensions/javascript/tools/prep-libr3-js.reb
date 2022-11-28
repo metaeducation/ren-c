@@ -319,7 +319,7 @@ to-js-type: func [
 ; ASYNCIFY_BLACKLIST.
 
 append api-objects make object! [
-    spec: _  ; e.g. `name: RL_API [...this is the spec, if any...]`
+    spec: null  ; e.g. `name: RL_API [...this is the spec, if any...]`
     name: "rebPromise"
     returns: "intptr_t"
     paramlist: []
@@ -328,7 +328,7 @@ append api-objects make object! [
 ]
 
 append api-objects make object! [
-    spec: _  ; e.g. `name: RL_API [...this is the spec, if any...]`
+    spec: null  ; e.g. `name: RL_API [...this is the spec, if any...]`
     name: "rebResolveNative_internal"  ; !!! see %mod-javascript.c
     returns: "void"
     paramlist: ["intptr_t" frame_id "intptr_t" value_id]
@@ -339,7 +339,7 @@ append api-objects make object! [
 ]
 
 append api-objects make object! [
-    spec: _  ; e.g. `name: RL_API [...this is the spec, if any...]`
+    spec: null  ; e.g. `name: RL_API [...this is the spec, if any...]`
     name: "rebRejectNative_internal"  ; !!! see %mod-javascript.c
     returns: "void"
     paramlist: ["intptr_t" frame_id "intptr_t" error_id]
@@ -350,7 +350,7 @@ append api-objects make object! [
 ]
 
 append api-objects make object! [
-    spec: _  ; e.g. `name: RL_API [...this is the spec, if any...]`
+    spec: null  ; e.g. `name: RL_API [...this is the spec, if any...]`
     name: "rebIdle_internal"  ; !!! see %mod-javascript.c
     returns: "void"
     paramlist: []
@@ -360,7 +360,7 @@ append api-objects make object! [
 
 if false [  ; Only used if DEBUG_JAVASCRIPT_SILENT_TRACE (how to know here?)
     append api-objects make object! [
-        spec: _  ; e.g. `name: RL_API [...this is the spec, if any...]`
+        spec: null  ; e.g. `name: RL_API [...this is the spec, if any...]`
         name: "rebGetSilentTrace_internal"  ; !!! see %mod-javascript.c
         returns: "intptr_t"
         paramlist: []
@@ -383,7 +383,7 @@ for-each-api [
         continue
     ]
 
-    no-reb-name: _
+    no-reb-name: null
     if didn't parse2 name ["reb" copy no-reb-name to end] [
         fail ["API name must start with `reb`" name]
     ]

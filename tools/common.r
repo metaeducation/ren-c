@@ -238,7 +238,7 @@ export parse-args: function [
     args: any [args copy []]
     if not block? args [args: split args [some " "]]
     iterate args [
-        name: _
+        name: null
         value: args/1
         case [
             idx: find value #"=" [; name=value

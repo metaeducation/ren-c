@@ -96,12 +96,12 @@ func: func* [
     ;
     new-spec: clear copy spec
 
-    new-body: _
-    statics: _
-    defaulters: _
+    new-body: null
+    statics: null
+    defaulters: null
     var: #dummy  ; enter PARSE with truthy state (gets overwritten)
-    loc: _
-    with-return: _
+    loc: null
+    with-return: null
 
     parse3 spec [opt some [
         '<none> (append new-spec <none>)
@@ -157,7 +157,7 @@ func: func* [
             ]
         )
     |
-        (var: _)  ; everything below this line resets var
+        (var: null)  ; everything below this line resets var
         false  ; failing here means rolling over to next rule
     |
         '<local> (append new-spec <local>)
@@ -171,7 +171,7 @@ func: func* [
                 ]
             ]
         )]
-        (var: _)  ; don't consider further GROUP!s or variables
+        (var: null)  ; don't consider further GROUP!s or variables
     |
         '<in> (
             new-body: default [
@@ -208,13 +208,13 @@ func: func* [
             ]
         )
         maybe some [
-            set var: word! (other: _) maybe set other: group! (
+            set var: word! (other: null) maybe set other: group! (
                 append exclusions var
                 append statics (as set-word! var)
                 append statics (other else [the ~])
             )
         ]
-        (var: _)
+        (var: null)
     |
         <end> accept
     |
@@ -329,8 +329,8 @@ redescribe: func [
     action: reify :action
 
     let meta: meta-of :action
-    let notes: _
-    let description: _
+    let notes: null
+    let description: null
 
     ; For efficiency, objects are only created on demand by hitting the
     ; required point in the PARSE.  Hence `redescribe [] :foo` will not tamper
@@ -359,7 +359,7 @@ redescribe: func [
         on-demand-meta
 
         if find meta 'parameter-notes [
-            meta: _  ; need to get a parameter-notes field in the OBJECT!
+            meta: null  ; need to get a parameter-notes field in the OBJECT!
             on-demand-meta  ; ...so this loses SPECIALIZEE, etc.
 
             description: meta.description: fields.description
@@ -368,8 +368,8 @@ redescribe: func [
         ]
     ]
 
-    let param: _
-    let note: _
+    let param: null
+    let note: null
     parse3 spec [
         opt [
             copy description some text! (
@@ -443,7 +443,7 @@ redescribe: func [
         notes
         every [param note] notes [nihil? :note]
     ] then [
-        meta.parameter-notes: _
+        meta.parameter-notes: null
     ]
 
     return runs action  ; should have updated the meta
@@ -1137,10 +1137,10 @@ read-lines: func [
         <static> port (groupify src)
     ] compose/deep [
         let crlf: charset "^/^M"
-        let data: _
+        let data: null
         let eof: false
         cycle [
-            pos: _
+            pos: null
             parse3 buffer (rule)
             if pos [break]
             (spread if same? src system.ports.input
@@ -1163,5 +1163,5 @@ read-lines: func [
 input-lines: redescribe [
     {Makes a generator that yields lines from system.ports.input.}
 ](
-    specialize :read-lines [src: _]
+    specialize :read-lines [src: null]
 )

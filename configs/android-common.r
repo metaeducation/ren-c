@@ -40,7 +40,7 @@ ndk-root: local-to-file try get-env "ANDROID_NDK_ROOT" else [
 ;     Pkg.Desc = Android NDK
 ;     Pkg.Revision = 13.1.3345770
 ;
-ndk-version: make object! [major: minor: patch: _]
+ndk-version: make object! [major: minor: patch: null]
 (
     use [major minor patch] [
         parse2 as text! read (join ndk-root %source.properties) [

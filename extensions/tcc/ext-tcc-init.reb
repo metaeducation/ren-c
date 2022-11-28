@@ -91,10 +91,10 @@ compile: func [
         include-path: copy []  ; block! of text!s (local directories)
         library-path: copy []  ; block! of text!s (local directories)
         library: copy []  ; block of text!s (local filenames)
-        runtime-path: _  ; sets "CONFIG_TCCDIR" at runtime, text! or blank
-        librebol-path: _  ; alternative to "LIBREBOL_INCLUDE_DIR"
-        output-type: _  ; will default to MEMORY
-        output-file: _  ; not needed if MEMORY
+        runtime-path: null  ; sets "CONFIG_TCCDIR" at runtime, text! or null
+        librebol-path: null  ; alternative to "LIBREBOL_INCLUDE_DIR"
+        output-type: null  ; will default to MEMORY
+        output-file: null  ; not needed if MEMORY
     ]
 
     let b: settings
@@ -476,10 +476,10 @@ c99: func [
 
     let nonspacedot: complement charset reduce [space tab cr lf "."]
 
-    let infile: _  ; set to <multi> if multiple input files
-    let outfile: _
+    let infile: null  ; set to <multi> if multiple input files
+    let outfile: null
 
-    let outtype: _  ; default will be EXE (also overridden if `-c` or `-E`)
+    let outtype: null  ; default will be EXE (also overridden if `-c` or `-E`)
 
     let settings: collect [
         let option-no-arg-rule: [option: across to [space | <end>] (
@@ -513,7 +513,7 @@ c99: func [
 
             "-c" (  ; just compile (no link phase)
                 keep spread compose [output-type (outtype: 'OBJ)]
-                outfile: _  ; don't need to specify
+                outfile: null  ; don't need to specify
             )
             |
             ahead "-D"  ; #define
@@ -521,7 +521,7 @@ c99: func [
             |
             "-E" (  ; preprocess only, print to standard output (not file)
                 keep spread compose [output-type (outtype: 'PREPROCESS)]
-                outfile: _  ; don't need to specify
+                outfile: null  ; don't need to specify
             )
             |
             ahead "-g"  ; include debug symbols (don't use with -s)

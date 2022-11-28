@@ -98,7 +98,7 @@
 
 ; :HARD-QUOTE parameter
 (
-    x: _
+    x: null
     x: ->- default [10 + 20]
     x: ->- default [1000000]
     x = 30
@@ -200,7 +200,7 @@
 
 (
     count: 0
-    o: make object! [x: _]
+    o: make object! [x: null]
     nuller: function [y] [return null]
     o.(count: count + 1, first [x]): my nuller
     did all [
@@ -234,7 +234,7 @@
         ]
         did all [
             ignored: func [return: [issue!]] [
-                ignored: _
+                ignored: null
                 return #ignored
             ]
             did all [
@@ -254,7 +254,7 @@
         ]
         did all [
             ignored: func [return: [issue!]] [
-                ignored: _
+                ignored: null
                 return #ignored
             ]
             did all [
@@ -280,7 +280,7 @@
     )
 
     (
-        bar: func [return: <void>] [bar: _]
+        bar: func [return: <void>] [bar: null]
         did all [
             var: evaluate/next [1020 bar 304] 'pos
             pos = [bar 304]
@@ -289,7 +289,7 @@
         ]
         comment {Invisible normal arity-0 function should run on next eval}
     )(
-        enbar: enfixed func [left] [enbar: _, return left]
+        enbar: enfixed func [left] [enbar: null, return left]
         did all [
             var: evaluate/next [1020 enbar 304] 'pos
             pos = [304]
@@ -300,10 +300,10 @@
     )
 
     (
-        ibar: func ['i [<skip> integer!]] [ibar: _]
+        ibar: func ['i [<skip> integer!]] [ibar: null]
         did all [
             ignored: func [return: [issue!]] [
-                ignored: _
+                ignored: null
                 return #ignored
             ]
             did all [
@@ -325,7 +325,7 @@
         ]
         did all [
             kept: func [return: [issue!]] [
-                kept: _
+                kept: null
                 return #kept
             ]
             did all [
@@ -337,7 +337,7 @@
         ]
     )(
         enibar: enfixed func [return: [integer!] 'i [<skip> integer!]] [
-            enibar: _
+            enibar: null
             return i
         ]
         did all [

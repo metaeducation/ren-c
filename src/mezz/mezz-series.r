@@ -69,9 +69,9 @@ array: func [
         if not integer? size: size.1 [
             fail 'size ["Expect INTEGER! size in BLOCK!, not" type of size]
         ]
-        if tail? rest [rest: _]  ; want `array [2]` => `[_ _]`, no recurse
+        if tail? rest [rest: null]  ; want `array [2]` => `[_ _]`, no recurse
     ]
-    else [rest: _]
+    else [rest: null]
 
     block: make block! size
     case [
@@ -174,8 +174,8 @@ reword: function [
 
     out: make (type of source) length of source
 
-    prefix: _
-    suffix: _
+    prefix: null
+    suffix: null
     case [
         null? escape [prefix: "$"]  ; refinement not used, so use default
 
@@ -236,7 +236,7 @@ reword: function [
     ;         | "10" (keyword-match: '10)
     ;    ] suffix  ; ...but then it's at "0>" and not ">", so it fails
     ;
-    keyword-match: _  ; variable that gets set by rule
+    keyword-match: null  ; variable that gets set by rule
     any-keyword-suffix-rule: collect [
         for-each [keyword value] values [
             if not match keyword-types keyword [
@@ -391,7 +391,7 @@ collect*: func [
     body "Block to evaluate"
         [<maybe> block!]
 ][
-    let out: _
+    let out: null
     let keeper: specialize* (  ; SPECIALIZE to hide series argument
         enclose* :append lambda [  ; Derive from APPEND for /LINE /DUP
             f [frame!]

@@ -177,7 +177,7 @@ if commands [user-config/target: load commands]
 
 === {MODULES AND EXTENSIONS} ===
 
-system-config: config-system reify user-config/os-id
+system-config: config-system user-config/os-id
 rebmake/set-target-platform system-config/os-base
 
 to-obj-path: func [
@@ -769,28 +769,28 @@ extension-class: make object! [
     name: ~
     loadable: yes ;can be loaded at runtime
 
-    mode: _  ; [<builtin> <dynamic>] or unused
+    mode: null  ; [<builtin> <dynamic>] or unused
 
-    modules: _
-    source: _  ; main script
-    depends: _  ; additional C files compiled in
-    requires: _  ; it might require other extensions
+    modules: null
+    source: null  ; main script
+    depends: null  ; additional C files compiled in
+    requires: null  ; it might require other extensions
 
-    includes: _
-    definitions: _
-    cflags: _
+    includes: null
+    definitions: null
+    cflags: null
 
-    searches: _
-    libraries: _
-    ldflags: _
+    searches: null
+    libraries: null
+    ldflags: null
 
-    hook: _  ; FILE! of extension-specific Rebol script to run during rebmake
+    hook: null  ; FILE! of extension-specific Rebol script to run during rebmake
 
     use-librebol: false  ; default right now is use %sys-core.h
 
     ; Internal Fields
 
-    sequence: _  ; the sequence in which the extension should be loaded
+    sequence: null  ; the sequence in which the extension should be loaded
     visited: false
 
     directory: meth [
@@ -1020,7 +1020,7 @@ NOTES:^/
 'os-id unspaced [ {=== OS-ID ===^/
 CURRENT OS:^/
     }
-    indent mold config-system reify user-config/os-id
+    indent mold config-system user-config/os-id
     {^/
 LIST:^/
     OS-ID:  OS-NAME:}

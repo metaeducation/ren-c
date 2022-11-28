@@ -73,7 +73,7 @@ make-port*: function [
         ]
         word! [
             name: spec
-            spec: _
+            spec: null
         ]
         port! [
             name: port.scheme.name

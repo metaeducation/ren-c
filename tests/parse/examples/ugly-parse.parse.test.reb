@@ -12,7 +12,7 @@
 [(
     ugly-combinators: copy default-combinators
     ugly-combinators.(group!): :default-combinators.(get-group!)
-    ugly-combinators.(get-group!): _
+    ugly-combinators.(get-group!): null
 
     ugly-parse: specialize :parse [combinators: ugly-combinators]
 

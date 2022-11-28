@@ -66,7 +66,8 @@ export cscape: function [
         parse2 string [(col: 0), start:  ; <here>
         opt some [
             [
-                (prefix: _ suffix: _) finish:  ; <here>
+                (prefix: null suffix: null)
+                finish:  ; <here>
 
                 "${" change [copy expr: [to "}"]] (num-text) skip (
                     mode: #cname
@@ -100,7 +101,9 @@ export cscape: function [
                 num-text: to text! num
             )
                 |
-            newline (col: 0 prefix: _ suffix: _) start:  ; <here>
+            newline
+            (col: 0 prefix: null suffix: null)
+            start:  ; <here>
                 |
             skip (col: col + 1)
         ]]
@@ -316,7 +319,7 @@ export make-emitter: function [
             data [text! char! <variadic>]
             <with> buf-emit
         ][
-            context: _
+            context: null
             firstlook: first look
             if any [
                 lit-word? :firstlook
@@ -362,8 +365,8 @@ export make-emitter: function [
 
             ; For clarity/simplicity, emitters are not reused.
             ;
-            file: _
-            buf-emit: _
+            file: null
+            buf-emit: null
         ]
     ]
 

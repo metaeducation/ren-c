@@ -5,10 +5,10 @@
 
 [
     (did argtest: func [return: [block!] args [block!]] [
-        let port: _
-        let root-dir: _
-        let access-dir: _
-        let verbose: _
+        let port: null
+        let root-dir: null
+        let access-dir: null
+        let verbose: null
         let dir
         parse args [opt some [
             "-a", access-dir: [

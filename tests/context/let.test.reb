@@ -43,7 +43,7 @@
 ; If a LET receives a BLOCK!, then anything that is quoted will be dequoted
 ; and slipped into the stream to be handled normally.
 [(
-    saved: _
+    saved: null
     leftq: enfixed func ['x] [saved: x]
     let [a 'b ''(c)]: leftq
     saved = the '[a b '(c)]:
@@ -238,7 +238,7 @@
     var: #  ; v-- second result is discarded, but request did partial transcode
     'abc = let [_ (var)]: transcode/one "abc def"
 )(
-    var: _  ; opting out of second result, hence full transcode
+    var: null  ; opting out of second result, hence full transcode
     [abc def] = let [_ (var)]: transcode/one "abc def"
 )]
 

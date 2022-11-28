@@ -176,13 +176,13 @@
 
     (  ; Clear zone - no date adjustment.
         d: date-111
-        d.zone: _
+        d.zone: null
         same? d date-110
     )
 
     (  ; Clear time and zone - no date adjustment.
         d: date-111
-        d.time: _
+        d.time: null
         same? d date-100
     )
 

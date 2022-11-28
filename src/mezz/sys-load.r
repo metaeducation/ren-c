@@ -252,7 +252,7 @@ load: func [
         ]
     ]
     else [
-        file: _
+        file: null
         data: source
         type: default ['rebol]
     ]
@@ -508,7 +508,7 @@ import*: func [
     ; A relative path may have contributed some of its own directory portions,
     ; so extract the net path where we're executing to save in system.script.
 
-    let dir: _
+    let dir: null
     match [file! url! the-word! tag!] source then [
         source: clean-path source
         dir: as text! source
@@ -663,7 +663,7 @@ export*: func [
         if set-group? left [
             left: ^ eval left
             case [
-                void' = left [word: _]
+                void' = left [word: null]
                 any-word? unget left [word: as word! unget left]
                 fail "EXPORT of SET-GROUP! must be VOID or ANY-WORD!"
             ]

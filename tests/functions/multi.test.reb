@@ -53,7 +53,7 @@
     ; multi-return result of the expression come from another output.
 
     (
-        a: b: c: _
+        a: b: c: null
         did all [
             <y-result> = [a @b c]: test 1020
             a = 304
@@ -61,7 +61,7 @@
             c = <z-result>
         ]
     )(
-        a: b: c: _
+        a: b: c: null
         did all [
             304 = [@a b c]: test 1020
             a = 304
@@ -69,7 +69,7 @@
             c = <z-result>
         ]
     )(
-        a: b: c: _
+        a: b: c: null
         did all [
             <z-result> = [a b @(first [c])]: test 1020
             a = 304
@@ -77,7 +77,7 @@
             c = <z-result>
         ]
     )(
-        a: b: c: _
+        a: b: c: null
         did all [
             <z-result> = [a b @(void)]: test 1020
             a = 304

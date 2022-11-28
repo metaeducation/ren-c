@@ -287,7 +287,7 @@
         medium: func [':x <with> got] [got: :x, return 1000]
         Lmedium: enfixed :medium
 
-        got: _
+        got: null
         test: lambda [expr [block!]] [
             got: '~trash~
             compose [(do expr), (:got)]
@@ -323,7 +323,7 @@
         soft: lambda [:x <with> got] [got: :x, 1000]
         Lsoft: enfixed :soft
 
-        got: _
+        got: null
         test: func [expr [block!]] [
             got: '~trash~
             return compose [(do expr), (:got)]
@@ -404,7 +404,7 @@
 ; R3-Alpha recycles variables based on stack searching (non-specific binding).
 (
     a: lambda [b] [
-        a: _  comment "erases a so only first call saves c"
+        a: null  comment "erases a so only first call saves c"
         c: b
     ]
     f: lambda [d] [

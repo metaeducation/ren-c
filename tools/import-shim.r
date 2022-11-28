@@ -282,7 +282,7 @@ protect 'strip-commas-and-null-apostrophes  ; was getting overwritten once
 
 old-do: :lib3/do
 do: lib3/do: enclose :lib3/do func3 [f <local> old-dir] [
-    old-dir: _
+    old-dir: _  ; shim null
     if file? :f.source [
         ;
         ; We want to strip the commas, but we also want the file-like behavior
@@ -338,10 +338,10 @@ import: enfix func3 [
     change-dir new-script-path
     system/script: make system/standard/script [
         title: "Script imported by import shim"
-        header: _
+        header: _  ; shim null
         parent: system/standard/script
         path: new-script-path
-        args: _
+        args: _  ; shim null
     ]
 
     code: read/string second path+file

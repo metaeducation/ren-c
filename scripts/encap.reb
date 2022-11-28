@@ -158,7 +158,7 @@ elf-format: context [
         begin: <here>, 2 skip (handler 'e_shnum 2)
         begin: <here>, 2 skip (handler 'e_shstrndx 2)
 
-        (mode: _)
+        (mode: null)
     ]
 
     program-header-rule: [
@@ -192,7 +192,7 @@ elf-format: context [
             ]
         ]
 
-        (mode: _)
+        (mode: null)
     ]
 
     section-header-rule: [
@@ -227,7 +227,7 @@ elf-format: context [
             ]
         ]
 
-        (mode: _)
+        (mode: null)
     ]
 
     find-section: meth [
@@ -540,7 +540,7 @@ pe-format: context [
 
     buf: ~
     u16: u32: uintptr: ~
-    err: _
+    err: null
     fail-at: ~
 
     u16-le: [copy buf 2 skip (u16: debin [LE + 2] buf)]
@@ -696,7 +696,7 @@ pe-format: context [
         u32-le (image-base: u32
             if signature = 'exe-64 [
                 image-base: code-base or+ shift image-base 32
-                code-base: _
+                code-base: null
             ])
         u32-le (section-alignment: u32)
         u32-le (file-alignment: u32)
@@ -805,7 +805,7 @@ pe-format: context [
     ]
 
     reset: does [
-        err: _
+        err: null
         fail-at: ~
         start-of-section-header: ~
         end-of-section-header: ~

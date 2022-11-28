@@ -37,7 +37,7 @@
     g2: make gob! []
     insert g1 g2
     same? g1 g2.parent
-    do "g1: _"
+    do "g1: null"
     do "recycle"
     g3: make gob! []
     insert g2.parent g3

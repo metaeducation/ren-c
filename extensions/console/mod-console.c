@@ -263,7 +263,7 @@ DECLARE_NATIVE(console)
         panic (LOCAL(old_console));
 
     if (REF(skin))
-        rebElide("system.console: _");  // !!! needed for now
+        rebElide("system.console: null");  // !!! needed for now
 
     // We only enable halting (e.g. Ctrl-C, or Escape, or whatever) when user
     // code is running...not when the HOST-CONSOLE function itself is, or

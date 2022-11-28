@@ -71,7 +71,7 @@ src: join repo-dir src
 mkdir/deep output-dir
 
 
-config: config-system any [get 'args/OS_ID '_]
+config: config-system get 'args/OS_ID
 
 use-librebol: switch get 'args/USE_LIBREBOL [
     "false" [false]

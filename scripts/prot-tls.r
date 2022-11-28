@@ -928,7 +928,7 @@ encrypt-data: func [
                 ; encrypt-stream must be reinitialized each time with the
                 ; new initialization vector.
                 ;
-                ctx.encrypt-stream: _
+                ctx.encrypt-stream: null
             ]
         ]
     ] else [
@@ -962,7 +962,7 @@ decrypt-data: func [
             ; so the decrypt stream has to get GC'd.
             ;
             if ctx.version > 1.0 [
-                ctx.decrypt-stream: _
+                ctx.decrypt-stream: null
             ]
         ]
     ] else [
@@ -1197,7 +1197,7 @@ parse-messages: func [
                             ]
                             check-length: 0
 
-                            curve-list: _
+                            curve-list: null
                             while [not tail? bin] [
                                 let extension-id: grab 'bin 2
                                 let extension-length: grab-int 'bin 2
@@ -1290,7 +1290,7 @@ parse-messages: func [
                                     ; introduction of the algorithm field is a
                                     ; change from previous versions"
                                     ;
-                                    algorithm: _
+                                    algorithm: null
                                     if ctx.version >= 1.2 [
                                         algorithm: grab 'bin 2
                                     ]
@@ -1687,7 +1687,7 @@ tls-init: func [
 ][
     ctx.seq-num-r: 0
     ctx.seq-num-w: 0
-    ctx.mode: _
+    ctx.mode: null
     ctx.encrypted?: false
     assert [not ctx.suite]
 ]
@@ -1779,7 +1779,7 @@ check-response: function [
                         ]
                         append tls-port.data msg.content
                         application?: true
-                        msg.type: _
+                        msg.type: null
                     ]
                 ]
             ]
@@ -1861,11 +1861,11 @@ sys.util.make-scheme [
             port.state: context [
                 data-buffer: make binary! 32000
                 port-data: make binary! 32000
-                resp: _
+                resp: null
 
-                min-version: _
-                max-version: _
-                version: _
+                min-version: null
+                max-version: null
+                version: null
                 ver-bytes: does [
                     select version-to-bytes version else [
                         fail ["version has no byte sequence:" version]
@@ -1877,9 +1877,9 @@ sys.util.make-scheme [
                 ; Used by https://en.wikipedia.org/wiki/Server_Name_Indication
                 host-name: port.spec.host
 
-                mode: _
+                mode: null
 
-                suite: _
+                suite: null
 
                 cipher-suite: does [first find suite matches word!]
 
@@ -1924,12 +1924,12 @@ sys.util.make-scheme [
                     try select (ensure block! second cryptspec) 'iv
                 ]
 
-                client-crypt-key: _
-                client-mac-key: _
-                client-iv: _
-                server-crypt-key: _
-                server-mac-key: _
-                server-iv: _
+                client-crypt-key: null
+                client-mac-key: null
+                client-iv: null
+                server-crypt-key: null
+                server-mac-key: null
+                server-iv: null
 
                 seq-num-r: 0
                 seq-num-w: 0
@@ -1942,30 +1942,30 @@ sys.util.make-scheme [
 
                 encrypted?: false
 
-                client-random: _
-                server-random: _
-                pre-master-secret: _
-                master-secret: _
+                client-random: null
+                server-random: null
+                pre-master-secret: null
+                master-secret: null
 
-                key-block: _
+                key-block: null
 
-                certificate: _
-                rsa-e: _
-                rsa-pub: _
+                certificate: null
+                rsa-e: null
+                rsa-pub: null
 
-                dh-g: _  ; generator
-                dh-p: _  ; modulus
-                dh-keypair: _
-                dh-pub: _
+                dh-g: null  ; generator
+                dh-p: null  ; modulus
+                dh-keypair: null
+                dh-pub: null
 
                 ; secp256r1 currently assumed for ECDH
-                ecdh-keypair: _
-                ecdh-pub: _
+                ecdh-keypair: null
+                ecdh-pub: null
 
-                encrypt-stream: _
-                decrypt-stream: _
+                encrypt-stream: null
+                decrypt-stream: null
 
-                connection: _
+                connection: null
             ]
 
             let conn: port.state.connection: make port! [
@@ -2033,10 +2033,10 @@ sys.util.make-scheme [
                 switch port.state.crypt-method [
                     @aes [
                         if port.state.encrypt-stream [
-                            port.state.encrypt-stream: _  ; will be GC'd
+                            port.state.encrypt-stream: null  ; will be GC'd
                         ]
                         if port.state.decrypt-stream [
-                            port.state.decrypt-stream: _  ; will be GC'd
+                            port.state.decrypt-stream: null  ; will be GC'd
                         ]
                     ]
                 ] else [
@@ -2045,7 +2045,7 @@ sys.util.make-scheme [
             ]
 
             debug "TLS/TCP port closed"
-            port.state: _
+            port.state: null
             return port
         ]
 

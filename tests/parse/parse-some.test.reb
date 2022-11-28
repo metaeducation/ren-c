@@ -46,13 +46,13 @@
             "a" = x
         ]
     )(
-        x: _
+        x: null
         did all [
             "a" == parse "aaa" [x: some "a"]
             "a" = x  ; SOME doesn't want to be "expensive" on average
         ]
     )(
-        x: _
+        x: null
         did all [
             "a" == parse "aaa" [x: [some "a" | some "b"]]
             "a" = x  ; demonstrates use of the result (which alternate taken)

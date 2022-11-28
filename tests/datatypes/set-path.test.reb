@@ -19,7 +19,7 @@
 ("a/b:" = mold first [a/b:])
 ; set-paths are active
 (
-    a: make object! [b: _]
+    a: make object! [b: null]
     a.b: 5
     5 == a.b
 )
@@ -54,7 +54,7 @@
 ; GET pass, and that block of inert elements is reused on the SET pass.
 (
    counter: 0
-   obj: make object! [x: _]
+   obj: make object! [x: null]
    obj.(counter: counter + 1 'x): default [<thing>]
    did all [
        obj.x = <thing>

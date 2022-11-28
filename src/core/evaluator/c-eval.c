@@ -1659,11 +1659,8 @@ Bounce Evaluator_Executor(Frame(*) f)
     //
     //=///////////////////////////////////////////////////////////////////=//
 
-      case REB_BLANK:  // new behavior, evaluate to NULL isotope
-        Init_Nulled(OUT);
-        break;
-
     inert:
+      case REB_BLANK:  // once blanks evaluated to null, but that was panned
       case REB_LOGIC:
       case REB_INTEGER:
       case REB_DECIMAL:

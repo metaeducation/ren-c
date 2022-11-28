@@ -114,8 +114,8 @@ gather-natives join src-dir %core/
 ; special way.  Startup constructs it manually, before skipping it and invoking
 ; the evaluator to do the other `xxx: native/yyy [...]` evaluations.
 
-native-proto: _
-enfix-proto: _
+native-proto: null
+enfix-proto: null
 
 for-next info all-protos [
     case [

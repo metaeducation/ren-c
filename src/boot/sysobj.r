@@ -19,10 +19,10 @@ REBOL [
 ; Next five fields are updated during build:
 version:  0.0.0
 build:    1
-platform: _
-commit: _
+platform: null
+commit: null
 
-product: _  ; assigned by startup of the host ('core, 'view, 'ren-garden...)
+product: null  ; assigned by startup of the host ('core, 'view, 'ren-garden...)
 
 license: {Copyright 2012 REBOL Technologies
 REBOL is a trademark of REBOL Technologies
@@ -34,16 +34,16 @@ catalog: make object! [
     ;
     ; These catalogs are filled in by Init_System_Object()
     ;
-    datatypes: _
-    actions: _
-    natives: _
-    errors: _
+    datatypes: null
+    actions: null
+    natives: null
+    errors: null
 ]
 
 contexts: make object! [
     lib:
     user:
-        _
+        null
 ]
 
 state: make object! [
@@ -62,7 +62,7 @@ state: make object! [
             0.0.0
         extension: 2.2.2 ; execute only
     ]
-    last-error: _ ; used by WHY?
+    last-error: null ; used by WHY?
 ]
 
 modules: []
@@ -72,20 +72,20 @@ codecs: make object! []
 
 schemes: make object! []
 
-util: _
+util: null
 
 ports: make object! [
     wait-list: []   ; List of ports to add to 'wait
     input:          ; Port for user input.
     output:         ; Port for user output
     system:         ; Port for system events
-    callback: _     ; Port for callback events
-;   serial: _       ; serial device name block
+    callback: null  ; Port for callback events
+;   serial: null    ; serial device name block
 ]
 
 locale: make object! [
     language:   ; Human language locale
-    language*: _
+    language*: null
     library: make object! [
         ;
         ; This is a list mapping tags to URLs as [<tag> http://example.com]
@@ -94,7 +94,7 @@ locale: make object! [
         utilities: https://raw.githubusercontent.com/r3n/renclib/master/userutils.reb
     ]
     locale:
-    locale*: _
+    locale*: null
     months: [
         "January" "February" "March" "April" "May" "June"
         "July" "August" "September" "October" "November" "December"
@@ -105,21 +105,21 @@ locale: make object! [
 ]
 
 options: make object! [  ; Options supplied to REBOL during startup
-    bin: _          ; Path to directory where Rebol executable binary lives
-    boot: _         ; Path of executable, ie. system.options.bin/r3-exe
-    home: _         ; Path of home directory
-    resources: _    ; users resources directory (for %user.r, skins, modules etc)
-    suppress: _     ; block of user --suppress items, eg [%rebol.r %user.r %console-skin.reb]
+    bin: null       ; Path to directory where Rebol executable binary lives
+    boot: null      ; Path of executable, ie. system.options.bin/r3-exe
+    home: null      ; Path of home directory
+    resources: null ; users resources directory (for %user.r, skins, modules etc)
+    suppress: null  ; block of user --suppress items, eg [%rebol.r %user.r %console-skin.reb]
     loaded: []      ; block with full paths to loaded start-up scripts
-    path: _         ; Where script was started or the startup dir
+    path: null      ; Where script was started or the startup dir
 
-    current-path: _ ; Current URL! or FILE! path to use for relative lookups
+    current-path: null  ; Current URL! or FILE! path to use for relative lookups
 
-    encap: _        ; The encapping data extracted
-    script: _       ; Filename of script to evaluate
-    args: _         ; Command line arguments passed to script
-    debug: _        ; debug flags
-    version: _      ; script version needed
+    encap: null     ; The encapping data extracted
+    script: null    ; Filename of script to evaluate
+    args: null      ; Command line arguments passed to script
+    debug: null     ; debug flags
+    version: null   ; script version needed
 
     dump-size: 68   ; used by dump
 
@@ -202,9 +202,9 @@ standard: make object! [
     ; with this archetype used by the REDESCRIBE Mezzanine.
     ;
     action-meta: make object! [
-        description: _
-        parameter-types: _
-        parameter-notes: _
+        description: null
+        parameter-types: null
+        parameter-notes: null
     ]
 
     ; !!! This is the template used for all errors, to which extra fields are
@@ -214,13 +214,13 @@ standard: make object! [
     ; like FILE and LINE would not conflict with parameters.
     ;
     error: make object! [
-        type: _
-        id: _
-        message: _  ; a BLOCK! template with arg substitution or just a STRING!
-        near: _
-        where: _
-        file: _
-        line: _
+        type: null
+        id: null
+        message: null  ; BLOCK! template with arg substitution or just a STRING!
+        near: null
+        where: null
+        file: null
+        line: null
 
         ; Arguments will be allocated in the context at creation time if
         ; necessary (errors with no arguments will just have a message)
@@ -232,7 +232,7 @@ standard: make object! [
         parent:
         path:
         args:
-            _
+            null
     ]
 
     ; Having a "standard header object" for modules/scripts means:
@@ -261,14 +261,14 @@ standard: make object! [
     ;
     header: make object! [
         Title: {Untitled}
-        File: _
-        Name: _
+        File: null
+        Name: null
         Type: 'script  ; !!! Is this a good default?
-        Version: _
-        Date: _
-        Author: _
-        Options: _
-        Description: _
+        Version: null
+        Date: null
+        Author: null
+        Options: null
+        Description: null
 
         ; !!! `Compress:`, `Exports:`, and `Contents:` were commented out.
         ; Exports perhaps because they only applied to modules, and would be
@@ -288,22 +288,22 @@ standard: make object! [
 ;       kind:       ; network, file, driver
 ;       type:       ; bytes, integers, objects, values, block
         actor:      ; standard action handler for scheme port functions
-            _
+            null
     ]
 
     port: make object! [ ; Port specification object
-        spec: _     ; published specification of the port
-        scheme: _   ; scheme object used for this port
-        actor: _    ; port action handler (script driven)
+        spec: null     ; published specification of the port
+        scheme: null   ; scheme object used for this port
+        actor: null    ; port action handler (script driven)
 
         ; !!! Native ports typically used raw C structs stored in a BINARY!
         ; as the `state`.  This makes that state opaque to the garbage
         ; collector, so it is a problem if REBVAL*/REBSER* are stored in it.
         ;
-        state: _    ; internal state values (private)
+        state: null    ; internal state values (private)
 
-        data: _     ; data buffer (usually binary or block)
-        locals: _   ; user-defined storage of local data
+        data: null     ; data buffer (usually binary or block)
+        locals: null   ; user-defined storage of local data
 
         ; !!! With asynchronous events, TRAP cannot be used, e.g. you can't
         ; say `trap [write...]` if the error will happen outside of the
@@ -315,7 +315,7 @@ standard: make object! [
         ; functions) could pass the error to the callback as every other such
         ; language would do.
         ;
-        error: _
+        error: null
     ]
 
     port-spec-head: make object! [
@@ -323,23 +323,23 @@ standard: make object! [
         scheme:     ; reference to scheme that defines this port
         ref:        ; reference path or url (for errors)
         path:       ; used for files
-           _            ; (extended here)
+           null          ; (extended here)
     ]
 
     port-spec-net: make port-spec-head [
-        host: _
+        host: null
         port-id: 80
 
         ; Set this to make outgoing packets seem to originate from a specific
         ; port (it's done by calling bind() before the first sendto(),
         ; otherwise the OS will pick an available port and stick with it.)
         ;
-        local-id: _
+        local-id: null
 
         ; This should be set to a function that takes a PORT! on listening
         ; sockets...it will be called when a new connection is made.
         ;
-        accept: _
+        accept: null
     ]
 
     port-spec-signal: make port-spec-head [
@@ -372,24 +372,26 @@ standard: make object! [
     ; as a placeholder to remember the idea.
     ;
     type-spec: make object! [
-        title: _
+        title: null
     ]
 
-    utype: _
-    font: _  ; mezz-graphics.h
-    para: _  ; mezz-graphics.h
+    utype: null
+    font: null  ; mezz-graphics.h
+    para: null  ; mezz-graphics.h
 ]
 
 
 user: make object! [
-   name:           ; User's name
-   home:           ; The HOME environment variable
-   words: _
-   identity: make object! [email: smtp: pop3: esmtp-user: esmtp-pass: fqdn: _]
-   identities: []
+    name:           ; User's name
+    home:           ; The HOME environment variable
+    words: null
+    identity: make object! [
+        email: smtp: pop3: esmtp-user: esmtp-pass: fqdn: null
+    ]
+    identities: []
 ]
 
-console: _  ; console (repl) object created by the console extension
+console: null  ; console (repl) object created by the console extension
 
 
 cgi: make object! [ ; CGI environment variables
@@ -409,7 +411,7 @@ cgi: make object! [ ; CGI environment variables
        remote-user:
        remote-ident:
        Content-Type:           ; cap'd for email header
-       content-length: _
+       content-length: null
        other-headers: []
 ]
 

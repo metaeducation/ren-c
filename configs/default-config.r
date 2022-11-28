@@ -1,5 +1,5 @@
 REBOL []
-os-id: _
+os-id: null
 
 ; possible values (words):
 ; Execution: Build the target directly without generating a Makefile
@@ -46,7 +46,7 @@ extensions: make map! [
     View +
 ]
 
-rebol-tool: _ ; fallback value if system/options/boot fails
+rebol-tool: null ; fallback value if system/options/boot fails
 
 ; possible combination:
 ; [gcc _ ld _]
@@ -83,16 +83,16 @@ with-tcc: no
 pre-vista: no
 
 
-git-commit: _
+git-commit: null
 
-includes: _
-definitions: _
-cflags: _
-libraries: _
-ldflags: _
+includes: null
+definitions: null
+cflags: null
+libraries: null
+ldflags: null
 
-main: _
+main: null
 
-top: _
+top: null
 
-config: _
+config: null

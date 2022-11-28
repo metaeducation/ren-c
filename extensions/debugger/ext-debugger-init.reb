@@ -41,9 +41,9 @@ debug-console-skin: make console! [
 {!! Entering *EXPERIMENTAL* Debug Console that only barely works for a demo.
 Expect crashes and mayhem.  But see BACKTRACE, RESUME, and STEP.}
 
-    base-frame: _
-    focus-frame: _
-    focus-index: _
+    base-frame: null
+    focus-frame: null
+    focus-index: null
 
     print-greeting: meth [return: <none>] [
         ;
@@ -54,7 +54,7 @@ Expect crashes and mayhem.  But see BACKTRACE, RESUME, and STEP.}
         if greeting [
             print newline
             print greeting
-            greeting: _
+            greeting: null
         ]
         base-frame: parent of parent of binding of 'return
         focus-frame: parent of parent of base-frame

@@ -325,7 +325,7 @@ trim: function [
     ; later lines relative to that.  Only makes sense for ANY-STRING!, though
     ; a concept like "lines" could apply to a BLOCK! of BLOCK!s.
     ;
-    indent: _
+    indent: null
     if auto [
         parse3* series [
             ; Don't count empty lines, (e.g. trim/auto {^/^/^/    asdf})

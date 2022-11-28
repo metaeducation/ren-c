@@ -93,7 +93,7 @@ load-until-blank: function [
         ;
         ; !!! SET-BLOCK! not bootstrap
         ;
-        attempt [transcode/next x 'res] else [res: _]
+        attempt [transcode/next x 'res] else [res: null]
         res
     ]
 
@@ -123,9 +123,9 @@ export proto-parser: context [
     unsorted-buffer: ~
     file: ~
 
-    emit-fileheader: _
-    emit-proto: _
-    emit-directive: _
+    emit-fileheader: null
+    emit-proto: null
+    emit-directive: null
 
     parse-position: ~
     notes: ~
@@ -153,7 +153,7 @@ export proto-parser: context [
         ]
 
         fileheader: [
-            (data: _)
+            (data: null)
             doubleslashed-lines
             and is-fileheader
             eoh:  ; <here>
@@ -163,7 +163,7 @@ export proto-parser: context [
         ]
 
         segment: [
-            (proto-id: proto-arg-1: _)
+            (proto-id: proto-arg-1: null)
             format-func-section
             | span-comment
             | line-comment opt some [newline line-comment] newline

@@ -38,7 +38,7 @@ category!: make object! [
 
 release!: make object! [
     version: "Unreleased"
-    date: _
+    date: null
     changes: make category! []
 ]
 

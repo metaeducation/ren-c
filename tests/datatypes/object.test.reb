@@ -100,7 +100,7 @@
 ; )]
 ;
 ; [#1553 (
-;    o: make object! [a: _]
+;    o: make object! [a: null]
 ;    same? (binding of in o 'self) (binding of in o 'a)
 ; )]
 ;

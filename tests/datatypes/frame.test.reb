@@ -153,7 +153,7 @@
             return binding of 'public  ; return FRAME! with the internal view
         ]
 
-        f-prelude: _
+        f-prelude: null
 
         bar: adapt augment :foo [/private [tag!]] [
             f-prelude: binding of 'private

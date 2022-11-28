@@ -171,7 +171,7 @@ run-test-cluster: func [
         ;
         opt some [url! | issue!]
 
-        (expected-id: _)  ; default is expecting a true result, not error w/id
+        (expected-id: null)  ; default expects a true result, not error w/id
 
         opt [
             expected-id: quasi! [(expected-id: unquasi expected-id)
@@ -308,7 +308,7 @@ export do-recover: func [
     ]
     else [
         parse3 read log-file [
-            (last-vector: _)
+            (last-vector: null)
             opt some [
                 opt some whitespace
                 [
@@ -316,7 +316,7 @@ export do-recover: func [
 
                     ; Test filenames appear in the log, %x.test.reb
                     "%" (
-                        next-position: _  ; !!! for SET-WORD! gather
+                        next-position: null  ; !!! for SET-WORD! gather
                         [value next-position]: transcode/one position
                     )
                     seek (next-position)
@@ -358,7 +358,7 @@ export do-recover: func [
                         |
                     "system.version:"
                     to <end>
-                    (last-vector: _)
+                    (last-vector: null)
                 ]
                     |
                 (fail [

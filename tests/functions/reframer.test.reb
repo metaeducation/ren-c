@@ -50,7 +50,7 @@
 [
     (
         ver: 1.2.3
-        date: _
+        date: null
 
         x: spaced [
             curtail spaced ["Version:" ver] curtail spaced ["Date:" date]
@@ -59,8 +59,8 @@
     )
 
     ~need-non-null~ !! (
-        a: 1, b: _, c: 3
-        date: _
+        a: 1, b: null, c: 3
+        date: null
         get-ver: func [] [to tuple! reduce [a b c]]
 
         spaced [

@@ -110,8 +110,8 @@ lines-exceeding: func [  ; !!! Doesn't appear used, except in tests (?)
     line-length [integer!]
     text [text!]
 ] [
-    let line-list: _
-    let line: _
+    let line-list: null
+    let line: null
     let [eol bol]
 
     count-line-rule: [
@@ -203,7 +203,7 @@ text-location-of: func [
         advance-rule
     ]
 
-    if zero? line [line: _] else [
+    if zero? line [line: null] else [
         line: reduce [line 1 + subtract index? position index? eol]
     ]
 

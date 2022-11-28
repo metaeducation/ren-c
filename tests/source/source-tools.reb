@@ -254,7 +254,7 @@ export analyse: context [
                 ]
             ]
 
-            non-std-func-space: _
+            non-std-func-space: null
             proto-parser.emit-proto: :emit-proto
             proto-parser.process data
 
@@ -291,15 +291,15 @@ export analyse: context [
 
         data: read %% (repo-dir)/(file)
 
-        bol: _
-        line: _
+        bol: null
+        line: null
 
         stop-char: charset { ^-^M^/}
         ws-char: charset { ^-}
         wsp: [some ws-char]
 
         eol: [line-ending | alt-ending (append inconsistent-eol line)]
-        line-ending: _
+        line-ending: null
 
         ;
         ; Identify line termination.
@@ -421,13 +421,13 @@ list: context [
         if equal? #"/" last item [
             contents: read %% (repo-dir)/(item)
             insert queue spread map-each x contents [join item x]
-            item: _
+            item: null
         ] else [
             any [
                 did parse3 split-path item ["tmp-" ...]
                 not find extensions extension-of item
             ] then [
-                item: _
+                item: null
             ]
         ]
 
@@ -439,7 +439,7 @@ c-parser-extension: context bind bind [
 
     ; Extend parser to support checking of function spacing.
 
-    last-func-end: _
+    last-func-end: null
 
     lbrace: [and punctuator "{"]
     rbrace: [and punctuator "}"]
@@ -457,7 +457,7 @@ c-parser-extension: context bind bind [
     ]
 
     append grammar.other-segment '(
-        last-func-end: _
+        last-func-end: null
     )
 
 ] proto-parser c-lexical.grammar

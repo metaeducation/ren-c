@@ -29,7 +29,7 @@
 )
 
 ; set [:get-word] [word]
-(a: 1 b: _ [b]: pack inert [a] b = 'a)
+(a: 1 b: ~ [b]: pack inert [a] b = 'a)
 
 (
     a: 10

@@ -15,7 +15,7 @@ letter: charset [#"a" - #"z" #"A" - #"Z"]
 parse3 cnt [
     some [
         ;initialization
-        (code-2: name: _)
+        (code-2: name: null)
 
         ; 3-letter code
         ;

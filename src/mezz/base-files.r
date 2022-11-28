@@ -202,7 +202,7 @@ split-path: func [
     <local> pos text dir
 ][
     text: as text! target
-    pos: _
+    pos: null
     parse3 text [
         ["/" | "." opt "." opt "/"] end (dir: dirize text) |
         pos: <here>, opt some [thru "/" [end | pos: <here>]] (

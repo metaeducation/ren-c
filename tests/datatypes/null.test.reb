@@ -1,8 +1,10 @@
 ; null.test.reb
 ;
-; Note: NULL is not technically a datatype.
+; Note: "null" is the isotopic state of the word "null", which has special
+; consideration in the system, and is exposed in the API not via a typical
+; value handle but the bound-to language's NULL abstraction.
 ;
-; It is a transitional state that can be held by variables, but it cannot
+; WORD! isotopes like ~null~ can be held by variables, but they cannot
 ; appear in BLOCK!s etc.  It's use is as a kind of "soft failure", and can
 ; be tested for and reacted to easily with things like DID, DIDN'T, THEN, ELSE.
 
@@ -11,13 +13,11 @@
 (not null? 1)
 
 ; Early designs for NULL did not let you get or set them from plain WORD!
-; Responsibility for kind of "ornery-ness" this shifted to isotopes, as NULL
-; took on increasing roles as the "true NONE!" and became the value for
-; unused refinements.
+; Responsibility for kind of "ornery-ness" shifted to the isotope of void.
 (
     a: ~
     did all [
-        null? a: _
+        null? a: null
         null? a
         null = a
     ]

@@ -72,7 +72,7 @@ loud-print: redescribe [
 ; it hasn't really been worked through yet (nested REPLs?)  Review.
 ;
 export console!: make object! [
-    name: _
+    name: null
     repl: true  ; used to identify this as a console! object
     is-loaded: false  ; if true then this is a loaded (external) skin
     was-updated: false  ; if true then console! object found in loaded skin
@@ -286,7 +286,7 @@ export console!: make object! [
 
     print-error: meth [return: <none> e [error!]] [
         if e.file = 'tmp-boot.r [
-            e.file: e.line: _  ; errors in console showed this, junk
+            e.file: e.line: null  ; errors in console showed this, junk
         ]
         print [e]
     ]
@@ -382,7 +382,7 @@ start-console: func [
     loud-print "Starting console..."
     loud-print newline
     let proto-skin: match object! skin else [make console! []]
-    let skin-error: _
+    let skin-error: null
 
     all [
         skin-file

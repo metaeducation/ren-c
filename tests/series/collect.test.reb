@@ -28,7 +28,7 @@
         body: compose [
             keep: adapt* specialize* :keep [
                 line: #
-                part: _
+                part: null
             ][
                 value: try spaced :value
             ]
@@ -52,8 +52,8 @@
         adapt :collect [
             body: compose [
                 keep: adapt* specialize* :keep [
-                    line: _
-                    part: _
+                    line: null
+                    part: null
                 ][
                     value: try unspaced :value
                 ]

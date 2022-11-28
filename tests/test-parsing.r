@@ -119,7 +119,7 @@ export collect-tests: function [
             [
                 set expected: quasi! ['!! | (fail "!! must follow ~error-id~")]
                 |
-                (expected: _)
+                (expected: null)
             ]
             set group: group! (
                 keep flags, flags: copy []

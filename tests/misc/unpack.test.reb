@@ -118,7 +118,7 @@
     '_ = b
 )
 
-(a: 1 b: _ [b]: unpack-old inert [a] b = 'a)
+(a: 1 b: null [b]: unpack-old inert [a] b = 'a)
 
 (
     a: 10

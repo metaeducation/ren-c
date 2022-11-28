@@ -63,7 +63,7 @@ clean-path: func [
         ]
     ]
 
-    let scheme: _
+    let scheme: null
 
     let target
     case [
@@ -186,7 +186,7 @@ ask: function [
     ; This is a limited implementation just to get the ball rolling; could
     ; do much more: https://forum.rebol.info/t/1124
     ;
-    prompt: _
+    prompt: null
     type: text!
     switch type of question [
         text! [prompt: question]  ; `ask "Input:"` doesn't filter type
@@ -254,10 +254,10 @@ ask: function [
             ; there's no API for a "light" printing of errors.  Scrub out all
             ; the extra information from the error so it isn't as verbose.
             ;
-            e.file: _
-            e.line: _
-            e.where: _
-            e.near: _
+            e.file: null
+            e.line: null
+            e.where: null
+            e.near: null
             print [e]
 
             continue  ; Keep cycling, bypasses the RETURN (...)

@@ -338,7 +338,7 @@ export system-definitions: make object! [
     ; !!! This doesn't seem to be used anywhere in the code.
     ;
     LLC: "HAS_LL_CONSTS"          ; supports e.g. 0xffffffffffffffffLL
-    ;LL?: _                       ; might have LL consts, reb-config.h checks
+    ;LL?: null                    ; might have LL consts, reb-config.h checks
 
     ; See C_STACK_OVERFLOWING for an explanation of the dodgy technique used
     ; to try and preempt a C stackoverflow crash with a trappable error.
@@ -447,17 +447,17 @@ export for-each-system: func [
         {Body of code to run for each system}
 ][
     let s: make object! [
-        platform-name: _
-        platform-number: _
-        id: _
-        os: _
-        os-name: _
-        os-base: _
-        build-label: _
-        definitions: _
-        cflags: _
-        libraries: _
-        ldflags: _
+        platform-name: null
+        platform-number: null
+        id: null
+        os: null
+        os-name: null
+        os-base: null
+        build-label: null
+        definitions: null
+        cflags: null
+        libraries: null
+        ldflags: null
     ]
 
     parse2 systems in s [ some [
@@ -468,12 +468,12 @@ export for-each-system: func [
         opt some [
             set id tuple!
             [
-                blank! (os: os-name: os-base: _)
+                blank! (os: os-name: os-base: null)
                     |
                 set os path! (os-name: os/1, os-base: os/2)
             ]
             [
-                blank! (build-label: _)
+                blank! (build-label: null)
                     |
                 set build-label text! (build-label: to-word build-label)
             ]
@@ -570,13 +570,14 @@ use [
 
 export config-system: func [
     {Return build configuration information}
-    hint "Version ID (blank means guess)"
-        [blank! text! tuple!]
+    hint "Version ID (null means guess)"
+        [<opt> text! tuple!]
 ][
+    if null? hint [  ; Try same version as this r3-make was built with
+        hint: to tuple! reduce [0 system/version/4 system/version/5]
+    ]
+
     let version: switch type of hint [
-        blank! [  ; Try same version as this r3-make was built with
-            to tuple! reduce [0 system/version/4 system/version/5]
-        ]
         text! [load-value hint]
         tuple! [hint]
     ]
@@ -585,7 +586,7 @@ export config-system: func [
         fail ["Expected OS_ID tuple like 0.3.1, not:" version]
     ]
 
-    let result: _
+    let result: null
     for-each-system s [
         if s/id = version [
             result: copy s  ; could RETURN, but sanity-check whole table

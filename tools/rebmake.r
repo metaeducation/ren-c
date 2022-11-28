@@ -38,10 +38,10 @@ if trap [:import/into] [  ; See %import-shim.r
 
 import <bootstrap-shim.r>
 
-default-compiler: _
-default-linker: _
-default-strip: _
-target-platform: _
+default-compiler: null
+default-linker: null
+default-strip: null
+target-platform: null
 
 map-files-to-local: func [
     return: [block!]
@@ -118,11 +118,11 @@ pkg-config: func [  ; !!! Note: Does not appear to be used
             opt: "--libs-only-l"
         ]
         'cflags [
-            dlm: _
+            dlm: null
             opt: "--cflags-only-other"
         ]
         'ldflags [
-            dlm: _
+            dlm: null
             opt: "--libs-only-other"
         ]
         fail ["Unsupported pkg-config word:" var]
@@ -301,18 +301,18 @@ set-target-platform: func [
 
 project-class: make object! [
     class: #project
-    name: _
-    id: _
-    type: _  ;  dynamic, static, object or application
-    depends: _  ; a dependency could be a library, object file
-    output: _  ; file path
-    basename: _   ; output without extension part
+    name: null
+    id: null
+    type: null  ;  dynamic, static, object or application
+    depends: null  ; a dependency could be a library, object file
+    output: null  ; file path
+    basename: null   ; output without extension part
     generated?: false
-    implib: _  ; Windows exe/lib with exported symbols generates implib file
+    implib: null  ; Windows exe/lib with exported symbols generates implib file
 
-    post-build-commands: _  ; commands to run after the "build" command
+    post-build-commands: null  ; commands to run after the "build" command
 
-    compiler: _
+    compiler: null
 
     ; common settings applying to all included obj-files
     ; setting inheritage:
@@ -320,15 +320,15 @@ project-class: make object! [
     ; _not_ from project to project.
     ; They will be applied _in addition_ to the obj-file level settings
     ;
-    includes: _
-    definitions: _
-    cflags: _
+    includes: null
+    definitions: null
+    cflags: null
 
     ; These can be inherited from project to obj-files and will be overwritten
     ; at the obj-file level
     ;
-    optimization: _
-    debug: _
+    optimization: null
+    debug: null
 ]
 
 solution-class: make project-class [
@@ -337,14 +337,14 @@ solution-class: make project-class [
 
 ext-dynamic-class: make object! [
     class: #dynamic-extension
-    output: _
-    flags: _  ;static?
+    output: null
+    flags: null  ;static?
 ]
 
 ext-static-class: make object! [
     class: #static-extension
-    output: _
-    flags: _  ;static?
+    output: null
+    flags: null  ;static?
 ]
 
 application-class: make project-class [
@@ -352,9 +352,9 @@ application-class: make project-class [
     type: 'application
     generated?: false
 
-    linker: _
-    searches: _
-    ldflags: _
+    linker: null
+    searches: null
+    ldflags: null
 
     link: meth [return: <none>] [
         linker/link output depends ldflags
@@ -374,10 +374,10 @@ dynamic-library-class: make project-class [
     class: #dynamic-library
     type: 'dynamic
     generated?: false
-    linker: _
+    linker: null
 
-    searches: _
-    ldflags: _
+    searches: null
+    ldflags: null
     link: meth [return: <none>] [
         linker/link output depends ldflags
     ]
@@ -407,10 +407,10 @@ object-library-class: make project-class [
 
 compiler-class: make object! [
     class: #compiler
-    name: _
-    id: _ ;flag prefix
-    version: _
-    exec-file: _
+    name: null
+    id: null  ; flag prefix
+    version: null
+    exec-file: null
     compile: meth [
         return: <none>
         output [file!]
@@ -690,9 +690,9 @@ cl: make compiler-class [
 
 linker-class: make object! [
     class: #linker
-    name: _
-    id: _ ;flag prefix
-    version: _
+    name: null
+    id: null  ; flag prefix
+    version: null
     link: meth [
         return: <none>
     ][
@@ -719,8 +719,8 @@ ld: make linker-class [
     ; even when processing a similar looking link line.
     ;
     name: 'ld
-    version: _
-    exec-file: _
+    version: null
+    exec-file: null
     id: "gnu"
     command: meth [
         return: [text!]
@@ -828,8 +828,8 @@ ld: make linker-class [
 
 llvm-link: make linker-class [
     name: 'llvm-link
-    version: _
-    exec-file: _
+    version: null
+    exec-file: null
     id: "llvm"
     command: meth [
         return: [text!]
@@ -913,8 +913,8 @@ llvm-link: make linker-class [
 link: make linker-class [
     name: 'link
     id: "msc"
-    version: _
-    exec-file: _
+    version: null
+    exec-file: null
     command: meth [
         return: [text!]
         output [file!]
@@ -1008,10 +1008,10 @@ link: make linker-class [
 
 strip-class: make object! [
     class: #strip
-    name: _
-    id: _  ; flag prefix
-    exec-file: _
-    options: _
+    name: null
+    id: null  ; flag prefix
+    exec-file: null
+    options: null
     commands: meth [
         return: [block!]
         target [file!]
@@ -1042,17 +1042,17 @@ strip: make strip-class [
 ; includes/definitions/cflags will be inherited from its immediately ancester
 object-file-class: make object! [
     class: #object-file
-    compiler: _
-    cflags: _
+    compiler: null
+    cflags: null
     definitions:
     source: ~
     output: ~
-    basename: _  ; output without extension part
-    optimization: _
-    debug: _
-    includes: _
+    basename: null  ; output without extension part
+    optimization: null
+    debug: null
+    includes: null
     generated?: false
-    depends: _
+    depends: null
 
     compile: meth [return: <none>] [
         compiler/compile
@@ -1131,9 +1131,9 @@ object-file-class: make object! [
 
 entry-class: make object! [
     class: #entry
-    id: _
+    id: null
     target: ~
-    depends: _
+    depends: null
     commands: ~
     generated?: false
 ]
@@ -1141,7 +1141,7 @@ entry-class: make object! [
 var-class: make object! [
     class: #variable
     name: ~
-    value: _  ; behavior is `any [value, default]`, so start as blank
+    value: null  ; behavior is `any [value, default]`, so start as blank
     default: ~
     generated?: false
 ]
@@ -1159,8 +1159,8 @@ cmd-delete-class: make object! [
 cmd-strip-class: make object! [
     class: #cmd-strip
     file: ~
-    options: _
-    strip: _
+    options: null
+    strip: null
 ]
 
 generator-class: make object! [
@@ -1168,9 +1168,9 @@ generator-class: make object! [
 
     vars: make map! 128
 
-    gen-cmd-create: _
-    gen-cmd-delete: _
-    gen-cmd-strip: _
+    gen-cmd-create: null
+    gen-cmd-delete: null
+    gen-cmd-strip: null
 
     gen-cmd: meth [
         return: [text!]
@@ -1555,17 +1555,17 @@ nmake: make makefile [
     nmake?: true
 
     ; reset them, so they will be chosen by the target platform
-    gen-cmd-create: _
-    gen-cmd-delete: _
-    gen-cmd-strip: _
+    gen-cmd-create: null
+    gen-cmd-delete: null
+    gen-cmd-strip: null
 ]
 
 ; For mingw-make on Windows
 mingw-make: make makefile [
     ; reset them, so they will be chosen by the target platform
-    gen-cmd-create: _
-    gen-cmd-delete: _
-    gen-cmd-strip: _
+    gen-cmd-create: null
+    gen-cmd-delete: null
+    gen-cmd-strip: null
 ]
 
 ; Execute the command to generate the target directly

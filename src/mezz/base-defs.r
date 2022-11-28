@@ -421,7 +421,7 @@ next: specialize :skip [offset: 1]
 back: specialize :skip [offset: -1]
 
 
-unspaced: specialize :delimit [delimiter: _]
+unspaced: specialize :delimit [delimiter: null]
 spaced: specialize :delimit [delimiter: space]
 newlined: specialize :delimit [delimiter: newline, tail: #]
 

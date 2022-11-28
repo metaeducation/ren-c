@@ -46,7 +46,7 @@ This will now make a new CHANGES.md file with all latest notable changes.
 
 ## Requirements
 
-- Git 
+- Git
 
 NB. Currently only tested on Mac OSX & Linux.
 
@@ -146,10 +146,10 @@ Then these three changes can be combined into one like so:
 "922658f" [
     related: ["00def28" "2955730"]
     summary: "Added CONSOLE! object & skinning"
-] 
+]
 ```
 
-Note change in summary message otherwise it would have used summary provided by 922658f commit. 
+Note change in summary message otherwise it would have used summary provided by 922658f commit.
 
 
 ### How to mark a version release?
@@ -169,19 +169,19 @@ Example commit-log block (extracted via `git log` - see GET-GIT-LOG func)
 ```rebol
 
 [
-    commit: {b953008} 
-    author: {Joe Bloggs} 
+    commit: {b953008}
+    author: {Joe Bloggs}
     email: {joe.bloggs@example.com}
-    date-string: {2017-05-29 16:34:12 +0100} 
+    date-string: {2017-05-29 16:34:12 +0100}
     summary: {Console skin update bug fix (#525)}
 
-    ;; above comes over directly from git-log.  
+    ;; above comes over directly from git-log.
     ;; Below are added by this program (some optional)
 
     type:  'Changed
     related: [...]  ;; if combined commits then provides links to related commits
     cc: [...]       ;; links to any Rebol issues (Cure-Code)
-    wiki: https://github.com/r3n/reboldocs/wiki/User-and-Console        
+    wiki: https://github.com/r3n/reboldocs/wiki/User-and-Console
     trello: https://trello.com/xxxx
 
     issues: [] ;; PR / Issue codes (CURRENTLY NOT USED)
@@ -197,10 +197,10 @@ which is made up like this....
 [
     make release! [
         version: "Undefined"
-        date: _
+        date: null
         changes: [
             make category! [
-                Added: make change! [] 
+                Added: make change! []
                 Changed: make change! []
                 ... ;; see category! for full list
             ]

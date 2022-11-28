@@ -137,7 +137,7 @@
 ; parse THRU tag!
 
 [#682 (
-    t: _
+    t: null
     parse3 "<tag>text</tag>" [thru '<tag> copy t to '</tag>]
     t == "text"
 )]

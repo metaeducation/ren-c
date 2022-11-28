@@ -346,7 +346,7 @@ main-startup: func [
             fail
         ]
     ] else [
-        system.options.boot: _
+        system.options.boot: null
     ]
 
     === HELPER FUNCTIONS ===
@@ -439,9 +439,9 @@ main-startup: func [
 
     sys.util.script-pre-load-hook: runs :host-script-pre-load
 
-    let do-string: _  ; will be set if a string is given with --do
+    let do-string: null  ; will be set if a string is given with --do
 
-    let quit-when-done: _  ; by default run CONSOLE
+    let quit-when-done: null  ; by default run CONSOLE
 
     ; Process the option syntax out of the command line args in order to get
     ; the intended arguments.  TAKEs each option string as it goes so the
@@ -466,7 +466,7 @@ main-startup: func [
     if o.boot [
         [_ o.bin]: split-path o.boot
     ] else [
-        o.bin: _
+        o.bin: null
     ]
 
     let param-or-die: func [

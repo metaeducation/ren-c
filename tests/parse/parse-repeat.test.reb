@@ -15,7 +15,7 @@
 ;
 ; However, REPEAT adds much more flexibility.  It can opt-out with a blank:
 ;
-;    >> num: _
+;    >> num: null
 ;    >> did parse "aaa" [repeat (num) "b", some "a"]
 ;    == #[true]
 ;

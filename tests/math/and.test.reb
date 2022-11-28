@@ -75,12 +75,12 @@
 (
     x: 1020
     did all [
-        true and (x: _) = false
+        true and (x: null) = false
         null? x
     ]
 )
 (
-    x: _
+    x: null
     did all [
         true and (x: 304) = true
         x = 304
@@ -96,7 +96,7 @@
 (
     x: 1020
     did all [
-        (<truthy>) and (x: _) = false
+        (<truthy>) and (x: null) = false
         null? x
     ]
 )
@@ -109,12 +109,12 @@
 (
     x: 1020
     did all [
-        false or (x: _) = false
+        false or (x: null) = false
         null? x
     ]
 )
 (
-    x: _
+    x: null
     did all [
         false or (x: 304) = true
         x = 304

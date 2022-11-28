@@ -12,7 +12,7 @@
 
     rule: [copy data [some integer!]]
 
-    obj: make object! [data: _]
+    obj: make object! [data: null]
 
     did all [
         did parse3/inside [1 2 3] [some rule] obj

@@ -127,7 +127,7 @@ do-request: function [
     port.state.mode: <doing-request>
 
     info.headers: info.response-line: info.response-parsed: port.data:
-    info.size: info.date: info.name: _
+    info.size: info.date: info.name: null
     req: (make-http-request spec.method any [spec.path %/]
         spec.headers spec.content)
 
@@ -154,7 +154,7 @@ do-request: function [
     ; The port data has been accrued for the client and can be given back
     ; directly, not as a copy.  STEAL returns PORT.DATA value before reset.
     ;
-    return steal port.data: _
+    return steal port.data: null
 ]
 
 ; if a no-redirect keyword is found in the write dialect after 'headers then
@@ -288,10 +288,10 @@ check-response: function [
         ; intends to reject the request."
         ;
         'continue [
-            info.headers: _
-            info.response-line: _
-            info.response-parsed: _
-            port.data: _
+            info.headers: null
+            info.response-line: null
+            info.response-parsed: null
+            port.data: null
             state.mode: <reading-headers>
             read conn
         ]
@@ -384,9 +384,9 @@ crlfbin: #{0D0A}
 crlf2bin: #{0D0A0D0A}
 crlf2: as text! crlf2bin
 http-response-headers: context [
-    Content-Length: _
-    Transfer-Encoding: _
-    Last-Modified: _
+    Content-Length: null
+    Transfer-Encoding: null
+    Last-Modified: null
 ]
 
 do-redirect: func [
@@ -586,16 +586,16 @@ sys.util.make-scheme [
         path: %/
         method: 'get
         headers: []
-        content: _
+        content: null
         timeout: 15
-        debug: _
+        debug: null
         follow: 'redirect
     ]
 
     info: make system.standard.file-info [
         response-line:
         response-parsed:
-        headers: _
+        headers: null
     ]
 
     actor: [
@@ -744,7 +744,7 @@ sys.util.make-scheme [
             ]
 
             close state.connection
-            port.state: _
+            port.state: null
             return port
         ]
 
