@@ -124,14 +124,6 @@ DECLARE_NATIVE(delimit)
     bool nothing = true;  // any elements seen so far have been null or blank
 
     for (; Not_Frame_At_End(f); Restart_Evaluator_Frame(f)) {
-        if (IS_BLANK(At_Frame(f))) {
-            Append_Codepoint(mo->series, ' ');
-            pending = false;
-            nothing = false;
-            Fetch_Next_Forget_Lookback(f);
-            continue;
-        }
-
         if (Eval_Step_Throws(OUT, f)) {
             Drop_Mold(mo);
             Drop_Frame(f);
