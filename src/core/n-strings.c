@@ -50,22 +50,27 @@ DECLARE_NATIVE(delimit)
 // 1. Erroring on NULL has been found to catch real bugs in practice.  It also
 //    enables clever constructs like CURTAIL.
 //
-// 2. CHAR! suppresses the delimiter logic.  Hence:
+// 2. BLOCK!s are prohibitied in DELIMIT because it's too often the case the
+//    result is gibberish--guessing what to do is bad:
+//
+//        >> block: [1 2 <x> hello]
+//
+//        >> print ["Your block is:" block]
+//        Your block is: 12<x>hello  ; ugh.
+//
+// 3. Because blocks aren't allowed, the usual rule of thumb that blanks should
+//    act like empty blocks need not apply.  Instead, the concept is that
+//    they act like spaces.  This concept is a long-running experiment that
+//    may not pan out, but is cool enough to keep weighing the pros/cons.
+//
+// 4. CHAR! suppresses the delimiter logic.  Hence:
 //
 //        >> delimit ":" ["a" space "b" newline void "c" newline "d" "e"]
 //        == "a b^/c^/d:e"
 //
 //    Only the last interstitial is considered a candidate for delimiting.
 //
-// 3. BLOCK!s are methods for gathering material to be part of the delimit.
-//    The behavior is defined as being not reduced and without spaces between.
-//  ..The main place you find this behavior is in the APPEND of a block to a
-//    string.  So this code delegates to that.
-//
-//    !!! Unify with the Modify_String() code so this doesn't need to call
-//    through the API.
-//
-// 4. Empty strings are distinct from voids in terms of still being delimited.
+// 5. Empty strings are distinct from voids in terms of still being delimited.
 //    This is important, e.g. in comma-delimited formats for empty fields.
 //
 //    >> delimit "," [field1 field2 field3]  ; field2 is ""
@@ -87,7 +92,7 @@ DECLARE_NATIVE(delimit)
         DECLARE_MOLD (mo);
         Push_Mold(mo);
 
-        if (REF(head))
+        if (REF(head) and REF(delimiter))
             Form_Value(mo, delimiter);
 
         // Note: This path used to shortcut with running TO TEXT! if not using
@@ -96,7 +101,7 @@ DECLARE_NATIVE(delimit)
         //
         Form_Value(mo, line);
 
-        if (REF(tail))
+        if (REF(tail) and REF(delimiter))
             Form_Value(mo, delimiter);
 
         return Init_Text(OUT, Pop_Molded_String(mo));
@@ -135,44 +140,24 @@ DECLARE_NATIVE(delimit)
 
         Decay_If_Isotope(OUT);  // spaced [match [logic!] false ...]
 
-        if (Is_Isotope(OUT))
-            return RAISE(Error_Bad_Isotope(OUT));
-
         if (Is_Nulled(OUT))  // catches bugs in practice, see [1]
             return RAISE(Error_Need_Non_Null_Raw());
 
+        if (Is_Isotope(OUT))
+            return RAISE(Error_Bad_Isotope(OUT));
+
+        if (ANY_ARRAY(OUT))  // guessing a behavior is bad, see [2]
+            fail ("Desired array rendering in DELIMIT not known");
+
         nothing = false;
 
-        if (IS_BLANK(OUT)) {  // BLANK! acts as space
+        if (IS_BLANK(OUT)) {  // BLANK! acts as space, see [3]
             Append_Codepoint(mo->series, ' ');
             pending = false;
         }
-        else if (IS_ISSUE(OUT)) {  // do not delimit (unified w/char), see [2]
+        else if (IS_ISSUE(OUT)) {  // do not delimit (unified w/char), see [4]
             Form_Value(mo, OUT);
             pending = false;
-        }
-        else if (ANY_ARRAY(OUT)) {  // BLOCK!s not reduced--no spaces, see [3]
-            if (not IS_BLOCK(OUT))
-                fail ("Only BLOCK! array types can be used in DELIMIT");
-
-            if (VAL_LEN_AT(OUT) != 0) {
-                if (pending)
-                    Form_Value(mo, delimiter);
-
-                Move_Cell(SPARE, OUT);
-                if (rebRunThrows(
-                    OUT,  // <-- output cell
-                    Canon(APPEND), Canon(COPY), EMPTY_TEXT,
-                        Canon(SPREAD), rebQ(SPARE)
-                )){
-                    Drop_Mold(mo);
-                    Drop_Frame(f);
-                    return THROWN;
-                }
-                Form_Value(mo, OUT);
-
-                pending = true;
-            }
         }
         else {
             if (pending and REF(delimiter))
@@ -185,7 +170,7 @@ DECLARE_NATIVE(delimit)
             else
                 Form_Value(mo, OUT);
 
-            pending = true;  // note this includes empty strings, see [4]
+            pending = true;  // note this includes empty strings, see [5]
         }
     } while (Not_Frame_At_End(f));
 
@@ -194,7 +179,7 @@ DECLARE_NATIVE(delimit)
         Init_Nulled(OUT);
     }
     else {
-        if (REF(tail))
+        if (REF(tail) and REF(delimiter))
             Form_Value(mo, delimiter);
         Init_Text(OUT, Pop_Molded_String(mo));
     }
