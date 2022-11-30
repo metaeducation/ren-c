@@ -4,8 +4,6 @@
 (not logic? 1)
 (logic! = type of true)
 (logic! = type of false)
-(true = #[true])
-(false = #[false])
 (on = true)
 (off = false)
 (yes = true)
@@ -15,5 +13,15 @@
 (true = to logic! 0)
 (true = to logic! 1)
 (true = to logic! "f")
-("#[true]" = mold true)
-("#[false]" = mold false)
+
+(mold true)
+(mold false)
+
+; Legacy support for LOAD-ability, compatible with Rebol2/R3-Alpha
+; (This support could be shifted to the Redbol module, perhaps?)
+[
+    ('~true~ = the #[true])
+    ('~false~ = the #[false])
+    (true = #[true])  ; legacy support
+    (false = #[false])
+]

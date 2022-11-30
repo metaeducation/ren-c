@@ -109,7 +109,7 @@ save: function [
 
         if length [
             append header spread compose [
-                length: (true)  ; "uses #[true], any truthy value will work"
+                length: #  ; "uses #, but any truthy value will work"
             ]
         ]
 

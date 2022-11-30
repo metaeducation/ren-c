@@ -403,10 +403,10 @@ DECLARE_NATIVE(of)
 // these cases would work:
 //
 //     >> integer! = type of 1
-//     == #[true]
+//     == ~true~  ; isotope
 //
 //     >> integer! = :(second [length type]) of 1
-//     == #[true]
+//     == ~true~  ; isotope
 //
 // For the moment the behavior is manually simulated.
 //

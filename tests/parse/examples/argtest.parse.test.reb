@@ -35,12 +35,12 @@
         return reduce/predicate [access-dir port root-dir verbose] :reify
     ])
 
-    ([_ _ _ 2] = argtest ["-v"])
-    ([#[true] _ _ _] = argtest ["-a"])
-    ([#[true] _ _ _] = argtest ["-a" "true"])
-    ([#[false] _ _ _] = argtest ["-a" "false"])
-    ([%something _ _ _] = argtest ["-a" "something"])
-    ([_ 8000 _ _] = argtest ["8000"])
-    ([_ 8000 _ 2] = argtest ["8000" "-v"])
-    ([_ 8000 %foo/bar 2] = argtest ["8000" "-v" "foo/bar"])
+    ([~null~ ~null~ ~null~ 2] = argtest ["-v"])
+    ([~true~ ~null~ ~null~ ~null~] = argtest ["-a"])
+    ([~true~ ~null~ ~null~ ~null~] = argtest ["-a" "true"])
+    ([~false~ ~null~ ~null~ ~null~] = argtest ["-a" "false"])
+    ([%something ~null~ ~null~ ~null~] = argtest ["-a" "something"])
+    ([~null~ 8000 ~null~ ~null~] = argtest ["8000"])
+    ([~null~ 8000 ~null~ 2] = argtest ["8000" "-v"])
+    ([~null~ 8000 %foo/bar 2] = argtest ["8000" "-v" "foo/bar"])
 ]

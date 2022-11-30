@@ -1,4 +1,4 @@
-; EVERY is similar to FOR-EACH but returns #[false] on any falsey body evals
+; EVERY is similar to FOR-EACH but returns null on any falsey body evals
 ; Still runs the body fully through for each value (assuming no BREAK)
 
 (

@@ -144,8 +144,8 @@
     a-value: first ['a]
     :a-value == do [:a-value]
 )
-(#[true] == do [#[true]])
-(#[false] == do [#[false]])
+(~true~ == do [~true~])
+(~false~ == do [~true~])
 ($1 == do [$1])
 (same? :append do [:append])
 (null? do [_])

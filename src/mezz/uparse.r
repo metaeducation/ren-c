@@ -1421,7 +1421,7 @@ default-combinators: make map! reduce [
     ; as a rule"
     ;
     ;     >> did parse "aaabbb" [:[some "a" ([some "b"])]
-    ;     == #[true]
+    ;     == ~true~  ; isotope
     ;
     ; It's hard offhand to think of great uses for that, but that isn't to say
     ; that they don't exist.
@@ -1610,9 +1610,8 @@ default-combinators: make map! reduce [
     === LOGIC! COMBINATOR ===
 
     ; Handling of LOGIC! in Ren-C replaces the idea of FAIL, because a logic
-    ; #[true] is treated as "continue parsing" while #[false] is "rule did
-    ; not match".  When combined with GET-GROUP!, this fully replaces the
-    ; need for the IF construct.
+    ; true is treated as "continue parsing" while false is "rule didn't match".
+    ; When combined with GET-GROUP!, this fully replaces the IF construct.
     ;
     ; e.g. parse "..." [:(mode = 'read) ... | :(mode = 'write) ...]
 

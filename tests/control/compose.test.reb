@@ -29,7 +29,10 @@
 ~need-non-null~ !! (
     compose [(~_~) * <ok>]
 )
-([#[false]] = compose [(~false~)])
+~bad-isotope~ !! (
+    compose [(~false~)]
+)
+([~false~] = compose [('~false~)])
 
 ([_ * _] = compose [('_) * ('_)])
 ([a * 'a] = compose [(the a) * (the 'a)])

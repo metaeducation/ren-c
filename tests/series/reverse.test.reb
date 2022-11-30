@@ -14,7 +14,7 @@
     ;     6
     ; ]
     before: collect [
-        for-next pos data [keep new-line? pos]
+        for-next pos data [keep reify new-line? pos]
         keep new-line? tail data
     ]
 
@@ -25,12 +25,12 @@
     ;     2 1
     ; ]
     after: collect [
-        for-next pos data [keep new-line? pos]
+        for-next pos data [keep reify new-line? pos]
         keep new-line? tail data
     ]
 
     did all [
-        before = [#[true] #[false] #[true] #[false] #[false] #[true] #[true]]
-        after = [#[true] #[true] #[false] #[false] #[true] #[false] #[true]]
+        before = [~true~ ~false~ ~true~ ~false~ ~false~ ~true~ ~true~]
+        after = [~true~ ~true~ ~false~ ~false~ ~true~ ~false~ ~true~]
     ]
 )]

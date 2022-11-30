@@ -537,7 +537,7 @@ curtail: reframer func [
 ;    ** Script Error: + does not allow logic! for its value1 argument
 ;
 ;    >> 10 >- equal? 5 + 5  ; as if you wrote `equal? 10 5 + 5`
-;    == #[true]
+;    == ~true~  ; isotope
 ;
 ; You can force processing to be enfix using `->-` (an infix-looking "icon"):
 ;

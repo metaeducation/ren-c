@@ -405,7 +405,7 @@
 [
     (void? any @[])
     (1 = any @[1 + 2])
-    ('_ = any @[#[false] _])
+    ('_ = any @[~false~ _])
     ('_ = any inert reduce [false blank])
     ('false = any @[false])  ; just the word, and words are truthy
 ]

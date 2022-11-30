@@ -2490,7 +2490,7 @@ DECLARE_NATIVE(decay)
 //
 //  isotopify-if-falsey: native [
 //
-//  "Turn NULL and #[false] into their corresponding isotopes"
+//  "Turn null and false into their corresponding isotopes"
 //
 //      return: [<opt> <void> any-value!]
 //      ^optional [<opt> any-value!]

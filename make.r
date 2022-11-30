@@ -374,7 +374,7 @@ gen-obj: func [
     ; own headers
     ;
     append flags spread switch rigorous [
-        #[true] 'yes 'on 'true [
+        ~true~ 'yes 'on 'true [
             compose [
                 <gnu:-Werror> <msc:/WX>  ; convert warnings to errors
 
@@ -641,7 +641,7 @@ gen-obj: func [
                 <msc:/wd5264>
             ]
         ]
-        _ #[false] 'no 'off 'false [
+        ~false~ 'no 'off 'false [
             []  ; empty for SPREAD
         ]
 
@@ -1207,11 +1207,11 @@ app-config: make object! [
 cfg-sanitize: false
 cfg-symbols: false
 switch user-config/debug [
-    #[false] 'no 'false 'off 'none [
+    ~false~ 'no 'false 'off 'none [
         append app-config/definitions "NDEBUG"
         app-config/debug: off
     ]
-    #[true] 'yes 'true 'on [
+    ~true~ 'yes 'true 'on [
         app-config/debug: on
     ]
     'asserts [
@@ -1293,7 +1293,7 @@ switch user-config/debug [
 ]
 
 switch user-config/optimize [
-    #[false] 'false 'no 'off 0 [
+    ~false~ 'false 'no 'off 0 [
         app-config/optimization: false
     ]
     1 2 3 4 "s" "z" "g" 's 'z 'g [
@@ -1308,13 +1308,13 @@ cfg-cplusplus: false  ; gets set to true if linked as c++ overall
 ;
 cfg-pre-vista: false
 append app-config/definitions maybe spread switch user-config/pre-vista [
-    #[true] 'yes 'on 'true [
+    ~true~ 'yes 'on 'true [
         cfg-pre-vista: true
         compose [
             "PRE_VISTA"
         ]
     ]
-    _ #[false] 'no 'off 'false [
+    ~false~ 'no 'off 'false [
         cfg-pre-vista: false
         []  ; empty for spread
     ]
@@ -1324,11 +1324,11 @@ append app-config/definitions maybe spread switch user-config/pre-vista [
 
 
 append app-config/ldflags maybe spread switch user-config/static [
-    _ 'no 'off 'false #[false] [
+    ~false~ 'no 'off 'false [
         ;pass
         []
     ]
-    'yes 'on #[true] [
+    ~true~ 'yes 'on 'true [
         compose [
             <gnu:-static-libgcc>
             (if cfg-cplusplus [<gnu:-static-libstdc++>])

@@ -384,7 +384,7 @@ DECLARE_NATIVE(did_1)  // see TO-C-NAME for why the "_1" is needed
 //     ** Error: We save you by not letting isotopes be conditionally tested
 //
 //     >> did match [logic! integer!] false
-//     == #[true]  ; DID tolerates isotopes, returns #[false] only on true NULL
+//     == ~true~  ; DID tolerates isotopes, returns false only on true NULL
 //
 //     >> if (did match [logic! integer!] false) [print "Praise isotopes!"]
 //     Praise isotopes!

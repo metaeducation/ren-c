@@ -167,10 +167,10 @@
 ; All escaped values are truthy, regardless of what it is they are escaping
 
 (did the '_)
-(did the '#[false])
+(did the '~false~)
 (did the ')
 (did the ''''''''_)
-(did the ''''''''#[false])
+(did the ''''''''~false~)
 (did the '''''''')
 
 
@@ -226,7 +226,7 @@
         (make frame! unrun :append)
         (make error! "error")
         (port: open http://example.com)
-        #[true]
+        ~quasiword~
         10
         10.20
         10%

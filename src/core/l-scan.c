@@ -2463,7 +2463,11 @@ Bounce Scanner_Executor(Frame(*) f) {
 
         Symbol(const*) symbol = VAL_WORD_SYMBOL(ARR_HEAD(array));
 
-        if (ARR_LEN(array) == 1) {  // #[none], #[true], #[false], #[unset]
+        if (ARR_LEN(array) == 1) {
+            //
+            // #[none], #[true], #[false], #[unset]
+            // !!! These should be under a LEGACY flag...
+            //
             switch (ID_OF_SYMBOL(symbol)) {
               case SYM_NONE:  // !!! Should be under a LEGACY flag...
                 Init_Blank(PUSH());
@@ -2477,7 +2481,7 @@ Bounce Scanner_Executor(Frame(*) f) {
                 Init_Quasi_Word(PUSH(), Canon(TRUE));
                 break;
 
-              case SYM_UNSET:  // !!! Should be under a LEGACY flag...
+              case SYM_UNSET:
                 Init_Quasi_Word(PUSH(), Canon(UNSET));
                 break;
 

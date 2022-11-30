@@ -251,14 +251,6 @@ static void Startup_Lib(void)
     Set_Cell_Flag(Init_Quasi_Void(force_Lib(QUASI_VOID)), PROTECTED);
     assert(Is_Truthy(Lib(QUASI_VOID)) and Is_Meta_Of_Nihil(Lib(QUASI_VOID)));
 
-    // !!! Rebol is firm on TRUE and FALSE being WORD!s, as opposed to the
-    // literal forms of logical true and false.  Not only does this frequently
-    // lead to confusion, but there's not consensus on what a good literal form
-    // would be. R3-Alpha used #[true] and #[false] (but often molded them as
-    // looking like the words true and false anyway).  $true and $false have
-    // been proposed, but would not be backward compatible in files read
-    // by bootstrap.
-    //
     Init_True(force_Lib(TRUE));
     Init_False(force_Lib(FALSE));
     assert(Is_Truthy(Lib(TRUE)) and VAL_LOGIC(Lib(TRUE)) == true);

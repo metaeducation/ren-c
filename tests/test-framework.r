@@ -90,7 +90,7 @@ run-single-test: func [
         (elide if pack? unget result [result: first unquasi result])
 
         result = '~false~ [
-            "test returned #[false]"
+            "test returned false"
         ]
 
         quasi? result [

@@ -27,7 +27,7 @@
     ('~[_]~ = ^ match null null)
     ('_ = match blank! blank)
     (true = match logic! true)
-    ('~['#[false]]~ = ^ match logic! false)
+    ('~[~false~]~ = ^ match logic! false)
 ]
 
 [
@@ -115,7 +115,7 @@
         if f.unsafe [return do f]
         let result': ^ do f
         any [
-            result' = '~['#[false]]~
+            result' = '~[~false~]~
             result' = '~[_]~
         ] then [
             return raise ~falsey-match~

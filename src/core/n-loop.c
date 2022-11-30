@@ -1093,7 +1093,7 @@ DECLARE_NATIVE(every)
 //
 // 2. We don't decay isotopes, for the reason we don't decay them in ALL etc:
 //
-//        every x [#[false] #[true]] [match logic! x]
+//        every x [~false~ ~true~] [match logic! decay x]
 //
 //    The ~false~ isotope here catches the misunderstanding by erroring.
 {

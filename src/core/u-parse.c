@@ -550,7 +550,7 @@ static Bounce Parse_One_Rule(
             // something like:
             //
             //     >> did parse3 "ab" [thru ["ab"] ""]
-            //     == #[true]
+            //     == ~true~  ; isotope
             //
             // Just to show what should happen in the new model (R3-Alpha did
             // not have that working for multiple reasons...lack of making
@@ -678,12 +678,12 @@ static Bounce Parse_One_Rule(
         // how items render, e.g.:
         //
         //     >> parse? "ab<c>10" ['ab <c> '10]
-        //     == #[true]
+        //     == ~true~  ; isotope
         //
         // It can be less visually noisy than:
         //
         //     >> parse? "ab<c>10" ["ab" {<c>} "10"]
-        //     == #[true]
+        //     == ~true~  ; isotope
         //
         // !!! The concept is based somewhat on what was legal in FIND for
         // Rebol2, and leverages quoting.  It's being experimented with.

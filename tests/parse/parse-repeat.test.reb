@@ -17,13 +17,13 @@
 ;
 ;    >> num: null
 ;    >> did parse "aaa" [repeat (num) "b", some "a"]
-;    == #[true]
+;    == ~true~  ; isotope
 ;
 ; It can also "opt all the way in" and become a synonym for MAYBE SOME with #:
 ;
 ;    >> num: #
 ;    >> did parse "aaaaaaaaaa" [repeat (num) "a"]
-;    == #[true]
+;    == ~true~  ; isotope
 ;
 ; These decayed forms mean that you can get behavior differences out of your
 ; variables driving the looping while using the same rule.  But it also works
@@ -33,11 +33,11 @@
 ;    >> min: 3
 ;    >> max: #
 ;    >> did parse "aaaaaaa" [repeat (:[min max]) "a"]
-;    == #[true]
+;    == ~true~  ; isotope
 ;    >> did parse "aaaaaaaaaaaaaaaaaaa" [repeat (:[min max]) "a"]
-;    == #[true]
+;    == ~true~  ; isotope
 ;    >> did parse "aa" [repeat (:[min max]) "a"]
-;    == #[false]
+;    == ~false~  ; isotope
 ;
 ; If maximum is blank then it's assumed to be the same as if it were equal
 ; to the minimum, so `repeat (:[n _])` is the same as `repeat (n)`.  So if

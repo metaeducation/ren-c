@@ -7,7 +7,7 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2021 Ren-C Open Source Contributors
+// Copyright 2012-2022 Ren-C Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -20,13 +20,26 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// LOGIC! is a simple boolean value type which can be either true or false.
+// Since Rebol was firm on TRUE and FALSE being WORD!s (both of which were
+// seen as conditionally truthy), it was an uphill battle to figure out
+// a representation for logic literals.  R3-Alpha used #[true] and #[false]
+// but often molded them as looking like the words true and false anyway.
+//
+// Ren-C's answer is to use the isotopic WORD!s for ~true~ and ~false~,
+// which creates some friction as these isotopic states can't be put in
+// blocks directly...but that turns out to be a benefit, and helps guide the
+// user to triage their intent with LOGIC-TO-WORD or REIFY-LOGIC, etc.
 //
 //=//// NOTES /////////////////////////////////////////////////////////////=//
 //
-// * A good source notation for logic literals was never chosen, so #[true]
-//   and #[false] have been used.  Rebol2, Red, and R3-Alpha accept this
-//   notation...but render them ambiguously as the words `true` and `false`.
+// * See ~null~ for another isotopic word state that is falsey, like ~false~.
+//
+// * There may be value to making ~on~ and ~off~ and ~yes~ and ~no~ be other
+//   isotopic words that register as falsey... or more generally allowing
+//   the concept of truthiness and falseyness to be overridden in a way that
+//   is cross-cutting for a "language skin" (e.g. Redbol)
+//
+// * Despite Rebol's C heritage, the INTEGER! 0 is purposefully not "falsey".
 //
 
 #define Init_True(out)      Init_Word_Isotope((out), Canon(TRUE))
@@ -51,22 +64,6 @@ inline static bool VAL_LOGIC(Cell(const*) v) {
     fail ("Attempt to test VAL_LOGIC() on non-LOGIC!");
 }
 
-
-//=//// "TRUTHINESS" AND "FALSEYNESS" //////////////////////////////////////=//
-//
-// Like most languages, more things are "truthy" than logic #[true] and more
-// things are "falsey" than logic #[false].  NULLs and BLANK!s are also falsey,
-// and most other values are considered truthy.  Any value type is truthy when
-// quoted, and BAD-WORD!s are also truthy; specifically for patterns like this:
-//
-//     for-both: func ['var blk1 blk2 body] [
-//         return unmeta all [
-//             meta for-each :var blk1 body  ; isotope results become BAD-WORD!
-//             meta for-each :var blk2 body  ; only NULL is falsey for BREAK
-//         ]
-//     ]
-//
-// Despite Rebol's C heritage, the INTEGER! 0 is purposefully not "falsey".
 
 inline static bool Is_Truthy(Cell(const*) v) {
     if (QUOTE_BYTE(v) == ISOTOPE_0) {

@@ -101,7 +101,7 @@
 ])
 ([30 70] = reduce/predicate [1 + 2 3 + 4] func [x] [return x * 10])
 
-([#[true] #[false]] = reduce/predicate [2 + 2 3 + 4] :even?)
+([~true~ ~false~] = reduce/predicate [2 + 2 3 + 4] chain [:even?, :reify])
 
 
 ; REDUCE-EACH is a variant which lets you intercept the values, and thus

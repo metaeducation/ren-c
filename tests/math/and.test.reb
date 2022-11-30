@@ -2,7 +2,7 @@
 ;
 ; Historical Rebol's NOT was "conditional" (tested for conditional truth
 ; or falsehood using the same rules as IF and other conditions, and returned
-; #[true] or #[false]).  However the other logic words like AND, OR, and XOR
+; true or false).  However the other logic words like AND, OR, and XOR
 ; were handled as bitwise operations...that could also be used to intersect
 ; or union sets of values.
 ;

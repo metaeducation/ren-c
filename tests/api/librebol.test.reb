@@ -18,11 +18,11 @@
         text? result  ; informational string
 
         result =  [
-            1 #[true]
-            2 #[true]
+            1 ~true~
+            2 ~true~
             3 [1 2 3 d]
             4 [1 2 3 d]
-            5 #[true]
+            5 ~true~
         ]
     ]
 )

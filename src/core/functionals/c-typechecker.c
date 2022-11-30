@@ -24,10 +24,10 @@
 //     >> integer?: func [v [any-value!]] [integer! = type of :v]
 //
 //     >> integer? 10
-//     == #[true]
+//     == ~true~  ; isotope
 //
 //     >> integer? <foo>
-//     == #[false]
+//     == ~false~  ; isotope
 //
 // But given that it is done so often, it's more efficient to have a custom
 // dispatcher for making a typechecker:
