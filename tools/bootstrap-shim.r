@@ -383,6 +383,7 @@ append: func3 [series value [<opt> any-value!] /line <local> only] [
         null3? :value []
         void3? :value [fail/where "APPEND of VOID! disallowed" 'value]
         blank? :value [fail/where "APPEND blanks with [_] only" 'value]
+        logic? :value [fail/where "APPEND LOGIC! LOGIC-TO-WORD, REIFY" 'value]
         block? :value [
             if find3 value void! [
                 fail/where "APPEND of BLOCK! w/VOID! disallowed" 'value
@@ -408,6 +409,7 @@ insert: func3 [series value [<opt> any-value!] /line <local> only] [
         null3? :value []
         void3? :value [fail/where "INSERT of VOID! disallowed" 'value]
         blank? :value [fail/where "INSERT blanks with [_] only" 'value]
+        logic? :value [fail/where "INSERT LOGIC! LOGIC-TO-WORD, REIFY" 'value]
         block? :value [
             if find3 value void! [
                 fail/where "INSERT of BLOCK! w/VOID! disallowed"
@@ -433,6 +435,7 @@ change: func3 [series value [<opt> any-value!] /line <local> only] [
         null3? :value []
         void3? :value [fail/where "CHANGE of VOID! disallowed" 'value]
         blank? :value [fail/where "CHANGE blanks with [_] only" 'value]
+        logic? :value [fail/where "CHANGE LOGIC! LOGIC-TO-WORD, REIFY" 'value]
         block? :value [
             if find3 value void! [
                 fail/where "CHANGE of BLOCK! w/VOID! disallowed" 'value
