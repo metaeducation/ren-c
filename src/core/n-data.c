@@ -2515,7 +2515,7 @@ DECLARE_NATIVE(isotopify_if_falsey)
 //
 //  reify: native [
 //
-//  "Turn NULL to BLANK!, make isotopes plain, pass thru other values"
+//  "Make isotopes into their quasiforms, pass thru other values"
 //
 //      return: [any-value!]
 //      value [<opt> any-value! ~any-value!~]
@@ -2537,4 +2537,28 @@ DECLARE_NATIVE(reify)
         fail ("REIFY of NIHIL is currently undefined (needs motivating case)");
 
     return Reify(Copy_Cell(OUT, v));
+}
+
+
+//
+//  noisotope: native [
+//
+//  "Turn isotopes into their plain forms, pass thru other values"
+//
+//      return: [any-value!]
+//      value [<opt> any-value! ~any-value!~]
+//  ]
+//
+DECLARE_NATIVE(noisotope)
+{
+    INCLUDE_PARAMS_OF_REIFY;
+
+    REBVAL *v = ARG(value);
+
+    if (not Is_Isotope(v))
+        return COPY(v);
+
+    Copy_Cell(OUT, v);
+    mutable_QUOTE_BYTE(OUT) = UNQUOTED_1;
+    return OUT;
 }

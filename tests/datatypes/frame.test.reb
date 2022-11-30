@@ -21,7 +21,7 @@
 ; you don't accidentally try to reuse them or assume their arguments can
 ; act as caches of the input.
 (
-    f: make frame! reify :append
+    f: make frame! unrun :append
     f.series: [a b c]
     f.value: <d>
     did all [
@@ -46,7 +46,7 @@
             return binding of 'public  ; frame as seen from inside
         ]
 
-        f-outside: make frame! reify :foo  ; frame as seen from outside
+        f-outside: make frame! unrun :foo  ; frame as seen from outside
         f-outside.public: 1020
 
         f-inside: do copy f-outside
@@ -77,7 +77,7 @@
             assert [private = <not-in-prelude>]  ; should not be bound
         ]
 
-        f-outside-adapt: make frame! reify :adapted-foo
+        f-outside-adapt: make frame! unrun :adapted-foo
         f-outside-adapt.public: 1020
 
         f-inside-foo: do copy f-outside-adapt
@@ -118,7 +118,7 @@
 
         assert [private = <not-in-prelude>]  ; should be untouched
 
-        f-outside-augment: make frame! reify :augmented-foo
+        f-outside-augment: make frame! unrun :augmented-foo
         f-outside-augment.public: 1020
         f-outside-augment.additional: 1020304
 
@@ -159,7 +159,7 @@
             f-prelude: binding of 'private
         ]
 
-        f-outside: make frame! reify :bar
+        f-outside: make frame! unrun :bar
         f-outside.public: 1020
         f-outside.private: <different!>
 

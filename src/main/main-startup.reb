@@ -179,9 +179,9 @@ host-script-pre-load: func [
 ][
     ; Print out the script info
     boot-print [
-        (if is-module ["Module:"] else ["Script:"]) reify try select hdr 'title
-            "Version:" reify try select hdr 'version
-            "Date:" reify try select hdr 'date
+        (if is-module ["Module:"] else ["Script:"]) reify select maybe hdr 'title
+            "Version:" reify select maybe hdr 'version
+            "Date:" reify select maybe hdr 'date
     ]
 ]
 
@@ -309,7 +309,7 @@ main-startup: func [
     ; useful to know that is what happened (and it demonstrates the ability
     ; to hook it, just to remind us that we can).
     ;
-    hijack :panic adapt (copy reify :panic) [
+    hijack :panic adapt (copy unrun :panic) [
         print "PANIC ACTION! is being triggered from a usermode call"
         print mold reason
         ;

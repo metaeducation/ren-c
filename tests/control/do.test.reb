@@ -15,7 +15,7 @@
     (''30 = ^ (10 + 20 eval []))
     (''30 = ^ (10 + 20 eval [void]))
     (''30 = ^ (10 + 20 eval [comment "hi"]))
-    (''30 = ^ (10 + 20 eval make frame! reify :void))
+    (''30 = ^ (10 + 20 eval make frame! unrun :void))
 
     (didn't do [null])
     ('~[_]~ = ^ do [if true [null]])
@@ -36,13 +36,13 @@
 
     (void' = (10 + 20 ^(eval [])))
     (void' = (10 + 20 ^(eval [comment "hi"])))
-    (void' = (10 + 20 ^(eval make frame! reify :void)))
+    (void' = (10 + 20 ^(eval make frame! unrun :void)))
     (null' = ^(eval [null]))
     ('~[_]~ = ^(eval [if true [null]]))
 
     (30 = (10 + 20 eval []))
     (30 = (10 + 20 eval [comment "hi"]))
-    (30 = (10 + 20 eval make frame! reify :void))
+    (30 = (10 + 20 eval make frame! unrun :void))
     (null' = ^(eval [null]))
     ('~[_]~ = ^ eval [heavy null])
     ('~[_]~ = ^ eval [if true [null]])
@@ -50,7 +50,7 @@
     ; Try standalone ^ operator so long as we're at it.
     (void' = ^ eval [])
     (void' = ^ eval [comment "hi"])
-    (void' = ^ eval make frame! reify :void)
+    (void' = ^ eval make frame! unrun :void)
     (void' = ^ do :void)
 
     (null' = ^ eval [null])

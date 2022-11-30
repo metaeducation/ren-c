@@ -609,7 +609,7 @@ ext-console-impl: func [
     all [
         error? result
         result.id = 'no-catch
-        result.arg2 = reify :quit  ; throw's /NAME
+        result.arg2 = unrun :quit  ; throw's /NAME
     ] then [
         if '~quit~ = ^result.arg1 [
             return 0  ; plain QUIT with no argument, treat it as success
@@ -635,7 +635,7 @@ ext-console-impl: func [
     all [
         error? result
         result.id = 'no-catch
-        result.arg2 = reify :halt  ; throw's /NAME
+        result.arg2 = unrun :halt  ; throw's /NAME
     ] then [
         if find directives #quit-if-halt [
             return 128 + 2 ; standard cancellation exit status for bash
@@ -675,7 +675,7 @@ ext-console-impl: func [
         in lib 'resume
         error? result
         result.id = 'no-catch
-        result.arg2 = reify :lib.resume  ; throw's /NAME
+        result.arg2 = unrun :lib.resume  ; throw's /NAME
     ] then [
         assert [match [meta-group! handle!] result.arg1]
         if not resumable [
@@ -784,7 +784,7 @@ ext-console-impl: func [
         ; issue--but it needs deeper thought.
         ;
         emit [(  ; <-- GROUP! needed for binding bug, review
-            let f: make frame! reify :system.console.print-result
+            let f: make frame! unrun :system.console.print-result
             f.v: '(<*> result)  ; avoid conflating pure void and void isotope
             do f
         )]

@@ -326,7 +326,7 @@ redescribe: func [
     action [action! ~action!~]
         {(modified) Action whose description is to be updated.}
 ][
-    action: reify :action
+    action: unrun :action
 
     let meta: meta-of :action
     let notes: null
@@ -769,7 +769,7 @@ trap+: func [
 reduce*: redescribe [
     "REDUCE a block but vaporize NULL Expressions"
 ](
-    specialize :reduce [predicate: reify :maybe]
+    specialize :reduce [predicate: unrun :maybe]
 )
 
 for-next: redescribe [
@@ -892,7 +892,7 @@ eval-all: func [
 ; to allow longer runs of evaluation.  "Invisible functions" (those which
 ; `return: <void>`) permit a more flexible version of the mechanic.
 
-|<\||: runs tweak copy reify :eval-all 'postpone on
+|<\||: runs tweak copy unrun :eval-all 'postpone on
 |\|>|: runs tweak enfixed :shove 'postpone on
 
 
@@ -909,7 +909,7 @@ meth: enfix func [
         fail [member "must be bound to an ANY-CONTEXT! to use METHOD"]
     ]
     return set member runs bind (  ; !!! BIND doesn't take ACTION! as isotope
-        reify apply :func [
+        unrun apply :func [
             compose [(spread spec) <in> (context)]
             body
             /gather gather

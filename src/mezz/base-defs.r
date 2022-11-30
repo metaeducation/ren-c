@@ -65,13 +65,13 @@ probe: func* [
 ; The pattern `foo: enfix function [...] [...]` is probably more common than
 ; enfixing an existing function, e.g. `foo: enfix :add`.  Hence making a
 ; COPY of the ACTION! identity is probably a waste.  It may be better to go
-; with mutability-by-default, so `foo: enfix copy reify :add` would avoid the
+; with mutability-by-default, so `foo: enfix copy unrun :add` would avoid the
 ; mutation.  However, it could also be that the function spec dialect gets
 ; a means to specify enfixedness.  See:
 ;
 ; https://forum.rebol.info/t/moving-enfixedness-back-into-the-action/1156
 ;
-enfixed: chain* reduce [reify :reify, reify :copy, reify :enfix]
+enfixed: chain* reduce [unrun :unrun, unrun :copy, unrun :enfix]
 
 
 ; Pre-decaying specializations for DID, DIDN'T, THEN, ELSE, ALSO
@@ -296,40 +296,40 @@ pointfree*: func* [
 ;
 
 enclose: enclose* :enclose* lambda [f] [  ; uses low-level ENCLOSE* to make
-    set let inner reify :f.inner  ; don't cache name via SET-WORD!
+    set let inner unrun :f.inner  ; don't cache name via SET-WORD!
     inherit-meta (do f) inner
 ]
 inherit-meta enclose :enclose*  ; needed since we used ENCLOSE*
 
 specialize: enclose :specialize* lambda [f] [  ; now we have high-level ENCLOSE
-    set let action reify :f.action  ; don't cache name via SET-WORD!
+    set let action unrun :f.action  ; don't cache name via SET-WORD!
     inherit-meta (do f) action
 ]
 
 adapt: enclose :adapt* lambda [f] [
-    set let action reify :f.action
+    set let action unrun :f.action
     inherit-meta do f action
 ]
 
 chain: enclose :chain* lambda [f] [
     ; don't cache name via SET-WORD!
-    set let pipeline1 pick (f.pipeline: reduce/predicate f.pipeline :reify) 1
+    set let pipeline1 pick (f.pipeline: reduce/predicate f.pipeline :unrun) 1
     inherit-meta (do f) pipeline1
 ]
 
 augment: enclose :augment* lambda [f] [
-    set let action reify :f.action  ; don't cache name via SET-WORD!
+    set let action unrun :f.action  ; don't cache name via SET-WORD!
     let spec: f.spec
     inherit-meta/augment (do f) action spec
 ]
 
 reframer: enclose :reframer* lambda [f] [
-    set let shim reify :f.shim  ; don't cache name via SET-WORD!
+    set let shim unrun :f.shim  ; don't cache name via SET-WORD!
     inherit-meta (do f) shim
 ]
 
 reorder: enclose :reorder* lambda [f] [
-    set let action reify :f.action  ; don't cache name via SET-WORD!
+    set let action unrun :f.action  ; don't cache name via SET-WORD!
     inherit-meta (do f) action
 ]
 
@@ -350,7 +350,7 @@ parse2: runs :parse3*/redbol/fully
 ;
 pointfree: specialize* (enclose :pointfree* lambda [f] [
     set let action f.action: (match action! any [  ; don't SET-WORD! cache name
-        if match [word! path!] f.block.1 [reify get/any f.block.1]
+        if match [word! path!] f.block.1 [unrun get/any f.block.1]
     ]) else [
         fail "POINTFREE requires ACTION! argument at head of block"
     ]
@@ -360,7 +360,7 @@ pointfree: specialize* (enclose :pointfree* lambda [f] [
 
     inherit-meta (do f) action  ; don't SET-WORD! cache name
 ])[
-    action: reify :panic/value  ; overwritten, best to make it something mean
+    action: unrun :panic/value  ; overwritten, best to make it something mean
 ]
 
 
@@ -477,7 +477,7 @@ run func* [
     while [<end> != set-word: take set-words] [
         type-name: copy as text! set-word
         change back tail of type-name "!"  ; change ? at tail to !
-        tester: reify typechecker (get bind (as word! type-name) set-word)
+        tester: unrun typechecker (get bind (as word! type-name) set-word)
         set set-word runs tester
 
         set-meta tester make system.standard.action-meta [

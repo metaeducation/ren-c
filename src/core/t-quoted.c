@@ -761,6 +761,26 @@ DECLARE_NATIVE(runs)
 
 
 //
+//  unrun: native [
+//
+//  {Make actions not run when fetched through word access}
+//
+//      return: [action!]
+//      action [<maybe> action! ~action!~]
+//  ]
+//
+DECLARE_NATIVE(unrun)
+{
+    INCLUDE_PARAMS_OF_RUNS;
+
+    REBVAL *v = ARG(action);
+    Copy_Cell(OUT, v);  // may or may not be isotope
+    mutable_QUOTE_BYTE(OUT) = UNQUOTED_1;  // now it's known to not be isotopic
+    return OUT;
+}
+
+
+//
 //  maybe: native [
 //
 //  {If argument is null or none, make it void (also pass through voids)}

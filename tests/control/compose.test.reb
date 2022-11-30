@@ -8,11 +8,10 @@
 ;
 ([[a b] * a b] = compose [([a b]) * (spread [a b])])
 
-; Preserve one element rule vs. tolerate vaporization.  ~_~ isotopes are
-; treated the same by the compose site as pure NULL.
+; Preserve one element rule vs. tolerate vaporization.
 ;
-([_ *] = compose [(reify null) * (maybe null)])
-([_ *] = compose [(reify ~_~) * (maybe ~_~)])
+([~null~ *] = compose [(reify null) * (maybe null)])
+([' *] = compose [(reify void) * (void)])
 
 ; Voids vaporize regardless of form.
 

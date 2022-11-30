@@ -55,7 +55,7 @@ true)
 )
 
 (
-    f: make frame! reify :append/only
+    f: make frame! unrun :append/only
     f.series: copy [a b c]
     f.value: [d e f]
     [a b c [d e f]] = do f

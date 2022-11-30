@@ -285,6 +285,8 @@ to-logic: func3 [return: [logic!] optional [<opt> any-value!]] [
 ; like a PRINT being turned into a NULL.
 ;
 ~null~: :null3  ; e.g. _
+~true~: #[true]
+~false~: #[false]
 decay: func3 [v [<opt> any-value!]] [
     assert [not null3? :v]
     if void3? :v [fail "Attempt to decay a void, may have been _, try ~null~"]
@@ -301,6 +303,7 @@ reify: func3 [v [<opt> any-value!]] [
     if :v = #[false] [return '~false~]
     :v
 ]
+unrun: func3 [v [action!]] [:v]
 opt: ~  ; replaced by DECAY word
 try: ~  ; reviewing uses
 
@@ -311,7 +314,11 @@ load-value: :load
 load-all: :load/all
 
 logic-to-word: func3 [logic [logic!]] [
-    either logic ['true] ['false]
+    as word! either logic ["true"] ["false"]  ; want no binding, so AS it
+]
+
+reify-logic: func3 [logic [logic!]] [
+    either logic ['~true~] ['~false~]
 ]
 
 maybe: enfix func3 [
@@ -1052,7 +1059,7 @@ apply: function3 [
     action [action!]
     args [block!]
 ][
-    f: make frame! reify :action
+    f: make frame! unrun :action
     params: words of :action
 
     ; Get all the normal parameters applied

@@ -248,7 +248,7 @@ int main(int argc, char *argv_ansi[])
     //     import module [Name: Encap ...] [...]
     //     ...
     //     import module [Name: Main-Startup ...] [...]
-    //     reify :main-startup
+    //     unrun :main-startup
     //
     // There are no top-level SET-WORD!s, and it doesn't leak any declarations
     // into LIB.  The return of the MAIN-STARTUP function as the last item

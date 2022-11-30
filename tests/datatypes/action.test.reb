@@ -5,7 +5,7 @@
 (action! = type of :abs)
 ; actions are active
 [#1659
-    (1 == do reduce [reify :abs -1])
+    (1 == do reduce [unrun :abs -1])
 ]
 
 ; Actions should store labels of the last GET-WORD! or GET-PATH! that was
@@ -31,7 +31,7 @@
     )
 
     (
-        f: make frame! reify :append
+        f: make frame! unrun :append
         did all [
             'append = label of f
             'append = label of make action! f

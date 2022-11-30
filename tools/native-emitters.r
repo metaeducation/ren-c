@@ -83,7 +83,7 @@ export extract-native-protos: func [
                 keep make native-info! compose [
                     proto: (proto)
                     name: (name)
-                    exported: (logic-to-word exported)
+                    exported: (reify-logic exported)
                     file: (c-source-file)
                 ]
             )

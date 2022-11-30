@@ -226,7 +226,7 @@ summarize-obj: function [
         for-each [word val] obj [
             if unset? 'val [continue]  ; don't consider unset fields
 
-            type: type of reify get/any 'val
+            type: type of noisotope get/any 'val
 
             str: if match [object!] type [
                 spaced [word, words of val]
@@ -251,7 +251,7 @@ summarize-obj: function [
                 fail 'pattern
             ]
 
-            if desc: description-of reify get/any 'val [
+            if desc: description-of noisotope get/any 'val [
                 if 48 < length of desc [
                     desc: append copy/part desc 45 "..."
                 ]

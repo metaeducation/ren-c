@@ -7,6 +7,6 @@ REBOL [
 ]
 
 sys.util.register-codec* 'png %.png
-    reify :identify-png?
-    reify :decode-png
-    reify :encode-png
+    unrun :identify-png?
+    unrun :decode-png
+    unrun :encode-png

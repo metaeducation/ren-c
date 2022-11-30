@@ -53,4 +53,10 @@ use [word] [
 ;
 to-refinement: runs :to-path
 
-logic-to-word: lambda [logic [logic!]] [either logic 'true 'false]
+; !!! We make this give back an unbound word for the moment, to encourage
+; people to use REIFY-LOGIC instead if they want literals that survive.  If
+; having a lib binding is a better default, we'll find out via examples
+;
+logic-to-word: lambda [logic [logic!]] [unbind either logic 'true 'false]
+
+reify-logic: lambda [logic [logic!]] [reify logic]

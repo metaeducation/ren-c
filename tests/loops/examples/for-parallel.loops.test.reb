@@ -30,7 +30,7 @@
         ]
     ])
 
-    ([[a 1] [b 2] [c _]] = collect [
+    ([[a 1] [b 2] [c ~null~]] = collect [
         assert [
             <exhausted> = for-parallel [x y] [a b c] [1 2] [
                 keep :[x reify y]
@@ -39,7 +39,7 @@
         ]
     ])
 
-    ([[a 1] [b 2] [_ 3]] = collect [
+    ([[a 1] [b 2] [~null~ 3]] = collect [
         assert [
             30 = for-parallel [x y] [a b] [1 2 3] [
                 keep :[reify x y]

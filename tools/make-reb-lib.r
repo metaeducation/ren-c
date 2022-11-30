@@ -156,7 +156,7 @@ emit-proto: func [return: <none> proto] [
         returns: (ensure text! trim/tail returns)
         paramlist: (ensure block! paramlist)
         proto: (ensure text! proto)
-        is-variadic: (ensure logic! is-variadic)
+        is-variadic: (reify-logic is-variadic)
     ]
 ]
 

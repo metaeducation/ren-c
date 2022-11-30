@@ -181,8 +181,8 @@
         left-normal*: enfixed right-normal*:
             func [return: [<opt> word!] x [word! <end>]] [return x]
 
-        left-defer: enfixed tweak (copy reify :left-normal) 'defer on
-        left-defer*: enfixed tweak (copy reify :left-normal*) 'defer on
+        left-defer: enfixed tweak (copy unrun :left-normal) 'defer on
+        left-defer*: enfixed tweak (copy unrun :left-normal*) 'defer on
 
         left-soft: enfixed right-soft:
             func [return: [<opt> word!] 'x [word!]] [return x]
@@ -245,8 +245,8 @@
                 return take x
             ]
 
-        left-defer: enfixed tweak (copy reify :left-normal) 'defer on
-        left-defer*: enfixed tweak (copy reify :left-normal*) 'defer on
+        left-defer: enfixed tweak (copy unrun :left-normal) 'defer on
+        left-defer*: enfixed tweak (copy unrun :left-normal*) 'defer on
 
         left-soft: enfixed right-soft:
             func [return: [<opt> word!] 'x [word! <variadic>]] [

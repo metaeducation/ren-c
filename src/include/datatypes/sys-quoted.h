@@ -195,7 +195,7 @@ inline static Value(*) Reify(Value(*) v) {
     assert(not Is_Void(v));
     assert(not Is_Nihil(v));
     if (QUOTE_BYTE(v) == ISOTOPE_0)  // includes void ("null isotope")
-        mutable_QUOTE_BYTE(v) = UNQUOTED_1;
+        mutable_QUOTE_BYTE(v) = QUASI_2;
     return v;
 }
 

@@ -228,7 +228,7 @@ DECLARE_NATIVE(hijack)
 //    restore the behavior.  Because you can make such a copy yourself if
 //    you intend to put the behavior back:
 //
-//        foo-saved: copy reify :foo
+//        foo-saved: copy unrun :foo
 //        hijack :foo :bar
 //        ...
 //        hijack :foo foo-saved

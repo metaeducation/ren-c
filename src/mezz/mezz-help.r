@@ -225,7 +225,7 @@ help: function [
                 return none
             ]
 
-            switch type of value: reify get/any topic [
+            switch type of value: noisotope get/any topic [
                 null [
                     print [topic "is null"]
                 ]

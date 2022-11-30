@@ -247,7 +247,7 @@ combinator: func [
     ; Enclosing with the wrapper permits us to inject behavior before and
     ; after each combinator is executed.
     ;
-    return reify enclose :action :wrapper  ; returns plain ACTION!
+    return unrun enclose :action :wrapper  ; returns plain ACTION!
 ]
 
 
@@ -2368,7 +2368,7 @@ default-combinators: make map! reduce [
 
                 rules: sublimit else [tail of rules]
             ] else [
-                f: make frame! reify [@ rules]: parsify state rules
+                f: make frame! unrun [@ rules]: parsify state rules
             ]
 
             f.input: pos
@@ -2714,7 +2714,7 @@ parsify: func [
             ;
             let f
             if blank? last r [
-                if not action? let action: reify get/any r [
+                if not action? let action: unrun get/any r [
                     fail "In UPARSE PATH ending in / must resolve to ACTION!"
                 ]
                 if not comb: select state.combinators action! [
@@ -2729,7 +2729,7 @@ parsify: func [
                 ; combinator with AUGMENT for each argument (parser1, parser2
                 ; parser3).
                 ;
-                comb: reify adapt (augment comb collect [
+                comb: unrun adapt (augment comb collect [
                     let n: 1
                     for-each param parameters of action [
                         if not path? param [
@@ -2750,7 +2750,7 @@ parsify: func [
                     let n: 1
                     for-each param (parameters of value) [
                         if not path? param [
-                            append parsers reify :f.(as word! unspaced ["param" n])
+                            append parsers unrun :f.(as word! unspaced ["param" n])
                             n: n + 1
                         ]
                     ]
