@@ -27,18 +27,20 @@ seek: []  ; Temporary measure, SEEK as no-op in bootstrap
 export parsing-at: func [
     {Make rule that evaluates a block for next input position, fails otherwise}
     return: [block!]
-    'word [word!] {Word set to input position (will be local).}
-    block [block!]
-        {Block to evaluate. Return next input position, or blank/false.}
+    'word "Word set to input position (will be local)"
+        [word!]
+    code "Code to evaluate. Should Return next input position, or null"
+        [block!]
     /end {Drop the default tail check (allows evaluation at the tail).}
 ][
     return use [result position][
-        block: compose [reify (as group! block)]
-        if not end [
-            block: compose [decay either not tail? (word) (block) [_]]
+        if end [  ; feature not used by Ren-C bootstrap, but kept anyway
+            code: compose [(as group! code)]
+        ] else [
+            code: compose [either not tail? (word) (code) [null]]
         ]
-        block: compose [
-            result: either position: (spread block) [
+        code: compose [
+            result: either position: (spread code) [
                 [:position]  ; seek
             ][
                 [end skip]
@@ -46,7 +48,7 @@ export parsing-at: func [
         ]
         use compose [(word)] reduce [compose [
             (as set-word! word)  ; <here>
-            (as group! block) result
+            (as group! code) result
         ]]
     ]
 ]

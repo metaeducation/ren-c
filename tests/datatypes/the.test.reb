@@ -29,12 +29,11 @@
 ]
 
 ; @ runs the action THE*, and has special case behavior that QUASI! forms
-; become isotopic forms.  This is useful in the API as it splices ~_~ QUASI!
-; values into slots where nullptr was passed, which become their isotopes,
-; that decay to NULL most places.  So can avoid having to use rebQ() on
-; arguments that you aren't intending as QUASI!.  The good part is that if
-; you do this in error, you'll probably find out--since the quasiforms will
-; not be silently accepted most places.
+; become isotopic forms.  This is useful in the API as it splices ~null~ QUASI!
+; values into slots where nullptr was passed, which become their isotopes.
+; So can avoid having to use rebQ() on arguments that you aren't intending as
+; QUASI!.  The good part is that if you do this in error, you'll probably find
+; out--since the quasiforms will not be silently accepted most places.
 [
    ('x = @ x)
    ('(a b c) = @ (a b c))

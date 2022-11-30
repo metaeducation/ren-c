@@ -310,7 +310,6 @@
     (null? do [left-hard*])
 ]
 
-; void assignments decay to none on assignment, propagate the none
 (
     x: <overwritten>
     did all [

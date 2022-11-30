@@ -128,7 +128,7 @@ pkg-config: func [  ; !!! Note: Does not appear to be used
         fail ["Unsupported pkg-config word:" var]
     ]
 
-    let x: run-command spaced reduce [pkg decay lib]
+    let x: run-command spaced [pkg lib]
 
     if not dlm [
         return x
@@ -773,7 +773,7 @@ ld: make linker-class [
         return: [<opt> text!]
         dep [object!]
     ][
-        return decay (switch dep/class [
+        return decay switch dep/class [
             #object-file [
                 file-to-local dep/output
             ]
@@ -800,17 +800,17 @@ ld: make linker-class [
                 ]
             ]
             #application [
-                null
+                '~null~
             ]
             #variable [
-                null
+                '~null~
             ]
             #entry [
-                null
+                '~null~
             ]
             (elide dump dep)
             fail "unrecognized dependency"
-        ])
+        ]
     ]
 
     check: meth [
@@ -879,15 +879,15 @@ llvm-link: make linker-class [
         return: [<opt> text!]
         dep [object!]
     ][
-        return decay (switch dep/class [
+        return decay switch dep/class [
             #object-file [
                 file-to-local dep/output
             ]
             #dynamic-extension [
-                null
+                '~null~
             ]
             #static-extension [
-                null
+                '~null~
             ]
             #object-library [
                 spaced map-each ddep dep/depends [
@@ -895,17 +895,17 @@ llvm-link: make linker-class [
                 ]
             ]
             #application [
-                null
+                '~null~
             ]
             #variable [
-                null
+                '~null~
             ]
             #entry [
-                null
+                '~null~
             ]
             (elide dump dep)
             fail "unrecognized dependency"
-        ])
+        ]
     ]
 ]
 
@@ -972,7 +972,7 @@ link: make linker-class [
             #dynamic-extension [
                 comment [import file]  ; static property is ignored
 
-                either tag? dep/output [
+                reify either tag? dep/output [
                     filter-flag dep/output id
                 ][
                     ;dump dep/output
@@ -995,10 +995,10 @@ link: make linker-class [
                 file-to-local any [:dep/implib, join dep/basename ".lib"]
             ]
             #variable [
-                null
+                '~null~
             ]
             #entry [
-                null
+                '~null~
             ]
             (elide dump dep)
             fail "unrecognized dependency"

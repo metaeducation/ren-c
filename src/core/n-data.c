@@ -2470,9 +2470,6 @@ DECLARE_NATIVE(decay)
     if (Is_Nulled(v))  // !!! Is passthru a good idea as default?
         return nullptr;
 
-    if (IS_BLANK(v))
-        return nullptr;
-
     if (Is_Isotope(v)) {  // currently includes VOID (again, is passthru good?)
         Copy_Cell(OUT, v);
         Decay_If_Isotope(OUT);
@@ -2526,8 +2523,8 @@ DECLARE_NATIVE(isotopify_if_falsey)
 //
 DECLARE_NATIVE(reify)
 //
-// 1. REIFY of a VOID is not something currently supported.  If it were, then
-//    it would probably be better to make it a `~` instead of a BLANK!.
+// 1. REIFY of NIHIL and VOID are not currently supported by default.  If they
+//    were, then they would be ~ and ' respectively.
 {
     INCLUDE_PARAMS_OF_REIFY;
 

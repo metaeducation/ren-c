@@ -284,15 +284,21 @@ to-logic: func3 [return: [logic!] optional [<opt> any-value!]] [
 ; into NULL, and trust that the current build will catch cases of something
 ; like a PRINT being turned into a NULL.
 ;
+~null~: :null3  ; e.g. _
 decay: func3 [v [<opt> any-value!]] [
     assert [not null3? :v]
-    if void3? :v [return blank]  ; e.g. null (blank is null)
-    if blank? :v [return blank]
+    if void3? :v [fail "Attempt to decay a void, may have been _, try ~null~"]
+    if null3? :v [fail "Attempt to decay a blank where ~null~ may be meant"]
+    if :v = '~null~ [return null]
+    if :v = '~ [fail "decay ~ would be ambiguous with decay '"]
+    if :v = the3 ' [return void]
     :v
 ]
 reify: func3 [v [<opt> any-value!]] [
-    if void? :v [return _]
-    if null? :v [return _]
+    if void? :v [return the3 ']  ; ambiguous with ~, but favor invisibility
+    if null? :v [return '~null~]
+    if :v = #[true] [return '~true~]
+    if :v = #[false] [return '~false~]
     :v
 ]
 opt: ~  ; replaced by DECAY word
@@ -1113,4 +1119,20 @@ split-path: func3 [  ; interface changed to multi-return in new Ren-C
     dir+file: split-path3 in
     if dir [set darg decay first dir+file]
     return decay second dir+file
+]
+
+
+=== {SANITY CHECKS} ===
+
+if not void3? (
+    if true [null] else [fail "ELSE shim running when it shouldn't"]
+) [
+    fail "shim IF/ELSE did not voidify null result"
+]
+
+if not all [
+    null? either true [null] [<unused>]
+    null? either false [<unused>] [null]
+][
+    fail "EITHER not preserving null"
 ]

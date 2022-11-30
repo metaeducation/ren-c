@@ -94,8 +94,8 @@ export cscape: function [
                 copy suffix: remove to newline
             ] (
                 keep compose [
-                    (pattern else [spread [_]]) (col) (mode) (expr)
-                    (prefix else [spread [_]]) (suffix else [spread [_]])
+                    (pattern else ['~null~]) (col) (mode) (expr)
+                    (prefix else ['~null~]) (suffix else ['~null~])
                 ]
                 num: num + 1
                 num-text: to text! num
@@ -162,11 +162,13 @@ export cscape: function [
                     ; are prefixed, like `cscape {SYM_${...}}`.  But if there
                     ; is no prefix, then the check might be helpful.  Review.
                     ;
-                    to-c-name/scope :sub #prefixed  ; can vanish
+                    (to-c-name/scope :sub #prefixed) else [  ; can vanish
+                        '~null~
+                    ]
                 ]
                 #unspaced [
                     case [
-                        void? :sub [_]
+                        void? :sub ['~null~]
                         block? sub [unspaced sub]
                     ] else [
                         form sub
@@ -174,7 +176,7 @@ export cscape: function [
                 ]
                 #delimit [
                     if void? :sub [
-                        _
+                        '~null~
                     ] else [
                         delimit (unspaced [maybe :suffix newline]) sub
                     ]

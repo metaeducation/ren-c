@@ -88,7 +88,7 @@ load-until-blank: function [
 ] [
     wsp: compose [some (charset { ^-})]
 
-    res: '_  ; !!! collect as SET-WORD!s for locals, evolving...
+    res: null  ; !!! collect as SET-WORD!s for locals, evolving...
     rebol-value: parsing-at x [
         ;
         ; !!! SET-BLOCK! not bootstrap
@@ -99,18 +99,16 @@ load-until-blank: function [
 
     terminator: [opt wsp newline opt wsp newline]
 
-    rule: [
+    parse2 text [
         some [not terminator rebol-value]
         opt wsp opt [newline opt newline] position:  ; <here>
         to end
+    ] then [
+        values: load copy/part text position
+        return reduce [values position]
     ]
 
-    return decay (parse2 text rule then [  ; bootstrap EXE needs group here
-        values: load copy/part text position
-        reduce [values position]
-    ] else [
-        _
-    ])
+    return null
 ]
 
 

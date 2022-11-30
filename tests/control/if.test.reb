@@ -153,9 +153,9 @@
 ;(
 ;    var: <something>
 ;    did all [
-;        null = decay if false @(var: <something-else> [null])
+;        void? if false @(var: <something-else> [null])
 ;        var = <something>
-;        null = decay if true @(var: <something-else> [null])
+;        null? if true @(var: <something-else> [null])
 ;        var = <something-else>
 ;    ]
 ;)

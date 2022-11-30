@@ -105,16 +105,16 @@
     ])
 
     ; It's not possible to return a "pure NULL" otherwise.  But the existence
-    ; of ~[_]~ isotopes permit a non-break-signaling construct that carries
-    ; semantic intent of a null, and will decay to it upon variable assignment.
+    ; of ~[~null~]~ isotopes permit a non-break-signaling construct that
+    ; carries semantic intent of a "there's an answer and it is null"
 
     ([1 2 3 4] = collect [
         assert [did all [
-            '~[_]~ = result': ^ for-both x [1 2] [3 4] [
+            '~[~null~]~ = result': ^ for-both x [1 2] [3 4] [
                 keep x
                 null
             ]
-            result' = '~[_]~
+            result' = '~[~null~]~
         ]]
     ])
 

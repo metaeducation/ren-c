@@ -653,7 +653,7 @@ ensure: redescribe [
     ;
     enclose :match lambda [f] [
         let value: f.value  ; DO makes frame arguments unavailable
-        decay (do f else [
+        do f else [
             ; !!! Can't use FAIL/WHERE until we can implicate the callsite.
             ;
             ; https://github.com/metaeducation/ren-c/issues/587
@@ -662,7 +662,7 @@ ensure: redescribe [
                 "ENSURE failed with argument of type"
                     type of value else ["NULL"]
             ]
-        ])
+        ]
     ]
 )
 
@@ -671,7 +671,7 @@ non: redescribe [
 ](
     enclose :match lambda [f] [
         let value: f.value  ; DO makes frame arguments unavailable
-        decay (do f then [null] else [value])
+        light (do f then [null] else [value])
     ]
 )
 
