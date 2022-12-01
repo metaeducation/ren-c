@@ -215,3 +215,14 @@
 ; C stack when FOR-EACH's dispatcher is on the stack.
 ;
 ~???~ !! (for-each [x y z] make object! [key: <value>] [])
+
+
+; BLANK! acts same as empty block, void opts out and generates BREAK signal
+[
+    (void? for-each x [] [fail])
+    (void? for-each x _ [fail])
+    (null? for-each x ' [fail])
+
+    ~expect-arg~ !! (for-each x '~ [fail])
+    ~expect-arg~ !! (for-each x ~ [fail])
+]

@@ -9,7 +9,7 @@
         blk2 [<maybe> block!]
         body [block!]
     ][
-        while [(not empty? blk1) or (not empty? blk2)] [  ; null and [] EMPTY?
+        while [(not empty-or-null? blk1) or (not empty-or-null? blk2)] [
             (vars): pack [(first maybe blk1) (first maybe blk2)]
 
             do body  ; BREAK from body break the outer while, it returns NULL

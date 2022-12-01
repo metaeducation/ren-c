@@ -459,11 +459,19 @@ open?: specialize :reflect [property: 'open?]
 
 
 empty?: func* [
-    {TRUE if empty or NULL, or if series is at or beyond its tail.}
+    {TRUE if blank, or if series is empty or at or beyond its tail}
     return: [logic!]
-    series [<opt> any-series! object! port! bitset! map!]
+    series [blank! any-series! object! port! bitset! map!]
 ][
-    return did any [not series, tail? series]
+    return did any [blank? series, tail? series]
+]
+
+empty-or-null?: func* [
+    {TRUE if null, blank, or if series is empty or at or beyond its tail}
+    return: [logic!]
+    series [<opt> blank! any-series! object! port! bitset! map!]
+][
+    return did any [null? series, blank? series, tail? series]
 ]
 
 

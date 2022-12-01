@@ -2890,7 +2890,7 @@ parse*: func [
     ; If you want to get the pending items, a <pop-pending> combinator could be
     ; used to do that.
     ;
-    if not empty? pending [
+    if not empty-or-null? pending [
         fail "Residual items accumulated in pending array"
     ]
 

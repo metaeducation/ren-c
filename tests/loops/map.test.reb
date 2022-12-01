@@ -75,3 +75,13 @@
         spread reduce [key val]
     ]
 )
+
+; BLANK! acts same as empty block, void opts out and generates BREAK signal
+[
+    ([] = map-each x [] [fail])
+    ([] = map-each x _ [fail])
+    (null? map-each x ' [fail])
+
+    ~expect-arg~ !! (map-each x '~ [fail])
+    ~expect-arg~ !! (map-each x ~ [fail])
+]

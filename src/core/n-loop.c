@@ -985,7 +985,7 @@ void Shutdown_Loop_Each(Value(*) iterator)
 //      :vars "Word or block of words to set each time, no new var if quoted"
 //          [blank! word! lit-word! block! group!]
 //      data "The series to traverse"
-//          [<maybe> any-series! any-context! map! any-sequence!
+//          [<maybe> blank! any-series! any-context! map! any-sequence!
 //           action!]  ; experimental
 //      body "Block to evaluate each time"
 //          [<const> block! meta-block!]
@@ -1016,6 +1016,9 @@ DECLARE_NATIVE(for_each)
     }
 
   initial_entry: {  //////////////////////////////////////////////////////////
+
+    if (IS_BLANK(data))  // same response as to empty series
+        return VOID;
 
     Context(*) pseudo_vars_ctx = Virtual_Bind_Deep_To_New_Context(
         ARG(body),  // may be updated, will still be GC safe
@@ -1121,6 +1124,9 @@ DECLARE_NATIVE(every)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
+    if (IS_BLANK(data))  // same response as to empty series
+        return VOID;
+
     Context(*) pseudo_vars_ctx = Virtual_Bind_Deep_To_New_Context(
         ARG(body),  // may be updated, will still be GC safe
         ARG(vars)
@@ -1212,7 +1218,7 @@ DECLARE_NATIVE(remove_each)
 //    the data stack and then creating a precisely-sized output blob to swap as
 //    underlying memory for the array.  (Imagine a large array from which there
 //    are many removals, and the ensuing wasted space being left behind).  We
-//    use the method anyway, to test novel techinques and error handling.
+//    use the method anyway, to test novel techniques and error handling.
 //
 // 3. For binaries and strings, we push new data as the loop runs.  Then at
 //    the end of the enumeration, the identity of the incoming series is kept
@@ -1532,16 +1538,15 @@ DECLARE_NATIVE(remove_each)
 //      :vars "Word or block of words to set each time, no new var if quoted"
 //          [blank! word! lit-word! block! group!]
 //      data "The series to traverse"
-//          [<maybe> any-series! any-sequence! action! any-context!]
+//          [<maybe> blank! any-series! any-sequence! action! any-context!]
 //      body "Block to evaluate each time (result will be kept literally)"
 //          [<const> block!]
 //  ]
 //
 DECLARE_NATIVE(map_each)
 //
-// !!! MAP-EACH is a legacy construct that lacks the planned flexibility of
-// MAP, as it presumes a 1:1 mapping vs. being able to splice.  The syntax of
-// FOR and MAP are intended to be generic to work with generators or a dialect.
+// MAP-EACH lacks the planned flexibility of MAP.  The syntax of FOR and MAP
+// are intended to be generic to work with generators or a dialect.
 {
     INCLUDE_PARAMS_OF_MAP_EACH;
 
@@ -1554,7 +1559,8 @@ DECLARE_NATIVE(map_each)
     // iterator does not exist yet (and would not be cheap) a QUOTED! BLOCK!
     // is used temporarily as a substitute for passing a block iterator.
     //
-    Quotify(ARG(data), 1);
+    if (not IS_BLANK(ARG(data)))
+        Quotify(ARG(data), 1);
 
     INIT_FRM_PHASE(frame_, VAL_ACTION(Lib(MAP)));
     // INIT_FRM_BINDING ?
@@ -1574,7 +1580,7 @@ DECLARE_NATIVE(map_each)
 //      :vars "Word or block of words to set each time, no new var if quoted"
 //          [blank! word! lit-word! block! group!]
 //      data "The series to traverse (only QUOTED! BLOCK! at the moment...)"
-//          [<maybe> quoted! action!]
+//          [<maybe> blank! quoted! action!]
 //      :body "Block to evaluate each time"
 //          [<const> block! meta-block!]
 //  ]
@@ -1617,6 +1623,9 @@ DECLARE_NATIVE(map)
   initial_entry: {  //////////////////////////////////////////////////////////
 
     assert(Is_Fresh(OUT));  // output only written during MAP if BREAK hit
+
+    if (IS_BLANK(data))  // same response as to empty series
+        return Init_Block(OUT, Make_Array(0));
 
     if (IS_ACTION(data)) {
         // treat as a generator

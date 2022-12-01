@@ -528,6 +528,10 @@ parse: does [
 ;
 enfixed: enfix :enfix
 
+; EMPTY? in modern Ren-C only considers blanks and tail series empty.
+;
+empty-or-null?: :empty?
+
 
 ; COLLECT in the bootstrap version would return NULL on no keeps.  But beyond
 ; wanting to change that, we also want KEEP to be based on the new rules and

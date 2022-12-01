@@ -530,7 +530,7 @@ DECLARE_NATIVE(unget)
 //
 //      return: "Isotope of BLOCK! or unquoted value (passthru null and void)"
 //          [<opt> <void> any-value!]
-//      array [<opt> <void> quoted! any-array!]
+//      array [<opt> <void> quoted! blank! any-array!]
 //  ]
 //
 DECLARE_NATIVE(spread)
@@ -546,6 +546,9 @@ DECLARE_NATIVE(spread)
         return VOID;
     if (Is_Nulled(v))
         return nullptr;
+
+    if (IS_BLANK(v))
+        return Init_Splice(OUT, EMPTY_ARRAY);  // treat blank as if it was []
 
     if (IS_QUOTED(v))
         return Unquotify(Copy_Cell(OUT, v), 1);

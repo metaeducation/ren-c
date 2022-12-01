@@ -1445,7 +1445,7 @@ DECLARE_NATIVE(glom)
 //
 // GLOM was designed to bubble up `pending` values (e.g. collected values) in
 // UPARSE, which are lists...but often they will be empty.  So creating lots of
-// empty blocks was undesirable.  So having the accumulators start at BLANK!
+// empty blocks was undesirable.  So having the accumulators start at null
 // and be willing to start by taking over a bubbled up BLOCK! was desirable.
 //
 // https://forum.rebol.info/t/efficient-consuming-append-like-operator-glom/1647

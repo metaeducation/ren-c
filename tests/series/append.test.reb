@@ -195,3 +195,16 @@
     ([a b c] = append [a b c] if true [])
     ([a b c] = append [a b c] if false [<a>])
 ]
+
+; BLANK! acts like an empty block when passed to SPREAD
+[
+    ([a b] = append [a b] spread second [c []])
+    ([a b] = append [a b] spread second [c _])
+
+    ~expect-arg~ !! (
+        [a b] = append [a b] spread second [c ~]
+    )
+    ~expect-arg~ !! (
+        [a b] = append [a b] spread second [c ']
+    )
+]

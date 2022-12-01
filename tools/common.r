@@ -202,7 +202,7 @@ export binary-to-c: function [
     data-len: length of data
 
     out: make text! 6 * (length of data)
-    while [all [data, not empty? data]] [
+    while [not empty-or-null? data] [
         ; grab hexes in groups of 8 bytes
         hexed: enbase/base (copy/part data 8) 16
         data: skip data 8
@@ -211,7 +211,7 @@ export binary-to-c: function [
         ]
 
         take/last out  ; drop the last space
-        if empty? data [
+        if empty-or-null? data [
             take/last out  ; lose that last comma
         ]
         append out newline  ; newline after each group, and at end
