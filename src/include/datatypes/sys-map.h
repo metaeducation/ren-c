@@ -32,7 +32,7 @@
 // they are implemented using series--and hence are in %sys-series.h, at least
 // until a better location for the definition is found.
 //
-// !!! Should there be a MAP_LEN()?  Current implementation has NONE in
+// !!! Should there be a MAP_LEN()?  Current implementation has VOID in
 // slots that are unused, so can give a deceptive number.  But so can
 // objects with hidden fields, locals in paramlists, etc.
 //

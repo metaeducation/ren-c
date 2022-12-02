@@ -389,11 +389,11 @@ static void Propagate_All_GC_Marks(void)
                     panic (v);
                 break;
 
-              case UNQUOTED_1:  // nulls indicate absence of values from MAP!
-                if (HEART_BYTE_UNCHECKED(v) == REB_NULL)
+              case UNQUOTED_1:
+                if (HEART_BYTE_UNCHECKED(v) == REB_VOID)
                     if (not (
                         IS_VARLIST(a) or IS_LET(a) or IS_PATCH(a)
-                        or IS_PAIRLIST(a)
+                        or IS_PAIRLIST(a)  // void is absent value in MAP!
                     )){
                         panic (v);
                     }

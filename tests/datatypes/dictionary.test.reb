@@ -138,3 +138,31 @@
     m.(#"A"): 1020
     1020 = m.(#"A")
 )]
+
+; Isotopes are not allowed in maps as either keys or values
+[
+    ~bad-isotope~ !! (
+        m: make map! []
+        m.key: null
+    )
+
+    ~bad-isotope~ !! (
+        m: make map! []
+        m.(null): 1020
+    )
+
+    ~isotope-arg~ !! (
+        m: make map! []
+        m.(spread [a b c]): 1020
+    )
+]
+
+; Void can be used to remove keys from maps
+(
+    m: make map! [key <initial>]
+    did all [
+        m.key = <initial>
+        m.key: void  ; opts out of the all
+        null? m.key
+    ]
+)

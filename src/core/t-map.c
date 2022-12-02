@@ -139,7 +139,7 @@ REBINT Find_Key_Hashed(
             }
         }
 
-        if (wide > 1 && Is_Nulled(k + 1) && zombie_slot == -1)
+        if (wide > 1 && Is_Void(k + 1) && zombie_slot == -1)
             zombie_slot = slot;
 
         slot += skip;
@@ -195,7 +195,7 @@ static void Rehash_Map(REBMAP *map)
     for (n = 0; n < ARR_LEN(pairlist); n += 2, key += 2) {
         const bool cased = true; // cased=true is always fine
 
-        if (Is_Nulled(key + 1)) {
+        if (Is_Void(key + 1)) {
             //
             // It's a "zombie", move last key to overwrite it
             //
@@ -215,7 +215,7 @@ static void Rehash_Map(REBMAP *map)
 
         // discard zombies at end of pairlist
         //
-        while (Is_Nulled(ARR_AT(pairlist, ARR_LEN(pairlist) - 1))) {
+        while (Is_Void(ARR_AT(pairlist, ARR_LEN(pairlist) - 1))) {
             SET_SERIES_LEN(pairlist, ARR_LEN(pairlist) - 2);
         }
     }
@@ -259,7 +259,7 @@ REBLEN Find_Map_Entry(
     REBSPC *val_specifier,
     bool strict
 ) {
-    assert(not Is_Nulled(key));
+    assert(not Is_Isotope(key));
 
     REBSER *hashlist = MAP_HASHLIST(map); // can be null
     Array(*) pairlist = MAP_PAIRLIST(map);
@@ -303,7 +303,7 @@ REBLEN Find_Map_Entry(
         return n;
     }
 
-    if (Is_Nulled(val)) return 0; // trying to remove non-existing key
+    if (Is_Void(val)) return 0; // trying to remove non-existing key
 
     // Create new entry.  Note that it does not copy underlying series (e.g.
     // the data of a string), which is why the immutability test is necessary
@@ -410,7 +410,7 @@ inline static REBMAP *Copy_Map(const REBMAP *map, REBU64 types) {
 
         REBVAL *v = key + 1;
         assert(v != tail);
-        if (Is_Nulled(v))
+        if (Is_Void(v))
             continue; // "zombie" map element (not present)
 
         Flags flags = NODE_FLAG_MANAGED;  // !!! Review
@@ -473,15 +473,16 @@ Array(*) Map_To_Array(const REBMAP *map, REBINT what)
     Cell(const*) val_tail = ARR_TAIL(MAP_PAIRLIST(map));
     Cell(const*) val = ARR_HEAD(MAP_PAIRLIST(map));
     for (; val != val_tail; val += 2) {
-        if (not Is_Nulled(val + 1)) {  // can't be END
-            if (what <= 0) {
-                Copy_Cell(dest, SPECIFIC(&val[0]));
-                ++dest;
-            }
-            if (what >= 0) {
-                Copy_Cell(dest, SPECIFIC(&val[1]));
-                ++dest;
-            }
+        if (Is_Void(val + 1))  // val + 1 can't be past tail
+            continue;  // zombie key, e.g. not actually in map
+
+        if (what <= 0) {
+            Copy_Cell(dest, SPECIFIC(&val[0]));
+            ++dest;
+        }
+        if (what >= 0) {
+            Copy_Cell(dest, SPECIFIC(&val[1]));
+            ++dest;
         }
     }
 
@@ -507,7 +508,7 @@ Context(*) Alloc_Context_From_Map(const REBMAP *map)
     Cell(const*) mval_tail = ARR_TAIL(MAP_PAIRLIST(map));
     Cell(const*) mval = ARR_HEAD(MAP_PAIRLIST(map));
     for (; mval != mval_tail; mval += 2) {  // note mval must not be END
-        if (ANY_WORD(mval) and not Is_Nulled(mval + 1))
+        if (ANY_WORD(mval) and not Is_Void(mval + 1))
             ++count;
     }
   }
@@ -520,7 +521,7 @@ Context(*) Alloc_Context_From_Map(const REBMAP *map)
     Cell(const*) mval = ARR_HEAD(MAP_PAIRLIST(map));
 
     for (; mval != mval_tail; mval += 2) {  // note mval must not be END
-        if (ANY_WORD(mval) and not Is_Nulled(mval + 1)) {
+        if (ANY_WORD(mval) and not Is_Void(mval + 1)) {
             REBVAL *var = Append_Context(c, VAL_WORD_SYMBOL(mval));
             Copy_Cell(var, SPECIFIC(mval + 1));
         }
@@ -559,8 +560,8 @@ void MF_Map(REB_MOLD *mo, noquote(Cell(const*)) v, bool form)
     Cell(const*) key = ARR_HEAD(MAP_PAIRLIST(m));
     for (; key != tail; key += 2) {  // note value slot must not be END
         assert(key + 1 != tail);
-        if (Is_Nulled(key + 1))
-            continue; // if value for this key is void, key has been removed
+        if (Is_Void(key + 1))
+            continue;  // if value for this key is void, key has been removed
 
         if (not form)
             New_Indented_Line(mo);
@@ -748,7 +749,7 @@ REBTYPE(Map)
         const REBVAL *val = SPECIFIC(
             ARR_AT(MAP_PAIRLIST(VAL_MAP(map)), ((n - 1) * 2) + 1)
         );
-        if (Is_Nulled(val))  // zombie entry, means unused
+        if (Is_Void(val))  // zombie entry, means unused
             return nullptr;
 
         return Copy_Cell(OUT, val); }
@@ -759,7 +760,7 @@ REBTYPE(Map)
         INCLUDE_PARAMS_OF_POKE_P;
         UNUSED(ARG(location));
 
-        Cell(const*) picker = ARG(picker);
+        Cell(const*) picker = ARG(picker);  // isotope pickers not allowed
 
         // Fetching and setting with path-based access is case-preserving for
         // initial insertions.  However, the case-insensitivity means that all
@@ -770,12 +771,10 @@ REBTYPE(Map)
         //
         bool strict = false;
 
-        REBVAL *setval = ARG(value);
+        REBVAL *setval = ARG(value);  // Note: VOID interpreted as remove key
 
-        if (Is_Isotope(setval))
-            fail (Error_Bad_Isotope(setval));  // !!! disallow in MAP! ?
-
-        // Note: NULL is interpreted as "remove from map"
+        if (Is_Isotope(setval))  // isotopes not allowed as value in maps
+            return RAISE(Error_Bad_Isotope(setval));
 
         REBINT n = Find_Map_Entry(
             VAL_MAP_ENSURE_MUTABLE(map),  // modified
