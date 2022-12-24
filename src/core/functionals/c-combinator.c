@@ -286,7 +286,7 @@ DECLARE_NATIVE(combinator)
         relativized
     );
 
-    return Init_Activation(OUT, combinator, ANONYMOUS, UNBOUND);
+    return Init_Action(OUT, combinator, ANONYMOUS, UNBOUND);  // not isotopic
 }
 
 

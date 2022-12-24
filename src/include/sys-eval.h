@@ -108,7 +108,9 @@ inline static bool Is_Isotope_Set_Friendly(Cell(const*) v) {
 //
 inline static bool Is_Isotope_Get_Friendly(Cell(const*) v) {
     assert(Is_Isotope(v));
-    return HEART_BYTE(v) == REB_WORD or HEART_BYTE(v) == REB_BLANK;
+    return HEART_BYTE(v) == REB_WORD
+        or HEART_BYTE(v) == REB_BLANK
+        or HEART_BYTE(v) == REB_ACTION;
 }
 
 
