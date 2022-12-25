@@ -143,6 +143,11 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
 
   TRAP_BLOCK_IN_CASE_OF_ABRUPT_FAILURE {  ////////////////////////////////////
 
+  bounce_on_trampoline_skip_just_use_out:
+
+    while (FRAME->executor == &Just_Use_Out_Executor)
+        FRAME = FRAME->prior;  // fast skip, allow Is_Fresh() output
+
   bounce_on_trampoline:
 
   // 1. The Just_Use_Out_Executor() exists vs. using something like nullptr
@@ -256,10 +261,9 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
             FRAME = TOP_FRAME;
         }
 
-        while (FRAME->executor == &Just_Use_Out_Executor)
-            FRAME = FRAME->prior;  // fast skip, allow Is_Fresh() output
+        // some pending frame now has a result
 
-        goto bounce_on_trampoline;  // some pending frame now has a result
+        goto bounce_on_trampoline_skip_just_use_out;
     }
 
   //=//// HANDLE CONTINUATIONS ////////////////////////////////////////////=//
@@ -283,10 +287,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
             assert(STATE != 0);  // otherwise state enforced nonzero, see [2]
 
         FRAME = TOP_FRAME;
-        while (FRAME->executor == &Just_Use_Out_Executor)
-            FRAME = FRAME->prior;  // !!! Should this use a special BOUNCE?
-
-        goto bounce_on_trampoline;
+        goto bounce_on_trampoline_skip_just_use_out;
     }
 
     if (r == BOUNCE_DELEGATE) {
