@@ -56,7 +56,13 @@ DECLARE_NATIVE(reeval)
 
     REBVAL *v = ARG(value);
 
-    bool enfix = IS_ACTION(v) and Get_Action_Flag(VAL_ACTION(v), ENFIXED);
+    if (Is_Isotope(v))  // !!! lax handling (should it be error instead?)
+        Meta_Quotify(v);
+
+    bool enfix =
+        IS_QUASI(v)
+        and HEART_BYTE(v) == REB_ACTION
+        and Get_Action_Flag(VAL_ACTION(v), ENFIXED);
 
     Flags flags = FRAME_MASK_NONE;
 
