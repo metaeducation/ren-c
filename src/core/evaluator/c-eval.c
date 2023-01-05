@@ -427,18 +427,22 @@ Bounce Evaluator_Executor(Frame(*) f)
     if (Is_Frame_At_End(f))
         goto give_up_backward_quote_priority;
 
-    if (VAL_TYPE_UNCHECKED(f_next) != REB_WORD)  // right's kind
-        goto give_up_backward_quote_priority;
-
     assert(not f_next_gotten);  // Fetch_Next_In_Frame() cleared it
-    f_next_gotten = Lookup_Word(f_next, FEED_SPECIFIER(f->feed));
 
-    if (
-        not f_next_gotten
-        or not Is_Activation(unwrap(f_next_gotten))
-    ){
-        goto give_up_backward_quote_priority;  // note only ACTION! is ENFIXED
+    if (VAL_TYPE_UNCHECKED(f_next) == REB_ACTION) {  // plain ACTION! runs
+        f_next_gotten = SPECIFIC(f_next);
     }
+    else if (VAL_TYPE_UNCHECKED(f_next) == REB_WORD) {  // right's kind
+        f_next_gotten = Lookup_Word(f_next, FEED_SPECIFIER(f->feed));
+
+        if (
+            not f_next_gotten
+            or not Is_Activation(unwrap(f_next_gotten))
+        ){
+            goto give_up_backward_quote_priority;  // note only ACTION! is ENFIXED
+        }
+    } else
+        goto give_up_backward_quote_priority;
 
     if (Get_Action_Flag(VAL_ACTION(unwrap(f_next_gotten)), IS_BARRIER)) {
         //
@@ -549,7 +553,10 @@ Bounce Evaluator_Executor(Frame(*) f)
         VAL_ACTION(unwrap(f_current_gotten)),
         VAL_ACTION_BINDING(unwrap(f_current_gotten))
     );
-    Begin_Enfix_Action(subframe, VAL_WORD_SYMBOL(f_current));
+    if (IS_WORD(f_current))
+        Begin_Enfix_Action(subframe, VAL_WORD_SYMBOL(f_current));
+    else
+        Begin_Enfix_Action(subframe, VAL_ACTION_LABEL(f_current));
 
     goto process_action; }
 
@@ -801,7 +808,7 @@ Bounce Evaluator_Executor(Frame(*) f)
             if (Is_Isotope(OUT) and not Is_Isotope_Set_Friendly(OUT))
                 fail (Error_Bad_Isotope(OUT));
 
-            if (IS_ACTION(OUT))  // !!! Review: When to update labels?
+            if (Is_Activation(OUT))  // !!! Review: When to update labels?
                 INIT_VAL_ACTION_LABEL(OUT, VAL_WORD_SYMBOL(f_current));
 
             Copy_Cell(
@@ -809,9 +816,16 @@ Bounce Evaluator_Executor(Frame(*) f)
                 OUT
             );
 
-            if (f_next_gotten)  // cache can tamper with lookahead, see [2]
-                if (VAL_WORD_SYMBOL(f_next) == VAL_WORD_SYMBOL(f_current))
-                    f_next_gotten = nullptr;
+            if (f_next_gotten) {  // cache can tamper with lookahead, see [2]
+                if (VAL_TYPE_UNCHECKED(f_next) == REB_ACTION) {
+                    // not a cache
+                }
+                else {
+                    assert(VAL_TYPE_UNCHECKED(f_next) == REB_WORD);
+                    if (VAL_WORD_SYMBOL(f_next) == VAL_WORD_SYMBOL(f_current))
+                        f_next_gotten = nullptr;
+                }
+            }
         }
 
         break; }
@@ -1830,7 +1844,10 @@ Bounce Evaluator_Executor(Frame(*) f)
 
     if (
         not f_next_gotten
-        or not Is_Activation(unwrap(f_next_gotten))
+        or (
+            not (IS_WORD(f_next) and Is_Activation(unwrap(f_next_gotten)))
+            and not IS_ACTION(f_next)
+        )
         or Not_Action_Flag(VAL_ACTION(unwrap(f_next_gotten)), ENFIXED)
     ){
       lookback_quote_too_late: // run as if starting new expression
