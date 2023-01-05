@@ -362,6 +362,17 @@ gen-obj: func [
     ; Still we'd like to get the best information from any good ones, so
     ; they're turned off on a case-by-case basis.
     ;
+    ; NOTE: Microsoft's own header files aren't compliant with the errors in
+    ; their own /Wall.  So most people use /W4.  It's a matter of philosophy
+    ; whether GCC's definition of /Wall or /W4 is the right one ("all warnings"
+    ; could mean even those which might not be useful, in which case Microsoft
+    ; is more correct).
+    ;
+    ; https://stackoverflow.com/a/4001759
+    ;
+    ; For the moment we still use /Wall and omit any errors triggered in MS's
+    ; own headers
+    ;
     append flags spread switch rigorous [
         #[true] 'yes 'on 'true [
             compose [
@@ -376,7 +387,9 @@ gen-obj: func [
                 (if not find [c gnu89] standard [<gnu:--pedantic>])
 
                 <gnu:-Wextra>
-                <gnu:-Wall> <msc:/Wall>
+
+                <gnu:-Wall>
+                <msc:/Wall>  ; see note above why we use instead of /W4
 
                 <gnu:-Wchar-subscripts>
                 <gnu:-Wwrite-strings>
@@ -520,6 +533,10 @@ gen-obj: func [
                 ;
                 <msc:/wd4061>
 
+                ; implicit fall-through looking for [[fallthrough]]
+                ;
+                <msc:/wd5262>
+
                 ; setjmp() / longjmp() can't be combined with C++ objects due
                 ; to bypassing destructors.  Yet Microsoft's compiler seems to
                 ; think even "POD" (plain-old-data) structs qualify as
@@ -618,6 +635,10 @@ gen-obj: func [
                 ; Implicit conversion from `int` to `REBD32`, possible loss.
                 ;
                 <msc:/wd5219>
+
+                ; const variable is not used, triggers in MS's type_traits
+                ;
+                <msc:/wd5264>
             ]
         ]
         _ #[false] 'no 'off 'false [
