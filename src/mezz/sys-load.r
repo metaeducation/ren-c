@@ -404,7 +404,7 @@ import*: func [
 
     return: "Loaded module"
         [<opt> module!]
-    @product "Evaluative product of module body (only if WHERE is BLANK!)"
+    @product' "Evaluative product of module body (only if WHERE is BLANK!)"
         [<opt> any-value!]
     where "Where to put exported definitions from SOURCE"
         [<opt> module!]
@@ -451,18 +451,18 @@ import*: func [
         assert [not into]  ; ONLY isn't applicable unless scanning new source
 
         let name: (meta-of source).name else [
-            product: ~nameless~
+            product': ~nameless~
             return source  ; no name, so just do the RESOLVE to get variables
         ]
         let mod: (select/skip system.modules name 2) else [
             append system.modules spread :[name source]  ; not in mod list, add
-            product: ~registered~
+            product': ~registered~
             return source
         ]
         if mod != source [
             fail ["Conflict: more than one module instance named" name]
         ]
-        product: ~cached~
+        product': ~cached~
         return source
     ]
 
@@ -544,7 +544,7 @@ import*: func [
 
     let name: select maybe hdr 'name
     (select/skip system.modules maybe name 2) then cached -> [
-        product: ~cached~
+        product': ~cached~
         return cached
     ]
 
@@ -618,11 +618,11 @@ import*: func [
     ; from the unfinished R3-Alpha module system, and its decade of atrophy
     ; that happened after that...
 
-    let [mod '^product quitting]: module/into/file/line hdr code into file line
+    let [mod 'product' quitting]: module/into/file/line hdr code into file line
 
     ensure module! mod
 
-    if is-module and (name) [
+    if is-module and name [
         append system.modules spread :[name mod]
     ]
 
@@ -636,10 +636,8 @@ import*: func [
     === PROPAGATE QUIT IF REQUESTED, OR RETURN MODULE ===
 
     if quitting and only [
-        quit unget product  ; "rethrow" the QUIT if DO/ONLY
+        quit unget product'  ; "rethrow" the QUIT if DO/ONLY
     ]
-
-    set/any 'product unget product
 
     return mod
 ]

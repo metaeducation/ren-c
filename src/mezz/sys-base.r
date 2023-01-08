@@ -223,7 +223,6 @@ do*: func [
         [<opt> any-value!]
     only "Do not catch quits...propagate them"
         [logic!]
-    <local> result
 ][
     ; For the moment, common features of DO and IMPORT are implemented in the
     ; IMPORT* command.  This includes:
@@ -254,5 +253,9 @@ do*: func [
     ; of times.  So what DO does is effectively flips the order of the
     ; return results of IMPORT.
     ;
-    return [_ ~@result~]: import*/args/only _ source args only
+    ; !!! Because DO presumably wants to be able to return unstable isotopes,
+    ; this is likely done backwards, as having product as a secondary result
+    ; means that it has to be meta.
+    ;
+    return unmeta [_ ~@~]: import*/args/only null source args only
 ]
