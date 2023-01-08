@@ -2541,6 +2541,35 @@ DECLARE_NATIVE(reify)
 
 
 //
+//  concretize: native [
+//
+//  "Make isotopes into plain forms, pass thru other values"
+//
+//      return: [any-value!]
+//      value [<opt> any-value! ~any-value!~]
+//  ]
+//
+DECLARE_NATIVE(concretize)
+//
+// 1. CONCRETIZE of NIHIL and VOID are not currently supported by default.
+//    If they were, then they would both become '
+{
+    INCLUDE_PARAMS_OF_REIFY;
+
+    REBVAL *v = ARG(value);
+
+    if (Is_Void(v))  // see 1
+        fail ("CONCRETIZE of VOID is undefined (needs motivating case)");
+
+    if (Is_Nihil(v))  // see 1
+        fail ("CONCRETIZE of NIHIL is undefined (needs motivating case)");
+
+    return Concretize(Copy_Cell(OUT, v));
+}
+
+
+
+//
 //  noisotope: native [
 //
 //  "Turn isotopes into their plain forms, pass thru other values"
