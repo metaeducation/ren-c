@@ -73,7 +73,7 @@
     (
         x: ~
         did all [
-            '~[_]~ == meta parse [1] [x: [integer! opt text!]]
+            '~[~null~]~ == meta parse [1] [x: [integer! opt text!]]
             x = null
         ]
     )
@@ -81,7 +81,7 @@
     (
         x: ~
         did all [
-            '~[_]~ == meta parse [1] [integer! x: [(null)]]
+            '~[~null~]~ == meta parse [1] [integer! x: [(null)]]
             x = null
         ]
     )

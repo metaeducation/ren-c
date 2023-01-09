@@ -32,7 +32,7 @@
 [
     (#a + 1 = #b)
 
-    ~cannot-use~ !! (
+    ~expect-arg~ !! (  ; was ~cannot-use~ before
         #aa + 1
     )
 ]

@@ -219,7 +219,7 @@ DECLARE_NATIVE(either)
 //    branches if applicable.  But the decision on whether it's a THEN or
 //    ELSE case comes from the first parameter in the pack.
 //
-// 3. With the exception of ~[_]~ and ~[~]~ when /DECAY is used, a "pack"
+// 3. With the exception of ~[~null~]~ and ~[']~ when /DECAY is used, a "pack"
 //    (isotopic block) will always run a THEN and not an ELSE.  If a function
 //    wants to tweak this, it needs to return a lazy object with customized
 //    then/else behavior that otherwise reifies to a pack.
@@ -269,7 +269,7 @@ static Bounce Then_Else_Isotopic_Object_Helper(
         return Copy_Cell(OUT, in);
     }
 
-    if (not Is_Lazy(in))  // Packs run THEN, including ~[_]~ and ~[~]~, see [3]
+    if (not Is_Lazy(in))  // Packs run THEN, including ~[~null~]~ and ~[~]~, see [3]
         goto test_not_lazy;
 
     goto handle_lazy_object;

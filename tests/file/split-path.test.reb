@@ -1,11 +1,11 @@
 
 (
     [file dir]: split-path %./
-    [%./ _] = reduce [dir, reify file]
+    [%./ ~null~] = reduce [dir, reify file]
 )
 (
     [file dir]: split-path %../
-    [%../ _] = reduce [dir, reify file]
+    [%../ ~null~] = reduce [dir, reify file]
 )
 (
     [file dir]: split-path %test
@@ -75,7 +75,7 @@
     ]
     for-each [test result] split-path-tests [
         [file dir]: split-path test
-        if result <> actual: reduce [reify dir, reify file] [
+        if result <> actual: reduce [any [dir _], any [file _]] [
             fail [mold test 'expected mold result "but got" mold actual]
         ]
         res: if file and dir [

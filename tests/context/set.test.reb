@@ -2,8 +2,8 @@
 [#1763
     (
         a: <before>
-        '_ = [a]: pack inert reduce/predicate [null] :reify
-        '_ = a
+        '~null~ = [a]: pack inert reduce/predicate [null] :reify
+        '~null~ = a
     )
 ]
 (
@@ -11,7 +11,7 @@
     b: <b-before>
     2 = [a b]: pack inert reduce/predicate [2 null] :reify
     a = 2
-    '_ = b
+    '~null~ = b
 )
 (
     x: make object! [a: 1]

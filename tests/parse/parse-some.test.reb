@@ -136,8 +136,8 @@
 )]
 
 [
-    ('~[_]~ = ^ parse "a" ["a" opt some "b"])
-    ('~[_]~ = ^ parse "a" ["a" [opt "b"]])
+    ('~[~null~]~ = ^ parse "a" ["a" opt some "b"])
+    ('~[~null~]~ = ^ parse "a" ["a" [opt "b"]])
     (''~ = ^ parse "a" ["a" ^[maybe some "b"]])
 ]
 

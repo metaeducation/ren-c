@@ -24,7 +24,7 @@
 
 ; Falsey things are wrapped in single-unit packs so they will trigger THEN.
 [
-    ('~[_]~ = ^ match null null)
+    ('~[~null~]~ = ^ match null null)
     ('_ = match blank! blank)
     (true = match logic! true)
     ('~[~false~]~ = ^ match logic! false)
@@ -116,7 +116,7 @@
         let result': ^ do f
         any [
             result' = '~[~false~]~
-            result' = '~[_]~
+            result' = '~[~null~]~
         ] then [
             return raise ~falsey-match~
         ]

@@ -51,9 +51,9 @@
 ([] = reduce [maybe null])
 
 ~need-non-null~ !! (
-    reduce [~_~]
+    reduce [~null~]
 )
-([] = reduce [maybe ~_~])
+([] = reduce [maybe ~null~])
 
 
 ([] = reduce [void])

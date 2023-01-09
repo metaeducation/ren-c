@@ -66,5 +66,5 @@
 ;
 ('~[']~ = ^ cycle [stop])
 (10 = cycle [stop 10])
-('~[_]~ = ^ cycle [stop null])  ; allowed
+('~[~null~]~ = ^ cycle [stop null])  ; allowed
 (null = cycle [break])

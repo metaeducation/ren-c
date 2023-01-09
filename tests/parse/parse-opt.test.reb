@@ -6,8 +6,8 @@
 ; the parse rules from the current position.
 
 [
-    ('~[_]~ == meta parse [] [opt blank])
-    ('~[_]~ == meta parse [] [opt 'a])
+    ('~[~null~]~ == meta parse [] [opt blank])
+    ('~[~null~]~ == meta parse [] [opt 'a])
     ('a == parse [a] [opt 'a])
     ('a == parse [a] [opt 'b 'a])
     ('a == parse [a] [opt ['a]])
@@ -20,8 +20,8 @@
 ]
 
 [
-    ('~[_]~ == meta parse "" [opt blank])
-    ('~[_]~ == meta parse "" [opt #a])
+    ('~[~null~]~ == meta parse "" [opt blank])
+    ('~[~null~]~ == meta parse "" [opt #a])
     (#a == parse "a" [opt #a])
     (#a == parse "a" [opt #b #a])
     (#a == parse "a" [opt [#a]])
@@ -34,8 +34,8 @@
 ]
 
 [
-    ('~[_]~ == meta parse #{} [opt blank])
-    ('~[_]~ == meta parse #{} [opt #{0A}])
+    ('~[~null~]~ == meta parse #{} [opt blank])
+    ('~[~null~]~ == meta parse #{} [opt #{0A}])
     (#{0A} == parse #{0A} [opt #{0A}])
     (#{0A} == parse #{0A} [opt #{0B} #{0A}])
     (#{0A} == parse #{0A} [opt [#{0A}]])

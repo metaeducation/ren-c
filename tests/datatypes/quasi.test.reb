@@ -165,7 +165,7 @@
 ; MATCH will match a bad-word! as-is, but falsey inputs produce isotopes
 [
     (''~preserved~ = ^ match bad-word! '~preserved~)
-    ('~[_]~ = ^ match null null)
+    ('~[~null~]~ = ^ match null null)
 ]
 
 ; ~quit~ is the label of the BAD-WORD! isotope you get by default from QUIT.
@@ -225,18 +225,13 @@
 )
 (not error? trap [set 'a '~bad~])
 
-~bad-word-get~ !! (
-    a-value: ~bad~
-    a-value
-)
 
-
-; REIFY is used to make isotopes into the non-isotope form, pass through all
-; other values.
+; CONCRETIZE is used to make isotopes into the non-isotope form, pass through
+; all other values.
 [
-    ('foo = reify ~foo~)
-    ('_ = reify null)
-    ('_ = reify ~_~)
+    ('foo = concretize ~foo~)
+    ('~null~ = reify null)
+    ('~null~ = reify ~null~)
 
     (10 = reify 10)
     ((the '''a) = reify the '''a)
