@@ -193,16 +193,21 @@ inline static Value(*) Quasify_Isotope(Value(*) v) {
 
 inline static Value(*) Reify(Value(*) v) {
     assert(not Is_Void(v));
-    assert(not Is_Nihil(v));
-    if (QUOTE_BYTE(v) == ISOTOPE_0)  // would include void
+    if (QUOTE_BYTE(v) == ISOTOPE_0)
         mutable_QUOTE_BYTE(v) = QUASI_2;
+    return v;
+}
+
+inline static Value(*) Degrade(Value(*) v) {
+    if (QUOTE_BYTE(v) == QUASI_2)
+        mutable_QUOTE_BYTE(v) = ISOTOPE_0;
     return v;
 }
 
 inline static Value(*) Concretize(Value(*) v) {
     assert(not Is_Void(v));
     assert(not Is_Nihil(v));
-    if (QUOTE_BYTE(v) == ISOTOPE_0)  // would include void
+    if (QUOTE_BYTE(v) == ISOTOPE_0)
         mutable_QUOTE_BYTE(v) = UNQUOTED_1;
     return v;
 }

@@ -119,12 +119,12 @@ export cscape: function [
             ; SET no longer takes BLOCK!, and bootstrap executable doesn't have
             ; SET-BLOCK! so no UNPACK.
             ;
-            pattern: decay item/1
+            pattern: degrade item/1
             col: item/2
             mode: item/3
             expr: item/4
-            prefix: decay item/5
-            suffix: decay item/6
+            prefix: degrade item/5
+            suffix: degrade item/6
 
             any-upper: did find/case expr charset [#"A" - #"Z"]
             any-lower: did find/case expr charset [#"a" - #"z"]
@@ -155,7 +155,7 @@ export cscape: function [
                 fail "Substitution can't be NULL (shim BLANK!)"
             ]
 
-            sub: decay switch mode [  ; still want to make sure mode is good
+            sub: degrade switch mode [  ; still want to make sure mode is good
                 #cname [
                     ; !!! The #prefixed scope is unchecked for valid global or
                     ; local identifiers.  This is okay for cases that actually

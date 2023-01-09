@@ -287,12 +287,12 @@ to-logic: func3 [return: [logic!] optional [<opt> any-value!]] [
 ~null~: :null3  ; e.g. _
 ~true~: #[true]
 ~false~: #[false]
-decay: func3 [v [<opt> any-value!]] [
+degrade: func3 [v [<opt> any-value!]] [
     assert [not null3? :v]
-    if void3? :v [fail "Attempt to decay a void, may have been _, try ~null~"]
-    if null3? :v [fail "Attempt to decay a blank where ~null~ may be meant"]
+    if void3? :v [fail "Attempt to degrade a void, may have been _, try ~null~"]
+    if null3? :v [fail "Attempt to degrade a blank where ~null~ may be meant"]
     if :v = '~null~ [return null]
-    if :v = '~ [fail "decay ~ would be ambiguous with decay '"]
+    if :v = '~ [fail "degrade ~ would be ambiguous with degrade '"]
     if :v = the3 ' [return void]
     :v
 ]
@@ -304,7 +304,7 @@ reify: func3 [v [<opt> any-value!]] [
     :v
 ]
 unrun: func3 [v [action!]] [:v]
-opt: ~  ; replaced by DECAY word
+opt: ~  ; replaced by DEGRADE word
 try: ~  ; reviewing uses
 
 
@@ -1131,8 +1131,8 @@ split-path: func3 [  ; interface changed to multi-return in new Ren-C
     <local> path+file
 ][
     dir+file: split-path3 in
-    if dir [set darg decay first dir+file]
-    return decay second dir+file
+    if dir [set darg degrade first dir+file]
+    return degrade second dir+file
 ]
 
 

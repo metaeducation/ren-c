@@ -397,7 +397,9 @@ collect*: func [
             f [frame!]
             <with> out
         ][
-            if not unset? 'f.value [  ; can't collect voids
+            decay either voided? 'f.value [  ; DECAY, we want pure null
+                null  ; void in, null out (should it pass through the void?)
+            ][
                 f.series: out: default [make block! 16]  ; no null return now
                 get/any 'f.value  ; ELIDE leaves as result
                 elide do f  ; would invalidate f.value (hence ELIDE)

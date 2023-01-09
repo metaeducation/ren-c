@@ -512,6 +512,14 @@ undefined?: func [
     ]
 ]
 
+voided?: func [
+    {Determine if a variable looks up to a void}
+    return: [logic!]
+    var [word! path! tuple!]
+][
+    return void? get/any var
+]
+
 
 curtail: reframer func [
     {Voids an expression if it raises any NEED-NON-NULL failures}

@@ -2440,7 +2440,7 @@ DECLARE_NATIVE(light) {
 //
 //  none: native [
 //
-//  {Less noisy way to make the ~none~ WORD! isotope (not displayed by console)}
+//  {Make an empty parameter pack (isotopic ~[]~, not displayed by console)}
 //
 //      return: []
 //  ]
@@ -2455,7 +2455,7 @@ DECLARE_NATIVE(none) {
 //
 //  decay: native [
 //
-//  "Turn quasiforms into their isotopes, and BLANK! into NULL"
+//  "Handle unstable isotopes like assignments do, pass through other values"
 //
 //      return: [<opt> any-value! ~any-value!~]
 //      value [<opt> <void> any-value! ~any-value!~]
@@ -2465,25 +2465,11 @@ DECLARE_NATIVE(decay)
 {
     INCLUDE_PARAMS_OF_DECAY;
 
-    Value(*) v = ARG(value);
+    Value(*) v = ARG(value);  // plain argument should collapse isotopes
 
-    if (Is_Nulled(v))  // !!! Is passthru a good idea as default?
-        return nullptr;
+    assert((not Is_Isotope(v)) or Is_Isotope_Stable(v));
 
-    if (Is_Isotope(v)) {  // currently includes VOID (again, is passthru good?)
-        Copy_Cell(OUT, v);
-        Decay_If_Isotope(OUT);
-        return OUT;
-    }
-
-    if (IS_QUASI(v)) {
-        Copy_Cell(OUT, v);
-        Meta_Unquotify(OUT);
-        Decay_If_Isotope(OUT);  // !!! Review general idea of this decay
-        return OUT;
-    }
-
-    return COPY(v);
+    return Copy_Cell(OUT, v);
 }
 
 
@@ -2523,8 +2509,8 @@ DECLARE_NATIVE(isotopify_if_falsey)
 //
 DECLARE_NATIVE(reify)
 //
-// 1. REIFY of NIHIL and VOID are not currently supported by default.  If they
-//    were, then they would be ~ and ' respectively.
+// 1. REIFY of VOID isn't currently supported by default.  If it was it might
+//    become a quoted void (e.g. ')
 {
     INCLUDE_PARAMS_OF_REIFY;
 
@@ -2533,10 +2519,31 @@ DECLARE_NATIVE(reify)
     if (Is_Void(v))  // see 1
         fail ("REIFY of VOID is currently undefined (needs motivating case)");
 
-    if (Is_Nihil(v))  // see 1
-        fail ("REIFY of NIHIL is currently undefined (needs motivating case)");
-
     return Reify(Copy_Cell(OUT, v));
+}
+
+
+//
+//  degrade: native [
+//
+//  "Make quasiforms into their isotopes, pass thru other values"
+//
+//      return: [any-value!]
+//      value [<opt> any-value!]
+//  ]
+//
+DECLARE_NATIVE(degrade)
+//
+// 1. DEGRADE of a quoted void stays a quoted void.  This should change if
+//    REIFY is altered to support turning voids into quoted voids.
+{
+    INCLUDE_PARAMS_OF_DEGRADE;
+
+    REBVAL *v = ARG(value);
+
+    assert(not Is_Void(v));  // typechecking
+
+    return Degrade(Copy_Cell(OUT, v));
 }
 
 

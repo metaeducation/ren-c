@@ -657,7 +657,7 @@ gen-obj: func [
     ;
     if block? s [
         for-each flag next s [
-            append flags maybe spread decay (switch flag [  ; bootstrap ELSE, ()
+            append flags maybe spread degrade (switch flag [  ; boot ELSE, ()
                 <no-uninitialized> [
                     [
                         <gnu:-Wno-uninitialized>

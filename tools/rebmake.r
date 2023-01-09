@@ -773,7 +773,7 @@ ld: make linker-class [
         return: [<opt> text!]
         dep [object!]
     ][
-        return decay switch dep/class [
+        return degrade switch dep/class [
             #object-file [
                 file-to-local dep/output
             ]
@@ -879,7 +879,7 @@ llvm-link: make linker-class [
         return: [<opt> text!]
         dep [object!]
     ][
-        return decay switch dep/class [
+        return degrade switch dep/class [
             #object-file [
                 file-to-local dep/output
             ]
@@ -965,7 +965,7 @@ link: make linker-class [
         return: [<opt> text!]
         dep [object!]
     ][
-        return decay switch dep/class [
+        return degrade switch dep/class [
             #object-file [
                 file-to-local to-file dep/output
             ]
