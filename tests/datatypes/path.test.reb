@@ -123,16 +123,24 @@
     obj: make object! [fun: func [/ref [integer!]] [return ref]]
     1 == obj.fun/ref 1
 )
+
 ; calling functions through paths: function in block, positional
 (
-    blk: reduce [func [] [return 10]  lambda [] [20]]
-    10 == blk.1
+    blk: reduce [
+        concretize func [] [return 10]
+        concretize lambda [] [20]
+    ]
+    10 = run blk.1
 )
 ; calling functions through paths: function in block, "named"
 (
-    blk: reduce ['foo lambda [] [10]  'bar func [] [return 20]]
-    20 == blk.bar
+    blk: reduce [
+        'foo concretize lambda [] [10]
+        'bar concretize func [] [return 20]
+    ]
+    20 = run blk.bar
 )
+
 [#26 (
     b: [b 1]
     1 = b.b

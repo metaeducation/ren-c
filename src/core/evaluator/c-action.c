@@ -966,6 +966,7 @@ Bounce Action_Executor(Frame(*) f)
         if (not Typecheck_Including_Constraints(PARAM, ARG)) {
             if (Is_Isotope(ARG))
                 fail (Error_Bad_Isotope(ARG));
+
             fail (Error_Arg_Type(f, KEY, kind));
         }
     }
