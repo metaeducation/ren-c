@@ -65,13 +65,13 @@ run-single-test: func [
         (all [not error.id, expected-id = '???]) or (error.id = expected-id)
     ] then [
         successes: me + 1
-        log reduce [space {"correct failure:"} quote quasi expected-id newline]
+        log reduce [_ {"correct failure:"} _ quote quasi expected-id newline]
         return none
     ]
 
     if result = '~true~ [
         successes: me + 1
-        log reduce [space {"succeeded"} newline]
+        log reduce [_ {"succeeded"} newline]
         return none
     ]
 
