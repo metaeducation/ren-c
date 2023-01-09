@@ -742,6 +742,9 @@ DECLARE_NATIVE(must)  // `must x` is a faster synonym for `non null x`
 }
 
 
+#define FRAME_FLAG_ALL_VOIDS FRAME_FLAG_24
+
+
 //
 //  all: native [
 //
@@ -752,7 +755,7 @@ DECLARE_NATIVE(must)  // `must x` is a faster synonym for `non null x`
 //      block "Block of expressions, @[block] will be treated inertly"
 //          [block! the-block!]
 //      /predicate "Test for whether an evaluation passes (default is DID)"
-//          [action! ~action!~]
+//          [action!]
 //      <local> scratch
 //  ]
 //
@@ -767,7 +770,7 @@ DECLARE_NATIVE(all)
 //    your only two choices.  Because Ren-C has the option of isotopes, it's
 //    better to signal to the caller that nothing happened.  For an example
 //    of how useful it is, see the loop wrapper FOR-BOTH.  Other behaviors
-//    can be forced with (all [... null]) or (any [true ...])
+//    can be forced with (all [... null]) or (any [... true])
 //
 // 2. The predicate-running condition gets pushed over the "keepalive" stepper,
 //    but we don't want the stepper to take a step before coming back to us.
@@ -805,10 +808,8 @@ DECLARE_NATIVE(all)
     if (VAL_LEN_AT(block) == 0)
         return VOID;
 
-    if (REF(predicate))
-        Decay_If_Activation(predicate);
-
-    Finalize_Void(OUT);  // default to void if all conditions vaporize, see [1]
+    assert(Not_Frame_Flag(FRAME, ALL_VOIDS));
+    Set_Frame_Flag(FRAME, ALL_VOIDS);
 
     Flags flags = FRAME_FLAG_TRAMPOLINE_KEEPALIVE;
 
@@ -831,6 +832,8 @@ DECLARE_NATIVE(all)
         Restart_Evaluator_Frame(SUBFRAME);
         return CONTINUE_SUBFRAME(SUBFRAME);
     }
+
+    Clear_Frame_Flag(FRAME, ALL_VOIDS);
 
     Decay_If_Isotope(SPARE);
 
@@ -884,7 +887,7 @@ DECLARE_NATIVE(all)
 
     Drop_Frame(SUBFRAME);
 
-    if (Is_Void(OUT))
+    if (Get_Frame_Flag(FRAME, ALL_VOIDS))
         return VOID;
 
     return BRANCHED(OUT);
@@ -901,7 +904,7 @@ DECLARE_NATIVE(all)
 //      block "Block of expressions, @[block] will be treated inertly"
 //          [block! the-block!]
 //      /predicate "Test for whether an evaluation passes (default is DID)"
-//          [action! ~action!~]
+//          [action!]
 //  ]
 //
 DECLARE_NATIVE(any)
@@ -928,7 +931,7 @@ DECLARE_NATIVE(any)
 
     switch (STATE) {
       case ST_ANY_INITIAL_ENTRY: goto initial_entry;
-      case ST_ANY_EVAL_STEP: goto eval_step_finished;
+      case ST_ANY_EVAL_STEP: goto eval_step_result_in_out;
       case ST_ANY_PREDICATE: goto predicate_result_in_spare;
       default: assert(false);
     }
@@ -938,8 +941,8 @@ DECLARE_NATIVE(any)
     if (VAL_LEN_AT(block) == 0)
         return VOID;
 
-    if (REF(predicate))
-        Decay_If_Activation(predicate);
+    assert(Not_Frame_Flag(FRAME, ALL_VOIDS));
+    Set_Frame_Flag(FRAME, ALL_VOIDS);
 
     Flags flags = FRAME_FLAG_TRAMPOLINE_KEEPALIVE;
 
@@ -952,7 +955,7 @@ DECLARE_NATIVE(any)
     STATE = ST_ANY_EVAL_STEP;
     return CONTINUE_SUBFRAME(subframe);
 
-} eval_step_finished: {  /////////////////////////////////////////////////////
+} eval_step_result_in_out: {  ////////////////////////////////////////////////
 
     if (Is_Void(OUT)) {  // void steps, e.g. (comment "hi") (if false [<a>])
         if (Is_Frame_At_End(SUBFRAME))
@@ -962,6 +965,8 @@ DECLARE_NATIVE(any)
         Restart_Evaluator_Frame(SUBFRAME);
         return CONTINUE_SUBFRAME(SUBFRAME);
     }
+
+    Clear_Frame_Flag(FRAME, ALL_VOIDS);
 
     Decay_If_Isotope(OUT);
 
@@ -1011,6 +1016,10 @@ DECLARE_NATIVE(any)
 } reached_end: {  ////////////////////////////////////////////////////////////
 
     Drop_Frame(SUBFRAME);
+
+    if (Get_Frame_Flag(FRAME, ALL_VOIDS))
+        return VOID;
+
     return nullptr;  // reached end of input and found nothing to return
 }}
 

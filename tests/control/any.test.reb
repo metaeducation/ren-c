@@ -1,10 +1,7 @@
 ; %any.test.reb
 
 ; Most languages consider variadic OR operations in the spirit of ANY to
-; be truthy if there are no items.  We use the ~false~ isotope.  This gives the
-; feature of safety, while still offering a DIDN'T/ELSE triggering.  But most
-; importantly and uniquely, it counts as an invisible so that MAYBE can cause
-; it to vanish completely.
+; be truthy if there are no items.  We use void if things truly vanish.
 [
     (void? any [])
 
@@ -14,7 +11,16 @@
         x: <overwritten>
         did all [
             void? x: any []
-            unset? 'x
+            voided? 'x
+            void? :x
+        ]
+    )
+    (
+        x: <overwritten>
+        did all [
+            void? x: any [comment "hi"]
+            voided? 'x
+            void? :x
         ]
     )
     (<didn't> = if didn't any [] [<didn't>])
@@ -81,8 +87,12 @@
 (true = any [true])
 (null? any [false])
 ($1 == any [$1])
-(same? :append any [:append])
-(null? any [_])
+
+(same? ^append any [^append])
+
+(_ = any [_])
+(null? any [~null~])
+
 (
     a-value: make object! []
     same? :a-value any [:a-value]
@@ -181,7 +191,10 @@
 (null? any [false false])
 ($1 == any [false $1])
 (same? unrun :append any [false unrun :append])
-(null? any [false _])
+
+(null? any [false ~null~])
+(_ = any [false _])
+
 (
     a-value: make object! []
     same? :a-value any [false :a-value]
@@ -276,8 +289,11 @@
 )
 (true = any [true false])
 ($1 == any [$1 false])
+
 (same? unrun :append any [unrun :append false])
-(null? any [_ false])
+(_ = any [_ false])
+(null? any [~null~ false])
+
 (
     a-value: make object! []
     same? :a-value any [:a-value false]
@@ -405,8 +421,8 @@
 [
     (void? any @[])
     (1 = any @[1 + 2])
-    ('_ = any @[~false~ _])
-    ('_ = any inert reduce [false blank])
+    ('~false~ = any @[~false~ _])
+    ('false = any inert reduce ['false blank])
     ('false = any @[false])  ; just the word, and words are truthy
 ]
 

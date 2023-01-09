@@ -27,7 +27,7 @@
     compose [(null) * <ok>]
 )
 ~need-non-null~ !! (
-    compose [(~_~) * <ok>]
+    compose [(~null~) * <ok>]
 )
 ~bad-isotope~ !! (
     compose [(~false~)]
