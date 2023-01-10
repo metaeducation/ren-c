@@ -84,6 +84,7 @@ core: [
     c-path.c
     c-port.c
     c-signal.c
+    c-state.c
     c-value.c
     c-word.c
 
