@@ -2,7 +2,7 @@
 ([1 2] = reduce [1 1 + 1])
 (
     success: false
-    reduce [success: true]
+    reduce [elide success: true]
     success
 )
 ([] = reduce [])

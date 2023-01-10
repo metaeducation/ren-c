@@ -79,7 +79,7 @@
         x: (1 + 2 y: eval [comment "HI"])
         did all [
             x = 3
-            unset? 'y
+            voided? 'y
         ]
     )
 ]
@@ -145,7 +145,7 @@
     :a-value == do [:a-value]
 )
 (~true~ == do [~true~])
-(~false~ == do [~true~])
+(~false~ == do [~false~])
 ($1 == do [$1])
 (same? :append do [:append])
 (null? do [~null~])

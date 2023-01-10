@@ -4,8 +4,8 @@
 ]
 (1 = attempt [1])
 
-(none? attempt [])
-(none? attempt [void void])
+(void? attempt [])
+(void? attempt [void void])
 (1 = attempt [1 void])
 
 ; RETURN stops attempt evaluation

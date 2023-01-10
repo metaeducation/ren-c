@@ -17,7 +17,7 @@
 (null = match :even? 3)
 
 
-('_ = ^ match blank! _)
+(_ = match blank! _)
 (null = match blank! 10)
 (null = match blank! false)
 

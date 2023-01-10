@@ -123,7 +123,7 @@
 
 ; No quote levels is legal for QUOTE to add also, if /DEPTH is 0
 [
-    (void = quote/depth void 0)
+    (void? quote/depth void 0)
     (<x> = quote/depth <x> 0)
 ]
 
@@ -197,7 +197,7 @@
 
 (
     for-each item compose [
-        (:+)
+        (^+)
         word
         set-word:
         :get-word

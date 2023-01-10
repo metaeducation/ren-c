@@ -219,9 +219,9 @@
 ]
 
 
-~bad-word-get~ !! (
+(
     a: ~bad~
-    a
+    ^a = '~bad~
 )
 (not error? trap [set 'a '~bad~])
 
