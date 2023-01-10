@@ -380,23 +380,23 @@ static void Propagate_All_GC_Marks(void)
         Cell(const*) tail = ARR_TAIL(a);
         for (; v != tail; ++v) {
           #if DEBUG
+            enum Reb_Stub_Flavor flavor = SER_FLAVOR(a);
+            assert(flavor <= FLAVOR_MAX_ARRAY);
+
             switch (QUOTE_BYTE_UNCHECKED(v)) {
-              case ISOTOPE_0:  // isotopes only legal in objects/frames/modules
-                if (IS_VARLIST(a) or IS_LET(a) or IS_PATCH(a)) {
-                    if (Is_Isotope_Unstable(v))
-                        panic (v);
-                } else
+              case ISOTOPE_0:
+                if (flavor < FLAVOR_MIN_ISOTOPES_OK)
+                    panic (v);  // isotopes not legal in some array types
+
+                if (Is_Isotope_Unstable(v))  // no arrays can store unstable
                     panic (v);
                 break;
 
               case UNQUOTED_1:
-                if (HEART_BYTE_UNCHECKED(v) == REB_VOID)
-                    if (not (
-                        IS_VARLIST(a) or IS_LET(a) or IS_PATCH(a)
-                        or IS_PAIRLIST(a)  // void is absent value in MAP!
-                    )){
-                        panic (v);
-                    }
+                if (HEART_BYTE_UNCHECKED(v) == REB_VOID) {
+                    if (flavor < FLAVOR_MIN_VOIDS_OK)
+                        panic (v);  // voids not legal in some array types
+                }
                 break;
 
               default:

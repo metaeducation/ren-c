@@ -338,16 +338,22 @@ Array(*) Pop_Stack_Values_Core(StackIndex base, Flags flags)
     Array(*) a = Make_Array_Core(len, flags);
     SET_SERIES_LEN(a, len);
 
+  #if DEBUG
+    enum Reb_Stub_Flavor flavor = SER_FLAVOR(a);  // flavor comes from flags
+  #endif
+
     Count count = 0;
     Value(*) src = Data_Stack_At(base + 1);  // not const, will be FRESHEN()
     Cell(*) dest = ARR_HEAD(a);
     for (; count < len; ++count, ++src, ++dest) {
-        if (
-            Is_Isotope(src)
-            or VAL_TYPE_UNCHECKED(src) == REB_VOID  // allow unreadable trash
-        ){
-            assert(IS_VARLIST(a) and Is_Isotope_Stable(src));  // legal if so
+      #if DEBUG
+        if (Is_Isotope(src)) {
+            assert(Is_Isotope_Stable(src));
+            assert(flavor >= FLAVOR_MIN_ISOTOPES_OK);
         }
+        if (VAL_TYPE_UNCHECKED(src) == REB_VOID)  // allow unreadable trash
+            assert(flavor >= FLAVOR_MIN_VOIDS_OK);
+      #endif
 
         Move_Cell_Untracked(dest, src, CELL_MASK_MOVE);
 

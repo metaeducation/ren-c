@@ -47,39 +47,6 @@ enum Reb_Stub_Flavor {
     //
     FLAVOR_ARRAY,
 
-    // This indicates this series represents the "varlist" of a context (which
-    // is interchangeable with the identity of the varlist itself).  A second
-    // series can be reached from it via the LINK() in the series node, which
-    // is known as a "keylist".
-    //
-    // See notes on Raw_Context for further details about what a context is.
-    //
-    FLAVOR_VARLIST,
-    FLAVOR_PARAMLIST = FLAVOR_VARLIST,  // review
-
-    // "Details" are the per-ACTION! instance information (e.g. this would be
-    // the body array for a usermode function, or the datatype that a type
-    // checker dispatcher would want to check against.)  The first element of
-    // the array is an archetypal value for the action (no binding/phase).
-    //
-    FLAVOR_DETAILS,
-
-    FLAVOR_PAIRLIST,
-
-    // A "patch" is a container for a single variable for a context.  Rather
-    // than live in the context directly, it stands on its own.  Modules are
-    // made up of patches vs. using the packed array VARLIST of frames and
-    // contexts.
-    //
-    FLAVOR_PATCH,
-
-    // The concept of "Virtual Binding" is that instances of ANY-ARRAY! values
-    // can carry along a collection of contexts that override the bindings of
-    // words that are encountered.  This collection is done by means of
-    // "lets" that make a linked list of overrides.
-    //
-    FLAVOR_LET,
-
     // A "use" is a request in a virtual binding chain to make an object's
     // fields visible virtually in the code.  LETs can also be in the chain,
     // and a frame varlist is also allowed to temrinate it.
@@ -105,7 +72,6 @@ enum Reb_Stub_Flavor {
     FLAVOR_HANDLE,
     FLAVOR_GOBLIST,
 
-    FLAVOR_DATASTACK,
     FLAVOR_FEED,
     FLAVOR_API,
 
@@ -114,8 +80,56 @@ enum Reb_Stub_Flavor {
     //
     FLAVOR_INSTRUCTION_SPLICE,
 
-    FLAVOR_MAX_ARRAY = FLAVOR_INSTRUCTION_SPLICE,
-    // ^-- everything above this line has width=sizeof(REBVAL)
+    // Pairlists are used by map!.  They can't hold isotopes, but voids are
+    // used to signal missing keys.
+    //
+    FLAVOR_PAIRLIST,
+    FLAVOR_MIN_VOIDS_OK = FLAVOR_PAIRLIST,
+
+    FLAVOR_MIN_ISOTOPES_OK,  //=//// BELOW HERE, THE ARRAYS CAN HOLD ISOTOPES
+
+    // This indicates this series represents the "varlist" of a context (which
+    // is interchangeable with the identity of the varlist itself).  A second
+    // series can be reached from it via the LINK() in the series node, which
+    // is known as a "keylist".
+    //
+    // See notes on Raw_Context for further details about what a context is.
+    //
+    FLAVOR_VARLIST = FLAVOR_MIN_ISOTOPES_OK,
+
+    FLAVOR_PARAMLIST = FLAVOR_VARLIST,  // review
+
+    // "Details" are the per-ACTION! instance information (e.g. this would be
+    // the body array for a usermode function, or the datatype that a type
+    // checker dispatcher would want to check against.)  The first element of
+    // the array is an archetypal value for the action (no binding/phase).
+    //
+    FLAVOR_DETAILS,
+
+    // The concept of "Virtual Binding" is that instances of ANY-ARRAY! values
+    // can carry along a collection of contexts that override the bindings of
+    // words that are encountered.  This collection is done by means of
+    // "lets" that make a linked list of overrides.
+    //
+    FLAVOR_LET,
+
+    // A "patch" is a container for a single variable for a context.  Rather
+    // than live in the context directly, it stands on its own.  Modules are
+    // made up of patches vs. using the packed array VARLIST of frames and
+    // contexts.
+    //
+    FLAVOR_PATCH,
+
+    // The data stack is implemented as an array but has its own special
+    // marking routine.  However, isotopes are legal in the data stack... but
+    // when popping the stack it is checked that the array being popped *into*
+    // allows isotopes.
+    //
+    FLAVOR_DATASTACK,
+
+    FLAVOR_PLUG,
+
+    FLAVOR_MAX_ARRAY = FLAVOR_PLUG,  //=//// ABOVE HERE WIDTH IS sizeof(REBVAL)
 
     // For the moment all series that aren't a REBVAL or a binary store items
     // of size pointer.
@@ -130,15 +144,13 @@ enum Reb_Stub_Flavor {
     FLAVOR_HASHLIST,  // outlier, sizeof(REBLEN)...
     FLAVOR_BOOKMARKLIST,  // also outlier, sizeof(struct Reb_Bookmark)
 
-    // v-- everything below this line has width=1
+    FLAVOR_MIN_BYTESIZE,  //=//////// EVERYTHING BELOW THIS LINE HAS WIDTH = 1
 
-    FLAVOR_BINARY,
-    FLAVOR_MIN_BYTESIZE = FLAVOR_BINARY,
+    FLAVOR_BINARY = FLAVOR_MIN_BYTESIZE,
 
-    // v-- everything below this line is UTF-8 (or trash)
+    FLAVOR_MIN_UTF8,  //=////// EVERYTHING BELOW THIS LINE IS UTF-8 (OR TRASH)
 
-    FLAVOR_STRING,
-    FLAVOR_MIN_UTF8 = FLAVOR_STRING,
+    FLAVOR_STRING = FLAVOR_MIN_UTF8,
 
     // While the content format is UTF-8 for both ANY-STRING! and ANY-WORD!,
     // MISC() and LINK() fields are used differently.  String caches its length
