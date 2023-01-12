@@ -380,7 +380,7 @@ static void Propagate_All_GC_Marks(void)
         Cell(const*) tail = ARR_TAIL(a);
         for (; v != tail; ++v) {
           #if DEBUG
-            enum Reb_Stub_Flavor flavor = SER_FLAVOR(a);
+            Flavor flavor = SER_FLAVOR(a);
             assert(flavor <= FLAVOR_MAX_ARRAY);
 
             switch (QUOTE_BYTE_UNCHECKED(v)) {

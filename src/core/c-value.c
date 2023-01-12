@@ -249,7 +249,7 @@ void* Probe_Core_Debug(
   blockscope {
     REBSER *s = m_cast(REBSER*, cast(const REBSER*, p));
     assert(not IS_FREE_NODE(s));  // Detect should have caught, above
-    enum Reb_Stub_Flavor flavor = SER_FLAVOR(s);
+    Flavor flavor = SER_FLAVOR(s);
     ASSERT_SERIES(s); // if corrupt, gives better info than a print crash
 
     switch (flavor) {

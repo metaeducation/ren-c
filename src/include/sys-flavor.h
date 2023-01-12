@@ -181,6 +181,8 @@ enum Reb_Stub_Flavor {
     FLAVOR_MAX
 };
 
+typedef enum Reb_Stub_Flavor Flavor;
+
 
 // Most accesses of series via SER_AT(...) and ARR_AT(...) macros already
 // know at the callsite the size of the access.  The width is only a double
@@ -189,7 +191,7 @@ enum Reb_Stub_Flavor {
 // This doesn't need to be particularly fast...so a lookup table is probably
 // not needed.  Still, the common cases (array and strings) are put first.
 //
-inline static size_t Wide_For_Flavor(enum Reb_Stub_Flavor flavor) {
+inline static size_t Wide_For_Flavor(Flavor flavor) {
     assert(flavor != FLAVOR_TRASH);
     if (flavor <= FLAVOR_MAX_ARRAY)
         return sizeof(REBVAL);

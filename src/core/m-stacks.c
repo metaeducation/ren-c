@@ -339,7 +339,7 @@ Array(*) Pop_Stack_Values_Core(StackIndex base, Flags flags)
     SET_SERIES_LEN(a, len);
 
   #if DEBUG
-    enum Reb_Stub_Flavor flavor = SER_FLAVOR(a);  // flavor comes from flags
+    Flavor flavor = SER_FLAVOR(a);  // flavor comes from flags
   #endif
 
     Count count = 0;
