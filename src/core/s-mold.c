@@ -609,6 +609,30 @@ void Throttle_Mold(REB_MOLD *mo) {
 
 
 //
+//  Pop_Molded_String_Core: C
+//
+String(*) Pop_Molded_String_Core(String(*) buf, Size offset, Index index)
+{
+    Size size = STR_SIZE(buf) - offset;
+    Length len = STR_LEN(buf) - index;
+
+    String(*) popped = Make_String(size);
+    memcpy(BIN_HEAD(popped), BIN_AT(buf, offset), size);
+    TERM_STR_LEN_SIZE(popped, len, size);
+
+    // Though the protocol of Mold_Value does terminate, it only does so if
+    // it adds content to the buffer.  If we did not terminate when we
+    // reset the size, then these no-op molds (e.g. mold of "") would leave
+    // whatever value in the terminator spot was there.  This could be
+    // addressed by making no-op molds terminate.
+    //
+    TERM_STR_LEN_SIZE(buf, index, offset);
+
+    return popped;
+}
+
+
+//
 //  Pop_Molded_String: C
 //
 // When a Push_Mold is started, then string data for the mold is accumulated
@@ -627,20 +651,11 @@ String(*) Pop_Molded_String(REB_MOLD *mo)
     //
     Throttle_Mold(mo);
 
-    Size size = STR_SIZE(mo->series) - mo->base.size;
-    Length len = STR_LEN(mo->series) - mo->base.index;
-
-    String(*) popped = Make_String(size);
-    memcpy(BIN_HEAD(popped), BIN_AT(mo->series, mo->base.size), size);
-    TERM_STR_LEN_SIZE(popped, len, size);
-
-    // Though the protocol of Mold_Value does terminate, it only does so if
-    // it adds content to the buffer.  If we did not terminate when we
-    // reset the size, then these no-op molds (e.g. mold of "") would leave
-    // whatever value in the terminator spot was there.  This could be
-    // addressed by making no-op molds terminate.
-    //
-    TERM_STR_LEN_SIZE(STR(mo->series), mo->base.index, mo->base.size);
+    String(*) popped = Pop_Molded_String_Core(
+        mo->series,
+        mo->base.size,
+        mo->base.index
+    );
 
     mo->series = nullptr;  // indicates mold is not currently pushed
     return popped;
