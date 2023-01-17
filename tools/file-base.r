@@ -43,6 +43,7 @@ core: [
     functionals/c-reorder.c
     functionals/c-specialize.c
     functionals/c-typechecker.c
+    functionals/c-yielder.c
 
     ; (C)ore
     c-bind.c
