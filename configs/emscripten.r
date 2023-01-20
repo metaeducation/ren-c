@@ -308,11 +308,15 @@ ldflags: compose [
     ; * stringToUTF8()
     ; * UTF8ToString()
     ; * stackAlloc()
-    ; * writeArrayToMemory()
     ; * stackRestore()
     ;
     ; (Once this included `ccall`, `cwrap`, etc. but those aren't runtime
     ; but "library" now.  See DEFAULT_LIBRARY_FUNCS_TO_INCLUDE for those...)
+    ;
+    ; Also, the list has been thinning over time.  Once writeArrayToMemory()
+    ; was included, but now has to be explicit:
+    ;
+    ; https://groups.google.com/g/emscripten-discuss/c/GqyrjgRmcEw/
     ;
     ; The documentation claims a `--pre-js` or `--post-js` script that uses
     ; internal methods will auto-export them since the linker "sees" it.  But
@@ -325,7 +329,7 @@ ldflags: compose [
     ; after the module's preRun() method, and to assign ENV with MODULARIZE=1
     ; one must export it (or ENV is a function stub that raises an error).
     ;
-    {-s "EXPORTED_RUNTIME_METHODS=['ENV']"}
+    {-s "EXPORTED_RUNTIME_METHODS=['ENV', 'writeArrayToMemory']"}
 
     ; These are functions in Emscripten that make it easier to call C code.
     ; You don't need them to call C functions with integer arguments.  But

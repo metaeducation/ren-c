@@ -93,7 +93,7 @@ e-cwrap/emit {
         },
         'array': function(arr) {
           var ret = stackAlloc(arr.length);
-          writeArrayToMemory(arr, ret);
+          Module.writeArrayToMemory(arr, ret);
           return ret;
         }
       };
@@ -560,7 +560,7 @@ e-cwrap/emit {
 
         let binary = reb.m._RL_rebUninitializedBinary_internal(view.length)
         let head = reb.m._RL_rebBinaryHead_internal(binary)
-        writeArrayToMemory(view, head)  /* uses Int8Array.set() on HEAP8 */
+        Module.writeArrayToMemory(view, head)  /* w/Int8Array.set() on HEAP8 */
 
         return binary
     }
