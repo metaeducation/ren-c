@@ -713,9 +713,8 @@ DECLARE_NATIVE(match)
     //     >> decay match [<opt>] null
     //     == ~null~
     //
-    Isotopify_If_Falsey(v);
-
     Copy_Cell(OUT, v);  // Otherwise, input is the result
+    Isotopify_If_Falsey(OUT);
 
     return BRANCHED(OUT);
 }

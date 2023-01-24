@@ -20,12 +20,12 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// This file contains Process_Action_Throws(), which does the work of calling
+// This file contains the Action_Executor(), which does the work of calling
 // functions in the evaluator.
 //
 //=//// NOTES /////////////////////////////////////////////////////////////=//
 //
-// * Process_Action_Throws() is LONG.  That is largely a purposeful choice.
+// * Action_Executor() is LONG.  That is for the most part a purposeful choice.
 //   Breaking it into functions would add overhead (in the debug build if not
 //   also release builds) and prevent interesting tricks and optimizations.
 //   It is separated into sections, and the invariants in each section are
@@ -89,7 +89,7 @@
 //     ]
 //
 // If the first time the THEN was seen was not after the 1, but when the
-// LIT ran, it would get deferred until after the RETURN.  This is not
+// THE ran, it would get deferred until after the RETURN.  This is not
 // consistent with the pattern people expect.
 //
 // Returns TRUE if it set the flag.
@@ -828,6 +828,7 @@ Bounce Action_Executor(Frame(*) f)
 
     for (; KEY != KEY_TAIL; ++KEY, ++PARAM, ++ARG) {
         assert(READABLE(ARG));
+        assert(not Is_Isotope(ARG) or Is_Isotope_Stable(ARG));
 
         if (Is_Specialized(PARAM))  // checked when specialized, see [1]
             continue;
