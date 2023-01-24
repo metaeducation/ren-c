@@ -524,10 +524,6 @@ main-startup: func [
                 o.about: true  ; show full banner (ABOUT) on startup
             )
         |
-            "--breakpoint" end (
-                c-debug-break-at to-integer param-or-die "BREAKPOINT"
-            )
-        |
             ["--cgi" | "-c"] end (
                 o.quiet: true
                 o.cgi: true
@@ -653,28 +649,6 @@ main-startup: func [
 
         take argv
     ]
-
-    ; Taking a command-line `--breakpoint NNN` parameter is helpful if a
-    ; problem is reproducible, and you have a tick count in hand from a
-    ; panic(), REBSER.tick, Frame.tick, REBVAL.extra.tick, etc.  But there's
-    ; an entanglement issue, as any otherwise-deterministic tick from a prior
-    ; run would be thrown off by the **ticks added by the userspace parameter
-    ; processing of the command-line for `--breakpoint`**!  :-/
-    ;
-    ; The /COMPENSATE option addresses this problem.  Pass it a reasonable
-    ; upper bound for how many ticks you think could have been added to the
-    ; parse, if `--breakpoint` was processed (even though it might not have
-    ; been processed).  Regardless of whether the switch was present or not,
-    ; the tick count rounds up to a reproducible value, using this method:
-    ;
-    ; https://math.stackexchange.com/q/2521219/
-    ;
-    ; At time of writing, 1000 ticks should be *way* more than enough for both
-    ; the PARSE steps and the evaluation steps `--breakpoint` adds.  Yet some
-    ; things could affect this, e.g. a complex userspace TRACE which was
-    ; run during boot.
-    ;
-    attempt [c-debug-break-at/compensate 1000]  ; fails in release build
 
     ; As long as there was no `--script` or `--do` passed on the command line
     ; explicitly, the first item after the options is implicitly the script.
