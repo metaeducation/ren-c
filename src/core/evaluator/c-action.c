@@ -425,6 +425,7 @@ Bounce Action_Executor(Frame(*) f)
             }
             else switch (pclass) {
               case PARAM_CLASS_NORMAL:
+                Decay_If_Unstable(OUT);
                 Move_Cell(ARG, OUT);
                 break;
 

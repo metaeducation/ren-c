@@ -209,7 +209,7 @@
 
 ; isotopes besides splices are not legal in compose, but you can reify them
 [
-    ([<a> _ <b>] = apply :compose [
+    ([<a> ~null~ <b>] = apply :compose [
         [<a> (if true [null]) <b>]
         /predicate chain [:eval :reify]
     ])
