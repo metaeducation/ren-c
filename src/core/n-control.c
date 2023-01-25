@@ -834,7 +834,7 @@ DECLARE_NATIVE(all)
 
     Clear_Frame_Flag(FRAME, ALL_VOIDS);
 
-    Decay_If_Isotope(SPARE);
+    Decay_If_Unstable(SPARE);
 
     if (not Is_Nulled(predicate)) {
         SUBFRAME->executor = &Just_Use_Out_Executor;  // tunnel thru, see [2]
@@ -967,7 +967,7 @@ DECLARE_NATIVE(any)
 
     Clear_Frame_Flag(FRAME, ALL_VOIDS);
 
-    Decay_If_Isotope(OUT);
+    Decay_If_Unstable(OUT);
 
     if (not Is_Nulled(predicate)) {
         SUBFRAME->executor = &Just_Use_Out_Executor;  // tunnel thru, see [2]
@@ -1140,7 +1140,7 @@ DECLARE_NATIVE(case)
 
 } condition_result_in_spare: {  //////////////////////////////////////////////
 
-    Decay_If_Isotope(SPARE);
+    Decay_If_Unstable(SPARE);
 
     if (Is_Void(SPARE))  // skip void expressions, see [2]
         goto handle_next_clause;
@@ -1350,7 +1350,7 @@ DECLARE_NATIVE(switch)
         goto reached_end;  // nothing left, so drop frame and return
 
     if (Is_Nulled(predicate)) {
-        Decay_If_Isotope(SPARE);
+        Decay_If_Unstable(SPARE);
         if (Is_Matcher(SPARE)) {
             if (not Matcher_Matches(SPARE, left))
                 goto next_switch_step;

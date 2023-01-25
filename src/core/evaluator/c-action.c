@@ -200,12 +200,12 @@ Bounce Action_Executor(Frame(*) f)
                 if (VAL_PARAM_CLASS(PARAM) == PARAM_CLASS_META) {
                     if (Is_Meta_Of_Pack(ARG)) {
                         Meta_Unquotify(ARG);
-                        Decay_If_Isotope(ARG);
+                        Decay_If_Unstable(ARG);
                         Meta_Quotify(ARG);
                     }
                 }
                 else if (Is_Pack(ARG))
-                    Decay_If_Isotope(ARG);
+                    Decay_If_Unstable(ARG);
             }
 
             goto continue_fulfilling;
@@ -424,7 +424,7 @@ Bounce Action_Executor(Frame(*) f)
               case PARAM_CLASS_META: {
                 Move_Cell(ARG, OUT);
                 if (Is_Pack(ARG) and NOT_PARAM_FLAG(PARAM, WANT_PACKS))
-                    Decay_If_Isotope(ARG);
+                    Decay_If_Unstable(ARG);
                 Meta_Quotify(ARG);
                 break; }
 
@@ -828,7 +828,7 @@ Bounce Action_Executor(Frame(*) f)
 
     for (; KEY != KEY_TAIL; ++KEY, ++PARAM, ++ARG) {
         assert(READABLE(ARG));
-        assert(not Is_Isotope(ARG) or Is_Isotope_Stable(ARG));
+        assert(Is_Stable(ARG));
 
         if (Is_Specialized(PARAM))  // checked when specialized, see [1]
             continue;
@@ -843,22 +843,17 @@ Bounce Action_Executor(Frame(*) f)
 
         if (NOT_PARAM_FLAG(PARAM, WANT_PACKS)) {
             if (VAL_PARAM_CLASS(PARAM) == PARAM_CLASS_META) {
-                if (Is_Meta_Of_Pack(ARG)) {
+                if (Is_Meta_Of_Pack(ARG)) {  // v-- inefficient, but works
                     Meta_Unquotify(ARG);
-                    Decay_If_Isotope(ARG);
+                    Decay_If_Unstable(ARG);
+                    Meta_Quotify(ARG);
                 }
             }
-            else
-                Decay_If_Isotope(ARG);
         }
 
         if (NOT_PARAM_FLAG(PARAM, WANT_FAILURES)) {
             if (VAL_PARAM_CLASS(PARAM) == PARAM_CLASS_META) {
                 if (Is_Meta_Of_Raised(ARG))
-                    fail (VAL_CONTEXT(ARG));
-            }
-            else {
-                if (Is_Raised(ARG))
                     fail (VAL_CONTEXT(ARG));
             }
         }

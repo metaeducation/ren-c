@@ -803,7 +803,7 @@ Bounce Evaluator_Executor(Frame(*) f)
             // Don't assign, but let (trap [a: transcode "1&aa"]) work
         }
         else {
-            Decay_If_Isotope(OUT);
+            Decay_If_Unstable(OUT);
 
             if (Is_Isotope(OUT) and not Is_Isotope_Set_Friendly(OUT))
                 fail (Error_Bad_Isotope(OUT));
@@ -1166,7 +1166,7 @@ Bounce Evaluator_Executor(Frame(*) f)
             // Don't assign, but let (trap [a.b: transcode "1&aa"]) work
         }
         else {
-            Decay_If_Isotope(OUT);
+            Decay_If_Unstable(OUT);
 
             if (Is_Isotope(OUT) and not Is_Isotope_Set_Friendly(OUT))
                 fail (Error_Bad_Isotope(OUT));
@@ -1554,7 +1554,7 @@ Bounce Evaluator_Executor(Frame(*) f)
             }
 
             if (not isotopes_ok)
-                Decay_If_Isotope(SPARE);  // if pack in slot, resolve it
+                Decay_If_Unstable(SPARE);  // if pack in slot, resolve it
 
             if (Is_Raised(SPARE))  // don't hide raised errors if not @
                 fail (VAL_CONTEXT(SPARE));

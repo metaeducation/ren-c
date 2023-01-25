@@ -800,7 +800,7 @@ inline static bool Pushed_Continuation(
             Copy_Cell(arg, unwrap(with));  // do not decay, see [4]
 
             if (NOT_PARAM_FLAG(param, WANT_PACKS))
-                Decay_If_Isotope(arg);
+                Decay_If_Unstable(arg);
 
             if (VAL_PARAM_CLASS(param) == PARAM_CLASS_META) {
                 Meta_Quotify(arg);

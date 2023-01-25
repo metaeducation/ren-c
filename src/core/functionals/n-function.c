@@ -627,7 +627,7 @@ DECLARE_NATIVE(definitional_return)
         // is written as `return: []`
 
         if (Is_Pack(v) and not Is_None(v) and not REF(forward))
-            Decay_If_Isotope(v);
+            Decay_If_Unstable(v);
 
         if (GET_PARAM_FLAG(param, RETURN_NONE) and not Is_None(v))
             fail ("If RETURN: <none> is in a function spec, RETURN NONE only");

@@ -249,7 +249,7 @@ DECLARE_NATIVE(shove)
 
     if (REF(set)) {
         if (IS_SET_WORD(left)) {
-            Decay_If_Isotope(OUT);
+            Decay_If_Unstable(OUT);
             Copy_Cell(Sink_Word_May_Fail(left, SPECIFIED), OUT);
         }
         else if (IS_SET_PATH(left) or IS_SET_TUPLE(left)) {

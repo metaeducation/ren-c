@@ -138,7 +138,7 @@ DECLARE_NATIVE(delimit)
         if (Is_Void(OUT))  // spaced [maybe null], spaced [if false [<a>]], etc
             continue;  // vaporize
 
-        Decay_If_Isotope(OUT);  // spaced [match [logic!] false ...]
+        Decay_If_Unstable(OUT);  // spaced [match [logic!] false ...]
 
         if (Is_Nulled(OUT))  // catches bugs in practice, see [1]
             return RAISE(Error_Need_Non_Null_Raw());

@@ -811,7 +811,7 @@ DECLARE_NATIVE(maybe)
     if (Is_None(v))  // !!! Should MAYBE be tolerant of NONE?
         return VOID;
 
-    Decay_If_Isotope(v);  // question about decay, see [1]
+    Decay_If_Unstable(v);  // question about decay, see [1]
 
     if (Is_Void(v))
         return VOID;  // passthru

@@ -589,7 +589,7 @@ DECLARE_NATIVE(let)
     mutable_BINDING(FEED_SINGLE(f->feed)) = bindings;
 
     if (Is_Pack(OUT))
-        Decay_If_Isotope(OUT);
+        Decay_If_Unstable(OUT);
 
     return OUT;
 }}

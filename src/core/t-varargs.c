@@ -342,7 +342,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
         return false;
     }
 
-    Decay_If_Isotope(out);
+    Decay_If_Unstable(out);
 
     if (param) {
         if (not Is_Nulled(out) and Is_Isotope(out)) {

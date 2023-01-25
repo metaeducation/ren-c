@@ -583,7 +583,7 @@ DECLARE_NATIVE(stop)  // See CYCLE for notes about STOP
         Meta_Unquotify(v);
 
     if (not REF(forward))
-        Decay_If_Isotope(v);
+        Decay_If_Unstable(v);
 
     return Init_Thrown_With_Label(FRAME, v, Lib(STOP));
 }
@@ -1673,7 +1673,7 @@ DECLARE_NATIVE(map)
         }
     }
 
-    Decay_If_Isotope(SPARE);
+    Decay_If_Unstable(SPARE);
 
     if (Is_Void(SPARE))
         goto next_iteration;  // okay to skip

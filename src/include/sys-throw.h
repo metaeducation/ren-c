@@ -118,7 +118,7 @@ inline static void Drop_Frame(Frame(*) f);
 // When you're sure that the value isn't going to be consumed by a multireturn
 // then use this to get the first value unmeta'd
 //
-inline static Value(*) Decay_If_Isotope(Value(*) v) {
+inline static Value(*) Decay_If_Unstable(Value(*) v) {
     if (not Is_Isotope(v))
         return v;
 
@@ -142,6 +142,8 @@ inline static Value(*) Decay_If_Isotope(Value(*) v) {
             fail (Error_Bad_Isotope(v));  // need more granular unpacking
         return v;
     }
+
+    assert(not Is_Raised(v));  // !!! should this raise an error here?
 
     return v;
 }

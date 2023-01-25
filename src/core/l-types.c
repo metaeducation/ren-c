@@ -288,7 +288,7 @@ Bounce Reflect_Core(Frame(*) frame_)
     option(SymId) id = VAL_WORD_ID(ARG(property));
 
     if (id != SYM_TYPE_P)
-        Decay_If_Isotope(v);
+        Decay_If_Unstable(v);
 
     enum Reb_Kind heart = CELL_HEART(v);
 

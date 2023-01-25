@@ -575,7 +575,7 @@ bool Get_Var_Push_Refinements_Throws(
 
         Copy_Cell(out, Lookup_Word_May_Fail(var, var_specifier));
 
-        Decay_If_Isotope(out);  // !!! should not be possible, review
+        Decay_If_Unstable(out);  // !!! should not be possible, review
         return false;
     }
 
@@ -643,7 +643,7 @@ bool Get_Var_Push_Refinements_Throws(
                     return true;
                 }
                 Move_Cell(PUSH(), out);
-                Decay_If_Isotope(TOP);
+                Decay_If_Unstable(TOP);
 
                 // By convention, picker steps quote the first item if it was a
                 // GROUP!.  It has to be somehow different because `('a).b` is
@@ -717,7 +717,7 @@ bool Get_Var_Push_Refinements_Throws(
     else
         Drop_Data_Stack_To(base);
 
-    Decay_If_Isotope(out);  // !!! should not be possible, review
+    Decay_If_Unstable(out);  // !!! should not be possible, review
     return false;
 }
 
@@ -971,7 +971,7 @@ bool Get_Path_Push_Refinements_Throws(
             if (Is_Void(temp))
                 continue;  // just skip it (voids are ignored, NULLs error)
 
-            at = Decay_If_Isotope(temp);
+            at = Decay_If_Unstable(temp);
             if (Is_Isotope(at))
                 fail (Error_Bad_Isotope(at));
         }
@@ -1414,7 +1414,7 @@ DECLARE_NATIVE(set)
     REBVAL *v = ARG(value);
 
     Meta_Unquotify(v);
-    Decay_If_Isotope(v);
+    Decay_If_Unstable(v);
 
     if (Is_Raised(v))
         return COPY(v);
@@ -1469,7 +1469,7 @@ DECLARE_NATIVE(try)
     }
 
     Meta_Unquotify(v);
-    Decay_If_Isotope(v);  // !!! this decays isotopes, should it?
+    Decay_If_Unstable(v);  // !!! this decays isotopes, should it?
 
     return COPY(v);  // !!! also tolerates other isotopes, should it?
 }
@@ -2431,7 +2431,7 @@ DECLARE_NATIVE(light) {
     INCLUDE_PARAMS_OF_LIGHT;
 
     Move_Cell(OUT, Meta_Unquotify(ARG(optional)));
-    Decay_If_Isotope(OUT);
+    Decay_If_Unstable(OUT);
 
     return OUT;
 }

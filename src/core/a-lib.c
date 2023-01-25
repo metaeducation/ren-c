@@ -955,7 +955,7 @@ inline static void Run_Va_May_Fail(
 ){
     Run_Va_No_Decay_May_Fail(out, p, vaptr);
 
-    Decay_If_Isotope(out);
+    Decay_If_Unstable(out);
 }
 
 
@@ -1007,7 +1007,7 @@ bool RL_rebRunCoreThrows(
     if (too_many)
         fail (Error_Apply_Too_Many_Raw());
 
-    Decay_If_Isotope(out);
+    Decay_If_Unstable(out);
     return false;
 }
 
@@ -1144,7 +1144,7 @@ REBVAL *RL_rebEntrap(const void *p, va_list *vaptr)
 
     if (Is_Meta_Of_Pack(v)) {
         Meta_Unquotify(v);
-        Decay_If_Isotope(v);
+        Decay_If_Unstable(v);
         Meta_Quotify(v);
     }
 
@@ -1180,7 +1180,7 @@ REBVAL *RL_rebEntrapInterruptible(
 
     if (Is_Meta_Of_Pack(v)) {
         Meta_Unquotify(v);
-        Decay_If_Isotope(v);
+        Decay_If_Unstable(v);
         Meta_Quotify(v);
     }
 
