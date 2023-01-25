@@ -1414,10 +1414,13 @@ DECLARE_NATIVE(set)
     REBVAL *v = ARG(value);
 
     Meta_Unquotify(v);
-    Decay_If_Unstable(v);
-
     if (Is_Raised(v))
-        return COPY(v);
+        return COPY(v);  // !!! Is this tunneling worthwhile?
+
+    // !!! Isotopic objects may have a particular interaction with SET, that
+    // is distinct from its reification (which should probably be its DECAY)
+
+    Decay_If_Unstable(v);
 
     REBVAL *steps;
     if (REF(groups))
