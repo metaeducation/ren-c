@@ -196,17 +196,24 @@ Bounce Action_Executor(Frame(*) f)
 
           case ST_ACTION_DOING_PICKUPS:
           case ST_ACTION_FULFILLING_ARGS:
-            if (NOT_PARAM_FLAG(PARAM, WANT_PACKS)) {
-                if (VAL_PARAM_CLASS(PARAM) == PARAM_CLASS_META) {
-                    if (Is_Meta_Of_Pack(ARG)) {
+            if (VAL_PARAM_CLASS(PARAM) == PARAM_CLASS_META) {
+                if (Is_Meta_Of_Pack(ARG)) {
+                    if (NOT_PARAM_FLAG(PARAM, WANT_PACKS)) {
                         Meta_Unquotify(ARG);
                         Decay_If_Unstable(ARG);
                         Meta_Quotify(ARG);
                     }
                 }
-                else if (Is_Pack(ARG))
-                    Decay_If_Unstable(ARG);
+                if (Is_Meta_Of_Raised(ARG)) {
+                    if (NOT_PARAM_FLAG(PARAM, WANT_FAILURES)) {
+                        Meta_Unquotify(ARG);
+                        Decay_If_Unstable(ARG);
+                        Meta_Quotify(ARG);
+                    }
+                }
             }
+            else
+                Decay_If_Unstable(ARG);
 
             goto continue_fulfilling;
 
