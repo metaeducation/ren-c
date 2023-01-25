@@ -790,7 +790,7 @@ DECLARE_NATIVE(unrun)
 //
 //      return: "Value (if it's anything other than the states being checked)"
 //          [<opt> <void> any-value!]
-//      ^optional [<opt> <void> <fail> <pack> any-value!]
+//      ^optional [<opt> <void> any-value!]
 //  ]
 //
 DECLARE_NATIVE(maybe)
