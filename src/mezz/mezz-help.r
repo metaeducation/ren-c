@@ -89,11 +89,6 @@ help: function [
         "WORD! whose value to explain, or other HELP target (try HELP HELP)"
     /doc "Open web browser to related documentation."
 ][
-    if quasi? ^topic [  ; !!! Review: What should this do?
-        print [mold get/any 'topic "is an QUASI! value"]
-        return none
-    ]
-
     if null? :topic [
         ;
         ; Was just `>> help` or `do [help]` or similar.
