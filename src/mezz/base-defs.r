@@ -344,25 +344,6 @@ parse3: runs :parse3*/fully  ; could be more complex definition (UPARSE is!)
 
 parse2: runs :parse3*/redbol/fully
 
-; The lower-level pointfree function separates out the action it takes, but
-; the higher level one uses a block.  Specialize out the action, and then
-; overwrite it in the enclosure with an action taken out of the block.
-;
-pointfree: specialize* (enclose :pointfree* lambda [f] [
-    set let action f.action: (match action! any [  ; don't SET-WORD! cache name
-        if match [word! path!] f.block.1 [unrun get/any f.block.1]
-    ]) else [
-        fail "POINTFREE requires ACTION! argument at head of block"
-    ]
-
-    ; rest of block is invocation by example
-    f.block: skip f.block 1  ; Note: NEXT not defined yet
-
-    inherit-meta (do f) action  ; don't SET-WORD! cache name
-])[
-    action: unrun :panic/value  ; overwritten, best to make it something mean
-]
-
 
 ; REQUOTE is helpful when functions do not accept QUOTED! values.
 ;
@@ -396,19 +377,6 @@ requote: reframer lambda [
 ][
     if group? words [words: eval words]
     lambda words body
-]
-
-
-<-: enfix func* [
-    {Declare action by example instantiation, missing args left unspecialized}
-
-    return: [action!]
-    :left "Enforces nothing to the left of the pointfree expression"
-        [<end>]
-    :expression "POINTFREE expression, BLANK!s are unspecialized arg slots"
-        [any-value! <variadic>]
-][
-    return pointfree make block! expression  ; !!! vararg param for efficiency?
 ]
 
 

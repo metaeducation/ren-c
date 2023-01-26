@@ -152,6 +152,7 @@
 %functions/multi.test.reb
 %functions/native.test.reb
 %functions/oneshot.test.reb
+%functions/pointfree.test.reb
 %functions/predicate.test.reb
 %functions/redo.test.reb
 %functions/reframer.test.reb

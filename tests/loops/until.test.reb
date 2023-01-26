@@ -53,12 +53,6 @@
         blank? until/predicate [take x] z -> [blank? z]
         x = [<bar> "baz" 2]
     ]
-)(
-    x: [1 2 3 4 5 6]
-    did all [
-        5 = until/predicate [take x] (<- greater? _ 4)
-        x = [6]
-    ]
 )
 
 ; UNTIL should error upon receiving isotopes, because it would be misleading

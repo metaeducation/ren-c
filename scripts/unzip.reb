@@ -62,11 +62,11 @@ central-file-sig: #{504B0102}
 end-of-central-sig: #{504B0506}
 data-descriptor-sig: #{504B0708}
 
-to-ilong: (<- enbin [LE + 4])  ; Little endian 4-byte positive integer
+to-ilong: specialize :enbin [settings: [LE + 4]]  ; Little endian 4-byte + int
 
-to-ishort: (<- enbin [LE + 2])  ; Little endian 2-byte positive integer
+to-ishort: specialize :enbin [settings: [LE + 2]]  ; Little endian 2-byte + int
 
-to-long: (<- enbin [BE + 4])  ; Big endian 4-byte positive integer
+to-long: specialize :enbin [settings: [BE + 4]]  ; Big endian 4-byte + int
 
 to-msdos-time: func [
     {Converts to a MS-DOS time}
