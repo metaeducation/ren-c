@@ -319,16 +319,14 @@ change-dir: func [  ; This can be HIJACK'd by a "smarter" version
 redescribe: func [
     {Mutate action description with new title and/or new argument notes.}
 
-    return: [action!]
+    return: [~action!~]
         {The input action, with its description now updated.}
     spec [block!]
         {Either a string description, or a spec block (without types).}
-    action [action! ~action!~]
+    action [<unrun> action!]
         {(modified) Action whose description is to be updated.}
 ][
-    action: unrun :action
-
-    let meta: meta-of :action
+    let meta: meta-of action
     let notes: null
     let description: null
 
@@ -426,7 +424,7 @@ redescribe: func [
                             fail [param {doesn't match word type of} actual]
                         ]
 
-                        notes/(as word! param): if note = {} [~] else [note]
+                        notes.(as word! param): if note = {} [~] else [note]
                     ]
                 ]
             )]

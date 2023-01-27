@@ -1576,8 +1576,8 @@ DECLARE_NATIVE(enfixed_q)
 //
 //  {For making enfix functions, e.g `+: enfixed :add` (copies)}
 //
-//      return: [action!]
-//      action [action! ~action!~]
+//      return: [~action!~]
+//      action [<unrun> action!]
 //  ]
 //
 DECLARE_NATIVE(enfix)
@@ -1594,8 +1594,7 @@ DECLARE_NATIVE(enfix)
 
     Set_Action_Flag(VAL_ACTION(action), ENFIXED);
 
-    Copy_Cell(OUT, action);  // may or may not be an isotope
-    mutable_QUOTE_BYTE(OUT) = ISOTOPE_0;  // now it's guaranteed isotope
+    Activatify(Copy_Cell(OUT, action));
     return OUT;
 }
 

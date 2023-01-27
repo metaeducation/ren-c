@@ -1917,7 +1917,7 @@ DECLARE_NATIVE(for)
 //          {Last body result, or null if a BREAK occurred}
 //      body [<const> block!]
 //      /predicate "Function to apply to body result"
-//          [action! ~action!~]
+//          [<unrun> action!]
 //  ]
 //
 DECLARE_NATIVE(until)
@@ -1962,9 +1962,6 @@ DECLARE_NATIVE(until)
     }
 
   initial_entry: {  //////////////////////////////////////////////////////////
-
-    if (REF(predicate))
-        Decay_If_Activation(predicate);
 
     STATE = ST_UNTIL_EVALUATING_BODY;
     return CATCH_CONTINUE(OUT, body);

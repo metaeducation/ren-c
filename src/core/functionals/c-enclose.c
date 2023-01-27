@@ -202,22 +202,19 @@ Bounce Encloser_Dispatcher(Frame(*) f)
 //
 //  {Wrap code around an ACTION! with access to its FRAME! and return value}
 //
-//      return: [action!]
+//      return: [~action!~]
 //      inner "Action that a FRAME! will be built for, then passed to OUTER"
-//          [action! ~action!~]
+//          [<unrun> action!]
 //      outer "Gets a FRAME! for INNER before invocation, can DO it (or not)"
-//          [action! ~action!~]
+//          [<unrun> action!]
 //  ]
 //
 DECLARE_NATIVE(enclose_p)  // see extended definition ENCLOSE in %base-defs.r
 {
     INCLUDE_PARAMS_OF_ENCLOSE_P;
 
-    REBVAL *inner = ARG(inner);
-    REBVAL *outer = ARG(outer);
-
-    mutable_QUOTE_BYTE(inner) = UNQUOTED_1;  // if isotope, make normal
-    mutable_QUOTE_BYTE(outer) = UNQUOTED_1;
+    Value(*) inner = ARG(inner);
+    Value(*) outer = ARG(outer);
 
     // The new function has the same interface as `inner`
     //

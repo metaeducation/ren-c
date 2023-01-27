@@ -64,7 +64,7 @@
 //
 //      return: [~action!~]
 //      action "Function whose implementation is to be augmented"
-//          [action! ~action!~]
+//          [<unrun> action!]
 //      spec "Spec dialect for words to add to the derived function"
 //          [block!]
 //  ]

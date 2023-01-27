@@ -296,18 +296,18 @@ pointfree*: func* [
 ;
 
 enclose: enclose* :enclose* lambda [f] [  ; uses low-level ENCLOSE* to make
-    set let inner unrun :f.inner  ; don't cache name via SET-WORD!
+    set let inner f.inner  ; don't cache name via SET-WORD!
     inherit-meta (do f) inner
 ]
 inherit-meta enclose :enclose*  ; needed since we used ENCLOSE*
 
 specialize: enclose :specialize* lambda [f] [  ; now we have high-level ENCLOSE
-    set let action unrun :f.action  ; don't cache name via SET-WORD!
+    set let action f.action  ; don't cache name via SET-WORD!
     inherit-meta (do f) action
 ]
 
 adapt: enclose :adapt* lambda [f] [
-    set let action unrun :f.action
+    set let action f.action
     inherit-meta do f action
 ]
 
@@ -318,18 +318,18 @@ chain: enclose :chain* lambda [f] [
 ]
 
 augment: enclose :augment* lambda [f] [
-    set let action unrun :f.action  ; don't cache name via SET-WORD!
+    set let action f.action  ; don't cache name via SET-WORD!
     let spec: f.spec
     inherit-meta/augment (do f) action spec
 ]
 
 reframer: enclose :reframer* lambda [f] [
-    set let shim unrun :f.shim  ; don't cache name via SET-WORD!
+    set let shim f.shim  ; don't cache name via SET-WORD!
     inherit-meta (do f) shim
 ]
 
 reorder: enclose :reorder* lambda [f] [
-    set let action unrun :f.action  ; don't cache name via SET-WORD!
+    set let action f.action  ; don't cache name via SET-WORD!
     inherit-meta (do f) action
 ]
 
@@ -338,11 +338,11 @@ reorder: enclose :reorder* lambda [f] [
 ; UPARSE's design when it hardens.  For now these routines provide some amount
 ; of interface parity with UPARSE.
 ;
-parse3: runs :parse3*/fully  ; could be more complex definition (UPARSE is!)
+parse3: :parse3*/fully  ; could be more complex definition (UPARSE is!)
 
 ; The PARSE name has been taken by what was UPARSE.
 
-parse2: runs :parse3*/redbol/fully
+parse2: :parse3*/redbol/fully
 
 
 ; REQUOTE is helpful when functions do not accept QUOTED! values.

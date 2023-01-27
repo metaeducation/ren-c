@@ -455,9 +455,9 @@ bool Specialize_Action_Throws(
 //
 //  {Create a new action through partial or full specialization of another}
 //
-//      return: [action!]
+//      return: [~action!~]
 //      action "Function whose parameters will be set to fixed values"
-//          [action! ~action!~]
+//          [<unrun> action!]
 //      def "Definition for FRAME! fields for args and refinements"
 //          [block!]
 //  ]

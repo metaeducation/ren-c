@@ -16,9 +16,9 @@ spec-of: function [
     {Generate a block which could be used as a "spec block" from an action.}
 
     return: [block!]
-    action [action!]
+    action [<unrun> action!]
 ][
-    meta: (match object! meta-of :action) else [return [~bad-spec~]]
+    meta: (match object! meta-of action) else [return [~bad-spec~]]
 
     return collect [
         keep/line maybe ensure [<opt> text!] select meta 'description
@@ -35,7 +35,7 @@ spec-of: function [
             ]
         ]
 
-        for-each param parameters of :action [
+        for-each param parameters of action [
             keep spread compose [
                 (param)
                     (maybe select maybe types param)

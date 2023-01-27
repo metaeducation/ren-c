@@ -213,7 +213,7 @@ make-port*: function [
     ]
 ]
 
-decode-url: runs :*parse-url.decode-url  ; wrapped in context, expose function
+decode-url: :*parse-url.decode-url  ; wrapped in context, expose function
 
 ;-- Native Schemes -----------------------------------------------------------
 

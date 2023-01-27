@@ -21,7 +21,7 @@
         :branch "If target needs default, this is evaluated and stored there"
             [any-branch!]
         /predicate "Test for what's considered empty (default is null + void)"
-            [action! ~action!~]
+            [<unrun> action!]
         <local> steps
     ][
         ([steps ~@v~]: resolve target) else [set steps do branch]

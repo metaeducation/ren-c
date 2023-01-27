@@ -668,7 +668,7 @@ inline static Bounce Native_None_Result_Untracked(
 #define Init_Activation(out,a,label,binding) \
     Activatify(Init_Action_Core(TRACK(out), (a), (label), (binding)))
 
-inline static Value(*) Activatify(Cell(*) v) {
+inline static Value(*) Activatify(Value(*) v) {
     assert(IS_ACTION(v) and QUOTE_BYTE(v) == UNQUOTED_1);
     mutable_QUOTE_BYTE(v) = ISOTOPE_0;
     return VAL(v);

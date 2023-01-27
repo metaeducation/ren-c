@@ -691,7 +691,7 @@ DECLARE_NATIVE(redo)
 //  {Invoke an ACTION! with all required arguments specified}
 //
 //      return: [<opt> <void> any-value!]
-//      action [action! ~action!~]
+//      action [<unrun> action!]
 //      def "Frame definition block (will be bound and evaluated)"
 //          [block!]
 //  ]

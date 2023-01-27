@@ -29,9 +29,9 @@ register-codec*: func [
         {Descriptive name of the codec.}
     suffixes [file! block!]
         {File extension or block of file extensions the codec processes}
-    identify? [<opt> action!]
-    decode [<opt> action!]
-    encode [<opt> action!]
+    identify? [<opt> <unrun> action!]
+    decode [<opt> <unrun> action!]
+    encode [<opt> <unrun> action!]
     <local> codec
 ][
     if not block? suffixes [suffixes: reduce [suffixes]]
@@ -44,9 +44,9 @@ register-codec*: func [
         ; here, or be another parameter, or...?
 
         suffixes: '(suffixes)
-        identify?: (^ runs maybe identify?)
-        decode: (^ runs maybe decode)
-        encode: (^ runs maybe encode)
+        identify?: (^ identify?)
+        decode: (^ decode)
+        encode: (^ encode)
     ]
 
     append system.codecs spread reduce [(to set-word! name) codec]
@@ -87,7 +87,7 @@ decode: function [
 ][
     all [
         cod: select system.codecs type
-        (data: cod.decode data)
+        (data: run cod.decode data)
     ] else [
         cause-error 'access 'no-codec type
     ]
@@ -107,7 +107,7 @@ encode: function [
 ][
     all [
         cod: select system.codecs type
-        (data: cod.encode data)
+        (data: run cod.encode data)
     ] else [
         cause-error 'access 'no-codec type
     ]
@@ -123,7 +123,7 @@ encoding-of: function [
 ][
     for-each [name codec] system.codecs [
         if all [
-            (codec.identify? data)
+            (run codec.identify? data)
         ][
             return name
         ]

@@ -658,8 +658,8 @@ DECLARE_NATIVE(definitional_return)
 //
 //      return: "Same as derived (assists in efficient chaining)"
 //          [~action!~]
-//      derived [action! ~action!~]
-//      original [action! ~action!~]
+//      derived [<unrun> action!]
+//      original [<unrun> action!]
 //      /augment "Additional spec information to scan"
 //          [block!]
 //  ]
