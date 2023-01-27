@@ -144,15 +144,15 @@ export console!: make object! [
         ;
         set 'last-result v
 
-        === REIFY IF A "LAZY" VALUE ===
+        === DECAY IF A "LAZY" VALUE ===
 
         if lazy? unget v [
             v: unquasi v
-            if in v 'reify [
-                print ["; reify of lazy object with" mold words of v]
-                v: ^ do v.reify
+            if in v 'decay [
+                print ["; decay of lazy object with" mold words of v]
+                v: ^ do v.decay
             ] else [
-                print ["; no reify in lazy object with" mold words of v]
+                print ["; no decay in lazy object with" mold words of v]
                 v: quasi v
             ]
         ]

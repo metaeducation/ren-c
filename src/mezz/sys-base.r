@@ -52,7 +52,7 @@ rescue+: func [  ; see also TRAP+
     ; If you return a pure NULL with the desire of triggering ELSE, that does
     ; not allow you to return more values.  This uses a lazy object that will
     ; run a THEN branch on error, but then an ELSE branch with the returned
-    ; value on non-error...or reify to a pack with NULL for the error and
+    ; value on non-error...or decay to a pack with NULL for the error and
     ; the result.
     ;
     if error? result: enrescue code [
@@ -61,7 +61,7 @@ rescue+: func [  ; see also TRAP+
 
     return isotopic make object! [
         else: branch -> [(heavy unmeta :result) then (:branch)]
-        reify: [pack [null unmeta result]]
+        decay: [pack [null unmeta result]]
     ]
 ]
 

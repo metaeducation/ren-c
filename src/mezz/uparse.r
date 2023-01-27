@@ -2935,12 +2935,12 @@ parse+: (comment [redescribe [  ; redescribe not working at the moment (?)
             ;
             obj: make object! compose [
                 then: [
-                    reify: null'  ; defuse unchecked error
+                    decay: null'  ; defuse unchecked error
                     obj.then: ~  ; don't let this hook get called again
                     lazy obj  ; leave REIFY and ELSE available
                 ]
                 else: '(branch -> [if e (:branch)])
-                reify: '([raise e])
+                decay: '([raise e])
             ]
             return lazy obj
         ])

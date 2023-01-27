@@ -1473,7 +1473,7 @@ Bounce Evaluator_Executor(Frame(*) f)
             // want to be stackless about the reification, but for now make
             // it easy.
             //
-            if (Pushed_Reifying_Frame(OUT, OUT, FRAME_MASK_NONE)) {
+            if (Pushed_Decaying_Frame(OUT, OUT, FRAME_MASK_NONE)) {
                 if (Trampoline_With_Top_As_Root_Throws())
                     fail (Error_No_Catch_For_Throw(TOP_FRAME));
                 Drop_Frame(TOP_FRAME);

@@ -285,7 +285,7 @@ static Bounce Then_Else_Isotopic_Object_Helper(
         else_hook = nullptr;  // can be unset by Debranch_Output()
 
     if (not then_hook and not else_hook) {  // !!! should it always take THEN?
-        if (not Pushed_Reifying_Frame(  // fails if no reify method, see [4]
+        if (not Pushed_Decaying_Frame(  // fails if no reify method, see [4]
             SPARE,
             in,
             FRAME_FLAG_META_RESULT
@@ -1715,19 +1715,19 @@ void Debranch_Output(Value(*) out) {
 
 
 //
-//  Pushed_Reifying_Frame: C
+//  Pushed_Decaying_Frame: C
 //
-bool Pushed_Reifying_Frame(Value(*) out, Value(const*) obj, Flags flags) {
-    option(Value(*)) reify = Select_Symbol_In_Context(obj, Canon(REIFY));
-    if (not reify)
-        fail ("Asked to reify lazy object with no REIFY method");
+bool Pushed_Decaying_Frame(Value(*) out, Value(const*) obj, Flags flags) {
+    option(Value(*)) decayer = Select_Symbol_In_Context(obj, Canon(DECAY));
+    if (not decayer)
+        fail ("Asked to decay lazy object with no DECAY method");
 
     bool pushed = Pushed_Continuation(
         out,
         flags,
         SPECIFIED,
-        unwrap(reify),
-        nullptr  // no argument to reify--must answer in isolation
+        unwrap(decayer),
+        nullptr  // no arguments to decay--must answer in isolation
     );
     if (not pushed)
         return false;

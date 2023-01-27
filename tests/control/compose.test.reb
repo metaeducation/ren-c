@@ -11,7 +11,7 @@
 ; Preserve one element rule vs. tolerate vaporization.
 ;
 ([~null~ *] = compose [(reify null) * (maybe null)])
-([' *] = compose [(reify void) * (void)])
+([' *] = compose [(meta void) * (void)])
 
 ; Voids vaporize regardless of form.
 

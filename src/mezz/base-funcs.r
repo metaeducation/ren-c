@@ -768,7 +768,7 @@ trap+: func [
 
     return isotopic make object! [
         else: branch -> [(heavy unmeta :result) then (:branch)]
-        reify: [pack [null unmeta result]]
+        decay: [pack [null unmeta result]]
     ]
 ]
 

@@ -123,7 +123,7 @@ inline static Value(*) Decay_If_Unstable(Value(*) v) {
         return v;
 
     if (Is_Lazy(v)) {
-        if (not Pushed_Reifying_Frame(v, v, FRAME_MASK_NONE))
+        if (not Pushed_Decaying_Frame(v, v, FRAME_MASK_NONE))
             return v;  // cheap reification
         if (Trampoline_With_Top_As_Root_Throws())
             fail (Error_No_Catch_For_Throw(TOP_FRAME));
