@@ -192,6 +192,7 @@
 %math/log-10.test.reb
 %math/log-2.test.reb
 %math/log-e.test.reb
+%math/math.test.reb
 %math/mod.test.reb
 %math/multiply.test.reb
 %math/negate.test.reb
