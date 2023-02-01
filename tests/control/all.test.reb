@@ -298,7 +298,7 @@
 (null? all [true false])
 (true = all [$1 true])
 (true = all [:append true])
-(_ = all [_ true])
+(true = all [_ true])
 (
     a-value: make object! []
     true = all [:a-value true]

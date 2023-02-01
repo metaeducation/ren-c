@@ -188,7 +188,7 @@
 
 ; object cloning
 [#2050 (
-    o: make object! [n: 'o b: reduce [meta lambda [] [n]]]
+    o: make object! [n: 'o b: reduce [unrun lambda [] [n]]]
     p: make o [n: 'p]
     'o = run (o.b).1
 )]

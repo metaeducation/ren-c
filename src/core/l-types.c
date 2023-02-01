@@ -324,6 +324,8 @@ Bounce Reflect_Core(Frame(*) frame_)
         return OUT;
     }
 
+    Decay_If_Activation(v);  // should LENGTH etc. apply to isotopes, also?
+
     if (Is_Isotope(v) and not Is_Nulled(v))
         fail (Error_Bad_Isotope(v));  // only TYPE* will allow isotopes
 
@@ -393,7 +395,7 @@ DECLARE_NATIVE(reflect_native)
 //      'property "Will be escapable, ':property (bootstrap permitting)"
 //          [word! get-word! get-path! get-group!]
 //      value "Accepts null so TYPE OF NULL can be returned as null"
-//          [<maybe> <opt> <pack> <fail> any-value! ~any-value!~]
+//          [<maybe> <opt> any-value! ~any-value!~]
 //  ]
 //
 DECLARE_NATIVE(of)
