@@ -1501,10 +1501,8 @@ DECLARE_NATIVE(default)
 //
 //  {Catches a throw from a block and returns its value.}
 //
-//      return: "Thrown value, or BLOCK! with value and name (if /NAME, /ANY)"
-//          [<opt> any-value!]
-//      @result "Evaluation result (only set if not thrown)"
-//          [<opt> any-value!]
+//      return: "Thrown value"
+//          [<opt> any-value! ~any-value!~]
 //      block "Block to evaluate"
 //          [block!]
 //      /name "Catches a named throw (single name if not block)"
@@ -1548,11 +1546,8 @@ DECLARE_NATIVE(catch)
 
 } code_result_in_out: {  //////////////////////////////////////////////////////
 
-    if (not THROWING) {
-        Copy_Cell(ARG(result), OUT);
-        Init_Nulled(OUT); // no throw means just return null
-        return Proxy_Multi_Returns(frame_);
-    }
+    if (not THROWING)
+        return nullptr;  // no throw means just return null (pure, for ELSE)
 
     const REBVAL *label = VAL_THROWN_LABEL(FRAME);
 
@@ -1623,23 +1618,9 @@ DECLARE_NATIVE(catch)
 
   was_caught:  ///////////////////////////////////////////////////////////////
 
-    if (REF(name) or REF(any)) {
-        Array(*) a = Make_Array(2);
-        SET_SERIES_LEN(a, 2);
-        Copy_Cell(ARR_AT(a, 0), label); // throw name
-        CATCH_THROWN(ARR_AT(a, 1), frame_); // thrown value--may be null!
-        if (Is_Nulled(ARR_AT(a, 1)))  // can't put null in blocks...
-            Init_Blank(ARR_AT(a, 1));  // !!! review: use multi-return instead!
-
-        return Init_Block(OUT, a);
-    }
-
     CATCH_THROWN(OUT, frame_); // thrown value
 
-    if (Is_Void(OUT))
-        return NONE;  // void would trigger ELSE
-
-    Isotopify_If_Nulled(OUT);  // a caught NULL triggers THEN, not ELSE
+    Isotopify_If_Falsey(OUT);  // a caught NULL triggers THEN, not ELSE
     return BRANCHED(OUT);
 }}
 
@@ -1651,7 +1632,7 @@ DECLARE_NATIVE(catch)
 //
 //      return: []  ; !!! notation for divergent function?
 //      ^value "Value returned from catch"
-//          [<opt> <void> any-value!]
+//          [<opt> <void> <pack> <fail> any-value!]
 //      /name "Throws to a named catch"
 //          [word! action! object!]
 //  ]

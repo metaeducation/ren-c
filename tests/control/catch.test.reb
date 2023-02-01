@@ -15,14 +15,20 @@
 ((the '~()~) = ^ catch [throw do ['~()~]])
 (error? first catch [throw reduce [trap [1 / 0]]])
 (1 = catch [throw 1])
+
 ; catch/name results
+
 (null? catch/name [] 'catch)
 (null? catch/name [()] 'catch)
 (null? catch/name [trap [1 / 0]] 'catch)
 (null? catch/name [1] 'catch)
-([catch ~()~] = catch/name [throw/name ('~()~) 'catch] 'catch)
-(error? first second catch/name [throw/name reduce [trap [1 / 0]] 'catch] 'catch)
-([catch 1] = catch/name [throw/name 1 'catch] 'catch)
+
+('~()~ = catch/name [throw/name ('~()~) 'catch] 'catch)
+
+(raised? catch/name [throw/name (1 / 0) 'catch] 'catch)
+
+(1 = catch/name [throw/name 1 'catch] 'catch)
+
 ; recursive cases
 (
     num: 1
@@ -86,18 +92,14 @@
 
 ; Multiple return values
 (
-    [c v]: catch [throw 304]
     did all [
-        c = 304
-        undefined? 'v
+        304 = ([j b]: catch [throw pack [304 1020]])
+        j = 304
+        b = 1020
     ]
 )
 (
-    [c v]: catch [10 + 20]
-    did all [
-        null? c
-        v = 30
-    ]
+    null = catch [10 + 20]
 )
 
 ; Isotopes
