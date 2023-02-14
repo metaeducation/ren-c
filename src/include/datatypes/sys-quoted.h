@@ -145,26 +145,48 @@ inline static Count Dequotify(Cell(*) v) {
 //     >> append [a b c] [d e]
 //     == [a b c [d e]]
 //
-//     >> append [a b c] ~[d e]~
+//     >> ~(d e)~
+//     == ~(d e)~  ; isotope (this connotes a "splice")
+//
+//     >> append [a b c] ~(d e)~
 //     == [a b c d e]
 //
-//     >> append [a b c] '~[d e]~
-//     == [a b c ~[d e]~]
+//     >> append [a b c] '~(d e)~
+//     == [a b c ~(d e)~]
 //
 // As demonstrated, the reified QUASI! form and the "ghostly" isotopic form
 // work in concert to solve the problem.
 //
-// * Isotope forms are neither true nor false...they must be decayed or
-//   handled in some other way, for instance DID/DIDN'T or THEN/ELSE.
+// * Besides the word isotopes of ~true~, ~false~ and ~null~, isotope forms
+//   are neither true nor false...they must be decayed or handled in some other
+//   way, for instance DID/DIDN'T or THEN/ELSE.
 //
 // * A special parameter convention must be used to receive isotopes.  Code
 //   that isn't expecting such strange circumstances can error if they ever
 //   happen, while more sensitive code can be adapted to cleanly handle the
 //   intents that they care about.
 //
+// Unstable isotopes like packs (block isotopes), error isotopes, and object
+// isotopes aren't just not allowed in blocks, they can't be in variables.
+//
 
 #define Is_Isotope(v) \
     (QUOTE_BYTE(v) == ISOTOPE_0)
+
+inline static bool Is_Isotope_Unstable(Cell(const*) v) {
+    assert(Is_Isotope(v));
+    return (
+        HEART_BYTE(v) == REB_BLOCK  // Is_Pack()
+        or HEART_BYTE(v) == REB_ERROR  // Is_Raised()
+        or HEART_BYTE(v) == REB_OBJECT  // Is_Lazy()
+    );
+}
+
+#define Is_Isotope_Stable(v) \
+    (not Is_Isotope_Unstable(v))
+
+inline static bool Is_Stable(Cell(const*) v)
+  { return not Is_Isotope(v) or Is_Isotope_Stable(v); }
 
 
 //=//// QUASI! FORMS //////////////////////////////////////////////////////=//

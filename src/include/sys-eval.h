@@ -114,25 +114,6 @@ inline static bool Is_Isotope_Get_Friendly(Cell(const*) v) {
 }
 
 
-// Unstable isotopes like packs (block isotopes), error isotopes, and object
-// isotopes aren't just not allowed in blocks, they can't be in variables.
-//
-inline static bool Is_Isotope_Unstable(Cell(const*) v) {
-    assert(Is_Isotope(v));
-    return (
-        HEART_BYTE(v) == REB_BLOCK  // Is_Pack()
-        or HEART_BYTE(v) == REB_ERROR  // Is_Raised()
-        or HEART_BYTE(v) == REB_OBJECT  // Is_Lazy()
-    );
-}
-
-#define Is_Isotope_Stable(v) \
-    (not Is_Isotope_Unstable(v))
-
-inline static bool Is_Stable(Cell(const*) v)
-  { return not Is_Isotope(v) or Is_Isotope_Stable(v); }
-
-
 // The evaluator publishes its internal states in this header file, so that
 // a frame can be made with e.g. `FLAG_STATE_BYTE(ST_EVALUATOR_REEVALUATING)`
 // to start in various points of the evaluation process.  When doing so, be
