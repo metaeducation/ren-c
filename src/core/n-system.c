@@ -47,8 +47,8 @@ DECLARE_NATIVE(halt)
 //  {Stop evaluating and return control to command shell or calling script}
 //
 //      return: []  ; !!! Notation for divergent functions?
-//      ^value "See: http://en.wikipedia.org/wiki/Exit_status"
-//          [<end> <opt> any-value!]
+//      /with "See: http://en.wikipedia.org/wiki/Exit_status"
+//          [<end> <opt> <void> any-value! ~any-value!~]
 //  ]
 //
 DECLARE_NATIVE(quit)
@@ -59,9 +59,9 @@ DECLARE_NATIVE(quit)
 {
     INCLUDE_PARAMS_OF_QUIT;
 
-    REBVAL *v = ARG(value);
+    REBVAL *v = ARG(with);
 
-    if (Is_Nulled(v) or Is_Meta_Of_Void(v)) {  // e.g. QUIT VOID or QUIT
+    if (not REF(with)) {  // e.g. QUIT VOID or QUIT
         //
         // This returns an isotope if there is no arg, and labels it ~quit~
         // It's a pretty good generic signal of what happened if there's not
@@ -74,8 +74,6 @@ DECLARE_NATIVE(quit)
         //
         Init_Word_Isotope(v, Canon(QUIT));
     }
-    else
-        Meta_Unquotify(v);
 
     return Init_Thrown_With_Label(FRAME, v, Lib(QUIT));
 }

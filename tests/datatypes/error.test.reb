@@ -22,7 +22,7 @@
     ~zero-divide~ !! (
         e: trap [
             catch/quit [attempt [catch/quit [1 / 0]]]
-            quit 127
+            quit/with 127
         ]
     )
 ]

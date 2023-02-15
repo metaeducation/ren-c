@@ -278,7 +278,7 @@ main-startup: func [
                 emit [fail ["Bad REPL continuation:" '(<*> result)]]
             ]
             <quit> [
-                emit [quit 0]
+                emit [quit/with 0]
                 emit [fail ~unreachable~]
             ]
         ] then [

@@ -414,28 +414,13 @@
         no-spec: func [x] [return void]
         <test> = (<test> no-spec 10)
     )
-    (
-        no-spec: func [x] [return]
-        <test> = (<test> no-spec 10)
-    )
     ~bad-invisible~ !! (
         int-spec: func [return: [integer!] x] [return void]
         int-spec 10
     )
-    ~bad-invisible~ !! (
-        int-spec: func [return: [integer!] x] [return]
-        int-spec 10
-    )
-
     (
         invis-spec: func [return: [<void> integer!] x] [
             return void
-        ]
-        <test> = (<test> invis-spec 10)
-    )
-    (
-        invis-spec: func [return: [<void> integer!] x] [
-            return
         ]
         <test> = (<test> invis-spec 10)
     )

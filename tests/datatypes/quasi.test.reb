@@ -102,14 +102,12 @@
     (3 = (1 + 2 foo))
 ]
 
-; Not providing an argument acts the same
+; Not providing an argument is an error (too easy to pick up random arguments
+; from another line if 0-arity were allowed)
 [
-    (did foo: func [return: [<opt> <void> any-value!]] [return])
+    (did foo: func [return: [<opt> <void> any-value!]] [return none])
 
-    (void? foo)
-    (void' = ^ foo)
-
-    (3 = (1 + 2 foo))
+    ~no-arg~ !! (foo)
 ]
 
 ; !!! Should the ~()~ isotope be usable as a synonym for VOID?
@@ -175,10 +173,10 @@
 ;
 ; Note: DO of BLOCK! does not catch quits, so TEXT! is used here.
 [
-    (1 = do "quit 1")
+    (1 = do "quit/with 1")
     ('~quit~ =  ^ do "quit")
-    ('~isotope~ = ^ do "quit ~isotope~")
-    ('~plain~ = do "quit '~plain~")
+    ('~isotope~ = ^ do "quit/with ~isotope~")
+    ('~plain~ = do "quit/with '~plain~")
 ]
 
 ; Isotopes make it easier to write generic routines that handle BAD-WORD!

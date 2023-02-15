@@ -155,7 +155,7 @@ jobs:
 
     - name: Stop the build early if the R3MAKE is no good
       run: |
-        "$R3MAKE" --do "print {R3MAKE is Working} quit 0"
+        "$R3MAKE" --do "print {R3MAKE is Working} quit"
 
 
     # GCC can build 32-bit targets on a 64-bit host, but it needs multilib
@@ -340,7 +340,7 @@ jobs:
           ]
           then [
             print "Times matched!"
-            quit 0
+            quit/with 0
           ]
         ]
 

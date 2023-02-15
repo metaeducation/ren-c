@@ -120,7 +120,7 @@ run-test-cluster: func [
     if not empty? exclude flags allowed-flags [
         skipped: me + 1
         log [space {"skipped"} newline]
-        return
+        return none
     ]
 
     ; Here we use MODULE instead of MAKE MODULE! so that we get IMPORT and

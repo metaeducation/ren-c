@@ -534,8 +534,7 @@ DECLARE_NATIVE(unwind)
 //  {RETURN, giving a result to the caller}
 //
 //      return: []  ; !!! notation for "divergent?"
-//      ^value "If no argument is given, result will act like RETURN VOID"
-//          [<end> <opt> <void> <fail> <pack> any-value!]
+//      ^value [<opt> <void> <fail> <pack> any-value!]
 //      /forward "Pass on parameter packs, vs. just the first pack item"
 //  ]
 //
@@ -593,7 +592,7 @@ DECLARE_NATIVE(definitional_return)
     const REBPAR *param = ACT_PARAMS_HEAD(target_fun);
     assert(KEY_SYM(ACT_KEYS_HEAD(target_fun)) == SYM_RETURN);
 
-    if (Is_Nulled(v) or Is_Meta_Of_Void(v)) {  // RETURN VOID or just RETURN
+    if (Is_Meta_Of_Void(v)) {  // RETURN VOID
         if (NOT_PARAM_FLAG(param, VANISHABLE))
             fail (Error_Bad_Invisible(f));
 

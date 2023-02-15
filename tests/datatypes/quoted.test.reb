@@ -32,7 +32,7 @@
     foo: function [] [
         set 'x: 20
         set 'y x
-        return
+        return none
     ]
     foo
     (x = 10) and (y = 20)

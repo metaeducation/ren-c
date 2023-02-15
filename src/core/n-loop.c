@@ -104,8 +104,8 @@ DECLARE_NATIVE(break)
 //  "Throws control back to top of loop for next iteration."
 //
 //      return: []  ; !!! notation for divergent function?
-//      ^value "Act as if loop body finished with this value"
-//          [<end> <void> <opt> any-value!]
+//      /with "Act as if loop body finished with this value"
+//          [<void> <opt> any-value! ~any-value!~]
 //  ]
 //
 DECLARE_NATIVE(continue)
@@ -116,11 +116,9 @@ DECLARE_NATIVE(continue)
 {
     INCLUDE_PARAMS_OF_CONTINUE;
 
-    Value(*) v = ARG(value);
-    if (Is_Nulled(v))
-        Init_Void(v);  // CONTINUE and CONTINUE VOID act the same
-    else
-        Meta_Unquotify(v);
+    Value(*) v = ARG(with);
+    if (not REF(with))
+        Init_Void(v);  // CONTINUE and CONTINUE/WITH VOID act the same
 
     if (Is_Void(v))
         Init_Heavy_Void(v);
