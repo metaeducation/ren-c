@@ -340,6 +340,9 @@ void Push_Paramlist_Quads_May_Fail(
                 else
                     pclass = PARAM_CLASS_NORMAL;
             }
+            else if (heart == REB_META_PATH) {
+                pclass = PARAM_CLASS_META;
+            }
         }
         else if (ANY_TUPLE_KIND(heart)) {
             //
