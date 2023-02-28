@@ -444,6 +444,9 @@ bool Specialize_Action_Throws(
     );
     assert(CTX_KEYLIST(exemplar) == ACT_KEYLIST(unspecialized));
 
+    if (Get_Action_Flag(VAL_ACTION(specializee), ENFIXED))
+        Set_Action_Flag(specialized, ENFIXED);  // if incoming was, outgoing is
+
     Init_Activation(out, specialized, VAL_ACTION_LABEL(specializee), UNBOUND);
 
     return false;  // code block did not throw
