@@ -172,23 +172,17 @@ int get_random(void *p_rng, unsigned char *output, size_t output_len)
 //
 //      return: "Warning: likely to be changed to always be BINARY!"
 //          [binary! integer!]  ; see note below
-//      'settings "Temporarily literal word, evaluative after /METHOD purged"
-//          [<skip> lit-word!]
+//      method "Method name"
+//          [word!]
 //      data "Input data to digest (TEXT! is interpreted as UTF-8 bytes)"
 //          [binary! text!]
 //      /part "Length of data to use, default is current index to series end"
 //          [any-value!]
-//      /method "Supply a method name (deprecated, use `settings`)"
-//          [word!]
 //      /key "Returns keyed HMAC value"
 //          [binary! text!]
 //  ]
 //
 DECLARE_NATIVE(checksum)
-//
-// !!! The /METHOD refinement is being removed because you pretty much always
-// need to supply a method.  As an interim compatibility measure, it is kept
-// but the preference is to say e.g. `checksum 'sha256 data`.
 //
 // !!! The return value of this function was initially integers, and expanded
 // to be either INTEGER! or BINARY!.  Allowing integer results gives some
@@ -211,9 +205,6 @@ DECLARE_NATIVE(checksum)
 {
     CRYPT_INCLUDE_PARAMS_OF_CHECKSUM;
 
-    if (REF(settings))
-        Dequotify(ARG(settings));
-
     REBLEN len = Part_Len_May_Modify_Index(ARG(data), ARG(part));
 
     Size size;
@@ -223,25 +214,13 @@ DECLARE_NATIVE(checksum)
     // builds in when you `#include "md.h"`.  How many entries are in this
     // table depend on the config settings (see %mbedtls-rebol-config.h)
     //
-    char *method_name = rebTrySpell(
-        "all [@", ARG(method), "@", ARG(settings), "] then [",
-            "fail {Specify SETTINGS or /METHOD for CHECKSUM, not both}",
-        "]",
-        "uppercase maybe to text! maybe any [",
-            "@", ARG(method), "@", ARG(settings),
-        "]"
-    );
-    if (method_name == nullptr)
-        fail ("Must specify SETTINGS for CHECKSUM");
+    char *method_name = rebSpell("uppercase to text! @", ARG(method));
 
     const mbedtls_md_info_t *info = mbedtls_md_info_from_string(method_name);
     if (info) {
         rebFree(method_name);
         goto found_tls_info;
     }
-
-    if (REF(key))  // old methods do not support HMAC keying
-        rebJumps ("fail {/METHOD does not support HMAC keying}");
 
     // Look up some internally available methods.
     //

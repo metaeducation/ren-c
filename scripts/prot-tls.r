@@ -852,7 +852,7 @@ finished: func [
         ; cipher suite which defines a different PRF MUST also define the
         ; Hash to use in the Finished computation."
         ;
-        checksum/method ctx.handshake-messages ctx.prf-method
+        checksum ctx.prf-method ctx.handshake-messages
     ]
 
     return make binary! [
@@ -898,13 +898,13 @@ encrypt-data: func [
     ; Message Authentication Code
     ; https://tools.ietf.org/html/rfc5246#section-6.2.3.1
     ;
-    let MAC: checksum/method/key make binary! [
+    let MAC: checksum/key ctx.hash-method make binary! [
         to-8bin ctx.seq-num-w               ; sequence number (64-bit int)
         type                                ; msg type
         ctx.ver-bytes                       ; version
         to-2bin length of content           ; msg content length
         content                             ; msg content
-    ] ctx.hash-method ctx.client-mac-key
+    ] ctx.client-mac-key
 
     let data: join content MAC
 
@@ -1412,7 +1412,7 @@ parse-messages: func [
                                 checksum 'sha1 ctx.handshake-messages
                             ]
                         ] else [
-                            checksum/method ctx.handshake-messages ctx.hmac-method
+                            checksum ctx.hmac-method ctx.handshake-messages
                         ]
                         if (
                             bin <> applique :prf [
@@ -1445,13 +1445,13 @@ parse-messages: func [
                 let skip-amount: either ctx.encrypted? [
                     let mac: copy/part skip data len + 4 ctx.hash-size
 
-                    let mac-check: checksum/method/key make binary! [
+                    let mac-check: checksum/key ctx.hash-method make binary! [
                         to-8bin ctx.seq-num-r   ; 64-bit sequence number
                         #{16}                   ; msg type
                         ctx.ver-bytes           ; version
                         to-2bin len + 4         ; msg content length
                         copy/part data len + 4
-                    ] ctx.hash-method ctx.server-mac-key
+                    ] ctx.server-mac-key
 
                     if mac <> mac-check [
                         fail "Bad handshake record MAC"
@@ -1480,13 +1480,13 @@ parse-messages: func [
             ]
             let len: length of msg-obj.content
             let mac: copy/part skip data len ctx.hash-size
-            let mac-check: checksum/method/key make binary! [
+            let mac-check: checksum/key ctx.hash-method make binary! [
                 to-8bin ctx.seq-num-r   ; sequence number (64-bit int in R3)
                 #{17}                   ; msg type
                 ctx.ver-bytes           ; version
                 to-2bin len             ; msg content length
                 msg-obj.content         ; content
-            ] ctx.hash-method ctx.server-mac-key
+            ] ctx.server-mac-key
 
             if mac <> mac-check [
                 fail "Bad application record MAC"
@@ -1579,8 +1579,8 @@ prf: func [
     let p-shaX: copy #{}  ; P_SHA256, P_SHA384..whichever
     let a: seed  ; A(0)
     while [output-length > length of p-shaX] [
-        a: checksum/key/method a secret ctx.prf-method
-        append p-shaX checksum/key/method (join a seed) secret ctx.prf-method
+        a: checksum/key ctx.prf-method a secret
+        append p-shaX checksum/key ctx.prf-method (join a seed) secret
     ]
     take/last/part p-shaX ((length of p-shaX) - output-length)
     return p-shaX
