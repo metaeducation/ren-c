@@ -232,7 +232,7 @@ combinator: func [
         ; where ACCEPT makes a pack and REJECT does RAISE?
         ;
         return: adapt :return/forward [
-            if not raised? unget value [  ; errors mean combinator failure
+            if not raised? unmeta value [  ; errors mean combinator failure
                 value: ^ pack [unmeta value remainder pending]
             ]
         ]
@@ -713,7 +713,7 @@ default-combinators: make map! reduce [
         [^where remainder]: parser input except e -> [
             return raise e
         ]
-        if null? unget where [  ; e.g. was a plain NULL, isotoped by combinator
+        if null? unmeta where [  ; e.g. was a plain NULL, isotoped by combinator
             return raise make error! [
                 message: [{Call should use TRY if NULL intended, gives:} :arg1]
                 id: 'try-if-null-meant
@@ -1005,12 +1005,12 @@ default-combinators: make map! reduce [
         [^result' remainder subpending]: parser input except e -> [
             return raise e
         ]
-        if pack? unget result' [  ; KEEP picks first pack item
+        if pack? unmeta result' [  ; KEEP picks first pack item
             result': (first unquasi result') else [  ; empty pack, ~[]~
                 fail "Can't KEEP NULL"
             ]
         ]
-        if void? unget result' [
+        if void? unmeta result' [
             pending: null
             return void
         ]
@@ -1027,7 +1027,7 @@ default-combinators: make map! reduce [
             quoted? result' [  ; unmeta'd result asked to be kept literally
                 pending: glom subpending result'  ; retain meta quote as signal
             ]
-            splice? unget result' [
+            splice? unmeta result' [
                 subpending: default [copy []]  ; !!! optimize empty results?
                 for-each item unquasi result' [
                     ;
@@ -1040,7 +1040,7 @@ default-combinators: make map! reduce [
             fail "Incorrect KEEP (not value or SPREAD)"
         ]
 
-        return unget result'
+        return unmeta result'
     ]
 
     === GATHER AND EMIT ===
@@ -1378,13 +1378,13 @@ default-combinators: make map! reduce [
 
         r: ^ eval value
 
-        if void? unget r [  ; like [:(if false [...])] or [:(comment "hi")]
+        if void? unmeta r [  ; like [:(if false [...])] or [:(comment "hi")]
             pending: null
             remainder: input
             return void
         ]
 
-        if null? unget r [
+        if null? unmeta r [
             fail "GET-GROUP! evaluated to NULL"  ; no NULL rules, mistake?
         ]
 
@@ -1500,7 +1500,7 @@ default-combinators: make map! reduce [
                 pending: null
                 return unquote value
             ]
-            if not splice? unget value [
+            if not splice? unmeta value [
                 fail "Only isotope matched against array content is splice"
             ]
             for-each item unquasi value [
@@ -1862,7 +1862,7 @@ default-combinators: make map! reduce [
 
         comb: runs state.combinators.(quoted!)
 
-        if (not quoted? result') and (not splice? unget result') [
+        if (not quoted? result') and (not splice? unmeta result') [
             fail "Inline matching @(...) requires plain value or splice"
         ]
 
@@ -2378,7 +2378,7 @@ default-combinators: make map! reduce [
                     print mold/limit rules 200
                     fail "Combinator did not set remainder"
                 ]
-                if not void? unget temp [
+                if not void? unmeta temp [
                     result': temp  ; overwrite if was visible
                 ]
                 totalpending: glom totalpending spread subpending
@@ -2898,7 +2898,7 @@ parse*: func [
         return raise "Tail of input was not reached"
     ]
 
-    return/forward unget synthesized'
+    return/forward unmeta synthesized'
 ]
 
 parse: (comment [redescribe [  ; redescribe not working at the moment (?)

@@ -68,7 +68,7 @@
     (
         did all [
             (raised? unmeta [^x]: raise "hi" void)
-            raised? unget x
+            raised? unmeta x
         ]
     )
 ]

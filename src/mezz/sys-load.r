@@ -304,10 +304,10 @@ load-value: redescribe [
     chain [
         :load,
         lambda [^x [<fail> block!]] [
-            either raised? unget x [
-                unget x  ; pipe error
+            either raised? unmeta x [
+                unmeta x  ; pipe error
             ][
-                x: unget x
+                x: unmeta x
                 either 1 = length of ensure block! x [
                     first x
                 ][
@@ -636,7 +636,7 @@ import*: func [
     === PROPAGATE QUIT IF REQUESTED, OR RETURN MODULE ===
 
     if quitting and only [
-        quit unget product'  ; "rethrow" the QUIT if DO/ONLY
+        quit unmeta product'  ; "rethrow" the QUIT if DO/ONLY
     ]
 
     return mod
@@ -664,7 +664,7 @@ export*: func [
             left: ^ eval left
             case [
                 void' = left [word: null]
-                any-word? unget left [word: as word! unget left]
+                any-word? unmeta left [word: as word! unmeta left]
                 fail "EXPORT of SET-GROUP! must be VOID or ANY-WORD!"
             ]
         ] else [

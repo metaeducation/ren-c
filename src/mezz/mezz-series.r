@@ -108,7 +108,7 @@ replace: function [
     /all "Replace all occurrences"
     /case "Case-sensitive replacement"
 ][
-    if void? unget pattern' [return target]
+    if void? unmeta pattern' [return target]
 
     all_REPLACE: all
     all: runs :lib.all

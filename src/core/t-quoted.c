@@ -496,34 +496,6 @@ DECLARE_NATIVE(unmeta_p)
 
 
 //
-//  unget: native [
-//
-//  {Interim tool for emulating future GET-WORD!/GET-TUPLE! semantics}
-//
-//      return: [<opt> <void> any-value!]
-//      'var "Quoted for convenience"
-//          [word! tuple!]
-//  ]
-//
-DECLARE_NATIVE(unget)
-{
-    INCLUDE_PARAMS_OF_UNGET;
-
-    if (Get_Var_Core_Throws(SPARE, GROUPS_OK, ARG(var), SPECIFIED))
-        return THROWN;
-
-    if (
-        not IS_BLANK(SPARE)
-        and QUOTE_BYTE(SPARE) <= UNQUOTED_1  // QUASI_2 can be UNMETA'd
-    ){
-        fail ("Unquoted or isotopic values cannot be UNMETA'd");
-    }
-
-    return UNMETA(SPARE);
-}
-
-
-//
 //  spread: native [
 //
 //  {Make block arguments splice}

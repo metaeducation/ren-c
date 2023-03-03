@@ -34,7 +34,7 @@ destructure: func [
                 branch
             ) also ^r' -> [
                 if not multi [
-                    return unget r'
+                    return unmeta r'
                 ]
                 result': r'
             ]

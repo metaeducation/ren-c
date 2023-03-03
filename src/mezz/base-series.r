@@ -89,7 +89,7 @@ join: function [
     ]
     ^value [<void> any-value!]
 ][
-    if void? unget value [
+    if void? unmeta value [
         return copy base
     ]
 
@@ -110,7 +110,7 @@ join: function [
     base: to block! base  ; TO operation copies
 
     if quasi? value [
-        if not splice? unget value [
+        if not splice? unmeta value [
             fail "JOIN only accepts SPLICE blocks as ^^META parameters"
         ]
         value: unquasi value

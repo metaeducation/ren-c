@@ -146,7 +146,7 @@ export console!: make object! [
 
         === DECAY IF A "LAZY" VALUE ===
 
-        if lazy? unget v [
+        if lazy? unmeta v [
             v: unquasi v
             if in v 'decay [
                 print ["; decay of lazy object with" mold words of v]
@@ -181,7 +181,7 @@ export console!: make object! [
         ; But doing it the other way around would force functions like HELP to
         ; be invisible, and that's not desirable.
 
-        if pack? unget v [
+        if pack? unmeta v [
             v: unquasi v
 
             if 0 = length of v [  ; 0-length pack prints nothing, see above

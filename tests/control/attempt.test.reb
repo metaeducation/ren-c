@@ -38,11 +38,11 @@
     ][
         last': none'
         reduce-each ^result' code [
-            if raised? unget result' [return null]
-            if void? unget result' [continue]
+            if raised? unmeta result' [return null]
+            if void? unmeta result' [continue]
             last': result'
         ]
-        return unget last'
+        return unmeta last'
     ], true)
 
     (null? uattempt [1 / 0])

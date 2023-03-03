@@ -87,7 +87,7 @@ run-single-test: func [
         '~[]~ = result [
             "test returned empty pack ~[]~ isotope"  ; ~result~ would error
         ]
-        (elide if pack? unget result [result: first unquasi result])
+        (elide if pack? unmeta result [result: first unquasi result])
 
         result = '~false~ [
             "test returned false"
@@ -96,7 +96,7 @@ run-single-test: func [
         quasi? result [
             "test returned isotope:" (mold/limit result 40)
         ]
-        (elide result: unget result)
+        (elide result: unmeta result)
 
         null? result [
             "test returned null"

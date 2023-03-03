@@ -26,21 +26,21 @@
     ][
         [^result1' remainder1]: parser1 input except e -> [pack [raise e null]]
         [^result2' remainder2]: parser2 input except e -> [pack [raise e null]]
-        if raised? unget result2' [  ; parser2 didn't succeed
-            if raised? unget result1' [
-                return unget result1'  ; neither succeeded
+        if raised? unmeta result2' [  ; parser2 didn't succeed
+            if raised? unmeta result1' [
+                return unmeta result1'  ; neither succeeded
             ]
         ] else [  ; parser2 succeeded
             any [
-                raised? unget result1'
+                raised? unmeta result1'
                 (index of remainder1) < (index of remainder2)
             ] then [
                 remainder: remainder2
-                return unget result2'
+                return unmeta result2'
             ]
         ]
         remainder: remainder1
-        return unget result1'
+        return unmeta result1'
     ]
     true
 )
@@ -202,13 +202,13 @@
         [^result2' remainder2 pending2]: parser2 input except e -> [
             pack [raise e null null]
         ]
-        if raised? unget result2' [  ; parser2 didn't succeed
-            if raised? unget result1' [
-                return unget result1'  ; neither succeeded
+        if raised? unmeta result2' [  ; parser2 didn't succeed
+            if raised? unmeta result1' [
+                return unmeta result1'  ; neither succeeded
             ]
         ] else [  ; parser2 succeeded
             any [
-                raised? unget result1'
+                raised? unmeta result1'
                 (index of remainder1) < (index of remainder2)
             ] then [
                 remainder: remainder2

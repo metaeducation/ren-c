@@ -23,7 +23,7 @@ verify: function [
 ][
     while [[^result']: evaluate/next conditions 'pos, pos] [
         any [
-            void? unget result'  ; vanished
+            void? unmeta result'  ; vanished
             '~true~ = result'  ; truthy
             non quasi! result' then [result' <> null']
 
