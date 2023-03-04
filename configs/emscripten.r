@@ -120,7 +120,6 @@ extensions: make map! compose [
     Event -
     Filesystem -
     JavaScript +
-    Library -
     Locale -
     Network -
     ODBC -

@@ -28,7 +28,6 @@ extensions: make map! [
     Event +
     Filesystem +
     JavaScript -
-    Library +
     Locale +
     Network +
     ODBC -

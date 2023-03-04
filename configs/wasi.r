@@ -107,7 +107,6 @@ extensions: make map! compose [
     Event -
     Filesystem -  ; libuv-based, see [1]
     JavaScript -  ; emscripten only (embed QuickJS? see [2])
-    Library -
     Locale -
     Network -  ; libuv-based, see [1]
     ODBC -
