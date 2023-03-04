@@ -58,9 +58,9 @@
 ; ARRAY is poorly named (noun-ish), generates blocks
 ; http://www.rebol.com/docs/words/warray.html
 
-([_ _ _ _ _] = array 5)
+([~ ~ ~ ~ ~] = array 5)
 ([0 0 0 0 0] = array/initial 5 0)
-([[_ _ _] [_ _ _]] = array [2 3])
+([[~ ~ ~] [~ ~ ~]] = array [2 3])
 ([[0 0 0] [0 0 0]] = array/initial [2 3] 0)
 (
     counter: func [<static> n (0)] [return n: n + 1]

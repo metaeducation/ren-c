@@ -58,7 +58,7 @@ array: func [
         [any-value! ~action!~]
     <local> rest block
 ][
-    initial: default ['_]  ; if not specified, array will be all blanks
+    initial: default ['~]  ; if not specified, array will be all meta nihil
     if block? size [
         rest: next size else [
             ;
@@ -69,7 +69,7 @@ array: func [
         if not integer? size: size.1 [
             fail 'size ["Expect INTEGER! size in BLOCK!, not" type of size]
         ]
-        if tail? rest [rest: null]  ; want `array [2]` => `[_ _]`, no recurse
+        if tail? rest [rest: null]  ; want `array [2]` => `[~ ~]`, no recurse
     ]
     else [rest: null]
 
