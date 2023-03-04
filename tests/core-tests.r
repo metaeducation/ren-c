@@ -36,7 +36,6 @@
 %datatypes/get-group.test.reb
 %datatypes/get-path.test.reb
 %datatypes/get-word.test.reb
-%datatypes/gob.test.reb
 %datatypes/hash.test.reb
 %datatypes/image.test.reb
 %datatypes/integer.test.reb

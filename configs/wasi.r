@@ -108,7 +108,6 @@ extensions: make map! compose [
     Event -
     Filesystem -  ; libuv-based, see [1]
     GIF -
-    Gob -
     Image -
     JavaScript -  ; emscripten only (embed QuickJS? see [2])
     JPG -

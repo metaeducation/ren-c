@@ -355,9 +355,9 @@ enum Reb_Vararg_Op {
 //=//// REBVAL PAYLOAD CONTENTS ///////////////////////////////////////////=//
 //
 // Some internal APIs pass around the extraction of value payloads, like take
-// a REBYMD* or REBGOB*, when they could probably just as well pass around a
-// REBVAL*.  The usages are few and far enough between.  But for the moment
-// just define things here.
+// a REBYMD* when they could probably just as well pass around a REBVAL*.
+// The usages are few and far enough between.  But for the moment just define
+// things here.
 //
 
 typedef struct reb_ymdz {

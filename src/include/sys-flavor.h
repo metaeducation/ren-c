@@ -70,7 +70,6 @@ enum Reb_Stub_Flavor {
 
     FLAVOR_LIBRARY,
     FLAVOR_HANDLE,
-    FLAVOR_GOBLIST,
 
     FLAVOR_FEED,
     FLAVOR_API,

@@ -6,10 +6,6 @@
     recycle
     true
 )]
-[#1989 (
-    repeat ([comment 30000000] 300) [make gob! []]
-    true
-)]
 
 ; !!! simplest possible LOAD/SAVE smoke test, expand!
 (

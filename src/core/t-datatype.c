@@ -158,8 +158,7 @@ REBTYP* Datatype_From_Url(const REBVAL *url) {
             "http://datatypes.rebol.info/library [0]",
             "http://datatypes.rebol.info/image [1]",
             "http://datatypes.rebol.info/vector [2]",
-            "http://datatypes.rebol.info/gob [3]",
-            "http://datatypes.rebol.info/struct [4]",
+            "http://datatypes.rebol.info/struct [3]",
             "-1",
         "]"
     );

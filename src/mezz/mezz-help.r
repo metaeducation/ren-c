@@ -65,7 +65,6 @@ description-of: function [
                 copy maybe get 'meta.description
             ] else [null]
         ]
-        gob! [spaced ["offset:" v.offset "size:" v.size]]
         object! [mold words of v]
         typeset! [mold make block! v]
         port! [mold reduce [v.spec.title v.spec.ref]]

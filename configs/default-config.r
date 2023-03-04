@@ -29,7 +29,6 @@ extensions: make map! [
     Event +
     Filesystem +
     GIF +
-    Gob +
     JavaScript -
     JPG +
     Library +

@@ -406,15 +406,15 @@ an: lambda [
 ;
 ; head?
 ; {Returns TRUE if a series is at its beginning.}
-; series [any-series! gob! port!]
+; series [any-series! port!]
 ;
 ; tail?
 ; {Returns TRUE if series is at or past its end; or empty for other types.}
-; series [any-series! object! gob! port! bitset! map! blank! varargs!]
+; series [any-series! object! port! bitset! map! blank! varargs!]
 ;
 ; past?
 ; {Returns TRUE if series is past its end.}
-; series [any-series! gob! port!]
+; series [any-series! port!]
 ;
 ; open?
 ; {Returns TRUE if port is open.}

@@ -304,10 +304,6 @@ void* Probe_Core_Debug(
         Probe_Print_Helper(p, expr, "Handle", file, line);
         break;
 
-      case FLAVOR_GOBLIST:
-        Probe_Print_Helper(p, expr, "Goblist", file, line);
-        break;
-
       case FLAVOR_DATASTACK:
         Probe_Print_Helper(p, expr, "Datastack", file, line);
         break;

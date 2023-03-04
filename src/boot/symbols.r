@@ -48,7 +48,6 @@ optimized-out
 
 image!  ; !!! for LOAD #[image! [...]] (used in tests), and molding, temporary
 vector!  ; !!! for molding, temporary
-gob!  ; !!! for molding, temporary
 struct!  ; !!! for molding, temporary
 library!  ; !!! for molding, temporary
 
@@ -181,39 +180,18 @@ rebval
 *** ; !!! Temporary placeholder for ellipsis; will have to be special trick
 varargs
 
-; Gobs:
-gob
+bits
+
 offset
-size
-pane
-parent
-image
-draw
-text
-effect
-color
+data
 flags
+
+; Used by image! extension
 rgb
 alpha
-data
-resize
-rotate
-no-title
-no-border
-dropable
-transparent
-popup
-modal
-on-top
-hidden
-owner
-active
-minimize
-maximize
-restore
-fullscreen
 
-bits
+parent
+size
 
 uid
 euid

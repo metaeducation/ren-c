@@ -121,7 +121,6 @@ extensions: make map! compose [
     Event -
     Filesystem -
     GIF -
-    Gob -
     Image -
     JavaScript +
     JPG -

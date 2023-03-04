@@ -234,7 +234,6 @@
         #"a"
         10x20
         (make typeset! [integer! text!])
-        (make gob! [])
         (make event! [type: 'done port: port])
         ("try handle here")
         ("try struct here")

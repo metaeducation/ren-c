@@ -144,7 +144,7 @@ inline static void SET_VAL_EVENT_Y(REBVAL *v, uint16_t y) {
 #define SET_VAL_EVENT_KEYCODE(v,keycode) \
     SET_SECOND_UINT16(VAL_EVENT_DATA(v), (keycode))
 
-// !!! These hooks allow the REB_GOB cell type to dispatch to code in the
+// !!! These hooks allow the REB_EVENT cell type to dispatch to code in the
 // EVENT! extension if it is loaded.
 //
 extern REBINT CT_Event(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict);
@@ -158,41 +158,6 @@ extern REBTYPE(Event);
 extern Bounce Event_Actor(Frame(*) frame_, REBVAL *port, Symbol(const*) verb);
 extern void Startup_Event_Scheme(void);
 extern void Shutdown_Event_Scheme(void);
-
-
-////// GOB! INSIDE KNOWLEDGE ("libGOB") ///////////////////////////////////=//
-//
-// !!! As an attempt at allowing optimization between events and GOB!s
-// in particular, events mirror enough information about a GOB!'s internal
-// structure to extract a handle to them and reconstitute them to values.
-// This allows events to fit in a single cell.
-//
-// (The concept could be expanded to make a kind of "libGob" if events truly
-// wanted to do more without going through usermode libRebol API calls.)
-//
-
-#define VAL_GOB(v) \
-    cast(REBGOB*, PAYLOAD(Any, (v)).first.p)  // use w/a const REBVAL*
-
-#define mutable_VAL_GOB(v) \
-    (*cast(REBGOB**, &PAYLOAD(Any, (v)).first.p))  // non-const REBVAL*
-
-#define VAL_GOB_INDEX(v) \
-    PAYLOAD(Any, v).second.u
-
-inline static REBVAL *Init_Gob(Cell(*) out, REBGOB *g) {
-    assert(GET_SERIES_FLAG(g, MANAGED));
-
-    // !!! HACK... way of getting EG_Gob_Type.
-    //
-    REBVAL *hack = rebValue("make gob! []");
-    Copy_Cell(out, hack);
-    rebRelease(hack);
-
-    mutable_VAL_GOB(out) = g;
-    VAL_GOB_INDEX(out) = 0;
-    return cast(REBVAL*, out);
-}
 
 
 extern int64_t Delta_Time(int64_t base);

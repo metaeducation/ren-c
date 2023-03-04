@@ -102,12 +102,6 @@ static bool Set_Event_Var(REBVAL *event, Cell(const*) word, const REBVAL *val)
         break;
 
       case SYM_WINDOW:
-      case SYM_GOB:
-        if (rebUnboxLogic("gob?", val)) {  // optimized to extract GOB's node
-            mutable_VAL_EVENT_MODEL(event) = EVM_GUI;
-            SET_VAL_EVENT_NODE(event, VAL_GOB(val));
-            break;
-        }
         return false;
 
       case SYM_OFFSET:
@@ -288,12 +282,7 @@ static REBVAL *Get_Event_Var(
         assert(VAL_EVENT_MODEL(v) == EVM_CALLBACK);
         return Copy_Cell(out, Get_System(SYS_PORTS, PORTS_CALLBACK)); }
 
-      case SYM_WINDOW:
-      case SYM_GOB: {
-        if (VAL_EVENT_MODEL(v) == EVM_GUI) {
-            if (VAL_EVENT_NODE(v))
-                return Init_Gob(out, cast(REBGOB*, VAL_EVENT_NODE(v)));
-        }
+      case SYM_WINDOW: {
         return nullptr; }
 
       case SYM_OFFSET: {
@@ -472,7 +461,7 @@ void MF_Event(REB_MOLD *mo, noquote(Cell(const*)) v, bool form)
 
     REBLEN field;
     option(SymId) fields[] = {
-        SYM_TYPE, SYM_PORT, SYM_GOB, SYM_OFFSET, SYM_KEY,
+        SYM_TYPE, SYM_PORT, SYM_OFFSET, SYM_KEY,
         SYM_FLAGS, SYM_CODE, SYM_DATA, SYM_0
     };
 

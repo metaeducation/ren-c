@@ -97,8 +97,6 @@ image!: make datatype! @image!
 image?: typechecker image!
 vector!: make datatype! @vector!
 vector?: typechecker vector!
-gob!: make datatype! @gob!
-gob?: typechecker gob!
 struct!: make datatype! @struct!
 struct?: typechecker struct!
 

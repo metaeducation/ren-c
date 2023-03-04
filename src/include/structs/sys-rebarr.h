@@ -52,15 +52,6 @@
 typedef Raw_Array REBSPC;
 
 
-// To help document places in the core that are complicit in the "extension
-// hack", alias arrays being used for the FFI and GOB to another name.
-//
-typedef Raw_Array REBGOB;
-
-typedef Raw_Array REBSTU;
-typedef Raw_Array REBFLD;
-
-
 //=//// TYPE HOOK ACCESS //////////////////////////////////////////////////=//
 //
 // Built-in types identify themselves as one of ~64 fundamental "kinds".  This
