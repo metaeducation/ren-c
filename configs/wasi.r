@@ -109,7 +109,6 @@ extensions: make map! compose [
     Filesystem -  ; libuv-based, see [1]
     Image -
     JavaScript -  ; emscripten only (embed QuickJS? see [2])
-    JPG -
     Library -
     Locale -
     Network -  ; libuv-based, see [1]

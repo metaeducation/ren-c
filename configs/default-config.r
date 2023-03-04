@@ -29,7 +29,6 @@ extensions: make map! [
     Event +
     Filesystem +
     JavaScript -
-    JPG +
     Library +
     Locale +
     Network +

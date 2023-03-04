@@ -122,7 +122,6 @@ extensions: make map! compose [
     Filesystem -
     Image -
     JavaScript +
-    JPG -
     Library -
     Locale -
     Network -
