@@ -113,7 +113,6 @@ extensions: make map! compose [
     Locale -
     Network -  ; libuv-based, see [1]
     ODBC -
-    PNG -
     Process -  ; no pipe2, separate out Call extension?
     Stdio +
     TCC -

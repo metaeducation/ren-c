@@ -126,7 +126,6 @@ extensions: make map! compose [
     Locale -
     Network -
     ODBC -
-    PNG -
     Process -
     Stdio -
     TCC -

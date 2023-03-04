@@ -33,7 +33,6 @@ extensions: make map! [
     Locale +
     Network +
     ODBC -
-    PNG +
     Process +
     TCC -
     Time +
