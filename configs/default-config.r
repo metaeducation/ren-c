@@ -20,7 +20,6 @@ extensions: make map! [
     ; default.  (Review the general policy for default inclusions.)
     ; Clipboard is only implemented in Windows at the moment.
 
-    BMP +
     Clipboard -
     Console +
     Crypt +

@@ -112,7 +112,6 @@ optimize: "s"
 ; https://webassembly.org/roadmap/
 ;
 extensions: make map! compose [
-    BMP -
     Clipboard -
     Crypt -
     Console +

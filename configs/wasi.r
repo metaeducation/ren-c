@@ -99,7 +99,6 @@ optimize: if debug-wasi-extension [0] else ["s"]
 ;      https://github.com/second-state/wasmedge-quickjs
 ;
 extensions: make map! compose [
-    BMP -
     Clipboard -
     Crypt -
     Console +
