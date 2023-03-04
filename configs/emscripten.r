@@ -117,7 +117,6 @@ extensions: make map! compose [
     Console +
     Debugger -
     DNS -
-    Event -
     Filesystem -
     JavaScript +
     Locale -

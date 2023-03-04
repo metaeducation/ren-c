@@ -104,7 +104,6 @@ extensions: make map! compose [
     Console +
     Debugger -
     DNS -
-    Event -
     Filesystem -  ; libuv-based, see [1]
     JavaScript -  ; emscripten only (embed QuickJS? see [2])
     Locale -

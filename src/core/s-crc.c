@@ -326,7 +326,6 @@ uint32_t Hash_Value(Cell(const*) cell)
         hash = cast(uint32_t, cast(uintptr_t, VAL_MAP(cell)) >> 4);
         break;
 
-      case REB_EVENT:
       case REB_HANDLE:
         //
         // !!! Review hashing behavior or needs of these types if necessary.

@@ -183,12 +183,6 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
         }
         break; }
 
-      case REB_EVENT: {  // packed cell structure with one GC-able slot
-        assert(Get_Cell_Flag(v, FIRST_IS_NODE));
-        Node* n = VAL_NODE1(v);  // REBGOB*, Context(*), etc.
-        assert(n == nullptr or Is_Marked(n));
-        break; }
-
       case REB_BINARY: {
         assert(Get_Cell_Flag(v, FIRST_IS_NODE));
         Binary(*) s = BIN(VAL_NODE1(v));

@@ -10,14 +10,12 @@
 (datatype? decimal!)
 (datatype? email!)
 (datatype? error!)
-(datatype? event!)
 (datatype? file!)
 (datatype? get-path!)  ; get-path! =? path! in R2/Forward, R2 2.7.7+
 (datatype? get-word!)
 (datatype? handle!)
 (datatype? integer!)
 (datatype? issue!)
-(datatype? library!)
 (datatype? logic!)
 (datatype? map!)  ; map! =? hash! in R2/Forward, R2 2.7.7+
 (datatype? module!)

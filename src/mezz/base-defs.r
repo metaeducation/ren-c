@@ -515,7 +515,6 @@ run func* [
     module?:
     error?:
     port?:
-    event?:
     handle?:
 
     ; Typesets predefined during bootstrap.
@@ -640,7 +639,7 @@ internal!: make typeset! [
 
 immediate!: make typeset! [
     ; Does not include internal datatypes
-    blank! logic! any-scalar! date! any-word! datatype! typeset! event!
+    blank! logic! any-scalar! date! any-word! datatype! typeset!
 ]
 
 ok?: func* [

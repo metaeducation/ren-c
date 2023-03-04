@@ -44,10 +44,6 @@ inherited  ; answer from BINDING OF when variable is attached and inherited
 
 optimized-out
 
-;=== LEGACY HELPERS ===
-
-library!  ; !!! for molding, temporary
-
 
 ;=== COMBINATORS ===
 

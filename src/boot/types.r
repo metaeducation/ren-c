@@ -140,20 +140,11 @@ handle!     "arbitrary internal object or value"
 ; 64 entries).  Yet there can be an arbitrary number of extension types.
 ; Those types use the REB_CUSTOM cell class, and give up their ->extra field
 ; of their cell instances to point to their specific datatype.
-;
-; Exceptions may be permitted.  As an example, EVENT! is implemented in an
-; extension (because not all builds need it).  But it reserves a type byte
-; and fills in its entry in this table when it is loaded (hence `?`)
 
 custom!     "instance of an extension-defined type"
             ()
             []
             [-           -       -]
-
-event!      "user interface event"  ; %extensions/event/README.md
-            (CELL_FLAG_FIRST_IS_NODE)
-            []
-            [?           ?       ?]
 
 
 ; URL! has a HEART-BYTE! that is a string, but is not itself in the ANY-STRING!

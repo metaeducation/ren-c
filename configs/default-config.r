@@ -25,7 +25,6 @@ extensions: make map! [
     Crypt +
     Debugger +
     DNS +
-    Event +
     Filesystem +
     JavaScript -
     Locale +
