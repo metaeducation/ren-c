@@ -1099,7 +1099,7 @@ Context(*) Error_Cannot_Use(Symbol(const*) verb, Cell(const*) first_arg)
 
     // !!! Improve this error message when used with REB_CUSTOM (right now
     // will just say "cannot use verb with CUSTOM!", regardless of if it
-    // is an IMAGE! or VECTOR! or GOB!...)
+    // is an IMAGE! or ...)
     //
     if (VAL_TYPE(first_arg) == REB_CUSTOM)
         fail (Error_Cannot_Use_Raw(

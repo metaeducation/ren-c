@@ -216,7 +216,6 @@
         <tag>
         (make bitset! 16)
         (make image! 10x20)
-        (make vector! [integer! 32 100])
 
         ; https://github.com/rebol/rebol-issues/issues/2340
         ; (make map! [m a p !])

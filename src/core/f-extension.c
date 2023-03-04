@@ -375,7 +375,7 @@ DECLARE_NATIVE(unload_extension)
 // in %generics.r (though R3-Alpha called them "actions").
 //
 // Ren-C attempts to streamline the core so it can be used for more purposes,
-// where suppport code for GOB! (or IMAGE!, or VECTOR!) may be redundant or
+// where suppport code for GOB! (or IMAGE!) may be redundant or
 // otherwise wasteful.  These types are moved to extensions, which may be
 // omitted from the build (or optionally loaded as DLLs).   That means that
 // when the system is booting, it might not know what a GOB! is...and other

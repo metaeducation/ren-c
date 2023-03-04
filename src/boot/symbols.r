@@ -47,7 +47,6 @@ optimized-out
 ;=== LEGACY HELPERS ===
 
 image!  ; !!! for LOAD #[image! [...]] (used in tests), and molding, temporary
-vector!  ; !!! for molding, temporary
 struct!  ; !!! for molding, temporary
 library!  ; !!! for molding, temporary
 
@@ -152,30 +151,6 @@ identify
 decode
 encode
 
-; Serial parameters
-; Parity
-odd
-even
-; Control flow
-hardware
-software
-
-; Struct
-uint8
-int8
-uint16
-int16
-uint32
-int32
-uint64
-int64
-float
-;double ;reuse earlier definition
-pointer
-raw-memory
-raw-size
-extern
-rebval
 
 *** ; !!! Temporary placeholder for ellipsis; will have to be special trick
 varargs

@@ -157,8 +157,7 @@ REBTYP* Datatype_From_Url(const REBVAL *url) {
         "switch", url, "[",
             "http://datatypes.rebol.info/library [0]",
             "http://datatypes.rebol.info/image [1]",
-            "http://datatypes.rebol.info/vector [2]",
-            "http://datatypes.rebol.info/struct [3]",
+            "http://datatypes.rebol.info/struct [2]",
             "-1",
         "]"
     );
@@ -316,7 +315,7 @@ Array(*) Startup_Datatypes(Array(*) boot_types, Array(*) boot_typespecs)
     // this establishes it for just the extension types we currently have.
     //
     int i;
-    for (i = 0; i < 5; ++i) {
+    for (i = 0; i < 3; ++i) {
         REBTYP *type = Make_Binary(sizeof(CFUNC*) * IDX_HOOKS_MAX);
         CFUNC** hooks = cast(CFUNC**, BIN_HEAD(type));
 

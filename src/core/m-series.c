@@ -44,7 +44,7 @@ void Extend_Series_If_Necessary(REBSER *s, REBLEN delta)
 //  Copy_Series_Core: C
 //
 // Copy underlying series that *isn't* an "array" (such as STRING!, BINARY!,
-// BITSET!, VECTOR!...).  Includes the terminator.
+// BITSET!...).  Includes the terminator.
 //
 // Use Copy_Array routines (which specify Shallow, Deep, etc.) for greater
 // detail needed when expressing intent for Rebol Arrays.

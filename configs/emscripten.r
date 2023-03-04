@@ -135,7 +135,6 @@ extensions: make map! compose [
     Time -
     UUID -
     UTF -
-    Vector -
     View -
 ]
 

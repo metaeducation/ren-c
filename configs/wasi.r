@@ -122,7 +122,6 @@ extensions: make map! compose [
     Time -  ; no sys/wait
     UUID -
     UTF -
-    Vector -
     View -
 ]
 

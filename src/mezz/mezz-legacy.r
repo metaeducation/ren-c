@@ -95,10 +95,6 @@ rejoin: func [<local> dummy] [
 
 image!: make datatype! @image!
 image?: typechecker image!
-vector!: make datatype! @vector!
-vector?: typechecker vector!
-struct!: make datatype! @struct!
-struct?: typechecker struct!
 
 ; LIBRARY! is a bit different, because it may not be feasible to register it
 ; in an extension, because it's used to load extensions from DLLs.  But it

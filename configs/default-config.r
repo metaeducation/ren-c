@@ -41,7 +41,6 @@ extensions: make map! [
     Time +
     UUID +
     UTF +
-    Vector +
     View +
 ]
 

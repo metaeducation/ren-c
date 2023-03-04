@@ -663,7 +663,7 @@ static void Mark_Data_Stack(void)
 static void Mark_Extension_Types(void)
 {
     int i;
-    for (i = 0; i < 5; ++i) {
+    for (i = 0; i < 3; ++i) {
         const REBTYP** custom = c_cast(const REBTYP**, &PG_Extension_Types[i]);
         if (not *custom)
             continue;
