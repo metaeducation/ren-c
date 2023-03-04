@@ -11,7 +11,6 @@
 (false = not %myfile)
 (false = not func [] [])
 (false = not first [:a])
-(false = not make image! 0x0)
 (false = not 0)
 (false = not #1444)
 (false = not first ['a/b])

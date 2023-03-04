@@ -215,7 +215,6 @@
         e@mail
         <tag>
         (make bitset! 16)
-        (make image! 10x20)
 
         ; https://github.com/rebol/rebol-issues/issues/2340
         ; (make map! [m a p !])

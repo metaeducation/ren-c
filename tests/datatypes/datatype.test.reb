@@ -15,7 +15,6 @@
 (datatype? get-path!)  ; get-path! =? path! in R2/Forward, R2 2.7.7+
 (datatype? get-word!)
 (datatype? handle!)
-(datatype? image!)
 (datatype? integer!)
 (datatype? issue!)
 (datatype? library!)

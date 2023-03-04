@@ -79,11 +79,6 @@
     #"^M" == f
 )
 (
-    a-value: make image! 0x0
-    f: does [a-value]
-    same? a-value f
-)
-(
     f: does [0]
     0 == f
 )

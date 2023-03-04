@@ -129,10 +129,7 @@
     :a-value == do reduce [:a-value]
 )
 (NUL == do [NUL])
-(
-    a-value: make image! 0x0
-    same? a-value do reduce [a-value]
-)
+
 (0 == do [0])
 (1 == do [1])
 (#a == do [#a])

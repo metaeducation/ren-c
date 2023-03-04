@@ -106,7 +106,6 @@ extensions: make map! compose [
     DNS -
     Event -
     Filesystem -  ; libuv-based, see [1]
-    Image -
     JavaScript -  ; emscripten only (embed QuickJS? see [2])
     Library -
     Locale -

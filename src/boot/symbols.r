@@ -46,8 +46,6 @@ optimized-out
 
 ;=== LEGACY HELPERS ===
 
-image!  ; !!! for LOAD #[image! [...]] (used in tests), and molding, temporary
-struct!  ; !!! for molding, temporary
 library!  ; !!! for molding, temporary
 
 
@@ -70,7 +68,6 @@ kind
 quotes
 index
 xy  ; !!! There was an INDEX?/XY, which is an XY reflector for the time being
-;bytes  ; IMAGE! uses this to give back the underlying BINARY!--in %types.r
 length
 codepoint
 head
@@ -160,10 +157,6 @@ bits
 offset
 data
 flags
-
-; Used by image! extension
-rgb
-alpha
 
 parent
 size

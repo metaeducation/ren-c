@@ -45,10 +45,7 @@
     :a == reeval :a-value
 )
 (NUL == reeval NUL)
-(
-    a-value: make image! 0x0
-    same? a-value reeval a-value
-)
+
 (0 == reeval 0)
 (1 == reeval 1)
 (#a == reeval #a)

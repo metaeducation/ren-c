@@ -55,7 +55,6 @@ description-of: function [
     return (switch type of :v [
         bad-word! [null]
         any-array! [spaced ["array of length:" length of v]]
-        image! [spaced ["size:" v.size]]
         datatype! [
             spec: ensure object! spec of v  ; "type specs" need simplifying
             copy maybe spec.title

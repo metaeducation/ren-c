@@ -69,10 +69,7 @@
     :a-value == any [:a-value]
 )
 (NUL == any [NUL])
-(
-    a-value: make image! 0x0
-    same? a-value any [a-value]
-)
+
 (0 == any [0])
 (1 == any [1])
 (#a == any [#a])
@@ -172,10 +169,7 @@
     :a-value == any [false :a-value]
 )
 (NUL == any [false NUL])
-(
-    a-value: make image! 0x0
-    same? a-value any [false a-value]
-)
+
 (0 == any [false 0])
 (1 == any [false 1])
 (#a == any [false #a])
@@ -272,10 +266,7 @@
     :a-value == any [:a-value false]
 )
 (NUL == any [NUL false])
-(
-    a-value: make image! 0x0
-    same? a-value any [a-value false]
-)
+
 (0 == any [0 false])
 (1 == any [1 false])
 (#a == any [#a false])

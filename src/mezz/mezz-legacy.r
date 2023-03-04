@@ -84,18 +84,6 @@ rejoin: func [<local> dummy] [
 
 === EXTENSION DATATYPE DEFINITIONS ===
 
-; Even though Ren-C does not build in things like IMAGE! or GOB! to the core,
-; there's a mechanical issue about the words for the datatypes being defined
-; so that the extension can load.  This means at least some kind of stub type
-; has to be available when the specs are being processed, else they could not
-; mention the types.  The extension mechanism should account for this with
-; some kind of "preload" script material (right now it only has a "postload"
-; hook to run a script).  Until then, define here.  (Note these types won't
-; be usable for anything but identity comparisons until the extension loads.)
-
-image!: make datatype! @image!
-image?: typechecker image!
-
 ; LIBRARY! is a bit different, because it may not be feasible to register it
 ; in an extension, because it's used to load extensions from DLLs.  But it
 ; doesn't really need all 3 cell fields, so it gives up being in the base

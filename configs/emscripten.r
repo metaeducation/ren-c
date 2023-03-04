@@ -119,7 +119,6 @@ extensions: make map! compose [
     DNS -
     Event -
     Filesystem -
-    Image -
     JavaScript +
     Library -
     Locale -

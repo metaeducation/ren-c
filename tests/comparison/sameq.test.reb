@@ -37,9 +37,6 @@
     a-value: %""
     equal? same? a-value to text! a-value same? to text! a-value a-value
 )
-(not same? #{00} #[image! [1x1 #{00000000}]])
-; symmetry
-(equal? same? #{00} #[image! [1x1 #{00000000}]] same? #[image! [1x1 #{00000000}]] #{00})
 (not same? #{00} to integer! #{00})
 ; symmetry
 (equal? same? #{00} to integer! #{00} same? to integer! #{00} #{00})

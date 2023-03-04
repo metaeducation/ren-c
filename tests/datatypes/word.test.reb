@@ -60,10 +60,6 @@
     :a-value == a-value
 )
 (
-    a-value: make image! 0x0
-    same? :a-value a-value
-)
-(
     a-value: 0
     :a-value == a-value
 )

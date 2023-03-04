@@ -91,7 +91,7 @@ inline static REBTYP* VAL_TYPE_CUSTOM(noquote(Cell(const*)) v) {
     assert(VAL_TYPE_KIND_OR_CUSTOM(v) == REB_CUSTOM);
 
     int i;
-    for (i = 0; i < 5; ++i) {
+    for (i = 0; i < 1; ++i) {
         CFUNC** hooklist = cast(CFUNC**,
             m_cast(Byte*, SER_DATA(PG_Extension_Types[i]))
         );

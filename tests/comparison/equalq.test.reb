@@ -54,41 +54,7 @@
     a-value: %""
     equal? equal? a-value to text! a-value equal? to text! a-value a-value
 )
-; image! same contents
-(equal? a-value: #[image! [1x1 #{000000FF}]] a-value)
-(equal? #[image! [1x1 #{000000FF}]] #[image! [1x1 #{000000FF}]])
 
-; Literal offset not supported in R2.
-(equal? #[image! [1x1 #{000000FF} 2]] #[image! [1x1 #{000000FF} 2]])
-; Literal offset not supported in R2.
-(not equal? #[image! [1x1 #{000000FF} 2]] #[image! [1x1 #{000000FF}]])
-
-; !!! The IMAGE! data type is being moved to an extension, but NEXT is a
-; specialization of SKIP and doesn't go through the GENERIC mechanism.  This
-; can be revisited and addressed a number of ways, but IMAGE! is not a
-; Beta/One feature.  However loading/encoding/decoding are kept working.
-;
-
-[(true comment [
-    (
-        a-value: #[image! [1x1 #{000000FF}]]
-        not equal? a-value next a-value
-    )
-    (equal? #[image! [0x0 #{}]] next #[image! [1x1 #{000000FF}]])
-    (equal? #[image! [1x0 #{}]] next #[image! [1x1 #{000000FF}]])
-    (equal? #[image! [0x1 #{}]] next #[image! [1x1 #{000000FF}]])
-    (not equal? #[image! [0x0 #{}]] next #[image! [1x1 #{000000FF}]])
-    (not equal? #[image! [1x0 #{}]] next #[image! [1x1 #{000000FF}]])
-    (not equal? #[image! [0x1 #{}]] next #[image! [1x1 #{000000FF}]])
-])]
-
-; No implicit to binary! from image!
-(not equal? #{00} #[image! [1x1 #{000000FF}]])
-; No implicit to binary! from image!
-(not equal? #{00000000} #[image! [1x1 #{000000FF}]])
-; No implicit to binary! from image!
-(not equal? #{0000000000} #[image! [1x1 #{000000FF}]])
-(equal? equal? #{00} #[image! [1x1 #{00000000}]] equal? #[image! [1x1 #{00000000}]] #{00})
 ; No implicit to binary! from integer!
 (not equal? #{00} to integer! #{00})
 (equal? equal? #{00} to integer! #{00} equal? to integer! #{00} #{00})
