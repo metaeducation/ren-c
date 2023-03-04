@@ -120,7 +120,6 @@ extensions: make map! compose [
     DNS -
     Event -
     Filesystem -
-    GIF -
     Image -
     JavaScript +
     JPG -

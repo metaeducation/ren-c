@@ -28,7 +28,6 @@ extensions: make map! [
     DNS +
     Event +
     Filesystem +
-    GIF +
     JavaScript -
     JPG +
     Library +
