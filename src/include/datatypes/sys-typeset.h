@@ -115,19 +115,8 @@ inline static bool TYPE_CHECK(noquote(Cell(const*)) typeset, Cell(const*) v) {
         if (typekind != VAL_TYPE(v))
             continue;
 
-        if (typekind != REB_CUSTOM)
-            return true;
-
-        Symbol(const*) typesym = VAL_TYPE_SYMBOL(item);  // specific custom
-        SYMBOL_HOOK* hook = Symbol_Hook_For_Type_Of(v);
-        Symbol(const*) sym = hook();
-        if (sym == nullptr)
-            fail ("Cannot reflect TYPE due to unloaded extension");
-
-        if (Are_Synonyms(sym, typesym))
-            return true;
-
-        continue;
+        assert(typekind != REB_CUSTOM);
+        return true;
     }
 
     return false;

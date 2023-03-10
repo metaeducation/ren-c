@@ -159,8 +159,6 @@ PVAR REBVAL *Root_Action_Meta;
 PVAR REBVAL *Root_Stackoverflow_Error;  // made in advance, avoids extra calls
 PVAR REBVAL *Root_No_Memory_Error;  // also must be made in advance
 
-PVAR REBTYP* PG_Extension_Types[1];  // array of datatypes created by extensions
-
 // This signal word should be thread-local, but it will not work
 // when implemented that way. Needs research!!!!
 PVAR Flags Eval_Signals;   // Signal flags

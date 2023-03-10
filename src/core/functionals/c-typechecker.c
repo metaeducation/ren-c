@@ -79,17 +79,6 @@ Bounce Datatype_Checker_Dispatcher(Frame(*) frame_)
 
     REBVAL *datatype = DETAILS_AT(details, IDX_TYPECHECKER_TYPE);
 
-    if (VAL_TYPE_KIND_OR_CUSTOM(datatype) == REB_CUSTOM) {
-        if (VAL_TYPE(FRM_ARG(f, 2)) != REB_CUSTOM)
-            return Init_False(OUT);
-
-        REBTYP *typ = VAL_TYPE_CUSTOM(datatype);
-        return Init_Logic(
-            OUT,
-            CELL_CUSTOM_TYPE(FRM_ARG(f, 2)) == typ
-        );
-    }
-
     assert(KEY_SYM(ACT_KEY(FRM_PHASE(f), 1)) == SYM_RETURN);  // skip arg 1
 
     return Init_Logic(  // otherwise won't be equal to any custom type

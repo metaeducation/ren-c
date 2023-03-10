@@ -272,11 +272,6 @@ inline static void INIT_VAL_NODE2(Cell(*) v, option(const Node*) node) {
     CELL_HEART_UNCHECKED(READABLE(cell))
 
 
-inline static const REBTYP *CELL_CUSTOM_TYPE(noquote(Cell(const*)) v) {
-    assert(CELL_HEART(v) == REB_CUSTOM);
-    return cast(Binary(const*), EXTRA(Any, v).node);
-}
-
 // Sometimes you have a noquote and need to pass a REBVAL* to something.  It
 // doesn't seem there's too much bad that can happen if you do; you'll get
 // back something that might be quoted up to 3 levels...if it's an escaped
@@ -453,19 +448,6 @@ inline static void Reset_Unquoted_Header_Untracked(Cell(*) v, uintptr_t flags)
     FRESHEN_CELL_EVIL_MACRO(v);
     v->header.bits |= (NODE_FLAG_NODE | NODE_FLAG_CELL  // must ensure NODE+CELL
         | flags | FLAG_QUOTE_BYTE(UNQUOTED_1));
-}
-
-inline static REBVAL *RESET_CUSTOM_CELL(
-    Cell(*) out,
-    REBTYP *type,
-    Flags flags
-){
-    Reset_Unquoted_Header_Untracked(
-        out,
-        FLAG_HEART_BYTE(REB_CUSTOM) | flags
-    );
-    EXTRA(Any, out).node = type;
-    return cast(REBVAL*, out);
 }
 
 inline static REBVAL* Freshen_Cell_Untracked(Cell(*) v) {

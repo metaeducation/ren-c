@@ -64,16 +64,6 @@ Bounce MAKE_Datatype(
     if (parent)
         return RAISE(Error_Bad_Make_Parent(kind, unwrap(parent)));
 
-    // !!! This is used by e.g. `image!: make datatype! @image!` to get the
-    // type to exist so people can then say `make image! [...]`.  But a WORD!
-    // form is used by the legacy datatype syntax of #[datatype! integer!]
-    // which is going to be deleted soon (the entire concept of DATATYPE! as
-    // reified is going away).  But for now that WORD! of INTEGER! is what
-    // gets passed in here in that case.
-    //
-    if (IS_THE_WORD(arg) or IS_WORD(arg))
-        return Init_Datatype(OUT, VAL_WORD_SYMBOL(arg), UNQUOTED_1);
-
     return RAISE(Error_Bad_Make(kind, arg));
 }
 
@@ -140,28 +130,6 @@ REBTYPE(Datatype)
     }
 
     return BOUNCE_UNHANDLED;
-}
-
-
-
-//
-//  Datatype_From_Url: C
-//
-// !!! This is a hack until there's a good way for types to encode the URL
-// they represent in their spec somewhere.  It's just here to help get past
-// the point of the fixed list of REB_XXX types--first step is just expanding
-// to take four out.
-//
-REBTYP* Datatype_From_Url(const REBVAL *url) {
-    int i = rebUnbox(
-        "switch", url, "[",
-            "-1",
-        "]"
-    );
-
-    if (i != -1)
-        return PG_Extension_Types[i];
-    return nullptr;
 }
 
 
@@ -303,106 +271,7 @@ Array(*) Startup_Datatypes(Array(*) boot_types, Array(*) boot_typespecs)
     Startup_Fake_Type_Constraint(SYM_PREDICATE_X);
     Startup_Fake_Type_Constraint(SYM_BLACKHOLE_X);
 
-    // Extensions can add datatypes.  These types are not identified by a
-    // single byte, but give up the `extra` portion of their cell to hold
-    // the type information.  The list of types has to be kept by the system
-    // in order to translate URL! references to those types.
-    //
-    // !!! For the purposes of just getting this mechanism off the ground,
-    // this establishes it for just the extension types we currently have.
-    //
-    int i;
-    for (i = 0; i < 0; ++i) {
-        REBTYP *type = Make_Binary(sizeof(CFUNC*) * IDX_HOOKS_MAX);
-        CFUNC** hooks = cast(CFUNC**, BIN_HEAD(type));
-
-        hooks[IDX_SYMBOL_HOOK] = cast(CFUNC*, &S_Unhooked);
-        hooks[IDX_GENERIC_HOOK] = cast(CFUNC*, &T_Unhooked);
-        hooks[IDX_COMPARE_HOOK] = cast(CFUNC*, &CT_Unhooked);
-        hooks[IDX_MAKE_HOOK] = cast(CFUNC*, &MAKE_Unhooked);
-        hooks[IDX_TO_HOOK] = cast(CFUNC*, &TO_Unhooked);
-        hooks[IDX_MOLD_HOOK] = cast(CFUNC*, &MF_Unhooked);
-        hooks[IDX_HOOK_NULLPTR] = nullptr;
-
-        Manage_Series(type);
-
-        PG_Extension_Types[i] = type;
-    }
-
     return catalog;
-}
-
-
-//
-//  Hook_Datatype: C
-//
-// Poor-man's user-defined type hack: this really just gives the ability to
-// have the only thing the core knows about a "user-defined-type" be its
-// value cell structure and datatype enum number...but have the behaviors
-// come from functions that are optionally registered in an extension.
-//
-// (Actual facets of user-defined types will ultimately be dispatched through
-// Rebol-frame-interfaced functions, not raw C structures like this.)
-//
-REBTYP *Hook_Datatype(
-    const char *url,
-    const char *description,
-    SYMBOL_HOOK *symbol,
-    GENERIC_HOOK *generic,
-    COMPARE_HOOK *compare,
-    MAKE_HOOK *make,
-    TO_HOOK *to,
-    MOLD_HOOK *mold
-){
-    UNUSED(description);
-
-    REBVAL *url_value = rebValue("as url!", rebT(url));
-    REBTYP *datatype = Datatype_From_Url(url_value);
-
-    if (not datatype)
-        fail (url_value);
-    rebRelease(url_value);
-
-    CFUNC** hooks = cast(CFUNC**,
-        m_cast(Byte*, SER_DATA(datatype))
-    );
-
-    if (hooks[IDX_GENERIC_HOOK] != cast(CFUNC*, &T_Unhooked))
-        fail ("Extension type already registered");
-
-    // !!! Need to fail if already hooked
-
-    hooks[IDX_SYMBOL_HOOK] = cast(CFUNC*, symbol);
-    hooks[IDX_GENERIC_HOOK] = cast(CFUNC*, generic);
-    hooks[IDX_COMPARE_HOOK] = cast(CFUNC*, compare);
-    hooks[IDX_MAKE_HOOK] = cast(CFUNC*, make);
-    hooks[IDX_TO_HOOK] = cast(CFUNC*, to);
-    hooks[IDX_MOLD_HOOK] = cast(CFUNC*, mold);
-    hooks[IDX_HOOK_NULLPTR] = nullptr;
-
-    return datatype;  // filled in now
-}
-
-
-//
-//  Unhook_Datatype: C
-//
-void Unhook_Datatype(REBTYP *type)
-{
-    // need to fail if not hooked
-
-    CFUNC** hooks = cast(CFUNC**, BIN_HEAD(type));
-
-    if (hooks[IDX_GENERIC_HOOK] == cast(CFUNC*, &T_Unhooked))
-        fail ("Extension type not registered to unhook");
-
-    hooks[IDX_SYMBOL_HOOK] = cast(CFUNC*, &S_Unhooked);
-    hooks[IDX_GENERIC_HOOK] = cast(CFUNC*, &T_Unhooked);
-    hooks[IDX_COMPARE_HOOK] = cast(CFUNC*, &CT_Unhooked);
-    hooks[IDX_MAKE_HOOK] = cast(CFUNC*, &MAKE_Unhooked);
-    hooks[IDX_TO_HOOK] = cast(CFUNC*, &TO_Unhooked);
-    hooks[IDX_MOLD_HOOK] = cast(CFUNC*, &MF_Unhooked);
-    hooks[IDX_HOOK_NULLPTR] = nullptr;
 }
 
 

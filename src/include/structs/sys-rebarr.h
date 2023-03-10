@@ -70,7 +70,6 @@ typedef Raw_Array REBSPC;
 //
 
 enum Reb_Type_Hook_Index {
-    IDX_SYMBOL_HOOK,
     IDX_GENERIC_HOOK,
     IDX_COMPARE_HOOK,
     IDX_MAKE_HOOK,
@@ -79,8 +78,6 @@ enum Reb_Type_Hook_Index {
     IDX_HOOK_NULLPTR,  // see notes on why null termination convention
     IDX_HOOKS_MAX
 };
-
-typedef Raw_Binary REBTYP;  // Rebol Type (list of hook function pointers)
 
 
 //=//// ARRAY_FLAG_HAS_FILE_LINE_UNMASKED /////////////////////////////////=//

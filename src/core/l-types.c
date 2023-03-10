@@ -216,13 +216,8 @@ DECLARE_NATIVE(to)
     enum Reb_Kind new_kind = VAL_TYPE_KIND(type);
     enum Reb_Kind old_kind = VAL_TYPE(v);
 
-    if (
-        new_kind == old_kind
-        and (
-            new_kind != REB_CUSTOM
-            or CELL_CUSTOM_TYPE(type) == CELL_CUSTOM_TYPE(v)
-        )
-    ){
+    assert(new_kind != REB_CUSTOM);
+    if (new_kind == old_kind) {
         return rebValue("copy @", v);
     }
 
@@ -306,15 +301,8 @@ Bounce Reflect_Core(Frame(*) frame_)
             quote_byte = QUASI_2;  // we'll return ~&[~xxx~]~
         }
 
-        if (heart == REB_CUSTOM) {
-            SYMBOL_HOOK* hook = Symbol_Hook_For_Type_Of(v);
-            Symbol(const*) sym = hook();
-            if (sym == nullptr)
-                fail ("Cannot reflect TYPE due to unloaded extension");
-
-            Init_Datatype(OUT, sym, quote_byte);
-        }
-        else if (heart == REB_VOID)
+        assert(heart != REB_CUSTOM);
+        if (heart == REB_VOID)
             Init_Datatype(OUT, Canon(VOID), quote_byte);  // !!! hack
         else
             Init_Datatype(OUT, Canon_Symbol(cast(SymId, heart)), quote_byte);

@@ -86,24 +86,6 @@ inline static enum Reb_Kind VAL_TYPE_KIND(noquote(Cell(const*)) v) {
     return k;
 }
 
-inline static REBTYP* VAL_TYPE_CUSTOM(noquote(Cell(const*)) v) {
-    assert(CELL_HEART(v) == REB_DATATYPE);
-    assert(VAL_TYPE_KIND_OR_CUSTOM(v) == REB_CUSTOM);
-
-    int i;
-    for (i = 0; i < 0; ++i) {
-        CFUNC** hooklist = cast(CFUNC**,
-            m_cast(Byte*, SER_DATA(PG_Extension_Types[i]))
-        );
-        SYMBOL_HOOK* hook = cast(SYMBOL_HOOK*, hooklist[IDX_SYMBOL_HOOK]);
-        Symbol(const*) sym = hook();
-        if (sym == nullptr)
-            continue;
-        if (Are_Synonyms(sym, VAL_TYPE_SYMBOL(v)))
-            return PG_Extension_Types[i];
-    }
-    fail ("VAL_TYPE_CUSTOM() could not find custom hooks for type");
-}
 
 
 // Built in types have their specs initialized from data in the boot block.
@@ -176,18 +158,14 @@ extern CFUNC* Builtin_Type_Hooks[REB_MAX][IDX_HOOKS_MAX];
 inline static CFUNC** VAL_TYPE_HOOKS(noquote(Cell(const*)) type) {
     assert(CELL_HEART(type) == REB_DATATYPE);
     enum Reb_Kind k = VAL_TYPE_KIND_OR_CUSTOM(type);
-    if (k != REB_CUSTOM)
-        return Builtin_Type_Hooks[k];
-
-    REBTYP* custom = VAL_TYPE_CUSTOM(type);
-    return cast(CFUNC**, m_cast(Byte*, SER_DATA(custom)));
+    assert(k != REB_CUSTOM);
+    return Builtin_Type_Hooks[k];
 }
 
 inline static CFUNC** HOOKS_FOR_TYPE_OF(noquote(Cell(const*)) v) {
     enum Reb_Kind k = CELL_HEART(v);
-    if (k != REB_CUSTOM)
-        return Builtin_Type_Hooks[k];
-    return cast(CFUNC**, m_cast(Byte*, SER_DATA(CELL_CUSTOM_TYPE(v))));
+    assert(k != REB_CUSTOM);
+    return Builtin_Type_Hooks[k];
 }
 
 #define Symbol_Hook_For_Type_Of(v) \
