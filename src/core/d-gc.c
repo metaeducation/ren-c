@@ -94,9 +94,6 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
       case REB_MONEY:
         break;
 
-      case REB_BYTES:  // used as inert storage by some extension types
-        break;
-
       case REB_ISSUE: {
         if (Get_Cell_Flag(v, ISSUE_HAS_NODE)) {
             const REBSER *s = VAL_STRING(v);
@@ -127,7 +124,7 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
         break;
 
       case REB_DATATYPE:
-        assert(VAL_TYPE_KIND_OR_CUSTOM(v) != REB_NULL);
+        assert(VAL_TYPE_KIND(v) != REB_NULL);
         break;
 
       case REB_TYPESET: {  // bitset bits don't need marking
@@ -429,11 +426,6 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
         // "pseudotype" added on by VAL_TYPE() for nonzero quote levels.
         //
         panic ("REB_QUOTED found in cell heart");
-
-    //=//// BEGIN INTERNAL TYPES ////////////////////////////////////////=//
-
-      case REB_CUSTOM:  // !!! Might it have an "integrity check" hook?
-        break;
 
       default:
         panic (v);

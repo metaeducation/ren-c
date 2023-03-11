@@ -70,11 +70,6 @@ logic!      "boolean true or false"
             []
             [logic       +       +]
 
-bytes       "!!! `BYTES!` isn't a datatype, `heart` type  for optimizations"
-            (CELL_MASK_NO_NODES)
-            []
-            [0           0       0]
-
 decimal!    "64bit floating point number (IEEE standard)"
             (CELL_MASK_NO_NODES)
             [any-number! any-scalar!]
@@ -134,17 +129,6 @@ handle!     "arbitrary internal object or value"
             ()
             []
             [handle      -       +]
-
-
-; This table of fundamental types is intended to be limited (less than
-; 64 entries).  Yet there can be an arbitrary number of extension types.
-; Those types use the REB_CUSTOM cell class, and give up their ->extra field
-; of their cell instances to point to their specific datatype.
-
-custom!     "instance of an extension-defined type"
-            ()
-            []
-            [-           -       -]
 
 
 ; URL! has a HEART-BYTE! that is a string, but is not itself in the ANY-STRING!

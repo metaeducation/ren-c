@@ -1097,16 +1097,6 @@ Context(*) Error_Cannot_Use(Symbol(const*) verb, Cell(const*) first_arg)
     DECLARE_LOCAL (verb_cell);
     Init_Word(verb_cell, verb);
 
-    // !!! Improve this error message when used with REB_CUSTOM (right now
-    // will just say "cannot use verb with CUSTOM!", regardless of if it
-    // is an IMAGE! or ...)
-    //
-    if (VAL_TYPE(first_arg) == REB_CUSTOM)
-        fail (Error_Cannot_Use_Raw(
-            verb_cell,
-            rebText("custom!")
-        ));
-
     fail (Error_Cannot_Use_Raw(
         verb_cell,
         Datatype_From_Kind(VAL_TYPE(first_arg))

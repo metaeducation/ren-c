@@ -58,10 +58,6 @@ typedef Raw_Array REBSPC;
 // occupies a byte in the header (64 is chosen as a limit currently in order
 // to be used with 64-bit typesets, but this is due for change).
 //
-// Extension types all use the same builtin-type in their header: REB_CUSTOM.
-// However, some bits in the cell must be surrendered in order for the full
-// type to be expressed.  They have to sacrifice their "Extra" bits.
-//
 // For efficiency, what's put in the extra is what would be like that type's
 // row in the `Builtin_Type_Hooks` if it had been built-in.  These table
 // rows are speculatively implemented as an untyped array of CFUNC* which is

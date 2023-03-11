@@ -44,9 +44,7 @@
 // So the next part of the structure is the "Extra".  This is the size of one
 // pointer, which sits immediately after the header (that's also the size of
 // one pointer).  For built-in types this can carry instance data for the
-// value--such as a binding, or extra bits for a fixed-point decimal.  But
-// since all extension types have the same identification (REB_CUSTOM), this
-// cell slot must be yielded for a pointer to the real type information.
+// value--such as a binding, or extra bits for a fixed-point decimal.
 //
 // This sets things up for the "Payload"--which is the size of two pointers.
 // It is broken into a separate structure at this position so that on 32-bit
@@ -487,9 +485,6 @@ union Reb_Value_Extra { //=/////////////////// ACTUAL EXTRA DEFINITION ////=//
 // would violate strict aliasing.  Only direct payload types should be used:
 //
 //     https://stackoverflow.com/q/41298619/
-//
-// So for custom types, use the correct union field in Reb_Custom_Payload,
-// and only read back from the exact field written to.
 //
 
 struct Reb_Logic_Payload { bool flag; };  // see %sys-logic.h

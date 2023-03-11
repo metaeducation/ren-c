@@ -71,19 +71,11 @@ inline static enum Reb_Kind KIND_FROM_SYM(SymId s) {
 #define INIT_VAL_TYPE_QUOTEDNESS(v,qbyte) \
     (EXTRA(Datatype, (v)).quotedness = (qbyte))
 
-inline static enum Reb_Kind VAL_TYPE_KIND_OR_CUSTOM(noquote(Cell(const*)) v) {
-    assert(CELL_HEART(v) == REB_DATATYPE);
-    option(SymId) id = ID_OF_SYMBOL(VAL_TYPE_SYMBOL(v));
-    if (id == SYM_0 or unwrap(id) >= cast(SymId, REB_MAX))
-        return REB_CUSTOM;
-    return cast(enum Reb_Kind, unwrap(id));
-}
-
 inline static enum Reb_Kind VAL_TYPE_KIND(noquote(Cell(const*)) v) {
     assert(CELL_HEART(v) == REB_DATATYPE);
-    enum Reb_Kind k = VAL_TYPE_KIND_OR_CUSTOM(v);
-    assert(k != REB_CUSTOM);
-    return k;
+    option(SymId) id = ID_OF_SYMBOL(VAL_TYPE_SYMBOL(v));
+    assert(unwrap(id) < cast(SymId, REB_MAX));
+    return cast(enum Reb_Kind, unwrap(id));
 }
 
 
@@ -157,14 +149,14 @@ extern CFUNC* Builtin_Type_Hooks[REB_MAX][IDX_HOOKS_MAX];
 //
 inline static CFUNC** VAL_TYPE_HOOKS(noquote(Cell(const*)) type) {
     assert(CELL_HEART(type) == REB_DATATYPE);
-    enum Reb_Kind k = VAL_TYPE_KIND_OR_CUSTOM(type);
-    assert(k != REB_CUSTOM);
+    enum Reb_Kind k = VAL_TYPE_KIND(type);
+    assert(k < REB_MAX);
     return Builtin_Type_Hooks[k];
 }
 
 inline static CFUNC** HOOKS_FOR_TYPE_OF(noquote(Cell(const*)) v) {
     enum Reb_Kind k = CELL_HEART(v);
-    assert(k != REB_CUSTOM);
+    assert(k < REB_MAX);
     return Builtin_Type_Hooks[k];
 }
 

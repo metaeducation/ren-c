@@ -83,7 +83,7 @@ Bounce Datatype_Checker_Dispatcher(Frame(*) frame_)
 
     return Init_Logic(  // otherwise won't be equal to any custom type
         OUT,
-        VAL_TYPE(FRM_ARG(f, 2)) == VAL_TYPE_KIND_OR_CUSTOM(datatype)
+        VAL_TYPE(FRM_ARG(f, 2)) == VAL_TYPE_KIND(datatype)
     );
 }
 

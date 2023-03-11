@@ -131,7 +131,7 @@ DECLARE_NATIVE(make)
     enum Reb_Kind kind;
     if (IS_DATATYPE(type)) {
         hook = Make_Hook_For_Type(type);
-        kind = VAL_TYPE_KIND_OR_CUSTOM(type);
+        kind = VAL_TYPE_KIND(type);
         parent = nullptr;
     }
     else {
@@ -139,7 +139,6 @@ DECLARE_NATIVE(make)
         parent = type;
         hook = Make_Hook_For_Kind(kind);
     }
-
 
     Bounce b = hook(frame_, kind, parent, arg);  // might throw, fail...
     if (b == BOUNCE_DELEGATE)
@@ -216,7 +215,6 @@ DECLARE_NATIVE(to)
     enum Reb_Kind new_kind = VAL_TYPE_KIND(type);
     enum Reb_Kind old_kind = VAL_TYPE(v);
 
-    assert(new_kind != REB_CUSTOM);
     if (new_kind == old_kind) {
         return rebValue("copy @", v);
     }
@@ -301,7 +299,6 @@ Bounce Reflect_Core(Frame(*) frame_)
             quote_byte = QUASI_2;  // we'll return ~&[~xxx~]~
         }
 
-        assert(heart != REB_CUSTOM);
         if (heart == REB_VOID)
             Init_Datatype(OUT, Canon(VOID), quote_byte);  // !!! hack
         else

@@ -91,12 +91,6 @@ inline static bool TYPE_CHECK(noquote(Cell(const*)) typeset, Cell(const*) v) {
             continue;
         }
 
-        if (Is_Word_Isotope_With_Id(item, SYM_CUSTOM)) {  // *any* custom type
-            if (VAL_TYPE(v) == REB_CUSTOM)
-                return true;
-            continue;
-        }
-
         if (Is_Nulled(item)) { // null looks up to NULL
             if (Is_Nulled(v))
                 return true;
@@ -111,11 +105,10 @@ inline static bool TYPE_CHECK(noquote(Cell(const*)) typeset, Cell(const*) v) {
 
         assert(IS_DATATYPE(item));
 
-        enum Reb_Kind typekind = VAL_TYPE_KIND_OR_CUSTOM(item);
+        enum Reb_Kind typekind = VAL_TYPE_KIND(item);
         if (typekind != VAL_TYPE(v))
             continue;
 
-        assert(typekind != REB_CUSTOM);
         return true;
     }
 

@@ -510,8 +510,7 @@ e-types/emit {
      */
 
     #define TS_NOT_COPIED \
-        (FLAGIT_KIND(REB_CUSTOM) \
-        | FLAGIT_KIND(REB_PORT))
+        FLAGIT_KIND(REB_PORT)
 
     #define TS_STD_SERIES \
         (TS_SERIES & ~TS_NOT_COPIED)

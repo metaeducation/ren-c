@@ -438,17 +438,6 @@ REBINT Cmp_Value(Cell(const*) sval, Cell(const*) tval, bool strict)
       case REB_ACTION:
         return CT_Action(s, t, strict);
 
-      case REB_CUSTOM:
-        //
-        // !!! Comparison in R3-Alpha never had a design document; it's not
-        // clear what all the variations were for.  Extensions have a CT_XXX
-        // hook, what's different about that from the Cmp_XXX functions?
-        //
-        /* return Compare_Vector(s, t); */
-        /* return Cmp_Event(s, t); */
-        /* return VAL_LIBRARY(s) - VAL_LIBRARY(t); */
-        fail ("Temporary disablement of CUSTOM! comparisons");
-
       case REB_VOID: // !!! should voids be allowed at this level?
         return 0;  // voids always equal to each other
 

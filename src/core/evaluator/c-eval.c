@@ -1688,8 +1688,7 @@ Bounce Evaluator_Executor(Frame(*) f)
       case REB_TYPESET:
         //
       case REB_HANDLE:
-        //
-      case REB_CUSTOM:  // custom types (IMAGE!, VECTOR!) are all inert
+
         Inertly_Derelativize_Inheriting_Const(OUT, f_current, f->feed);
         break;
 

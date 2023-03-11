@@ -37,16 +37,10 @@ REBINT CT_Datatype(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict
             ? 1
             : -1;
 
-    if (VAL_TYPE_KIND_OR_CUSTOM(a) != VAL_TYPE_KIND_OR_CUSTOM(b))
-        return VAL_TYPE_KIND_OR_CUSTOM(a) > VAL_TYPE_KIND_OR_CUSTOM(b)
+    if (VAL_TYPE_KIND(a) != VAL_TYPE_KIND(b))
+        return VAL_TYPE_KIND(a) > VAL_TYPE_KIND(b)
             ? 1
             : -1;
-
-    if (VAL_TYPE_KIND_OR_CUSTOM(a) == REB_CUSTOM) {
-        if (VAL_TYPE_HOOKS(a) == VAL_TYPE_HOOKS(b))
-            return 0;
-        return 1;  // !!! all cases of "just return greater" are bad
-    }
 
     return 0;
 }
@@ -218,24 +212,6 @@ Array(*) Startup_Datatypes(Array(*) boot_types, Array(*) boot_typespecs)
         assert(Canon_Symbol(cast(SymId, kind)) == VAL_WORD_SYMBOL(word));
 
         Value(*) value = Force_Lib_Var(cast(SymId, kind));
-
-        if (kind == REB_BYTES) {
-            Init_Word_Isotope(value, Canon(BYTES));
-            Set_Cell_Flag(value, PROTECTED);
-            continue;
-        }
-        if (kind == REB_CUSTOM) {
-            //
-            // There shouldn't be any literal CUSTOM! datatype instances.
-            // But presently, it lives in the middle of the range of valid
-            // cell kinds, so that it will properly register as being in the
-            // "not bindable" range.  (Is_Bindable() would be a slower test
-            // if it had to account for it.)
-            //
-            Init_Word_Isotope(value, Canon(CUSTOM));
-            Set_Cell_Flag(value, PROTECTED);
-            continue;
-        }
 
         // !!! Currently datatypes are just molded specially to look like an
         // ANY-BLOCK! type, so they seem like &[integer] or &['word].  But the

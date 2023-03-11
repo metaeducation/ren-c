@@ -332,14 +332,6 @@ uint32_t Hash_Value(Cell(const*) cell)
         //
         fail (Error_Invalid_Type(heart));
 
-      case REB_CUSTOM:
-        //
-        // !!! We don't really know how to hash a custom value.  Knowing what
-        // the answer is ties into the equality operator.  It should be one
-        // of the extensibility hooks.
-        //
-        fail (Error_Invalid_Type(heart));
-
       default:
         panic (nullptr); // List should be comprehensive
     }
