@@ -375,7 +375,6 @@ e-types/emit 'rebs {
 
         REB_NULL,  /* similar--but not conflated with isotopes */
         REB_ISOTOPE,  /* not a "type", but can answer VAL_TYPE() */
-        REB_NIHIL,
 
         /*
         * Invalid type bytes can currently be used for other purposes.  (If
