@@ -280,6 +280,20 @@ void MF_The_word(REB_MOLD *mo, noquote(Cell(const*)) v, bool form) {
 
 
 //
+//  MF_Type_word: C
+//
+void MF_Type_word(REB_MOLD *mo, noquote(Cell(const*)) v, bool form) {
+    Symbol(const*) symbol = VAL_WORD_SYMBOL(v);
+    bool escape = form
+        ? false
+        : Get_Subclass_Flag(SYMBOL, symbol, ESCAPE_WITH_SIGIL);
+
+    Append_Codepoint(mo->series, '&');
+    Mold_Word(mo, symbol, escape);
+}
+
+
+//
 //  REBTYPE: C
 //
 // The future plan for WORD! types is that they will be unified somewhat with

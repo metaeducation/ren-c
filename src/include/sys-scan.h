@@ -42,6 +42,7 @@ enum Reb_Token {
     TOKEN_COLON,
     TOKEN_CARET,
     TOKEN_AT,
+    TOKEN_AMPERSAND,
     TOKEN_WORD,
     TOKEN_ESCAPED_WORD,
     TOKEN_LOGIC,

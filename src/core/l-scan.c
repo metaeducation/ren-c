@@ -1076,6 +1076,10 @@ static enum Reb_Token Maybe_Locate_Token_May_Push_Mold(
         ss->end = cp + 1;
         return TOKEN_AT;
     }
+    if (*cp == '&') {
+        ss->end = cp + 1;
+        return TOKEN_AMPERSAND;
+    }
 
     // If we hit a vertical bar we know we are trying to scan a WORD! (which
     // may become transformed into a SET-WORD! or similar).  Typically this is
@@ -1992,6 +1996,14 @@ Bounce Scanner_Executor(Frame(*) f) {
         }
         goto token_prefixable_sigil;
 
+      case TOKEN_AMPERSAND:
+        assert(*bp == '&');
+        if (IS_LEX_ANY_SPACE(*ep) or *ep == '~' or *ep == ']' or *ep == ')') {
+            Init_Word(PUSH(), Canon(AMPERSAND_1));
+            break;
+        }
+        goto token_prefixable_sigil;
+
       case TOKEN_COLON:
         assert(*bp == ':');
 
@@ -2869,6 +2881,10 @@ Bounce Scanner_Executor(Frame(*) f) {
 
           case TOKEN_AT:
             mutable_HEART_BYTE(TOP) = THEIFY_ANY_PLAIN_KIND(kind);
+            break;
+
+          case TOKEN_AMPERSAND:
+            mutable_HEART_BYTE(TOP) = TYPEIFY_ANY_PLAIN_KIND(kind);
             break;
 
           default:

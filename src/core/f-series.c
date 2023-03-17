@@ -383,11 +383,13 @@ REBINT Cmp_Value(Cell(const*) sval, Cell(const*) tval, bool strict)
       case REB_GET_BLOCK:
       case REB_META_BLOCK:
       case REB_THE_BLOCK:
+      case REB_TYPE_BLOCK:
       case REB_GROUP:
       case REB_SET_GROUP:
       case REB_GET_GROUP:
       case REB_META_GROUP:
       case REB_THE_GROUP:
+      case REB_TYPE_GROUP:
         return CT_Array(s, t, strict);
 
       case REB_PATH:
@@ -395,11 +397,13 @@ REBINT Cmp_Value(Cell(const*) sval, Cell(const*) tval, bool strict)
       case REB_GET_PATH:
       case REB_META_PATH:
       case REB_THE_PATH:
+      case REB_TYPE_PATH:
       case REB_TUPLE:
       case REB_SET_TUPLE:
       case REB_GET_TUPLE:
       case REB_META_TUPLE:
       case REB_THE_TUPLE:
+      case REB_TYPE_TUPLE:
         return CT_Sequence(s, t, strict);
 
       case REB_MAP:
@@ -427,6 +431,7 @@ REBINT Cmp_Value(Cell(const*) sval, Cell(const*) tval, bool strict)
       case REB_GET_WORD:
       case REB_META_WORD:
       case REB_THE_WORD:
+      case REB_TYPE_WORD:
         return CT_Word(s, t, strict);
 
       case REB_ERROR:

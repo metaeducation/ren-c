@@ -130,6 +130,11 @@ inline static enum Reb_Kind METAFY_ANY_PLAIN_KIND(Byte k) {
 
 inline static enum Reb_Kind THEIFY_ANY_PLAIN_KIND(Byte k) {
     assert(ANY_PLAIN_KIND(k));
+    return cast(enum Reb_Kind, k - 10);
+}
+
+inline static enum Reb_Kind TYPEIFY_ANY_PLAIN_KIND(Byte k) {
+    assert(ANY_PLAIN_KIND(k));
     return cast(enum Reb_Kind, k - 5);
 }
 

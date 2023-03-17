@@ -250,6 +250,38 @@ varargs!    "evaluator position for variable numbers of arguments"
 </ANY-THE-VALUE!>
 
 
+<ANY-TYPE-VALUE!>  ; (order matters, e.g. UNTYPEIFY_ANY_XXX_KIND())
+
+    ; Review: Should these be ANY-BRANCH! types?
+
+    type-block!  "alternative inert form of block"
+                (CELL_FLAG_FIRST_IS_NODE)
+                [any-block! any-array! any-series! any-branch!]
+                [array       *       *]
+
+    type-group!  "inert form of group"
+                (CELL_FLAG_FIRST_IS_NODE)
+                [any-group! any-array! any-series!]
+                [array       *       *]
+
+    type-path!   "inert form of path"
+                ()
+                [any-path! any-sequence!]
+                [sequence    *       *]
+
+    type-tuple!  "inert form of tuple"
+                ()
+                [any-tuple! any-sequence! any-scalar!]
+                [sequence    *       *]
+
+    type-word!   "inert form of word"
+                (CELL_FLAG_FIRST_IS_NODE)
+                [any-word! any-utf8!]
+                [word        *       +]
+
+</ANY-TYPE-VALUE!>
+
+
 <ANY-PLAIN-VALUE!>  ; (order matters, e.g. SETIFY_ANY_PLAIN_KIND())
 
     block!      "array of values that blocks evaluation unless DO is used"

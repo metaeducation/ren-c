@@ -92,6 +92,7 @@ export to-c-name: function [
         "@" ["at_1"]
         "^^" ["caret_1"]
         ":" ["colon_1"]
+        "&" ["ampersand_1"]
 
         ; These are in the set of what are known as "alterative tokens".  They
         ; aren't exactly keywords (and in C they're just done with #define).

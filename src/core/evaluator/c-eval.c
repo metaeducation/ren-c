@@ -1687,6 +1687,12 @@ Bounce Evaluator_Executor(Frame(*) f)
       case REB_DATATYPE:
       case REB_TYPESET:
         //
+      case REB_TYPE_WORD:
+      case REB_TYPE_BLOCK:
+      case REB_TYPE_GROUP:
+      case REB_TYPE_PATH:
+      case REB_TYPE_TUPLE:
+        //
       case REB_HANDLE:
 
         Inertly_Derelativize_Inheriting_Const(OUT, f_current, f->feed);

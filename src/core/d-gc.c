@@ -287,11 +287,13 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
       case REB_SET_BLOCK:
       case REB_GET_BLOCK:
       case REB_META_BLOCK:
+      case REB_TYPE_BLOCK:
       case REB_GROUP:
       case REB_THE_GROUP:
       case REB_SET_GROUP:
       case REB_GET_GROUP:
-      case REB_META_GROUP: {
+      case REB_META_GROUP:
+      case REB_TYPE_GROUP: {
         Array(*) a = ARR(VAL_NODE1(v));
         if (GET_SERIES_FLAG(a, INACCESSIBLE))
             break;
@@ -307,6 +309,7 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
       case REB_SET_TUPLE:
       case REB_GET_TUPLE:
       case REB_META_TUPLE:
+      case REB_TYPE_TUPLE:
         goto any_sequence;
 
       case REB_PATH:
@@ -314,6 +317,7 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
       case REB_SET_PATH:
       case REB_GET_PATH:
       case REB_META_PATH:
+      case REB_TYPE_PATH:
         goto any_sequence;
 
       any_sequence: {
@@ -358,7 +362,8 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
       case REB_THE_WORD:
       case REB_SET_WORD:
       case REB_GET_WORD:
-      case REB_META_WORD: {
+      case REB_META_WORD:
+      case REB_TYPE_WORD: {
         assert(Get_Cell_Flag(v, FIRST_IS_NODE));
 
         const Raw_String *spelling = VAL_WORD_SYMBOL(v);

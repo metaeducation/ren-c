@@ -752,6 +752,10 @@ void MF_Array(REB_MOLD *mo, noquote(Cell(const*)) v, bool form)
             Append_Codepoint(mo->series, '@');
             goto block;
 
+          case REB_TYPE_BLOCK:
+            Append_Codepoint(mo->series, '&');
+            goto block;
+
           case REB_BLOCK:
           case REB_SET_BLOCK:
           block:
@@ -773,6 +777,10 @@ void MF_Array(REB_MOLD *mo, noquote(Cell(const*)) v, bool form)
 
           case REB_THE_GROUP:
             Append_Codepoint(mo->series, '@');
+            goto group;
+
+          case REB_TYPE_GROUP:
+            Append_Codepoint(mo->series, '&');
             goto group;
 
           case REB_GROUP:
