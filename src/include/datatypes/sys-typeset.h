@@ -67,6 +67,9 @@ inline static bool TYPE_CHECK(noquote(Cell(const*)) typeset, Cell(const*) v) {
     assert(CELL_HEART(typeset) == REB_TYPESET);
 
     Array(const*) a = VAL_TYPESET_ARRAY(typeset);  // values all specified
+    if (a == nullptr)
+        return true;  // anything goes
+
     Cell(const*) var = ARR_HEAD(a);  // don't use SPECIFIC() yet, may be tail!
     Cell(const*) tail = ARR_TAIL(a);
 

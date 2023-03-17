@@ -165,6 +165,9 @@
 #define QUASI_2             2
 #define ONEQUOTE_3          3  // non-QUASI state of having one quote level
 
+#define AddQuote(byte)           ((byte) + 2)
+#define SubtractQuote(byte)      ((byte) - 2)
+
 #define MAX_QUOTE_DEPTH     126  // highest legal quoting level
 
 
