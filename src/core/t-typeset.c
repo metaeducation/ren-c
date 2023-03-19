@@ -103,17 +103,16 @@ Array(*) Add_Typeset_Bits_Core(
     StackIndex base = TOP_INDEX;
     *flags = 0;
 
-    Cell(const*) maybe_word = head;
-    for (; maybe_word != tail; ++maybe_word) {
-        Cell(const*) item;
-        if (IS_QUASI(maybe_word)) {
-            if (HEART_BYTE(maybe_word) != REB_WORD)
+    Cell(const*) item = head;
+    for (; item != tail; ++item) {
+        if (IS_QUASI(item)) {
+            if (HEART_BYTE(item) != REB_WORD)
                 fail ("QUASI! must be of WORD! in typeset spec");
 
             // We suppress isotopic decay on the parameter only if it actually
             // requests seeing isotopic words, potentially transitively.
             //
-            switch (VAL_WORD_ID(maybe_word)) {
+            switch (VAL_WORD_ID(item)) {
               case SYM_WORD_X :
               case SYM_ANY_WORD_X :
               case SYM_ANY_VALUE_X :
@@ -128,11 +127,6 @@ Array(*) Add_Typeset_Bits_Core(
             }
             continue;
         }
-
-        if (IS_WORD(maybe_word))
-            item = Lookup_Word_May_Fail(maybe_word, specifier);
-        else
-            item = maybe_word;  // wasn't variable
 
         if (IS_TAG(item)) {
             bool strict = false;
@@ -197,14 +191,9 @@ Array(*) Add_Typeset_Bits_Core(
                 *flags |= PARAM_FLAG_CONST;
             }
         }
-        else if (IS_DATATYPE(item) or IS_TYPESET(item)) {
-            Derelativize(PUSH(), maybe_word, specifier);
+        else {
+            Derelativize(PUSH(), item, specifier);
         }
-        else if (IS_META_WORD(item)) {  // see Startup_Fake_Type_Constraint()
-            Derelativize(PUSH(), maybe_word, specifier);
-        }
-        else
-            fail (Error_Bad_Value(maybe_word));
 
         // !!! Review erroring policy--should probably not just be ignoring
         // things that aren't recognized here (!)

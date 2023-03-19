@@ -108,16 +108,19 @@ enum Reb_Spec_Mode {
 
 
 static void Finalize_Param(Value(*) param) {
-    if (VAL_TYPESET_ARRAY(param) != nullptr)
-        return;
-
-    if (GET_PARAM_FLAG(param, REFINEMENT)) {  // implies no callsite argument
-        INIT_VAL_TYPESET_ARRAY(param, EMPTY_ARRAY);
-    }
-    else {  // implies anything is legal (that isn't an isotope)
-        INIT_VAL_TYPESET_ARRAY(param, VAL_TYPESET_ARRAY(Lib(ANY_VALUE_X)));
-    }
+    //
+    // This used to guard against nullptr in VAL_TYPESET_ARRAY() and canonize
+    // the refinement case to EMPTY_ARRAY and the non-refinement case to
+    // the ANY-VALUE! typeset.  New philosophy is to allow null arrays in
+    // order to establish &(ANY-VALUE?) as a type annotation, because
+    // ANY-VALUE? has to bootstrap itself somehow.
+    //
+    // For the moment we hack in the ISOTOPES_OKAY flag.
+    //
+    if (VAL_TYPESET_ARRAY(param) == nullptr)
+        SET_PARAM_FLAG(param, ISOTOPES_OKAY);
 }
+
 
 //
 //  Push_Paramlist_Quads_May_Fail: C

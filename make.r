@@ -1071,7 +1071,10 @@ help: function [
                 print msg
             ]
         ]
-        all [value? :topic msg: select help-topics topic] [
+        all [
+            not null? :topic
+            msg: select help-topics topic
+        ][
             print msg
         ]
     ] else [

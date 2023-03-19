@@ -388,6 +388,11 @@ requote: reframer lambda [
 next: specialize :skip [offset: 1]
 back: specialize :skip [offset: -1]
 
+; Function synonyms
+
+min: runs :minimum
+max: runs :maximum
+abs: runs :absolute
 
 unspaced: specialize :delimit [delimiter: null]
 spaced: specialize :delimit [delimiter: space]
@@ -535,9 +540,6 @@ run func* [
     any-set-value?:
     any-meta-value?:
     <end>
-
-
-bound?: chain [specialize :reflect [property: 'binding], :value?]
 
 
 ; Note: `LIT-WORD!: UNEVAL WORD!` and `LIT-PATH!: UNEVAL PATH!` is actually

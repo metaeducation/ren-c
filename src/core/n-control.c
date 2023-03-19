@@ -633,53 +633,94 @@ DECLARE_NATIVE(also)  // see `tweak :also 'defer on` in %base-defs.r
 // for TYPE-BLOCK! and TYPE-GROUP!.
 //
 bool Typecheck_Value(
-    Cell(const*) test,  // can be BLOCK!, TYPE-BLOCK!, GROUP!, TYPE-GROUP!
-    REBSPC *test_specifier,
-    Value(const*) v
+    Cell(const*) tests,  // can be BLOCK!, TYPE-BLOCK!, GROUP!, TYPE-GROUP!
+    REBSPC *tests_specifier,
+    Cell(const*) v,
+    REBSPC *v_specifier
 ){
     DECLARE_LOCAL (spare);  // !!! stackful
 
+    Cell(const*) tail;
+    Cell(const*) item;
     bool match_all;
-    if (IS_BLOCK(test) or IS_TYPE_BLOCK(test))
+    if (IS_BLOCK(tests) or IS_TYPE_BLOCK(tests)) {
+        item = VAL_ARRAY_AT(&tail, tests);
         match_all = false;
-    else if (IS_GROUP(test) or IS_TYPE_GROUP(test))
+    }
+    else if (IS_GROUP(tests) or IS_TYPE_GROUP(tests)) {
+        item = VAL_ARRAY_AT(&tail, tests);
         match_all = true;
+    }
+    else if (IS_TYPESET(tests)) {
+        Array(const*) array = try_unwrap(VAL_TYPESET_ARRAY(tests));
+        if (array == nullptr)
+            return true;  // implicitly all is permitted
+        item = ARR_HEAD(array);
+        tail = ARR_TAIL(array);
+        match_all = false;
+    }
     else {
         assert(false);
         fail ("Bad test passed to Typecheck_Value");
     }
 
-    Cell(const*) tail;
-    Cell(const*) item = VAL_ARRAY_AT(&tail, test);
     for (; item != tail; ++item) {
-        enum Reb_Kind subkind;
-        Cell(const*) subtest;
+        enum Reb_Kind kind;
+        Cell(const*) test;
         if (IS_WORD(item)) {
-            subtest = Lookup_Word_May_Fail(item, test_specifier);
-            subkind = VAL_TYPE(subtest);  // e.g. TYPE-BLOCK! <> BLOCK!
+            test = Lookup_Word_May_Fail(item, tests_specifier);
+            kind = VAL_TYPE(test);  // e.g. TYPE-BLOCK! <> BLOCK!
+
+            // Predicates like `any-value!: &(any-value?)` depend on calling
+            // functions to get a match.  But we can speed this up for
+            // common cases using bitflags for built-in typesets.
+            //
+            // Because binding is a bit convoluted, instead of checking if the
+            // variable is bound to lib we check to see if what it looked up
+            // to ultimately resolved to the lib variable definition
+
+            option(SymId) id = VAL_WORD_ID(item);
+
+            if (
+                id
+                and id == SYM_ANY_VALUE_X
+                and test == Try_Lib_Var(id)
+            ){
+                goto test_succeeded;  // accepts everything
+            }
+            if (
+                id
+                and (id > SYM_ANY_VALUE_X and id < SYM_DATATYPES)
+                and test == Try_Lib_Var(id)
+            ){
+                REBU64 bits = Typesets[cast(int, id) - SYM_ANY_VALUE_X];
+                if (not (bits & FLAGIT_KIND(VAL_TYPE(v))))
+                    goto test_failed;
+                goto test_succeeded;
+            }
         }
         else {
-            subtest = item;
-            if (IS_BLOCK(subtest))
-                subkind = REB_TYPE_BLOCK;
-            else if (IS_GROUP(subtest))
-                subkind = REB_TYPE_GROUP;
+            test = item;
+            if (IS_BLOCK(test))
+                kind = REB_TYPE_BLOCK;
+            else if (IS_GROUP(test))
+                kind = REB_TYPE_GROUP;
             else
-                subkind = VAL_TYPE(subtest);
+                kind = VAL_TYPE(test);
         }
 
-        if (Is_Activation(subtest))
+        if (Is_Activation(test))
             goto run_activation;
 
-        switch (subkind) {
+        switch (kind) {
           run_activation:
           case REB_ACTION: {
             Flags flags = 0;
             Frame(*) f = Make_End_Frame(
                 FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING) | flags
             );
-            Push_Action(f, VAL_ACTION(subtest), VAL_ACTION_BINDING(subtest));
-            Begin_Prefix_Action(f, VAL_ACTION_LABEL(subtest));
+            Push_Action(f, VAL_ACTION(test), VAL_ACTION_BINDING(test));
+            Begin_Prefix_Action(f, VAL_ACTION_LABEL(test));
 
             const REBKEY *key = f->u.action.key;
             const REBPAR *param = f->u.action.param;
@@ -695,7 +736,7 @@ bool Typecheck_Value(
             if (not arg)
                 fail ("Type predicate doesn't take an argument");
 
-            Copy_Cell(arg, v);  // do not decay, see [4]
+            Derelativize(arg, v, v_specifier);  // do not decay, see [4]
 
             if (NOT_PARAM_FLAG(param, WANT_PACKS))
                 Decay_If_Unstable(arg);
@@ -720,54 +761,78 @@ bool Typecheck_Value(
             if (not IS_LOGIC(spare))
                 fail ("Type Predicates Must Return LOGIC!");
 
-            if (not VAL_LOGIC(spare)) {
-                if (match_all)
-                    return false;
-                continue;
-            }
+            if (not VAL_LOGIC(spare))
+                goto test_failed;
             break; }
 
           case REB_TYPE_BLOCK:
           case REB_TYPE_GROUP: {
-            REBSPC *subspecifier = Derive_Specifier(test_specifier, subtest);
-            if (not Typecheck_Value(subtest, subspecifier, v)) {
-                if (match_all)
-                    return false;
-                continue;
-            }
+            REBSPC *subspecifier = Derive_Specifier(tests_specifier, test);
+            if (not Typecheck_Value(test, subspecifier, v, v_specifier))
+                goto test_failed;
             break; }
 
           case REB_QUOTED:
           case REB_QUASI: {
-            if (HEART_BYTE(subtest) != REB_WORD)
+            if (HEART_BYTE(test) != REB_WORD)
                 fail ("QUOTED! or QUASI! must be of WORD in type group");
             Byte quotedness;
-            if (subkind == REB_QUASI)  // indicates isotope
+            if (kind == REB_QUASI)  // indicates isotope
                 quotedness = ISOTOPE_0;
             else
-                quotedness = SubtractQuote(QUOTE_BYTE(subtest));
-            enum Reb_Kind kind = KIND_FROM_SYM(VAL_WORD_ID(subtest));
-            if (kind != HEART_BYTE(v) or quotedness != QUOTE_BYTE(v)) {
-                if (match_all)
-                    return false;
-                continue;
-            }
+                quotedness = SubtractQuote(QUOTE_BYTE(test));
+            enum Reb_Kind heart = KIND_FROM_SYM(VAL_WORD_ID(test));
+            if (heart != HEART_BYTE(v) or quotedness != QUOTE_BYTE(v))
+                goto test_failed;
+            break; }
+
+          case REB_TYPESET: {
+            if (not Typecheck_Value(test, SPECIFIED, v, v_specifier))
+                goto test_failed;
             break; }
 
           case REB_DATATYPE: {
-            if (VAL_TYPE_KIND(subtest) != subkind) {
-                if (match_all)
-                    return false;
-                continue;
+            if (VAL_TYPE_KIND(test) != VAL_TYPE(v))
+                goto test_failed;
+            break; }
+
+          case REB_TAG: {
+            bool strict = false;
+
+            if (0 == CT_String(test, Root_Opt_Tag, strict)) {
+                if (not Is_Nulled(v))
+                    goto test_failed;
             }
+            if (0 == CT_String(test, Root_Void_Tag, strict)) {
+                if (not Is_Void(v))
+                    goto test_failed;
+            }
+            break; }  // currently, ignore all other tags
+
+          case REB_NULL: {
+            if (not Is_Nulled(v))
+                goto test_failed;
+            break; }
+
+          case REB_META_WORD: {
+            if (not Matches_Fake_Type_Constraint(v, VAL_WORD_ID(test)))
+                goto test_failed;
             break; }
 
           default:
             fail ("Invalid element in TYPE-GROUP!");
         }
+        goto test_succeeded;
 
+      test_succeeded:
         if (not match_all)
             return true;
+        continue;
+
+      test_failed:
+        if (match_all)
+            return false;
+        continue;
     }
 
     if (match_all)
@@ -816,19 +881,6 @@ DECLARE_NATIVE(match)
             return nullptr;
         break;
 
-      case REB_BLOCK: {
-        Bounce r = MAKE_Typeset(frame_, REB_TYPESET, nullptr, test);
-        if (r == BOUNCE_THROWN)
-            return THROWN;
-        test = Move_Cell(SPARE, OUT);;
-        goto test_is_typeset; }
-
-      case REB_TYPESET:
-      test_is_typeset:
-        if (not TYPE_CHECK(test, v))
-            return nullptr;
-        break;
-
       case REB_ACTION: {
         if (rebRunThrows(
             SPARE,  // <-- output cell
@@ -840,9 +892,11 @@ DECLARE_NATIVE(match)
             return nullptr;
         break; }
 
+      case REB_TYPESET:
+      case REB_BLOCK:
       case REB_TYPE_GROUP:
       case REB_TYPE_BLOCK:
-        if (not Typecheck_Value(test, SPECIFIED, v))
+        if (not Typecheck_Value(test, SPECIFIED, v, SPECIFIED))
             return nullptr;
         break;
 

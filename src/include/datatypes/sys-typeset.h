@@ -50,7 +50,7 @@
 #define mutable_VAL_TYPESET_PARAM_CLASS_BYTE(v) \
     mutable_FIRST_BYTE(EXTRA(Typeset, (v)).param_flags)
 
-inline static Array(const*) VAL_TYPESET_ARRAY(noquote(Cell(const*)) v) {
+inline static option(Array(const*)) VAL_TYPESET_ARRAY(noquote(Cell(const*)) v) {
     assert(HEART_BYTE(v) == REB_TYPESET);
 
     Array(const*) a = ARR(VAL_NODE1(v));
@@ -63,60 +63,12 @@ inline static Array(const*) VAL_TYPESET_ARRAY(noquote(Cell(const*)) v) {
     INIT_VAL_NODE1((v), (a))
 
 
-inline static bool TYPE_CHECK(noquote(Cell(const*)) typeset, Cell(const*) v) {
-    assert(CELL_HEART(typeset) == REB_TYPESET);
-
-    Array(const*) a = VAL_TYPESET_ARRAY(typeset);  // values all specified
-    if (a == nullptr)
-        return true;  // anything goes
-
-    Cell(const*) var = ARR_HEAD(a);  // don't use SPECIFIC() yet, may be tail!
-    Cell(const*) tail = ARR_TAIL(a);
-
-    for (; var != tail; ++var) {
-        Value(const*) item;
-        if (not IS_WORD(var))
-            item = SPECIFIC(var);
-        else {
-            option(SymId) id = VAL_WORD_ID(var);  // builtin typeset optimized
-            if (id and (id >= SYM_ANY_VALUE_X and id < SYM_DATATYPES)) {
-                REBU64 bits = Typesets[cast(int, id) - SYM_ANY_VALUE_X];
-                if (bits & FLAGIT_KIND(VAL_TYPE(v)))
-                    return true;
-                continue;
-            }
-            item = Lookup_Word_May_Fail(var, SPECIFIED);
-        }
-
-        if (IS_TYPESET(item)) {
-            if (TYPE_CHECK(item, v))  // !!! Should cycle protect
-                return true;
-            continue;
-        }
-
-        if (Is_Nulled(item)) { // null looks up to NULL
-            if (Is_Nulled(v))
-                return true;
-            continue;
-        }
-
-        if (IS_META_WORD(item)) {  // "fake type constraint"
-            if (Matches_Fake_Type_Constraint(v, unwrap(VAL_WORD_ID(item))))
-                return true;
-            continue;
-        }
-
-        assert(IS_DATATYPE(item));
-
-        enum Reb_Kind typekind = VAL_TYPE_KIND(item);
-        if (typekind != VAL_TYPE(v))
-            continue;
-
-        return true;
-    }
-
-    return false;
+inline static bool TYPE_CHECK(Cell(const*) typeset, Value(const*) v) {
+    return Typecheck_Value(typeset, SPECIFIED, v, SPECIFIED);
 }
+
+#define TYPE_CHECK_CORE(typeset,v,v_specifier) \
+    Typecheck_Value((typeset), SPECIFIED, (v), (v_specifier))
 
 
 inline static bool EQUAL_TYPESET(
@@ -138,7 +90,11 @@ inline static bool Is_Matcher(Cell(const*) v) {
     return HEART_BYTE(v) == REB_DATATYPE or HEART_BYTE(v) == REB_TYPESET;
 }
 
-inline static bool Matcher_Matches(Cell(const*) matcher, Cell(const*) v) {
+inline static bool Matcher_Matches(
+    Cell(const*) matcher,
+    Cell(const*) v,
+    REBSPC *v_specifier
+){
     assert(Is_Matcher(matcher));
     if (HEART_BYTE(matcher) == REB_DATATYPE) {
         if (VAL_TYPE(v) == VAL_TYPE_KIND(matcher))
@@ -146,7 +102,7 @@ inline static bool Matcher_Matches(Cell(const*) matcher, Cell(const*) v) {
     }
     else {
         assert(HEART_BYTE(matcher) == REB_TYPESET);
-        if (TYPE_CHECK(matcher, v))
+        if (TYPE_CHECK_CORE(matcher, v, v_specifier))
             return true;
     }
     return false;
@@ -337,7 +293,7 @@ inline static bool IS_PREDICATE(Cell(const*) v);  // forward decl
 //
 inline static bool Typecheck_Including_Constraints(
     const REBPAR *param,
-    Cell(*) v  // need mutability for ^META check
+    Value(*) v  // need mutability for ^META check
 ){
     // We do an adjustment of the argument to accommodate meta parameters,
     // which check the unquoted type.
@@ -414,7 +370,7 @@ inline static bool Typecheck_Including_Constraints(
 
 
 inline static bool Is_Typeset_Empty(noquote(Cell(const*)) param) {
-    return ARR_LEN(VAL_TYPESET_ARRAY(param)) == 0;  // e.g. `[/refine]`
+    return VAL_TYPESET_ARRAY(param) == nullptr;  // e.g. `[/refine]`
 }
 
 inline static bool Is_Blackhole(Cell(const*) v);  // forward decl

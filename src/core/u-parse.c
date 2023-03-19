@@ -639,10 +639,10 @@ static Bounce Parse_One_Rule(
                 return Init_Integer(OUT, pos + 1);  // specific type match
             return BOUNCE_UNHANDLED;
 
-          case REB_TYPESET:
-            if (TYPE_CHECK(rule, item))
+          case REB_TYPESET: {
+            if (TYPE_CHECK_CORE(rule, item, P_INPUT_SPECIFIER))
                 return Init_Integer(OUT, pos + 1);  // type was in typeset
-            return BOUNCE_UNHANDLED;
+            return BOUNCE_UNHANDLED; }
 
           case REB_WORD: {  // !!! Small set of simulated type constraints
             if (Matches_Fake_Type_Constraint(
@@ -1066,6 +1066,7 @@ static REBIXO To_Thru_Non_Block_Rule(
         REBINT i = Find_In_Array(
             &len,
             ARR(P_INPUT),
+            P_INPUT_SPECIFIER,
             P_POS,
             ARR_LEN(ARR(P_INPUT)),
             rule,

@@ -47,11 +47,11 @@ escape:    #"^(ESC)"
 cr: CR:    #"^M"
 lf: LF:    newline
 
-; Function synonyms
+; Type predicates
 
-min: runs :minimum
-max: runs :maximum
-abs: runs :absolute
+any-cell!: &(any-cell?)
+null!: &(null?)
+void!: &(void?)
 
 ; A "blackhole" is a name for the usage of the NUL character in the sense of
 ; "truthy emptiness".  e.g. `set # 10` will not error, while `set _ 10` will.

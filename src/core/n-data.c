@@ -422,18 +422,18 @@ bool Did_Get_Binding_Of(REBVAL *out, const REBVAL *v)
 
 
 //
-//  value?: native [
+//  any-cell?: native [
 //
-//  "Test if an optional cell contains a value (e.g. `value? null` is FALSE)"
+//  "Test if an argument can be put into blocks as-is"
 //
 //      return: [logic!]
-//      optional [<opt> any-value!]
+//      value
 //  ]
 //
-DECLARE_NATIVE(value_q)
+DECLARE_NATIVE(any_cell_q)
 {
-    INCLUDE_PARAMS_OF_VALUE_Q;
-    enum Reb_Kind kind = VAL_TYPE(ARG(optional));
+    INCLUDE_PARAMS_OF_ANY_CELL_Q;
+    enum Reb_Kind kind = VAL_TYPE(ARG(value));
 
     return Init_Logic(OUT, kind != REB_VOID and kind < REB_MAX);
 }

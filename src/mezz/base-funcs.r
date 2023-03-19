@@ -606,10 +606,6 @@ so: enfixed func [
 tweak :so 'postpone on
 
 
-; Rare case where a `?` variant is useful, to avoid BAD-WORD! on falsey matches
-match?: chain [:match :value?]
-
-
 was: enfixed redescribe [
     "Assert that the left hand side--when fully evaluated--IS the right"
 ](

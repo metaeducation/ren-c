@@ -382,6 +382,7 @@ Bounce TO_Array(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg) {
 REBINT Find_In_Array(
     Length* len,
     Array(const*) array,
+    REBSPC *array_specifier,
     REBLEN index_unsigned, // index to start search
     REBLEN end_unsigned, // ending position
     Cell(const*) target,
@@ -441,7 +442,7 @@ REBINT Find_In_Array(
         for (; index >= start and index < end; index += skip) {
             Cell(const*) item = ARR_AT(array, index);
 
-            if (Matcher_Matches(target, item))
+            if (Matcher_Matches(target, item, array_specifier))
                 return index;
 
             if (flags & AM_FIND_MATCH)
@@ -951,7 +952,7 @@ REBTYPE(Array)
 
         Length len;
         REBINT find = Find_In_Array(
-            &len, arr, index, limit, pattern, flags, skip
+            &len, arr, VAL_SPECIFIER(array), index, limit, pattern, flags, skip
         );
 
         if (find == NOT_FOUND) {
