@@ -1766,6 +1766,62 @@ default-combinators: make map! reduce [
         ]
     ]
 
+    type-group! combinator [
+        return: "Matched or synthesized value"
+            [any-value!]
+        value [type-group!]
+        <local> item error
+    ][
+        either any-array? input [
+            match value input.1 else [
+                return raise "Value at parse position did not match TYPE-GROUP!"
+            ]
+            remainder: next input
+            return input.1
+        ][
+            [item remainder]: transcode/one input except e -> [return raise e]
+
+            ; If TRANSCODE knew what kind of item we were looking for, it could
+            ; shortcut this.  Since it doesn't, we might waste time and memory
+            ; doing something like transcoding a very long block, only to find
+            ; afterward it's not something like a requested integer!.  Red
+            ; has some type sniffing in their fast lexer, review relevance.
+            ;
+            match value item else [
+                return raise "Could not TRANSCODE the TYPE-GROUP! from input"
+            ]
+            return item
+        ]
+    ]
+
+    type-block! combinator [
+        return: "Matched or synthesized value"
+            [any-value!]
+        value [type-block!]
+        <local> item error
+    ][
+        either any-array? input [
+            match input.1 value else [
+                return raise "Value at parse position did not match TYPE-BLOCK!"
+            ]
+            remainder: next input
+            return input.1
+        ][
+            [item remainder]: transcode/one input except e -> [return raise e]
+
+            ; If TRANSCODE knew what kind of item we were looking for, it could
+            ; shortcut this.  Since it doesn't, we might waste time and memory
+            ; doing something like transcoding a very long block, only to find
+            ; afterward it's not something like a requested integer!.  Red
+            ; has some type sniffing in their fast lexer, review relevance.
+            ;
+            match item value else [
+                return raise "Could not TRANSCODE the TYPE-BLOCK! from input"
+            ]
+            return item
+        ]
+    ]
+
     typeset! combinator [
         return: "Matched or synthesized value"
             [any-value!]
