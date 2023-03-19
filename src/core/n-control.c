@@ -1501,16 +1501,11 @@ DECLARE_NATIVE(switch)
 
     if (Is_Nulled(predicate)) {
         Decay_If_Unstable(SPARE);
-        if (Is_Matcher(SPARE)) {
-            if (not Matcher_Matches(SPARE, left))
-                goto next_switch_step;
-        }
-        else {
-            const bool strict = false;
-            Copy_Cell(scratch, left);
-            if (0 != Compare_Modify_Values(scratch, SPARE, strict))
-                goto next_switch_step;
-        }
+
+        const bool strict = false;
+        Copy_Cell(scratch, left);
+        if (0 != Compare_Modify_Values(scratch, SPARE, strict))
+            goto next_switch_step;
     }
     else {
         // `switch x .greater? [10 [...]]` acts like `case [x > 10 [...]]
