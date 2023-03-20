@@ -114,7 +114,7 @@ Array(*) Copy_Values_Len_Extra_Shallow_Core(
     for (; count < len; ++count, ++src, ++dest) {
         if (
             Is_Isotope(src)
-            or VAL_TYPE_UNCHECKED(src) == REB_NULL  // allow unreadable trash
+            or VAL_TYPE_UNCHECKED(src) == REB_VOID  // allow unreadable trash
         ){
             assert(IS_VARLIST(a));  // usually not legal
         }

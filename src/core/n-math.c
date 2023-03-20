@@ -482,7 +482,7 @@ REBINT Compare_Modify_Values(Cell(*) a, Cell(*) b, bool strict)
         // "strict" here still allows coercion, e.g. `1 < 1.1` should work.
         //
         switch (ta) {
-          case REB_NULL:
+          case REB_VOID:
             return -1;  // consider always less than anything else
 
           case REB_INTEGER:

@@ -63,8 +63,11 @@ inline static void INIT_VAL_NOTHING_LINE(Cell(*) v, LineNumber line)
   { PAYLOAD(Any, v).second.i = line; }
 
 
-#define Is_Nulled(v) \
-    (VAL_TYPE(v) == REB_NULL)
+inline static bool Is_Nulled(Cell(const*) v) {
+    return QUOTE_BYTE(v) == 0  // Checked version, checks for READABLE()
+        and HEART_BYTE_UNCHECKED(v) == REB_WORD
+        and VAL_WORD_ID(v) == SYM_NULL;
+}
 
 inline static String(const*) FRM_FILE(Frame(*) f);
 inline static LineNumber FRM_LINE(Frame(*) f);
@@ -148,7 +151,7 @@ inline bool Is_Quasi_Null(Cell(const*) v) {
 }
 
 #define Is_Breaking_Null(out) \
-    (VAL_TYPE_UNCHECKED(out) == REB_NULL)
+    (Is_Nulled(out))  // helps note usage of null to mean break loop
 
 #define Init_Meta_Of_Null(out) \
     Init_Quasi_Null(out)
@@ -198,7 +201,7 @@ inline static bool Is_Meta_Of_Heavy_Null(Cell(const*) v) {
 }
 
 inline static Value(*) Isotopify_If_Nulled(Value(*) v) {
-    if (VAL_TYPE_UNCHECKED(v) == REB_NULL)
+    if (Is_Nulled(v))
         Init_Heavy_Null(v);
     return v;
 }

@@ -712,6 +712,12 @@ bool Typecheck_Value(
         if (Is_Activation(test))
             goto run_activation;
 
+        if (Is_Nulled(test)) {  // <opt> turned to null in MAKE_Typeset
+            if (not Is_Nulled(v))
+                goto test_failed;
+            goto test_succeeded;
+        }
+
         switch (kind) {
           run_activation:
           case REB_ACTION: {
@@ -809,11 +815,6 @@ bool Typecheck_Value(
             }
             break; }  // currently, ignore all other tags
 
-          case REB_NULL: {
-            if (not Is_Nulled(v))
-                goto test_failed;
-            break; }
-
           default:
             fail ("Invalid element in TYPE-GROUP!");
         }
@@ -860,12 +861,11 @@ DECLARE_NATIVE(match)
     Value(*) v = ARG(value);
     Value(*) test = ARG(test);
 
-    switch (VAL_TYPE(test)) {
-      case REB_NULL:
+    if (Is_Nulled(test)) {
         if (not Is_Nulled(v))
             return nullptr;
-        break;
-
+    }
+    else switch (VAL_TYPE(test)) {
       case REB_LOGIC:
         if (Is_Truthy(v) != VAL_LOGIC(test))
             return nullptr;

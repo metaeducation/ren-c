@@ -138,7 +138,7 @@ Array(*) Startup_Datatypes(Array(*) boot_types, Array(*) boot_typespecs)
 {
     UNUSED(boot_typespecs);  // not currently used
 
-    if (ARR_LEN(boot_types) != REB_MAX - 1)  // exclude REB_NULL (not a type)
+    if (ARR_LEN(boot_types) != REB_MAX - 1)  // exclude REB_VOID
         panic (boot_types);  // other types/internals should have a WORD!
 
     Array(*) catalog = Make_Array(REB_MAX - 1);

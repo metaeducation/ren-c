@@ -120,8 +120,8 @@ uint32_t Hash_Value(Cell(const*) cell)
     uint32_t hash;
 
     switch (heart) {
-      case REB_NULL:
-        panic ("Cannot hash NULL");  // nulls can't be values or keys in MAP!s
+      case REB_VOID:
+        panic ("Cannot hash VOID");  // voids can't be values or keys in MAP!s
 
       case REB_BLANK:
         hash = 0;

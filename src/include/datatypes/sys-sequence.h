@@ -123,7 +123,7 @@ inline static bool Is_Valid_Sequence_Element(
 
 // The Try_Init_Any_Sequence_XXX variants will return nullptr if any of the
 // requested path elements are not valid.  Instead of an initialized sequence,
-// the output cell passed in will be either a REB_NULL (if the data was
+// the output cell passed in will be either a null (if the data was
 // too short) or it will be the first badly-typed value that was problematic.
 //
 inline static Context(*) Error_Bad_Sequence_Init(const REBVAL *v) {

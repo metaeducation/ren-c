@@ -2007,11 +2007,10 @@ DECLARE_NATIVE(subparse)
     if (IS_BAR(rule))
         fail ("BAR! must be source level (else PARSE can't skip it)");
 
-    switch (VAL_TYPE(rule)) {
-      case REB_NULL:
-        FETCH_NEXT_RULE(f);  // handle fetched blanks same as null
-        goto pre_rule;
+    if (Is_Nulled(rule))
+        fail ("NULL rules are not allowed in PARSE");
 
+    switch (VAL_TYPE(rule)) {
       case REB_GROUP:
         goto process_group;  // GROUP! can make WORD! that fetches GROUP!
 

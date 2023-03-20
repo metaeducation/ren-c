@@ -91,7 +91,7 @@ static bool PG_Api_Initialized = false;
 // to the clients of the API for NULL.
 //
 inline static const REBVAL *NULLIFY_NULLED(const REBVAL *cell) {
-  return VAL_TYPE(cell) == REB_NULL
+  return Is_Nulled(cell)
       ? cast(REBVAL*, nullptr)  // C++98 ambiguous w/o cast
       : cell;
 }
@@ -1024,7 +1024,7 @@ REBVAL *RL_rebValue(const void *p, va_list *vaptr)
     REBVAL *result = Alloc_Value();
     Run_Va_May_Fail(result, p, vaptr);  // calls va_end()
 
-    if (VAL_TYPE_UNCHECKED(result) == REB_NULL) {  // tolerate isotopes
+    if (Is_Nulled(result)) {  // tolerate isotopes
         rebRelease(result);
         return nullptr;  // No NULLED cells in API, see NULLIFY_NULLED()
     }

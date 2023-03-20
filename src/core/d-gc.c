@@ -124,7 +124,7 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
         break;
 
       case REB_DATATYPE:
-        assert(VAL_TYPE_KIND(v) != REB_NULL);
+        assert(VAL_TYPE_KIND(v) < REB_MAX);
         break;
 
       case REB_TYPESET: {  // bitset bits don't need marking

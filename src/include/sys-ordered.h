@@ -63,7 +63,7 @@
 // All the inert types are grouped together to make this test fast.
 
 inline static bool ANY_INERT_KIND(Byte k) {
-    assert(k != REB_NULL);  // don't call on NULL (0 in enum, breaks pattern)
+    assert(k != REB_VOID);  // don't call on void (0 in enum, breaks pattern)
     return k <= REB_BLOCK;
 }
 

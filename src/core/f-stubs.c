@@ -702,8 +702,6 @@ REBVAL *Plainify(REBVAL *out) {
     else if (ANY_GROUP_KIND(heart)) {
         mutable_HEART_BYTE(out) = REB_GROUP;
     }
-    else if (heart == REB_NULL)
-        fail ("Cannot PLAINIFY a NULL");
 
     return out;
 }
