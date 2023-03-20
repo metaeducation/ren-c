@@ -65,11 +65,6 @@ REBOL [
 ; BEGIN TYPES THAT ARE EVALUATOR INERT
 ; ============================================================================
 
-logic!      "boolean true or false"
-            (CELL_MASK_NO_NODES)
-            []
-            [logic       +       +]
-
 decimal!    "64bit floating point number (IEEE standard)"
             (CELL_MASK_NO_NODES)
             [any-number! any-scalar!]

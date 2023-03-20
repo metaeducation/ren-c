@@ -1211,7 +1211,7 @@ REBTYPE(Fail)
 //          [<unrun> action!]
 //      property "Currently must be [defer postpone]"
 //          [word!]
-//      enable [logic!]
+//      enable ; should be LOGIC!, but logic constraint not loaded yet
 //  ]
 //
 DECLARE_NATIVE(tweak)

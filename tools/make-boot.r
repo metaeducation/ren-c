@@ -374,6 +374,7 @@ e-types/emit 'rebs {
         REB_MAX,  /* one past valid types */
 
         REB_NULL,  /* similar--but not conflated with isotopes */
+        REB_LOGIC, /* also not conflated with isotopes (at this time) */
         REB_ISOTOPE,  /* not a "type", but can answer VAL_TYPE() */
 
         /*

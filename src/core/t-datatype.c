@@ -147,7 +147,7 @@ Array(*) Startup_Datatypes(Array(*) boot_types, Array(*) boot_typespecs)
     Cell(*) word = ARR_HEAD(boot_types);
 
     REBINT n = VAL_WORD_ID(word);
-    if (n != SYM_LOGIC_X)  // first symbol (SYM_NULL is something random)
+    if (n != SYM_DECIMAL_X)  // first symbol (SYM_NULL is something random)
         panic (word);
 
     for (; word != word_tail; ++word, ++n) {

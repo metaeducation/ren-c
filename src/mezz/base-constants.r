@@ -59,6 +59,7 @@ splice!: &(splice?)
 lit-word!: &(lit-word?)
 lit-path!: &(lit-path?)
 any-matcher!: &(~typeset!~ ~datatype!~)
+logic!: &(logic?)
 
 
 ; A "blackhole" is a name for the usage of the NUL character in the sense of

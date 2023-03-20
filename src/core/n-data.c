@@ -2356,14 +2356,31 @@ DECLARE_NATIVE(aliases_q)
 //  "Tells you if the argument is not a value"
 //
 //      return: [logic!]
-//      optional [<opt> <void> any-value! ~any-value!~]
+//      value
 //  ]
 //
 DECLARE_NATIVE(null_q)
 {
     INCLUDE_PARAMS_OF_NULL_Q;
 
-    return Init_Logic(OUT, Is_Nulled(ARG(optional)));
+    return Init_Logic(OUT, Is_Nulled(ARG(value)));
+}
+
+
+//
+//  logic?: native [
+//
+//  "Tells you if the argument is a ~true~ or ~false~ isotope"
+//
+//      return: [logic!]
+//      value
+//  ]
+//
+DECLARE_NATIVE(logic_q)
+{
+    INCLUDE_PARAMS_OF_LOGIC_Q;
+
+    return Init_Logic(OUT, IS_LOGIC(ARG(value)));
 }
 
 

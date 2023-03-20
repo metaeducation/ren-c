@@ -469,7 +469,6 @@ run func* [
 ]
     blank?:
     comma?:
-    logic?:
     integer?:
     decimal?:
     percent?:
