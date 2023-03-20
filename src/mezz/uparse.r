@@ -2184,21 +2184,13 @@ default-combinators: make map! reduce [
         value [word! tuple!]
         <local> r comb
     ][
-        r: case [
-            ; !!! The CHAR!=ISSUE! => TOKEN! change has not really been fully
-            ; finished, which is bad.  Work around it by making CHAR! a
-            ; synonym for ISSUE!, instead of the "type constraint" META-WORD!
-            ;
-            value = 'char! [issue!]
-            true [get value]
-        ]
-        *else [
-            fail "WORD! fetches cannot be NULL in UPARSE (use BLANK!)"
+        r: get value else [
+            fail "WORD! fetches cannot be NULL in UPARSE"
         ]
 
         ; !!! It's not clear exactly what set of things should be allowed or
         ; disallowed here.  Letting you do INTEGER! has been rejected as too
-        ; obfuscating, since the INTEGER! combinator takes an argument.  Letting
+        ; obfuscating, since the INTEGER! combinator takes an argument.
         ; Allowing WORD! to run the WORD! combinator again would not be letting
         ; you do anything with recursion you couldn't do with BLOCK! rules, but
         ; still seems kind of bad.  Allowing LOGIC! seems like it may be
@@ -2213,36 +2205,6 @@ default-combinators: make map! reduce [
         ]
         if word? r [
             fail [value "can't be WORD!, use" :["[" value "]"] "BLOCK! rule"]
-        ]
-
-        ; !!! Type constraints like "quoted word" or "quoted block" have not
-        ; been sorted out, unfortunately.  But LIT-WORD! being matched was
-        ; something historically taken for granted.  So LIT-WORD! is the fake
-        ; "pseudotype" of ^lit-word! at the moment.  Embrace it for the moment.
-        ;
-        if r = lit-word! [
-            if not any-array? input [
-                fail "LIT-WORD! hack only works with array inputs"
-            ]
-            all [quoted? input.1, word? unquote input.1] then [
-                pending: null
-                remainder: next input
-                return unquote input.1
-            ] else [
-                return raise "LIT-WORD! hack did not match"
-            ]
-        ]
-        if r = lit-path! [
-            if not any-array? input [
-                fail "LIT-PATH! hack only works with array inputs"
-            ]
-            all [quoted? input.1, path? unquote input.1] then [
-                pending: null
-                remainder: next input
-                return unquote input.1
-            ] else [
-                return raise "LIT-PATH! hack did not match"
-            ]
         ]
 
         if not comb: select state.combinators kind of r [

@@ -100,17 +100,6 @@ DECLARE_NATIVE(make)
     REBVAL *type = ARG(type);
     REBVAL *arg = ARG(def);
 
-    if (IS_META_WORD(type)) {  // hack for MAKE CHAR! 0
-        switch (VAL_WORD_ID(type)) {
-          case SYM_CHAR_X:
-            Copy_Cell(type, Datatype_From_Kind(REB_ISSUE));
-            break;
-
-          default:
-            fail ("MAKE only supports CHAR! fake type constraint");
-        }
-    }
-
     // See notes in DECLARE_NATIVE(do) for why this is the easiest way to pass
     // a flag to Do_Any_Array(), to help us discern the likes of:
     //
@@ -201,16 +190,6 @@ DECLARE_NATIVE(to)
 
     REBVAL *v = ARG(value);
     REBVAL *type = ARG(type);
-
-    if (IS_META_WORD(type)) {  // hack for TO CHAR! XXX
-        switch (VAL_WORD_ID(type)) {
-          case SYM_CHAR_X:
-            fail ("Convert INTEGER! to codepoint with MAKE ISSUE!, not TO");
-
-          default:
-            fail ("TO only supports CHAR! fake type constraint");
-        }
-    }
 
     enum Reb_Kind new_kind = VAL_TYPE_KIND(type);
     enum Reb_Kind old_kind = VAL_TYPE(v);

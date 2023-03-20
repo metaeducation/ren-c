@@ -440,6 +440,78 @@ DECLARE_NATIVE(any_cell_q)
 
 
 //
+//  refinement?: native [
+//
+//  "Test if an argument is a path with a leading blank"
+//
+//      return: [logic!]
+//      value
+//  ]
+//
+DECLARE_NATIVE(refinement_q)
+{
+    INCLUDE_PARAMS_OF_REFINEMENT_Q;
+    Value(*) v = ARG(value);
+
+    return Init_Logic(OUT, IS_PATH(v) and IS_REFINEMENT(v));;
+}
+
+
+//
+//  char?: native [
+//
+//  "Test if an argument is an issue with one character"
+//
+//      return: [logic!]
+//      value
+//  ]
+//
+DECLARE_NATIVE(char_q)
+{
+    INCLUDE_PARAMS_OF_CHAR_Q;
+    Value(*) v = ARG(value);
+
+    return Init_Logic(OUT, IS_CHAR(v));
+}
+
+
+//
+//  lit-word?: native [
+//
+//  "Test if an argument is quoted word"
+//
+//      return: [logic!]
+//      value
+//  ]
+//
+DECLARE_NATIVE(lit_word_q)
+{
+    INCLUDE_PARAMS_OF_LIT_WORD_Q;
+    Value(*) v = ARG(value);
+
+    return Init_Logic(OUT, IS_QUOTED_WORD(v));
+}
+
+
+//
+//  lit-path?: native [
+//
+//  "Test if an argument is a quoted path"
+//
+//      return: [logic!]
+//      value
+//  ]
+//
+DECLARE_NATIVE(lit_path_q)
+{
+    INCLUDE_PARAMS_OF_LIT_PATH_Q;
+    Value(*) v = ARG(value);
+
+    return Init_Logic(OUT, IS_QUOTED_PATH(v));
+}
+
+
+//
 //  any-inert?: native [
 //
 //  "Test if a value type is inert"

@@ -639,18 +639,11 @@ static Bounce Parse_One_Rule(
                 return Init_Integer(OUT, pos + 1);  // specific type match
             return BOUNCE_UNHANDLED;
 
+          case REB_TYPE_BLOCK:
+          case REB_TYPE_GROUP:
           case REB_TYPESET: {
             if (TYPE_CHECK_CORE(rule, item, P_INPUT_SPECIFIER))
                 return Init_Integer(OUT, pos + 1);  // type was in typeset
-            return BOUNCE_UNHANDLED; }
-
-          case REB_WORD: {  // !!! Small set of simulated type constraints
-            if (Matches_Fake_Type_Constraint(
-                item,
-                cast(enum Reb_Symbol_Id, VAL_WORD_ID(rule))
-            )){
-                return Init_Integer(OUT, pos + 1);
-            }
             return BOUNCE_UNHANDLED; }
 
           default:
@@ -2154,28 +2147,6 @@ DECLARE_NATIVE(subparse)
                 }
                 else
                     i = END_FLAG;
-                break;
-            }
-
-            // !!! Simulate constrained types since they do not exist yet.
-
-              case SYM_CHAR_X:  // actually an ISSUE!
-              case SYM_BLACKHOLE_X:  // actually an ISSUE!
-              case SYM_LIT_WORD_X:  // actually a QUOTED!
-              case SYM_LIT_PATH_X:  // actually a QUOTED!
-              case SYM_REFINEMENT_X:  // actually a PATH!
-              case SYM_PREDICATE_X: {  // actually a TUPLE!
-                Bounce r = Parse_One_Rule(f, P_POS, rule);
-                if (r == BOUNCE_THROWN)
-                    goto return_thrown;
-
-                if (r == BOUNCE_UNHANDLED)
-                    i = END_FLAG;
-                else {
-                    assert(r == OUT);
-                    i = VAL_INT32(OUT);
-                }
-                FRESHEN(OUT);  // preserve invariant
                 break; }
 
               case SYM_INTO: {

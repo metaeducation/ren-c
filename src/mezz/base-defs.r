@@ -565,19 +565,6 @@ to-lit-path: func* [return: [quoted!] value [any-value!]] [
     return quote to path! noquote value
 ]
 
-refinement?: func* [return: [logic!] value [<opt> any-value!]] [
-    return to-logic all [
-        path? value
-        2 = length of value
-        blank? value.1
-        word? value.2
-    ]
-]
-
-char?: func* [return: [logic!] value [<opt> any-value!]] [
-    return (issue? value) and (1 >= length of value)
-]
-
 print: func* [
     {Textually output spaced line (evaluating elements if a block)}
 

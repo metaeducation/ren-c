@@ -286,11 +286,6 @@ inline static bool IS_PREDICATE(Cell(const*) v);  // forward decl
 // data types (e.g. PATH!-with-BLANK!-at-head being REFINEMENT!).  See
 // Startup_Fake_Type_Constraint() for an explanation.
 //
-// !!! All type constraints have been temporarily removed from typesets in
-// order to reclaim bits.  However, type checks that want to ultimately
-// include parameter constraints (e.g. function arguments) should call this
-// instead of checking typeset bit flags directly.
-//
 inline static bool Typecheck_Including_Constraints(
     const REBPAR *param,
     Value(*) v  // need mutability for ^META check

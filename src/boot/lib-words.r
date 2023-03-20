@@ -101,13 +101,6 @@ to
 thru
 quote  ; !!! kept for compatibility, but use THE instead
 just
-lit-word!  ; !!! simulated datatype constraint (a QUOTED! like 'x)
-lit-path!  ; !!! simulated datatype costraint (a QUOTED! like 'x/y)
-refinement!  ; !!! simulated datatype constraint (a PATH! like `/word`)
-predicate!  ; !!! simulated datatype constraint (a TUPLE! like `.word`)
-blackhole!  ; !!! simulated datatype constraint (the ISSUE! `#`)
-char!  ; !!! simulated datatype constraint (single-element ISSUE!)
-match  ; !!! no longer supported by PARSE3
 do
 into
 spread

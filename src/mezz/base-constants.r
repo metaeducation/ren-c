@@ -52,6 +52,14 @@ lf: LF:    newline
 any-cell!: &(any-cell?)
 null!: &(null?)
 void!: &(void?)
+refinement!: &(refinement?)
+char!: &(char?)
+blackhole!: &(blackhole?)
+splice!: &(splice?)
+lit-word!: &(lit-word?)
+lit-path!: &(lit-path?)
+any-matcher!: &(~typeset!~ ~datatype!~)
+
 
 ; A "blackhole" is a name for the usage of the NUL character in the sense of
 ; "truthy emptiness".  e.g. `set # 10` will not error, while `set _ 10` will.

@@ -128,62 +128,6 @@ REBTYPE(Datatype)
 
 
 //
-//  Startup_Fake_Type_Constraints: C
-//
-// Consolidating types like REFINEMENT! into a specific instance of PATH!,
-// or CHAR! into a specific instance of ISSUE!, reduces the total number of
-// fundamental datatypes and offers consistency and flexibility.  But there
-// is no standard mechanism for expressing a type constraint in a function
-// spec (e.g. "integer!, but it must be even") so the unification causes
-// a loss of that check.
-//
-// A true solution to the problem needs to be found.  But until it is, this
-// creates some fake values that can be used by function specs which at least
-// give an annotation of the constraint.  They are in Lib_Context so that
-// native specs can use them.
-//
-// While they have no teeth in typeset creation (they only verify that the
-// unconstrained form of the type matches), PARSE recognizes the symbol and
-// enforces it.
-//
-static void Startup_Fake_Type_Constraint(SymId sym)
-{
-    Init_Meta_Word(Force_Lib_Var(sym), Canon_Symbol(sym));
-}
-
-
-//
-//  Matches_Fake_Type_Constraint: C
-//
-// Called on META-WORD!s by PARSE and MATCH.
-//
-bool Matches_Fake_Type_Constraint(Cell(const*) v, enum Reb_Symbol_Id sym) {
-    switch (sym) {
-      case SYM_CHAR_X:
-        return IS_CHAR(v);
-
-      case SYM_BLACKHOLE_X:
-        return IS_CHAR(v) and VAL_CHAR(v) == 0;
-
-      case SYM_LIT_WORD_X:
-        return IS_QUOTED_WORD(v);
-
-      case SYM_LIT_PATH_X:
-        return IS_QUOTED_PATH(v);
-
-      case SYM_REFINEMENT_X:
-        return IS_PATH(v) and IS_REFINEMENT(v);
-
-      case SYM_PREDICATE_X:
-        return IS_PREDICATE(v);
-
-      default:
-        fail ("Invalid fake type constraint");
-    }
-}
-
-
-//
 //  Startup_Datatypes: C
 //
 // Create library words for each type, (e.g. make INTEGER! correspond to
@@ -237,15 +181,6 @@ Array(*) Startup_Datatypes(Array(*) boot_types, Array(*) boot_typespecs)
 
         Append_Value(catalog, SPECIFIC(word));
     }
-
-    // !!! Temporary solution until actual type constraints exist.
-    //
-    Startup_Fake_Type_Constraint(SYM_CHAR_X);
-    Startup_Fake_Type_Constraint(SYM_LIT_WORD_X);
-    Startup_Fake_Type_Constraint(SYM_LIT_PATH_X);
-    Startup_Fake_Type_Constraint(SYM_REFINEMENT_X);
-    Startup_Fake_Type_Constraint(SYM_PREDICATE_X);
-    Startup_Fake_Type_Constraint(SYM_BLACKHOLE_X);
 
     return catalog;
 }

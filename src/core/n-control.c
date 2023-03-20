@@ -814,11 +814,6 @@ bool Typecheck_Value(
                 goto test_failed;
             break; }
 
-          case REB_META_WORD: {
-            if (not Matches_Fake_Type_Constraint(v, VAL_WORD_ID(test)))
-                goto test_failed;
-            break; }
-
           default:
             fail ("Invalid element in TYPE-GROUP!");
         }
