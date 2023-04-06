@@ -304,9 +304,6 @@ ldflags: compose [
     ; The EXPORTED_"RUNTIME"_METHODS are referring to functions built into
     ; Emscripten which you can use.  Several seem to link by default, like:
     ;
-    ; * lengthBytesUTF8()
-    ; * stringToUTF8()
-    ; * UTF8ToString()
     ; * stackAlloc()
     ; * stackRestore()
     ;
@@ -314,7 +311,7 @@ ldflags: compose [
     ; but "library" now.  See DEFAULT_LIBRARY_FUNCS_TO_INCLUDE for those...)
     ;
     ; Also, the list has been thinning over time.  Once writeArrayToMemory()
-    ; was included, but now has to be explicit:
+    ; and lengthBytesUTF8() and stringToUTF8() were included, but now explicit:
     ;
     ; https://groups.google.com/g/emscripten-discuss/c/GqyrjgRmcEw/
     ;
@@ -329,7 +326,7 @@ ldflags: compose [
     ; after the module's preRun() method, and to assign ENV with MODULARIZE=1
     ; one must export it (or ENV is a function stub that raises an error).
     ;
-    {-s "EXPORTED_RUNTIME_METHODS=['ENV', 'writeArrayToMemory']"}
+    {-s EXPORTED_RUNTIME_METHODS=ENV,writeArrayToMemory,lengthBytesUTF8,stringToUTF8}
 
     ; These are functions in Emscripten that make it easier to call C code.
     ; You don't need them to call C functions with integer arguments.  But
