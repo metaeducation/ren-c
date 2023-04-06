@@ -147,16 +147,9 @@ jobs:
     #
     # See README: !!! IMPORTANT - Untrusted Actions, Use Audited Hash !!!
     #
-    # Note: There is a bug that arose in emsdk 3.1.31 with some bugs in the
-    # preprocessor which are being addressed by the emscripten team:
-    #
-    # https://github.com/emscripten-core/emscripten/issues/18609#issuecomment-1434950492
-    #
-    # Until that is resolved, we use 3.1.30 instead of latest-upstream.
-    #
     - uses: mymindstorm/setup-emsdk@5b66c2d3aac3b3d1572a96064e91833b68cf65d3
       with:
-        version: '3.1.30'  # see note, want to use latest-upstream
+        version: 'latest-upstream'
 
 
     # Show a little bit of sanity check information
