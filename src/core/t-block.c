@@ -191,13 +191,6 @@ Bounce MAKE_Array(
             derived
         );
     }
-    else if (IS_TYPESET(arg)) {
-        //
-        // !!! Should MAKE GROUP! and MAKE PATH! from a TYPESET! work like
-        // MAKE BLOCK! does?  Allow it for now.
-        //
-        return Init_Array_Cell(OUT, kind, Typeset_To_Array(arg));
-    }
     else if (ANY_ARRAY(arg)) {
         //
         // `to group! [1 2 3]` etc. -- copy the array data at the index

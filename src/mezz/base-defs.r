@@ -621,13 +621,12 @@ echo: func* [
 ]
 
 
-internal!: make typeset! [
+internal!: &[
     handle!
 ]
 
-immediate!: make typeset! [
-    ; Does not include internal datatypes
-    blank! logic! any-scalar! date! any-word! datatype! typeset!
+immediate!: &[  ; Does not include internal datatypes
+    blank! logic! any-scalar! date! any-word! datatype!
 ]
 
 ok?: func* [

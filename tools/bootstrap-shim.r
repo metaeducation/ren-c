@@ -355,7 +355,7 @@ quote: func3 [x [<opt> any-value!]] [
 ;=== BELOW THIS LINE, TRY NOT TO USE FUNCTIONS IN THE SHIM IMPLEMENTATION ===
 
 
-any-inert!: make typeset! [
+any-inert!: make typeset! [  ; note TYPESET! does not exist in new exe
     any-string! binary! char! any-context! time! date! any-number! object!
 ]
 

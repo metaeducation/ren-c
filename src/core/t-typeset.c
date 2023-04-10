@@ -212,33 +212,8 @@ Bounce MAKE_Typeset(
     option(const REBVAL*) parent,
     const REBVAL *arg
 ){
-    assert(kind == REB_TYPESET);
-    if (parent)
-        return RAISE(Error_Bad_Make_Parent(kind, unwrap(parent)));
-
-    if (IS_TYPESET(arg))
-        return Copy_Cell(OUT, arg);
-
-    if (!IS_BLOCK(arg)) goto bad_make;
-
-  blockscope {
-    Cell(const*) tail;
-    Cell(const*) at = VAL_ARRAY_AT(&tail, arg);
-    Init_Typeset(OUT, 0);
-    Flags flags;
-    INIT_VAL_TYPESET_ARRAY(OUT,
-        Add_Typeset_Bits_Core(
-            &flags,
-            at,
-            tail,
-            VAL_SPECIFIER(arg)
-        )
-    );
-    return OUT;
-  }
-
-  bad_make:
-
+    UNUSED(kind);
+    UNUSED(parent);
     return RAISE(Error_Bad_Make(REB_TYPESET, arg));
 }
 
@@ -249,22 +224,6 @@ Bounce MAKE_Typeset(
 Bounce TO_Typeset(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg)
 {
     return MAKE_Typeset(frame_, kind, nullptr, arg);
-}
-
-
-//
-//  Typeset_To_Array: C
-//
-// Converts typeset value to a block of datatypes, no order is guaranteed.
-//
-// !!! Typesets are likely to be scrapped in their current form; this is just
-// here to try and keep existing code running for now.
-//
-// https://forum.rebol.info/t/the-typeset-representation-problem/1300
-//
-Array(*) Typeset_To_Array(const REBVAL *tset)
-{
-    return Copy_Array_Shallow(VAL_TYPESET_ARRAY(tset), SPECIFIED);
 }
 
 
@@ -294,45 +253,5 @@ void MF_Typeset(REB_MOLD *mo, noquote(Cell(const*)) v, bool form)
 //
 REBTYPE(Typeset)
 {
-    REBVAL *v = D_ARG(1);
-
-    switch (ID_OF_SYMBOL(verb)) {
-      case SYM_FIND: {
-        INCLUDE_PARAMS_OF_FIND;
-        UNUSED(ARG(series));  // covered by `v`
-        UNUSED(ARG(tail));  // not supported
-
-        UNUSED(REF(case));  // !!! tolerate, even though ignored?
-
-        if (REF(part) or REF(skip) or REF(match))
-            fail (Error_Bad_Refines_Raw());
-
-        REBVAL *pattern = ARG(pattern);
-        if (Is_Isotope(pattern))
-            fail (pattern);
-
-        if (not IS_DATATYPE(pattern))
-            fail (pattern);
-
-        if (TYPE_CHECK(v, pattern))
-            return Init_True(OUT);
-
-        return nullptr; }
-
-      case SYM_UNIQUE:
-      case SYM_INTERSECT:
-      case SYM_UNION:
-      case SYM_DIFFERENCE:
-      case SYM_EXCLUDE:
-      case SYM_COMPLEMENT:
-        fail ("TYPESET! INTERSECT/UNION/etc. currently disabled");
-
-      case SYM_COPY:
-        return COPY(v);
-
-      default:
-        break;
-    }
-
     return BOUNCE_UNHANDLED;
 }

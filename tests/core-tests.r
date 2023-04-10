@@ -68,7 +68,6 @@
 %datatypes/tag.test.reb
 %datatypes/time.test.reb
 %datatypes/tuple.test.reb
-%datatypes/typeset.test.reb
 %datatypes/url.test.reb
 %datatypes/varargs.test.reb
 %datatypes/word.test.reb

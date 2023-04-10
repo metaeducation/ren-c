@@ -133,17 +133,17 @@ intersect: generic [
 
     return: [
         logic! integer! char! tuple!  ; math
-        any-array! any-string! bitset! typeset!  ; sets
+        any-array! any-string! bitset!  ; sets
         binary!  ; ???
     ]
     value1 [
         logic! integer! char! tuple!  ; math
-        any-array! any-string! bitset! typeset!  ; sets
+        any-array! any-string! bitset!  ; sets
         binary!  ; ???
     ]
     value2 [
         logic! integer! char! tuple!  ; math
-        any-array! any-string! bitset! typeset!  ; sets
+        any-array! any-string! bitset!  ; sets
         binary!  ; ???
     ]
     /case "Uses case-sensitive comparison"
@@ -156,17 +156,17 @@ union: generic [
 
     return: [
         logic! integer! char! tuple!  ; math
-        any-array! any-string! bitset! typeset!  ; sets
+        any-array! any-string! bitset!  ; sets
         binary!  ; ???
     ]
     value1 [
         logic! integer! char! tuple!  ; math
-        any-array! any-string! bitset! typeset!  ; sets
+        any-array! any-string! bitset!  ; sets
         binary!  ; ???
     ]
     value2 [
         logic! integer! char! tuple!  ; math
-        any-array! any-string! bitset! typeset!  ; sets
+        any-array! any-string! bitset!  ; sets
         binary!  ; ???
     ]
     /case "Use case-sensitive comparison"
@@ -179,19 +179,19 @@ difference: generic [
 
     return: [
         logic! integer! char! tuple!
-        any-array! any-string! bitset! typeset!
+        any-array! any-string! bitset!
         binary!
         time!  ; !!! Under review, this really doesn't fit
     ]
     value1 [
         logic! integer! char! tuple!  ; math
-        any-array! any-string! bitset! typeset!  ; sets
+        any-array! any-string! bitset!  ; sets
         binary!  ; ???
         date!  ; !!! Under review, this really doesn't fit
     ]
     value2 [
         logic! integer! char! tuple!  ; math
-        any-array! any-string! bitset! typeset!  ; sets
+        any-array! any-string! bitset!  ; sets
         binary!  ; ???
         date!  ; !!! Under review, this really doesn't fit
     ]
@@ -203,11 +203,11 @@ difference: generic [
 exclude: generic [
     {Returns the first data set less the second data set.}
 
-    return: [any-array! any-string! binary! bitset! typeset!]
+    return: [any-array! any-string! binary! bitset!]
     data "original data"
-        [any-array! any-string! binary! bitset! typeset!]
+        [any-array! any-string! binary! bitset!]
     exclusions "data to exclude from series"
-        [any-array! any-string! binary! bitset! typeset!]
+        [any-array! any-string! binary! bitset!]
     /case "Uses case-sensitive comparison"
     /skip "Treat the series as records of fixed size"
         [integer!]
@@ -230,15 +230,15 @@ bitwise-not: generic [
 
 complement: generic [
     {Returns the inversion of a set}
-    return: [bitset! typeset!]
-    value [bitset! typeset!]
+    return: [bitset!]
+    value [bitset!]
 ]
 
 unique: generic [
     {Returns the data set with duplicates removed}
 
-    return: [any-array! any-string! binary! bitset! typeset!]
-    series [any-array! any-string! binary! bitset! typeset!]
+    return: [any-array! any-string! binary! bitset!]
+    series [any-array! any-string! binary! bitset!]
     <local> dummy  ; unused, makes frame-compatible with INTERSECT/UNIQUE/etc.
     /case "Use case-sensitive comparison (except bitsets)"
     /skip "Treat the series as records of fixed size"
@@ -318,9 +318,9 @@ find: generic [
     @tail "Returns the end of the found data"
         [<opt> any-series!]
     series [
-        <maybe> any-series! any-context! map! bitset! typeset!
+        <maybe> any-series! any-context! map! bitset!
     ]
-    pattern [<maybe> any-value! ~group!~ ~typeset!~ ~datatype!~]
+    pattern [<maybe> any-value! ~group!~ ~type-group!~ ~type-word!~]
     /part "Limits the search to a given length or position"
         [any-number! any-series! pair!]
     /case "Characters are case-sensitive"
@@ -335,7 +335,7 @@ select: generic [
     return: [<opt> any-value!]
     @tail []  ; for frame compatibility with FIND
     series [<maybe> any-series! any-context! map!]
-    value [<maybe> any-value! ~group!~ ~typeset!~ ~datatype!~]
+    value [<maybe> any-value! ~group!~ ~type-group!~ ~type-word!~]
     /part "Limits the search to a given length or position"
         [any-number! any-series! pair!]
     /case "Characters are case-sensitive"

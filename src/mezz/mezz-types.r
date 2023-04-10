@@ -27,7 +27,7 @@ REBOL [
 to-integer: to-decimal: to-percent: to-money: to-pair:
 to-tuple: to-time: to-date: to-binary: to-file: to-email: to-url: to-tag:
 to-bitset: to-image: to-vector: to-block: to-group:
-to-path: to-set-path: to-get-path: to-map: to-datatype: to-typeset:
+to-path: to-set-path: to-get-path: to-map: to-datatype:
 to-word: to-set-word: to-get-word: to-issue:
 to-function: to-object: to-module: to-error: to-port:
 to-event:

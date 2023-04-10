@@ -163,10 +163,10 @@ reword: function [
     ; BLOCK! excluded.
     ;
     delimiter-types (
-        make typeset! [char! any-string! word! binary!]
+        &[char! any-string! word! binary!]
     )
     keyword-types (
-        make typeset! [char! any-string! integer! word! binary!]
+        &[char! any-string! integer! word! binary!]
     )
 ][
     case_REWORD: case

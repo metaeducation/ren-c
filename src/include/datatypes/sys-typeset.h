@@ -32,11 +32,6 @@
 // as well as flags describing other attributes of the parameter (if it is
 // optional/refinement, or const, etc.)
 //
-// !!! At present, a TYPESET! created with MAKE TYPESET! cannot set the
-// parameter flags:
-//
-//      make typeset! [<hide> <quote> <protect> text! integer!]
-//
 
 
 //=//// TYPESET BITS //////////////////////////////////////////////////////=//

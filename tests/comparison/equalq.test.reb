@@ -170,21 +170,10 @@
 (not equal? any-number! integer!)
 ; datatype! vs. typeset! symmetry
 (equal? equal? any-number! integer! equal? integer! any-number!)
-; datatype! vs. typeset!
-(not equal? integer! make typeset! [integer!])
-; datatype! vs. typeset!
-(not equal? integer! to typeset! [integer!])
-; datatype! vs. typeset!
-; Supported by R2/Forward.
-(not equal? integer! to-typeset [integer!])
 ; typeset! (or pseudo-type in R2)
 (equal? any-number! any-number!)
 ; typeset! (or pseudo-type in R2)
 (not equal? any-number! any-series!)
-(equal? make typeset! [integer!] make typeset! [integer!])
-(equal? to typeset! [integer!] to typeset! [integer!])
-; Supported by R2/Forward.
-(equal? to-typeset [integer!] to-typeset [integer!])
 (equal? -1 -1)
 (equal? 0 0)
 (equal? 1 1)

@@ -690,11 +690,8 @@ export*: func [
         ; !!! notation for exporting isotopes?
         items: next items
 
-        (types: match block! :items.1) then [
-            if quasi? ^val [  ; !!! assume type block means no isotopes
-                fail [{EXPORT given} types {for} word {but it is} ^val]
-            ]
-            (find (make typeset! types) kind of val) else [
+        (types: match block! items.1) then [
+            (match types val) else [
                 fail [
                     {EXPORT expected} word {to be in} ^types
                     {but it was} (mold kind of val) else ["null"]

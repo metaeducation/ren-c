@@ -231,7 +231,6 @@
         $10.20
         #"a"
         10x20
-        (make typeset! [integer! text!])
         ("try handle here")
         ("try struct here")
         ("try library here")

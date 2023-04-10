@@ -1718,7 +1718,7 @@ default-combinators: make map! reduce [
         return unmeta result'
     ]
 
-    === DATATYPE! COMBINATOR ===
+    === TYPE-XXX! COMBINATORS ===
 
     ; Traditionally you could only use a datatype with ANY-ARRAY! types,
     ; but since Ren-C uses UTF-8 Everywhere it makes it practical to merge in
@@ -1817,29 +1817,6 @@ default-combinators: make map! reduce [
             ;
             match item value else [
                 return raise "Could not TRANSCODE the TYPE-BLOCK! from input"
-            ]
-            return item
-        ]
-    ]
-
-    typeset! combinator [
-        return: "Matched or synthesized value"
-            [any-value!]
-        value [typeset!]
-        <local> item error
-    ][
-        either any-array? input [
-            if not find value maybe (kind of input.1) [
-                return raise "Value at parse position did not match TYPESET!"
-            ]
-            remainder: next input
-            return input.1
-        ][
-            any [
-                [item remainder]: transcode/one input
-                not find value (type of :item)
-            ] then [
-                return raise "Could not TRANSCODE item from TYPESET! from input"
             ]
             return item
         ]
