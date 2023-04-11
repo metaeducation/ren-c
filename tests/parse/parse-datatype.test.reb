@@ -1,9 +1,9 @@
 ; %parse-datatype.test.reb
 ;
-; If a DATATYPE! is used in a BLOCK! rule, it means the item at the current
+; If a TYPE-XXX! is used in a BLOCK! rule, it means the item at the current
 ; parse position needs to match that type.  It returns the matched value.
 ;
-; If a DATATYPE! is used in a text or binary rule, that is interpreted as a
+; If a TYPE-XXX! is used in a text or binary rule, that is interpreted as a
 ; desire to TRANSCODE the input.
 ;
 ; !!! This feature needs more definition, e.g. to be able to transcode things

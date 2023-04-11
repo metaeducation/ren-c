@@ -634,11 +634,7 @@ static Bounce Parse_One_Rule(
             rule = SPARE;
             break; }  // all through to direct match
 
-          case REB_DATATYPE:
-            if (VAL_TYPE(item) == VAL_TYPE_KIND(rule))
-                return Init_Integer(OUT, pos + 1);  // specific type match
-            return BOUNCE_UNHANDLED;
-
+          case REB_TYPE_WORD:
           case REB_TYPE_BLOCK:
           case REB_TYPE_GROUP:
           case REB_TYPESET: {
@@ -1048,7 +1044,7 @@ static REBIXO To_Thru_Non_Block_Rule(
             Get_Var_May_Fail(temp, rule, P_RULE_SPECIFIER, any);
             rule = temp;
         }
-        else if (IS_DATATYPE(rule) or IS_TYPESET(rule)) {
+        else if (IS_TYPE_WORD(rule) or IS_TYPESET(rule)) {
             Derelativize(temp, rule, P_RULE_SPECIFIER);
             Quasify(temp);
             Meta_Unquotify(temp);

@@ -1,6 +1,6 @@
 //
 //  File: %sys-nulled.h
-//  Summary: "NULL definitions (transient evaluative cell--not a DATATYPE!)"
+//  Summary: "NULL definitions"
 //  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  Homepage: https://github.com/metaeducation/ren-c/
 //
@@ -32,20 +32,7 @@
 //
 // But that's the API.  Internally, cells are the currency used, and if they
 // are to represent an "optional" value, they must have a bit pattern.  So
-// NULL is the isotopic form of BLANK!.
-//
-//=//// NOTES /////////////////////////////////////////////////////////////=//
-//
-// * BLANK! are a kind of "reified" form of nothingness, that evaluate
-//   to NULL, and use the same payload structure
-//
-//     >> _
-//     ; null
-//
-// * NULL has no semantic "payload" for its cell contents.  So it uses the
-//   space to record the file and line number the frame was at when it was
-//   generated.  So error messages can be supplemented with some information
-//   about where the null came from.  BLANK!s and VOID get this too.
+// NULL is the isotopic form of the WORD! null.
 //
 
 inline static const Raw_String* VAL_NOTHING_FILE(noquote(Cell(const*)) v) {

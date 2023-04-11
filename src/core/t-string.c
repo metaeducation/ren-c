@@ -1058,9 +1058,6 @@ REBTYPE(String)
         UNUSED(PARAM(value));
         UNUSED(REF(deep));  // /DEEP is historically ignored on ANY-STRING!
 
-        if (REF(types))
-            fail (Error_Bad_Refines_Raw());
-
         REBINT len = Part_Len_May_Modify_Index(v, ARG(part));
 
         return Init_Any_String(

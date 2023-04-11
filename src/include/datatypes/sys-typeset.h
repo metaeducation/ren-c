@@ -82,7 +82,7 @@ inline static bool EQUAL_TYPESET(
 inline static bool Is_Matcher(Cell(const*) v) {
     if (QUOTE_BYTE(v) != ISOTOPE_0)
         return false;
-    return HEART_BYTE(v) == REB_DATATYPE or HEART_BYTE(v) == REB_TYPESET;
+    return HEART_BYTE(v) == REB_TYPE_WORD or HEART_BYTE(v) == REB_TYPESET;
 }
 
 inline static bool Matcher_Matches(
@@ -91,7 +91,7 @@ inline static bool Matcher_Matches(
     REBSPC *v_specifier
 ){
     assert(Is_Matcher(matcher));
-    if (HEART_BYTE(matcher) == REB_DATATYPE) {
+    if (HEART_BYTE(matcher) == REB_TYPE_WORD) {
         if (VAL_TYPE(v) == VAL_TYPE_KIND(matcher))
             return true;
     }

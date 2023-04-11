@@ -249,7 +249,7 @@ main-startup: func [
 
         return: []  ; !!! syntax for divergent functions?
         state "Describes the RESULT that the next call to HOST-CONSOLE gets"
-            [integer! tag! group! datatype!]
+            [integer! tag! group! type-word!]
         <with> instruction prior
         <local> return-to-c (runs :return)  ; capture HOST-CONSOLE's RETURN
     ][
@@ -290,7 +290,7 @@ main-startup: func [
                 assert [empty? instruction]
                 state
             ]
-            datatype! [  ; type assertion, how to enforce this?
+            type-word! [  ; type assertion, how to enforce this?
                 emit spaced ["^-- Result should be" an state]
                 instruction
             ]

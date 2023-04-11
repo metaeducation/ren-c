@@ -423,9 +423,6 @@ REBINT Cmp_Value(Cell(const*) sval, Cell(const*) tval, bool strict)
       case REB_BINARY:
         return CT_Binary(s, t, strict);
 
-      case REB_DATATYPE:
-        return CT_Datatype(s, t, strict);
-
       case REB_WORD:
       case REB_SET_WORD:
       case REB_GET_WORD:

@@ -705,10 +705,7 @@ REBTYPE(Map)
         REBU64 types = 0; // which types to copy non-"shallowly"
 
         if (REF(deep))
-            types |= REF(types) ? 0 : TS_CLONE;
-
-        if (REF(types))
-            fail ("COPY/TYPES is currently disabled");
+            types |= TS_CLONE;
 
         return Init_Map(OUT, Copy_Map(VAL_MAP(map), types)); }
 

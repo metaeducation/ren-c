@@ -253,5 +253,8 @@ void MF_Typeset(REB_MOLD *mo, noquote(Cell(const*)) v, bool form)
 //
 REBTYPE(Typeset)
 {
+    UNUSED(frame_);
+    UNUSED(verb);
+
     return BOUNCE_UNHANDLED;
 }

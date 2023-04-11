@@ -112,7 +112,6 @@ REBTYPE(Blank)
             fail (Error_Bad_Refines_Raw());
 
         UNUSED(REF(deep));
-        UNUSED(REF(types));
 
         return Init_Blank(OUT); }
 

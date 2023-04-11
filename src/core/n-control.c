@@ -659,6 +659,11 @@ bool Typecheck_Value(
         tail = ARR_TAIL(array);
         match_all = false;
     }
+    else if (IS_TYPE_WORD(tests)) {
+        item = tests;
+        tail = tests + 1;
+        match_all = true;
+    }
     else {
         assert(false);
         fail ("Bad test passed to Typecheck_Value");
@@ -797,7 +802,7 @@ bool Typecheck_Value(
                 goto test_failed;
             break; }
 
-          case REB_DATATYPE: {
+          case REB_TYPE_WORD: {
             if (VAL_TYPE_KIND(test) != VAL_TYPE(v))
                 goto test_failed;
             break; }
@@ -845,7 +850,7 @@ bool Typecheck_Value(
 //      return: "Input if it matched, NULL if it did not (isotope if falsey)"
 //          [<opt> any-value! logic!]
 //      test "Typeset or arity-1 filter function"
-//          [<opt> logic! action! block! datatype! typeset! type-group! type-block!]
+//          [<opt> logic! action! block! type-word! typeset! type-group! type-block!]
 //      value [<maybe> <opt> any-value! ~any-value!~]
 //  ]
 //
@@ -871,11 +876,6 @@ DECLARE_NATIVE(match)
             return nullptr;
         break;
 
-      case REB_DATATYPE:
-        if (VAL_TYPE(v) != VAL_TYPE_KIND(test))
-            return nullptr;
-        break;
-
       case REB_ACTION: {
         if (rebRunThrows(
             SPARE,  // <-- output cell
@@ -889,6 +889,7 @@ DECLARE_NATIVE(match)
 
       case REB_TYPESET:
       case REB_BLOCK:
+      case REB_TYPE_WORD:
       case REB_TYPE_GROUP:
       case REB_TYPE_BLOCK:
         if (not Typecheck_Value(test, SPECIFIED, v, SPECIFIED))

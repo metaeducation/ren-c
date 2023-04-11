@@ -666,7 +666,7 @@ REBTYPE(Bitset)
         INCLUDE_PARAMS_OF_COPY;
         UNUSED(PARAM(value));
 
-        if (REF(part) or REF(deep) or REF(types))
+        if (REF(part) or REF(deep))
             fail (Error_Bad_Refines_Raw());
 
         Binary(*) copy = BIN(Copy_Series_Core(VAL_BITSET(v), NODE_FLAG_MANAGED));

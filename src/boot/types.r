@@ -100,11 +100,6 @@ pair!       "two dimensional point or size"
             [any-scalar!]
             [pair        +       +]
 
-datatype!   "type of datatype"
-            (CELL_FLAG_FIRST_IS_NODE)
-            []
-            [datatype    +       +]
-
 typeset!    "set of datatypes"
             (CELL_FLAG_FIRST_IS_NODE)
             []

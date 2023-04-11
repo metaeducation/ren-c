@@ -411,8 +411,7 @@ copy: generic [
     /part "Limits to a given length or position"
         [any-number! any-series! pair!]
     /deep "Also copies series values within the block"
-    /types "What datatypes to copy"
-        [typeset! datatype!]
+    ; Once had /TYPES, but that is disabled for now
 ]
 
 take: generic [

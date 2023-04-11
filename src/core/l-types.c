@@ -114,20 +114,18 @@ DECLARE_NATIVE(make)
     if (Not_Cell_Flag(arg, CONST))
         Set_Cell_Flag(arg, EXPLICITLY_MUTABLE);
 
-    MAKE_HOOK *hook;
-
     option(const REBVAL*) parent;
     enum Reb_Kind kind;
-    if (IS_DATATYPE(type)) {
-        hook = Make_Hook_For_Type(type);
+    if (IS_TYPE_WORD(type)) {
         kind = VAL_TYPE_KIND(type);
         parent = nullptr;
     }
     else {
         kind = VAL_TYPE(type);
         parent = type;
-        hook = Make_Hook_For_Kind(kind);
     }
+
+    MAKE_HOOK *hook = Make_Hook_For_Kind(kind);
 
     Bounce b = hook(frame_, kind, parent, arg);  // might throw, fail...
     if (b == BOUNCE_DELEGATE)
@@ -180,7 +178,7 @@ Bounce TO_Unhooked(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 //
 //      return: "VALUE converted to TYPE, null if type or value are blank"
 //          [<opt> any-value!]
-//      type [<maybe> datatype! meta-word!]
+//      type [<maybe> type-word!]
 //      value [<maybe> any-value!]
 //  ]
 //
@@ -279,9 +277,9 @@ Bounce Reflect_Core(Frame(*) frame_)
         }
 
         if (heart == REB_VOID)
-            Init_Datatype(OUT, Canon(VOID), quote_byte);  // !!! hack
+            Init_Any_Word(OUT, REB_TYPE_WORD, Canon(VOID));  // !!! hack
         else
-            Init_Datatype(OUT, Canon_Symbol(cast(SymId, heart)), quote_byte);
+            Init_Any_Word(OUT, REB_TYPE_WORD, Canon_Symbol(cast(SymId, heart)));
 
         if (quasify)
             Quasify(OUT);

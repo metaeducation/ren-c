@@ -1940,7 +1940,7 @@ bool Try_As_String(
 //          any-sequence! any-series! any-word!
 //          frame! action!
 //      ]
-//      type [datatype!]
+//      type [type-word!]
 //      value [
 //          <maybe>
 //          integer!

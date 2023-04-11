@@ -1733,20 +1733,16 @@ default-combinators: make map! reduce [
     ;     >> i
     ;     == 1020
     ;
-    ; !!! TYPESET! is on somewhat shaky ground as "a thing", so it has to
-    ; be thought about as to how `s: any-series!` or `v: any-value!` might
-    ; work.  It could be that there's a generic TRANSCODE operation and
-    ; then you can filter the result of that.
 
-    datatype! combinator [
+    type-word! combinator [
         return: "Matched or synthesized value"
             [any-value!]
-        value [datatype!]
+        value [type-word!]
         <local> item error
     ][
         either any-array? input [
             if value <> kind of input.1 [
-                return raise "Value at parse position did not match DATATYPE!"
+                return raise "Value at parse position did not match datatype"
             ]
             remainder: next input
             return input.1
@@ -1760,7 +1756,7 @@ default-combinators: make map! reduce [
             ; has some type sniffing in their fast lexer, review relevance.
             ;
             if value != type of item [
-                return raise "Could not TRANSCODE the DATATYPE! from input"
+                return raise "Could not TRANSCODE the datatype from input"
             ]
             return item
         ]

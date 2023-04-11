@@ -115,7 +115,7 @@ Bounce Typeset_Checker_Dispatcher(Frame(*) frame_)
 //  {Generator for an optimized typechecking ACTION!}
 //
 //      return: [action!]
-//      type [datatype! typeset!]
+//      type [type-word! typeset!]
 //  ]
 //
 DECLARE_NATIVE(typechecker)
@@ -127,7 +127,7 @@ DECLARE_NATIVE(typechecker)
     Action(*) typechecker = Make_Action(
         ACT_PARAMLIST(VAL_ACTION(Lib(TYPECHECK_INTERNAL_Q))),
         nullptr,  // no partials
-        IS_DATATYPE(type)
+        IS_TYPE_WORD(type)
             ? &Datatype_Checker_Dispatcher
             : &Typeset_Checker_Dispatcher,
         IDX_TYPECHECKER_MAX  // details array capacity

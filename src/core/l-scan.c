@@ -2511,29 +2511,9 @@ Bounce Scanner_Executor(Frame(*) f) {
             // structures neglected binding...and the scanner is just supposed
             // to be making a data structure.
             //
-            // Hence this doesn't really work in any general sense.  It is
-            // here as a placeholder that has some legacy instances of a few
-            // cases that work (like IMAGE! can construct itself from the
-            // information passed in a BLOCK! this way).
+            // Hence this doesn't really work in any general sense.
 
-            Init_Datatype(ARR_HEAD(array), symbol, UNQUOTED_1);
-                // ^-- unbound, no xxx! lookup
-
-            PUSH_GC_GUARD(array);
-            if (rebRunThrows(
-                SPARE,  // can't write to movable stack location
-                Canon(MAKE),  // will not work during boot!
-                SPECIFIC(ARR_AT(array, 0)),
-                rebQ(SPECIFIC(ARR_AT(array, 1)))  // e.g. ACTION! as WORD!
-            )){
-                CATCH_THROWN(OUT, frame_);
-                DECLARE_LOCAL (temp);
-                Init_Block(temp, array);
-                return RAISE(Error_Malconstruct_Raw(temp));
-            }
-            DROP_GC_GUARD(array);
-
-            Copy_Cell(PUSH(), SPARE);
+            fail ("#[xxx! [...]] construction syntax no longer supported");
         }
         else {
             DECLARE_LOCAL (temp);

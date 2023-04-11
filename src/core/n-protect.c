@@ -559,9 +559,8 @@ void Force_Value_Frozen_Core(
         UNUSED(deep);
         if (locker)
             SET_SERIES_INFO(s, AUTO_LOCKED);
-    } else if (heart == REB_ACTION or heart == REB_DATATYPE) {
-        // No freezing needed
-    } else if (ANY_SEQUENCE_KIND(heart)) {
+    }
+    else if (ANY_SEQUENCE_KIND(heart)) {
         // No freezing needed
     }
     else

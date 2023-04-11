@@ -33,11 +33,11 @@
 //    r3-alpha>> mold/all reduce [integer! block!]
 //    == "[#[datatype! integer!] #[datatype! block!]]"
 //
-// Ren-C's approach is to say datatypes can't be directly represented in a
-// block, but rather that they are isotopes...and must be transformed at
-// least slightly (through META, REIFY, or otherwise) in order to be put into
-// a block.  But those representations need not be uniquely dedicated to
-// datatypes, and the lexical types can be applied for other purposes.
+// Ren-C's approach is to introduce several lexical types to represent types
+// and type constraints.
+//
+//    >> type of 10
+//    == &integer
 //
 //=//// NOTES /////////////////////////////////////////////////////////////=//
 //
@@ -60,20 +60,11 @@ inline static enum Reb_Kind KIND_FROM_SYM(SymId s) {
 
 
 #define VAL_TYPE_SYMBOL(v) \
-    SYM(PAYLOAD(Any, (v)).first.node)
-
-#define VAL_TYPE_QUOTEDNESS(v) \
-    EXTRA(Datatype, (v)).quotedness
-
-#define INIT_VAL_TYPE_SYMBOL(v,sym) \
-    (PAYLOAD(Any, (v)).first.node = (sym))
-
-#define INIT_VAL_TYPE_QUOTEDNESS(v,qbyte) \
-    (EXTRA(Datatype, (v)).quotedness = (qbyte))
+    VAL_WORD_SYMBOL(v)
 
 inline static enum Reb_Kind VAL_TYPE_KIND(noquote(Cell(const*)) v) {
-    assert(CELL_HEART(v) == REB_DATATYPE);
-    option(SymId) id = ID_OF_SYMBOL(VAL_TYPE_SYMBOL(v));
+    assert(CELL_HEART(v) == REB_TYPE_WORD);
+    option(SymId) id = ID_OF_SYMBOL(VAL_WORD_SYMBOL(v));
     assert(unwrap(id) < cast(SymId, REB_MAX));
     return cast(enum Reb_Kind, unwrap(id));
 }
@@ -95,32 +86,6 @@ inline static REBVAL *Init_Builtin_Datatype_Untracked(
 #define Init_Builtin_Datatype(out,kind) \
     TRACK(Init_Builtin_Datatype_Untracked((out), (kind)))
 
-
-// Custom types have to be registered by extensions.  They are identified by
-// a URL, so that there is a way of MAKE-ing them.
-//
-inline static REBVAL *Init_Datatype_Untracked(
-    Cell(*) out,
-    Symbol(const*) sym,
-    Byte quotedness
-){
-    assert(quotedness != ISOTOPE_0);  // isotopes have no type
-
-    if (quotedness == UNQUOTED_1) {  // pre-made type may be available
-        option(SymId) id = ID_OF_SYMBOL(sym);
-        if (id and id < REB_MAX)
-            return Init_Builtin_Datatype(out, cast(enum Reb_Kind, unwrap(id)));
-    }
-
-    Reset_Unquoted_Header_Untracked(out, CELL_MASK_DATATYPE);
-    INIT_VAL_TYPE_SYMBOL(out, sym);
-    INIT_VAL_TYPE_QUOTEDNESS(out, quotedness);
-
-    return cast(REBVAL*, out);
-}
-
-#define Init_Datatype(out,sym,qbyte) \
-    TRACK(Init_Datatype_Untracked((out), (sym), (qbyte)))
 
 
 // Another table generated from %types.r for builtin typesets
@@ -148,7 +113,7 @@ extern CFUNC* Builtin_Type_Hooks[REB_MAX][IDX_HOOKS_MAX];
 // list of hooks registered by the extension providing the custom type.
 //
 inline static CFUNC** VAL_TYPE_HOOKS(noquote(Cell(const*)) type) {
-    assert(CELL_HEART(type) == REB_DATATYPE);
+    assert(CELL_HEART(type) == REB_TYPE_WORD);
     enum Reb_Kind k = VAL_TYPE_KIND(type);
     assert(k < REB_MAX);
     return Builtin_Type_Hooks[k];
@@ -168,9 +133,6 @@ inline static CFUNC** HOOKS_FOR_TYPE_OF(noquote(Cell(const*)) v) {
 
 #define Compare_Hook_For_Type_Of(v) \
     cast(COMPARE_HOOK*, HOOKS_FOR_TYPE_OF(v)[IDX_COMPARE_HOOK])
-
-#define Make_Hook_For_Type(type) \
-    cast(MAKE_HOOK*, VAL_TYPE_HOOKS(type)[IDX_MAKE_HOOK])
 
 #define Make_Hook_For_Kind(k) \
     cast(MAKE_HOOK*, Builtin_Type_Hooks[k][IDX_MAKE_HOOK])

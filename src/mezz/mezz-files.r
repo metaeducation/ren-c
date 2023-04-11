@@ -172,7 +172,7 @@ ask: function [
     return: "Null if the input was aborted (via ESCAPE, Ctrl-D, etc.)"
         [<opt> any-value!]
     question "Prompt to user, datatype to request, or dialect block"
-        [block! text! datatype!]
+        [block! text! type-word!]
     /hide "mask input with * (Rebol2 feature, not yet implemented)"
     ; !!! What about /MULTILINE ?
 ][
@@ -190,13 +190,13 @@ ask: function [
     type: text!
     switch type of question [
         text! [prompt: question]  ; `ask "Input:"` doesn't filter type
-        datatype! [type: question]  ; `ask text!` has no prompt (like INPUT)
+        type-word! [type: question]  ; `ask text!` has no prompt (like INPUT)
         block! [
             parse question [
                 opt prompt: text!
-                opt word: word! (type: ensure datatype! get word)
+                opt word: word! (type: ensure type-word! get word)
             ] else [
-                fail "ASK currently only supports [{Prompt:} datatype!]"
+                fail "ASK currently only supports [{Prompt:} type-word!]"
             ]
         ]
         fail

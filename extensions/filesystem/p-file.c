@@ -528,7 +528,7 @@ Bounce File_Actor(Frame(*) frame_, REBVAL *port, Symbol(const*) verb)
         INCLUDE_PARAMS_OF_COPY;
         UNUSED(PARAM(value));
 
-        if (REF(deep) or REF(types))
+        if (REF(deep))
             fail (Error_Bad_Refines_Raw());
 
         return rebValue(Canon(APPLIQUE), Canon(READ), "[",

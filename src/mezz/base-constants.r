@@ -58,7 +58,7 @@ blackhole!: &(blackhole?)
 splice!: &(splice?)
 lit-word!: &(lit-word?)
 lit-path!: &(lit-path?)
-any-matcher!: &(~typeset!~ ~datatype!~)
+any-matcher!: &(~typeset!~ ~type-word!~)
 logic!: &(logic?)
 
 

@@ -510,7 +510,6 @@ run func* [
     meta-group?:
     the-group?:
     map?:
-    datatype?:
     typeset?:
     action?:
     varargs?:
@@ -626,7 +625,7 @@ internal!: &[
 ]
 
 immediate!: &[  ; Does not include internal datatypes
-    blank! logic! any-scalar! date! any-word! datatype!
+    blank! logic! any-scalar! date! any-word!
 ]
 
 ok?: func* [

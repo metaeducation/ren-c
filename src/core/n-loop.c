@@ -959,9 +959,6 @@ void Shutdown_Loop_Each(Value(*) iterator)
     if (les->took_hold)  // release read-only lock
         CLEAR_SERIES_FLAG(m_cast(REBSER*, les->series), FIXED_SIZE);
 
-    if (IS_DATATYPE(les->data))  // must free temp array of instances
-        Free_Unmanaged_Series(m_cast(Array(*), ARR(les->series)));
-
     if (ANY_CONTEXT(les->data))
         Shutdown_Evars(&les->u.evars);
 
@@ -1072,7 +1069,7 @@ DECLARE_NATIVE(for_each)
 //          {null on BREAK, blank on empty, false or the last truthy value}
 //      :vars "Word or block of words to set each time, no new var if quoted"
 //          [blank! word! lit-word! block! group!]
-//      data [<maybe> any-series! any-context! map! datatype! action!]
+//      data [<maybe> any-series! any-context! map! action!]
 //          "The series to traverse"
 //      body [<const> block! meta-block!]
 //          "Block to evaluate each time"

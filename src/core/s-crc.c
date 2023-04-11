@@ -263,10 +263,6 @@ uint32_t Hash_Value(Cell(const*) cell)
         hash = ARR_LEN(VAL_ARRAY(cell));
         break;
 
-      case REB_DATATYPE: {
-        hash = Hash_String(Canon_Symbol(SYM_FROM_KIND(VAL_TYPE_KIND(cell))));
-        break; }
-
       case REB_BITSET:
       case REB_TYPESET:
         //

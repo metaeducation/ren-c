@@ -124,7 +124,6 @@ REBTYPE(Quoted)
         INCLUDE_PARAMS_OF_COPY;
         UNUSED(REF(part));
         UNUSED(REF(deep));
-        UNUSED(REF(types));
 
         REBLEN num_quotes = Dequotify(ARG(value));
         bool threw = Run_Generic_Dispatch_Throws(ARG(value), frame_, verb);
@@ -620,9 +619,9 @@ DECLARE_NATIVE(pack)
 //
 //  {Create isotopic pattern to signal a desire to test types non-literally}
 //
-//      return: "Isotope of DATATYPE! or TYPESET!"
+//      return: "Isotope of TYPE-XXX!"
 //          [<opt> any-value!]
-//      types [<opt> datatype! typeset! block!]
+//      types [<opt> type-word! typeset! block!]
 //  ]
 //
 DECLARE_NATIVE(matches)
@@ -634,14 +633,12 @@ DECLARE_NATIVE(matches)
     if (Is_Nulled(v))
         return nullptr;  // Put TRY on the FIND or whatever, not MATCHES
 
-    if (IS_DATATYPE(v) or IS_TYPESET(v))
+    if (IS_TYPE_WORD(v) or IS_TYPESET(v))
         return UNMETA(Quasify(v));
 
     assert(IS_BLOCK(v));
-    if (rebRunThrows(OUT, Canon(MAKE), Canon(TYPESET_X), v))
-        return THROWN;
+    mutable_HEART_BYTE(v) = REB_TYPE_BLOCK;
 
-    assert(IS_TYPESET(OUT));
     return Meta_Unquotify(Quasify(OUT));
 }
 

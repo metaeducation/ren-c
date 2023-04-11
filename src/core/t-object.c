@@ -1209,9 +1209,7 @@ REBTYPE(Context)
             fail (Error_Bad_Refines_Raw());
 
         REBU64 types = 0;
-        if (REF(types))
-            fail ("COPY/TYPES is currently disabled");
-        else if (REF(deep))
+        if (REF(deep))
             types = TS_STD_SERIES;
 
         // !!! Special attention on copying frames is going to be needed,

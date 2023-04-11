@@ -55,7 +55,7 @@ description-of: function [
     return (switch type of :v [
         bad-word! [null]
         any-array! [spaced ["array of length:" length of v]]
-        datatype! [
+        type-word! [
             spec: ensure object! spec of v  ; "type specs" need simplifying
             copy maybe spec.title
         ]
@@ -120,7 +120,7 @@ help: function [
 
                 help object!
                 help action!
-                help datatype!
+                help type-word!
 
             Other debug helpers:
 
@@ -246,7 +246,7 @@ help: function [
     ]
 
     ; Open the web page for it?
-    all [doc, match [action! datatype!] :value] then [
+    all [doc, match [action! type-word!] :value] then [
         item: form :topic
         if action? get :topic [
             ;
@@ -273,14 +273,14 @@ help: function [
                 https://github.com/gchiu/reboldocs/blob/master/ (item) .MD
             ]
         ] else [
-            remove back tail of item  ; it's a DATATYPE!, so remove the !
+            remove item  ; it's a &type-word, so remove the &
             browse to url! compose [
                 http://www.rebol.com/r3/docs/datatypes/ (item) .html
             ]
         ]
     ]
 
-    if datatype? :value [
+    if type-word? :value [
         if instances: summarize-obj/pattern make-libuser :value [
             print ["Found these" (uppercase form topic) "words:"]
             for-each line instances [

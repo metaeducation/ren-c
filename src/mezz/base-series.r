@@ -82,7 +82,7 @@ join: function [
         [any-series! issue! url! any-sequence! port!
             map! object! module! bitset!]
     base [
-        datatype!
+        type-word!
         any-series! issue! url!
         any-sequence!
         port! map! object! module! bitset!

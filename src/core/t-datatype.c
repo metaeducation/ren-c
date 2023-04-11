@@ -26,108 +26,6 @@
 
 
 //
-//  CT_Datatype: C
-//
-REBINT CT_Datatype(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
-{
-    UNUSED(strict);
-
-    if (VAL_TYPE_QUOTEDNESS(a) != VAL_TYPE_QUOTEDNESS(b))
-        return VAL_TYPE_QUOTEDNESS(a) > VAL_TYPE_QUOTEDNESS(b)
-            ? 1
-            : -1;
-
-    if (VAL_TYPE_KIND(a) != VAL_TYPE_KIND(b))
-        return VAL_TYPE_KIND(a) > VAL_TYPE_KIND(b)
-            ? 1
-            : -1;
-
-    return 0;
-}
-
-
-//
-//  MAKE_Datatype: C
-//
-Bounce MAKE_Datatype(
-    Frame(*) frame_,
-    enum Reb_Kind kind,
-    option(const REBVAL*) parent,
-    const REBVAL *arg
-){
-    if (parent)
-        return RAISE(Error_Bad_Make_Parent(kind, unwrap(parent)));
-
-    return RAISE(Error_Bad_Make(kind, arg));
-}
-
-
-//
-//  TO_Datatype: C
-//
-Bounce TO_Datatype(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg) {
-    return MAKE_Datatype(frame_, kind, nullptr, arg);
-}
-
-
-//
-//  MF_Datatype: C
-//
-// !!! Today's datatype is not actually an ANY-BLOCK!, but wants to render
-// as one.  To avoid writing duplicate code, we synthesize the block that would
-// be avaliable to us if types were actually implemented via arrays...so that
-// the quotedness/quasiness renders correctly.
-//
-void MF_Datatype(REB_MOLD *mo, noquote(Cell(const*)) v, bool form)
-{
-    Array(*) a = Alloc_Singular(NODE_FLAG_MANAGED);
-    Init_Word(ARR_SINGLE(a), VAL_TYPE_SYMBOL(v));
-    mutable_QUOTE_BYTE(ARR_SINGLE(a)) = VAL_TYPE_QUOTEDNESS(v);
-
-    DECLARE_LOCAL (temp);
-    Init_Block(temp, a);
-
-    Append_Codepoint(mo->series, '&');
-
-    PUSH_GC_GUARD(temp);
-    Mold_Or_Form_Value(mo, temp, form);
-    DROP_GC_GUARD(temp);
-}
-
-
-//
-//  REBTYPE: C
-//
-REBTYPE(Datatype)
-{
-    REBVAL *type = D_ARG(1);
-    assert(IS_DATATYPE(type));
-
-    REBVAL *arg = D_ARG(2);
-
-    switch (ID_OF_SYMBOL(verb)) {
-      case SYM_REFLECT:
-        //
-        // !!! This used to support SPEC OF for datatypes, coming from strings
-        // that are built into the executable from the information in %types.r.
-        // It was removed when DATATYPE! no longer existed as its own reified
-        // type with a pointer in the cell for such information.
-        //
-        // But generally speaking, help information of this nature seems like
-        // something that shouldn't be built into the core, but an optional
-        // part of the help system...covered by usermode code.
-        //
-        fail (Error_Cannot_Reflect(VAL_TYPE(type), arg));
-
-      default:
-        break;
-    }
-
-    return BOUNCE_UNHANDLED;
-}
-
-
-//
 //  Startup_Datatypes: C
 //
 // Create library words for each type, (e.g. make INTEGER! correspond to
@@ -164,9 +62,7 @@ Array(*) Startup_Datatypes(Array(*) boot_types, Array(*) boot_typespecs)
         // allocations.  We pre-build the types into the lib slots in an
         // anticipation of that change.
         //
-        Reset_Unquoted_Header_Untracked(TRACK(value), CELL_MASK_DATATYPE);
-        INIT_VAL_TYPE_SYMBOL(value, Canon_Symbol(SYM_FROM_KIND(kind)));
-        INIT_VAL_TYPE_QUOTEDNESS(value, UNQUOTED_1);
+        Init_Any_Word(value, REB_TYPE_WORD, Canon_Symbol(SYM_FROM_KIND(kind)));
 
         // !!! The system depends on these definitions, as they are used by
         // Get_Type and Type_Of.  Lock it for safety...though consider an

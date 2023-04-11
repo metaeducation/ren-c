@@ -268,7 +268,7 @@ REBTYPE(Action)
 
         UNUSED(PARAM(value));
 
-        if (REF(part) or REF(types))
+        if (REF(part))
             fail (Error_Bad_Refines_Raw());
 
         if (REF(deep)) {

@@ -447,7 +447,7 @@ REBINT Find_In_Array(
     if (Is_Isotope(target))
         fail ("Only Isotopes Supported by FIND are MATCHES and SPREAD");
 
-    if (IS_DATATYPE(target) or IS_TYPESET(target))
+    if (IS_TYPE_WORD(target) or IS_TYPESET(target))
         fail (
             "FIND temporarily not taking DATATYPE! / TYPESET!, use MATCHES"
             " see https://forum.rebol.info/t/1881"
@@ -1060,10 +1060,7 @@ REBTYPE(Array)
         REBLEN index = VAL_INDEX(array);
 
         if (REF(deep))
-            types |= REF(types) ? 0 : TS_STD_SERIES;
-
-        if (REF(types))
-            fail ("COPY/TYPES is currently disabled");
+            types |= TS_STD_SERIES;
 
         Flags flags = ARRAY_MASK_HAS_FILE_LINE;
 
