@@ -1046,11 +1046,6 @@ Context(*) Error_No_Catch_For_Throw(Frame(*) frame_)
 //
 Context(*) Error_Invalid_Type(enum Reb_Kind kind)
 {
-    if (kind == REB_NULL) {
-        DECLARE_LOCAL (null_word);
-        Init_Word(null_word, Canon(NULL));
-        fail (Error_Invalid_Type_Raw(null_word));
-    }
     return Error_Invalid_Type_Raw(Datatype_From_Kind(kind));
 }
 
@@ -1198,9 +1193,6 @@ Context(*) Error_Bad_Argless_Refine(const REBKEY *key)
 Context(*) Error_Bad_Return_Type(Frame(*) f, enum Reb_Kind kind) {
     DECLARE_LOCAL (label);
     Get_Frame_Label_Or_Nulled(label, f);
-
-    if (kind == REB_NULL)
-        return Error_Needs_Return_Opt_Raw(label);
 
     return Error_Bad_Return_Type_Raw(label, Datatype_From_Kind(kind));
 }

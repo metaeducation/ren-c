@@ -345,11 +345,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
     Decay_If_Unstable(out);
 
     if (param) {
-        if (not Is_Nulled(out) and Is_Isotope(out)) {
-            if (NOT_PARAM_FLAG(param, ISOTOPES_OKAY))
-                fail (Error_Bad_Isotope(out));
-        }
-        else if (not TYPE_CHECK(param, out)) {
+        if (not TYPE_CHECK(param, out)) {
             //
             // !!! Array-based varargs only store the parameter list they are
             // stamped with, not the frame.  This is because storing non-reified

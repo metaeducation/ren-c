@@ -652,7 +652,7 @@ export*: func [
         [module!]
     'left [<skip> set-word! set-group!]
     args "`export x: ...` for single or `export [...]` for words list"
-        [<opt> any-value! ~any-value!~ <variadic>]
+        [<opt> any-value! <variadic>]
     <local>
         hdr exports val word types items
 ][

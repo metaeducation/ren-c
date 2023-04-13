@@ -115,10 +115,7 @@ static void Finalize_Param(Value(*) param) {
     // order to establish &(ANY-VALUE?) as a type annotation, because
     // ANY-VALUE? has to bootstrap itself somehow.
     //
-    // For the moment we hack in the ISOTOPES_OKAY flag.
-    //
-    if (VAL_PARAMETER_ARRAY(param) == nullptr)
-        SET_PARAM_FLAG(param, ISOTOPES_OKAY);
+    UNUSED(param);
 }
 
 
@@ -451,12 +448,7 @@ void Push_Paramlist_Quads_May_Fail(
 
         StackValue(*) param = PARAM_SLOT(TOP_INDEX);
 
-        // Non-annotated arguments allow all parameter types, but a normal
-        // parameter cannot pick up a non-isotope form of BAD-WORD!.
-        //
-        // Note there are currently two ways to get NULL: <opt> and <end>.
-        // If the typeset bits contain REB_NULL, that indicates <opt>.
-        // But Is_Param_Endable() indicates <end>.
+        // Non-annotated arguments allow all parameter types.
 
         if (local) {
             Finalize_Nihil(param);

@@ -880,12 +880,6 @@ Bounce Action_Executor(Frame(*) f)
                 Init_Nulled(ARG);
                 continue;
             }
-            if (
-                NOT_PARAM_FLAG(PARAM, VANISHABLE)
-                and NOT_PARAM_FLAG(PARAM, ISOTOPES_OKAY)
-            ){
-                fail (Error_Bad_Isotope(ARG));
-            }
 
             if (VAL_PARAM_CLASS(PARAM) == PARAM_CLASS_META)
                 Init_Meta_Of_Void(ARG);
@@ -905,21 +899,6 @@ Bounce Action_Executor(Frame(*) f)
                 Init_Nulled(ARG);
                 continue;
             }
-        }
-
-        if (Is_True(ARG) or Is_False(ARG)) {
-            if (TYPE_CHECK(PARAM, ARG))
-                continue;
-        }
-
-        if (Is_Isotope(ARG) and not Is_Nulled(ARG)) {
-            if (GET_PARAM_FLAG(PARAM, ISOTOPES_OKAY))
-                continue;
-
-            if (Is_Activation(ARG))
-                Decay_If_Activation(ARG);
-            else
-                fail (Error_Isotope_Arg(f, PARAM));
         }
 
         if (GET_PARAM_FLAG(PARAM, VARIADIC)) {  // can't check now, see [3]
@@ -956,7 +935,6 @@ Bounce Action_Executor(Frame(*) f)
         if (GET_PARAM_FLAG(PARAM, CONST))
             Set_Cell_Flag(ARG, CONST);  // mutability override?  see [5]
 
-
         if (GET_PARAM_FLAG(PARAM, REFINEMENT)) {
             Typecheck_Refinement(KEY, PARAM, ARG);
             continue;  // !!! Review when # is used here
@@ -965,8 +943,16 @@ Bounce Action_Executor(Frame(*) f)
         if (KEY_SYM(KEY) == SYM_RETURN)
             continue;  // !!! let whatever go for now
 
-        if (not Typecheck_Including_Constraints(PARAM, ARG))
+      typecheck_again:
+
+        if (not Typecheck_Including_Constraints(PARAM, ARG)) {
+            if (Is_Activation(ARG)) {
+                Decay_If_Activation(ARG);
+                goto typecheck_again;
+            }
+
             fail (Error_Arg_Type(f, KEY, PARAM, ARG));
+        }
     }
 
   // Action arguments now gathered, begin dispatching

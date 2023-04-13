@@ -174,10 +174,10 @@ inline static bool Matcher_Matches(
 #define PARAM_FLAG_WANT_FAILURES \
     FLAG_LEFT_BIT(20)
 
-#define PARAM_FLAG_ISOTOPES_OKAY \
+#define PARAM_FLAG_21 \
     FLAG_LEFT_BIT(21)
 
-#define PARAM_FLAG_NO_ISOTOPE_DECAY \
+#define PARAM_FLAG_22 \
     FLAG_LEFT_BIT(22)
 
 #define PARAM_FLAG_WANT_PACKS \
@@ -300,16 +300,6 @@ inline static bool Typecheck_Including_Constraints(
     else
         unquoted = false;
 
-    if (Is_Isotope(v) and not Is_Nulled(v) and not IS_LOGIC(v)) {
-        if (VAL_PARAM_CLASS(param) == PARAM_CLASS_RETURN)
-            goto return_true;  // !!! type checking should be applied
-
-        if (GET_PARAM_FLAG(param, ISOTOPES_OKAY))
-            goto return_true;
-
-        goto return_false;
-    }
-
     if (TYPE_CHECK(param, v))
         goto return_true;
 
@@ -333,11 +323,6 @@ inline static bool Typecheck_Including_Constraints(
 
     if (GET_PARAM_FLAG(param, PREDICATE) and IS_PREDICATE(v))
         goto return_true;
-
-  return_false:
-
-    if (unquoted)
-        Quotify(v, 1);
 
     return false;
 
@@ -377,20 +362,26 @@ inline static void Typecheck_Refinement(
         or GET_PARAM_FLAG(param, SKIPPABLE)
     );
 
-    if (Is_Nulled(arg)) {
-        //
-        // Not in use
-    }
-    else if (
+    if (Is_Nulled(arg))  // not in use
+        return;
+
+    if (
         Is_Parameter_Unconstrained(param)
         and VAL_PARAM_CLASS(param) != PARAM_CLASS_OUTPUT
     ){
         if (not Is_Blackhole(arg))
             fail (Error_Bad_Argless_Refine(key));
+
+        return;
     }
-    else if (not Typecheck_Including_Constraints(param, arg)) {
-        if (Is_Isotope(arg))
-            fail (Error_Bad_Isotope(arg));
+
+  typecheck_again:
+
+    if (not Typecheck_Including_Constraints(param, arg)) {
+        if (Is_Activation(arg)) {
+            Decay_If_Activation(arg);
+            goto typecheck_again;
+        }
         fail (Error_Invalid_Type(VAL_TYPE(arg)));
     }
 }

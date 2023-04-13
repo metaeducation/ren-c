@@ -441,6 +441,11 @@ quoted!     "container for arbitrary levels of quoting"
             [any-branch!]
             [quoted       +       -]
 
+isotope!    "special values that cannot be stored in blocks"
+            ()
+            []
+            [quoted       +       -]
+
 
 ; This is the end of the value cell enumerations (after REB_QUOTED is REB_MAX)
 ; and no valid cell should have bits between REB_QUOTED and REB_MAX.

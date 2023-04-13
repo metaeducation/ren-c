@@ -428,7 +428,7 @@ REBTYPE(Binary)
         else if (Is_Splice(arg)) {
             mutable_QUOTE_BYTE(arg) = UNQUOTED_1;  // make plain group
         }
-        else if (Is_Isotope(arg)) {  // only ~group!~ in typecheck
+        else if (Is_Isotope(arg)) {  // only SPLICE! in typecheck
             fail (Error_Bad_Isotope(arg));  // ...but that doesn't filter yet
         }
         else if (ANY_ARRAY(arg) or ANY_SEQUENCE(arg))

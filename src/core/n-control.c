@@ -845,7 +845,7 @@ bool Typecheck_Value(
 //          [<opt> any-value! logic!]
 //      test "Typeset or arity-1 filter function"
 //          [<opt> logic! action! block! type-word! type-group! type-block!]
-//      value [<maybe> <opt> any-value! ~any-value!~]
+//      value [<maybe> <opt> any-value!]
 //  ]
 //
 DECLARE_NATIVE(match)
@@ -1697,7 +1697,7 @@ DECLARE_NATIVE(default)
 //  {Catches a throw from a block and returns its value.}
 //
 //      return: "Thrown value"
-//          [<opt> any-value! ~any-value!~]
+//          [<opt> any-value!]
 //      block "Block to evaluate"
 //          [block!]
 //      /name "Catches a named throw (single name if not block)"

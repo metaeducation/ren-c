@@ -105,7 +105,7 @@ DECLARE_NATIVE(break)
 //
 //      return: []  ; !!! notation for divergent function?
 //      /with "Act as if loop body finished with this value"
-//          [<void> <opt> any-value! ~any-value!~]
+//          [<void> <opt> any-value!]
 //  ]
 //
 DECLARE_NATIVE(continue)
@@ -1165,7 +1165,7 @@ DECLARE_NATIVE(every)
     if (Is_Falsey(SPARE)) {
         Init_Nulled(OUT);
     }
-    else if (Is_Fresh(OUT) or VAL_TYPE_UNCHECKED(OUT) != REB_NULL) {
+    else if (Is_Fresh(OUT) or Is_Nulled(OUT)) {
         Move_Cell(OUT, SPARE);  // will overwrite a none, e.g. from void
     }
 

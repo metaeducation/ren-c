@@ -154,7 +154,7 @@ DECLARE_NATIVE(pick)
 //          {(modified)}
 //      picker [<maybe> any-value!]
 //          {Index offset, symbol, or other value to use as index}
-//      value [<opt> any-value! ~any-value!~]
+//      value [<opt> any-value!]
 //          {The new value}
 //      /immediate "Allow modification even if it will not mutate location"
 //  ]

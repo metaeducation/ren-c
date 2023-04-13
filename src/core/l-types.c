@@ -89,7 +89,7 @@ Bounce MAKE_Unhooked(
 //          "Constructed value, or null if BLANK! input"
 //      type [<maybe> meta-word! any-value!]
 //          {The datatype or parent value to construct from}
-//      def [<maybe> any-value!]
+//      def [<maybe> <unrun> any-cell!]  ; accept activation for FRAME!
 //          {Definition or size of the new value (binding may be modified)}
 //  ]
 //
@@ -332,7 +332,7 @@ Bounce Reflect_Core(Frame(*) frame_)
 //
 //      return: [<opt> any-value!]
 //      value "Accepts NULL so REFLECT () 'TYPE can be returned as NULL"
-//          [<maybe> <opt> <pack> <fail> any-value! ~any-value!~]
+//          [<maybe> <opt> <pack> <fail> any-value!]
 //      property [word!]
 //          "Such as: type, length, spec, body, words, values, title"
 //  ]
@@ -357,7 +357,7 @@ DECLARE_NATIVE(reflect_native)
 //      'property "Will be escapable, ':property (bootstrap permitting)"
 //          [word! get-word! get-path! get-group!]
 //      value "Accepts null so TYPE OF NULL can be returned as null"
-//          [<maybe> <opt> any-value! ~any-value!~]
+//          [<maybe> <opt> any-value!]
 //  ]
 //
 DECLARE_NATIVE(of)

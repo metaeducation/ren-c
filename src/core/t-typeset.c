@@ -140,29 +140,6 @@ Array(*) Add_Parameter_Bits_Core(
 
     Cell(const*) item = head;
     for (; item != tail; ++item) {
-        if (IS_QUASI(item)) {
-            if (HEART_BYTE(item) != REB_WORD)
-                fail ("QUASI! must be of WORD! in typeset spec");
-
-            // We suppress isotopic decay on the parameter only if it actually
-            // requests seeing isotopic words, potentially transitively.
-            //
-            switch (VAL_WORD_ID(item)) {
-              case SYM_WORD_X :
-              case SYM_ANY_WORD_X :
-              case SYM_ANY_VALUE_X :
-              case SYM_ANY_UTF8_X :
-                *flags |= PARAM_FLAG_ISOTOPES_OKAY;
-                *flags |= PARAM_FLAG_NO_ISOTOPE_DECAY;
-                break;
-
-              default:
-                *flags |= PARAM_FLAG_ISOTOPES_OKAY;
-                break;
-            }
-            continue;
-        }
-
         if (IS_TAG(item)) {
             bool strict = false;
 

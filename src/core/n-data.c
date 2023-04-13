@@ -2548,8 +2548,8 @@ DECLARE_NATIVE(none) {
 //
 //  "Handle unstable isotopes like assignments do, pass through other values"
 //
-//      return: [<opt> any-value! ~any-value!~]
-//      value [<opt> <void> any-value! ~any-value!~]
+//      return: [<opt> any-value!]
+//      value [<opt> <void> any-value!]
 //  ]
 //
 DECLARE_NATIVE(decay)
@@ -2594,8 +2594,8 @@ DECLARE_NATIVE(isotopify_if_falsey)
 //
 //  "Make isotopes into their quasiforms, pass thru other values"
 //
-//      return: [any-value!]
-//      value [<opt> any-value! ~any-value!~]
+//      return: [any-cell!]
+//      value [<opt> any-value!]
 //  ]
 //
 DECLARE_NATIVE(reify)
@@ -2643,8 +2643,8 @@ DECLARE_NATIVE(degrade)
 //
 //  "Make isotopes into plain forms, pass thru other values"
 //
-//      return: [any-value!]
-//      value [<opt> any-value! ~any-value!~]
+//      return: [any-cell!]
+//      value [<opt> any-value!]
 //  ]
 //
 DECLARE_NATIVE(concretize)
@@ -2672,13 +2672,13 @@ DECLARE_NATIVE(concretize)
 //
 //  "Turn isotopes into their plain forms, pass thru other values"
 //
-//      return: [any-value!]
-//      value [<opt> any-value! ~any-value!~]
+//      return: [any-cell!]
+//      value [<opt> any-value!]
 //  ]
 //
 DECLARE_NATIVE(noisotope)
 {
-    INCLUDE_PARAMS_OF_REIFY;
+    INCLUDE_PARAMS_OF_NOISOTOPE;
 
     REBVAL *v = ARG(value);
 

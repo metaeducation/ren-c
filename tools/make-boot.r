@@ -373,9 +373,7 @@ e-types/emit 'rebs {
         $[Rebs],
         REB_MAX,  /* one past valid types */
 
-        REB_NULL,  /* similar--but not conflated with isotopes */
         REB_LOGIC, /* also not conflated with isotopes (at this time) */
-        REB_ISOTOPE,  /* not a "type", but can answer VAL_TYPE() */
 
         /*
         * Invalid type bytes can currently be used for other purposes.  (If
@@ -436,20 +434,21 @@ nontypes: collect [
     ]
 ]
 
-value-flagnots: compose [
-    "(FLAGIT_KIND(REB_MAX) - 1)"  ; Subtract 1 to get mask for everything
-    (spread nontypes)  ; take out all nontypes
-]
-
-e-types/emit 'value-flagnots {
+e-types/emit {
     #define TS_VALUE \
-        ($<Delimit "&~" Value-Flagnots>)
+        ((FLAGIT_KIND(REB_MAX) - 1) & ~FLAGIT_KIND(REB_VOID))
+
+    #define TS_CELL \
+        ((FLAGIT_KIND(REB_MAX) - 1) & ~FLAGIT_KIND(REB_VOID) & ~FLAGIT_KIND(REB_ISOTOPE))
 }
 
 typeset-sets: copy []
 
 add-sym 'any-value?  ; starts the typeset symbols, not mentioned in %types.r
 add-sym 'any-value!  ; will be initialized as just &(any-value?)
+
+add-sym 'any-cell?
+add-sym 'any-cell!  ; will be initialized as just &(any-cell?)
 
 for-each-datatype t [
     for-each ts-name t/typesets [
@@ -630,6 +629,7 @@ e-typesets/emit {
 e-typesets/emit {
     const REBU64 Typesets[] = ^{
         TS_VALUE,  /* any-value! */
+        TS_CELL,  /* any-cell! */
 }
 
 for-each [ts-name types] typeset-sets [

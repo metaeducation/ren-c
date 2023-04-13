@@ -320,7 +320,7 @@ find: generic [
     series [
         <maybe> any-series! any-context! map! bitset!
     ]
-    pattern [<maybe> any-value! ~group!~ ~type-group!~ ~type-word!~]
+    pattern [<maybe> any-value! splice! any-matcher!]
     /part "Limits the search to a given length or position"
         [any-number! any-series! pair!]
     /case "Characters are case-sensitive"
@@ -335,7 +335,7 @@ select: generic [
     return: [<opt> any-value!]
     @tail []  ; for frame compatibility with FIND
     series [<maybe> any-series! any-context! map!]
-    value [<maybe> any-value! ~group!~ ~type-group!~ ~type-word!~]
+    value [<maybe> any-value! splice! any-matcher!]
     /part "Limits the search to a given length or position"
         [any-number! any-series! pair!]
     /case "Characters are case-sensitive"
@@ -367,7 +367,7 @@ poke*: generic [
     picker "The property to update"
         [any-value!]
     value "Value to POKE"
-        [<opt> <void> any-value! ~any-value!~]
+        [<opt> <void> any-value!]
 ]
 
 
@@ -438,7 +438,7 @@ insert: generic [
     series "At position (modified)"
         [<maybe> any-series! port! map! object! bitset! port!]
     value "What to insert (isotopic groups will splice, e.g. SPREAD)"
-        [<void> any-value! ~group!~]
+        [<void> any-value! splice!]
     /part "Limits to a given length or position"
         [any-number! any-series! pair!]
     /dup "Duplicates the insert a specified number of times"
@@ -456,7 +456,7 @@ append: generic [
     series "Any position (modified)"
         [<maybe> any-series! port! map! object! module! bitset!]
     value "What to append (isotopic groups will splice, e.g. SPREAD)"
-        [<void> any-value! ~group!~]
+        [<void> any-value! splice!]
     /part "Limits to a given length or position"
         [any-number! any-series! pair!]
     /dup "Duplicates the insert a specified number of times"
@@ -474,7 +474,7 @@ change: generic [
     series "At position (modified)"
         [<maybe> any-series! port!]
     value "The new value (isotopic groups will splice, e.g. SPREAD)"
-        [<void> any-value! ~group!~]
+        [<void> any-value! splice!]
     /part "Limits the amount to change to a given length or position"
         [any-number! any-series! pair!]
     /dup "Duplicates the change a specified number of times"

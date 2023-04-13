@@ -573,8 +573,8 @@ e-lib/emit 'ver {
      * being 1 mean it is in the "stale" state.  The low bit in the first byte
      * set suggests it points to a "series"...though it doesn't (this helps
      * prevent code from trying to write a cell into a rebEND signal).  But the
-     * SECOND_BYTE() is where the VAL_TYPE() of a cell is usually stored, and
-     * this being 0 would indicate REB_NULL (used also by void).
+     * SECOND_BYTE() is where the "heart" of a cell is usually stored, and
+     * this being 0 would indicate REB_VOID.
      *
      * Note: We use a `void*` for this because it needs to be suitable for
      * the same alignment as character.  The C++ build checks that void*

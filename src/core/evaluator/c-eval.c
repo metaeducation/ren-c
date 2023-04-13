@@ -1222,9 +1222,6 @@ Bounce Evaluator_Executor(Frame(*) f)
             STATE = REB_SET_TUPLE;
             goto set_tuple_in_spare;
 
-          case REB_ISOTOPE :
-            fail (Error_Bad_Isotope(SPARE));
-
           default:
             fail ("Unknown type for use in SET-GROUP!");
         }
