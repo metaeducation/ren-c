@@ -893,12 +893,11 @@ Context(*) Error_No_Relative_Core(noquote(Cell(const*)) any_word)
 Context(*) Error_Not_Varargs(
     Frame(*) f,
     const REBKEY *key,
-    const REBVAL *param,
-    enum Reb_Kind kind
+    const REBPAR *param,
+    const REBVAL *arg
 ){
     assert(GET_PARAM_FLAG(param, VARIADIC));
-    assert(kind != REB_VARARGS);
-    UNUSED(param);
+    assert(not IS_VARARGS(arg));
 
     // Since the "types accepted" are a lie (an [integer! <variadic>] takes
     // VARARGS! when fulfilled in a frame directly, not INTEGER!) then
@@ -913,7 +912,7 @@ Context(*) Error_Not_Varargs(
     );
     UNUSED(honest_param);  // !!! pass to Error_Arg_Type(?)
 
-    return Error_Arg_Type(f, key, kind);
+    return Error_Arg_Type(f, key, param, arg);
 }
 
 
@@ -1128,13 +1127,21 @@ Context(*) Error_Unexpected_Type(enum Reb_Kind expected, enum Reb_Kind actual)
 Context(*) Error_Arg_Type(
     Frame(*) f,
     const REBKEY *key,
-    enum Reb_Kind actual
+    const REBPAR *param,
+    const REBVAL *arg
 ){
     DECLARE_LOCAL (param_word);
     Init_Word(param_word, KEY_SYMBOL(key));
 
     DECLARE_LOCAL (label);
     Get_Frame_Label_Or_Nulled(label, f);
+
+    DECLARE_LOCAL (spec);
+    option(Array(const*)) param_array = VAL_PARAMETER_ARRAY(param);
+    if (param_array)
+        Init_Block(spec, unwrap(param_array));
+    else
+        Init_Block(spec, EMPTY_ARRAY);
 
     if (FRM_PHASE(f) != f->u.action.original) {
         //
@@ -1143,22 +1150,28 @@ Context(*) Error_Arg_Type(
         // it's confusing to say that the original function didn't take that
         // type--it was on its interface.  A different message is needed.
         //
-        if (actual == REB_VOID or actual == REB_NULL)
+        if (Is_Void(arg))
             return Error_Phase_No_Arg_Raw(label, param_word);
+
+        if (Is_Isotope(arg))
+            return Error_Bad_Isotope(arg);
 
         return Error_Phase_Bad_Arg_Type_Raw(
             label,
-            Datatype_From_Kind(actual),
+            spec,
             param_word
         );
     }
 
-    if (actual == REB_VOID or actual == REB_NULL)  // no Datatype_From_Kind()
+    if (Is_Void(arg))
         return Error_Arg_Required_Raw(label, param_word);
+
+    if (Is_Isotope(arg))
+        return Error_Bad_Isotope(arg);
 
     return Error_Expect_Arg_Raw(
         label,
-        Datatype_From_Kind(actual),
+        spec,
         param_word
     );
 }

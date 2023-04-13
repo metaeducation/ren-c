@@ -153,7 +153,7 @@ Script: [
     invalid-arg:        [:arg1 {has an invalid} :arg2 {argument:} :arg3]
     isotope-arg:        [:arg1 {needs} :arg2 {as ^^META for} :arg3 {isotope}]
     no-arg:             [:arg1 {is missing its} :arg2 {argument}]
-    expect-arg:         [:arg1 {does not allow} :arg2 {for its} :arg3 {argument}]
+    expect-arg:         [:arg1 {expects} :arg2 {for its} :arg3 {argument}]
     arg-required:       [:arg1 {requires} :arg2 {argument to not be null}]
 
     invalid-type:       [:arg1 {type is not allowed here}]

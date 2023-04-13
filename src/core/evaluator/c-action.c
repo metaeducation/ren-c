@@ -924,7 +924,7 @@ Bounce Action_Executor(Frame(*) f)
 
         if (GET_PARAM_FLAG(PARAM, VARIADIC)) {  // can't check now, see [3]
             if (not IS_VARARGS(ARG))  // argument itself is always VARARGS!
-                fail (Error_Not_Varargs(f, KEY, PARAM, VAL_TYPE(ARG)));
+                fail (Error_Not_Varargs(f, KEY, PARAM, ARG));
 
             INIT_VAL_VARARGS_PHASE(ARG, FRM_PHASE(f));
 
@@ -946,8 +946,6 @@ Bounce Action_Executor(Frame(*) f)
             continue;
         }
 
-        enum Reb_Kind kind = VAL_TYPE(ARG);
-
         if (PARAM_CLASS_META == VAL_PARAM_CLASS(PARAM)) {
             //
             // !!! Now that everything is isotopic, there needs to be a new
@@ -967,12 +965,8 @@ Bounce Action_Executor(Frame(*) f)
         if (KEY_SYM(KEY) == SYM_RETURN)
             continue;  // !!! let whatever go for now
 
-        if (not Typecheck_Including_Constraints(PARAM, ARG)) {
-            if (Is_Isotope(ARG))
-                fail (Error_Bad_Isotope(ARG));
-
-            fail (Error_Arg_Type(f, KEY, kind));
-        }
+        if (not Typecheck_Including_Constraints(PARAM, ARG))
+            fail (Error_Arg_Type(f, KEY, PARAM, ARG));
     }
 
   // Action arguments now gathered, begin dispatching

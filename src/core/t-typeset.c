@@ -272,7 +272,12 @@ void MF_Parameter(REB_MOLD *mo, noquote(Cell(const*)) v, bool form)
     }
 
     DECLARE_LOCAL(temp);
-    Init_Group(temp, VAL_PARAMETER_ARRAY(v));
+    option(Array(const*)) param_array = VAL_PARAMETER_ARRAY(v);
+    if (param_array)
+        Init_Block(temp, unwrap(param_array));
+    else
+        Init_Block(temp, EMPTY_ARRAY);
+
     PUSH_GC_GUARD(temp);
     Mold_Or_Form_Value(mo, temp, form);
     DROP_GC_GUARD(temp);

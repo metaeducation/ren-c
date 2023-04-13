@@ -689,7 +689,7 @@ bool Typecheck_Value(
             if (
                 id
                 and (id >= SYM_ANY_VALUE_Q and id < SYM_DATATYPES)
-                and test == Try_Lib_Var(id)
+                and test == Try_Lib_Var(unwrap(id))
             ){
                 Index n = (cast(int, id) - SYM_ANY_VALUE_Q) / 2;
                 REBU64 bits = Typesets[n];
@@ -786,7 +786,7 @@ bool Typecheck_Value(
                 quotedness = ISOTOPE_0;
             else
                 quotedness = SubtractQuote(QUOTE_BYTE(test));
-            enum Reb_Kind heart = KIND_FROM_SYM(VAL_WORD_ID(test));
+            enum Reb_Kind heart = KIND_FROM_SYM(unwrap(VAL_WORD_ID(test)));
             if (heart != HEART_BYTE(v) or quotedness != QUOTE_BYTE(v))
                 goto test_failed;
             break; }
