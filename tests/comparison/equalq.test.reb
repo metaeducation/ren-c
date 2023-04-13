@@ -166,13 +166,9 @@
 (equal? decimal! decimal!)
 (not equal? decimal! integer!)
 (equal? equal? decimal! integer! equal? integer! decimal!)
-; datatype! vs. typeset!
 (not equal? any-number! integer!)
-; datatype! vs. typeset! symmetry
 (equal? equal? any-number! integer! equal? integer! any-number!)
-; typeset! (or pseudo-type in R2)
 (equal? any-number! any-number!)
-; typeset! (or pseudo-type in R2)
 (not equal? any-number! any-series!)
 (equal? -1 -1)
 (equal? 0 0)

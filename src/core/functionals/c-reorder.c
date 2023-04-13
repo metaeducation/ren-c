@@ -186,7 +186,7 @@ DECLARE_NATIVE(reorder_p)  // see REORDER in %base-defs.r, for inheriting meta
             continue;
 
         const REBVAL *param = ACT_PARAM(reorderee, index);
-        if (GET_PARAM_FLAG(param, REFINEMENT) and Is_Typeset_Empty(param)) {
+        if (GET_PARAM_FLAG(param, REFINEMENT) and Is_Parameter_Unconstrained(param)) {
             error = Error_User("Can't reorder refinements with no argument");
             goto cleanup_binder;
         }

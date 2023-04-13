@@ -39,14 +39,16 @@
 // Operations when typeset is done with a bitset (currently all typesets)
 
 
-#define VAL_TYPESET_PARAM_CLASS_BYTE(v) \
-    FIRST_BYTE(EXTRA(Typeset, (v)).param_flags)
+#define VAL_PARAMETER_CLASS_BYTE(v) \
+    FIRST_BYTE(EXTRA(Parameter, (v)).param_flags)
 
-#define mutable_VAL_TYPESET_PARAM_CLASS_BYTE(v) \
-    mutable_FIRST_BYTE(EXTRA(Typeset, (v)).param_flags)
+#define mutable_VAL_PARAMETER_CLASS_BYTE(v) \
+    mutable_FIRST_BYTE(EXTRA(Parameter, (v)).param_flags)
 
-inline static option(Array(const*)) VAL_TYPESET_ARRAY(noquote(Cell(const*)) v) {
-    assert(HEART_BYTE(v) == REB_TYPESET);
+inline static option(Array(const*)) VAL_PARAMETER_ARRAY(
+    noquote(Cell(const*)) v
+){
+    assert(HEART_BYTE(v) == REB_PARAMETER);
 
     Array(const*) a = ARR(VAL_NODE1(v));
     if (a != nullptr and GET_SERIES_FLAG(a, INACCESSIBLE))
@@ -54,7 +56,7 @@ inline static option(Array(const*)) VAL_TYPESET_ARRAY(noquote(Cell(const*)) v) {
     return a;
 }
 
-#define INIT_VAL_TYPESET_ARRAY(v, a) \
+#define INIT_VAL_PARAMETER_ARRAY(v, a) \
     INIT_VAL_NODE1((v), (a))
 
 
@@ -66,23 +68,12 @@ inline static bool TYPE_CHECK(Cell(const*) typeset, Value(const*) v) {
     Typecheck_Value((typeset), SPECIFIED, (v), (v_specifier))
 
 
-inline static bool EQUAL_TYPESET(
-    noquote(Cell(const*)) v1,
-    noquote(Cell(const*)) v2
-){
-    assert(CELL_HEART(v1) == REB_TYPESET);
-    assert(CELL_HEART(v2) == REB_TYPESET);
-
-    fail ("Typeset equality test currently disabled");
-}
-
-
 // isotopic type matcher (e.g. used by FIND, SWITCH)
 
 inline static bool Is_Matcher(Cell(const*) v) {
     if (QUOTE_BYTE(v) != ISOTOPE_0)
         return false;
-    return HEART_BYTE(v) == REB_TYPE_WORD or HEART_BYTE(v) == REB_TYPESET;
+    return HEART_BYTE(v) == REB_TYPE_WORD or HEART_BYTE(v) == REB_PARAMETER;
 }
 
 inline static bool Matcher_Matches(
@@ -96,7 +87,7 @@ inline static bool Matcher_Matches(
             return true;
     }
     else {
-        assert(HEART_BYTE(matcher) == REB_TYPESET);
+        assert(HEART_BYTE(matcher) == REB_TYPE_GROUP);
         if (TYPE_CHECK_CORE(matcher, v, v_specifier))
             return true;
     }
@@ -106,7 +97,7 @@ inline static bool Matcher_Matches(
 
 //=//// PARAMETER TYPESET PROPERTIES ///////////////////////////////////////=//
 
-#define VAL_PARAM_FLAGS(v)           EXTRA(Typeset, (v)).param_flags
+#define VAL_PARAM_FLAGS(v)           EXTRA(Parameter, (v)).param_flags
 #define FLAG_PARAM_CLASS_BYTE(b)     FLAG_FIRST_BYTE(b)
 
 
@@ -208,9 +199,9 @@ inline static bool Matcher_Matches(
 
 
 inline static enum Reb_Param_Class VAL_PARAM_CLASS(const REBPAR *param) {
-    assert(IS_TYPESET(param));
+    assert(IS_PARAMETER(param));
     enum Reb_Param_Class pclass = cast(enum Reb_Param_Class,
-        VAL_TYPESET_PARAM_CLASS_BYTE(param)
+        VAL_PARAMETER_CLASS_BYTE(param)
     );
     if (pclass == PARAM_CLASS_RETURN)
         assert(NOT_PARAM_FLAG(param, REFINEMENT));
@@ -223,7 +214,7 @@ inline static enum Reb_Param_Class VAL_PARAM_CLASS(const REBPAR *param) {
 //
 inline static bool Is_Specialized(const REBPAR *param) {
     if (
-        HEART_BYTE_UNCHECKED(param) == REB_TYPESET  // no assert on isotope
+        HEART_BYTE_UNCHECKED(param) == REB_PARAMETER  // no assert on isotope
         and VAL_PARAM_CLASS(param) != PARAM_CLASS_0  // non-parameter typeset
     ){
         assert(QUOTE_BYTE(param) == UNQUOTED_1);  // no quoted parameters
@@ -236,18 +227,18 @@ inline static bool Is_Specialized(const REBPAR *param) {
 
 // Parameter class should be PARAM_CLASS_0 unless typeset in func paramlist.
 
-inline static REBVAL *Init_Typeset_Core(Cell(*) out, Array(const*) array)
+inline static REBVAL *Init_Parameter_Core(Cell(*) out, Array(const*) array)
 {
-    Reset_Unquoted_Header_Untracked(out, CELL_MASK_TYPESET);
+    Reset_Unquoted_Header_Untracked(out, CELL_MASK_PARAMETER);
     if (array)
         ASSERT_SERIES_MANAGED(array);
-    INIT_VAL_TYPESET_ARRAY(out, array);
+    INIT_VAL_PARAMETER_ARRAY(out, array);
     VAL_PARAM_FLAGS(out) = FLAG_PARAM_CLASS_BYTE(PARAM_CLASS_0);
     return cast(REBVAL*, out);
 }
 
-#define Init_Typeset(out,bits) \
-    TRACK(Init_Typeset_Core((out), (bits)))
+#define Init_Parameter(out,bits) \
+    TRACK(Init_Parameter_Core((out), (bits)))
 
 
 inline static REBPAR *Init_Param_Core(
@@ -255,12 +246,12 @@ inline static REBPAR *Init_Param_Core(
     Flags param_flags,
     Array(const*) array
 ){
-    Reset_Unquoted_Header_Untracked(out, CELL_MASK_TYPESET);
+    Reset_Unquoted_Header_Untracked(out, CELL_MASK_PARAMETER);
     if (array)
         ASSERT_SERIES_MANAGED(array);
 
     VAL_PARAM_FLAGS(out) = param_flags;
-    INIT_VAL_TYPESET_ARRAY(out, array);
+    INIT_VAL_PARAMETER_ARRAY(out, array);
 
     REBPAR *param = cast(REBPAR*, cast(REBVAL*, out));
     assert(VAL_PARAM_CLASS(param) != PARAM_CLASS_0);  // must set
@@ -359,8 +350,8 @@ inline static bool Typecheck_Including_Constraints(
 }
 
 
-inline static bool Is_Typeset_Empty(noquote(Cell(const*)) param) {
-    return VAL_TYPESET_ARRAY(param) == nullptr;  // e.g. `[/refine]`
+inline static bool Is_Parameter_Unconstrained(noquote(Cell(const*)) param) {
+    return VAL_PARAMETER_ARRAY(param) == nullptr;  // e.g. `[/refine]`
 }
 
 inline static bool Is_Blackhole(Cell(const*) v);  // forward decl
@@ -391,7 +382,7 @@ inline static void Typecheck_Refinement(
         // Not in use
     }
     else if (
-        Is_Typeset_Empty(param)
+        Is_Parameter_Unconstrained(param)
         and VAL_PARAM_CLASS(param) != PARAM_CLASS_OUTPUT
     ){
         if (not Is_Blackhole(arg))

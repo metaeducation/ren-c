@@ -447,7 +447,7 @@ REBINT Find_In_Array(
     if (Is_Isotope(target))
         fail ("Only Isotopes Supported by FIND are MATCHES and SPREAD");
 
-    if (IS_TYPE_WORD(target) or IS_TYPESET(target))
+    if (IS_TYPE_WORD(target) or IS_PARAMETER(target))
         fail (
             "FIND temporarily not taking DATATYPE! / TYPESET!, use MATCHES"
             " see https://forum.rebol.info/t/1881"

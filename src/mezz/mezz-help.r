@@ -65,7 +65,7 @@ description-of: function [
             ] else [null]
         ]
         object! [mold words of v]
-        typeset! [mold make block! v]
+        parameter! [mold v]
         port! [mold reduce [v.spec.title v.spec.ref]]
     ] else [null])
 ]

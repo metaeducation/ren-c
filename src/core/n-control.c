@@ -651,8 +651,8 @@ bool Typecheck_Value(
         item = VAL_ARRAY_AT(&tail, tests);
         match_all = true;
     }
-    else if (IS_TYPESET(tests)) {
-        Array(const*) array = try_unwrap(VAL_TYPESET_ARRAY(tests));
+    else if (IS_PARAMETER(tests)) {
+        Array(const*) array = try_unwrap(VAL_PARAMETER_ARRAY(tests));
         if (array == nullptr)
             return true;  // implicitly all is permitted
         item = ARR_HEAD(array);
@@ -688,17 +688,11 @@ bool Typecheck_Value(
 
             if (
                 id
-                and id == SYM_ANY_VALUE_X
+                and (id >= SYM_ANY_VALUE_Q and id < SYM_DATATYPES)
                 and test == Try_Lib_Var(id)
             ){
-                goto test_succeeded;  // accepts everything
-            }
-            if (
-                id
-                and (id > SYM_ANY_VALUE_X and id < SYM_DATATYPES)
-                and test == Try_Lib_Var(id)
-            ){
-                REBU64 bits = Typesets[cast(int, id) - SYM_ANY_VALUE_X];
+                Index n = (cast(int, id) - SYM_ANY_VALUE_Q) / 2;
+                REBU64 bits = Typesets[n];
                 if (not (bits & FLAGIT_KIND(VAL_TYPE(v))))
                     goto test_failed;
                 goto test_succeeded;
@@ -797,7 +791,7 @@ bool Typecheck_Value(
                 goto test_failed;
             break; }
 
-          case REB_TYPESET: {
+          case REB_PARAMETER: {
             if (not Typecheck_Value(test, SPECIFIED, v, v_specifier))
                 goto test_failed;
             break; }
@@ -850,7 +844,7 @@ bool Typecheck_Value(
 //      return: "Input if it matched, NULL if it did not (isotope if falsey)"
 //          [<opt> any-value! logic!]
 //      test "Typeset or arity-1 filter function"
-//          [<opt> logic! action! block! type-word! typeset! type-group! type-block!]
+//          [<opt> logic! action! block! type-word! type-group! type-block!]
 //      value [<maybe> <opt> any-value! ~any-value!~]
 //  ]
 //
@@ -887,7 +881,7 @@ DECLARE_NATIVE(match)
             return nullptr;
         break; }
 
-      case REB_TYPESET:
+      case REB_PARAMETER:
       case REB_BLOCK:
       case REB_TYPE_WORD:
       case REB_TYPE_GROUP:

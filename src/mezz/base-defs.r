@@ -510,7 +510,6 @@ run func* [
     meta-group?:
     the-group?:
     map?:
-    typeset?:
     action?:
     varargs?:
     object?:
@@ -520,23 +519,6 @@ run func* [
     port?:
     handle?:
 
-    ; Typesets predefined during bootstrap.
-
-    any-string?:
-    any-word?:
-    any-path?:
-    any-context?:
-    any-number?:
-    any-series?:
-    any-sequence?:
-    any-scalar?:
-    any-array?:
-    any-branch?:
-    any-the-value?:
-    any-plain-value?:
-    any-get-value?:
-    any-set-value?:
-    any-meta-value?:
     <end>
 
 

@@ -26,14 +26,16 @@
 
 
 //
-//  CT_Typeset: C
+//  CT_Parameter: C
 //
-REBINT CT_Typeset(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
+REBINT CT_Parameter(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
 {
     UNUSED(strict);
-    if (EQUAL_TYPESET(a, b))
-        return 0;
-    return a > b ? 1 : -1;  // !!! Bad arbitrary comparison, review
+
+    assert(CELL_HEART(a) == REB_PARAMETER);
+    assert(CELL_HEART(b) == REB_PARAMETER);
+
+    fail ("Parameter equality test currently disabled");
 }
 
 
@@ -46,30 +48,63 @@ REBINT CT_Typeset(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
 //
 void Startup_Typesets(void)
 {
+    // We need a spec for our typecheckers, which is really just `value`
+    // with no type restrictions.
+    //
+    DECLARE_LOCAL (spec);
+    Array(*) spec_array = Alloc_Singular(NODE_FLAG_MANAGED);
+    Init_Word(ARR_SINGLE(spec_array), Canon(VALUE));
+    Init_Block(spec, spec_array);
+
+    Context(*) meta;
+    Flags flags = MKF_KEYWORDS | MKF_RETURN;
+    Array(*) paramlist = Make_Paramlist_Managed_May_Fail(
+        &meta,
+        spec,
+        &flags  // return type checked only in debug build
+    );
+    ASSERT_SERIES_TERM_IF_NEEDED(paramlist);
+
     REBINT id;
-    for (id = SYM_ANY_VALUE_X; id != SYM_DATATYPES; ++id) {
-        REBINT n = id - SYM_ANY_VALUE_X;
+    for (id = SYM_ANY_VALUE_Q; id != SYM_DATATYPES; id += 2) {
+        REBINT n = (id - SYM_ANY_VALUE_Q) / 2;  // means Typesets[n]
 
-        StackIndex base = TOP_INDEX;
-        REBINT kind;
-        for (kind = 0; kind < REB_MAX; ++kind) {
-            if (not (Typesets[n] & FLAGIT_KIND(kind)))
-                continue;
+        // We want the forms like ANY-VALUE? to be typechecker functions that
+        // act on Typesets[n].
+        //
+        Action(*) typechecker = Make_Action(
+            paramlist,
+            nullptr,  // no partials
+            &Typeset_Checker_Dispatcher,
+            2 /* IDX_TYPECHECKER_MAX */  // details array capacity
+        );
+        Init_Integer(
+            ARR_AT(ACT_DETAILS(typechecker), 1 /* IDX_TYPECHECKER_TYPE */),
+            n  // e.g. this check uses typechecker[n]
+        );
+        Init_Activation(
+            Force_Lib_Var(cast(SymId, id)),
+            typechecker,
+            Canon_Symbol(cast(SymId, id)),  // cached symbol for function
+            UNBOUND
+        );
 
-            Init_Any_Word_Bound(
-                PUSH(),
-                REB_WORD,
-                Canon_Symbol(cast(SymId, kind)),
-                Lib_Context,
-                INDEX_ATTACHED  // !!! should this be INDEX_PATCHED?
-            );
-        }
-
-        Array(*) a = Pop_Stack_Values_Core(base, NODE_FLAG_MANAGED);
-        Init_Typeset(Force_Lib_Var(cast(SymId, id)), a);
+        // Make e.g. ANY-VALUE! a TYPE-GROUP! with the bound question mark
+        // form inside it, e.g. any-value!: &(any-value?)
+        //
+        Array(*) a = Alloc_Singular(NODE_FLAG_MANAGED);
+        Init_Any_Word_Bound(
+            ARR_SINGLE(a),
+            REB_WORD,
+            Canon_Symbol(cast(SymId, id)),
+            Lib_Context,
+            INDEX_ATTACHED
+        );
+        Init_Array_Cell(Force_Lib_Var(cast(SymId, id + 1)), REB_TYPE_GROUP, a);
     }
 
-    assert(Typesets[id - SYM_ANY_VALUE_X] == 0);  // table ends in zero
+    Index last = (cast(int, SYM_DATATYPES) - SYM_ANY_VALUE_Q) / 2;
+    assert(Typesets[last] == 0);  // table ends in zero
 }
 
 
@@ -82,7 +117,7 @@ void Shutdown_Typesets(void)
 
 
 //
-//  Add_Typeset_Bits_Core: C
+//  Add_Parameter_Bits_Core: C
 //
 // This sets the bits in a bitset according to a block of datatypes.  There
 // is special handling by which BAR! will set the "variadic" bit on the
@@ -94,7 +129,7 @@ void Shutdown_Typesets(void)
 // will act as WORD!.  Also, is essentially having "keywords" and should be
 // reviewed to see if anything actually used it.
 //
-Array(*) Add_Typeset_Bits_Core(
+Array(*) Add_Parameter_Bits_Core(
     Flags* flags,
     Cell(const*) head,
     Cell(const*) tail,
@@ -204,9 +239,9 @@ Array(*) Add_Typeset_Bits_Core(
 
 
 //
-//  MAKE_Typeset: C
+//  MAKE_Parameter: C
 //
-Bounce MAKE_Typeset(
+Bounce MAKE_Parameter(
     Frame(*) frame_,
     enum Reb_Kind kind,
     option(const REBVAL*) parent,
@@ -214,30 +249,30 @@ Bounce MAKE_Typeset(
 ){
     UNUSED(kind);
     UNUSED(parent);
-    return RAISE(Error_Bad_Make(REB_TYPESET, arg));
+    return RAISE(Error_Bad_Make(REB_PARAMETER, arg));
 }
 
 
 //
-//  TO_Typeset: C
+//  TO_Parameter: C
 //
-Bounce TO_Typeset(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg)
+Bounce TO_Parameter(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg)
 {
-    return MAKE_Typeset(frame_, kind, nullptr, arg);
+    return MAKE_Parameter(frame_, kind, nullptr, arg);
 }
 
 
 //
-//  MF_Typeset: C
+//  MF_Parameter: C
 //
-void MF_Typeset(REB_MOLD *mo, noquote(Cell(const*)) v, bool form)
+void MF_Parameter(REB_MOLD *mo, noquote(Cell(const*)) v, bool form)
 {
     if (not form) {
-        Pre_Mold(mo, v);  // #[typeset! or make typeset!
+        Pre_Mold(mo, v);  // #[parameter! or make parameter!
     }
 
     DECLARE_LOCAL(temp);
-    Init_Group(temp, VAL_TYPESET_ARRAY(v));
+    Init_Group(temp, VAL_PARAMETER_ARRAY(v));
     PUSH_GC_GUARD(temp);
     Mold_Or_Form_Value(mo, temp, form);
     DROP_GC_GUARD(temp);
@@ -251,7 +286,7 @@ void MF_Typeset(REB_MOLD *mo, noquote(Cell(const*)) v, bool form)
 //
 //  REBTYPE: C
 //
-REBTYPE(Typeset)
+REBTYPE(Parameter)
 {
     UNUSED(frame_);
     UNUSED(verb);

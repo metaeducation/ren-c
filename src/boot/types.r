@@ -100,10 +100,10 @@ pair!       "two dimensional point or size"
             [any-scalar!]
             [pair        +       +]
 
-typeset!    "set of datatypes"
+parameter!  "function parameter description"
             (CELL_FLAG_FIRST_IS_NODE)
             []
-            [typeset     +       +]
+            [parameter   +       +]
 
 bitset!     "set of bit flags"
             (CELL_FLAG_FIRST_IS_NODE)

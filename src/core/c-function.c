@@ -109,7 +109,7 @@ enum Reb_Spec_Mode {
 
 static void Finalize_Param(Value(*) param) {
     //
-    // This used to guard against nullptr in VAL_TYPESET_ARRAY() and canonize
+    // This used to guard against nullptr in VAL_PARAMETER_ARRAY() and canonize
     // the refinement case to EMPTY_ARRAY and the non-refinement case to
     // the ANY-VALUE! typeset.  New philosophy is to allow null arrays in
     // order to establish &(ANY-VALUE?) as a type annotation, because
@@ -117,7 +117,7 @@ static void Finalize_Param(Value(*) param) {
     //
     // For the moment we hack in the ISOTOPES_OKAY flag.
     //
-    if (VAL_TYPESET_ARRAY(param) == nullptr)
+    if (VAL_PARAMETER_ARRAY(param) == nullptr)
         SET_PARAM_FLAG(param, ISOTOPES_OKAY);
 }
 
@@ -197,7 +197,7 @@ void Push_Paramlist_Quads_May_Fail(
 
                 // Fake as if they said []
                 //
-                assert(VAL_TYPESET_ARRAY(param) == nullptr);
+                assert(VAL_PARAMETER_ARRAY(param) == nullptr);
                 continue;
             }
             else if (0 == CT_String(item, Root_Void_Tag, strict)) {
@@ -205,7 +205,7 @@ void Push_Paramlist_Quads_May_Fail(
                 // Fake as if they said [<void>] !!! make more efficient
                 //
                 StackValue(*) param = PARAM_SLOT(TOP_INDEX);
-                assert(VAL_TYPESET_ARRAY(param) == nullptr);
+                assert(VAL_PARAMETER_ARRAY(param) == nullptr);
                 SET_PARAM_FLAG(param, RETURN_VOID);
                 SET_PARAM_FLAG(param, ENDABLE);
                 continue;
@@ -276,7 +276,7 @@ void Push_Paramlist_Quads_May_Fail(
             Cell(const*) types_tail;
             Cell(const*) types_at = VAL_ARRAY_AT(&types_tail, item);
             Flags param_flags;
-            Array(*) a = Add_Typeset_Bits_Core(
+            Array(*) a = Add_Parameter_Bits_Core(
                 &param_flags,
                 types_at,
                 types_tail,
@@ -285,8 +285,8 @@ void Push_Paramlist_Quads_May_Fail(
 
             StackValue(*) param = PARAM_SLOT(TOP_INDEX);
             VAL_PARAM_FLAGS(param) |= param_flags;
-            assert(VAL_TYPESET_ARRAY(param) == nullptr);
-            INIT_VAL_TYPESET_ARRAY(param, a);
+            assert(VAL_PARAMETER_ARRAY(param) == nullptr);
+            INIT_VAL_PARAMETER_ARRAY(param, a);
 
             if (was_refinement)
                 SET_PARAM_FLAG(param, REFINEMENT);

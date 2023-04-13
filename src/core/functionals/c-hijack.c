@@ -117,7 +117,7 @@ void Push_Redo_Action_Frame(REBVAL *out, Frame(*) f1, const REBVAL *run)
 
             Init_Pushed_Refinement(PUSH(), KEY_SYMBOL(e.key));
 
-            if (Is_Typeset_Empty(e.param)) {
+            if (Is_Parameter_Unconstrained(e.param)) {
                 assert(Is_Blackhole(e.var));  // used but argless refinement
                 continue;
             }

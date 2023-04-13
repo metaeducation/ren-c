@@ -1684,7 +1684,7 @@ Bounce Evaluator_Executor(Frame(*) f)
       case REB_TIME:
       case REB_DATE:
         //
-      case REB_TYPESET:
+      case REB_PARAMETER:
         //
       case REB_TYPE_WORD:
       case REB_TYPE_BLOCK:

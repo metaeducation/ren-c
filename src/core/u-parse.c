@@ -637,7 +637,7 @@ static Bounce Parse_One_Rule(
           case REB_TYPE_WORD:
           case REB_TYPE_BLOCK:
           case REB_TYPE_GROUP:
-          case REB_TYPESET: {
+          case REB_PARAMETER: {
             if (TYPE_CHECK_CORE(rule, item, P_INPUT_SPECIFIER))
                 return Init_Integer(OUT, pos + 1);  // type was in typeset
             return BOUNCE_UNHANDLED; }
@@ -1044,7 +1044,7 @@ static REBIXO To_Thru_Non_Block_Rule(
             Get_Var_May_Fail(temp, rule, P_RULE_SPECIFIER, any);
             rule = temp;
         }
-        else if (IS_TYPE_WORD(rule) or IS_TYPESET(rule)) {
+        else if (IS_TYPE_WORD(rule) or IS_PARAMETER(rule)) {
             Derelativize(temp, rule, P_RULE_SPECIFIER);
             Quasify(temp);
             Meta_Unquotify(temp);

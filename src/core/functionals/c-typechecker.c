@@ -100,12 +100,15 @@ Bounce Typeset_Checker_Dispatcher(Frame(*) frame_)
     Array(*) details = ACT_DETAILS(FRM_PHASE(f));
     assert(ARR_LEN(details) == IDX_TYPECHECKER_MAX);
 
-    REBVAL *typeset = DETAILS_AT(details, IDX_TYPECHECKER_TYPE);
-    assert(IS_TYPESET(typeset));
+    REBVAL *typeset_index = DETAILS_AT(details, IDX_TYPECHECKER_TYPE);
+    assert(IS_INTEGER(typeset_index));
+    Index n = VAL_INT32(typeset_index);
 
     assert(KEY_SYM(ACT_KEY(FRM_PHASE(f), 1)) == SYM_RETURN);  // skip arg 1
 
-    return Init_Logic(OUT, TYPE_CHECK(typeset, FRM_ARG(f, 2)));
+    REBU64 typeset = Typesets[n];
+    enum Reb_Kind kind = VAL_TYPE(FRM_ARG(f, 2));
+    return Init_Logic(OUT, FLAGIT_KIND(kind) & typeset);
 }
 
 
@@ -115,7 +118,7 @@ Bounce Typeset_Checker_Dispatcher(Frame(*) frame_)
 //  {Generator for an optimized typechecking ACTION!}
 //
 //      return: [action!]
-//      type [type-word! typeset!]
+//      type [type-word! integer!]
 //  ]
 //
 DECLARE_NATIVE(typechecker)

@@ -621,7 +621,7 @@ DECLARE_NATIVE(pack)
 //
 //      return: "Isotope of TYPE-XXX!"
 //          [<opt> any-value!]
-//      types [<opt> type-word! typeset! block!]
+//      types [<opt> type-word! type-group! block!]
 //  ]
 //
 DECLARE_NATIVE(matches)
@@ -633,7 +633,7 @@ DECLARE_NATIVE(matches)
     if (Is_Nulled(v))
         return nullptr;  // Put TRY on the FIND or whatever, not MATCHES
 
-    if (IS_TYPE_WORD(v) or IS_TYPESET(v))
+    if (IS_TYPE_WORD(v) or IS_TYPE_GROUP(v))
         return UNMETA(Quasify(v));
 
     assert(IS_BLOCK(v));

@@ -264,7 +264,7 @@ uint32_t Hash_Value(Cell(const*) cell)
         break;
 
       case REB_BITSET:
-      case REB_TYPESET:
+      case REB_PARAMETER:
         //
         // "These types are currently not supported."
         //

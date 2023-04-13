@@ -171,7 +171,7 @@ Context(*) Make_Context_For_Action_Push_Partials(
             INIT_VAL_WORD_BINDING(ordered, varlist);
             INIT_VAL_WORD_INDEX(ordered, index);
 
-            if (not Is_Typeset_Empty(param))  // needs argument
+            if (not Is_Parameter_Unconstrained(param))  // needs argument
                 goto continue_unspecialized;
 
             // If refinement named on stack takes no arguments, then it can't
@@ -345,7 +345,7 @@ bool Specialize_Action_Throws(
       unspecialized_arg:
 
         assert(Is_Nihil(arg));
-        assert(IS_TYPESET(param));
+        assert(IS_PARAMETER(param));
         Copy_Cell(arg, param);
         continue;
 
@@ -750,7 +750,7 @@ Action(*) Alloc_Action_From_Exemplar(
         // https://forum.rebol.info/t/1413
         //
         if (Is_Nihil(arg)) {
-            assert(IS_TYPESET(param));
+            assert(IS_PARAMETER(param));
             Copy_Cell(arg, param);
             continue;
         }

@@ -960,7 +960,7 @@ DECLARE_NATIVE(apply)
     else if (  // help convert logic for no-arg refinement, see [5]
         VAL_TYPE_UNCHECKED(SPARE) == REB_LOGIC  // let isotopes pass
         and GET_PARAM_FLAG(param, REFINEMENT)
-        and Is_Typeset_Empty(param)
+        and Is_Parameter_Unconstrained(param)
     ){
         if (VAL_LOGIC(SPARE))
             Init_Blackhole(var);

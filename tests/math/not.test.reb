@@ -4,7 +4,7 @@
 (false = not charset "")
 (false = not [])
 (false = not #"a")
-(false = not datatype!)
+(false = not type-word!)
 (false = not 1/1/2007)
 (false = not 0.0)
 (false = not me@mydomain.com)

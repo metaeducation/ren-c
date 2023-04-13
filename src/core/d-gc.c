@@ -123,9 +123,9 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
       case REB_DATE:
         break;
 
-      case REB_TYPESET: {
-        if (VAL_TYPESET_ARRAY(v))
-            assert(Is_Marked(unwrap(VAL_TYPESET_ARRAY(v))));
+      case REB_PARAMETER: {
+        if (VAL_PARAMETER_ARRAY(v))
+            assert(Is_Marked(unwrap(VAL_PARAMETER_ARRAY(v))));
         break; }
 
       case REB_BITSET: {

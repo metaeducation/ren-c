@@ -277,7 +277,7 @@ Bounce Action_Executor(Frame(*) f)
             goto continue_fulfilling;
         }
 
-        assert(IS_TYPESET(PARAM));
+        assert(IS_PARAMETER(PARAM));
 
   //=//// CHECK FOR ORDER OVERRIDE ////////////////////////////////////////=//
 
@@ -317,7 +317,7 @@ Bounce Action_Executor(Frame(*) f)
                 INIT_VAL_WORD_BINDING(ordered, f->varlist);
                 INIT_VAL_WORD_INDEX(ordered, offset + 1);
 
-                if (Is_Typeset_Empty(PARAM)) {
+                if (Is_Parameter_Unconstrained(PARAM)) {
                     //
                     // There's no argument, so we won't need to come back
                     // for this one.  But we did need to set its index
@@ -760,7 +760,7 @@ Bounce Action_Executor(Frame(*) f)
         assert(VAL_WORD_SYMBOL(TOP) == KEY_SYMBOL(KEY));
         DROP();
 
-        if (Is_Typeset_Empty(PARAM)) {  // no callsite arg, just drop
+        if (Is_Parameter_Unconstrained(PARAM)) {  // no callsite arg, just drop
             if (TOP_INDEX != BASELINE->stack_base)
                 goto next_pickup;
 

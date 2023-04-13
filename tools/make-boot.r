@@ -448,7 +448,8 @@ e-types/emit 'value-flagnots {
 
 typeset-sets: copy []
 
-add-sym 'any-value!  ; starts the typesets, not mentioned in %types.r
+add-sym 'any-value?  ; starts the typeset symbols, not mentioned in %types.r
+add-sym 'any-value!  ; will be initialized as just &(any-value?)
 
 for-each-datatype t [
     for-each ts-name t/typesets [
@@ -457,7 +458,9 @@ for-each-datatype t [
             continue
         ]
 
+        add-sym as word! unspaced ["any-" ts-name "?"]
         add-sym as word! unspaced ["any-" ts-name "!"]
+
         append typeset-sets ts-name
         append typeset-sets reduce [t/name]
 
@@ -473,6 +476,7 @@ for-each-datatype t [
 ]
 
 for-each-typerange tr [
+    add-sym replace to text! tr/any-name! "!" "?"
     add-sym tr/any-name!
 
     append typeset-sets spread reduce [tr/name tr/types]
