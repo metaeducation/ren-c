@@ -84,7 +84,10 @@ Bounce MAKE_Money(
     if (parent)
         return RAISE(Error_Bad_Make_Parent(kind, unwrap(parent)));
 
-    switch (VAL_TYPE(arg)) {
+    if (IS_LOGIC(arg)) {
+        return Init_Money(OUT, int_to_deci(VAL_LOGIC(arg) ? 1 : 0));
+    }
+    else switch (VAL_TYPE(arg)) {
       case REB_INTEGER:
         return Init_Money(OUT, int_to_deci(VAL_INT64(arg)));
 
@@ -112,9 +115,6 @@ Bounce MAKE_Money(
       case REB_BINARY:
         Bin_To_Money_May_Fail(OUT, arg);
         return OUT;
-
-      case REB_LOGIC:
-        return Init_Money(OUT, int_to_deci(VAL_LOGIC(arg) ? 1 : 0));
 
       default:
         break;

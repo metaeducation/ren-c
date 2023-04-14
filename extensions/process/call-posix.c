@@ -145,10 +145,10 @@ Bounce Call_Core(Frame(*) frame_) {
         inbuf = nullptr;
         inbuf_size = 0;
     }
-    else switch (VAL_TYPE(ARG(input))) {
-      case REB_LOGIC:
+    else if (IS_LOGIC(ARG(input))) {
         goto null_input_buffer;
-
+    }
+    else switch (VAL_TYPE(ARG(input))) {
       case REB_TEXT: {
         inbuf_size = rebSpellInto(nullptr, 0, ARG(input));
         inbuf = rebAllocN(char, inbuf_size);

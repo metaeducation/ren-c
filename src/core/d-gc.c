@@ -87,7 +87,6 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
       case REB_COMMA:
         break;
 
-      case REB_LOGIC:
       case REB_INTEGER:
       case REB_DECIMAL:
       case REB_PERCENT:

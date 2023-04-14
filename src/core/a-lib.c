@@ -1376,15 +1376,15 @@ intptr_t RL_rebUnbox(const void *p, va_list *vaptr)
     DECLARE_LOCAL (result);
     Run_Va_May_Fail(result, p, vaptr);  // calls va_end()
 
-    switch (VAL_TYPE(result)) {
+    if (IS_LOGIC(result)) {
+        return VAL_LOGIC(result) ? 1 : 0;
+    }
+    else switch (VAL_TYPE(result)) {
       case REB_INTEGER:
         return VAL_INT64(result);
 
       case REB_ISSUE:
         return VAL_CHAR(result);
-
-      case REB_LOGIC:
-        return VAL_LOGIC(result) ? 1 : 0;
 
       default:
         fail ("C-based rebUnbox() only supports INTEGER!, CHAR!, and LOGIC!");

@@ -48,7 +48,6 @@
 #define Is_True(out)        Is_Word_Isotope_With_Id((out), SYM_TRUE)
 #define Is_False(out)       Is_Word_Isotope_With_Id((out), SYM_FALSE)
 
-#undef IS_LOGIC
 inline static bool IS_LOGIC(Cell(const*) v) {
     return Is_True(v) or Is_False(v);
 }
@@ -108,8 +107,8 @@ inline static bool Is_Conditional_True(const REBVAL *v) {
 inline static bool Is_Meta_Of_False(Cell(const*) v) {
     return (
         QUOTE_BYTE(v) == QUASI_2
-        and HEART_BYTE(v) == REB_LOGIC
-        and not VAL_LOGIC(v)
+        and HEART_BYTE(v) == REB_WORD
+        and VAL_WORD_ID(v) == SYM_FALSE
     );
 }
 

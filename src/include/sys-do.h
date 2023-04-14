@@ -111,12 +111,7 @@ inline static Bounce Run_Generic_Dispatch_Core(
     GENERIC_HOOK *hook;
     switch (QUOTE_BYTE(first_arg)) {
       case ISOTOPE_0:
-        if (IS_LOGIC(first_arg))
-            hook = cast(GENERIC_HOOK*, Builtin_Type_Hooks[REB_LOGIC][IDX_GENERIC_HOOK]);
-        else {
-            assert(false);
-            hook = nullptr;
-        }
+        hook = &T_Isotope;
         break;
       case UNQUOTED_1:
         hook = Generic_Hook_For_Type_Of(first_arg);

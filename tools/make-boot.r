@@ -373,8 +373,6 @@ e-types/emit 'rebs {
         $[Rebs],
         REB_MAX,  /* one past valid types */
 
-        REB_LOGIC, /* also not conflated with isotopes (at this time) */
-
         /*
         * Invalid type bytes can currently be used for other purposes.  (If
         * bits become scarce, then the HEART_BYTE could be processed % 64

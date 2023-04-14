@@ -958,7 +958,7 @@ DECLARE_NATIVE(apply)
         FRESHEN(SPARE);
     }
     else if (  // help convert logic for no-arg refinement, see [5]
-        VAL_TYPE_UNCHECKED(SPARE) == REB_LOGIC  // let isotopes pass
+        IS_LOGIC(SPARE)
         and GET_PARAM_FLAG(param, REFINEMENT)
         and Is_Parameter_Unconstrained(param)
     ){

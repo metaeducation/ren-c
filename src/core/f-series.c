@@ -344,9 +344,6 @@ REBINT Cmp_Value(Cell(const*) sval, Cell(const*) tval, bool strict)
         }
         return CT_Integer(s, t, strict);
 
-      case REB_LOGIC:
-        return CT_Logic(s, t, strict);
-
       case REB_PERCENT:
       case REB_DECIMAL:
       case REB_MONEY:

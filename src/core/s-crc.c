@@ -127,10 +127,6 @@ uint32_t Hash_Value(Cell(const*) cell)
         hash = 0;
         break;
 
-      case REB_LOGIC:
-        hash = VAL_LOGIC(cell) ? 1 : 0;
-        break;
-
       case REB_INTEGER:
         //
         // R3-Alpha XOR'd with (VAL_INT64(val) >> 32).  But: "XOR with high

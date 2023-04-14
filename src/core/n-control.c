@@ -864,12 +864,11 @@ DECLARE_NATIVE(match)
         if (not Is_Nulled(v))
             return nullptr;
     }
-    else switch (VAL_TYPE(test)) {
-      case REB_LOGIC:
+    else if (IS_LOGIC(test)) {
         if (Is_Truthy(v) != VAL_LOGIC(test))
             return nullptr;
-        break;
-
+    }
+    else switch (VAL_TYPE(test)) {
       case REB_ACTION: {
         if (rebRunThrows(
             SPARE,  // <-- output cell

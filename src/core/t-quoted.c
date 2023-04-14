@@ -140,44 +140,6 @@ REBTYPE(Quoted)
 }
 
 
-
-//
-//  MAKE_Isotope: C
-//
-Bounce MAKE_Isotope(
-    Frame(*) frame_,
-    enum Reb_Kind kind,
-    option(const REBVAL*) parent,
-    const REBVAL *arg
-){
-    assert(kind == REB_ISOTOPE);
-    if (parent)
-        return RAISE(Error_Bad_Make_Parent(kind, unwrap(parent)));
-
-    return Quotify(Copy_Cell(OUT, arg), 1);
-}
-
-
-//
-//  TO_Isotope: C
-//
-Bounce TO_Isotope(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *data) {
-    return RAISE(Error_Bad_Make(kind, data));
-}
-
-
-//
-//  REBTYPE: C
-//
-REBTYPE(Isotope)
-{
-    UNUSED(frame_);
-    UNUSED(verb);
-
-    fail ("ISOTOPE! has no GENERIC operations");
-}
-
-
 //
 //  the: native [
 //

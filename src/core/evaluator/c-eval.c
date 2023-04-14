@@ -1672,7 +1672,6 @@ Bounce Evaluator_Executor(Frame(*) f)
 
     inert:
       case REB_BLANK:  // once blanks evaluated to null, but that was panned
-      case REB_LOGIC:
       case REB_INTEGER:
       case REB_DECIMAL:
       case REB_PERCENT:

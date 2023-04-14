@@ -563,13 +563,12 @@ static Bounce Parse_One_Rule(
         }
     }
 
-    switch (VAL_TYPE(rule)) {  // handle w/same behavior for all P_INPUT
-
-      case REB_LOGIC:
+    if (IS_LOGIC(rule)) {
         if (VAL_LOGIC(rule))
             return Init_Integer(OUT, pos);  // true matches always
         return BOUNCE_UNHANDLED;  // false matches never
-
+    }
+    else switch (VAL_TYPE(rule)) {  // handle w/same behavior for all P_INPUT
       case REB_INTEGER:
         fail ("Non-rule-count INTEGER! in PARSE must be literal, use QUOTE");
 
@@ -998,14 +997,14 @@ static REBIXO To_Thru_Non_Block_Rule(
 ){
     USE_PARAMS_OF_SUBPARSE;
 
+    if (IS_LOGIC(rule))  // no-op if true, match failure if false
+        return VAL_LOGIC(rule) ? cast(REBLEN, P_POS) : END_FLAG;
+
     enum Reb_Kind kind = VAL_TYPE(rule);
     assert(kind != REB_BLOCK);
 
     if (kind == REB_BLANK)
         return P_POS;  // make it a no-op
-
-    if (kind == REB_LOGIC)  // no-op if true, match failure if false
-        return VAL_LOGIC(rule) ? cast(REBLEN, P_POS) : END_FLAG;
 
     if (kind == REB_WORD and VAL_WORD_ID(rule) == SYM_END) {
         //
@@ -2006,11 +2005,7 @@ DECLARE_NATIVE(subparse)
     if (Is_Nulled(rule))
         fail ("NULL rules are not allowed in PARSE");
 
-    switch (VAL_TYPE(rule)) {
-      case REB_GROUP:
-        goto process_group;  // GROUP! can make WORD! that fetches GROUP!
-
-      case REB_LOGIC:  // true is a no-op, false causes match failure
+    if (IS_LOGIC(rule)) {  // true is a no-op, false causes match failure
         if (VAL_LOGIC(rule)) {
             FETCH_NEXT_RULE(f);
             goto pre_rule;
@@ -2018,6 +2013,10 @@ DECLARE_NATIVE(subparse)
         FETCH_NEXT_RULE(f);
         Init_Nulled(ARG(position));  // not found
         goto post_match_processing;
+    }
+    else switch (VAL_TYPE(rule)) {
+      case REB_GROUP:
+        goto process_group;  // GROUP! can make WORD! that fetches GROUP!
 
       case REB_INTEGER:  // Specify repeat count
         mincount = maxcount = Int32s(rule, 0);

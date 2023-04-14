@@ -284,68 +284,6 @@ DECLARE_NATIVE(unless)
 }
 
 
-//
-//  CT_Logic: C
-//
-REBINT CT_Logic(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
-{
-    UNUSED(strict);
-    UNUSED(a);
-    UNUSED(b);
-    panic ("LOGIC! type no longer concretely exists");
-}
-
-
-//
-//  MAKE_Logic: C
-//
-Bounce MAKE_Logic(
-    Frame(*) frame_,
-    enum Reb_Kind kind,
-    option(const REBVAL*) parent,
-    const REBVAL *arg
-){
-    assert(kind == REB_LOGIC);
-    if (parent)
-        return RAISE(Error_Bad_Make_Parent(kind, unwrap(parent)));
-
-    // As a construction routine, MAKE takes more liberties in the
-    // meaning of its parameters, so it lets zero values be false.
-    //
-    // !!! Is there a better idea for MAKE that does not hinge on the
-    // "zero is false" concept?  Is there a reason it should?
-    //
-    if (
-        Is_Falsey(arg)
-        || (IS_INTEGER(arg) && VAL_INT64(arg) == 0)
-        || (
-            (IS_DECIMAL(arg) || IS_PERCENT(arg))
-            && (VAL_DECIMAL(arg) == 0.0)
-        )
-        || (IS_MONEY(arg) && deci_is_zero(VAL_MONEY_AMOUNT(arg)))
-    ){
-        return Init_False(OUT);
-    }
-
-    return Init_True(OUT);
-}
-
-
-//
-//  TO_Logic: C
-//
-Bounce TO_Logic(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg) {
-    assert(kind == REB_LOGIC);
-    UNUSED(kind);
-
-    // As a "Rebol conversion", TO falls in line with the rest of the
-    // interpreter canon that all non-none non-logic-false values are
-    // considered effectively "truth".
-    //
-    return Init_Logic(OUT, Is_Truthy(arg));
-}
-
-
 inline static bool Math_Arg_For_Logic(REBVAL *arg)
 {
     if (IS_LOGIC(arg))
@@ -354,27 +292,43 @@ inline static bool Math_Arg_For_Logic(REBVAL *arg)
     if (IS_BLANK(arg))
         return false;
 
-    fail (Error_Unexpected_Type(REB_LOGIC, VAL_TYPE(arg)));
+    fail (Error_Unexpected_Type(REB_ISOTOPE, VAL_TYPE(arg)));
 }
 
 
 //
-//  MF_Logic: C
+//  MAKE_Isotope: C
 //
-void MF_Logic(REB_MOLD *mo, noquote(Cell(const*)) v, bool form)
-{
-    UNUSED(mo);
-    UNUSED(v);
-    UNUSED(form);
-    panic ("LOGIC! type no longer concretely exists");
+Bounce MAKE_Isotope(
+    Frame(*) frame_,
+    enum Reb_Kind kind,
+    option(const REBVAL*) parent,
+    const REBVAL *arg
+){
+    assert(kind == REB_ISOTOPE);
+    if (parent)
+        return RAISE(Error_Bad_Make_Parent(kind, unwrap(parent)));
+
+    return Quotify(Copy_Cell(OUT, arg), 1);
+}
+
+
+//
+//  TO_Isotope: C
+//
+Bounce TO_Isotope(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *data) {
+    return RAISE(Error_Bad_Make(kind, data));
 }
 
 
 //
 //  REBTYPE: C
 //
-REBTYPE(Logic)
+REBTYPE(Isotope)
 {
+    if (not IS_LOGIC(D_ARG(1)))
+        fail ("Isotope handler only supports LOGIC! (legacy workaround)");
+
     bool b1 = VAL_LOGIC(D_ARG(1));
     bool b2;
 

@@ -300,10 +300,6 @@ inline static option(SymId) VAL_WORD_ID(noquote(Cell(const*)) v);
 inline static enum Reb_Kind VAL_TYPE_UNCHECKED(Cell(const*) v) {
     switch (QUOTE_BYTE_UNCHECKED(v)) {
       case ISOTOPE_0:
-        if (HEART_BYTE_UNCHECKED(v) == REB_WORD) {
-            if (VAL_WORD_ID(v) == SYM_TRUE or VAL_WORD_ID(v) == SYM_FALSE)
-                return REB_LOGIC;  // !!! Temporary compatibility
-        }
         return REB_ISOTOPE;
 
       case UNQUOTED_1:

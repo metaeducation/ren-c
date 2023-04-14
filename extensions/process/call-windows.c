@@ -90,8 +90,7 @@ static bool Try_Init_Startupinfo_Sink(
     if (Is_Nulled(arg)) {  // write normally (usually to console)
         *hsink = GetStdHandle(std_handle_id);
     }
-    else switch (VAL_TYPE(arg)) {
-      case REB_LOGIC:
+    else if (IS_LOGIC(arg)) {
         if (VAL_LOGIC(arg)) {
             //
             // !!! This said true was "inherit", but hwrite was not being
@@ -124,8 +123,9 @@ static bool Try_Init_Startupinfo_Sink(
             if (*hwrite == INVALID_HANDLE_VALUE)
                 return false;
             *hsink = *hwrite;
-        break; }
-
+        }
+    }
+    else switch (VAL_TYPE(arg)) {
       case REB_TEXT:  // write to pre-existing TEXT!
       case REB_BINARY:  // write to pre-existing BINARY!
         if (not CreatePipe(hread, hwrite, NULL, 0))
@@ -319,8 +319,7 @@ Bounce Call_Core(Frame(*) frame_) {
     if (not REF(input)) {  // get stdin normally (usually from user console)
         si.hStdInput = GetStdHandle(STD_INPUT_HANDLE);
     }
-    else switch (VAL_TYPE(ARG(input))) {
-      case REB_LOGIC:
+    else if (IS_LOGIC(ARG(input))) {
         if (VAL_LOGIC(ARG(input))) {  // !!! make inheritable (correct?)
             if (not SetHandleInformation(
                 hInputRead,
@@ -344,7 +343,9 @@ Bounce Call_Core(Frame(*) frame_) {
                 0,
                 NULL
              );  // don't offer any stdin
-        break; }
+        }
+    }
+    else switch (VAL_TYPE(ARG(input))) {
       case REB_TEXT: {  // feed standard input from TEXT!
         //
         // See notes at top of file about why UTF-16/UCS-2 are not used here.

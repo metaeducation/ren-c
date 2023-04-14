@@ -155,11 +155,11 @@ Bounce MAKE_Decimal(
 
     REBDEC d;
 
-    switch (VAL_TYPE(arg)) {
-      case REB_LOGIC:
+    if (IS_LOGIC(arg)) {
         d = VAL_LOGIC(arg) ? 1.0 : 0.0;
         goto dont_divide_if_percent;
-
+    }
+    else switch (VAL_TYPE(arg)) {
       case REB_ISSUE:
         d = cast(REBDEC, VAL_CHAR(arg));
         goto dont_divide_if_percent;
