@@ -232,15 +232,6 @@ REBTYPE(Unhooked)
 }
 
 
-//
-//  S_Unhooked: C
-//
-Symbol(const*) S_Unhooked(void)
-{
-    return nullptr;
-}
-
-
 // !!! Some reflectors are more general and apply to all types (e.g. TYPE)
 // while others only apply to some types (e.g. LENGTH or HEAD only to series,
 // or perhaps things like PORT! that wish to act like a series).  This
@@ -256,41 +247,6 @@ Bounce Reflect_Core(Frame(*) frame_)
     REBVAL *v = ARG(value);
 
     option(SymId) id = VAL_WORD_ID(ARG(property));
-
-    if (id != SYM_TYPE_P)
-        Decay_If_Unstable(v);
-
-    enum Reb_Kind heart = CELL_HEART(v);
-
-    if (id == SYM_TYPE_P or id == SYM_TYPE) {
-        Byte quote_byte = QUOTE_BYTE(v);
-
-        bool quasify = false;
-        if (quote_byte == ISOTOPE_0) {
-            if (Is_Nulled(v))
-                return nullptr;
-
-            if (id != SYM_TYPE_P)
-                fail ("Use TYPE* and not TYPE on isotopes (if intentional)");
-            quasify = true;
-            quote_byte = QUASI_2;  // we'll return ~&[~xxx~]~
-        }
-
-        if (heart == REB_VOID)
-            Init_Any_Word(OUT, REB_TYPE_WORD, Canon(VOID));  // !!! hack
-        else
-            Init_Any_Word(OUT, REB_TYPE_WORD, Canon_Symbol(cast(SymId, heart)));
-
-        if (quasify)
-            Quasify(OUT);
-        return OUT;
-    }
-
-    Decay_If_Activation(v);  // should LENGTH etc. apply to isotopes, also?
-
-    if (Is_Isotope(v) and not Is_Nulled(v))
-        fail (Error_Bad_Isotope(v));  // only TYPE* will allow isotopes
-
     if (not id) {
         //
         // If a word wasn't in %words.r, it has no integer SYM.  There is
@@ -302,13 +258,11 @@ Bounce Reflect_Core(Frame(*) frame_)
     }
 
     switch (id) {
-      case SYM_KIND: // simpler answer, low-level datatype (e.g. QUOTED!)
-        if (Is_Nulled(v))
+      case SYM_KIND:
+      case SYM_TYPE:  // currently synonym for KIND, may change
+        if (Is_Void(v))
             return nullptr;
         return Init_Builtin_Datatype(OUT, VAL_TYPE(v));
-
-      case SYM_TYPE_P:
-      case SYM_TYPE: // higher order-answer, may build structured result
 
       case SYM_QUOTES:
         return Init_Integer(OUT, VAL_NUM_QUOTES(v));
@@ -331,8 +285,8 @@ Bounce Reflect_Core(Frame(*) frame_)
 //  {Returns specific details about a datatype.}
 //
 //      return: [<opt> any-value!]
-//      value "Accepts NULL so REFLECT () 'TYPE can be returned as NULL"
-//          [<maybe> <opt> <pack> <fail> any-value!]
+//      value "Accepts isotopes for the purposes of TYPE OF"
+//          [<maybe> <opt> any-value!]
 //      property [word!]
 //          "Such as: type, length, spec, body, words, values, title"
 //  ]
