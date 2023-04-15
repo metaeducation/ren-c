@@ -31,7 +31,7 @@ make-port*: function [
 ][
     ; The first job is to identify the scheme specified:
 
-    switch type of spec [
+    switch/type spec [
         file! [
             name: either (dir? spec) 'dir 'file
             spec: make object! [

@@ -994,7 +994,7 @@ raise: func [
     ;
     let frame: match frame! maybe binding of maybe match the-word! blame
 
-    let error: switch type of :reason [
+    let error: switch/type :reason [
         error! [reason]
         text! [make error! reason]
         word! [

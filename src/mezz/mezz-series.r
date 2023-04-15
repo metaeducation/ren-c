@@ -275,7 +275,7 @@ reword: function [
                             values keyword-match
                             /case case_REWORD
                         ]
-                        append out switch type of :v [
+                        append out switch/type :v [
                             action! [
                                 ; Give v the option of taking an argument, but
                                 ; if it does not, evaluate to arity-0 result.
@@ -447,9 +447,9 @@ format: function [
     ; Compute size of output (for better mem usage):
     val: 0
     for-each rule rules [
-        if word? :rule [rule: get rule]
+        if word? rule [rule: get rule]
 
-        val: me + switch type of :rule [
+        val: me + switch/type rule [
             integer! [abs rule]
             text! [length of rule]
             char! [1]
@@ -461,9 +461,9 @@ format: function [
 
     ; Process each rule:
     for-each rule rules [
-        if word? :rule [rule: get rule]
+        if word? rule [rule: get rule]
 
-        switch type of :rule [
+        switch/type rule [
             integer! [
                 pad: rule
                 val: form first values
@@ -595,7 +595,7 @@ split: function [
         ; If the last thing in the series is a delimiter, there is an
         ; implied empty field after it, which we add here.
         ;
-        switch type of dlm [
+        switch/type dlm [
             bitset! [did find dlm maybe last series]
             char! [dlm = last series]
             text! tag! word! [

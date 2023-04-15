@@ -228,7 +228,7 @@ main-startup: func [
             [block! issue! text!]
         <with> instruction
     ][
-        switch type of item [
+        switch/type item [
             issue! [
                 if not empty? instruction [append/line instruction ',]
                 insert instruction item
@@ -285,7 +285,7 @@ main-startup: func [
             run return-to-c instruction
         ]
 
-        return-to-c switch type of state [
+        return-to-c switch/type state [
             integer! [  ; just tells the calling C loop to exit() process
                 assert [empty? instruction]
                 state
@@ -340,7 +340,7 @@ main-startup: func [
     ; then decide if it wants to fall back on argv[0]
     ;
     if defined? 'get-current-exec [
-        switch type of system.options.boot: get-current-exec [
+        switch/type system.options.boot: get-current-exec [
             file! []  ; found it
             null []  ; also okay (not foolproof!)
             fail

@@ -493,7 +493,7 @@ ext-console-impl: func [
             [block! issue! text!]
         <with> instruction
     ][
-        switch type of item [
+        switch/type item [
             issue! [
                 if not empty? instruction [append/line instruction ',]
                 insert instruction item
@@ -542,7 +542,7 @@ ext-console-impl: func [
             return-to-c instruction
         ]
 
-        return-to-c switch type of state [
+        return-to-c switch/type state [
             integer! [  ; just tells the calling C loop to exit() process
                 assert [empty? instruction]
                 state
@@ -617,7 +617,7 @@ ext-console-impl: func [
         if quasi? ^result.arg1 [
             return 1  ; treat all other QUIT with isotopes as generic error
         ]
-        return switch type of result.arg1 [
+        return switch/type result.arg1 [
             logic! [either result.arg1 [0] [1]]  ; logic true is success
 
             integer! [result.arg1]  ; Note: may be too big for status range

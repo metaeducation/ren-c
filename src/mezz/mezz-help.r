@@ -52,7 +52,7 @@ description-of: function [
     return: [<opt> text!]
     v [<maybe> any-value!]
 ][
-    return (switch type of :v [
+    return (switch/type :v [
         bad-word! [null]
         any-array! [spaced ["array of length:" length of v]]
         type-word! [
@@ -179,7 +179,7 @@ help: function [
         libuser
     ]
 
-    switch type of :topic [
+    switch/type :topic [
         issue! [
             ; HELP #TOPIC will browse r3n for the topic
 
@@ -218,8 +218,8 @@ help: function [
                 return none
             ]
 
-            switch type of value: noisotope get/any topic [
-                null [
+            switch/type value: noisotope get/any topic [
+                null! [
                     print [topic "is null"]
                 ]
                 bad-word! [
@@ -409,7 +409,7 @@ source: function [
     return: <none>
     'arg [word! path! action! tag!]
 ][
-    switch type of arg [
+    switch/type arg [
         tag! [
             f: copy "unknown tag"
             for-each location words of system.locale.library [
@@ -459,7 +459,7 @@ source: function [
     ; some kind of displayable "source" would have to depend on the dispatcher
     ; used.  For the moment, BODY OF hands back limited information.  Review.
     ;
-    switch type of (body: body of f) [
+    switch/type (body: body of f) [
         block! [  ; FUNC, FUNCTION, PROC, PROCEDURE or (DOES of a BLOCK!)
             print [mold body "]"]
         ]

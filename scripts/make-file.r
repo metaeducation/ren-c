@@ -79,7 +79,7 @@ make-file-block-parts: func [
 
         item: predicate item
 
-        switch type of item [
+        switch/type item [
             null []  ; !!! Review
 
             blank! []
@@ -156,7 +156,7 @@ make-file-tuple-parts: func [
 ][
     tuple: as block! tuple
     return collect [iterate tuple [
-        item: switch type of tuple.1 [
+        item: switch/type tuple.1 [
             group! [eval tuple.1]
             block! [fail "Blocks in tuples should reduce or something"]
         ] else [
@@ -165,7 +165,7 @@ make-file-tuple-parts: func [
 
         item: predicate item
 
-        text: switch type of item [
+        text: switch/type item [
             blank! [null]
             text! [item]
             file! [as text! item]
@@ -196,7 +196,7 @@ make-file-path-parts: func [
 
         item: predicate item
 
-        switch type of item [
+        switch/type item [
             blank! []  ; just there as placeholder to get the "/"
 
             word! [
@@ -252,7 +252,7 @@ make-file: func [
     ; dialect form.
 
     result: as file! try unspaced do [
-        def: switch type of def [  ; consolidate to BLOCK!-oriented file spec
+        def: switch/type def [  ; consolidate to BLOCK!-oriented file spec
             word! [to text! predicate def]
             path! [make-file-path-parts def :predicate]
             tuple! [make-file-tuple-parts def :predicate]

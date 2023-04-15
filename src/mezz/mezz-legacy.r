@@ -159,8 +159,8 @@ prin: function [
     return: <none>
     value [<opt> any-value!]
 ][
-    write-stdout switch type of value [
-        null [return]
+    write-stdout switch/type value [
+        null! [return]
         text! char! [value]
         block! [spaced value]
     ] else [

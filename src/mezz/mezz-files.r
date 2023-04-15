@@ -188,7 +188,7 @@ ask: function [
     ;
     prompt: null
     type: text!
-    switch type of question [
+    switch/type question [
         text! [prompt: question]  ; `ask "Input:"` doesn't filter type
         type-word! [type: question]  ; `ask text!` has no prompt (like INPUT)
         block! [
@@ -320,8 +320,8 @@ list-dir: function [
         fail ["No directory listing protocol registered for" save-dir]
     ]
 
-    switch type of :path [
-        null []  ; Stay here
+    switch/type :path [
+        null! []  ; Stay here
         file! [change-dir path]
         text! [change-dir local-to-file path]
         word! path! [change-dir to-file path]

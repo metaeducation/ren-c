@@ -1440,6 +1440,7 @@ DECLARE_NATIVE(case)
 //      cases "Block of cases (comparison lists followed by block branches)"
 //          [block!]
 //      /all "Evaluate all matches (not just first one)"
+//      /type "Match based on type constraints, not equality"
 //      /predicate "Binary switch-processing action (default is EQUAL?)"
 //          [<unrun> action!]
 //      <local> scratch
@@ -1505,6 +1506,9 @@ DECLARE_NATIVE(switch)
     assert(Is_Fresh(SPARE));  // initial condition
     assert(Is_Fresh(OUT));  // if no writes to out performed, we act void
 
+    if (REF(type) and REF(predicate))
+        fail (Error_Bad_Refines_Raw());
+
     if (IS_BLOCK(left) and Get_Cell_Flag(left, UNEVALUATED))
         fail (Error_Block_Switch_Raw(left));  // `switch [x] [...]` safeguard
 
@@ -1542,7 +1546,16 @@ DECLARE_NATIVE(switch)
     if (Is_Frame_At_End(SUBFRAME))
         goto reached_end;  // nothing left, so drop frame and return
 
-    if (Is_Nulled(predicate)) {
+    if (REF(type)) {
+        Decay_If_Unstable(SPARE);
+
+        if (not ANY_TYPE_VALUE(SPARE))
+            fail ("SWITCH/TYPE requires comparisons to TYPE-XXX!");
+
+        if (not TYPE_CHECK(SPARE, left))
+            goto next_switch_step;
+    }
+    else if (Is_Nulled(predicate)) {
         Decay_If_Unstable(SPARE);
 
         const bool strict = false;

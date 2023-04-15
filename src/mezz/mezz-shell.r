@@ -28,8 +28,8 @@ cd: func [
     'path [<end> file! word! path! tuple! text!]
         "Accepts %file, :variables and just words (as dirs)"
 ][
-    switch type of path [
-        null []
+    switch/type path [
+        null! []
         file! [change-dir path]
         text! [
             ; !!! LOCAL-TO-FILE lives in the filesystem extension, and does
@@ -50,7 +50,7 @@ more: lambda [
     'file "Accepts %file and also just words (as file names)"
         [file! word! path! text!]
 ][
-    print deline to-text read switch type of file [
+    print deline to-text read switch/type file [
         file! [file]
         text! [local-to-file file]
         word! path! [to-file file]

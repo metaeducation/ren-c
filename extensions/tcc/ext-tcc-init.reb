@@ -112,7 +112,7 @@ compile: func [
 
         if block? var [  ; at present, this always means multiple paths
             for-each item compose [(arg)] [
-                switch type of item [
+                switch/type item [
                     text! []
                     file! [item: file-to-local/full item]
                     fail ["Invalid item type for" key "-" type of item]
@@ -135,7 +135,7 @@ compile: func [
                     config.output-type: arg
                 ]
                 'output-file 'runtime-path 'librebol-path [
-                    config.(key): switch type of arg [
+                    config.(key): switch/type arg [
                         file! [arg]
                         text! [local-to-file arg]
                         fail [key "must be TEXT! or FILE!"]
@@ -324,7 +324,7 @@ compile: func [
     compilables: map-each item compilables [
         if match [word! path!] :item [item: get item]
 
-        switch type of :item [
+        switch/type :item [
             action! [
                 librebol: true
                 :item
@@ -405,7 +405,7 @@ compile: func [
 
         ; We are going to test for %rebol.h in the path, so need a FILE!
         ;
-        switch type of config.librebol-path [
+        switch/type config.librebol-path [
             text! [config.librebol-path: my local-to-file]
             file! []
             null [

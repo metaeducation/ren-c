@@ -1658,7 +1658,7 @@ default-combinators: make map! reduce [
     ][
         [^times' input]: times-parser input except e -> [return raise e]
 
-        switch type of unmeta times' [
+        switch/type unmeta times' [
             blank! [
                 remainder: input
                 return void  ; `[repeat (_) rule]` is a no-op
@@ -2216,7 +2216,7 @@ default-combinators: make map! reduce [
             [any-value!]  ; lie and take ANY-VALUE! to report better error
         <local> result' block
     ][
-        switch type of :arg [
+        switch/type :arg [
             group! [
                 if not block? block: eval arg [
                     fail ["The ANY combinator requires a BLOCK! of alternates"]

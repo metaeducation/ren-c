@@ -51,7 +51,7 @@ dump: function [
     ]
 
     dump-one: function [return: <none> item] [
-        switch type of item [
+        switch/type item [
             refinement!  ; treat as label, /a no shift and shorter than "a"
             text! [  ; good for longer labeling when you need spaces/etc.
                 print unspaced [
@@ -234,8 +234,8 @@ summarize-obj: function [
                 form word
             ]
 
-            switch type of pattern [  ; filter out any non-matching items
-                null []
+            switch/type pattern [  ; filter out any non-matching items
+                null! []
 
                 type-word! [
                     if type != pattern [continue]

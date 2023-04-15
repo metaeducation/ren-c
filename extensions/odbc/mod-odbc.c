@@ -536,7 +536,7 @@ SQLRETURN ODBC_BindParameter(
     //
     // https://forum.rebol.info/t/689/2
     //
-    SQLSMALLINT c_type = rebUnboxInteger("switch type of @", v, "[",
+    SQLSMALLINT c_type = rebUnboxInteger("switch/type @", v, "[",
         "blank! [", rebI(SQL_C_DEFAULT), "]",
         "logic! [", rebI(SQL_C_BIT), "]",
 
@@ -1184,7 +1184,7 @@ DECLARE_NATIVE(insert_odbc)
     bool use_cache = false;
 
     bool get_catalog = rebUnboxLogic(
-        "switch type of first", ARG(sql), "[",
+        "switch/type first", ARG(sql), "[",
             "lit-word! [true]",  // like Rebol2: 'tables, 'columns, 'types
             "text! [false]",
         "] else [",

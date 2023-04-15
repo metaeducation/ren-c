@@ -94,7 +94,7 @@
                 append/part out a offset? a b  ; output before prefix
 
                 v: apply :select [values keyword-match, /case case_REWORD]
-                append out switch type of :v [
+                append out switch/type :v [
                     action! [
                         ; Give v the option of taking an argument, but
                         ; if it does not, evaluate to arity-0 result.

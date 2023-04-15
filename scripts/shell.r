@@ -78,7 +78,7 @@ shell: func [
         let item: first block
         if group? item [item: eval item]
 
-        return switch type of item [
+        return switch/type item [
             text! word! [unspaced ["${" item "}"]]
 
             fail ["SHELL expects [ENV] blocks to be WORD! or TEXT!:" mold item]
@@ -131,7 +131,7 @@ shell: func [
         ; To bypass this behavior, use GET-GROUP! or GET-BLOCK!
 
         let splice?: <default>
-        switch type of item [
+        switch/type item [
             group! [splice?: false, item: try eval item]
 
             get-group! [splice?: true, item: try eval item]
@@ -147,7 +147,7 @@ shell: func [
             return text? item  ; plain `$ ls "/foo"` puts quotes on "/foo"
         ]
 
-        item: switch type of item [
+        item: switch/type item [
             blank! [continue]  ; !!! should you have to use #_ for undercore?
 
             integer! decimal! [form item]

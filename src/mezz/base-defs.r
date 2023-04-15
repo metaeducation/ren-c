@@ -590,7 +590,7 @@ echo: func* [
         ]
     ]
     write-stdout form map-each item line [
-        switch type of item [
+        switch/type item [
             the-word! [get item]
             the-tuple! [get item]
             the-group! [do as block! item]

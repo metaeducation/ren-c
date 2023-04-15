@@ -154,7 +154,7 @@ sqlform: func [
     value "Item to form"
         [any-value!]
 ][
-    return switch type of :value [
+    return switch/type :value [
         comma! [join #"," space]  ; avoid spacing before the comma
 
         integer! word! [as text! value]

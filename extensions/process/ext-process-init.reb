@@ -11,7 +11,7 @@ REBOL [
 ; FILE! into local paths are done here.
 ;
 call*: adapt :call-internal* [
-    command: switch type of command [
+    command: switch/type command [
         text! [
             ; A TEXT! is passed through as-is, and will be interpreted by
             ; the shell (e.g. `sh -c your text` or `cmd.exe /C your text`)
@@ -38,7 +38,7 @@ call*: adapt :call-internal* [
             ; the CALL block that looks a bit more like a shell invocation.
             ;
             map-each arg compose command [
-                switch type of arg [
+                switch/type arg [
                     text! [arg]  ; pass through as is
                     file! [file-to-local arg]
                     url! [as text! arg]
