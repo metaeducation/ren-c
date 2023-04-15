@@ -107,7 +107,6 @@ void Startup_Typesets(void)
     assert(Typesets[last] == 0);  // table ends in zero
 
     // Make the NULL! type checker
-    //
   {
     Array(*) a = Alloc_Singular(NODE_FLAG_MANAGED);
     Init_Any_Word_Bound(
@@ -121,7 +120,6 @@ void Startup_Typesets(void)
   }
 
     // Make the ACTIVATION! type checker
-    //
   {
     Array(*) a = Alloc_Singular(NODE_FLAG_MANAGED);
     Init_Any_Word_Bound(
@@ -132,6 +130,19 @@ void Startup_Typesets(void)
         INDEX_ATTACHED
     );
     Init_Array_Cell(Force_Lib_Var(SYM_ACTIVATION_X), REB_TYPE_GROUP, a);
+  }
+
+    // Make the ANY-MATCHER! type checker
+  {
+    Array(*) a = Alloc_Singular(NODE_FLAG_MANAGED);
+    Init_Any_Word_Bound(
+        ARR_SINGLE(a),
+        REB_WORD,
+        Canon(ANY_MATCHER_Q),
+        Lib_Context,
+        INDEX_ATTACHED
+    );
+    Init_Array_Cell(Force_Lib_Var(SYM_ANY_MATCHER_X), REB_TYPE_GROUP, a);
   }
 }
 

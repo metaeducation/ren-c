@@ -620,8 +620,8 @@ DECLARE_NATIVE(pack)
 //  {Create isotopic pattern to signal a desire to test types non-literally}
 //
 //      return: "Isotope of TYPE-XXX!"
-//          [<opt> any-value!]
-//      types [<opt> type-word! type-group! block!]
+//          [<opt> any-matcher!]
+//      types [<opt> block! any-type-value!]
 //  ]
 //
 DECLARE_NATIVE(matches)
@@ -633,13 +633,15 @@ DECLARE_NATIVE(matches)
     if (Is_Nulled(v))
         return nullptr;  // Put TRY on the FIND or whatever, not MATCHES
 
-    if (IS_TYPE_WORD(v) or IS_TYPE_GROUP(v))
+    if (ANY_TYPE_VALUE(v))
         return UNMETA(Quasify(v));
 
     assert(IS_BLOCK(v));
-    mutable_HEART_BYTE(v) = REB_TYPE_BLOCK;
+    Copy_Cell(OUT, v);
+    mutable_HEART_BYTE(OUT) = REB_TYPE_BLOCK;
+    mutable_QUOTE_BYTE(OUT) = ISOTOPE_0;
 
-    return Meta_Unquotify(Quasify(OUT));
+    return OUT;
 }
 
 
@@ -657,6 +659,28 @@ DECLARE_NATIVE(splice_q)
     INCLUDE_PARAMS_OF_SPLICE_Q;
 
     return Init_Logic(OUT, Is_Meta_Of_Splice(ARG(optional)));
+}
+
+
+//
+//  any-matcher?: native [
+//
+//  "Tells you if argument is any kind of matcher (TYPE-XXX! isotope)"
+//
+//      return: [logic!]
+//      ^value [<opt> <void> <fail> <pack> any-value!]
+//  ]
+//
+DECLARE_NATIVE(any_matcher_q)
+{
+    INCLUDE_PARAMS_OF_ANY_MATCHER_Q;
+
+    Value(*) v = ARG(value);
+
+    if (IS_QUASI(v) and ANY_TYPE_VALUE_KIND(HEART_BYTE(v)))
+        return Init_True(OUT);
+
+    return Init_False(OUT);
 }
 
 

@@ -1058,6 +1058,7 @@ static REBIXO To_Thru_Non_Block_Rule(
             P_POS,
             ARR_LEN(ARR(P_INPUT)),
             rule,
+            SPECIFIED,  // !!! is it specific?
             find_flags,
             1
         );

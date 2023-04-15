@@ -378,7 +378,8 @@ REBINT Find_In_Array(
     REBSPC *array_specifier,
     REBLEN index_unsigned, // index to start search
     REBLEN end_unsigned, // ending position
-    Cell(const*) target,
+    Cell(const*) pattern,
+    REBSPC *pattern_specifier,
     Flags flags, // see AM_FIND_XXX
     REBINT skip // skip factor
 ){
@@ -395,8 +396,8 @@ REBINT Find_In_Array(
 
     // match a block against a block
 
-    if (Is_Splice(target)) {
-        *len = VAL_LEN_AT(target);
+    if (Is_Splice(pattern)) {
+        *len = VAL_LEN_AT(pattern);
         if (*len == 0)  // empty block matches any position, see [1]
             return index_unsigned;
 
@@ -406,7 +407,7 @@ REBINT Find_In_Array(
 
             REBLEN count = 0;
             Cell(const*) other_tail;
-            Cell(const*) other = VAL_ARRAY_AT(&other_tail, target);
+            Cell(const*) other = VAL_ARRAY_AT(&other_tail, pattern);
             for (; other != other_tail; ++other, ++item) {
                 if (
                     item == item_tail or
@@ -429,14 +430,20 @@ REBINT Find_In_Array(
 
     // Find instances of datatype(s) in block
 
-    if (Is_Matcher(target)) {
+    if (Is_Matcher(pattern)) {
         *len = 1;
 
         for (; index >= start and index < end; index += skip) {
             Cell(const*) item = ARR_AT(array, index);
 
-            if (Matcher_Matches(target, item, array_specifier))
+            if (Matcher_Matches(
+                pattern,
+                pattern_specifier,
+                item,
+                array_specifier
+            )){
                 return index;
+            }
 
             if (flags & AM_FIND_MATCH)
                 break;
@@ -444,16 +451,16 @@ REBINT Find_In_Array(
         return NOT_FOUND;
     }
 
-    if (Is_Isotope(target))
+    if (Is_Isotope(pattern))
         fail ("Only Isotopes Supported by FIND are MATCHES and SPREAD");
 
-    if (IS_TYPE_WORD(target) or IS_PARAMETER(target))
+    if (ANY_TYPE_VALUE(pattern))
         fail (
-            "FIND temporarily not taking DATATYPE! / TYPESET!, use MATCHES"
+            "FIND temporarily not taking TYPE-XXX! use MATCHES"
             " see https://forum.rebol.info/t/1881"
         );
 
-    if (Is_Nulled(target)) {  // never match, see [1]
+    if (Is_Nulled(pattern)) {  // never match, see [1]
         *len = 0;
         return NOT_FOUND;
     }
@@ -462,21 +469,21 @@ REBINT Find_In_Array(
 
     // Optimized find word in block
 
-    if (ANY_WORD(target)) {
+    if (ANY_WORD(pattern)) {
         for (; index >= start and index < end; index += skip) {
             Cell(const*) item = ARR_AT(array, index);
-            Symbol(const*) target_symbol = VAL_WORD_SYMBOL(target);
+            Symbol(const*) pattern_symbol = VAL_WORD_SYMBOL(pattern);
             if (ANY_WORD(item)) {
                 if (flags & AM_FIND_CASE) { // Must be same type and spelling
                     if (
-                        VAL_WORD_SYMBOL(item) == target_symbol
-                        and VAL_TYPE(item) == VAL_TYPE(target)
+                        VAL_WORD_SYMBOL(item) == pattern_symbol
+                        and VAL_TYPE(item) == VAL_TYPE(pattern)
                     ){
                         return index;
                     }
                 }
                 else { // Can be different type or differently cased spelling
-                    if (Are_Synonyms(VAL_WORD_SYMBOL(item), target_symbol))
+                    if (Are_Synonyms(VAL_WORD_SYMBOL(item), pattern_symbol))
                         return index;
                 }
             }
@@ -492,7 +499,7 @@ REBINT Find_In_Array(
         Cell(const*) item = ARR_AT(array, index);
         if (0 == Cmp_Value(
             item,
-            target,
+            pattern,
             did (flags & AM_FIND_CASE))
         ){
             return index;
@@ -945,7 +952,15 @@ REBTYPE(Array)
 
         Length len;
         REBINT find = Find_In_Array(
-            &len, arr, VAL_SPECIFIER(array), index, limit, pattern, flags, skip
+            &len,
+            arr,
+            VAL_SPECIFIER(array),
+            index,
+            limit,
+            pattern,
+            SPECIFIED,
+            flags,
+            skip
         );
 
         if (find == NOT_FOUND) {

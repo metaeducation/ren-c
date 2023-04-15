@@ -73,24 +73,23 @@ inline static bool TYPE_CHECK(Cell(const*) typeset, Value(const*) v) {
 inline static bool Is_Matcher(Cell(const*) v) {
     if (QUOTE_BYTE(v) != ISOTOPE_0)
         return false;
-    return HEART_BYTE(v) == REB_TYPE_WORD or HEART_BYTE(v) == REB_PARAMETER;
+    return ANY_TYPE_VALUE_KIND(HEART_BYTE(v));
 }
 
 inline static bool Matcher_Matches(
     Cell(const*) matcher,
+    REBSPC *matcher_specifier,
     Cell(const*) v,
     REBSPC *v_specifier
 ){
     assert(Is_Matcher(matcher));
-    if (HEART_BYTE(matcher) == REB_TYPE_WORD) {
-        if (VAL_TYPE(v) == VAL_TYPE_KIND(matcher))
-            return true;
-    }
-    else {
-        assert(HEART_BYTE(matcher) == REB_TYPE_GROUP);
-        if (TYPE_CHECK_CORE(matcher, v, v_specifier))
-            return true;
-    }
+    DECLARE_LOCAL (plain);
+    Derelativize(plain, matcher, matcher_specifier);
+    mutable_QUOTE_BYTE(plain) = UNQUOTED_1;
+
+    if (TYPE_CHECK_CORE(plain, v, v_specifier))
+        return true;
+
     return false;
 }
 
