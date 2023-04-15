@@ -675,28 +675,6 @@ bool Typecheck_Value(
         if (IS_WORD(item)) {
             test = Lookup_Word_May_Fail(item, tests_specifier);
             kind = VAL_TYPE(test);  // e.g. TYPE-BLOCK! <> BLOCK!
-
-            // Predicates like `any-value!: &(any-value?)` depend on calling
-            // functions to get a match.  But we can speed this up for
-            // common cases using bitflags for built-in typesets.
-            //
-            // Because binding is a bit convoluted, instead of checking if the
-            // variable is bound to lib we check to see if what it looked up
-            // to ultimately resolved to the lib variable definition
-
-            option(SymId) id = VAL_WORD_ID(item);
-
-            if (
-                id
-                and (id >= SYM_ANY_VALUE_Q and id < SYM_DATATYPES)
-                and test == Try_Lib_Var(unwrap(id))
-            ){
-                Index n = (cast(int, id) - SYM_ANY_VALUE_Q) / 2;
-                REBU64 bits = Typesets[n];
-                if (not (bits & FLAGIT_KIND(VAL_TYPE(v))))
-                    goto test_failed;
-                goto test_succeeded;
-            }
         }
         else {
             test = item;
@@ -711,15 +689,35 @@ bool Typecheck_Value(
         if (Is_Activation(test))
             goto run_activation;
 
-        if (Is_Nulled(test)) {  // <opt> turned to null in MAKE_Typeset
-            if (not Is_Nulled(v))
-                goto test_failed;
-            goto test_succeeded;
-        }
-
         switch (kind) {
           run_activation:
           case REB_ACTION: {
+            Action(*) action = VAL_ACTION(test);
+
+            // Here we speedup NULL! type constraint checking to avoid needing
+            // a function call.  This method could be generalized, where
+            // typecheckers are associated with internal function pointers
+            // that are used to test the value.
+            //
+            if (action == VAL_ACTION(Lib(NULL_Q))) {
+                if (Is_Nulled(v))
+                    goto test_succeeded;
+                goto test_failed;
+            }
+
+            // Here we speedup the typeset checking.  It may be that the
+            // acceleration could be unified with a function pointer method
+            // if we are willing to make functions for checking each typeset
+            // instead of using a table.
+            //
+            if (ACT_DISPATCHER(action) == &Typeset_Checker_Dispatcher) {
+                Index n = VAL_INT32(DETAILS_AT(ACT_DETAILS(action), 1));
+                REBU64 bits = Typesets[n];
+                if (not (bits & FLAGIT_KIND(VAL_TYPE(v))))
+                    goto test_failed;
+                goto test_succeeded;
+            }
+
             Flags flags = 0;
             Frame(*) f = Make_End_Frame(
                 FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING) | flags

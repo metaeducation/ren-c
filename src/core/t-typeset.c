@@ -105,6 +105,18 @@ void Startup_Typesets(void)
 
     Index last = (cast(int, SYM_DATATYPES) - SYM_ANY_VALUE_Q) / 2;
     assert(Typesets[last] == 0);  // table ends in zero
+
+    // Make the NULL! type checker
+    //
+    Array(*) a = Alloc_Singular(NODE_FLAG_MANAGED);
+    Init_Any_Word_Bound(
+        ARR_SINGLE(a),
+        REB_WORD,
+        Canon(NULL_Q),
+        Lib_Context,
+        INDEX_ATTACHED
+    );
+    Init_Array_Cell(Force_Lib_Var(SYM_NULL_X), REB_TYPE_GROUP, a);
 }
 
 
@@ -159,7 +171,7 @@ Array(*) Add_Parameter_Bits_Core(
                 Init_Any_Word_Bound(
                     PUSH(),
                     REB_WORD,
-                    Canon(NULL),
+                    Canon(NULL_X),
                     Lib_Context,
                     INDEX_ATTACHED
                 );
@@ -171,7 +183,7 @@ Array(*) Add_Parameter_Bits_Core(
                 Init_Any_Word_Bound(
                     PUSH(),
                     REB_WORD,
-                    Canon(NULL),
+                    Canon(NULL_X),
                     Lib_Context,
                     INDEX_ATTACHED
                 );
@@ -194,7 +206,7 @@ Array(*) Add_Parameter_Bits_Core(
                 Init_Any_Word_Bound(
                     PUSH(),
                     REB_WORD,
-                    Canon(NULL),
+                    Canon(NULL_X),
                     Lib_Context,
                     INDEX_ATTACHED
                 );

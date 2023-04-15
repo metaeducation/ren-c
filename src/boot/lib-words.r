@@ -34,6 +34,8 @@ off
 yes
 no
 
+null!
+
 null
 quoted-void
 quasi-void
