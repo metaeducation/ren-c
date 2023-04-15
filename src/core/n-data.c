@@ -422,24 +422,6 @@ bool Did_Get_Binding_Of(REBVAL *out, const REBVAL *v)
 
 
 //
-//  any-cell?: native [
-//
-//  "Test if an argument can be put into blocks as-is"
-//
-//      return: [logic!]
-//      value
-//  ]
-//
-DECLARE_NATIVE(any_cell_q)
-{
-    INCLUDE_PARAMS_OF_ANY_CELL_Q;
-    enum Reb_Kind kind = VAL_TYPE(ARG(value));
-
-    return Init_Logic(OUT, kind != REB_VOID and kind < REB_MAX);
-}
-
-
-//
 //  refinement?: native [
 //
 //  "Test if an argument is a path with a leading blank"
