@@ -495,7 +495,7 @@ DECLARE_NATIVE(didnt)
 //          [<opt> <void> <fail> <pack> any-value!]
 //      /decay "Pre-decay ~null~ isotope input to NULL"
 //      :branch "If arity-1 ACTION!, receives value that triggered branch"
-//          [any-branch! ~action!~]
+//          [<unrun> any-branch!]
 //  ]
 //
 DECLARE_NATIVE(then)  // see `tweak :then 'defer on` in %base-defs.r
@@ -536,7 +536,7 @@ DECLARE_NATIVE(then)  // see `tweak :then 'defer on` in %base-defs.r
 //      ^optional "<deferred argument> Run branch if this is null"
 //          [<opt> <void> <fail> <pack> any-value!]
 //      /decay "Pre-decay ~null~ isotope input to NULL"
-//      :branch [any-branch! ~action!~]
+//      :branch [<unrun> any-branch!]
 //  ]
 //
 DECLARE_NATIVE(else)  // see `tweak :else 'defer on` in %base-defs.r
@@ -578,7 +578,7 @@ DECLARE_NATIVE(else)  // see `tweak :else 'defer on` in %base-defs.r
 //          [<opt> <void> <fail> any-value!]
 //      /decay "Pre-decay ~null~ isotope input to NULL"
 //      :branch "If arity-1 ACTION!, receives value that triggered branch"
-//          [any-branch! ~action!~]
+//          [<unrun> any-branch!]
 //  ]
 //
 DECLARE_NATIVE(also)  // see `tweak :also 'defer on` in %base-defs.r

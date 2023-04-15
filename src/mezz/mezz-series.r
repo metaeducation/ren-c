@@ -55,7 +55,7 @@ array: func [
     size "Size or block of sizes for each dimension"
         [<maybe> integer! block!]
     /initial "Initial value (will be called each time if action isotope)"
-        [any-value! ~action!~]
+        [<unrun> any-value! action!]
     <local> rest block
 ][
     initial: default ['~]  ; if not specified, array will be all meta nihil
@@ -78,8 +78,8 @@ array: func [
         block? rest [
             repeat size [append block (array/initial rest :initial)]
         ]
-        activation? :initial [
-            repeat size [append block run :initial]  ; Called every time
+        action? initial [
+            repeat size [append block run initial]  ; Called every time
         ]
         any-series? initial [
             repeat size [append block (copy/deep initial)]
@@ -412,7 +412,7 @@ collect*: func [
     ; use LAMBDA for binding work of connecting KEEP with the keeper function
     ; (Doesn't have or enforce RETURN)
     ;
-    run lambda [keep [~action!~]] body :keeper
+    run lambda [keep [activation!]] body :keeper
 
     return out  ; might be null if no KEEPs that kept anything yet
 ]

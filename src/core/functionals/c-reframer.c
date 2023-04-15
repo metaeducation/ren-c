@@ -341,7 +341,7 @@ Bounce Reframer_Dispatcher(Frame(*) f)
 //
 //  {Make a function that manipulates an invocation at the callsite}
 //
-//      return: [~action!~]
+//      return: [activation!]
 //      shim "The action that has a FRAME! (or QUOTED!) argument to supply"
 //          [<unrun> action!]
 //      /parameter "Shim parameter receiving the frame--defaults to last"

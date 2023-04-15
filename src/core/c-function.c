@@ -1198,7 +1198,7 @@ REBTYPE(Fail)
 //  {Modify a special property (currently only for ACTION!)}
 //
 //      return: "Same action identity as input"
-//          [~action!~]
+//          [activation!]
 //      action "(modified) Action to modify property of"
 //          [<unrun> action!]
 //      property "Currently must be [defer postpone]"

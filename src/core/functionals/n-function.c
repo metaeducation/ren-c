@@ -656,7 +656,7 @@ DECLARE_NATIVE(definitional_return)
 //  {Copy help information from the original function to the derived function}
 //
 //      return: "Same as derived (assists in efficient chaining)"
-//          [~action!~]
+//          [activation!]
 //      derived [<unrun> action!]
 //      original [<unrun> action!]
 //      /augment "Additional spec information to scan"

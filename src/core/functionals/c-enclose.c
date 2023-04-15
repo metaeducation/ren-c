@@ -202,7 +202,7 @@ Bounce Encloser_Dispatcher(Frame(*) f)
 //
 //  {Wrap code around an ACTION! with access to its FRAME! and return value}
 //
-//      return: [~action!~]
+//      return: [activation!]
 //      inner "Action that a FRAME! will be built for, then passed to OUTER"
 //          [<unrun> action!]
 //      outer "Gets a FRAME! for INNER before invocation, can DO it (or not)"

@@ -121,7 +121,7 @@ Bounce Adapter_Dispatcher(Frame(*) f)
 //
 //  {Create a variant of an ACTION! that preprocesses its arguments}
 //
-//      return: [~action!~]
+//      return: [activation!]
 //      action "Function to be run after the prelude is complete"
 //          [<unrun> action!]
 //      prelude "Code to run in constructed frame before adaptee runs"

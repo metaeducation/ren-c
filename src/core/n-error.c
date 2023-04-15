@@ -188,7 +188,7 @@ DECLARE_NATIVE(entrap)  // wrapped as multi-return versions TRAP and ATTEMPT
 //      ^optional "<deferred argument> Run branch if this is definitional fail"
 //          [<opt> <void> <fail> <pack> any-value!]
 //      :branch "If arity-1 ACTION!, receives value that triggered branch"
-//          [any-branch! ~action!~]
+//          [<unrun> any-branch!]
 //  ]
 //
 DECLARE_NATIVE(except)

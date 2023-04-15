@@ -717,8 +717,8 @@ DECLARE_NATIVE(activation_q)
 //
 //  {Make actions run when fetched through word access}
 //
-//      return: [~action!~]
-//      action [<maybe> action! ~action!~]
+//      return: [activation!]
+//      action [<maybe> action! activation!]
 //  ]
 //
 DECLARE_NATIVE(runs)
@@ -738,7 +738,7 @@ DECLARE_NATIVE(runs)
 //  {Make actions not run when fetched through word access}
 //
 //      return: [action!]
-//      action [<maybe> action! ~action!~]
+//      action [<maybe> action! activation!]
 //  ]
 //
 DECLARE_NATIVE(unrun)

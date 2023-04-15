@@ -194,7 +194,7 @@ run-test-cluster: func [
 process-tests: function [
     return: <none>
     test-sources [block!]
-    handler [~action!~]
+    handler [activation!]
 ][
     parse3 test-sources [
         opt some [

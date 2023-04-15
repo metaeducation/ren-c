@@ -190,7 +190,7 @@
 )
 ; two-function return tests
 (
-    g: func [return: [integer!] f [~action!~]] [f [return 1] 2]
+    g: func [return: [integer!] f [activation!]] [f [return 1] 2]
     1 = g :do
 )
 ; BREAK out of a function

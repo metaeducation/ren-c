@@ -1630,7 +1630,7 @@ DECLARE_NATIVE(enfixed_q)
 //
 //  {For making enfix functions, e.g `+: enfixed :add` (copies)}
 //
-//      return: [~action!~]
+//      return: [activation!]
 //      action [<unrun> action!]
 //  ]
 //

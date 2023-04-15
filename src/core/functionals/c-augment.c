@@ -62,7 +62,7 @@
 //
 //  {Create an ACTION! variant that acts the same, but has added parameters}
 //
-//      return: [~action!~]
+//      return: [activation!]
 //      action "Function whose implementation is to be augmented"
 //          [<unrun> action!]
 //      spec "Spec dialect for words to add to the derived function"

@@ -108,6 +108,7 @@ void Startup_Typesets(void)
 
     // Make the NULL! type checker
     //
+  {
     Array(*) a = Alloc_Singular(NODE_FLAG_MANAGED);
     Init_Any_Word_Bound(
         ARR_SINGLE(a),
@@ -117,6 +118,21 @@ void Startup_Typesets(void)
         INDEX_ATTACHED
     );
     Init_Array_Cell(Force_Lib_Var(SYM_NULL_X), REB_TYPE_GROUP, a);
+  }
+
+    // Make the ACTIVATION! type checker
+    //
+  {
+    Array(*) a = Alloc_Singular(NODE_FLAG_MANAGED);
+    Init_Any_Word_Bound(
+        ARR_SINGLE(a),
+        REB_WORD,
+        Canon(ACTIVATION_Q),
+        Lib_Context,
+        INDEX_ATTACHED
+    );
+    Init_Array_Cell(Force_Lib_Var(SYM_ACTIVATION_X), REB_TYPE_GROUP, a);
+  }
 }
 
 

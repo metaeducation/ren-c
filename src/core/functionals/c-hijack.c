@@ -200,7 +200,7 @@ Bounce Hijacker_Dispatcher(Frame(*) frame_)
 //  {Cause all existing references to an ACTION! to invoke another ACTION!}
 //
 //      return: "The hijacked action value, null if self-hijack (no-op)"
-//          [<opt> ~action!~]
+//          [<opt> activation!]
 //      victim "Action whose references are to be affected"
 //          [<unrun> action!]
 //      hijacker "The  action to run in its place"
