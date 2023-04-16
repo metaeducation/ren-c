@@ -711,11 +711,23 @@ bool Typecheck_Value(
             // instead of using a table.
             //
             if (ACT_DISPATCHER(action) == &Typeset_Checker_Dispatcher) {
-                Index n = VAL_INT32(DETAILS_AT(ACT_DETAILS(action), 1));
+                Index n = VAL_INT32(
+                    DETAILS_AT(ACT_DETAILS(action), 1)
+                );
                 REBU64 bits = Typesets[n];
-                if (not (bits & FLAGIT_KIND(VAL_TYPE(v))))
-                    goto test_failed;
-                goto test_succeeded;
+                if (bits & FLAGIT_KIND(VAL_TYPE(v)))
+                    goto test_succeeded;
+                goto test_failed;
+            }
+
+            if (ACT_DISPATCHER(action) == &Datatype_Checker_Dispatcher) {
+                Value(*) type_word = DETAILS_AT(
+                    ACT_DETAILS(action),
+                    1
+                );
+                if (VAL_TYPE(v) == VAL_TYPE_KIND(type_word))
+                    goto test_succeeded;
+                goto test_failed;
             }
 
             Flags flags = 0;
@@ -777,17 +789,7 @@ bool Typecheck_Value(
 
           case REB_QUOTED:
           case REB_QUASI: {
-            if (HEART_BYTE(test) != REB_WORD)
-                fail ("QUOTED! or QUASI! must be of WORD in type group");
-            Byte quotedness;
-            if (kind == REB_QUASI)  // indicates isotope
-                quotedness = ISOTOPE_0;
-            else
-                quotedness = SubtractQuote(QUOTE_BYTE(test));
-            enum Reb_Kind heart = KIND_FROM_SYM(unwrap(VAL_WORD_ID(test)));
-            if (heart != HEART_BYTE(v) or quotedness != QUOTE_BYTE(v))
-                goto test_failed;
-            break; }
+            fail ("QUOTED! and QUASI! not currently supported in TYPE-XXX!"); }
 
           case REB_PARAMETER: {
             if (not Typecheck_Value(test, SPECIFIED, v, v_specifier))
