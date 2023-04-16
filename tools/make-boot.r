@@ -387,8 +387,6 @@ e-types/emit {
 }
 e-types/emit newline
 
-boot-types: copy []  ; includes internal types like REB_VOID (but not END)
-
 for-each-datatype t [
     if not empty? t/cellmask [
         e-types/emit 't {
@@ -397,8 +395,6 @@ for-each-datatype t [
         }
         e-types/emit newline
     ]
-
-    append boot-types to word! unspaced [t/name "!"]
 
     e-types/emit 't {
         #define IS_${T/NAME}(v) \
@@ -947,7 +943,6 @@ e-bootblock/emit {
 }
 
 sections: [
-    boot-types
     :boot-generics
     :boot-natives
     boot-typespecs

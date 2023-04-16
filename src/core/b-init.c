@@ -922,7 +922,6 @@ void Startup_Core(void)
     // for comparison to see if a usage matches that.
 
     Array(*) datatypes_catalog = Startup_Datatypes(
-        VAL_ARRAY_KNOWN_MUTABLE(&boot->types),
         VAL_ARRAY_KNOWN_MUTABLE(&boot->typespecs)
     );
     Manage_Series(datatypes_catalog);

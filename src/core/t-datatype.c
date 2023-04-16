@@ -32,26 +32,17 @@
 // the integer datatype value).  Returns an array of words for the added
 // datatypes to use in SYSTEM/CATALOG/DATATYPES.  See %boot/types.r
 //
-Array(*) Startup_Datatypes(Array(*) boot_types, Array(*) boot_typespecs)
+Array(*) Startup_Datatypes(Array(*) boot_typespecs)
 {
-    UNUSED(boot_typespecs);  // not currently used
-
-    if (ARR_LEN(boot_types) != REB_MAX - 1)  // exclude REB_VOID
-        panic (boot_types);  // other types/internals should have a WORD!
+    if (ARR_LEN(boot_typespecs) != REB_MAX - 1)  // exclude REB_VOID
+        panic (boot_typespecs);
 
     Array(*) catalog = Make_Array(REB_MAX - 1);
 
-    Cell(const*) word_tail = ARR_TAIL(boot_types);
-    Cell(*) word = ARR_HEAD(boot_types);
+    REBINT n = 1;
 
-    REBINT n = VAL_WORD_ID(word);
-    if (n != SYM_DECIMAL_X)  // first symbol (SYM_NULL is something random)
-        panic (word);
-
-    for (; word != word_tail; ++word, ++n) {
+    for (; n < REB_MAX; ++n) {
         enum Reb_Kind kind = cast(enum Reb_Kind, n);
-
-        assert(Canon_Symbol(cast(SymId, kind)) == VAL_WORD_SYMBOL(word));
 
         Value(*) value = Force_Lib_Var(cast(SymId, kind));
 
@@ -75,8 +66,16 @@ Array(*) Startup_Datatypes(Array(*) boot_types, Array(*) boot_typespecs)
         assert(value == Datatype_From_Kind(kind));
         Set_Cell_Flag(value, PROTECTED);
 
-        Append_Value(catalog, SPECIFIC(word));
+        Init_Any_Word_Bound(
+            Alloc_Tail_Array(catalog),
+            REB_WORD,
+            Canon_Symbol(cast(SymId, n)),
+            Lib_Context,
+            INDEX_ATTACHED
+        );
     }
+
+    assert(cast(SymId, n) == SYM_ANY_VALUE_Q);
 
     return catalog;
 }
