@@ -81,9 +81,9 @@ types
 title
 binding
 attach
-file
+#file
 line
-action
+#action
 near
 label
 
@@ -113,8 +113,8 @@ second
 year
 month
 day
-time
-date
+#time
+#date
 weekday
 julian
 yearday
@@ -145,7 +145,7 @@ encode
 
 
 *** ; !!! Temporary placeholder for ellipsis; will have to be special trick
-varargs
+#varargs
 
 bits
 
@@ -197,7 +197,7 @@ shutdown*
 ; Event:
 #type  ; declared in this file as a reflector
 key
-port
+#port
 mode
 window
 double
@@ -242,7 +242,7 @@ scroll-page
 
 drop-file
 
-error
+#error
 
 
 ; === EVENT KEYS ===

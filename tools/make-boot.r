@@ -335,7 +335,7 @@ rebs: collect [
     for-each-datatype t [
         assert [sym-n == t/heart]  ; SYM_XXX should equal REB_XXX value
 
-        add-sym unspaced [t/name "!"]
+        add-sym unspaced t/name
 
         keep cscape/with {REB_${T/NAME} = $<T/HEART>} [t]
     ]
@@ -401,6 +401,13 @@ for-each-datatype t [
             (VAL_TYPE(v) == REB_${T/NAME})  /* $<T/HEART> */
     }
     e-types/emit newline
+]
+
+; Type constraints: integer! is &(integer?) and distinct from &integer
+
+for-each-datatype t [
+    add-sym unspaced [t/name "?"]
+    add-sym unspaced [t/name "!"]
 ]
 
 e-types/emit {

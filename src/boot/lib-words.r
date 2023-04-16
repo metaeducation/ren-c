@@ -41,7 +41,6 @@ any-matcher!
 null
 quoted-void
 quasi-void
-blank
 quasi-null
 blackhole
 
