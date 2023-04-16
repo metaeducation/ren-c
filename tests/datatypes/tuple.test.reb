@@ -2,7 +2,7 @@
 
 (tuple? 1.2.3)
 (not tuple? 1)
-(tuple! = type of 1.2.3)
+(tuple! = kind of 1.2.3)
 
 ; Test that scanner compacted forms match forms built from arrays
 ;

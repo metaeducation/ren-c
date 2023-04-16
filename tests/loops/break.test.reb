@@ -23,7 +23,7 @@
     (a: 1, repeat 1 [a: error? break], :a = 1)
 ]
 [#1509
-    (a: 1, repeat 1 [a: type of break], :a = 1)
+    (a: 1, repeat 1 [a: kind of break], :a = 1)
 ]
 [#1509
     (foo: func [x y] [9], a: 1, repeat 1 [a: foo break 5], :a = 1)

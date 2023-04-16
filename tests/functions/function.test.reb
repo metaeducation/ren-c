@@ -1,7 +1,7 @@
 ; datatypes/function.r
 (action? does ["OK"])
 (not action? 1)
-(action! = type of does ["OK"])
+(action! = kind of does ["OK"])
 ; minimum
 (action? does [])
 
@@ -382,7 +382,7 @@
 
 [#27
     ~unassigned-attach~ !! (
-        error? trap [(type of) 1]
+        error? trap [(kind of) 1]
     )
 ]
 

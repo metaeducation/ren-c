@@ -102,7 +102,7 @@ run-single-test: func [
             "test returned null"
         ]
         true [
-            spaced ["was" (mold type of :result) ", not logic!"]
+            spaced ["was" (mold kind of :result) ", not logic!"]
         ]
     ] then message -> [
         test-failures: me + 1

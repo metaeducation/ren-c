@@ -332,11 +332,11 @@ export make-emitter: function [
             ]
 
             data: take data
-            switch type of data [
-                text! [
+            case [  ; no switch/type in bootstrap
+                text? data [
                     append buf-emit cscape/with data maybe noquote context
                 ]
-                char! [
+                char? data [
                     append buf-emit data
                 ]
             ]

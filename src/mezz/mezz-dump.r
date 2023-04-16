@@ -226,9 +226,9 @@ summarize-obj: function [
         for-each [word val] obj [
             if unset? 'val [continue]  ; don't consider unset fields
 
-            type: type of noisotope get/any 'val
+            kind: kind of noisotope get/any 'val
 
-            str: if match [object!] type [
+            str: if kind = object! [
                 spaced [word, words of val]
             ] else [
                 form word
@@ -238,7 +238,7 @@ summarize-obj: function [
                 null! []
 
                 type-word! [
-                    if type != pattern [continue]
+                    if kind != pattern [continue]
                 ]
 
                 text! [
@@ -258,7 +258,7 @@ summarize-obj: function [
             ]
 
             keep spaced [
-                "  " (form-pad word 15) (form-pad type 10) maybe desc
+                "  " (form-pad word 15) (form-pad kind 10) maybe desc
             ]
         ]
     ]

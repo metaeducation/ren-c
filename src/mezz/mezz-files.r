@@ -101,7 +101,7 @@ clean-path: func [
         append target #"/"
     ]
 
-    path: make type of target length of target
+    path: make kind of target length of target
 
     let count: 0
     let part

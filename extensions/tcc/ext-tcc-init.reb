@@ -115,7 +115,7 @@ compile: func [
                 switch/type item [
                     text! []
                     file! [item: file-to-local/full item]
-                    fail ["Invalid item type for" key "-" type of item]
+                    fail ["Invalid item type for" key "-" kind of item]
                 ]
 
                 ; If the var is supposed to be paths, should we check them

@@ -3,7 +3,7 @@
 (blank? _)
 (blank? blank)
 (not blank? 1)
-(blank! = type of blank)
+(blank! = kind of blank)
 
 (blank = '_)
 

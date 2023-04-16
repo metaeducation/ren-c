@@ -143,7 +143,7 @@ export to-c-name: function [
     if empty? string [
         fail [
             "empty identifier produced by to-c-name for"
-            (mold value) "of type" (mold type of value)
+            (mold value) "of kind" (mold kind of value)
         ]
     ]
 

@@ -235,7 +235,7 @@ pointfree*: func* [
     for-skip p params 1 [
         case [
             ; !!! Have to use STRICT-EQUAL?, else '_ says type equal to blank
-            blank! == type of block.1 [block: skip block 1]
+            blank? block.1 [block: skip block 1]
 
             match word! p.1 [
                 if not (var: evaluate/next block 'block, block) [
@@ -526,19 +526,19 @@ run func* [
 ; set up in %b-init.c.  Also LIT-WORD! and LIT-PATH! are handled specially in
 ; %words.r for bootstrap compatibility as a parse keyword.
 
-lit-word?: func* [return: [logic!] value [<opt> any-value!]] [
-    return to-logic all [
+lit-word?: lambda [value] [
+    to-logic all [
         quoted? value
-        word! = type of unquote value
+        word? unquote value
     ]
 ]
 to-lit-word: func* [return: [quoted!] value [any-value!]] [
     return quote to word! noquote value
 ]
-lit-path?: func* [return: [logic!] value [<opt> any-value!]] [
-    return to-logic all [
+lit-path?: lambda [value] [
+    to-logic all [
         quoted? value
-        path! = type of unquote value
+        word? unquote value
     ]
 ]
 to-lit-path: func* [return: [quoted!] value [any-value!]] [

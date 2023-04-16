@@ -2,7 +2,7 @@
 
 (module? module [] [])
 (not module? 1)
-(module! = type of module [] [])
+(module! = kind of module [] [])
 
 ; Create a Module, but Don't Import It
 (

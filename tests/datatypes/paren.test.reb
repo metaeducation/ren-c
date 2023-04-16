@@ -2,7 +2,7 @@
 (group? first [(1 + 1)])
 (not group? 1)
 ; minimum
-(group! = type of first [()])
+(group! = kind of first [()])
 ; alternative literal form
 (strict-equal? first [()] first [#[group! [[] 1]]])
 (strict-equal? first [()] make group! 0)

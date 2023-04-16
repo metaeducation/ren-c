@@ -2,7 +2,7 @@
 
 (any-word? '^foo)
 ("foo" = as text! '^foo)
-(meta-word! = type of '^foo)
+(meta-word! = kind of '^foo)
 
 (x: 10, (the '10) = ^x)
 (x: null, null' = ^x)

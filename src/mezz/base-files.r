@@ -214,6 +214,6 @@ split-path: func [
         )
         end
     ]
-    dir: as type of target dir
+    dir: as kind of target dir
     return/forward pack [pos dir]
 ]

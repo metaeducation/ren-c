@@ -1020,7 +1020,7 @@ strip-class: make object! [
         return reduce [spaced collect [
             keep any [(file-to-local/pass maybe exec-file) "strip"]
             params: default [options]
-            switch type of params [
+            switch kind of params [  ; switch/type not in bootstrap
                 block! [
                     for-each flag params [
                         keep filter-flag flag id

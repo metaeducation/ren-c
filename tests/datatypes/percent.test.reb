@@ -1,7 +1,7 @@
 ; datatypes/percent.r
 (percent? 0%)
 (not percent? 1)
-(percent! = type of 0%)
+(percent! = kind of 0%)
 (percent? 0.0%)
 (percent? 1%)
 (percent? -1.0%)

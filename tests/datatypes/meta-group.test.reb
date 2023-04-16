@@ -1,6 +1,6 @@
 ; The META-GROUP! type is new and needs testing.
 
-(meta-group! = type of '^(a b c))
+(meta-group! = kind of '^(a b c))
 
 ; The only way to see vanishing stuff is with meta operations.
 [

@@ -320,10 +320,10 @@ DECLARE_NATIVE(of)
 // writing.  But that is desired over 'PROPERTY or :PROPERTY so that both
 // these cases would work:
 //
-//     >> integer! = type of 1
+//     >> integer! = kind of 1
 //     == ~true~  ; isotope
 //
-//     >> integer! = :(second [length type]) of 1
+//     >> integer! = :(second [length kind]) of 1
 //     == ~true~  ; isotope
 //
 // For the moment the behavior is manually simulated.

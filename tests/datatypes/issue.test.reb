@@ -5,7 +5,7 @@
 (not issue? 1)
 (issue? #1)
 
-(issue! = type of #aa)
+(issue! = kind of #aa)
 
 (issue? #a)
 

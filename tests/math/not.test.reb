@@ -22,7 +22,7 @@
 (false = not :append)
 (false = not blank)
 (false = not make object! [])
-(false = not type of get '+)
+(false = not kind of get '+)
 (false = not 0x0)
 (false = not first [()])
 (false = not first [a/b])

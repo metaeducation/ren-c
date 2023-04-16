@@ -1044,7 +1044,7 @@ default-combinators: make map! reduce [
 
     === GATHER AND EMIT ===
 
-    ; With gather, the idea is to do more of a "bubble-up" type of strategy
+    ; With gather, the idea is to do more of a "bubble-up" sort of strategy
     ; for creating objects with labeled fields.  Also, the idea that PARSE
     ; itself would switch modes.
     ;
@@ -1754,7 +1754,7 @@ default-combinators: make map! reduce [
             ; afterward it's not something like a requested integer!.  Red
             ; has some type sniffing in their fast lexer, review relevance.
             ;
-            if value != type of item [
+            if value != kind of item [
                 return raise "Could not TRANSCODE the datatype from input"
             ]
             return item
@@ -1948,7 +1948,7 @@ default-combinators: make map! reduce [
     ; the set of combinators chosen for the particular parse.
     ;
     ; !!! These follow a simple pattern, could all use the same combinator and
-    ; just be sensitive to the received type of value.
+    ; just be sensitive to the received kind of value.
 
     '^ combinator [
         return: "Meta quoted" [<opt> quasi! quoted!]
@@ -2538,9 +2538,6 @@ comment [combinatorize: func [
                     ; combinators can implement things like INTEGER! combinator
                     ; which takes another optional INTEGER! for end of range.
                     ;
-                    ; !!! We use KIND OF :R here because TYPE OF can give a
-                    ; quoted type.  This isn't supported by FIND atm.
-                    ;
                     all [
                         skippable? in f param
                         not find (exemplar of action of f).(param) kind of r
@@ -2648,7 +2645,7 @@ parsify: func [
                 ; The datatype handler is unconditionally called with no hook,
                 ; as if the value had appeared literally in the rule stream.
                 ;
-                comb: state.combinators.(type of value)
+                comb: state.combinators.(kind of value)
                 return (
                     [@ advanced]: combinatorize/value comb rules state :value
                 )

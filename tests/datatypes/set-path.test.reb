@@ -1,7 +1,7 @@
 ; datatypes/set-path.r
 (set-path? first [a/b:])
 (not set-path? 1)
-(set-path! = type of first [a/b:])
+(set-path! = kind of first [a/b:])
 ; the minimum
 [#1947
     (set-path? load-value "#[set-path! [[a] 1]]")

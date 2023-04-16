@@ -7,7 +7,7 @@
 
 (lit-word? first ['a])
 (not lit-word? 1)
-((quote word!) = type of first ['a])
+((quote word!) = kind of first ['a])
 
 ; lit-words are active
 (

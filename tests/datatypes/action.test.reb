@@ -2,7 +2,9 @@
 
 (action? :abs)
 (not action? 1)
-(action! = type of :abs)
+(isotope! = kind of :abs)
+(action! = kind of unrun :abs)
+
 ; actions are active
 [#1659
     (1 == do reduce [unrun :abs -1])

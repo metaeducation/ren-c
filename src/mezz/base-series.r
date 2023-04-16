@@ -98,7 +98,7 @@ join: function [
     ; and should be reviewed if it belongs here too.
     ;
     if match [url! issue! any-string!] base [
-        return as (type of base) append (to text! base) unmeta value
+        return as (kind of base) append (to text! base) unmeta value
     ]
 
     if not any-sequence? base [
@@ -106,7 +106,7 @@ join: function [
     ]
 
     sep: either any-path? base ['/] ['.]
-    type: type of base  ; to set output type back to original
+    kind: kind of base  ; to set output type back to original
     base: to block! base  ; TO operation copies
 
     if quasi? value [
@@ -162,7 +162,7 @@ join: function [
         ]
     ]
 
-    return as type base
+    return as kind base
 ]
 
 
@@ -216,7 +216,7 @@ trim: function [
         if any [head_TRIM tail_TRIM auto lines all_TRIM with] [
             fail ~bad-refines~
         ]
-        trimmed: make (type of series) collect [
+        trimmed: make (kind of series) collect [
             for-each [key val] series [
                 if not blank? :val [keep key]
             ]

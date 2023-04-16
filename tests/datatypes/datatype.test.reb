@@ -1,6 +1,6 @@
 ; datatypes/datatype.r
 (not type-word? 1)
-(type-word! = type of action!)
+(type-word! = kind of action!)
 (type-word? action!)
 (type-word? binary!)
 (type-word? bitset!)

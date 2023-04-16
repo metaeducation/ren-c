@@ -243,8 +243,8 @@ enum Reb_Param_Class {
     // Hence it is the main mode of quoting for branches.  It would be
     // unsuitable for cases like OF, however, due to this problem:
     //
-    //     integer! = type of 1  ; want left quoting semantics on `type` WORD!
-    //     integer! = :(first [type length]) of 1  ; want escapability
+    //     integer! = kind of 1  ; want left quoting semantics on `kind` WORD!
+    //     integer! = :(first [kind length]) of 1  ; want escapability
     //
     // OF wants its left hand side to be escapable, however it wants the
     // quoting behavior to out-prioritize the completion of enfix on the

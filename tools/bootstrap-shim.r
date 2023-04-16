@@ -193,6 +193,15 @@ null3-to-blank: func3 [x [<opt> any-value!]] [
     :x
 ]
 
+; Things like INTEGER! are now type constraints, not to be confused with
+; "cell kinds" like &integer.  SWITCH/TYPE does not exist in the bootstrap
+; so one must use the more limited `switch kind of` pattern.
+;
+of: enfix adapt :of [
+    if property = 'type [fail "Use KIND OF not kind of"]
+    if property = 'kind [property: 'type]
+]
+
 any: chain [:any3 :null3-to-blank]
 all: chain [:all3 :null3-to-blank]
 get: chain [:lib3/get :null3-to-blank]
@@ -340,10 +349,10 @@ maybe: enfix func3 [
 
 the: :the3  ; Renamed due to the QUOTED! datatype
 quote: func3 [x [<opt> any-value!]] [
-    switch type of x [
-        null [the ()]
-        word! [to lit-word! x]
-        path! [to lit-path! x]
+    if null? x [return the ()]
+    switch kind of x [
+        word! [to lit-word! x]  ; to lit-word! not legal in new EXE
+        path! [to lit-path! x]  ; to lit-path! not legal in new EXE
 
         fail/where [
             "QUOTE can only work on WORD!, PATH!, NULL in old Rebols"
@@ -771,7 +780,7 @@ match: func [
         datatype? types [types: make typeset! reduce [types]]  ; circuitious :-(
         block? types [types: make typeset! types]
     ]
-    if find3 types type of value [return value]
+    if find3 types kind of value [return value]
     return _
 ]
 
@@ -1001,7 +1010,7 @@ spaced: specialize :delimit [delimiter: space]
 
 
 noquote: func3 [x [<opt> any-value!]] [
-    switch type of :x [
+    switch kind of :x [
         lit-word! [return to word! x]
         lit-path! [return to path! x]
     ]

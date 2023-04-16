@@ -7,7 +7,7 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2019 Ren-C Open Source Contributors
+// Copyright 2012-2022 Ren-C Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -36,15 +36,25 @@
 // Ren-C's approach is to introduce several lexical types to represent types
 // and type constraints.
 //
-//    >> type of 10
+//    >> integer!
 //    == &integer
+//
+//    >> kind of 10
+//    == &integer
+//
+//    >> any-series!
+//    == &(any-series?)
+//
+//    >> match any-series! [a b c]
+//    == [a b c]
+//
+//    >> match any-series! 10
+//    == ~null~  ; isotope
 //
 //=//// NOTES /////////////////////////////////////////////////////////////=//
 //
 // * %words.r is arranged so symbols for the fundamental types are at the
 //   start of the enumeration.
-//
-// !!! Consider renaming (or adding a synonym) to just TYPE!
 //
 
 inline static bool IS_KIND_SYM(option(SymId) id)

@@ -11,8 +11,8 @@
 ;     == [a b c 3 7]
 ;
 
-(get-block! = type of first [:[a b c]])
-(get-path! = type of first [:[a b c]/d])
+(get-block! = kind of first [:[a b c]])
+(get-path! = kind of first [:[a b c]/d])
 
 (
     a: 10 b: 20

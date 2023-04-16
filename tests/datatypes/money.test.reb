@@ -1,7 +1,7 @@
 ; datatypes/money.r
 (money? $0.0)
 (not money? 0)
-(money! = type of $0.0)
+(money! = kind of $0.0)
 (money? $1.0)
 (money? -$1.0)
 (money? $1.5)
@@ -175,5 +175,5 @@
 ; While Rebol2 would keep the units of the input as MONEY! if you used a non
 ; MONEY! value to round to, R3-Alpha seems to have changed this.  #1470
 ;
-(2.6 = round/even/to $2.55 1E-1)  ; adopts type of rounding unit
+(2.6 = round/even/to $2.55 1E-1)  ; adopts kind of rounding unit
 ($2.6 = round/even/to $2.55 $1E-1)  ; keeps MONEY!

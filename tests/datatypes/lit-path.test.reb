@@ -5,7 +5,7 @@
 
 (lit-path? first ['a/b])
 (not lit-path? 1)
-((quote path!) = type of first ['a/b])
+((quote path!) = kind of first ['a/b])
 
 ; minimum
 

@@ -55,7 +55,7 @@ array: func [
     size "Size or block of sizes for each dimension"
         [<maybe> integer! block!]
     /initial "Initial value (will be called each time if action isotope)"
-        [<unrun> any-value! action!]
+        [<unrun> any-cell! action!]
     <local> rest block
 ][
     initial: default ['~]  ; if not specified, array will be all meta nihil
@@ -67,7 +67,7 @@ array: func [
             fail "Empty ARRAY dimensions (file issue if you want a meaning)"
         ]
         if not integer? size: size.1 [
-            fail 'size ["Expect INTEGER! size in BLOCK!, not" type of size]
+            fail 'size ["Expect INTEGER! size in BLOCK!, not" kind of size]
         ]
         if tail? rest [rest: null]  ; want `array [2]` => `[~ ~]`, no recurse
     ]
@@ -172,7 +172,7 @@ reword: function [
     case_REWORD: case
     case: runs :lib.case
 
-    out: make (type of source) length of source
+    out: make (kind of source) length of source
 
     prefix: null
     suffix: null
@@ -339,7 +339,7 @@ extract: function [
     /index "Extract from offset position"
         [integer!]
 ][
-    if zero? width [return make (type of series) 0]  ; avoid an infinite loop
+    if zero? width [return make (kind of series) 0]  ; avoid an infinite loop
 
     len: to integer! either positive? width [  ; Length to preallocate
         divide (length of series) width  ; Forward loop, use length
@@ -348,7 +348,7 @@ extract: function [
     ]
 
     index: default '1
-    out: make (type of series) len
+    out: make (kind of series) len
     iterate-skip series width [
         append out maybe (pick series index)
     ]

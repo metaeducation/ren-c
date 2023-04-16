@@ -662,7 +662,7 @@ ensure: redescribe [
             ;
             fail [
                 "ENSURE failed with argument of type"
-                    type of value else ["NULL"]
+                    kind of value else ["VOID"]
             ]
         ]
     ]
@@ -689,7 +689,7 @@ prohibit: redescribe [
             ;
             fail [
                 "NON failed with argument of type"
-                    type of :value else ["NULL"]
+                    kind of :value else ["VOID"]
             ]
         ]
         value

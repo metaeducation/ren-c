@@ -7,7 +7,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2016-2020 Ren-C Open Source Contributors
+// Copyright 2016-2022 Ren-C Open Source Contributors
 //
 // See README.md and CREDITS.md for more information.
 //
@@ -19,9 +19,9 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Making a typechecker is very easy:
+// Making a typechecker can be easy:
 //
-//     >> integer?: func [v [any-value!]] [integer! = type of :v]
+//     >> integer?: func [v [any-value!]] [integer! = kind of :v]
 //
 //     >> integer? 10
 //     == ~true~  ; isotope
@@ -32,10 +32,12 @@
 // But given that it is done so often, it's more efficient to have a custom
 // dispatcher for making a typechecker:
 //
-//     >> integer?: typechecker integer!
+//     >> integer?: typechecker &integer
 //
 // This makes a near-native optimized version of the type checker which uses
-// a custom dispatcher.  It works for both datatypes and typesets.
+// a custom dispatcher.  Additionally, when used in a type constraint the
+// dispatcher can be recognized to bypass an interpreted function call
+// entirely to check the type.
 //
 
 #include "sys-core.h"

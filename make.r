@@ -129,7 +129,7 @@ for-each [name value] options [
                 if not block? user-ext [
                     fail [
                         "Selected extensions must be a block, not"
-                        (type of user-ext)
+                        (kind of user-ext)
                     ]
                 ]
                 all [
@@ -1487,7 +1487,7 @@ for-each [category entries] file-base [
     if find [generated made] category [
         continue  ; these categories are taken care of elsewhere
     ]
-    switch type of entries [
+    switch kind of entries [
         word!  ; if bootstrap
         tuple! [  ; if generic-tuple enabled
             assert [entries = 'main.c]  ; !!! anomaly, ignore it for now
@@ -1495,7 +1495,7 @@ for-each [category entries] file-base [
         block! [
             for-each entry entries [
                 if block? entry [entry: first entry]
-                switch type of entry [
+                switch kind of entry [
                     word!  ; if bootstrap executable
                     tuple! [  ; if generic-tuple enabled
                         ; assume taken care of
@@ -1703,7 +1703,7 @@ for-each ext extensions [
                 ]
             ] else [
                 dump s
-                fail [type of s "can't be a dependency of a module"]
+                fail [kind of s "can't be a dependency of a module"]
             ]
         ]
         libraries: all [
@@ -1916,7 +1916,7 @@ prep: make rebmake/entry-class [
             keep [
                 {$(REBOL)} join tools-dir %prep-extension.r
                 unspaced [{MODULE=} ext/name]
-                unspaced [{SRC=extensions/} switch type of ext/source [
+                unspaced [{SRC=extensions/} switch kind of ext/source [
                     file! [ext/source]
                     block! [first find ext/source matches file!]
                     fail "ext/source must be BLOCK! or FILE!"

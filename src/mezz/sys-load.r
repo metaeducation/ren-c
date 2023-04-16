@@ -266,7 +266,7 @@ load: func [
             return decode type :data
         ]
 
-        fail ["No" type "LOADer found for" type of source]
+        fail ["No" type "LOADer found for" kind of source]
     ]
 
     ensure [text! binary!] data
@@ -514,7 +514,7 @@ import*: func [
         dir: as text! source
         let [before file]: find-last dir slash
         assert [before]
-        dir: as (type of source) copy/part dir file
+        dir: as (kind of source) copy/part dir file
     ]
 
     if url? source [

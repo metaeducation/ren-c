@@ -249,7 +249,7 @@ make-scheme: function [
     ]
 
     match [object! handle!] scheme.actor else [
-        fail ["Scheme actor" scheme.name "can't be" type of scheme.actor]
+        fail ["Scheme actor" scheme.name "can't be" kind of scheme.actor]
     ]
 
     append system.schemes spread reduce [scheme.name scheme]

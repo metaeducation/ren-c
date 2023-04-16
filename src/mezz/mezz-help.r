@@ -239,7 +239,7 @@ help: function [
             if not free? :topic [keep mold topic]
             keep "is"
             if free? :topic [keep "a *freed*"]
-            keep any [mold type of :topic, "NULL"]
+            keep any [mold kind of :topic, "VOID"]
         ]
         return none
     ]
@@ -295,7 +295,7 @@ help: function [
         print collect [
             keep [
                 (uppercase mold topic)
-                "is" an any [mold type of :value, "NULL"]
+                "is" an any [mold kind of :value, "VOID"]
             ]
             if free? :value [
                 keep "that has been FREEd"
@@ -437,7 +437,7 @@ source: function [
         ]
         not action? :f [
             print [
-                name "is" an any [mold type of :f, "NULL"]
+                name "is" an any [mold kind of :f, "VOID"]
                 "and not an ACTION!"
             ]
         ]

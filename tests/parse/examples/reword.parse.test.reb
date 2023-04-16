@@ -22,7 +22,7 @@
     case_REWORD: if case [#] else [null]
     case: :lib.case
 
-    out: make (type of source) length of source
+    out: make (kind of source) length of source
 
     prefix: []  ; initialize with no-op rule
     suffix: []

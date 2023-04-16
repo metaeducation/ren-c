@@ -39,7 +39,7 @@ utrim: function [
         if any [head_TRIM tail_TRIM auto lines all_TRIM with] [
             fail ~bad-refines~
         ]
-        trimmed: make (type of series) collect [
+        trimmed: make (kind of series) collect [
             for-each [key val] series [
                 if not blank? :val [keep key]
             ]

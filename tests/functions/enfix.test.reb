@@ -1,6 +1,6 @@
 ; %enfix.test.reb
 
-(action! = type of :+)
+(action! = kind of :+)
 (true = enfixed? :+)
 
 (enfixed? :+)

@@ -134,8 +134,8 @@
     (quoted! = kind of the 'foo)
 ]
 
-((quote word!) = type of the 'foo)  ; higher-level "TYPE"
-((type of the ''[a b c]) = quote/depth block! 2)
+((quote word!) = kind of the 'foo)  ; higher-level "TYPE"
+((kind of the ''[a b c]) = quote/depth block! 2)
 
 
 ; REQUOTE is a reframing action that removes quoting levels and then puts
@@ -252,7 +252,7 @@
         if e1 [e1.line: null]  ; ignore line difference (file should be same)
         if e2 [e2.line: null]
         if :e1 != :e2 [
-            print mold type of get/any 'item
+            print mold kind of get/any 'item
             print mold e1
             print mold e2
             fail "no error parity"

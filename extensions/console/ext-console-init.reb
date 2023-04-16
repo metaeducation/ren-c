@@ -863,7 +863,7 @@ ext-console-impl: func [
                     system.console.input-hook  ; hook to run in sandbox
                 ]]
 
-                return block!  ; documents expected type of the REDUCE product
+                return block!  ; documents expected match of REDUCE product
             ]
         ]
 

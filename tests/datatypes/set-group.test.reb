@@ -14,8 +14,8 @@
 ; actions with the right hand side have been axed.
 
 
-(set-group! = type of first [(a b c):])
-(set-path! = type of first [a/(b c d):])
+(set-group! = kind of first [(a b c):])
+(set-path! = kind of first [a/(b c d):])
 
 (
     m: <before>
