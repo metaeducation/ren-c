@@ -65,57 +65,57 @@ REBOL [
 ; BEGIN TYPES THAT ARE EVALUATOR INERT
 ; ============================================================================
 
-decimal!    "64bit floating point number (IEEE standard)"
+decimal     "64bit floating point number (IEEE standard)"
             (CELL_MASK_NO_NODES)
             [any-number! any-scalar!]
             [decimal     *       +]
 
-percent!    "special form of decimals (used mainly for layout)"
+percent     "special form of decimals (used mainly for layout)"
             (CELL_MASK_NO_NODES)
             [any-number! any-scalar!]
             [decimal     *       +]
 
-money!      "high precision decimals with denomination (opt)"
+money       "high precision decimals with denomination (opt)"
             (CELL_MASK_NO_NODES)
             [any-scalar!]
             [money       +       +]
 
-time!       "time of day or duration"
+time        "time of day or duration"
             (CELL_MASK_NO_NODES)
             [any-scalar!]
             [time        +       +]
 
-date!       "day, month, year, time of day, and timezone"
+date        "day, month, year, time of day, and timezone"
             (CELL_MASK_NO_NODES)
             []
             [date        +       +]
 
-integer!    "64 bit integer"
+integer     "64 bit integer"
             (CELL_MASK_NO_NODES)  ; would change with bignum ints
             [any-number! any-scalar!]
             [integer     +       +]
 
-pair!       "two dimensional point or size"
+pair        "two dimensional point or size"
             (CELL_FLAG_FIRST_IS_NODE)
             [any-scalar!]
             [pair        +       +]
 
-parameter!  "function parameter description"
+parameter   "function parameter description"
             (CELL_FLAG_FIRST_IS_NODE)
             []
             [parameter   +       +]
 
-bitset!     "set of bit flags"
+bitset      "set of bit flags"
             (CELL_FLAG_FIRST_IS_NODE)
             []
             [bitset      +       +]
 
-map!        "name-value pairs (hash associative)"
+map         "name-value pairs (hash associative)"
             (CELL_FLAG_FIRST_IS_NODE)
             []
             [map         +       +]
 
-handle!     "arbitrary internal object or value"
+handle      "arbitrary internal object or value"
             ()
             []
             [handle      -       +]
@@ -124,14 +124,14 @@ handle!     "arbitrary internal object or value"
 ; URL! has a HEART-BYTE! that is a string, but is not itself in the ANY-STRING!
 ; category.
 ;
-url!        "uniform resource locator or identifier"
+url         "uniform resource locator or identifier"
             (CELL_FLAG_FIRST_IS_NODE)
             [any-utf8!]
             [url         string  string]
 
 
 
-binary!     "series of bytes"
+binary      "series of bytes"
             (CELL_FLAG_FIRST_IS_NODE)
             [any-series!]  ; not an ANY-STRING!
             [binary      *       +]
@@ -139,22 +139,22 @@ binary!     "series of bytes"
 
 <ANY-STRING!>  ; (order does not currently matter)
 
-    text!       "text string series of characters"
+    text        "text string series of characters"
                 (CELL_FLAG_FIRST_IS_NODE)
                 [any-series! any-utf8!]
                 [string      *       *]
 
-    file!       "file name or path"
+    file        "file name or path"
                 (CELL_FLAG_FIRST_IS_NODE)
                 [any-series! any-utf8!]
                 [string      *       *]
 
-    email!      "email address"
+    email       "email address"
                 (CELL_FLAG_FIRST_IS_NODE)
                 [any-series! any-utf8!]
                 [string      *       *]
 
-    tag!        "markup string (HTML or XML)"
+    tag         "markup string (HTML or XML)"
                 (CELL_FLAG_FIRST_IS_NODE)
                 [any-series! any-utf8!]
                 [string      *       *]
@@ -162,7 +162,7 @@ binary!     "series of bytes"
 </ANY-STRING!>  ; ISSUE! is "string-like" but not an ANY-STRING!
 
 
-issue!      "immutable codepoint or codepoint sequence"
+issue       "immutable codepoint or codepoint sequence"
             ()  ; may embed data in issue
             [any-utf8!]
             [issue       *       *]
@@ -175,34 +175,34 @@ issue!      "immutable codepoint or codepoint sequence"
 
 <ANY-CONTEXT!>
 
-    object!     "context of names with values"
+    object      "context of names with values"
     ~lazy~      (CELL_FLAG_FIRST_IS_NODE | CELL_FLAG_SECOND_IS_NODE)
                 []
                 [context     *       *]
 
-    module!     "loadable context of code and data"
+    module      "loadable context of code and data"
                 (CELL_FLAG_FIRST_IS_NODE | CELL_FLAG_SECOND_IS_NODE)
                 []
                 [context     *       *]
 
-    error!      "error context with id, arguments, and stack origin"
+    error       "error context with id, arguments, and stack origin"
                 (CELL_FLAG_FIRST_IS_NODE | CELL_FLAG_SECOND_IS_NODE)
                 []
                 [context     +       +]
 
-    frame!      "arguments and locals of a specific action invocation"
+    frame       "arguments and locals of a specific action invocation"
                 (CELL_FLAG_FIRST_IS_NODE | CELL_FLAG_SECOND_IS_NODE)
                 []
                 [frame       +       *]
 
-    port!       "external series, an I/O channel"
+    port        "external series, an I/O channel"
                 (CELL_FLAG_FIRST_IS_NODE | CELL_FLAG_SECOND_IS_NODE)
                 []
                 [port        +       context]
 
 </ANY-CONTEXT!>
 
-varargs!    "evaluator position for variable numbers of arguments"
+varargs     "evaluator position for variable numbers of arguments"
             (CELL_FLAG_SECOND_IS_NODE)
             []
             [varargs     +       +]
@@ -212,27 +212,27 @@ varargs!    "evaluator position for variable numbers of arguments"
 
     ; Review: Should these be ANY-BRANCH! types?
 
-    the-block!  "alternative inert form of block"
+    the-block   "alternative inert form of block"
                 (CELL_FLAG_FIRST_IS_NODE)
                 [any-block! any-array! any-series! any-branch!]
                 [array       *       *]
 
-    the-group!  "inert form of group"
+    the-group   "inert form of group"
                 (CELL_FLAG_FIRST_IS_NODE)
                 [any-group! any-array! any-series!]
                 [array       *       *]
 
-    the-path!   "inert form of path"
+    the-path    "inert form of path"
                 ()
                 [any-path! any-sequence!]
                 [sequence    *       *]
 
-    the-tuple!  "inert form of tuple"
+    the-tuple   "inert form of tuple"
                 ()
                 [any-tuple! any-sequence! any-scalar!]
                 [sequence    *       *]
 
-    the-word!   "inert form of word"
+    the-word    "inert form of word"
                 (CELL_FLAG_FIRST_IS_NODE)
                 [any-word! any-utf8!]
                 [word        *       +]
@@ -244,27 +244,27 @@ varargs!    "evaluator position for variable numbers of arguments"
 
     ; Review: Should these be ANY-BRANCH! types?
 
-    type-block!  "alternative inert form of block"
+    type-block  "alternative inert form of block"
                 (CELL_FLAG_FIRST_IS_NODE)
                 [any-block! any-array! any-series! any-branch!]
                 [array       *       *]
 
-    type-group!  "inert form of group"
+    type-group  "inert form of group"
                 (CELL_FLAG_FIRST_IS_NODE)
                 [any-group! any-array! any-series!]
                 [array       *       *]
 
-    type-path!   "inert form of path"
+    type-path   "inert form of path"
                 ()
                 [any-path! any-sequence!]
                 [sequence    *       *]
 
-    type-tuple!  "inert form of tuple"
+    type-tuple  "inert form of tuple"
                 ()
                 [any-tuple! any-sequence! any-scalar!]
                 [sequence    *       *]
 
-    type-word!   "inert form of word"
+    type-word   "inert form of word"
                 (CELL_FLAG_FIRST_IS_NODE)
                 [any-word! any-utf8!]
                 [word        *       +]
@@ -274,7 +274,7 @@ varargs!    "evaluator position for variable numbers of arguments"
 
 <ANY-PLAIN-VALUE!>  ; (order matters, e.g. SETIFY_ANY_PLAIN_KIND())
 
-    block!      "array of values that blocks evaluation unless DO is used"
+    block       "array of values that blocks evaluation unless DO is used"
     ~pack~      (CELL_FLAG_FIRST_IS_NODE)
                 [any-block! any-array! any-series! any-branch!]
                 [array       *       *]
@@ -283,22 +283,22 @@ varargs!    "evaluator position for variable numbers of arguments"
   ; BEGIN EVALUATOR ACTIVE TYPES, SEE ANY_EVALUATIVE()
   ; ==========================================================================
 
-    group!      "array that evaluates expressions as an isolated group"
+    group       "array that evaluates expressions as an isolated group"
     ~splice~    (CELL_FLAG_FIRST_IS_NODE)
                 [any-group! any-array! any-series! any-branch!]
                 [array       *       *]
 
-    path!       "member or refinement selection with execution bias"
+    path        "member or refinement selection with execution bias"
                 ()
                 [any-path! any-sequence!]
                 [sequence    *       *]
 
-    tuple!      "member selection with inert bias"
+    tuple       "member selection with inert bias"
                 ()
                 [any-tuple! any-sequence! any-scalar!]  ; scalar e.g. ADD 0.0.1
                 [sequence    *       *]
 
-    word!       "evaluates a variable or action"
+    word        "evaluates a variable or action"
                 (CELL_FLAG_FIRST_IS_NODE)
                 [any-word! any-utf8!]
                 [word        *       +]
@@ -308,27 +308,27 @@ varargs!    "evaluator position for variable numbers of arguments"
 
 <ANY-SET-VALUE!>  ; (order matters, e.g. UNSETIFY_ANY_XXX_KIND())
 
-    set-block!  "array of values that will element-wise SET if evaluated"
+    set-block   "array of values that will element-wise SET if evaluated"
                 (CELL_FLAG_FIRST_IS_NODE)
                 [any-block! any-array! any-series!]
                 [array       *       *]
 
-    set-group!  "array that evaluates and runs SET on the resulting word/path"
+    set-group   "array that evaluates and runs SET on the resulting word/path"
                 (CELL_FLAG_FIRST_IS_NODE)
                 [any-group! any-array! any-series!]
                 [array       *       *]
 
-    set-path!   "definition of a path's value"
+    set-path    "definition of a path's value"
                 ()
                 [any-path! any-sequence!]
                 [sequence    *       *]
 
-    set-tuple!  "definition of a tuple's value"
+    set-tuple   "definition of a tuple's value"
                 ()
                 [any-tuple! any-sequence!]
                 [sequence    *       *]
 
-    set-word!   "definition of a word's value"
+    set-word    "definition of a word's value"
                 (CELL_FLAG_FIRST_IS_NODE)
                 [any-word! any-utf8!]
                 [word        *       +]
@@ -338,27 +338,27 @@ varargs!    "evaluator position for variable numbers of arguments"
 
 <ANY-GET-VALUE!>  ; (order matters, e.g. UNGETIFY_ANY_XXX_KIND())
 
-    get-block!  "array of values that is reduced if evaluated"
+    get-block   "array of values that is reduced if evaluated"
                 (CELL_FLAG_FIRST_IS_NODE)
                 [any-block! any-array! any-series! any-branch!]
                 [array       *       *]
 
-    get-group!  "array that evaluates and runs GET on the resulting word/path"
+    get-group   "array that evaluates and runs GET on the resulting word/path"
                 (CELL_FLAG_FIRST_IS_NODE)
                 [any-group! any-array! any-series!]
                 [array       *       *]
 
-    get-path!   "the value of a path"
+    get-path    "the value of a path"
                 ()
                 [any-path! any-sequence!]
                 [sequence    *       *]
 
-    get-tuple!  "the value of a tuple"
+    get-tuple   "the value of a tuple"
                 ()
                 [any-tuple! any-sequence!]
                 [sequence    *       *]
 
-    get-word!   "the value of a word (variable)"
+    get-word    "the value of a word (variable)"
                 (CELL_FLAG_FIRST_IS_NODE)
                 [any-word! any-utf8!]
                 [word        *       +]
@@ -368,27 +368,27 @@ varargs!    "evaluator position for variable numbers of arguments"
 
 <ANY-META-VALUE!>  ; (order matters, e.g. UNMETAFY_ANY_XXX_KIND())
 
-    meta-block! "block that evaluates to produce a quoted block"
+    meta-block  "block that evaluates to produce a quoted block"
                 (CELL_FLAG_FIRST_IS_NODE)
                 [any-block! any-array! any-series! any-branch!]
                 [array       *       *]
 
-    meta-group! "group that quotes its product or removes isotope status"
+    meta-group  "group that quotes its product or removes isotope status"
                 (CELL_FLAG_FIRST_IS_NODE)
                 [any-group! any-array! any-series!]
                 [array       *       *]
 
-    meta-path!  "path that quotes its product or removes isotope status"
+    meta-path   "path that quotes its product or removes isotope status"
                 ()
                 [any-path! any-sequence!]
                 [sequence    *       *]
 
-    meta-tuple! "tuple that quotes its product or removes isotope status"
+    meta-tuple  "tuple that quotes its product or removes isotope status"
                 ()
                 [any-tuple! any-sequence!]
                 [sequence    *       *]
 
-    meta-word!  "word that quotes its product or removes isotope status"
+    meta-word   "word that quotes its product or removes isotope status"
                 (CELL_FLAG_FIRST_IS_NODE)
                 [any-word! any-utf8!]
                 [word        *       +]
@@ -401,12 +401,12 @@ varargs!    "evaluator position for variable numbers of arguments"
 ; with a single comparison, so they have to null out their binding fields
 ; in order to avoid crashing the processing since they report Is_Bindable()
 
-blank!      "placeholder unit type which acts as conditionally false"
+blank       "placeholder unit type which acts as conditionally false"
             (CELL_MASK_NO_NODES)
             [any-unit!]  ; allow as `branch`?
             [blank       -       +]
 
-comma!      "separator between full evaluations (that is otherwise invisible)"
+comma       "separator between full evaluations (that is otherwise invisible)"
             (CELL_MASK_NO_NODES)
             [any-unit!]
             [comma       -       +]
@@ -414,7 +414,7 @@ comma!      "separator between full evaluations (that is otherwise invisible)"
 
 ; ACTION! is the "OneFunction" type in Ren-C https://forum.rebol.info/t/596
 
-action!       "an invokable Rebol subroutine"
+action        "an invokable Rebol subroutine"
 ~activation~  (CELL_FLAG_FIRST_IS_NODE | CELL_FLAG_SECOND_IS_NODE)
               [any-branch!]
               [action      +       +]
@@ -431,17 +431,17 @@ action!       "an invokable Rebol subroutine"
 ; Neither are inert...QUASI! becomes isotopic when evaluated, and QUOTED!
 ; removes one level of quoting.
 
-quasi!      "value which evaluates to a form that triggers errors on access"
+quasi       "value which evaluates to a form that triggers errors on access"
             ()
             []
             [quasi       +       -]
 
-quoted!     "container for arbitrary levels of quoting"
+quoted      "container for arbitrary levels of quoting"
             ()
             [any-branch!]
             [quoted       +       -]
 
-isotope!    "special values that cannot be stored in blocks"
+isotope     "special values that cannot be stored in blocks"
             ()
             []
             [quoted       +       -]

@@ -224,14 +224,7 @@ for-each-datatype: func [
         ] (
             name*: to text! name*
             set var make object! [
-                name!: all [
-                    #"!" = last name*
-                    to word! name*
-                ]
-                name: (
-                    if #"!" = last name* [take/last name*]
-                    name*
-                )
+                name: name*
                 cellmask: cellmask*
                 heart: ensure integer! heart*
                 description: ensure text! description*
@@ -317,7 +310,7 @@ for-each-typerange: func [
             )]
             [set name* word! (if types* [
                 name*: to text! name*
-                assert [#"!" = take/last name*]
+                assert [#"!" <> last name*]
                 append types* to text! name*
             ])]
             text!
@@ -342,11 +335,7 @@ rebs: collect [
     for-each-datatype t [
         assert [sym-n == t/heart]  ; SYM_XXX should equal REB_XXX value
 
-        if not t/name! [
-            add-sym as word! t/name
-        ] else [
-            add-sym t/name!
-        ]
+        add-sym unspaced [t/name "!"]
 
         keep cscape/with {REB_${T/NAME} = $<T/HEART>} [t]
     ]
@@ -409,27 +398,13 @@ for-each-datatype t [
         e-types/emit newline
     ]
 
-    if not t/name! [  ; internal type
-        append boot-types as word! t/name
-        continue
-    ]
-
-    append boot-types t/name!
+    append boot-types to word! unspaced [t/name "!"]
 
     e-types/emit 't {
         #define IS_${T/NAME}(v) \
             (VAL_TYPE(v) == REB_${T/NAME})  /* $<T/HEART> */
     }
     e-types/emit newline
-]
-
-nontypes: collect [
-    keep cscape {FLAGIT_KIND(REB_VOID)}
-    for-each-datatype t [
-        any [not t/name!] then [
-            keep cscape/with {FLAGIT_KIND(REB_${AS TEXT! T/NAME})} 't
-        ]
-    ]
 ]
 
 e-types/emit {
