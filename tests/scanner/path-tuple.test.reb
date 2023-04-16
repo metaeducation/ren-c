@@ -67,8 +67,8 @@
         === BAD PATH ELEMENT TESTS ===
 
         ; TUPLE! can go in PATH! but not vice-versa.  Besides that, only
-        ; INTEGER!, WORD!, GROUP!, BLOCK!, TEXT!, TAG!, and BAD-WORD! are
-        ; currently allowed in either sequence form.
+        ; INTEGER!, WORD!, GROUP!, BLOCK!, TEXT!, TAG!, and their QUASI!
+        ; forms are currently allowed in either sequence form.
 
         "/#a"  !!  ~scan-invalid~
         "blk/#{}"  !!  ~scan-invalid~
@@ -153,7 +153,7 @@
                 fail ["Unexpected failure on" mold text "->" error.id]
             ]
             iter: my next
-            if iter.1 <> make bad-word! error.id [
+            if iter.1 <> quasi error.id [
                 fail ["Error mismatch" mold text "->" error.id "and not" iter.1]
             ]
             iter: my next

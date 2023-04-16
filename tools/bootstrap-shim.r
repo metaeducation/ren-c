@@ -125,7 +125,7 @@ set '~ :null3  ; most similar behavior to bad-word isotope available
 none: :void3  ; again, most similar thing
 
 ; Done is used as a signal in the boot files that the expected end is reached.
-; This is a BAD-WORD! in modern Ren-C, but a plain word in the bootstrap EXE.
+; This is a QUASI-WORD! in modern Ren-C, but a plain word in the bootstrap EXE.
 ; Must use SET because even though we don't run this in modern Ren-C, the file
 ; gets scanned...and `~done~:` would be invalid.
 ;

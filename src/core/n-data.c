@@ -435,7 +435,43 @@ DECLARE_NATIVE(refinement_q)
     INCLUDE_PARAMS_OF_REFINEMENT_Q;
     Value(*) v = ARG(value);
 
-    return Init_Logic(OUT, IS_PATH(v) and IS_REFINEMENT(v));;
+    return Init_Logic(OUT, IS_PATH(v) and IS_REFINEMENT(v));
+}
+
+
+//
+//  bad-word?: native [
+//
+//  "Test if an argument is an isotopic word"
+//
+//      return: [logic!]
+//      value
+//  ]
+//
+DECLARE_NATIVE(bad_word_q)
+{
+    INCLUDE_PARAMS_OF_BAD_WORD_Q;
+    Value(*) v = ARG(value);
+
+    return Init_Logic(OUT, Is_Word_Isotope(v));
+}
+
+
+//
+//  quasi-word?: native [
+//
+//  "Test if an argument is an QUASI form of word"
+//
+//      return: [logic!]
+//      value
+//  ]
+//
+DECLARE_NATIVE(quasi_word_q)
+{
+    INCLUDE_PARAMS_OF_QUASI_WORD_Q;
+    Value(*) v = ARG(value);
+
+    return Init_Logic(OUT, IS_QUASI(v) and HEART_BYTE(v) == REB_WORD);
 }
 
 
@@ -2369,7 +2405,7 @@ DECLARE_NATIVE(logic_q)
 //
 //  none?: native [
 //
-//  "Tells you if argument is a ~ isotope (not a ~ BAD-WORD!)"
+//  "Tells you if argument is an ~[]~ isotope, e.g. an empty pack"
 //
 //      return: [logic!]
 //      ^optional [<opt> <void> <pack> <fail> any-value!]

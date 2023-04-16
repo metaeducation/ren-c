@@ -160,13 +160,13 @@
     e.arg1 = 'asiieiajiaosdfbjakbsjxbjkchasdf
 ])
 
-; MATCH will match a bad-word! as-is, but falsey inputs produce isotopes
+; MATCH will match a quasi-word! as-is, but falsey inputs produce isotopes
 [
-    (''~preserved~ = ^ match bad-word! '~preserved~)
+    (''~preserved~ = ^ match quasi-word! '~preserved~)
     ('~[~null~]~ = ^ match null null)
 ]
 
-; ~quit~ is the label of the BAD-WORD! isotope you get by default from QUIT.
+; ~quit~ is the label of the QUASI-WORD! isotope you get by default from QUIT.
 ; If the result is meant to be used, then QUIT should be passed an argument,
 ; but the idea is to help draw attention to when a script was cut short
 ; prematurely via a QUIT command.  Isotopes may be passed.
@@ -179,13 +179,13 @@
     ('~plain~ = do "quit/with '~plain~")
 ]
 
-; Isotopes make it easier to write generic routines that handle BAD-WORD!
+; Isotopes make it easier to write generic routines that handle QUASI-WORD!
 ; values, so long as they are "friendly" (e.g. come from picking out of a
 ; block vs. running it, or come from a quote evaluation).
 ;
 ([~abc~ ~def~] = collect [keep spread [~abc~], keep '~def~])
 
-; Erroring modes of BAD-WORD! are being fetched by WORD! and logic tests.
+; Erroring modes of QUASI-WORD! are being fetched by WORD! and logic tests.
 ; They are inert values otherwise, so PARSE should treat them such.
 ;
 ; !!! Review: PARSE should probably error on rules like `some ~foo~`, and

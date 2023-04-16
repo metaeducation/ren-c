@@ -203,20 +203,19 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
 //  "Terminate abnormally with a message, optionally diagnosing a value cell"
 //
 //      return: []  ; !!! notation for divergent functions?
-//      ^reason [<opt> any-value!]
-//          "Cause of the panic"
+//      reason "Cause of the panic"
+//          [any-value!]
 //      /value "Interpret reason as a value cell to debug dump, vs. a message"
 //  ]
 //
 DECLARE_NATIVE(panic)
 //
-// Note: The ^reason parameter is meta so that `panic ~bad-word~` won't
-// cause a parameter type check error, but actually runs this panic() code.
-// Since it allows bad-word!, we treat it as a message if /VALUE is not used.
+// If you write `panic ~bad-word~` and don't use /VALUE then the word is
+// treated as a message.
 {
     INCLUDE_PARAMS_OF_PANIC;
 
-    REBVAL *v = Meta_Unquotify(ARG(reason));  // remove quote level from @reason
+    REBVAL *v = ARG(reason);  // remove quote level from @reason
 
     // Use frame tick (if available) instead of TG_tick, so tick count dumped
     // is the exact moment before the PANIC ACTION! was invoked.
@@ -237,9 +236,8 @@ DECLARE_NATIVE(panic)
         p = v;
     }
     else {  // interpret reason as a message
-      if (Is_Isotope(v)) {
-            assert(!"Called PANIC without /VALUE on isotope");
-            p = v;
+      if (Is_Word_Isotope(v)) {
+            p = STR_UTF8(VAL_WORD_SYMBOL(v));
         }
         else if (IS_TEXT(v)) {
             p = VAL_UTF8_AT(v);

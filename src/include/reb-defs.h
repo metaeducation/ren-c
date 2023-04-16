@@ -257,10 +257,9 @@ enum Reb_Param_Class {
     //
     PARAM_CLASS_SOFT,
 
-    // `PARAM_CLASS_META` is the only parameter type that can accept isotope
-    // forms of BAD-WORD!.  They become plain forms of BAD-WORD! when they
-    // are an argument, and all other types receive one added quote level
-    // (except for pure NULL, which is left as NULL).
+    // `PARAM_CLASS_META` is the only parameter type that can accept unstable
+    // isotopes.  Isotopes become quasiforms when they are an argument, and all
+    // other types receive one added quote level.
     //
     //     >> foo: function [^a] [print [{a is} a]
     //

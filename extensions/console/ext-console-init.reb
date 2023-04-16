@@ -306,7 +306,7 @@ export console!: make object! [
         {Receives line input, parse/transform, send back to CONSOLE eval}
 
         return: "null if EOF, ~escape~ if canceled, else line of text input"
-            [<opt> text! bad-word!]
+            [<opt> text! quasi-word!]
     ][
         return read-line
     ]

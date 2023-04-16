@@ -590,8 +590,7 @@ default-combinators: make map! reduce [
         start: index of input
 
         ; Because parse operations can SEEK, this can potentially create
-        ; issues.  We fail if the index is before, but could also return a
-        ; bad-word! isotope.
+        ; issues.  We currently fail if the index is before.
         ;
         if start > end [
             fail "Can't MEASURE region where rules did a SEEK before the INPUT"
@@ -1108,7 +1107,7 @@ default-combinators: make map! reduce [
             return raise e
         ]
 
-        ; The value is quoted (or a BAD-WORD!) because of ^ on ^(parser input).
+        ; The value is quoted or quasi because of ^ on ^(parser input).
         ; This lets us emit null fields and isotopes, since the MAKE OBJECT!
         ; will do an evaluation.
         ;
@@ -1938,8 +1937,8 @@ default-combinators: make map! reduce [
 
     === META-XXX! COMBINATORS ===
 
-    ; The META-XXX! combinators add a quoting level to their result, with
-    ; some quirks surrounding nulls and BAD-WORD! isotopes.  The quoting is
+    ; The META-XXX! combinators add a quoting level to their result, unless
+    ; it's isotopic in which case it becomes a qusaiform.  The quoting is
     ; important with functions like KEEP...but advanced tunneling of behavior
     ; regarding unsets, nulls, and invisibility requires the feature.
     ;

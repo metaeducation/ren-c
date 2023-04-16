@@ -965,7 +965,7 @@ DECLARE_NATIVE(js_native)
 //  {Evaluate textual JavaScript code}
 //
 //      return: "Note: Only supports types that reb.Box() supports"
-//          [<opt> integer! text! bad-word!]
+//          [<opt> integer! text! none!]
 //      source "JavaScript code as a text string" [text!]
 //      /local "Evaluate in local scope (as opposed to global)"
 //      /value "Return a Rebol value"
@@ -1020,9 +1020,9 @@ DECLARE_NATIVE(js_eval_p)
 
   want_result: {  ////////////////////////////////////////////////////////////
 
-    // Currently, reb.Box() only translates to INTEGER!, TEXT!, BAD-WORD!, NULL
+    // Currently, reb.Box() only translates to INTEGER!, TEXT!, NONE!, NULL
     //
-    // !!! All other types come back as BAD-WORD!.  Should they error?
+    // !!! All other types come back as NONE!.  Should they error?
     //
     if (REF(local)) {
         addr = EM_ASM_INT(

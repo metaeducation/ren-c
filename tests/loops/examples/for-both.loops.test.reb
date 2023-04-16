@@ -144,7 +144,7 @@
         ]
     )
 
-    ; Handles isotopes (^META operations make BAD-WORD!, these are truthy, so
+    ; Handles isotopes (^META operations make quasiforms, these are truthy, so
     ; the only falsey possibility is the BREAK
 
     ([1 2 3 4] = collect [

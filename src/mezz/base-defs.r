@@ -549,7 +549,7 @@ print: func* [
     {Textually output spaced line (evaluating elements if a block)}
 
     return: "NULL if blank input or effectively empty block, else none"
-        [<opt> bad-word!]
+        [<opt> none!]
     line "Line of text or block, blank or [] has NO output, newline allowed"
         [<maybe> char! text! block! quoted!]
 ][

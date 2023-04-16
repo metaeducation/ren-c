@@ -70,7 +70,7 @@
 ]
 
 ; ^META functions will receive the meta form of the argument, so isotopes will
-; be converted to BAD-WORD! and other values quoted.  This is a service given
+; be converted to quasiforms and other values quoted.  This is a service given
 ; by APPLY, because the fundamental frame mechanics do not intervene.
 [
     (

@@ -63,8 +63,8 @@ int Line_History_Index;  // Current position in the line history
 // Read a line (as a sequence of bytes) from the terminal.  Handles line
 // editing and line history recall.
 //
-// If HALT is encountered (e.g. a Ctrl-C), this routine will return BAD-WORD!
-// If ESC is pressed, this will return a BLANK!.
+// If HALT is encountered (e.g. a Ctrl-C), this routine will return ~halt~
+// If ESC is pressed, this will return ~escape~
 // Otherwise it will return a TEXT! of the read-in string.
 //
 // !!! Read_Line is a transitional step as a C version of what should move to

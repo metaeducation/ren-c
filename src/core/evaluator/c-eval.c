@@ -676,8 +676,8 @@ Bounce Evaluator_Executor(Frame(*) f)
     //
     // A plain word tries to fetch its value through its binding.  It fails
     // if the word is unbound (or if the binding is to a variable which is
-    // set, but to a non-isotope form of bad-word!).  Should the word look up
-    // to an action, then that action will be invoked.
+    // set, but to the isotopic form of void, e.g. "nihil").  Should the word
+    // look up to an isotopic action, then that action will be invoked.
     //
     // NOTE: The usual dispatch of enfix functions is *not* via a REB_WORD in
     // this switch, it's by some code at the `lookahead:` label.  You only see
@@ -929,7 +929,7 @@ Bounce Evaluator_Executor(Frame(*) f)
     //
     // For now, we defer to what GET does.
     //
-    // Tuples looking up to BAD-WORD! isotopes are handled consistently with
+    // Tuples looking up to nihil isotopes are handled consistently with
     // WORD! and GET-WORD!, and will error...directing you use GET/ANY if
     // fetching isotopes is what you actually intended.
 
@@ -1241,7 +1241,7 @@ Bounce Evaluator_Executor(Frame(*) f)
     //
     //    :foo/(print "side effect" 1)  ; this is allowed
     //
-    // Consistent with GET-WORD!, a GET-PATH! won't allow BAD-WORD! access on
+    // Consistent with GET-WORD!, a GET-PATH! won't allow nihil access on
     // the plain (unfriendly) forms.
 
       case REB_META_PATH:

@@ -50,6 +50,7 @@ lf: LF:    newline
 ; Type predicates
 
 null!: &(null?)
+none!: &(none?)
 void!: &(void?)
 refinement!: &(refinement?)
 char!: &(char?)
@@ -58,6 +59,8 @@ splice!: &(splice?)
 lit-word!: &(lit-word?)
 lit-path!: &(lit-path?)
 logic!: &(logic?)
+bad-word!: &(bad-word?)
+quasi-word!: &(quasi-word?)
 
 
 ; A "blackhole" is a name for the usage of the NUL character in the sense of
@@ -66,5 +69,3 @@ logic!: &(logic?)
 ; feels a bit like "sending things to `/dev/null`".
 ;
 blackhole: #
-
-bad-word!: quasi!  ; !!! temporary

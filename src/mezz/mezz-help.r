@@ -53,7 +53,6 @@ description-of: function [
     v [<maybe> any-value!]
 ][
     return (switch/type :v [
-        bad-word! [null]
         any-array! [spaced ["array of length:" length of v]]
         type-word! [
             spec: ensure object! spec of v  ; "type specs" need simplifying
@@ -218,12 +217,12 @@ help: function [
                 return none
             ]
 
-            switch/type value: noisotope get/any topic [
+            switch/type value: get/any topic [
                 null! [
                     print [topic "is null"]
                 ]
-                bad-word! [
-                    print [topic "is not defined (e.g. has a BAD-WORD! value)"]
+                nihil! [
+                    print [topic "is not defined (e.g. has a NIHIL! value)"]
                 ]
             ] then [
                 return none
@@ -476,7 +475,7 @@ source: function [
 what: function [
     {Prints a list of known actions}
 
-    return: [bad-word! block!]
+    return: [none! block!]
     'name [<end> word! lit-word!]
         "Optional module name"
     /args "Show arguments not titles"

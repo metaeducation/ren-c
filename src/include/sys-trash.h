@@ -1,6 +1,6 @@
 //
 //  File: %sys-trash.h
-//  Summary: "Unreadable Variant of BAD-WORD! Available In Early Boot"
+//  Summary: "Unreadable Variant of nihil Available In Early Boot"
 //  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  Homepage: https://github.com/metaeducation/ren-c/
 //

@@ -33,7 +33,7 @@
 // of creation.
 //
 // Both forms are allowed to contain WORD!, INTEGER!, GROUP!, BLOCK!, TEXT!,
-// BAD-WORD!, and TAG! elements.  There are SET-, GET-, META-, and THE- forms:
+// QUASI-WORD!, and TAG!.  There are SET-, GET-, META-, THE-, and TPYPE- forms:
 //
 //     <abc>/(d e f)/[g h i]:   ; a 3-element SET-PATH!
 //     :foo.1.bar               ; a 3-element GET-TUPLE!

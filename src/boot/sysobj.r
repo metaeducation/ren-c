@@ -173,7 +173,7 @@ standard: make object! [
         ] #BODY
     ]
 
-    proc-return-type: []  ; was once [bad-word!], now just []
+    proc-return-type: []  ; was once [none!], now just []
 
     elider-return-type: [<void>]
 

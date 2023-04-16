@@ -23,20 +23,16 @@
 // The "DO" helpers have names like Do_XXX(), and are a convenience layer
 // over making repeated calls into the Eval_XXX() routines.  DO-ing things
 // always implies running to the end of an input.  It also implies returning
-// a BAD-WORD! value if nothing can be synthesized, but letting the last null
-// or value fall out otherwise:
+// void if nothing can be synthesized, otherwise let the last value fall out:
 //
-//     >> type of ^ do []
-//     == bad-word!
+//     >> do [1 + 2]
+//     == 3
 //
-//     >> type of ^ do [comment "hi"]
-//     == bad-word!
+//     >> do []
+//     ; void
 //
-//     >> do [1 comment "hi"]
-//     == 1
-//
-//    >> do [null comment "hi"]
-//    ; null
+//     >> do [1 + 2 comment "hi"]
+//     == 3
 //
 // See %sys-eval.h for the lower level routines if this isn't enough control.
 //
