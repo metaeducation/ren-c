@@ -563,8 +563,6 @@ inline static REBVAR *Force_Lib_Var(SymId id) {
 
 #include "datatypes/sys-binary.h"  // BIN_XXX(), etc. used by strings
 
-#include "datatypes/sys-datatype.h"  // uses BIN()
-
 #include "datatypes/sys-char.h"  // use Init_Integer() for bad codepoint error
 #include "datatypes/sys-string.h"  // SymId needed for typesets
 
@@ -580,6 +578,7 @@ inline static REBVAR *Force_Lib_Var(SymId id) {
 #include "datatypes/sys-error.h"
 
 #include "datatypes/sys-word.h"  // needs to know about QUOTED! for binding
+#include "datatypes/sys-datatype.h"  // uses words
 
 #include "datatypes/sys-bitset.h"
 

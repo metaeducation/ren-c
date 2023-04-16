@@ -70,17 +70,14 @@ inline static enum Reb_Kind VAL_TYPE_KIND(noquote(Cell(const*)) v) {
 }
 
 
-
-// Built in types have their specs initialized from data in the boot block.
-// We can quickly find them in the lib context, because the types take up
-// the early 64-ish symbol IDs in lib, so just use kind as an index.
+// Ren-C just uses TYPE-WORD! for built in datatypes
 //
 inline static REBVAL *Init_Builtin_Datatype_Untracked(
     Cell(*) out,
     enum Reb_Kind kind
 ){
     assert(kind < REB_MAX);
-    return Copy_Cell(out, Try_Lib_Var(cast(SymId, kind)));
+    return Init_Any_Word(out, REB_TYPE_WORD, Canon_Symbol(cast(SymId, kind)));
 }
 
 #define Init_Builtin_Datatype(out,kind) \

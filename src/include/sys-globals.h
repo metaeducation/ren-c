@@ -72,6 +72,8 @@ PVAR Context(*) User_Context;
 PVAR Dispatcher* const *PG_Next_Native_Dispatcher;
 PVAR Context(*) PG_Currently_Loading_Module;
 
+PVAR REBVAL Datatypes[REB_MAX];  // just the TYPE-WORD!s, like &integer
+
 //-- Various char tables:
 PVAR Byte* White_Chars;
 PVAR Codepoint *Upper_Cases;

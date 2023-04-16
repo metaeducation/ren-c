@@ -213,7 +213,7 @@ REBI64 Int64s(const REBVAL *val, REBINT sign)
 const REBVAL *Datatype_From_Kind(enum Reb_Kind kind)
 {
     assert(kind < REB_MAX);
-    REBVAL *type = SPECIFIC(ARR_SINGLE(&PG_Lib_Patches[SYM_FROM_KIND(kind)]));
+    REBVAL *type = &Datatypes[kind];
     assert(IS_TYPE_WORD(type));
     return type;
 }
