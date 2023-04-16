@@ -65,6 +65,11 @@ REBOL [
 ; BEGIN TYPES THAT ARE EVALUATOR INERT
 ; ============================================================================
 
+blank       "placeholder unit type"
+            (CELL_MASK_NO_NODES)
+            [any-unit!]  ; allow as `branch`?
+            [blank       -       +]
+
 decimal     "64bit floating point number (IEEE standard)"
             (CELL_MASK_NO_NODES)
             [any-number! any-scalar!]
@@ -396,15 +401,10 @@ varargs     "evaluator position for variable numbers of arguments"
 </ANY-META-VALUE!>
 
 
-; BLANK! and COMMA! need to be evaluative, so they have higher numbers that
-; are past the non-bindable types.  We want the ANY_INERT() test to be fast
-; with a single comparison, so they have to null out their binding fields
-; in order to avoid crashing the processing since they report Is_Bindable()
-
-blank       "placeholder unit type which acts as conditionally false"
-            (CELL_MASK_NO_NODES)
-            [any-unit!]  ; allow as `branch`?
-            [blank       -       +]
+; COMMA! needs to be evaluative, so it is past the non-bindable types.  We
+; want the ANY_INERT() test to be fast with a single comparison, so it has
+; to null out the binding field in order to avoid crashing the processing
+; since it reports Is_Bindable()
 
 comma       "separator between full evaluations (that is otherwise invisible)"
             (CELL_MASK_NO_NODES)
