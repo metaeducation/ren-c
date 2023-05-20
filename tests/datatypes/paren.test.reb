@@ -4,7 +4,7 @@
 ; minimum
 (group! = kind of first [()])
 ; alternative literal form
-(strict-equal? first [()] first [#[group! [[] 1]]])
+(strict-equal? first [()] first compose [(make group! 1)])
 (strict-equal? first [()] make group! 0)
 (strict-equal? first [()] to group! [])
 ("()" == mold first [()])

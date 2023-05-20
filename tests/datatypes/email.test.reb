@@ -4,9 +4,9 @@
 (not email? 1)
 (email! = kind of me@here.com)
 ; "minimum"
-(email? #[email! ""])
-(strict-equal? #[email! ""] make email! 0)
-(strict-equal? #[email! ""] to email! "")
+(email? make email! "")
+(strict-equal? make email! "" make email! 0)
+(strict-equal? make email! "" to email! "")
 
 ; There are some complex rules determining what an email address can and can't
 ; be like.  e.g. dots are legal in the part to the left of the @, but not two

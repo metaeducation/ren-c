@@ -2,8 +2,7 @@
 (bitset? make bitset! "a")
 (not bitset? 1)
 (bitset! = kind of make bitset! "a")
-; minimum, literal representation
-(bitset? #[bitset! #{}])
+
 ; TS crash
 (bitset? charset ensure block! transcode {#"^(A0)"})
 

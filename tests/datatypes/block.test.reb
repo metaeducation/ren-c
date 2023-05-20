@@ -7,7 +7,6 @@
 (block? [])
 
 ; alternative literal representation
-([] == #[block! [[] 1]])
 ([] == make block! 0)
 ([] == make block! "")
 ("[]" == mold [])

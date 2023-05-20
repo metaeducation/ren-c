@@ -33,7 +33,7 @@
 ]
 
 [#77
-    ("#[block! [[1 2] 2]]" == mold/all next [1 2])
+    ("make block! [[1 2] 2]" == mold/all next [1 2])
 ]
 [#77
     (null? find mold/flat make object! [a: 1] "    ")

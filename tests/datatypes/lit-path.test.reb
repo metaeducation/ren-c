@@ -10,7 +10,7 @@
 ; minimum
 
 [#1947
-    (lit-path? quote load-value "#[path! [[a] 1]]")
+    (lit-path? quote load-value "'[a]/1")
 ]
 
 ; lit-paths are active

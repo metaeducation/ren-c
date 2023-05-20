@@ -4,7 +4,7 @@
 (file! = kind of %myscript.r)
 ; minimum
 (file? %"")
-(%"" == #[file! ""])
+(%"" == make file! "")
 (%"" == make file! 0)
 (%"" == to file! "")
 ("%%2520" = mold to file! "%20")

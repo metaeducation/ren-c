@@ -29,7 +29,6 @@
 %datatypes/dictionary.test.reb
 %datatypes/email.test.reb
 %datatypes/error.test.reb
-%datatypes/event.test.reb
 %datatypes/file.test.reb
 %datatypes/frame.test.reb
 %datatypes/get-block.test.reb
@@ -37,7 +36,6 @@
 %datatypes/get-path.test.reb
 %datatypes/get-word.test.reb
 %datatypes/hash.test.reb
-%datatypes/image.test.reb
 %datatypes/integer.test.reb
 %datatypes/issue.test.reb
 %datatypes/lit-path.test.reb
@@ -346,7 +344,6 @@
 ; !!! These tests require the named extensions to be built in.  Whether the
 ; test is run or not should depend on whether the extension is present.  TBD.
 
-%../extensions/vector/tests/vector.test.reb
 %../extensions/process/tests/call.test.reb
 %../extensions/dns/tests/dns.test.reb
 

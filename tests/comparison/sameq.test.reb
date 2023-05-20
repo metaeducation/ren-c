@@ -15,9 +15,9 @@
 ; binary!
 (not same? #{00} #{00})
 ; binary versus bitset
-(not same? #{00} #[bitset! #{00}])
+(not same? #{00} make bitset! #{00})
 ; symmetry
-(equal? same? #[bitset! #{00}] #{00} same? #{00} #[bitset! #{00}])
+(equal? same? make bitset! #{00} #{00} same? #{00} make bitset! #{00})
 ; email versus text
 (
     a-value: to email! ""
@@ -79,8 +79,8 @@
     a-value: 0.0.0.0
     equal? same? to binary! a-value a-value same? a-value to binary! a-value
 )
-(not same? #[bitset! #{00}] #[bitset! #{00}])
-(not same? #[bitset! #{}] #[bitset! #{00}])
+(not same? make bitset! #{00} make bitset! #{00})
+(not same? make bitset! #{} make bitset! #{00})
 ; block!
 (not same? [] [])
 ; reflexivity

@@ -3,9 +3,9 @@
 (not url? 1)
 (url! = kind of http://www.fm.tul.cz/~ladislav/rebol)
 ; minimum; alternative literal form
-(url? #[url! ""])
-(strict-equal? #[url! ""] make url! 0)
-(strict-equal? #[url! ""] to url! "")
+(url? make url! "")
+(strict-equal? make url! "" make url! 0)
+(strict-equal? make url! "" to url! "")
 ("http://" = mold http://)
 ("http://a%2520b" = mold http://a%2520b)
 

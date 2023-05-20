@@ -2,9 +2,9 @@
 (not tag? 1)
 (tag! = kind of <tag>)
 
-(tag? #[tag! ""])
-(strict-equal? #[tag! ""] make tag! 0)
-(strict-equal? #[tag! ""] to tag! "")
+(tag? make tag! "")
+(strict-equal? make tag! "" make tag! 0)
+(strict-equal? make tag! "" to tag! "")
 ("<tag>" == mold <tag>)
 
 [#219

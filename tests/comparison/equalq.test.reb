@@ -18,10 +18,10 @@
 ; Different contents
 (not equal? #{00} #{01})
 ; Offset + similar contents at reference
-(equal? #{00} #[binary! [#{0000} 2]])
+(equal? #{00} next #{0000})
 ; Offset + similar contents at reference
-(equal? #{00} #[binary! [#{0100} 2]])
-(equal? equal? #{00} #[binary! [#{0100} 2]] equal? #[binary! [#{0100} 2]] #{00})
+(equal? #{00} next #{0100})
+(equal? equal? #{00} next #{0100} equal? next #{0100} #{00})
 ; No binary! padding
 (not equal? #{00} #{0000})
 (equal? equal? #{00} #{0000} equal? #{0000} #{00})
@@ -78,13 +78,17 @@
     a-value: to tag! ""
     equal? equal? a-value to text! a-value equal? to text! a-value a-value
 )
-(equal? #[bitset! #{00}] #[bitset! #{00}])
+(equal? make bitset! #{00} make bitset! #{00})
+
 ; bitset! with no bits set does not equal empty bitset
 ; This is because of the COMPLEMENT problem: bug#1085.
-(not equal? #[bitset! #{}] #[bitset! #{00}])
+(not equal? make bitset! #{} make bitset! #{00})
+
 ; No implicit to binary! from bitset!
-(not equal? #{00} #[bitset! #{00}])
-(equal? equal? #[bitset! #{00}] #{00} equal? #{00} #[bitset! #{00}])
+(not equal? #{00} make bitset! #{00})
+
+(equal? equal? make bitset! #{00} #{00} equal? #{00} make bitset! #{00})
+
 (equal? [] [])
 (equal? a-value: [] a-value)
 
@@ -502,9 +506,9 @@
         f: ["a" #a http://a a@a.com <a>]
         g: :a/b/(c: 'd/e/f)/(b/d: [:f/g h/i])
     ]
-    b-value: construct/only [
+    b-value: construct/only compose [
         a: 1.0 b: $1 c: 100% d: 0.01
-        e: [/a a 'a :a a: #"A" #[binary! [#{0000} 2]]]
+        e: [/a a 'a :a a: #"A" (next #{0000})]
         f: [#a <A> http://A a@A.com "A"]
         g: :a/b/(c: 'd/e/f)/(b/d: [:f/g h/i])
     ]

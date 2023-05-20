@@ -14,9 +14,9 @@
 ; binary!
 (strict-equal? #{00} #{00})
 ; binary versus bitset
-(not strict-equal? #{00} #[bitset! #{00}])
+(not strict-equal? #{00} make bitset! #{00})
 ; symmetry
-(equal? strict-equal? #[bitset! #{00}] #{00} strict-equal? #{00} #[bitset! #{00}])
+(equal? strict-equal? make bitset! #{00} #{00} strict-equal? #{00} make bitset! #{00})
 ; email versus text
 (
     a-value: to email! ""
@@ -79,8 +79,8 @@
     a-value: 0.0.0.0
     equal? strict-equal? to binary! a-value a-value strict-equal? a-value to binary! a-value
 )
-(strict-equal? #[bitset! #{00}] #[bitset! #{00}])
-(not strict-equal? #[bitset! #{}] #[bitset! #{00}])
+(strict-equal? make bitset! #{00} make bitset! #{00})
+(not strict-equal? make bitset! #{} make bitset! #{00})
 ; block!
 (strict-equal? [] [])
 ; reflexivity

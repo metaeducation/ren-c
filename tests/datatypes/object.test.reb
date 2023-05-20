@@ -4,8 +4,6 @@
 (object! = kind of make object! [x: 1])
 ; minimum
 (object? make object! [])
-; literal form
-(object? #[object! [[][]]])
 ; local words
 (
     x: 1

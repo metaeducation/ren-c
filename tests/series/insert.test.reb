@@ -74,16 +74,16 @@
 (
     a: make email! 0
     insert a #"0"
-    a == #[email! "0"]
+    a == make email! "0"
 )
 (
-    a: #[email! "0"]
+    a: make email! "0"
     b: make email! 0
     insert b first a
     a == b
 )
 (
-    a: #[email! "0"]
+    a: make email! "0"
     b: make email! 0
     insert b a
     a == b
@@ -92,16 +92,16 @@
 (
     a: make url! 0
     insert a #"0"
-    a == #[url! "0"]
+    a == make url! "0"
 )
 (
-    a: #[url! "0"]
+    a: make url! "0"
     b: make url! 0
     insert b first a
     a == b
 )
 (
-    a: #[url! "0"]
+    a: make url! "0"
     b: make url! 0
     insert b a
     a == b

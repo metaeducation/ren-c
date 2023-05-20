@@ -5,13 +5,13 @@
 (path! = kind of 'a/b)
 ; the minimum
 [#1947
-    (path? load-value "#[path! [[a] 1]]")
+    (path? load-value "[a]/1")
 ]
 
 ; ANY-PATH! are no longer positional
 ;(
 ;    all [
-;        path? a: load-value "#[path! [[a b c] 2]]"
+;        path? a: load-value "[a b c]/2"
 ;        2 == index? a
 ;    ]
 ;)
@@ -32,7 +32,7 @@
 )
 (
     blk: [[] 3]
-    3 == blk.#[block! [[] 1]]
+    3 == blk.([])
 )
 (
     blk: [_ 3]

@@ -20,7 +20,6 @@
 ; minimum
 (binary? #{})
 ; alternative literal representation
-(#{} == #[binary! #{}])
 ; access symmetry
 (
     b: #{0b}

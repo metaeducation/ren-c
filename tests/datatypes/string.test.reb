@@ -5,7 +5,7 @@
 ; minimum
 (text? "")
 ; alternative literal form
-("" == #[text! ""])
+("" == make text! "")
 ("" == make text! 0)
 
 ; !!! The test system uses TRANSCODE to get past strings with illegal content.
@@ -155,7 +155,7 @@
 ("^(esc)" = "^(1B)")
 ("^(back)" = "^(08)")
 ("^(del)" = "^(7f)")
-("ahoj" = #[text! "ahoj"])
+("ahoj" = make text! "ahoj")
 ("1" = to text! 1)
 ({""} = mold "")
 
