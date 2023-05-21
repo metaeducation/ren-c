@@ -1415,7 +1415,7 @@ DECLARE_NATIVE(remove_each)
     CLEAR_SERIES_INFO(series, HOLD);
 
     if (ANY_ARRAY(data)) {
-        if (Is_Breaking_Null(OUT)) {  // clean markers, don't do removals
+        if (not threw and Is_Breaking_Null(OUT)) {  // clean marks, don't remove
             Cell(const*) tail;
             Cell(*) temp = VAL_ARRAY_KNOWN_MUTABLE_AT(&tail, data);
             for (; temp != tail; ++temp) {
@@ -1456,7 +1456,7 @@ DECLARE_NATIVE(remove_each)
         assert(removals == 0);  // didn't goto, so no removals
     }
     else if (IS_BINARY(data)) {
-        if (Is_Breaking_Null(OUT)) {  // leave data unchanged
+        if (not threw and Is_Breaking_Null(OUT)) {  // leave data unchanged
             Drop_Mold(mo);
             goto done_finalizing;
         }
@@ -1484,7 +1484,7 @@ DECLARE_NATIVE(remove_each)
     }
     else {
         assert(ANY_STRING(data));
-        if (Is_Breaking_Null(OUT)) {  // leave data unchanged
+        if (not threw and Is_Breaking_Null(OUT)) {  // leave data unchanged
             Drop_Mold(mo);
             goto done_finalizing;
         }
