@@ -727,7 +727,9 @@ REBTYPE(Map)
         INCLUDE_PARAMS_OF_PICK_P;
         UNUSED(ARG(location));
 
-        Cell(const*) picker = ARG(picker);
+        Cell(const*) picker = ARG(picker);  // isotope pickers not allowed
+        if (Is_Isotope(picker))
+            return RAISE(Error_Bad_Isotope(picker));
 
         bool strict = false;
 
@@ -758,6 +760,8 @@ REBTYPE(Map)
         UNUSED(ARG(location));
 
         Cell(const*) picker = ARG(picker);  // isotope pickers not allowed
+        if (Is_Isotope(picker))
+            return RAISE(Error_Bad_Isotope(picker));
 
         // Fetching and setting with path-based access is case-preserving for
         // initial insertions.  However, the case-insensitivity means that all
