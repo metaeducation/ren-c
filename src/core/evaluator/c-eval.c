@@ -359,7 +359,7 @@ Bounce Evaluator_Executor(Frame(*) f)
             Begin_Enfix_Action(subframe, VAL_ACTION_LABEL(f_current));
                 // ^-- invisibles cache NO_LOOKAHEAD
 
-            assert(Is_Void(SPARE));
+            assert(Is_Fresh(SPARE));
             goto process_action;
         }
 
