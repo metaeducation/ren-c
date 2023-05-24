@@ -282,7 +282,7 @@ didn't: chain [:did :not]
 to-logic: func3 [return: [logic!] optional [<opt> any-value!]] [
     case [
         null3? :optional [fail "Can't turn void (null proxied) TO-LOGIC"]
-        blank? :optional [false]
+        blank? :optional [false]  ; blank acts like null
         true [to logic! :optional]
     ]
 ]

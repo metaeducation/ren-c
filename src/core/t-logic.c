@@ -92,18 +92,34 @@ DECLARE_NATIVE(nand_q)
 //
 //  to-logic: native [
 //
-//  "Synonym for TO-LOGIC!"
+//  "true if value is NOT a LOGIC! false or NULL"
 //
-//      return: "true if value is NOT a LOGIC! false, BLANK!, or NULL"
-//          [logic!]
-//      optional [<opt> any-value! logic!]
+//      return: [logic!]
+//      value [<opt> any-value!]
 //  ]
 //
 DECLARE_NATIVE(to_logic)
 {
     INCLUDE_PARAMS_OF_TO_LOGIC;
 
-    return Init_Logic(OUT, Is_Truthy(ARG(optional)));
+    return Init_Logic(OUT, Is_Truthy(ARG(value)));
+}
+
+
+//
+//  false-if-zero: native [
+//
+//  "False if the integer input is a zero"
+//
+//      return: [logic!]
+//      integer [integer!]
+//  ]
+//
+DECLARE_NATIVE(false_if_zero)
+{
+    INCLUDE_PARAMS_OF_FALSE_IF_ZERO;
+
+    return Init_Logic(OUT, VAL_INT64(ARG(integer)) != 0);
 }
 
 

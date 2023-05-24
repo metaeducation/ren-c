@@ -532,7 +532,7 @@ main-startup: func [
             "--debug" end (
                 ; was coerced to BLOCK! before, but what did this do?
                 ;
-                o.debug: to logic! param-or-die "DEBUG"
+                o.debug: to-logic param-or-die "DEBUG"
             )
         |
             "--do" end (
