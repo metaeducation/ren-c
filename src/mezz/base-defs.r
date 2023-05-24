@@ -481,6 +481,7 @@ run func* [
     get-word?:
     meta-word?:
     the-word?:
+    type-word?:
     issue?:
     binary?:
     text?:
@@ -494,21 +495,25 @@ run func* [
     get-path?:
     meta-path?:
     the-path?:
+    type-path?:
     tuple?:
     set-tuple?:
     get-tuple?:
     meta-tuple?:
     the-tuple?:
+    type-tuple?:
     block?:
     set-block?:
     get-block?:
     meta-block?:
     the-block?:
+    type-block?:
     group?:
     get-group?:
     set-group?:
     meta-group?:
     the-group?:
+    type-group?:
     map?:
     action?:
     varargs?:
