@@ -244,6 +244,7 @@ Array(*) Add_Parameter_Bits_Core(
         }
         else {
             Derelativize(PUSH(), item, specifier);
+            Clear_Cell_Flag(TOP, NEWLINE_BEFORE);
         }
 
         // !!! Review erroring policy--should probably not just be ignoring

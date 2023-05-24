@@ -50,6 +50,7 @@ lf: LF:    newline
 ; Type predicates
 
 null!: &(null?)
+nihil!: &(nihil?)
 none!: &(none?)
 void!: &(void?)
 refinement!: &(refinement?)

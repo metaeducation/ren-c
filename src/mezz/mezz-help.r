@@ -291,7 +291,7 @@ help: function [
         return none
     ]
 
-    if not action? :value [
+    match [action! activation!] :value else [
         print collect [
             keep [
                 (uppercase mold topic)
