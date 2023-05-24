@@ -105,7 +105,7 @@
 ; Not providing an argument is an error (too easy to pick up random arguments
 ; from another line if 0-arity were allowed)
 [
-    (did foo: func [return: [<opt> <void> any-value!]] [return none])
+    (did foo: func [return: [<opt> <void> any-value!] x] [return none])
 
     ~no-arg~ !! (foo)
 ]

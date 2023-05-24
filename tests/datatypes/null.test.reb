@@ -9,7 +9,7 @@
 ; be tested for and reacted to easily with things like DID, DIDN'T, THEN, ELSE.
 
 (null? null)
-(null? kind of null)
+(isotope! = kind of null)
 (not null? 1)
 
 ; Early designs for NULL did not let you get or set them from plain WORD!

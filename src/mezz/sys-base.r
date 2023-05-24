@@ -202,7 +202,7 @@ module: func [
     ]
     then ^arg-to-quit -> [
         quitting: true
-        set/any 'product unmeta arg-to-quit  ; !!! meta convention?
+        set/any 'product arg-to-quit  ; !!! meta convention?
     ]
 
     return mod
@@ -235,9 +235,9 @@ do*: func [
     ; * Isolating the executed code into a MODULE! so that it doesn't leak
     ;   into the caller's context.
     ;
-    ; * Turning <tag> identified script names to DO into a URL by looking it
-    ;   up in the modules library.  So `do <chess>` and `import <json>` use
-    ;   the same logic to figure out where that tag poitns.
+    ; * Turning @xxx identified script names to DO into a URL by looking it
+    ;   up in the modules library.  So `do @chess` and `import @json` use
+    ;   the same logic to figure out where that name points.
     ;
     ; * Setting system.script to reflect the executing script during its run,
     ;   and then putting it back when control is returned to the caller.

@@ -416,7 +416,7 @@ DECLARE_NATIVE(unquasi)
 //
 //  {Give the isotopic form of the plain argument (same as UNMETA QUASI)}
 //
-//      return: []  ; isotope!
+//      return: [isotope!]
 //      value "Any non-QUOTED!, non-QUASI value"
 //          [<opt> any-value!]  ; there isn't an any-nonquoted! typeset
 //  ]
@@ -445,7 +445,7 @@ DECLARE_NATIVE(isotopic)
 //  {Variant of UNQUOTE that also accepts QUASI! to make isotopes}
 //
 //      return: [<opt> <void> any-value!]
-//      value [blank! quoted! quasi!]
+//      value [quoted! quasi!]
 //  ]
 //
 DECLARE_NATIVE(unmeta)
