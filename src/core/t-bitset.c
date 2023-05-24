@@ -720,19 +720,19 @@ REBTYPE(Bitset)
         REBVAL *action;
         switch (sym) {
           case SYM_INTERSECT:
-            action = rebValue(":bitwise-and");
+            action = rebValue("unrun :bitwise-and");
             break;
 
           case SYM_UNION:
-            action = rebValue(":bitwise-or");
+            action = rebValue("unrun :bitwise-or");
             break;
 
           case SYM_DIFFERENCE:
-            action = rebValue(":bitwise-xor");
+            action = rebValue("unrun :bitwise-xor");
             break;
 
           case SYM_EXCLUDE:
-            action = rebValue(":bitwise-and-not");
+            action = rebValue("unrun :bitwise-and-not");
             break;
 
           default:

@@ -1,6 +1,7 @@
 ; datatypes/action.r
 
-(action? :abs)
+(activation? :abs)
+(action? unrun :abs)
 (not action? 1)
 (isotope! = kind of :abs)
 (action! = kind of unrun :abs)
