@@ -233,11 +233,11 @@
 ; evaluate block tests
 (
     success: false
-    evaluate/next [success: true success: false] #
-    success
+    evaluate/next [success: true success: false] 'pos
+    success and (pos = [success: false])
 )
 (
-    value: evaluate [1 2] 'b
+    value: evaluate/next [1 2] 'b
     did all [
         1 = value
         [2] = b
@@ -246,13 +246,16 @@
 (
     value: <overwritten>
     did all [
-        null? [value @]: evaluate/next []  ; @ requests po after step (null)
-        unset? 'value
+        void? value: evaluate/next [] 'pos ; @ requests pos after step (null)
+        pos = null
     ]
 )
 (
-    value: evaluate/next [trap [1 / 0]]
-    error? value
+    value: evaluate/next [trap [1 / 0]] 'pos
+    did all [
+        error? value
+        pos = []
+    ]
 )
 (
     f1: func [return: [integer!]] [evaluate [return 1 2] 2]
