@@ -151,7 +151,7 @@
         m.(null): 1020
     )
 
-    ~isotope-arg~ !! (
+    ~bad-isotope~ !! (
         m: make map! []
         m.(spread [a b c]): 1020
     )

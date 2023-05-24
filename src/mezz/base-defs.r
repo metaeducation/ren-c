@@ -543,7 +543,7 @@ to-lit-word: func* [return: [quoted!] value [any-value!]] [
 lit-path?: lambda [value] [
     to-logic all [
         quoted? value
-        word? unquote value
+        path? unquote value
     ]
 ]
 to-lit-path: func* [return: [quoted!] value [any-value!]] [
