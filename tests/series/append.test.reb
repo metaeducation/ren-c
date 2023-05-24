@@ -152,7 +152,7 @@
     "abcdefgh" = append/part "abc" spread ["defg" "hijk"] 5
 )]
 
-('illegal-zero-byte = (trap [append "abc" make char! 0]).id)
+('illegal-zero-byte = (trap [append "abc" codepoint-to-char 0]).id)
 ('illegal-zero-byte = (trap [append "abc" #{410041}]).id)
 
 

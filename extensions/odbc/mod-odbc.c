@@ -1535,7 +1535,7 @@ REBVAL *ODBC_Column_To_Rebol_Value(COLUMN *col)
             );
             return rebValue(
                 "append make text!", rebI(col->length),
-                    "map-each byte", rebR(binary), "[to char! byte]"
+                    "map-each byte", rebR(binary), "[codepoint-to-char byte]"
             ); }
         }
         break; }

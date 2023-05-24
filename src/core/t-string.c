@@ -265,11 +265,9 @@ Bounce TO_String(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg)
             //
             // `to issue! 1` is slated to keep the visual consistency intact,
             // so that you'd get #1 back.  With issue! and char! unified,
-            // that means a way to get a codepoint is needed.  Since this is
-            // more about capturing an internal implementation, that falls
-            // under AS ISSUE!, which could handle multi-codepoint TUPLE! too.
+            // that means a way to get a codepoint is needed.
             //
-            return RAISE("Use AS ISSUE! to convert integer codepoint to ISSUE!");
+            return RAISE("Use CODEPOINT-TO-CHAR for codepoint to ISSUE!");
         }
         if (IS_CHAR(arg) and VAL_CHAR(arg) == 0)
             return RAISE(Error_Illegal_Zero_Byte_Raw());  // `#` as codepoint 0

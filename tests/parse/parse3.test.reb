@@ -16,10 +16,12 @@
     count-up n 512 [
         if n = 1 [continue]
 
-        if didn't parse3 (append copy "" make char! n - 1) [set c any-char <end>] [
+        if didn't parse3 (append copy "" codepoint-to-char n - 1) [
+            set c any-char <end>
+        ][
             fail "Parse didn't work"
         ]
-        if c != make char! n - 1 [fail "Char didn't match"]
+        if c != codepoint-to-char n - 1 [fail "Char didn't match"]
     ]
     true
 )]

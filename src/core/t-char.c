@@ -155,11 +155,66 @@ Bounce MAKE_Issue(
 
 
 //
+//  codepoint-to-char: native [
+//
+//  {Make a character out of an integer codepoint}
+//
+//      return: [char!]
+//      codepoint [integer!]
+//  ]
+//
+DECLARE_NATIVE(codepoint_to_char)
+{
+    INCLUDE_PARAMS_OF_CODEPOINT_TO_CHAR;
+
+    uint32_t c = VAL_UINT32(ARG(codepoint));
+
+    Maybe_Init_Char(OUT, c);
+    return OUT;
+}
+
+
+//
+//  utf8-to-char: native [
+//
+//  {Make a single character out of a UTF-8 binary sequence}
+//
+//      return: [char!]
+//      utf8 [binary!]
+//  ]
+//
+DECLARE_NATIVE(utf8_to_char)
+{
+    INCLUDE_PARAMS_OF_UTF8_TO_CHAR;
+
+    Size size;
+    const Byte *encoded = VAL_BINARY_SIZE_AT(&size, ARG(utf8));
+
+    if (size == 0)
+        fail ("Empty binary passed to UTF8-TO-CHAR");
+
+    Codepoint c;
+    if (nullptr == Back_Scan_UTF8_Char(&c, encoded, &size))
+        fail ("Invalid UTF-8 Sequence found in UTF8-TO-CHAR");
+
+    assert(size != 0);  // Back_Scan() assumes one byte decrement
+
+    if (size != 1)
+        fail ("More than one codepoint found in UTF8-TO-CHAR conversion");
+
+    Init_Char_Unchecked(OUT, c);  // !!! Guaranteed good character?
+    return OUT;
+}
+
+
+//
 //  TO_Issue: C
 //
-// !!! We want `to char! 'x` to give #"x" back.  But `make char! "&nbsp;"`
-// might be best acting like #"&" ?  Consider in light of a general review
-// of the sematnics of MAKE and TO.
+// General semantics of TO and MAKE have been historically confusing, and
+// are further complicated by CHAR! no longer being a unique fundamental
+// type (but rather a single-codepoint form of ISSUE!).  Functionality is
+// divided into functions like CODEPOINT-TO-CHAR and UTF8-TO-CHAR, which
+// leave things like TO ISSUE! 10 to be #10.
 //
 Bounce TO_Issue(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg)
 {

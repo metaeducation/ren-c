@@ -44,7 +44,7 @@
 ;
 (true = do load #{23225E4022203D2023225E2830302922})  ; ^ @ = ^ (00)
 (true = do load #{23225E286E756C6C2922203D2023225E2830302922})  ; ^ (null) = ^ (00)
-((load-value #{23225E2830302922}) = make char! 0)  ; ^ (00)
+((load-value #{23225E2830302922}) = codepoint-to-char 0)  ; ^ (00)
 
 (#"^A" = #"^(01)")
 (#"^B" = #"^(02)")
@@ -190,7 +190,7 @@
 ({#a} = mold #a)
 
 (
-    c: make char! 0
+    c: codepoint-to-char 0
     did all [
         char? c
         0 = codepoint of c
@@ -265,26 +265,22 @@
 )
 
 
-[#1043
-    ~bad-make-arg~ !! (make char! #{})
-    ~???~ !! (make char! "")
-]
-
-
 [#1031
+    ~???~ !! (utf8-to-char #{})
+
     ; 1 UTF-8 byte
-    (#"b" = make char! #{62})
+    (#"b" = utf8-to-char #{62})
     (#{62} = to binary! #"b")
 
     ; 2 UTF-8 bytes
-    (#"à" = make char! #{C3A0})
+    (#"à" = utf8-to-char #{C3A0})
     (#{C3A0} = to binary! #"à")
 
     ; 3 UTF-8 bytes
-    (#"漢" = make char! #{E6BCA2})
+    (#"漢" = utf8-to-char #{E6BCA2})
     (#{E6BCA2} = to binary! #"漢")
 
     ; 4 UTF-8 bytes
-    (#"😺" = make char! #{F09F98BA})
+    (#"😺" = utf8-to-char #{F09F98BA})
     (#{F09F98BA} = to binary! #"😺")
 ]

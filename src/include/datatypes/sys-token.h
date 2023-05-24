@@ -143,7 +143,7 @@ inline static REBVAL *Init_Char_Unchecked_Untracked(Cell(*) out, Codepoint c) {
 #define Init_Char_Unchecked(out,c) \
     TRACK(Init_Char_Unchecked_Untracked((out), (c)))
 
-inline static Context(*) Maybe_Init_Char_Untracked(Cell(*) out, Codepoint c) {
+inline static Context(*) Maybe_Init_Char_Untracked(Cell(*) out, uint32_t c) {
     if (c > MAX_UNI) {
         DECLARE_LOCAL (temp);
         return Error_Codepoint_Too_High_Raw(Init_Integer(temp, c));
