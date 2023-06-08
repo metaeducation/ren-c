@@ -35,7 +35,7 @@
     (not head? bind next [1] 'rebol)
 ]
 [#892 #216
-    (y: 'x reeval lambda [<local> x] [x: true get bind y 'x])
+    (y: 'x reeval unrun lambda [<local> x] [x: true get bind y 'x])
 ]
 
 [#2086 (
@@ -44,6 +44,6 @@
 )]
 
 [#1893 (
-    word: reeval lambda [x] ['x] 1
+    word: reeval unrun lambda [x] ['x] 1
     same? word bind 'x word
 )]

@@ -76,7 +76,7 @@
     null? (~null~ then [fail ~unreachable~])
 )
 
-(<hello> = <hello> ~ then [<isotope>])
+(~ then [true])
 
 ; Although branches can be triggered by heavy null, if functions ask to
 ; receive the value it is decayed, so they do not have to be ^META.  But if
@@ -87,8 +87,8 @@
     ('~[~null~]~ then x -> [x = the ~null~])
     ('~[~null~]~ then ^x -> [x = the '~[~null~]~])
 
-    (catch [~null~ also x -> [throw (x = null)]])
-    (catch [~null~ also ^x -> [throw (x = the ~null~)]])
+    (catch [~[~null~]~ also x -> [throw (x = null)]])
+    (catch [~[~null~]~ also ^x -> [throw (x = the ~[~null~]~)]])
     (catch ['~null~ also ^x -> [throw (x = the '~null~)]])
 
     (~[]~ *else x -> [null = x])

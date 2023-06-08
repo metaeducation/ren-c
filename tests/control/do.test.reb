@@ -265,7 +265,7 @@
 (1 = do [do [1]])
 (1 = do "do [1]")
 (1 == 1)
-(3 = reeval :reeval :add 1 2)
+(3 = reeval unrun :reeval unrun :add 1 2)
 ; infinite recursion for block
 (
     x: 0

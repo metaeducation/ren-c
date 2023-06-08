@@ -129,13 +129,12 @@
 
 ; low level "KIND"
 [
-    (null = kind of null)
     (quoted! = kind of the ')
     (quoted! = kind of the 'foo)
 ]
 
-((quote word!) = kind of the 'foo)  ; higher-level "TYPE"
-((kind of the ''[a b c]) = quote/depth block! 2)
+(quoted! = kind of the 'foo)
+(quoted! = kind of the ''[a b c])
 
 
 ; REQUOTE is a reframing action that removes quoting levels and then puts

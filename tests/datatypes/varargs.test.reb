@@ -16,7 +16,7 @@
 ; leaked VARARGS! cannot be accessed after call is over
 ;
 ~frame-not-on-stack~ !! (
-    take reeval (foo: lambda [x [integer! <variadic>]] [x])
+    take reeval (unrun foo: lambda [x [integer! <variadic>]] [x])
 )
 
 (
@@ -85,7 +85,7 @@
     )
 
     ([] = do [soft])
-    ~bad-word-get~ !! (
+    ~literal-left-tuple~ !! (
         a: ~end~
         (a soft)
     )
@@ -103,7 +103,7 @@
     )
 
     ([] = do [hard])
-    ~bad-word-get~ !! (
+    ~literal-left-tuple~ !! (
         a: ~end~
         (a hard)
     )

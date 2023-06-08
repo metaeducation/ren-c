@@ -81,7 +81,7 @@
     (30 = do compose [(group)])
     (30 = do compose [(group)])
     (30 = do compose/deep [do [(group)]])
-    (30 = reeval does [do compose [(group)]])
+    (30 = reeval unrun does [do compose [(group)]])
 
     ; Unrelated USE should not interfere
     ;

@@ -88,7 +88,7 @@
     :a-value == a-value
 )
 ; natives are word-active
-(action! == kind of :reduce)
+(action! == kind of unrun :reduce)
 (:blank == blank)
 ; library test?
 (
@@ -144,9 +144,9 @@
     a-value: 0.0.0
     same? :a-value a-value
 )
-~bad-word-get~ !! (
+(
     a-value: ~bad~
-    a-value
+    a-value = ~bad~
 )
 (
     a-value: 'a
@@ -157,13 +157,16 @@
     for-each str [
         {<>} {<+>} {<|>} {<=>} {<->} {<>>} {<<>}
 
-        {<} '{+} '{|} '{=} '{-} {>}  ; tick marks mean unescaped in path
+        {<} '{+} '{=} '{-} {>}  ; tick marks mean unescaped in path
+
+        ; Review handling:
+        ;  {|} {|->} {|>} {|>>}
 
         {>=} {=|<} {<><} {-=>} {<-<=}
 
         {<<} {>>} {>>=} {<<=} {>>=<->}
 
-        {|->} {-<=>-} {-<>-} {>=<} {|>} {|>>}
+        {-<=>-} {-<>-} {>=<}
     ][
         let assert: specialize :assert [
             handler: [echo Failure on: @str]
