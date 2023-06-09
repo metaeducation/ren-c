@@ -345,7 +345,7 @@ help: function [
     ] else [
         print [
             _ _ _ _ (uppercase mold topic)
-                form maybe args, form maybe refinements
+                maybe form maybe args, maybe form maybe refinements
         ]
     ]
 
@@ -382,7 +382,7 @@ help: function [
 
     print newline
     print [
-        "RETURNS:" mold return-type else ["(undocumented)"]
+        "RETURNS:" mold any [return-type, "(undocumented)"]
     ]
     if return-note [
         print [_ _ _ _ return-note]

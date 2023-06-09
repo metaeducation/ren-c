@@ -176,9 +176,9 @@
 ]
 
 [
-    (void? mold void)
-    (null? mold null)
+    (null? mold void)
+    ~bad-isotope~ !! (mold null)
 
-    (void? form void)
-    (null? form null)
+    (null? form void)
+    ~bad-isotope~ !! (form null)
 ]

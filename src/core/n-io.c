@@ -30,10 +30,10 @@
 //
 //  "Converts a value to a human-readable string."
 //
-//      return: "Returns void if input is void, null if the input is null"
-//          [<void> <opt> text!]
+//      return: "Returns null if input is void"
+//          [<void> text!]
 //      value "The value to form (currently errors on isotopes)"
-//          [<void> <opt> any-value!]
+//          [<maybe> any-cell!]
 //  ]
 //
 DECLARE_NATIVE(form)
@@ -41,13 +41,6 @@ DECLARE_NATIVE(form)
     INCLUDE_PARAMS_OF_FORM;
 
     REBVAL *v = ARG(value);
-    if (Is_Void(v))
-        return VOID;
-    if (Is_Nulled(v))
-        return nullptr;
-
-    if (Is_Quasi_Word(v))
-        fail (ARG(value));
 
     return Init_Text(OUT, Copy_Form_Value(v, 0));
 }
@@ -58,11 +51,11 @@ DECLARE_NATIVE(form)
 //
 //  "Converts value to a REBOL-readable string"
 //
-//      return: "Returns void if input is void, null if input is null"
-//          [<opt> <void> text!]
+//      return: "Returns null if input is void"
+//          [<opt> text!]
 //      @truncated "Whether the mold was truncated"
 //          [logic!]
-//      value [<opt> <void> any-value!]
+//      value [<maybe> any-cell!]
 //      /only "For a block value, mold only its contents, no outer []"
 //      /all "Use construction syntax"
 //      /flat "No indentation"
@@ -75,12 +68,6 @@ DECLARE_NATIVE(mold)
     INCLUDE_PARAMS_OF_MOLD;
 
     REBVAL *v = ARG(value);
-    if (Is_Void(v))
-        return VOID;
-    if (Is_Nulled(v)) {
-        Init_Nulled(OUT);
-        return Proxy_Multi_Returns(frame_);
-    }
 
     DECLARE_MOLD (mo);
     if (REF(all))
