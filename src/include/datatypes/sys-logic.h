@@ -66,10 +66,15 @@ inline static bool VAL_LOGIC(Cell(const*) v) {
 
 inline static bool Is_Truthy(Cell(const*) v) {
     if (QUOTE_BYTE(v) == ISOTOPE_0) {
+        assert(Is_Isotope_Stable(v));
+        if (not Is_Word_Isotope(v))
+            return true;  // all non-word isotopes are truthy
         if (Is_Nulled(v))  // blank isotope is null, falsey
             return false;
-        if (IS_LOGIC(v))
-            return VAL_LOGIC(v);
+        if (Is_True(v))
+            return true;
+        if (Is_False(v))
+            return false;
         fail (Error_Bad_Isotope(v));  // !!! special error?
     }
 

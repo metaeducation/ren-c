@@ -566,10 +566,10 @@ inline static REBVAR *Force_Lib_Var(SymId id) {
 #include "datatypes/sys-char.h"  // use Init_Integer() for bad codepoint error
 #include "datatypes/sys-string.h"  // SymId needed for typesets
 
+#include "datatypes/sys-quoted.h"
 #include "datatypes/sys-logic.h"
 
 #include "datatypes/sys-pair.h"
-#include "datatypes/sys-quoted.h"  // pairings for storage, void used as well
 
 #include "sys-stack.h"
 

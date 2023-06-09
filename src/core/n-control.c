@@ -850,9 +850,6 @@ DECLARE_NATIVE(all)
 
 } process_condition: {  //////////////////////////////////////////////////////
 
-    if (Is_Activation(condition) or Is_Splice(condition))
-        goto update_out_from_spare;  // current exceptions (maybe more?)
-
     if (Is_Falsey(condition)) {
         Drop_Frame(SUBFRAME);
         return nullptr;
@@ -982,9 +979,6 @@ DECLARE_NATIVE(any)
     goto process_condition;
 
 } process_condition: {  //////////////////////////////////////////////////////
-
-    if (Is_Activation(condition) or Is_Splice(condition))
-        goto return_out;  // current exceptions (maybe more?)
 
     if (Is_Truthy(condition))
         goto return_out;
