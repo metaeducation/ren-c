@@ -67,8 +67,10 @@
         (to-word unquote :a-value) == (reeval :a-value)
     ]
 )
-(true = reeval true)
-(false = reeval false)
+
+~bad-isotope~ !! (true = reeval true)
+~bad-isotope~ !! (false = reeval false)
+
 ($1 == reeval $1)
 (null? reeval (specialize :of [property: 'type]) null)
 (null? do maybe null)

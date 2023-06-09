@@ -47,7 +47,7 @@
 
 ; NON is an inverted form of ENSURE, that FAILs when the argument *matches*
 [
-    (null = non action! :append)
+    (null = non activation! :append)
     (10 = non action! 10)
 
     (null = non integer! 10)
@@ -62,7 +62,7 @@
 ; PROHIBIT is an inverted version of ENSURE, where it must not match
 ; probably needs a better name, even ENSURE-NOT is likely clearer
 [
-    ~???~ !! (prohibit action! :append)
+    ~???~ !! (prohibit activation! :append)
     (10 = prohibit action! 10)
 
     ~???~ !! (prohibit integer! 10)

@@ -672,8 +672,8 @@ non: redescribe [
     {Pass through value if it *doesn't* match test, else null (e.g. MATCH/NOT)}
 ](
     enclose :match lambda [f] [
-        let value: f.value  ; DO makes frame arguments unavailable
-        light (do f then [null] else [value])
+        let value: :f.value  ; DO makes frame arguments unavailable
+        light (do f then [null] else [:value])
     ]
 )
 
@@ -681,7 +681,7 @@ prohibit: redescribe [
     {Pass through value if it *doesn't* match test, else fail (e.g. ENSURE/NOT)}
 ](
     enclose :match lambda [f] [
-        let value: f.value  ; DO makes frame arguments unavailable
+        let value: :f.value  ; DO makes frame arguments unavailable
         do f then [
             ; !!! Can't use FAIL/WHERE until we can implicate the callsite.
             ;
@@ -692,7 +692,7 @@ prohibit: redescribe [
                     kind of :value else ["VOID"]
             ]
         ]
-        value
+        :value
     ]
 )
 
