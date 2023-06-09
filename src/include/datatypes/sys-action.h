@@ -607,13 +607,14 @@ inline static Bounce Native_Thrown_Result(Frame(*) frame_) {
 }
 
 
-// Asserts that value is not void or pure null
+// Turns voids and nulls into boxed form to be THEN-reactive, vs ELSE
 //
 inline static Bounce Native_Branched_Result(Frame(*) frame_, Value(*) v) {
     assert(v == frame_->out);  // would not be zero cost if we supported copy
-    assert(not Is_Void(v));
-    assert(not Is_Nulled(v));  // unchecked, as isotopes ok
-    UNUSED(v);
+    if (Is_Void(v))
+        Init_Heavy_Void(v);
+    else if (Is_Nulled(v))
+        Init_Heavy_Null(v);
     return frame_->out;
 }
 

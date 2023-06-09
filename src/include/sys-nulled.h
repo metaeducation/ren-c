@@ -137,9 +137,6 @@ inline bool Is_Quasi_Null(Cell(const*) v) {
     return VAL_WORD_ID(v) == SYM_NULL;
 }
 
-#define Is_Breaking_Null(out) \
-    (Is_Nulled(out))  // helps note usage of null to mean break loop
-
 #define Init_Meta_Of_Null(out) \
     Init_Quasi_Null(out)
 

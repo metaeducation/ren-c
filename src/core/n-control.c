@@ -703,7 +703,6 @@ DECLARE_NATIVE(match)
     //     == ~null~
     //
     Copy_Cell(OUT, v);  // Otherwise, input is the result
-    Isotopify_If_Falsey(OUT);
 
     return BRANCHED(OUT);
 }
@@ -755,7 +754,7 @@ DECLARE_NATIVE(all)
 //    is falsey.
 //
 //    There are some reasonable intuitive arguments for that--*if* those are
-//    your only two choices.  Because Ren-C has the option of isotopes, it's
+//    your only two choices.  Because Ren-C has the option of voids, it's
 //    better to signal to the caller that nothing happened.  For an example
 //    of how useful it is, see the loop wrapper FOR-BOTH.  Other behaviors
 //    can be forced with (all [... null]) or (any [... true])
@@ -1200,7 +1199,6 @@ DECLARE_NATIVE(case)
     Drop_Frame(SUBFRAME);
 
     if (not Is_Fresh(SPARE)) {  // prioritize fallout result, see [4]
-        Isotopify_If_Nulled(SPARE);
         Move_Cell(OUT, SPARE);
         return BRANCHED(OUT);
     }
@@ -1611,8 +1609,7 @@ DECLARE_NATIVE(catch)
 
     CATCH_THROWN(OUT, frame_); // thrown value
 
-    Isotopify_If_Falsey(OUT);  // a caught NULL triggers THEN, not ELSE
-    return BRANCHED(OUT);
+    return BRANCHED(OUT);  // a caught NULL triggers THEN, not ELSE
 }}
 
 

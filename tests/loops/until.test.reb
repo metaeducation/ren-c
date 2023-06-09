@@ -55,14 +55,20 @@
     ]
 )
 
-; UNTIL should error upon receiving isotopes, because it would be misleading
-; for instance if you wrote `until [match [logic!] false]` and it decayed
-; the ~false~ isotope to a plain #[false], and did not break the loop.  The
-; error helps you realize something is wrong...
+; UNTIL truth tests the results, which means unstable isotopes have to be
+; decayed to run that test.
 [
-    ~bad-isotope~ !! (
-        until [match [logic!] false]
-    )
+    (1 = until [pack [1 2]])
+    ('~['1 '2]~ = until [meta pack [1 2]])
+]
+
+; At one time, UNTIL errored upon receiving "isotopes", so that cases like
+; `until [match [logic!] false]` would raise an error on a ~false~ isotopic
+; word--as opposed to a plain #[false] value.  This protection no longer made
+; sense once ~false~ the isotopic word *was* the representation of falseness.
+; So there's no stopping you shooting yourself in the foot with MATCH here,
+; you need to use something like DID.
+[
     (
         true = until [did match logic! false]
     )

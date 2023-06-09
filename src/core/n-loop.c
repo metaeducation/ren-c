@@ -46,7 +46,7 @@
 //
 //        for-each x [1 2 3] [if x != 3 [x]]  =>  ~()~ isotope
 //
-bool Try_Catch_Break_Or_Continue(Value(*) out, Frame(*) frame_)
+bool Try_Catch_Break_Or_Continue(Value(*) out, Frame(*) frame_, bool* breaking)
 {
     const Value(*) label = VAL_THROWN_LABEL(frame_);
 
@@ -58,7 +58,8 @@ bool Try_Catch_Break_Or_Continue(Value(*) out, Frame(*) frame_)
 
     if (ACT_DISPATCHER(VAL_ACTION(label)) == &N_break) {
         CATCH_THROWN(out, frame_);
-        assert(Is_Nulled(out)); // BREAK must always return NULL
+        Init_Trash(out);  // caller must interpret breaking flag
+        *breaking = true;
         return true;
     }
 
@@ -69,8 +70,9 @@ bool Try_Catch_Break_Or_Continue(Value(*) out, Frame(*) frame_)
         // in cases like MAP-EACH (one wants a continue to not add any value)
         //
         CATCH_THROWN(out, frame_);
-        assert(not Is_Nulled(out));  // heavy null is OK
-        assert(not Is_Void(out));  // heavy void is OK, not plain, see [1]
+        if (Is_Isotope(out))
+            assert(not Is_Isotope_Unstable(out));
+        *breaking = false;
         return true;
     }
 
@@ -120,11 +122,6 @@ DECLARE_NATIVE(continue)
     if (not REF(with))
         Init_Void(v);  // CONTINUE and CONTINUE/WITH VOID act the same
 
-    if (Is_Void(v))
-        Init_Heavy_Void(v);
-    else if (Is_Nulled(v))
-        Init_Heavy_Null(v);
-
     return Init_Thrown_With_Label(FRAME, v, Lib(CONTINUE));
 }
 
@@ -159,10 +156,11 @@ static Bounce Loop_Series_Common(
     REBINT s = VAL_INDEX(start);
     if (s == end) {
         if (Do_Branch_Throws(OUT, body)) {
-            if (not Try_Catch_Break_Or_Continue(OUT, FRAME))
+            bool breaking;
+            if (not Try_Catch_Break_Or_Continue(OUT, FRAME, &breaking))
                 return THROWN;
 
-            if (Is_Breaking_Null(OUT))
+            if (breaking)
                 return nullptr;
         }
         return OUT;
@@ -182,10 +180,11 @@ static Bounce Loop_Series_Common(
             : cast(REBINT, *state) >= end
     ){
         if (Do_Branch_Throws(OUT, body)) {
-            if (not Try_Catch_Break_Or_Continue(OUT, FRAME))
+            bool breaking;
+            if (not Try_Catch_Break_Or_Continue(OUT, FRAME, &breaking))
                 return THROWN;
 
-            if (Is_Breaking_Null(OUT))
+            if (breaking)
                 return nullptr;
         }
 
@@ -236,10 +235,11 @@ static Bounce Loop_Integer_Common(
     //
     if (start == end) {
         if (Do_Branch_Throws(OUT, body)) {
-            if (not Try_Catch_Break_Or_Continue(OUT, FRAME))
+            bool breaking;
+            if (not Try_Catch_Break_Or_Continue(OUT, FRAME, &breaking))
                 return THROWN;
 
-            if (Is_Breaking_Null(OUT))
+            if (breaking)
                 return nullptr;
         }
         return BRANCHED(OUT);
@@ -255,10 +255,11 @@ static Bounce Loop_Integer_Common(
 
     while (counting_up ? *state <= end : *state >= end) {
         if (Do_Branch_Throws(OUT, body)) {
-            if (not Try_Catch_Break_Or_Continue(OUT, FRAME))
+            bool breaking;
+            if (not Try_Catch_Break_Or_Continue(OUT, FRAME, &breaking))
                 return THROWN;
 
-            if (Is_Breaking_Null(OUT))
+            if (breaking)
                 return nullptr;
         }
 
@@ -319,10 +320,11 @@ static Bounce Loop_Number_Common(
     //
     if (s == e) {
         if (Do_Branch_Throws(OUT, body)) {
-            if (not Try_Catch_Break_Or_Continue(OUT, FRAME))
+            bool breaking;
+            if (not Try_Catch_Break_Or_Continue(OUT, FRAME, &breaking))
                 return THROWN;
 
-            if (Is_Breaking_Null(OUT))
+            if (breaking)
                 return nullptr;
         }
         return BRANCHED(OUT);
@@ -336,10 +338,11 @@ static Bounce Loop_Number_Common(
 
     while (counting_up ? *state <= e : *state >= e) {
         if (Do_Branch_Throws(OUT, body)) {
-            if (not Try_Catch_Break_Or_Continue(OUT, FRAME))
+            bool breaking;
+            if (not Try_Catch_Break_Or_Continue(OUT, FRAME, &breaking))
                 return THROWN;
 
-            if (Is_Breaking_Null(OUT))
+            if (breaking)
                 return nullptr;
         }
 
@@ -524,10 +527,11 @@ DECLARE_NATIVE(for_skip)
         }
 
         if (Do_Branch_Throws(OUT, ARG(body))) {
-            if (not Try_Catch_Break_Or_Continue(OUT, FRAME))
+            bool breaking;
+            if (not Try_Catch_Break_Or_Continue(OUT, FRAME, &breaking))
                 return THROWN;
 
-            if (Is_Breaking_Null(OUT))
+            if (breaking)
                 return nullptr;
         }
 
@@ -643,8 +647,9 @@ DECLARE_NATIVE(cycle)
 
 } handle_thrown: {  /////////////////////////////////////////////////////////
 
-    if (Try_Catch_Break_Or_Continue(OUT, FRAME)) {
-        if (Is_Breaking_Null(OUT))
+    bool breaking;
+    if (Try_Catch_Break_Or_Continue(OUT, FRAME, &breaking)) {
+        if (breaking)
             return nullptr;
 
         return CATCH_CONTINUE(OUT, body);  // plain continue
@@ -996,6 +1001,8 @@ DECLARE_NATIVE(for_each)
 
     Value(*) iterator = ARG(return);  // reuse to hold Loop_Each_State
 
+    bool breaking = false;
+
     enum {
         ST_FOR_EACH_INITIAL_ENTRY = STATE_0,
         ST_FOR_EACH_RUNNING_BODY
@@ -1037,10 +1044,10 @@ DECLARE_NATIVE(for_each)
 } body_result_in_spare_or_threw: {  //////////////////////////////////////////
 
     if (THROWING) {
-        if (not Try_Catch_Break_Or_Continue(OUT, FRAME))
+        if (not Try_Catch_Break_Or_Continue(OUT, FRAME, &breaking))
             goto finalize_for_each;
 
-        if (Is_Breaking_Null(OUT))
+        if (breaking)
             goto finalize_for_each;
     }
 
@@ -1053,10 +1060,13 @@ DECLARE_NATIVE(for_each)
     if (THROWING)
         return THROWN;
 
+    if (breaking)
+        return nullptr;
+
     if (Is_Fresh(OUT))
         return VOID;
 
-    return OUT;
+    return BRANCHED(OUT);
 }}
 
 
@@ -1144,10 +1154,11 @@ DECLARE_NATIVE(every)
 } body_result_in_spare: {  ///////////////////////////////////////////////////
 
     if (THROWING) {
-        if (not Try_Catch_Break_Or_Continue(SPARE, FRAME))
+        bool breaking;
+        if (not Try_Catch_Break_Or_Continue(SPARE, FRAME, &breaking))
             goto finalize_every;
 
-        if (Is_Breaking_Null(SPARE)) {
+        if (breaking) {
             Init_Nulled(OUT);
             goto finalize_every;
         }
@@ -1285,6 +1296,7 @@ DECLARE_NATIVE(remove_each)
         : SER_USED(series);  // temp read-only, this won't change
 
     bool threw = false;
+    bool breaking = false;
 
     REBLEN index = start;
     while (index < len) {
@@ -1319,12 +1331,12 @@ DECLARE_NATIVE(remove_each)
         }
 
         if (Do_Any_Array_At_Throws(OUT, body, SPECIFIED)) {
-            if (not Try_Catch_Break_Or_Continue(OUT, FRAME)) {
+            if (not Try_Catch_Break_Or_Continue(OUT, FRAME, &breaking)) {
                 threw = true;
                 goto finalize_remove_each;
             }
 
-            if (Is_Breaking_Null(OUT)) {  // break semantics are no-op, see [4]
+            if (breaking) {  // break semantics are no-op, see [4]
                 assert(start < len);
                 goto finalize_remove_each;
             }
@@ -1415,7 +1427,7 @@ DECLARE_NATIVE(remove_each)
     CLEAR_SERIES_INFO(series, HOLD);
 
     if (ANY_ARRAY(data)) {
-        if (not threw and Is_Breaking_Null(OUT)) {  // clean marks, don't remove
+        if (not threw and breaking) {  // clean marks, don't remove
             Cell(const*) tail;
             Cell(*) temp = VAL_ARRAY_KNOWN_MUTABLE_AT(&tail, data);
             for (; temp != tail; ++temp) {
@@ -1456,7 +1468,7 @@ DECLARE_NATIVE(remove_each)
         assert(removals == 0);  // didn't goto, so no removals
     }
     else if (IS_BINARY(data)) {
-        if (not threw and Is_Breaking_Null(OUT)) {  // leave data unchanged
+        if (not threw and breaking) {  // leave data unchanged
             Drop_Mold(mo);
             goto done_finalizing;
         }
@@ -1484,7 +1496,7 @@ DECLARE_NATIVE(remove_each)
     }
     else {
         assert(ANY_STRING(data));
-        if (not threw and Is_Breaking_Null(OUT)) {  // leave data unchanged
+        if (not threw and breaking) {  // leave data unchanged
             Drop_Mold(mo);
             goto done_finalizing;
         }
@@ -1516,7 +1528,7 @@ DECLARE_NATIVE(remove_each)
     if (threw)
         return THROWN;
 
-    if (Is_Breaking_Null(OUT))
+    if (breaking)
         return nullptr;
 
     return Init_Integer(OUT, removals);
@@ -1659,10 +1671,11 @@ DECLARE_NATIVE(map)
 } body_result_in_spare: {  ///////////////////////////////////////////////////
 
     if (THROWING) {
-        if (not Try_Catch_Break_Or_Continue(SPARE, FRAME))
+        bool breaking;
+        if (not Try_Catch_Break_Or_Continue(SPARE, FRAME, &breaking))
             goto finalize_map;
 
-        if (Is_Breaking_Null(SPARE)) {
+        if (breaking) {
             Init_Nulled(OUT);
             goto finalize_map;
         }
@@ -1772,10 +1785,11 @@ DECLARE_NATIVE(repeat)
 } body_result_in_out: {  /////////////////////////////////////////////////////
 
     if (THROWING) {
-        if (not Try_Catch_Break_Or_Continue(OUT, FRAME))
+        bool breaking;
+        if (not Try_Catch_Break_Or_Continue(OUT, FRAME, &breaking))
             return THROWN;
 
-        if (Is_Breaking_Null(OUT))
+        if (breaking)
             return nullptr;
     }
 
@@ -1880,10 +1894,11 @@ DECLARE_NATIVE(for)
 } body_result_in_out: {  /////////////////////////////////////////////////////
 
     if (THROWING) {
-        if (not Try_Catch_Break_Or_Continue(OUT, FRAME))
+        bool breaking;
+        if (not Try_Catch_Break_Or_Continue(OUT, FRAME, &breaking))
             return THROWN;
 
-        if (Is_Breaking_Null(OUT))
+        if (breaking)
             return nullptr;
     }
 
@@ -1919,22 +1934,19 @@ DECLARE_NATIVE(until)
 //
 // 1. When CONTINUE has an argument, it acts as if the loop body evaluated to
 //    that argument.  But UNTIL's condition and body are the same.  That means
-//    CONTINUE TRUE will stop the UNTIL and return TRUE, CONTINUE 10 will stop
-//    and return 10, etc.
+//    CONTINUE/WITH TRUE will stop the UNTIL and return TRUE, CONTINUE/WITH 10
+//    will stop and return 10, etc.
 //
-// 2. Purusant to [1], we want CONTINUE (or CONTINUE VOID) to keep the loop
+// 2. Testing the body result for truthiness or falseyness means that the
+//    evaluated-to-value must be decayed.  Hence UNTIL cannot return something
+//    like a pack...it must be META'd and the result UNMETA'd...with all
+//    packs quasiforms being considered truthy.
+//
+// 3. Purusant to [1], we want CONTINUE (or CONTINUE VOID) to keep the loop
 //    running.  For parity between what continue does with an argument and
 //    what the loop does if the body evaluates to that argument, it suggests
 //    tolerating a void body result as intent to continue the loop also.
 //
-// 3. While some cases may want to decay isotopes for convenience, this is
-//    not such a case.  Imagine:
-//
-//        until [match [<opt>] get-queue-item]
-//
-//    The likely intent is that null is supposed to stop the loop.  Erroring
-//    on the ~null~ isotope draws attention to the problem, so they know to
-//    use DID MATCH or CATCH/THROW the null.
 {
     INCLUDE_PARAMS_OF_UNTIL;
 
@@ -1964,10 +1976,11 @@ DECLARE_NATIVE(until)
 } body_result_in_out: {  /////////////////////////////////////////////////////
 
     if (THROWING) {
-        if (not Try_Catch_Break_Or_Continue(OUT, FRAME))
+        bool breaking;
+        if (not Try_Catch_Break_Or_Continue(OUT, FRAME, &breaking))
             return THROWN;
 
-        if (Is_Breaking_Null(OUT))
+        if (breaking)
             return nullptr;
 
         // continue acts like body evaluated to its argument, see [1]
@@ -1983,14 +1996,14 @@ DECLARE_NATIVE(until)
 
 } predicate_result_in_spare: {  //////////////////////////////////////////////
 
-    Isotopify_If_Nulled(OUT);  // predicates can like NULL, reserved for BREAK
-
     condition = SPARE;
     goto test_condition;
 
 } test_condition: {  /////////////////////////////////////////////////////////
 
-    if (not Is_Void(condition)) {  // skip voids, see [2]
+    Decay_If_Unstable(condition);  // must decay for truth test, see [2]
+
+    if (not Is_Void(condition)) {  // skip voids, see [3]
         if (Is_Truthy(condition))
             return BRANCHED(OUT);  // truthy result, return value!
     }
@@ -2082,10 +2095,11 @@ DECLARE_NATIVE(while)
 } body_was_evaluated: {  /////////////////////////////////////////////////////
 
     if (THROWING) {
-        if (not Try_Catch_Break_Or_Continue(OUT, FRAME))
+        bool breaking;
+        if (not Try_Catch_Break_Or_Continue(OUT, FRAME, &breaking))
             return THROWN;
 
-        if (Is_Breaking_Null(OUT))
+        if (breaking)
             return nullptr;
     }
 

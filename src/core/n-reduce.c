@@ -213,6 +213,8 @@ DECLARE_NATIVE(reduce_each)
     Value(*) block = ARG(block);
     Value(*) body = ARG(body);
 
+    bool breaking = false;
+
     enum {
         ST_REDUCE_EACH_INITIAL_ENTRY = STATE_0,
         ST_REDUCE_EACH_REDUCING_STEP,
@@ -276,10 +278,10 @@ DECLARE_NATIVE(reduce_each)
 } body_result_in_out: {  /////////////////////////////////////////////////////
 
     if (THROWING) {
-        if (not Try_Catch_Break_Or_Continue(OUT, FRAME))
+        if (not Try_Catch_Break_Or_Continue(OUT, FRAME, &breaking))
             goto finished;
 
-        if (Is_Breaking_Null(OUT))
+        if (breaking)
             goto finished;
     }
 
@@ -298,7 +300,7 @@ DECLARE_NATIVE(reduce_each)
     if (Is_Fresh(OUT))  // body never ran
         return VOID;
 
-    if (Is_Breaking_Null(OUT))
+    if (breaking)
         return nullptr;  // BREAK encountered
 
     return BRANCHED(OUT);
