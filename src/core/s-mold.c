@@ -113,6 +113,7 @@ void Pre_Mold_Core(REB_MOLD *mo, noquote(Cell(const*)) v, bool all)
 
     String(const*) type_name = Canon_Symbol(SYM_FROM_KIND(CELL_HEART(v)));
     Append_Spelling(mo->series, type_name);
+    Append_Codepoint(mo->series, '!');  // !!! `make object!` not `make object`
 
     Append_Codepoint(mo->series, ' ');
 }
