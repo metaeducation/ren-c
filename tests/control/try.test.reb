@@ -99,22 +99,13 @@
 
 ; Multiple return values
 #trap (
-    a: <a>
-    b: <b>
-    [a b]: trap [10 + 20]
-    all [
-        null? a
-        b = 30
-    ]
+    null? trap [10 + 20]
 )
 #trap (
-    a: <a>
-    b: <b>
-    [a b]: trap [raise ~something~]  ; trap before assign attempt
+    e: trap [raise ~something~]  ; trap before assign attempt
     all [
-        error? a
-        a.id = 'something
-        unset? 'b
+        error? e
+        e.id = 'something
     ]
 )
 #trap (

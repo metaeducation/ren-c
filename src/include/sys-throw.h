@@ -143,7 +143,10 @@ inline static Value(*) Decay_If_Unstable(Value(*) v) {
         return v;
     }
 
-    assert(not Is_Raised(v));  // !!! should this raise an error here?
+    if (Is_Raised(v)) {  // !!! should this raise an error here?
+        mutable_QUOTE_BYTE(v) = UNQUOTED_1;
+        fail (VAL_CONTEXT(v));
+    }
 
     return v;
 }
