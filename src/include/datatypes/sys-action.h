@@ -615,6 +615,8 @@ inline static Bounce Native_Branched_Result(Frame(*) frame_, Value(*) v) {
         Init_Heavy_Void(v);
     else if (Is_Nulled(v))
         Init_Heavy_Null(v);
+    else if (Is_False(v))
+        Init_Heavy_False(v);
     return frame_->out;
 }
 
