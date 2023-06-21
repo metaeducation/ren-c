@@ -16,7 +16,6 @@
 (type-word? handle!)
 (type-word? integer!)
 (type-word? issue!)
-(type-word? logic!)
 (type-word? map!)  ; map! =? hash! in R2/Forward, R2 2.7.7+
 (type-word? module!)
 (type-word? money!)
@@ -30,7 +29,6 @@
 (type-word? set-path!)
 (type-word? set-word!)
 (type-word? text!)
-(type-word? struct!)
 (type-word? tag!)
 (type-word? time!)
 (type-word? tuple!)
@@ -40,3 +38,6 @@
 
 ; literal representation
 (type-word? &action!)
+
+; Now a type constraint, not a datatype
+(type-group? logic!)

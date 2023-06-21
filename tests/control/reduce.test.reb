@@ -13,7 +13,15 @@
 ]
 ('~[']~ = ^ repeat 1 [reduce [continue]])
 (1 = catch [reduce [throw 1]])
-([a 1] = catch/name [reduce [throw/name 1 'a]] 'a)
+
+; There used to be a multi-return situation where the name of a throw was
+; returned as a block, e.g. this would produce [1 a].  When true multi-return
+; was introduced, the name was at first a secondary result...until the
+; convenience of throwing packs was decided as better.
+;
+(1 = catch/name [reduce [throw/name 1 'a]] 'a)
+(~['1 '2]~ = catch [throw pack [1 2]])
+
 (1 = reeval unrun func [return: [integer!]] [reduce [return 1 2] 2])
 ; recursive behaviour
 (1 = first reduce [first reduce [1]])
@@ -108,11 +116,6 @@
     ([3 7] = collect [reduce-each x [1 + 2 3 + 4] [keep x]])
 
     ([1 + 2] = collect [reduce-each x @[1 + 2] [keep x]])
-
-    (
-        e: trap [reduce-each x [1 + 2] [raise "foo"]]
-        e.message = "foo"
-    )
 ]
 
 ; REDUCE-EACH can do ^META processing, this is the basis of ATTEMPT

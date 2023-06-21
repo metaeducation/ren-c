@@ -1,2 +1,2 @@
 ; functions/control/halt.r
-(action? :halt)
+(action? unrun :halt)
