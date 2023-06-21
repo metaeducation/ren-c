@@ -1606,7 +1606,7 @@ default-combinators: make map! reduce [
         return raise "BLANK! rule found next input in binary was not ASCII 32"
     ]
 
-    === LOGIC! COMBINATOR ===
+    === ISOTOPE! COMBINATOR ===
 
     ; Handling of LOGIC! in Ren-C replaces the idea of FAIL, because a logic
     ; true is treated as "continue parsing" while false is "rule didn't match".
@@ -1614,16 +1614,21 @@ default-combinators: make map! reduce [
     ;
     ; e.g. parse "..." [:(mode = 'read) ... | :(mode = 'write) ...]
 
-    logic! combinator [
+    isotope! combinator [
         return: "Invisible if true (signal to keep parsing)"
             [<void>]
-        value [logic!]
+        value [isotope!]
     ][
-        if value [
-            remainder: input
-            return void
+        switch/type :value [
+            logic! [
+                if value [
+                    remainder: input
+                    return void
+                ]
+                return raise "LOGIC! of FALSE used to signal a parse failing"
+            ]
         ]
-        return raise "LOGIC! of FALSE used to signal a parse failing"
+        fail "Unhandled isotope type in GET-GROUP!"
     ]
 
     === INTEGER! COMBINATOR ===
