@@ -72,7 +72,6 @@
 ~bad-isotope~ !! (false = reeval false)
 
 ($1 == reeval $1)
-(null? reeval (specialize :of [property: 'type]) null)
 (null? do maybe null)
 (
     a-value: make object! []

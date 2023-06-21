@@ -40,9 +40,9 @@
 //  {Process an evaluated argument *inline* as the evaluator loop would}
 //
 //      return: [<opt> <void> any-value!]
-//      value [any-value!]
+//      value [any-cell!]
 //          {BLOCK! passes-thru, ACTION! runs, SET-WORD! assigns...}
-//      expressions [<opt> any-value! <variadic>]
+//      expressions [<opt> any-cell! <variadic>]
 //          {Depending on VALUE, more expressions may be consumed}
 //  ]
 //
@@ -55,9 +55,6 @@ DECLARE_NATIVE(reeval)
     UNUSED(ARG(expressions));
 
     REBVAL *v = ARG(value);
-
-    if (Is_Isotope(v))  // !!! lax handling (should it be error instead?)
-        Meta_Quotify(v);
 
     bool enfix =
         IS_QUASI(v)
