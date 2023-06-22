@@ -65,6 +65,12 @@
 ; value with STOP.  Plain STOP is not conflated with BREAK.
 ;
 ('~[']~ = ^ cycle [stop])
-(10 = cycle [stop 10])
-('~[~null~]~ = ^ cycle [stop null])  ; allowed
+(10 = cycle [stop/with 10])
 (null = cycle [break])
+
+; !!! Right now null implements refinement revocation, which makes STOP/WITH
+; a null equivalent to STOP with no argument.  This is being reviewed:
+;
+; https://forum.rebol.info/t/line-continuation-and-arity-bugs-thoughts/1965/3
+;
+('~[']~ = ^ cycle [stop/with null])  ; allowed... for now

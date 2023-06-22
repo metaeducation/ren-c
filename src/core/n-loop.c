@@ -120,7 +120,7 @@ DECLARE_NATIVE(continue)
 
     Value(*) v = ARG(with);
     if (not REF(with))
-        Init_Void(v);  // CONTINUE and CONTINUE/WITH VOID act the same
+        Init_Void(v);  // See: https://forum.rebol.info/t/1965/3
 
     return Init_Thrown_With_Label(FRAME, v, Lib(CONTINUE));
 }
@@ -566,26 +566,20 @@ DECLARE_NATIVE(for_skip)
 //
 //  stop: native [
 //
-//  {End the current iteration of CYCLE and return a value (nulls allowed)}
+//  {End the current iteration of CYCLE, optionally returning a value}
 //
 //      return: []  ; !!! Notation for divergent functions?s
-//      ^value "If no argument is provided, STOP acts like STOP VOID"
-//          [<opt> <void> <end> <pack> <fail> any-value!]
-//      /forward "Don't unpack multi-return values"
+//      /with "Act as if loop body finished with this value"
+//          [<void> any-value!]
 //  ]
 //
 DECLARE_NATIVE(stop)  // See CYCLE for notes about STOP
 {
     INCLUDE_PARAMS_OF_STOP;
 
-    Value(*) v = ARG(value);
-    if (Is_Nulled(v))
-        Init_Void(v);  // STOP acts the same as STOP VOID
-    else
-        Meta_Unquotify(v);
-
-    if (not REF(forward))
-        Decay_If_Unstable(v);
+    Value(*) v = ARG(with);
+    if (not REF(with))
+        Init_Void(v);  // See: https://forum.rebol.info/t/1965/3
 
     return Init_Thrown_With_Label(FRAME, v, Lib(STOP));
 }

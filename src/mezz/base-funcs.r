@@ -850,8 +850,8 @@ count-up: func [
         result': ^ cfor :var start end 1 body else [
             return null  ; a BREAK was encountered
         ]
-        if limit <> # [
-            stop/forward unmeta result'  ; the limit was actually reached
+        if limit <> # [  ; Note: /WITH not ^META, decays PACK! etc
+            stop/with unmeta result'  ; the limit was actually reached
         ]
         ; otherwise keep going...
         end: end + 100
