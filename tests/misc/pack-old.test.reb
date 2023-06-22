@@ -1,4 +1,4 @@
-; %unpack.test.reb
+; %pack-old.test.reb
 ;
 ; Prior to the creation of isotopic-BLOCK!-packs, this function was created
 ; to replace the idiom of using SET on a BLOCK! that you REDUCE.  It used
@@ -19,12 +19,12 @@
 ;    Rebol2>> set [a 'b :c d: /e ^f] [1 2 3 4 5 6]
 ;    == [1 2 3 4 5 6]
 ;
-; This wasn't supported by UNPACK-OLD, and SET-BLOCK! also has a more
+; This wasn't supported by PACK-OLD, and SET-BLOCK! also has a more
 ; dialected notion of what the words represent.
 
 
-[(unpack-old: enfixed func [
-    {Unpack a BLOCK! of values and store each in a variable}
+[(pack-old: enfixed func [
+    {Prepare a BLOCK! of values for storing each in a SET-BLOCK!}
     return: [<opt> <void> any-value!]
     'vars [set-block! set-group!]
     block "Reduced if normal [block], but values used as-is if @[block]"
@@ -51,19 +51,21 @@
             result': either blank? vars.1 [void'] [val']
         ]
         if tail? vars [
-            fail "Too many values for vars in UNPACK (use ... if on purpose)"
+            fail "Too many values for vars in PACK (use ... if on purpose)"
         ]
-        switch vars.1 [
-            '... [continue]  ; ignore all other values (but must reduce all)
-            (matches blank!) []  ; no assignment
-            (matches [word! tuple!]) [set vars.1 unmeta val']
-            (matches [meta-word! meta-tuple!]) [set vars.1 val']
+        if vars.1 = '... [
+            continue  ; ignore all other values (but must reduce all)
+        ]
+        switch/type vars.1 [
+            blank! []  ; no assignment
+            word! tuple! [set vars.1 unmeta val']
+            meta-word! meta-tuple! [set vars.1 val']
         ]
         vars: my next
     ]
     if vars.1 = '... [
         if not last? vars [
-            fail "... must appear only at the tail of UNPACK variable list"
+            fail "... must appear only at the tail of PACK variable list"
         ]
     ] else [
         ; We do not error on too few values (such as `[a b c]: [1 2]`) but
@@ -80,7 +82,7 @@
 (
     a: b: ~bad~
     did all [
-        3 = [a b]: unpack-old [1 + 2 3 + 4]
+        3 = [a b]: pack-old [1 + 2 3 + 4]
         a = 3
         b = 7
     ]
@@ -89,7 +91,7 @@
 (
     a: b: ~bad~
     did all [
-        1 = [a b c]: unpack-old @[1 + 2]
+        1 = [a b c]: pack-old @[1 + 2]
         a = 1
         b = '+
         c = 2
@@ -99,7 +101,7 @@
 ; ... is used to indicate willingness to discard extra values
 (
     did all [
-        1 = [a b ...]: unpack-old @[1 2 3 4 5]
+        1 = [a b ...]: pack-old @[1 2 3 4 5]
         a = 1
         b = 2
     ]
@@ -107,29 +109,29 @@
 
 (
     a: <before>
-    '_ = [a]: unpack-old inert reduce/predicate [null] :reify
-    '_ = a
+    '~null~ = [a]: pack-old inert reduce/predicate [null] :reify
+    '~null~ = a
 )
 (
     a: <a-before>
     b: <b-before>
-    2 = [a b]: unpack-old inert reduce/predicate [2 null] :reify
+    2 = [a b]: pack-old inert reduce/predicate [2 null] :reify
     a = 2
-    '_ = b
+    '~null~ = b
 )
 
-(a: 1 b: null [b]: unpack-old inert [a] b = 'a)
+(a: 1 b: null [b]: pack-old inert [a] b = 'a)
 
 (
     a: 10
     b: 20
-    did all [blank = [a b]: unpack-old @[_ _], blank? a, blank? b]
+    did all [blank = [a b]: pack-old @[_ _], blank? a, blank? b]
 )
 (
     a: 10
     b: 20
     c: 30
-    [a b c]: unpack-old [_ 99]
+    [a b c]: pack-old [null 99]
     did all [null? a, b = 99, ^c = '~]
 )
 
@@ -137,6 +139,6 @@
     a: 10
     b: 20
     c: 30
-    [a b c]: unpack-old [_ 99]
+    [a b c]: pack-old [~null~ 99]
     did all [null? a, b = 99, ^c = '~]
 )]
