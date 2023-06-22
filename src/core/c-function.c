@@ -220,6 +220,7 @@ void Push_Paramlist_Quads_May_Fail(
             REBSPC* derived = Derive_Specifier(VAL_SPECIFIER(spec), item);
 
             bool was_refinement;
+            enum Reb_Param_Class pclass;
 
           blockscope {
             StackValue(*) types = TYPES_SLOT(TOP_INDEX);
@@ -259,6 +260,7 @@ void Push_Paramlist_Quads_May_Fail(
                 continue;
 
             was_refinement = GET_PARAM_FLAG(param, REFINEMENT);
+            pclass = VAL_PARAM_CLASS(cast_PAR(param));
 
             Init_Block(
                 types,
@@ -275,6 +277,7 @@ void Push_Paramlist_Quads_May_Fail(
             Flags param_flags;
             Array(*) a = Add_Parameter_Bits_Core(
                 &param_flags,
+                pclass,
                 types_at,
                 types_tail,
                 derived

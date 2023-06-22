@@ -158,9 +158,13 @@ void Shutdown_Typesets(void)
 //
 //  Add_Parameter_Bits_Core: C
 //
-// This sets the bits in a bitset according to a block of datatypes.  There
-// is special handling by which BAR! will set the "variadic" bit on the
-// typeset, which is heeded by functions only.
+// This sets the bits in a bitset according to a type spec.  These accelerate
+// the checking of tags when functions are called to not require string
+// comparisons for things like <opt> or <skip>.
+//
+// Because this uses the stack, it cannot take the Param being built on the
+// stack as input.  As a workaround the parameter class and flags to write
+// are passed in.
 //
 // !!! R3-Alpha supported fixed word symbols for datatypes and typesets.
 // Confusingly, this means that if you have said `word!: integer!` and use
@@ -170,6 +174,7 @@ void Shutdown_Typesets(void)
 //
 Array(*) Add_Parameter_Bits_Core(
     Flags* flags,
+    enum Reb_Param_Class pclass,
     Cell(const*) head,
     Cell(const*) tail,
     REBSPC *specifier
@@ -225,8 +230,8 @@ Array(*) Add_Parameter_Bits_Core(
                 *flags |= PARAM_FLAG_WANT_PACKS;
             }
             else if (0 == CT_String(item, Root_Skip_Tag, strict)) {
-               /* if (VAL_PARAM_CLASS(typeset) != PARAM_CLASS_HARD)
-                    fail ("Only hard-quoted parameters are <skip>-able"); */
+                if (pclass != PARAM_CLASS_HARD)
+                    fail ("Only hard-quoted parameters are <skip>-able");
 
                 *flags |= PARAM_FLAG_SKIPPABLE;
                 *flags |= PARAM_FLAG_ENDABLE; // skip => null

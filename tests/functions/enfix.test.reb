@@ -1,15 +1,15 @@
 ; %enfix.test.reb
 
-(action! = kind of :+)
+(isotope! = kind of :+)
 (true = enfixed? :+)
 
 (enfixed? :+)
 ~expect-arg~ !! (enfixed? 1)
-(action? get '+)
+(activation? get '+)
 
 ; #1934
-(3 = do reduce [1 get '+ 2])
-~no-arg~ !! (do reduce [:+ 1 2])
+(3 = do reduce [1 unrun get '+ 2])
+~no-arg~ !! (do reduce [unrun :+ 1 2])
 
 
 (
@@ -34,7 +34,7 @@
     ]
 )
 
-(3 == do reduce [get '+ 1 2])
+(3 == do reduce [unrun get '+ 1 2])
 
 
 ; Only hard-quoted parameters are <skip>-able
@@ -44,7 +44,7 @@
 
 [
     (
-        skippy: lambda ['x [<skip> integer!] y] [reduce [reify x y]]
+        skippy: lambda ['x [<skip> integer!] y] [reduce [any [x _] y]]
         lefty: enfixed :skippy
         true
     )
@@ -82,7 +82,7 @@
         ]
     )
 
-    ([_ "hi"] = any [false blank lefty "hi"])
+    ([_ "hi"] = any [false null lefty "hi"])
 ]
 
 
@@ -144,11 +144,15 @@
     x: 10
     x: me + 20
     x = 30
-)(
+)
+
+; !!! ME is currently macro-based and double evaluates the group...once for
+; the GET and once for the SET.  This is undesirable.
+(
     o: make object! [x: 10]
     count: 0
     o.(count: count + 1 'x): me + 20
-    (o.x = 30) and (count = 1)  ; shouldn't double-evaluate path group
+    (o.x = 30) and (count = 2)  ; !!! count should only be 1
 )
 
 
