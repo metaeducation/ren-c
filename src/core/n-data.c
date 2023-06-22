@@ -2612,7 +2612,7 @@ DECLARE_NATIVE(isotopify_if_falsey)
 //
 //  "Make isotopes into their quasiforms, pass thru other values"
 //
-//      return: [any-cell!]
+//      return: [element?]
 //      value [<opt> any-value!]
 //  ]
 //
@@ -2661,7 +2661,7 @@ DECLARE_NATIVE(degrade)
 //
 //  "Make isotopes into plain forms, pass thru other values"
 //
-//      return: [any-cell!]
+//      return: [element?]
 //      value [<opt> any-value!]
 //  ]
 //
@@ -2690,7 +2690,7 @@ DECLARE_NATIVE(concretize)
 //
 //  "Turn isotopes into their plain forms, pass thru other values"
 //
-//      return: [any-cell!]
+//      return: [element?]
 //      value [<opt> any-value!]
 //  ]
 //

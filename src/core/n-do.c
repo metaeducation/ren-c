@@ -40,9 +40,9 @@
 //  {Process an evaluated argument *inline* as the evaluator loop would}
 //
 //      return: [<opt> <void> any-value!]
-//      value [any-cell!]
+//      value [element?]
 //          {BLOCK! passes-thru, ACTION! runs, SET-WORD! assigns...}
-//      expressions [<opt> any-cell! <variadic>]
+//      expressions [<opt> element? <variadic>]
 //          {Depending on VALUE, more expressions may be consumed}
 //  ]
 //

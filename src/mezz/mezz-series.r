@@ -55,7 +55,7 @@ array: func [
     size "Size or block of sizes for each dimension"
         [<maybe> integer! block!]
     /initial "Initial value (will be called each time if action isotope)"
-        [<unrun> any-cell! action!]
+        [<unrun> element? action!]
     <local> rest block
 ][
     initial: default ['~]  ; if not specified, array will be all meta nihil

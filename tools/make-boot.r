@@ -414,7 +414,7 @@ e-types/emit {
     #define TS_VALUE \
         ((FLAGIT_KIND(REB_MAX) - 1) & ~FLAGIT_KIND(REB_VOID))
 
-    #define TS_CELL \
+    #define TS_ELEMENT \
         ((FLAGIT_KIND(REB_MAX) - 1) & ~FLAGIT_KIND(REB_VOID) & ~FLAGIT_KIND(REB_ISOTOPE))
 }
 
@@ -423,8 +423,8 @@ typeset-sets: copy []
 add-sym 'any-value?  ; starts the typeset symbols, not mentioned in %types.r
 add-sym 'any-value!  ; will be initialized as just &(any-value?)
 
-add-sym 'any-cell?
-add-sym 'any-cell!  ; will be initialized as just &(any-cell?)
+add-sym 'element?
+add-sym 'any-element!  ; will be initialized as just &(element?)
 
 for-each-datatype t [
     for-each ts-name t/typesets [
@@ -605,7 +605,7 @@ e-typesets/emit {
 e-typesets/emit {
     const REBU64 Typesets[] = ^{
         TS_VALUE,  /* any-value! */
-        TS_CELL,  /* any-cell! */
+        TS_ELEMENT,  /* any-element! */
 }
 
 for-each [ts-name types] typeset-sets [

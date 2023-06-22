@@ -31,9 +31,9 @@
 //  "Converts a value to a human-readable string."
 //
 //      return: "Returns null if input is void"
-//          [<void> text!]
+//          [<opt> text!]
 //      value "The value to form (currently errors on isotopes)"
-//          [<maybe> any-cell!]
+//          [<maybe> element?]
 //  ]
 //
 DECLARE_NATIVE(form)
@@ -55,7 +55,7 @@ DECLARE_NATIVE(form)
 //          [<opt> text!]
 //      @truncated "Whether the mold was truncated"
 //          [logic!]
-//      value [<maybe> any-cell!]
+//      value [<maybe> element?]
 //      /only "For a block value, mold only its contents, no outer []"
 //      /all "Use construction syntax"
 //      /flat "No indentation"
