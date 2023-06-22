@@ -107,9 +107,9 @@ DECLARE_NATIVE(as_pair)
 //
 //  {Binds words or words in arrays to the specified context}
 //
-//      return: [action! any-array! any-path! any-word! quoted!]
+//      return: [action! activation! any-array! any-path! any-word! quoted!]
 //      value "Value whose binding is to be set (modified) (returned)"
-//          [action! any-array! any-path! any-word! quoted!]
+//          [action! activation! any-array! any-path! any-word! quoted!]
 //      target "Target context or a word whose binding should be the target"
 //          [any-word! any-context!]
 //      /copy "Bind and return a deep copy of a block, don't modify original"
