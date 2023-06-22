@@ -551,10 +551,7 @@ Bounce Action_Executor(Frame(*) f)
   //=//// ERROR ON END MARKER, BAR! IF APPLICABLE /////////////////////////=//
 
         if (Is_Frame_At_End(f)) {
-            if (NOT_PARAM_FLAG(PARAM, ENDABLE))
-                fail (Error_No_Arg(f->label, KEY_SYMBOL(KEY)));
-
-            Init_Nulled(ARG);
+            Init_Word_Isotope(ARG, Canon(END));
             goto continue_fulfilling;
         }
 
@@ -808,7 +805,7 @@ Bounce Action_Executor(Frame(*) f)
   //    modified.  Even though it's hidden, it may need to be typechecked
   //    again (unless it was *fully* hidden).
   //
-  // 2. Voids are the default values from MAKE FRAME!.
+  // 2. Nihil (isotopic voids) are the default values from MAKE FRAME!.
   //
   // 3. We can't a-priori typecheck the variadic argument, since the values
   //    aren't calculated until the function starts running.  Instead we stamp
@@ -899,6 +896,12 @@ Bounce Action_Executor(Frame(*) f)
                 Init_Nulled(ARG);
                 continue;
             }
+        }
+
+        if (Is_Word_Isotope_With_Id(ARG, SYM_END)) {
+            if (NOT_PARAM_FLAG(PARAM, ENDABLE))
+                fail (Error_No_Arg(f->label, KEY_SYMBOL(KEY)));
+            continue;
         }
 
         if (GET_PARAM_FLAG(PARAM, VARIADIC)) {  // can't check now, see [3]

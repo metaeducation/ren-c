@@ -91,10 +91,9 @@
 inline static bool Is_Isotope_Set_Friendly(Cell(const*) v) {
     assert(Is_Isotope(v));
     return (
-        HEART_BYTE(v) == REB_BLANK  // null is the isotopic state of blank
-        or HEART_BYTE(v) == REB_WORD  // used e.g. for ~true~ and ~false~
+        HEART_BYTE(v) == REB_WORD  // e.g. ~true~ and ~false~ and ~null~
         or HEART_BYTE(v) == REB_VOID  // nihil is the isotopic state of void
-        or HEART_BYTE(v) == REB_ACTION  // !!! Temporary just to boot
+        or HEART_BYTE(v) == REB_ACTION  // action assignment allowed
     );
 }
 
@@ -102,14 +101,11 @@ inline static bool Is_Isotope_Set_Friendly(Cell(const*) v) {
 // with plain WORD! access regarding isotopes.  Since ~true~ and ~false~
 // isotopes are the currency of "logic" now, they have to be legal...so this
 // is opened up to the entire class of isotopic words.  But unlike in
-// assignment, isotopic nulls (voids) are not made friendly--this raises the
-// bar to constructing true invisibility, as those variables are what are
-// considered to be "unset".
+// assignment, isotopic voids are not get-friendly.
 //
 inline static bool Is_Isotope_Get_Friendly(Cell(const*) v) {
     assert(Is_Isotope(v));
     return HEART_BYTE(v) == REB_WORD
-        or HEART_BYTE(v) == REB_BLANK
         or HEART_BYTE(v) == REB_ACTION;
 }
 
