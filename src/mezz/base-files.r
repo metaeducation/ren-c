@@ -196,24 +196,30 @@ file-type?: function [
 ]
 
 split-path: func [
-    {Splits and returns directory path and file as a block}
+    {Splits and returns file and directory path (either may be null)}
     return: [<opt> file!]
     target [file! url!]
-    <local> pos text dir
+    /relax "Allow filenames to be . and .."
+    <local> text file dir
 ][
-    text: as text! target
-    pos: null
-    parse3 text [
-        ["/" | "." opt "." opt "/"] end (dir: dirize text) |
-        pos: <here>, opt some [thru "/" [end | pos: <here>]] (
-            all [
-                empty? dir: copy/part text (at head of text index of pos),
-                dir: %"./"
-            ]
-            all [find [%. %..] pos: to file! pos insert tail of pos "/"]
-        )
-        end
+    parse3 as text! target [
+        copy dir opt some thru "/"
+        copy file thru end
     ]
-    dir: as kind of target dir
-    return/forward pack [pos dir]
+    if empty? dir [
+        dir: null
+    ] else [
+        dir: as kind of target dir
+    ]
+    if empty? file [
+        file: null
+    ] else [
+        file: as file! file
+        all [
+            not relax
+            find [%. %..] file
+            fail {. and .. are invalid filenames}
+        ]
+    ]
+    return/forward pack [file dir]
 ]
