@@ -1,7 +1,7 @@
 ; %parse-the-xxx.test.reb
 ;
 ; THE-XXX! types are based around matching things literally.  GROUP!s will
-; evaluate, and BLOCK!s will use th synthesized value of the rule to be the
+; evaluate, and BLOCK!s will use the synthesized value of the rule to be the
 ; thing that gets matched.
 
 (

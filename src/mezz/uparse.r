@@ -1852,8 +1852,8 @@ default-combinators: make map! reduce [
     ][
         [^result' remainder]: parser input except e -> [return raise e]
 
-        comb: :(state.combinators).(quoted!)
-        return [@ remainder pending]: comb state remainder result'
+        comb: (state.combinators).(quoted!)
+        return [@ remainder pending]: run comb state remainder result'
     ]
 
     the-word! combinator [
