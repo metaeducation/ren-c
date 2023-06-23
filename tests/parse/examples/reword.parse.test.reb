@@ -35,8 +35,8 @@
 
         block? escape [
             parse escape [
-                [_ | prefix: delimiter-types]
-                [_ | suffix: delimiter-types]
+                prefix: [_ (void) | delimiter-types]
+                suffix: [_ (void) | delimiter-types]
             ] else [
                 fail ["Invalid /ESCAPE delimiter block" escape]
             ]

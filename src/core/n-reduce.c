@@ -128,8 +128,8 @@ DECLARE_NATIVE(reduce)
     if (Is_Nulled(predicate))  // default is no processing
         goto process_out;
 
-    if (Is_Void(OUT))  // voids aren't offered to predicates, by design
-        goto next_reduce_step;  // reduce skips over voids
+    if (Is_None(OUT) or Is_Void(OUT))  // not offered to predicates, by design
+        goto next_reduce_step;  // reduce skips over voids and nones
 
     SUBFRAME->executor = &Just_Use_Out_Executor;
     STATE = ST_REDUCE_RUNNING_PREDICATE;
@@ -137,7 +137,7 @@ DECLARE_NATIVE(reduce)
 
 } process_out: {  ////////////////////////////////////////////////////////////
 
-    if (Is_Void(OUT))
+    if (Is_None(OUT) or Is_Void(OUT))
         goto next_reduce_step;  // void results are skipped by reduce
 
     Decay_If_Unstable(OUT);

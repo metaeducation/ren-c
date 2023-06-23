@@ -20,22 +20,21 @@
     'b = parse [a b] ['a 'b var]
 )
 
-; ...however, if used as arguments in combinators (including the SET-WORD!
-; combinator) they are treated as values assigned to variables
+; Given that they evaporate, they can't be assigned to variables...
 
 (
     test: ~
     did all [
-        'b = parse [a b] ['a test: ' 'b]
-        void? test  ; notably *not* b
+        'b = parse [a b] ['a test: ^['] 'b]
+        none' = test
     ]
 )
 (
     test: ~
     var: the '
     did all [
-       'b = parse [a b] ['a test: var 'b]
-        void? test  ; notably *not* b
+       'b = parse [a b] ['a test: ^[var] 'b]
+        none' = test
     ]
 )
 
@@ -100,15 +99,8 @@
      ]
 )
 
-; Important to remember that a synthesized void from a plain GROUP! will
-; effectively vanish.  Getting around this might be accomplished via a
-; substitution of some kind, or speaking in terms of meta values.
+; Void rules or GET-GROUP! are distinct from synthesized voids in plain GROUP!
+; These are values that do not vanish.
 
 (3 = parse [x] ['x (1 + 2) | 'y (10 + 20)])
-('x = parse [x] ['x (void) | 'y (10 + 20)])  ; can't map x to void like this
-(
-    result: parse [x] ['x (<void>) | 'y (10 + 20)]
-    if result = <void> [result: void]  ; sample workaround
-    void? result
-)
-(void? unmeta parse [x] ['x ^(void) | 'y ^(10 + 20)])  ; alternative
+('~[']~ = ^ parse [x] ['x (void) | 'y (10 + 20)])

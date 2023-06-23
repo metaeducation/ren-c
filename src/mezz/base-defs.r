@@ -158,7 +158,7 @@ comment: func* [
     {Ignores the argument value, but does no evaluation (see also ELIDE)}
 
     return: "Evaluator will skip over the result (not seen)"
-        <void>
+        <none>
     :discarded "Literal value to be ignored."  ; `comment print "x"` disallowed
         [block! any-string! binary! any-scalar!]
 ][
@@ -168,7 +168,7 @@ elide: func* [
     {Argument is evaluative, but discarded (see also COMMENT)}
 
     return: "The evaluator will skip over the result (not seen)"
-        <void>
+        <none>
     ^discarded "Evaluated value to be ignored"
         [<opt> <void> any-value!]
 ][

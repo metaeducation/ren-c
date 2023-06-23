@@ -101,6 +101,9 @@ run-single-test: func [
         null? result [
             "test returned null"
         ]
+        void? result [
+            "test returned void"
+        ]
         true [
             spaced ["was" (mold kind of :result) ", not logic!"]
         ]

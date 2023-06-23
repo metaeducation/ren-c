@@ -229,16 +229,16 @@ inline static Frame(*) Maybe_Rightward_Continuation_Needed(Frame(*) f)
 //
 Bounce Array_Executor(Frame(*) f)
 {
-    enum {
-        ST_ARRAY_INITIAL_ENTRY = STATE_0,
-        ST_ARRAY_STEPPING
-    };
-
     if (THROWING)
         return THROWN;  // no state to clean up
 
     switch (STATE) {
       case ST_ARRAY_INITIAL_ENTRY:
+        Finalize_Void(OUT);  // what most callers want (?)
+        goto initial_entry;
+
+      case ST_ARRAY_PRELOADED_ENTRY:
+        assert(not Is_Fresh(OUT));  // groups `1 (elide "hi")` preload none
         goto initial_entry;
 
       case ST_ARRAY_STEPPING:
@@ -248,8 +248,6 @@ Bounce Array_Executor(Frame(*) f)
     }
 
   initial_entry: {  //////////////////////////////////////////////////////////
-
-    Finalize_Void(OUT);  // default if all void outputs
 
     if (Is_Feed_At_End(f->feed))
         return OUT;
@@ -265,7 +263,7 @@ Bounce Array_Executor(Frame(*) f)
 
 } step_result_in_spare: {  ///////////////////////////////////////////////////
 
-    if (not Is_Void(SPARE))
+    if (not Is_None(SPARE))  // heed ELIDE or COMMENT, preserve old result
         Move_Cell(OUT, SPARE);
 
     if (Not_Frame_At_End(SUBFRAME)) {
@@ -617,7 +615,7 @@ Bounce Evaluator_Executor(Frame(*) f)
     // A comma is a lightweight looking expression barrier.
 
       case REB_COMMA:
-        Finalize_Void(OUT);
+        Init_None(OUT);
         if (Get_Executor_Flag(EVAL, f, FULFILLING_ARG)) {
             Clear_Feed_Flag(f->feed, NO_LOOKAHEAD);
             Set_Feed_Flag(f->feed, BARRIER_HIT);
@@ -866,22 +864,12 @@ Bounce Evaluator_Executor(Frame(*) f)
     //   seems wasteful on the surface, but it means dialects can be free to
     //   use it to make a distinction--like escaping soft-quoted slots.
     //
-    // 2. A group can vanish, leaving what was to the left of it stale:
+    // 2. The default for the Array_Executor is to make voids if expressions
+    //    vanish.  We use ST_ARRAY_PRELOADED_ENTRY with none in order to
+    //    avoid generating voids from thin air when using GROUP!s
     //
-    //        >> 1 + 2 (comment "hi") * 3
-    //        ** Error: The 3 is stale
-    //
-    //    But some evaluation clients (like ALL) need to know the difference
-    //    between when a result wasn't overwritten, or when it was overwritten
-    //    with a stale value, e.g.
-    //
-    //        all [10 (comment "hi")] => 10
-    //        all [10 (20 comment "hi")] => 20
-    //
-    //    If we evaluated the GROUP! into the OUT cell overlapping with the
-    //    previous result, the stale bit alone wouldn't tell us which situation
-    //    we had.  So we evaluate into the SPARE cell to discern.  (We could
-    //    also mark the out cell with some other bit, if one were available?)
+    //        >> 1 + 2 (comment "hi")
+    //        == 3  ; e.g. not void
 
       case REB_GET_GROUP:  // synonym for GROUP!, see [1]
       case REB_GROUP: {
@@ -891,8 +879,10 @@ Bounce Evaluator_Executor(Frame(*) f)
             f_current,
             f_specifier,
             FRAME_FLAG_FAILURE_RESULT_OK
+                | FLAG_STATE_BYTE(ST_ARRAY_PRELOADED_ENTRY)
         );
         Push_Frame(OUT, subframe);
+        Init_None(OUT);  // allow group to vanish, see [2]
         subframe->executor = &Array_Executor;
 
         return CATCH_CONTINUE_SUBFRAME(subframe); }

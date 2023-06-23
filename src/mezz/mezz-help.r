@@ -81,7 +81,7 @@ browse: function [
 help: function [
     "Prints information about words and values (if no args, general help)."
 
-    return: <none>
+    return: <void>
     'topic [<end> any-value!]
         "WORD! whose value to explain, or other HELP target (try HELP HELP)"
     /doc "Open web browser to related documentation."
@@ -143,7 +143,7 @@ help: function [
                 upgrade - check for newer versions
                 usage - program cmd line options
         }
-        return none
+        return void
     ]
 
     ; HELP quotes, but someone might want to use an expression, e.g.
@@ -156,7 +156,7 @@ help: function [
     if match [group! get-word! get-path! get-tuple!] :topic [
         topic: reeval topic else [
             print "NULL is a non-valued state that cannot be put in arrays"
-            return none
+            return void
         ]
     ]
 
@@ -184,7 +184,7 @@ help: function [
 
             browse join https://r3n.github.io/topics/ as text! topic
             print newline
-            return none
+            return void
         ]
 
         text! [
@@ -198,7 +198,7 @@ help: function [
             ] else [
                 print ["No information on" topic]
             ]
-            return none
+            return void
         ]
 
         path! word! [
@@ -209,12 +209,12 @@ help: function [
                 null? binding of topic
             ] then [
                 print [topic "is an unbound WORD!"]
-                return none
+                return void
             ]
 
             if '~attached~ = binding of topic [
                 print [topic "is ~attached~ to a context, but has no variable"]
-                return none
+                return void
             ]
 
             switch/type value: get/any topic [
@@ -225,7 +225,7 @@ help: function [
                     print [topic "is not defined (e.g. has a NIHIL! value)"]
                 ]
             ] then [
-                return none
+                return void
             ]
             enfixed: (action? :value) and (enfixed? :value)
         ]
@@ -241,7 +241,7 @@ help: function [
             if free? :topic [keep "a *freed*"]
             keep any [mold kind of :topic, "VOID"]
         ]
-        return none
+        return void
     ]
 
     ; Open the web page for it?
@@ -288,7 +288,7 @@ help: function [
         ] else [
             print [topic {is a datatype}]
         ]
-        return none
+        return void
     ]
 
     match [action! activation!] :value else [
@@ -312,7 +312,7 @@ help: function [
                 ]
             ]
         ]
-        return none
+        return void
     ]
 
     ; The HELP mechanics for ACTION! are more complex in Ren-C due to the
@@ -399,13 +399,15 @@ help: function [
         print "REFINEMENTS:"
         print-args/indent-words refinements
     ]
+
+    return void
 ]
 
 
 source: function [
     "Prints the source code for an ACTION! (if available)"
 
-    return: <none>
+    return: <void>
     'arg [word! path! action! tag!]
 ][
     switch/type arg [
@@ -423,7 +425,7 @@ source: function [
             name: arg
             f: get arg else [
                 print [name "is not set to a value"]
-                return none
+                return void
             ]
         ]
     ] else [
@@ -442,7 +444,7 @@ source: function [
             ]
         ]
     ] then [
-        return none
+        return void
     ]
 
     ; ACTION!
@@ -469,6 +471,8 @@ source: function [
     ] else [
         print "...native code, no source available..."
     ]
+
+    return void
 ]
 
 

@@ -811,7 +811,7 @@ DECLARE_NATIVE(all)
 
 } eval_step_result_in_spare: {  //////////////////////////////////////////////
 
-    if (Is_Void(SPARE)) {  // void steps, e.g. (comment "hi") (if false [<a>])
+    if (Is_Void(SPARE) or Is_None(SPARE)) {  // (comment "hi") (if false [<a>])
         if (Is_Frame_At_End(SUBFRAME))
             goto reached_end;
 
@@ -941,7 +941,7 @@ DECLARE_NATIVE(any)
 
 } eval_step_result_in_out: {  ////////////////////////////////////////////////
 
-    if (Is_Void(OUT)) {  // void steps, e.g. (comment "hi") (if false [<a>])
+    if (Is_Void(OUT) or Is_None(OUT)) {  // (comment "hi") (if false [<a>])
         if (Is_Frame_At_End(SUBFRAME))
             goto reached_end;
 
@@ -1026,16 +1026,13 @@ DECLARE_NATIVE(case)
 //    to take arity > 2.  Don't do this.  We have to get a true/false answer
 //    *and* know what the right hand argument was, for fallout to work.
 //
-// 2. Expressions that are between branches are allowed to vaporize.  This is
-//    powerful, but people should be conscious of what can produce voids and
-//    not try to use them as conditions:
+// 2. Expressions that are between branches are allowed to vaporize via NONE
+//    (e.g. ELIDE), but voids are not skipped...it would create problems:
 //
 //        >> condition: false
 //        >> case [if condition [<a>] [print "Whoops?"] [<hmm>]]
 //        Whoops?
 //        == <hmm>
-//
-//   Those who dislike this can use variations of CASE that require `=>`.
 //
 // 3. Maintain symmetry with IF on non-taken branches:
 //
@@ -1119,10 +1116,10 @@ DECLARE_NATIVE(case)
 
 } condition_result_in_spare: {  //////////////////////////////////////////////
 
-    Decay_If_Unstable(SPARE);
-
-    if (Is_Void(SPARE))  // skip void expressions, see [2]
+    if (Is_None(SPARE))  // skip none expressions, e.g. ELIDE, see [2]
         goto handle_next_clause;
+
+    Decay_If_Unstable(SPARE);
 
     if (Is_Frame_At_End(SUBFRAME))
         goto reached_end;  // we tolerate "fallout" from a condition
@@ -1322,7 +1319,7 @@ DECLARE_NATIVE(switch)
 
 } right_result_in_spare: {  //////////////////////////////////////////////////
 
-    if (Is_Void(SPARE))  // skip comments or failed conditionals
+    if (Is_None(SPARE))  // skip comments or ELIDEs
         goto next_switch_step;  // see note [2] in comments for CASE
 
     if (Is_Frame_At_End(SUBFRAME))

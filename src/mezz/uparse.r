@@ -279,16 +279,19 @@ default-combinators: make map! reduce [
 
     === BASIC KEYWORDS ===
 
+    ; !!! This meaning for MAYBE is questionable as a combinator, but it is
+    ; used in some tests at time of writing.
+    ;
     'maybe combinator [
-        {If applying parser fails, succeed and return VOID; don't advance input}
-        return: "PARSER's result if it succeeds w/non-NULL, otherwise VOID"
-            [<opt> <void> any-value!]
+        {If applying parser fails, succeed and vanish; don't advance input}
+        return: "PARSER's result if it succeeds w/non-NULL, otherwise vanish"
+            [<opt> <void> <none> any-value!]
         parser [activation!]
         <local> result'
     ][
         [^result' remainder]: parser input except [
             remainder: input  ; succeed on parser fail but don't advance input
-            return void
+            return none  ; act invisible
         ]
         return unmeta result'  ; return successful parser result
     ]
@@ -1310,7 +1313,7 @@ default-combinators: make map! reduce [
 
     group! combinator [
         return: "Result of evaluating the group (invisible if <delay>)"
-            [<void> <opt> any-value!]
+            [<void> <opt> <none> any-value!]
         @pending [<opt> block!]
         value [any-array!]  ; allow any array to use this "DO combinator"
     ][
@@ -1321,7 +1324,7 @@ default-combinators: make map! reduce [
                 fail "Use ('<delay>) to evaluate to the tag <delay> in GROUP!"
             ]
             pending: reduce [next value]  ; GROUP! signals delayed groups
-            return void
+            return none  ; act invisible
         ]
 
         pending: null
@@ -1366,7 +1369,7 @@ default-combinators: make map! reduce [
 
     get-group! combinator [
         return: "Result of running combinator from fetching the WORD!"
-            [<opt> <void> any-value!]
+            [<opt> <void> <none> any-value!]
         @pending [<opt> block!]   ; we retrigger combinator; it may KEEP, etc.
 
         value [any-array!]  ; allow any array to use this "REPARSE-COMBINATOR"
@@ -1380,7 +1383,7 @@ default-combinators: make map! reduce [
         if void? unmeta r [  ; like [:(if false [...])] or [:(comment "hi")]
             pending: null
             remainder: input
-            return void
+            return none  ; invisible
         ]
 
         if null? unmeta r [
@@ -1475,7 +1478,7 @@ default-combinators: make map! reduce [
 
     quoted! combinator [
         return: "The matched value"
-            [any-value!]
+            [<none> any-value!]
         @pending [<opt> block!]
         value [quoted! quasi!]
         <local> comb
@@ -1491,7 +1494,7 @@ default-combinators: make map! reduce [
         if void' = value [
             pending: null
             remainder: input
-            return void
+            return none  ; act invisibly
         ]
 
         if any-array? input [
@@ -1622,14 +1625,14 @@ default-combinators: make map! reduce [
 
     isotope! combinator [
         return: "Invisible if true (signal to keep parsing)"
-            [<void>]
+            [<none>]
         value [isotope!]
     ][
         switch/type :value [
             logic! [
                 if value [
                     remainder: input
-                    return void
+                    return none
                 ]
                 return raise "LOGIC! of FALSE used to signal a parse failing"
             ]
@@ -2036,17 +2039,17 @@ default-combinators: make map! reduce [
     'elide combinator [
         {Transform a result-bearing combinator into one that has no result}
         return: "Invisible"
-            [<void>]
+            [<none>]
         parser [activation!]
     ][
         [^ remainder]: parser input except e -> [return raise e]
-        return void
+        return none
     ]
 
     'comment combinator [
         {Comment out an arbitrary amount of PARSE material}
         return: "Invisible"
-            [<void>]
+            [<none>]
         'ignored [block! text! tag! issue!]
     ][
         ; !!! This presents a dilemma, should it be quoting out a rule, or
@@ -2067,12 +2070,12 @@ default-combinators: make map! reduce [
         ; most useful, and the closest parallel to the plain COMMENT action.
         ;
         remainder: input
-        return void
+        return none
     ]
 
     'skip combinator [
         {Skip an integral number of items}
-        return: "Invisible" [<void>]
+        return: "Invisible" [<none>]
         parser [activation!]
         <local> result
     ][
@@ -2080,7 +2083,7 @@ default-combinators: make map! reduce [
 
         if blank? :result [
             remainder: input
-            return void
+            return none
         ]
         if not integer? :result [
             fail "SKIP expects INTEGER! amount to skip"
@@ -2088,7 +2091,7 @@ default-combinators: make map! reduce [
         remainder: skip input result else [
             return raise "Attempt to SKIP past end of parse input"
         ]
-        return void
+        return none
     ]
 
     === ACTION! COMBINATOR ===
@@ -2162,7 +2165,7 @@ default-combinators: make map! reduce [
 
     word! combinator [
         return: "Result of running combinator from fetching the WORD!"
-            [<opt> <void> any-value!]
+            [<opt> <void> <none> any-value!]
         @pending [<opt> block!]
         value [word! tuple!]
         <local> r comb
@@ -2174,7 +2177,7 @@ default-combinators: make map! reduce [
             void! [
                 remainder: input
                 pending: null  ; not delegating to combinator with pending
-                return void
+                return none  ; act invisibly
             ]
         ]
 
@@ -2280,7 +2283,7 @@ default-combinators: make map! reduce [
 
     block! combinator [
         return: "Last result value"
-            [<opt> <void> any-value!]
+            [<opt> <void> <none> any-value!]
         @pending [<opt> block!]
         value [block!]
         /limit "Limit of how far to consider (used by ... recursion)"
@@ -2294,7 +2297,7 @@ default-combinators: make map! reduce [
 
         totalpending: null  ; can become GLOM'd into a BLOCK!
 
-        result': void'  ; default result is void
+        result': none'  ; default result is invisible
 
         while [not same? rules limit] [
             if state.verbose [
@@ -2386,12 +2389,12 @@ default-combinators: make map! reduce [
                     print mold/limit rules 200
                     fail "Combinator did not set remainder"
                 ]
-                if not void? unmeta temp [
+                if temp <> none' [
                     result': temp  ; overwrite if was visible
                 ]
                 totalpending: glom totalpending spread subpending
             ] else [
-                result': void'  ; reset, e.g. `[false |]`
+                result': none'  ; reset, e.g. `[false |]`
 
                 free maybe totalpending  ; proactively release memory
                 totalpending: null
@@ -2901,6 +2904,12 @@ parse*: func [
 
     if not tail? remainder [
         return raise "Tail of input was not reached"
+    ]
+
+    ; While combinators can vaporize, don't allow PARSE itself to vaporize
+    ;
+    if synthesized' = none' [
+        return void
     ]
 
     return/forward unmeta synthesized'

@@ -157,7 +157,7 @@ export console!: make object! [
             ]
         ]
 
-        === UNPACK FIRST VALUE IN "PACKS" (OUTPUT *NOTHING* IF LENGTH 0) ===
+        === UNPACK FIRST VALUE IN "PACKS" ===
 
         ; Functions can return block isotopes which represent multiple returns.
         ; Only the first output is printed--but with a comment saying that it
@@ -165,26 +165,14 @@ export console!: make object! [
         ; see the complete pack.
         ;
         ; 0-length packs (~[]~ a.k.a. "none") are treated specially by the
-        ; console, and print no output.  This is used by commands like HELP
-        ; that want to keep the focus on what they are printing out, without
-        ; an `== xxx` evaluated result showing up.  Functions that need a way
-        ; of returning an "uninteresting" result, such as PRINT, use it too.
-        ;
-        ; This gives a slightly weird dichotomy that "none" and "void"
-        ; are distinct states, but we don't print the "value-bearing" one:
-        ;
-        ;      >> none
-        ;
-        ;      >> ()
-        ;      ; void
-        ;
-        ; But doing it the other way around would force functions like HELP to
-        ; be invisible, and that's not desirable.
+        ; evaluator, and should not be able to be returned by a non-^META
+        ; invocation of a code block.
 
         if pack? unmeta v [
             v: unquasi v
 
-            if 0 = length of v [  ; 0-length pack prints nothing, see above
+            if 0 = length of v [
+                print "!!! UNEXPECTED 0-LENGTH PACK, SHOULD NOT HAPPEN !!!"
                 return none
             ]
 
@@ -200,23 +188,15 @@ export console!: make object! [
             v: first v  ; items in pack are ^META'd
         ]
 
-        === DISPLAY VOID AS IF IT WERE A COMMENT ===
+        === PRINT NOTHING FOR VOID ===
 
-        ; VOID lacks any representation, and is supposed to just vaporize.
-        ; So there's nothing we can print like `== void` (which would look
-        ; like the WORD! void), and no special syntax exists for them...
-        ; that's by design.
+        ; VOID lacks any representation.  So there's nothing we can print
+        ; like `== void` (which would look like the WORD! void), and no special
+        ; syntax exists for them...only meta/quasiforms...that's by design.
         ;
-        ; It might seem that giving *no* output would be the most natural case
-        ; for such a situation.  See above for why ~[]~ isotopes are used for
-        ; suppressing output instead.
-        ;
-        ; Hence it's more grounding to print *something*.  So we are tricky
-        ; here in the text medium and display a line in comment form, without
-        ; the ==.  It has settled into being a good compromise.
+        ; So giving *no* output is the most natural case for such a situation.
 
         if v = void' [
-            print "; void"
             return none
         ]
 

@@ -109,7 +109,6 @@ inline static bool Is_Isotope_Get_Friendly(Cell(const*) v) {
         or HEART_BYTE(v) == REB_ACTION;
 }
 
-
 // The evaluator publishes its internal states in this header file, so that
 // a frame can be made with e.g. `FLAG_STATE_BYTE(ST_EVALUATOR_REEVALUATING)`
 // to start in various points of the evaluation process.  When doing so, be
@@ -125,6 +124,15 @@ enum {
 
     ST_EVALUATOR_LOOKING_AHEAD = 100,
     ST_EVALUATOR_REEVALUATING
+};
+
+// Some array executions wish to vaporize if all contents vaporize
+// The generalized hack for that is ST_ARRAY_PRELOADED_ENTRY
+//
+enum {
+    ST_ARRAY_INITIAL_ENTRY = STATE_0,
+    ST_ARRAY_PRELOADED_ENTRY,
+    ST_ARRAY_STEPPING
 };
 
 inline static void Restart_Evaluator_Frame(Frame(*) f) {

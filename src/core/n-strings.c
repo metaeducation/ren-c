@@ -135,10 +135,13 @@ DECLARE_NATIVE(delimit)
             return THROWN;
         }
 
-        if (Is_Void(OUT))  // spaced [maybe null], spaced [if false [<a>]], etc
+        if (Is_None(OUT))  // spaced [elide print "hi"], etc
             continue;  // vaporize
 
         Decay_If_Unstable(OUT);  // spaced [match [logic!] false ...]
+
+        if (Is_Void(OUT))  // spaced [maybe null], spaced [if false [<a>]], etc
+            continue;  // vaporize
 
         if (Is_Nulled(OUT))  // catches bugs in practice, see [1]
             return RAISE(Error_Need_Non_Null_Raw());
