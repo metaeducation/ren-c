@@ -41,6 +41,6 @@
 ]
 
 ; !!! What to do about out-of-range seeks?  It was tolerated historically but
-; seems to be a poor practice.  It's an error at the moment.
+; seems to be a poor practice.
 ;
-~index-out-of-range~ !! (parse "abcd" [seek (128)])
+(didn't parse "abcd" [seek (128)])
