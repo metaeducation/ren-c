@@ -997,7 +997,10 @@ void MF_Context(REB_MOLD *mo, noquote(Cell(const*)) v, bool form)
         Mold_Value(mo, set_word);
         Append_Codepoint(mo->series, ' ');
 
-        if (Is_Isotope(e.var)) {
+        if (Is_Void(e.var)) {
+            Append_Ascii(s, "'");
+        }
+        else if (Is_Isotope(e.var)) {
             assert(not Is_Raised(e.var));  // can't be saved in variables
 
             DECLARE_LOCAL (reified);
