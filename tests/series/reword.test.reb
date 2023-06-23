@@ -20,8 +20,8 @@
 ; Functions can optionally take the keyword being replaced
 (
     "zero is one-B" = reword "$A is $B" reduce [
-        "A" lambda [] ["zero"]
-        "B" lambda [w] [join "one-" w]
+        "A" unrun lambda [] ["zero"]
+        "B" unrun lambda [w] [join "one-" w]
     ]
 )
 

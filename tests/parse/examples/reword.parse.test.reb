@@ -24,8 +24,8 @@
 
     out: make (kind of source) length of source
 
-    prefix: []  ; initialize with no-op rule
-    suffix: []
+    prefix: void  ; initialize with no-op rules
+    suffix: void
     case [
         null? escape [prefix: "$"]  ; refinement not used, so use default
 
@@ -35,8 +35,8 @@
 
         block? escape [
             parse escape [
-                prefix: [_ (null) | delimiter-types]
-                suffix: [_ (null) | delimiter-types]
+                [_ | prefix: delimiter-types]
+                [_ | suffix: delimiter-types]
             ] else [
                 fail ["Invalid /ESCAPE delimiter block" escape]
             ]
@@ -76,7 +76,7 @@
                     keyword
                 ])
 
-                (maybe suffix)  ; vaporize if suffix is blank
+                (suffix)  ; vaporize if suffix is void
 
                 (engroup quote keyword)  ; make rule evaluate to actual keyword
             ]
@@ -86,7 +86,7 @@
     rule: [
         a: <here>  ; Begin marking text to copy verbatim to output
         opt some [
-            to prefix  ; seek to prefix (may be blank!, this could be a no-op)
+            to prefix  ; seek to prefix (may be void, this could be a no-op)
             b: <here>  ; End marking text to copy verbatim to output
             prefix  ; consume prefix (if no-op, may not be at start of match)
             ||

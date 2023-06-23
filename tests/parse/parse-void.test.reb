@@ -54,7 +54,13 @@
 ('c = parse [a b c c c] ['a 'b :(if true [[some 'c]])])
 
 ; Liberal policy of letting voids opt-out is convenient to use void as a
-; state equivalent to no-op
+; state equivalent to no-op...if you are willing to deal with the possible
+; slipperiness of such values, e.g. consider:
+;
+;    c-rule-copy: all [1 = 1, c-rule]  ; won't act like you expect
+;
+; This may suggest a naming convention for variables which can be void,
+; such as *c-rule, to draw attention to the issue.
 
 (
     c-rule: if false [[some 'c]]
@@ -75,7 +81,7 @@
     'b = parse [a b] ['a 'b :(maybe c-rule)]
 )
 (
-    c-rule: [some 'c] 
+    c-rule: [some 'c]
     'c = parse [a b c c c] ['a 'b :(maybe c-rule)]
 )
 
@@ -93,3 +99,16 @@
         opt some further :(maybe suffix)
      ]
 )
+
+; Important to remember that a synthesized void from a plain GROUP! will
+; effectively vanish.  Getting around this might be accomplished via a
+; substitution of some kind, or speaking in terms of meta values.
+
+(3 = parse [x] ['x (1 + 2) | 'y (10 + 20)])
+('x = parse [x] ['x (void) | 'y (10 + 20)])  ; can't map x to void like this
+(
+    result: parse [x] ['x (<void>) | 'y (10 + 20)]
+    if result = <void> [result: void]  ; sample workaround
+    void? result
+)
+(void? unmeta parse [x] ['x ^(void) | 'y ^(10 + 20)])  ; alternative

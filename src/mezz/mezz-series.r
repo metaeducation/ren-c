@@ -174,8 +174,8 @@ reword: function [
 
     out: make (kind of source) length of source
 
-    prefix: null
-    suffix: null
+    prefix: []  ; void imperfect in parse3
+    suffix: []
     case [
         null? escape [prefix: "$"]  ; refinement not used, so use default
 
@@ -188,7 +188,7 @@ reword: function [
         block? escape [
             parse3 escape [
                 set prefix delimiter-types
-                set suffix opt delimiter-types
+                [end | set suffix delimiter-types]
             ] else [
                 fail ["Invalid /ESCAPE delimiter block" escape]
             ]
@@ -250,7 +250,7 @@ reword: function [
                     keyword
                 ])
 
-                (<*> maybe suffix)
+                (<*> if suffix <> [] [suffix])  ; vaporizes if no-op rule
 
                 (keyword-match: '(<*> keyword))
             ]
@@ -263,7 +263,7 @@ reword: function [
     rule: [
         a: <here>  ; Begin marking text to copy verbatim to output
         opt some [
-            to prefix  ; seek to prefix (may be blank!, this could be a no-op)
+            to prefix  ; seek to prefix (may be [], this could be a no-op)
             b: <here>  ; End marking text to copy verbatim to output
             prefix  ; consume prefix (if no-op, may not be at start of match)
             [
@@ -275,17 +275,17 @@ reword: function [
                             values keyword-match
                             /case case_REWORD
                         ]
-                        append out switch/type :v [
+                        append out switch/type v [
                             action! [
                                 ; Give v the option of taking an argument, but
                                 ; if it does not, evaluate to arity-0 result.
                                 ;
-                                (result: v :keyword-match)
+                                (result: run v :keyword-match)
                                 :result
                             ]
-                            block! [do :v]
+                            block! [do v]
                         ] else [
-                            :v
+                            v
                         ]
                     )
                     a: <here>  ; Restart mark of text to copy verbatim to output
