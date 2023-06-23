@@ -65,7 +65,7 @@
 ; a void, as do 0-iteration REPEAT and INTEGER! rules.
 [
     ("a" = parse "a" ["a" repeat (0) "b"])
-    ('~ = parse "a" ["a" ^[repeat (0) "b"]])
+    (void' = parse "a" ["a" ^[repeat (0) "b"]])
 ]
 
 ; Conventional ranges
@@ -113,7 +113,7 @@
     ("a" == parse "aaaaaaa" [repeat (#) "a"])
     ("a" == parse "aaaaaaaaaaaaaaaaaaa" [repeat (#) "a"])
     ("a" == parse "aa" [repeat (#) "a"])
-    ('~()~ = ^ parse "" [repeat (#) "a"])
+    ('~[']~ = ^ parse "" [repeat (#) "a"])
 ]
 
 ; No minimum or maximum (MAYBE SOME equivalent), block form
@@ -121,5 +121,5 @@
     ("a" == parse "aaaaaaa" [repeat ([_ #]) "a"])
     ("a" == parse "aaaaaaaaaaaaaaaaaaa" [repeat ([_ #]) "a"])
     ("a" == parse "aa" [repeat ([_ #]) "a"])
-    ('~()~ = ^ parse "" [repeat ([_ #]) "a"])
+    ('~[']~ = ^ parse "" [repeat ([_ #]) "a"])
 ]

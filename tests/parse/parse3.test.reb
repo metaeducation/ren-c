@@ -3,6 +3,14 @@
 (did parse3 "abc" ["abc"])
 (did parse3 "abc" ["abc" <end>])
 
+; voids match and don't advance input (nulls are errors)
+;
+(did parse3 [] [void])
+(
+    parse3 [a b] ['a void pos: <here> 'b]
+    pos = [b]
+)
+
 ; Edge case of matching <END> with TO or THRU
 ;
 (did parse3 "" [to ["a" | <end>]])
@@ -72,7 +80,7 @@
 ;
 ; BLANK! behavior is still contentious at time of writing.
 [
-    ~no-value~ !! (did parse3 [x] ['x null])
+    ~bad-word-get~ !! (did parse3 [x] ['x null])
     (did parse3 [_ x] [blank 'x <end>])
 
     (didn't parse3 [] [blank blank blank])

@@ -535,7 +535,7 @@ static Bounce Parse_One_Rule(
     }
 
     if (pos == P_INPUT_LEN) {  // at end of input
-        if (IS_LOGIC(rule) or IS_BLOCK(rule)) {
+        if (IS_LOGIC(rule) or IS_BLOCK(rule) or Is_Void(rule)) {
             //
             // Only these types can *potentially* handle an END input.
         }
@@ -563,7 +563,10 @@ static Bounce Parse_One_Rule(
         }
     }
 
-    if (IS_LOGIC(rule)) {
+    if (Is_Void(rule)) {
+        return Init_Integer(OUT, pos);  // void matches always
+    }
+    else if (IS_LOGIC(rule)) {
         if (VAL_LOGIC(rule))
             return Init_Integer(OUT, pos);  // true matches always
         return BOUNCE_UNHANDLED;  // false matches never

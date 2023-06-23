@@ -1480,14 +1480,20 @@ default-combinators: make map! reduce [
         value [quoted! quasi!]
         <local> comb
     ][
-        ; Review: should it be legal to say:
+        ; It is legal to say:
         ;
         ;     >> parse "" [' (1020)]
         ;     == 1020
         ;
-        ; Arguably there is a null match at every position.  A ^null might
-        ; also be chosen to match)...but NULL rules are errors.
+        ; Arguably there is a void match at every position (note that by
+        ; contrast, null rules are errors)
         ;
+        if void' = value [
+            pending: null
+            remainder: input
+            return void
+        ]
+
         if any-array? input [
             if quoted? value [
                 if input.1 <> unquote value [
@@ -2161,8 +2167,15 @@ default-combinators: make map! reduce [
         value [word! tuple!]
         <local> r comb
     ][
-        r: get value else [
-            fail "WORD! fetches cannot be NULL in UPARSE"
+        switch/type r: get value [
+            null! [
+                fail "WORD! fetches cannot be NULL in UPARSE"
+            ]
+            void! [
+                remainder: input
+                pending: null  ; not delegating to combinator with pending
+                return void
+            ]
         ]
 
         ; !!! It's not clear exactly what set of things should be allowed or
@@ -2659,8 +2672,8 @@ parsify: func [
             ; Failing to find an entry in the combinator table, we fall back on
             ; checking to see if the word looks up to a variable via binding.
             ;
-            value: get r else [
-                fail [r "looked up to NULL in UPARSE"]
+            if null? value: get r [
+                fail [r "looked up to ~null~ isotope in UPARSE"]  ; void is ok
             ]
 
             ; Looking up to a combinator via variable is allowed, and will use

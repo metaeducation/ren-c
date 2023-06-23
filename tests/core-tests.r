@@ -263,6 +263,7 @@
 %parse/parse-the-xxx.test.reb
 %parse/parse-thru.test.reb
 %parse/parse-to.test.reb
+%parse/parse-void.test.reb
 %parse/parse-word.test.reb
 %parse/examples/argtest.parse.test.reb
 %parse/examples/breaker.parse.test.reb

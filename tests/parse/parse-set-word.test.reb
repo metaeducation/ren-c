@@ -81,20 +81,19 @@
     )
 ]
 
-; Void assignments unset the variable
-; https://forum.rebol.info/t/q-should-be-the-unevaluated-form-of-void-a-no/1915/
+; Void assignments are legal
 (
     x: ~, y: 10
     did all [
         <result> = parse "a" [x: y: elide "a" (<result>)]
-        unset? 'x
-        unset? 'y
+        voided? 'x
+        void? :y
     ]
 )(
     obj: make object! [x: ~, y: 10]
     did all [
         <result> = parse "a" [obj.x: obj.y: elide "a" (<result>)]
-        unset? 'obj.x
-        unset? 'obj.y
+        voided? 'obj.x
+        void? :obj.y
     ]
 )
