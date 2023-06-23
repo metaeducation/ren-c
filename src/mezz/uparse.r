@@ -1807,7 +1807,7 @@ default-combinators: make map! reduce [
         <local> item error
     ][
         either any-array? input [
-            match input.1 value else [
+            match value input.1 else [
                 return raise "Value at parse position did not match TYPE-BLOCK!"
             ]
             remainder: next input
@@ -1821,7 +1821,7 @@ default-combinators: make map! reduce [
             ; afterward it's not something like a requested integer!.  Red
             ; has some type sniffing in their fast lexer, review relevance.
             ;
-            match item value else [
+            match value item else [
                 return raise "Could not TRANSCODE the TYPE-BLOCK! from input"
             ]
             return item
