@@ -20,7 +20,7 @@
     (
         ws: charset " ^-^/^M"
         res: parse html rule: [
-            collect maybe some [
+            collect opt some [
                 ws
                 |
                 "</" thru ">" stop
@@ -39,7 +39,7 @@
     (
         ws: charset " ^-^/^M"
         res: parse html rule: [
-            collect maybe some [
+            collect opt some [
                 ws
                 |
                 "</" thru ">" stop

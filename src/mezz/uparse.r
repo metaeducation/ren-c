@@ -290,7 +290,7 @@ default-combinators: make map! reduce [
             remainder: input  ; succeed on parser fail but don't advance input
             return void
         ]
-        return maybe unmeta result'  ; return successful parser result
+        return unmeta result'  ; return successful parser result
     ]
 
     'opt combinator [

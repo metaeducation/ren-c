@@ -49,16 +49,6 @@
 (did all [
     "b" == parse "bbb" [
         (x: 10, y: 20)
-        y: x: maybe (null)  ; !!! TBD: align with `maybe if true [null]`
-        some "b"
-    ]
-    voided? 'x
-    void? y
-])
-
-(did all [
-    "b" == parse "bbb" [
-        (x: 10, y: 20)
         y: x: maybe (~)  ; Isotopic ~ is a nihil, unset variable
         some "b"
     ]
