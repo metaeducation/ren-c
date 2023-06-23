@@ -94,17 +94,17 @@
                 append/part out a offset? a b  ; output before prefix
 
                 v: apply :select [values keyword-match, /case case_REWORD]
-                append out switch/type :v [
+                append out switch/type v [
                     action! [
                         ; Give v the option of taking an argument, but
                         ; if it does not, evaluate to arity-0 result.
                         ;
-                        (result: v :keyword-match)
+                        (result: run v :keyword-match)
                         :result
                     ]
-                    block! [eval :v]
+                    block! [eval v]
                 ] else [
-                    :v
+                    v
                 ]
             )
             a: <here>  ; Restart mark of text to copy verbatim to output
@@ -142,8 +142,8 @@
 ; Functions can optionally take the keyword being replaced
 (
     "zero is one-B" = uparse-reword "$A is $B" reduce [
-        "A" lambda [] ["zero"]
-        "B" lambda [w] [join "one-" w]
+        "A" unrun lambda [] ["zero"]
+        "B" unrun lambda [w] [join "one-" w]
     ]
 )
 (
