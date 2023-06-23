@@ -66,7 +66,7 @@
     ]
 
     tracked-combinators: copy default-combinators
-    tracked-combinators.(word!): :tracked-word!
+    tracked-combinators.(word!): unrun :tracked-word!
 
     trackparse*: specialize :parse [combinators: tracked-combinators]
 
