@@ -2420,22 +2420,6 @@ DECLARE_NATIVE(none_q)
 
 
 //
-//  void: native [
-//
-//  "0-arity comment, vanishes (see also: ~()~ to make empty splices)"
-//
-//      return: [<void>]
-//  ]
-//
-DECLARE_NATIVE(void)
-{
-    INCLUDE_PARAMS_OF_VOID;
-
-    return VOID;
-}
-
-
-//
 //  nihil: native [
 //
 //  "returns the value used to represent an unset variable"

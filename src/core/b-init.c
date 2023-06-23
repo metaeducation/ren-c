@@ -438,10 +438,6 @@ static void Init_Root_Vars(void)
     Set_Cell_Flag(&PG_Nihil_Cell, PROTECTED);  // prevent overwriting
     assert(Is_Nihil(NIHIL_CELL));
 
-    Finalize_Void(&PG_Void_Cell);
-    Set_Cell_Flag(&PG_Void_Cell, PROTECTED);  // prevent overwriting
-    assert(Is_Void(VOID_CELL));
-
     // They should only be accessed by macros which retrieve their values
     // as `const`, to avoid the risk of accidentally changing them.  (This
     // rule is broken by some special system code which `m_cast`s them for
@@ -512,7 +508,6 @@ static void Init_Root_Vars(void)
 static void Shutdown_Root_Vars(void)
 {
     Erase_Cell(&PG_Nihil_Cell);
-    Erase_Cell(&PG_Void_Cell);
 
     Erase_Cell(&PG_R_Thrown);
     Erase_Cell(&PG_R_Redo_Unchecked);

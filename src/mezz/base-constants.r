@@ -70,3 +70,4 @@ quasi-word!: &(quasi-word?)
 ; feels a bit like "sending things to `/dev/null`".
 ;
 blackhole: #
+void: '

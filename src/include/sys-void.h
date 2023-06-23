@@ -50,9 +50,6 @@
 #define NIHIL_CELL \
     c_cast(const REBVAL*, &PG_Nihil_Cell)
 
-#define VOID_CELL \
-    c_cast(const REBVAL*, &PG_Void_Cell)
-
 
 inline static REBVAL *Prep_Nihil_Untracked(Value(*) out) {
     ALIGN_CHECK_CELL_EVIL_MACRO(out);

@@ -34,9 +34,6 @@ unset
 #blank
 #false
 
-#void
-#none
-
 errored  ; when rebRescue() has no handler and evaluates to non-fail ERROR!
 rootvar  ; used as placeholder in rootvar cells
 attached  ; answer from BINDING OF when variable is attached but unresolved

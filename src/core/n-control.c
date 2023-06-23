@@ -1215,10 +1215,10 @@ DECLARE_NATIVE(case)
 //
 //  {Selects a choice and evaluates the block that follows it.}
 //
-//      return: "Last case evaluation, or null if no cases matched"
+//      return: "Last case evaluation, or void if no cases matched"
 //          [<opt> <void> any-value!]
 //      value "Target value"
-//          [<opt> any-value!]
+//          [<opt> <void> any-value!]
 //      cases "Block of cases (comparison lists followed by block branches)"
 //          [block!]
 //      /all "Evaluate all matches (not just first one)"

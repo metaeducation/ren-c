@@ -29,6 +29,7 @@ REBOL [
 
 true
 false
+void
 on
 off
 yes
