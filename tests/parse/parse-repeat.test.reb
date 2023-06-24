@@ -64,7 +64,7 @@
 ; Plain loops that never actually run their body give back a match that is
 ; a void, as do 0-iteration REPEAT and INTEGER! rules.
 [
-    ("a" = parse "a" ["a" repeat (0) "b"])
+    (void? parse "a" ["a" repeat (0) "b"])
     (void' = parse "a" ["a" ^[repeat (0) "b"]])
 ]
 

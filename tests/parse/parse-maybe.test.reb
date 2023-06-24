@@ -15,35 +15,28 @@
 
 ; Usages with SET-WORD!, potentially opting out of changing variables and
 ; making the rule evaluation their previous value if opting out.
+;
+; !!! So long as MAYBE is designed to return nihil, this can't do a legal
+; assignment...demonstrate meta
 
 (did all [
     "b" == parse "bbb" [
         (x: 10, y: 20)
-        y: x: maybe some "a"  ; !!! maybe retention concept TBD
+        y: x: ^[maybe some "a"]  ; !!! maybe retention concept TBD
         some "b"
     ]
-    voided? 'y
-    void? x
+    nihil' = y
+    nihil' = x
 ])
 
 (did all [
     "b" == parse "aaabbb" [
         (x: 10, y: 20)
-        y: x: maybe some "a"  ; matched, so non-void...changes x
+        y: x: ^[maybe some "a"]  ; matched, so non-void...changes x
         some "b"
     ]
-    x = "a"
-    y = "a"
-])
-
-(did all [
-    "b" == parse "aaabbb" [
-        (x: 10, y: 20)
-        y: x: maybe elide some "a"  ; !!! TBD: invisibles stay invisible
-        some "b"
-    ]
-    voided? 'x
-    void? y
+    x = quote "a"
+    y = quote "a"
 ])
 
 (did all [

@@ -85,15 +85,15 @@
 (
     x: ~, y: 10
     did all [
-        <result> = parse "a" [x: y: elide "a" (<result>)]
+        <result> = parse "a" [x: y: (void) "a" (<result>)]
         voided? 'x
-        void? :y
+        void? y
     ]
 )(
     obj: make object! [x: ~, y: 10]
     did all [
-        <result> = parse "a" [obj.x: obj.y: elide "a" (<result>)]
+        <result> = parse "a" [obj.x: obj.y: (void) "a" (<result>)]
         voided? 'obj.x
-        void? :obj.y
+        void? obj.y
     ]
 )

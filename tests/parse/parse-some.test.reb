@@ -113,8 +113,8 @@
 (
     x: ~
     did all [
-        "a" == parse "aaa" [x: maybe some "b", opt some "a"]
-        voided? 'x
+        "a" == parse "aaa" [x: opt some "b", opt some "a"]
+        null? x
     ]
 )
 
@@ -138,7 +138,7 @@
 [
     ('~[~null~]~ = ^ parse "a" ["a" opt some "b"])
     ('~[~null~]~ = ^ parse "a" ["a" [opt "b"]])
-    (void' = parse "a" ["a" ^[maybe some "b"]])
+    (nihil' = parse "a" ["a" ^[maybe some "b"]])
 ]
 
 ; This test works in Rebol2 even if it starts `i: 0`, presumably a bug.
