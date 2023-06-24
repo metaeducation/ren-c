@@ -82,7 +82,7 @@
 ; recursive behaviour
 
 ('~[']~ = ^ if true [if false [1]])
-(2 = if true [2 if false [1]])
+(void? if true [2 if false [1]])
 (1 = if true [if true [1]])
 
 ; infinite recursion

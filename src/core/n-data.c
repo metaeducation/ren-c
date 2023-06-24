@@ -2374,7 +2374,7 @@ DECLARE_NATIVE(aliases_q)
 //  "Tells you if the argument is not a value"
 //
 //      return: [logic!]
-//      value
+//      value  ; no type spec, avoids recursion from <opt>
 //  ]
 //
 DECLARE_NATIVE(null_q)
@@ -2440,14 +2440,14 @@ DECLARE_NATIVE(none)
 //  "Tells you if argument is void"
 //
 //      return: [logic!]
-//      ^optional [<opt> <void> <fail> <pack> any-value!]
+//      optional  ; no type spec, avoids recursion from <void> check
 //  ]
 //
 DECLARE_NATIVE(void_q)
 {
     INCLUDE_PARAMS_OF_VOID_Q;
 
-    return Init_Logic(OUT, Is_Meta_Of_Void(ARG(optional)));
+    return Init_Logic(OUT, Is_Void(ARG(optional)));
 }
 
 

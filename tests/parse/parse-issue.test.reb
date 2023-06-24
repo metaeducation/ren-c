@@ -219,7 +219,7 @@
     (#a == parse "aa" [repeat 2 #a])
     (didn't parse "aa" [repeat 3 #a])
     (#a == parse "aa" [some [#a]])
-    (#a = parse "aa" [some [#a] repeat (#) [#b]])
+    (void? parse "aa" [some [#a] repeat (#) [#b]])
     ("b" == parse "aabb" [repeat 2 #a, repeat 2 "b"])
     (didn't parse "aabb" [repeat 2 "a", repeat 3 #b])
 ]

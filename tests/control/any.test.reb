@@ -25,7 +25,7 @@
     )
     (<didn't> = if didn't any [] [<didn't>])
     (<else> = any [] else [<else>])
-    (3 = (1 + 2 any []))
+    (void? (1 + 2 any []))
     (null = (1 + 2 any [1 > 2, 3 > 4]))
 ]
 
@@ -401,7 +401,7 @@
     (
         two: ~
         3 = any [
-            maybe all [maybe eval [comment "hi"], elide two: 2]
+            all [eval [comment "hi"], elide two: 2]
             1 + two
         ]
     )

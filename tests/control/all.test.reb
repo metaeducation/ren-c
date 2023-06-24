@@ -30,7 +30,7 @@
     (void? all [] then [<then>])
     (<else> = all [] else [<else>])
 
-    (3 = (1 + 2 all []))
+    (void? (1 + 2 all []))
     (null = (1 + 2 all [1 < 2, 3 > 4]))
 ]
 

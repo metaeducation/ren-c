@@ -211,13 +211,24 @@ bool Typecheck_Value(
           case REB_ACTION: {
             Action(*) action = VAL_ACTION(test);
 
-            // Here we speedup NULL! type constraint checking to avoid needing
-            // a function call.  This method could be generalized, where
-            // typecheckers are associated with internal function pointers
-            // that are used to test the value.
+            // NULL? and VOID? do not have type specs on their argument,
+            // because if they did they would have to mention <opt> and <void>
+            // and this would lead to an infinite recursion if called here.
             //
+            // But we still speedup the checking to avoid needing a function
+            // call.  This could be generalized, where typecheckers are
+            // associated with internal function pointers for testing...so
+            // no actual frame needed to be built for any arity-1 and
+            // logic-returning native.
+
             if (action == VAL_ACTION(Lib(NULL_Q))) {
                 if (Is_Nulled(v))
+                    goto test_succeeded;
+                goto test_failed;
+            }
+
+            if (action == VAL_ACTION(Lib(VOID_Q))) {
+                if (Is_Void(v))
                     goto test_succeeded;
                 goto test_failed;
             }

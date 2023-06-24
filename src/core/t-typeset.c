@@ -203,7 +203,7 @@ Array(*) Add_Parameter_Bits_Core(
                 Init_Any_Word_Bound(
                     PUSH(),
                     REB_WORD,
-                    Canon(NULL_X),
+                    Canon(NULL_Q),
                     Lib_Context,
                     INDEX_ATTACHED
                 );
@@ -215,13 +215,19 @@ Array(*) Add_Parameter_Bits_Core(
                 Init_Any_Word_Bound(
                     PUSH(),
                     REB_WORD,
-                    Canon(NULL_X),
+                    Canon(NULL_Q),
                     Lib_Context,
                     INDEX_ATTACHED
                 );
             }
             else if (0 == CT_String(item, Root_Void_Tag, strict)) {
-                *flags |= PARAM_FLAG_VANISHABLE;
+                Init_Any_Word_Bound(
+                    PUSH(),
+                    REB_WORD,
+                    Canon(VOID_Q),
+                    Lib_Context,
+                    INDEX_ATTACHED
+                );
             }
             else if (0 == CT_String(item, Root_Fail_Tag, strict)) {
                 *flags |= PARAM_FLAG_WANT_FAILURES;
@@ -238,7 +244,7 @@ Array(*) Add_Parameter_Bits_Core(
                 Init_Any_Word_Bound(
                     PUSH(),
                     REB_WORD,
-                    Canon(NULL_X),
+                    Canon(NULL_Q),
                     Lib_Context,
                     INDEX_ATTACHED
                 );
