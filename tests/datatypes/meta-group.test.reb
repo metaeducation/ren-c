@@ -2,21 +2,25 @@
 
 (meta-group! = kind of '^(a b c))
 
-; The only way to see vanishing stuff is with meta operations.
+; Voids don't vanish in ordinary DO operations (just special constructs which
+; choose to interpret them as vanishing).  But they are invalid as parameters
+; to things like EQUAL?, so meta operations (or functions taking meta args)
+; are the only way to test for and process them.
+;
+; Actual vanishing stuff via nihil (empty packs) can only be observed via
+; meta operations.
 [
-    (void' = ^())
-    (void' = ^(comment "hi"))
+    (nihil' = ^())
+    (nihil' = ^(comment "hi"))
     (void' = ^(void))
 
-    (void' = ^(maybe comment "hi"))
     (void' = ^(maybe void))
-
-    (void' = ^ ())
-    (void' = ^ (comment "hi"))
-    (void' = ^ (void))
-
-    (void' = ^ (maybe comment "hi"))
     (void' = ^ (maybe void))
+    ~???~ !! (maybe comment "hi")
+
+    (nihil' = ^ ())
+    (nihil' = ^ (comment "hi"))
+    (void' = ^ (void))
 ]
 
 ((the '10) = ^(10 comment "hi"))

@@ -368,8 +368,6 @@ Bounce Evaluator_Executor(Frame(*) f)
 
       case REB_GROUP :
       case REB_GET_GROUP :
-        goto lookahead;
-
       case REB_META_GROUP :
         goto lookahead;
 
@@ -849,9 +847,9 @@ Bounce Evaluator_Executor(Frame(*) f)
         break;
 
 
-    //=//// GROUP! and GET-GROUP! /////////////////////////////////////////=//
+    //=//// GROUP!, GET-GROUP!, and META-GROUP! ///////////////////////////=//
     //
-    // Groups simply evaluate their contents, and will evaluate to void if
+    // Groups simply evaluate their contents, and can evaluate to nihil if
     // the contents completely disappear.
     //
     // GET-GROUP! currently acts as a synonym for group, see [1].
@@ -872,37 +870,23 @@ Bounce Evaluator_Executor(Frame(*) f)
     //        == 3  ; e.g. not void
 
       case REB_GET_GROUP:  // synonym for GROUP!, see [1]
-      case REB_GROUP: {
-        f_next_gotten = nullptr;  // arbitrary code changes fetched variables
-
-        Frame(*) subframe = Make_Frame_At_Core(
-            f_current,
-            f_specifier,
-            FRAME_FLAG_FAILURE_RESULT_OK
-                | FLAG_STATE_BYTE(ST_ARRAY_PRELOADED_ENTRY)
-        );
-        Push_Frame(OUT, subframe);
-        Init_Nihil(OUT);  // allow group to vanish, see [2]
-        subframe->executor = &Array_Executor;
-
-        return CATCH_CONTINUE_SUBFRAME(subframe); }
-
-
-    //=//// META-GROUP! ///////////////////////////////////////////////////=//
-    //
-    // A META-GROUP! simply gives the meta form of its evaluation.  Unlike the
-    // GROUP! and GET-GROUP!, it doesn't need to be concerned about staleness
-    // as it always overwrites the result.
-
+      case REB_GROUP:
       case REB_META_GROUP: {
         f_next_gotten = nullptr;  // arbitrary code changes fetched variables
 
+        Flags flags = FRAME_FLAG_FAILURE_RESULT_OK
+            | FLAG_STATE_BYTE(ST_ARRAY_PRELOADED_ENTRY);  // see [2]
+
+        if (STATE == REB_META_GROUP)
+            flags |= FRAME_FLAG_META_RESULT;
+
         Frame(*) subframe = Make_Frame_At_Core(
             f_current,
             f_specifier,
-            FRAME_FLAG_META_RESULT | FRAME_FLAG_FAILURE_RESULT_OK
+            flags
         );
         Push_Frame(OUT, subframe);
+        Init_Nihil(OUT);  // the ST_ARRAY_PRELOADED_ENTRY, see [2]
         subframe->executor = &Array_Executor;
 
         return CATCH_CONTINUE_SUBFRAME(subframe); }

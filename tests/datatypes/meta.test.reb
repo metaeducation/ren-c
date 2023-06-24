@@ -13,10 +13,7 @@
 ; a group if you wish their invisibility to be subsumed in the argument.
 ;
 (3 = all [
-    void? comment "Hi" 1 + 2
-])
-(3 = all [
-    void? maybe comment "Hi" 1 + 2
+    nihil? comment "Hi" 1 + 2
 ])
 ((the '3) = ^ (comment "Hi" 1 + 2))
 ((the '3) = ^(comment "Hi" 1 + 2))

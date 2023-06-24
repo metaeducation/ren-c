@@ -92,14 +92,14 @@
     (none' = ^ do :foo)
 ]
 
-; Explicit return of VOID is also invisible
+; Explicit return of VOID
 [
     (did foo: func [return: [<opt> <void> any-value!]] [return void])
 
     (void? foo)
     (void' = ^ foo)
 
-    (3 = (1 + 2 foo))
+    (void? (1 + 2 foo))
 ]
 
 ; Not providing an argument is an error (too easy to pick up random arguments
@@ -210,9 +210,16 @@
     (
         a: 1020
         did all [
-            void? a: ()
-            void? :a
+            void? a: (void)
+            void? a
         ]
+    )
+    (did all [
+        nihil? ()  ; empty groups make nihil
+        3 = (1 + 2 ())
+    ])
+    ~!!!~ (
+        a: () 1 + 2  ; can't assign nihil
     )
 ]
 

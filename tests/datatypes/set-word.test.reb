@@ -42,10 +42,11 @@
 [https://github.com/metaeducation/ren-c/issues/876 (
     x: 1020
     did all [
-        null? (null, x: (void))
-        void? :x
+        void? (null, x: (void))
+        void? x
     ]
-)(
+)
+~???~ !! (
     x: 1020
     did all [
         2 = (x: comment "Hi" 2)
