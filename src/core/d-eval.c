@@ -238,7 +238,17 @@ void Do_After_Action_Checks_Debug(Frame(*) f) {
     // !!! PG_Dispatcher() should do this, so every phase gets checked.
     //
   #if DEBUG_NATIVE_RETURNS
-    if (Is_Isotope(f->out)) {
+    if (Is_Nihil(f->out) and ACT_HAS_RETURN(phase)) {
+        const REBKEY *key = ACT_KEYS_HEAD(phase);
+        const REBPAR *param = ACT_PARAMS_HEAD(phase);
+        assert(KEY_SYM(key) == SYM_RETURN);
+
+        if (NOT_PARAM_FLAG(param, VANISHABLE)) {
+            assert(!"Native code violated return type contract!\n");
+            fail (Error_Bad_Invisible(f));
+        }
+    }
+    else if (Is_Isotope(f->out)) {
         //
         // Isotopes not currently checked for by return conventions, so they
         // are always legal... this includes failures.  Review premise.
@@ -250,7 +260,7 @@ void Do_After_Action_Checks_Debug(Frame(*) f) {
 
         if (not Typecheck_Including_Constraints(param, f->out)) {
             assert(!"Native code violated return type contract!\n");
-            panic (Error_Bad_Return_Type(f, VAL_TYPE(f->out)));
+            panic (Error_Bad_Return_Type(f, f->out));
         }
     }
   #endif

@@ -444,7 +444,7 @@ DECLARE_NATIVE(isotopic)
 //
 //  {Variant of UNQUOTE that also accepts QUASI! to make isotopes}
 //
-//      return: [<opt> <void> any-value!]
+//      return: [<opt> <void> <nihil> any-value!]
 //      value [quoted! quasi!]
 //  ]
 //
@@ -463,7 +463,7 @@ DECLARE_NATIVE(unmeta)
 //
 //  {Variant of UNMETA that passes thru VOID and NULL}
 //
-//      return: [<opt> <void> any-value!]
+//      return: [<opt> <void> <nihil> any-value!]
 //      ^value [<opt> <void> quoted! quasi!]
 //  ]
 //

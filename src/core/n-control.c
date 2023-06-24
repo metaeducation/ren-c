@@ -262,6 +262,9 @@ static Bounce Then_Else_Isotopic_Object_Helper(
     Value(*) in = ARG(optional);
     Value(*) branch = ARG(branch);
 
+    if (Is_Meta_Of_Nihil(in))
+        fail ("THEN/ELSE cannot operate on empty pack! input (e.g. NIHIL)");
+
     Meta_Unquotify(in);  // see [1]
 
     if (Is_Raised(in)) {  // definitional failure, skip

@@ -229,6 +229,9 @@ Array(*) Add_Parameter_Bits_Core(
                     INDEX_ATTACHED
                 );
             }
+            else if (0 == CT_String(item, Root_Nihil_Tag, strict)) {
+                *flags |= PARAM_FLAG_VANISHABLE;
+            }
             else if (0 == CT_String(item, Root_Fail_Tag, strict)) {
                 *flags |= PARAM_FLAG_WANT_FAILURES;
             }

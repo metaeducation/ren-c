@@ -161,8 +161,10 @@
     ]
 )(
     i: 0
-    parse "a" [maybe some [(i: i + 1, j: if i = 2 [[false]]) j]]
-    i == 2
+    did all [
+        didn't parse "a" [maybe some [(i: i + 1, j: if i = 2 [[false]]) j]]
+        i == 2
+    ]
 )]
 
 

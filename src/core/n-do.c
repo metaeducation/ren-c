@@ -39,7 +39,7 @@
 //
 //  {Process an evaluated argument *inline* as the evaluator loop would}
 //
-//      return: [<opt> <void> any-value!]
+//      return: [<opt> <void> <nihil> any-value!]
 //      value [element?]
 //          {BLOCK! passes-thru, ACTION! runs, SET-WORD! assigns...}
 //      expressions [<opt> element? <variadic>]

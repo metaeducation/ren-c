@@ -635,7 +635,7 @@ inline static void FAIL_IF_BAD_RETURN_TYPE(Frame(*) f) {
     // local uses them for the return types of a function.
     //
     if (not Typecheck_Including_Constraints(param, f->out))
-        fail (Error_Bad_Return_Type(f, VAL_TYPE(f->out)));
+        fail (Error_Bad_Return_Type(f, f->out));
 }
 
 

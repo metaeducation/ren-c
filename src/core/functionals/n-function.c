@@ -592,11 +592,11 @@ DECLARE_NATIVE(definitional_return)
     const REBPAR *param = ACT_PARAMS_HEAD(target_fun);
     assert(KEY_SYM(ACT_KEYS_HEAD(target_fun)) == SYM_RETURN);
 
-    if (Is_Meta_Of_Void(v)) {  // RETURN VOID
+    if (Is_Meta_Of_Nihil(v)) {  // RETURN NIHIL
         if (NOT_PARAM_FLAG(param, VANISHABLE))
             fail (Error_Bad_Invisible(f));
 
-        Init_Void(v);
+        Init_Nihil(v);
         goto skip_type_check;
     }
 
@@ -633,7 +633,7 @@ DECLARE_NATIVE(definitional_return)
     }
     else {
         if (not TYPE_CHECK(param, v))
-            fail (Error_Bad_Return_Type(target_frame, VAL_TYPE(v)));
+            fail (Error_Bad_Return_Type(target_frame, v));
     }
 
   skip_type_check: {  ////////////////////////////////////////////////////////

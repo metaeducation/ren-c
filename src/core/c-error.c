@@ -1190,13 +1190,14 @@ Context(*) Error_Bad_Argless_Refine(const REBKEY *key)
 //
 //  Error_Bad_Return_Type: C
 //
-Context(*) Error_Bad_Return_Type(Frame(*) f, enum Reb_Kind kind) {
+Context(*) Error_Bad_Return_Type(Frame(*) f, Value(*) v) {
     DECLARE_LOCAL (label);
     Get_Frame_Label_Or_Nulled(label, f);
 
-    if (Is_Void(f->out))
+    if (Is_Void(v))
         return Error_Bad_Invisible(f);
 
+    enum Reb_Kind kind = VAL_TYPE(v);
     return Error_Bad_Return_Type_Raw(label, Datatype_From_Kind(kind));
 }
 
