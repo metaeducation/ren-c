@@ -102,7 +102,7 @@
 ;
 ([3 300] = reduce* [1 + 2 null 100 + 200])
 
-~???~ !! (reduce/predicate [1 + 2 3 + 4] func [x] [x * 10])
+~bad-isotope~ !! (reduce/predicate [1 + 2 3 + 4] func [x] [x * 10])
 ([30 70] = reduce/predicate [1 + 2 3 + 4] func [x] [return x * 10])
 
 ([~true~ ~false~] = reduce/predicate [2 + 2 3 + 4] chain [:even?, :reify])

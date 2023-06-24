@@ -398,7 +398,7 @@
 
 ; ALL returns void when contents completely erase
 [
-    ("A" = all ["A", maybe all [comment "hi", maybe eval []]])
+    ("A" = all ["A", all [comment "hi", void, eval []]])
 ]
 
 ; When used with @ blocks, ALL will treat the block as already reduced

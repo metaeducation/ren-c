@@ -413,7 +413,7 @@ DECLARE_NATIVE(do)
 //  {Perform a single evaluator step, returning the next source position}
 //
 //      return: "Value from the step"
-//          [<opt> <void> any-value!]
+//          [<opt> <void> <nihil> any-value!]
 //      source [
 //          <maybe>  ; useful for `evaluate try ...` scenarios when no match
 //          any-array!  ; source code in block form
@@ -485,7 +485,7 @@ DECLARE_NATIVE(evaluate)
             if (REF(next))
                 rebElide(Canon(SET), rebQ(rest_var), nullptr);
 
-            Init_Void(OUT);  // !!! Callers not prepared for more ornery result
+            Init_Nihil(OUT);  // !!! Callers not prepared for more ornery result
             return Proxy_Multi_Returns(frame_);
         }
 
@@ -495,10 +495,14 @@ DECLARE_NATIVE(evaluate)
         );
         assert(Not_Feed_At_End(feed));
 
-        Frame(*) subframe = Make_Frame(
-            feed,
-            FRAME_FLAG_ALLOCATED_FEED
-        );
+        Flags flags = FRAME_FLAG_ALLOCATED_FEED;
+
+        if (not REF(next)) {
+            flags |= FLAG_STATE_BYTE(ST_ARRAY_PRELOADED_ENTRY);
+            Init_Nihil(OUT);  // heeded by array executor
+        }
+
+        Frame(*) subframe = Make_Frame(feed, flags);
         Push_Frame(OUT, subframe);
 
         if (not REF(next)) {  // plain evaluation to end, maybe invisible

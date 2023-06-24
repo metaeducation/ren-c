@@ -3,55 +3,54 @@
 ; !!! Should DO be able to return void?
 [
     (void' = ^(do []))
-    (void' = ^ (eval []))
-    (void' = ^ (maybe eval []))
+    (nihil' = ^ (eval []))
+    (nihil' = ^(eval []))
 
     (void? do [])
-    (void? (eval []))
-    (void? maybe eval [])
+    (nihil? (eval []))
     (3 = (1 + 2 eval []))
     (3 = (1 + 2 unmeta ^ eval []))
 
     (''30 = ^ (10 + 20 eval []))
-    (''30 = ^ (10 + 20 eval [void]))
+    (void' = ^ (10 + 20 eval [void]))
     (''30 = ^ (10 + 20 eval [comment "hi"]))
-    (''30 = ^ (10 + 20 eval make frame! unrun :void))
+    (''30 = ^ (10 + 20 eval make frame! :nihil))
 
     (didn't do [null])
     ('~[~null~]~ = ^ do [if true [null]])
     (void' = ^ do [if false [<a>]])
-    (''30 = ^ do [10 + 20 if false [<a>]])
+    (void' = ^ do [10 + 20 if false [<a>]])
 
     (did all [
         x: <overwritten>
-        void' = x: ^ comment "HI" comment "HI"  ; not eval'd in same step
-        x = void'
+        nihil' = x: ^ comment "HI" comment "HI"  ; not eval'd in same step
+        x = nihil'
     ])
 
     (did all [
         x: <overwritten>
         void' = (x: ^(comment "HI") ^ do [comment "HI"])
-        void' = x
+        nihil' = x
     ])
 
-    (void' = (10 + 20 ^(eval [])))
-    (void' = (10 + 20 ^(eval [comment "hi"])))
-    (void' = (10 + 20 ^(eval make frame! unrun :void)))
+    (nihil' = (10 + 20 ^(eval [])))
+    (nihil' = (10 + 20 ^(eval [comment "hi"])))
+    (void' = (10 + 20 ^(eval make frame! lambda [] [void])))
     (null' = ^(eval [null]))
     ('~[~null~]~ = ^(eval [if true [null]]))
 
     (30 = (10 + 20 eval []))
     (30 = (10 + 20 eval [comment "hi"]))
-    (30 = (10 + 20 eval make frame! unrun :void))
+    (30 = (10 + 20 eval make frame! :nihil))
     (null' = ^(eval [null]))
     ('~[~null~]~ = ^ eval [heavy null])
     ('~[~null~]~ = ^ eval [if true [null]])
 
     ; Try standalone ^ operator so long as we're at it.
-    (void' = ^ eval [])
-    (void' = ^ eval [comment "hi"])
-    (void' = ^ eval make frame! unrun :void)
-    (void' = ^ do :void)
+    (nihil' = ^ eval [])
+    (nihil' = ^ eval [comment "hi"])
+    (nihil' = ^ eval make frame! :nihil)
+    (void' = ^ do [void])
 
     (null' = ^ eval [null])
     (null' = ^(eval [null]))
@@ -69,16 +68,16 @@
 
 [
     (''3 = ^ (1 + 2 eval [comment "HI"]))
-    (void' = ^ eval [comment "HI"])
+    (nihil' = ^ eval [comment "HI"])
 
     (3 = (1 + 2 eval [comment "HI"]))
-    (void? eval [comment "HI"])
+    (nihil? eval [comment "HI"])
 
     (
         y: <overwritten>
-        x: (1 + 2 y: eval [comment "HI"])
+        x: (1 + 2 y: (void eval [comment "HI"]))
         did all [
-            x = 3
+            void? x
             voided? 'y
         ]
     )
@@ -244,9 +243,8 @@
     ]
 )
 (
-    value: <overwritten>
     did all [
-        void? value: evaluate/next [] 'pos ; @ requests pos after step (null)
+        nihil? evaluate/next [] 'pos ; @ requests pos after step (null)
         pos = null
     ]
 )

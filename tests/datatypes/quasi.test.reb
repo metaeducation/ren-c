@@ -52,16 +52,13 @@
 (
     x: 10
     did all [
-        void' = ^ x: eval []
-        void? :x
+        nihil' = x: ^ eval []
+        nihil? unmeta x
     ]
 )
 (
     x: 10
-    did all [
-        10 maybe x: eval []
-        void? :x
-    ]
+    10 = (x eval [])
 )
 
 [
@@ -218,7 +215,7 @@
         nihil? ()  ; empty groups make nihil
         3 = (1 + 2 ())
     ])
-    ~!!!~ (
+    ~???~ !! (
         a: () 1 + 2  ; can't assign nihil
     )
 ]
