@@ -4,6 +4,7 @@
         while [not tail? x] [
             sum: sum + take x
         ]
+        sum
     ]
     y: (z: foo 1 2 3, 4 5)
     all [y = 5, z = 6, 0 = (foo)]
