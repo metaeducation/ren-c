@@ -801,7 +801,7 @@ DECLARE_NATIVE(maybe)
     REBVAL *v = ARG(optional);
     Meta_Unquotify(v);
 
-    if (Is_None(v))  // !!! Should MAYBE be tolerant of NONE?
+    if (Is_Nihil(v))  // !!! Should MAYBE be tolerant of NONE?
         return VOID;
 
     Decay_If_Unstable(v);  // question about decay, see [1]

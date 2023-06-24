@@ -132,7 +132,7 @@ Bounce Func_Dispatcher(Frame(*) f)
     assert(KEY_SYM(ACT_KEYS_HEAD(phase)) == SYM_RETURN);
 
     REBVAL *cell = FRM_ARG(f, 1);
-    assert(Is_Nihil(cell));
+    assert(Is_None(cell));
     Init_Activation(
         cell,
         VAL_ACTION(Lib(DEFINITIONAL_RETURN)),
@@ -625,7 +625,7 @@ DECLARE_NATIVE(definitional_return)
         // allow, so that you can say `return ~xxx~` in functions whose spec
         // is written as `return: []`
 
-        if (Is_Pack(v) and not Is_None(v) and not REF(forward))
+        if (Is_Pack(v) and not Is_Nihil(v) and not REF(forward))
             Decay_If_Unstable(v);
 
         if (GET_PARAM_FLAG(param, RETURN_NONE) and not Is_None(v))

@@ -811,7 +811,7 @@ DECLARE_NATIVE(all)
 
 } eval_step_result_in_spare: {  //////////////////////////////////////////////
 
-    if (Is_Void(SPARE) or Is_None(SPARE)) {  // (comment "hi") (if false [<a>])
+    if (Is_Void(SPARE) or Is_Nihil(SPARE)) {  // (comment "hi") (if false [<a>])
         if (Is_Frame_At_End(SUBFRAME))
             goto reached_end;
 
@@ -941,7 +941,7 @@ DECLARE_NATIVE(any)
 
 } eval_step_result_in_out: {  ////////////////////////////////////////////////
 
-    if (Is_Void(OUT) or Is_None(OUT)) {  // (comment "hi") (if false [<a>])
+    if (Is_Void(OUT) or Is_Nihil(OUT)) {  // (comment "hi") (if false [<a>])
         if (Is_Frame_At_End(SUBFRAME))
             goto reached_end;
 
@@ -1026,7 +1026,7 @@ DECLARE_NATIVE(case)
 //    to take arity > 2.  Don't do this.  We have to get a true/false answer
 //    *and* know what the right hand argument was, for fallout to work.
 //
-// 2. Expressions that are between branches are allowed to vaporize via NONE
+// 2. Expressions that are between branches are allowed to vaporize via NIHIL
 //    (e.g. ELIDE), but voids are not skipped...it would create problems:
 //
 //        >> condition: false
@@ -1116,7 +1116,7 @@ DECLARE_NATIVE(case)
 
 } condition_result_in_spare: {  //////////////////////////////////////////////
 
-    if (Is_None(SPARE))  // skip none expressions, e.g. ELIDE, see [2]
+    if (Is_Nihil(SPARE))  // skip nihils, e.g. ELIDE, see [2]
         goto handle_next_clause;
 
     Decay_If_Unstable(SPARE);
@@ -1319,7 +1319,7 @@ DECLARE_NATIVE(switch)
 
 } right_result_in_spare: {  //////////////////////////////////////////////////
 
-    if (Is_None(SPARE))  // skip comments or ELIDEs
+    if (Is_Nihil(SPARE))  // skip comments or ELIDEs
         goto next_switch_step;  // see note [2] in comments for CASE
 
     if (Is_Frame_At_End(SUBFRAME))
@@ -1457,7 +1457,7 @@ DECLARE_NATIVE(default)
         return CONTINUE(SPARE, predicate, OUT);
     }
 
-    if (not Is_Nihil(OUT) and not Is_Nulled(OUT))
+    if (not Is_None(OUT) and not Is_Nulled(OUT))
         return OUT;  // consider it a "value", see [2]
 
     STATE = ST_DEFAULT_EVALUATING_BRANCH;

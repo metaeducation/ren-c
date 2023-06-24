@@ -426,7 +426,7 @@
     )
 ]
 
-(nihil: func* [
+(none: func* [
     {Arity-0 COMMENT}
 
     return: <void> {Evaluator will skip result}

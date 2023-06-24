@@ -606,6 +606,40 @@ inline static Value(*) Init_Pack_Untracked(
     TRACK(Init_Pack_Untracked((out), ISOTOPE_0, (a)))
 
 
+//=//// "NIHIL" (empty BLOCK! Isotope Pack, ~[]~) /////////////////////////=//
+//
+// This unstable isotope is used in situations that want to convey a full
+// absence of values (e.g. ELIDE).  It can't be used in assignments, and if
+// the evaluator encounters one in an interstitial context it will be
+// vaporized.  It is sensibly represented as a parameter pack of length 0.
+//
+
+#define Init_Nihil_Untracked(out) \
+    Init_Pack_Untracked((out), ISOTOPE_0, EMPTY_ARRAY)
+
+#define Init_Nihil(out) \
+    TRACK(Init_Nihil_Untracked(out))
+
+#define Init_Meta_Of_Nihil(out) \
+    TRACK(Init_Pack_Untracked((out), QUASI_2, EMPTY_ARRAY))
+
+inline static bool Is_Nihil(Cell(const*) v) {
+    if (not Is_Pack(v))
+        return false;
+    Cell(const*) tail;
+    Cell(const*) at = VAL_ARRAY_AT(&tail, v);
+    return tail == at;
+}
+
+inline static bool Is_Meta_Of_Nihil(Cell(const*) v) {
+    if (not Is_Meta_Of_Pack(v))
+        return false;
+    Cell(const*) tail;
+    Cell(const*) at = VAL_ARRAY_AT(&tail, v);
+    return tail == at;
+}
+
+
 //=//// "SPLICES" (GROUP! Isotopes) ///////////////////////////////////////=//
 //
 // Group isotopes are understood by routines like APPEND/INSERT/CHANGE to

@@ -21,9 +21,26 @@ verify: function [
         [block! action!]
     <local> pos result'
 ][
-    while [[^result']: evaluate/next conditions 'pos, pos] [
+    while [
+        ; If asserting on a multi-return, we want to assert based only on the
+        ; first item.  But some evaluations (like of a COMMA!) return nihil...
+        ; an empty parameter pack with no values at all.  The leading slash
+        ; means we consider the result to be optional.  If we instead wrote:
+        ;
+        ;    result': ^ evaluate/next conditions 'pos
+        ;
+        ; ...then if the eval step produced multiple returns (like for instance
+        ; FIND does) we'd have a meta-PACK! and have to write code to decay
+        ; it ourselves.
+        ;
+        ; Using a meta-value here is a way of reacting to isotopes, but we
+        ; could also put that responsibility onto the access points.  Review.
+        ;
+        [^/result']: evaluate/next conditions 'pos
+        pos
+    ][
         any [
-            void? unmeta result'  ; vanished
+            null? result'  ; evaluated to ~[]~ isotope, no first item to unpack
             '~true~ = result'  ; truthy
             non quasi! result' then [result' <> null']
 

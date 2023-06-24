@@ -66,7 +66,7 @@ void Bind_Values_Inner_Loop(
                 INIT_VAL_WORD_INDEX(v, 1);
             }
             else if (type_bit & add_midstream_types) {
-                Finalize_Nihil(Append_Context_Bind_Word(context, v));
+                Finalize_None(Append_Context_Bind_Word(context, v));
             }
           }
           else {
@@ -251,7 +251,7 @@ Array(*) Make_Let_Patch(
             | SERIES_FLAG_INFO_NODE_NEEDS_MARK  // inode of symbol
     );
 
-    Finalize_Nihil(VAL(ARR_SINGLE(let)));  // start variable as unset
+    Finalize_None(VAL(ARR_SINGLE(let)));  // start variable as unset
 
     if (specifier) {
         assert(IS_LET(specifier) or IS_USE(specifier) or IS_VARLIST(specifier));
@@ -1074,7 +1074,7 @@ Context(*) Virtual_Bind_Deep_To_New_Context(
             // with something.  But this code is shared with USE, so the user
             // can get their hands on the variable.  Can't be trash.
             //
-            Finalize_Nihil(var);
+            Finalize_None(var);
 
             assert(rebinding); // shouldn't get here unless we're rebinding
 

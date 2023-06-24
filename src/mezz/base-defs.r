@@ -36,6 +36,7 @@ c-break-debug: runs :c-debug-break  ; easy to mix up
 void': meta void
 null': meta null
 none': meta none
+nihil': meta nihil
 
 eval: :evaluate  ; shorthands should be synonyms, too confusing otherwise
 
@@ -158,20 +159,22 @@ comment: func* [
     {Ignores the argument value, but does no evaluation (see also ELIDE)}
 
     return: "Evaluator will skip over the result (not seen)"
-        <none>
+        [<nihil>]
     :discarded "Literal value to be ignored."  ; `comment print "x"` disallowed
         [block! any-string! binary! any-scalar!]
 ][
+    return nihil
 ]
 
 elide: func* [
     {Argument is evaluative, but discarded (see also COMMENT)}
 
     return: "The evaluator will skip over the result (not seen)"
-        <none>
+        [<nihil>]
     ^discarded "Evaluated value to be ignored"
         [<opt> <void> any-value!]
 ][
+    return nihil
 ]
 
 ; COMMA! is the new expression barrier.  But `||` is included as a redefine of

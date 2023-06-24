@@ -36,7 +36,7 @@
         code [block!]
         <local> last'
     ][
-        last': none'
+        last': void'
         reduce-each ^result' code [
             if raised? unmeta result' [return null]
             if void? unmeta result' [continue]

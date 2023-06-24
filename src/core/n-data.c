@@ -168,7 +168,7 @@ DECLARE_NATIVE(bind)
         // not in context, bind/new means add it if it's not.
         //
         if (REF(new) or (IS_SET_WORD(v) and REF(set))) {
-            Finalize_Nihil(Append_Context_Bind_Word(VAL_CONTEXT(context), v));
+            Finalize_None(Append_Context_Bind_Word(VAL_CONTEXT(context), v));
             return COPY(v);
         }
 
@@ -308,7 +308,7 @@ DECLARE_NATIVE(without)
 //
 //  {Defines words local to a block (See also: LET)}
 //
-//      return: [<opt> any-value!]
+//      return: [<opt> <void> any-value!]
 //      vars "Local word(s) to the block"
 //          [block! word!]
 //      body "Block to evaluate"
@@ -1340,7 +1340,7 @@ bool Set_Var_Core_Updater_Throws(
 
     DECLARE_LOCAL (writeback);
     PUSH_GC_GUARD(writeback);
-    Finalize_Nihil(writeback);  // needs to be GC safe
+    Finalize_None(writeback);  // needs to be GC safe
 
     PUSH_GC_GUARD(temp);
 
@@ -2403,7 +2403,7 @@ DECLARE_NATIVE(logic_q)
 
 
 //
-//  none?: native [
+//  nihil?: native [
 //
 //  "Tells you if argument is an ~[]~ isotope, e.g. an empty pack"
 //
@@ -2411,27 +2411,27 @@ DECLARE_NATIVE(logic_q)
 //      ^optional [<opt> <void> <pack> <fail> any-value!]
 //  ]
 //
-DECLARE_NATIVE(none_q)
+DECLARE_NATIVE(nihil_q)
 {
-    INCLUDE_PARAMS_OF_NONE_Q;
+    INCLUDE_PARAMS_OF_NIHIL_Q;
 
-    return Init_Logic(OUT, Is_Meta_Of_None(ARG(optional)));
+    return Init_Logic(OUT, Is_Meta_Of_Nihil(ARG(optional)));
 }
 
 
 //
-//  nihil: native [
+//  none: native [
 //
 //  "returns the value used to represent an unset variable"
 //
 //      return: []
 //  ]
 //
-DECLARE_NATIVE(nihil)
+DECLARE_NATIVE(none)
 {
-    INCLUDE_PARAMS_OF_NIHIL;
+    INCLUDE_PARAMS_OF_NONE;
 
-    return Init_Nihil(OUT);
+    return Init_None(OUT);
 }
 
 //
@@ -2452,19 +2452,19 @@ DECLARE_NATIVE(void_q)
 
 
 //
-//  nihil?: native [
+//  none?: native [
 //
-//  "Tells you if argument is nihil"
+//  "Tells you if argument is none"
 //
 //      return: [logic!]
 //      ^optional [<opt> <void> <fail> <pack> any-value!]
 //  ]
 //
-DECLARE_NATIVE(nihil_q)
+DECLARE_NATIVE(none_q)
 {
-    INCLUDE_PARAMS_OF_NIHIL_Q;
+    INCLUDE_PARAMS_OF_NONE_Q;
 
-    return Init_Logic(OUT, Is_Meta_Of_Nihil(ARG(optional)));
+    return Init_Logic(OUT, Is_Meta_Of_None(ARG(optional)));
 }
 
 
@@ -2531,17 +2531,17 @@ DECLARE_NATIVE(light) {
 
 
 //
-//  none: native [
+//  nihil: native [
 //
 //  {Make an empty parameter pack (isotopic ~[]~, not displayed by console)}
 //
-//      return: []
+//      return: [<nihil>]
 //  ]
 //
-DECLARE_NATIVE(none) {
-    INCLUDE_PARAMS_OF_NONE;
+DECLARE_NATIVE(nihil) {
+    INCLUDE_PARAMS_OF_NIHIL;
 
-    return NONE;
+    return Init_Nihil(OUT);
 }
 
 
@@ -2651,7 +2651,7 @@ DECLARE_NATIVE(degrade)
 //
 DECLARE_NATIVE(concretize)
 //
-// 1. CONCRETIZE of NIHIL and VOID are not currently supported by default.
+// 1. CONCRETIZE of NONE and VOID are not currently supported by default.
 //    If they were, then they would both become '
 {
     INCLUDE_PARAMS_OF_REIFY;
@@ -2661,8 +2661,8 @@ DECLARE_NATIVE(concretize)
     if (Is_Void(v))  // see 1
         fail ("CONCRETIZE of VOID is undefined (needs motivating case)");
 
-    if (Is_Nihil(v))  // see 1
-        fail ("CONCRETIZE of NIHIL is undefined (needs motivating case)");
+    if (Is_None(v))  // see 1
+        fail ("CONCRETIZE of NONE is undefined (needs motivating case)");
 
     return Concretize(Copy_Cell(OUT, v));
 }

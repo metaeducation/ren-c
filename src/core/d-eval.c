@@ -248,33 +248,8 @@ void Do_After_Action_Checks_Debug(Frame(*) f) {
         const REBPAR *param = ACT_PARAMS_HEAD(phase);
         assert(KEY_SYM(key) == SYM_RETURN);
 
-        if (Is_Void(f->out)) {
-            //
-            // If a function is void, it left whatever was in the output
-            // from before it ran.  So there's no correspondence to the return
-            // types it declares it could return itself (if the output was
-            // not flagged with the stale bit).
-            //
-            // Doesn't make sense to type check some arbitrary other function's
-            // return result we are passing through!
-
-            if (NOT_PARAM_FLAG(param, VANISHABLE)) {
-                assert(!"Native code violated return type contract!\n");
-                if (Is_Void(f->out))
-                    panic (Error_Bad_Invisible(f));
-                panic (Error_Bad_Return_Type(f, VAL_TYPE(f->out)));
-            }
-        }
-        else if (
-            not Typecheck_Including_Constraints(param, f->out)
-            and not (
-                GET_PARAM_FLAG(param, VANISHABLE)
-                and Get_Executor_Flag(ACTION, f, RUNNING_ENFIX)
-            )  // exemption, e.g. `1 comment "hi" + 2` infix non-stale
-        ){
+        if (not Typecheck_Including_Constraints(param, f->out)) {
             assert(!"Native code violated return type contract!\n");
-            if (Is_Void(f->out))
-                panic (Error_Bad_Invisible(f));
             panic (Error_Bad_Return_Type(f, VAL_TYPE(f->out)));
         }
     }

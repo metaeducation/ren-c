@@ -263,7 +263,7 @@ Bounce Array_Executor(Frame(*) f)
 
 } step_result_in_spare: {  ///////////////////////////////////////////////////
 
-    if (not Is_None(SPARE))  // heed ELIDE or COMMENT, preserve old result
+    if (not Is_Nihil(SPARE))  // heed ELIDE or COMMENT, preserve old result
         Move_Cell(OUT, SPARE);
 
     if (Not_Frame_At_End(SUBFRAME)) {
@@ -615,7 +615,7 @@ Bounce Evaluator_Executor(Frame(*) f)
     // A comma is a lightweight looking expression barrier.
 
       case REB_COMMA:
-        Init_None(OUT);
+        Init_Nihil(OUT);
         if (Get_Executor_Flag(EVAL, f, FULFILLING_ARG)) {
             Clear_Feed_Flag(f->feed, NO_LOOKAHEAD);
             Set_Feed_Flag(f->feed, BARRIER_HIT);
@@ -674,7 +674,7 @@ Bounce Evaluator_Executor(Frame(*) f)
     //
     // A plain word tries to fetch its value through its binding.  It fails
     // if the word is unbound (or if the binding is to a variable which is
-    // set, but to the isotopic form of void, e.g. "nihil").  Should the word
+    // set, but to the isotopic form of void, e.g. "none").  Should the word
     // look up to an isotopic action, then that action will be invoked.
     //
     // NOTE: The usual dispatch of enfix functions is *not* via a REB_WORD in
@@ -865,7 +865,7 @@ Bounce Evaluator_Executor(Frame(*) f)
     //   use it to make a distinction--like escaping soft-quoted slots.
     //
     // 2. The default for the Array_Executor is to make voids if expressions
-    //    vanish.  We use ST_ARRAY_PRELOADED_ENTRY with none in order to
+    //    vanish.  We use ST_ARRAY_PRELOADED_ENTRY with nihil in order to
     //    avoid generating voids from thin air when using GROUP!s
     //
     //        >> 1 + 2 (comment "hi")
@@ -882,7 +882,7 @@ Bounce Evaluator_Executor(Frame(*) f)
                 | FLAG_STATE_BYTE(ST_ARRAY_PRELOADED_ENTRY)
         );
         Push_Frame(OUT, subframe);
-        Init_None(OUT);  // allow group to vanish, see [2]
+        Init_Nihil(OUT);  // allow group to vanish, see [2]
         subframe->executor = &Array_Executor;
 
         return CATCH_CONTINUE_SUBFRAME(subframe); }
@@ -919,7 +919,7 @@ Bounce Evaluator_Executor(Frame(*) f)
     //
     // For now, we defer to what GET does.
     //
-    // Tuples looking up to nihil isotopes are handled consistently with
+    // Tuples looking up to none isotopes are handled consistently with
     // WORD! and GET-WORD!, and will error...directing you use GET/ANY if
     // fetching isotopes is what you actually intended.
 
@@ -1231,7 +1231,7 @@ Bounce Evaluator_Executor(Frame(*) f)
     //
     //    :foo/(print "side effect" 1)  ; this is allowed
     //
-    // Consistent with GET-WORD!, a GET-PATH! won't allow nihil access on
+    // Consistent with GET-WORD!, a GET-PATH! won't allow none access on
     // the plain (unfriendly) forms.
 
       case REB_META_PATH:
@@ -1354,7 +1354,7 @@ Bounce Evaluator_Executor(Frame(*) f)
 
             bool is_optional;
             if (
-                heart == REB_PATH
+                (heart == REB_PATH or heart == REB_META_PATH)
                 and VAL_SEQUENCE_LEN(check) == 2
                 and IS_BLANK(VAL_SEQUENCE_AT(SCRATCH, check, 0))
             ){

@@ -103,7 +103,7 @@ PVAR REB_OPTS *Reb_Opts;
 
 PVAR REBVAL PG_Feed_At_End;  // Canon pointer; internals use instead of rebEND
 
-PVAR REBVAL PG_Nihil_Cell;
+PVAR REBVAL PG_None_Cell;
 
 // These are special return values that can be checked easily by pointer.  They
 // could be checked even faster if they were fake immediate values, like
@@ -123,7 +123,7 @@ PVAR REBVAL PG_R_Suspend;
 // by the same mechanism they use.  This means they can be initialized at
 // the appropriate moment during the boot, one at a time.
 
-PVAR REBVAL *Root_None_Tag; // used with RETURN: <none> to suppress results
+PVAR REBVAL *Root_None_Tag; // RETURN: <none> for "uninteresting" results
 PVAR REBVAL *Root_With_Tag; // overrides locals gathering (can disable RETURN)
 PVAR REBVAL *Root_Variadic_Tag; // marks variadic argument <variadic>
 PVAR REBVAL *Root_Opt_Tag; // marks optional argument (can be NULL)

@@ -335,7 +335,7 @@ Bounce Action_Executor(Frame(*) f)
 
         if (GET_PARAM_FLAG(PARAM, REFINEMENT)) {
             assert(STATE != ST_ACTION_DOING_PICKUPS);  // jump lower
-            Finalize_Nihil(ARG);  // may be filled by a pickup
+            Finalize_None(ARG);  // may be filled by a pickup
             goto continue_fulfilling;
         }
 
@@ -351,7 +351,7 @@ Bounce Action_Executor(Frame(*) f)
 
         if (pclass == PARAM_CLASS_RETURN or pclass == PARAM_CLASS_OUTPUT) {
             assert(STATE != ST_ACTION_DOING_PICKUPS);
-            Finalize_Nihil(ARG);
+            Finalize_None(ARG);
             goto continue_fulfilling;
         }
 
@@ -419,7 +419,7 @@ Bounce Action_Executor(Frame(*) f)
             }
 
             if (GET_PARAM_FLAG(PARAM, VARIADIC)) {  // non-empty is ok, see [4]
-                assert(not Is_Nihil(OUT));
+                assert(not Is_None(OUT));
                 Init_Varargs_Untyped_Enfix(ARG, OUT);
                 FRESHEN(OUT);
             }
@@ -776,7 +776,7 @@ Bounce Action_Executor(Frame(*) f)
 } fulfill_and_any_pickups_done: {  ///////////////////////////////////////////
 
     if (Get_Executor_Flag(ACTION, f, FULFILL_ONLY)) {  // no typecheck
-        Finalize_Nihil(OUT);  // didn't touch out, should be fresh
+        Finalize_None(OUT);  // didn't touch out, should be fresh
         goto skip_output_check;
     }
 
@@ -805,7 +805,7 @@ Bounce Action_Executor(Frame(*) f)
   //    modified.  Even though it's hidden, it may need to be typechecked
   //    again (unless it was *fully* hidden).
   //
-  // 2. Nihil (isotopic voids) are the default values from MAKE FRAME!.
+  // 2. None (isotopic voids) are the default values from MAKE FRAME!.
   //
   // 3. We can't a-priori typecheck the variadic argument, since the values
   //    aren't calculated until the function starts running.  Instead we stamp
@@ -842,7 +842,7 @@ Bounce Action_Executor(Frame(*) f)
             VAL_PARAM_CLASS(PARAM) == PARAM_CLASS_RETURN
             or VAL_PARAM_CLASS(PARAM) == PARAM_CLASS_OUTPUT
         ){
-            assert(Is_Nihil(ARG));
+            assert(Is_None(ARG));
             continue;  // typeset is its legal return types, wants to be unset
         }
 
@@ -863,7 +863,7 @@ Bounce Action_Executor(Frame(*) f)
             }
         }
 
-        if (Is_Nihil(ARG)) {  // e.g. (~) isotope, unspecialized, see [2]
+        if (Is_None(ARG)) {  // e.g. (~) isotope, unspecialized, see [2]
             if (GET_PARAM_FLAG(PARAM, NOOP_IF_VOID)) {  // e.g. <maybe> param
                 Set_Executor_Flag(ACTION, f, TYPECHECK_ONLY);
                 Init_Nulled(OUT);
@@ -1200,7 +1200,7 @@ Bounce Action_Executor(Frame(*) f)
                 if (Is_Specialized(PARAM))
                     Copy_Cell(ARG, PARAM);  // must reset, see [3]
                 else if (VAL_PARAM_CLASS(PARAM) == PARAM_CLASS_RETURN)
-                    Init_Nihil(ARG);  // dispatcher expects unset
+                    Init_None(ARG);  // dispatcher expects unset
             }
 
             INIT_FRM_PHASE(f, redo_phase);

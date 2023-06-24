@@ -92,7 +92,7 @@ inline static bool Is_Isotope_Set_Friendly(Cell(const*) v) {
     assert(Is_Isotope(v));
     return (
         HEART_BYTE(v) == REB_WORD  // e.g. ~true~ and ~false~ and ~null~
-        or HEART_BYTE(v) == REB_VOID  // nihil is the isotopic state of void
+        or HEART_BYTE(v) == REB_VOID  // none is the isotopic state of void
         or HEART_BYTE(v) == REB_ACTION  // action assignment allowed
     );
 }

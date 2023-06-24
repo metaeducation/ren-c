@@ -58,7 +58,7 @@ array: func [
         [<unrun> element? action!]
     <local> rest block
 ][
-    initial: default ['~]  ; if not specified, array will be all meta nihil
+    initial: default ['~]  ; if not specified, array will be all meta none
     if block? size [
         rest: next size else [
             ;

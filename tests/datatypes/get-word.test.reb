@@ -20,7 +20,7 @@
 )
 (
     unset 'a
-    nihil? :a
+    none? :a
 )
 
 [#1477

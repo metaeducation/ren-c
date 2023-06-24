@@ -439,7 +439,7 @@ redescribe: func [
     ;
     all [
         notes
-        every [param note] notes [nihil? :note]
+        every [param note] notes [none? :note]
     ] then [
         meta.parameter-notes: null
     ]
@@ -470,7 +470,7 @@ unset?: func [
     return: [logic!]
     var [word! path! tuple!]
 ][
-    return nihil? get/any var
+    return none? get/any var
 ]
 
 set?: func [
@@ -478,7 +478,7 @@ set?: func [
     return: [logic!]
     var [word! path! tuple!]
 ][
-    return not nihil? get/any var
+    return not none? get/any var
 ]
 
 

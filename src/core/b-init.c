@@ -249,7 +249,7 @@ static void Startup_Lib(void)
     );
 
     Set_Cell_Flag(Init_Quasi_Void(force_Lib(QUASI_VOID)), PROTECTED);
-    assert(Is_Truthy(Lib(QUASI_VOID)) and Is_Meta_Of_Nihil(Lib(QUASI_VOID)));
+    assert(Is_Truthy(Lib(QUASI_VOID)) and Is_Meta_Of_None(Lib(QUASI_VOID)));
 
     Init_True(force_Lib(TRUE));
     Init_False(force_Lib(FALSE));
@@ -434,9 +434,9 @@ static void Init_Root_Vars(void)
     // Simple isolated values, not available via lib, e.g. not Lib(TRUE) or
     // Lib(BLANK)...
 
-    Finalize_Nihil(&PG_Nihil_Cell);
-    Set_Cell_Flag(&PG_Nihil_Cell, PROTECTED);  // prevent overwriting
-    assert(Is_Nihil(NIHIL_CELL));
+    Finalize_None(&PG_None_Cell);
+    Set_Cell_Flag(&PG_None_Cell, PROTECTED);  // prevent overwriting
+    assert(Is_None(NONE_CELL));
 
     // They should only be accessed by macros which retrieve their values
     // as `const`, to avoid the risk of accidentally changing them.  (This
@@ -507,7 +507,7 @@ static void Init_Root_Vars(void)
 
 static void Shutdown_Root_Vars(void)
 {
-    Erase_Cell(&PG_Nihil_Cell);
+    Erase_Cell(&PG_None_Cell);
 
     Erase_Cell(&PG_R_Thrown);
     Erase_Cell(&PG_R_Redo_Unchecked);

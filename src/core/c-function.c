@@ -454,7 +454,7 @@ void Push_Paramlist_Quads_May_Fail(
         // Non-annotated arguments allow all parameter types.
 
         if (local) {
-            Finalize_Nihil(param);
+            Finalize_None(param);
         }
         else if (refinement) {
             Init_Param(

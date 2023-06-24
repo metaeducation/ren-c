@@ -228,7 +228,7 @@ inline static Value(*) Degrade(Value(*) v) {
 
 inline static Value(*) Concretize(Value(*) v) {
     assert(not Is_Void(v));
-    assert(not Is_Nihil(v));
+    assert(not Is_None(v));
     if (QUOTE_BYTE(v) == ISOTOPE_0)
         mutable_QUOTE_BYTE(v) = UNQUOTED_1;
     return v;

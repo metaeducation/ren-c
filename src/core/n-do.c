@@ -729,7 +729,7 @@ DECLARE_NATIVE(applique)
         action,
         STACK_BASE,  // lowest_ordered_dsp of refinements to weave in
         nullptr,  // no binder needed
-        NIHIL_CELL  // seen as unspecialized by ST_ACTION_TYPECHECKING
+        NONE_CELL  // seen as unspecialized by ST_ACTION_TYPECHECKING
     );
     Manage_Series(CTX_VARLIST(exemplar));
     Init_Frame(frame, exemplar, VAL_ACTION_LABEL(action));
@@ -833,7 +833,7 @@ DECLARE_NATIVE(apply)
         action,
         STACK_BASE, // lowest_ordered_dsp of refinements to weave in
         nullptr /* &binder */,
-        NIHIL_CELL
+        NONE_CELL
     );
     Manage_Series(CTX_VARLIST(exemplar)); // Putting into a frame
     Init_Frame(frame, exemplar, VAL_ACTION_LABEL(action));  // GC guarded
@@ -880,7 +880,7 @@ DECLARE_NATIVE(apply)
 
         var = CTX_VAR(VAL_CONTEXT(frame), index);
 
-        if (not Is_Nihil(var))
+        if (not Is_None(var))
             fail (Error_Bad_Parameter_Raw(rebUnrelativize(at)));
 
         Cell(const*) lookback = Lookback_While_Fetching_Next(f);  // for error
@@ -909,10 +909,10 @@ DECLARE_NATIVE(apply)
             or GET_PARAM_FLAG(e->param, REFINEMENT)
             or GET_PARAM_FLAG(e->param, SKIPPABLE)
         ){
-            Init_Nihil(e->var);  // TBD: RETURN will be a pure local
+            Init_None(e->var);  // TBD: RETURN will be a pure local
             continue;  // skippable only requested by name, see [4]
         }
-        if (Is_Nihil(e->var))
+        if (Is_None(e->var))
             break;
     }
 

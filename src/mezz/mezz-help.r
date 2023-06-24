@@ -221,8 +221,8 @@ help: function [
                 null! [
                     print [topic "is null"]
                 ]
-                nihil! [
-                    print [topic "is not defined (e.g. has a NIHIL! value)"]
+                none! [
+                    print [topic "is not defined (e.g. has a NONE! value)"]
                 ]
             ] then [
                 return void

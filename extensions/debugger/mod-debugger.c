@@ -86,7 +86,7 @@ bool Do_Breakpoint_Throws(
         // longer available.  Debugging is being reviewed in light of a
         // stackless model and is non-functional at time of writing.
 
-        Init_None(out);
+        Init_Nihil(out);
         return false;  // no throw, run normally (but now, hooked)
     }
 

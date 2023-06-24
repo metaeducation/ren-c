@@ -261,7 +261,7 @@ bool Typecheck_Value(
                 if (Is_Specialized(param))
                     Copy_Cell(arg, param);
                 else
-                    Finalize_Nihil(arg);
+                    Finalize_None(arg);
             }
 
             arg = First_Unspecialized_Arg(&param, f);

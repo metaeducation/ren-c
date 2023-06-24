@@ -128,7 +128,7 @@ DECLARE_NATIVE(reduce)
     if (Is_Nulled(predicate))  // default is no processing
         goto process_out;
 
-    if (Is_None(OUT) or Is_Void(OUT))  // not offered to predicates, by design
+    if (Is_Nihil(OUT) or Is_Void(OUT))  // not offered to predicates, by design
         goto next_reduce_step;  // reduce skips over voids and nones
 
     SUBFRAME->executor = &Just_Use_Out_Executor;
@@ -137,7 +137,7 @@ DECLARE_NATIVE(reduce)
 
 } process_out: {  ////////////////////////////////////////////////////////////
 
-    if (Is_None(OUT) or Is_Void(OUT))
+    if (Is_Nihil(OUT) or Is_Void(OUT))
         goto next_reduce_step;  // void results are skipped by reduce
 
     Decay_If_Unstable(OUT);
@@ -264,7 +264,7 @@ DECLARE_NATIVE(reduce_each)
 } reduce_step_output_in_spare: {  ////////////////////////////////////////////
 
     if (Is_Void(SPARE)) {
-        Init_None(OUT);
+        Init_Nihil(OUT);
         goto reduce_next;
     }
 
@@ -286,7 +286,7 @@ DECLARE_NATIVE(reduce_each)
     }
 
     if (Is_Void(OUT))  // vaporized body or CONTINUE w/no argument
-        Init_None(OUT);  // void reserved for body never ran
+        Init_Nihil(OUT);  // void reserved for body never ran
 
     goto reduce_next;
 

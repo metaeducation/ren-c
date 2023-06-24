@@ -134,7 +134,7 @@
 ; locals are unset before they are assigned
 (
     f: func [<local> loc] [return get/any 'loc]
-    nihil? f
+    none? f
 )(
     f: func [<local> loc] [return reify get/any 'loc]
     f = '~

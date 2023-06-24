@@ -1194,6 +1194,9 @@ Context(*) Error_Bad_Return_Type(Frame(*) f, enum Reb_Kind kind) {
     DECLARE_LOCAL (label);
     Get_Frame_Label_Or_Nulled(label, f);
 
+    if (Is_Void(f->out))
+        return Error_Bad_Invisible(f);
+
     return Error_Bad_Return_Type_Raw(label, Datatype_From_Kind(kind));
 }
 

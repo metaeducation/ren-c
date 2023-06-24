@@ -1,6 +1,6 @@
 //
 //  File: %sys-trash.h
-//  Summary: "Unreadable Variant of nihil Available In Early Boot"
+//  Summary: "Unreadable Variant of none Available In Early Boot"
 //  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  Homepage: https://github.com/metaeducation/ren-c/
 //
@@ -66,7 +66,7 @@
         return did (v->header.bits & CELL_FLAG_STALE);
     }
 #else
-    // Release Build Behavior: Looks just like a meta-nihil (`~` value)
+    // Release Build Behavior: Looks just like a meta-none (`~` value)
 
     #define Init_Trash_Untracked(out) \
         Init_Nothing_Untracked((out), REB_VOID, QUASI_2)
