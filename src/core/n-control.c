@@ -711,27 +711,6 @@ DECLARE_NATIVE(match)
 }
 
 
-//
-//  must: native [
-//
-//  {Ensure that the argument is not NULL}
-//
-//      return: "Same as input value if non-NULL"
-//          [any-value!]
-//      value [<opt> any-value!]
-//  ]
-//
-DECLARE_NATIVE(must)  // `must x` is a faster synonym for `non null x`
-{
-    INCLUDE_PARAMS_OF_MUST;
-
-    if (Is_Nulled(ARG(value)))
-        fail ("MUST requires argument to not be NULL");
-
-    return COPY(ARG(value));
-}
-
-
 #define FRAME_FLAG_ALL_VOIDS FRAME_FLAG_24
 
 
