@@ -1380,7 +1380,10 @@ default-combinators: make map! reduce [
 
         r: ^ eval value
 
-        if void? unmeta r [  ; like [:(if false [...])] or [:(comment "hi")]
+        any [
+            r = nihil'  ; like [:(comment "hi")]
+            r = void'  ; like [:(if false [...])]
+        ] then [
             pending: null
             remainder: input
             return nihil  ; invisible
