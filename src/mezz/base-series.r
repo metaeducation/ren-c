@@ -83,40 +83,70 @@ join: function [
             map! object! module! bitset!]
     base [
         type-word!
-        any-series! issue! url!
+        any-string! issue! url!
         any-sequence!
-        port! map! object! module! bitset!
+        any-array!
+        binary!
     ]
-    ^value [<void> any-value!]
+    value [<void> element? splice?]
 ][
-    if void? unmeta value [
+    if void? :value [
         return copy base
+    ]
+
+    if type-word? base [
+        if not block? :value [
+            fail "JOIN with base as type only takes BLOCK! arguments"
+        ]
+        kind: base
+        if (any-sequence? first value) or (any-array? first value) [
+            base: reduce [spread as block! first value]
+            value: next value
+        ] else [
+            base: copy []
+        ]
+        set/any 'value spread value  ; act like a splice
+    ] else [
+        kind: kind of base
+    ]
+
+    if kind = binary! [
+        return as binary! append (to binary! base) :value
     ]
 
     ; !!! This doesn't do any "slash calculus" on URLs or files, e.g. to stop
     ; the append of two slashes in a row.  That is done by the MAKE-FILE code,
     ; and should be reviewed if it belongs here too.
     ;
-    if match [url! issue! any-string!] base [
-        return as (kind of base) append (to text! base) unmeta value
+    if find/case reduce [url! issue! text! file! email! tag!] kind [
+        return as (kind of base) append (to text! base) :value
     ]
 
-    if not any-sequence? base [
-        return append (copy base) unmeta value
+    if find/case reduce [
+        block! get-block! set-block! the-block! meta-block!
+        group! get-group! set-group! the-group! meta-group!
+    ] kind [
+        return append (copy base) :value
     ]
 
-    sep: either any-path? base ['/] ['.]
-    kind: kind of base  ; to set output type back to original
-    base: to block! base  ; TO operation copies
+    if find/case reduce [
+        path! get-path! set-path! the-path! meta-path!
+    ] kind [
+        sep: '/
+    ] else [
+        assert [find/case reduce [
+            tuple! get-tuple! set-tuple! the-tuple! meta-tuple!
+        ] kind]
+        sep: '.
+    ]
 
-    if quasi? value [
-        if not splice? unmeta value [
-            fail "JOIN only accepts SPLICE blocks as ^^META parameters"
-        ]
-        value: unquasi value
+    base: copy as block! base
+
+    if splice? :value [
+        value: unquasi meta :value  ; should AS BLOCK! work on splices?
     ]
     else [
-        value: reduce [unquote value]  ; !!! should FOR-EACH take quoted?
+        value: reduce [value]  ; !!! should FOR-EACH take quoted?
     ]
 
     for-each item value [  ; !!! or REDUCE-EACH, for implicit reduce...?

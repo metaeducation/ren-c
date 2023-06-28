@@ -454,9 +454,9 @@ REBINT Find_In_Array(
     if (Is_Isotope(pattern))
         fail ("Only Isotopes Supported by FIND are MATCHES and SPREAD");
 
-    if (ANY_TYPE_VALUE(pattern))
+    if (ANY_TYPE_VALUE(pattern) and not (flags & AM_FIND_CASE))
         fail (
-            "FIND temporarily not taking TYPE-XXX! use MATCHES"
+            "FIND without /CASE temporarily not taking TYPE-XXX! use MATCHES"
             " see https://forum.rebol.info/t/1881"
         );
 
