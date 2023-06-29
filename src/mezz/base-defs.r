@@ -172,9 +172,20 @@ elide: func* [
     return: "The evaluator will skip over the result (not seen)"
         [<nihil>]
     ^discarded "Evaluated value to be ignored"
-        [<opt> <void> any-value!]
+        [<opt> <void> <pack> any-value!]  ; <pack> so (elide elide "x") works
 ][
     return nihil
+]
+
+elide-if-void: func* [
+    {Argument is evaluative, but discarded if void}
+
+    return: [<nihil> <opt> <void> any-value!]
+    ^value' "Evaluated value to be ignored"
+        [<opt> <void> <pack> any-value!]  ; <pack> is passed through
+][
+    if value' = void' [return nihil]
+    return unmeta value'
 ]
 
 ; COMMA! is the new expression barrier.  But `||` is included as a redefine of

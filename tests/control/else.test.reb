@@ -91,9 +91,10 @@
     (catch [~[~null~]~ also ^x -> [throw (x = the ~[~null~]~)]])
     (catch ['~null~ also ^x -> [throw (x = the '~null~)]])
 
-    (~[]~ *else x -> [null = x])
+    ~???~ !! (~[]~ *else x -> [1020])
+    ~???~ !! (~[]~ *else ^x -> [1020])
+
     (null *else ^x -> [null' = x])
-    (~[]~ *else ^x -> ['~[]~ = x])
 ]
 
 ; Variant forms react to ~null~ isotopes as if they were null.  This can be
@@ -106,18 +107,16 @@
     (~null~ *else [true])
 ]
 
-; Void handling is distinct from the error case with nothing on the left.
 [
-    (sys.util.rescue [else [~unused~]] then e -> [e.id = 'no-arg])
+    ~no-arg~ !! (else [~unused~])
+    ~???~ !! (() else [true])  ; should NIHIL with enfix look like no value?
+    ~???~ !! (1000 + 20 () then [fail ~unreachable~])
 
     (void else [true])
-    (1020 = (1000 + 20 void then [fail ~unreachable~]))
-
-    (() else [true])
-    (1020 = (1000 + 20 () then [fail ~unreachable~]))
+    (1020 = (1000 + 20 elide-if-void (void then [fail ~unreachable~])))
 
     ((void) else [true])
-    (1020 = (1000 + 20 ((void) then [fail ~unreachable~])))
+    (void? (1000 + 20 ((void) then [fail ~unreachable~])))
 
     (do [] else [true])
     (void? do [] then [fail ~reachable~])
@@ -126,22 +125,17 @@
 [
     (foo: func [] [return void], true)
     (foo else [true])
-    (1020 = (1000 + 20 foo then [fail [~unreachable~]]))
+    (1020 = (1000 + 20 elide-if-void (foo then [fail [~unreachable~]])))
 ]
 
 [
     (foo: lambda [] [if false [~ignore~]], true)
     (foo else [true])
-    (1020 = (1000 + 20 foo then [fail [~unreachable~]]))
+    (void? (1000 + 20 foo then [fail [~unreachable~]]))
 ]
 
-; !!! This one is a tricky case, because LAMBDA wants to use DELEGATE.
-; Before the delegation it has to be in a state that feeds a stale value
-; without the transient void signal.  At the end of the block, it needs
-; something to transition it to void.  Where to put the responsibility
-; is not quite clear... punt on it for now.
 [
     (foo: lambda [] [], true)
     (foo else [true])
-    (1020 = (1000 + 20 foo then [fail [~unreachable~]]))
+    (1020 = (1000 + 20 elide-if-void (foo then [fail [~unreachable~]])))
 ]
