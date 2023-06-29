@@ -779,6 +779,8 @@ Array(*) Pop_Paramlist_With_Meta_May_Fail(
             CTX_VAR(*meta, STD_ACTION_META_PARAMETER_TYPES),
             CTX(types_varlist)
         );
+
+        USED(param);
     }
 
     // Only make `parameter-notes` if there were strings (besides description)
@@ -826,6 +828,8 @@ Array(*) Pop_Paramlist_With_Meta_May_Fail(
             CTX_VAR(*meta, STD_ACTION_META_PARAMETER_NOTES),
             CTX(notes_varlist)
         );
+
+        USED(param);
     }
 
     // With all the values extracted from stack to array, restore stack pointer

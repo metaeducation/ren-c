@@ -222,6 +222,8 @@ core: [
         <implicit-fallthru>
         <no-constant-conditional>
 
+        <gnu:-Wno-unused-const-variable>  ; e.g. z_deflate_copyright
+
         ; Zlib is an active project so it would be worth it to check to see
         ; if minor patches for subverting Spectre mitigation would be taken.
         ;

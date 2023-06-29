@@ -597,6 +597,10 @@ void Mold_Text_Series_At(REB_MOLD *mo, String(const*) s, REBLEN index) {
     }
 
     Append_Codepoint(buf, '}');
+
+    USED(escape);
+    USED(paren);
+    USED(chr1e);
 }
 
 

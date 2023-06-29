@@ -34,6 +34,8 @@ REBINT CT_Parameter(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool stric
 
     assert(CELL_HEART(a) == REB_PARAMETER);
     assert(CELL_HEART(b) == REB_PARAMETER);
+    UNUSED(a);
+    UNUSED(b);
 
     fail ("Parameter equality test currently disabled");
 }
@@ -105,6 +107,7 @@ void Startup_Typesets(void)
 
     Index last = (cast(int, SYM_DATATYPES) - SYM_ANY_VALUE_Q) / 2;
     assert(Typesets[last] == 0);  // table ends in zero
+    UNUSED(last);
 
     // Make the NULL! type checker
   {
