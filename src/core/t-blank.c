@@ -44,14 +44,24 @@ void MF_Void(REB_MOLD *mo, noquote(Cell(const*)) v, bool form)
 //
 //  MF_Blank: C
 //
+// Considerable debate was invested into whether BLANK! should act like a
+// space when formed in string contexts.  As blanks have moved further away
+// from representing "nothing" (delegating shades of that to NULL and VOID)
+// it seems to make sense that their presence indicate *something*:
+//
+//    >> append [a b c] _
+//    == [a b c _]
+//
+//    >> append "abc" _
+//    == "abc "
+//
 void MF_Blank(REB_MOLD *mo, noquote(Cell(const*)) v, bool form)
 {
     UNUSED(v);
 
-    // While it was tempting to say that _ could act as "space", that overload
-    // turns out to not be good mojo.
-    //
-    if (not form)
+    if (form)
+        Append_Ascii(mo->series, " ");
+    else
         Append_Ascii(mo->series, "_");
 }
 
