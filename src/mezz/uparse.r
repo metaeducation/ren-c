@@ -2174,33 +2174,59 @@ default-combinators: make map! reduce [
         <local> r comb
     ][
         switch/type r: get value [
-            null! [
-                fail "WORD! fetches cannot be NULL in UPARSE"
-            ]
+            ;
+            ; BLOCK!s are accepted as rules, and looked up via combinator.
+            ; Most common case, make them first to shortcut earlier.
+            ;
+            block! []
+
+            ; These types are accepted literally (though they do run through
+            ; the combinator looked up to, which ultimately may not mean
+            ; that they are literal... should there be a special "literal"
+            ; mapped-to-value so that if you rephrase them to active
+            ; combinators the word lookup won't work?)
+            ;
+            text! []
+            binary! []
+            issue! []
+
+            ; While most frequently used with GET-GROUP! to use a conditional
+            ; to continue control or not, ~true~ and ~false~ isotopes are
+            ; allowed from word lookups e.g. TRUE and FALSE.
+            ;
+            logic! []
+
+            ; Datatypes looked up by words (e.g. TAG!) are legal as rules
+            ;
+            type-word! []
+            type-tuple! []
+            type-path! []
+            type-block! []
+            type-group! []
+
+            ; Bitsets were also legal as rules without decoration
+            ;
+            bitset! []
+
+            ; Blanks were legal as inert...they may become the actual canon
+            ; representation of the space CHAR!.
+            ;
+            blank! []
+
             void! [
                 remainder: input
                 pending: null  ; not delegating to combinator with pending
                 return nihil  ; act invisibly
             ]
-        ]
 
-        ; !!! It's not clear exactly what set of things should be allowed or
-        ; disallowed here.  Letting you do INTEGER! has been rejected as too
-        ; obfuscating, since the INTEGER! combinator takes an argument.
-        ; Allowing WORD! to run the WORD! combinator again would not be letting
-        ; you do anything with recursion you couldn't do with BLOCK! rules, but
-        ; still seems kind of bad.  Allowing LOGIC! seems like it may be
-        ; confusing but if it weren't allowed you couldn't break rules just
-        ; by using the word FALSE.
-        ;
-        ; Basically, for the moment, we rule out anything that takes arguments.
-        ; Right now that's integers and keywords, so just prohibit those.
-        ;
-        if integer? r [
-            fail [value "can't be INTEGER!, use REPEAT" :["(" value ")"]]
-        ]
-        if word? r [
-            fail [value "can't be WORD!, use" :["[" value "]"] "BLOCK! rule"]
+            null! [
+                fail "WORD! fetches cannot be NULL in UPARSE"
+            ]
+
+            fail [
+                "WORD! can't look up to active combinator, unless BLOCK!."
+                "If literal match is meant, use" unspaced ["@" value]
+            ]
         ]
 
         if not comb: select state.combinators kind of r [

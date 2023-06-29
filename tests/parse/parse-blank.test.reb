@@ -31,11 +31,8 @@
 (didn't parse [] [blank blank blank])
 
 (didn't parse [x <y> "z"] ['_ '_ '_])
-('_ == parse [_ _ _] ['_ '_ '_])
-(
-    q-blank: quote '_
-    '_ == parse [_ _ _] [q-blank q-blank q-blank]
-)
+(_ == parse [_ _ _] ['_ '_ '_])
+(_ == parse [_ _ _] [_ _ _])
 
 [
     (didn't parse "" [_])

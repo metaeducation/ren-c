@@ -4,11 +4,11 @@
 ; fetched from words), voids have no-op behavior...leaving the parse position
 ; alone and succeeding, evaluating to void.
 
-; Quoted voids are just skipped, whether literal or in a variable.
+; Quoted voids are just skipped, and skipped if hit in a variable
 
 ('b = parse [a b] ['a ' 'b])
 (
-    var: the '
+    var: void
     'b = parse [a b] ['a var 'b]
 )
 
@@ -16,7 +16,7 @@
 
 ('b = parse [a b] ['a 'b '])
 (
-    var: the '
+    var: void
     'b = parse [a b] ['a 'b var]
 )
 
@@ -31,7 +31,7 @@
 )
 (
     test: ~
-    var: the '
+    var: void
     did all [
        'b = parse [a b] ['a test: ^[var] 'b]
         nihil' = test
