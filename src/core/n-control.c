@@ -578,7 +578,7 @@ DECLARE_NATIVE(else)  // see `tweak :else 'defer on` in %base-defs.r
 //      return: "The same value as input, regardless of if branch runs"
 //          [<opt> <void> any-value!]
 //      ^optional "<deferred argument> Run branch if this is not null"
-//          [<opt> <void> <fail> any-value!]
+//          [<opt> <void> <fail> <pack> any-value!]
 //      /decay "Pre-decay ~null~ isotope input to NULL"
 //      :branch "If arity-1 ACTION!, receives value that triggered branch"
 //          [<unrun> any-branch!]
@@ -604,6 +604,9 @@ DECLARE_NATIVE(also)  // see `tweak :also 'defer on` in %base-defs.r
     }
 
   initial_entry: {  //////////////////////////////////////////////////////////
+
+    if (Is_Meta_Of_Nihil(in))
+        fail ("ALSO cannot operate on empty pack! input (e.g. NIHIL)");
 
     if (Is_Meta_Of_Void(in))
         return VOID;  // telegraph invisible intent

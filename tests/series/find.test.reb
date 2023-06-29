@@ -26,7 +26,7 @@
 ; Copyright (C) 2011-2015 Red Foundation).
 [
     (equal? [x y] find/match [x y] 'x)
-    (equal? [y] [# @]: find/match [x y] 'x)
+    (equal? [y] [_ @]: find/match [x y] 'x)
 
     ([here and now] = find/match [here and now] 'here)
     (null = find/match [here and now] 'her)
