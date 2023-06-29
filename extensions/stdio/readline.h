@@ -65,7 +65,7 @@ typedef struct Reb_Terminal_Struct STD_TERM;
 extern int Term_Pos(STD_TERM *t);
 extern REBVAL *Term_Buffer(STD_TERM *t);
 
-extern STD_TERM *Init_Terminal();
+extern STD_TERM *Init_Terminal(void);
 
 extern void Term_Insert(STD_TERM *t, const REBVAL *v);
 extern void Term_Seek(STD_TERM *t, unsigned int pos);

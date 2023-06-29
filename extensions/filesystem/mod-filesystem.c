@@ -633,7 +633,7 @@ DECLARE_NATIVE(change_dir)
 }
 
 
-extern REBVAL *Get_Current_Exec();
+extern REBVAL *Get_Current_Exec(void);
 
 //
 //  export get-current-exec: native [

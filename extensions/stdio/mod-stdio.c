@@ -34,8 +34,8 @@
 // what has to be done on startup and shutdown of stdin, stdout, or smart
 // terminal services.
 //
-extern void Startup_Stdio();
-extern void Shutdown_Stdio();
+extern void Startup_Stdio(void);
+extern void Shutdown_Stdio(void);
 
 // This used to be a function you had to build a "device request" to interact
 // with.  But so long as our file I/O is synchronous, there's no reason for

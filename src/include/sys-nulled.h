@@ -129,7 +129,7 @@ inline static bool Is_Word_Isotope_With_Id(Cell(const*) v, SymId id);
 #define Init_Quasi_Null(out) \
     Init_Quasi_Word((out), Canon(NULL))
 
-inline bool Is_Quasi_Null(Cell(const*) v) {
+inline static bool Is_Quasi_Null(Cell(const*) v) {
     if (not IS_QUASI(v))
         return false;
     if (HEART_BYTE(v) != REB_WORD)
