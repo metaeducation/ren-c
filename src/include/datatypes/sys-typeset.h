@@ -378,7 +378,7 @@ inline static void Typecheck_Refinement(
 
     if (not Typecheck_Including_Constraints(param, arg)) {
         if (Is_Activation(arg)) {
-            Decay_If_Activation(arg);
+            Deactivate_If_Activation(arg);
             goto typecheck_again;
         }
         fail (Error_Invalid_Type(VAL_TYPE(arg)));

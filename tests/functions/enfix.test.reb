@@ -34,12 +34,12 @@
     ]
 )
 
-(3 == do reduce [unrun get '+ 1 2])
+~???~ !! (do reduce [unrun get '+ 1 2])  ; enfix no argument
 
 
 ; Only hard-quoted parameters are <skip>-able
-(
-    error? trap [bad-skippy: lambda [x [<skip> integer!] y] [reduce [try :x y]]]
+~???~ !! (
+    lambda [x [<skip> integer!] y] [<unreachable>]
 )
 
 [

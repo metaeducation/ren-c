@@ -342,8 +342,17 @@ Bounce TO_Isotope(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *data) {
 //
 REBTYPE(Isotope)
 {
-    if (not IS_LOGIC(D_ARG(1)))
+    if (not IS_LOGIC(D_ARG(1))) {
+        //
+        // Need a special exemption for COPY on ACTION! isotopes.
+        //
+        if (Is_Activation(D_ARG(1)) and ID_OF_SYMBOL(verb) == SYM_COPY) {
+            Deactivate_If_Activation(D_ARG(1));
+            return rebValue(Canon(RUNS), Canon(COPY), rebQ(D_ARG(1)));
+        }
+
         fail ("Isotope handler only supports LOGIC! (legacy workaround)");
+    }
 
     bool b1 = VAL_LOGIC(D_ARG(1));
     bool b2;

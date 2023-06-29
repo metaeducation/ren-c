@@ -506,7 +506,7 @@ DECLARE_NATIVE(then)  // see `tweak :then 'defer on` in %base-defs.r
     INCLUDE_PARAMS_OF_THEN;
 
     Value(*) in = ARG(optional);
-    Decay_If_Activation(ARG(branch));
+    Deactivate_If_Activation(ARG(branch));
     USED(ARG(branch));  // used by helper
     USED(ARG(decay));
 
@@ -547,7 +547,7 @@ DECLARE_NATIVE(else)  // see `tweak :else 'defer on` in %base-defs.r
     INCLUDE_PARAMS_OF_ELSE;
 
     Value(*) in = ARG(optional);
-    Decay_If_Activation(ARG(branch));
+    Deactivate_If_Activation(ARG(branch));
     USED(ARG(branch));  // used by helper
     USED(ARG(decay));
 
@@ -590,7 +590,7 @@ DECLARE_NATIVE(also)  // see `tweak :also 'defer on` in %base-defs.r
 
     Value(*) in = ARG(optional);
     Value(*) branch = ARG(branch);
-    Decay_If_Activation(ARG(branch));
+    Deactivate_If_Activation(ARG(branch));
 
     enum {
         ST_ALSO_INITIAL_ENTRY = STATE_0,

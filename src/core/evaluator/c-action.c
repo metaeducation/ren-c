@@ -950,7 +950,7 @@ Bounce Action_Executor(Frame(*) f)
 
         if (not Typecheck_Including_Constraints(PARAM, ARG)) {
             if (Is_Activation(ARG)) {
-                Decay_If_Activation(ARG);
+                Deactivate_If_Activation(ARG);
                 goto typecheck_again;
             }
 

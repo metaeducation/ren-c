@@ -197,7 +197,7 @@ DECLARE_NATIVE(except)
 
     Value(*) v = ARG(optional);
     Value(*) branch = ARG(branch);
-    Decay_If_Activation(ARG(branch));
+    Deactivate_If_Activation(ARG(branch));
 
     if (not Is_Meta_Of_Raised(v))
         return UNMETA(v);

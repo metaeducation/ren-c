@@ -677,7 +677,7 @@ inline static Value(*) Activatify(Value(*) v) {
     return VAL(v);
 }
 
-inline static Cell(*) Decay_If_Activation(Cell(*) v) {
+inline static Cell(*) Deactivate_If_Activation(Cell(*) v) {
     if (Is_Activation(v))
         mutable_QUOTE_BYTE(v) = UNQUOTED_1;
     return v;

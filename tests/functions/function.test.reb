@@ -1,9 +1,9 @@
 ; datatypes/function.r
-(action? does ["OK"])
+(activation? does ["OK"])
 (not action? 1)
-(action! = kind of does ["OK"])
+(action! = kind of unrun does ["OK"])
 ; minimum
-(action? does [])
+(action? unrun does [])
 
 ; !!! literal form no longer supported
 ;
@@ -118,7 +118,7 @@
 )
 (
     f: does [_]
-    null? f
+    blank? f
 )
 (
     a-value: make object! []
@@ -388,7 +388,7 @@
 
 ; inline function test
 [#1659 (
-    f: does :(reduce [does [true]])
+    f: does :(reduce [unrun does [true]])
     f
 )]
 

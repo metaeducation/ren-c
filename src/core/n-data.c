@@ -833,7 +833,7 @@ bool Get_Var_Core_Throws(
         //
         DECLARE_LOCAL (action);
         Move_Cell(action, out);
-        Decay_If_Activation(action);
+        Deactivate_If_Activation(action);
         return Specialize_Action_Throws(out, action, nullptr, base);
     }
     return threw;

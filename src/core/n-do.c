@@ -153,7 +153,7 @@ DECLARE_NATIVE(shove)
         Copy_Cell(shovee, SPECIFIC(At_Frame(f)));
 
     if (Is_Activation(shovee)) {
-        Decay_If_Activation(shovee);  // allow ACTION! to be run
+        Deactivate_If_Activation(shovee);  // allow ACTION! to be run
     }
     else if (Is_Isotope(shovee))
         fail (Error_Bad_Isotope(shovee));
