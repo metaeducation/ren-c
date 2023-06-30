@@ -202,10 +202,11 @@ tweak :|\|\|| 'barrier on
 |\|\|\||: func* [  ; e.g. |||
     {Inertly consumes all subsequent data, evaluating to previous result.}
 
-    return: <void>
+    return: [<nihil>]
     :omit [any-value! <variadic>]
 ][
     until [null? take omit]
+    return nihil
 ]
 
 
