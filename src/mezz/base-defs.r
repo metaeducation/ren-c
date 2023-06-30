@@ -192,10 +192,7 @@ elide-if-void: func* [
 ; the old `|`, so that the barrier-making properties of a usermode entity can
 ; stay tested.  But outside of testing, use `,` instead.
 ;
-|\|\||: lambda [  ; e.g. ||
-    "Expression barrier - invisible so it vanishes, but blocks evaluation"
-][
-]
+|\|\||: copy :nihil  ; at time of writing, lambda [] [nihil] returns void
 
 tweak :|\|\|| 'barrier on
 

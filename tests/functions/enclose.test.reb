@@ -30,37 +30,37 @@
     ]
     outer: enclose :inner func [f] [
         assert [1020 = do f]
-        return void
+        return nihil
     ]
     did all [
-        304 = (304 maybe outer)
-        void? outer
+        304 = (304 outer)
+        nihil? outer
         var = 1020
     ]
 )(
     var: #before
-    inner: func [return: [<void>]] [
+    inner: func [return: [<nihil>]] [
         var: 1020
-        return void
+        return nihil
     ]
-    outer: enclose :inner func [return: [<opt> any-value!] f] [
+    outer: enclose :inner func [return: [<nihil> <opt> any-value!] f] [
         return ^(eval f)  ; don't unquote it here
     ]
     did all [
-        void' = outer
+        nihil' = outer
         var = 1020
     ]
 )(
     var: #before
-    inner: func [return: [<void>]] [
+    inner: func [return: [<nihil>]] [
         var: 1020
-        return void
+        return nihil
     ]
-    outer: enclose :inner func [return: [<opt> <void> any-value!] f] [
+    outer: enclose :inner func [return: [<nihil> <opt> <void> any-value!] f] [
         return eval f  ; now try unquoting
     ]
     did all [
-        void' = ^(outer)
+        nihil' = ^(outer)
         var = 1020
     ]
 )]

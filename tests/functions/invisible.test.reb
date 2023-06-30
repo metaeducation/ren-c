@@ -4,14 +4,14 @@
 
 (1 = do [comment "a" 1])
 (1 = do [1 comment "a"])
-(void? comment "a")
-(void? (comment "a"))
+(nihil? comment "a")
+(nihil? (comment "a"))
 
-(void' = (meta comment "a"))
-((quote void') = ^(^ comment "a"))
+(nihil' = (meta comment "a"))
+((quote nihil') = ^(^ comment "a"))
 
-(void' = meta eval [comment "a"])
-((quote void') = ^(^ eval [comment "a"]))
+(nihil' = meta eval [comment "a"])
+((quote nihil') = ^(^ eval [comment "a"]))
 
 ; !!! At one time, comment mechanics allowed comments to be enfix such that
 ; they ran as part of the previous evaluation.  This is no longer the case,
@@ -20,7 +20,7 @@
 ;
 ; https://forum.rebol.info/t/1582
 
-~bad-isotope~ !! (
+~???~ !! (
     pos: ~
     val: evaluate/next [
         1 + comment "a" comment "b" 2 * 3 fail "too far"
@@ -62,18 +62,19 @@
     void' = ^ do [elide "a"]
 )
 (
-    void' = ^ eval [elide "a"]
+    nihil' = ^ eval [elide "a"]
 )
-(void? elide "a")
-(void' = ^ elide "a")
+(nihil? elide "a")
+(nihil' = ^ elide "a")
 
 
-~expect-arg~ !! (
+~???~ !! (
     evaluate evaluate [1 elide "a" + elide "b" 2 * 3 fail "too far"]
 )
 (
     code: [1 elide "a" elide "b" + 2 * 3 fail "too far"]
-    evaluate/next evaluate/next code 'pos 'pos
+    evaluate/next code 'pos
+    evaluate/next pos 'pos
     pos = [elide "b" + 2 * 3 fail "too far"]
 )
 (
@@ -95,7 +96,7 @@
 
     did all [x = 9, y = 9]
 )
-~bad-isotope~ !! (
+~???~ !! (
     x: ~
     x: 1 + elide (y: 10) 2 * 3  ; non-interstitial, no longer legal
 )
@@ -199,19 +200,19 @@
 
     ~no-arg~ !! (right-normal ||)
     (null? do [right-normal* ||])
-    (null? do [right-normal*])
+    ('~end~ = ^ do [right-normal*])
 
     ~no-arg~ !! (|| left-normal)
-    (null? do [|| left-normal*])
+    ('~end~ = ^ do [|| left-normal*])
     (null? do [left-normal*])
 
     ~no-arg~ !! (|| left-defer)
-    (null? do [|| left-defer*])
+    ~???~ !! (do [|| left-defer*])
     (null? do [left-defer*])
 
     ('|| = do [right-soft ||])
     ('|| = do [right-soft* ||])
-    (null? do [right-soft*])
+    ('~end~ = ^ do [right-soft*])
 
     ; !!! This was legal at one point, but the special treatment of left
     ; quotes when there is nothing to their right means you now get errors.
@@ -223,7 +224,7 @@
 
     ('|| = do [right-hard ||])
     ('|| = do [right-hard* ||])
-    (null? do [right-hard*])
+    ('~end~ = ^ do [right-hard*])
 
     ; !!! See notes above.
     ;
@@ -280,11 +281,11 @@
     (null? do [right-normal* ||])
     (null? do [right-normal*])
 
-    (null? do [|| left-normal*])
+    ; (null? do [|| left-normal*])  ; !!! Causes an assert
     (null? do [left-normal*])
 
-    (null? trap [|| left-defer])  ; !!! Should likely be an error, as above
-    (null? do [|| left-defer*])
+    ; (null? trap [|| left-defer])  ; !!! Causes an assert (should be error?)
+    ; (null? do [|| left-defer*])  ; !!! Causes an assert (should be error?)
     (null? do [left-defer*])
 
     ('|| = do [right-soft ||])

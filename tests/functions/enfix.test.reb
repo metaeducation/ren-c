@@ -209,7 +209,7 @@
     o.(count: count + 1, first [x]): my nuller
     did all [
         :o.x = null
-        count = 1
+        count = 2
     ]
 )
 
@@ -220,7 +220,7 @@
         foo: func [] [
             fail "foo should not run, it's prefix and runs on *next* step"]
         did all [
-            1020 == evaluate/next [1020 foo 304] 'pos`
+            1020 == evaluate/next [1020 foo 304] 'pos
             pos == [foo 304]
         ]
     )(
@@ -242,8 +242,9 @@
                 return #ignored
             ]
             did all [
-                [ifoo 304] == [var @]: evaluate/next [ignored ifoo 304]
+                #ignored == var: evaluate/next [ignored ifoo 304] 'pos
                 var == #ignored
+                pos = [ifoo 304]
                 null? ignored
             ]
         ]
@@ -284,12 +285,14 @@
     )
 
     (
-        bar: func [return: <void>] [bar: null]
+        bar: func [return: [<nihil>]] [bar: null, return nihil]
         did all [
             var: evaluate/next [1020 bar 304] 'pos
             pos = [bar 304]
             var == 1020
-            action? :bar
+            activation? :bar
+            bar
+            null? bar
         ]
         comment {Invisible normal arity-0 function should run on next eval}
     )(
@@ -333,7 +336,7 @@
                 return #kept
             ]
             did all [
-                var: evaluate/next [kept enibar 304]
+                var: evaluate/next [kept enibar 304] 'pos
                 pos = [enibar 304]
                 var == #kept
                 null? kept
@@ -346,7 +349,7 @@
         ]
         did all [
             did all [
-                var: evaluate/next [1020 enibar 304]
+                var: evaluate/next [1020 enibar 304] 'pos
                 pos = [304]
                 var == 1020
                 null? enibar
