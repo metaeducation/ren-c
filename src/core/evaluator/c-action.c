@@ -901,6 +901,7 @@ Bounce Action_Executor(Frame(*) f)
         if (Is_Word_Isotope_With_Id(ARG, SYM_END)) {
             if (NOT_PARAM_FLAG(PARAM, ENDABLE))
                 fail (Error_No_Arg(f->label, KEY_SYMBOL(KEY)));
+            Init_Nulled(ARG);  // more convenient, use ^META for nuance
             continue;
         }
 

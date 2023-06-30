@@ -484,6 +484,6 @@
         (the '1020) = (foo 1020)
         nihil' = (foo comment "HI")
         null' = (foo any [1 > 2, 3 > 4])
-        '~end~ = meta (foo)
+        null? (foo)
     ]
 )

@@ -200,10 +200,10 @@
 
     ~no-arg~ !! (right-normal ||)
     (null? do [right-normal* ||])
-    ('~end~ = ^ do [right-normal*])
+    (null? do [right-normal*])
 
     ~no-arg~ !! (|| left-normal)
-    ('~end~ = ^ do [|| left-normal*])
+    (null? ^ do [|| left-normal*])
     (null? do [left-normal*])
 
     ~no-arg~ !! (|| left-defer)
@@ -212,7 +212,7 @@
 
     ('|| = do [right-soft ||])
     ('|| = do [right-soft* ||])
-    ('~end~ = ^ do [right-soft*])
+    (null? ^ do [right-soft*])
 
     ; !!! This was legal at one point, but the special treatment of left
     ; quotes when there is nothing to their right means you now get errors.
@@ -224,7 +224,7 @@
 
     ('|| = do [right-hard ||])
     ('|| = do [right-hard* ||])
-    ('~end~ = ^ do [right-hard*])
+    (null? do [right-hard*])
 
     ; !!! See notes above.
     ;
