@@ -6,13 +6,6 @@ REBOL [
     License: {Apache 2.0}
 ]
 
-; The polymorphic WAIT function was part of the event module, and had not
-; been redone to operate with libuv.  But there were still calls to WAIT
-; with times to do sleeping.  Temporarily keep those working, but ultimately
-; WAIT should probably be a more nuanced construct.
-;
-wait: :sleep
-
 ; It's desirable to do as much usermode logic as possible, to reduce the
 ; amount of C code that CALL has to run.  So things like transforming any
 ; FILE! into local paths are done here.
@@ -161,4 +154,4 @@ browse*: func [
 
 hijack :browse :browse*
 
-export [call call* wait]
+export [call call*]

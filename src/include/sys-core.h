@@ -477,11 +477,7 @@ enum rebol_signals {
     // state.  Because the ability to manage such a state may not be
     // registered by the host, this could generate an error.
     //
-    SIG_INTERRUPT = 1 << 2,
-
-    // SIG_EVENT_PORT is to-be-documented
-    //
-    SIG_EVENT_PORT = 1 << 3
+    SIG_INTERRUPT = 1 << 2
 };
 
 inline static void SET_SIGNAL(Flags f) { // used in %sys-series.h

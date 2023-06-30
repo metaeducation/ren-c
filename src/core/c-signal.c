@@ -108,8 +108,6 @@ bool Do_Signals_Throws(Frame(*) frame_)
     // signals.  It defaults to ALL_BITS, but during signal processing
     // itself, the mask is set to 0 to avoid recursion.
     //
-    // !!! This seems overdesigned considering SIG_EVENT_PORT isn't used.
-    //
     Flags filtered_sigs = Eval_Signals & Eval_Sigmask;
     Flags saved_sigmask = Eval_Sigmask;
     Eval_Sigmask = 0;

@@ -113,7 +113,6 @@ core: [
         ;
         <msc:/wd5045>  ; https://stackoverflow.com/q/50399940
     ]
-    f-device.c
     [
         f-dtoa.c
 

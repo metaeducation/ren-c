@@ -165,13 +165,6 @@ PVAR REBVAL *Root_No_Memory_Error;  // also must be made in advance
 // when implemented that way. Needs research!!!!
 PVAR Flags Eval_Signals;   // Signal flags
 
-// !!! R3-Alpha was prescriptive about the design of devices and how they
-// managed requests.  Ren-C pulls back on this and has devices manage their
-// own idea of how they handle events, by only giving them a hook to
-// respond to Poll().
-//
-PVAR REBDEV *PG_Device_List;  // Linked list of R3-Alpha-style "devices"
-
 
 /***********************************************************************
 **

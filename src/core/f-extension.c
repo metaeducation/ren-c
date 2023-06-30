@@ -48,8 +48,6 @@
 //
 void Startup_Extension_Loader(void)
 {
-    assert(PG_Device_List == nullptr);
-
     assert(rebUnboxLogic("empty? system.extensions"));
 }
 
@@ -64,11 +62,6 @@ void Shutdown_Extension_Loader(void)
     // efficient.)
     //
     rebElide("for-each ext copy system.extensions [unload-extension ext]");
-
-    // !!! The R3-Alpha "Device model" is likely going to go away, but for
-    // the sake of cleanliness make sure all "devices" were unregistered.
-    //
-    assert(PG_Device_List == nullptr);
 }
 
 

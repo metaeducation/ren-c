@@ -21,8 +21,6 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 
-EXTERN_C REBDEV *Dev_Net;
-
 enum Transport_Type {
     TRANSPORT_TCP,
     TRANSPORT_UDP

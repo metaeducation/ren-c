@@ -374,21 +374,3 @@ typedef struct rebol_time_fields {
 } REB_TIMEF;
 
 #include "sys-deci.h"
-
-
-
-//=//// R3-ALPHA DEVICE / DEVICE REQUEST //////////////////////////////////=//
-//
-// This may become part of the rebXXX API, if someone wants to just register
-// something that wants an opportunity to get polled (?)
-//
-typedef bool (DEVICE_POLL_CFUNC)(void);
-
-struct Reb_Device;
-struct Reb_Device {
-    const char *name;
-    DEVICE_POLL_CFUNC *poll;
-
-    struct Reb_Device *next;  // next in linked list of registered devices
-};
-#define REBDEV struct Reb_Device

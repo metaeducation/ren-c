@@ -55,8 +55,6 @@ extern REBVAL *rebError_UV(int err);
 #include "tmp-mod-network.h"
 
 
-REBDEV *Dev_Net;
-
 #define NET_BUF_SIZE 32*1024
 
 
@@ -1071,23 +1069,29 @@ DECLARE_NATIVE(get_udp_actor_handle)
 }
 
 
+uv_timer_t wait_timer;
 
-//
-//  Dev_Net_Poll: c
-//
-bool Dev_Net_Poll(void)
-{
-    bool changed = false;  // we don't actually know from return result :-/
+void wait_timer_callback(uv_timer_t* handle) {
+    assert(handle->data != nullptr);
+    handle->data = nullptr;
+}
 
-    // !!! If we use UV_RUN_ONCE here, it will block if there are no callbacks.
-    // For now that's not a good idea because the timeout mechanism isn't
-    // based on libuv timers.  But even if it were, the Ctrl-C hooks that
-    // interrupt the evaluator don't interrupt this.  Use UV_RUN_NOWAIT.
+
+uv_timer_t halt_poll_timer;
+
+void halt_poll_timer_callback(uv_timer_t* handle) {
     //
-    int loop_result = uv_run(uv_default_loop(), UV_RUN_NOWAIT);
-    UNUSED(loop_result);
-
-    return changed;
+    // Doesn't actually do anything, just breaks the UV_RUN_ONCE loop
+    // every half a second.  Theoretically we could do this with uv_signal_t
+    // for SIGINT and a callback like:
+    //
+    //     void signal_callback(uv_signal_t* handle, int signum) {
+    //         SET_SIGNAL(SIG_HALT);
+    //     }
+    //
+    // But that seems to only work on Linux and not Windows.
+    //
+    UNUSED(handle);
 }
 
 
@@ -1127,13 +1131,9 @@ DECLARE_NATIVE(startup_p)
     }
   #endif
 
-    // We register a "device" with the system so that when WAIT is being run
-    // then our supplied polling function will be called.  That function
-    // handles in-progress network transfers as well as accepting new
-    // socket connections while listening on a port.
-    //
-    assert(Dev_Net == nullptr);
-    Dev_Net = OS_Register_Device("TCP/IP Network", &Dev_Net_Poll);
+    uv_timer_init(uv_default_loop(), &wait_timer);
+
+    uv_timer_init(uv_default_loop(), &halt_poll_timer);
 
     return rebNone();
 }
@@ -1151,11 +1151,132 @@ DECLARE_NATIVE(shutdown_p)
 {
     NETWORK_INCLUDE_PARAMS_OF_SHUTDOWN_P;
 
-    OS_Unregister_Device(Dev_Net);
-
   #if TO_WINDOWS
     WSACleanup();  // have to call as libuv does not
   #endif
 
+    uv_close(cast(uv_handle_t*, &wait_timer), nullptr);  // no close callback
+    uv_close(cast(uv_handle_t*, &halt_poll_timer), nullptr);
+
     return rebNone();
+}
+
+
+//
+//  export wait*: native [
+//
+//  "Waits for a duration, port, or both."
+//
+//      return: "NULL if timeout, PORT! that awoke or BLOCK! of ports if /ALL"
+//          [<opt> port! block!]
+//      value [<opt> any-number! time! port! block!]
+//  ]
+//
+DECLARE_NATIVE(wait_p)  // See wrapping function WAIT in usermode code
+//
+// WAIT* expects a BLOCK! argument to have been pre-reduced; this means it
+// does not have to implement the reducing process "stacklessly" itself.  The
+// stackless nature comes for free by virtue of REDUCE-ing in usermode.
+{
+    NETWORK_INCLUDE_PARAMS_OF_WAIT_P;
+
+    REBLEN timeout = 0;  // in milliseconds
+    REBVAL *ports = nullptr;
+
+    Cell(const*) val;
+    if (not IS_BLOCK(ARG(value)))
+        val = ARG(value);
+    else {
+        ports = ARG(value);
+
+        REBLEN num_pending = 0;
+        Cell(const*) tail;
+        val = VAL_ARRAY_AT(&tail, ports);
+        for (; val != tail; ++val) {  // find timeout
+            if (IS_PORT(val))
+                ++num_pending;
+
+            if (IS_INTEGER(val) or IS_DECIMAL(val) or IS_TIME(val))
+                break;
+        }
+        if (val == tail) {
+            if (num_pending == 0)
+                return nullptr; // has no pending ports!
+            timeout = ALL_BITS; // no timeout provided
+            val = nullptr;
+        }
+    }
+
+    if (val != nullptr) {
+        switch (VAL_TYPE(val)) {
+          case REB_INTEGER:
+          case REB_DECIMAL:
+          case REB_TIME:
+            timeout = Milliseconds_From_Value(val);
+            break;
+
+          case REB_PORT: {
+            Array(*) single = Make_Array(1);
+            Append_Value(single, SPECIFIC(val));
+            Init_Block(ARG(value), single);
+            ports = ARG(value);
+
+            timeout = ALL_BITS;
+            break; }
+
+          case REB_BLANK:
+            timeout = ALL_BITS; // wait for all windows
+            break;
+
+          default:
+            fail (Error_Bad_Value(val));
+        }
+    }
+
+    const uint64_t repeat_ms = 0;  // do not repeat the timer
+
+    if (timeout != ALL_BITS) {
+        wait_timer.data = &wait_timer;  // nulled by callback if timeout
+        uv_timer_start(&wait_timer, &wait_timer_callback, timeout, repeat_ms);
+    }
+
+    // !!! See halt_poll_timer_callback() on why not uv_signal_t for SIGINT
+    //
+    uv_timer_start(&halt_poll_timer, &halt_poll_timer_callback, 500, 500);
+
+    // Let any pending device I/O have a chance to run.  UV_RUN_ONCE means it
+    // will block until *something* happens (could be the timer timing out,
+    // or could be something like an incoming network connection being made).
+    //
+    while (
+        (timeout == ALL_BITS or wait_timer.data != nullptr)
+        and not GET_SIGNAL(SIG_HALT)
+    ){
+        int callbacks_left = uv_run(uv_default_loop(), UV_RUN_ONCE);
+        UNUSED(callbacks_left);
+    }
+
+    uv_timer_stop(&halt_poll_timer);
+
+    if (timeout != ALL_BITS) {
+        uv_timer_stop(&wait_timer);
+    }
+
+    if (GET_SIGNAL(SIG_HALT)) {
+        CLR_SIGNAL(SIG_HALT);
+
+        return Init_Thrown_With_Label(FRAME, Lib(NULL), Lib(HALT));
+    }
+
+    if (GET_SIGNAL(SIG_INTERRUPT)) {
+        CLR_SIGNAL(SIG_INTERRUPT);
+
+        // !!! If implemented, this would allow triggering a breakpoint
+        // with a keypress.  This needs to be thought out a bit more,
+        // but may not involve much more than running `BREAKPOINT`.
+        //
+        fail ("BREAKPOINT from SIG_INTERRUPT not currently implemented");
+    }
+
+    return nullptr;
 }
