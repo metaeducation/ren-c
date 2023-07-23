@@ -38,12 +38,12 @@ last?: single?: lambda [
 extend: func [
     "Extend an object, map, or block type with word and value pair."
     return: [<opt> any-value!]
-    obj [object! map! block! group!] {object to extend (modified)}
+    obj [object! map!] {object to extend (modified)}
     word [any-word!]
     val [<opt> any-value!]
 ][
-    append obj spread reduce [to-set-word word :val]
-    return :val
+    append obj word
+    return poke obj word :val
 ]
 
 
