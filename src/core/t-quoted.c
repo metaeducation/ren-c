@@ -268,8 +268,8 @@ DECLARE_NATIVE(just_p)
 //  {Constructs a quoted form of the evaluated argument}
 //
 //      return: "Quoted value (if depth = 0, may not be quoted)"
-//          [<void> any-value!]
-//      optional [<void> any-value!]
+//          [<void> element?]
+//      optional [<void> element?]
 //      /depth "Number of quoting levels to apply (default 1)"
 //          [integer!]
 //  ]
@@ -801,7 +801,7 @@ DECLARE_NATIVE(maybe)
     REBVAL *v = ARG(optional);
     Meta_Unquotify(v);
 
-    if (Is_Nihil(v))  // !!! Should MAYBE be tolerant of NONE?
+    if (Is_Nihil(v))  // !!! Should MAYBE be tolerant of NIHIL?
         return VOID;
 
     Decay_If_Unstable(v);  // question about decay, see [1]
@@ -833,7 +833,7 @@ DECLARE_NATIVE(maybe)
 //  {Tells you if the argument is QUOTED! or not}
 //
 //      return: [logic!]
-//      optional [<opt> any-value!]
+//      optional [<opt> <void> any-value!]
 //  ]
 //
 DECLARE_NATIVE(quoted_q)
@@ -850,7 +850,7 @@ DECLARE_NATIVE(quoted_q)
 //  {Tells you if the argument is QUASI! or not}
 //
 //      return: [logic!]
-//      optional [<opt> any-value!]
+//      optional [<opt> <void> any-value!]
 //  ]
 //
 DECLARE_NATIVE(quasi_q)
@@ -866,8 +866,8 @@ DECLARE_NATIVE(quasi_q)
 //
 //  {Removes all levels of quoting from a quoted value}
 //
-//      return: [<opt> any-value!]
-//      optional [<opt> any-value!]
+//      return: [<void> element?]
+//      optional [<void> element?]
 //  ]
 //
 DECLARE_NATIVE(noquote)
@@ -875,9 +875,6 @@ DECLARE_NATIVE(noquote)
     INCLUDE_PARAMS_OF_NOQUOTE;
 
     REBVAL *v = ARG(optional);
-
-    if (Is_Nulled(v))
-        return nullptr;
 
     Unquotify(v, VAL_NUM_QUOTES(v));
     return COPY(v);
