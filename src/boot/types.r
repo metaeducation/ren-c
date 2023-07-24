@@ -304,7 +304,7 @@ varargs     "evaluator position for variable numbers of arguments"
                 [sequence    *       *]
 
     word        "evaluates a variable or action"
-                (CELL_FLAG_FIRST_IS_NODE)
+    ~isoword~   (CELL_FLAG_FIRST_IS_NODE)  ; !!! Better name than isoword?
                 [any-word! any-utf8!]
                 [word        *       +]
 

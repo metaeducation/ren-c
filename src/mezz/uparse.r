@@ -342,7 +342,8 @@ default-combinators: make map! reduce [
 
     'not combinator [
         {Fail if the parser rule given succeeds, else continue}
-        return: []  ; isotope!
+        return: "The isotopic WORD! ~not~"
+            [isoword?]
         parser [activation!]
     ][
         [@ remainder]: parser input except [  ; don't care about result

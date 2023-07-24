@@ -719,6 +719,22 @@ DECLARE_NATIVE(pack_q)
 
 
 //
+//  isoword?: native [
+//
+//  "Tells you if argument is an isotopic word"
+//
+//      return: [logic!]
+//      ^optional [<opt> <void> <fail> <pack> any-value!]
+//  ]
+//
+DECLARE_NATIVE(isoword_q)
+{
+    INCLUDE_PARAMS_OF_ISOWORD_Q;
+
+    return Init_Logic(OUT, Is_Meta_Of_Isoword(ARG(optional)));
+}
+
+//
 //  activation?: native [
 //
 //  "Tells you if argument is an activation (isotopic action)"
