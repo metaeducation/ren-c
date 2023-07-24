@@ -218,9 +218,9 @@ emit: func [
             code: my next
         ]
         else [
-            let result
-            if ([^result']: evaluate/next code 'code, code) [
-                if void? unmeta result' [continue]  ; invisible
+            let result': ^ evaluate/next code 'code
+            if code [
+                if result' = nihil' [continue]  ; invisible
                 append ctx.msg ensure binary! unmeta result'
             ]
         ]
