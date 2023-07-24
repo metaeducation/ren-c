@@ -24,56 +24,33 @@
     new-line? result
 ])
 
-; Requesting a position to be returned is implicitly a request to go value
-; by value...
+; If TRANSCODE returns null, there is no POS so you have to make it optional
+; (unless you don't expect it to return null)
 (
     did all [
-        1 = [value pos]: transcode/one "1 [2] <3>"
+        1 = [value /pos]: transcode/one "1 [2] <3>"
         value = 1
         pos = " [2] <3>"
 
-        [2] = [value pos]: transcode/one pos
+        [2] = [value /pos]: transcode/one pos
         value = [2]
         pos = " <3>"
 
-        <3> = [value pos]: transcode/one pos
+        <3> = [value /pos]: transcode/one pos
         value = <3>
         pos = ""
 
-        null = [value pos]: transcode/one pos
+        null = [value /pos]: transcode/one pos
         value = null
-        pos = ""
-    ]
-)
-(
-    ; Same as above, just using /NEXT instead of multiple returns
-    ; Test used in shimming older Ren-Cs
-    ;
-    did all [
-        1 = transcode/next "1 [2] <3>" 'pos
-        pos = " [2] <3>"
-
-        [2] = transcode/next pos 'pos
-        pos = " <3>"
-
-        <3> = transcode/next pos 'pos
-        pos = ""
-
-        null = transcode/next pos 'pos
-        pos = ""
+        pos = null
     ]
 )
 
 (
-    [value pos]: transcode/one "[^M^/ a] b c" except e -> [
+    [value /pos]: transcode/one "[^M^/ a] b c" except e -> [
         e.id = 'illegal-cr
     ]
 )
-
-(did all [
-    1 = transcode/next to binary! "1" 'pos
-    pos = #{}
-])
 
 (
     str: "Cat😺: [😺 😺] (😺)"

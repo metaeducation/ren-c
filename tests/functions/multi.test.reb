@@ -148,17 +148,17 @@
     (
         value: rest: ~
         did all [
-            <item!> = [value rest]: transcode/one "ab cd" then [<item!>]
+            <item!> = [value /rest]: transcode/one "ab cd" then [<item!>]
             value = <item!>
-            rest = " cd"
+            rest = null
         ]
     )
     (
         value: rest: ~
         did all [
-            <item!> = ([value rest]: transcode/one "ab cd") then [<item!>]
+            <item!> = ([value /rest]: transcode/one "ab cd") then [<item!>]
             value = 'ab
-            rest = " cd"
+            rest = null
         ]
     )
 
