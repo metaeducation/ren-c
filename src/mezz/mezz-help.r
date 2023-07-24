@@ -433,13 +433,17 @@ source: function [
         f: arg
     ]
 
+    if activation? :f [
+        f: unrun :f
+    ]
+
     case [
         match [text! url!] f [
             print f
         ]
-        not action? :f [
+        not action? f [
             print [
-                name "is" an any [mold kind of :f, "VOID"]
+                name "is" an any [mold kind of :f, "NONE"]
                 "and not an ACTION!"
             ]
         ]
