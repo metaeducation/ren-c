@@ -135,7 +135,7 @@ inline static Value(*) Decay_If_Unstable(Value(*) v) {
         Cell(const*) pack_meta_tail;
         Cell(const*) pack_meta_at = VAL_ARRAY_AT(&pack_meta_tail, v);
         if (pack_meta_at == pack_meta_tail)
-            fail ("No value in isotopic BLOCK! pack: ~[]~");  // treat as void?
+            fail (Error_No_Value_Raw());  // treat as void?
         Derelativize(v, pack_meta_at, VAL_SPECIFIER(v));
         Meta_Unquotify(v);
         if (Is_Pack(v))

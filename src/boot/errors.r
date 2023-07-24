@@ -76,7 +76,8 @@ Syntax: [
 ]
 
 Script: [
-    no-value:           [:arg1 {has no value}]
+    no-value:           {No value in isotopic BLOCK! pack: ~[]~ (nihil)}
+    bad-null:           [:arg1 {cannot be null}]
     bad-word-get:       [:arg1 {is} :arg2 {isotope (see ^^(...) and GET/ANY)}]
     bad-isotope:        [{Invalid use of} :arg1 {isotope}]
     need-non-end:       [{end was reached while trying to set} :arg1]

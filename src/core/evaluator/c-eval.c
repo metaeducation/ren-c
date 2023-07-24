@@ -308,18 +308,6 @@ Bounce Evaluator_Executor(Frame(*) f)
         return OUT;
     }
 
-    // A barrier shouldn't cause an error in evaluation if code would be
-    // willing to accept an <end>.  So we allow argument gathering to try to
-    // run, but it may error if that's not acceptable.
-    //
-    if (Get_Feed_Flag(f->feed, BARRIER_HIT)) {
-        if (Get_Executor_Flag(EVAL, f, FULFILLING_ARG)) {
-            assert(Is_Fresh(OUT));
-            return OUT;
-        }
-        Clear_Feed_Flag(f->feed, BARRIER_HIT);  // not an argument, clear flag
-    }
-
     // Given how the evaluator is written, it's inevitable that there will
     // have to be a test for points to `goto` before running normal eval.
     // This cost is paid on every entry to Eval_Core().
@@ -439,17 +427,6 @@ Bounce Evaluator_Executor(Frame(*) f)
         }
     } else
         goto give_up_backward_quote_priority;
-
-    if (Get_Action_Flag(VAL_ACTION(unwrap(f_next_gotten)), IS_BARRIER)) {
-        //
-        // In a situation like `foo |`, we want FOO to be able to run...it
-        // may take 0 args or it may be able to tolerate END.  But we should
-        // not be required to run the barrier in the same evaluative step
-        // as the left hand side.  (It can be enfix, or it can not be.)
-        //
-        Set_Feed_Flag(f->feed, BARRIER_HIT);
-        goto give_up_backward_quote_priority;
-    }
 
     if (Not_Action_Flag(VAL_ACTION(unwrap(f_next_gotten)), ENFIXED))
         goto give_up_backward_quote_priority;
@@ -610,16 +587,32 @@ Bounce Evaluator_Executor(Frame(*) f)
 
     //=//// COMMA! ////////////////////////////////////////////////////////=//
     //
-    // A comma is a lightweight looking expression barrier.
+    // A comma is a lightweight looking expression barrier, which evaluates
+    // to nihil.  This means it acts like a vaporizing COMMENT or ELIDE.
+    // Since very few functions accept nihil as an argument, it is considered
+    // "good enough" to cause functions to choke, but there are some notable
+    // exceptions:
+    //
+    //    >> the,
+    //    == ,
+    //
+    //    >> meta,
+    //    == ~[]~
+    //
+    // At one point the evaluator tried to maintain a BARRIER_HIT state to
+    // give extra protection, but this was deemed to confuse the mechanics
+    // more than it actually helped.
+    //
+    //   https://forum.rebol.info/t/1387/6
+    //
+    // 1. We skip the lookahead step, which means (then [...]) will have the
+    //    same failure mode as (1 + 2, then [...]).  This is different from
+    //    what would happen with (nihil then [...]) which shows the only
+    //    current difference between COMMA! and a WORD! evaluating to nihil.
 
       case REB_COMMA:
         Init_Nihil(OUT);
-        if (Get_Executor_Flag(EVAL, f, FULFILLING_ARG)) {
-            Clear_Feed_Flag(f->feed, NO_LOOKAHEAD);
-            Set_Feed_Flag(f->feed, BARRIER_HIT);
-            goto finished;
-        }
-        break;
+        goto finished;  // skip lookahead, see [1]
 
 
     //=//// ACTION! ///////////////////////////////////////////////////////=//
@@ -1938,9 +1931,10 @@ Bounce Evaluator_Executor(Frame(*) f)
             //
             //     variadic2 1 2 then (t => [print ["t is" t] <then>])
             //
-            // We want to treat this like a barrier.
+            // We used to treat this like a barrier, but there is now no such
+            // thing as a "BARRIER_HIT" flag.  What should we do now?  Try
+            // just jumping to `finished`.
             //
-            Set_Feed_Flag(f->feed, BARRIER_HIT);
             goto finished;
         }
 

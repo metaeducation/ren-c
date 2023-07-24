@@ -1012,10 +1012,10 @@ Context(*) Error_Bad_Value(Cell(const*) value)
 
 
 //
-//  Error_No_Value: C
+//  Error_Bad_Null: C
 //
-Context(*) Error_No_Value(Cell(const*) target) {
-    return Error_No_Value_Raw(target);
+Context(*) Error_Bad_Null(Cell(const*) target) {
+    return Error_Bad_Null_Raw(target);
 }
 
 

@@ -198,21 +198,21 @@
         true
     )
 
-    ~no-arg~ !! (right-normal ||)
-    (null? do [right-normal* ||])
+    ~no-value~ !! (right-normal ||)
+    ~no-value~ !! (do [right-normal* ||])
     (null? do [right-normal*])
 
-    ~no-arg~ !! (|| left-normal)
-    (null? ^ do [|| left-normal*])
+    ~no-value~ !! (|| left-normal)
+    ~no-value~ !! (do [|| left-normal*])
     (null? do [left-normal*])
 
-    ~no-arg~ !! (|| left-defer)
-    ~???~ !! (do [|| left-defer*])
+    ~no-value~ !! (|| left-defer)
+    ~no-value~ !! (do [|| left-defer*])
     (null? do [left-defer*])
 
     ('|| = do [right-soft ||])
     ('|| = do [right-soft* ||])
-    (null? ^ do [right-soft*])
+    (null? do [right-soft*])
 
     ; !!! This was legal at one point, but the special treatment of left
     ; quotes when there is nothing to their right means you now get errors.
@@ -278,7 +278,7 @@
 ;    (error? trap [right-normal ||])
 ;    (error? trap [|| left-normal])
 
-    (null? do [right-normal* ||])
+    ~no-value~ !! (do [right-normal* ||])
     (null? do [right-normal*])
 
     ; (null? do [|| left-normal*])  ; !!! Causes an assert
@@ -311,30 +311,30 @@
     (null? do [left-hard*])
 ]
 
-(
+~no-value~ !! (
     x: <overwritten>
-    did all [
-        <kept> = (<kept> x: ())
-        unset? 'x
-    ]
-)(
+    (<kept> x: ())
+)
+~no-value~ !! (
     x: <overwritten>
-    did all [
-        <kept> = (<kept> x: comment "hi")
-        unset? 'x
-    ]
-)(
+    (<kept> x: comment "hi")
+)
+~no-value~ !! (
+    x: <overwritten>
+    (<kept> x:,)
+)
+
+~no-value~ !! (
     obj: make object! [x: <overwritten>]
-    did all [
-        <kept> = (<kept> obj.x: comment "hi")
-        unset? 'obj.x
-    ]
-)(
+    (<kept> obj.x: comment "hi")
+)
+~no-value~ !! (
     obj: make object! [x: <overwritten>]
-    did all [
-        <kept> = (<kept> obj.x: ())
-        unset? 'obj.x
-    ]
+    (<kept> obj.x: ())
+)
+~no-value~ !! (
+    obj: make object! [x: <overwritten>]
+    (<kept> obj.x:,)
 )
 
 ('~[']~ = ^ (if true [] else [<else>]))
@@ -380,10 +380,10 @@
 ;
 ; https://forum.rebol.info/t/permissive-group-invisibility/1153
 ;
-~bad-isotope~ !! (
+~no-value~ !! (
     () 1 + () 2 = () 3
 )
-~bad-isotope~ !! (
+~no-value~ !! (
     (comment "one") 1 + (comment "two") 2 = (comment "three") 3
 )
 
@@ -441,18 +441,19 @@
 
 (void' = ^ void)
 
-~bad-isotope~ !! (
+~no-value~ !! (
     1 + 2 (comment "stale") + 3
 )
 
-; Functions that take voids as normal parameters receive them as unset
-(
-    foo: lambda [x [<void> integer!]] [if unset? 'x [<unset>] else [x]]
-    did all [
-        <unset> = foo comment "hi"
-        1020 = foo 1000 + 20
-    ]
-)
+; Functions that took nihil as normal parameters once received them as unset.
+; It's not clear that this is an interesting feature, especially in light of
+; COMMA!'s new mechanic getting its barrier-ness from returning nihil.
+;
+;    foo: lambda [x [<nihil> integer!]] [if unset? 'x [<unset>] else [x]]
+;    did all [
+;        <unset> = foo comment "hi"
+;        1020 = foo 1000 + 20
+;    ]
 
 (
     num-runs: 0

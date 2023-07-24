@@ -56,20 +56,9 @@
     SERIES_FLAG_24
 
 
-//=//// DETAILS_FLAG_IS_BARRIER ///////////////////////////////////////////=//
+//=//// DETAILS_FLAG_25 ///////////////////////////////////////////////////=//
 //
-// Special action property set with TWEAK.  Used by |
-//
-// The "expression barrier" was once a built-in type (BAR!) in order to get
-// a property not possible to achieve with functions...that it would error
-// if it was used during FULFILL_ARG and would be transparent in evaluation.
-//
-// Transparency was eventually generalized as "invisibility".  But attempts
-// to intuit the barrier-ness from another property (e.g. "enfix but no args")
-// were confusing.  It seems an orthogonal feature in its own right, so it
-// was added to the TWEAK list pending a notation in function specs.
-//
-#define DETAILS_FLAG_IS_BARRIER \
+#define DETAILS_FLAG_25 \
     SERIES_FLAG_25
 
 

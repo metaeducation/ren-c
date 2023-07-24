@@ -1,23 +1,23 @@
 ; %literal.test.reb
 ;
-; Literal arguments allow callees the ability to distinguish the
-; NULL, ~_~ isotope, and END states.
+; ^META arguments can tell the difference between the end condition, a null,
+; and a nihil`
 
 [
-    (did detector: lambda [^x [<opt> <end> <void> any-value!]] [x])
+    (did detector: lambda [^x [<opt> <end> <void> <pack> any-value!]] [x])
 
     ((the '10) = detector 10)
     (null' = detector null)
     ('~[~null~]~ = detector if true [null])
 
-    (void' = detector (comment "hi"))
-    (void' = detector)
+    (nihil' = detector (comment "hi"))
+    (null = detector)
 
     (did left-detector: enfixed :detector)
 
     ((the '1) = (1 left-detector))
-    (void' = left-detector)
-    (void' = (left-detector))
+    (null = left-detector)
+    (null = (left-detector))
 ]
 
 (

@@ -37,7 +37,7 @@
     true
 )
 (
-    none? source ||   ; Tricky case, SOURCE of a barrier
+    void? source ||   ; Was once a tricky case, SOURCE of a barrier
 )
 (
     for-each w words of lib [

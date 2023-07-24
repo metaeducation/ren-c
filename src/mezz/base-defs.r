@@ -194,8 +194,6 @@ elide-if-void: func* [
 ;
 |\|\||: copy :nihil  ; at time of writing, lambda [] [nihil] returns void
 
-tweak :|\|\|| 'barrier on
-
 |\|\|\||: func* [  ; e.g. |||
     {Inertly consumes all subsequent data, evaluating to previous result.}
 

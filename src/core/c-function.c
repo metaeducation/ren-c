@@ -1227,10 +1227,6 @@ DECLARE_NATIVE(tweak)
     Flags flag;
 
     switch (VAL_WORD_ID(ARG(property))) {
-      case SYM_BARRIER:   // don't allow being taken as an argument, e.g. |
-        flag = DETAILS_FLAG_IS_BARRIER;
-        break;
-
       case SYM_DEFER:  // Special enfix behavior used by THEN, ELSE, ALSO...
         if (pclass != PARAM_CLASS_NORMAL and pclass != PARAM_CLASS_META)
             fail ("TWEAK defer only actions with evaluative 1st params");

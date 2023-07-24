@@ -786,7 +786,7 @@ void Startup_Core(void)
   #if defined(TEST_EARLY_BOOT_PANIC)
     panic ("early panic test"); // should crash
   #elif defined(TEST_EARLY_BOOT_FAIL)
-    fail (Error_No_Value_Raw(Lib(BLANK))); // same as panic (crash)
+    fail ("early fail test"); // same as panic (crash)
   #endif
 
   #if DEBUG_ENABLE_ALWAYS_MALLOC
@@ -969,7 +969,7 @@ void Startup_Core(void)
   #if defined(TEST_MID_BOOT_PANIC)
     panic (EMPTY_ARRAY); // panics should be able to give some details by now
   #elif defined(TEST_MID_BOOT_FAIL)
-    fail (Error_No_Value_Raw(Lib(BLANK))); // DEBUG->assert, RELEASE->panic
+    fail ("mid boot fail"); // DEBUG->assert, RELEASE->panic
   #endif
 
     // Pre-make the stack overflow error (so it doesn't need to be made

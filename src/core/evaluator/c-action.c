@@ -565,14 +565,8 @@ Bounce Action_Executor(Frame(*) f)
         output_from_feed:
           case PARAM_CLASS_NORMAL:
           case PARAM_CLASS_META: {
-            if (
-                Is_Frame_At_End(f)
-                or Get_Feed_Flag(f->feed, BARRIER_HIT)
-            ){
-                if (NOT_PARAM_FLAG(PARAM, ENDABLE))
-                    fail (Error_No_Arg(f->label, KEY_SYMBOL(KEY)));
-
-                Init_Nulled(ARG);
+            if (Is_Frame_At_End(f)) {
+                Init_Word_Isotope(ARG, Canon(END));
                 goto continue_fulfilling;
             }
 
@@ -598,13 +592,12 @@ Bounce Action_Executor(Frame(*) f)
             // get here...if we don't clear the flag, then the presence of
             // a non-void causes a later assert.  Review.
             //
-            Clear_Feed_Flag(f->feed, BARRIER_HIT);
             if (NOT_PARAM_FLAG(PARAM, SKIPPABLE))
                 Literal_Next_In_Frame(ARG, f);  // CELL_FLAG_UNEVALUATED
             else {
                 if (not TYPE_CHECK_CORE(PARAM, f_next, f_specifier)) {
                     assert(GET_PARAM_FLAG(PARAM, ENDABLE));
-                    Init_Nulled(ARG);  // not FRAME_FLAG_BARRIER_HIT
+                    Init_Nulled(ARG);  // not actually an ~end~ (?)
                     goto continue_fulfilling;
                 }
                 Literal_Next_In_Frame(ARG, f);
@@ -1111,7 +1104,7 @@ Bounce Action_Executor(Frame(*) f)
 } skip_output_check: {  //////////////////////////////////////////////////////
 
   // This is where things get jumped to if you pass a <maybe> argument a
-  // BLANK! and it wants to jump past all the processing and return, or if
+  // VOID and it wants to jump past all the processing and return, or if
   // a frame just wants argument fulfillment and no execution.
   //
   // NOTE: Anything that calls fail() must do so before Drop_Action()!
@@ -1127,16 +1120,6 @@ Bounce Action_Executor(Frame(*) f)
   //    to win the context (this is how HELP can quote things that quote
   //    left and would usually win, but don't when they have no args).
   //
-  //    The problem is that || doesn't take any arguments, so the LEFT-SOFT
-  //    has put itself into the output cell to be quoted, but the || has
-  //    this tweak:
-  //
-  //      tweak :|| 'barrier on
-  //
-  //   It's not important enough to fix at time of writing, so error.  But
-  //   a good answer needs to reactivate/reevaluate LEFT-SOFT as a new
-  //   expression, somehow.
-  //
   // 2. Want to keep this flag between an operation and an ensuing enfix in
   //    the same frame, so can't clear in Drop_Action(), e.g. due to:
   //
@@ -1144,10 +1127,10 @@ Bounce Action_Executor(Frame(*) f)
   //      o: make object! [f: does [1]]
   //      o.f left-the  ; want error suggesting -> here, need flag for that
 
-    if (STATE == ST_ACTION_FULFILLING_ENFIX_FROM_OUT)
+    if (STATE == ST_ACTION_FULFILLING_ENFIX_FROM_OUT)  // see [1]
         fail ("Left lookback toward thing that took no args, look at later");
 
-    Clear_Executor_Flag(ACTION, f, DIDNT_LEFT_QUOTE_TUPLE);  // for why, see [2]
+    Clear_Executor_Flag(ACTION, f, DIDNT_LEFT_QUOTE_TUPLE);  // see [2]
 
     Drop_Action(f);  // must fail before Drop_Action()
 
@@ -1255,13 +1238,6 @@ void Push_Action(
 
     assert(Not_Executor_Flag(ACTION, f, FULFILL_ONLY));
     assert(Not_Executor_Flag(ACTION, f, RUNNING_ENFIX));
-
-    STATIC_ASSERT(
-        ACTION_EXECUTOR_FLAG_FULFILLING_ARG == DETAILS_FLAG_IS_BARRIER
-    );
-    Array(*) identity = ACT_IDENTITY(act);
-    if (f->flags.bits & identity->leader.bits & DETAILS_FLAG_IS_BARRIER)
-        fail (Error_Expression_Barrier_Raw());
 
     REBLEN num_args = ACT_NUM_PARAMS(act);  // includes specialized + locals
 
@@ -1392,9 +1368,6 @@ void Begin_Action_Core(
 //
 void Drop_Action(Frame(*) f) {
     assert(not f->label or IS_SYMBOL(unwrap(f->label)));
-
-    if (Not_Executor_Flag(ACTION, f, FULFILLING_ARG))
-        Clear_Feed_Flag(f->feed, BARRIER_HIT);
 
     Clear_Executor_Flag(ACTION, f, RUNNING_ENFIX);
     Clear_Executor_Flag(ACTION, f, FULFILL_ONLY);

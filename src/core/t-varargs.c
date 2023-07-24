@@ -197,12 +197,8 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
                 return true;
             }
 
-            if (
-                Is_Feed_At_End(f_temp->feed)
-                or Get_Feed_Flag(f_temp->feed, BARRIER_HIT)
-            ){
+            if (Is_Feed_At_End(f_temp->feed))
                 Poison_Cell(shared);
-            }
             else {
                 // The indexor is "prefetched", so though the temp_frame would
                 // be ready to use again we're throwing it away, and need to
@@ -274,13 +270,8 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
         else
             arg = FRM_ARG(f, VAL_VARARGS_SIGNED_PARAM_INDEX(vararg));
 
-        bool hit_barrier = Get_Feed_Flag(f->feed, BARRIER_HIT)
-            and (pclass != PARAM_CLASS_SOFT)
-            and (pclass != PARAM_CLASS_MEDIUM)
-            and (pclass != PARAM_CLASS_HARD);
-
         option(Cell(const*)) look = nullptr;
-        if (not hit_barrier and not Is_Frame_At_End(f))
+        if (not Is_Frame_At_End(f))
             look = At_Frame(f);
 
         if (Vararg_Op_If_No_Advance_Handled(
@@ -639,10 +630,7 @@ void MF_Varargs(REB_MOLD *mo, noquote(Cell(const*)) v, bool form) {
     else if (Is_Frame_Style_Varargs_Maybe_Null(&f, v)) {
         if (f == NULL)
             Append_Ascii(mo->series, "!!!");
-        else if (
-            Is_Feed_At_End(f->feed)
-            or Get_Feed_Flag(f->feed, BARRIER_HIT)
-        ){
+        else if (Is_Feed_At_End(f->feed)) {
             Append_Ascii(mo->series, "[]");
         }
         else if (pclass == PARAM_CLASS_HARD) {

@@ -442,7 +442,7 @@ static Cell(const*) Get_Parse_Value(
         return rule;
 
     if (Is_Nulled(cell))
-        fail (Error_No_Value(rule));
+        fail (Error_Bad_Null(rule));
 
     if (IS_INTEGER(cell))
         fail ("Use REPEAT on integers https://forum.rebol.info/t/1578/6");

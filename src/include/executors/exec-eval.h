@@ -57,8 +57,6 @@
 #define EVAL_EXECUTOR_FLAG_FULFILLING_ARG \
     FRAME_FLAG_25
 
-STATIC_ASSERT(EVAL_EXECUTOR_FLAG_FULFILLING_ARG == DETAILS_FLAG_IS_BARRIER);
-
 
 //=//// EVAL_EXECUTOR_FLAG_26 /////////////////////////////////////////////=//
 //

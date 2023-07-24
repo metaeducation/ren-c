@@ -186,12 +186,6 @@ inline static bool Did_Init_Inert_Optimize_Complete(
             goto optimized;  // not action
         }
 
-        if (Get_Action_Flag(VAL_ACTION(unwrap(feed->gotten)), IS_BARRIER)) {
-            Set_Feed_Flag(feed, BARRIER_HIT);
-            Clear_Feed_Flag(feed, NO_LOOKAHEAD);
-            goto optimized;  // is barrier
-        }
-
         if (Not_Action_Flag(VAL_ACTION(unwrap(feed->gotten)), ENFIXED)) {
             Clear_Feed_Flag(feed, NO_LOOKAHEAD);
             goto optimized;  // not enfixed
