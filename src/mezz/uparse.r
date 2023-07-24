@@ -2848,6 +2848,9 @@ parse*: func [
 
     return: "Synthesized value from last match rule, or NULL if rules failed"
         [<opt> <void> any-value!]
+    @pending "Values remaining in pending queue after reaching end"
+        [<opt> block!]
+
     input "Input data"
         [<maybe> any-series! url! any-sequence!]
     rules "Block of parse rules"
@@ -2861,7 +2864,7 @@ parse*: func [
 
     /verbose "Print some additional debug information"
 
-    <local> loops furthest synthesized' remainder pending
+    <local> loops furthest synthesized' remainder
 ][
     ; PATH!s, TUPLE!s, and URL!s are read only and don't have indices.  But we
     ; want to be able to parse them, so make them read-only series aliases:
@@ -2924,13 +2927,6 @@ parse*: func [
 
     assert [empty? state.loops]
 
-    ; If you want to get the pending items, a <pop-pending> combinator could be
-    ; used to do that.
-    ;
-    if not empty-or-null? pending [
-        fail "Residual items accumulated in pending array"
-    ]
-
     if not tail? remainder [
         return raise "Tail of input was not reached"
     ]
@@ -2938,19 +2934,23 @@ parse*: func [
     ; While combinators can vaporize, don't allow PARSE itself to vaporize
     ;
     if synthesized' = nihil' [
-        return void
+        synthesized': void'
     ]
 
-    return/forward unmeta synthesized'
+    return/forward pack [unmeta synthesized', pending]
 ]
 
 parse: (comment [redescribe [  ; redescribe not working at the moment (?)
     {Process input in the parse dialect, pure NULL on failure}
 ] ]
     enclose :parse* func [f] [
-        return/forward heavy (do f except [
+        let [^synthesized' pending]: do f except [
             return null
-        ])
+        ]
+        if not empty-or-null? pending [
+            fail "PARSE completed, but pending array was not empty"
+        ]
+        return/forward heavy unmeta synthesized'
     ]
 )
 
@@ -2959,7 +2959,14 @@ parse-: (comment [redescribe [  ; redescribe not working at the moment (?)
 ] ]
     enclose :parse* func [f] [
         f.rules: compose [(f.rules) || return <here>]
-        return do f except [return null]
+
+        let [^synthesized' pending]: do f except [
+            return null
+        ]
+        if not empty-or-null? pending [
+            fail "PARSE completed, but pending array was not empty"
+        ]
+        return/forward heavy unmeta synthesized'
     ]
 )
 
@@ -2968,7 +2975,7 @@ parse+: (comment [redescribe [  ; redescribe not working at the moment (?)
     {Process input in the parse dialect, passes error to ELSE}
 ] ]
     enclose :parse* func [f <local> obj] [
-        return/forward heavy (do f except e -> [
+        let [^synthesized' pending]: do f except e -> [
             ;
             ; Providing both a THEN and an ELSE is interpreted as allowing
             ; the THEN clause to run, and passing through the object with
@@ -2986,7 +2993,11 @@ parse+: (comment [redescribe [  ; redescribe not working at the moment (?)
                 decay: '([raise e])
             ]
             return lazy obj
-        ])
+        ]
+        if not empty-or-null? [
+            fail "PARSE completed, but pending array was not empty"
+        ]
+        return/forward heavy unmeta synthesized'
     ]
 )
 
