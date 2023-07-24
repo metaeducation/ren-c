@@ -160,7 +160,7 @@ prin: function [
     value [<opt> any-value!]
 ][
     write-stdout switch/type value [
-        null! [return]
+        null! [return none]  ; type of VOID is currently null
         text! char! [value]
         block! [spaced value]
     ] else [

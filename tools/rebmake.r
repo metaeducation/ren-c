@@ -1602,7 +1602,9 @@ export execution: make generator-class [
                     not word? target/target
                     ; so you can use words for "phony" targets
                     exists? to-file target/target
-                ] [return] ;TODO: Check the timestamp to see if it needs to be updated
+                ][
+                    return none
+                ]  ; TODO: Check the timestamp to see if it needs to be updated
                 either block? target/commands [
                     for-each cmd target/commands [
                         cmd: do-substitutions cmd

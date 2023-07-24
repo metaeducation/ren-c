@@ -541,7 +541,7 @@ require-commit: function [
     return: <none>
     commit [text!]
 ][
-    c: select system.script.header 'commit else [return]
+    c: select system.script.header 'commit else [return none]
 
     ; If we happen to have commit information that includes a date, then we
     ; can look at the date of the running Rebol and know that a build that is

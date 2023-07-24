@@ -49,7 +49,7 @@ typedef REBINT (COMPARE_HOOK)(
 //
 // These functions must return a REBVAL* to the type they are making
 // (either in the output cell given or an API cell)...or they can return
-// BOUNCE_THROWN if they throw.  (e.g. `make object! [return]` can throw)
+// BOUNCE_THROWN if they throw.  (e.g. `make object! [return ...]` can throw)
 //
 typedef Bounce (MAKE_HOOK)(
     Frame(*) frame_,

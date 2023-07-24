@@ -209,7 +209,7 @@ emit: func [
 ][
     if binary? code [
         append ctx.msg code
-        return
+        return none
     ]
 
     while [code] [
