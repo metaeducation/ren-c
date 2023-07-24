@@ -1009,7 +1009,7 @@ Context(*) Virtual_Bind_Deep_To_New_Context(
             if (IS_BLANK(check)) {
                 // Will be transformed into dummy item, no rebinding needed
             }
-            else if (IS_WORD(check))
+            else if (IS_WORD(check) or IS_META_WORD(check))
                 rebinding = true;
             else if (not IS_QUOTED_WORD(check)) {
                 //
@@ -1026,7 +1026,7 @@ Context(*) Virtual_Bind_Deep_To_New_Context(
         item = spec;
         tail = spec;
         specifier = SPECIFIED;
-        rebinding = IS_WORD(item);
+        rebinding = IS_WORD(item) or IS_META_WORD(item);
     }
 
     // Keylists are always managed, but varlist is unmanaged by default (so
@@ -1065,7 +1065,7 @@ Context(*) Virtual_Bind_Deep_To_New_Context(
 
             goto add_binding_for_check;
         }
-        else if (IS_WORD(item)) {
+        else if (IS_WORD(item) or IS_META_WORD(item)) {
             symbol = VAL_WORD_SYMBOL(item);
             REBVAR *var = Append_Context(c, symbol);
 

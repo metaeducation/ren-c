@@ -128,6 +128,27 @@
     )
 ]
 
+; REDUCE-EACH is the basis of functions like PACK, and hence by default it
+; wants to skip over commas.  However, there's an option which will give you
+; isotopic commas when it sees a source-level comma.  This will be conflated
+; with evaluations that produce comma unless ^META variable used.
+[
+    (['3 '30 ~,~] = collect [
+        reduce-each x [1 + 2, 10 + 20 ~,~] [keep ^x]
+    ])
+    (['3 ~,~ '30 ~,~] = collect [
+        reduce-each/commas x [1 + 2, 10 + 20 ~,~] [keep ^x]
+    ])
+
+    ([''3 ''30 '~,~] = collect [
+        reduce-each ^x [1 + 2, 10 + 20 ~,~] [keep ^x]
+    ])
+    ([''3 ~,~ ''30 '~,~] = collect [
+        reduce-each/commas ^x [1 + 2, 10 + 20 ~,~] [keep ^x]
+    ])
+]
+
+
 ; SPREAD is honored by REDUCE
 [
     ([1 2 3 4] = reduce [1 if true [spread [2 3]] 4])

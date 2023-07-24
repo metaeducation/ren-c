@@ -199,13 +199,13 @@ DECLARE_NATIVE(reduce)
 //          [block! the-block!]
 //      body "Code to run on each step"
 //          [block!]
+//      /commas "Don't skip source-level commas (turn into comma! isotopes)"
 //  ]
 //
 DECLARE_NATIVE(reduce_each)
 //
-// 1. This current REDUCE-EACH only works with one variable, and it has to
-//    be a plain WORD!.  It should be able to support ^META words, as well as
-//    multiple variables.  See the code behind Loop_Each() for pattern to use.
+// 1. This current REDUCE-EACH only works with one variable; it should be able
+//    to take a block of variables.
 {
     INCLUDE_PARAMS_OF_REDUCE_EACH;
 
@@ -234,7 +234,6 @@ DECLARE_NATIVE(reduce_each)
 
     if (IS_META_WORD(vars)) {  // Note: gets converted to object in next step
         flags |= FRAME_FLAG_META_RESULT | FRAME_FLAG_FAILURE_RESULT_OK;
-        mutable_HEART_BYTE(vars) = REB_WORD;
     }
 
     Context(*) context = Virtual_Bind_Deep_To_New_Context(
@@ -255,6 +254,17 @@ DECLARE_NATIVE(reduce_each)
     if (Is_Feed_At_End(SUBFRAME->feed))
         goto finished;
 
+    if (IS_COMMA(At_Frame(SUBFRAME))) {
+        Fetch_Next_Forget_Lookback(SUBFRAME);
+
+        if (not REF(commas))
+            goto reduce_next;
+
+        Init_Comma(SPARE);
+        mutable_QUOTE_BYTE(SPARE) = ISOTOPE_0;  // conflates if not meta
+        goto reduce_step_output_in_spare;
+    }
+
     SUBFRAME->executor = &Evaluator_Executor;  // restore from pass through
 
     STATE = ST_REDUCE_EACH_REDUCING_STEP;
@@ -263,7 +273,7 @@ DECLARE_NATIVE(reduce_each)
 
 } reduce_step_output_in_spare: {  ////////////////////////////////////////////
 
-    if (Is_Void(SPARE)) {
+    if (not IS_META_WORD(vars) and (Is_Void(SPARE) or Is_Nihil(SPARE))) {
         Init_Nihil(OUT);
         goto reduce_next;
     }
@@ -284,9 +294,6 @@ DECLARE_NATIVE(reduce_each)
         if (breaking)
             goto finished;
     }
-
-    if (Is_Void(OUT))  // vaporized body or CONTINUE w/no argument
-        Init_Nihil(OUT);  // void reserved for body never ran
 
     goto reduce_next;
 
