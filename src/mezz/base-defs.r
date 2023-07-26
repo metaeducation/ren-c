@@ -44,7 +44,7 @@ probe: func* [
     {Debug print a molded value and returns that same value.}
 
     return: "Same as the input value"
-        [<opt> <void> any-value!]
+        [<nihil> <opt> <void> any-value!]
     ^value' [<opt> <void> <pack> <fail> any-value!]
 ][
     ; Remember this is early in the boot, so many things not defined.
@@ -57,7 +57,7 @@ probe: func* [
     ]
     write-stdout newline
 
-    return/forward unmeta value'
+    return unmeta value'
 ]
 
 ??: runs :probe  ; shorthand for debug sessions, not intended to be committed
