@@ -143,10 +143,10 @@ combinator: func [
         ; Get the text description if given
         (if text? spec.1 [spec.1, elide spec: my next])
 
-        ; Enforce a RETURN: definition.  RETURN: [] is allowed
+        ; Enforce a RETURN: definition.  RETURN: [...] is allowed w/no text
         (
             assert [spec.1 = 'return:]
-            if spec.2 = '[] [
+            if block? spec.2 [  ; no description
                 spread reduce [spec.1 spec.2]
                 elide spec: my skip 2
             ] else [
@@ -342,8 +342,7 @@ default-combinators: make map! reduce [
 
     'not combinator [
         {Fail if the parser rule given succeeds, else continue}
-        return: "The isotopic WORD! ~not~"
-            [isoword?]
+        return: [~not~]
         parser [activation!]
     ][
         [@ remainder]: parser input except [  ; don't care about result
@@ -618,7 +617,7 @@ default-combinators: make map! reduce [
 
     'change combinator [
         {Substitute a match with new data}
-        return: []  ; isotope!
+        return: [~change~]
         parser [activation!]
         replacer [activation!]  ; !!! How to say result is used here?
         <local> replacement'
@@ -634,12 +633,12 @@ default-combinators: make map! reduce [
         ; CHANGE returns tail, use as new remainder
         ;
         remainder: change/part input (unmeta replacement') remainder
-        return ~changed~
+        return ~change~
     ]
 
     'remove combinator [
         {Remove data that matches a parse rule}
-        return: []  ; isotope!
+        return: [~remove~]
         parser [activation!]
     ][
         [^ remainder]: parser input except e -> [  ; first find end position
@@ -647,12 +646,12 @@ default-combinators: make map! reduce [
         ]
 
         remainder: remove/part input remainder
-        return ~removed~
+        return ~remove~
     ]
 
     'insert combinator [
         {Insert literal data into the input series}
-        return: []  ; isotope!
+        return: [~insert~]
         parser [activation!]
         <local> insertion'
     ][
@@ -661,7 +660,7 @@ default-combinators: make map! reduce [
         ]
 
         remainder: insert input (unmeta insertion')
-        return ~inserted~
+        return ~insert~
     ]
 
     === SEEKING KEYWORDS ===

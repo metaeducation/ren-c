@@ -187,6 +187,20 @@ bool Typecheck_Value(
     }
 
     for (; item != tail; ++item) {
+        //
+        // !!! Ultimately, we'll enable literal comparison for quoted/quasi
+        // items.  For the moment just try quasi-words for isotopes.
+        //
+        if (IS_QUASI(item)) {
+            if (HEART_BYTE(item) != REB_WORD)
+                fail (item);
+            if (not Is_Isoword(v))
+                continue;
+            if (VAL_WORD_SYMBOL(v) == VAL_WORD_SYMBOL(item))
+                goto test_succeeded;
+            goto test_failed;
+        }
+
         enum Reb_Kind kind;
         Cell(const*) test;
         if (IS_WORD(item)) {

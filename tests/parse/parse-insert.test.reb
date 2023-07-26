@@ -19,11 +19,11 @@
 
 [https://github.com/red/red/issues/3357
     (did all [
-        '~inserted~ == meta parse x3357: [] [insert ('foo)]
+        '~insert~ == meta parse x3357: [] [insert ('foo)]
         x3357 = [foo]
     ])
     (did all [
-        '~inserted~ == meta parse x3357b: [] [insert (the foo)]
+        '~insert~ == meta parse x3357b: [] [insert (the foo)]
         x3357b = [foo]
     ])
 ]
@@ -31,7 +31,7 @@
 ; Block insertion tests from %parse-test.red
 [
     (did all [
-        '~inserted~ == meta parse blk: [] [insert (1)]
+        '~insert~ == meta parse blk: [] [insert (1)]
         blk = [1]
     ])
     (did all [
@@ -39,17 +39,17 @@
         blk = [a b a]
     ])
     (did all [
-        '~removed~ == meta parse blk: [] [
+        '~remove~ == meta parse blk: [] [
             p: <here> insert (the a) seek (p) remove 'a
         ]
         blk = []
     ])
     (did all [
-        '~inserted~ == meta parse blk: [] [insert (spread [a b])]
+        '~insert~ == meta parse blk: [] [insert (spread [a b])]
         blk = [a b]
     ])
     (did all [
-        '~inserted~ == meta parse blk: [] [insert ([a b])]
+        '~insert~ == meta parse blk: [] [insert ([a b])]
         blk = [[a b]]
     ])
     (
@@ -84,7 +84,7 @@
 ; TEXT! insertion tests from %parse-test.red
 [
     (did all [
-        '~inserted~ == meta parse str: "" [insert (#1)]
+        '~insert~ == meta parse str: "" [insert (#1)]
         str = "1"
     ])
     (did all [
@@ -92,13 +92,13 @@
         str = "aba"
     ])
     (did all [
-        '~removed~ == meta parse str: "" [
+        '~remove~ == meta parse str: "" [
             p: <here> insert (#a) seek (p) remove #a
         ]
         str = ""
     ])
     (did all [
-        '~removed~ == meta parse str: "test" [
+        '~remove~ == meta parse str: "test" [
             some [<any> p: <here> insert (#_)] seek (p) remove <any>
         ]
         str = "t_e_s_t"
@@ -108,7 +108,7 @@
 ; BINARY! insertion tests from %parse-test.red
 [
    (did all [
-        '~inserted~ == meta parse bin: #{} [insert (#"^A")]
+        '~insert~ == meta parse bin: #{} [insert (#"^A")]
         bin = #{01}
     ])
     (did all [
@@ -116,13 +116,13 @@
         bin = #{0A0B0A}
     ])
     (did all [
-        '~removed~ == meta parse bin: #{} [
+        '~remove~ == meta parse bin: #{} [
             p: <here> insert (#{0A}) seek (p) remove #{0A}
         ]
         bin = #{}
     ])
     (did all [
-        '~removed~ == meta parse bin: #{DEADBEEF} [
+        '~remove~ == meta parse bin: #{DEADBEEF} [
             some [<any> p: <here> insert (#)] seek (p) remove <any>
         ]
         bin = #{DE00AD00BE00EF}
