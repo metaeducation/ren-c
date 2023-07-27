@@ -2089,7 +2089,7 @@ default-combinators: make map! reduce [
     action! combinator [
         {Run an ordinary ACTION! with parse rule products as its arguments}
         return: "The return value of the action"
-            [<opt> <void> any-value!]
+            [<nihil> <opt> <void> any-value!]
         @pending [<opt> block!]
         value [action!]
         ; AUGMENT is used to add param1, param2, param3, etc.
