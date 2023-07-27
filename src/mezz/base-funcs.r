@@ -52,7 +52,7 @@ return: func* [] [
 func: func* [
     {Make action with set-words as locals, <static>, <in>, <with>, <local>}
 
-    return: [action!]
+    return: [activation!]
     spec "Help string (opt) followed by arg words (and opt type and string)"
         [block!]
     body "The body block of the function"
@@ -729,11 +729,11 @@ attempt: func [
 
     return: "Returns NULL on failure (-or- if last evaluative result is NULL)"
         [<opt> <void> any-value!]
-    @error [error!]
     code [block!]
+    <local> temp
 ][
-    if error? error: entrap code [return null]
-    return (unmeta error, elide error: ~)
+    if error? temp: entrap code [return null]
+    return unmeta temp
 ]
 
 trap: func [
@@ -759,7 +759,7 @@ trap+: func [
     ; the result.
     ;
     if error? result: entrap code [
-        return/forward pack [result null]
+        return pack [result null]
     ]
 
     return isotopic make object! [
@@ -902,7 +902,7 @@ eval-all: func [
 meth: enfix func [
     {FUNC variant that creates an ACTION! implicitly bound in a context}
 
-    return: [action!]
+    return: [activation!]
     :member [set-word! set-path!]
     spec [block!]
     body [block!]

@@ -40,7 +40,7 @@ transcode-header: func [
     {Try to match a data binary! as being a script, definitional fail if not}
 
     return: [<opt> block!]
-    @rest [binary!]
+    @rest [<opt> binary!]
     @line [integer!]
 
     data [binary!]
@@ -53,13 +53,13 @@ transcode-header: func [
         return raise e
     ]
     if not rest [
-        return/forward heavy null
+        return null
     ]
     [hdr /rest]: transcode/one/file/line rest file line except e -> [  ; BLOCK!
         return raise e
     ]
 
-    return/forward heavy all [key = 'REBOL, block? hdr] then [hdr]
+    return all [key = 'REBOL, block? hdr] then [hdr]
 ]
 
 
@@ -131,7 +131,7 @@ load-header: function [
         return either required ['no-header] [
             body: data
             final: tail of data
-            return/forward heavy null  ; no header object, keep multireturn
+            return null  ; no header object, keep multireturn
         ]
     ]
 
@@ -221,7 +221,7 @@ load: func [
     return: "BLOCK! if Rebol code, otherwise value(s) appropriate for codec"
         [<opt> any-value!]
     @header "Request the Rebol header object be returned as well"
-        [object!]
+        [<opt> object!]
     source "Source of the information being loaded"
         [<maybe> file! url! tag! the-word! text! binary!]
     /type "E.g. rebol, text, markup, jpeg... (by default, auto-detected)"
@@ -248,6 +248,7 @@ load: func [
             ; to return that block...do that for now, for compatibility with
             ; the tests until more work is done.
             ;
+            header: null
             return data
         ]
     ]
@@ -263,6 +264,7 @@ load: func [
 
     if not find [unbound rebol] type [
         if find system.options.file-types type [
+            header: null
             return decode type :data
         ]
 

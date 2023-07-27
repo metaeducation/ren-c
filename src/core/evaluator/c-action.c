@@ -131,13 +131,16 @@ bool Lookahead_To_Sync_Enfix_Defer_Flag(Feed(*) feed) {
 // UNWIND.  We already force type checking through the returns, so this (along
 // with any typechecking) should also be done.
 //
+// 1. At one time this code would not do proxying if the value to return was
+//    null or void.  This was to have parity with a usermode RETURN which
+//    implemented the same policy.  However that policy proved to be a burden
+//    on usermode RETURN, so it was changed to require explicit suppression
+//    of multi-return proxying via RETURN/ONLY.  Hence natives now need to
+//    take that responsibility of choosing whether or not to proxy.
+//
 Bounce Proxy_Multi_Returns_Core(Frame(*) f, Value(*) v)
 {
-    if (Is_Void(v))
-        return v;
-
-    if (Is_Nulled(v))
-        return v;
+    assert(not Is_Raised(v));
 
     StackIndex base = TOP_INDEX;
 
@@ -152,6 +155,9 @@ Bounce Proxy_Multi_Returns_Core(Frame(*) f, Value(*) v)
             continue;
         if (VAL_PARAM_CLASS(PARAM) != PARAM_CLASS_OUTPUT)
             continue;
+
+        if (not TYPE_CHECK(PARAM, ARG))
+            fail (Error_Arg_Type(f, KEY, PARAM, ARG));
 
         Meta_Quotify(Copy_Cell(PUSH(), ARG));
     }

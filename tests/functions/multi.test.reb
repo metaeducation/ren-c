@@ -194,8 +194,8 @@
 ; Propagates void signals, but sets variables to null
 [
     (did all [
-        void? [x]: comment "hi"
-        unset? 'x
+        null? [/x]: comment "hi"
+        null? x
     ])
 ]
 

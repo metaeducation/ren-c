@@ -181,10 +181,13 @@ DECLARE_NATIVE(read_stdin)
     if (Term_IO) {
         if (rebRunThrows(
             OUT,  // <-- output cell
-            "as binary! try read-line"
+            "as binary! maybe read-line"
         )){
             return THROWN;
         }
+        if (Is_Nulled(OUT))
+            return nullptr;  // don't proxy multi-returns
+
         Init_Logic(ARG(eof), false);  // never terminates?
         return Proxy_Multi_Returns(frame_);
     }
@@ -369,9 +372,13 @@ DECLARE_NATIVE(read_line)
     }
   #endif
 
-    Init_Logic(ARG(eof), eof);
     Copy_Cell(OUT, line);
     rebRelease(line);
+
+    if (Is_Nulled(OUT))
+        return nullptr;
+
+    Init_Logic(ARG(eof), eof);
     return Proxy_Multi_Returns(frame_);
 }
 

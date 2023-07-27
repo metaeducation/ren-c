@@ -945,11 +945,8 @@ REBTYPE(String)
             &len, v, tail, ARG(pattern), flags, skip
         );
 
-        if (find == NOT_FOUND) {
-            Init_Nulled(OUT);
-            Init_Nulled(ARG(tail));
-            return Proxy_Multi_Returns(frame_);
-        }
+        if (find == NOT_FOUND)
+            return nullptr;  // don't Proxy_Multi_Returns
 
         REBLEN ret = cast(REBLEN, find);
         assert(ret <= cast(REBLEN, tail));

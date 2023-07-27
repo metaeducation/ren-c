@@ -109,7 +109,7 @@ combinator: func [
     <static> wrapper (
         func [
             {Enclosing function for hooking all combinators}
-            return: [<opt> <void> any-value!]
+            return: [<nihil> <opt> <void> any-value!]
             f [frame!]
         ][
             ; This hook lets us run code before and after each execution of
@@ -133,7 +133,7 @@ combinator: func [
             ;] then [
             ;    state.furthest: f.remainder
             ;]
-            return/forward unmeta result'
+            return unmeta result'
         ]
     )
 ][
@@ -158,16 +158,16 @@ combinator: func [
             ]
         )
 
-        /remainder [any-series!]  ; all combinators have remainder
+        @remainder [any-series!]  ; all combinators have remainder
 
         (if spec.1 = '@pending [
             assert [spec.2 = [<opt> block!]]
             autopipe: false  ; they're asking to handle pending themselves
-            spread reduce [/pending spec.2]
+            spread reduce [@pending spec.2]
             elide spec: my skip 2
         ] else [
             autopipe: true  ; they didn't mention pending, handle automatically
-            spread [/pending [<opt> block!]]
+            spread [@pending [<opt> block!]]
         ])
 
         state [frame!]
@@ -207,35 +207,21 @@ combinator: func [
                         [^result' remainder subpending]: eval f2 except e -> [
                             return raise e
                         ]
-                        pending: glom pending spread subpending
-                        return/forward pack [
-                            ;
-                            ; !!! pack wants to preserve invisibility but this
-                            ; wrecks commas.  should there be "comma isotopes?"
-                            ;
-                            (unmeta result') remainder subpending
+                        pending: glom pending maybe spread subpending
+                        return pack [
+                            unmeta result', remainder, subpending
                         ]
                     ]
                 ]
             ]
         ])
 
-        ; Default to forwarding return.  This can be stopped by using any
-        ; operation that filters out block isotopes (packs)... just don't
-        ; return one of those and no multireturn forwarding will happen.
-        ;
         ; ** Currently parsers unify RETURN where a failure is done with
-        ; an `return raise`.  Should this instead be ACCEPT and REJECT, as
+        ; a `return raise`.  Should this instead be ACCEPT and REJECT, as
         ; local functions to the combinator, so that you can ACCEPT a failure
         ; from something like a GROUP! (and remove need for RAISE with the
         ; return?)  Or RETURN ACCEPT and RETURN REJECT to make it clearer,
         ; where ACCEPT makes a pack and REJECT does RAISE?
-        ;
-        return: adapt :return/forward [
-            if not raised? unmeta value [  ; errors mean combinator failure
-                value: ^ pack [unmeta value remainder pending]
-            ]
-        ]
 
         (as group! body)
 
@@ -543,8 +529,10 @@ default-combinators: make map! reduce [
 
         ; !!! STATE is filled in as the frame of the top-level UPARSE call.  If
         ; we UNWIND then we bypass any of its handling code, so it won't set
-        ; the /PROGRESS etc.  Review.
+        ; things like PENDING (which gets type checked as a multi-return, so
+        ; we can't leave it as unset).  Review.
         ;
+        state.pending: null
         state.return isotopify-if-falsey unmeta value'
     ]
 
@@ -972,13 +960,13 @@ default-combinators: make map! reduce [
             [block!]
         @pending [<opt> block!]
         parser [activation!]
-        <local> subpending collected
+        <local> collected
     ][
-        [^ remainder subpending]: parser input except e -> [
+        [^ remainder pending]: parser input except e -> [
             return raise e
         ]
 
-        ; subpending can be NULL or a block full of items that may or may
+        ; PENDING can be NULL or a block full of items that may or may
         ; not be intended for COLLECT.  Right now the logic is that all QUOTED!
         ; items are intended for collect, extract those from the pending array.
         ;
@@ -988,12 +976,11 @@ default-combinators: make map! reduce [
         ; unquoted forms.  Punt on such optimizations for now.
         ;
         collected: collect [
-            remove-each item (maybe subpending) [
-                if quoted? :item [keep unquote item, true]
+            remove-each item (maybe pending) [
+                if quoted? item [keep unquote item, true]
             ]
         ]
 
-        pending: subpending
         return collected
     ]
 
@@ -1002,9 +989,9 @@ default-combinators: make map! reduce [
             [<void> any-value!]
         @pending [<opt> block!]
         parser [activation!]
-        <local> result' subpending
+        <local> result'
     ][
-        [^result' remainder subpending]: parser input except e -> [
+        [^result' remainder pending]: parser input except e -> [
             return raise e
         ]
         if pack? unmeta result' [  ; KEEP picks first pack item
@@ -1027,17 +1014,15 @@ default-combinators: make map! reduce [
         ;
         case [
             quoted? result' [  ; unmeta'd result asked to be kept literally
-                pending: glom subpending result'  ; retain meta quote as signal
+                pending: glom pending result'  ; retain meta quote as signal
             ]
             splice? unmeta result' [
-                subpending: default [copy []]  ; !!! optimize empty results?
                 for-each item unquasi result' [
                     ;
                     ; We quote to signal that this pending item targets COLLECT.
                     ;
-                    append subpending quote item
+                    pending: glom pending quote item
                 ]
-                pending: subpending
             ]
             fail "Incorrect KEEP (not value or SPREAD)"
         ]
@@ -1068,9 +1053,9 @@ default-combinators: make map! reduce [
             [object!]
         @pending [<opt> block!]
         parser [activation!]
-        <local> obj subpending
+        <local> obj
     ][
-        [^ remainder subpending]: parser input except e -> [
+        [^ remainder pending]: parser input except e -> [
             return raise e
         ]
 
@@ -1078,14 +1063,13 @@ default-combinators: make map! reduce [
         ; intended for GATHER.
 
         obj: make object! collect [
-            remove-each item (maybe subpending) [
+            remove-each item (maybe pending) [
                 if block? item [keep spread item, true]
             ] else [
-                ; should it error or fail if subpending was BLANK! ?
+                ; should it error or fail if pending was NULL ?
             ]
         ]
 
-        pending: subpending
         return obj
     ]
 
@@ -1333,22 +1317,21 @@ default-combinators: make map! reduce [
 
     'phase combinator [
         return: "Result of the parser evaluation"
-            [<void> <opt> any-value!]
+            [<nihil> <void> <opt> any-value!]
         @pending [<opt> block!]
         parser [activation!]
-        <local> subpending result'
+        <local> result'
     ][
-        [^result' remainder subpending]: parser input except e -> [
+        [^result' remainder pending]: parser input except e -> [
             return raise e
         ]
 
         ; Run GROUP!s in order, removing them as one goes
         ;
-        remove-each item (maybe subpending) [
+        remove-each item (maybe pending) [
             if group? item [eval item, true]
         ]
 
-        pending: subpending
         return unmeta result'
     ]
 
@@ -1896,9 +1879,8 @@ default-combinators: make map! reduce [
         return: "Literal value" [any-value!]
         @pending [<opt> block!]
         value [the-group!]
-        <local> result' comb totalpending single
+        <local> result' comb subpending single
     ][
-        totalpending: copy []
         value: as group! value
         comb: runs (state.combinators).(group!)
         [^result' remainder pending]: comb state input value except e -> [
@@ -1911,13 +1893,12 @@ default-combinators: make map! reduce [
             fail "Inline matching @(...) requires plain value or splice"
         ]
 
-        [^result' remainder pending]: comb state remainder result'
+        [^result' remainder subpending]: comb state remainder result'
             except e -> [
                 return raise e
             ]
 
-        totalpending: glom totalpending spread pending
-        pending: totalpending
+        pending: glom pending maybe spread subpending
         return unmeta result'
     ]
 
@@ -1925,7 +1906,7 @@ default-combinators: make map! reduce [
         return: "Literal value" [any-value!]
         @pending [<opt> block!]
         value [the-block!]
-        <local> result' comb totalpending
+        <local> result' comb subpending
     ][
         ; !!! THE-BLOCK! acting as just matching the block is redundant with
         ; a quoted block.  Suggestions have been to repurpose @[...] for a
@@ -1936,19 +1917,18 @@ default-combinators: make map! reduce [
         ; as useless as it sounds, since a rule can synthesize an arbitrary
         ; value.
 
-        totalpending: copy []
+        pending: null
         value: as block! value
         comb: runs (state.combinators).(block!)
-        [^result' input pending]: comb state input value except e -> [
+        [^result' input subpending]: comb state input value except e -> [
             return raise e
         ]
-        totalpending: glom totalpending spread pending
+        pending: glom pending maybe spread subpending
         comb: runs (state.combinators).(quoted!)
-        [^result' remainder pending]: comb state input result' except e -> [
+        [^result' remainder subpending]: comb state input result' except e -> [
             return raise e
         ]
-        totalpending: glom totalpending spread pending
-        pending: totalpending
+        pending: glom pending maybe spread subpending
         return unmeta result'
     ]
 
@@ -2035,9 +2015,6 @@ default-combinators: make map! reduce [
     ; result-bearing rules it hits as it goes.  Not all rules give results
     ; by default--such as GROUP! or literals for instance.  If something
     ; gives a result and you do not want it to, use ELIDE.
-    ;
-    ; !!! Suggestion has made that ELIDE actually be SKIP.  This sounds good,
-    ; but would require SKIP as "match next item" having another name.
 
     'elide combinator [
         {Transform a result-bearing combinator into one that has no result}
@@ -2118,7 +2095,7 @@ default-combinators: make map! reduce [
         ; AUGMENT is used to add param1, param2, param3, etc.
         /parsers "Sneaky argument of parsers collected from arguments"
             [block!]
-        <local> arg totalpending
+        <local> arg subpending
     ][
         ; !!! We very inelegantly pass a block of PARSERS for the argument in
         ; because we can't reach out to the augmented frame (rule of the
@@ -2131,7 +2108,7 @@ default-combinators: make map! reduce [
         ; !!! We cannot use the autopipe mechanism because the hooked combinator
         ; does not see the augmented frame.  Have to do it manually.
         ;
-        totalpending: null
+        pending: null
 
         let f: make frame! value
         for-each param (parameters of action of f) [
@@ -2139,21 +2116,24 @@ default-combinators: make map! reduce [
                 ensure action! parsers.1
                 if meta-word? param [
                     param: to word! param
-                    f.(param): [^ input pending]: (run parsers.1 input) except e -> [
+                    f.(param): [^ input subpending]: (
+                        run parsers.1 input
+                    ) except e -> [
                         return raise e
                     ]
                 ] else [
-                    f.(param): [@ input pending]: (run parsers.1 input) except e -> [
+                    f.(param): [@ input subpending]: (
+                        run parsers.1 input
+                    ) except e -> [
                         return raise e
                     ]
                 ]
-                totalpending: glom totalpending spread pending
+                pending: glom pending maybe spread subpending
                 parsers: next parsers
             ]
         ]
         assert [tail? parsers]
         remainder: input
-        pending: totalpending
         return eval f
     ]
 
@@ -2318,13 +2298,13 @@ default-combinators: make map! reduce [
         /limit "Limit of how far to consider (used by ... recursion)"
             [block!]
         /thru "Keep trying rule until end of block"
-        <local> rules pos result' f sublimit totalpending subpending temp
+        <local> rules pos result' f sublimit subpending temp
     ][
         rules: value  ; alias for clarity
         limit: default [tail of rules]
         pos: input
 
-        totalpending: null  ; can become GLOM'd into a BLOCK!
+        pending: null  ; can become GLOM'd into a BLOCK!
 
         result': nihil'  ; default result is invisible
 
@@ -2374,7 +2354,6 @@ default-combinators: make map! reduce [
                 ; successful alternate means the whole block is done.
                 ;
                 remainder: pos
-                pending: totalpending
                 return unmeta result'
             ]
 
@@ -2394,7 +2373,6 @@ default-combinators: make map! reduce [
                 rules: next rules
                 if tail? rules [  ; if at end, act like [elide to <end>]
                     remainder: tail of pos
-                    pending: totalpending
                     return unmeta result'
                 ]
                 sublimit: find/part rules [...] limit
@@ -2418,15 +2396,19 @@ default-combinators: make map! reduce [
                     print mold/limit rules 200
                     fail "Combinator did not set remainder"
                 ]
+                if unset? 'subpending [
+                    print mold/limit rules 200
+                    fail "Combinator did not set pending"
+                ]
                 if temp <> nihil' [
                     result': temp  ; overwrite if was visible
                 ]
-                totalpending: glom totalpending spread subpending
+                pending: glom pending maybe spread subpending
             ] else [
                 result': nihil'  ; reset, e.g. `[false |]`
 
-                free maybe totalpending  ; proactively release memory
-                totalpending: null
+                free maybe pending  ; proactively release memory
+                pending: null
 
                 ; If we fail a match, we skip ahead to the next alternate rule
                 ; by looking for an `|`, resetting the input position to where
@@ -2459,7 +2441,6 @@ default-combinators: make map! reduce [
         ]
 
         remainder: pos
-        pending: totalpending
         return unmeta result'
     ]
 
@@ -2638,7 +2619,7 @@ parsify: func [
     {Transform one "step's worth" of rules into a parser combinator action}
 
     return: "Parser action for input processing corresponding to a full rule"
-        [action!]
+        [activation!]
     @advanced "Rules position advanced past the elements used for the action"
         [block!]
     state "Parse state"
@@ -2917,6 +2898,7 @@ parse*: func [
     sys.util.rescue+ [
         [^synthesized' remainder pending]: eval f except e -> [
             assert [empty? state.loops]
+            pending: null  ; didn't get assigned due to error
             return raise e  ; wrappers catch
         ]
     ] then e -> [
@@ -2937,7 +2919,7 @@ parse*: func [
         synthesized': void'
     ]
 
-    return/forward pack [unmeta synthesized', pending]
+    return unmeta synthesized'
 ]
 
 parse: (comment [redescribe [  ; redescribe not working at the moment (?)
@@ -2950,7 +2932,7 @@ parse: (comment [redescribe [  ; redescribe not working at the moment (?)
         if not empty-or-null? pending [
             fail "PARSE completed, but pending array was not empty"
         ]
-        return/forward heavy unmeta synthesized'
+        return heavy unmeta synthesized'
     ]
 )
 
@@ -2966,7 +2948,7 @@ parse-: (comment [redescribe [  ; redescribe not working at the moment (?)
         if not empty-or-null? pending [
             fail "PARSE completed, but pending array was not empty"
         ]
-        return/forward heavy unmeta synthesized'
+        return heavy unmeta synthesized'
     ]
 )
 
@@ -2997,7 +2979,7 @@ parse+: (comment [redescribe [  ; redescribe not working at the moment (?)
         if not empty-or-null? [
             fail "PARSE completed, but pending array was not empty"
         ]
-        return/forward heavy unmeta synthesized'
+        return heavy unmeta synthesized'
     ]
 )
 

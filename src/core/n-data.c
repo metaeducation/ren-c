@@ -1154,7 +1154,7 @@ DECLARE_NATIVE(get)
         if (Is_Isotope(OUT) and not Is_Isotope_Get_Friendly(OUT))
             fail (Error_Bad_Word_Get(source, OUT));
 
-    return Proxy_Multi_Returns(frame_);
+    return OUT;
 }
 
 

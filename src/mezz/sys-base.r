@@ -56,7 +56,7 @@ rescue+: func [  ; see also TRAP+
     ; the result.
     ;
     if error? result: enrescue code [
-        return/forward pack [result null]
+        return pack [result null]
     ]
 
     return isotopic make object! [

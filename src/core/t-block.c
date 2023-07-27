@@ -963,11 +963,8 @@ REBTYPE(Array)
             skip
         );
 
-        if (find == NOT_FOUND) {
-            Init_Nulled(OUT);
-            Init_Nulled(ARG(tail));
-            return Proxy_Multi_Returns(frame_);
-        }
+        if (find == NOT_FOUND)
+            return nullptr;  // don't Proxy_Multi_Returns
 
         REBLEN ret = cast(REBLEN, find);
         assert(ret <= limit);
@@ -1452,7 +1449,7 @@ DECLARE_NATIVE(engroup)
 //
 //      return: [<opt> block!]
 //      accumulator [<opt> block!]
-//      ^result [<opt> any-value!]
+//      result [<void> element? splice?]
 //  ]
 //
 DECLARE_NATIVE(glom)
@@ -1478,20 +1475,14 @@ DECLARE_NATIVE(glom)
     //
     bool splice = false;
 
-    if (Is_Meta_Of_Null(result))
+    if (Is_Void(result))
         return COPY(accumulator);
 
-    if (IS_QUASI(result)) {
-        if (not Is_Meta_Of_Splice(result))
-            fail ("Only isotopes accepted by GLOM are BLOCK! for splicing");
-
+    if (Is_Splice(result)) {
         splice = true;
-        Unquasify(result);
         assert(HEART_BYTE(result) == REB_GROUP);
         mutable_HEART_BYTE(result) = REB_BLOCK;  // interface is for blocks
-    }
-    else {
-        Unquotify(result, 1);
+        mutable_QUOTE_BYTE(result) = UNQUOTED_1;
     }
 
     if (Is_Nulled(accumulator)) {

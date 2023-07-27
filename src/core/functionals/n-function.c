@@ -535,7 +535,7 @@ DECLARE_NATIVE(unwind)
 //
 //      return: []  ; !!! notation for "divergent?"
 //      ^value [<opt> <void> <fail> <pack> any-value!]
-//      /forward "Pass on parameter packs, vs. just the first pack item"
+//      /only "Do not do proxying of output variables, just return argument"
 //  ]
 //
 DECLARE_NATIVE(definitional_return)
@@ -627,18 +627,11 @@ DECLARE_NATIVE(definitional_return)
     // take [<opt> any-value!] as its argument, and then report the error
     // itself...implicating the frame (in a way parallel to this native).
     //
-    if (Is_Isotope(v)) {
-        //
-        // allow, so that you can say `return ~xxx~` in functions whose spec
-        // is written as `return: []`
+    if (GET_PARAM_FLAG(param, RETURN_NONE) and not Is_None(v))
+        fail ("If RETURN: <none> is in a function spec, RETURN NONE only");
 
-        if (Is_Pack(v) and not Is_Nihil(v) and not REF(forward))
-            Decay_If_Unstable(v);
-
-        if (GET_PARAM_FLAG(param, RETURN_NONE) and not Is_None(v))
-            fail ("If RETURN: <none> is in a function spec, RETURN NONE only");
-    }
-    else {
+    if (not TYPE_CHECK(param, v)) {
+        Decay_If_Unstable(v);
         if (not TYPE_CHECK(param, v))
             fail (Error_Bad_Return_Type(target_frame, v));
     }
@@ -649,7 +642,7 @@ DECLARE_NATIVE(definitional_return)
     Copy_Cell(label, Lib(UNWIND)); // see Make_Thrown_Unwind_Value
     TG_Unwind_Frame = target_frame;
 
-    if (not Is_Raised(v) and not Is_Nulled(v) and not Is_Void(v))
+    if (not Is_Raised(v) and not REF(only))
         Proxy_Multi_Returns_Core(target_frame, v);
 
     return Init_Thrown_With_Label(FRAME, v, label);
