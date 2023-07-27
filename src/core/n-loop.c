@@ -1067,7 +1067,7 @@ DECLARE_NATIVE(for_each)
 //
 //  every: native [
 //
-//  {Iterate and return false if any previous body evaluations were false}
+//  {Iterate and return null if any previous body evaluations were falsey}
 //
 //      return: [<opt> <void> any-value!]
 //          {null on BREAK, blank on empty, false or the last truthy value}
@@ -1170,8 +1170,8 @@ DECLARE_NATIVE(every)
     if (Is_Falsey(SPARE)) {
         Init_Nulled(OUT);
     }
-    else if (Is_Fresh(OUT) or Is_Nulled(OUT)) {
-        Move_Cell(OUT, SPARE);  // will overwrite a none, e.g. from void
+    else if (Is_Fresh(OUT) or not Is_Nulled(OUT)) {
+        Move_Cell(OUT, SPARE);
     }
 
     goto next_iteration;
