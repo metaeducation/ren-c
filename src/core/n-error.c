@@ -184,7 +184,7 @@ DECLARE_NATIVE(entrap)  // wrapped as multi-return versions TRAP and ATTEMPT
 //  {Analogue to something like a THEN which traps definitional errors}
 //
 //      return: "Non-failure input, or product of processing failure"
-//          [<opt> <void> any-value!]
+//          [<nihil> <opt> <void> any-value!]  ; see [1]
 //      ^optional "<deferred argument> Run branch if this is definitional fail"
 //          [<opt> <void> <fail> <pack> any-value!]
 //      :branch "If arity-1 ACTION!, receives value that triggered branch"
@@ -192,7 +192,23 @@ DECLARE_NATIVE(entrap)  // wrapped as multi-return versions TRAP and ATTEMPT
 //  ]
 //
 DECLARE_NATIVE(except)
-{
+//
+// 1. Although THEN and ELSE will not operate on invisible input, it is legal
+//    to trap a definitional error coming from a function that evaluates to
+//    nihil.  Consider this case:
+//
+//        let result': ^ eval f except e -> [...]
+//
+//    If you intend this to work with arbitrary code and store a meta-NIHIL
+//    in non-erroring cases, then EXCEPT must tolerate the NIHIL, since the
+//    enfix defer rules mean this acts as ^ (eval f except e -> [...]).  If
+//    you couldn't do that, this gets laborious to where you have to write
+//    something like:
+//
+//        let result': ^ eval f
+//        if failure? unmeta result' [let e: unquasi reify unmeta result ...]
+//
+ {
     INCLUDE_PARAMS_OF_EXCEPT;
 
     Value(*) v = ARG(optional);
