@@ -592,23 +592,30 @@ DECLARE_NATIVE(definitional_return)
     const REBPAR *param = ACT_PARAMS_HEAD(target_fun);
     assert(KEY_SYM(ACT_KEYS_HEAD(target_fun)) == SYM_RETURN);
 
-    if (Is_Meta_Of_Nihil(v)) {  // RETURN NIHIL
-        if (NOT_PARAM_FLAG(param, VANISHABLE))
-            fail (Error_Bad_Invisible(f));
-
-        Init_Nihil(v);
-        goto skip_type_check;
-    }
-
     if (Is_Meta_Of_Raised(v)) {
         Unquasify(v);
         Raisify(v);  // Meta_Unquotify won't do this, it fail()'s
         goto skip_type_check;
     }
 
-    // Safe to unquotify for type checking
+    if (Is_Meta_Of_Nihil(v)) {  // RETURN NIHIL
+        if (GET_PARAM_FLAG(param, VANISHABLE)) {
+            Init_Nihil(v);
+            goto skip_type_check;
+        }
 
-    Meta_Unquotify(v);
+        // !!! Treating a return of NIHIL as a return of NONE helps some
+        // scenarios, for instance piping UPARSE combinators which do not
+        // want to propagate pure invisibility.  The idea should be reviewed
+        // to see if VOID makes more sense...but start with a more "ornery"
+        // value to see how it shapes up.
+        //
+        Init_None(v);
+    }
+    else {
+        // Safe to unquotify for type checking
+        Meta_Unquotify(v);
+    }
 
     // Check type NOW instead of waiting and letting Eval_Core()
     // check it.  Reasoning is that the error can indicate the callsite,
