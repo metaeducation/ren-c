@@ -89,12 +89,8 @@
 // a variable could easily be unset with (var: ~)
 //
 inline static bool Is_Isotope_Set_Friendly(Cell(const*) v) {
-    assert(Is_Isotope(v));
-    return (
-        HEART_BYTE(v) == REB_WORD  // e.g. ~true~ and ~false~ and ~null~
-        or HEART_BYTE(v) == REB_VOID  // none is the isotopic state of void
-        or HEART_BYTE(v) == REB_ACTION  // action assignment allowed
-    );
+    assert(not Is_Isotope_Unstable(v));
+    return true;
 }
 
 // Like with set-friendliness, get-friendliness relates to what can be done
@@ -104,9 +100,8 @@ inline static bool Is_Isotope_Set_Friendly(Cell(const*) v) {
 // assignment, isotopic voids are not get-friendly.
 //
 inline static bool Is_Isotope_Get_Friendly(Cell(const*) v) {
-    assert(Is_Isotope(v));
-    return HEART_BYTE(v) == REB_WORD
-        or HEART_BYTE(v) == REB_ACTION;
+    assert(not Is_Isotope_Unstable(v));
+    return HEART_BYTE(v) != REB_VOID;
 }
 
 // The evaluator publishes its internal states in this header file, so that
