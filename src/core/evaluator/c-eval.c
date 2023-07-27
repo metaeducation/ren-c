@@ -1363,6 +1363,8 @@ Bounce Evaluator_Executor(Frame(*) f)
                     Theify(SPARE);  // transfer @ decoration to product
                 else if (heart == REB_META_GROUP)
                     Metafy(SPARE);  // transfer ^ decoration to product
+                else if (heart == REB_GROUP and Is_Void(SPARE))
+                    Init_Blank(SPARE);  // [(void)]: ... opts out of return
 
                 heart = CELL_HEART(SPARE);
                 Copy_Cell(PUSH(), SPARE);
