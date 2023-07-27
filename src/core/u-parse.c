@@ -1006,7 +1006,13 @@ static REBIXO To_Thru_Non_Block_Rule(
     enum Reb_Kind kind = VAL_TYPE(rule);
     assert(kind != REB_BLOCK);
 
-    if (kind == REB_BLANK)
+    // R3-Alpha does not support `TO []` or `THRU []` as a no-op, so we fall
+    // back on not recognizing blanks literally in Redbol mode.
+    //
+    if (kind == REB_BLANK and (P_FLAGS & PF_REDBOL))
+        return P_POS;  // make it a no-op
+
+    if (kind == REB_VOID)
         return P_POS;  // make it a no-op
 
     if (kind == REB_WORD and VAL_WORD_ID(rule) == SYM_END) {

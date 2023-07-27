@@ -177,8 +177,8 @@ reword: function [
 
     out: make (kind of source) length of source
 
-    prefix: []  ; void imperfect in parse3
-    suffix: []
+    prefix: void  ; void imperfect in parse3
+    suffix: void
     case [
         null? escape [prefix: "$"]  ; refinement not used, so use default
 
@@ -253,7 +253,7 @@ reword: function [
                     keyword
                 ])
 
-                (<*> if suffix <> [] [suffix])  ; vaporizes if no-op rule
+                (<*> suffix)  ; vaporizes if void no-op rule
 
                 (keyword-match: '(<*> keyword))
             ]
@@ -266,9 +266,9 @@ reword: function [
     rule: [
         a: <here>  ; Begin marking text to copy verbatim to output
         opt some [
-            to prefix  ; seek to prefix (may be [], this could be a no-op)
+            to prefix  ; seek to prefix (may be void, this could be a no-op)
             b: <here>  ; End marking text to copy verbatim to output
-            prefix  ; consume prefix (if no-op, may not be at start of match)
+            prefix  ; consume prefix (if void, may not be at start of match)
             [
                 [
                     any-keyword-suffix-rule (

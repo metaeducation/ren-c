@@ -10,6 +10,10 @@
     parse3 [a b] ['a void pos: <here> 'b]
     pos = [b]
 )
+(did parse3 "a" [void "a"])
+(did parse3 "a" [to void "a"])
+(did parse3 "a" [thru void "a"])
+
 
 ; Edge case of matching <END> with TO or THRU
 ;
