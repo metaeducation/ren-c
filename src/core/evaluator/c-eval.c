@@ -357,6 +357,7 @@ Bounce Evaluator_Executor(Frame(*) f)
       case REB_GROUP :
       case REB_GET_GROUP :
       case REB_META_GROUP :
+        Clear_Cell_Flag(OUT, UNEVALUATED);  // e.g. (<inert>) *did* evaluate
         goto lookahead;
 
       case REB_SET_GROUP :
