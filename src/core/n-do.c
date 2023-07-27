@@ -765,6 +765,7 @@ DECLARE_NATIVE(applique)
 //      action [action!]
 //      args "Arguments and Refinements, e.g. [arg1 arg2 /ref refine1]"
 //          [block!]
+//      /relax "Don't worry about too many arguments to the APPLY"
 //      <local> frame index
 //  ]
 //
@@ -821,9 +822,17 @@ DECLARE_NATIVE(apply)
         goto initial_entry;
 
       case ST_APPLY_LABELED_EVAL_STEP :
+        if (THROWING)
+            goto finalize_apply;
         goto labeled_step_result_in_spare;
 
       case ST_APPLY_UNLABELED_EVAL_STEP :
+        if (THROWING)
+            goto finalize_apply;
+        if (IS_TRASH(iterator)) {
+            assert(REF(relax));
+            goto handle_next_item;
+        }
         goto unlabeled_step_result_in_spare;
 
       default : assert(false);
@@ -860,7 +869,6 @@ DECLARE_NATIVE(apply)
 } handle_next_item: {  ///////////////////////////////////////////////////////
 
     Frame(*) f = SUBFRAME;
-    EVARS *e = VAL_HANDLE_POINTER(EVARS, iterator);
 
     if (Is_Frame_At_End(f))
         goto finalize_apply;
@@ -903,9 +911,17 @@ DECLARE_NATIVE(apply)
         return CATCH_CONTINUE_SUBFRAME(SUBFRAME);
     }
 
-    while (true) {
-        if (not Did_Advance_Evars(e))
-            fail (Error_Apply_Too_Many_Raw());
+    while (not IS_TRASH(iterator)) {
+        EVARS *e = VAL_HANDLE_POINTER(EVARS, iterator);
+
+        if (not Did_Advance_Evars(e)) {
+            if (not REF(relax))
+                fail (Error_Apply_Too_Many_Raw());
+
+            FREE(EVARS, e);
+            Init_Trash(iterator);
+            break;
+        }
 
         if (
             VAL_PARAM_CLASS(e->param) == PARAM_CLASS_RETURN
@@ -926,9 +942,6 @@ DECLARE_NATIVE(apply)
 
 } labeled_step_result_in_spare: {  ///////////////////////////////////////////
 
-    if (THROWING)
-        goto finalize_apply;
-
     REBLEN index = VAL_UINT32(ARG(index));
 
     var = CTX_VAR(VAL_CONTEXT(frame), index);
@@ -937,9 +950,6 @@ DECLARE_NATIVE(apply)
     goto copy_spare_to_var_in_frame;
 
 } unlabeled_step_result_in_spare: {  /////////////////////////////////////////
-
-    if (THROWING)
-        goto finalize_apply;
 
     EVARS *e = VAL_HANDLE_POINTER(EVARS, iterator);
 
@@ -980,19 +990,19 @@ DECLARE_NATIVE(apply)
 
 } finalize_apply: {  /////////////////////////////////////////////////////////
 
-    EVARS *e = VAL_HANDLE_POINTER(EVARS, iterator);
-    Shutdown_Evars(e);
-
-    if (THROWING) {  // assume Drop_Frame() called on SUBFRAME?
+    if (IS_TRASH(iterator))
+        assert(REF(relax));
+    else {
+        EVARS *e = VAL_HANDLE_POINTER(EVARS, iterator);
+        Shutdown_Evars(e);
         FREE(EVARS, e);
         Init_Trash(iterator);
-        return THROWN;
     }
 
-    Drop_Frame(SUBFRAME);
+    if (THROWING)  // assume Drop_Frame() called on SUBFRAME?
+        return THROWN;
 
-    FREE(EVARS, e);
-    Init_Trash(iterator);
+    Drop_Frame(SUBFRAME);
 
     Clear_Frame_Flag(frame_, NOTIFY_ON_ABRUPT_FAILURE);  // necessary?
 

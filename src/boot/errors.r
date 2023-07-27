@@ -124,9 +124,7 @@ Script: [
     do-running-frame:   [{Must COPY a FRAME! that's RUNNING? before DOing it}]
     expired-frame:      [{Cannot use a FRAME! whose stack storage expired}]
 
-    apply-too-many:     {Too many values in processed argument block of APPLY.}
-
-    print-needs-eval:   {PRINT needs /EVAL to process non-literal blocks}
+    apply-too-many:     {Too many values in APPLY argument block (see /RELAX)}
 
     hijack-blank:       {Hijacked function was captured but no body given yet}
 

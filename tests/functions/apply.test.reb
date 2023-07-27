@@ -26,7 +26,7 @@
     ([a b c d e] = apply :append [/value spread [d e] [a b c]])
 ]
 
-; Giving too many arguments is an error
+; Giving too many arguments is an error, unless you use /RELAX
 [
     ~apply-too-many~ !! (
         apply :append [[a b c] spread [d e] [f g]]
@@ -34,6 +34,9 @@
     ~apply-too-many~ !! (
         apply :append [/value spread [d e] [a b c] [f g]]
     )
+
+    ([a b c d e] = apply/relax :append [[a b c] spread [d e] [f g]])
+    ([a b c d e] = apply/relax :append [/value spread [d e] [a b c] [f g]])
 ]
 
 ; You can use commas so long as they are at interstitial positions
