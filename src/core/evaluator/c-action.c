@@ -863,11 +863,6 @@ Bounce Action_Executor(Frame(*) f)
         }
 
         if (Is_None(ARG)) {  // e.g. (~) isotope, unspecialized, see [2]
-            if (GET_PARAM_FLAG(PARAM, NOOP_IF_VOID)) {  // e.g. <maybe> param
-                Set_Executor_Flag(ACTION, f, TYPECHECK_ONLY);
-                Init_Nulled(OUT);
-                continue;
-            }
             if (GET_PARAM_FLAG(PARAM, REFINEMENT)) {
                 Init_Nulled(ARG);
                 continue;
@@ -876,16 +871,8 @@ Bounce Action_Executor(Frame(*) f)
                 Init_Nulled(ARG);
                 continue;
             }
-
-            if (VAL_PARAM_CLASS(PARAM) == PARAM_CLASS_META)
-                Init_Meta_Of_Void(ARG);
-            else {
-                // leave as plain void
-            }
-            continue;
         }
-
-        if (Is_Void(ARG)) {
+        else if (Is_Void(ARG)) {
             if (GET_PARAM_FLAG(PARAM, NOOP_IF_VOID)) {  // e.g. <maybe> param
                 Set_Executor_Flag(ACTION, f, TYPECHECK_ONLY);
                 Init_Nulled(OUT);
@@ -896,8 +883,7 @@ Bounce Action_Executor(Frame(*) f)
                 continue;
             }
         }
-
-        if (Is_Word_Isotope_With_Id(ARG, SYM_END)) {
+        else if (Is_Word_Isotope_With_Id(ARG, SYM_END)) {
             if (NOT_PARAM_FLAG(PARAM, ENDABLE))
                 fail (Error_No_Arg(f->label, KEY_SYMBOL(KEY)));
             Init_Nulled(ARG);  // more convenient, use ^META for nuance

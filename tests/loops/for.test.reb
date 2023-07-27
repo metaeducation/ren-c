@@ -223,6 +223,6 @@
     (void? for-each x _ [fail])
     (null? for-each x ' [fail])
 
-    ~expect-arg~ !! (for-each x '~ [fail])
+    ~bad-isotope~ !! (for-each x '~ [fail])
     ~expect-arg~ !! (for-each x ~ [fail])
 ]
