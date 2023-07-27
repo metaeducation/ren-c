@@ -273,6 +273,7 @@
 %parse/examples/html-parser.parse.test.reb
 %parse/examples/maxmatch.parse.test.reb
 %parse/examples/nanbnc.parse.test.reb
+%parse/examples/red-replace.parse.test.reb
 %parse/examples/reword.parse.test.reb
 %parse/examples/split.parse.test.reb
 %parse/examples/tracked-word.parse.test.reb

@@ -95,42 +95,45 @@ replace: function [
     {Replaces a search value with the replace value within the target series}
 
     return: [any-series!]
-    @tail "Tail position after replacement (not applicable if /ALL)"
-        [<opt> any-series!]
     target "Series to replace within (modified)"
         [any-series!]
-    ^pattern' "Value to be replaced (converted if necessary)"
-        [<void> any-value!]
-    ^replacement' "Value to replace with (called each time if a function)"
-        [<void> any-value!]
+    pattern "Value to be replaced (converted if necessary)"
+        [<void> element? splice? any-matcher?]
+    replacement "Value to replace with (called each time if action isotope)"
+        [<void> element? splice? activation?]
 
-    ; !!! Note these refinments alias ALL, CASE, TAIL natives!
+    ; !!! Note these refinements alias ALL, CASE natives!
     /all "Replace all occurrences"
     /case "Case-sensitive replacement"
-][
-    if void? unmeta pattern' [return target]
 
-    all_REPLACE: all
-    all: runs :lib.all
-    case_REPLACE: case
-    case: runs :lib.case
+    <local> value' pos tail  ; !!! Aliases TAIL native (should use TAIL OF)
+][
+    if void? pattern [return target]
+
+    let all_REPLACE: all
+    all: :lib.all
+    let case_REPLACE: case
+    case: :lib.case
 
     pos: target
 
     while [[pos /tail]: apply :find [
         pos
-        unmeta pattern'
+        pattern
         /case case_REPLACE
     ]][
-        all [quoted? replacement', action? unmeta replacement'] then [
+        if activation? :replacement [
             ;
-            ; If arity-0 action, value gets replacement and pos discarded
+            ; If arity-0 action, pos and tail discarded
             ; If arity-1 action, pos will be argument to replacement
-            ; If arity > 1, end of block will cause an error
+            ; If arity-2 action, pos and tail will be passed
             ;
-            value': ^ reeval (unmeta replacement') pos
+            ; They are passed as const so that the replacing function answers
+            ; merely by providing the replacement.
+            ;
+            value': ^ apply/relax :replacement [const pos, const tail]
         ] else [
-            value': replacement'  ; inert value, might be null
+            value': ^ replacement  ; inert value, might be null
         ]
 
         pos: change/part pos (unmeta value') tail

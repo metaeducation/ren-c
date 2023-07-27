@@ -84,21 +84,6 @@
 ;([i j c [i j]] = replace/deep/all [a b c [d e]] ['d 'e | 'a 'b] [i j])
 ;([a [<tag> [<tag>]]] = replace/all/deep [a [b c [d b]]] ['d 'b | 'b 'c] <tag>)
 
-; REPLACE IN STRING WITH RULE
-;
-; !!! This is a Red invention that seems like a pretty bad idea.  It mixes
-; PARSE mechanisms in with REPLACE, but it only works if the source data is
-; a string...because it "knows" not to treat the block string-like.  This is
-; in contention with many other functions that assume you want to stringify
-; blocks when passed, and block parsing can't use the same idea.  If anything
-; it sounds like a PARSE feature.
-;
-;("!racadabra" = replace "abracadabra" ["ra" | "ab"] #"!")
-;("!!cad!!" = replace/all "abracadabra" ["ra" | "ab"] #"!")
-;("!!cad!!" = replace/all "abracadabra" ["ra" | "ab"] does ["!"])
-;("AbrACAdAbrA" == replace/all "abracadabra" [s: ["a" | "c"]] does [uppercase s.1])
-;("a-babAA-" = replace/case/all "aAbbabAAAa" ["Ab" | "Aa"] "-")
-
 ; REPLACE/CASE/DEEP - /DEEP not (yet?) implemented in Ren-C
 
 ;([x A x B [x A x B]] = replace/case/deep/all [a A b B [a A b B]] ['a | 'b] 'x)
