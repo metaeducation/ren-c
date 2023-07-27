@@ -1322,7 +1322,7 @@ Bounce Evaluator_Executor(Frame(*) f)
 
         StackIndex stackindex_circled = 0;
 
-        for (; tail != check; ++check) {  // push variables first, see [2]
+        for (; check != tail; ++check) {  // push variables first, see [2]
             if (IS_QUOTED(check))
                 fail ("QUOTED! not currently permitted in SET-BLOCK!s");
 
@@ -1378,7 +1378,7 @@ Bounce Evaluator_Executor(Frame(*) f)
             if (
                 // @xxx is indicator of circled result, see [3]
                 //
-                (heart == REB_WORD and VAL_WORD_SYMBOL(check) == Canon(AT_1))
+                (heart == REB_WORD and VAL_WORD_SYMBOL(TOP) == Canon(AT_1))
                 or heart == REB_THE_WORD
                 or heart == REB_THE_TUPLE
             ){

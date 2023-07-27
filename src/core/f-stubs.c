@@ -606,6 +606,9 @@ REBVAL *Metafy(REBVAL *out) {  // called on stack values; can't call evaluator
     else if (ANY_GROUP_KIND(heart)) {
         mutable_HEART_BYTE(out) = REB_META_GROUP;
     }
+    else if (heart == REB_VOID) {
+        Init_Word(out, Canon(CARET_1));
+    }
     else
         fail ("Cannot METAFY");
 
@@ -618,8 +621,8 @@ REBVAL *Metafy(REBVAL *out) {  // called on stack values; can't call evaluator
 //
 //  {If possible, convert a value to a META-XXX! representation}
 //
-//      return: [<opt> meta-word! meta-path! meta-tuple! meta-group! meta-block!]
-//      value [<maybe> any-value!]
+//      return: [word! meta-word! meta-path! meta-tuple! meta-group! meta-block!]
+//      value [<void> any-value!]  ; void makes @ as a WORD!
 //  ]
 //
 DECLARE_NATIVE(metafy)
@@ -640,10 +643,10 @@ REBVAL *Theify(REBVAL *out) {  // called on stack values; can't call evaluator
     if (ANY_WORD_KIND(heart)) {
         mutable_HEART_BYTE(out) = REB_THE_WORD;
     }
-    else if (ANY_PATH_KIND(heart)) {  // Don't change "heart"!
+    else if (ANY_PATH_KIND(heart)) {
         mutable_HEART_BYTE(out) = REB_THE_PATH;
     }
-    else if (ANY_TUPLE_KIND(heart)) {    // Don't change "heart"
+    else if (ANY_TUPLE_KIND(heart)) {
         mutable_HEART_BYTE(out) = REB_THE_TUPLE;
     }
     else if (ANY_BLOCK_KIND(heart)) {
@@ -651,6 +654,9 @@ REBVAL *Theify(REBVAL *out) {  // called on stack values; can't call evaluator
     }
     else if (ANY_GROUP_KIND(heart)) {
         mutable_HEART_BYTE(out) = REB_THE_GROUP;
+    }
+    else if (heart == REB_VOID) {
+        Init_Word(out, Canon(AT_1));
     }
     else
         fail ("Cannot THEIFY");
