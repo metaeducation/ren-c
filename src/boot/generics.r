@@ -318,7 +318,7 @@ find: generic [
     @tail "Returns the end of the found data"
         [<opt> any-series!]
     series [
-        <maybe> any-series! any-context! map! bitset!
+        <maybe> any-series! any-context! map!
     ]
     pattern [<maybe> element? splice! any-matcher!]
     /part "Limits the search to a given length or position"
@@ -334,7 +334,7 @@ select: generic [
 
     return: [<opt> any-value!]
     @tail []  ; for frame compatibility with FIND
-    series [<maybe> any-series! any-context! map!]
+    series [<maybe> any-series! any-context! map! bitset!]
     value [<maybe> element? splice! any-matcher!]
     /part "Limits the search to a given length or position"
         [any-number! any-series! pair!]

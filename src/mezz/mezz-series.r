@@ -599,7 +599,7 @@ split: function [
         ; implied empty field after it, which we add here.
         ;
         switch/type dlm [
-            bitset! [did find dlm maybe last series]
+            bitset! [did select dlm maybe last series]
             char! [dlm = last series]
             text! tag! word! [
                 (find series dlm) and (empty? [_ @]: find-last series dlm)

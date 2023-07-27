@@ -21,12 +21,12 @@
 (
     a-bitset: charset "a"
     remove/part a-bitset "a"
-    null? find a-bitset #"a"
+    null? select a-bitset #"a"
 )
 (
     a-bitset: charset "a"
     remove/part a-bitset as integer! #"a"
-    null? find a-bitset #"a"
+    null? select a-bitset #"a"
 )
 
 [
