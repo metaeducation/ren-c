@@ -456,13 +456,7 @@ redescribe [
 unset: redescribe [
     {Clear the value of a word to the unset state (in its current context)}
 ](
-    ; SPECIALIZE glosses over ^META states, so it can't be used for fancy
-    ; specializations involving unstable isotopes or the unset state.  We
-    ; go lower to the FRAME! level to pass a ~ isotope as ^META.
-    ;
-    let f: make frame! :set
-    f.value: meta ~
-    make action! :f
+    specialize :set [value: meta ~]  ; SET's value is a ^META parameter
 )
 
 unset?: func [

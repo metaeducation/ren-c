@@ -357,9 +357,6 @@ bool Specialize_Action_Throws(
         if (GET_PARAM_FLAG(param, VARIADIC))
             fail ("Cannot currently SPECIALIZE variadic arguments.");
 
-        if (VAL_PARAM_CLASS(param) == PARAM_CLASS_META)
-            Meta_Quotify(arg);
-
         if (not Typecheck_Including_Constraints(param, arg))
             fail (arg);  // !!! merge w/Error_Invalid_Arg()
 

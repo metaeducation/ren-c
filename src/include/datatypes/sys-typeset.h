@@ -284,16 +284,10 @@ inline static bool Typecheck_Including_Constraints(
         if (Is_Nulled(v))
             return GET_PARAM_FLAG(param, ENDABLE);
 
-        if (Is_Isotope(v))
+        if (not IS_QUASI(v) and not IS_QUOTED(v))
             return false;
 
-        if (IS_QUASI(v))
-            return true;  // currently no isotopic typecheck
-
-        if (not IS_QUOTED(v))
-            return false;
-
-        Unquotify(v, 1);  // temporary adjustment (easiest option)
+        Meta_Unquotify(v);  // temporary adjustment (easiest option)
         unquoted = true;
     }
     else
@@ -328,7 +322,7 @@ inline static bool Typecheck_Including_Constraints(
   return_true:
 
     if (unquoted)
-        Quotify(v, 1);
+        Meta_Quotify(v);
 
     return true;
 }
