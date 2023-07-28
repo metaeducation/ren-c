@@ -349,6 +349,7 @@ jobs:
 
 
     - name: Test UUID Extension Built As DLL
+      if: false  # See https://github.com/metaeducation/ren-c-library/
       shell: r3built --fragment {0}  # See README: Ren-C Code As Step
       run: |
         print {== Hello From R3 DLL Test! ==}
