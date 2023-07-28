@@ -741,7 +741,7 @@ main-startup: func [
     ;
     all [
         o.resources
-        not find o.suppress %user.reb
+        not find maybe o.suppress %user.reb
         elide (loud-print ["Checking for user.reb file in" o.resources])
         exists? join o.resources %user.reb
     ] then [
