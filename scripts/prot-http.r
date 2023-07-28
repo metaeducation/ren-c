@@ -234,10 +234,10 @@ check-response: function [
 
     info.response-parsed: default [
         ;
-        ; We use a RETURN rule to end the parse abruptly after matching only
+        ; We use an ACCEPT rule to end the parse abruptly after matching only
         ; the initial part to derive a value.
         ;
-        parse line [return [
+        parse line [accept [
             "HTTP/1." ["0" | "1"] some space [
                 "100" ('continue)
                 |

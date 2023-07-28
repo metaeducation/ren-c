@@ -212,6 +212,7 @@
 
 %parse/parse3.test.reb
 %parse/parse3-collect.test.reb
+%parse/parse-accept.test.reb
 %parse/parse-across.test.reb
 %parse/parse-action.test.reb
 %parse/parse-ahead.test.reb
@@ -246,7 +247,6 @@
 %parse/parse-quoted.test.reb
 %parse/parse-remove.test.reb
 %parse/parse-repeat.test.reb
-%parse/parse-return.test.reb
 %parse/parse-seek.test.reb
 %parse/parse-set-word.test.reb
 %parse/parse-set-group.test.reb

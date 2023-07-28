@@ -508,17 +508,21 @@ default-combinators: make map! reduce [
         f.return unmeta result'
     ]
 
-   === RETURN KEYWORD ===
+   === ACCEPT KEYWORD ===
 
+    ; ACCEPT is like R3-Alpha's RETURN keyword, but with the name adjusted to
+    ; help distinguish it from the overall return of a function (as well as cue
+    ; the reader it is not unconditional, e.g. you can say something like
+    ; `[accept integer! | ...]`).
+    ;
     ; RETURN was removed for a time in Ren-C due to concerns about how it
-    ; "contaminated" the return value, and that its use to avoid having to
-    ; name and set a variable could lead to abruptly ending a parse before
-    ; all the matching was complete.  Now UPARSE can return ANY-VALUE! and
-    ; the only reason you'd ever use RETURN would be specifically for the
-    ; abrupt exit...so it's fit for purpose.
+    ; could lead to abruptly ending a parse before all the matching was
+    ; complete.  Now UPARSE can return ANY-VALUE! and the only reason you'd
+    ; ever use ACCEPT would be specifically for the abrupt exit...so it's fit
+    ; for purpose.
 
-    'return combinator [
-        {Return a value explicitly from the parse}
+    'accept combinator [
+        {Return a value explicitly from the parse, terminating early}
         return: []  ; divergent
         parser [activation!]
         <local> value'
@@ -2940,7 +2944,7 @@ parse-: (comment [redescribe [  ; redescribe not working at the moment (?)
     {Process input in the parse dialect, return how far reached}
 ] ]
     enclose :parse* func [f] [
-        f.rules: compose [(f.rules) || return <here>]
+        f.rules: compose [(f.rules) || accept <here>]
 
         let [^synthesized' pending]: do f except [
             return null
