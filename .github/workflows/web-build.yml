@@ -416,6 +416,7 @@ jobs:
     - name: Collect Cypress Tests from Repositories We Want to Keep Working
       uses: metaeducation/ren-c-action@release
       with:
+        checked: true
         script: |
           cd %tests/cypress/e2e/
           list: parse as text! read %README.md [
