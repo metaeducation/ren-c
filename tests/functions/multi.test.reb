@@ -199,44 +199,17 @@
     ])
 ]
 
-; QUASI! values in SET-BLOCK! allow for isotopic assignments
+; QUASI! values in SET-BLOCK! on meta-values allow upacking errors
 [
-    ~bad-isotope~ !! (
-        [x]: ~test~
+    ~zero-divide~ !! (
+        [e]: pack [1 / 0]  ; should ~e~ have meaning, e.g. give plain error?
+    )
+    ~zero-divide~ !! (
+        [^e]: pack [1 / 0]
     )
     (
-        [~x~]: ~test~
-        ^x = '~test~
-    )
-    ~bad-isotope~ !! (
-        [x y]: pack [1 ~test~]
-    )
-    (
-        all [
-            1 = [x ~y~]: pack [1 ~test~]
-            x = 1
-            ^y = '~test~
-        ]
-    )
-    (
-        all [
-            '~test~ = ^ [x ~@y~]: pack [1 ~test~]
-            x = 1
-            ^y = '~test~
-        ]
-    )
-    ~bad-isotope~ !! (
-        let [x]: ~test~
-    )
-    (
-        x: <outside>
-        all [
-            all [
-                '~test~ = ^ let [~x~]: ~test~
-                ^x = '~test~
-            ]
-            x = <outside>
-        ]
+        [~^e~]: pack [1 / 0]
+        (unquasi e).id = 'zero-divide
     )
 ]
 
@@ -254,8 +227,14 @@
 
 ; Using @ or _ allows passthru of isotopes
 [
-    ~bad-isotope~ !! (
-        [x]: spread [a b c]
+    (
+        '~(a b c)~ = ^ [x]: spread [a b c]
+    )
+    (
+        '~(a b c)~ = ^ [@]: spread [a b c]
+    )
+    (
+        '~(a b c)~ = ^ [_]: spread [a b c]  ; definitive behavior TBD
     )
 ]
 

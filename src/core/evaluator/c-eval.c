@@ -786,6 +786,10 @@ Bounce Evaluator_Executor(Frame(*) f)
 
       } set_word_rightside_in_out: {  ////////////////////////////////////////
 
+        if (Is_Pack(OUT)) {  // !!! Needs rethinking, this isn't generalized
+            Decay_If_Unstable(OUT);
+        }
+
         if (Is_Void(f_current)) {
             // can happen with SET-GROUP! e.g. `(void): ...`, current in spare
         }
@@ -793,7 +797,7 @@ Bounce Evaluator_Executor(Frame(*) f)
             // Don't assign, but let (trap [a: transcode "1&aa"]) work
         }
         else {
-            Decay_If_Unstable(OUT);
+            Decay_If_Unstable(OUT);  // !!! See above regarding rethink
 
             if (Is_Isotope(OUT) and not Is_Isotope_Set_Friendly(OUT))
                 fail (Error_Bad_Isotope(OUT));
@@ -1282,7 +1286,7 @@ Bounce Evaluator_Executor(Frame(*) f)
     set_block_common: ////////////////////////////////////////////////////////
 
       // 1. Empty SET-BLOCK! are not supported, although it could be argued
-      //    that an empty set-block could receive a NONE (~[]~) pack.
+      //    that an empty set-block could receive a NIHIL (~[]~) pack.
       //
       // 2. We pre-process the SET-BLOCK! first and collect the variables to
       //    write on the stack.  (It makes more sense for any GROUP!s in the
@@ -1327,7 +1331,7 @@ Bounce Evaluator_Executor(Frame(*) f)
             if (IS_QUOTED(check))
                 fail ("QUOTED! not currently permitted in SET-BLOCK!s");
 
-            bool isotopes_ok = IS_QUASI(check);  // quasi has meaning
+            bool raised_ok = IS_QUASI(check);  // quasi has meaning
             enum Reb_Kind heart = CELL_HEART(check);
 
             bool is_optional;
@@ -1377,8 +1381,8 @@ Bounce Evaluator_Executor(Frame(*) f)
             if (is_optional)  // so next phase won't worry about leading slash
                 Set_Cell_Flag(TOP, STACK_NOTE_OPTIONAL);
 
-            if (isotopes_ok and not IS_QUASI(TOP))
-                Quasify(TOP);  // keep this as signal for isotopes ok
+            if (raised_ok and not IS_QUASI(TOP))
+                Quasify(TOP);  // keep this as signal for raised ok
 
             if (
                 // @xxx is indicator of circled result, see [3]
@@ -1484,7 +1488,7 @@ Bounce Evaluator_Executor(Frame(*) f)
             Copy_Cell(var, Data_Stack_At(stackindex_var));
 
             assert(not IS_QUOTED(var));
-            bool isotopes_ok = IS_QUASI(var);  // quasi has meaning
+            bool raised_ok = IS_QUASI(var);  // quasi has meaning
             enum Reb_Kind var_heart = CELL_HEART(var);
 
             if (pack_meta_at == pack_meta_tail) {
@@ -1512,10 +1516,15 @@ Bounce Evaluator_Executor(Frame(*) f)
                 var_heart == REB_META_WORD
                 or var_heart == REB_META_TUPLE
             ){
-                if (pack_meta_at == pack_meta_tail)  // special detection
+                if (pack_meta_at == pack_meta_tail) {  // special detection
                     Set_Var_May_Fail(var, SPECIFIED, Lib(NULL));
-                else
-                    Set_Var_May_Fail(var, SPECIFIED, SPARE);  // came in meta'd
+                    goto circled_check;
+                }
+                if (Is_Meta_Of_Raised(SPARE) and not raised_ok) {
+                    mutable_QUOTE_BYTE(SPARE) = UNQUOTED_1;
+                    fail (VAL_CONTEXT(SPARE));
+                }
+                Set_Var_May_Fail(var, SPECIFIED, SPARE);  // came in meta'd
                 goto circled_check;
             }
 
@@ -1525,12 +1534,10 @@ Bounce Evaluator_Executor(Frame(*) f)
                 var_heart == REB_WORD
                 and VAL_WORD_SYMBOL(var) == Canon(AT_1)  // [@ ...]:
             ){
-                // Allow pass-thru of any isotope (don't need ~@~)
                 goto circled_check;
             }
 
-            if (not isotopes_ok)
-                Decay_If_Unstable(SPARE);  // if pack in slot, resolve it
+            Decay_If_Unstable(SPARE);  // if pack in slot, resolve it
 
             if (Is_Raised(SPARE))  // don't hide raised errors if not @
                 fail (VAL_CONTEXT(SPARE));
@@ -1543,7 +1550,6 @@ Bounce Evaluator_Executor(Frame(*) f)
 
             if (
                 Is_Isotope(SPARE) and not Is_Isotope_Set_Friendly(SPARE)
-                and not isotopes_ok  // ([~var~]: ...) acts as a SET/ANY
             ){
                 fail (Error_Bad_Isotope(SPARE));
             }

@@ -24,8 +24,12 @@
         parser2 [activation!]
         <local> result1' result2' remainder1 remainder2
     ][
-        [^result1' remainder1]: parser1 input except e -> [pack [raise e null]]
-        [^result2' remainder2]: parser2 input except e -> [pack [raise e null]]
+        [~^result1'~ remainder1]: parser1 input except e -> [
+            pack [raise e, null]
+        ]
+        [~^result2'~ remainder2]: parser2 input except e -> [
+            pack [raise e, null]
+        ]
         if raised? unmeta result2' [  ; parser2 didn't succeed
             if raised? unmeta result1' [
                 return unmeta result1'  ; neither succeeded
@@ -196,11 +200,11 @@
         parser2 [activation!]
         <local> result1' result2' remainder1 remainder2 pending1 pending2
     ][
-        [^result1' remainder1 pending1]: parser1 input except e -> [
-            pack [raise e null null]
+        [~^result1'~ remainder1 pending1]: parser1 input except e -> [
+            pack [raise e, null, null]
         ]
-        [^result2' remainder2 pending2]: parser2 input except e -> [
-            pack [raise e null null]
+        [~^result2'~ remainder2 pending2]: parser2 input except e -> [
+            pack [raise e, null, null]
         ]
         if raised? unmeta result2' [  ; parser2 didn't succeed
             if raised? unmeta result1' [
