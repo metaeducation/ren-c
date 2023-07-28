@@ -281,8 +281,6 @@ DECLARE_NATIVE(shove)
 //          action!  ; will only run arity 0 actions (avoids DO variadic)
 //          frame!  ; acts like APPLY (voids are optionals, not unspecialized)
 //          varargs!  ; simulates as if frame! or block! is being executed
-//          quoted!  ; removes quote level
-//          quasi!  ; returns as isotope
 //      ]
 //      /args "Sets system.script.args if doing a script (usually a TEXT!)"
 //          [any-value!]
@@ -363,14 +361,14 @@ DECLARE_NATIVE(do)
         Push_Frame(OUT, sub);
         return DELEGATE_SUBFRAME(sub); }
 
-      case REB_THE_WORD : goto do_string;
-      case REB_BINARY : goto do_string;
-      case REB_TEXT : goto do_string;
-      case REB_URL : goto do_string;
-      case REB_FILE : goto do_string;
-      case REB_TAG : goto do_string;
+      case REB_THE_WORD : goto do_helper;
+      case REB_BINARY : goto do_helper;
+      case REB_TEXT : goto do_helper;
+      case REB_URL : goto do_helper;
+      case REB_FILE : goto do_helper;
+      case REB_TAG : goto do_helper;
 
-      do_string : {
+      do_helper : {
         UNUSED(REF(args)); // detected via `value? :arg`
 
         rebPushContinuation(
@@ -394,10 +392,6 @@ DECLARE_NATIVE(do)
 
       case REB_FRAME :
         return DELEGATE(OUT, source);
-
-      case REB_QUASI :
-      case REB_QUOTED :
-        return UNMETA(source);  // !!! delegate to offer a debug step?
 
       default :
         break;
