@@ -51,7 +51,14 @@ jobs:
 
     # https://github.com/actions/virtual-environments#available-environments
     #
-    runs-on: ubuntu-latest
+    # We want to build on the oldest available ubuntu, because GLIBC from
+    # newer Ubuntus won't work on older ones.
+    #
+    # !!! Consider usage of BUILD-ANYWHERE toolchain for better compatibility:
+    #
+    #   https://github.com/theopolis/build-anywhere
+    #
+    runs-on: ubuntu-20.04
 
 
     # See README: Build Matrix
