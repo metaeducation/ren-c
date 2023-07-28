@@ -284,7 +284,7 @@ jobs:
     - name: QUIT Test (from code on command line)
       run: |
         set +e  # so nonzero exit codes won't immediately terminate step
-        "$R3BUILT" --do "quit 3"
+        "$R3BUILT" --do "quit/with 3"
         if [ $? -eq 3 ]; then
           echo "QUIT Properly Gave Exit Status 3"
         else

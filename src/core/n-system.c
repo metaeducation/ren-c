@@ -48,7 +48,7 @@ DECLARE_NATIVE(halt)
 //
 //      return: []  ; !!! Notation for divergent functions?
 //      /with "See: http://en.wikipedia.org/wiki/Exit_status"
-//          [<void> any-value!]
+//          [<opt> <void> any-value!]
 //  ]
 //
 DECLARE_NATIVE(quit)

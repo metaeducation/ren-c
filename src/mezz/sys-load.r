@@ -641,7 +641,7 @@ import*: func [
     === PROPAGATE QUIT IF REQUESTED, OR RETURN MODULE ===
 
     if quitting and only [
-        quit unmeta product'  ; "rethrow" the QUIT if DO/ONLY
+        quit/with unmeta product'  ; "rethrow" the QUIT if DO/ONLY
     ]
 
     return mod
