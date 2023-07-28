@@ -260,7 +260,7 @@ DECLARE_NATIVE(panic)
 //
 //  {Version of RAISE of definitional error that only takes ERROR!}
 //
-//      return: []  ; isotope!
+//      return: [raised?]
 //      reason [error!]
 //  ]
 //

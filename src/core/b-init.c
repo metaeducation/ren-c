@@ -323,6 +323,7 @@ static void Init_Action_Spec_Tags(void)
     ensureNullptr(Root_Void_Tag) = Make_Locked_Tag("void");
     ensureNullptr(Root_Fail_Tag) = Make_Locked_Tag("fail");
     ensureNullptr(Root_Pack_Tag) = Make_Locked_Tag("pack");
+    ensureNullptr(Root_Unrun_Tag) = Make_Locked_Tag("unrun");
 
     ensureNullptr(Root_Here_Tag) = Make_Locked_Tag("here");  // used by PARSE
 }
@@ -342,6 +343,7 @@ static void Shutdown_Action_Spec_Tags(void)
     rebReleaseAndNull(&Root_Void_Tag);
     rebReleaseAndNull(&Root_Fail_Tag);
     rebReleaseAndNull(&Root_Pack_Tag);
+    rebReleaseAndNull(&Root_Unrun_Tag);
 
     rebReleaseAndNull(&Root_Here_Tag);  // used by PARSE
 }

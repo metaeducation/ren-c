@@ -126,7 +126,7 @@ Bounce Lambda_Unoptimized_Dispatcher(Frame(*) frame_)
 //
 //  {Makes an anonymous function that evaluates to its body, and has no RETURN}
 //
-//      return: [action!]
+//      return: [activation?]
 //      spec "Names of arguments (will not be type checked)"
 //          [<opt> word! lit-word! meta-word! refinement! block!]
 //      body "Code to execute"

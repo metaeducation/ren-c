@@ -110,7 +110,7 @@ dump: function [
     ]
 ]
 
-contains-newline: function [return: [logic!] pos [block! group!]] [
+contains-newline: function [return: [logic?] pos [block! group!]] [
     while [pos] [
         any [
             new-line? pos

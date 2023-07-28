@@ -51,7 +51,7 @@ enum {
 //
 //  typecheck-internal?: native [
 //
-//      return: [logic!]
+//      return: [logic?]
 //      optional
 //  ]
 //
@@ -119,7 +119,7 @@ Bounce Typeset_Checker_Dispatcher(Frame(*) frame_)
 //
 //  {Generator for an optimized typechecking ACTION!}
 //
-//      return: [action!]
+//      return: [activation?]
 //      type [type-word! integer!]
 //  ]
 //
@@ -192,8 +192,15 @@ bool Typecheck_Value(
         // items.  For the moment just try quasi-words for isotopes.
         //
         if (IS_QUASI(item)) {
+            if (HEART_BYTE(item) == REB_VOID) {
+                if (Is_Quasi_Void(item))
+                    goto test_succeeded;
+                goto test_failed;
+            }
+
             if (HEART_BYTE(item) != REB_WORD)
                 fail (item);
+
             if (not Is_Isoword(v))
                 continue;
             if (VAL_WORD_SYMBOL(v) == VAL_WORD_SYMBOL(item))

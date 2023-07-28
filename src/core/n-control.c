@@ -368,7 +368,7 @@ static Bounce Then_Else_Isotopic_Object_Helper(
 //
 //  {Synonym for NOT NULL? that is isotope tolerant (IF DID is prefix THEN)}
 //
-//      return: [logic!]
+//      return: [logic?]
 //      ^optional "Argument to test"
 //          [<opt> <void> <pack> any-value!]
 //      /decay "Pre-decay ~null~ isotope input to NULL"
@@ -462,7 +462,7 @@ DECLARE_NATIVE(did_1)  // see TO-C-NAME for why the "_1" is needed
 //
 //  {Synonym for NULL? that is isotope tolerant (IF DIDN'T is prefix ELSE)}
 //
-//      return: [logic!]
+//      return: [logic?]
 //      ^optional "Argument to test"
 //          [<opt> <void> any-value!]
 //      /decay "Pre-decay ~null~ isotope input to NULL"

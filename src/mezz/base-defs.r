@@ -218,7 +218,7 @@ each: runs :quote
 pointfree*: func* [
     {Specialize by example: https://en.wikipedia.org/wiki/Tacit_programming}
 
-    return: [action!]
+    return: [activation?]
     action [action!]  ; lower level version takes action AND a block
     block [block!]
     <local> params frame var
@@ -443,7 +443,7 @@ open?: specialize :reflect [property: 'open?]
 
 empty?: func* [
     {TRUE if blank, or if series is empty or at or beyond its tail}
-    return: [logic!]
+    return: [logic?]
     series [blank! any-series! object! port! bitset! map!]
 ][
     return did any [blank? series, tail? series]
@@ -451,7 +451,7 @@ empty?: func* [
 
 empty-or-null?: func* [
     {TRUE if null, blank, or if series is empty or at or beyond its tail}
-    return: [logic!]
+    return: [logic?]
     series [<opt> blank! any-series! object! port! bitset! map!]
 ][
     return did any [null? series, blank? series, tail? series]
@@ -627,7 +627,7 @@ immediate!: &[  ; Does not include internal datatypes
 
 ok?: func* [
     "Returns TRUE on all values that are not ERROR!"
-    return: [logic!]
+    return: [logic?]
     value [<opt> any-value!]
 ][
     return not error? :value

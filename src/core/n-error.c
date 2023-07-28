@@ -228,7 +228,7 @@ DECLARE_NATIVE(except)
 //
 //  "Tells you if argument is a failure, but does not raise it"
 //
-//      return: [logic!]
+//      return: [logic?]
 //      ^optional [<opt> <void> <fail> <pack> any-value!]
 //  ]
 //

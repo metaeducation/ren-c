@@ -228,32 +228,15 @@ void Do_After_Action_Checks_Debug(Frame(*) f) {
     if (GET_SERIES_FLAG(f->varlist, INACCESSIBLE))  // e.g. ENCLOSE
         return;
 
-    Action(*) phase = FRM_PHASE(f);
-
     // Usermode functions check the return type via Func_Dispatcher(),
     // with everything else assumed to return the correct type.  But this
     // double checks any function marked with RETURN in the debug build,
     // so native return types are checked instead of just trusting the C.
     //
-    // !!! PG_Dispatcher() should do this, so every phase gets checked.
-    //
   #if DEBUG_NATIVE_RETURNS
-    if (Is_Nihil(f->out) and ACT_HAS_RETURN(phase)) {
-        const REBKEY *key = ACT_KEYS_HEAD(phase);
-        const REBPAR *param = ACT_PARAMS_HEAD(phase);
-        assert(KEY_SYM(key) == SYM_RETURN);
+    Action(*) phase = FRM_PHASE(f);
 
-        if (NOT_PARAM_FLAG(param, VANISHABLE)) {
-            assert(!"Native code violated return type contract!\n");
-            fail (Error_Bad_Invisible(f));
-        }
-    }
-    else if (Is_Isotope(f->out)) {
-        //
-        // Isotopes not currently checked for by return conventions, so they
-        // are always legal... this includes failures.  Review premise.
-    }
-    else if (ACT_HAS_RETURN(phase)) {
+    if (ACT_HAS_RETURN(phase)) {
         const REBKEY *key = ACT_KEYS_HEAD(phase);
         const REBPAR *param = ACT_PARAMS_HEAD(phase);
         assert(KEY_SYM(key) == SYM_RETURN);

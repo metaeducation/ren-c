@@ -1194,22 +1194,11 @@ Context(*) Error_Bad_Return_Type(Frame(*) f, Value(*) v) {
     DECLARE_LOCAL (label);
     Get_Frame_Label_Or_Nulled(label, f);
 
-    if (Is_Void(v))
-        return Error_Bad_Invisible(f);
+    if (Is_Void(v))  // void's "kind" is null, no type (good idea?)
+        return Error_Bad_Void_Return_Raw(label);
 
     enum Reb_Kind kind = VAL_TYPE(v);
     return Error_Bad_Return_Type_Raw(label, Datatype_From_Kind(kind));
-}
-
-
-//
-//  Error_Bad_Invisible: C
-//
-Context(*) Error_Bad_Invisible(Frame(*) f) {
-    DECLARE_LOCAL (label);
-    Get_Frame_Label_Or_Nulled(label, f);
-
-    return Error_Bad_Invisible_Raw(label);
 }
 
 

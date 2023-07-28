@@ -655,7 +655,7 @@ void MF_Varargs(REB_MOLD *mo, noquote(Cell(const*)) v, bool form) {
 //
 //  {Returns TRUE if an ACTION! may take a variable number of arguments.}
 //
-//      return: [logic!]
+//      return: [logic?]
 //      action [action!]
 //  ]
 //

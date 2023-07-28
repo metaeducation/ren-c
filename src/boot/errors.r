@@ -166,7 +166,7 @@ Script: [
 
     needs-return-opt:   [:arg1 {can't return null (see RETURN: [<opt> ...])}]
     bad-return-type:    [:arg1 {doesn't have RETURN: enabled for} :arg2]
-    bad-invisible:      [:arg1 {doesn't have invisible RETURN enabled}]
+    bad-void-return:    [:arg1 {doesn't have void RETURN enabled}]
 
     unintended-literal: [{Likely unintended literal, use quote/group:} :arg1]
 

@@ -115,23 +115,24 @@ gather-natives join src-dir %core/
 ; the evaluator to do the other `xxx: native/yyy [...]` evaluations.
 
 native-proto: null
+logic?-proto: null
+activation?-proto: null
 enfix-proto: null
 
 for-next info all-protos [
     case [
         info/1/name = "native" [native-proto: take info]
+        info/1/name = "logic?" [logic?-proto: take info]
+        info/1/name = "activation?" [activation?-proto: take info]
         info/1/name = "enfix" [enfix-proto: take info]
     ]
 ]
 
-if not enfix-proto [
-    fail "Did not find the ENFIX: native function, required by boot"
-]
-insert all-protos enfix-proto  ; will be second after native insertion
+assert [native-proto logic?-proto activation?-proto enfix-proto]
 
-if not native-proto [
-    fail "Did not find the NATIVE: native generator, required by boot"
-]
+insert all-protos enfix-proto  ; will be fourth
+insert all-protos logic?-proto  ; will be third
+insert all-protos activation?-proto  ; will be second
 insert all-protos native-proto  ; so now it's first
 
 

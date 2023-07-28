@@ -791,7 +791,7 @@ Bounce JavaScript_Dispatcher(Frame(*) frame_)
 //
 //  {Create ACTION! from textual JavaScript code}
 //
-//      return: [action!]
+//      return: [activation?]
 //      spec "Function specification (similar to the one used by FUNCTION)"
 //          [block!]
 //      source "JavaScript code as a text string" [text!]
@@ -965,7 +965,7 @@ DECLARE_NATIVE(js_native)
 //  {Evaluate textual JavaScript code}
 //
 //      return: "Note: Only supports types that reb.Box() supports"
-//          [<opt> integer! text! none!]
+//          [<opt> <none> integer! text!]
 //      source "JavaScript code as a text string" [text!]
 //      /local "Evaluate in local scope (as opposed to global)"
 //      /value "Return a Rebol value"

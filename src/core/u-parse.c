@@ -2645,8 +2645,8 @@ DECLARE_NATIVE(subparse)
 //
 //  "Parse series according to grammar rules"
 //
-//      return: "TBD: parse product, currently either ~parsed~ or NULL"
-//          [<opt> quasi! any-series!]
+//      return: "TBD: parse product, help catch incompatibilites"
+//          [<opt> ~use-DID-PARSE-for-logic~ block! any-series!]  ; can COLLECT
 //
 //      input "Input series to parse"
 //          [<maybe> any-series! any-sequence! url!]

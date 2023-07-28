@@ -137,7 +137,7 @@ shell: func [
             get-group! [splice?: true, item: try eval item]
             get-block! [splice?: true, item: as block! item]
         ]
-        let needs-quotes?: func [return: [logic!] item] [
+        let needs-quotes?: func [return: [logic?] item] [
             if match [word! issue!] item [return false]  ; never quoted
             if file? item [
                 return did find item space  ; !!! should check other escapes

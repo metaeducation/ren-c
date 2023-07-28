@@ -470,7 +470,7 @@ DECLARE_NATIVE(open_connection)
 //
 //  export open-statement: native [
 //
-//      return: [logic!]
+//      return: [logic?]
 //      connection [object!]
 //      statement [object!]
 //  ]
@@ -1801,7 +1801,7 @@ DECLARE_NATIVE(update_odbc)
 //
 //  export close-statement: native [
 //
-//      return: [logic!]
+//      return: [logic?]
 //      statement [object!]
 //  ]
 //
@@ -1843,7 +1843,7 @@ DECLARE_NATIVE(close_statement)
 //
 //  export close-connection: native [
 //
-//      return: [logic!]
+//      return: [logic?]
 //      connection [object!]
 //  ]
 //

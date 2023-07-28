@@ -203,25 +203,14 @@ Array(*) Add_Parameter_Bits_Core(
             }
             else if (0 == CT_String(item, Root_End_Tag, strict)) {
                 *flags |= PARAM_FLAG_ENDABLE;
-                Init_Any_Word_Bound(
-                    PUSH(),
-                    REB_WORD,
-                    Canon(NULL_Q),
-                    Lib_Context,
-                    INDEX_ATTACHED
-                );
+                Init_Quasi_Word(PUSH(), Canon(NULL));
+
             }
             else if (0 == CT_String(item, Root_Maybe_Tag, strict)) {
                 *flags |= PARAM_FLAG_NOOP_IF_VOID;
             }
             else if (0 == CT_String(item, Root_Opt_Tag, strict)) {
-                Init_Any_Word_Bound(
-                    PUSH(),
-                    REB_WORD,
-                    Canon(NULL_Q),
-                    Lib_Context,
-                    INDEX_ATTACHED
-                );
+                Init_Quasi_Word(PUSH(), Canon(NULL));
             }
             else if (0 == CT_String(item, Root_Void_Tag, strict)) {
                 Init_Any_Word_Bound(
@@ -247,16 +236,20 @@ Array(*) Add_Parameter_Bits_Core(
 
                 *flags |= PARAM_FLAG_SKIPPABLE;
                 *flags |= PARAM_FLAG_ENDABLE; // skip => null
-                Init_Any_Word_Bound(
-                    PUSH(),
-                    REB_WORD,
-                    Canon(NULL_Q),
-                    Lib_Context,
-                    INDEX_ATTACHED
-                );
+                Init_Quasi_Word(PUSH(), Canon(NULL));
             }
             else if (0 == CT_String(item, Root_Const_Tag, strict)) {
                 *flags |= PARAM_FLAG_CONST;
+            }
+            else if (0 == CT_String(item, Root_None_Tag, strict)) {
+                Init_Quasi_Void(PUSH());
+            }
+            else if (0 == CT_String(item, Root_Unrun_Tag, strict)) {
+                // !!! Currently just commentary, degrading happens due
+                // to type checking.  Review this.
+            }
+            else {
+                fail (item);
             }
         }
         else {

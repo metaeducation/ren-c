@@ -55,7 +55,7 @@ static bool Check_Char_Range(const REBVAL *val, REBLEN limit)
 //
 //  {Returns TRUE if value or string is in ASCII character range (below 128).}
 //
-//      return: [logic!]
+//      return: [logic?]
 //      value [any-string! char! integer!]
 //  ]
 //
@@ -72,7 +72,7 @@ DECLARE_NATIVE(ascii_q)
 //
 //  {Returns TRUE if value or string is in Latin-1 character range (below 256).}
 //
-//      return: [logic!]
+//      return: [logic?]
 //      value [any-string! char! integer!]
 //  ]
 //
@@ -426,7 +426,7 @@ bool Did_Get_Binding_Of(REBVAL *out, const REBVAL *v)
 //
 //  "Test if an argument is a path with a leading blank"
 //
-//      return: [logic!]
+//      return: [logic?]
 //      value
 //  ]
 //
@@ -444,7 +444,7 @@ DECLARE_NATIVE(refinement_q)
 //
 //  "Test if an argument is an isotopic word"
 //
-//      return: [logic!]
+//      return: [logic?]
 //      value
 //  ]
 //
@@ -462,7 +462,7 @@ DECLARE_NATIVE(bad_word_q)
 //
 //  "Test if an argument is an QUASI form of word"
 //
-//      return: [logic!]
+//      return: [logic?]
 //      value
 //  ]
 //
@@ -480,7 +480,7 @@ DECLARE_NATIVE(quasi_word_q)
 //
 //  "Test if an argument is an issue with one character"
 //
-//      return: [logic!]
+//      return: [logic?]
 //      value
 //  ]
 //
@@ -498,7 +498,7 @@ DECLARE_NATIVE(char_q)
 //
 //  "Test if an argument is quoted word"
 //
-//      return: [logic!]
+//      return: [logic?]
 //      value
 //  ]
 //
@@ -516,7 +516,7 @@ DECLARE_NATIVE(lit_word_q)
 //
 //  "Test if an argument is a quoted path"
 //
-//      return: [logic!]
+//      return: [logic?]
 //      value
 //  ]
 //
@@ -534,7 +534,7 @@ DECLARE_NATIVE(lit_path_q)
 //
 //  "Test if a value type is inert"
 //
-//      return: [logic!]
+//      return: [logic?]
 //      optional [<opt> any-value!]
 //  ]
 //
@@ -1646,7 +1646,7 @@ DECLARE_NATIVE(proxy_exports)
 //
 //  {TRUE if looks up to a function and gets first argument before the call}
 //
-//      return: [logic!]
+//      return: [logic?]
 //      action [action!]
 //  ]
 //
@@ -1666,7 +1666,8 @@ DECLARE_NATIVE(enfixed_q)
 //
 //  {For making enfix functions, e.g `+: enfixed :add` (copies)}
 //
-//      return: [activation!]
+//      return: "Isotopic ACTION!"
+//          [isotope!]  ; [activation?] comes after ENFIX in bootstrap
 //      action [<unrun> action!]
 //  ]
 //
@@ -1694,7 +1695,7 @@ DECLARE_NATIVE(enfix)
 //
 //  {Discern if a function parameter came from an "active" evaluation.}
 //
-//      return: [logic!]
+//      return: [logic?]
 //      parameter [word!]
 //  ]
 //
@@ -2355,7 +2356,7 @@ DECLARE_NATIVE(as_text)
 //
 //  {Return whether or not the underlying data of one value aliases another}
 //
-//      return: [logic!]
+//      return: [logic?]
 //      value1 [any-series!]
 //      value2 [any-series!]
 //  ]
@@ -2373,7 +2374,7 @@ DECLARE_NATIVE(aliases_q)
 //
 //  "Tells you if the argument is not a value"
 //
-//      return: [logic!]
+//      return: [logic?]
 //      value  ; no type spec, avoids recursion from <opt>
 //  ]
 //
@@ -2390,7 +2391,8 @@ DECLARE_NATIVE(null_q)
 //
 //  "Tells you if the argument is a ~true~ or ~false~ isotope"
 //
-//      return: [logic!]
+//      return: "~true~ or ~false~ isotope"
+//          [isotope!]  ; can't use LOGIC? to test LOGIC? return result
 //      value
 //  ]
 //
@@ -2407,7 +2409,7 @@ DECLARE_NATIVE(logic_q)
 //
 //  "Tells you if argument is an ~[]~ isotope, e.g. an empty pack"
 //
-//      return: [logic!]
+//      return: [logic?]
 //      ^optional [<opt> <void> <pack> <fail> any-value!]
 //  ]
 //
@@ -2424,7 +2426,7 @@ DECLARE_NATIVE(nihil_q)
 //
 //  "returns the value used to represent an unset variable"
 //
-//      return: []
+//      return: [<none>]
 //  ]
 //
 DECLARE_NATIVE(none)
@@ -2439,7 +2441,7 @@ DECLARE_NATIVE(none)
 //
 //  "Tells you if argument is void"
 //
-//      return: [logic!]
+//      return: [logic?]
 //      optional  ; no type spec, avoids recursion from <void> check
 //  ]
 //
@@ -2456,7 +2458,7 @@ DECLARE_NATIVE(void_q)
 //
 //  "Tells you if argument is none"
 //
-//      return: [logic!]
+//      return: [logic?]
 //      ^optional [<opt> <void> <fail> <pack> any-value!]
 //  ]
 //
@@ -2473,7 +2475,7 @@ DECLARE_NATIVE(none_q)
 //
 //  "Tells you if argument is a blackhole (#)"
 //
-//      return: [logic!]
+//      return: [logic?]
 //      optional [any-value!]
 //  ]
 //

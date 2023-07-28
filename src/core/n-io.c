@@ -208,7 +208,7 @@ DECLARE_NATIVE(new_line)
 //
 //  {Returns the state of the new-line marker within a block or group.}
 //
-//      return: [logic!]
+//      return: [logic?]
 //      position "Position to check marker"
 //          [block! group! varargs!]
 //  ]

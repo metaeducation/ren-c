@@ -325,7 +325,7 @@ Action(*) Make_Interpreted_Action_May_Fail(
 //
 //  "Defines an ACTION! with given spec and body"
 //
-//      return: [action!]
+//      return: [activation?]
 //      spec "Help string (opt) followed by arg words (and opt type + string)"
 //          [block!]
 //      body "Code implementing the function--use RETURN to yield a result"
@@ -356,7 +356,7 @@ DECLARE_NATIVE(func_p)
 //
 //  {Tell whether a parameter is registered as <end> or not}
 //
-//      return: [logic!]
+//      return: [logic?]
 //      parameter [word!]
 //  ]
 //
@@ -391,7 +391,7 @@ DECLARE_NATIVE(endable_q)
 //
 //  {Tell whether a parameter is registered as <skip> or not}
 //
-//      return: [logic!]
+//      return: [logic?]
 //      parameter [word!]
 //  ]
 //

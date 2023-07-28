@@ -155,7 +155,7 @@ Bounce Macro_Dispatcher(Frame(*) f)
 //
 //  {Makes function that generates code to splice into the execution stream}
 //
-//      return: [action!]
+//      return: [activation?]
 //      spec "Help string (opt) followed by arg words (and opt type + string)"
 //          [block!]
 //      body "Code implementing the macro--use RETURN to yield a result"

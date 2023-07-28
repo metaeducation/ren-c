@@ -278,13 +278,13 @@ random: generic [
 
 odd?: generic [
     {Returns TRUE if the number is odd.}
-    return: [logic!]
+    return: [logic?]
     number [any-number! char! date! money! time! pair!]
 ]
 
 even?: generic [
     {Returns TRUE if the number is even.}
-    return: [logic!]
+    return: [logic?]
     number [any-number! char! date! money! time! pair!]
 ]
 
@@ -615,7 +615,7 @@ query: generic [
 
 modify: generic [
     {Change mode or control for port or file.}
-    return: [logic!]
+    return: [logic?]
         "TRUE if successful, FALSE if unsuccessful (!!! REVIEW)"
     target [port! file!]
     field [word! blank!]

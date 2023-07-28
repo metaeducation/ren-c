@@ -153,7 +153,7 @@ String(*) Decode_UTF16(
 //
 //  {Codec for identifying BINARY! data for a .TXT file}
 //
-//      return: [logic!]
+//      return: [logic?]
 //      data [binary!]
 //  ]
 //
@@ -260,7 +260,7 @@ static REBSER *Encode_Utf16(
 //
 //  {Codec for identifying BINARY! data for a little-endian UTF16 file}
 //
-//      return: [logic!]
+//      return: [logic?]
 //      data [binary!]
 //  ]
 //
@@ -340,7 +340,7 @@ DECLARE_NATIVE(encode_utf16le)
 //
 //  {Codec for identifying BINARY! data for a big-endian UTF16 file}
 //
-//      return: [logic!]
+//      return: [logic?]
 //      data [binary!]
 //  ]
 //

@@ -227,7 +227,7 @@ Bounce Chainer_Dispatcher(Frame(*) f)
 //
 //  {Create a processing pipeline of actions, each consuming the last result}
 //
-//      return: [action!]
+//      return: [activation?]
 //      pipeline "Block of ACTION!s to apply (will be LOCKed)"
 //          [block!]
 //  ]

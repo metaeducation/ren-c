@@ -89,7 +89,7 @@ suffix-of: function [
 
 dir?: func [
     {Returns TRUE if the file or url ends with a slash (or backslash).}
-    return: [logic!]
+    return: [logic?]
     target [file! url!]
 ][
     return did find "/\" last target

@@ -650,7 +650,7 @@ DECLARE_NATIVE(matches)
 //
 //  "Tells you if argument is a splice (isotopic block)"
 //
-//      return: [logic!]
+//      return: [logic?]
 //      ^optional [<opt> <void> <fail> <pack> any-value!]
 //  ]
 //
@@ -667,7 +667,7 @@ DECLARE_NATIVE(splice_q)
 //
 //  "Tells you if argument is any kind of matcher (TYPE-XXX! isotope)"
 //
-//      return: [logic!]
+//      return: [logic?]
 //      ^value [<opt> <void> <fail> <pack> any-value!]
 //  ]
 //
@@ -689,7 +689,7 @@ DECLARE_NATIVE(any_matcher_q)
 //
 //  "Tells you if argument is a lazy value (isotopic object)"
 //
-//      return: [logic!]
+//      return: [logic?]
 //      ^optional [<opt> <void> <fail> <pack> any-value!]
 //  ]
 //
@@ -706,7 +706,7 @@ DECLARE_NATIVE(lazy_q)
 //
 //  "Tells you if argument is a parameter pack (isotopic block)"
 //
-//      return: [logic!]
+//      return: [logic?]
 //      ^optional [<opt> <void> <fail> <pack> any-value!]
 //  ]
 //
@@ -723,7 +723,7 @@ DECLARE_NATIVE(pack_q)
 //
 //  "Tells you if argument is an isotopic word"
 //
-//      return: [logic!]
+//      return: [logic?]
 //      ^optional [<opt> <void> <fail> <pack> any-value!]
 //  ]
 //
@@ -739,7 +739,7 @@ DECLARE_NATIVE(isoword_q)
 //
 //  "Tells you if argument is an activation (isotopic action)"
 //
-//      return: [logic!]
+//      return: [logic?]
 //      ^optional [<opt> <void> <fail> <pack> any-value!]
 //  ]
 //
@@ -778,7 +778,7 @@ DECLARE_NATIVE(runs)
 //  {Make actions not run when fetched through word access}
 //
 //      return: [action!]
-//      action [<maybe> action! activation!]
+//      action [<maybe> action! activation?]
 //  ]
 //
 DECLARE_NATIVE(unrun)
@@ -848,7 +848,7 @@ DECLARE_NATIVE(maybe)
 //
 //  {Tells you if the argument is QUOTED! or not}
 //
-//      return: [logic!]
+//      return: [logic?]
 //      optional [<opt> <void> any-value!]
 //  ]
 //
@@ -865,7 +865,7 @@ DECLARE_NATIVE(quoted_q)
 //
 //  {Tells you if the argument is QUASI! or not}
 //
-//      return: [logic!]
+//      return: [logic?]
 //      optional [<opt> <void> any-value!]
 //  ]
 //

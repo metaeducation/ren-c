@@ -7,8 +7,8 @@
 
 [(
 onlify: func [
-    return: [action!]
-    action [action!]
+    return: [activation?]
+    action [<unrun> action!]
     /param [word!]
 ][
     param: default ['value]

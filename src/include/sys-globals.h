@@ -135,8 +135,8 @@ PVAR REBVAL *Root_Skip_Tag; // marks a hard quote as "skippable" if wrong type
 PVAR REBVAL *Root_Const_Tag; // pass a CONST version of the input argument
 PVAR REBVAL *Root_Void_Tag;  // tolerance for void returns or passing void args
 PVAR REBVAL *Root_Fail_Tag;  // meta parameters that want failures
-PVAR REBVAL *Root_Pack_Tag;  // meta parameters that want failures
-
+PVAR REBVAL *Root_Pack_Tag;  // meta parameters that want packs
+PVAR REBVAL *Root_Unrun_Tag;  // parameters that degrade isotopic actions
 
 PVAR REBVAL *Root_Here_Tag;  // https://forum.rebol.info/t/1558/5
 

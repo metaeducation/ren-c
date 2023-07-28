@@ -26,7 +26,7 @@
     <-: enfix func* [
         {Declare action by example instantiation, missing args unspecialized}
 
-        return: [action!]
+        return: [activation?]
         :left "Enforces nothing to the left of the pointfree expression"
             [<end>]
         :expression "POINTFREE expression, BLANK!s are unspecialized arg slots"

@@ -1694,7 +1694,7 @@ tls-init: func [
 
 
 tls-read-data: func [
-    return: [logic!]
+    return: [logic?]
     ctx [object!]
     port-data [binary!]
 ][
@@ -1756,7 +1756,7 @@ perform-read: function [
 ]
 
 check-response: function [
-    return: [logic!]
+    return: [logic?]
     tls-port [port!]
 ][
     let port: tls-port.state.connection

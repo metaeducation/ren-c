@@ -161,7 +161,7 @@ DECLARE_NATIVE(surprise)
 //
 //  {Make action that will DO a value (more optimized than SPECIALIZE :DO)}
 //
-//      return: [action!]
+//      return: [activation?]
 //      source "Note: Will LOCK source if a BLOCK! (review behavior)"
 //          [any-value!]
 //  ]

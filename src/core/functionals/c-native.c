@@ -133,7 +133,8 @@ Action(*) Make_Native(
 //
 //  {(Internal Function) Create a native, using compiled C code}
 //
-//      return: [action!]
+//      return: "Isotopic ACTION!"
+//          [isotope!]  ; [activation?] needs NATIVE to define it!
 //      spec [block!]
 //      /combinator
 //  ]

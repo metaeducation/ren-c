@@ -242,7 +242,7 @@ combinator: func [
 ;
 combinator?: func [
     {Crude test to try and determine if an ACTION! is a combinator}
-    return: [logic!]
+    return: [logic?]
     action [action!]
     <local> keys
 ][

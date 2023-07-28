@@ -574,7 +574,7 @@ REBINT Compare_Modify_Values(Cell(*) a, Cell(*) b, bool strict)
 //
 //  {TRUE if the values are equal}
 //
-//      return: [logic!]
+//      return: [logic?]
 //      value1 [<opt> any-value! logic!]
 //      value2 [<opt> any-value! logic!]
 //  ]
@@ -594,7 +594,7 @@ DECLARE_NATIVE(equal_q)
 //
 //  {TRUE if the values are not equal}
 //
-//      return: [logic!]
+//      return: [logic?]
 //      value1 [<opt> any-value!]
 //      value2 [<opt> any-value!]
 //  ]
@@ -614,7 +614,7 @@ DECLARE_NATIVE(not_equal_q)
 //
 //  {TRUE if the values are strictly equal}
 //
-//      return: [logic!]
+//      return: [logic?]
 //      value1 [<opt> any-value!]
 //      value2 [<opt> any-value!]
 //  ]
@@ -637,7 +637,7 @@ DECLARE_NATIVE(strict_equal_q)
 //
 //  {TRUE if the values are not strictly equal}
 //
-//      return: [logic!]
+//      return: [logic?]
 //      value1 [<opt> any-value!]
 //      value2 [<opt> any-value!]
 //  ]
@@ -660,7 +660,7 @@ DECLARE_NATIVE(strict_not_equal_q)
 //
 //  {TRUE if the values are identical}
 //
-//      return: [logic!]
+//      return: [logic?]
 //      value1 [<opt> any-value!]
 //      value2 [<opt> any-value!]
 //  ]
@@ -748,7 +748,7 @@ DECLARE_NATIVE(same_q)
 //
 //  {TRUE if the first value is less than the second value}
 //
-//      return: [logic!]
+//      return: [logic?]
 //      value1 value2
 //  ]
 //
@@ -779,7 +779,7 @@ DECLARE_NATIVE(lesser_q)
 //
 //  {TRUE if the first value is equal to or less than the second value}
 //
-//      return: [logic!]
+//      return: [logic?]
 //      value1 value2
 //  ]
 //
@@ -798,7 +798,7 @@ DECLARE_NATIVE(equal_or_lesser_q)
 //
 //  {TRUE if the first value is greater than the second value}
 //
-//      return: [logic!]
+//      return: [logic?]
 //      value1 value2
 //  ]
 //
@@ -817,7 +817,7 @@ DECLARE_NATIVE(greater_q)
 //
 //  {TRUE if the first value is greater than or equal to the second value}
 //
-//      return: [logic!]
+//      return: [logic?]
 //      value1 value2
 //  ]
 //
@@ -934,7 +934,7 @@ inline static REBVAL *Init_Zeroed_Hack(Cell(*) out, enum Reb_Kind kind) {
 //
 //  "Returns TRUE if the number is negative."
 //
-//      return: [logic!]
+//      return: [logic?]
 //      number [any-number! money! time! pair!]
 //  ]
 //
@@ -956,7 +956,7 @@ DECLARE_NATIVE(negative_q)
 //
 //  "Returns TRUE if the value is positive."
 //
-//      return: [logic!]
+//      return: [logic?]
 //      number [any-number! money! time! pair!]
 //  ]
 //
@@ -978,7 +978,7 @@ DECLARE_NATIVE(positive_q)
 //
 //  {Returns TRUE if the value is zero (for its datatype).}
 //
-//      return: [logic!]
+//      return: [logic?]
 //      value
 //  ]
 //

@@ -461,7 +461,7 @@ unset: redescribe [
 
 unset?: func [
     {Determine if a variable looks up to a `~` isotope}
-    return: [logic!]
+    return: [logic?]
     var [word! path! tuple!]
 ][
     return none? get/any var
@@ -469,7 +469,7 @@ unset?: func [
 
 set?: func [
     {Determine if a variable does not look up to  `~` isotope}
-    return: [logic!]
+    return: [logic?]
     var [word! path! tuple!]
 ][
     return not none? get/any var
@@ -478,7 +478,7 @@ set?: func [
 
 defined?: func [
     {Determine if a variable is both "attached", and not unset}
-    return: [logic!]
+    return: [logic?]
     var [word! path! tuple!]
 ][
     if tuple? var [
@@ -492,7 +492,7 @@ defined?: func [
 
 undefined?: func [
     {Determine if a variable is "unattached" or unset}
-    return: [logic!]
+    return: [logic?]
     var [word! path! tuple!]
 ][
     if tuple? var [
@@ -506,7 +506,7 @@ undefined?: func [
 
 voided?: func [
     {Determine if a variable looks up to a void}
-    return: [logic!]
+    return: [logic?]
     var [word! path! tuple!]
 ][
     return void? get/any var

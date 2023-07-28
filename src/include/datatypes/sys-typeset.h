@@ -275,6 +275,13 @@ inline static bool Typecheck_Including_Constraints(
     const REBPAR *param,
     Value(*) v  // need mutability for ^META check
 ){
+    if (VAL_PARAM_CLASS(param) == PARAM_CLASS_RETURN) {
+        if (Is_Pack(v))
+            return true;  // For now, assume multi-return typechecked it
+        if (Is_Raised(v))
+            return true;  // For now, all functions return definitional errors
+    }
+
     // We do an adjustment of the argument to accommodate meta parameters,
     // which check the unquoted type.
     //
@@ -296,7 +303,7 @@ inline static bool Typecheck_Including_Constraints(
     if (TYPE_CHECK(param, v))
         goto return_true;
 
-    if (Is_Void(v) and GET_PARAM_FLAG(param, VANISHABLE))
+    if (Is_Nihil(v) and GET_PARAM_FLAG(param, VANISHABLE))
         goto return_true;
 
     // !!! Predicates check more complex properties than just the kind, and
@@ -316,6 +323,9 @@ inline static bool Typecheck_Including_Constraints(
 
     if (GET_PARAM_FLAG(param, PREDICATE) and IS_PREDICATE(v))
         goto return_true;
+
+    if (unquoted)
+        Meta_Quotify(v);
 
     return false;
 

@@ -31,7 +31,7 @@
 //
 //  {Returns true if both values are conditionally true (no "short-circuit")}
 //
-//      return: [logic!]
+//      return: [logic?]
 //      value1 [any-value!]
 //      value2 [any-value!]
 //  ]
@@ -52,7 +52,7 @@ DECLARE_NATIVE(and_q)
 //
 //  {Returns true if both values are conditionally false (no "short-circuit")}
 //
-//      return: [logic!]
+//      return: [logic?]
 //      value1 [any-value!]
 //      value2 [any-value!]
 //  ]
@@ -73,7 +73,7 @@ DECLARE_NATIVE(nor_q)
 //
 //  {Returns false if both values are conditionally true (no "short-circuit")}
 //
-//      return: [logic!]
+//      return: [logic?]
 //      value1 [any-value!]
 //      value2 [any-value!]
 //  ]
@@ -94,7 +94,7 @@ DECLARE_NATIVE(nand_q)
 //
 //  "true if value is NOT a LOGIC! false or NULL"
 //
-//      return: [logic!]
+//      return: [logic?]
 //      value [<opt> any-value!]
 //  ]
 //
@@ -111,7 +111,7 @@ DECLARE_NATIVE(to_logic)
 //
 //  "False if the integer input is a zero"
 //
-//      return: [logic!]
+//      return: [logic?]
 //      integer [integer!]
 //  ]
 //
@@ -176,7 +176,7 @@ inline static bool Do_Logic_Right_Side_Throws(
 //
 //  {Boolean AND, right hand side must be in GROUP! to allow short-circuit}
 //
-//      return: [logic!]
+//      return: [logic?]
 //      left [<opt> any-value! logic!]
 //      'right "Right is evaluated if left is true"
 //          [group! tuple! word!]
@@ -207,7 +207,7 @@ DECLARE_NATIVE(and_1)  // see TO-C-NAME
 //
 //  {Boolean OR, right hand side must be in GROUP! to allow short-circuit}
 //
-//      return: [logic!]
+//      return: [logic?]
 //      left [<opt> any-value! logic!]
 //      'right "Right is evaluated if left is false"
 //          [group! tuple! word!]
@@ -238,7 +238,7 @@ DECLARE_NATIVE(or_1)  // see TO-C-NAME
 //
 //  {Boolean XOR (operation cannot be short-circuited)}
 //
-//      return: [logic!]
+//      return: [logic?]
 //      left [<opt> any-value! logic!]
 //      'right "Always evaluated"
 //          [group! tuple! word!]
