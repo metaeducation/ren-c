@@ -536,9 +536,16 @@ SQLRETURN ODBC_BindParameter(
     //
     // https://forum.rebol.info/t/689/2
     //
-    SQLSMALLINT c_type = rebUnboxInteger("switch/type @", v, "[",
+    SQLSMALLINT c_type = rebUnboxInteger("switch/type", rebQ(v), "[",
+        "quasi! [",
+            "if find [~true~ ~false~]", rebQ(v), "[",
+                rebI(SQL_C_BIT),
+            "] else [",
+                "fail {Only legal QUASI!-parameters are ~true~ and ~false~}",
+            "]",
+        "]",
+
         "blank! [", rebI(SQL_C_DEFAULT), "]",
-        "logic! [", rebI(SQL_C_BIT), "]",
 
         // When we ask to insert data, the ODBC layer is supposed to be able
         // to take a C variable in any known integral type format, and so
@@ -568,8 +575,11 @@ SQLRETURN ODBC_BindParameter(
                 v, "< -2147483648 [", rebI(SQL_C_SBIGINT), "]",
             "] else [", rebI(SQL_C_LONG), "]",
         "]",
+
         "decimal! [", rebI(SQL_C_DOUBLE), "]",
+
         "time! [", rebI(SQL_C_TYPE_TIME), "]",
+
         "date! [",
             "either pick", v, "'time [",  // does it have a time component?
                 rebI(SQL_C_TYPE_TIMESTAMP),  // can hold both date and time
@@ -577,7 +587,9 @@ SQLRETURN ODBC_BindParameter(
                 rebI(SQL_C_TYPE_DATE),  // just holds the date component
             "]",
         "]",
+
         "text! [", rebI(SQL_C_WCHAR), "]",
+
         "binary! [", rebI(SQL_C_BINARY), "]",
 
         "fail {Non-SQL-mappable type used in parameter binding}",
@@ -1414,7 +1426,9 @@ REBVAL *ODBC_Column_To_Rebol_Value(COLUMN *col)
         if (col->column_size != 1)
             rebJumps("fail {BIT(n) fields are only supported for n = 1}");
 
-        return rebLogic(*cast(unsigned char*, col->buffer) != 0);
+        if (*cast(unsigned char*, col->buffer))
+            return rebValue("'~true~");  // can't append isotope to block :-(
+        return rebValue("'~false~");
 
     // ODBC was asked at SQLGetData time to give back *most* integer
     // types as SQL_C_SLONG or SQL_C_ULONG, regardless of actual size
@@ -1496,7 +1510,7 @@ REBVAL *ODBC_Column_To_Rebol_Value(COLUMN *col)
                 stamp->hour * 3600 + stamp->minute * 60 + stamp->second
             ),  // seconds
             rebI(fraction),  // billionths of a second (nanoseconds)
-            "_"  // timezone (null)
+            nullptr,  // timezone (null)
         ")"); }
 
     // SQL_BINARY, SQL_VARBINARY, and SQL_LONGVARBINARY were all requested
