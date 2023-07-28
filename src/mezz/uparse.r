@@ -285,7 +285,7 @@ default-combinators: make map! reduce [
     'opt combinator [
         {If applying parser fails, succeed and return NULL; don't advance input}
         return: "PARSER's result if it succeeds, otherwise NULL"
-            [<opt> any-value!]
+            [<opt> <void> any-value!]
         parser [activation!]
         <local> result'
     ][
@@ -299,7 +299,7 @@ default-combinators: make map! reduce [
     'try combinator [
         {If applying parser fails, succeed and return NULL; don't advance input}
         return: "PARSER's result if it succeeds, otherwise NULL"
-            [<opt> any-value!]
+            [<opt> <void> any-value!]
         parser [activation!]
         <local> result'
     ][
