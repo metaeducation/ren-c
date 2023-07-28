@@ -11,25 +11,28 @@
 
 [(
     ugly-combinators: copy default-combinators
-    ugly-combinators.(group!): :default-combinators.(get-group!)
-    ugly-combinators.(get-group!): null
+    ugly-combinators.(group!): default-combinators.(get-group!)
+    ugly-combinators.(get-group!): void
 
     ugly-parse: specialize :parse [combinators: ugly-combinators]
 
+    ; DISCARD is different from ELIDE when GROUP! acts like a GET-GROUP!,
+    ; because we want to suppress the triggering of the generated rule
+    ;
     ugly-combinators.discard: combinator [
-        return: "Don't return anything" [<void>]
+        return: "Don't return anything" [<nihil>]
         'group [group!]
     ][
         eval group
-        set remainder input
-        return
+        remainder: input
+        return nihil
     ]
     true
 )
 
 (
-    data: "aaabbb"
-
-    did ugly-parse data [(if true '[some "a"]) some "b" discard (if true '[some "c"])]
+    "b" = ugly-parse "aaabbb" [
+        (if true '[some "a"]), some "b", discard (if true '[some "c"])
+    ]
 )
 ]
