@@ -1343,6 +1343,8 @@ Bounce Evaluator_Executor(Frame(*) f)
                     check_specifier,
                     1
                 );
+                if (heart == REB_META_PATH)
+                    Metafy(SCRATCH);
                 heart = CELL_HEART(SCRATCH);
             }
             else {
@@ -1486,10 +1488,14 @@ Bounce Evaluator_Executor(Frame(*) f)
             enum Reb_Kind var_heart = CELL_HEART(var);
 
             if (pack_meta_at == pack_meta_tail) {
-                if (is_optional)
-                    Init_Meta_Of_Null(SPARE);
-                else
+                if (not is_optional)
                     fail ("Not enough values for required multi-return");
+
+                // match typical input of meta which will be Meta_Unquotify'd
+                // (special handling in REB_META_WORD and REB_META_TUPLE
+                // below will actually use plain null to distinguish)
+                //
+                Init_Meta_Of_Null(SPARE);
             }
             else
                 Derelativize(SPARE, pack_meta_at, pack_specifier);
@@ -1498,16 +1504,19 @@ Bounce Evaluator_Executor(Frame(*) f)
                 var_heart == REB_WORD
                 and VAL_WORD_SYMBOL(var) == Canon(CARET_1)
             ){
-                 // leave as meta the way it came in
-                 goto circled_check;
+                // leave as meta the way it came in
+                goto circled_check;
             }
 
             if (
                 var_heart == REB_META_WORD
                 or var_heart == REB_META_TUPLE
             ){
-                 Set_Var_May_Fail(var, SPECIFIED, SPARE);  // came in meta'd
-                 goto circled_check;
+                if (pack_meta_at == pack_meta_tail)  // special detection
+                    Set_Var_May_Fail(var, SPECIFIED, Lib(NULL));
+                else
+                    Set_Var_May_Fail(var, SPECIFIED, SPARE);  // came in meta'd
+                goto circled_check;
             }
 
             Meta_Unquotify(SPARE);

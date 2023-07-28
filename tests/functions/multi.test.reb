@@ -257,10 +257,19 @@
     ~bad-isotope~ !! (
         [x]: spread [a b c]
     )
+]
+
+; If you want to unpack an empty pack, you have to use meta to tell the
+; difference between an empty pack and a null.
+[
     (
-        ('~(a b c)~) = ^ [@]: spread [a b c]
+        x: ~
+        [^/x]: null
+        x = null'
     )
     (
-        not raised? [_]: spread [a b c]  ; definitive behavior TBD
+        x: ~
+        [^/x]: comment "hi"
+        x = null
     )
 ]
