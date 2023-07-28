@@ -65,8 +65,8 @@
 
 ; ^META blocks collect the meta variation of the evaluation, including voids
 [
-    (['1 ~ '3] = map x each [1 2 3] ^[if x <> 2 [x]])
-    (['1 ~[~]~ '3] = map x each [1 2 3] ^[if x = 2 [void] else [x]])
+    (['1 ' '3] = map x each [1 2 3] ^[if x <> 2 [x]])
+    (['1 ~[']~ '3] = map x each [1 2 3] ^[if x = 2 [void] else [x]])
 ]
 
 ; MAP-EACH works with ANY-CONTEXT! now
@@ -83,5 +83,5 @@
     (null? map-each x ' [fail])
 
     ~expect-arg~ !! (map-each x '~ [fail])
-    ~expect-arg~ !! (map-each x ~ [fail])
+    ~bad-isotope~ !! (map-each x ~ [fail])
 ]

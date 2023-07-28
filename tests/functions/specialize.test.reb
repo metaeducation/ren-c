@@ -212,7 +212,7 @@
     f: make frame! unrun :append
     f.series: data
 
-    apd: make action! f
+    apd: runs make action! f
     apd [d e f]
 
     data = [a b c [d e f]]

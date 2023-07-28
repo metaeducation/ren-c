@@ -34,7 +34,7 @@
     ]
 )
 
-~???~ !! (do reduce [unrun get '+ 1 2])  ; enfix no argument
+~no-arg~ !! (do reduce [unrun get '+ 1 2])  ; enfix no argument
 
 
 ; Only hard-quoted parameters are <skip>-able

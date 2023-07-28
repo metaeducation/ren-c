@@ -199,7 +199,7 @@
 )
 
 ; local variable type safety
-~no-arg~ !! (
+~expect-arg~ !! (
     test: false
     cfor i 1 2 [
         either test [i == 2] [

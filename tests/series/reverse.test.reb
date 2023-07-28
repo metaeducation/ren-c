@@ -15,7 +15,7 @@
     ; ]
     before: collect [
         for-next pos data [keep reify new-line? pos]
-        keep new-line? tail data
+        keep reify new-line? tail data
     ]
 
     reverse data
@@ -26,7 +26,7 @@
     ; ]
     after: collect [
         for-next pos data [keep reify new-line? pos]
-        keep new-line? tail data
+        keep reify new-line? tail data
     ]
 
     did all [

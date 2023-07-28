@@ -123,14 +123,14 @@
 (
     x: 1020
     did all [
-        (_) or (x: 304) = true
+        (null) or (x: 304) = true
         x = 304
     ]
 )
 (
     x: 1020
     did all [
-        (_) or (x: true) = true
+        (null) or (x: true) = true
         x = true
     ]
 )

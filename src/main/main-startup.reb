@@ -387,7 +387,7 @@ main-startup: func [
 
     let get-home-path: func [
         {Return HOME path (e.g. $HOME on *nix)}
-        return: [<opt> file!]
+        return: [<opt> element? file!]
     ][
         let get-env: if select system.modules 'Process [
             runs :system.modules.Process.get-env

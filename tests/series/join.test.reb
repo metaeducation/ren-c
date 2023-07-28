@@ -72,8 +72,8 @@
     (#{1020} = join #{10} spread [_ #{20} _])
     ("A B " = join "A" spread [_ "B" _])
 
-    ([A _ B _] = join [A] [_ B _])
-    ('(A _ B _) = join '(A) [_ B _])
+    ([A _ B _] = join [A] spread [_ B _])
+    ('(A _ B _) = join '(A) spread [_ B _])
 ]
 
 [

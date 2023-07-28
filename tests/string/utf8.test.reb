@@ -154,5 +154,5 @@ https://github.com/metaeducation/ren-c/issues/817
     ("ò" = append/part "" #{C3B2} 2)
 
     ("ò" = append/part "" #{C3B2DECAFBAD} 1)
-    (error? trap [append/part "" #{C3B2FEFEFEFE} 2])
+    ~bad-utf8-bin-edit~ !! (append/part "" #{C3B2FEFEFEFE} 2)
 ]

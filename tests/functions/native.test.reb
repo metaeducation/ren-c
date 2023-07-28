@@ -1,10 +1,10 @@
 ; datatypes/native.r
-(action? :reduce)
+(activation? :reduce)
 (not action? 1)
-(action! = kind of :reduce)
+(isotope! = kind of :reduce)
 [#1659 (
     ; natives are active
     same? blank! do reduce [
-        (specialize :of [property: 'type]) blank
+        (unrun specialize :of [property: 'type]) blank
     ]
 )]

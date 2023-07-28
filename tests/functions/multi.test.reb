@@ -158,7 +158,7 @@
         did all [
             <item!> = ([value /rest]: transcode/one "ab cd") then [<item!>]
             value = 'ab
-            rest = null
+            rest = " cd"
         ]
     )
 
@@ -168,8 +168,20 @@
             return 20
         ]
         did all [
-            '~weird~ = [^x y]: foo then [~weird~]
+            '~weird~ = ([^x /y]: foo then [~weird~])
             x = '~weird~
+            y = null
+        ]
+    )
+
+    (
+        foo: func [return: [integer!] @other [integer!]] [
+            other: 10
+            return 20
+        ]
+        did all [
+            '~weird~ <> [^x y]: foo then [~weird~]
+            x = the '20
             y = 10
         ]
     )

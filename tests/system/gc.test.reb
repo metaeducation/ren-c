@@ -56,5 +56,5 @@
 )
 ; ...
 (
-    (unspaced ["<" intersect [a b c] [d e f]  ">"]) = "<>"
+    (unspaced ["<" form intersect [a b c] [d e f] ">"]) = "<>"
 )

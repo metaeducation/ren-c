@@ -20,7 +20,7 @@
 ;
 ; https://forum.rebol.info/t/1582
 
-~???~ !! (
+~no-value~ !! (
     pos: ~
     val: evaluate/next [
         1 + comment "a" comment "b" 2 * 3 fail "too far"
@@ -68,7 +68,7 @@
 (nihil' = ^ elide "a")
 
 
-~???~ !! (
+~no-value~ !! (
     evaluate evaluate [1 elide "a" + elide "b" 2 * 3 fail "too far"]
 )
 (
@@ -96,7 +96,7 @@
 
     did all [x = 9, y = 9]
 )
-~???~ !! (
+~no-value~ !! (
     x: ~
     x: 1 + elide (y: 10) 2 * 3  ; non-interstitial, no longer legal
 )
@@ -388,19 +388,18 @@
 )
 
 ; "Opportunistic Invisibility" means that functions can treat invisibility as
-; a return type, decided on after they've already started running.  This means
-; using the ^(...) form of RETURN, which can also be used for chaining.
+; a return type, decided on after they've already started running.
 [
-    (vanish-if-odd: func [return: [<void> integer!] x] [
+    (vanish-if-odd: func [return: [<nihil> integer!] x] [
         if even? x [return x]
-        return void
+        return nihil
     ] true)
 
     (2 = (<test> vanish-if-odd 2))
     (<test> = (<test> vanish-if-odd 1))
 
-    (vanish-if-even: func [return: [<void> integer!] y] [
-       return maybe unmeta ^(vanish-if-odd y + 1)
+    (vanish-if-even: func [return: [<nihil> integer!] y] [
+        return unmeta ^(vanish-if-odd y + 1)
     ] true)
 
     (<test> = (<test> vanish-if-even 2))
@@ -412,32 +411,20 @@
 ; by default if not.
 [
     (
-        no-spec: func [x] [return void]
+        no-spec: func [x] [return nihil]
         <test> = (<test> no-spec 10)
     )
-    ~bad-invisible~ !! (
-        int-spec: func [return: [integer!] x] [return void]
+    ~bad-return-type~ !! (
+        int-spec: func [return: [integer!] x] [return nihil]
         int-spec 10
     )
     (
-        invis-spec: func [return: [<void> integer!] x] [
-            return void
+        invis-spec: func [return: [<nihil> integer!] x] [
+            return nihil
         ]
         <test> = (<test> invis-spec 10)
     )
 ]
-
-(none: func* [
-    {Arity-0 COMMENT}
-
-    return: <void> {Evaluator will skip result}
-][
-    ; Note: This was once enfix to test the following issue, but it is better
-    ; to not contaminate the base code with something introducing weird
-    ; evaluator ordering for no reason.  It should be tested elsewhere.
-    ;
-    ; https://github.com/metaeducation/ren-c/issues/581#issuecomment-562875470
-], true)
 
 (void' = ^ void)
 

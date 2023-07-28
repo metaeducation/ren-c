@@ -2,4 +2,4 @@
 [#2
     (99 = last #"c")
 ]
-(error? trap [last 7])
+~cannot-use~ !! (last 7)

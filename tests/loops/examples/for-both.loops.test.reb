@@ -140,7 +140,7 @@
     (
         <something> = do [
             <something>
-            for-both x [] [] [fail "Body Never Runs"]
+            elide-if-void for-both x [] [] [fail "Body Never Runs"]
         ]
     )
 

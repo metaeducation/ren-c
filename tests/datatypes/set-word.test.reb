@@ -46,7 +46,7 @@
         void? x
     ]
 )
-~???~ !! (
+~no-value~ !! (
     x: 1020
     did all [
         2 = (x: comment "Hi" 2)

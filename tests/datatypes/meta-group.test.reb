@@ -16,7 +16,7 @@
 
     (void' = ^(maybe void))
     (void' = ^ (maybe void))
-    ~???~ !! (maybe comment "hi")
+    ~no-value~ !! (maybe comment "hi")
 
     (nihil' = ^ ())
     (nihil' = ^ (comment "hi"))
