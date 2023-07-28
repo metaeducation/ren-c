@@ -49,7 +49,7 @@ save: function [
     where "Where to save (suffix determines encoding)"
         [file! url! binary! text! blank!]
     value "Value(s) to save"
-        [<const> any-value!]
+        [<const> element?]
     /header "Provide REBOL header block/object, or TRUE (header is in value)"
         [block! object! logic!]
     /all "Save in serialized format"
@@ -94,7 +94,7 @@ save: function [
         ;
         case [
             null? compress [
-                compress: did find maybe (select header 'options) [compress]
+                compress: did find maybe (select header 'options) 'compress
             ]
             compress = false [
                 remove find maybe select header 'options 'compress

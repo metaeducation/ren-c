@@ -94,8 +94,8 @@ transcode-header: func [
 load-header: function [
     {Loads script header object and body binary (not loaded)}
 
-    return: "header OBJECT! if present, or error WORD!"
-        [<opt> object! word!]
+    return: "header OBJECT! if present"
+        [<opt> object!]
     @body [binary! text!]
     @line [integer!]
     @final [binary!]
@@ -128,19 +128,20 @@ load-header: function [
         ; TRANSCODE didn't detect REBOL [...], but it didn't see anything it
         ; thought was invalid Rebol tokens either.
         ;
-        return either required ['no-header] [
-            body: data
-            final: tail of data
-            return null  ; no header object, keep multireturn
+        if required [
+            return raise "no-header"
         ]
+        body: data
+        final: tail of data
+        return null
     ]
 
     hdr: construct/with/only hdr system.standard.header except [
-        return 'bad-header
+        return raise "bad-header"
     ]
 
     (match [<opt> block!] hdr.options) else [
-        return 'bad-header
+        return raise "bad-header"
     ]
 
     if find maybe hdr.options 'content [
@@ -170,26 +171,28 @@ load-header: function [
         ; traps with ATTEMPT.  ATTEMPT no longer glosses over such things.
         ;
         ; This feature needs redesign if it's to be kept, but switching it
-        ; to use TRAP with the bad idea for now.
+        ; to use RESCUE with the bad idea for now.
         ;
         if find maybe hdr.options 'compress [
-            rest: any [
-                attempt [
+            any [
+                not error? sys.util.rescue [
                     ; Raw bits.  whitespace *could* be tolerated; if
                     ; you know the kind of compression and are looking
                     ; for its signature (gzip is 0x1f8b)
                     ;
-                    gunzip/part rest end
+                    rest: gunzip/part rest end
                 ]
-                attempt [
+                not error? sys.util.rescue [  ; e.g. not error
                     ; BINARY! literal ("'SCRIPT encoded").  Since it
                     ; uses transcode, leading whitespace and comments
                     ; are tolerated before the literal.
                     ;
                     [binary rest]: transcode/one/file/line rest file 'line
-                    gunzip binary
+                    rest: gunzip binary
                 ]
-                return 'bad-compress
+            ]
+            else [
+                return raise "bad-compress"
             ]
         ]
     ] else [
@@ -200,7 +203,7 @@ load-header: function [
 
         if find maybe hdr.options 'compress [  ; script encoded only
             rest: attempt [gunzip first rest] else [
-                return 'bad-compress
+                return raise "bad-compress"
             ]
         ]
     ]
