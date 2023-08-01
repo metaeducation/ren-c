@@ -238,7 +238,7 @@ REBTYPE(Pair)
         REBVAL *setval = ARG(value);
 
         if (not IS_INTEGER(setval) and not IS_DECIMAL(setval))
-            return BOUNCE_UNHANDLED;
+            fail (PARAM(value));
 
         REBVAL *which = (n == 1) ? VAL_PAIR_X(v) : VAL_PAIR_Y(v);
 

@@ -1310,7 +1310,7 @@ REBTYPE(Array)
         break; // fallthrough to error
     }
 
-    return BOUNCE_UNHANDLED;
+    fail (UNHANDLED);
 }
 
 

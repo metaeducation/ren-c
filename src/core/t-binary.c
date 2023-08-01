@@ -355,7 +355,7 @@ REBTYPE(Binary)
             // !!! See notes in the REBTYPE(String) about alternate cases
             // for the POKE'd value.
             //
-            return BOUNCE_UNHANDLED;
+            fail (PARAM(value));
         }
 
         if (i > 0xff)
@@ -867,7 +867,7 @@ REBTYPE(Binary)
         break;
     }
 
-    return BOUNCE_UNHANDLED;
+    fail (UNHANDLED);
 }
 
 

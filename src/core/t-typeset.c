@@ -323,5 +323,5 @@ REBTYPE(Parameter)
     UNUSED(frame_);
     UNUSED(verb);
 
-    return BOUNCE_UNHANDLED;
+    fail (UNHANDLED);
 }

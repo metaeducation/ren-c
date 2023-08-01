@@ -450,8 +450,6 @@ static Cell(const*) Get_Parse_Value(
     return cell;
 }
 
-#define BOUNCE_PARSE_GROUP_VAPORIZED nullptr
-
 //
 //  Process_Group_For_Parse: C
 //
@@ -460,23 +458,22 @@ static Cell(const*) Get_Parse_Value(
 // adds another behavior for GET-GROUP!, e.g. :(...).  This makes them act
 // like a COMPOSE that runs each time they are visited.
 //
-Bounce Process_Group_For_Parse(
+bool Process_Group_For_Parse_Throws(
+    Value(*) out,
     Frame(*) frame_,
-    REBVAL *cell,
     Cell(const*) group  // may be same as `cell`
 ){
     USE_PARAMS_OF_SUBPARSE;
 
-    // `cell` may equal `group`, read its type before Do() overwrites `cell`
-    bool inject = IS_GET_GROUP(group);  // plain groups always discard
+    assert(out != group);
 
     assert(IS_GROUP(group) or IS_GET_GROUP(group));
     REBSPC *derived = (group == P_SAVE)
         ? SPECIFIED
         : Derive_Specifier(P_RULE_SPECIFIER, group);
 
-    if (Do_Any_Array_At_Throws(cell, group, derived))
-        return THROWN;
+    if (Do_Any_Array_At_Throws(out, group, derived))
+        return true;
 
     // !!! The input is not locked from modification by agents other than the
     // PARSE's own REMOVE/etc.  This is a sketchy idea, but as long as it's
@@ -485,10 +482,7 @@ Bounce Process_Group_For_Parse(
     if (P_POS > cast(REBIDX, P_INPUT_LEN))
         P_POS = P_INPUT_LEN;
 
-    if (not inject or Is_Void(cell))  // even GET-GROUP! discards voids
-        return BOUNCE_PARSE_GROUP_VAPORIZED;
-
-    return cell;
+    return false;
 }
 
 
@@ -507,7 +501,7 @@ Bounce Process_Group_For_Parse(
 // Only in the case of THROWN_FLAG will f->out (aka OUT) be affected.
 // Otherwise, it should exit the routine as an END marker (as it started);
 //
-static Bounce Parse_One_Rule(
+static REBIXO Parse_One_Rule(
     Frame(*) frame_,
     REBLEN pos,
     Cell(const*) rule
@@ -517,16 +511,16 @@ static Bounce Parse_One_Rule(
     assert(Is_Fresh(OUT));
 
     if (IS_GROUP(rule) or IS_GET_GROUP(rule)) {
-        Bounce b = Process_Group_For_Parse(frame_, SPARE, rule);
-        if (b == BOUNCE_THROWN)
-            return THROWN;
+        bool inject = IS_GET_GROUP(rule);  // rule may be SPARE
+        if (Process_Group_For_Parse_Throws(SPARE, frame_, rule))
+            return THROWN_FLAG;
 
-        if (b == BOUNCE_PARSE_GROUP_VAPORIZED) {  // !!! Should this be legal?
+        if (not inject or Is_Void(SPARE)) {  // !!! Should this be legal?
             assert(pos <= P_INPUT_LEN);  // !!! Process_Group ensures
-            return Init_Integer(OUT, pos);
+            return pos;
         }
         // was a GET-GROUP! :(...), use result as rule
-        rule = Value_From_Bounce(b);
+        rule = SPARE;
     }
 
     if (Trace_Level) {
@@ -556,20 +550,19 @@ static Bounce Parse_One_Rule(
             // not have that working for multiple reasons...lack of making
             // progress in the "" rule, for one.)
             //
-            return Init_Integer(OUT, pos);
+            return pos;
         }
-        else {
-            return BOUNCE_UNHANDLED;  // Other cases below assert if item is END
-        }
+        else
+            return END_FLAG;  // Other cases below assert if item is END
     }
 
     if (Is_Void(rule)) {
-        return Init_Integer(OUT, pos);  // void matches always
+        return pos;  // void matches always
     }
     else if (IS_LOGIC(rule)) {
         if (VAL_LOGIC(rule))
-            return Init_Integer(OUT, pos);  // true matches always
-        return BOUNCE_UNHANDLED;  // false matches never
+            return pos;  // true matches always
+        return END_FLAG;  // false matches never
     }
     else switch (VAL_TYPE(rule)) {  // handle w/same behavior for all P_INPUT
       case REB_INTEGER:
@@ -602,7 +595,7 @@ static Bounce Parse_One_Rule(
             (P_FLAGS & PF_FIND_MASK)
                 | (P_FLAGS & PF_REDBOL)
         )){
-            return THROWN;
+            return THROWN_FLAG;
         }
 
         UNUSED(interrupted);  // !!! ignore "interrupted" (ACCEPT or REJECT?)
@@ -610,11 +603,11 @@ static Bounce Parse_One_Rule(
         P_POS = pos_before;  // restore input position
 
         if (Is_Nulled(subresult))
-            return BOUNCE_UNHANDLED;
+            return END_FLAG;
 
         REBINT index = VAL_INT32(subresult);
         assert(index >= 0);
-        return Init_Integer(OUT, index); }
+        return index; }
 
       default:;
         // Other cases handled distinctly between blocks/strings/binaries...
@@ -641,8 +634,8 @@ static Bounce Parse_One_Rule(
           case REB_TYPE_GROUP:
           case REB_PARAMETER: {
             if (TYPE_CHECK_CORE(rule, item, P_INPUT_SPECIFIER))
-                return Init_Integer(OUT, pos + 1);  // type was in typeset
-            return BOUNCE_UNHANDLED; }
+                return pos + 1;  // type was in typeset
+            return END_FLAG; }
 
           default:
             break;
@@ -652,9 +645,9 @@ static Bounce Parse_One_Rule(
         // default?!
         //
         if (Cmp_Value(item, rule, did (P_FLAGS & AM_FIND_CASE)) == 0)
-            return Init_Integer(OUT, pos + 1);
+            return pos + 1;
 
-        return BOUNCE_UNHANDLED;
+        return END_FLAG;
     }
     else {
         assert(ANY_STRING_KIND(P_TYPE) or P_TYPE == REB_BINARY);
@@ -698,8 +691,8 @@ static Bounce Parse_One_Rule(
                 1  // skip
             );
             if (index == NOT_FOUND)
-                return BOUNCE_UNHANDLED;
-            return Init_Integer(OUT, cast(REBLEN, index) + len);
+                return END_FLAG;
+            return cast(REBLEN, index) + len;
         }
         else switch (VAL_TYPE(rule)) {
           case REB_BITSET: {
@@ -718,9 +711,9 @@ static Bounce Parse_One_Rule(
             }
 
             if (Check_Bit(VAL_BITSET(rule), uni, uncased))
-                return Init_Integer(OUT, P_POS + 1);
+                return P_POS + 1;
 
-            return BOUNCE_UNHANDLED; }
+            return END_FLAG; }
 
           default:
             fail (Error_Parse_Rule());
@@ -770,14 +763,14 @@ static REBIXO To_Thru_Block_Rule(
             if (not (IS_GROUP(blk) or IS_GET_GROUP(blk)))
                 rule = blk;
             else {
-                Bounce b = Process_Group_For_Parse(frame_, cell, blk);
-                if (b == BOUNCE_THROWN)
+                bool inject = IS_GET_GROUP(blk);
+                if (Process_Group_For_Parse_Throws(cell, frame_, blk))
                     return THROWN_FLAG;
 
-                if (b == BOUNCE_PARSE_GROUP_VAPORIZED)
+                if (not inject or Is_Void(cell))
                     continue;
 
-                rule = Value_From_Bounce(b);
+                rule = cell;
             }
 
             if (IS_WORD(rule)) {
@@ -828,18 +821,15 @@ static REBIXO To_Thru_Block_Rule(
                 if (ANY_ARRAY(rule))
                     fail (Error_Parse_Rule());
 
-                Bounce r = Parse_One_Rule(frame_, VAL_INDEX(iter), rule);
-                if (r == BOUNCE_THROWN)
+                REBIXO ixo = Parse_One_Rule(frame_, VAL_INDEX(iter), rule);
+                if (ixo == THROWN_FLAG)
                     return THROWN_FLAG;
 
-                if (r == BOUNCE_UNHANDLED) {
+                if (ixo == END_FLAG) {
                     // fall through, keep looking
-                    FRESHEN(OUT);
                 }
-                else {  // OUT is pos we matched past, so back up if only TO
-                    assert(r == OUT);
-                    VAL_INDEX_RAW(iter) = VAL_INT32(OUT);
-                    FRESHEN(OUT);
+                else {  // ixo is pos we matched past, so back up if only TO
+                    VAL_INDEX_RAW(iter) = ixo;
                     if (is_thru)
                         return VAL_INDEX(iter);  // don't back up
                     return VAL_INDEX(iter) - 1;  // back up
@@ -1401,15 +1391,14 @@ DECLARE_NATIVE(subparse)
 
       process_group: {
 
-        Bounce b = Process_Group_For_Parse(f, SPARE, rule);
-        if (b == BOUNCE_THROWN)
+        bool inject = IS_GET_GROUP(rule);
+        if (Process_Group_For_Parse_Throws(SPARE, f, rule))
             return THROWN;
 
-        if (b == BOUNCE_PARSE_GROUP_VAPORIZED) {  // (...) or void :(...)
+        if (not inject or Is_Void(SPARE)) {  // (...) or void :(...)
             FETCH_NEXT_RULE(f);  // ignore result and go on to next rule
             goto pre_rule;
         }
-        assert(b == SPARE);
         rule = Move_Cell(P_SAVE, SPARE);
 
         // was a GET-GROUP!, e.g. :(...), fall through so its result will
@@ -2287,17 +2276,9 @@ DECLARE_NATIVE(subparse)
         else {
             // Parse according to datatype
 
-            Bounce r = Parse_One_Rule(f, P_POS, rule);
-            if (r == BOUNCE_THROWN)
+            i = Parse_One_Rule(f, P_POS, rule);
+            if (i == THROWN_FLAG)
                 return THROWN;
-
-            if (r == BOUNCE_UNHANDLED)
-                i = END_FLAG;
-            else {
-                assert(r == OUT);
-                i = VAL_INT32(OUT);
-            }
-            FRESHEN(OUT);  // preserve invariant
         }
 
         assert(i != THROWN_FLAG);

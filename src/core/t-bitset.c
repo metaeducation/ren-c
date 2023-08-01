@@ -581,7 +581,7 @@ REBTYPE(Bitset)
             picker,
             BITS_NOT(bset) ? Is_Falsey(setval) : Is_Truthy(setval)
         )){
-            return BOUNCE_UNHANDLED;
+            fail (PARAM(picker));
         }
         return nullptr; }
 
@@ -752,5 +752,5 @@ REBTYPE(Bitset)
         break;
     }
 
-    return BOUNCE_UNHANDLED;
+    fail (UNHANDLED);
 }

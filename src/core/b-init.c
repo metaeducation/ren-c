@@ -456,7 +456,6 @@ static void Init_Root_Vars(void)
     Init_Return_Signal(&PG_R_Thrown, C_THROWN);
     Init_Return_Signal(&PG_R_Redo_Unchecked, C_REDO_UNCHECKED);
     Init_Return_Signal(&PG_R_Redo_Checked, C_REDO_CHECKED);
-    Init_Return_Signal(&PG_R_Unhandled, C_UNHANDLED);
     Init_Return_Signal(&PG_R_Continuation, C_CONTINUATION);
     Init_Return_Signal(&PG_R_Delegation, C_DELEGATION);
     Init_Return_Signal(&PG_R_Suspend, C_SUSPEND);
@@ -516,7 +515,6 @@ static void Shutdown_Root_Vars(void)
     Erase_Cell(&PG_R_Thrown);
     Erase_Cell(&PG_R_Redo_Unchecked);
     Erase_Cell(&PG_R_Redo_Checked);
-    Erase_Cell(&PG_R_Unhandled);
     Erase_Cell(&PG_R_Continuation);
     Erase_Cell(&PG_R_Delegation);
     Erase_Cell(&PG_R_Suspend);

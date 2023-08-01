@@ -128,7 +128,7 @@ REBTYPE(Blank)
       default: break;
     }
 
-    return BOUNCE_UNHANDLED;
+    fail (UNHANDLED);
 }
 
 
@@ -224,5 +224,5 @@ REBTYPE(Handle)
     UNUSED(frame_);
     UNUSED(verb);
 
-    return BOUNCE_UNHANDLED;
+    fail (UNHANDLED);
 }

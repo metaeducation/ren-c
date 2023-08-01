@@ -417,5 +417,5 @@ Bounce Console_Actor(Frame(*) frame_, REBVAL *port, Symbol(const*) verb)
         break;
     }
 
-    return BOUNCE_UNHANDLED;
+    fail (UNHANDLED);
 }

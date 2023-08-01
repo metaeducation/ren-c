@@ -410,5 +410,5 @@ REBTYPE(Isotope)
         break;
     }
 
-    return BOUNCE_UNHANDLED;
+    fail (UNHANDLED);
 }

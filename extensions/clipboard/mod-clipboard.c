@@ -197,7 +197,7 @@ static Bounce Clipboard_Actor(
         break;
     }
 
-    return BOUNCE_UNHANDLED;
+    fail (UNHANDLED);
 }
 
 

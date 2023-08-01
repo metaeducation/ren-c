@@ -662,7 +662,7 @@ REBTYPE(Decimal)
         break;
     }
 
-    return BOUNCE_UNHANDLED;
+    fail (UNHANDLED);
 
 setDec:
     if (not FINITE(d1))

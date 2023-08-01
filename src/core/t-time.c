@@ -712,5 +712,5 @@ REBTYPE(Time)
         }
     }
 
-    return BOUNCE_UNHANDLED;
+    fail (UNHANDLED);
 }

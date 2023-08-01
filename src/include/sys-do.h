@@ -120,11 +120,7 @@ inline static Bounce Run_Generic_Dispatch_Core(
         break;
     }
 
-    Bounce r = hook(f, verb);  // Note that QUOTED! has its own hook & handling
-    if (r == BOUNCE_UNHANDLED)  // convenience for error handling
-        fail (Error_Cannot_Use(verb, first_arg));
-
-    return r;
+    return hook(f, verb);  // Note QUOTED! has its own hook & handling;
 }
 
 

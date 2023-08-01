@@ -241,7 +241,7 @@ Bounce Series_Common_Action_Maybe_Unhandled(
         break;
     }
 
-    return BOUNCE_UNHANDLED;  // not a common operation, uhandled...not Lib(NULL)!
+    fail (UNHANDLED);
 }
 
 

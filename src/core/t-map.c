@@ -791,15 +791,9 @@ REBTYPE(Map)
 
         return nullptr; }  // no upstream changes needed for REBMAP* reference
 
-      return_unhandled:
       default:
-        //
-        // If you put a `break` here (or other variants, like trying to `goto`
-        // the below lines) GCC 2.95 on Haiku will warn "control reaches end
-        // of non-void function" warning.  This contortion works.  :-/
-        //
-        return BOUNCE_UNHANDLED;
+        break;
     }
 
-    goto return_unhandled;
+    fail (UNHANDLED);
 }

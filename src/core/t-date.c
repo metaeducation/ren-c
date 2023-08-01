@@ -1158,7 +1158,7 @@ REBTYPE(Date)
         }
     }
 
-    return BOUNCE_UNHANDLED;
+    fail (UNHANDLED);
 
   fix_time:
     Normalize_Time(&secs, &day);

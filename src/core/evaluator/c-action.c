@@ -1072,9 +1072,6 @@ Bounce Action_Executor(Frame(*) f)
         STATE = ST_ACTION_TYPECHECKING;
         goto typecheck_then_dispatch;
 
-      case C_UNHANDLED:  // was used e.g. by `#a + 1`, should we revive this?
-        fail ("Not handled (review instances of this error!)");
-
       default:
         assert(!"Invalid pseudotype returned from action dispatcher");
     }

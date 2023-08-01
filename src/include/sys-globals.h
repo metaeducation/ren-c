@@ -112,7 +112,6 @@ PVAR REBVAL PG_None_Cell;
 PVAR REBVAL PG_R_Redo_Unchecked;
 PVAR REBVAL PG_R_Redo_Checked;
 PVAR REBVAL PG_R_Thrown;
-PVAR REBVAL PG_R_Unhandled;
 PVAR REBVAL PG_R_Continuation;
 PVAR REBVAL PG_R_Delegation;
 PVAR REBVAL PG_R_Suspend;

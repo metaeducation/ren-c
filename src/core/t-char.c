@@ -350,7 +350,7 @@ REBTYPE(Issue)
           default:
             break;
         }
-        return BOUNCE_UNHANDLED; }
+        fail (PARAM(property)); }
 
       case SYM_COPY:  // since copy result is also immutable, Move() suffices
         return Copy_Cell(OUT, issue);
@@ -363,7 +363,7 @@ REBTYPE(Issue)
     // implementation, and will not work if the ISSUE! length is > 1.
     //
     if (not IS_CHAR(issue))
-        return BOUNCE_UNHANDLED;
+        fail ("Math operations only usable on single-character ISSUE!");
 
     // Don't use a Codepoint for chr, because it does signed math and then will
     // detect overflow.
@@ -378,7 +378,7 @@ REBTYPE(Issue)
 
         Cell(const*) picker = ARG(picker);
         if (not IS_INTEGER(picker))
-            return BOUNCE_UNHANDLED;
+            fail (PARAM(picker));
 
         REBI64 n = VAL_INT64(picker);
         if (n <= 0)
@@ -487,7 +487,7 @@ REBTYPE(Issue)
         break; }
 
       default:
-        return BOUNCE_UNHANDLED;
+        fail (UNHANDLED);
     }
 
     if (chr < 0)

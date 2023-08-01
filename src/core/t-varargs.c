@@ -534,7 +534,7 @@ REBTYPE(Varargs)
         break;
     }
 
-    return BOUNCE_UNHANDLED;
+    fail (UNHANDLED);
 }
 
 

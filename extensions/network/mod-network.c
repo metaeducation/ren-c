@@ -1011,7 +1011,7 @@ static Bounce Transport_Actor(
         break;
     }
 
-    return BOUNCE_UNHANDLED;
+    fail (UNHANDLED);
 }
 
 

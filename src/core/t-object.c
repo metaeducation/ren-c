@@ -1181,7 +1181,7 @@ REBTYPE(Context)
 
         ENSURE_MUTABLE(context);
         if (not IS_OBJECT(context) and not IS_MODULE(context))
-            return BOUNCE_UNHANDLED;
+            fail ("APPEND only works on OBJECT! and MODULE! contexts");
 
         if (Is_Splice(arg)) {
             mutable_QUOTE_BYTE(arg) = UNQUOTED_1;  // make plain group
@@ -1267,7 +1267,7 @@ REBTYPE(Context)
         break;
     }
 
-    return BOUNCE_UNHANDLED;
+    fail (UNHANDLED);
 }
 
 

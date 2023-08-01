@@ -470,5 +470,5 @@ REBTYPE(Integer)
         break;
     }
 
-    return BOUNCE_UNHANDLED;
+    fail (UNHANDLED);
 }

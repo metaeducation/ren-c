@@ -205,11 +205,6 @@ inline static bool Is_Throwing(Frame(*) frame_) {
     cast(Bounce, &PG_R_Redo_Checked)
 
 
-#define C_UNHANDLED 'U'
-#define BOUNCE_UNHANDLED \
-    cast(Bounce, &PG_R_Unhandled)
-
-
 // Continuations are used to mitigate the problems that occur when the C stack
 // contains a mirror of frames corresponding to the frames for each stack
 // level.  Avoiding this means that routines that would be conceived as doing

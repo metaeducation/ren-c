@@ -790,7 +790,7 @@ REBTYPE(String)
             c = Int32(setval);
         }
         else  // CHANGE is a better route for splicing/removal/etc.
-            return BOUNCE_UNHANDLED;
+            fail (PARAM(value));
 
         if (c == 0)
             fail (Error_Illegal_Zero_Byte_Raw());
@@ -1218,7 +1218,7 @@ REBTYPE(String)
         }
     }
 
-    return BOUNCE_UNHANDLED;
+    fail (UNHANDLED);
 }
 
 

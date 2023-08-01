@@ -311,7 +311,7 @@ REBTYPE(Sequence)
                 break;
 
             default:
-                return BOUNCE_UNHANDLED;
+                fail (UNHANDLED);
             }
 
             if (v > 255)
@@ -427,7 +427,7 @@ REBTYPE(Sequence)
         break;
     }
 
-    return BOUNCE_UNHANDLED;
+    fail (UNHANDLED);
 }
 
 

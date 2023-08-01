@@ -593,6 +593,15 @@ inline static Frame(*) Prep_Frame_Core(
     #define UNMETA(v)   Native_Unmeta_Result(frame_, (v))
     #define BRANCHED(v) Native_Branched_Result(frame_, (v))
 
+    // `fail (UNHANDLED)` is a shorthand for something that's written often
+    // enough that it seems worthwhile.
+    //
+    // Note: being able to just say `fail (UNHANDLED)` would be nice, but the
+    // fail macro does capturing of __LINE__ and __FILE__ and is too complex
+    // to use such tricks.
+    //
+    #define UNHANDLED   Error_Cannot_Use(verb, D_ARG(1))
+
     #define BASELINE   (&frame_->baseline)
 #endif
 

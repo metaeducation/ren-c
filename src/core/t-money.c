@@ -305,5 +305,5 @@ REBTYPE(Money)
         break;
     }
 
-    return BOUNCE_UNHANDLED;
+    fail (UNHANDLED);
 }
