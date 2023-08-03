@@ -23,7 +23,7 @@ switch2: func [
             condition: between <here> any [
                 ['| (more: true)]
                 ['=> (more: false)]
-                [<end> return (unmeta result')]
+                [<end> accept (unmeta result')]
             ]
 
             any [
