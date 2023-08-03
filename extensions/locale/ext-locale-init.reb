@@ -464,7 +464,7 @@ if 'Windows <> first system.platform [
         letter: charset [#"a" - #"z" #"A" - #"Z"]
         parse env-lang [
             lang: across some letter
-            opt [#"_" territory: across some letter]
+            try [#"_" territory: across some letter]
             to <end>
         ] else [
             print ["Malformatted LANG environment variable:" env-lang]

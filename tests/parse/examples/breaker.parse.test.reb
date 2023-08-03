@@ -4,10 +4,10 @@
     (did breaker: func [return: [block!] text [text!]] [
         let capturing
         let inner
-        return parse text [collect opt some [
+        return parse text [collect try some [
             not <end>
             (capturing: false)
-            keep opt between <here> ["$(" (capturing: true) | <end>]
+            keep try between <here> ["$(" (capturing: true) | <end>]
             :(if capturing '[
                 inner: between <here> ")"
                 keep (as word! inner)

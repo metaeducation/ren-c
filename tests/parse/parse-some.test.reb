@@ -5,13 +5,13 @@
 (
     x: ~
     did all [
-        "a" == parse "aaa" [x: opt some "b", some "a"]
+        "a" == parse "aaa" [x: try some "b", some "a"]
         x = null
     ]
 )(
     x: ~
     did all [
-        "a" == parse "aaa" [x: opt some "a"]
+        "a" == parse "aaa" [x: try some "a"]
         x = "a"
     ]
 )
@@ -108,43 +108,43 @@
 (#c == parse "baaac" [<any> some [#a] #c])
 
 
-; OPT SOME or MAYBE SOME tests (which used to be WHILE)
+; TRY SOME or MAYBE SOME tests (which used to be WHILE)
 
 (
     x: ~
     did all [
-        "a" == parse "aaa" [x: opt some "b", opt some "a"]
+        "a" == parse "aaa" [x: try some "b", try some "a"]
         null? x
     ]
 )
 
 [
-    ('~[']~ = ^ parse [] [maybe some 'a])
-    ('~[']~ = ^(parse [] [maybe some 'b]))
-    ('a == parse [a] [maybe some 'a])
-    (didn't parse [a] [maybe some 'b])
-    ('a == parse [a] [maybe some 'b <any>])
-    ('b == parse [a b a b] [maybe some ['b | 'a]])
+    ('~[~null~]~ = ^ parse [] [try some 'a])
+    ('~[~null~]~ = ^(parse [] [try some 'b]))
+    ('a == parse [a] [try some 'a])
+    (didn't parse [a] [try some 'b])
+    ('a == parse [a] [try some 'b <any>])
+    ('b == parse [a b a b] [try some ['b | 'a]])
 ]
 
 [(
     x: ~
     did all [
-        "a" == parse "aaa" [x: maybe some "a"]
+        "a" == parse "aaa" [x: try some "a"]
         x = "a"
     ]
 )]
 
 [
-    ('~[~null~]~ = ^ parse "a" ["a" opt some "b"])
-    ('~[~null~]~ = ^ parse "a" ["a" [opt "b"]])
-    (nihil' = parse "a" ["a" ^[maybe some "b"]])
+    ('~[~null~]~ = ^ parse "a" ["a" try some "b"])
+    ('~[~null~]~ = ^ parse "a" ["a" [try "b"]])
+    ('~null~ = parse "a" ["a" ^[try some "b"]])
 ]
 
 ; This test works in Rebol2 even if it starts `i: 0`, presumably a bug.
 (
     i: 1
-    parse "a" [maybe some [
+    parse "a" [try some [
         (
             i: i + 1
             j: if i = 2 [[<end> <any>]]
@@ -157,51 +157,51 @@
 [#1268 (
     i: 0
     <infinite?> = catch [
-        parse "a" [maybe some [(i: i + 1, if i > 100 [throw <infinite?>])]]
+        parse "a" [try some [(i: i + 1, if i > 100 [throw <infinite?>])]]
     ]
 )(
     i: 0
     did all [
-        didn't parse "a" [maybe some [(i: i + 1, j: if i = 2 [[false]]) j]]
+        didn't parse "a" [try some [(i: i + 1, j: if i = 2 [[false]]) j]]
         i == 2
     ]
 )]
 
 
 [
-    ('~[']~ = ^ parse "" [maybe some #a])
-    ('~[']~ = ^ parse "" [maybe some #b])
-    (#a == parse "a" [maybe some #a])
-    (didn't parse "a" [maybe some #b])
-    (#a == parse "a" [maybe some #b <any>])
-    (#b == parse "abab" [maybe some [#b | #a]])
+    ('~[~null~]~ = ^ parse "" [try some #a])
+    ('~[~null~]~ = ^ parse "" [try some #b])
+    (#a == parse "a" [try some #a])
+    (didn't parse "a" [try some #b])
+    (#a == parse "a" [try some #b <any>])
+    (#b == parse "abab" [try some [#b | #a]])
 ]
 
-; WHILE tests from %parse-test.red, rethought as MAYBE SOME or OPT SOME
+; WHILE tests from %parse-test.red, rethought as TRY SOME
 [
     (
         x: blank
         true
     )
     (#{06} == parse #{020406} [
-        maybe some [x: across <any> :(even? first x)]
+        try some [x: across <any> :(even? first x)]
     ])
     (didn't parse #{01} [x: across <any> :(even? first x)])
     (didn't parse #{0105} [some [x: across <any> :(even? first x)]])
-    ('~[']~ = ^ parse #{} [maybe some #{0A}])
-    ('~[']~ = ^ parse #{} [maybe some #{0B}])
-    (#{0A} == parse #{0A} [maybe some #{0A}])
-    (didn't parse #{0A} [maybe some #{0B}])
-    (10 == parse #{0A} [maybe some #{0B} <any>])
-    (#{0B} == parse #{0A0B0A0B} [maybe some [#{0B} | #{0A}]])
+    ('~[~null~]~ = ^ parse #{} [try some #{0A}])
+    ('~[~null~]~ = ^ parse #{} [try some #{0B}])
+    (#{0A} == parse #{0A} [try some #{0A}])
+    (didn't parse #{0A} [try some #{0B}])
+    (10 == parse #{0A} [try some #{0B} <any>])
+    (#{0B} == parse #{0A0B0A0B} [try some [#{0B} | #{0A}]])
 
     ~???~ !! (parse #{} [ahead])
 
-    (didn't parse #{0A} [maybe some #{0A} #{0A}])
+    (didn't parse #{0A} [try some #{0A} #{0A}])
     (1 == parse #{01} [ahead [#{0A} | #"^A"] <any>])
 ]
 
 [
-    ('a == parse [a a] [maybe some 'a])
-    ('a == parse [a a] [maybe some 'a, maybe some 'b])
+    ('a == parse [a a] [try some 'a])
+    ('~[~null~]~ == ^ parse [a a] [try some 'a, try some 'b])
 ]

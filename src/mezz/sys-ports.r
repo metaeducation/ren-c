@@ -145,12 +145,12 @@ make-port*: function [
         ; Required scheme name, but "//" is optional (without it is a "URN")
         ; https://en.wikipedia.org/wiki/Uniform_Resource_Name
         ;
-        emit scheme: [as/ (word!) across some scheme-char] ":" opt "//"
+        emit scheme: [as/ (word!) across some scheme-char] ":" try "//"
 
         ; optional user [:pass] @
         [
             emit user: across some user-char
-            emit pass: opt [":", across to "@"]
+            emit pass: try [":", across to "@"]
             "@"
             |
             emit user: (null)
@@ -172,23 +172,23 @@ make-port*: function [
                 ; IP-address style, make a TUPLE!
                 ;
                 to/ (tuple!) across [
-                    opt some [some digit "."], some digit
+                    try some [some digit "."], some digit
                     not host-char  ; don't match "1.2.3.4a" as IP address
                 ]
                     |
                 ; Ordinary "foo.bar.com" style, just give it back as TEXT!
                 ;
-                across opt some host-char
+                across try some host-char
             ]
-            emit port-id: opt [":", to/ (integer!) across digits]
+            emit port-id: try [":", to/ (integer!) across digits]
             |
             emit host: (null)
             emit port-id: (~no-host~)  ; is this better than NULL?
         ]
 
-        emit path: opt [across some path-char]  ; optional path
+        emit path: try [across some path-char]  ; optional path
 
-        emit tag: opt ["#", across to <end>]  ; optional bookmark ("tag")
+        emit tag: try ["#", across to <end>]  ; optional bookmark ("tag")
 
         emit ref: as/ (url!) <input>  ; alway save original URL for reference
     ]

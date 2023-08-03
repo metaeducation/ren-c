@@ -211,9 +211,9 @@ export analyse: context [
                 ]
 
                 parse3 proto-parser.data [
-                    opt 'export
+                    try 'export
                     set name: set-word! (name: to-word name)
-                    opt 'enfix
+                    try 'enfix
                     [
                         'native
                         | 'native/combinator
@@ -340,13 +340,13 @@ export analyse: context [
 
             last-pos: <here>
 
-            opt [
+            try [
                 bol: <here>
                 skip (line: 1)
                 seek bol
             ]
 
-            opt some [
+            try some [
                 to stop-char
                 position: <here>
                 [
@@ -443,7 +443,7 @@ c-parser-extension: context bind bind [
 
     lbrace: [and punctuator "{"]
     rbrace: [and punctuator "}"]
-    braced: [lbrace opt some [braced | not rbrace skip] rbrace]
+    braced: [lbrace try some [braced | not rbrace skip] rbrace]
 
     function-spacing-rule: (
         bind/copy standard.function-spacing c-lexical.grammar
@@ -453,7 +453,7 @@ c-parser-extension: context bind bind [
 
     append grammar.format-func-section spread [
         last-func-end: <here>
-        opt some [nl | eol | wsp]
+        try some [nl | eol | wsp]
     ]
 
     append grammar.other-segment '(

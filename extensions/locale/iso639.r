@@ -24,11 +24,11 @@ parse3 cnt [
         ; "terminological code"
         ; https://en.wikipedia.org/wiki/ISO_639-2#B_and_T_codes
         ;
-        "|" opt [3 lower]
+        "|" try [3 lower]
 
         ; 2-letter code
         ;
-        "|" opt [
+        "|" try [
             copy code-2 2 lower
         ]
 

@@ -521,6 +521,9 @@ parse2: func3 [series rules] [
 parse: does [
     fail "Only PARSE2 is available in bootstrap executable, not PARSE"
 ]
+parse3: does [
+    fail "Only PARSE2 is available in bootstrap executable, not PARSE3"
+]
 
 ; Enfixedness was conceived as not a property of an action itself, but of a
 ; particular relationship between a word and an action.  While this had some

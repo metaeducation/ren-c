@@ -172,11 +172,11 @@ run-test-cluster: func [
         ;        2 = 1 + 1
         ;     )]
         ;
-        opt some [url! | issue!]
+        try some [url! | issue!]
 
         (expected-id: null)  ; default expects a true result, not error w/id
 
-        opt [
+        try [
             expected-id: quasi! [(expected-id: unquasi expected-id)
                 '!! ahead group!
                 | (fail "QUASI! must be followed by !! and a GROUP!")
@@ -200,7 +200,7 @@ process-tests: function [
     handler [activation!]
 ][
     parse3 test-sources [
-        opt some [
+        try some [
             set flags: block! set value: block! (
                 handler flags value  ; flags ignored atm
             )
@@ -313,8 +313,8 @@ export do-recover: func [
     else [
         parse3 read log-file [
             (last-vector: null)
-            opt some [
-                opt some whitespace
+            try some [
+                try some whitespace
                 [
                     position: <here>
 
@@ -331,7 +331,7 @@ export do-recover: func [
                     (dialect-failures: dialect-failures + 1)
                         |
                     copy last-vector ["(" test-source-rule ")"]
-                    opt some whitespace
+                    try some whitespace
                     [
                         <end> (
                             ; crash found
@@ -346,7 +346,7 @@ export do-recover: func [
                                 "succeeded" <end>
                                 (successes: me + 1)
                                     |
-                                "failed" opt ["," to <end>]  ; error msg
+                                "failed" try ["," to <end>]  ; error msg
                                 (test-failures: me + 1)
                                     |
                                 "crashed" <end>

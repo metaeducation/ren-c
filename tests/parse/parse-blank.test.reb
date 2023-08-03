@@ -26,7 +26,7 @@
 
 (didn't parse [x] ['x blank])
 ('_ = parse [x _] ['x _])
-([] == parse [x] [opt blank 'x <end>])
+([] == parse [x] [try blank 'x <end>])
 
 (didn't parse [] [blank blank blank])
 

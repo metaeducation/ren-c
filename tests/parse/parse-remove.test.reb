@@ -149,7 +149,7 @@
 [https://github.com/red/red/issues/748
     (
         txt: "Hello world"
-        #d == parse txt [opt some further some [remove "l" | <any>]]
+        #d == parse txt [try some further some [remove "l" | <any>]]
         did all [
             txt = "Heo word"
             8 = length? txt

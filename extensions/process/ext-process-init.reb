@@ -73,21 +73,21 @@ parse-command-to-argv*: func [
     return: [block!]
     command [text!]
 ][
-    let quoted-shell-item-rule: [  ; Note: OPT because "" is legal as an arg
-        opt some [{\"} | not {"} skip]  ; escaped quotes and nonquotes
+    let quoted-shell-item-rule: [  ; Note: TRY because "" is legal as an arg
+        try some [{\"} | not {"} skip]  ; escaped quotes and nonquotes
     ]
     let unquoted-shell-item-rule: [some [not space skip]]
 
     let result: parse command [
         collect [
-            opt some [
-                opt some space
+            try some [
+                try some space
                 [
                     {"} keep quoted-shell-item-rule {"}
                     | keep unquoted-shell-item-rule
                 ]
             ]
-            opt some space
+            try some space
         ]
     ] else [
         fail [

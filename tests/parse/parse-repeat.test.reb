@@ -78,18 +78,18 @@
 
 ; Opt out completely
 [
-    ("a" == parse "aaaaaaa" [repeat (_) "b", maybe some "a"])
-    ("a" == parse "aaaaaaaaaaaaaaaaaaa" [repeat (_) "b", maybe some "a"])
-    ("a" == parse "aa" [repeat (_) "b", maybe some "a"])
-    ('~[']~ = ^ parse "" [repeat (_) "b", maybe some "a"])
+    ("a" == parse "aaaaaaa" [repeat (_) "b", try some "a"])
+    ("a" == parse "aaaaaaaaaaaaaaaaaaa" [repeat (_) "b", try some "a"])
+    ("a" == parse "aa" [repeat (_) "b", try some "a"])
+    ('~[']~ = ^ parse "" [repeat (_) "b", try some "a"])
 ]
 
 ; Opt out completely, block form
 [
-    ("a" == parse "aaaaaaa" [repeat ([_ _]) "b", maybe some "a"])
-    ("a" == parse "aaaaaaaaaaaaaaaaaaa" [repeat ([_ _]) "b", maybe some "a"])
-    ("a" == parse "aa" [repeat ([_ _]) "b", maybe some "a"])
-    ('~[']~ = ^ parse "" [repeat ([_ _]) "b", maybe some "a"])
+    ("a" == parse "aaaaaaa" [repeat ([_ _]) "b", try some "a"])
+    ("a" == parse "aaaaaaaaaaaaaaaaaaa" [repeat ([_ _]) "b", try some "a"])
+    ("a" == parse "aa" [repeat ([_ _]) "b", try some "a"])
+    ('~[']~ = ^ parse "" [repeat ([_ _]) "b", try some "a"])
 ]
 
 ; Minimum but no maximum

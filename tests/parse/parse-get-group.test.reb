@@ -31,8 +31,8 @@
 ] true)]
 
 [https://github.com/red/red/issues/562
-    (didn't parse [+] [opt some ['+ :(no)]])
-    (didn't parse "+" [opt some [#+ :(no)]])
+    (didn't parse [+] [try some ['+ :(no)]])
+    (didn't parse "+" [try some [#+ :(no)]])
 ]
 
 
@@ -71,7 +71,7 @@
 
 [https://github.com/red/red/issues/563
     (
-        f563: lambda [t [text!]] [did parse t [opt some r]]
+        f563: lambda [t [text!]] [did parse t [try some r]]
 
         r: [#+, :(res: f563 "-", assert [not res], res)]
 
@@ -101,7 +101,7 @@
                     | #"]" :(f x)
                 ]
             ]
-            return "" == parse s [opt some r <end>]
+            return "" == parse s [try some r <end>]
         ]
 
         f "420,]]"

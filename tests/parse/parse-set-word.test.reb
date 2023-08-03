@@ -19,7 +19,7 @@
 )(
     x: ~
     did all [
-        '~[~null~]~ == meta parse [] [x: [opt integer!]]
+        '~[~null~]~ == meta parse [] [x: [try integer!]]
         x = null
     ]
 )(
@@ -31,7 +31,7 @@
 )(
     x: ~
     did all [
-        '~[~null~]~ == meta parse [] [x: opt [integer!]]
+        '~[~null~]~ == meta parse [] [x: try [integer!]]
         x = null
     ]
 )
@@ -45,7 +45,7 @@
 
 
 ; SET-WORD! rules that do not match should not disrupt the variable, but if
-; OPT is used with it then that indicates it should be set to NULL.
+; TRY is used with it then that indicates it should be set to NULL.
 [(
     t: "t"
     i: "i"
@@ -58,7 +58,7 @@
     t: "t"
     i: "i"
     did all [
-        <foo> == parse [<foo>] [i: opt integer!, t: tag!]
+        <foo> == parse [<foo>] [i: try integer!, t: tag!]
         i = null
         t = <foo>
     ]

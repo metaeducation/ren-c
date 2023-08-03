@@ -75,10 +75,10 @@ across
 collect  ; Variant in Red, but Ren-C's acts SET-like, suggested by @rgchris
 keep
 some
-any  ; no longer a parse keyword, use OPT SOME FURTHER for precise meaning
+any  ; no longer a parse keyword, use TRY SOME FURTHER for precise meaning
 further  ; https://forum.rebol.info/t/1593
-opt
-maybe  ; new
+opt  ; replaced by TRY
+try
 not  ; turned to _not_ for SYM__NOT_, see TO-C-NAME for why this is weird
 and  ; turned to _and_ for SYM__AND_, see TO-C-NAME for why this is weird
 ahead  ; Ren-C addition (also in Red)
@@ -88,7 +88,7 @@ change
 if  ; deprecated: https://forum.rebol.info/t/968/7
 fail
 reject
-while  ; no longer supported, use OPT SOME or MAYBE SOME for precise meaning
+while  ; no longer supported, use TRY SOME for precise meaning
 repeat
 limit
 seek  ; Ren-C addition

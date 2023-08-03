@@ -17,7 +17,7 @@
             keep 'false
         ]
         return parse data (compose/deep [
-            opt some [(spread rules)]  ; could also be `opt some [rules]`
+            try some [(spread rules)]  ; could also be `try some [rules]`
         ]) then [
             collect [
                 for-each [key value] counts [

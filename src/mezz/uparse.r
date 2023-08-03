@@ -265,23 +265,6 @@ default-combinators: make map! reduce [
 
     === BASIC KEYWORDS ===
 
-    ; !!! This meaning for MAYBE is questionable as a combinator, but it is
-    ; used in some tests at time of writing.
-    ;
-    'maybe combinator [
-        {If applying parser fails, succeed and vanish; don't advance input}
-        return: "PARSER's result if it succeeds w/non-NULL, otherwise vanish"
-            [<opt> <void> <nihil> any-value!]
-        parser [activation!]
-        <local> result'
-    ][
-        [^result' remainder]: parser input except [
-            remainder: input  ; succeed on parser fail but don't advance input
-            return nihil  ; act invisible
-        ]
-        return unmeta result'  ; return successful parser result
-    ]
-
     'opt combinator [
         {If applying parser fails, succeed and return NULL; don't advance input}
         return: "PARSER's result if it succeeds, otherwise NULL"
@@ -289,11 +272,7 @@ default-combinators: make map! reduce [
         parser [activation!]
         <local> result'
     ][
-        [^result' remainder]: parser input except [
-            remainder: input  ; succeed on parser fail but don't advance input
-            return null
-        ]
-        return unmeta result'  ; return successful parser result
+        fail "OPT combinator replaced in UPARSE by TRY"
     ]
 
     'try combinator [
@@ -367,11 +346,11 @@ default-combinators: make map! reduce [
 
     === LOOPING CONSTRUCT KEYWORDS ===
 
-    ; UPARSE uses SOME as its looping operator, with OPT SOME or MAYBE SOME
-    ; taking the place of both ANY and WHILE.  ANY is reserved for more fitting
+    ; UPARSE uses SOME as a loop operator, with TRY SOME or TRY FURTHER SOME
+    ; taking the place of both ANY and WHILE.  ANY is now used for more fitting
     ; semantics for the word, and WHILE is reclaimed as an arity-2 construct.
     ; The progress requirement that previously made ANY different from WHILE is
-    ; achieved with OPT SOME FURTHER:
+    ; achieved with FURTHER:
     ;
     ; https://forum.rebol.info/t/1540/12
     ;
@@ -1668,7 +1647,7 @@ default-combinators: make map! reduce [
             ]
             issue! [
                 if times' <> meta # [
-                    fail ["REPEAT takes ISSUE! of # to act like MAYBE SOME"]
+                    fail ["REPEAT takes ISSUE! of # to act like TRY SOME"]
                 ]
                 min: 0, max: #
             ]
@@ -2226,7 +2205,7 @@ default-combinators: make map! reduce [
 
     === NEW-STYLE ANY COMBINATOR ===
 
-    ; Historically ANY was a synonym for what is today MAYBE SOME FURTHER.  It
+    ; Historically ANY was a synonym for what is today TRY SOME FURTHER.  It
     ; was seen as a confusing usage of the word ANY given its typical meaning
     ; related to picking a single item from a list of alternatives--not a
     ; looping construct.
@@ -2259,7 +2238,7 @@ default-combinators: make map! reduce [
         ] else [
             fail [
                 "The ANY combinator in UPARSE is not an iterating construct."
-                "Use MAYBE SOME, OPT SOME FURTHER, etc. depending on purpose:"
+                "Use TRY SOME, TRY SOME FURTHER, etc. depending on purpose:"
                 https://forum.rebol.info/t/1572
             ]
         ]

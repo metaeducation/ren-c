@@ -30,7 +30,7 @@
 (
     s: {a}
     did all [
-        null = parse s [opt change "b" ("x")]
+        null = parse s [try change "b" ("x")]
         s = {a}
     ]
 )
@@ -39,7 +39,7 @@
     s: {aba}
     did all [
         '~change~ = ^ parse s [some [
-            opt change "b" ("x")
+            try change "b" ("x")
             elide <any>
         ]]
         s = {axa}

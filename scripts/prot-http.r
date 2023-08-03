@@ -169,12 +169,12 @@ parse-write-dialect: function [
 ][
     spec: port.spec
     parse block [
-        opt ['headers (spec.debug: true)]  ; may leave debug as-is
-        opt ['no-redirect (spec.follow: 'ok)]  ; may leave follow as-is
+        try ['headers (spec.debug: true)]  ; may leave debug as-is
+        try ['no-redirect (spec.follow: 'ok)]  ; may leave follow as-is
         spec.method: [word! | ('post)]
-        opt [spec.path: [file! | url!]]
+        try [spec.path: [file! | url!]]
         spec.headers: [block! | ([])]
-        spec.content: opt [any-string! | binary!]
+        spec.content: try [any-string! | binary!]
         <end>
     ]
 ]

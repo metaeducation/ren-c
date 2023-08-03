@@ -35,5 +35,5 @@
 ; Trying to accept a failing rule is like any other non-match, won't take
 ; the action...
 (
-    "b" = parse "aaabbb" [some "a", opt accept some "c", some "b"]
+    "b" = parse "aaabbb" [some "a", try accept some "c", some "b"]
 )

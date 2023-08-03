@@ -323,17 +323,17 @@ trim: function [
     ; /ALL just removes all whitespace entirely.  No subtlety needed.
     ;
     if all_TRIM [
-        parse3 series [opt some [remove rule | skip | <end> break]]
+        parse3 series [try some [remove rule | skip | <end> break]]
         return series
     ]
 
     case/all [
         head_TRIM [
-            parse3 series [remove [opt some rule] to <end>]
+            parse3 series [remove [try some rule] to <end>]
         ]
 
         tail_TRIM [
-            parse3 series [opt some [remove [some rule <end>] | skip]]  ; #2289
+            parse3 series [try some [remove [some rule <end>] | skip]]  ; #2289
         ]
     ] then [
         return series
@@ -345,7 +345,7 @@ trim: function [
     ; with leading and trailing whitespace removed.
     ;
     if lines [
-        parse3 series [opt some [change [some rule] (space) skip | skip]]
+        parse3 series [try some [change [some rule] (space) skip | skip]]
         if space = first series [take series]
         if space = last series [take/last series]
         return series
@@ -359,7 +359,7 @@ trim: function [
     if auto [
         parse3* series [
             ; Don't count empty lines, (e.g. trim/auto {^/^/^/    asdf})
-            remove [opt some LF]
+            remove [try some LF]
 
             (indent: 0)
             s: <here>, some rule, e: <here>
@@ -368,14 +368,14 @@ trim: function [
     ]
 
     line-start-rule: compose [
-        remove (if indent '[opt [repeat (indent) rule]] else '[opt some rule])
+        remove (if indent '[try [repeat (indent) rule]] else '[try some rule])
     ]
 
     parse3 series [
         line-start-rule
-        opt some [not <end> [
-            ahead [opt some rule [newline | <end>]]
-            remove [opt some rule]
+        try some [not <end> [
+            ahead [try some rule [newline | <end>]]
+            remove [try some rule]
             newline line-start-rule
                 |
             skip
@@ -386,8 +386,8 @@ trim: function [
     ; in R3-Alpha and Red leaves at most one newline at the end.
     ;
     parse3 series [
-        opt remove [some newline]
-        opt some [newline remove [some newline <end>] | skip]
+        try remove [some newline]
+        try some [newline remove [some newline <end>] | skip]
     ]
 
     return series

@@ -58,7 +58,7 @@
             [ [to (delimiter) remove (delimiter) pos: <here>] ]
         ][
             [
-                to crlf opt some [
+                to crlf try some [
                     ["^M" and not "^/"]
                     to crlf
                 ] (if not keep ['remove]) ["^/" | "^M^/"] pos: <here>

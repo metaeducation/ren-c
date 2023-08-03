@@ -106,7 +106,7 @@ clean-path: func [
     let count: 0
     let part
     parse3 reverse target [
-        opt some [not <end> [
+        try some [not <end> [
             "../"
             (count: me + 1)
             |
@@ -193,8 +193,8 @@ ask: function [
         type-word! [type: question]  ; `ask text!` has no prompt (like INPUT)
         block! [
             parse question [
-                opt prompt: text!
-                opt word: word! (type: ensure type-word! get word)
+                try prompt: text!
+                try word: word! (type: ensure type-word! get word)
             ] else [
                 fail "ASK currently only supports [{Prompt:} type-word!]"
             ]

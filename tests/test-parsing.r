@@ -36,7 +36,7 @@ success: ~
 ; to TRANSCODE to parse that string.
 
 export test-source-rule: [
-    opt some [
+    try some [
         let position: <here>
 
         ["{" | {"}] :(  ; handle string using TRANSCODE, see note
@@ -106,7 +106,7 @@ export collect-tests: function [
     append into clean-path file
 
     append into spread collect [parse3 code [
-        opt some [
+        try some [
             pos: <here>
 
             ; A GROUP! top level in the test file indicates a standalone test.
@@ -177,7 +177,7 @@ export collect-tests: function [
                 keep @collect-tests
                 keep body
             )
-        ]  ; ends OPT SOME
+        ]  ; ends TRY SOME
     ] else [  ; ends PARSE
         append into spread reduce [
             'dialect
@@ -204,8 +204,8 @@ export collect-logs: function [
 
     parse3 log-contents [
         (guard: false)  ; trigger failure by default (may be set to true)
-        opt some [
-            opt some whitespace
+        try some [
+            try some whitespace
             [
                 position: "%"
                 (next-position: transcode/next (the value:) position)
@@ -216,7 +216,7 @@ export collect-logs: function [
                 {"} thru {"}
                     |
                 copy last-vector ["(" test-source-rule ")"]
-                opt some whitespace
+                try some whitespace
                 [
                     <end> (
                         ; crash found

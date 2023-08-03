@@ -241,7 +241,6 @@
 %parse/parse-measure.test.reb
 %parse/parse-meta-xxx.test.reb
 %parse/parse-not.test.reb
-%parse/parse-opt.test.reb
 %parse/parse-path.test.reb
 %parse/parse-phase.test.reb
 %parse/parse-quoted.test.reb
@@ -262,6 +261,7 @@
 %parse/parse-the.test.reb
 %parse/parse-the-xxx.test.reb
 %parse/parse-thru.test.reb
+%parse/parse-try.test.reb
 %parse/parse-to.test.reb
 %parse/parse-void.test.reb
 %parse/parse-word.test.reb

@@ -58,7 +58,7 @@ switch2: func [
         (more: true)
 
         branch: [block! | (fail "Code must be BLOCK! in SWITCH2 (for now)")]
-        maybe some ',  ; skip commas between branch and next condition
+        try some ',  ; skip commas between branch and next condition
 
         any [
             ; If we didn't find a matching condition, skip over this branch.

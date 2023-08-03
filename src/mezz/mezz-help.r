@@ -331,8 +331,8 @@ help: function [
     refinements: ~  ; optional parameters (PARAMETERS OF puts at tail)
 
     parse parameters of :value [
-        args: opt across some [word! | meta-word! | get-word! | lit-word!]
-        refinements: opt across some path!  ; as mentioned, these are at tail
+        args: try across some [word! | meta-word! | get-word! | lit-word!]
+        refinements: try across some path!  ; as mentioned, these are at tail
     ] else [
         fail ["Unknown results in PARAMETERS OF:" mold parameters of :value]
     ]

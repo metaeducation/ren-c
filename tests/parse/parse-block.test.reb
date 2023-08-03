@@ -73,7 +73,7 @@
     (
         x: ~
         did all [
-            '~[~null~]~ == meta parse [1] [x: [integer! opt text!]]
+            '~[~null~]~ == meta parse [1] [x: [integer! try text!]]
             x = null
         ]
     )

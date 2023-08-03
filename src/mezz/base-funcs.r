@@ -103,7 +103,7 @@ func: func* [
     loc: null
     with-return: null
 
-    parse3 spec [opt some [
+    parse3 spec [try some [
         '<none> (append new-spec <none>)
     |
         '<void> (append new-spec <void>)
@@ -161,7 +161,7 @@ func: func* [
         false  ; failing here means rolling over to next rule
     |
         '<local> (append new-spec <local>)
-        opt some [set var: word! set other: opt group! (
+        try some [set var: word! set other: try group! (
             append new-spec var
             append exclusions var
             if other [
@@ -178,7 +178,7 @@ func: func* [
                 copy/deep body
             ]
         )
-        opt some [
+        try some [
             set other: [object! | word! | tuple!] (
                 if not object? other [other: ensure any-context! get other]
                 bind new-body other
@@ -188,7 +188,7 @@ func: func* [
             )
         ]
     |
-        '<with> opt some [
+        '<with> try some [
             set other: [word! | path!] (
                 append exclusions other
 
@@ -207,8 +207,8 @@ func: func* [
                 copy/deep body
             ]
         )
-        maybe some [
-            set var: word! (other: null) maybe set other: group! (
+        try some [
+            set var: word! (other: null) try set other: group! (
                 append exclusions var
                 append statics (as set-word! var)
                 append statics (other else [the ~])
@@ -369,7 +369,7 @@ redescribe: func [
     let param: null
     let note: null
     parse3 spec [
-        opt [
+        try [
             copy description some text! (
                 description: spaced description
                 all [
@@ -387,7 +387,7 @@ redescribe: func [
                 ]
             )
         ]
-        opt some [
+        try some [
             set param: [
                 word! | get-word! | lit-word! | set-word!
                 | ahead path! into [word! blank!]
@@ -400,7 +400,7 @@ redescribe: func [
             ; But if {} is given as the notes, that's seen as a request
             ; to delete a note.
             ;
-            opt [[copy note some text!] (
+            try [[copy note some text!] (
                 note: spaced note
                 on-demand-meta
                 if param = 'return: [

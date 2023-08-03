@@ -20,13 +20,13 @@
     (
         ws: charset " ^-^/^M"
         res: parse html rule: [
-            collect opt some [
+            collect try some [
                 ws
                 |
                 "</" thru ">" stop
                 |
                 "<" name: across to ">" <any>
-                keep (load-value name) opt keep rule
+                keep (load-value name) try keep rule
                 |
                 str: across to "<" keep (str)
             ]
@@ -39,12 +39,12 @@
     (
         ws: charset " ^-^/^M"
         res: parse html rule: [
-            collect opt some [
+            collect try some [
                 ws
                 |
                 "</" thru ">" stop
                 |
-                keep to-word/ [between "<" ">"], opt keep rule
+                keep to-word/ [between "<" ">"], try keep rule
                 |
                 keep across to "<"  ; may be end tag or new start tag
             ]

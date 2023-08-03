@@ -608,13 +608,13 @@ pe-format: context [
             | skip
         ]
         block-rule: [
-            ahead group! into [opt some group-rule]
-            | ahead block! into [opt some block-rule]
+            ahead group! into [try some group-rule]
+            | ahead block! into [try some block-rule]
             | ['copy | 'set] set word word! (find-a-word word)
             | skip
         ]
 
-        parse3 rule [opt some block-rule] else [fail]
+        parse3 rule [try some block-rule] else [fail]
 
         set name make object! append def '~
         return bind rule get name

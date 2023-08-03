@@ -199,7 +199,7 @@ enum parse_flags {
     PF_CHANGE = 1 << 11,
     PF_LOOPING = 1 << 12,
     PF_FURTHER = 1 << 13,  // must advance parse input to count as a match
-    PF_OPT = 1 << 14,  // want NULL (not no-op) if no matches
+    PF_TRY = 1 << 14,  // want NULL (not no-op) if no matches
 
     PF_ONE_RULE = 1 << 15,  // signal to only run one step of the parse
 
@@ -1454,8 +1454,8 @@ DECLARE_NATIVE(subparse)
               case SYM_WHILE:
                 if (not (P_FLAGS & PF_REDBOL)) {
                     fail (
-                        "Please replace PARSE's WHILE with MAYBE SOME -or-"
-                        " OPT SOME--it's being reclaimed as arity-2."
+                        "Please replace PARSE2's WHILE with TRY SOME -or-"
+                        " TRY FURTHER SOME--it's being reclaimed as arity-2."
                         " https://forum.rebol.info/t/1540/12 (or use PARSE2)"
                     );
                 }
@@ -1488,7 +1488,7 @@ DECLARE_NATIVE(subparse)
                     goto run_while_rule;
                 }
                 fail (
-                    "Please replace PARSE's ANY with MAYBE SOME -or- OPT SOME"
+                    "Please replace PARSE's ANY with TRY SOME"
                     " -- it's being reclaimed for a new construct"
                     " https://forum.rebol.info/t/1540/12 (or use PARSE2)"
                 );
@@ -1549,12 +1549,17 @@ DECLARE_NATIVE(subparse)
                 goto pre_rule;
 
               case SYM_OPT:
-                P_FLAGS |= PF_OPT;
-                mincount = 0;
-                FETCH_NEXT_RULE(f);
-                goto pre_rule;
+                if (not (P_FLAGS & PF_REDBOL))
+                    fail ("Please use TRY instead of OPT in PARSE3");
+                goto try_or_opt;
 
-              case SYM_MAYBE:
+              case SYM_TRY:
+                if (P_FLAGS & PF_REDBOL)
+                    fail ("Please use OPT instead of TRY in PARSE2");
+                goto try_or_opt;
+
+              try_or_opt:
+                P_FLAGS |= PF_TRY;
                 mincount = 0;
                 FETCH_NEXT_RULE(f);
                 goto pre_rule;
@@ -2420,7 +2425,7 @@ DECLARE_NATIVE(subparse)
                     // Note: It should be `x: opt group!` but R3-Alpha parse
                     // is hard to get composability on such things.
                     //
-                    if (P_FLAGS & PF_OPT)  // don't just leave alone
+                    if (P_FLAGS & PF_TRY)  // don't just leave alone
                         Init_Nulled(
                             Sink_Word_May_Fail(
                                 set_or_copy_word,

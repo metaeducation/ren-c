@@ -437,12 +437,12 @@
 ; then not count the rule as a match.
 ;
 [
-    (did parse3 "" [opt some further [to <end>]])
+    (did parse3 "" [try some further [to <end>]])
 
-    (didn't parse3 "" [further [opt "a" opt "b"] ("at least one")])
-    (did parse3 "a" [further [opt "a" opt "b"] ("at least 1")])
-    (did parse3 "a" [further [opt "a" opt "b"] ("at least 1")])
-    (did parse3 "ab" [further [opt "a" opt "b"] ("at least 1")])
+    (didn't parse3 "" [further [try "a" try "b"] ("at least one")])
+    (did parse3 "a" [further [try "a" try "b"] ("at least 1")])
+    (did parse3 "a" [further [try "a" try "b"] ("at least 1")])
+    (did parse3 "ab" [further [try "a" try "b"] ("at least 1")])
 ]
 
 [https://github.com/metaeducation/ren-c/issues/1032 (
@@ -472,7 +472,7 @@
             keep 'fail
         ]
         return parse3 data (compose/deep [
-            opt some [(spread rules)]  ; could also be `opt some [rules]`
+            try some [(spread rules)]  ; could also be `try some [rules]`
         ]) then [
             collect [
                 for-each [key value] counts [
@@ -535,7 +535,7 @@
 [(
     x: <before>
     did all [
-        did parse3 [1] [set x opt text! integer!]
+        did parse3 [1] [set x try text! integer!]
         x = null
     ]
 )(
@@ -588,13 +588,13 @@
 
 [#1298 (
     cset: charset [#"^(01)" - #"^(FF)"]
-    did parse3 "a" ["a" opt some cset]
+    did parse3 "a" ["a" try some cset]
 )(
     cset: charset [# - #"^(FE)"]
-    did parse3 "a" ["a" opt some cset]
+    did parse3 "a" ["a" try some cset]
 )(
     cset: charset [# - #"^(FF)"]
-    did parse3 "a" ["a" opt some cset]
+    did parse3 "a" ["a" try some cset]
 )]
 
 [#1282
@@ -618,24 +618,3 @@
         tags = [<def> <ghi>]
     ]
 )]
-
-; MAYBE is like OPT but if used with SET it will not set the variable if there
-; is no match.  The UPARSE implementation is better, but it's mostly just
-; added to PARSE3 in case people don't like replacing their ANY and WHILE
-; with OPT SOME and find MAYBE SOME more palatable.
-[
-    (did all [
-        x: 10
-        did parse3 "" [
-            set x maybe "a"
-        ]
-        x = 10
-    ])
-    (did all [
-        x: 10
-        did parse3 "a" [
-            set x maybe "a"
-        ]
-        x = #a
-    ])
-]
