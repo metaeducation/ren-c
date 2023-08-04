@@ -235,7 +235,7 @@ inline static Array(*) Make_Array_Core_Into(
 }
 
 #define Make_Array_Core(capacity,flags) \
-    Make_Array_Core_Into(Alloc_Series_Node(), (capacity), (flags))
+    Make_Array_Core_Into(Alloc_Stub(), (capacity), (flags))
 
 #define Make_Array(capacity) \
     Make_Array_Core((capacity), ARRAY_MASK_HAS_FILE_LINE)

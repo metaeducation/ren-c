@@ -185,8 +185,8 @@ inline static void *Alloc_Pooled(PoolID pool_id) {
     fail (Error_No_Memory(pool->wide * pool->num_units_per_segment));
 }
 
-#define Alloc_Series_Node() ( \
-    (GC_Ballast -= sizeof(REBSER)) <= 0 ? SET_SIGNAL(SIG_RECYCLE) : NOOP, \
+#define Alloc_Stub() ( \
+    (GC_Ballast -= sizeof(Stub)) <= 0 ? SET_SIGNAL(SIG_RECYCLE) : NOOP, \
     Alloc_Pooled(STUB_POOL))  // won't pass SER() yet, don't cast it
 
 

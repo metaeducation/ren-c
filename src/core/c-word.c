@@ -271,7 +271,7 @@ Symbol(const*) Intern_UTF8_Managed_Core(
   new_interning: {
 
     Binary(*) s = BIN(Make_Series_Into(
-        preallocated ? unwrap(preallocated) : Alloc_Series_Node(),
+        preallocated ? unwrap(preallocated) : Alloc_Stub(),
         size + 1,  // if small, fits in a REBSER node (no data allocation)
         FLAG_FLAVOR(SYMBOL) | SERIES_FLAG_FIXED_SIZE | NODE_FLAG_MANAGED
     ));

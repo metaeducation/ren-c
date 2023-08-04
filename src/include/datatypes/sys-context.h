@@ -691,7 +691,7 @@ inline static Context(*) Steal_Context_Vars(Context(*) c, Node* keysource) {
     // etc.--use constant assignments and only copy the remaining fields.
     //
     Stub* copy = Prep_Stub(
-        Alloc_Series_Node(),  // not preallocated
+        Alloc_Stub(),  // not preallocated
         SERIES_MASK_VARLIST
             | SERIES_FLAG_FIXED_SIZE
     );

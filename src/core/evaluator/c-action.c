@@ -1233,7 +1233,7 @@ void Push_Action(
     assert(f->varlist == nullptr);
 
     Stub* s = Prep_Stub(
-        Alloc_Series_Node(),  // not preallocated
+        Alloc_Stub(),  // not preallocated
         SERIES_MASK_VARLIST
             | SERIES_FLAG_FIXED_SIZE // FRAME!s don't expand ATM
     );
