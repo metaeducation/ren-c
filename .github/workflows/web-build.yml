@@ -94,7 +94,7 @@ jobs:
     #
     # See README: Checkout Action
     #
-    - uses: actions/checkout@v2  # See README: Trusted Actions
+    - uses: actions/checkout@v3  # See README: Trusted Actions
 
 
     # The full commit is passed to make to build into the binary, and the
