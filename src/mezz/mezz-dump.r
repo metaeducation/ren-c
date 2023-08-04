@@ -34,10 +34,10 @@ dump: function [
         do f
     ]
 
-    val-to-text: function [return: [text!] ^val [<opt> any-value!]] [
-        return switch val [
-            void' ["; void"]
-            (matches quasi!) [unspaced [mold val space space "; isotope"]]
+    val-to-text: function [return: [text!] ^val [<opt> <void> any-value!]] [
+        return case [
+            void? val ["; void"]
+            quasi? val [unspaced [mold val space space "; isotope"]]
 
             (elide val: unquote val)
 
