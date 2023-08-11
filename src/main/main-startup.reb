@@ -342,8 +342,8 @@ main-startup: func [
     if defined? 'get-current-exec [
         switch/type system.options.boot: get-current-exec [
             file! []  ; found it
-            null []  ; also okay (not foolproof!)
-            fail
+            null! []  ; also okay (not foolproof!)
+            fail "GET-CURRENT-EXEC returned unexpected datatype"
         ]
     ] else [
         system.options.boot: null

@@ -408,7 +408,7 @@ compile: func [
         switch/type config.librebol-path [
             text! [config.librebol-path: my local-to-file]
             file! []
-            null [
+            null! [
                 fail [
                     {LIBREBOL_INCLUDE_DIR currently must be set either as an}
                     {environment variable or as LIBREBOL-PATH in /OPTIONS so}
