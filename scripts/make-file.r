@@ -67,7 +67,7 @@ embedded-file-slash-error: lambda [item] [
 make-file-block-parts: func [
     return: [block!]
     block [block!]
-    predicate [action!]
+    predicate [activation!]
     <local> last-was-slash item
 ][
     ; Current idea is to analyze for "slash coherence"
@@ -151,7 +151,7 @@ make-file-block-parts: func [
 make-file-tuple-parts: func [
     return: [block!]
     tuple [tuple!]
-    predicate [action!]
+    predicate [activation!]
     <local> text item
 ][
     tuple: as block! tuple
@@ -187,7 +187,7 @@ make-file-tuple-parts: func [
 make-file-path-parts: func [
     return: [block!]
     path [path!]
-    predicate [action!]
+    predicate [activation!]
     <local> item
 ][
     path: as block! path
@@ -242,7 +242,7 @@ make-file: func [
 
     return: [<opt> file!]
     def [<maybe> word! path! tuple! block!]
-    /predicate [action!]
+    /predicate [activation!]
     <local> result
 ][
     predicate: default [:identity]
