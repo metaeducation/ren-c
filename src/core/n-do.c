@@ -877,7 +877,13 @@ DECLARE_NATIVE(apply)
     // We do special handling if we see a /REFINEMENT ... that is taken
     // to mean we are naming the next argument.
 
+  #if !defined(NDEBUG)
+    TRASH_POINTER_IF_DEBUG(param);
+  #endif
+
     if (IS_PATH(at) and IS_REFINEMENT(at)) {
+        STATE = ST_APPLY_LABELED_EVAL_STEP;
+
         Symbol(const*) symbol = VAL_REFINEMENT_SYMBOL(At_Frame(f));
 
         REBLEN index = Find_Symbol_In_Context(frame, symbol, false);
@@ -885,6 +891,7 @@ DECLARE_NATIVE(apply)
             fail (Error_Bad_Parameter_Raw(rebUnrelativize(at)));
 
         var = CTX_VAR(VAL_CONTEXT(frame), index);
+        param = ACT_PARAM(VAL_ACTION(action), index);
 
         if (not Is_None(var))
             fail (Error_Bad_Parameter_Raw(rebUnrelativize(at)));
@@ -899,38 +906,50 @@ DECLARE_NATIVE(apply)
             fail (Error_Need_Non_End_Raw(rebUnrelativize(lookback)));
 
         Init_Integer(ARG(index), index);
-
-        STATE = ST_APPLY_LABELED_EVAL_STEP;
-        Restart_Evaluator_Frame(SUBFRAME);
-        return CATCH_CONTINUE_SUBFRAME(SUBFRAME);
     }
+    else if (IS_TRASH(iterator)) {
+        STATE = ST_APPLY_UNLABELED_EVAL_STEP;
+        param = nullptr;  // throw away result
+    }
+    else {
+        STATE = ST_APPLY_UNLABELED_EVAL_STEP;
 
-    while (not IS_TRASH(iterator)) {
         EVARS *e = VAL_HANDLE_POINTER(EVARS, iterator);
 
-        if (not Did_Advance_Evars(e)) {
-            if (not REF(relax))
-                fail (Error_Apply_Too_Many_Raw());
+        while (true) {
+            if (not Did_Advance_Evars(e)) {
+                if (not REF(relax))
+                    fail (Error_Apply_Too_Many_Raw());
 
-            FREE(EVARS, e);
-            Init_Trash(iterator);
-            break;
-        }
+                FREE(EVARS, e);
+                Init_Trash(iterator);
+                param = nullptr;  // we're throwing away the evaluated product
+                break;
+            }
 
-        if (
-            VAL_PARAM_CLASS(e->param) == PARAM_CLASS_RETURN
-            or VAL_PARAM_CLASS(e->param) == PARAM_CLASS_OUTPUT
-            or GET_PARAM_FLAG(e->param, REFINEMENT)
-            or GET_PARAM_FLAG(e->param, SKIPPABLE)
-        ){
-            Init_None(e->var);  // TBD: RETURN will be a pure local
-            continue;  // skippable only requested by name, see [4]
+            if (
+                VAL_PARAM_CLASS(e->param) == PARAM_CLASS_RETURN
+                or VAL_PARAM_CLASS(e->param) == PARAM_CLASS_OUTPUT
+                or GET_PARAM_FLAG(e->param, REFINEMENT)
+                or GET_PARAM_FLAG(e->param, SKIPPABLE)
+            ){
+                Init_None(e->var);  // TBD: RETURN will be a pure local
+                continue;  // skippable only requested by name, see [4]
+            }
+            if (Is_None(e->var)) {
+                param = e->param;
+                break;
+            }
         }
-        if (Is_None(e->var))
-            break;
     }
 
-    STATE = ST_APPLY_UNLABELED_EVAL_STEP;
+    assert(not IS_POINTER_TRASH_DEBUG(param));  // nullptr means toss result
+
+    if (param and VAL_PARAM_CLASS(param) == PARAM_CLASS_META)
+        Set_Frame_Flag(SUBFRAME, META_RESULT);  // get decayed result otherwise
+    else
+        Clear_Frame_Flag(SUBFRAME, META_RESULT);
+
     Restart_Evaluator_Frame(SUBFRAME);
     return CATCH_CONTINUE_SUBFRAME(SUBFRAME);
 
@@ -954,15 +973,7 @@ DECLARE_NATIVE(apply)
 
 } copy_spare_to_var_in_frame: {  /////////////////////////////////////////////
 
-    if (Is_Void(SPARE)) {
-        if (VAL_PARAM_CLASS(param) == PARAM_CLASS_META)
-            Init_Meta_Of_Void(var);
-        else
-            Init_Heavy_Void(var);
-
-        FRESHEN(SPARE);
-    }
-    else if (  // help convert logic for no-arg refinement, see [5]
+    if (  // help convert logic for no-arg refinement, see [5]
         IS_LOGIC(SPARE)
         and GET_PARAM_FLAG(param, REFINEMENT)
         and Is_Parameter_Unconstrained(param)
@@ -976,8 +987,6 @@ DECLARE_NATIVE(apply)
     }
     else {
         Move_Cell(var, SPARE);
-        if (VAL_PARAM_CLASS(param) == PARAM_CLASS_META)
-            Meta_Quotify(var);
     }
 
     goto handle_next_item;
