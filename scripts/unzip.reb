@@ -377,7 +377,7 @@ unzip: function [
         skip (archive-comment-len)
 
         [<end> | (fail "Extra information at end of ZIP file")]
-    ] else [
+    ] except [
         fail "Malformed end of central directory record"
     ]
 
@@ -472,7 +472,9 @@ unzip: function [
     ; While this is by no means broken up perfectly into subrules, it is
     ; clearer than it was.
     ;
-    parse (skip source central-directory-offset) [
+    parse source [
+        skip (central-directory-offset)
+
         repeat (num-central-entries) [
             ;
             ; Process one central directory entry, extracting its fields
@@ -600,8 +602,8 @@ unzip: function [
         ;
         pos: <here>, (assert [pos = central-end-pos])
 
-        to <end>  ; jump to end so parse succeeds
-    ] else [
+        accept (true)  ; allow parse to succeed even though not at end
+    ] except [
         fail "Malformed Zip Archive"
     ]
 

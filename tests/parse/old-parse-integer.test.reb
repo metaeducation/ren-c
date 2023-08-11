@@ -35,46 +35,46 @@
     (none? parse [] [0 "ignore me"])
     (none? parse [] [0 0 [ignore me]])
     (none? parse [] [0 0 "ignore me"])
-    (didn't parse [x] [0 0 'x])
-    (didn't parse " " [0 0 space])
+    (raised? parse [x] [0 0 'x])
+    (raised? parse " " [0 0 space])
 ]
 
 [https://github.com/red/red/issues/564
-    (didn't parse "a" [0 <any>])
+    (raised? parse "a" [0 <any>])
     (#a == parse "a" [0 <any> #a])
     (
         z: ~
         did all [
-            didn't parse "a" [z: across 0 <any>]
+            raised? parse "a" [z: across 0 <any>]
             z = ""
         ]
     )
 ]
 
 [https://github.com/red/red/issues/564
-    (didn't parse [a] [0 <any>])
+    (raised? parse [a] [0 <any>])
     ('a == parse [a] [0 <any> 'a])
     (
         z: ~
         did all [
-            didn't parse [a] [z: across 0 <any>]
+            raised? parse [a] [z: across 0 <any>]
             z = []
         ]
     )
 ]
 
 [
-    (didn't parse [a a] [1 ['a]])
+    (raised? parse [a a] [1 ['a]])
     ('a == parse [a a] [2 ['a]])
-    (didn't parse [a a] [3 ['a]])
+    (raised? parse [a a] [3 ['a]])
 
-    (didn't parse [a a] [1 'a])
+    (raised? parse [a a] [1 'a])
     ('a == parse [a a] [2 'a])
-    (didn't parse [a a] [3 'a])
-    (didn't parse [a a] [1 1 'a])  ; synonym for [1 [1 'a]] in UPARSE
+    (raised? parse [a a] [3 'a])
+    (raised? parse [a a] [1 1 'a])  ; synonym for [1 [1 'a]] in UPARSE
 ]
 
 [
     ('b == parse [a a b b] [2 'a 2 'b])
-    (didn't parse [a a b b] [2 'a 3 'b])
+    (raised? parse [a a b b] [2 'a 3 'b])
 ]

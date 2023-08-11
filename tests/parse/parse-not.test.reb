@@ -14,8 +14,8 @@
 [#1246
     ("1" == parse "1" [not not "1" "1"])
     ("1" == parse "1" [not [not "1"] "1"])
-    (didn't parse "" [not repeat 0 "a"])
-    (didn't parse "" [not [repeat 0 "a"]])
+    (raised? parse "" [not repeat 0 "a"])
+    (raised? parse "" [not [repeat 0 "a"]])
 ]
 
 [#1240
@@ -25,43 +25,43 @@
 ]
 
 [
-    (didn't parse [] [not <end>])
+    (raised? parse [] [not <end>])
     ('a == parse [a] [not 'b 'a])
-    (didn't parse [a] [not <any>])
-    (didn't parse [a] [not <any> <any>])
+    (raised? parse [a] [not <any>])
+    (raised? parse [a] [not <any> <any>])
     ('a == parse [a] [not ['b] 'a])
     (
         wb: ['b]
         'a == parse [a] [not wb 'a]
     )
-    (didn't parse [a a] [not ['a 'a] to <end>])
+    (raised? parse [a a] [not ['a 'a] to <end>])
     ([] == parse [a a] [not [some 'b] to <end>])
 ]
 
 [
-    (didn't parse "" [not <end>])
+    (raised? parse "" [not <end>])
     (#a == parse "a" [not #b #a])
-    (didn't parse "a" [not <any>])
-    (didn't parse "a" [not <any> <any>])
+    (raised? parse "a" [not <any>])
+    (raised? parse "a" [not <any> <any>])
     (#a == parse "a" [not [#b] #a])
     (
         wb: [#b]
         #a == parse "a" [not wb #a]
     )
-    (didn't parse "aa" [not [#a #a] to <end>])
+    (raised? parse "aa" [not [#a #a] to <end>])
     ("" == parse "aa" [not [some #b] to <end>])
 ]
 
 [
-    (didn't parse #{} [not <end>])
+    (raised? parse #{} [not <end>])
     (#{0A} == parse #{0A} [not #{0B} #{0A}])
-    (didn't parse #{0A} [not <any>])
-    (didn't parse #{0A} [not <any> <any>])
+    (raised? parse #{0A} [not <any>])
+    (raised? parse #{0A} [not <any> <any>])
     (#{0A} == parse #{0A} [not [#{0B}] #{0A}])
     (
         wb: [#b]
         #{0A} == parse #{0A} [not wb #{0A}]
     )
-    (didn't parse #{0A0A} [not [#{0A} #{0A}] to <end>])
+    (raised? parse #{0A0A} [not [#{0A} #{0A}] to <end>])
     (#{} == parse #{0A0A} [not [some #{0B}] to <end>])
 ]

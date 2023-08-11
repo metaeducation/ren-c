@@ -14,7 +14,7 @@
 ; BLOCK! remove tests from %parse-test.red
 [
     ~???~ !! (parse [] [remove])
-    (didn't parse [] [remove <any>])
+    (raised? parse [] [remove <any>])
     (
         blk: [a]
         did all [
@@ -39,7 +39,7 @@
         true
     )
     ~???~ !! (parse "" [remove])
-    (didn't parse "" [remove <any>])
+    (raised? parse "" [remove <any>])
     (
         str: "a"
         did all [
@@ -95,7 +95,7 @@
         true
     )
     ~???~ !! (parse #{} [remove])
-    (didn't parse #{} [remove <any>])
+    (raised? parse #{} [remove <any>])
     (
         bin: #{0A}
         did all [
@@ -170,12 +170,12 @@
 
 [#1244
     (did all [
-        didn't parse a: "12" [remove v: across <any>]
+        raised? parse a: "12" [remove v: across <any>]
         a = "2"
         v = "1"
     ])
     (did all [
-        didn't parse a: "12" [remove [v: across <any>]]
+        raised? parse a: "12" [remove [v: across <any>]]
         a = "2"
         v = "1"
     ])

@@ -4,7 +4,7 @@
 ; This measures the length in series units across a match.
 
 (3 = parse "aaa" [measure some "a"])
-(null = parse "aaa" [measure some "b"])
+(raised? parse "aaa" [measure some "b"])
 
 ; Applying MEASURE to itself should return the same thing (rule still
 ; spans the same amount of input)

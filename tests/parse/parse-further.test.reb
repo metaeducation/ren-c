@@ -6,15 +6,15 @@
 ; but removed input etc. would create an issue.  FURTHER takes the test
 ; for advancement out and makes it usable with any rule.
 
-(null = parse "" [further [try "a" try "b"] ("at least one")])
+(raised? parse "" [further [try "a" try "b"] ("at least one")])
 ("at least 1" = parse "a" [further [try "a" try "b"] ("at least 1")])
 ("at least 1" = parse "a" [further [try "a" try "b"] ("at least 1")])
 ("at least 1" = parse "ab" [further [try "a" try "b"] ("at least 1")])
 
-('~[']~ = ^ parse "" [repeat (#) some further [to <end>]])
+(void? parse "" [repeat (#) some further [to <end>]])
 
 [https://github.com/red/red/issues/3927
-    (didn't parse "bx" [some further [not "b" | <any>]])
+    (raised? parse "bx" [some further [not "b" | <any>]])
 ]
 
 ; Only SOME is needed in Red, but try SOME FURTHER is needed here.  But the

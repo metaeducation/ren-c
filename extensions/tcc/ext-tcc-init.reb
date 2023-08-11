@@ -579,7 +579,7 @@ c99: func [
             )
         ]
 
-        parse/case command [some [rule [some space | <end>]]] else [
+        parse/case command [some [rule [some space | <end>]]] except [
             fail [
                 elide trunc: ~
                 "Could not parse C99 command line at:"
@@ -603,7 +603,7 @@ c99: func [
             ]
             'OBJ [
                 if infile != <multi> [
-                    parse copy infile [to [".c" <end>] change ".c" ".o"] else [
+                    parse copy infile [thru change [".c" <end>] (".o")] except [
                         fail "Input file must end in `.c` for use with -c"
                     ]
                 ]

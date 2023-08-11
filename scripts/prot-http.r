@@ -49,7 +49,7 @@ idate-to-date: lambda [idate [text!]] [
         space
         time: between <here> space
         zone: ["GMT" (copy "+0") | between <here> <end>]
-    ] else [
+    ] except [
         fail ["Invalid idate:" idate]
     ]
     to date! unspaced [day "-" month "-" year "/" time zone]
@@ -271,8 +271,9 @@ check-response: function [
                 |
                 "5" ('server-error)
             ]
-            | ('version-not-supported)
-        ]]
+        ]] except [
+            fail "HTTP Version Not Supported"
+        ]
     ]
 
     if spec.debug = true [

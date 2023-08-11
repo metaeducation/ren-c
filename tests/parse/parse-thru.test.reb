@@ -11,11 +11,11 @@
     ([] == parse [] [thru <end>])
     ('a == parse [a] [thru 'a])
     ([] == parse [a] [thru 'a <end>])
-    (didn't parse [a] [thru 'a <any>])
+    (raised? parse [a] [thru 'a <any>])
     ('b == parse [a b] [thru 'b])
     ('a == parse [a] [thru ['a]])
     ([] == parse [a] [thru ['a] <end>])
-    (didn't parse [a] [thru ['a] <any>])
+    (raised? parse [a] [thru ['a] <any>])
     ('b == parse [a b] [thru ['b]])
 ]
 
@@ -53,7 +53,7 @@
 
 [#1457
     (#a == parse "a" compose [thru (charset "a")])
-    (didn't parse "a" compose [thru (charset "a") <any>])
+    (raised? parse "a" compose [thru (charset "a") <any>])
 ]
 
 [#2141 (
@@ -64,7 +64,7 @@
 ; THRU advances the input position correctly.
 (
     i: 0
-    parse "a." [
+    try parse "a." [
         some [thru "a" (i: i + 1 j: if i > 1 [<end> <any>]) j]
     ]
     i == 1
@@ -105,12 +105,12 @@
     ("" == parse "" [thru <end>])
     (#a == parse "a" [thru #a])
     ("" == parse "a" [thru #a <end>])
-    (didn't parse "a" [thru #a <any>])
+    (raised? parse "a" [thru #a <any>])
     (#b == parse "ab" [thru #a <any>])
     (#a == parse "aaba" [<any> thru #a repeat 2 <any>])
     (#a == parse "a" [thru [#a]])
     ("" == parse "a" [thru [#a] <end>])
-    (didn't parse "a" [thru [#a] <any>])
+    (raised? parse "a" [thru [#a] <any>])
     (#b == parse "ab" [thru [#a] <any>])
     (#a == parse "aaba" [<any> thru [#a] repeat 2 <any>])
     (#c == parse "zzabc" [thru [#c | #b | #a] repeat 2 <any>])
@@ -136,12 +136,12 @@
     (#{} == parse #{} [thru <end>])
     (#{0A} == parse #{0A} [thru #{0A}])
     (#{} == parse #{0A} [thru #{0A} <end>])
-    (didn't parse #{0A} [thru #{0A} <any>])
+    (raised? parse #{0A} [thru #{0A} <any>])
     (11 == parse #{0A0B} [thru #{0A} <any>])
     (10 == parse #{0A0A0B0A} [<any> thru #{0A} repeat 2 <any>])
     (#{0A} == parse #{0A} [thru [#{0A}]])
     (#{} == parse #{0A} [thru [#{0A}] <end>])
-    (didn't parse #{0A} [thru [#{0A}] <any>])
+    (raised? parse #{0A} [thru [#{0A}] <any>])
     (11 == parse #{0A0B} [thru [#{0A}] <any>])
     (10 == parse #{0A0A0B0A} [<any> thru [#{0A}] repeat 2 <any>])
     (12 == parse #{99990A0B0C} [thru [#"^L" | #{0B} | #{0A}] repeat 2 <any>])

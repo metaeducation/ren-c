@@ -70,10 +70,10 @@
 
 ; Conventional ranges
 [
-    (didn't parse "a" [repeat ([2 3]) "a"])
+    (raised? parse "a" [repeat ([2 3]) "a"])
     ("a" == parse "aa" [repeat ([2 3]) "a"])
     ("a" == parse "aaa" [repeat ([2 3]) "a"])
-    (didn't parse "aaaa" [repeat ([2 3]) "a"])
+    (raised? parse "aaaa" [repeat ([2 3]) "a"])
 ]
 
 ; Opt out completely
@@ -81,7 +81,7 @@
     ("a" == parse "aaaaaaa" [repeat (_) "b", try some "a"])
     ("a" == parse "aaaaaaaaaaaaaaaaaaa" [repeat (_) "b", try some "a"])
     ("a" == parse "aa" [repeat (_) "b", try some "a"])
-    ('~[']~ = ^ parse "" [repeat (_) "b", try some "a"])
+    (null = parse "" [repeat (_) "b", try some "a"])
 ]
 
 ; Opt out completely, block form
@@ -89,23 +89,23 @@
     ("a" == parse "aaaaaaa" [repeat ([_ _]) "b", try some "a"])
     ("a" == parse "aaaaaaaaaaaaaaaaaaa" [repeat ([_ _]) "b", try some "a"])
     ("a" == parse "aa" [repeat ([_ _]) "b", try some "a"])
-    ('~[']~ = ^ parse "" [repeat ([_ _]) "b", try some "a"])
+    (null = parse "" [repeat ([_ _]) "b", try some "a"])
 ]
 
 ; Minimum but no maximum
 [
     ("a" == parse "aaaaaaa" [repeat ([3 #]) "a"])
     ("a" == parse "aaaaaaaaaaaaaaaaaaa" [repeat ([3 #]) "a"])
-    (didn't parse "aa" [repeat ([3 #]) "a"])
-    (didn't parse "" [repeat ([3 #]) "a"])
+    (raised? parse "aa" [repeat ([3 #]) "a"])
+    (raised? parse "" [repeat ([3 #]) "a"])
 ]
 
 ; Opt out of maximum (e.g. min max equivalence)
 [
     ("a" == parse "aaa" [repeat ([3 _]) "a"])
-    (didn't parse "aaaaaaaaaaaaaaaaaaa" [repeat ([3 _]) "a"])
-    (didn't parse "aa" [repeat ([3 _]) "a"])
-    (didn't parse "" [repeat ([3 _]) "a"])
+    (raised? parse "aaaaaaaaaaaaaaaaaaa" [repeat ([3 _]) "a"])
+    (raised? parse "aa" [repeat ([3 _]) "a"])
+    (raised? parse "" [repeat ([3 _]) "a"])
 ]
 
 ; No minimum or maximum (MAYBE SOME equivalent), just using #
@@ -113,7 +113,7 @@
     ("a" == parse "aaaaaaa" [repeat (#) "a"])
     ("a" == parse "aaaaaaaaaaaaaaaaaaa" [repeat (#) "a"])
     ("a" == parse "aa" [repeat (#) "a"])
-    ('~[']~ = ^ parse "" [repeat (#) "a"])
+    (void? parse "" [repeat (#) "a"])
 ]
 
 ; No minimum or maximum (MAYBE SOME equivalent), block form
@@ -121,5 +121,5 @@
     ("a" == parse "aaaaaaa" [repeat ([_ #]) "a"])
     ("a" == parse "aaaaaaaaaaaaaaaaaaa" [repeat ([_ #]) "a"])
     ("a" == parse "aa" [repeat ([_ #]) "a"])
-    ('~[']~ = ^ parse "" [repeat ([_ #]) "a"])
+    (void? parse "" [repeat ([_ #]) "a"])
 ]

@@ -80,24 +80,24 @@
 
 [
     ('a == parse [a a] [some ['a]])
-    (didn't parse [a a] [some ['a] 'b])
+    (raised? parse [a a] [some ['a] 'b])
     ('a == parse [a a b a b b b a] [some [<any>]])
     ('a == parse [a a b a b b b a] [some ['a | 'b]])
-    (didn't parse [a a b a b b b a] [some ['a | 'c]])
+    (raised? parse [a a b a b b b a] [some ['a | 'c]])
     ('b == parse [a a b b] [some 'a some 'b])
-    (didn't parse [a a b b] [some 'a some 'c])
+    (raised? parse [a a b b] [some 'a some 'c])
     ('c == parse [b a a a c] [<any> some ['a] 'c])
 ]
 
 [
     (#a == parse "aa" [some [#a]])
-    (didn't parse "aa" [some [#a] #b])
+    (raised? parse "aa" [some [#a] #b])
     (#a == parse "aababbba" [some [<any>]])
     ("a" == parse "aababbba" [some ["a" | "b"]])
-    (didn't parse "aababbba" [some ["a" | #c]])
+    (raised? parse "aababbba" [some ["a" | #c]])
 
     ("b" == parse "aabb" [some #a some "b"])
-    (didn't parse "aabb" [some "a" some #c])
+    (raised? parse "aabb" [some "a" some #c])
 ]
 
 [https://github.com/red/red/issues/3108
@@ -119,10 +119,10 @@
 )
 
 [
-    ('~[~null~]~ = ^ parse [] [try some 'a])
-    ('~[~null~]~ = ^(parse [] [try some 'b]))
+    (null = parse [] [try some 'a])
+    (null = parse [] [try some 'b])
     ('a == parse [a] [try some 'a])
-    (didn't parse [a] [try some 'b])
+    (raised? parse [a] [try some 'b])
     ('a == parse [a] [try some 'b <any>])
     ('b == parse [a b a b] [try some ['b | 'a]])
 ]
@@ -136,15 +136,15 @@
 )]
 
 [
-    ('~[~null~]~ = ^ parse "a" ["a" try some "b"])
-    ('~[~null~]~ = ^ parse "a" ["a" [try "b"]])
+    (null = parse "a" ["a" try some "b"])
+    (null = parse "a" ["a" [try "b"]])
     ('~null~ = parse "a" ["a" ^[try some "b"]])
 ]
 
 ; This test works in Rebol2 even if it starts `i: 0`, presumably a bug.
 (
     i: 1
-    parse "a" [try some [
+    try parse "a" [try some [
         (
             i: i + 1
             j: if i = 2 [[<end> <any>]]
@@ -162,17 +162,17 @@
 )(
     i: 0
     did all [
-        didn't parse "a" [try some [(i: i + 1, j: if i = 2 [[false]]) j]]
+        raised? parse "a" [try some [(i: i + 1, j: if i = 2 [[false]]) j]]
         i == 2
     ]
 )]
 
 
 [
-    ('~[~null~]~ = ^ parse "" [try some #a])
-    ('~[~null~]~ = ^ parse "" [try some #b])
+    (null = parse "" [try some #a])
+    (null = parse "" [try some #b])
     (#a == parse "a" [try some #a])
-    (didn't parse "a" [try some #b])
+    (raised? parse "a" [try some #b])
     (#a == parse "a" [try some #b <any>])
     (#b == parse "abab" [try some [#b | #a]])
 ]
@@ -186,22 +186,20 @@
     (#{06} == parse #{020406} [
         try some [x: across <any> :(even? first x)]
     ])
-    (didn't parse #{01} [x: across <any> :(even? first x)])
-    (didn't parse #{0105} [some [x: across <any> :(even? first x)]])
-    ('~[~null~]~ = ^ parse #{} [try some #{0A}])
-    ('~[~null~]~ = ^ parse #{} [try some #{0B}])
+    (raised? parse #{01} [x: across <any> :(even? first x)])
+    (raised? parse #{0105} [some [x: across <any> :(even? first x)]])
+    (null = parse #{} [try some #{0A}])
+    (null = parse #{} [try some #{0B}])
     (#{0A} == parse #{0A} [try some #{0A}])
-    (didn't parse #{0A} [try some #{0B}])
+    (raised? parse #{0A} [try some #{0B}])
     (10 == parse #{0A} [try some #{0B} <any>])
     (#{0B} == parse #{0A0B0A0B} [try some [#{0B} | #{0A}]])
 
-    ~???~ !! (parse #{} [ahead])
-
-    (didn't parse #{0A} [try some #{0A} #{0A}])
+    (raised? parse #{0A} [try some #{0A} #{0A}])
     (1 == parse #{01} [ahead [#{0A} | #"^A"] <any>])
 ]
 
 [
     ('a == parse [a a] [try some 'a])
-    ('~[~null~]~ == ^ parse [a a] [try some 'a, try some 'b])
+    (null == parse [a a] [try some 'a, try some 'b])
 ]

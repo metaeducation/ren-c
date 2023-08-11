@@ -16,6 +16,6 @@
 ]
 
 [#1238
-    (null = parse "ab" [ahead "ab" "ac"])
-    (null = parse "ac" [ahead "ab" "ac"])
+    (raised? parse "ab" [ahead "ab" "ac"])
+    (raised? parse "ac" [ahead "ab" "ac"])
 ]

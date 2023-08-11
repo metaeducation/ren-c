@@ -5,11 +5,11 @@
 
 ; General BINARY! matching
 [
-    ('~[']~ = ^ parse #{} [])
+    (void? parse #{} [])
 
     (#{0A} == parse #{0A} [#{0A}])
     (#"^/" == parse #{0A} [#"^/"])
-    (didn't parse #{0A} [#{0B}])
+    (raised? parse #{0A} [#{0B}])
     (#{0B} == parse #{0A0B} [#{0A} #{0B}])
     (#{0A0B} == parse #{0A0B} [#{0A0B}])
     (#{0A} == parse #{0A} [[#{0A}]])
@@ -17,9 +17,9 @@
     (#{0B} == parse #{0A0B} [#{0A} [#{0B}]])
     (#{0B} == parse #{0A0B} [[#{0A}] [#{0B}]])
     (#{0A} == parse #{0A} [#{0B} | #{0A}])
-    (didn't parse #{0A0B} [#{0B} | #{0A}])
+    (raised? parse #{0A0B} [#{0B} | #{0A}])
     (#{0A} == parse #{0A} [[#{0B} | #{0A}]])
-    (didn't parse #{0A0B} [[#{0B} | #{0A}]])
+    (raised? parse #{0A0B} [[#{0B} | #{0A}]])
     (#{0B} == parse #{0A0B} [[#{0A} | #{0B}] [#{0B} | #{0A}]])
     (
         res: 0
@@ -38,7 +38,7 @@
     (
         res: 0
         did all [
-            didn't parse #{0A} [#{0B} (res: 1)]
+            raised? parse #{0A} [#{0B} (res: 1)]
             res = 0
         ]
     )
@@ -59,7 +59,7 @@
     (
         res: 0
         did all [
-            didn't parse #{0A} [[#{0B} (res: 1)]]
+            raised? parse #{0A} [[#{0B} (res: 1)]]
             res = 0
         ]
     )
@@ -75,51 +75,51 @@
     (
         res: 0
         did all [
-            didn't parse #{0A0B} [#{0A} (res: 1) [#{0C} (res: 2) | #{0D} (res: 3)]]
+            raised? parse #{0A0B} [#{0A} (res: 1) [#{0C} (res: 2) | #{0D} (res: 3)]]
             res = 1
         ]
     )
-    (didn't parse #{0A0A} [repeat 1 [#{0A}]])
+    (raised? parse #{0A0A} [repeat 1 [#{0A}]])
     (#{0A} == parse #{0A0A} [repeat 2 [#{0A}]])
-    (didn't parse #{0A0A} [repeat 3 [#{0A}]])
+    (raised? parse #{0A0A} [repeat 3 [#{0A}]])
 
-    (didn't parse #{0A0A} [repeat ([1 1]) [#{0A}]])
+    (raised? parse #{0A0A} [repeat ([1 1]) [#{0A}]])
     (#{0A} == parse #{0A0A} [repeat ([1 2]) [#{0A}]])
     (#{0A} == parse #{0A0A} [repeat ([2 2]) [#{0A}]])
     (#{0A} == parse #{0A0A} [repeat ([2 3]) [#{0A}]])
-    (didn't parse #{0A0A} [repeat ([3 4]) [#{0A}]])
-    (didn't parse #{0A0A} [repeat ([1 1]) #{0A}])
+    (raised? parse #{0A0A} [repeat ([3 4]) [#{0A}]])
+    (raised? parse #{0A0A} [repeat ([1 1]) #{0A}])
     (#{0A} == parse #{0A0A} [repeat ([1 2]) #{0A}])
     (#{0A} == parse #{0A0A} [repeat ([2 2]) #{0A}])
     (#{0A} == parse #{0A0A} [repeat ([2 3]) #{0A}])
-    (didn't parse #{0A0A} [repeat ([3 4]) #{0A}])
-    (didn't parse #{0A0A} [repeat ([1 1]) <any>])
+    (raised? parse #{0A0A} [repeat ([3 4]) #{0A}])
+    (raised? parse #{0A0A} [repeat ([1 1]) <any>])
     (10 == parse #{0A0A} [repeat ([1 2]) <any>])
     (10 == parse #{0A0A} [repeat ([2 2]) <any>])
     (10 == parse #{0A0A} [repeat ([2 3]) <any>])
-    (didn't parse #{0A0A} [repeat ([3 4]) <any>])
+    (raised? parse #{0A0A} [repeat ([3 4]) <any>])
 
-    (didn't parse #{0A0A} [repeat 1 #{0A}])
+    (raised? parse #{0A0A} [repeat 1 #{0A}])
     (#{0A} == parse #{0A0A} [repeat 2 #{0A}])
-    (didn't parse #{0A0A} [repeat 3 #{0A}])
-    (didn't parse #{0A0A} [repeat 1 <any>])
+    (raised? parse #{0A0A} [repeat 3 #{0A}])
+    (raised? parse #{0A0A} [repeat 1 <any>])
     (10 == parse #{0A0A} [repeat 2 <any>])
-    (didn't parse #{0A0A} [repeat 3 <any>])
+    (raised? parse #{0A0A} [repeat 3 <any>])
     (10 == parse #{0A} [<any>])
     (11 == parse #{0A0B} [<any> <any>])
     (11 == parse #{0A0B} [<any> [<any>]])
     (11 == parse #{0A0B} [[<any>] [<any>]])
     (#{0A} == parse #{0A0A} [some [#{0A}]])
-    (didn't parse #{0A0A} [some [#{0A}] #{0B}])
+    (raised? parse #{0A0A} [some [#{0A}] #{0B}])
     (10 == parse #{0A0A0B0A0B0B0B0A} [some [<any>]])
     (#{0A} == parse #{0A0A0B0A0B0B0B0A} [some [#{0A} | #{0B}]])
-    (didn't parse #{0A0A0B0A0B0B0B0A} [some [#{0A} | #"^L"]])
+    (raised? parse #{0A0A0B0A0B0B0B0A} [some [#{0A} | #"^L"]])
     (#{0A} == parse #{0A0A} [some [#{0A}]])
-    ('~[~null~]~ = ^ parse #{0A0A} [some [#{0A}] try some [#{0B}]])
+    (null = parse #{0A0A} [some [#{0A}] try some [#{0B}]])
     (#{0B} == parse #{0A0A0B0B} [repeat 2 #{0A} repeat 2 #{0B}])
-    (didn't parse #{0A0A0B0B} [repeat 2 #{0A} repeat 3 #{0B}])
+    (raised? parse #{0A0A0B0B} [repeat 2 #{0A} repeat 3 #{0B}])
     (#{0B} == parse #{0A0A0B0B} [some #{0A} some #{0B}])
-    (didn't parse #{0A0A0B0B} [some #{0A} some #"^L"])
+    (raised? parse #{0A0A0B0B} [some #{0A} some #"^L"])
     (#"^L" == parse #{0B0A0A0A0C} [<any> some [#{0A}] #"^L"])
 ]
 
@@ -163,7 +163,7 @@
     (
         res: '~before~
         did all [
-            didn't parse #{0A0A} [res: repeat 3 #{0A}]
+            raised? parse #{0A0A} [res: repeat 3 #{0A}]
             res = '~before~
         ]
     )
@@ -208,7 +208,7 @@
     (
         res: '~before~
         did all [
-            didn't parse #{0A} [res: [#"^L" | #{0B}]]
+            raised? parse #{0A} [res: [#"^L" | #{0B}]]
             res = '~before~
         ]
     )

@@ -466,7 +466,7 @@ if 'Windows <> first system.platform [
             lang: across some letter
             try [#"_" territory: across some letter]
             to <end>
-        ] else [
+        ] except [
             print ["Malformatted LANG environment variable:" env-lang]
             return null
         ]

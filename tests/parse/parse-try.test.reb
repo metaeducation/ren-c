@@ -10,8 +10,8 @@
 ; the word in Parsec.
 
 [
-    ('~[~null~]~ == meta parse [] [try blank])
-    ('~[~null~]~ == meta parse [] [try 'a])
+    (null == parse [] [try blank])
+    (null == parse [] [try 'a])
     ('a == parse [a] [try 'a])
     ('a == parse [a] [try 'b 'a])
     ('a == parse [a] [try ['a]])
@@ -24,8 +24,8 @@
 ]
 
 [
-    ('~[~null~]~ == meta parse "" [try blank])
-    ('~[~null~]~ == meta parse "" [try #a])
+    (null == parse "" [try blank])
+    (null == parse "" [try #a])
     (#a == parse "a" [try #a])
     (#a == parse "a" [try #b #a])
     (#a == parse "a" [try [#a]])
@@ -38,8 +38,8 @@
 ]
 
 [
-    ('~[~null~]~ == meta parse #{} [try blank])
-    ('~[~null~]~ == meta parse #{} [try #{0A}])
+    (null == parse #{} [try blank])
+    (null == parse #{} [try #{0A}])
     (#{0A} == parse #{0A} [try #{0A}])
     (#{0A} == parse #{0A} [try #{0B} #{0A}])
     (#{0A} == parse #{0A} [try [#{0A}]])

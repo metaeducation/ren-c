@@ -2902,16 +2902,16 @@ parse*: func [
 ]
 
 parse: (comment [redescribe [  ; redescribe not working at the moment (?)
-    {Process input in the parse dialect, pure NULL on failure}
+    {Process input in the parse dialect, definitional error on failure}
 ] ]
     enclose :parse* func [f] [
-        let [^synthesized' pending]: do f except [
-            return null
+        let [^synthesized' pending]: do f except e -> [
+            return raise e
         ]
         if not empty-or-null? pending [
             fail "PARSE completed, but pending array was not empty"
         ]
-        return heavy unmeta synthesized'
+        return unmeta synthesized'
     ]
 )
 

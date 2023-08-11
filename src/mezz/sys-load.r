@@ -343,34 +343,32 @@ adjust-url-for-raw: func [
 ][
     let text: to text! url  ; URL! may become immutable, try thinking ahead
 
-    parse text [
+    try parse text [
         "http" try "s" "://gitlab.com/"
         thru "/"  ; user name
         thru "/"  ; repository name
         try "-/"  ; mystery thing (see remarks on CORSify-gitlab-port)
         change "blob/" ("raw/")
-        to <end>
-    ] then [
-        return as url! text  ; The port will CORSIFY at a lower level
+
+        (return as url! text)  ; The port will CORSIFY at a lower level
     ]
 
     ; Adjust a decorated GitHub UI to https://raw.githubusercontent.com
     let start
-    parse text [
+    try parse text [
         "http" try "s" "://github.com/"
         start: <here>
         thru "/"  ; user name
         thru "/"  ; repository name
         change "blob/" ("")  ; GitHub puts the "raw" in the subdomain name
-        to <end>
-    ] then [
-        return as url! unspaced [
+
+        (return as url! unspaced [
             https://raw.githubusercontent.com/ start
-        ]
+        ])
     ]
 
     ; Adjust a Github Gist URL to https://gist.github.com/.../raw/
-    parse text [
+    try parse text [
         "http" try "s" "://gist.github.com/"
         start: <here>
         thru "/"  ; user name
@@ -381,10 +379,10 @@ adjust-url-for-raw: func [
             to <end>
         ]
         insert ("/raw/")
-    ] then [
-        return as url! unspaced [
+
+        (return as url! unspaced [
             https://gist.githubusercontent.com/ start
-        ]
+        ])
     ]
 
     return null

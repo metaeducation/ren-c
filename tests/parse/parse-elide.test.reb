@@ -8,7 +8,7 @@
 (
     j: ~
     did all [
-        null = parse "b" [[(1000 + 20) elide (j: 304)]]
+        raised? parse "b" [[(1000 + 20) elide (j: 304)]]
         j = 304
     ]
 )
@@ -25,4 +25,4 @@
 
 ; ELIDE doesn't elide failure...just the result on success.
 ;
-(didn't parse "a" [elide "b"])
+(raised? parse "a" [elide "b"])

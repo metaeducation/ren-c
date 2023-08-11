@@ -19,19 +19,19 @@
 )(
     x: ~
     did all [
-        '~[~null~]~ == meta parse [] [x: [try integer!]]
+        null == parse [] [x: [try integer!]]
         x = null
     ]
 )(
     x: <before>
     did all [
-        didn't parse [] [x: [integer!]]
+        raised? parse [] [x: [integer!]]
         x = <before>
     ]
 )(
     x: ~
     did all [
-        '~[~null~]~ == meta parse [] [x: try [integer!]]
+        null == parse [] [x: try [integer!]]
         x = null
     ]
 )

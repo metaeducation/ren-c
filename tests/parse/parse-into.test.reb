@@ -11,15 +11,15 @@
     ; the default behavior that functions which do not support NIHIL returns
     ; will react by producing a NONE when passed a NIHIL.
     ;
-    ('~ = ^ parse [[]] [subparse any-series! []])
+    (none? parse [[]] [subparse any-series! []])
 
     ('a == parse [[a]] [subparse any-series! ['a]])
     ('c == parse [b [a] c] ['b subparse any-series! ['a] 'c])
     (#a == parse ["a"] [subparse any-series! [#a]])
     ('c == parse [b "a" c] ['b subparse any-series! ["a"] 'c])
     (#a == parse [["a"]] [subparse block! [subparse any-series! [#a]]])
-    (didn't parse [[a]] [subparse any-series! ['a 'b]])
-    (didn't parse [[a]] [subparse any-series! [some 'b]])
+    (raised? parse [[a]] [subparse any-series! ['a 'b]])
+    (raised? parse [[a]] [subparse any-series! [some 'b]])
     ([a] == parse [[a]] [subparse any-series! ['a 'b] | block!])
 ]
 
@@ -30,7 +30,7 @@
 ; have to be put into blocks as often.
 [
     ("a" = parse ["aaaa"] [subparse text! some repeat 2 "a"])
-    (null = parse ["aaaa"] [subparse text! some repeat 3 "a"])
+    (raised? parse ["aaaa"] [subparse text! some repeat 3 "a"])
 ]
 
 
@@ -72,11 +72,11 @@
         subparse [between "b" "b"] [some "a" <end>] to <end>
     ]
 )(
-    didn't parse "baaabccc" [
+    raised? parse "baaabccc" [
         subparse [between "b" "b"] ["a" <end>], to <end>
     ]
 )(
-    didn't parse "baaabccc" [subparse [between "b" "b"] ["a"], to <end>]
+    raised? parse "baaabccc" [subparse [between "b" "b"] ["a"], to <end>]
 )(
     "" == parse "baaabccc" [
         subparse [between "b" "b"] ["a" to <end>], "c", to <end>

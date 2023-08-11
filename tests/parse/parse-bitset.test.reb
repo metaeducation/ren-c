@@ -12,7 +12,7 @@
     count-up n 512 [
         if n = 1 [continue]
 
-        if didn't parse (append copy "" codepoint-to-char n - 1) [
+        if not try parse (append copy "" codepoint-to-char n - 1) [
             c: any-char <end>
         ][
             fail "Parse didn't work"
@@ -31,11 +31,11 @@
         wbs2: reduce wbs
         true
     )
-    (didn't parse #{0A0B0C} [some bs])
-    (didn't parse #{010203} [some bs])
+    (raised? parse #{0A0B0C} [some bs])
+    (raised? parse #{010203} [some bs])
     (9 == parse #{070809} [some bs])
-    (didn't parse #{0A0B0C} [bs bs bs])
-    (didn't parse #{010203} [bs bs bs])
+    (raised? parse #{0A0B0C} [bs bs bs])
+    (raised? parse #{010203} [bs bs bs])
     (9 == parse #{070809} [bs bs bs])
     (
         digit: charset [0 - 9]
@@ -55,21 +55,21 @@
         true
     )
     (12 == parse #{0A0B0C} [some bs])
-    (didn't parse #{010203} [some bs])
+    (raised? parse #{010203} [some bs])
     (12 == parse #{0A0B0C} [some [bs]])
-    (didn't parse #{010203} [some [bs]])
+    (raised? parse #{010203} [some [bs]])
     (12 == parse #{0A0B0C} [some wbs])
-    (didn't parse #{010203} [some wbs])
+    (raised? parse #{010203} [some wbs])
     (12 == parse #{0A0B0C} [some wbs2])
-    (didn't parse #{010203} [some wbs2])
+    (raised? parse #{010203} [some wbs2])
     (12 == parse #{0A0B0C} [bs bs bs])
-    (didn't parse #{010203} [bs bs bs])
+    (raised? parse #{010203} [bs bs bs])
     (12 == parse #{0A0B0C} [[bs] [bs] [bs]])
-    (didn't parse #{010203} [[bs] [bs] [bs]])
+    (raised? parse #{010203} [[bs] [bs] [bs]])
     (12 == parse #{0A0B0C} [wbs wbs wbs])
-    (didn't parse #{010203} [wbs wbs wbs])
+    (raised? parse #{010203} [wbs wbs wbs])
     (12 == parse #{0A0B0C} [wbs2 wbs2 wbs2])
-    (didn't parse #{010203} [wbs2 wbs2 wbs2])
+    (raised? parse #{010203} [wbs2 wbs2 wbs2])
 ]
 
 [#753
@@ -82,19 +82,19 @@
     )
     ("c" == parse "a b c" rls)
     ("c" == parse "a b c" rla)
-    (didn't parse "a b" rls)
-    (didn't parse "a b" rla)
+    (raised? parse "a b" rls)
+    (raised? parse "a b" rla)
 ]
 
 [#1298 (
     cset: charset [#"^(01)" - #"^(FF)"]
-    "a" = parse "a" ["a" try some cset]
+    "a" = parse "a" ["a" elide try some cset]
 )(
     cset: charset [# - #"^(FE)"]
-    '~[~null~]~ = ^ parse "a" ["a" try some cset]
+    null = parse "a" ["a" try some cset]
 )(
     cset: charset [# - #"^(FF)"]
-    "a" = parse "a" ["a" try some cset]
+    "a" = parse "a" ["a" elide try some cset]
 )]
 
 [
@@ -105,22 +105,22 @@
         true
     )
     (#c == parse "abc" [some bs])
-    (didn't parse "123" [some bs])
-    (didn't parse "ABC" [some bs])
+    (raised? parse "123" [some bs])
+    (raised? parse "ABC" [some bs])
     (#c == parse "abc" [some [bs]])
-    (didn't parse "123" [some [bs]])
+    (raised? parse "123" [some [bs]])
     (#c == parse "abc" [some wbs])
-    (didn't parse "123" [some wbs])
+    (raised? parse "123" [some wbs])
     (#c == parse "abc" [some wbs2])
-    (didn't parse "123" [some wbs2])
+    (raised? parse "123" [some wbs2])
     (#c == parse "abc" [bs bs bs])
-    (didn't parse "123" [bs bs bs])
+    (raised? parse "123" [bs bs bs])
     (#c == parse "abc" [[bs] [bs] [bs]])
-    (didn't parse "123" [[bs] [bs] [bs]])
+    (raised? parse "123" [[bs] [bs] [bs]])
     (#c == parse "abc" [wbs wbs wbs])
-    (didn't parse "123" [wbs wbs wbs])
+    (raised? parse "123" [wbs wbs wbs])
     (#c == parse "abc" [wbs2 wbs2 wbs2])
-    (didn't parse "123" [wbs2 wbs2 wbs2])
+    (raised? parse "123" [wbs2 wbs2 wbs2])
 ]
 
 [
@@ -130,13 +130,13 @@
         wbs2: reduce wbs
         true
     )
-    (didn't parse "abc" [some bs])
+    (raised? parse "abc" [some bs])
     (#C == parse "ABC" [some bs])
-    (didn't parse "123" [some bs])
+    (raised? parse "123" [some bs])
     (#9 == parse "789" [some bs])
-    (didn't parse "abc" [bs bs bs])
+    (raised? parse "abc" [bs bs bs])
     (#C == parse "ABC" [bs bs bs])
-    (didn't parse "123" [bs bs bs])
+    (raised? parse "123" [bs bs bs])
     (#9 == parse "789" [bs bs bs])
     (
         digit: charset "0123456789"

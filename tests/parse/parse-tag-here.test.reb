@@ -52,7 +52,11 @@
     ]
 )(
     did all [
-        null? res: parse ser: "foo" [pos: <here>, val: across <any>]
+        true = res: parse ser: "foo" [
+            pos: <here>
+            val: across <any>
+            accept (true)
+        ]
         val = "f"
         pos = ser
     ]
@@ -64,7 +68,7 @@
     a-value: first [a/b]
     b-value: ~
     did all [
-        didn't parse as block! a-value [b-value: <here>]
+        raised? parse as block! a-value [b-value: <here>]
         a-value = to path! b-value
     ]
 )
@@ -117,7 +121,7 @@
     (
         p: ~
         did all [
-            didn't parse "ab" [#a p: <here>]
+            raised? parse "ab" [#a p: <here>]
             p = "b"
         ]
     )
@@ -179,7 +183,7 @@
     (
         p: ~
         did all [
-            didn't parse [a b] ['a p: <here>]
+            raised? parse [a b] ['a p: <here>]
             p = [b]
         ]
     )
@@ -241,7 +245,7 @@
     (
         p: ~
         did all [
-            didn't parse #{0A0B} [#{0A} p: <here>]
+            raised? parse #{0A0B} [#{0A} p: <here>]
             p = #{0B}
         ]
     )

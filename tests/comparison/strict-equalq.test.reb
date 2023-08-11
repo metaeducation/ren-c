@@ -118,7 +118,7 @@
 (equal? strict-equal? [] blank strict-equal? blank [])
 [#1068 #1066 (
     a-value: first [()]
-    parse a-value [b-value: <here>, <end>]
+    parse a-value [b-value: <here>, to <end>]
     strict-equal? a-value b-value
 )]
 (not strict-equal? any-number! integer!)

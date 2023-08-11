@@ -27,9 +27,8 @@
     ]
 )
 
-; Successful ACCEPT of NULL will be turned into an isotope.
 (
-    '~[~null~]~ = ^ parse "aaa" [accept (null)]
+    null = parse "aaa" [accept (null)]
 )
 
 ; Trying to accept a failing rule is like any other non-match, won't take

@@ -333,7 +333,7 @@ help: function [
     parse parameters of :value [
         args: try across some [word! | meta-word! | get-word! | lit-word!]
         refinements: try across some path!  ; as mentioned, these are at tail
-    ] else [
+    ] except [
         fail ["Unknown results in PARAMETERS OF:" mold parameters of :value]
     ]
 

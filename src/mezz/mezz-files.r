@@ -195,7 +195,7 @@ ask: function [
             parse question [
                 try prompt: text!
                 try word: word! (type: ensure type-word! get word)
-            ] else [
+            ] except [
                 fail "ASK currently only supports [{Prompt:} type-word!]"
             ]
         ]

@@ -89,7 +89,7 @@ parse-command-to-argv*: func [
             ]
             try some space
         ]
-    ] else [
+    ] except [
         fail [
             "Could not parse command line into argv[] block." LF
             "Use CALL/SHELL to defer the shell to parse, or if you believe"

@@ -19,9 +19,9 @@
     ([] = parse "" [collect []])
     ([] = parse #{} [collect []])
 
-    (null = parse [1] [collect []])
-    (null = parse "1" [collect []])
-    (null = parse #{01} [collect []])
+    (raised? parse [1] [collect []])
+    (raised? parse "1" [collect []])
+    (raised? parse #{01} [collect []])
 
     ([1] = parse [1] [collect [keep <any>]])
     ([#1] = parse "1" [collect [keep <any>]])
@@ -151,7 +151,7 @@
 [
     ([1 2 3] = parse [1 2 3 yay] [collect [some keep integer!] elide word!])
     ('yay = parse [1 2 3 yay] [collect [some keep integer!] word!])
-    (null = parse [1 2 3 <bomb>] [collect [some keep integer!] word!])
+    (raised? parse [1 2 3 <bomb>] [collect [some keep integer!] word!])
     ([1 2 3] = parse [1 2 3 <bomb>] [
         collect [some keep integer!] elide to <end>
     ])
@@ -180,7 +180,7 @@
 )(
     x: <before>
     did all [  ; semi-nonsensical use of BETWEEN just because it takes 2 rules
-        didn't parse "(abc}" [x: collect between "(" keep ")"]
+        raised? parse "(abc}" [x: collect between "(" keep ")"]
         x = <before>
     ]
 )(
@@ -288,7 +288,7 @@
 [
     (did all [
         x: <before>
-        null = parse [1 2] [x: collect [keep integer! keep text!]]
+        raised? parse [1 2] [x: collect [keep integer! keep text!]]
         x = <before>
     ])
 ]
@@ -494,7 +494,7 @@ https://github.com/metaeducation/ren-c/issues/939
 (
     thing: ~
     did all [
-        null = parse "a" [thing: collect [foo: <here>, "a", keep seek (foo)]]
+        raised? parse "a" [thing: collect [foo: <here>, "a", keep seek (foo)]]
         foo = "a"
         thing = ["a"]
     ]

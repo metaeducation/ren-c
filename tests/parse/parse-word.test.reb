@@ -21,7 +21,7 @@
         true
     )
     ('a == parse [a] [wa])
-    (didn't parse [a] [wb])
+    (raised? parse [a] [wb])
     ('b == parse [a b] [wa wb])
     (#b == parse [a #b] [wa wcb])
     ('a == parse [a] [wra])
@@ -30,14 +30,14 @@
     ('b == parse [a b] [wra wrb])
     ("hello" == parse ["hello"] [wh])
     (#a == parse [#a] [wcb | wca])
-    (didn't parse [a b] [wb | wa])
+    (raised? parse [a b] [wb | wa])
     (#a == parse [#a] [[wcb | wca]])
-    (didn't parse [a b] [wrba])
+    (raised? parse [a b] [wrba])
     ('b == parse [a b] [wrab wrba])
     (123 == parse [a 123] [wa integer!])
-    (didn't parse [a 123] [wa char!])
+    (raised? parse [a 123] [wa char!])
     (123 == parse [a 123] [wra [integer!]])
-    (didn't parse [a 123] [wa [char!]])
+    (raised? parse [a 123] [wa [char!]])
     (
         res: ~
         did all [
@@ -48,7 +48,7 @@
     (
         res: '~before~
         did all [
-            didn't parse [a] [wb (res: 1)]
+            raised? parse [a] [wb (res: 1)]
             res = '~before~
         ]
     )
@@ -72,7 +72,7 @@
         res: '~before~
         wres: ['b (res: 1)]
         did all [
-            didn't parse [a] [wres]
+            raised? parse [a] [wres]
             res = '~before~
         ]
     )
@@ -88,7 +88,7 @@
         res: ~
         wres: [char! (res: 2) | text! (res: 3)]
         did all [
-            didn't parse [a 123] [wa (res: 1) wres]
+            raised? parse [a 123] [wa (res: 1) wres]
             res = 1
         ]
     )
@@ -109,7 +109,7 @@
         true
     )
     (#a == parse "a" [wa])
-    (didn't parse "a" [wb])
+    (raised? parse "a" [wb])
     (#b == parse "ab" [wa wb])
     (#a == parse "a" [wra])
     (#b == parse "ab" [wra #b])
@@ -117,9 +117,9 @@
     (#b == parse "ab" [wra wrb])
     ("hello" == parse "hello" [wh])
     (#a == parse "a" [wcb | wca])
-    (didn't parse "ab" [wb | wa])
+    (raised? parse "ab" [wb | wa])
     (#a == parse "a" [[wcb | wca]])
-    (didn't parse "ab" [wrba])
+    (raised? parse "ab" [wrba])
     (#b == parse "ab" [wrab wrba])
     (
         res: ~
@@ -131,7 +131,7 @@
     (
         res: '~before~
         did all [
-            didn't parse "a" [wb (res: 1)]
+            raised? parse "a" [wb (res: 1)]
             res = '~before~
         ]
     )
@@ -155,7 +155,7 @@
         res: '~before~
         wres: [#b (res: 1)]
         did all [
-            didn't parse "a" [wres]
+            raised? parse "a" [wres]
             res = '~before~
         ]
     )
@@ -176,7 +176,7 @@
         true
     )
     (#{0A} == parse #{0A} [wa])
-    (didn't parse #{0A} [wb])
+    (raised? parse #{0A} [wb])
     (#{0B} == parse #{0A0B} [wa wb])
     (#{0A} == parse #{0A} [wra])
     (#{0B} == parse #{0A0B} [wra #{0B}])
@@ -184,9 +184,9 @@
     (#{0B} == parse #{0A0B} [wra wrb])
     (#{88031100} == parse #{88031100} [wh])
     (#{0A} == parse #{0A} [wcb | wca])
-    (didn't parse #{0A0B} [wb | wa])
+    (raised? parse #{0A0B} [wb | wa])
     (#{0A} == parse #{0A} [[wcb | wca]])
-    (didn't parse #{0A0B} [wrba])
+    (raised? parse #{0A0B} [wrba])
     (#{0B} == parse #{0A0B} [wrab wrba])
     (
         res: ~
@@ -198,7 +198,7 @@
     (
         res: '~before~
         did all [
-            didn't parse #{0A} [wb (res: 1)]
+            raised? parse #{0A} [wb (res: 1)]
             res = '~before~
         ]
     )
@@ -222,7 +222,7 @@
         res: '~before~
         wres: [#{0B} (res: 1)]
         did all [
-            didn't parse #{0A} [wres]
+            raised? parse #{0A} [wres]
             res = '~before~
         ]
     )

@@ -30,7 +30,7 @@
 (
     s: {a}
     did all [
-        null = parse s [try change "b" ("x")]
+        raised? parse s [try change "b" ("x")]
         s = {a}
     ]
 )

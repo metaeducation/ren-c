@@ -46,4 +46,4 @@
 ; !!! What to do about out-of-range seeks?  It was tolerated historically but
 ; seems to be a poor practice.
 ;
-(didn't parse "abcd" [seek (128)])
+(raised? parse "abcd" [seek (128)])

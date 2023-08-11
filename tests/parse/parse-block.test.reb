@@ -12,14 +12,14 @@
 
 ; No-op rule of empty block should always match.
 [
-    ('~[']~ = ^ parse "" [])
-    ('~[']~ = ^ parse "" [[]])
-    ('~[']~ = ^ parse "" [[[]]])
+    (void? parse "" [])
+    (void? parse "" [[]])
+    (void? parse "" [[[]]])
 
-    ('~[']~ = ^ parse [] [])
-    ('~[']~ = ^ parse [] [[[]]])
-    (null = parse [x] [])
-    (null = parse [x] [[[]]])
+    (void? parse [] [])
+    (void? parse [] [[[]]])
+    (raised? parse [x] [])
+    (raised? parse [x] [[[]]])
     ('x = parse [x] [[] 'x []])
 ]
 
@@ -48,9 +48,9 @@
 
 ; | means alternate clause
 [
-    (didn't parse [a b] ['b | 'a])
+    (raised? parse [a b] ['b | 'a])
     (#a == parse [#a] [[#b | #a]])
-    (didn't parse [a b] [['b | 'a]])
+    (raised? parse [a b] [['b | 'a]])
     ('b == parse [a b] [['a | 'b] ['b | 'a]])
 ]
 
@@ -73,7 +73,7 @@
     (
         x: ~
         did all [
-            '~[~null~]~ == meta parse [1] [x: [integer! try text!]]
+            null == parse [1] [x: [integer! try text!]]
             x = null
         ]
     )
@@ -81,7 +81,7 @@
     (
         x: ~
         did all [
-            '~[~null~]~ == meta parse [1] [integer! x: [(null)]]
+            null == parse [1] [integer! x: [(null)]]
             x = null
         ]
     )
@@ -95,11 +95,11 @@
 [
     ("c" = parse "ac" ["a" | "b" || "c"])
     ("c" = parse "bc" ["a" | "b" || "c"])
-    (null = parse "xc" ["a" | "b" || "c"])
+    (raised? parse "xc" ["a" | "b" || "c"])
 
     ("c" = parse "ac" ["a" || "b" | "c"])
     ("b" = parse "ab" ["a" || "b" | "c"])
-    (null = parse "ax" ["a" || "b" | "c"])
+    (raised? parse "ax" ["a" || "b" | "c"])
 ]
 
 
@@ -120,12 +120,12 @@
 ; it's this easy to work around.
 [
     (
-        x: parse "aaa" [some "a" (null)] else [fail "Shouldn't be reached"]
+        x: parse "aaa" [some "a" (null)] except [fail "Shouldn't be reached"]
         x = null
     )
     (
         did-not-match: false
-        parse "aaa" [some "b"] else [did-not-match: true]
+        parse "aaa" [some "b"] except [did-not-match: true]
         did-not-match
     )
 ]
@@ -149,7 +149,7 @@
     (
         res: '~before~
         did all [
-            didn't parse [a] [res: ['c | 'b]]
+            raised? parse [a] [res: ['c | 'b]]
             res = '~before~
         ]
     )

@@ -20,7 +20,7 @@
 
 [
     ('a == parse [a] ['a])
-    (didn't parse [a] ['b])
+    (raised? parse [a] ['b])
     ('b == parse [a b] ['a 'b])
     ('a == parse [a] [['a]])
     ('b == parse [a b] [['a] 'b])
@@ -44,7 +44,7 @@
     (
         res: '~before~
         did all [
-            didn't parse [a] ['b (res: 1)]
+            raised? parse [a] ['b (res: 1)]
             res = '~before~
         ]
     )
@@ -65,7 +65,7 @@
     (
         res: '~before~
         did all [
-            didn't parse [a] [['b (res: 1)]]
+            raised? parse [a] [['b (res: 1)]]
             res = '~before~
         ]
     )
@@ -116,7 +116,7 @@
     (
         res: '~before~
         did all [
-            didn't parse [a a] [res: repeat 3 'a]
+            raised? parse [a a] [res: repeat 3 'a]
             res = '~before~
         ]
     )

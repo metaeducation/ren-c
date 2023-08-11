@@ -20,7 +20,7 @@
 ;
 [(comment [
     ("a" == parse "aaa" [:('some) "a"])
-    (didn't parse "aaa" [:(1 + 1) "a"])
+    (raised? parse "aaa" [:(1 + 1) "a"])
     ("a" == parse "aaa" [:(1 + 2) "a"])
     (
         count: 0
@@ -31,8 +31,8 @@
 ] true)]
 
 [https://github.com/red/red/issues/562
-    (didn't parse [+] [try some ['+ :(no)]])
-    (didn't parse "+" [try some [#+ :(no)]])
+    (raised? parse [+] [try some ['+ :(no)]])
+    (raised? parse "+" [try some [#+ :(no)]])
 ]
 
 
@@ -43,11 +43,11 @@
     )
     (
         x: ~
-        didn't parse [1] [x: integer! :(even? x)]
+        raised? parse [1] [x: integer! :(even? x)]
     )
     (
         x: ~
-        didn't parse [1 5] [some [x: integer! :(even? x)]]
+        raised? parse [1 5] [some [x: integer! :(even? x)]]
     )
 ]
 
@@ -60,18 +60,18 @@
     )
     (
         x: ~
-        didn't parse "1" [x: across <any> :(even? load-value x)]
+        raised? parse "1" [x: across <any> :(even? load-value x)]
     )
     (
         x: ~
-        didn't parse "15" [some [x: across <any> :(even? load-value x)]]
+        raised? parse "15" [some [x: across <any> :(even? load-value x)]]
     )
 ]
 
 
 [https://github.com/red/red/issues/563
     (
-        f563: lambda [t [text!]] [did parse t [try some r]]
+        f563: lambda [t [text!]] [did try parse t [try some r]]
 
         r: [#+, :(res: f563 "-", assert [not res], res)]
 

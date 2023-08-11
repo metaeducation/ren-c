@@ -9,29 +9,29 @@
 [
     (NUL = as issue! 0)
 
-    (null = parse "" [to NUL])
-    (null = parse "" [thru NUL])
-    (null = parse "" [to [NUL]])
-    (null = parse "" [thru [NUL]])
+    (raised? parse "" [to NUL])
+    (raised? parse "" [thru NUL])
+    (raised? parse "" [to [NUL]])
+    (raised? parse "" [thru [NUL]])
 
-    (null = parse #{} [to NUL])
-    (null = parse #{} [thru NUL])
-    (null = parse #{} [to [NUL]])
-    (null = parse #{} [thru [NUL]])
+    (raised? parse #{} [to NUL])
+    (raised? parse #{} [thru NUL])
+    (raised? parse #{} [to [NUL]])
+    (raised? parse #{} [thru [NUL]])
 ]
 
 [
     (#a == parse "a" [#a])
-    (didn't parse "a" [#b])
+    (raised? parse "a" [#b])
     (#b == parse "ab" [#a #b])
     (#a == parse "a" [[#a]])
     ("b" == parse "ab" [[#a] "b"])
     (#b == parse "ab" [#a [#b]])
     (#b == parse "ab" [[#a] [#b]])
     (#a == parse "a" [#b | #a])
-    (didn't parse "ab" [#b | "a"])
+    (raised? parse "ab" [#b | "a"])
     (#a == parse "a" [[#b | #a]])
-    (didn't parse "ab" [[#b | "a"]])
+    (raised? parse "ab" [[#b | "a"]])
     (#b == parse "ab" [["a" | #b] [#b | "a"]])
 ]
 
@@ -80,7 +80,7 @@
     (
         res: '~before~
         did all [
-            didn't parse "aa" [res: repeat 3 #a]
+            raised? parse "aa" [res: repeat 3 #a]
             res = '~before~
         ]
     )
@@ -122,7 +122,7 @@
     (
         res: '~before~
         did all [
-            didn't parse "a" [res: [#c | #b]]
+            raised? parse "a" [res: [#c | #b]]
             res = '~before~
         ]
     )
@@ -161,7 +161,7 @@
     (
         res: '~before~
         did all [
-            didn't parse "a" [#b (res: 1)]
+            raised? parse "a" [#b (res: 1)]
             res = '~before~
         ]
     )
@@ -182,7 +182,7 @@
     (
         res: '~before~
         did all [
-            didn't parse "a" [[#b (res: 1)]]
+            raised? parse "a" [[#b (res: 1)]]
             res = '~before~
         ]
     )
@@ -196,30 +196,30 @@
     (
         res: ~
         did all [
-            didn't parse "ab" [#a (res: 1) [#c (res: 2) | #d (res: 3)]]
+            raised? parse "ab" [#a (res: 1) [#c (res: 2) | #d (res: 3)]]
             res = 1
         ]
     )
-    (didn't parse "aa" [repeat 1 [#a]])
+    (raised? parse "aa" [repeat 1 [#a]])
     (#a == parse "aa" [repeat 2 [#a]])
-    (didn't parse "aa" [repeat 3 [#a]])
+    (raised? parse "aa" [repeat 3 [#a]])
 
-    (didn't parse "aa" [repeat ([1 1]) [#a]])
+    (raised? parse "aa" [repeat ([1 1]) [#a]])
     (#a == parse "aa" [repeat ([1 2]) [#a]])
     (#a == parse "aa" [repeat ([2 2]) [#a]])
     (#a == parse "aa" [repeat ([2 3]) [#a]])
-    (didn't parse "aa" [repeat ([3 4]) [#a]])
-    (didn't parse "aa" [repeat ([1 1]) #a])
+    (raised? parse "aa" [repeat ([3 4]) [#a]])
+    (raised? parse "aa" [repeat ([1 1]) #a])
     (#a == parse "aa" [repeat ([1 2]) #a])
     (#a == parse "aa" [repeat ([2 2]) #a])
     (#a == parse "aa" [repeat ([2 3]) #a])
-    (didn't parse "aa" [repeat ([3 4]) #a])
+    (raised? parse "aa" [repeat ([3 4]) #a])
 
-    (didn't parse "aa" [repeat 1 #a])
+    (raised? parse "aa" [repeat 1 #a])
     (#a == parse "aa" [repeat 2 #a])
-    (didn't parse "aa" [repeat 3 #a])
+    (raised? parse "aa" [repeat 3 #a])
     (#a == parse "aa" [some [#a]])
     (void? parse "aa" [some [#a] repeat (#) [#b]])
     ("b" == parse "aabb" [repeat 2 #a, repeat 2 "b"])
-    (didn't parse "aabb" [repeat 2 "a", repeat 3 #b])
+    (raised? parse "aabb" [repeat 2 "a", repeat 3 #b])
 ]

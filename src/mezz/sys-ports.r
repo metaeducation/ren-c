@@ -207,7 +207,7 @@ make-port*: function [
         return: [object!]
         url [url! text!]
     ][
-        return parse as text! url [gather rules] else [
+        return parse as text! url [gather rules] except [
             fail ["Could not decode URL to an object:" url]
         ]
     ]

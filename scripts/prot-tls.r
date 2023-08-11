@@ -472,7 +472,7 @@ client-hello: func [
             pack [version version]
         ]
         block? version [
-            parse version [decimal! decimal!] else [
+            parse version [decimal! decimal!] except [
                 fail "BLOCK! /VERSION must be two DECIMAL! (min ver, max ver)"
             ]
             pack version

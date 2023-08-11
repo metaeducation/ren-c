@@ -77,7 +77,7 @@
     (
         res: '~before~
         did all [
-            didn't parse [a a] [res: across repeat 3 'a]
+            raised? parse [a a] [res: across repeat 3 'a]
             res = '~before~
         ]
     )
@@ -105,7 +105,7 @@
     (
         res: '~before~
         did all [
-            didn't parse [a] [res: across ['c | 'b]]
+            raised? parse [a] [res: across ['c | 'b]]
             res = '~before~
         ]
     )
@@ -139,7 +139,7 @@
     (
         v: '~before~
         did all [
-            didn't parse/part input [v: across repeat 3 <any>] 2
+            raised? parse/part input [v: across repeat 3 <any>] 2
             v = '~before~
         ]
     )
@@ -153,7 +153,7 @@
     (
         v: ~
         did all [
-            didn't parse/part input [v: across repeat 3 <any>] 4
+            raised? parse/part input [v: across repeat 3 <any>] 4
             v = [h 5 #l]
         ]
     )
@@ -174,7 +174,7 @@
     (
         v: '~before~
         did all [
-            didn't parse/part input [v: across to 'o <any>] 3
+            raised? parse/part input [v: across to 'o <any>] 3
             v = '~before~
         ]
     )
@@ -188,7 +188,7 @@
     (
         v: '~before~
         did all [
-            didn't parse/part input2 [v: across repeat 3 'a] 2
+            raised? parse/part input2 [v: across repeat 3 'a] 2
             v = '~before~
         ]
     )
@@ -202,7 +202,7 @@
     (
         v: '~before~
         did all [
-            didn't parse/part input [v: across repeat 3 <any>] skip input 2
+            raised? parse/part input [v: across repeat 3 <any>] skip input 2
             v = '~before~
         ]
     )
@@ -216,7 +216,7 @@
     (
         v: ~
         did all [
-            didn't parse/part input [v: across repeat 3 <any>] skip input 4
+            raised? parse/part input [v: across repeat 3 <any>] skip input 4
             v = [h 5 #l]
         ]
     )
@@ -241,7 +241,7 @@
     (
         v: '~before~
         did all [
-            didn't parse/part input [v: across to 'o <any>] skip input 3
+            raised? parse/part input [v: across to 'o <any>] skip input 3
             v = '~before~
         ]
     )
@@ -255,7 +255,7 @@
     (
         v: '~before~
         did all [
-            didn't parse/part input2 [v: across repeat 3 'a] skip input2 2
+            raised? parse/part input2 [v: across repeat 3 'a] skip input2 2
             v = '~before~
         ]
     )
@@ -304,7 +304,7 @@
     (
         res: '~before~
         did all [
-            didn't parse "aa" [res: across repeat 3 #a]
+            raised? parse "aa" [res: across repeat 3 #a]
             res = '~before~
         ]
     )
@@ -348,7 +348,7 @@
     (
         res: '~before~
         did all [
-            didn't parse "a" [res: across [#c | #b]]
+            raised? parse "a" [res: across [#c | #b]]
             res = '~before~
         ]
     )
@@ -366,7 +366,7 @@
     (
         v: '~before~
         did all [
-            didn't parse/part input [v: across repeat 3 <any>] 2
+            raised? parse/part input [v: across repeat 3 <any>] 2
             v = '~before~
         ]
     )
@@ -380,7 +380,7 @@
     (
         v: ~
         did all [
-            didn't parse/part input [v: across repeat 3 <any>] 4
+            raised? parse/part input [v: across repeat 3 <any>] 4
             v = "hel"
         ]
     )
@@ -401,7 +401,7 @@
     (
         v: '~before~
         did all [
-            didn't parse/part input [v: across to #o <any>] 3
+            raised? parse/part input [v: across to #o <any>] 3
             v = '~before~
         ]
     )
@@ -415,7 +415,7 @@
     (
         v: '~before~
         did all [
-            didn't parse/part input [v: across repeat 3 letters] 2
+            raised? parse/part input [v: across repeat 3 letters] 2
             v = '~before~
         ]
     )
@@ -429,7 +429,7 @@
     (
         v: '~before~
         did all [
-            didn't parse/part input2 [v: across repeat 3 #a] 2
+            raised? parse/part input2 [v: across repeat 3 #a] 2
             v = '~before~
         ]
     )
@@ -443,7 +443,7 @@
     (
         v: '~before~
         did all [
-            didn't parse/part input [v: across repeat 3 <any>] skip input 2
+            raised? parse/part input [v: across repeat 3 <any>] skip input 2
             v = '~before~
         ]
     )
@@ -457,7 +457,7 @@
     (
         v: ~
         did all [
-            didn't parse/part input [v: across repeat 3 <any>] skip input 4
+            raised? parse/part input [v: across repeat 3 <any>] skip input 4
             v = "hel"
         ]
     )
@@ -478,7 +478,7 @@
     (
         v: '~before~
         did all [
-            didn't parse/part input [v: across to #o <any>] skip input 3
+            raised? parse/part input [v: across to #o <any>] skip input 3
             v = '~before~
         ]
     )
@@ -492,7 +492,7 @@
     (
         v: '~before~
         did all [
-            didn't parse/part input [v: across repeat 3 letters] skip input 2
+            raised? parse/part input [v: across repeat 3 letters] skip input 2
             v = '~before~
         ]
     )
@@ -506,7 +506,7 @@
     (
         v: '~before~
         did all [
-            didn't parse/part input2 [v: across repeat 3 #a] skip input2 2
+            raised? parse/part input2 [v: across repeat 3 #a] skip input2 2
             v = '~before~
         ]
     )
@@ -555,7 +555,7 @@
     (
         res: '~before~
         did all [
-            didn't parse #{0A0A} [res: across repeat 3 #{0A}]
+            raised? parse #{0A0A} [res: across repeat 3 #{0A}]
             res = '~before~
         ]
     )
@@ -583,7 +583,7 @@
     (
         res: '~before~
         did all [
-            didn't parse #{0A} [res: across [#"^L" | #{0B}]]
+            raised? parse #{0A} [res: across [#"^L" | #{0B}]]
             res = '~before~
         ]
     )
@@ -617,7 +617,7 @@
     (
         v: '~before~
         did all [
-            didn't parse/part input [v: across repeat 3 <any>] 2
+            raised? parse/part input [v: across repeat 3 <any>] 2
             v = '~before~
         ]
     )
@@ -631,7 +631,7 @@
     (
         v: ~
         did all [
-            didn't parse/part input [v: across repeat 3 <any>] 4
+            raised? parse/part input [v: across repeat 3 <any>] 4
             v = #{DEADBE}
         ]
     )
@@ -652,7 +652,7 @@
     (
         v: '~before~
         did all [
-            didn't parse/part input [v: across to #o <any>] 3
+            raised? parse/part input [v: across to #o <any>] 3
             v = '~before~
         ]
     )
@@ -666,7 +666,7 @@
     (
         v: '~before~
         did all [
-            didn't parse/part input [v: across repeat 3 letters] 2
+            raised? parse/part input [v: across repeat 3 letters] 2
             v = '~before~
         ]
     )
@@ -680,7 +680,7 @@
     (
         v: '~before~
         did all [
-            didn't parse/part input2 [v: across repeat 3 #{0A}] 2
+            raised? parse/part input2 [v: across repeat 3 #{0A}] 2
             v = '~before~
         ]
     )
@@ -694,7 +694,7 @@
     (
         v: '~before~
         did all [
-            didn't parse/part input [v: across skip 3] skip input 2
+            raised? parse/part input [v: across skip 3] skip input 2
             v = '~before~
         ]
     )
@@ -708,7 +708,7 @@
     (
         v: ~
         did all [
-            didn't parse/part input [v: across repeat 3 <any>] skip input 4
+            raised? parse/part input [v: across repeat 3 <any>] skip input 4
             v = #{DEADBE}
         ]
     )
@@ -729,7 +729,7 @@
     (
         v: '~before~
         did all [
-            didn't parse/part input [v: across to #o <any>] skip input 3
+            raised? parse/part input [v: across to #o <any>] skip input 3
             v = '~before~
         ]
     )
@@ -743,7 +743,7 @@
     (
         v: '~before~
         did all [
-            didn't parse/part input [v: across repeat 3 letters] skip input 2
+            raised? parse/part input [v: across repeat 3 letters] skip input 2
             v = '~before~
         ]
     )
@@ -759,7 +759,7 @@
     (
         v: '~before~
         did all [
-            didn't parse/part input2 [v: across repeat 3 #{0A}] skip input2 2
+            raised? parse/part input2 [v: across repeat 3 #{0A}] skip input2 2
             v = '~before~
         ]
     )

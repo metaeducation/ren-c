@@ -16,17 +16,16 @@
             ]
             keep 'false
         ]
-        return parse data (compose/deep [
+        parse data (compose/deep [
             try some [(spread rules)]  ; could also be `try some [rules]`
-        ]) then [
-            collect [
-                for-each [key value] counts [
-                    keep key
-                    keep value
-                ]
+        ]) except [
+            return <outlier>
+        ]
+        return collect [
+            for-each [key value] counts [
+                keep key
+                keep value
             ]
-        ] else [
-            <outlier>
         ]
     ]
     true

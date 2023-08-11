@@ -13,10 +13,10 @@
 )
 (
     sum: ~
-    m: <unchanged> 
+    m: <unchanged>
     word: 'm
     did all [
-        didn't parse [1020] [(sum: 1 + 2, word): text!]
+        raised? parse [1020] [(sum: 1 + 2, word): text!]
         word = 'm
         sum = 3
         m = <unchanged>

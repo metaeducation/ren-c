@@ -11,9 +11,9 @@
         block: [a]
         (tail block) = parse block ['a <end>]
     )
-    (didn't parse [a b] ['a <end>])
+    (raised? parse [a b] ['a <end>])
     ([] == parse [a] [<any> <end>])
-    (didn't parse [a b] [<any> <end>])
+    (raised? parse [a b] [<any> <end>])
     ([] == parse [] [<end>])
     (
         be6: ~
@@ -30,9 +30,9 @@
         text: "a"
         (tail text) == parse text [#a <end>]
     )
-    (didn't parse "ab" [#a <end>])
+    (raised? parse "ab" [#a <end>])
     ("" == parse "a" [<any> <end>])
-    (didn't parse "ab" [<any> <end>])
+    (raised? parse "ab" [<any> <end>])
     ("" == parse "" [<end>])
     (
         be6: ~
@@ -49,9 +49,9 @@
         binary: #{0A}
         (tail binary) == parse #{0A} [#{0A} <end>]
     )
-    (didn't parse #{0A0B} [#{0A} <end>])
+    (raised? parse #{0A0B} [#{0A} <end>])
     (#{} == parse #{0A} [<any> <end>])
-    (didn't parse #{0A0B} [<any> <end>])
+    (raised? parse #{0A0B} [<any> <end>])
     (#{} == parse #{} [<end>])
     (
         be6: ~

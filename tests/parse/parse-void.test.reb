@@ -103,4 +103,4 @@
 ; These are values that do not vanish.
 
 (3 = parse [x] ['x (1 + 2) | 'y (10 + 20)])
-('~[']~ = ^ parse [x] ['x (void) | 'y (10 + 20)])
+(void? parse [x] ['x (void) | 'y (10 + 20)])

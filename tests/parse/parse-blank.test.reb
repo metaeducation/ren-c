@@ -24,27 +24,27 @@
    'a = parse [/a] [refinement-rule]
 )
 
-(didn't parse [x] ['x blank])
+(raised? parse [x] ['x blank])
 ('_ = parse [x _] ['x _])
 ([] == parse [x] [try blank 'x <end>])
 
-(didn't parse [] [blank blank blank])
+(raised? parse [] [blank blank blank])
 
-(didn't parse [x <y> "z"] ['_ '_ '_])
+(raised? parse [x <y> "z"] ['_ '_ '_])
 (_ == parse [_ _ _] ['_ '_ '_])
 (_ == parse [_ _ _] [_ _ _])
 
 [
-    (didn't parse "" [_])
+    (raised? parse "" [_])
     (space = parse " " [_])
-    (didn't parse "" [blank])
+    (raised? parse "" [blank])
     (space = parse " " [blank])
 ]
 
 ; !!! Should matching in a binary against blank return 32 or SPACE?
 [
-    (didn't parse #{} [_])
+    (raised? parse #{} [_])
     (space = parse #{20} [_])
-    (didn't parse #{} [blank])
+    (raised? parse #{} [blank])
     (space = parse #{20} [blank])
 ]
