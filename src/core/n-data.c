@@ -1550,21 +1550,10 @@ DECLARE_NATIVE(try)
     if (Is_Meta_Of_Void(v) or Is_Meta_Of_Null(v))
         return Init_Nulled(OUT);
 
-    if (Is_Meta_Of_Raised(v)) {
-        ERROR_VARS *vars = ERR_VARS(VAL_CONTEXT(v));
-        if (
-            IS_WORD(&vars->id)
-            and VAL_WORD_ID(&vars->id) == SYM_TRY_IF_NULL_MEANT
-        ){
-            return COPY(SPECIFIC(&vars->line + 1));
-        }
-        return RAISE(VAL_CONTEXT(v));
-    }
+    if (Is_Meta_Of_Raised(v))
+        return nullptr;
 
-    Meta_Unquotify(v);
-    Decay_If_Unstable(v);  // !!! this decays isotopes, should it?
-
-    return COPY(v);  // !!! also tolerates other isotopes, should it?
+    return UNMETA(v);  // !!! also tolerates other isotopes, should it?
 }
 
 

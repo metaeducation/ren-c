@@ -5,7 +5,10 @@
 ;
 ; Unlike R3-Alpha, changing the series being parsed is not allowed.
 
-("a" == parse "a" [try seek (null) "a"])
+~???~ !! (parse "a" [seek (null) "a"])  ; null seeks are errors
+
+("a" = parse "a" [seek (void) "a"])  ; void seeks are no-ops
+
 ("b" == parse "aaabbb" [
     "a" pos: <here> repeat 2 "a" seek (pos) repeat 2 "a" repeat 3 "b"
 ])

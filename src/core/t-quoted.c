@@ -828,16 +828,8 @@ DECLARE_NATIVE(maybe)
     if (Is_Nulled(v))
         return VOID;  // main purpose of function: NULL => VOID
 
-    if (Is_Raised(v)) {  // !!! fold in TRY behavior as well?
-        ERROR_VARS *vars = ERR_VARS(VAL_CONTEXT(v));
-        if (
-            IS_WORD(&vars->id)
-            and VAL_WORD_ID(&vars->id) == SYM_TRY_IF_NULL_MEANT
-        ){
-            return VOID;
-        }
-        return RAISE(VAL_CONTEXT(v));
-    }
+    if (Is_Raised(v))  // !!! fold in TRY behavior as well?
+        return RAISE(VAL_CONTEXT(v));  // !!! e.g. should this be VOID ?
 
     return COPY(v);
 }

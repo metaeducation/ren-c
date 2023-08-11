@@ -686,18 +686,14 @@ default-combinators: make map! reduce [
         [^where remainder]: parser input except e -> [
             return raise e
         ]
-        if null? unmeta where [  ; e.g. was a plain NULL, isotoped by combinator
-            return raise make error! [
-                message: [{Call should use TRY if NULL intended, gives:} :arg1]
-                id: 'try-if-null-meant
-                arg1: null
-            ]
-        ]
         if quasi? where [
             fail "Cannot SEEK to isotope"
         ]
         where: my unquote
         case [
+            void? where [
+                remainder: input
+            ]
             integer? where [
                 remainder: at head input where
             ]
@@ -707,7 +703,7 @@ default-combinators: make map! reduce [
                 ]
                 remainder: where
             ]
-            fail "SEEK requires INTEGER!, series position, or NULL (with TRY)"
+            fail "SEEK requires INTEGER!, series position, or VOID"
         ]
         return remainder
     ]
