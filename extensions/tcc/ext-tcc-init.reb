@@ -325,9 +325,9 @@ compile: func [
         if match [word! path!] :item [item: get item]
 
         switch/type :item [
-            action! [
+            activation! [
                 librebol: true
-                :item
+                unrun :item
             ]
             text! [
                 item
@@ -335,7 +335,7 @@ compile: func [
             file! [  ; Just an example idea... reading disk files?
                 as text! read item
             ]
-            fail ["COMPILABLES currently must be TEXT!/ACTION!/FILE!"]
+            fail ["COMPILABLES currently must be TEXT!/ACTIVATION!/FILE!"]
         ]
     ]
 

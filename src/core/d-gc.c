@@ -409,6 +409,7 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
             Value(*) context = DETAILS_AT(details, IDX_NATIVE_CONTEXT);
             assert(
                 IS_BLANK(body)
+                or IS_TEXT(body)  // TCC uses the slot for "source"
                 or IS_WORD(body)  // GENERIC uses the slot for the "verb"
             );
             assert(ANY_CONTEXT(context));
