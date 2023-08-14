@@ -14,7 +14,7 @@ includes: copy [
 ; For now just enable REQUEST-FILE on Windows if the view module is
 ; included, because it doesn't bring along any extra dependencies.
 ;
-libraries: maybe switch system-config/os-base [
+libraries: switch system-config/os-base [
     ;
     ; Note: MinGW is case-sensitive, e.g. %Ole32 won't work.
     ;
@@ -34,4 +34,4 @@ libraries: maybe switch system-config/os-base [
         comment [%gtk-3 %gobject-2.0 %glib-2.0]
         []
     ]
-]
+] else [null]  ; can't use null fallout in bootstrap

@@ -330,20 +330,10 @@ reify-logic: func3 [logic [logic!]] [
     either logic ['~true~] ['~false~]
 ]
 
-maybe: enfix func3 [
-    :left [<skip> set-word!]
+maybe: func3 [
     v [<opt> any-value!]
 ][
-    if :left [
-        assert [set-word? left]
-        if not null3? :v [
-            set left :v
-        ] else [
-            set 'v get left
-        ]
-    ]
-    if null? :v [return null3]
-    if blank? :v [return null3]
+    if null? :v [return void]  ; null here is blank in the shim, void is null
     :v
 ]
 

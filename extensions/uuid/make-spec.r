@@ -6,7 +6,7 @@ includes: reduce [
     (join repo-dir %extensions/uuid/libuuid/)
     %prep/extensions/uuid ;for %tmp-extensions-uuid-init.inc
 ]
-depends: maybe switch system-config/os-base [
+depends: switch system-config/os-base [
     'linux [
         [
             %uuid/libuuid/gen_uuid.c
@@ -15,17 +15,18 @@ depends: maybe switch system-config/os-base [
             %uuid/libuuid/randutils.c
         ]
     ]
-]
+] else [null]  ; can't use null fallout in bootstrap
 
-libraries: maybe switch system-config/os-base [
+libraries: switch system-config/os-base [
     'Windows [
         [%rpcrt4]
     ]
-]
-ldflags: maybe switch system-config/os-base [
+] else [null]  ; can't use null fallout in bootstrap
+
+ldflags: switch system-config/os-base [
     'OSX [
         ["-framework CoreFoundation"]
     ]
-]
+] else [null]  ; can't use null fallout in bootstrap
 
 use-librebol: true  ; can't use %sys-core.h with MacOS UUID APIs, conflicts

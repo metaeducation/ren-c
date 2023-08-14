@@ -88,11 +88,11 @@ depends: [
      [%crypt/mbedtls/library/hmac_drbg.c  #no-c++]
 ]
 
-libraries: maybe switch system-config/os-base [
+libraries: switch system-config/os-base [
     'Windows [
         ;
         ; Provides crypto functions, e.g. CryptAcquireContext()
         ;
         [%advapi32]
     ]
-]
+] else [null]  ; can't use null fallout in bootstrap
