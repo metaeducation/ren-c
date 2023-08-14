@@ -90,6 +90,7 @@
 //
 inline static bool Is_Isotope_Set_Friendly(Cell(const*) v) {
     assert(not Is_Isotope_Unstable(v));
+    UNUSED(v);
     return true;
 }
 
