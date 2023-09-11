@@ -545,10 +545,13 @@ inline static REBVAR *Force_Lib_Var(SymId id) {
 
 //=//// CONTINUE VALUE TYPES ///////////////////////////////////////////////=//
 
-#include "sys-nulled.h"  // not a datatype, but it is exposed to the user
-#include "sys-void.h"  // not really a datatype either
+#include "sys-void.h"
+#include "sys-trash.h"  // quasi-void with special behavior in debug build
 
-#include "sys-trash.h"
+#include "sys-nulled.h"
+
+#include "datatypes/sys-blank.h"
+
 #include "datatypes/sys-comma.h"
 
 #include "datatypes/sys-integer.h"

@@ -53,7 +53,7 @@
     // Will trip up any access attempts via READABLE(), but can be overwritten
 
     inline static Value(*) Init_Trash_Untracked(Cell(*) out) {
-        Init_Nothing_Untracked(out, REB_VOID, QUASI_2);
+        Init_Void_Untracked(out, QUASI_2);
         Set_Cell_Flag(out, STALE);
         return cast(Value(*), out);
     }
@@ -69,7 +69,7 @@
     // Release Build Behavior: Looks just like a meta-none (`~` value)
 
     #define Init_Trash_Untracked(out) \
-        Init_Nothing_Untracked((out), REB_VOID, QUASI_2)
+        Init_Void_Untracked((out), QUASI_2)
 
     #undef IS_TRASH  // testing for trash in release builds is not meaningful
 #endif

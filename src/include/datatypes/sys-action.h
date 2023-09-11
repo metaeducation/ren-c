@@ -623,7 +623,7 @@ inline static Bounce Native_Void_Result_Untracked(
     assert(out == frame_->out);
     UNUSED(out);
     assert(not THROWING);
-    return Init_Void_Untracked(frame_->out);
+    return Init_Void_Untracked(frame_->out, UNQUOTED_1);
 }
 
 inline static Bounce Native_Unmeta_Result(Frame(*) frame_, const REBVAL *v) {
@@ -638,7 +638,7 @@ inline static Bounce Native_None_Result_Untracked(
     assert(out == frame_->out);
     UNUSED(out);
     assert(not THROWING);
-    return Init_None_Untracked(frame_->out);
+    return Init_Void_Untracked(frame_->out, ISOTOPE_0);
 }
 
 

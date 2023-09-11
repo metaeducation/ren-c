@@ -66,20 +66,33 @@
 inline static bool Is_Void(Cell(const*) v)
   { return HEART_BYTE(v) == REB_VOID and QUOTE_BYTE(v) == UNQUOTED_1; }
 
-#define Init_Void_Untracked(out) \
-    Init_Nothing_Untracked((out), REB_VOID, UNQUOTED_1)
+inline static REBVAL *Init_Void_Untracked(Cell(*) out, Byte quote_byte) {
+    FRESHEN_CELL_EVIL_MACRO(out);
+    out->header.bits |= (
+        NODE_FLAG_NODE | NODE_FLAG_CELL
+            | FLAG_HEART_BYTE(REB_VOID) | FLAG_QUOTE_BYTE(quote_byte)
+    );
+
+  #ifdef ZERO_UNUSED_CELL_FIELDS
+    mutable_BINDING(out) = ZEROTRASH;  // not Is_Bindable()
+    PAYLOAD(Any, out).first.trash = ZEROTRASH;
+    PAYLOAD(Any, out).second.trash = ZEROTRASH;
+  #endif
+
+    return cast(REBVAL*, out);
+}
 
 #define Init_Void(out) \
-    TRACK(Init_Void_Untracked(out))
+    TRACK(Init_Void_Untracked((out), UNQUOTED_1))
 
 #define Init_Quoted_Void(out) \
-    TRACK(Init_Nothing_Untracked((out), REB_VOID, ONEQUOTE_3))
+    TRACK(Init_Void_Untracked((out), ONEQUOTE_3))
 
 inline static bool Is_Quoted_Void(Cell(const*) v)
   { return QUOTE_BYTE(v) == ONEQUOTE_3 and HEART_BYTE(v) == REB_VOID; }
 
 #define Init_Quasi_Void(out) \
-    TRACK(Init_Nothing_Untracked((out), REB_VOID, QUASI_2))
+    TRACK(Init_Void_Untracked((out), QUASI_2))
 
 inline static bool Is_Quasi_Void(Cell(const*) v)
   { return QUOTE_BYTE(v) == QUASI_2 and HEART_BYTE(v) == REB_VOID; }
@@ -108,11 +121,8 @@ inline static bool Is_Quasi_Void(Cell(const*) v)
 inline static bool Is_None(Cell(const*) v)
   { return HEART_BYTE(v) == REB_VOID and QUOTE_BYTE(v) == ISOTOPE_0; }
 
-#define Init_None_Untracked(out) \
-    Init_Nothing_Untracked((out), REB_VOID, ISOTOPE_0)
-
 #define Init_None(out) \
-    TRACK(Init_None_Untracked(out))
+    TRACK(Init_Void_Untracked((out), ISOTOPE_0))
 
 #define Init_Meta_Of_None(out)      Init_Quasi_Void(out)
 #define Is_Meta_Of_None(v)          Is_Quasi_Void(v)

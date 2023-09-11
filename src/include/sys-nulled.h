@@ -6,7 +6,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2012-2022 Ren-C Open Source Contributors
+// Copyright 2012-2023 Ren-C Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -19,98 +19,55 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// NULL is a transient evaluation product.  It is used as a signal for
-// "soft failure", e.g. `find [a b] 'c` is NULL, hence they are conditionally
-// false.  But null isn't an "ANY-VALUE!", and can't be stored in BLOCK!s that
-// are seen by the user.
+// Null is used as a signal for "soft failure", e.g. (find [c d] 'e) is null.
+// It is treated as conditionally false by branching constructs like IF.
 //
-// The libRebol API takes advantage of this by actually using C's concept of
-// a null pointer to directly represent the optional state.  By promising this
-// is the case, clients of the API can write `if (value)` or `if (!value)`
-// and be sure that there's not some nonzero address of a "null-valued cell".
-// So there is no `isRebolNull()` API.
+// The representation for nulls is the isotope form of the WORD! "null":
 //
-// But that's the API.  Internally, cells are the currency used, and if they
-// are to represent an "optional" value, they must have a bit pattern.  So
-// NULL is the isotopic form of the WORD! null.
+//    >> find [c d] 'e
+//    == ~null~  ; isotope
 //
-
-inline static const Raw_String* VAL_NOTHING_FILE(noquote(Cell(const*)) v) {
-    assert(HEART_BYTE(v) == REB_VOID or HEART_BYTE(v) == REB_BLANK);
-    return SYM(VAL_NODE1(v));
-}
-inline static void INIT_VAL_NOTHING_FILE(Cell(*) v, String(const*) file)
-  { INIT_VAL_NODE1(v, file); }
-
-inline static LineNumber VAL_NOTHING_LINE(noquote(Cell(const*)) v) {
-    assert(HEART_BYTE(v) == REB_VOID or HEART_BYTE(v) == REB_BLANK);
-    return PAYLOAD(Any, v).second.i;
-}
-inline static void INIT_VAL_NOTHING_LINE(Cell(*) v, LineNumber line)
-  { PAYLOAD(Any, v).second.i = line; }
-
+// This choice conveniently fits with the rule that nulls should not be able
+// to be stored in blocks (as no isotope forms can be).  Greater safety comes
+// from catching potential mistakes with this property:
+//
+//    >> append [a b] find [c d] 'e
+//    ** Error: Cannot put ~null~ isotopes in blocks
+//
+// If a no-op is desired in this situation, MAYBE can be used to convert the
+// null to a void:
+//
+//    >> maybe find [c d] 'e
+//
+//    >> append [a b] maybe find [c d] 'e
+//    == [a b]
+//
+//=//// NOTES /////////////////////////////////////////////////////////////=//
+//
+// * In the libRebol API, a nulled cell handle actually uses C's concept of
+//   a null pointer to represent the optional state.  By promising this
+//   is the case, clients of the API can write `if (value)` or `if (!value)`
+//   as tests for the null state...with no need to release cell handles
+//   for nulls.  Hence there is no `isRebolNull()` API.
+//
+//   HOWEVER: The definition which must be used is `nullptr` and not C's
+//   macro for NULL, because NULL may just be defined as just the integer 0.
+//   This can confuse variadics which won't treat NULL as a pointer.
+//
+// * To avoid confusing the test for whether cell contents are the null
+//   representation with the test for if a pointer itself is C's NULL, it is
+//   called "Is_Nulled()" instead of "Is_Null()".
+//
+// * We ensure that non-quoted, non-quasi NULL isn't written into a Cell(*)
+//   e.g. for a BLOCK!... must be a Value(*), e.g. a context variable or
+//   frame output.
+//
 
 inline static bool Is_Nulled(Cell(const*) v) {
     return QUOTE_BYTE(v) == 0  // Checked version, checks for READABLE()
         and HEART_BYTE_UNCHECKED(v) == REB_WORD
         and VAL_WORD_ID(v) == SYM_NULL;
 }
-
-inline static String(const*) FRM_FILE(Frame(*) f);
-inline static LineNumber FRM_LINE(Frame(*) f);
-
-inline static REBVAL *Init_Nothing_Untracked(
-    Cell(*) out,
-    Byte heart_byte,
-    Byte quote_byte
-){
-    FRESHEN_CELL_EVIL_MACRO(out);
-    out->header.bits |= (
-        NODE_FLAG_NODE | NODE_FLAG_CELL
-            | FLAG_HEART_BYTE(heart_byte) | FLAG_QUOTE_BYTE(quote_byte)
-            | CELL_FLAG_FIRST_IS_NODE
-    );
-
-    // Extra can't be used for an integer, because although NULL isn't bindable
-    // the BLANK! has to be evaluative, pushing its number up into the range of
-    // bindable types.  Set binding to nullptr and use payload slot for line.
-
-    mutable_BINDING(out) = nullptr;
-
-    if (TOP_FRAME) {
-        INIT_VAL_NOTHING_LINE(out, FRM_LINE(TOP_FRAME));
-        INIT_VAL_NOTHING_FILE(out, FRM_FILE(TOP_FRAME));
-    }
-    else {
-        INIT_VAL_NOTHING_LINE(out, 0);
-        INIT_VAL_NOTHING_FILE(out, nullptr);
-    }
-
-    return cast(REBVAL*, out);
-}
-
-
-//=//// BLANK! ////////////////////////////////////////////////////////////=//
-//
-
-#define Init_Blank_Untracked(out,quote_byte) \
-    Init_Nothing_Untracked((out), REB_BLANK, (quote_byte))
-
-#define Init_Blank(out) \
-    TRACK(Init_Blank_Untracked((out), UNQUOTED_1))
-
-#define Init_Quasi_Blank(out) \
-    TRACK(Init_Blank_Untracked((out), QUASI_2))
-
-inline static bool Is_Quasi_Blank(Cell(const*) v)
-  { return IS_QUASI(v) and HEART_BYTE(v) == REB_BLANK; }
-
-
-//=//// NULL //////////////////////////////////////////////////////////////=//
-//
-// 1. We ensure that non-quoted, non-quasi NULL isn't written into a Cell(*)
-//    e.g. for a BLOCK!... must be a Value(*), e.g. a context variable or
-//    frame output.
 
 #define Init_Word_Isotope(out,label) \
     TRACK(Init_Any_Word_Untracked(ensure(Value(*), (out)), REB_WORD, \
