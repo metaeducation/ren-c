@@ -1040,6 +1040,9 @@ DECLARE_NATIVE(case)
 //
 //        >> case/all [1 < 2 [<a>] 3 < 4 [<b>] 10 + 20]
 //        == 30  ; so not the same as an ELSE, it's just "fallout"
+//
+//    This counts as a "branch taken", so void and null are boxed into an
+//    isotopic pack.
 {
     INCLUDE_PARAMS_OF_CASE;
 
@@ -1233,6 +1236,17 @@ DECLARE_NATIVE(switch)
 //
 //    ...HOWEVER... this mutated the branch fallout, and quote removals were
 //    distorting comparisons.  So it copies the cell into a scratch location.
+//
+// 3. Fallout is used in situations like:
+//
+//        lib: switch config.platform [
+//            'Windows [%windows.lib]
+//            'Linux [%linux.a]
+//            null
+//        ]
+//
+//    These cases still count as "branch taken", so the null is put in a
+//    PACK!.
 {
     INCLUDE_PARAMS_OF_SWITCH;
 
