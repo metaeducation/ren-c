@@ -910,6 +910,9 @@ static bool Run_Va_Throws(
 
     bool threw = Trampoline_Throws(out, f);
 
+    if (not threw and (flags & FRAME_FLAG_META_RESULT))
+        assert(QUOTE_BYTE(out) >= QUASI_2);
+
     // (see also Reb_State->saved_sigmask RE: if a longjmp happens)
     Eval_Sigmask = saved_sigmask;
 
@@ -927,7 +930,7 @@ static bool Run_Va_Throws(
 // or use rebElide() and say it doesn't matter.  (or just find a way in the
 // executed code passed to not have it evaluate to none)
 //
-inline static void Run_Va_No_Decay_May_Fail(
+inline static void Run_Va_Undecayed_May_Fail_Calls_Va_End(
     REBVAL *out,
     const void *p,  // first pointer (may be END, nullptr means NULLED)
     va_list *vaptr  // va_end() handled by feed for all cases (throws, fails)
@@ -948,12 +951,12 @@ inline static void Run_Va_No_Decay_May_Fail(
 // APIs just as if you'd tried to do a SET-WORD!...so you don't have to worry
 // about multi-return packs etc.
 //
-inline static void Run_Va_May_Fail(
+inline static void Run_Va_Decay_May_Fail_Calls_Va_End(
     REBVAL *out,
     const void *p,  // first pointer (may be END, nullptr means NULLED)
     va_list *vaptr  // va_end() handled by feed for all cases (throws, fails)
 ){
-    Run_Va_No_Decay_May_Fail(out, p, vaptr);
+    Run_Va_Undecayed_May_Fail_Calls_Va_End(out, p, vaptr);
 
     Decay_If_Unstable(out);
 }
@@ -1022,9 +1025,9 @@ REBVAL *RL_rebValue(const void *p, va_list *vaptr)
     ENTER_API;
 
     REBVAL *result = Alloc_Value();
-    Run_Va_May_Fail(result, p, vaptr);  // calls va_end()
+    Run_Va_Decay_May_Fail_Calls_Va_End(result, p, vaptr);
 
-    if (Is_Nulled(result)) {  // tolerate isotopes
+    if (Is_Nulled(result)) {
         rebRelease(result);
         return nullptr;  // No NULLED cells in API, see NULLIFY_NULLED()
     }
@@ -1118,7 +1121,7 @@ REBVAL *RL_rebMeta(const void *p, va_list *vaptr)
     if (Run_Va_Throws(v, interruptible, FRAME_FLAG_META_RESULT, p, vaptr))
         fail (Error_No_Catch_For_Throw(TOP_FRAME));  // panic?
 
-    assert(not Is_Nulled(v));  // meta operations do not produce NULL
+    assert(not Is_Nulled(v));  // meta operations cannot produce NULL
 
     return v;  // caller must rebRelease()
 }
@@ -1148,11 +1151,7 @@ REBVAL *RL_rebEntrap(const void *p, va_list *vaptr)
         Meta_Quotify(v);
     }
 
-    if (Is_Nulled(v)) {  // tolerate isotopes
-        assert(!"Meta values are not supposed to be NULL");
-        rebRelease(v);
-        return nullptr;  // No NULLED API cells, see notes on NULLIFY_NULLED()
-    }
+    assert(not Is_Nulled(v));  // meta operations cannot produce NULL
 
     return v;  // caller must rebRelease()
 }
@@ -1184,11 +1183,7 @@ REBVAL *RL_rebEntrapInterruptible(
         Meta_Quotify(v);
     }
 
-    if (Is_Nulled(v)) {  // tolerate isotopes
-        assert(!"Meta values are not supposed to be NULL");
-        rebRelease(v);
-        return nullptr;  // No NULLED API cells, see notes on NULLIFY_NULLED()
-    }
+    assert(not Is_Nulled(v));  // META operations can't return null
 
     return v;  // caller must rebRelease()
 }
@@ -1210,7 +1205,7 @@ REBVAL *RL_rebQuote(const void *p, va_list *vaptr)
     ENTER_API;
 
     REBVAL *result = Alloc_Value();
-    Run_Va_May_Fail(result, p, vaptr);  // calls va_end()
+    Run_Va_Decay_May_Fail_Calls_Va_End(result, p, vaptr);
 
     return Quotify(result, 1);  // nulled cells legal for API if quoted
 }
@@ -1230,7 +1225,7 @@ void RL_rebElide(const void *p, va_list *vaptr)
     ENTER_API;
 
     DECLARE_LOCAL (elided);
-    Run_Va_No_Decay_May_Fail(elided, p, vaptr);  // calls va_end()
+    Run_Va_Undecayed_May_Fail_Calls_Va_End(elided, p, vaptr);
 }
 
 
@@ -1260,7 +1255,7 @@ void RL_rebJumps(const void *p, va_list *vaptr)
     ENTER_API;
 
     DECLARE_LOCAL (dummy);
-    Run_Va_May_Fail(dummy, p, vaptr);  // calls va_end()
+    Run_Va_Decay_May_Fail_Calls_Va_End(dummy, p, vaptr);
 
     // Note: If we just `fail()` here, then while MSVC compiles %a-lib.c at
     // higher optimization levels it can conclude that RL_rebJumps() never
@@ -1287,21 +1282,18 @@ void RL_rebJumps(const void *p, va_list *vaptr)
 // e.g. "Would the supplied expression run a THEN"
 // See DECLARE_NATIVE(did_1) for explanation.
 //
+// !!! This does not handle isotopic objects, an experimental concept where
+// if the object supports a THEN method it would pass the DID test.  Review
+// this in light of whether isotopic objects are going to be kept.
+//
 bool RL_rebDid(const void *p, va_list *vaptr)
 {
     ENTER_API;
 
     DECLARE_LOCAL (condition);
-    Run_Va_May_Fail(condition, p, vaptr);  // calls va_end()
+    Run_Va_Undecayed_May_Fail_Calls_Va_End(condition, p, vaptr);
 
-    if (IS_BLANK(condition) or IS_LOGIC(condition))
-        fail (
-            "SEMANTIC CHANGE: DID tests against NULL only, temporarily not"
-            " working with blank or logic...use THEN or TO-LOGIC in meantime"
-            " https://forum.rebol.info/t/498/2"
-        );
-
-    return not Is_Nulled(condition);  // isotopes okay for this test
+    return not Is_Nulled(condition) and not Is_Void(condition);
 }
 
 
@@ -1311,14 +1303,18 @@ bool RL_rebDid(const void *p, va_list *vaptr)
 // Analogue of DIDN'T, which is an isotope-tolerant version of NULL?.
 // e.g. "Would the supplied expression run an ELSE"
 //
+// !!! This does not handle isotopic objects, an experimental concept where
+// if the object supports a ELSE method it would pass the DIDN'T test.  Review
+// this in light of whether isotopic objects are going to be kept.
+//
 bool RL_rebDidnt(const void *p, va_list *vaptr)
 {
     ENTER_API;
 
     DECLARE_LOCAL (condition);
-    Run_Va_May_Fail(condition, p, vaptr);  // calls va_end()
+    Run_Va_Undecayed_May_Fail_Calls_Va_End(condition, p, vaptr);
 
-    return Is_Nulled(condition);  // isotopes are okay with this test
+    return Is_Nulled(condition) or Is_Void(condition);
 }
 
 //
@@ -1335,7 +1331,7 @@ bool RL_rebTruthy(const void *p, va_list *vaptr)
     ENTER_API;
 
     DECLARE_LOCAL (condition);
-    Run_Va_May_Fail(condition, p, vaptr);  // calls va_end()
+    Run_Va_Decay_May_Fail_Calls_Va_End(condition, p, vaptr);
 
     return Is_Truthy(condition);  // will fail() on (most) isotopes
 }
@@ -1352,7 +1348,7 @@ bool RL_rebNot(const void *p, va_list *vaptr)
     ENTER_API;
 
     DECLARE_LOCAL (condition);
-    Run_Va_May_Fail(condition, p, vaptr);  // calls va_end()
+    Run_Va_Decay_May_Fail_Calls_Va_End(condition, p, vaptr);
 
     return Is_Falsey(condition);  // will fail() on isotopes
 }
@@ -1374,7 +1370,7 @@ intptr_t RL_rebUnbox(const void *p, va_list *vaptr)
     ENTER_API;
 
     DECLARE_LOCAL (result);
-    Run_Va_May_Fail(result, p, vaptr);  // calls va_end()
+    Run_Va_Decay_May_Fail_Calls_Va_End(result, p, vaptr);
 
     if (IS_LOGIC(result)) {
         return VAL_LOGIC(result) ? 1 : 0;
@@ -1402,7 +1398,7 @@ bool RL_rebUnboxLogic(
     ENTER_API;
 
     DECLARE_LOCAL (result);
-    Run_Va_May_Fail(result, p, vaptr);  // calls va_end()
+    Run_Va_Decay_May_Fail_Calls_Va_End(result, p, vaptr);
 
     if (not IS_LOGIC(result))
         fail ("rebUnboxLogic() called on non-LOGIC!");
@@ -1421,7 +1417,7 @@ intptr_t RL_rebUnboxInteger(
     ENTER_API;
 
     DECLARE_LOCAL (result);
-    Run_Va_May_Fail(result, p, vaptr);  // calls va_end()
+    Run_Va_Decay_May_Fail_Calls_Va_End(result, p, vaptr);
 
     if (not IS_INTEGER(result))
         fail ("rebUnboxInteger() called on non-INTEGER!");
@@ -1439,7 +1435,7 @@ double RL_rebUnboxDecimal(
     ENTER_API;
 
     DECLARE_LOCAL (result);
-    Run_Va_May_Fail(result, p, vaptr);  // calls va_end()
+    Run_Va_Decay_May_Fail_Calls_Va_End(result, p, vaptr);
 
     if (IS_DECIMAL(result))
         return VAL_DECIMAL(result);
@@ -1460,7 +1456,7 @@ uint32_t RL_rebUnboxChar(
     ENTER_API;
 
     DECLARE_LOCAL (result);
-    Run_Va_May_Fail(result, p, vaptr);  // calls va_end()
+    Run_Va_Decay_May_Fail_Calls_Va_End(result, p, vaptr);
 
     if (not IS_CHAR(result))
         fail ("rebUnboxChar() called on non-CHAR");
@@ -1479,7 +1475,7 @@ void *RL_rebUnboxHandle(
     ENTER_API;
 
     DECLARE_LOCAL (result);
-    Run_Va_May_Fail(result, p, vaptr);  // calls va_end()
+    Run_Va_Decay_May_Fail_Calls_Va_End(result, p, vaptr);
 
     if (VAL_TYPE(result) != REB_HANDLE)
         fail ("rebUnboxHandle() called on non-HANDLE!");
@@ -1531,7 +1527,7 @@ size_t RL_rebSpellInto(
     ENTER_API;
 
     DECLARE_LOCAL (v);
-    Run_Va_May_Fail(v, p, vaptr);  // calls va_end()
+    Run_Va_Decay_May_Fail_Calls_Va_End(v, p, vaptr);
 
     return Spell_Into(buf, buf_size, v);
 }
@@ -1551,7 +1547,7 @@ char *RL_rebTrySpell(const void *p, va_list *vaptr)
     ENTER_API;
 
     DECLARE_LOCAL (v);
-    Run_Va_May_Fail(v, p, vaptr);  // calls va_end()
+    Run_Va_Decay_May_Fail_Calls_Va_End(v, p, vaptr);
 
     if (Is_Nulled(v))
         return nullptr;
@@ -1650,7 +1646,7 @@ unsigned int RL_rebSpellIntoWide(
     ENTER_API;
 
     DECLARE_LOCAL (v);
-    Run_Va_May_Fail(v, p, vaptr);  // calls va_end()
+    Run_Va_Decay_May_Fail_Calls_Va_End(v, p, vaptr);
 
     return Spell_Into_Wide(buf, buf_chars, v);
 }
@@ -1667,7 +1663,7 @@ REBWCHAR *RL_rebTrySpellWide(const void *p, va_list *vaptr)
     ENTER_API;
 
     DECLARE_LOCAL (v);
-    Run_Va_May_Fail(v, p, vaptr);  // calls va_end()
+    Run_Va_Decay_May_Fail_Calls_Va_End(v, p, vaptr);
 
     if (Is_Nulled(v))
         return nullptr;
@@ -1770,7 +1766,7 @@ size_t RL_rebBytesInto(
     ENTER_API;
 
     DECLARE_LOCAL (v);
-    Run_Va_May_Fail(v, p, vaptr);  // calls va_end()
+    Run_Va_Decay_May_Fail_Calls_Va_End(v, p, vaptr);
 
     return Bytes_Into(buf, buf_size, v);
 }
@@ -1790,7 +1786,7 @@ unsigned char *RL_rebTryBytes(
     ENTER_API;
 
     DECLARE_LOCAL (v);
-    Run_Va_May_Fail(v, p, vaptr);  // calls va_end()
+    Run_Va_Decay_May_Fail_Calls_Va_End(v, p, vaptr);
 
     if (Is_Nulled(v)) {
         *size_out = 0;
