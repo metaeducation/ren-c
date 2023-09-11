@@ -305,8 +305,10 @@ static void Queue_Mark_Cell_Deep(Cell(const*) cv)
 {
     Cell(*) v = m_cast(Cell(*), cv);  // we're the system, we can do this
 
-    if (IS_TRASH(cv))  // always false in release builds (no cost)
+  #if DEBUG_UNREADABLE_TRASH
+    if (IS_TRASH(cv))  // tolerate unreadable "trash" in debug builds
         return;
+  #endif
 
     // We mark based on the type of payload in the cell, e.g. its "unescaped"
     // form.  So if '''a fits in a WORD! (despite being a QUOTED!), we want

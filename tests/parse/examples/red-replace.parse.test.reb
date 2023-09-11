@@ -1,5 +1,5 @@
 ; %red-replace.parse.test.reb
-; 
+;
 ; Red's REPLACE has an invention that seems like a pretty bad idea.  It mixes
 ; PARSE mechanisms in with REPLACE, but it only works if the source data is
 ; a string...because it "knows" not to treat the block string-like.  This is
@@ -17,9 +17,9 @@
         ]
         rule: if activation? :f.replacement '[
             head: <here>
-            change [f.pattern, tail: <here>] ( 
+            change [f.pattern, tail: <here>] (
                 apply/relax :f.replacement [const head, const tail]
-            ) 
+            )
         ] else '[
             change f.pattern (f.replacement)
         ]
@@ -30,7 +30,7 @@
             to <end>
         ]]
         return f.target
-    ], true) 
+    ], true)
 
     ; These are the tests Red had demonstrating the feature
 

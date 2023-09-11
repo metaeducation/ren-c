@@ -71,7 +71,7 @@
     #define Init_Trash_Untracked(out) \
         Init_Nothing_Untracked((out), REB_VOID, QUASI_2)
 
-    #define IS_TRASH(v) false  // should constant-fold out clauses in optimizer
+    #undef IS_TRASH  // testing for trash in release builds is not meaningful
 #endif
 
 #define Init_Trash(out) \
