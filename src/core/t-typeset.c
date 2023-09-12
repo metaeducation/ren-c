@@ -224,8 +224,8 @@ Array(*) Add_Parameter_Bits_Core(
             else if (0 == CT_String(item, Root_Nihil_Tag, strict)) {
                 *flags |= PARAM_FLAG_VANISHABLE;
             }
-            else if (0 == CT_String(item, Root_Fail_Tag, strict)) {
-                *flags |= PARAM_FLAG_WANT_FAILURES;
+            else if (0 == CT_String(item, Root_Raised_Tag, strict)) {
+                *flags |= PARAM_FLAG_WANT_RAISED;
             }
             else if (0 == CT_String(item, Root_Pack_Tag, strict)) {
                 *flags |= PARAM_FLAG_WANT_PACKS;

@@ -170,7 +170,7 @@ inline static bool Matcher_Matches(
 #define PARAM_FLAG_RETURN_TYPECHECKED \
     FLAG_LEFT_BIT(19)
 
-#define PARAM_FLAG_WANT_FAILURES \
+#define PARAM_FLAG_WANT_RAISED \
     FLAG_LEFT_BIT(20)
 
 #define PARAM_FLAG_21 \

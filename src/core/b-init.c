@@ -321,7 +321,7 @@ static void Init_Action_Spec_Tags(void)
     ensureNullptr(Root_Skip_Tag) = Make_Locked_Tag("skip");
     ensureNullptr(Root_Const_Tag) = Make_Locked_Tag("const");
     ensureNullptr(Root_Void_Tag) = Make_Locked_Tag("void");
-    ensureNullptr(Root_Fail_Tag) = Make_Locked_Tag("fail");
+    ensureNullptr(Root_Raised_Tag) = Make_Locked_Tag("raised");
     ensureNullptr(Root_Pack_Tag) = Make_Locked_Tag("pack");
     ensureNullptr(Root_Unrun_Tag) = Make_Locked_Tag("unrun");
 
@@ -341,7 +341,7 @@ static void Shutdown_Action_Spec_Tags(void)
     rebReleaseAndNull(&Root_Skip_Tag);
     rebReleaseAndNull(&Root_Const_Tag);
     rebReleaseAndNull(&Root_Void_Tag);
-    rebReleaseAndNull(&Root_Fail_Tag);
+    rebReleaseAndNull(&Root_Raised_Tag);
     rebReleaseAndNull(&Root_Pack_Tag);
     rebReleaseAndNull(&Root_Unrun_Tag);
 

@@ -45,7 +45,7 @@ probe: func* [
 
     return: "Same as the input value"
         [<nihil> <opt> <void> any-value!]
-    ^value' [<opt> <void> <pack> <fail> any-value!]
+    ^value' [<opt> <void> <pack> <raised> any-value!]
 ][
     ; Remember this is early in the boot, so many things not defined.
 

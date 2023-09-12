@@ -186,7 +186,7 @@ DECLARE_NATIVE(entrap)  // wrapped as multi-return versions TRAP and ATTEMPT
 //      return: "Non-failure input, or product of processing failure"
 //          [<nihil> <opt> <void> any-value!]  ; see [1]
 //      ^optional "<deferred argument> Run branch if this is definitional fail"
-//          [<opt> <void> <fail> <pack> any-value!]
+//          [<opt> <void> <raised> <pack> any-value!]
 //      :branch "If arity-1 ACTION!, receives value that triggered branch"
 //          [<unrun> any-branch!]
 //  ]
@@ -229,7 +229,7 @@ DECLARE_NATIVE(except)
 //  "Tells you if argument is a failure, but does not raise it"
 //
 //      return: [logic?]
-//      ^optional [<opt> <void> <fail> <pack> any-value!]
+//      ^optional [<opt> <void> <raised> <pack> any-value!]
 //  ]
 //
 DECLARE_NATIVE(raised_q)

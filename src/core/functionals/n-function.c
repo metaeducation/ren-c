@@ -499,7 +499,7 @@ Bounce Init_Thrown_Unwind_Value(
 //      level "Frame, action, or index to exit from"
 //          [frame! action! integer!]
 //      ^result "Result for enclosing state"
-//          [<opt> <end> <fail> <pack> any-value!]
+//          [<opt> <end> <raised> <pack> any-value!]
 //  ]
 //
 DECLARE_NATIVE(unwind)
@@ -534,7 +534,7 @@ DECLARE_NATIVE(unwind)
 //  {RETURN, giving a result to the caller}
 //
 //      return: []  ; !!! notation for "divergent?"
-//      ^value [<opt> <void> <fail> <pack> any-value!]
+//      ^value [<opt> <void> <raised> <pack> any-value!]
 //      /only "Do not do proxying of output variables, just return argument"
 //  ]
 //

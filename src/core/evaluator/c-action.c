@@ -211,7 +211,7 @@ Bounce Action_Executor(Frame(*) f)
                     }
                 }
                 if (Is_Meta_Of_Raised(ARG)) {
-                    if (NOT_PARAM_FLAG(PARAM, WANT_FAILURES)) {
+                    if (NOT_PARAM_FLAG(PARAM, WANT_RAISED)) {
                         Meta_Unquotify(ARG);
                         Decay_If_Unstable(ARG);
                         Meta_Quotify(ARG);
@@ -855,7 +855,7 @@ Bounce Action_Executor(Frame(*) f)
             }
         }
 
-        if (NOT_PARAM_FLAG(PARAM, WANT_FAILURES)) {
+        if (NOT_PARAM_FLAG(PARAM, WANT_RAISED)) {
             if (VAL_PARAM_CLASS(PARAM) == PARAM_CLASS_META) {
                 if (Is_Meta_Of_Raised(ARG))
                     fail (VAL_CONTEXT(ARG));

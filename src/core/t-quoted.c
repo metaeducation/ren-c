@@ -297,7 +297,7 @@ DECLARE_NATIVE(quote)
 //  {VOID -> NULL, isotopes -> QUASI!, adds a quote to rest (behavior of ^^)}
 //
 //      return: [quoted! quasi!]
-//      ^optional [<void> <opt> <fail> <pack> any-value!]
+//      ^optional [<void> <opt> <raised> <pack> any-value!]
 //  ]
 //
 DECLARE_NATIVE(meta)
@@ -651,7 +651,7 @@ DECLARE_NATIVE(matches)
 //  "Tells you if argument is a splice (isotopic block)"
 //
 //      return: [logic?]
-//      ^optional [<opt> <void> <fail> <pack> any-value!]
+//      ^optional [<opt> <void> <raised> <pack> any-value!]
 //  ]
 //
 DECLARE_NATIVE(splice_q)
@@ -668,7 +668,7 @@ DECLARE_NATIVE(splice_q)
 //  "Tells you if argument is any kind of matcher (TYPE-XXX! isotope)"
 //
 //      return: [logic?]
-//      ^value [<opt> <void> <fail> <pack> any-value!]
+//      ^value [<opt> <void> <raised> <pack> any-value!]
 //  ]
 //
 DECLARE_NATIVE(any_matcher_q)
@@ -690,7 +690,7 @@ DECLARE_NATIVE(any_matcher_q)
 //  "Tells you if argument is a lazy value (isotopic object)"
 //
 //      return: [logic?]
-//      ^optional [<opt> <void> <fail> <pack> any-value!]
+//      ^optional [<opt> <void> <raised> <pack> any-value!]
 //  ]
 //
 DECLARE_NATIVE(lazy_q)
@@ -707,7 +707,7 @@ DECLARE_NATIVE(lazy_q)
 //  "Tells you if argument is a parameter pack (isotopic block)"
 //
 //      return: [logic?]
-//      ^optional [<opt> <void> <fail> <pack> any-value!]
+//      ^optional [<opt> <void> <raised> <pack> any-value!]
 //  ]
 //
 DECLARE_NATIVE(pack_q)
@@ -724,7 +724,7 @@ DECLARE_NATIVE(pack_q)
 //  "Tells you if argument is an isotopic word"
 //
 //      return: [logic?]
-//      ^optional [<opt> <void> <fail> <pack> any-value!]
+//      ^optional [<opt> <void> <raised> <pack> any-value!]
 //  ]
 //
 DECLARE_NATIVE(isoword_q)
@@ -740,7 +740,7 @@ DECLARE_NATIVE(isoword_q)
 //  "Tells you if argument is an activation (isotopic action)"
 //
 //      return: [logic?]
-//      ^optional [<opt> <void> <fail> <pack> any-value!]
+//      ^optional [<opt> <void> <raised> <pack> any-value!]
 //  ]
 //
 DECLARE_NATIVE(activation_q)

@@ -1487,7 +1487,7 @@ void Set_Var_May_Fail(
 //          [<opt> <void> any-value!]
 //      target "Word or tuple, or calculated sequence steps (from GET)"
 //          [<void> any-word! any-sequence! any-group! the-block!]
-//      ^value [<opt> <void> <fail> <pack> any-value!]  ; tunnels failure
+//      ^value [<opt> <void> <raised> <pack> any-value!]  ; tunnels failure
 //      /any "Do not error on isotopes"
 //      /groups "Allow GROUP! Evaluations"
 //  ]
@@ -1538,7 +1538,7 @@ DECLARE_NATIVE(set)
 //  {Suppress failure from raised errors or VOID, by returning NULL}
 //
 //      return: [<opt> any-value!]
-//      ^optional [<opt> <void> <fail> any-value!]
+//      ^optional [<opt> <void> <raised> any-value!]
 //  ]
 //
 DECLARE_NATIVE(try)
@@ -2399,7 +2399,7 @@ DECLARE_NATIVE(logic_q)
 //  "Tells you if argument is an ~[]~ isotope, e.g. an empty pack"
 //
 //      return: [logic?]
-//      ^optional [<opt> <void> <pack> <fail> any-value!]
+//      ^optional [<opt> <void> <pack> <raised> any-value!]
 //  ]
 //
 DECLARE_NATIVE(nihil_q)
@@ -2448,7 +2448,7 @@ DECLARE_NATIVE(void_q)
 //  "Tells you if argument is none"
 //
 //      return: [logic?]
-//      ^optional [<opt> <void> <fail> <pack> any-value!]
+//      ^optional [<opt> <void> <raised> <pack> any-value!]
 //  ]
 //
 DECLARE_NATIVE(none_q)

@@ -119,7 +119,7 @@ export console!: make object! [
     print-result: meth [
         return: <none>
         ^v "Value (done with meta parameter to discern isotope status)"
-            [<opt> <void> <pack> any-value!]
+            [<opt> <void> <pack> <raised> any-value!]
     ][
         ; We use SET instead of a SET-WORD! here to avoid caching the action
         ; name as "last-result", so it should keep the name it had before.
@@ -764,7 +764,7 @@ ext-console-impl: func [
         ; issue--but it needs deeper thought.
         ;
         emit [(  ; <-- GROUP! needed for binding bug, review
-            let f: make frame! unrun :system.console.print-result
+            let f: make frame! :system.console.print-result
             f.v: '(<*> result)  ; avoid conflating pure void and void isotope
             do f
         )]
