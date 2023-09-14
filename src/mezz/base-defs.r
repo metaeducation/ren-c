@@ -561,33 +561,36 @@ to-lit-path: func* [return: [quoted!] value [any-value!]] [
 ]
 
 print: func* [
-    {Textually output spaced line (evaluating elements if a block)}
+    {Output SPACED text with newline (evaluating elements if BLOCK!)}
 
-    return: "NULL if blank input or effectively empty block, else none"
-        [<opt> none!]
-    line "Line of text or block, blank or [] has NO output, newline allowed"
+    return: "See NIHIL docs for caution on casually making vaporizing routines"
+        [<nihil>]
+    line "Line of text or block, [] has NO output, CHAR! newline allowed"
         [<maybe> char! text! block! quoted!]
 ][
     if char? line [
         if line <> newline [
             fail "PRINT only allows CHAR! of newline (see WRITE-STDOUT)"
         ]
-        return write-stdout line
+        write-stdout line
+        return nihil
     ]
 
-    if quoted? line [  ; Feature: treats a quote mark as a mold request
+    if quoted? line [  ; Speculative feature: quote mark as a mold request
         line: mold unquote line
     ]
 
-    return write-stdout (maybe spaced line) then [
+    write-stdout (maybe spaced line) then [
         write-stdout newline
-    ] else [none]
+    ]
+
+    return nihil
 ]
 
 echo: func* [
     {Freeform output of text, with @WORD, @TU.P.LE, and @(GR O UP) as escapes}
 
-    return: <void>
+    return: [<nihil>]
     'args "If a BLOCK!, then just that block's contents--else to end of line"
         [any-value! <variadic>]
     <local> line
@@ -614,6 +617,7 @@ echo: func* [
         ]
     ]
     write-stdout newline
+    return nihil
 ]
 
 
