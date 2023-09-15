@@ -200,7 +200,7 @@ elide-if-void: func* [
     return: [<nihil>]
     :omit [any-value! <variadic>]
 ][
-    until [null? take omit]
+    until [null? try take omit]
     return nihil
 ]
 

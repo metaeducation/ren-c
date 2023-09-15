@@ -217,6 +217,7 @@ Script: [
     bad-cast:           [{cannot cast} :arg1 {as} :arg2]
     alias-constrains:   [{AS constrains unlocked input, so must be mutable}]
 
+    nothing-to-take:    {Can't TAKE, no value available (consider TRY TAKE)}
     return-archetype:   {RETURN called with no generator providing it in use}
 
     parse-rule:         {PARSE - invalid rule or usage of rule}

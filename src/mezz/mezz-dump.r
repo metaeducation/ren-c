@@ -282,19 +282,20 @@ summarize-obj: function [
 **: enfix function [
     {Comment until end of line, or end of current BLOCK!/GROUP!}
 
-    return: <void>
+    return: [<nihil>]
     left "Enfix required for 'fully invisible' enfix behavior (ignored)"
         [<opt> <end> any-value!]
-    :args [any-value! <variadic>]
+    'args [any-value! <variadic>]
 ][
     while [all [
         not new-line? args
-        value: take args
+        value: try take args
     ]] [
         all [
-            any-array? :value
+            any-array? value
             contains-newline value
-            return none
+            return nihil
         ]
     ]
+    return nihil
 ]

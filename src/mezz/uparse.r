@@ -458,7 +458,7 @@ default-combinators: make map! reduce [
         return: []  ; divergent
         <local> f
     ][
-        f: take/last state.loops else [
+        f: take/last state.loops except [
             fail "No PARSE iteration to BREAK"
         ]
 
@@ -479,7 +479,7 @@ default-combinators: make map! reduce [
             ]
         ]
 
-        f: take/last state.loops else [
+        f: take/last state.loops except [
             fail "No PARSE iteration to STOP"
         ]
 

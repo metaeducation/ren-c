@@ -1012,7 +1012,7 @@ REBTYPE(String)
 
         if (VAL_INDEX(v) >= tail) {
             if (not REF(part))
-                return nullptr;
+                return RAISE(Error_Nothing_To_Take_Raw());
             return Init_Any_String(OUT, VAL_TYPE(v), Make_String(0));
         }
 

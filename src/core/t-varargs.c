@@ -500,7 +500,7 @@ REBTYPE(Varargs)
                 return THROWN;
             }
             if (Is_Fresh(OUT))
-                return Init_Nulled(OUT);
+                return RAISE(Error_Nothing_To_Take_Raw());
             return OUT;
         }
 

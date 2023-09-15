@@ -674,12 +674,12 @@ export*: func [
             word: as word! left
         ]
         return (
-            (maybe word): take args
+            (maybe word): try take args
             elide if word [append exports word]
         )
     ]
 
-    items: ^ take args
+    items: ^ try take args
     if group? unmeta items [items: do unmeta items]
     if not block? unmeta items [
         fail "EXPORT must be of form `export x: ...` or `export [...]`"

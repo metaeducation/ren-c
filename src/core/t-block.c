@@ -904,7 +904,7 @@ REBTYPE(Array)
 
         if (index >= VAL_LEN_HEAD(array)) {
             if (not REF(part))
-                return nullptr;
+                return RAISE(Error_Nothing_To_Take_Raw());
 
             return Init_Block(OUT, Make_Array(0)); // new empty block
         }

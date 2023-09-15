@@ -239,11 +239,11 @@
     (
         left-normal: enfixed right-normal:
             func [return: [<opt> word!] x [word! <variadic>]] [
-                return take x
+                return try take x
             ]
         left-normal*: enfixed right-normal*:
             func [return: [<opt> word!] x [word! <variadic> <end>]] [
-                return take x
+                return try take x
             ]
 
         left-defer: enfixed tweak (copy unrun :left-normal) 'defer on
@@ -251,20 +251,20 @@
 
         left-soft: enfixed right-soft:
             func [return: [<opt> word!] 'x [word! <variadic>]] [
-                return take x
+                return try take x
             ]
         left-soft*: enfixed right-soft*:
             func [return: [<opt> word!] 'x [word! <variadic> <end>]] [
-                return take x
+                return try take x
             ]
 
         left-hard: enfixed right-hard:
             func [return: [<opt> word!] :x [word! <variadic>]] [
-                return take x
+                return try take x
             ]
         left-hard*: enfixed right-hard*:
             func [return: [<opt> word!] :x [word! <variadic> <end>]] [
-                return take x
+                return try take x
             ]
 
         true

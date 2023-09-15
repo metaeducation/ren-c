@@ -242,7 +242,7 @@
 ; UNMETA* works on void, but not other "isotopic" forms as a trick
 [
     (void? unmeta* void)
-    ~bad-isotope~ !! (
+    ~expect-arg~ !! (
         unmeta* ~foo~
     )
 ]
