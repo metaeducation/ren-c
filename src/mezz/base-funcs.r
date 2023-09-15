@@ -216,7 +216,7 @@ func: func* [
         ]
         (var: null)
     |
-        <end> accept
+        <end> accept (true)
     |
         other: <here> (
             fail [

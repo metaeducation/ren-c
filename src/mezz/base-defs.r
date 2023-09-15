@@ -343,16 +343,9 @@ reorder: enclose :reorder* lambda [f] [
     inherit-meta (do f) action
 ]
 
-; !!! The native R3-Alpha parse functionality doesn't have parity with UPARSE's
-; ability to synthesize results, but it will once it is re-engineered to match
-; UPARSE's design when it hardens.  For now these routines provide some amount
-; of interface parity with UPARSE.
-;
-parse3: :parse3*/fully  ; could be more complex definition (UPARSE is!)
-
 ; The PARSE name has been taken by what was UPARSE.
 
-parse2: :parse3*/redbol/fully
+parse2: :parse3/redbol
 
 
 ; REQUOTE is helpful when functions do not accept QUOTED! values.

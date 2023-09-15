@@ -336,7 +336,7 @@ static bool Subparse_Throws(
                 return false;
             }
 
-            if (VAL_ACTION(label) == VAL_ACTION(Lib(PARSE_ACCEPT))) {
+            if (VAL_ACTION(label) == VAL_ACTION(Lib(PARSE_BREAK))) {
                 CATCH_THROWN(out, FRAME);
                 assert(IS_INTEGER(out));
                 *interrupted_out = true;
@@ -1808,7 +1808,36 @@ DECLARE_NATIVE(subparse)
                 Init_Nulled(ARG(position));  // not found
                 goto post_match_processing; }
 
-              case SYM_ACCEPT:
+              case SYM_ACCEPT: {
+                //
+                // ACCEPT means different things in Rebol2/Red (synonym for
+                // BREAK) where in UPARSE it means RETURN.
+                //
+                if (P_FLAGS & PF_REDBOL)
+                    goto handle_break;
+
+              handle_accept:
+
+                FETCH_NEXT_RULE(f);
+
+                DECLARE_LOCAL (thrown_arg);
+                if (IS_TAG(P_RULE)) {
+                    if (rebDid(P_RULE, "= <here>"))
+                        Copy_Cell(thrown_arg, ARG(position));
+                    else
+                        fail ("PARSE3 ACCEPT TAG! only works with <here>");
+                }
+                else if (IS_GROUP(P_RULE)) {
+                    if (Eval_Value_Throws(thrown_arg, P_RULE, P_RULE_SPECIFIER))
+                        goto return_thrown;
+                }
+                else
+                    fail ("PARSE3 ACCEPT only works with GROUP! and <here>");
+
+                Init_Thrown_With_Label(FRAME, thrown_arg, Lib(PARSE_ACCEPT));
+                goto return_thrown; }
+
+              handle_break:
               case SYM_BREAK: {
                 //
                 // This has to be throw-style, because it's not enough
@@ -1818,7 +1847,7 @@ DECLARE_NATIVE(subparse)
                 DECLARE_LOCAL (thrown_arg);
                 Init_Integer(thrown_arg, P_POS);
 
-                Init_Thrown_With_Label(FRAME, thrown_arg, Lib(PARSE_ACCEPT));
+                Init_Thrown_With_Label(FRAME, thrown_arg, Lib(PARSE_BREAK));
                 goto return_thrown; }
 
               case SYM_REJECT: {
@@ -1842,7 +1871,9 @@ DECLARE_NATIVE(subparse)
                 goto pre_rule;
 
               case SYM_RETURN:
-                fail ("RETURN removed from PARSE, see UPARSE return value");
+                if (P_FLAGS & PF_REDBOL)
+                    goto handle_accept;
+                fail ("RETURN keyword switched to ACCEPT in PARSE3/UPARSE");
 
               case SYM_SEEK: {
                 FETCH_NEXT_RULE(f);  // skip the SEEK word
@@ -2619,7 +2650,7 @@ DECLARE_NATIVE(subparse)
 
   return_thrown:
     if (not Is_Nulled(ARG(collection)))  // throw -> drop COLLECT additions
-        if (VAL_THROWN_LABEL(FRAME) != Lib(PARSE_ACCEPT))  // ...unless
+        if (VAL_THROWN_LABEL(FRAME) != Lib(PARSE_BREAK))  // ...unless
             SET_SERIES_LEN(P_COLLECTION, collection_tail);
 
     return THROWN;
@@ -2627,27 +2658,26 @@ DECLARE_NATIVE(subparse)
 
 
 //
-//  parse3*: native [
+//  parse3: native [
 //
 //  "Parse series according to grammar rules"
 //
-//      return: "TBD: parse product, help catch incompatibilites"
-//          [<opt> ~use-DID-PARSE-for-logic~ block! any-series!]  ; can COLLECT
+//      return: "Parse product (return value may be what's passed to ACCEPT)"
+//          [<opt> <void> any-value!]
 //
 //      input "Input series to parse"
 //          [<maybe> any-series! any-sequence! url!]
 //      rules "Rules to parse by"
 //          [<maybe> block!]
 //      /case "Uses case-sensitive comparison"
-//      /fully "Require parse to reach end, see PARSE specialization"
 //      /redbol "Use Rebol2/Red-style rules vs. UPARSE-style rules"
 //  ]
 //
-DECLARE_NATIVE(parse3_p)
+DECLARE_NATIVE(parse3)
 //
 // https://forum.rebol.info/t/1084
 {
-    INCLUDE_PARAMS_OF_PARSE3_P;
+    INCLUDE_PARAMS_OF_PARSE3;
 
     REBVAL *input = ARG(input);
     REBVAL *rules = ARG(rules);
@@ -2717,8 +2747,15 @@ DECLARE_NATIVE(parse3_p)
         // as case-insensitive bytes for ASCII characters.
     )){
         // Any PARSE-specific THROWs (where a PARSE directive jumped the
-        // stack) should be handled here.  However, RETURN was eliminated,
-        // in favor of enforcing a more clear return value protocol for PARSE
+        // stack) should be handled here.  ACCEPT is one example.
+
+        Value(const*) label = VAL_THROWN_LABEL(FRAME);
+        if (IS_ACTION(label)) {
+            if (VAL_ACTION(label) == VAL_ACTION(Lib(PARSE_ACCEPT))) {
+                CATCH_THROWN(OUT, FRAME);
+                return OUT;
+            }
+        }
 
         return THROWN;
     }
@@ -2729,10 +2766,8 @@ DECLARE_NATIVE(parse3_p)
     REBLEN index = VAL_UINT32(OUT);
     assert(index <= VAL_LEN_HEAD(input));
 
-    if (REF(fully)) {  // match succeeded, but we also want to reach the tail
-        if (index != VAL_LEN_HEAD(input))
-            return nullptr;  // index did not reach tail
-    }
+    if (index != VAL_LEN_HEAD(input))
+        return nullptr;  // the match failed
 
     // !!! R3-Alpha parse design had no means to bubble up a "synthesized"
     // rule product.  But that's important in the new design.  Hack in support
@@ -2762,7 +2797,7 @@ DECLARE_NATIVE(parse3_p)
 //
 //  parse-accept: native [
 //
-//  "Accept the current parse rule (Internal Implementation Detail ATM)."
+//  "Accept argument as parse result (Internal Implementation Detail ATM)."
 //
 //      return: []  ; !!! Notation for divergent function?
 //  ]
@@ -2773,6 +2808,23 @@ DECLARE_NATIVE(parse_accept)
 // internal throw used to indicate "accept".
 {
     return RAISE("PARSE-ACCEPT is for internal PARSE use only");
+}
+
+
+//
+//  parse-break: native [
+//
+//  "Break the current parse rule (Internal Implementation Detail ATM)."
+//
+//      return: []  ; !!! Notation for divergent function?
+//  ]
+//
+DECLARE_NATIVE(parse_break)
+//
+// !!! This was not created for user usage, but rather as a label for the
+// internal throw used to indicate "break".
+{
+    return RAISE("PARSE-BREAK is for internal PARSE use only");
 }
 
 
