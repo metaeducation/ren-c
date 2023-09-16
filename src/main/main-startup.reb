@@ -54,7 +54,7 @@ make-banner: func [
                 set a: text! (s: format ["**  " 68 "**"] a)
               | '= set a: [text! | word! | set-word!] [
                         b: <here>
-                          path! (b: get b.1)
+                          tuple! (b: get b.1)
                         | word! (b: get b.1)
                         | block! (b: spaced b.1)
                         | text! (b: b.1)
@@ -68,7 +68,6 @@ make-banner: func [
             ]
             (append append str s newline)
         ]
-        end
     ]
     return str
 ]
