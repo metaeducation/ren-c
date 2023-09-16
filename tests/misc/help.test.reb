@@ -12,15 +12,15 @@
 ; It has had a tendency to break, so these tests are here even though they
 ; spew a large amount of output, in the interests of making HELP stay working.
 
-(none? help)
-(none? help help)
-(none? help system)
-(none? help to)
-(none? help to-)
-(none? help "to")
-(none? help void)
-(none? help xxx)
-(none? help function)
+(nihil? help)
+(nihil? help help)
+(nihil? help system)
+(nihil? help to)
+(nihil? help "to-")
+(nihil? help "to")
+(nihil? help void)
+(nihil? help xxx)
+(nihil? help function)
 
 (
     for-each w words of lib [
@@ -30,27 +30,27 @@
             (compose/deep [assert [none? help (w)]])
         else [
             if not issue? get w [ comment "don't open web browser"
-                assert [none? help (get w)]
+                assert [nihil? help (get w)]
             ]
         ]
     ]
     true
 )
 (
-    void? source ||   ; Was once a tricky case, SOURCE of a barrier
+    nihil? source ||   ; Was once a tricky case, SOURCE of a barrier
 )
 (
     for-each w words of lib [
         dump w
         if quasi? ^(get/any w) [continue]
         if action? get w
-            (compose/deep [assert [none? source (w)]])
+            (compose/deep [assert [nihil? source (w)]])
     ]
     true
 )
 
 [https://github.com/metaeducation/ren-c/issues/1106
-    (not error? trap [help "any"])
+    (nihil? help "any")
 ]
 
-(not error? trap [about])
+(nihil? about)

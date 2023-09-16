@@ -55,12 +55,11 @@ description-of: function [
     return (switch/type :v [
         any-array! [spaced ["array of length:" length of v]]
         type-word! [
-            spec: ensure object! spec of v  ; "type specs" need simplifying
-            copy maybe spec.title
+            mold v
         ]
         action! [
-            if meta: meta-of :v [
-                copy maybe get 'meta.description
+            if let m: meta-of :v [
+                copy maybe get 'm.description
             ] else [null]
         ]
         object! [mold words of v]
@@ -218,6 +217,9 @@ help: function [
             ]
 
             switch/type value: get/any topic [
+                void! [
+                    print [topic "is void"]
+                ]
                 null! [
                     print [topic "is null"]
                 ]
@@ -293,10 +295,9 @@ help: function [
 
     match [action! activation!] :value else [
         print collect [
-            keep [
-                (uppercase mold topic)
-                "is" an any [mold kind of :value, "VOID"]
-            ]
+            keep uppercase mold topic
+            keep "is"
+            keep an any [mold kind of :value, "VOID"]
             if free? :value [
                 keep "that has been FREEd"
             ] else [

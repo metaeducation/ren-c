@@ -229,7 +229,7 @@ summarize-obj: function [
             kind: kind of noisotope get/any 'val
 
             str: if kind = object! [
-                spaced [word, words of val]
+                spaced [word, form words of val]
             ] else [
                 form word
             ]
