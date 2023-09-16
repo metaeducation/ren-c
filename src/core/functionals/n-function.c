@@ -712,7 +712,7 @@ DECLARE_NATIVE(inherit_meta)
             CTX_ARCHETYPE(m1),
             Canon_Symbol(unwrap(syms[which]))
         ));
-        if (not val1 or Is_Nulled(val1) or Is_Void(val1))
+        if (not val1 or Is_Nulled(val1) or Is_None(val1))
             continue;  // nothing to inherit from
         if (not ANY_CONTEXT(val1))
             fail ("Expected context in original meta information");
@@ -727,7 +727,7 @@ DECLARE_NATIVE(inherit_meta)
             continue;
 
         Context(*) ctx2;
-        if (Is_Nulled(val2) or Is_Void(val2)) {
+        if (Is_Nulled(val2) or Is_None(val2)) {
             ctx2 = Make_Context_For_Action(
                 derived,  // the action
                 TOP_INDEX,  // would weave in refinements pushed (none apply)
@@ -745,7 +745,7 @@ DECLARE_NATIVE(inherit_meta)
         Init_Evars(&e, val2);
 
         while (Did_Advance_Evars(&e)) {
-            if (not Is_Void(e.var) and not Is_Nulled(e.var))
+            if (not Is_None(e.var) and not Is_Nulled(e.var))
                 continue;  // already set to something
 
             option(Value(*)) slot = Select_Symbol_In_Context(
