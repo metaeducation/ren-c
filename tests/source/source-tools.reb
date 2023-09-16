@@ -195,10 +195,12 @@ export analyse: context [
                 do in c-parser-extension [
                     if last-func-end [
                         all [
-                            did parse3 last-func-end [
+                            parse3 last-func-end [
                                 function-spacing-rule
                                 position: <here>
-                                to <end>
+                                accept (true)
+                                |
+                                accept (false)
                             ]
                             same? position proto-parser.parse-position
                         ] else [
@@ -210,7 +212,7 @@ export analyse: context [
                     ]
                 ]
 
-                parse3 proto-parser.data [
+                if (try parse3 proto-parser.data [
                     try 'export
                     set name: set-word! (name: to-word name)
                     try 'enfix
@@ -219,7 +221,7 @@ export analyse: context [
                         | 'native/combinator
                     ]
                     to <end>
-                ] also [
+                ]) [
                     ;
                     ; It's a `some-name?: native [...]`, so we expect
                     ; `DECLARE_NATIVE(some_name_q)` to be correctly lined up
@@ -424,7 +426,7 @@ list: context [
             item: null
         ] else [
             any [
-                did parse3 split-path item ["tmp-" ...]
+                try parse3 split-path item ["tmp-" ...]
                 not find extensions extension-of item
             ] then [
                 item: null

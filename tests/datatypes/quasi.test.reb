@@ -189,15 +189,17 @@
 ; there needs to be a mechanism to indicate that it's okay for a rule to
 ; literally match something that's not set vs. be a typo.
 ;
-(did parse3 [~foo~ ~foo~] [some '~foo~])  ; acceptable
-(did parse3 [~foo~ ~foo~] [some ~foo~])  ; !!! shady, rethink
+(parse3 [~foo~ ~foo~] [some '~foo~], true)  ; acceptable
+(parse3 [~foo~ ~foo~] [some ~foo~], true)  ; !!! shady, rethink
 (
     foo: '~foo~
-    did parse3 [~foo~ ~foo~] [some foo]
+    parse3 [~foo~ ~foo~] [some foo]
+    true
 )
 ~bad-word-get~ !! (
     foo: ~foo~
     parse3 [~foo~ ~foo~] [some foo]
+    true
 )
 
 [#68 https://github.com/metaeducation/ren-c/issues/876

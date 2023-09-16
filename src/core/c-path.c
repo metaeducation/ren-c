@@ -308,12 +308,11 @@ Bounce TO_Sequence(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg) {
         // (Inefficient!  But just see how it feels before optimizing.)
         //
         return rebValue(
-            "as", Datatype_From_Kind(kind), "catch [",
+            "as", Datatype_From_Kind(kind),
                 "parse3 let v: load @", arg, "[",
-                    "[any-sequence! | any-array!] end (throw first v)",
-                    "| (throw v)",  // try to convert whatever other block
-                "]",
-            "]"
+                    "[any-sequence! | any-array!] <end> accept (first v)",
+                    "| accept (v)",  // try to convert whatever other block
+                "]"
         );
     }
 

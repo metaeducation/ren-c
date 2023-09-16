@@ -178,7 +178,7 @@ export collect-tests: function [
                 keep body
             )
         ]  ; ends TRY SOME
-    ] else [  ; ends PARSE
+    ] except [  ; ends PARSE
         append into spread reduce [
             'dialect
             spaced [

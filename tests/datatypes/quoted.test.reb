@@ -153,7 +153,8 @@
 (
     match-parse3: enclose :parse3 lambda [f] [
         let input: f.input
-        do f then [input]
+        do f
+        input
     ]
     (the '[1]) = (requote match-parse3 the '[1] [some integer!])
 )

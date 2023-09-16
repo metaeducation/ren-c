@@ -59,7 +59,7 @@ parse3 init-code [
          #"[" thru #"]"
     ] iso-3166-table-count
     to <end>
-] else [
+] except [
     fail "Failed to update iso-3166-table"
 ]
 

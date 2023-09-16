@@ -511,7 +511,7 @@ main-startup: func [
 
     while [not tail? argv] [
 
-        let is-option: did parse3/case argv.1 [
+        let is-option: did try parse3/case argv.1 [
 
             ["--" end] (
                 ; Double-dash means end of command line arguments, and the
@@ -673,11 +673,11 @@ main-startup: func [
         ; heuristic is to check for more than one letter.
         ;
         alphanum: charset [#"A" - #"Z" #"a" - #"z" #"0" #"9"]
-        o.script: parse3 o.script [alphanum some alphanum ":" to <end>] then [
-            to url! o.script
-        ]
-        else [
-            local-to-file o.script
+        parse3 o.script [
+            alphanum some alphanum ":" to <end>
+            (o.script: to url! o.script)
+        ] except [
+            o.script: local-to-file o.script
         ]
     ]
 

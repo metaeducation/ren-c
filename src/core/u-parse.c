@@ -1454,7 +1454,7 @@ DECLARE_NATIVE(subparse)
               case SYM_WHILE:
                 if (not (P_FLAGS & PF_REDBOL)) {
                     fail (
-                        "Please replace PARSE2's WHILE with TRY SOME -or-"
+                        "Please replace PARSE3's WHILE with TRY SOME -or-"
                         " TRY FURTHER SOME--it's being reclaimed as arity-2."
                         " https://forum.rebol.info/t/1540/12 (or use PARSE2)"
                     );
@@ -1779,7 +1779,7 @@ DECLARE_NATIVE(subparse)
                 //    (go-on?: either condition [[accept]][[reject]])
                 //    go-on?
                 //
-                // !!! Note: PARSE/REDBOL may be a modality it needs to
+                // !!! Note: PARSE3/REDBOL may be a modality it needs to
                 // support, and Red added IF.  It might be necessary to keep
                 // it (though Rebol2 did not have IF in PARSE...)
                 //
@@ -1822,7 +1822,7 @@ DECLARE_NATIVE(subparse)
 
                 DECLARE_LOCAL (thrown_arg);
                 if (IS_TAG(P_RULE)) {
-                    if (rebDid(P_RULE, "= <here>"))
+                    if (rebDid(rebR(rebUnrelativize(P_RULE)), "= <here>"))
                         Copy_Cell(thrown_arg, ARG(position));
                     else
                         fail ("PARSE3 ACCEPT TAG! only works with <here>");
@@ -2760,14 +2760,20 @@ DECLARE_NATIVE(parse3)
         return THROWN;
     }
 
-    if (Is_Nulled(OUT))
-        return nullptr;  // the match failed
+    if (Is_Nulled(OUT)) {  // a match failed (but may be at end of input)
+        if (REF(redbol))
+            return nullptr;
+        return RAISE(Error_Parse_Incomplete_Raw());
+    }
 
     REBLEN index = VAL_UINT32(OUT);
     assert(index <= VAL_LEN_HEAD(input));
 
-    if (index != VAL_LEN_HEAD(input))
-        return nullptr;  // the match failed
+    if (index != VAL_LEN_HEAD(input)) {  // didn't reach end of input
+        if (REF(redbol))
+            return nullptr;
+        return RAISE(Error_Parse_Incomplete_Raw());
+    }
 
     // !!! R3-Alpha parse design had no means to bubble up a "synthesized"
     // rule product.  But that's important in the new design.  Hack in support
@@ -2785,12 +2791,7 @@ DECLARE_NATIVE(parse3)
         return OUT;
     }
 
-    // !!! Give back a value that triggers a THEN clause and won't trigger an
-    // ELSE clause.  See UPARSE for the redesign that will be applied to more
-    // native code in the future.  But this is just to get people out of the
-    // habit of writing `IF PARSE ...`
-    //
-    return rebValue("~use-DID-PARSE-for-logic~");
+    return NONE;
 }
 
 

@@ -191,8 +191,8 @@ reword: function [
         block? escape [
             parse3 escape [
                 set prefix delimiter-types
-                [end | set suffix delimiter-types]
-            ] else [
+                [<end> | set suffix delimiter-types]
+            ] except [
                 fail ["Invalid /ESCAPE delimiter block" escape]
             ]
         ]
@@ -301,7 +301,7 @@ reword: function [
         (append out a)  ; finalize output - transfer any remainder verbatim
     ]
 
-    apply :parse3 [source rule /case case_REWORD] else [fail]  ; should succeed
+    apply :parse3 [source rule /case case_REWORD]  ; should succeed
     return out
 ]
 
@@ -513,7 +513,7 @@ split: function [
         [block! integer! char! bitset! text! tag! word!]
     /into "If dlm is integer, split in n pieces (vs. pieces of length n)"
 ][
-    (parse3 (maybe match block! dlm) [some integer!]) then [
+    if try parse3 (maybe match block! dlm) [some integer!] [
         return map-each len dlm [
             if len <= 0 [
                 series: skip series negate len
@@ -538,7 +538,7 @@ split: function [
 
                 [
                     repeat (count) [
-                        copy series [repeat (piece-size) skip] (
+                        copy series try [repeat (piece-size) skip] (
                             keep series
                         )
                     ]

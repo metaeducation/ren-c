@@ -61,7 +61,7 @@ parse3 init-code [
          #"[" thru #"]"
     ] iso-639-table-count
     to <end>
-] else [
+] except [
     fail "Failed to update iso-639-table"
 ]
 

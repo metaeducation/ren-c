@@ -1,26 +1,56 @@
 ; Is PARSE working at all?
 
-(did parse3 "abc" ["abc"])
-(did parse3 "abc" ["abc" <end>])
+(
+    parse3 "abc" ["abc"]
+    true
+)
+(
+    parse3 "abc" ["abc" <end>]
+    true
+)
 
 ; voids match and don't advance input (nulls are errors)
 ;
-(did parse3 [] [void])
+(
+    parse3 [] [void]
+    true
+)
 (
     parse3 [a b] ['a void pos: <here> 'b]
     pos = [b]
 )
-(did parse3 "a" [void "a"])
-(did parse3 "a" [to void "a"])
-(did parse3 "a" [thru void "a"])
+(
+    parse3 "a" [void "a"]
+    true
+)
+(
+    parse3 "a" [to void "a"]
+    true
+)
+(
+    parse3 "a" [thru void "a"]
+    true
+)
 
 
 ; Edge case of matching <END> with TO or THRU
 ;
-(did parse3 "" [to ["a" | <end>]])
-(did parse3 "" [thru ["a" | <end>]])
-(did parse3 [] [to ["a" | <end>]])
-(did parse3 [] [thru ["a" | <end>]])
+(
+    parse3 "" [to ["a" | <end>]]
+    true
+)
+(
+    parse3 "" [thru ["a" | <end>]]
+    true
+)
+(
+    parse3 [] [to ["a" | <end>]]
+    true
+)
+(
+    parse3 [] [thru ["a" | <end>]]
+    true
+)
 
 
 [#206 (
@@ -28,10 +58,8 @@
     count-up n 512 [
         if n = 1 [continue]
 
-        if didn't parse3 (append copy "" codepoint-to-char n - 1) [
+        parse3 (append copy "" codepoint-to-char n - 1) [
             set c any-char <end>
-        ][
-            fail "Parse didn't work"
         ]
         if c != codepoint-to-char n - 1 [fail "Char didn't match"]
     ]
@@ -41,22 +69,23 @@
 (
     var: 3
     rule: "a"
-    did parse3 "aaa" [repeat (var) rule]  ; clearer than [var rule]
+    parse3 "aaa" [repeat (var) rule]  ; clearer than [var rule]
+    true
 )
 
 ; Don't leak internal detail that BINARY! or ANY-STRING! are 0-terminated
 [
     (NUL = as issue! 0)
 
-    (didn't parse3 "" [to NUL])
-    (didn't parse3 "" [thru NUL])
-    (didn't parse3 "" [to [NUL]])
-    (didn't parse3 "" [thru [NUL]])
+    ~parse-incomplete~ !! (parse3 "" [to NUL])
+    ~parse-incomplete~ !! (parse3 "" [thru NUL])
+    ~parse-incomplete~ !! (parse3 "" [to [NUL]])
+    ~parse-incomplete~ !! (parse3 "" [thru [NUL]])
 
-    (didn't parse3 #{} [to NUL])
-    (didn't parse3 #{} [thru NUL])
-    (didn't parse3 #{} [to [NUL]])
-    (didn't parse3 #{} [thru [NUL]])
+    ~parse-incomplete~ !! (parse3 #{} [to NUL])
+    ~parse-incomplete~ !! (parse3 #{} [thru NUL])
+    ~parse-incomplete~ !! (parse3 #{} [to [NUL]])
+    ~parse-incomplete~ !! (parse3 #{} [thru [NUL]])
 ]
 
 
@@ -65,94 +94,159 @@
     ~bad-word-get~ !! (
         foo: ~bad~
         parse3 "a" [foo]
+        true
     )
     (
         foo: '~bad~
-        did parse3 [~bad~] [foo <end>]
+        parse3 [~bad~] [foo <end>]
+        true
     )
 ]
 
 ; Empty block case handling
 
-(did parse3 [] [])
-(did parse3 [] [[[]]])
-(didn't parse3 [x] [])
-(didn't parse3 [x] [[[]]])
-(did parse3 [x] [[] 'x []])
+(
+    parse3 [] []
+    true
+)
+(
+    parse3 [] [[[]]]
+    true
+)
+~parse-incomplete~ !! (
+    parse3 [x] []
+)
+~parse-incomplete~ !! (
+    parse3 [x] [[[]]]
+)
+(
+    parse3 [x] [[] 'x []]
+    true
+)
 
 ; No longer contentious concept: NULL is not legal as a parse rule.
 ;
 ; BLANK! behavior is still contentious at time of writing.
 [
-    ~bad-word-get~ !! (did parse3 [x] ['x null])
-    (did parse3 [_ x] [blank 'x <end>])
-
-    (didn't parse3 [] [blank blank blank])
-    (did parse3 [_ _ _] [blank blank blank])
-    (did parse3 [_ _ _] [_ _ _])
-    (didn't parse3 [x <y> "z"] [_ _ _])
-
-    (didn't parse3 [x <y> "z"] ['_ '_ '_])
-    (did parse3 [_ _ _] ['_ '_ '_])
+    ~bad-word-get~ !! (
+        parse3 [x] ['x null]
+    )
     (
-        q-blank: quote '_
-        did parse3 [_ _ _] [q-blank q-blank q-blank]
+        parse3 [_ x] [blank 'x <end>]
+        true
     )
 
-    (didn't parse3 [] [[[_ _ _]]])
-    (did parse3 [_ _ _] [[[blank blank blank]]])
+    ~parse-incomplete~ !! (
+        parse3 [] [blank blank blank]
+    )
+    (
+        parse3 [_ _ _] [blank blank blank]
+        true
+    )
+    (
+        parse3 [_ _ _] [_ _ _]
+        true
+    )
+    ~parse-incomplete~ !!(
+        parse3 [x <y> "z"] [_ _ _]
+    )
+
+    ~parse-incomplete~ !!(
+        parse3 [x <y> "z"] ['_ '_ '_]
+    )
+    (
+        parse3 [_ _ _] ['_ '_ '_]
+        true
+    )
+    (
+        q-blank: quote '_
+        parse3 [_ _ _] [q-blank q-blank q-blank]
+        true
+    )
+
+    ~parse-incomplete~ !!(
+        parse3 [] [[[_ _ _]]]
+    )
+    (
+        parse3 [_ _ _] [[[blank blank blank]]]
+        true
+    )
 ]
 
 ; SET-WORD! (store current input position)
 
 (
-    res: did parse3 ser: [x y] [pos: <here>, skip, skip]
-    all [res, pos = ser]
+    parse3 ser: [x y] [pos: <here>, skip, skip]
+    pos = ser
 )
 (
-    res: did parse3 ser: [x y] [skip, pos: <here>, skip]
-    all [res, pos = next ser]
+    parse3 ser: [x y] [skip, pos: <here>, skip]
+    pos = next ser
 )
 (
-    res: did parse3 ser: [x y] [skip, skip, pos: <here>]
-    all [res, pos = tail of ser]
+    parse3 ser: [x y] [skip, skip, pos: <here>]
+    pos = tail of ser
 )
 [#2130 (
-    res: did parse3 ser: [x] [pos: <here>, set val word!]
-    all [res, val = 'x, pos = ser]
+    parse3 ser: [x] [pos: <here>, set val word!]
+    all [val = 'x, pos = ser]
 )]
 [#2130 (
-    res: did parse3 ser: [x] [pos: <here>, set val: word!]
-    all [res, val = 'x, pos = ser]
+    parse3 ser: [x] [pos: <here>, set val: word!]
+    all [val = 'x, pos = ser]
 )]
 [#2130 (
-    res: did parse3 ser: "foo" [pos: <here>, copy val skip]
-    all [not res, val = "f", pos = ser]
+    res: try parse3 ser: "foo" [pos: <here>, copy val skip]
+    all [res = null, val = "f", pos = ser]
 )]
 [#2130 (
-    res: did parse3 ser: "foo" [pos: <here>, copy val: skip]
-    all [not res, val = "f", pos = ser]
+    res: try parse3 ser: "foo" [pos: <here>, copy val: skip]
+    all [res = null, val = "f", pos = ser]
 )]
 
 ; SEEK INTEGER! (replaces TO/THRU integer!
 
-(did parse3 "abcd" [seek 3 "cd"])
-(did parse3 "abcd" [seek 5])
-(did parse3 "abcd" [seek 128])
+(
+    parse3 "abcd" [seek 3 "cd"]
+    true
+)
+(
+    parse3 "abcd" [seek 5]
+    true
+)
+(
+    parse3 "abcd" [seek 128]
+    true
+)
 
 [#1965
-    (did parse3 "abcd" [seek 3 skip "d"])
-    (did parse3 "abcd" [seek 4 skip])
-    (did parse3 "abcd" [seek 128])
-    (did parse3 "abcd" ["ab" seek 1 "abcd"])
-    (did parse3 "abcd" ["ab" seek 1 skip "bcd"])
+    (
+        parse3 "abcd" [seek 3 skip "d"]
+        true
+    )
+    (
+        parse3 "abcd" [seek 4 skip]
+        true
+    )
+    (
+        parse3 "abcd" [seek 128]
+        true
+    )
+    (
+        parse3 "abcd" ["ab" seek 1 "abcd"]
+        true
+    )
+    (
+        parse3 "abcd" ["ab" seek 1 skip "bcd"]
+        true
+    )
 ]
 
 ; parse THRU tag!
 
 [#682 (
     t: null
-    parse3 "<tag>text</tag>" [thru '<tag> copy t to '</tag>]
+    parse3 "<tag>text</tag>" [thru '<tag> copy t to '</tag> '</tag>]
     t == "text"
 )]
 
@@ -160,27 +254,42 @@
 
 (
     i: 0
-    parse3 "a." [
+    parse3 "a" [
         some [thru "a" (i: i + 1, j: if i > 1 [<end> skip]) j]
     ]
     i == 1
 )
 
 [#1959
-    (did parse3 "abcd" [thru "d"])
+    (
+        parse3 "abcd" [thru "d"]
+        true
+    )
 ]
 [#1959
-    (did parse3 "abcd" [to "d" skip])
+    (
+        parse3 "abcd" [to "d" skip]
+        true
+    )
 ]
 
 [#1959
-    (did parse3 "<abcd>" [thru '<abcd>])
+    (
+        parse3 "<abcd>" [thru '<abcd>]
+        true
+    )
 ]
 [#1959
-    (did parse3 [a b c d] [thru 'd])
+    (
+        parse3 [a b c d] [thru 'd]
+        true
+    )
 ]
 [#1959
-    (did parse3 [a b c d] [to 'd skip])
+    (
+        parse3 [a b c d] [to 'd skip]
+        true
+    )
 ]
 
 ; self-invoking rule
@@ -188,7 +297,7 @@
 [#1672
     ~stack-overflow~ !! (
         a: [a]
-        error? trap [parse3 [] a]
+        parse3 [] a
     )
 ]
 
@@ -206,58 +315,74 @@
 )]
 [#1268 (
     i: 0
-    parse3 "a" [some [(i: i + 1, j: if i = 2 [[fail]]) j]]
+    parse3 "a" [some [try "a" (i: i + 1, j: if i = 2 [[fail]]) j]]
     i == 2
 )]
 
 ; NOT rule
 
 [#1246
-    (did parse3 "1" [not not "1" "1"])
+    (
+        parse3 "1" [not not "1" "1"]
+        true
+    )
+    (
+        parse3 "1" [not [not "1"] "1"]
+        true
+    )
+    ~parse-incomplete~ !! (
+        parse3 "" [not 0 "a"]
+    )
+    ~parse-incomplete~ !! (
+        parse3 "" [not [0 "a"]]
+    )
 ]
-[#1246
-    (did parse3 "1" [not [not "1"] "1"])
-]
-[#1246
-    (didn't parse3 "" [not 0 "a"])
-]
-[#1246
-    (didn't parse3 "" [not [0 "a"]])
-]
+
 [#1240
-    (did parse3 "" [not "a"])
-]
-[#1240
-    (did parse3 "" [not skip])
-]
-[#1240
-    (did parse3 "" [not fail])
+    (
+        parse3 "" [not "a"]
+        true
+    )
+    (
+        parse3 "" [not skip]
+        true
+    )
+    (
+        parse3 "" [not fail]
+        true
+    )
 ]
 
 
 ; TO/THRU + bitset!/charset!
 
 [#1457
-    (did parse3 "a" compose [thru (charset "a")])
+    (
+        parse3 "a" compose [thru (charset "a")]
+        true
+    )
+    ~parse-incomplete~ !! (
+        parse3 "a" compose [thru (charset "a") skip]
+    )
+    (
+        parse3 "ba" compose [to (charset "a") skip]
+        true
+    )
+    ~parse-incomplete~ !! (
+        parse3 "ba" compose [to (charset "a") "ba"]
+    )
 ]
-[#1457
-    (didn't parse3 "a" compose [thru (charset "a") skip])
-]
-[#1457
-    (did parse3 "ba" compose [to (charset "a") skip])
-]
-[#1457
-    (didn't parse3 "ba" compose [to (charset "a") "ba"])
-]
+
 [#2141 (
     xset: charset "x"
-    did parse3 "x" [thru [xset]]
+    parse3 "x" [thru [xset]]
+    true
 )]
 
 ; self-modifying rule, not legal in Ren-C if it's during the parse
 
 ~series-held~ !! (
-    didn't parse3 "abcd" rule: ["ab" (remove back tail of rule) "cd"]
+    parse3 "abcd" rule: ["ab" (remove back tail of rule) "cd"]
 )
 
 [https://github.com/metaeducation/ren-c/issues/377 (
@@ -268,12 +393,18 @@
 
 ; AHEAD and AND are synonyms
 ;
-(did parse3 ["aa"] [ahead text! into ["a" "a"]])
-(did parse3 ["aa"] [and text! into ["a" "a"]])
+(
+    parse3 ["aa"] [ahead text! into ["a" "a"]]
+    true
+)
+(
+    parse3 ["aa"] [and text! into ["a" "a"]]
+    true
+)
 
 [#1238
-    (null = parse3 "ab" [ahead "ab" "ac"])
-    (null = parse3 "ac" [ahead "ab" "ac"])
+    ~parse-incomplete~ !! (parse3 "ab" [ahead "ab" "ac"])
+    ~parse-incomplete~ !! (parse3 "ac" [ahead "ab" "ac"])
 ]
 
 ; INTO is not legal if a string parse is already running
@@ -285,20 +416,24 @@
 ; PATH! cannot be PARSE'd due to restrictions of the implementation
 (
     a-value: first [a/b]
-    parse3 as block! a-value [b-value: <here>]
+    parse3 as block! a-value [b-value: <here>, accept (true)]
     a-value = to path! b-value
 )
 (
     a-value: first [()]
-    parse3 a-value [b-value: <here>]
+    parse3 a-value [b-value: <here>, accept (true)]
     same? a-value b-value
 )
 
 ; This test works in Rebol2 even if it starts `i: 0`, presumably a bug.
 (
     i: 1
-    parse3 "a" [some [(i: i + 1 j: if i = 2 [[<end> skip]]) j]]
-    i == 2
+    did all [
+        raised? parse3 "a" [
+            some [try "a" (i: i + 1 j: if i = 2 [[<end> skip]]) j]
+        ]
+        i == 2
+    ]
 )
 
 
@@ -306,54 +441,86 @@
 ; These evaluate and inject their material into the PARSE, if it is not null.
 ; They act like a COMPOSE that runs each time the GET-GROUP! is passed.
 
-(did parse3 "aaabbb" [:([some "a"]) :([some "b"])])
-(did parse3 "aaabbb" [:([some "a"]) :(if false [some "c"]) :([some "b"])])
-(did parse3 "aaa" [:('some) "a"])
-(didn't parse3 "aaa" [:(1 + 1) "a"])
-(did parse3 "aaa" [:(1 + 2) "a"])
+(
+    parse3 "aaabbb" [:([some "a"]) :([some "b"])]
+    true
+)
+(
+    parse3 "aaabbb" [:([some "a"]) :(if false [some "c"]) :([some "b"])]
+    true
+)
+(
+    parse3 "aaa" [:('some) "a"]
+    true
+)
+~parse-incomplete~ !! (
+    parse3 "aaa" [:(1 + 1) "a"]
+)
+(
+    parse3 "aaa" [:(1 + 2) "a"]
+    true
+)
 (
     count: 0
-    did parse3 ["a" "aa" "aaa"] [some [into [:(count: count + 1) "a"]]]
+    parse3 ["a" "aa" "aaa"] [some [into [:(count: count + 1) "a"]]]
+    true
 )
 
 ; LOGIC! BEHAVIOR
 ; A logic true acts as a no-op, while a logic false causes matches to fail
 
-(did parse3 "ab" ["a" true "b"])
-(didn't parse3 "ab" ["a" false "b"])
-(did parse3 "ab" ["a" :(1 = 1) "b"])
-(didn't parse3 "ab" ["a" :(1 = 2) "b"])
+(
+    parse3 "ab" ["a" true "b"]
+    true
+)
+~parse-incomplete~ !! (
+    parse3 "ab" ["a" false "b"]
+)
+(
+    parse3 "ab" ["a" :(1 = 1) "b"]
+    true
+)
+~parse-incomplete~ !! (
+    parse3 "ab" ["a" :(1 = 2) "b"]
+)
 
 
 ; QUOTED! BEHAVIOR
 ; Support for the new literal types
 
 (
-    did all [
-        pos: parse3* [... [a b]] [to '[a b], <here>]
-        pos = [[a b]]
-    ]
+    pos: parse3 [... [a b]] [to '[a b], accept <here>]
+    pos = [[a b]]
 )
-(did parse3 [... [a b]] [thru '[a b]])
-(did parse3 [1 1 1] [some '1])
+(
+    parse3 [... [a b]] [thru '[a b]]
+    true
+)
+(
+    parse3 [1 1 1] [some '1]
+    true
+)
 
 ; Quote level is not retained by captured content
 ;
-(did all [
-    pos: parse3* [''[1 + 2]] [into [copy x to <end>], <here>]
-    [] == pos
-    x == [1 + 2]
-])
-
+(
+    pos: parse3 [''[1 + 2]] [into [copy x to <end>], accept <here>]
+    did all [
+        [] == pos
+        x == [1 + 2]
+    ]
+)
 
 ; Limited support for @word
 (
     block: [some rule]
-    did parse3 [[some rule] [some rule]] [2 @block]
+    parse3 [[some rule] [some rule]] [2 @block]
+    true
 )
 (
     ch: #a
-    did parse3 "a" [@ch]
+    parse3 "a" [@ch]
+    true
 )
 
 ; As alternatives to using SET-WORD! to set the parse position and GET-WORD!
@@ -364,11 +531,11 @@
 ;
 ; Unlike R3-Alpha, changing the series being parsed is not allowed.
 (
+    parse3 "aabbcc" [
+        some "a", x: <here>, some "b", y: <here>
+        seek x, copy z to <end>
+    ]
     did all [
-        did parse3 "aabbcc" [
-            some "a", x: <here>, some "b", y: <here>
-            seek x, copy z to <end>
-        ]
         x = "bbcc"
         y = "cc"
         z = "bbcc"
@@ -387,19 +554,23 @@
 [
     (
         catchar: #"🐱"
-        did parse3 #{F09F90B1} [catchar]
+        parse3 #{F09F90B1} [catchar]
+        true
     )
     (
         cattext: "🐱"
-        did parse3 #{F09F90B1} [cattext]
+        parse3 #{F09F90B1} [cattext]
+        true
     )
     ~find-string-binary~ !! (
         catbin: #{F09F90B1}
-        did parse3 "🐱" [catbin]
+        parse3 "🐱" [catbin]
+        true
     )
     (
         catchar: #"🐱"
-        did parse3 "🐱" [catchar]
+        parse3 "🐱" [catchar]
+        true
     )
 ]
 
@@ -409,40 +580,62 @@
         bincat = #{43F09F98BA54}
     )
 
-    (did parse3 bincat [{C😺T}])
+    (
+        parse3 bincat [{C😺T}]
+        true
+    )
 
-    (did parse3 bincat [{c😺t}])
+    (
+        parse3 bincat [{c😺t}]
+        true
+    )
 
-    (didn't parse3/case bincat [{c😺t} <end>])
+    ~parse-incomplete~ !! (
+        parse3/case bincat [{c😺t}]
+    )
 ]
 
 (
     test: to-binary {The C😺T Test}
+    parse3 test [to {c😺t} copy x to space to <end>]
     did all [
-        did parse3 test [to {c😺t} copy x to space to <end>]
         x = #{43F09F98BA54}
         "C😺T" = to-text x
     ]
 )
 
 
-(did all [
-    did parse3 text: "a ^/ " [
+(
+    parse3 text: "a ^/ " [
         some [newline remove [to <end>] | "a" [remove [to newline]] | skip]
     ]
     text = "a^/"
-])
+)
 
 ; FURTHER can be used to detect when parse has stopped advancing the input and
 ; then not count the rule as a match.
 ;
 [
-    (did parse3 "" [try some further [to <end>]])
+    (
+        parse3 "" [try some further [to <end>]]
+        true
+    )
 
-    (didn't parse3 "" [further [try "a" try "b"] ("at least one")])
-    (did parse3 "a" [further [try "a" try "b"] ("at least 1")])
-    (did parse3 "a" [further [try "a" try "b"] ("at least 1")])
-    (did parse3 "ab" [further [try "a" try "b"] ("at least 1")])
+    ~parse-incomplete~ !! (
+        parse3 "" [further [try "a" try "b"] ("at least one")]
+    )
+    (
+        parse3 "a" [further [try "a" try "b"] ("at least 1")]
+        true
+    )
+    (
+        parse3 "a" [further [try "a" try "b"] ("at least 1")]
+        true
+    )
+    (
+        parse3 "ab" [further [try "a" try "b"] ("at least 1")]
+        true
+    )
 ]
 
 [https://github.com/metaeducation/ren-c/issues/1032 (
@@ -471,17 +664,16 @@
             ]
             keep 'fail
         ]
-        return parse3 data (compose/deep [
+        parse3 data (compose/deep [
             try some [(spread rules)]  ; could also be `try some [rules]`
-        ]) then [
-            collect [
-                for-each [key value] counts [
-                    keep key
-                    keep value
-                ]
+        ]) except [
+            return <outlier>
+        ]
+        return collect [
+            for-each [key value] counts [
+                keep key
+                keep value
             ]
-        ] else [
-            <outlier>
         ]
     ]
     true
@@ -493,61 +685,83 @@
 
 [
     https://github.com/rebol/rebol-issues/issues/2393
-    (didn't parse3 "aa" [some [#"a"] reject])
-    (didn't parse3 "aabb" [some [#"a"] reject some [#"b"]])
-    (didn't parse3 "aabb" [some [#"a" reject] to <end>])
+
+    ~parse-incomplete~ !! (
+        parse3 "aa" [some [#"a"] reject]
+    )
+    ~parse-incomplete~ !! (
+        parse3 "aabb" [some [#"a"] reject some [#"b"]]
+    )
+    ~parse-incomplete~ !! (
+        parse3 "aabb" [some [#"a" reject] to <end>]
+    )
 ]
 
 ; Ren-C does not mandate that rules make progress, so matching empty strings
 ; works, as it does in Red.
 [
-    (did parse3 "ab" [to [""] "ab"])
-    (did parse3 "ab" [to ["a"] "ab"])
-    (did parse3 "ab" [to ["ab"] "ab"])
-    (did parse3 "ab" [thru [""] "ab"])
-    (did parse3 "ab" [thru ["a"] "b"])
-    (did parse3 "ab" [thru ["ab"] ""])
+    (
+        parse3 "ab" [to [""] "ab"]
+        true
+    )
+    (
+        parse3 "ab" [to ["a"] "ab"]
+        true
+    )
+    (
+        parse3 "ab" [to ["ab"] "ab"]
+        true
+    )
+    (
+        parse3 "ab" [thru [""] "ab"]
+        true
+    )
+    (
+        parse3 "ab" [thru ["a"] "b"]
+        true
+    )
+    (
+        parse3 "ab" [thru ["ab"] ""]
+        true
+    )
 ]
 
 ; Ren-C made it possible to use quoted WORD!s in place of CHAR! or TEXT! to
 ; match in strings.  This gives a cleaner look, as you drop off 3 vertical
 ; tick marks from everything like ["ab"] to become ['ab]
 ;
-(did all [
-    pos: parse3* "abbbbbc" ['a some ['b], <here>]
+(
+    pos: parse3 "abbbbbc" ['a some ['b], accept <here>]
     "c" = pos
-])
-(did all [
-    pos: parse3* "abbbbc" ['ab, some ['bc | 'b], <here>]
+)
+(
+    pos: parse3 "abbbbc" ['ab, some ['bc | 'b], accept <here>]
     "" = pos
-])
-(did all [
-    pos: parse3* "abc10def" ['abc '10, <here>]
+)
+(
+    pos: parse3 "abc10def" ['abc '10, accept <here>]
     "def" = pos
-])
+)
 
 (
     byteset: make bitset! [0 16 32]
-    did parse3 #{001020} [some byteset]
+    parse3 #{001020} [some byteset]
+    true
 )
 
 ; A SET of zero elements gives NULL, a SET of > 1 elements is an error
 [(
     x: <before>
-    did all [
-        did parse3 [1] [set x try text! integer!]
-        x = null
-    ]
+    parse3 [1] [set x try text! integer!]
+    x = null
 )(
     x: <before>
-    did all [
-        did parse3 ["a" 1] [set x some text! integer!]
-        x = "a"
-    ]
+    parse3 ["a" 1] [set x some text! integer!]
+    x = "a"
 )(
     x: <before>
     e: sys.util.rescue [
-        did parse3 ["a" "b" 1] [set x some text! integer!]
+        parse3 ["a" "b" 1] [set x some text! integer!]
     ]
     did all [
         e.id = 'parse-multiple-set
@@ -556,31 +770,31 @@
 )]
 
 [#1251
-    (did all [
-        did parse3 e: "a" [remove skip insert ("xxx")]
+    (
+        parse3 e: "a" [remove skip insert ("xxx")]
         e = "xxx"
-    ])
-    (did all [
-        did parse3 e: "a" [[remove skip] insert ("xxx")]
+    )
+    (
+        parse3 e: "a" [[remove skip] insert ("xxx")]
         e = "xxx"
-    ])
+    )
 ]
 
 [#1245
-    (did all [
-        did parse3 s: "(1)" [change "(1)" ("()")]
+    (
+        parse3 s: "(1)" [change "(1)" ("()")]
         s = "()"
-    ])
+    )
 ]
 
 [#1244
     (did all [
-        didn't parse3 a: "12" [remove copy v skip]
+        raised? parse3 a: "12" [remove copy v skip]
         a = "2"
         v = "1"
     ])
     (did all [
-        didn't parse3 a: "12" [remove [copy v skip]]
+        raised? parse3 a: "12" [remove [copy v skip]]
         a = "2"
         v = "1"
     ])
@@ -588,35 +802,37 @@
 
 [#1298 (
     cset: charset [#"^(01)" - #"^(FF)"]
-    did parse3 "a" ["a" try some cset]
+    parse3 "a" ["a" try some cset]
+    true
 )(
     cset: charset [# - #"^(FE)"]
-    did parse3 "a" ["a" try some cset]
+    parse3 "a" ["a" try some cset]
+    true
 )(
     cset: charset [# - #"^(FF)"]
-    did parse3 "a" ["a" try some cset]
+    parse3 "a" ["a" try some cset]
+    true
 )]
 
 [#1282
-    (did parse3 [1 2 a] [thru word!])
+    (
+        parse3 [1 2 a] [thru word!]
+        true
+    )
 ]
 
-; Compatibility PARSE2 allows things like set-word and get-word for mark and
-; seek funcitonality, uses plain END and not <end>, etc.
+; Compatibility Redbol PARSE allows things like set-word and get-word for mark
+; and seek functionality, uses plain END and not <end>, etc.
 ;
-(did parse2 "aaa" [pos: some "a" to end :pos 3 "a"])
+(did parse3/redbol "aaa" [pos: some "a" to end :pos 3 "a"])
 
 ; Parsing URL!s and ANY-SEQUENCE! is read-only
 [(
-    did all [
-        did parse3 http://example.com ["http:" some "/" copy name to "." ".com"]
-        name = "example"
-    ]
+    parse3 http://example.com ["http:" some "/" copy name to "." ".com"]
+    name = "example"
 )(
-    did all [
-        did parse3 'abc.<def>.<ghi>.jkl [word! copy tags some tag! word!]
-        tags = [<def> <ghi>]
-    ]
+    parse3 'abc.<def>.<ghi>.jkl [word! copy tags some tag! word!]
+    tags = [<def> <ghi>]
 )]
 
 ; The idea of being able to return a value from a parse is implemented via

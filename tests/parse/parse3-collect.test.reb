@@ -15,67 +15,73 @@
 ; and KEEP SPREAD INTEGER! is needed to splice the integer into the collected
 ; block.  It is not considered worth it to re-engineer parse3 to resolve this.
 
-(did all [
-    did parse3 [1 2 3] [x: collect [keep spread [some integer!]]]
+(
+    parse3 [1 2 3] [x: collect [keep spread [some integer!]]]
     x = [1 2 3]
-])
-(did all [
-    did parse3 [1 2 3] [x: collect [some [keep spread integer!]]]
+)
+(
+    parse3 [1 2 3] [x: collect [some [keep spread integer!]]]
     x = [1 2 3]
-])
-(did all [
-    did parse3 [1 2 3] [x: collect [keep [some integer!]]]
+)
+(
+    parse3 [1 2 3] [x: collect [keep [some integer!]]]
     x = [[1 2 3]]
-])
-(did all [
-    did parse3 [1 2 3] [x: collect [some [keep integer!]]]
+)
+(
+    parse3 [1 2 3] [x: collect [some [keep integer!]]]
     x = [[1] [2] [3]]
-])
+)
 
 ; Collecting non-array series fragments
 
-(did all [
-    pos: parse3* "aaabbb" [x: collect [keep [some "a"]] <here>]
-    "bbb" = pos
-    x = ["aaa"]
-])
-(did all [
-    pos: parse3* "aaabbbccc" [
-        x: collect [keep [some "a"] some "b" keep [some "c"]]
-        <here>
+(
+    pos: parse3 "aaabbb" [x: collect [keep [some "a"]] accept <here>]
+    did all [
+        "bbb" = pos
+        x = ["aaa"]
     ]
-    "" = pos
-    x = ["aaa" "ccc"]
-])
+)
+(
+    pos: parse3 "aaabbbccc" [
+        x: collect [keep [some "a"] some "b" keep [some "c"]]
+        accept <here>
+    ]
+    did all [
+        "" = pos
+        x = ["aaa" "ccc"]
+    ]
+)
 
 ; Backtracking (more tests needed!)
 
-(did all [
-    pos: parse3* [1 2 3] [
+(
+    pos: parse3 [1 2 3] [
         x: collect [
             keep spread integer! keep spread integer! keep text!
             |
             keep spread integer! keep spread [some integer!]
         ]
-        <here>
+        accept <here>
     ]
-    [] = pos
-    x = [1 2 3]
-])
+    did all [
+        [] = pos
+        x = [1 2 3]
+    ]
+)
 
 ; No change to variable on failed match (consistent with Rebol2/R3-Alpha/Red
 ; behaviors w.r.t SET and COPY)
 
 (did all [
     x: <before>
-    null = parse3 [1 2] [x: collect [keep spread integer! keep spread text!]]
+    not try parse3 [1 2] [x: collect [keep spread integer! keep spread text!]]
     x = <before>
 ])
 
 ; Nested collect
 
-(did all [
-    did parse3 [1 2 3 4] [
+(
+    parse3 [1 2 3 4] [
         a: collect [
             keep spread integer!
             b: collect [keep spread [2 integer!]]
@@ -84,64 +90,74 @@
         <end>
     ]
 
-    a = [1 4]
-    b = [2 3]
-])
+    did all [
+        a = [1 4]
+        b = [2 3]
+    ]
+)
 
 ; GROUP! can be used to keep material that did not originate from the
 ; input series or a match rule.
 ;
-(did all [
-    pos: parse3* [1 2 3] [
+(
+    pos: parse3 [1 2 3] [
         x: collect [
             keep spread integer!
             keep spread (second [A [<pick> <me>] B])
             keep spread integer!
         ]
-        <here>
+        accept <here>
     ]
-    [3] = pos
-    x = [1 <pick> <me> 2]
-])
-(did all [
-    pos: parse3* [1 2 3] [
+
+    did all [
+        [3] = pos
+        x = [1 <pick> <me> 2]
+    ]
+)
+(
+    pos: parse3 [1 2 3] [
         x: collect [
             keep spread integer!
             keep (second [A [<pick> <me>] B])
             keep spread integer!
         ]
-        <here>
+        accept <here>
     ]
-    [3] = pos
-    x = [1 [<pick> <me>] 2]
-])
-(did all [
-    did parse3 [1 2 3] [x: collect [keep ([a b c]) to <end>]]
+
+    did all [
+        [3] = pos
+        x = [1 [<pick> <me>] 2]
+    ]
+)
+(
+    parse3 [1 2 3] [x: collect [keep ([a b c]) to <end>]]
     x = [[a b c]]
-])
+)
 
 ; KEEP without blocks
 https://github.com/metaeducation/ren-c/issues/935
 [
-    (did all [
-        did parse3 "aaabbb" [x: collect [keep some "a" keep some "b"]]
+    (
+        parse3 "aaabbb" [x: collect [keep some "a" keep some "b"]]
         x = ["aaa" "bbb"]
-    ])
+    )
 
-    (did all [
-        did parse3 "aaabbb" [x: collect [keep to "b"] to <end>]
+    (
+        parse3 "aaabbb" [x: collect [keep to "b"] to <end>]
         x = ["aaa"]
-    ])
+    )
 
-    (did all [
-        did parse3 "aaabbb" [
+    (
+        parse3 "aaabbb" [
             outer: collect [
                 some [inner: collect keep some "a" | keep some "b"]
             ]
         ]
-        outer = ["bbb"]
-        inner = ["aaa"]
-    ])
+        did all [
+            outer = ["bbb"]
+            inner = ["aaa"]
+        ]
+    )
 ]
 
 ; Because COLLECT works with a SET-WORD! on the left, it also works with
@@ -149,8 +165,8 @@ https://github.com/metaeducation/ren-c/issues/935
 (
     x: <x>
     y: <y>
+    parse3 "aaa" [let x: collect [some [keep "a"]], (y: x)]
     did all [
-        did parse3 "aaa" [let x: collect [some [keep "a"]], (y: x)]
         x = <x>
         y = ["a" "a" "a"]
     ]

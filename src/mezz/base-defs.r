@@ -343,10 +343,6 @@ reorder: enclose :reorder* lambda [f] [
     inherit-meta (do f) action
 ]
 
-; The PARSE name has been taken by what was UPARSE.
-
-parse2: :parse3/redbol
-
 
 ; REQUOTE is helpful when functions do not accept QUOTED! values.
 ;

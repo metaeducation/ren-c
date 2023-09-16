@@ -14,8 +14,9 @@
 
     obj: make object! [data: null]
 
+    parse3/inside [1 2 3] [some rule] obj
+
     did all [
-        did parse3/inside [1 2 3] [some rule] obj
         obj.data = [1 2 3]
         data = <unmodified>
     ]
@@ -29,8 +30,7 @@
         foo: func [x] [append stuff x]
     ]
 
-    did all [
-        did parse3/inside "aaa" [some ["a" rule]] obj
-        obj.stuff = ["hi" "hi" "hi"]
-    ]
+    parse3/inside "aaa" [some ["a" rule]] obj
+
+    obj.stuff = ["hi" "hi" "hi"]
 )

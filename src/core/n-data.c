@@ -2665,8 +2665,8 @@ DECLARE_NATIVE(concretize)
 //
 //  "Turn isotopes into their plain forms, pass thru other values"
 //
-//      return: [element?]
-//      value [<opt> any-value!]
+//      return: [<void> element?]
+//      value [<opt> <void> any-value!]
 //  ]
 //
 DECLARE_NATIVE(noisotope)

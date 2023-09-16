@@ -371,7 +371,7 @@ export do-recover: func [
                 ])
             ]
             <end>
-        ] else [
+        ] except [
             fail "do-recover log file parsing problem"
         ]
         last-vector

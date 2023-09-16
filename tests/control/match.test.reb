@@ -86,11 +86,8 @@
 [
     (match+: reframer func [f [frame!] <local> p] [
         p: f.(first parameters of action of f)  ; get the first parameter
-        if did do f [
-            return p
-        ] else [
-            return null
-        ] ; evaluate to parameter if operation succeeds
+        do f except [return null]
+        return p  ; evaluate to parameter if operation succeeds
     ]
     true)
 

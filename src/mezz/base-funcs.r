@@ -430,7 +430,7 @@ redescribe: func [
             )]
         ]
         <end>
-    ] else [
+    ] except [
         fail [{REDESCRIBE specs should be STRING! and ANY-WORD! only:} spec]
     ]
 

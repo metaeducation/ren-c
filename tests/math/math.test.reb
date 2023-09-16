@@ -121,7 +121,7 @@
     ])
 ][
     clear nested-expr-val
-    let res: either parse3 expr expression [expr-val] [blank]
+    let res: if try parse3 expr expression [expr-val] else [blank]
 
     either only [
         return res

@@ -357,13 +357,15 @@ trim: function [
     ;
     indent: null
     if auto [
-        parse3* series [
+        parse3 series [
             ; Don't count empty lines, (e.g. trim/auto {^/^/^/    asdf})
-            remove [try some LF]
+            try remove some LF
 
             (indent: 0)
-            s: <here>, some rule, e: <here>
+            s: <here>, try some rule, e: <here>
             (indent: (index of e) - (index of s))
+
+            accept (true)  ; don't need to reach end
         ]
     ]
 

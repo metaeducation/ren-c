@@ -79,6 +79,12 @@ trap [
         fail/where "Use PARSE2 in Bootstrap Process, not UPARSE/PARSE" 'return
     ]
 
+    ; In the distant future, modern EXE bootstrap should use UPARSE-based code
+    ; of Redbol's PARSE2.  For now, it relies on hacks to make PARSE3 act
+    ; in a legacy way.
+    ;
+    export parse2: :parse3/redbol
+
     ; Bootstrap EXE doesn't support multi-returns so SPLIT-PATH takes a /DIR
     ; refinement of a variable to write to.
     ;

@@ -573,7 +573,10 @@ ext-console-impl: func [
     let directives: collect [
         let i
         if block? prior [
-            parse3 prior [some [set i: issue! (keep i)] end]
+            parse3 prior [
+                try some [set i: issue! (keep i)]
+                accept (true)
+            ]
         ]
     ]
 

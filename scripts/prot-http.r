@@ -485,7 +485,7 @@ read-body: function [
                 ; even have enough input data for the chunk *size*, much less
                 ; the chunk.  READ until we have at least a chunk size.
                 ;
-                while [didn't parse3 conn.data [
+                while [not try parse3 conn.data [
                     copy chunk-size: some hex-digits, thru crlfbin
                     mk1: <here>, to <end>
                 ]][
@@ -511,7 +511,7 @@ read-body: function [
                 ; Now we have the chunk size but may not have the chunk data.
                 ; Loop until enough data is gathered.
                 ;
-                while [didn't parse3 mk1 [
+                while [not try parse3 mk1 [
                     repeat (chunk-size) skip, mk2: <here>, crlfbin, to <end>
                 ]][
                     read conn
@@ -532,11 +532,11 @@ read-body: function [
             ;
             ; https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Trailer
             ;
-            parse3 mk1 [
+            if try parse3 mk1 [
                 crlfbin (trailer: "") to <end>
                     |
                 copy trailer to crlf2bin to <end>
-            ] then [
+            ][
                 trailer: scan-net-header as binary! trailer
                 append headers spread trailer
                 clear conn.data
