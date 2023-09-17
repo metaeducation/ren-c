@@ -472,13 +472,12 @@ main-startup: func [
         o.bin: null
     ]
 
-    let param-or-die: func [
+    let param-missing: func [
         {Take --option argv and then check if param arg is present, else die}
-        return: [text!]
-        option [text!] {Command-line option (switch) used}
+        return: []
+        option [text!] {Name of command-line option (switch) used}
     ][
-        take argv
-        return first argv else [die [option {parameter missing}]]
+        die [option {parameter missing}]
     ]
 
     ; As we process command line arguments, we build up an "instruction" block
@@ -509,155 +508,153 @@ main-startup: func [
     let is-script-implicit: true
     let check-encap: true
 
-    while [not tail? argv] [
+    let param
 
-        let is-option: did try parse3/case argv.1 [
+    o.args: copy parse3/case argv [try some [ ; COPY to drop processed argv
 
-            ["--" end] (
-                ; Double-dash means end of command line arguments, and the
-                ; rest of the arguments are going to be positional.  In
-                ; Rebol's case, that means a file to run (if --script or --do
-                ; not explicit) and its arguments (if anything following).
-                ;
-                take argv
-                break
-            )
-        |
-            "--about" end (
-                o.about: true  ; show full banner (ABOUT) on startup
-            )
-        |
-            ["--cgi" | "-c"] end (
-                o.quiet: true
-                o.cgi: true
-            )
-        |
-            "--debug" end (
-                ; was coerced to BLOCK! before, but what did this do?
-                ;
-                o.debug: to-logic param-or-die "DEBUG"
-            )
-        |
-            "--do" end (
-                ;
-                ; A string of code to run, e.g. `r3 --do "print {Hello}"`
-                ;
-                o.quiet: true  ; don't print banner, just run code string
-                quit-when-done: default [true]  ; override blank, not false
+        ; Double-dash means end of command line arguments, and the rest of the
+        ; arguments are going to be positional.  In Rebol's case, that means a
+        ; file to run (if --script or --do not explicit) and its arguments (if
+        ; anything following).
 
-                is-script-implicit: false  ; must use --script
+        ["--" | <end>]
+        accept <here>  ; rest of command line arguments (or none)
+    |
+        [ahead text! | (panic "ARGV element not TEXT!")]  ; argv.N must be text
 
-                emit {Use /ONLY so that QUIT/WITH quits, vs. return DO value}
-                emit [do/only (<*> param-or-die "DO")]
-            )
-        |
-            ["--halt" | "-h"] end (
-                quit-when-done: false  ; overrides true
-            )
-        |
-            ["--help" | "-?"] end (
-                usage
-                quit-when-done: default [true]
-            )
-        |
-            "--import" end (
-                lib.import local-to-file param-or-die "IMPORT"
-            )
-        |
-            "--no-encap" end (
-                check-encap: false
-            )
-        |
-            ["--quiet" | "-q"] end (
-                o.quiet: true
-            )
-        |
-            "--resources" end (
-                o.resources: (to-dir param-or-die "RESOURCES") else [
-                    die "RESOURCES directory not found"
-                ]
-            )
-        |
-            "--suppress" end (
-                let param: param-or-die "SUPPRESS"
-                o.suppress: if param = "*" [
-                    ; suppress all known start-up files
-                    [%rebol.reb %user.reb %console-skin.reb]
-                ] else [
-                    make block! param
-                ]
-            )
-        |
-            "--script" end (
-                o.script: param-or-die "SCRIPT"
-                quit-when-done: default [true]  ; overrides blank, not false
-
-                is-script-implicit: false  ; not the first post-option arg
-            )
-        |
-            ; Added initially for GitHub CI.  Concept is that it takes a
-            ; filename and runs it with "shell semantics", e.g. how bash would
-            ; work.  The code is loaded from the file and run as a string, not
-            ; through the DO %FILE mechanics that change the directory.
+        "--about" (
+            o.about: true  ; show full banner (ABOUT) on startup
+        )
+    |
+        ["--cgi" | "-c"] (
+            o.quiet: true
+            o.cgi: true
+        )
+    |
+        "--debug" [set param text! | (param-missing "DEBUG")] (
+            ; was coerced to BLOCK! before, but what did this do?
             ;
-            "--fragment" end (
-                let code: read local-to-file param-or-die "FRAGMENT"
-                is-script-implicit: false  ; must use --script
+            o.debug: to-logic param
+        )
+    |
+        "--do" [set param text! | (param-missing "DO")] (
+            ;
+            ; A string of code to run, e.g. `r3 --do "print {Hello}"`
+            ;
+            o.quiet: true  ; don't print banner, just run code string
+            quit-when-done: default [true]
 
-                o.quiet: true  ; don't print banner, just run code string
-                quit-when-done: default [true]  ; override blank, not false
+            is-script-implicit: false  ; must use --script
 
-                ; !!! Here we make a concession to Windows CR LF, only when
-                ; running code fragments.  This was added because when you use
-                ; a custom shell in GitHub CI, it takes a piece out of the
-                ; yaml file (which has no CR LF) and puts it in a temporary
-                ; file which does have CR LF on Windows.  This would be
-                ; difficult to work around.
-                ;
-                if system.version.4 = 3 [  ; Windows
-                    code: deline code  ; Removes CR or leaves as-is
-                ] else [
-                    code: as text! code
-                ]
-                emit {Use /ONLY so that QUIT/WITH quits, vs. return DO value}
-                emit [do/only (code)]
-            )
-        |
-            ["-t" | "--trace"] end (
-                trace on  ; did they mean trace just the script/DO code?
-            )
-        |
-            "--verbose" end (
-                o.verbose: true
-            )
-        |
-            ["-v" | "-V" | "--version"] end (
-                boot-print ["Rebol 3" system.version]  ; version tuple
-                quit-when-done: default [true]
-            )
-        |
-            "-w" end (
-                ; No window; not currently applicable
-            )
-        |
-            [let cli-option copy cli-option: [["--" | "-" | "+"] to <end>] (
-                die [
-                    "Unknown command line option:" cli-option LF
-                    {!! For a full list of command-line options use: --help}
-                ]
-            )]
-        ]
+            emit {Use /ONLY so that QUIT/WITH quits, vs. return DO value}
+            emit [do/only (<*> param)]
+        )
+    |
+        ["--halt" | "-h"] (
+            quit-when-done: false  ; overrides true
+        )
+    |
+        ["--help" | "-?"] (
+            usage
+            quit-when-done: default [true]
+        )
+    |
+        "--import" [set param text! | (param-missing "IMPORT")] (
+            lib.import local-to-file param
+        )
+    |
+        "--no-encap" (
+            check-encap: false
+        )
+    |
+        ["--quiet" | "-q"] (
+            o.quiet: true
+        )
+    |
+        "--resources" [set param text! | (param-missing "RESOURCES")] (
+            o.resources: (to-dir param) else [
+                die "RESOURCES directory not found"
+            ]
+        )
+    |
+        "--suppress" [set param text! | (param-missing "SUPPRESS")] (
+            o.suppress: if param = "*" [
+                ; suppress all known start-up files
+                [%rebol.reb %user.reb %console-skin.reb]
+            ] else [
+                make block! param
+            ]
+        )
+    |
+        "--script" [set param text! | (param-missing "SCRIPT")] (
+            o.script: param
+            quit-when-done: default [true]  ; overrides blank, not false
 
-        if not is-option [break]
+            is-script-implicit: false  ; not the first post-option arg
+        )
+    |
+        ; Added initially for GitHub CI.  Concept is that it takes a
+        ; filename and runs it with "shell semantics", e.g. how bash would
+        ; work.  The code is loaded from the file and run as a string, not
+        ; through the DO %FILE mechanics that change the directory.
+        ;
+        "--fragment" [param: text! | (param-missing "FRAGMENT")] (
+            let code: read local-to-file param
+            is-script-implicit: false  ; must use --script
 
-        take argv
-    ]
+            o.quiet: true  ; don't print banner, just run code string
+            quit-when-done: default [true]  ; override blank, not false
+
+            ; !!! Here we make a concession to Windows CR LF, only when
+            ; running code fragments.  This was added because when you use
+            ; a custom shell in GitHub CI, it takes a piece out of the
+            ; yaml file (which has no CR LF) and puts it in a temporary
+            ; file which does have CR LF on Windows.  This would be
+            ; difficult to work around.
+            ;
+            if system.version.4 = 3 [  ; Windows
+                code: deline code  ; Removes CR or leaves as-is
+            ] else [
+                code: as text! code
+            ]
+            emit {Use /ONLY so that QUIT/WITH quits, vs. return DO value}
+            emit [do/only (code)]
+        )
+    |
+        ["-t" | "--trace"] (
+            trace on  ; did they mean trace just the script/DO code?
+        )
+    |
+        "--verbose" (
+            o.verbose: true
+        )
+    |
+        ["-v" | "-V" | "--version"] (
+            boot-print ["Rebol 3" system.version]  ; version tuple
+            quit-when-done: default [true]
+        )
+    |
+        "-w" (
+            ; No window; not currently applicable
+        )
+    |
+        [let cli-option copy cli-option: [["--" | "-" | "+"] to <end>] (
+            die [
+                "Unknown command line option:" cli-option LF
+                {!! For a full list of command-line options use: --help}
+            ]
+        )]
+    |
+        accept <here>  ; rest of command line arguments
+    ]]
 
     ; As long as there was no `--script` or `--do` passed on the command line
     ; explicitly, the first item after the options is implicitly the script.
     ;
-    all [is-script-implicit, not tail? argv] then [
-        o.script: take argv
+    ; Whatever is left is the positional arguments, available to the script.
+    ;
+    all [is-script-implicit, not tail? o.args] then [
+        o.script: take o.args
         quit-when-done: default [true]
     ]
 
@@ -673,19 +670,13 @@ main-startup: func [
         ; heuristic is to check for more than one letter.
         ;
         alphanum: charset [#"A" - #"Z" #"a" - #"z" #"0" #"9"]
-        parse3 o.script [
-            alphanum some alphanum ":" to <end>
-            (o.script: to url! o.script)
+        o.script: parse3 o.script [
+            some alphanum ":"  ; SOME, e.g. more than one letter
+            accept (to url! o.script)
         ] except [
-            o.script: local-to-file o.script
+            local-to-file o.script
         ]
     ]
-
-
-    ; Whatever is left is the positional arguments, available to the script.
-    ;
-    o.args: argv  ; whatever's left is positional args
-
 
     let boot-embedded: all [
         check-encap

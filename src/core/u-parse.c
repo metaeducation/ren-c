@@ -778,6 +778,9 @@ static REBIXO To_Thru_Block_Rule(
 
                 if (cmd) {
                     if (cmd == SYM_END) {
+                        if (not (P_FLAGS & PF_REDBOL))
+                            fail ("Use <end> instead of END outside PARSE2");
+
                         if (VAL_INDEX(iter) >= P_INPUT_LEN)
                             return P_INPUT_LEN;
                         goto next_alternate_rule;
@@ -1006,7 +1009,9 @@ static REBIXO To_Thru_Non_Block_Rule(
         return P_POS;  // make it a no-op
 
     if (kind == REB_WORD and VAL_WORD_ID(rule) == SYM_END) {
-        //
+        if (not (P_FLAGS & PF_REDBOL))
+            fail ("Use <end> instead of END outside PARSE2");
+
         // `TO/THRU END` JUMPS TO END INPUT SERIES (ANY SERIES TYPE)
         //
         return P_INPUT_LEN;
@@ -2131,6 +2136,8 @@ DECLARE_NATIVE(subparse)
                 break;
 
               case SYM_END:
+                if (not (P_FLAGS & PF_REDBOL))
+                    fail ("Use <end> instead of END outside PARSE2");
                 goto handle_end;
 
               case SYM_TO:
