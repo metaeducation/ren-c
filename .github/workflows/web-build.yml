@@ -455,7 +455,7 @@ jobs:
     #    variable that Cypress will proxy to the browser is easiest.
     #
     - name: Run Replpad using Chrome
-      uses: cypress-io/github-action@v4
+      uses: cypress-io/github-action@v6
       with:
         working-directory: tests/cypress
         browser: chrome
