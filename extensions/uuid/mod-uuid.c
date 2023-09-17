@@ -115,7 +115,7 @@ DECLARE_NATIVE(generate)
 
     return rebRepossess(buf, 16);
 
-  #elif TO_LINUX
+  #elif TO_LINUX || TO_HAIKU
 
     REBVAL *binary = rebUninitializedBinary_internal(16);
     unsigned char* bp = rebBinaryHead_internal(binary);

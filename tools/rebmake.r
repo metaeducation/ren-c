@@ -195,7 +195,7 @@ posix: make platform-class [
         cmd [object!]
     ][
         if let tool: any [:cmd/strip :default-strip] [
-            let b: ensure block! tool/commands/params cmd/file maybe cmd/options
+            let b: ensure block! tool/commands cmd/file cmd/options
             assert [1 = length of b]
             return b/1
         ]
@@ -205,6 +205,10 @@ posix: make platform-class [
 
 linux: make posix [
     name: 'Linux
+]
+
+haiku: make posix [
+    name: 'Haiku
 ]
 
 android: make linux [
@@ -280,6 +284,9 @@ set-target-platform: func [
         ]
         'linux [
             target-platform: linux
+        ]
+        'haiku [
+            target-platform: haiku
         ]
         'android [
             target-platform: android
@@ -455,8 +462,9 @@ gcc: make compiler-class [
         attempt [
             exec-file: exec: default ["gcc"]
             call/output [(exec) "--version"] version
+            let letter: charset [#"a" - #"z" #"A" - #"Z"]
             parse2 version [
-                {gcc (GCC)} space
+                "gcc (" some [letter | digit | #"_"] ")" space
                 copy major: some digit "."
                 copy minor: some digit "."
                 copy macro: some digit
@@ -1015,7 +1023,7 @@ strip-class: make object! [
     commands: meth [
         return: [block!]
         target [file!]
-        /params [blank! block! any-string!]
+        params [blank! block! any-string! null!]
     ][
         return reduce [spaced collect [
             keep any [(file-to-local/pass maybe exec-file) "strip"]
@@ -1033,10 +1041,21 @@ strip-class: make object! [
             keep file-to-local target
         ]]
     ]
+    check: does [
+        ...  ; overridden
+    ]
 ]
 
 strip: make strip-class [
     id: "gnu"
+    check: meth [
+        return: [logic!]
+        /exec [file!]
+    ][
+        exec-file: exec: default ["strip"]
+        return true
+    ]
+
 ]
 
 ; includes/definitions/cflags will be inherited from its immediately ancester
@@ -1574,6 +1593,8 @@ export execution: make generator-class [
     host: switch system/platform/1 [
         'Windows [windows]
         'Linux [linux]
+        'BeOS [haiku]
+        'Haiku [haiku]
         'OSX [osx]
         'Android [android]
     ] else [

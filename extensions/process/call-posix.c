@@ -63,6 +63,16 @@
 
 #include "reb-process.h"
 
+static inline bool retry_read(int nbytes) {
+    return nbytes < 0 && (errno == EAGAIN || errno == EINTR);
+}
+
+static inline ssize_t safe_read(int f, void*b, size_t c) {
+    ssize_t r = read(f,b,c);
+    if (retry_read(r))
+        r = safe_read(f,b,c);
+    return r;
+}
 
 inline static bool Open_Pipe_Fails(int pipefd[2]) {
   #ifdef USE_PIPE2_NOT_PIPE
@@ -508,7 +518,7 @@ Bounce Call_Core(Frame(*) frame_) {
         //
         int nonvolatile_errno = errno;
 
-        if (write(info_pipe[W], &nonvolatile_errno, sizeof(int)) == -1) {
+        if (write(info_pipe[W], &nonvolatile_errno, sizeof(int)) < 0) {
             //
             // Nothing we can do, but need to stop compiler warning
             // (cast to void is insufficient for warn_unused_result)
@@ -615,7 +625,7 @@ Bounce Call_Core(Frame(*) frame_) {
 
             if (xpid == forked_pid) {  // try a last read of remaining out/err
                 if (stdout_pipe[R] > 0) {
-                    nbytes = read(
+                    nbytes = safe_read(
                         stdout_pipe[R],
                         outbuf + outbuf_used,
                         outbuf_capacity - outbuf_used
@@ -625,7 +635,7 @@ Bounce Call_Core(Frame(*) frame_) {
                 }
 
                 if (stderr_pipe[R] > 0) {
-                    nbytes = read(
+                    nbytes = safe_read(
                         stderr_pipe[R],
                         errbuf + errbuf_used,
                         errbuf_capacity - errbuf_used
@@ -635,7 +645,7 @@ Bounce Call_Core(Frame(*) frame_) {
                 }
 
                 if (info_pipe[R] > 0) {
-                    nbytes = read(
+                    nbytes = safe_read(
                         info_pipe[R],
                         infobuf + infobuf_used,
                         infobuf_capacity - infobuf_used
@@ -664,7 +674,7 @@ Bounce Call_Core(Frame(*) frame_) {
             }
             printf(" / %d\n", nfds);
             */
-            if (poll(pfds, nfds, -1) < 0) {
+            if (poll(pfds, nfds, -1) < 0 && errno != EINTR) {
                 ret = errno;
                 goto kill;
             }
@@ -733,7 +743,7 @@ Bounce Call_Core(Frame(*) frame_) {
                         to_read = *capacity - *used;
                         assert (to_read > 0);
                         /* printf("to read %d bytes\n", to_read); */
-                        nbytes = read(pfds[i].fd, *buffer + *used, to_read);
+                        nbytes = safe_read(pfds[i].fd, *buffer + *used, to_read);
 
                         // The man page of poll says about POLLIN:
                         //

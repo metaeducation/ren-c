@@ -7,7 +7,7 @@ includes: reduce [
     %prep/extensions/uuid ;for %tmp-extensions-uuid-init.inc
 ]
 depends: switch system-config/os-base [
-    'linux [
+    'linux 'Haiku [
         [
             %uuid/libuuid/gen_uuid.c
             %uuid/libuuid/unpack.c

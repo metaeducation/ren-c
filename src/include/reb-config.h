@@ -315,6 +315,9 @@ Special internal defines used by RT, not Host-Kit developers:
     #define DEF_UINT
 #endif
 
+#if !defined(TO_HAIKU_X64)
+    #define TO_HAIKU_X64 0
+#endif
 
 //=//// EMSCRIPTEN /////////////////////////////////////////////////////////=//
 

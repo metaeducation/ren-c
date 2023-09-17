@@ -661,6 +661,9 @@
 #define ALIGN_SIZE \
     (sizeof(double) > sizeof(void*) ? sizeof(double) : sizeof(void*))
 
+#if TO_HAIKU
+#undef ALIGN
+#endif
 #define ALIGN(s,a) \
     (((s) + (a) - 1) & ~((a) - 1))
 

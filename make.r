@@ -1105,11 +1105,10 @@ set-exec-path: func [
     tool [object!]
     path
 ][
-    if path [
-        if not match [file! text!] path [
-            fail "Tool path has to be a file!"
-        ]
-        tool/exec-file: path
+    switch/type path [
+        blank! [tool/check]
+        file! text! [tool/exec-file: path]
+        fail "Tool path has to be a file!"
     ]
 ]
 

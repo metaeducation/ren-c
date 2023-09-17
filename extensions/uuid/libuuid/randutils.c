@@ -17,7 +17,9 @@
 #include <string.h>
 #include <sys/time.h>
 
+#if !TO_HAIKU
 #include <sys/syscall.h>
+#endif
 
 //#include "c.h"
 #include "randutils.h"

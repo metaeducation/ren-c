@@ -295,7 +295,7 @@ if os = 'Sun [
     ]
 ]
 
-if os = 'Haiku [
+if find [Haiku BeOS] os [
     append definitions spread [_BSD_SOURCE]
     append uv-sources spread [
         haiku.c
