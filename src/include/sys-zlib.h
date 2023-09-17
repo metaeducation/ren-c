@@ -732,7 +732,7 @@ extern z_const char * const z_errmsg[10]; /* indexed by 2-zlib_error */
 #  define OS_CODE  10
 #endif
 
-#ifdef _BEOS_
+#if defined _BEOS_ || defined __HAIKU__
 #  define OS_CODE  16
 #endif
 

@@ -166,7 +166,7 @@ systems: [
     0.4.61 linux-ia64/linux "libc-ia64"
         #SGD #LEN #LLC #PIP2 #LP64 <HID> /HID /DYN %M %DL
 
-    BeOS: 5
+    Haiku: 5
     ;-------------------------------------------------------------------------
     0.5.1 _ _
         ; labeled "BeOS R5 PPC" in Rebol 1.2, but "BeOS R4 PPC" in Rebol 2.5
@@ -174,7 +174,10 @@ systems: [
     0.5.2 _ _
         ; was: "BeOS R5 iX86"
 
-    0.5.75 haiku/posix "x86-32"
+    0.5.40 haiku-x64/haiku "x64"
+        #SGD #LEN #LLC #LLP64 <DCE> /DCE %NWK
+
+    0.5.75 haiku/haiku "x86-32"
         #SGD #LEN #LLC %NWK
 
     BSDi: 6
@@ -390,6 +393,12 @@ export compiler-flags: make object! [
     PIE: <gnu:-fPIE>                ; position independent (executable)
     NCM: <gnu:-fno-common>          ; lib cannot have common vars
     UFS: <gnu:-U_FORTIFY_SOURCE>    ; _chk variants of C calls
+    DCE: [
+        <gnu:-ffunction-sections>
+        <gnu:-fdata-sections>
+    ]                               ; dead code elimination
+    ; LTO: <gnu:-flto>                ; link-time optimization
+
 
     ; See comments about the glibc version above
     NSP: <gnu:-fno-stack-protector> ; stack protect pulls in glibc 2.4 calls
@@ -411,6 +420,8 @@ export linker-flags: make object! [
     ARC: <gnu:-arch i386>
     PIE: <gnu:-pie>
     HID: <gnu:-fvisibility=hidden>  ; all syms are hidden
+    DCE: <gnu:-Wl,--gc-sections>    ; dead code elimination
+    ; LTO: <gnu:-flto=auto>
 
     ; The `-rdynamic` option is not a POSIX C option, but makes symbols from
     ; the executable visible.  This is generally used for debugging (e.g.

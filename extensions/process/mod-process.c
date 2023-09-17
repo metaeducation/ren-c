@@ -190,7 +190,11 @@ DECLARE_NATIVE(get_os_browsers)
         "]"
     );
 
-  #else // Just try /usr/bin/open on POSIX, OS X, Haiku, etc.
+  #elif TO_HAIKU
+
+    rebElide("append", list, rebT("open %1"));
+
+  #else // Just try /usr/bin/open on POSIX, OS X, etc.
 
     rebElide("append", list, rebT("/usr/bin/open %1"));
 
@@ -236,7 +240,7 @@ DECLARE_NATIVE(sleep)
 }
 
 
-#if TO_LINUX || TO_ANDROID || TO_POSIX || TO_OSX
+#if TO_LINUX || TO_ANDROID || TO_POSIX || TO_OSX || TO_HAIKU
 static void kill_process(pid_t pid, int signal)
 {
     if (kill(pid, signal) >= 0)
@@ -311,7 +315,7 @@ DECLARE_NATIVE(terminate)
         Fail_Terminate_Failed(err);
     }
 
-  #elif TO_LINUX || TO_ANDROID || TO_POSIX || TO_OSX
+  #elif TO_LINUX || TO_ANDROID || TO_POSIX || TO_OSX || TO_HAIKU
 
     if (getpid() == VAL_INT32(ARG(pid))) {
         // signal is not as reliable for this purpose

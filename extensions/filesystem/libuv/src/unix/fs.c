@@ -620,7 +620,39 @@ static int uv__fs_readdir(uv_fs_t* req) {
     if (dirent->name == NULL)
       goto error;
 
-    dirent->type = uv__fs_get_dirent_type(res);
+#if TO_HAIKU
+        struct stat st;
+        int dfd = dirfd(dir->dir);
+        int r  = fstatat(dfd, dirent->name, &st, 0);
+        switch (st.st_mode & S_IFMT) {
+            case S_IFDIR:
+                dirent->type = UV_DIRENT_DIR;
+                break;
+            case S_IFREG:
+                dirent->type = UV_DIRENT_FILE;
+                break;
+            case S_IFLNK:
+                dirent->type = UV_DIRENT_LINK;
+                break;
+            case S_IFIFO:
+                dirent->type = UV_DIRENT_FIFO;
+                break;
+            case S_IFSOCK:
+                dirent->type = UV_DIRENT_SOCKET;
+                break;
+            case S_IFCHR:
+                dirent->type = UV_DIRENT_CHAR;
+                break;
+            case S_IFBLK:
+                dirent->type = UV_DIRENT_BLOCK;
+                break;
+            default:
+                dirent->type = UV_DIRENT_UNKNOWN;
+                break;
+        }
+#else
+        dirent->type = uv__fs_get_dirent_type(res);
+#endif
     ++dirent_idx;
   }
 
