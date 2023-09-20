@@ -598,7 +598,7 @@ main-startup: func [
         ; work.  The code is loaded from the file and run as a string, not
         ; through the DO %FILE mechanics that change the directory.
         ;
-        "--fragment" [param: text! | (param-missing "FRAGMENT")] (
+        "--fragment" [set param text! | (param-missing "FRAGMENT")] (
             let code: read local-to-file param
             is-script-implicit: false  ; must use --script
 
