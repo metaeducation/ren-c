@@ -27,7 +27,7 @@ dump: function [
 ][
     print: enclose :lib.print lambda [f [frame!]] [
         if prefix [
-            if select enablements prefix <> #on [return none]
+            if #on <> select enablements prefix [return none]
             write-stdout prefix
             write-stdout space
         ]
