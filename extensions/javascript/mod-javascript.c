@@ -965,7 +965,7 @@ DECLARE_NATIVE(js_native)
 //  {Evaluate textual JavaScript code}
 //
 //      return: "Note: Only supports types that reb.Box() supports"
-//          [<opt> <none> integer! text!]
+//          [<opt> <none> logic! integer! text!]
 //      source "JavaScript code as a text string" [text!]
 //      /local "Evaluate in local scope (as opposed to global)"
 //      /value "Return a Rebol value"
