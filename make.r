@@ -172,7 +172,7 @@ repo-dir: relative-to-path repo-dir output-dir
 
 === {PROCESS COMMANDS} ===
 
-if commands [user-config/target: load commands]
+if commands [user-config/target: null]  ; was `target: load commands`  Why? :-/
 
 
 === {MODULES AND EXTENSIONS} ===
