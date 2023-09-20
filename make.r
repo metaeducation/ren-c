@@ -1061,18 +1061,20 @@ replace help-topics/usage "HELP-TOPICS" ;\
 
 help: function [
     return: <none>
-    topic [text! blank!]
+    /topic [text!]
 ][
-    topic: attempt [to-word topic]
-    print ""
+    if topic [
+        topic: to-word topic
+    ]
+    print newline
     case [
-        :topic = 'all [
+        topic = 'all [
             for-each [topic msg] help-topics [
                 print msg
             ]
         ]
         all [
-            not null? :topic
+            topic
             msg: select help-topics topic
         ][
             print msg
@@ -1087,7 +1089,11 @@ help: function [
 if commands [
     iterate commands [
         if find ["-h" "-help" "--help"] commands/1 [
-            help commands/2
+            if second commands [  ; bootstrap commands/2 errors if null
+                help/topic second commands
+            ] else [
+                help
+            ]
             quit
         ]
     ]

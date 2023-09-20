@@ -232,12 +232,10 @@ export binary-to-c: function [
 
 export parse-args: function [
     return: [block!]
-    args
+    args [block!]
 ][
     ret: make block! 4
     standalone: make block! 4
-    args: any [args copy []]
-    if not block? args [args: split args [some " "]]
     iterate args [
         name: null
         value: args/1
@@ -267,7 +265,7 @@ export parse-args: function [
     ]
     if not empty? standalone [
         append ret '|
-        append ret standalone
+        append ret spread standalone
     ]
     return ret
 ]

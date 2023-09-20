@@ -282,6 +282,12 @@ jobs:
         "$R3BUILT" --do "print {hi}"
 
 
+    - name: Test Rebmake HELP functionality
+      run: |
+        "$R3BUILT" make.r --help
+        "$R3BUILT" make.r --help all
+
+
     # Besides just testing success cases, it's important to make sure failures
     # actually report bad exit codes, or a lot of the GitHub Actions intended
     # for testing will be useless.

@@ -492,7 +492,7 @@ write: adapt :lib/write [
 ]
 
 ; PARSE is being changed to a more powerful interface that returns synthesized
-; parse products.  So just testing for matching or not is done with PARSE?,
+; parse products.  So just testing for matching or not is done with PARSE2,
 ; to avoid conflating successful-but-null-bearing-parses with failure.
 ;
 parse2: func3 [series rules] [
