@@ -1023,7 +1023,7 @@ strip-class: make object! [
     commands: meth [
         return: [block!]
         target [file!]
-        params [blank! block! any-string! null!]
+        params [<opt> blank! block! any-string!]
     ][
         return reduce [spaced collect [
             keep any [(file-to-local/pass maybe exec-file) "strip"]
@@ -1593,7 +1593,6 @@ export execution: make generator-class [
     host: switch system/platform/1 [
         'Windows [windows]
         'Linux [linux]
-        'BeOS [haiku]
         'Haiku [haiku]
         'OSX [osx]
         'Android [android]

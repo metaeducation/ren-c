@@ -174,11 +174,11 @@ systems: [
     0.5.2 _ _
         ; was: "BeOS R5 iX86"
 
+    0.5.4 haiku/haiku "x86-32"
+        #SGD #LEN #LLC %NWK
+
     0.5.40 haiku-x64/haiku "x64"
         #SGD #LEN #LLC #LLP64 <DCE> /DCE %NWK
-
-    0.5.75 haiku/haiku "x86-32"
-        #SGD #LEN #LLC %NWK
 
     BSDi: 6
     ;-------------------------------------------------------------------------

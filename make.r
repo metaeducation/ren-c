@@ -1111,7 +1111,7 @@ set-exec-path: func [
     tool [object!]
     path
 ][
-    switch/type path [
+    switch kind of path [  ; can't use SWITCH/TYPE in bootstrap
         blank! [tool/check]
         file! text! [tool/exec-file: path]
         fail "Tool path has to be a file!"

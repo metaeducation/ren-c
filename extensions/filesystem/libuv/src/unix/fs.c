@@ -620,7 +620,12 @@ static int uv__fs_readdir(uv_fs_t* req) {
     if (dirent->name == NULL)
       goto error;
 
-#if TO_HAIKU
+    // !!! This haiku patch to libuv's %fs.c is not in the official libuv
+    // sources, but was added for Ren-C.  If the libuv files are updated the
+    // patch may be lost, so getting this change into the official libuv
+    // sources is the best way to preserve the functionality.
+    //
+#if defined(__HAIKU__)
         struct stat st;
         int dfd = dirfd(dir->dir);
         int r  = fstatat(dfd, dirent->name, &st, 0);
