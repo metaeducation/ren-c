@@ -17,7 +17,7 @@
 #include <string.h>
 #include <sys/time.h>
 
-#if !TO_HAIKU
+#if !defined(__HAIKU__)  // doesn't include %reb-config.h, can't use TO_HAIKU
 #include <sys/syscall.h>
 #endif
 
