@@ -237,11 +237,7 @@ void Do_After_Action_Checks_Debug(Frame(*) f) {
     Action(*) phase = FRM_PHASE(f);
 
     if (ACT_HAS_RETURN(phase)) {
-        const REBKEY *key = ACT_KEYS_HEAD(phase);
-        const REBPAR *param = ACT_PARAMS_HEAD(phase);
-        assert(KEY_SYM(key) == SYM_RETURN);
-
-        if (not Typecheck_Including_Constraints(param, f->out)) {
+        if (not Typecheck_Return(f, f->out)) {
             assert(!"Native code violated return type contract!\n");
             panic (Error_Bad_Return_Type(f, f->out));
         }

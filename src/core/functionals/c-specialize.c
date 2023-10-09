@@ -322,34 +322,16 @@ bool Specialize_Action_Throws(
         if (Is_Specialized(param))
             continue;
 
-        if (GET_PARAM_FLAG(param, REFINEMENT)) {
-            if (Is_None(arg)) {
-                //
-                // Undefined refinements not explicitly marked hidden are
-                // still candidates for usage at the callsite.
-
-                goto unspecialized_arg;  // ran out...no pre-empt needed
-            }
-
-            Typecheck_Refinement(key, param, arg);
-            goto specialized_arg_no_typecheck;
-        }
-
-        // It's an argument, either a normal one or a refinement arg.
-
-        if (Is_None(arg))
-            goto unspecialized_arg;
-
-        goto specialized_arg_with_check;
-
-      unspecialized_arg:
-
-        assert(Is_None(arg));
         assert(IS_PARAMETER(param));
-        Copy_Cell(arg, param);
-        continue;
 
-      specialized_arg_with_check:
+        // You can't specialize with ~ isotopes ("none"), these indicate
+        // unspecialized arguments.  Only ^META parameters can take meta-none
+        // (e.g. a plain quasi-void, or ~)
+        //
+        if (Is_None(arg)) {  // unspecialized argument
+            Copy_Cell(arg, param);
+            continue;
+        }
 
         // !!! If argument was previously specialized, should have been type
         // checked already... don't type check again (?)
@@ -357,26 +339,8 @@ bool Specialize_Action_Throws(
         if (GET_PARAM_FLAG(param, VARIADIC))
             fail ("Cannot currently SPECIALIZE variadic arguments.");
 
-        if (not Typecheck_Including_Constraints(param, arg))
-            fail (arg);  // !!! merge w/Error_Invalid_Arg()
-
-        continue;
-
-      specialized_arg_no_typecheck:
-
-        // !!! Technically speaking, if you are trying to implement the ^META
-        // parameter convention, SPECIALIZE does it too late here.  The intent
-        // of ~_~ isotope vs. NULL is lost...at least in theory, because
-        // variables don't store the null isotope state.  The "core" way to
-        // do this is MAKE FRAME! (specialize could be written in usermode
-        // with that).  But as a higher-level tool, specialize can make the
-        // tradeoff to make it easy by doing the meta-quoting for you...which
-        // also means it can keep working if the parameter convention changes.
-        //
-        if (VAL_PARAM_CLASS(param) == PARAM_CLASS_META)
-            Meta_Quotify(arg);
-
-        continue;
+        if (not Typecheck_Parameter(param, arg))
+            fail (Error_Arg_Type(nullptr, key, param, arg));
     }
 
     // Everything should have balanced out for a valid specialization.
@@ -752,10 +716,8 @@ Action(*) Alloc_Action_From_Exemplar(
             continue;
         }
 
-        if (GET_PARAM_FLAG(param, REFINEMENT))
-            Typecheck_Refinement(key, param, arg);
-        else
-            Typecheck_Including_Constraints(param, arg);
+        if (not Typecheck_Parameter(param, arg))
+            fail (Error_Arg_Type(nullptr, key, param, arg));
     }
 
     // This code parallels Specialize_Action_Throws(), see comments there

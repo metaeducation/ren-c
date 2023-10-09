@@ -142,7 +142,7 @@ inline static bool Matcher_Matches(
 #define PARAM_FLAG_REFINEMENT \
     FLAG_LEFT_BIT(11)
 
-#define PARAM_FLAG_PREDICATE \
+#define PARAM_FLAG_12 \
     FLAG_LEFT_BIT(12)
 
 // Parameters can be marked such that if they are void, the action will not
@@ -265,21 +265,29 @@ inline static REBPAR *Init_Param_Core(
 
 inline static REBVAL *Refinify(REBVAL *v);  // forward declaration
 inline static bool IS_REFINEMENT(Cell(const*) v);  // forward decl
-inline static bool IS_PREDICATE(Cell(const*) v);  // forward decl
 
-// This is an interim workaround for the need to be able check constrained
-// data types (e.g. PATH!-with-BLANK!-at-head being REFINEMENT!).  See
-// Startup_Fake_Type_Constraint() for an explanation.
+inline static bool Is_Parameter_Unconstrained(noquote(Cell(const*)) param) {
+    return VAL_PARAMETER_ARRAY(param) == nullptr;  // e.g. `[/refine]`
+}
+
+inline static bool Is_Blackhole(Cell(const*) v);  // forward decl
+
+// This does extra typechecking pertinent to function parameters, compared to
+// the basic type checking.
 //
-inline static bool Typecheck_Including_Constraints(
+inline static bool Typecheck_Parameter(
     const REBPAR *param,
     Value(*) v  // need mutability for ^META check
 ){
-    if (VAL_PARAM_CLASS(param) == PARAM_CLASS_RETURN) {
-        if (Is_Pack(v))
-            return true;  // For now, assume multi-return typechecked it
-        if (Is_Raised(v))
-            return true;  // For now, all functions return definitional errors
+    if (
+        GET_PARAM_FLAG(param, REFINEMENT)
+        or GET_PARAM_FLAG(param, SKIPPABLE)
+    ){
+        if (Is_Nulled(v))  // nulls always legal...means refinement not used
+            return true;
+
+        if (Is_Parameter_Unconstrained(param))  // no-arg refinement
+            return Is_Blackhole(v);  // !!! Error_Bad_Argless_Refine(key)
     }
 
     // We do an adjustment of the argument to accommodate meta parameters,
@@ -306,24 +314,6 @@ inline static bool Typecheck_Including_Constraints(
     if (Is_Nihil(v) and GET_PARAM_FLAG(param, VANISHABLE))
         goto return_true;
 
-    // !!! Predicates check more complex properties than just the kind, and
-    // so will mess up on meta parameters.  All of this needs review, but
-    // the main point is to realize that a frame built for a meta parameter
-    // has already "leveled up" and removed isotope status and added quotes,
-    // so the type checking must effectively unquote (if not actually do so,
-    // which may be the easiest approach)
-
-    if (
-        GET_PARAM_FLAG(param, REFINEMENT)
-        and IS_PATH(v)
-        and IS_REFINEMENT(v)
-    ){
-        goto return_true;
-    }
-
-    if (GET_PARAM_FLAG(param, PREDICATE) and IS_PREDICATE(v))
-        goto return_true;
-
     if (unquoted)
         Meta_Quotify(v);
 
@@ -335,56 +325,4 @@ inline static bool Typecheck_Including_Constraints(
         Meta_Quotify(v);
 
     return true;
-}
-
-
-inline static bool Is_Parameter_Unconstrained(noquote(Cell(const*)) param) {
-    return VAL_PARAMETER_ARRAY(param) == nullptr;  // e.g. `[/refine]`
-}
-
-inline static bool Is_Blackhole(Cell(const*) v);  // forward decl
-
-// During the process of specialization, a NULL refinement means that it has
-// not been specified one way or the other (MAKE FRAME! creates a frame with
-// all nulled cells).  However, by the time a user function runs with that
-// frame, those nulled cells are turned to BLANK! so they can be checked via
-// a plain WORD! (not GET-WORD!).  The exception is <opt> refinements--which
-// treat null as the unused state (or state when null is explicitly passed).
-//
-// Note: This does not cover features like "skippability", "endability",
-// dequoting and requoting, etc.  Those are evaluator mechanics for filling
-// the slot--this happens after that.
-//
-inline static void Typecheck_Refinement(
-    const REBKEY *key,
-    const REBPAR *param,
-    REBVAL *arg
-){
-    assert(
-        GET_PARAM_FLAG(param, REFINEMENT)
-        or GET_PARAM_FLAG(param, SKIPPABLE)
-    );
-
-    if (Is_Nulled(arg))  // not in use
-        return;
-
-    if (
-        Is_Parameter_Unconstrained(param)
-        and VAL_PARAM_CLASS(param) != PARAM_CLASS_OUTPUT
-    ){
-        if (not Is_Blackhole(arg))
-            fail (Error_Bad_Argless_Refine(key));
-
-        return;
-    }
-
-  typecheck_again:
-
-    if (not Typecheck_Including_Constraints(param, arg)) {
-        if (Is_Activation(arg)) {
-            Deactivate_If_Activation(arg);
-            goto typecheck_again;
-        }
-        fail (Error_Invalid_Type(VAL_TYPE(arg)));
-    }
 }

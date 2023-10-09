@@ -620,12 +620,9 @@ DECLARE_NATIVE(definitional_return)
     // take [<opt> any-value!] as its argument, and then report the error
     // itself...implicating the frame (in a way parallel to this native).
     //
-    if (GET_PARAM_FLAG(param, RETURN_NONE) and not Is_None(atom))
-        fail ("If RETURN: <none> is in a function spec, RETURN NONE only");
-
-    if (not TYPE_CHECK(param, atom)) {
+    if (not Typecheck_Return(target_frame, atom)) {
         Decay_If_Unstable(atom);
-        if (not TYPE_CHECK(param, atom))
+        if (not Typecheck_Return(target_frame, atom))
             fail (Error_Bad_Return_Type(target_frame, atom));
     }
 

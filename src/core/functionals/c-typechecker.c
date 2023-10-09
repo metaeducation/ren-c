@@ -318,7 +318,7 @@ bool Typecheck_Value(
             if (VAL_PARAM_CLASS(param) == PARAM_CLASS_META)
                 Meta_Quotify(arg);
 
-            if (not TYPE_CHECK(param, arg)) {
+            if (not Typecheck_Parameter(param, arg)) {
                 Drop_Action(f);
                 if (match_all)
                     return false;

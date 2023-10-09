@@ -156,7 +156,7 @@ Bounce Proxy_Multi_Returns_Core(Frame(*) f, Value(*) v)
         if (VAL_PARAM_CLASS(PARAM) != PARAM_CLASS_OUTPUT)
             continue;
 
-        if (not TYPE_CHECK(PARAM, ARG))
+        if (not Typecheck_Parameter(PARAM, ARG))
             fail (Error_Arg_Type(f, KEY, PARAM, ARG));
 
         Meta_Quotify(Copy_Cell(PUSH(), ARG));
@@ -903,35 +903,15 @@ Bounce Action_Executor(Frame(*) f)
             continue;
         }
 
-        if (
-            GET_PARAM_FLAG(PARAM, REFINEMENT)
-            or GET_PARAM_FLAG(PARAM, SKIPPABLE)
-        ){
-            Typecheck_Refinement(KEY, PARAM, ARG);  // extra check of # or NULL
-            continue;
-        }
-
-        if (PARAM_CLASS_META == VAL_PARAM_CLASS(PARAM)) {
-            //
-            // !!! Now that everything is isotopic, there needs to be a new
-            // policy on checking here.
-            //
-        }
-
         if (GET_PARAM_FLAG(PARAM, CONST))
             Set_Cell_Flag(ARG, CONST);  // mutability override?  see [5]
-
-        if (GET_PARAM_FLAG(PARAM, REFINEMENT)) {
-            Typecheck_Refinement(KEY, PARAM, ARG);
-            continue;  // !!! Review when # is used here
-        }
 
         if (KEY_SYM(KEY) == SYM_RETURN)
             continue;  // !!! let whatever go for now
 
       typecheck_again:
 
-        if (not Typecheck_Including_Constraints(PARAM, ARG)) {
+        if (not Typecheck_Parameter(PARAM, ARG)) {
             if (Is_Activation(ARG)) {
                 Deactivate_If_Activation(ARG);
                 goto typecheck_again;

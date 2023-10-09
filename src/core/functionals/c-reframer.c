@@ -399,7 +399,14 @@ DECLARE_NATIVE(reframer_p)
     // Make sure the parameter is able to accept FRAME! arguments (the type
     // checking will ultimately use the same slot we overwrite here!)
     //
-/*    if (not TYPE_CHECK(param, REB_FRAME)) {
+    // !!! This checks to see if it accepts *an* instance of a frame, but it's
+    // not narrow enough because there might be some additional check on the
+    // properties of the frame.  This is a limit of the type constraints
+    // needing an instance of the type to check.  It may suggest that we
+    // shouldn't do this at all, and just let it fail when called.  :-/
+    //
+    Copy_Cell(SPARE, FRAME->rootvar);
+    if (not Typecheck_Parameter(param, SPARE)) {
         DECLARE_LOCAL (label_word);
         if (label)
             Init_Word(label_word, unwrap(label));
@@ -415,7 +422,7 @@ DECLARE_NATIVE(reframer_p)
             param_word
         );
         goto cleanup_binder;
-    } */
+    }
   }
 
   cleanup_binder: {

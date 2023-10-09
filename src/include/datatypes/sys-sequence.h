@@ -731,21 +731,6 @@ inline static bool IS_PREDICATE1_CELL(noquote(Cell(const*)) v) {
     return Get_Cell_Flag(v, REFINEMENT_LIKE);  // !!! Review: test this first?
 }
 
-inline static Symbol(const*) VAL_PREDICATE1_SYMBOL(
-    noquote(Cell(const*)) v
-){
-    assert(IS_PREDICATE1_CELL(v));
-    return SYM(VAL_NODE1(v));
-}
-
-inline static bool IS_PREDICATE(Cell(const*) v) {
-    if (not IS_TUPLE(v))
-        return false;
-
-    DECLARE_LOCAL (temp);
-    return IS_BLANK(VAL_SEQUENCE_AT(temp, v, 0));
-}
-
 inline static Symbol(const*) VAL_REFINEMENT_SYMBOL(
     noquote(Cell(const*)) v
 ){

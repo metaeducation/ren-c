@@ -632,22 +632,6 @@ inline static REBVAL *D_ARG_Core(Frame(*) f, REBLEN n) {  // 1 for first arg
     D_ARG_Core(frame_, (n))
 
 
-// Shared code for type checking the return result.  It's used by the
-// Returner_Dispatcher(), but custom dispatchers use it to (e.g. JS-NATIVE)
-//
-inline static void FAIL_IF_BAD_RETURN_TYPE(Frame(*) f) {
-    Action(*) phase = FRM_PHASE(f);
-    const REBPAR *param = ACT_PARAMS_HEAD(phase);
-    assert(KEY_SYM(ACT_KEYS_HEAD(phase)) == SYM_RETURN);
-
-    // Typeset bits for locals in frames are usually ignored, but the RETURN:
-    // local uses them for the return types of a function.
-    //
-    if (not Typecheck_Including_Constraints(param, f->out))
-        fail (Error_Bad_Return_Type(f, f->out));
-}
-
-
 inline static bool Eval_Value_Core_Throws(
     REBVAL *out,
     Flags flags,
@@ -959,3 +943,26 @@ inline static Bounce Continue_Subframe_Helper(
 #define DELEGATE_SUBFRAME(sub) ( \
     Continue_Subframe_Helper(frame_, false, (sub)), \
     BOUNCE_DELEGATE)
+
+
+inline static bool Typecheck_Return(
+    Frame(*) f,
+    Value(*) atom  // Typecheck_Parameter needs mutability (unused for returns)
+){
+    if (Is_Pack(atom))
+        return true;  // For now, assume multi-return typechecked it
+    if (Is_Raised(atom))
+        return true;  // For now, all functions return definitional errors
+
+    // Typeset bits for locals in frames are usually ignored, but the RETURN:
+    // local uses them for the return types of a function.
+    //
+    Action(*) phase = FRM_PHASE(f);
+    const REBPAR *param = ACT_PARAMS_HEAD(phase);
+    assert(KEY_SYM(ACT_KEYS_HEAD(phase)) == SYM_RETURN);
+
+    if (GET_PARAM_FLAG(param, RETURN_NONE) and not Is_None(atom))
+        fail ("If RETURN: <none> is in a function spec, RETURN NONE only");
+
+    return Typecheck_Parameter(param, atom);
+}
