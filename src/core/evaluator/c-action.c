@@ -205,15 +205,13 @@ Bounce Action_Executor(Frame(*) f)
             if (VAL_PARAM_CLASS(PARAM) == PARAM_CLASS_META) {
                 if (Is_Meta_Of_Pack(ARG)) {
                     if (NOT_PARAM_FLAG(PARAM, WANT_PACKS)) {
-                        Meta_Unquotify(ARG);
-                        Decay_If_Unstable(ARG);
+                        Meta_Unquotify_Decayed(ARG);
                         Meta_Quotify(ARG);
                     }
                 }
                 if (Is_Meta_Of_Raised(ARG)) {
                     if (NOT_PARAM_FLAG(PARAM, WANT_RAISED)) {
-                        Meta_Unquotify(ARG);
-                        Decay_If_Unstable(ARG);
+                        Meta_Unquotify_Decayed(ARG);
                         Meta_Quotify(ARG);
                     }
                 }
@@ -848,8 +846,7 @@ Bounce Action_Executor(Frame(*) f)
         if (NOT_PARAM_FLAG(PARAM, WANT_PACKS)) {
             if (VAL_PARAM_CLASS(PARAM) == PARAM_CLASS_META) {
                 if (Is_Meta_Of_Pack(ARG)) {  // v-- inefficient, but works
-                    Meta_Unquotify(ARG);
-                    Decay_If_Unstable(ARG);
+                    Meta_Unquotify_Decayed(ARG);
                     Meta_Quotify(ARG);
                 }
             }

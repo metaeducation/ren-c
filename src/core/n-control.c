@@ -265,7 +265,7 @@ static Bounce Then_Else_Isotopic_Object_Helper(
     if (Is_Meta_Of_Nihil(in))
         fail ("THEN/ELSE cannot operate on empty pack! input (e.g. NIHIL)");
 
-    Meta_Unquotify(in);  // see [1]
+    Meta_Unquotify_Undecayed(in);  // see [1]
 
     if (Is_Raised(in)) {  // definitional failure, skip
         STATE = ST_THENABLE_REJECTING_INPUT;
@@ -294,7 +294,7 @@ static Bounce Then_Else_Isotopic_Object_Helper(
             FRAME_FLAG_META_RESULT
         )){
             Copy_Cell(in, SPARE);  // cheap reification... (e.g. quoted)
-            Meta_Unquotify(in);  // see [1]
+            Meta_Unquotify_Stable(in);  // see [1]
             assert(STATE == ST_THENABLE_INITIAL_ENTRY);
             assert(not Is_Isotope(in));
             goto test_not_lazy;
@@ -624,7 +624,7 @@ DECLARE_NATIVE(also)  // see `tweak :also 'defer on` in %base-defs.r
         return Init_Heavy_Null(OUT);  // telegraph null isotope
 
     STATE = ST_ALSO_RUNNING_BRANCH;
-    return CONTINUE(SPARE, branch, Meta_Unquotify(in));
+    return CONTINUE(SPARE, branch, Meta_Unquotify_Undecayed(in));
 
 } return_original_input: {  //////////////////////////////////////////////////
 
@@ -1630,19 +1630,16 @@ DECLARE_NATIVE(throw)
 {
     INCLUDE_PARAMS_OF_THROW;
 
-    REBVAL *v = ARG(value);
+    Value(*) atom = Copy_Cell(SPARE, ARG(value));
 
-    if (Is_Nulled(v))
-        Init_Void(v);  // CONTINUE and CONTINUE VOID act the same
+    if (Is_Meta_Of_Void(atom))
+        Init_Heavy_Void(atom);
+    else if (Is_Meta_Of_Null(atom))
+        Init_Heavy_Null(atom);
     else
-        Meta_Unquotify(v);
+        Meta_Unquotify_Undecayed(atom);
 
-    if (Is_Void(v))
-        Init_Heavy_Void(v);
-    else if (Is_Nulled(v))
-        Init_Heavy_Null(v);
-
-    return Init_Thrown_With_Label(FRAME, v, ARG(name));  // name can be nulled
+    return Init_Thrown_With_Label(FRAME, atom, ARG(name));  // nulled name ok
 }
 
 

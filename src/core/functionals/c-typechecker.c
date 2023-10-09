@@ -264,7 +264,12 @@ bool Typecheck_Value(
                     DETAILS_AT(ACT_DETAILS(action), IDX_TYPECHECKER_TYPE)
                 );
                 REBU64 bits = Typesets[n];
-                if (bits & FLAGIT_KIND(VAL_TYPE(v)))
+                enum Reb_Kind k;
+                if (Is_Isotope(v) and Is_Isotope_Unstable(v))
+                    k = REB_ISOTOPE;
+                else
+                    k = VAL_TYPE(v);
+                if (bits & FLAGIT_KIND(k))
                     goto test_succeeded;
                 goto test_failed;
             }
@@ -274,7 +279,12 @@ bool Typecheck_Value(
                     ACT_DETAILS(action),
                     IDX_TYPECHECKER_TYPE
                 );
-                if (VAL_TYPE(v) == VAL_TYPE_KIND(type_word))
+                enum Reb_Kind k;
+                if (Is_Isotope(v) and Is_Isotope_Unstable(v))
+                    k = REB_ISOTOPE;
+                else
+                    k = VAL_TYPE(v);
+                if (k == VAL_TYPE_KIND(type_word))
                     goto test_succeeded;
                 goto test_failed;
             }
@@ -346,7 +356,12 @@ bool Typecheck_Value(
             break; }
 
           case REB_TYPE_WORD: {
-            if (VAL_TYPE_KIND(test) != VAL_TYPE(v))
+            enum Reb_Kind k;
+            if (Is_Isotope(v) and Is_Isotope_Unstable(v))
+                k = REB_ISOTOPE;
+            else
+                k = VAL_TYPE(v);
+            if (VAL_TYPE_KIND(test) != k)
                 goto test_failed;
             break; }
 

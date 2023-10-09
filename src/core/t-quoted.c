@@ -464,7 +464,7 @@ DECLARE_NATIVE(unmeta)
 //  {Variant of UNMETA that passes thru VOID and NULL}
 //
 //      return: [<opt> <void> <nihil> any-value!]
-//      ^value [<opt> <void> quoted! quasi!]
+//      value [<opt> <void> quoted! quasi!]
 //  ]
 //
 DECLARE_NATIVE(unmeta_p)
@@ -473,23 +473,12 @@ DECLARE_NATIVE(unmeta_p)
 
     REBVAL *v = ARG(value);
 
-    if (Is_Meta_Of_Void(v))
+    if (Is_Void(v))
         return VOID;
 
-    if (Is_Meta_Of_Null(v))
+    if (Is_Nulled(v))
         return nullptr;
 
-    if (IS_QUASI(v)) {
-        Meta_Unquotify(v);
-        fail (Error_Bad_Isotope(v));  // isotopes not allowed as input
-    }
-
-    // handling the invisibility detour is done now...
-
-    Unquotify(v, 1);  // drop quote level caused by ^META parameter convention
-
-    // Now remove the level of meta the user was asking for.
-    //
     return UNMETA(v);
 }
 
@@ -795,11 +784,11 @@ DECLARE_NATIVE(unrun)
 //
 //  maybe: native [
 //
-//  {If argument is null or none, make it void (also pass through voids)}
+//  {If argument is null, make it void (also pass through voids)}
 //
 //      return: "Value (if it's anything other than the states being checked)"
 //          [<opt> <void> any-value!]
-//      ^optional [<opt> <void> any-value!]
+//      optional [<opt> <void> any-value!]
 //  ]
 //
 DECLARE_NATIVE(maybe)
@@ -811,25 +800,18 @@ DECLARE_NATIVE(maybe)
 //        [a b]: maybe multi-return
 //
 //    ...and leave the `b` element left untouched.  Review.
+//
+// 2. !!! Should MAYBE of a raised error pass through the raised error?
 {
     INCLUDE_PARAMS_OF_MAYBE;
 
     REBVAL *v = ARG(optional);
-    Meta_Unquotify(v);
-
-    if (Is_Nihil(v))  // !!! Should MAYBE be tolerant of NIHIL?
-        return VOID;
-
-    Decay_If_Unstable(v);  // question about decay, see [1]
 
     if (Is_Void(v))
         return VOID;  // passthru
 
     if (Is_Nulled(v))
         return VOID;  // main purpose of function: NULL => VOID
-
-    if (Is_Raised(v))  // !!! fold in TRY behavior as well?
-        return RAISE(VAL_CONTEXT(v));  // !!! e.g. should this be VOID ?
 
     return COPY(v);
 }

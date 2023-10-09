@@ -137,16 +137,17 @@ inline static Value(*) Decay_If_Unstable(Value(*) v) {
         if (pack_meta_at == pack_meta_tail)
             fail (Error_No_Value_Raw());  // treat as void?
         Derelativize(v, pack_meta_at, VAL_SPECIFIER(v));
-        Meta_Unquotify(v);
-        if (Is_Pack(v))
+        Meta_Unquotify_Undecayed(v);
+        if (Is_Pack(v) or Is_Lazy(v))
             fail (Error_Bad_Isotope(v));  // need more granular unpacking
+        if (Is_Raised(v))
+            fail (VAL_CONTEXT(v));
+        assert(not Is_Isotope(v) or Is_Isotope_Stable(v));
         return v;
     }
 
-    if (Is_Raised(v)) {  // !!! should this raise an error here?
-        mutable_QUOTE_BYTE(v) = UNQUOTED_1;
+    if (Is_Raised(v))  // !!! should this raise an error here?
         fail (VAL_CONTEXT(v));
-    }
 
     return v;
 }

@@ -1487,7 +1487,7 @@ void Set_Var_May_Fail(
 //          [<opt> <void> any-value!]
 //      target "Word or tuple, or calculated sequence steps (from GET)"
 //          [<void> any-word! any-sequence! any-group! the-block!]
-//      ^value [<opt> <void> <raised> <pack> any-value!]  ; tunnels failure
+//      ^value [<opt> <void> <raised> any-value!]  ; tunnels failure
 //      /any "Do not error on isotopes"
 //      /groups "Allow GROUP! Evaluations"
 //  ]
@@ -1503,14 +1503,13 @@ DECLARE_NATIVE(set)
     REBVAL *target = ARG(target);
     REBVAL *v = ARG(value);
 
-    Meta_Unquotify(v);
-    if (Is_Raised(v))
-        return COPY(v);  // !!! Is this tunneling worthwhile?
+    // !!! Should SET look for isotopic objects specially, with a particular
+    // interaction distinct from DECAY?  Review.
 
-    // !!! Isotopic objects may have a particular interaction with SET, that
-    // is distinct from its reification (which should probably be its DECAY)
+    if (Is_Meta_Of_Raised(v))
+        return UNMETA(v);  // !!! Is this tunneling worthwhile?
 
-    Decay_If_Unstable(v);
+    Meta_Unquotify_Stable(v);
 
     REBVAL *steps;
     if (REF(groups))
@@ -2514,8 +2513,8 @@ DECLARE_NATIVE(heavy) {
 DECLARE_NATIVE(light) {
     INCLUDE_PARAMS_OF_LIGHT;
 
-    Move_Cell(OUT, Meta_Unquotify(ARG(optional)));
-    Decay_If_Unstable(OUT);
+    Move_Cell(OUT, ARG(optional));
+    Meta_Unquotify_Decayed(OUT);
 
     return OUT;
 }
@@ -2554,31 +2553,6 @@ DECLARE_NATIVE(decay)
     assert((not Is_Isotope(v)) or Is_Isotope_Stable(v));
 
     return Copy_Cell(OUT, v);
-}
-
-
-//
-//  isotopify-if-falsey: native [
-//
-//  "Turn null and false into their corresponding isotopes"
-//
-//      return: [<opt> <void> any-value!]
-//      ^optional [<opt> any-value!]
-//  ]
-//
-DECLARE_NATIVE(isotopify_if_falsey)
-{
-    INCLUDE_PARAMS_OF_ISOTOPIFY_IF_FALSEY;
-
-    REBVAL *v = ARG(optional);
-
-    if (Is_Meta_Of_Void(v))
-        return VOID;
-
-    Meta_Unquotify(v);
-    Isotopify_If_Falsey(v);
-
-    return Move_Cell(OUT, v);
 }
 
 

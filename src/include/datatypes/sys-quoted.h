@@ -257,10 +257,22 @@ inline static Value(*) Meta_Quotify(Value(*) v) {
     return Quotify(v, 1);  // a non-isotope winds up quoted
 }
 
-inline static Value(*) Meta_Unquotify(Value(*) v) {
+inline static Value(*) Meta_Unquotify_Undecayed(Value(*) v) {
     if (QUOTE_BYTE(v) == QUASI_2)
         mutable_QUOTE_BYTE(v) = ISOTOPE_0;
     else
         Unquotify_Core(v, 1);  // will assert the input is quoted
     return v;
+}
+
+inline static Value(*) Meta_Unquotify_Stable(Value(*) v) {
+    Meta_Unquotify_Undecayed(v);
+    assert(not Is_Isotope(v) or not Is_Isotope_Unstable(v));
+    return v;
+}
+
+inline static Value(*) Decay_If_Unstable(Value(*) v);
+
+inline static Value(*) Meta_Unquotify_Decayed(Value(*) v) {
+    return Decay_If_Unstable(Meta_Unquotify_Undecayed(v));
 }

@@ -628,7 +628,7 @@ inline static Bounce Native_Void_Result_Untracked(
 
 inline static Bounce Native_Unmeta_Result(Frame(*) frame_, const REBVAL *v) {
     assert(not THROWING);
-    return Meta_Unquotify(Copy_Cell(frame_->out, v));
+    return Meta_Unquotify_Undecayed(Copy_Cell(frame_->out, v));
 }
 
 inline static Bounce Native_None_Result_Untracked(

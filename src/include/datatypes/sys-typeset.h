@@ -294,7 +294,7 @@ inline static bool Typecheck_Including_Constraints(
         if (not IS_QUASI(v) and not IS_QUOTED(v))
             return false;
 
-        Meta_Unquotify(v);  // temporary adjustment (easiest option)
+        Meta_Unquotify_Undecayed(v);  // temporary adjustment (easiest option)
         unquoted = true;
     }
     else

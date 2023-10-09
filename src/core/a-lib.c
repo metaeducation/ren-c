@@ -1146,8 +1146,7 @@ REBVAL *RL_rebEntrap(const void *p, va_list *vaptr)
     }
 
     if (Is_Meta_Of_Pack(v)) {
-        Meta_Unquotify(v);
-        Decay_If_Unstable(v);
+        Meta_Unquotify_Decayed(v);
         Meta_Quotify(v);
     }
 
@@ -1178,8 +1177,7 @@ REBVAL *RL_rebEntrapInterruptible(
     }
 
     if (Is_Meta_Of_Pack(v)) {
-        Meta_Unquotify(v);
-        Decay_If_Unstable(v);
+        Meta_Unquotify_Decayed(v);
         Meta_Quotify(v);
     }
 

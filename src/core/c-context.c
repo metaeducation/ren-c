@@ -819,7 +819,9 @@ REBLEN Find_Symbol_In_Context(
     Symbol(const*) symbol,
     bool strict
 ){
-    if (IS_MODULE(context)) {
+    Byte heart = HEART_BYTE(context);
+
+    if (heart == REB_MODULE) {
         //
         // Modules hang their variables off the symbol itself, in a linked
         // list with other modules who also have variables of that name.

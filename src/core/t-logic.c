@@ -267,14 +267,13 @@ DECLARE_NATIVE(xor_1)  // see TO-C-NAME
 //
 //  unless: enfix native [
 //
-//  {Variant of non-short-circuit OR which favors the right-hand side result}
+//  {Give left hand side when right hand side is not null or void}
 //
-//      return: "Conditionally true or false value (not coerced to LOGIC!)"
-//          [<opt> any-value!]
+//      return: [<opt> any-value!]
 //      left "Expression which will always be evaluated"
 //          [<opt> any-value!]
 //      ^right "Expression that's also always evaluated (can't short circuit)"
-//          [<opt> <void> any-value!]  ; not a literal GROUP! as with XOR
+//          [<opt> <void> <pack> any-value!]  ; not literal GROUP! as with XOR
 //  ]
 //
 DECLARE_NATIVE(unless)
@@ -288,15 +287,10 @@ DECLARE_NATIVE(unless)
     REBVAL *left = ARG(left);
     REBVAL *right = ARG(right);
 
-    if (Is_Meta_Of_Void(right))  // if right disappears (no branching), left
+    if (Is_Meta_Of_Void(right) or Is_Meta_Of_Null(right))
         return COPY(left);
 
-    Meta_Unquotify(right);
-
-    if (Is_Truthy(right))
-        return COPY(right);
-
-    return COPY(left); // preserve the exact truthy or falsey value
+    return UNMETA(right);  // preserve packs
 }
 
 

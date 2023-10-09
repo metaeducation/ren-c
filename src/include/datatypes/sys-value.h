@@ -299,8 +299,14 @@ inline static option(SymId) VAL_WORD_ID(noquote(Cell(const*)) v);
 
 inline static enum Reb_Kind VAL_TYPE_UNCHECKED(Cell(const*) v) {
     switch (QUOTE_BYTE_UNCHECKED(v)) {
-      case ISOTOPE_0:
-        return REB_ISOTOPE;
+      case ISOTOPE_0: {
+        Byte heart = HEART_BYTE_UNCHECKED(v);
+        assert(  // can't answer VAL_TYPE() for unstable isotopes
+            heart != REB_BLOCK
+            and heart != REB_ERROR
+            and heart != REB_OBJECT
+        );
+        return REB_ISOTOPE; }
 
       case UNQUOTED_1:
         return cast(enum Reb_Kind, HEART_BYTE_UNCHECKED(v));

@@ -499,7 +499,7 @@ Bounce Init_Thrown_Unwind_Value(
 //      level "Frame, action, or index to exit from"
 //          [frame! action! integer!]
 //      ^result "Result for enclosing state"
-//          [<opt> <end> <raised> <pack> any-value!]
+//          [<opt> <void> <raised> <pack> any-value!]
 //  ]
 //
 DECLARE_NATIVE(unwind)
@@ -520,11 +520,11 @@ DECLARE_NATIVE(unwind)
     INCLUDE_PARAMS_OF_UNWIND;
 
     REBVAL *level = ARG(level);
-    REBVAL *v = ARG(result);
 
-    Meta_Unquotify(v);
+    Copy_Cell(SPARE, ARG(result));  // SPARE can hold unstable isotopes
+    Meta_Unquotify_Undecayed(SPARE);
 
-    return Init_Thrown_Unwind_Value(FRAME, level, v, frame_);
+    return Init_Thrown_Unwind_Value(FRAME, level, SPARE, frame_);
 }
 
 
@@ -553,8 +553,10 @@ DECLARE_NATIVE(definitional_return)
 {
     INCLUDE_PARAMS_OF_DEFINITIONAL_RETURN;
 
-    REBVAL *v = ARG(value);
-    Frame(*) f = frame_;  // frame of this RETURN call (implicit DECLARE_NATIVE arg)
+    Value(*) atom = Copy_Cell(SPARE, ARG(value));  // SPARE for unstable atoms
+    Meta_Unquotify_Undecayed(atom);
+
+    Frame(*) f = FRAME;  // frame of this RETURN call
 
     // Each ACTION! cell for RETURN has a piece of information in it that can
     // can be unique (the binding).  When invoked, that binding is held in the
@@ -592,17 +594,12 @@ DECLARE_NATIVE(definitional_return)
     const REBPAR *param = ACT_PARAMS_HEAD(target_fun);
     assert(KEY_SYM(ACT_KEYS_HEAD(target_fun)) == SYM_RETURN);
 
-    if (Is_Meta_Of_Raised(v)) {
-        Unquasify(v);
-        Raisify(v);  // Meta_Unquotify won't do this, it fail()'s
-        goto skip_type_check;
-    }
+    if (Is_Raised(atom))
+        goto skip_type_check;  // all functions allow returning errors
 
-    if (Is_Meta_Of_Nihil(v)) {  // RETURN NIHIL
-        if (GET_PARAM_FLAG(param, VANISHABLE)) {
-            Init_Nihil(v);
+    if (Is_Nihil(atom)) {  // RETURN NIHIL
+        if (GET_PARAM_FLAG(param, VANISHABLE))
             goto skip_type_check;
-        }
 
         // !!! Treating a return of NIHIL as a return of NONE helps some
         // scenarios, for instance piping UPARSE combinators which do not
@@ -610,11 +607,7 @@ DECLARE_NATIVE(definitional_return)
         // to see if VOID makes more sense...but start with a more "ornery"
         // value to see how it shapes up.
         //
-        Init_None(v);
-    }
-    else {
-        // Safe to unquotify for type checking
-        Meta_Unquotify(v);
+        Init_None(atom);
     }
 
     // Check type NOW instead of waiting and letting Eval_Core()
@@ -627,13 +620,13 @@ DECLARE_NATIVE(definitional_return)
     // take [<opt> any-value!] as its argument, and then report the error
     // itself...implicating the frame (in a way parallel to this native).
     //
-    if (GET_PARAM_FLAG(param, RETURN_NONE) and not Is_None(v))
+    if (GET_PARAM_FLAG(param, RETURN_NONE) and not Is_None(atom))
         fail ("If RETURN: <none> is in a function spec, RETURN NONE only");
 
-    if (not TYPE_CHECK(param, v)) {
-        Decay_If_Unstable(v);
-        if (not TYPE_CHECK(param, v))
-            fail (Error_Bad_Return_Type(target_frame, v));
+    if (not TYPE_CHECK(param, atom)) {
+        Decay_If_Unstable(atom);
+        if (not TYPE_CHECK(param, atom))
+            fail (Error_Bad_Return_Type(target_frame, atom));
     }
 
   skip_type_check: {  ////////////////////////////////////////////////////////
@@ -642,10 +635,10 @@ DECLARE_NATIVE(definitional_return)
     Copy_Cell(label, Lib(UNWIND)); // see Make_Thrown_Unwind_Value
     TG_Unwind_Frame = target_frame;
 
-    if (not Is_Raised(v) and not REF(only))
-        Proxy_Multi_Returns_Core(target_frame, v);
+    if (not Is_Raised(atom) and not REF(only))
+        Proxy_Multi_Returns_Core(target_frame, atom);
 
-    return Init_Thrown_With_Label(FRAME, v, label);
+    return Init_Thrown_With_Label(FRAME, atom, label);
   }
 }
 

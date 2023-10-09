@@ -1528,7 +1528,7 @@ Bounce Evaluator_Executor(Frame(*) f)
                 goto circled_check;
             }
 
-            Meta_Unquotify(SPARE);
+            Meta_Unquotify_Undecayed(SPARE);
 
             if (
                 var_heart == REB_WORD
@@ -1537,10 +1537,10 @@ Bounce Evaluator_Executor(Frame(*) f)
                 goto circled_check;
             }
 
-            Decay_If_Unstable(SPARE);  // if pack in slot, resolve it
-
             if (Is_Raised(SPARE))  // don't hide raised errors if not @
                 fail (VAL_CONTEXT(SPARE));
+
+            Decay_If_Unstable(SPARE);  // if pack in slot, resolve it
 
             if (var_heart == REB_BLANK)  // [_ ...]:
                 goto circled_check;

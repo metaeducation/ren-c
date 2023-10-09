@@ -1047,10 +1047,10 @@ static REBIXO To_Thru_Non_Block_Rule(
             Get_Var_May_Fail(temp, rule, P_RULE_SPECIFIER, any);
             rule = temp;
         }
-        else if (IS_TYPE_WORD(rule) or IS_PARAMETER(rule)) {
+        else if (IS_TYPE_WORD(rule) or IS_TYPE_GROUP(rule)) {
             Derelativize(temp, rule, P_RULE_SPECIFIER);
             Quasify(temp);
-            Meta_Unquotify(temp);
+            Meta_Unquotify_Stable(temp);
             rule = temp;
         }
 

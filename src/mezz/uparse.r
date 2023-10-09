@@ -516,7 +516,7 @@ default-combinators: make map! reduce [
         ; we can't leave it as unset).  Review.
         ;
         state.pending: null
-        state.return isotopify-if-falsey unmeta value'
+        state.return unmeta value'
     ]
 
     === INDEX and MEASUREMENT COMBINATORS ===
