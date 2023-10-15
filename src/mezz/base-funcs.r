@@ -956,11 +956,11 @@ raise: func [
     'blame "Point to variable or parameter to blame"
         [<skip> quoted!]
     reason "ERROR! value, ID, URL, message text, or failure spec"
-        [<end> error! path! url! text! block! bad-word!]
+        [<end> error! path! url! text! block! isoword?]
     /where "Frame or parameter at which to indicate the error originated"
         [frame! any-word!]
 ][
-    if bad-word? reason [
+    if isoword? reason [
         reason: noisotope reason
     ]
     all [error? reason, not blame, not where] then [

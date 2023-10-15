@@ -60,7 +60,6 @@ splice!: &(splice?)
 lit-word!: &(lit-word?)
 lit-path!: &(lit-path?)
 logic!: &(logic?)
-bad-word!: &(bad-word?)
 quasi-word!: &(quasi-word?)
 
 

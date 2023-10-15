@@ -440,24 +440,6 @@ DECLARE_NATIVE(refinement_q)
 
 
 //
-//  bad-word?: native [
-//
-//  "Test if an argument is an isotopic word"
-//
-//      return: [logic?]
-//      value
-//  ]
-//
-DECLARE_NATIVE(bad_word_q)
-{
-    INCLUDE_PARAMS_OF_BAD_WORD_Q;
-    Value(*) v = ARG(value);
-
-    return Init_Logic(OUT, Is_Word_Isotope(v));
-}
-
-
-//
 //  quasi-word?: native [
 //
 //  "Test if an argument is an QUASI form of word"

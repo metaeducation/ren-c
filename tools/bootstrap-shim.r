@@ -478,7 +478,7 @@ change: func3 [series value [<opt> any-value!] /line <local> only] [
 do compose3 [(to set-word! first [->]) enfix :lambda]
 unset3 first [=>]
 
-; SET was changed to accept BAD-WORD! isotopes
+; SET was changed to accept states representing unset variables by default
 ;
 set: specialize :lib/set [opt: true]
 

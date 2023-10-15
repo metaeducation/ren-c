@@ -70,7 +70,7 @@ verify: function [
                     (spread copy/part conditions pos) ** (case [
                         null' = result' ['~null~]
                         '~false~ = result' ['~false~]  ; isotopic false
-                        bad-word? result' [result']  ; non-~true~ isotope
+                        isoword? result' [result']  ; non-~true~ isotope
                     ])
                 ]
             ]
