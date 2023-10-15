@@ -14,7 +14,7 @@
     3 = three
 )
 
-(
+~expect-arg~ !! (
     make-x: does the 'x
     make-x = 'x
 )

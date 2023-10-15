@@ -80,7 +80,7 @@ browse: function [
 help: function [
     "Prints information about words and values (if no args, general help)."
 
-    return: [<nihil>]
+    return: [nihil?]
     'topic [<end> any-value!]
         "WORD! whose value to explain, or other HELP target (try HELP HELP)"
     /doc "Open web browser to related documentation."
@@ -408,7 +408,7 @@ help: function [
 source: function [
     "Prints the source code for an ACTION! (if available)"
 
-    return: [<nihil>]
+    return: [nihil?]
     'arg [word! path! action! tag!]
 ][
     switch/type arg [

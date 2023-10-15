@@ -285,7 +285,7 @@
     )
 
     (
-        bar: func [return: [<nihil>]] [bar: null, return nihil]
+        bar: func [return: [nihil?]] [bar: null, return nihil]
         did all [
             var: evaluate/next [1020 bar 304] 'pos
             pos = [bar 304]

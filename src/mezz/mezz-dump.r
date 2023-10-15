@@ -282,7 +282,7 @@ summarize-obj: function [
 **: enfix function [
     {Comment until end of line, or end of current BLOCK!/GROUP!}
 
-    return: [<nihil>]
+    return: [nihil?]
     left "Enfix required for 'fully invisible' enfix behavior (ignored)"
         [<opt> <end> any-value!]
     'args [any-value! <variadic>]

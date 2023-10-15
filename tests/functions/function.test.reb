@@ -479,7 +479,7 @@
 )]
 
 (
-    foo: lambda [^arg [<opt> <pack> <end> <void> integer!]] [arg]
+    foo: lambda [^arg [<opt> pack? <end> <void> integer!]] [arg]
     did all [
         (the '1020) = (foo 1020)
         nihil' = (foo comment "HI")

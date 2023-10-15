@@ -71,7 +71,7 @@
 
     ~const-value~ !! (
         block: []
-        do compose/deep [repeat 2 [append (block) <raised>]]
+        do compose/deep [repeat 2 [append (block) <illegal>]]
     )
 
     (
@@ -88,8 +88,8 @@
 (
     repeat 1 [data: copy [a [b [c]]]]
     append data <success>
-    e2: sys.util.rescue [append data.2 <raised>]
-    e22: sys.util.rescue [append data.2.2 <raised>]
+    e2: sys.util.rescue [append data.2 <failure>]
+    e22: sys.util.rescue [append data.2.2 <failure>]
     did all [
         data = [a [b [c]] <success>]
         e2.id = 'const-value

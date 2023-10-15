@@ -917,19 +917,7 @@ Context(*) Error_Not_Varargs(
 
 
 //
-//  Error_Invalid: C
-//
-// This is the very vague and generic "invalid argument" error with no further
-// commentary or context.  It becomes a catch all for "unexpected input" when
-// a more specific error would often be more useful.
-//
-// It is given a short function name as it is--unfortunately--used very often.
-//
-// Note: Historically the behavior of `fail (some_value)` would generate this
-// error, as it could be distinguished from `fail (some_context)` meaning that
-// the context was for an actual intended error.  However, this created a bad
-// incompatibility with rebFail(), where the non-exposure of raw context
-// pointers meant passing REBVAL* was literally failing on an error value.
+//  Error_Invalid_Arg: C
 //
 Context(*) Error_Invalid_Arg(Frame(*) f, const REBPAR *param)
 {
@@ -951,9 +939,6 @@ Context(*) Error_Invalid_Arg(Frame(*) f, const REBPAR *param)
     Init_Word(param_name, KEY_SYMBOL(ACT_KEY(FRM_PHASE(f), index)));
 
     REBVAL *arg = FRM_ARG(f, index);
-    if (Is_Nulled(arg))
-        return Error_Arg_Required_Raw(label, param_name);
-
     return Error_Invalid_Arg_Raw(label, param_name, arg);
 }
 
@@ -997,13 +982,16 @@ Context(*) Error_Isotope_Arg(Frame(*) f, const REBPAR *param)
 //
 //  Error_Bad_Value: C
 //
-// Will turn into an unknown error if a nulled cell is passed in.
+// This is the very vague and generic error citing a value with no further
+// commentary or context.  It becomes a catch all for "unexpected input" when
+// a more specific error would often be more useful.
+//
+// The behavior of `fail (some_value)` generates this error, as it can be
+// distinguished from `fail (some_context)` meaning that the context iss for
+// an actual intended error.
 //
 Context(*) Error_Bad_Value(Cell(const*) value)
 {
-    if (Is_Nulled(value))
-        return Error_Unknown_Error_Raw();
-
     if (Is_Isotope(value))
         return Error_Bad_Isotope(value);
 
@@ -1125,6 +1113,9 @@ Context(*) Error_Arg_Type(
     const REBPAR *param,
     const REBVAL *arg
 ){
+    if (VAL_PARAM_CLASS(param) == PARAM_CLASS_META and Is_Meta_Of_Raised(arg))
+        return VAL_CONTEXT(arg);
+
     DECLARE_LOCAL (param_word);
     Init_Word(param_word, KEY_SYMBOL(key));
 
@@ -1148,24 +1139,12 @@ Context(*) Error_Arg_Type(
         // it's confusing to say that the original function didn't take that
         // type--it was on its interface.  A different message is needed.
         //
-        if (Is_Void(arg))
-            return Error_Phase_No_Arg_Raw(label, param_word);
-
-        if (Is_Isotope(arg))
-            return Error_Bad_Isotope(arg);
-
         return Error_Phase_Bad_Arg_Type_Raw(
             label,
             spec,
             param_word
         );
     }
-
-    if (Is_Void(arg))
-        return Error_Arg_Required_Raw(label, param_word);
-
-    if (Is_Isotope(arg))
-        return Error_Bad_Isotope(arg);
 
     return Error_Expect_Arg_Raw(
         label,

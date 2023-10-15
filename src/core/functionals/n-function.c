@@ -499,7 +499,7 @@ Bounce Init_Thrown_Unwind_Value(
 //      level "Frame, action, or index to exit from"
 //          [frame! action! integer!]
 //      ^result "Result for enclosing state"
-//          [<opt> <void> <raised> <pack> any-value!]
+//          [<opt> <void> raised? pack? any-value!]
 //  ]
 //
 DECLARE_NATIVE(unwind)
@@ -529,12 +529,50 @@ DECLARE_NATIVE(unwind)
 
 
 //
+//  Typecheck_Coerce_Return: C
+//
+bool Typecheck_Coerce_Return(
+    Frame(*) f,
+    Value(*) atom  // coercion needs mutability
+){
+    if (Is_Raised(atom))
+        return true;  // For now, all functions return definitional errors
+
+    // Typeset bits for locals in frames are usually ignored, but the RETURN:
+    // local uses them for the return types of a function.
+    //
+    Action(*) phase = FRM_PHASE(f);
+    const REBPAR *param = ACT_PARAMS_HEAD(phase);
+    assert(KEY_SYM(ACT_KEYS_HEAD(phase)) == SYM_RETURN);
+
+    if (GET_PARAM_FLAG(param, RETURN_NONE) and not Is_None(atom))
+        fail ("If RETURN: <none> is in a function spec, RETURN NONE only");
+
+    if (Typecheck_Coerce_Argument(param, atom))
+        return true;
+
+    if (Is_Nihil(atom)) {  // RETURN NIHIL
+        //
+        // !!! Treating a return of NIHIL as a return of NONE helps some
+        // scenarios, for instance piping UPARSE combinators which do not
+        // want to propagate pure invisibility.  The idea should be reviewed
+        // to see if VOID makes more sense...but start with a more "ornery"
+        // value to see how it shapes up.
+        //
+        Init_None(atom);
+    }
+
+    return Typecheck_Coerce_Argument(param, atom);
+}
+
+
+//
 //  definitional-return: native [
 //
 //  {RETURN, giving a result to the caller}
 //
 //      return: []  ; !!! notation for "divergent?"
-//      ^value [<opt> <void> <raised> <pack> any-value!]
+//      ^value [<opt> <void> raised? pack? any-value!]
 //      /only "Do not do proxying of output variables, just return argument"
 //  ]
 //
@@ -569,47 +607,6 @@ DECLARE_NATIVE(definitional_return)
 
     Frame(*) target_frame = CTX_FRAME_MAY_FAIL(f_binding);
 
-    // !!! We only have a Frame(*) via the binding.  We don't have distinct
-    // knowledge about exactly which "phase" the original RETURN was
-    // connected to.  As a practical matter, it can only return from the
-    // current phase (what other option would it have, any other phase is
-    // either not running yet or has already finished!).  But this means the
-    // `target_frame->phase` may be somewhat incidental to which phase the
-    // RETURN originated from...and if phases were allowed different return
-    // typesets, then that means the typechecking could be somewhat random.
-    //
-    // Without creating a unique tracking entity for which phase was
-    // intended for the return, it's not known which phase the return is
-    // for.  So the return type checking is done on the basis of the
-    // underlying function.  So compositions that share frames cannot expand
-    // the return type set.  The unfortunate upshot of this is--for instance--
-    // that an ENCLOSE'd function can't return any types the original function
-    // could not.  :-(
-    //
-    Action(*) target_fun = target_frame->u.action.original;
-
-    // Defininitional returns are "locals"--there's no argument type check.
-    // So TYPESET! bits in the RETURN param are used for legal return types.
-    //
-    const REBPAR *param = ACT_PARAMS_HEAD(target_fun);
-    assert(KEY_SYM(ACT_KEYS_HEAD(target_fun)) == SYM_RETURN);
-
-    if (Is_Raised(atom))
-        goto skip_type_check;  // all functions allow returning errors
-
-    if (Is_Nihil(atom)) {  // RETURN NIHIL
-        if (GET_PARAM_FLAG(param, VANISHABLE))
-            goto skip_type_check;
-
-        // !!! Treating a return of NIHIL as a return of NONE helps some
-        // scenarios, for instance piping UPARSE combinators which do not
-        // want to propagate pure invisibility.  The idea should be reviewed
-        // to see if VOID makes more sense...but start with a more "ornery"
-        // value to see how it shapes up.
-        //
-        Init_None(atom);
-    }
-
     // Check type NOW instead of waiting and letting Eval_Core()
     // check it.  Reasoning is that the error can indicate the callsite,
     // e.g. the point where `return badly-typed-value` happened.
@@ -620,13 +617,8 @@ DECLARE_NATIVE(definitional_return)
     // take [<opt> any-value!] as its argument, and then report the error
     // itself...implicating the frame (in a way parallel to this native).
     //
-    if (not Typecheck_Return(target_frame, atom)) {
-        Decay_If_Unstable(atom);
-        if (not Typecheck_Return(target_frame, atom))
-            fail (Error_Bad_Return_Type(target_frame, atom));
-    }
-
-  skip_type_check: {  ////////////////////////////////////////////////////////
+    if (not REF(only) and not Typecheck_Coerce_Return(target_frame, atom))
+        fail (Error_Bad_Return_Type(target_frame, atom));
 
     DECLARE_LOCAL (label);
     Copy_Cell(label, Lib(UNWIND)); // see Make_Thrown_Unwind_Value
@@ -636,7 +628,6 @@ DECLARE_NATIVE(definitional_return)
         Proxy_Multi_Returns_Core(target_frame, atom);
 
     return Init_Thrown_With_Label(FRAME, atom, label);
-  }
 }
 
 

@@ -158,7 +158,7 @@ inline static bool Matcher_Matches(
 #define PARAM_FLAG_CONST \
     FLAG_LEFT_BIT(15)
 
-#define PARAM_FLAG_VANISHABLE \
+#define PARAM_FLAG_16 \
     FLAG_LEFT_BIT(16)
 
 #define PARAM_FLAG_RETURN_NONE \
@@ -170,7 +170,7 @@ inline static bool Matcher_Matches(
 #define PARAM_FLAG_RETURN_TYPECHECKED \
     FLAG_LEFT_BIT(19)
 
-#define PARAM_FLAG_WANT_RAISED \
+#define PARAM_FLAG_20 \
     FLAG_LEFT_BIT(20)
 
 #define PARAM_FLAG_21 \
@@ -179,7 +179,7 @@ inline static bool Matcher_Matches(
 #define PARAM_FLAG_22 \
     FLAG_LEFT_BIT(22)
 
-#define PARAM_FLAG_WANT_PACKS \
+#define PARAM_FLAG_23 \
     FLAG_LEFT_BIT(23)
 
 
@@ -263,66 +263,6 @@ inline static REBPAR *Init_Param_Core(
     TRACK(Init_Param_Core((out), (param_flags), (bits)))
 
 
-inline static REBVAL *Refinify(REBVAL *v);  // forward declaration
-inline static bool IS_REFINEMENT(Cell(const*) v);  // forward decl
-
 inline static bool Is_Parameter_Unconstrained(noquote(Cell(const*)) param) {
     return VAL_PARAMETER_ARRAY(param) == nullptr;  // e.g. `[/refine]`
-}
-
-inline static bool Is_Blackhole(Cell(const*) v);  // forward decl
-
-// This does extra typechecking pertinent to function parameters, compared to
-// the basic type checking.
-//
-inline static bool Typecheck_Parameter(
-    const REBPAR *param,
-    Value(*) v  // need mutability for ^META check
-){
-    if (
-        GET_PARAM_FLAG(param, REFINEMENT)
-        or GET_PARAM_FLAG(param, SKIPPABLE)
-    ){
-        if (Is_Nulled(v))  // nulls always legal...means refinement not used
-            return true;
-
-        if (Is_Parameter_Unconstrained(param))  // no-arg refinement
-            return Is_Blackhole(v);  // !!! Error_Bad_Argless_Refine(key)
-    }
-
-    // We do an adjustment of the argument to accommodate meta parameters,
-    // which check the unquoted type.
-    //
-    bool unquoted = false;
-
-    if (VAL_PARAM_CLASS(param) == PARAM_CLASS_META) {
-        if (Is_Nulled(v))
-            return GET_PARAM_FLAG(param, ENDABLE);
-
-        if (not IS_QUASI(v) and not IS_QUOTED(v))
-            return false;
-
-        Meta_Unquotify_Undecayed(v);  // temporary adjustment (easiest option)
-        unquoted = true;
-    }
-    else
-        unquoted = false;
-
-    if (TYPE_CHECK(param, v))
-        goto return_true;
-
-    if (Is_Nihil(v) and GET_PARAM_FLAG(param, VANISHABLE))
-        goto return_true;
-
-    if (unquoted)
-        Meta_Quotify(v);
-
-    return false;
-
-  return_true:
-
-    if (unquoted)
-        Meta_Quotify(v);
-
-    return true;
 }

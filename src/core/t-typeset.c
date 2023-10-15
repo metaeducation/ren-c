@@ -221,15 +221,6 @@ Array(*) Add_Parameter_Bits_Core(
                     INDEX_ATTACHED
                 );
             }
-            else if (0 == CT_String(item, Root_Nihil_Tag, strict)) {
-                *flags |= PARAM_FLAG_VANISHABLE;
-            }
-            else if (0 == CT_String(item, Root_Raised_Tag, strict)) {
-                *flags |= PARAM_FLAG_WANT_RAISED;
-            }
-            else if (0 == CT_String(item, Root_Pack_Tag, strict)) {
-                *flags |= PARAM_FLAG_WANT_PACKS;
-            }
             else if (0 == CT_String(item, Root_Skip_Tag, strict)) {
                 if (pclass != PARAM_CLASS_HARD)
                     fail ("Only hard-quoted parameters are <skip>-able");

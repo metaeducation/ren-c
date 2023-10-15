@@ -390,7 +390,7 @@
 ; "Opportunistic Invisibility" means that functions can treat invisibility as
 ; a return type, decided on after they've already started running.
 [
-    (vanish-if-odd: func [return: [<nihil> integer!] x] [
+    (vanish-if-odd: func [return: [nihil? integer!] x] [
         if even? x [return x]
         return nihil
     ] true)
@@ -398,7 +398,7 @@
     (2 = (<test> vanish-if-odd 2))
     (<test> = (<test> vanish-if-odd 1))
 
-    (vanish-if-even: func [return: [<nihil> integer!] y] [
+    (vanish-if-even: func [return: [nihil? integer!] y] [
         return unmeta ^(vanish-if-odd y + 1)
     ] true)
 
@@ -419,7 +419,7 @@
         int-spec 10
     )
     (
-        invis-spec: func [return: [<nihil> integer!] x] [
+        invis-spec: func [return: [nihil? integer!] x] [
             return nihil
         ]
         <test> = (<test> invis-spec 10)
@@ -436,7 +436,7 @@
 ; It's not clear that this is an interesting feature, especially in light of
 ; COMMA!'s new mechanic getting its barrier-ness from returning nihil.
 ;
-;    foo: lambda [x [<nihil> integer!]] [if unset? 'x [<unset>] else [x]]
+;    foo: lambda [x [nihil? integer!]] [if unset? 'x [<unset>] else [x]]
 ;    did all [
 ;        <unset> = foo comment "hi"
 ;        1020 = foo 1000 + 20

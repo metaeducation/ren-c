@@ -339,7 +339,7 @@ bool Specialize_Action_Throws(
         if (GET_PARAM_FLAG(param, VARIADIC))
             fail ("Cannot currently SPECIALIZE variadic arguments.");
 
-        if (not Typecheck_Parameter(param, arg))
+        if (not Typecheck_Coerce_Argument(param, arg))
             fail (Error_Arg_Type(nullptr, key, param, arg));
     }
 
@@ -716,7 +716,7 @@ Action(*) Alloc_Action_From_Exemplar(
             continue;
         }
 
-        if (not Typecheck_Parameter(param, arg))
+        if (not Typecheck_Coerce_Argument(param, arg))
             fail (Error_Arg_Type(nullptr, key, param, arg));
     }
 

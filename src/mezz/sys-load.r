@@ -308,7 +308,7 @@ load-value: redescribe [
 ](
     chain [
         :load,
-        lambda [^x [<raised> block!]] [
+        lambda [^x [raised? block!]] [
             either raised? unmeta x [
                 unmeta x  ; pipe error
             ][

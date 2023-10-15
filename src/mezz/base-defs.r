@@ -44,8 +44,8 @@ probe: func* [
     {Debug print a molded value and returns that same value.}
 
     return: "Same as the input value"
-        [<nihil> <opt> <void> any-value!]
-    ^value' [<opt> <void> <pack> <raised> any-value!]
+        [nihil? <opt> <void> any-value!]
+    ^value' [<opt> <void> pack? raised? any-value!]
 ][
     ; Remember this is early in the boot, so many things not defined.
 
@@ -159,7 +159,7 @@ comment: func* [
     {Ignores the argument value, but does no evaluation (see also ELIDE)}
 
     return: "Evaluator will skip over the result (not seen)"
-        [<nihil>]
+        [nihil?]
     :discarded "Literal value to be ignored."  ; `comment print "x"` disallowed
         [block! any-string! binary! any-scalar!]
 ][
@@ -170,9 +170,9 @@ elide: func* [
     {Argument is evaluative, but discarded (see also COMMENT)}
 
     return: "The evaluator will skip over the result (not seen)"
-        [<nihil>]
+        [nihil?]
     ^discarded "Evaluated value to be ignored"
-        [<opt> <void> <pack> any-value!]  ; <pack> so (elide elide "x") works
+        [<opt> <void> pack? any-value!]  ; pack? so (elide elide "x") works
 ][
     return nihil
 ]
@@ -180,9 +180,9 @@ elide: func* [
 elide-if-void: func* [
     {Argument is evaluative, but discarded if void}
 
-    return: [<nihil> <opt> <void> any-value!]
+    return: [nihil? <opt> <void> any-value!]
     ^value' "Evaluated value to be ignored"
-        [<opt> <void> <pack> any-value!]  ; <pack> is passed through
+        [<opt> <void> pack? any-value!]  ; pack? is passed through
 ][
     if value' = void' [return nihil]
     return unmeta value'
@@ -197,7 +197,7 @@ elide-if-void: func* [
 |\|\|\||: func* [  ; e.g. |||
     {Inertly consumes all subsequent data, evaluating to previous result.}
 
-    return: [<nihil>]
+    return: [nihil?]
     :omit [any-value! <variadic>]
 ][
     until [null? try take omit]
@@ -553,7 +553,7 @@ print: func* [
     {Output SPACED text with newline (evaluating elements if BLOCK!)}
 
     return: "See NIHIL docs for caution on casually making vaporizing routines"
-        [<nihil>]
+        [nihil?]
     line "Line of text or block, [] has NO output, CHAR! newline allowed"
         [<maybe> char! text! block! quoted!]
 ][
@@ -579,7 +579,7 @@ print: func* [
 echo: func* [
     {Freeform output of text, with @WORD, @TU.P.LE, and @(GR O UP) as escapes}
 
-    return: [<nihil>]
+    return: [nihil?]
     'args "If a BLOCK!, then just that block's contents--else to end of line"
         [any-value! <variadic>]
     <local> line

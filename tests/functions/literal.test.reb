@@ -4,7 +4,7 @@
 ; and a nihil`
 
 [
-    (did detector: lambda [^x [<opt> <end> <void> <pack> any-value!]] [x])
+    (did detector: lambda [^x [<opt> <end> <void> pack? any-value!]] [x])
 
     ((the '10) = detector 10)
     (null' = detector null)

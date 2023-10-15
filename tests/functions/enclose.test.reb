@@ -39,11 +39,11 @@
     ]
 )(
     var: #before
-    inner: func [return: [<nihil>]] [
+    inner: func [return: [nihil?]] [
         var: 1020
         return nihil
     ]
-    outer: enclose :inner func [return: [<nihil> <opt> any-value!] f] [
+    outer: enclose :inner func [return: [nihil? <opt> any-value!] f] [
         return ^(eval f)  ; don't unquote it here
     ]
     did all [
@@ -52,11 +52,11 @@
     ]
 )(
     var: #before
-    inner: func [return: [<nihil>]] [
+    inner: func [return: [nihil?]] [
         var: 1020
         return nihil
     ]
-    outer: enclose :inner func [return: [<nihil> <opt> <void> any-value!] f] [
+    outer: enclose :inner func [return: [nihil? <opt> <void> any-value!] f] [
         return eval f  ; now try unquoting
     ]
     did all [

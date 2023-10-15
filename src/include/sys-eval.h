@@ -224,7 +224,7 @@ inline static bool Did_Init_Inert_Optimize_Complete(
         //
         if (Get_Action_Flag(action, SKIPPABLE_FIRST)) {
             const REBPAR *first = First_Unspecialized_Param(nullptr, action);
-            if (not Typecheck_Parameter(first, out))
+            if (not Typecheck_Coerce_Argument(first, out))
                 goto optimized;  // didn't actually want this parameter type
         }
 

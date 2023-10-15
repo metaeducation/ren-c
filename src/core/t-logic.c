@@ -273,7 +273,7 @@ DECLARE_NATIVE(xor_1)  // see TO-C-NAME
 //      left "Expression which will always be evaluated"
 //          [<opt> any-value!]
 //      ^right "Expression that's also always evaluated (can't short circuit)"
-//          [<opt> <void> <pack> any-value!]  ; not literal GROUP! as with XOR
+//          [<opt> <void> pack? any-value!]  ; not literal GROUP! as with XOR
 //  ]
 //
 DECLARE_NATIVE(unless)

@@ -754,7 +754,7 @@ Bounce JavaScript_Dispatcher(Frame(*) frame_)
 
 } handle_resolved: {  ////////////////////////////////////////////////////////
 
-    if (not Typecheck_Return(f, OUT))
+    if (not Typecheck_Coerce_Return(f, OUT))
         fail (Error_Bad_Return_Type(f, OUT));
 
     return OUT;

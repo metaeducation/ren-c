@@ -18,7 +18,7 @@
 ; EMPTY? is not by default tolerant of null, but it's a common need, so a
 ; combined test is available.
 [
-    ~bad-isotope~ !! (empty? null)
+    ~expect-arg~ !! (empty? null)
 
     (empty-or-null? [])
     (empty-or-null? _)

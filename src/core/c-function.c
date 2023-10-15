@@ -251,11 +251,6 @@ void Push_Paramlist_Quads_May_Fail(
 
             StackValue(*) param = PARAM_SLOT(TOP_INDEX);
 
-            // By default parameters can be passed void, but if a block spec
-            // is found then it has to say `<void>` to allow it.
-            //
-            CLEAR_PARAM_FLAG(param, VANISHABLE);
-
             if (Is_Specialized(cast(REBPAR*, cast(REBVAL*, param))))
                 continue;
 
@@ -470,11 +465,6 @@ void Push_Paramlist_Quads_May_Fail(
                 FLAG_PARAM_CLASS_BYTE(pclass),
                 nullptr
             );
-
-            // We say they are vanishable by default, but clear this flag if
-            // a typeset block is found afterward.
-            //
-            SET_PARAM_FLAG(param, VANISHABLE);
         }
 
         if (symbol == Canon(RETURN)) {
@@ -543,8 +533,7 @@ Array(*) Pop_Paramlist_With_Meta_May_Fail(
             //
             Init_Param(
                 param,
-                FLAG_PARAM_CLASS_BYTE(PARAM_CLASS_RETURN)
-                    | PARAM_FLAG_VANISHABLE,  // allows invisibility
+                FLAG_PARAM_CLASS_BYTE(PARAM_CLASS_RETURN),
                 nullptr
             );
 

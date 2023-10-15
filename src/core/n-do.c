@@ -39,7 +39,7 @@
 //
 //  {Process an evaluated argument *inline* as the evaluator loop would}
 //
-//      return: [<opt> <void> <nihil> any-value!]
+//      return: [<opt> <void> nihil? any-value!]
 //      value [element?]
 //          {BLOCK! passes-thru, ACTION! runs, SET-WORD! assigns...}
 //      expressions [<opt> element? <variadic>]
@@ -407,7 +407,7 @@ DECLARE_NATIVE(do)
 //  {Perform a single evaluator step, returning the next source position}
 //
 //      return: "Value from the step"
-//          [<opt> <void> <nihil> any-value!]
+//          [<opt> <void> nihil? any-value!]
 //      source [
 //          <maybe>  ; useful for `evaluate try ...` scenarios when no match
 //          any-array!  ; source code in block form

@@ -109,7 +109,7 @@ combinator: func [
     <static> wrapper (
         func [
             {Enclosing function for hooking all combinators}
-            return: [<nihil> <opt> <void> any-value!]
+            return: [nihil? <opt> <void> any-value!]
             f [frame!]
         ][
             ; This hook lets us run code before and after each execution of
@@ -1276,7 +1276,7 @@ default-combinators: make map! reduce [
 
     group! combinator [
         return: "Result of evaluating the group (invisible if <delay>)"
-            [<void> <opt> <nihil> any-value!]
+            [<void> <opt> nihil? any-value!]
         @pending [<opt> block!]
         value [any-array!]  ; allow any array to use this "DO combinator"
     ][
@@ -1296,7 +1296,7 @@ default-combinators: make map! reduce [
 
     'phase combinator [
         return: "Result of the parser evaluation"
-            [<nihil> <void> <opt> any-value!]
+            [nihil? <void> <opt> any-value!]
         @pending [<opt> block!]
         parser [activation!]
         <local> result'
@@ -1331,7 +1331,7 @@ default-combinators: make map! reduce [
 
     get-group! combinator [
         return: "Result of running combinator from fetching the WORD!"
-            [<opt> <void> <nihil> any-value!]
+            [<opt> <void> nihil? any-value!]
         @pending [<opt> block!]   ; we retrigger combinator; it may KEEP, etc.
 
         value [any-array!]  ; allow any array to use this "REPARSE-COMBINATOR"
@@ -1443,7 +1443,7 @@ default-combinators: make map! reduce [
 
     quoted! combinator [
         return: "The matched value"
-            [<nihil> any-value!]
+            [nihil? any-value!]
         @pending [<opt> block!]
         value [quoted! quasi!]
         <local> comb
@@ -1590,7 +1590,7 @@ default-combinators: make map! reduce [
 
     isotope! combinator [
         return: "Invisible if true (signal to keep parsing)"
-            [<nihil>]
+            [nihil?]
         value [isotope!]
     ][
         switch/type :value [
@@ -1998,7 +1998,7 @@ default-combinators: make map! reduce [
     'elide combinator [
         {Transform a result-bearing combinator into one that has no result}
         return: "Invisible"
-            [<nihil>]
+            [nihil?]
         parser [activation!]
     ][
         [^ remainder]: parser input except e -> [return raise e]
@@ -2008,7 +2008,7 @@ default-combinators: make map! reduce [
     'comment combinator [
         {Comment out an arbitrary amount of PARSE material}
         return: "Invisible"
-            [<nihil>]
+            [nihil?]
         'ignored [block! text! tag! issue!]
     ][
         ; !!! This presents a dilemma, should it be quoting out a rule, or
@@ -2034,7 +2034,7 @@ default-combinators: make map! reduce [
 
     'skip combinator [
         {Skip an integral number of items}
-        return: "Invisible" [<nihil>]
+        return: "Invisible" [nihil?]
         parser [activation!]
         <local> result
     ][
@@ -2068,7 +2068,7 @@ default-combinators: make map! reduce [
     action! combinator [
         {Run an ordinary ACTION! with parse rule products as its arguments}
         return: "The return value of the action"
-            [<nihil> <opt> <void> any-value!]
+            [nihil? <opt> <void> any-value!]
         @pending [<opt> block!]
         value [action!]
         ; AUGMENT is used to add param1, param2, param3, etc.
@@ -2127,7 +2127,7 @@ default-combinators: make map! reduce [
 
     word! combinator [
         return: "Result of running combinator from fetching the WORD!"
-            [<opt> <void> <nihil> any-value!]
+            [<opt> <void> nihil? any-value!]
         @pending [<opt> block!]
         value [word! tuple!]
         <local> r comb
@@ -2271,7 +2271,7 @@ default-combinators: make map! reduce [
 
     block! combinator [
         return: "Last result value"
-            [<opt> <void> <nihil> any-value!]
+            [<opt> <void> nihil? any-value!]
         @pending [<opt> block!]
         value [block!]
         /limit "Limit of how far to consider (used by ... recursion)"

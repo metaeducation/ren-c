@@ -177,8 +177,8 @@
 
 [
     (null? mold void)
-    ~bad-isotope~ !! (mold null)
+    ~expect-arg~ !! (mold null)
 
     (null? form void)
-    ~bad-isotope~ !! (form null)
+    ~expect-arg~ !! (form null)
 ]

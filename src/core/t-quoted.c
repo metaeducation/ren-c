@@ -297,7 +297,7 @@ DECLARE_NATIVE(quote)
 //  {VOID -> NULL, isotopes -> QUASI!, adds a quote to rest (behavior of ^^)}
 //
 //      return: [quoted! quasi!]
-//      ^optional [<void> <opt> <raised> <pack> any-value!]
+//      ^optional [<void> <opt> raised? pack? any-value!]
 //  ]
 //
 DECLARE_NATIVE(meta)
@@ -316,7 +316,7 @@ DECLARE_NATIVE(meta)
 //  {META variant that passes through VOID and NULL, and doesn't take failures}
 //
 //      return: [<opt> <void> quoted! quasi!]
-//      ^optional [<opt> <void> <pack> any-value!]
+//      ^optional [<opt> <void> pack? any-value!]
 //  ]
 //
 DECLARE_NATIVE(meta_p)
@@ -444,7 +444,7 @@ DECLARE_NATIVE(isotopic)
 //
 //  {Variant of UNQUOTE that also accepts QUASI! to make isotopes}
 //
-//      return: [<opt> <void> <nihil> any-value!]
+//      return: [<opt> <void> nihil? any-value!]
 //      value [quoted! quasi!]
 //  ]
 //
@@ -463,7 +463,7 @@ DECLARE_NATIVE(unmeta)
 //
 //  {Variant of UNMETA that passes thru VOID and NULL}
 //
-//      return: [<opt> <void> <nihil> any-value!]
+//      return: [<opt> <void> nihil? any-value!]
 //      value [<opt> <void> quoted! quasi!]
 //  ]
 //
@@ -640,7 +640,7 @@ DECLARE_NATIVE(matches)
 //  "Tells you if argument is a splice (isotopic block)"
 //
 //      return: [logic?]
-//      ^optional [<opt> <void> <raised> <pack> any-value!]
+//      ^optional [<opt> <void> raised? pack? any-value!]
 //  ]
 //
 DECLARE_NATIVE(splice_q)
@@ -657,7 +657,7 @@ DECLARE_NATIVE(splice_q)
 //  "Tells you if argument is any kind of matcher (TYPE-XXX! isotope)"
 //
 //      return: [logic?]
-//      ^value [<opt> <void> <raised> <pack> any-value!]
+//      ^value [<opt> <void> raised? pack? any-value!]
 //  ]
 //
 DECLARE_NATIVE(any_matcher_q)
@@ -679,7 +679,7 @@ DECLARE_NATIVE(any_matcher_q)
 //  "Tells you if argument is a lazy value (isotopic object)"
 //
 //      return: [logic?]
-//      ^optional [<opt> <void> <raised> <pack> any-value!]
+//      ^optional [<opt> <void> raised? pack? any-value!]
 //  ]
 //
 DECLARE_NATIVE(lazy_q)
@@ -696,7 +696,7 @@ DECLARE_NATIVE(lazy_q)
 //  "Tells you if argument is a parameter pack (isotopic block)"
 //
 //      return: [logic?]
-//      ^optional [<opt> <void> <raised> <pack> any-value!]
+//      ^optional
 //  ]
 //
 DECLARE_NATIVE(pack_q)
@@ -713,7 +713,7 @@ DECLARE_NATIVE(pack_q)
 //  "Tells you if argument is an isotopic word"
 //
 //      return: [logic?]
-//      ^optional [<opt> <void> <raised> <pack> any-value!]
+//      ^optional [<opt> <void> raised? pack? any-value!]
 //  ]
 //
 DECLARE_NATIVE(isoword_q)
@@ -729,7 +729,7 @@ DECLARE_NATIVE(isoword_q)
 //  "Tells you if argument is an activation (isotopic action)"
 //
 //      return: [logic?]
-//      ^optional [<opt> <void> <raised> <pack> any-value!]
+//      ^optional [<opt> <void> raised? pack? any-value!]
 //  ]
 //
 DECLARE_NATIVE(activation_q)

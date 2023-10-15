@@ -99,8 +99,6 @@ Script: [
 
     phase-bad-arg-type:
         [:arg1 {internal phase disallows} :arg2 {for its} :arg3 {argument}]
-    phase-no-arg:
-        [:arg1 {internal phase requres} :arg2 {argument to not be null}]
 
     expect-val:         [{expected} :arg1 {not} :arg2]
     expect-type:        [:arg1 :arg2 {field must be of type} :arg3]
@@ -151,7 +149,6 @@ Script: [
     isotope-arg:        [:arg1 {needs} :arg2 {as ^^META for} :arg3 {isotope}]
     no-arg:             [:arg1 {is missing its} :arg2 {argument}]
     expect-arg:         [:arg1 {expects} :arg2 {for its} :arg3 {argument}]
-    arg-required:       [:arg1 {requires} :arg2 {argument to not be null}]
 
     invalid-type:       [:arg1 {type is not allowed here}]
     invalid-op:         [{invalid operator:} :arg1]

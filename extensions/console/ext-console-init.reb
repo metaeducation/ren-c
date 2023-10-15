@@ -119,7 +119,7 @@ export console!: make object! [
     print-result: meth [
         return: <none>
         ^v "Value (done with meta parameter to discern isotope status)"
-            [<opt> <void> <pack> <raised> any-value!]
+            [<opt> <void> pack? raised? any-value!]
     ][
         ; We use SET instead of a SET-WORD! here to avoid caching the action
         ; name as "last-result", so it should keep the name it had before.

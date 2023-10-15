@@ -406,7 +406,7 @@ DECLARE_NATIVE(reframer_p)
     // shouldn't do this at all, and just let it fail when called.  :-/
     //
     Copy_Cell(SPARE, FRAME->rootvar);
-    if (not Typecheck_Parameter(param, SPARE)) {
+    if (not Typecheck_Coerce_Argument(param, SPARE)) {
         DECLARE_LOCAL (label_word);
         if (label)
             Init_Word(label_word, unwrap(label));

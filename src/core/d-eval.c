@@ -236,8 +236,8 @@ void Do_After_Action_Checks_Debug(Frame(*) f) {
   #if DEBUG_NATIVE_RETURNS
     Action(*) phase = FRM_PHASE(f);
 
-    if (ACT_HAS_RETURN(phase)) {
-        if (not Typecheck_Return(f, f->out)) {
+    if (ACT_HAS_RETURN(phase) and Is_Stable(f->out)) {
+        if (not Typecheck_Coerce_Return(f, f->out)) {
             assert(!"Native code violated return type contract!\n");
             panic (Error_Bad_Return_Type(f, f->out));
         }

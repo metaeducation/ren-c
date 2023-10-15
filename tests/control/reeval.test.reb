@@ -68,8 +68,8 @@
     ]
 )
 
-~bad-isotope~ !! (true = reeval true)
-~bad-isotope~ !! (false = reeval false)
+~expect-arg~ !! (true = reeval true)
+~expect-arg~ !! (false = reeval false)
 
 ($1 == reeval $1)
 (null? do maybe null)

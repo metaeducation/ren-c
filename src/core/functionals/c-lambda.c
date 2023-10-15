@@ -186,7 +186,7 @@ DECLARE_NATIVE(lambda)
 
         // First in quad needs to be a WORD!, after pclass extracted...
         //
-        Flags param_flags = PARAM_FLAG_VANISHABLE;
+        Flags param_flags = 0;
         enum Reb_Param_Class pclass;
         if (IS_WORD(key_slot))
             pclass = PARAM_CLASS_NORMAL;

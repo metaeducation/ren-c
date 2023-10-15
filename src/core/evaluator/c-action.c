@@ -156,7 +156,7 @@ Bounce Proxy_Multi_Returns_Core(Frame(*) f, Value(*) v)
         if (VAL_PARAM_CLASS(PARAM) != PARAM_CLASS_OUTPUT)
             continue;
 
-        if (not Typecheck_Parameter(PARAM, ARG))
+        if (not Typecheck_Coerce_Argument(PARAM, ARG))
             fail (Error_Arg_Type(f, KEY, PARAM, ARG));
 
         Meta_Quotify(Copy_Cell(PUSH(), ARG));
@@ -202,21 +202,7 @@ Bounce Action_Executor(Frame(*) f)
 
           case ST_ACTION_DOING_PICKUPS:
           case ST_ACTION_FULFILLING_ARGS:
-            if (VAL_PARAM_CLASS(PARAM) == PARAM_CLASS_META) {
-                if (Is_Meta_Of_Pack(ARG)) {
-                    if (NOT_PARAM_FLAG(PARAM, WANT_PACKS)) {
-                        Meta_Unquotify_Decayed(ARG);
-                        Meta_Quotify(ARG);
-                    }
-                }
-                if (Is_Meta_Of_Raised(ARG)) {
-                    if (NOT_PARAM_FLAG(PARAM, WANT_RAISED)) {
-                        Meta_Unquotify_Decayed(ARG);
-                        Meta_Quotify(ARG);
-                    }
-                }
-            }
-            else
+            if (VAL_PARAM_CLASS(PARAM) != PARAM_CLASS_META)
                 Decay_If_Unstable(ARG);
 
             goto continue_fulfilling;
@@ -251,7 +237,8 @@ Bounce Action_Executor(Frame(*) f)
         goto fulfill_loop_body;  // optimized out
 
       continue_fulfilling:
-        assert(READABLE(ARG));
+        assert(Is_Stable(ARG));  // implicitly asserts READABLE(ARG)
+
         if (STATE == ST_ACTION_DOING_PICKUPS) {
             if (TOP_INDEX != f->baseline.stack_base)
                 goto next_pickup;
@@ -435,8 +422,6 @@ Bounce Action_Executor(Frame(*) f)
 
               case PARAM_CLASS_META: {
                 Move_Cell(ARG, OUT);
-                if (Is_Pack(ARG) and NOT_PARAM_FLAG(PARAM, WANT_PACKS))
-                    Decay_If_Unstable(ARG);
                 Meta_Quotify(ARG);
                 break; }
 
@@ -815,10 +800,6 @@ Bounce Action_Executor(Frame(*) f)
   // 4. Store the offset so that both the arg and param locations can quickly
   //    be recovered, while using only a single slot in the cell.  Sign denotes
   //    whether the parameter was enfixed or not.
-  //
-  // 5. !!! Should explicit mutability override, so people can say things
-  //    like `foo: func [...] mutable [...]` ?  This seems bad, because the
-  //    contract of the function hasn't been "tweaked" with reskinning.
 
     assert(STATE == ST_ACTION_TYPECHECKING);
 
@@ -829,8 +810,7 @@ Bounce Action_Executor(Frame(*) f)
     PARAM = ACT_PARAMS_HEAD(FRM_PHASE(f));
 
     for (; KEY != KEY_TAIL; ++KEY, ++PARAM, ++ARG) {
-        assert(READABLE(ARG));
-        assert(Is_Stable(ARG));
+        assert(Is_Stable(ARG));  // implicitly asserts READABLE(ARG)
 
         if (Is_Specialized(PARAM))  // checked when specialized, see [1]
             continue;
@@ -841,22 +821,6 @@ Bounce Action_Executor(Frame(*) f)
         ){
             assert(Is_None(ARG));
             continue;  // typeset is its legal return types, wants to be unset
-        }
-
-        if (NOT_PARAM_FLAG(PARAM, WANT_PACKS)) {
-            if (VAL_PARAM_CLASS(PARAM) == PARAM_CLASS_META) {
-                if (Is_Meta_Of_Pack(ARG)) {  // v-- inefficient, but works
-                    Meta_Unquotify_Decayed(ARG);
-                    Meta_Quotify(ARG);
-                }
-            }
-        }
-
-        if (NOT_PARAM_FLAG(PARAM, WANT_RAISED)) {
-            if (VAL_PARAM_CLASS(PARAM) == PARAM_CLASS_META) {
-                if (Is_Meta_Of_Raised(ARG))
-                    fail (VAL_CONTEXT(ARG));
-            }
         }
 
         if (Is_None(ARG)) {  // e.g. (~) isotope, unspecialized, see [2]
@@ -903,22 +867,8 @@ Bounce Action_Executor(Frame(*) f)
             continue;
         }
 
-        if (GET_PARAM_FLAG(PARAM, CONST))
-            Set_Cell_Flag(ARG, CONST);  // mutability override?  see [5]
-
-        if (KEY_SYM(KEY) == SYM_RETURN)
-            continue;  // !!! let whatever go for now
-
-      typecheck_again:
-
-        if (not Typecheck_Parameter(PARAM, ARG)) {
-            if (Is_Activation(ARG)) {
-                Deactivate_If_Activation(ARG);
-                goto typecheck_again;
-            }
-
+        if (not Typecheck_Coerce_Argument(PARAM, ARG))
             fail (Error_Arg_Type(f, KEY, PARAM, ARG));
-        }
     }
 
   // Action arguments now gathered, begin dispatching

@@ -20,7 +20,7 @@
     ; because we want to suppress the triggering of the generated rule
     ;
     ugly-combinators.discard: combinator [
-        return: "Don't return anything" [<nihil>]
+        return: "Don't return anything" [nihil?]
         'group [group!]
     ][
         eval group

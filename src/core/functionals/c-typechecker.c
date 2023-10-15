@@ -304,6 +304,7 @@ bool Typecheck_Value(
                     Copy_Cell(arg, param);
                 else
                     Finalize_None(arg);
+                assert(Is_Stable(arg));
             }
 
             arg = First_Unspecialized_Arg(&param, f);
@@ -312,13 +313,10 @@ bool Typecheck_Value(
 
             Derelativize(arg, v, v_specifier);  // do not decay, see [4]
 
-            if (NOT_PARAM_FLAG(param, WANT_PACKS))
-                Decay_If_Unstable(arg);
-
             if (VAL_PARAM_CLASS(param) == PARAM_CLASS_META)
                 Meta_Quotify(arg);
 
-            if (not Typecheck_Parameter(param, arg)) {
+            if (not Typecheck_Coerce_Argument(param, arg)) {
                 Drop_Action(f);
                 if (match_all)
                     return false;
@@ -397,4 +395,106 @@ bool Typecheck_Value(
     if (match_all)
         return true;
     return false;
+}
+
+
+//
+//  Typecheck_Coerce_Argument: C
+//
+// This does extra typechecking pertinent to function parameters, compared to
+// the basic type checking.
+//
+// 1. !!! Should explicit mutability override, so people can say things
+//    like `foo: func [...] mutable [...]` ?  This seems bad, because the
+//    contract of the function hasn't been "tweaked" with reskinning.
+//
+bool Typecheck_Coerce_Argument(
+    const REBPAR *param,
+    Value(*) arg  // need mutability for coercion
+){
+    if (GET_PARAM_FLAG(param, CONST))
+        Set_Cell_Flag(arg, CONST);  // mutability override?  see [1]
+
+    if (
+        GET_PARAM_FLAG(param, REFINEMENT)
+        or GET_PARAM_FLAG(param, SKIPPABLE)
+    ){
+        if (Is_Nulled(arg))  // nulls always legal...means refinement not used
+            return true;
+
+        if (Is_Parameter_Unconstrained(param))  // no-arg refinement
+            return Is_Blackhole(arg);  // !!! Error_Bad_Argless_Refine(key)
+    }
+
+    bool coerced = false;
+
+    // We do an adjustment of the argument to accommodate meta parameters,
+    // which check the unquoted type.
+    //
+    bool unquoted = false;
+
+    if (VAL_PARAM_CLASS(param) == PARAM_CLASS_META) {
+        if (Is_Nulled(arg))
+            return GET_PARAM_FLAG(param, ENDABLE);
+
+        if (not IS_QUASI(arg) and not IS_QUOTED(arg))
+            return false;
+
+        Meta_Unquotify_Undecayed(arg);  // temporary adjustment (easiest option)
+        unquoted = true;
+    }
+    else if (VAL_PARAM_CLASS(param) == PARAM_CLASS_RETURN) {
+        unquoted = false;
+    }
+    else {
+        unquoted = false;
+
+        if (not Is_Stable(arg))
+            goto do_coercion;
+    }
+
+  typecheck_again:
+
+    if (TYPE_CHECK(param, arg))
+        goto return_true;
+
+    if (not coerced) {
+
+      do_coercion:
+
+        if (Is_Activation(arg)) {
+            mutable_QUOTE_BYTE(arg) = UNQUOTED_1;
+            coerced = true;
+            goto typecheck_again;
+        }
+
+        if (Is_Raised(arg))
+            goto return_false;
+
+        if (Is_Nihil(arg))
+            goto return_false;  // can't decay
+
+        if (Is_Isotope(arg) and Is_Isotope_Unstable(arg)) {
+            Decay_If_Unstable(arg);
+            coerced = true;
+            goto typecheck_again;
+        }
+    }
+
+  return_false:
+
+    if (unquoted)
+        Meta_Quotify(arg);
+
+    return false;
+
+  return_true:
+
+    if (unquoted)
+        Meta_Quotify(arg);
+
+    if (not Is_Stable(arg))
+        assert(VAL_PARAM_CLASS(param) == PARAM_CLASS_RETURN);
+
+    return true;
 }

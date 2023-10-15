@@ -83,5 +83,5 @@
     (null? map-each x ' [fail])
 
     ~expect-arg~ !! (map-each x '~ [fail])
-    ~bad-isotope~ !! (map-each x ~ [fail])
+    ~expect-arg~ !! (map-each x ~ [fail])
 ]

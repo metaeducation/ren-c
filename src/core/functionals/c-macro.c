@@ -174,12 +174,6 @@ DECLARE_NATIVE(macro)
         IDX_DETAILS_1 + 1  // details capacity, just body slot (and archetype)
     );
 
-    if (ACT_HAS_RETURN(macro)) {
-        REBPAR *param = ACT_PARAMS_HEAD(macro);
-        assert(KEY_SYM(ACT_KEYS_HEAD(macro)) == SYM_RETURN);
-        SET_PARAM_FLAG(param, VANISHABLE);  // dispatcher is invisible
-    }
-
     return Init_Activation(OUT, macro, ANONYMOUS, UNBOUND);
 }
 

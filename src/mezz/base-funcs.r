@@ -875,7 +875,7 @@ lock-of: redescribe [
 eval-all: func [
     {Evaluate any number of expressions and discard them}
 
-    return: [<nihil>]
+    return: [nihil?]
     expressions [<opt> any-value! <variadic>]
         {Any number of expressions on the right.}
 ][

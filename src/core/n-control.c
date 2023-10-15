@@ -370,7 +370,7 @@ static Bounce Then_Else_Isotopic_Object_Helper(
 //
 //      return: [logic?]
 //      ^optional "Argument to test"
-//          [<opt> <void> <pack> any-value!]
+//          [<opt> <void> pack? any-value!]
 //      /decay "Pre-decay ~null~ isotope input to NULL"
 //      <local> branch  ; for frame compatibility with THEN/ELSE/ALSO
 //  ]
@@ -495,7 +495,7 @@ DECLARE_NATIVE(didnt)
 //      return: "null if input is null, or branch result"
 //          [<opt> <void> any-value!]
 //      ^optional "<deferred argument> Run branch if this is not null"
-//          [<opt> <void> <raised> <pack> any-value!]
+//          [<opt> <void> raised? pack? any-value!]
 //      /decay "Pre-decay ~null~ isotope input to NULL"
 //      :branch "If arity-1 ACTION!, receives value that triggered branch"
 //          [<unrun> any-branch!]
@@ -537,7 +537,7 @@ DECLARE_NATIVE(then)  // see `tweak :then 'defer on` in %base-defs.r
 //      return: "Input value if not null, or branch result"
 //          [<opt> <void> any-value!]
 //      ^optional "<deferred argument> Run branch if this is null"
-//          [<opt> <void> <raised> <pack> any-value!]
+//          [<opt> <void> raised? pack? any-value!]
 //      /decay "Pre-decay ~null~ isotope input to NULL"
 //      :branch [<unrun> any-branch!]
 //  ]
@@ -578,7 +578,7 @@ DECLARE_NATIVE(else)  // see `tweak :else 'defer on` in %base-defs.r
 //      return: "The same value as input, regardless of if branch runs"
 //          [<opt> <void> any-value!]
 //      ^optional "<deferred argument> Run branch if this is not null"
-//          [<opt> <void> <raised> <pack> any-value!]
+//          [<opt> <void> raised? pack? any-value!]
 //      /decay "Pre-decay ~null~ isotope input to NULL"
 //      :branch "If arity-1 ACTION!, receives value that triggered branch"
 //          [<unrun> any-branch!]
@@ -1616,7 +1616,7 @@ DECLARE_NATIVE(catch)
 //
 //      return: []  ; !!! notation for divergent function?
 //      ^value "Value returned from catch"
-//          [<opt> <void> <pack> <raised> any-value!]
+//          [<opt> <void> pack? raised? any-value!]
 //      /name "Throws to a named catch"
 //          [word! action! object!]
 //  ]
