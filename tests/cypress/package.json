@@ -1,22 +1,22 @@
 {
-  "name": "discord",
+  "name": "ren-c-collected-cypress-tests",
   "version": "1.0.0",
-  "description": "Made a basic repo with a git command and GitHub Actions",
+  "description": "Runs tests gathered from %tests/cypress/e2e/README.md",
   "main": "cypress.config.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/conversaShawn/cypress10.git"
+    "url": "git+https://github.com/metaeducation/ren-c.git"
   },
   "author": "",
-  "license": "ISC",
+  "license": "LGPL3",
   "bugs": {
-    "url": "https://github.com/conversaShawn/cypress10/issues"
+    "url": "https://github.com/metaeducation/ren-c/issues"
   },
-  "homepage": "https://github.com/conversaShawn/cypress10#readme",
+  "homepage": "https://github.com/metaeducation/ren-c/",
   "devDependencies": {
-    "cypress": "^10.0.3"
+    "cypress": "^13.0.0"
   }
 }
