@@ -176,6 +176,13 @@ struct Reb_State;
 struct Reb_Jump;
 
 
+typedef enum {
+    NATIVE_NORMAL,
+    NATIVE_COMBINATOR,
+    NATIVE_INTRINSIC
+} NativeType;
+
+
 //=//// DATA STACK ////////////////////////////////////////////////////////=//
 //
 typedef uint_fast32_t StackIndex;  // 0 for empty stack ([0] entry is trash)

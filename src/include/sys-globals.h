@@ -69,7 +69,7 @@ PVAR Context(*) Lib_Context;
 PVAR Context(*) Sys_Context;
 PVAR Context(*) User_Context;
 
-PVAR Dispatcher* const *PG_Next_Native_Dispatcher;
+PVAR CFUNC* const *PG_Next_Native_Cfunc;
 PVAR Context(*) PG_Currently_Loading_Module;
 
 PVAR REBVAL Datatypes[REB_MAX];  // just the TYPE-WORD!s, like &integer

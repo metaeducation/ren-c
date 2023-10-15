@@ -233,6 +233,9 @@ else [
 dispatcher-forward-decls: collect [
     for-each info all-protos [
         name: info/name
+        if info/native-type = 'intrinsic [  ; not that hard to do if needed
+            fail "Intrinsics not currently supported in extensions"
+        ]
         keep cscape/with {DECLARE_NATIVE(${Name})} 'name
     ]
 ]
@@ -372,8 +375,8 @@ e/emit 'mod {
      * an extension uses "rebol.h" and doesn't return a Bounce C++ class it
      * should still work (it's a standard layout type).
      */
-    static Dispatcher* native_dispatchers[$<num-natives> + 1] = {
-        dispatcher_cast($[Dispatcher_C_Names]),
+    static CFUNC* native_cfuncs[$<num-natives> + 1] = {
+        (CFUNC*)$[Dispatcher_C_Names],
         nullptr /* just here to ensure > 0 length array (C++ requirement) */
     };
 
@@ -404,7 +407,7 @@ e/emit 'mod {
             script_compressed,  /* script compressed data */
             sizeof(script_compressed),  /* size of script compressed data */
             $<script-num-codepoints>,  /* codepoints in uncompressed utf8 */
-            native_dispatchers,  /* C function pointers for native bodies */
+            native_cfuncs,  /* C function pointers for native implementations */
             $<num-natives>  /* number of NATIVE invocations in script */
         );
     }

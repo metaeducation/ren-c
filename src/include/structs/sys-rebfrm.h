@@ -296,6 +296,11 @@ STATIC_ASSERT(31 < 32);  // otherwise FRAME_FLAG_XXX too high
 typedef Bounce (Executor)(Frame(*) frame_);
 typedef Executor Dispatcher;  // sub-dispatched in Action_Executor()
 
+// Intrinsics are a special form of implementing natives that do not need
+// to instantiate a frame.  See Intrinsic_Dispatcher().
+//
+typedef void (Intrinsic)(Value(*) out, Value(*) arg);
+
 // This is for working around pedantic C and C++ errors, when an extension
 // that doesn't use %sys-core.h tries to redefine dispatcher in terms of
 // taking a void* and returning a REBVAL*.

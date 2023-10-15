@@ -34,6 +34,40 @@
 
 
 //
+//  Extract_Intrinsic: C
+//
+Intrinsic* Extract_Intrinsic(Action(*) action)
+{
+    assert(ACT_DISPATCHER(action) == &Intrinsic_Dispatcher);
+
+    Array(*) details = ACT_DETAILS(action);
+    assert(ARR_LEN(details) == IDX_NATIVE_MAX);
+
+    Cell(*) handle = DETAILS_AT(details, IDX_NATIVE_BODY);
+    return cast(Intrinsic*, VAL_HANDLE_CFUNC(handle));
+}
+
+
+//
+//  Intrinsic_Dispatcher: C
+//
+// While frames aren't necessary to execute intrinsics, the system is able to
+// run intrinsics using this thin wrapper of a dispatcher as if they were
+// ordinary natives.
+//
+Bounce Intrinsic_Dispatcher(Frame(*) f)
+{
+    Frame(*) frame_ = f;
+    Value(*) arg = FRM_ARG(f, 2);  // skip the RETURN
+
+    Intrinsic* intrinsic = Extract_Intrinsic(FRM_PHASE(f));
+    (*intrinsic)(OUT, arg);  // typechecking was done when frame was built
+
+    return OUT;
+}
+
+
+//
 //  Make_Native: C
 //
 // Reused function in Startup_Natives() as well as extensions loading natives,
@@ -57,8 +91,8 @@
 //
 Action(*) Make_Native(
     REBVAL *spec,
-    bool is_combinator,
-    Dispatcher* dispatcher,
+    NativeType native_type,
+    CFUNC* cfunc,  // may be Dispatcher*, may be Intrinsic*
     Context(*) module
 ){
     // There are implicit parameters to both NATIVE/COMBINATOR and usermode
@@ -68,7 +102,7 @@ Action(*) Make_Native(
     // need a version of Make_Paramlist_Managed() which took an array + index
     //
     DECLARE_LOCAL (expanded_spec);
-    if (is_combinator) {
+    if (native_type == NATIVE_COMBINATOR) {
         Init_Block(expanded_spec, Expanded_Combinator_Spec(spec));
         spec = expanded_spec;
     }
@@ -86,6 +120,12 @@ Action(*) Make_Native(
     );
     ASSERT_SERIES_TERM_IF_NEEDED(paramlist);
 
+    Dispatcher* dispatcher;
+    if (native_type == NATIVE_INTRINSIC)
+        dispatcher = &Intrinsic_Dispatcher;
+    else
+        dispatcher = cast(Dispatcher*, cfunc);
+
     Action(*) native = Make_Action(
         paramlist,
         nullptr,  // no partials
@@ -95,7 +135,12 @@ Action(*) Make_Native(
     Set_Action_Flag(native, IS_NATIVE);
 
     Array(*) details = ACT_DETAILS(native);
-    Init_Blank(ARR_AT(details, IDX_NATIVE_BODY));
+
+    if (native_type == NATIVE_INTRINSIC)
+        Init_Handle_Cfunc(ARR_AT(details, IDX_NATIVE_BODY),cfunc);
+    else
+        Init_Blank(ARR_AT(details, IDX_NATIVE_BODY));
+
     Copy_Cell(ARR_AT(details, IDX_NATIVE_CONTEXT), CTX_ARCHETYPE(module));
 
     // NATIVE-COMBINATORs actually aren't *quite* their own dispatchers, they
@@ -103,7 +148,7 @@ Action(*) Make_Native(
     // calculating the furthest amount of progress in the parse.  So we call
     // that the actual "native" in that case.
     //
-    if (is_combinator) {
+    if (native_type == NATIVE_COMBINATOR) {
         Action(*) native_combinator = native;
         native = Make_Action(
             ACT_PARAMLIST(native_combinator),
@@ -124,6 +169,18 @@ Action(*) Make_Native(
     assert(ACT_META(native) == nullptr);
     mutable_ACT_META(native) = meta;
 
+    // Some features are not supported by intrinsics, because it would make
+    // them too complicated.
+    //
+    if (native_type == NATIVE_INTRINSIC) {
+        assert(ACT_NUM_PARAMS(native) == 2);  // return + 1 argument
+        const REBPAR* param = ACT_PARAM(native, 2);
+        assert(NOT_PARAM_FLAG(param, REFINEMENT));
+        assert(NOT_PARAM_FLAG(param, SKIPPABLE));
+        assert(NOT_PARAM_FLAG(param, ENDABLE));
+        UNUSED(param);
+    }
+
     return native;
 }
 
@@ -136,7 +193,8 @@ Action(*) Make_Native(
 //      return: "Isotopic ACTION!"
 //          [isotope!]  ; [activation?] needs NATIVE to define it!
 //      spec [block!]
-//      /combinator
+//      /combinator "This native is an implementation of a PARSE keyword"
+//      /intrinsic "This native can be called without building a frame"
 //  ]
 //
 DECLARE_NATIVE(native)
@@ -144,18 +202,24 @@ DECLARE_NATIVE(native)
     INCLUDE_PARAMS_OF_NATIVE;
 
     Value(*) spec = ARG(spec);
-    bool is_combinator = REF(combinator);
 
-    if (not PG_Next_Native_Dispatcher)
+    if (REF(combinator) and REF(intrinsic))
+        fail (Error_Bad_Refines_Raw());
+
+    NativeType native_type = REF(combinator) ? NATIVE_COMBINATOR
+        : REF(intrinsic) ? NATIVE_INTRINSIC
+        : NATIVE_NORMAL;
+
+    if (not PG_Next_Native_Cfunc)
         fail ("NATIVE is for internal use during boot and extension loading");
 
-    Dispatcher* dispatcher = *PG_Next_Native_Dispatcher;
-    ++PG_Next_Native_Dispatcher;
+    CFUNC* cfunc = *PG_Next_Native_Cfunc;
+    ++PG_Next_Native_Cfunc;
 
     Action(*) native = Make_Native(
         spec,
-        is_combinator,
-        dispatcher,
+        native_type,
+        cfunc,
         PG_Currently_Loading_Module
     );
 
@@ -215,8 +279,8 @@ Array(*) Startup_Natives(const REBVAL *boot_natives)
     // function which carries those arguments, which would be cleaner.  The
     // C function could be passed as a HANDLE!.
     //
-    assert(PG_Next_Native_Dispatcher == nullptr);
-    PG_Next_Native_Dispatcher = Native_C_Funcs;
+    assert(PG_Next_Native_Cfunc == nullptr);
+    PG_Next_Native_Cfunc = Native_C_Funcs;
     assert(PG_Currently_Loading_Module == nullptr);
     PG_Currently_Loading_Module = Lib_Context;
 
@@ -234,11 +298,11 @@ Array(*) Startup_Natives(const REBVAL *boot_natives)
 
     Action(*) the_native_action = Make_Native(
         spec,
-        false,  // not a combinator
-        *PG_Next_Native_Dispatcher,
+        NATIVE_NORMAL,  // not a combinator or intrinsic
+        *PG_Next_Native_Cfunc,
         PG_Currently_Loading_Module
     );
-    ++PG_Next_Native_Dispatcher;
+    ++PG_Next_Native_Cfunc;
 
     Init_Activation(
         Append_Context(Lib_Context, Canon(NATIVE)),
@@ -277,7 +341,7 @@ Array(*) Startup_Natives(const REBVAL *boot_natives)
     // and check that a couple of functions can be successfully looked up
     // by their symbol ID numbers.
 
-    assert(PG_Next_Native_Dispatcher == Native_C_Funcs + Num_Natives);
+    assert(PG_Next_Native_Cfunc == Native_C_Funcs + Num_Natives);
 
     if (not Is_Activation(Lib(GENERIC)))
         panic (Lib(GENERIC));
@@ -286,9 +350,9 @@ Array(*) Startup_Natives(const REBVAL *boot_natives)
         panic (Lib(PARSE_REJECT));
   #endif
 
-    assert(PG_Next_Native_Dispatcher == Native_C_Funcs + Num_Natives);
+    assert(PG_Next_Native_Cfunc == Native_C_Funcs + Num_Natives);
 
-    PG_Next_Native_Dispatcher = nullptr;
+    PG_Next_Native_Cfunc = nullptr;
     PG_Currently_Loading_Module = nullptr;
 
     return catalog;

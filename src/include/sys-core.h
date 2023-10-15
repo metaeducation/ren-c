@@ -286,6 +286,7 @@ typedef struct Reb_Enum_Vars EVARS;
 //
 
 #include "tmp-internals.h"
+#include "tmp-native-fwd-decls.h"
 
 
 /***********************************************************************

@@ -961,8 +961,15 @@ sections: [
 ]
 
 nats: collect [
+    ;
+    ; Most C functions backing natives are Dispatchers (take a "Frame" pointer,
+    ; return a "Bounce").  But some are intrinsics and are able to be called
+    ; without building a frame.  It would be a nuisance to separate these
+    ; into distinct tables, so they're all coerced to a CFUNC, and then
+    ; Make_Native() decides which actual function type to cast them to.
+    ;
     for-each name native-names [
-        keep cscape/with {N_${name}} 'name
+        keep cscape/with {(CFUNC*)N_${name}} 'name
     ]
 ]
 
@@ -996,7 +1003,7 @@ e-bootblock/emit 'nats {
     #define NUM_NATIVES $<length of nats>
     const REBLEN Num_Natives = NUM_NATIVES;
 
-    Dispatcher* const Native_C_Funcs[NUM_NATIVES] = {
+    CFUNC* const Native_C_Funcs[NUM_NATIVES] = {
         $(Nats),
     };
 }
@@ -1077,7 +1084,7 @@ e-boot/emit 'fields {
      * Raw C function pointers for natives, take Frame(*) and return REBVAL*.
      */
     EXTERN_C const REBLEN Num_Natives;
-    EXTERN_C Dispatcher* const Native_C_Funcs[];
+    EXTERN_C CFUNC* const Native_C_Funcs[];
 
     typedef struct REBOL_Boot_Block {
         $[Fields];

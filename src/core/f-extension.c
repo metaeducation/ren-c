@@ -174,20 +174,20 @@ DECLARE_NATIVE(load_extension)
         = DETAILS_AT(details, IDX_COLLATOR_SCRIPT);
     REBLEN script_num_codepoints
         = VAL_UINT32(DETAILS_AT(details, IDX_COLLATOR_SCRIPT_NUM_CODEPOINTS));
-    const REBVAL *dispatchers_handle
-        = DETAILS_AT(details, IDX_COLLATOR_DISPATCHERS);
+    const REBVAL *cfuncs_handle
+        = DETAILS_AT(details, IDX_COLLATOR_CFUNCS);
 
-    REBLEN num_natives = VAL_HANDLE_LEN(dispatchers_handle);
-    Dispatcher* *dispatchers = VAL_HANDLE_POINTER(
-        Dispatcher*,
-        dispatchers_handle
+    REBLEN num_natives = VAL_HANDLE_LEN(cfuncs_handle);
+    CFUNC* *cfuncs = VAL_HANDLE_POINTER(
+        CFUNC*,
+        cfuncs_handle
     );
 
     // !!! used to use STD_EXT_CTX, now this would go in META OF
 
     Context(*) module_ctx = Alloc_Context_Core(REB_MODULE, 1, NODE_FLAG_MANAGED);
 
-    PG_Next_Native_Dispatcher = dispatchers;
+    PG_Next_Native_Cfunc = cfuncs;
     PG_Currently_Loading_Module = module_ctx;
 
     DECLARE_LOCAL (module);
@@ -242,9 +242,9 @@ DECLARE_NATIVE(load_extension)
     // !!! Note: This does not get cleaned up in case of an error, needs to
     // have TRAP.
     //
-    if (PG_Next_Native_Dispatcher != dispatchers + num_natives)
-        panic ("NATIVE calls did not line up with stored dispatch count");
-    PG_Next_Native_Dispatcher = nullptr;
+    if (PG_Next_Native_Cfunc != cfuncs + num_natives)
+        panic ("NATIVE calls did not line up with stored C function count");
+    PG_Next_Native_Cfunc = nullptr;
 
     assert(PG_Currently_Loading_Module == module_ctx);
     PG_Currently_Loading_Module = nullptr;

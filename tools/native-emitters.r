@@ -72,8 +72,10 @@ export extract-native-protos: func [
                 opt ["export" space (exported: true)]
                 ahead not space copy name to ":" skip space
                 opt ["enfix" space]
-                (combinator: false)
-                ["native" opt "/combinator" (combinator: true)] space
+                ["native" (native-type: 'normal)
+                    opt ["/combinator" (native-type: 'combinator)]
+                    opt ["/intrinsic" (native-type: 'intrinsic)]
+                ] space
                 "[" thru "//  ]"
             ]
             (
@@ -85,6 +87,7 @@ export extract-native-protos: func [
                     name: (name)
                     exported: (reify-logic exported)
                     file: (c-source-file)
+                    native-type: the (native-type)
                 ]
             )
                 |
@@ -109,6 +112,10 @@ export emit-include-params-macro: function [
     proto [text!]
     /ext [text!] "extension name"
 ][
+    if find proto "native/intrinsic" [
+        return none  ; intrinsics don't have INCLUDE_PARAMS_OF macros
+    ]
+
     seen-refinement: false
 
     native-name: ~

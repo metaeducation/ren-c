@@ -45,6 +45,12 @@ typedef REBINT (COMPARE_HOOK)(
     Bounce N_##n(Frame(*) frame_)
 
 
+// Helper for declaring an intrinsic native (can be dispatched w/o a frame)
+//
+#define DECLARE_INTRINSIC(n) \
+    void N_##n(Value(*) out, Value(*) arg)
+
+
 // PER-TYPE MAKE HOOKS: for `make datatype def`
 //
 // These functions must return a REBVAL* to the type they are making

@@ -2615,8 +2615,8 @@ REBVAL *RL_rebCollateExtension_internal(
     const unsigned char *script_compressed,
     size_t script_compressed_size,
     int script_num_codepoints,
-    void *dispatchers,  // Dispatcher*, but Dispatcher is not in the API
-    int dispatchers_len
+    void *cfuncs,  // Dispatcher* or Intrinsic* (not in API either way)
+    int cfuncs_len
 ){
     Array(*) a = Make_Array(IDX_COLLATOR_MAX);  // details
     SET_SERIES_LEN(a, IDX_COLLATOR_MAX);
@@ -2631,9 +2631,9 @@ REBVAL *RL_rebCollateExtension_internal(
         script_num_codepoints
     );
     Init_Handle_Cdata(
-        ARR_AT(a, IDX_COLLATOR_DISPATCHERS),
-        dispatchers,
-        dispatchers_len
+        ARR_AT(a, IDX_COLLATOR_CFUNCS),
+        cfuncs,
+        cfuncs_len
     );
 
     return Init_Block(Alloc_Value(), a);

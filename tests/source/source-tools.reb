@@ -219,6 +219,7 @@ export analyse: context [
                     [
                         'native
                         | 'native/combinator
+                        | 'native/intrinsic
                     ]
                     to <end>
                 ]) [

@@ -54,6 +54,7 @@ emit-proto: func [
     any [
         find proto "static"
         find proto "DECLARE_NATIVE(" ; Natives handled by make-natives.r
+        find proto "DECLARE_INTRINSIC(" ; Natives handled by make-natives.r
 
         ; The REBTYPE macro actually is expanded in %tmp-internals.h
         ; Should we allow macro expansion or do the REBTYPE another way?
@@ -150,9 +151,6 @@ process: function [return: <none> file] [
 ; more solid mechanism.
 
 
-native-names: copy []
-boot-natives: stripload/gather (join output-dir %boot/tmp-natives.r) 'native-names
-
 e-funcs/emit {
     /*
      * Once there was a rule that C++ builds would not be different in function
@@ -169,31 +167,11 @@ e-funcs/emit {
     #if 0
     extern "C" ^{
     #endif
-
-    /*
-     * NATIVE PROTOTYPES
-     *
-     * DECLARE_NATIVE is a macro which will expand such that DECLARE_NATIVE(parse) will
-     * define a function named `N_parse`.  The prototypes are included in a
-     * system-wide header in order to allow recognizing a given native by
-     * identity in the C code, e.g.:
-     *
-     *     if (ACT_DISPATCHER(VAL_ACTION(native)) == &N_parse) { ... }
-     */
 }
 e-funcs/emit newline
 
-for-each val native-names [
-    assert [word? val]
-    e-funcs/emit 'val {
-        DECLARE_NATIVE(${val});
-    }
-]
-
 e-funcs/emit {
     /*
-     * OTHER PROTOTYPES
-     *
      * These are the functions that are scanned for in the %.c files by
      * %make-headers.r, and then their prototypes placed here.  This means it
      * is not necessary to manually keep them in sync to make calls to
