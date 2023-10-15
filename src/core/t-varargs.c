@@ -347,7 +347,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
             if (not vararg_frame)
                 fail (out);
 
-            fail (Error_Arg_Type(unwrap(vararg_frame), key, param, out));
+            fail (Error_Phase_Arg_Type(unwrap(vararg_frame), key, param, out));
         }
     }
 

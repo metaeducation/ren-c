@@ -912,7 +912,7 @@ Context(*) Error_Not_Varargs(
     );
     UNUSED(honest_param);  // !!! pass to Error_Arg_Type(?)
 
-    return Error_Arg_Type(f, key, param, arg);
+    return Error_Phase_Arg_Type(f, key, param, arg);
 }
 
 
@@ -1104,11 +1104,15 @@ Context(*) Error_Unexpected_Type(enum Reb_Kind expected, enum Reb_Kind actual)
 //
 //  Error_Arg_Type: C
 //
-// Function in frame of `call` expected parameter `param` to be
-// a type different than the arg given (which had `arg_type`)
+// Function in frame of `call` expected parameter `param` to be a type
+// different than the arg given.
+//
+// !!! Right now, we do not include the arg itself in the error.  It would
+// potentially lead to some big molding, and the error machinery isn't
+// really equipped to handle it.
 //
 Context(*) Error_Arg_Type(
-    option(Frame(*)) f,
+    option(Symbol(const*)) name,
     const REBKEY *key,
     const REBPAR *param,
     const REBVAL *arg
@@ -1120,8 +1124,8 @@ Context(*) Error_Arg_Type(
     Init_Word(param_word, KEY_SYMBOL(key));
 
     DECLARE_LOCAL (label);
-    if (f)
-        Get_Frame_Label_Or_Nulled(label, unwrap(f));
+    if (name)
+        Init_Word(label, unwrap(name));
     else
         Init_Nulled(label);
 
@@ -1132,25 +1136,41 @@ Context(*) Error_Arg_Type(
     else
         Init_Block(spec, EMPTY_ARRAY);
 
-    if (f and FRM_PHASE(unwrap(f)) != unwrap(f)->u.action.original) {
-        //
-        // When RESKIN has been used, or if an ADAPT messes up a type and
-        // it isn't allowed by an inner phase, then it causes an error.  But
-        // it's confusing to say that the original function didn't take that
-        // type--it was on its interface.  A different message is needed.
-        //
-        return Error_Phase_Bad_Arg_Type_Raw(
-            label,
-            spec,
-            param_word
-        );
-    }
-
     return Error_Expect_Arg_Raw(
         label,
         spec,
         param_word
     );
+}
+
+
+//
+//  Error_Phase_Arg_Type: C
+//
+// When RESKIN has been used, or if an ADAPT messes up a type and it isn't
+// allowed by an inner phase, then it causes an error.  But it's confusing to
+// say that the original function didn't take that type--it was on its
+// interface.  A different message is helpful, so this does that by coercing
+// the ordinary error into one making it clear it's an internal phase.
+//
+Context(*) Error_Phase_Arg_Type(
+    Frame(*) f,
+    const REBKEY *key,
+    const REBPAR *param,
+    const REBVAL *arg
+){
+    if (FRM_PHASE(f) == f->u.action.original)  // not an internal phase
+        return Error_Arg_Type(f->label, key, param, arg);
+
+    if (VAL_PARAM_CLASS(param) == PARAM_CLASS_META and Is_Meta_Of_Raised(arg))
+        return VAL_CONTEXT(arg);
+
+    Context(*) error = Error_Arg_Type(f->label, key, param, arg);
+    ERROR_VARS* vars = ERR_VARS(error);
+    assert(IS_WORD(&vars->id));
+    assert(VAL_WORD_ID(&vars->id) == SYM_EXPECT_ARG);
+    Init_Word(&vars->id, Canon(PHASE_EXPECT_ARG));
+    return error;
 }
 
 

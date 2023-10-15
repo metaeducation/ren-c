@@ -97,9 +97,6 @@ Script: [
 
     find-string-binary: {Can't search binary in string (must convert input)}
 
-    phase-bad-arg-type:
-        [:arg1 {internal phase disallows} :arg2 {for its} :arg3 {argument}]
-
     expect-val:         [{expected} :arg1 {not} :arg2]
     expect-type:        [:arg1 :arg2 {field must be of type} :arg3]
     cannot-use:         [{cannot use} :arg1 {on} :arg2 {value}]
@@ -148,7 +145,12 @@ Script: [
     invalid-arg:        [:arg1 {has an invalid} :arg2 {argument:} :arg3]
     isotope-arg:        [:arg1 {needs} :arg2 {as ^^META for} :arg3 {isotope}]
     no-arg:             [:arg1 {is missing its} :arg2 {argument}]
+
+    ; These need to have the same arguments (shared code coerces them)
+    ;
     expect-arg:         [:arg1 {expects} :arg2 {for its} :arg3 {argument}]
+    phase-expect-arg:
+        [:arg1 {internal phase expects} :arg2 {for its} :arg3 {argument}]
 
     invalid-type:       [:arg1 {type is not allowed here}]
     invalid-op:         [{invalid operator:} :arg1]

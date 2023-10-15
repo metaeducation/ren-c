@@ -783,6 +783,7 @@ DECLARE_NATIVE(combinatorize)
     INCLUDE_PARAMS_OF_COMBINATORIZE;
 
     Action(*) act = VAL_ACTION(ARG(c));
+    option(Symbol(const*)) label = VAL_ACTION_LABEL(ARG(c));
 
     // !!! The hack for PATH! handling was added to make /ONLY work; it only
     // works for refinements with no arguments by looking at what's in the path
@@ -807,7 +808,7 @@ DECLARE_NATIVE(combinatorize)
     //
     Copy_Cell(ARG(advanced), ARG(rules));
 
-    Action(*) parser = Make_Action_From_Exemplar(s.ctx);
+    Action(*) parser = Make_Action_From_Exemplar(s.ctx, label);
     DROP_GC_GUARD(s.ctx);
 
     Activatify(Init_Action(  // note: MAKE ACTION! copies the context, this won't

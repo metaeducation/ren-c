@@ -463,6 +463,7 @@ DECLARE_NATIVE(reframer_p)
     Manage_Series(CTX_VARLIST(exemplar));
     Action(*) reframer = Alloc_Action_From_Exemplar(
         exemplar,  // shim minus the frame argument
+        label,
         &Reframer_Dispatcher,
         IDX_REFRAMER_MAX  // details array capacity => [shim, param_index]
     );

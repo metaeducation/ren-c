@@ -115,10 +115,11 @@ Bounce MAKE_Action(
         Context(*) exemplar = VAL_CONTEXT(frame_copy);
         rebRelease(frame_copy);
 
+        option(Symbol(const*)) label = VAL_FRAME_LABEL(arg);
         return Init_Action(
             OUT,
-            Make_Action_From_Exemplar(exemplar),
-            VAL_FRAME_LABEL(arg),
+            Make_Action_From_Exemplar(exemplar, label),
+            label,
             VAL_FRAME_BINDING(arg)
         );
     }

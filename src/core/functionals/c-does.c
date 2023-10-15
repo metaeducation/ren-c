@@ -219,8 +219,8 @@ DECLARE_NATIVE(does)
     assert(KEY_SYM(CTX_KEY(exemplar, 1)) == SYM_RETURN);
     Copy_Cell(CTX_VAR(exemplar, 2), source);
 
-    Symbol(const*) label = ANONYMOUS;  // !!! Better answer?
+    Symbol(const*) label = Canon(DO);  // !!! Better answer?
 
-    Action(*) doer = Make_Action_From_Exemplar(exemplar);
+    Action(*) doer = Make_Action_From_Exemplar(exemplar, label);
     return Init_Activation(OUT, doer, label, UNBOUND);
 }

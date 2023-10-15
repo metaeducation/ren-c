@@ -157,7 +157,7 @@ Bounce Proxy_Multi_Returns_Core(Frame(*) f, Value(*) v)
             continue;
 
         if (not Typecheck_Coerce_Argument(PARAM, ARG))
-            fail (Error_Arg_Type(f, KEY, PARAM, ARG));
+            fail (Error_Phase_Arg_Type(f, KEY, PARAM, ARG));
 
         Meta_Quotify(Copy_Cell(PUSH(), ARG));
     }
@@ -868,7 +868,7 @@ Bounce Action_Executor(Frame(*) f)
         }
 
         if (not Typecheck_Coerce_Argument(PARAM, ARG))
-            fail (Error_Arg_Type(f, KEY, PARAM, ARG));
+            fail (Error_Phase_Arg_Type(f, KEY, PARAM, ARG));
     }
 
   // Action arguments now gathered, begin dispatching

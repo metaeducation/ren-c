@@ -339,8 +339,10 @@ bool Specialize_Action_Throws(
         if (GET_PARAM_FLAG(param, VARIADIC))
             fail ("Cannot currently SPECIALIZE variadic arguments.");
 
-        if (not Typecheck_Coerce_Argument(param, arg))
-            fail (Error_Arg_Type(nullptr, key, param, arg));
+        if (not Typecheck_Coerce_Argument(param, arg)) {
+            option(Symbol(const*)) label = VAL_ACTION_LABEL(specializee);
+            fail (Error_Arg_Type(label, key, param, arg));
+        }
     }
 
     // Everything should have balanced out for a valid specialization.
@@ -690,6 +692,7 @@ REBVAL *First_Unspecialized_Arg(option(const REBPAR **) param_out, Frame(*) f)
 //
 Action(*) Alloc_Action_From_Exemplar(
     Context(*) exemplar,
+    option(Symbol(const*)) label,
     Dispatcher* dispatcher,
     REBLEN details_capacity
 ){
@@ -717,7 +720,7 @@ Action(*) Alloc_Action_From_Exemplar(
         }
 
         if (not Typecheck_Coerce_Argument(param, arg))
-            fail (Error_Arg_Type(nullptr, key, param, arg));
+            fail (Error_Arg_Type(label, key, param, arg));
     }
 
     // This code parallels Specialize_Action_Throws(), see comments there
@@ -738,10 +741,13 @@ Action(*) Alloc_Action_From_Exemplar(
 //
 // Assumes you want a Specializer_Dispatcher with the exemplar in details.
 //
-Action(*) Make_Action_From_Exemplar(Context(*) exemplar)
-{
+Action(*) Make_Action_From_Exemplar(
+    Context(*) exemplar,
+    option(Symbol(const*)) label
+){
     Action(*) action = Alloc_Action_From_Exemplar(
         exemplar,
+        label,
         &Specializer_Dispatcher,
         IDX_SPECIALIZER_MAX  // details capacity
     );
