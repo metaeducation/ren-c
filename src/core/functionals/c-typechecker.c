@@ -187,13 +187,14 @@ bool Typecheck_Value(
     }
 
     for (; item != tail; ++item) {
-        //
+        option(Symbol(const*)) label = nullptr;  // so goto doesn't cross
+
         // !!! Ultimately, we'll enable literal comparison for quoted/quasi
         // items.  For the moment just try quasi-words for isotopes.
         //
         if (IS_QUASI(item)) {
             if (HEART_BYTE(item) == REB_VOID) {
-                if (Is_Quasi_Void(item))
+                if (Is_None(v))
                     goto test_succeeded;
                 goto test_failed;
             }
@@ -211,6 +212,7 @@ bool Typecheck_Value(
         enum Reb_Kind kind;
         Cell(const*) test;
         if (IS_WORD(item)) {
+            label = VAL_WORD_SYMBOL(item);
             test = Lookup_Word_May_Fail(item, tests_specifier);
             kind = VAL_TYPE(test);  // e.g. TYPE-BLOCK! <> BLOCK!
         }
@@ -231,28 +233,6 @@ bool Typecheck_Value(
           run_activation:
           case REB_ACTION: {
             Action(*) action = VAL_ACTION(test);
-
-            // NULL? and VOID? do not have type specs on their argument,
-            // because if they did they would have to mention <opt> and <void>
-            // and this would lead to an infinite recursion if called here.
-            //
-            // But we still speedup the checking to avoid needing a function
-            // call.  This could be generalized, where typecheckers are
-            // associated with internal function pointers for testing...so
-            // no actual frame needed to be built for any arity-1 and
-            // logic-returning native.
-
-            if (action == VAL_ACTION(Lib(NULL_Q))) {
-                if (Is_Nulled(v))
-                    goto test_succeeded;
-                goto test_failed;
-            }
-
-            if (action == VAL_ACTION(Lib(VOID_Q))) {
-                if (Is_Void(v))
-                    goto test_succeeded;
-                goto test_failed;
-            }
 
             // Here we speedup the typeset checking.  It may be that the
             // acceleration could be unified with a function pointer method
@@ -289,6 +269,26 @@ bool Typecheck_Value(
                 goto test_failed;
             }
 
+            if (ACT_DISPATCHER(action) == &Intrinsic_Dispatcher) {
+                Intrinsic* intrinsic = Extract_Intrinsic(action);
+
+                REBPAR* param = ACT_PARAM(action, 2);
+                DECLARE_LOCAL (arg);
+                Derelativize(arg, v, v_specifier);
+                if (VAL_PARAM_CLASS(param) == PARAM_CLASS_META)
+                    Meta_Quotify(arg);
+                if (not Typecheck_Coerce_Argument(param, arg))
+                    goto test_failed;
+
+                DECLARE_LOCAL (out);
+                (*intrinsic)(out, arg);
+                if (not IS_LOGIC(out))
+                    fail (Error_No_Logic_Typecheck(label));
+                if (VAL_LOGIC(out))
+                    goto test_succeeded;
+                goto test_failed;
+            }
+
             Flags flags = 0;
             Frame(*) f = Make_End_Frame(
                 FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING) | flags
@@ -309,7 +309,7 @@ bool Typecheck_Value(
 
             arg = First_Unspecialized_Arg(&param, f);
             if (not arg)
-                fail ("Type predicate doesn't take an argument");
+                fail (Error_No_Arg_Typecheck(label));  // must take argument
 
             Derelativize(arg, v, v_specifier);  // do not decay, see [4]
 
@@ -331,7 +331,7 @@ bool Typecheck_Value(
             Drop_Frame(f);
 
             if (not IS_LOGIC(spare))
-                fail ("Type Predicates Must Return LOGIC!");
+                fail (Error_No_Logic_Typecheck(label));
 
             if (not VAL_LOGIC(spare))
                 goto test_failed;
@@ -471,8 +471,8 @@ bool Typecheck_Coerce_Argument(
         if (Is_Raised(arg))
             goto return_false;
 
-        if (Is_Nihil(arg))
-            goto return_false;  // can't decay
+        if (Is_Pack(arg) and Is_Pack_Undecayable(arg))
+            goto return_false;  // nihil or unstable isotope in first slot
 
         if (Is_Isotope(arg) and Is_Isotope_Unstable(arg)) {
             Decay_If_Unstable(arg);

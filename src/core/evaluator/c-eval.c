@@ -354,6 +354,22 @@ Bounce Evaluator_Executor(Frame(*) f)
         f_current_gotten = nullptr;  // !!! allow/require to be passe in?
         goto evaluate; }
 
+      intrinsic_in_scratch_arg_in_spare:
+      case ST_EVALUATOR_CALCULATING_INTRINSIC_ARG : {
+        Action(*) action = VAL_ACTION(SCRATCH);
+        Intrinsic* intrinsic = Extract_Intrinsic(action);
+        REBPAR* param = ACT_PARAM(action, 2);
+
+        if (VAL_PARAM_CLASS(param) == PARAM_CLASS_META)
+            Meta_Quotify(SPARE);
+        if (not Typecheck_Coerce_Argument(param, SPARE)) {
+            option(Symbol(const*)) label = VAL_ACTION_LABEL(SCRATCH);
+            const REBKEY* key = ACT_KEY(action, 2);
+            fail (Error_Arg_Type(label, key, param, SPARE));
+        }
+        (*intrinsic)(OUT, SPARE);
+        goto finished; }
+
       case REB_GROUP :
       case REB_GET_GROUP :
       case REB_META_GROUP :
@@ -718,6 +734,28 @@ Bounce Evaluator_Executor(Frame(*) f)
             }
             else
                 enfixed = Get_Action_Flag(action, ENFIXED);
+
+            if (
+                not enfixed  // too rare a case for intrinsic optimization
+                and ACT_DISPATCHER(action) == &Intrinsic_Dispatcher
+                and Not_Frame_At_End(f)  // can't do <end>, fallthru to error
+                and not SPORADICALLY(10)  // debug build bypass every 10th call
+            ){
+                Copy_Cell(SCRATCH, unwrap(f_current_gotten));
+                INIT_VAL_ACTION_LABEL(SCRATCH, label);  // use the word
+                REBPAR* param = ACT_PARAM(action, 2);
+                Flags flags = 0;
+                if (VAL_PARAM_CLASS(param) == PARAM_CLASS_META)
+                    flags |= FRAME_FLAG_FAILURE_RESULT_OK;
+
+                if (Did_Init_Inert_Optimize_Complete(SPARE, f->feed, &flags))
+                    goto intrinsic_in_scratch_arg_in_spare;
+
+                Frame(*) subframe = Make_Frame(f->feed, flags);
+                Push_Frame(SPARE, subframe);
+                STATE = ST_EVALUATOR_CALCULATING_INTRINSIC_ARG;
+                return CATCH_CONTINUE_SUBFRAME(subframe);
+            }
 
             Frame(*) subframe = Make_Action_Subframe(f);
             Push_Frame(OUT, subframe);

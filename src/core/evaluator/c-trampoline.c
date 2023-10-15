@@ -477,6 +477,19 @@ bool Trampoline_With_Top_As_Root_Throws(void)
         return false;
 
   #if DEBUG_FANCY_PANIC
+    if (r == BOUNCE_CONTINUE)
+        printf("R is BOUNCE_CONTINUE\n");
+    else if (r == BOUNCE_DELEGATE)
+        printf("R is BOUNCE_DELEGATE\n");
+    else if (r == BOUNCE_REDO_CHECKED)
+        printf("R is BOUNCE_REDO_CHECKED\n");
+    else if (r == BOUNCE_REDO_UNCHECKED)
+        printf("R is BOUNCE_REDO_UNCHECKED\n");
+    else if (r == BOUNCE_SUSPEND)
+        printf("R is BOUNCE_SUSPEND\n");
+    else
+        printf("R is something unknown\n");
+
     Dump_Stack(root);
   #endif
 

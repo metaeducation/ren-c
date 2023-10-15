@@ -128,7 +128,11 @@ inline static Value(*) Decay_If_Unstable(Value(*) v) {
         if (Trampoline_With_Top_As_Root_Throws())
             fail (Error_No_Catch_For_Throw(TOP_FRAME));
         Drop_Frame(TOP_FRAME);
-        return v;
+
+        // fall through in case result is pack or raised
+        // (should this iterate?)
+
+        assert(not Is_Lazy(v));
     }
 
     if (Is_Pack(v)) {  // iterate until result is not multi-return, see [1]
@@ -150,4 +154,23 @@ inline static Value(*) Decay_If_Unstable(Value(*) v) {
         fail (VAL_CONTEXT(v));
 
     return v;
+}
+
+// Packs with unstable isotopes in their first cell (or nihil) are not able
+// to be decayed.  Type checking has to be aware of this, and know that such
+// packs shouldn't raise errors.
+//
+inline static bool Is_Pack_Undecayable(Value(*) pack)
+{
+    assert(Is_Pack(pack));
+    if (Is_Nihil(pack))
+        return true;
+    Cell(const*) at = VAL_ARRAY_AT(nullptr, pack);
+    if (Is_Meta_Of_Raised(at))
+        return true;
+    if (Is_Meta_Of_Pack(at))
+        return true;
+    if (Is_Meta_Of_Lazy(at))
+        return true;
+    return false;
 }

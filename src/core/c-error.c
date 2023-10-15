@@ -1175,6 +1175,35 @@ Context(*) Error_Phase_Arg_Type(
 
 
 //
+//  Error_No_Logic_Typecheck: C
+//
+Context(*) Error_No_Logic_Typecheck(option(Symbol(const*)) label)
+{
+    DECLARE_LOCAL (name);
+    if (label)
+        Init_Word(name, unwrap(label));
+    else
+        Init_Nulled(name);
+
+    return Error_No_Logic_Typecheck_Raw(name);
+}
+
+
+//
+//  Error_No_Arg_Typecheck: C
+//
+Context(*) Error_No_Arg_Typecheck(option(Symbol(const*)) label)
+{
+    DECLARE_LOCAL (name);
+    if (label)
+        Init_Word(name, unwrap(label));
+    else
+        Init_Nulled(name);
+
+    return Error_No_Arg_Typecheck_Raw(name);
+}
+
+//
 //  Error_Bad_Argless_Refine: C
 //
 // Refinements that take no arguments can only be # or NULL as far as DO FRAME!

@@ -152,6 +152,9 @@ Script: [
     phase-expect-arg:
         [:arg1 {internal phase expects} :arg2 {for its} :arg3 {argument}]
 
+    no-logic-typecheck: [:arg1 {must return LOGIC? to use in typechecking}]
+    no-arg-typecheck:   [:arg1 {must take an argument to use in typechecking}]
+
     invalid-type:       [:arg1 {type is not allowed here}]
     invalid-op:         [{invalid operator:} :arg1]
     no-op-arg:          [:arg1 {operator is missing an argument}]

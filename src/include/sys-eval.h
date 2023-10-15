@@ -119,7 +119,8 @@ enum {
     // easy use in the "hot" frame header location.
 
     ST_EVALUATOR_LOOKING_AHEAD = 100,
-    ST_EVALUATOR_REEVALUATING
+    ST_EVALUATOR_REEVALUATING,
+    ST_EVALUATOR_CALCULATING_INTRINSIC_ARG
 };
 
 // Some array executions wish to vaporize if all contents vaporize
