@@ -42,6 +42,10 @@ static bool Params_Of_Hook(
 ){
     struct Params_Of_State *s = cast(struct Params_Of_State*, opaque);
 
+    enum Reb_Param_Class pclass = VAL_PARAM_CLASS(param);
+    if (pclass == PARAM_CLASS_OUTPUT)
+        return true;  // use `outputs of` instead of `parameters of` to get
+
     Init_Word(PUSH(), KEY_SYMBOL(key));
 
     if (not s->just_words) {
@@ -54,7 +58,6 @@ static bool Params_Of_Hook(
 
         switch (VAL_PARAM_CLASS(param)) {
           case PARAM_CLASS_RETURN:
-          case PARAM_CLASS_OUTPUT:
           case PARAM_CLASS_NORMAL:
             break;
 
@@ -98,6 +101,32 @@ Array(*) Make_Action_Parameters_Arr(Action(*) act, bool just_words)
     return Pop_Stack_Values(base);
 }
 
+
+
+static bool Outputs_Of_Hook(
+    const REBKEY *key,
+    const REBPAR *param,
+    Flags flags,
+    void *opaque
+){
+    UNUSED(opaque);
+    UNUSED(flags);
+    if (VAL_PARAM_CLASS(param) == PARAM_CLASS_OUTPUT)
+        Init_Word(PUSH(), KEY_SYMBOL(key));
+    return true;
+}
+
+//
+//  Make_Action_Outputs_Arr: C
+//
+// Returns array of function words, unbound.
+//
+Array(*) Make_Action_Outputs_Arr(Action(*) act)
+{
+    StackIndex base = TOP_INDEX;
+    For_Each_Unspecialized_Param(act, &Outputs_Of_Hook, nullptr);
+    return Pop_Stack_Values(base);
+}
 
 
 enum Reb_Spec_Mode {
@@ -373,7 +402,6 @@ void Push_Paramlist_Quads_May_Fail(
                         );
                     }
 
-                    refinement = true;  // sets PARAM_FLAG_REFINEMENT
                     pclass = PARAM_CLASS_OUTPUT;
                 }
             }

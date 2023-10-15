@@ -202,7 +202,8 @@ inline static enum Reb_Param_Class VAL_PARAM_CLASS(const REBPAR *param) {
     enum Reb_Param_Class pclass = cast(enum Reb_Param_Class,
         VAL_PARAMETER_CLASS_BYTE(param)
     );
-    if (pclass == PARAM_CLASS_RETURN)
+    assert(pclass != PARAM_CLASS_0);  // internal/temporary
+    if (pclass == PARAM_CLASS_RETURN or pclass == PARAM_CLASS_OUTPUT)
         assert(NOT_PARAM_FLAG(param, REFINEMENT));
     return pclass;
 }

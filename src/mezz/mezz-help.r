@@ -389,6 +389,13 @@ help: function [
         print [_ _ _ _ return-note]
     ]
 
+    outputs: outputs of :value
+    if not empty? outputs [
+        print newline
+        print "ADDITIONAL OUTPUTS:"
+        print-args outputs
+    ]
+
     if args [
         print newline
         print "ARGUMENTS:"

@@ -1132,7 +1132,7 @@ Context(*) Error_Arg_Type(
     else
         Init_Block(spec, EMPTY_ARRAY);
 
-    if (f and FRM_PHASE(f) != unwrap(f)->u.action.original) {
+    if (f and FRM_PHASE(unwrap(f)) != unwrap(f)->u.action.original) {
         //
         // When RESKIN has been used, or if an ADAPT messes up a type and
         // it isn't allowed by an inner phase, then it causes an error.  But

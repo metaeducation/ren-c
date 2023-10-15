@@ -733,6 +733,9 @@ static bool Combinator_Param_Hook(
         }
         break; }
 
+      case PARAM_CLASS_OUTPUT:
+        break;  // just skip
+
       default:
         fail ("COMBINATOR parameters must be normal or quoted at this time");
     }

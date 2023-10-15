@@ -238,7 +238,7 @@
 enum Reb_Var_Visibility {
     VAR_VISIBILITY_ALL,
     VAR_VISIBILITY_INPUTS,
-    VAR_VISIBILITY_OUTPUTS
+    VAR_VISIBILITY_NONE
 };
 
 struct Reb_Enum_Vars {

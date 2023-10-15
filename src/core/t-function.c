@@ -342,6 +342,12 @@ REBTYPE(Action)
                 Make_Action_Parameters_Arr(act, just_words)
             ); }
 
+          case SYM_OUTPUTS: {
+            return Init_Block(
+                OUT,
+                Make_Action_Outputs_Arr(act)
+            ); }
+
           case SYM_BODY:
             Get_Maybe_Fake_Action_Body(OUT, action);
             return OUT;

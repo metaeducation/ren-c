@@ -188,6 +188,8 @@ static void Append_Vars_To_Context_From_Group(REBVAL *context, REBVAL *block)
 void Init_Evars(EVARS *e, noquote(Cell(const*)) v) {
     enum Reb_Kind kind = CELL_HEART(v);
 
+    e->visibility = VAR_VISIBILITY_ALL;  // ensure not uninitialized
+
     if (kind == REB_ACTION) {
         e->index = 0;  // will be bumped to 1
 
@@ -298,7 +300,7 @@ void Init_Evars(EVARS *e, noquote(Cell(const*)) v) {
                 //
                 Array(*) varlist = CTX_VARLIST(e->ctx);
                 if (Get_Subclass_Flag(VARLIST, varlist, FRAME_HAS_BEEN_INVOKED))
-                    e->visibility = VAR_VISIBILITY_OUTPUTS;
+                    e->visibility = VAR_VISIBILITY_NONE;
                 else
                     e->visibility = VAR_VISIBILITY_INPUTS;
             }
@@ -345,6 +347,9 @@ void Init_Evars(EVARS *e, noquote(Cell(const*)) v) {
 // levels.  Ultimately there should probably be a Shutdown_Evars().
 //
 bool Did_Advance_Evars(EVARS *e) {
+    if (e->visibility == VAR_VISIBILITY_NONE)
+        return false;
+
     if (e->word) {
         while (++e->word != e->word_tail) {
             e->var = MOD_VAR(e->ctx, VAL_WORD_SYMBOL(e->word), true);
@@ -395,21 +400,26 @@ bool Did_Advance_Evars(EVARS *e) {
             if (e->visibility == VAR_VISIBILITY_ALL)
                 return true;  // private sees ONE level of specialization
 
-            if (Is_Specialized(e->param))  // not TYPESET! with a PARAM_CLASS
+            if (Is_Specialized(e->param))  // parameter replaced with the value
                 continue;  // public should not see specialized args
 
-            if (e->visibility == VAR_VISIBILITY_OUTPUTS) {
-                if (VAL_PARAM_CLASS(e->param) == PARAM_CLASS_OUTPUT)
-                    return true;
-                continue;
+            if (e->visibility == VAR_VISIBILITY_INPUTS) {
+                //
+                // !!! Unfortunately, the code for associating comments with
+                // return and output parameters uses a FRAME! for the function
+                // to do it.  This means that it expects keys for those values
+                // as public.  A rethought mechanism will be needed to keep
+                // HELP working if we actually suppress these from the
+                // "input" view of a FRAME!.
+                //
+              #if 0
+                enum Reb_Param_Class pclass = VAL_PARAM_CLASS(e->param);
+                if (pclass == PARAM_CLASS_RETURN)
+                    continue;
+                if (pclass == PARAM_CLASS_OUTPUT)
+                    continue;
+              #endif
             }
-
-            // Note: while RETURN: parameters were considered to be "local"
-            // they are actually part of the public interface of a function.
-            // A special feature makes it so that if you put a WORD! in the
-            // return slot, it will be assigned the result at the end of
-            // the call (like other output arguments).  But during the function
-            // execution it will be a definitional return.
         }
 
         return true;

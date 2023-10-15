@@ -72,6 +72,7 @@ spec
 body
 words
 parameters
+outputs
 exemplar
 values
 types

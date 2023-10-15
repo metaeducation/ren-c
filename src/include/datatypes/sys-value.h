@@ -306,6 +306,7 @@ inline static enum Reb_Kind VAL_TYPE_UNCHECKED(Cell(const*) v) {
             and heart != REB_ERROR
             and heart != REB_OBJECT
         );
+        UNUSED(heart);
         return REB_ISOTOPE; }
 
       case UNQUOTED_1:
