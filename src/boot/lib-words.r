@@ -104,7 +104,7 @@ skip
 to
 thru
 quote  ; !!! kept for compatibility, but use THE instead
-just
+the
 do
 into
 spread

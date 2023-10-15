@@ -7,7 +7,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2018-2021 Ren-C Open Source Contributors
+// Copyright 2018-2023 Ren-C Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -27,8 +27,7 @@
 //
 // Ren-C has a generic QUOTED! datatype, a container which can be arbitrarily
 // deep in escaping.  This faciliated a more succinct way to QUOTE, as well as
-// new features.  THE takes the place of the former literalizing operator,
-// and JUST will be literalizing but add a quoting level.
+// new features.  THE takes the place of the former literalizing operator:
 //
 //    >> quote 1 + 2  ; now evaluative, adds a quoting level
 //    == '3
@@ -37,9 +36,6 @@
 //    == a
 //
 //    >> the 'a
-//    == 'a
-//
-//    >> just a
 //    == 'a
 //
 
@@ -225,40 +221,6 @@ DECLARE_NATIVE(the_p)
         Set_Cell_Flag(OUT, UNEVALUATED);  // !!! Is this a good idea?
     }
     return OUT;
-}
-
-
-//
-//  just*: native [  ; deprecate temporarily due to isotopic block methodoloy
-//
-//  "Returns quoted eversion of value passed in without evaluation"
-//
-//      return: "Input value, verbatim--unless /SOFT and soft quoted type"
-//          [<opt> any-value!]
-//      'value [any-value!]
-//      /soft "Evaluate if a GET-GROUP!, GET-WORD!, or GET-PATH!"
-//  ]
-//
-DECLARE_NATIVE(just_p)
-//
-// Note: This could be defined as `chain [^the, ^quote]`.  However, it can be
-// needed early in the boot (before REDESCRIBE is available), and it is also
-// something that needs to perform well due to common use.  Having it be its
-// own native is probably worthwhile.
-{
-    INCLUDE_PARAMS_OF_JUST_P;
-
-    REBVAL *v = ARG(value);
-
-    if (REF(soft) and ANY_ESCAPABLE_GET(v)) {
-        if (Eval_Value_Throws(OUT, v, SPECIFIED))
-            return THROWN;
-        return Quotify(OUT, 1);  // Don't set UNEVALUATED flag
-    }
-
-    Copy_Cell(OUT, v);
-    Set_Cell_Flag(OUT, UNEVALUATED);  // !!! should this bit be set?
-    return Quotify(OUT, 1);
 }
 
 

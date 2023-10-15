@@ -786,8 +786,17 @@ static REBIXO To_Thru_Block_Rule(
                         goto next_alternate_rule;
                     }
                     else if (
-                        cmd == SYM_JUST
-                        or cmd == SYM_QUOTE // temporarily same for bootstrap
+                        cmd == SYM_QUOTE // temporarily same for bootstrap
+                    ){
+                        if (not (P_FLAGS & PF_REDBOL))
+                            fail ("Use THE instead of QUOTE outside PARSE2");
+
+                        rule = ++blk;  // next rule is the literal value
+                        if (rule == blk_tail)
+                            fail (Error_Parse_Rule());
+                    }
+                    else if (
+                        cmd == SYM_THE // temporarily same for bootstrap
                     ){
                         rule = ++blk;  // next rule is the literal value
                         if (rule == blk_tail)
@@ -2161,7 +2170,7 @@ DECLARE_NATIVE(subparse)
                 break; }
 
               case SYM_QUOTE:  // temporarily behaving like LIT for bootstrap
-              case SYM_JUST: {
+              case SYM_THE: {
                 if (not IS_SER_ARRAY(P_INPUT))
                     fail (Error_Parse_Rule());  // see #2253
 

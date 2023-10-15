@@ -235,7 +235,6 @@
 %parse/parse-insert.test.reb
 %parse/parse-into.test.reb
 %parse/parse-issue.test.reb
-%parse/parse-just.test.reb
 %parse/parse-logic.test.reb
 %parse/parse-maybe.test.reb
 %parse/parse-measure.test.reb
@@ -309,7 +308,6 @@
 %series/indexq.test.reb
 %series/insert.test.reb
 %series/intersect.test.reb
-%series/just.test.reb
 %series/join.test.reb
 %series/last.test.reb
 %series/lengthq.test.reb

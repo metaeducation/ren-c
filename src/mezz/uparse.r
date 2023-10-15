@@ -1534,14 +1534,6 @@ default-combinators: make map! reduce [
         return :value
     ]
 
-    'just* combinator [
-        return: "Quoted form of literal value (not matched)" [quoted!]
-        'value [any-value!]
-    ][
-        remainder: input
-        return quote :value
-    ]
-
     === BLANK! COMBINATOR ===
 
     ; Blanks match themselves literally in blocks.  This is particularly
