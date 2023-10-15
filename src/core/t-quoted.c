@@ -254,21 +254,17 @@ DECLARE_NATIVE(quote)
 
 
 //
-//  meta: native [
+//  meta: native/intrinsic [
 //
-//  {VOID -> NULL, isotopes -> QUASI!, adds a quote to rest (behavior of ^^)}
+//  {isotopes -> QUASI!, adds a quote to rest (behavior of ^^)}
 //
 //      return: [quoted! quasi!]
-//      ^optional [<void> <opt> raised? pack? any-value!]
+//      ^atom
 //  ]
 //
-DECLARE_NATIVE(meta)
+DECLARE_INTRINSIC(meta)
 {
-    INCLUDE_PARAMS_OF_META;
-
-    REBVAL *v = ARG(optional);
-
-    return COPY(v);  // argument was already ^META, no need to Meta_Quotify()
+    Copy_Cell(out, arg);  // arg was already ^META, no need to Meta_Quotify()
 }
 
 
@@ -354,22 +350,19 @@ DECLARE_NATIVE(quasi)
 
 
 //
-//  unquasi: native [
+//  unquasi: native/intrinsic [
 //
 //  {Remove QUASI! wrapper from the argument}
 //
 //      return: "Value with quasi state removed"
-//          [<opt> any-value!]
+//          [element?]  ; more narrowly, a non-quasi non-quoted element
 //      value [quasi!]
 //  ]
 //
-DECLARE_NATIVE(unquasi)
+DECLARE_INTRINSIC(unquasi)
 {
-    INCLUDE_PARAMS_OF_UNQUASI;
-
-    REBVAL *v = ARG(value);
-    Unquasify(Copy_Cell(OUT, v));
-    return OUT;
+    Copy_Cell(out, arg);
+    Unquasify(out);
 }
 
 
@@ -402,7 +395,7 @@ DECLARE_NATIVE(isotopic)
 
 
 //
-//  unmeta: native [
+//  unmeta: native/intrinsic [
 //
 //  {Variant of UNQUOTE that also accepts QUASI! to make isotopes}
 //
@@ -410,18 +403,15 @@ DECLARE_NATIVE(isotopic)
 //      value [quoted! quasi!]
 //  ]
 //
-DECLARE_NATIVE(unmeta)
+DECLARE_INTRINSIC(unmeta)
 {
-    INCLUDE_PARAMS_OF_UNMETA;
-
-    REBVAL *v = ARG(value);
-
-    return UNMETA(v);
+    Copy_Cell(out, arg);
+    Meta_Unquotify_Undecayed(out);
 }
 
 
 //
-//  unmeta*: native [
+//  unmeta*: native/intrinsic [
 //
 //  {Variant of UNMETA that passes thru VOID and NULL}
 //
@@ -429,54 +419,71 @@ DECLARE_NATIVE(unmeta)
 //      value [<opt> <void> quoted! quasi!]
 //  ]
 //
-DECLARE_NATIVE(unmeta_p)
+DECLARE_INTRINSIC(unmeta_p)
 {
-    INCLUDE_PARAMS_OF_UNMETA_P;
-
-    REBVAL *v = ARG(value);
-
-    if (Is_Void(v))
-        return VOID;
-
-    if (Is_Nulled(v))
-        return nullptr;
-
-    return UNMETA(v);
+    if (Is_Void(arg)) {
+        Init_Void(out);
+    }
+    else if (Is_Nulled(arg)) {
+        Init_Nulled(out);
+    }
+    else {
+        Copy_Cell(out, arg);
+        Meta_Unquotify_Undecayed(out);
+    }
 }
 
 
 //
-//  spread: native [
+//  spread: native/intrinsic [
 //
 //  {Make block arguments splice}
 //
 //      return: "Isotope of BLOCK! or unquoted value (passthru null and void)"
-//          [<opt> <void> any-value!]
-//      array [<opt> <void> quoted! blank! any-array!]
+//          [<opt> <void> element? splice?]
+//      value [<opt> <void> quoted! blank! any-array!]
 //  ]
 //
-DECLARE_NATIVE(spread)
+DECLARE_INTRINSIC(spread)
 //
 // !!! The name SPREAD is being chosen because it is more uncommon than splice,
 // and there is no particular contention for its design.  SPLICE may be a more
 // complex operation.
+//
+// 1. The current thinking on SPREAD is that it acts as passthru for null and
+//    for void, and whatever you were going to pass the result of spread to
+//    is responsible for raising errors or MAYBE'ing it.  Seems to work out.
+//
+// 2. BLANK! is sort of the universal placeholder meaning agnostically "no
+//    value here".  If you wanted SPREAD to give an error you could use the
+//    more ornery single-character placeholder `~` (a quasi-void).
+//
+// 3. !!! The idea that quoted elements spread to be their unquoted forms was
+//    presumably added here to provide an efficiency hack, so that you could
+//    avoid making a series.  This has the added behavior that a single quote
+//    (') would SPREAD to make a VOID...which may be desirable even if the
+//    generic unquoting behavior is not.  This might be something controlled
+//    with a refinement (which would prevent spread from being an intrinsic)
+//    but it may just be undesirable.  Review.
 {
-    INCLUDE_PARAMS_OF_SPREAD;
-
-    Value(*) v = ARG(array);
-    if (Is_Void(v))
-        return VOID;
-    if (Is_Nulled(v))
-        return nullptr;
-
-    if (IS_BLANK(v))
-        return Init_Splice(OUT, EMPTY_ARRAY);  // treat blank as if it was []
-
-    if (IS_QUOTED(v))
-        return Unquotify(Copy_Cell(OUT, v), 1);
-
-    mutable_HEART_BYTE(v) = REB_GROUP;
-    return UNMETA(Quasify(v));
+    if (Is_Void(arg)) {
+        Init_Void(out);  // pass through, see [1]
+    }
+    else if (Is_Nulled(arg)) {
+        Init_Nulled(out);  // pass through, see [1]
+    }
+    else if (IS_BLANK(arg)) {
+        Init_Splice(out, EMPTY_ARRAY);  // treat blank as if it was [], see [2]
+    }
+    else if (IS_QUOTED(arg)) {
+        Unquotify(Copy_Cell(out, arg), 1);  // !!! good idea or not?  see [3]
+    }
+    else {
+        assert(ANY_ARRAY(arg));
+        Copy_Cell(out, arg);
+        mutable_HEART_BYTE(out) = REB_GROUP;
+        mutable_QUOTE_BYTE(out) = ISOTOPE_0;
+    }
 }
 
 
@@ -597,19 +604,17 @@ DECLARE_NATIVE(matches)
 
 
 //
-//  splice?: native [
+//  splice?: native/intrinsic [
 //
-//  "Tells you if argument is a splice (isotopic block)"
+//  "Tells you if argument is a splice (isotopic group)"
 //
 //      return: [logic?]
-//      ^optional [<opt> <void> raised? pack? any-value!]
+//      value
 //  ]
 //
-DECLARE_NATIVE(splice_q)
+DECLARE_INTRINSIC(splice_q)
 {
-    INCLUDE_PARAMS_OF_SPLICE_Q;
-
-    return Init_Logic(OUT, Is_Meta_Of_Splice(ARG(optional)));
+    Init_Logic(out, Is_Splice(arg));
 }
 
 
@@ -636,95 +641,83 @@ DECLARE_NATIVE(any_matcher_q)
 
 
 //
-//  lazy?: native [
+//  lazy?: native/intrinsic [
 //
 //  "Tells you if argument is a lazy value (isotopic object)"
 //
 //      return: [logic?]
-//      ^optional [<opt> <void> raised? pack? any-value!]
+//      ^atom
 //  ]
 //
-DECLARE_NATIVE(lazy_q)
+DECLARE_INTRINSIC(lazy_q)
 {
-    INCLUDE_PARAMS_OF_LAZY_Q;
-
-    return Init_Logic(OUT, Is_Meta_Of_Lazy(ARG(optional)));
+    Init_Logic(out, Is_Meta_Of_Lazy(arg));
 }
 
 
 //
-//  pack?: native [
+//  pack?: native/intrinsic [
 //
 //  "Tells you if argument is a parameter pack (isotopic block)"
 //
 //      return: [logic?]
-//      ^optional
+//      ^atom
 //  ]
 //
-DECLARE_NATIVE(pack_q)
+DECLARE_INTRINSIC(pack_q)
 {
-    INCLUDE_PARAMS_OF_PACK_Q;
-
-    return Init_Logic(OUT, Is_Meta_Of_Pack(ARG(optional)));
+    Init_Logic(out, Is_Meta_Of_Pack(arg));
 }
 
 
 //
-//  isoword?: native [
+//  isoword?: native/intrinsic [
 //
 //  "Tells you if argument is an isotopic word"
 //
 //      return: [logic?]
-//      ^optional [<opt> <void> raised? pack? any-value!]
+//      value
 //  ]
 //
-DECLARE_NATIVE(isoword_q)
+DECLARE_INTRINSIC(isoword_q)
 {
-    INCLUDE_PARAMS_OF_ISOWORD_Q;
-
-    return Init_Logic(OUT, Is_Meta_Of_Isoword(ARG(optional)));
+    Init_Logic(out, Is_Isoword(arg));
 }
 
+
 //
-//  activation?: native [
+//  activation?: native/intrinsic [
 //
 //  "Tells you if argument is an activation (isotopic action)"
 //
 //      return: [logic?]
-//      ^optional [<opt> <void> raised? pack? any-value!]
+//      value
 //  ]
 //
-DECLARE_NATIVE(activation_q)
+DECLARE_INTRINSIC(activation_q)
 {
-    INCLUDE_PARAMS_OF_ACTIVATION_Q;
-
-    return Init_Logic(OUT, Is_Meta_Of_Activation(ARG(optional)));
+    Init_Logic(out, Is_Activation(arg));
 }
 
 
-
 //
-//  runs: native [
+//  runs: native/intrinsic [
 //
 //  {Make actions run when fetched through word access}
 //
 //      return: [activation!]
-//      action [<maybe> action! activation!]
+//      action [<maybe> action! activation?]
 //  ]
 //
-DECLARE_NATIVE(runs)
+DECLARE_INTRINSIC(runs)
 {
-    INCLUDE_PARAMS_OF_RUNS;
-
-    REBVAL *v = ARG(action);
-    Copy_Cell(OUT, v);  // may or may not be isotope
-    mutable_QUOTE_BYTE(OUT) = ISOTOPE_0;  // now it's known to be an isotope
-    return OUT;
+    Copy_Cell(out, arg);  // may or may not be isotope
+    mutable_QUOTE_BYTE(out) = ISOTOPE_0;  // now it's known to be an isotope
 }
 
 
 //
-//  unrun: native [
+//  unrun: native/intrinsic [
 //
 //  {Make actions not run when fetched through word access}
 //
@@ -732,28 +725,23 @@ DECLARE_NATIVE(runs)
 //      action [<maybe> action! activation?]
 //  ]
 //
-DECLARE_NATIVE(unrun)
+DECLARE_INTRINSIC(unrun)
 {
-    INCLUDE_PARAMS_OF_RUNS;
-
-    REBVAL *v = ARG(action);
-    Copy_Cell(OUT, v);  // may or may not be isotope
-    mutable_QUOTE_BYTE(OUT) = UNQUOTED_1;  // now it's known to not be isotopic
-    return OUT;
+    Copy_Cell(out, arg);  // may or may not be isotope
+    mutable_QUOTE_BYTE(out) = UNQUOTED_1;  // now it's known to not be isotopic
 }
 
 
 //
-//  maybe: native [
+//  maybe: native/intrinsic [
 //
 //  {If argument is null, make it void (also pass through voids)}
 //
-//      return: "Value (if it's anything other than the states being checked)"
-//          [<opt> <void> any-value!]
-//      optional [<opt> <void> any-value!]
+//      return: "Null if input value was void"
+//      value
 //  ]
 //
-DECLARE_NATIVE(maybe)
+DECLARE_INTRINSIC(maybe)
 //
 // 1. !!! Should MAYBE of a parameter pack be willing to twist that parameter
 //    pack, e.g. with a NULL in the first slot--into one with a void in the
@@ -765,56 +753,49 @@ DECLARE_NATIVE(maybe)
 //
 // 2. !!! Should MAYBE of a raised error pass through the raised error?
 {
-    INCLUDE_PARAMS_OF_MAYBE;
-
-    REBVAL *v = ARG(optional);
-
-    if (Is_Void(v))
-        return VOID;  // passthru
-
-    if (Is_Nulled(v))
-        return VOID;  // main purpose of function: NULL => VOID
-
-    return COPY(v);
+    if (Is_Void(arg)) {
+        Init_Void(out);  // passthru
+    }
+    else if (Is_Nulled(arg)) {
+        Init_Void(out);  // main purpose of function: NULL => VOID
+    }
+    else
+        Copy_Cell(out, arg);  // passthru
 }
 
 
 //
-//  quoted?: native [
+//  quoted?: native/intrinsic [
 //
 //  {Tells you if the argument is QUOTED! or not}
 //
 //      return: [logic?]
-//      optional [<opt> <void> any-value!]
+//      value
 //  ]
 //
-DECLARE_NATIVE(quoted_q)
+DECLARE_INTRINSIC(quoted_q)
 {
-    INCLUDE_PARAMS_OF_QUOTED_Q;
-
-    return Init_Logic(OUT, VAL_TYPE(ARG(optional)) == REB_QUOTED);
+    Init_Logic(out, VAL_TYPE(arg) == REB_QUOTED);
 }
 
 
 //
-//  quasi?: native [
+//  quasi?: native/intrinsic [
 //
 //  {Tells you if the argument is QUASI! or not}
 //
 //      return: [logic?]
-//      optional [<opt> <void> any-value!]
+//      value
 //  ]
 //
-DECLARE_NATIVE(quasi_q)
+DECLARE_INTRINSIC(quasi_q)
 {
-    INCLUDE_PARAMS_OF_QUASI_Q;
-
-    return Init_Logic(OUT, VAL_TYPE(ARG(optional)) == REB_QUASI);
+    Init_Logic(out, VAL_TYPE(arg) == REB_QUASI);
 }
 
 
 //
-//  noquote: native [
+//  noquote: native/intrinsic [
 //
 //  {Removes all levels of quoting from a quoted value}
 //
@@ -822,12 +803,8 @@ DECLARE_NATIVE(quasi_q)
 //      optional [<void> element?]
 //  ]
 //
-DECLARE_NATIVE(noquote)
+DECLARE_INTRINSIC(noquote)
 {
-    INCLUDE_PARAMS_OF_NOQUOTE;
-
-    REBVAL *v = ARG(optional);
-
-    Unquotify(v, VAL_NUM_QUOTES(v));
-    return COPY(v);
+    Copy_Cell(out, arg);
+    Unquotify(out, VAL_NUM_QUOTES(out));
 }

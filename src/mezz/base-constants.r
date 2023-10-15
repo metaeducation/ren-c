@@ -51,7 +51,6 @@ lf: LF:    newline
 
 null!: &(null?)
 none!: &(none?)
-none!: &(none?)
 void!: &(void?)
 refinement!: &(refinement?)
 char!: &(char?)

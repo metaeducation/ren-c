@@ -124,20 +124,18 @@ DECLARE_NATIVE(false_if_zero)
 
 
 //
-//  not: native [
+//  not: native/intrinsic [
 //
-//  "Returns the logic complement."
+//  "Returns the logic complement"
 //
-//      return: "Only LOGIC!'s FALSE, BLANK!, and NULL return TRUE"
-//          [logic!]
-//      optional [<opt> any-value! logic!]
+//      return: "Only ~false~ and ~null~ isotopes return a ~true~ isotope"
+//          [logic?]
+//      value
 //  ]
 //
-DECLARE_NATIVE(not_1)  // see TO-C-NAME
+DECLARE_INTRINSIC(not_1)  // see TO-C-NAME
 {
-    INCLUDE_PARAMS_OF_NOT_1;
-
-    return Init_Logic(OUT, Is_Falsey(ARG(optional)));
+    Init_Logic(out, Is_Falsey(arg));
 }
 
 

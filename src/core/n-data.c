@@ -422,7 +422,7 @@ bool Did_Get_Binding_Of(REBVAL *out, const REBVAL *v)
 
 
 //
-//  refinement?: native [
+//  refinement?: native/intrinsic [
 //
 //  "Test if an argument is a path with a leading blank"
 //
@@ -430,17 +430,14 @@ bool Did_Get_Binding_Of(REBVAL *out, const REBVAL *v)
 //      value
 //  ]
 //
-DECLARE_NATIVE(refinement_q)
+DECLARE_INTRINSIC(refinement_q)
 {
-    INCLUDE_PARAMS_OF_REFINEMENT_Q;
-    Value(*) v = ARG(value);
-
-    return Init_Logic(OUT, IS_PATH(v) and IS_REFINEMENT(v));
+    Init_Logic(out, IS_PATH(arg) and IS_REFINEMENT(arg));
 }
 
 
 //
-//  quasi-word?: native [
+//  quasi-word?: native/intrinsic [
 //
 //  "Test if an argument is an QUASI form of word"
 //
@@ -448,17 +445,14 @@ DECLARE_NATIVE(refinement_q)
 //      value
 //  ]
 //
-DECLARE_NATIVE(quasi_word_q)
+DECLARE_INTRINSIC(quasi_word_q)
 {
-    INCLUDE_PARAMS_OF_QUASI_WORD_Q;
-    Value(*) v = ARG(value);
-
-    return Init_Logic(OUT, IS_QUASI(v) and HEART_BYTE(v) == REB_WORD);
+    Init_Logic(out, IS_QUASI(arg) and HEART_BYTE(arg) == REB_WORD);
 }
 
 
 //
-//  char?: native [
+//  char?: native/intrinsic [
 //
 //  "Test if an argument is an issue with one character"
 //
@@ -466,12 +460,9 @@ DECLARE_NATIVE(quasi_word_q)
 //      value
 //  ]
 //
-DECLARE_NATIVE(char_q)
+DECLARE_INTRINSIC(char_q)
 {
-    INCLUDE_PARAMS_OF_CHAR_Q;
-    Value(*) v = ARG(value);
-
-    return Init_Logic(OUT, IS_CHAR(v));
+    Init_Logic(out, IS_CHAR(arg));
 }
 
 
@@ -2340,24 +2331,22 @@ DECLARE_NATIVE(aliases_q)
 
 
 //
-//  null?: native [
+//  null?: native/intrinsic [
 //
 //  "Tells you if the argument is not a value"
 //
 //      return: [logic?]
-//      value  ; no type spec, avoids recursion from <opt>
+//      value
 //  ]
 //
-DECLARE_NATIVE(null_q)
+DECLARE_INTRINSIC(null_q)
 {
-    INCLUDE_PARAMS_OF_NULL_Q;
-
-    return Init_Logic(OUT, Is_Nulled(ARG(value)));
+    Init_Logic(out, Is_Nulled(arg));
 }
 
 
 //
-//  logic?: native [
+//  logic?: native/intrinsic [
 //
 //  "Tells you if the argument is a ~true~ or ~false~ isotope"
 //
@@ -2366,35 +2355,31 @@ DECLARE_NATIVE(null_q)
 //      value
 //  ]
 //
-DECLARE_NATIVE(logic_q)
+DECLARE_INTRINSIC(logic_q)
 {
-    INCLUDE_PARAMS_OF_LOGIC_Q;
-
-    return Init_Logic(OUT, IS_LOGIC(ARG(value)));
+    Init_Logic(out, IS_LOGIC(arg));
 }
 
 
 //
-//  nihil?: native [
+//  nihil?: native/intrinsic [
 //
 //  "Tells you if argument is an ~[]~ isotope, e.g. an empty pack"
 //
 //      return: [logic?]
-//      ^optional
+//      ^atom
 //  ]
 //
-DECLARE_NATIVE(nihil_q)
+DECLARE_INTRINSIC(nihil_q)
 {
-    INCLUDE_PARAMS_OF_NIHIL_Q;
-
-    return Init_Logic(OUT, Is_Meta_Of_Nihil(ARG(optional)));
+    Init_Logic(out, Is_Meta_Of_Nihil(arg));
 }
 
 
 //
 //  none: native [
 //
-//  "returns the value used to represent an unset variable"
+//  "Returns the value used to represent an unset variable (isotopic void)"
 //
 //      return: [<none>]
 //  ]
@@ -2406,56 +2391,56 @@ DECLARE_NATIVE(none)
     return Init_None(OUT);
 }
 
+
 //
-//  void?: native [
+//  void?: native/intrinsic [
 //
 //  "Tells you if argument is void"
 //
 //      return: [logic?]
-//      optional  ; no type spec, avoids recursion from <void> check
+//      value
 //  ]
 //
-DECLARE_NATIVE(void_q)
+DECLARE_INTRINSIC(void_q)
 {
-    INCLUDE_PARAMS_OF_VOID_Q;
-
-    return Init_Logic(OUT, Is_Void(ARG(optional)));
+    Init_Logic(out, Is_Void(arg));
 }
 
 
 //
-//  none?: native [
+//  none?: native/intrinsic [
 //
-//  "Tells you if argument is none"
+//  "Tells you if argument is the value used to indicate an unset variable"
 //
 //      return: [logic?]
-//      ^optional [<opt> <void> raised? pack? any-value!]
+//      ^value "Parameter must be ^META, none usually means unspecialized"
+//          [void? any-value?] ; see [1]
 //  ]
 //
-DECLARE_NATIVE(none_q)
+DECLARE_INTRINSIC(none_q)
+//
+// 1. Although none values are stable, they can't be passed as normal arguments
+//    to functions, because in frames they represent an unspecialized
+//    argument value.  So a meta parameter is used.  However, it isn't
+//    intended that raised errors be tolerated by this test, so the type
+//    constraint is just to regular values.
 {
-    INCLUDE_PARAMS_OF_NONE_Q;
-
-    return Init_Logic(OUT, Is_Meta_Of_None(ARG(optional)));
+    Init_Logic(out, Is_Meta_Of_None(arg));
 }
 
 
 //
-//  blackhole?: native [
+//  blackhole?: native/intrinsic [
 //
 //  "Tells you if argument is a blackhole (#)"
 //
 //      return: [logic?]
-//      optional [any-value!]
+//      value
 //  ]
 //
-DECLARE_NATIVE(blackhole_q)
+DECLARE_INTRINSIC(blackhole_q)
 {
-    INCLUDE_PARAMS_OF_BLACKHOLE_Q;
-
-    REBVAL *v = ARG(optional);
-
-    return Init_Logic(OUT, Is_Blackhole(v));
+    Init_Logic(out, Is_Blackhole(arg));
 }
 
 
@@ -2505,7 +2490,7 @@ DECLARE_NATIVE(light) {
 //
 //  nihil: native [
 //
-//  {Make an empty parameter pack (isotopic ~[]~, not displayed by console)}
+//  {Make an empty parameter pack (isotopic ~[]~), representing "vaporization"}
 //
 //      return: [nihil?]
 //  ]
@@ -2518,23 +2503,25 @@ DECLARE_NATIVE(nihil) {
 
 
 //
-//  decay: native [
+//  decay: native/intrinsic [
 //
 //  "Handle unstable isotopes like assignments do, pass through other values"
 //
 //      return: [<opt> any-value!]
-//      value [<opt> <void> any-value!]
+//      atom
 //  ]
 //
-DECLARE_NATIVE(decay)
+DECLARE_INTRINSIC(decay)
+//
+// 1. We take the argument as a plain (non-^META) parameter in order to make
+//    the decay process happen in the parameter fulfillment, because an idea
+//    with intrinsics is that they do not raise errors.  If we called
+//    Meta_Unquotify_Decayed() in the body of this intrinsic, that would
+//    break the contract in the case of an error.  So we let the parameter
+//    fulfillment cause the problem.
 {
-    INCLUDE_PARAMS_OF_DECAY;
-
-    Value(*) v = ARG(value);  // plain argument should collapse isotopes
-
-    assert((not Is_Isotope(v)) or Is_Isotope_Stable(v));
-
-    return Copy_Cell(OUT, v);
+    assert(Is_Stable(arg));  // pre-decayed by non-^META argument, see [1]
+    Copy_Cell(out, arg);
 }
 
 
@@ -2617,24 +2604,18 @@ DECLARE_NATIVE(concretize)
 
 
 //
-//  noisotope: native [
+//  noisotope: native/intrinsic [
 //
 //  "Turn isotopes into their plain forms, pass thru other values"
 //
 //      return: [<void> element?]
-//      value [<opt> <void> any-value!]
+//      value
 //  ]
 //
-DECLARE_NATIVE(noisotope)
+DECLARE_INTRINSIC(noisotope)
 {
-    INCLUDE_PARAMS_OF_NOISOTOPE;
+    Copy_Cell(out, arg);
 
-    REBVAL *v = ARG(value);
-
-    if (not Is_Isotope(v))
-        return COPY(v);
-
-    Copy_Cell(OUT, v);
-    mutable_QUOTE_BYTE(OUT) = UNQUOTED_1;
-    return OUT;
+    if (Is_Isotope(out))
+        mutable_QUOTE_BYTE(out) = UNQUOTED_1;
 }
