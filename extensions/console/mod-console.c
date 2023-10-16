@@ -68,15 +68,14 @@
 
 bool halting_enabled = true;
 
-#if TO_EMSCRIPTEN  //=//// EMSCRIPTEN //////////////////////////////////////=//
+#if TO_EMSCRIPTEN || TO_WASI //=////////////////////////////////////////////=//
 
-// !!! Review how an emscripten console extension should be hooking something
-// like a keyboard shortcut for breaking.  With the pthread model, there may
-// be shared memory for the GUI to be able to poke a value in that the running
-// code can see to perceive a halt.
+// !!! The WASI-SDK has something called WASI_EMULATED_SIGNAL, but if you try
+// compile the POSIX branch of this #if it will say that sigaction is an
+// incomplete type.
 
-void Disable_Halting(void) {}
-void Enable_Halting(void) {}
+void Disable_Halting(void) { halting_enabled = false; }
+void Enable_Halting(void) { halting_enabled = true; }
 
 
 #elif TO_WINDOWS  //=//// WINDOWS //////////////////////////////////////////=//
