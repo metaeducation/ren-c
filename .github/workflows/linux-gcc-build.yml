@@ -171,6 +171,7 @@ jobs:
     - name: Get Multilib If Cross-Compiling
       if: env.OS_ID == '0.4.4'
       run: |
+        sudo apt update  # might help?
         sudo apt install gcc-multilib
         sudo apt install g++-multilib
 
