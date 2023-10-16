@@ -296,3 +296,87 @@ REBLEN Milliseconds_From_Value(Cell(const*) v) {
 
     return cast(REBLEN, msec);
 }
+
+
+#if TO_WASI || 1
+    #include <stdio.h>
+    #include <errno.h>
+#endif
+
+//
+//  basic-read: native [
+//
+//  {Very simplistic function for reading files, provided for WASI}
+//
+//       return: [binary!]
+//       file [file!]
+//  ]
+//
+DECLARE_NATIVE(basic_read)
+//
+// !!! The filesystem support in Ren-C is based on libuv, and if you try and
+// build the Posix implementation of libuv on WASI a lot is missing.  It's not
+// clear that libuv will ever try to provide a specific WASI target--instead
+// WASI appears to be targeting a lower common denominator of basic C stdio.
+//
+// It might be a good idea to have an alternative "basic filesystem" extension
+// which just does things like dull whole-file reads and writes.  But as a
+// near-term proof of concept, this gives a BASIC-READ routine to WASI.
+{
+    INCLUDE_PARAMS_OF_BASIC_READ;
+
+  #if !TO_WASI
+    UNUSED(ARG(file));
+    fail ("BASIC-READ is a simple demo used in WASI only");
+  #else
+    String(const*) filename = VAL_STRING(ARG(file));
+    FILE* f = fopen(STR_UTF8(filename), "rb");
+    if (f == nullptr)
+        fail (rebError_OS(errno));
+    fseek(f, 0, SEEK_END);
+    Size size = ftell(f);
+    fseek(f, 0, SEEK_SET);
+
+    Binary(*) bin = Make_Binary(size);
+    fread(BIN_HEAD(bin), size, 1, f);
+    TERM_BIN_LEN(bin, size);
+    fclose(f);
+
+    return Init_Binary(OUT, bin);
+  #endif
+}
+
+
+//
+//  basic-write: native [
+//
+//  {Very simplistic function for writing files, provided for WASI}
+//
+//       return: [none?]
+//       file [file!]
+//       data [binary! text!]
+//  ]
+//
+DECLARE_NATIVE(basic_write)
+//
+// !!! See remarks on BASIC-READ.
+{
+    INCLUDE_PARAMS_OF_BASIC_WRITE;
+
+  #if !TO_WASI
+    UNUSED(ARG(file));
+    fail ("BASIC-WRITE is a simple demo used in WASI only");
+  #else
+    String(const*) filename = VAL_STRING(ARG(file));
+    FILE* f = fopen(STR_UTF8(filename), "wb");
+    if (f == nullptr)
+        fail (rebError_OS(errno));
+
+    Size size;
+    const Byte* data = VAL_BYTES_AT(&size, ARG(data));
+    fwrite(data, size, 1, f);
+    fclose(f);
+
+    return NONE;
+  #endif
+}

@@ -281,6 +281,16 @@ jobs:
         curl -sSf https://raw.githubusercontent.com/WasmEdge/WasmEdge/master/utils/install.sh | bash
 
 
+  #====# INSTALL REN-C #=====================================================#
+
+    # Useful to have a Ren-C on hand to validate tests with.
+    #
+    - name: Download and Cache the Interpreter
+      uses: metaeducation/ren-c-action@release
+      with:
+        checked: true
+
+
   #====# TESTING STEPS #=====================================================#
 
     # The compiler optimisation through the -O setting is generic, and a much
@@ -300,3 +310,21 @@ jobs:
         cd build
         wasmedge r3.wasm --do \
           "print ['** parse {Hello, Cloud} [thru space across to <end>] '**]"
+
+
+    # The command `--dir x:.` tells WasmEdge to allow file access to the
+    # current directory `.`, and to map it `:` to the directory that wasmedge
+    # considers %x/
+    #
+    # (It does not appear that `--dir .:.` is allowed to work.)
+    #
+    - name: WasmEdge Read and Write Test
+      run: |
+        source /home/runner/.wasmedge/env
+        cd build
+        wasmedge --dir x:. r3.wasm --do \
+          "print {Begin}, basic-write %x/test.txt {Test}, print {End}"
+        wasmedge --dir x:. r3.wasm  --do \
+          "either {Test} = as text! basic-read %x/test.txt [print {Yay}] [fail]"
+        r3 --do \
+          "if {Test} = as text! read %test.txt [print {Verified}] else [fail]"
