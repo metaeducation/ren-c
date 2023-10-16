@@ -146,10 +146,10 @@ jobs:
     #
     - name: Get the Wasi-Sdk from GitHub Release
       run: |
-        wget https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-16/wasi-sdk-16.0-linux.tar.gz
-        tar xf wasi-sdk-16.0-linux.tar.gz
-        wget https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-16/wasi-sysroot-16.0.tar.gz
-        tar xf wasi-sysroot-16.0.tar.gz
+        wget https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-20/wasi-sdk-20.0-linux.tar.gz
+        tar xf wasi-sdk-20.0-linux.tar.gz
+        wget https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-20/wasi-sysroot-20.0.tar.gz
+        tar xf wasi-sysroot-20.0.tar.gz
 
 
     # Everything in makefiles tends to be rigged up a bit hackily, and it's no
@@ -159,7 +159,7 @@ jobs:
     #
     - name: Set Compiler and Sysroot Environment Variables Used By %wasi.r
       run: |
-        echo "WASI_CLANG=$(pwd)/wasi-sdk-16.0/bin/clang" >> $GITHUB_ENV
+        echo "WASI_CLANG=$(pwd)/wasi-sdk-20.0/bin/clang" >> $GITHUB_ENV
         echo "WASI_SYSROOT=$(pwd)/wasi-sysroot" >> $GITHUB_ENV
 
 
@@ -169,16 +169,15 @@ jobs:
       run: |
         echo "Current directory is: $(pwd)"
         echo "WASI-SDK/clang version check:"
-        wasi-sdk-16.0/bin/clang -v
+        wasi-sdk-20.0/bin/clang -v
 
 
   #====# BUILD STEPS #=======================================================#
 
 
-  # !!! optimization is currently hardcoded in the web build config files as
-  # `s`.  Review if `z` would be better (it cannot be passed in the options
-  # here at time of writing, and would be ignored even if it could be due to
-  # that ldflags config hardcoding).
+  # Note: optimization for the WASI build must be 0 if debug information is
+  # requested.  Otherwise it is done for size, and the real "optimization" is
+  # done with a post-processing step (with WasmEdge's `wasmedgec`)
   #
   # See README: {Braces} For %make.r String Parameters
 
