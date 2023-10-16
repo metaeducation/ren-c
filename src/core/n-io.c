@@ -116,9 +116,9 @@ DECLARE_NATIVE(write_stdout)
 
     REBVAL *v = ARG(value);
 
-  #if defined(NDEBUG)
+  #if !DEBUG_HAS_PROBE
     UNUSED(v);
-    fail ("Boot WRITE-STDOUT needs to be a debug build or loaded I/O module");
+    fail ("Boot WRITE-STDOUT needs DEBUG_HAS_PROBE or loaded I/O module");
   #else
     if (IS_TEXT(v)) {
         printf("WRITE-STDOUT: %s\n", cast(const char*, STR_HEAD(VAL_STRING(v))));
@@ -129,11 +129,7 @@ DECLARE_NATIVE(write_stdout)
     }
     else {
         assert(IS_BINARY(v));
-      #if DEBUG_HAS_PROBE
         PROBE(v);
-      #else
-        fail ("Boot WRITE-STDOUT received BINARY!, needs DEBUG_HAS_PROBE");
-      #endif
     }
     return NONE;
   #endif
