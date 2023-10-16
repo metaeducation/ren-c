@@ -334,6 +334,7 @@ inline static REBVAR *MOD_VAR(Context(*) c, Symbol(const*) sym, bool strict) {
         }
         if (strict)
             return nullptr;
+        sym = LINK(Synonym, sym);
     } while (synonym != sym);
     return nullptr;
 }
