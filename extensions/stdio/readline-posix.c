@@ -291,7 +291,7 @@ static bool Read_Bytes_Interruptible(
     // IO system...so it would work on Windows as well.  Also, this does not
     // distinguish between interruption and cancellation.
     //
-  #if TO_EMSCRIPTEN == 0  // seemingly not supported e.g. on WasmEdge
+  #if TO_WASI == 0  // fd_set not even supported by Wasix at time of writing
     if (timeout_msec != 0) {
         fd_set selectset;
         struct timeval timeout_tv = {  // need to break up milliseconds

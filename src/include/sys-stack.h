@@ -329,7 +329,7 @@ inline static void Drop_Data_Stack_To(StackIndex i) {
 // http://stackoverflow.com/questions/5013806/
 //
 
-#if TO_EMSCRIPTEN
+#if TO_EMSCRIPTEN || TO_WASI
     //
     // !!! Catching stack overflows in emscripten stopped working in the
     // BinaryEn build; the stack seems to not grow up or down specifically.
