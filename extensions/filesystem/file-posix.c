@@ -523,6 +523,31 @@ REBVAL *Rename_File_Or_Directory(const REBVAL *port, const REBVAL *to)
 
 
 #if TO_WINDOWS
+    static const int64_t SECS_BETWEEN_1601_AND_1970_EPOCHS = 11644473600LL;
+    static const int64_t SECS_TO_100NS = 10000000; /* 10^7 */
+
+    // Convert a time_t value to a win32 FILETIME structure, as described in
+    // MSDN documentation. time_t is the number of seconds elapsed since
+    // 00:00 01 January 1970 UTC (Unix epoch), while FILETIME represents a
+    // 64-bit number of 100-nanosecond intervals that have passed since 00:00
+    // 01 January 1601 UTC (win32 epoch).
+    //
+    FILETIME LibuvTimeToFileTime( uv_timespec_t uvtime)
+    {
+        int64_t result;
+        FILETIME filetime;
+
+        result =
+            (cast(int64_t, uvtime.tv_sec) + SECS_BETWEEN_1601_AND_1970_EPOCHS)
+            * SECS_TO_100NS
+            + (uvtime.tv_nsec / 100);
+
+        filetime.dwLowDateTime = cast(DWORD, result);
+        filetime.dwHighDateTime = cast(DWORD, result >> 32);
+
+        return filetime;
+    }
+
     //
     //  File_Time_To_Rebol: C
     //
@@ -536,10 +561,8 @@ REBVAL *Rename_File_Or_Directory(const REBVAL *port, const REBVAL *to)
         if (TIME_ZONE_ID_DAYLIGHT == GetTimeZoneInformation(&tzone))
             tzone.Bias += tzone.DaylightBias;
 
-        FILETIME filetime;
-        filetime.dwLowDateTime = uvtime.tv_sec;
-        filetime.dwHighDateTime = uvtime.tv_nsec;
-        FileTimeToSystemTime(cast(FILETIME *, &uvtime), &stime);
+        FILETIME filetime = LibuvTimeToFileTime(uvtime);
+        FileTimeToSystemTime(&filetime, &stime);
 
         return rebValue("ensure date! (make-date-ymdsnz",
             rebI(stime.wYear),  // year
