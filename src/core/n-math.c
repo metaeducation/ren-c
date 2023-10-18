@@ -768,7 +768,14 @@ DECLARE_NATIVE(lesser_q)
     // the `<` is still strict to see the difference.  Kept this way for
     // compatibility for now.
     //
-    bool strict = true;
+    // BUT one exception is made for dates, so that they will compare
+    // (26-Jul-2021/7:41:45.314 > 26-Jul-2021) to be false.  This requires
+    // being willing to consider them equal, hence non-strict.
+    //
+    bool strict =
+        HEART_BYTE(ARG(value1)) != REB_DATE
+        and HEART_BYTE(ARG(value2)) != REB_DATE;
+
     REBINT diff = Compare_Modify_Values(ARG(value1), ARG(value2), strict);
     return Init_Logic(OUT, diff == -1);
 }
@@ -806,7 +813,10 @@ DECLARE_NATIVE(greater_q)
 {
     INCLUDE_PARAMS_OF_GREATER_Q;
 
-    bool strict = true;  // see notes in LESSER?
+    bool strict =  // see notes in LESSER?
+        HEART_BYTE(ARG(value1)) != REB_DATE
+        and HEART_BYTE(ARG(value2)) != REB_DATE;
+
     REBINT diff = Compare_Modify_Values(ARG(value1), ARG(value2), strict);
     return Init_Logic(OUT, diff == 1);
 }

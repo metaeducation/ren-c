@@ -111,13 +111,12 @@
     ; say they were not equal.  This might be as misleading as doing a
     ; comparison for greater or less than...if the date component is the same
     ; but one has a time of 00:00 in the 00:00 time zone, then the intent
-    ; might have been for them to be equal.  It's better to make them match
-    ; in precision before saying one way or another.  In either case, the
-    ; comparison machinery can't tell if you're doing a test for equality or
-    ; otherwise because it is only returning -1, 0, or 1 at this time.
+    ; might have been for them to be equal.  In either case, the comparison
+    ; machinery can't tell if you're doing a test for equality or otherwise
+    ; because it is only returning -1, 0, or 1 at this time.
     ;
-    ~invalid-compare~ !! (equal? date-110 date-100)
-    ~invalid-compare~ !! (equal? date-111 date-100)
+    (equal? date-110 date-100)
+    (equal? date-111 date-100)
 
     ;
     ; Math
@@ -137,8 +136,8 @@
     (date-100 <= date-100)
     (date-110 <= date-110)
     (date-111 <= date-111)
-    ~invalid-compare~ !! (date-111 <= date-110)
-    ~invalid-compare~ !! (date-110 <= date-100)
+    (date-111 <= date-110)
+    (date-110 <= date-100)
 
     ;
     ; Mappings

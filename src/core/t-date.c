@@ -29,81 +29,70 @@
 #include "sys-core.h"
 
 
-static Context(*) Error_Bad_Date_Compare(noquote(Cell(const*)) a, noquote(Cell(const*)) b)
-{
-    return Error_Invalid_Compare_Raw(
-        cast(const REBVAL*, a),
-        cast(const REBVAL*, b)
-    );
-}
-
-
 //
 //  CT_Date: C
 //
-REBINT CT_Date(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
+// Comparing Rebol DATE! is fraught with ambiguities, because a date can have
+// various levels of specificity (having a time, or lacking a time, etc.)
+//
+// It was tried to say that dates without time or zones lacked specificity to
+// participate in comparisons with dates that had them.  This turned out to be
+// quite unpleasant in practice, so we instead use more pragmatic methods
+// where you can say things like (26-Jul-2021/7:41:45.314 > 26-Jul-2021) is
+// false, because it still lies on the same span of a day.
+//
+// Note that throwing in ideas like assuming 26-Jul-2021 is in the "current
+// time zone" would result in determinism problems for this comparison, so
+// date value literals on different machines would compare differently.
+//
+REBINT CT_Date(noquote(Cell(const*)) a_in, noquote(Cell(const*)) b_in, bool strict)
+//
+// 1. This comparison doesn't know if it's being asked on behalf of equality or
+//    not.  This is suboptimal, a redesign is needed:
+//
+//      https://forum.rebol.info/t/comparison-semantics/1318
+//
+// 2. Plain > and < sometimes pass in strict.  We don't want that for dates,
+//    because we want (26-Jul-2021/7:41:45.314 > 26-Jul-2021) to be false.
+//    See GREATER? and LESSER? for the nuance of the relevant hackery.
 {
-    // Dates which lack times or time zones cannot be compared directly with
-    // dates that do have times or time zones.  Error on those.
-    //
-    if (
-        Does_Date_Have_Time(a) != Does_Date_Have_Time(b)
-        or Does_Date_Have_Zone(a) != Does_Date_Have_Zone(b)
-    ){
-        fail (Error_Bad_Date_Compare(a, b));
-    }
+    bool a_had_zone = Does_Date_Have_Zone(a_in);
+    bool b_had_zone = Does_Date_Have_Zone(b_in);
 
-    DECLARE_LOCAL (adjusted_a);
-    DECLARE_LOCAL (adjusted_b);
+    bool a_had_time = Does_Date_Have_Time(a_in);
+    bool b_had_time = Does_Date_Have_Time(b_in);
 
-    REBINT tiebreaker = 0;
+    DECLARE_LOCAL (a);
+    DECLARE_LOCAL (b);
+    Dequotify(Copy_Cell(a, SPECIFIC(CELL_TO_VAL(a_in))));
+    Dequotify(Copy_Cell(b, SPECIFIC(CELL_TO_VAL(b_in))));
 
-    if (Does_Date_Have_Zone(a)) {
-        assert(Does_Date_Have_Zone(b));  // we checked for matching above
+    Adjust_Date_UTC(a);  // gets 00:00:00+0:00 filled in if no time info
+    Adjust_Date_UTC(b);
 
-        // If the dates are in different time zones, they have to be canonized
-        // to compare them.  But if we're doing strict equality then we can't
-        // consider actually equal unless zones the same.
-
-        if (VAL_DATE(a).zone != VAL_DATE(b).zone)
-            tiebreaker = VAL_DATE(a).zone > VAL_DATE(b).zone ? 1 : -1;
-
-        Dequotify(Copy_Cell(adjusted_a, SPECIFIC(CELL_TO_VAL(a))));
-        Dequotify(Copy_Cell(adjusted_b, SPECIFIC(CELL_TO_VAL(b))));
-
-        Adjust_Date_UTC(adjusted_a);
-        Adjust_Date_UTC(adjusted_b);
-
-        a = adjusted_a;
-        b = adjusted_b;
-    }
-
-    // !!! This comparison doesn't know if it's being asked on behalf of
-    // equality or not; and `strict` is passed in as true for plain > and <.
-    // In those cases, strictness needs to be accurate for inequality but
-    // never side for exact equality unless they really are equal (time zones
-    // and all).  This is suboptimal, a redesign is needed:
-    //
-    // https://forum.rebol.info/t/comparison-semantics/1318
-    //
-
-    REBINT days_diff = Days_Between_Dates(  // compare date component first
-        cast(const REBVAL*, a),
-        cast(const REBVAL*, b)
-    );
-    if (days_diff != 0)
+    REBINT days_diff = Days_Between_Dates(a, b);
+    if (days_diff != 0)  // all comparison modes consider this unequal
         return days_diff > 0 ? 1 : -1;
 
-    if (Does_Date_Have_Time(a)) {
-        assert(Does_Date_Have_Time(b));  // we checked for matching above
+    if (not strict and (not a_had_time or not b_had_time))  // see [2]
+        return 0;  // non strict says (26-Jul-2021/7:41:45.314 = 26-Jul-2021)
 
-        REBINT time_ct = CT_Time(a, b, strict);  // guaranteed [-1 0 1]
-        if (time_ct != 0)
-            return time_ct;
+    if (strict) {
+        if (not a_had_time and not b_had_time)  // AND, not OR, for strict
+            return 0;
+
+        if (a_had_time != b_had_time)  // 26-Jul-2021/0:00 strict > 26-Jul-2021
+            return b_had_time ? 1 : -1;
     }
 
-    if (strict)
-        return tiebreaker;  // don't allow equal unless time zones equal
+    assert(a_had_time and b_had_time);
+
+    REBINT time_ct = CT_Time(a, b, strict);  // guaranteed [-1 0 1]
+    if (time_ct != 0)
+        return time_ct;
+
+    if (strict and (a_had_zone != b_had_zone))
+        return b_had_zone ? 1 : -1;
 
     return 0;
 }
