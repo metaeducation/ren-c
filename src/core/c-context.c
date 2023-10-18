@@ -741,6 +741,9 @@ Context(*) Construct_Context_Managed(
 
         REBVAL *var = Sink_Word_May_Fail(value, specifier);
         Derelativize(var, value + 1, specifier);
+
+        if (IS_QUASI(var) and HEART_BYTE(var) == REB_WORD)  // ~null~, ~true~
+            Meta_Unquotify_Stable(var);  // want the isotope in the object
     }
 
     return context;
