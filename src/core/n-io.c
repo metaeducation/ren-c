@@ -298,7 +298,7 @@ REBLEN Milliseconds_From_Value(Cell(const*) v) {
 }
 
 
-#if TO_WASI || 1
+#if TO_WASI
     #include <stdio.h>
     #include <errno.h>
 #endif
@@ -365,6 +365,7 @@ DECLARE_NATIVE(basic_write)
 
   #if !TO_WASI
     UNUSED(ARG(file));
+    UNUSED(ARG(data));
     fail ("BASIC-WRITE is a simple demo used in WASI only");
   #else
     String(const*) filename = VAL_STRING(ARG(file));

@@ -319,10 +319,15 @@ Special internal defines used by RT, not Host-Kit developers:
     #define TO_HAIKU_X64 0
 #endif
 
-//=//// EMSCRIPTEN /////////////////////////////////////////////////////////=//
+
+//=//// EMSCRIPTEN and WASI ////////////////////////////////////////////////=//
 
 #if !defined(TO_EMSCRIPTEN)
     #define TO_EMSCRIPTEN 0
+#endif
+
+#if !defined(TO_WASI)
+    #define TO_WASI 0
 #endif
 
 
