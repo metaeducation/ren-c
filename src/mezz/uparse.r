@@ -109,7 +109,7 @@ combinator: func [
     <static> wrapper (
         func [
             {Enclosing function for hooking all combinators}
-            return: [nihil? <opt> <void> any-value!]
+            return: [pack?]
             f [frame!]
         ][
             ; This hook lets us run code before and after each execution of
@@ -247,8 +247,11 @@ combinator?: func [
     <local> keys
 ][
     keys: words of action  ; test if it's a combinator
+    ;
+    ; could also check RETURNS OF for `pending` and `state`, but might exclude
+    ; wrapped combinators which return packs directly.
+    ;
     return did all [
-        find keys 'remainder
         find keys 'input
         find keys 'state
     ]
@@ -2672,7 +2675,8 @@ parsify: func [
                 let name: uppercase to text! r
                 fail [
                     name "is not a COMBINATOR ACTION!"
-                    "For non-combinator actions in PARSE, use" reduce [name "/"]
+                    "For non-combinator actions in PARSE, use"
+                        unspaced [name "/"]
                 ]
             ]
 

@@ -1228,6 +1228,9 @@ Context(*) Error_Bad_Return_Type(Frame(*) f, Value(*) v) {
     if (Is_Void(v))  // void's "kind" is null, no type (good idea?)
         return Error_Bad_Void_Return_Raw(label);
 
+    if (Is_Pack(v) and Is_Pack_Undecayable(v))
+        return Error_User("Bad return pack (undecayable elements)");
+
     enum Reb_Kind kind = VAL_TYPE(v);
     return Error_Bad_Return_Type_Raw(label, Datatype_From_Kind(kind));
 }
