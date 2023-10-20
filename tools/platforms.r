@@ -1,8 +1,8 @@
 REBOL [
     System: "REBOL [R3] Language Interpreter and Run-time Environment"
-    Title: "System build targets"
+    Title: "Target build platforms"
     Type: module
-    Name: Target-Systems
+    Name: Target-Platforms
     Rights: {
         Copyright 2012 REBOL Technologies
         Copyright 2012-2021 Ren-C Open Source Contributors
@@ -13,7 +13,7 @@ REBOL [
         See: http://www.apache.org/licenses/LICENSE-2.0
     }
     Purpose: {
-        These are target system definitions used to build Rebol with a
+        These are target platform definitions used to build Rebol with a
         various compilers and libraries.  A longstanding historical numbering
         scheme of `0.X.Y` is currently used.  X is a kind of generic indicator
         of the vendor or OS, and Y is a variant in architecture or linkage.
@@ -43,7 +43,7 @@ REBOL [
         been "Linux DEC Alpha" and "Linux PPC" respectively, but became
         "Linux x86 libc6 2.5" and "Linux x86 libc6 2.11".
 
-      * The original systems.r would write `0.3.01` instead of just `0.3.1` to
+      * The original platforms list wrote `0.3.01` instead of just `0.3.1` to
         accentuate the difference.  But canon tuples remove leading zeros, so
         if some parts of the code (e.g. bash shell scripts) use the `0.3.01`
         format and handle it as a string (e.g. to make directories), this gets
@@ -51,7 +51,7 @@ REBOL [
 
           https://forum.rebol.info/t/1755
 
-      * R3-Alpha was released on many fewer systems than previous versions.
+      * R3-Alpha was released on many fewer platforms than previous versions.
         It demanded a 64-bit `long long` integer type from the C compiler, and
         additionally some platforms were just too old to be deemed relevant.
         However, there's probably no serious barrier to building the current
@@ -61,7 +61,7 @@ REBOL [
 
 import <bootstrap-shim.r>
 
-systems: [
+platforms: [
 
     Amiga: 1
     ;-------------------------------------------------------------------------
@@ -327,7 +327,7 @@ systems: [
 ]
 
 
-export system-definitions: make object! [
+export platform-definitions: make object! [
     LP64: "__LP64__"              ; 64-bit, and 'void *' is sizeof(long)
     LLP64: "__LLP64__"            ; 64-bit, and 'void *' is sizeof(long long)
 
@@ -435,7 +435,7 @@ export linker-flags: make object! [
     S4M: [<gnu:-Wl,--stack=4194300> <msc:/stack:4194300>]
 ]
 
-export system-libraries: make object! [
+export platform-libraries: make object! [
     ;
     ; Math library, needed only when compiling with GCC
     ; (Haiku has it in libroot)
@@ -449,17 +449,17 @@ export system-libraries: make object! [
 ]
 
 
-export for-each-system: func [
-    {Use PARSE to enumerate the systems, and set 'var to a record object}
+export for-each-platform: func [
+    {Use PARSE to enumerate the platforms, and set 'var to a record object}
 
     return: <none>
     'var [word!]
-    body [block! action!]
-        {Body of code to run for each system}
+    body "Body of code to run for each platform"
+        [block!]
 ][
-    let s: make object! [
-        platform-name: null
-        platform-number: null
+    let p: make object! [
+        name: null
+        number: null
         id: null
         os: null
         os-name: null
@@ -471,11 +471,11 @@ export for-each-system: func [
         ldflags: null
     ]
 
-    parse2 systems in s [ some [
-        set platform-name set-word! (
-            platform-name: to-word platform-name
+    parse2 platforms in p [ some [
+        set name set-word! (
+            name: to-word name
         )
-        set platform-number integer!
+        set number integer!
         opt some [
             set id tuple!
             [
@@ -503,26 +503,26 @@ export for-each-system: func [
 
             (
                 if os [
-                    set var s
+                    set var p
                     do body
                 ]
             )
         ]
     ]] else [
-        fail "Couldn't parse systems.r table"
+        fail "Couldn't parse %platforms.r table"
     ]
 ]
 
 
-; Do a little bit of sanity-checking on the systems table
+; Do a little bit of sanity-checking on the platforms table
 use [
     unknown-flags used-flags build-flags word context
 ][
     used-flags: copy []
-    for-each-system s [
-        assert in s [
-            word? platform-name
-            integer? platform-number
+    for-each-platform p [
+        assert in p [
+            word? name
+            integer? number
             any [
                 word? build-label
                 not build-label
@@ -530,7 +530,7 @@ use [
             tuple? id
             all [
                 id/1 = 0
-                id/2 = platform-number
+                id/2 = number
             ]
             (to-text os-name) == (lowercase to-text os-name)
             (to-text os-base) == (lowercase to-text os-base)
@@ -541,25 +541,25 @@ use [
             block? ldflags
         ]
 
-        for-each flag s/definitions [assert [word? flag]]
-        for-each flag s/cflags [assert [word? flag]]
-        for-each flag s/libraries [assert [word? flag]]
-        for-each flag s/ldflags [assert [word? flag]]
+        for-each flag p/definitions [assert [word? flag]]
+        for-each flag p/cflags [assert [word? flag]]
+        for-each flag p/libraries [assert [word? flag]]
+        for-each flag p/ldflags [assert [word? flag]]
 
         for-each [word context] compose [
-            definitions (system-definitions)
-            libraries (system-libraries)
+            definitions (platform-definitions)
+            libraries (platform-libraries)
             cflags (compiler-flags)
             ldflags (linker-flags)
         ][
             ; Exclude should mutate (CC#2222), but this works either way
             unknown-flags: exclude (
-                    unknown_flags: copy any [build-flags: get in s word, []]
+                    unknown_flags: copy any [build-flags: get in p word, []]
                 )
                 words-of context
             if not empty? unknown-flags [
                 print mold unknown-flags
-                fail ["Unknown" word "used in %systems.r specification"]
+                fail ["Unknown" word "used in %platforms.r specification"]
             ]
             used-flags: union used-flags any [build-flags, []]
         ]
@@ -568,18 +568,18 @@ use [
     unused-flags: exclude compose [
         (spread words-of compiler-flags)
         (spread words-of linker-flags)
-        (spread words-of system-definitions)
-        (spread words-of system-libraries)
+        (spread words-of platform-definitions)
+        (spread words-of platform-libraries)
     ] used-flags
 
     if not empty? unused-flags [
         print mold unused-flags
-        fail "Unused flags in %systems.r specifications"
+        fail "Unused flags in %platforms.r specifications"
     ]
 ]
 
 
-export config-system: func [
+export configure-platform: func [
     {Return build configuration information}
     hint "Version ID (null means guess)"
         [<opt> text! tuple!]
@@ -598,15 +598,15 @@ export config-system: func [
     ]
 
     let result: null
-    for-each-system s [
-        if s/id = version [
-            result: copy s  ; could RETURN, but sanity-check whole table
+    for-each-platform p [
+        if p/id = version [
+            result: copy p  ; could RETURN, but sanity-check whole table
         ]
     ]
 
     if not result [
         fail [
-            {No table entry for} version {found in systems.r}
+            {No table entry for} version {found in %platforms.r}
         ]
     ]
 

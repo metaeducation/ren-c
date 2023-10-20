@@ -27,7 +27,7 @@ includes: [
     %prep/extensions/odbc ;for %tmp-ext-odbc-init.inc
 ]
 
-libraries: switch system-config/os-base [
+libraries: switch platform-config/os-base [
     'Windows [
         [%odbc32]
     ]

@@ -3,11 +3,11 @@ REBOL []
 name: 'Filesystem
 source: %filesystem/mod-filesystem.c
 
-; !!! Note: There are nuances between os-base, os-name, and platform-name
-; The most relevant choice here is platform-name, e.g. the `Windows: 3` you
-; would see in %systems.r
+; !!! Note: There are nuances between os-base, os-name, and platform's name
+; The most relevant choice here is platform's name, e.g. the `Windows: 3` you
+; would see in %platforms.r
 ;
-os: system-config/platform-name
+os: platform-config/name
 
 definitions: []
 libraries: []

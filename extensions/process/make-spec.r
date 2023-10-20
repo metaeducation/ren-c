@@ -8,7 +8,7 @@ source: %process/mod-process.c
 ; spec for call, so that is in %mod-process.c, but the implementations are
 ; in separate files, as C functions parameterized by the frame.
 ;
-depends: switch system-config/os-base [
+depends: switch platform-config/os-base [
     'Windows [
         [%process/call-windows.c]
     ]

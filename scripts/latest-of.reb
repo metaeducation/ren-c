@@ -32,9 +32,9 @@ Rebol [
         == http://...
 
         ; Invocation with an OS_ID tuple only will get you the latest *debug*
-        ; version of for that OS_ID (if it's in the CI builds).  Systems list:
+        ; version of for that OS_ID (if it's in the CI builds).  Platform list:
         ;
-        ;   https://github.com/metaeducation/ren-c/blob/master/tools/systems.r
+        ;   https://github.com/metaeducation/ren-c/blob/master/tools/platforms.r
         ;
         ; All stakeholders should run debug builds by default, unless you have
         ; a good reason not to!  Bug reports will not be processed unless the
@@ -131,7 +131,7 @@ latest-of: func [
 
     return: [url!]
 
-    os "https://github.com/metaeducation/ren-c/blob/master/tools/systems.r"
+    os "https://github.com/metaeducation/ren-c/blob/master/tools/platforms.r"
         [<end> blank! tuple!]
     /variant "Which build variation (DEBUG, RELEASE)"
         [word!]

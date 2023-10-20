@@ -9,7 +9,7 @@ includes: [
 depends: compose [
     %stdio/p-stdio.c
 
-    (switch system-config/os-base [
+    (switch platform-config/os-base [
         'Windows [
             spread [
                 [%stdio/stdio-windows.c]

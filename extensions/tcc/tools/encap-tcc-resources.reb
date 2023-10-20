@@ -49,8 +49,8 @@ REBOL [
 import %../../tools/common.r
 args: parse-args system.script.args  ; either from command line or DO/ARGS
 
-import %../../tools/systems.r
-system-config: config-system args/OS_ID
+import %../../tools/platforms.r
+platform-config: configure-platform args/OS_ID
 
 ; !!! For the moment, this script only works with the in-source output
 ; directory.  It would have to be passed a directory by the caller otherwise.
@@ -134,7 +134,7 @@ encap: compose [
     ;
     ; The Windows directory contains some other junk, like examples.
     ;
-    (if system-config/os-base = 'Windows [
+    (if platform-config/os-base = 'Windows [
         compose [
             ; typically %(...)/win32/include
             %win32/include/  ; `(config-tccdir)/include/` see CHANGE_DIR above

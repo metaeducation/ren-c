@@ -58,7 +58,7 @@
 // Addressing that is an ongoing process.
 //
 
-#include "tmp-version.h"  // historical 5 numbers in a TUPLE! (see %systems.r)
+#include "tmp-version.h"  // historical 5 numbers in a TUPLE! (see %platforms.r)
 #include "reb-config.h"
 
 

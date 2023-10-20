@@ -41,7 +41,7 @@ if trap [:import/into] [  ; See %import-shim.r
 import <bootstrap-shim.r>
 
 import <common.r>  ; for REPO-DIR
-import <systems.r>  ; for BOOT-VERSION
+import <platforms.r>  ; for BOOT-VERSION
 
 export cscape: function [
     {Escape Rebol expressions in templated C source, returns new string}

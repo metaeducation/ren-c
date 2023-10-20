@@ -20,7 +20,7 @@ if trap [:import/into] [  ; See %import-shim.r
 import <tools/bootstrap-shim.r>
 
 import <tools/common.r>  ; Note: sets up `repo-dir`
-import <tools/systems.r>
+import <tools/platforms.r>
 
 rebmake: import <tools/rebmake.r>
 
@@ -177,8 +177,8 @@ if commands [user-config/target: null]  ; was `target: load commands`  Why? :-/
 
 === {MODULES AND EXTENSIONS} ===
 
-system-config: config-system user-config/os-id
-rebmake/set-target-platform system-config/os-base
+platform-config: configure-platform user-config/os-id
+rebmake/set-target-platform platform-config/os-base
 
 to-obj-path: func [
     file [any-string!]
@@ -854,7 +854,7 @@ use [extension-dir entry][
             ;
             insert spec spread compose [
                 repo-dir: (repo-dir)
-                system-config: (system-config)
+                platform-config: (platform-config)
                 user-config: (user-config)
             ]
 
@@ -932,13 +932,13 @@ targets: [
     'visual-studio [
         apply :rebmake/visual-studio/generate [
             output-dir solution
-            /x86 (system-config/os-name = 'Windows-x86)
+            /x86 (platform-config/os-name = 'Windows-x86)
         ]
     ]
     'vs2015 [
         apply :rebmake/vs2015/generate [
             output-dir solution
-            /x86 (system-config/os-name = 'Windows-x86)
+            /x86 (platform-config/os-name = 'Windows-x86)
         ]
     ]
     'vs2017 [
@@ -1020,13 +1020,13 @@ NOTES:^/
 'os-id unspaced [ {=== OS-ID ===^/
 CURRENT OS:^/
     }
-    indent mold config-system user-config/os-id
+    indent mold configure-platform user-config/os-id
     {^/
 LIST:^/
     OS-ID:  OS-NAME:}
-    indent form collect [for-each-system s [
+    indent form collect [for-each-platform p [
         keep unspaced [
-            newline format 8 s/id s/os-name
+            newline format 8 p/id p/os-name
         ]
     ]]
     newline
@@ -1353,15 +1353,17 @@ append app-config/ldflags maybe spread switch user-config/static [
 ; Not quite sure what counts as system definitions (?)  Review.
 
 append app-config/definitions spread flatten/deep (
-    reduce bind (copy system-config/definitions) system-definitions
+    reduce bind (copy platform-config/definitions) platform-definitions
 )
 
 append app-config/cflags spread flatten/deep (  ; !!! can be string?
-    reduce bind copy system-config/cflags compiler-flags
+    reduce bind copy platform-config/cflags compiler-flags
 )
 
 append app-config/libraries spread (
-    let value: flatten/deep reduce bind copy system-config/libraries system-libraries
+    let value: flatten/deep reduce (
+        bind copy platform-config/libraries platform-libraries
+    )
     map-each w flatten value [
         make rebmake/ext-dynamic-class [
             output: w
@@ -1370,7 +1372,7 @@ append app-config/libraries spread (
 )
 
 append app-config/ldflags spread flatten/deep (
-    reduce bind copy system-config/ldflags linker-flags
+    reduce bind copy platform-config/ldflags linker-flags
 )
 
 print ["definitions:" mold app-config/definitions]
@@ -1382,9 +1384,9 @@ print ["debug:" logic-to-word app-config/debug]
 print ["optimization:" mold app-config/optimization]
 
 append app-config/definitions spread reduce [
-    unspaced ["TO_" uppercase to-text system-config/os-base "=1"]
+    unspaced ["TO_" uppercase to-text platform-config/os-base "=1"]
     unspaced [
-        "TO_" (uppercase replace/all to-text system-config/os-name "-" "_") "=1"
+        "TO_" (uppercase replace/all to-text platform-config/os-name "-" "_") "=1"
     ]
 ]
 
@@ -1797,7 +1799,7 @@ for-each ext extensions [
         ; We need to make a new "Project" abstraction to represent the DLL
 
         ext-proj: make rebmake/dynamic-library-class [
-            name: join either system-config/os-base = 'windows ["r3-"]["libr3-"]
+            name: join either platform-config/os-base = 'windows ["r3-"]["libr3-"]
                 lowercase to text! ext/name
             output: to file! name
             depends: compose [
@@ -1909,12 +1911,12 @@ prep: make rebmake/entry-class [
         keep [{$(REBOL)} join tools-dir %make-headers.r]
         keep [
             {$(REBOL)} join tools-dir %make-boot.r
-            unspaced [{OS_ID=} system-config/id]
+            unspaced [{OS_ID=} platform-config/id]
             {GIT_COMMIT=$(GIT_COMMIT)}
         ]
         keep [
             {$(REBOL)} join tools-dir %make-reb-lib.r
-            unspaced [{OS_ID=} system-config/id]
+            unspaced [{OS_ID=} platform-config/id]
         ]
 
         for-each ext extensions [
@@ -1926,7 +1928,7 @@ prep: make rebmake/entry-class [
                     block! [first find ext/source matches file!]
                     fail "ext/source must be BLOCK! or FILE!"
                 ]]
-                unspaced [{OS_ID=} system-config/id]
+                unspaced [{OS_ID=} platform-config/id]
                 unspaced [{USE_LIBREBOL=} logic-to-word ext/use-librebol]
             ]
 
@@ -1946,7 +1948,7 @@ prep: make rebmake/entry-class [
                 )
                 keep [
                     {$(REBOL)} hook-script
-                    unspaced [{OS_ID=} system-config/id]
+                    unspaced [{OS_ID=} platform-config/id]
                 ]
             ]
         ]

@@ -41,7 +41,7 @@ import <bootstrap-shim.r>
 
 import <common.r>
 import <common-emitter.r>
-import <systems.r>
+import <platforms.r>
 
 import <native-emitters.r>  ; scans C source for native specs, emits macros
 
@@ -71,7 +71,7 @@ src: join repo-dir src
 mkdir/deep output-dir
 
 
-config: config-system get 'args/OS_ID
+platform-config: configure-platform get 'args/OS_ID
 
 use-librebol: switch get 'args/USE_LIBREBOL [
     "false" [false]

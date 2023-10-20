@@ -6,7 +6,7 @@ includes: reduce [
     (join repo-dir %extensions/uuid/libuuid/)
     %prep/extensions/uuid ;for %tmp-extensions-uuid-init.inc
 ]
-depends: switch system-config/os-base [
+depends: switch platform-config/os-base [
     'linux 'Haiku [
         [
             %uuid/libuuid/gen_uuid.c
@@ -17,13 +17,13 @@ depends: switch system-config/os-base [
     ]
 ] else [null]  ; can't use null fallout in bootstrap
 
-libraries: switch system-config/os-base [
+libraries: switch platform-config/os-base [
     'Windows [
         [%rpcrt4]
     ]
 ] else [null]  ; can't use null fallout in bootstrap
 
-ldflags: switch system-config/os-base [
+ldflags: switch platform-config/os-base [
     'OSX [
         ["-framework CoreFoundation"]
     ]

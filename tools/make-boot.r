@@ -31,12 +31,12 @@ import <bootstrap-shim.r>
 import <common.r>
 import <common-emitter.r>
 
-import <systems.r>
+import <platforms.r>
 
 change-dir join repo-dir %src/boot/
 
 args: parse-args system/script/args  ; either from command line or DO/ARGS
-config: config-system get 'args/OS_ID
+platform-config: configure-platform get 'args/OS_ID
 
 first-rebol-commit: "19d4f969b4f5c1536f24b023991ec11ee6d5adfb"
 
@@ -116,7 +116,7 @@ e-version: make-emitter "Version Information" (
 
 version: load-value %version.r
 version: to tuple! reduce [
-    version/1 version/2 version/3 config/id/2 config/id/3
+    version/1 version/2 version/3 platform-config/id/2 platform-config/id/3
  ]
 
 e-version/emit 'version {
@@ -712,8 +712,8 @@ change (at-value build) now/utc
 change (at-value product) (quote to word! product)  ; want it to be quoted
 
 change at-value platform reduce [
-    any [config/platform-name "Unknown"]
-    any [config/build-label ""]
+    any [platform-config/name "Unknown"]
+    any [platform-config/build-label ""]
 ]
 
 ; If debugging something code in %sysobj.r, the C-DEBUG-BREAK should only

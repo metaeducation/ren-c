@@ -7,7 +7,7 @@ includes: [
 ]
 
 depends: compose [
-    (switch system-config/os-base [
+    (switch platform-config/os-base [
         'Windows [
             spread [
                 [%time/time-windows.c]

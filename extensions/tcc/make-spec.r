@@ -75,7 +75,7 @@ libraries: compose [  ; Note: dependent libraries first, dependencies after.
     ;
     ; https://stackoverflow.com/a/38672664/
     ;
-    (if not find [Windows Android] system-config/os-base [%pthread])
+    (if not find [Windows Android] platform-config/os-base [%pthread])
 ]
 
 requires: [

@@ -18,7 +18,7 @@ project and limited resources mean there isn't support for packaging and
 distribution of native binaries.  So the table stakes for participating is
 building your own native interpreter (see instructions below)
 
-[5]: https://github.com/metaeducation/ren-c/blob/master/tools/systems.r#L55
+[5]: https://github.com/metaeducation/ren-c/blob/master/tools/platforms.r
 
 The current sole focus for deploying a *prebuilt* experience to users is via
 WebAssembly in the web browser.  See the [demo of the Web Console][6]
@@ -137,7 +137,7 @@ streamline and document it!  Since it's now *all* written in Rebol, that
 should be more possible--and maybe even a little "fun" (?))*
 
 [14]: https://forum.rebol.info/t/on-building-ren-c-with-c-compilers/1343
-[15]: https://github.com/metaeducation/ren-c/blob/master/make/tools/systems.r
+[15]: https://github.com/metaeducation/ren-c/blob/master/make/tools/platforms.r
 
 
 ## License
