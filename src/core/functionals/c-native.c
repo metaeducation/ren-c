@@ -41,9 +41,9 @@ Intrinsic* Extract_Intrinsic(Action(*) action)
     assert(ACT_DISPATCHER(action) == &Intrinsic_Dispatcher);
 
     Array(*) details = ACT_DETAILS(action);
-    assert(ARR_LEN(details) == IDX_NATIVE_MAX);
+    assert(ARR_LEN(details) >= IDX_INTRINSIC_MAX);  // e.g. typecheck uses more
 
-    Cell(*) handle = DETAILS_AT(details, IDX_NATIVE_BODY);
+    Cell(*) handle = DETAILS_AT(details, IDX_INTRINSIC_CFUNC);
     return cast(Intrinsic*, VAL_HANDLE_CFUNC(handle));
 }
 
@@ -59,9 +59,10 @@ Bounce Intrinsic_Dispatcher(Frame(*) f)
 {
     Frame(*) frame_ = f;
     Value(*) arg = FRM_ARG(f, 2);  // skip the RETURN
+    Action(*) phase = FRM_PHASE(f);
 
-    Intrinsic* intrinsic = Extract_Intrinsic(FRM_PHASE(f));
-    (*intrinsic)(OUT, arg);  // typechecking was done when frame was built
+    Intrinsic* intrinsic = Extract_Intrinsic(phase);
+    (*intrinsic)(OUT, phase, arg);  // typechecking done when frame was built
 
     return OUT;
 }
@@ -120,28 +121,32 @@ Action(*) Make_Native(
     );
     ASSERT_SERIES_TERM_IF_NEEDED(paramlist);
 
-    Dispatcher* dispatcher;
-    if (native_type == NATIVE_INTRINSIC)
-        dispatcher = &Intrinsic_Dispatcher;
-    else
-        dispatcher = cast(Dispatcher*, cfunc);
+    Action(*) native;
+    if (native_type == NATIVE_INTRINSIC) {
+        native = Make_Action(
+            paramlist,
+            nullptr,  // no partials
+            &Intrinsic_Dispatcher,
+            IDX_INTRINSIC_MAX  // details array capacity
+        );
 
-    Action(*) native = Make_Action(
-        paramlist,
-        nullptr,  // no partials
-        dispatcher,  // "dispatcher" is unique to this "native"
-        IDX_NATIVE_MAX  // details array capacity
-    );
-    Set_Action_Flag(native, IS_NATIVE);
+        Array(*) details = ACT_DETAILS(native);
+        Init_Handle_Cfunc(ARR_AT(details, IDX_INTRINSIC_CFUNC), cfunc);
+    }
+    else {
+        native = Make_Action(
+            paramlist,
+            nullptr,  // no partials
+            cast(Dispatcher*, cfunc),  // dispatcher is unique to this native
+            IDX_NATIVE_MAX  // details array capacity
+        );
+        Array(*) details = ACT_DETAILS(native);
 
-    Array(*) details = ACT_DETAILS(native);
-
-    if (native_type == NATIVE_INTRINSIC)
-        Init_Handle_Cfunc(ARR_AT(details, IDX_NATIVE_BODY),cfunc);
-    else
         Init_Blank(ARR_AT(details, IDX_NATIVE_BODY));
+        Copy_Cell(ARR_AT(details, IDX_NATIVE_CONTEXT), CTX_ARCHETYPE(module));
 
-    Copy_Cell(ARR_AT(details, IDX_NATIVE_CONTEXT), CTX_ARCHETYPE(module));
+        Set_Action_Flag(native, IS_NATIVE);
+    }
 
     // NATIVE-COMBINATORs actually aren't *quite* their own dispatchers, they
     // all share a common hook to help with tracing and doing things like

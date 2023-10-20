@@ -264,6 +264,8 @@ DECLARE_NATIVE(quote)
 //
 DECLARE_INTRINSIC(meta)
 {
+    UNUSED(action);
+
     Copy_Cell(out, arg);  // arg was already ^META, no need to Meta_Quotify()
 }
 
@@ -361,6 +363,8 @@ DECLARE_NATIVE(quasi)
 //
 DECLARE_INTRINSIC(unquasi)
 {
+    UNUSED(action);
+
     Copy_Cell(out, arg);
     Unquasify(out);
 }
@@ -405,6 +409,8 @@ DECLARE_NATIVE(isotopic)
 //
 DECLARE_INTRINSIC(unmeta)
 {
+    UNUSED(action);
+
     Copy_Cell(out, arg);
     Meta_Unquotify_Undecayed(out);
 }
@@ -421,6 +427,8 @@ DECLARE_INTRINSIC(unmeta)
 //
 DECLARE_INTRINSIC(unmeta_p)
 {
+    UNUSED(action);
+
     if (Is_Void(arg)) {
         Init_Void(out);
     }
@@ -466,6 +474,8 @@ DECLARE_INTRINSIC(spread)
 //    with a refinement (which would prevent spread from being an intrinsic)
 //    but it may just be undesirable.  Review.
 {
+    UNUSED(action);
+
     if (Is_Void(arg)) {
         Init_Void(out);  // pass through, see [1]
     }
@@ -568,6 +578,7 @@ DECLARE_NATIVE(pack)
     )){
         return THROWN;
     }
+
     return UNMETA(SPARE);
 }
 
@@ -614,6 +625,8 @@ DECLARE_NATIVE(matches)
 //
 DECLARE_INTRINSIC(splice_q)
 {
+    UNUSED(action);
+
     Init_Logic(out, Is_Splice(arg));
 }
 
@@ -651,6 +664,8 @@ DECLARE_NATIVE(any_matcher_q)
 //
 DECLARE_INTRINSIC(lazy_q)
 {
+    UNUSED(action);
+
     Init_Logic(out, Is_Meta_Of_Lazy(arg));
 }
 
@@ -666,6 +681,8 @@ DECLARE_INTRINSIC(lazy_q)
 //
 DECLARE_INTRINSIC(pack_q)
 {
+    UNUSED(action);
+
     Init_Logic(out, Is_Meta_Of_Pack(arg));
 }
 
@@ -681,6 +698,8 @@ DECLARE_INTRINSIC(pack_q)
 //
 DECLARE_INTRINSIC(isoword_q)
 {
+    UNUSED(action);
+
     Init_Logic(out, Is_Isoword(arg));
 }
 
@@ -696,6 +715,8 @@ DECLARE_INTRINSIC(isoword_q)
 //
 DECLARE_INTRINSIC(activation_q)
 {
+    UNUSED(action);
+
     Init_Logic(out, Is_Activation(arg));
 }
 
@@ -711,6 +732,8 @@ DECLARE_INTRINSIC(activation_q)
 //
 DECLARE_INTRINSIC(runs)
 {
+    UNUSED(action);
+
     Copy_Cell(out, arg);  // may or may not be isotope
     mutable_QUOTE_BYTE(out) = ISOTOPE_0;  // now it's known to be an isotope
 }
@@ -727,6 +750,8 @@ DECLARE_INTRINSIC(runs)
 //
 DECLARE_INTRINSIC(unrun)
 {
+    UNUSED(action);
+
     Copy_Cell(out, arg);  // may or may not be isotope
     mutable_QUOTE_BYTE(out) = UNQUOTED_1;  // now it's known to not be isotopic
 }
@@ -753,6 +778,8 @@ DECLARE_INTRINSIC(maybe)
 //
 // 2. !!! Should MAYBE of a raised error pass through the raised error?
 {
+    UNUSED(action);
+
     if (Is_Void(arg)) {
         Init_Void(out);  // passthru
     }
@@ -775,6 +802,8 @@ DECLARE_INTRINSIC(maybe)
 //
 DECLARE_INTRINSIC(quoted_q)
 {
+    UNUSED(action);
+
     Init_Logic(out, VAL_TYPE(arg) == REB_QUOTED);
 }
 
@@ -790,6 +819,8 @@ DECLARE_INTRINSIC(quoted_q)
 //
 DECLARE_INTRINSIC(quasi_q)
 {
+    UNUSED(action);
+
     Init_Logic(out, VAL_TYPE(arg) == REB_QUASI);
 }
 
@@ -805,6 +836,8 @@ DECLARE_INTRINSIC(quasi_q)
 //
 DECLARE_INTRINSIC(noquote)
 {
+    UNUSED(action);
+
     Copy_Cell(out, arg);
     Unquotify(out, VAL_NUM_QUOTES(out));
 }

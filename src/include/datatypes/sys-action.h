@@ -361,6 +361,11 @@ enum {
     IDX_NATIVE_MAX
 };
 
+enum {
+    IDX_INTRINSIC_CFUNC = 1,
+    IDX_INTRINSIC_MAX
+};
+
 
 #define KEY_SLOT(dsp)       Data_Stack_At((dsp) - 3)
 #define PARAM_SLOT(dsp)     Data_Stack_At((dsp) - 2)

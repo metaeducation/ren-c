@@ -50,23 +50,6 @@ REBINT CT_Parameter(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool stric
 //
 void Startup_Typesets(void)
 {
-    // We need a spec for our typecheckers, which is really just `value`
-    // with no type restrictions.
-    //
-    DECLARE_LOCAL (spec);
-    Array(*) spec_array = Alloc_Singular(NODE_FLAG_MANAGED);
-    Init_Word(ARR_SINGLE(spec_array), Canon(VALUE));
-    Init_Block(spec, spec_array);
-
-    Context(*) meta;
-    Flags flags = MKF_KEYWORDS | MKF_RETURN;
-    Array(*) paramlist = Make_Paramlist_Managed_May_Fail(
-        &meta,
-        spec,
-        &flags  // return type checked only in debug build
-    );
-    ASSERT_SERIES_TERM_IF_NEEDED(paramlist);
-
     REBINT id;
     for (id = SYM_ANY_VALUE_Q; id != SYM_DATATYPES; id += 2) {
         REBINT n = (id - SYM_ANY_VALUE_Q) / 2;  // means Typesets[n]
@@ -74,16 +57,10 @@ void Startup_Typesets(void)
         // We want the forms like ANY-VALUE? to be typechecker functions that
         // act on Typesets[n].
         //
-        Action(*) typechecker = Make_Action(
-            paramlist,
-            nullptr,  // no partials
-            &Typeset_Checker_Dispatcher,
-            2 /* IDX_TYPECHECKER_MAX */  // details array capacity
-        );
-        Init_Integer(
-            ARR_AT(ACT_DETAILS(typechecker), 1 /* IDX_TYPECHECKER_TYPE */),
-            n  // e.g. this check uses typechecker[n]
-        );
+        DECLARE_LOCAL (typeset_index);
+        Init_Integer(typeset_index, n);
+        Action(*) typechecker = Make_Typechecker(typeset_index);
+
         Init_Activation(
             Force_Lib_Var(cast(SymId, id)),
             typechecker,

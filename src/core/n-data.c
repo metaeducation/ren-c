@@ -432,6 +432,8 @@ bool Did_Get_Binding_Of(REBVAL *out, const REBVAL *v)
 //
 DECLARE_INTRINSIC(refinement_q)
 {
+    UNUSED(action);
+
     Init_Logic(out, IS_PATH(arg) and IS_REFINEMENT(arg));
 }
 
@@ -447,6 +449,8 @@ DECLARE_INTRINSIC(refinement_q)
 //
 DECLARE_INTRINSIC(quasi_word_q)
 {
+    UNUSED(action);
+
     Init_Logic(out, IS_QUASI(arg) and HEART_BYTE(arg) == REB_WORD);
 }
 
@@ -462,6 +466,8 @@ DECLARE_INTRINSIC(quasi_word_q)
 //
 DECLARE_INTRINSIC(char_q)
 {
+    UNUSED(action);
+
     Init_Logic(out, IS_CHAR(arg));
 }
 
@@ -2341,6 +2347,8 @@ DECLARE_NATIVE(aliases_q)
 //
 DECLARE_INTRINSIC(null_q)
 {
+    UNUSED(action);
+
     Init_Logic(out, Is_Nulled(arg));
 }
 
@@ -2357,6 +2365,8 @@ DECLARE_INTRINSIC(null_q)
 //
 DECLARE_INTRINSIC(logic_q)
 {
+    UNUSED(action);
+
     Init_Logic(out, IS_LOGIC(arg));
 }
 
@@ -2372,6 +2382,8 @@ DECLARE_INTRINSIC(logic_q)
 //
 DECLARE_INTRINSIC(nihil_q)
 {
+    UNUSED(action);
+
     Init_Logic(out, Is_Meta_Of_Nihil(arg));
 }
 
@@ -2403,6 +2415,8 @@ DECLARE_NATIVE(none)
 //
 DECLARE_INTRINSIC(void_q)
 {
+    UNUSED(action);
+
     Init_Logic(out, Is_Void(arg));
 }
 
@@ -2425,6 +2439,8 @@ DECLARE_INTRINSIC(none_q)
 //    intended that raised errors be tolerated by this test, so the type
 //    constraint is just to regular values.
 {
+    UNUSED(action);
+
     Init_Logic(out, Is_Meta_Of_None(arg));
 }
 
@@ -2440,6 +2456,8 @@ DECLARE_INTRINSIC(none_q)
 //
 DECLARE_INTRINSIC(blackhole_q)
 {
+    UNUSED(action);
+
     Init_Logic(out, Is_Blackhole(arg));
 }
 
@@ -2520,6 +2538,8 @@ DECLARE_INTRINSIC(decay)
 //    break the contract in the case of an error.  So we let the parameter
 //    fulfillment cause the problem.
 {
+    UNUSED(action);
+
     assert(Is_Stable(arg));  // pre-decayed by non-^META argument, see [1]
     Copy_Cell(out, arg);
 }
@@ -2614,6 +2634,8 @@ DECLARE_NATIVE(concretize)
 //
 DECLARE_INTRINSIC(noisotope)
 {
+    UNUSED(action);
+
     Copy_Cell(out, arg);
 
     if (Is_Isotope(out))

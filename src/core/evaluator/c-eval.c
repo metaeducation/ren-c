@@ -367,7 +367,7 @@ Bounce Evaluator_Executor(Frame(*) f)
             const REBKEY* key = ACT_KEY(action, 2);
             fail (Error_Arg_Type(label, key, param, SPARE));
         }
-        (*intrinsic)(OUT, SPARE);
+        (*intrinsic)(OUT, action, SPARE);
         goto finished; }
 
       case REB_GROUP :

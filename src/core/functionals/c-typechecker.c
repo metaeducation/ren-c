@@ -34,83 +34,108 @@
 //
 //     >> integer?: typechecker &integer
 //
-// This makes a near-native optimized version of the type checker which uses
-// a custom dispatcher.  Additionally, when used in a type constraint the
-// dispatcher can be recognized to bypass an interpreted function call
-// entirely to check the type.
+// This makes a near-native optimized version of the type checker, that
+// leverages the "Intrinsic" facility...so that the evaluator and type checking
+// can call the C implementation directly without building a frame for the
+// ACTION! call.
 //
 
 #include "sys-core.h"
 
 enum {
-    IDX_TYPECHECKER_TYPE = 1,  // datatype or typeset to check
+    IDX_TYPECHECKER_CFUNC = IDX_INTRINSIC_CFUNC,  // uses Intrinsic_Dispatcher()
+    IDX_TYPECHECKER_TYPE,  // datatype or typeset to check
     IDX_TYPECHECKER_MAX
 };
 
 
 //
-//  typecheck-internal?: native [
+//  Datatype_Checker_Intrinsic: C
 //
-//      return: [logic?]
-//      optional
-//  ]
+// Intrinsic used by TYPECHECKER generator for when argument is a datatype.
 //
-DECLARE_NATIVE(typecheck_internal_q)
-//
-// Note: This prototype is used by all TYPECHECKER instances.  (It steals the
-// paramlist from this native.)
+void Datatype_Checker_Intrinsic(Value(*) out, Action(*) action, Value(*) arg)
 {
-    INCLUDE_PARAMS_OF_TYPECHECK_INTERNAL_Q;
+    assert(ACT_DISPATCHER(action) == &Intrinsic_Dispatcher);
 
-    UNUSED(ARG(optional));
-    panic (nullptr);
-}
-
-
-//
-//  Datatype_Checker_Dispatcher: C
-//
-// Dispatcher used by TYPECHECKER generator for when argument is a datatype.
-//
-Bounce Datatype_Checker_Dispatcher(Frame(*) frame_)
-{
-    Frame(*) f = frame_;
-
-    Array(*) details = ACT_DETAILS(FRM_PHASE(f));
+    Array(*) details = ACT_DETAILS(action);
     assert(ARR_LEN(details) == IDX_TYPECHECKER_MAX);
 
     REBVAL *datatype = DETAILS_AT(details, IDX_TYPECHECKER_TYPE);
 
-    assert(KEY_SYM(ACT_KEY(FRM_PHASE(f), 1)) == SYM_RETURN);  // skip arg 1
-
-    return Init_Logic(  // otherwise won't be equal to any custom type
-        OUT,
-        VAL_TYPE(FRM_ARG(f, 2)) == VAL_TYPE_KIND(datatype)
-    );
+    Init_Logic(out, VAL_TYPE(arg) == VAL_TYPE_KIND(datatype));
 }
 
 
 //
-//  Typeset_Checker_Dispatcher: C
+//  Typeset_Checker_Intrinsic: C
 //
-// Dispatcher used by TYPECHECKER generator for when argument is a typeset.
+// Intrinsic used by TYPECHECKER generator for when argument is a typeset.
 //
-Bounce Typeset_Checker_Dispatcher(Frame(*) frame_)
+void Typeset_Checker_Intrinsic(Value(*) out, Action(*) action, Value(*) arg)
 {
-    Frame(*) f = frame_;
+    assert(ACT_DISPATCHER(action) == &Intrinsic_Dispatcher);
 
-    Array(*) details = ACT_DETAILS(FRM_PHASE(f));
+    Array(*) details = ACT_DETAILS(action);
     assert(ARR_LEN(details) == IDX_TYPECHECKER_MAX);
 
     REBVAL *typeset_index = DETAILS_AT(details, IDX_TYPECHECKER_TYPE);
     assert(IS_INTEGER(typeset_index));
     Index n = VAL_INT32(typeset_index);
 
-    assert(KEY_SYM(ACT_KEY(FRM_PHASE(f), 1)) == SYM_RETURN);  // skip arg 1
-
     REBU64 typeset = Typesets[n];
-    enum Reb_Kind kind = VAL_TYPE(FRM_ARG(f, 2));
-    return Init_Logic(OUT, FLAGIT_KIND(kind) & typeset);
+    enum Reb_Kind kind = VAL_TYPE(arg);
+    Init_Logic(out, FLAGIT_KIND(kind) & typeset);
+}
+
+
+//
+//  Make_Typechecker: C
+//
+// Bootstrap creates typechecker functions before functions like TYPECHECKER
+// are allowed to run to create them.  So this is factored out.
+//
+Action(*) Make_Typechecker(Value(const*) type) {
+    assert(
+        IS_TYPE_WORD(type)  // datatype
+        or IS_INTEGER(type)  // typeset index (for finding bitset)
+    );
+
+    // We need a spec for our typecheckers, which is really just `value`
+    // with no type restrictions.
+    //
+    DECLARE_LOCAL (spec);
+    Array(*) spec_array = Alloc_Singular(NODE_FLAG_MANAGED);
+    Init_Word(ARR_SINGLE(spec_array), Canon(VALUE));
+    Init_Block(spec, spec_array);
+
+    Context(*) meta;
+    Flags flags = MKF_KEYWORDS | MKF_RETURN;
+    Array(*) paramlist = Make_Paramlist_Managed_May_Fail(
+        &meta,
+        spec,
+        &flags  // return type checked only in debug build
+    );
+    ASSERT_SERIES_TERM_IF_NEEDED(paramlist);
+
+    Action(*) typechecker = Make_Action(
+        paramlist,
+        nullptr,  // no partials
+        &Intrinsic_Dispatcher,  // leverage Intrinsic's optimized calls
+        IDX_TYPECHECKER_MAX  // details array capacity
+    );
+
+    Array(*) details = ACT_DETAILS(typechecker);
+
+    Init_Handle_Cfunc(
+        ARR_AT(details, IDX_TYPECHECKER_CFUNC),
+        IS_TYPE_WORD(type)
+            ? cast(CFUNC*, &Datatype_Checker_Intrinsic)
+            : cast(CFUNC*, &Typeset_Checker_Intrinsic)
+    );
+    Copy_Cell(ARR_AT(details, IDX_TYPECHECKER_TYPE), type);
+
+    return typechecker;
 }
 
 
@@ -127,18 +152,7 @@ DECLARE_NATIVE(typechecker)
 {
     INCLUDE_PARAMS_OF_TYPECHECKER;
 
-    REBVAL *type = ARG(type);
-
-    Action(*) typechecker = Make_Action(
-        ACT_PARAMLIST(VAL_ACTION(Lib(TYPECHECK_INTERNAL_Q))),
-        nullptr,  // no partials
-        IS_TYPE_WORD(type)
-            ? &Datatype_Checker_Dispatcher
-            : &Typeset_Checker_Dispatcher,
-        IDX_TYPECHECKER_MAX  // details array capacity
-    );
-    Copy_Cell(ARR_AT(ACT_DETAILS(typechecker), IDX_TYPECHECKER_TYPE), type);
-
+    Action(*) typechecker = Make_Typechecker(ARG(type));
     return Init_Activation(OUT, typechecker, ANONYMOUS, UNBOUND);
 }
 
@@ -234,41 +248,6 @@ bool Typecheck_Value(
           case REB_ACTION: {
             Action(*) action = VAL_ACTION(test);
 
-            // Here we speedup the typeset checking.  It may be that the
-            // acceleration could be unified with a function pointer method
-            // if we are willing to make functions for checking each typeset
-            // instead of using a table.
-            //
-            if (ACT_DISPATCHER(action) == &Typeset_Checker_Dispatcher) {
-                Index n = VAL_INT32(
-                    DETAILS_AT(ACT_DETAILS(action), IDX_TYPECHECKER_TYPE)
-                );
-                REBU64 bits = Typesets[n];
-                enum Reb_Kind k;
-                if (Is_Isotope(v) and Is_Isotope_Unstable(v))
-                    k = REB_ISOTOPE;
-                else
-                    k = VAL_TYPE(v);
-                if (bits & FLAGIT_KIND(k))
-                    goto test_succeeded;
-                goto test_failed;
-            }
-
-            if (ACT_DISPATCHER(action) == &Datatype_Checker_Dispatcher) {
-                Value(*) type_word = DETAILS_AT(
-                    ACT_DETAILS(action),
-                    IDX_TYPECHECKER_TYPE
-                );
-                enum Reb_Kind k;
-                if (Is_Isotope(v) and Is_Isotope_Unstable(v))
-                    k = REB_ISOTOPE;
-                else
-                    k = VAL_TYPE(v);
-                if (k == VAL_TYPE_KIND(type_word))
-                    goto test_succeeded;
-                goto test_failed;
-            }
-
             if (ACT_DISPATCHER(action) == &Intrinsic_Dispatcher) {
                 Intrinsic* intrinsic = Extract_Intrinsic(action);
 
@@ -281,7 +260,7 @@ bool Typecheck_Value(
                     goto test_failed;
 
                 DECLARE_LOCAL (out);
-                (*intrinsic)(out, arg);
+                (*intrinsic)(out, action, arg);
                 if (not IS_LOGIC(out))
                     fail (Error_No_Logic_Typecheck(label));
                 if (VAL_LOGIC(out))
