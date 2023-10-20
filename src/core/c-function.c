@@ -1116,8 +1116,9 @@ void Get_Maybe_Fake_Action_Body(REBVAL *out, const REBVAL *action)
         REBVAL *example;
         REBLEN real_body_index;
         if (ACT_DISPATCHER(a) == &Lambda_Dispatcher) {
-            example = Get_System(SYS_STANDARD, STD_PROC_BODY);
-            real_body_index = 4;
+            example = nullptr;
+            real_body_index = 0;
+            UNUSED(real_body_index);
         }
         else if (ACT_HAS_RETURN(a)) {
             example = Get_System(SYS_STANDARD, STD_FUNC_BODY);
@@ -1134,7 +1135,7 @@ void Get_Maybe_Fake_Action_Body(REBVAL *out, const REBVAL *action)
             maybe_fake_body = VAL_ARRAY(body);
         }
         else {
-            // See %sysobj.r for STANDARD/FUNC-BODY and STANDARD/PROC-BODY
+            // See %sysobj.r for STANDARD/FUNC-BODY
             //
             Array(*) fake = Copy_Array_Shallow_Flags(
                 VAL_ARRAY(example),

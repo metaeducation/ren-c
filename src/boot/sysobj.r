@@ -167,28 +167,23 @@ standard: make object! [
     ; to find #BODY, just asserts the position is an ISSUE!.
 
     func-body: [
-        return: make action! [
-            [{Returns a value from an action} value [<opt> <end> any-value!]]
-            [unwind/with (binding of 'return) either end? 'value [] [:value]]
+        return: lambda [
+            {(pseudocode) returns a value from an action} ^atom [atom?]
+        ][
+            if not typecheck 'return unmeta atom [
+                fail ["Invalid Return type, expects:" types of 'return]
+            ]
+            [unwind/with (binding of 'return) typecheck 'return unmeta value]
         ] #BODY
+        ~  ; if you don't call RETURN, the result is a ~ isotope
     ]
 
     proc-return-type: []  ; was once [none!], now just []
 
-    elider-return-type: [<void>]
-
-    proc-body: [
-        return: make action! [
-            [{Returns a value from an action} value [<opt> <end> any-value!]]
-            [unwind/with (binding of 'return) either end? 'value [] [:value]]
-        ] #BODY
-        void
-    ]
-
     ; !!! The PORT! and actor code is deprecated, but this bridges it so
     ; it doesn't have to build a spec by hand.
     ;
-    port-actor-spec: [port-actor-parameter [<opt> any-value!]]
+    port-actor-spec: [port-actor-parameter [any-value!]]
 
     ; !!! The %sysobj.r initialization currently runs natives (notably the
     ; natives for making objects, and here using COMMENT because it can).
