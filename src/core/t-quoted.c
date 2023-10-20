@@ -841,3 +841,21 @@ DECLARE_INTRINSIC(noquote)
     Copy_Cell(out, arg);
     Unquotify(out, VAL_NUM_QUOTES(out));
 }
+
+
+//
+//  atom?: native/intrinsic [
+//
+//  "Tells you if argument is truly anything--e.g. packs, raised, voids, etc."
+//
+//      return: [logic?]
+//      ^atom
+//  ]
+//
+DECLARE_INTRINSIC(atom_q)
+{
+    UNUSED(action);
+    UNUSED(arg);
+
+    Init_Logic(out, true);
+}
