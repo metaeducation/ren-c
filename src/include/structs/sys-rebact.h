@@ -27,9 +27,9 @@
 
 
 
-#define MISC_DetailsMeta_TYPE      Context(*)
-#define MISC_DetailsMeta_CAST      CTX
-#define HAS_MISC_DetailsMeta       FLAVOR_DETAILS
+#define MISC_DetailsAdjunct_TYPE      Context(*)
+#define MISC_DetailsAdjunct_CAST      CTX
+#define HAS_MISC_DetailsAdjunct       FLAVOR_DETAILS
 
 // Note: LINK on details is the DISPATCHER, on varlists it's KEYSOURCE
 

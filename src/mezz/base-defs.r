@@ -300,47 +300,47 @@ pointfree*: func* [
 ; Note: ENCLOSE is the first wrapped version here; so that the other wrappers
 ; can use it, thus inheriting HELP from their core (*-having) implementations.
 ;
-; (A usermode INHERIT-META existed, but it was very slow.  It was made native.)
+; (A usermode INHERIT-ADJUNCT existed, but it was slow.  It was made native.)
 ;
-; https://forum.rebol.info/t/performance-of-inherit-meta/1619
+; https://forum.rebol.info/t/1619
 ;
 
 enclose: enclose* :enclose* lambda [f] [  ; uses low-level ENCLOSE* to make
     set let inner f.inner  ; don't cache name via SET-WORD!
-    inherit-meta (do f) inner
+    inherit-adjunct (do f) inner
 ]
-inherit-meta enclose :enclose*  ; needed since we used ENCLOSE*
+inherit-adjunct enclose :enclose*  ; needed since we used ENCLOSE*
 
 specialize: enclose :specialize* lambda [f] [  ; now we have high-level ENCLOSE
     set let action f.action  ; don't cache name via SET-WORD!
-    inherit-meta (do f) action
+    inherit-adjunct (do f) action
 ]
 
 adapt: enclose :adapt* lambda [f] [
     set let action f.action
-    inherit-meta do f action
+    inherit-adjunct do f action
 ]
 
 chain: enclose :chain* lambda [f] [
     ; don't cache name via SET-WORD!
     set let pipeline1 pick (f.pipeline: reduce/predicate f.pipeline :unrun) 1
-    inherit-meta (do f) pipeline1
+    inherit-adjunct (do f) pipeline1
 ]
 
 augment: enclose :augment* lambda [f] [
     set let action f.action  ; don't cache name via SET-WORD!
     let spec: f.spec
-    inherit-meta/augment (do f) action spec
+    inherit-adjunct/augment (do f) action spec
 ]
 
 reframer: enclose :reframer* lambda [f] [
     set let shim f.shim  ; don't cache name via SET-WORD!
-    inherit-meta (do f) shim
+    inherit-adjunct (do f) shim
 ]
 
 reorder: enclose :reorder* lambda [f] [
     set let action f.action  ; don't cache name via SET-WORD!
-    inherit-meta (do f) action
+    inherit-adjunct (do f) action
 ]
 
 
@@ -460,7 +460,7 @@ run func* [
         tester: unrun typechecker (get bind (as word! type-name) set-word)
         set set-word runs tester
 
-        set-meta tester make system.standard.action-meta [
+        set-adjunct tester make system.standard.action-adjunct [
             description: spaced [{Returns TRUE if the value is} an type-name]
             return-type: [logic!]
         ]

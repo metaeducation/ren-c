@@ -186,7 +186,7 @@ Context(*) Make_Context_For_Action_Push_Partials(
         goto continue_unspecialized;
     }
 
-    mutable_MISC(VarlistMeta, varlist) = nullptr;
+    mutable_MISC(VarlistAdjunct, varlist) = nullptr;
     mutable_LINK(Patches, varlist) = nullptr;
 
     return CTX(varlist);

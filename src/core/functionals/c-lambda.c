@@ -245,9 +245,9 @@ DECLARE_NATIVE(lambda)
         return Init_Activation(OUT, lambda, ANONYMOUS, UNBOUND);
     }
 
-    Context(*) meta;  // reuses Pop_Paramlist(), see [1]
-    Array(*) paramlist = Pop_Paramlist_With_Meta_May_Fail(
-        &meta,
+    Context(*) adjunct;  // reuses Pop_Paramlist(), see [1]
+    Array(*) paramlist = Pop_Paramlist_With_Adjunct_May_Fail(
+        &adjunct,
         STACK_BASE,
         MKF_KEYWORDS,
         0  // no return_stackindex
@@ -260,7 +260,7 @@ DECLARE_NATIVE(lambda)
         IDX_LAMBDA_MAX  // same as specialization, just 1 (for archetype)
     );
 
-    assert(ACT_META(lambda) == nullptr);
+    assert(ACT_ADJUNCT(lambda) == nullptr);
 
     Array(*) details = ACT_DETAILS(lambda);
     Copy_Cell(ARR_AT(details, IDX_LAMBDA_BLOCK), body);

@@ -443,7 +443,7 @@ import*: func [
         ;
         ensure module! unmeta value
         if where [
-            let exports: select (maybe meta-of unmeta value) 'exports
+            let exports: select (maybe adjunct-of unmeta value) 'exports
             proxy-exports where (unmeta value) (maybe exports)
         ]
     ]
@@ -453,7 +453,7 @@ import*: func [
     if module? source [
         assert [not into]  ; ONLY isn't applicable unless scanning new source
 
-        let name: (meta-of source).name else [
+        let name: (adjunct-of source).name else [
             product': ~nameless~
             return source  ; no name, so just do the RESOLVE to get variables
         ]
@@ -659,7 +659,7 @@ export*: func [
     <local>
         hdr exports val word types items
 ][
-    hdr: meta-of where
+    hdr: adjunct-of where
     exports: ensure block! select hdr 'Exports
 
     if left [

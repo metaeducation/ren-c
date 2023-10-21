@@ -1166,7 +1166,7 @@ void Push_Action(
     );
     SER_INFO(s) = SERIES_INFO_MASK_NONE;
     INIT_BONUS_KEYSOURCE(ARR(s), f);  // maps varlist back to f
-    mutable_MISC(VarlistMeta, s) = nullptr;
+    mutable_MISC(VarlistAdjunct, s) = nullptr;
     mutable_LINK(Patches, s) = nullptr;
     f->varlist = ARR(s);
 

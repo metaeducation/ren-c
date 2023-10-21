@@ -48,7 +48,7 @@ decode-key-value-text: function [
                 newline not data-field-name not newline to newline
             ]
             | opt some [newline opt newline 2 20 #" " to newline]
-        ] eol: (emit-meta) newline
+        ] eol: (emit-stuff) newline
     ]
 
     data-field-char: charset [#"A" - #"Z" #"a" - #"z"]
@@ -57,7 +57,7 @@ decode-key-value-text: function [
         opt some [#" " some data-field-char] #":"
     ]
 
-    emit-meta: func [
+    emit-stuff: func [
         return: <none>
         <local> key
     ][
@@ -69,7 +69,7 @@ decode-key-value-text: function [
         ]
     ]
 
-    meta: copy []
+    stuff: copy []
 
     parse2 text data-fields else [
         fail [
@@ -78,7 +78,7 @@ decode-key-value-text: function [
         ]
     ]
 
-    return new-line/all/skip meta true 2
+    return new-line/all/skip stuff true 2
 ]
 
 load-until-blank: function [

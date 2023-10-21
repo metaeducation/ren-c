@@ -323,8 +323,8 @@ DECLARE_NATIVE(make_native)
         IDX_TCC_NATIVE_MAX  // details len [source module linkname tcc_state]
     );
 
-    assert(ACT_META(native) == nullptr);
-    mutable_ACT_META(native) = meta;
+    assert(ACT_ADJUNCT(native) == nullptr);
+    mutable_ACT_ADJUNCT(native) = meta;
 
     Array(*) details = ACT_DETAILS(native);
 

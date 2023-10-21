@@ -96,7 +96,7 @@
 // discern the case where it can be cast to a Frame(*) vs. Array(*).
 //
 // (Note: FRAME!s used to use a field `misc.f` to track the associated
-// frame...but that prevented the ability to SET-META on a frame.  While
+// frame...but that prevented the ability to SET-ADJUNCT on a frame.  While
 // that feature may not be essential, it seems awkward to not allow it
 // since it's allowed for other ANY-CONTEXT!s.  Also, it turns out that
 // heap-based FRAME! values--such as those that come from MAKE FRAME!--
@@ -399,8 +399,8 @@ inline static void Init_Key(REBKEY *dest, const Raw_Symbol* symbol)
 // where information for HELP is saved, and it's how modules store out-of-band
 // information that doesn't appear in their body.
 
-#define mutable_ACT_META(a)     mutable_MISC(DetailsMeta, ACT_IDENTITY(a))
-#define ACT_META(a)             MISC(DetailsMeta, ACT_IDENTITY(a))
+#define mutable_ACT_ADJUNCT(a)     mutable_MISC(DetailsAdjunct, ACT_IDENTITY(a))
+#define ACT_ADJUNCT(a)             MISC(DetailsAdjunct, ACT_IDENTITY(a))
 
 
 inline static Action(*) VAL_ACTION(noquote(Cell(const*)) v) {

@@ -103,8 +103,8 @@ DECLARE_NATIVE(generic)
         IDX_NATIVE_MAX  // details array capacity
     );
 
-    assert(ACT_META(generic) == nullptr);
-    mutable_ACT_META(generic) = meta;
+    assert(ACT_ADJUNCT(generic) == nullptr);
+    mutable_ACT_ADJUNCT(generic) = meta;
 
     Set_Action_Flag(generic, IS_NATIVE);
 

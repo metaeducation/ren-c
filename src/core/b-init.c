@@ -578,15 +578,15 @@ static void Init_System_Object(
     if (not Is_Word_Isotope_With_Id(result, SYM_DONE))
         panic (result);
 
-    // Init_Action_Meta_Shim() made Root_Action_Meta as a bootstrap hack
-    // since it needed to make function meta information for natives before
+    // Init_Action_Adjunct_Shim() made Root_Action_Adjunct as a bootstrap hack
+    // since it needed to make function adjunct information for natives before
     // %sysobj.r's code could run using those natives.  But make sure what it
     // made is actually identical to the definition in %sysobj.r.
     //
     assert(
         0 == CT_Context(
-            Get_System(SYS_STANDARD, STD_ACTION_META),
-            Root_Action_Meta,
+            Get_System(SYS_STANDARD, STD_ACTION_ADJUNCT),
+            Root_Action_Adjunct,
             true  // "strict equality"
         )
     );
@@ -1050,7 +1050,7 @@ void Startup_Core(void)
         // we don't have MODULE or EXPORT available.  Do the exports manually,
         // and then import the results to lib.
         //
-        "set-meta sys.util make object! [",
+        "set-adjunct sys.util make object! [",
             "Name: 'System",  // this is MAKE OBJECT!, not MODULE, must quote
             "Exports: [module load load-value decode encode encoding-of]",
         "]",

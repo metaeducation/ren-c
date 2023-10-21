@@ -113,7 +113,7 @@
 // is another object's-worth of data *about* the module's contents (e.g. the
 // processed header)
 //
-#define CTX_META(c)     MISC(VarlistMeta, CTX_VARLIST(c))
+#define CTX_ADJUNCT(c)     MISC(VarlistAdjunct, CTX_VARLIST(c))
 
 #define LINK_Patches_TYPE       Array(*)
 #define LINK_Patches_CAST       ARR
@@ -150,7 +150,7 @@
 //
 // Note: Other context types could use the slots for binding and phase for
 // other purposes.  For instance, MODULE! could store its header information.
-// For the moment that is done with the CTX_META() field instead.
+// For the moment that is done with the CTX_ADJUNCT() field instead.
 //
 
 inline static const REBVAL *CTX_ARCHETYPE(Context(*) c) {  // read-only form
@@ -703,7 +703,7 @@ inline static Context(*) Steal_Context_Vars(Context(*) c, Node* keysource) {
         cast(char*, &stub->content),
         sizeof(union Reb_Stub_Content)
     );
-    mutable_MISC(VarlistMeta, copy) = nullptr;  // let stub have the meta
+    mutable_MISC(VarlistAdjunct, copy) = nullptr;  // let stub have the meta
     mutable_LINK(Patches, copy) = nullptr;  // don't carry forward patches
 
     REBVAL *rootvar = cast(REBVAL*, copy->content.dynamic.data);

@@ -90,7 +90,7 @@
     nohelp: reorder* :append [value series]  ; cheaper/faster to create
     did all [
         [a b c <item>] = nohelp <item> [a b c]  ; works the same
-        null = meta-of :nohelp  ; ...but has no parameter information
+        null = adjunct-of :nohelp  ; ...but has no parameter information
     ]
 )
 

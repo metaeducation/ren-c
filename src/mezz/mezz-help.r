@@ -18,13 +18,13 @@ spec-of: function [
     return: [block!]
     action [<unrun> action!]
 ][
-    meta: (match object! meta-of action) else [return [~bad-spec~]]
+    adjunct: (match object! adjunct-of action) else [return [~bad-spec~]]
 
     return collect [
-        keep/line maybe ensure [<opt> text!] select meta 'description
+        keep/line maybe ensure [<opt> text!] select adjunct 'description
 
-        types: ensure [<opt> frame! object!] select meta 'parameter-types
-        notes: ensure [<opt> frame! object!] select meta 'parameter-notes
+        types: ensure [<opt> frame! object!] select adjunct 'parameter-types
+        notes: ensure [<opt> frame! object!] select adjunct 'parameter-notes
 
         return-type: ensure [<opt> block!] select maybe types 'return
         return-note: ensure [<opt> text!] select maybe notes 'return
@@ -58,8 +58,8 @@ description-of: function [
             mold v
         ]
         action! [
-            if let m: meta-of :v [
-                copy maybe get 'm.description
+            if let adjunct: adjunct-of :v [
+                copy maybe get 'adjunct.description
             ] else [null]
         ]
         object! [mold words of v]
@@ -319,7 +319,7 @@ help: function [
     ; The HELP mechanics for ACTION! are more complex in Ren-C due to the
     ; existence of function composition tools like SPECIALIZE, CHAIN, ADAPT,
     ; HIJACK, etc.  Rather than keep multiple copies of the help strings,
-    ; the relationships are maintained in META-OF information on the ACTION!
+    ; the relationships are maintained in ADJUNCT-OF information on the ACTION!
     ; and are "dug through" in order to dynamically inherit the information.
     ;
     ; Code to do this evolved rather organically, as automatically generating
@@ -350,21 +350,25 @@ help: function [
         ]
     ]
 
-    meta: meta-of :value else '[]  ; so SELECT just returns NULL
+    adjunct: adjunct-of :value else '[]  ; so SELECT just returns NULL
 
     print newline
 
     print "DESCRIPTION:"
-    print [_ _ _ _ (select meta 'description) else ["(undocumented)"]]
+    print [_ _ _ _ (select adjunct 'description) else ["(undocumented)"]]
     print [_ _ _ _ (uppercase mold topic) {is an ACTION!}]
 
     print-args: [list /indent-words] -> [
         for-each param list [
             types: ensure [<opt> block!] (
-                select (maybe select meta 'parameter-types) to-word noquote param
+                select (maybe select adjunct 'parameter-types) (
+                    to-word noquote param
+                )
             )
             note: ensure [<opt> text!] (try
-                select (maybe select meta 'parameter-notes) to-word noquote param
+                select (maybe select adjunct 'parameter-notes) (
+                    to-word noquote param
+                )
             )
 
             print [_ _ _ _ param (if types [mold types])]
@@ -378,8 +382,8 @@ help: function [
     ; that isn't intended for use as a definitional return is a return type.
     ; The concepts are still being fleshed out.
     ;
-    return-type: select maybe select meta 'parameter-types 'return
-    return-note: select maybe select meta 'parameter-notes 'return
+    return-type: select maybe select adjunct 'parameter-types 'return
+    return-note: select maybe select adjunct 'parameter-notes 'return
 
     print newline
     print [
@@ -461,7 +465,7 @@ source: function [
 
     ; ACTION!
     ; The system doesn't preserve the literal spec, so it must be rebuilt
-    ; from combining the the META-OF information.
+    ; from combining the the ADJUNCT-OF information.
 
     write-stdout unspaced [
         mold name ":" _ "make action! [" _ mold spec-of f

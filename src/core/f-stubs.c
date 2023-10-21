@@ -293,7 +293,7 @@ void Extra_Init_Context_Cell_Checks_Debug(enum Reb_Kind kind, Context(*) c) {
         ASSERT_SERIES_MANAGED(keylist);
     }
 
-    assert(not CTX_META(c) or ANY_CONTEXT_KIND(CTX_TYPE(CTX_META(c))));
+    assert(not CTX_ADJUNCT(c) or ANY_CONTEXT_KIND(CTX_TYPE(CTX_ADJUNCT(c))));
 
     // FRAME!s must always fill in the phase slot, but that piece of the
     // REBVAL is reserved for future use in other context types...so make
@@ -329,7 +329,7 @@ void Extra_Init_Action_Checks_Debug(Action(*) a) {
     // !!! Currently only a context can serve as the "meta" information,
     // though the interface may expand.
     //
-    assert(not ACT_META(a) or ANY_CONTEXT_KIND(CTX_TYPE(ACT_META(a))));
+    assert(not ACT_ADJUNCT(a) or ANY_CONTEXT_KIND(CTX_TYPE(ACT_ADJUNCT(a))));
 }
 
 #endif

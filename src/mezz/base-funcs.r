@@ -326,7 +326,7 @@ redescribe: func [
     action [<unrun> action!]
         {(modified) Action whose description is to be updated.}
 ][
-    let meta: meta-of action
+    let adjunct: adjunct-of action
     let notes: null
     let description: null
 
@@ -335,34 +335,36 @@ redescribe: func [
     ; with the meta information at all, while `redescribe [{stuff}] :foo` will
     ; only manipulate the description.
 
-    let on-demand-meta: does [
-        meta: default [set-meta action copy system.standard.action-meta]
-
-        if not in meta 'description [
-            fail [{archetype META-OF doesn't have DESCRIPTION slot} meta]
+    let on-demand-adjunct: does [
+        adjunct: default [
+            set-adjunct action copy system.standard.action-adjunct
         ]
 
-        if notes: select meta 'parameter-notes [
+        if not in adjunct 'description [
+            fail [{archetype ADJUNCT OF doesn't have DESCRIPTION slot} meta]
+        ]
+
+        if notes: select adjunct 'parameter-notes [
             if not any-context? notes [  ; !!! Sometimes OBJECT!, else FRAME!
-                fail [{PARAMETER-NOTES in META-OF is not a FRAME!} notes]
+                fail [{PARAMETER-NOTES in ADJUNCT-OF is not a FRAME!} notes]
             ]
 
             all [frame? notes, action <> (action of notes)] then [
-                fail [{PARAMETER-NOTES in META-OF frame mismatch} notes]
+                fail [{PARAMETER-NOTES in ADJUNCT-OF frame mismatch} notes]
             ]
         ]
     ]
 
     let on-demand-notes: does [  ; was DOES CATCH, removed during DOES tweak
-        on-demand-meta
+        on-demand-adjunct
 
-        if find meta 'parameter-notes [
-            meta: null  ; need to get a parameter-notes field in the OBJECT!
-            on-demand-meta  ; ...so this loses SPECIALIZEE, etc.
+        if find adjunct 'parameter-notes [
+            adjunct: null  ; need to get a parameter-notes field in the OBJECT!
+            on-demand-adjunct  ; ...so this loses SPECIALIZEE, etc.
 
-            description: meta.description: fields.description
-            notes: meta.parameter-notes: fields.parameter-notes
-            types: meta.parameter-types: fields.parameter-types
+            description: adjunct.description: fields.description
+            notes: adjunct.parameter-notes: fields.parameter-notes
+            types: adjunct.parameter-types: fields.parameter-types
         ]
     ]
 
@@ -374,12 +376,12 @@ redescribe: func [
                 description: spaced description
                 all [
                     description = {}
-                    not meta
+                    not adjunct
                 ] then [
-                    ; No action needed (no meta to delete old description in)
+                    ; No action needed (no adjunct to delete old description in)
                 ] else [
-                    on-demand-meta
-                    meta.description: if description = {} [
+                    on-demand-adjunct
+                    adjunct.description: if description = {} [
                         _
                     ] else [
                         description
@@ -402,9 +404,9 @@ redescribe: func [
             ;
             try [[copy note some text!] (
                 note: spaced note
-                on-demand-meta
+                on-demand-adjunct
                 if param = 'return: [
-                    meta.return-note: all [
+                    adjunct.return-note: all [
                         note <> {}
                         copy note
                     ]
@@ -434,17 +436,17 @@ redescribe: func [
         fail [{REDESCRIBE specs should be STRING! and ANY-WORD! only:} spec]
     ]
 
-    ; If you kill all the notes then they will be cleaned up.  The meta
+    ; If you kill all the notes then they will be cleaned up.  The adjunct
     ; object will be left behind, however.
     ;
     all [
         notes
         every [param note] notes [none? :note]
     ] then [
-        meta.parameter-notes: null
+        adjunct.parameter-notes: null
     ]
 
-    return runs action  ; should have updated the meta
+    return runs action  ; should have updated the adjunct
 ]
 
 
@@ -926,7 +928,7 @@ cause-error: func [
     ; Filter out functional values:
     iterate args [
         if action? first args [
-            change args (meta-of first args)
+            change args (adjunct-of first args)
         ]
     ]
 

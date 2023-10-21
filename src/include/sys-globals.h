@@ -152,7 +152,7 @@ PVAR REBVAL *Root_Heavy_False;  // isotopic block containing a meta false
 
 PVAR Raw_Array PG_Inaccessible_Series;  // singular inaccessible varlist
 
-PVAR REBVAL *Root_Action_Meta;
+PVAR REBVAL *Root_Action_Adjunct;
 
 PVAR REBVAL *Root_Stackoverflow_Error;  // made in advance, avoids extra calls
 PVAR REBVAL *Root_No_Memory_Error;  // also must be made in advance

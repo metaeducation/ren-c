@@ -187,7 +187,7 @@ standard: make object! [
 
     ; !!! The %sysobj.r initialization currently runs natives (notably the
     ; natives for making objects, and here using COMMENT because it can).
-    ; This means that if the ACTION-META information is going to be produced
+    ; This means that if the ACTION-ADJUNCT information is going to be produced
     ; from a spec block for natives, it wouldn't be available while the
     ; natives are getting initialized.
     ;
@@ -196,7 +196,7 @@ standard: make object! [
     ; the archetypal context has to be created "by hand" for natives to use,
     ; with this archetype used by the REDESCRIBE Mezzanine.
     ;
-    action-meta: make object! [
+    action-adjunct: make object! [
         description: null
         parameter-types: null
         parameter-notes: null
@@ -204,7 +204,7 @@ standard: make object! [
 
     ; !!! This is the template used for all errors, to which extra fields are
     ; added if the error has parameters.  It likely makes sense to put this
-    ; information into the META-OF of the error, so that parameterizing the
+    ; information into the ADJUNCT-OF of the error, so that parameterizing the
     ; error does not require a keylist expansion...and also so that fields
     ; like FILE and LINE would not conflict with parameters.
     ;

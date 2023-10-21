@@ -47,7 +47,7 @@ Context(*) Alloc_Context_Core(enum Reb_Kind kind, REBLEN capacity, Flags flags)
         SERIES_MASK_VARLIST  // includes assurance of dynamic allocation
             | flags  // e.g. NODE_FLAG_MANAGED
     );
-    mutable_MISC(VarlistMeta, varlist) = nullptr;
+    mutable_MISC(VarlistAdjunct, varlist) = nullptr;
     mutable_LINK(Patches, varlist) = nullptr;
     INIT_CTX_KEYLIST_UNIQUE(CTX(varlist), keylist);  // starts out unique
 
@@ -619,7 +619,7 @@ Context(*) Make_Context_Detect_Managed(
             | NODE_FLAG_MANAGED // Note: Rebind below requires managed context
     );
     SET_SERIES_LEN(varlist, 1 + len);
-    mutable_MISC(VarlistMeta, varlist) = nullptr;
+    mutable_MISC(VarlistAdjunct, varlist) = nullptr;
     mutable_LINK(Patches, varlist) = nullptr;  // start w/no virtual binds
 
     Context(*) context = CTX(varlist);

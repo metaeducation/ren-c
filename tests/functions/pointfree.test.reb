@@ -18,7 +18,7 @@
         ; rest of block is invocation by example
         f.block: skip f.block 1  ; Note: NEXT not defined yet
 
-        inherit-meta (do f) action  ; don't SET-WORD! cache name
+        inherit-adjunct (do f) action  ; don't SET-WORD! cache name
     ])[
         action: unrun :panic/value  ; overwritten, best to make something mean
     ], true

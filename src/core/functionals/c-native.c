@@ -171,8 +171,8 @@ Action(*) Make_Native(
     // We want the meta information on the wrapped version if it's a
     // NATIVE-COMBINATOR.
     //
-    assert(ACT_META(native) == nullptr);
-    mutable_ACT_META(native) = meta;
+    assert(ACT_ADJUNCT(native) == nullptr);
+    mutable_ACT_ADJUNCT(native) = meta;
 
     // Some features are not supported by intrinsics, because it would make
     // them too complicated.
@@ -233,32 +233,32 @@ DECLARE_NATIVE(native)
 
 
 //
-//  Init_Action_Meta_Shim: C
+//  Init_Action_Adjunct_Shim: C
 //
-// Make_Paramlist_Managed_May_Fail() needs the object archetype ACTION-META
+// Make_Paramlist_Managed_May_Fail() needs the object archetype ACTION-ADJUNCT
 // from %sysobj.r, to have the keylist to use in generating the info used
 // by HELP for the natives.  However, natives themselves are used in order
 // to run the object construction in %sysobj.r
 //
 // To break this Catch-22, this code builds a field-compatible version of
-// ACTION-META.  After %sysobj.r is loaded, an assert checks to make sure
+// ACTION-ADJUNCT.  After %sysobj.r is loaded, an assert checks to make sure
 // that this manual construction actually matches the definition in the file.
 //
-static void Init_Action_Meta_Shim(void) {
+static void Init_Action_Adjunct_Shim(void) {
     SymId field_syms[3] = {
         SYM_DESCRIPTION, SYM_PARAMETER_TYPES, SYM_PARAMETER_NOTES
     };
-    Context(*) meta = Alloc_Context_Core(REB_OBJECT, 4, NODE_FLAG_MANAGED);
+    Context(*) adjunct = Alloc_Context_Core(REB_OBJECT, 4, NODE_FLAG_MANAGED);
     REBLEN i = 1;
     for (; i != 4; ++i)
-        Init_Nulled(Append_Context(meta, Canon_Symbol(field_syms[i - 1])));
+        Init_Nulled(Append_Context(adjunct, Canon_Symbol(field_syms[i - 1])));
 
-    Root_Action_Meta = Init_Object(Alloc_Value(), meta);
-    Force_Value_Frozen_Deep(Root_Action_Meta);
+    Root_Action_Adjunct = Init_Object(Alloc_Value(), adjunct);
+    Force_Value_Frozen_Deep(Root_Action_Adjunct);
 }
 
-static void Shutdown_Action_Meta_Shim(void) {
-    rebRelease(Root_Action_Meta);
+static void Shutdown_Action_Adjunct_Shim(void) {
+    rebRelease(Root_Action_Adjunct);
 }
 
 
@@ -273,7 +273,7 @@ Array(*) Startup_Natives(const REBVAL *boot_natives)
 
     // Must be called before first use of Make_Paramlist_Managed_May_Fail()
     //
-    Init_Action_Meta_Shim();
+    Init_Action_Adjunct_Shim();
 
     assert(VAL_INDEX(boot_natives) == 0); // should be at head, sanity check
     Cell(const*) tail;
@@ -374,5 +374,5 @@ Array(*) Startup_Natives(const REBVAL *boot_natives)
 // for startups after the first, unless we manually null them out.
 //
 void Shutdown_Natives(void) {
-    Shutdown_Action_Meta_Shim();
+    Shutdown_Action_Adjunct_Shim();
 }

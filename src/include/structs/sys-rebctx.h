@@ -24,9 +24,9 @@
 // This file just defines basic structures and flags.
 //
 
-#define MISC_VarlistMeta_TYPE      Context(*)
-#define MISC_VarlistMeta_CAST      CTX
-#define HAS_MISC_VarlistMeta       FLAVOR_VARLIST
+#define MISC_VarlistAdjunct_TYPE      Context(*)
+#define MISC_VarlistAdjunct_CAST      CTX
+#define HAS_MISC_VarlistAdjunct       FLAVOR_VARLIST
 
 
 //=//// PARAMLIST_HAS_RETURN //////////////////////////////////////////////=//

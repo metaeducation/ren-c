@@ -78,7 +78,7 @@
     did all [
         orig: func ["description" a "a" /b "b"] [return <unused>]
         aug: augment :orig [c "c" /d "d"]
-        m: meta-of :aug
+        m: adjunct-of :aug
         m.description = "description"
         m.parameter-notes.a = "a"
         m.parameter-notes.b = "b"

@@ -250,8 +250,8 @@ Action(*) Make_Interpreted_Action_May_Fail(
         details_capacity  // we fill in details[0], caller fills any extra
     );
 
-    assert(ACT_META(a) == nullptr);
-    mutable_ACT_META(a) = meta;
+    assert(ACT_ADJUNCT(a) == nullptr);
+    mutable_ACT_ADJUNCT(a) = meta;
 
     Array(*) copy = Copy_And_Bind_Relative_Deep_Managed(
         body,  // new copy has locals bound relatively to the new action
@@ -632,7 +632,7 @@ DECLARE_NATIVE(definitional_return)
 
 
 //
-//  inherit-meta: native [
+//  inherit-adjunct: native [
 //
 //  {Copy help information from the original function to the derived function}
 //
@@ -644,9 +644,9 @@ DECLARE_NATIVE(definitional_return)
 //          [block!]
 //  ]
 //
-DECLARE_NATIVE(inherit_meta)
+DECLARE_NATIVE(inherit_adjunct)
 {
-    INCLUDE_PARAMS_OF_INHERIT_META;
+    INCLUDE_PARAMS_OF_INHERIT_ADJUNCT;
 
     REBVAL *derived = ARG(derived);
     mutable_QUOTE_BYTE(derived) = ISOTOPE_0;  // ensure return is isotope
@@ -655,30 +655,30 @@ DECLARE_NATIVE(inherit_meta)
 
     UNUSED(ARG(augment));  // !!! not yet implemented
 
-    Context(*) m1 = ACT_META(VAL_ACTION(original));
-    if (not m1)  // nothing to copy
+    Context(*) a1 = ACT_ADJUNCT(VAL_ACTION(original));
+    if (not a1)  // nothing to copy
         return COPY(ARG(derived));
 
-    // Often the derived function won't have its own meta information yet.  But
-    // if it was created via an AUGMENT, it will have some...only the notes
+    // Often the derived function won't have its own adjunct information yet.
+    // But if it was created via an AUGMENT, it will have some...only the notes
     // and types for the added parameters, the others will be NULL.
     //
-    Context(*) m2 = ACT_META(VAL_ACTION(derived));
-    if (not m2) {  // doesn't have its own information
-        m2 = Copy_Context_Shallow_Managed(VAL_CONTEXT(Root_Action_Meta));
-        mutable_ACT_META(VAL_ACTION(derived)) = m2;
+    Context(*) a2 = ACT_ADJUNCT(VAL_ACTION(derived));
+    if (not a2) {  // doesn't have its own information
+        a2 = Copy_Context_Shallow_Managed(VAL_CONTEXT(Root_Action_Adjunct));
+        mutable_ACT_ADJUNCT(VAL_ACTION(derived)) = a2;
     }
 
     // By default, inherit description (though ideally, they should have
     // changed it to explain why it's different).
     //
     option(Value(*)) description2 = Select_Symbol_In_Context(
-        CTX_ARCHETYPE(m2),
+        CTX_ARCHETYPE(a2),
         Canon(DESCRIPTION)
     );
     if (description2 and Is_Nulled(unwrap(description2))) {
         option(Value(*)) description1 = Select_Symbol_In_Context(
-            CTX_ARCHETYPE(m1),
+            CTX_ARCHETYPE(a1),
             Canon(DESCRIPTION)
         );
         if (description1)
@@ -690,7 +690,7 @@ DECLARE_NATIVE(inherit_meta)
 
     for (; syms[which] != 0; ++which) {
         Value(*) val1 = try_unwrap(Select_Symbol_In_Context(
-            CTX_ARCHETYPE(m1),
+            CTX_ARCHETYPE(a1),
             Canon_Symbol(unwrap(syms[which]))
         ));
         if (not val1 or Is_Nulled(val1) or Is_None(val1))
@@ -701,7 +701,7 @@ DECLARE_NATIVE(inherit_meta)
         Context(*) ctx1 = VAL_CONTEXT(val1);
 
         Value(*) val2 = try_unwrap(Select_Symbol_In_Context(
-            CTX_ARCHETYPE(m2),
+            CTX_ARCHETYPE(a2),
             Canon_Symbol(unwrap(syms[which]))
         ));
         if (not val2)

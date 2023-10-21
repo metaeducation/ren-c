@@ -825,8 +825,8 @@ DECLARE_NATIVE(js_native)
     );
     Set_Action_Flag(native, IS_NATIVE);
 
-    assert(ACT_META(native) == nullptr);  // should default to nullptr
-    mutable_ACT_META(native) = meta;
+    assert(ACT_ADJUNCT(native) == nullptr);  // should default to nullptr
+    mutable_ACT_ADJUNCT(native) = meta;
 
     heapaddr_t native_id = Native_Id_For_Action(native);
 

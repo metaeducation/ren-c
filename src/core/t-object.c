@@ -703,26 +703,26 @@ Bounce TO_Context(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg)
 
 
 //
-//  meta-of: native [
+//  adjunct-of: native [
 //
-//  {Get a reference to the "meta" context associated with a value.}
+//  {Get a reference to the "adjunct" context associated with a value}
 //
 //      return: [<opt> any-context!]
 //      value [<maybe> action! any-context!]
 //  ]
 //
-DECLARE_NATIVE(meta_of)  // see notes on MISC_META()
+DECLARE_NATIVE(adjunct_of)
 {
-    INCLUDE_PARAMS_OF_META_OF;
+    INCLUDE_PARAMS_OF_ADJUNCT_OF;
 
     REBVAL *v = ARG(value);
 
     Context(*) meta;
     if (IS_ACTION(v))
-        meta = ACT_META(VAL_ACTION(v));
+        meta = ACT_ADJUNCT(VAL_ACTION(v));
     else {
         assert(ANY_CONTEXT(v));
-        meta = CTX_META(VAL_CONTEXT(v));
+        meta = CTX_ADJUNCT(VAL_CONTEXT(v));
     }
 
     if (not meta)
@@ -733,43 +733,43 @@ DECLARE_NATIVE(meta_of)  // see notes on MISC_META()
 
 
 //
-//  set-meta: native [
+//  set-adjunct: native [
 //
-//  {Set "meta" object associated with all references to a value.}
+//  {Set "adjunct" object associated with all references to a value}
 //
 //      return: [<opt> any-context!]
 //      value [action! any-context!]
-//      meta [<opt> any-context!]
+//      adjunct [<opt> any-context!]
 //  ]
 //
-DECLARE_NATIVE(set_meta)
+DECLARE_NATIVE(set_adjunct)
 //
-// See notes accompanying the `meta` field in the REBSER definition.
+// See notes accompanying the `adjunct` field in the REBSER definition.
 {
-    INCLUDE_PARAMS_OF_SET_META;
+    INCLUDE_PARAMS_OF_SET_ADJUNCT;
 
-    REBVAL *meta = ARG(meta);
+    REBVAL *adjunct = ARG(adjunct);
 
-    Context(*) meta_ctx;
-    if (ANY_CONTEXT(meta)) {
-        if (IS_FRAME(meta))
-            fail ("SET-META can't store context bindings, frames disallowed");
+    Context(*) ctx;
+    if (ANY_CONTEXT(adjunct)) {
+        if (IS_FRAME(adjunct))
+            fail ("SET-ADJUNCT can't store bindings, FRAME! disallowed");
 
-        meta_ctx = VAL_CONTEXT(meta);
+        ctx = VAL_CONTEXT(adjunct);
     }
     else {
-        assert(Is_Nulled(meta));
-        meta_ctx = nullptr;
+        assert(Is_Nulled(adjunct));
+        ctx = nullptr;
     }
 
     REBVAL *v = ARG(value);
 
     if (IS_ACTION(v))
-        mutable_MISC(DetailsMeta, ACT_IDENTITY(VAL_ACTION(v))) = meta_ctx;
+        mutable_MISC(DetailsAdjunct, ACT_IDENTITY(VAL_ACTION(v))) = ctx;
     else
-        mutable_MISC(VarlistMeta, CTX_VARLIST(VAL_CONTEXT(v))) = meta_ctx;
+        mutable_MISC(VarlistAdjunct, CTX_VARLIST(VAL_CONTEXT(v))) = ctx;
 
-    return COPY(meta);
+    return COPY(adjunct);
 }
 
 
@@ -821,13 +821,13 @@ Context(*) Copy_Context_Extra_Managed(
 
         assert(extra == 0);
 
-        if (CTX_META(original)) {
-            mutable_MISC(VarlistMeta, varlist) = Copy_Context_Shallow_Managed(
-                CTX_META(original)
+        if (CTX_ADJUNCT(original)) {
+            mutable_MISC(VarlistAdjunct, varlist) = Copy_Context_Shallow_Managed(
+                CTX_ADJUNCT(original)
             );
         }
         else {
-            mutable_MISC(VarlistMeta, varlist) = nullptr;
+            mutable_MISC(VarlistAdjunct, varlist) = nullptr;
         }
         INIT_BONUS_KEYSOURCE(varlist, nullptr);
         mutable_LINK(Patches, varlist) = nullptr;
@@ -904,12 +904,12 @@ Context(*) Copy_Context_Extra_Managed(
     // If we're copying a frame here, we know it's not running.
     //
     if (CTX_TYPE(original) == REB_FRAME)
-        mutable_MISC(VarlistMeta, varlist) = nullptr;
+        mutable_MISC(VarlistAdjunct, varlist) = nullptr;
     else {
         // !!! Should the meta object be copied for other context types?
         // Deep copy?  Shallow copy?  Just a reference to the same object?
         //
-        mutable_MISC(VarlistMeta, varlist) = nullptr;
+        mutable_MISC(VarlistAdjunct, varlist) = nullptr;
     }
 
     mutable_LINK(Patches, varlist) = nullptr;  // no virtual bind patches yet

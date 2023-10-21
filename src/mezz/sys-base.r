@@ -133,7 +133,7 @@ module: func [
             append spec spread compose [Exports: (make block! 10)]
         ]
 
-        set-meta mod spec
+        set-adjunct mod spec
     ]
 
     ; Interning makes the binding of *all* the words be "attached" in their

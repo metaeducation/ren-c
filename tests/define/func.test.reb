@@ -24,7 +24,7 @@
 [(
     did all [  ; try with no RETURN:
         foo: func ["description" a "a" b "b"] []
-        m: meta-of :foo
+        m: adjunct-of :foo
         m.description = "description"
         m.parameter-types = null
         m.parameter-notes.return = null
@@ -34,7 +34,7 @@
 )(
     did all [  ; try RETURN: with no type
         foo: func ["description" return: "returns" a "a" b "b"] []
-        m: meta-of :foo
+        m: adjunct-of :foo
         m.description = "description"
         m.parameter-types = null
         m.parameter-notes.return = "returns"
@@ -44,7 +44,7 @@
 )(
     did all [  ; try RETURN: with type
         foo: func ["description" return: [integer!] "returns" a "a" b "b"] []
-        m: meta-of :foo
+        m: adjunct-of :foo
         m.description = "description"
         m.parameter-types.return = [integer!]
         m.parameter-types.a = null
@@ -56,7 +56,7 @@
 )(
     did all [  ; try without description
         foo: func [return: [integer!] "returns" a "a" /b "b"] []
-        m: meta-of :foo
+        m: adjunct-of :foo
         m.description = null
         m.parameter-types.return = [integer!]
         m.parameter-types.a = null

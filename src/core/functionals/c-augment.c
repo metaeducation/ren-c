@@ -115,8 +115,8 @@ DECLARE_NATIVE(augment_p)  // see extended definition AUGMENT in %base-defs.r
         if (Is_Specialized(param))
             Set_Cell_Flag(TOP, STACK_NOTE_SEALED);
 
-        Init_Nulled(PUSH());  // types (inherits via INHERIT-META)
-        Init_Nulled(PUSH());  // notes (inherits via INHERIT-META)
+        Init_Nulled(PUSH());  // types (inherits via INHERIT-ADJUNCT)
+        Init_Nulled(PUSH());  // notes (inherits via INHERIT-ADJUNCT)
     }
   }
 
@@ -130,9 +130,9 @@ DECLARE_NATIVE(augment_p)  // see extended definition AUGMENT in %base-defs.r
         &return_stackindex
     );
 
-    Context(*) meta;
-    Array(*) paramlist = Pop_Paramlist_With_Meta_May_Fail(
-        &meta,
+    Context(*) adjunct;
+    Array(*) paramlist = Pop_Paramlist_With_Adjunct_May_Fail(
+        &adjunct,
         base,
         flags,
         return_stackindex
@@ -162,8 +162,8 @@ DECLARE_NATIVE(augment_p)  // see extended definition AUGMENT in %base-defs.r
         IDX_AUGMENTER_MAX  // same as specialization, just 1 (for archetype)
     );
 
-    assert(ACT_META(augmentated) == nullptr);
-    mutable_ACT_META(augmentated) = meta;
+    assert(ACT_ADJUNCT(augmentated) == nullptr);
+    mutable_ACT_ADJUNCT(augmentated) = adjunct;
 
     // Keep track that the derived keylist is related to the original, so
     // that it's possible to tell a frame built for the augmented function is

@@ -299,9 +299,9 @@ REBTYPE(Action)
         Array(*) details = ACT_DETAILS(proxy);
         Init_Quasi_Word(ARR_AT(details, 1), Canon(COPY));  // dummy ~copy~
 
-        Context(*) meta = ACT_META(act);
-        assert(ACT_META(proxy) == nullptr);
-        mutable_ACT_META(proxy) = meta;  // !!! Note: not a copy of meta
+        Context(*) meta = ACT_ADJUNCT(act);
+        assert(ACT_ADJUNCT(proxy) == nullptr);
+        mutable_ACT_ADJUNCT(proxy) = meta;  // !!! Note: not a copy of meta
 
         if (Get_Action_Flag(act, IS_NATIVE))
             Set_Action_Flag(proxy, IS_NATIVE);

@@ -511,7 +511,7 @@ void Push_Paramlist_Quads_May_Fail(
 
 
 //
-//  Pop_Paramlist_And_Meta_May_Fail: C
+//  Pop_Paramlist_With_Adjunct_May_Fail: C
 //
 // Assuming the stack is formed in a rhythm of the parameter, a type spec
 // block, and a description...produce a paramlist in a state suitable to be
@@ -519,8 +519,8 @@ void Push_Paramlist_Quads_May_Fail(
 // duplicate parameters on the stack, and the checking via a binder is done
 // as part of this popping process.
 //
-Array(*) Pop_Paramlist_With_Meta_May_Fail(
-    Context(*) *meta,
+Array(*) Pop_Paramlist_With_Adjunct_May_Fail(
+    Context(*) *adjunct_out,
     StackIndex base,
     Flags flags,
     StackIndex return_stackindex
@@ -693,7 +693,7 @@ Array(*) Pop_Paramlist_With_Meta_May_Fail(
     Manage_Series(paramlist);
 
     INIT_BONUS_KEYSOURCE(paramlist, keylist);
-    mutable_MISC(VarlistMeta, paramlist) = nullptr;
+    mutable_MISC(VarlistAdjunct, paramlist) = nullptr;
     mutable_LINK(Patches, paramlist) = nullptr;
   }
 
@@ -728,16 +728,18 @@ Array(*) Pop_Paramlist_With_Meta_May_Fail(
 
     //=///////////////////////////////////////////////////////////////////=//
     //
-    // BUILD META INFORMATION OBJECT (IF NEEDED)
+    // BUILD ADJUNCT INFORMATION OBJECT (IF NEEDED)
     //
     //=///////////////////////////////////////////////////////////////////=//
 
-    // !!! See notes on ACTION-META in %sysobj.r
+    // !!! See notes on ACTION-ADJUNCT in %sysobj.r
 
     if (flags & (MKF_HAS_DESCRIPTION | MKF_HAS_TYPES | MKF_HAS_NOTES))
-        *meta = Copy_Context_Shallow_Managed(VAL_CONTEXT(Root_Action_Meta));
+        *adjunct_out = Copy_Context_Shallow_Managed(
+            VAL_CONTEXT(Root_Action_Adjunct)
+        );
     else
-        *meta = nullptr;
+        *adjunct_out = nullptr;
 
     // If a description string was gathered, it's sitting in the first string
     // slot, the third cell we pushed onto the stack.  Extract it if so.
@@ -746,7 +748,7 @@ Array(*) Pop_Paramlist_With_Meta_May_Fail(
         StackValue(*) description = NOTES_SLOT(base + 4);
         assert(IS_TEXT(description));
         Copy_Cell(
-            CTX_VAR(*meta, STD_ACTION_META_DESCRIPTION),
+            CTX_VAR(*adjunct_out, STD_ACTION_ADJUNCT_DESCRIPTION),
             description
         );
     }
@@ -760,7 +762,7 @@ Array(*) Pop_Paramlist_With_Meta_May_Fail(
         );
         SET_SERIES_LEN(types_varlist, num_slots);
 
-        mutable_MISC(VarlistMeta, types_varlist) = nullptr;
+        mutable_MISC(VarlistAdjunct, types_varlist) = nullptr;
         mutable_LINK(Patches, types_varlist) = nullptr;
         INIT_CTX_KEYLIST_SHARED(CTX(types_varlist), keylist);
 
@@ -793,7 +795,7 @@ Array(*) Pop_Paramlist_With_Meta_May_Fail(
         }
 
         Init_Object(
-            CTX_VAR(*meta, STD_ACTION_META_PARAMETER_TYPES),
+            CTX_VAR(*adjunct_out, STD_ACTION_ADJUNCT_PARAMETER_TYPES),
             CTX(types_varlist)
         );
 
@@ -809,7 +811,7 @@ Array(*) Pop_Paramlist_With_Meta_May_Fail(
         );
         SET_SERIES_LEN(notes_varlist, num_slots);
 
-        mutable_MISC(VarlistMeta, notes_varlist) = nullptr;
+        mutable_MISC(VarlistAdjunct, notes_varlist) = nullptr;
         mutable_LINK(Patches, notes_varlist) = nullptr;
         INIT_CTX_KEYLIST_SHARED(CTX(notes_varlist), keylist);
 
@@ -842,7 +844,7 @@ Array(*) Pop_Paramlist_With_Meta_May_Fail(
         }
 
         Init_Object(
-            CTX_VAR(*meta, STD_ACTION_META_PARAMETER_NOTES),
+            CTX_VAR(*adjunct_out, STD_ACTION_ADJUNCT_PARAMETER_NOTES),
             CTX(notes_varlist)
         );
 
@@ -890,7 +892,7 @@ Array(*) Pop_Paramlist_With_Meta_May_Fail(
 // variable.  But it won't be a void at the start.
 //
 Array(*) Make_Paramlist_Managed_May_Fail(
-    Context(*) *meta,
+    Context(*) *adjunct_out,
     const REBVAL *spec,
     Flags *flags  // flags may be modified to carry additional information
 ){
@@ -921,8 +923,8 @@ Array(*) Make_Paramlist_Managed_May_Fail(
         flags,
         &return_stackindex
     );
-    Array(*) paramlist = Pop_Paramlist_With_Meta_May_Fail(
-        meta,
+    Array(*) paramlist = Pop_Paramlist_With_Adjunct_May_Fail(
+        adjunct_out,
         base,
         *flags,
         return_stackindex
@@ -1013,7 +1015,7 @@ Action(*) Make_Action(
     // Leave rest of the cells in the capacity uninitialized (caller fills in)
 
     mutable_LINK_DISPATCHER(details) = cast(CFUNC*, dispatcher);
-    mutable_MISC(DetailsMeta, details) = nullptr;  // caller can fill in
+    mutable_MISC(DetailsAdjunct, details) = nullptr;  // caller can fill in
 
     mutable_INODE(Exemplar, details) = CTX(paramlist);
 
