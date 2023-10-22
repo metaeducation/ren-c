@@ -231,6 +231,11 @@
 // remove the flag...e.g. there can be inaccessible contexts that carry the
 // SERIES_FLAG_ALWAYS_DYNAMIC bit but no longer have an allocation.
 //
+// Note: At one time the USED_BYTE() of 255 was the signal for this.  But
+// being able to pass in the flag to creation routines easily, and make the
+// test easier with Get_Series_Flag(), was seen as better.  Also, this means
+// dynamic series have an entire byte worth of free data available to use.
+//
 #define SERIES_FLAG_DYNAMIC \
     FLAG_LEFT_BIT(11)
 

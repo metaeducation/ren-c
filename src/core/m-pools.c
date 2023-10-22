@@ -935,18 +935,24 @@ void Expand_Series(REBSER *s, REBLEN index, REBLEN delta)
 //
 void Swap_Series_Content(REBSER* a, REBSER* b)
 {
-    // While the data series underlying a string may change widths over the
-    // lifetime of that string node, there's not really any reasonable case
-    // for mutating an array node into a non-array or vice versa.
+    // Can't think of any reasonable case for mutating an array node into a
+    // non-array or vice versa.  Cases haven't come up for swapping series
+    // of varying width, either.
     //
     assert(IS_SER_ARRAY(a) == IS_SER_ARRAY(b));
     assert(SER_WIDE(a) == SER_WIDE(b));
 
-    // There are bits in the ->info and ->header which pertain to the content,
-    // which includes whether the series is dynamic or if the data lives in
-    // the node itself, the width (right 8 bits), etc.
+    bool a_dynamic = GET_SERIES_FLAG(a, DYNAMIC);
+    if (GET_SERIES_FLAG(b, DYNAMIC))
+        SET_SERIES_FLAG(a, DYNAMIC);
+    else
+        CLEAR_SERIES_FLAG(a, DYNAMIC);
+    if (a_dynamic)
+        SET_SERIES_FLAG(b, DYNAMIC);
+    else
+        CLEAR_SERIES_FLAG(b, DYNAMIC);
 
-    Byte a_len = USED_BYTE(a); // indicates dynamic if 255
+    Byte a_len = USED_BYTE(a);  // unused (for now) when SERIES_FLAG_DYNAMIC()
     mutable_USED_BYTE(a) = USED_BYTE(b);
     mutable_USED_BYTE(b) = a_len;
 
