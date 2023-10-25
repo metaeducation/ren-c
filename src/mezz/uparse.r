@@ -7,7 +7,9 @@ Rebol [
 
     Exports: [
         combinator
-        parse  default-combinators
+        parse
+        default-combinators
+        parse-trace-hook
         using  ; TBD: will become new meaning of USE
     ]
 
@@ -112,28 +114,11 @@ combinator: func [
             return: [pack?]
             f [frame!]
         ][
-            ; This hook lets us run code before and after each execution of
-            ; the combinator.  That offers lots of potential, but for now
-            ; we just use it to notice the furthest parse point reached.
-            ;
-            let state: f.state
-
-            let result': ^ eval f except e -> [
-                if state.verbose [
-                    print ["RESULT': FAIL"]
-                ]
-                return raise e
+            return either f.state.hook [
+                run f.state.hook f
+            ][
+                do f
             ]
-            if state.verbose [
-                print ["RESULT':" (mold result' else ["NULL"])]
-            ]
-            ;all [  ; success, so mark state.furthest
-            ;    state.furthest
-            ;    (index? f.remainder) > (index? state.furthest)
-            ;] then [
-            ;    state.furthest: f.remainder
-            ;]
-            return unmeta result'
         ]
     )
 ][
@@ -233,7 +218,9 @@ combinator: func [
     ; Enclosing with the wrapper permits us to inject behavior before and
     ; after each combinator is executed.
     ;
-    return unrun enclose :action :wrapper  ; returns plain ACTION!
+    return unrun enclose augment :action [
+        /rule-start [block!] /rule-end [block!]
+    ] :wrapper  ; returns plain ACTION!
 ]
 
 
@@ -1381,7 +1368,7 @@ default-combinators: make map! reduce [
         ; arguments here, but this should have better errors if the datatype
         ; combinator takes arguments.
         ;
-        return [@ remainder pending]: run comb state input :r
+        return [@ remainder pending]: run comb state input :r value tail of value
     ]
 
     === GET-BLOCK! COMBINATOR ===
@@ -2125,14 +2112,20 @@ default-combinators: make map! reduce [
             [<opt> <void> nihil? any-value!]
         @pending [<opt> block!]
         value [word! tuple!]
-        <local> r comb
+        <local> r comb rule-start rule-end
     ][
+        rule-start: null
+        rule-end: null
+
         switch/type r: get value [
             ;
             ; BLOCK!s are accepted as rules, and looked up via combinator.
             ; Most common case, make them first to shortcut earlier.
             ;
-            block! []
+            block! [
+                rule-start: r
+                rule-end: tail of r
+            ]
 
             ; These types are accepted literally (though they do run through
             ; the combinator looked up to, which ultimately may not mean
@@ -2191,7 +2184,7 @@ default-combinators: make map! reduce [
         ; arguments here, but this should have better errors if the datatype
         ; combinator takes arguments.
         ;
-        return [@ remainder pending]: run comb state input :r
+        return [@ remainder pending]: run comb state input :r rule-start rule-end
     ]
 
     === NEW-STYLE ANY COMBINATOR ===
@@ -2283,12 +2276,6 @@ default-combinators: make map! reduce [
         result': nihil'  ; default result is invisible
 
         while [not same? rules limit] [
-            if state.verbose [
-                print ["RULE:" mold/limit rules 60]
-                print ["INPUT:" mold/limit pos 60]
-                print "---"
-            ]
-
             if rules.1 = ', [  ; COMMA! is only legal between steps
                 rules: my next
                 continue
@@ -2355,6 +2342,8 @@ default-combinators: make map! reduce [
                 f.state: state
                 f.value: rules
                 f.limit: sublimit
+                f.rule-start: rules
+                f.rule-end: sublimit else [tail of rules]
                 f.thru: #
 
                 rules: sublimit else [tail of rules]
@@ -2472,7 +2461,7 @@ comment [combinatorize: func [
     {Analyze combinator parameters in rules to produce a specialized "parser"}
 
     return: "Parser function taking only input, returning value + remainder"
-        [action!]
+        [activation?]
     @advanced [block!]
     combinator "Parser combinator taking input, but also other parameters"
         [action!]
@@ -2480,8 +2469,10 @@ comment [combinatorize: func [
     state "Parse State" [frame!]
     /value "Initiating value (if datatype)" [any-value!]
     /path "Invoking Path" [path!]
-    <local> r f
+    <local> r f rule-start
 ][
+    rule-start: back rules  ; value may not be set if WORD! dispatch
+
     ; Combinators take arguments.  If the arguments are quoted, then they are
     ; taken literally from the rules feed.  If they are not quoted, they will
     ; be another "parser" generated from the rules.
@@ -2524,6 +2515,12 @@ comment [combinatorize: func [
             ]
             param = 'state [  ; the "state" is currently the UPARSE frame
                 f.state: state
+            ]
+            param = '/rule-start [
+                f.rule-start: rule-start
+            ]
+            param = '/rule-end [
+                ; skip (filled in at end)
             ]
             quoted? param [  ; literal element captured from rules
                 param: unquote param
@@ -2584,8 +2581,10 @@ comment [combinatorize: func [
         ]
     ]
 
+    f.rule-end: rules
+
     advanced: rules
-    return make action! f
+    return runs make action! f
 ]]
 
 
@@ -2818,7 +2817,8 @@ parse*: func [
     /part "FAKE /PART FEATURE - runs on a copy of the series!"
         [integer! any-series!]
 
-    /verbose "Print some additional debug information"
+    /hook "Call a hook on dispatch of each combinator"
+        [action!]
 
     <local> loops furthest synthesized' remainder
 ][
@@ -2869,6 +2869,16 @@ parse*: func [
     f.state: state
     f.input: input
     f.value: rules
+
+    ; There's a display issue with giving the whole rule in that the outermost
+    ; block isn't positioned inside another block, so it would have to be
+    ; nested in a singular block to get brackets on it and suggest you are
+    ; in a block rule.  But more generally, giving the entire parse rule as
+    ; a parse step in the display isn't that helpful--you know you're running
+    ; the whole rule.  Revisit if this turns out to be a problem.
+    ;
+    f.rule-start: null
+    f.rule-end: null
 
     sys.util.rescue+ [
         [^synthesized' remainder pending]: eval f except e -> [
@@ -2980,6 +2990,39 @@ match-parse: (comment [redescribe [  ; redescribe not working at the moment (?)
         return all [^ eval f, input]
     ]
 )
+
+
+=== HOOKS ===
+
+parse-trace-hook: func [
+    return: [pack?]
+    f [frame!]
+][
+    ; This hook lets us run code before and after each execution of
+    ; the combinator.  That offers lots of potential, but for now
+    ; we just use it to notice the furthest parse point reached.
+    ;
+    let state: f.state
+
+    if f.rule-start [
+        print ["RULE:" mold/only copy/part f.rule-start f.rule-end]
+    ]
+
+    let result': ^ eval f except e -> [
+        print ["RESULT': FAIL"]
+        return raise e
+    ]
+
+    print ["RESULT':" (mold result' else ["NULL"])]
+
+    ;all [  ; success, so mark state.furthest
+    ;    state.furthest
+    ;    (index? f.remainder) > (index? state.furthest)
+    ;] then [
+    ;    state.furthest: f.remainder
+    ;]
+    return unmeta result'
+]
 
 
 === "USING" FEATURE ===

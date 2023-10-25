@@ -47,6 +47,8 @@ optimized-out
 input
 #remainder
 state
+rule-start
+rule-end
 
 
 ;=== REFLECTORS ===

@@ -144,6 +144,18 @@ export console!: make object! [
         ;
         set 'last-result v
 
+        === FORM ERROR IF RAISED ===
+
+        ; The console knows the difference between a raised error returned as
+        ; a result, and a failure.  It's worth thinking about how to present
+        ; this nuance in the display...but for now we just form it, because
+        ; it looks ugly to show the molded isotopic object.
+
+        if raised? unmeta v [
+            print form unquasi v
+            return none
+        ]
+
         === DECAY IF A "LAZY" VALUE ===
 
         if lazy? unmeta v [

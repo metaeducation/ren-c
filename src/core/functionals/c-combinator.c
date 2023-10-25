@@ -193,8 +193,10 @@ Array(*) Expanded_Combinator_Spec(const REBVAL *original)
     Derelativize(PUSH(), item, specifier);  // return:
     if (item == tail) fail("too few combinator args");
     ++item;
-    Derelativize(PUSH(), item, specifier);  // "return description"
-    if (item == tail) fail("too few combinator args");
+    if (IS_TEXT(item)) {
+        Derelativize(PUSH(), item, specifier);  // "return description"
+        if (item == tail) fail("too few combinator args");
+    }
     ++item;
     Derelativize(PUSH(), item, specifier);  // [return type block]
     if (item == tail) fail("too few combinator args");
@@ -247,12 +249,15 @@ DECLARE_NATIVE(combinator)
 {
     INCLUDE_PARAMS_OF_COMBINATOR;
 
+    Value(*) spec = ARG(spec);
+    Value(*) body = ARG(body);
+
     // This creates the expanded spec and puts it in a block which manages it.
     // That might not be needed if the Make_Paramlist_Managed() could take an
     // array and an index.
     //
     DECLARE_LOCAL (expanded_spec);
-    Init_Block(expanded_spec, Expanded_Combinator_Spec(ARG(spec)));
+    Init_Block(expanded_spec, Expanded_Combinator_Spec(spec));
 
     Context(*) meta;
     Flags flags = MKF_KEYWORDS | MKF_RETURN;
@@ -275,7 +280,7 @@ DECLARE_NATIVE(combinator)
     // bind things that are copied.
     //
     Array(*) relativized = Copy_And_Bind_Relative_Deep_Managed(
-        ARG(body),
+        body,
         combinator,
         VAR_VISIBILITY_ALL
     );
@@ -612,6 +617,7 @@ DECLARE_NATIVE(further_combinator)
 struct Combinator_Param_State {
     Context(*) ctx;
     Frame(*) frame_;
+    Value(*) rule_end;
 };
 
 static bool Combinator_Param_Hook(
@@ -642,15 +648,6 @@ static bool Combinator_Param_Hook(
         return true;  // keep iterating the parameters.
     }
 
-    if (GET_PARAM_FLAG(param, REFINEMENT)) {
-        //
-        // !!! Behavior of refinements is a bit up in the air, the idea is
-        // that refinements that don't take arguments can be supported...
-        // examples would be things like KEEP/ONLY.  But refinements that
-        // take arguments...e.g. additional rules...is open to discussion.
-        //
-        return true;  // just leave unspecialized for now
-    }
 
     // we need to calculate what variable slot this lines up with.  Can be
     // done based on the offset of the param from the head.
@@ -668,6 +665,23 @@ static bool Combinator_Param_Hook(
         // argument named value for other purposes.
         //
         Copy_Cell(var, ARG(value));
+    }
+    else if (symid == SYM_RULE_START) {
+        Copy_Cell(var, ARG(rule_start));
+    }
+    else if (symid == SYM_RULE_END) {
+        s->rule_end = var;  // can't set until rules consumed, let caller do it
+    }
+    else if (GET_PARAM_FLAG(param, REFINEMENT)) {
+        //
+        // !!! Behavior of refinements is a bit up in the air, the idea is
+        // that refinements that don't take arguments can be supported...
+        // examples would be things like KEEP/ONLY.  But refinements that
+        // take arguments...e.g. additional rules...is open to discussion.
+        //
+        // BLOCK! combinator has a /LIMIT refinement it uses internally ATM.
+        //
+        return true;  // just leave unspecialized for now
     }
     else switch (VAL_PARAM_CLASS(param)) {
       case PARAM_CLASS_HARD: {
@@ -750,7 +764,7 @@ static bool Combinator_Param_Hook(
 //  {Analyze combinator parameters in rules to produce a specialized "parser"}
 //
 //      return: "Parser function taking only input, returning value + remainder"
-//          [action!]
+//          [activation?]
 //      @advanced [block!]
 //      c "Parser combinator taking input, but also other parameters"
 //          [action!]
@@ -758,6 +772,7 @@ static bool Combinator_Param_Hook(
 //      state "Parse State" [frame!]
 //      /value "Initiating value (if datatype)" [any-value!]
 //      /path "Invoking Path" [path!]
+//      <local> rule-start
 //  ]
 //
 DECLARE_NATIVE(combinatorize)
@@ -785,6 +800,11 @@ DECLARE_NATIVE(combinatorize)
     Action(*) act = VAL_ACTION(ARG(c));
     option(Symbol(const*)) label = VAL_ACTION_LABEL(ARG(c));
 
+    Value(*) rule_start = ARG(rule_start);
+    Copy_Cell(rule_start, ARG(rules));
+    if (VAL_INDEX(rule_start) > 0)
+        VAL_INDEX_RAW(rule_start) -= 1;
+
     // !!! The hack for PATH! handling was added to make /ONLY work; it only
     // works for refinements with no arguments by looking at what's in the path
     // when it doesn't end in /.  Now /ONLY is not used.  Review general
@@ -796,6 +816,7 @@ DECLARE_NATIVE(combinatorize)
     struct Combinator_Param_State s;
     s.ctx = Make_Context_For_Action(ARG(c), TOP_INDEX, nullptr);
     s.frame_ = frame_;
+    s.rule_end = nullptr;  // argument found by param hook
 
     PUSH_GC_GUARD(s.ctx);  // Combinator_Param_Hook may call evaluator
 
@@ -807,6 +828,10 @@ DECLARE_NATIVE(combinatorize)
     // steps through ARG(rules), updating its index)
     //
     Copy_Cell(ARG(advanced), ARG(rules));
+
+    // For debug and tracing, combinators are told where their rule end is
+    //
+    Copy_Cell(s.rule_end, ARG(rules));
 
     Action(*) parser = Make_Action_From_Exemplar(s.ctx, label);
     DROP_GC_GUARD(s.ctx);
