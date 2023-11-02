@@ -646,8 +646,8 @@ ensure: redescribe [
     ; MATCH returns a pack (isotopic block) vs. NULL if the input is NULL
     ; and matches NULL.  This is not reactive with ELSE
     ;
-    enclose :match lambda [f] [
-        let value: f.value  ; DO makes frame arguments unavailable
+    enclose :match lambda [f <local> value] [  ; LET was having trouble
+        value: :f.value  ; DO makes frame arguments unavailable
         do f else [
             ; !!! Can't use FAIL/WHERE until we can implicate the callsite.
             ;
@@ -655,7 +655,7 @@ ensure: redescribe [
             ;
             fail [
                 "ENSURE failed with argument of type"
-                    kind of value else ["VOID"]
+                    kind of :value else ["VOID"]
             ]
         ]
     ]
