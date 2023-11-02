@@ -99,19 +99,21 @@
 
 ; THROW should stop the loop
 (1 = catch [cycle?: true while [cycle?] [throw 1 cycle?: false]])
-(  ; bug#1519
+
+[#1519 (
     cycle?: true
     1 = catch [while [if cycle? [throw 1] false] [cycle?: false]]
-)
-([a 1] = catch/name [
-    cycle?: true while [cycle?] [throw/name 1 'a cycle?: false]
-] 'a)
-(  ; bug#1519
+)(
+    1 = catch/name [
+        cycle?: true while [cycle?] [throw/name 1 'a cycle?: false]
+    ] 'a
+)(
     cycle?: true
-    [a 1] = catch/name [
+    1 = catch/name [
         while [if cycle? [throw/name 1 'a] false] [cycle?: false]
     ] 'a
-)
+)]
+
 ; Test that disarmed errors do not stop the loop and errors can be returned
 (
     num: 0
