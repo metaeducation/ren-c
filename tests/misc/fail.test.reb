@@ -12,8 +12,8 @@
 ; way of raising errors, it would have to raise an error anyway.
 ; This is convenient for throwaway code.
 [
-    ~???~ !! (fail)
-    ~???~ !! (case [false [x] false [y] fail])
+    ~unknown-error~ !! (fail)
+    ~unknown-error~ !! (case [false [x] false [y] fail])
 ]
 
 
