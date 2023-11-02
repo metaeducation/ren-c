@@ -1,6 +1,8 @@
 ; functions/convert/to.r
-[#38
-    ('logic! = to word! logic!)
+
+; Originally discussed in #38, but logic is no longer a fundamental type
+[
+    ~expect-val~ !! (to word! logic!)
 ]
 ('percent! = to word! percent!)
 ('money! = to word! money!)

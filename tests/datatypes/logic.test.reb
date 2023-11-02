@@ -14,8 +14,8 @@
 (true = to-logic 1)
 (true = to-logic "f")
 
-~bad-isotope~ !! (mold true)
-~bad-isotope~ !! (mold false)
+~expect-arg~ !! (mold true)
+~expect-arg~ !! (mold false)
 
 ("true" = mold logic-to-word true)
 ("false" = mold logic-to-word false)
