@@ -4,8 +4,13 @@
 [
     ~expect-val~ !! (to word! logic!)
 ]
-('percent! = to word! percent!)
-('money! = to word! money!)
+
+; Fundamental datatypes are now `percent!: &percent` and give word with no
+; decoration after conversion.
+;
+('percent = to word! percent!)
+('money = to word! money!)
+
 [#1967
     (not same? to binary! [1] to binary! [2])
 ]
