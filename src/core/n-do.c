@@ -90,7 +90,6 @@ DECLARE_NATIVE(reeval)
 //          "(uses magic -- SHOVE can't be written easily in usermode yet)"
 //      /prefix "Force either prefix or enfix behavior (vs. acting as is)"
 //          [logic!]
-//      /set "If left hand side is a SET-WORD! or SET-PATH!, shove and assign"
 //  ]
 //
 DECLARE_NATIVE(shove)
@@ -108,8 +107,8 @@ DECLARE_NATIVE(shove)
 //      200
 //
 // It's becoming more possible to write something like this in usermode, but
-// it would be inefficient.  This version of shove is a light variation on
-// the EVAL native, which retriggers the actual enfix machinery.
+// it would be inefficient, and there are binding problems to worry about
+// in macro-like code.
 {
     INCLUDE_PARAMS_OF_SHOVE;
 
@@ -133,8 +132,12 @@ DECLARE_NATIVE(shove)
     // with refinements *at all* before, this is a step up.
 
     REBVAL *shovee = ARG(right); // reuse arg cell for the shoved-into
+    option(Symbol(const*)) label = nullptr;
 
     if (IS_WORD(At_Frame(f)) or IS_PATH(At_Frame(f)) or IS_TUPLE(At_Frame(f))) {
+        //
+        // !!! should get label from word
+        //
         Get_Var_May_Fail(
             OUT, // can't eval directly into arg slot
             At_Frame(f),
@@ -152,14 +155,13 @@ DECLARE_NATIVE(shove)
     else
         Copy_Cell(shovee, SPECIFIC(At_Frame(f)));
 
-    if (Is_Activation(shovee)) {
-        Deactivate_If_Activation(shovee);  // allow ACTION! to be run
-    }
-    else if (Is_Isotope(shovee))
-        fail (Error_Bad_Isotope(shovee));
+    Deactivate_If_Activation(shovee);  // allow ACTION! to be run
 
-    if (not IS_ACTION(shovee) and not ANY_SET_KIND(VAL_TYPE(shovee)))
+    if (not IS_ACTION(shovee))
         fail ("SHOVE's immediate right must be ACTION! or SET-XXX! type");
+
+    if (not label)
+        label = VAL_ACTION_LABEL(shovee);
 
     // Basic operator `>-` will use the enfix status of the shovee.
     // `->-` will force enfix evaluator behavior even if shovee is prefix.
@@ -175,38 +177,15 @@ DECLARE_NATIVE(shove)
 
     Fetch_Next_Forget_Lookback(f);
 
-    // Trying to EVAL a SET-WORD! or SET-PATH! with no args would be an error.
-    // So interpret it specially...GET the value and SET it back.  Note this
-    // is tricky stuff to do when a SET-PATH! has groups in it to avoid a
-    // double evaluation--the API is used here for simplicity.
-    //
-    REBVAL *composed_set_path = nullptr;
-
     // Since we're simulating enfix dispatch, we need to move the first arg
     // where enfix gets it from...the frame output slot.
     //
     // We quoted the argument on the left, but the ACTION! we are feeding
     // into may want it evaluative.  (Enfix handling itself does soft quoting)
     //
-    if (REF(set)) {
-        if (IS_SET_WORD(left)) {
-            Copy_Cell(OUT, Lookup_Word_May_Fail(left, SPECIFIED));
-        }
-        else if (IS_SET_PATH(left) or IS_SET_TUPLE(left)) {
-            f->feed->gotten = nullptr;  // calling arbitrary code, may disrupt
-            composed_set_path = rebValue("compose @", left);
-            if (rebRunThrows(OUT, "get @", composed_set_path))
-                return THROWN;
-        }
-        else
-            fail ("Left hand side must be SET-WORD! or SET-PATH!");
-    }
-    else if (
+    if (
         Get_Cell_Flag(left, UNEVALUATED)
-        and not (
-            IS_ACTION(shovee)
-            and Get_Action_Flag(VAL_ACTION(shovee), QUOTES_FIRST)
-        )
+        and Not_Action_Flag(VAL_ACTION(shovee), QUOTES_FIRST)
     ){
         if (Eval_Value_Throws(OUT, left, SPECIFIED))
             return THROWN;
@@ -217,48 +196,14 @@ DECLARE_NATIVE(shove)
             Set_Cell_Flag(OUT, UNEVALUATED);
     }
 
-    // !!! Originally this used a REEVAL technique to say that the frame's
-    // feed got its "next arg from out".  That feed flag had many problematic
-    // issues--you could skip checking for it, and it was speaking relative
-    // to "some frame".  Since then, splicing experiments were made for
-    // macros--and although those features are in flux, it's a better approach
-    // for use in this kind of feature.
-    //
-    Array(*) a = Make_Array(2);
-    SET_SERIES_USED(a, 2);
-    if (enfix) {
-        Quotify(Move_Cell(ARR_AT(a, 0), OUT), 1);
-        Move_Cell(ARR_AT(a, 1), shovee);
-    }
-    else {
-        Move_Cell(ARR_AT(a, 0), shovee);
-        Quotify(Move_Cell(ARR_AT(a, 1), OUT), 1);
-    }
-    Init_Block(SPARE, a);
-    Splice_Block_Into_Feed(frame_->feed, SPARE);
+    Flags flags = FLAG_STATE_BYTE(ST_ACTION_FULFILLING_ENFIX_FROM_OUT);
 
-    Frame(*) sub = Make_Frame(frame_->feed, FRAME_MASK_NONE);
+    Frame(*) sub = Make_Frame(frame_->feed, flags);
+    Push_Action(sub, VAL_ACTION(shovee), VAL_ACTION_BINDING(shovee));
+    Begin_Action_Core(sub, label, enfix);
 
-    if (Trampoline_Throws(OUT, sub)) {
-        rebRelease(composed_set_path);  // ok if nullptr
-        return THROWN;
-    }
-
-    if (REF(set)) {
-        if (IS_SET_WORD(left)) {
-            Decay_If_Unstable(OUT);
-            Copy_Cell(Sink_Word_May_Fail(left, SPECIFIED), OUT);
-        }
-        else if (IS_SET_PATH(left) or IS_SET_TUPLE(left)) {
-            f->feed->gotten = nullptr;  // calling arbitrary code, may disrupt
-            rebElide("set @", composed_set_path, "@", OUT);
-            rebRelease(composed_set_path);
-        }
-        else
-            assert(false); // SET-WORD!/SET-PATH! was checked above
-    }
-
-    return OUT;
+    Push_Frame(OUT, sub);
+    return DELEGATE_SUBFRAME(sub);
 }
 
 
