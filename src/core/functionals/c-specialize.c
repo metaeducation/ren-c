@@ -318,11 +318,31 @@ bool Specialize_Action_Throws(
 
     StackIndex ordered_stackindex = lowest_ordered_stackindex;
 
+    // If you specialize out the first argument of an enfixed function, then
+    // it ceases being enfix.
+    //
+    // !!! Needs handling for interaction with REORDER.
+    //
+    bool first_param = true;
+    bool enfix = Get_Action_Flag(VAL_ACTION(specializee), ENFIXED);
+
     for (; key != tail; ++key, ++param, ++arg) {
         if (Is_Specialized(param))
             continue;
 
         assert(IS_PARAMETER(param));
+
+        // !!! Current entanglements of wanting to get help information for
+        // return and output parameters means they are exposed to the user
+        // in the external view of frames.  They should not be.
+        //
+        enum Reb_Param_Class pclass = VAL_PARAM_CLASS(param);
+        if (pclass == PARAM_CLASS_OUTPUT or pclass == PARAM_CLASS_RETURN) {
+            if (not Is_None(arg))
+                fail ("Can't specialize RETURN or output parameters");
+            Copy_Cell(arg, param);
+            continue;
+        }
 
         // You can't specialize with ~ isotopes ("none"), these indicate
         // unspecialized arguments.  Only ^META parameters can take meta-none
@@ -330,6 +350,8 @@ bool Specialize_Action_Throws(
         //
         if (Is_None(arg)) {  // unspecialized argument
             Copy_Cell(arg, param);
+            if (first_param)
+                first_param = false;  // leave enfix as is
             continue;
         }
 
@@ -342,6 +364,11 @@ bool Specialize_Action_Throws(
         if (not Typecheck_Coerce_Argument(param, arg)) {
             option(Symbol(const*)) label = VAL_ACTION_LABEL(specializee);
             fail (Error_Arg_Type(label, key, param, arg));
+        }
+
+        if (first_param) {
+            first_param = false;
+            enfix = false;  // specialized out the first parameter
         }
     }
 
@@ -407,8 +434,8 @@ bool Specialize_Action_Throws(
     );
     assert(CTX_KEYLIST(exemplar) == ACT_KEYLIST(unspecialized));
 
-    if (Get_Action_Flag(VAL_ACTION(specializee), ENFIXED))
-        Set_Action_Flag(specialized, ENFIXED);  // if incoming was, outgoing is
+    if (enfix)  // incoming was enfix, and we didn't specialize out first arg
+        Set_Action_Flag(specialized, ENFIXED);
 
     Init_Activation(out, specialized, VAL_ACTION_LABEL(specializee), UNBOUND);
 
