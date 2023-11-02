@@ -80,18 +80,15 @@
 ("$0.66666666666666666666666667" = mold $2 / $3)
 
 
-; Configurability of the `/` is special, because it is a PATH! and not a WORD!
-; The synonym -SLASH-1- is used to refer to it in "word-space", and it can
-; be bound using this.  Note that because it is a PATH!, `/` won't get
-; collected by routines like COLLECT-WORDS or similar...so this applies to
-; specific intents for overloading, vs. thinking of `/` as being truly
-; "word-equivalent"
+; Configurability of the `/` was once special because it was a PATH! and not
+; a WORD!.  However, it was changed back to a WORD!.  Previous hacks for
+; reinterpreting /: as a SET-WORD! of an alias vs. a SET-PATH! are gone.
 ;
 [#2516 (
     code: [1 / 2]
     obj: make object! [
         /: enfix func [a b] [
-            reduce '(b a)
+            return reduce '(b a)
         ]
     ]
     0.5 = do code

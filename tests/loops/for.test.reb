@@ -193,7 +193,17 @@
 (
     [a b c] = collect [for x each 'a/b/c [keep x]]
 )(
-    [_ _] = collect [for x each '/ [keep x]]
+    [_ b] = collect [for x each '/b [keep x]]
+)(
+    [a _] = collect [for x each 'a/ [keep x]]
+)
+
+(
+    [a b c] = collect [for x each 'a.b.c [keep x]]
+)(
+    [_ b] = collect [for x each '.b [keep x]]
+)(
+    [a _] = collect [for x each 'a. [keep x]]
 )
 
 ; FOR-EACH X is an alias of FOR X EACH
