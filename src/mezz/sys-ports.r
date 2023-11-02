@@ -178,12 +178,13 @@ make-port*: function [
                     |
                 ; Ordinary "foo.bar.com" style, just give it back as TEXT!
                 ;
-                across try some host-char
+                across some host-char
+                    |
+                ; Missing host, set as null
+                ;
+                ahead [":" | <end>] (null)
             ]
             emit port-id: try [":", to/ (integer!) across digits]
-            |
-            emit host: (null)
-            emit port-id: (~no-host~)  ; is this better than NULL?
         ]
 
         emit path: try [across some path-char]  ; optional path

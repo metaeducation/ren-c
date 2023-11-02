@@ -62,6 +62,85 @@
 
 #include "tmp-mod-dns.h"
 
+
+#if !(TO_WINDOWS)
+//
+//  Get_Local_Ip_Via_Google_DNS_May_Fail: C
+//
+// Passing null to gethostbyname() works on Windows, but does not seem to fly
+// on Linux.  Using method described as "most elegant" from this article:
+//
+//   https://jhshi.me/2013/11/02/how-to-get-hosts-ip-address/index.html
+//
+// Had to make some fixes:
+//
+// * Needed const on the char* for C string literals
+// * Needed to call freeaddrinfo() on all paths
+// * Needed to close the socket on the success path
+// * Called gethostname() for no obvious reason
+//
+static void Get_Local_Ip_Via_Google_DNS_May_Fail(REBVAL *out)
+{
+    const char* target_name = "8.8.8.8";  // Google's DNS server IP
+    const char* target_port = "53";  // DNS port
+
+    struct addrinfo* info = nullptr;
+    const char* error = nullptr;
+    int sock = 0;
+
+    struct addrinfo hints;  // get peer server
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = AF_INET;
+    hints.ai_socktype = SOCK_STREAM;
+
+    int ret = getaddrinfo(target_name, target_port, &hints, &info);
+    if (ret != 0) {
+        error = gai_strerror(ret);
+        goto cleanup_and_fail_if_error;
+    }
+
+    if (info->ai_family == AF_INET6) {
+        error = "dns:// doesn't support IPv6 yet";
+        goto cleanup_and_fail_if_error;
+    }
+
+    // create socket
+    sock = socket(info->ai_family, info->ai_socktype, info->ai_protocol);
+    if (sock <= 0) {
+        error = "Socket creation error to 8.8.8.8 for dns://";
+        goto cleanup_and_fail_if_error;
+    }
+
+    // connect to server
+    if (connect(sock, info->ai_addr, info->ai_addrlen) < 0) {
+        error = "Connection error to 8.8.8.8 for dns://";
+        goto cleanup_and_fail_if_error;
+    }
+
+    // get local socket info
+  blockscope {
+    struct sockaddr_in local_addr;
+    socklen_t addr_len = sizeof(local_addr);
+    if (getsockname(sock, cast(struct sockaddr*, &local_addr), &addr_len) < 0) {
+        error = "getsockname() error for local socket to 8.8.8.8 for dns://";
+        goto cleanup_and_fail_if_error;
+    }
+
+    Init_Tuple_Bytes(out, cast(Byte*, &local_addr.sin_addr.s_addr), 4);
+  }
+
+  cleanup_and_fail_if_error:
+
+    if (sock > 0)
+        close(sock);
+    if (info)
+        freeaddrinfo(info);
+    if (error)
+        fail (error);
+}
+#endif
+
+
 //
 //  DNS_Actor: C
 //
@@ -98,11 +177,28 @@ static Bounce DNS_Actor(Frame(*) frame_, REBVAL *port, Symbol(const*) verb)
 
         REBVAL *host = Obj_Value(spec, STD_PORT_SPEC_NET_HOST);
 
-        // A DNS read e.g. of `read dns://66.249.66.140` should do a reverse
-        // lookup.  The scheme handler may pass in either a TUPLE! or a string
-        // that scans to a tuple, at this time (currently uses a string)
-        //
-        if (IS_TUPLE(host)) {
+        if (Is_Nulled(host)) {
+            //
+            // Semantics of `read dns://` are open-ended.  Rebol2 gives back
+            // the machine name.  Passing empty string or null to Windows's
+            // gethostbyname() appears to give back the local machine's
+            // hostent, but Linux gives back null.
+            //
+          #if TO_WINDOWS
+            HOSTENT *he = gethostbyname(nullptr);  // 1 HOSTENT per thread
+            if (he != nullptr)
+                return Init_Tuple_Bytes(OUT, cast(Byte*, *he->h_addr_list), 4);
+          #else
+            Get_Local_Ip_Via_Google_DNS_May_Fail(OUT);
+            return OUT;
+          #endif
+        }
+        else if (IS_TUPLE(host)) {
+            //
+            // DNS read e.g. of `read dns://66.249.66.140` should do a reverse
+            // lookup.  Scheme handler may pass in either a TUPLE! or a string
+            // that scans to a tuple, at this time (currently uses a string)
+            //
           reverse_lookup:
             if (VAL_SEQUENCE_LEN(host) != 4)
                 fail ("Reverse DNS lookup requires length 4 TUPLE!");
@@ -132,7 +228,7 @@ static Bounce DNS_Actor(Frame(*) frame_, REBVAL *port, Symbol(const*) verb)
             char *name = rebSpell(host);
 
             // example.com => 93.184.216.34
-            HOSTENT *he = gethostbyname(name);
+            HOSTENT *he = gethostbyname(name);  // 1 HOSTENT per thread
 
             rebFree(name);
             if (he != nullptr)
