@@ -2342,8 +2342,10 @@ default-combinators: make map! reduce [
                 f.state: state
                 f.value: rules
                 f.limit: sublimit
-                f.rule-start: rules
-                f.rule-end: sublimit else [tail of rules]
+                comment [  ; !!! BINDING OF 'RETURN doesn't expose these
+                    f.rule-start: rules
+                    f.rule-end: sublimit else [tail of rules]
+                ]
                 f.thru: #
 
                 rules: sublimit else [tail of rules]

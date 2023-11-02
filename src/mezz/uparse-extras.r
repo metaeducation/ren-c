@@ -30,7 +30,7 @@ destructure: func [
         |
         pattern: block!, '=>, branch: block!
         (
-            parse/combinators input pattern combinators then (
+            if not raised? parse/combinators input pattern combinators (
                 branch
             ) also ^r' -> [
                 if not multi [
