@@ -967,7 +967,13 @@ raise: func [
     /where "Frame or parameter at which to indicate the error originated"
         [frame! any-word!]
 ][
-    if isoword? reason [
+    if (isoword? reason) and (not null? reason) [  ; <end> acts as null nonmeta
+        ;
+        ; !!! It's not clear that users will be able to create arbitrary
+        ; isotopic words like ~unreachable~ to occupy the same space as
+        ; ~null~, ~true~, ~false~, etc.  But for a time they were allowed
+        ; to say things like (fail ~unreachable~)...permit for now.
+        ;
         reason: noisotope reason
     ]
     all [error? reason, not blame, not where] then [
