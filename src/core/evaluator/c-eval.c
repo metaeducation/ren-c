@@ -368,7 +368,7 @@ Bounce Evaluator_Executor(Frame(*) f)
             fail (Error_Arg_Type(label, key, param, SPARE));
         }
         (*intrinsic)(OUT, action, SPARE);
-        goto finished; }
+        goto lookahead; }
 
       case REB_GROUP :
       case REB_GET_GROUP :
@@ -744,7 +744,7 @@ Bounce Evaluator_Executor(Frame(*) f)
                 Copy_Cell(SCRATCH, unwrap(f_current_gotten));
                 INIT_VAL_ACTION_LABEL(SCRATCH, label);  // use the word
                 REBPAR* param = ACT_PARAM(action, 2);
-                Flags flags = 0;
+                Flags flags = EVAL_EXECUTOR_FLAG_FULFILLING_ARG;
                 if (VAL_PARAM_CLASS(param) == PARAM_CLASS_META)
                     flags |= FRAME_FLAG_FAILURE_RESULT_OK;
 
