@@ -91,7 +91,7 @@
             any [file, dir, %""]
         ]
         if test <> res [
-            fail ["REJOIN quality failed:" mold test mold res]
+            fail ["Split did not JOIN equivalently:" mold test mold res]
         ]
     ]
     true
