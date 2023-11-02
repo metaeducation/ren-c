@@ -49,9 +49,9 @@ verify: function [
                     do handler
                 ] else [
                     if (comment [1 = arity of :handler], true) [  ; TBD
-                        handler (copy/part conditions pos)
+                        run handler (copy/part conditions pos)
                     ] else [
-                        handler (copy/part conditions pos) unmeta result'
+                        run handler (copy/part conditions pos) unmeta result'
                     ]
                 ]
 
