@@ -221,7 +221,7 @@ make-file-path-parts: func [
             ]
 
             tuple! [  ; not allowed to have slashes in it
-                keep make-file-tuple-parts item :predicate
+                keep spread make-file-tuple-parts item :predicate
             ]
 
             integer! [
@@ -229,7 +229,7 @@ make-file-path-parts: func [
             ]
 
             block! [
-                keep make-file-block-parts item :predicate
+                keep spread make-file-block-parts item :predicate
             ]
         ]
 
@@ -251,7 +251,7 @@ make-file: func [
     ; paths, and no support for generic tuples.  It only offers the BLOCK!
     ; dialect form.
 
-    result: as file! try unspaced do [
+    result: as file! maybe unspaced do [
         def: switch/type def [  ; consolidate to BLOCK!-oriented file spec
             word! [to text! predicate def]
             path! [make-file-path-parts def :predicate]

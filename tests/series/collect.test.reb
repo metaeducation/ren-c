@@ -55,7 +55,7 @@
                     line: null
                     part: null
                 ][
-                    value: try unspaced :value
+                    value: maybe unspaced :value
                 ]
                 (as group! body)
             ]
