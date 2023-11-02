@@ -285,18 +285,18 @@
 ; symmetry
 (equal? same? 10% + 10% + 10% 30% same? 30% 10% + 10% + 10%)
 
-~invalid-compare~ !! (not same? 2-Jul-2009 2-Jul-2009/22:20)
-~invalid-compare~ !! (
+(not same? 2-Jul-2009 2-Jul-2009/22:20)
+(
     equal? same? 2-Jul-2009 2-Jul-2009/22:20 same? 2-Jul-2009/22:20 2-Jul-2009
 )
-~invalid-compare~ !! (
+(
     not same? 2-Jul-2009 2-Jul-2009/00:00:00+00:00
 )
-~invalid-compare~ !! (
+(
     equal? not same? 2-Jul-2009 2-Jul-2009/00:00 not same? 2-Jul-2009/00:00 2-Jul-2009
 )
-~invalid-compare~ !! (
-    same? 2-Jul-2009/22:20 2-Jul-2009/20:20-2:00
+(
+    not same? 2-Jul-2009/22:20 2-Jul-2009/20:20-2:00
 )
 
 ; time!

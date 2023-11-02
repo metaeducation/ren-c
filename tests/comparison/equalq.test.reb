@@ -333,27 +333,23 @@
 (equal? equal? 10% + 10% + 10% 30% equal? 30% 10% + 10% + 10%)
 (equal? 2-Jul-2009 2-Jul-2009)
 
-; date! doesn't ignore time portion
-~invalid-compare~ !! (
-    not equal? 2-Jul-2009 2-Jul-2009/22:20
+; non-strict equal compares to the lowest specificity
+(
+    equal? 2-Jul-2009 2-Jul-2009/22:20
 )
-~invalid-compare~ !! (
+(
     equal? equal? 2-Jul-2009 2-Jul-2009/22:20 equal? 2-Jul-2009/22:20 2-Jul-2009
 )
-
-; R3-Alpha considered date! missing time and zone = 00:00:00+00:00.  But
-; in Ren-C, dates without a time are semantically distinct from a date with
-; a time at midnight.
-;
-~invalid-compare~ !! (
+(
     equal? 2-Jul-2009 2-Jul-2009/00:00:00+00:00
 )
-
-~invalid-compare~ !! (
+(
     equal? equal? 2-Jul-2009 2-Jul-2009/00:00 equal? 2-Jul-2009/00:00 2-Jul-2009
 )
-~invalid-compare~ !! (
-    equal? 2-Jul-2009/22:20 2-Jul-2009/20:20-2:00
+
+; Times without zones are interpreted as GMT
+(
+    not equal? 2-Jul-2009/22:20 2-Jul-2009/20:20-2:00
 )
 
 (equal? 00:00 00:00)

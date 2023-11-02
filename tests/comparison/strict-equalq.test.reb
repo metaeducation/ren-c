@@ -273,18 +273,18 @@
 ; symmetry
 (equal? strict-equal? 10% + 10% + 10% 30% strict-equal? 30% 10% + 10% + 10%)
 
-~invalid-compare~ !! (strict-equal? 2-Jul-2009 2-Jul-2009/22:20)
-~invalid-compare~ !! (
+(not strict-equal? 2-Jul-2009 2-Jul-2009/22:20)
+(
     equal? strict-equal? 2-Jul-2009 2-Jul-2009/22:20 strict-equal? 2-Jul-2009/22:20 2-Jul-2009
 )
-~invalid-compare~ !! (
-    strict-equal? 2-Jul-2009 2-Jul-2009/00:00:00+00:00
+(
+    not strict-equal? 2-Jul-2009 2-Jul-2009/00:00:00+00:00
 )
-~invalid-compare~ !! (
+(
     equal? strict-equal? 2-Jul-2009 2-Jul-2009/00:00 strict-equal? 2-Jul-2009/00:00 2-Jul-2009
 )
-~invalid-compare~ !! (
-    strict-equal? 2-Jul-2009/22:20 2-Jul-2009/20:20-2:00
+(
+    not strict-equal? 2-Jul-2009/22:20 2-Jul-2009/20:20-2:00
 )
 
 ; time!
