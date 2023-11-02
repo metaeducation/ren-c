@@ -115,13 +115,3 @@
         true
     )
 ]
-
-; TO and AHEAD are "broken" w.r.t. FURTHEST at the moment
-; https://forum.rebol.info/t/semantics-of-parses-furthest/1868
-(
-    [value furthest]: parse "abcd" [to "c"]
-    did all [
-        value = null
-        furthest = "d"
-    ]
-)

@@ -2996,14 +2996,13 @@ match-parse: (comment [redescribe [  ; redescribe not working at the moment (?)
 
 === HOOKS ===
 
+; These are some very primordial hooks; for an elaborate demo see EPARSE's
+; rule-stepwise debugger.
+
 parse-trace-hook: func [
     return: [pack?]
     f [frame!]
 ][
-    ; This hook lets us run code before and after each execution of
-    ; the combinator.  That offers lots of potential, but for now
-    ; we just use it to notice the furthest parse point reached.
-    ;
     let state: f.state
 
     if f.rule-start [
@@ -3017,13 +3016,35 @@ parse-trace-hook: func [
 
     print ["RESULT':" (mold result' else ["NULL"])]
 
-    ;all [  ; success, so mark state.furthest
-    ;    state.furthest
-    ;    (index? f.remainder) > (index? state.furthest)
-    ;] then [
-    ;    state.furthest: f.remainder
-    ;]
     return unmeta result'
+]
+
+parse-trace: specialize :parse [hook: :parse-trace-hook]
+
+
+parse-furthest-hook: func [
+    return: [pack?]
+    f [frame!]
+    var [word! tuple!]
+][
+    let result': ^ eval f except e -> [
+        return raise e
+    ]
+
+    let remainder: unquote second unquasi result'
+    if (index? remainder) > (index? get var) [
+        set var remainder
+    ]
+
+    return unmeta result'
+]
+
+parse-furthest: adapt augment :parse [
+    var "Variable to hold furthest position reached"
+        [word! tuple!]
+][
+    hook: specialize :parse-furthest-hook compose [var: '(var)]
+    set var input
 ]
 
 
