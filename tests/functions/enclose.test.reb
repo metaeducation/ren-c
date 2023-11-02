@@ -70,8 +70,8 @@
         func [@out in] [out: in + 1]
     ) f -> [
         x: f.in
-        do f
-        f.out * 10
+        [_ o]: do f
+        o * 10
     ]
     110 = wrapped 10
 )

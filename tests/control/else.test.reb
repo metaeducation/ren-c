@@ -84,7 +84,7 @@
 [
     (~[~null~]~ then x -> [x = null])
     (~[~null~]~ then ^x -> [x = the ~[~null~]~])
-    ('~[~null~]~ then x -> [x = the ~null~])
+    ('~[~null~]~ then x -> [x = the ~[~null~]~])
     ('~[~null~]~ then ^x -> [x = the '~[~null~]~])
 
     (catch [~[~null~]~ also x -> [throw (x = null)]])

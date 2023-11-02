@@ -199,7 +199,7 @@
     ~expect-arg~ !! (
         [a b] = append [a b] spread second [c ~]
     )
-    ~expect-arg~ !! (
+    (
         [a b] = append [a b] spread second [c ']
     )
 ]
