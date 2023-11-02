@@ -997,7 +997,7 @@ raise: func [
     ; !!! PATH! doesn't do BINDING OF, and in the general case it couldn't
     ; tell you where it resolved to without evaluating, just do WORD! for now.
     ;
-    let frame: match frame! maybe binding of maybe match the-word! blame
+    let frame: match frame! maybe binding of maybe match word! blame
 
     let error: switch/type :reason [
         error! [reason]
@@ -1062,9 +1062,9 @@ raise: func [
         set-location-of-error error where  ; !!! why is this native?
     ]
 
-    ; Initially this would call DO in order to raise the error, to the nearest
+    ; Initially this would call DO in order to force an exception to the nearest
     ; trap up the stack (if any).  However, Ren-C rethought errors as being
-    ; "definitional", which means you would say RETURN FAIL and it would be
+    ; "definitional", which means you would say RETURN RAISE and it would be
     ; a special kind of "error isotope" that was a unique return result.  Then
     ; you typically can only trap/catch errors that come from a function you
     ; directly called.
@@ -1074,6 +1074,9 @@ raise: func [
 
 ; Immediately fail on a raised error--do not allow ^META interception/etc.
 ;
-fail: enclose :raise func [f] [
-    do f  ; FUNC so it can't drop the failure out the bottom like lambda
-]
+; Note: we use CHAIN into NULL? as an arbitrary intrinsic which won't take
+; a raised error, because the CHAIN doesn't add a stack level that obscures
+; generation of the NEAR and WHERE fields.  If we tried to ENCLOSE and DO
+; the error it would add more overhead and confuse those matters.
+;
+fail: chain [:raise, :null?]

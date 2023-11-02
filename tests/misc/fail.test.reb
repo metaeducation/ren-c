@@ -67,8 +67,8 @@
 [
     (
         did all [
-            (raised? unmeta [^x]: raise "hi" void)
-            raised? unmeta x
+            (raised? unmeta [x']: ^ raise "hi" void)
+            raised? unmeta x'
         ]
     )
 ]
