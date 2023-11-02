@@ -1381,7 +1381,7 @@ print ["libraries:" mold app-config/libraries]
 print ["cflags:" mold app-config/cflags]
 print ["ldflags:" mold app-config/ldflags]
 print ["debug:" logic-to-word app-config/debug]
-print ["optimization:" mold app-config/optimization]
+print ["optimization:" mold reify app-config/optimization]
 
 append app-config/definitions spread reduce [
     unspaced ["TO_" uppercase to-text platform-config/os-base "=1"]
