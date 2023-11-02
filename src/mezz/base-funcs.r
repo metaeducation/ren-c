@@ -580,24 +580,21 @@ my: enfixed redescribe [
 so: enfixed func [
     {Postfix assertion which won't keep running if left expression is false}
 
-    return: [<opt> any-value!]
+    return: [<opt> <void> any-value!]
     condition "Condition to test, must resolve to a LOGIC! (use DID, NOT)"
         [logic!]
-    feed [<opt> <end> any-value! <variadic>]
+    feed "Needs value to return as result e.g. (x: even? 4 so 10 + 20)"
+        [<end> <opt> <void> any-value! <variadic>]
 ][
     if not condition [
         fail 'condition make error! [
             type: 'Script
             id: 'assertion-failure
-            arg1: compose [(condition) so]
+            arg1: compose [~false~ so]
         ]
     ]
     if tail? feed [return none]
-    feed: take feed
-    all [block? :feed, semiquoted? 'feed] then [
-        fail "Don't use literal block as SO right hand side, use ([...])"
-    ]
-    return :feed
+    return take feed
 ]
 tweak :so 'postpone on
 
