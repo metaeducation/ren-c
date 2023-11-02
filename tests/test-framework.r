@@ -69,7 +69,7 @@ run-single-test: func [
         return none
     ]
 
-    if result = '~true~ [
+    if (result = '~true~) and (not expected-id) [
         successes: me + 1
         log reduce [_ {"succeeded"} newline]
         return none
@@ -82,6 +82,10 @@ run-single-test: func [
                 error.message
                 "(unknown)"
             ]]
+        ]
+
+        expected-id [
+            spaced ["did not error, but expected:" mold quasi expected-id]
         ]
 
         '~[]~ = result [
