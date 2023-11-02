@@ -40,9 +40,26 @@ STATIC_ASSERT(
 );
 
 
-//=//// ACTION_EXECUTOR_FLAG_25 ///////////////////////////////////////////=//
+//=//// ACTION_EXECUTOR_FLAG_DOING_PICKUPS ////////////////////////////////=//
 //
-#define ACTION_EXECUTOR_FLAG_25 \
+// If actions are invoked via path and use refinements in a different order
+// from how they appear in the frame's parameter definition, then the arguments
+// at the callsite can't be gathered in sequence.  Revisiting will be
+// necessary.  This flag is set while they are revisited, which is important
+// for Action_Executor() to know -and- the GC...since it means it must protect
+// *all* of the arguments--not just up thru `key`.
+//
+// Note: It was tried to do this with ST_ACTION_DOING_PICKUPS as a state byte,
+// which are not as scarce as executor flags.  But that overwrote the case
+// of ST_ACTION_FULFILLING_ENFIX_FROM_OUT, and sometimes the enfix argument
+// is actually a pickup (e.g. a refinement specialized to be the first
+// ordinary argument).  There's a good reason for ENFIX_FROM_OUT to be a state
+// byte, so this moved to being a flag.
+//
+// Note: This flag only applies when not IN_DISPATCH, so could have a distinct
+// meaning during dispatch if desired (e.g. DELEGATE_CONTROL)
+//
+#define ACTION_EXECUTOR_FLAG_DOING_PICKUPS \
     FRAME_FLAG_25
 
 

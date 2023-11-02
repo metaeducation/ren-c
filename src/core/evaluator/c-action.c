@@ -200,7 +200,6 @@ Bounce Action_Executor(Frame(*) f)
           case ST_ACTION_FULFILLING_ENFIX_FROM_OUT:
             goto fulfill;
 
-          case ST_ACTION_DOING_PICKUPS:
           case ST_ACTION_FULFILLING_ARGS:
             if (VAL_PARAM_CLASS(PARAM) != PARAM_CLASS_META)
                 Decay_If_Unstable(ARG);
@@ -228,7 +227,7 @@ Bounce Action_Executor(Frame(*) f)
 
     assert(TOP_INDEX >= f->baseline.stack_base);  // paths push refinements
 
-    assert(STATE != ST_ACTION_DOING_PICKUPS);
+    assert(Not_Executor_Flag(ACTION, f, DOING_PICKUPS));
 
     for (; KEY != KEY_TAIL; ++KEY, ++ARG, ++PARAM) {
 
@@ -239,7 +238,7 @@ Bounce Action_Executor(Frame(*) f)
       continue_fulfilling:
         assert(Is_Stable(ARG));  // implicitly asserts READABLE(ARG)
 
-        if (STATE == ST_ACTION_DOING_PICKUPS) {
+        if (Get_Executor_Flag(ACTION, f, DOING_PICKUPS)) {
             if (TOP_INDEX != f->baseline.stack_base)
                 goto next_pickup;
 
@@ -325,7 +324,7 @@ Bounce Action_Executor(Frame(*) f)
   //=//// A /REFINEMENT ARG ///////////////////////////////////////////////=//
 
         if (GET_PARAM_FLAG(PARAM, REFINEMENT)) {
-            assert(STATE != ST_ACTION_DOING_PICKUPS);  // jump lower
+            assert(Not_Executor_Flag(ACTION, f, DOING_PICKUPS));  // jump lower
             Finalize_None(ARG);  // may be filled by a pickup
             goto continue_fulfilling;
         }
@@ -341,7 +340,7 @@ Bounce Action_Executor(Frame(*) f)
         // The return function is filled in by the dispatchers that provide it.
 
         if (pclass == PARAM_CLASS_RETURN or pclass == PARAM_CLASS_OUTPUT) {
-            assert(STATE != ST_ACTION_DOING_PICKUPS);
+            assert(Not_Executor_Flag(ACTION, f, DOING_PICKUPS));
             Finalize_None(ARG);
             goto continue_fulfilling;
         }
@@ -751,7 +750,7 @@ Bounce Action_Executor(Frame(*) f)
             FRESHEN(ARG);
         }
 
-        STATE = ST_ACTION_DOING_PICKUPS;
+        Set_Executor_Flag(ACTION, f, DOING_PICKUPS);
         goto fulfill_arg;
     }
 

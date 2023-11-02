@@ -576,15 +576,6 @@ enum {
     //
     ST_ACTION_FULFILLING_ENFIX_FROM_OUT,
 
-    // If actions are invoked via path and use refinements in a different
-    // order from how they appear in the frame's parameter definition, then the
-    // arguments at the callsite can't be gathered in sequence.  Revisiting
-    // will be necessary.  This flag is set while they are revisited, which is
-    // important for Action_Executor() to know -and- the GC...since it
-    // means it must protect *all* of the arguments--not just up thru `key`.
-    //
-    ST_ACTION_DOING_PICKUPS,
-
     ST_ACTION_TYPECHECKING
 
     // Note: There is no ST_ACTION_DISPATCHING, because if an action is
