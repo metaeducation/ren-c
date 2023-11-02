@@ -52,6 +52,8 @@ import %% (repo-dir)/tools/read-deep.reb
 logfn: func [message][print mold new-line/all compose message false]
 log: :logfn
 
+parse2: :parse3/redbol
+
 standard: context [
     ;
     ; Not counting newline, lines should be no longer than this.
@@ -93,14 +95,17 @@ whitelisted: [
     %src/core/u-zlib.c
     %src/core/f-dtoa.c
 
-    %extensions/bmp/mod-bmp.c
+; IMAGE! currently not part of the project while type system is worked on
+;
+;    %extensions/bmp/mod-bmp.c
+;    %extensions/gif/mod-gif.c
+;    %extensions/jpg/u-jpg.c
+;    %extensions/png/lodepng.h
+;    %extensions/png/lodepng.c
 
-    %extensions/gif/mod-gif.c
+    %extensions/crypt/mbedtls/
 
-    %extensions/jpg/u-jpg.c
-
-    %extensions/png/lodepng.h
-    %extensions/png/lodepng.c
+    %extensions/filesystem/libuv/
 ]
 
 
@@ -126,7 +131,7 @@ export analyse: context [
             for-each source list.source-files [
                 if find whitelisted source [continue]
 
-                keep try analyse.file source
+                keep maybe spread analyse.file source
             ]
         ]
     ]
@@ -136,10 +141,11 @@ export analyse: context [
         return: [<opt> block!]
         file
     ][
+        lib.print ["Analyzing:" file]  ; subvert tests PRINT disablement
         return all [
             filetype: select extensions extension-of file
             type: in source filetype
-            (reeval (ensure action! get type) file
+            (reeval (ensure activation! get type) file
                 (read %% (repo-dir)/(file)))
         ]
     ]
@@ -170,7 +176,7 @@ export analyse: context [
                 )
             ]
 
-            parse3/case data [
+            parse2/case data [
                 some [
                     position: <here>
                     malloc-check
@@ -195,12 +201,12 @@ export analyse: context [
                 do in c-parser-extension [
                     if last-func-end [
                         all [
-                            parse3 last-func-end [
+                            parse2 last-func-end [
                                 function-spacing-rule
-                                position: <here>
-                                accept (true)
+                                position:  ; <here>
+                                to end  ; accept (true)
                                 |
-                                accept (false)
+                                end skip  ; accept (false)
                             ]
                             same? position proto-parser.parse-position
                         ] else [
@@ -212,7 +218,7 @@ export analyse: context [
                     ]
                 ]
 
-                if (try parse3 proto-parser.data [
+                if (parse3 proto-parser.data [
                     try 'export
                     set name: set-word! (name: to-word name)
                     try 'enfix
@@ -221,7 +227,9 @@ export analyse: context [
                         | 'native/combinator
                         | 'native/intrinsic
                     ]
-                    to <end>
+                    accept (true)
+                    |
+                    accept (false)
                 ]) [
                     ;
                     ; It's a `some-name?: native [...]`, so we expect
@@ -418,8 +426,23 @@ list: context [
         {Take next file from a sequence that is represented by a queue.}
         return: [<opt> file!]
         queue [block!]
+        <static> c-count (0)
     ][
         item: ensure file! take queue
+
+        if find whitelisted item [
+            return null
+        ]
+
+        ; C Analysis is extremely slow right now.  Only analyze one out of
+        ; every N files.
+        ;
+        if try parse item [... ".c"] [
+            c-count: me + 1
+            if c-count mod 30 != 0 [
+                return null  ; C analysis is extremely slow right now
+            ]
+        ]
 
         if equal? #"/" last item [
             contents: read %% (repo-dir)/(item)
@@ -427,7 +450,7 @@ list: context [
             item: null
         ] else [
             any [
-                try parse3 split-path item ["tmp-" ...]
+                try parse lib.split-path item ["tmp-" ...]
                 not find extensions extension-of item
             ] then [
                 item: null
@@ -446,7 +469,7 @@ c-parser-extension: context bind bind [
 
     lbrace: [and punctuator "{"]
     rbrace: [and punctuator "}"]
-    braced: [lbrace try some [braced | not rbrace skip] rbrace]
+    braced: [lbrace opt some [braced | not rbrace skip] rbrace]
 
     function-spacing-rule: (
         bind/copy standard.function-spacing c-lexical.grammar

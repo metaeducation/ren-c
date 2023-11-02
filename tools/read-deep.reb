@@ -53,14 +53,14 @@ export read-deep: func [
     /strategy "TAKEs next item from queue, building the queue as necessary"
         [action!]
 ][
-    let taker: let strategy: default [:read-deep-seq]
+    let taker: runs any [strategy, :read-deep-seq]
 
     let result: copy []
 
     let queue: blockify root
 
     while [not tail? queue] [
-        append result taker queue  ; Possible null
+        append result maybe taker queue  ; possibly null
     ]
 
     if not full [

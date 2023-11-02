@@ -11,20 +11,23 @@
 ; with the automated checking.
 ;
 
-(
-    rebsource: import %source-tools.reb
-    source-analysis: rebsource/analyse/files  ; `rebsource.analyse` bug atm
-    save %../source-analysis.log source-analysis
-    true
-)
-(not find source-analysis <whitespace-at-eol>)
-(not find source-analysis <eof-eol-missing>)
-(not find source-analysis <tabbed>)
-(not find source-analysis <id-mismatch>)
-(not find source-analysis <inconsistent-eol>)
+[
+    (
+        rebsource: import %source-tools.reb
+        source-analysis: rebsource.analyse.files
+        save %../source-analysis.log source-analysis
+        true
+    )
 
-; Currently failing. Uncomment, to work on cleaning this up.
-;[not find source-analysis [<line-exceeds> 127]]
+    (not find source-analysis <whitespace-at-eol>)
+    (not find source-analysis <eof-eol-missing>)
+    (not find source-analysis <tabbed>)
+    (not find source-analysis <id-mismatch>)
+    (not find source-analysis <inconsistent-eol>)
 
-; Currently failing. Uncomment, to work on cleaning this up.
-;[not find source-analysis <malloc>]
+    ; Currently failing. Uncomment, to work on cleaning this up.
+    ; (not find source-analysis [<line-exceeds> 127])
+
+    ; Currently failing. Uncomment, to work on cleaning this up.
+    ; (not find source-analysis <malloc>)
+]

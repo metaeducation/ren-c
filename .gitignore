@@ -2,9 +2,9 @@
 #
 # Only keep ren-c project specific file exclusions in .gitignore
 #
-# For files created by... 
+# For files created by...
 #
-#   * Editors (for eg. Vim, Eclipse, etc) 
+#   * Editors (for eg. Vim, Eclipse, etc)
 #   * Machines (Windows, Linux, OSX, etc)
 #   * or any artifacts of your development environment
 #
@@ -17,12 +17,12 @@
 #
 # Our recommended advice is to use a .gitignore_global file described
 # in link.
-#           
+#
 # Here is an example .gitignore_global used on OS X (Mac):
-#     
+#
 #      ## Mac stuff
 #      .DS_Store
-#  
+#
 #      ## Vim stuff
 #      *.un~
 #      *.swp
@@ -59,6 +59,7 @@ prebuilt/*
 # release...or so the rumor goes.)
 #
 tests/r_2*.log
+tests/source-analysis.log
 
 #################
 ## Eclipse
