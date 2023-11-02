@@ -822,7 +822,7 @@ iterate-back: redescribe [
 
 count-up: func [
     "Loop the body, setting a word from 1 up to the end value given"
-    return: [<opt> any-value!]
+    return: [<opt> <void> any-value!]
     'var [word!]
     limit [<maybe> integer! issue!]
     body [block!]
@@ -843,11 +843,16 @@ count-up: func [
         limit
     ]
     return cycle [
-        result': ^ cfor :var start end 1 body else [
-            return null  ; a BREAK was encountered
+        result': ^ cfor :var start end 1 body except e -> [
+            return raise e
+        ]
+        if result' = null' [return null]  ; a BREAK was encountered
+        if result' = void' [
+            assert [start = end]  ; should only happen if body never runs
+            return void'
         ]
         if limit <> # [  ; Note: /WITH not ^META, decays PACK! etc
-            stop/with unmeta result'  ; the limit was actually reached
+            stop/with heavy unmeta result'  ; the limit was actually reached
         ]
         ; otherwise keep going...
         end: end + 100
