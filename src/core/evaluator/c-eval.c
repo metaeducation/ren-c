@@ -256,7 +256,7 @@ Bounce Array_Executor(Frame(*) f)
 
 } step_result_in_spare: {  ///////////////////////////////////////////////////
 
-    if (not Is_Nihil(SPARE))  // heed ELIDE or COMMENT, preserve old result
+    if (not Is_Elision(SPARE))  // heed ELIDE, COMMENT, COMMA!, preserve result
         Move_Cell(OUT, SPARE);
 
     if (Not_Frame_At_End(SUBFRAME)) {
@@ -598,16 +598,15 @@ Bounce Evaluator_Executor(Frame(*) f)
     //=//// COMMA! ////////////////////////////////////////////////////////=//
     //
     // A comma is a lightweight looking expression barrier, which evaluates
-    // to nihil.  This means it acts like a vaporizing COMMENT or ELIDE.
-    // Since very few functions accept nihil as an argument, it is considered
-    // "good enough" to cause functions to choke, but there are some notable
-    // exceptions:
+    // to isotopic comma.  It acts much like a vaporizing COMMENT or ELIDE,
+    // but has the distinction of appearing like an <end> to most evaluative
+    // parameters.  We can debate the wisdom of the exceptions:
     //
     //    >> the,
     //    == ,
     //
     //    >> meta,
-    //    == ~[]~
+    //    == ~,~
     //
     // At one point the evaluator tried to maintain a BARRIER_HIT state to
     // give extra protection, but this was deemed to confuse the mechanics
@@ -615,14 +614,10 @@ Bounce Evaluator_Executor(Frame(*) f)
     //
     //   https://forum.rebol.info/t/1387/6
     //
-    // 1. We skip the lookahead step, which means (then [...]) will have the
-    //    same failure mode as (1 + 2, then [...]).  This is different from
-    //    what would happen with (nihil then [...]) which shows the only
-    //    current difference between COMMA! and a WORD! evaluating to nihil.
 
       case REB_COMMA:
-        Init_Nihil(OUT);
-        goto finished;  // skip lookahead, see [1]
+        Init_Barrier(OUT);
+        goto skip_lookahead;  // skip lookahead, see notes there
 
 
     //=//// ACTION! ///////////////////////////////////////////////////////=//
@@ -820,6 +815,9 @@ Bounce Evaluator_Executor(Frame(*) f)
         if (Is_Pack(OUT)) {  // !!! Needs rethinking, this isn't generalized
             Decay_If_Unstable(OUT);
         }
+
+        if (Is_Barrier(OUT))  // e.g. (x:,) where comma makes isotope
+            fail (Error_Need_Non_End(f_current));
 
         if (Is_Void(f_current)) {
             // can happen with SET-GROUP! e.g. `(void): ...`, current in spare
@@ -1168,6 +1166,9 @@ Bounce Evaluator_Executor(Frame(*) f)
         if (Is_Raised(OUT)) {
             // Don't assign, but let (trap [a.b: transcode "1&aa"]) work
         }
+        else if (Is_Barrier(OUT)) {
+            fail (Error_Need_Non_End(rebUnrelativize(f_current)));
+        }
         else {
             Decay_If_Unstable(OUT);
 
@@ -1490,6 +1491,9 @@ Bounce Evaluator_Executor(Frame(*) f)
         Cell(const*) pack_meta_tail = nullptr;
         REBSPC* pack_specifier = nullptr;
 
+        if (Is_Barrier(OUT))  // !!! Hack, wnat ([/foo]: eval) to always work
+            Init_Nihil(OUT);
+
         if (Is_Pack(OUT)) {  // isotopic block
             pack_meta_at = VAL_ARRAY_AT(&pack_meta_tail, OUT);
             pack_specifier = VAL_SPECIFIER(OUT);
@@ -1804,6 +1808,21 @@ Bounce Evaluator_Executor(Frame(*) f)
     // So this post-switch step is where all of it happens, and it's tricky!
 
   lookahead:
+
+    if (Is_Barrier(OUT)) {
+        //
+        // With COMMA!, we skip the lookahead step, which means (then [...])
+        // will have the same failure mode as (1 + 2, then [...]).  In order
+        // to make this the same behavior anything else that evaluates to
+        // a barrier (COMMA! isotope) we make this hinge on producing a
+        // barrier--not on being a source level comma.  Note it's different
+        // from what would happen with (nihil then [...]) which shows a nuance
+        // between barriers and nihils.
+
+      skip_lookahead:
+        assert(Is_Barrier(OUT));  // only jump in for barriers
+        goto finished;
+    }
 
     // If something was run with the expectation it should take the next arg
     // from the output cell, and an evaluation cycle ran that wasn't an

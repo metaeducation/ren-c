@@ -453,6 +453,9 @@ bool Typecheck_Coerce_Argument(
         if (Is_Pack(arg) and Is_Pack_Undecayable(arg))
             goto return_false;  // nihil or unstable isotope in first slot
 
+        if (Is_Barrier(arg))
+            goto return_false;  // comma isotopes
+
         if (Is_Isotope(arg) and Is_Isotope_Unstable(arg)) {
             Decay_If_Unstable(arg);
             coerced = true;

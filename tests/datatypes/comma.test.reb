@@ -45,7 +45,6 @@
 ;
 (1.1 = load-value "1,1")
 
-; Because we're using `,` and not `|`, it can be used in the PARSE dialect.
 ; R3-Alpha's PARSE implementation was not particularly orderly in terms of
 ; holding the state of expressions, so detecting the interstitial points is
 ; a bit of a hack...but it's in as a proof of concept pending a better
@@ -64,3 +63,21 @@
     remove-each x commafied [comma? x]
     commafied = normal
 )
+
+; We want commas to usually act as END for non-meta parameters.
+(
+    foo: func [x [<end> integer!]] [return x]
+    did all [
+        null = (foo,)
+        10 = (foo 10)
+    ]
+)(
+    bar: func [x [<end> integer!] y [<end> integer!]] [return pack [x y]]
+    did all [
+        1020 = ([a b]: bar, 1020)
+        a = null
+        b = null
+    ]
+)
+
+~need-non-end~ !! (x:,)

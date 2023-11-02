@@ -407,7 +407,7 @@ varargs     "evaluator position for variable numbers of arguments"
 ; since it reports Is_Bindable()
 
 comma       "separator between full evaluations (that is otherwise invisible)"
-            (CELL_MASK_NO_NODES)
+~barrier~   (CELL_MASK_NO_NODES)
             [any-unit!]
             [comma       -       +]
 

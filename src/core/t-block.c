@@ -294,7 +294,7 @@ Bounce MAKE_Array(
                 return BOUNCE_THROWN;
             }
 
-            if (Is_Fresh(OUT))
+            if (Is_Barrier(OUT))
                 break;
 
             Move_Cell(PUSH(), OUT);

@@ -33,7 +33,7 @@ inline static void Init_For_Vararg_End(REBVAL *out, enum Reb_Vararg_Op op) {
     if (op == VARARG_OP_TAIL_Q)
         Init_True(out);
     else
-        FRESHEN(out);
+        Init_Barrier(out);
 }
 
 
@@ -139,6 +139,8 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
     Cell(const*) vararg,
     enum Reb_Param_Class pclass  // PARAM_CLASS_0 to use vararg's class
 ){
+    FRESHEN(out);
+
     const REBKEY *key;
     const REBPAR *param = Param_For_Varargs_Maybe_Null(&key, vararg);
     if (pclass == PARAM_CLASS_0)
@@ -197,7 +199,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
                 return true;
             }
 
-            if (Is_Feed_At_End(f_temp->feed))
+            if (Is_Feed_At_End(f_temp->feed) or Is_Barrier(out))
                 Poison_Cell(shared);
             else {
                 // The indexor is "prefetched", so though the temp_frame would
@@ -333,9 +335,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
         return false;
     }
 
-    Decay_If_Unstable(out);
-
-    if (param) {
+    if (param and not Is_Barrier(out)) {
         if (not Typecheck_Coerce_Argument(param, out)) {
             //
             // !!! Array-based varargs only store the parameter list they are
@@ -441,7 +441,7 @@ REBTYPE(Varargs)
         switch (property) {
         case SYM_TAIL_Q: {
             if (Do_Vararg_Op_Maybe_End_Throws(
-                FRESHEN(OUT),
+                OUT,
                 VARARG_OP_TAIL_Q,
                 value
             )){
@@ -469,14 +469,14 @@ REBTYPE(Varargs)
             fail (Error_Varargs_No_Look_Raw());
 
         if (Do_Vararg_Op_Maybe_End_Throws(
-            FRESHEN(OUT),
+            OUT,
             VARARG_OP_FIRST,
             value
         )){
             assert(false); // VARARG_OP_FIRST can't throw
             return THROWN;
         }
-        if (Is_Fresh(OUT))
+        if (Is_Barrier(OUT))
             Init_Nulled(OUT);
 
         return OUT; }
@@ -493,13 +493,13 @@ REBTYPE(Varargs)
 
         if (not REF(part)) {
             if (Do_Vararg_Op_Maybe_End_Throws(
-                FRESHEN(OUT),
+                OUT,
                 VARARG_OP_TAKE,
                 value
             )){
                 return THROWN;
             }
-            if (Is_Fresh(OUT))
+            if (Is_Barrier(OUT))
                 return RAISE(Error_Nothing_To_Take_Raw());
             return OUT;
         }
@@ -515,13 +515,13 @@ REBTYPE(Varargs)
 
         while (limit-- > 0) {
             if (Do_Vararg_Op_Maybe_End_Throws(
-                FRESHEN(OUT),
+                OUT,
                 VARARG_OP_TAKE,
                 value
             )){
                 return THROWN;
             }
-            if (Is_Void(OUT))
+            if (Is_Barrier(OUT))
                 break;
             Move_Cell(PUSH(), OUT);
         }

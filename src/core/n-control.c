@@ -796,7 +796,10 @@ DECLARE_NATIVE(all)
 
 } eval_step_result_in_spare: {  //////////////////////////////////////////////
 
-    if (Is_Void(SPARE) or Is_Nihil(SPARE)) {  // (comment "hi") (if false [<a>])
+    if (
+        Is_Void(SPARE)  // (if false [<a>])
+        or Is_Elision(SPARE)  // (comment "hi") or ,
+    ){
         if (Is_Frame_At_End(SUBFRAME))
             goto reached_end;
 
@@ -926,7 +929,7 @@ DECLARE_NATIVE(any)
 
 } eval_step_result_in_out: {  ////////////////////////////////////////////////
 
-    if (Is_Void(OUT) or Is_Nihil(OUT)) {  // (comment "hi") (if false [<a>])
+    if (Is_Void(OUT) or Is_Elision(OUT)) {  // (comment "hi") (if false [<a>])
         if (Is_Frame_At_End(SUBFRAME))
             goto reached_end;
 
@@ -1104,7 +1107,7 @@ DECLARE_NATIVE(case)
 
 } condition_result_in_spare: {  //////////////////////////////////////////////
 
-    if (Is_Nihil(SPARE))  // skip nihils, e.g. ELIDE, see [2]
+    if (Is_Elision(SPARE))  // skip nihils, e.g. ELIDE, see [2]
         goto handle_next_clause;
 
     Decay_If_Unstable(SPARE);
@@ -1318,7 +1321,7 @@ DECLARE_NATIVE(switch)
 
 } right_result_in_spare: {  //////////////////////////////////////////////////
 
-    if (Is_Nihil(SPARE))  // skip comments or ELIDEs
+    if (Is_Elision(SPARE))  // skip comments or ELIDEs
         goto next_switch_step;  // see note [2] in comments for CASE
 
     if (Is_Frame_At_End(SUBFRAME))

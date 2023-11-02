@@ -31,15 +31,25 @@
 //
 // It has the property that it renders "glued" to the element to the left.
 //
-// (An original implementation of expression barriers used the heavier `|`
-// character.  However that was considered non-negotiable as "alternate" in
-// PARSE, where expression barriers would also be needed.  Also, it was a
-// fairly big interruption visually...so comma was preferred.  It is still
-// possible to get the same effect of an expression barrier with any user
-// function, so `|` could be used for this in normal evaluation.)
+// Commas are effectively invisible, but they accomplish this not by
+// producing Nihil (an empty PACK! isotope) but rather by making an isotopic
+// comma, which is called a "barrier".  It's treated like nihil in interstitial
+// positions and vaporizes, but has the special property of appearing like
+// an <end>...as well as stopping lookahead.  For code that doesn't care
+// about the subtlety, nihil and barrier are both considered "elisions".
+//
+//=//// NOTES //////////////////////////////////////////////////////////////=//
+//
+// * An original implementation of expression barriers used the heavier `|`
+//   character.  However that was considered non-negotiable as "alternate" in
+//   PARSE, where expression barriers would also be needed.  Also, it was a
+//   fairly big interruption visually...so comma was preferred.  It is still
+//   possible to get the same effect of an expression barrier with any user
+//   function, so `|` could be used for this in normal evaluation if it
+//   evaluated to a COMMA! isotope (for instance).
+//
 
-
-inline static REBVAL *Init_Comma(Cell(*) out) {
+inline static Value(*) Init_Comma(Cell(*) out) {
     Reset_Unquoted_Header_Untracked(out, CELL_MASK_COMMA);
 
     // Although COMMA! carries no data, it is not inert.  To make ANY_INERT()
@@ -48,5 +58,25 @@ inline static REBVAL *Init_Comma(Cell(*) out) {
     // GC from crashing on it.
     //
     mutable_BINDING(out) = nullptr;
-    return cast(REBVAL*, out);
+
+  #ifdef ZERO_UNUSED_CELL_FIELDS
+    PAYLOAD(Any, out).first.trash = ZEROTRASH;
+    PAYLOAD(Any, out).second.trash = ZEROTRASH;
+  #endif
+
+    return cast(Value(*), out);
+}
+
+inline static Value(*) Init_Barrier(Cell(*) out) {
+    Init_Comma(out);
+    mutable_QUOTE_BYTE(out) = ISOTOPE_0;
+    return cast(Value(*), out);
+}
+
+inline static bool Is_Elision(Cell(*) v) {
+    return Is_Barrier(v) or Is_Nihil(v);
+}
+
+inline static bool Is_Meta_Of_Elision(Cell(*) v) {
+    return Is_Meta_Of_Barrier(v) or Is_Meta_Of_Nihil(v);
 }

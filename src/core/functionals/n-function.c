@@ -572,7 +572,7 @@ bool Typecheck_Coerce_Return(
 //  {RETURN, giving a result to the caller}
 //
 //      return: []  ; !!! notation for "divergent?"
-//      ^value [<opt> <void> raised? pack? any-value!]
+//      ^value [<opt> <void> raised? pack? any-value! barrier?]
 //      /only "Do not do proxying of output variables, just return argument"
 //  ]
 //

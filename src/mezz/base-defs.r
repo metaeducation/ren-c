@@ -45,7 +45,7 @@ probe: func* [
 
     return: "Same as the input value"
         [nihil? <opt> <void> any-value!]
-    ^value' [<opt> <void> pack? raised? any-value!]
+    ^value' [<opt> <void> pack? raised? any-value! barrier?]
 ][
     ; Remember this is early in the boot, so many things not defined.
 
@@ -188,11 +188,10 @@ elide-if-void: func* [
     return unmeta value'
 ]
 
-; COMMA! is the new expression barrier.  But `||` is included as a redefine of
-; the old `|`, so that the barrier-making properties of a usermode entity can
-; stay tested.  But outside of testing, use `,` instead.
+; COMMA! is the new expression barrier.  But `||` is included as a way to
+; make comma isotopes to show how to create custom barrier-like constructs.
 ;
-|\|\||: copy :nihil  ; at time of writing, lambda [] [nihil] returns void
+|\|\||: func* [] [return ~,~]
 
 |\|\|\||: func* [  ; e.g. |||
     {Inertly consumes all subsequent data, evaluating to previous result.}

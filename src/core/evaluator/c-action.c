@@ -201,9 +201,14 @@ Bounce Action_Executor(Frame(*) f)
             goto fulfill;
 
           case ST_ACTION_FULFILLING_ARGS:
-            if (VAL_PARAM_CLASS(PARAM) != PARAM_CLASS_META)
-                Decay_If_Unstable(ARG);
-
+            if (VAL_PARAM_CLASS(PARAM) != PARAM_CLASS_META) {
+                if (Is_Barrier(ARG)) {
+                    STATE = ST_ACTION_BARRIER_HIT;
+                    Init_Word_Isotope(ARG, Canon(END));
+                }
+                else
+                    Decay_If_Unstable(ARG);
+            }
             goto continue_fulfilling;
 
           case ST_ACTION_TYPECHECKING:
@@ -388,6 +393,11 @@ Bounce Action_Executor(Frame(*) f)
     //
     // 7. MEDIUM escapability means that it only allows the escape of one unit.
     //    Thus when reaching this point, it must carry the UENEVALUATED FLAG.
+
+        if (STATE == ST_ACTION_BARRIER_HIT) {
+            Init_Word_Isotope(ARG, Canon(END));
+            goto continue_fulfilling;
+        }
 
         if (STATE == ST_ACTION_FULFILLING_ENFIX_FROM_OUT) {
             STATE = ST_ACTION_FULFILLING_ARGS;

@@ -198,28 +198,29 @@
         true
     )
 
-    ~no-value~ !! (right-normal ||)
-    ~no-value~ !! (do [right-normal* ||])
+    ~no-arg~ !! (right-normal ||)
+    (null? do [right-normal* ||])
     (null? do [right-normal*])
 
-    ~no-value~ !! (|| left-normal)
-    ~no-value~ !! (do [|| left-normal*])
+    ~no-arg~ !! (|| left-normal)
+    (null? do [|| left-normal*])
     (null? do [left-normal*])
 
-    ~no-value~ !! (|| left-defer)
-    ~no-value~ !! (do [|| left-defer*])
+    ~no-arg~ !! (|| left-defer)
+    (null? do [|| left-defer*])
     (null? do [left-defer*])
 
     ('|| = do [right-soft ||])
     ('|| = do [right-soft* ||])
     (null? do [right-soft*])
 
-    ; !!! This was legal at one point, but the special treatment of left
-    ; quotes when there is nothing to their right means you now get errors.
-    ; It's not clear what the best behavior is, so punting for now.
+    ; !!! At one point, when left quoting saw a "barrier" to the left, it would
+    ; perceive it as a null.  Today's barriers (commas or ||) make nihil, and
+    ; we have to distinguish between the case where it expects to see a nihil
+    ; vs. when that should act as an <end>.  This is not thought out well.
     ;
-    ~literal-left-tuple~ !! (<bug> 'left-soft = do [|| left-soft])
-    ~literal-left-tuple~ !! (<bug> 'left-soft* = do [|| left-soft*])
+    ~expect-arg~ !! (<bug> do [|| left-soft])
+    ~expect-arg~ !! (<bug> do [|| left-soft*])
     (null? do [left-soft*])
 
     ('|| = do [right-hard ||])
@@ -228,8 +229,8 @@
 
     ; !!! See notes above.
     ;
-    ~literal-left-tuple~ !! (<bug> 'left-hard = do [|| left-hard])
-    ~literal-left-tuple~ !! (<bug> 'left-hard* = do [|| left-hard*])
+    ~expect-arg~ !! (<bug> do [|| left-hard])
+    ~expect-arg~ !! (<bug> do [|| left-hard*])
     (null? do [left-hard*])
 ]
 
@@ -239,7 +240,7 @@
     (
         left-normal: enfixed right-normal:
             func [return: [<opt> word!] x [word! <variadic>]] [
-                return try take x
+                return take x
             ]
         left-normal*: enfixed right-normal*:
             func [return: [<opt> word!] x [word! <variadic> <end>]] [
@@ -251,7 +252,7 @@
 
         left-soft: enfixed right-soft:
             func [return: [<opt> word!] 'x [word! <variadic>]] [
-                return try take x
+                return take x
             ]
         left-soft*: enfixed right-soft*:
             func [return: [<opt> word!] 'x [word! <variadic> <end>]] [
@@ -260,7 +261,7 @@
 
         left-hard: enfixed right-hard:
             func [return: [<opt> word!] :x [word! <variadic>]] [
-                return try take x
+                return take x
             ]
         left-hard*: enfixed right-hard*:
             func [return: [<opt> word!] :x [word! <variadic> <end>]] [
@@ -270,44 +271,46 @@
         true
     )
 
-; !!! A previous distinction between TAKE and TAKE* made errors on cases of
-; trying to TAKE from a non-endable parameter.  The definition has gotten
-; fuzzy:
-; https://github.com/metaeducation/ren-c/issues/1057
-;
-;    (error? trap [right-normal ||])
-;    (error? trap [|| left-normal])
+    ; !!! A previous distinction between TAKE and TAKE* made errors on cases of
+    ; trying to TAKE from a non-endable parameter.  The definition has gotten
+    ; fuzzy:
+    ; https://github.com/metaeducation/ren-c/issues/1057
+    ;
+    ~nothing-to-take~ !! (do [right-normal ||])
+    ~nothing-to-take~ !! (do [|| left-normal])
 
-    ~no-value~ !! (do [right-normal* ||])
+    (null? do [right-normal* ||])
     (null? do [right-normal*])
 
-    ; (null? do [|| left-normal*])  ; !!! Causes an assert
+    (null? do [|| left-normal*])
     (null? do [left-normal*])
 
-    ; (null? trap [|| left-defer])  ; !!! Causes an assert (should be error?)
-    ; (null? do [|| left-defer*])  ; !!! Causes an assert (should be error?)
+    ~nothing-to-take~ !! (do [|| left-defer])
+    (null? do [|| left-defer*])
     (null? do [left-defer*])
 
     ('|| = do [right-soft ||])
     ('|| = do [right-soft* ||])
     (null? do [right-soft*])
 
-    ; !!! This was legal at one point, but the special treatment of left
-    ; quotes when there is nothing to their right means you now get errors.
-    ; It's not clear what the best behavior is, so punting for now.
+    ; !!! At one point, when left quoting saw a "barrier" to the left, it would
+    ; perceive it as a null.  Today's barriers (commas or ||) make nihil, and
+    ; we have to distinguish between the case where it expects to see a nihil
+    ; vs. when that should act as an <end>.  This is not thought out well.
     ;
-    ~literal-left-tuple~ !! (<bug> 'left-soft = do [|| left-soft])
-    ~literal-left-tuple~ !! (<bug> 'left-soft* = do [|| left-soft*])
+    ~expect-arg~ !! (<bug> do [|| left-soft])
+    ~expect-arg~ !! (<bug> do [|| left-soft*])
     (null? do [left-soft*])
 
+    ~nothing-to-take~ !! (do [right-hard])
     ('|| = do [right-hard ||])
     ('|| = do [right-hard* ||])
     (null? do [right-hard*])
 
     ; !!! See notes above.
     ;
-    ~literal-left-tuple~ !! (<bug> 'left-hard = do [|| left-hard])
-    ~literal-left-tuple~ !! (<bug> 'left-hard* = do [|| left-hard*])
+    ~expect-arg~ !! (<bug> do [|| left-hard])
+    ~expect-arg~ !! (<bug> do [|| left-hard*])
     (null? do [left-hard*])
 ]
 
@@ -319,7 +322,7 @@
     x: <overwritten>
     (<kept> x: comment "hi")
 )
-~no-value~ !! (
+~need-non-end~ !! (
     x: <overwritten>
     (<kept> x:,)
 )
@@ -332,7 +335,7 @@
     obj: make object! [x: <overwritten>]
     (<kept> obj.x: ())
 )
-~no-value~ !! (
+~need-non-end~ !! (
     obj: make object! [x: <overwritten>]
     (<kept> obj.x:,)
 )

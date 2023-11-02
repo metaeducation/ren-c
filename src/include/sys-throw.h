@@ -150,6 +150,9 @@ inline static Value(*) Decay_If_Unstable(Value(*) v) {
         return v;
     }
 
+    if (Is_Barrier(v))
+        fail (Error_No_Value_Raw());  // distinct error from nihil?
+
     if (Is_Raised(v))  // !!! should this raise an error here?
         fail (VAL_CONTEXT(v));
 

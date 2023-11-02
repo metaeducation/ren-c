@@ -2389,6 +2389,40 @@ DECLARE_INTRINSIC(nihil_q)
 
 
 //
+//  barrier?: native/intrinsic [
+//
+//  "Tells you if argument is an ~,~ isotope, e.g. an isotopic comma"
+//
+//      return: [logic?]
+//      ^atom
+//  ]
+//
+DECLARE_INTRINSIC(barrier_q)
+{
+    UNUSED(action);
+
+    Init_Logic(out, Is_Meta_Of_Barrier(arg));
+}
+
+
+//
+//  elision?: native/intrinsic [
+//
+//  "If argument is either nihil or a barrier (empty pack or isotopic comma)"
+//
+//      return: [logic?]
+//      ^atom
+//  ]
+//
+DECLARE_INTRINSIC(elision_q)
+{
+    UNUSED(action);
+
+    Init_Logic(out, Is_Meta_Of_Elision(arg));
+}
+
+
+//
 //  none: native [
 //
 //  "Returns the value used to represent an unset variable (isotopic void)"

@@ -576,6 +576,22 @@ enum {
     //
     ST_ACTION_FULFILLING_ENFIX_FROM_OUT,
 
+    // While some special-purpose functions intentionally receive nihil, most
+    // don't want to...so we can treat it as an expression barrier--whether
+    // it's produced by a COMMA! evaluating to nothing, or otherwise.
+    //
+    //    foo: func [x [integer! <end>]] [...]
+    //
+    //    (foo,)  ; sees an end
+    //    (foo comment "hi")  ; also sees an end
+    //
+    //    bar: func [^y [nihil? integer!]] [...]
+    //
+    //    (bar,)  ; sees an empty pack isotope (nihil) ~[]~
+    //    (bar comment "hi")  ; same
+    //
+    ST_ACTION_BARRIER_HIT,
+
     ST_ACTION_TYPECHECKING
 
     // Note: There is no ST_ACTION_DISPATCHING, because if an action is

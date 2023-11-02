@@ -135,7 +135,7 @@ DECLARE_NATIVE(delimit)
             return THROWN;
         }
 
-        if (Is_Nihil(OUT))  // spaced [elide print "hi"], etc
+        if (Is_Elision(OUT))  // spaced [elide print "hi"], etc
             continue;  // vaporize
 
         Decay_If_Unstable(OUT);  // spaced [match [logic!] false ...]

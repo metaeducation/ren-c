@@ -128,7 +128,7 @@ DECLARE_NATIVE(reduce)
     if (Is_Nulled(predicate))  // default is no processing
         goto process_out;
 
-    if (Is_Nihil(OUT) or Is_Void(OUT))  // not offered to predicates, by design
+    if (Is_Elision(OUT) or Is_Void(OUT))  // not given to predicates, by design
         goto next_reduce_step;  // reduce skips over voids and nones
 
     SUBFRAME->executor = &Just_Use_Out_Executor;
@@ -137,7 +137,7 @@ DECLARE_NATIVE(reduce)
 
 } process_out: {  ////////////////////////////////////////////////////////////
 
-    if (Is_Nihil(OUT) or Is_Void(OUT))
+    if (Is_Elision(OUT) or Is_Void(OUT))
         goto next_reduce_step;  // void results are skipped by reduce
 
     Decay_If_Unstable(OUT);
@@ -199,10 +199,16 @@ DECLARE_NATIVE(reduce)
 //          [block! the-block!]
 //      body "Code to run on each step"
 //          [block!]
-//      /commas "Don't skip source-level commas (turn into comma! isotopes)"
 //  ]
 //
 DECLARE_NATIVE(reduce_each)
+//
+// !!! There used to be a /COMMAS refinement on this, which allowed you to
+// see source-level commas.  Once comma isotopes took over the barrier role,
+// they were distinguishable from nihils and could be filtered separately.
+// With this you can write `pack [1, nihil, 2]` and get a 3-element pack.
+// It may be that some use case requires /COMMAS to come back, but waiting
+// to see one.
 //
 // 1. This current REDUCE-EACH only works with one variable; it should be able
 //    to take a block of variables.
@@ -254,17 +260,6 @@ DECLARE_NATIVE(reduce_each)
     if (Is_Feed_At_End(SUBFRAME->feed))
         goto finished;
 
-    if (IS_COMMA(At_Frame(SUBFRAME))) {
-        Fetch_Next_Forget_Lookback(SUBFRAME);
-
-        if (not REF(commas))
-            goto reduce_next;
-
-        Init_Comma(SPARE);
-        mutable_QUOTE_BYTE(SPARE) = ISOTOPE_0;  // conflates if not meta
-        goto reduce_step_output_in_spare;
-    }
-
     SUBFRAME->executor = &Evaluator_Executor;  // restore from pass through
 
     STATE = ST_REDUCE_EACH_REDUCING_STEP;
@@ -273,9 +268,23 @@ DECLARE_NATIVE(reduce_each)
 
 } reduce_step_output_in_spare: {  ////////////////////////////////////////////
 
-    if (not IS_META_WORD(vars) and (Is_Void(SPARE) or Is_Nihil(SPARE))) {
+    if (
+        Is_Barrier(SPARE)
+        or (
+            Get_Frame_Flag(SUBFRAME, META_RESULT)
+            and Is_Meta_Of_Barrier(SPARE)
+        )
+    ){
         Init_Nihil(OUT);
-        goto reduce_next;
+        goto reduce_next;  // always cull isotopic commas (barriers)
+    }
+
+    if (
+        Not_Frame_Flag(SUBFRAME, META_RESULT)
+        and (Is_Void(SPARE) or Is_Nihil(SPARE))
+    ){
+        Init_Nihil(OUT);
+        goto reduce_next;  // cull voids and nihils if not ^META
     }
 
     Move_Cell(CTX_VAR(VAL_CONTEXT(vars), 1), SPARE);  // do multiple? see [1]

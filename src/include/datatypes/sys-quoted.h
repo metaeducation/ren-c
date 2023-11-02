@@ -178,6 +178,7 @@ inline static bool Is_Isotope_Unstable(Cell(const*) v) {
     return (
         HEART_BYTE(v) == REB_BLOCK  // Is_Pack()
         or HEART_BYTE(v) == REB_ERROR  // Is_Raised()
+        or HEART_BYTE(v) == REB_COMMA  // Is_Barrier()
         or HEART_BYTE(v) == REB_OBJECT  // Is_Lazy()
     );
 }
