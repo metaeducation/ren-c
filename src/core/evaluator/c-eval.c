@@ -106,11 +106,6 @@
 // !!! Evil Macro, repeats parent!
 //
 STATIC_ASSERT(
-    EVAL_EXECUTOR_FLAG_FULFILLING_ARG
-    == ACTION_EXECUTOR_FLAG_FULFILLING_ARG
-);
-
-STATIC_ASSERT(
     EVAL_EXECUTOR_FLAG_DIDNT_LEFT_QUOTE_TUPLE
     == ACTION_EXECUTOR_FLAG_DIDNT_LEFT_QUOTE_TUPLE
 );
@@ -118,9 +113,7 @@ STATIC_ASSERT(
 #define Make_Action_Subframe(parent) \
     Make_Frame((parent)->feed, \
         FRAME_FLAG_FAILURE_RESULT_OK \
-        | ((parent)->flags.bits \
-            & (EVAL_EXECUTOR_FLAG_FULFILLING_ARG \
-                | EVAL_EXECUTOR_FLAG_DIDNT_LEFT_QUOTE_TUPLE)))
+        | ((parent)->flags.bits & EVAL_EXECUTOR_FLAG_DIDNT_LEFT_QUOTE_TUPLE))
 
 
 #if DEBUG_EXPIRED_LOOKBACK

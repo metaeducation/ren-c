@@ -40,17 +40,10 @@ STATIC_ASSERT(
 );
 
 
-//=//// ACTION_EXECUTOR_FLAG_FULFILLING_ARG ///////////////////////////////=//
+//=//// ACTION_EXECUTOR_FLAG_25 ///////////////////////////////////////////=//
 //
-// Lined up with EVAL_EXECUTOR_FLAG_FULFILLING_ARG so they can inherit via
-// a simple bitmask.
-//
-#define ACTION_EXECUTOR_FLAG_FULFILLING_ARG \
+#define ACTION_EXECUTOR_FLAG_25 \
     FRAME_FLAG_25
-
-STATIC_ASSERT(
-    EVAL_EXECUTOR_FLAG_FULFILLING_ARG == ACTION_EXECUTOR_FLAG_FULFILLING_ARG
-);
 
 
 //=//// ACTION_EXECUTOR_FLAG_ERROR_ON_DEFERRED_ENFIX //////////////////////=//
