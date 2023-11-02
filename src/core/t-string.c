@@ -719,7 +719,7 @@ bool Did_Get_Series_Index_From_Picker(
     const REBVAL *v,
     Cell(const*) picker
 ){
-    if (not IS_INTEGER(picker))
+    if (not (IS_INTEGER(picker) or IS_DECIMAL(picker)))  // !!! why DECIMAL! ?
         fail (Error_Bad_Pick_Raw(picker));
 
     REBINT n = Int32(picker);
