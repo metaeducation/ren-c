@@ -103,6 +103,12 @@ STATIC_ASSERT(
 #define ACTION_EXECUTOR_FLAG_IN_DISPATCH \
     FRAME_FLAG_26
 
+#define Is_Action_Frame_Fulfilling(f) \
+    Not_Executor_Flag(ACTION, f, IN_DISPATCH)
+
+#define Is_Action_Frame_Dispatching(f) \
+    Get_Executor_Flag(ACTION, f, IN_DISPATCH)
+
 
 //=//// ACTION_EXECUTOR_FLAG_DELEGATE_CONTROL /////////////////////////////=//
 //
@@ -218,10 +224,3 @@ struct Reb_Action_Executor_State {
 
     StackIndex dispatcher_base;
 };
-
-
-#define Is_Action_Frame_Fulfilling(f) \
-    Not_Executor_Flag(ACTION, f, IN_DISPATCH)
-
-#define Is_Action_Frame_Dispatching(f) \
-    Get_Executor_Flag(ACTION, f, IN_DISPATCH)

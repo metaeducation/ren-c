@@ -39,6 +39,22 @@
 
 #include "sys-core.h"
 
+
+// Prefer these to XXX_Executor_Flag(SCAN) in this file (much faster!)
+
+#define Get_Scan_Executor_Flag(f,name) \
+    (((f)->flags.bits & SCAN_EXECUTOR_FLAG_##name) != 0)
+
+#define Not_Scan_Executor_Flag(f,name) \
+    (((f)->flags.bits & SCAN_EXECUTOR_FLAG_##name) == 0)
+
+#define Set_Scan_Executor_Flag(f,name) \
+    ((f)->flags.bits |= SCAN_EXECUTOR_FLAG_##name)
+
+#define Clear_Scan_Executor_Flag(f,name) \
+    ((f)->flags.bits &= ~SCAN_EXECUTOR_FLAG_##name)
+
+
 inline static bool Is_Dot_Or_Slash(char c)
   { return c == '/' or c == '.'; }
 
@@ -999,8 +1015,8 @@ static enum Reb_Token Maybe_Locate_Token_May_Push_Mold(
         if (f->feed->p == nullptr) {  // API null, can't be in feed, use BLANK
             assert(Is_Quasi_Null(FEED_NULL_SUBSTITUTE_CELL));
             Init_Quasi_Null(PUSH());
-            if (Get_Executor_Flag(SCAN, f, NEWLINE_PENDING)) {
-                Clear_Executor_Flag(SCAN, f, NEWLINE_PENDING);
+            if (Get_Scan_Executor_Flag(f, NEWLINE_PENDING)) {
+                Clear_Scan_Executor_Flag(f, NEWLINE_PENDING);
                 Set_Cell_Flag(TOP, NEWLINE_BEFORE);
             }
         }
@@ -1011,8 +1027,8 @@ static enum Reb_Token Maybe_Locate_Token_May_Push_Mold(
 
           case DETECTED_AS_CELL: {
             Copy_Reified_Variadic_Feed_Cell(PUSH(), f->feed);
-            if (Get_Executor_Flag(SCAN, f, NEWLINE_PENDING)) {
-                Clear_Executor_Flag(SCAN, f, NEWLINE_PENDING);
+            if (Get_Scan_Executor_Flag(f, NEWLINE_PENDING)) {
+                Clear_Scan_Executor_Flag(f, NEWLINE_PENDING);
                 Set_Cell_Flag(TOP, NEWLINE_BEFORE);
             }
             break; }
@@ -1023,8 +1039,8 @@ static enum Reb_Token Maybe_Locate_Token_May_Push_Mold(
                 goto get_next_variadic_pointer;
 
             Copy_Cell(PUSH(), unwrap(v));
-            if (Get_Executor_Flag(SCAN, f, NEWLINE_PENDING)) {
-                Clear_Executor_Flag(SCAN, f, NEWLINE_PENDING);
+            if (Get_Scan_Executor_Flag(f, NEWLINE_PENDING)) {
+                Clear_Scan_Executor_Flag(f, NEWLINE_PENDING);
                 Set_Cell_Flag(TOP, NEWLINE_BEFORE);
             }
             break; }
@@ -1957,7 +1973,7 @@ Bounce Scanner_Executor(Frame(*) f) {
 
     switch (level->token) {
       case TOKEN_NEWLINE:
-        Set_Executor_Flag(SCAN, f, NEWLINE_PENDING);
+        Set_Scan_Executor_Flag(f, NEWLINE_PENDING);
         ss->line_head = ep;
         goto loop;
 
@@ -2166,7 +2182,7 @@ Bounce Scanner_Executor(Frame(*) f) {
             goto handle_failure;
 
         Flags flags = NODE_FLAG_MANAGED;
-        if (Get_Executor_Flag(SCAN, SUBFRAME, NEWLINE_PENDING))
+        if (Get_Scan_Executor_Flag(SUBFRAME, NEWLINE_PENDING))
             flags |= ARRAY_FLAG_NEWLINE_AT_TAIL;
 
         Array(*) a = Pop_Stack_Values_Core(
@@ -2450,7 +2466,7 @@ Bounce Scanner_Executor(Frame(*) f) {
             goto handle_failure;
 
         Flags flags = NODE_FLAG_MANAGED;
-        if (Get_Executor_Flag(SCAN, f, NEWLINE_PENDING))
+        if (Get_Scan_Executor_Flag(f, NEWLINE_PENDING))
             flags |= ARRAY_FLAG_NEWLINE_AT_TAIL;
 
         Array(*) array = Pop_Stack_Values_Core(
@@ -2789,7 +2805,7 @@ Bounce Scanner_Executor(Frame(*) f) {
             // had it, but it was exploratory and predates the ideas that
             // are currently being used to solidify paths.
             //
-            if (Get_Executor_Flag(SCAN, f, NEWLINE_PENDING))
+            if (Get_Scan_Executor_Flag(f, NEWLINE_PENDING))
                 Set_Subclass_Flag(ARRAY, a, NEWLINE_AT_TAIL);
         }
 
@@ -2896,14 +2912,14 @@ Bounce Scanner_Executor(Frame(*) f) {
     // process paths or other arrays...because the newline belongs on the
     // whole array...not the first element of it).
     //
-    if (Get_Executor_Flag(SCAN, f, NEWLINE_PENDING)) {
-        Clear_Executor_Flag(SCAN, f, NEWLINE_PENDING);
+    if (Get_Scan_Executor_Flag(f, NEWLINE_PENDING)) {
+        Clear_Scan_Executor_Flag(f, NEWLINE_PENDING);
         Set_Cell_Flag(TOP, NEWLINE_BEFORE);
     }
 
     // Added for TRANSCODE/NEXT (LOAD/NEXT is deprecated, see #1703)
     //
-    if (Get_Executor_Flag(SCAN, f, JUST_ONCE))
+    if (Get_Scan_Executor_Flag(f, JUST_ONCE))
         goto done;
 
     goto loop;
@@ -2972,7 +2988,7 @@ Array(*) Scan_UTF8_Managed(
     // Note: exhausting feed should take care of the va_end()
 
     Flags flags = NODE_FLAG_MANAGED;
-/*    if (Get_Executor_Flag(SCAN, f, NEWLINE_PENDING))  // !!! feed flag
+/*    if (Get_Scan_Executor_Flag(f, NEWLINE_PENDING))  // !!! feed flag
         flags |= ARRAY_FLAG_NEWLINE_AT_TAIL; */
 
     Free_Feed(feed);  // feeds are dynamically allocated and must be freed
@@ -3169,7 +3185,7 @@ DECLARE_NATIVE(transcode)
     }
     else {
         Flags flags = NODE_FLAG_MANAGED;
-        if (Get_Executor_Flag(SCAN, SUBFRAME, NEWLINE_PENDING))
+        if (Get_Scan_Executor_Flag(SUBFRAME, NEWLINE_PENDING))
             flags |= ARRAY_FLAG_NEWLINE_AT_TAIL;
 
         Array(*) a = Pop_Stack_Values_Core(STACK_BASE, flags);

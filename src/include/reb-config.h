@@ -612,6 +612,12 @@ Special internal defines used by RT, not Host-Kit developers:
     #define DEBUG_COLLECT_STATS DEBUG
 #endif
 
+// See notes on ensure_executor() for why executor files define their own
+// set of macros for use within their files.
+//
+#if !defined(DEBUG_ENSURE_EXECUTOR_FLAGS)
+    #define DEBUG_ENSURE_EXECUTOR_FLAGS DEBUG
+#endif
 
 // UTF-8 Everywhere is a particularly large system change, which requires
 // careful bookkeeping to allow the caching of positions to work.  These

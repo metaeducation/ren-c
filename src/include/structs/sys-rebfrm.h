@@ -217,8 +217,10 @@ STATIC_ASSERT(FRAME_FLAG_7_IS_TRUE == NODE_FLAG_CELL);
 //
 // These flags are those that differ based on which executor is in use.
 //
-// Use the Get_Executor_Flag()/Set_Executor_Flag()/Clear_Executor_Flag()
-// functions to access these.
+// See notes on ensure_executor() for why the generic routines for
+// Get_Executor_Flag()/Set_Executor_Flag()/Clear_Executor_Flag() were axed
+// in favor of putting executor-specific defines at the top of each file,
+// like Get_Action_Executor_Flag() / Get_Eval_Executor_Flag() etc.
 //
 
 #define FRAME_FLAG_24    FLAG_LEFT_BIT(24)
@@ -516,7 +518,22 @@ inline static bool FRM_IS_VARIADIC(Frame(*) f);
 #define BOTTOM_FRAME (TG_Bottom_Frame + 0) // avoid assign to BOTTOM_FRAME via + 0
 
 
-#if defined(NDEBUG)
+// There are 8 flags in a frame header that are reserved for the use of the
+// frame executor.  A nice idea was to make generic Get_Executor_Flag()
+// routines that could check to make sure the right flags were only tested
+// on frames with the right executor.
+//
+// Using this pervasively was punishingly slow.  Testing frame flags is
+// supposed to be "hot and fast" and this wound up costing 3% of runtime...
+// due to just how often the flags are fiddled.
+//
+// A compromise is that each executor file defines its own set of uniquely
+// named macros that are applicable just in that file.  This is relatively
+// safe, as they should rarely examine flags for other executors.  Then, the
+// rarer operations in other parts of the codebase use the generic and
+// checked forms.
+//
+#if DEBUG_ENSURE_EXECUTOR_FLAGS
     #define ensure_executor(executor,f) (f)  // no-op in release build
 #else
     inline static Frame(*) ensure_executor(Executor *executor, Frame(*) f) {

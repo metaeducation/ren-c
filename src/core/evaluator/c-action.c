@@ -35,6 +35,26 @@
 #include "sys-core.h"
 
 
+// Prefer these to XXX_Executor_Flag(ACTION) in this file (much faster!)
+
+#define Get_Action_Executor_Flag(f,name) \
+    (((f)->flags.bits & ACTION_EXECUTOR_FLAG_##name) != 0)
+
+#define Not_Action_Executor_Flag(f,name) \
+    (((f)->flags.bits & ACTION_EXECUTOR_FLAG_##name) == 0)
+
+#define Set_Action_Executor_Flag(f,name) \
+    ((f)->flags.bits |= ACTION_EXECUTOR_FLAG_##name)
+
+#define Clear_Action_Executor_Flag(f,name) \
+    ((f)->flags.bits &= ~ACTION_EXECUTOR_FLAG_##name)
+
+
+// By the same token, prefer direct testing of IN_DISPATCH to the macros
+
+#undef Is_Action_Frame_Dispatching
+#undef Is_Action_Frame_Fulfilling
+
 
 // The frame contains a "feed" whose ->value typically represents a "current"
 // step in the feed.  But the evaluator is organized in a way that the
@@ -177,7 +197,7 @@ Bounce Proxy_Multi_Returns_Core(Frame(*) f, Value(*) v)
 Bounce Action_Executor(Frame(*) f)
 {
     if (THROWING) {
-        if (Get_Executor_Flag(ACTION, f, DISPATCHER_CATCHES))
+        if (Get_Action_Executor_Flag(f, DISPATCHER_CATCHES))
             goto dispatch_phase;  // wants to see the throw
 
         if (Get_Frame_Flag(f, ABRUPT_FAILURE)) {
@@ -188,8 +208,8 @@ Bounce Action_Executor(Frame(*) f)
         goto handle_thrown_maybe_redo;
     }
 
-    if (Is_Action_Frame_Fulfilling(f)) {
-        assert(Not_Executor_Flag(ACTION, f, DISPATCHER_CATCHES));
+    if (Not_Action_Executor_Flag(f, IN_DISPATCH)) {
+        assert(Not_Action_Executor_Flag(f, DISPATCHER_CATCHES));
         assert(Not_Frame_Flag(f, NOTIFY_ON_ABRUPT_FAILURE));
 
         switch (STATE) {
@@ -219,8 +239,8 @@ Bounce Action_Executor(Frame(*) f)
         }
     }
 
-    if (Get_Executor_Flag(ACTION, f, DELEGATE_CONTROL)) {  // delegation done
-        Clear_Executor_Flag(ACTION, f, DELEGATE_CONTROL);
+    if (Get_Action_Executor_Flag(f, DELEGATE_CONTROL)) {  // delegation done
+        Clear_Action_Executor_Flag(f, DELEGATE_CONTROL);
         goto check_output;  // since it's done, return type should be checked
     }
 
@@ -232,7 +252,7 @@ Bounce Action_Executor(Frame(*) f)
 
     assert(TOP_INDEX >= f->baseline.stack_base);  // paths push refinements
 
-    assert(Not_Executor_Flag(ACTION, f, DOING_PICKUPS));
+    assert(Not_Action_Executor_Flag(f, DOING_PICKUPS));
 
     for (; KEY != KEY_TAIL; ++KEY, ++ARG, ++PARAM) {
 
@@ -243,7 +263,7 @@ Bounce Action_Executor(Frame(*) f)
       continue_fulfilling:
         assert(Is_Stable(ARG));  // implicitly asserts READABLE(ARG)
 
-        if (Get_Executor_Flag(ACTION, f, DOING_PICKUPS)) {
+        if (Get_Action_Executor_Flag(f, DOING_PICKUPS)) {
             if (TOP_INDEX != f->baseline.stack_base)
                 goto next_pickup;
 
@@ -329,7 +349,7 @@ Bounce Action_Executor(Frame(*) f)
   //=//// A /REFINEMENT ARG ///////////////////////////////////////////////=//
 
         if (GET_PARAM_FLAG(PARAM, REFINEMENT)) {
-            assert(Not_Executor_Flag(ACTION, f, DOING_PICKUPS));  // jump lower
+            assert(Not_Action_Executor_Flag(f, DOING_PICKUPS));  // jump lower
             Finalize_None(ARG);  // may be filled by a pickup
             goto continue_fulfilling;
         }
@@ -345,7 +365,7 @@ Bounce Action_Executor(Frame(*) f)
         // The return function is filled in by the dispatchers that provide it.
 
         if (pclass == PARAM_CLASS_RETURN or pclass == PARAM_CLASS_OUTPUT) {
-            assert(Not_Executor_Flag(ACTION, f, DOING_PICKUPS));
+            assert(Not_Action_Executor_Flag(f, DOING_PICKUPS));
             Finalize_None(ARG);
             goto continue_fulfilling;
         }
@@ -403,7 +423,7 @@ Bounce Action_Executor(Frame(*) f)
             STATE = ST_ACTION_FULFILLING_ARGS;
 
             if (Is_Fresh(OUT)) {  // "nothing" to left, but see [1]
-                if (Get_Executor_Flag(ACTION, f, DIDNT_LEFT_QUOTE_TUPLE))
+                if (Get_Action_Executor_Flag(f, DIDNT_LEFT_QUOTE_TUPLE))
                     fail (Error_Literal_Left_Tuple_Raw());  // see [2]
 
                 if (GET_PARAM_FLAG(PARAM, VARIADIC)) {  // empty is ok, see [3]
@@ -472,7 +492,7 @@ Bounce Action_Executor(Frame(*) f)
             //
             // This effectively puts the enfix into a *single step defer*.
             //
-            if (Get_Executor_Flag(ACTION, f, RUNNING_ENFIX)) {
+            if (Get_Action_Executor_Flag(f, RUNNING_ENFIX)) {
                 assert(Not_Feed_Flag(f->feed, NO_LOOKAHEAD));
                 if (
                     Not_Action_Flag(FRM_PHASE(f), POSTPONES_ENTIRELY)
@@ -525,7 +545,7 @@ Bounce Action_Executor(Frame(*) f)
         //      >> 1 + 2 * 3
         //      == 9
         //
-        if (Not_Executor_Flag(ACTION, f, RUNNING_ENFIX))
+        if (Not_Action_Executor_Flag(f, RUNNING_ENFIX))
             Clear_Feed_Flag(f->feed, NO_LOOKAHEAD);
 
         // Once a deferred flag is set, it must be cleared during the
@@ -760,13 +780,13 @@ Bounce Action_Executor(Frame(*) f)
             FRESHEN(ARG);
         }
 
-        Set_Executor_Flag(ACTION, f, DOING_PICKUPS);
+        Set_Action_Executor_Flag(f, DOING_PICKUPS);
         goto fulfill_arg;
     }
 
 } fulfill_and_any_pickups_done: {  ///////////////////////////////////////////
 
-    if (Get_Executor_Flag(ACTION, f, FULFILL_ONLY)) {  // no typecheck
+    if (Get_Action_Executor_Flag(f, FULFILL_ONLY)) {  // no typecheck
         Finalize_None(OUT);  // didn't touch out, should be fresh
         goto skip_output_check;
     }
@@ -844,7 +864,7 @@ Bounce Action_Executor(Frame(*) f)
         }
         else if (Is_Void(ARG)) {
             if (GET_PARAM_FLAG(PARAM, NOOP_IF_VOID)) {  // e.g. <maybe> param
-                Set_Executor_Flag(ACTION, f, TYPECHECK_ONLY);
+                Set_Action_Executor_Flag(f, TYPECHECK_ONLY);
                 Init_Nulled(OUT);
                 continue;
             }
@@ -901,8 +921,8 @@ Bounce Action_Executor(Frame(*) f)
   //    internal processing to actions.  It means that any attempts to read
   //    the spare cell will give an assert.
 
-    assert(Not_Executor_Flag(ACTION, f, IN_DISPATCH));
-    Set_Executor_Flag(ACTION, f, IN_DISPATCH);
+    assert(Not_Action_Executor_Flag(f, IN_DISPATCH));
+    Set_Action_Executor_Flag(f, IN_DISPATCH);
 
     Action(*) save_original = f->u.action.original;
     TRASH_IF_DEBUG(f->u);  // freed for dispatcher use...
@@ -910,21 +930,21 @@ Bounce Action_Executor(Frame(*) f)
     f->u.action.dispatcher_base = TOP_INDEX;
 
     if (STATE == ST_ACTION_FULFILLING_ENFIX_FROM_OUT) {  // can happen, see [2]
-        if (Get_Executor_Flag(ACTION, f, DIDNT_LEFT_QUOTE_TUPLE))  // see notes
+        if (Get_Action_Executor_Flag(f, DIDNT_LEFT_QUOTE_TUPLE))  // see notes
             fail (Error_Literal_Left_Tuple_Raw());
 
-        assert(Get_Executor_Flag(ACTION, f, RUNNING_ENFIX));
+        assert(Get_Action_Executor_Flag(f, RUNNING_ENFIX));
         FRESHEN(OUT);
     }
 
-    assert(not Is_Action_Frame_Fulfilling(f));
+    assert(Get_Action_Executor_Flag(f, IN_DISPATCH));
     assert(
         Is_Frame_At_End(f)
         or FRM_IS_VARIADIC(f)
         or IS_VALUE_IN_ARRAY_DEBUG(FEED_ARRAY(f->feed), f_next)
     );
 
-    if (Get_Executor_Flag(ACTION, f, TYPECHECK_ONLY)) {  // <maybe>
+    if (Get_Action_Executor_Flag(f, TYPECHECK_ONLY)) {  // <maybe>
         assert(Is_Nulled(OUT));
         goto skip_output_check;
     }
@@ -957,8 +977,8 @@ Bounce Action_Executor(Frame(*) f)
   //    (To intentionally not write anything and "vaporize", use `return VOID`
   //    which gives back a distinct `Bounce` signal to know it's purposeful.)
 
-    assert(Not_Executor_Flag(ACTION, FRAME, DELEGATE_CONTROL));  // delegated!
-    Clear_Executor_Flag(ACTION, FRAME, DISPATCHER_CATCHES);  // see [1]
+    assert(Not_Action_Executor_Flag(FRAME, DELEGATE_CONTROL));  // delegated!
+    Clear_Action_Executor_Flag(FRAME, DISPATCHER_CATCHES);  // see [1]
 
     Action(*) phase = FRM_PHASE(f);
 
@@ -989,7 +1009,7 @@ Bounce Action_Executor(Frame(*) f)
         return BOUNCE_CONTINUE;  // Note: may not have pushed a new frame...
 
       case C_DELEGATION:
-        Set_Executor_Flag(ACTION, FRAME, DELEGATE_CONTROL);
+        Set_Action_Executor_Flag(FRAME, DELEGATE_CONTROL);
         STATE = DELEGATE_255;  // the trampoline does this when delegating
         return BOUNCE_CONTINUE;
 
@@ -1000,11 +1020,11 @@ Bounce Action_Executor(Frame(*) f)
         goto handle_thrown_maybe_redo;
 
       case C_REDO_UNCHECKED:
-        Clear_Executor_Flag(ACTION, f, IN_DISPATCH);
+        Clear_Action_Executor_Flag(f, IN_DISPATCH);
         goto dispatch;  // Note: dispatcher may have changed frame's PHASE
 
       case C_REDO_CHECKED:
-        Clear_Executor_Flag(ACTION, f, IN_DISPATCH);
+        Clear_Action_Executor_Flag(f, IN_DISPATCH);
         STATE = ST_ACTION_TYPECHECKING;
         goto typecheck_then_dispatch;
 
@@ -1055,7 +1075,7 @@ Bounce Action_Executor(Frame(*) f)
     if (STATE == ST_ACTION_FULFILLING_ENFIX_FROM_OUT)  // see [1]
         fail ("Left lookback toward thing that took no args, look at later");
 
-    Clear_Executor_Flag(ACTION, f, DIDNT_LEFT_QUOTE_TUPLE);  // see [2]
+    Clear_Action_Executor_Flag(f, DIDNT_LEFT_QUOTE_TUPLE);  // see [2]
 
     Drop_Action(f);  // must fail before Drop_Action()
 
@@ -1115,9 +1135,9 @@ Bounce Action_Executor(Frame(*) f)
             INIT_FRM_PHASE(f, redo_phase);
             INIT_FRM_BINDING(f, VAL_FRAME_BINDING(OUT));
             STATE = ST_ACTION_TYPECHECKING;
-            Clear_Executor_Flag(ACTION, f, DISPATCHER_CATCHES);  // else asserts
+            Clear_Action_Executor_Flag(f, DISPATCHER_CATCHES);  // else asserts
             Clear_Frame_Flag(f, NOTIFY_ON_ABRUPT_FAILURE);
-            Clear_Executor_Flag(ACTION, f, IN_DISPATCH);
+            Clear_Action_Executor_Flag(f, IN_DISPATCH);
             goto typecheck_then_dispatch;
         }
     }
@@ -1161,8 +1181,8 @@ void Push_Action(
 ){
     f->executor = &Action_Executor;
 
-    assert(Not_Executor_Flag(ACTION, f, FULFILL_ONLY));
-    assert(Not_Executor_Flag(ACTION, f, RUNNING_ENFIX));
+    assert(Not_Action_Executor_Flag(f, FULFILL_ONLY));
+    assert(Not_Action_Executor_Flag(f, RUNNING_ENFIX));
 
     REBLEN num_args = ACT_NUM_PARAMS(act);  // includes specialized + locals
 
@@ -1250,7 +1270,7 @@ void Begin_Action_Core(
     // These assertions were blocking code sharing with SET-BLOCK! mechanics.
     // Review where the right place to put them is.
     //
-    /*assert(Not_Executor_Flag(ACTION, f, RUNNING_ENFIX));
+    /*assert(Not_Action_Executor_Flag(f, RUNNING_ENFIX));
     assert(Not_Feed_Flag(f->feed, DEFERRING_ENFIX));*/
 
     assert(Not_Subclass_Flag(VARLIST, f->varlist, FRAME_HAS_BEEN_INVOKED));
@@ -1275,7 +1295,7 @@ void Begin_Action_Core(
         // argument of an enfix call, ACTION_EXECUTOR_FLAG_RUNNING_ENFIX is
         // set for the whole duration.
         //
-        Set_Executor_Flag(ACTION, f, RUNNING_ENFIX);
+        Set_Action_Executor_Flag(f, RUNNING_ENFIX);
 
         // All the enfix call sites cleared this flag on the feed, so it was
         // moved into the Begin_Enfix_Action() case.  Note this has to be done
@@ -1294,8 +1314,8 @@ void Begin_Action_Core(
 void Drop_Action(Frame(*) f) {
     assert(not f->label or IS_SYMBOL(unwrap(f->label)));
 
-    Clear_Executor_Flag(ACTION, f, RUNNING_ENFIX);
-    Clear_Executor_Flag(ACTION, f, FULFILL_ONLY);
+    Clear_Action_Executor_Flag(f, RUNNING_ENFIX);
+    Clear_Action_Executor_Flag(f, FULFILL_ONLY);
 
     assert(
         GET_SERIES_FLAG(f->varlist, INACCESSIBLE)

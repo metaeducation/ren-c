@@ -57,6 +57,21 @@
 #include "sys-core.h"
 
 
+// Prefer these to XXX_Executor_Flag(EVAL) in this file (much faster!)
+
+#define Get_Eval_Executor_Flag(f,name) \
+    (((f)->flags.bits & EVAL_EXECUTOR_FLAG_##name) != 0)
+
+#define Not_Eval_Executor_Flag(f,name) \
+    (((f)->flags.bits & EVAL_EXECUTOR_FLAG_##name) == 0)
+
+#define Set_Eval_Executor_Flag(f,name) \
+    ((f)->flags.bits |= EVAL_EXECUTOR_FLAG_##name)
+
+#define Clear_Eval_Executor_Flag(f,name) \
+    ((f)->flags.bits &= ~EVAL_EXECUTOR_FLAG_##name)
+
+
 // The frame contains a "feed" whose ->value typically represents a "current"
 // step in the feed.  But the evaluator is organized in a way that the
 // notion of what is "current" can get out of sync with the feed.  An example
@@ -292,7 +307,7 @@ Bounce Evaluator_Executor(Frame(*) f)
     assert(TOP_INDEX >= BASELINE->stack_base);  // e.g. REDUCE accrues
     assert(OUT != SPARE);  // overwritten by temporary calculations
 
-    if (Get_Executor_Flag(EVAL, f, NO_EVALUATIONS)) {  // see flag for rationale
+    if (Get_Eval_Executor_Flag(f, NO_EVALUATIONS)) {  // see flag for rationale
         if (Is_Feed_At_End(f->feed))
             return OUT;
         Derelativize(OUT, At_Feed(f->feed), FEED_SPECIFIER(f->feed));
@@ -513,7 +528,7 @@ Bounce Evaluator_Executor(Frame(*) f)
         Derelativize(OUT, f_current, f_specifier);
         Set_Cell_Flag(OUT, UNEVALUATED);
 
-        Set_Executor_Flag(EVAL, f, DIDNT_LEFT_QUOTE_TUPLE);
+        Set_Eval_Executor_Flag(f, DIDNT_LEFT_QUOTE_TUPLE);
 
         if (IS_WORD(SPARE)) {
             STATE = REB_WORD;
@@ -698,7 +713,7 @@ Bounce Evaluator_Executor(Frame(*) f)
                     Get_Action_Flag(action, POSTPONES_ENTIRELY)
                     or Get_Action_Flag(action, DEFERS_LOOKBACK)
                 ){
-                    if (Get_Executor_Flag(EVAL, f, FULFILLING_ARG)) {
+                    if (Get_Eval_Executor_Flag(f, FULFILLING_ARG)) {
                         Clear_Feed_Flag(f->feed, NO_LOOKAHEAD);
                         Set_Feed_Flag(f->feed, DEFERRING_ENFIX);
                         FRESHEN(OUT);
@@ -710,7 +725,7 @@ Bounce Evaluator_Executor(Frame(*) f)
             Context(*) binding = VAL_ACTION_BINDING(unwrap(f_current_gotten));
             Symbol(const*) label = VAL_WORD_SYMBOL(f_current);  // use WORD!
             bool enfixed;
-            if (Get_Executor_Flag(EVAL, f, DIDNT_LEFT_QUOTE_TUPLE)) {
+            if (Get_Eval_Executor_Flag(f, DIDNT_LEFT_QUOTE_TUPLE)) {
                 if (Get_Action_Flag(action, ENFIXED)) {
                     assert(false);  // !!! want OUT as *right* hand side...
                     enfixed = true;
@@ -718,7 +733,7 @@ Bounce Evaluator_Executor(Frame(*) f)
                 else
                     enfixed = true;  // not enfix, but act as OUT is first arg
 
-                Clear_Executor_Flag(EVAL, f, DIDNT_LEFT_QUOTE_TUPLE);
+                Clear_Eval_Executor_Flag(f, DIDNT_LEFT_QUOTE_TUPLE);
             }
             else
                 enfixed = Get_Action_Flag(action, ENFIXED);
@@ -1831,7 +1846,7 @@ Bounce Evaluator_Executor(Frame(*) f)
     // opportunity to quote left because it has no argument...and instead
     // retriggers and lets x run.
 
-    if (Get_Executor_Flag(EVAL, f, DIDNT_LEFT_QUOTE_TUPLE))
+    if (Get_Eval_Executor_Flag(f, DIDNT_LEFT_QUOTE_TUPLE))
         fail (Error_Literal_Left_Tuple_Raw());
 
 
@@ -1887,7 +1902,7 @@ Bounce Evaluator_Executor(Frame(*) f)
       lookback_quote_too_late: // run as if starting new expression
 
         Clear_Feed_Flag(f->feed, NO_LOOKAHEAD);
-        Clear_Executor_Flag(EVAL, f, INERT_OPTIMIZATION);
+        Clear_Eval_Executor_Flag(f, INERT_OPTIMIZATION);
 
         // Since it's a new expression, EVALUATE doesn't want to run it
         // even if invisible, as it's not completely invisible (enfixed)
@@ -1912,26 +1927,26 @@ Bounce Evaluator_Executor(Frame(*) f)
         // the left quoting function might be okay with seeing nothing on the
         // left.  Start a new expression and let it error if that's not ok.
         //
-        assert(Not_Executor_Flag(EVAL, f, DIDNT_LEFT_QUOTE_TUPLE));
-        if (Get_Executor_Flag(EVAL, f, DIDNT_LEFT_QUOTE_TUPLE))
+        assert(Not_Eval_Executor_Flag(f, DIDNT_LEFT_QUOTE_TUPLE));
+        if (Get_Eval_Executor_Flag(f, DIDNT_LEFT_QUOTE_TUPLE))
             fail (Error_Literal_Left_Tuple_Raw());
 
         const REBPAR *first = First_Unspecialized_Param(nullptr, enfixed);
         if (VAL_PARAM_CLASS(first) == PARAM_CLASS_SOFT) {
             if (Get_Feed_Flag(f->feed, NO_LOOKAHEAD)) {
                 Clear_Feed_Flag(f->feed, NO_LOOKAHEAD);
-                Clear_Executor_Flag(EVAL, f, INERT_OPTIMIZATION);
+                Clear_Eval_Executor_Flag(f, INERT_OPTIMIZATION);
                 goto finished;
             }
         }
-        else if (Not_Executor_Flag(EVAL, f, INERT_OPTIMIZATION))
+        else if (Not_Eval_Executor_Flag(f, INERT_OPTIMIZATION))
             goto lookback_quote_too_late;
     }
 
-    Clear_Executor_Flag(EVAL, f, INERT_OPTIMIZATION);  // served purpose if set
+    Clear_Eval_Executor_Flag(f, INERT_OPTIMIZATION);  // served purpose if set
 
     if (
-        Get_Executor_Flag(EVAL, f, FULFILLING_ARG)
+        Get_Eval_Executor_Flag(f, FULFILLING_ARG)
         and not (Get_Action_Flag(enfixed, DEFERS_LOOKBACK)
                                        // ^-- `1 + if false [2] else [3]` => 4
         )
@@ -1960,7 +1975,7 @@ Bounce Evaluator_Executor(Frame(*) f)
     // to know not to do the deferral more than once.
     //
     if (
-        Get_Executor_Flag(EVAL, f, FULFILLING_ARG)
+        Get_Eval_Executor_Flag(f, FULFILLING_ARG)
         and (
             Get_Action_Flag(enfixed, POSTPONES_ENTIRELY)
             or (
@@ -2045,7 +2060,7 @@ Bounce Evaluator_Executor(Frame(*) f)
     //     o: make object! [f: does [1]]
     //     o.f left-the  ; want error suggesting >- here, need flag for that
     //
-    Clear_Executor_Flag(EVAL, f, DIDNT_LEFT_QUOTE_TUPLE);
+    Clear_Eval_Executor_Flag(f, DIDNT_LEFT_QUOTE_TUPLE);
 
   #if !defined(NDEBUG)
     Evaluator_Exit_Checks_Debug(f);
