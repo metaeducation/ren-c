@@ -404,7 +404,7 @@ inline static void Init_Key(REBKEY *dest, const Raw_Symbol* symbol)
 
 
 inline static Action(*) VAL_ACTION(noquote(Cell(const*)) v) {
-    assert(CELL_HEART(v) == REB_ACTION);
+    assert(CELL_HEART_UNCHECKED(v) == REB_ACTION);
     REBSER *s = SER(VAL_NODE1(v));
     if (GET_SERIES_FLAG(s, INACCESSIBLE))
         fail (Error_Series_Data_Freed_Raw());

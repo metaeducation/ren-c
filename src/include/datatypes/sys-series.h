@@ -1042,28 +1042,28 @@ inline static const REBSER *VAL_SERIES(noquote(Cell(const*)) v) {
     //
     //     VAL_INDEX_UNBOUNDED(v) = xxx;  // ensures v is ANY_SERIES!
     //
-    // uses "evil macro" variants because the cost of this basic operation
-    // becomes prohibitive when the functions aren't inlined and checks wind
-    // up getting done
+    // Avoids READABLE() macro, because it's assumed that it was done in the
+    // type checking to ensure VAL_INDEX() applied.  (This is called often.)
     //
     inline static REBIDX VAL_INDEX_UNBOUNDED(noquote(Cell(const*)) v) {
-        enum Reb_Kind k = CELL_HEART(v);  // only const access if heart!
+        enum Reb_Kind k = CELL_HEART_UNCHECKED(v);  // only const if heart!
         assert(
             ANY_SERIES_KIND(k)
             or k == REB_ISSUE or k == REB_URL
             or ANY_ARRAYLIKE(v)
         );
-        assert(Get_Cell_Flag(v, FIRST_IS_NODE));
+        assert(Get_Cell_Flag_Unchecked(v, FIRST_IS_NODE));
         return VAL_INDEX_RAW(v);
     }
     inline static REBIDX & VAL_INDEX_UNBOUNDED(Cell(*) v) {
-        enum Reb_Kind k = VAL_TYPE(v);  // mutable allowed if nonquoted
+        ASSERT_CELL_WRITABLE_EVIL_MACRO(v);
+        enum Reb_Kind k = CELL_HEART_UNCHECKED(v);
         assert(
             ANY_SERIES_KIND(k)
             or k == REB_ISSUE or k == REB_URL
             or ANY_ARRAYLIKE(v)
         );
-        assert(Get_Cell_Flag(v, FIRST_IS_NODE));
+        assert(Get_Cell_Flag_Unchecked(v, FIRST_IS_NODE));
         return VAL_INDEX_RAW(v);  // returns a C++ reference
     }
 #endif

@@ -50,7 +50,7 @@
 #if DEBUG_UNREADABLE_TRASH
     //
     // Debug behavior: `~` with the CELL_FLAG_STALE set
-    // Will trip up any access attempts via READABLE(), but can be overwritten
+    // Will trip up any access attempts via READABLE(), but is WRITABLE()
 
     inline static Value(*) Init_Trash_Untracked(Cell(*) out) {
         Init_Void_Untracked(out, QUASI_2);
@@ -63,7 +63,7 @@
             return false;
         if (QUOTE_BYTE_UNCHECKED(v) != QUASI_2)
             return false;
-        return did (v->header.bits & CELL_FLAG_STALE);
+        return Get_Cell_Flag_Unchecked(v, STALE);
     }
 #else
     // Release Build Behavior: Looks just like a meta-none (`~` value)

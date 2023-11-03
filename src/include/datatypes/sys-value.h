@@ -341,6 +341,12 @@ inline static enum Reb_Kind VAL_TYPE_UNCHECKED(Cell(const*) v) {
 #define Not_Cell_Flag(v,name) \
     ((READABLE(v)->header.bits & CELL_FLAG_##name) == 0)
 
+#define Get_Cell_Flag_Unchecked(v,name) \
+    (((v)->header.bits & CELL_FLAG_##name) != 0)
+
+#define Not_Cell_Flag_Unchecked(v,name) \
+    (((v)->header.bits & CELL_FLAG_##name) == 0)
+
 #define Set_Cell_Flag(v,name) \
     (WRITABLE(v)->header.bits |= CELL_FLAG_##name)
 
@@ -586,11 +592,12 @@ inline static REBVAL *SPECIFIC(const_if_c Cell(*) v) {
 
 
 inline static bool ANY_ARRAYLIKE(noquote(Cell(const*)) v) {
-    if (ANY_ARRAY_KIND(CELL_HEART(v)))
+    // called by core code, sacrifice READABLE() checks
+    if (ANY_ARRAY_KIND(CELL_HEART_UNCHECKED(v)))
         return true;
-    if (not ANY_SEQUENCE_KIND(CELL_HEART(v)))
+    if (not ANY_SEQUENCE_KIND(CELL_HEART_UNCHECKED(v)))
         return false;
-    if (Not_Cell_Flag(v, FIRST_IS_NODE))
+    if (Not_Cell_Flag_Unchecked(v, FIRST_IS_NODE))
         return false;
     const Node* node1 = VAL_NODE1(v);
     if (Is_Node_A_Cell(node1))
@@ -599,11 +606,12 @@ inline static bool ANY_ARRAYLIKE(noquote(Cell(const*)) v) {
 }
 
 inline static bool ANY_WORDLIKE(noquote(Cell(const*)) v) {
-    if (ANY_WORD_KIND(CELL_HEART(v)))
+    // called by core code, sacrifice READABLE() checks
+    if (ANY_WORD_KIND(CELL_HEART_UNCHECKED(v)))
         return true;
-    if (not ANY_SEQUENCE_KIND(CELL_HEART(v)))
+    if (not ANY_SEQUENCE_KIND(CELL_HEART_UNCHECKED(v)))
         return false;
-    if (Not_Cell_Flag(v, FIRST_IS_NODE))
+    if (Not_Cell_Flag_Unchecked(v, FIRST_IS_NODE))
         return false;
     const Node* node1 = VAL_NODE1(v);
     if (Is_Node_A_Cell(node1))
@@ -612,13 +620,14 @@ inline static bool ANY_WORDLIKE(noquote(Cell(const*)) v) {
 }
 
 inline static bool ANY_STRINGLIKE(noquote(Cell(const*)) v) {
-    if (ANY_STRING_KIND(CELL_HEART(v)))
+    // called by core code, sacrifice READABLE() checks
+    if (ANY_STRING_KIND(CELL_HEART_UNCHECKED(v)))
         return true;
     if (CELL_HEART(v) == REB_URL)
         return true;
     if (CELL_HEART(v) != REB_ISSUE)
         return false;
-    return Get_Cell_Flag(v, ISSUE_HAS_NODE);
+    return Get_Cell_Flag_Unchecked(v, ISSUE_HAS_NODE);
 }
 
 
@@ -626,7 +635,7 @@ inline static void INIT_VAL_WORD_SYMBOL(Cell(*) v, Symbol(const*) symbol)
   { INIT_VAL_NODE1(v, symbol); }
 
 inline static const Raw_Symbol* VAL_WORD_SYMBOL(noquote(Cell(const*)) cell) {
-    assert(ANY_WORDLIKE(cell));
+    assert(ANY_WORDLIKE(cell));  // no _UNCHECKED variant :-(
     return SYM(VAL_NODE1(cell));
 }
 

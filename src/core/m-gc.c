@@ -328,13 +328,10 @@ static void Queue_Mark_Cell_Deep(Cell(const*) cv)
                 Queue_Mark_Node_Deep(&v->extra.Binding);
     }
 
-    // We don't use Get_Cell_Flag() here because we assume caller checked
-    // using READABLE() if they knew the cell didn't have CELL_FLAG_STALE set.
-
-    if ((v->header.bits & CELL_FLAG_FIRST_IS_NODE) and VAL_NODE1(v))
+    if (Get_Cell_Flag_Unchecked(v, FIRST_IS_NODE) and VAL_NODE1(v))
         Queue_Mark_Node_Deep(&PAYLOAD(Any, v).first.node);
 
-    if ((v->header.bits & CELL_FLAG_SECOND_IS_NODE) and VAL_NODE2(v))
+    if (Get_Cell_Flag_Unchecked(v, SECOND_IS_NODE) and VAL_NODE2(v))
         Queue_Mark_Node_Deep(&PAYLOAD(Any, v).second.node);
 
   #if !defined(NDEBUG)

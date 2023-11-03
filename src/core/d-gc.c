@@ -45,6 +45,8 @@
 //
 void Assert_Cell_Marked_Correctly(Cell(const*) v)
 {
+    ASSERT_CELL_READABLE_EVIL_MACRO(v);  // then we use unchecked() on v below
+
     enum Reb_Kind heart = CELL_HEART_UNCHECKED(v);
 
     REBSER *binding;
@@ -94,7 +96,7 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
         break;
 
       case REB_ISSUE: {
-        if (Get_Cell_Flag(v, ISSUE_HAS_NODE)) {
+        if (Get_Cell_Flag_Unchecked(v, ISSUE_HAS_NODE)) {
             const REBSER *s = VAL_STRING(v);
             assert(Is_Series_Frozen(s));
 
@@ -128,7 +130,7 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
         break; }
 
       case REB_BITSET: {
-        assert(Get_Cell_Flag(v, FIRST_IS_NODE));
+        assert(Get_Cell_Flag_Unchecked(v, FIRST_IS_NODE));
         REBSER *s = SER(VAL_NODE1(v));
         Assert_Series_Term_Core(s);
         if (GET_SERIES_FLAG(s, INACCESSIBLE))
@@ -138,14 +140,14 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
         break; }
 
       case REB_MAP: {
-        assert(Get_Cell_Flag(v, FIRST_IS_NODE));
+        assert(Get_Cell_Flag_Unchecked(v, FIRST_IS_NODE));
         const REBMAP* map = VAL_MAP(v);
         assert(Is_Marked(map));
         assert(IS_SER_ARRAY(MAP_PAIRLIST(map)));
         break; }
 
       case REB_HANDLE: { // See %sys-handle.h
-        if (Not_Cell_Flag(v, FIRST_IS_NODE)) {
+        if (Not_Cell_Flag_Unchecked(v, FIRST_IS_NODE)) {
             // simple handle, no GC interaction
         }
         else {
@@ -178,7 +180,7 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
         break; }
 
       case REB_BINARY: {
-        assert(Get_Cell_Flag(v, FIRST_IS_NODE));
+        assert(Get_Cell_Flag_Unchecked(v, FIRST_IS_NODE));
         Binary(*) s = BIN(VAL_NODE1(v));
         if (GET_SERIES_FLAG(s, INACCESSIBLE))
             break;
@@ -193,11 +195,11 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
       case REB_EMAIL:
       case REB_URL:
       case REB_TAG: {
-        assert(Get_Cell_Flag(v, FIRST_IS_NODE));
+        assert(Get_Cell_Flag_Unchecked(v, FIRST_IS_NODE));
         if (GET_SERIES_FLAG(STR(VAL_NODE1(v)), INACCESSIBLE))
             break;
 
-        assert(Get_Cell_Flag(v, FIRST_IS_NODE));
+        assert(Get_Cell_Flag_Unchecked(v, FIRST_IS_NODE));
         const REBSER *s = VAL_SERIES(v);
         ASSERT_SERIES_TERM_IF_NEEDED(s);
 
@@ -230,7 +232,10 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
         if (GET_SERIES_FLAG(SER(VAL_NODE1(v)), INACCESSIBLE))
             break;
 
-        assert((v->header.bits & CELL_MASK_ANY_CONTEXT) == CELL_MASK_ANY_CONTEXT);
+        assert(
+            (v->header.bits & CELL_MASK_ANY_CONTEXT)
+            == CELL_MASK_ANY_CONTEXT
+        );
         Context(*) context = VAL_CONTEXT(v);
         assert(Is_Marked(context));
 
@@ -297,7 +302,7 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
 
         ASSERT_SERIES_TERM_IF_NEEDED(a);
 
-        assert(Get_Cell_Flag(v, FIRST_IS_NODE));
+        assert(Get_Cell_Flag_Unchecked(v, FIRST_IS_NODE));
         assert(Is_Marked(a));
         break; }
 
@@ -318,7 +323,7 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
         goto any_sequence;
 
       any_sequence: {
-        if (Not_Cell_Flag(v, SEQUENCE_HAS_NODE))
+        if (Not_Cell_Flag_Unchecked(v, SEQUENCE_HAS_NODE))
             break;  // should be just bytes
 
         const Node* node1 = VAL_NODE1(v);
@@ -361,7 +366,7 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
       case REB_GET_WORD:
       case REB_META_WORD:
       case REB_TYPE_WORD: {
-        assert(Get_Cell_Flag(v, FIRST_IS_NODE));
+        assert(Get_Cell_Flag_Unchecked(v, FIRST_IS_NODE));
 
         const Raw_String *spelling = VAL_WORD_SYMBOL(v);
         assert(Is_Series_Frozen(spelling));

@@ -105,7 +105,8 @@
 #define FEED_PENDING(feed) \
     MISC(Pending, &(feed)->singular)
 
-#define FEED_IS_VARIADIC(feed)  IS_COMMA(FEED_SINGLE(feed))
+#define FEED_IS_VARIADIC(feed) \
+    (REB_COMMA == HEART_BYTE_UNCHECKED(FEED_SINGLE(feed)))
 
 #define FEED_VAPTR_POINTER(feed)    PAYLOAD(Comma, FEED_SINGLE(feed)).vaptr
 #define FEED_PACKED(feed)           PAYLOAD(Comma, FEED_SINGLE(feed)).packed

@@ -169,9 +169,11 @@ inline static bool IS_QUOTED_WORD(Cell(const*) v) {
 }
 
 
-inline static bool Is_Word_Isotope(Cell(const*) v)
-  { return QUOTE_BYTE(v) == ISOTOPE_0 and HEART_BYTE(v) == REB_WORD; }
-
+inline static bool Is_Word_Isotope(Cell(const*) v) {
+    if (HEART_BYTE(v) != REB_WORD)
+        return false;
+    return QUOTE_BYTE_UNCHECKED(v) == ISOTOPE_0;
+}
 
 inline static bool Is_Word_Isotope_With_Id(Cell(const*) v, SymId id) {
     assert(id != 0);

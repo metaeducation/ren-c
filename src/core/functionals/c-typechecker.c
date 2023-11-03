@@ -174,46 +174,56 @@ bool Typecheck_Value(
     Cell(const*) tail;
     Cell(const*) item;
     bool match_all;
-    if (IS_BLOCK(tests) or IS_TYPE_BLOCK(tests)) {
+
+    switch (VAL_TYPE(tests)) {
+      case REB_BLOCK:
+      case REB_TYPE_BLOCK:
         item = VAL_ARRAY_AT(&tail, tests);
         match_all = false;
-    }
-    else if (IS_GROUP(tests) or IS_TYPE_GROUP(tests)) {
+        break;
+
+      case REB_GROUP:
+      case REB_TYPE_GROUP:
         item = VAL_ARRAY_AT(&tail, tests);
         match_all = true;
-    }
-    else if (IS_PARAMETER(tests)) {
+        break;
+
+      case REB_PARAMETER: {
         Array(const*) array = try_unwrap(VAL_PARAMETER_ARRAY(tests));
         if (array == nullptr)
             return true;  // implicitly all is permitted
         item = ARR_HEAD(array);
         tail = ARR_TAIL(array);
         match_all = false;
-    }
-    else if (IS_TYPE_WORD(tests)) {
+        break; }
+
+      case REB_TYPE_WORD:
         item = tests;
         tail = tests + 1;
         match_all = true;
-    }
-    else {
+        break;
+
+      default:
         assert(false);
         fail ("Bad test passed to Typecheck_Value");
     }
 
     for (; item != tail; ++item) {
+        ASSERT_CELL_READABLE_EVIL_MACRO(item);
+
         option(Symbol(const*)) label = nullptr;  // so goto doesn't cross
 
         // !!! Ultimately, we'll enable literal comparison for quoted/quasi
         // items.  For the moment just try quasi-words for isotopes.
         //
-        if (IS_QUASI(item)) {
-            if (HEART_BYTE(item) == REB_VOID) {
+        if (VAL_TYPE_UNCHECKED(item) == REB_QUASI) {
+            if (HEART_BYTE_UNCHECKED(item) == REB_VOID) {
                 if (Is_None(v))
                     goto test_succeeded;
                 goto test_failed;
             }
 
-            if (HEART_BYTE(item) != REB_WORD)
+            if (HEART_BYTE_UNCHECKED(item) != REB_WORD)
                 fail (item);
 
             if (not Is_Isoword(v))
@@ -225,19 +235,26 @@ bool Typecheck_Value(
 
         enum Reb_Kind kind;
         Cell(const*) test;
-        if (IS_WORD(item)) {
+        if (VAL_TYPE_UNCHECKED(item) == REB_WORD) {
             label = VAL_WORD_SYMBOL(item);
             test = Lookup_Word_May_Fail(item, tests_specifier);
             kind = VAL_TYPE(test);  // e.g. TYPE-BLOCK! <> BLOCK!
         }
         else {
             test = item;
-            if (IS_BLOCK(test))
+            switch (VAL_TYPE_UNCHECKED(test)) {
+              case REB_BLOCK:
                 kind = REB_TYPE_BLOCK;
-            else if (IS_GROUP(test))
+                break;
+
+              case REB_GROUP:
                 kind = REB_TYPE_GROUP;
-            else
-                kind = VAL_TYPE(test);
+                break;
+
+              default:
+                kind = VAL_TYPE_UNCHECKED(test);
+                break;
+            }
         }
 
         if (Is_Activation(test))

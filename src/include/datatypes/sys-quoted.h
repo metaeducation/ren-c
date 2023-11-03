@@ -174,12 +174,12 @@ inline static Count Dequotify(Cell(*) v) {
     (QUOTE_BYTE(v) == ISOTOPE_0)
 
 inline static bool Is_Isotope_Unstable(Cell(const*) v) {
-    assert(Is_Isotope(v));
+    assert(QUOTE_BYTE_UNCHECKED(v) == ISOTOPE_0);  // say Is_Isotope() checked
     return (
-        HEART_BYTE(v) == REB_BLOCK  // Is_Pack()
-        or HEART_BYTE(v) == REB_ERROR  // Is_Raised()
-        or HEART_BYTE(v) == REB_COMMA  // Is_Barrier()
-        or HEART_BYTE(v) == REB_OBJECT  // Is_Lazy()
+        HEART_BYTE_UNCHECKED(v) == REB_BLOCK  // Is_Pack()
+        or HEART_BYTE_UNCHECKED(v) == REB_ERROR  // Is_Raised()
+        or HEART_BYTE_UNCHECKED(v) == REB_COMMA  // Is_Barrier()
+        or HEART_BYTE_UNCHECKED(v) == REB_OBJECT  // Is_Lazy()
     );
 }
 

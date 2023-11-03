@@ -415,7 +415,7 @@ inline static void FAIL_IF_INACCESSIBLE_CTX(Context(*) c) {
 //
 
 inline static Context(*) VAL_CONTEXT(noquote(Cell(const*)) v) {
-    assert(ANY_CONTEXT_KIND(CELL_HEART(v)));
+    assert(ANY_CONTEXT_KIND(CELL_HEART_UNCHECKED(v)));
     Context(*) c = CTX(VAL_NODE1(v));
     FAIL_IF_INACCESSIBLE_CTX(c);
     return c;
