@@ -614,20 +614,6 @@ inline static Bounce Native_Thrown_Result(Frame(*) frame_) {
 }
 
 
-// Turns voids and nulls into boxed form to be THEN-reactive, vs ELSE
-//
-inline static Bounce Native_Branched_Result(Frame(*) frame_, Value(*) v) {
-    assert(v == frame_->out);  // would not be zero cost if we supported copy
-    if (Is_Void(v))
-        Init_Heavy_Void(v);
-    else if (Is_Nulled(v))
-        Init_Heavy_Null(v);
-    else if (Is_False(v))
-        Init_Heavy_False(v);
-    return frame_->out;
-}
-
-
 inline static Bounce Native_Void_Result_Untracked(
     Value(*) out,  // have to pass; comma at callsite -> "operand has no effect"
     Frame(*) frame_

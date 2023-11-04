@@ -295,8 +295,6 @@ inline static Cell(const*) CELL_TO_VAL(noquote(Cell(const*)) cell)
 // pointer you pass in is carrying a word payload.  It disregards the quotes.)
 //
 
-inline static option(SymId) VAL_WORD_ID(noquote(Cell(const*)) v);
-
 inline static enum Reb_Kind VAL_TYPE_UNCHECKED(Cell(const*) v) {
     switch (QUOTE_BYTE_UNCHECKED(v)) {
       case ISOTOPE_0: {

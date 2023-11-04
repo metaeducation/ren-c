@@ -31,10 +31,8 @@
 //
 
 
-inline static option(SymId) VAL_WORD_ID(noquote(Cell(const*)) v) {
-    assert(PG_Symbol_Canons[0].leader.bits == SERIES_FLAG_FREE);
-    return ID_OF_SYMBOL(VAL_WORD_SYMBOL(v));
-}
+#define VAL_WORD_ID(v) \
+    ID_OF_SYMBOL(VAL_WORD_SYMBOL(v))
 
 inline static void INIT_VAL_WORD_INDEX(Cell(*) v, REBLEN i) {
     assert(ANY_WORDLIKE(v));
@@ -186,11 +184,3 @@ inline static bool Is_Word_Isotope_With_Id(Cell(const*) v, SymId id) {
 
 inline static bool Is_Quasi_Word(Cell(const*) v)
   { return IS_QUASI(v) and HEART_BYTE_UNCHECKED(v) == REB_WORD; }
-
-inline static Value(*) Isotopify_If_Falsey(Value(*) v) {
-    if (Is_Nulled(v))
-        Init_Heavy_Null(v);
-    else if (IS_LOGIC(v) and VAL_LOGIC(v) == false)
-        Init_Heavy_False(v);
-    return v;
-}

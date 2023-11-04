@@ -549,8 +549,6 @@ inline static REBVAR *Force_Lib_Var(SymId id) {
 #include "sys-void.h"
 #include "sys-trash.h"  // quasi-void with special behavior in debug build
 
-#include "sys-nulled.h"
-
 #include "datatypes/sys-blank.h"
 
 #include "datatypes/sys-comma.h"
@@ -567,7 +565,6 @@ inline static REBVAR *Force_Lib_Var(SymId id) {
 #include "datatypes/sys-string.h"  // SymId needed for typesets
 
 #include "datatypes/sys-quoted.h"
-#include "datatypes/sys-logic.h"
 
 #include "datatypes/sys-pair.h"
 
@@ -575,10 +572,13 @@ inline static REBVAR *Force_Lib_Var(SymId id) {
 
 #include "datatypes/sys-action.h"
 #include "datatypes/sys-context.h"  // needs actions for FRAME! contexts
-#include "datatypes/sys-error.h"
 
 #include "datatypes/sys-word.h"  // needs to know about QUOTED! for binding
+#include "sys-nulled.h"
+#include "datatypes/sys-logic.h"
 #include "datatypes/sys-datatype.h"  // uses words
+
+#include "datatypes/sys-error.h"
 
 #include "datatypes/sys-bitset.h"
 

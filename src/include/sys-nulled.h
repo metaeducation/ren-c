@@ -76,10 +76,6 @@ inline static bool Is_Nulled(Cell(const*) v) {
 #define Init_Quasi_Word(out,label) \
     TRACK(Init_Any_Word_Untracked((out), REB_WORD, (label), QUASI_2))
 
-inline static bool Is_Word_Isotope(Cell(const*) v);
-
-inline static bool Is_Word_Isotope_With_Id(Cell(const*) v, SymId id);
-
 #define Init_Nulled(out) \
     Init_Word_Isotope((out), Canon(NULL))
 

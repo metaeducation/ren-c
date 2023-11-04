@@ -55,30 +55,35 @@ inline static bool IS_LOGIC(Cell(const*) v) {
     if (HEART_BYTE_UNCHECKED(v) != REB_WORD)  // quote byte checked it
         return false;
 
-    return Is_True(v) or Is_False(v);  // !!! speed up
+    option(SymId) id = VAL_WORD_ID(v);
+    return id == SYM_TRUE or id == SYM_FALSE;
 }
 
 #define Init_Logic(out,flag) \
     Init_Word_Isotope((out), (flag) ? Canon(TRUE) : Canon(FALSE))
 
 inline static bool VAL_LOGIC(Cell(const*) v) {
-    if (Is_True(v))  // !!! speed up
+    assert(Is_Isotope(v));
+    option(SymId) id = VAL_WORD_ID(v);
+    if (id == SYM_TRUE)
         return true;
-    if (Is_False(v))
+    if (id == SYM_FALSE)
         return false;
-    fail ("Attempt to test VAL_LOGIC() on non-LOGIC!");  // assert?
+    assert(false);
+    fail ("Attempt to test VAL_LOGIC() on non-LOGIC!");  // shouldn't happen
 }
 
 inline static bool Is_Truthy(Cell(const*) v) {
     if (QUOTE_BYTE(v) == ISOTOPE_0) {
         assert(Is_Isotope_Stable(v));
-        if (not Is_Word_Isotope(v))
-            return true;  // all non-word isotopes are truthy
-        if (Is_Nulled(v))  // blank isotope is null, falsey
+        if (HEART_BYTE_UNCHECKED(v) != REB_WORD)
+            return true;  // all non-word isotopes are truthy?
+        option(SymId) id = VAL_WORD_ID(v);
+        if (id == SYM_NULL)
             return false;
-        if (Is_True(v))
+        if (id == SYM_TRUE)
             return true;
-        if (Is_False(v))
+        if (id == SYM_FALSE)
             return false;
         fail (Error_Bad_Isotope(v));  // !!! special error?
     }
@@ -131,4 +136,25 @@ inline static bool Is_Heavy_False(Cell(const*) v) {
     Cell(const*) tail;
     Cell(const*) at = VAL_ARRAY_AT(&tail, v);
     return (tail == at + 1) and Is_Meta_Of_False(at);
+}
+
+inline static Value(*) Isotopify_If_Falsey(Value(*) v) {
+    if (Is_Nulled(v))
+        Init_Heavy_Null(v);
+    else if (IS_LOGIC(v) and VAL_LOGIC(v) == false)
+        Init_Heavy_False(v);
+    return v;
+}
+
+// Turns voids and nulls into boxed form to be THEN-reactive, vs ELSE
+//
+inline static Bounce Native_Branched_Result(Frame(*) frame_, Value(*) v) {
+    assert(v == frame_->out);  // would not be zero cost if we supported copy
+    if (Is_Void(v))
+        Init_Heavy_Void(v);
+    else if (Is_Nulled(v))
+        Init_Heavy_Null(v);
+    else if (Is_False(v))
+        Init_Heavy_False(v);
+    return frame_->out;
 }
