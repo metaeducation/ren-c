@@ -64,6 +64,7 @@ jobs:
            config-file: generic.r
            standard: gnu99  # used for sigjmp_buf (signal safety)
            debug: none
+           optimize: 2
            extensions: "UUID *"
            variation: ""
            checked: false
@@ -72,6 +73,7 @@ jobs:
            config-file: generic.r
            standard: gnu99  # used for sigjmp_buf (signal safety)
            debug: normal
+           optimize: 0
            extensions: "UUID * ODBC +"
            variation: "-debug"  # !!! Maybe -debug-odbc ?
            checked: true
@@ -91,6 +93,7 @@ jobs:
       CONFIG_FILE: ${{ matrix.config-file }}
       STANDARD: ${{ matrix.standard }}
       DEBUG: ${{ matrix.debug }}
+      OPTIMIZE: ${{ matrix.optimize }}
       EXTENSIONS: ${{ matrix.extensions }}
       VARIATION: ${{ matrix.variation }}
       CHECKED: ${{ matrix.checked }}
@@ -185,6 +188,7 @@ jobs:
             standard=$STANDARD \
             os_id=$OS_ID \
             debug=$DEBUG \
+            optimize=$OPTIMIZE \
             git_commit="{$GIT_COMMIT}" \
             rigorous=no \
             static=no \

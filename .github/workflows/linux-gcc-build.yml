@@ -71,6 +71,7 @@ jobs:
            config-file: generic.r
            standard: gnu99  # used for sigjmp_buf (signal safety)
            debug: none
+           optimize: 2
            extensions: ""
            variation: ""
 
@@ -78,6 +79,7 @@ jobs:
            config-file: generic.r
            standard: gnu99  # used for sigjmp_buf (signal safety)
            debug: normal
+           optimize: g
            extensions: "ODBC +"
            variation: "-debug"  # !!! Maybe -debug-odbc ?
 
@@ -85,6 +87,7 @@ jobs:
            config-file: generic-c++.r
            standard: c++17  # c++11 is "default", no option for it
            debug: normal
+           optimize: g
            extensions: ""  # TBD: ODBC for 32-bit?
            variation: ""
 
@@ -100,6 +103,7 @@ jobs:
       CONFIG_FILE: ${{ matrix.config-file }}
       STANDARD: ${{ matrix.standard }}
       DEBUG: ${{ matrix.debug }}
+      OPTIMIZE: ${{ matrix.optimize }}
       EXTENSIONS: ${{ matrix.extensions }}
       VARIATION: ${{ matrix.variation }}
 
@@ -209,6 +213,7 @@ jobs:
             standard=$STANDARD \
             os_id=$OS_ID \
             debug=$DEBUG \
+            optimize=$OPTIMIZE \
             git_commit="{$GIT_COMMIT}" \
             rigorous=no \
             static=no \
