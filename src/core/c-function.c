@@ -997,7 +997,7 @@ Action(*) Make_Action(
     // at the given length implicitly.
     //
     Array(*) details = Make_Array_Core(
-        details_capacity,  // leave room for archetype
+        details_capacity,  // Note: may be just 1 (so non-dynamic!)
         SERIES_MASK_DETAILS | NODE_FLAG_MANAGED
     );
     SET_SERIES_LEN(details, details_capacity);

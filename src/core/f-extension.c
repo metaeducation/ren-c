@@ -142,40 +142,40 @@ DECLARE_NATIVE(load_extension)
     // and shutdown functions, as well as Rebol script source, plus Dispatcher
     // functions for each native.
     //
-    Array(const*) details;
+    Array(*) collated;
 
     if (IS_BLOCK(ARG(where))) {  // It's one of the BUILTIN-EXTENSIONS
-        details = VAL_ARRAY(ARG(where)); // already "collated"
+        collated = VAL_ARRAY_ENSURE_MUTABLE(ARG(where));  // already "collated"
     }
     else {  // It's a DLL, must locate and call its RX_Collate() function
         assert(IS_FILE(ARG(where)));
 
         REBVAL *lib_api = rebValue("make library!", ARG(where));
 
-        REBVAL *details_block = rebValue(
+        REBVAL *collated_block = rebValue(
             "run-library-collator", lib_api, "{RX_Collate}"
         );
 
-        if (not details_block or not IS_BLOCK(details_block)) {
+        if (not collated_block or not IS_BLOCK(collated_block)) {
             rebElide("close", lib_api);
             fail (Error_Bad_Extension_Raw(ARG(where)));
         }
 
-        details = VAL_ARRAY(details_block);
-        rebRelease(details_block);
+        collated = VAL_ARRAY_ENSURE_MUTABLE(collated_block);
+        rebRelease(collated_block);
 
         rebRelease(lib_api);  // should we hang onto lib to pass along?
     }
 
-    assert(ARR_LEN(details) == IDX_COLLATOR_MAX);
-    PUSH_GC_GUARD(details);
+    assert(ARR_LEN(collated) == IDX_COLLATOR_MAX);
+    PUSH_GC_GUARD(collated);
 
-    const REBVAL *script_compressed
-        = DETAILS_AT(details, IDX_COLLATOR_SCRIPT);
+    Cell(const*) script_compressed
+        = ARR_AT(collated, IDX_COLLATOR_SCRIPT);
     REBLEN script_num_codepoints
-        = VAL_UINT32(DETAILS_AT(details, IDX_COLLATOR_SCRIPT_NUM_CODEPOINTS));
-    const REBVAL *cfuncs_handle
-        = DETAILS_AT(details, IDX_COLLATOR_CFUNCS);
+        = VAL_UINT32(ARR_AT(collated, IDX_COLLATOR_SCRIPT_NUM_CODEPOINTS));
+    Cell(const*) cfuncs_handle
+        = ARR_AT(collated, IDX_COLLATOR_CFUNCS);
 
     REBLEN num_natives = VAL_HANDLE_LEN(cfuncs_handle);
     CFUNC* *cfuncs = VAL_HANDLE_POINTER(
@@ -252,7 +252,7 @@ DECLARE_NATIVE(load_extension)
     rebRelease(script);
 
     DROP_GC_GUARD(module);
-    DROP_GC_GUARD(details);
+    DROP_GC_GUARD(collated);
 
     rebElide("append system.extensions", CTX_ARCHETYPE(module_ctx));
 

@@ -241,36 +241,8 @@ inline static bool Is_Throwing(Frame(*) frame_) {
 #define INIT_VAL_ACTION_PARTIALS_OR_LABEL               INIT_VAL_NODE2
 
 
-// An action's details array is stored in the archetype, which is the first
-// element of the action array...which is *usually* the same thing as the
-// action array itself, -but not always-.  Hijackings fiddle with this, and
-// a COPY of an action will get the details array of what it copied...not
-// itself.  So an archetype represents -an- action, but it may be a hijacked
-// action from what it once was (much like a word reference).
-//
-inline static Array(*) ACT_DETAILS(Action(*) a) {
-    return cast(Array(*),
-        cast(REBVAL*, cast(REBSER*, a)->content.dynamic.data)
-            ->payload.Any.first.node
-    );
-}  // ARR() has debug cost, not defined yet
-
-inline static Array(*) ACT_IDENTITY(Action(*) a)
-  { return cast(Array(*), a); }
-
-
-inline static Context(*) VAL_ACTION_BINDING(noquote(Cell(const*)) v) {
-    assert(CELL_HEART(v) == REB_ACTION);
-    return CTX(BINDING(v));
-}
-
-inline static void INIT_VAL_ACTION_BINDING(
-    Cell(*) v,
-    Context(*) binding
-){
-    assert(CELL_HEART(v) == REB_ACTION);
-    mutable_BINDING(v) = binding;
-}
+#define ACT_IDENTITY(action) \
+    cast(Array(*), ensure(Action(*), (action)))
 
 
 // An action's "archetype" is data in the head cell (index [0]) of the array
@@ -278,9 +250,36 @@ inline static void INIT_VAL_ACTION_BINDING(
 // paramlist value match the paramlist it is in.  So when copying one array
 // to make a new paramlist from another, you must ensure the new array's
 // archetype is updated to match its container.
+//
+// Note that the details array represented by the identity is not guaranteed
+// to be SERIES_FLAG_DYNAMIC, so we use SER_AT() here vs. optimize further.
+//
+#define ACT_ARCHETYPE(action) \
+    SER_AT(REBVAL, ACT_IDENTITY(action), 0)
 
-#define ACT_ARCHETYPE(a) \
-    SER_AT(REBVAL, ACT_IDENTITY(a), 0)
+
+// An action's details array is stored in the archetype, which is the first
+// element of the action array...which is *usually* the same thing as the
+// action array itself, -but not always-.  Hijackings fiddle with this, and
+// a COPY of an action will get the details array of what it copied...not
+// itself.  So an archetype represents -an- action, but it may be a hijacked
+// action from what it once was (much like a word reference).
+//
+#define ACT_DETAILS(action) \
+    x_cast(Array(*), ACT_ARCHETYPE(action)->payload.Any.first.node)
+
+inline static Context(*) VAL_ACTION_BINDING(noquote(Cell(const*)) v) {
+    assert(CELL_HEART_UNCHECKED(v) == REB_ACTION);
+    return CTX(BINDING(v));
+}
+
+inline static void INIT_VAL_ACTION_BINDING(
+    Cell(*) v,
+    Context(*) binding
+){
+    assert(CELL_HEART_UNCHECKED(v) == REB_ACTION);
+    mutable_BINDING(v) = binding;
+}
 
 
 // Only the archetype should be asked if it is native (because the archetype
@@ -337,8 +336,14 @@ inline static REBPAR *ACT_PARAMS_HEAD(Action(*) a) {
     mutable_LINK_DISPATCHER(ACT_IDENTITY(a)) = cast(CFUNC*, (cfunc))
 
 
-#define DETAILS_AT(a,n) \
-    SPECIFIC(ARR_AT((a), (n)))
+// The DETAILS array isn't guaranteed to be SERIES_FLAG_DYNAMIC (it may hold
+// only the archetype, e.g. with a specialized function).  *BUT* if you are
+// asking for elements in the details array, you must know it is dynamic.
+//
+inline static Value(*) DETAILS_AT(Array(*) details, Length n) {
+    assert(n != 0 and n < details->content.dynamic.used);
+    return cast(Value(*), details->content.dynamic.data) + n;
+}
 
 #define IDX_DETAILS_1 1  // Common index used for code body location
 
