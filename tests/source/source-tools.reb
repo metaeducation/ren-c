@@ -426,22 +426,11 @@ list: context [
         {Take next file from a sequence that is represented by a queue.}
         return: [<opt> file!]
         queue [block!]
-        <static> c-count (0)
     ][
         item: ensure file! take queue
 
         if find whitelisted item [
             return null
-        ]
-
-        ; C Analysis is extremely slow right now.  Only analyze one out of
-        ; every N files.
-        ;
-        if try parse item [... ".c"] [
-            c-count: me + 1
-            if c-count mod 30 != 0 [
-                return null  ; C analysis is extremely slow right now
-            ]
         ]
 
         if equal? #"/" last item [

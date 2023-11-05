@@ -447,8 +447,8 @@ inline static Utf8(*) STR_AT(const_if_c Raw_String* s, REBLEN at) {
     // is positive and bigger than `at`, faster to seek from head.
     //
     if (cast(REBINT, at) < cast(REBINT, booked) - cast(REBINT, at)) {
-        if (booked > sizeof(REBVAL))
-            bookmark = nullptr;  // don't throw away bookmark for low searches
+        if (at < sizeof(REBVAL))
+            bookmark = nullptr;  // don't update bookmark for near head search
         goto scan_from_head;
     }
 
@@ -456,8 +456,8 @@ inline static Utf8(*) STR_AT(const_if_c Raw_String* s, REBLEN at) {
     // it is positive and bigger than `len - at`, faster to seek from tail.
     //
     if (cast(REBINT, len - at) < cast(REBINT, at) - cast(REBINT, booked)) {
-        if (booked > sizeof(REBVAL))
-            bookmark = nullptr;  // don't throw away bookmark for low searches
+        if (len - at < sizeof(REBVAL))
+            bookmark = nullptr;  // don't update bookmark for near tail search
         goto scan_from_tail;
     }
 
