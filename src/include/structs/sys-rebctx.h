@@ -90,4 +90,4 @@
 
 
 inline static Array(*) CTX_VARLIST(Context(*) ctx)
-  { return x_cast(Array(*), ctx); }  // ARR() has debug cost, not defined yet
+  { return cast(Array(*), ctx); }  // ARR() has debug cost, not defined yet

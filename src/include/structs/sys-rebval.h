@@ -652,7 +652,7 @@ union Reb_Value_Payload { //=/////////////// ACTUAL PAYLOAD DEFINITION ////=//
     (v)->extra.Binding
 
 #define BINDING(v) \
-    x_cast(REBSER*, m_cast(Node*, (v)->extra.Binding))
+    x_cast(REBSER*, (v)->extra.Binding)  // binding const (why?), need x_cast
 
 
 //=////////////////////////////////////////////////////////////////////////=//

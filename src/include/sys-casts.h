@@ -54,25 +54,25 @@
 
 #if (! DEBUG_CHECK_CASTS)
 
-    // Plain definitions are very permissive...they cast away any constness
+    // Plain definitions are very permissive...they x_cast() away any constness
     // of the input pointer, and always return a mutable output.  This is
     // because to do otherwise in the C build would require having variants
-    // like `const_SER()` and `SER()`, which would be ugly.
+    // like `const_SER()` and `SER()`, which would be unmanageable.
     //
     // So we just trust the occasional build with DEBUG_CHECK_CASTS will use
     // C++ templating magic to validate the constness, and keep the C source
     // form more readable at the callsites.
 
-    #define NOD(p)          m_cast(Node*, x_cast(const Node*, (p)))
+    #define NOD(p)          x_cast(Node*, (p))
 
-    #define SER(p)          m_cast(Raw_Series*, x_cast(const Raw_Series*, (p)))
-    #define ARR(p)          m_cast(Raw_Array*, x_cast(const Raw_Array*, (p)))
-    #define ACT(p)          m_cast(Raw_Action*, x_cast(const Raw_Action*, (p)))
-    #define CTX(p)          m_cast(Raw_Context*, x_cast(const Raw_Context*, (p)))
+    #define SER(p)          x_cast(Raw_Series*, (p))
+    #define ARR(p)          x_cast(Raw_Array*, (p))
+    #define ACT(p)          x_cast(Raw_Action*, (p))
+    #define CTX(p)          x_cast(Raw_Context*, (p))
 
-    #define STR(p)          m_cast(Raw_String*, x_cast(const Raw_String*, (p)))
+    #define STR(p)          x_cast(Raw_String*, (p))
 
-    #define SYM(p)          m_cast(Raw_Symbol*, x_cast(const Raw_Symbol*, (p)))
+    #define SYM(p)          x_cast(Raw_Symbol*, (p))
 
     #define VAL(p)          x_cast(REBVAL*, (p))
 

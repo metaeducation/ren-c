@@ -54,7 +54,7 @@ inline static Array(*) MAP_PAIRLIST(const_if_c REBMAP *map)
 
 #if CPLUSPLUS_11
     inline static Array(const*) MAP_PAIRLIST(const REBMAP *map)
-      { return x_cast(Array(const*), map); }
+      { return cast(Array(const*), map); }
 #endif
 
 #define MAP_HASHLIST(m) \

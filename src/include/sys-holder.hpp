@@ -109,7 +109,7 @@ struct SeriesHolder {
     explicit SeriesHolder (const void* other) {  // allow casting
         p = reinterpret_cast<T*>(const_cast<void*>(other));
         if (p) {
-            auto *s = m_cast(Raw_Series*, x_cast(const Raw_Series*, p));
+            auto* s = x_cast(Raw_Series*, p);
             assert(s->num_locals < INT32_MAX);
             s->num_locals = s->num_locals + 1;
         }
@@ -157,7 +157,7 @@ struct SeriesHolder {
 
     ~SeriesHolder () {
         if (p) {
-            auto *s = m_cast(Raw_Series*, x_cast(const Raw_Series*, p));
+            auto* s = x_cast(Raw_Series*, p);
             assert(s->num_locals > 0);
             s->num_locals = s->num_locals - 1;
         }
@@ -216,7 +216,7 @@ bool operator!= (U left, SeriesHolder<T*>& right)
 
 
 // const_cast<> and reinterpret_cast<> don't work with user-defined
-// conversion operators.  But since this codebase uses m_cast, we can
+// conversion operators.  But since this codebase uses mp_cast, we can
 // cheat when the class is being used with the helpers.
 //
 template <
@@ -225,12 +225,12 @@ template <
     typename CT = typename std::add_const<T>::type,
     typename CTP = typename std::add_pointer<CT>::type
 >
-inline TP m_cast_helper(SeriesHolder<CTP>& s)  // "CTP" => const T pointer
+inline TP mp_cast_helper(SeriesHolder<CTP>& s)  // "CTP" => const T pointer
   { return const_cast<T*>(s.p); }
 
 template <typename TP>
-inline TP m_cast_helper(SeriesHolder<TP>& s)
-    { return s.p; }  // m_cast() allows being a no-op
+inline TP mp_cast_helper(SeriesHolder<TP>& s)
+    { return s.p; }  // mp_cast() allows being a no-op
 
 
 #if !defined(NDEBUG)

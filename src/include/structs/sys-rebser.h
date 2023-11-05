@@ -298,7 +298,7 @@ inline static Byte FLAVOR_BYTE(uintptr_t flags)
   { return THIRD_BYTE(flags); }
 
 #define SER_FLAVOR(s) \
-    x_cast(Flavor, THIRD_BYTE((s)->leader))
+    cast(Flavor, THIRD_BYTE((s)->leader))
 
 #define mutable_SER_FLAVOR(s) \
     mutable_THIRD_BYTE((s)->leader)

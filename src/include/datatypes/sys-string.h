@@ -129,7 +129,7 @@ inline static Utf8(*) SKIP_CHR(
         }
     }
     NEXT_CHR(codepoint_out, cp);
-    return m_cast(Utf8(*), cp);
+    return mp_cast(Utf8(*), cp);
 }
 
 #if CPLUSPLUS_11
@@ -141,21 +141,21 @@ inline static Utf8(*) SKIP_CHR(
         Codepoint *codepoint_out,
         Utf8(const*) cp
     ){
-        return NEXT_CHR(codepoint_out, m_cast(Utf8(*), cp));
+        return NEXT_CHR(codepoint_out, mp_cast(Utf8(*), cp));
     }
 
     inline static Utf8(const*) BACK_CHR(
         Codepoint *codepoint_out,
         Utf8(const*) cp
     ){
-        return BACK_CHR(codepoint_out, m_cast(Utf8(*), cp));
+        return BACK_CHR(codepoint_out, mp_cast(Utf8(*), cp));
     }
 
     inline static Utf8(const*) NEXT_STR(Utf8(const*) cp)
-      { return NEXT_STR(m_cast(Utf8(*), cp)); }
+      { return NEXT_STR(mp_cast(Utf8(*), cp)); }
 
     inline static Utf8(const*) BACK_STR(Utf8(const*) cp)
-      { return BACK_STR(m_cast(Utf8(*), cp)); }
+      { return BACK_STR(mp_cast(Utf8(*), cp)); }
 
     inline static Utf8(const*) SKIP_CHR(
         Codepoint *codepoint_out,
@@ -310,10 +310,10 @@ inline static void TERM_STR_LEN_SIZE(Raw_String* s, REBLEN len, Size used) {
 // very short, or that are never enumerated.
 
 #define BMK_INDEX(b) \
-    SER_HEAD(struct Reb_Bookmark, c_cast(REBBMK*, (b)))->index
+    SER_HEAD(struct Reb_Bookmark, (b))->index
 
 #define BMK_OFFSET(b) \
-    SER_HEAD(struct Reb_Bookmark, c_cast(REBBMK*, (b)))->offset
+    SER_HEAD(struct Reb_Bookmark, (b))->offset
 
 inline static REBBMK* Alloc_Bookmark(void) {
     REBSER *s = Make_Series_Core(
@@ -602,10 +602,10 @@ inline static Utf8(const*) VAL_STRING_TAIL(noquote(Cell(const*)) v) {
 
 
 #define VAL_STRING_AT_ENSURE_MUTABLE(v) \
-    m_cast(Utf8(*), VAL_STRING_AT(ENSURE_MUTABLE(v)))
+    mp_cast(Utf8(*), VAL_STRING_AT(ENSURE_MUTABLE(v)))
 
 #define VAL_STRING_AT_KNOWN_MUTABLE(v) \
-    m_cast(Utf8(*), VAL_STRING_AT(KNOWN_MUTABLE(v)))
+    mp_cast(Utf8(*), VAL_STRING_AT(KNOWN_MUTABLE(v)))
 
 
 inline static Size VAL_SIZE_LIMIT_AT(

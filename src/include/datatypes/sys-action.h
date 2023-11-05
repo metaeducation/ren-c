@@ -249,14 +249,14 @@ inline static bool Is_Throwing(Frame(*) frame_) {
 // action from what it once was (much like a word reference).
 //
 inline static Array(*) ACT_DETAILS(Action(*) a) {
-    return m_cast(Array(*), x_cast(Array(const*),
-        x_cast(REBVAL*, x_cast(const REBSER*, a)->content.dynamic.data)
+    return cast(Array(*),
+        cast(REBVAL*, cast(REBSER*, a)->content.dynamic.data)
             ->payload.Any.first.node
-    ));
+    );
 }  // ARR() has debug cost, not defined yet
 
 inline static Array(*) ACT_IDENTITY(Action(*) a)
-  { return x_cast(Array(*), a); }
+  { return cast(Array(*), a); }
 
 
 inline static Context(*) VAL_ACTION_BINDING(noquote(Cell(const*)) v) {

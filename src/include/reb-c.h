@@ -394,32 +394,34 @@
 
 //=//// CASTING MACROS ////////////////////////////////////////////////////=//
 //
-// The following code and explanation is from "Casts for the Masses (in C)":
+// These macros are easier-to-spot variants of the parentheses cast.
 //
-// http://blog.hostilefork.com/c-casts-for-the-masses/
+//   * The 'm_cast' is when getting [M]utablity on a const is okay
+//   * Plain 'cast' can do everything else (except remove const/volatile)
+//   * The 'c_cast' helper ensures you're ONLY adding [C]onst to a value
 //
-// But debug builds don't inline functions--not even no-op ones whose sole
-// purpose is static analysis.  This means the cast macros add a headache when
-// stepping through the debugger, and also they consume a measurable amount
-// of runtime.  Hence we sacrifice cast checking in the debug builds...and the
-// release C++ builds are relied upon to do the proper optimizations as well
-// as report any static analysis errors.  See DEBUG_CHECK_CASTS.
+// Additionally there is x_cast(), for cases where you don't know if your
+// input pointer is const or not, and want to cast to a mutable pointer.
+// C++ doesn't let you use old-style casts to accomplish this, so it has to
+// be done using two casts and type_traits magic.
 //
-// !!! C++14 gcc release builds seem to trigger bad behavior on cast() to
-// a CFUNC*, and non-C++14 builds are allowing cast of `const void*` to
-// non-const `char` with plain `cast()`.  Investigate as time allows.
+// (This code is based on ideas in "Casts for the Masses (in C)":
+//
+//   http://blog.hostilefork.com/c-casts-for-the-masses/
+//
+// However, due to the runtime costs of the "helper" functions in debug
+// builds where inlining is not done...they have been simplified so as to
+// compile away completely, whenever possible.)
+//
+// See also: DEBUG_CHECK_CASTS
 
-#define x_cast(t,v)    ((t)(v))  // not checked for performance, use sparingly
+#define cast(T,v)       ((T)(v))
 
-#if !defined(__cplusplus)
-    /* These macros are easier-to-spot variants of the parentheses cast.
-     * The 'm_cast' is when getting [M]utablity on a const is okay (RARELY!)
-     * Plain 'cast' can do everything else (except remove volatile)
-     * The 'c_cast' helper ensures you're ONLY adding [C]onst to a value
-     */
-    #define m_cast(t,v)     ((t)(v))
-    #define cast(t,v)       ((t)(v))
-    #define c_cast(t,v)     ((t)(v))
+#if (! CPLUSPLUS_11)
+    #define x_cast(T,v)    ((T)(v))  /* pointer casts different in C++11 */
+
+    #define m_cast(T,v)     ((T)(v))
+    #define c_cast(T,v)     ((T)(v))
     /*
      * Q: Why divide roles?  A: Frequently, input to cast is const but you
      * "just forget" to include const in the result type, gaining mutable
@@ -427,76 +429,53 @@
      * effects *before* that write is made...due to "undefined behavior".
      */
 #else
+    /* We build an arbitrary pointer cast out of two steps: one which adds
+     * a const if it wasn't already there, and then a const_cast to the
+     * desired type (which will remove the const if target type isn't const).
+     * This has no runtime cost, so provides the desired efficiency.
+     */
+    #define x_cast(T,v) \
+       (const_cast<T>( \
+            ( \
+                std::add_pointer< \
+                    std::add_const< \
+                        std::remove_pointer<T>::type \
+                    >::type \
+                >::type \
+            )(v) /* old-style parentheses cast, "everything but" the const */ \
+        ))
+
+    #define c_cast(T,v) \
+        (const_cast<std::conditional< \
+            std::is_const<std::remove_pointer<T>::type>::value, \
+            T, /* success case */ \
+            void /* failure case--you get this if c_cast to mutable type */ \
+        >::type>(v))
+
+    #define m_cast(T,v) \
+        (const_cast<std::conditional< \
+            ! std::is_const<std::remove_pointer<T>::type>::value, \
+            T, /* success case */ \
+            void /* failure case--you get this if m_cast to const type */ \
+        >::type>(v))
+
     /*
-     * NOTE: m_cast_helper() is needed vs. plain const_cast<> in all C++ builds
+     * NOTE: mp_cast_helper() is needed vs. plain const_cast<> in all C++ builds
      * as a hook point to overload casting with smart pointer types, e.g.
-     * `m_cast(Utf8(*), some_const_rebchr)`.  Search for overloads of the
-     * m_cast_helper() in certain builds before deciding to simplify this.
+     * `mp_cast(Utf8(*), some_const_rebchr)`.  Search for overloads of the
+     * mp_cast_helper() in certain builds before deciding to simplify this.
+     * (C++ smart pointers have this problem too, see `const_cast_pointer<>`)
      */
     template<typename T, typename V>
-    T m_cast_helper(V v) {
-      #if CPLUSPLUS_11
+    T mp_cast_helper(V v) {
         static_assert(
-            !std::is_pointer<T>::value
-                || !std::is_const<typename std::remove_pointer<T>::type>::value,
-            "invalid m_cast() - requested a const type for output result"
+            !std::is_const<typename std::remove_pointer<T>::type>::value,
+            "invalid mp_cast() - requested a const type for output result"
         );
-        /* ignore volatile, we don't use it */
-      #endif
         return const_cast<T>(v);
     }
 
-    #define m_cast(t,v)     m_cast_helper<t>(v)
-
-  #if CPLUSPLUS_11 == 0 || DEBUG_CHECK_CASTS == 0
-    #define cast(t,v)       ((t)(v))
-    #define c_cast(t,v)     const_cast<t>(v)
-  #else
-    /* __cplusplus >= 201103L has C++11's type_traits, where we get some
-     * actual power.  cast becomes a reinterpret_cast for pointers and a
-     * static_cast otherwise.  We ensure c_cast added a const and m_cast
-     * removed one, and that neither affected volatility.
-     */
-    /* construct if possible for ptr to ptr casting (non-class source) */
-    template<typename T, typename V,
-        typename std::enable_if<
-            !std::is_class<V>::value
-            && (std::is_pointer<V>::value || std::is_pointer<T>::value)
-            && std::is_constructible<T, V>::value
-        >::type* = nullptr>
-                T cast_helper(V v) { return T {v}; }
-    /* reinterpret_cast for all other ptr-to-ptr (non-class source) */
-    template<typename T, typename V,
-        typename std::enable_if<
-            !std::is_class<V>::value
-            && (std::is_pointer<V>::value || std::is_pointer<T>::value)
-            && !std::is_constructible<T, V>::value
-        >::type* = nullptr>
-                T cast_helper(V v) { return reinterpret_cast<T>(v); }
-    /* static_cast for non-pointer to non-pointer casting (non-class source) */
-    template<typename T, typename V,
-        typename std::enable_if<
-            !std::is_class<V>::value
-            && (!std::is_pointer<V>::value && !std::is_pointer<T>::value)
-        >::type* = nullptr>
-                T cast_helper(V v) { return static_cast<T>(v); }
-    /* use static_cast on all classes, to go through their cast operators */
-    template<typename T, typename V,
-        typename std::enable_if<
-            std::is_class<V>::value
-        >::type* = nullptr>
-                T cast_helper(V v) { return static_cast<T>(v); }
-    template<typename T, typename V>
-    T c_cast_helper(V v) {
-        static_assert(!std::is_const<T>::value,
-            "invalid c_cast() - did not request const type for output result");
-        static_assert(std::is_volatile<T>::value == std::is_volatile<V>::value,
-            "invalid c_cast() - input and output have mismatched volatility");
-        return const_cast<T>(v);
-    }
-    #define cast(t, v)      cast_helper<t>(v)
-    #define c_cast(t, v)    c_cast_helper<t>(v)
-  #endif
+    #define mp_cast(T,v)     mp_cast_helper<T>(v)
 #endif
 
 
@@ -1016,37 +995,44 @@
 // helpful when you need to do something like assign to a void* and can't
 // do weird cast dereferencing or you'll violate strict aliasing.
 //
-#if (! CPLUSPLUS_11) || (! DEBUG_CHECK_CASTS)
+#if (! CPLUSPLUS_11)
     #define ensure(T,v) (v)
     #define ensurer(T)
     #define ensured(T,L,left) (left)
 #else
-    template<typename T>
-    struct ensure_reader {
-        template<typename U>
-        T operator<< (U u) { return u; }
+    #define ensure(T,v) \
+        static_cast<T>(v)
 
-        template<typename U>
-        static T check(U u) { return u; }
-    };
-    #define ensure(T,v) ensure_reader<T>::check(v)
-    #define ensurer(T) ensure_reader<T>() <<
+    #if (! DEBUG_CHECK_CASTS)
+        #define ensurer(T)
+        #define ensured(T,L,left) (left)
+    #else
+        template<typename T>
+        struct ensure_reader {
+            template<typename U>
+            T operator<< (U u) { return u; }
 
-    template<typename T, typename L>
-    struct ensure_writer {
-        L &left;
-        ensure_writer(L &left) : left (left) {}
-        void operator=(const T &right) {
-            left = right;
-        }
-    };
-    #define ensured(T,L,left) (ensure_writer<T,L>{(left)})
-        //
-        // ^-- Note: C++17 should be able to infer template arguments from
-        // constructors, so this could just be `ensurer(T,left)`.  There
-        // aren't enough of these to worry about it, yet.
-        //
-        // https://stackoverflow.com/a/984597/
+            template<typename U>
+            static T check(U u) { return u; }
+        };
+        #define ensurer(T) ensure_reader<T>() <<
+
+        template<typename T, typename L>
+        struct ensure_writer {
+            L &left;
+            ensure_writer(L &left) : left (left) {}
+            void operator=(const T &right) {
+                left = right;
+            }
+        };
+        #define ensured(T,L,left) (ensure_writer<T,L>{(left)})
+            //
+            // ^-- Note: C++17 should be able to infer template arguments from
+            // constructors, so this could just be `ensurer(T,left)`.  There
+            // aren't enough of these to worry about it, yet.
+            //
+            // https://stackoverflow.com/a/984597/
+  #endif
 #endif
 
 

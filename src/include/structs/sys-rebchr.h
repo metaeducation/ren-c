@@ -153,10 +153,10 @@
     // cheat when the class is being used with the helpers.
     //
     template <>
-    inline Utf8(*) m_cast_helper(Utf8(const*) v)
+    inline Utf8(*) mp_cast_helper(Utf8(const*) v)
       { return Utf8Ptr<Byte*> {const_cast<Byte*>(v.bp)}; }
 
     template <>
-    inline Utf8(*) m_cast_helper(Utf8(*) v)
+    inline Utf8(*) mp_cast_helper(Utf8(*) v)
       { return v; }  // m_cast() is supposed to be able to be a no-op
 #endif

@@ -820,7 +820,7 @@ REBVAL *RL_rebArg(const void *p, va_list *vaptr)
     if (not argR)
         return nullptr;
 
-    REBVAL *arg = cast(REBVAL*, c_cast(void*, argR));  // sneaky, but we know!
+    const REBVAL *arg = cast(const REBVAL*, argR);  // sneaky, but we know!
     return Copy_Cell(Alloc_Value(), arg);  // don't give REBVAL* arg directly
 }
 
