@@ -737,13 +737,19 @@
 #endif
 
 
-//=//// OPTIONAL TRICK FOR TYPES THAT TEST AGAINST 0 //////////////////////=//
+//=//// OPTIONAL TRICK FOR BOOLEAN COERCIBLE TYPES ////////////////////////=//
 //
-// This is a light wrapper class that provides limited functionality in the
-// vein of `std::optional` and Rust's `Option`:
+// This is a light wrapper class that uses a trick to provide limited
+// functionality in the vein of `std::optional` and Rust's `Option`:
 //
 //     option(char*) abc = "abc";
 //     option(char*) xxx = nullptr;
+//
+//     if (abc)
+//        printf("abc is truthy, so unwrap(abc) is safe!\n")
+//
+//     if (xxx)
+//        printf("XXX is falsey, so don't unwrap(xxx)...\n")
 //
 //     char* s1 = abc;                  // **compile time error
 //     option(char*) s2 = abc;          // legal
@@ -751,15 +757,21 @@
 //     char* s3 = unwrap(xxx);          // **runtime error
 //     char* s4 = try_unwrap(xxx);      // gets nullptr out
 //
-// Rather than invent a new nothing state (like `std::nullopt`) this just uses
-// nullptr.  Construction and comparison are also more lenient, allowing
-// direct comparison to the contained pointer type.
+// The trick is that in a plain C build, it doesn't use a wrapper class at all.
+// It falls back on the natural boolean coercibility of the standalone type.
+// Hence you can only use this with things like pointers, integers or enums
+// where 0 means no value.  If used in the C++ build with smart pointer
+// classes, they must be boolean coercible, e.g. `operator bool() const {...}`
+//
+// Comparison is lenient, allowing direct comparison to the contained value.
 //
 // 1. This needs special handling in %make-headers.r to recognize the format.
 //    See the `typemacro_parentheses` rule.
 //
-// 2. We want to be able to default construct structures with members that are
-//    option(), so we can't provide custom default constructor code.
+// 2. Because we want this to work in plain C, we can't take advantage of a
+//    default construction to a zeroed value.  But we also can't disable the
+//    default constructor, because we want to be able to default construct
+//    structures with members that are option().  :-(
 //
 // 3. While the combinatorics may seem excessive with repeating the equality
 //    and inequality operators, this is the way std::optional does it too.
@@ -778,7 +790,7 @@
         OptionWrapper (OptionWrapper<X> other) : wrapped (other.wrapped) {}
 
         T unwrap_helper() const {
-            assert(wrapped != 0);  // works with nullptr, or integers/enums
+            assert(wrapped);  // non-null pointers or int/enum checks != 0
             return wrapped;
         }
 
