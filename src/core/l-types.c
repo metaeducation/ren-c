@@ -704,7 +704,7 @@ const Byte* Scan_Integer(
 
     Reset_Unquoted_Header_Untracked(TRACK(out), CELL_MASK_INTEGER);
 
-    VAL_INT64(out) = CHR_TO_INT(buf);
+    mutable_VAL_INT64(out) = CHR_TO_INT(buf);
     if (errno != 0)
         return_NULL; // overflow
 

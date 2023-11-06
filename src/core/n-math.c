@@ -372,27 +372,27 @@ DECLARE_NATIVE(shift)
         REBU64 c = - cast(REBU64, b); // defined, see note on #pragma above
         if (c >= 64) {
             if (REF(logical))
-                VAL_INT64(a) = 0;
+                mutable_VAL_INT64(a) = 0;
             else
-                VAL_INT64(a) >>= 63;
+                mutable_VAL_INT64(a) >>= 63;
         }
         else {
             if (REF(logical))
-                VAL_INT64(a) = cast(REBU64, VAL_INT64(a)) >> c;
+                mutable_VAL_INT64(a) = cast(REBU64, VAL_INT64(a)) >> c;
             else
-                VAL_INT64(a) >>= cast(REBI64, c);
+                mutable_VAL_INT64(a) >>= cast(REBI64, c);
         }
     }
     else {
         if (b >= 64) {
             if (REF(logical))
-                VAL_INT64(a) = 0;
+                mutable_VAL_INT64(a) = 0;
             else if (VAL_INT64(a) != 0)
                 fail (Error_Overflow_Raw());
         }
         else {
             if (REF(logical))
-                VAL_INT64(a) = cast(REBU64, VAL_INT64(a)) << b;
+                mutable_VAL_INT64(a) = cast(REBU64, VAL_INT64(a)) << b;
             else {
                 REBU64 c = cast(REBU64, INT64_MIN) >> b;
                 REBU64 d = VAL_INT64(a) < 0
@@ -402,10 +402,10 @@ DECLARE_NATIVE(shift)
                     if ((c < d) || (VAL_INT64(a) >= 0))
                         fail (Error_Overflow_Raw());
 
-                    VAL_INT64(a) = INT64_MIN;
+                    mutable_VAL_INT64(a) = INT64_MIN;
                 }
                 else
-                    VAL_INT64(a) <<= b;
+                    mutable_VAL_INT64(a) <<= b;
             }
         }
     }

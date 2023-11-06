@@ -121,7 +121,7 @@
 #define P_INPUT_IDX         VAL_INDEX_UNBOUNDED(ARG(input))
 #define P_INPUT_LEN         VAL_LEN_HEAD(ARG(input))
 
-#define P_FLAGS             VAL_INT64(ARG(flags))
+#define P_FLAGS             mutable_VAL_INT64(ARG(flags))
 
 #define P_COLLECTION \
     (Is_Nulled(ARG(collection)) \

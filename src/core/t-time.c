@@ -685,7 +685,7 @@ REBTYPE(Time)
                 return COPY(to);
             }
             else if (IS_INTEGER(to)) {
-                VAL_INT64(to)
+                mutable_VAL_INT64(to)
                     = Round_Int(secs, frame_, Int32(to) * SEC_SEC) / SEC_SEC;
                 return COPY(to);
             }

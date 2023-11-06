@@ -59,7 +59,7 @@ Bounce Downshot_Dispatcher(Frame(*) f)  // runs until count is reached
     Cell(*) n = DETAILS_AT(details, IDX_ONESHOT_COUNTER);
     if (VAL_INT64(n) == 0)
         return nullptr;  // always return null once 0 is reached
-    --VAL_INT64(n);
+    mutable_VAL_INT64(n) -= 1;
 
     Value(*) code = FRM_ARG(f, 2);  // skip the RETURN
     return DELEGATE_BRANCH(OUT, code);
@@ -75,7 +75,7 @@ Bounce Upshot_Dispatcher(Frame(*) f)  // won't run until count is reached
 
     Cell(*) n = DETAILS_AT(details, IDX_ONESHOT_COUNTER);
     if (VAL_INT64(n) < 0) {
-        ++VAL_INT64(n);
+        mutable_VAL_INT64(n) += 1;
         return nullptr;  // return null until 0 is reached
     }
 

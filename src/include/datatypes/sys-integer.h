@@ -36,6 +36,9 @@
 
 #if defined(NDEBUG) || (! CPLUSPLUS_11)
     #define VAL_INT64(v) \
+        cast(const REBI64, PAYLOAD(Integer, (v)).i64)
+
+    #define mutable_VAL_INT64(v) \
         PAYLOAD(Integer, (v)).i64
 #else
     // allows an assert, but also lvalue: `VAL_INT64(v) = xxx`
@@ -44,7 +47,7 @@
         assert(CELL_HEART(v) == REB_INTEGER);
         return PAYLOAD(Integer, v).i64;
     }
-    inline static REBI64 & VAL_INT64(Cell(*) v) {
+    inline static REBI64 & mutable_VAL_INT64(Cell(*) v) {
         assert(VAL_TYPE(v) == REB_INTEGER);
         return PAYLOAD(Integer, v).i64;
     }

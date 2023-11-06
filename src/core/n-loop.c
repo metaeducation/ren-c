@@ -228,7 +228,7 @@ static Bounce Loop_Integer_Common(
     // it must be checked for changing to a non-integer form.
     //
     Reset_Unquoted_Header_Untracked(TRACK(var), CELL_MASK_INTEGER);
-    REBI64 *state = &VAL_INT64(var);
+    REBI64* state = &mutable_VAL_INT64(var);
     *state = start;
 
     // Run only once if start is equal to end...edge case.
@@ -1795,7 +1795,7 @@ DECLARE_NATIVE(repeat)
     if (VAL_INT64(count) == VAL_INT64(index))  // reached the desired count
         return BRANCHED(OUT);
 
-    ++VAL_INT64(index);  // bump index by one
+    mutable_VAL_INT64(index) += 1;
 
     return CATCH_CONTINUE_BRANCH(OUT, body, index);  // keep looping
 }}
@@ -1904,7 +1904,7 @@ DECLARE_NATIVE(for)
     if (VAL_INT64(var) == VAL_INT64(value))
         return BRANCHED(OUT);
 
-    if (REB_I64_ADD_OF(VAL_INT64(var), 1, &VAL_INT64(var)))
+    if (REB_I64_ADD_OF(VAL_INT64(var), 1, &mutable_VAL_INT64(var)))
         fail (Error_Overflow_Raw());
 
     STATE = ST_FOR_RUNNING_BODY;
