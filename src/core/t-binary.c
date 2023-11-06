@@ -204,7 +204,7 @@ Bounce MAKE_Binary(
 
     if (IS_BLOCK(def)) {  // was construction syntax, #[binary [#{0001} 2]]
         rebPushContinuation(
-            OUT,
+            cast(REBVAL*, OUT),
             FRAME_MASK_NONE,
             Canon(TO), Canon(BINARY_X),
                 Canon(REDUCE), rebQ(def)  // rebQ() copies cell, survives frame

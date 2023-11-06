@@ -592,18 +592,14 @@ inline static bool Is_Any_Doubled_Group(noquote(Cell(const*)) group) {
 //      == <b>
 //
 
-inline static Value(*) Init_Pack_Untracked(
-    Cell(*) out,
-    Byte quote_byte,
-    Array(*) a
-){
+inline static Value(*) Init_Pack_Untracked(Atom(*) out, Array(*) a) {
     Init_Block(out, a);
-    mutable_QUOTE_BYTE(out) = quote_byte;
-    return cast(Value(*), out);
+    mutable_QUOTE_BYTE(out) = ISOTOPE_0;
+    return cast(Value(*), out);  // Note: Is_Isotope_Unstable(out)
 }
 
 #define Init_Pack(out,a) \
-    TRACK(Init_Pack_Untracked((out), ISOTOPE_0, (a)))
+    TRACK(Init_Pack_Untracked((out), (a)))
 
 
 //=//// "NIHIL" (empty BLOCK! Isotope Pack, ~[]~) /////////////////////////=//
@@ -615,15 +611,12 @@ inline static Value(*) Init_Pack_Untracked(
 //
 
 #define Init_Nihil_Untracked(out) \
-    Init_Pack_Untracked((out), ISOTOPE_0, EMPTY_ARRAY)
+    Init_Pack_Untracked((out), EMPTY_ARRAY)
 
 #define Init_Nihil(out) \
     TRACK(Init_Nihil_Untracked(out))
 
-#define Init_Meta_Of_Nihil(out) \
-    TRACK(Init_Pack_Untracked((out), QUASI_2, EMPTY_ARRAY))
-
-inline static bool Is_Nihil(Cell(const*) v) {
+inline static bool Is_Nihil(Atom(const*) v) {
     if (not Is_Pack(v))
         return false;
     Cell(const*) tail;
@@ -657,7 +650,7 @@ inline static bool Is_Meta_Of_Nihil(Cell(const*) v) {
 //    == [a b c d e]
 //
 
-inline static Value(*) Splicify(Cell(*) v) {
+inline static Value(*) Splicify(Value(*) v) {
     assert(ANY_ARRAY(v) and QUOTE_BYTE(v) == UNQUOTED_1);
     mutable_QUOTE_BYTE(v) = ISOTOPE_0;
     mutable_HEART_BYTE(v) = REB_GROUP;

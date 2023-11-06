@@ -56,7 +56,7 @@ enum {
 // move the built frame into a new frame that can be executed with a new
 // entry to Process_Action().  The ability is also used by RESKINNED.
 //
-Frame(*) Push_Downshifted_Frame(REBVAL *out, Frame(*) f) {
+Frame(*) Push_Downshifted_Frame(Atom(*) out, Frame(*) f) {
     Flags flags = ACTION_EXECUTOR_FLAG_IN_DISPATCH;
     flags |= f->flags.bits & FRAME_FLAG_FAILURE_RESULT_OK;
 
@@ -193,7 +193,8 @@ Bounce Chainer_Dispatcher(Frame(*) f)
 
     sub->varlist = nullptr;
 
-    Value(*) pipeline_at = SPARE;
+    assert(IS_BLOCK(SPARE));
+    Value(*) pipeline_at = cast(Value(*), SPARE);
     Cell(const*) chained_tail;
     Cell(const*) chained = VAL_ARRAY_AT(&chained_tail, pipeline_at);
 
@@ -236,7 +237,7 @@ DECLARE_NATIVE(chain_p)  // see extended definition CHAIN in %base-defs.r
 {
     INCLUDE_PARAMS_OF_CHAIN_P;
 
-    REBVAL *out = OUT;  // plan ahead for factoring into Chain_Action(out..
+    Atom(*) out = OUT;  // plan ahead for factoring into Chain_Action(out..
 
     REBVAL *pipeline = ARG(pipeline);
     Cell(const*) tail;

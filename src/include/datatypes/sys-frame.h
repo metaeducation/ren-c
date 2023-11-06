@@ -136,7 +136,7 @@ inline static LineNumber FRM_LINE(Frame(*) f) {
     (cast(REBSER*, (f)->varlist)->content.dynamic.used - 1) // minus rootvar
 
 #define FRM_SPARE(f) \
-    cast(REBVAL*, &(f)->spare)
+    cast(Atom(*), &(f)->spare)
 
 #define FRM_PRIOR(f) \
     ((f)->prior + 0) // prevent assignment via this macro
@@ -225,7 +225,7 @@ inline static Context(*) Context_For_Frame_May_Manage(Frame(*) f) {
 
 //=//// FRAME LABELING ////////////////////////////////////////////////////=//
 
-inline static void Get_Frame_Label_Or_Nulled(Value(*) out, Frame(*) f) {
+inline static void Get_Frame_Label_Or_Nulled(Sink(Value(*)) out, Frame(*) f) {
     assert(Is_Action_Frame(f));
     if (f->label)
         Init_Word(out, unwrap(f->label));  // WORD!, PATH!, or stored invoke
@@ -279,9 +279,19 @@ inline static void Free_Frame_Internal(Frame(*) f) {
     Free_Pooled(FRAME_POOL, f);
 }
 
-
+// * Push_Frame() takes an Atom() for the output.  This is important, as
+//   we don't want to evaluate into arbitrary array Cell(*), since the array
+//   could have its memory moved during an evaluation.  Also we don't want
+//   to take a Value(*) that could be a variable in an object--because the
+//   unstable intermediate states of the evaluation could be exposed by
+//   an object (this applies to the ARG() of the function too, as these could
+//   be seen by debugging code).  So typically evaluations are done into the
+//   OUT or SPARE cells (or SCRATCH if in the evaluator).  Note that a
+//   special exception is made by LOCAL() in frames, based on the belief
+//   that local state for a native will never be exposed by a debugger.
+//
 inline static void Push_Frame(
-    Value(*) out,  // typecheck prohibits passing `unstable` Cell(*) for output
+    Atom(*) out,  // typecheck prohibits passing `unstable` Cell(*) for output
     Frame(*) f
 ){
     // All calls through to Eval_Core() are assumed to happen at the same C
@@ -306,41 +316,6 @@ inline static void Push_Frame(
 
   #if DEBUG_EXPIRED_LOOKBACK
     f->stress = nullptr;
-  #endif
-
-    // The arguments to functions in their frame are exposed via FRAME!s
-    // and through WORD!s.  This means that if you try to do an evaluation
-    // directly into one of those argument slots, and run arbitrary code
-    // which also *reads* those argument slots...there could be trouble with
-    // reading and writing overlapping locations.  So unless a function is
-    // in the argument fulfillment stage (before the variables or frame are
-    // accessible by user code), it's not legal to write directly into an
-    // argument slot.  :-/
-    //
-  #if !defined(NDEBUG)
-    Frame(*) ftemp = TOP_FRAME;
-    for (; ftemp != BOTTOM_FRAME; ftemp = ftemp->prior) {
-        if (not Is_Action_Frame(ftemp))
-            continue;
-        if (Is_Action_Frame_Fulfilling(ftemp))
-            continue;
-        if (GET_SERIES_FLAG(ftemp->varlist, INACCESSIBLE))
-            continue; // Encloser_Dispatcher() reuses args from up stack
-        if (
-            f->out < FRM_ARGS_HEAD(ftemp)
-            or f->out >= FRM_ARGS_HEAD(ftemp) + FRM_NUM_ARGS(ftemp)
-        ){
-            continue;
-        }
-        // Allow evaluations into native LOCAL() cells (presume that we will
-        // not expose these to the user).
-        //
-        Action(*) phase = FRM_PHASE(ftemp);
-        assert(Get_Action_Flag(phase, IS_NATIVE));
-        assert(f->out == FRM_ARG(ftemp, f->out - FRM_ARGS_HEAD(ftemp) + 1));
-        REBPAR* param = ACT_PARAM(phase, f->out - FRM_ARGS_HEAD(ftemp) + 1);
-        assert(Is_Specialized(param));
-    }
   #endif
 
   #if !defined(NDEBUG)
@@ -553,7 +528,8 @@ inline static Frame(*) Prep_Frame_Core(
 #define ARG(name) \
     FRM_ARG(frame_, (p_##name##_))
 
-#define LOCAL ARG  // documentation only (assert local param?)
+#define LOCAL(name) \
+    cast(Atom(*), ARG(name))  // see Push_Frame() for why this is allowed
 
 #define PARAM(name) \
     ACT_PARAM(FRM_PHASE(frame_), (p_##name##_))  // a TYPESET!
@@ -579,6 +555,9 @@ inline static Frame(*) Prep_Frame_Core(
     #define SPARE   FRM_SPARE(frame_)       // scratch GC-safe cell
     #define STATE   FRM_STATE_BYTE(frame_)
     #define PHASE   FRM_PHASE(frame_)
+
+    #define stable_SPARE            Stable_Unchecked(SPARE)
+    #define stable_OUT              Stable_Unchecked(OUT)
 
     #define SUBFRAME    (assert(TOP_FRAME->prior == frame_), TOP_FRAME)
 
@@ -633,7 +612,7 @@ inline static REBVAL *D_ARG_Core(Frame(*) f, REBLEN n) {  // 1 for first arg
 
 
 inline static bool Eval_Value_Core_Throws(
-    REBVAL *out,
+    Atom(*) out,
     Flags flags,
     Cell(const*) value,  // e.g. a BLOCK! here would just evaluate to itself!
     REBSPC *specifier
@@ -688,11 +667,11 @@ enum {
 //         ]
 //
 inline static bool Pushed_Continuation(
-    REBVAL *out,
+    Atom(*) out,
     Flags flags,  // FRAME_FLAG_BRANCH, etc. for pushed frames
     REBSPC *branch_specifier,  // before branch forces non-empty variadic call
     Cell(const*) branch,
-    option(const REBVAL*) with  // can be same as out or not GC-safe, may copy
+    option(Atom(const*)) with  // can be same as out or not GC-safe, may copy
 ){
     assert(branch != out);  // it's legal for `with` to be the same as out
     assert(not with or unwrap(with) == out or not Is_Api_Value(unwrap(with)));
@@ -752,7 +731,7 @@ inline static bool Pushed_Continuation(
 
         const REBKEY *key = f->u.action.key;
         const REBPAR *param = f->u.action.param;
-        REBVAL *arg = f->u.action.arg;
+        Atom(*) arg = f->u.action.arg;
         for (; key != f->u.action.key_tail; ++key, ++param, ++arg) {
             if (Is_Specialized(param))
                 Copy_Cell(arg, param);
@@ -777,7 +756,7 @@ inline static bool Pushed_Continuation(
 
         const REBKEY *key = f->u.action.key;
         const REBPAR *param = f->u.action.param;
-        REBVAL *arg = f->u.action.arg;
+        Atom(*) arg = f->u.action.arg;
         for (; key != f->u.action.key_tail; ++key, ++param, ++arg) {
             if (Is_Specialized(param))
                 Copy_Cell(arg, param);

@@ -44,8 +44,6 @@
 
 #define AS_DECIMAL(n) (IS_INTEGER(n) ? (REBDEC)VAL_INT64(n) : VAL_DECIMAL(n))
 
-enum {SINE, COSINE, TANGENT};
-
 
 //
 //  Trig_Value: C
@@ -53,8 +51,11 @@ enum {SINE, COSINE, TANGENT};
 // Convert integer arg, if present, to decimal and convert to radians
 // if necessary.  Clip ranges for correct REBOL behavior.
 //
-static REBDEC Trig_Value(const REBVAL *value, bool radians, REBLEN which)
-{
+static REBDEC Trig_Value(
+    const REBVAL *value,
+    bool radians,
+    SymId which
+){
     REBDEC dval = AS_DECIMAL(value);
 
     if (not radians) {
@@ -62,13 +63,16 @@ static REBDEC Trig_Value(const REBVAL *value, bool radians, REBLEN which)
         dval = fmod (dval, 360.0);
 
         /* get dval between -180.0 and 180.0 */
-        if (fabs (dval) > 180.0) dval += dval < 0.0 ? 360.0 : -360.0;
-        if (which == TANGENT) {
+        if (fabs (dval) > 180.0)
+            dval += dval < 0.0 ? 360.0 : -360.0;
+        if (which == SYM_TANGENT) {
             /* get dval between -90.0 and 90.0 */
-            if (fabs (dval) > 90.0) dval += dval < 0.0 ? 180.0 : -180.0;
-        } else if (which == SINE) {
+            if (fabs (dval) > 90.0)
+                dval += dval < 0.0 ? 180.0 : -180.0;
+        } else if (which == SYM_SINE) {
             /* get dval between -90.0 and 90.0 */
-            if (fabs (dval) > 90.0) dval = (dval < 0.0 ? -180.0 : 180.0) - dval;
+            if (fabs (dval) > 90.0)
+                dval = (dval < 0.0 ? -180.0 : 180.0) - dval;
         }
         dval = dval * PI / 180.0; // to radians
     }
@@ -80,15 +84,24 @@ static REBDEC Trig_Value(const REBVAL *value, bool radians, REBLEN which)
 //
 //  Arc_Trans: C
 //
-static void Arc_Trans(REBVAL *out, const REBVAL *value, bool radians, REBLEN kind)
-{
+static void Arc_Trans(
+    Sink(Value(*)) out,
+    Value(const*) value,
+    bool radians,
+    SymId which
+){
     REBDEC dval = AS_DECIMAL(value);
-    if (kind != TANGENT and (dval < -1 || dval > 1))
+    if (which != SYM_TANGENT and (dval < -1 || dval > 1))
         fail (Error_Overflow_Raw());
 
-    if (kind == SINE) dval = asin(dval);
-    else if (kind == COSINE) dval = acos(dval);
-    else dval = atan(dval);
+    if (which == SYM_SINE)
+        dval = asin(dval);
+    else if (which == SYM_COSINE)
+        dval = acos(dval);
+    else {
+        assert(which == SYM_TANGENT);
+        dval = atan(dval);
+    }
 
     if (not radians)
         dval = dval * 180.0 / PI; // to degrees
@@ -112,7 +125,7 @@ DECLARE_NATIVE(cosine)
 {
     INCLUDE_PARAMS_OF_COSINE;
 
-    REBDEC dval = cos(Trig_Value(ARG(angle), REF(radians), COSINE));
+    REBDEC dval = cos(Trig_Value(ARG(angle), REF(radians), SYM_COSINE));
     if (fabs(dval) < DBL_EPSILON)
         dval = 0.0;
 
@@ -135,7 +148,7 @@ DECLARE_NATIVE(sine)
 {
     INCLUDE_PARAMS_OF_SINE;
 
-    REBDEC dval = sin(Trig_Value(ARG(angle), REF(radians), SINE));
+    REBDEC dval = sin(Trig_Value(ARG(angle), REF(radians), SYM_SINE));
     if (fabs(dval) < DBL_EPSILON)
         dval = 0.0;
 
@@ -158,7 +171,7 @@ DECLARE_NATIVE(tangent)
 {
     INCLUDE_PARAMS_OF_TANGENT;
 
-    REBDEC dval = Trig_Value(ARG(angle), REF(radians), TANGENT);
+    REBDEC dval = Trig_Value(ARG(angle), REF(radians), SYM_TANGENT);
     if (Eq_Decimal(fabs(dval), PI / 2.0))
         fail (Error_Overflow_Raw());
 
@@ -181,7 +194,7 @@ DECLARE_NATIVE(arccosine)
 {
     INCLUDE_PARAMS_OF_ARCCOSINE;
 
-    Arc_Trans(OUT, ARG(cosine), REF(radians), COSINE);
+    Arc_Trans(OUT, ARG(cosine), REF(radians), SYM_COSINE);
     return OUT;
 }
 
@@ -201,7 +214,7 @@ DECLARE_NATIVE(arcsine)
 {
     INCLUDE_PARAMS_OF_ARCSINE;
 
-    Arc_Trans(OUT, ARG(sine), REF(radians), SINE);
+    Arc_Trans(OUT, ARG(sine), REF(radians), SYM_SINE);
     return OUT;
 }
 
@@ -221,7 +234,7 @@ DECLARE_NATIVE(arctangent)
 {
     INCLUDE_PARAMS_OF_ARCTANGENT;
 
-    Arc_Trans(OUT, ARG(tangent), REF(radians), TANGENT);
+    Arc_Trans(OUT, ARG(tangent), REF(radians), SYM_TANGENT);
     return OUT;
 }
 
@@ -855,8 +868,8 @@ DECLARE_NATIVE(maximum)
 {
     INCLUDE_PARAMS_OF_MAXIMUM;
 
-    const REBVAL *value1 = ARG(value1);
-    const REBVAL *value2 = ARG(value2);
+    Value(const*) value1 = ARG(value1);
+    Value(const*) value2 = ARG(value2);
 
     if (IS_PAIR(value1) || IS_PAIR(value2)) {
         Min_Max_Pair(OUT, value1, value2, true);

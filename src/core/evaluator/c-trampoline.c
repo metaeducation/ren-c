@@ -233,7 +233,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
                 // anywhere, so it is bubbled up as a throw.
                 //
                 mutable_QUOTE_BYTE(OUT) = UNQUOTED_1;
-                Init_Thrown_Error(FRAME, OUT);
+                Init_Thrown_Error(FRAME, stable_OUT);
                 goto thrown;
             }
         }
@@ -500,7 +500,7 @@ bool Trampoline_With_Top_As_Root_Throws(void)
 //
 //  Trampoline_Throws: C
 //
-bool Trampoline_Throws(REBVAL *out, Frame(*) root)
+bool Trampoline_Throws(Atom(*) out, Frame(*) root)
 {
     Push_Frame(out, root);
     bool threw = Trampoline_With_Top_As_Root_Throws();

@@ -173,7 +173,7 @@ inline static Count Dequotify(Cell(*) v) {
 #define Is_Isotope(v) \
     (QUOTE_BYTE(v) == ISOTOPE_0)
 
-inline static bool Is_Isotope_Unstable(Cell(const*) v) {
+inline static bool Is_Isotope_Unstable(Atom(const*) v) {
     assert(QUOTE_BYTE_UNCHECKED(v) == ISOTOPE_0);  // say Is_Isotope() checked
     return (
         HEART_BYTE_UNCHECKED(v) == REB_BLOCK  // Is_Pack()
@@ -186,8 +186,28 @@ inline static bool Is_Isotope_Unstable(Cell(const*) v) {
 #define Is_Isotope_Stable(v) \
     (not Is_Isotope_Unstable(v))
 
-inline static bool Is_Stable(Cell(const*) v)
-  { return not Is_Isotope(v) or Is_Isotope_Stable(v); }
+inline static bool Is_Stable(Atom(const*) v) {  // repeat for non-inlined speed
+    if (QUOTE_BYTE(v) != ISOTOPE_0)
+        return true;
+    return (
+        HEART_BYTE_UNCHECKED(v) != REB_BLOCK  // Is_Pack()
+        and HEART_BYTE_UNCHECKED(v) != REB_ERROR  // Is_Raised()
+        and HEART_BYTE_UNCHECKED(v) != REB_COMMA  // Is_Barrier()
+        and HEART_BYTE_UNCHECKED(v) != REB_OBJECT  // Is_Lazy()
+    );
+}
+
+#if CPLUSPLUS_11
+    void Is_Stable(Value(const*) v) = delete;
+    void Is_Isotope_Unstable(Value(const*) v) = delete;
+#endif
+
+#if !defined(NDEBUG)
+    #define ASSERT_STABLE(v) \
+        assert(Is_Stable(cast(Atom(*), (v))));
+#else
+    #define ASSERT_STABLE(v)
+#endif
 
 
 //=//// QUASI! FORMS //////////////////////////////////////////////////////=//
@@ -208,20 +228,20 @@ inline static Value(*) Quasify(Value(*) v) {
     return v;
 }
 
-inline static Value(*) Quasify_Isotope(Value(*) v) {
+inline static Value(*) Quasify_Isotope(Atom(*) v) {
     assert(Is_Isotope(v));
     mutable_QUOTE_BYTE(v) = QUASI_2;
-    return v;
+    return cast(Value(*), v);
 }
 
-inline static Value(*) Reify(Value(*) v) {
+inline static Value(*) Reify(Atom(*) v) {
     assert(not Is_Void(v));
     if (QUOTE_BYTE(v) == ISOTOPE_0)
         mutable_QUOTE_BYTE(v) = QUASI_2;
-    return v;
+    return cast(Value(*), v);
 }
 
-inline static Value(*) Degrade(Value(*) v) {
+inline static Atom(*) Degrade(Atom(*) v) {
     if (QUOTE_BYTE(v) == QUASI_2)
         mutable_QUOTE_BYTE(v) = ISOTOPE_0;
     return v;
@@ -250,15 +270,15 @@ inline static Value(*) Concretize(Value(*) v) {
 //  https://forum.rebol.info/t/1833
 //
 
-inline static Value(*) Meta_Quotify(Value(*) v) {
+inline static Value(*) Meta_Quotify(Atom(*) v) {
     if (QUOTE_BYTE(v) == ISOTOPE_0) {
         mutable_QUOTE_BYTE(v) = QUASI_2;
-        return v;
+        return cast(Value(*), v);
     }
-    return Quotify(v, 1);  // a non-isotope winds up quoted
+    return cast(Value(*), Quotify(v, 1));  // a non-isotope winds up quoted
 }
 
-inline static Value(*) Meta_Unquotify_Undecayed(Value(*) v) {
+inline static Atom(*) Meta_Unquotify_Undecayed(Atom(*) v) {
     if (QUOTE_BYTE(v) == QUASI_2)
         mutable_QUOTE_BYTE(v) = ISOTOPE_0;
     else
@@ -266,14 +286,18 @@ inline static Value(*) Meta_Unquotify_Undecayed(Value(*) v) {
     return v;
 }
 
-inline static Value(*) Meta_Unquotify_Stable(Value(*) v) {
+inline static Value(*) Meta_Unquotify_Known_Stable(Value(*) v) {
     Meta_Unquotify_Undecayed(v);
-    assert(not Is_Isotope(v) or not Is_Isotope_Unstable(v));
+    ASSERT_STABLE(v);
     return v;
 }
 
-inline static Value(*) Decay_If_Unstable(Value(*) v);
+inline static Value(*) Decay_If_Unstable(Atom(*) v);
+
+#if CPLUSPLUS_11
+    inline static Value(*) Decay_If_Unstable(Value(*) v) = delete;
+#endif
 
 inline static Value(*) Meta_Unquotify_Decayed(Value(*) v) {
-    return Decay_If_Unstable(Meta_Unquotify_Undecayed(v));
+    return Decay_If_Unstable(Meta_Unquotify_Undecayed(cast(Atom(*), v)));
 }

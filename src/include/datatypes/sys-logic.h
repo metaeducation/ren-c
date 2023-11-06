@@ -75,7 +75,6 @@ inline static bool VAL_LOGIC(Cell(const*) v) {
 
 inline static bool Is_Truthy(Cell(const*) v) {
     if (QUOTE_BYTE(v) == ISOTOPE_0) {
-        assert(Is_Isotope_Stable(v));
         if (HEART_BYTE_UNCHECKED(v) != REB_WORD)
             return true;  // all non-word isotopes are truthy?
         option(SymId) id = VAL_WORD_ID(v);
@@ -130,7 +129,7 @@ inline static bool Is_Meta_Of_False(Cell(const*) v) {
 #define Init_Heavy_False(out) \
     Init_Pack((out), PG_1_Meta_False_Array)
 
-inline static bool Is_Heavy_False(Cell(const*) v) {
+inline static bool Is_Heavy_False(Atom(const*) v) {
     if (not Is_Pack(v))
         return false;
     Cell(const*) tail;
@@ -138,7 +137,7 @@ inline static bool Is_Heavy_False(Cell(const*) v) {
     return (tail == at + 1) and Is_Meta_Of_False(at);
 }
 
-inline static Value(*) Isotopify_If_Falsey(Value(*) v) {
+inline static Atom(*) Isotopify_If_Falsey(Atom(*) v) {
     if (Is_Nulled(v))
         Init_Heavy_Null(v);
     else if (IS_LOGIC(v) and VAL_LOGIC(v) == false)
@@ -148,7 +147,7 @@ inline static Value(*) Isotopify_If_Falsey(Value(*) v) {
 
 // Turns voids and nulls into boxed form to be THEN-reactive, vs ELSE
 //
-inline static Bounce Native_Branched_Result(Frame(*) frame_, Value(*) v) {
+inline static Bounce Native_Branched_Result(Frame(*) frame_, Atom(*) v) {
     assert(v == frame_->out);  // would not be zero cost if we supported copy
     if (Is_Void(v))
         Init_Heavy_Void(v);

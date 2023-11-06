@@ -876,7 +876,7 @@ REBVAL *RL_rebArg(const void *p, va_list *vaptr)
 //   encoded...and can stick to the standardized layout of a pointer array.)
 //
 static bool Run_Va_Throws(
-    REBVAL *out,
+    Atom(*) out,
     bool interruptible,  // whether a HALT can cause a longjmp/throw
     Flags flags,
     const void *p,  // first pointer (may be END, nullptr means NULLED)
@@ -931,7 +931,7 @@ static bool Run_Va_Throws(
 // executed code passed to not have it evaluate to none)
 //
 inline static void Run_Va_Undecayed_May_Fail_Calls_Va_End(
-    REBVAL *out,
+    Atom(*) out,
     const void *p,  // first pointer (may be END, nullptr means NULLED)
     va_list *vaptr  // va_end() handled by feed for all cases (throws, fails)
 ){
@@ -952,13 +952,13 @@ inline static void Run_Va_Undecayed_May_Fail_Calls_Va_End(
 // about multi-return packs etc.
 //
 inline static void Run_Va_Decay_May_Fail_Calls_Va_End(
-    REBVAL *out,
+    Value(*) out,
     const void *p,  // first pointer (may be END, nullptr means NULLED)
     va_list *vaptr  // va_end() handled by feed for all cases (throws, fails)
 ){
     Run_Va_Undecayed_May_Fail_Calls_Va_End(out, p, vaptr);
 
-    Decay_If_Unstable(out);
+    Decay_If_Unstable(cast(Atom(*), out));
 }
 
 
@@ -1010,7 +1010,7 @@ bool RL_rebRunCoreThrows(
     if (too_many)
         fail (Error_Apply_Too_Many_Raw());
 
-    Decay_If_Unstable(out);
+    Decay_If_Unstable(cast(Atom(*), out));
     return false;
 }
 
@@ -1095,7 +1095,7 @@ void RL_rebPushContinuation(
     ENTER_API;
 
     DECLARE_LOCAL (block);
-    RL_rebTranscodeInto(block, p, vaptr);  // use core "RL_" call, see [1]
+    RL_rebTranscodeInto(cast(REBVAL*, block), p, vaptr);  // use "RL_", see [1]
 
     Frame(*) f = Make_Frame_At(block, flags);
     Push_Frame(out, f);
@@ -1252,7 +1252,7 @@ void RL_rebJumps(const void *p, va_list *vaptr)
 {
     ENTER_API;
 
-    DECLARE_LOCAL (dummy);
+    DECLARE_STABLE (dummy);
     Run_Va_Decay_May_Fail_Calls_Va_End(dummy, p, vaptr);
 
     // Note: If we just `fail()` here, then while MSVC compiles %a-lib.c at
@@ -1328,7 +1328,7 @@ bool RL_rebTruthy(const void *p, va_list *vaptr)
 {
     ENTER_API;
 
-    DECLARE_LOCAL (condition);
+    DECLARE_STABLE (condition);
     Run_Va_Decay_May_Fail_Calls_Va_End(condition, p, vaptr);
 
     return Is_Truthy(condition);  // will fail() on (most) isotopes
@@ -1345,7 +1345,7 @@ bool RL_rebNot(const void *p, va_list *vaptr)
 {
     ENTER_API;
 
-    DECLARE_LOCAL (condition);
+    DECLARE_STABLE (condition);
     Run_Va_Decay_May_Fail_Calls_Va_End(condition, p, vaptr);
 
     return Is_Falsey(condition);  // will fail() on isotopes
@@ -1367,7 +1367,7 @@ intptr_t RL_rebUnbox(const void *p, va_list *vaptr)
 {
     ENTER_API;
 
-    DECLARE_LOCAL (result);
+    DECLARE_STABLE (result);
     Run_Va_Decay_May_Fail_Calls_Va_End(result, p, vaptr);
 
     if (IS_LOGIC(result)) {
@@ -1395,7 +1395,7 @@ bool RL_rebUnboxLogic(
 ){
     ENTER_API;
 
-    DECLARE_LOCAL (result);
+    DECLARE_STABLE (result);
     Run_Va_Decay_May_Fail_Calls_Va_End(result, p, vaptr);
 
     if (not IS_LOGIC(result))
@@ -1414,7 +1414,7 @@ intptr_t RL_rebUnboxInteger(
 ){
     ENTER_API;
 
-    DECLARE_LOCAL (result);
+    DECLARE_STABLE (result);
     Run_Va_Decay_May_Fail_Calls_Va_End(result, p, vaptr);
 
     if (not IS_INTEGER(result))
@@ -1432,7 +1432,7 @@ double RL_rebUnboxDecimal(
 ){
     ENTER_API;
 
-    DECLARE_LOCAL (result);
+    DECLARE_STABLE (result);
     Run_Va_Decay_May_Fail_Calls_Va_End(result, p, vaptr);
 
     if (IS_DECIMAL(result))
@@ -1453,7 +1453,7 @@ uint32_t RL_rebUnboxChar(
 ){
     ENTER_API;
 
-    DECLARE_LOCAL (result);
+    DECLARE_STABLE (result);
     Run_Va_Decay_May_Fail_Calls_Va_End(result, p, vaptr);
 
     if (not IS_CHAR(result))
@@ -1472,7 +1472,7 @@ void *RL_rebUnboxHandle(
 ){
     ENTER_API;
 
-    DECLARE_LOCAL (result);
+    DECLARE_STABLE (result);
     Run_Va_Decay_May_Fail_Calls_Va_End(result, p, vaptr);
 
     if (VAL_TYPE(result) != REB_HANDLE)
@@ -1524,7 +1524,7 @@ size_t RL_rebSpellInto(
 ){
     ENTER_API;
 
-    DECLARE_LOCAL (v);
+    DECLARE_STABLE (v);
     Run_Va_Decay_May_Fail_Calls_Va_End(v, p, vaptr);
 
     return Spell_Into(buf, buf_size, v);
@@ -1544,7 +1544,7 @@ char *RL_rebTrySpell(const void *p, va_list *vaptr)
 {
     ENTER_API;
 
-    DECLARE_LOCAL (v);
+    DECLARE_STABLE (v);
     Run_Va_Decay_May_Fail_Calls_Va_End(v, p, vaptr);
 
     if (Is_Nulled(v))
@@ -1643,7 +1643,7 @@ unsigned int RL_rebSpellIntoWide(
 ){
     ENTER_API;
 
-    DECLARE_LOCAL (v);
+    DECLARE_STABLE (v);
     Run_Va_Decay_May_Fail_Calls_Va_End(v, p, vaptr);
 
     return Spell_Into_Wide(buf, buf_chars, v);
@@ -1660,7 +1660,7 @@ REBWCHAR *RL_rebTrySpellWide(const void *p, va_list *vaptr)
 {
     ENTER_API;
 
-    DECLARE_LOCAL (v);
+    DECLARE_STABLE (v);
     Run_Va_Decay_May_Fail_Calls_Va_End(v, p, vaptr);
 
     if (Is_Nulled(v))
@@ -1763,7 +1763,7 @@ size_t RL_rebBytesInto(
 ){
     ENTER_API;
 
-    DECLARE_LOCAL (v);
+    DECLARE_STABLE (v);
     Run_Va_Decay_May_Fail_Calls_Va_End(v, p, vaptr);
 
     return Bytes_Into(buf, buf_size, v);
@@ -1783,7 +1783,7 @@ unsigned char *RL_rebTryBytes(
 ){
     ENTER_API;
 
-    DECLARE_LOCAL (v);
+    DECLARE_STABLE (v);
     Run_Va_Decay_May_Fail_Calls_Va_End(v, p, vaptr);
 
     if (Is_Nulled(v)) {

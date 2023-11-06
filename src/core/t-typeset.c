@@ -57,7 +57,7 @@ void Startup_Typesets(void)
         // We want the forms like ANY-VALUE? to be typechecker functions that
         // act on Typesets[n].
         //
-        DECLARE_LOCAL (typeset_index);
+        DECLARE_STABLE (typeset_index);
         Init_Integer(typeset_index, n);
         Action(*) typechecker = Make_Typechecker(typeset_index);
 

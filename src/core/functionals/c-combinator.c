@@ -102,7 +102,7 @@ Bounce Combinator_Dispatcher(Frame(*) f)
     if (b == BOUNCE_THROWN)
         return b;
 
-    REBVAL *r = Value_From_Bounce(b);
+    Atom(*) r = Atom_From_Bounce(b);
 
     if (r == nullptr or Is_Nulled(r))
         return r;  // did not advance, don't update furthest
@@ -256,7 +256,7 @@ DECLARE_NATIVE(combinator)
     // That might not be needed if the Make_Paramlist_Managed() could take an
     // array and an index.
     //
-    DECLARE_LOCAL (expanded_spec);
+    DECLARE_STABLE (expanded_spec);
     Init_Block(expanded_spec, Expanded_Combinator_Spec(spec));
 
     Context(*) meta;
@@ -310,7 +310,7 @@ DECLARE_NATIVE(combinator)
 // in the right order in the frame.
 //
 void Push_Parser_Subframe(
-    REBVAL *out,
+    Atom(*) out,
     const REBVAL *remainder,
     const REBVAL *parser,
     const REBVAL *input
@@ -702,14 +702,14 @@ static bool Combinator_Param_Hook(
             Init_Nulled(var);
         }
         else {
+            Derelativize(var, item, VAL_SPECIFIER(ARG(rules)));
             if (
                 GET_PARAM_FLAG(param, SKIPPABLE)
-                and not TYPE_CHECK_CORE(param, item, VAL_SPECIFIER(ARG(rules)))
+                and not TYPE_CHECK(param, var)
             ){
                 Init_Nulled(var);
             }
             else {
-                Derelativize(var, item, VAL_SPECIFIER(ARG(rules)));
                 ++VAL_INDEX_UNBOUNDED(ARG(rules));
             }
         }
@@ -735,13 +735,13 @@ static bool Combinator_Param_Hook(
             // write to native frame variables, so hack in a temporary here.
             // (could be done much more efficiently another way!)
 
-            if (rebRunThrows(SPARE, "let temp"))
+            if (rebRunThrows(cast(REBVAL*, SPARE), "let temp"))
                 assert(!"LET failed");
             REBVAL *parser = rebValue(
-                "[@", SPARE, "]: parsify", ARG(state), ARG(rules)
+                "[@", stable_SPARE, "]: parsify", ARG(state), ARG(rules)
             );
             bool any = false;
-            Get_Var_May_Fail(ARG(rules), SPARE, SPECIFIED, any);
+            Get_Var_May_Fail(ARG(rules), stable_SPARE, SPECIFIED, any);
             Copy_Cell(var, parser);
             rebRelease(parser);
         }

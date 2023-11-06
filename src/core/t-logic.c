@@ -150,13 +150,14 @@ DECLARE_INTRINSIC(not_1)  // see TO-C-NAME
 // WORD!, or TUPLE!.
 //
 inline static bool Do_Logic_Right_Side_Throws(
-    REBVAL *out,
+    Sink(Value(*)) out,
     const REBVAL *right
 ){
     if (IS_GROUP(right)) {
-        if (Do_Any_Array_At_Throws(out, right, SPECIFIED))
+        Atom(*) atom_out = out;
+        if (Do_Any_Array_At_Throws(atom_out, right, SPECIFIED))
             return true;
-        Decay_If_Unstable(out);
+        Decay_If_Unstable(atom_out);
         return false;
     }
 

@@ -259,8 +259,8 @@ STATIC_ASSERT(31 < 32);  // otherwise FRAME_FLAG_XXX too high
     ((FRM(f)->flags.bits & FRAME_FLAG_##name) == 0)
 
 
-// !!! It was thought that a standard layout struct with just {REBVAL *p} in
-// it would be compatible as a return result with plain REBVAL *p.  That does
+// !!! It was thought that a standard layout struct with just {Atom(*) p} in
+// it would be compatible as a return result with plain Atom(*) p.  That does
 // not seem to be the case...because when an extension-defined dispatcher is
 // defined to return REBVAL*, it is incompatible with callers expecting a
 // Bounce struct as defined below.
@@ -271,19 +271,20 @@ STATIC_ASSERT(31 < 32);  // otherwise FRAME_FLAG_XXX too high
 // of extensions that only speak in REBVAL*.  Review when there's time.
 //
 #if 1  /* CPLUSPLUS_11 == 0 || defined(NDEBUG) */
-    typedef REBVAL* Bounce;
+    typedef Atom(*) Bounce;
 #else
     struct Bounce {
-        REBVAL *p;
+        Atom(*) p;
         Bounce () {}
-        Bounce (REBVAL *v) : p (v) {}
-        bool operator==(REBVAL *v) { return v == p; }
-        bool operator!=(REBVAL *v) { return v != p; }
+        Bounce (Atom(*) v) : p (v) {}
+
+        bool operator==(Atom(*) v) { return v == p; }
+        bool operator!=(Atom(*) v) { return v != p; }
 
         bool operator==(const Bounce& other) { return other.p == p; }
         bool operator!=(const Bounce& other) { return other.p != p; }
 
-        explicit operator REBVAL* () { return p; }
+        explicit operator Atom(*) () { return p; }
         explicit operator void* () { return p; }
     };
 #endif
@@ -301,7 +302,7 @@ typedef Executor Dispatcher;  // sub-dispatched in Action_Executor()
 // Intrinsics are a special form of implementing natives that do not need
 // to instantiate a frame.  See Intrinsic_Dispatcher().
 //
-typedef void (Intrinsic)(Value(*) out, Action(*) action, Value(*) arg);
+typedef void (Intrinsic)(Atom(*) out, Action(*) action, Value(*) arg);
 
 // This is for working around pedantic C and C++ errors, when an extension
 // that doesn't use %sys-core.h tries to redefine dispatcher in terms of
@@ -406,7 +407,7 @@ typedef void (Intrinsic)(Value(*) out, Action(*) action, Value(*) arg);
     // used as an intermediate free location to do calculations en route to
     // a final result, due to being GC-safe during function evaluation.
     //
-    REBVAL *out;
+    Atom(*) out;
 
     // The error reporting machinery doesn't want where `index` is right now,
     // but where it was at the beginning of a single EVALUATE step.

@@ -407,7 +407,7 @@ DECLARE_NATIVE(let)
           case REB_WORD:
           case REB_BLOCK:
             if (IS_SET_GROUP(vars))
-                Setify(SPARE);  // convert `(word):` to be SET-WORD!
+                Setify(stable_SPARE);  // convert `(word):` to be SET-WORD!
             break;
 
           case REB_SET_WORD:
@@ -421,7 +421,7 @@ DECLARE_NATIVE(let)
             fail ("LET GROUP! limited to WORD! and BLOCK!");  // see [4]
         }
 
-        vars = SPARE;
+        vars = stable_SPARE;
     }
 
     //=//// GENERATE NEW BLOCK IF QUOTED! OR GROUP! ELEMENTS ///////////////=//
@@ -442,10 +442,10 @@ DECLARE_NATIVE(let)
         REBVAL *where;
         if (CELL_HEART(vars) == REB_SET_WORD) {
             STATE = ST_LET_EVAL_STEP;
-            where = SPARE;
+            where = stable_SPARE;
         }
         else
-            where = OUT;
+            where = stable_OUT;
 
         Copy_Cell_Header(where, vars);  // keep QUASI! state and word/setword
         INIT_VAL_WORD_SYMBOL(where, symbol);
@@ -509,10 +509,10 @@ DECLARE_NATIVE(let)
         REBVAL *where;
         if (IS_SET_BLOCK(vars)) {
             STATE = ST_LET_EVAL_STEP;
-            where = SPARE;
+            where = stable_SPARE;
         }
         else
-            where = OUT;
+            where = stable_OUT;
 
         if (altered) {  // elements altered, can't reuse input block rebound
             Init_Array_Cell(

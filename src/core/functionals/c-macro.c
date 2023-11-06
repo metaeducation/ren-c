@@ -135,10 +135,13 @@ Bounce Macro_Dispatcher(Frame(*) f)
             return THROWN;  // we didn't catch the throw
     }
 
-    if (Is_Void(SPARE) or not IS_BLOCK(SPARE))
-        fail ("MACRO must return BLOCK! for the moment");
+    if (Is_Void(SPARE))
+        return Init_Nihil(OUT);
 
-    Splice_Block_Into_Feed(f->feed, SPARE);
+    if (not IS_BLOCK(SPARE))
+        fail ("MACRO must return VOID or BLOCK! for the moment");
+
+    Splice_Block_Into_Feed(f->feed, stable_SPARE);
 
     Frame(*) reeval_frame = Make_Frame(
         f->feed,

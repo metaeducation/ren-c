@@ -317,7 +317,7 @@ DECLARE_NATIVE(do)
         UNUSED(REF(args)); // detected via `value? :arg`
 
         rebPushContinuation(
-            OUT,  // <-- output cell
+            cast(REBVAL*, OUT),  // <-- output cell
             FRAME_MASK_NONE,
             rebRUN(SysUtil(DO_P)),
                 source,
@@ -621,7 +621,7 @@ DECLARE_NATIVE(redo)
     // to restart the phase at the point of parameter checking.  Make that
     // the actual value that Eval_Core() catches.
     //
-    return Init_Thrown_With_Label(FRAME, restartee, SPARE);
+    return Init_Thrown_With_Label(FRAME, restartee, stable_SPARE);
 }
 
 

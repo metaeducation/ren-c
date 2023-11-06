@@ -81,7 +81,7 @@ inline static REBVAL *Init_Varargs_Untyped_Normal(Cell(*) out, Frame(*) f) {
 }
 
 inline static REBVAL *Init_Varargs_Untyped_Enfix(
-    Cell(*) out,
+    Sink(Value(*)) out,
     option(Value(const*)) left
 ){
     Array(*) feed;
@@ -99,7 +99,7 @@ inline static REBVAL *Init_Varargs_Untyped_Enfix(
     INIT_VAL_VARARGS_BINDING(out, feed);
     UNUSED(VAL_VARARGS_SIGNED_PARAM_INDEX(out));
     INIT_VAL_VARARGS_PHASE(out, nullptr);  // set in typecheck
-    return cast(REBVAL*, out);
+    return out;
 }
 
 

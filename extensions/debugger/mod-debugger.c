@@ -53,9 +53,9 @@
 // this is not implemented.
 //
 bool Do_Breakpoint_Throws(
-    REBVAL *out,
+    Sink(Value(*)) out,
     bool interrupted,  // Ctrl-C (as opposed to a BREAKPOINT)
-    const REBVAL *paused
+    Value(const*) paused
 ){
     UNUSED(interrupted);  // !!! not passed to the REPL, should it be?
     UNUSED(paused);  // !!! feature TBD
@@ -207,7 +207,7 @@ DECLARE_NATIVE(resume)
     // We throw with /NAME as identity of the RESUME function.  (Note: there
     // is no NATIVE() variant for extensions yet.  Extract from current frame.)
     //
-    DECLARE_LOCAL (resume);
+    DECLARE_STABLE (resume);
     Init_Action(
         resume,
         FRM_PHASE(frame_),

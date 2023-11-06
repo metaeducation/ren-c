@@ -312,7 +312,7 @@ static Bounce Protect_Unprotect_Core(Frame(*) frame_, Flags flags)
             Cell(const*) tail;
             Cell(const*) item = VAL_ARRAY_AT(&tail, value);
             for (; item != tail; ++item) {
-                DECLARE_LOCAL (word); // need binding, can't pass Cell
+                DECLARE_STABLE (word); // need binding, can't pass Cell
                 Derelativize(word, item, VAL_SPECIFIER(value));
                 Protect_Word_Value(word, flags);  // will unmark if deep
             }
@@ -323,7 +323,7 @@ static Bounce Protect_Unprotect_Core(Frame(*) frame_, Flags flags)
             Cell(const*) tail;
             Cell(const*) item = VAL_ARRAY_AT(&tail, value);
 
-            DECLARE_LOCAL (safe);
+            DECLARE_STABLE (safe);
 
             for (; item != tail; ++item) {
                 if (IS_WORD(item)) {
@@ -396,7 +396,7 @@ DECLARE_NATIVE(protect)
             nullptr,
             v,
             SPECIFIED,
-            SPARE,
+            stable_SPARE,
             Lib(PROTECT_P)
         )){
             return THROWN;
@@ -456,7 +456,7 @@ DECLARE_NATIVE(unprotect)
             nullptr,
             v,
             SPECIFIED,
-            SPARE,
+            stable_SPARE,
             Lib(PROTECT_P)
         )){
             return THROWN;

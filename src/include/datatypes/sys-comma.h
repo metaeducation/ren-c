@@ -73,9 +73,13 @@ inline static Value(*) Init_Barrier(Cell(*) out) {
     return cast(Value(*), out);
 }
 
-inline static bool Is_Elision(Cell(*) v) {
+inline static bool Is_Elision(Atom(*) v) {
     return Is_Barrier(v) or Is_Nihil(v);
 }
+
+#if CPLUSPLUS_11
+    void Is_Elision(Value(*) v) = delete;
+#endif
 
 inline static bool Is_Meta_Of_Elision(Cell(*) v) {
     return Is_Meta_Of_Barrier(v) or Is_Meta_Of_Nihil(v);

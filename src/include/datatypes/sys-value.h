@@ -716,33 +716,48 @@ inline static Cell(*) Copy_Cell_Untracked(
     return out;
 }
 
+inline static bool Is_Stable(Atom(const*) v);
+
 #if CPLUSPLUS_11  // REBVAL and Cell are checked distinctly
-    inline static REBVAL *Copy_Cell_Untracked(
+    inline static Value(*) Copy_Cell_Untracked(
         Cell(*) out,
-        const REBVAL *v,
+        Value(const*) v,
         Flags copy_mask
     ){
-        return cast(REBVAL*, Copy_Cell_Untracked(
+        return cast(Value(*), Copy_Cell_Untracked(
             out,
             cast(Cell(const*), v),
             copy_mask
         ));
     }
 
-    inline static REBVAL *Copy_Cell_Untracked(
-        REBVAL *out,
-        const REBVAL *v,
+    inline static Value(*) Copy_Cell_Untracked(
+        Value(*) out,
+        Value(const*) v,
         Flags copy_mask
     ){
-        return cast(REBVAL*, Copy_Cell_Untracked(
+        return cast(Value(*), Copy_Cell_Untracked(
             cast(Cell(*), out),
             cast(Cell(const*), v),
             copy_mask
         ));
     }
 
-    inline static Cell(*) Copy_Cell_Untracked(
-        REBVAL *out,
+    inline static Value(*) Copy_Cell_Untracked(
+        Value(*) out,
+        Atom(const*) v,
+        Flags copy_mask
+    ){
+        assert(Is_Stable(v));
+        return cast(Value(*), Copy_Cell_Untracked(
+            cast(Cell(*), out),
+            cast(Cell(const*), v),
+            copy_mask
+        ));
+    }
+
+    inline static void Copy_Cell_Untracked(
+        Value(*) out,
         Cell(const*) v,
         Flags copy_mask
     ) = delete;
@@ -766,7 +781,7 @@ inline static Cell(*) Copy_Cell_Untracked(
 
 inline static REBVAL *Move_Cell_Untracked(
     Cell(*) out,
-    REBVAL *v,
+    Atom(*) v,
     Flags copy_mask
 ){
     Copy_Cell_Untracked(out, v, copy_mask);  // Move_Cell() adds track to `out`
@@ -822,6 +837,11 @@ inline static REBVAL *Constify(REBVAL *v) {
 // to define cells that are part of the frame, and access them via LOCAL().
 //
 #define DECLARE_LOCAL(name) \
-    REBVAL name##_cell; \
+    RawCell name##_cell; \
     Erase_Cell(&name##_cell); \
-    REBVAL * const name = &name##_cell
+    Atom(*) name = cast(Atom(*), &name##_cell)
+
+#define DECLARE_STABLE(name) \
+    RawCell name##_cell; \
+    Erase_Cell(&name##_cell); \
+    Value(*) name = cast(Value(*), &name##_cell)

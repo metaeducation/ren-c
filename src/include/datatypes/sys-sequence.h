@@ -304,7 +304,7 @@ inline static REBVAL *Try_Init_Any_Sequence_All_Integers(
 // REB_PAIR type, making PAIR! just a type constraint on TUPLE!s.
 
 inline static REBVAL *Try_Init_Any_Sequence_Pairlike_Core(
-    Cell(*) out,
+    Sink(Value(*)) out,
     enum Reb_Kind kind,
     Cell(const*) v1,
     Cell(const*) v2,
@@ -385,7 +385,7 @@ inline static REBVAL *Try_Init_Any_Sequence_Pairlike_Core(
 // in this code.
 //
 inline static Value(*) Try_Pop_Sequence_Or_Element_Or_Nulled(
-    Value(*) out,  // will be the error-triggering value if nullptr returned
+    Sink(Value(*)) out,  // the error-triggering value if nullptr returned
     enum Reb_Kind kind,
     StackIndex base
 ){
@@ -549,7 +549,7 @@ inline static Cell(const*) VAL_SEQUENCE_AT(
 }
 
 inline static Value(*) GET_SEQUENCE_AT(
-    Value(*) out,
+    Sink(Value(*)) out,
     noquote(Cell(const*)) sequence,
     REBSPC* specifier,
     REBLEN n

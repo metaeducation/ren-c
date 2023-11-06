@@ -117,7 +117,7 @@ DECLARE_NATIVE(now)
         mutable_HEART_BYTE(OUT) = REB_TIME;
     }
     else if (REF(weekday))
-        n = Week_Day(OUT);
+        n = Week_Day(stable_OUT);
     else if (REF(yearday))
         n = Julian_Date(VAL_DATE(OUT));
     else if (REF(year))

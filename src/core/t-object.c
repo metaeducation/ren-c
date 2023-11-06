@@ -638,7 +638,7 @@ Bounce MAKE_Context(
         );
         Init_Context_Cell(OUT, kind, ctx); // GC guards it
 
-        DECLARE_LOCAL (virtual_arg);
+        DECLARE_STABLE (virtual_arg);
         Copy_Cell(virtual_arg, arg);
 
         Virtual_Bind_Deep_To_Existing_Context(
@@ -1011,7 +1011,7 @@ void MF_Context(REB_MOLD *mo, noquote(Cell(const*)) v, bool form)
             Append_Ascii(s, "'");
         }
         else if (Is_Isotope(e.var)) {
-            assert(not Is_Raised(e.var));  // can't be saved in variables
+            assert(Is_Isotope_Stable(cast(Atom(*), e.var)));  // extra check
 
             DECLARE_LOCAL (reified);
             Unrelativize(reified, e.var);

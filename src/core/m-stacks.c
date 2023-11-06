@@ -348,7 +348,7 @@ Array(*) Pop_Stack_Values_Core(StackIndex base, Flags flags)
     for (; count < len; ++count, ++src, ++dest) {
       #if DEBUG
         if (Is_Isotope(src)) {
-            assert(Is_Isotope_Stable(src));
+            ASSERT_STABLE(src);
             assert(flavor >= FLAVOR_MIN_ISOTOPES_OK);
         }
         if (VAL_TYPE_UNCHECKED(src) == REB_VOID)  // allow unreadable trash

@@ -375,7 +375,7 @@ EXTERN_C intptr_t RL_rebPromise(void *p, va_list *vaptr)
     // for granted the resolve() function created on return from this helper
     // already exists.
 
-    DECLARE_LOCAL (block);
+    DECLARE_STABLE (block);
     RL_rebTranscodeInto(block, p, vaptr);
 
     Array(*) code = VAL_ARRAY_ENSURE_MUTABLE(block);
@@ -443,14 +443,14 @@ void RunPromise(void)
         return;  // the setTimeout() on resolve/reject will queue us back
     }
 
-    REBVAL *metaresult = TOP_FRAME->out;
+    REBVAL *metaresult;
     if (r == BOUNCE_THROWN) {
         assert(Is_Throwing(TOP_FRAME));
         Context(*) error = Error_No_Catch_For_Throw(TOP_FRAME);
-        Init_Error(metaresult, error);
+        metaresult = Init_Error(TOP_FRAME->out, error);
     }
     else
-        Meta_Quotify(metaresult);
+        metaresult = Meta_Quotify(TOP_FRAME->out);
 
     Drop_Frame(TOP_FRAME);
 

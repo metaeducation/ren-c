@@ -368,7 +368,7 @@ Bounce TO_Time(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg)
 //
 //  Pick_Time: C
 //
-void Pick_Time(REBVAL *out, Cell(const*) value, Cell(const*) picker)
+void Pick_Time(Sink(Value(*)) out, Cell(const*) value, Cell(const*) picker)
 {
     REBINT i;
     if (IS_WORD(picker)) {

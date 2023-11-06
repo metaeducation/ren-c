@@ -240,8 +240,8 @@ Context(*) Make_Context_For_Action(
 // has /DUP at TOP, and /PART under it.  List stops at lowest_ordered_dsp.
 //
 bool Specialize_Action_Throws(
-    REBVAL *out,
-    REBVAL *specializee,
+    Sink(Value(*)) out,
+    Value(*) specializee,
     option(REBVAL*) def,  // !!! REVIEW: binding modified directly, not copied
     StackIndex lowest_ordered_stackindex
 ){

@@ -88,8 +88,8 @@
 // to also permit the void state to assign easily was made as well--so that
 // a variable could easily be unset with (var: ~)
 //
-inline static bool Is_Isotope_Set_Friendly(Cell(const*) v) {
-    assert(not Is_Isotope_Unstable(v));
+inline static bool Is_Isotope_Set_Friendly(Value(const*) v) {
+    assert(QUOTE_BYTE_UNCHECKED(v) == ISOTOPE_0);
     UNUSED(v);
     return true;
 }
@@ -100,8 +100,8 @@ inline static bool Is_Isotope_Set_Friendly(Cell(const*) v) {
 // is opened up to the entire class of isotopic words.  But unlike in
 // assignment, isotopic voids are not get-friendly.
 //
-inline static bool Is_Isotope_Get_Friendly(Cell(const*) v) {
-    assert(not Is_Isotope_Unstable(v));
+inline static bool Is_Isotope_Get_Friendly(Value(const*) v) {
+    assert(QUOTE_BYTE_UNCHECKED(v) == ISOTOPE_0);
     return HEART_BYTE(v) != REB_VOID;
 }
 
@@ -157,7 +157,7 @@ inline static REBVAL *Refinify_Pushed_Refinement(REBVAL *v) {
 // you have to enter the frame specially with ST_EVALUATOR_LOOKING_AHEAD.
 //
 inline static bool Did_Init_Inert_Optimize_Complete(
-    REBVAL *out,
+    Atom(*) out,
     Feed(*) feed,
     Flags *flags
 ){
@@ -253,7 +253,7 @@ inline static bool Did_Init_Inert_Optimize_Complete(
 // operations on an array, without creating a new frame each time.
 //
 inline static bool Eval_Step_Throws(
-    REBVAL *out,
+    Atom(*) out,
     Frame(*) f
 ){
     assert(Not_Feed_Flag(f->feed, NO_LOOKAHEAD));
@@ -275,7 +275,7 @@ inline static bool Eval_Step_Throws(
 // SET-PATH! are running with an expiring `current` in effect.
 //
 inline static bool Eval_Step_In_Subframe_Throws(
-    REBVAL *out,
+    Atom(*) out,
     Frame(*) f,
     Flags flags
 ){
@@ -289,9 +289,9 @@ inline static bool Eval_Step_In_Subframe_Throws(
 
 
 inline static bool Reevaluate_In_Subframe_Throws(
-    REBVAL *out,
+    Atom(*) out,
     Frame(*) f,
-    const REBVAL *reval,
+    Value(const*) reval,
     Flags flags,
     bool enfix
 ){
@@ -308,7 +308,7 @@ inline static bool Reevaluate_In_Subframe_Throws(
 
 
 inline static bool Eval_Step_In_Any_Array_At_Throws(
-    REBVAL *out,
+    Atom(*) out,
     REBLEN *index_out,
     Cell(const*) any_array,  // Note: legal to have any_array = out
     REBSPC *specifier,
@@ -343,7 +343,7 @@ inline static bool Eval_Step_In_Any_Array_At_Throws(
 
 
 inline static bool Eval_Value_Core_Throws(
-    REBVAL *out,
+    Atom(*) out,
     Flags flags,
     Cell(const*) value,  // e.g. a BLOCK! here would just evaluate to itself!
     REBSPC *specifier
@@ -398,5 +398,6 @@ inline static Bounce Native_Raised_Result(Frame(*) frame_, const void *p) {
     while (TOP_FRAME != frame_)  // cancel subframes as default behavior
         Drop_Frame_Unbalanced(TOP_FRAME);  // Note: won't seem like THROW/Fail
 
-    return Raisify(Init_Error(frame_->out, error));
+    Init_Error(frame_->out, error);
+    return Raisify(frame_->out);
 }

@@ -46,9 +46,12 @@
 //
 //        for-each x [1 2 3] [if x != 3 [x]]  =>  ~()~ isotope
 //
-bool Try_Catch_Break_Or_Continue(Value(*) out, Frame(*) frame_, bool* breaking)
-{
-    const Value(*) label = VAL_THROWN_LABEL(frame_);
+bool Try_Catch_Break_Or_Continue(
+    Sink(Value(*)) out,
+    Frame(*) frame_,
+    bool* breaking
+){
+    Value(const*) label = VAL_THROWN_LABEL(frame_);
 
     // Throw /NAME-s used by CONTINUE and BREAK are the actual native
     // function values of the routines themselves.
@@ -70,8 +73,7 @@ bool Try_Catch_Break_Or_Continue(Value(*) out, Frame(*) frame_, bool* breaking)
         // in cases like MAP-EACH (one wants a continue to not add any value)
         //
         CATCH_THROWN(out, frame_);
-        if (Is_Isotope(out))
-            assert(not Is_Isotope_Unstable(out));
+        ASSERT_STABLE(out);  // CONTINUE doesn't take unstable /WITH
         *breaking = false;
         return true;
     }
@@ -1351,7 +1353,7 @@ DECLARE_NATIVE(remove_each)
         else if (Is_Isotope(OUT)) {  // don't decay isotopes, see [5]
             threw = true;
             Init_Error(SPARE, Error_Bad_Isotope(OUT));
-            Init_Thrown_With_Label(FRAME, Lib(NULL), SPARE);
+            Init_Thrown_With_Label(FRAME, Lib(NULL), stable_SPARE);
             goto finalize_remove_each;
         }
         else if (Is_Blackhole(OUT)) {  // do remove
@@ -1363,7 +1365,7 @@ DECLARE_NATIVE(remove_each)
                 SPARE,
                 Error_User("Use [LOGIC! NULL BLACKHOLE VOID] with REMOVE-EACH")
             );
-            Init_Thrown_With_Label(FRAME, Lib(NULL), SPARE);
+            Init_Thrown_With_Label(FRAME, Lib(NULL), stable_SPARE);
             goto finalize_remove_each;
         }
 
@@ -1689,7 +1691,7 @@ DECLARE_NATIVE(map)
     }
     else if (Is_Isotope(SPARE)) {
         Init_Error(SPARE, Error_Bad_Isotope(SPARE));
-        Init_Thrown_Error(FRAME, SPARE);
+        Init_Thrown_Error(FRAME, stable_SPARE);
         goto finalize_map;
     }
     else if (Is_Nulled(SPARE)) {
@@ -1745,7 +1747,7 @@ DECLARE_NATIVE(repeat)
     Value(*) count = ARG(count);
     Value(*) body = ARG(body);
 
-    Value(*) index = SPARE;  // use spare cell to hold current index
+    Value(*) index = cast(Value(*), SPARE);  // spare cell holds current index
 
     enum {
         ST_REPEAT_INITIAL_ENTRY = STATE_0,
@@ -1860,7 +1862,7 @@ DECLARE_NATIVE(for)
         // way around, with FOR-EACH delegating to FOR).
         //
         rebPushContinuation(
-            OUT,  // <-- output cell
+            cast(REBVAL*, OUT),  // <-- output cell
             FRAME_MASK_NONE,
             Canon(FOR_EACH), ARG(vars), rebQ(value), body
         );
@@ -1947,7 +1949,7 @@ DECLARE_NATIVE(until)
     Value(*) body = ARG(body);
     Value(*) predicate = ARG(predicate);
 
-    Value(*) condition;  // can point to OUT or SPARE
+    Atom(*) condition;  // can point to OUT or SPARE
 
     enum {
         ST_UNTIL_INITIAL_ENTRY = STATE_0,

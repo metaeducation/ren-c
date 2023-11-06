@@ -373,9 +373,9 @@ Bounce Evaluator_Executor(Frame(*) f)
         if (not Typecheck_Coerce_Argument(param, SPARE)) {
             option(Symbol(const*)) label = VAL_ACTION_LABEL(SCRATCH);
             const REBKEY* key = ACT_KEY(action, 2);
-            fail (Error_Arg_Type(label, key, param, SPARE));
+            fail (Error_Arg_Type(label, key, param, stable_SPARE));
         }
-        (*intrinsic)(OUT, action, SPARE);
+        (*intrinsic)(OUT, action, stable_SPARE);
         goto lookahead; }
 
       case REB_GROUP :
@@ -484,6 +484,13 @@ Bounce Evaluator_Executor(Frame(*) f)
         }
     }
 
+    // Lookback args are fetched from OUT, then copied into an arg slot.
+    // Put the backwards quoted value into OUT.  (Do this before next
+    // step because we need derelativized value for type check)
+    //
+    Derelativize(OUT, f_current, f_specifier);  // for FULFILLING_ENFIX
+    Set_Cell_Flag(OUT, UNEVALUATED);  // so lookback knows it was quoted
+
     // Let the <skip> flag allow the right hand side to gracefully decline
     // interest in the left hand side due to type.  This is how DEFAULT works,
     // such that `case [condition [...] default [...]]` does not interfere
@@ -491,15 +498,11 @@ Bounce Evaluator_Executor(Frame(*) f)
     //
     if (Get_Action_Flag(enfixed, SKIPPABLE_FIRST)) {
         const REBPAR *first = First_Unspecialized_Param(nullptr, enfixed);
-        if (not TYPE_CHECK_CORE(first, f_current, f_specifier))  // left's kind
+        if (not TYPE_CHECK(first, OUT)) {  // left's kind
+            FRESHEN(OUT);
             goto give_up_backward_quote_priority;
+        }
     }
-
-    // Lookback args are fetched from OUT, then copied into an arg slot.
-    // Put the backwards quoted value into OUT.
-    //
-    Derelativize(OUT, f_current, f_specifier);  // for FULFILLING_ENFIX
-    Set_Cell_Flag(OUT, UNEVALUATED);  // so lookback knows it was quoted
 
     // We skip over the word that invoked the action (e.g. ->-, OF, =>).
     // v will then hold a pointer to that word (possibly now resident in the
@@ -843,7 +846,7 @@ Bounce Evaluator_Executor(Frame(*) f)
         else {
             Decay_If_Unstable(OUT);  // !!! See above regarding rethink
 
-            if (Is_Isotope(OUT) and not Is_Isotope_Set_Friendly(OUT))
+            if (Is_Isotope(OUT) and not Is_Isotope_Set_Friendly(stable_OUT))
                 fail (Error_Bad_Isotope(OUT));
 
             if (Is_Activation(OUT))  // !!! Review: When to update labels?
@@ -1082,7 +1085,7 @@ Bounce Evaluator_Executor(Frame(*) f)
 
         STATE = REB_ACTION;  // bounces back to do lookahead
         rebPushContinuation(
-            OUT,
+            cast(REBVAL*, OUT),  // API won't take Atom(*)
             FRAME_MASK_NONE,
             Canon(APPLY), rebQ(SPARE), rebDERELATIVIZE(f_next, f_specifier)
         );
@@ -1187,15 +1190,15 @@ Bounce Evaluator_Executor(Frame(*) f)
         else {
             Decay_If_Unstable(OUT);
 
-            if (Is_Isotope(OUT) and not Is_Isotope_Set_Friendly(OUT))
+            if (Is_Isotope(OUT) and not Is_Isotope_Set_Friendly(stable_OUT))
                 fail (Error_Bad_Isotope(OUT));
 
             if (Set_Var_Core_Throws(
-                SPARE,
+                SCRATCH,
                 GROUPS_OK,
-                f_current,
+                f_current,  // may be SPARE
                 f_specifier,
-                OUT
+                stable_OUT
             )){
                 goto return_thrown;
             }
@@ -1296,7 +1299,7 @@ Bounce Evaluator_Executor(Frame(*) f)
         Derelativize(SPARE, f_current, f_specifier);
         mutable_HEART_BYTE(SPARE) = REB_BLOCK;
         if (rebRunThrows(
-            OUT,  // <-- output cell
+            cast(REBVAL*, OUT),  // <-- output cell, API won't make atoms
             Canon(REDUCE), SPARE
         )){
             goto return_thrown;
@@ -1412,10 +1415,11 @@ Bounce Evaluator_Executor(Frame(*) f)
                     Drop_Data_Stack_To(BASELINE->stack_base);
                     goto return_thrown;
                 }
+                Decay_If_Unstable(SPARE);
                 if (heart == REB_THE_GROUP)
-                    Theify(SPARE);  // transfer @ decoration to product
+                    Theify(stable_SPARE);  // transfer @ decoration to product
                 else if (heart == REB_META_GROUP)
-                    Metafy(SPARE);  // transfer ^ decoration to product
+                    Metafy(stable_SPARE);  // transfer ^ decoration to product
                 else if (heart == REB_GROUP and Is_Void(SPARE))
                     Init_Blank(SPARE);  // [(void)]: ... opts out of return
 
@@ -1574,7 +1578,7 @@ Bounce Evaluator_Executor(Frame(*) f)
                     mutable_QUOTE_BYTE(SPARE) = UNQUOTED_1;
                     fail (VAL_CONTEXT(SPARE));
                 }
-                Set_Var_May_Fail(var, SPECIFIED, SPARE);  // came in meta'd
+                Set_Var_May_Fail(var, SPECIFIED, stable_SPARE);  // is meta'd
                 goto circled_check;
             }
 
@@ -1599,7 +1603,7 @@ Bounce Evaluator_Executor(Frame(*) f)
                 Init_Nulled(SPARE);
 
             if (
-                Is_Isotope(SPARE) and not Is_Isotope_Set_Friendly(SPARE)
+                Is_Isotope(SPARE) and not Is_Isotope_Set_Friendly(stable_SPARE)
             ){
                 fail (Error_Bad_Isotope(SPARE));
             }
@@ -1607,7 +1611,7 @@ Bounce Evaluator_Executor(Frame(*) f)
                 var_heart == REB_WORD or var_heart == REB_TUPLE
                 or var_heart == REB_THE_WORD or var_heart == REB_THE_TUPLE
             ){
-                Set_Var_May_Fail(var, SPECIFIED, SPARE);
+                Set_Var_May_Fail(var, SPECIFIED, stable_SPARE);
             }
             else
                 assert(false);

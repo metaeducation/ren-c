@@ -147,8 +147,11 @@ void Hex_String_To_Integer(REBVAL *out, const REBVAL *value)
 //
 // If a type is added or removed, update DECLARE_NATIVE(to_integer)'s spec
 //
-Context(*) Maybe_Value_To_Int64(REBVAL *out, const REBVAL *value, bool no_sign)
-{
+Context(*) Maybe_Value_To_Int64(
+    Sink(Value(*)) out,
+    Value(const*) value,
+    bool no_sign
+){
     // !!! Code extracted from REBTYPE(Integer)'s A_MAKE and A_TO cases
     // Use SWITCH instead of IF chain? (was written w/ANY_STR test)
 

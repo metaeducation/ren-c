@@ -29,7 +29,7 @@
 #include "sys-core.h"
 
 
-inline static void Init_For_Vararg_End(REBVAL *out, enum Reb_Vararg_Op op) {
+inline static void Init_For_Vararg_End(Atom(*) out, enum Reb_Vararg_Op op) {
     if (op == VARARG_OP_TAIL_Q)
         Init_True(out);
     else
@@ -44,7 +44,7 @@ inline static void Init_For_Vararg_End(REBVAL *out, enum Reb_Vararg_Op op) {
 // unit ahead.
 //
 inline static bool Vararg_Op_If_No_Advance_Handled(
-    REBVAL *out,
+    Atom(*) out,
     enum Reb_Vararg_Op op,
     option(Cell(const*)) opt_look, // the first value in the varargs input
     REBSPC *specifier,
@@ -134,7 +134,7 @@ inline static bool Vararg_Op_If_No_Advance_Handled(
 // If an evaluation is involved, then a thrown value is possibly returned.
 //
 bool Do_Vararg_Op_Maybe_End_Throws_Core(
-    REBVAL *out,
+    Atom(*) out,
     enum Reb_Vararg_Op op,
     Cell(const*) vararg,
     enum Reb_Param_Class pclass  // PARAM_CLASS_0 to use vararg's class
@@ -347,7 +347,9 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
             if (not vararg_frame)
                 fail (out);
 
-            fail (Error_Phase_Arg_Type(unwrap(vararg_frame), key, param, out));
+            fail (Error_Phase_Arg_Type(
+                unwrap(vararg_frame), key, param, Stable_Unchecked(out))
+            );
         }
     }
 

@@ -112,7 +112,7 @@ DECLARE_NATIVE(write_stdout)
     //
     if (IS_ISSUE(v)) {
         bool threw = rebRunThrows(
-            SPARE,  // <-- output cell
+            cast(REBVAL*, SPARE),  // <-- output cell
             Canon(AS), Canon(TEXT_X), v
         );
         assert(not threw);
@@ -180,7 +180,7 @@ DECLARE_NATIVE(read_stdin)
   #ifdef REBOL_SMART_CONSOLE
     if (Term_IO) {
         if (rebRunThrows(
-            OUT,  // <-- output cell
+            cast(REBVAL*, OUT),  // <-- output cell
             "as binary! maybe read-line"
         )){
             return THROWN;

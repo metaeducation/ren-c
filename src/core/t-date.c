@@ -62,8 +62,8 @@ REBINT CT_Date(noquote(Cell(const*)) a_in, noquote(Cell(const*)) b_in, bool stri
     bool a_had_time = Does_Date_Have_Time(a_in);
     bool b_had_time = Does_Date_Have_Time(b_in);
 
-    DECLARE_LOCAL (a);
-    DECLARE_LOCAL (b);
+    DECLARE_STABLE (a);
+    DECLARE_STABLE (b);
     Dequotify(Copy_Cell(a, SPECIFIC(CELL_TO_VAL(a_in))));
     Dequotify(Copy_Cell(b, SPECIFIC(CELL_TO_VAL(b_in))));
 
@@ -218,8 +218,8 @@ REBINT Days_Between_Dates(const REBVAL *a, const REBVAL *b)
     if (Does_Date_Have_Time(a) != Does_Date_Have_Time(b))
         fail (Error_Invalid_Compare_Raw(a, b));
 
-    DECLARE_LOCAL (utc_a);
-    DECLARE_LOCAL (utc_b);
+    DECLARE_STABLE (utc_a);
+    DECLARE_STABLE (utc_b);
 
     if (Does_Date_Have_Zone(a) != Does_Date_Have_Zone(b))
         fail (Error_Invalid_Compare_Raw(a, b));
@@ -290,7 +290,7 @@ REBINT Days_Between_Dates(const REBVAL *a, const REBVAL *b)
 //
 REBLEN Week_Day(const REBVAL *date)
 {
-    DECLARE_LOCAL (year1);
+    DECLARE_STABLE (year1);
     Copy_Cell(year1, date);
     VAL_DATE(year1).year = 0;
     VAL_DATE(year1).month = 1;
@@ -474,8 +474,11 @@ void Adjust_Date_UTC(Cell(*) d)
 //
 // Called by DIFFERENCE function.
 //
-REBVAL *Time_Between_Dates(REBVAL *out, const REBVAL *d1, const REBVAL *d2)
-{
+Value(*) Time_Between_Dates(
+    Sink(Value(*)) out,
+    Value(const*) d1,
+    Value(const*) d2
+){
     // DIFFERENCE is supposed to calculate a time difference, and dates without
     // time components will lead to misleading answers for that.  The user is
     // expected to explicitly ensure that if a 0:00 time is intended as
@@ -654,10 +657,10 @@ static REBINT Int_From_Date_Arg(const REBVAL *poke) {
 //  Pick_Or_Poke_Date: C
 //
 void Pick_Or_Poke_Date(
-    option(REBVAL*) opt_out,
-    REBVAL *v,
+    option(Sink(Value(*))) opt_out,
+    Value(*) v,
     Cell(const*) picker,
-    option(const REBVAL*) opt_poke
+    option(Value(const*)) opt_poke
 ){
     option(SymId) sym;
     if (IS_WORD(picker)) {
@@ -690,7 +693,7 @@ void Pick_Or_Poke_Date(
     // actually 3.)  We extract the original values so we have them if we
     // need them (e.g if asked for the UTC or zone) and adjust.
     //
-    DECLARE_LOCAL (adjusted);
+    DECLARE_STABLE (adjusted);
     Copy_Cell(adjusted, v);
     Fold_Zone_Into_Date(adjusted);
     assert(not Does_Date_Have_Zone(adjusted));

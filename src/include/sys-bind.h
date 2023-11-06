@@ -739,7 +739,7 @@ inline static option(REBSER*) Get_Word_Container(
 }
 
 
-inline static const REBVAL *Lookup_Word_May_Fail(
+inline static Value(const*) Lookup_Word_May_Fail(
     Cell(const*) any_word,
     REBSPC *specifier
 ){
@@ -1184,21 +1184,6 @@ inline static REBSPC *Derive_Specifier_Core(
 
     if (IS_VARLIST(old)) {
         //
-        // !!! It's very frequent now with heavy nulls and heavy voids, as
-        // arrays injecting their bindings in places where arrays were not
-        // before.  This entire thing needs a rewrite.
-
-        if (  // !!! hack out heavy null and heavy void cases, for now
-            VAL_LEN_AT(any_array) == 1
-            and (
-                Is_Heavy_Null(VAL_ARRAY_ITEM_AT(any_array))
-                or Is_Heavy_Void(VAL_ARRAY_ITEM_AT(any_array))
-                or Is_Heavy_False(VAL_ARRAY_ITEM_AT(any_array))
-            )
-        ){
-            return old;
-        }
-
         // If the specifier is only for providing resolutions of variables in
         // functions, an array specified by a frame isn't going to need that.
         // This is kind of like dealing with something specified.

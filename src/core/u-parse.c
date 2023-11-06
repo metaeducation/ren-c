@@ -250,7 +250,7 @@ inline static option(SymId) VAL_CMD(Cell(const*) v) {
 //
 static bool Subparse_Throws(
     bool *interrupted_out,
-    REBVAL *out,
+    Sink(Value(*)) out,
     Cell(const*) input,
     REBSPC *input_specifier,
     Frame(*) f,
@@ -349,7 +349,7 @@ static bool Subparse_Throws(
 
     Drop_Frame(f);
 
-    assert(b == out);
+    assert(b == cast(Bounce, out));
 
     *interrupted_out = false;
     return false;
@@ -425,7 +425,7 @@ static void Print_Parse_Index(Frame(*) frame_) {
 // values as-is.
 //
 static Cell(const*) Get_Parse_Value(
-    REBVAL *cell,  // storage for fetched values; must be GC protected
+    Sink(Value(*)) cell,  // storage for fetched values; must be GC protected
     Cell(const*) rule,
     REBSPC *specifier
 ){
@@ -459,21 +459,25 @@ static Cell(const*) Get_Parse_Value(
 // like a COMPOSE that runs each time they are visited.
 //
 bool Process_Group_For_Parse_Throws(
-    Value(*) out,
+    Sink(Value(*)) out,
     Frame(*) frame_,
     Cell(const*) group  // may be same as `cell`
 ){
     USE_PARAMS_OF_SUBPARSE;
 
-    assert(out != group);
+    assert(cast(Cell(const*), out) != group);
 
     assert(IS_GROUP(group) or IS_GET_GROUP(group));
     REBSPC *derived = (group == P_SAVE)
         ? SPECIFIED
         : Derive_Specifier(P_RULE_SPECIFIER, group);
 
-    if (Do_Any_Array_At_Throws(out, group, derived))
+  blockscope {
+    Atom(*) atom_out = out;
+    if (Do_Any_Array_At_Throws(atom_out, group, derived))
         return true;
+    Decay_If_Unstable(atom_out);
+  }
 
     // !!! The input is not locked from modification by agents other than the
     // PARSE's own REMOVE/etc.  This is a sketchy idea, but as long as it's
@@ -633,7 +637,8 @@ static REBIXO Parse_One_Rule(
           case REB_TYPE_BLOCK:
           case REB_TYPE_GROUP:
           case REB_PARAMETER: {
-            if (TYPE_CHECK_CORE(rule, item, P_INPUT_SPECIFIER))
+            Derelativize(SPARE, item, P_INPUT_SPECIFIER);
+            if (Typecheck_Value(rule, P_RULE_SPECIFIER, SPARE))
                 return pos + 1;  // type was in typeset
             return END_FLAG; }
 
@@ -740,7 +745,7 @@ static REBIXO To_Thru_Block_Rule(
 ){
     USE_PARAMS_OF_SUBPARSE;
 
-    DECLARE_LOCAL (cell);  // holds evaluated rules (use frame cell instead?)
+    DECLARE_STABLE (cell);  // holds evaluated rules (use frame cell instead?)
 
     // Note: This enumeration goes through <= P_INPUT_LEN, because the
     // block rule might be something like `to [{a} | end]`.  e.g. being
@@ -1046,7 +1051,7 @@ static REBIXO To_Thru_Non_Block_Rule(
         // other considerations for how non-block rules act with array input?
         //
         Flags find_flags = (P_FLAGS & AM_FIND_CASE);
-        DECLARE_LOCAL (temp);
+        DECLARE_STABLE (temp);
         if (IS_QUOTED(rule)) {  // make `'[foo bar]` match `[foo bar]`
             Derelativize(temp, rule, P_RULE_SPECIFIER);
             rule = Unquotify(temp, 1);
@@ -1059,7 +1064,7 @@ static REBIXO To_Thru_Non_Block_Rule(
         else if (IS_TYPE_WORD(rule) or IS_TYPE_GROUP(rule)) {
             Derelativize(temp, rule, P_RULE_SPECIFIER);
             Quasify(temp);
-            Meta_Unquotify_Stable(temp);
+            Meta_Unquotify_Known_Stable(temp);
             rule = temp;
         }
 
@@ -1146,7 +1151,7 @@ static void Handle_Mark_Rule(
         DECLARE_LOCAL (temp);
         Quotify(Derelativize(OUT, rule, specifier), 1);
         if (rebRunThrows(
-            temp,  // <-- output cell
+            cast(REBVAL*, temp),  // <-- output cell
             Canon(SET), OUT, ARG(position)
         )){
             fail (Error_No_Catch_For_Throw(FRAME));
@@ -2016,7 +2021,7 @@ DECLARE_NATIVE(subparse)
             goto pre_rule;
         }
         else if (IS_WORD(P_RULE)) {
-            DECLARE_LOCAL (temp);
+            DECLARE_STABLE (temp);
             Cell(const*) gotten = Get_Parse_Value(
                 temp,
                 P_RULE,
@@ -2555,19 +2560,24 @@ DECLARE_NATIVE(subparse)
                 if (not IS_GROUP(rule))
                     fail ("Only (...) or ^(...) in old PARSE's CHANGE/INSERT");
 
-                DECLARE_LOCAL (evaluated);
+                DECLARE_STABLE (evaluated);
                 REBSPC *derived = Derive_Specifier(
                     P_RULE_SPECIFIER,
                     rule
                 );
+
+              blockscope {
+                Atom(*) atom_evaluated = evaluated;
                 if (Do_Any_Array_At_Throws(
-                    evaluated,
+                    atom_evaluated,
                     rule,
                     derived
                 )){
                     Copy_Cell(OUT, evaluated);
                     goto return_thrown;
                 }
+                Decay_If_Unstable(atom_evaluated);
+              }
 
                 if (IS_SER_ARRAY(P_INPUT)) {
                     REBLEN mod_flags = (P_FLAGS & PF_INSERT) ? 0 : AM_PART;
@@ -2700,7 +2710,7 @@ DECLARE_NATIVE(parse3)
 
     if (ANY_SEQUENCE(input)) {
         if (rebRunThrows(
-            SPARE,  // <-- output cell
+            cast(REBVAL*, SPARE),  // <-- output cell
             Canon(AS), Canon(BLOCK_X), rebQ(input)
         )){
             return THROWN;
@@ -2709,7 +2719,7 @@ DECLARE_NATIVE(parse3)
     }
     else if (IS_URL(input)) {
         if (rebRunThrows(
-            SPARE,  // <-- output cell
+            cast(REBVAL*, SPARE),  // <-- output cell
             Canon(AS), Canon(TEXT_X), input
         )){
             return THROWN;

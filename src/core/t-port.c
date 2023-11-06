@@ -54,7 +54,7 @@ Bounce MAKE_Port(
         return RAISE(Error_Bad_Make_Parent(kind, unwrap(parent)));
 
     if (rebRunThrows(
-        OUT,  // <-- output cell
+        cast(REBVAL*, OUT),  // <-- output cell
         rebRUN(SysUtil(MAKE_PORT_P)), rebQ(arg)
     )){
         fail (Error_No_Catch_For_Throw(TOP_FRAME));
@@ -141,7 +141,7 @@ REBTYPE(Port)
         if (b == nullptr)
            Init_Nulled(OUT);
         else if (b != OUT) {
-            REBVAL *r = Value_From_Bounce(b);
+            Atom(*) r = Atom_From_Bounce(b);
             assert(Is_Api_Value(r));
             Copy_Cell(OUT, r);
             Release_Api_Value_If_Unmanaged(r);
@@ -205,7 +205,7 @@ REBTYPE(Port)
         if (REF(lines)) { // caller wants a BLOCK! of STRING!s, not one string
             assert(IS_TEXT(OUT));
 
-            DECLARE_LOCAL (temp);
+            DECLARE_STABLE (temp);
             Move_Cell(temp, OUT);
             Init_Block(OUT, Split_Lines(temp));
         }

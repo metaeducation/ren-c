@@ -122,7 +122,7 @@ Bounce Group_Branch_Executor(Frame(*) frame_)
     if (ANY_GROUP(SPARE))
         fail (Error_Bad_Branch_Type_Raw());  // stop infinite recursion (good?)
 
-    Value(const*) with = Is_Fresh(OUT) ? nullptr : OUT;  // with here, see [1]
+    Atom(const*) with = Is_Fresh(OUT) ? nullptr : OUT;  // with here, see [1]
 
     assert(Is_Frame_At_End(FRAME));
     return DELEGATE_BRANCH(OUT, SPARE, with);  // couldn't do (OUT, OUT, SPARE)
@@ -259,7 +259,7 @@ static Bounce Then_Else_Isotopic_Object_Helper(
 ){
     INCLUDE_PARAMS_OF_THEN;  // assume frame compatibility w/ELSE
 
-    Value(*) in = ARG(optional);
+    Atom(*) in = ARG(optional);  /* !!! Wrong, rewrite this routine */
     Value(*) branch = ARG(branch);
 
     if (Is_Meta_Of_Nihil(in))
@@ -269,7 +269,8 @@ static Bounce Then_Else_Isotopic_Object_Helper(
 
     if (Is_Raised(in)) {  // definitional failure, skip
         STATE = ST_THENABLE_REJECTING_INPUT;
-        return Copy_Cell(OUT, in);
+        Copy_Cell(OUT, in);
+        return OUT;
     }
 
     if (not Is_Lazy(in))  // Packs run THEN, including ~[~null~]~ and ~[~]~, see [3]
@@ -294,7 +295,7 @@ static Bounce Then_Else_Isotopic_Object_Helper(
             FRAME_FLAG_META_RESULT
         )){
             Copy_Cell(in, SPARE);  // cheap reification... (e.g. quoted)
-            Meta_Unquotify_Stable(in);  // see [1]
+            Meta_Unquotify_Known_Stable(Stable_Unchecked(in));  // see [1]
             assert(STATE == ST_THENABLE_INITIAL_ENTRY);
             assert(not Is_Isotope(in));
             goto test_not_lazy;
@@ -308,14 +309,16 @@ static Bounce Then_Else_Isotopic_Object_Helper(
     if (then) {
         if (not then_hook) {
             STATE = ST_THENABLE_REJECTING_INPUT;
-            return Copy_Cell(OUT, in);  // pass lazy object thru to ELSEs
+            Copy_Cell(OUT, in);  // pass lazy object thru to ELSEs
+            return OUT;
         }
         hook = unwrap(then_hook);
     }
     else {
         if (not else_hook) {
             STATE = ST_THENABLE_REJECTING_INPUT;
-            return Copy_Cell(OUT, in);  // pass lazy object thru to THENs (?)
+            Copy_Cell(OUT, in);  // pass lazy object thru to THENs (?)
+            return OUT;
         }
         hook = unwrap(else_hook);
     }
@@ -337,8 +340,10 @@ static Bounce Then_Else_Isotopic_Object_Helper(
     if (Is_Void(in) or (REF(decay) and Is_Heavy_Void(in))) {
         if (then) {
             STATE = ST_THENABLE_REJECTING_INPUT;
-            if (Is_Pack(in))
-                return Copy_Cell(OUT, in);
+            if (Is_Pack(in)) {
+                Copy_Cell(OUT, in);
+                return OUT;
+            }
             return VOID;  // then of void, don't want to write to output cell
         }
         STATE = ST_THENABLE_RUNNING_BRANCH;
@@ -348,7 +353,8 @@ static Bounce Then_Else_Isotopic_Object_Helper(
     if (Is_Nulled(in) or (REF(decay) and Is_Heavy_Null(in))) {
         if (then) {
             STATE = ST_THENABLE_REJECTING_INPUT;
-            return Copy_Cell(OUT, in);  // then of null, may be pack
+            Copy_Cell(OUT, in);  // then of null, may be pack
+            return OUT;
         }
         STATE = ST_THENABLE_RUNNING_BRANCH;
         return DELEGATE_BRANCH(OUT, branch, in);  // else of null
@@ -356,7 +362,8 @@ static Bounce Then_Else_Isotopic_Object_Helper(
 
     if (not then) {
         STATE = ST_THENABLE_REJECTING_INPUT;
-        return Copy_Cell(OUT, in);  // passthru, see [4]
+        Copy_Cell(OUT, in);  // passthru, see [4]
+        return OUT;
     }
     STATE = ST_THENABLE_RUNNING_BRANCH;
     return DELEGATE_BRANCH(OUT, branch, in);  // then branch, takes arg
@@ -616,7 +623,7 @@ DECLARE_NATIVE(also)  // see `tweak :also 'defer on` in %base-defs.r
 
     if (Is_Meta_Of_Raised(in)) {  // definitional failure, skip
         Copy_Cell(OUT, in);
-        Unquasify(OUT);
+        Unquasify(stable_OUT);
         return Raisify(OUT);
     }
 
@@ -667,7 +674,7 @@ DECLARE_NATIVE(match)
     else switch (VAL_TYPE(test)) {
       case REB_ACTION: {
         if (rebRunThrows(
-            SPARE,  // <-- output cell
+            cast(REBVAL*, SPARE),  // <-- output cell, API doesn't do unstable
             test, rebQ(v)
         )){
             return THROWN;
@@ -681,7 +688,7 @@ DECLARE_NATIVE(match)
       case REB_TYPE_WORD:
       case REB_TYPE_GROUP:
       case REB_TYPE_BLOCK:
-        if (not Typecheck_Value(test, SPECIFIED, v, SPECIFIED))
+        if (not Typecheck_Value(test, SPECIFIED, v))
             return nullptr;
         break;
 
@@ -819,7 +826,7 @@ DECLARE_NATIVE(all)
         return CONTINUE(scratch, predicate, SPARE);
     }
 
-    condition = SPARE;  // without predicate, `condition` is same as evaluation
+    condition = stable_SPARE;  // without predicate, `condition` is same as evaluation
     goto process_condition;
 
 } predicate_result_in_scratch: {  ////////////////////////////////////////////
@@ -949,7 +956,7 @@ DECLARE_NATIVE(any)
         return CONTINUE(SPARE, predicate, OUT);
     }
 
-    condition = OUT;
+    condition = stable_OUT;
     goto process_condition;
 
 } predicate_result_in_spare: {  //////////////////////////////////////////////
@@ -962,7 +969,7 @@ DECLARE_NATIVE(any)
     SUBFRAME->executor = &Evaluator_Executor;  // done tunneling, see [2]
     STATE = ST_ANY_EVAL_STEP;
 
-    condition = SPARE;
+    condition = stable_SPARE;
     goto process_condition;
 
 } process_condition: {  //////////////////////////////////////////////////////
@@ -1052,7 +1059,7 @@ DECLARE_NATIVE(case)
     REBVAL *cases = ARG(cases);
     REBVAL *predicate = ARG(predicate);
 
-    REBVAL *discarded = LOCAL(discarded);  // slot to write unused results to
+    Atom(*) discarded = LOCAL(discarded);  // slot to write unused results to
 
     enum {
         ST_CASE_INITIAL_ENTRY = STATE_0,
@@ -1257,7 +1264,7 @@ DECLARE_NATIVE(switch)
     REBVAL *predicate = ARG(predicate);
     REBVAL *cases = ARG(cases);
 
-    Value(*) scratch = LOCAL(scratch);
+    Atom(*) scratch = LOCAL(scratch);
 
     enum {
         ST_SWITCH_INITIAL_ENTRY = STATE_0,
@@ -1333,7 +1340,7 @@ DECLARE_NATIVE(switch)
         if (not ANY_TYPE_VALUE(SPARE))
             fail ("SWITCH/TYPE requires comparisons to TYPE-XXX!");
 
-        if (not TYPE_CHECK(SPARE, left))
+        if (not TYPE_CHECK(stable_SPARE, left))
             goto next_switch_step;
     }
     else if (Is_Nulled(predicate)) {
@@ -1349,7 +1356,7 @@ DECLARE_NATIVE(switch)
         // The ARG(value) passed in is the left/first argument to compare.
         //
         if (rebRunThrows(
-            scratch,  // <-- output cell
+            cast(REBVAL*, scratch),  // <-- output cell
             predicate,
                 rebQ(left),  // first arg (left hand side if infix)
                 rebQ(SPARE)  // second arg (right hand side if infix)
@@ -1475,7 +1482,7 @@ DECLARE_NATIVE(default)
 
 } branch_result_in_spare: {  /////////////////////////////////////////////////
 
-    if (Set_Var_Core_Throws(OUT, nullptr, steps, SPECIFIED, SPARE)) {
+    if (Set_Var_Core_Throws(OUT, nullptr, steps, SPECIFIED, stable_SPARE)) {
         assert(false);  // shouldn't be able to happen.
         fail (Error_No_Catch_For_Throw(FRAME));
     }
@@ -1658,7 +1665,7 @@ DECLARE_NATIVE(throw)
 // See notes about "Heavy Null" and "Heavy Void" for how the variations carry
 // some behaviors of the types, while not being technically void or null.
 //
-void Debranch_Output(Value(*) out) {
+void Debranch_Output(Atom(*) out) {
     if (Is_Lazy(out)) {
         //
         // We don't have to fully reify the object, we just need to make sure
@@ -1682,8 +1689,14 @@ void Debranch_Output(Value(*) out) {
 //
 //  Pushed_Decaying_Frame: C
 //
-bool Pushed_Decaying_Frame(Value(*) out, Value(const*) obj, Flags flags) {
-    option(Value(*)) decayer = Select_Symbol_In_Context(obj, Canon(DECAY));
+bool Pushed_Decaying_Frame(Atom(*) out, Atom(const*) obj, Flags flags) {
+    if (out != obj)
+        Copy_Cell(out, obj);
+    mutable_QUOTE_BYTE(out) = UNQUOTED_1;
+    option(Value(*)) decayer = Select_Symbol_In_Context(
+        cast(Cell(const*), out),
+        Canon(DECAY)
+    );
     if (not decayer)
         fail ("Asked to decay lazy object with no DECAY method");
 

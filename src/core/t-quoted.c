@@ -126,7 +126,7 @@ REBTYPE(Quoted)
         assert(not threw);  // can't throw
         UNUSED(threw);
 
-        return Quotify(OUT, num_quotes); }
+        return Quotify(stable_OUT, num_quotes); }
 
       default:
         break;
@@ -242,14 +242,10 @@ DECLARE_NATIVE(quote)
 
     REBINT depth = REF(depth) ? VAL_INT32(ARG(depth)) : 1;
 
-    if (depth == 0)
-        return COPY(ARG(optional));
-
     if (depth < 0)
         fail (PARAM(depth));
 
-    Copy_Cell(OUT, ARG(optional));
-    return Quotify(OUT, depth);
+    return COPY(Quotify(ARG(optional), depth));
 }
 
 
@@ -346,8 +342,7 @@ DECLARE_NATIVE(quasi)
     if (IS_QUOTED(v))
         fail ("QUOTED! values do not have QUASI! forms");
 
-    Copy_Cell(OUT, v);
-    return Quasify(OUT);
+    return COPY(Quasify(v));
 }
 
 
@@ -522,7 +517,7 @@ DECLARE_NATIVE(lazy)
         return Unquotify(Copy_Cell(OUT, v), 1);
 
     if (IS_BLOCK(v)) {
-        if (rebRunThrows(OUT, Canon(MAKE), Canon(OBJECT_X), v))
+        if (rebRunThrows(cast(REBVAL*, OUT), Canon(MAKE), Canon(OBJECT_X), v))
             return THROWN;
     }
     else
@@ -571,7 +566,7 @@ DECLARE_NATIVE(pack)
     }
 
     assert(IS_BLOCK(v));
-    if (rebRunThrows(SPARE,
+    if (rebRunThrows(cast(REBVAL*, SPARE),
         Canon(QUASI), Canon(COLLECT), "[", Canon(REDUCE_EACH), "^x", v,
             "[keep x]",
         "]"
@@ -579,7 +574,7 @@ DECLARE_NATIVE(pack)
         return THROWN;
     }
 
-    return UNMETA(SPARE);
+    return UNMETA(stable_SPARE);
 }
 
 

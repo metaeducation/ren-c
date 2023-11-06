@@ -72,6 +72,7 @@
 
 #undef ARG                       // undefine the ARG(x) macro that natives use
 #define ARG f->u.action.arg      // ...aredefine as currently fulfilling arg
+#define stable_ARG Stable_Unchecked(ARG)
 
 #undef PARAM
 #define PARAM f->u.action.param
@@ -158,13 +159,14 @@ bool Lookahead_To_Sync_Enfix_Defer_Flag(Feed(*) feed) {
 //    of multi-return proxying via RETURN/ONLY.  Hence natives now need to
 //    take that responsibility of choosing whether or not to proxy.
 //
-Bounce Proxy_Multi_Returns_Core(Frame(*) f, Value(*) v)
+Bounce Proxy_Multi_Returns_Core(Frame(*) f, Atom(*) v)
 {
     assert(not Is_Raised(v));
 
     StackIndex base = TOP_INDEX;
 
-    Meta_Quotify(Copy_Cell(PUSH(), v));
+    Meta_Quotify(v);  // unquotified at end if not overwritten
+    Copy_Cell(PUSH(), v);  // can't push unstable isotopes to data stack
 
     KEY = ACT_KEYS(&KEY_TAIL, f->u.action.original);
     PARAM = ACT_PARAMS_HEAD(f->u.action.original);
@@ -177,14 +179,15 @@ Bounce Proxy_Multi_Returns_Core(Frame(*) f, Value(*) v)
             continue;
 
         if (not Typecheck_Coerce_Argument(PARAM, ARG))
-            fail (Error_Phase_Arg_Type(f, KEY, PARAM, ARG));
+            fail (Error_Phase_Arg_Type(f, KEY, PARAM, stable_ARG));
 
         Meta_Quotify(Copy_Cell(PUSH(), ARG));
     }
 
-    if (TOP_INDEX == base + 1)  // no multi return values
+    if (TOP_INDEX == base + 1) {  // no multi return values
         DROP();
-    else
+        Meta_Unquotify_Undecayed(v);
+    } else
         Init_Pack(v, Pop_Stack_Values(base));
 
     return v;
@@ -328,7 +331,7 @@ Bounce Action_Executor(Frame(*) f)
                 if (VAL_WORD_SYMBOL(ordered) != param_symbol)
                     continue;
 
-                REBLEN offset = ARG - FRM_ARGS_HEAD(f);
+                REBLEN offset = ARG - cast(Atom(*), FRM_ARGS_HEAD(f));
                 INIT_VAL_WORD_BINDING(ordered, f->varlist);
                 INIT_VAL_WORD_INDEX(ordered, offset + 1);
 
@@ -440,7 +443,8 @@ Bounce Action_Executor(Frame(*) f)
 
             if (GET_PARAM_FLAG(PARAM, VARIADIC)) {  // non-empty is ok, see [4]
                 assert(not Is_None(OUT));
-                Init_Varargs_Untyped_Enfix(ARG, OUT);
+                Decay_If_Unstable(OUT);  // !!! ^META variadics?
+                Init_Varargs_Untyped_Enfix(ARG, stable_OUT);
                 FRESHEN(OUT);
             }
             else switch (pclass) {
@@ -613,7 +617,8 @@ Bounce Action_Executor(Frame(*) f)
             if (NOT_PARAM_FLAG(PARAM, SKIPPABLE))
                 Literal_Next_In_Frame(ARG, f);  // CELL_FLAG_UNEVALUATED
             else {
-                if (not TYPE_CHECK_CORE(PARAM, f_next, f_specifier)) {
+                Derelativize(SPARE, f_next, f_specifier);
+                if (not TYPE_CHECK(PARAM, SPARE)) {
                     assert(GET_PARAM_FLAG(PARAM, ENDABLE));
                     Init_Nulled(ARG);  // not actually an ~end~ (?)
                     goto continue_fulfilling;
@@ -760,7 +765,7 @@ Bounce Action_Executor(Frame(*) f)
         // But +1 is okay, because we want the slots after the refinement.
         //
         REBINT offset =
-            VAL_WORD_INDEX(TOP) - (ARG - FRM_ARGS_HEAD(f)) - 1;
+            VAL_WORD_INDEX(TOP) - (ARG - cast(Atom(*), FRM_ARGS_HEAD(f))) - 1;
         KEY += offset;
         ARG += offset;
         PARAM += offset;
@@ -882,22 +887,22 @@ Bounce Action_Executor(Frame(*) f)
 
         if (GET_PARAM_FLAG(PARAM, VARIADIC)) {  // can't check now, see [3]
             if (not IS_VARARGS(ARG))  // argument itself is always VARARGS!
-                fail (Error_Not_Varargs(f, KEY, PARAM, ARG));
+                fail (Error_Not_Varargs(f, KEY, PARAM, stable_ARG));
 
             INIT_VAL_VARARGS_PHASE(ARG, FRM_PHASE(f));
 
             bool enfix = false;  // !!! how does enfix matter?
             VAL_VARARGS_SIGNED_PARAM_INDEX(ARG) =  // store offset, see [4]
                 enfix
-                    ? -(ARG - FRM_ARGS_HEAD(f) + 1)
-                    : ARG - FRM_ARGS_HEAD(f) + 1;
+                    ? -(ARG - cast(Atom(*), FRM_ARGS_HEAD(f)) + 1)
+                    : ARG - cast(Atom(*), FRM_ARGS_HEAD(f)) + 1;
 
             assert(VAL_VARARGS_SIGNED_PARAM_INDEX(ARG) != 0);
             continue;
         }
 
         if (not Typecheck_Coerce_Argument(PARAM, ARG))
-            fail (Error_Phase_Arg_Type(f, KEY, PARAM, ARG));
+            fail (Error_Phase_Arg_Type(f, KEY, PARAM, stable_ARG));
     }
 
   // Action arguments now gathered, begin dispatching
@@ -997,8 +1002,8 @@ Bounce Action_Executor(Frame(*) f)
     else if (b == nullptr) {  // API and internal code can both return `nullptr`
         Init_Nulled(OUT);
     }
-    else if (Is_Bounce_A_Value(b)) {
-        REBVAL *r = Value_From_Bounce(b);
+    else if (Is_Bounce_An_Atom(b)) {
+        Atom(*) r = Atom_From_Bounce(b);
         assert(Is_Api_Value(r));
         Copy_Cell(OUT, r);
         Release_Api_Value_If_Unmanaged(r);

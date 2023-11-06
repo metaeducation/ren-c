@@ -128,8 +128,12 @@ Bounce TO_Pair(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg)
 // Note: compares on the basis of decimal value, but preserves the DECIMAL!
 // or INTEGER! state of the element it kept.  This may or may not be useful.
 //
-void Min_Max_Pair(REBVAL *out, const REBVAL *a, const REBVAL *b, bool maxed)
-{
+void Min_Max_Pair(
+    Sink(Value(*)) out,
+    Value(const*) a,
+    Value(const*) b,
+    bool maxed
+){
     const REBVAL* x;
     if (VAL_PAIR_X_DEC(a) > VAL_PAIR_X_DEC(b))
         x = maxed ? VAL_PAIR_X(a) : VAL_PAIR_X(b);

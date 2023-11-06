@@ -178,8 +178,8 @@ PVAR Flags Eval_Signals;   // Signal flags
 // of the TG_Thrown_Label, but Frame(*) bindings are not legal at the moment.
 // To get past the issue, the frame is just put in the TG_Unwind_Frame.
 //
-TVAR REBVAL TG_Thrown_Arg;
-TVAR REBVAL TG_Thrown_Label;
+TVAR Reb_Atom TG_Thrown_Arg;
+TVAR Reb_Value TG_Thrown_Label;
 TVAR Frame(*) TG_Unwind_Frame;
 
 // !!! These values were held in REBVALs for some reason in R3-Alpha, which

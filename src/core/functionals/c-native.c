@@ -102,7 +102,7 @@ Action(*) Make_Native(
     // !!! Note: This will manage the combinator's array.  Changing this would
     // need a version of Make_Paramlist_Managed() which took an array + index
     //
-    DECLARE_LOCAL (expanded_spec);
+    DECLARE_STABLE (expanded_spec);
     if (native_type == NATIVE_COMBINATOR) {
         Init_Block(expanded_spec, Expanded_Combinator_Spec(spec));
         spec = expanded_spec;

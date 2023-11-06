@@ -147,7 +147,7 @@ Frame(*) Make_Pushed_Frame_From_Action_Feed_May_Throw(
 // a single quote of nothing.
 //
 bool Init_Invokable_From_Feed_Throws(
-    REBVAL *out,
+    Sink(Value(*)) out,
     option(Cell(const*)) first,  // override first value, vs. At_Feed(feed)
     Feed(*) feed,
     bool error_on_deferred  // if not planning to keep running, can't ELSE/THEN
@@ -178,7 +178,7 @@ bool Init_Invokable_From_Feed_Throws(
     StackIndex base = TOP_INDEX;
 
     if (IS_WORD(v) or IS_TUPLE(v) or IS_PATH(v)) {
-        DECLARE_LOCAL (steps);
+        DECLARE_STABLE (steps);
         if (Get_Var_Push_Refinements_Throws(
             out,
             steps,
@@ -203,7 +203,7 @@ bool Init_Invokable_From_Feed_Throws(
     // It probably shouldn't, but since it does we need the action afterward
     // to put the phase back.
     //
-    DECLARE_LOCAL (action);
+    DECLARE_STABLE (action);
     Move_Cell(action, out);
     PUSH_GC_GUARD(action);
 
@@ -255,7 +255,7 @@ bool Init_Invokable_From_Feed_Throws(
 // This converts QUOTED!s into frames for the identity function.
 //
 bool Init_Frame_From_Feed_Throws(
-    REBVAL *out,
+    Sink(Value(*)) out,
     Cell(const*) first,
     Feed(*) feed,
     bool error_on_deferred

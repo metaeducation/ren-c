@@ -3253,7 +3253,7 @@ DECLARE_NATIVE(transcode)
 // Returns symbol number, or zero for errors.
 //
 const Byte* Scan_Any_Word(
-    REBVAL *out,
+    Sink(Value(*)) out,
     enum Reb_Kind kind,
     const Byte* utf8,
     Size size

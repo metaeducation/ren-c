@@ -387,7 +387,7 @@ static void Propagate_All_GC_Marks(void)
                 if (flavor < FLAVOR_MIN_ISOTOPES_OK)
                     panic (v);  // isotopes not legal in some array types
 
-                if (Is_Isotope_Unstable(v))  // no arrays can store unstable
+                if (Is_Isotope_Unstable(cast(Atom(*), v)))  // illegal in array
                     panic (v);
                 break;
 

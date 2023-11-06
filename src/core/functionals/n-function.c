@@ -433,10 +433,10 @@ DECLARE_NATIVE(skippable_q)
 Bounce Init_Thrown_Unwind_Value(
     Frame(*) frame_,
     const REBVAL *level, // FRAME!, ACTION! (or INTEGER! relative to frame)
-    const REBVAL *value,
+    Atom(const*) value,
     Frame(*) target // required if level is INTEGER! or ACTION!
 ) {
-    DECLARE_LOCAL (label);
+    DECLARE_STABLE (label);
     Copy_Cell(label, Lib(UNWIND));
 
     if (IS_FRAME(level)) {
@@ -533,7 +533,7 @@ DECLARE_NATIVE(unwind)
 //
 bool Typecheck_Coerce_Return(
     Frame(*) f,
-    Value(*) atom  // coercion needs mutability
+    Atom(*) atom  // coercion needs mutability
 ){
     if (Is_Raised(atom))
         return true;  // For now, all functions return definitional errors
@@ -591,7 +591,7 @@ DECLARE_NATIVE(definitional_return)
 {
     INCLUDE_PARAMS_OF_DEFINITIONAL_RETURN;
 
-    Value(*) atom = Copy_Cell(SPARE, ARG(value));  // SPARE for unstable atoms
+    Atom(*) atom = Copy_Cell(SPARE, ARG(value));  // SPARE for unstable atoms
     Meta_Unquotify_Undecayed(atom);
 
     Frame(*) f = FRAME;  // frame of this RETURN call
@@ -620,7 +620,7 @@ DECLARE_NATIVE(definitional_return)
     if (not REF(only) and not Typecheck_Coerce_Return(target_frame, atom))
         fail (Error_Bad_Return_Type(target_frame, atom));
 
-    DECLARE_LOCAL (label);
+    DECLARE_STABLE (label);
     Copy_Cell(label, Lib(UNWIND)); // see Make_Thrown_Unwind_Value
     TG_Unwind_Frame = target_frame;
 

@@ -122,7 +122,8 @@
             return *this;
         }
 
-        operator REBVAL* () { return v; }
+        operator REBVAL* () const { return v; }
+        operator Sink(Value(*)) () const { return v; }
         operator noquote(Cell(const*)) () { return v; }
         REBVAL* operator->() { return v; }
 

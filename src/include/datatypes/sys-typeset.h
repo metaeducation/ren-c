@@ -60,12 +60,9 @@ inline static option(Array(const*)) VAL_PARAMETER_ARRAY(
     INIT_VAL_NODE1((v), (a))
 
 
-inline static bool TYPE_CHECK(Cell(const*) typeset, Value(const*) v) {
-    return Typecheck_Value(typeset, SPECIFIED, v, SPECIFIED);
+inline static bool TYPE_CHECK(Value(const*) typeset, Atom(const*) v) {
+    return Typecheck_Value(typeset, SPECIFIED, v);
 }
-
-#define TYPE_CHECK_CORE(typeset,v,v_specifier) \
-    Typecheck_Value((typeset), SPECIFIED, (v), (v_specifier))
 
 
 // isotopic type matcher (e.g. used by FIND, SWITCH)
@@ -87,7 +84,9 @@ inline static bool Matcher_Matches(
     Derelativize(plain, matcher, matcher_specifier);
     mutable_QUOTE_BYTE(plain) = UNQUOTED_1;
 
-    if (TYPE_CHECK_CORE(plain, v, v_specifier))
+    DECLARE_STABLE (v_derelativized);
+    Derelativize(v_derelativized, v, v_specifier);
+    if (TYPE_CHECK(Stable_Unchecked(plain), v_derelativized))
         return true;
 
     return false;

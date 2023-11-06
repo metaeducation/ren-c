@@ -137,7 +137,7 @@ inline static bool Is_Meta_Of_Heavy_Null(Cell(const*) v) {
     return (tail == at + 1) and Is_Meta_Of_Null(at);
 }
 
-inline static Value(*) Isotopify_If_Nulled(Value(*) v) {
+inline static Atom(*) Isotopify_If_Nulled(Atom(*) v) {
     if (Is_Nulled(v))
         Init_Heavy_Null(v);
     return v;

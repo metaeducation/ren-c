@@ -554,7 +554,7 @@ static int Compare_Val_Custom(void *arg, const void *v1, const void *v2)
 
     DECLARE_LOCAL (result);
     if (rebRunThrows(
-        result,  // <-- output cell
+        cast(REBVAL*, result),  // <-- output cell
         flags->comparator,
             flags->reverse ? v1 : v2,
             flags->reverse ? v2 : v1
@@ -685,8 +685,11 @@ static REBINT Try_Get_Array_Index_From_Picker(
 //
 // Fills out with NULL if no pick.
 //
-bool Did_Pick_Block(REBVAL *out, const REBVAL *block, Cell(const*) picker)
-{
+bool Did_Pick_Block(
+    Sink(Value(*)) out,
+    Value(const*) block,
+    Cell(const*) picker
+){
     REBINT n = Get_Num_From_Arg(picker);
     n += VAL_INDEX(block) - 1;
     if (n < 0 or cast(REBLEN, n) >= VAL_LEN_HEAD(block))
@@ -831,7 +834,7 @@ REBTYPE(Array)
         Cell(const*) at = ARR_AT(VAL_ARRAY(array), n);
 
         Derelativize(OUT, at, VAL_SPECIFIER(array));
-        Inherit_Const(OUT, array);
+        Inherit_Const(stable_OUT, array);
         return OUT; }
 
 
@@ -986,7 +989,7 @@ REBTYPE(Array)
 
             Derelativize(OUT, ARR_AT(arr, ret), specifier);
         }
-        return Inherit_Const(OUT, array); }
+        return Inherit_Const(stable_OUT, array); }
 
     //-- Modification:
       case SYM_APPEND:
@@ -1272,7 +1275,7 @@ REBTYPE(Array)
 
             if (not Did_Pick_Block(OUT, array, ARG(seed)))
                 return nullptr;
-            return Inherit_Const(OUT, array);
+            return Inherit_Const(stable_OUT, array);
         }
 
         Array(*) arr = VAL_ARRAY_ENSURE_MUTABLE(array);

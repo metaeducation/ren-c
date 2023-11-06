@@ -143,9 +143,9 @@ void Trim_Tail(REB_MOLD *mo, Byte ascii)
 // Common code for string case handling.
 //
 void Change_Case(
-    REBVAL *out,
-    REBVAL *val, // !!! Not const--uses Partial(), may change index, review
-    const REBVAL *part,
+    Sink(Value(*)) out,
+    Value(*) val, // !!! Not const--uses Partial(), may change index, review
+    Value(const*) part,
     bool upper
 ){
     if (IS_CHAR(val)) {

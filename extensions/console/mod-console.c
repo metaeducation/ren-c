@@ -233,8 +233,11 @@ DECLARE_NATIVE(console)
 {
     CONSOLE_INCLUDE_PARAMS_OF_CONSOLE;
 
-    REBVAL *code = OUT;  // skin return result--request or ultimate return
-    REBVAL *metaresult = SPARE;  // what we got from running code requests
+    // skin return result--request or ultimate return
+    REBVAL *code = cast(Value(*), OUT);
+
+    // what we got from running code requests
+    REBVAL *metaresult = cast(Value(*), SPARE);
 
     enum {
         ST_CONSOLE_INITIAL_ENTRY = STATE_0,
@@ -258,7 +261,7 @@ DECLARE_NATIVE(console)
     // nested sessions which might have a different skin.  So save whatever
     // the console object was if it is being overridden.
 
-    if (rebRunThrows(LOCAL(old_console), ":system.console"))
+    if (rebRunThrows(cast(REBVAL*, LOCAL(old_console)), ":system.console"))
         panic (LOCAL(old_console));
 
     if (REF(skin))

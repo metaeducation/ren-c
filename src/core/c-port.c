@@ -49,7 +49,7 @@
 // function is exposed through a native that returns it.  This is the shared
 // routine used to make a handle out of a PORT_HOOK.
 //
-void Make_Port_Actor_Handle(REBVAL *out, PORT_HOOK paf)
+void Make_Port_Actor_Handle(Sink(Value(*)) out, PORT_HOOK paf)
 {
     Init_Handle_Cfunc(out, cast(CFUNC*, paf));
 }

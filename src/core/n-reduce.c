@@ -358,7 +358,7 @@ bool Match_For_Compose(noquote(Cell(const*)) group, const REBVAL *label) {
 //    so long as it is passed in the `main_frame` member of Frame.
 //
 static void Push_Composer_Frame(
-    Value(*) out,
+    Atom(*) out,
     Frame(*) main_frame,
     Cell(const*) arraylike,
     REBSPC *specifier
@@ -404,8 +404,8 @@ static void Push_Composer_Frame(
 // 3. There are N instances of the NEWLINE_BEFORE flags on the pushed items,
 //    and we need N + 1 flags.  Borrow the tail flag from the input array.
 //
-static Value(*) Finalize_Composer_Frame(
-    Value(*) out,
+static Atom(*) Finalize_Composer_Frame(
+    Atom(*) out,
     Frame(*) composer_frame,
     Cell(const*) composee  // special handling if the output kind is a sequence
 ){
@@ -426,10 +426,11 @@ static Value(*) Finalize_Composer_Frame(
             if (Is_Valid_Sequence_Element(heart, out))
                 fail (Error_Cant_Decorate_Type_Raw(out));  // no `3:`, see [1]
 
-            fail (Error_Bad_Sequence_Init(out));
+            fail (Error_Bad_Sequence_Init(Stable_Unchecked(out)));
         }
 
-        return Quotify(out, quotes);  // may not be sequence, see [2]
+        Quotify(Stable_Unchecked(out), quotes);  // may not be sequence, see [2]
+        return out;
     }
 
     Flags flags = NODE_FLAG_MANAGED | ARRAY_MASK_HAS_FILE_LINE;
@@ -442,7 +443,7 @@ static Value(*) Finalize_Composer_Frame(
         Pop_Stack_Values_Core(composer_frame->baseline.stack_base, flags)
     );
 
-    return Quotify(out, quotes);
+    return Quotify(Stable_Unchecked(out), quotes);
 }
 
 

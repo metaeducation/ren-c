@@ -1078,7 +1078,7 @@ Action(*) Make_Action(
 // dispatchers to code to get the BODY OF an ACTION.  For the moment, just
 // handle common kinds so the SOURCE command works adquately, revisit later.
 //
-void Get_Maybe_Fake_Action_Body(REBVAL *out, const REBVAL *action)
+void Get_Maybe_Fake_Action_Body(Sink(Value(*)) out, Value(const*) action)
 {
     Context(*) binding = VAL_ACTION_BINDING(action);
     Action(*) a = VAL_ACTION(action);

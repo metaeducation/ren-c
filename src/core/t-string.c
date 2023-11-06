@@ -139,13 +139,13 @@ static void reverse_string(String(*) str, REBLEN index, REBLEN len)
             Append_Codepoint(mo->series, c);
         }
 
-        DECLARE_LOCAL (temp);
+        DECLARE_STABLE (temp);
         Init_Text(temp, Pop_Molded_String(mo));
 
         // Effectively do a CHANGE/PART to overwrite the reversed portion of
         // the string (from the input value's index to the tail).
 
-        DECLARE_LOCAL (string);  // !!! Temp value, string type is irrelevant
+        DECLARE_STABLE (string);  // !!! Temp value, string type is irrelevant
         Init_Any_String_At(string, REB_TEXT, str, index);
         Modify_String_Or_Binary(
             string,

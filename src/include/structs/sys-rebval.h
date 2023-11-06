@@ -686,8 +686,24 @@ union Reb_Value_Payload { //=/////////////// ACTUAL PAYLOAD DEFINITION ////=//
         "C++ Cell must match C layout: http://stackoverflow.com/a/7189821/"
     );
 
-    struct Reb_Value : public Reb_Relative_Value
+    // An Atom(*) is able to hold unstable isotope states.  A separate type
+    // is used to avoid propagating the concerns of unstable isotopes to
+    // routines that shouldn't have to worry about them.
+    //
+    struct Reb_Atom : public Reb_Relative_Value
     {
+      #if !defined(NDEBUG)
+        Reb_Atom() = default;
+        ~Reb_Atom() {
+            assert(
+                (this->header.bits & (NODE_FLAG_NODE | NODE_FLAG_CELL))
+                or this->header.bits == CELL_MASK_0
+            );
+        }
+      #endif
+    };
+
+    struct Reb_Value : public Reb_Atom {
       #if !defined(NDEBUG)
         Reb_Value () = default;
         ~Reb_Value () {
@@ -730,5 +746,57 @@ union Reb_Value_Payload { //=/////////////// ACTUAL PAYLOAD DEFINITION ////=//
 #endif
 
 
+#if CPLUSPLUS_11
+    #define Atom(star_maybe_const) \
+        struct Reb_Atom star_maybe_const  // will evolve to use Holder class
+#else
+    #define Reb_Atom Reb_Value
+    #define Atom(star_maybe_const) \
+        Reb_Atom star_maybe_const
+#endif
+
 #define Value(star_maybe_const) \
     struct Reb_Value star_maybe_const  // will evolve to use Holder class
+
+// Because atoms are supersets of value, you may want to pass an atom to a
+// function that writes a value.  But such passing is usually illegal, due
+// to wanting to protect functions that only expect stable isotopes from
+// getting unstable ones.  So you need to specifically point out that the
+// atom is being written into and its contents not heeded.
+//
+// In the debug build we can give this extra teeth by wiping the contents
+// of the atom, to ensure they are not examined.
+//
+#define Stable_Unchecked(atom) \
+    x_cast(Value(*), ensure(Atom(const*), (atom)))
+
+inline static REBVAL* Freshen_Cell_Untracked(Cell(*) v);
+
+#if CPLUSPLUS_11
+    struct ValueSink {
+        Value(*) p;
+
+        ValueSink() = default;  // or MSVC warns making option(Sink(Value(*)))
+        ValueSink(nullptr_t) : p (nullptr) {}
+        ValueSink(Atom(*) atom) : p (cast(Value(*), atom)) {
+          #if !defined(NDEBUG)
+            Freshen_Cell_Untracked(p);
+          #endif
+        }
+        ValueSink(Value(*) value) : p (value) {
+          #if !defined(NDEBUG)
+            Freshen_Cell_Untracked(p);
+          #endif
+        }
+
+        operator bool () const { return p != nullptr; }
+
+        operator Value(*) () const { return p; }
+        operator noquote(Cell(const*)) () const { return p; }
+        Value(*) operator->() const { return p; }
+    };
+
+    #define Sink(x) const ValueSink  // TBD: generalize?
+#else
+    #define Sink(x) x
+#endif

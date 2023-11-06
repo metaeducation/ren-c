@@ -104,7 +104,7 @@ Action(*) Make_Typechecker(Value(const*) type) {
     // We need a spec for our typecheckers, which is really just `value`
     // with no type restrictions.
     //
-    DECLARE_LOCAL (spec);
+    DECLARE_STABLE (spec);
     Array(*) spec_array = Alloc_Singular(NODE_FLAG_MANAGED);
     Init_Word(ARR_SINGLE(spec_array), Canon(VALUE));
     Init_Block(spec, spec_array);
@@ -166,8 +166,7 @@ DECLARE_NATIVE(typechecker)
 bool Typecheck_Value(
     Cell(const*) tests,  // can be BLOCK!, TYPE-BLOCK!, GROUP!, TYPE-GROUP!
     REBSPC *tests_specifier,
-    Cell(const*) v,
-    REBSPC *v_specifier
+    Atom(const*) v
 ){
     DECLARE_LOCAL (spare);  // !!! stackful
 
@@ -270,14 +269,14 @@ bool Typecheck_Value(
 
                 REBPAR* param = ACT_PARAM(action, 2);
                 DECLARE_LOCAL (arg);
-                Derelativize(arg, v, v_specifier);
+                Copy_Cell(arg, v);
                 if (VAL_PARAM_CLASS(param) == PARAM_CLASS_META)
                     Meta_Quotify(arg);
                 if (not Typecheck_Coerce_Argument(param, arg))
                     goto test_failed;
 
                 DECLARE_LOCAL (out);
-                (*intrinsic)(out, action, arg);
+                (*intrinsic)(out, action, Stable_Unchecked(arg));
                 if (not IS_LOGIC(out))
                     fail (Error_No_Logic_Typecheck(label));
                 if (VAL_LOGIC(out))
@@ -294,7 +293,7 @@ bool Typecheck_Value(
 
             const REBKEY *key = f->u.action.key;
             const REBPAR *param = f->u.action.param;
-            REBVAL *arg = f->u.action.arg;
+            Atom(*) arg = f->u.action.arg;
             for (; key != f->u.action.key_tail; ++key, ++param, ++arg) {
                 if (Is_Specialized(param))
                     Copy_Cell(arg, param);
@@ -307,7 +306,7 @@ bool Typecheck_Value(
             if (not arg)
                 fail (Error_No_Arg_Typecheck(label));  // must take argument
 
-            Derelativize(arg, v, v_specifier);  // do not decay, see [4]
+            Copy_Cell(arg, v);  // do not decay, see [4]
 
             if (VAL_PARAM_CLASS(param) == PARAM_CLASS_META)
                 Meta_Quotify(arg);
@@ -336,7 +335,7 @@ bool Typecheck_Value(
           case REB_TYPE_BLOCK:
           case REB_TYPE_GROUP: {
             REBSPC *subspecifier = Derive_Specifier(tests_specifier, test);
-            if (not Typecheck_Value(test, subspecifier, v, v_specifier))
+            if (not Typecheck_Value(test, subspecifier, v))
                 goto test_failed;
             break; }
 
@@ -345,7 +344,7 @@ bool Typecheck_Value(
             fail ("QUOTED! and QUASI! not currently supported in TYPE-XXX!"); }
 
           case REB_PARAMETER: {
-            if (not Typecheck_Value(test, SPECIFIED, v, v_specifier))
+            if (not Typecheck_Value(test, SPECIFIED, v))
                 goto test_failed;
             break; }
 
@@ -406,7 +405,7 @@ bool Typecheck_Value(
 //
 bool Typecheck_Coerce_Argument(
     const REBPAR *param,
-    Value(*) arg  // need mutability for coercion
+    Atom(*) arg  // need mutability for coercion
 ){
     if (GET_PARAM_FLAG(param, CONST))
         Set_Cell_Flag(arg, CONST);  // mutability override?  see [1]

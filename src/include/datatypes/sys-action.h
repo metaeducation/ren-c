@@ -147,17 +147,17 @@ inline static REBVAL *Init_Return_Signal_Untracked(Cell(*) out, char ch) {
 #define Init_Return_Signal(out,ch) \
     TRACK(Init_Return_Signal_Untracked((out), (ch)))
 
-inline static bool Is_Bounce_A_Value(Bounce b)
+inline static bool Is_Bounce_An_Atom(Bounce b)
   { return HEART_BYTE(cast(REBVAL*, b)) != REB_T_RETURN_SIGNAL; }
 
 inline static char VAL_RETURN_SIGNAL(Bounce b) {
-    assert(not Is_Bounce_A_Value(b));
+    assert(not Is_Bounce_An_Atom(b));
     return PAYLOAD(Any, cast(REBVAL*, b)).first.u;
 }
 
-inline static REBVAL *Value_From_Bounce(Bounce b) {
-    assert(Is_Bounce_A_Value(b));
-    return cast(REBVAL*, b);
+inline static Atom(*) Atom_From_Bounce(Bounce b) {
+    assert(Is_Bounce_An_Atom(b));
+    return cast(Atom(*), b);
 }
 
 
@@ -620,7 +620,7 @@ inline static Bounce Native_Thrown_Result(Frame(*) frame_) {
 
 
 inline static Bounce Native_Void_Result_Untracked(
-    Value(*) out,  // have to pass; comma at callsite -> "operand has no effect"
+    Atom(*) out,  // have to pass; comma at callsite -> "operand has no effect"
     Frame(*) frame_
 ){
     assert(out == frame_->out);
@@ -635,7 +635,7 @@ inline static Bounce Native_Unmeta_Result(Frame(*) frame_, const REBVAL *v) {
 }
 
 inline static Bounce Native_None_Result_Untracked(
-    Value(*) out,  // have to pass; comma at callsite -> "operand has no effect"
+    Atom(*) out,  // have to pass; comma at callsite -> "operand has no effect"
     Frame(*) frame_
 ){
     assert(out == frame_->out);

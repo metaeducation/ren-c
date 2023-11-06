@@ -214,7 +214,11 @@ struct Reb_Action_Executor_State {
     // so it can examine `arg` and avoid trying to protect the random
     // bits that haven't been fulfilled yet.
     //
-    REBVAL *arg;
+    // While ultimately the arguments will be Value(*) and not able to hold
+    // unstable isotopes arguments, the process of argument fulfillment will
+    // hold unstable isotopes temporarily.
+    //
+    Atom(*) arg;
 
     // The param can either be a definition of a parameter and its types to
     // be fulfilled, or if it has been specialized with a value already then

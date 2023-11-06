@@ -155,7 +155,7 @@ DECLARE_NATIVE(bind)
         if (not Did_Get_Binding_Of(SPARE, target))
             fail (Error_Not_Bound_Raw(target));
 
-        context = SPARE;
+        context = stable_SPARE;
     }
 
     if (ANY_WORDLIKE(v)) {
@@ -346,7 +346,7 @@ DECLARE_NATIVE(use)
 //
 //  Did_Get_Binding_Of: C
 //
-bool Did_Get_Binding_Of(REBVAL *out, const REBVAL *v)
+bool Did_Get_Binding_Of(Sink(Value(*)) out, const REBVAL *v)
 {
     switch (VAL_TYPE(v)) {
     case REB_ACTION: {
@@ -602,12 +602,12 @@ DECLARE_NATIVE(collect_words)
 //  Get_Var_Push_Refinements_Throws: C
 //
 bool Get_Var_Push_Refinements_Throws(
-    REBVAL *out,
+    Sink(Value(*)) out,
     option(REBVAL*) steps_out,  // if NULL, then GROUP!s not legal
     Cell(const*) var,
     REBSPC *var_specifier
 ){
-    assert(var != out);
+    assert(var != cast(Cell(const*), out));
     assert(steps_out != out);  // Legal for SET, not for GET
 
     if (ANY_GROUP(var)) {  // !!! GET-GROUP! makes sense, but SET-GROUP!?
@@ -643,8 +643,6 @@ bool Get_Var_Push_Refinements_Throws(
         }
 
         Copy_Cell(out, Lookup_Word_May_Fail(var, var_specifier));
-
-        Decay_If_Unstable(out);  // !!! should not be possible, review
         return false;
     }
 
@@ -707,12 +705,16 @@ bool Get_Var_Push_Refinements_Throws(
                 if (not steps_out)
                     fail (Error_Bad_Get_Group_Raw(var));
 
-                if (Do_Any_Array_At_Throws(out, at, at_specifier)) {
+              blockscope {
+                Atom(*) atom_out = out;
+                if (Do_Any_Array_At_Throws(atom_out, at, at_specifier)) {
                     Drop_Data_Stack_To(base);
                     return true;
                 }
+                Decay_If_Unstable(atom_out);
+              }
+
                 Move_Cell(PUSH(), out);
-                Decay_If_Unstable(TOP);
 
                 // By convention, picker steps quote the first item if it was a
                 // GROUP!.  It has to be somehow different because `('a).b` is
@@ -786,7 +788,6 @@ bool Get_Var_Push_Refinements_Throws(
     else
         Drop_Data_Stack_To(base);
 
-    Decay_If_Unstable(out);  // !!! should not be possible, review
     return false;
 }
 
@@ -795,8 +796,8 @@ bool Get_Var_Push_Refinements_Throws(
 //  Get_Var_Core_Throws: C
 //
 bool Get_Var_Core_Throws(
-    REBVAL *out,
-    option(REBVAL*) steps_out,  // if NULL, then GROUP!s not legal
+    Sink(Value(*)) out,
+    option(Value(*)) steps_out,  // if NULL, then GROUP!s not legal
     Cell(const*) var,
     REBSPC *var_specifier
 ){
@@ -810,7 +811,7 @@ bool Get_Var_Core_Throws(
         // !!! Note: passing EMPTY_BLOCK here for the def causes problems;
         // that needs to be looked into.
         //
-        DECLARE_LOCAL (action);
+        DECLARE_STABLE (action);
         Move_Cell(action, out);
         Deactivate_If_Activation(action);
         return Specialize_Action_Throws(out, action, nullptr, base);
@@ -825,7 +826,7 @@ bool Get_Var_Core_Throws(
 // Simple interface, does not process GROUP!s (lone or in TUPLE!s)
 //
 void Get_Var_May_Fail(
-    REBVAL *out,
+    Sink(Value(*)) out,  // variables never store unstable Atom(*) values
     Cell(const*) source,
     REBSPC *specifier,
     bool any
@@ -851,8 +852,8 @@ void Get_Var_May_Fail(
 // is enabled.
 //
 bool Get_Path_Push_Refinements_Throws(
-    REBVAL *out,
-    REBVAL *safe,
+    Sink(Value(*)) out,
+    Sink(Value(*)) safe,
     Cell(const*) path,
     REBSPC *path_specifier
 ){
@@ -945,7 +946,7 @@ bool Get_Path_Push_Refinements_Throws(
 
         REBSPC *derived = Derive_Specifier(path_specifier, path);
 
-        DECLARE_LOCAL (steps);
+        DECLARE_STABLE (steps);
         if (Get_Var_Core_Throws(out, steps, head, derived))
             return true;
 
@@ -989,20 +990,20 @@ bool Get_Path_Push_Refinements_Throws(
         if (not IS_LOGIC(redbol) or VAL_LOGIC(redbol) == false) {
             Derelativize(out, path, path_specifier);
             rebElide(
-                "echo [The PATH!", out, "doesn't evaluate to",
+                "echo [The PATH!", cast(REBVAL*, out), "doesn't evaluate to",
                     "an ACTION! in the first slot.]",
                 "echo [SYSTEM.OPTIONS.REDBOL-PATHS is FALSE so this",
                     "is not allowed by default.]",
                 "echo [For now, we'll enable it automatically...but it",
                     "will slow down the system!]",
-                "echo [Please use TUPLE! instead, like", safe, "]",
+                "echo [Please use TUPLE!, like", cast(REBVAL*, safe), "]",
 
                 "system.options.redbol-paths: true",
                 "wait 3"
             );
         }
 
-        DECLARE_LOCAL (steps);
+        DECLARE_STABLE (steps);
         if (Get_Var_Core_Throws(out, steps, safe, SPECIFIED))
             return true;
 
@@ -1087,7 +1088,7 @@ DECLARE_NATIVE(resolve)
 
     Value(*) source = ARG(source);
 
-    if (Get_Var_Core_Throws(SPARE, OUT, source, SPECIFIED))
+    if (Get_Var_Core_Throws(SPARE, cast(Value(*), OUT), source, SPECIFIED))
         return THROWN;
 
     Move_Cell(ARG(value), SPARE);  // should be able to eval direct, review
@@ -1130,8 +1131,8 @@ DECLARE_NATIVE(get)
     }
 
     if (not REF(any))
-        if (Is_Isotope(OUT) and not Is_Isotope_Get_Friendly(OUT))
-            fail (Error_Bad_Word_Get(source, OUT));
+        if (Is_Isotope(OUT) and not Is_Isotope_Get_Friendly(stable_OUT))
+            fail (Error_Bad_Word_Get(source, stable_OUT));
 
     return OUT;
 }
@@ -1166,7 +1167,7 @@ DECLARE_NATIVE(get)
 // in the course of the assignment.
 //
 bool Set_Var_Core_Updater_Throws(
-    REBVAL *out,  // GC-safe cell to write steps to, or put thrown value
+    Sink(Value(*)) out,  // GC-safe cell to write steps to, or put thrown value
     option(REBVAL*) steps_out,  // no GROUP!s if nulled
     Cell(const*) var,  // e.g. v
     REBSPC *var_specifier,  // e.g. v_specifier
@@ -1175,7 +1176,7 @@ bool Set_Var_Core_Updater_Throws(
 ){
     // Note: `steps_out` can be equal to `out` can be equal to `target`
 
-    assert(not Is_Isotope(setval) or Is_Isotope_Stable(setval));
+    ASSERT_STABLE(setval);
 
     assert(Is_Activation(updater));  // we will use rebM() on it
 
@@ -1317,7 +1318,7 @@ bool Set_Var_Core_Updater_Throws(
     else
         fail (var);
 
-    DECLARE_LOCAL (writeback);
+    DECLARE_STABLE (writeback);
     PUSH_GC_GUARD(writeback);
     Finalize_None(writeback);  // needs to be GC safe
 
@@ -1421,7 +1422,7 @@ bool Set_Var_Core_Updater_Throws(
 //  Set_Var_Core_Throws: C
 //
 bool Set_Var_Core_Throws(
-    REBVAL *out,  // GC-safe cell to write steps to, or put thrown value
+    Sink(Value(*)) out,  // GC-safe cell to write steps to, or put thrown value
     option(REBVAL*) steps_out,  // no GROUP!s if nulled
     Cell(const*) var,  // e.g. v
     REBSPC *var_specifier,  // e.g. v_specifier
@@ -1488,7 +1489,7 @@ DECLARE_NATIVE(set)
     if (Is_Meta_Of_Raised(v))
         return UNMETA(v);  // !!! Is this tunneling worthwhile?
 
-    Meta_Unquotify_Stable(v);
+    Meta_Unquotify_Known_Stable(v);
 
     REBVAL *steps;
     if (REF(groups))
@@ -1776,7 +1777,7 @@ DECLARE_NATIVE(free_q)
 // Shared code from the refinement-bearing AS-TEXT and AS TEXT!.
 //
 bool Try_As_String(
-    REBVAL *out,
+    Sink(Value(*)) out,
     enum Reb_Kind new_kind,
     const REBVAL *v,
     REBLEN quotes,
@@ -2021,7 +2022,7 @@ DECLARE_NATIVE(as)
                 return OUT;
             }
 
-            fail (Error_Bad_Sequence_Init(OUT));
+            fail (Error_Bad_Sequence_Init(stable_OUT));
         }
 
         if (ANY_SEQUENCE(v)) {
@@ -2127,7 +2128,7 @@ DECLARE_NATIVE(as)
             if (nullptr == Scan_Any_Word(OUT, new_kind, utf8, size))
                 fail (Error_Bad_Char_Raw(v));
 
-            return Inherit_Const(OUT, v);
+            return Inherit_Const(stable_OUT, v);
           }
         }
 
@@ -2165,7 +2166,7 @@ DECLARE_NATIVE(as)
             }
 
             Init_Any_Word(OUT, new_kind, SYM(s));
-            return Inherit_Const(OUT, v);
+            return Inherit_Const(stable_OUT, v);
           }
         }
 
@@ -2226,7 +2227,7 @@ DECLARE_NATIVE(as)
             SET_SERIES_USED(bin, size);
             Freeze_Series(bin);
             Init_Binary(OUT, bin);
-            return Inherit_Const(OUT, v);
+            return Inherit_Const(stable_OUT, v);
         }
 
         if (ANY_WORD(v) or ANY_STRING(v)) {
@@ -2236,7 +2237,7 @@ DECLARE_NATIVE(as)
                 VAL_STRING(v),
                 ANY_WORD(v) ? 0 : VAL_BYTEOFFSET(v)
             );
-            return Inherit_Const(OUT, v);
+            return Inherit_Const(stable_OUT, v);
         }
 
         fail (v); }
@@ -2532,8 +2533,8 @@ DECLARE_NATIVE(heavy) {
 DECLARE_NATIVE(light) {
     INCLUDE_PARAMS_OF_LIGHT;
 
+    Meta_Unquotify_Decayed(ARG(optional));
     Move_Cell(OUT, ARG(optional));
-    Meta_Unquotify_Decayed(OUT);
 
     return OUT;
 }
@@ -2574,8 +2575,8 @@ DECLARE_INTRINSIC(decay)
 {
     UNUSED(action);
 
-    assert(Is_Stable(arg));  // pre-decayed by non-^META argument, see [1]
-    Copy_Cell(out, arg);
+    ASSERT_STABLE(arg);  // paranoid check...Value(*) should always be stable
+    Copy_Cell(out, arg);  // pre-decayed by non-^META argument, see [1]
 }
 
 

@@ -187,14 +187,14 @@ inline static REBVAL *rebSpecific(Cell(const*) v, REBSPC *specifier)
 // so that is something to think about.  At the moment, only f->out can
 // hold thrown returns, and these API handles are elsewhere.
 //
-inline static void Release_Api_Value_If_Unmanaged(const REBVAL* r) {
+inline static void Release_Api_Value_If_Unmanaged(const Atom(*) r) {
     assert(Get_Cell_Flag(r, ROOT));
 
     if (Is_Nulled(r))  // tolerate isotopes
         assert(!"Dispatcher returned nulled cell, not C nullptr for API use");
 
     if (Not_Cell_Flag(r, MANAGED))
-        rebRelease(r);
+        rebRelease(cast(Value(*), r));
 }
 
 
@@ -207,13 +207,14 @@ inline static void Release_Api_Value_If_Unmanaged(const REBVAL* r) {
 // arbitrary local variable, which would be dead after the return.
 //
 inline static Bounce Native_Copy_Result_Untracked(
-    Value(*) out,  // have to pass; comma at callsite -> "operand has no effect"
+    Atom(*) out,  // have to pass; comma at callsite -> "operand has no effect"
     Frame(*) frame_,
-    Value(const*) v
+    Atom(const*) v
 ){
     assert(out == frame_->out);
     UNUSED(out);
     assert(v != frame_->out);   // Copy_Cell() would fail; don't tolerate
     assert(not Is_Api_Value(v)); // too easy to not release()
-    return Copy_Cell_Untracked(frame_->out, v, CELL_MASK_COPY);
+    Copy_Cell_Untracked(frame_->out, v, CELL_MASK_COPY);
+    return frame_->out;
 }

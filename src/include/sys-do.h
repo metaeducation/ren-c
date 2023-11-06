@@ -65,7 +65,7 @@ inline static void Tweak_Non_Const_To_Explicitly_Mutable(Value(*) source) {
 }
 
 inline static bool Do_Any_Array_At_Core_Throws(
-    REBVAL *out,
+    Atom(*) out,
     Flags flags,
     noquote(Cell(const*)) any_array,
     REBSPC *specifier
@@ -81,7 +81,7 @@ inline static bool Do_Any_Array_At_Core_Throws(
 
 
 inline static bool Do_Branch_Throws(  // !!! Legacy code, should be phased out
-    REBVAL *out,
+    Atom(*) out,
     const REBVAL *branch
 ){
     if (not Pushed_Continuation(
@@ -141,8 +141,8 @@ inline static bool Run_Generic_Dispatch_Throws(
     else if (b == nullptr) {
         Init_Nulled(f->out);
     }
-    else if (Is_Bounce_A_Value(b)) {
-        REBVAL *r = Value_From_Bounce(b);
+    else if (Is_Bounce_An_Atom(b)) {
+        Atom(*) r = Atom_From_Bounce(b);
         assert(Is_Api_Value(r));
         Copy_Cell(f->out, r);
         Release_Api_Value_If_Unmanaged(r);

@@ -155,7 +155,7 @@ inline static bool Is_None(Cell(const*) v)
 STATIC_ASSERT(REB_VOID == 0);  // the optimization depends on this
 STATIC_ASSERT(ISOTOPE_0 == 0);  // QUOTE_BYTE() of 0 means it's an isotope
 
-inline static Value(*) Finalize_None_Untracked(Value(*) out) {
+inline static Value(*) Finalize_None_Untracked(Atom(*) out) {
     ASSERT_CELL_FRESH_EVIL_MACRO(out);  // can bitwise OR, need node+cell flags
     assert(
         HEART_BYTE_UNCHECKED(out) == 0
@@ -166,13 +166,13 @@ inline static Value(*) Finalize_None_Untracked(Value(*) out) {
             /* | FLAG_HEART_BYTE(REB_VOID) */  // already 0
             /* | FLAG_QUOTE_BYTE(ISOTOPE_0) */  // already 0
     );
-    return out;
+    return cast(Value(*), out);
 }
 
 #define Finalize_None(out) \
     TRACK(Finalize_None_Untracked(out))
 
-inline static Value(*) Finalize_Void_Untracked(Value(*) out) {
+inline static Value(*) Finalize_Void_Untracked(Atom(*) out) {
     ASSERT_CELL_FRESH_EVIL_MACRO(out);  // can bitwise OR, need node+cell flags
     assert(
         HEART_BYTE_UNCHECKED(out) == 0
@@ -183,7 +183,7 @@ inline static Value(*) Finalize_Void_Untracked(Value(*) out) {
             /* | FLAG_HEART_BYTE(REB_VOID) */  // already 0
             | FLAG_QUOTE_BYTE(UNQUOTED_1)  // mask over top of existing 0
     );
-    return out;
+    return cast(Value(*), out);
 }
 
 #define Finalize_Void(out) \

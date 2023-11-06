@@ -61,7 +61,7 @@
 //   more checking that thrown values aren't being dropped or misused.
 //
 
-inline static const REBVAL *VAL_THROWN_LABEL(Frame(*) frame_) {
+inline static Value(const*) VAL_THROWN_LABEL(Frame(*) frame_) {
     UNUSED(frame_);
     assert(not Is_Cell_Erased(&TG_Thrown_Label));
     return &TG_Thrown_Label;
@@ -69,7 +69,7 @@ inline static const REBVAL *VAL_THROWN_LABEL(Frame(*) frame_) {
 
 inline static Bounce Init_Thrown_With_Label(  // assumes `arg` in TG_Thrown_Arg
     Frame(*) frame_,
-    const REBVAL *arg,
+    Atom(const*) arg,
     const REBVAL *label  // Note: is allowed to be same as `out`
 ){
     assert(not THROWING);
@@ -118,13 +118,13 @@ inline static void Drop_Frame(Frame(*) f);
 // When you're sure that the value isn't going to be consumed by a multireturn
 // then use this to get the first value unmeta'd
 //
-inline static Value(*) Decay_If_Unstable(Value(*) v) {
+inline static Value(*) Decay_If_Unstable(Atom(*) v) {
     if (not Is_Isotope(v))
-        return v;
+        return cast(Value(*), v);
 
     if (Is_Lazy(v)) {
         if (not Pushed_Decaying_Frame(v, v, FRAME_MASK_NONE))
-            return v;  // cheap reification
+            return cast(Value(*), v);  // cheap reification
         if (Trampoline_With_Top_As_Root_Throws())
             fail (Error_No_Catch_For_Throw(TOP_FRAME));
         Drop_Frame(TOP_FRAME);
@@ -147,7 +147,7 @@ inline static Value(*) Decay_If_Unstable(Value(*) v) {
         if (Is_Raised(v))
             fail (VAL_CONTEXT(v));
         assert(not Is_Isotope(v) or Is_Isotope_Stable(v));
-        return v;
+        return cast(Value(*), v);
     }
 
     if (Is_Barrier(v))
@@ -156,14 +156,14 @@ inline static Value(*) Decay_If_Unstable(Value(*) v) {
     if (Is_Raised(v))  // !!! should this raise an error here?
         fail (VAL_CONTEXT(v));
 
-    return v;
+    return cast(Value(*), v);
 }
 
 // Packs with unstable isotopes in their first cell (or nihil) are not able
 // to be decayed.  Type checking has to be aware of this, and know that such
 // packs shouldn't raise errors.
 //
-inline static bool Is_Pack_Undecayable(Value(*) pack)
+inline static bool Is_Pack_Undecayable(Atom(*) pack)
 {
     assert(Is_Pack(pack));
     if (Is_Nihil(pack))

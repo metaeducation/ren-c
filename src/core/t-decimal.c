@@ -196,8 +196,8 @@ Bounce MAKE_Decimal(
         if (VAL_SEQUENCE_LEN(arg) != 2)
             goto bad_make;
 
-        DECLARE_LOCAL (numerator);
-        DECLARE_LOCAL (denominator);
+        DECLARE_STABLE (numerator);
+        DECLARE_STABLE (denominator);
         GET_SEQUENCE_AT(numerator, arg, VAL_SEQUENCE_SPECIFIER(arg), 0);
         GET_SEQUENCE_AT(denominator, arg, VAL_SEQUENCE_SPECIFIER(arg), 1);
         PUSH_GC_GUARD(numerator);  // might be GROUP!, so (1.2)/4

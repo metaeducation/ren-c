@@ -436,7 +436,7 @@ Bounce MAKE_Error(
 
         Rebind_Context_Deep(root_error, e, nullptr);  // NULL=>no more binds
 
-        DECLARE_LOCAL (virtual_arg);
+        DECLARE_STABLE (virtual_arg);
         Copy_Cell(virtual_arg, arg);
         Virtual_Bind_Deep_To_Existing_Context(
             virtual_arg,
@@ -811,7 +811,7 @@ Context(*) Error_Bad_Word_Get(
     // Don't want the error message to have an isotope version as argument, as
     // they're already paying for an error regarding the state.
     //
-    DECLARE_LOCAL (reified);
+    DECLARE_STABLE (reified);
     Copy_Cell(reified, isotope);
     Quasify_Isotope(reified);
 
@@ -1221,17 +1221,17 @@ Context(*) Error_Bad_Argless_Refine(const REBKEY *key)
 //
 //  Error_Bad_Return_Type: C
 //
-Context(*) Error_Bad_Return_Type(Frame(*) f, Value(*) v) {
-    DECLARE_LOCAL (label);
+Context(*) Error_Bad_Return_Type(Frame(*) f, Atom(*) atom) {
+    DECLARE_STABLE (label);
     Get_Frame_Label_Or_Nulled(label, f);
 
-    if (Is_Void(v))  // void's "kind" is null, no type (good idea?)
+    if (Is_Void(atom))  // void's "kind" is null, no type (good idea?)
         return Error_Bad_Void_Return_Raw(label);
 
-    if (Is_Pack(v) and Is_Pack_Undecayable(v))
+    if (Is_Pack(atom) and Is_Pack_Undecayable(atom))
         return Error_User("Bad return pack (undecayable elements)");
 
-    enum Reb_Kind kind = VAL_TYPE(v);
+    enum Reb_Kind kind = VAL_TYPE(atom);
     return Error_Bad_Return_Type_Raw(label, Datatype_From_Kind(kind));
 }
 
@@ -1291,7 +1291,7 @@ Context(*) Error_On_Port(enum Reb_Symbol_Id id_sym, REBVAL *port, REBINT err_cod
 Context(*) Error_Bad_Isotope(Cell(const*) isotope) {
     assert(Is_Isotope(isotope));
 
-    DECLARE_LOCAL (reified);
+    DECLARE_STABLE (reified);
     Copy_Cell(reified, SPECIFIC(isotope));
     Quasify_Isotope(reified);
 

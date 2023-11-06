@@ -31,7 +31,7 @@
 //  Try_Init_Any_Sequence_At_Arraylike_Core: C
 //
 Value(*) Try_Init_Any_Sequence_At_Arraylike_Core(
-    Value(*) out,  // NULL if array is too short, violating value otherwise
+    Sink(Value(*)) out,  // NULL if array too short, violating value otherwise
     enum Reb_Kind kind,
     Array(const*) a,
     REBSPC *specifier,
@@ -182,7 +182,7 @@ DECLARE_NATIVE(poke)
     Bounce r = Run_Generic_Dispatch_Core(location, frame_, Canon(POKE_P));
     if (r == BOUNCE_THROWN)
         return THROWN;
-    assert(r == nullptr or Is_Bounce_A_Value(r));  // other signals invalid
+    assert(r == nullptr or Is_Bounce_An_Atom(r));  // other signals invalid
 
     // Note: if r is not nullptr here, that means there was a modification
     // which nothing is writing back.  It would be like saying:
@@ -246,7 +246,7 @@ Bounce MAKE_Path(
     Drop_Frame_Unbalanced(f); // !!! f's stack_base got captured each loop
 
     if (not p)
-        fail (Error_Bad_Sequence_Init(OUT));
+        fail (Error_Bad_Sequence_Init(stable_OUT));
 
     if (not ANY_PATH(OUT))  // e.g. `make path! ['x]` giving us the WORD! `x`
         return RAISE(Error_Sequence_Too_Short_Raw());
@@ -329,10 +329,10 @@ Bounce TO_Sequence(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg) {
 
     if (arg_kind != REB_BLOCK) {
         Copy_Cell(OUT, arg);  // move value so we can modify it
-        Dequotify(OUT);  // remove quotes (should TO take a noquote(Cell(*))?)
-        Plainify(OUT);  // remove any decorations like @ or :
-        if (not Try_Leading_Blank_Pathify(OUT, kind))
-            return RAISE(Error_Bad_Sequence_Init(OUT));
+        Dequotify(stable_OUT);  // !!! should TO take noquote(Cell(*))?
+        Plainify(stable_OUT);  // remove any decorations like @ or :
+        if (not Try_Leading_Blank_Pathify(stable_OUT, kind))
+            return RAISE(Error_Bad_Sequence_Init(stable_OUT));
         return OUT;
     }
 
@@ -353,7 +353,7 @@ Bounce TO_Sequence(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg) {
             at + 1,
             VAL_SPECIFIER(arg)
         )){
-            return RAISE(Error_Bad_Sequence_Init(OUT));
+            return RAISE(Error_Bad_Sequence_Init(stable_OUT));
         }
     }
     else {
@@ -370,12 +370,12 @@ Bounce TO_Sequence(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg) {
         Force_Series_Managed(a);
 
         if (not Try_Init_Any_Sequence_Arraylike(OUT, kind, a))
-            return RAISE(Error_Bad_Sequence_Init(OUT));
+            return RAISE(Error_Bad_Sequence_Init(stable_OUT));
     }
 
     if (VAL_TYPE(OUT) != kind) {
         assert(VAL_TYPE(OUT) == REB_WORD);
-        return RAISE(Error_Bad_Sequence_Init(OUT));
+        return RAISE(Error_Bad_Sequence_Init(stable_OUT));
     }
 
     return OUT;

@@ -158,7 +158,7 @@ void MF_Money(REB_MOLD *mo, noquote(Cell(const*)) v, bool form)
 //
 // Will successfully convert or fail (longjmp) with an error.
 //
-void Bin_To_Money_May_Fail(REBVAL *result, const REBVAL *val)
+void Bin_To_Money_May_Fail(Sink(Value(*)) result, Value(const*) val)
 {
     if (not IS_BINARY(val))
         fail (val);
@@ -176,8 +176,11 @@ void Bin_To_Money_May_Fail(REBVAL *result, const REBVAL *val)
 }
 
 
-static REBVAL *Math_Arg_For_Money(REBVAL *store, REBVAL *arg, Symbol(const*) verb)
-{
+static Value(*) Math_Arg_For_Money(
+    Sink(Value(*)) store,
+    Value(*) arg,
+    Symbol(const*) verb
+){
     if (IS_MONEY(arg))
         return arg;
 
