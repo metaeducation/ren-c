@@ -291,7 +291,12 @@ DECLARE_NATIVE(combinator)
         relativized
     );
 
-    return Init_Action(OUT, combinator, ANONYMOUS, UNBOUND);  // not isotopic
+    return Init_Frame_Details(  // not isotopic
+        OUT,
+        combinator,
+        ANONYMOUS,
+        UNBOUND
+    );
 }
 
 
@@ -798,7 +803,7 @@ DECLARE_NATIVE(combinatorize)
     INCLUDE_PARAMS_OF_COMBINATORIZE;
 
     Action(*) act = VAL_ACTION(ARG(c));
-    option(Symbol(const*)) label = VAL_ACTION_LABEL(ARG(c));
+    option(Symbol(const*)) label = VAL_FRAME_LABEL(ARG(c));
 
     Value(*) rule_start = ARG(rule_start);
     Copy_Cell(rule_start, ARG(rules));
@@ -836,11 +841,11 @@ DECLARE_NATIVE(combinatorize)
     Action(*) parser = Make_Action_From_Exemplar(s.ctx, label);
     DROP_GC_GUARD(s.ctx);
 
-    Activatify(Init_Action(
+    Activatify(Init_Frame_Details(
         OUT,
         parser,
-        VAL_ACTION_LABEL(ARG(c)),
-        VAL_ACTION_BINDING(ARG(c))
+        VAL_FRAME_LABEL(ARG(c)),
+        VAL_FRAME_BINDING(ARG(c))
     ));
 
     return Proxy_Multi_Returns(frame_);

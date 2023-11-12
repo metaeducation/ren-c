@@ -159,7 +159,7 @@ Bounce Encloser_Dispatcher(Frame(*) f)
     //
     REBVAL *rootvar = CTX_ROOTVAR(c);
     INIT_VAL_FRAME_PHASE(rootvar, VAL_ACTION(inner));
-    INIT_VAL_FRAME_BINDING(rootvar, VAL_ACTION_BINDING(inner));
+    INIT_VAL_FRAME_BINDING(rootvar, VAL_FRAME_BINDING(inner));
 
     // We want people to be able to DO the FRAME! being given back.
     //
@@ -191,7 +191,7 @@ Bounce Encloser_Dispatcher(Frame(*) f)
     // try and use CTX_ARCHETYPE() directly to GC issues.
     //
     REBVAL *rootcopy = Copy_Cell(SPARE, rootvar);
-    INIT_VAL_FRAME_PHASE_OR_LABEL(SPARE, VAL_ACTION_LABEL(inner));
+    INIT_VAL_FRAME_PHASE_OR_LABEL(SPARE, VAL_FRAME_LABEL(inner));
 
     return DELEGATE(OUT, outer, rootcopy);
 }
@@ -231,5 +231,5 @@ DECLARE_NATIVE(enclose_p)  // see extended definition ENCLOSE in %base-defs.r
     Copy_Cell(ARR_AT(details, IDX_ENCLOSER_INNER), inner);
     Copy_Cell(ARR_AT(details, IDX_ENCLOSER_OUTER), outer);
 
-    return Init_Activation(OUT, enclosure, VAL_ACTION_LABEL(inner), UNBOUND);
+    return Init_Activation(OUT, enclosure, VAL_FRAME_LABEL(inner), UNBOUND);
 }

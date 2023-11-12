@@ -741,7 +741,7 @@ DECLARE_INTRINSIC(runs)
         rebRelease(frame_copy);
 
         option(Symbol(const*)) label = VAL_FRAME_LABEL(arg);
-        Activatify(Init_Action(
+        Activatify(Init_Frame_Details(
             out,
             Make_Action_From_Exemplar(exemplar, label),
             label,

@@ -1080,7 +1080,7 @@ Action(*) Make_Action(
 //
 void Get_Maybe_Fake_Action_Body(Sink(Value(*)) out, Value(const*) action)
 {
-    Context(*) binding = VAL_ACTION_BINDING(action);
+    Context(*) binding = VAL_FRAME_BINDING(action);
     Action(*) a = VAL_ACTION(action);
 
     // A Hijacker *might* not need to splice itself in with a dispatcher.

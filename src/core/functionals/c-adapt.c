@@ -110,7 +110,7 @@ Bounce Adapter_Dispatcher(Frame(*) f)
     REBVAL* adaptee = DETAILS_AT(details, IDX_ADAPTER_ADAPTEE);
 
     INIT_FRM_PHASE(f, VAL_ACTION(adaptee));
-    INIT_FRM_BINDING(f, VAL_ACTION_BINDING(adaptee));
+    INIT_FRM_BINDING(f, VAL_FRAME_BINDING(adaptee));
 
     return BOUNCE_REDO_CHECKED;  // redo uses updated phase & binding, see [3]
 }}
@@ -169,5 +169,5 @@ DECLARE_NATIVE(adapt_p)  // see extended definition ADAPT in %base-defs.r
     );
     Copy_Cell(ARR_AT(details, IDX_ADAPTER_ADAPTEE), adaptee);
 
-    return Init_Activation(OUT, adaptation, VAL_ACTION_LABEL(adaptee), UNBOUND);
+    return Init_Activation(OUT, adaptation, VAL_FRAME_LABEL(adaptee), UNBOUND);
 }

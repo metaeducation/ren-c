@@ -348,9 +348,9 @@ Bounce Evaluator_Executor(Frame(*) f)
             Push_Action(
                 subframe,
                 VAL_ACTION(f_current),
-                VAL_ACTION_BINDING(f_current)
+                VAL_FRAME_BINDING(f_current)
             );
-            Begin_Enfix_Action(subframe, VAL_ACTION_LABEL(f_current));
+            Begin_Enfix_Action(subframe, VAL_FRAME_LABEL(f_current));
                 // ^-- invisibles cache NO_LOOKAHEAD
 
             assert(Is_Fresh(SPARE));
@@ -371,7 +371,7 @@ Bounce Evaluator_Executor(Frame(*) f)
         if (VAL_PARAM_CLASS(param) == PARAM_CLASS_META)
             Meta_Quotify(SPARE);
         if (not Typecheck_Coerce_Argument(param, SPARE)) {
-            option(Symbol(const*)) label = VAL_ACTION_LABEL(SCRATCH);
+            option(Symbol(const*)) label = VAL_FRAME_LABEL(SCRATCH);
             const REBKEY* key = ACT_KEY(action, 2);
             fail (Error_Arg_Type(label, key, param, stable_SPARE));
         }
@@ -553,12 +553,12 @@ Bounce Evaluator_Executor(Frame(*) f)
     Push_Action(
         subframe,
         VAL_ACTION(unwrap(f_current_gotten)),
-        VAL_ACTION_BINDING(unwrap(f_current_gotten))
+        VAL_FRAME_BINDING(unwrap(f_current_gotten))
     );
     if (IS_WORD(f_current))
         Begin_Enfix_Action(subframe, VAL_WORD_SYMBOL(f_current));
     else
-        Begin_Enfix_Action(subframe, VAL_ACTION_LABEL(f_current));
+        Begin_Enfix_Action(subframe, VAL_FRAME_LABEL(f_current));
 
     goto process_action; }
 
@@ -657,11 +657,11 @@ Bounce Evaluator_Executor(Frame(*) f)
         Push_Action(
             subframe,
             VAL_ACTION(f_current),
-            VAL_ACTION_BINDING(f_current)
+            VAL_FRAME_BINDING(f_current)
         );
         bool enfix = Is_Enfixed(f_current);
         assert(Is_Fresh(OUT));  // so nothing on left, see [1]
-        Begin_Action_Core(subframe, VAL_ACTION_LABEL(f_current), enfix);
+        Begin_Action_Core(subframe, VAL_FRAME_LABEL(f_current), enfix);
 
         goto process_action; }
 
@@ -727,7 +727,7 @@ Bounce Evaluator_Executor(Frame(*) f)
                 }
             }
 
-            Context(*) binding = VAL_ACTION_BINDING(unwrap(f_current_gotten));
+            Context(*) binding = VAL_FRAME_BINDING(unwrap(f_current_gotten));
             Symbol(const*) label = VAL_WORD_SYMBOL(f_current);  // use WORD!
             bool enfixed = Is_Enfixed(unwrap(f_current_gotten));
             if (Get_Eval_Executor_Flag(f, DIDNT_LEFT_QUOTE_TUPLE)) {
@@ -989,9 +989,9 @@ Bounce Evaluator_Executor(Frame(*) f)
             Push_Action(
                 subframe,
                 VAL_ACTION(SCRATCH),
-                VAL_ACTION_BINDING(SCRATCH)
+                VAL_FRAME_BINDING(SCRATCH)
             );
-            Begin_Prefix_Action(subframe, VAL_ACTION_LABEL(SCRATCH));
+            Begin_Prefix_Action(subframe, VAL_FRAME_LABEL(SCRATCH));
             goto process_action;
         }
 
@@ -1076,8 +1076,8 @@ Bounce Evaluator_Executor(Frame(*) f)
             sub->baseline.stack_base = BASELINE->stack_base;  // refinements
 
             Push_Frame(OUT, sub);
-            Push_Action(sub, VAL_ACTION(SPARE), VAL_ACTION_BINDING(SPARE));
-            Begin_Prefix_Action(sub, VAL_ACTION_LABEL(SPARE));
+            Push_Action(sub, VAL_ACTION(SPARE), VAL_FRAME_BINDING(SPARE));
+            Begin_Prefix_Action(sub, VAL_FRAME_LABEL(SPARE));
             goto process_action;
         }
 
@@ -2046,10 +2046,10 @@ Bounce Evaluator_Executor(Frame(*) f)
 
     Frame(*) subframe = Make_Action_Subframe(f);
     Push_Frame(OUT, subframe);
-    Push_Action(subframe, enfixed, VAL_ACTION_BINDING(unwrap(f_next_gotten)));
+    Push_Action(subframe, enfixed, VAL_FRAME_BINDING(unwrap(f_next_gotten)));
     Begin_Enfix_Action(
         subframe,
-        IS_ACTION(f_next) ? VAL_ACTION_LABEL(f_next) : VAL_WORD_SYMBOL(f_next)
+        IS_ACTION(f_next) ? VAL_FRAME_LABEL(f_next) : VAL_WORD_SYMBOL(f_next)
     );
 
     Fetch_Next_Forget_Lookback(f);  // advances next

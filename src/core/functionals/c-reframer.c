@@ -106,12 +106,12 @@ Frame(*) Make_Pushed_Frame_From_Action_Feed_May_Throw(
     if (error_on_deferred)  // can't deal with ELSE/THEN, see [1]
         f->flags.bits |= ACTION_EXECUTOR_FLAG_ERROR_ON_DEFERRED_ENFIX;
 
-    Push_Action(f, VAL_ACTION(action), VAL_ACTION_BINDING(action));
-    Begin_Prefix_Action(f, VAL_ACTION_LABEL(action));
+    Push_Action(f, VAL_ACTION(action), VAL_FRAME_BINDING(action));
+    Begin_Prefix_Action(f, VAL_FRAME_LABEL(action));
 
     Set_Executor_Flag(ACTION, f, FULFILL_ONLY);  // Push_Action() won't allow
 
-    assert(FRM_BINDING(f) == VAL_ACTION_BINDING(action));  // no invocation
+    assert(FRM_BINDING(f) == VAL_FRAME_BINDING(action));  // no invocation
 
     if (Trampoline_With_Top_As_Root_Throws())
         return f;
@@ -126,7 +126,7 @@ Frame(*) Make_Pushed_Frame_From_Action_Feed_May_Throw(
 
     f->u.action.original = VAL_ACTION(action);
     INIT_FRM_PHASE(f, VAL_ACTION(action));  // Drop_Action() cleared, restore
-    INIT_FRM_BINDING(f, VAL_ACTION_BINDING(action));
+    INIT_FRM_BINDING(f, VAL_FRAME_BINDING(action));
 
     assert(NOT_SERIES_FLAG(f->varlist, MANAGED));  // shouldn't be, see [3]
 
@@ -207,7 +207,7 @@ bool Init_Invokable_From_Feed_Throws(
     Move_Cell(action, out);
     PUSH_GC_GUARD(action);
 
-    option(String(const*)) label = VAL_ACTION_LABEL(action);
+    option(String(const*)) label = VAL_FRAME_LABEL(action);
 
     Frame(*) f = Make_Pushed_Frame_From_Action_Feed_May_Throw(
         out,
@@ -228,7 +228,7 @@ bool Init_Invokable_From_Feed_Throws(
     // make its nodes, so manual ones don't wind up in the tracking list.
     //
     Action(*) act = VAL_ACTION(action);
-    assert(FRM_BINDING(f) == VAL_ACTION_BINDING(action));
+    assert(FRM_BINDING(f) == VAL_FRAME_BINDING(action));
 
     assert(NOT_SERIES_FLAG(f->varlist, MANAGED));
 
@@ -330,7 +330,7 @@ Bounce Reframer_Dispatcher(Frame(*) f)
     Move_Cell(arg, SPARE);
 
     INIT_FRM_PHASE(f, VAL_ACTION(shim));
-    INIT_FRM_BINDING(f, VAL_ACTION_BINDING(shim));
+    INIT_FRM_BINDING(f, VAL_FRAME_BINDING(shim));
 
     return BOUNCE_REDO_CHECKED;  // the redo will use the updated phase & binding
 }
@@ -355,7 +355,7 @@ DECLARE_NATIVE(reframer_p)
     mutable_QUOTE_BYTE(ARG(shim)) = UNQUOTED_1;  // remove isotope if present
 
     Action(*) shim = VAL_ACTION(ARG(shim));
-    option(Symbol(const*)) label = VAL_ACTION_LABEL(ARG(shim));
+    option(Symbol(const*)) label = VAL_FRAME_LABEL(ARG(shim));
 
     StackIndex base = TOP_INDEX;
 

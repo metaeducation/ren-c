@@ -422,32 +422,6 @@ inline static Context(*) VAL_CONTEXT(noquote(Cell(const*)) v) {
 }
 
 
-//=//// FRAME BINDING /////////////////////////////////////////////////////=//
-//
-// Only FRAME! contexts store bindings at this time.  The reason is that a
-// unique binding can be stored by individual ACTION! values, so when you make
-// a frame out of an action it has to preserve that binding.
-//
-// Note: The presence of bindings in non-archetype values makes it possible
-// for FRAME! values that have phases to carry the binding of that phase.
-// This is a largely unexplored feature, but is used in REDO scenarios where
-// a running frame gets re-executed.  More study is needed.
-//
-
-inline static void INIT_VAL_FRAME_BINDING(Cell(*) v, Context(*) binding) {
-    assert(
-        IS_FRAME(v)  // may be marked protected (e.g. archetype)
-        or IS_ACTION(v)  // used by UNWIND
-    );
-    EXTRA(Binding, v) = binding;
-}
-
-inline static Context(*) VAL_FRAME_BINDING(noquote(Cell(const*)) v) {
-    assert(REB_FRAME == CELL_HEART(v));
-    return CTX(BINDING(v));
-}
-
-
 //=//// FRAME PHASE AND LABELING //////////////////////////////////////////=//
 //
 // A frame's phase is usually a pointer to the component action in effect for
@@ -483,11 +457,11 @@ inline static bool IS_FRAME_PHASED(noquote(Cell(const*)) v) {
     return s and not IS_SYMBOL(s);
 }
 
-inline static option(Symbol(const*)) VAL_FRAME_LABEL(Cell(const*) v) {
-    REBSER *s = VAL_FRAME_PHASE_OR_LABEL(v);
+inline static option(Symbol(const*)) VAL_FRAME_LABEL(noquote(Cell(const*)) v) {
+    REBSER *s = VAL_FRAME_PHASE_OR_LABEL(v);  // VAL_ACTION_PARTIALS_OR_LABEL as well
     if (s and IS_SYMBOL(s))  // label in value
         return SYM(s);
-    return ANONYMOUS;  // has a phase, so no label (maybe findable if running)
+    return ANONYMOUS;  // has a phase (or partials), so no label (maybe findable if running)
 }
 
 inline static void INIT_VAL_FRAME_LABEL(

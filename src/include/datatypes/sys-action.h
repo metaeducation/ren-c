@@ -278,19 +278,38 @@ inline static bool IS_ACTION(Cell(const*) v) {
 // itself.  So an archetype represents -an- action, but it may be a hijacked
 // action from what it once was (much like a word reference).
 //
-#define ACT_DETAILS(action) \
-    x_cast(Array(*), ACT_ARCHETYPE(action)->payload.Any.first.node)
 
-inline static Context(*) VAL_ACTION_BINDING(noquote(Cell(const*)) v) {
-    assert(Is_Frame_Details(v));
+inline static Action(*) CTX_FRAME_ACTION(Context(*) c);
+
+inline static Array(*) ACT_DETAILS(Action(*) a) {
+    if (not IS_DETAILS(a))
+        a = CTX_FRAME_ACTION(cast(Context(*), a));
+    return x_cast(Array(*), ACT_ARCHETYPE(a)->payload.Any.first.node);
+}
+
+
+//=//// FRAME BINDING /////////////////////////////////////////////////////=//
+//
+// Only FRAME! contexts store bindings at this time.  The reason is that a
+// unique binding can be stored by individual ACTION! values, so when you make
+// a frame out of an action it has to preserve that binding.
+//
+// Note: The presence of bindings in non-archetype values makes it possible
+// for FRAME! values that have phases to carry the binding of that phase.
+// This is a largely unexplored feature, but is used in REDO scenarios where
+// a running frame gets re-executed.  More study is needed.
+//
+
+inline static Context(*) VAL_FRAME_BINDING(noquote(Cell(const*)) v) {
+    assert(HEART_BYTE(v) == REB_FRAME);
     return CTX(BINDING(v));
 }
 
-inline static void INIT_VAL_ACTION_BINDING(
+inline static void INIT_VAL_FRAME_BINDING(
     Cell(*) v,
     Context(*) binding
 ){
-    assert(Is_Frame_Details(v));
+    assert(HEART_BYTE(v) == REB_FRAME);
     mutable_BINDING(v) = binding;
 }
 
@@ -314,11 +333,16 @@ inline static void INIT_VAL_ACTION_BINDING(
 
 
 inline static option(Array(*)) ACT_PARTIALS(Action(*) a) {
-    return ARR(VAL_NODE2(ACT_ARCHETYPE(a)));
+    if (IS_DETAILS(a))
+        return ARR(VAL_NODE2(ACT_ARCHETYPE(a)));
+    return nullptr;  // !!! how to preserve partials in exemplars?
 }
 
-#define ACT_EXEMPLAR(a) \
-    INODE(Exemplar, (a))
+inline static Context(*) ACT_EXEMPLAR(Action(*) a) {
+    if (IS_DETAILS(a))
+        return INODE(Exemplar, a);
+    return cast(Context(*), a);
+}
 
 // Note: This is a more optimized version of CTX_KEYLIST(ACT_EXEMPLAR(a)),
 // and also forward declared.
@@ -422,8 +446,8 @@ inline static void Init_Key(REBKEY *dest, const Raw_Symbol* symbol)
 
 
 inline static Action(*) VAL_ACTION(noquote(Cell(const*)) v) {
-    assert(Is_Frame_Details(v));
-    REBSER *s = SER(VAL_NODE1(v));
+    assert(HEART_BYTE(v) == REB_FRAME);
+    REBSER *s = SER(VAL_NODE1(v));  // maybe exemplar, maybe details
     if (GET_SERIES_FLAG(s, INACCESSIBLE))
         fail (Error_Series_Data_Freed_Raw());
     return ACT(s);
@@ -443,16 +467,6 @@ inline static Action(*) VAL_ACTION(noquote(Cell(const*)) v) {
 // use an array node here.  But since CHAINs store ACTION!s that can cache
 // the words, you get the currently executing label instead...which may
 // actually make more sense.
-
-inline static option(Symbol(const*)) VAL_ACTION_LABEL(noquote(Cell(const*)) v) {
-    assert(Is_Frame_Details(v));
-    REBSER *s = VAL_ACTION_PARTIALS_OR_LABEL(v);
-    if (not s)
-        return ANONYMOUS;
-    if (IS_SER_ARRAY(s))
-        return ANONYMOUS;  // archetype (e.g. may live in paramlist[0] itself)
-    return SYM(s);
-}
 
 inline static void INIT_VAL_ACTION_LABEL(
     Cell(*) v,
@@ -559,7 +573,7 @@ inline static bool Action_Is_Base_Of(Action(*) base, Action(*) derived) {
 // the 0 slot of the action's details.  That action has no binding and
 // no label.
 //
-inline static REBVAL *Init_Action_Core(
+inline static REBVAL *Init_Frame_Details_Core(
     Cell(*) out,
     Action(*) a,
     option(Symbol(const*)) label,  // allowed to be ANONYMOUS
@@ -573,13 +587,13 @@ inline static REBVAL *Init_Action_Core(
     Reset_Unquoted_Header_Untracked(out, CELL_MASK_FRAME);
     INIT_VAL_ACTION_DETAILS(out, ACT_IDENTITY(a));
     INIT_VAL_ACTION_LABEL(out, label);
-    INIT_VAL_ACTION_BINDING(out, binding);
+    INIT_VAL_FRAME_BINDING(out, binding);
 
     return cast(REBVAL*, out);
 }
 
-#define Init_Action(out,a,label,binding) \
-    TRACK(Init_Action_Core((out), (a), (label), (binding)))
+#define Init_Frame_Details(out,a,label,binding) \
+    TRACK(Init_Frame_Details_Core((out), (a), (label), (binding)))
 
 
 enum {
@@ -680,7 +694,7 @@ inline static Bounce Native_None_Result_Untracked(
 //
 
 #define Init_Activation(out,a,label,binding) \
-    Activatify(Init_Action_Core(TRACK(out), (a), (label), (binding)))
+    Activatify(Init_Frame_Details_Core(TRACK(out), (a), (label), (binding)))
 
 inline static Value(*) Activatify(Value(*) v) {
     assert(IS_ACTION(v) and QUOTE_BYTE(v) == UNQUOTED_1);

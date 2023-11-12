@@ -181,7 +181,7 @@ DECLARE_NATIVE(bind)
     // FRAME! that they intend to return from.)
     //
     if (REB_FRAME == CELL_HEART(v)) {
-        INIT_VAL_ACTION_BINDING(v, VAL_CONTEXT(context));
+        INIT_VAL_FRAME_BINDING(v, VAL_CONTEXT(context));
         return COPY(v);
     }
 
@@ -350,7 +350,7 @@ bool Did_Get_Binding_Of(Sink(Value(*)) out, const REBVAL *v)
 {
     switch (VAL_TYPE(v)) {
     case REB_FRAME: {
-        Context(*) binding = VAL_ACTION_BINDING(v); // e.g. METHOD, RETURNs
+        Context(*) binding = VAL_FRAME_BINDING(v); // e.g. METHOD, RETURNs
         if (not binding)
             return false;
 
@@ -2259,7 +2259,7 @@ DECLARE_NATIVE(as)
         //
         assert(ACT_EXEMPLAR(VAL_FRAME_PHASE(v)) == VAL_CONTEXT(v));
         Freeze_Array_Shallow(CTX_VARLIST(VAL_CONTEXT(v)));
-        return Init_Action(
+        return Init_Frame_Details(
             OUT,
             VAL_FRAME_PHASE(v),
             ANONYMOUS,  // see note, we might have stored this in varlist slot

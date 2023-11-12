@@ -287,8 +287,8 @@ bool Typecheck_Value(
             Frame(*) f = Make_End_Frame(
                 FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING) | flags
             );
-            Push_Action(f, VAL_ACTION(test), VAL_ACTION_BINDING(test));
-            Begin_Prefix_Action(f, VAL_ACTION_LABEL(test));
+            Push_Action(f, VAL_ACTION(test), VAL_FRAME_BINDING(test));
+            Begin_Prefix_Action(f, VAL_FRAME_LABEL(test));
 
             const REBKEY *key = f->u.action.key;
             const REBPAR *param = f->u.action.param;

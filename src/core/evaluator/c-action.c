@@ -1122,7 +1122,7 @@ Bounce Action_Executor(Frame(*) f)
     if (IS_ACTION(label)) {
         if (
             VAL_ACTION(label) == VAL_ACTION(Lib(REDO))  // REDO, see [1]
-            and VAL_ACTION_BINDING(label) == CTX(f->varlist)
+            and VAL_FRAME_BINDING(label) == CTX(f->varlist)
         ){
             CATCH_THROWN(OUT, frame_);
             assert(IS_FRAME(OUT));

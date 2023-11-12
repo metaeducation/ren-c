@@ -582,7 +582,7 @@ Bounce MAKE_Frame(
     // put /REFINEMENTs in refinement slots (instead of true/false/null)
     // to preserve the order of execution.
 
-    return Init_Frame(OUT, exemplar, VAL_ACTION_LABEL(arg));
+    return Init_Frame(OUT, exemplar, VAL_FRAME_LABEL(arg));
 }
 
 
@@ -1328,7 +1328,7 @@ REBTYPE(Frame)
             // GC'd if all the frames pointing to them were expired but still
             // referenced somewhere.
             //
-            return Init_Action(
+            return Init_Frame_Details(
                 OUT,
                 VAL_FRAME_PHASE(frame),  // just a Action(*), no binding
                 VAL_FRAME_LABEL(frame),
@@ -1340,7 +1340,7 @@ REBTYPE(Frame)
             return T_Context(frame_, verb);
 
         if (prop == SYM_PARAMETERS) {
-            Init_Action(
+            Init_Frame_Details(
                 ARG(value),
                 CTX_FRAME_ACTION(c),
                 VAL_FRAME_LABEL(frame),
@@ -1406,7 +1406,7 @@ REBTYPE(Frame)
             return nullptr; }
 
           case SYM_LABEL: {
-            option(Symbol(const*)) label = VAL_ACTION_LABEL(frame);
+            option(Symbol(const*)) label = VAL_FRAME_LABEL(frame);
             if (not label)
                 return nullptr;
             return Init_Word(OUT, unwrap(label)); }
@@ -1442,7 +1442,7 @@ REBTYPE(Frame)
             //
             Reset_Unquoted_Header_Untracked(TRACK(OUT), CELL_MASK_FRAME);
             INIT_VAL_CONTEXT_VARLIST(OUT, ACT_PARAMLIST(act));
-            mutable_BINDING(OUT) = VAL_ACTION_BINDING(frame);
+            mutable_BINDING(OUT) = VAL_FRAME_BINDING(frame);
             INIT_VAL_FRAME_PHASE_OR_LABEL(OUT, act);
             return OUT; }
 
@@ -1561,11 +1561,11 @@ REBTYPE(Frame)
         Copy_Cell(ACT_ARCHETYPE(proxy), ACT_ARCHETYPE(act));
         Set_Cell_Flag(ACT_ARCHETYPE(proxy), PROTECTED);  // restore invariant
 
-        return Init_Action(
+        return Init_Frame_Details(
             OUT,
             proxy,
-            VAL_ACTION_LABEL(frame),  // keep symbol (if any) from original
-            VAL_ACTION_BINDING(frame)  // same (e.g. RETURN to same frame)
+            VAL_FRAME_LABEL(frame),  // keep symbol (if any) from original
+            VAL_FRAME_BINDING(frame)  // same (e.g. RETURN to same frame)
         ); }
 
 
@@ -1632,7 +1632,7 @@ static bool Same_Action(noquote(Cell(const*)) a, noquote(Cell(const*)) b)
         // paramlist, but the binding is different in the REBVAL instances
         // in order to know where to "exit from".
         //
-        return VAL_ACTION_BINDING(a) == VAL_ACTION_BINDING(b);
+        return VAL_FRAME_BINDING(a) == VAL_FRAME_BINDING(b);
     }
 
     return false;
@@ -1674,7 +1674,7 @@ void MF_Frame(REB_MOLD *mo, noquote(Cell(const*)) v, bool form) {
 
     Append_Ascii(mo->series, "#[details! ");
 
-    option(String(const*)) label = VAL_ACTION_LABEL(v);
+    option(Symbol(const*)) label = VAL_FRAME_LABEL(v);
     if (label) {
         Append_Codepoint(mo->series, '{');
         Append_Spelling(mo->series, unwrap(label));

@@ -208,7 +208,7 @@ DECLARE_NATIVE(resume)
     // is no NATIVE() variant for extensions yet.  Extract from current frame.)
     //
     DECLARE_STABLE (resume);
-    Init_Action(
+    Init_Frame_Details(
         resume,
         FRM_PHASE(frame_),
         FRM_LABEL(frame_),

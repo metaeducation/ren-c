@@ -104,7 +104,7 @@ Context(*) Make_Context_For_Action_Push_Partials(
         rootvar,
         varlist,
         VAL_ACTION(action),
-        VAL_ACTION_BINDING(action)
+        VAL_FRAME_BINDING(action)
     );
 
     // If there is a PARTIALS list, then push its refinements.
@@ -362,7 +362,7 @@ bool Specialize_Action_Throws(
             fail ("Cannot currently SPECIALIZE variadic arguments.");
 
         if (not Typecheck_Coerce_Argument(param, arg)) {
-            option(Symbol(const*)) label = VAL_ACTION_LABEL(specializee);
+            option(Symbol(const*)) label = VAL_FRAME_LABEL(specializee);
             fail (Error_Arg_Type(label, key, param, arg));
         }
 
@@ -434,7 +434,7 @@ bool Specialize_Action_Throws(
     );
     assert(CTX_KEYLIST(exemplar) == ACT_KEYLIST(unspecialized));
 
-    Init_Activation(out, specialized, VAL_ACTION_LABEL(specializee), UNBOUND);
+    Init_Activation(out, specialized, VAL_FRAME_LABEL(specializee), UNBOUND);
 
     if (enfix)  // incoming was enfix, and we didn't specialize out first arg
         Set_Cell_Flag(out, ENFIX_FRAME);

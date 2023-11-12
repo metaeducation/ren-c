@@ -80,7 +80,7 @@ Bounce Reorderer_Dispatcher(Frame(*) f) {
     REBVAL *reorderee = DETAILS_AT(details, IDX_REORDERER_REORDEREE);
 
     INIT_FRM_PHASE(f, VAL_ACTION(reorderee));
-    INIT_FRM_BINDING(f, VAL_ACTION_BINDING(reorderee));
+    INIT_FRM_BINDING(f, VAL_FRAME_BINDING(reorderee));
 
     return BOUNCE_REDO_UNCHECKED;  // exemplar unchanged; known to be valid
 }
@@ -102,7 +102,7 @@ DECLARE_NATIVE(reorder_p)  // see REORDER in %base-defs.r, for inheriting meta
     INCLUDE_PARAMS_OF_REORDER_P;
 
     Action(*) reorderee = VAL_ACTION(ARG(original));
-    option(Symbol(const*)) label  = VAL_ACTION_LABEL(ARG(original));
+    option(Symbol(const*)) label  = VAL_FRAME_LABEL(ARG(original));
 
     // Working with just the exemplar means we will lose the partials ordering
     // information from the interface.  But that's what we want, as the

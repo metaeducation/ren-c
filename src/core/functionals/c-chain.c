@@ -168,10 +168,10 @@ Bounce Chainer_Dispatcher(Frame(*) f)
     ++VAL_INDEX_RAW(pipeline_at);
 
     INIT_FRM_PHASE(sub, VAL_ACTION(chained));  // has varlist already, see [3]
-    INIT_FRM_BINDING(sub, VAL_ACTION_BINDING(chained));
+    INIT_FRM_BINDING(sub, VAL_FRAME_BINDING(chained));
 
     sub->u.action.original = VAL_ACTION(chained);
-    sub->label = VAL_ACTION_LABEL(chained);
+    sub->label = VAL_FRAME_LABEL(chained);
   #if !defined(NDEBUG)
     sub->label_utf8 = sub->label
         ? STR_UTF8(unwrap(sub->label))
@@ -203,9 +203,9 @@ Bounce Chainer_Dispatcher(Frame(*) f)
 
     ++VAL_INDEX_RAW(pipeline_at);
 
-    Push_Action(sub, VAL_ACTION(chained), VAL_ACTION_BINDING(chained));
+    Push_Action(sub, VAL_ACTION(chained), VAL_FRAME_BINDING(chained));
 
-    Begin_Prefix_Action(sub, VAL_ACTION_LABEL(chained));
+    Begin_Prefix_Action(sub, VAL_FRAME_LABEL(chained));
 
     FRM_STATE_BYTE(sub) = ST_ACTION_FULFILLING_ENFIX_FROM_OUT;  // see [4]
     Clear_Executor_Flag(ACTION, sub, DISPATCHER_CATCHES);
@@ -272,5 +272,5 @@ DECLARE_NATIVE(chain_p)  // see extended definition CHAIN in %base-defs.r
     Force_Value_Frozen_Deep(pipeline);
     Copy_Cell(ARR_AT(ACT_DETAILS(chain), IDX_CHAINER_PIPELINE), pipeline);
 
-    return Init_Activation(out, chain, VAL_ACTION_LABEL(first), UNBOUND);
+    return Init_Activation(out, chain, VAL_FRAME_LABEL(first), UNBOUND);
 }

@@ -475,7 +475,7 @@ void Assert_Array_Marked_Correctly(Array(const*) a) {
     if (IS_DETAILS(a)) {
         Cell(const*) archetype = ARR_HEAD(a);
         assert(IS_ACTION(archetype));
-        assert(VAL_ACTION_BINDING(archetype) == UNBOUND);
+        assert(VAL_FRAME_BINDING(archetype) == UNBOUND);
 
         // These queueings cannot be done in Queue_Mark_Function_Deep
         // because of the potential for overflowing the C stack with calls

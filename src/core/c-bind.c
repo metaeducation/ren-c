@@ -897,7 +897,7 @@ void Rebind_Values_Deep(
             // binding pointer (in the function's value cell) is changed to
             // be this object.
             //
-            Context(*) stored = VAL_ACTION_BINDING(v);
+            Context(*) stored = VAL_FRAME_BINDING(v);
             if (stored == UNBOUND) {
                 //
                 // Leave NULL bindings alone.  Hence, unlike in R3-Alpha, an
@@ -914,7 +914,7 @@ void Rebind_Values_Deep(
             }
             else {
                 if (Is_Overriding_Context(stored, to))
-                    INIT_VAL_ACTION_BINDING(v, to);
+                    INIT_VAL_FRAME_BINDING(v, to);
                 else {
                     // Could be bound to a reified frame context, or just
                     // to some other object not related to this derivation.

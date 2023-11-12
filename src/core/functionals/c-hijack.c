@@ -145,8 +145,8 @@ void Push_Redo_Action_Frame(Atom(*) out, Frame(*) f1, const REBVAL *run)
     f2->baseline.stack_base = base;
 
     Push_Frame(out, f2);
-    Push_Action(f2, VAL_ACTION(run), VAL_ACTION_BINDING(run));
-    Begin_Prefix_Action(f2, VAL_ACTION_LABEL(run));
+    Push_Action(f2, VAL_ACTION(run), VAL_FRAME_BINDING(run));
+    Begin_Prefix_Action(f2, VAL_FRAME_LABEL(run));
 }
 
 
@@ -269,7 +269,7 @@ DECLARE_NATIVE(hijack)
     return Init_Activation(  // don't bother returning copy of original, see [3]
         OUT,
         victim,
-        VAL_ACTION_LABEL(ARG(victim)),  // MISC(victim_paramlist).meta? see [4]
-        VAL_ACTION_BINDING(ARG(hijacker))
+        VAL_FRAME_LABEL(ARG(victim)),  // MISC(victim_paramlist).meta? see [4]
+        VAL_FRAME_BINDING(ARG(hijacker))
     );
 }

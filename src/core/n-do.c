@@ -161,7 +161,7 @@ DECLARE_NATIVE(shove)
         fail ("SHOVE's immediate right must be ACTION! or SET-XXX! type");
 
     if (not label)
-        label = VAL_ACTION_LABEL(shovee);
+        label = VAL_FRAME_LABEL(shovee);
 
     // Basic operator `>-` will use the enfix status of the shovee.
     // `->-` will force enfix evaluator behavior even if shovee is prefix.
@@ -203,7 +203,7 @@ DECLARE_NATIVE(shove)
     Flags flags = FLAG_STATE_BYTE(ST_ACTION_FULFILLING_ENFIX_FROM_OUT);
 
     Frame(*) sub = Make_Frame(frame_->feed, flags);
-    Push_Action(sub, VAL_ACTION(shovee), VAL_ACTION_BINDING(shovee));
+    Push_Action(sub, VAL_ACTION(shovee), VAL_FRAME_BINDING(shovee));
     Begin_Action_Core(sub, label, enfix);
 
     Push_Frame(OUT, sub);
@@ -610,7 +610,7 @@ DECLARE_NATIVE(redo)
         }
 
         INIT_VAL_FRAME_PHASE(restartee, VAL_ACTION(sibling));
-        INIT_VAL_FRAME_BINDING(restartee, VAL_ACTION_BINDING(sibling));
+        INIT_VAL_FRAME_BINDING(restartee, VAL_FRAME_BINDING(sibling));
     }
 
     // We need to cooperatively throw a restart instruction up to the level
@@ -618,7 +618,7 @@ DECLARE_NATIVE(redo)
     // identify for that behavior.
     //
     Copy_Cell(SPARE, Lib(REDO));
-    INIT_VAL_ACTION_BINDING(SPARE, c);
+    INIT_VAL_FRAME_BINDING(SPARE, c);
 
     // The FRAME! contains its ->phase and ->binding, which should be enough
     // to restart the phase at the point of parameter checking.  Make that
@@ -678,7 +678,7 @@ DECLARE_NATIVE(applique)
         NONE_CELL  // seen as unspecialized by ST_ACTION_TYPECHECKING
     );
     Manage_Series(CTX_VARLIST(exemplar));
-    Init_Frame(frame, exemplar, VAL_ACTION_LABEL(op));
+    Init_Frame(frame, exemplar, VAL_FRAME_LABEL(op));
 
     Drop_Data_Stack_To(STACK_BASE);  // refinement order unimportant
 
@@ -791,7 +791,7 @@ DECLARE_NATIVE(apply)
         NONE_CELL
     );
     Manage_Series(CTX_VARLIST(exemplar)); // Putting into a frame
-    Init_Frame(frame, exemplar, VAL_ACTION_LABEL(op));  // GC guarded
+    Init_Frame(frame, exemplar, VAL_FRAME_LABEL(op));  // GC guarded
 
     Drop_Data_Stack_To(STACK_BASE);  // partials ordering unimportant
 
@@ -994,9 +994,9 @@ DECLARE_NATIVE(run)
     Push_Action(
         subframe,
         VAL_ACTION(action),
-        VAL_ACTION_BINDING(action)
+        VAL_FRAME_BINDING(action)
     );
-    Begin_Prefix_Action(subframe, VAL_ACTION_LABEL(action));
+    Begin_Prefix_Action(subframe, VAL_FRAME_LABEL(action));
 
     return DELEGATE_SUBFRAME (subframe);
 }

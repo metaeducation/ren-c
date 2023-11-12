@@ -726,8 +726,8 @@ inline static bool Pushed_Continuation(
         Frame(*) f = Make_End_Frame(FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING));
 
         const REBVAL *action = Lib(REDUCE);
-        Push_Action(f, VAL_ACTION(action), VAL_ACTION_BINDING(action));
-        Begin_Prefix_Action(f, VAL_ACTION_LABEL(action));
+        Push_Action(f, VAL_ACTION(action), VAL_FRAME_BINDING(action));
+        Begin_Prefix_Action(f, VAL_FRAME_LABEL(action));
 
         const REBKEY *key = f->u.action.key;
         const REBPAR *param = f->u.action.param;
@@ -750,8 +750,8 @@ inline static bool Pushed_Continuation(
         Frame(*) f = Make_End_Frame(
             FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING) | flags
         );
-        Push_Action(f, VAL_ACTION(branch), VAL_ACTION_BINDING(branch));
-        Begin_Prefix_Action(f, VAL_ACTION_LABEL(branch));
+        Push_Action(f, VAL_ACTION(branch), VAL_FRAME_BINDING(branch));
+        Begin_Prefix_Action(f, VAL_FRAME_LABEL(branch));
 
         const REBKEY *key = f->u.action.key;
         const REBPAR *param = f->u.action.param;
