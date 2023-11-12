@@ -34,12 +34,18 @@
 
 #if CPLUSPLUS_11
     struct Raw_Array : public Raw_Series {};
+
+    struct Raw_Details : public Raw_Array {};
 #else
     typedef Raw_Series Raw_Array;
+    typedef Raw_Array Raw_Details;
 #endif
 
 #define Array(star_maybe_const) \
     Raw_Array star_maybe_const
+
+#define Details(star_maybe_const) \
+    Raw_Details star_maybe_const
 
 
 // It may become interesting to say that a specifier can be a pairing or

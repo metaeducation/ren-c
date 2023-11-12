@@ -281,10 +281,10 @@ inline static bool IS_ACTION(Cell(const*) v) {
 
 inline static Action(*) CTX_FRAME_ACTION(Context(*) c);
 
-inline static Array(*) ACT_DETAILS(Action(*) a) {
+inline static Details(*) ACT_DETAILS(Action(*) a) {
     if (not IS_DETAILS(a))
         a = CTX_FRAME_ACTION(cast(Context(*), a));
-    return x_cast(Array(*), ACT_ARCHETYPE(a)->payload.Any.first.node);
+    return x_cast(Details(*), ACT_ARCHETYPE(a)->payload.Any.first.node);
 }
 
 
@@ -377,9 +377,11 @@ inline static REBPAR *ACT_PARAMS_HEAD(Action(*) a) {
 // only the archetype, e.g. with a specialized function).  *BUT* if you are
 // asking for elements in the details array, you must know it is dynamic.
 //
-inline static Value(*) DETAILS_AT(Array(*) details, Length n) {
+inline static Value(*) DETAILS_AT(Details(*) details, Length n) {
     assert(n != 0 and n < details->content.dynamic.used);
-    return cast(Value(*), details->content.dynamic.data) + n;
+    Cell(*) at = cast(Cell(*), details->content.dynamic.data) + n;
+    assert(Is_Fresh(at) or not IS_RELATIVE(at));
+    return cast(Value(*), at);
 }
 
 #define IDX_DETAILS_1 1  // Common index used for code body location

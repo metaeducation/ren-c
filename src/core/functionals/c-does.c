@@ -74,7 +74,7 @@ Bounce Block_Dispatcher(Frame(*) f)
 {
     Frame(*) frame_ = f;  // for RETURN macros
 
-    Array(*) details = ACT_DETAILS(FRM_PHASE(f));
+    Details(*) details = ACT_DETAILS(FRM_PHASE(f));
     assert(ARR_LEN(details) == IDX_DOES_MAX);
 
     Cell(*) block = ARR_AT(details, IDX_DOES_BLOCK);

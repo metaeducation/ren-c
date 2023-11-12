@@ -58,7 +58,7 @@ void Datatype_Checker_Intrinsic(Value(*) out, Action(*) action, Value(*) arg)
 {
     assert(ACT_DISPATCHER(action) == &Intrinsic_Dispatcher);
 
-    Array(*) details = ACT_DETAILS(action);
+    Details(*) details = ACT_DETAILS(action);
     assert(ARR_LEN(details) == IDX_TYPECHECKER_MAX);
 
     REBVAL *datatype = DETAILS_AT(details, IDX_TYPECHECKER_TYPE);
@@ -76,7 +76,7 @@ void Typeset_Checker_Intrinsic(Value(*) out, Action(*) action, Value(*) arg)
 {
     assert(ACT_DISPATCHER(action) == &Intrinsic_Dispatcher);
 
-    Array(*) details = ACT_DETAILS(action);
+    Details(*) details = ACT_DETAILS(action);
     assert(ARR_LEN(details) == IDX_TYPECHECKER_MAX);
 
     REBVAL *typeset_index = DETAILS_AT(details, IDX_TYPECHECKER_TYPE);
@@ -125,15 +125,15 @@ Action(*) Make_Typechecker(Value(const*) type) {
         IDX_TYPECHECKER_MAX  // details array capacity
     );
 
-    Array(*) details = ACT_DETAILS(typechecker);
+    Details(*) details = ACT_DETAILS(typechecker);
 
     Init_Handle_Cfunc(
-        ARR_AT(details, IDX_TYPECHECKER_CFUNC),
+        DETAILS_AT(details, IDX_TYPECHECKER_CFUNC),
         IS_TYPE_WORD(type)
             ? cast(CFUNC*, &Datatype_Checker_Intrinsic)
             : cast(CFUNC*, &Typeset_Checker_Intrinsic)
     );
-    Copy_Cell(ARR_AT(details, IDX_TYPECHECKER_TYPE), type);
+    Copy_Cell(DETAILS_AT(details, IDX_TYPECHECKER_TYPE), type);
 
     return typechecker;
 }

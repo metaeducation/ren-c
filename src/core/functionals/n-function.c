@@ -124,7 +124,7 @@ Bounce Func_Dispatcher(Frame(*) f)
   initial_entry: {  //////////////////////////////////////////////////////////
 
     Action(*) phase = FRM_PHASE(f);
-    Array(*) details = ACT_DETAILS(phase);
+    Details(*) details = ACT_DETAILS(phase);
     Cell(*) body = ARR_AT(details, IDX_DETAILS_1);  // code to run
     assert(IS_BLOCK(body) and IS_RELATIVE(body) and VAL_INDEX(body) == 0);
 
@@ -282,7 +282,7 @@ Action(*) Make_Interpreted_Action_May_Fail(
     // running frame instance (the Frame(*) received by the dispatcher) before
     // executing the interpreted code.
     //
-    Array(*) details = ACT_DETAILS(a);
+    Details(*) details = ACT_DETAILS(a);
     Cell(*) rebound = Init_Relative_Block(
         ARR_AT(details, IDX_NATIVE_BODY),
         a,

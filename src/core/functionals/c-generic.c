@@ -55,7 +55,7 @@ enum {
 Bounce Generic_Dispatcher(Frame(*) f)
 {
     Action(*) phase = FRM_PHASE(f);
-    Array(*) details = ACT_DETAILS(phase);
+    Details(*) details = ACT_DETAILS(phase);
     Symbol(const*) verb = VAL_WORD_SYMBOL(DETAILS_AT(details, IDX_GENERIC_VERB));
 
     // !!! It's technically possible to throw in locals or refinements at
@@ -108,9 +108,10 @@ DECLARE_NATIVE(generic)
 
     Set_Action_Flag(generic, IS_NATIVE);
 
-    Array(*) details = ACT_DETAILS(generic);
-    Init_Word(ARR_AT(details, IDX_NATIVE_BODY), VAL_WORD_SYMBOL(verb));
-    Copy_Cell(ARR_AT(details, IDX_NATIVE_CONTEXT), Lib_Context_Value);
+    Details(*) details = ACT_DETAILS(generic);
+
+    Init_Word(DETAILS_AT(details, IDX_NATIVE_BODY), VAL_WORD_SYMBOL(verb));
+    Copy_Cell(DETAILS_AT(details, IDX_NATIVE_CONTEXT), Lib_Context_Value);
 
     REBVAL *verb_var = Sink_Word_May_Fail(verb, SPECIFIED);
     Init_Activation(verb_var, generic, VAL_WORD_SYMBOL(verb), UNBOUND);

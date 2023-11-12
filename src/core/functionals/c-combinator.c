@@ -85,7 +85,7 @@ enum {
 Bounce Combinator_Dispatcher(Frame(*) f)
 {
     Action(*) phase = FRM_PHASE(f);
-    Array(*) details = ACT_DETAILS(phase);
+    Details(*) details = ACT_DETAILS(phase);
     Cell(*) body = ARR_AT(details, IDX_DETAILS_1);  // code to run
 
     Bounce b;

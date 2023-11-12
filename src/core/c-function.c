@@ -1107,7 +1107,7 @@ void Get_Maybe_Fake_Action_Body(Sink(Value(*)) out, Value(const*) action)
         // Interpreted code, the body is a block with some bindings relative
         // to the action.
 
-        Array(*) details = ACT_DETAILS(a);
+        Details(*) details = ACT_DETAILS(a);
         Cell(*) body = ARR_AT(details, IDX_DETAILS_1);
 
         // The PARAMLIST_HAS_RETURN tricks for definitional return make it
@@ -1188,7 +1188,7 @@ void Get_Maybe_Fake_Action_Body(Sink(Value(*)) out, Value(const*) action)
     }
 
     if (ACT_DISPATCHER(a) == &Generic_Dispatcher) {
-        Array(*) details = ACT_DETAILS(a);
+        Details(*) details = ACT_DETAILS(a);
         REBVAL *verb = DETAILS_AT(details, 1);
         assert(IS_WORD(verb));
         Copy_Cell(out, verb);

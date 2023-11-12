@@ -236,7 +236,7 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
             assert(Is_Marked(VAL_ACTION_PARTIALS_OR_LABEL(v)));
 
         if (Is_Action_Native(a)) {
-            Array(*) details = ACT_DETAILS(a);
+            Details(*) details = ACT_DETAILS(a);
             assert(ARR_LEN(details) >= IDX_NATIVE_MAX);
             Value(*) body = DETAILS_AT(details, IDX_NATIVE_BODY);
             Value(*) context = DETAILS_AT(details, IDX_NATIVE_CONTEXT);
@@ -481,7 +481,7 @@ void Assert_Array_Marked_Correctly(Array(const*) a) {
         // because of the potential for overflowing the C stack with calls
         // to Queue_Mark_Function_Deep.
 
-        Array(*) details = ACT_IDENTITY(VAL_ACTION(archetype));
+        Details(*) details = cast(Details(*), VAL_ACTION(archetype));
         assert(Is_Marked(details));
 
         Array(*) list = CTX_VARLIST(ACT_EXEMPLAR(VAL_ACTION(archetype)));

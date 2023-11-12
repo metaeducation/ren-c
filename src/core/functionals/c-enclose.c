@@ -85,7 +85,7 @@ Bounce Encloser_Dispatcher(Frame(*) f)
 {
     Frame(*) frame_ = f;  // for RETURN macros
 
-    Array(*) details = ACT_DETAILS(FRM_PHASE(f));
+    Details(*) details = ACT_DETAILS(FRM_PHASE(f));
     assert(ARR_LEN(details) == IDX_ENCLOSER_MAX);
 
     REBVAL *inner = DETAILS_AT(details, IDX_ENCLOSER_INNER);
@@ -227,9 +227,9 @@ DECLARE_NATIVE(enclose_p)  // see extended definition ENCLOSE in %base-defs.r
         IDX_ENCLOSER_MAX  // details array capacity => [inner, outer]
     );
 
-    Array(*) details = ACT_DETAILS(enclosure);
-    Copy_Cell(ARR_AT(details, IDX_ENCLOSER_INNER), inner);
-    Copy_Cell(ARR_AT(details, IDX_ENCLOSER_OUTER), outer);
+    Details(*) details = ACT_DETAILS(enclosure);
+    Copy_Cell(DETAILS_AT(details, IDX_ENCLOSER_INNER), inner);
+    Copy_Cell(DETAILS_AT(details, IDX_ENCLOSER_OUTER), outer);
 
     return Init_Activation(OUT, enclosure, VAL_FRAME_LABEL(inner), UNBOUND);
 }

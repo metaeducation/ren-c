@@ -98,7 +98,7 @@ Bounce Macro_Dispatcher(Frame(*) f)
     Frame(*) frame_ = f;  // for RETURN macros
 
     Action(*) phase = FRM_PHASE(f);
-    Array(*) details = ACT_DETAILS(phase);
+    Details(*) details = ACT_DETAILS(phase);
     Cell(*) body = ARR_AT(details, IDX_DETAILS_1);  // code to run
     assert(IS_BLOCK(body) and IS_RELATIVE(body) and VAL_INDEX(body) == 0);
 

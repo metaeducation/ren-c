@@ -153,12 +153,12 @@ Bounce Chainer_Dispatcher(Frame(*) f)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    Array(*) details = ACT_DETAILS(FRM_PHASE(f));
+    Details(*) details = ACT_DETAILS(FRM_PHASE(f));
     assert(ARR_LEN(details) == IDX_CHAINER_MAX);
 
     Value(*) pipeline_at = Init_Block(
         SPARE,  // index of BLOCK! is current step
-        VAL_ARRAY(ARR_AT(details, IDX_CHAINER_PIPELINE))
+        VAL_ARRAY(DETAILS_AT(details, IDX_CHAINER_PIPELINE))
     );
 
     Frame(*) sub = Push_Downshifted_Frame(OUT, f);  // steals varlist, see [1]

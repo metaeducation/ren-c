@@ -551,7 +551,7 @@ union Reb_Value_Payload { //=/////////////// ACTUAL PAYLOAD DEFINITION ////=//
     //
     // ACTION!  // see %sys-action.h
     //     Array(*) paramlist;  // has MISC.meta, LINK.underlying
-    //     Array(*) details;  // has MISC.dispatcher, LINK.specialty
+    //     Details(*) details;  // has MISC.dispatcher, LINK.specialty
     //
     // VARARGS!  // see %sys-varargs.h
     //     REBINT signed_param_index;  // if negative, consider arg enfixed

@@ -1456,7 +1456,7 @@ REBTYPE(Frame)
             // is a series with the file and line bits set, then that's what
             // it returns for FILE OF and LINE OF.
 
-            Array(*) details = ACT_DETAILS(act);
+            Details(*) details = ACT_DETAILS(act);
             if (ARR_LEN(details) < 1 or not ANY_ARRAY(ARR_HEAD(details)))
                 return nullptr;
 
@@ -1547,15 +1547,21 @@ REBTYPE(Frame)
             2
         );
 
-        Array(*) details = ACT_DETAILS(proxy);
-        Init_Quasi_Word(ARR_AT(details, 1), Canon(COPY));  // dummy ~copy~
+        Details(*) details = ACT_DETAILS(proxy);
+        Init_Quasi_Word(DETAILS_AT(details, 1), Canon(COPY));  // dummy ~copy~
 
         Context(*) meta = ACT_ADJUNCT(act);
         assert(ACT_ADJUNCT(proxy) == nullptr);
         mutable_ACT_ADJUNCT(proxy) = meta;  // !!! Note: not a copy of meta
 
+        // !!! Do this with masking?
+
         if (Get_Action_Flag(act, IS_NATIVE))
             Set_Action_Flag(proxy, IS_NATIVE);
+        if (Get_Action_Flag(act, DEFERS_LOOKBACK))
+            Set_Action_Flag(proxy, DEFERS_LOOKBACK);
+        if (Get_Action_Flag(act, POSTPONES_ENTIRELY))
+            Set_Action_Flag(proxy, POSTPONES_ENTIRELY);
 
         Clear_Cell_Flag(ACT_ARCHETYPE(proxy), PROTECTED);  // intentional change
         Copy_Cell(ACT_ARCHETYPE(proxy), ACT_ARCHETYPE(act));

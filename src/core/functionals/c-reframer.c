@@ -298,7 +298,7 @@ Bounce Reframer_Dispatcher(Frame(*) f)
 {
     Frame(*) frame_ = f;  // for RETURN macros
 
-    Array(*) details = ACT_DETAILS(FRM_PHASE(f));
+    Details(*) details = ACT_DETAILS(FRM_PHASE(f));
     assert(ARR_LEN(details) == IDX_REFRAMER_MAX);
 
     REBVAL* shim = DETAILS_AT(details, IDX_REFRAMER_SHIM);
@@ -468,9 +468,9 @@ DECLARE_NATIVE(reframer_p)
         IDX_REFRAMER_MAX  // details array capacity => [shim, param_index]
     );
 
-    Array(*) details = ACT_DETAILS(reframer);
-    Copy_Cell(ARR_AT(details, IDX_REFRAMER_SHIM), ARG(shim));
-    Init_Integer(ARR_AT(details, IDX_REFRAMER_PARAM_INDEX), param_index);
+    Details(*) details = ACT_DETAILS(reframer);
+    Copy_Cell(DETAILS_AT(details, IDX_REFRAMER_SHIM), ARG(shim));
+    Init_Integer(DETAILS_AT(details, IDX_REFRAMER_PARAM_INDEX), param_index);
 
     return Init_Activation(OUT, reframer, label, UNBOUND);
 }

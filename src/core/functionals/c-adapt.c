@@ -74,7 +74,7 @@ Bounce Adapter_Dispatcher(Frame(*) f)
 {
     Frame(*) frame_ = f;  // for RETURN macros
 
-    Array(*) details = ACT_DETAILS(FRM_PHASE(f));
+    Details(*) details = ACT_DETAILS(FRM_PHASE(f));
     assert(ARR_LEN(details) == IDX_ADAPTER_MAX);
 
     enum {
@@ -161,13 +161,13 @@ DECLARE_NATIVE(adapt_p)  // see extended definition ADAPT in %base-defs.r
     // Adapter_Dispatcher() must combine it with the FRAME! instance before
     // it can be executed (e.g. the `Frame(*) f` it is dispatching).
     //
-    Array(*) details = ACT_DETAILS(adaptation);
+    Details(*) details = ACT_DETAILS(adaptation);
     Init_Relative_Block(
         ARR_AT(details, IDX_ADAPTER_PRELUDE),
         adaptation,
         prelude
     );
-    Copy_Cell(ARR_AT(details, IDX_ADAPTER_ADAPTEE), adaptee);
+    Copy_Cell(DETAILS_AT(details, IDX_ADAPTER_ADAPTEE), adaptee);
 
     return Init_Activation(OUT, adaptation, VAL_FRAME_LABEL(adaptee), UNBOUND);
 }

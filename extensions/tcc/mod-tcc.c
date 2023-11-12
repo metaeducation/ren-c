@@ -109,9 +109,9 @@ bool Is_User_Native(Action(*) act) {
     if (not Is_Action_Native(act))
         return false;
 
-    Array(*) details = ACT_DETAILS(act);
+    Details(*) details = ACT_DETAILS(act);
     assert(ARR_LEN(details) >= 2); // ACTION_FLAG_NATIVE needs source+context
-    return IS_TEXT(ARR_AT(details, IDX_NATIVE_BODY));
+    return IS_TEXT(DETAILS_AT(details, IDX_NATIVE_BODY));
 }
 
 
@@ -326,13 +326,13 @@ DECLARE_NATIVE(make_native)
     assert(ACT_ADJUNCT(native) == nullptr);
     mutable_ACT_ADJUNCT(native) = meta;
 
-    Array(*) details = ACT_DETAILS(native);
+    Details(*) details = ACT_DETAILS(native);
 
     if (Is_Series_Frozen(VAL_SERIES(source)))
-        Copy_Cell(ARR_AT(details, IDX_NATIVE_BODY), source); // no copy
+        Copy_Cell(DETAILS_AT(details, IDX_NATIVE_BODY), source); // no copy
     else {
         Init_Text(
-            ARR_AT(details, IDX_NATIVE_BODY),
+            DETAILS_AT(details, IDX_NATIVE_BODY),
             Copy_String_At(source)  // might change before COMPILE call
         );
     }
@@ -341,16 +341,16 @@ DECLARE_NATIVE(make_native)
     // look for bindings.  For the moment, set user natives to use the user
     // context...it could be a parameter of some kind (?)
     //
-    Copy_Cell(ARR_AT(details, IDX_NATIVE_CONTEXT), User_Context_Value);
+    Copy_Cell(DETAILS_AT(details, IDX_NATIVE_CONTEXT), User_Context_Value);
 
     if (REF(linkname)) {
         REBVAL *linkname = ARG(linkname);
 
         if (Is_Series_Frozen(VAL_SERIES(linkname)))
-            Copy_Cell(ARR_AT(details, IDX_TCC_NATIVE_LINKNAME), linkname);
+            Copy_Cell(DETAILS_AT(details, IDX_TCC_NATIVE_LINKNAME), linkname);
         else {
             Init_Text(
-                ARR_AT(details, IDX_TCC_NATIVE_LINKNAME),
+                DETAILS_AT(details, IDX_TCC_NATIVE_LINKNAME),
                 Copy_String_At(linkname)
             );
         }
@@ -364,11 +364,11 @@ DECLARE_NATIVE(make_native)
             "unspaced [{N_} as text! to-hex", rebI(heapaddr), "]"
         );
 
-        Copy_Cell(ARR_AT(details, IDX_TCC_NATIVE_LINKNAME), linkname);
+        Copy_Cell(DETAILS_AT(details, IDX_TCC_NATIVE_LINKNAME), linkname);
         rebRelease(linkname);
     }
 
-    Init_Blank(ARR_AT(details, IDX_TCC_NATIVE_STATE)); // no TCC_State, yet...
+    Init_Blank(DETAILS_AT(details, IDX_TCC_NATIVE_STATE)); // no TCC_State, yet
 
     Set_Action_Flag(native, IS_NATIVE);
     return Init_Activation(OUT, native, ANONYMOUS, UNBOUND);
@@ -518,9 +518,9 @@ DECLARE_NATIVE(compile_p)
                 //
                 Copy_Cell(PUSH(), SPECIFIC(item));
 
-                Array(*) details = ACT_DETAILS(VAL_ACTION(item));
-                Cell(*) source = ARR_AT(details, IDX_NATIVE_BODY);
-                Cell(*) linkname = ARR_AT(details, IDX_TCC_NATIVE_LINKNAME);
+                Details(*) details = ACT_DETAILS(VAL_ACTION(item));
+                Value(*) source = DETAILS_AT(details, IDX_NATIVE_BODY);
+                Value(*) linkname = DETAILS_AT(details, IDX_TCC_NATIVE_LINKNAME);
 
                 // !!! Frame(*) is not exported by libRebol, though it could be
                 // opaquely...and there could be some very narrow routines for
@@ -660,7 +660,7 @@ DECLARE_NATIVE(compile_p)
         Action(*) action = VAL_ACTION(TOP);  // stack will hold action live
         assert(Is_User_Native(action));  // can't cache stack pointer, extract
 
-        Array(*) details = ACT_DETAILS(action);
+        Details(*) details = ACT_DETAILS(action);
         REBVAL *linkname = DETAILS_AT(details, IDX_TCC_NATIVE_LINKNAME);
 
         char *name_utf8 = rebSpell("ensure text!", linkname);
@@ -679,7 +679,7 @@ DECLARE_NATIVE(compile_p)
         memcpy(&c_func, &sym, sizeof(c_func));
 
         INIT_ACT_DISPATCHER(action, c_func);
-        Copy_Cell(ARR_AT(details, IDX_TCC_NATIVE_STATE), handle);
+        Copy_Cell(DETAILS_AT(details, IDX_TCC_NATIVE_STATE), handle);
 
         DROP();
     }

@@ -63,7 +63,7 @@ Bounce Yielder_Dispatcher(Frame(*) f)
     Frame(*) frame_ = f;  // for RETURN macros
 
     Action(*) phase = FRM_PHASE(f);
-    Array(*) details = ACT_DETAILS(phase);
+    Details(*) details = ACT_DETAILS(phase);
     Value(*) mode = DETAILS_AT(details, IDX_YIELDER_MODE);
 
     switch (STATE) {
@@ -132,7 +132,7 @@ Bounce Yielder_Dispatcher(Frame(*) f)
     // in the stack walk.
     //
     Context(*) last_yielder_context = VAL_CONTEXT(
-        ARR_AT(details, IDX_YIELDER_LAST_YIELDER_CONTEXT)
+        DETAILS_AT(details, IDX_YIELDER_LAST_YIELDER_CONTEXT)
     );
 
     // We want the identity of the old varlist to replace this yielder's
@@ -189,7 +189,7 @@ Bounce Yielder_Dispatcher(Frame(*) f)
     f->varlist = CTX_VARLIST(last_yielder_context);
     f->rootvar = m_cast(REBVAL*, CTX_ARCHETYPE(last_yielder_context));  // must match
 
-    Value(*) plug = SPECIFIC(ARR_AT(details, IDX_YIELDER_PLUG));
+    Value(*) plug = DETAILS_AT(details, IDX_YIELDER_PLUG);
     Replug_Stack(yield_frame, yielder_frame, plug);
     assert(IS_TRASH(plug));  // Replug trashes, make GC safe
 
@@ -199,7 +199,7 @@ Bounce Yielder_Dispatcher(Frame(*) f)
     // Note special trick used to encode END inside an array by means of
     // using the hidden identity of the details array itself.
     //
-    Value(*) out_copy = SPECIFIC(ARR_AT(details, IDX_YIELDER_OUT));
+    Value(*) out_copy = DETAILS_AT(details, IDX_YIELDER_OUT);
     Move_Cell(yielder_frame->out, out_copy);
 
     // We could make YIELD appear to return a VOID! when we jump back in
@@ -208,7 +208,7 @@ Bounce Yielder_Dispatcher(Frame(*) f)
     //
     Move_Cell(
         yield_frame->out,
-        SPECIFIC(ARR_AT(details, IDX_YIELDER_LAST_YIELD_RESULT))
+        DETAILS_AT(details, IDX_YIELDER_LAST_YIELD_RESULT)
     );
 
     // If the yielder actually reaches its end (instead of YIELD-ing)
@@ -228,10 +228,10 @@ Bounce Yielder_Dispatcher(Frame(*) f)
 
     // Clean up all the details fields so the GC can reclaim the memory
     //
-    Init_Trash(ARR_AT(details, IDX_YIELDER_LAST_YIELDER_CONTEXT));
-    Init_Trash(ARR_AT(details, IDX_YIELDER_LAST_YIELD_RESULT));
-    Init_Trash(ARR_AT(details, IDX_YIELDER_PLUG));
-    Init_Trash(ARR_AT(details, IDX_YIELDER_OUT));
+    Init_Trash(DETAILS_AT(details, IDX_YIELDER_LAST_YIELDER_CONTEXT));
+    Init_Trash(DETAILS_AT(details, IDX_YIELDER_LAST_YIELD_RESULT));
+    Init_Trash(DETAILS_AT(details, IDX_YIELDER_PLUG));
+    Init_Trash(DETAILS_AT(details, IDX_YIELDER_OUT));
 
  /*   if (Is_Throwing(f)) {
         if (IS_ERROR(VAL_THROWN_LABEL(f->out))) {
@@ -288,14 +288,14 @@ DECLARE_NATIVE(yielder)
     );
     rebRelease(body);
 
-    Array(*) details = ACT_DETAILS(yielder);
+    Details(*) details = ACT_DETAILS(yielder);
 
     assert(IS_BLOCK(ARR_AT(details, IDX_YIELDER_BODY)));
-    Init_Blank(ARR_AT(details, IDX_YIELDER_MODE));  // starting
-    Init_Trash(ARR_AT(details, IDX_YIELDER_LAST_YIELDER_CONTEXT));
-    Init_Trash(ARR_AT(details, IDX_YIELDER_LAST_YIELD_RESULT));
-    Init_Trash(ARR_AT(details, IDX_YIELDER_PLUG));
-    Init_Trash(ARR_AT(details, IDX_YIELDER_OUT));
+    Init_Blank(DETAILS_AT(details, IDX_YIELDER_MODE));  // starting
+    Init_Trash(DETAILS_AT(details, IDX_YIELDER_LAST_YIELDER_CONTEXT));
+    Init_Trash(DETAILS_AT(details, IDX_YIELDER_LAST_YIELD_RESULT));
+    Init_Trash(DETAILS_AT(details, IDX_YIELDER_PLUG));
+    Init_Trash(DETAILS_AT(details, IDX_YIELDER_OUT));
 
     return Init_Activation(OUT, yielder, ANONYMOUS, UNBOUND);
 }

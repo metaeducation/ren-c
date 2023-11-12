@@ -40,7 +40,7 @@ Intrinsic* Extract_Intrinsic(Action(*) action)
 {
     assert(ACT_DISPATCHER(action) == &Intrinsic_Dispatcher);
 
-    Array(*) details = ACT_DETAILS(action);
+    Details(*) details = ACT_DETAILS(action);
     assert(ARR_LEN(details) >= IDX_INTRINSIC_MAX);  // e.g. typecheck uses more
 
     Cell(*) handle = DETAILS_AT(details, IDX_INTRINSIC_CFUNC);
@@ -130,8 +130,8 @@ Action(*) Make_Native(
             IDX_INTRINSIC_MAX  // details array capacity
         );
 
-        Array(*) details = ACT_DETAILS(native);
-        Init_Handle_Cfunc(ARR_AT(details, IDX_INTRINSIC_CFUNC), cfunc);
+        Details(*) details = ACT_DETAILS(native);
+        Init_Handle_Cfunc(DETAILS_AT(details, IDX_INTRINSIC_CFUNC), cfunc);
     }
     else {
         native = Make_Action(
@@ -140,10 +140,14 @@ Action(*) Make_Native(
             cast(Dispatcher*, cfunc),  // dispatcher is unique to this native
             IDX_NATIVE_MAX  // details array capacity
         );
-        Array(*) details = ACT_DETAILS(native);
 
-        Init_Blank(ARR_AT(details, IDX_NATIVE_BODY));
-        Copy_Cell(ARR_AT(details, IDX_NATIVE_CONTEXT), CTX_ARCHETYPE(module));
+        Details(*) details = ACT_DETAILS(native);
+
+        Init_Blank(DETAILS_AT(details, IDX_NATIVE_BODY));
+        Copy_Cell(
+            DETAILS_AT(details, IDX_NATIVE_CONTEXT),
+            CTX_ARCHETYPE(module)
+        );
 
         Set_Action_Flag(native, IS_NATIVE);
     }

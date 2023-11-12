@@ -74,7 +74,7 @@ enum {
 // tweak them (e.g. ADAPT).
 //
 Bounce Reorderer_Dispatcher(Frame(*) f) {
-    Array(*) details = ACT_DETAILS(FRM_PHASE(f));
+    Details(*) details = ACT_DETAILS(FRM_PHASE(f));
     assert(ARR_LEN(details) == IDX_REORDERER_MAX);
 
     REBVAL *reorderee = DETAILS_AT(details, IDX_REORDERER_REORDEREE);
@@ -239,7 +239,7 @@ DECLARE_NATIVE(reorder_p)  // see REORDER in %base-defs.r, for inheriting meta
         IDX_REORDERER_MAX
     );
 
-    Array(*) details = ACT_DETAILS(reordered);
+    Details(*) details = ACT_DETAILS(reordered);
     Copy_Cell(DETAILS_AT(details, IDX_REORDERER_REORDEREE), ARG(original));
 
     return Init_Activation(OUT, reordered, label, UNBOUND);

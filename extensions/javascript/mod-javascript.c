@@ -701,8 +701,8 @@ Bounce JavaScript_Dispatcher(Frame(*) frame_)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    Array(*) details = ACT_DETAILS(FRM_PHASE(f));
-    bool is_awaiter = VAL_LOGIC(ARR_AT(details, IDX_JS_NATIVE_IS_AWAITER));
+    Details(*) details = ACT_DETAILS(FRM_PHASE(f));
+    bool is_awaiter = VAL_LOGIC(DETAILS_AT(details, IDX_JS_NATIVE_IS_AWAITER));
 
     struct Reb_Promise_Info *info = PG_Promises;
     if (is_awaiter) {
@@ -830,13 +830,13 @@ DECLARE_NATIVE(js_native)
 
     heapaddr_t native_id = Native_Id_For_Action(native);
 
-    Array(*) details = ACT_DETAILS(native);
+    Details(*) details = ACT_DETAILS(native);
 
     if (Is_Series_Frozen(VAL_SERIES(source)))
-        Copy_Cell(ARR_AT(details, IDX_NATIVE_BODY), source);  // no copy
+        Copy_Cell(DETAILS_AT(details, IDX_NATIVE_BODY), source);  // no copy
     else {
         Init_Text(
-            ARR_AT(details, IDX_NATIVE_BODY),
+            DETAILS_AT(details, IDX_NATIVE_BODY),
             Copy_String_At(source)  // might change
         );
     }
@@ -844,7 +844,7 @@ DECLARE_NATIVE(js_native)
     // !!! A bit wasteful to use a whole cell for this--could just be whether
     // the ID is positive or negative.  Keep things clear, optimize later.
     //
-    Init_Logic(ARR_AT(details, IDX_JS_NATIVE_IS_AWAITER), REF(awaiter));
+    Init_Logic(DETAILS_AT(details, IDX_JS_NATIVE_IS_AWAITER), REF(awaiter));
 
     // The generation of the function called by JavaScript.  It takes no
     // arguments, as giving it arguments would make calling it more complex
@@ -948,10 +948,10 @@ DECLARE_NATIVE(js_native)
     // look for bindings.  For the moment, set user natives to use the user
     // context...it could be a parameter of some kind (?)
     //
-    Copy_Cell(ARR_AT(details, IDX_NATIVE_CONTEXT), User_Context_Value);
+    Copy_Cell(DETAILS_AT(details, IDX_NATIVE_CONTEXT), User_Context_Value);
 
     Init_Handle_Cdata_Managed(
-        ARR_AT(details, IDX_JS_NATIVE_OBJECT),
+        DETAILS_AT(details, IDX_JS_NATIVE_OBJECT),
         ACT_KEYLIST(native),
         0,
         &cleanup_js_object
