@@ -693,3 +693,12 @@ inline static Cell(*) Deactivate_If_Activation(Cell(*) v) {
         mutable_QUOTE_BYTE(v) = UNQUOTED_1;
     return v;
 }
+
+
+inline static bool Is_Enfixed(noquote(Cell(const*)) v) {
+    assert(HEART_BYTE(v) == REB_FRAME);
+    return Get_Cell_Flag_Unchecked(v, ENFIX_FRAME);
+}
+
+#define Not_Enfixed(v) \
+    (not Is_Enfixed(v))

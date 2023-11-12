@@ -280,7 +280,7 @@
 [
     (
         medium: func [':x <with> got] [got: :x, return 1000]
-        Lmedium: enfixed :medium
+        Lmedium: enfix :medium
 
         got: null
         test: lambda [expr [block!]] [
@@ -316,7 +316,7 @@
 [
     (
         soft: lambda [:x <with> got] [got: :x, 1000]
-        Lsoft: enfixed :soft
+        Lsoft: enfix :soft
 
         got: null
         test: func [expr [block!]] [

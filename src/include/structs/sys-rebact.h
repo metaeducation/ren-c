@@ -104,13 +104,9 @@
     SERIES_FLAG_29
 
 
-//=//// DETAILS_FLAG_ENFIXED //////////////////////////////////////////////=//
+//=//// DETAILS_FLAG_30 ///////////////////////////////////////////////////=//
 //
-// An enfix function gets its first argument from its left.  For a time, this
-// was the property of a binding and not an ACTION! itself.  This was an
-// attempt at simplification which caused more problems than it solved.
-//
-#define DETAILS_FLAG_ENFIXED \
+#define DETAILS_FLAG_30 \
     SERIES_FLAG_30
 
 

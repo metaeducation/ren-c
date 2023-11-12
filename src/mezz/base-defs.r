@@ -62,28 +62,15 @@ probe: func* [
 
 ??: runs :probe  ; shorthand for debug sessions, not intended to be committed
 
-
-; The pattern `foo: enfix function [...] [...]` is probably more common than
-; enfixing an existing function, e.g. `foo: enfix :add`.  Hence making a
-; COPY of the ACTION! identity is probably a waste.  It may be better to go
-; with mutability-by-default, so `foo: enfix copy unrun :add` would avoid the
-; mutation.  However, it could also be that the function spec dialect gets
-; a means to specify enfixedness.  See:
-;
-; https://forum.rebol.info/t/moving-enfixedness-back-into-the-action/1156
-;
-enfixed: chain* reduce [unrun :unrun, unrun :copy, unrun :enfix]
-
-
 ; Pre-decaying specializations for DID, DIDN'T, THEN, ELSE, ALSO
 ;
 ; https://forum.rebol.info/t/why-then-and-else-are-mutually-exclusive/1080/9
 ;
 did*: runs :did/decay
 didn't*: runs :didn't/decay
-*then: enfixed :then/decay
-*also: enfixed :also/decay
-*else: enfixed :else/decay
+*then: enfix :then/decay
+*also: enfix :also/decay
+*else: enfix :else/decay
 
 ; Give special operations their special properties
 ;
@@ -104,19 +91,19 @@ tweak :*else 'defer on
 ;
 ; Note that `/` is rather trickily not a PATH!, but a decayed form as a WORD!
 
-+: enfixed :add
--: enfixed :subtract
-*: enfixed :multiply
-/: enfixed :divide
++: enfix :add
+-: enfix :subtract
+*: enfix :multiply
+/: enfix :divide
 
 
 ; SET OPERATORS
 
 not+: runs :bitwise-not
-and+: enfixed :bitwise-and
-or+: enfixed :bitwise-or
-xor+: enfixed :bitwise-xor
-and-not+: enfixed :bitwise-and-not
+and+: enfix :bitwise-and
+or+: enfix :bitwise-or
+xor+: enfix :bitwise-xor
+and-not+: enfix :bitwise-and-not
 
 
 ; COMPARISON OPERATORS
@@ -124,17 +111,17 @@ and-not+: enfixed :bitwise-and-not
 ; !!! See discussion about the future of comparison operators:
 ; https://forum.rebol.info/t/349
 
-=: enfixed :equal?
-<>: enfixed :not-equal?
-<: enfixed :lesser?
->: enfixed :greater?
+=: enfix :equal?
+<>: enfix :not-equal?
+<: enfix :lesser?
+>: enfix :greater?
 
 ; "Official" forms of the comparison operators.  This is what we would use
 ; if starting from scratch, and didn't have to deal with expectations people
 ; have coming from other languages: https://forum.rebol.info/t/349/
 ;
->=: enfixed :greater-or-equal?
-=<: enfixed :equal-or-lesser?
+>=: enfix :greater-or-equal?
+=<: enfix :equal-or-lesser?
 
 ; Compatibility Compromise: sacrifice what looks like left and right arrows
 ; for usage as comparison, even though the perfectly good `=<` winds up
@@ -143,14 +130,14 @@ and-not+: enfixed :bitwise-and-not
 ;
 equal-or-greater?: runs :greater-or-equal?
 lesser-or-equal?: runs :equal-or-lesser?
-=>: enfixed :equal-or-greater?
-<=: enfixed :lesser-or-equal?
+=>: enfix :equal-or-greater?
+<=: enfix :lesser-or-equal?
 
-!=: enfixed :not-equal?  ; http://www.rebol.net/r3blogs/0017.html
-==: enfixed :strict-equal?  ; !!! https://forum.rebol.info/t/349
-!==: enfixed :strict-not-equal?  ; !!! bad pairing, most would think !=
+!=: enfix :not-equal?  ; http://www.rebol.net/r3blogs/0017.html
+==: enfix :strict-equal?  ; !!! https://forum.rebol.info/t/349
+!==: enfix :strict-not-equal?  ; !!! bad pairing, most would think !=
 
-=?: enfixed :same?
+=?: enfix :same?
 
 
 ; Common "Invisibles"
@@ -296,7 +283,7 @@ requote: reframer lambda [
 ; If <end> is used, e.g. `x: -> [print "hi"]` then this will act like DOES.
 ; (It's still up in the air whether DOES has different semantics or not.)
 ;
-->: enfixed lambda [
+->: enfix lambda [
     'words "Names of arguments (will not be type checked)"
         [<skip> word! lit-word! meta-word! refinement! block! group!]
     body "Code to execute"

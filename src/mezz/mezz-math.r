@@ -54,8 +54,8 @@ modulo: func [
     return r
 ]
 
-mod: enfixed :modulo
-pow: enfixed :power
+mod: enfix :modulo
+pow: enfix :power
 
 sign-of: func [
     "Returns sign of number as 1, 0, or -1 (to use as multiplier)."

@@ -202,17 +202,14 @@
 // a single cell.  It assumes that if the node flavor is FLAVOR_SYMBOL then
 // the nonblank thing is a WORD!.
 //
-// !!! Thought: Could FRAME! use this bit to encode when the frame is actually
-// a frame for the IDENTITY, and the value is just something that came from
-// `make frame! ^ 10` or similar?  It would weave a bit of a tangled web for
-// things like `action of f` for such frames.  Still might be worth it to
-// lie, and that way you could make ACTION!s and FRAME!s which were really
-// just QUOTED!s under the hood.
+// FRAME! uses this to encode enfixedness for actions
 //
 #define CELL_FLAG_TYPE_SPECIFIC \
     FLAG_LEFT_BIT(25)
 
 #define CELL_FLAG_REFINEMENT_LIKE   CELL_FLAG_TYPE_SPECIFIC  // ANY-SEQUENCE!
+
+#define CELL_FLAG_ENFIX_FRAME   CELL_FLAG_TYPE_SPECIFIC  // FRAME!
 
 
 //=//// CELL_FLAG_26 ///////////////////////////////////////////////////////=//

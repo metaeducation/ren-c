@@ -1019,7 +1019,7 @@ grab: enfix func [
     return set left result  ; must manually assign if SET-WORD! overridden
 ]
 
-grab-int: enfixed enclose :grab lambda [f [frame!]] [
+grab-int: enfix enclose :grab lambda [f [frame!]] [
     set f.left (debin [be +] do copy f)
 ]
 

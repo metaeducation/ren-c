@@ -13,7 +13,7 @@
     (nihil' = detector (comment "hi"))
     (null = detector)
 
-    (did left-detector: enfixed :detector)
+    (did left-detector: enfix :detector)
 
     ((the '1) = (1 left-detector))
     (null = left-detector)

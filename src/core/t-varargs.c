@@ -78,7 +78,7 @@ inline static bool Vararg_Op_If_No_Advance_Handled(
         const REBVAL *child_gotten = try_unwrap(Lookup_Word(look, specifier));
 
         if (child_gotten and Is_Activation(child_gotten)) {
-            if (Get_Action_Flag(VAL_ACTION(child_gotten), ENFIXED)) {
+            if (Is_Enfixed(child_gotten)) {
                 if (
                     pclass == PARAM_CLASS_NORMAL or
                     Get_Action_Flag(VAL_ACTION(child_gotten), DEFERS_LOOKBACK)

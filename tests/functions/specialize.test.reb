@@ -187,7 +187,7 @@
         foo: function [/a [integer!] '/b [<skip> word!]] [
             return reduce [/A (reify a) /B (reify b)]
         ]
-        foob: enfixed :foo/b
+        foob: enfix :foo/b
         true
     )
 

@@ -453,12 +453,8 @@ Bounce Evaluator_Executor(Frame(*) f)
     } else
         goto give_up_backward_quote_priority;
 
-    if (
-        not Is_Frame_Details(unwrap(f_next_gotten)) or
-        Not_Action_Flag(VAL_ACTION(unwrap(f_next_gotten)), ENFIXED)
-    ){
+    if (Not_Enfixed(unwrap(f_next_gotten)))
         goto give_up_backward_quote_priority;
-    }
 
   blockscope {
     Action(*) enfixed = VAL_ACTION(unwrap(f_next_gotten));
@@ -663,7 +659,7 @@ Bounce Evaluator_Executor(Frame(*) f)
             VAL_ACTION(f_current),
             VAL_ACTION_BINDING(f_current)
         );
-        bool enfix = Get_Action_Flag(VAL_ACTION(f_current), ENFIXED);
+        bool enfix = Is_Enfixed(f_current);
         assert(Is_Fresh(OUT));  // so nothing on left, see [1]
         Begin_Action_Core(subframe, VAL_ACTION_LABEL(f_current), enfix);
 
@@ -717,7 +713,7 @@ Bounce Evaluator_Executor(Frame(*) f)
         if (Is_Activation(unwrap(f_current_gotten))) {
             Action(*) action = VAL_ACTION(unwrap(f_current_gotten));
 
-            if (Get_Action_Flag(action, ENFIXED)) {
+            if (Is_Enfixed(unwrap(f_current_gotten))) {
                 if (
                     Get_Action_Flag(action, POSTPONES_ENTIRELY)
                     or Get_Action_Flag(action, DEFERS_LOOKBACK)
@@ -733,9 +729,9 @@ Bounce Evaluator_Executor(Frame(*) f)
 
             Context(*) binding = VAL_ACTION_BINDING(unwrap(f_current_gotten));
             Symbol(const*) label = VAL_WORD_SYMBOL(f_current);  // use WORD!
-            bool enfixed;
+            bool enfixed = Is_Enfixed(unwrap(f_current_gotten));
             if (Get_Eval_Executor_Flag(f, DIDNT_LEFT_QUOTE_TUPLE)) {
-                if (Get_Action_Flag(action, ENFIXED)) {
+                if (enfixed) {
                     assert(false);  // !!! want OUT as *right* hand side...
                     enfixed = true;
                 }
@@ -744,8 +740,6 @@ Bounce Evaluator_Executor(Frame(*) f)
 
                 Clear_Eval_Executor_Flag(f, DIDNT_LEFT_QUOTE_TUPLE);
             }
-            else
-                enfixed = Get_Action_Flag(action, ENFIXED);
 
             if (
                 not enfixed  // too rare a case for intrinsic optimization
@@ -759,6 +753,8 @@ Bounce Evaluator_Executor(Frame(*) f)
                 Flags flags = EVAL_EXECUTOR_FLAG_FULFILLING_ARG;
                 if (VAL_PARAM_CLASS(param) == PARAM_CLASS_META)
                     flags |= FRAME_FLAG_FAILURE_RESULT_OK;
+
+                Clear_Feed_Flag(f->feed, NO_LOOKAHEAD);  // when non-enfix call
 
                 if (Did_Init_Inert_Optimize_Complete(SPARE, f->feed, &flags))
                     goto intrinsic_in_scratch_arg_in_spare;
@@ -977,8 +973,7 @@ Bounce Evaluator_Executor(Frame(*) f)
             goto return_thrown;
 
         if (Is_Activation(SCRATCH)) {
-            Action(*) act = VAL_ACTION(SCRATCH);
-
+            //
             // PATH! dispatch is costly and can error in more ways than WORD!:
             //
             //     e: trap [do make block! ":a"] e.id = 'not-bound
@@ -986,7 +981,7 @@ Bounce Evaluator_Executor(Frame(*) f)
             //
             // Plus with GROUP!s in a path, their evaluations can't be undone.
             //
-            if (Get_Action_Flag(act, ENFIXED))
+            if (Is_Enfixed(SCRATCH))
                 fail ("Use `>-` to shove left enfix operands into PATH!s");
 
             Frame(*) subframe = Make_Action_Subframe(f);
@@ -1071,7 +1066,7 @@ Bounce Evaluator_Executor(Frame(*) f)
         //
         // Plus with GROUP!s in a path, their evaluations can't be undone.
         //
-        if (Get_Action_Flag(VAL_ACTION(SPARE), ENFIXED)) {
+        if (Is_Enfixed(SPARE)) {
             Drop_Data_Stack_To(BASELINE->stack_base);
             fail ("Use `>-` to shove left enfix operands into PATH!s");
         }
@@ -1906,7 +1901,7 @@ Bounce Evaluator_Executor(Frame(*) f)
             not (IS_WORD(f_next) and Is_Activation(unwrap(f_next_gotten)))
             and not IS_ACTION(f_next)
         )
-        or Not_Action_Flag(VAL_ACTION(unwrap(f_next_gotten)), ENFIXED)
+        or Not_Enfixed(unwrap(f_next_gotten))
     ){
       lookback_quote_too_late: // run as if starting new expression
 

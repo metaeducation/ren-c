@@ -177,22 +177,22 @@
 ; Non-variadic
 [
     (
-        left-normal: enfixed right-normal:
+        left-normal: enfix right-normal:
             func [return: [<opt> word!] x [word!]] [return x]
-        left-normal*: enfixed right-normal*:
+        left-normal*: enfix right-normal*:
             func [return: [<opt> word!] x [word! <end>]] [return x]
 
-        left-defer: enfixed tweak (copy unrun :left-normal) 'defer on
-        left-defer*: enfixed tweak (copy unrun :left-normal*) 'defer on
+        left-defer: enfix tweak (copy unrun :left-normal) 'defer on
+        left-defer*: enfix tweak (copy unrun :left-normal*) 'defer on
 
-        left-soft: enfixed right-soft:
+        left-soft: enfix right-soft:
             func [return: [<opt> word!] 'x [word!]] [return x]
-        left-soft*: enfixed right-soft*:
+        left-soft*: enfix right-soft*:
             func [return: [<opt> word!] 'x [word! <end>]] [return x]
 
-        left-hard: enfixed right-hard:
+        left-hard: enfix right-hard:
             func [return: [<opt> word!] :x [word!]] [return x]
-        left-hard*: enfixed right-hard*:
+        left-hard*: enfix right-hard*:
             func [return: [<opt> word!] :x [word! <end>]] [return x]
 
         true
@@ -238,32 +238,32 @@
 ; Variadic
 [
     (
-        left-normal: enfixed right-normal:
+        left-normal: enfix right-normal:
             func [return: [<opt> word!] x [word! <variadic>]] [
                 return take x
             ]
-        left-normal*: enfixed right-normal*:
+        left-normal*: enfix right-normal*:
             func [return: [<opt> word!] x [word! <variadic> <end>]] [
                 return try take x
             ]
 
-        left-defer: enfixed tweak (copy unrun :left-normal) 'defer on
-        left-defer*: enfixed tweak (copy unrun :left-normal*) 'defer on
+        left-defer: enfix tweak (copy unrun :left-normal) 'defer on
+        left-defer*: enfix tweak (copy unrun :left-normal*) 'defer on
 
-        left-soft: enfixed right-soft:
+        left-soft: enfix right-soft:
             func [return: [<opt> word!] 'x [word! <variadic>]] [
                 return take x
             ]
-        left-soft*: enfixed right-soft*:
+        left-soft*: enfix right-soft*:
             func [return: [<opt> word!] 'x [word! <variadic> <end>]] [
                 return try take x
             ]
 
-        left-hard: enfixed right-hard:
+        left-hard: enfix right-hard:
             func [return: [<opt> word!] :x [word! <variadic>]] [
                 return take x
             ]
-        left-hard*: enfixed right-hard*:
+        left-hard*: enfix right-hard*:
             func [return: [<opt> word!] :x [word! <variadic> <end>]] [
                 return try take x
             ]

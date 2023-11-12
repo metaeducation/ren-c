@@ -183,7 +183,7 @@ inline static bool Did_Init_Inert_Optimize_Complete(
             goto optimized;  // not action
         }
 
-        if (Not_Action_Flag(VAL_ACTION(unwrap(feed->gotten)), ENFIXED)) {
+        if (Not_Enfixed(unwrap(feed->gotten))) {
             Clear_Feed_Flag(feed, NO_LOOKAHEAD);
             goto optimized;  // not enfixed
         }

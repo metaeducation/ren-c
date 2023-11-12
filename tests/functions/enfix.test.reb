@@ -1,10 +1,10 @@
 ; %enfix.test.reb
 
 (isotope! = kind of :+)
-(true = enfixed? :+)
+(true = enfix? :+)
 
-(enfixed? :+)
-~expect-arg~ !! (enfixed? 1)
+(enfix? :+)
+~expect-arg~ !! (enfix? 1)
 (activation? get '+)
 
 ; #1934
@@ -15,21 +15,21 @@
 (
     foo: :+
     did all [
-        enfixed? :foo
+        enfix? :foo
         3 = (1 foo 2)
     ]
 )
 (
-    set 'foo enfixed :add
+    set 'foo enfix :add
     did all [
-        enfixed? :foo
+        enfix? :foo
         1 foo 2 = 3
     ]
 )
 (
-    set 'postfix-thing enfixed lambda [x] [x * 2]
+    set 'postfix-thing enfix lambda [x] [x * 2]
     all [
-       enfixed? :postfix-thing
+       enfix? :postfix-thing
        20 = (10 postfix-thing)
     ]
 )
@@ -45,7 +45,7 @@
 [
     (
         skippy: lambda ['x [<skip> integer!] y] [reduce [any [x _] y]]
-        lefty: enfixed :skippy
+        lefty: enfix :skippy
         true
     )
 
@@ -107,7 +107,7 @@
 ; SHOVE should be able to handle refinements and contexts.
 [
     (did obj: make object! [
-        magic: enfixed lambda [a b /minus] [
+        magic: enfix lambda [a b /minus] [
             either minus [a - b] [a + b]
         ]
     ])
@@ -123,7 +123,7 @@
 
 [
     (
-        left-the: enfixed :the
+        left-the: enfix :the
         o: make object! [i: 10 f: does [20]]
         true
     )
@@ -224,7 +224,7 @@
             pos == [foo 304]
         ]
     )(
-        enfoo: enfixed func [] [return <enfoo>]
+        enfoo: enfix func [] [return <enfoo>]
         did all [
             <enfoo> == evaluate/next [1020 enfoo 304] 'pos
             pos = [304]
@@ -249,7 +249,7 @@
             ]
         ]
     )(
-        enifoo: enfixed func ['i [<skip> integer!]] [
+        enifoo: enfix func ['i [<skip> integer!]] [
             fail [
                 {enifoo should not run; when arguments are skipped this}
                 {defers the enfix until the next evaluator step.  Otherwise}
@@ -270,7 +270,7 @@
             ]
         ]
     )(
-        enifoo: enfixed lambda ['i [<skip> integer!]] [compose '<enifoo>/(i)]
+        enifoo: enfix lambda ['i [<skip> integer!]] [compose '<enifoo>/(i)]
         did all [
             did all [
                 var: evaluate/next [1020 enifoo 304] 'pos
@@ -296,7 +296,7 @@
         ]
         comment {Invisible normal arity-0 function should run on next eval}
     )(
-        enbar: enfixed func [left] [enbar: null, return left]
+        enbar: enfix func [left] [enbar: null, return left]
         did all [
             var: evaluate/next [1020 enbar 304] 'pos
             pos = [304]
@@ -322,7 +322,7 @@
             comment {skip irrelevant (tests right on *next* step)}
         ]
     )(
-        enibar: enfixed func [return: <void> 'i [<skip> integer!]] [
+        enibar: enfix func [return: <void> 'i [<skip> integer!]] [
             fail {
                 When arguments are skipped, this defers the enfix until the
                 next evaluator step.  Doing otherwise would mean that
@@ -343,7 +343,7 @@
             ]
         ]
     )(
-        enibar: enfixed func [return: [integer!] 'i [<skip> integer!]] [
+        enibar: enfix func [return: [integer!] 'i [<skip> integer!]] [
             enibar: null
             return i
         ]
@@ -368,12 +368,12 @@
 [
     (
         rightq: lambda [:x] [compose [<rightq> was (x)]]
-        leftq: enfixed lambda [:y] [compose [<leftq> was (y)]]
+        leftq: enfix lambda [:y] [compose [<leftq> was (y)]]
 
         [<rightq> was [<leftq> was foo]] = rightq foo leftq
     )(
         rightq: lambda [:x] [compose [<rightq> was (x)]]
-        leftq: enfixed lambda ['y] [compose [<leftq> was (y)]]
+        leftq: enfix lambda ['y] [compose [<leftq> was (y)]]
 
         [<rightq> was [<leftq> was foo]] = rightq foo leftq
     )

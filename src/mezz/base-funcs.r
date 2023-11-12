@@ -551,9 +551,9 @@ curtail: reframer func [
 ;    >> 10 >-- lib.+ 2 * 3  ; as if you wrote `add 1 2 * 3`
 ;    == 7
 ;
->-: enfixed :shove
->--: enfixed specialize :>- [prefix: true]
-->-: enfixed specialize :>- [prefix: false]
+>-: enfix :shove
+>--: enfix specialize :>- [prefix: true]
+->-: enfix specialize :>- [prefix: false]
 
 
 ; The -- and ++ operators were deemed too "C-like", so ME was created to allow
@@ -561,7 +561,7 @@ curtail: reframer func [
 ; code with SHOVE, but are currently done using macro due to unfinished binding
 ; semantics in SHOVE pertaining to fetched values.
 
-me: enfixed redescribe [
+me: enfix redescribe [
     {Update variable using it as the left hand argument to an enfix operator}
 ](
     macro ['left [set-word! set-tuple!] 'right [word! tuple! path!]] [
@@ -569,7 +569,7 @@ me: enfixed redescribe [
     ]
 )
 
-my: enfixed redescribe [
+my: enfix redescribe [
     {Update variable using it as the first argument to a prefix operator}
 ](
     macro ['left [set-word! set-tuple!] 'right [word! tuple! path!]] [
@@ -577,7 +577,7 @@ my: enfixed redescribe [
     ]
 )
 
-so: enfixed func [
+so: enfix func [
     {Postfix assertion which won't keep running if left expression is false}
 
     return: [<opt> <void> any-value!]
@@ -599,7 +599,7 @@ so: enfixed func [
 tweak :so 'postpone on
 
 
-was: enfixed redescribe [
+was: enfix redescribe [
     "Assert that the left hand side--when fully evaluated--IS the right"
 ](
     lambda [left [<opt> any-value!] right [<opt> any-value!]] [
@@ -894,7 +894,7 @@ eval-all: func [
 ; `return: <void>`) permit a more flexible version of the mechanic.
 
 |<\||: runs tweak copy unrun :eval-all 'postpone on
-|\|>|: runs tweak enfixed :shove 'postpone on
+|\|>|: runs tweak enfix copy :shove 'postpone on
 
 
 meth: enfix func [

@@ -59,7 +59,7 @@ DECLARE_NATIVE(reeval)
     bool enfix =
         IS_QUASI(v)
         and HEART_BYTE(v) == REB_FRAME
-        and Get_Action_Flag(VAL_ACTION(v), ENFIXED);
+        and Is_Enfixed(v);
 
     Flags flags = FRAME_MASK_NONE;
 
@@ -171,7 +171,7 @@ DECLARE_NATIVE(shove)
     if (REF(prefix))
         enfix = not VAL_LOGIC(ARG(prefix));
     else if (IS_ACTION(shovee))
-        enfix = Get_Action_Flag(VAL_ACTION(shovee), ENFIXED);
+        enfix = Is_Enfixed(shovee);
     else
         enfix = false;
 

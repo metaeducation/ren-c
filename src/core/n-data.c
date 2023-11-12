@@ -1610,7 +1610,7 @@ DECLARE_NATIVE(proxy_exports)
 
 
 //
-//  enfixed?: native [
+//  enfix?: native/intrinsic [
 //
 //  {TRUE if looks up to a function and gets first argument before the call}
 //
@@ -1618,43 +1618,49 @@ DECLARE_NATIVE(proxy_exports)
 //      frame [<unrun> frame!]
 //  ]
 //
-DECLARE_NATIVE(enfixed_q)
+DECLARE_INTRINSIC(enfix_q)
 {
-    INCLUDE_PARAMS_OF_ENFIXED_Q;
+    UNUSED(action);
 
-    return Init_Logic(
-        OUT,
-        Get_Action_Flag(VAL_ACTION(ARG(frame)), ENFIXED)
-    );
+    Init_Logic(out, Is_Enfixed(arg));
 }
 
 
 //
-//  enfix: native [
+//  enfix: native/intrinsic [
 //
-//  {For making enfix functions, e.g `+: enfixed :add` (copies)}
+//  {For making enfix functions, e.g `+: enfix :add`}
 //
 //      return: "Isotopic action"
 //          [isotope!]  ; [activation?] comes after ENFIX in bootstrap
 //      original [<unrun> frame!]
 //  ]
 //
-DECLARE_NATIVE(enfix)
+DECLARE_INTRINSIC(enfix)
 {
-    INCLUDE_PARAMS_OF_ENFIX;
+    UNUSED(action);
 
-    REBVAL *action = ARG(original);
+    Activatify(Copy_Cell(out, arg));
+    Set_Cell_Flag(out, ENFIX_FRAME);
+}
 
-    if (Get_Action_Flag(VAL_ACTION(action), ENFIXED))
-        fail (
-            "ACTION! is already enfixed (review callsite, enfix changed"
-            " https://forum.rebol.info/t/1156"
-        );
 
-    Set_Action_Flag(VAL_ACTION(action), ENFIXED);
+//
+//  unenfix: native/intrinsic [
+//
+//  {For removing enfixedness from functions (prefix is a common var name)}
+//
+//      return: "Isotopic action"
+//          [isotope!]  ; [activation?] comes after ENFIX in bootstrap
+//      original [<unrun> frame!]
+//  ]
+//
+DECLARE_INTRINSIC(unenfix)
+{
+    UNUSED(action);
 
-    Activatify(Copy_Cell(OUT, action));
-    return OUT;
+    Activatify(Copy_Cell(out, arg));
+    Clear_Cell_Flag(out, ENFIX_FRAME);
 }
 
 

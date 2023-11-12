@@ -44,11 +44,11 @@
 ; and slipped into the stream to be handled normally.
 [(
     saved: null
-    leftq: enfixed func ['x] [saved: x]
+    leftq: enfix func ['x] [saved: x]
     let [a 'b ''(c)]: leftq
     saved = the '[a b '(c)]:
 )(
-    leftq: enfixed func ['x] [saved: x]
+    leftq: enfix func ['x] [saved: x]
     saved: let [a 'b ''(c)]
     saved = [a b '(c)]
 )]

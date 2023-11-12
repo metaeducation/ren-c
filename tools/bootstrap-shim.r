@@ -786,7 +786,7 @@ match: func [
 ]
 
 
-meth: enfixed adapt :lib/meth [set [spec body] modernize-action spec body]
+meth: enfix adapt :lib/meth [set [spec body] modernize-action spec body]
 method: func3 [] [
     fail/where "METHOD deprecated temporarily, use METH" 'return
 ]

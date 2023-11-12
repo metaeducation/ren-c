@@ -231,7 +231,7 @@ help: function [
             ] then [
                 return nihil
             ]
-            enfixed: (activation? :value) and (enfixed? :value)
+            enfixed: (activation? :value) and (enfix? :value)
         ]
     ] else [
         ; !!! There may be interesting meanings to apply to things like

@@ -136,7 +136,7 @@ bool Lookahead_To_Sync_Enfix_Defer_Flag(Feed(*) feed) {
         return false;
     }
 
-    if (Not_Action_Flag(VAL_ACTION(unwrap(feed->gotten)), ENFIXED))
+    if (Not_Enfixed(unwrap(feed->gotten)))
         return false;
 
     if (Get_Action_Flag(VAL_ACTION(unwrap(feed->gotten)), DEFERS_LOOKBACK))

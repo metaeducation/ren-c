@@ -324,7 +324,7 @@ bool Specialize_Action_Throws(
     // !!! Needs handling for interaction with REORDER.
     //
     bool first_param = true;
-    bool enfix = Get_Action_Flag(VAL_ACTION(specializee), ENFIXED);
+    bool enfix = Is_Enfixed(specializee);
 
     for (; key != tail; ++key, ++param, ++arg) {
         if (Is_Specialized(param))
@@ -434,10 +434,10 @@ bool Specialize_Action_Throws(
     );
     assert(CTX_KEYLIST(exemplar) == ACT_KEYLIST(unspecialized));
 
-    if (enfix)  // incoming was enfix, and we didn't specialize out first arg
-        Set_Action_Flag(specialized, ENFIXED);
-
     Init_Activation(out, specialized, VAL_ACTION_LABEL(specializee), UNBOUND);
+
+    if (enfix)  // incoming was enfix, and we didn't specialize out first arg
+        Set_Cell_Flag(out, ENFIX_FRAME);
 
     return false;  // code block did not throw
 }
