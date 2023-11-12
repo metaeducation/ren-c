@@ -462,8 +462,9 @@ Bounce Evaluator_Executor(Frame(*) f)
 
   blockscope {
     Action(*) enfixed = VAL_ACTION(unwrap(f_next_gotten));
+    Array(*) paramlist = ACT_PARAMLIST(enfixed);
 
-    if (Not_Action_Flag(enfixed, QUOTES_FIRST))
+    if (Not_Subclass_Flag(VARLIST, paramlist, PARAMLIST_QUOTES_FIRST))
         goto give_up_backward_quote_priority;
 
     // If the action soft quotes its left, that means it's aware that its
@@ -500,7 +501,7 @@ Bounce Evaluator_Executor(Frame(*) f)
     // such that `case [condition [...] default [...]]` does not interfere
     // with the BLOCK! on the left, but `x: default [...]` gets the SET-WORD!
     //
-    if (Get_Action_Flag(enfixed, SKIPPABLE_FIRST)) {
+    if (Get_Subclass_Flag(VARLIST, paramlist, PARAMLIST_SKIPPABLE_FIRST)) {
         const REBPAR *first = First_Unspecialized_Param(nullptr, enfixed);
         if (not TYPE_CHECK(first, OUT)) {  // left's kind
             FRESHEN(OUT);
@@ -1922,8 +1923,9 @@ Bounce Evaluator_Executor(Frame(*) f)
 
   blockscope {
     Action(*) enfixed = VAL_ACTION(unwrap(f_next_gotten));
+    Array(*) paramlist = ACT_PARAMLIST(enfixed);
 
-    if (Get_Action_Flag(enfixed, QUOTES_FIRST)) {
+    if (Get_Subclass_Flag(VARLIST, paramlist, PARAMLIST_QUOTES_FIRST)) {
         //
         // Left-quoting by enfix needs to be done in the lookahead before an
         // evaluation, not this one that's after.  This happens in cases like:

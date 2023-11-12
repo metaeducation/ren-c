@@ -64,6 +64,38 @@
     SERIES_FLAG_24
 
 
+//=//// VARLIST_FLAG_PARAMLIST_QUOTES_FIRST ///////////////////////////////=//
+//
+// This is a calculated property, which is cached by Make_Action().
+//
+// This is another cached property, needed because lookahead/lookback is done
+// so frequently, and it's quicker to check a bit on the function than to
+// walk the parameter list every time that function is called.
+//
+#define VARLIST_FLAG_PARAMLIST_QUOTES_FIRST \
+    SERIES_FLAG_25
+
+
+//=//// VARLIST_FLAG_PARAMLIST_SKIPPABLE_FIRST ////////////////////////////=//
+//
+// This is a calculated property, which is cached by Make_Action().
+//
+// It is good for the evaluator to have a fast test for knowing if the first
+// argument to a function is willing to be skipped, as this comes into play
+// in quote resolution.  (It's why `x: default [10]` can have default looking
+// for SET-WORD! and SET-PATH! to its left, but `case [... default [x]]` can
+// work too when it doesn't see a SET-WORD! or SET-PATH! to the left.)
+//
+#define VARLIST_FLAG_PARAMLIST_SKIPPABLE_FIRST \
+    SERIES_FLAG_26
+
+
+// These are the flags which are scanned for and set during Make_Action
+//
+#define PARAMLIST_MASK_CACHED \
+    (PARAMLIST_FLAG_QUOTES_FIRST | PARAMLIST_FLAG_SKIPPABLE_FIRST)
+
+
 #define CELL_MASK_ANY_CONTEXT \
     (CELL_FLAG_FIRST_IS_NODE  /* varlist */ \
         | CELL_FLAG_SECOND_IS_NODE  /* phase (for FRAME!) */)

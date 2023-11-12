@@ -74,29 +74,15 @@
     SERIES_FLAG_26
 
 
-//=//// DETAILS_FLAG_QUOTES_FIRST /////////////////////////////////////////=//
+//=//// DETAILS_FLAG_27 ///////////////////////////////////////////////////=//
 //
-// This is a calculated property, which is cached by Make_Action().
-//
-// This is another cached property, needed because lookahead/lookback is done
-// so frequently, and it's quicker to check a bit on the function than to
-// walk the parameter list every time that function is called.
-//
-#define DETAILS_FLAG_QUOTES_FIRST \
+#define DETAILS_FLAG_27 \
     SERIES_FLAG_27
 
 
-//=//// DETAILS_FLAG_SKIPPABLE_FIRST //////////////////////////////////////=//
+//=//// DETAILS_FLAG_28 ///////////////////////////////////////////////////=//
 //
-// This is a calculated property, which is cached by Make_Action().
-//
-// It is good for the evaluator to have a fast test for knowing if the first
-// argument to a function is willing to be skipped, as this comes into play
-// in quote resolution.  (It's why `x: default [10]` can have default looking
-// for SET-WORD! and SET-PATH! to its left, but `case [... default [x]]` can
-// work too when it doesn't see a SET-WORD! or SET-PATH! to the left.)
-//
-#define DETAILS_FLAG_SKIPPABLE_FIRST \
+#define DETAILS_FLAG_28 \
     SERIES_FLAG_28
 
 
@@ -133,11 +119,6 @@
 #define DETAILS_FLAG_31 \
     SERIES_FLAG_31
 
-
-// These are the flags which are scanned for and set during Make_Action
-//
-#define DETAILS_MASK_CACHED \
-    (DETAILS_FLAG_QUOTES_FIRST | DETAILS_FLAG_SKIPPABLE_FIRST)
 
 // These flags should be copied when specializing or adapting.  They may not
 // be derivable from the paramlist (e.g. a native with no RETURN does not

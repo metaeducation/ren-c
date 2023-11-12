@@ -1028,13 +1028,6 @@ Action(*) Make_Action(
         INIT_VAL_FRAME_ROOTVAR(rootvar, paramlist, act, UNBOUND);
     }
 
-    // The exemplar needs to be frozen, it can't change after this point.
-    // You can't change the types or parameter conventions of an existing
-    // action...you have to make a new variation.  Note that the exemplar
-    // can be exposed by AS FRAME! of this action...
-    //
-    Freeze_Array_Shallow(paramlist);
-
     // Precalculate cached function flags.  This involves finding the first
     // unspecialized argument which would be taken at a callsite, which can
     // be tricky to figure out with partial refinement specialization.  So
@@ -1054,7 +1047,7 @@ Action(*) Make_Action(
           case PARAM_CLASS_SOFT:
           case PARAM_CLASS_MEDIUM:
           case PARAM_CLASS_HARD:
-            Set_Action_Flag(act, QUOTES_FIRST);
+            Set_Subclass_Flag(VARLIST, paramlist, PARAMLIST_QUOTES_FIRST);
             break;
 
           default:
@@ -1062,8 +1055,15 @@ Action(*) Make_Action(
         }
 
         if (GET_PARAM_FLAG(first, SKIPPABLE))
-            Set_Action_Flag(act, SKIPPABLE_FIRST);
+            Set_Subclass_Flag(VARLIST, paramlist, PARAMLIST_SKIPPABLE_FIRST);
     }
+
+    // The exemplar needs to be frozen, it can't change after this point.
+    // You can't change the types or parameter conventions of an existing
+    // action...you have to make a new variation.  Note that the exemplar
+    // can be exposed by AS FRAME! of this action...
+    //
+    Freeze_Array_Shallow(paramlist);
 
     return act;
 }

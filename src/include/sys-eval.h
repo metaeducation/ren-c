@@ -189,7 +189,11 @@ inline static bool Did_Init_Inert_Optimize_Complete(
         }
 
         Action(*) action = VAL_ACTION(unwrap(feed->gotten));
-        if (Get_Action_Flag(action, QUOTES_FIRST)) {
+        if (Get_Subclass_Flag(
+            VARLIST,
+            ACT_PARAMLIST(action),
+            PARAMLIST_QUOTES_FIRST
+        )) {
             //
             // Quoting defeats NO_LOOKAHEAD but only on soft quotes.
             //
@@ -223,7 +227,11 @@ inline static bool Did_Init_Inert_Optimize_Complete(
         // quoted and skippable, that the skip check has already been done.
         // So we have to do that check here.
         //
-        if (Get_Action_Flag(action, SKIPPABLE_FIRST)) {
+        if (Get_Subclass_Flag(
+            VARLIST,
+            ACT_PARAMLIST(action),
+            PARAMLIST_SKIPPABLE_FIRST
+        )) {
             const REBPAR *first = First_Unspecialized_Param(nullptr, action);
             if (not Typecheck_Coerce_Argument(first, out))
                 goto optimized;  // didn't actually want this parameter type

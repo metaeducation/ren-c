@@ -185,7 +185,11 @@ DECLARE_NATIVE(shove)
     //
     if (
         Get_Cell_Flag(left, UNEVALUATED)
-        and Not_Action_Flag(VAL_ACTION(shovee), QUOTES_FIRST)
+        and Not_Subclass_Flag(
+            VARLIST,
+            ACT_PARAMLIST(VAL_ACTION(shovee)),
+            PARAMLIST_QUOTES_FIRST
+        )
     ){
         if (Eval_Value_Throws(OUT, left, SPECIFIED))
             return THROWN;

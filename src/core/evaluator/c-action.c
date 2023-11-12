@@ -678,9 +678,10 @@ Bounce Action_Executor(Frame(*) f)
             //
             if (
                 Lookahead_To_Sync_Enfix_Defer_Flag(f->feed) and  // ensure got
-                (pclass == PARAM_CLASS_SOFT and Get_Action_Flag(
-                    VAL_ACTION(unwrap(f->feed->gotten)),  // ensured
-                    QUOTES_FIRST
+                (pclass == PARAM_CLASS_SOFT and Get_Subclass_Flag(
+                    VARLIST,
+                    ACT_PARAMLIST(VAL_ACTION(unwrap(f->feed->gotten))),
+                    PARAMLIST_QUOTES_FIRST
                 ))
             ){
                 // We need to defer and let the right hand quote that is
