@@ -318,7 +318,9 @@ reify: func3 [v [<opt> any-value!]] [
     if :v = #[false] [return '~false~]
     :v
 ]
-unrun: func3 [v [action!]] [:v]
+unrun: func3 [] [
+    fail/where "No UNRUN in bootstrap, but could be done w/make FRAME!" 'return
+]
 opt: ~  ; replaced by DEGRADE word
 try: ~  ; reviewing uses
 
@@ -1071,7 +1073,7 @@ apply: function3 [
     action [action!]
     args [block!]
 ][
-    f: make frame! unrun :action
+    f: make frame! :action
     params: words of :action
 
     ; Get all the normal parameters applied
