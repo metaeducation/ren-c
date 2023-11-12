@@ -1,9 +1,9 @@
 ; datatypes/function.r
 (activation? does ["OK"])
-(not action? 1)
-(action! = kind of unrun does ["OK"])
+(not frame? 1)
+(frame! = kind of unrun does ["OK"])
 ; minimum
-(action? unrun does [])
+(frame? unrun does [])
 
 ; !!! literal form no longer supported
 ;
@@ -348,7 +348,7 @@
     ([1000, 6] = test [1 + :(2 + 3) Lsoft])
 ]
 
-; basic test for recursive action! invocation
+; basic test for recursive action invocation
 (
     i: 0
     countdown: lambda [n] [if n > 0 [i: i + 1, countdown n - 1]]

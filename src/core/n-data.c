@@ -107,9 +107,9 @@ DECLARE_NATIVE(as_pair)
 //
 //  {Binds words or words in arrays to the specified context}
 //
-//      return: [action! activation! any-array! any-path! any-word! quoted!]
+//      return: [frame! activation! any-array! any-path! any-word! quoted!]
 //      value "Value whose binding is to be set (modified) (returned)"
-//          [action! activation! any-array! any-path! any-word! quoted!]
+//          [frame! activation! any-array! any-path! any-word! quoted!]
 //      target "Target context or a word whose binding should be the target"
 //          [any-word! any-context!]
 //      /copy "Bind and return a deep copy of a block, don't modify original"
@@ -180,7 +180,7 @@ DECLARE_NATIVE(bind)
     // binding pointer is also used in cases like RETURN to link them to the
     // FRAME! that they intend to return from.)
     //
-    if (REB_ACTION == CELL_HEART(v)) {
+    if (REB_FRAME == CELL_HEART(v)) {
         INIT_VAL_ACTION_BINDING(v, VAL_CONTEXT(context));
         return COPY(v);
     }
@@ -349,7 +349,7 @@ DECLARE_NATIVE(use)
 bool Did_Get_Binding_Of(Sink(Value(*)) out, const REBVAL *v)
 {
     switch (VAL_TYPE(v)) {
-    case REB_ACTION: {
+    case REB_FRAME: {
         Context(*) binding = VAL_ACTION_BINDING(v); // e.g. METHOD, RETURNs
         if (not binding)
             return false;
@@ -1615,7 +1615,7 @@ DECLARE_NATIVE(proxy_exports)
 //  {TRUE if looks up to a function and gets first argument before the call}
 //
 //      return: [logic?]
-//      action [action!]
+//      frame [<unrun> frame!]
 //  ]
 //
 DECLARE_NATIVE(enfixed_q)
@@ -1624,7 +1624,7 @@ DECLARE_NATIVE(enfixed_q)
 
     return Init_Logic(
         OUT,
-        Get_Action_Flag(VAL_ACTION(ARG(action)), ENFIXED)
+        Get_Action_Flag(VAL_ACTION(ARG(frame)), ENFIXED)
     );
 }
 
@@ -1634,16 +1634,16 @@ DECLARE_NATIVE(enfixed_q)
 //
 //  {For making enfix functions, e.g `+: enfixed :add` (copies)}
 //
-//      return: "Isotopic ACTION!"
+//      return: "Isotopic action"
 //          [isotope!]  ; [activation?] comes after ENFIX in bootstrap
-//      action [<unrun> action!]
+//      original [<unrun> frame!]
 //  ]
 //
 DECLARE_NATIVE(enfix)
 {
     INCLUDE_PARAMS_OF_ENFIX;
 
-    REBVAL *action = ARG(action);
+    REBVAL *action = ARG(original);
 
     if (Get_Action_Flag(VAL_ACTION(action), ENFIXED))
         fail (
@@ -1925,14 +1925,14 @@ bool Try_As_String(
 //          <opt> integer!
 //          issue! url!
 //          any-sequence! any-series! any-word!
-//          frame! action!
+//          frame!
 //      ]
 //      type [type-word!]
 //      value [
 //          <maybe>
 //          integer!
 //          issue! url!
-//          any-sequence! any-series! any-word! frame! action!
+//          any-sequence! any-series! any-word! frame!
 //      ]
 //  ]
 //
@@ -2242,7 +2242,7 @@ DECLARE_NATIVE(as)
 
         fail (v); }
 
-    case REB_ACTION: {
+    case REB_FRAME: {
       if (IS_FRAME(v)) {
         //
         // We want AS ACTION! AS FRAME! of an action to be basically a no-op.

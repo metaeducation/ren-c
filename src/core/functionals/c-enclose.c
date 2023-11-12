@@ -200,13 +200,13 @@ Bounce Encloser_Dispatcher(Frame(*) f)
 //
 //  enclose*: native [
 //
-//  {Wrap code around an ACTION! with access to its FRAME! and return value}
+//  {Wrap code around a frame with access to its instance and return value}
 //
 //      return: [activation!]
-//      inner "Action that a FRAME! will be built for, then passed to OUTER"
-//          [<unrun> action!]
+//      inner "Frame to be copied, then passed to OUTER"
+//          [<unrun> frame!]
 //      outer "Gets a FRAME! for INNER before invocation, can DO it (or not)"
-//          [<unrun> action!]
+//          [<unrun> frame!]
 //  ]
 //
 DECLARE_NATIVE(enclose_p)  // see extended definition ENCLOSE in %base-defs.r

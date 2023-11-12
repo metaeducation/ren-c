@@ -188,7 +188,7 @@ DECLARE_NATIVE(resume)
 //
 //      /at
 //          "Return from another call up stack besides the breakpoint"
-//      level [frame! action! integer!]
+//      level [frame! integer!]
 //          "Stack level to target in unwinding (can be BACKTRACE #)"
 //
 // While an interesting feature, it's not currently a priority.  (It can be

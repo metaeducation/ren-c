@@ -58,7 +58,7 @@ DECLARE_NATIVE(reeval)
 
     bool enfix =
         IS_QUASI(v)
-        and HEART_BYTE(v) == REB_ACTION
+        and HEART_BYTE(v) == REB_FRAME
         and Get_Action_Flag(VAL_ACTION(v), ENFIXED);
 
     Flags flags = FRAME_MASK_NONE;
@@ -223,8 +223,8 @@ DECLARE_NATIVE(shove)
 //          tag!  ; load relative to system.script.name
 //          the-word!  ; module name (URL! looked up from table)
 //          error!  ; should use FAIL instead
-//          action!  ; will only run arity 0 actions (avoids DO variadic)
 //          frame!  ; acts like APPLY (voids are optionals, not unspecialized)
+//          activation?  ; will only run arity 0 actions (avoids DO variadic)
 //          varargs!  ; simulates as if frame! or block! is being executed
 //      ]
 //      /args "Sets system.script.args if doing a script (usually a TEXT!)"
@@ -253,6 +253,8 @@ DECLARE_NATIVE(do)
   #if !defined(NDEBUG)
     Set_Cell_Flag(source, PROTECTED);  // maybe only GC reference, keep!
   #endif
+
+    Deactivate_If_Activation(source);
 
     switch (VAL_TYPE(source)) {
       case REB_BLOCK :  // no REB_GROUP, etc...EVAL does that.  see [1]
@@ -329,14 +331,12 @@ DECLARE_NATIVE(do)
       case REB_ERROR :
         fail (VAL_CONTEXT(source));  // would fail anyway, see [2]
 
-      case REB_ACTION :
-        if (First_Unspecialized_Param(nullptr, VAL_ACTION(source)))
-            fail (Error_Do_Arity_Non_Zero_Raw());  // specific error?  see [3]
+      case REB_FRAME : {
+        if (Is_Frame_Details(source))
+            if (First_Unspecialized_Param(nullptr, VAL_ACTION(source)))
+                fail (Error_Do_Arity_Non_Zero_Raw());  // specific error?  see [3]
 
-        return DELEGATE(OUT, source);
-
-      case REB_FRAME :
-        return DELEGATE(OUT, source);
+        return DELEGATE(OUT, source); }
 
       default :
         break;
@@ -356,7 +356,7 @@ DECLARE_NATIVE(do)
 //      source [
 //          <maybe>  ; useful for `evaluate try ...` scenarios when no match
 //          any-array!  ; source code in block form
-//          action!
+//          activation?
 //          frame!
 //          varargs!  ; simulates as if frame! or block! is being executed
 //      ]
@@ -413,6 +413,7 @@ DECLARE_NATIVE(evaluate)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
+    Deactivate_If_Activation(source);
     Tweak_Non_Const_To_Explicitly_Mutable(source);
 
   #if !defined(NDEBUG)
@@ -456,7 +457,7 @@ DECLARE_NATIVE(evaluate)
     }
     else switch (VAL_TYPE(source)) {
 
-      case REB_FRAME :
+      case REB_FRAME : {
         //
         // !!! It is likely that the return result for the NEXT: will actually
         // be a FRAME! when the input to EVALUATE is a BLOCK!, so that the
@@ -466,11 +467,9 @@ DECLARE_NATIVE(evaluate)
         if (REF(next))
             fail ("/NEXT Behavior not implemented for FRAME! in EVALUATE");
 
-        return DELEGATE(OUT, source);
-
-      case REB_ACTION: {
-        if (First_Unspecialized_Param(nullptr, VAL_ACTION(source)))
-            fail (Error_Do_Arity_Non_Zero_Raw());  // see notes in DO on error
+        if (Is_Frame_Details(source))
+            if (First_Unspecialized_Param(nullptr, VAL_ACTION(source)))
+                fail (Error_Do_Arity_Non_Zero_Raw());  // see notes in DO on error
 
         return DELEGATE(OUT, source); }
 
@@ -557,7 +556,7 @@ DECLARE_NATIVE(evaluate)
 //      restartee "Frame to restart, or bound word (e.g. REDO 'RETURN)"
 //          [frame! any-word!]
 //      /other "Restart in a frame-compatible function (sibling tail-call)"
-//          [action!]
+//          [<unrun> frame!]
 //  ]
 //
 DECLARE_NATIVE(redo)
@@ -631,7 +630,7 @@ DECLARE_NATIVE(redo)
 //  {Invoke an ACTION! with all required arguments specified}
 //
 //      return: [<opt> <void> any-value!]
-//      action [<unrun> action!]
+//      operation [<unrun> frame!]
 //      def "Frame definition block (will be bound and evaluated)"
 //          [block!]
 //  ]
@@ -646,7 +645,7 @@ DECLARE_NATIVE(applique)
 {
     INCLUDE_PARAMS_OF_APPLIQUE;
 
-    Value(*) action = ARG(action);
+    Value(*) op = ARG(operation);
     Value(*) def = ARG(def);
 
     Value(*) frame = ARG(return);  // reuse as GC-safe cell for FRAME!
@@ -669,13 +668,13 @@ DECLARE_NATIVE(applique)
   initial_entry: {  //////////////////////////////////////////////////////////
 
     Context(*) exemplar = Make_Context_For_Action_Push_Partials(  // see [1]
-        action,
+        op,
         STACK_BASE,  // lowest_ordered_dsp of refinements to weave in
         nullptr,  // no binder needed
         NONE_CELL  // seen as unspecialized by ST_ACTION_TYPECHECKING
     );
     Manage_Series(CTX_VARLIST(exemplar));
-    Init_Frame(frame, exemplar, VAL_ACTION_LABEL(action));
+    Init_Frame(frame, exemplar, VAL_ACTION_LABEL(op));
 
     Drop_Data_Stack_To(STACK_BASE);  // refinement order unimportant
 
@@ -698,10 +697,10 @@ DECLARE_NATIVE(applique)
 //
 //  apply: native [
 //
-//  {Invoke an ACTION! with all required arguments specified}
+//  {Invoke an action with all required arguments specified}
 //
 //      return: [<opt> <void> any-value!]
-//      action [action!]
+//      operation [<unrun> frame!]
 //      args "Arguments and Refinements, e.g. [arg1 arg2 /ref refine1]"
 //          [block!]
 //      /relax "Don't worry about too many arguments to the APPLY"
@@ -738,7 +737,7 @@ DECLARE_NATIVE(apply)
 {
     INCLUDE_PARAMS_OF_APPLY;
 
-    Value(*) action = ARG(action);
+    Value(*) op = ARG(operation);
     Value(*) args = ARG(args);
 
     Value(*) frame = ARG(frame);  // local variable for holding GC-safe frame
@@ -782,13 +781,13 @@ DECLARE_NATIVE(apply)
     /*struct Reb_Binder binder;  // see [1]
     INIT_BINDER(&binder);*/
     Context(*) exemplar = Make_Context_For_Action_Push_Partials(  // see [2]
-        action,
+        op,
         STACK_BASE, // lowest_ordered_dsp of refinements to weave in
         nullptr /* &binder */,
         NONE_CELL
     );
     Manage_Series(CTX_VARLIST(exemplar)); // Putting into a frame
-    Init_Frame(frame, exemplar, VAL_ACTION_LABEL(action));  // GC guarded
+    Init_Frame(frame, exemplar, VAL_ACTION_LABEL(op));  // GC guarded
 
     Drop_Data_Stack_To(STACK_BASE);  // partials ordering unimportant
 
@@ -836,7 +835,7 @@ DECLARE_NATIVE(apply)
             fail (Error_Bad_Parameter_Raw(rebUnrelativize(at)));
 
         var = CTX_VAR(VAL_CONTEXT(frame), index);
-        param = ACT_PARAM(VAL_ACTION(action), index);
+        param = ACT_PARAM(VAL_ACTION(op), index);
 
         if (not Is_None(var))
             fail (Error_Bad_Parameter_Raw(rebUnrelativize(at)));
@@ -903,7 +902,7 @@ DECLARE_NATIVE(apply)
     REBLEN index = VAL_UINT32(ARG(index));
 
     var = CTX_VAR(VAL_CONTEXT(frame), index);
-    param = ACT_PARAM(VAL_ACTION(action), index);
+    param = ACT_PARAM(VAL_ACTION(op), index);
 
     goto copy_spare_to_var_in_frame;
 
@@ -972,10 +971,10 @@ DECLARE_NATIVE(apply)
 //
 //  run: native [
 //
-//  {Invoke an ACTION! inline as if it had been invoked via a WORD!}
+//  {Invoke code inline as if it had been invoked via a WORD!}
 //
 //      return: [<opt> <void> any-value!]
-//      action [action!]
+//      frame [<unrun> frame!]
 //      args [<opt> <void> any-value! <variadic>]
 //  ]
 //
@@ -983,7 +982,7 @@ DECLARE_NATIVE(run)
 {
     INCLUDE_PARAMS_OF_RUN;
 
-    Value(*) action = ARG(action);
+    Value(*) action = ARG(frame);
     UNUSED(ARG(args));  // uses internal mechanisms to act variadic
 
     Frame(*) subframe = Make_Action_Subframe(frame_);

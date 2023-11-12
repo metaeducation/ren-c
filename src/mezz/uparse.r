@@ -101,9 +101,9 @@ Rebol [
 ; manage it yourself, otherwise it will be automagic.
 
 combinator: func [
-    {Make a stylized ACTION! that fulfills the interface of a combinator}
+    {Make stylized code that fulfills the interface of a combinator}
 
-    return: [action!]
+    return: [frame!]
 
     spec [block!]
     body [block!]
@@ -230,10 +230,10 @@ combinator: func [
 combinator?: func [
     {Crude test to try and determine if an ACTION! is a combinator}
     return: [logic?]
-    action [action!]
+    frame [<unrun> frame!]
     <local> keys
 ][
-    keys: words of action  ; test if it's a combinator
+    keys: words of frame  ; test if it's a combinator
     ;
     ; could also check RETURNS OF for `pending` and `state`, but might exclude
     ; wrapped combinators which return packs directly.
@@ -2035,9 +2035,9 @@ default-combinators: make map! reduce [
         return nihil
     ]
 
-    === ACTION! COMBINATOR ===
+    === FRAME! COMBINATOR ===
 
-    ; The ACTION! combinator is a new idea of letting you call a normal
+    ; The frame combinator is a new idea of letting you call a normal
     ; function with parsers fulfilling the arguments.  At the Montreal
     ; conference Carl said he was skeptical of PARSE getting any harder to read
     ; than it was already, so the isolation of DO code to GROUP!s seemed like
@@ -2047,12 +2047,12 @@ default-combinators: make map! reduce [
     ; you can make a PATH! that ends in / and that will be run as a normal
     ; ACTION!, but whose arguments are fulfilled via PARSE.
 
-    action! combinator [
-        {Run an ordinary ACTION! with parse rule products as its arguments}
+    frame! combinator [
+        {Run an ordinary action with parse rule products as its arguments}
         return: "The return value of the action"
             [nihil? <opt> <void> any-value!]
         @pending [<opt> block!]
-        value [action!]
+        value [frame!]
         ; AUGMENT is used to add param1, param2, param3, etc.
         /parsers "Sneaky argument of parsers collected from arguments"
             [block!]
@@ -2072,9 +2072,9 @@ default-combinators: make map! reduce [
         pending: null
 
         let f: make frame! value
-        for-each param (parameters of action of f) [
+        for-each param (parameters of f) [
             if not path? param [
-                ensure action! parsers.1
+                ensure frame! parsers.1
                 if meta-word? param [
                     param: to word! param
                     f.(param): [^ input subpending]: (
@@ -2466,7 +2466,7 @@ comment [combinatorize: func [
         [activation?]
     @advanced [block!]
     combinator "Parser combinator taking input, but also other parameters"
-        [action!]
+        [frame!]
     rules [block!]
     state "Parse State" [frame!]
     /value "Initiating value (if datatype)" [any-value!]
@@ -2542,16 +2542,16 @@ comment [combinatorize: func [
                     ; combinators can implement things like INTEGER! combinator
                     ; which takes another optional INTEGER! for end of range.
                     ;
-                    all [
-                        skippable? in f param
-                        not find (exemplar of action of f).(param) kind of r
-                    ] then [
-                        f.(param): null
-                    ]
-                    else [
+                ;    all [
+                ;        skippable? in f param
+                ;        not find (exemplar of action of f).(param) kind of r
+                ;    ] then [
+                ;        f.(param): null
+                ;    ]
+                ;    else [
                         f.(param): r
                         rules: next rules
-                    ]
+                ;    ]
                 ]
             ]
             refinement? param [
@@ -2586,7 +2586,7 @@ comment [combinatorize: func [
     f.rule-end: rules
 
     advanced: rules
-    return runs make action! f
+    return runs f
 ]]
 
 
@@ -2630,7 +2630,7 @@ parsify: func [
                 ; Combinators get "combinated" with the subsequent stream of
                 ; rules to produce a parser instance.  This is the common case.
                 ;
-                if comb: match action! :value [
+                if comb: match frame! :value [
                     return [@ advanced]: combinatorize :comb rules state
                 ]
 
@@ -2668,7 +2668,7 @@ parsify: func [
             ; COMBINATORIZE to permit access to consume parts of the subsequent
             ; rule stream.
             ;
-            if comb: match action! :value [
+            if comb: match frame! :value [
                 if combinator? :comb [
                     return [@ advanced]: combinatorize :comb rules state
                 ]
@@ -2707,14 +2707,14 @@ parsify: func [
             ;
             let f
             if blank? last r [
-                if not action? let action: unrun get/any r [
-                    fail "In UPARSE PATH ending in / must resolve to ACTION!"
+                if not frame? let gotten: unrun get/any r [
+                    fail "In UPARSE PATH ending in / must be action or frame"
                 ]
-                if not comb: select state.combinators action! [
-                    fail "No ACTION! combinator, can't use PATH ending in /"
+                if not comb: select state.combinators frame! [
+                    fail "No frame! combinator, can't use PATH ending in /"
                 ]
 
-                ; !!! The ACTION! combinator has to be variadic, because the
+                ; !!! The frame combinator has to be variadic, because the
                 ; number of arguments it takes depends on the arguments of
                 ; the action.  This requires design.  :-/
                 ;
@@ -2724,7 +2724,7 @@ parsify: func [
                 ;
                 comb: unrun adapt (augment comb collect [
                     let n: 1
-                    for-each param parameters of action [
+                    for-each param parameters of gotten [
                         if not path? param [
                             keep spread compose [
                                 (to word! unspaced ["param" n]) [activation!]
@@ -2750,7 +2750,7 @@ parsify: func [
                 ]
 
                 return [@ advanced]:
-                        combinatorize/value comb rules state action
+                        combinatorize/value comb rules state gotten
             ]
 
             let word: ensure word! first r
@@ -2820,7 +2820,7 @@ parse*: func [
         [integer! any-series!]
 
     /hook "Call a hook on dispatch of each combinator"
-        [action!]
+        [<unrun> frame!]
 
     <local> loops furthest synthesized' remainder
 ][

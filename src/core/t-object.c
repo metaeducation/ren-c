@@ -190,7 +190,7 @@ void Init_Evars(EVARS *e, noquote(Cell(const*)) v) {
 
     e->visibility = VAR_VISIBILITY_ALL;  // ensure not uninitialized
 
-    if (kind == REB_ACTION) {
+    if (kind == REB_FRAME and Is_Frame_Details(v)) {
         e->index = 0;  // will be bumped to 1
 
         TRASH_POINTER_IF_DEBUG(e->ctx);
@@ -708,7 +708,7 @@ Bounce TO_Context(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg)
 //  {Get a reference to the "adjunct" context associated with a value}
 //
 //      return: [<opt> any-context!]
-//      value [<maybe> action! any-context!]
+//      value [<unrun> <maybe> frame! any-context!]
 //  ]
 //
 DECLARE_NATIVE(adjunct_of)
@@ -738,7 +738,7 @@ DECLARE_NATIVE(adjunct_of)
 //  {Set "adjunct" object associated with all references to a value}
 //
 //      return: [<opt> any-context!]
-//      value [action! any-context!]
+//      value [<unrun> frame! any-context!]
 //      adjunct [<opt> any-context!]
 //  ]
 //
@@ -1295,7 +1295,11 @@ REBTYPE(Frame)
     option(SymId) symid = ID_OF_SYMBOL(verb);
 
     switch (symid) {
-      case SYM_REFLECT : {
+
+      case SYM_REFLECT :
+        if (Is_Frame_Details(frame))
+            goto handle_reflect_action;
+      {
         INCLUDE_PARAMS_OF_REFLECT;
         UNUSED(ARG(value));  // covered by `frame`
 
@@ -1316,7 +1320,7 @@ REBTYPE(Frame)
             // is drastically different.  Review.
         }
 
-        if (prop == SYM_ACTION) {
+       /* if (prop == SYM_ACTION) {
             //
             // Currently this can be answered for any frame, even if it is
             // expired...though it probably shouldn't do this unless it's
@@ -1330,10 +1334,20 @@ REBTYPE(Frame)
                 VAL_FRAME_LABEL(frame),
                 VAL_FRAME_BINDING(frame)  // e.g. where RETURN returns to
             );
-        }
+        } */
 
         if (prop == SYM_WORDS)
             return T_Context(frame_, verb);
+
+        if (prop == SYM_PARAMETERS) {
+            Init_Action(
+                ARG(value),
+                CTX_FRAME_ACTION(c),
+                VAL_FRAME_LABEL(frame),
+                VAL_FRAME_BINDING(frame)
+            );
+            goto handle_reflect_action;
+        }
 
         Frame(*) f = CTX_FRAME_MAY_FAIL(c);
 
@@ -1377,6 +1391,226 @@ REBTYPE(Frame)
         }
       }
 
+    handle_reflect_action: {
+        INCLUDE_PARAMS_OF_REFLECT;
+        UNUSED(ARG(value));
+
+        Action(*) act = VAL_ACTION(frame);
+
+        REBVAL *property = ARG(property);
+        option(SymId) sym = VAL_WORD_ID(property);
+        switch (sym) {
+          case SYM_BINDING: {
+            if (Did_Get_Binding_Of(OUT, frame))
+                return OUT;
+            return nullptr; }
+
+          case SYM_LABEL: {
+            option(Symbol(const*)) label = VAL_ACTION_LABEL(frame);
+            if (not label)
+                return nullptr;
+            return Init_Word(OUT, unwrap(label)); }
+
+          case SYM_WORDS:
+          case SYM_PARAMETERS: {
+            bool just_words = (sym == SYM_WORDS);
+            return Init_Block(
+                OUT,
+                Make_Action_Parameters_Arr(act, just_words)
+            ); }
+
+          case SYM_OUTPUTS: {
+            return Init_Block(
+                OUT,
+                Make_Action_Outputs_Arr(act)
+            ); }
+
+          case SYM_BODY:
+            Get_Maybe_Fake_Action_Body(OUT, frame);
+            return OUT;
+
+          case SYM_EXEMPLAR: {
+            //
+            // We give back the exemplar of the frame, which contains the
+            // parameter descriptions.  Since exemplars are reused, this is
+            // not enough to make the right action out of...so the phase has
+            // to be set to the action that we are returning.
+            //
+            // !!! This loses the label information.  Technically the space
+            // for the varlist could be reclaimed in this case and a label
+            // used, as the read-only frame is archetypal.
+            //
+            Reset_Unquoted_Header_Untracked(TRACK(OUT), CELL_MASK_FRAME);
+            INIT_VAL_CONTEXT_VARLIST(OUT, ACT_PARAMLIST(act));
+            mutable_BINDING(OUT) = VAL_ACTION_BINDING(frame);
+            INIT_VAL_FRAME_PHASE_OR_LABEL(OUT, act);
+            return OUT; }
+
+          case SYM_TYPES:
+            return Copy_Cell(OUT, CTX_ARCHETYPE(ACT_EXEMPLAR(act)));
+
+          case SYM_FILE:
+          case SYM_LINE: {
+            //
+            // Use a heuristic that if the first element of a function's body
+            // is a series with the file and line bits set, then that's what
+            // it returns for FILE OF and LINE OF.
+
+            Array(*) details = ACT_DETAILS(act);
+            if (ARR_LEN(details) < 1 or not ANY_ARRAY(ARR_HEAD(details)))
+                return nullptr;
+
+            Array(const*) a = VAL_ARRAY(ARR_HEAD(details));
+            if (Not_Subclass_Flag(ARRAY, a, HAS_FILE_LINE_UNMASKED))
+                return nullptr;
+
+            // !!! How to tell URL! vs FILE! ?
+            //
+            if (VAL_WORD_ID(property) == SYM_FILE)
+                Init_File(OUT, LINK(Filename, a));
+            else
+                Init_Integer(OUT, a->misc.line);
+
+            return OUT; }
+
+          default:
+            fail (Error_Cannot_Reflect(REB_FRAME, property));
+        }
+        break; }
+
+
+  //=//// COPY /////////////////////////////////////////////////////////////=//
+
+    // Being able to COPY functions was added so that you could create a new
+    // function identity which behaved the same as an existing function, but
+    // kept working if the original function was HIJACK'ed.  (See %c-hijack.c)
+    // To do this means being able to create an independent identity that can
+    // run the same code without needing to invoke the prior identity to do so.
+    //
+    // (By contrast: specialization also creates a new identity, but then falls
+    // through via a reference to the old identity to run the implementation.
+    // Hence hijacking a function that has been specialized will hijack all of
+    // its specializations.)
+    //
+    // Originally COPY was done just by copying the details array.  But that
+    // puts two copies of the details array in play--which can be technically
+    // dangerous, since the relationship between a function dispatcher and its
+    // details is currently treated as a black box.  (The array could contain a
+    // reference to an arbitrary C pointer, which might get freed in one clone
+    // with an extant reference still lingering in the other.)
+    //
+    // The modified solution tweaks it so that the identity array for an
+    // action is not necessarily where it looks for its ACT_DETAILS(), with
+    // the details instead coming out of the archetype slot [0] of that array.
+    //
+    // !!! There are higher-level interesting mechanics that might be called
+    // COPY that aren't covered at all here.  For instance: Someone might like
+    // to have a generator that counts from 1 to 10 that is at 5, and be able
+    // to COPY it...then have two generators that will count from 5 to 10
+    // independently.  That requires methodization and cooperation with the
+    // specific dispatcher.
+
+      case SYM_COPY:
+        if (Is_Frame_Exemplar(frame))
+            break;
+      {
+        INCLUDE_PARAMS_OF_COPY;
+
+        UNUSED(PARAM(value));
+
+        if (REF(part))
+            fail (Error_Bad_Refines_Raw());
+
+        if (REF(deep)) {
+            // !!! always "deep", allow it?
+        }
+
+        Action(*) act = VAL_ACTION(frame);
+
+        // If the function had code, then that code will be bound relative
+        // to the original paramlist that's getting hijacked.  So when the
+        // proxy is called, we want the frame pushed to be relative to
+        // whatever underlied the function...even if it was foundational
+        // so `underlying = VAL_ACTION(value)`
+
+        Action(*) proxy = Make_Action(
+            ACT_PARAMLIST(act),  // not changing the interface
+            ACT_PARTIALS(act),  // keeping partial specializations
+            ACT_DISPATCHER(act),  // have to preserve in case original hijacked
+            //
+            // While the copy doesn't need any details array of its own, it
+            // has to be a dynamic allocation in order for ACT_DETAILS() to
+            // assume the array is dynamic and beeline for the array.  We put
+            // a dummy value ~copy~ in the array.  We assume this is better
+            // than making ACT_DETAILS() have to check the dynamic series bit,
+            // just because COPY on actions is so rare.
+            2
+        );
+
+        Array(*) details = ACT_DETAILS(proxy);
+        Init_Quasi_Word(ARR_AT(details, 1), Canon(COPY));  // dummy ~copy~
+
+        Context(*) meta = ACT_ADJUNCT(act);
+        assert(ACT_ADJUNCT(proxy) == nullptr);
+        mutable_ACT_ADJUNCT(proxy) = meta;  // !!! Note: not a copy of meta
+
+        if (Get_Action_Flag(act, IS_NATIVE))
+            Set_Action_Flag(proxy, IS_NATIVE);
+
+        Clear_Cell_Flag(ACT_ARCHETYPE(proxy), PROTECTED);  // intentional change
+        Copy_Cell(ACT_ARCHETYPE(proxy), ACT_ARCHETYPE(act));
+        Set_Cell_Flag(ACT_ARCHETYPE(proxy), PROTECTED);  // restore invariant
+
+        return Init_Action(
+            OUT,
+            proxy,
+            VAL_ACTION_LABEL(frame),  // keep symbol (if any) from original
+            VAL_ACTION_BINDING(frame)  // same (e.g. RETURN to same frame)
+        ); }
+
+
+  //=//// PICK* (see %sys-pick.h for explanation) //////////////////////////=//
+
+    // !!! This is an interim implementation hack for REDBOL-PATHS, which
+    // transforms something like `lib/append/dup` into `lib.append.dup` when
+    // it notices that LIB is not an ACTION!.  This is a *very slow* way of
+    // dealing with refinements because it produces a specialized action
+    // at each stage.
+
+      case SYM_PICK_P:
+        if (Is_Frame_Exemplar(frame))
+            break;
+      {
+        INCLUDE_PARAMS_OF_PICK_P;
+        UNUSED(ARG(location));
+
+        REBVAL *redbol = Get_System(SYS_OPTIONS, OPTIONS_REDBOL_PATHS);
+        if (not IS_LOGIC(redbol) or VAL_LOGIC(redbol) == false) {
+            fail (
+                "SYSTEM.OPTIONS.REDBOL-PATHS is false, so you can't"
+                " use paths to do ordinary picking.  Use TUPLE!"
+            );
+          }
+
+        REBVAL *picker = ARG(picker);
+        if (IS_BLANK(picker))
+            return COPY(frame);
+
+        Symbol(const*) symbol;
+        if (IS_WORD(picker))
+            symbol = VAL_WORD_SYMBOL(picker);
+        else if (IS_PATH(picker) and IS_REFINEMENT(picker))
+            symbol = VAL_REFINEMENT_SYMBOL(picker);
+        else
+            fail (picker);
+
+        StackIndex base = TOP_INDEX;
+        Init_Pushed_Refinement(PUSH(), symbol);
+        if (Specialize_Action_Throws(OUT, frame, nullptr, base))
+            return THROWN;
+
+        return OUT; }
+
       default:
         break;
     }
@@ -1385,18 +1619,87 @@ REBTYPE(Frame)
 }
 
 
+static bool Same_Action(noquote(Cell(const*)) a, noquote(Cell(const*)) b)
+{
+    assert(CELL_HEART(a) == REB_FRAME and CELL_HEART(b) == REB_FRAME);
+    if (not Is_Frame_Details(a) or not Is_Frame_Details(b))
+        return false;
+
+    if (VAL_ACTION_KEYLIST(a) == VAL_ACTION_KEYLIST(b)) {
+        //
+        // All actions that have the same paramlist are not necessarily the
+        // "same action".  For instance, every RETURN shares a common
+        // paramlist, but the binding is different in the REBVAL instances
+        // in order to know where to "exit from".
+        //
+        return VAL_ACTION_BINDING(a) == VAL_ACTION_BINDING(b);
+    }
+
+    return false;
+}
+
+
 //
 //  CT_Frame: C
 //
 REBINT CT_Frame(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
-  { return CT_Context(a, b, strict); }
+{
+    UNUSED(strict);  // no lax form of comparison
+
+    if (Is_Frame_Details(a)) {
+        if (not Is_Frame_Details(b))
+            return -1;
+        if (Same_Action(a, b))
+            return 0;
+        assert(VAL_ACTION(a) != VAL_ACTION(b));
+        return a > b ? 1 : -1;  // !!! Review arbitrary ordering
+    }
+
+    if (not Is_Frame_Exemplar(b))
+        return 1;
+
+    return CT_Context(a, b, strict);
+}
 
 
 //
 //  MF_Frame: C
 //
-void MF_Frame(REB_MOLD *mo, noquote(Cell(const*)) v, bool form)
-  { MF_Context(mo, v, form); }
+void MF_Frame(REB_MOLD *mo, noquote(Cell(const*)) v, bool form) {
+
+    if (Is_Frame_Exemplar(v)) {
+        MF_Context(mo, v, form);
+        return;
+    }
+
+    Append_Ascii(mo->series, "#[details! ");
+
+    option(String(const*)) label = VAL_ACTION_LABEL(v);
+    if (label) {
+        Append_Codepoint(mo->series, '{');
+        Append_Spelling(mo->series, unwrap(label));
+        Append_Ascii(mo->series, "} ");
+    }
+
+    // !!! The system is no longer keeping the spec of functions, in order
+    // to focus on a generalized "meta info object" service.  MOLD of
+    // functions temporarily uses the word list as a substitute (which
+    // drops types)
+    //
+    const bool just_words = false;
+    Array(*) parameters = Make_Action_Parameters_Arr(VAL_ACTION(v), just_words);
+    Mold_Array_At(mo, parameters, 0, "[]");
+    Free_Unmanaged_Series(parameters);
+
+    // !!! Previously, ACTION! would mold the body out.  This created a large
+    // amount of output, and also many function variations do not have
+    // ordinary "bodies".  It's more useful to show the cached name, and maybe
+    // some base64 encoding of a UUID (?)  In the meantime, having the label
+    // of the last word used is actually a lot more useful than most things.
+
+    Append_Codepoint(mo->series, ']');
+    End_Mold(mo);
+}
 
 
 //

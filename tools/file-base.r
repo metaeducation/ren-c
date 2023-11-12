@@ -194,7 +194,6 @@ core: [
     t-datatype.c
     t-date.c
     t-decimal.c
-    t-function.c
     t-integer.c
     t-logic.c
     t-map.c

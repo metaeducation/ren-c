@@ -235,41 +235,40 @@ each: runs :quote
 ;
 
 enclose: enclose* :enclose* lambda [f] [  ; uses low-level ENCLOSE* to make
-    set let inner f.inner  ; don't cache name via SET-WORD!
+    let inner: f.inner
     inherit-adjunct (do f) inner
 ]
 inherit-adjunct enclose :enclose*  ; needed since we used ENCLOSE*
 
 specialize: enclose :specialize* lambda [f] [  ; now we have high-level ENCLOSE
-    set let action f.action  ; don't cache name via SET-WORD!
-    inherit-adjunct (do f) action
+    let original: f.original
+    inherit-adjunct (do f) original
 ]
 
 adapt: enclose :adapt* lambda [f] [
-    set let action f.action
-    inherit-adjunct do f action
+    let original: f.original
+    inherit-adjunct (do f) original
 ]
 
 chain: enclose :chain* lambda [f] [
-    ; don't cache name via SET-WORD!
-    set let pipeline1 pick (f.pipeline: reduce/predicate f.pipeline :unrun) 1
+    let pipeline1: pick (f.pipeline: reduce/predicate f.pipeline :unrun) 1
     inherit-adjunct (do f) pipeline1
 ]
 
 augment: enclose :augment* lambda [f] [
-    set let action f.action  ; don't cache name via SET-WORD!
+    let original: f.original
     let spec: f.spec
-    inherit-adjunct/augment (do f) action spec
+    inherit-adjunct/augment (do f) original spec
 ]
 
 reframer: enclose :reframer* lambda [f] [
-    set let shim f.shim  ; don't cache name via SET-WORD!
+    let shim: f.shim
     inherit-adjunct (do f) shim
 ]
 
 reorder: enclose :reorder* lambda [f] [
-    set let action f.action  ; don't cache name via SET-WORD!
-    inherit-adjunct (do f) action
+    let original: f.original
+    inherit-adjunct (do f) original
 ]
 
 
@@ -280,7 +279,7 @@ requote: reframer lambda [
     f [frame!]
     <local> p num-quotes result
 ][
-    if not p: first parameters of action of f [
+    if not p: first parameters of f [
         fail ["REQUOTE must have an argument to process"]
     ]
 
@@ -443,7 +442,6 @@ run func* [
     the-group?:
     type-group?:
     map?:
-    action?:
     varargs?:
     object?:
     frame?:

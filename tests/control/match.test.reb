@@ -41,14 +41,14 @@
 
 ; ENSURE is a version of MATCH that fails vs. returning NULL on no match
 [
-    ~???~ !! (ensure action! 10)
+    ~???~ !! (ensure frame! 10)
     (10 = ensure integer! 10)
 ]
 
 ; NON is an inverted form of ENSURE, that FAILs when the argument *matches*
 [
     (null = non activation! :append)
-    (10 = non action! 10)
+    (10 = non frame! 10)
 
     (null = non integer! 10)
     (:append = non integer! :append)
@@ -63,7 +63,7 @@
 ; probably needs a better name, even ENSURE-NOT is likely clearer
 [
     ~???~ !! (prohibit activation! :append)
-    (10 = prohibit action! 10)
+    (10 = prohibit frame! 10)
 
     ~???~ !! (prohibit integer! 10)
     (:append = prohibit integer! :append)

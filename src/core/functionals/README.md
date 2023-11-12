@@ -43,7 +43,7 @@ are just some of these tools...which the system relies on heavily.
 * Space for the "details" array in the ACTION! cell was made by eliminating
   the idea that the core holds onto the "spec" block of a function.  Instead,
   storing information about the parameters of a function is optional, and
-  goes in what is called the `meta` object...which can contain arbitrary
+  goes in what is called the `adjunct` object...which can contain arbitrary
   out-of-band information added onto ACTION!s.  HELP reads this information,
   and it is possible to use variants of functions that do not generate it,
   as well as to free the HELP data after-the-fact.

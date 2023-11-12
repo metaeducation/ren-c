@@ -682,7 +682,7 @@ static void Clonify_And_Bind_Relative(
     // !!! Could theoretically do what COPY does and generate a new hijackable
     // identity.  There's no obvious use for this; hence not implemented.
     //
-    assert(not (deep_types & FLAGIT_KIND(REB_ACTION)));
+    assert(not (deep_types & FLAGIT_KIND(REB_FRAME)));
 
     // !!! This used to use KIND3Q_BYTE_UNCHECKED to get a "kind", but it
     // applied it on a dequoted form.  This was effectively the heart.  That

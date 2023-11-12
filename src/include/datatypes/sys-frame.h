@@ -746,8 +746,7 @@ inline static bool Pushed_Continuation(
         Push_Frame(out, f);
         goto pushed_continuation; }
 
-    handle_action:
-      case REB_ACTION : {
+    handle_action: {
         Frame(*) f = Make_End_Frame(
             FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING) | flags
         );
@@ -783,6 +782,9 @@ inline static bool Pushed_Continuation(
         goto pushed_continuation; }
 
       case REB_FRAME: {
+        if (Is_Frame_Details(branch))
+            goto handle_action;
+
         if (IS_FRAME_PHASED(branch))  // see REDO for tail-call recursion
             fail ("Use REDO to restart a running FRAME! (not DO)");
 

@@ -239,6 +239,21 @@ Bounce MAKE_Array(
     else if (IS_MAP(arg)) {
         return Init_Array_Cell(OUT, kind, Map_To_Array(VAL_MAP(arg), 0));
     }
+    else if (IS_FRAME(arg)) {
+        //
+        // !!! Experimental behavior; if action can run as arity-0, then
+        // invoke it so long as it doesn't return null, collecting values.
+        //
+        StackIndex base = TOP_INDEX;
+        while (true) {
+            REBVAL *generated = rebValue(arg);
+            if (not generated)
+                break;
+            Copy_Cell(PUSH(), generated);
+            rebRelease(generated);
+        }
+        return Init_Array_Cell(OUT, kind, Pop_Stack_Values(base));
+    }
     else if (ANY_CONTEXT(arg)) {
         return Init_Array_Cell(OUT, kind, Context_To_Array(arg, 3));
     }
@@ -300,21 +315,6 @@ Bounce MAKE_Array(
             Move_Cell(PUSH(), OUT);
         } while (true);
 
-        return Init_Array_Cell(OUT, kind, Pop_Stack_Values(base));
-    }
-    else if (IS_ACTION(arg)) {
-        //
-        // !!! Experimental behavior; if action can run as arity-0, then
-        // invoke it so long as it doesn't return null, collecting values.
-        //
-        StackIndex base = TOP_INDEX;
-        while (true) {
-            REBVAL *generated = rebValue(arg);
-            if (not generated)
-                break;
-            Copy_Cell(PUSH(), generated);
-            rebRelease(generated);
-        }
         return Init_Array_Cell(OUT, kind, Pop_Stack_Values(base));
     }
 

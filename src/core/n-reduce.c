@@ -34,7 +34,7 @@
 //      value "GROUP! and BLOCK! evaluate each item, single values evaluate"
 //          [any-value!]
 //      /predicate "Applied after evaluation, default is IDENTITY"
-//          [<unrun> action!]
+//          [<unrun> frame!]
 //  ]
 //
 DECLARE_NATIVE(reduce)
@@ -765,14 +765,14 @@ Bounce Composer_Executor(Frame(*) f)
 //
 //  {Evaluates only contents of GROUP!-delimited expressions in an array}
 //
-//      return: [blackhole! any-array! any-sequence! any-word! action!]
+//      return: [blackhole! any-array! any-sequence! any-word! activation?]
 //      'label "Distinguish compose groups, e.g. [(plain) (<*> composed)]"
 //          [<skip> tag! file!]
-//      value "The template to fill in (no-op if WORD!, ACTION! or SPACE!)"
-//          [blackhole! any-array! any-sequence! any-word! action!]
+//      value "The template to fill in (no-op if WORD!, ACTIVATION?, BLACKHOLE!)"
+//          [blackhole! any-array! any-sequence! any-word! activation?]
 //      /deep "Compose deeply into nested arrays"
 //      /predicate "Function to run on composed slots (default: META)"
-//          [<unrun> action!]
+//          [<unrun> frame!]
 //  ]
 //
 //  ; Note: /INTO is intentionally no longer supported
@@ -807,7 +807,7 @@ DECLARE_NATIVE(compose)
     if (Is_Blackhole(v))
         return COPY(v);  // sink locations composed to avoid double eval
 
-    if (ANY_WORD(v) or IS_ACTION(v))
+    if (ANY_WORD(v) or Is_Activation(v))
         return COPY(v);  // makes it easier to `set compose target`
 
     Push_Composer_Frame(OUT, frame_, v, VAL_SPECIFIER(v));

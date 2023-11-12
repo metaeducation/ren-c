@@ -397,7 +397,7 @@ Bounce Evaluator_Executor(Frame(*) f)
       case REB_SET_BLOCK :
         goto set_block_rightside_result_in_out;
 
-      case REB_ACTION :
+      case REB_FRAME :
         goto lookahead;
 
       default:
@@ -438,7 +438,7 @@ Bounce Evaluator_Executor(Frame(*) f)
 
     assert(not f_next_gotten);  // Fetch_Next_In_Frame() cleared it
 
-    if (VAL_TYPE_UNCHECKED(f_next) == REB_ACTION) {  // plain ACTION! runs
+    if (VAL_TYPE_UNCHECKED(f_next) == REB_FRAME) {  // plain FRAME! runs
         f_next_gotten = SPECIFIC(f_next);
     }
     else if (VAL_TYPE_UNCHECKED(f_next) == REB_WORD) {  // right's kind
@@ -453,8 +453,12 @@ Bounce Evaluator_Executor(Frame(*) f)
     } else
         goto give_up_backward_quote_priority;
 
-    if (Not_Action_Flag(VAL_ACTION(unwrap(f_next_gotten)), ENFIXED))
+    if (
+        not Is_Frame_Details(unwrap(f_next_gotten)) or
+        Not_Action_Flag(VAL_ACTION(unwrap(f_next_gotten)), ENFIXED)
+    ){
         goto give_up_backward_quote_priority;
+    }
 
   blockscope {
     Action(*) enfixed = VAL_ACTION(unwrap(f_next_gotten));
@@ -638,18 +642,19 @@ Bounce Evaluator_Executor(Frame(*) f)
         goto skip_lookahead;  // skip lookahead, see notes there
 
 
-    //=//// ACTION! ///////////////////////////////////////////////////////=//
+    //=//// FRAME! ////////////////////////////////////////////////////////=//
     //
-    // If an action makes it to the SWITCH statement, that means it is either
-    // literally an action value in the array (`do compose [(:add) 1 2]`) or is
+    // If a FRAME! makes it to the SWITCH statement, that means it is either
+    // literally a frame in the array (`do compose [(unrun :add) 1 2]`) or is
     // being retriggered via REEVAL.
     //
-    // (Most action evaluations are triggered from a WORD! or PATH! case.)
+    // Most FRAME! evaluations are the isotopic form ("actions") triggered
+    // from a WORD! or PATH! case.)
     //
-    // 1. If an enfix action is run at this moment, it will not have a left
+    // 1. If an enfix function is run at this moment, it will not have a left
     //    hand side argument.
 
-      case REB_ACTION: {
+      case REB_FRAME: {
         Frame(*) subframe = Make_Action_Subframe(f);
         Push_Frame(OUT, subframe);
         Push_Action(
@@ -680,7 +685,7 @@ Bounce Evaluator_Executor(Frame(*) f)
         // Gather args and execute function (the arg gathering makes nested
         // eval calls that lookahead, but no lookahead after the action runs)
         //
-        STATE = REB_ACTION;
+        STATE = REB_FRAME;
         return CATCH_CONTINUE_SUBFRAME(TOP_FRAME); }
 
 
@@ -858,7 +863,7 @@ Bounce Evaluator_Executor(Frame(*) f)
             );
 
             if (f_next_gotten) {  // cache can tamper with lookahead, see [2]
-                if (VAL_TYPE_UNCHECKED(f_next) == REB_ACTION) {
+                if (VAL_TYPE_UNCHECKED(f_next) == REB_FRAME) {
                     // not a cache
                 }
                 else {
@@ -1083,7 +1088,7 @@ Bounce Evaluator_Executor(Frame(*) f)
         if (Is_Frame_At_End(f))
             fail ("Terminal-Slash Action Invocation Needs APPLY argument");
 
-        STATE = REB_ACTION;  // bounces back to do lookahead
+        STATE = REB_FRAME;  // bounces back to do lookahead
         rebPushContinuation(
             cast(REBVAL*, OUT),  // API won't take Atom(*)
             FRAME_MASK_NONE,
@@ -1696,7 +1701,6 @@ Bounce Evaluator_Executor(Frame(*) f)
       case REB_VARARGS:
         //
       case REB_OBJECT:
-      case REB_FRAME:
       case REB_MODULE:
       case REB_ERROR:
       case REB_PORT:
@@ -1873,7 +1877,7 @@ Bounce Evaluator_Executor(Frame(*) f)
             assert(f_next_gotten == Lookup_Word(f_next, FEED_SPECIFIER(f->feed)));
         break;  // need to check for lookahead
 
-      case REB_ACTION:
+      case REB_FRAME:
         f_next_gotten = SPECIFIC(f_next);
         break;
 

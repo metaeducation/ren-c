@@ -12,9 +12,9 @@
         {Specialize by example: https://en.wikipedia.org/wiki/Tacit_programming}
 
         return: [activation?]
-        action [action!]  ; lower level version takes action AND a block
+        frame [<unrun> frame!]  ; this lower version takes frame AND a block
         block [block!]
-        <local> params frame var
+        <local> params var
     ][
         ; If we did a GET of a PATH! it comes back as a partially specialized
         ; function, where the refinements are reported as normal args at the
@@ -23,11 +23,11 @@
         ;
         ; We prune out any unused refinements for convenience.
         ;
-        params: map-each w parameters of action [
+        params: map-each w parameters of frame [
             match [word! lit-word! get-word!] w  ; !!! what about skippable?
         ]
 
-        frame: make frame! action
+        frame: make frame! frame
 
         ; Step through the block we are given--first looking to see if there is
         ; a BLANK! in the slot where a parameter was accepted.  If it is blank,
@@ -69,22 +69,22 @@
         ; We now create an action out of the frame.  NONE parameters are taken
         ; as being unspecialized and gathered at the callsite.
         ;
-        return runs make action! frame
+        return runs frame
     ]
 
     pointfree: specialize* (enclose :pointfree* lambda [f] [
-        set let action f.action: (match action! any [  ; no SET-WORD! namecache
+        set let frame f.frame: (match frame! any [  ; no SET-WORD! namecache
             if match [word! path!] f.block.1 [unrun get/any f.block.1]
         ]) else [
-            fail "POINTFREE requires ACTION! argument at head of block"
+            fail "POINTFREE requires FRAME! argument at head of block"
         ]
 
         ; rest of block is invocation by example
         f.block: skip f.block 1  ; Note: NEXT not defined yet
 
-        inherit-adjunct (do f) action  ; don't SET-WORD! cache name
+        inherit-adjunct (do f) frame  ; don't SET-WORD! cache name
     ])[
-        action: unrun :panic/value  ; overwritten, best to make something mean
+        frame: unrun :panic/value  ; overwritten, best to make something mean
     ]
 
     <-: enfix func* [

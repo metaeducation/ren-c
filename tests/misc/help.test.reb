@@ -26,7 +26,7 @@
     for-each w words of lib [
         dump w
         if quasi? ^(get/any w) [continue]
-        if action? get w
+        if activation? get w
             (compose/deep [assert [none? help (w)]])
         else [
             if not issue? get w [ comment "don't open web browser"
@@ -43,7 +43,7 @@
     for-each w words of lib [
         dump w
         if quasi? ^(get/any w) [continue]
-        if action? get w
+        if activation? get w
             (compose/deep [assert [nihil? source (w)]])
     ]
     true

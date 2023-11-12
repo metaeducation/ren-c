@@ -1,16 +1,16 @@
 ; functions/comparison/sameq.r
-; reflexivity test for action
+; reflexivity test for activation
 (same? :abs :abs)
 ; reflexivity test for native
 (same? :all :all)
 ; reflexivity test for infix
 (same? :+ :+)
-; reflexivity test for action!
+; reflexivity test for activation
 (
     a-value: func [] []
     same? :a-value :a-value
 )
-; no structural equality for action!
+; no structural equality for activation
 (not same? func [] [] func [] [])
 ; binary!
 (not same? #{00} #{00})

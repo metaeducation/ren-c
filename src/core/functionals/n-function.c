@@ -52,7 +52,7 @@
 //   possible using CLOSURE which made a costly deep copy of the function's
 //   body on every invocation.  Ren-C's method does not require a copy.)
 //
-// * Invisible functions (return: <void>) that vanish completely,
+// * Invisible functions (return: [nihil?]) that vanish completely,
 //   leaving whatever result was in the evaluation previous to the function
 //   call as-is.
 //
@@ -69,9 +69,9 @@
 // * While FUNC is intended to be an optimized native due to its commonality,
 //   the belief is still that it should be possible to build an equivalent
 //   (albeit slower) version in usermode out of other primitives.  The current
-//   plan is that those primitives would be MAKE ACTION! from a FRAME!, and
-//   being able to ADAPT a block of code into that frame.  This makes ADAPT
-//   the more foundational operation for fusing interfaces with block bodies.
+//   plan is that those primitives would be RUNS of a FRAME!, and being able
+//   to ADAPT a block of code into that frame.  This makes ADAPT the more
+//   foundational operation for fusing interfaces with block bodies.
 //
 
 #include "sys-core.h"
@@ -198,7 +198,7 @@ Bounce Func_Dispatcher(Frame(*) f)
 // the body will introduce a RETURN specific to each action invocation, thus
 // acting more like:
 //
-//     return: make action! [
+//     return: lambda
 //         [{Returns a value from a function.} value [<opt> any-value!]]
 //         [unwind/with (binding of 'return) :value]
 //     ]
@@ -206,16 +206,14 @@ Bounce Func_Dispatcher(Frame(*) f)
 //
 // This pattern addresses "Definitional Return" in a way that does not need to
 // build in RETURN as a language keyword in any specific form (in the sense
-// that MAKE ACTION! does not itself require it).
+// that functions do not itself require it).  See the LAMBDA generator for
+// an example...where UNWIND can be used to exit frames if you want to build
+// something return-like.
 //
 // FUNC optimizes by not internally building or executing the equivalent body,
 // but giving it back from BODY-OF.  This gives FUNC the edge to pretend to
 // add containing code and simulate its effects, while really only holding
 // onto the body the caller provided.
-//
-// While plain MAKE ACTION! has no RETURN, UNWIND can be used to exit frames
-// but must be explicit about what frame is being exited.  This can be used
-// by usermode generators that want to create something return-like.
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
@@ -439,10 +437,30 @@ Bounce Init_Thrown_Unwind_Value(
     DECLARE_STABLE (label);
     Copy_Cell(label, Lib(UNWIND));
 
-    if (IS_FRAME(level)) {
+    if (IS_ACTION(level)) {
+        Frame(*) f = target->prior;
+        for (; true; f = f->prior) {
+            if (f == BOTTOM_FRAME)
+                fail (Error_Invalid_Exit_Raw());
+
+            if (not Is_Action_Frame(f))
+                continue; // only exit functions
+
+            if (Is_Action_Frame_Fulfilling(f))
+                continue; // not ready to exit
+
+            if (VAL_ACTION(level) == f->u.action.original) {
+                TG_Unwind_Frame = f;
+                break;
+            }
+        }
+    }
+    else if (IS_FRAME(level)) {
         TG_Unwind_Frame = CTX_FRAME_IF_ON_STACK(VAL_CONTEXT(level));
     }
-    else if (IS_INTEGER(level)) {
+    else {
+        assert(IS_INTEGER(level));
+
         REBLEN count = VAL_INT32(level);
         if (count <= 0)
             fail (Error_Invalid_Exit_Raw());
@@ -465,26 +483,6 @@ Bounce Init_Thrown_Unwind_Value(
             }
         }
     }
-    else {
-        assert(IS_ACTION(level));
-
-        Frame(*) f = target->prior;
-        for (; true; f = f->prior) {
-            if (f == BOTTOM_FRAME)
-                fail (Error_Invalid_Exit_Raw());
-
-            if (not Is_Action_Frame(f))
-                continue; // only exit functions
-
-            if (Is_Action_Frame_Fulfilling(f))
-                continue; // not ready to exit
-
-            if (VAL_ACTION(level) == f->u.action.original) {
-                TG_Unwind_Frame = f;
-                break;
-            }
-        }
-    }
 
     return Init_Thrown_With_Label(frame_, value, label);
 }
@@ -496,8 +494,8 @@ Bounce Init_Thrown_Unwind_Value(
 //  {Jump up the stack to return from a specific frame or call.}
 //
 //      return: []  ; !!! notation for divergent functions?
-//      level "Frame, action, or index to exit from"
-//          [frame! action! integer!]
+//      level "Frame or index to exit from"
+//          [frame! integer!]
 //      ^result "Result for enclosing state"
 //          [<opt> <void> raised? pack? any-value!]
 //  ]
@@ -638,8 +636,8 @@ DECLARE_NATIVE(definitional_return)
 //
 //      return: "Same as derived (assists in efficient chaining)"
 //          [activation!]
-//      derived [<unrun> action!]
-//      original [<unrun> action!]
+//      derived [<unrun> frame!]
+//      original [<unrun> frame!]
 //      /augment "Additional spec information to scan"
 //          [block!]
 //  ]

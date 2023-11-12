@@ -258,6 +258,19 @@ inline static bool Is_Throwing(Frame(*) frame_) {
     SER_AT(REBVAL, ACT_IDENTITY(action), 0)
 
 
+inline static bool Is_Frame_Details(noquote(Cell(const*)) v) {
+    assert(HEART_BYTE(v) == REB_FRAME);
+    return IS_DETAILS(cast(Stub*, VAL_NODE1(v)));
+}
+
+#define Is_Frame_Exemplar(v) (not Is_Frame_Details(v))
+
+inline static bool IS_ACTION(Cell(const*) v) {
+    if (VAL_TYPE(v) != REB_FRAME)
+        return false;
+    return Is_Frame_Details(v);
+}
+
 // An action's details array is stored in the archetype, which is the first
 // element of the action array...which is *usually* the same thing as the
 // action array itself, -but not always-.  Hijackings fiddle with this, and
@@ -269,7 +282,7 @@ inline static bool Is_Throwing(Frame(*) frame_) {
     x_cast(Array(*), ACT_ARCHETYPE(action)->payload.Any.first.node)
 
 inline static Context(*) VAL_ACTION_BINDING(noquote(Cell(const*)) v) {
-    assert(CELL_HEART_UNCHECKED(v) == REB_ACTION);
+    assert(Is_Frame_Details(v));
     return CTX(BINDING(v));
 }
 
@@ -277,7 +290,7 @@ inline static void INIT_VAL_ACTION_BINDING(
     Cell(*) v,
     Context(*) binding
 ){
-    assert(CELL_HEART_UNCHECKED(v) == REB_ACTION);
+    assert(Is_Frame_Details(v));
     mutable_BINDING(v) = binding;
 }
 
@@ -409,7 +422,7 @@ inline static void Init_Key(REBKEY *dest, const Raw_Symbol* symbol)
 
 
 inline static Action(*) VAL_ACTION(noquote(Cell(const*)) v) {
-    assert(CELL_HEART_UNCHECKED(v) == REB_ACTION);
+    assert(Is_Frame_Details(v));
     REBSER *s = SER(VAL_NODE1(v));
     if (GET_SERIES_FLAG(s, INACCESSIBLE))
         fail (Error_Series_Data_Freed_Raw());
@@ -432,7 +445,7 @@ inline static Action(*) VAL_ACTION(noquote(Cell(const*)) v) {
 // actually make more sense.
 
 inline static option(Symbol(const*)) VAL_ACTION_LABEL(noquote(Cell(const*)) v) {
-    assert(CELL_HEART(v) == REB_ACTION);
+    assert(Is_Frame_Details(v));
     REBSER *s = VAL_ACTION_PARTIALS_OR_LABEL(v);
     if (not s)
         return ANONYMOUS;
@@ -557,7 +570,7 @@ inline static REBVAL *Init_Action_Core(
   #endif
     Force_Series_Managed(ACT_IDENTITY(a));
 
-    Reset_Unquoted_Header_Untracked(out, CELL_MASK_ACTION);
+    Reset_Unquoted_Header_Untracked(out, CELL_MASK_FRAME);
     INIT_VAL_ACTION_DETAILS(out, ACT_IDENTITY(a));
     INIT_VAL_ACTION_LABEL(out, label);
     INIT_VAL_ACTION_BINDING(out, binding);

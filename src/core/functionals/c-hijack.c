@@ -197,14 +197,14 @@ Bounce Hijacker_Dispatcher(Frame(*) frame_)
 //
 //  hijack: native [
 //
-//  {Cause all existing references to an ACTION! to invoke another ACTION!}
+//  {Cause all existing references to a frame to invoke another frame}
 //
 //      return: "The hijacked action value, null if self-hijack (no-op)"
 //          [<opt> activation!]
-//      victim "Action whose references are to be affected"
-//          [<unrun> action!]
-//      hijacker "The  action to run in its place"
-//          [<unrun> action!]
+//      victim "Frame whose inherited instances are to be affected"
+//          [<unrun> frame!]
+//      hijacker "The frame to run in its place"
+//          [<unrun> frame!]
 //  ]
 //
 DECLARE_NATIVE(hijack)

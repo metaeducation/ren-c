@@ -16,7 +16,7 @@ spec-of: function [
     {Generate a block which could be used as a "spec block" from an action.}
 
     return: [block!]
-    action [<unrun> action!]
+    action [<unrun> frame!]
 ][
     adjunct: (match object! adjunct-of action) else [return [~bad-spec~]]
 
@@ -52,12 +52,15 @@ description-of: function [
     return: [<opt> text!]
     v [<maybe> any-value!]
 ][
+    if activation? :v [
+        v: unrun v
+    ]
     return (switch/type :v [
         any-array! [spaced ["array of length:" length of v]]
         type-word! [
             mold v
         ]
-        action! [
+        frame! [
             if let adjunct: adjunct-of :v [
                 copy maybe get 'adjunct.description
             ] else [null]
@@ -117,7 +120,6 @@ help: function [
             To see all words of a specific datatype:
 
                 help object!
-                help action!
                 help type-word!
 
             Other debug helpers:
@@ -229,7 +231,7 @@ help: function [
             ] then [
                 return nihil
             ]
-            enfixed: (action? :value) and (enfixed? :value)
+            enfixed: (activation? :value) and (enfixed? :value)
         ]
     ] else [
         ; !!! There may be interesting meanings to apply to things like
@@ -247,9 +249,9 @@ help: function [
     ]
 
     ; Open the web page for it?
-    all [doc, match [action! type-word!] :value] then [
+    all [doc, match [activation? type-word!] :value] then [
         item: form :topic
-        if action? get :topic [
+        if activation? get :topic [
             ;
             ; !!! The logic here repeats somewhat the same thing that is done
             ; by TO-C-NAME for generating C identifiers.  It might be worth it
@@ -293,7 +295,7 @@ help: function [
         return nihil
     ]
 
-    match [action! activation!] :value else [
+    match [frame! activation!] :value else [
         print collect [
             keep uppercase mold topic
             keep "is"
@@ -420,7 +422,7 @@ source: function [
     "Prints the source code for an ACTION! (if available)"
 
     return: [nihil?]
-    'arg [word! path! action! tag!]
+    'arg [<unrun> word! path! frame! tag!]
 ][
     switch/type arg [
         tag! [
@@ -443,20 +445,19 @@ source: function [
     ] else [
         name: "anonymous"
         f: arg
-    ]
-
-    if activation? :f [
-        f: unrun :f
+        if activation? :f [
+            f: unrun :f
+        ]
     ]
 
     case [
         match [text! url!] f [
             print f
         ]
-        not action? f [
+        not frame? f [
             print [
                 name "is" an any [mold kind of :f, "NONE"]
-                "and not an ACTION!"
+                "and not a FRAME!"
             ]
         ]
     ] then [
@@ -509,7 +510,7 @@ what: function [
 
     for-each [word val] ctx [
         ; word val
-        if (action? :val) [
+        if (activation? :val) [
             arg: either args [
                 mold parameters of :val
             ][

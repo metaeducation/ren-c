@@ -647,7 +647,7 @@ DECLARE_NATIVE(also)  // see `tweak :also 'defer on` in %base-defs.r
 //      return: "Input if it matched, NULL if it did not (isotope if falsey)"
 //          [<opt> any-value! logic!]
 //      test "Typeset or arity-1 filter function"
-//          [<opt> logic! action! block! type-word! type-group! type-block!]
+//          [<opt> logic! activation? block! type-word! type-group! type-block!]
 //      value [<opt> <void> any-value!]
 //  ]
 //
@@ -671,18 +671,17 @@ DECLARE_NATIVE(match)
         if (Is_Truthy(v) != VAL_LOGIC(test))
             return nullptr;
     }
-    else switch (VAL_TYPE(test)) {
-      case REB_ACTION: {
+    else if (Is_Activation(test)) {
         if (rebRunThrows(
             cast(REBVAL*, SPARE),  // <-- output cell, API doesn't do unstable
-            test, rebQ(v)
+            rebRUN(test), rebQ(v)
         )){
             return THROWN;
         }
         if (Is_Falsey(SPARE))
             return nullptr;
-        break; }
-
+    }
+    else switch (VAL_TYPE(test)) {
       case REB_PARAMETER:
       case REB_BLOCK:
       case REB_TYPE_WORD:
@@ -734,7 +733,7 @@ DECLARE_NATIVE(match)
 //      block "Block of expressions, @[block] will be treated inertly"
 //          [block! the-block!]
 //      /predicate "Test for whether an evaluation passes (default is DID)"
-//          [action!]
+//          [<unrun> frame!]
 //      <local> scratch
 //  ]
 //
@@ -883,7 +882,7 @@ DECLARE_NATIVE(all)
 //      block "Block of expressions, @[block] will be treated inertly"
 //          [block! the-block!]
 //      /predicate "Test for whether an evaluation passes (default is DID)"
-//          [action!]
+//          [<unrun> frame!]
 //  ]
 //
 DECLARE_NATIVE(any)
@@ -1011,7 +1010,7 @@ DECLARE_NATIVE(any)
 //          [block!]
 //      /all "Do not stop after finding first logically true case"
 //      /predicate "Unary case-processing action (default is DID)"
-//          [<unrun> action!]
+//          [<unrun> frame!]
 //      <local> discarded
 //  ]
 //
@@ -1219,7 +1218,7 @@ DECLARE_NATIVE(case)
 //      /all "Evaluate all matches (not just first one)"
 //      /type "Match based on type constraints, not equality"
 //      /predicate "Binary switch-processing action (default is EQUAL?)"
-//          [<unrun> action!]
+//          [<unrun> frame!]
 //      <local> scratch
 //  ]
 //
@@ -1418,7 +1417,7 @@ DECLARE_NATIVE(switch)
 //      :branch "If target needs default, this is evaluated and stored there"
 //          [any-branch!]
 //      /predicate "Test for what's considered empty (default is null + void)"
-//          [<unrun> action!]
+//          [<unrun> frame!]
 //  ]
 //
 DECLARE_NATIVE(default)
@@ -1501,7 +1500,7 @@ DECLARE_NATIVE(default)
 //      block "Block to evaluate"
 //          [block!]
 //      /name "Catches a named throw (single name if not block)"
-//          [block! word! action! object!]
+//          [block! word! frame! object!]
 //      /quit "Special catch for QUIT native"
 //      /any "Catch all throws except QUIT (can be used with /QUIT)"
 //  ]
@@ -1628,7 +1627,7 @@ DECLARE_NATIVE(catch)
 //      ^value "Value returned from catch"
 //          [<opt> <void> pack? raised? any-value!]
 //      /name "Throws to a named catch"
-//          [word! action! object!]
+//          [word! frame! object!]
 //  ]
 //
 DECLARE_NATIVE(throw)

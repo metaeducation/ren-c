@@ -18,7 +18,7 @@ verify: function [
     conditions "Conditions to check"
         [block!]
     /handler "Optional code to run if the assertion fails, receives condition"
-        [block! action!]
+        [<unrun> block! frame!]
     <local> pos result'
 ][
     while [

@@ -8,12 +8,12 @@
 [(
 onlify: func [
     return: [activation?]
-    action [<unrun> action!]
+    frame [<unrun> frame!]
     /param [word!]
 ][
     param: default ['value]
     return adapt (
-        augment :action [
+        augment frame [
             /only "Use value literally (don't splice blocks or unquote)"
         ]
     ) compose/deep [

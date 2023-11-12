@@ -655,17 +655,17 @@ void MF_Varargs(REB_MOLD *mo, noquote(Cell(const*)) v, bool form) {
 //
 //  variadic?: native [
 //
-//  {Returns TRUE if an ACTION! may take a variable number of arguments.}
+//  {Returns TRUE if a frame may take a variable number of arguments.}
 //
 //      return: [logic?]
-//      action [action!]
+//      frame [<unrun> frame!]
 //  ]
 //
 DECLARE_NATIVE(variadic_q)
 {
     INCLUDE_PARAMS_OF_VARIADIC_Q;
 
-    Action(*) action = VAL_ACTION(ARG(action));
+    Action(*) action = VAL_ACTION(ARG(frame));
 
     const REBKEY *key_tail;
     const REBKEY *key = ACT_KEYS(&key_tail, action);

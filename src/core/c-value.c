@@ -267,8 +267,8 @@ void* Probe_Core_Debug(
         break;
 
       case FLAVOR_DETAILS:
-        Probe_Print_Helper(p, expr, "Action", file, line);
-        MF_Action(mo, ACT_ARCHETYPE(ACT(m_cast(void*, p))), false);
+        Probe_Print_Helper(p, expr, "Details", file, line);
+        MF_Frame(mo, ACT_ARCHETYPE(ACT(m_cast(void*, p))), false);
         break;
 
       case FLAVOR_PAIRLIST:

@@ -256,7 +256,7 @@ int main(int argc, char *argv_ansi[])
     // command line arguments.
     //
     REBVAL *main_startup = rebValue(
-        "ensure action! do transcode/where", rebR(startup_bin), "lib"
+        "ensure frame! do transcode/where", rebR(startup_bin), "lib"
     );
 
     // This runs the MAIN-STARTUP, which returns *requests* to execute
@@ -264,7 +264,7 @@ int main(int argc, char *argv_ansi[])
     // to intercept bugs *in MAIN-STARTUP itself*.
     //
     REBVAL *trapped = rebValue(
-        "entrap [",  // MAIN-STARTUP action! takes one argument (argv[])
+        "entrap [",  // MAIN-STARTUP frame takes one argument (argv[])
             main_startup, rebR(argv_block),
         "]"
     );

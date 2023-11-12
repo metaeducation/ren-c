@@ -434,8 +434,8 @@ REBINT Cmp_Value(Cell(const*) sval, Cell(const*) tval, bool strict)
       case REB_PORT:
         return CT_Context(s, t, strict);
 
-      case REB_ACTION:
-        return CT_Action(s, t, strict);
+      case REB_FRAME:
+        return CT_Frame(s, t, strict);
 
       case REB_VOID: // !!! should voids be allowed at this level?
         return 0;  // voids always equal to each other

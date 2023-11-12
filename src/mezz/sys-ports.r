@@ -244,7 +244,7 @@ make-scheme: function [
                 block? body
             ]
             append actor name: to word! name  ; !!! use EXTEND-style operation?
-            actor.(name): reeval op args body ; add action! to object! w/name
+            actor.(name): reeval op args body ; add action to object! w/name
         ]
         scheme.actor: actor
     ]

@@ -513,10 +513,10 @@ Bounce Action_Executor(Frame(*) f)
 
   //=//// NON-ENFIX VARIADIC ARG (doesn't consume anything *yet*) /////////=//
 
-        // Evaluation argument "hook" parameters (marked in MAKE ACTION!
-        // by a `[[]]` in the spec, and in FUNC by `<variadic>`).  They point
-        // back to this call through a reified FRAME!, and are able to
-        // consume additional arguments during the function run.
+        // Evaluation argument "hook" parameters (marked in FUNC by
+        // `<variadic>`).  They point back to this call through a reified
+        // FRAME!, and are able to consume additional arguments during the
+        // function run.
         //
         if (GET_PARAM_FLAG(PARAM, VARIADIC)) {
             Init_Varargs_Untyped_Normal(ARG, f);

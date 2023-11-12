@@ -95,7 +95,7 @@
 
                 v: apply :select [values keyword-match, /case case_REWORD]
                 append out switch/type v [
-                    action! [
+                    frame! [
                         ; Give v the option of taking an argument, but
                         ; if it does not, evaluate to arity-0 result.
                         ;

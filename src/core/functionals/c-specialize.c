@@ -449,9 +449,9 @@ bool Specialize_Action_Throws(
 //  {Create a new action through partial or full specialization of another}
 //
 //      return: [activation!]
-//      action "Function whose parameters will be set to fixed values"
-//          [<unrun> action!]
-//      def "Definition for FRAME! fields for args and refinements"
+//      original "Frame whose parameters will be set to fixed values"
+//          [<unrun> frame!]
+//      def "Definition code setting fields for args and refinements"
 //          [block!]
 //  ]
 //
@@ -464,7 +464,7 @@ DECLARE_NATIVE(specialize_p)  // see extended SPECIALIZE in %base-defs.r
 {
     INCLUDE_PARAMS_OF_SPECIALIZE_P;
 
-    Value(*) specializee = ARG(action);
+    Value(*) specializee = ARG(original);
     Value(*) def = ARG(def);
 
     if (Specialize_Action_Throws(

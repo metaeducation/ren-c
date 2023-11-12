@@ -34,7 +34,7 @@
 //      return: "ERROR! if raised, else ^META of the result"
 //          [error! quoted! quasi! blank!]
 //      code "Code to sandbox and monitor"
-//          [block! action!]
+//          [<unrun> frame! block!]
 //  ]
 //
 DECLARE_NATIVE(enrescue)

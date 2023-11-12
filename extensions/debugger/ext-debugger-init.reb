@@ -115,7 +115,7 @@ backtrace*: function [
         "Nothing if printing, if specific level a frame! else block"
     start [frame!]
         "Where to consider the trace point as starting from"
-    level [blank! integer! action!]
+    level [blank! integer!]
         "Stack level to return frame for (blank to list)"
     /limit "Max number of frames (pending and active), false for no limit"
         [logic! integer!]
@@ -205,7 +205,7 @@ backtrace*: function [
                     continue
                 ]
             ] else [
-                assert [action? :level]
+                assert [activation? :level]
                 if (action of f) <> :level [
                     continue
                 ]
@@ -338,7 +338,7 @@ interrupt: adapt :breakpoint* [
 debug: func [
     {Dialect for interactive debugging, see documentation for details}
     return: <none>
-    'value [<opt> integer! frame! action! block!]
+    'value [<opt> integer! frame! block!]
         {Stack level to inspect or dialect block, or enter debug mode}
 ][
     if not integer? :value [

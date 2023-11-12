@@ -88,7 +88,7 @@
     :a-value == a-value
 )
 ; natives are word-active
-(action! == kind of unrun :reduce)
+(frame! == kind of unrun :reduce)
 (:blank == blank)
 ; library test?
 (

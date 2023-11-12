@@ -260,7 +260,7 @@ Bounce Yielder_Dispatcher(Frame(*) f)
 //  yielder: native [
 //
 //      return: "Action that can be called repeatedly until it yields NULL"
-//          [action!]
+//          [activation?]
 //      spec "Arguments passed in to each call for the generator"
 //          [block!]
 //      body "Code containing YIELD statements"
@@ -305,7 +305,7 @@ DECLARE_NATIVE(yielder)
 //  generator: native [
 //
 //      return: "Arity-0 action you can call repeatedly until it yields NULL"
-//          [action!]
+//          [activation?]
 //      body "Code containing YIELD statements"
 //          [block!]
 //  ]

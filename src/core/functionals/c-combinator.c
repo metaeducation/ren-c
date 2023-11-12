@@ -238,9 +238,9 @@ Array(*) Expanded_Combinator_Spec(const REBVAL *original)
 //
 //  combinator: native [
 //
-//  {Make a stylized ACTION! that fulfills the interface of a combinator}
+//  {Make stylized code that fulfills the interface of a combinator}
 //
-//      return: [action!]
+//      return: [frame!]
 //      spec [block!]
 //      body [block!]
 //  ]
@@ -354,7 +354,7 @@ void Push_Parser_Subframe(
 //
 //      return: "PARSER's result if it succeeds, otherwise ~null~ isotope"
 //          [any-value!]
-//      parser [action!]
+//      parser [activation?]
 //  ]
 //
 DECLARE_NATIVE(opt_combinator)
@@ -466,7 +466,7 @@ DECLARE_NATIVE(text_x_combinator)
 //
 //      return: "Result of last successful match"
 //          [<opt> any-value!]
-//      parser [action!]
+//      parser [activation?]
 //  ]
 //
 DECLARE_NATIVE(some_combinator)
@@ -566,7 +566,7 @@ DECLARE_NATIVE(some_combinator)
 //
 //      return: "parser result if it succeeded and advanced input, else NULL"
 //          [<opt> any-value!]
-//      parser [action!]
+//      parser [activation?]
 //  ]
 //
 DECLARE_NATIVE(further_combinator)
@@ -738,7 +738,7 @@ static bool Combinator_Param_Hook(
             if (rebRunThrows(cast(REBVAL*, SPARE), "let temp"))
                 assert(!"LET failed");
             REBVAL *parser = rebValue(
-                "[@", stable_SPARE, "]: parsify", ARG(state), ARG(rules)
+                "[@", stable_SPARE, "]: parsify", rebQ(ARG(state)), ARG(rules)
             );
             bool any = false;
             Get_Var_May_Fail(ARG(rules), stable_SPARE, SPECIFIED, any);
@@ -767,7 +767,7 @@ static bool Combinator_Param_Hook(
 //          [activation?]
 //      @advanced [block!]
 //      c "Parser combinator taking input, but also other parameters"
-//          [action!]
+//          [frame!]
 //      rules [block!]
 //      state "Parse State" [frame!]
 //      /value "Initiating value (if datatype)" [any-value!]
@@ -836,7 +836,7 @@ DECLARE_NATIVE(combinatorize)
     Action(*) parser = Make_Action_From_Exemplar(s.ctx, label);
     DROP_GC_GUARD(s.ctx);
 
-    Activatify(Init_Action(  // note: MAKE ACTION! copies the context, this won't
+    Activatify(Init_Action(
         OUT,
         parser,
         VAL_ACTION_LABEL(ARG(c)),

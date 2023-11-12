@@ -224,10 +224,43 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
 
     //=//// BEGIN BINDABLE TYPES ////////////////////////////////////////=//
 
+      case REB_FRAME:
+        if (Is_Frame_Exemplar(v))
+            goto mark_object;
+        {
+        assert((v->header.bits & CELL_MASK_FRAME) == CELL_MASK_FRAME);
+
+        Action(*) a = VAL_ACTION(v);
+        assert(Is_Marked(a));
+        if (VAL_ACTION_PARTIALS_OR_LABEL(v))
+            assert(Is_Marked(VAL_ACTION_PARTIALS_OR_LABEL(v)));
+
+        if (Is_Action_Native(a)) {
+            Array(*) details = ACT_DETAILS(a);
+            assert(ARR_LEN(details) >= IDX_NATIVE_MAX);
+            Value(*) body = DETAILS_AT(details, IDX_NATIVE_BODY);
+            Value(*) context = DETAILS_AT(details, IDX_NATIVE_CONTEXT);
+            assert(
+                IS_BLANK(body)
+                or IS_HANDLE(body)  // Intrinsics use the slot for Intrinsic*
+                or IS_TEXT(body)  // TCC uses the slot for "source"
+                or IS_WORD(body)  // GENERIC uses the slot for the "verb"
+            );
+            assert(ANY_CONTEXT(context));
+        }
+
+        // We used to check the [0] slot of the details holds an archetype
+        // that is consistent with the details itself.  That is no longer true
+        // (by design), see HIJACK and COPY of actions for why.
+        //
+        REBVAL *archetype = ACT_ARCHETYPE(a);
+        assert(IS_ACTION(archetype));
+        break; }
+
+      mark_object:
       case REB_OBJECT:
       case REB_MODULE:
       case REB_ERROR:
-      case REB_FRAME:
       case REB_PORT: {
         if (GET_SERIES_FLAG(SER(VAL_NODE1(v)), INACCESSIBLE))
             break;
@@ -397,36 +430,6 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
         }
         else
             assert(VAL_WORD_INDEX_U32(v) == 0);
-        break; }
-
-      case REB_ACTION: {
-        assert((v->header.bits & CELL_MASK_ACTION) == CELL_MASK_ACTION);
-
-        Action(*) a = VAL_ACTION(v);
-        assert(Is_Marked(a));
-        if (VAL_ACTION_PARTIALS_OR_LABEL(v))
-            assert(Is_Marked(VAL_ACTION_PARTIALS_OR_LABEL(v)));
-
-        if (Is_Action_Native(a)) {
-            Array(*) details = ACT_DETAILS(a);
-            assert(ARR_LEN(details) >= IDX_NATIVE_MAX);
-            Value(*) body = DETAILS_AT(details, IDX_NATIVE_BODY);
-            Value(*) context = DETAILS_AT(details, IDX_NATIVE_CONTEXT);
-            assert(
-                IS_BLANK(body)
-                or IS_HANDLE(body)  // Intrinsics use the slot for Intrinsic*
-                or IS_TEXT(body)  // TCC uses the slot for "source"
-                or IS_WORD(body)  // GENERIC uses the slot for the "verb"
-            );
-            assert(ANY_CONTEXT(context));
-        }
-
-        // We used to check the [0] slot of the details holds an archetype
-        // that is consistent with the details itself.  That is no longer true
-        // (by design), see HIJACK and COPY of actions for why.
-        //
-        REBVAL *archetype = ACT_ARCHETYPE(a);
-        assert(IS_ACTION(archetype));
         break; }
 
       case REB_QUOTED:

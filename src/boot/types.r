@@ -196,8 +196,8 @@ issue       "immutable codepoint or codepoint sequence"
                 [context     +       +]
 
     frame       "arguments and locals of a specific action invocation"
-                (CELL_FLAG_FIRST_IS_NODE | CELL_FLAG_SECOND_IS_NODE)
-                []
+    ~activation~ (CELL_FLAG_FIRST_IS_NODE | CELL_FLAG_SECOND_IS_NODE)
+                [any-branch!]
                 [frame       +       *]
 
     port        "external series, an I/O channel"
@@ -410,14 +410,6 @@ comma       "separator between full evaluations (that is otherwise invisible)"
 ~barrier~   (CELL_MASK_NO_NODES)
             [any-unit!]
             [comma       -       +]
-
-
-; ACTION! is the "OneFunction" type in Ren-C https://forum.rebol.info/t/596
-
-action        "an invokable Rebol subroutine"
-~activation~  (CELL_FLAG_FIRST_IS_NODE | CELL_FLAG_SECOND_IS_NODE)
-              [any-branch!]
-              [action      +       +]
 
 
 ; ============================================================================

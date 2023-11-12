@@ -405,7 +405,7 @@ enum {
     MKF_HAS_RETURN = 1 << 6
 };
 
-#define MKF_MASK_NONE 0 // no special handling (e.g. MAKE ACTION!)
+#define MKF_MASK_NONE 0 // no special handling
 
 
 

@@ -719,15 +719,36 @@ DECLARE_INTRINSIC(activation_q)
 //
 //  runs: native/intrinsic [
 //
-//  {Make actions run when fetched through word access}
+//  {Make frames run when fetched through word access}
 //
 //      return: [activation!]
-//      action [<maybe> action! activation?]
+//      frame [<maybe> frame! activation?]
 //  ]
 //
 DECLARE_INTRINSIC(runs)
 {
     UNUSED(action);
+
+    if (Is_Frame_Exemplar(arg)) {  // assume `~` isotope fields unspecialized
+        //
+        // !!! This makes a copy of the incoming context.  AS FRAME! does not,
+        // but it expects any specialized frame fields to be hidden, and non
+        // hidden fields are parameter specifications.  Review if there is
+        // some middle ground.
+        //
+        REBVAL *frame_copy = rebValue(Canon(COPY), rebQ(arg));
+        Context(*) exemplar = VAL_CONTEXT(frame_copy);
+        rebRelease(frame_copy);
+
+        option(Symbol(const*)) label = VAL_FRAME_LABEL(arg);
+        Activatify(Init_Action(
+            out,
+            Make_Action_From_Exemplar(exemplar, label),
+            label,
+            VAL_FRAME_BINDING(arg)
+        ));
+        return;
+    }
 
     Copy_Cell(out, arg);  // may or may not be isotope
     mutable_QUOTE_BYTE(out) = ISOTOPE_0;  // now it's known to be an isotope
@@ -737,10 +758,10 @@ DECLARE_INTRINSIC(runs)
 //
 //  unrun: native/intrinsic [
 //
-//  {Make actions not run when fetched through word access}
+//  {Give back a frame! for activation? input}
 //
-//      return: [action!]
-//      action [<maybe> action! activation?]
+//      return: [frame!]
+//      action [<maybe> frame! activation?]
 //  ]
 //
 DECLARE_INTRINSIC(unrun)

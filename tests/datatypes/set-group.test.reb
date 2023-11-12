@@ -58,8 +58,8 @@
 
 ; Example of an interesting use of the void case
 [
-    (returnproxy: lambda [action [<unrun> action!]] [
-        enclose (augment action [/return [word!]]) f -> [
+    (returnproxy: lambda [frame [<unrun> frame!]] [
+        enclose (augment frame [/return [word!]]) f -> [
             (maybe f.return): do f
         ]
     ], true)

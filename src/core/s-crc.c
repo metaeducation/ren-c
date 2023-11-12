@@ -288,16 +288,18 @@ uint32_t Hash_Value(Cell(const*) cell)
         hash = Hash_String(VAL_WORD_SYMBOL(cell));
         break; }
 
-      case REB_ACTION:
+      case REB_FRAME:
         //
         // Because function equality is by identity only and they are
         // immutable once created, it is legal to put them in hashes.  The
         // VAL_ACT is the paramlist series, guaranteed unique per function
         //
+        if (Is_Frame_Exemplar(cell))
+            goto hash_object;
         hash = cast(REBLEN, cast(uintptr_t, VAL_ACTION(cell)) >> 4);
         break;
 
-      case REB_FRAME:
+      hash_object:
       case REB_MODULE:
       case REB_ERROR:
       case REB_PORT:

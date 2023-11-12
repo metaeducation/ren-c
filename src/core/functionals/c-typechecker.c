@@ -260,8 +260,7 @@ bool Typecheck_Value(
             goto run_activation;
 
         switch (kind) {
-          run_activation:
-          case REB_ACTION: {
+          run_activation: {
             Action(*) action = VAL_ACTION(test);
 
             if (ACT_DISPATCHER(action) == &Intrinsic_Dispatcher) {

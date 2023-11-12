@@ -20,8 +20,8 @@
     equal? a []
 )
 (
-    a: action!
-    equal? :a action!
+    a: frame!
+    equal? :a frame!
 )
 [#1817 (
     a: make map! []

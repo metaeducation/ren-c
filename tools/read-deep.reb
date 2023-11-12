@@ -51,7 +51,7 @@ export read-deep: func [
     root [file! url! block!]
     /full "Include root path, retains full paths vs. returning relative paths"
     /strategy "TAKEs next item from queue, building the queue as necessary"
-        [action!]
+        [<unrun> frame!]
 ][
     let taker: runs any [strategy, :read-deep-seq]
 

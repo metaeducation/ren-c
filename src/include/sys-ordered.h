@@ -64,7 +64,7 @@
 
 inline static bool ANY_INERT_KIND(Byte k) {
     assert(k != REB_VOID);  // don't call on void (0 in enum, breaks pattern)
-    return k <= REB_BLOCK;
+    return k <= REB_BLOCK and k != REB_FRAME;  // hack for frame
 }
 
 #define ANY_INERT(v) \

@@ -170,6 +170,9 @@ void Protect_Value(Cell(const*) v, Flags flags)
     if (Is_Isotope(v))
         return;
 
+    if (IS_ACTION(v))  // special case
+        return;
+
     if (ANY_SERIES(v))
         Protect_Series(VAL_SERIES(v), VAL_INDEX(v), flags);
     else if (IS_MAP(v))
@@ -534,6 +537,9 @@ void Force_Value_Frozen_Core(
         return;
 
     enum Reb_Kind heart = CELL_HEART(v);
+
+    if (heart == REB_FRAME and Is_Frame_Details(v))
+        return;  // special form, immutable
 
     if (ANY_ARRAY_KIND(heart)) {
         Array(*) a = m_cast(Array(*), VAL_ARRAY(v));  // mutate flags only

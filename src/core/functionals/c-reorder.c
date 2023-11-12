@@ -89,10 +89,10 @@ Bounce Reorderer_Dispatcher(Frame(*) f) {
 //
 //  reorder*: native [
 //
-//  {Create variation of a function with its arguments reordered}
+//  {Create variation of a frame with its parameters reordered}
 //
 //      return: [activation!]
-//      action [<unrun> action!]
+//      original [<unrun> frame!]
 //      ordering "Parameter WORD!s, all required parameters must be mentioned"
 //          [block!]
 //  ]
@@ -101,8 +101,8 @@ DECLARE_NATIVE(reorder_p)  // see REORDER in %base-defs.r, for inheriting meta
 {
     INCLUDE_PARAMS_OF_REORDER_P;
 
-    Action(*) reorderee = VAL_ACTION(ARG(action));
-    option(Symbol(const*)) label  = VAL_ACTION_LABEL(ARG(action));
+    Action(*) reorderee = VAL_ACTION(ARG(original));
+    option(Symbol(const*)) label  = VAL_ACTION_LABEL(ARG(original));
 
     // Working with just the exemplar means we will lose the partials ordering
     // information from the interface.  But that's what we want, as the
@@ -240,7 +240,7 @@ DECLARE_NATIVE(reorder_p)  // see REORDER in %base-defs.r, for inheriting meta
     );
 
     Array(*) details = ACT_DETAILS(reordered);
-    Copy_Cell(DETAILS_AT(details, IDX_REORDERER_REORDEREE), ARG(action));
+    Copy_Cell(DETAILS_AT(details, IDX_REORDERER_REORDEREE), ARG(original));
 
     return Init_Activation(OUT, reordered, label, UNBOUND);
 }

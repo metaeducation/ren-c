@@ -83,7 +83,6 @@ binding
 attach
 #file
 line
-#action
 near
 label
 

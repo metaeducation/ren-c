@@ -283,17 +283,17 @@ REBTYPE(Pair)
     Copy_Cell(D_ARG(1), x1);
     if (x2)
         Copy_Cell(D_ARG(2), x2);  // use extracted arg x instead of pair arg
-    REBVAL *x_frame = rebValue("copy", frame);
+    REBVAL *x_frame = rebValue(Canon(COPY), rebQ(frame));
 
     Copy_Cell(D_ARG(1), y1);
     if (y2)
         Copy_Cell(D_ARG(2), y2);  // use extracted arg y instead of pair arg
-    REBVAL *y_frame = rebValue("copy", frame);
+    REBVAL *y_frame = rebValue(Canon(COPY), rebQ(frame));
 
     return rebValue(
         "make pair! reduce [",
-            "do", rebR(x_frame),
-            "do", rebR(y_frame),
+            "do @", rebR(x_frame),
+            "do @", rebR(y_frame),
         "]"
     );
 }

@@ -102,33 +102,33 @@
     (/a/ = /a/)
     (.a/ = .a/)
 
-    (action? :a)
-    (action? :/a)
-    (action? :.a)
+    (activation? :a)
+    (activation? :/a)
+    (activation? :.a)
 
-    (action? get 'a)
-    (action? get '/a)
-    (action? get '.a)
+    (activation? get 'a)
+    (activation? get '/a)
+    (activation? get '.a)
 
     ('action-with-dotted = pick trap [ get 'a. ] 'id)
     ; (<inert> = get '/a.)  ; !!! Not working ATM, needs path overhaul
     ; (<inert> = get '.a.)  ; !!! Not working ATM, needs path overhaul
 
-    (action? :a/)
-    (action? :/a/)
-    (action? :.a/)
+    (activation? :a/)
+    (activation? :/a/)
+    (activation? :.a/)
 
-    (action? get 'a/)
-    (action? get '/a/)
-    (action? get '.a/)
+    (activation? get 'a/)
+    (activation? get '/a/)
+    (activation? get '.a/)
 
-    (action? get ':a/)
-    (action? get ':/a/)
-    (action? get ':.a/)
+    (activation? get ':a/)
+    (activation? get ':/a/)
+    (activation? get ':.a/)
 
-    (action? get 'a/:)
-    (action? get '/a/:)
-    (action? get '.a/:)
+    (activation? get 'a/:)
+    (activation? get '/a/:)
+    (activation? get '.a/:)
   ]
   true
 )]

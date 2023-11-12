@@ -24,7 +24,7 @@ assert: func* [
     conditions "Block of conditions to evaluate and test for logical truth"
         [block!]
     /handler "Optional code to run if the assertion fails, receives condition"
-        [block! action!]
+        [<unrun> block! frame!]
 ][
     ; ASSERT has no default implementation, but can be HIJACKed by a debug
     ; mode with a custom validation or output routine.
@@ -323,7 +323,7 @@ redescribe: func [
         {The input action, with its description now updated.}
     spec [block!]
         {Either a string description, or a spec block (without types).}
-    action [<unrun> action!]
+    action [<unrun> frame!]
         {(modified) Action whose description is to be updated.}
 ][
     let adjunct: adjunct-of action
@@ -349,9 +349,9 @@ redescribe: func [
                 fail [{PARAMETER-NOTES in ADJUNCT-OF is not a FRAME!} notes]
             ]
 
-            all [frame? notes, action <> (action of notes)] then [
-                fail [{PARAMETER-NOTES in ADJUNCT-OF frame mismatch} notes]
-            ]
+;            all [frame? notes, action <> (action of notes)] then [
+;                fail [{PARAMETER-NOTES in ADJUNCT-OF frame mismatch} notes]
+;            ]
         ]
     ]
 
@@ -926,13 +926,6 @@ cause-error: func [
     args
 ][
     args: blockify args  ; make sure it's a block
-
-    ; Filter out functional values:
-    iterate args [
-        if action? first args [
-            change args (adjunct-of first args)
-        ]
-    ]
 
     fail make error! [
         type: err-type

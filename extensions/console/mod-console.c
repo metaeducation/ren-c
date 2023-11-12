@@ -310,7 +310,7 @@ DECLARE_NATIVE(console)
     //
     REBVAL *metacode;  // Note: goto would cross initialization
     metacode = rebEntrap(
-        "ext-console-impl",  // action! that takes 4 args, run it
+        "ext-console-impl",  // action that takes 4 args, run it
             rebQ(code),  // group! or block! executed prior (or null)
             rebQ(metaresult),  // prior result quoted, or error (or null)
             rebL(REF(resumable)),

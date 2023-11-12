@@ -709,7 +709,7 @@ void Init_Loop_Each(Value(*) iterator, Value(*) data)
 
     les->specifier = SPECIFIED;
 
-    if (IS_ACTION(data)) {
+    if (Is_Activation(data)) {
         //
         // The value is generated each time by calling the data action.
         // Assign values to avoid compiler warnings.
@@ -793,7 +793,28 @@ static bool Try_Loop_Each_Next(Value(const*) iterator, Context(*) vars_ctx)
         }
 
         enum Reb_Kind kind = VAL_TYPE(les->data);
-        switch (kind) {
+
+        if (Is_Activation(les->data)) {
+            REBVAL *generated = rebValue(rebRUN(les->data));
+            if (generated) {
+                if (var)
+                    Copy_Cell(var, generated);
+                rebRelease(generated);
+            }
+            else {
+                les->more_data = false;  // any remaining vars must be unset
+                if (pseudo_var == CTX_VARS_HEAD(vars_ctx)) {
+                    //
+                    // If we don't have at least *some* of the variables
+                    // set for this body loop run, don't run the body.
+                    //
+                    return false;
+                }
+                if (var)
+                    Init_Nulled(var);
+            }
+        }
+        else switch (kind) {
           case REB_BLOCK:
           case REB_SET_BLOCK:
           case REB_GET_BLOCK:
@@ -918,27 +939,6 @@ static bool Try_Loop_Each_Next(Value(const*) iterator, Context(*) vars_ctx)
                 les->more_data = false;
             break;
 
-          case REB_ACTION: {
-            REBVAL *generated = rebValue(les->data);
-            if (generated) {
-                if (var)
-                    Copy_Cell(var, generated);
-                rebRelease(generated);
-            }
-            else {
-                les->more_data = false;  // any remaining vars must be unset
-                if (pseudo_var == CTX_VARS_HEAD(vars_ctx)) {
-                    //
-                    // If we don't have at least *some* of the variables
-                    // set for this body loop run, don't run the body.
-                    //
-                    return false;
-                }
-                if (var)
-                    Init_Nulled(var);
-            }
-            break; }
-
           default:
             panic ("Unsupported type");
         }
@@ -982,7 +982,7 @@ void Shutdown_Loop_Each(Value(*) iterator)
 //          [blank! word! lit-word! block! group!]
 //      data "The series to traverse"
 //          [<maybe> blank! any-series! any-context! map! any-sequence!
-//           action!]  ; experimental
+//           activation?]  ; activation support experimental, e.g. generators
 //      body "Block to evaluate each time"
 //          [<const> block! meta-block!]
 //  ]
@@ -1075,8 +1075,8 @@ DECLARE_NATIVE(for_each)
 //          {null on BREAK, blank on empty, false or the last truthy value}
 //      :vars "Word or block of words to set each time, no new var if quoted"
 //          [blank! word! lit-word! block! group!]
-//      data [<maybe> any-series! any-context! map! action!]
-//          "The series to traverse"
+//      data "The series to traverse"
+//          [<maybe> any-series! any-context! map! activation?]
 //      body [<const> block! meta-block!]
 //          "Block to evaluate each time"
 //  ]
@@ -1541,7 +1541,8 @@ DECLARE_NATIVE(remove_each)
 //      :vars "Word or block of words to set each time, no new var if quoted"
 //          [blank! word! lit-word! block! group!]
 //      data "The series to traverse"
-//          [<maybe> blank! any-series! any-sequence! action! any-context!]
+//          [<maybe> blank! any-series! any-sequence! any-context!
+//           activation?]
 //      body "Block to evaluate each time (result will be kept literally)"
 //          [<const> block!]
 //  ]
@@ -1583,7 +1584,7 @@ DECLARE_NATIVE(map_each)
 //      :vars "Word or block of words to set each time, no new var if quoted"
 //          [blank! word! lit-word! block! group!]
 //      data "The series to traverse (only QUOTED! BLOCK! at the moment...)"
-//          [<maybe> blank! quoted! action!]
+//          [<maybe> blank! quoted! activation?]
 //      :body "Block to evaluate each time"
 //          [<const> block! meta-block!]
 //  ]
@@ -1630,7 +1631,7 @@ DECLARE_NATIVE(map)
     if (IS_BLANK(data))  // same response as to empty series
         return Init_Block(OUT, Make_Array(0));
 
-    if (IS_ACTION(data)) {
+    if (Is_Activation(data)) {
         // treat as a generator
     }
     else if (
@@ -1732,7 +1733,7 @@ DECLARE_NATIVE(map)
 //      count "Repetitions (true loops infinitely, false doesn't run)"
 //          [<maybe> any-number! logic!]
 //      body "Block to evaluate or action to run"
-//          [<const> block! action!]
+//          [<unrun> <const> block! frame!]
 //  ]
 //
 DECLARE_NATIVE(repeat)
@@ -1813,7 +1814,7 @@ DECLARE_NATIVE(repeat)
 //      :vars "Word or block of words to set each time, no new var if quoted"
 //          [blank! word! lit-word! block! group!]
 //      value "Maximum number or series to traverse"
-//          [<maybe> any-number! any-sequence! quoted! block! action!]
+//          [<maybe> any-number! any-sequence! quoted! block! activation?]
 //      'body "!!! actually just BLOCK!, but quoted to catch legacy uses"
 //          [<const> any-value!]
 //  ]
@@ -1923,7 +1924,7 @@ DECLARE_NATIVE(for)
 //          {Last body result, or null if a BREAK occurred}
 //      body [<const> block!]
 //      /predicate "Function to apply to body result"
-//          [<unrun> action!]
+//          [<unrun> frame!]
 //  ]
 //
 DECLARE_NATIVE(until)
@@ -2017,7 +2018,7 @@ DECLARE_NATIVE(until)
 //      return: "Void if body never run, else last body result, null if BREAK"
 //          [<opt> <void> any-value!]
 //      condition [<const> block!]
-//      body [<const> block! action!]
+//      body [<unrun> <const> block! frame!]
 //  ]
 //
 DECLARE_NATIVE(while)

@@ -149,7 +149,7 @@ void Clonify(
     // !!! Could theoretically do what COPY does and generate a new hijackable
     // identity.  There's no obvious use for this; hence not implemented.
     //
-    assert(not (deep_types & FLAGIT_KIND(REB_ACTION)));
+    assert(not (deep_types & FLAGIT_KIND(REB_FRAME)));
 
   #if DEBUG_UNREADABLE_TRASH
     if (IS_TRASH(v))  // running code below would assert

@@ -60,11 +60,11 @@
 //
 //  augment*: native [
 //
-//  {Create an ACTION! variant that acts the same, but has added parameters}
+//  {Create an action variant that acts the same, but has added parameters}
 //
 //      return: [activation!]
-//      action "Function whose implementation is to be augmented"
-//          [<unrun> action!]
+//      original "Frame whose implementation is to be augmented"
+//          [<unrun> frame!]
 //      spec "Spec dialect for words to add to the derived function"
 //          [block!]
 //  ]
@@ -73,8 +73,8 @@ DECLARE_NATIVE(augment_p)  // see extended definition AUGMENT in %base-defs.r
 {
     INCLUDE_PARAMS_OF_AUGMENT_P;
 
-    Action(*) augmentee = VAL_ACTION(ARG(action));
-    option(Symbol(const*)) label = VAL_ACTION_LABEL(ARG(action));
+    Action(*) augmentee = VAL_ACTION(ARG(original));
+    option(Symbol(const*)) label = VAL_ACTION_LABEL(ARG(original));
 
     // We reuse the process from Make_Paramlist_Managed_May_Fail(), which
     // pushes descriptors to the stack in groups for each parameter.
@@ -151,8 +151,8 @@ DECLARE_NATIVE(augment_p)  // see extended definition AUGMENT in %base-defs.r
     INIT_VAL_FRAME_ROOTVAR(
         ARR_HEAD(paramlist),
         paramlist,
-        VAL_ACTION(ARG(action)),
-        VAL_ACTION_BINDING(ARG(action))
+        VAL_ACTION(ARG(original)),
+        VAL_ACTION_BINDING(ARG(original))
     );
 
     Action(*) augmentated = Make_Action(

@@ -1,17 +1,17 @@
 ; datatypes/action.r
 
 (activation? :abs)
-(action? unrun :abs)
-(not action? 1)
+(frame? unrun :abs)
+(not frame? 1)
 (isotope! = kind of :abs)
-(action! = kind of unrun :abs)
+(frame! = kind of unrun :abs)
 
-; actions are active
+; frames are active
 [#1659
     (1 == do reduce [unrun :abs -1])
 ]
 
-; Actions should store labels of the last GET-WORD! or GET-PATH! that was
+; Activations should store labels of the last GET-WORD! or GET-PATH! that was
 ; used to retrieve them.  Using GET subverts changing the name.
 [
     ('append = label of :append)
@@ -37,7 +37,7 @@
         f: make frame! unrun :append
         did all [
             'append = label of f
-            'append = label of make action! f
+            'append = label of runs f
         ]
     )
 ]

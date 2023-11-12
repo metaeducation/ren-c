@@ -1,7 +1,7 @@
 ; datatypes/datatype.r
 (not type-word? 1)
-(type-word! = kind of action!)
-(type-word? action!)
+(type-word! = kind of frame!)
+(type-word? frame!)
 (type-word? binary!)
 (type-word? bitset!)
 (type-word? block!)
@@ -37,7 +37,7 @@
 (type-word? word!)
 
 ; literal representation
-(type-word? &action!)
+(type-word? &frame!)
 
 ; Now a type constraint, not a datatype
 (type-group? logic!)

@@ -54,8 +54,8 @@ array: func [
         [block!]
     size "Size or block of sizes for each dimension"
         [<maybe> integer! block!]
-    /initial "Initial value (will be called each time if action isotope)"
-        [<unrun> element? action!]
+    /initial "Initial value (will be called each time if activation)"
+        [element? activation?]
     <local> rest block
 ][
     initial: default ['~]  ; if not specified, array will be all meta none
@@ -78,8 +78,8 @@ array: func [
         block? rest [
             repeat size [append block (array/initial rest :initial)]
         ]
-        action? initial [
-            repeat size [append block run initial]  ; Called every time
+        activation? :initial [
+            repeat size [append block initial]  ; Called every time
         ]
         any-series? initial [
             repeat size [append block (copy/deep initial)]
@@ -279,7 +279,7 @@ reword: function [
                             /case case_REWORD
                         ]
                         append out switch/type v [
-                            action! [
+                            frame! [
                                 ; Give v the option of taking an argument, but
                                 ; if it does not, evaluate to arity-0 result.
                                 ;

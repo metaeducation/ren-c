@@ -1003,7 +1003,7 @@ Action(*) Make_Action(
     SET_SERIES_LEN(details, details_capacity);
 
     Cell(*) archetype = ARR_HEAD(details);
-    Reset_Unquoted_Header_Untracked(TRACK(archetype), CELL_MASK_ACTION);
+    Reset_Unquoted_Header_Untracked(TRACK(archetype), CELL_MASK_FRAME);
     INIT_VAL_ACTION_DETAILS(archetype, details);
     mutable_BINDING(archetype) = UNBOUND;
     INIT_VAL_ACTION_PARTIALS_OR_LABEL(archetype, partials);
@@ -1226,8 +1226,8 @@ REBTYPE(Fail)
 //
 //      return: "Same action identity as input"
 //          [activation!]
-//      action "(modified) Action to modify property of"
-//          [<unrun> action!]
+//      frame "(modified) Action to modify property of"
+//          [<unrun> frame!]
 //      property "Currently must be [defer postpone]"
 //          [word!]
 //      enable ; should be LOGIC!, but logic constraint not loaded yet
@@ -1237,7 +1237,7 @@ DECLARE_NATIVE(tweak)
 {
     INCLUDE_PARAMS_OF_TWEAK;
 
-    Action(*) act = VAL_ACTION(ARG(action));
+    Action(*) act = VAL_ACTION(ARG(frame));
     const REBPAR *first = First_Unspecialized_Param(nullptr, act);
 
     enum Reb_Param_Class pclass = first
@@ -1273,5 +1273,5 @@ DECLARE_NATIVE(tweak)
     else
         ACT_IDENTITY(act)->leader.bits &= ~flag;
 
-    return Activatify(Copy_Cell(OUT, ARG(action)));;
+    return Activatify(Copy_Cell(OUT, ARG(frame)));;
 }
