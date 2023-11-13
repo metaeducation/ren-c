@@ -123,7 +123,7 @@ Bounce Func_Dispatcher(Frame(*) f)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    Action(*) phase = FRM_PHASE(f);
+    Phase(*) phase = FRM_PHASE(f);
     Details(*) details = ACT_DETAILS(phase);
     Cell(*) body = ARR_AT(details, IDX_DETAILS_1);  // code to run
     assert(IS_BLOCK(body) and IS_RELATIVE(body) and VAL_INDEX(body) == 0);
@@ -135,7 +135,7 @@ Bounce Func_Dispatcher(Frame(*) f)
     assert(Is_None(cell));
     Init_Activation(
         cell,
-        VAL_ACTION(Lib(DEFINITIONAL_RETURN)),
+        ACT_IDENTITY(VAL_ACTION(Lib(DEFINITIONAL_RETURN))),
         Canon(RETURN),  // relabel (the RETURN in lib is a dummy action)
         CTX(f->varlist)  // bind this return to know where to return from
     );
@@ -224,7 +224,7 @@ Bounce Func_Dispatcher(Frame(*) f)
 //    made these optimizations give diminishing returns, so they were all
 //    eliminated (though they set useful precedent for varying dispatchers).
 //
-Action(*) Make_Interpreted_Action_May_Fail(
+Phase(*) Make_Interpreted_Action_May_Fail(
     const REBVAL *spec,
     const REBVAL *body,
     Flags mkf_flags,  // MKF_RETURN, etc.
@@ -241,7 +241,7 @@ Action(*) Make_Interpreted_Action_May_Fail(
         &mkf_flags
     );
 
-    Action(*) a = Make_Action(
+    Phase(*) a = Make_Action(
         paramlist,
         nullptr,  // no partials
         dispatcher,
@@ -337,7 +337,7 @@ DECLARE_NATIVE(func_p)
     REBVAL *spec = ARG(spec);
     REBVAL *body = ARG(body);
 
-    Action(*) func = Make_Interpreted_Action_May_Fail(
+    Phase(*) func = Make_Interpreted_Action_May_Fail(
         spec,
         body,
         MKF_RETURN | MKF_KEYWORDS,
@@ -375,7 +375,7 @@ DECLARE_NATIVE(endable_q)
         fail ("ENDABLE? requires a WORD! bound into a FRAME! at present");
 
     Context(*) ctx = VAL_CONTEXT(SPARE);
-    Action(*) act = CTX_FRAME_ACTION(ctx);
+    Action(*) act = ACT(CTX_FRAME_PHASE(ctx));
 
     REBPAR *param = ACT_PARAM(act, VAL_WORD_INDEX(v));
     bool endable = GET_PARAM_FLAG(param, ENDABLE);
@@ -410,7 +410,7 @@ DECLARE_NATIVE(skippable_q)
         fail ("SKIPPABLE? requires a WORD! bound into a FRAME! at present");
 
     Context(*) ctx = VAL_CONTEXT(SPARE);
-    Action(*) act = CTX_FRAME_ACTION(ctx);
+    Action(*) act = ACT(CTX_FRAME_PHASE(ctx));
 
     REBPAR *param = ACT_PARAM(act, VAL_WORD_INDEX(v));
     bool skippable = GET_PARAM_FLAG(param, SKIPPABLE);
@@ -437,7 +437,7 @@ Bounce Init_Thrown_Unwind_Value(
     DECLARE_STABLE (label);
     Copy_Cell(label, Lib(UNWIND));
 
-    if (IS_ACTION(level)) {
+    if (IS_FRAME(level)) {
         Frame(*) f = target->prior;
         for (; true; f = f->prior) {
             if (f == BOTTOM_FRAME)
@@ -539,7 +539,7 @@ bool Typecheck_Coerce_Return(
     // Typeset bits for locals in frames are usually ignored, but the RETURN:
     // local uses them for the return types of a function.
     //
-    Action(*) phase = FRM_PHASE(f);
+    Phase(*) phase = FRM_PHASE(f);
     const REBPAR *param = ACT_PARAMS_HEAD(phase);
     assert(KEY_SYM(ACT_KEYS_HEAD(phase)) == SYM_RETURN);
 
@@ -650,6 +650,13 @@ DECLARE_NATIVE(inherit_adjunct)
     mutable_QUOTE_BYTE(derived) = ISOTOPE_0;  // ensure return is isotope
 
     const REBVAL *original = ARG(original);
+
+    if (
+        not IS_DETAILS(VAL_ACTION(original))
+        or not IS_DETAILS(VAL_ACTION(derived))
+    ){
+        return COPY(ARG(derived));  // !!! temporary (?) weakness
+    }
 
     UNUSED(ARG(augment));  // !!! not yet implemented
 

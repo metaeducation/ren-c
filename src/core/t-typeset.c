@@ -59,7 +59,7 @@ void Startup_Typesets(void)
         //
         DECLARE_STABLE (typeset_index);
         Init_Integer(typeset_index, n);
-        Action(*) typechecker = Make_Typechecker(typeset_index);
+        Phase(*) typechecker = Make_Typechecker(typeset_index);
 
         Init_Activation(
             Force_Lib_Var(cast(SymId, id)),

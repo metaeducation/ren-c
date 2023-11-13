@@ -50,7 +50,7 @@
 //  +------------------------------+        +-------------------------------+
 //
 // (For executing frames, the ---Link--> is actually to the Frame(*) structure
-// so the paramlist of the CTX_FRAME_ACTION() must be consulted.  When the
+// so the paramlist of the CTX_FRAME_PHASE() must be consulted.  When the
 // frame stops running, the paramlist is written back to the link again.)
 //
 // The "ROOTVAR" is a canon value image of an ANY-CONTEXT!'s `REBVAL`.  This
@@ -169,10 +169,10 @@ inline static const REBVAL *CTX_ARCHETYPE(Context(*) c) {  // read-only form
 inline static REBVAL *CTX_ROOTVAR(Context(*) c)  // mutable archetype access
   { return m_cast(REBVAL*, CTX_ARCHETYPE(c)); }  // inline checks mutability
 
-inline static Action(*) CTX_FRAME_ACTION(Context(*) c) {
+inline static Phase(*) CTX_FRAME_PHASE(Context(*) c) {
     const REBVAL *archetype = CTX_ARCHETYPE(c);
     assert(VAL_TYPE(archetype) == REB_FRAME);
-    return ACT(VAL_FRAME_PHASE_OR_LABEL_NODE(archetype));
+    return cast(Phase(*), VAL_FRAME_PHASE_OR_LABEL_NODE(archetype));
 }
 
 inline static Context(*) CTX_FRAME_BINDING(Context(*) c) {
@@ -206,7 +206,7 @@ inline static void INIT_VAL_CONTEXT_ROOTVAR_Core(
 inline static void INIT_VAL_FRAME_ROOTVAR_Core(
     Cell(*) out,
     Array(*) varlist,
-    Action(*) phase,
+    Phase(*) phase,
     Context(*) binding  // allowed to be UNBOUND
 ){
     assert(
@@ -248,7 +248,7 @@ inline static Keylist(*) CTX_KEYLIST(Context(*) c) {
         //
         // running frame, source is Frame(*), so use action's paramlist.
         //
-        return ACT_KEYLIST(CTX_FRAME_ACTION(c));
+        return ACT_KEYLIST(CTX_FRAME_PHASE(c));
     }
     return cast(Raw_Keylist*, BONUS(KeySource, CTX_VARLIST(c)));  // not Frame
 }
@@ -365,7 +365,7 @@ inline static REBVAR *CTX_VARS(const REBVAR ** tail, Context(*) c) {
 //=//// FRAME! Context(*) <-> Frame(*) STRUCTURE //////////////////////////////=//
 //
 // For a FRAME! context, the keylist is redundant with the paramlist of the
-// CTX_FRAME_ACTION() that the frame is for.  That is taken advantage of when
+// CTX_FRAME_PHASE() that the frame is for.  That is taken advantage of when
 // a frame is executing in order to use the LINK() keysource to point at the
 // running Frame(*) structure for that stack level.  This provides a cheap
 // way to navigate from a Context(*) to the Frame(*) that's running it.
@@ -416,7 +416,16 @@ inline static void FAIL_IF_INACCESSIBLE_CTX(Context(*) c) {
 
 inline static Context(*) VAL_CONTEXT(noquote(Cell(const*)) v) {
     assert(ANY_CONTEXT_KIND(CELL_HEART_UNCHECKED(v)));
-    Context(*) c = CTX(VAL_NODE1(v));
+    Context(*) c;
+
+    if (IS_VARLIST(cast(Stub*, VAL_NODE1(v)))) {
+        c = CTX(VAL_NODE1(v));
+    }
+    else {
+        assert(CELL_HEART_UNCHECKED(v) == REB_FRAME);
+        assert(IS_DETAILS(cast(Stub*, VAL_NODE1(v))));
+        c = INODE(Exemplar, cast(Array(*), VAL_NODE1(v)));
+    }
     FAIL_IF_INACCESSIBLE_CTX(c);
     return c;
 }
@@ -439,16 +448,16 @@ inline static Context(*) VAL_CONTEXT(noquote(Cell(const*)) v) {
 // So extraction of the phase has to be sensitive to this.
 //
 
-inline static void INIT_VAL_FRAME_PHASE(Cell(*) v, Action(*) phase) {
+inline static void INIT_VAL_FRAME_PHASE(Cell(*) v, Phase(*) phase) {
     assert(IS_FRAME(v));  // may be marked protected (e.g. archetype)
     INIT_VAL_FRAME_PHASE_OR_LABEL(v, phase);
 }
 
-inline static Action(*) VAL_FRAME_PHASE(noquote(Cell(const*)) v) {
+inline static Phase(*) VAL_FRAME_PHASE(noquote(Cell(const*)) v) {
     REBSER *s = VAL_FRAME_PHASE_OR_LABEL(v);
     if (not s or IS_SYMBOL(s))  // ANONYMOUS or label, not a phase
-        return CTX_FRAME_ACTION(VAL_CONTEXT(v));  // so use archetype
-    return ACT(s);  // cell has its own phase, return it
+        return CTX_FRAME_PHASE(VAL_CONTEXT(v));  // use archetype
+    return cast(Phase(*), s);  // cell has its own phase, return it
 }
 
 inline static bool IS_FRAME_PHASED(noquote(Cell(const*)) v) {
@@ -493,7 +502,7 @@ inline static const REBKEY *VAL_CONTEXT_KEYS_HEAD(noquote(Cell(const*)) context)
     if (CELL_HEART(context) != REB_FRAME)
         return CTX_KEYS_HEAD(VAL_CONTEXT(context));
 
-    Action(*) phase = VAL_FRAME_PHASE(context);
+    Phase(*) phase = VAL_FRAME_PHASE(context);
     return ACT_KEYS_HEAD(phase);
 }
 

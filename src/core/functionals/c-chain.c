@@ -153,7 +153,8 @@ Bounce Chainer_Dispatcher(Frame(*) f)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    Details(*) details = ACT_DETAILS(FRM_PHASE(f));
+    Phase(*) phase = FRM_PHASE(f);
+    Details(*) details = ACT_DETAILS(phase);
     assert(ARR_LEN(details) == IDX_CHAINER_MAX);
 
     Value(*) pipeline_at = Init_Block(
@@ -167,7 +168,10 @@ Bounce Chainer_Dispatcher(Frame(*) f)
     Cell(const*) chained = VAL_ARRAY_ITEM_AT(pipeline_at);
     ++VAL_INDEX_RAW(pipeline_at);
 
-    INIT_FRM_PHASE(sub, VAL_ACTION(chained));  // has varlist already, see [3]
+    INIT_FRM_PHASE(
+        sub,
+        ACT_IDENTITY(VAL_ACTION(chained))  // has varlist already, see [3]
+    );
     INIT_FRM_BINDING(sub, VAL_FRAME_BINDING(chained));
 
     sub->u.action.original = VAL_ACTION(chained);
@@ -243,13 +247,13 @@ DECLARE_NATIVE(chain_p)  // see extended definition CHAIN in %base-defs.r
     Cell(const*) tail;
     Cell(const*) first = VAL_ARRAY_AT(&tail, pipeline);
 
-    // !!! Current validation is that all are actions.  Should there be other
+    // !!! Current validation is that all are frames.  Should there be other
     // checks?  (That inputs match outputs in the chain?)  Should it be
     // a dialect and allow things other than functions?
     //
     Cell(const*) check = first;
     for (; check != tail; ++check) {
-        if (not IS_ACTION(check)) {
+        if (not IS_FRAME(check)) {
             DECLARE_LOCAL (specific);
             Derelativize(specific, check, VAL_SPECIFIER(pipeline));
             fail (specific);
@@ -263,7 +267,7 @@ DECLARE_NATIVE(chain_p)  // see extended definition CHAIN in %base-defs.r
     // general, possibly that all actions put the return slot in a separate
     // sliver that includes the partials?
     //
-    Action(*) chain = Make_Action(
+    Phase(*) chain = Make_Action(
         ACT_PARAMLIST(VAL_ACTION(first)),  // same interface as first action
         ACT_PARTIALS(VAL_ACTION(first)),
         &Chainer_Dispatcher,

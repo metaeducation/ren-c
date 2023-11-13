@@ -56,7 +56,7 @@ bool Try_Catch_Break_Or_Continue(
     // Throw /NAME-s used by CONTINUE and BREAK are the actual native
     // function values of the routines themselves.
     //
-    if (not IS_ACTION(label))
+    if (not IS_FRAME(label))
         return false;
 
     if (ACT_DISPATCHER(VAL_ACTION(label)) == &N_break) {
@@ -653,7 +653,7 @@ DECLARE_NATIVE(cycle)
 
     const REBVAL *label = VAL_THROWN_LABEL(FRAME);
     if (
-        IS_ACTION(label)
+        IS_FRAME(label)
         and ACT_DISPATCHER(VAL_ACTION(label)) == &N_stop
     ){
         CATCH_THROWN(OUT, FRAME);  // Unlike BREAK, STOP takes an arg--see [1]
@@ -1566,7 +1566,7 @@ DECLARE_NATIVE(map_each)
     if (not IS_BLANK(ARG(data)))
         Quotify(ARG(data), 1);
 
-    INIT_FRM_PHASE(frame_, VAL_ACTION(Lib(MAP)));
+    INIT_FRM_PHASE(frame_, ACT_IDENTITY(VAL_ACTION(Lib(MAP))));
     // INIT_FRM_BINDING ?
 
     Dispatcher* dispatcher = ACT_DISPATCHER(VAL_ACTION(Lib(MAP)));

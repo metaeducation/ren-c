@@ -95,7 +95,7 @@ void Typeset_Checker_Intrinsic(Value(*) out, Action(*) action, Value(*) arg)
 // Bootstrap creates typechecker functions before functions like TYPECHECKER
 // are allowed to run to create them.  So this is factored out.
 //
-Action(*) Make_Typechecker(Value(const*) type) {
+Phase(*) Make_Typechecker(Value(const*) type) {
     assert(
         IS_TYPE_WORD(type)  // datatype
         or IS_INTEGER(type)  // typeset index (for finding bitset)
@@ -118,7 +118,7 @@ Action(*) Make_Typechecker(Value(const*) type) {
     );
     ASSERT_SERIES_TERM_IF_NEEDED(paramlist);
 
-    Action(*) typechecker = Make_Action(
+    Phase(*) typechecker = Make_Action(
         paramlist,
         nullptr,  // no partials
         &Intrinsic_Dispatcher,  // leverage Intrinsic's optimized calls
@@ -152,7 +152,7 @@ DECLARE_NATIVE(typechecker)
 {
     INCLUDE_PARAMS_OF_TYPECHECKER;
 
-    Action(*) typechecker = Make_Typechecker(ARG(type));
+    Phase(*) typechecker = Make_Typechecker(ARG(type));
     return Init_Activation(OUT, typechecker, ANONYMOUS, UNBOUND);
 }
 

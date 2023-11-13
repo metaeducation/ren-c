@@ -260,12 +260,12 @@ DECLARE_NATIVE(check)
     if (ANY_SERIES(value)) {
         ASSERT_SERIES(VAL_SERIES(value));
     }
-    else if (ANY_CONTEXT(value)) {
-        ASSERT_CONTEXT(VAL_CONTEXT(value));
-    }
-    else if (IS_ACTION(value)) {
+    else if (IS_FRAME(value)) {
         ASSERT_SERIES(VAL_ACTION_KEYLIST(value));
         ASSERT_ARRAY(ACT_DETAILS(VAL_ACTION(value)));
+    }
+    else if (ANY_CONTEXT(value)) {
+        ASSERT_CONTEXT(VAL_CONTEXT(value));
     }
 
     return COPY(value);

@@ -290,9 +290,9 @@ void Init_Evars(EVARS *e, noquote(Cell(const*)) v) {
             // on the public interface.  Or it can be running, in which case
             // the phase determines which additional fields should be seen.
             //
-            Action(*) phase;
+            Phase(*) phase;
             if (not IS_FRAME_PHASED(v)) {
-                phase = CTX_FRAME_ACTION(e->ctx);
+                phase = CTX_FRAME_PHASE(e->ctx);
 
                 // See FRAME_HAS_BEEN_INVOKED about the efficiency trick used
                 // to make sure archetypal frame views do not DO a frame after
@@ -313,16 +313,17 @@ void Init_Evars(EVARS *e, noquote(Cell(const*)) v) {
                 // a function that reuses its exemplar, but should not be able
                 // to see the locals (for instance).
                 //
-                Context(*) exemplar = ACT_EXEMPLAR(phase);
-                if (CTX_FRAME_ACTION(exemplar) == phase)
+                Context(*) exemplar = ACT_EXEMPLAR(ACT(phase));
+                if (CTX_FRAME_PHASE(exemplar) == phase)
                     e->visibility = VAR_VISIBILITY_ALL;
                 else
                     e->visibility = VAR_VISIBILITY_INPUTS;
             }
 
-            e->param = ACT_PARAMS_HEAD(phase) - 1;
-            e->key = ACT_KEYS(&e->key_tail, phase) - 1;
-            assert(SER_USED(ACT_KEYLIST(phase)) <= ACT_NUM_PARAMS(phase));
+            Action(*) action = ACT(phase);
+            e->param = ACT_PARAMS_HEAD(action) - 1;
+            e->key = ACT_KEYS(&e->key_tail, action) - 1;
+            assert(SER_USED(ACT_KEYLIST(action)) <= ACT_NUM_PARAMS(action));
         }
 
       #if !defined(NDEBUG)
@@ -569,7 +570,7 @@ Bounce MAKE_Frame(
 
     StackIndex lowest_ordered_stackindex = TOP_INDEX;  // for refinements
 
-    if (not IS_ACTION(arg))
+    if (not IS_FRAME(arg))
         return RAISE(Error_Bad_Make(kind, arg));
 
     Context(*) exemplar = Make_Context_For_Action(
@@ -718,8 +719,12 @@ DECLARE_NATIVE(adjunct_of)
     REBVAL *v = ARG(value);
 
     Context(*) meta;
-    if (IS_ACTION(v))
+    if (IS_FRAME(v)) {
+        if (not Is_Frame_Details(v))
+            return nullptr;
+
         meta = ACT_ADJUNCT(VAL_ACTION(v));
+    }
     else {
         assert(ANY_CONTEXT(v));
         meta = CTX_ADJUNCT(VAL_CONTEXT(v));
@@ -764,8 +769,10 @@ DECLARE_NATIVE(set_adjunct)
 
     REBVAL *v = ARG(value);
 
-    if (IS_ACTION(v))
-        mutable_MISC(DetailsAdjunct, ACT_IDENTITY(VAL_ACTION(v))) = ctx;
+    if (IS_FRAME(v)) {
+        if (Is_Frame_Details(v))
+            mutable_MISC(DetailsAdjunct, ACT_IDENTITY(VAL_ACTION(v))) = ctx;
+    }
     else
         mutable_MISC(VarlistAdjunct, CTX_VARLIST(VAL_CONTEXT(v))) = ctx;
 
@@ -1342,7 +1349,7 @@ REBTYPE(Frame)
         if (prop == SYM_PARAMETERS) {
             Init_Frame_Details(
                 ARG(value),
-                CTX_FRAME_ACTION(c),
+                CTX_FRAME_PHASE(c),
                 VAL_FRAME_LABEL(frame),
                 VAL_FRAME_BINDING(frame)
             );
@@ -1533,7 +1540,7 @@ REBTYPE(Frame)
         // whatever underlied the function...even if it was foundational
         // so `underlying = VAL_ACTION(value)`
 
-        Action(*) proxy = Make_Action(
+        Phase(*) proxy = Make_Action(
             ACT_PARAMLIST(act),  // not changing the interface
             ACT_PARTIALS(act),  // keeping partial specializations
             ACT_DISPATCHER(act),  // have to preserve in case original hijacked
@@ -1668,7 +1675,7 @@ void MF_Frame(REB_MOLD *mo, noquote(Cell(const*)) v, bool form) {
         return;
     }
 
-    Append_Ascii(mo->series, "#[details! ");
+    Append_Ascii(mo->series, "#[frame! ");
 
     option(Symbol(const*)) label = VAL_FRAME_LABEL(v);
     if (label) {

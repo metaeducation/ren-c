@@ -59,7 +59,7 @@ Bounce Intrinsic_Dispatcher(Frame(*) f)
 {
     Frame(*) frame_ = f;
     Value(*) arg = FRM_ARG(f, 2);  // skip the RETURN
-    Action(*) phase = FRM_PHASE(f);
+    Phase(*) phase = FRM_PHASE(f);
 
     Intrinsic* intrinsic = Extract_Intrinsic(phase);
     (*intrinsic)(OUT, phase, arg);  // typechecking done when frame was built
@@ -90,7 +90,7 @@ Bounce Intrinsic_Dispatcher(Frame(*) f)
 // native index is being loaded, which is non-obvious.  But these issues
 // could be addressed (e.g. by passing the native index number / DLL in).
 //
-Action(*) Make_Native(
+Phase(*) Make_Native(
     REBVAL *spec,
     NativeType native_type,
     CFUNC* cfunc,  // may be Dispatcher*, may be Intrinsic*
@@ -121,7 +121,7 @@ Action(*) Make_Native(
     );
     ASSERT_SERIES_TERM_IF_NEEDED(paramlist);
 
-    Action(*) native;
+    Phase(*) native;
     if (native_type == NATIVE_INTRINSIC) {
         native = Make_Action(
             paramlist,
@@ -225,7 +225,7 @@ DECLARE_NATIVE(native)
     CFUNC* cfunc = *PG_Next_Native_Cfunc;
     ++PG_Next_Native_Cfunc;
 
-    Action(*) native = Make_Native(
+    Phase(*) native = Make_Native(
         spec,
         native_type,
         cfunc,
@@ -305,7 +305,7 @@ Array(*) Startup_Natives(const REBVAL *boot_natives)
     REBVAL *spec = SPECIFIC(item);
     ++item;
 
-    Action(*) the_native_action = Make_Native(
+    Phase(*) the_native_action = Make_Native(
         spec,
         NATIVE_NORMAL,  // not a combinator or intrinsic
         *PG_Next_Native_Cfunc,

@@ -308,11 +308,11 @@ void Extra_Init_Context_Cell_Checks_Debug(enum Reb_Kind kind, Context(*) c) {
 
 
 //
-//  Extra_Init_Action_Checks_Debug: C
+//  Extra_Init_Frame_Details_Checks_Debug: C
 //
 // !!! Overlaps with ASSERT_ACTION, review folding them together.
 //
-void Extra_Init_Action_Checks_Debug(Action(*) a) {
+void Extra_Init_Frame_Details_Checks_Debug(Action(*) a) {
     REBVAL *archetype = ACT_ARCHETYPE(a);
 
     // Once it was true that `VAL_ACTION(archetype) == a`.  That's no longer

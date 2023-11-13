@@ -85,13 +85,14 @@ Bounce Encloser_Dispatcher(Frame(*) f)
 {
     Frame(*) frame_ = f;  // for RETURN macros
 
-    Details(*) details = ACT_DETAILS(FRM_PHASE(f));
+    Phase(*) phase = FRM_PHASE(f);
+    Details(*) details = ACT_DETAILS(phase);
     assert(ARR_LEN(details) == IDX_ENCLOSER_MAX);
 
     REBVAL *inner = DETAILS_AT(details, IDX_ENCLOSER_INNER);
-    assert(IS_ACTION(inner));  // same args as f
+    assert(IS_FRAME(inner));  // same args as f
     REBVAL *outer = DETAILS_AT(details, IDX_ENCLOSER_OUTER);
-    assert(IS_ACTION(outer));  // takes 1 arg (a FRAME!)
+    assert(IS_FRAME(outer));  // takes 1 arg (a FRAME!)
 
     // We want to call OUTER with a FRAME! value that will dispatch to INNER
     // when (and if) it runs DO on it.  That frame is the one built for this
@@ -155,10 +156,10 @@ Bounce Encloser_Dispatcher(Frame(*) f)
     // We're passing the built context to the `outer` function as a FRAME!,
     // which that function can DO (or not).  But when the DO runs, we don't
     // want it to run the encloser again--that would be an infinite loop.
-    // Update CTX_FRAME_ACTION() to point to the `inner` that was enclosed.
+    // Update CTX_FRAME_PHASE() to point to the `inner` that was enclosed.
     //
     REBVAL *rootvar = CTX_ROOTVAR(c);
-    INIT_VAL_FRAME_PHASE(rootvar, VAL_ACTION(inner));
+    INIT_VAL_FRAME_PHASE(rootvar, ACT_IDENTITY(VAL_ACTION(inner)));
     INIT_VAL_FRAME_BINDING(rootvar, VAL_FRAME_BINDING(inner));
 
     // We want people to be able to DO the FRAME! being given back.
@@ -220,7 +221,7 @@ DECLARE_NATIVE(enclose_p)  // see extended definition ENCLOSE in %base-defs.r
     //
     // !!! Return result may differ; similar issue comes up with CHAIN
     //
-    Action(*) enclosure = Make_Action(
+    Phase(*) enclosure = Make_Action(
         ACT_PARAMLIST(VAL_ACTION(inner)),  // same interface as inner
         ACT_PARTIALS(VAL_ACTION(inner)),
         &Encloser_Dispatcher,

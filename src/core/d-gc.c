@@ -254,7 +254,7 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
         // (by design), see HIJACK and COPY of actions for why.
         //
         REBVAL *archetype = ACT_ARCHETYPE(a);
-        assert(IS_ACTION(archetype));
+        assert(IS_FRAME(archetype));
         break; }
 
       mark_object:
@@ -474,7 +474,7 @@ void Assert_Array_Marked_Correctly(Array(const*) a) {
 
     if (IS_DETAILS(a)) {
         Cell(const*) archetype = ARR_HEAD(a);
-        assert(IS_ACTION(archetype));
+        assert(IS_FRAME(archetype));
         assert(VAL_FRAME_BINDING(archetype) == UNBOUND);
 
         // These queueings cannot be done in Queue_Mark_Function_Deep

@@ -884,7 +884,7 @@ bool Get_Path_Push_Refinements_Throws(
             Copy_Cell(out, val);
         }
         else {
-            if (not IS_ACTION(val))
+            if (not IS_FRAME(val))
                 fail (Error_Inert_With_Slashed_Raw());
             Copy_Cell(out, val);
             Activatify(out);
@@ -924,7 +924,7 @@ bool Get_Path_Push_Refinements_Throws(
             NOOP;  // it's good
         else if (Is_Isotope(out))
             fail (Error_Bad_Isotope(out));
-        else if (IS_ACTION(out))
+        else if (IS_FRAME(out))
             Activatify(out);
         else
             fail ("Head of PATH! did not evaluate to an ACTION!");
@@ -954,7 +954,7 @@ bool Get_Path_Push_Refinements_Throws(
             if (not Is_Activation(out))
                 fail (Error_Bad_Isotope(out));
         }
-        else if (IS_ACTION(out)) {
+        else if (IS_FRAME(out)) {
             Activatify(out);
         }
         else

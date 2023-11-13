@@ -74,12 +74,13 @@ enum {
 // tweak them (e.g. ADAPT).
 //
 Bounce Reorderer_Dispatcher(Frame(*) f) {
-    Details(*) details = ACT_DETAILS(FRM_PHASE(f));
+    Phase(*) phase = FRM_PHASE(f);
+    Details(*) details = ACT_DETAILS(phase);
     assert(ARR_LEN(details) == IDX_REORDERER_MAX);
 
     REBVAL *reorderee = DETAILS_AT(details, IDX_REORDERER_REORDEREE);
 
-    INIT_FRM_PHASE(f, VAL_ACTION(reorderee));
+    INIT_FRM_PHASE(f, ACT_IDENTITY(VAL_ACTION(reorderee)));
     INIT_FRM_BINDING(f, VAL_FRAME_BINDING(reorderee));
 
     return BOUNCE_REDO_UNCHECKED;  // exemplar unchanged; known to be valid
@@ -232,7 +233,7 @@ DECLARE_NATIVE(reorder_p)  // see REORDER in %base-defs.r, for inheriting meta
         SERIES_FLAG_MANAGED | SERIES_MASK_PARTIALS
     );
 
-    Action(*) reordered = Make_Action(
+    Phase(*) reordered = Make_Action(
         CTX_VARLIST(exemplar),
         partials,
         &Reorderer_Dispatcher,

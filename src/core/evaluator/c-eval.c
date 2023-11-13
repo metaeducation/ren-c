@@ -1178,7 +1178,7 @@ Bounce Evaluator_Executor(Frame(*) f)
       } set_generic_rightside_in_out: {  /////////////////////////////////////
 
         /*  // !!! Should we figure out how to cache a label in the cell?
-        if (IS_ACTION(OUT))
+        if (IS_FRAME(OUT))
             INIT_VAL_ACTION_LABEL(OUT, VAL_WORD_SYMBOL(v));
         */
 
@@ -1899,7 +1899,7 @@ Bounce Evaluator_Executor(Frame(*) f)
         not f_next_gotten
         or (
             not (IS_WORD(f_next) and Is_Activation(unwrap(f_next_gotten)))
-            and not IS_ACTION(f_next)
+            and not IS_FRAME(f_next)
         )
         or Not_Enfixed(unwrap(f_next_gotten))
     ){
@@ -2049,7 +2049,7 @@ Bounce Evaluator_Executor(Frame(*) f)
     Push_Action(subframe, enfixed, VAL_FRAME_BINDING(unwrap(f_next_gotten)));
     Begin_Enfix_Action(
         subframe,
-        IS_ACTION(f_next) ? VAL_FRAME_LABEL(f_next) : VAL_WORD_SYMBOL(f_next)
+        IS_FRAME(f_next) ? VAL_FRAME_LABEL(f_next) : VAL_WORD_SYMBOL(f_next)
     );
 
     Fetch_Next_Forget_Lookback(f);  // advances next

@@ -121,6 +121,18 @@ inline static bool Is_Quasi_Void(Cell(const*) v)
 inline static bool Is_None(Cell(const*) v)
   { return HEART_BYTE(v) == REB_VOID and QUOTE_BYTE(v) == ISOTOPE_0; }
 
+#if defined(NDEBUG)
+    inline static bool Is_Fresh_Or_None(Cell(const*) v) {
+        return 0 == (
+            v->header.bits & (FLAG_HEART_BYTE(255) | FLAG_QUOTE_BYTE(255))
+        );
+    }
+#else
+    inline static bool Is_Fresh_Or_None(Cell(const*) v) {
+        return Is_Fresh(v) or Is_None(v);
+    }
+#endif
+
 #define Init_None(out) \
     TRACK(Init_Void_Untracked((out), ISOTOPE_0))
 

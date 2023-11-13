@@ -958,13 +958,13 @@ Array(*) Make_Paramlist_Managed_May_Fail(
 // take several forms depending on how much detail there is.  See the
 // ACT_SPECIALTY() definition for more information on how this is laid out.
 //
-Action(*) Make_Action(
+Phase(*) Make_Action(
     Array(*) paramlist,
     option(Array(*)) partials,
     Dispatcher* dispatcher,  // native C function called by Action_Executor()
     REBLEN details_capacity  // capacity of ACT_DETAILS (including archetype)
 ){
-    assert(details_capacity >= 1);  // must have room for archetype
+    assert(details_capacity >= 1);  // need archetype, maybe 1 (singular array)
 
     assert(GET_SERIES_FLAG(paramlist, MANAGED));
     assert(
@@ -1025,7 +1025,7 @@ Action(*) Make_Action(
     //
     REBVAL *rootvar = SER_HEAD(REBVAL, paramlist);
     if (Is_Word_Isotope_With_Id(rootvar, SYM_ROOTVAR)) {
-        INIT_VAL_FRAME_ROOTVAR(rootvar, paramlist, act, UNBOUND);
+        INIT_VAL_FRAME_ROOTVAR(rootvar, paramlist, ACT_IDENTITY(act), UNBOUND);
     }
 
     // Precalculate cached function flags.  This involves finding the first
@@ -1065,7 +1065,7 @@ Action(*) Make_Action(
     //
     Freeze_Array_Shallow(paramlist);
 
-    return act;
+    return ACT_IDENTITY(act);
 }
 
 

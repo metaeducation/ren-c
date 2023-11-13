@@ -84,12 +84,12 @@ enum {
 //
 Bounce Combinator_Dispatcher(Frame(*) f)
 {
-    Action(*) phase = FRM_PHASE(f);
+    Phase(*) phase = FRM_PHASE(f);
     Details(*) details = ACT_DETAILS(phase);
     Cell(*) body = ARR_AT(details, IDX_DETAILS_1);  // code to run
 
     Bounce b;
-    if (IS_ACTION(body)) {  // NATIVE-COMBINATOR
+    if (IS_FRAME(body)) {  // NATIVE-COMBINATOR
         SET_SERIES_INFO(f->varlist, HOLD);  // mandatory for natives.
         Dispatcher* dispatcher = ACT_DISPATCHER(VAL_ACTION(body));
         b = dispatcher(f);
@@ -267,7 +267,7 @@ DECLARE_NATIVE(combinator)
         &flags
     );
 
-    Action(*) combinator = Make_Action(
+    Phase(*) combinator = Make_Action(
         paramlist,
         nullptr,  // no partials
         &Combinator_Dispatcher,
@@ -321,7 +321,7 @@ void Push_Parser_Subframe(
     const REBVAL *input
 ){
     assert(ANY_SERIES(input));
-    assert(IS_ACTION(parser));
+    assert(IS_FRAME(parser));
 
     Context(*) ctx = Make_Context_For_Action(parser, TOP_INDEX, nullptr);
 
@@ -804,6 +804,7 @@ DECLARE_NATIVE(combinatorize)
 
     Action(*) act = VAL_ACTION(ARG(c));
     option(Symbol(const*)) label = VAL_FRAME_LABEL(ARG(c));
+    Context(*) binding = VAL_FRAME_BINDING(ARG(c));
 
     Value(*) rule_start = ARG(rule_start);
     Copy_Cell(rule_start, ARG(rules));
@@ -838,14 +839,14 @@ DECLARE_NATIVE(combinatorize)
     //
     Copy_Cell(s.rule_end, ARG(rules));
 
-    Action(*) parser = Make_Action_From_Exemplar(s.ctx, label);
+    Phase(*) parser = Make_Action_From_Exemplar(s.ctx, label);
     DROP_GC_GUARD(s.ctx);
 
     Activatify(Init_Frame_Details(
         OUT,
         parser,
-        VAL_FRAME_LABEL(ARG(c)),
-        VAL_FRAME_BINDING(ARG(c))
+        label,
+        binding
     ));
 
     return Proxy_Multi_Returns(frame_);

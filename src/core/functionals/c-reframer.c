@@ -125,7 +125,10 @@ Frame(*) Make_Pushed_Frame_From_Action_Feed_May_Throw(
     assert(not (f->flags.bits & ACTION_EXECUTOR_FLAG_FULFILL_ONLY));
 
     f->u.action.original = VAL_ACTION(action);
-    INIT_FRM_PHASE(f, VAL_ACTION(action));  // Drop_Action() cleared, restore
+    INIT_FRM_PHASE(  // Drop_Action() cleared, restore
+        f,
+        ACT_IDENTITY(VAL_ACTION(action))
+    );
     INIT_FRM_BINDING(f, VAL_FRAME_BINDING(action));
 
     assert(NOT_SERIES_FLAG(f->varlist, MANAGED));  // shouldn't be, see [3]
@@ -298,11 +301,12 @@ Bounce Reframer_Dispatcher(Frame(*) f)
 {
     Frame(*) frame_ = f;  // for RETURN macros
 
-    Details(*) details = ACT_DETAILS(FRM_PHASE(f));
+    Phase(*) phase = FRM_PHASE(f);
+    Details(*) details = ACT_DETAILS(phase);
     assert(ARR_LEN(details) == IDX_REFRAMER_MAX);
 
     REBVAL* shim = DETAILS_AT(details, IDX_REFRAMER_SHIM);
-    assert(IS_ACTION(shim));
+    assert(IS_FRAME(shim));
 
     REBVAL* param_index = DETAILS_AT(details, IDX_REFRAMER_PARAM_INDEX);
     assert(IS_INTEGER(param_index));
@@ -329,7 +333,7 @@ Bounce Reframer_Dispatcher(Frame(*) f)
     REBVAL *arg = FRM_ARG(f, VAL_INT32(param_index));
     Move_Cell(arg, SPARE);
 
-    INIT_FRM_PHASE(f, VAL_ACTION(shim));
+    INIT_FRM_PHASE(f, ACT_IDENTITY(VAL_ACTION(shim)));
     INIT_FRM_BINDING(f, VAL_FRAME_BINDING(shim));
 
     return BOUNCE_REDO_CHECKED;  // the redo will use the updated phase & binding
@@ -461,7 +465,7 @@ DECLARE_NATIVE(reframer_p)
     // which parameter to fill with the *real* frame instance.
     //
     Manage_Series(CTX_VARLIST(exemplar));
-    Action(*) reframer = Alloc_Action_From_Exemplar(
+    Phase(*) reframer = Alloc_Action_From_Exemplar(
         exemplar,  // shim minus the frame argument
         label,
         &Reframer_Dispatcher,

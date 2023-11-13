@@ -54,7 +54,7 @@ enum {
 //
 Bounce Generic_Dispatcher(Frame(*) f)
 {
-    Action(*) phase = FRM_PHASE(f);
+    Phase(*) phase = FRM_PHASE(f);
     Details(*) details = ACT_DETAILS(phase);
     Symbol(const*) verb = VAL_WORD_SYMBOL(DETAILS_AT(details, IDX_GENERIC_VERB));
 
@@ -96,7 +96,7 @@ DECLARE_NATIVE(generic)
         &flags  // return type checked only in debug build
     );
 
-    Action(*) generic = Make_Action(
+    Phase(*) generic = Make_Action(
         paramlist,
         nullptr,  // no partials
         &Generic_Dispatcher,  // return type is only checked in debug build

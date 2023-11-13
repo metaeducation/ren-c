@@ -97,7 +97,7 @@ Bounce Macro_Dispatcher(Frame(*) f)
 {
     Frame(*) frame_ = f;  // for RETURN macros
 
-    Action(*) phase = FRM_PHASE(f);
+    Phase(*) phase = FRM_PHASE(f);
     Details(*) details = ACT_DETAILS(phase);
     Cell(*) body = ARR_AT(details, IDX_DETAILS_1);  // code to run
     assert(IS_BLOCK(body) and IS_RELATIVE(body) and VAL_INDEX(body) == 0);
@@ -114,7 +114,7 @@ Bounce Macro_Dispatcher(Frame(*) f)
     REBVAL *cell = FRM_ARG(f, 1);
     Init_Activation(
         cell,
-        VAL_ACTION(Lib(DEFINITIONAL_RETURN)),
+        ACT_IDENTITY(VAL_ACTION(Lib(DEFINITIONAL_RETURN))),
         Canon(RETURN),  // relabel (the RETURN in lib is a dummy action)
         CTX(f->varlist)  // bind this return to know where to return from
     );
@@ -125,7 +125,7 @@ Bounce Macro_Dispatcher(Frame(*) f)
     if (Do_Any_Array_At_Throws(SPARE, body, SPC(f->varlist))) {
         const REBVAL *label = VAL_THROWN_LABEL(f);
         if (
-            IS_ACTION(label)  // catch UNWIND here, see [2]
+            IS_FRAME(label)  // catch UNWIND here, see [2]
             and VAL_ACTION(label) == VAL_ACTION(Lib(UNWIND))
             and TG_Unwind_Frame == f
         ){
@@ -169,7 +169,7 @@ DECLARE_NATIVE(macro)
 {
     INCLUDE_PARAMS_OF_MACRO;
 
-    Action(*) macro = Make_Interpreted_Action_May_Fail(
+    Phase(*) macro = Make_Interpreted_Action_May_Fail(
         ARG(spec),
         ARG(body),
         MKF_RETURN | MKF_KEYWORDS,

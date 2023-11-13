@@ -53,7 +53,8 @@ Bounce Downshot_Dispatcher(Frame(*) f)  // runs until count is reached
 {
     Frame(*) frame_ = f;  // for RETURN macros
 
-    Details(*) details = ACT_DETAILS(FRM_PHASE(f));
+    Phase(*) phase = FRM_PHASE(f);
+    Details(*) details = ACT_DETAILS(phase);
     assert(ARR_LEN(details) == IDX_ONESHOT_MAX);
 
     Cell(*) n = DETAILS_AT(details, IDX_ONESHOT_COUNTER);
@@ -70,7 +71,8 @@ Bounce Upshot_Dispatcher(Frame(*) f)  // won't run until count is reached
 {
     Frame(*) frame_ = f;
 
-    Details(*) details = ACT_DETAILS(FRM_PHASE(f));
+    Phase(*) phase = FRM_PHASE(f);
+    Details(*) details = ACT_DETAILS(phase);
     assert(ARR_LEN(details) == IDX_ONESHOT_MAX);
 
     Cell(*) n = DETAILS_AT(details, IDX_ONESHOT_COUNTER);
@@ -124,7 +126,7 @@ DECLARE_NATIVE(n_shot)
 
     REBI64 n = VAL_INT64(ARG(n));
 
-    Action(*) n_shot = Make_Action(
+    Phase(*) n_shot = Make_Action(
         ACT_PARAMLIST(VAL_ACTION(Lib(DO_BRANCH))),
         nullptr,  // no partials
         n >= 0 ? &Downshot_Dispatcher : &Upshot_Dispatcher,

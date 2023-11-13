@@ -157,7 +157,7 @@ DECLARE_NATIVE(shove)
 
     Deactivate_If_Activation(shovee);  // allow ACTION! to be run
 
-    if (not IS_ACTION(shovee))
+    if (not IS_FRAME(shovee))
         fail ("SHOVE's immediate right must be ACTION! or SET-XXX! type");
 
     if (not label)
@@ -170,7 +170,7 @@ DECLARE_NATIVE(shove)
     bool enfix;
     if (REF(prefix))
         enfix = not VAL_LOGIC(ARG(prefix));
-    else if (IS_ACTION(shovee))
+    else if (IS_FRAME(shovee))
         enfix = Is_Enfixed(shovee);
     else
         enfix = false;
@@ -609,7 +609,7 @@ DECLARE_NATIVE(redo)
             fail ("/OTHER function passed to REDO has incompatible FRAME!");
         }
 
-        INIT_VAL_FRAME_PHASE(restartee, VAL_ACTION(sibling));
+        INIT_VAL_FRAME_PHASE(restartee, ACT_IDENTITY(VAL_ACTION(sibling)));
         INIT_VAL_FRAME_BINDING(restartee, VAL_FRAME_BINDING(sibling));
     }
 

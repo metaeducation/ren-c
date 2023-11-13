@@ -730,7 +730,7 @@ inline static option(REBSER*) Get_Word_Container(
         // code, because the identity of the derived function would not match
         // up with the body it intended to reuse.
         //
-        assert(Action_Is_Base_Of(ACT(binding), CTX_FRAME_ACTION(c)));
+        assert(Action_Is_Base_Of(ACT(binding), CTX_FRAME_PHASE(c)));
     }
 
     *index_out = VAL_WORD_INDEX(any_word);
@@ -1165,7 +1165,10 @@ inline static REBSPC *Derive_Specifier_Core(
             frame_ctx == nullptr
             or (
                 NOT_SERIES_FLAG(CTX_VARLIST(frame_ctx), INACCESSIBLE) and
-                not Action_Is_Base_Of(ACT(old), CTX_FRAME_ACTION(frame_ctx))
+                not Action_Is_Base_Of(
+                    ACT(old),
+                    CTX_FRAME_PHASE(frame_ctx)
+                )
             )
         ){
             printf("Function mismatch in specific binding, expected:\n");

@@ -247,8 +247,8 @@ DECLARE_NATIVE(hijack)
     if (victim == hijacker)
         return nullptr;  // permitting no-op hijack has some practical uses
 
-    Array(*) victim_identity = ACT_IDENTITY(victim);
-    Array(*) hijacker_identity = ACT_IDENTITY(hijacker);
+    Phase(*) victim_identity = ACT_IDENTITY(victim);
+    Phase(*) hijacker_identity = ACT_IDENTITY(hijacker);
 
     if (Action_Is_Base_Of(victim, hijacker)) {  // no shim needed, see [1]
         mutable_LINK_DISPATCHER(victim_identity)
@@ -268,7 +268,7 @@ DECLARE_NATIVE(hijack)
 
     return Init_Activation(  // don't bother returning copy of original, see [3]
         OUT,
-        victim,
+        victim_identity,
         VAL_FRAME_LABEL(ARG(victim)),  // MISC(victim_paramlist).meta? see [4]
         VAL_FRAME_BINDING(ARG(hijacker))
     );

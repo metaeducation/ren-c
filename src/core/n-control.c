@@ -328,8 +328,8 @@ static Bounce Then_Else_Isotopic_Object_Helper(
     if (then_hook and else_hook)  // THEN is likely passthru if both
         return DELEGATE(OUT, hook, branch);  // not DELEGATE_BRANCH, see [5]
 
-    if (not IS_ACTION(hook))  // if not full control, assume must use BRANCH
-        fail ("non-ACTION! found in THEN or ELSE method of lazy object");
+    if (not IS_FRAME(hook))  // if not full control, assume must use BRANCH
+        fail ("non-FRAME! found in THEN or ELSE method of lazy object");
 
     return DELEGATE_BRANCH(OUT, hook, branch);  // BRANCH for safety, see [6]
 
@@ -1315,7 +1315,7 @@ DECLARE_NATIVE(switch)
 
     Cell(const*) at = At_Frame(SUBFRAME);
 
-    if (IS_BLOCK(at) or IS_ACTION(at)) {  // seen with no match in effect
+    if (IS_BLOCK(at) or IS_FRAME(at)) {  // seen with no match in effect
         Fetch_Next_Forget_Lookback(SUBFRAME);  // just skip over it
         goto next_switch_step;
     }
@@ -1372,7 +1372,7 @@ DECLARE_NATIVE(switch)
         if (at == nullptr)
             goto reached_end;
 
-        if (IS_BLOCK(at) or IS_META_BLOCK(at) or IS_ACTION(at))
+        if (IS_BLOCK(at) or IS_META_BLOCK(at) or IS_FRAME(at))
             break;
 
         Fetch_Next_Forget_Lookback(SUBFRAME);
@@ -1546,14 +1546,14 @@ DECLARE_NATIVE(catch)
     const REBVAL *label = VAL_THROWN_LABEL(FRAME);
 
     if (REF(any) and not (
-        IS_ACTION(label)
+        IS_FRAME(label)
         and ACT_DISPATCHER(VAL_ACTION(label)) == &N_quit
     )){
         goto was_caught;
     }
 
     if (REF(quit) and (
-        IS_ACTION(label)
+        IS_FRAME(label)
         and ACT_DISPATCHER(VAL_ACTION(label)) == &N_quit
     )){
         goto was_caught;

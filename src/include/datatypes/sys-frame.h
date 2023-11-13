@@ -149,9 +149,9 @@ inline static LineNumber FRM_LINE(Frame(*) f) {
 // called *a lot*) this is a macro and is unchecked.
 //
 #define FRM_PHASE(f) \
-    cast(Action(*), VAL_FRAME_PHASE_OR_LABEL_NODE((f)->rootvar))
+    cast(Phase(*), VAL_FRAME_PHASE_OR_LABEL_NODE((f)->rootvar))
 
-inline static void INIT_FRM_PHASE(Frame(*) f, Action(*) phase)  // check types
+inline static void INIT_FRM_PHASE(Frame(*) f, Phase(*) phase)  // check types
   { INIT_VAL_FRAME_PHASE_OR_LABEL(f->rootvar, phase); }  // ...only
 
 inline static void INIT_FRM_BINDING(Frame(*) f, Context(*) binding)
@@ -803,8 +803,10 @@ inline static bool Pushed_Continuation(
         f->rootvar = CTX_ROOTVAR(c);
         INIT_BONUS_KEYSOURCE(varlist, f);
 
-        assert(FRM_PHASE(f) == CTX_FRAME_ACTION(c));
+        assert(FRM_PHASE(f) == CTX_FRAME_PHASE(c));
         INIT_FRM_BINDING(f, VAL_FRAME_BINDING(branch));
+
+        f->u.action.original = FRM_PHASE(f);
 
         Begin_Prefix_Action(f, VAL_FRAME_LABEL(branch));
 

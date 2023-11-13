@@ -844,7 +844,7 @@ static void Mark_Frame_Stack_Deep(void)
         // this is the "doing pickups" or not.  If doing pickups then skip the
         // cells for pending refinement arguments.
         //
-        Action(*) phase; // goto would cross initialization
+        Phase(*) phase; // goto would cross initialization
         phase = FRM_PHASE(f);
         const REBKEY *key;
         const REBKEY *tail;

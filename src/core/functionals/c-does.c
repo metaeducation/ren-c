@@ -74,7 +74,8 @@ Bounce Block_Dispatcher(Frame(*) f)
 {
     Frame(*) frame_ = f;  // for RETURN macros
 
-    Details(*) details = ACT_DETAILS(FRM_PHASE(f));
+    Phase(*) phase = FRM_PHASE(f);
+    Details(*) details = ACT_DETAILS(phase);
     assert(ARR_LEN(details) == IDX_DOES_MAX);
 
     Cell(*) block = ARR_AT(details, IDX_DOES_BLOCK);
@@ -106,7 +107,7 @@ Bounce Block_Dispatcher(Frame(*) f)
 
         Array(*) relativized = Copy_And_Bind_Relative_Deep_Managed(
             SPECIFIC(block),
-            FRM_PHASE(f),
+            phase,
             VAR_VISIBILITY_INPUTS  // no locals, does not matter
         );
 
@@ -120,7 +121,6 @@ Bounce Block_Dispatcher(Frame(*) f)
 
         // Update block cell as a relativized copy (we won't do this again).
         //
-        Action(*) phase = FRM_PHASE(f);
         Init_Relative_Block(block, phase, relativized);
     }
 
@@ -187,7 +187,7 @@ DECLARE_NATIVE(does)
     REBVAL *source = ARG(source);
 
     if (IS_BLOCK(source)) {
-        Action(*) doer = Make_Action(
+        Phase(*) doer = Make_Action(
             ACT_PARAMLIST(VAL_ACTION(Lib(SURPRISE))),  // same, no args
             nullptr,  // no partials
             &Block_Dispatcher,  // **SEE COMMENTS**, not quite like plain DO!
@@ -221,6 +221,6 @@ DECLARE_NATIVE(does)
 
     Symbol(const*) label = Canon(DO);  // !!! Better answer?
 
-    Action(*) doer = Make_Action_From_Exemplar(exemplar, label);
+    Phase(*) doer = Make_Action_From_Exemplar(exemplar, label);
     return Init_Activation(OUT, doer, label, UNBOUND);
 }

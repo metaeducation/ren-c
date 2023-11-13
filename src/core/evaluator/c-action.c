@@ -295,6 +295,13 @@ Bounce Action_Executor(Frame(*) f)
             goto continue_fulfilling;
         }
 
+        // The arguments may be provided by an isotopic FRAME! which was
+        // copied into the varlist.  If that is the case, then any arguments
+        // which are not none are specialized.
+        //
+        if (not Is_Fresh_Or_None(ARG))
+            goto continue_fulfilling;
+
         assert(IS_PARAMETER(PARAM));
 
   //=//// CHECK FOR ORDER OVERRIDE ////////////////////////////////////////=//
@@ -353,7 +360,8 @@ Bounce Action_Executor(Frame(*) f)
 
         if (GET_PARAM_FLAG(PARAM, REFINEMENT)) {
             assert(Not_Action_Executor_Flag(f, DOING_PICKUPS));  // jump lower
-            Finalize_None(ARG);  // may be filled by a pickup
+            assert(Is_Fresh_Or_None(ARG));
+            Init_None(ARG);  // may be filled by a pickup
             goto continue_fulfilling;
         }
 
@@ -369,7 +377,8 @@ Bounce Action_Executor(Frame(*) f)
 
         if (pclass == PARAM_CLASS_RETURN or pclass == PARAM_CLASS_OUTPUT) {
             assert(Not_Action_Executor_Flag(f, DOING_PICKUPS));
-            Finalize_None(ARG);
+            assert(Is_Fresh_Or_None(ARG));
+            Init_None(ARG);
             goto continue_fulfilling;
         }
 
@@ -1119,7 +1128,7 @@ Bounce Action_Executor(Frame(*) f)
   //    seems like make-work.
 
     const REBVAL *label = VAL_THROWN_LABEL(frame_);
-    if (IS_ACTION(label)) {
+    if (IS_FRAME(label)) {
         if (
             VAL_ACTION(label) == VAL_ACTION(Lib(REDO))  // REDO, see [1]
             and VAL_FRAME_BINDING(label) == CTX(f->varlist)
@@ -1127,7 +1136,7 @@ Bounce Action_Executor(Frame(*) f)
             CATCH_THROWN(OUT, frame_);
             assert(IS_FRAME(OUT));
 
-            Action(*) redo_phase = VAL_FRAME_PHASE(OUT);  // earlier?  see [2]
+            Action(*) redo_phase = ACT(VAL_FRAME_PHASE(OUT));  // earlier?  see [2]
             KEY = ACT_KEYS(&KEY_TAIL, redo_phase);
             PARAM = ACT_PARAMS_HEAD(redo_phase);
             ARG = FRM_ARGS_HEAD(f);
@@ -1138,7 +1147,7 @@ Bounce Action_Executor(Frame(*) f)
                     Init_None(ARG);  // dispatcher expects unset
             }
 
-            INIT_FRM_PHASE(f, redo_phase);
+            INIT_FRM_PHASE(f, ACT_IDENTITY(redo_phase));
             INIT_FRM_BINDING(f, VAL_FRAME_BINDING(OUT));
             STATE = ST_ACTION_TYPECHECKING;
             Clear_Action_Executor_Flag(f, DISPATCHER_CATCHES);  // else asserts
@@ -1222,7 +1231,7 @@ void Push_Action(
             | FLAG_QUOTE_BYTE(UNQUOTED_1);
     INIT_VAL_CONTEXT_VARLIST(f->rootvar, f->varlist);
 
-    INIT_VAL_FRAME_PHASE(f->rootvar, act);  // FRM_PHASE()
+    INIT_VAL_FRAME_PHASE(f->rootvar, ACT_IDENTITY(act));  // FRM_PHASE()
     INIT_VAL_FRAME_BINDING(f->rootvar, binding);  // FRM_BINDING()
 
     s->content.dynamic.used = num_args + 1;
@@ -1234,8 +1243,19 @@ void Push_Action(
     //
     Cell(*) tail = ARR_TAIL(f->varlist);
     Cell(*) prep = f->rootvar + 1;
-    for (; prep < tail; ++prep)
-        USED(Erase_Cell(prep));
+    if (IS_DETAILS(act)) {
+        for (; prep < tail; ++prep)
+            USED(Erase_Cell(prep));
+    }
+    else {
+        Value(*) arg = CTX_VARS_HEAD(ACT_EXEMPLAR(act));
+        for (; prep < tail; ++prep, ++arg) {
+            if (IS_PARAMETER(arg))
+                USED(Erase_Cell(prep));
+            else
+                Copy_Cell(Erase_Cell(prep), arg);
+        }
+    }
 
   #if DEBUG_POISON_EXCESS_CAPACITY  // poison cells past usable range
     for (; prep < f->rootvar + s->content.dynamic.rest; ++prep)
@@ -1262,6 +1282,8 @@ void Push_Action(
 
     assert(NOT_SERIES_FLAG(f->varlist, MANAGED));
     assert(NOT_SERIES_FLAG(f->varlist, INACCESSIBLE));
+
+    ORIGINAL = act;
 }
 
 
@@ -1282,10 +1304,8 @@ void Begin_Action_Core(
     assert(Not_Subclass_Flag(VARLIST, f->varlist, FRAME_HAS_BEEN_INVOKED));
     Set_Subclass_Flag(VARLIST, f->varlist, FRAME_HAS_BEEN_INVOKED);
 
-    ORIGINAL = FRM_PHASE(f);
-
-    KEY = ACT_KEYS(&KEY_TAIL, ORIGINAL);
-    PARAM = ACT_PARAMS_HEAD(ORIGINAL);
+    KEY = ACT_KEYS(&KEY_TAIL, ACT(ACT_IDENTITY(ORIGINAL)));
+    PARAM = ACT_PARAMS_HEAD(ACT(ACT_IDENTITY(ORIGINAL)));
     ARG = f->rootvar + 1;
 
     assert(IS_POINTER_TRASH_DEBUG(f->label));  // ACTION! makes valid

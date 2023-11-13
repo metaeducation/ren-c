@@ -274,7 +274,10 @@ Bounce Reflect_Core(Frame(*) frame_)
 
     mutable_QUOTE_BYTE(ARG(value)) = UNQUOTED_1;  // ignore QUASI! or QUOTED!
 
-    INIT_FRM_PHASE(frame_, VAL_ACTION(Lib(REFLECT)));  // switch to generic
+    INIT_FRM_PHASE(
+        frame_,
+        ACT_IDENTITY(VAL_ACTION(Lib(REFLECT)))  // switch to generic
+    );
     return BOUNCE_CONTINUE;
 }
 

@@ -151,11 +151,11 @@ DECLARE_NATIVE(augment_p)  // see extended definition AUGMENT in %base-defs.r
     INIT_VAL_FRAME_ROOTVAR(
         ARR_HEAD(paramlist),
         paramlist,
-        VAL_ACTION(ARG(original)),
+        ACT_IDENTITY(VAL_ACTION(ARG(original))),
         VAL_FRAME_BINDING(ARG(original))
     );
 
-    Action(*) augmentated = Make_Action(
+    Phase(*) augmentated = Make_Action(
         paramlist,
         ACT_PARTIALS(augmentee),  // partials should still work
         &Augmenter_Dispatcher,

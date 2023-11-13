@@ -125,7 +125,7 @@ static void Evaluator_Shared_Checks_Debug(Frame(*) f)
     // See notes on f->feed->gotten about the coherence issues in the face
     // of arbitrary function execution.
     //
-    if (f_next_gotten and not IS_ACTION(f_next)) {
+    if (f_next_gotten and not IS_FRAME(f_next)) {
         assert(IS_WORD(f_next));
         assert(Lookup_Word(f_next, f_specifier) == f_next_gotten);
     }

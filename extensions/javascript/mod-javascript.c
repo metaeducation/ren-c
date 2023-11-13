@@ -701,7 +701,8 @@ Bounce JavaScript_Dispatcher(Frame(*) frame_)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    Details(*) details = ACT_DETAILS(FRM_PHASE(f));
+    Phase(*) phase = FRM_PHASE(f);
+    Details(*) details = ACT_DETAILS(phase);
     bool is_awaiter = VAL_LOGIC(DETAILS_AT(details, IDX_JS_NATIVE_IS_AWAITER));
 
     struct Reb_Promise_Info *info = PG_Promises;
@@ -817,7 +818,7 @@ DECLARE_NATIVE(js_native)
         &flags
     );
 
-    Action(*) native = Make_Action(
+    Phase(*) native = Make_Action(
         paramlist,
         nullptr,  // no partials
         &JavaScript_Dispatcher,

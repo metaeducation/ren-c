@@ -260,7 +260,7 @@ static void cleanup(const REBVAL *val)
 // simple COMPILE for just that one function, using default options.
 //
 Bounce Pending_Native_Dispatcher(Frame(*) f) {
-    Action(*) phase = FRM_PHASE(f);
+    Phase(*) phase = FRM_PHASE(f);
     assert(ACT_DISPATCHER(phase) == &Pending_Native_Dispatcher);
 
     REBVAL *action = ACT_ARCHETYPE(phase); // this action's value
@@ -316,7 +316,7 @@ DECLARE_NATIVE(make_native)
         ARG(spec),
         &flags
     );
-    Action(*) native = Make_Action(
+    Phase(*) native = Make_Action(
         paramlist,
         nullptr,  // no partials
         &Pending_Native_Dispatcher,  // will be replaced e.g. by COMPILE
@@ -509,7 +509,7 @@ DECLARE_NATIVE(compile_p)
         Cell(const*) tail;
         Cell(const*) item = VAL_ARRAY_AT(&tail, compilables);
         for (; item != tail; ++item) {
-            if (IS_ACTION(item)) {
+            if (IS_FRAME(item)) {
                 assert(Is_User_Native(VAL_ACTION(item)));
 
                 // Remember this function, because we're going to need to come

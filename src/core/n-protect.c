@@ -170,9 +170,6 @@ void Protect_Value(Cell(const*) v, Flags flags)
     if (Is_Isotope(v))
         return;
 
-    if (IS_ACTION(v))  // special case
-        return;
-
     if (ANY_SERIES(v))
         Protect_Series(VAL_SERIES(v), VAL_INDEX(v), flags);
     else if (IS_MAP(v))

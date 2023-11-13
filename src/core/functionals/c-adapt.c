@@ -74,7 +74,8 @@ Bounce Adapter_Dispatcher(Frame(*) f)
 {
     Frame(*) frame_ = f;  // for RETURN macros
 
-    Details(*) details = ACT_DETAILS(FRM_PHASE(f));
+    Phase(*) phase = FRM_PHASE(f);
+    Details(*) details = ACT_DETAILS(phase);
     assert(ARR_LEN(details) == IDX_ADAPTER_MAX);
 
     enum {
@@ -109,7 +110,7 @@ Bounce Adapter_Dispatcher(Frame(*) f)
 
     REBVAL* adaptee = DETAILS_AT(details, IDX_ADAPTER_ADAPTEE);
 
-    INIT_FRM_PHASE(f, VAL_ACTION(adaptee));
+    INIT_FRM_PHASE(f, ACT_IDENTITY(VAL_ACTION(adaptee)));
     INIT_FRM_BINDING(f, VAL_FRAME_BINDING(adaptee));
 
     return BOUNCE_REDO_CHECKED;  // redo uses updated phase & binding, see [3]
@@ -138,7 +139,7 @@ DECLARE_NATIVE(adapt_p)  // see extended definition ADAPT in %base-defs.r
     // access to the locals.  That requires creating a new paramlist.  Is
     // there a better way to do that with phasing?
 
-    Action(*) adaptation = Make_Action(
+    Phase(*) adaptation = Make_Action(
         ACT_PARAMLIST(VAL_ACTION(adaptee)),  // reuse partials/exemplar/etc.
         ACT_PARTIALS(VAL_ACTION(adaptee)),
         &Adapter_Dispatcher,

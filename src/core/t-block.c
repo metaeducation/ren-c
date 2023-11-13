@@ -1213,7 +1213,7 @@ REBTYPE(Array)
 
         REBVAL *cmp = ARG(compare);  // null if no /COMPARE
         Deactivate_If_Activation(cmp);
-        if (IS_ACTION(cmp)) {
+        if (IS_FRAME(cmp)) {
             flags.comparator = cmp;
             flags.offset = 0;
         }

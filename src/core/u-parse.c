@@ -329,7 +329,7 @@ static bool Subparse_Throws(
         // ignored by most callers, but makes that fact more apparent.
         //
         const REBVAL *label = VAL_THROWN_LABEL(FRAME);
-        if (IS_ACTION(label)) {
+        if (IS_FRAME(label)) {
             if (VAL_ACTION(label) == VAL_ACTION(Lib(PARSE_REJECT))) {
                 CATCH_THROWN(out, FRAME);
                 *interrupted_out = true;
@@ -2776,7 +2776,7 @@ DECLARE_NATIVE(parse3)
         // stack) should be handled here.  ACCEPT is one example.
 
         Value(const*) label = VAL_THROWN_LABEL(FRAME);
-        if (IS_ACTION(label)) {
+        if (IS_FRAME(label)) {
             if (VAL_ACTION(label) == VAL_ACTION(Lib(PARSE_ACCEPT))) {
                 CATCH_THROWN(OUT, FRAME);
                 return OUT;

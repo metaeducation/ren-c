@@ -241,8 +241,13 @@ inline static bool Is_Throwing(Frame(*) frame_) {
 #define INIT_VAL_ACTION_PARTIALS_OR_LABEL               INIT_VAL_NODE2
 
 
-#define ACT_IDENTITY(action) \
-    cast(Array(*), ensure(Action(*), (action)))
+inline static Phase(*) CTX_FRAME_PHASE(Context(*) c);
+
+inline static Phase(*) ACT_IDENTITY(Action(*) action) {
+    if (IS_DETAILS(action))
+        return cast(Phase(*), action);  // don't want hijacked archetype details
+    return CTX_FRAME_PHASE(cast(Context(*), action));  // always ACT_IDENTITY()
+}
 
 
 // An action's "archetype" is data in the head cell (index [0]) of the array
@@ -265,25 +270,28 @@ inline static bool Is_Frame_Details(noquote(Cell(const*)) v) {
 
 #define Is_Frame_Exemplar(v) (not Is_Frame_Details(v))
 
-inline static bool IS_ACTION(Cell(const*) v) {
-    if (VAL_TYPE(v) != REB_FRAME)
-        return false;
-    return Is_Frame_Details(v);
-}
 
 // An action's details array is stored in the archetype, which is the first
-// element of the action array...which is *usually* the same thing as the
-// action array itself, -but not always-.  Hijackings fiddle with this, and
-// a COPY of an action will get the details array of what it copied...not
-// itself.  So an archetype represents -an- action, but it may be a hijacked
-// action from what it once was (much like a word reference).
+// element of the action array.  That's *usually* the same thing as the
+// action array itself, -but not always-:
 //
-
-inline static Action(*) CTX_FRAME_ACTION(Context(*) c);
-
+// * When you COPY an action, it creates a minimal details array of length 1
+//   whose archetype points at the details array of what it copied...not
+//   back to itself.  So the dispatcher of the original funciton may run for a
+//   phase with this mostly-empty-array, but expect ACT_DETAILS() to give
+//   it the original details.
+//
+// * HIJACK swaps out the archetype in the 0 details slot and puts in the
+//   archetype of the hijacker.  (It leaves the rest of the array alone.)
+//   When the hijacking function runs, it wants ACT_DETAILS() for the phase
+//   to give the details that the hijacking dispatcher wants.
+//
+// So consequently, all phases have to look in the archetype, in case they
+// are running the implementation of a copy or are spliced in as a hijacker.
+//
 inline static Details(*) ACT_DETAILS(Action(*) a) {
     if (not IS_DETAILS(a))
-        a = CTX_FRAME_ACTION(cast(Context(*), a));
+        a = CTX_FRAME_PHASE(cast(Context(*), a));
     return x_cast(Details(*), ACT_ARCHETYPE(a)->payload.Any.first.node);
 }
 
@@ -514,7 +522,7 @@ inline static bool Action_Is_Base_Of(Action(*) base, Action(*) derived) {
     if (derived == base)
         return true;  // fast common case (review how common)
 
-    if (ACT_DETAILS(derived) == ACT_IDENTITY(base))
+    if (ACT_IDENTITY(derived) == ACT_IDENTITY(base))
         return true;  // Covers COPY + HIJACK cases (seemingly)
 
     REBSER *keylist_test = ACT_KEYLIST(derived);
@@ -577,17 +585,17 @@ inline static bool Action_Is_Base_Of(Action(*) base, Action(*) derived) {
 //
 inline static REBVAL *Init_Frame_Details_Core(
     Cell(*) out,
-    Action(*) a,
+    Phase(*) a,
     option(Symbol(const*)) label,  // allowed to be ANONYMOUS
     Context(*) binding  // allowed to be UNBOUND
 ){
   #if !defined(NDEBUG)
-    Extra_Init_Action_Checks_Debug(a);
+    Extra_Init_Frame_Details_Checks_Debug(a);
   #endif
-    Force_Series_Managed(ACT_IDENTITY(a));
+    Force_Series_Managed(a);
 
     Reset_Unquoted_Header_Untracked(out, CELL_MASK_FRAME);
-    INIT_VAL_ACTION_DETAILS(out, ACT_IDENTITY(a));
+    INIT_VAL_ACTION_DETAILS(out, a);
     INIT_VAL_ACTION_LABEL(out, label);
     INIT_VAL_FRAME_BINDING(out, binding);
 
@@ -699,7 +707,7 @@ inline static Bounce Native_None_Result_Untracked(
     Activatify(Init_Frame_Details_Core(TRACK(out), (a), (label), (binding)))
 
 inline static Value(*) Activatify(Value(*) v) {
-    assert(IS_ACTION(v) and QUOTE_BYTE(v) == UNQUOTED_1);
+    assert(IS_FRAME(v) and QUOTE_BYTE(v) == UNQUOTED_1);
     mutable_QUOTE_BYTE(v) = ISOTOPE_0;
     return VAL(v);
 }

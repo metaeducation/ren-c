@@ -772,7 +772,7 @@ const void *RL_rebArgR(const void *p, va_list *vaptr)
     ENTER_API;
 
     Frame(*) f = TOP_FRAME;
-    Action(*) act = FRM_PHASE(f);
+    Phase(*) act = FRM_PHASE(f);
 
     // !!! Currently the JavaScript wrappers do not do the right thing for
     // taking just a `const char*`, so this falsely is a variadic to get the
@@ -2217,8 +2217,8 @@ const REBINS *RL_rebRUN(const void *p)
     Value(*) v = VAL(ARR_SINGLE(a));
     if (Is_Activation(v))
         mutable_QUOTE_BYTE(v) = UNQUOTED_1;
-    else if (not IS_ACTION(v))
-        fail ("rebRUN() only accepts ACTION! or ACTION! isotopes");
+    else if (not IS_FRAME(v))
+        fail ("rebRUN() only accepts FRAME! or actions (aka FRAME! isotopes)");
 
     return a;
 }

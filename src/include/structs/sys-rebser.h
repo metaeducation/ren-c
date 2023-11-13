@@ -809,6 +809,8 @@ union Reb_Stub_Info {
 
     struct Raw_Action : public Raw_Series {};
 
+    struct Raw_Phase : public Raw_Action {};
+
     struct Raw_Context : public Raw_Series {};
 
     struct Reb_Map : public Raw_Series {};
@@ -821,6 +823,7 @@ union Reb_Stub_Info {
     typedef Raw_Series Raw_Symbol;
     typedef Raw_Series REBBMK;
     typedef Raw_Series Raw_Action;
+    typedef Raw_Series Raw_Phase;
     typedef Raw_Series Raw_Context;
     typedef Raw_Series REBMAP;
     typedef Raw_Series Raw_Keylist;
@@ -847,6 +850,9 @@ union Reb_Stub_Info {
 
 #define Action(star_maybe_const) \
     Raw_Action star_maybe_const
+
+#define Phase(star_maybe_const) \
+    Raw_Phase star_maybe_const
 
 #define Context(star_maybe_const) \
     Raw_Context star_maybe_const

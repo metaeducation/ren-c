@@ -165,8 +165,8 @@ inline static bool Do_Logic_Right_Side_Throws(
 
     Get_Var_May_Fail(out, right, SPECIFIED, false);
 
-    if (IS_ACTION(out))
-        fail ("words/tuples can't be ACTION! as right hand of OR, AND, XOR");
+    if (Is_Activation(out))
+        fail ("words/tuples can't be activation as right hand of OR, AND, XOR");
 
     return false;
 }

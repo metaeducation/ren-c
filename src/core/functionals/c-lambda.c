@@ -74,7 +74,7 @@ Bounce Lambda_Dispatcher(Frame(*) f)
 {
     Frame(*) frame_ = f;
 
-    Action(*) phase = FRM_PHASE(f);
+    Phase(*) phase = FRM_PHASE(f);
     Details(*) details = ACT_DETAILS(phase);
     assert(ARR_LEN(details) == IDX_LAMBDA_MAX);
 
@@ -107,7 +107,7 @@ Bounce Lambda_Dispatcher(Frame(*) f)
 //
 Bounce Lambda_Unoptimized_Dispatcher(Frame(*) frame_)
 {
-    Action(*) phase = FRM_PHASE(FRAME);
+    Phase(*) phase = FRM_PHASE(FRAME);
     Details(*) details = ACT_DETAILS(phase);
     Cell(*) body = ARR_AT(details, IDX_DETAILS_1);  // code to run
     assert(IS_BLOCK(body) and IS_RELATIVE(body) and VAL_INDEX(body) == 0);
@@ -234,7 +234,7 @@ DECLARE_NATIVE(lambda)
     if (not optimizable) {
         Drop_Data_Stack_To(STACK_BASE);
 
-        Action(*) lambda = Make_Interpreted_Action_May_Fail(
+        Phase(*) lambda = Make_Interpreted_Action_May_Fail(
             spec,
             body,
             MKF_KEYWORDS,  // no MKF_RETURN
@@ -253,7 +253,7 @@ DECLARE_NATIVE(lambda)
         0  // no return_stackindex
     );
 
-    Action(*) lambda = Make_Action(
+    Phase(*) lambda = Make_Action(
         paramlist,
         nullptr,  // no partials
         &Lambda_Dispatcher,

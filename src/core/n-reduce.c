@@ -484,7 +484,7 @@ static Atom(*) Finalize_Composer_Frame(
 //               thing3
 //           ]
 //
-//        >> compose [thing1 ((block-of-things))]  ; no newline flag on (( ))
+//        >> compose [thing1 (spread block-of-things)]  ; no newline flag ()
 //        == [thing1
 //               thing2  ; we proxy the flag, but is this what you wanted?
 //               thing3
@@ -517,7 +517,7 @@ Bounce Composer_Executor(Frame(*) f)
     bool deep = not Is_Nulled(FRM_ARG(main_frame, p_deep_));
     Value(*) predicate = FRM_ARG(main_frame, p_predicate_);
 
-    assert(Is_Nulled(predicate) or IS_ACTION(predicate));
+    assert(Is_Nulled(predicate) or IS_FRAME(predicate));
 
     enum {
         ST_COMPOSER_INITIAL_ENTRY = STATE_0,

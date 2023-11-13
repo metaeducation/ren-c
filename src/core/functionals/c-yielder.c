@@ -279,7 +279,7 @@ DECLARE_NATIVE(yielder)
         "(as group!", ARG(body), ")",  // GROUP! so it can't backquote 'YIELD
     "]");
 
-    Action(*) yielder = Make_Interpreted_Action_May_Fail(
+    Phase(*) yielder = Make_Interpreted_Action_May_Fail(
         ARG(spec),
         body,
         MKF_KEYWORDS | MKF_RETURN,  // give it a RETURN
@@ -374,7 +374,7 @@ DECLARE_NATIVE(yield)
     if (Is_Nulled(ARG(value)))
         return nullptr;
 
-    Array(*) yielder_details = ACT_DETAILS(yielder_phase);
+    Details(*) yielder_details = ACT_DETAILS(yielder_phase);
 
     // Evaluations will frequently use the f->out to accrue state, perhaps
     // preloading with something (like NULL) that is expected to be there.
@@ -382,10 +382,10 @@ DECLARE_NATIVE(yield)
     // of that evaluative product.  It must be preserved.  But since we can't
     // put END values in blocks, use the hidden block to indicate that
     //
-    REBVAL *out_copy = SPECIFIC(ARR_AT(yielder_details, IDX_YIELDER_OUT));
+    Value(*) out_copy = DETAILS_AT(yielder_details, IDX_YIELDER_OUT);
     Move_Cell(out_copy, yielder_frame->out);
 
-    Value(*) plug = SPECIFIC(ARR_AT(yielder_details, IDX_YIELDER_PLUG));
+    Value(*) plug = DETAILS_AT(yielder_details, IDX_YIELDER_PLUG);
     assert(IS_TRASH(plug));
     Unplug_Stack(plug, yield_frame, yielder_frame);
 
@@ -394,7 +394,7 @@ DECLARE_NATIVE(yield)
     // The garbage collector should notice it is there, and mark it live up
     // until the nullptr that we put at the root.
     //
-    Cell(*) mode = ARR_AT(yielder_details, IDX_YIELDER_MODE);
+    Value(*) mode = DETAILS_AT(yielder_details, IDX_YIELDER_MODE);
     assert(Is_Quasi_Void(mode));  // should be signal for "currently running"
     Init_Frame(mode, Context_For_Frame_May_Manage(yield_frame), ANONYMOUS);
     ASSERT_SERIES_MANAGED(VAL_CONTEXT(mode));
@@ -404,7 +404,7 @@ DECLARE_NATIVE(yield)
     // GC of the ACTION's details will keep it alive.
     //
     Init_Frame(
-        ARR_AT(yielder_details, IDX_YIELDER_LAST_YIELDER_CONTEXT),
+        DETAILS_AT(yielder_details, IDX_YIELDER_LAST_YIELDER_CONTEXT),
         yielder_context,
         ANONYMOUS
     );
@@ -427,7 +427,7 @@ DECLARE_NATIVE(yield)
     //
     Copy_Cell(yielder_frame->out, ARG(value));
     Move_Cell(
-        ARR_AT(yielder_details, IDX_YIELDER_LAST_YIELD_RESULT),
+        DETAILS_AT(yielder_details, IDX_YIELDER_LAST_YIELD_RESULT),
         ARG(value)
     );
 

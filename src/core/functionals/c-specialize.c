@@ -59,7 +59,7 @@ Bounce Specializer_Dispatcher(Frame(*) f)
 {
     Context(*) exemplar = ACT_EXEMPLAR(FRM_PHASE(f));
 
-    INIT_FRM_PHASE(f, CTX_FRAME_ACTION(exemplar));
+    INIT_FRM_PHASE(f, CTX_FRAME_PHASE(exemplar));
     INIT_FRM_BINDING(f, CTX_FRAME_BINDING(exemplar));
 
     return BOUNCE_REDO_UNCHECKED; // redo uses the updated phase and binding
@@ -103,7 +103,7 @@ Context(*) Make_Context_For_Action_Push_Partials(
     INIT_VAL_FRAME_ROOTVAR(
         rootvar,
         varlist,
-        VAL_ACTION(action),
+        ACT_IDENTITY(VAL_ACTION(action)),
         VAL_FRAME_BINDING(action)
     );
 
@@ -426,7 +426,7 @@ bool Specialize_Action_Throws(
         }
     }
 
-    Action(*) specialized = Make_Action(
+    Phase(*) specialized = Make_Action(
         CTX_VARLIST(exemplar),
         partials,
         &Specializer_Dispatcher,
@@ -699,7 +699,7 @@ const REBPAR *Last_Unspecialized_Param(const REBKEY ** key, Action(*) act)
 //
 REBVAL *First_Unspecialized_Arg(option(const REBPAR **) param_out, Frame(*) f)
 {
-    Action(*) phase = FRM_PHASE(f);
+    Phase(*) phase = FRM_PHASE(f);
     const REBPAR *param = First_Unspecialized_Param(nullptr, phase);
     if (param_out)
         *unwrap(param_out) = param;
@@ -717,13 +717,13 @@ REBVAL *First_Unspecialized_Arg(option(const REBPAR **) param_out, Frame(*) f)
 //
 // Leaves details blank, and lets you specify the dispatcher.
 //
-Action(*) Alloc_Action_From_Exemplar(
+Phase(*) Alloc_Action_From_Exemplar(
     Context(*) exemplar,
     option(Symbol(const*)) label,
     Dispatcher* dispatcher,
     REBLEN details_capacity
 ){
-    Action(*) unspecialized = CTX_FRAME_ACTION(exemplar);
+    Action(*) unspecialized = ACT(CTX_FRAME_PHASE(exemplar));
 
     const REBKEY *tail;
     const REBKEY *key = ACT_KEYS(&tail, unspecialized);
@@ -752,7 +752,7 @@ Action(*) Alloc_Action_From_Exemplar(
 
     // This code parallels Specialize_Action_Throws(), see comments there
 
-    Action(*) action = Make_Action(
+    Phase(*) action = Make_Action(
         CTX_VARLIST(exemplar),
         nullptr,  // no partials
         dispatcher,
@@ -768,11 +768,11 @@ Action(*) Alloc_Action_From_Exemplar(
 //
 // Assumes you want a Specializer_Dispatcher with the exemplar in details.
 //
-Action(*) Make_Action_From_Exemplar(
+Phase(*) Make_Action_From_Exemplar(
     Context(*) exemplar,
     option(Symbol(const*)) label
 ){
-    Action(*) action = Alloc_Action_From_Exemplar(
+    Phase(*) action = Alloc_Action_From_Exemplar(
         exemplar,
         label,
         &Specializer_Dispatcher,
