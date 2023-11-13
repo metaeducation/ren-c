@@ -89,14 +89,14 @@
 // REBVALs for that object.
 //
 // It may be a simple REBSER* -or- in the case of the varlist of a running
-// FRAME! on the stack, it points to a Frame(*).  If it's a FRAME! that
+// FRAME! on the stack, it points to a Level(*).  If it's a FRAME! that
 // is not running on the stack, it will be the function paramlist of the
-// actual phase that function is for.  Since Frame(*) all start with a
+// actual phase that function is for.  Since Level(*) all start with a
 // REBVAL cell, this means NODE_FLAG_CELL can be used on the node to
-// discern the case where it can be cast to a Frame(*) vs. Array(*).
+// discern the case where it can be cast to a Level(*) vs. Array(*).
 //
-// (Note: FRAME!s used to use a field `misc.f` to track the associated
-// frame...but that prevented the ability to SET-ADJUNCT on a frame.  While
+// (Note: FRAME!s used to use a field `misc.L` to track the associated
+// level...but that prevented the ability to SET-ADJUNCT on a frame.  While
 // that feature may not be essential, it seems awkward to not allow it
 // since it's allowed for other ANY-CONTEXT!s.  Also, it turns out that
 // heap-based FRAME! values--such as those that come from MAKE FRAME!--
@@ -124,7 +124,7 @@ inline static void INIT_BONUS_KEYSOURCE(Array(*) varlist, Node* keysource) {
 // An arbitrary cell pointer may be returned from a native--in which case it
 // will be checked to see if it is thrown and processed if it is, or checked
 // to see if it's an unmanaged API handle and released if it is...ultimately
-// putting the cell into f->out.
+// putting the cell into L->out.
 //
 // However, pseudotypes can be used to indicate special instructions to the
 // evaluator.
@@ -167,7 +167,7 @@ inline static Atom(*) Atom_From_Bounce(Bounce b) {
 #define BOUNCE_THROWN \
     cast(Bounce, &PG_R_Thrown)
 
-inline static bool Is_Throwing(Frame(*) frame_) {
+inline static bool Is_Throwing(Level(*) level_) {
     //
     // !!! An original constraint on asking if something was throwing was
     // that only the top frame could be asked about.  But Action_Executor()
@@ -177,18 +177,18 @@ inline static bool Is_Throwing(Frame(*) frame_) {
     // frames above on the stack.
     //
     if (not Is_Cell_Erased(&TG_Thrown_Arg)) {
-        /*assert(frame_ == TOP_FRAME);*/  // forget even that check
-        UNUSED(frame_);  // currently only used for debug build check
+        /*assert(level_ == TOP_LEVEL);*/  // forget even that check
+        UNUSED(level_);  // currently only used for debug build check
         return true;
     }
     return false;
 }
 
-#define THROWING Is_Throwing(frame_)
+#define THROWING Is_Throwing(level_)
 
 
 // If Eval_Core gets back an REB_R_REDO from a dispatcher, it will re-execute
-// the f->phase in the frame.  This function may be changed by the dispatcher
+// the L->phase in the frame.  This function may be changed by the dispatcher
 // from what was originally called.
 //
 // If EXTRA(Any).flag is not set on the cell, then the types will be checked
@@ -649,36 +649,36 @@ inline static REBVAL *Maybe_Move_Cell(REBVAL *out, REBVAL *v) {
     return Move_Cell(out, v);
 }
 
-inline static Bounce Native_Thrown_Result(Frame(*) frame_) {
+inline static Bounce Native_Thrown_Result(Level(*) level_) {
     assert(THROWING);
-    FRESHEN(frame_->out);
+    FRESHEN(level_->out);
     return BOUNCE_THROWN;
 }
 
 
 inline static Bounce Native_Void_Result_Untracked(
     Atom(*) out,  // have to pass; comma at callsite -> "operand has no effect"
-    Frame(*) frame_
+    Level(*) level_
 ){
-    assert(out == frame_->out);
+    assert(out == level_->out);
     UNUSED(out);
     assert(not THROWING);
-    return Init_Void_Untracked(frame_->out, UNQUOTED_1);
+    return Init_Void_Untracked(level_->out, UNQUOTED_1);
 }
 
-inline static Bounce Native_Unmeta_Result(Frame(*) frame_, const REBVAL *v) {
+inline static Bounce Native_Unmeta_Result(Level(*) level_, const REBVAL *v) {
     assert(not THROWING);
-    return Meta_Unquotify_Undecayed(Copy_Cell(frame_->out, v));
+    return Meta_Unquotify_Undecayed(Copy_Cell(level_->out, v));
 }
 
 inline static Bounce Native_None_Result_Untracked(
     Atom(*) out,  // have to pass; comma at callsite -> "operand has no effect"
-    Frame(*) frame_
+    Level(*) level_
 ){
-    assert(out == frame_->out);
+    assert(out == level_->out);
     UNUSED(out);
     assert(not THROWING);
-    return Init_Void_Untracked(frame_->out, ISOTOPE_0);
+    return Init_Void_Untracked(level_->out, ISOTOPE_0);
 }
 
 

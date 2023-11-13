@@ -284,9 +284,9 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
         //
         if (BINDING(v) != UNBOUND) {
             if (CTX_TYPE(context) == REB_FRAME) {
-                struct Reb_Frame *f = CTX_FRAME_IF_ON_STACK(context);
-                if (f)  // comes from execution, not MAKE FRAME!
-                    assert(VAL_FRAME_BINDING(v) == FRM_BINDING(f));
+                Level(*) L = CTX_LEVEL_IF_ON_STACK(context);
+                if (L)  // comes from execution, not MAKE FRAME!
+                    assert(VAL_FRAME_BINDING(v) == Level_Binding(L));
             }
             else
                 assert(IS_LET(Singular_From_Cell(v)));

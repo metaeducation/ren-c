@@ -169,7 +169,7 @@ static void reverse_string(String(*) str, REBLEN index, REBLEN len)
 //  MAKE_String: C
 //
 Bounce MAKE_String(
-    Frame(*) frame_,
+    Level(*) level_,
     enum Reb_Kind kind,
     option(const REBVAL*) parent,
     const REBVAL *def
@@ -258,7 +258,7 @@ Bounce MAKE_String(
 //
 //  TO_String: C
 //
-Bounce TO_String(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg)
+Bounce TO_String(Level(*) level_, enum Reb_Kind kind, const REBVAL *arg)
 {
     if (kind == REB_ISSUE) {  // encompasses what would have been TO CHAR!
         if (IS_INTEGER(arg)) {
@@ -303,7 +303,7 @@ Bounce TO_String(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg)
     // moment, it is kept as-is to avoid disruption.
     //
     if (IS_TAG(arg))
-        return MAKE_String(frame_, kind, nullptr, arg);
+        return MAKE_String(level_, kind, nullptr, arg);
 
     return Init_Any_String(
         OUT,
@@ -810,7 +810,7 @@ REBTYPE(String)
             VAL_UTF8_SIZE_AT(&size, v);
             return Init_Integer(OUT, size);
         }
-        return Series_Common_Action_Maybe_Unhandled(frame_, verb); }
+        return Series_Common_Action_Maybe_Unhandled(level_, verb); }
 
       case SYM_UNIQUE:
       case SYM_INTERSECT:
@@ -820,7 +820,7 @@ REBTYPE(String)
         //
       case SYM_SKIP:
       case SYM_AT:
-        return Series_Common_Action_Maybe_Unhandled(frame_, verb);
+        return Series_Common_Action_Maybe_Unhandled(level_, verb);
 
       case SYM_REMOVE: {
         INCLUDE_PARAMS_OF_REMOVE;
@@ -965,7 +965,7 @@ REBTYPE(String)
                 VAL_SERIES(v),
                 ret
             );
-            return Proxy_Multi_Returns(frame_);
+            return Proxy_Multi_Returns(level_);
         }
 
         assert(id == SYM_SELECT);

@@ -73,9 +73,9 @@
 
 
 
-// For efficiency, native PICK-POKE* implementations reuse the frame (this is
+// For efficiency, native PICK-POKE* implementations reuse the level (this is
 // somewhat comparable to R3-Alpha's "PVS" struct, reused for all the path
-// dispatches...but with the added protections frames have with the GC).
+// dispatches...but with the added protections levels have with the GC).
 //
 // For pokes, the poke location of the value that is doing the chaining to
 // another pickpoke needs to be preserved...because the bits in the container
@@ -83,13 +83,13 @@
 // actually in the container.
 //
 inline static Bounce Run_Pickpoke_Dispatch(
-    Frame(*) frame_,
+    Level(*) level_,
     Symbol(const*) verb,
     const REBVAL *new_location
 ){
     Copy_Cell(PUSH(), D_ARG(1));
     Copy_Cell(D_ARG(1), new_location);
-    Bounce r = Run_Generic_Dispatch_Core(D_ARG(1), frame_, verb);
+    Bounce r = Run_Generic_Dispatch_Core(D_ARG(1), level_, verb);
     Copy_Cell(D_ARG(1), TOP);
     DROP();
     return r;

@@ -23,12 +23,12 @@
 //
 // Due to the length of %c-eval.c and debug checks it already has, some
 // debug-only routines are separated out here.  (Note that these are in
-// addition to the checks already done by Push_Frame() and Drop_Frame() time)
+// addition to the checks already done by Push_Level() and Drop_Level() time)
 //
 // * Evaluator_Expression_Checks_Debug() runs before each full "expression"
 //   is evaluated, e.g. before each EVALUATE step.  It makes sure the state
 //   balanced completely--so no PUSH() that wasn't balanced by a DROP()
-//   (for example).  It also trashes variables in the frame which might
+//   (for example).  It also trashes variables in the level which might
 //   accidentally carry over from one step to another, so that there will be
 //   a crash instead of a casual reuse.
 //
@@ -43,46 +43,46 @@
 
 #include "sys-core.h"
 
-#undef At_Frame
-#undef f_gotten
+#undef At_Level
 
-#define f_next At_Feed(f->feed)
-#define f_next_gotten f->feed->gotten
+#define L_next          At_Feed(L->feed)
+#define L_next_gotten   L->feed->gotten
+#define L_specifier     Level_Specifier(L)
 
 #if DEBUG_COUNT_TICKS && DEBUG_HAS_PROBE
 
 //
-//  Dump_Frame_Location: C
+//  Dump_Level_Location: C
 //
-void Dump_Frame_Location(Cell(const*) v, Frame(*) f)
+void Dump_Level_Location(Cell(const*) v, Level(*) L)
 {
     DECLARE_LOCAL (dump);
 
     if (v) {
-        Derelativize(dump, v, f_specifier);
-        printf("Dump_Frame_Location() current\n");
+        Derelativize(dump, v, L_specifier);
+        printf("Dump_Level_Location() current\n");
         PROBE(dump);
     }
 
-    if (Is_Feed_At_End(f->feed)) {
-        printf("...then Dump_Frame_Location() is at end of array\n");
-        if (not v) { // well, that wasn't informative
-            if (f->prior == BOTTOM_FRAME)
+    if (Is_Feed_At_End(L->feed)) {
+        printf("...then Dump_Level_Location() is at end of array\n");
+        if (not v) {  // well, that wasn't informative
+            if (L->prior == BOTTOM_LEVEL)
                 printf("...and no parent frame, so you're out of luck\n");
             else {
                 printf("...dumping parent in case that's more useful?\n");
-                Dump_Frame_Location(nullptr, f->prior);
+                Dump_Level_Location(nullptr, L->prior);
             }
         }
     }
     else {
-        Derelativize(dump, f_next, f_specifier);
-        printf("Dump_Frame_Location() next\n");
+        Derelativize(dump, L_next, L_specifier);
+        printf("Dump_Level_Location() next\n");
         PROBE(dump);
 
-        printf("Dump_Frame_Location() rest\n");
+        printf("Dump_Level_Location() rest\n");
 
-        if (FRM_IS_VARIADIC(f)) {
+        if (Level_Is_Variadic(L)) {
             //
             // NOTE: This reifies the va_list in the frame, which should not
             // affect procssing.  But it is a side-effect and may need to be
@@ -90,15 +90,15 @@ void Dump_Frame_Location(Cell(const*) v, Frame(*) f)
             // related to va_list frame processing.
             //
             const bool truncated = true;
-            Reify_Variadic_Feed_As_Array_Feed(f->feed, truncated);
+            Reify_Variadic_Feed_As_Array_Feed(L->feed, truncated);
         }
 
         Init_Array_Cell_At_Core(
             dump,
             REB_BLOCK,
-            f_array,
-            cast(REBLEN, f_index),
-            f_specifier
+            Level_Array(L),
+            Level_Array_Index(L),
+            L_specifier
         );
         PROBE(dump);
     }
@@ -112,25 +112,25 @@ void Dump_Frame_Location(Cell(const*) v, Frame(*) f)
 // These are checks common to Expression and Exit checks (hence also common
 // to the "end of Start" checks, since that runs on the first expression)
 //
-static void Evaluator_Shared_Checks_Debug(Frame(*) f)
+static void Evaluator_Shared_Checks_Debug(Level(*) L)
 {
-    // The state isn't actually guaranteed to balance overall until a frame
-    // is completely dropped.  This is because a frame may be reused over
+    // The state isn't actually guaranteed to balance overall until a level
+    // is completely dropped.  This is because a level may be reused over
     // multiple calls by something like REDUCE or FORM, accumulating items
-    // on the data stack or mold stack/etc.  See Drop_Frame() for the actual
+    // on the data stack or mold stack/etc.  See Drop_Level() for the actual
     // balance check.
     //
     ASSERT_NO_DATA_STACK_POINTERS_EXTANT();
 
-    // See notes on f->feed->gotten about the coherence issues in the face
+    // See notes on L->feed->gotten about the coherence issues in the face
     // of arbitrary function execution.
     //
-    if (f_next_gotten and not IS_FRAME(f_next)) {
-        assert(IS_WORD(f_next));
-        assert(Lookup_Word(f_next, f_specifier) == f_next_gotten);
+    if (L_next_gotten and not IS_FRAME(L_next)) {
+        assert(IS_WORD(L_next));
+        assert(Lookup_Word(L_next, L_specifier) == L_next_gotten);
     }
 
-    assert(f == TOP_FRAME);
+    assert(L == TOP_LEVEL);
 
     // If this fires, it means that Flip_Series_To_White was not called an
     // equal number of times after Flip_Series_To_Black, which means that
@@ -140,24 +140,24 @@ static void Evaluator_Shared_Checks_Debug(Frame(*) f)
 
     // We only have a label if we are in the middle of running a function.
     //
-    assert(IS_POINTER_TRASH_DEBUG(unwrap(f->label)));
+    assert(IS_POINTER_TRASH_DEBUG(unwrap(L->label)));
 
-    if (f->varlist) {
-        assert(NOT_SERIES_FLAG(f->varlist, MANAGED));
-        assert(NOT_SERIES_FLAG(f->varlist, INACCESSIBLE));
+    if (L->varlist) {
+        assert(NOT_SERIES_FLAG(L->varlist, MANAGED));
+        assert(NOT_SERIES_FLAG(L->varlist, INACCESSIBLE));
     }
 
     //=//// ^-- ABOVE CHECKS *ALWAYS* APPLY ///////////////////////////////=//
 
-    if (Is_Feed_At_End(f->feed))
+    if (Is_Feed_At_End(L->feed))
         return;
 
-    if (Is_Throwing(f))
+    if (Is_Throwing(L))
         return;
 
     //=//// v-- BELOW CHECKS ONLY APPLY IN EXITS CASE WITH MORE CODE //////=//
 
-    assert(f_next != f->out);
+    assert(L_next != L->out);
 
     //=//// ^-- ADD CHECKS EARLIER THAN HERE IF THEY SHOULD ALWAYS RUN ////=//
 }
@@ -168,53 +168,53 @@ static void Evaluator_Shared_Checks_Debug(Frame(*) f)
 //
 // These fields are required upon initialization:
 //
-//     f->out
+//     L->out
 //     REBVAL pointer to which the evaluation's result should be written.
 //     Should be to writable memory in a cell that lives above this call to
 //     the evalutor in stable memory (not user-visible, e.g. DECLARE_LOCAL
-//     or the parent's f->spare).  This can't point into an array whose memory
+//     or the parent's L->spare).  This can't point into an array whose memory
 //     may move during arbitrary evaluation, and that includes cells on the
 //     expandable data stack.  It also usually can't write a function argument
 //     cell, because that could expose an unfinished calculation during this
-//     Action_Executor() through its FRAME!...though an Action_Executor(f) must
-//     write f's *own* arg slots to fulfill them.
+//     Action_Executor() through its FRAME!...though an Action_Executor(L) must
+//     write L's *own* arg slots to fulfill them.
 //
-//     f->feed
+//     L->feed
 //     Contains the Array(*) or C va_list of subsequent values to fetch...as
 //     well as the specifier.  The current value, its cached "gotten" value if
 //     it is a WORD!, and other information is stored here through a level of
 //     indirection so it may be shared and updated between recursions.
 //
-// This routine attempts to "trash" a lot of frame state variables to help
+// This routine attempts to "trash" a lot of level state variables to help
 // make sure one evaluation does not leak data into the next.
 //
-void Evaluator_Expression_Checks_Debug(Frame(*) f)
+void Evaluator_Expression_Checks_Debug(Level(*) L)
 {
-    assert(f == TOP_FRAME); // should be topmost frame, still
+    assert(L == TOP_LEVEL); // should be topmost level, still
 
-    assert(Not_Executor_Flag(EVAL, f, DIDNT_LEFT_QUOTE_TUPLE));
-    if (Not_Executor_Flag(EVAL, f, FULFILLING_ARG))
-        assert(Not_Feed_Flag(f->feed, NO_LOOKAHEAD));
-    assert(Not_Feed_Flag(f->feed, DEFERRING_ENFIX));
+    assert(Not_Executor_Flag(EVAL, L, DIDNT_LEFT_QUOTE_TUPLE));
+    if (Not_Executor_Flag(EVAL, L, FULFILLING_ARG))
+        assert(Not_Feed_Flag(L->feed, NO_LOOKAHEAD));
+    assert(Not_Feed_Flag(L->feed, DEFERRING_ENFIX));
 
-    Evaluator_Shared_Checks_Debug(f);
+    Evaluator_Shared_Checks_Debug(L);
 
-    assert(not Is_Throwing(f)); // no evals between throws
+    assert(not Is_Throwing(L)); // no evals between throws
 
-    // Trash fields that GC won't be seeing unless Is_Action_Frame()
+    // Trash fields that GC won't be seeing unless Is_Action_Level()
     //
-    TRASH_POINTER_IF_DEBUG(f->u.action.key);
-    TRASH_POINTER_IF_DEBUG(f->u.action.arg);
-    TRASH_POINTER_IF_DEBUG(f->u.action.param);
+    TRASH_POINTER_IF_DEBUG(L->u.action.key);
+    TRASH_POINTER_IF_DEBUG(L->u.action.arg);
+    TRASH_POINTER_IF_DEBUG(L->u.action.param);
 
-    assert(not f->varlist or NOT_SERIES_FLAG(f->varlist, INACCESSIBLE));
+    assert(not L->varlist or NOT_SERIES_FLAG(L->varlist, INACCESSIBLE));
 
     // Mutate va_list sources into arrays at fairly random moments in the
     // debug build.  It should be able to handle it at any time.
     //
-    if (FRM_IS_VARIADIC(f) and SPORADICALLY(50)) {
+    if (Level_Is_Variadic(L) and SPORADICALLY(50)) {
         const bool truncated = true;
-        Reify_Variadic_Feed_As_Array_Feed(f->feed, truncated);
+        Reify_Variadic_Feed_As_Array_Feed(L->feed, truncated);
     }
 }
 
@@ -222,10 +222,10 @@ void Evaluator_Expression_Checks_Debug(Frame(*) f)
 //
 //  Do_After_Action_Checks_Debug: C
 //
-void Do_After_Action_Checks_Debug(Frame(*) f) {
-    assert(not Is_Throwing(f));
+void Do_After_Action_Checks_Debug(Level(*) L) {
+    assert(not Is_Throwing(L));
 
-    if (GET_SERIES_FLAG(f->varlist, INACCESSIBLE))  // e.g. ENCLOSE
+    if (GET_SERIES_FLAG(L->varlist, INACCESSIBLE))  // e.g. ENCLOSE
         return;
 
     // Usermode functions check the return type via Func_Dispatcher(),
@@ -234,12 +234,12 @@ void Do_After_Action_Checks_Debug(Frame(*) f) {
     // so native return types are checked instead of just trusting the C.
     //
   #if DEBUG_NATIVE_RETURNS
-    Action(*) phase = FRM_PHASE(f);
+    Action(*) phase = Level_Phase(L);
 
-    if (ACT_HAS_RETURN(phase) and Is_Stable(f->out)) {
-        if (not Typecheck_Coerce_Return(f, f->out)) {
+    if (ACT_HAS_RETURN(phase) and Is_Stable(L->out)) {
+        if (not Typecheck_Coerce_Return(L, L->out)) {
             assert(!"Native code violated return type contract!\n");
-            panic (Error_Bad_Return_Type(f, f->out));
+            panic (Error_Bad_Return_Type(L, L->out));
         }
     }
   #endif
@@ -249,26 +249,26 @@ void Do_After_Action_Checks_Debug(Frame(*) f) {
 //
 //  Evaluator_Exit_Checks_Debug: C
 //
-void Evaluator_Exit_Checks_Debug(Frame(*) f) {
-    Evaluator_Shared_Checks_Debug(f);
+void Evaluator_Exit_Checks_Debug(Level(*) L) {
+    Evaluator_Shared_Checks_Debug(L);
 
-    if (Not_Frame_At_End(f) and not FRM_IS_VARIADIC(f)) {
-        if (f_index > ARR_LEN(f_array)) {
-            assert(Is_Throwing(f));
-            assert(f_index == ARR_LEN(f_array) + 1);
+    if (Not_Level_At_End(L) and not Level_Is_Variadic(L)) {
+        if (Level_Array_Index(L) > ARR_LEN(Level_Array(L))) {
+            assert(Is_Throwing(L));
+            assert(Level_Array_Index(L) == ARR_LEN(Level_Array(L)) + 1);
         }
     }
 
   //=//// CHECK FOR STRAY FLAGS ///////////////////////////////////////////=//
 
-    if (not Is_Throwing(f)) {
-        Flags filtered = (f->flags.bits & ~FLAG_STATE_BYTE(255));
+    if (not Is_Throwing(L)) {
+        Flags filtered = (L->flags.bits & ~FLAG_STATE_BYTE(255));
         filtered &= ~ (
-            FRAME_FLAG_0_IS_TRUE  // always true
-            | FRAME_FLAG_7_IS_TRUE  // always true
-            | FRAME_FLAG_ALLOCATED_FEED
-            | FRAME_FLAG_ROOT_FRAME
-            | FRAME_FLAG_TRAMPOLINE_KEEPALIVE
+            LEVEL_FLAG_0_IS_TRUE  // always true
+            | LEVEL_FLAG_7_IS_TRUE  // always true
+            | LEVEL_FLAG_ALLOCATED_FEED
+            | LEVEL_FLAG_ROOT_LEVEL
+            | LEVEL_FLAG_TRAMPOLINE_KEEPALIVE
         );
 
         // These are provided as options to Evaluator_Executor, and should not
@@ -276,9 +276,9 @@ void Evaluator_Exit_Checks_Debug(Frame(*) f) {
         // any case they are okay if they are set.
         //
         filtered &= ~ (
-            FRAME_FLAG_BRANCH
-            | FRAME_FLAG_META_RESULT
-            | FRAME_FLAG_FAILURE_RESULT_OK
+            LEVEL_FLAG_BRANCH
+            | LEVEL_FLAG_META_RESULT
+            | LEVEL_FLAG_FAILURE_RESULT_OK
             | EVAL_EXECUTOR_FLAG_FULFILLING_ARG
             | EVAL_EXECUTOR_FLAG_NO_RESIDUE
         );

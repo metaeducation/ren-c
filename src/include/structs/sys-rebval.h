@@ -511,7 +511,7 @@ union Reb_Bytes_Payload  // IMPORTANT: Do not cast, use `Pointers` instead
 // with a specifier in a value cell slot.  (Most commas don't have this.)
 //
 struct Reb_Comma_Payload {
-    // A frame may be sourced from a va_list of pointers, or not.  If this is
+    // A feed may be sourced from a va_list of pointers, or not.  If this is
     // NULL it is assumed that the values are sourced from a simple array.
     //
     va_list* vaptr;  // may be nullptr

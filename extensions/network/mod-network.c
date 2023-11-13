@@ -661,7 +661,7 @@ void on_write_finished(uv_write_t *req, int status)
 //  Transport_Actor: C
 //
 static Bounce Transport_Actor(
-    Frame(*) frame_,
+    Level(*) level_,
     REBVAL *port,
     Symbol(const*) verb,
     enum Transport_Type transport
@@ -1018,18 +1018,18 @@ static Bounce Transport_Actor(
 //
 //  TCP_Actor: C
 //
-static Bounce TCP_Actor(Frame(*) frame_, REBVAL *port, Symbol(const*) verb)
+static Bounce TCP_Actor(Level(*) level_, REBVAL *port, Symbol(const*) verb)
 {
-    return Transport_Actor(frame_, port, verb, TRANSPORT_TCP);
+    return Transport_Actor(level_, port, verb, TRANSPORT_TCP);
 }
 
 
 //
 //  UDP_Actor: C
 //
-static Bounce UDP_Actor(Frame(*) frame_, REBVAL *port, Symbol(const*) verb)
+static Bounce UDP_Actor(Level(*) level_, REBVAL *port, Symbol(const*) verb)
 {
-    return Transport_Actor(frame_, port, verb, TRANSPORT_UDP);
+    return Transport_Actor(level_, port, verb, TRANSPORT_UDP);
 }
 
 
@@ -1265,7 +1265,7 @@ DECLARE_NATIVE(wait_p)  // See wrapping function WAIT in usermode code
     if (GET_SIGNAL(SIG_HALT)) {
         CLR_SIGNAL(SIG_HALT);
 
-        return Init_Thrown_With_Label(FRAME, Lib(NULL), Lib(HALT));
+        return Init_Thrown_With_Label(LEVEL, Lib(NULL), Lib(HALT));
     }
 
     if (GET_SIGNAL(SIG_INTERRUPT)) {

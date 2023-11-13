@@ -271,11 +271,11 @@ DECLARE_NATIVE(load_extension)
 // This will be the dispatcher for the natives in an extension after the
 // extension is unloaded.
 //
-static const REBVAL *Unloaded_Dispatcher(Frame(*) f)
+static const REBVAL *Unloaded_Dispatcher(Level(*) L)
 {
-    UNUSED(f);
+    UNUSED(L);
 
-    fail (Error_Native_Unloaded_Raw(ACT_ARCHETYPE(FRM_PHASE(f))));
+    fail (Error_Native_Unloaded_Raw(ACT_ARCHETYPE(Level_Phase(L))));
 }
 
 

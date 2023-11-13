@@ -24,6 +24,9 @@
 #include "sys-core.h"
 
 
+#define L_specifier         Level_Specifier(L)
+
+
 //
 //  reduce: native [
 //
@@ -50,10 +53,10 @@ DECLARE_NATIVE(reduce)
 //    won't have the starting value anymore.  Cache the newline flag on the
 //    ARG(value) cell, as newline flags on ARG()s are available.
 //
-// 3. The subframe that is pushed to run the reduce evaluations uses the data
+// 3. The sublevel that is pushed to run the reduce evaluations uses the data
 //    stack position captured in BASELINE to tell things like whether a
-//    function dispatch has pushed refinements, etc.  So when the REDUCE frame
-//    underneath it pushes a value to the data stack, that frame must be
+//    function dispatch has pushed refinements, etc.  So when the REDUCE level
+//    underneath it pushes a value to the data stack, that level must be
 //    informed the stack element is "not for it" before the next call.
 {
     INCLUDE_PARAMS_OF_REDUCE;
@@ -87,41 +90,41 @@ DECLARE_NATIVE(reduce)
     if (ANY_INERT(v))
         return COPY(v);  // save time if it's something like a TEXT!
 
-    Frame(*) subframe = Make_End_Frame(
+    Level(*) sub = Make_End_Level(
         FLAG_STATE_BYTE(ST_EVALUATOR_REEVALUATING)
     );
-    Push_Frame(OUT, subframe);
+    Push_Level(OUT, sub);
 
-    subframe->u.eval.current = v;
-    subframe->u.eval.current_gotten = nullptr;
-    subframe->u.eval.enfix_reevaluate = 'N';  // detect?
+    sub->u.eval.current = v;
+    sub->u.eval.current_gotten = nullptr;
+    sub->u.eval.enfix_reevaluate = 'N';  // detect?
 
-    return DELEGATE_SUBFRAME(subframe);
+    return DELEGATE_SUBLEVEL(sub);
 
 } initial_entry_any_array: {  ////////////////////////////////////////////////
 
-    Frame(*) subframe = Make_Frame_At(
+    Level(*) sub = Make_Level_At(
         v,  // REB_BLOCK or REB_GROUP
-        FRAME_FLAG_ALLOCATED_FEED
-            | FRAME_FLAG_TRAMPOLINE_KEEPALIVE  // reused for each step
+        LEVEL_FLAG_ALLOCATED_FEED
+            | LEVEL_FLAG_TRAMPOLINE_KEEPALIVE  // reused for each step
     );
-    Push_Frame(OUT, subframe);
+    Push_Level(OUT, sub);
     goto next_reduce_step;
 
 } next_reduce_step: {  ///////////////////////////////////////////////////////
 
-    if (Is_Feed_At_End(SUBFRAME->feed))
+    if (Is_Feed_At_End(SUBLEVEL->feed))
         goto finished;
 
-    if (Get_Cell_Flag(At_Feed(SUBFRAME->feed), NEWLINE_BEFORE))
+    if (Get_Cell_Flag(At_Feed(SUBLEVEL->feed), NEWLINE_BEFORE))
         Set_Cell_Flag(v, NEWLINE_BEFORE);  // cache newline flag, see [2]
     else
         Clear_Cell_Flag(v, NEWLINE_BEFORE);
 
-    SUBFRAME->executor = &Evaluator_Executor;
+    SUBLEVEL->executor = &Evaluator_Executor;
     STATE = ST_REDUCE_EVAL_STEP;
-    Restart_Evaluator_Frame(SUBFRAME);
-    return CONTINUE_SUBFRAME(SUBFRAME);
+    Restart_Evaluator_Level(SUBLEVEL);
+    return CONTINUE_SUBLEVEL(SUBLEVEL);
 
 } reduce_step_result_in_out: {  //////////////////////////////////////////////
 
@@ -131,7 +134,7 @@ DECLARE_NATIVE(reduce)
     if (Is_Elision(OUT) or Is_Void(OUT))  // not given to predicates, by design
         goto next_reduce_step;  // reduce skips over voids and nones
 
-    SUBFRAME->executor = &Just_Use_Out_Executor;
+    SUBLEVEL->executor = &Just_Use_Out_Executor;
     STATE = ST_REDUCE_RUNNING_PREDICATE;
     return CONTINUE(OUT, predicate, OUT);  // arg can be same as output
 
@@ -151,7 +154,7 @@ DECLARE_NATIVE(reduce)
         bool newline = Get_Cell_Flag(v, NEWLINE_BEFORE);
         for (; at != tail; ++at) {
             Derelativize(PUSH(), at, VAL_SPECIFIER(OUT));
-            SUBFRAME->baseline.stack_base += 1;  // see [3]
+            SUBLEVEL->baseline.stack_base += 1;  // see [3]
             if (newline) {
                 Set_Cell_Flag(TOP, NEWLINE_BEFORE);  // see [2]
                 newline = false;
@@ -162,7 +165,7 @@ DECLARE_NATIVE(reduce)
         return RAISE(Error_Bad_Isotope(OUT));
     else {
         Move_Cell(PUSH(), OUT);
-        SUBFRAME->baseline.stack_base += 1;  // see [3]
+        SUBLEVEL->baseline.stack_base += 1;  // see [3]
 
         if (Get_Cell_Flag(v, NEWLINE_BEFORE))  // see [2]
             Set_Cell_Flag(TOP, NEWLINE_BEFORE);
@@ -172,7 +175,7 @@ DECLARE_NATIVE(reduce)
 
 } finished: {  ///////////////////////////////////////////////////////////////
 
-    Drop_Frame_Unbalanced(SUBFRAME);  // Drop_Frame() asserts on accumulation
+    Drop_Level_Unbalanced(SUBLEVEL);  // Drop_Level() asserts on accumulation
 
     Flags pop_flags = NODE_FLAG_MANAGED | ARRAY_MASK_HAS_FILE_LINE;
     if (Get_Subclass_Flag(ARRAY, VAL_ARRAY(v), NEWLINE_AT_TAIL))
@@ -236,10 +239,10 @@ DECLARE_NATIVE(reduce_each)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    Flags flags = FRAME_FLAG_TRAMPOLINE_KEEPALIVE;
+    Flags flags = LEVEL_FLAG_TRAMPOLINE_KEEPALIVE;
 
     if (IS_META_WORD(vars)) {  // Note: gets converted to object in next step
-        flags |= FRAME_FLAG_META_RESULT | FRAME_FLAG_FAILURE_RESULT_OK;
+        flags |= LEVEL_FLAG_META_RESULT | LEVEL_FLAG_FAILURE_RESULT_OK;
     }
 
     Context(*) context = Virtual_Bind_Deep_To_New_Context(
@@ -251,27 +254,27 @@ DECLARE_NATIVE(reduce_each)
     if (IS_THE_BLOCK(block))
         flags |= EVAL_EXECUTOR_FLAG_NO_EVALUATIONS;
 
-    Frame(*) subframe = Make_Frame_At(block, flags);
-    Push_Frame(SPARE, subframe);
+    Level(*) sub = Make_Level_At(block, flags);
+    Push_Level(SPARE, sub);
     goto reduce_next;
 
 } reduce_next: {  ////////////////////////////////////////////////////////////
 
-    if (Is_Feed_At_End(SUBFRAME->feed))
+    if (Is_Feed_At_End(SUBLEVEL->feed))
         goto finished;
 
-    SUBFRAME->executor = &Evaluator_Executor;  // restore from pass through
+    SUBLEVEL->executor = &Evaluator_Executor;  // restore from pass through
 
     STATE = ST_REDUCE_EACH_REDUCING_STEP;
-    Restart_Evaluator_Frame(SUBFRAME);
-    return CONTINUE_SUBFRAME(SUBFRAME);
+    Restart_Evaluator_Level(SUBLEVEL);
+    return CONTINUE_SUBLEVEL(SUBLEVEL);
 
 } reduce_step_output_in_spare: {  ////////////////////////////////////////////
 
     if (
         Is_Barrier(SPARE)
         or (
-            Get_Frame_Flag(SUBFRAME, META_RESULT)
+            Get_Level_Flag(SUBLEVEL, META_RESULT)
             and Is_Meta_Of_Barrier(SPARE)
         )
     ){
@@ -280,7 +283,7 @@ DECLARE_NATIVE(reduce_each)
     }
 
     if (
-        Not_Frame_Flag(SUBFRAME, META_RESULT)
+        Not_Level_Flag(SUBLEVEL, META_RESULT)
         and (Is_Void(SPARE) or Is_Nihil(SPARE))
     ){
         Init_Nihil(OUT);
@@ -289,7 +292,7 @@ DECLARE_NATIVE(reduce_each)
 
     Move_Cell(CTX_VAR(VAL_CONTEXT(vars), 1), SPARE);  // do multiple? see [1]
 
-    SUBFRAME->executor = &Just_Use_Out_Executor;  // pass through subframe
+    SUBLEVEL->executor = &Just_Use_Out_Executor;  // pass through sublevel
 
     STATE = ST_REDUCE_EACH_RUNNING_BODY;
     return CATCH_CONTINUE_BRANCH(OUT, body);
@@ -297,7 +300,7 @@ DECLARE_NATIVE(reduce_each)
 } body_result_in_out: {  /////////////////////////////////////////////////////
 
     if (THROWING) {
-        if (not Try_Catch_Break_Or_Continue(OUT, FRAME, &breaking))
+        if (not Try_Catch_Break_Or_Continue(OUT, LEVEL, &breaking))
             goto finished;
 
         if (breaking)
@@ -308,10 +311,10 @@ DECLARE_NATIVE(reduce_each)
 
 } finished: {  ///////////////////////////////////////////////////////////////
 
-    if (THROWING)  // subframe has already been dropped if thrown
+    if (THROWING)  // sublevel has already been dropped if thrown
         return THROWN;
 
-    Drop_Frame(SUBFRAME);
+    Drop_Level(SUBLEVEL);
 
     if (Is_Fresh(OUT))  // body never ran
         return VOID;
@@ -343,23 +346,23 @@ bool Match_For_Compose(noquote(Cell(const*)) group, const REBVAL *label) {
 
 
 // This is a helper common to the Composer_Executor() and the COMPOSE native
-// which will push a frame that does composing to the trampoline stack.
+// which will push a level that does composing to the trampoline stack.
 //
 /////////////////////////////////////////////////////////////////////////////
 //
-// 1. COMPOSE relies on frame enumeration...and frames are only willing to
+// 1. COMPOSE relies on feed enumeration...and feeds are only willing to
 //    enumerate arrays.  Paths and tuples may be in a more compressed form.
 //    While this is being rethought, we just reuse the logic of AS so it's in
 //    one place and gets tested more, to turn sequences into arrays.
 //
-// 2. The easiest way to pass along options to the composing subframes is by
+// 2. The easiest way to pass along options to the composing sublevels is by
 //    passing the frame of the COMPOSE to it.  Though Composer_Executor() has
 //    no varlist of its own, it can read the frame variables of the native
-//    so long as it is passed in the `main_frame` member of Frame.
+//    so long as it is passed in the `main_level` member.
 //
-static void Push_Composer_Frame(
+static void Push_Composer_Level(
     Atom(*) out,
-    Frame(*) main_frame,
+    Level(*) main_level,
     Cell(const*) arraylike,
     REBSPC *specifier
 ){
@@ -369,22 +372,22 @@ static void Push_Composer_Frame(
         adjusted = rebValue(Canon(AS), Canon(BLOCK_X), rebQ(out));
     }
 
-    Frame(*) subframe = Make_Frame_At_Core(
+    Level(*) sub = Make_Level_At_Core(
         adjusted ? adjusted : arraylike,
         adjusted ? SPECIFIED : specifier,
         EVAL_EXECUTOR_FLAG_NO_EVALUATIONS
-            | FRAME_FLAG_TRAMPOLINE_KEEPALIVE  // allows stack accumulation
-            | FRAME_FLAG_FAILURE_RESULT_OK  // bubbles up definitional errors
+            | LEVEL_FLAG_TRAMPOLINE_KEEPALIVE  // allows stack accumulation
+            | LEVEL_FLAG_FAILURE_RESULT_OK  // bubbles up definitional errors
     );
-    Push_Frame(out, subframe);  // subframe may raise definitional failure
+    Push_Level(out, sub);  // sublevel may raise definitional failure
 
     if (adjusted)
         rebRelease(adjusted);
 
-    subframe->executor = &Composer_Executor;
+    sub->executor = &Composer_Executor;
 
-    subframe->u.compose.main_frame = main_frame;   // pass options, see [2]
-    subframe->u.compose.changed = false;
+    sub->u.compose.main_level = main_level;   // pass options, see [2]
+    sub->u.compose.changed = false;
 }
 
 
@@ -404,13 +407,13 @@ static void Push_Composer_Frame(
 // 3. There are N instances of the NEWLINE_BEFORE flags on the pushed items,
 //    and we need N + 1 flags.  Borrow the tail flag from the input array.
 //
-static Atom(*) Finalize_Composer_Frame(
+static Atom(*) Finalize_Composer_Level(
     Atom(*) out,
-    Frame(*) composer_frame,
+    Level(*) L,
     Cell(const*) composee  // special handling if the output kind is a sequence
 ){
     if (Is_Raised(out)) {
-        Drop_Data_Stack_To(composer_frame->baseline.stack_base);
+        Drop_Data_Stack_To(L->baseline.stack_base);
         return out;
     }
 
@@ -421,7 +424,7 @@ static Atom(*) Finalize_Composer_Frame(
         if (not Try_Pop_Sequence_Or_Element_Or_Nulled(
             out,
             CELL_HEART(composee),
-            composer_frame->baseline.stack_base
+            L->baseline.stack_base
         )){
             if (Is_Valid_Sequence_Element(heart, out))
                 fail (Error_Cant_Decorate_Type_Raw(out));  // no `3:`, see [1]
@@ -440,7 +443,7 @@ static Atom(*) Finalize_Composer_Frame(
     Init_Array_Cell(
         out,
         heart,
-        Pop_Stack_Values_Core(composer_frame->baseline.stack_base, flags)
+        Pop_Stack_Values_Core(L->baseline.stack_base, flags)
     );
 
     return Quotify(Stable_Unchecked(out), quotes);
@@ -459,7 +462,7 @@ static Atom(*) Finalize_Composer_Frame(
 // an array also offers more options for avoiding that intermediate if the
 // caller wants to add part or all of the popped data to an existing array.
 //
-// At the end of the process, `f->u.compose.changed` will be false if the
+// At the end of the process, `L->u.compose.changed` will be false if the
 // composed series is identical to the input, true if there were compositions.
 //
 //////////////////////////////////////////////////////////////////////////////
@@ -490,15 +493,15 @@ static Atom(*) Finalize_Composer_Frame(
 //               thing3
 //           ]
 //
-// 5. At the end of the composer, we do not Drop_Data_Stack_To() and the frame
+// 5. At the end of the composer, we do not Drop_Data_Stack_To() and the level
 //    will still be alive for the caller.  This lets them have access to this
-//    frame's BASELINE->stack_base, so it knows what all was pushed...and it
+//    level's BASELINE->stack_base, so it knows what all was pushed...and it
 //    also means the caller can decide if they want the accrued items or not
-//    depending on the `changed` field in the frame.
+//    depending on the `changed` field in the level.
 //
-Bounce Composer_Executor(Frame(*) f)
+Bounce Composer_Executor(Level(*) L)
 {
-    Frame(*) frame_ = f;
+    Level(*) level_ = L;
 
     if (THROWING)
         return THROWN;  // no state to cleanup (just data stack, auto-cleaned)
@@ -509,13 +512,13 @@ Bounce Composer_Executor(Frame(*) f)
     DECLARE_PARAM(4, deep);
     DECLARE_PARAM(5, predicate);
 
-    Frame(*) main_frame = f->u.compose.main_frame;  // the invoked COMPOSE native
+    Level(*) main_level = L->u.compose.main_level;  // the invoked COMPOSE native
 
-    UNUSED(FRM_ARG(main_frame, p_return_));
-    Value(*) label = FRM_ARG(main_frame, p_label_);
-    UNUSED(FRM_ARG(main_frame, p_value_));
-    bool deep = not Is_Nulled(FRM_ARG(main_frame, p_deep_));
-    Value(*) predicate = FRM_ARG(main_frame, p_predicate_);
+    UNUSED(Level_Arg(main_level, p_return_));
+    Value(*) label = Level_Arg(main_level, p_label_);
+    UNUSED(Level_Arg(main_level, p_value_));
+    bool deep = not Is_Nulled(Level_Arg(main_level, p_deep_));
+    Value(*) predicate = Level_Arg(main_level, p_predicate_);
 
     assert(Is_Nulled(predicate) or IS_FRAME(predicate));
 
@@ -542,18 +545,18 @@ Bounce Composer_Executor(Frame(*) f)
 
   handle_next_item: {  ///////////////////////////////////////////////////////
 
-   Fetch_Next_Forget_Lookback(f);
+   Fetch_Next_Forget_Lookback(L);
    goto handle_current_item;
 
 } handle_current_item: {  ////////////////////////////////////////////////////
 
-    if (Is_Frame_At_End(f))
+    if (Is_Level_At_End(L))
         goto finished;
 
-    Cell(const*) at = At_Frame(f);
+    Cell(const*) at = At_Level(L);
 
     if (not ANY_ARRAYLIKE(at)) {  // won't substitute/recurse
-        Derelativize(PUSH(), at, f_specifier);  // keep newline flag
+        Derelativize(PUSH(), at, L_specifier);  // keep newline flag
         goto handle_next_item;
     }
 
@@ -570,7 +573,7 @@ Bounce Composer_Executor(Frame(*) f)
     else {  // plain compose, if match
         if (Match_For_Compose(at, label)) {
             match = at;
-            match_specifier = f_specifier;
+            match_specifier = L_specifier;
         }
     }
 
@@ -578,14 +581,14 @@ Bounce Composer_Executor(Frame(*) f)
         if (deep) {
             // compose/deep [does [(1 + 2)] nested] => [does [3] nested]
 
-            Push_Composer_Frame(OUT, main_frame, at, f_specifier);
+            Push_Composer_Level(OUT, main_level, at, L_specifier);
             STATE = ST_COMPOSER_RECURSING_DEEP;
-            return CATCH_CONTINUE_SUBFRAME(SUBFRAME);
+            return CATCH_CONTINUE_SUBLEVEL(SUBLEVEL);
         }
 
         // compose [[(1 + 2)] (3 + 4)] => [[(1 + 2)] 7]  ; non-deep
         //
-        Derelativize(PUSH(), at, f_specifier);  // keep newline flag
+        Derelativize(PUSH(), at, L_specifier);  // keep newline flag
         goto handle_next_item;
     }
 
@@ -609,16 +612,16 @@ Bounce Composer_Executor(Frame(*) f)
     if (not Is_Nulled(label))
         Fetch_Next_In_Feed(subfeed);  // wasn't possibly at END
 
-    Frame(*) subframe = Make_Frame(
+    Level(*) sublevel = Make_Level(
         subfeed,  // used subfeed so we could skip the label if there was one
-        FRAME_FLAG_ALLOCATED_FEED
+        LEVEL_FLAG_ALLOCATED_FEED
     );
-    subframe->executor = &Array_Executor;
+    sublevel->executor = &Array_Executor;
 
-    Push_Frame(OUT, subframe);
+    Push_Level(OUT, sublevel);
 
     STATE = ST_COMPOSER_EVAL_GROUP;
-    return CATCH_CONTINUE_SUBFRAME(subframe);
+    return CATCH_CONTINUE_SUBLEVEL(sublevel);
 
 }} process_out: {  ///////////////////////////////////////////////////////////
 
@@ -627,8 +630,8 @@ Bounce Composer_Executor(Frame(*) f)
         or STATE == ST_COMPOSER_RUNNING_PREDICATE
     );
 
-    enum Reb_Kind group_heart = CELL_HEART(At_Frame(f));
-    Byte group_quote_byte = QUOTE_BYTE(At_Frame(f));
+    enum Reb_Kind group_heart = CELL_HEART(At_Level(L));
+    Byte group_quote_byte = QUOTE_BYTE(At_Level(L));
 
     if (Is_Splice(OUT))
         goto push_out_spliced;
@@ -683,12 +686,12 @@ Bounce Composer_Executor(Frame(*) f)
 
     // Use newline intent from the GROUP! in the compose pattern
     //
-    if (Get_Cell_Flag(At_Frame(f), NEWLINE_BEFORE))
+    if (Get_Cell_Flag(At_Level(L), NEWLINE_BEFORE))
         Set_Cell_Flag(TOP, NEWLINE_BEFORE);
     else
         Clear_Cell_Flag(TOP, NEWLINE_BEFORE);
 
-    f->u.compose.changed = true;
+    L->u.compose.changed = true;
     goto handle_next_item;
 
   push_out_spliced:  /////////////////////////////////////////////////////////
@@ -705,7 +708,7 @@ Bounce Composer_Executor(Frame(*) f)
         Cell(const*) push = VAL_ARRAY_AT(&push_tail, OUT);
         if (push != push_tail) {
             Derelativize(PUSH(), push, VAL_SPECIFIER(OUT));
-            if (Get_Cell_Flag(At_Frame(f), NEWLINE_BEFORE))
+            if (Get_Cell_Flag(At_Level(L), NEWLINE_BEFORE))
                 Set_Cell_Flag(TOP, NEWLINE_BEFORE);  // first, see [4]
             else
                 Clear_Cell_Flag(TOP, NEWLINE_BEFORE);
@@ -719,7 +722,7 @@ Bounce Composer_Executor(Frame(*) f)
         Copy_Cell(PUSH(), OUT);
     }
 
-    f->u.compose.changed = true;
+    L->u.compose.changed = true;
     goto handle_next_item;
 
 } composer_finished_recursion: {  ////////////////////////////////////////////
@@ -727,40 +730,40 @@ Bounce Composer_Executor(Frame(*) f)
     // The compose stack of the nested compose is relative to *its* baseline.
 
     if (Is_Raised(OUT)) {
-        Drop_Data_Stack_To(SUBFRAME->baseline.stack_base);
-        Drop_Frame(SUBFRAME);
+        Drop_Data_Stack_To(SUBLEVEL->baseline.stack_base);
+        Drop_Level(SUBLEVEL);
         return OUT;
     }
 
     assert(Is_Void(OUT));
 
-    if (not SUBFRAME->u.compose.changed) {
+    if (not SUBLEVEL->u.compose.changed) {
         //
         // To save on memory usage, Ren-C does not make copies of
         // arrays that don't have some substitution under them.  This
         // may be controlled by a switch if it turns out to be needed.
         //
-        Drop_Data_Stack_To(SUBFRAME->baseline.stack_base);
-        Drop_Frame(SUBFRAME);
+        Drop_Data_Stack_To(SUBLEVEL->baseline.stack_base);
+        Drop_Level(SUBLEVEL);
 
-        Derelativize(PUSH(), At_Frame(f), f_specifier);
+        Derelativize(PUSH(), At_Level(L), L_specifier);
         // Constify(TOP);
         goto handle_next_item;
     }
 
-    Finalize_Composer_Frame(OUT, SUBFRAME, At_Frame(f));
-    Drop_Frame(SUBFRAME);
+    Finalize_Composer_Level(OUT, SUBLEVEL, At_Level(L));
+    Drop_Level(SUBLEVEL);
     Move_Cell(PUSH(), OUT);
 
-    if (Get_Cell_Flag(At_Frame(f), NEWLINE_BEFORE))
+    if (Get_Cell_Flag(At_Level(L), NEWLINE_BEFORE))
         Set_Cell_Flag(TOP, NEWLINE_BEFORE);
 
-    f->u.compose.changed = true;
+    L->u.compose.changed = true;
     goto handle_next_item;
 
 } finished: {  ///////////////////////////////////////////////////////////////
 
-    assert(Get_Frame_Flag(f, TRAMPOLINE_KEEPALIVE));  // caller needs, see [5]
+    assert(Get_Level_Flag(L, TRAMPOLINE_KEEPALIVE));  // caller needs, see [5]
 
     return Init_Void(OUT);  // signal finished, avoid leaking temp evaluations
 }}
@@ -793,7 +796,7 @@ DECLARE_NATIVE(compose)
 
     Value(*) v = ARG(value);
 
-    USED(ARG(predicate));  // used by Composer_Executor() via main_frame
+    USED(ARG(predicate));  // used by Composer_Executor() via main_level
     USED(ARG(label));
     USED(ARG(deep));
 
@@ -816,17 +819,17 @@ DECLARE_NATIVE(compose)
     if (ANY_WORD(v) or Is_Activation(v))
         return COPY(v);  // makes it easier to `set compose target`
 
-    Push_Composer_Frame(OUT, frame_, v, VAL_SPECIFIER(v));
+    Push_Composer_Level(OUT, level_, v, VAL_SPECIFIER(v));
 
     STATE = ST_COMPOSE_COMPOSING;
-    return CONTINUE_SUBFRAME(SUBFRAME);
+    return CONTINUE_SUBLEVEL(SUBLEVEL);
 
 } composer_finished: {  //////////////////////////////////////////////////////
 
-    Finalize_Composer_Frame(OUT, SUBFRAME, v);
-    Drop_Frame(SUBFRAME);
+    Finalize_Composer_Level(OUT, SUBLEVEL, v);
+    Drop_Level(SUBLEVEL);
 
-    if (Is_Raised(OUT))  // subframe was killed
+    if (Is_Raised(OUT))  // sublevel was killed
         return OUT;
 
     return OUT;

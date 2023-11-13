@@ -22,7 +22,7 @@
 //
 // This provides some convenience routines that require more definitions than
 // are available when %sys-rebnod.h is being processed.  (e.g. REBVAL,
-// REBSER, Frame(*)...)
+// REBSER, Level(*)...)
 //
 // See %sys-rebnod.h for what a "node" means in this context.
 //
@@ -304,7 +304,7 @@ inline static enum Reb_Pointer_Detect Detect_Rebol_Pointer(const void *p)
 
     // Note: technically there are some internal states that overlap with UTF-8
     // range, e.g. when a cell is marked "stale" in the output location of
-    // a frame.  Such states are not supposed to be leaked to where clients of
+    // a level.  Such states are not supposed to be leaked to where clients of
     // this routine would be concerned about them.
     //
     return DETECTED_AS_UTF8;

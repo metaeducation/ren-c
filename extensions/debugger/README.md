@@ -19,13 +19,6 @@ One advancement in Ren-C that empowers the creation of debug features is the
 FRAME! datatype.  This is a class of object whose keys are the arguments and
 locals of an ACTION!...and an instance is generated on each function call.
 
-For efficiency, frames are not made into objects that cost the GC just because
-a function is called.  Instead, they are raw C objects until a user manages
-to get access to the frame in a value (e.g. by asking for the BINDING OF a
-function's argument).  When a frame becomes exposed to userspace, it will
-"reify" a Frame(*) into an actual FRAME! object that connects as a "view" on
-the underlying memory.
-
 ### EVALUATOR HOOKS
 
 Another advancement which is important to debugging is the ability to "hook"

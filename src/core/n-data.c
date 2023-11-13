@@ -186,7 +186,7 @@ DECLARE_NATIVE(bind)
     }
 
     if (not ANY_ARRAYLIKE(v))  // QUOTED! could have wrapped any type
-        fail (Error_Invalid_Arg(frame_, PARAM(value)));
+        fail (Error_Invalid_Arg(level_, PARAM(value)));
 
     Cell(*) at;
     Cell(const*) tail;
@@ -375,11 +375,11 @@ bool Did_Get_Binding_Of(Sink(Value(*)) out, const REBVAL *v)
         // the current moment of execution.
         //
         if (CTX_TYPE(c) == REB_FRAME) {
-            Frame(*) f = CTX_FRAME_IF_ON_STACK(c);
-            if (f == nullptr)
+            Level(*) L = CTX_LEVEL_IF_ON_STACK(c);
+            if (L == nullptr)
                 Copy_Cell(out, CTX_ARCHETYPE(c));
             else
-                Copy_Cell(out, f->rootvar);  // rootvar has phase, binding
+                Copy_Cell(out, L->rootvar);  // rootvar has phase, binding
         }
         else
             Copy_Cell(out, CTX_ARCHETYPE(c));
@@ -405,10 +405,10 @@ bool Did_Get_Binding_Of(Sink(Value(*)) out, const REBVAL *v)
     //
     if (IS_FRAME(out)) {
         Context(*) c = VAL_CONTEXT(out);
-        Frame(*) f = CTX_FRAME_IF_ON_STACK(c);
-        if (f) {
-            INIT_VAL_FRAME_PHASE(out, FRM_PHASE(f));
-            INIT_VAL_FRAME_BINDING(out, FRM_BINDING(f));
+        Level(*) L = CTX_LEVEL_IF_ON_STACK(c);
+        if (L) {
+            INIT_VAL_FRAME_PHASE(out, Level_Phase(L));
+            INIT_VAL_FRAME_BINDING(out, Level_Binding(L));
         }
         else {
             // !!! Assume the canon FRAME! value in varlist[0] is useful?
@@ -774,7 +774,7 @@ bool Get_Var_Push_Refinements_Throws(
         )){
             Drop_Data_Stack_To(base);
             DROP_GC_GUARD(temp);
-            fail (Error_No_Catch_For_Throw(TOP_FRAME));
+            fail (Error_No_Catch_For_Throw(TOP_LEVEL));
         }
         ++stackindex;
     }
@@ -834,7 +834,7 @@ void Get_Var_May_Fail(
     REBVAL *steps_out = nullptr;
 
     if (Get_Var_Core_Throws(out, steps_out, source, specifier))
-        fail (Error_No_Catch_For_Throw(TOP_FRAME));
+        fail (Error_No_Catch_For_Throw(TOP_LEVEL));
 
     if (not any)
         if (Is_Isotope(out) and not Is_Isotope_Get_Friendly(out))
@@ -1093,7 +1093,7 @@ DECLARE_NATIVE(resolve)
 
     Move_Cell(ARG(value), SPARE);  // should be able to eval direct, review
 
-    return Proxy_Multi_Returns(frame_);
+    return Proxy_Multi_Returns(level_);
 }
 
 
@@ -1126,7 +1126,7 @@ DECLARE_NATIVE(get)
         steps = nullptr;  // no GROUP! evals
 
     if (Get_Var_Core_Throws(OUT, steps, source, SPECIFIED)) {
-        assert(steps or IS_ERROR(VAL_THROWN_LABEL(frame_)));  // see [1]
+        assert(steps or IS_ERROR(VAL_THROWN_LABEL(level_)));  // see [1]
         return THROWN;
     }
 
@@ -1157,11 +1157,11 @@ DECLARE_NATIVE(get)
 // The evaluator cases for SET_TUPLE and SET_GROUP use this routine, while the
 // SET_WORD is (currently) its own optimized case.  When they run:
 //
-//    `out` is the frame's spare (f_spare)
-//    `steps_out` is also frame spare
+//    `out` is the level's spare
+//    `steps_out` is also level spare
 //    `target` is the currently processed value (v)
 //    `target_specifier` is the feed's specifier (v_specifier)
-//    `setval` is the value held in the output (f->out)
+//    `setval` is the value held in the output (L->out)
 //
 // It is legal to have `target == out`.  It means the target may be overwritten
 // in the course of the assignment.
@@ -1171,7 +1171,7 @@ bool Set_Var_Core_Updater_Throws(
     option(REBVAL*) steps_out,  // no GROUP!s if nulled
     Cell(const*) var,  // e.g. v
     REBSPC *var_specifier,  // e.g. v_specifier
-    const REBVAL *setval,  // e.g. f->out (in the evaluator, right hand side)
+    const REBVAL *setval,  // e.g. L->out (in the evaluator, right hand side)
     const REBVAL *updater
 ){
     // Note: `steps_out` can be equal to `out` can be equal to `target`
@@ -1226,7 +1226,7 @@ bool Set_Var_Core_Updater_Throws(
                 rebRUN(updater), "binding of", temp, temp, rebQ(setval)
             )){
                 DROP_GC_GUARD(temp);
-                fail (Error_No_Catch_For_Throw(TOP_FRAME));
+                fail (Error_No_Catch_For_Throw(TOP_LEVEL));
             }
             DROP_GC_GUARD(temp);
         }
@@ -1362,7 +1362,7 @@ bool Set_Var_Core_Updater_Throws(
         )){
             DROP_GC_GUARD(temp);
             DROP_GC_GUARD(writeback);
-            fail (Error_No_Catch_For_Throw(TOP_FRAME));  // don't let PICKs throw
+            fail (Error_No_Catch_For_Throw(TOP_LEVEL));  // don't let PICKs throw
         }
         ++stackindex;
     }
@@ -1379,7 +1379,7 @@ bool Set_Var_Core_Updater_Throws(
     )){
         DROP_GC_GUARD(temp);
         DROP_GC_GUARD(writeback);
-        fail (Error_No_Catch_For_Throw(TOP_FRAME));  // don't let POKEs throw
+        fail (Error_No_Catch_For_Throw(TOP_LEVEL));  // don't let POKEs throw
     }
 
     // Subsequent updates become pokes, regardless of initial updater function
@@ -1426,7 +1426,7 @@ bool Set_Var_Core_Throws(
     option(REBVAL*) steps_out,  // no GROUP!s if nulled
     Cell(const*) var,  // e.g. v
     REBSPC *var_specifier,  // e.g. v_specifier
-    const REBVAL *setval  // e.g. f->out (in the evaluator, right hand side)
+    const REBVAL *setval  // e.g. L->out (in the evaluator, right hand side)
 ){
     return Set_Var_Core_Updater_Throws(
         out,
@@ -1454,7 +1454,7 @@ void Set_Var_May_Fail(
 
     DECLARE_LOCAL (dummy);
     if (Set_Var_Core_Throws(dummy, steps_out, target, target_specifier, setval))
-        fail (Error_No_Catch_For_Throw(TOP_FRAME));
+        fail (Error_No_Catch_For_Throw(TOP_LEVEL));
 }
 
 
@@ -1503,7 +1503,7 @@ DECLARE_NATIVE(set)
     }
 
     if (Set_Var_Core_Throws(SPARE, steps, target, SPECIFIED, v)) {
-        assert(steps or IS_ERROR(VAL_THROWN_LABEL(frame_)));  // see [1]
+        assert(steps or IS_ERROR(VAL_THROWN_LABEL(level_)));  // see [1]
         return THROWN;
     }
 

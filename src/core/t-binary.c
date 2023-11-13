@@ -124,7 +124,7 @@ static Binary(*) Make_Binary_BE64(const REBVAL *arg)
 // Note also the existence of AS and storing strings as UTF-8 should reduce
 // copying, e.g. `as binary! some-string` will be cheaper than TO or MAKE.
 //
-static Bounce MAKE_TO_Binary_Common(Frame(*) frame_, const REBVAL *arg)
+static Bounce MAKE_TO_Binary_Common(Level(*) level_, const REBVAL *arg)
 {
     switch (VAL_TYPE(arg)) {
     case REB_BINARY: {
@@ -184,7 +184,7 @@ static Bounce MAKE_TO_Binary_Common(Frame(*) frame_, const REBVAL *arg)
 // See also: MAKE_String, which is similar.
 //
 Bounce MAKE_Binary(
-    Frame(*) frame_,
+    Level(*) level_,
     enum Reb_Kind kind,
     option(const REBVAL*) parent,
     const REBVAL *def
@@ -205,21 +205,21 @@ Bounce MAKE_Binary(
     if (IS_BLOCK(def)) {  // was construction syntax, #[binary [#{0001} 2]]
         rebPushContinuation(
             cast(REBVAL*, OUT),
-            FRAME_MASK_NONE,
+            LEVEL_MASK_NONE,
             Canon(TO), Canon(BINARY_X),
                 Canon(REDUCE), rebQ(def)  // rebQ() copies cell, survives frame
         );
         return BOUNCE_DELEGATE;
     }
 
-    return MAKE_TO_Binary_Common(frame_, def);
+    return MAKE_TO_Binary_Common(level_, def);
 }
 
 
 //
 //  TO_Binary: C
 //
-Bounce TO_Binary(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg)
+Bounce TO_Binary(Level(*) level_, enum Reb_Kind kind, const REBVAL *arg)
 {
     assert(kind == REB_BINARY);
     UNUSED(kind);
@@ -227,7 +227,7 @@ Bounce TO_Binary(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg)
     if (IS_INTEGER(arg) or IS_DECIMAL(arg))
         return Init_Series_Cell(OUT, REB_BINARY, Make_Binary_BE64(arg));
 
-    return MAKE_TO_Binary_Common(frame_, arg);
+    return MAKE_TO_Binary_Common(level_, arg);
 }
 
 
@@ -377,7 +377,7 @@ REBTYPE(Binary)
       case SYM_SKIP:
       case SYM_AT:
       case SYM_REMOVE:
-        return Series_Common_Action_Maybe_Unhandled(frame_, verb);
+        return Series_Common_Action_Maybe_Unhandled(level_, verb);
 
     //-- Modification:
       case SYM_APPEND:
@@ -488,7 +488,7 @@ REBTYPE(Binary)
                 VAL_BINARY(v),
                 ret
             );
-            return Proxy_Multi_Returns(frame_);
+            return Proxy_Multi_Returns(level_);
         }
 
         ret++;

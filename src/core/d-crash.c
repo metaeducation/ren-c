@@ -100,7 +100,7 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
     // Address Sanitizer gives a reasonable idea of the stack.
     //
     Dump_Info();
-    Dump_Stack(TOP_FRAME, 0);
+    Dump_Stack(TOP_LEVEL, 0);
   #endif
 
   #if !defined(NDEBUG) && defined(HAVE_EXECINFO_AVAILABLE)
@@ -151,7 +151,7 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
             Context(*) context = cast(Context(*), s);  // CTX() does too much checking!
             if (HEART_BYTE_UNCHECKED(CTX_ARCHETYPE(context)) == REB_ERROR) {
                 printf("...and that VARLIST is of an ERROR!...");
-                Force_Location_Of_Error(context, TOP_FRAME);
+                Force_Location_Of_Error(context, TOP_LEVEL);
                 PROBE(context);
             }
         }
@@ -221,7 +221,7 @@ DECLARE_NATIVE(panic)
     // is the exact moment before the PANIC ACTION! was invoked.
     //
   #if DEBUG_COUNT_TICKS
-    Tick tick = frame_->tick;
+    Tick tick = level_->tick;
   #else
     Tick tick = 0;
   #endif
@@ -251,7 +251,7 @@ DECLARE_NATIVE(panic)
         }
     }
 
-    Panic_Core(p, tick, FRM_FILE_UTF8(frame_), FRM_LINE(frame_));
+    Panic_Core(p, tick, File_UTF8_Of_Level(level_), LineNumber_Of_Level(level_));
 }
 
 

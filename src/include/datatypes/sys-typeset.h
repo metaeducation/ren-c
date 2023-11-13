@@ -119,7 +119,7 @@ inline static bool Matcher_Matches(
     FLAG_LEFT_BIT(8)
 
 // Indicates that when this parameter is fulfilled, it will do so with a
-// value of type VARARGS!, that actually just holds a pointer to the frame
+// value of type VARARGS!, that actually just holds a pointer to the level
 // state and allows more arguments to be gathered at the callsite *while the
 // function body is running*.
 //

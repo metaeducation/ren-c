@@ -52,18 +52,18 @@ enum {
 //
 //  Generic_Dispatcher: C
 //
-Bounce Generic_Dispatcher(Frame(*) f)
+Bounce Generic_Dispatcher(Level(*) L)
 {
-    Phase(*) phase = FRM_PHASE(f);
+    Phase(*) phase = Level_Phase(L);
     Details(*) details = ACT_DETAILS(phase);
     Symbol(const*) verb = VAL_WORD_SYMBOL(DETAILS_AT(details, IDX_GENERIC_VERB));
 
     // !!! It's technically possible to throw in locals or refinements at
     // any point in the sequence.  D_ARG() accounts for this...hackily.
     //
-    REBVAL *first_arg = D_ARG_Core(f, 1);
+    REBVAL *first_arg = D_ARG_Core(L, 1);
 
-    return Run_Generic_Dispatch_Core(first_arg, f, verb);
+    return Run_Generic_Dispatch_Core(first_arg, L, verb);
 }
 
 

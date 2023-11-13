@@ -93,17 +93,16 @@ void Splice_Block_Into_Feed(Feed(*) feed, const REBVAL *splice) {
 //
 //  Macro_Dispatcher: C
 //
-Bounce Macro_Dispatcher(Frame(*) f)
+Bounce Macro_Dispatcher(Level(*) L)
 {
-    Frame(*) frame_ = f;  // for RETURN macros
+    Level(*) level_ = L;  // for RETURN macros
 
-    Phase(*) phase = FRM_PHASE(f);
-    Details(*) details = ACT_DETAILS(phase);
+    Details(*) details = ACT_DETAILS(PHASE);
     Cell(*) body = ARR_AT(details, IDX_DETAILS_1);  // code to run
     assert(IS_BLOCK(body) and IS_RELATIVE(body) and VAL_INDEX(body) == 0);
 
-    assert(ACT_HAS_RETURN(phase));
-    assert(KEY_SYM(ACT_KEYS_HEAD(phase)) == SYM_RETURN);
+    assert(ACT_HAS_RETURN(PHASE));
+    assert(KEY_SYM(ACT_KEYS_HEAD(PHASE)) == SYM_RETURN);
 
     // !!! Using this form of RETURN is based on UNWIND, which means we must
     // catch UNWIND ourselves to process that return.  This is probably not
@@ -111,25 +110,25 @@ Bounce Macro_Dispatcher(Frame(*) f)
     // use a different form of return.  Because under this model, UNWIND
     // can't unwind a macro frame to make it return an arbitrary result.
     //
-    REBVAL *cell = FRM_ARG(f, 1);
+    REBVAL *cell = Level_Arg(L, 1);
     Init_Activation(
         cell,
         ACT_IDENTITY(VAL_ACTION(Lib(DEFINITIONAL_RETURN))),
         Canon(RETURN),  // relabel (the RETURN in lib is a dummy action)
-        CTX(f->varlist)  // bind this return to know where to return from
+        CTX(L->varlist)  // bind this return to know where to return from
     );
 
     // Must trap RETURN ourselves, as letting it bubble up to generic UNWIND
     // handling would return a BLOCK! instead of splice it.
     //
-    if (Do_Any_Array_At_Throws(SPARE, body, SPC(f->varlist))) {
-        const REBVAL *label = VAL_THROWN_LABEL(f);
+    if (Do_Any_Array_At_Throws(SPARE, body, SPC(L->varlist))) {
+        const REBVAL *label = VAL_THROWN_LABEL(L);
         if (
             IS_FRAME(label)  // catch UNWIND here, see [2]
             and VAL_ACTION(label) == VAL_ACTION(Lib(UNWIND))
-            and TG_Unwind_Frame == f
+            and TG_Unwind_Level == L
         ){
-            CATCH_THROWN(SPARE, f);  // preserves CELL_FLAG_UNEVALUATED
+            CATCH_THROWN(SPARE, L);  // preserves CELL_FLAG_UNEVALUATED
         }
         else
             return THROWN;  // we didn't catch the throw
@@ -141,15 +140,15 @@ Bounce Macro_Dispatcher(Frame(*) f)
     if (not IS_BLOCK(SPARE))
         fail ("MACRO must return VOID or BLOCK! for the moment");
 
-    Splice_Block_Into_Feed(f->feed, stable_SPARE);
+    Splice_Block_Into_Feed(L->feed, stable_SPARE);
 
-    Frame(*) reeval_frame = Make_Frame(
-        f->feed,
-        FRAME_MASK_NONE
+    Level(*) sub = Make_Level(
+        L->feed,
+        LEVEL_MASK_NONE
     );
 
-    Push_Frame(OUT, reeval_frame);
-    return DELEGATE_SUBFRAME(reeval_frame);
+    Push_Level(OUT, sub);
+    return DELEGATE_SUBLEVEL(sub);
 }
 
 
@@ -207,17 +206,17 @@ DECLARE_NATIVE(inline)
         Array(*) a = Alloc_Singular(SERIES_FLAGS_NONE);
         Unquotify(Move_Cell(ARR_SINGLE(a), splice), 1);
         Init_Block(splice, a);
-        Splice_Block_Into_Feed(frame_->feed, ARG(splice));
+        Splice_Block_Into_Feed(level_->feed, ARG(splice));
     }
     else {
         assert(IS_BLOCK(splice));
-        Splice_Block_Into_Feed(frame_->feed, ARG(splice));
+        Splice_Block_Into_Feed(level_->feed, ARG(splice));
     }
 
-    Frame(*) reeval_frame = Make_Frame(
-        frame_->feed,
-        FRAME_MASK_NONE
+    Level(*) sub = Make_Level(
+        level_->feed,
+        LEVEL_MASK_NONE
     );
-    Push_Frame(OUT, reeval_frame);
-    return DELEGATE_SUBFRAME(reeval_frame);
+    Push_Level(OUT, sub);
+    return DELEGATE_SUBLEVEL(sub);
 }

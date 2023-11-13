@@ -37,52 +37,42 @@
 
 // Prefer these to XXX_Executor_Flag(ACTION) in this file (much faster!)
 
-#define Get_Action_Executor_Flag(f,name) \
-    (((f)->flags.bits & ACTION_EXECUTOR_FLAG_##name) != 0)
+#define Get_Action_Executor_Flag(L,name) \
+    (((L)->flags.bits & ACTION_EXECUTOR_FLAG_##name) != 0)
 
-#define Not_Action_Executor_Flag(f,name) \
-    (((f)->flags.bits & ACTION_EXECUTOR_FLAG_##name) == 0)
+#define Not_Action_Executor_Flag(L,name) \
+    (((L)->flags.bits & ACTION_EXECUTOR_FLAG_##name) == 0)
 
-#define Set_Action_Executor_Flag(f,name) \
-    ((f)->flags.bits |= ACTION_EXECUTOR_FLAG_##name)
+#define Set_Action_Executor_Flag(L,name) \
+    ((L)->flags.bits |= ACTION_EXECUTOR_FLAG_##name)
 
-#define Clear_Action_Executor_Flag(f,name) \
-    ((f)->flags.bits &= ~ACTION_EXECUTOR_FLAG_##name)
+#define Clear_Action_Executor_Flag(L,name) \
+    ((L)->flags.bits &= ~ACTION_EXECUTOR_FLAG_##name)
 
 
 // By the same token, prefer direct testing of IN_DISPATCH to the macros
 
-#undef Is_Action_Frame_Dispatching
-#undef Is_Action_Frame_Fulfilling
+#undef Is_Level_Dispatching
+#undef Is_Level_Fulfilling
 
 
-// The frame contains a "feed" whose ->value typically represents a "current"
-// step in the feed.  But the evaluator is organized in a way that the
-// notion of what is "current" can get out of sync with the feed.  An example
-// would be when a SET-WORD! evaluates its right hand side, causing the feed
-// to advance an arbitrary amount.
-//
-// So the frame has its own frame state for tracking the "current" position,
-// and maintains the optional cache of what the fetched value of that is.
-// These macros help make the code less ambiguous.
-//
-#undef f_gotten
-#define f_next              cast(const Reb_Cell*, f->feed->p)
-#define f_next_gotten       f->feed->gotten
+#define L_next              cast(const Reb_Cell*, L->feed->p)
+#define L_next_gotten       L->feed->gotten
+#define L_specifier         Level_Specifier(L)
 
 #undef ARG                       // undefine the ARG(x) macro that natives use
-#define ARG f->u.action.arg      // ...aredefine as currently fulfilling arg
+#define ARG L->u.action.arg      // ...aredefine as currently fulfilling arg
 #define stable_ARG Stable_Unchecked(ARG)
 
 #undef PARAM
-#define PARAM f->u.action.param
+#define PARAM L->u.action.param
 
-#define KEY f->u.action.key
-#define KEY_TAIL f->u.action.key_tail
+#define KEY L->u.action.key
+#define KEY_TAIL L->u.action.key_tail
 
-#define ORIGINAL f->u.action.original
+#define ORIGINAL L->u.action.original
 
-#define frame_ f  // for OUT, SPARE, STATE macros
+#define level_ L  // for OUT, SPARE, STATE macros
 
 
 // In debug builds, the KIND_BYTE() calls enforce cell validity...but slow
@@ -94,10 +84,10 @@
 
 #if DEBUG_EXPIRED_LOOKBACK
     #define CURRENT_CHANGES_IF_FETCH_NEXT \
-        (f->feed->stress != nullptr)
+        (L->feed->stress != nullptr)
 #else
     #define CURRENT_CHANGES_IF_FETCH_NEXT \
-        (v == &f->feed->lookback)
+        (v == &L->feed->lookback)
 #endif
 
 
@@ -159,7 +149,7 @@ bool Lookahead_To_Sync_Enfix_Defer_Flag(Feed(*) feed) {
 //    of multi-return proxying via RETURN/ONLY.  Hence natives now need to
 //    take that responsibility of choosing whether or not to proxy.
 //
-Bounce Proxy_Multi_Returns_Core(Frame(*) f, Atom(*) v)
+Bounce Proxy_Multi_Returns_Core(Level(*) L, Atom(*) v)
 {
     assert(not Is_Raised(v));
 
@@ -168,9 +158,9 @@ Bounce Proxy_Multi_Returns_Core(Frame(*) f, Atom(*) v)
     Meta_Quotify(v);  // unquotified at end if not overwritten
     Copy_Cell(PUSH(), v);  // can't push unstable isotopes to data stack
 
-    KEY = ACT_KEYS(&KEY_TAIL, f->u.action.original);
-    PARAM = ACT_PARAMS_HEAD(f->u.action.original);
-    ARG = FRM_ARGS_HEAD(f);
+    KEY = ACT_KEYS(&KEY_TAIL, L->u.action.original);
+    PARAM = ACT_PARAMS_HEAD(L->u.action.original);
+    ARG = Level_Args_Head(L);
 
     for (; KEY != KEY_TAIL; ++KEY, ++PARAM, ++ARG) {
         if (Is_Specialized(PARAM))
@@ -179,7 +169,7 @@ Bounce Proxy_Multi_Returns_Core(Frame(*) f, Atom(*) v)
             continue;
 
         if (not Typecheck_Coerce_Argument(PARAM, ARG))
-            fail (Error_Phase_Arg_Type(f, KEY, PARAM, stable_ARG));
+            fail (Error_Phase_Arg_Type(L, KEY, PARAM, stable_ARG));
 
         Meta_Quotify(Copy_Cell(PUSH(), ARG));
     }
@@ -197,23 +187,23 @@ Bounce Proxy_Multi_Returns_Core(Frame(*) f, Atom(*) v)
 //
 //  Action_Executor: C
 //
-Bounce Action_Executor(Frame(*) f)
+Bounce Action_Executor(Level(*) L)
 {
     if (THROWING) {
-        if (Get_Action_Executor_Flag(f, DISPATCHER_CATCHES))
+        if (Get_Action_Executor_Flag(L, DISPATCHER_CATCHES))
             goto dispatch_phase;  // wants to see the throw
 
-        if (Get_Frame_Flag(f, ABRUPT_FAILURE)) {
-            assert(Get_Frame_Flag(f, NOTIFY_ON_ABRUPT_FAILURE));
+        if (Get_Level_Flag(L, ABRUPT_FAILURE)) {
+            assert(Get_Level_Flag(L, NOTIFY_ON_ABRUPT_FAILURE));
             goto dispatch_phase;
         }
 
         goto handle_thrown_maybe_redo;
     }
 
-    if (Not_Action_Executor_Flag(f, IN_DISPATCH)) {
-        assert(Not_Action_Executor_Flag(f, DISPATCHER_CATCHES));
-        assert(Not_Frame_Flag(f, NOTIFY_ON_ABRUPT_FAILURE));
+    if (Not_Action_Executor_Flag(L, IN_DISPATCH)) {
+        assert(Not_Action_Executor_Flag(L, DISPATCHER_CATCHES));
+        assert(Not_Level_Flag(L, NOTIFY_ON_ABRUPT_FAILURE));
 
         switch (STATE) {
           case ST_ACTION_INITIAL_ENTRY:
@@ -242,8 +232,8 @@ Bounce Action_Executor(Frame(*) f)
         }
     }
 
-    if (Get_Action_Executor_Flag(f, DELEGATE_CONTROL)) {  // delegation done
-        Clear_Action_Executor_Flag(f, DELEGATE_CONTROL);
+    if (Get_Action_Executor_Flag(L, DELEGATE_CONTROL)) {  // delegation done
+        Clear_Action_Executor_Flag(L, DELEGATE_CONTROL);
         goto check_output;  // since it's done, return type should be checked
     }
 
@@ -253,9 +243,9 @@ Bounce Action_Executor(Frame(*) f)
 
     assert(not IS_POINTER_TRASH_DEBUG(ORIGINAL));  // set by Begin_Action()
 
-    assert(TOP_INDEX >= f->baseline.stack_base);  // paths push refinements
+    assert(TOP_INDEX >= L->baseline.stack_base);  // paths push refinements
 
-    assert(Not_Action_Executor_Flag(f, DOING_PICKUPS));
+    assert(Not_Action_Executor_Flag(L, DOING_PICKUPS));
 
     for (; KEY != KEY_TAIL; ++KEY, ++ARG, ++PARAM) {
 
@@ -266,8 +256,8 @@ Bounce Action_Executor(Frame(*) f)
       continue_fulfilling:
         assert(Is_Stable(ARG));  // implicitly asserts READABLE(ARG)
 
-        if (Get_Action_Executor_Flag(f, DOING_PICKUPS)) {
-            if (TOP_INDEX != f->baseline.stack_base)
+        if (Get_Action_Executor_Flag(L, DOING_PICKUPS)) {
+            if (TOP_INDEX != L->baseline.stack_base)
                 goto next_pickup;
 
             goto fulfill_and_any_pickups_done;
@@ -338,8 +328,8 @@ Bounce Action_Executor(Frame(*) f)
                 if (VAL_WORD_SYMBOL(ordered) != param_symbol)
                     continue;
 
-                REBLEN offset = ARG - cast(Atom(*), FRM_ARGS_HEAD(f));
-                INIT_VAL_WORD_BINDING(ordered, f->varlist);
+                REBLEN offset = ARG - cast(Atom(*), Level_Args_Head(L));
+                INIT_VAL_WORD_BINDING(ordered, L->varlist);
                 INIT_VAL_WORD_INDEX(ordered, offset + 1);
 
                 if (Is_Parameter_Unconstrained(PARAM)) {
@@ -359,7 +349,7 @@ Bounce Action_Executor(Frame(*) f)
   //=//// A /REFINEMENT ARG ///////////////////////////////////////////////=//
 
         if (GET_PARAM_FLAG(PARAM, REFINEMENT)) {
-            assert(Not_Action_Executor_Flag(f, DOING_PICKUPS));  // jump lower
+            assert(Not_Action_Executor_Flag(L, DOING_PICKUPS));  // jump lower
             assert(Is_Fresh_Or_None(ARG));
             Init_None(ARG);  // may be filled by a pickup
             goto continue_fulfilling;
@@ -376,7 +366,7 @@ Bounce Action_Executor(Frame(*) f)
         // The return function is filled in by the dispatchers that provide it.
 
         if (pclass == PARAM_CLASS_RETURN or pclass == PARAM_CLASS_OUTPUT) {
-            assert(Not_Action_Executor_Flag(f, DOING_PICKUPS));
+            assert(Not_Action_Executor_Flag(L, DOING_PICKUPS));
             assert(Is_Fresh_Or_None(ARG));
             Init_None(ARG);
             goto continue_fulfilling;
@@ -418,7 +408,7 @@ Bounce Action_Executor(Frame(*) f)
     //    have to go out of their way rethinking operators if it could just
     //    work out for inert types.
     //
-    // 6. SOFT permits f->out to not carry the UNEVALUATED flag--enfixed
+    // 6. SOFT permits L->out to not carry the UNEVALUATED flag--enfixed
     //    operations which have evaluations on their left are treated as if
     //    they were in a GROUP!.  This is important to `1 + 2 ->- lib.* 3`
     //    being 9, while also allowing `1 + x: ->- lib.default [...]` to work.
@@ -435,7 +425,7 @@ Bounce Action_Executor(Frame(*) f)
             STATE = ST_ACTION_FULFILLING_ARGS;
 
             if (Is_Fresh(OUT)) {  // "nothing" to left, but see [1]
-                if (Get_Action_Executor_Flag(f, DIDNT_LEFT_QUOTE_TUPLE))
+                if (Get_Action_Executor_Flag(L, DIDNT_LEFT_QUOTE_TUPLE))
                     fail (Error_Literal_Left_Tuple_Raw());  // see [2]
 
                 if (GET_PARAM_FLAG(PARAM, VARIADIC)) {  // empty is ok, see [3]
@@ -444,7 +434,7 @@ Bounce Action_Executor(Frame(*) f)
                 }
 
                 if (NOT_PARAM_FLAG(PARAM, ENDABLE))
-                    fail (Error_No_Arg(f->label, KEY_SYMBOL(KEY)));
+                    fail (Error_No_Arg(L->label, KEY_SYMBOL(KEY)));
 
                 Init_Nulled(ARG);
                 goto continue_fulfilling;
@@ -505,14 +495,14 @@ Bounce Action_Executor(Frame(*) f)
             //
             // This effectively puts the enfix into a *single step defer*.
             //
-            if (Get_Action_Executor_Flag(f, RUNNING_ENFIX)) {
-                assert(Not_Feed_Flag(f->feed, NO_LOOKAHEAD));
+            if (Get_Action_Executor_Flag(L, RUNNING_ENFIX)) {
+                assert(Not_Feed_Flag(L->feed, NO_LOOKAHEAD));
                 if (
-                    Not_Action_Flag(FRM_PHASE(f), POSTPONES_ENTIRELY)
+                    Not_Action_Flag(Level_Phase(L), POSTPONES_ENTIRELY)
                     and
-                    Not_Action_Flag(FRM_PHASE(f), DEFERS_LOOKBACK)
+                    Not_Action_Flag(Level_Phase(L), DEFERS_LOOKBACK)
                 ){
-                    Set_Feed_Flag(f->feed, NO_LOOKAHEAD);
+                    Set_Feed_Flag(L->feed, NO_LOOKAHEAD);
                 }
             }
 
@@ -528,7 +518,7 @@ Bounce Action_Executor(Frame(*) f)
         // function run.
         //
         if (GET_PARAM_FLAG(PARAM, VARIADIC)) {
-            Init_Varargs_Untyped_Normal(ARG, f);
+            Init_Varargs_Untyped_Normal(ARG, L);
             goto continue_fulfilling;
         }
 
@@ -558,8 +548,8 @@ Bounce Action_Executor(Frame(*) f)
         //      >> 1 + 2 * 3
         //      == 9
         //
-        if (Not_Action_Executor_Flag(f, RUNNING_ENFIX))
-            Clear_Feed_Flag(f->feed, NO_LOOKAHEAD);
+        if (Not_Action_Executor_Flag(L, RUNNING_ENFIX))
+            Clear_Feed_Flag(L->feed, NO_LOOKAHEAD);
 
         // Once a deferred flag is set, it must be cleared during the
         // evaluation of the argument it was set for... OR the function
@@ -576,12 +566,12 @@ Bounce Action_Executor(Frame(*) f)
         //     1 arity-3-op 2 + 3 <ambiguous>
         //     1 arity-3-op (2 + 3) <unambiguous>
         //
-        if (Get_Feed_Flag(f->feed, DEFERRING_ENFIX))
+        if (Get_Feed_Flag(L->feed, DEFERRING_ENFIX))
             fail (Error_Ambiguous_Infix_Raw());
 
   //=//// ERROR ON END MARKER, BAR! IF APPLICABLE /////////////////////////=//
 
-        if (Is_Frame_At_End(f)) {
+        if (Is_Level_At_End(L)) {
             Init_Word_Isotope(ARG, Canon(END));
             goto continue_fulfilling;
         }
@@ -596,23 +586,23 @@ Bounce Action_Executor(Frame(*) f)
         output_from_feed:
           case PARAM_CLASS_NORMAL:
           case PARAM_CLASS_META: {
-            if (Is_Frame_At_End(f)) {
+            if (Is_Level_At_End(L)) {
                 Init_Word_Isotope(ARG, Canon(END));
                 goto continue_fulfilling;
             }
 
             Flags flags = EVAL_EXECUTOR_FLAG_FULFILLING_ARG;
             if (pclass == PARAM_CLASS_META) {
-                flags |= FRAME_FLAG_META_RESULT;
+                flags |= LEVEL_FLAG_META_RESULT;
             }
 
-            if (Did_Init_Inert_Optimize_Complete(ARG, f->feed, &flags))
-                break;  // no frame needed
+            if (Did_Init_Inert_Optimize_Complete(ARG, L->feed, &flags))
+                break;  // no sublevel needed
 
-            Frame(*) subframe = Make_Frame(f->feed, flags);
-            Push_Frame(ARG, subframe);
+            Level(*) sub = Make_Level(L->feed, flags);
+            Push_Level(ARG, sub);
 
-            return CATCH_CONTINUE_SUBFRAME(subframe); }
+            return CATCH_CONTINUE_SUBLEVEL(sub); }
 
   //=//// HARD QUOTED ARG-OR-REFINEMENT-ARG ///////////////////////////////=//
 
@@ -624,15 +614,15 @@ Bounce Action_Executor(Frame(*) f)
             // a non-void causes a later assert.  Review.
             //
             if (NOT_PARAM_FLAG(PARAM, SKIPPABLE))
-                Literal_Next_In_Frame(ARG, f);  // CELL_FLAG_UNEVALUATED
+                Literal_Next_In_Feed(ARG, L->feed);  // CELL_FLAG_UNEVALUATED
             else {
-                Derelativize(SPARE, f_next, f_specifier);
+                Derelativize(SPARE, L_next, L_specifier);
                 if (not TYPE_CHECK(PARAM, SPARE)) {
                     assert(GET_PARAM_FLAG(PARAM, ENDABLE));
                     Init_Nulled(ARG);  // not actually an ~end~ (?)
                     goto continue_fulfilling;
                 }
-                Literal_Next_In_Frame(ARG, f);
+                Literal_Next_In_Feed(ARG, L->feed);
                 Set_Cell_Flag(ARG, UNEVALUATED);
             }
 
@@ -640,7 +630,7 @@ Bounce Action_Executor(Frame(*) f)
             //
             //     return the 1 then (x => [x + 1])
             //
-            Lookahead_To_Sync_Enfix_Defer_Flag(f->feed);
+            Lookahead_To_Sync_Enfix_Defer_Flag(L->feed);
 
             goto continue_fulfilling;
 
@@ -671,7 +661,7 @@ Bounce Action_Executor(Frame(*) f)
 
           case PARAM_CLASS_SOFT:
           case PARAM_CLASS_MEDIUM:
-            Literal_Next_In_Frame(ARG, f);  // CELL_FLAG_UNEVALUATED
+            Literal_Next_In_Feed(ARG, L->feed);  // CELL_FLAG_UNEVALUATED
 
             // See remarks on Lookahead_To_Sync_Enfix_Defer_Flag().  We
             // have to account for enfix deferrals in cases like:
@@ -686,16 +676,16 @@ Bounce Action_Executor(Frame(*) f)
             // https://forum.rebol.info/t/1361
             //
             if (
-                Lookahead_To_Sync_Enfix_Defer_Flag(f->feed) and  // ensure got
+                Lookahead_To_Sync_Enfix_Defer_Flag(L->feed) and  // ensure got
                 (pclass == PARAM_CLASS_SOFT and Get_Subclass_Flag(
                     VARLIST,
-                    ACT_PARAMLIST(VAL_ACTION(unwrap(f->feed->gotten))),
+                    ACT_PARAMLIST(VAL_ACTION(unwrap(L->feed->gotten))),
                     PARAMLIST_QUOTES_FIRST
                 ))
             ){
                 // We need to defer and let the right hand quote that is
                 // quoting leftward win.  We use ST_EVALUATOR_LOOKING_AHEAD
-                // to jump into a subframe where subframe->out is the ARG,
+                // to jump into a sublevel where sub->out is the ARG,
                 // and it knows to get the arg from there.
 
                 Flags flags =
@@ -703,9 +693,9 @@ Bounce Action_Executor(Frame(*) f)
                     | EVAL_EXECUTOR_FLAG_FULFILLING_ARG
                     | EVAL_EXECUTOR_FLAG_INERT_OPTIMIZATION;
 
-                Frame(*) subframe = Make_Frame(f->feed, flags);
-                Push_Frame(ARG, subframe);
-                return CATCH_CONTINUE_SUBFRAME(subframe);
+                Level(*) sub = Make_Level(L->feed, flags);
+                Push_Level(ARG, sub);
+                return CATCH_CONTINUE_SUBLEVEL(sub);
             }
             else if (ANY_ESCAPABLE_GET(ARG)) {
                 //
@@ -741,8 +731,8 @@ Bounce Action_Executor(Frame(*) f)
         // Is breaking this.  Review when there is time, and put the assert
         // back if it makes sense.
         //
-        /* assert(Not_Feed_Flag(f->feed, NO_LOOKAHEAD)); */
-        Clear_Feed_Flag(f->feed, NO_LOOKAHEAD);
+        /* assert(Not_Feed_Flag(L->feed, NO_LOOKAHEAD)); */
+        Clear_Feed_Flag(L->feed, NO_LOOKAHEAD);
 
         goto continue_fulfilling;
     }
@@ -771,11 +761,11 @@ Bounce Action_Executor(Frame(*) f)
             fail (Error_Bad_Parameter_Raw(TOP));  // so duplicate or junk
         }
 
-        // FRM_ARGS_HEAD offsets are 0-based, while index is 1-based.
+        // Level_Args_Head offsets are 0-based, while index is 1-based.
         // But +1 is okay, because we want the slots after the refinement.
         //
         REBINT offset =
-            VAL_WORD_INDEX(TOP) - (ARG - cast(Atom(*), FRM_ARGS_HEAD(f))) - 1;
+            VAL_WORD_INDEX(TOP) - (ARG - cast(Atom(*), Level_Args_Head(L))) - 1;
         KEY += offset;
         ARG += offset;
         PARAM += offset;
@@ -795,13 +785,13 @@ Bounce Action_Executor(Frame(*) f)
             FRESHEN(ARG);
         }
 
-        Set_Action_Executor_Flag(f, DOING_PICKUPS);
+        Set_Action_Executor_Flag(L, DOING_PICKUPS);
         goto fulfill_arg;
     }
 
 } fulfill_and_any_pickups_done: {  ///////////////////////////////////////////
 
-    if (Get_Action_Executor_Flag(f, FULFILL_ONLY)) {  // no typecheck
+    if (Get_Action_Executor_Flag(L, FULFILL_ONLY)) {  // no typecheck
         Finalize_None(OUT);  // didn't touch out, should be fresh
         goto skip_output_check;
     }
@@ -849,9 +839,9 @@ Bounce Action_Executor(Frame(*) f)
 
     FRESHEN(OUT);
 
-    KEY = ACT_KEYS(&KEY_TAIL, FRM_PHASE(f));
-    ARG = FRM_ARGS_HEAD(f);
-    PARAM = ACT_PARAMS_HEAD(FRM_PHASE(f));
+    KEY = ACT_KEYS(&KEY_TAIL, Level_Phase(L));
+    ARG = Level_Args_Head(L);
+    PARAM = ACT_PARAMS_HEAD(Level_Phase(L));
 
     for (; KEY != KEY_TAIL; ++KEY, ++PARAM, ++ARG) {
         assert(Is_Stable(ARG));  // implicitly asserts READABLE(ARG)
@@ -879,7 +869,7 @@ Bounce Action_Executor(Frame(*) f)
         }
         else if (Is_Void(ARG)) {
             if (GET_PARAM_FLAG(PARAM, NOOP_IF_VOID)) {  // e.g. <maybe> param
-                Set_Action_Executor_Flag(f, TYPECHECK_ONLY);
+                Set_Action_Executor_Flag(L, TYPECHECK_ONLY);
                 Init_Nulled(OUT);
                 continue;
             }
@@ -890,29 +880,29 @@ Bounce Action_Executor(Frame(*) f)
         }
         else if (Is_Word_Isotope_With_Id(ARG, SYM_END)) {
             if (NOT_PARAM_FLAG(PARAM, ENDABLE))
-                fail (Error_No_Arg(f->label, KEY_SYMBOL(KEY)));
+                fail (Error_No_Arg(L->label, KEY_SYMBOL(KEY)));
             Init_Nulled(ARG);  // more convenient, use ^META for nuance
             continue;
         }
 
         if (GET_PARAM_FLAG(PARAM, VARIADIC)) {  // can't check now, see [3]
             if (not IS_VARARGS(ARG))  // argument itself is always VARARGS!
-                fail (Error_Not_Varargs(f, KEY, PARAM, stable_ARG));
+                fail (Error_Not_Varargs(L, KEY, PARAM, stable_ARG));
 
-            INIT_VAL_VARARGS_PHASE(ARG, FRM_PHASE(f));
+            INIT_VAL_VARARGS_PHASE(ARG, Level_Phase(L));
 
             bool enfix = false;  // !!! how does enfix matter?
             VAL_VARARGS_SIGNED_PARAM_INDEX(ARG) =  // store offset, see [4]
                 enfix
-                    ? -(ARG - cast(Atom(*), FRM_ARGS_HEAD(f)) + 1)
-                    : ARG - cast(Atom(*), FRM_ARGS_HEAD(f)) + 1;
+                    ? -(ARG - cast(Atom(*), Level_Args_Head(L)) + 1)
+                    : ARG - cast(Atom(*), Level_Args_Head(L)) + 1;
 
             assert(VAL_VARARGS_SIGNED_PARAM_INDEX(ARG) != 0);
             continue;
         }
 
         if (not Typecheck_Coerce_Argument(PARAM, ARG))
-            fail (Error_Phase_Arg_Type(f, KEY, PARAM, stable_ARG));
+            fail (Error_Phase_Arg_Type(L, KEY, PARAM, stable_ARG));
     }
 
   // Action arguments now gathered, begin dispatching
@@ -922,7 +912,7 @@ Bounce Action_Executor(Frame(*) f)
   // 1. Here we free the union for use by the dispatcher...though currently
   //    one slot is stolen for the base stack address the dispatcher should
   //    consider (variables can be stored to write back to for multi-return).
-  //    It's also needed to keep f->original.  Think about how to improve.
+  //    It's also needed to keep L->original.  Think about how to improve.
   //
   // 2. This happens if you have something intending to act as enfix but
   //    that does not consume arguments, e.g. `x: enfix func [] []`.  An
@@ -936,30 +926,30 @@ Bounce Action_Executor(Frame(*) f)
   //    internal processing to actions.  It means that any attempts to read
   //    the spare cell will give an assert.
 
-    assert(Not_Action_Executor_Flag(f, IN_DISPATCH));
-    Set_Action_Executor_Flag(f, IN_DISPATCH);
+    assert(Not_Action_Executor_Flag(L, IN_DISPATCH));
+    Set_Action_Executor_Flag(L, IN_DISPATCH);
 
-    Action(*) save_original = f->u.action.original;
-    TRASH_IF_DEBUG(f->u);  // freed for dispatcher use...
-    f->u.action.original = save_original;  // ...er, mostly.  see [1]
-    f->u.action.dispatcher_base = TOP_INDEX;
+    Action(*) save_original = L->u.action.original;
+    TRASH_IF_DEBUG(L->u);  // freed for dispatcher use...
+    L->u.action.original = save_original;  // ...er, mostly.  see [1]
+    L->u.action.dispatcher_base = TOP_INDEX;
 
     if (STATE == ST_ACTION_FULFILLING_ENFIX_FROM_OUT) {  // can happen, see [2]
-        if (Get_Action_Executor_Flag(f, DIDNT_LEFT_QUOTE_TUPLE))  // see notes
+        if (Get_Action_Executor_Flag(L, DIDNT_LEFT_QUOTE_TUPLE))  // see notes
             fail (Error_Literal_Left_Tuple_Raw());
 
-        assert(Get_Action_Executor_Flag(f, RUNNING_ENFIX));
+        assert(Get_Action_Executor_Flag(L, RUNNING_ENFIX));
         FRESHEN(OUT);
     }
 
-    assert(Get_Action_Executor_Flag(f, IN_DISPATCH));
+    assert(Get_Action_Executor_Flag(L, IN_DISPATCH));
     assert(
-        Is_Frame_At_End(f)
-        or FRM_IS_VARIADIC(f)
-        or IS_VALUE_IN_ARRAY_DEBUG(FEED_ARRAY(f->feed), f_next)
+        Is_Level_At_End(L)
+        or Level_Is_Variadic(L)
+        or IS_VALUE_IN_ARRAY_DEBUG(FEED_ARRAY(L->feed), L_next)
     );
 
-    if (Get_Action_Executor_Flag(f, TYPECHECK_ONLY)) {  // <maybe>
+    if (Get_Action_Executor_Flag(L, TYPECHECK_ONLY)) {  // <maybe>
         assert(Is_Nulled(OUT));
         goto skip_output_check;
     }
@@ -967,7 +957,7 @@ Bounce Action_Executor(Frame(*) f)
     FRESHEN(SPARE);  // tiny cost (one bit clear) but worth it, see [3]
     STATE = STATE_0;  // reset to zero for each phase
 
-    f_next_gotten = nullptr;  // arbitrary code changes fetched variables
+    L_next_gotten = nullptr;  // arbitrary code changes fetched variables
 
 } dispatch_phase: {  /////////////////////////////////////////////////////////
 
@@ -992,18 +982,18 @@ Bounce Action_Executor(Frame(*) f)
   //    (To intentionally not write anything and "vaporize", use `return VOID`
   //    which gives back a distinct `Bounce` signal to know it's purposeful.)
 
-    assert(Not_Action_Executor_Flag(FRAME, DELEGATE_CONTROL));  // delegated!
-    Clear_Action_Executor_Flag(FRAME, DISPATCHER_CATCHES);  // see [1]
+    assert(Not_Action_Executor_Flag(LEVEL, DELEGATE_CONTROL));  // delegated!
+    Clear_Action_Executor_Flag(LEVEL, DISPATCHER_CATCHES);  // see [1]
 
-    Action(*) phase = FRM_PHASE(f);
+    Action(*) phase = Level_Phase(L);
 
     /*STATIC_ASSERT(DETAILS_FLAG_IS_NATIVE == SERIES_INFO_HOLD);*/
     if (Is_Action_Native(phase))
-        SER_INFO(f->varlist) |= SERIES_INFO_HOLD;  // prevents crashes, see [2]
+        SER_INFO(L->varlist) |= SERIES_INFO_HOLD;  // prevents crashes, see [2]
 
     Dispatcher* dispatcher = ACT_DISPATCHER(phase);
 
-    Bounce b = (*dispatcher)(f);
+    Bounce b = (*dispatcher)(L);
 
     if (b == OUT) {  // common case, made fastest
         assert(not Is_Fresh(OUT));  // must write output, even if just void
@@ -1021,10 +1011,10 @@ Bounce Action_Executor(Frame(*) f)
     else switch (VAL_RETURN_SIGNAL(b)) {  // it's a "pseudotype" instruction
 
       case C_CONTINUATION:
-        return BOUNCE_CONTINUE;  // Note: may not have pushed a new frame...
+        return BOUNCE_CONTINUE;  // Note: may not have pushed a new level...
 
       case C_DELEGATION:
-        Set_Action_Executor_Flag(FRAME, DELEGATE_CONTROL);
+        Set_Action_Executor_Flag(LEVEL, DELEGATE_CONTROL);
         STATE = DELEGATE_255;  // the trampoline does this when delegating
         return BOUNCE_CONTINUE;
 
@@ -1035,11 +1025,11 @@ Bounce Action_Executor(Frame(*) f)
         goto handle_thrown_maybe_redo;
 
       case C_REDO_UNCHECKED:
-        Clear_Action_Executor_Flag(f, IN_DISPATCH);
-        goto dispatch;  // Note: dispatcher may have changed frame's PHASE
+        Clear_Action_Executor_Flag(L, IN_DISPATCH);
+        goto dispatch;  // Note: dispatcher may have changed level's PHASE
 
       case C_REDO_CHECKED:
-        Clear_Action_Executor_Flag(f, IN_DISPATCH);
+        Clear_Action_Executor_Flag(L, IN_DISPATCH);
         STATE = ST_ACTION_TYPECHECKING;
         goto typecheck_then_dispatch;
 
@@ -1055,17 +1045,17 @@ Bounce Action_Executor(Frame(*) f)
   // abrupt fail().  (It may have done a `return RAISE(...)`, however.)
 
   #if !defined(NDEBUG)
-    Do_After_Action_Checks_Debug(f);
+    Do_After_Action_Checks_Debug(L);
   #endif
 
     if (not Is_Raised(OUT))  // !!! Should there be an R_FAIL ?
-        assert(f->u.action.dispatcher_base == TOP_INDEX);
+        assert(L->u.action.dispatcher_base == TOP_INDEX);
 
 } skip_output_check: {  //////////////////////////////////////////////////////
 
   // This is where things get jumped to if you pass a <maybe> argument a
   // VOID and it wants to jump past all the processing and return, or if
-  // a frame just wants argument fulfillment and no execution.
+  // a level just wants argument fulfillment and no execution.
   //
   // NOTE: Anything that calls fail() must do so before Drop_Action()!
   //
@@ -1081,7 +1071,7 @@ Bounce Action_Executor(Frame(*) f)
   //    left and would usually win, but don't when they have no args).
   //
   // 2. Want to keep this flag between an operation and an ensuing enfix in
-  //    the same frame, so can't clear in Drop_Action(), e.g. due to:
+  //    the same level, so can't clear in Drop_Action(), e.g. due to:
   //
   //      left-the: enfix :the
   //      o: make object! [f: does [1]]
@@ -1090,9 +1080,9 @@ Bounce Action_Executor(Frame(*) f)
     if (STATE == ST_ACTION_FULFILLING_ENFIX_FROM_OUT)  // see [1]
         fail ("Left lookback toward thing that took no args, look at later");
 
-    Clear_Action_Executor_Flag(f, DIDNT_LEFT_QUOTE_TUPLE);  // see [2]
+    Clear_Action_Executor_Flag(L, DIDNT_LEFT_QUOTE_TUPLE);  // see [2]
 
-    Drop_Action(f);  // must fail before Drop_Action()
+    Drop_Action(L);  // must fail before Drop_Action()
 
     return OUT;  // not thrown
 
@@ -1121,25 +1111,25 @@ Bounce Action_Executor(Frame(*) f)
   //
   //    !!! Consider folding this pass into the typechecking loop itself.
   //
-  // 4. As a convenience, we automatically drop evaluator frames above on the
+  // 4. As a convenience, we automatically drop evaluator levels above on the
   //    stack.  This doesn't necessarily generalize well, but if we didn't do
-  //    it then anything that pushed a subframe to do an evaluator walk (like
+  //    it then anything that pushed a sublevel to do an evaluator walk (like
   //    a CASE or ANY) would need to explicitly catch evaluator throws...which
   //    seems like make-work.
 
-    const REBVAL *label = VAL_THROWN_LABEL(frame_);
+    const REBVAL *label = VAL_THROWN_LABEL(level_);
     if (IS_FRAME(label)) {
         if (
             VAL_ACTION(label) == VAL_ACTION(Lib(REDO))  // REDO, see [1]
-            and VAL_FRAME_BINDING(label) == CTX(f->varlist)
+            and VAL_FRAME_BINDING(label) == CTX(L->varlist)
         ){
-            CATCH_THROWN(OUT, frame_);
+            CATCH_THROWN(OUT, level_);
             assert(IS_FRAME(OUT));
 
-            Action(*) redo_phase = ACT(VAL_FRAME_PHASE(OUT));  // earlier?  see [2]
+            Action(*) redo_phase = VAL_FRAME_PHASE(OUT);  // earlier?  see [2]
             KEY = ACT_KEYS(&KEY_TAIL, redo_phase);
             PARAM = ACT_PARAMS_HEAD(redo_phase);
-            ARG = FRM_ARGS_HEAD(f);
+            ARG = Level_Args_Head(L);
             for (; KEY != KEY_TAIL; ++KEY, ++ARG, ++PARAM) {
                 if (Is_Specialized(PARAM))
                     Copy_Cell(ARG, PARAM);  // must reset, see [3]
@@ -1147,21 +1137,21 @@ Bounce Action_Executor(Frame(*) f)
                     Init_None(ARG);  // dispatcher expects unset
             }
 
-            INIT_FRM_PHASE(f, ACT_IDENTITY(redo_phase));
-            INIT_FRM_BINDING(f, VAL_FRAME_BINDING(OUT));
+            INIT_LVL_PHASE(L, ACT_IDENTITY(redo_phase));
+            INIT_LVL_BINDING(L, VAL_FRAME_BINDING(OUT));
             STATE = ST_ACTION_TYPECHECKING;
-            Clear_Action_Executor_Flag(f, DISPATCHER_CATCHES);  // else asserts
-            Clear_Frame_Flag(f, NOTIFY_ON_ABRUPT_FAILURE);
-            Clear_Action_Executor_Flag(f, IN_DISPATCH);
+            Clear_Action_Executor_Flag(L, DISPATCHER_CATCHES);  // else asserts
+            Clear_Level_Flag(L, NOTIFY_ON_ABRUPT_FAILURE);
+            Clear_Action_Executor_Flag(L, IN_DISPATCH);
             goto typecheck_then_dispatch;
         }
     }
 
-    while (TOP_FRAME != f)  // convenient for natives pushing SUBFRAME, see [4]
-        Drop_Frame(TOP_FRAME);  // !!! Should all inert frames be aborted?
+    while (TOP_LEVEL != L)  // convenient for natives pushing SUBLEVEL, see [4]
+        Drop_Level(TOP_LEVEL);  // !!! Should all inert levels be aborted?
 
-    Drop_Action(f);
-    Drop_Data_Stack_To(f->baseline.stack_base);  // unprocessed refinements
+    Drop_Action(L);
+    Drop_Data_Stack_To(L->baseline.stack_base);  // unprocessed refinements
 
     return BOUNCE_THROWN;
 }}
@@ -1174,10 +1164,10 @@ Bounce Action_Executor(Frame(*) f)
 // values behind ARG(name), REF(name), D_ARG(3),  etc.)
 //
 // This only allocates space for the arguments, it does not initialize.
-// Eval_Core initializes as it goes, and updates KEY so the GC knows how
-// far it has gotten so as not to see garbage.  APPLY has different handling
+// Action_Executor() initializes as it goes, and updates KEY so the GC knows
+// how far it has gotten so as not to see garbage.  APPLY is different
 // when it has to build the frame for the user to write to before running;
-// so Eval_Core only checks the arguments, and does not fulfill them.
+// so Action_Core() only checks the arguments, and does not fulfill them.
 //
 // If the function is a specialization, then the parameter list of that
 // specialization will have *fewer* parameters than the full function would.
@@ -1190,18 +1180,18 @@ Bounce Action_Executor(Frame(*) f)
 // cached during the creation process.
 //
 void Push_Action(
-    Frame(*) f,
+    Level(*) L,
     Action(*) act,
     Context(*) binding  // actions may only be bound to contexts ATM
 ){
-    f->executor = &Action_Executor;
+    L->executor = &Action_Executor;
 
-    assert(Not_Action_Executor_Flag(f, FULFILL_ONLY));
-    assert(Not_Action_Executor_Flag(f, RUNNING_ENFIX));
+    assert(Not_Action_Executor_Flag(L, FULFILL_ONLY));
+    assert(Not_Action_Executor_Flag(L, RUNNING_ENFIX));
 
     REBLEN num_args = ACT_NUM_PARAMS(act);  // includes specialized + locals
 
-    assert(f->varlist == nullptr);
+    assert(L->varlist == nullptr);
 
     Stub* s = Prep_Stub(
         Alloc_Stub(),  // not preallocated
@@ -1209,30 +1199,30 @@ void Push_Action(
             | SERIES_FLAG_FIXED_SIZE // FRAME!s don't expand ATM
     );
     SER_INFO(s) = SERIES_INFO_MASK_NONE;
-    INIT_BONUS_KEYSOURCE(ARR(s), f);  // maps varlist back to f
+    INIT_BONUS_KEYSOURCE(ARR(s), L);  // maps varlist back to L
     mutable_MISC(VarlistAdjunct, s) = nullptr;
     mutable_LINK(Patches, s) = nullptr;
-    f->varlist = ARR(s);
+    L->varlist = ARR(s);
 
     if (not Did_Series_Data_Alloc(s, num_args + 1 + 1)) {  // +rootvar, +end
         SET_SERIES_FLAG(s, INACCESSIBLE);
         GC_Kill_Series(s);  // ^-- needs non-null data unless INACCESSIBLE
-        f->varlist = nullptr;
+        L->varlist = nullptr;
         fail (Error_No_Memory(sizeof(REBVAL) * (num_args + 1 + 1)));
     }
 
-    f->rootvar = cast(REBVAL*, s->content.dynamic.data);
-    USED(Erase_Cell(f->rootvar));  // want the tracking info, overwriting header
-    f->rootvar->header.bits =
+    L->rootvar = cast(REBVAL*, s->content.dynamic.data);
+    USED(Erase_Cell(L->rootvar));  // want the tracking info, overwriting header
+    L->rootvar->header.bits =
         NODE_FLAG_NODE
             | NODE_FLAG_CELL
             | CELL_FLAG_PROTECTED  // payload/binding tweaked, but not by user
             | CELL_MASK_FRAME
             | FLAG_QUOTE_BYTE(UNQUOTED_1);
-    INIT_VAL_CONTEXT_VARLIST(f->rootvar, f->varlist);
+    INIT_VAL_CONTEXT_VARLIST(L->rootvar, L->varlist);
 
-    INIT_VAL_FRAME_PHASE(f->rootvar, ACT_IDENTITY(act));  // FRM_PHASE()
-    INIT_VAL_FRAME_BINDING(f->rootvar, binding);  // FRM_BINDING()
+    INIT_VAL_FRAME_PHASE(L->rootvar, ACT_IDENTITY(act));  // Level_Phase()
+    INIT_VAL_FRAME_BINDING(L->rootvar, binding);  // Level_Binding()
 
     s->content.dynamic.used = num_args + 1;
 
@@ -1241,8 +1231,8 @@ void Push_Action(
     // notion of being able to just memset() to 0 or calloc().  The debug
     // build still wants to initialize the cells with file/line info though.
     //
-    Cell(*) tail = ARR_TAIL(f->varlist);
-    Cell(*) prep = f->rootvar + 1;
+    Cell(*) tail = ARR_TAIL(L->varlist);
+    Cell(*) prep = L->rootvar + 1;
     if (IS_DETAILS(act)) {
         for (; prep < tail; ++prep)
             USED(Erase_Cell(prep));
@@ -1258,12 +1248,12 @@ void Push_Action(
     }
 
   #if DEBUG_POISON_EXCESS_CAPACITY  // poison cells past usable range
-    for (; prep < f->rootvar + s->content.dynamic.rest; ++prep)
+    for (; prep < L->rootvar + s->content.dynamic.rest; ++prep)
         Poison_Cell(prep);  // unreadable + unwritable
   #endif
 
   #if DEBUG_POISON_SERIES_TAILS  // redundant if excess capacity poisoned
-    Poison_Cell(ARR_TAIL(f->varlist));
+    Poison_Cell(ARR_TAIL(L->varlist));
   #endif
 
     // Each layer of specialization of a function can only add specializations
@@ -1280,8 +1270,8 @@ void Push_Action(
             Copy_Cell(PUSH(), word);
     }
 
-    assert(NOT_SERIES_FLAG(f->varlist, MANAGED));
-    assert(NOT_SERIES_FLAG(f->varlist, INACCESSIBLE));
+    assert(NOT_SERIES_FLAG(L->varlist, MANAGED));
+    assert(NOT_SERIES_FLAG(L->varlist, INACCESSIBLE));
 
     ORIGINAL = act;
 }
@@ -1291,28 +1281,28 @@ void Push_Action(
 //  Begin_Action_Core: C
 //
 void Begin_Action_Core(
-    Frame(*) f,
+    Level(*) L,
     option(Symbol(const*)) label,
     bool enfix
 ){
     // These assertions were blocking code sharing with SET-BLOCK! mechanics.
     // Review where the right place to put them is.
     //
-    /*assert(Not_Action_Executor_Flag(f, RUNNING_ENFIX));
-    assert(Not_Feed_Flag(f->feed, DEFERRING_ENFIX));*/
+    /*assert(Not_Action_Executor_Flag(L, RUNNING_ENFIX));
+    assert(Not_Feed_Flag(L->feed, DEFERRING_ENFIX));*/
 
-    assert(Not_Subclass_Flag(VARLIST, f->varlist, FRAME_HAS_BEEN_INVOKED));
-    Set_Subclass_Flag(VARLIST, f->varlist, FRAME_HAS_BEEN_INVOKED);
+    assert(Not_Subclass_Flag(VARLIST, L->varlist, FRAME_HAS_BEEN_INVOKED));
+    Set_Subclass_Flag(VARLIST, L->varlist, FRAME_HAS_BEEN_INVOKED);
 
-    KEY = ACT_KEYS(&KEY_TAIL, ACT(ACT_IDENTITY(ORIGINAL)));
-    PARAM = ACT_PARAMS_HEAD(ACT(ACT_IDENTITY(ORIGINAL)));
-    ARG = f->rootvar + 1;
+    KEY = ACT_KEYS(&KEY_TAIL, ACT_IDENTITY(ORIGINAL));
+    PARAM = ACT_PARAMS_HEAD(ACT_IDENTITY(ORIGINAL));
+    ARG = L->rootvar + 1;
 
-    assert(IS_POINTER_TRASH_DEBUG(f->label));  // ACTION! makes valid
+    assert(IS_POINTER_TRASH_DEBUG(L->label));  // ACTION! makes valid
     assert(not label or IS_SYMBOL(unwrap(label)));
-    f->label = label;
-  #if DEBUG_FRAME_LABELS  // helpful for looking in the debugger
-    f->label_utf8 = cast(const char*, Frame_Label_Or_Anonymous_UTF8(f));
+    L->label = label;
+  #if DEBUG_LEVEL_LABELS  // helpful for looking in the debugger
+    L->label_utf8 = cast(const char*, Level_Label_Or_Anonymous_UTF8(L));
   #endif
 
     if (enfix) {
@@ -1321,15 +1311,15 @@ void Begin_Action_Core(
         // argument of an enfix call, ACTION_EXECUTOR_FLAG_RUNNING_ENFIX is
         // set for the whole duration.
         //
-        Set_Action_Executor_Flag(f, RUNNING_ENFIX);
+        Set_Action_Executor_Flag(L, RUNNING_ENFIX);
 
         // All the enfix call sites cleared this flag on the feed, so it was
         // moved into the Begin_Enfix_Action() case.  Note this has to be done
         // *after* the existing flag state has been captured for invisibles.
         //
-        Clear_Feed_Flag(f->feed, NO_LOOKAHEAD);
+        Clear_Feed_Flag(L->feed, NO_LOOKAHEAD);
 
-        FRM_STATE_BYTE(f) = ST_ACTION_FULFILLING_ENFIX_FROM_OUT;
+        Level_State_Byte(L) = ST_ACTION_FULFILLING_ENFIX_FROM_OUT;
     }
 }
 
@@ -1337,18 +1327,18 @@ void Begin_Action_Core(
 //
 //  Drop_Action: C
 //
-void Drop_Action(Frame(*) f) {
-    assert(not f->label or IS_SYMBOL(unwrap(f->label)));
+void Drop_Action(Level(*) L) {
+    assert(not L->label or IS_SYMBOL(unwrap(L->label)));
 
-    Clear_Action_Executor_Flag(f, RUNNING_ENFIX);
-    Clear_Action_Executor_Flag(f, FULFILL_ONLY);
+    Clear_Action_Executor_Flag(L, RUNNING_ENFIX);
+    Clear_Action_Executor_Flag(L, FULFILL_ONLY);
 
     assert(
-        GET_SERIES_FLAG(f->varlist, INACCESSIBLE)
-        or BONUS(KeySource, f->varlist) == f
+        GET_SERIES_FLAG(L->varlist, INACCESSIBLE)
+        or BONUS(KeySource, L->varlist) == L
     );
 
-    if (GET_SERIES_FLAG(f->varlist, INACCESSIBLE)) {
+    if (GET_SERIES_FLAG(L->varlist, INACCESSIBLE)) {
         //
         // If something like Encloser_Dispatcher() runs, it might steal the
         // variables from a context to give them to the user, leaving behind
@@ -1356,17 +1346,17 @@ void Drop_Action(Frame(*) f) {
         // therefore useless.  It served a purpose by being non-null during
         // the call, however, up to this moment.
         //
-        if (GET_SERIES_FLAG(f->varlist, MANAGED))
-            f->varlist = nullptr; // references exist, let a new one alloc
+        if (GET_SERIES_FLAG(L->varlist, MANAGED))
+            L->varlist = nullptr; // references exist, let a new one alloc
         else {
             // This node could be reused vs. calling Alloc_Pooled() on the next
             // action invocation...but easier for the moment to let it go.
             //
-            Free_Pooled(STUB_POOL, f->varlist);
-            f->varlist = nullptr;
+            Free_Pooled(STUB_POOL, L->varlist);
+            L->varlist = nullptr;
         }
     }
-    else if (GET_SERIES_FLAG(f->varlist, MANAGED)) {
+    else if (GET_SERIES_FLAG(L->varlist, MANAGED)) {
         //
         // Varlist wound up getting referenced in a cell that will outlive
         // this Drop_Action().
@@ -1391,18 +1381,18 @@ void Drop_Action(Frame(*) f) {
         // steals its dynamic memory (by setting the stub not HAS_DYNAMIC)."
         //
       #if 0
-        f->varlist = CTX_VARLIST(
+        L->varlist = CTX_VARLIST(
             Steal_Context_Vars(
-                CTX(f->varlist),
+                CTX(L->varlist),
                 ORIGINAL  // degrade keysource from f
             )
         );
-        assert(NOT_SERIES_FLAG(f->varlist, MANAGED));
-        INIT_BONUS_KEYSOURCE(f->varlist, f);
+        assert(NOT_SERIES_FLAG(L->varlist, MANAGED));
+        INIT_BONUS_KEYSOURCE(L->varlist, L);
       #endif
 
-        INIT_BONUS_KEYSOURCE(f->varlist, ACT_KEYLIST(ORIGINAL));
-        f->varlist = nullptr;
+        INIT_BONUS_KEYSOURCE(L->varlist, ACT_KEYLIST(ORIGINAL));
+        L->varlist = nullptr;
     }
     else {
         // We can reuse the varlist and its data allocation, which may be
@@ -1411,33 +1401,33 @@ void Drop_Action(Frame(*) f) {
         // But no series bits we didn't set should be set...and right now,
         // only DETAILS_FLAG_IS_NATIVE sets HOLD.  Clear that.
         //
-        CLEAR_SERIES_INFO(f->varlist, HOLD);
-        Clear_Subclass_Flag(VARLIST, f->varlist, FRAME_HAS_BEEN_INVOKED);
+        CLEAR_SERIES_INFO(L->varlist, HOLD);
+        Clear_Subclass_Flag(VARLIST, L->varlist, FRAME_HAS_BEEN_INVOKED);
 
         assert(
-            0 == (SER_INFO(f->varlist) & ~(  // <- note bitwise not
+            0 == (SER_INFO(L->varlist) & ~(  // <- note bitwise not
                 SERIES_INFO_0_IS_FALSE
                     | FLAG_USED_BYTE(255)  // mask out non-dynamic-len
         )));
     }
 
   #if !defined(NDEBUG)
-    if (f->varlist) {
-        assert(NOT_SERIES_FLAG(f->varlist, INACCESSIBLE));
-        assert(NOT_SERIES_FLAG(f->varlist, MANAGED));
+    if (L->varlist) {
+        assert(NOT_SERIES_FLAG(L->varlist, INACCESSIBLE));
+        assert(NOT_SERIES_FLAG(L->varlist, MANAGED));
 
-        Cell(*) rootvar = ARR_HEAD(f->varlist);
-        assert(CTX_VARLIST(VAL_CONTEXT(rootvar)) == f->varlist);
+        Cell(*) rootvar = ARR_HEAD(L->varlist);
+        assert(CTX_VARLIST(VAL_CONTEXT(rootvar)) == L->varlist);
         INIT_VAL_FRAME_PHASE_OR_LABEL(rootvar, nullptr);  // can't trash ptr
         TRASH_POINTER_IF_DEBUG(mutable_BINDING(rootvar));
     }
   #endif
 
     TRASH_POINTER_IF_DEBUG(ORIGINAL); // action is no longer running
-    f->executor = nullptr;  // so GC won't see this frame as Action GC
+    L->executor = nullptr;  // so GC won't think level needs Action marking
 
-    TRASH_POINTER_IF_DEBUG(f->label);
-  #if DEBUG_FRAME_LABELS
-    TRASH_POINTER_IF_DEBUG(f->label_utf8);
+    TRASH_POINTER_IF_DEBUG(L->label);
+  #if DEBUG_LEVEL_LABELS
+    TRASH_POINTER_IF_DEBUG(L->label_utf8);
   #endif
 }

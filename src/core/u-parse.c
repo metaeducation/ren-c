@@ -31,7 +31,7 @@
 // The code was patched to make its workings clearer over time in Ren-C, and
 // to try and eliminate mechanical bugs (such as bad interactions with the GC).
 // But the basic method was not attacked from the ground up.  Recursions of
-// the parser were unified with the frame model of recursing the evaluator...
+// the parser were unified with the level model of recursing the evaluator...
 // but that was the only true big change.
 //
 // However, a full redesign has been started with %src/mezz/uparse.reb.  This
@@ -43,7 +43,7 @@
 //=/////////////////////////////////////////////////////////////////////////=//
 //
 // As a major operational difference from R3-Alpha, each recursion in Ren-C's
-// PARSE runs using a "Rebol Stack Frame"--similar to how the DO evaluator
+// PARSE runs using a "Rebol Stack Level"--similar to how the DO evaluator
 // works.  So `[print "abc"]` and `[thru "abc"]` are both seen as "code" and
 // iterated using the same mechanic.  (The rules are also locked from
 // modification during the course of the PARSE, as code is in Ren-C.)
@@ -111,9 +111,9 @@
     USED(ARG(position)); \
     USED(ARG(save))
 
-#define P_AT_END            Is_Frame_At_End(frame_)
-#define P_RULE              At_Frame(frame_)  // rvalue
-#define P_RULE_SPECIFIER    FRM_SPECIFIER(frame_)
+#define P_AT_END            Is_Level_At_End(level_)
+#define P_RULE              At_Level(level_)  // rvalue
+#define P_RULE_SPECIFIER    Level_Specifier(level_)
 
 #define P_TYPE              VAL_TYPE(ARG(input))
 #define P_INPUT             VAL_SERIES(ARG(input))
@@ -157,20 +157,20 @@
 // be able to reuse the frame and avoid a recursion.  This would have to do
 // that as well.)
 //
-#define FETCH_NEXT_RULE_KEEP_LAST(opt_lookback,f) \
+#define FETCH_NEXT_RULE_KEEP_LAST(opt_lookback,L) \
     *opt_lookback = P_RULE; \
-    Fetch_Next_Forget_Lookback(f)
+    Fetch_Next_Forget_Lookback(L)
 
-#define FETCH_NEXT_RULE(f) \
-    Fetch_Next_Forget_Lookback(f)
+#define FETCH_NEXT_RULE(L) \
+    Fetch_Next_Forget_Lookback(L)
 
 
-#define FETCH_TO_BAR_OR_END(f) \
+#define FETCH_TO_BAR_OR_END(L) \
     while (not P_AT_END and not ( \
         VAL_TYPE_UNCHECKED(P_RULE) == REB_WORD \
         and VAL_WORD_SYMBOL(P_RULE) == Canon(BAR_1) \
     )){ \
-        FETCH_NEXT_RULE(f); \
+        FETCH_NEXT_RULE(L); \
     }
 
 
@@ -253,26 +253,26 @@ static bool Subparse_Throws(
     Sink(Value(*)) out,
     Cell(const*) input,
     REBSPC *input_specifier,
-    Frame(*) f,
+    Level(*) L,
     option(Array(*)) collection,
     Flags flags
 ){
     assert(ANY_SERIES_KIND(CELL_HEART(input)));
 
-    Push_Frame(out, f);  // checks for C stack overflow
+    Push_Level(out, L);  // checks for C stack overflow
     assert(Is_Fresh(out));
 
-    Push_Action(f, VAL_ACTION(Lib(SUBPARSE)), UNBOUND);
+    Push_Action(L, VAL_ACTION(Lib(SUBPARSE)), UNBOUND);
 
-    Begin_Prefix_Action(f, Canon(SUBPARSE));
+    Begin_Prefix_Action(L, Canon(SUBPARSE));
 
     // This needs to be set before INCLUDE_PARAMS_OF_SUBPARSE; it is what
     // ensures that usermode accesses to the frame won't be able to fiddle
     // the frame values to bit patterns the native might crash on.
     //
-    SET_SERIES_INFO(f->varlist, HOLD);
+    SET_SERIES_INFO(L->varlist, HOLD);
 
-    Frame(*) frame_ = f;
+    Level(*) level_ = L;
     INCLUDE_PARAMS_OF_SUBPARSE;
 
     Init_Nulled(ARG(return));
@@ -305,17 +305,17 @@ static bool Subparse_Throws(
     // vs. going through the evaluator, we don't get the opportunity to do
     // things like HIJACK it.  Consider APPLY-ing it.
     //
-    Set_Executor_Flag(ACTION, f, IN_DISPATCH);
+    Set_Executor_Flag(ACTION, L, IN_DISPATCH);
 
-    Bounce b = N_subparse(f);
+    Bounce b = N_subparse(L);
 
-    Drop_Action(f);
+    Drop_Action(L);
 
     if ((b == BOUNCE_THROWN or Is_Nulled(out)) and collection)
         SET_SERIES_LEN(unwrap(collection), collect_tail);  // abort rollback
 
     if (b == BOUNCE_THROWN) {
-        Drop_Frame(f);
+        Drop_Level(L);
 
         // ACCEPT and REJECT are special cases that can happen at nested parse
         // levels and bubble up through the throw mechanism to break a looping
@@ -328,16 +328,16 @@ static bool Subparse_Throws(
         // or not found.  This returns the interrupted flag which is still
         // ignored by most callers, but makes that fact more apparent.
         //
-        const REBVAL *label = VAL_THROWN_LABEL(FRAME);
+        const REBVAL *label = VAL_THROWN_LABEL(LEVEL);
         if (IS_FRAME(label)) {
             if (VAL_ACTION(label) == VAL_ACTION(Lib(PARSE_REJECT))) {
-                CATCH_THROWN(out, FRAME);
+                CATCH_THROWN(out, LEVEL);
                 *interrupted_out = true;
                 return false;
             }
 
             if (VAL_ACTION(label) == VAL_ACTION(Lib(PARSE_BREAK))) {
-                CATCH_THROWN(out, FRAME);
+                CATCH_THROWN(out, LEVEL);
                 assert(IS_INTEGER(out));
                 *interrupted_out = true;
                 return false;
@@ -347,7 +347,7 @@ static bool Subparse_Throws(
         return true;
     }
 
-    Drop_Frame(f);
+    Drop_Level(L);
 
     assert(b == cast(Bounce, out));
 
@@ -368,16 +368,16 @@ inline static Context(*) Error_Parse_End(void) {
     return Error_Parse_End_Raw();
 }
 
-inline static Context(*) Error_Parse_Command(Frame(*) frame_) {
+inline static Context(*) Error_Parse_Command(Level(*) level_) {
     return Error_Parse_Command_Raw(P_RULE);
 }
 
-inline static Context(*) Error_Parse_Variable(Frame(*) frame_) {
+inline static Context(*) Error_Parse_Variable(Level(*) level_) {
     return Error_Parse_Variable_Raw(P_RULE);
 }
 
 
-static void Print_Parse_Index(Frame(*) frame_) {
+static void Print_Parse_Index(Level(*) level_) {
     USE_PARAMS_OF_SUBPARSE;
 
     DECLARE_LOCAL (input);
@@ -460,7 +460,7 @@ static Cell(const*) Get_Parse_Value(
 //
 bool Process_Group_For_Parse_Throws(
     Sink(Value(*)) out,
-    Frame(*) frame_,
+    Level(*) level_,
     Cell(const*) group  // may be same as `cell`
 ){
     USE_PARAMS_OF_SUBPARSE;
@@ -502,11 +502,11 @@ bool Process_Group_For_Parse_Throws(
 // that is held by the frame.
 //
 // The return result is either an int position, END_FLAG, or THROWN_FLAG
-// Only in the case of THROWN_FLAG will f->out (aka OUT) be affected.
+// Only in the case of THROWN_FLAG will L->out (aka OUT) be affected.
 // Otherwise, it should exit the routine as an END marker (as it started);
 //
 static REBIXO Parse_One_Rule(
-    Frame(*) frame_,
+    Level(*) level_,
     REBLEN pos,
     Cell(const*) rule
 ){
@@ -516,7 +516,7 @@ static REBIXO Parse_One_Rule(
 
     if (IS_GROUP(rule) or IS_GET_GROUP(rule)) {
         bool inject = IS_GET_GROUP(rule);  // rule may be SPARE
-        if (Process_Group_For_Parse_Throws(SPARE, frame_, rule))
+        if (Process_Group_For_Parse_Throws(SPARE, level_, rule))
             return THROWN_FLAG;
 
         if (not inject or Is_Void(SPARE)) {  // !!! Should this be legal?
@@ -582,9 +582,9 @@ static REBIXO Parse_One_Rule(
         REBLEN pos_before = P_POS;
         P_POS = pos;  // modify input position
 
-        Frame(*) subframe = Make_Frame_At_Core(
+        Level(*) sub = Make_Level_At_Core(
             rule, rule_specifier(),
-            FRAME_MASK_NONE
+            LEVEL_MASK_NONE
         );
 
         DECLARE_LOCAL (subresult);
@@ -594,7 +594,7 @@ static REBIXO Parse_One_Rule(
             FRESHEN(subresult),
             ARG(position),  // affected by P_POS assignment above
             SPECIFIED,
-            subframe,
+            sub,
             P_COLLECTION,
             (P_FLAGS & PF_FIND_MASK)
                 | (P_FLAGS & PF_REDBOL)
@@ -739,7 +739,7 @@ static REBIXO Parse_One_Rule(
 // the code, it gets clarified in small steps.
 //
 static REBIXO To_Thru_Block_Rule(
-    Frame(*) frame_,
+    Level(*) level_,
     Cell(const*) rule_block,
     bool is_thru
 ){
@@ -769,7 +769,7 @@ static REBIXO To_Thru_Block_Rule(
                 rule = blk;
             else {
                 bool inject = IS_GET_GROUP(blk);
-                if (Process_Group_For_Parse_Throws(cell, frame_, blk))
+                if (Process_Group_For_Parse_Throws(cell, level_, blk))
                     return THROWN_FLAG;
 
                 if (not inject or Is_Void(cell))
@@ -838,7 +838,7 @@ static REBIXO To_Thru_Block_Rule(
                 if (ANY_ARRAY(rule))
                     fail (Error_Parse_Rule());
 
-                REBIXO ixo = Parse_One_Rule(frame_, VAL_INDEX(iter), rule);
+                REBIXO ixo = Parse_One_Rule(level_, VAL_INDEX(iter), rule);
                 if (ixo == THROWN_FLAG)
                     return THROWN_FLAG;
 
@@ -1001,7 +1001,7 @@ static REBIXO To_Thru_Block_Rule(
 // as blocks are the common case.
 //
 static REBIXO To_Thru_Non_Block_Rule(
-    Frame(*) frame_,
+    Level(*) level_,
     Cell(const*) rule,
     bool is_thru
 ){
@@ -1124,7 +1124,7 @@ static REBIXO To_Thru_Non_Block_Rule(
 // or the newer `mark pos` rule.  Handles WORD! and PATH!.
 //
 static void Handle_Mark_Rule(
-    Frame(*) frame_,
+    Level(*) level_,
     Cell(const*) rule,
     REBSPC *specifier
 ){
@@ -1154,19 +1154,19 @@ static void Handle_Mark_Rule(
             cast(REBVAL*, temp),  // <-- output cell
             Canon(SET), OUT, ARG(position)
         )){
-            fail (Error_No_Catch_For_Throw(FRAME));
+            fail (Error_No_Catch_For_Throw(LEVEL));
         }
         FRESHEN(OUT);
     }
     else
-        fail (Error_Parse_Variable(frame_));
+        fail (Error_Parse_Variable(level_));
 
     Dequotify(ARG(position));  // go back to 0 quote level
 }
 
 
 static void Handle_Seek_Rule_Dont_Update_Begin(
-    Frame(*) frame_,
+    Level(*) level_,
     Cell(const*) rule,
     REBSPC *specifier
 ){
@@ -1214,7 +1214,7 @@ static void Handle_Seek_Rule_Dont_Update_Begin(
 // position if the seek appears to be a "separate rule" in its own right.
 //
 #define HANDLE_SEEK_RULE_UPDATE_BEGIN(f,rule,specifier) \
-    Handle_Seek_Rule_Dont_Update_Begin((f), (rule), (specifier)); \
+    Handle_Seek_Rule_Dont_Update_Begin((L), (rule), (specifier)); \
     if (not (P_FLAGS & PF_STATE_MASK)) \
         begin = P_POS;
 
@@ -1265,7 +1265,7 @@ DECLARE_NATIVE(subparse)
 
     UNUSED(ARG(flags));  // used via P_FLAGS
 
-    Frame(*) f = frame_;  // nice alias of implicit native parameter
+    Level(*) L = level_;  // nice alias of implicit native parameter
 
     // If the input is quoted, e.g. `parse just ''''[...] [rules]`, we dequote
     // it while we are processing the ARG().  This is because we are trying
@@ -1354,8 +1354,8 @@ DECLARE_NATIVE(subparse)
 
     Cell(const*) rule = P_AT_END ? nullptr : P_RULE;
 
-    /* Print_Parse_Index(f); */
-    UPDATE_EXPRESSION_START(f);
+    /* Print_Parse_Index(L); */
+    UPDATE_EXPRESSION_START(L);
 
     //=//// FIRST THINGS FIRST: CHECK FOR END /////////////////////////////=//
 
@@ -1391,7 +1391,7 @@ DECLARE_NATIVE(subparse)
     if (IS_COMMA(rule)) {
         if (mincount != 1 or maxcount != 1 or (P_FLAGS & PF_STATE_MASK))
             fail (Error_Expression_Barrier_Raw());
-        FETCH_NEXT_RULE(f);
+        FETCH_NEXT_RULE(L);
         goto pre_rule;
     }
 
@@ -1411,11 +1411,11 @@ DECLARE_NATIVE(subparse)
       process_group: {
 
         bool inject = IS_GET_GROUP(rule);
-        if (Process_Group_For_Parse_Throws(SPARE, f, rule))
+        if (Process_Group_For_Parse_Throws(SPARE, L, rule))
             return THROWN;
 
         if (not inject or Is_Void(SPARE)) {  // (...) or void :(...)
-            FETCH_NEXT_RULE(f);  // ignore result and go on to next rule
+            FETCH_NEXT_RULE(L);  // ignore result and go on to next rule
             goto pre_rule;
         }
         rule = Move_Cell(P_SAVE, SPARE);
@@ -1437,7 +1437,7 @@ DECLARE_NATIVE(subparse)
       #endif
 
         if (--Eval_Countdown <= 0) {
-            if (Do_Signals_Throws(FRAME))
+            if (Do_Signals_Throws(LEVEL))
                 return THROWN;
         }
     }
@@ -1463,7 +1463,7 @@ DECLARE_NATIVE(subparse)
                 //
                 // Command but not WORD! (COPY:, :THRU)
                 //
-                fail (Error_Parse_Command(f));
+                fail (Error_Parse_Command(L));
             }
 
             if (cmd > SYM_BREAK)  // R3-Alpha claimed "optimization"
@@ -1484,7 +1484,7 @@ DECLARE_NATIVE(subparse)
                 assert(mincount == 1 and maxcount == 1);  // true on entry
                 mincount = 0;
                 maxcount = INT32_MAX;
-                FETCH_NEXT_RULE(f);
+                FETCH_NEXT_RULE(L);
                 P_FLAGS |= PF_LOOPING;
                 goto pre_rule;
 
@@ -1498,7 +1498,7 @@ DECLARE_NATIVE(subparse)
                 );  // true on entry
                 P_FLAGS |= PF_LOOPING;
                 maxcount = INT32_MAX;
-                FETCH_NEXT_RULE(f);
+                FETCH_NEXT_RULE(L);
                 goto pre_rule;
 
               case SYM_ANY:
@@ -1527,7 +1527,7 @@ DECLARE_NATIVE(subparse)
                         " so put a block around the REPEAT or use UPARSE!"
                     );
 
-                FETCH_NEXT_RULE(f);
+                FETCH_NEXT_RULE(L);
                 if (not IS_GROUP(P_RULE))
                     fail ("Old PARSE REPEAT requires GROUP! for times count");
 
@@ -1559,12 +1559,12 @@ DECLARE_NATIVE(subparse)
 
                 FRESHEN(OUT);
 
-                FETCH_NEXT_RULE(f);
+                FETCH_NEXT_RULE(L);
                 goto pre_rule;
 
               case SYM_FURTHER:  // require advancement
                 P_FLAGS |= PF_FURTHER;
-                FETCH_NEXT_RULE(f);
+                FETCH_NEXT_RULE(L);
                 goto pre_rule;
 
               case SYM_OPT:
@@ -1580,7 +1580,7 @@ DECLARE_NATIVE(subparse)
               try_or_opt:
                 P_FLAGS |= PF_TRY;
                 mincount = 0;
-                FETCH_NEXT_RULE(f);
+                FETCH_NEXT_RULE(L);
                 goto pre_rule;
 
               case SYM_COPY:
@@ -1594,30 +1594,30 @@ DECLARE_NATIVE(subparse)
               case SYM_LET:
               set_or_copy_pre_rule:
 
-                FETCH_NEXT_RULE(f);
+                FETCH_NEXT_RULE(L);
 
                 if (not (IS_WORD(P_RULE) or IS_SET_WORD(P_RULE)))
-                    fail (Error_Parse_Variable(f));
+                    fail (Error_Parse_Variable(L));
 
                 if (VAL_CMD(P_RULE))  // set set [...]
-                    fail (Error_Parse_Command(f));
+                    fail (Error_Parse_Command(L));
 
                 // We need to add a new binding before we derelativize w.r.t.
                 // the in-effect specifier.
                 //
                 if (cmd == SYM_LET) {
-                    mutable_BINDING(FEED_SINGLE(f->feed)) = Make_Let_Patch(
+                    mutable_BINDING(FEED_SINGLE(L->feed)) = Make_Let_Patch(
                         VAL_WORD_SYMBOL(P_RULE),
                         P_RULE_SPECIFIER
                     );
                     if (IS_WORD(P_RULE)) {  // no further action
-                        FETCH_NEXT_RULE(f);
+                        FETCH_NEXT_RULE(L);
                         goto pre_rule;
                     }
                     goto handle_set;
                 }
 
-                FETCH_NEXT_RULE_KEEP_LAST(&set_or_copy_word, f);
+                FETCH_NEXT_RULE_KEEP_LAST(&set_or_copy_word, L);
                 goto pre_rule;
 
               case SYM_COLLECT:
@@ -1627,7 +1627,7 @@ DECLARE_NATIVE(subparse)
                 if (not P_COLLECTION)
                     fail ("Used PARSE KEEP with no COLLECT in effect");
 
-                FETCH_NEXT_RULE(f);  // e.g. skip the KEEP word!
+                FETCH_NEXT_RULE(L);  // e.g. skip the KEEP word!
 
                 REBLEN pos_before = P_POS;
 
@@ -1639,7 +1639,7 @@ DECLARE_NATIVE(subparse)
                 bool spread;
                 if (IS_WORD(rule) and VAL_WORD_ID(rule) == SYM_SPREAD) {
                     spread = true;
-                    FETCH_NEXT_RULE(f);  // e.g. skip the SPREAD
+                    FETCH_NEXT_RULE(L);  // e.g. skip the SPREAD
                     rule = Get_Parse_Value(P_SAVE, P_RULE, P_RULE_SPECIFIER);
                 }
                 else
@@ -1679,11 +1679,11 @@ DECLARE_NATIVE(subparse)
                     // Don't touch P_POS, we didn't consume anything from
                     // the input series but just fabricated DO material.
 
-                    FETCH_NEXT_RULE(f);
+                    FETCH_NEXT_RULE(L);
                 }
                 else {  // Ordinary rule (may be block, may not be)
 
-                    Frame(*) subframe = Make_Frame(f->feed, FRAME_MASK_NONE);
+                    Level(*) sub = Make_Level(L->feed, LEVEL_MASK_NONE);
 
                     bool interrupted;
                     assert(Is_Fresh(OUT));  // invariant until finished
@@ -1692,7 +1692,7 @@ DECLARE_NATIVE(subparse)
                         OUT,
                         ARG(position),
                         SPECIFIED,
-                        subframe,
+                        sub,
                         P_COLLECTION,
                         (P_FLAGS & PF_FIND_MASK) | PF_ONE_RULE
                             | (P_FLAGS & PF_REDBOL)
@@ -1767,28 +1767,28 @@ DECLARE_NATIVE(subparse)
               case SYM_NOT_1:  // see TO-C-NAME
                 P_FLAGS |= PF_NOT;
                 P_FLAGS ^= PF_NOT2;
-                FETCH_NEXT_RULE(f);
+                FETCH_NEXT_RULE(L);
                 goto pre_rule;
 
               case SYM_AND_1:  // see TO-C-NAME
               case SYM_AHEAD:
                 P_FLAGS |= PF_AHEAD;
-                FETCH_NEXT_RULE(f);
+                FETCH_NEXT_RULE(L);
                 goto pre_rule;
 
               case SYM_REMOVE:
                 P_FLAGS |= PF_REMOVE;
-                FETCH_NEXT_RULE(f);
+                FETCH_NEXT_RULE(L);
                 goto pre_rule;
 
               case SYM_INSERT:
                 P_FLAGS |= PF_INSERT;
-                FETCH_NEXT_RULE(f);
+                FETCH_NEXT_RULE(L);
                 goto post_match_processing;
 
               case SYM_CHANGE:
                 P_FLAGS |= PF_CHANGE;
-                FETCH_NEXT_RULE(f);
+                FETCH_NEXT_RULE(L);
                 goto pre_rule;
 
                 // IF is deprecated in favor of `:(<logic!>)`.  But it is
@@ -1803,7 +1803,7 @@ DECLARE_NATIVE(subparse)
                 // it (though Rebol2 did not have IF in PARSE...)
                 //
               case SYM_IF: {
-                FETCH_NEXT_RULE(f);
+                FETCH_NEXT_RULE(L);
                 if (P_AT_END)
                     fail (Error_Parse_End());
 
@@ -1819,7 +1819,7 @@ DECLARE_NATIVE(subparse)
                     goto return_thrown;
                 }
 
-                FETCH_NEXT_RULE(f);
+                FETCH_NEXT_RULE(L);
 
                 if (Is_Truthy(condition))
                     goto pre_rule;
@@ -1837,7 +1837,7 @@ DECLARE_NATIVE(subparse)
 
               handle_accept:
 
-                FETCH_NEXT_RULE(f);
+                FETCH_NEXT_RULE(L);
 
                 DECLARE_LOCAL (thrown_arg);
                 if (IS_TAG(P_RULE)) {
@@ -1853,7 +1853,7 @@ DECLARE_NATIVE(subparse)
                 else
                     fail ("PARSE3 ACCEPT only works with GROUP! and <here>");
 
-                Init_Thrown_With_Label(FRAME, thrown_arg, Lib(PARSE_ACCEPT));
+                Init_Thrown_With_Label(LEVEL, thrown_arg, Lib(PARSE_ACCEPT));
                 goto return_thrown; }
 
               handle_break:
@@ -1866,27 +1866,27 @@ DECLARE_NATIVE(subparse)
                 DECLARE_LOCAL (thrown_arg);
                 Init_Integer(thrown_arg, P_POS);
 
-                Init_Thrown_With_Label(FRAME, thrown_arg, Lib(PARSE_BREAK));
+                Init_Thrown_With_Label(LEVEL, thrown_arg, Lib(PARSE_BREAK));
                 goto return_thrown; }
 
               case SYM_REJECT: {
                 //
                 // Similarly, this is a break/continue style "throw"
                 //
-                Init_Thrown_With_Label(FRAME, Lib(NULL), Lib(PARSE_REJECT));
+                Init_Thrown_With_Label(LEVEL, Lib(NULL), Lib(PARSE_REJECT));
                 goto return_thrown; }
 
               case SYM_FAIL:  // deprecated... use LOGIC! false instead
                 Init_Nulled(ARG(position));  // not found
-                FETCH_NEXT_RULE(f);
+                FETCH_NEXT_RULE(L);
                 goto post_match_processing;
 
               case SYM_LIMIT:
                 fail (Error_Not_Done_Raw());
 
               case SYM__Q_Q:
-                Print_Parse_Index(f);
-                FETCH_NEXT_RULE(f);
+                Print_Parse_Index(L);
+                FETCH_NEXT_RULE(L);
                 goto pre_rule;
 
               case SYM_RETURN:
@@ -1895,10 +1895,10 @@ DECLARE_NATIVE(subparse)
                 fail ("RETURN keyword switched to ACCEPT in PARSE3/UPARSE");
 
               case SYM_SEEK: {
-                FETCH_NEXT_RULE(f);  // skip the SEEK word
+                FETCH_NEXT_RULE(L);  // skip the SEEK word
                 // !!! what about `seek ^(first x)` ?
-                HANDLE_SEEK_RULE_UPDATE_BEGIN(f, P_RULE, P_RULE_SPECIFIER);
-                FETCH_NEXT_RULE(f);  // e.g. skip the `x` in `seek x`
+                HANDLE_SEEK_RULE_UPDATE_BEGIN(L, P_RULE, P_RULE_SPECIFIER);
+                FETCH_NEXT_RULE(L);  // e.g. skip the `x` in `seek x`
                 goto pre_rule; }
 
               default:  // the list above should be exhaustive
@@ -1928,8 +1928,8 @@ DECLARE_NATIVE(subparse)
                 // https://github.com/rebol/rebol-issues/issues/2269
 
                 if (P_FLAGS & PF_REDBOL) {
-                    FETCH_NEXT_RULE_KEEP_LAST(&set_or_copy_word, f);
-                    Handle_Mark_Rule(f, set_or_copy_word, P_RULE_SPECIFIER);
+                    FETCH_NEXT_RULE_KEEP_LAST(&set_or_copy_word, L);
+                    Handle_Mark_Rule(L, set_or_copy_word, P_RULE_SPECIFIER);
                     goto pre_rule;
                 }
 
@@ -1940,8 +1940,8 @@ DECLARE_NATIVE(subparse)
                 // :word - change the index for the series to a new position
                 //
                 if (P_FLAGS & PF_REDBOL) {
-                    Handle_Seek_Rule_Dont_Update_Begin(f, rule, P_RULE_SPECIFIER);
-                    FETCH_NEXT_RULE(f);
+                    Handle_Seek_Rule_Dont_Update_Begin(L, rule, P_RULE_SPECIFIER);
+                    FETCH_NEXT_RULE(L);
                     goto pre_rule;
                 }
                 fail ("GET-WORD! in PARSE is reserved (unless using PARSE2)");
@@ -1962,7 +1962,7 @@ DECLARE_NATIVE(subparse)
     }
     else if (IS_SET_TUPLE(rule)) {
       handle_set:
-        FETCH_NEXT_RULE_KEEP_LAST(&set_or_copy_word, f);
+        FETCH_NEXT_RULE_KEEP_LAST(&set_or_copy_word, L);
 
         // As an interim measure, permit `pos: <here>` to act as
         // setting the position, just as `pos:` did historically.
@@ -1970,7 +1970,7 @@ DECLARE_NATIVE(subparse)
         // time to settle.  Allows also `here: <here>` with `pos: here`
         //
         if (IS_WORD(P_RULE) and VAL_WORD_ID(P_RULE) == SYM_ACROSS) {
-            FETCH_NEXT_RULE(f);
+            FETCH_NEXT_RULE(L);
             P_FLAGS |= PF_COPY;
             goto pre_rule;
         }
@@ -1978,7 +1978,7 @@ DECLARE_NATIVE(subparse)
             IS_WORD(P_RULE)
             and VAL_WORD_ID(P_RULE) == SYM_COLLECT
         ){
-            FETCH_NEXT_RULE(f);
+            FETCH_NEXT_RULE(L);
 
             Array(*) collection = Make_Array_Core(
                 10,  // !!! how big?
@@ -1986,7 +1986,7 @@ DECLARE_NATIVE(subparse)
             );
             PUSH_GC_GUARD(collection);
 
-            Frame(*) subframe = Make_Frame(f->feed, FRAME_MASK_NONE);
+            Level(*) sub = Make_Level(L->feed, LEVEL_MASK_NONE);
 
             bool interrupted;
             assert(Is_Fresh(OUT));  // invariant until finished
@@ -1995,7 +1995,7 @@ DECLARE_NATIVE(subparse)
                 OUT,
                 ARG(position),  // affected by P_POS assignment above
                 SPECIFIED,
-                subframe,
+                sub,
                 collection,
                 (P_FLAGS & PF_FIND_MASK) | PF_ONE_RULE
                     | (P_FLAGS & PF_REDBOL)
@@ -2032,21 +2032,21 @@ DECLARE_NATIVE(subparse)
                 IS_TAG(gotten)
                 and 0 == CT_String(gotten, Root_Here_Tag, strict)
             ){
-                FETCH_NEXT_RULE(f);
+                FETCH_NEXT_RULE(L);
             }
             // fall through
         }
         else if (IS_TAG(P_RULE)) {
             bool strict = true;
             if (0 == CT_String(P_RULE, Root_Here_Tag, strict))
-                FETCH_NEXT_RULE(f);
+                FETCH_NEXT_RULE(L);
 
             // fall through
         }
         else
             fail ("PARSE SET-WORD! use with <HERE>, COLLECT, ACROSS");
 
-        Handle_Mark_Rule(f, set_or_copy_word, P_RULE_SPECIFIER);
+        Handle_Mark_Rule(L, set_or_copy_word, P_RULE_SPECIFIER);
         goto pre_rule;
     }
     else if (ANY_PATH(rule)) {
@@ -2061,10 +2061,10 @@ DECLARE_NATIVE(subparse)
 
     if (IS_LOGIC(rule)) {  // true is a no-op, false causes match failure
         if (VAL_LOGIC(rule)) {
-            FETCH_NEXT_RULE(f);
+            FETCH_NEXT_RULE(L);
             goto pre_rule;
         }
-        FETCH_NEXT_RULE(f);
+        FETCH_NEXT_RULE(L);
         Init_Nulled(ARG(position));  // not found
         goto post_match_processing;
     }
@@ -2075,7 +2075,7 @@ DECLARE_NATIVE(subparse)
       case REB_INTEGER:  // Specify repeat count
         mincount = maxcount = Int32s(rule, 0);
 
-        FETCH_NEXT_RULE(f);
+        FETCH_NEXT_RULE(L);
         if (P_AT_END)
             fail (Error_Parse_End());
 
@@ -2098,11 +2098,11 @@ DECLARE_NATIVE(subparse)
 
         bool strict = true;
         if (0 == CT_String(rule, Root_Here_Tag, strict)) {
-            FETCH_NEXT_RULE(f);  // not being assigned w/set-word!, no-op
+            FETCH_NEXT_RULE(L);  // not being assigned w/set-word!, no-op
             goto pre_rule;
         }
         if (0 == CT_String(rule, Root_End_Tag, strict)) {
-            FETCH_NEXT_RULE(f);
+            FETCH_NEXT_RULE(L);
             begin = P_POS;
             goto handle_end;
         }
@@ -2123,7 +2123,7 @@ DECLARE_NATIVE(subparse)
     // The index is advanced and stored in a temp variable i until
     // the entire rule has been satisfied.
 
-    FETCH_NEXT_RULE(f);
+    FETCH_NEXT_RULE(L);
 
     begin = P_POS;  // input at beginning of match section
 
@@ -2163,15 +2163,15 @@ DECLARE_NATIVE(subparse)
                     subrule = Get_Parse_Value(
                         P_SAVE, P_RULE, P_RULE_SPECIFIER
                     );
-                    FETCH_NEXT_RULE(f);
+                    FETCH_NEXT_RULE(L);
                 }
 
                 bool is_thru = (cmd == SYM_THRU);
 
                 if (IS_BLOCK(subrule))
-                    i = To_Thru_Block_Rule(f, subrule, is_thru);
+                    i = To_Thru_Block_Rule(L, subrule, is_thru);
                 else
-                    i = To_Thru_Non_Block_Rule(f, subrule, is_thru);
+                    i = To_Thru_Non_Block_Rule(L, subrule, is_thru);
                 break; }
 
               case SYM_QUOTE:  // temporarily behaving like LIT for bootstrap
@@ -2183,7 +2183,7 @@ DECLARE_NATIVE(subparse)
                     fail (Error_Parse_End());
 
                 if (not subrule)  // capture only on iteration #1
-                    FETCH_NEXT_RULE_KEEP_LAST(&subrule, f);
+                    FETCH_NEXT_RULE_KEEP_LAST(&subrule, L);
 
                 Cell(const*) input_tail = ARR_TAIL(ARR(P_INPUT));
                 Cell(const*) cmp = ARR_AT(ARR(P_INPUT), P_POS);
@@ -2207,7 +2207,7 @@ DECLARE_NATIVE(subparse)
                     subrule = Get_Parse_Value(
                         P_SAVE, P_RULE, P_RULE_SPECIFIER
                     );
-                    FETCH_NEXT_RULE(f);
+                    FETCH_NEXT_RULE(L);
                 }
 
                 if (not IS_BLOCK(subrule))
@@ -2243,9 +2243,9 @@ DECLARE_NATIVE(subparse)
                     break;
                 }
 
-                Frame(*) subframe = Make_Frame_At_Core(
+                Level(*) sub = Make_Level_At_Core(
                     subrule, P_RULE_SPECIFIER,
-                    FRAME_MASK_NONE
+                    LEVEL_MASK_NONE
                 );
 
                 bool interrupted;
@@ -2254,7 +2254,7 @@ DECLARE_NATIVE(subparse)
                     OUT,
                     into,
                     P_INPUT_SPECIFIER,  // harmless if specified API value
-                    subframe,
+                    sub,
                     P_COLLECTION,
                     (P_FLAGS & PF_FIND_MASK)  // PF_ONE_RULE?
                         | (P_FLAGS & PF_REDBOL)
@@ -2286,9 +2286,9 @@ DECLARE_NATIVE(subparse)
         }
         else if (IS_BLOCK(rule)) {  // word fetched block, or inline block
 
-            Frame(*) subframe = Make_Frame_At_Core(
+            Level(*) sub = Make_Level_At_Core(
                 rule, rule_specifier(),
-                FRAME_MASK_NONE
+                LEVEL_MASK_NONE
             );
 
             bool interrupted;
@@ -2297,7 +2297,7 @@ DECLARE_NATIVE(subparse)
                 FRESHEN(SPARE),
                 ARG(position),
                 SPECIFIED,
-                subframe,
+                sub,
                 P_COLLECTION,
                 (P_FLAGS & PF_FIND_MASK)  // no PF_ONE_RULE
                     | (P_FLAGS & PF_REDBOL)
@@ -2333,7 +2333,7 @@ DECLARE_NATIVE(subparse)
         else {
             // Parse according to datatype
 
-            i = Parse_One_Rule(f, P_POS, rule);
+            i = Parse_One_Rule(L, P_POS, rule);
             if (i == THROWN_FLAG)
                 return THROWN;
         }
@@ -2540,7 +2540,7 @@ DECLARE_NATIVE(subparse)
 
                 // new value...comment said "CHECK FOR QUOTE!!"
                 rule = Get_Parse_Value(P_SAVE, P_RULE, P_RULE_SPECIFIER);
-                FETCH_NEXT_RULE(f);
+                FETCH_NEXT_RULE(L);
 
                 // If you say KEEP (whatever) then that acts like /ONLY did
                 // and KEEP (spread whatever) will splice
@@ -2645,13 +2645,13 @@ DECLARE_NATIVE(subparse)
         if (P_COLLECTION)
             SET_SERIES_LEN(P_COLLECTION, collection_tail);
 
-        FETCH_TO_BAR_OR_END(f);
+        FETCH_TO_BAR_OR_END(L);
         if (P_AT_END)  // no alternate rule
             goto return_null;
 
         // Jump to the alternate rule and reset input
         //
-        FETCH_NEXT_RULE(f);
+        FETCH_NEXT_RULE(L);
         Copy_Cell(ARG(position), ARG(input));  // P_POS may be null
         begin = P_INPUT_IDX;
     }
@@ -2676,7 +2676,7 @@ DECLARE_NATIVE(subparse)
 
   return_thrown:
     if (not Is_Nulled(ARG(collection)))  // throw -> drop COLLECT additions
-        if (VAL_THROWN_LABEL(FRAME) != Lib(PARSE_BREAK))  // ...unless
+        if (VAL_THROWN_LABEL(LEVEL) != Lib(PARSE_BREAK))  // ...unless
             SET_SERIES_LEN(P_COLLECTION, collection_tail);
 
     return THROWN;
@@ -2743,7 +2743,7 @@ DECLARE_NATIVE(parse3)
         and IS_WORD(rules_at) and VAL_WORD_ID(rules_at) == SYM_COLLECT
         and IS_BLOCK(rules_at + 1)
     ){
-        Context(*) frame_ctx = Context_For_Frame_May_Manage(frame_);
+        Context(*) frame_ctx = Context_For_Level_May_Manage(level_);
         DECLARE_LOCAL (specific);
         Derelativize(specific, rules_at + 1, P_RULE_SPECIFIER);
         return rebValue(
@@ -2758,14 +2758,14 @@ DECLARE_NATIVE(parse3)
     if (not ANY_SERIES_KIND(CELL_HEART(input)))
         fail ("PARSE input must be an ANY-SERIES! (use AS BLOCK! for PATH!)");
 
-    Frame(*) subframe = Make_Frame_At(rules, FRAME_MASK_NONE);
+    Level(*) sub = Make_Level_At(rules, LEVEL_MASK_NONE);
 
     bool interrupted;
     if (Subparse_Throws(
         &interrupted,
         FRESHEN(OUT),
         input, SPECIFIED,
-        subframe,
+        sub,
         nullptr,  // start out with no COLLECT in effect, so no P_COLLECTION
         (REF(case) ? AM_FIND_CASE : 0) | (REF(redbol) ? PF_REDBOL : 0)
         //
@@ -2775,10 +2775,10 @@ DECLARE_NATIVE(parse3)
         // Any PARSE-specific THROWs (where a PARSE directive jumped the
         // stack) should be handled here.  ACCEPT is one example.
 
-        Value(const*) label = VAL_THROWN_LABEL(FRAME);
+        Value(const*) label = VAL_THROWN_LABEL(LEVEL);
         if (IS_FRAME(label)) {
             if (VAL_ACTION(label) == VAL_ACTION(Lib(PARSE_ACCEPT))) {
-                CATCH_THROWN(OUT, FRAME);
+                CATCH_THROWN(OUT, LEVEL);
                 return OUT;
             }
         }

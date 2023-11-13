@@ -366,7 +366,8 @@ DECLARE_NATIVE(let)
     REBVAL *vars = ARG(vars);
 
     UNUSED(ARG(expression));
-    Frame(*) f = frame_;  // fake variadic, see [1]
+    Level(*) L = level_;  // fake variadic, see [1]
+    REBSPC* L_specifier = Level_Specifier(L);
 
     REBVAL *bindings_holder = ARG(return);
 
@@ -390,9 +391,9 @@ DECLARE_NATIVE(let)
 
     //=//// HANDLE LET (GROUP): VARIANTS ///////////////////////////////////=//
 
-    // A first level of indirection is permitted since LET allows the syntax
+    // A first amount of indirection is permitted since LET allows the syntax
     // [let (word_or_block): <whatever>].  Handle those groups in such a way
-    // that it updates `At_Frame(f)` itself to reflect the group product.
+    // that it updates `At_Level(L)` itself to reflect the group product.
 
     if (
         IS_GROUP(vars) or IS_SET_GROUP(vars)
@@ -430,7 +431,7 @@ DECLARE_NATIVE(let)
     // so it can be used in a reevaluation.  For WORD!/BLOCK! forms of LET it
     // just writes the rebound copy into the OUT cell.
 
-    REBSPC *bindings = f_specifier;  // specifier chain we may be adding to
+    REBSPC *bindings = L_specifier;  // specifier chain we may be adding to
 
     if (bindings and NOT_SERIES_FLAG(bindings, MANAGED))
         SET_SERIES_FLAG(bindings, MANAGED);  // natives don't always manage
@@ -554,29 +555,29 @@ DECLARE_NATIVE(let)
 
     Flags flags =
         FLAG_STATE_BYTE(ST_EVALUATOR_REEVALUATING)
-        | (f->flags.bits & EVAL_EXECUTOR_FLAG_FULFILLING_ARG)
-        | (f->flags.bits & FRAME_FLAG_FAILURE_RESULT_OK);
+        | (L->flags.bits & EVAL_EXECUTOR_FLAG_FULFILLING_ARG)
+        | (L->flags.bits & LEVEL_FLAG_FAILURE_RESULT_OK);
 
-    Frame(*) subframe = Make_Frame(FRAME->feed, flags);
-    subframe->u.eval.current = SPARE;
-    subframe->u.eval.current_gotten = nullptr;
-    subframe->u.eval.enfix_reevaluate = 'N';  // detect?
+    Level(*) sub = Make_Level(LEVEL->feed, flags);
+    sub->u.eval.current = SPARE;
+    sub->u.eval.current_gotten = nullptr;
+    sub->u.eval.enfix_reevaluate = 'N';  // detect?
 
-    Push_Frame(OUT, subframe);
+    Push_Level(OUT, sub);
 
     assert(STATE == ST_LET_EVAL_STEP);  // checked above
-    return CONTINUE_SUBFRAME (subframe);
+    return CONTINUE_SUBLEVEL(sub);
 
 } integrate_eval_bindings: {  ////////////////////////////////////////////////
 
     REBSPC *bindings = VAL_SPECIFIER(bindings_holder);
 
-    if (f_specifier and IS_LET(f_specifier)) { // add bindings, see [7]
-        bindings = Merge_Patches_May_Reuse(f_specifier, bindings);
+    if (L_specifier and IS_LET(L_specifier)) { // add bindings, see [7]
+        bindings = Merge_Patches_May_Reuse(L_specifier, bindings);
         mutable_BINDING(bindings_holder) = bindings;
     }
 
-    f->feed->gotten = nullptr;  // invalidate next word's cache, see [8]
+    L->feed->gotten = nullptr;  // invalidate next word's cache, see [8]
     goto update_feed_binding;
 
 } update_feed_binding: {  /////////////////////////////////////////////////////
@@ -586,7 +587,7 @@ DECLARE_NATIVE(let)
     // needs systemic review.
 
     REBSPC *bindings = VAL_SPECIFIER(bindings_holder);
-    mutable_BINDING(FEED_SINGLE(f->feed)) = bindings;
+    mutable_BINDING(FEED_SINGLE(L->feed)) = bindings;
 
     if (Is_Pack(OUT))
         Decay_If_Unstable(OUT);
@@ -609,15 +610,16 @@ DECLARE_NATIVE(let)
 DECLARE_NATIVE(add_let_binding) {
     INCLUDE_PARAMS_OF_ADD_LET_BINDING;
 
-    Frame(*) f = CTX_FRAME_MAY_FAIL(VAL_CONTEXT(ARG(frame)));
+    Level(*) L = CTX_LEVEL_MAY_FAIL(VAL_CONTEXT(ARG(frame)));
+    REBSPC* L_specifier = Level_Specifier(L);
 
-    if (f_specifier)
-        SET_SERIES_FLAG(f_specifier, MANAGED);
-    REBSPC *let = Make_Let_Patch(VAL_WORD_SYMBOL(ARG(word)), f_specifier);
+    if (L_specifier)
+        SET_SERIES_FLAG(L_specifier, MANAGED);
+    REBSPC *let = Make_Let_Patch(VAL_WORD_SYMBOL(ARG(word)), L_specifier);
 
     Move_Cell(ARR_SINGLE(let), ARG(value));
 
-    mutable_BINDING(FEED_SINGLE(f->feed)) = let;
+    mutable_BINDING(FEED_SINGLE(L->feed)) = let;
 
     Move_Cell(OUT, ARG(word));
     INIT_VAL_WORD_BINDING(OUT, let);
@@ -640,16 +642,17 @@ DECLARE_NATIVE(add_let_binding) {
 DECLARE_NATIVE(add_use_object) {
     INCLUDE_PARAMS_OF_ADD_USE_OBJECT;
 
-    Frame(*) f = CTX_FRAME_MAY_FAIL(VAL_CONTEXT(ARG(frame)));
+    Level(*) L = CTX_LEVEL_MAY_FAIL(VAL_CONTEXT(ARG(frame)));
+    REBSPC* L_specifier = Level_Specifier(L);
 
     Context(*) ctx = VAL_CONTEXT(ARG(object));
 
-    if (f_specifier)
-        SET_SERIES_FLAG(f_specifier, MANAGED);
+    if (L_specifier)
+        SET_SERIES_FLAG(L_specifier, MANAGED);
 
-    REBSPC *use = Make_Or_Reuse_Use(ctx, f_specifier, REB_WORD);
+    REBSPC *use = Make_Or_Reuse_Use(ctx, L_specifier, REB_WORD);
 
-    mutable_BINDING(FEED_SINGLE(f->feed)) = use;
+    mutable_BINDING(FEED_SINGLE(L->feed)) = use;
 
     return NONE;
 }
@@ -985,7 +988,7 @@ Context(*) Virtual_Bind_Deep_To_New_Context(
     if (IS_GROUP(spec)) {
         DECLARE_LOCAL (temp);
         if (Do_Any_Array_At_Throws(temp, spec, SPECIFIED))
-            fail (Error_No_Catch_For_Throw(TOP_FRAME));
+            fail (Error_No_Catch_For_Throw(TOP_LEVEL));
         Move_Cell(spec, temp);
     }
 

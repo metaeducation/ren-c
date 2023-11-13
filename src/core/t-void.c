@@ -31,7 +31,7 @@
 // See also ISOTOPIC for making isotopes.
 //
 Bounce MAKE_Quasi(
-    Frame(*) frame_,
+    Level(*) level_,
     enum Reb_Kind kind,
     option(const REBVAL*) parent,
     const REBVAL *arg
@@ -56,7 +56,7 @@ Bounce MAKE_Quasi(
 //
 // TO is disallowed, e.g. you can't TO convert an integer of 0 to a blank.
 //
-Bounce TO_Quasi(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *data) {
+Bounce TO_Quasi(Level(*) level_, enum Reb_Kind kind, const REBVAL *data) {
     return RAISE(Error_Bad_Make(kind, data));
 }
 

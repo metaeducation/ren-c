@@ -47,7 +47,7 @@ REBINT CT_Pair(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
 //  MAKE_Pair: C
 //
 Bounce MAKE_Pair(
-    Frame(*) frame_,
+    Level(*) level_,
     enum Reb_Kind kind,
     option(const REBVAL*) parent,
     const REBVAL *arg
@@ -116,9 +116,9 @@ Bounce MAKE_Pair(
 //
 //  TO_Pair: C
 //
-Bounce TO_Pair(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg)
+Bounce TO_Pair(Level(*) level_, enum Reb_Kind kind, const REBVAL *arg)
 {
-    return MAKE_Pair(frame_, kind, nullptr, arg);
+    return MAKE_Pair(level_, kind, nullptr, arg);
 }
 
 
@@ -276,8 +276,8 @@ REBTYPE(Pair)
 
     REBVAL *frame = Init_Frame(
         OUT,
-        Context_For_Frame_May_Manage(frame_),
-        FRM_LABEL(frame_)
+        Context_For_Level_May_Manage(level_),
+        Level_Label(level_)
     );
 
     Copy_Cell(D_ARG(1), x1);

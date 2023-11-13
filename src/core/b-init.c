@@ -707,7 +707,7 @@ void Startup_Signals(void)
     assert(Is_Cell_Erased(&TG_Thrown_Arg));
     assert(Is_Cell_Erased(&TG_Thrown_Label));
 
-    assert(TG_Unwind_Frame == nullptr);
+    assert(TG_Unwind_Level == nullptr);
 }
 
 
@@ -832,7 +832,7 @@ void Startup_Core(void)
     Startup_Mold(MIN_COMMON / 4);
 
     Startup_Data_Stack(STACK_MIN / 4);
-    Startup_Frame_Stack(); // uses Canon() in FRM_FILE() currently
+    Startup_Level_Stack();  // uses Canon() in File_Of_Level() currently
 
     Startup_Api();
 
@@ -973,7 +973,7 @@ void Startup_Core(void)
     //
     Startup_Stackoverflow();
 
-    assert(TOP_INDEX == 0 and TOP_FRAME == BOTTOM_FRAME);
+    assert(TOP_INDEX == 0 and TOP_LEVEL == BOTTOM_LEVEL);
 
 //=//// RUN MEZZANINE CODE NOW THAT ERROR HANDLING IS INITIALIZED /////////=//
 
@@ -1105,7 +1105,7 @@ void Startup_Core(void)
 
   //=//// FINISH UP ///////////////////////////////////////////////////////=//
 
-    assert(TOP_INDEX == 0 and TOP_FRAME == BOTTOM_FRAME);
+    assert(TOP_INDEX == 0 and TOP_LEVEL == BOTTOM_LEVEL);
 
     DROP_GC_GUARD(boot_array);
 
@@ -1190,7 +1190,7 @@ void Shutdown_Core(bool clean)
 
     Shutdown_Feeds();
 
-    Shutdown_Frame_Stack();  // all API calls (e.g. rebRelease()) before this
+    Shutdown_Level_Stack();  // all API calls (e.g. rebRelease()) before this
     Shutdown_Api();
 
 //=//// ALL MANAGED SERIES MUST HAVE THE KEEPALIVE REFERENCES GONE NOW ////=//
@@ -1200,7 +1200,7 @@ void Shutdown_Core(bool clean)
 
     assert(Is_Cell_Erased(&TG_Thrown_Arg));
     assert(Is_Cell_Erased(&TG_Thrown_Label));
-    assert(TG_Unwind_Frame == nullptr);
+    assert(TG_Unwind_Level == nullptr);
 
     Shutdown_Mold();
     Shutdown_Collector();

@@ -81,12 +81,11 @@ enum {
 //
 // Note: Not static because it's checked for by pointer in RESKIN.
 //
-Bounce Encloser_Dispatcher(Frame(*) f)
+Bounce Encloser_Dispatcher(Level(*) L)
 {
-    Frame(*) frame_ = f;  // for RETURN macros
+    Level(*) level_ = L;  // for RETURN macros
 
-    Phase(*) phase = FRM_PHASE(f);
-    Details(*) details = ACT_DETAILS(phase);
+    Details(*) details = ACT_DETAILS(PHASE);
     assert(ARR_LEN(details) == IDX_ENCLOSER_MAX);
 
     REBVAL *inner = DETAILS_AT(details, IDX_ENCLOSER_INNER);
@@ -99,7 +98,7 @@ Bounce Encloser_Dispatcher(Frame(*) f)
     // call to the encloser.  (The encloser can run the frame multiple times
     // via DO COPY of the frame if they like.)
     //
-    // Since we are unplugging the varlist from the Frame(*) in which it is
+    // Since we are unplugging the varlist from the Level(*) in which it is
     // running, we at one time would actually `Steal_Context_Vars()` on it...
     // which would mean all outstanding FRAME! that had been pointing at
     // the varlist would go stale.  This hampered tricks like:
@@ -116,22 +115,22 @@ Bounce Encloser_Dispatcher(Frame(*) f)
     //     >> a 10 20
     //     == [10 20]
     //
-    // So instead we make f->varlist point to a universal inaccessible array
+    // So instead we make L->varlist point to a universal inaccessible array
     // and keep the varlist itself valid, so extant FRAME!s still work.  This
     // may be a bad idea, so keeping the old code on hand in case it turns
     // out to be fundamentally broken for some reason.
     //
     //-----------------------------------------------------------begin-old-code
     // Context(*) c = Steal_Context_Vars(
-    //     CTX(f->varlist),
-    //     ACT_KEYLIST(FRM_PHASE(f))
+    //     CTX(L->varlist),
+    //     ACT_KEYLIST(Level_Phase(L))
     // );
     //
     // INIT_BONUS_KEYSOURCE(CTX_VARLIST(c), ACT_KEYLIST(VAL_ACTION(inner)));
     //
-    // assert(GET_SERIES_FLAG(f->varlist, INACCESSIBLE));  // look dead
+    // assert(GET_SERIES_FLAG(L->varlist, INACCESSIBLE));  // look dead
     //
-    // // f->varlist may or may not have wound up being managed.  It was not
+    // // L->varlist may or may not have wound up being managed.  It was not
     // // allocated through the usual mechanisms, so if unmanaged it's not in
     // // the tracking list Init_Context_Cell() expects.  Just fiddle the bit.
     // //
@@ -139,18 +138,18 @@ Bounce Encloser_Dispatcher(Frame(*) f)
     //-------------------------------------------------------------end-old-code
 
     //-----------------------------------------------------------begin-new-code
-    Array(*) varlist = f->varlist;
+    Array(*) varlist = L->varlist;
     Context(*) c = CTX(varlist);
 
-    // Replace the f->varlist with a dead list.
+    // Replace the L->varlist with a dead list.
     //
-    f->varlist = &PG_Inaccessible_Series;
+    L->varlist = &PG_Inaccessible_Series;
 
     // The varlist is still pointed to by any extant frames.  Its keysource
     // should not be this frame any longer.
     //
-    assert(BONUS(KeySource, varlist) == f);
-    INIT_BONUS_KEYSOURCE(varlist, ACT_KEYLIST(f->u.action.original));
+    assert(BONUS(KeySource, varlist) == L);
+    INIT_BONUS_KEYSOURCE(varlist, ACT_KEYLIST(L->u.action.original));
     //-------------------------------------------------------------end-new-code
 
     // We're passing the built context to the `outer` function as a FRAME!,

@@ -326,9 +326,9 @@ inline static void INIT_BINDING_MAY_MANAGE(
     if (not binding or GET_SERIES_FLAG(binding, MANAGED))
         return;  // unbound or managed already (frame OR object context)
 
-    Frame(*) f = FRM(BONUS(KeySource, binding));  // unmanaged only frame
-    assert(not Is_Action_Frame_Fulfilling(f));
-    UNUSED(f);
+    Level(*) L = LVL(BONUS(KeySource, binding));  // unmanaged only frame
+    assert(not Is_Level_Fulfilling(L));
+    UNUSED(L);
 
     m_cast(REBSER*, binding)->leader.bits |= NODE_FLAG_MANAGED;  // GC sees...
 }
@@ -421,7 +421,7 @@ inline static Context(*) VAL_WORD_CONTEXT(const REBVAL *v) {
 
     assert(
         GET_SERIES_FLAG(binding, MANAGED) or
-        not Is_Action_Frame_Fulfilling(FRM(BONUS(KeySource, binding)))
+        not Is_Level_Fulfilling(LVL(BONUS(KeySource, binding)))
     );
     binding->leader.bits |= NODE_FLAG_MANAGED;  // !!! review managing needs
     Context(*) c = CTX(binding);

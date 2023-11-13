@@ -225,7 +225,7 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
     DEF_POOL(sizeof(REBVAL) * 2, 16),  // Pairings, PAIR_POOL
   #endif
 
-    DEF_POOL(ALIGN(sizeof(struct Reb_Frame), sizeof(REBI64)), 128),  // Frames
+    DEF_POOL(ALIGN(sizeof(struct Reb_Level), sizeof(REBI64)), 128),  // Levels
     DEF_POOL(ALIGN(sizeof(Reb_Feed), sizeof(REBI64)), 128),  // Feeds
 
     DEF_POOL(sizeof(REBI64), 1), // Just used for tracking main memory
@@ -610,7 +610,7 @@ void Manage_Pairing(REBVAL *paired) {
 //
 // A pairing may become unmanaged.  This is not a good idea for things like
 // the pairing used by a PAIR! value.  But pairings are used for API handles
-// which default to tying their lifetime to the currently executing frame.
+// which default to tying their lifetime to the currently executing level.
 // It may be desirable to extend, shorten, or otherwise explicitly control
 // their lifetime.
 //

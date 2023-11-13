@@ -287,7 +287,7 @@ static void Protect_Word_Value(REBVAL *word, Flags flags)
 //
 // Common arguments between protect and unprotect:
 //
-static Bounce Protect_Unprotect_Core(Frame(*) frame_, Flags flags)
+static Bounce Protect_Unprotect_Core(Level(*) level_, Flags flags)
 {
     INCLUDE_PARAMS_OF_PROTECT;
 
@@ -404,7 +404,7 @@ DECLARE_NATIVE(protect)
         return COPY(v);
     }
 
-    // Avoid unused parameter warnings (core routine handles them via frame)
+    // Avoid unused parameter warnings (core routine handles them via level_)
     //
     UNUSED(PARAM(deep));
     UNUSED(PARAM(words));
@@ -417,7 +417,7 @@ DECLARE_NATIVE(protect)
     else
         flags |= PROT_WORD; // there is no unhide
 
-    return Protect_Unprotect_Core(frame_, flags);
+    return Protect_Unprotect_Core(level_, flags);
 }
 
 
@@ -464,7 +464,7 @@ DECLARE_NATIVE(unprotect)
         return COPY(v);
     }
 
-    return Protect_Unprotect_Core(frame_, PROT_WORD);
+    return Protect_Unprotect_Core(level_, PROT_WORD);
 }
 
 

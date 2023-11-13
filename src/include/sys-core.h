@@ -87,7 +87,7 @@
     #include <stdio.h>
 
     // For some reason, Windows implementation of "_wassert" corrupts the stack
-    // by calling abort(), to where you only see at most 3 stack frames above
+    // by calling abort(), to where you only see at most 3 C stack frames above
     // the assert in the VSCode debugger.  That's unusable, so replace it.
 
     inline static void asserted(const char* file, int line, const char* expr) {

@@ -100,7 +100,7 @@ inline static uint64_t File_Size_Cacheable_May_Fail(const REBVAL *port)
 //
 // Internal port handler for files.
 //
-Bounce File_Actor(Frame(*) frame_, REBVAL *port, Symbol(const*) verb)
+Bounce File_Actor(Level(*) level_, REBVAL *port, Symbol(const*) verb)
 {
     Context(*) ctx = VAL_CONTEXT(port);
 

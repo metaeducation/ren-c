@@ -38,8 +38,8 @@
 
 #include "tmp-mod-filesystem.h"
 
-extern Bounce File_Actor(Frame(*) frame_, REBVAL *port, Symbol(const*) verb);
-extern Bounce Dir_Actor(Frame(*) frame_, REBVAL *port, Symbol(const*) verb);
+extern Bounce File_Actor(Level(*) level_, REBVAL *port, Symbol(const*) verb);
+extern Bounce Dir_Actor(Level(*) level_, REBVAL *port, Symbol(const*) verb);
 
 
 #if TO_WINDOWS

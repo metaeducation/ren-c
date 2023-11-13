@@ -58,7 +58,7 @@ enum {
 // Each time a function created with ADAPT is executed, this code runs to
 // invoke the "prelude" before passing control to the "adaptee" function.
 //
-Bounce Adapter_Dispatcher(Frame(*) f)
+Bounce Adapter_Dispatcher(Level(*) L)
 //
 // 1. When an ADAPT is done, it does not leave its product in the output
 //    cell.  This means ADAPT of COMMENT will still be invisible.
@@ -72,10 +72,9 @@ Bounce Adapter_Dispatcher(Frame(*) f)
 //    may have put invalid types in parameter slots.  So it needs to be
 //    typechecked before executing.
 {
-    Frame(*) frame_ = f;  // for RETURN macros
+    Level(*) level_ = L;  // for RETURN macros
 
-    Phase(*) phase = FRM_PHASE(f);
-    Details(*) details = ACT_DETAILS(phase);
+    Details(*) details = ACT_DETAILS(PHASE);
     assert(ARR_LEN(details) == IDX_ADAPTER_MAX);
 
     enum {
@@ -102,16 +101,16 @@ Bounce Adapter_Dispatcher(Frame(*) f)
 
     return CONTINUE_CORE(  // Note: we won't catch throws or errors
         SPARE,  // Evaluate prelude into SPARE cell (result discarded, see [1])
-        FRAME_MASK_NONE,  // plain result
-        SPC(f->varlist), prelude
+        LEVEL_MASK_NONE,  // plain result
+        SPC(L->varlist), prelude
     );
 
 } run_adaptee_in_same_frame: {  //////////////////////////////////////////////
 
     REBVAL* adaptee = DETAILS_AT(details, IDX_ADAPTER_ADAPTEE);
 
-    INIT_FRM_PHASE(f, ACT_IDENTITY(VAL_ACTION(adaptee)));
-    INIT_FRM_BINDING(f, VAL_FRAME_BINDING(adaptee));
+    INIT_LVL_PHASE(L, ACT_IDENTITY(VAL_ACTION(adaptee)));
+    INIT_LVL_BINDING(L, VAL_FRAME_BINDING(adaptee));
 
     return BOUNCE_REDO_CHECKED;  // redo uses updated phase & binding, see [3]
 }}
@@ -160,7 +159,7 @@ DECLARE_NATIVE(adapt_p)  // see extended definition ADAPT in %base-defs.r
     // We can't use a simple Init_Block() here, because the prelude has been
     // relativized.  It is thus not a REBVAL*, but a Cell(*)...so the
     // Adapter_Dispatcher() must combine it with the FRAME! instance before
-    // it can be executed (e.g. the `Frame(*) f` it is dispatching).
+    // it can be executed (e.g. the `Level(*) L` it is dispatching).
     //
     Details(*) details = ACT_DETAILS(adaptation);
     Init_Relative_Block(

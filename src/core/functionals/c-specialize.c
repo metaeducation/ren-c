@@ -51,16 +51,16 @@ enum {
 //
 // The evaluator does not do any special "running" of a specialized frame.
 // All of the contribution that the specialization had to make was taken care
-// of when Eval_Core() used f->param to fill from the exemplar.  So all this
+// of when Eval_Core() used L->param to fill from the exemplar.  So all this
 // does is change the phase and binding to match the function this layer was
 // specializing.
 //
-Bounce Specializer_Dispatcher(Frame(*) f)
+Bounce Specializer_Dispatcher(Level(*) L)
 {
-    Context(*) exemplar = ACT_EXEMPLAR(FRM_PHASE(f));
+    Context(*) exemplar = ACT_EXEMPLAR(Level_Phase(L));
 
-    INIT_FRM_PHASE(f, CTX_FRAME_PHASE(exemplar));
-    INIT_FRM_BINDING(f, CTX_FRAME_BINDING(exemplar));
+    INIT_LVL_PHASE(L, CTX_FRAME_PHASE(exemplar));
+    INIT_LVL_BINDING(L, CTX_FRAME_BINDING(exemplar));
 
     return BOUNCE_REDO_UNCHECKED; // redo uses the updated phase and binding
 }
@@ -697,9 +697,9 @@ const REBPAR *Last_Unspecialized_Param(const REBKEY ** key, Action(*) act)
 //
 // Helper built on First_Unspecialized_Param(), can also give you the param.
 //
-REBVAL *First_Unspecialized_Arg(option(const REBPAR **) param_out, Frame(*) f)
+REBVAL *First_Unspecialized_Arg(option(const REBPAR **) param_out, Level(*) L)
 {
-    Phase(*) phase = FRM_PHASE(f);
+    Phase(*) phase = Level_Phase(L);
     const REBPAR *param = First_Unspecialized_Param(nullptr, phase);
     if (param_out)
         *unwrap(param_out) = param;
@@ -708,7 +708,7 @@ REBVAL *First_Unspecialized_Arg(option(const REBPAR **) param_out, Frame(*) f)
         return nullptr;
 
     REBLEN index = param - ACT_PARAMS_HEAD(phase);
-    return FRM_ARGS_HEAD(f) + index;
+    return Level_Args_Head(L) + index;
 }
 
 
@@ -723,7 +723,7 @@ Phase(*) Alloc_Action_From_Exemplar(
     Dispatcher* dispatcher,
     REBLEN details_capacity
 ){
-    Action(*) unspecialized = ACT(CTX_FRAME_PHASE(exemplar));
+    Action(*) unspecialized = CTX_FRAME_PHASE(exemplar);
 
     const REBKEY *tail;
     const REBKEY *key = ACT_KEYS(&tail, unspecialized);

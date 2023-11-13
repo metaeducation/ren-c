@@ -52,7 +52,7 @@
 //
 // If `source` is not const, tweak it to be explicitly mutable--because
 // otherwise, it would wind up inheriting the FEED_MASK_CONST of our
-// currently executing frame.  That's no good for `repeat 2 [do block]`,
+// currently executing level.  That's no good for `repeat 2 [do block]`,
 // because we want whatever constness is on block...
 //
 // (Note we *can't* tweak values that are Cell in source.  So we either
@@ -70,14 +70,14 @@ inline static bool Do_Any_Array_At_Core_Throws(
     noquote(Cell(const*)) any_array,
     REBSPC *specifier
 ){
-    Frame(*) f = Make_Frame_At_Core(any_array, specifier, flags);
-    f->executor = &Array_Executor;
+    Level(*) L = Make_Level_At_Core(any_array, specifier, flags);
+    L->executor = &Array_Executor;
 
-    return Trampoline_Throws(out, f);
+    return Trampoline_Throws(out, L);
 }
 
 #define Do_Any_Array_At_Throws(out,any_array,specifier) \
-    Do_Any_Array_At_Core_Throws(out, FRAME_MASK_NONE, (any_array), (specifier))
+    Do_Any_Array_At_Core_Throws(out, LEVEL_MASK_NONE, (any_array), (specifier))
 
 
 inline static bool Do_Branch_Throws(  // !!! Legacy code, should be phased out
@@ -86,7 +86,7 @@ inline static bool Do_Branch_Throws(  // !!! Legacy code, should be phased out
 ){
     if (not Pushed_Continuation(
         out,
-        FRAME_FLAG_BRANCH,
+        LEVEL_FLAG_BRANCH,
         SPECIFIED, branch,
         nullptr
     )){
@@ -94,14 +94,14 @@ inline static bool Do_Branch_Throws(  // !!! Legacy code, should be phased out
     }
 
     bool threw = Trampoline_With_Top_As_Root_Throws();
-    Drop_Frame(TOP_FRAME);
+    Drop_Level(TOP_LEVEL);
     return threw;
 }
 
 
 inline static Bounce Run_Generic_Dispatch_Core(
-    const REBVAL *first_arg,  // !!! Is this always same as FRM_ARG(f, 1)?
-    Frame(*) f,
+    const REBVAL *first_arg,  // !!! Is this always same as Level_Arg(L, 1)?
+    Level(*) L,
     Symbol(const*) verb
 ){
     GENERIC_HOOK *hook;
@@ -120,31 +120,31 @@ inline static Bounce Run_Generic_Dispatch_Core(
         break;
     }
 
-    return hook(f, verb);  // Note QUOTED! has its own hook & handling;
+    return hook(L, verb);  // Note QUOTED! has its own hook & handling;
 }
 
 
 // Some routines invoke Run_Generic_Dispatch(), go ahead and reduce the
-// cases they have to look at by moving any ordinary outputs into f->out, and
+// cases they have to look at by moving any ordinary outputs into L->out, and
 // make throwing the only exceptional case they have to handle.
 //
 inline static bool Run_Generic_Dispatch_Throws(
-    const REBVAL *first_arg,  // !!! Is this always same as FRM_ARG(f, 1)?
-    Frame(*) f,
+    const REBVAL *first_arg,  // !!! Is this always same as Level_Arg(L, 1)?
+    Level(*) L,
     Symbol(const*) verb
 ){
-    Bounce b = Run_Generic_Dispatch_Core(first_arg, f, verb);
+    Bounce b = Run_Generic_Dispatch_Core(first_arg, L, verb);
 
-    if (b == f->out) {
+    if (b == L->out) {
          // common case
     }
     else if (b == nullptr) {
-        Init_Nulled(f->out);
+        Init_Nulled(L->out);
     }
     else if (Is_Bounce_An_Atom(b)) {
         Atom(*) r = Atom_From_Bounce(b);
         assert(Is_Api_Value(r));
-        Copy_Cell(f->out, r);
+        Copy_Cell(L->out, r);
         Release_Api_Value_If_Unmanaged(r);
     }
     else {

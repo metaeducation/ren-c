@@ -262,7 +262,7 @@ static void Queue_Unmarked_Accessible_Series_Deep(REBSER *s)
         //
         if (IS_VARLIST(a) and node_BONUS(Node, s)) {
             //
-            // !!! The keysource for varlists can be set to a Frame(*), which
+            // !!! The keysource for varlists can be set to a Level(*), which
             // at the moment pretends to be a cell to distinguish itself.
             // This makes less sense than pretending to be a series that is
             // already marked, and has a detectable FLAVOR_XXX.  Review.
@@ -423,7 +423,7 @@ static void Propagate_All_GC_Marks(void)
 //
 // However, va_lists cannot be backtracked once advanced.  So in a debug mode
 // it can be helpful to turn all the va_lists into arrays before running
-// them, so stack frames can be inspected more meaningfully--both for upcoming
+// them, so stack levels can be inspected more meaningfully--both for upcoming
 // evaluations and those already past.
 //
 // Because items may well have already been consumed from the va_list() that
@@ -469,7 +469,7 @@ void Reify_Variadic_Feed_As_Array_Feed(
         assert(READABLE(At_Feed(feed)));  // not end at start, not end now
 
         // The array just popped into existence, and it's tied to a running
-        // frame...so safe to say we're holding it.
+        // level...so safe to say we're holding it.
         //
         assert(Not_Feed_Flag(feed, TOOK_HOLD));
         SET_SERIES_INFO(m_cast(Array(*), FEED_ARRAY(feed)), HOLD);
@@ -544,14 +544,14 @@ static void Mark_Root_Series(void)
                     // if it's not managed, don't mark it (don't have to?)
                     Queue_Mark_Cell_Deep(ARR_SINGLE(a));
                 }
-                else { // Note that Mark_Frame_Stack_Deep() will mark the owner
+                else {  // Note that Mark_Level_Stack_Deep() marks the owner
                     if (not (a->leader.bits & NODE_FLAG_MARKED)) {
                         a->leader.bits |= NODE_FLAG_MARKED;
                         ++mark_count;
 
                         // Like frame cells or locals, API cells can be
                         // evaluation targets.  They should only be fresh if
-                        // they are targeted by some frame's f->out.
+                        // they are targeted by some frame's L->out.
                         //
                         // !!! Should we verify this?
                         //
@@ -591,7 +591,7 @@ static void Mark_Root_Series(void)
 
                 if (IS_VARLIST(a))
                     if (CTX_TYPE(CTX(a)) == REB_FRAME)
-                        continue;  // Mark_Frame_Stack_Deep() etc. mark it
+                        continue;  // Mark_Level_Stack_Deep() etc. mark it
 
                 // This means someone did something like Make_Array() and then
                 // ran an evaluation before referencing it somewhere from the
@@ -714,9 +714,9 @@ static void Mark_Guarded_Nodes(void)
 
 
 //
-//  Mark_Frame_Stack_Deep: C
+//  Mark_Level_Stack_Deep: C
 //
-// Mark values being kept live by all call frames.  If a function is running,
+// Mark values being kept live by all stack levels.  If a function is running,
 // then this will keep the function itself live, as well as the arguments.
 // There is also an "out" slot--which may point to an arbitrary REBVAL cell
 // on the C stack (and must contain valid GC-readable bits at all times).
@@ -728,105 +728,107 @@ static void Mark_Guarded_Nodes(void)
 // This should be called at the top level, and not from inside a
 // Propagate_All_GC_Marks().  All marks will be propagated.
 //
-static void Mark_Frame_Stack_Deep(void)
+static void Mark_Level_Stack_Deep(void)
 {
-    Frame(*) f = TOP_FRAME;
+    Level(*) L = TOP_LEVEL;
 
-    while (true) { // mark all frames (even BOTTOM_FRAME)
+    while (true) {  // mark all levels (even BOTTOM_LEVEL)
         //
         // Note: MISC_PENDING() should either live in FEED_ARRAY(), or
         // it may be trash (e.g. if it's an apply).  GC can ignore it.
         //
-        Array(*) singular = FEED_SINGULAR(f->feed);
+        Array(*) singular = FEED_SINGULAR(L->feed);
         do {
             Queue_Mark_Cell_Deep(ARR_SINGLE(singular));
             singular = LINK(Splice, singular);
         } while (singular);
 
-        // !!! This used to mark f->feed->p; but we probably do not need to.
+        // !!! This used to mark L->feed->p; but we probably do not need to.
         // All variadics are reified as arrays in the GC (we could avoid this
         // using va_copy, but probably not worth it).  All values in feed
         // should be covered in terms of GC protection.
 
+        REBSPC* L_specifier = Level_Specifier(L);
+
         // If ->gotten is set, it usually shouldn't need markeding because
-        // it's fetched via f->value and so would be kept alive by it.  Any
-        // code that a frame runs that might disrupt that relationship so it
+        // it's fetched via L->value and so would be kept alive by it.  Any
+        // code that a level runs that might disrupt that relationship so it
         // would fetch differently should have meant clearing ->gotten.
         //
-        if (f_gotten)
-            assert(f_gotten == Lookup_Word(At_Frame(f), f_specifier));
+        if (L->feed->gotten)
+            assert(L->feed->gotten == Lookup_Word(At_Level(L), L_specifier));
 
         if (
-            f_specifier != SPECIFIED
-            and (f_specifier->leader.bits & NODE_FLAG_MANAGED)
+            L_specifier != SPECIFIED
+            and (L_specifier->leader.bits & NODE_FLAG_MANAGED)
         ){
-            // Expand f_specifier.
+            // Expand L_specifier.
             //
             // !!! Should this instead check that it isn't INACCESSIBLE?
             //
-            Queue_Mark_Node_Deep(&FEED_SINGLE(f->feed)->extra.Binding);
+            Queue_Mark_Node_Deep(&FEED_SINGLE(L->feed)->extra.Binding);
         }
 
-        // f->out can be nullptr at the moment, when a frame is created that
+        // L->out can be nullptr at the moment, when a level is created that
         // can ask for a different output each evaluation.
         //
-        if (f->out)  // output is allowed to be FRESHEN()
-            Queue_Mark_Maybe_Fresh_Cell_Deep(f->out);
+        if (L->out)  // output is allowed to be FRESHEN()
+            Queue_Mark_Maybe_Fresh_Cell_Deep(L->out);
 
-        // Frame temporary cell should always contain initialized bits, as
-        // Make_Frame() sets it up and no one is supposed to trash it.
+        // Level temporary cell should always contain initialized bits, as
+        // Make_Level() sets it up and no one is supposed to trash it.
         //
-        Queue_Mark_Maybe_Fresh_Cell_Deep(&f->feed->fetched);
-        Queue_Mark_Maybe_Fresh_Cell_Deep(&f->feed->lookback);
-        Queue_Mark_Maybe_Fresh_Cell_Deep(&f->spare);
+        Queue_Mark_Maybe_Fresh_Cell_Deep(&L->feed->fetched);
+        Queue_Mark_Maybe_Fresh_Cell_Deep(&L->feed->lookback);
+        Queue_Mark_Maybe_Fresh_Cell_Deep(&L->spare);
 
-        if (f->executor == &Evaluator_Executor) {
-            if (not Is_Cell_Erased(&f->u.eval.scratch))  // extra GC-safe cell
-                Queue_Mark_Cell_Deep(cast(Cell(*), &f->u.eval.scratch));
+        if (L->executor == &Evaluator_Executor) {
+            if (not Is_Cell_Erased(&L->u.eval.scratch))  // extra GC-safe cell
+                Queue_Mark_Cell_Deep(cast(Cell(*), &L->u.eval.scratch));
             goto propagate_and_continue;
         }
 
-        if (not Is_Action_Frame(f)) {
+        if (not Is_Action_Level(L)) {
             //
             // Consider something like `eval copy '(recycle)`, because
             // while evaluating the group it has no anchor anywhere in the
-            // root set and could be GC'd.  The Reb_Frame's array ref is it.
+            // root set and could be GC'd.  The Level's array ref is it.
             //
             goto propagate_and_continue;
         }
 
-        Queue_Mark_Node_Deep(  // f->u.action.original is never nullptr
-            cast(const Node**, m_cast(const Action(*)*, &f->u.action.original))
+        Queue_Mark_Node_Deep(  // L->u.action.original is never nullptr
+            cast(const Node**, m_cast(const Action(*)*, &L->u.action.original))
         );
 
-        if (f->label) { // nullptr if anonymous
-            Symbol(const*) sym = unwrap(f->label);
+        if (L->label) { // nullptr if anonymous
+            Symbol(const*) sym = unwrap(L->label);
             if (NOT_SERIES_FLAG(sym, MARKED)) {
                 assert(NOT_SERIES_FLAG(sym, INACCESSIBLE));  // can't happen
                 Queue_Unmarked_Accessible_Series_Deep(m_cast(Raw_Symbol*, sym));
             }
         }
 
-        if (f->varlist and GET_SERIES_FLAG(f->varlist, MANAGED)) {
+        if (L->varlist and GET_SERIES_FLAG(L->varlist, MANAGED)) {
             //
             // If the context is all set up with valid values and managed,
             // then it can just be marked normally...no need to do custom
             // partial parameter traversal.
             //
             assert(
-                not Is_Action_Frame_Fulfilling(f)
-                or FRM_STATE_BYTE(f) == ST_ACTION_TYPECHECKING  // filled, safe
+                not Is_Level_Fulfilling(L)
+                or Level_State_Byte(L) == ST_ACTION_TYPECHECKING  // filled/safe
             );
 
             // "may not pass CTX() test"
             //
             Queue_Mark_Node_Deep(
-                cast(const Node**, m_cast(Array(const*)*, &f->varlist))
+                cast(const Node**, m_cast(Array(const*)*, &L->varlist))
             );
             goto propagate_and_continue;
         }
 
-        if (f->varlist and GET_SERIES_FLAG(f->varlist, INACCESSIBLE)) {
+        if (L->varlist and GET_SERIES_FLAG(L->varlist, INACCESSIBLE)) {
             //
             // This happens in Encloser_Dispatcher(), where it can capture a
             // varlist that may not be managed (e.g. if there were no ADAPTs
@@ -838,33 +840,33 @@ static void Mark_Frame_Stack_Deep(void)
         // Mark arguments as used, but only as far as parameter filling has
         // gotten (may be garbage bits past that).  Could also be an END value
         // of an in-progress arg fulfillment, but in that case it is protected
-        // by the *evaluating frame's f->out* (!)
+        // by the *evaluating frame's L->out* (!)
         //
         // Refinements need special treatment, and also consideration of if
         // this is the "doing pickups" or not.  If doing pickups then skip the
         // cells for pending refinement arguments.
         //
         Phase(*) phase; // goto would cross initialization
-        phase = FRM_PHASE(f);
+        phase = Level_Phase(L);
         const REBKEY *key;
         const REBKEY *tail;
         key = ACT_KEYS(&tail, phase);
 
         REBVAL *arg;
-        for (arg = FRM_ARGS_HEAD(f); key != tail; ++key, ++arg) {
+        for (arg = Level_Args_Head(L); key != tail; ++key, ++arg) {
             //
             // We only tolerate unfulfilled cells during the fulfillment phase.
             // Once the frame is fulfilled, it may be exposed to usermode code
             // as a FRAME!...and there can be no END/prep cells.
             //
-            // (Note that when key == f->u.action.key, that means that arg is
-            // the output slot for some other frame's f->out...which is a case
+            // (Note that when key == L->u.action.key, that means that arg is
+            // the output slot for some other level's L->out...which is a case
             // where transient FRESHEN() can also leave voids in slots.)
             //
             if (Is_Cell_Erased(arg))
-                assert(f->u.action.key != tail);
+                assert(L->u.action.key != tail);
             else {
-                if (key == f->u.action.key)
+                if (key == L->u.action.key)
                     Queue_Mark_Maybe_Fresh_Cell_Deep(arg);
                 else
                     Queue_Mark_Cell_Deep(arg);
@@ -874,10 +876,10 @@ static void Mark_Frame_Stack_Deep(void)
       propagate_and_continue:;
 
         Propagate_All_GC_Marks();
-        if (f == BOTTOM_FRAME)
+        if (L == BOTTOM_LEVEL)
             break;
 
-        f = f->prior;
+        L = L->prior;
     }
 }
 
@@ -1162,7 +1164,7 @@ REBLEN Recycle_Core(bool shutdown, REBSER *sweeplist)
     // (or deadness) of a series.  If we are shutting down, we do not mark
     // several categories of series...but we do need to run the root marking.
     // (In particular because that is when API series whose lifetimes
-    // are bound to frames will be freed, if the frame is expired.)
+    // are bound to levels will be freed, if the level is expired.)
     //
     Mark_Root_Series();
 
@@ -1173,7 +1175,7 @@ REBLEN Recycle_Core(bool shutdown, REBSER *sweeplist)
 
         Mark_Guarded_Nodes();
 
-        Mark_Frame_Stack_Deep();
+        Mark_Level_Stack_Deep();
 
         Propagate_All_GC_Marks();
     }

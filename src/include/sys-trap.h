@@ -93,12 +93,12 @@
 //    value up to the `catch`, so this isn't needed in that case.)
 //
 // 3. Technically speaking, there's not a need for Fail_Core() to know what
-//    the currently running frame is before it jumps...because any cleanup
+//    the currently running level is before it jumps...because any cleanup
 //    it wants to do, it can do after the jump.  However, there's benefit
 //    that if there's any "bad" situation noticed to be able to intercept
 //    it before the stack state has been lost due to throw()/longjmp()...
 //    a debugger has more information on hand.  For this reason, the
-//    trampoline stores its concept of "current" frame in the jump structure
+//    trampoline stores its concept of "current" level in the jump structure
 //    so it is available to Fail_Core() for automated or manual inspection.
 //
 struct Reb_Jump {
@@ -114,7 +114,7 @@ struct Reb_Jump {
 
     struct Reb_Jump *last_jump;
 
-    Frame(*) frame;  // trampoline caches frame here for flexibility, see [3]
+    Level(*) level;  // trampoline caches level here for flexibility, see [3]
 };
 
 
@@ -229,7 +229,7 @@ struct Reb_Jump {
 //
 //    We make the best of it by using it as an opportunity to keep other
 //    information up to date, like letting the system globally know what
-//    frame the trampoline currently is running (which may not be TOP_FRAME).
+//    level the trampoline currently is running (which may not be TOP_LEVEL).
 //
 #if REBOL_FAIL_USES_LONGJMP
 
@@ -240,7 +240,7 @@ struct Reb_Jump {
         NOOP; /* stops warning when case previous statement was label */ \
         struct Reb_Jump jump;  /* one setjmp() per trampoline invocation */ \
         jump.last_jump = TG_Jump_List; \
-        jump.frame = TOP_FRAME; \
+        jump.level = TOP_LEVEL; \
         jump.error = nullptr; \
         TG_Jump_List = &jump; \
         if (1 == SET_JUMP(jump.cpu_state))  /* beware return value, see [1] */ \
@@ -266,7 +266,7 @@ struct Reb_Jump {
         ; /* in case previous tatement was label */ \
         struct Reb_Jump jump; /* one per trampoline invocation */ \
         jump.last_jump = TG_Jump_List; \
-        jump.frame = TOP_FRAME; \
+        jump.level = TOP_LEVEL; \
         TG_Jump_List = &jump; \
         try /* picks up subsequent {...} block */
 
@@ -284,7 +284,7 @@ struct Reb_Jump {
         ; /* in case previous tatement was label */ \
         struct Reb_Jump jump; /* one per trampoline invocation */ \
         jump.last_jump = TG_Jump_List; \
-        jump.frame = TOP_FRAME; \
+        jump.level = TOP_LEVEL; \
         TG_Jump_List = &jump; \
         if (false) \
             goto abrupt_failure;  /* avoids unreachable code warning */

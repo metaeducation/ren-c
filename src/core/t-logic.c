@@ -311,7 +311,7 @@ inline static bool Math_Arg_For_Logic(REBVAL *arg)
 //  MAKE_Isotope: C
 //
 Bounce MAKE_Isotope(
-    Frame(*) frame_,
+    Level(*) level_,
     enum Reb_Kind kind,
     option(const REBVAL*) parent,
     const REBVAL *arg
@@ -327,7 +327,7 @@ Bounce MAKE_Isotope(
 //
 //  TO_Isotope: C
 //
-Bounce TO_Isotope(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *data) {
+Bounce TO_Isotope(Level(*) level_, enum Reb_Kind kind, const REBVAL *data) {
     return RAISE(Error_Bad_Make(kind, data));
 }
 

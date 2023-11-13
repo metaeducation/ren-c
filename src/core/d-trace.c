@@ -26,7 +26,7 @@
 //
 // Ren-C's goal is to have a fully-featured debugger that should allow a
 // TRACE-like facility to be written and customized by the user.  They would
-// be able to get access on each step to the call frame, and control the
+// be able to get access on each step of the trampoline, and control the
 // evaluator from within.
 //
 // A lower-level trace facility may still be interesting even then, for

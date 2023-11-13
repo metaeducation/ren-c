@@ -517,7 +517,7 @@ Value(*) Time_Between_Dates(
 //  MAKE_Date: C
 //
 Bounce MAKE_Date(
-    Frame(*) frame_,
+    Level(*) level_,
     enum Reb_Kind kind,
     option(const REBVAL*) parent,
     const REBVAL *arg
@@ -637,8 +637,8 @@ Bounce MAKE_Date(
 //
 //  TO_Date: C
 //
-Bounce TO_Date(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg) {
-    return MAKE_Date(frame_, kind, nullptr, arg);
+Bounce TO_Date(Level(*) level_, enum Reb_Kind kind, const REBVAL *arg) {
+    return MAKE_Date(level_, kind, nullptr, arg);
 }
 
 

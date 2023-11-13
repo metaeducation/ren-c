@@ -172,13 +172,13 @@ Special internal defines used by RT, not Host-Kit developers:
 
 // Windows headers define the macros IN and OUT as part of an interface
 // definition language.  Inside of Ren-C the OUT macro is used as a shorthand
-// for accessing `FRM_OUT(frame_)` in a native.  You can #undef the Windows
+// for accessing `Level_Out(level_)` in a native.  You can #undef the Windows
 // macros after you #include <windows.h>, but having the definitions under
 // a switch gives more flexibility to define your own macros and leave the
 // Windows ones alone.
 //
-#if !defined(REBOL_FRAME_SHORTHAND_MACROS)
-    #define REBOL_FRAME_SHORTHAND_MACROS 1
+#if !defined(REBOL_LEVEL_SHORTHAND_MACROS)
+    #define REBOL_LEVEL_SHORTHAND_MACROS 1
 #endif
 
 
@@ -385,8 +385,8 @@ Special internal defines used by RT, not Host-Kit developers:
     #define DEBUG_COUNT_TICKS DEBUG
 #endif
 
-#if !defined(DEBUG_FRAME_LABELS)
-    #define DEBUG_FRAME_LABELS DEBUG
+#if !defined(DEBUG_LEVEL_LABELS)
+    #define DEBUG_LEVEL_LABELS DEBUG
 #endif
 
 #if !defined(DEBUG_UNREADABLE_TRASH)

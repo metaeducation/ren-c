@@ -237,7 +237,7 @@ Array(*) Add_Parameter_Bits_Core(
 //  MAKE_Parameter: C
 //
 Bounce MAKE_Parameter(
-    Frame(*) frame_,
+    Level(*) level_,
     enum Reb_Kind kind,
     option(const REBVAL*) parent,
     const REBVAL *arg
@@ -251,9 +251,9 @@ Bounce MAKE_Parameter(
 //
 //  TO_Parameter: C
 //
-Bounce TO_Parameter(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg)
+Bounce TO_Parameter(Level(*) level_, enum Reb_Kind kind, const REBVAL *arg)
 {
-    return MAKE_Parameter(frame_, kind, nullptr, arg);
+    return MAKE_Parameter(level_, kind, nullptr, arg);
 }
 
 
@@ -288,7 +288,7 @@ void MF_Parameter(REB_MOLD *mo, noquote(Cell(const*)) v, bool form)
 //
 REBTYPE(Parameter)
 {
-    UNUSED(frame_);
+    UNUSED(level_);
     UNUSED(verb);
 
     fail (UNHANDLED);

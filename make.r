@@ -1284,7 +1284,7 @@ switch user-config/debug [
             ; Include debugging features which do not in-and-of-themselves
             ; affect runtime performance (DEBUG_TRACK_EXTEND_CELLS would be an
             ; example of something that significantly affects runtime, and
-            ; even things like DEBUG_FRAME_LABELS adds a tiny bit!)
+            ; even things like DEBUG_LEVEL_LABELS adds a tiny bit!)
             ;
             "DEBUG_HAS_PROBE=1"
             "DEBUG_FANCY_PANIC=1"

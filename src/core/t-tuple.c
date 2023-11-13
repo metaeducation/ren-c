@@ -33,13 +33,13 @@
 // unique behavior which might be interesting for numeric MAKEs.
 //
 Bounce MAKE_Sequence(
-    Frame(*) frame_,
+    Level(*) level_,
     enum Reb_Kind kind,
     option(const REBVAL*) parent,
     const REBVAL *arg
 ){
     if (kind == REB_TEXT or ANY_PATH_KIND(kind))  // delegate for now
-        return MAKE_Path(frame_, kind, parent, arg);
+        return MAKE_Path(level_, kind, parent, arg);
 
     assert(kind == REB_TUPLE);
     if (parent)
@@ -368,12 +368,12 @@ REBTYPE(Sequence)
         //
       case SYM_COPY: {
         if (not ANY_ARRAYLIKE(sequence))
-            return Copy_Cell(frame_->out, sequence);
+            return Copy_Cell(level_->out, sequence);
 
         enum Reb_Kind kind = VAL_TYPE(sequence);
         mutable_HEART_BYTE(sequence) = REB_BLOCK;
 
-        Atom(*) r = Atom_From_Bounce(T_Array(frame_, verb));
+        Atom(*) r = Atom_From_Bounce(T_Array(level_, verb));
         assert(CELL_HEART(r) == REB_BLOCK);
 
         if (r != OUT)

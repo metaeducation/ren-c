@@ -63,7 +63,7 @@
 //   the arguments were frequently passed around by pointer (vs. using a
 //   StackIndex position).  This was bad since the data stack could relocate
 //   its contents due to growth.  This has completely changed in Ren-C, with
-//   memory-pooled frames and stacklessness (see %c-trampoline.c)
+//   memory-pooled levels and stacklessness (see %c-trampoline.c)
 //
 
 // The result of PUSH() and TOP is not REBVAL*, but StackValue(*).  In an
@@ -278,7 +278,7 @@ inline static void Drop_Data_Stack_To(StackIndex i) {
 
 // If Pop_Stack_Values_Core is used ARRAY_HAS_FILE_LINE, it means the system
 // will try to capture the file and line number associated with the current
-// frame into the generated array.  But if there are other flags--like
+// level into the generated array.  But if there are other flags--like
 // ARRAY_FLAG_IS_DETAILS or ARRAY_FLAG_IS_VARLIST--you don't want to do
 // this, because the ->link and ->misc fields have other uses.
 //

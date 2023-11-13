@@ -85,7 +85,7 @@ DECLARE_NATIVE(delimit)
 
     if (IS_TEXT(line) or IS_ISSUE(line)) {  // can shortcut, no evals needed
         //
-        // Note: It's hard to unify this mold with the mold that uses a frame
+        // Note: It's hard to unify this mold with code below that uses a level
         // due to the asserts on states balancing.  Easiest to repeat a small
         // bit of code!
         //
@@ -107,14 +107,14 @@ DECLARE_NATIVE(delimit)
         return Init_Text(OUT, Pop_Molded_String(mo));
     }
 
-    Flags flags = FRAME_MASK_NONE;
+    Flags flags = LEVEL_MASK_NONE;
     if (IS_THE_BLOCK(ARG(line)))
         flags |= EVAL_EXECUTOR_FLAG_NO_EVALUATIONS;
     else
         assert(IS_BLOCK(line));
 
-    Frame(*) f = Make_Frame_At(line, flags);
-    Push_Frame(OUT, f);
+    Level(*) L = Make_Level_At(line, flags);
+    Push_Level(OUT, L);
 
     DECLARE_MOLD (mo);
     Push_Mold(mo);
@@ -128,10 +128,10 @@ DECLARE_NATIVE(delimit)
     bool pending = false;  // pending delimiter output, *if* more non-nulls
     bool nothing = true;  // any elements seen so far have been null or blank
 
-    for (; Not_Frame_At_End(f); Restart_Evaluator_Frame(f)) {
-        if (Eval_Step_Throws(OUT, f)) {
+    for (; Not_Level_At_End(L); Restart_Evaluator_Level(L)) {
+        if (Eval_Step_Throws(OUT, L)) {
             Drop_Mold(mo);
-            Drop_Frame(f);
+            Drop_Level(L);
             return THROWN;
         }
 
@@ -175,7 +175,7 @@ DECLARE_NATIVE(delimit)
 
             pending = true;  // note this includes empty strings, see [5]
         }
-    } while (Not_Frame_At_End(f));
+    } while (Not_Level_At_End(L));
 
     if (nothing) {
         Drop_Mold(mo);
@@ -187,7 +187,7 @@ DECLARE_NATIVE(delimit)
         Init_Text(OUT, Pop_Molded_String(mo));
     }
 
-    Drop_Frame(f);
+    Drop_Level(L);
 
     return OUT;
 }

@@ -49,12 +49,11 @@ enum {
 };
 
 
-Bounce Downshot_Dispatcher(Frame(*) f)  // runs until count is reached
+Bounce Downshot_Dispatcher(Level(*) L)  // runs until count is reached
 {
-    Frame(*) frame_ = f;  // for RETURN macros
+    Level(*) level_ = L;  // for RETURN macros
 
-    Phase(*) phase = FRM_PHASE(f);
-    Details(*) details = ACT_DETAILS(phase);
+    Details(*) details = ACT_DETAILS(PHASE);
     assert(ARR_LEN(details) == IDX_ONESHOT_MAX);
 
     Cell(*) n = DETAILS_AT(details, IDX_ONESHOT_COUNTER);
@@ -62,17 +61,16 @@ Bounce Downshot_Dispatcher(Frame(*) f)  // runs until count is reached
         return nullptr;  // always return null once 0 is reached
     mutable_VAL_INT64(n) -= 1;
 
-    Value(*) code = FRM_ARG(f, 2);  // skip the RETURN
+    Value(*) code = Level_Arg(L, 2);  // skip the RETURN
     return DELEGATE_BRANCH(OUT, code);
 }
 
 
-Bounce Upshot_Dispatcher(Frame(*) f)  // won't run until count is reached
+Bounce Upshot_Dispatcher(Level(*) L)  // won't run until count is reached
 {
-    Frame(*) frame_ = f;
+    Level(*) level_ = L;
 
-    Phase(*) phase = FRM_PHASE(f);
-    Details(*) details = ACT_DETAILS(phase);
+    Details(*) details = ACT_DETAILS(PHASE);
     assert(ARR_LEN(details) == IDX_ONESHOT_MAX);
 
     Cell(*) n = DETAILS_AT(details, IDX_ONESHOT_COUNTER);
@@ -81,7 +79,7 @@ Bounce Upshot_Dispatcher(Frame(*) f)  // won't run until count is reached
         return nullptr;  // return null until 0 is reached
     }
 
-    Value(*) code = FRM_ARG(f, 2);  // skip the RETURN
+    Value(*) code = Level_Arg(L, 2);  // skip the RETURN
     return DELEGATE_BRANCH(OUT, code);
 }
 

@@ -210,7 +210,7 @@ if use-librebol [
         proto-name: to-c-name proto-name
         e1/emit [info u-m-name] {
             #define ${U-M-NAME}_INCLUDE_PARAMS_OF_${PROTO-NAME} \
-                (void)frame_
+                (void)level_
         }
         e1/emit newline
     ]
@@ -248,7 +248,7 @@ if use-librebol [
         */
         #undef DECLARE_NATIVE
         #define DECLARE_NATIVE(n) \
-            REBVAL* N_${MOD}_##n(void* frame_)
+            REBVAL* N_${MOD}_##n(void* level_)
     }
 ]
 else [
@@ -259,7 +259,7 @@ else [
         */
         #undef DECLARE_NATIVE
         #define DECLARE_NATIVE(n) \
-            Bounce N_${MOD}_##n(Frame(*) frame_)
+            Bounce N_${MOD}_##n(Level(*) level_)
     }
 ]
 

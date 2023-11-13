@@ -48,10 +48,10 @@
 //
 bool Try_Catch_Break_Or_Continue(
     Sink(Value(*)) out,
-    Frame(*) frame_,
+    Level(*) level_,
     bool* breaking
 ){
-    Value(const*) label = VAL_THROWN_LABEL(frame_);
+    Value(const*) label = VAL_THROWN_LABEL(level_);
 
     // Throw /NAME-s used by CONTINUE and BREAK are the actual native
     // function values of the routines themselves.
@@ -60,7 +60,7 @@ bool Try_Catch_Break_Or_Continue(
         return false;
 
     if (ACT_DISPATCHER(VAL_ACTION(label)) == &N_break) {
-        CATCH_THROWN(out, frame_);
+        CATCH_THROWN(out, level_);
         Init_Trash(out);  // caller must interpret breaking flag
         *breaking = true;
         return true;
@@ -72,7 +72,7 @@ bool Try_Catch_Break_Or_Continue(
         // for CONTINUE void (the form with an argument).  This makes sense
         // in cases like MAP-EACH (one wants a continue to not add any value)
         //
-        CATCH_THROWN(out, frame_);
+        CATCH_THROWN(out, level_);
         ASSERT_STABLE(out);  // CONTINUE doesn't take unstable /WITH
         *breaking = false;
         return true;
@@ -98,7 +98,7 @@ DECLARE_NATIVE(break)
 {
     INCLUDE_PARAMS_OF_BREAK;
 
-    return Init_Thrown_With_Label(FRAME, Lib(NULL), Lib(BREAK));
+    return Init_Thrown_With_Label(LEVEL, Lib(NULL), Lib(BREAK));
 }
 
 
@@ -124,7 +124,7 @@ DECLARE_NATIVE(continue)
     if (not REF(with))
         Init_Void(v);  // See: https://forum.rebol.info/t/1965/3
 
-    return Init_Thrown_With_Label(FRAME, v, Lib(CONTINUE));
+    return Init_Thrown_With_Label(LEVEL, v, Lib(CONTINUE));
 }
 
 
@@ -132,7 +132,7 @@ DECLARE_NATIVE(continue)
 //  Loop_Series_Common: C
 //
 static Bounce Loop_Series_Common(
-    Frame(*) frame_,
+    Level(*) level_,
     REBVAL *var, // Must not be movable from context expansion, see #2274
     const REBVAL *body,
     REBVAL *start,
@@ -159,7 +159,7 @@ static Bounce Loop_Series_Common(
     if (s == end) {
         if (Do_Branch_Throws(OUT, body)) {
             bool breaking;
-            if (not Try_Catch_Break_Or_Continue(OUT, FRAME, &breaking))
+            if (not Try_Catch_Break_Or_Continue(OUT, LEVEL, &breaking))
                 return THROWN;
 
             if (breaking)
@@ -183,7 +183,7 @@ static Bounce Loop_Series_Common(
     ){
         if (Do_Branch_Throws(OUT, body)) {
             bool breaking;
-            if (not Try_Catch_Break_Or_Continue(OUT, FRAME, &breaking))
+            if (not Try_Catch_Break_Or_Continue(OUT, LEVEL, &breaking))
                 return THROWN;
 
             if (breaking)
@@ -218,7 +218,7 @@ static Bounce Loop_Series_Common(
 //  Loop_Integer_Common: C
 //
 static Bounce Loop_Integer_Common(
-    Frame(*) frame_,
+    Level(*) level_,
     REBVAL *var,  // Must not be movable from context expansion, see #2274
     const REBVAL *body,
     REBI64 start,
@@ -238,7 +238,7 @@ static Bounce Loop_Integer_Common(
     if (start == end) {
         if (Do_Branch_Throws(OUT, body)) {
             bool breaking;
-            if (not Try_Catch_Break_Or_Continue(OUT, FRAME, &breaking))
+            if (not Try_Catch_Break_Or_Continue(OUT, LEVEL, &breaking))
                 return THROWN;
 
             if (breaking)
@@ -258,7 +258,7 @@ static Bounce Loop_Integer_Common(
     while (counting_up ? *state <= end : *state >= end) {
         if (Do_Branch_Throws(OUT, body)) {
             bool breaking;
-            if (not Try_Catch_Break_Or_Continue(OUT, FRAME, &breaking))
+            if (not Try_Catch_Break_Or_Continue(OUT, LEVEL, &breaking))
                 return THROWN;
 
             if (breaking)
@@ -280,7 +280,7 @@ static Bounce Loop_Integer_Common(
 //  Loop_Number_Common: C
 //
 static Bounce Loop_Number_Common(
-    Frame(*) frame_,
+    Level(*) level_,
     REBVAL *var,  // Must not be movable from context expansion, see #2274
     const REBVAL *body,
     REBVAL *start,
@@ -323,7 +323,7 @@ static Bounce Loop_Number_Common(
     if (s == e) {
         if (Do_Branch_Throws(OUT, body)) {
             bool breaking;
-            if (not Try_Catch_Break_Or_Continue(OUT, FRAME, &breaking))
+            if (not Try_Catch_Break_Or_Continue(OUT, LEVEL, &breaking))
                 return THROWN;
 
             if (breaking)
@@ -341,7 +341,7 @@ static Bounce Loop_Number_Common(
     while (counting_up ? *state <= e : *state >= e) {
         if (Do_Branch_Throws(OUT, body)) {
             bool breaking;
-            if (not Try_Catch_Break_Or_Continue(OUT, FRAME, &breaking))
+            if (not Try_Catch_Break_Or_Continue(OUT, LEVEL, &breaking))
                 return THROWN;
 
             if (breaking)
@@ -423,7 +423,7 @@ DECLARE_NATIVE(cfor)
         and IS_INTEGER(ARG(bump))
     ){
         return Loop_Integer_Common(
-            frame_,
+            level_,
             var,
             ARG(body),
             VAL_INT64(ARG(start)),
@@ -437,7 +437,7 @@ DECLARE_NATIVE(cfor)
     if (ANY_SERIES(ARG(start))) {
         if (ANY_SERIES(ARG(end))) {
             return Loop_Series_Common(
-                frame_,
+                level_,
                 var,
                 ARG(body),
                 ARG(start),
@@ -447,7 +447,7 @@ DECLARE_NATIVE(cfor)
         }
         else {
             return Loop_Series_Common(
-                frame_,
+                level_,
                 var,
                 ARG(body),
                 ARG(start),
@@ -458,7 +458,7 @@ DECLARE_NATIVE(cfor)
     }
 
     return Loop_Number_Common(
-        frame_, var, ARG(body), ARG(start), ARG(end), ARG(bump)
+        level_, var, ARG(body), ARG(start), ARG(end), ARG(bump)
     );
 }
 
@@ -530,7 +530,7 @@ DECLARE_NATIVE(for_skip)
 
         if (Do_Branch_Throws(OUT, ARG(body))) {
             bool breaking;
-            if (not Try_Catch_Break_Or_Continue(OUT, FRAME, &breaking))
+            if (not Try_Catch_Break_Or_Continue(OUT, LEVEL, &breaking))
                 return THROWN;
 
             if (breaking)
@@ -583,7 +583,7 @@ DECLARE_NATIVE(stop)  // See CYCLE for notes about STOP
     if (not REF(with))
         Init_Void(v);  // See: https://forum.rebol.info/t/1965/3
 
-    return Init_Thrown_With_Label(FRAME, v, Lib(STOP));
+    return Init_Thrown_With_Label(LEVEL, v, Lib(STOP));
 }
 
 
@@ -644,19 +644,19 @@ DECLARE_NATIVE(cycle)
 } handle_thrown: {  /////////////////////////////////////////////////////////
 
     bool breaking;
-    if (Try_Catch_Break_Or_Continue(OUT, FRAME, &breaking)) {
+    if (Try_Catch_Break_Or_Continue(OUT, LEVEL, &breaking)) {
         if (breaking)
             return nullptr;
 
         return CATCH_CONTINUE(OUT, body);  // plain continue
     }
 
-    const REBVAL *label = VAL_THROWN_LABEL(FRAME);
+    const REBVAL *label = VAL_THROWN_LABEL(LEVEL);
     if (
         IS_FRAME(label)
         and ACT_DISPATCHER(VAL_ACTION(label)) == &N_stop
     ){
-        CATCH_THROWN(OUT, FRAME);  // Unlike BREAK, STOP takes an arg--see [1]
+        CATCH_THROWN(OUT, LEVEL);  // Unlike BREAK, STOP takes an arg--see [1]
 
         if (Is_Void(OUT))  // STOP with no arg, void usually reserved, see [2]
             return Init_Heavy_Void(OUT);
@@ -1004,7 +1004,7 @@ DECLARE_NATIVE(for_each)
         ST_FOR_EACH_RUNNING_BODY
     };
 
-    if (Get_Frame_Flag(frame_, ABRUPT_FAILURE))  // a fail() in this dispatcher
+    if (Get_Level_Flag(level_, ABRUPT_FAILURE))  // a fail() in this dispatcher
         goto finalize_for_each;
 
     switch (STATE) {
@@ -1025,7 +1025,7 @@ DECLARE_NATIVE(for_each)
     Init_Object(ARG(vars), pseudo_vars_ctx);  // keep GC safe
 
     Init_Loop_Each(iterator, data);
-    Set_Frame_Flag(frame_, NOTIFY_ON_ABRUPT_FAILURE);  // to clean up iterator
+    Set_Level_Flag(level_, NOTIFY_ON_ABRUPT_FAILURE);  // to clean up iterator
 
     goto next_iteration;
 
@@ -1040,7 +1040,7 @@ DECLARE_NATIVE(for_each)
 } body_result_in_spare_or_threw: {  //////////////////////////////////////////
 
     if (THROWING) {
-        if (not Try_Catch_Break_Or_Continue(OUT, FRAME, &breaking))
+        if (not Try_Catch_Break_Or_Continue(OUT, LEVEL, &breaking))
             goto finalize_for_each;
 
         if (breaking)
@@ -1114,7 +1114,7 @@ DECLARE_NATIVE(every)
         ST_EVERY_RUNNING_BODY
     };
 
-    if (Get_Frame_Flag(frame_, ABRUPT_FAILURE))  // a fail() in this dispatcher
+    if (Get_Level_Flag(level_, ABRUPT_FAILURE))  // a fail() in this dispatcher
         goto finalize_every;
 
     switch (STATE) {
@@ -1135,7 +1135,7 @@ DECLARE_NATIVE(every)
     Init_Object(ARG(vars), pseudo_vars_ctx);  // keep GC safe
 
     Init_Loop_Each(iterator, data);
-    Set_Frame_Flag(frame_, NOTIFY_ON_ABRUPT_FAILURE);  // to clean up iterator
+    Set_Level_Flag(level_, NOTIFY_ON_ABRUPT_FAILURE);  // to clean up iterator
 
     goto next_iteration;
 
@@ -1151,7 +1151,7 @@ DECLARE_NATIVE(every)
 
     if (THROWING) {
         bool breaking;
-        if (not Try_Catch_Break_Or_Continue(SPARE, FRAME, &breaking))
+        if (not Try_Catch_Break_Or_Continue(SPARE, LEVEL, &breaking))
             goto finalize_every;
 
         if (breaking) {
@@ -1327,7 +1327,7 @@ DECLARE_NATIVE(remove_each)
         }
 
         if (Do_Any_Array_At_Throws(OUT, body, SPECIFIED)) {
-            if (not Try_Catch_Break_Or_Continue(OUT, FRAME, &breaking)) {
+            if (not Try_Catch_Break_Or_Continue(OUT, LEVEL, &breaking)) {
                 threw = true;
                 goto finalize_remove_each;
             }
@@ -1353,7 +1353,7 @@ DECLARE_NATIVE(remove_each)
         else if (Is_Isotope(OUT)) {  // don't decay isotopes, see [5]
             threw = true;
             Init_Error(SPARE, Error_Bad_Isotope(OUT));
-            Init_Thrown_With_Label(FRAME, Lib(NULL), stable_SPARE);
+            Init_Thrown_With_Label(LEVEL, Lib(NULL), stable_SPARE);
             goto finalize_remove_each;
         }
         else if (Is_Blackhole(OUT)) {  // do remove
@@ -1365,7 +1365,7 @@ DECLARE_NATIVE(remove_each)
                 SPARE,
                 Error_User("Use [LOGIC! NULL BLACKHOLE VOID] with REMOVE-EACH")
             );
-            Init_Thrown_With_Label(FRAME, Lib(NULL), stable_SPARE);
+            Init_Thrown_With_Label(LEVEL, Lib(NULL), stable_SPARE);
             goto finalize_remove_each;
         }
 
@@ -1566,11 +1566,11 @@ DECLARE_NATIVE(map_each)
     if (not IS_BLANK(ARG(data)))
         Quotify(ARG(data), 1);
 
-    INIT_FRM_PHASE(frame_, ACT_IDENTITY(VAL_ACTION(Lib(MAP))));
-    // INIT_FRM_BINDING ?
+    INIT_LVL_PHASE(LEVEL, ACT_IDENTITY(VAL_ACTION(Lib(MAP))));
+    // INIT_LVL_BINDING ?
 
     Dispatcher* dispatcher = ACT_DISPATCHER(VAL_ACTION(Lib(MAP)));
-    return dispatcher(frame_);
+    return dispatcher(LEVEL);
 }
 
 
@@ -1615,7 +1615,7 @@ DECLARE_NATIVE(map)
         ST_MAP_RUNNING_BODY
     };
 
-    if (Get_Frame_Flag(frame_, ABRUPT_FAILURE))  // a fail() in this dispatcher
+    if (Get_Level_Flag(level_, ABRUPT_FAILURE))  // a fail() in this dispatcher
         goto finalize_map;
 
     switch (STATE) {
@@ -1653,7 +1653,7 @@ DECLARE_NATIVE(map)
     Init_Object(ARG(vars), pseudo_vars_ctx);  // keep GC safe
 
     Init_Loop_Each(iterator, data);
-    Set_Frame_Flag(frame_, NOTIFY_ON_ABRUPT_FAILURE);  // to clean up iterator
+    Set_Level_Flag(level_, NOTIFY_ON_ABRUPT_FAILURE);  // to clean up iterator
 
     goto next_iteration;
 
@@ -1669,7 +1669,7 @@ DECLARE_NATIVE(map)
 
     if (THROWING) {
         bool breaking;
-        if (not Try_Catch_Break_Or_Continue(SPARE, FRAME, &breaking))
+        if (not Try_Catch_Break_Or_Continue(SPARE, LEVEL, &breaking))
             goto finalize_map;
 
         if (breaking) {
@@ -1692,7 +1692,7 @@ DECLARE_NATIVE(map)
     }
     else if (Is_Isotope(SPARE)) {
         Init_Error(SPARE, Error_Bad_Isotope(SPARE));
-        Init_Thrown_Error(FRAME, stable_SPARE);
+        Init_Thrown_Error(LEVEL, stable_SPARE);
         goto finalize_map;
     }
     else if (Is_Nulled(SPARE)) {
@@ -1783,7 +1783,7 @@ DECLARE_NATIVE(repeat)
 
     if (THROWING) {
         bool breaking;
-        if (not Try_Catch_Break_Or_Continue(OUT, FRAME, &breaking))
+        if (not Try_Catch_Break_Or_Continue(OUT, LEVEL, &breaking))
             return THROWN;
 
         if (breaking)
@@ -1864,7 +1864,7 @@ DECLARE_NATIVE(for)
         //
         rebPushContinuation(
             cast(REBVAL*, OUT),  // <-- output cell
-            FRAME_MASK_NONE,
+            LEVEL_MASK_NONE,
             Canon(FOR_EACH), ARG(vars), rebQ(value), body
         );
         return BOUNCE_DELEGATE;
@@ -1892,7 +1892,7 @@ DECLARE_NATIVE(for)
 
     if (THROWING) {
         bool breaking;
-        if (not Try_Catch_Break_Or_Continue(OUT, FRAME, &breaking))
+        if (not Try_Catch_Break_Or_Continue(OUT, LEVEL, &breaking))
             return THROWN;
 
         if (breaking)
@@ -1974,7 +1974,7 @@ DECLARE_NATIVE(until)
 
     if (THROWING) {
         bool breaking;
-        if (not Try_Catch_Break_Or_Continue(OUT, FRAME, &breaking))
+        if (not Try_Catch_Break_Or_Continue(OUT, LEVEL, &breaking))
             return THROWN;
 
         if (breaking)
@@ -2093,7 +2093,7 @@ DECLARE_NATIVE(while)
 
     if (THROWING) {
         bool breaking;
-        if (not Try_Catch_Break_Or_Continue(OUT, FRAME, &breaking))
+        if (not Try_Catch_Break_Or_Continue(OUT, LEVEL, &breaking))
             return THROWN;
 
         if (breaking)

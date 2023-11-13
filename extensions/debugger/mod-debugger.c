@@ -67,7 +67,7 @@ bool Do_Breakpoint_Throws(
     REBVAL *inst = rebValue("debug-console");
 
     if (IS_INTEGER(inst)) {
-        Init_Thrown_With_Label(TOP_FRAME, inst, Lib(QUIT));
+        Init_Thrown_With_Label(TOP_LEVEL, inst, Lib(QUIT));
         rebRelease(inst);
         return true;
     }
@@ -205,21 +205,21 @@ DECLARE_NATIVE(resume)
     }
 
     // We throw with /NAME as identity of the RESUME function.  (Note: there
-    // is no NATIVE() variant for extensions yet.  Extract from current frame.)
+    // is no NATIVE() variant for extensions yet.  Extract from current level.)
     //
     DECLARE_STABLE (resume);
     Init_Frame_Details(
         resume,
-        FRM_PHASE(frame_),
-        FRM_LABEL(frame_),
-        FRM_BINDING(frame_)
+        Level_Phase(LEVEL),
+        Level_Label(LEVEL),
+        Level_Binding(LEVEL)
     );
 
     // We don't want to run the expression yet.  If we tried to run code from
     // this stack level--and it failed or threw--we'd stay stuck in the
     // breakpoint's sandbox.  We throw it as-is and it gets evaluated later.
     //
-    return Init_Thrown_With_Label(FRAME, expr, resume);
+    return Init_Thrown_With_Label(LEVEL, expr, resume);
 }
 
 

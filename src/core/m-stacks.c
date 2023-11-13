@@ -106,36 +106,36 @@ void Shutdown_Feeds(void) {
 
 
 //
-//  Startup_Frame_Stack: C
+//  Startup_Level_Stack: C
 //
-// 1. We always push one unused frame at the top of the stack.  This way, it
-//    is not necessary for unused frames to check if `f->prior` is null; it
+// 1. We always push one unused level at the bottom of the stack.  This way, it
+//    is not necessary for used levels to check if `L->prior` is null; it
 //    may be assumed that it never is.
 //
-// 2. Also: since frames are needed to track API handles, this permits making
+// 2. Also: since levels are needed to track API handles, this permits making
 //    API handles for things that come into existence at boot and aren't freed
-//    until shutdown, as they attach to this frame.
+//    until shutdown, as they attach to this level.
 //
-void Startup_Frame_Stack(void)
+void Startup_Level_Stack(void)
 {
-    assert(TG_Top_Frame == nullptr);
-    assert(TG_Bottom_Frame == nullptr);
+    assert(TG_Top_Level == nullptr);
+    assert(TG_Bottom_Level == nullptr);
 
-    Frame(*) f = Make_End_Frame(FRAME_MASK_NONE);  // ensure f->prior, see [1]
-    Push_Frame(nullptr, f);  // global API handles attach here, see [2]
+    Level(*) L = Make_End_Level(LEVEL_MASK_NONE);  // ensure L->prior, see [1]
+    Push_Level(nullptr, L);  // global API handles attach here, see [2]
 
-    TRASH_POINTER_IF_DEBUG(f->prior);  // catches enumeration past BOTTOM_FRAME
-    TG_Bottom_Frame = f;
+    TRASH_POINTER_IF_DEBUG(L->prior);  // catches enumeration past BOTTOM_LEVEL
+    TG_Bottom_Level = L;
 
-    assert(TOP_FRAME == f and BOTTOM_FRAME == f);
+    assert(TOP_LEVEL == L and BOTTOM_LEVEL == L);
 }
 
 
 //
-//  Shutdown_Frame_Stack: C
+//  Shutdown_Level_Stack: C
 //
 // 1. To stop enumerations from using nullptr to stop the walk, and not count
-//    the bottom frame as a "real stack level", it had a trash pointer put
+//    the bottom level as a "real stack level", it had a trash pointer put
 //    in the debug build.  Restore it to a typical null before the drop.
 //
 // 2. There's a Catch-22 on checking the balanced state for outstanding
@@ -143,38 +143,38 @@ void Startup_Frame_Stack(void)
 //    is freed because it would look like it was a leaked series, but it
 //    can't check *after* because the mold buffer balance check would crash.
 //
-void Shutdown_Frame_Stack(void)
+void Shutdown_Level_Stack(void)
 {
-    assert(TOP_FRAME == BOTTOM_FRAME);
+    assert(TOP_LEVEL == BOTTOM_LEVEL);
 
-    assert(IS_POINTER_TRASH_DEBUG(TG_Bottom_Frame->prior));  // trash, see [1]
-    TG_Bottom_Frame->prior = nullptr;
+    assert(IS_POINTER_TRASH_DEBUG(TG_Bottom_Level->prior));  // trash, see [1]
+    TG_Bottom_Level->prior = nullptr;
 
   blockscope {
-    Frame(*) f = TOP_FRAME;
-    Drop_Frame_Core(f);  // can't Drop_Frame()/Drop_Frame_Unbalanced(), see [2]
-    assert(not TOP_FRAME);
+    Level(*) L = TOP_LEVEL;
+    Drop_Level_Core(L);  // can't Drop_Level()/Drop_Level_Unbalanced(), see [2]
+    assert(not TOP_LEVEL);
   }
 
-    TG_Top_Frame = nullptr;
-    TG_Bottom_Frame = nullptr;
+    TG_Top_Level = nullptr;
+    TG_Bottom_Level = nullptr;
 
   #if !defined(NDEBUG)
   blockscope {
-    Segment* seg = Mem_Pools[FRAME_POOL].segments;
+    Segment* seg = Mem_Pools[LEVEL_POOL].segments;
 
     for (; seg != nullptr; seg = seg->next) {
-        Count n = Mem_Pools[FRAME_POOL].num_units_per_segment;
+        Count n = Mem_Pools[LEVEL_POOL].num_units_per_segment;
         Byte* unit = cast(Byte*, seg + 1);
 
-        for (; n > 0; --n, unit += Mem_Pools[FRAME_POOL].wide) {
-            Frame(*) f = cast(Frame(*), unit);  // ^-- pool size may round up
-            if (IS_FREE_NODE(f))
+        for (; n > 0; --n, unit += Mem_Pools[LEVEL_POOL].wide) {
+            Level(*) L = cast(Level(*), unit);  // ^-- pool size may round up
+            if (IS_FREE_NODE(L))
                 continue;
           #if DEBUG_COUNT_TICKS
             printf(
                 "** FRAME LEAKED at tick %lu\n",
-                cast(unsigned long, f->tick)
+                cast(unsigned long, L->tick)
             );
           #else
             assert(!"** FRAME LEAKED but DEBUG_COUNT_TICKS not enabled");
@@ -224,18 +224,18 @@ void Shutdown_Frame_Stack(void)
 //
 Context(*) Get_Context_From_Stack(void)
 {
-    Frame(*) f = TOP_FRAME;
+    Level(*) L = TOP_LEVEL;
     Phase(*) phase = nullptr;  // avoid uninitialized variable warning
 
-    for (; f != BOTTOM_FRAME; f = f->prior) {
-        if (not Is_Action_Frame(f))
+    for (; L != BOTTOM_LEVEL; L = L->prior) {
+        if (not Is_Action_Level(L))
             continue;
 
-        phase = FRM_PHASE(f);
+        phase = Level_Phase(L);
         break;
     }
 
-    if (f == BOTTOM_FRAME) {
+    if (L == BOTTOM_LEVEL) {
         //
         // No natives are in effect, so this is API code running directly from
         // an `int main()`.  Previously this always ran in the user context,

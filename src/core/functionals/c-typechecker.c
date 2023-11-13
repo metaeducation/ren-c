@@ -284,16 +284,16 @@ bool Typecheck_Value(
             }
 
             Flags flags = 0;
-            Frame(*) f = Make_End_Frame(
+            Level(*) L = Make_End_Level(
                 FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING) | flags
             );
-            Push_Action(f, VAL_ACTION(test), VAL_FRAME_BINDING(test));
-            Begin_Prefix_Action(f, VAL_FRAME_LABEL(test));
+            Push_Action(L, VAL_ACTION(test), VAL_FRAME_BINDING(test));
+            Begin_Prefix_Action(L, VAL_FRAME_LABEL(test));
 
-            const REBKEY *key = f->u.action.key;
-            const REBPAR *param = f->u.action.param;
-            Atom(*) arg = f->u.action.arg;
-            for (; key != f->u.action.key_tail; ++key, ++param, ++arg) {
+            const REBKEY *key = L->u.action.key;
+            const REBPAR *param = L->u.action.param;
+            Atom(*) arg = L->u.action.arg;
+            for (; key != L->u.action.key_tail; ++key, ++param, ++arg) {
                 if (Is_Specialized(param))
                     Copy_Cell(arg, param);
                 else
@@ -301,7 +301,7 @@ bool Typecheck_Value(
                 assert(Is_Stable(arg));
             }
 
-            arg = First_Unspecialized_Arg(&param, f);
+            arg = First_Unspecialized_Arg(&param, L);
             if (not arg)
                 fail (Error_No_Arg_Typecheck(label));  // must take argument
 
@@ -311,18 +311,18 @@ bool Typecheck_Value(
                 Meta_Quotify(arg);
 
             if (not Typecheck_Coerce_Argument(param, arg)) {
-                Drop_Action(f);
+                Drop_Action(L);
                 if (match_all)
                     return false;
                 continue;
             }
 
-            Push_Frame(spare, f);
+            Push_Level(spare, L);
 
             if (Trampoline_With_Top_As_Root_Throws())
-                fail (Error_No_Catch_For_Throw(TOP_FRAME));
+                fail (Error_No_Catch_For_Throw(TOP_LEVEL));
 
-            Drop_Frame(f);
+            Drop_Level(L);
 
             if (not IS_LOGIC(spare))
                 fail (Error_No_Logic_Typecheck(label));

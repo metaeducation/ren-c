@@ -76,7 +76,7 @@
 
     #define VAL(p)          x_cast(REBVAL*, (p))
 
-    #define FRM(p)          x_cast(Frame(*), (p))
+    #define LVL(p)          x_cast(Level(*), (p))
 #else
 
   #if (! CPLUSPLUS_11)
@@ -278,12 +278,12 @@
       { return cast(const REBVAL*, p); }
 
     template <class T>
-    inline Frame(*) FRM(T *p) {
+    inline Level(*) LVL(T *p) {
         constexpr bool base = std::is_same<T, void>::value
             or std::is_same<T, Node>::value
-            or std::is_same<T, Reb_Frame>::value;
+            or std::is_same<T, Reb_Level>::value;
 
-        static_assert(base, "FRM() works on void* Node* Frame*");
+        static_assert(base, "LVL() works on void* Node* Level*");
 
         if (not p)
             return nullptr;
@@ -297,7 +297,7 @@
             panic (p);
         }
 
-        return reinterpret_cast<Frame(*)>(p);
+        return reinterpret_cast<Level(*)>(p);
     }
 #endif
 

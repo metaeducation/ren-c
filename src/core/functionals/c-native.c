@@ -55,14 +55,15 @@ Intrinsic* Extract_Intrinsic(Action(*) action)
 // run intrinsics using this thin wrapper of a dispatcher as if they were
 // ordinary natives.
 //
-Bounce Intrinsic_Dispatcher(Frame(*) f)
+Bounce Intrinsic_Dispatcher(Level(*) L)
 {
-    Frame(*) frame_ = f;
-    Value(*) arg = FRM_ARG(f, 2);  // skip the RETURN
-    Phase(*) phase = FRM_PHASE(f);
+    Level(*) level_ = L;
 
-    Intrinsic* intrinsic = Extract_Intrinsic(phase);
-    (*intrinsic)(OUT, phase, arg);  // typechecking done when frame was built
+    assert(ACT_HAS_RETURN(PHASE));
+    Value(*) arg = Level_Arg(L, 2);  // skip the RETURN
+
+    Intrinsic* intrinsic = Extract_Intrinsic(PHASE);
+    (*intrinsic)(OUT, PHASE, arg);  // typechecking done when frame was built
 
     return OUT;
 }
@@ -340,7 +341,7 @@ Array(*) Startup_Natives(const REBVAL *boot_natives)
 
     DECLARE_LOCAL (discarded);
     if (Do_Any_Array_At_Throws(discarded, skipped, SPECIFIED))
-        panic (Error_No_Catch_For_Throw(TOP_FRAME));
+        panic (Error_No_Catch_For_Throw(TOP_LEVEL));
     if (not Is_Word_Isotope_With_Id(discarded, SYM_DONE))
         panic (discarded);
 

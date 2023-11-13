@@ -1,6 +1,6 @@
 //
 //  File: %exec-scan.h
-//  Summary: {Flags and Frame State for Scanner_Executor()}
+//  Summary: {Flags and Level State for Scanner_Executor()}
 //  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  Homepage: https://github.com/metaeducation/ren-c/
 //
@@ -19,10 +19,10 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // The executor state has to be defined in order to be used (easily) in the
-// union of the Reb_Frame.
+// union of the Reb_Level.
 //
 
-// (Note: %sys-do.h needs to call into the scanner if Fetch_Next_In_Frame() is
+// (Note: %sys-do.h needs to call into the scanner if Fetch_Next_In_Feed() is
 // to be inlined at all--at its many time-critical callsites--so the scanner
 // has to be in the internal API)
 //
@@ -39,7 +39,7 @@
 // value to be scanned will receive the flag.
 //
 #define SCAN_EXECUTOR_FLAG_NEWLINE_PENDING \
-    FRAME_FLAG_24
+    LEVEL_FLAG_24
 
 
 //=//// SCAN_EXECUTOR_FLAG_JUST_ONCE //////////////////////////////////////=//
@@ -47,18 +47,17 @@
 // Supporting flag for TRANSCODE/NEXT
 //
 #define SCAN_EXECUTOR_FLAG_JUST_ONCE \
-    FRAME_FLAG_25
+    LEVEL_FLAG_25
 
 
 //=//// SCAN_EXECUTOR_FLAG_NULLEDS_LEGAL //////////////////////////////////=//
 //
 // NULL splice in top level of rebValue()
 //
-// !!! Appears no longer used; pure NULL now always splices as ~_~ QUASI!
-// That's probably a bad idea.
+// !!! Appears no longer used; pure NULL now always splices as ~null~ QUASI!
 //
 #define SCAN_EXECUTOR_FLAG_NULLEDS_LEGAL \
-    FRAME_FLAG_26
+    LEVEL_FLAG_26
 
 
 //=//// SCAN_EXECUTOR_FLAG_LOCK_SCANNED ///////////////////////////////////=//
@@ -68,37 +67,37 @@
 // !!! This also does not seem to be used, likely supplanted by CONST.
 //
 #define SCAN_EXECUTOR_FLAG_LOCK_SCANNED \
-    FRAME_FLAG_27
+    LEVEL_FLAG_27
 
 
 //=//// SCAN_EXECUTOR_27 //////////////////////////////////////////////////=//
 //
 #define SCAN_EXECUTOR_FLAG_27 \
-    FRAME_FLAG_27
+    LEVEL_FLAG_27
 
 
 //=//// SCAN_EXECUTOR_FLAG_24 /////////////////////////////////////////////=//
 //
 #define SCAN_EXECUTOR_FLAG_28 \
-    FRAME_FLAG_28
+    LEVEL_FLAG_28
 
 
 //=//// SCAN_EXECUTOR_FLAG_29 /////////////////////////////////////////////=//
 //
 #define SCAN_EXECUTOR_FLAG_29 \
-    FRAME_FLAG_29
+    LEVEL_FLAG_29
 
 
 //=//// SCAN_EXECUTOR_FLAG_30 /////////////////////////////////////////////=//
 //
 #define SCAN_EXECUTOR_FLAG_30 \
-    FRAME_FLAG_30
+    LEVEL_FLAG_30
 
 
 //=//// SCAN_EXECUTOR_FLAG_31 /////////////////////////////////////////////=//
 //
 #define SCAN_EXECUTOR_FLAG_31 \
-    FRAME_FLAG_31
+    LEVEL_FLAG_31
 
 
 // Flags that should be preserved when recursing the scanner

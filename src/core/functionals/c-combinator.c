@@ -82,21 +82,21 @@ enum {
 // for verbose debugging, as well as to record the furthest point reached.
 // At the moment we focus on the furthest point reached.
 //
-Bounce Combinator_Dispatcher(Frame(*) f)
+Bounce Combinator_Dispatcher(Level(*) L)
 {
-    Phase(*) phase = FRM_PHASE(f);
+    Phase(*) phase = Level_Phase(L);
     Details(*) details = ACT_DETAILS(phase);
     Cell(*) body = ARR_AT(details, IDX_DETAILS_1);  // code to run
 
     Bounce b;
     if (IS_FRAME(body)) {  // NATIVE-COMBINATOR
-        SET_SERIES_INFO(f->varlist, HOLD);  // mandatory for natives.
+        SET_SERIES_INFO(L->varlist, HOLD);  // mandatory for natives.
         Dispatcher* dispatcher = ACT_DISPATCHER(VAL_ACTION(body));
-        b = dispatcher(f);
+        b = dispatcher(L);
     }
     else {  // usermode COMBINATOR
         assert(IS_BLOCK(body));
-        b = Func_Dispatcher(f);
+        b = Func_Dispatcher(L);
     }
 
     if (b == BOUNCE_THROWN)
@@ -111,10 +111,10 @@ Bounce Combinator_Dispatcher(Frame(*) f)
     // previously measured furthest point?  This only is a question that
     // matters if there was a request to know the furthest point...
     //
-    REBVAL *state = FRM_ARG(f, IDX_COMBINATOR_PARAM_STATE);
+    REBVAL *state = Level_Arg(L, IDX_COMBINATOR_PARAM_STATE);
     assert(IS_FRAME(state));  // combinators *must* have this as the UPARSE.
-    Frame(*) frame_ = CTX_FRAME_MAY_FAIL(VAL_CONTEXT(state));
-    REBVAL *furthest_word = FRM_ARG(frame_, IDX_UPARSE_PARAM_FURTHEST);
+    Level(*) level_ = CTX_LEVEL_MAY_FAIL(VAL_CONTEXT(state));
+    REBVAL *furthest_word = Level_Arg(level_, IDX_UPARSE_PARAM_FURTHEST);
     if (Is_Nulled(furthest_word))
         return r;
 
@@ -123,7 +123,7 @@ Bounce Combinator_Dispatcher(Frame(*) f)
         SPECIFIED
     );
 
-    REBVAL *remainder_word = FRM_ARG(f, IDX_COMBINATOR_PARAM_REMAINDER);
+    REBVAL *remainder_word = Level_Arg(L, IDX_COMBINATOR_PARAM_REMAINDER);
     const REBVAL *remainder_var = Lookup_Word_May_Fail(
         remainder_word,
         SPECIFIED
@@ -314,7 +314,7 @@ DECLARE_NATIVE(combinator)
 // COMBINATOR or NATIVE-COMBINATOR.  Because it expects the parameters to be
 // in the right order in the frame.
 //
-void Push_Parser_Subframe(
+void Push_Parser_Sublevel(
     Atom(*) out,
     const REBVAL *remainder,
     const REBVAL *parser,
@@ -331,7 +331,7 @@ void Push_Parser_Subframe(
         KEY_SYM(remainder_key) != SYM_REMAINDER
         or KEY_SYM(input_key) != SYM_INPUT
     ){
-        fail ("Push_Parser_Subframe() only works on unadulterated combinators");
+        fail ("Push_Parser_Sublevel() only works on unadulterated combinators");
     }
 
     Copy_Cell(CTX_VAR(ctx, IDX_COMBINATOR_PARAM_REMAINDER), remainder);
@@ -342,7 +342,7 @@ void Push_Parser_Subframe(
 
     bool pushed = Pushed_Continuation(
         out,
-        FRAME_MASK_NONE,
+        LEVEL_MASK_NONE,
         SPECIFIED,
         temp,
         nullptr  // with
@@ -389,10 +389,10 @@ DECLARE_NATIVE(opt_combinator)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    Push_Parser_Subframe(OUT, remainder, parser, input);
+    Push_Parser_Sublevel(OUT, remainder, parser, input);
 
     STATE = ST_OPT_COMBINATOR_RUNNING_PARSER;
-    return CATCH_CONTINUE_SUBFRAME(SUBFRAME);
+    return CATCH_CONTINUE_SUBLEVEL(SUBLEVEL);
 
 } parser_result_in_out: {  ///////////////////////////////////////////////////
 
@@ -522,13 +522,13 @@ DECLARE_NATIVE(some_combinator)
   initial_entry: {  //////////////////////////////////////////////////////////
 
     Cell(*) loop_last = Alloc_Tail_Array(loops);
-    Init_Frame(loop_last, CTX(frame_->varlist), Canon(SOME));
-    INIT_VAL_FRAME_PHASE(loop_last, FRM_PHASE(frame_));  // need phase, see [1]
+    Init_Frame(loop_last, CTX(level_->varlist), Canon(SOME));
+    INIT_VAL_FRAME_PHASE(loop_last, Level_Phase(level_));  // need phase, see [1]
 
-    Push_Parser_Subframe(OUT, remainder, parser, input);
+    Push_Parser_Sublevel(OUT, remainder, parser, input);
 
     STATE = ST_SOME_COMBINATOR_FIRST_PARSER_RUN;
-    return CONTINUE_SUBFRAME(SUBFRAME);  // mirror usermode, see [2]
+    return CONTINUE_SUBLEVEL(SUBLEVEL);  // mirror usermode, see [2]
 
 } first_parse_result_in_out: {  //////////////////////////////////////////////
 
@@ -546,10 +546,10 @@ DECLARE_NATIVE(some_combinator)
         true
     );
 
-    Push_Parser_Subframe(SPARE, remainder, parser, input);
+    Push_Parser_Sublevel(SPARE, remainder, parser, input);
 
     STATE = ST_SOME_COMBINATOR_LATER_PARSER_RUN;
-    return CONTINUE_SUBFRAME(SUBFRAME);
+    return CONTINUE_SUBLEVEL(SUBLEVEL);
 
 } later_parse_result_in_spare: {  ////////////////////////////////////////////
 
@@ -600,10 +600,10 @@ DECLARE_NATIVE(further_combinator)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    Push_Parser_Subframe(OUT, remainder, parser, input);
+    Push_Parser_Sublevel(OUT, remainder, parser, input);
 
     STATE = ST_FURTHER_COMBINATOR_RUNNING_PARSER;
-    return CATCH_CONTINUE_SUBFRAME(SUBFRAME);
+    return CATCH_CONTINUE_SUBLEVEL(SUBLEVEL);
 
 } parser_result_in_out: {  ///////////////////////////////////////////////////
 
@@ -621,7 +621,7 @@ DECLARE_NATIVE(further_combinator)
 
 struct Combinator_Param_State {
     Context(*) ctx;
-    Frame(*) frame_;
+    Level(*) level_;
     Value(*) rule_end;
 };
 
@@ -636,7 +636,7 @@ static bool Combinator_Param_Hook(
     struct Combinator_Param_State *s
         = cast(struct Combinator_Param_State*, opaque);
 
-    Frame(*) frame_ = s->frame_;
+    Level(*) level_ = s->level_;
     INCLUDE_PARAMS_OF_COMBINATORIZE;
 
     UNUSED(REF(path));  // used by caller of hook
@@ -821,7 +821,7 @@ DECLARE_NATIVE(combinatorize)
 
     struct Combinator_Param_State s;
     s.ctx = Make_Context_For_Action(ARG(c), TOP_INDEX, nullptr);
-    s.frame_ = frame_;
+    s.level_ = level_;
     s.rule_end = nullptr;  // argument found by param hook
 
     PUSH_GC_GUARD(s.ctx);  // Combinator_Param_Hook may call evaluator
@@ -849,5 +849,5 @@ DECLARE_NATIVE(combinatorize)
         binding
     ));
 
-    return Proxy_Multi_Returns(frame_);
+    return Proxy_Multi_Returns(level_);
 }

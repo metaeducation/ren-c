@@ -106,9 +106,9 @@
 //    a hassle to force people to put RETURN NONE or RETURN at the end.  So
 //    this is the compromise chosen.
 //
-Bounce Func_Dispatcher(Frame(*) f)
+Bounce Func_Dispatcher(Level(*) L)
 {
-    Frame(*) frame_ = f;  // so we can use OUT
+    Level(*) level_ = L;  // so we can use OUT
 
     enum {
         ST_FUNC_INITIAL_ENTRY = STATE_0,
@@ -123,21 +123,20 @@ Bounce Func_Dispatcher(Frame(*) f)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    Phase(*) phase = FRM_PHASE(f);
-    Details(*) details = ACT_DETAILS(phase);
+    Details(*) details = ACT_DETAILS(PHASE);
     Cell(*) body = ARR_AT(details, IDX_DETAILS_1);  // code to run
     assert(IS_BLOCK(body) and IS_RELATIVE(body) and VAL_INDEX(body) == 0);
 
-    assert(ACT_HAS_RETURN(phase));  // all FUNC have RETURN
-    assert(KEY_SYM(ACT_KEYS_HEAD(phase)) == SYM_RETURN);
+    assert(ACT_HAS_RETURN(PHASE));  // all FUNC have RETURN
+    assert(KEY_SYM(ACT_KEYS_HEAD(PHASE)) == SYM_RETURN);
 
-    REBVAL *cell = FRM_ARG(f, 1);
+    REBVAL *cell = Level_Arg(L, 1);
     assert(Is_None(cell));
     Init_Activation(
         cell,
         ACT_IDENTITY(VAL_ACTION(Lib(DEFINITIONAL_RETURN))),
         Canon(RETURN),  // relabel (the RETURN in lib is a dummy action)
-        CTX(f->varlist)  // bind this return to know where to return from
+        CTX(L->varlist)  // bind this return to know where to return from
     );
 
     STATE = ST_FUNC_BODY_EXECUTING;
@@ -145,28 +144,28 @@ Bounce Func_Dispatcher(Frame(*) f)
     assert(Is_Fresh(SPARE));
     return CONTINUE_CORE(
         SPARE,  // body evaluative result discarded, see [1]
-        FRAME_MASK_NONE,  // no DISPATCHER_CATCHES, so RETURN skips, see [2]
-        SPC(f->varlist), body
+        LEVEL_MASK_NONE,  // no DISPATCHER_CATCHES, so RETURN skips, see [2]
+        SPC(L->varlist), body
     );
 
 } body_finished_without_returning: {  ////////////////////////////////////////
 
-    const REBPAR *param = ACT_PARAMS_HEAD(FRM_PHASE(f));
+    const REBPAR *param = ACT_PARAMS_HEAD(Level_Phase(L));
 
     if (NOT_PARAM_FLAG(param, RETURN_TYPECHECKED)) {
         Init_None(OUT);  // none falls out of FUNC by default
-        return Proxy_Multi_Returns(f);
+        return Proxy_Multi_Returns(L);
     }
 
     if (GET_PARAM_FLAG(param, RETURN_VOID)) {
         // void, regardless of body result, see [3]
         Init_Void(OUT);
-        return Proxy_Multi_Returns(f);
+        return Proxy_Multi_Returns(L);
     }
 
     if (GET_PARAM_FLAG(param, RETURN_NONE)) {
         Init_None(OUT);  // none, regardless of body result, see [3]
-        return Proxy_Multi_Returns(f);
+        return Proxy_Multi_Returns(L);
     }
 
     fail ("Functions with RETURN: in spec must use RETURN to typecheck");
@@ -279,7 +278,7 @@ Phase(*) Make_Interpreted_Action_May_Fail(
 
     // Save the relativized body in the action's details block.  Since it is
     // a Cell(*) and not a REBVAL*, the dispatcher must combine it with a
-    // running frame instance (the Frame(*) received by the dispatcher) before
+    // running frame instance (the Level(*) received by the dispatcher) before
     // executing the interpreted code.
     //
     Details(*) details = ACT_DETAILS(a);
@@ -375,7 +374,7 @@ DECLARE_NATIVE(endable_q)
         fail ("ENDABLE? requires a WORD! bound into a FRAME! at present");
 
     Context(*) ctx = VAL_CONTEXT(SPARE);
-    Action(*) act = ACT(CTX_FRAME_PHASE(ctx));
+    Action(*) act = CTX_FRAME_PHASE(ctx);
 
     REBPAR *param = ACT_PARAM(act, VAL_WORD_INDEX(v));
     bool endable = GET_PARAM_FLAG(param, ENDABLE);
@@ -410,7 +409,7 @@ DECLARE_NATIVE(skippable_q)
         fail ("SKIPPABLE? requires a WORD! bound into a FRAME! at present");
 
     Context(*) ctx = VAL_CONTEXT(SPARE);
-    Action(*) act = ACT(CTX_FRAME_PHASE(ctx));
+    Action(*) act = CTX_FRAME_PHASE(ctx);
 
     REBPAR *param = ACT_PARAM(act, VAL_WORD_INDEX(v));
     bool skippable = GET_PARAM_FLAG(param, SKIPPABLE);
@@ -429,62 +428,62 @@ DECLARE_NATIVE(skippable_q)
 // See notes is %sys-frame.h about how there is no actual REB_THROWN type.
 //
 Bounce Init_Thrown_Unwind_Value(
-    Frame(*) frame_,
-    const REBVAL *level, // FRAME!, ACTION! (or INTEGER! relative to frame)
+    Level(*) level_,
+    const REBVAL *seek, // FRAME!, ACTION! (or INTEGER! relative to frame)
     Atom(const*) value,
-    Frame(*) target // required if level is INTEGER! or ACTION!
+    Level(*) target // required if level is INTEGER! or ACTION!
 ) {
     DECLARE_STABLE (label);
     Copy_Cell(label, Lib(UNWIND));
 
-    if (IS_FRAME(level)) {
-        Frame(*) f = target->prior;
-        for (; true; f = f->prior) {
-            if (f == BOTTOM_FRAME)
+    if (IS_FRAME(seek) and Is_Frame_On_Stack(VAL_CONTEXT(seek))) {
+        TG_Unwind_Level = CTX_LEVEL_IF_ON_STACK(VAL_CONTEXT(seek));
+    }
+    else if (IS_FRAME(seek)) {
+        Level(*) L = target->prior;
+        for (; true; L = L->prior) {
+            if (L == BOTTOM_LEVEL)
                 fail (Error_Invalid_Exit_Raw());
 
-            if (not Is_Action_Frame(f))
+            if (not Is_Action_Level(L))
                 continue; // only exit functions
 
-            if (Is_Action_Frame_Fulfilling(f))
+            if (Is_Level_Fulfilling(L))
                 continue; // not ready to exit
 
-            if (VAL_ACTION(level) == f->u.action.original) {
-                TG_Unwind_Frame = f;
+            if (VAL_ACTION(seek) == L->u.action.original) {
+                TG_Unwind_Level = L;
                 break;
             }
         }
     }
-    else if (IS_FRAME(level)) {
-        TG_Unwind_Frame = CTX_FRAME_IF_ON_STACK(VAL_CONTEXT(level));
-    }
     else {
-        assert(IS_INTEGER(level));
+        assert(IS_INTEGER(seek));
 
-        REBLEN count = VAL_INT32(level);
+        REBLEN count = VAL_INT32(seek);
         if (count <= 0)
             fail (Error_Invalid_Exit_Raw());
 
-        Frame(*) f = target->prior;
-        for (; true; f = f->prior) {
-            if (f == BOTTOM_FRAME)
+        Level(*) L = target->prior;
+        for (; true; L = L->prior) {
+            if (L == BOTTOM_LEVEL)
                 fail (Error_Invalid_Exit_Raw());
 
-            if (not Is_Action_Frame(f))
+            if (not Is_Action_Level(L))
                 continue; // only exit functions
 
-            if (Is_Action_Frame_Fulfilling(f))
+            if (Is_Level_Fulfilling(L))
                 continue; // not ready to exit
 
             --count;
             if (count == 0) {
-                TG_Unwind_Frame = f;
+                TG_Unwind_Level = L;
                 break;
             }
         }
     }
 
-    return Init_Thrown_With_Label(frame_, value, label);
+    return Init_Thrown_With_Label(level_, value, label);
 }
 
 
@@ -522,7 +521,7 @@ DECLARE_NATIVE(unwind)
     Copy_Cell(SPARE, ARG(result));  // SPARE can hold unstable isotopes
     Meta_Unquotify_Undecayed(SPARE);
 
-    return Init_Thrown_Unwind_Value(FRAME, level, SPARE, frame_);
+    return Init_Thrown_Unwind_Value(LEVEL, level, SPARE, level_);
 }
 
 
@@ -530,7 +529,7 @@ DECLARE_NATIVE(unwind)
 //  Typecheck_Coerce_Return: C
 //
 bool Typecheck_Coerce_Return(
-    Frame(*) f,
+    Level(*) L,
     Atom(*) atom  // coercion needs mutability
 ){
     if (Is_Raised(atom))
@@ -539,7 +538,7 @@ bool Typecheck_Coerce_Return(
     // Typeset bits for locals in frames are usually ignored, but the RETURN:
     // local uses them for the return types of a function.
     //
-    Phase(*) phase = FRM_PHASE(f);
+    Phase(*) phase = Level_Phase(L);
     const REBPAR *param = ACT_PARAMS_HEAD(phase);
     assert(KEY_SYM(ACT_KEYS_HEAD(phase)) == SYM_RETURN);
 
@@ -592,18 +591,18 @@ DECLARE_NATIVE(definitional_return)
     Atom(*) atom = Copy_Cell(SPARE, ARG(value));  // SPARE for unstable atoms
     Meta_Unquotify_Undecayed(atom);
 
-    Frame(*) f = FRAME;  // frame of this RETURN call
+    Level(*) return_level = LEVEL;  // Level of this RETURN call
 
     // Each ACTION! cell for RETURN has a piece of information in it that can
     // can be unique (the binding).  When invoked, that binding is held in the
-    // Frame(*).  This generic RETURN dispatcher interprets that binding as the
+    // Level(*).  This generic RETURN dispatcher interprets that binding as the
     // FRAME! which this instance is specifically intended to return from.
     //
-    Context(*) f_binding = FRM_BINDING(f);
-    if (not f_binding)
+    Context(*) return_binding = Level_Binding(return_level);
+    if (not return_binding)
         fail (Error_Return_Archetype_Raw());  // must have binding to jump to
 
-    Frame(*) target_frame = CTX_FRAME_MAY_FAIL(f_binding);
+    Level(*) target_level = CTX_LEVEL_MAY_FAIL(return_binding);
 
     // Check type NOW instead of waiting and letting Eval_Core()
     // check it.  Reasoning is that the error can indicate the callsite,
@@ -615,17 +614,17 @@ DECLARE_NATIVE(definitional_return)
     // take [<opt> any-value!] as its argument, and then report the error
     // itself...implicating the frame (in a way parallel to this native).
     //
-    if (not REF(only) and not Typecheck_Coerce_Return(target_frame, atom))
-        fail (Error_Bad_Return_Type(target_frame, atom));
+    if (not REF(only) and not Typecheck_Coerce_Return(target_level, atom))
+        fail (Error_Bad_Return_Type(target_level, atom));
 
     DECLARE_STABLE (label);
     Copy_Cell(label, Lib(UNWIND)); // see Make_Thrown_Unwind_Value
-    TG_Unwind_Frame = target_frame;
+    TG_Unwind_Level = target_level;
 
     if (not Is_Raised(atom) and not REF(only))
-        Proxy_Multi_Returns_Core(target_frame, atom);
+        Proxy_Multi_Returns_Core(target_level, atom);
 
-    return Init_Thrown_With_Label(FRAME, atom, label);
+    return Init_Thrown_With_Label(LEVEL, atom, label);
 }
 
 

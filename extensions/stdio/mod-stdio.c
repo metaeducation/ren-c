@@ -47,7 +47,7 @@ extern void Write_IO(const REBVAL *data, REBLEN len);
 extern bool Read_Stdin_Byte_Interrupted(bool *eof, Byte* out);
 
 
-extern Bounce Console_Actor(Frame(*) frame_, REBVAL *port, Symbol(const*) verb);
+extern Bounce Console_Actor(Level(*) level_, REBVAL *port, Symbol(const*) verb);
 
 
 //
@@ -134,8 +134,8 @@ DECLARE_NATIVE(write_stdout)
         //
         // Yield to signals processing for cancellation requests.
         //
-        if (Do_Signals_Throws(FRAME))
-            fail (Error_No_Catch_For_Throw(FRAME));
+        if (Do_Signals_Throws(LEVEL))
+            fail (Error_No_Catch_For_Throw(LEVEL));
 
         REBLEN part;
         if (remaining <= 1024)
@@ -189,7 +189,7 @@ DECLARE_NATIVE(read_stdin)
             return nullptr;  // don't proxy multi-returns
 
         Init_Logic(ARG(eof), false);  // never terminates?
-        return Proxy_Multi_Returns(frame_);
+        return Proxy_Multi_Returns(level_);
     }
     else  // we have a smart console but aren't using it (redirected to file?)
   #endif
@@ -216,7 +216,7 @@ DECLARE_NATIVE(read_stdin)
 
         Init_Logic(ARG(eof), eof);
         Init_Binary(OUT, bin);
-        return Proxy_Multi_Returns(frame_);
+        return Proxy_Multi_Returns(level_);
     }
 }
 
@@ -379,7 +379,7 @@ DECLARE_NATIVE(read_line)
         return nullptr;
 
     Init_Logic(ARG(eof), eof);
-    return Proxy_Multi_Returns(frame_);
+    return Proxy_Multi_Returns(level_);
 }
 
 

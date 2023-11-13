@@ -432,11 +432,11 @@ void Probe(const void *p)
 //
 //  Where_Core_Debug: C
 //
-void Where_Core_Debug(Frame(*) f) {
-    if (FEED_IS_VARIADIC(f->feed))
-        Reify_Variadic_Feed_As_Array_Feed(f->feed, false);
+void Where_Core_Debug(Level(*) L) {
+    if (FEED_IS_VARIADIC(L->feed))
+        Reify_Variadic_Feed_As_Array_Feed(L->feed, false);
 
-    REBLEN index = FEED_INDEX(f->feed);
+    REBLEN index = FEED_INDEX(L->feed);
 
     if (index > 0) {
         DECLARE_MOLD (mo);
@@ -445,7 +445,7 @@ void Where_Core_Debug(Frame(*) f) {
 
         REBLEN before_index = index > 3 ? index - 3 : 0;
         Push_Mold(mo);
-        Mold_Array_At(mo, FEED_ARRAY(f->feed), before_index, "[]");
+        Mold_Array_At(mo, FEED_ARRAY(L->feed), before_index, "[]");
         Throttle_Mold(mo);
         printf("Where(Before):\n");
         printf("%s\n\n", BIN_AT(mo->series, mo->base.size));
@@ -456,14 +456,14 @@ void Where_Core_Debug(Frame(*) f) {
     SET_MOLD_FLAG(mo, MOLD_FLAG_LIMIT);
     mo->limit = 40 * 20;  // 20 lines of length 40, or so?
     Push_Mold(mo);
-    Mold_Array_At(mo, FEED_ARRAY(f->feed), index, "[]");
+    Mold_Array_At(mo, FEED_ARRAY(L->feed), index, "[]");
     Throttle_Mold(mo);
     printf("Where(At):\n");
     printf("%s\n\n", BIN_AT(mo->series, mo->base.size));
     Drop_Mold(mo);
 }
 
-void Where(Frame(*) f)
-  { Where_Core_Debug(f); }
+void Where(Level(*) L)
+  { Where_Core_Debug(L); }
 
 #endif  // DEBUG_HAS_PROBE

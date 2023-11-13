@@ -69,18 +69,18 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
     printf("%ld\n", cast(long, TG_tick));  /* tick count prefix */
   #endif
 
-    // The topmost frame must be the one issuing the error.  If a frame was
-    // pushed with FRAME_FLAG_TRAMPOLINE_KEEPALIVE that finished executing
-    // but remained pushed, it must be dropped before the frame that pushes
+    // The topmost level must be the one issuing the error.  If a level was
+    // pushed with LEVEL_FLAG_TRAMPOLINE_KEEPALIVE that finished executing
+    // but remained pushed, it must be dropped before the level that pushes
     // it issues a failure.
     //
-    assert(TOP_FRAME->executor != nullptr);
+    assert(TOP_LEVEL->executor != nullptr);
 
     // You can't abruptly fail during the handling of abrupt failure.  At the
-    // moment we're assuming that once a frame has failed it can't recover if
+    // moment we're assuming that once a level has failed it can't recover if
     // it originated the failure...but this may be revisited.
     //
-    assert(Not_Frame_Flag(TOP_FRAME, ABRUPT_FAILURE));
+    assert(Not_Level_Flag(TOP_LEVEL, ABRUPT_FAILURE));
 
     Context(*) error;
     if (p == nullptr) {
@@ -122,15 +122,15 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
             }
             rebRelease(cast(const REBVAL*, v));  // released even if we didn't
         }
-        else if (not Is_Action_Frame(TOP_FRAME))
+        else if (not Is_Action_Level(TOP_LEVEL))
             error = Error_Bad_Value(v);
         else {
-            const REBPAR *head = ACT_PARAMS_HEAD(FRM_PHASE(TOP_FRAME));
-            REBLEN num_params = ACT_NUM_PARAMS(FRM_PHASE(TOP_FRAME));
+            const REBPAR *head = ACT_PARAMS_HEAD(Level_Phase(TOP_LEVEL));
+            REBLEN num_params = ACT_NUM_PARAMS(Level_Phase(TOP_LEVEL));
 
             if (v >= head and v < head + num_params) {
                 const REBPAR *param = cast_PAR(cast(const REBVAL*, v));
-                error = Error_Invalid_Arg(TOP_FRAME, param);
+                error = Error_Invalid_Arg(TOP_LEVEL, param);
             }
             else
                 error = Error_Bad_Value(v);
@@ -165,7 +165,7 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
     // to use for it.
     //
     if (error != Error_No_Memory(1020))  // static global, review
-        Force_Location_Of_Error(error, TOP_FRAME);
+        Force_Location_Of_Error(error, TOP_LEVEL);
 
   #if DEBUG_HAS_PROBE
     if (PG_Probe_Failures) {  // see R3_PROBE_FAILURES environment variable
@@ -232,10 +232,10 @@ REBLEN Stack_Depth(void)
 {
     REBLEN depth = 0;
 
-    Frame(*) f = TOP_FRAME;
-    while (f) {
-        if (Is_Action_Frame(f))
-            if (not Is_Action_Frame_Fulfilling(f)) {
+    Level(*) L = TOP_LEVEL;
+    while (L) {
+        if (Is_Action_Level(L))
+            if (not Is_Level_Fulfilling(L)) {
                 //
                 // We only count invoked functions (not group or path
                 // evaluations or "pending" functions that are building their
@@ -244,7 +244,7 @@ REBLEN Stack_Depth(void)
                 ++depth;
             }
 
-        f = FRM_PRIOR(f);
+        L = L->prior;
     }
 
     return depth;
@@ -297,14 +297,14 @@ const REBVAL *Find_Error_For_Sym(enum Reb_Symbol_Id id_sym)
 // information may be captured as well.
 //
 // The information is derived from the current execution position and stack
-// depth of a running frame.  Also, if running from a C fail() call, the
+// depth of a running level.  Also, if running from a C fail() call, the
 // file and line information can be captured in the debug build.
 //
 void Set_Location_Of_Error(
     Context(*) error,
-    Frame(*) where  // must be valid and executing on the stack
+    Level(*) where  // must be valid and executing on the stack
 ) {
-    while (Get_Frame_Flag(where, BLAME_PARENT))  // e.g. Apply_Only_Throws()
+    while (Get_Level_Flag(where, BLAME_PARENT))  // e.g. Apply_Only_Throws()
         where = where->prior;
 
     StackIndex base = TOP_INDEX;
@@ -314,17 +314,17 @@ void Set_Location_Of_Error(
     // WHERE is a backtrace in the form of a block of label words, that start
     // from the top of stack and go downward.
     //
-    Frame(*) f = where;
-    for (; f != BOTTOM_FRAME; f = f->prior) {
+    Level(*) L = where;
+    for (; L != BOTTOM_LEVEL; L = L->prior) {
         //
         // Only invoked functions (not pending functions, groups, etc.)
         //
-        if (not Is_Action_Frame(f))
+        if (not Is_Action_Level(L))
             continue;
-        if (Is_Action_Frame_Fulfilling(f))
+        if (Is_Level_Fulfilling(L))
             continue;
 
-        Get_Frame_Label_Or_Nulled(PUSH(), f);
+        Get_Level_Label_Or_Nulled(PUSH(), L);
 
         // !!! We can't push a NULL to stack to pop in block.  BLANK! is one
         // option...it's not as informative as (anonymous) but also takes up
@@ -346,14 +346,14 @@ void Set_Location_Of_Error(
     // any existing near, but a less-random design is needed here.
     //
     if (Is_Nulled(&vars->nearest))
-        Init_Near_For_Frame(&vars->nearest, where);
+        Init_Near_For_Level(&vars->nearest, where);
 
     // Try to fill in the file and line information of the error from the
     // stack, looking for arrays with ARRAY_HAS_FILE_LINE.
     //
-    f = where;
-    for (; f != BOTTOM_FRAME; f = f->prior) {
-        if (FRM_IS_VARIADIC(f)) {
+    L = where;
+    for (; L != BOTTOM_LEVEL; L = L->prior) {
+        if (Level_Is_Variadic(L)) {
             //
             // !!! We currently skip any calls from C (e.g. rebValue()) and look
             // for calls from Rebol files for the file and line.  However,
@@ -362,14 +362,14 @@ void Set_Location_Of_Error(
             //
             continue;
         }
-        if (Not_Subclass_Flag(ARRAY, FRM_ARRAY(f), HAS_FILE_LINE_UNMASKED))
+        if (Not_Subclass_Flag(ARRAY, Level_Array(L), HAS_FILE_LINE_UNMASKED))
             continue;
         break;
     }
 
-    if (f != BOTTOM_FRAME) {  // found a frame with file and line information
-        String(const*) file = LINK(Filename, FRM_ARRAY(f));
-        LineNumber line = FRM_ARRAY(f)->misc.line;
+    if (L != BOTTOM_LEVEL) {  // found a level with file and line information
+        String(const*) file = LINK(Filename, Level_Array(L));
+        LineNumber line = Level_Array(L)->misc.line;
 
         if (file)
             Init_File(&vars->file, file);
@@ -394,7 +394,7 @@ void Set_Location_Of_Error(
 // exactly what is changing.
 //
 Bounce MAKE_Error(
-    Frame(*) frame_,
+    Level(*) level_,
     enum Reb_Kind kind,
     option(const REBVAL*) parent,
     const REBVAL *arg
@@ -568,9 +568,9 @@ Bounce MAKE_Error(
 // !!! Historically this was identical to MAKE ERROR!, but MAKE and TO are
 // being rethought.
 //
-Bounce TO_Error(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg)
+Bounce TO_Error(Level(*) level_, enum Reb_Kind kind, const REBVAL *arg)
 {
-    return MAKE_Error(frame_, kind, nullptr, arg);
+    return MAKE_Error(level_, kind, nullptr, arg);
 }
 
 
@@ -891,7 +891,7 @@ Context(*) Error_No_Relative_Core(noquote(Cell(const*)) any_word)
 //  Error_Not_Varargs: C
 //
 Context(*) Error_Not_Varargs(
-    Frame(*) f,
+    Level(*) L,
     const REBKEY *key,
     const REBPAR *param,
     const REBVAL *arg
@@ -912,33 +912,33 @@ Context(*) Error_Not_Varargs(
     );
     UNUSED(honest_param);  // !!! pass to Error_Arg_Type(?)
 
-    return Error_Phase_Arg_Type(f, key, param, arg);
+    return Error_Phase_Arg_Type(L, key, param, arg);
 }
 
 
 //
 //  Error_Invalid_Arg: C
 //
-Context(*) Error_Invalid_Arg(Frame(*) f, const REBPAR *param)
+Context(*) Error_Invalid_Arg(Level(*) L, const REBPAR *param)
 {
     assert(IS_PARAMETER(param));
 
-    const REBPAR *headparam = ACT_PARAMS_HEAD(FRM_PHASE(f));
+    const REBPAR *headparam = ACT_PARAMS_HEAD(Level_Phase(L));
     assert(param >= headparam);
-    assert(param <= headparam + FRM_NUM_ARGS(f));
+    assert(param <= headparam + Level_Num_Args(L));
 
     REBLEN index = 1 + (param - headparam);
 
     DECLARE_LOCAL (label);
-    if (not f->label)
+    if (not L->label)
         Init_Nulled(label);
     else
-        Init_Word(label, unwrap(f->label));
+        Init_Word(label, unwrap(L->label));
 
     DECLARE_LOCAL (param_name);
-    Init_Word(param_name, KEY_SYMBOL(ACT_KEY(FRM_PHASE(f), index)));
+    Init_Word(param_name, KEY_SYMBOL(ACT_KEY(Level_Phase(L), index)));
 
-    REBVAL *arg = FRM_ARG(f, index);
+    REBVAL *arg = Level_Arg(L, index);
     return Error_Invalid_Arg_Raw(label, param_name, arg);
 }
 
@@ -949,29 +949,29 @@ Context(*) Error_Invalid_Arg(Frame(*) f, const REBPAR *param)
 // This directs the user that they can't take isotopes as an argument to a
 // function unless the ^META parameter convention is used.
 //
-Context(*) Error_Isotope_Arg(Frame(*) f, const REBPAR *param)
+Context(*) Error_Isotope_Arg(Level(*) L, const REBPAR *param)
 {
     assert(IS_PARAMETER(param));
 
-    const REBPAR *headparam = ACT_PARAMS_HEAD(FRM_PHASE(f));
+    const REBPAR *headparam = ACT_PARAMS_HEAD(Level_Phase(L));
     assert(param >= headparam);
-    assert(param <= headparam + FRM_NUM_ARGS(f));
+    assert(param <= headparam + Level_Num_Args(L));
 
     REBLEN index = 1 + (param - headparam);
 
     DECLARE_LOCAL (label);
-    if (not f->label)
+    if (not L->label)
         Init_Nulled(label);
     else
-        Init_Word(label, unwrap(f->label));
+        Init_Word(label, unwrap(L->label));
 
     DECLARE_LOCAL (param_name);
-    Init_Word(param_name, KEY_SYMBOL(ACT_KEY(FRM_PHASE(f), index)));
+    Init_Word(param_name, KEY_SYMBOL(ACT_KEY(Level_Phase(L), index)));
 
     // Don't actually want an isotope in the error field, just put a normal
     // bad word there...
     //
-    REBVAL *arg = FRM_ARG(f, index);
+    REBVAL *arg = Level_Arg(L, index);
     Copy_Cell(PUSH(), arg);
     Quasify_Isotope(TOP);
 
@@ -1010,13 +1010,13 @@ Context(*) Error_Bad_Null(Cell(const*) target) {
 //
 //  Error_No_Catch_For_Throw: C
 //
-Context(*) Error_No_Catch_For_Throw(Frame(*) frame_)
+Context(*) Error_No_Catch_For_Throw(Level(*) level_)
 {
     DECLARE_LOCAL (label);
-    Copy_Cell(label, VAL_THROWN_LABEL(frame_));
+    Copy_Cell(label, VAL_THROWN_LABEL(level_));
 
     DECLARE_LOCAL (arg);
-    CATCH_THROWN(arg, frame_);
+    CATCH_THROWN(arg, level_);
 
     if (IS_ERROR(label)) {  // what would have been fail()
         assert(Is_Nulled(arg));
@@ -1154,18 +1154,18 @@ Context(*) Error_Arg_Type(
 // the ordinary error into one making it clear it's an internal phase.
 //
 Context(*) Error_Phase_Arg_Type(
-    Frame(*) f,
+    Level(*) L,
     const REBKEY *key,
     const REBPAR *param,
     const REBVAL *arg
 ){
-    if (FRM_PHASE(f) == f->u.action.original)  // not an internal phase
-        return Error_Arg_Type(f->label, key, param, arg);
+    if (Level_Phase(L) == L->u.action.original)  // not an internal phase
+        return Error_Arg_Type(L->label, key, param, arg);
 
     if (VAL_PARAM_CLASS(param) == PARAM_CLASS_META and Is_Meta_Of_Raised(arg))
         return VAL_CONTEXT(arg);
 
-    Context(*) error = Error_Arg_Type(f->label, key, param, arg);
+    Context(*) error = Error_Arg_Type(L->label, key, param, arg);
     ERROR_VARS* vars = ERR_VARS(error);
     assert(IS_WORD(&vars->id));
     assert(VAL_WORD_ID(&vars->id) == SYM_EXPECT_ARG);
@@ -1221,9 +1221,9 @@ Context(*) Error_Bad_Argless_Refine(const REBKEY *key)
 //
 //  Error_Bad_Return_Type: C
 //
-Context(*) Error_Bad_Return_Type(Frame(*) f, Atom(*) atom) {
+Context(*) Error_Bad_Return_Type(Level(*) L, Atom(*) atom) {
     DECLARE_STABLE (label);
-    Get_Frame_Label_Or_Nulled(label, f);
+    Get_Level_Label_Or_Nulled(label, L);
 
     if (Is_Void(atom))  // void's "kind" is null, no type (good idea?)
         return Error_Bad_Void_Return_Raw(label);

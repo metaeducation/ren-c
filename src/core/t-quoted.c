@@ -66,7 +66,7 @@ REBINT CT_Quoted(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
 // take a BLOCK! with an INTEGER! and the value.  :-/
 //
 Bounce MAKE_Quoted(
-    Frame(*) frame_,
+    Level(*) level_,
     enum Reb_Kind kind,
     option(const REBVAL*) parent,
     const REBVAL *arg
@@ -85,7 +85,7 @@ Bounce MAKE_Quoted(
 // TO is disallowed at the moment, as there is no clear equivalence of things
 // "to" a literal.  (to quoted! [[a]] => \\a, for instance?)
 //
-Bounce TO_Quoted(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *data) {
+Bounce TO_Quoted(Level(*) level_, enum Reb_Kind kind, const REBVAL *data) {
     return RAISE(Error_Bad_Make(kind, data));
 }
 
@@ -122,7 +122,7 @@ REBTYPE(Quoted)
         UNUSED(REF(deep));
 
         REBLEN num_quotes = Dequotify(ARG(value));
-        bool threw = Run_Generic_Dispatch_Throws(ARG(value), frame_, verb);
+        bool threw = Run_Generic_Dispatch_Throws(ARG(value), level_, verb);
         assert(not threw);  // can't throw
         UNUSED(threw);
 

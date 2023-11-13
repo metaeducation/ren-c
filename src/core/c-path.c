@@ -139,7 +139,7 @@ DECLARE_NATIVE(pick)
     // made PICK an ENCLOSE of PICK*.  But to get a fast native, we don't have
     // enclose...so this is an approximation.  Review ensuring this is "safe".
     //
-    return Run_Generic_Dispatch_Core(ARG(location), frame_, Canon(PICK_P));
+    return Run_Generic_Dispatch_Core(ARG(location), level_, Canon(PICK_P));
 }
 
 
@@ -179,7 +179,7 @@ DECLARE_NATIVE(poke)
     // made POKE an ENCLOSE of POKE*.  But to get a fast native, we don't have
     // enclose...so this is an approximation.  Review ensuring this is "safe".
     //
-    Bounce r = Run_Generic_Dispatch_Core(location, frame_, Canon(POKE_P));
+    Bounce r = Run_Generic_Dispatch_Core(location, level_, Canon(POKE_P));
     if (r == BOUNCE_THROWN)
         return THROWN;
     assert(r == nullptr or Is_Bounce_An_Atom(r));  // other signals invalid
@@ -208,7 +208,7 @@ DECLARE_NATIVE(poke)
 // MAKE OBJECT!--which evaluates the object body block.
 //
 Bounce MAKE_Path(
-    Frame(*) frame_,
+    Level(*) level_,
     enum Reb_Kind kind,
     option(const REBVAL*) parent,
     const REBVAL *arg
@@ -219,15 +219,15 @@ Bounce MAKE_Path(
     if (not IS_BLOCK(arg))
         fail (Error_Bad_Make(kind, arg)); // "make path! 0" has no meaning
 
-    Frame(*) f = Make_Frame_At(arg, FRAME_MASK_NONE);
+    Level(*) L = Make_Level_At(arg, LEVEL_MASK_NONE);
 
-    Push_Frame(OUT, f);
+    Push_Level(OUT, L);
 
     StackIndex base = TOP_INDEX;
 
-    for (; Not_Frame_At_End(f); Restart_Evaluator_Frame(f)) {
-        if (Eval_Step_Throws(OUT, f)) {
-            Drop_Frame(f);
+    for (; Not_Level_At_End(L); Restart_Evaluator_Level(L)) {
+        if (Eval_Step_Throws(OUT, L)) {
+            Drop_Level(L);
             return BOUNCE_THROWN;
         }
 
@@ -238,12 +238,12 @@ Bounce MAKE_Path(
             return RAISE(Error_Need_Non_Null_Raw());
 
         Move_Cell(PUSH(), OUT);
-        f->baseline.stack_base += 1;  // compensate for push
+        L->baseline.stack_base += 1;  // compensate for push
     }
 
     REBVAL *p = Try_Pop_Sequence_Or_Element_Or_Nulled(OUT, kind, base);
 
-    Drop_Frame_Unbalanced(f); // !!! f's stack_base got captured each loop
+    Drop_Level_Unbalanced(L); // !!! L's stack_base got captured each loop
 
     if (not p)
         fail (Error_Bad_Sequence_Init(stable_OUT));
@@ -290,7 +290,7 @@ Bounce MAKE_Path(
 //     >> to path! ^[a b c]
 //     == /[a b c]
 //
-Bounce TO_Sequence(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg) {
+Bounce TO_Sequence(Level(*) level_, enum Reb_Kind kind, const REBVAL *arg) {
     enum Reb_Kind arg_kind = VAL_TYPE(arg);
 
     if (IS_TEXT(arg)) {

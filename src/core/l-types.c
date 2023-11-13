@@ -42,7 +42,7 @@
 //  MAKE_Fail: C
 //
 Bounce MAKE_Fail(
-    Frame(*) frame_,
+    Level(*) level_,
     enum Reb_Kind kind,
     option(const REBVAL*) parent,
     const REBVAL *arg
@@ -63,7 +63,7 @@ Bounce MAKE_Fail(
 // dispatch table when the extension loads.
 //
 Bounce MAKE_Unhooked(
-    Frame(*) frame_,
+    Level(*) level_,
     enum Reb_Kind kind,
     option(const REBVAL*) parent,
     const REBVAL *arg
@@ -127,7 +127,7 @@ DECLARE_NATIVE(make)
 
     MAKE_HOOK *hook = Make_Hook_For_Kind(kind);
 
-    Bounce b = hook(frame_, kind, parent, arg);  // might throw, fail...
+    Bounce b = hook(level_, kind, parent, arg);  // might throw, fail...
     if (b == BOUNCE_DELEGATE)
         return b;  // !!! Doesn't check result if continuation used, review
     if (b == BOUNCE_THROWN)
@@ -198,10 +198,10 @@ DECLARE_NATIVE(to)
 
     TO_HOOK* hook = To_Hook_For_Type(type);
 
-    Bounce b = hook(frame_, new_kind, v); // may fail();
+    Bounce b = hook(level_, new_kind, v); // may fail();
     if (b == BOUNCE_THROWN) {
         assert(!"Illegal throw in TO conversion handler");
-        fail (Error_No_Catch_For_Throw(FRAME));
+        fail (Error_No_Catch_For_Throw(LEVEL));
     }
     Atom(*) r = Atom_From_Bounce(b);
     if (Is_Raised(r))
@@ -240,7 +240,7 @@ REBTYPE(Unhooked)
 // The series common code is in Series_Common_Action_Maybe_Unhandled(), but
 // that is only called from series.  Handle a few extra cases here.
 //
-Bounce Reflect_Core(Frame(*) frame_)
+Bounce Reflect_Core(Level(*) level_)
 {
     INCLUDE_PARAMS_OF_REFLECT;
 
@@ -274,8 +274,8 @@ Bounce Reflect_Core(Frame(*) frame_)
 
     mutable_QUOTE_BYTE(ARG(value)) = UNQUOTED_1;  // ignore QUASI! or QUOTED!
 
-    INIT_FRM_PHASE(
-        frame_,
+    INIT_LVL_PHASE(
+        level_,
         ACT_IDENTITY(VAL_ACTION(Lib(REFLECT)))  // switch to generic
     );
     return BOUNCE_CONTINUE;
@@ -301,7 +301,7 @@ DECLARE_NATIVE(reflect_native)
 // it is its own native.  Consider giving it its own dispatcher as well, as
 // the question of exactly what a "REFLECT" or "OF" actually *is*.
 {
-    return Reflect_Core(frame_);
+    return Reflect_Core(level_);
 }
 
 
@@ -345,7 +345,7 @@ DECLARE_NATIVE(of)
 
         if (not IS_WORD(SPARE)) {
             Move_Cell(prop, SPARE);
-            fail (Error_Invalid_Arg(frame_, PARAM(property)));
+            fail (Error_Invalid_Arg(level_, PARAM(property)));
         }
     }
     else
@@ -360,7 +360,7 @@ DECLARE_NATIVE(of)
     Copy_Cell(ARG(property), ARG(value));
     Copy_Cell(ARG(value), SPARE);
 
-    return Reflect_Core(frame_);
+    return Reflect_Core(level_);
 }
 
 

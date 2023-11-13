@@ -6,7 +6,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2022 Ren-C Open Source Contributors
+// Copyright 2023 Ren-C Open Source Contributors
 //
 // See README.md and CREDITS.md for more information
 //
@@ -36,34 +36,39 @@
 //
 //=//// NOTES /////////////////////////////////////////////////////////////=//
 //
-// 1. The instigating call to the Trampoline cannot be unwound across, as it
+// 1. Trampoline stack levels are called "Levels" and not "Frames", in order
+//    to avoid confusion with the usermode FRAME! datatype's implementation.
+//    (This was a major renaming effort, so some comments might be out of
+//    sync and use the wrong term.)
+//
+// 2. The instigating call to the Trampoline cannot be unwound across, as it
 //    represents a "stackful" invocation of the evaluator.  Functions like
-//    YIELD must know the passed-in frame is uncrossable, so that it can raise
+//    YIELD must know the passed-in level is uncrossable, so that it can raise
 //    an error if you try to unwind across a top-level Trampoline call.
 //
 //    !!! Instead of returning just `bool`, the Trampoline could theoretically
-//    offer the option of returning a frame stack to the caller that it could
+//    offer the option of returning a level stack to the caller that it could
 //    wrap up in a Promise.  This would be an alternative to raising errors.
 //
-// 2. In theory, a Trampoline caller could push several frames to be evaluated,
+// 3. In theory, a Trampoline caller could push several levels to be evaluated,
 //    and the passed in `root` would just be where evaluation should *stop*.
 //    No cases of this exist yet, so asserting you only pass in the topmost
-//    frame is conservative for now.
+//    level is conservative for now.
 //
 // 3. A fail() can happen at any moment--even due to something like a failed
 //    memory allocation requested by an executor itself.  These are called
-//    "abrupt failures" (see FRAME_FLAG_ABRUPT_FAILURE).  The executor which
+//    "abrupt failures" (see LEVEL_FLAG_ABRUPT_FAILURE).  The executor which
 //    was active when that failure occurred is offered a chance to clean up.
 //    But any stacks that it pushed which were not running will be discarded.
 //
-// 4. When fails occur, any frames which have been pushed that the trampoline
-//    is not running currently will be above FRAME.  These are not offered the
+// 4. When fails occur, any levels which have been pushed that the trampoline
+//    is not running currently will be above LEVEL.  These are not offered the
 //    chance to handle or trap the error.
 //
-//    (Example: When something like ALL is "between steps", the frame it
+//    (Example: When something like ALL is "between steps", the level it
 //     pushed to process its block will be above it on the stack.  If the ALL
-//     decides to call fail(), the non-running stack frame can be "TOP_FRAME"
-//     above the ALL's "FRAME".)
+//     decides to call fail(), the non-running stack level can be "TOP_LEVEL"
+//     above the ALL's "LEVEL".)
 //
 
 
@@ -88,8 +93,8 @@
 //
 // Optimized builds could use nullptr instead.
 //
-Bounce Just_Use_Out_Executor(Frame(*) f)
-  { panic (f->out); }
+Bounce Just_Use_Out_Executor(Level(*) L)
+  { panic (L->out); }
 
 
 //
@@ -99,19 +104,19 @@ Bounce Just_Use_Out_Executor(Frame(*) f)
 // replaced as the executor when DELEGATE() is used outside of Action_Executor.
 // (When actions run, it wants a call back to check the return type.)
 //
-Bounce Delegated_Executor(Frame(*) f)
+Bounce Delegated_Executor(Level(*) L)
 {
-    if (Is_Throwing(f))
+    if (Is_Throwing(L))
         return BOUNCE_THROWN;
-    return f->out;
+    return L->out;
 }
 
 
-// This gives us access to macros related to the idea of the current frame,
-// like OUT and SPARE.  It also defines FRAME as a way of getting at the
-// jump list's notion of which frame currently has "control"
+// This gives us access to macros related to the idea of the current level,
+// like OUT and SPARE.  It also hooks up to `#define LEVEL level_` as a way
+// of getting at the jump list's notion of which level currently has "control"
 //
-#define frame_ (TG_Jump_List->frame)
+#define level_ (TG_Jump_List->level)
 
 
 //
@@ -145,8 +150,8 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
 
   bounce_on_trampoline_skip_just_use_out:
 
-    while (FRAME->executor == &Just_Use_Out_Executor)
-        FRAME = FRAME->prior;  // fast skip, allow Is_Fresh() output
+    while (LEVEL->executor == &Just_Use_Out_Executor)
+        LEVEL = LEVEL->prior;  // fast skip, allow Is_Fresh() output
 
   bounce_on_trampoline:
 
@@ -161,7 +166,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
 
     ASSERT_NO_DATA_STACK_POINTERS_EXTANT();
 
-    assert(FRAME->executor != &Just_Use_Out_Executor);  // drops skip, see [1]
+    assert(LEVEL->executor != &Just_Use_Out_Executor);  // drops skip, see [1]
 
     Bounce r;
 
@@ -177,15 +182,15 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
         //  * Noticing when a HALT was requested
         //  * (future?) Allowing a break into an interactive debugger
         //
-        if (Do_Signals_Throws(FRAME)) {
+        if (Do_Signals_Throws(LEVEL)) {
             r = BOUNCE_THROWN;
             goto thrown;
         }
     }
 
-    if (Get_Frame_Flag(FRAME, ABRUPT_FAILURE)) {
-        assert(Get_Frame_Flag(FRAME, NOTIFY_ON_ABRUPT_FAILURE));
-        assert(Is_Throwing(FRAME));
+    if (Get_Level_Flag(LEVEL, ABRUPT_FAILURE)) {
+        assert(Get_Level_Flag(LEVEL, NOTIFY_ON_ABRUPT_FAILURE));
+        assert(Is_Throwing(LEVEL));
     }
     else if (STATE == STATE_0) {  // can't read STATE if ABRUPT_FAILURE
         FRESHEN(OUT);
@@ -193,29 +198,29 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
 
 { //=//// CALL THE EXECUTOR ///////////////////////////////////////////////=//
 
-    // The executor may push more frames or change the executor of the frame
-    // it receives.  The FRAME may not match TOP_FRAME at this moment.
+    // The executor may push more levels or change the executor of the level
+    // it receives.  The LEVEL may not match TOP_LEVEL at this moment.
 
   #if !defined(NDEBUG)
-    Frame(*) check = FRAME;  // make sure FRAME doesn't change during executor
+    Level(*) check = LEVEL;  // make sure LEVEL doesn't change during executor
   #endif
 
     UPDATE_TICK_DEBUG(nullptr);
 
     // v-- This is the TG_break_at_tick or C-DEBUG-BREAK landing spot --v
-                      r = (FRAME->executor)(FRAME);
+                      r = (LEVEL->executor)(LEVEL);
     // ^-- **STEP IN** to this call using the debugger to debug it!!! --^
 
   #if !defined(NDEBUG)
-    assert(FRAME == check);  // R is relative to the OUT of FRAME we executed
+    assert(LEVEL == check);  // R is relative to the OUT of LEVEL we executed
   #endif
 
 } //=//// HANDLE FINISHED RESULTS /////////////////////////////////////////=//
 
-    if (Get_Frame_Flag(FRAME, ABRUPT_FAILURE)) {
-        assert(Get_Frame_Flag(FRAME, NOTIFY_ON_ABRUPT_FAILURE));
+    if (Get_Level_Flag(LEVEL, ABRUPT_FAILURE)) {
+        assert(Get_Level_Flag(LEVEL, NOTIFY_ON_ABRUPT_FAILURE));
         assert(r == BOUNCE_THROWN);
-        assert(IS_ERROR(VAL_THROWN_LABEL(FRAME)));
+        assert(IS_ERROR(VAL_THROWN_LABEL(LEVEL)));
     }
 
     if (r == OUT) {
@@ -223,83 +228,83 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
         assert(not Is_Fresh(OUT));
         assert(IS_SPECIFIC(cast(Cell(*), OUT)));
 
-        if (Get_Frame_Flag(FRAME, META_RESULT)) {
+        if (Get_Level_Flag(LEVEL, META_RESULT)) {
             Meta_Quotify(OUT);
         }
         else if (Is_Raised(OUT)) {
-            if (Not_Frame_Flag(FRAME, FAILURE_RESULT_OK)) {
+            if (Not_Level_Flag(LEVEL, FAILURE_RESULT_OK)) {
                 //
                 // treat any failure as if it could have been thrown from
                 // anywhere, so it is bubbled up as a throw.
                 //
                 mutable_QUOTE_BYTE(OUT) = UNQUOTED_1;
-                Init_Thrown_Error(FRAME, stable_OUT);
+                Init_Thrown_Error(LEVEL, stable_OUT);
                 goto thrown;
             }
         }
-        else if (Get_Frame_Flag(FRAME, BRANCH)) {
+        else if (Get_Level_Flag(LEVEL, BRANCH)) {
             Debranch_Output(OUT);  // make heavy voids, clear ELSE/THEN methods
         }
 
-        if (Get_Frame_Flag(FRAME, ROOT_FRAME)) {  // may keepalive subframes
-            CLEANUP_BEFORE_EXITING_TRAP_BLOCK;  // switches FRAME pointer...
-            return TOP_FRAME->out;  // ...so return what's now TOP_FRAME->out
+        if (Get_Level_Flag(LEVEL, ROOT_LEVEL)) {  // may keepalive sublevels
+            CLEANUP_BEFORE_EXITING_TRAP_BLOCK;  // switches LEVEL pointer...
+            return TOP_LEVEL->out;  // ...so return what's now TOP_LEVEL->out
         }
 
-        // Some natives and executors want to be able to leave a pushed frame
+        // Some natives and executors want to be able to leave a pushed level
         // intact as the "top of stack" even when it has completed.  This
-        // means that when those executors run, their frame parameter is
+        // means that when those executors run, their level parameter is
         // not the technical top of the stack.
         //
-        if (Get_Frame_Flag(FRAME, TRAMPOLINE_KEEPALIVE)) {
-            FRAME = FRAME->prior;
-            assert(FRAME != TOP_FRAME);  // sanity check (*not* top of stack)
+        if (Get_Level_Flag(LEVEL, TRAMPOLINE_KEEPALIVE)) {
+            LEVEL = LEVEL->prior;
+            assert(LEVEL != TOP_LEVEL);  // sanity check (*not* top of stack)
         }
         else {
-            assert(FRAME == TOP_FRAME);  // sanity check (is top of the stack)
-            Drop_Frame(FRAME);
-            FRAME = TOP_FRAME;
+            assert(LEVEL == TOP_LEVEL);  // sanity check (is top of the stack)
+            Drop_Level(LEVEL);
+            LEVEL = TOP_LEVEL;
         }
 
-        // some pending frame now has a result
+        // some pending level now has a result
 
         goto bounce_on_trampoline_skip_just_use_out;
     }
 
   //=//// HANDLE CONTINUATIONS ////////////////////////////////////////////=//
   //
-  // 1. It's legal for a frame to implement itself in terms of another frame
+  // 1. It's legal for a level to implement itself in terms of another level
   //    that is compatible.  This could have a separate signal, but for now
   //    it's done as BOUNCE_CONTINUE.  Since that delegation may be to an
   //    INITIAL_ENTRY state, the zero STATE_0 needs to be allowed.
   //
-  // 2. If a frame besides the one that we ran is above on the stack, then
-  //    the frame is using that continuation to get a result it is interested
+  // 2. If a level besides the one that we ran is above on the stack, then
+  //    the level is using that continuation to get a result it is interested
   //    in.  It needs to know it did a push, so the state must be nonzero.
   //
-  //    (Technically there could be some other frame field modified to let it
+  //    (Technically there could be some other level field modified to let it
   //    know there was an effect, but we enforce the nonzero rule because it
   //    also helps with bookkeeping and GC features, allowing the zero value
   //    to be reserved to mean something else.)
 
     if (r == BOUNCE_CONTINUE) {
-        if (FRAME != TOP_FRAME)  // continuing self ok, see [1]
+        if (LEVEL != TOP_LEVEL)  // continuing self ok, see [1]
             assert(STATE != 0);  // otherwise state enforced nonzero, see [2]
 
-        FRAME = TOP_FRAME;
+        LEVEL = TOP_LEVEL;
         goto bounce_on_trampoline_skip_just_use_out;
     }
 
     if (r == BOUNCE_DELEGATE) {
         //
-        // We could unhook the frame from the stack here, but leaving it in
+        // We could unhook the level from the stack here, but leaving it in
         // provides clarity in the stack.   Hence this should not be used in
         // tail call situations.
         //
         STATE = DELEGATE_255;  // maintain non-zero invariant
-        FRAME->executor = &Delegated_Executor;
+        LEVEL->executor = &Delegated_Executor;
 
-        FRAME = TOP_FRAME;
+        LEVEL = TOP_LEVEL;
         goto bounce_on_trampoline;
     }
 
@@ -311,8 +316,8 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
 
   //=//// HANDLE THROWS, INCLUDING (NON-ABRUPT) ERRORS ////////////////////=//
 
-    // 1. Having handling of UNWIND be in the trampoline means that any frame
-    //    can be "teleported to" with a result, not just ACTION! frames.  It
+    // 1. Having handling of UNWIND be in the trampoline means that any level
+    //    can be "teleported to" with a result, not just action levels.  It
     //    has a notable use by RETURN from a FUNC, which considers its type
     //    checking to be finished so it can skip past the Action_Executor().
     //
@@ -321,18 +326,18 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
     //    which intercepts the UNWIND issued by RETURN, because it doesn't want
     //    to actually return the block (it wants to splice it).  But that may
     //    suggest MACRO wants to use its own throw type in a definitional
-    //    return, so that you could generically UNWIND to a macro frame and
+    //    return, so that you could generically UNWIND to a macro level and
     //    overwrite the result verbatim.
     //
-    // 2. Note FRAME->varlist may be SERIES_FLAG_INACCESSIBLE here.  This can
-    //    happen with RETURN during ENCLOSE.  So don't use CTX(FRAME->varlist)
+    // 2. Note LEVEL->varlist may be SERIES_FLAG_INACCESSIBLE here.  This can
+    //    happen with RETURN during ENCLOSE.  So don't use CTX(LEVEL->varlist)
     //    here, as that would try to validate it as not being inaccessible.
     //
-    // 3. Constructs like REDUCE-EACH keep a subframe pushed to do evaluation,
+    // 3. Constructs like REDUCE-EACH keep a sublevel pushed to do evaluation,
     //    but then want to keep that state while doing another evaluation
     //    (e.g. the body block).  To "punch a hole" through the evaluation
-    //    frame it sets the executor to Just_Use_Out and can get the result
-    //    without dropping the frame.  But thrown values like CONTINUE lead
+    //    level it sets the executor to Just_Use_Out and can get the result
+    //    without dropping the level.  But thrown values like CONTINUE lead
     //    to a problem of how to express wanting TRAMPOLINE_KEEPALIVE to be
     //    applicable to throw situations as well--not all want it.  For now
     //    we conflate Just_Use_Out with the intent of keepalive on throw.
@@ -340,53 +345,53 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
     if (r == BOUNCE_THROWN) {
       thrown:
 
-        assert(FRAME == TOP_FRAME);  // Action_Executor() helps, drops inerts
+        assert(LEVEL == TOP_LEVEL);  // Action_Executor() helps, drops inerts
 
-        /*assert(not IS_CFUNC_TRASH_DEBUG(Executor*, FRAME->executor));*/
-        TRASH_CFUNC_IF_DEBUG(Executor*, FRAME->executor);
+        /*assert(not IS_CFUNC_TRASH_DEBUG(Executor*, LEVEL->executor));*/
+        TRASH_CFUNC_IF_DEBUG(Executor*, LEVEL->executor);
 
-        if (Get_Frame_Flag(FRAME, ABRUPT_FAILURE)) {
+        if (Get_Level_Flag(LEVEL, ABRUPT_FAILURE)) {
             //
             // They had their chance to clean up.
             // Fail again as definitional error, but this time don't notify.
             //
-            assert(Get_Frame_Flag(FRAME, NOTIFY_ON_ABRUPT_FAILURE));
-            Clear_Frame_Flag(FRAME, NOTIFY_ON_ABRUPT_FAILURE);
-            Clear_Frame_Flag(FRAME, ABRUPT_FAILURE);
-            assert(IS_ERROR(VAL_THROWN_LABEL(FRAME)));
-            Context(*) ctx = VAL_CONTEXT(VAL_THROWN_LABEL(FRAME));
-            CATCH_THROWN(SPARE, FRAME);
+            assert(Get_Level_Flag(LEVEL, NOTIFY_ON_ABRUPT_FAILURE));
+            Clear_Level_Flag(LEVEL, NOTIFY_ON_ABRUPT_FAILURE);
+            Clear_Level_Flag(LEVEL, ABRUPT_FAILURE);
+            assert(IS_ERROR(VAL_THROWN_LABEL(LEVEL)));
+            Context(*) ctx = VAL_CONTEXT(VAL_THROWN_LABEL(LEVEL));
+            CATCH_THROWN(SPARE, LEVEL);
             fail (ctx);
         }
 
-        const REBVAL *label = VAL_THROWN_LABEL(FRAME);  // unwind, see [1]
+        const REBVAL *label = VAL_THROWN_LABEL(LEVEL);  // unwind, see [1]
         if (
             IS_FRAME(label)
             and VAL_ACTION(label) == VAL_ACTION(Lib(UNWIND))
-            and TG_Unwind_Frame == FRAME  // may be inaccessible, see [2]
+            and TG_Unwind_Level == LEVEL  // may be inaccessible, see [2]
         ){
-            CATCH_THROWN(OUT, FRAME);
+            CATCH_THROWN(OUT, LEVEL);
             goto result_in_out;
         }
 
-        if (Get_Frame_Flag(FRAME, ROOT_FRAME)) {  // don't abort top
-            assert(Not_Frame_Flag(TOP_FRAME, TRAMPOLINE_KEEPALIVE));
+        if (Get_Level_Flag(LEVEL, ROOT_LEVEL)) {  // don't abort top
+            assert(Not_Level_Flag(TOP_LEVEL, TRAMPOLINE_KEEPALIVE));
             CLEANUP_BEFORE_EXITING_TRAP_BLOCK;
             return BOUNCE_THROWN;
         }
 
-        Drop_Frame(FRAME);  // restores to baseline
-        FRAME = TOP_FRAME;
+        Drop_Level(LEVEL);  // restores to baseline
+        LEVEL = TOP_LEVEL;
 
-        if (FRAME->executor == &Just_Use_Out_Executor) {
-            if (Get_Frame_Flag(FRAME, TRAMPOLINE_KEEPALIVE))
-                FRAME = FRAME->prior;  // don't let it be aborted, see [3]
+        if (LEVEL->executor == &Just_Use_Out_Executor) {
+            if (Get_Level_Flag(LEVEL, TRAMPOLINE_KEEPALIVE))
+                LEVEL = LEVEL->prior;  // don't let it be aborted, see [3]
         }
 
         goto bounce_on_trampoline;  // executor will see the throw
     }
 
-    assert(!"executor(f) not OUT, BOUNCE_THROWN, or BOUNCE_CONTINUE");
+    assert(!"executor(L) not OUT, BOUNCE_THROWN, or BOUNCE_CONTINUE");
     panic (cast(void*, r));
 
 } ON_ABRUPT_FAILURE(Context(*) e) {  /////////////////////////////////////////
@@ -394,15 +399,15 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
   // 1. An abrupt fail(...) is treated as a "thrown error", which can not be
   //    intercepted in the same way as a definitional error can be.
   //
-  //   (It was wondered if since we know what FRAME was "in control" when a
+  //   (It was wondered if since we know what LEVEL was "in control" when a
   //    fail() occurred, if this code should put a Raised() in the output
   //    slot...as if a `return RAISE(xxx)` occurred.  But just because we know
-  //    what FRAME the trampoline last called does not mean every incidental
-  //    error should be attributed to being "from" that frame.  That would
+  //    what LEVEL the trampoline last called does not mean every incidental
+  //    error should be attributed to being "from" that level.  That would
   //    promote any incidental error--like "out of memory", that could come
   //    from any nested library call--to being definitional.)
   //
-  // 2. A frame that asked to be notified about abrupt failures will get the
+  // 2. A level that asked to be notified about abrupt failures will get the
   //    failure thrown.  The default behavior of staying in the thrown state
   //    will be to convert it to a definitional failure on return.
   //
@@ -412,35 +417,35 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
     ASSERT_CONTEXT(e);
     assert(CTX_TYPE(e) == REB_ERROR);
 
-    Set_Frame_Flag(FRAME, ABRUPT_FAILURE);
+    Set_Level_Flag(LEVEL, ABRUPT_FAILURE);
 
     FRESHEN_MOVED_CELL_EVIL_MACRO(OUT);  // avoid sweep error under rug assert
-    Init_Thrown_Error(FRAME, CTX_ARCHETYPE(e));  // non-definitional, see [1]
+    Init_Thrown_Error(LEVEL, CTX_ARCHETYPE(e));  // non-definitional, see [1]
 
-    while (TOP_FRAME != FRAME) {  // drop idle frames above the fail
-        assert(Not_Frame_Flag(TOP_FRAME, NOTIFY_ON_ABRUPT_FAILURE));
-        assert(Not_Frame_Flag(TOP_FRAME, ROOT_FRAME));
+    while (TOP_LEVEL != LEVEL) {  // drop idle levels above the fail
+        assert(Not_Level_Flag(TOP_LEVEL, NOTIFY_ON_ABRUPT_FAILURE));
+        assert(Not_Level_Flag(TOP_LEVEL, ROOT_LEVEL));
 
-        if (Is_Action_Frame(TOP_FRAME)) {
-            assert(Not_Executor_Flag(ACTION, TOP_FRAME, DISPATCHER_CATCHES));
-            assert(not Is_Action_Frame_Fulfilling(TOP_FRAME));
-            Drop_Action(TOP_FRAME);
+        if (Is_Action_Level(TOP_LEVEL)) {
+            assert(Not_Executor_Flag(ACTION, TOP_LEVEL, DISPATCHER_CATCHES));
+            assert(not Is_Level_Fulfilling(TOP_LEVEL));
+            Drop_Action(TOP_LEVEL);
         }
 
-        Drop_Frame(TOP_FRAME);  // will call va_end() if variadic frame
+        Drop_Level(TOP_LEVEL);  // will call va_end() if variadic level
     }
 
-    if (Not_Frame_Flag(FRAME, NOTIFY_ON_ABRUPT_FAILURE)) {
-        if (Get_Frame_Flag(FRAME, ROOT_FRAME)) {
+    if (Not_Level_Flag(LEVEL, NOTIFY_ON_ABRUPT_FAILURE)) {
+        if (Get_Level_Flag(LEVEL, ROOT_LEVEL)) {
             CLEANUP_BEFORE_EXITING_TRAP_BLOCK;
             return BOUNCE_THROWN;
         }
 
-        Drop_Frame(FRAME);
+        Drop_Level(LEVEL);
     }
 
-    CLEANUP_BEFORE_EXITING_TRAP_BLOCK;  /* Note: changes FRAME */
-    // (TOP_FRAME will become FRAME again after push_trap)
+    CLEANUP_BEFORE_EXITING_TRAP_BLOCK;  /* Note: changes LEVEL */
+    // (TOP_LEVEL will become LEVEL again after push_trap)
     goto bounce_on_trampoline_with_trap;  // after exception, need new trap
 }}
 
@@ -450,26 +455,26 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
 //
 bool Trampoline_With_Top_As_Root_Throws(void)
 {
-    Frame(*) root = TOP_FRAME;
+    Level(*) root = TOP_LEVEL;
 
   #if !defined(NDEBUG)
     struct Reb_Jump *check = TG_Jump_List;
-    assert(Not_Frame_Flag(root, ROOT_FRAME));
+    assert(Not_Level_Flag(root, ROOT_LEVEL));
   #endif
 
     // !!! More efficient if caller sets this, but set it ourselves for now.
     //
-    Set_Frame_Flag(root, ROOT_FRAME);  // can't unwind across, see [1]
+    Set_Level_Flag(root, ROOT_LEVEL);  // can't unwind across, see [1]
 
     Bounce r = Trampoline_From_Top_Maybe_Root();
 
   #if !defined(NDEBUG)
     assert(check == TG_Jump_List);  // must CLEANUP_BEFORE_EXITING_TRAP_BLOCK
-    assert(TOP_FRAME == root);
-    assert(Get_Frame_Flag(root, ROOT_FRAME));
+    assert(TOP_LEVEL == root);
+    assert(Get_Level_Flag(root, ROOT_LEVEL));
   #endif
 
-    Clear_Frame_Flag(root, ROOT_FRAME);
+    Clear_Level_Flag(root, ROOT_LEVEL);
 
     if (r == BOUNCE_THROWN)
         return true;
@@ -500,10 +505,10 @@ bool Trampoline_With_Top_As_Root_Throws(void)
 //
 //  Trampoline_Throws: C
 //
-bool Trampoline_Throws(Atom(*) out, Frame(*) root)
+bool Trampoline_Throws(Atom(*) out, Level(*) root)
 {
-    Push_Frame(out, root);
+    Push_Level(out, root);
     bool threw = Trampoline_With_Top_As_Root_Throws();
-    Drop_Frame(root);
+    Drop_Level(root);
     return threw;
 }

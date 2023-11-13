@@ -68,26 +68,26 @@ inline static bool Is_Api_Value(Cell(const*) v) {
     return did (v->header.bits & NODE_FLAG_ROOT);
 }
 
-inline static void Link_Api_Handle_To_Frame(Array(*) a, Frame(*) f)
+inline static void Link_Api_Handle_To_Level(Array(*) a, Level(*) L)
 {
-    // The head of the list isn't null, but points at the frame, so that
-    // API freeing operations can update the head of the list in the frame
+    // The head of the list isn't null, but points at the level, so that
+    // API freeing operations can update the head of the list in the level
     // when given only the node pointer.
 
-    mutable_MISC(ApiPrev, a) = f;  // back pointer for doubly linked list
+    mutable_MISC(ApiPrev, a) = L;  // back pointer for doubly linked list
 
-    bool empty_list = f->alloc_value_list == f;
+    bool empty_list = L->alloc_value_list == L;
 
     if (not empty_list) {  // head of list exists, take its spot at the head
-        assert(Is_Api_Value(ARR_SINGLE(ARR(f->alloc_value_list))));
-        mutable_MISC(ApiPrev, SER(f->alloc_value_list)) = a;  // link back
+        assert(Is_Api_Value(ARR_SINGLE(ARR(L->alloc_value_list))));
+        mutable_MISC(ApiPrev, SER(L->alloc_value_list)) = a;  // link back
     }
 
-    mutable_LINK(ApiNext, a) = f->alloc_value_list;  // forward pointer
-    f->alloc_value_list = a;
+    mutable_LINK(ApiNext, a) = L->alloc_value_list;  // forward pointer
+    L->alloc_value_list = a;
 }
 
-inline static void Unlink_Api_Handle_From_Frame(Array(*) a)
+inline static void Unlink_Api_Handle_From_Level(Array(*) a)
 {
     bool at_head = did (
         *cast(Byte*, MISC(ApiPrev, a)) & NODE_BYTEMASK_0x01_CELL
@@ -97,12 +97,12 @@ inline static void Unlink_Api_Handle_From_Frame(Array(*) a)
     );
 
     if (at_head) {
-        Frame(*) f = FRM(MISC(ApiPrev, a));
-        f->alloc_value_list = LINK(ApiNext, a);
+        Level(*) L = LVL(MISC(ApiPrev, a));
+        L->alloc_value_list = LINK(ApiNext, a);
 
         if (not at_tail) {  // only set next item's backlink if it exists
             assert(Is_Api_Value(ARR_SINGLE(ARR(LINK(ApiNext, a)))));
-            mutable_MISC(ApiPrev, SER(LINK(ApiNext, a))) = f;
+            mutable_MISC(ApiPrev, SER(LINK(ApiNext, a))) = L;
         }
     }
     else {
@@ -141,11 +141,11 @@ inline static REBVAL *Alloc_Value(void)
     v->header.bits = CELL_MASK_0_ROOT;  // not readable, but still "fresh"
 
     // We link the API handle into a doubly linked list maintained by the
-    // topmost frame at the time the allocation happens.  This frame will
+    // topmost level at the time the allocation happens.  This level will
     // be responsible for marking the node live, freeing the node in case
-    // of a fail() that interrupts the frame, and reporting any leaks.
+    // of a fail() that interrupts the level, and reporting any leaks.
     //
-    Link_Api_Handle_To_Frame(a, TOP_FRAME);
+    Link_Api_Handle_To_Level(a, TOP_LEVEL);
 
     return v;
 }
@@ -157,7 +157,7 @@ inline static void Free_Value(REBVAL *v)
     Array(*) a = Singular_From_Cell(v);
 
     if (GET_SERIES_FLAG(a, MANAGED))
-        Unlink_Api_Handle_From_Frame(a);
+        Unlink_Api_Handle_From_Level(a);
 
     Poison_Cell(ARR_SINGLE(a));  // has to be last (removes NODE_FLAG_ROOT)
     GC_Kill_Series(a);
@@ -184,7 +184,7 @@ inline static REBVAL *rebSpecific(Cell(const*) v, REBSPC *specifier)
 // encounter a leak.
 //
 // !!! There is no protocol in place yet for the external API to throw,
-// so that is something to think about.  At the moment, only f->out can
+// so that is something to think about.  At the moment, only L->out can
 // hold thrown returns, and these API handles are elsewhere.
 //
 inline static void Release_Api_Value_If_Unmanaged(const Atom(*) r) {
@@ -208,13 +208,13 @@ inline static void Release_Api_Value_If_Unmanaged(const Atom(*) r) {
 //
 inline static Bounce Native_Copy_Result_Untracked(
     Atom(*) out,  // have to pass; comma at callsite -> "operand has no effect"
-    Frame(*) frame_,
+    Level(*) level_,
     Atom(const*) v
 ){
-    assert(out == frame_->out);
+    assert(out == level_->out);
     UNUSED(out);
-    assert(v != frame_->out);   // Copy_Cell() would fail; don't tolerate
+    assert(v != level_->out);   // Copy_Cell() would fail; don't tolerate
     assert(not Is_Api_Value(v)); // too easy to not release()
-    Copy_Cell_Untracked(frame_->out, v, CELL_MASK_COPY);
-    return frame_->out;
+    Copy_Cell_Untracked(level_->out, v, CELL_MASK_COPY);
+    return level_->out;
 }

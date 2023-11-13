@@ -93,7 +93,7 @@ REBINT CT_Issue(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
 //  MAKE_Issue: C
 //
 Bounce MAKE_Issue(
-    Frame(*) frame_,
+    Level(*) level_,
     enum Reb_Kind kind,
     option(const REBVAL*) parent,
     const REBVAL *arg
@@ -120,7 +120,7 @@ Bounce MAKE_Issue(
         Codepoint c;
         if (*bp <= 0x80) {
             if (size != 1)
-                return MAKE_String(frame_, kind, nullptr, arg);
+                return MAKE_String(level_, kind, nullptr, arg);
 
             c = *bp;
         }
@@ -130,7 +130,7 @@ Bounce MAKE_Issue(
             if (bp == nullptr)
                 goto bad_make;  // must be valid UTF8
             if (size != 0)
-                return MAKE_String(frame_, kind, nullptr, arg);
+                return MAKE_String(level_, kind, nullptr, arg);
         }
         Context(*) error = Maybe_Init_Char(OUT, c);
         if (error)
@@ -142,7 +142,7 @@ Bounce MAKE_Issue(
             fail ("Empty ISSUE! is zero codepoint, unlike empty TEXT!");
         if (VAL_LEN_AT(arg) == 1)
             return Init_Char_Unchecked(OUT, CHR_CODE(VAL_UTF8_AT(arg)));
-        return MAKE_String(frame_, kind, nullptr, arg);
+        return MAKE_String(level_, kind, nullptr, arg);
 
       default:
         break;
@@ -216,7 +216,7 @@ DECLARE_NATIVE(utf8_to_char)
 // divided into functions like CODEPOINT-TO-CHAR and UTF8-TO-CHAR, which
 // leave things like TO ISSUE! 10 to be #10.
 //
-Bounce TO_Issue(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg)
+Bounce TO_Issue(Level(*) level_, enum Reb_Kind kind, const REBVAL *arg)
 {
     assert(VAL_TYPE(arg) != REB_ISSUE);  // !!! should call COPY?
 

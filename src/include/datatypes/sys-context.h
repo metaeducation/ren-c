@@ -42,14 +42,14 @@
 //  +          "ROOTVAR"           |        |
 //  | Archetype ANY-CONTEXT! Value |        v         KEYLIST SERIES
 //  +------------------------------+        +-------------------------------+
-//  |      <opt> ANY-VALUE! 1      |        |     String(*) key symbol  1     |
+//  |      <opt> ANY-VALUE! 1      |        |     Symbol(*) key symbol  1   |
 //  +------------------------------+        +-------------------------------+
-//  |      <opt> ANY-VALUE! 2      |        |     String(*) key symbol 2      |
+//  |      <opt> ANY-VALUE! 2      |        |     Symbol(*) key symbol 2    |
 //  +------------------------------+        +-------------------------------+
-//  |      <opt> ANY-VALUE! ...    |        |     String(*) key symbol ...    |
+//  |      <opt> ANY-VALUE! ...    |        |     Symbol(*) key symbol ...  |
 //  +------------------------------+        +-------------------------------+
 //
-// (For executing frames, the ---Link--> is actually to the Frame(*) structure
+// (For executing frames, the ---Link--> is actually to its Level(*) structure
 // so the paramlist of the CTX_FRAME_PHASE() must be consulted.  When the
 // frame stops running, the paramlist is written back to the link again.)
 //
@@ -69,12 +69,6 @@
 //   This is why objects are "append only"...because disruption of the index
 //   numbers would break the extant words with index numbers to that position.
 //   (Appending to keylists involves making a copy if it is shared.)
-//
-// * R3-Alpha used a special kind of WORD! known as an "unword" for the
-//   keylist keys.  Ren-C uses values whose "heart byte" are TYPESET!, but use
-//   a kind byte that makes them a "Param".  They can also hold a symbol, as
-//   this made certain kinds of corruption less likely.  The design is likely
-//   to change as TYPESET! is slated to be replaced with "type predicates".
 //
 // * Since varlists and keylists always have more than one element, they are
 //   allocated with SERIES_FLAG_DYNAMIC and do not need to check for whether
@@ -230,8 +224,8 @@ inline static void INIT_VAL_FRAME_ROOTVAR_Core(
 //=//// CONTEXT KEYLISTS //////////////////////////////////////////////////=//
 //
 // If a context represents a FRAME! that is currently executing, one often
-// needs to quickly navigate to the Frame(*) structure for the corresponding
-// stack level.  This is sped up by swapping the Frame(*) into the LINK() of
+// needs to quickly navigate to the Level(*) structure for the corresponding
+// stack level.  This is sped up by swapping the Level(*) into the LINK() of
 // the varlist until the frame is finished.  In this state, the paramlist of
 // the FRAME! action is consulted. When the action is finished, this is put
 // back in BONUS_KEYSOURCE().
@@ -246,11 +240,11 @@ inline static Keylist(*) CTX_KEYLIST(Context(*) c) {
     assert(CTX_TYPE(c) != REB_MODULE);
     if (Is_Node_A_Cell(BONUS(KeySource, CTX_VARLIST(c)))) {
         //
-        // running frame, source is Frame(*), so use action's paramlist.
+        // running frame, KeySource is Level(*), so use action's paramlist.
         //
         return ACT_KEYLIST(CTX_FRAME_PHASE(c));
     }
-    return cast(Raw_Keylist*, BONUS(KeySource, CTX_VARLIST(c)));  // not Frame
+    return cast(Raw_Keylist*, BONUS(KeySource, CTX_VARLIST(c)));  // not Level
 }
 
 inline static void INIT_CTX_KEYLIST_SHARED(Context(*) c, REBSER *keylist) {
@@ -362,13 +356,13 @@ inline static REBVAR *CTX_VARS(const REBVAR ** tail, Context(*) c) {
 }
 
 
-//=//// FRAME! Context(*) <-> Frame(*) STRUCTURE //////////////////////////////=//
+//=//// FRAME! Context(*) <-> Level(*) STRUCTURE //////////////////////////=//
 //
 // For a FRAME! context, the keylist is redundant with the paramlist of the
 // CTX_FRAME_PHASE() that the frame is for.  That is taken advantage of when
 // a frame is executing in order to use the LINK() keysource to point at the
-// running Frame(*) structure for that stack level.  This provides a cheap
-// way to navigate from a Context(*) to the Frame(*) that's running it.
+// running Level(*) structure for that stack level.  This provides a cheap
+// way to navigate from a Context(*) to the Level(*) that's running it.
 //
 
 inline static bool Is_Frame_On_Stack(Context(*) c) {
@@ -376,7 +370,7 @@ inline static bool Is_Frame_On_Stack(Context(*) c) {
     return Is_Node_A_Cell(BONUS(KeySource, CTX_VARLIST(c)));
 }
 
-inline static Frame(*) CTX_FRAME_IF_ON_STACK(Context(*) c) {
+inline static Level(*) CTX_LEVEL_IF_ON_STACK(Context(*) c) {
     Node* keysource = BONUS(KeySource, CTX_VARLIST(c));
     if (not Is_Node_A_Cell(keysource))
         return nullptr; // e.g. came from MAKE FRAME! or Encloser_Dispatcher
@@ -384,16 +378,16 @@ inline static Frame(*) CTX_FRAME_IF_ON_STACK(Context(*) c) {
     assert(NOT_SERIES_FLAG(CTX_VARLIST(c), INACCESSIBLE));
     assert(IS_FRAME(CTX_ARCHETYPE(c)));
 
-    Frame(*) f = FRM(keysource);
-    assert(f->executor == &Action_Executor);
-    return f;
+    Level(*) L = LVL(keysource);
+    assert(L->executor == &Action_Executor);
+    return L;
 }
 
-inline static Frame(*) CTX_FRAME_MAY_FAIL(Context(*) c) {
-    Frame(*) f = CTX_FRAME_IF_ON_STACK(c);
-    if (not f)
+inline static Level(*) CTX_LEVEL_MAY_FAIL(Context(*) c) {
+    Level(*) L = CTX_LEVEL_IF_ON_STACK(c);
+    if (not L)
         fail (Error_Frame_Not_On_Stack_Raw());
-    return f;
+    return L;
 }
 
 inline static void FAIL_IF_INACCESSIBLE_CTX(Context(*) c) {

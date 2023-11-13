@@ -1,6 +1,6 @@
 //
 //  File: %exec-action.h
-//  Summary: {Flags and Frame State for Action_Executor()}
+//  Summary: {Flags and Level State for Action_Executor()}
 //  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  Homepage: https://github.com/metaeducation/ren-c/
 //
@@ -18,8 +18,8 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// The frame state has to be defined in order to be used (easily) in the
-// union of the Reb_Frame.
+// The level state has to be defined in order to be used (easily) in the
+// union of the Reb_Level.
 //
 
 #define EXECUTOR_ACTION &Action_Executor   // shorthand in Xxx_Executor_Flag()
@@ -32,7 +32,7 @@
 // !!! Does this need both an ACTION and EVAL executor flag?
 //
 #define ACTION_EXECUTOR_FLAG_DIDNT_LEFT_QUOTE_TUPLE \
-    FRAME_FLAG_24
+    LEVEL_FLAG_24
 
 STATIC_ASSERT(
     ACTION_EXECUTOR_FLAG_DIDNT_LEFT_QUOTE_TUPLE
@@ -60,7 +60,7 @@ STATIC_ASSERT(
 // meaning during dispatch if desired (e.g. DELEGATE_CONTROL)
 //
 #define ACTION_EXECUTOR_FLAG_DOING_PICKUPS \
-    FRAME_FLAG_25
+    LEVEL_FLAG_25
 
 
 //=//// ACTION_EXECUTOR_FLAG_ERROR_ON_DEFERRED_ENFIX //////////////////////=//
@@ -101,13 +101,13 @@ STATIC_ASSERT(
 // it starts running dispatch it has to leave the byte to the dispatcher.
 //
 #define ACTION_EXECUTOR_FLAG_IN_DISPATCH \
-    FRAME_FLAG_26
+    LEVEL_FLAG_26
 
-#define Is_Action_Frame_Fulfilling(f) \
-    Not_Executor_Flag(ACTION, f, IN_DISPATCH)
+#define Is_Level_Fulfilling(L) \
+    Not_Executor_Flag(ACTION, L, IN_DISPATCH)
 
-#define Is_Action_Frame_Dispatching(f) \
-    Get_Executor_Flag(ACTION, f, IN_DISPATCH)
+#define Is_Level_Dispatching(L) \
+    Get_Executor_Flag(ACTION, L, IN_DISPATCH)
 
 
 //=//// ACTION_EXECUTOR_FLAG_DELEGATE_CONTROL /////////////////////////////=//
@@ -126,7 +126,7 @@ STATIC_ASSERT(
 // evaluated to a constant value!  This won't leave the frame on the stack).
 //
 #define ACTION_EXECUTOR_FLAG_DELEGATE_CONTROL \
-    FRAME_FLAG_27
+    LEVEL_FLAG_27
 
 
 //=//// ACTION_EXECUTOR_FLAG_RUNNING_ENFIX ////////////////////////////////=//
@@ -142,7 +142,7 @@ STATIC_ASSERT(
 // on what's in the action can be seen in the DECLARE_NATIVE(shove) code.
 //
 #define ACTION_EXECUTOR_FLAG_RUNNING_ENFIX \
-    FRAME_FLAG_28
+    LEVEL_FLAG_28
 
 
 //=//// ACTION_EXECUTOR_FLAG_DISPATCHER_CATCHES ///////////////////////////=//
@@ -154,7 +154,7 @@ STATIC_ASSERT(
 // something like a WHILE loop wanting to catch a BREAK.
 //
 #define ACTION_EXECUTOR_FLAG_DISPATCHER_CATCHES \
-    FRAME_FLAG_29
+    LEVEL_FLAG_29
 
 
 //=//// ACTION_EXECUTOR_FLAG_FULFILL_ONLY /////////////////////////////////=//
@@ -164,12 +164,12 @@ STATIC_ASSERT(
 // dodge having to check the flag on every dispatch.  But in the scheme of
 // things, checking the flag is negligible...and it's better to do it with
 // a flag so that one does not lose the paramlist information one was working
-// with (overwriting with a dummy action on FRM_PHASE() led to an inconsistent
+// with (overwriting with a dummy action on Level_Phase() led to an inconsistent
 // case that had to be accounted for, since the dummy's arguments did not
 // line up with the frame being filled).
 //
 #define ACTION_EXECUTOR_FLAG_FULFILL_ONLY \
-    FRAME_FLAG_30
+    LEVEL_FLAG_30
 
 
 //=//// ACTION_EXECUTOR_FLAG_TYPECHECK_ONLY ///////////////////////////////=//
@@ -178,17 +178,17 @@ STATIC_ASSERT(
 // only thing that should be done is typechecking...don't run the action.
 //
 #define ACTION_EXECUTOR_FLAG_TYPECHECK_ONLY \
-    FRAME_FLAG_31
+    LEVEL_FLAG_31
 
 
 struct Reb_Action_Executor_State {
     //
-    // If a function call is currently in effect, FRM_PHASE() is how you get
+    // If a function call is currently in effect, Level_Phase() is how you get
     // at the current function being run.  This is the action that started
     // the process.
     //
     // Compositions of functions (adaptations, specializations, hijacks, etc)
-    // update the FRAME!'s payload in the f->varlist archetype to say what
+    // update the FRAME!'s payload in the L->varlist archetype to say what
     // the current "phase" is.  The reason it is updated there instead of
     // as a frame field is because specifiers use it.  Similarly, that is
     // where the binding is stored.
@@ -210,7 +210,7 @@ struct Reb_Action_Executor_State {
     // fulfillment, see In_Typecheck_Mode()
     //
     // If arguments are actually being fulfilled into the slots, those
-    // slots start out as trash.  Yet the GC has access to the frame list,
+    // slots start out as trash.  Yet the GC has access to the Level,
     // so it can examine `arg` and avoid trying to protect the random
     // bits that haven't been fulfilled yet.
     //

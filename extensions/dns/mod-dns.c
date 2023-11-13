@@ -144,7 +144,7 @@ static void Get_Local_Ip_Via_Google_DNS_May_Fail(Sink(Value(*)) out)
 //
 //  DNS_Actor: C
 //
-static Bounce DNS_Actor(Frame(*) frame_, REBVAL *port, Symbol(const*) verb)
+static Bounce DNS_Actor(Level(*) level_, REBVAL *port, Symbol(const*) verb)
 {
     Context(*) ctx = VAL_CONTEXT(port);
     REBVAL *spec = CTX_VAR(ctx, STD_PORT_SPEC);

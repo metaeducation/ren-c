@@ -70,12 +70,11 @@ enum {
 // (Luckily these copies are often not needed, such as when the DOES is not
 // used in a method... -AND- it only needs to be made once.)
 //
-Bounce Block_Dispatcher(Frame(*) f)
+Bounce Block_Dispatcher(Level(*) L)
 {
-    Frame(*) frame_ = f;  // for RETURN macros
+    Level(*) level_ = L;  // for RETURN macros
 
-    Phase(*) phase = FRM_PHASE(f);
-    Details(*) details = ACT_DETAILS(phase);
+    Details(*) details = ACT_DETAILS(PHASE);
     assert(ARR_LEN(details) == IDX_DOES_MAX);
 
     Cell(*) block = ARR_AT(details, IDX_DOES_BLOCK);
@@ -85,10 +84,10 @@ Bounce Block_Dispatcher(Frame(*) f)
     Array(const*) body = VAL_ARRAY(block);
 
     if (IS_SPECIFIC(block)) {
-        if (FRM_BINDING(f) == UNBOUND)
+        if (Level_Binding(L) == UNBOUND)
             return DELEGATE(OUT, block);
 
-        // Until "virtual binding" is implemented, we would lose f->binding's
+        // Until "virtual binding" is implemented, we would lose L->binding's
         // ability to influence any variable lookups in the block if we did
         // not relativize it to this frame.  This is the only current way to
         // "beam down" influence of the binding for cases like:
@@ -107,7 +106,7 @@ Bounce Block_Dispatcher(Frame(*) f)
 
         Array(*) relativized = Copy_And_Bind_Relative_Deep_Managed(
             SPECIFIC(block),
-            phase,
+            PHASE,
             VAR_VISIBILITY_INPUTS  // no locals, does not matter
         );
 
@@ -121,15 +120,15 @@ Bounce Block_Dispatcher(Frame(*) f)
 
         // Update block cell as a relativized copy (we won't do this again).
         //
-        Init_Relative_Block(block, phase, relativized);
+        Init_Relative_Block(block, PHASE, relativized);
     }
 
     assert(IS_RELATIVE(block));
 
     return DELEGATE_CORE(
         OUT,  // output
-        FRAME_MASK_NONE,
-        SPC(f->varlist),  // branch specifier
+        LEVEL_MASK_NONE,
+        SPC(L->varlist),  // branch specifier
         block  // branch
     );
 }

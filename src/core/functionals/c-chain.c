@@ -45,45 +45,45 @@ enum {
 
 
 //
-//  Push_Downshifted_Frame: C
+//  Push_Downshifted_Level: C
 //
 // When a derived function dispatcher receives a frame built for the function
 // it derived from, sometimes it can do some work...update the phase...and
-// keep running in that same Frame(*) allocation.
+// keep running in that same Level(*) allocation.
 //
 // But if it wants to stay in control and do post-processing (as CHAIN does)
 // then it needs to remain linked into the stack.  This function helps to
-// move the built frame into a new frame that can be executed with a new
+// move the built level into a new level that can be executed with a new
 // entry to Process_Action().  The ability is also used by RESKINNED.
 //
-Frame(*) Push_Downshifted_Frame(Atom(*) out, Frame(*) f) {
+Level(*) Push_Downshifted_Level(Atom(*) out, Level(*) L) {
     Flags flags = ACTION_EXECUTOR_FLAG_IN_DISPATCH;
-    flags |= f->flags.bits & FRAME_FLAG_FAILURE_RESULT_OK;
+    flags |= L->flags.bits & LEVEL_FLAG_FAILURE_RESULT_OK;
 
-    Frame(*) sub = Make_Frame(f->feed, flags);
-    Push_Frame(out, sub);
+    Level(*) sub = Make_Level(L->feed, flags);
+    Push_Level(out, sub);
     assert(sub->varlist == nullptr);
-    sub->varlist = f->varlist;
-    assert(BONUS(KeySource, sub->varlist) == f);
+    sub->varlist = L->varlist;
+    assert(BONUS(KeySource, sub->varlist) == L);
     INIT_BONUS_KEYSOURCE(sub->varlist, sub);
     sub->rootvar = SPECIFIC(ARR_HEAD(sub->varlist));
 
-    // Note that it can occur that this may be a TRAMPOLINE_KEEPALIVE subframe
+    // Note that it can occur that this may be a TRAMPOLINE_KEEPALIVE sublevel
     // of something like another CHAIN, that it intends to reuse (!)  This
     // means it started out thinking we were going to run an action in that
     // frame and drop it, when in reality we're changing the executor and
     // everything.  This is clearly voodoo but maybe it can be formalized.
     //
-    f->varlist = &PG_Inaccessible_Series;  // trash?  nullptr?
-    f->rootvar = nullptr;
-    TRASH_POINTER_IF_DEBUG(f->executor);  // caller must set
-    TRASH_POINTER_IF_DEBUG(f->label);
+    L->varlist = &PG_Inaccessible_Series;  // trash?  nullptr?
+    L->rootvar = nullptr;
+    TRASH_POINTER_IF_DEBUG(L->executor);  // caller must set
+    TRASH_POINTER_IF_DEBUG(L->label);
 
-    sub->u.action.dispatcher_base = f->u.action.dispatcher_base;
+    sub->u.action.dispatcher_base = L->u.action.dispatcher_base;
 
     sub->executor = &Action_Executor;
 
-    TRASH_IF_DEBUG(f->u);  // not an action anymore; trash after get stack base
+    TRASH_IF_DEBUG(L->u);  // not an action anymore; trash after get stack base
 
     return sub;
 }
@@ -96,24 +96,24 @@ Frame(*) Push_Downshifted_Frame(Atom(*) out, Frame(*) f) {
 // function in the pipeline.  Having the same interface as that function
 // makes a chained function specializable.
 //
-// A first cut at implementing CHAIN did it all within one frame.  It changed
-// the FRM_PHASE() and returned a REDO signal--with actions pushed to the data
+// A first cut at implementing CHAIN did it all within one level.  It changed
+// the Level_Phase() and returned a REDO signal--pushing actions to the data
 // stack that the evaluator was complicit in processing as "things to run
-// afterward".  This baked awareness of chaining into %c-eval.c, when it is
+// afterward".  This baked awareness of chaining into %c-action.c, when it is
 // better if the process was localized inside the dispatcher.
 //
 // Handling it inside the dispatcher means the Chainer_Dispatcher() stays on
-// the stack and in control.  This means either unhooking the current `f` and
-// putting a new Frame(*) above it, or stealing the content of the `f` into a
-// new frame to put beneath it.  The latter is chosen to avoid disrupting
-// existing pointers to `f`.
+// the stack and in control.  This means either unhooking the current `L` and
+// putting a new Level(*) above it, or stealing the content of the `L` into a
+// new level to put beneath it.  The latter is chosen to avoid disrupting
+// existing pointers to `L`.
 //
-// (Having a separate frame for the overall chain has an advantage in error
-// messages too, as there is a frame with the label of the function that the
+// (Having a separate level for the overall chain has an advantage in error
+// messages too, as there is a level with the label of the function that the
 // user invoked in the stack trace...instead of just the chained item that
 // causes an error.)
 //
-Bounce Chainer_Dispatcher(Frame(*) f)
+Bounce Chainer_Dispatcher(Level(*) L)
 //
 // 1. Stealing the varlist leaves the actual chainer frame with no varlist
 //    content.  That means debuggers introspecting the stack may see a
@@ -121,7 +121,7 @@ Bounce Chainer_Dispatcher(Frame(*) f)
 //
 // 2. You can't have an Action_Executor()-based frame on the stack unless it
 //    has a lot of things (like a varlist, which provides the phase, etc.)
-//    So we switch it around to where the frame that had its varlist stolen
+//    So we switch it around to where the level that had its varlist stolen
 //    just uses this function as its executor, so we get called back.
 //
 // 3. At the head of the chain we start at the dispatching phase since the
@@ -129,13 +129,13 @@ Bounce Chainer_Dispatcher(Frame(*) f)
 //    from the top.)
 //
 // 4. We use the same mechanism as enfix operations do...give the next chain
-//    step its first argument coming from f->out.
+//    step its first argument coming from L->out.
 //
 //    !!! One side effect of this is that unless CHAIN is changed to check,
 //    your chains can consume more than one argument.  It might be interesting
 //    or it might be bugs waiting to happen, trying it this way for now.
 {
-    Frame(*) frame_ = f;  // for RETURN macros
+    Level(*) level_ = L;  // for RETURN macros
 
     if (THROWING)  // this routine is both dispatcher and executor, see [2]
         return THROWN;
@@ -153,8 +153,7 @@ Bounce Chainer_Dispatcher(Frame(*) f)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    Phase(*) phase = FRM_PHASE(f);
-    Details(*) details = ACT_DETAILS(phase);
+    Details(*) details = ACT_DETAILS(PHASE);
     assert(ARR_LEN(details) == IDX_CHAINER_MAX);
 
     Value(*) pipeline_at = Init_Block(
@@ -162,17 +161,17 @@ Bounce Chainer_Dispatcher(Frame(*) f)
         VAL_ARRAY(DETAILS_AT(details, IDX_CHAINER_PIPELINE))
     );
 
-    Frame(*) sub = Push_Downshifted_Frame(OUT, f);  // steals varlist, see [1]
-    f->executor = &Chainer_Dispatcher;  // so trampoline calls us, see [2]
+    Level(*) sub = Push_Downshifted_Level(OUT, L);  // steals varlist, see [1]
+    L->executor = &Chainer_Dispatcher;  // so trampoline calls us, see [2]
 
     Cell(const*) chained = VAL_ARRAY_ITEM_AT(pipeline_at);
     ++VAL_INDEX_RAW(pipeline_at);
 
-    INIT_FRM_PHASE(
+    INIT_LVL_PHASE(
         sub,
         ACT_IDENTITY(VAL_ACTION(chained))  // has varlist already, see [3]
     );
-    INIT_FRM_BINDING(sub, VAL_FRAME_BINDING(chained));
+    INIT_LVL_BINDING(sub, VAL_FRAME_BINDING(chained));
 
     sub->u.action.original = VAL_ACTION(chained);
     sub->label = VAL_FRAME_LABEL(chained);
@@ -183,14 +182,14 @@ Bounce Chainer_Dispatcher(Frame(*) f)
   #endif
 
     STATE = ST_CHAINER_RUNNING_SUBFUNCTION;
-    Set_Frame_Flag(sub, TRAMPOLINE_KEEPALIVE);
-    return CATCH_CONTINUE_SUBFRAME(sub);
+    Set_Level_Flag(sub, TRAMPOLINE_KEEPALIVE);
+    return CATCH_CONTINUE_SUBLEVEL(sub);
 
 } run_next_in_chain: {  //////////////////////////////////////////////////////
 
-    Frame(*) sub = SUBFRAME;
-    if (Get_Frame_Flag(f, FAILURE_RESULT_OK))
-        assert(Get_Frame_Flag(sub, FAILURE_RESULT_OK));
+    Level(*) sub = SUBLEVEL;
+    if (Get_Level_Flag(L, FAILURE_RESULT_OK))
+        assert(Get_Level_Flag(sub, FAILURE_RESULT_OK));
 
     if (sub->varlist and NOT_SERIES_FLAG(sub->varlist, MANAGED))
         GC_Kill_Series(sub->varlist);
@@ -211,17 +210,17 @@ Bounce Chainer_Dispatcher(Frame(*) f)
 
     Begin_Prefix_Action(sub, VAL_FRAME_LABEL(chained));
 
-    FRM_STATE_BYTE(sub) = ST_ACTION_FULFILLING_ENFIX_FROM_OUT;  // see [4]
+    Level_State_Byte(sub) = ST_ACTION_FULFILLING_ENFIX_FROM_OUT;  // see [4]
     Clear_Executor_Flag(ACTION, sub, DISPATCHER_CATCHES);
     Clear_Executor_Flag(ACTION, sub, IN_DISPATCH);
-    Clear_Frame_Flag(sub, NOTIFY_ON_ABRUPT_FAILURE);
+    Clear_Level_Flag(sub, NOTIFY_ON_ABRUPT_FAILURE);
 
     assert(STATE == ST_CHAINER_RUNNING_SUBFUNCTION);
-    return CATCH_CONTINUE_SUBFRAME(sub);
+    return CATCH_CONTINUE_SUBLEVEL(sub);
 
 } finished: {  ///////////////////////////////////////////////////////////////
 
-    Drop_Frame(SUBFRAME);
+    Drop_Level(SUBLEVEL);
 
     return OUT;
 }}

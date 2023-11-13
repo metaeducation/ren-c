@@ -33,8 +33,8 @@
 //
 // When the bits of a payload of a VARARGS! are copied from one item to
 // another, they are still maintained in sync.  TAKE-ing a vararg off of one
-// is reflected in the others.  This means that the "indexor" position of
-// the vararg is located through the frame pointer.  If there is no frame,
+// is reflected in the others.  This means that the array index position of
+// the vararg is located through the level pointer.  If there is no level,
 // then a single element array (the `array`) holds an ANY-ARRAY! value that
 // is shared between the instances, to reflect the state.
 //
@@ -72,9 +72,9 @@ inline static void INIT_VAL_VARARGS_BINDING(
 }
 
 
-inline static REBVAL *Init_Varargs_Untyped_Normal(Cell(*) out, Frame(*) f) {
+inline static REBVAL *Init_Varargs_Untyped_Normal(Cell(*) out, Level(*) L) {
     Reset_Unquoted_Header_Untracked(out, CELL_MASK_VARARGS);
-    mutable_BINDING(out) = f->varlist;  // frame-based VARARGS!
+    mutable_BINDING(out) = L->varlist;  // frame-based VARARGS!
     UNUSED(VAL_VARARGS_SIGNED_PARAM_INDEX(out));
     INIT_VAL_VARARGS_PHASE(out, nullptr);  // set in typecheck
     return cast(REBVAL*, out);
@@ -130,34 +130,34 @@ inline static bool Is_Block_Style_Varargs(
 }
 
 
-inline static bool Is_Frame_Style_Varargs_Maybe_Null(
-    Frame(*) *f_out,
+inline static bool Is_Level_Style_Varargs_Maybe_Null(
+    Level(*) *L_out,
     noquote(Cell(const*)) vararg
 ){
     assert(CELL_HEART(vararg) == REB_VARARGS);
 
     Array(*) binding = ARR(BINDING(vararg));
     if (IS_VARLIST(binding)) {
-        // "Ordinary" case... use the original frame implied by the VARARGS!
+        // "Ordinary" case... use the original level implied by the VARARGS!
         // (so long as it is still live on the stack)
 
-        *f_out = CTX_FRAME_IF_ON_STACK(CTX(binding));
+        *L_out = CTX_LEVEL_IF_ON_STACK(CTX(binding));
         return true;
     }
 
-    *f_out = nullptr; // avoid compiler warning in -Og build
-    return false; // it's a block varargs, made via MAKE VARARGS!
+    *L_out = nullptr;  // avoid compiler warning in -Og build
+    return false;  // it's a block varargs, made via MAKE VARARGS!
 }
 
 
-inline static bool Is_Frame_Style_Varargs_May_Fail(
-    Frame(*) *f_out,
+inline static bool Is_Level_Style_Varargs_May_Fail(
+    Level(*) *L_out,
     Cell(const*) vararg
 ){
-    if (not Is_Frame_Style_Varargs_Maybe_Null(f_out, vararg))
+    if (not Is_Level_Style_Varargs_Maybe_Null(L_out, vararg))
         return false;
 
-    if (not *f_out)
+    if (not *L_out)
         fail (Error_Frame_Not_On_Stack_Raw());
 
     return true;

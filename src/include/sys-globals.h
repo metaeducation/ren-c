@@ -168,19 +168,19 @@ PVAR Flags Eval_Signals;   // Signal flags
 **
 ***********************************************************************/
 
-// The thrown label was once tunneled through the frame output cell, with the
-// idea that this would help avoid confusion by thinking there was an actual
+// The thrown label was once tunneled through the level output cell, with the
+// idea that this would help avoid confusion from thinking there was an actual
 // valid result in the output.  Better means came along later of avoiding
-// confusion using reset cells--and not overwriting the output cell made
+// confusion using "fresh" cells--and not overwriting the output cell made
 // it possible to do UNWIND throws that could be invisible.
 //
-// The frame to unwind to is something that could be slipped into the binding
-// of the TG_Thrown_Label, but Frame(*) bindings are not legal at the moment.
-// To get past the issue, the frame is just put in the TG_Unwind_Frame.
+// The level to unwind to is something that could be slipped into the binding
+// of the TG_Thrown_Label, but Level(*) bindings are not legal at the moment.
+// To get past the issue, the level is just put in the TG_Unwind_Level.
 //
 TVAR Reb_Atom TG_Thrown_Arg;
 TVAR Reb_Value TG_Thrown_Label;
-TVAR Frame(*) TG_Unwind_Frame;
+TVAR Level(*) TG_Unwind_Level;
 
 // !!! These values were held in REBVALs for some reason in R3-Alpha, which
 // means that since they were INTEGER! they were signed 64-bit integers.  It
@@ -226,15 +226,15 @@ TVAR uintptr_t TG_Stack_Limit;    // Limit address for CPU stack.
     PVAR const Node* PG_Monitor_Node_Debug;
 #endif
 
-// Each time Eval_Core is called a Reb_Frame* is pushed to the "frame stack".
+// Each time Eval_Core is called a Reb_Level* is pushed to the "level stack".
 // Some pushed entries will represent groups or paths being executed, and
 // some will represent functions that are gathering arguments...hence they
 // have been "pushed" but are not yet actually running.  This stack must
 // be filtered to get an understanding of something like a "backtrace of
 // currently running functions".
 //
-TVAR Frame(*) TG_Top_Frame;
-TVAR Frame(*) TG_Bottom_Frame;
+TVAR Level(*) TG_Top_Level;
+TVAR Level(*) TG_Bottom_Level;
 TVAR Feed(*) TG_End_Feed;
 
 

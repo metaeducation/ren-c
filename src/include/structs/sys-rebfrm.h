@@ -1,6 +1,6 @@
 //
 //  File: %sys-rebfrm.h
-//  Summary: {Reb_Frame Structure Definition}
+//  Summary: {Reb_Level Structure Definition}
 //  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  Homepage: https://github.com/metaeducation/ren-c/
 //
@@ -20,105 +20,105 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// This declares the structure used by frames, for use in other structs.
+// This declares the structure used by levels, for use in other structs.
 // See %sys-frame.h for a higher-level description.
 //
 
 
-// !!! A Frame(*) answers that it is a node, and a cell.  This is questionable
+// !!! A Level(*) answers that it is a node, and a cell.  This is questionable
 // and should be reviewed now that many features no longer depend on it.
 
-#define FRAME_FLAG_0_IS_TRUE FLAG_LEFT_BIT(0) // IS a node
-STATIC_ASSERT(FRAME_FLAG_0_IS_TRUE == NODE_FLAG_NODE);
+#define LEVEL_FLAG_0_IS_TRUE FLAG_LEFT_BIT(0)  // IS a node
+STATIC_ASSERT(LEVEL_FLAG_0_IS_TRUE == NODE_FLAG_NODE);
 
-#define FRAME_FLAG_1_IS_FALSE FLAG_LEFT_BIT(1) // is NOT free
-STATIC_ASSERT(FRAME_FLAG_1_IS_FALSE == NODE_FLAG_STALE);
+#define LEVEL_FLAG_1_IS_FALSE FLAG_LEFT_BIT(1)  // is NOT free
+STATIC_ASSERT(LEVEL_FLAG_1_IS_FALSE == NODE_FLAG_STALE);
 
 
-//=//// FRAME_FLAG_ALLOCATED_FEED //////////////////////////////////////////=//
+//=//// LEVEL_FLAG_ALLOCATED_FEED //////////////////////////////////////////=//
 //
-// Some frame recursions re-use a feed that already existed, while others will
+// Some level recursions re-use a feed that already existed, while others will
 // allocate them.  This re-use allows recursions to keep index positions and
 // fetched "gotten" values in sync.  The dynamic allocation means that feeds
 // can be kept alive across contiuations--which wouldn't be possible if they
 // were on the C stack.
 //
-// If a frame allocated a feed, then it has to be freed...which is done when
-// the frame is dropped or aborted.
+// If a level allocated a feed, then it has to be freed...which is done when
+// the level is dropped or aborted.
 //
 // !!! Note that this is NODE_FLAG_MANAGED.  Right now, the concept of
-// "managed" vs. "unmanaged" doesn't completely apply to frames--they are all
+// "managed" vs. "unmanaged" doesn't completely apply to levels--they are all
 // basically managed, but references to them in values are done through a
 // level of indirection (a varlist) which will be patched up to not point
 // to them if they are freed.  So this bit is used for another purpose.
 //
-#define FRAME_FLAG_ALLOCATED_FEED \
+#define LEVEL_FLAG_ALLOCATED_FEED \
     FLAG_LEFT_BIT(2)
 
-STATIC_ASSERT(FRAME_FLAG_ALLOCATED_FEED == NODE_FLAG_MANAGED);  // should be ok
+STATIC_ASSERT(LEVEL_FLAG_ALLOCATED_FEED == NODE_FLAG_MANAGED);  // should be ok
 
-//=//// FRAME_FLAG_BRANCH ///////////////////////////////////////////////////=//
+
+//=//// LEVEL_FLAG_BRANCH ///////////////////////////////////////////////////=//
 //
 // If something is a branch and it is evaluating, then it cannot result in
-// either a pure NULL or a void result.  So nulls must be turned into null
-// isotopes and voids are turned into none (~) isotopes.
+// either a pure null or void result.  So they have to be put in a PACK!.
 //
 // This is done as a general service of the Trampoline...because if it did
 // not, this would require a separate continuation callback to do it.  So
-// routines like IF would not be able to just delegate to another frame.
+// routines like IF would not be able to just delegate to another level.
 //
-#define FRAME_FLAG_BRANCH \
+#define LEVEL_FLAG_BRANCH \
     FLAG_LEFT_BIT(3)
 
 
-//=//// FRAME_FLAG_META_RESULT ////////////////////////////////////////////=//
+//=//// LEVEL_FLAG_META_RESULT ////////////////////////////////////////////=//
 //
 // When this is applied, the Trampoline is asked to return an evaluator result
 // in its ^META form.  Doing so saves on needing separate callback entry
 // points for things like meta-vs-non-meta arguments, and is a useful
 // general facility.
 //
-#define FRAME_FLAG_META_RESULT \
+#define LEVEL_FLAG_META_RESULT \
     FLAG_LEFT_BIT(4)
 
 
-//=//// FRAME_FLAG_5 ///////////////////////////////////////////////////////=//
+//=//// LEVEL_FLAG_5 ///////////////////////////////////////////////////////=//
 //
-#define FRAME_FLAG_5 \
+#define LEVEL_FLAG_5 \
     FLAG_LEFT_BIT(5)
 
 
-//=//// FRAME_FLAG_TRAMPOLINE_KEEPALIVE ////////////////////////////////////=//
+//=//// LEVEL_FLAG_TRAMPOLINE_KEEPALIVE ////////////////////////////////////=//
 //
-// This flag asks the trampoline function to not call Drop_Frame() when it
-// sees that the frame's `executor` has reached the `nullptr` state.  Instead
-// it stays on the frame stack, and control is passed to the previous frame's
-// executor (which will then be receiving its frame pointer parameter that
+// This flag asks the trampoline function to not call Drop_Level() when it
+// sees that the level's `executor` has reached the `nullptr` state.  Instead
+// it stays on the level stack, and control is passed to the previous level's
+// executor (which will then be receiving its level pointer parameter that
 // will not be the current top of stack).
 //
 // It's a feature used by routines which want to make several successive
-// requests on a frame (REDUCE, ANY, CASE, etc.) without tearing down the
-// frame and putting it back together again.
+// requests on a level (REDUCE, ANY, CASE, etc.) without tearing down the
+// level and putting it back together again.
 //
-#define FRAME_FLAG_TRAMPOLINE_KEEPALIVE \
+#define LEVEL_FLAG_TRAMPOLINE_KEEPALIVE \
     FLAG_LEFT_BIT(6)
 
 
-// !!! Historically frames have identified as being "cells" even though they
+// !!! Historically levels have identified as being "cells" even though they
 // are not, in order to use that flag as a distinction when in bindings
 // from the non-cell choices like contexts and paramlists.  This may not be
-// the best way to flag frames; alternatives are in consideration.
+// the best way to flag levels; alternatives are in consideration.
 //
-#define FRAME_FLAG_7_IS_TRUE FLAG_LEFT_BIT(7)
-STATIC_ASSERT(FRAME_FLAG_7_IS_TRUE == NODE_FLAG_CELL);
+#define LEVEL_FLAG_7_IS_TRUE FLAG_LEFT_BIT(7)
+STATIC_ASSERT(LEVEL_FLAG_7_IS_TRUE == NODE_FLAG_CELL);
 
 
 //=//// FLAGS 8-15 ARE USED FOR THE "STATE" byte ///////////////////////////=//
 //
-// One byte's worth is used to encode a "frame state" that can be used by
+// One byte's worth is used to encode a "level state" that can be used by
 // natives or dispatchers, e.g. to encode which step they are on.
 //
-// By default, when a frame is initialized its state byte will be 0.  This
+// By default, when a level is initialized its state byte will be 0.  This
 // lets the executing code know that it's getting control for the first time.
 
 #define FLAG_STATE_BYTE(state) \
@@ -126,90 +126,90 @@ STATIC_ASSERT(FRAME_FLAG_7_IS_TRUE == NODE_FLAG_CELL);
 
 #define STATE_0 0  // use macro vs. just hardcoding 0 around the system
 
-#undef FRAME_FLAG_8
-#undef FRAME_FLAG_9
-#undef FRAME_FLAG_10
-#undef FRAME_FLAG_11
-#undef FRAME_FLAG_12
-#undef FRAME_FLAG_13
-#undef FRAME_FLAG_14
-#undef FRAME_FLAG_15
+#undef LEVEL_FLAG_8
+#undef LEVEL_FLAG_9
+#undef LEVEL_FLAG_10
+#undef LEVEL_FLAG_11
+#undef LEVEL_FLAG_12
+#undef LEVEL_FLAG_13
+#undef LEVEL_FLAG_14
+#undef LEVEL_FLAG_15
 
 
-//=//// FRAME_FLAG_FAILURE_RESULT_OK ///////////////////////////////////////=//
+//=//// LEVEL_FLAG_FAILURE_RESULT_OK ///////////////////////////////////////=//
 //
 // The special ISOTOPE_0 quotelevel will trip up code that isn't expecting
-// it, so most frames do not want to receive these "isotopic forms of error!"
-// This flag can be used with FRAME_FLAG_META_RESULT or without it, to say
+// it, so most levels do not want to receive these "isotopic forms of error!"
+// This flag can be used with LEVEL_FLAG_META_RESULT or without it, to say
 // that the caller is planning on dealing with the special case.
 //
 // Note: This bit is the same as CELL_FLAG_NOTE, which may be something that
 // could be exploited for some optimization.
 //
-#define FRAME_FLAG_FAILURE_RESULT_OK \
+#define LEVEL_FLAG_FAILURE_RESULT_OK \
     FLAG_LEFT_BIT(16)
 
 
-//=//// FRAME_FLAG_17 //////////////////////////////////////////////////////=//
+//=//// LEVEL_FLAG_17 //////////////////////////////////////////////////////=//
 //
-#define FRAME_FLAG_17 \
+#define LEVEL_FLAG_17 \
     FLAG_LEFT_BIT(17)
 
 
-//=//// FRAME_FLAG_ABRUPT_FAILURE ///////////////////////////////////////////=//
+//=//// LEVEL_FLAG_ABRUPT_FAILURE ///////////////////////////////////////////=//
 //
 // !!! This is a current guess for how to handle the case of re-entering an
 // executor when it fail()s abruptly.  We don't want to steal a STATE byte
 // for this in case the status of that state byte is important for cleanup.
 //
-#define FRAME_FLAG_ABRUPT_FAILURE \
+#define LEVEL_FLAG_ABRUPT_FAILURE \
     FLAG_LEFT_BIT(18)
 
 
-//=//// FRAME_FLAG_NOTIFY_ON_ABRUPT_FAILURE ////////////////////////////////=//
+//=//// LEVEL_FLAG_NOTIFY_ON_ABRUPT_FAILURE ////////////////////////////////=//
 //
-// Most frames don't want to be told about the errors that they themselves...
+// Most levels don't want to be told about the errors they cause themselves...
 // and if they have cleanup to do, they could do that cleanup before calling
 // the fail().  However, some code calls nested C stacks which use fail() and
 // it's hard to hook all the cases.  So this flag can be used to tell the
-// trampoline to give a callback even if the frame itself caused the problem.
+// trampoline to give a callback even if the level itself caused the problem.
 //
 // To help avoid misunderstandings, trying to read the STATE byte when in the
 // abrupt failure case causes an assert() in the C++ build.
 //
-#define FRAME_FLAG_NOTIFY_ON_ABRUPT_FAILURE \
+#define LEVEL_FLAG_NOTIFY_ON_ABRUPT_FAILURE \
     FLAG_LEFT_BIT(19)
 
 
-//=//// FRAME_FLAG_BLAME_PARENT ////////////////////////////////////////////=//
+//=//// LEVEL_FLAG_BLAME_PARENT ////////////////////////////////////////////=//
 //
-// Marks an error to hint that a frame is internal, and that reporting an
+// Marks an error to hint that a level is internal, and that reporting an
 // error on it probably won't give a good report.
 //
-#define FRAME_FLAG_BLAME_PARENT \
+#define LEVEL_FLAG_BLAME_PARENT \
     FLAG_LEFT_BIT(20)
 
 
-//=//// FRAME_FLAG_ROOT_FRAME //////////////////////////////////////////////=//
+//=//// LEVEL_FLAG_ROOT_LEVEL /////////////////////////////////////////////=//
 //
-// This frame is the root of a trampoline stack, and hence it cannot be jumped
+// This level is the root of a trampoline stack, and hence it cannot be jumped
 // past by something like a YIELD, return, or other throw.  This would mean
 // crossing C stack levels that the interpreter does not control (e.g. some
 // code that called into Rebol as a library.)
 //
-#define FRAME_FLAG_ROOT_FRAME \
+#define LEVEL_FLAG_ROOT_LEVEL \
     FLAG_LEFT_BIT(21)
 
 
-//=//// FRAME_FLAG_22 /////////////////////////////////////////////////////=//
+//=//// LEVEL_FLAG_22 /////////////////////////////////////////////////////=//
 //
-#define FRAME_FLAG_22 \
+#define LEVEL_FLAG_22 \
     FLAG_LEFT_BIT(22)
 
 
-//=//// FRAME_FLAG_23 //////////////////////////////////////////////////////=//
+//=//// LEVEL_FLAG_23 //////////////////////////////////////////////////////=//
 //
-#define FRAME_FLAG_23 \
+#define LEVEL_FLAG_23 \
     FLAG_LEFT_BIT(23)
 
 
@@ -223,40 +223,40 @@ STATIC_ASSERT(FRAME_FLAG_7_IS_TRUE == NODE_FLAG_CELL);
 // like Get_Action_Executor_Flag() / Get_Eval_Executor_Flag() etc.
 //
 
-#define FRAME_FLAG_24    FLAG_LEFT_BIT(24)
-#define FRAME_FLAG_25    FLAG_LEFT_BIT(25)
-#define FRAME_FLAG_26    FLAG_LEFT_BIT(26)
-#define FRAME_FLAG_27    FLAG_LEFT_BIT(27)
-#define FRAME_FLAG_28    FLAG_LEFT_BIT(28)
-STATIC_ASSERT(FRAME_FLAG_28 == CELL_FLAG_NOTE);  // useful for optimization?
-#define FRAME_FLAG_29    FLAG_LEFT_BIT(29)
-#define FRAME_FLAG_30    FLAG_LEFT_BIT(30)
-#define FRAME_FLAG_31    FLAG_LEFT_BIT(31)
+#define LEVEL_FLAG_24    FLAG_LEFT_BIT(24)
+#define LEVEL_FLAG_25    FLAG_LEFT_BIT(25)
+#define LEVEL_FLAG_26    FLAG_LEFT_BIT(26)
+#define LEVEL_FLAG_27    FLAG_LEFT_BIT(27)
+#define LEVEL_FLAG_28    FLAG_LEFT_BIT(28)
+STATIC_ASSERT(LEVEL_FLAG_28 == CELL_FLAG_NOTE);  // useful for optimization?
+#define LEVEL_FLAG_29    FLAG_LEFT_BIT(29)
+#define LEVEL_FLAG_30    FLAG_LEFT_BIT(30)
+#define LEVEL_FLAG_31    FLAG_LEFT_BIT(31)
 
-STATIC_ASSERT(31 < 32);  // otherwise FRAME_FLAG_XXX too high
+STATIC_ASSERT(31 < 32);  // otherwise LEVEL_FLAG_XXX too high
 
 
-// Note: It was considered to force clients to include a FRAME_MASK_DEFAULT
+// Note: It was considered to force clients to include a LEVEL_MASK_DEFAULT
 // when OR'ing together flags, to allow certain flag states to be favored
 // as truthy for the "unused" state, in case that helped some efficiency
-// trick.  This made the callsites much more noisy, so FRAME_MASK_NONE is used
+// trick.  This made the callsites much more noisy, so LEVEL_MASK_NONE is used
 // solely to help call out places that don't have other flags.
 //
-#define FRAME_MASK_NONE \
+#define LEVEL_MASK_NONE \
     FLAG_STATE_BYTE(STATE_0)  // note that the 0 state is implicit most places
 
 
-#define Set_Frame_Flag(f,name) \
-    (FRM(f)->flags.bits |= FRAME_FLAG_##name)
+#define Set_Level_Flag(f,name) \
+    (LVL(f)->flags.bits |= LEVEL_FLAG_##name)
 
-#define Get_Frame_Flag(f,name) \
-    ((FRM(f)->flags.bits & FRAME_FLAG_##name) != 0)
+#define Get_Level_Flag(f,name) \
+    ((LVL(f)->flags.bits & LEVEL_FLAG_##name) != 0)
 
-#define Clear_Frame_Flag(f,name) \
-    (FRM(f)->flags.bits &= ~FRAME_FLAG_##name)
+#define Clear_Level_Flag(f,name) \
+    (LVL(f)->flags.bits &= ~LEVEL_FLAG_##name)
 
-#define Not_Frame_Flag(f,name) \
-    ((FRM(f)->flags.bits & FRAME_FLAG_##name) == 0)
+#define Not_Level_Flag(f,name) \
+    ((LVL(f)->flags.bits & LEVEL_FLAG_##name) == 0)
 
 
 // !!! It was thought that a standard layout struct with just {Atom(*) p} in
@@ -296,7 +296,7 @@ STATIC_ASSERT(31 < 32);  // otherwise FRAME_FLAG_XXX too high
 
 // C function implementing a native ACTION!
 //
-typedef Bounce (Executor)(Frame(*) frame_);
+typedef Bounce (Executor)(Level(*) level_);
 typedef Executor Dispatcher;  // sub-dispatched in Action_Executor()
 
 // Intrinsics are a special form of implementing natives that do not need
@@ -321,23 +321,22 @@ typedef void (Intrinsic)(Atom(*) out, Action(*) action, Value(*) arg);
 #include "executors/exec-scan.h"
 
 
-// NOTE: The ordering of the fields in `Reb_Frame` are specifically done so
+// NOTE: The ordering of the fields in `Reb_Level` are specifically done so
 // as to accomplish correct 64-bit alignment of pointers on 64-bit systems.
 //
 // Because performance in the core evaluator loop is system-critical, this
 // uses full platform `int`s instead of REBLENs.
 //
-// If modifying the structure, be sensitive to this issue--and that the
-// layout of this structure is mirrored in Ren-Cpp.
+// If modifying the structure, be sensitive to this issue.
 //
 
 #if CPLUSPLUS_11
-    struct Reb_Frame : public Raw_Node
+    struct Reb_Level : public Raw_Node
 #else
-    struct Reb_Frame
+    struct Reb_Level
 #endif
 {
-    // These are FRAME_FLAG_XXX or'd together--see their documentation above.
+    // These are LEVEL_FLAG_XXX or'd together--see their documentation above.
     //
     // Note: In order to use the memory pools, this must be in first position,
     // and it must not have the NODE_FLAG_STALE bit set when in use.
@@ -351,12 +350,12 @@ typedef void (Intrinsic)(Atom(*) out, Action(*) action, Value(*) arg);
     // conditions require the va_list to be converted to an array, see notes
     // on Reify_Variadic_Feed_As_Array_Feed().)
     //
-    // Since frames may share source information, this needs to be done with
+    // Since levels may share source information, this needs to be done with
     // a dereference.
     //
     Feed(*) feed;
 
-    // The frame's "spare" is used for different purposes.  PARSE uses it as a
+    // The level's "spare" is used for different purposes.  PARSE uses it as a
     // scratch storage space.  Path evaluation uses it as where the calculated
     // "picker" goes (so if `foo/(1 + 2)`, the 3 would be stored there to be
     // used to pick the next value in the chain).
@@ -370,7 +369,7 @@ typedef void (Intrinsic)(Atom(*) out, Action(*) action, Value(*) arg);
     //
     Reb_Cell spare;
 
-    // Each executor subclass can store specialized information in the frame.
+    // Each executor subclass can store specialized information in the level.
     // We place it here up top where we've been careful to make sure the
     // `spare` is on a (2 * sizeof(uintptr_t)) alignment, in case there are
     // things in the state that also require alignment (e.g. the eval state
@@ -382,25 +381,27 @@ typedef void (Intrinsic)(Atom(*) out, Action(*) action, Value(*) arg);
     struct Reb_Action_Executor_State action;
 
     struct {
-        Frame(*) main_frame;
+        Level(*) main_level;
         bool changed;
     } compose;
 
     struct rebol_scan_level scan;
   } u;
 
-    // !!! The "executor" is an experimental new concept in the frame world,
-    // for who runs the continuation.  This was controlled with flags before,
-    // but the concept is that it be controlled with functions matching the
-    // signature of natives and dispatchers.
+    // The "executor" is the function the Trampoline delegates to for running
+    // the continuations in the level.  Some executors dispatch further--for
+    // instance the Action_Executor() will call Dispatcher* functions to
+    // implement actions.
+    //
+    // Each executor can put custom information in the `u` union.
     //
     Executor* executor;
 
-    // The prior call frame.  This never needs to be checked against nullptr,
-    // because the bottom of the stack is BOTTOM_FRAME which is allocated at
+    // The prior level.  This never needs to be checked against nullptr,
+    // because the bottom of the stack is BOTTOM_LEVEL which is allocated at
     // startup and never used to run code.
     //
-    struct Reb_Frame *prior;
+    Level(*) prior;
 
     // This is where to write the result of the evaluation.  It should not be
     // in "movable" memory, hence not in a series data array.  Often it is
@@ -426,7 +427,7 @@ typedef void (Intrinsic)(Atom(*) out, Action(*) action, Value(*) arg);
     //
     option(Symbol(const*)) label;
 
-    // The varlist is where arguments for the frame are kept.  Though it is
+    // The varlist is where arguments for FRAME! are kept.  Though it is
     // ultimately usable as an ordinary CTX_VARLIST() for a FRAME! value, it
     // is different because it is built progressively, with random bits in
     // its pending capacity that are specifically accounted for by the GC...
@@ -434,26 +435,30 @@ typedef void (Intrinsic)(Atom(*) out, Action(*) action, Value(*) arg);
     //
     // It starts out unmanaged, so that if no usages by the user specifically
     // ask for a FRAME! value, and the Context(*) isn't needed to store in a
-    // Derelativize()'d or Move_Velue()'d value as a binding, it can be
+    // Derelativize()'d or Move_Cell()'d value as a binding, it can be
     // reused or freed.  See Push_Action() and Drop_Action() for the logic.
+    //
+    // !!! Only Action_Executor() uses this at the moment, but FRAME! may
+    // grow to be able to capture evaluator state as a reified notion to
+    // automate in debugging.  That's very speculative, but, possible.
     //
     Array(*) varlist;
     REBVAL *rootvar; // cache of CTX_ARCHETYPE(varlist) if varlist is not null
 
     // The "baseline" is a digest of the state of global variables at the
-    // beginning of a frame evaluation.  An example of one of the things the
+    // beginning of a level evaluation.  An example of one of the things the
     // baseline captures is the data stack pointer at the start of an
     // evaluation step...which allows the evaluator to know how much state
     // it has accrued cheaply that belongs to it (such as refinements on
     // the data stack.
     //
-    // It may need to be updated.  For instance: if a frame gets pushed for
-    // reuse by multiple evaluations (like REDUCE, which pushes a single frame
+    // It may need to be updated.  For instance: if a level gets pushed for
+    // reuse by multiple evaluations (like REDUCE, which pushes a single level
     // for its block traversal).  Then steps which accrue state in REDUCE must
     // bump the baseline to account for any pushes it does--lest the next
-    // eval step in the subframe interpret what was pushed as its own data
+    // eval step in the sublevel interpret what was pushed as its own data
     // (e.g. as a refinement usage).  Anything like a YIELD which detaches a
-    // frame and then may re-enter it at a new global state must refresh
+    // level and then may re-enter it at a new global state must refresh
     // the baseline of any global state that may have changed.
     //
     // !!! Accounting for global state baselines is a work-in-progress.  The
@@ -464,28 +469,28 @@ typedef void (Intrinsic)(Atom(*) out, Action(*) action, Value(*) arg);
     //
     struct Reb_State baseline;
 
-    // While a frame is executing, any Alloc_Value() calls are linked into
+    // While a level is executing, any Alloc_Value() calls are linked into
     // a doubly-linked list.  This keeps them alive, and makes it quick for
     // them to be released.  In the case of an abrupt fail() call, they will
     // be automatically freed.
     //
-    // In order to make a handle able to find the frame whose linked list it
+    // In order to make a handle able to find the level whose linked list it
     // belongs to (in order to update the head of the list) the terminator on
-    // the ends is not nullptr, but a pointer to the Frame(*) itself (which
-    // can be noticed via NODE_FLAG_FRAME as not being an API handle).
+    // the ends is not nullptr, but a pointer to the Level(*) itself (which
+    // can be noticed as not being an API handle).
     //
     Node* alloc_value_list;
 
    #if DEBUG_COUNT_TICKS
     //
-    // The expression evaluation "tick" where the Reb_Frame is starting its
+    // The expression evaluation "tick" where the Level is starting its
     // processing.  This is helpful for setting breakpoints on certain ticks
     // in reproducible situations.
     //
     uintptr_t tick; // !!! Should this be in release builds, exposed to users?
   #endif
 
-  #if DEBUG_FRAME_LABELS
+  #if DEBUG_LEVEL_LABELS
     //
     // Knowing the label symbol is not as handy as knowing the actual string
     // of the function this call represents (if any).  It is in UTF8 format,
@@ -500,7 +505,7 @@ typedef void (Intrinsic)(Atom(*) out, Action(*) action, Value(*) arg);
     // series to a file and line number associated with their creation,
     // either their source code or some trace back to the code that generated
     // them.  As the feature gets better, it will certainly be useful to be
-    // able to quickly see the information in the debugger for f->feed.
+    // able to quickly see the information in the debugger for L->feed.
     //
     const char *file; // is Byte (UTF-8), but char* for debug watch
     int line;
@@ -511,20 +516,20 @@ typedef void (Intrinsic)(Atom(*) out, Action(*) action, Value(*) arg);
 // and line numbers into arrays based on the frame in effect at their time
 // of allocation.
 
-inline static Array(const*) FRM_ARRAY(Frame(*) f);
-inline static bool FRM_IS_VARIADIC(Frame(*) f);
+inline static Array(const*) Level_Array(Level(*) L);
+inline static bool Level_Is_Variadic(Level(*) L);
 
 
-#define TOP_FRAME (TG_Top_Frame + 0) // avoid assign to TOP_FRAME via + 0
-#define BOTTOM_FRAME (TG_Bottom_Frame + 0) // avoid assign to BOTTOM_FRAME via + 0
+#define TOP_LEVEL (TG_Top_Level + 0)  // avoid assign to TOP_LEVEL via + 0
+#define BOTTOM_LEVEL (TG_Bottom_Level + 0)  // avoid assign to BOTTOM_LEVEL
 
 
-// There are 8 flags in a frame header that are reserved for the use of the
-// frame executor.  A nice idea was to make generic Get_Executor_Flag()
+// There are 8 flags in a level header that are reserved for the use of the
+// level executor.  A nice idea was to make generic Get_Executor_Flag()
 // routines that could check to make sure the right flags were only tested
-// on frames with the right executor.
+// on levels with the right executor.
 //
-// Using this pervasively was punishingly slow.  Testing frame flags is
+// Using this pervasively was punishingly slow.  Testing level flags is
 // supposed to be "hot and fast" and this wound up costing 3% of runtime...
 // due to just how often the flags are fiddled.
 //
@@ -537,26 +542,26 @@ inline static bool FRM_IS_VARIADIC(Frame(*) f);
 #if DEBUG_ENSURE_EXECUTOR_FLAGS
     #define ensure_executor(executor,f) (f)  // no-op in release build
 #else
-    inline static Frame(*) ensure_executor(Executor *executor, Frame(*) f) {
-        if (f->executor != executor)
+    inline static Level(*) ensure_executor(Executor *executor, Level(*) L) {
+        if (L->executor != executor)
             assert(!"Wrong executor for flag tested");
-        return f;
+        return L;
     }
 #endif
 
 
-#define Get_Executor_Flag(executor,f,name) \
-    ((ensure_executor(EXECUTOR_##executor, (f))->flags.bits \
+#define Get_Executor_Flag(executor,L,name) \
+    ((ensure_executor(EXECUTOR_##executor, (L))->flags.bits \
         & executor##_EXECUTOR_FLAG_##name) != 0)
 
-#define Not_Executor_Flag(executor,f,name) \
-    ((ensure_executor(EXECUTOR_##executor, (f))->flags.bits \
+#define Not_Executor_Flag(executor,L,name) \
+    ((ensure_executor(EXECUTOR_##executor, (L))->flags.bits \
         & executor##_EXECUTOR_FLAG_##name) == 0)
 
-#define Set_Executor_Flag(executor,f,name) \
-    (ensure_executor(EXECUTOR_##executor, (f))->flags.bits \
+#define Set_Executor_Flag(executor,L,name) \
+    (ensure_executor(EXECUTOR_##executor, (L))->flags.bits \
         |= executor##_EXECUTOR_FLAG_##name)
 
-#define Clear_Executor_Flag(executor,f,name) \
-    (ensure_executor(EXECUTOR_##executor, (f))->flags.bits \
+#define Clear_Executor_Flag(executor,L,name) \
+    (ensure_executor(EXECUTOR_##executor, (L))->flags.bits \
         &= ~executor##_EXECUTOR_FLAG_##name)

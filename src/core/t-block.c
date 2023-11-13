@@ -102,7 +102,7 @@ REBINT CT_Array(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
 //     MAKE_Lit_Path
 //
 Bounce MAKE_Array(
-    Frame(*) frame_,
+    Level(*) level_,
     enum Reb_Kind kind,
     option(const REBVAL*) parent,
     const REBVAL *arg
@@ -283,10 +283,10 @@ Bounce MAKE_Array(
         }
         else {
             Context(*) context = CTX(VAL_VARARGS_BINDING(arg));
-            Frame(*) param_frame = CTX_FRAME_MAY_FAIL(context);
+            Level(*) param_level = CTX_LEVEL_MAY_FAIL(context);
 
             REBVAL *param = SPECIFIC(ARR_HEAD(
-                CTX_VARLIST(ACT_EXEMPLAR(FRM_PHASE(param_frame)))
+                CTX_VARLIST(ACT_EXEMPLAR(Level_Phase(param_level)))
             ));
             if (VAL_VARARGS_SIGNED_PARAM_INDEX(arg) < 0)
                 param += - VAL_VARARGS_SIGNED_PARAM_INDEX(arg);
@@ -327,7 +327,7 @@ Bounce MAKE_Array(
 //
 //  TO_Array: C
 //
-Bounce TO_Array(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg) {
+Bounce TO_Array(Level(*) level_, enum Reb_Kind kind, const REBVAL *arg) {
     if (ANY_SEQUENCE(arg)) {
         StackIndex base = TOP_INDEX;
         REBLEN len = VAL_SEQUENCE_LEN(arg);
@@ -559,7 +559,7 @@ static int Compare_Val_Custom(void *arg, const void *v1, const void *v2)
             flags->reverse ? v1 : v2,
             flags->reverse ? v2 : v1
     )){
-        fail (Error_No_Catch_For_Throw(TOP_FRAME));
+        fail (Error_No_Catch_For_Throw(TOP_LEVEL));
     }
 
     REBINT tristate = -1;
@@ -880,7 +880,7 @@ REBTYPE(Array)
       case SYM_SKIP:
       case SYM_AT:
       case SYM_REMOVE:
-        return Series_Common_Action_Maybe_Unhandled(frame_, verb);
+        return Series_Common_Action_Maybe_Unhandled(level_, verb);
 
       case SYM_TAKE: {
         INCLUDE_PARAMS_OF_TAKE;
@@ -980,7 +980,7 @@ REBTYPE(Array)
             Copy_Cell(OUT, array);
             VAL_INDEX_RAW(OUT) = ret;
 
-            return Proxy_Multi_Returns(frame_);
+            return Proxy_Multi_Returns(level_);
         }
         else {
             ret += len;

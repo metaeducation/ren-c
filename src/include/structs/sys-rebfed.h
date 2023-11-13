@@ -1,6 +1,6 @@
 //
 //  File: %sys-rebfed.h
-//  Summary: {REBFED Structure Frame Definition}
+//  Summary: {REBFED Structure Definition}
 //  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  Homepage: https://github.com/metaeducation/ren-c/
 //
@@ -80,15 +80,6 @@ STATIC_ASSERT(FEED_FLAG_1_IS_FALSE == NODE_FLAG_STALE);
 
 //=//// FEED_FLAG_5 ///////////////////////////////////////////////////////=//
 //
-// When processing something like enfix, the output cell of a frame is the
-// place to look for the "next" value.  This setting has to be managed
-// carefully in recursion, because the recursion must preserve the same
-// notion of what the "out" cell is for the frame.
-//
-// !!! It may be better to think of this as an EVAL_FLAG, but those per-frame
-// flags are running short.  Once this setting is on a feed, it has to be
-// consumed or there will be an error.
-//
 #define FEED_FLAG_5 \
     FLAG_LEFT_BIT(5)
 
@@ -97,8 +88,8 @@ STATIC_ASSERT(FEED_FLAG_1_IS_FALSE == NODE_FLAG_STALE);
 //
 // If a feed takes SERIES_INFO_HOLD on an array it is enumerating, it has to
 // remember that it did so it can release it when it is done processing.
-// Note that this has to be a flag on the frame, not the feed--as a feed can
-// be shared among many frames.
+// Note that this has to be a flag on the feed, not the level--as a feed can
+// be shared among many levels.
 //
 // !!! This is undermined by work in stackless, where a single bit is not
 // sufficient since the stacks do not cleanly unwind:
@@ -115,7 +106,7 @@ STATIC_ASSERT(FEED_FLAG_1_IS_FALSE == NODE_FLAG_STALE);
 // be used.  But with variadic feeds, requiring this meant that the scanner
 // had to be run before the first fetch occurred--if the first variadic item
 // was a string.  This was especially problematic because it meant an error
-// could occur in the scanner before the frame that would be receiving the
+// could occur in the scanner before the level that would be receiving the
 // feed was pushed.  Because that meant the error would happen before the
 // exception handling in the Trampoline could be set up.
 //
@@ -141,11 +132,9 @@ STATIC_ASSERT(FEED_FLAG_1_IS_FALSE == NODE_FLAG_STALE);
 // The user is able to flip the constness flag explicitly with the CONST and
 // MUTABLE functions explicitly.  However, if a feed has FEED_FLAG_CONST,
 // the system imposes it's own constness as part of the "wave of evaluation"
-// it does.  While this wave starts out initially with frames demanding const
+// it does.  While this wave starts out initially with levels demanding const
 // marking, if it ever gets flipped, it will have to encounter an explicit
 // CONST marking on a value before getting flipped back.
-//
-// (This behavior is designed to permit switching into a "mode" that is
 //
 #define FEED_FLAG_CONST \
     FLAG_LEFT_BIT(30)
@@ -179,7 +168,7 @@ struct Reb_Feed_Struct {
 
     // This is the "prefetched" value being processed.  Entry points to the
     // evaluator must load a first value pointer into it...which for any
-    // successive evaluations will be updated via Fetch_Next_In_Frame()--which
+    // successive evaluations will be updated via Fetch_Next_In_Feed()--which
     // retrieves values from arrays or va_lists.  But having the caller pass
     // in the initial value gives the option of that value being out of band.
     //
@@ -202,7 +191,7 @@ struct Reb_Feed_Struct {
     //=//// ^-- be sure above fields align cells below to 64-bits --v /////=//
     // (two intptr_t sized things should take care of it on both 32/64-bit) //
 
-    // Sometimes the frame can be advanced without keeping track of the
+    // Sometimes the feed can be advanced without keeping track of the
     // last cell.  And sometimes the last cell lives in an array that is
     // being held onto and read only, so its pointer is guaranteed to still
     // be valid after a fetch.  But there are cases where values are being
@@ -213,24 +202,25 @@ struct Reb_Feed_Struct {
 
     // When feeding cells from a variadic, those cells may wish to mutate the
     // value in some way... e.g. to add a quoting level.  Rather than
-    // complicate the evaluator itself with flags and switches, each frame
+    // complicate the evaluator itself with flags and switches, each feed
     // has a holding cell which can optionally be used as the pointer that
-    // is returned by Fetch_Next_in_Frame(), where arbitrary mutations can
+    // is returned by Fetch_Next_in_Feed(), where arbitrary mutations can
     // be applied without corrupting the value they operate on.
     //
     Reb_Cell fetched;
 
-    // Feeds are maintained in REBSER-sized "splice" units.  This is big
+    // Feed sources are expresesd as REBSER-sized "splice" units.  This is big
     // enough for a REBVAL to hold an array and an index, but it also lets
     // you point to other singulars that can hold arrays and indices.
     //
     // If values are being sourced from an array, this holds the pointer to
     // that array.  By knowing the array it is possible for error and debug
     // messages to reach backwards and present more context of where the
-    // error is located.
+    // error is located.  The index is of the *next* item in the array to
+    // fetch for processing.
     //
-    // This holds the index of the *next* item in the array to fetch as
-    // f->value for processing.  It's invalid if the frame is for a C va_list.
+    // If the feed is for a C va_list, the singular holds a pointer to that,
+    // and there is no index.
     //
     // This is used for relatively bound words to be looked up to become
     // specific.  Typically the specifier is extracted from the payload of the
@@ -260,7 +250,7 @@ struct Reb_Feed_Struct {
     // where x had been found before may have moved due to expansion.
     //
     // Basically any function call invalidates ->gotten, as does obviously any
-    // Fetch_Next_In_Frame (because the position changes).  So it has to be
+    // Fetch_Next_In_Feed (because the position changes).  So it has to be
     // nulled out fairly often, and checked for null before reuse.
     //
     // !!! Review how often gotten has hits vs. misses, and what the benefit
@@ -277,14 +267,14 @@ struct Reb_Feed_Struct {
     //
     // On each call to Fetch_Next_In_Feed, it's possible to ask it to give
     // a pointer to a cell with equivalent data to what was previously in
-    // f->value, but that might not be f->value.  So for all practical
-    // purposes, one is to assume that the f->value pointer died after the
+    // L->value, but that might not be L->value.  So for all practical
+    // purposes, one is to assume that the L->value pointer died after the
     // fetch.  If clients are interested in doing "lookback" and examining
     // two values at the same time (or doing a GC and expecting to still
-    // have the old f->current work), then they must not use the old f->value
-    // but request the lookback pointer from Fetch_Next_In_Frame().
+    // have the old L->current work), then they must not use the old L->value
+    // but request the lookback pointer from Fetch_Next_In_Feed().
     //
-    // To help stress this invariant, frames will forcibly expire REBVAL
+    // To help stress this invariant, feeds will forcibly expire REBVAL
     // cells, handing out disposable lookback pointers on each eval.
     //
     // !!! Test currently leaks on shutdown, review how to not leak.

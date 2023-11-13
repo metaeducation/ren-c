@@ -226,28 +226,28 @@ static void cleanup_js_object(const REBVAL *v) {
 }
 
 
-//=//// FRAME ID AND THROWING /////////////////////////////////////////////=//
+//=//// LEVEL ID AND THROWING /////////////////////////////////////////////=//
 //
-// We go ahead and use the Context(*) instead of the raw Frame(*) to act as the
-// unique pointer to identify a frame.  That's because if the JavaScript code
-// throws and that throw needs to make it to a promise higher up the stack, it
-// uses that pointer as an ID in a mapping table to associate the call with
-// the JavaScript object it threw.
+// !!! Outdated comment, review what happened here:
 //
-// !!! This aspect is overkill for something that can only happen once on
-// the stack at a time.  Review.
+// "We go ahead and use the Context(*) instead of the raw Level(*) to act as
+//  the unique pointer to identify a level.  That's because if the JavaScript
+//  code throws and that throw needs to make it to a promise higher up the
+//  stack, it uses that pointer as an ID in a mapping table to associate the
+//  call with the JavaScript object it threw.
 //
-// !!! Future designs may translate that object into Rebol so it could
-// be caught by Rebol, but for now we assume a throw originating from
-// JavaScript code may only be caught by JavaScript code.
+//  This aspect is overkill for something that can only happen once on the
+//  stack at a time.  Future designs may translate that object into Rebol so
+//  it could be caught by Rebol, but for now we assume a throw originating
+//  from JavaScript code may only be caught by JavaScript code."
 //
 
-inline static heapaddr_t Frame_Id_For_Frame(Frame(*) f) {
-    return Heapaddr_From_Pointer(f);
+inline static heapaddr_t Level_Id_For_Level(Level(*) L) {
+    return Heapaddr_From_Pointer(L);
 }
 
-inline static Frame(*) Frame_From_Frame_Id(heapaddr_t id) {
-    return FRM(Pointer_From_Heapaddr(id));
+inline static Level(*) Level_From_Level_Id(heapaddr_t id) {
+    return LVL(Pointer_From_Heapaddr(id));
 }
 
 inline static REBVAL *Value_From_Value_Id(heapaddr_t id) {
@@ -286,7 +286,7 @@ enum {
     IDX_JS_NATIVE_MAX
 };
 
-Bounce JavaScript_Dispatcher(Frame(*) f);
+Bounce JavaScript_Dispatcher(Level(*) L);
 
 
 //=//// GLOBAL PROMISE STATE //////////////////////////////////////////////=//
@@ -431,8 +431,8 @@ void RunPromise(void)
     DECLARE_LOCAL (code);
     Init_Block(code, a);
 
-    Frame(*) f = Make_Frame_At(code, FRAME_FLAG_ROOT_FRAME);
-    Push_Frame (Alloc_Value(), f);
+    Level(*) L = Make_Level_At(code, LEVEL_FLAG_ROOT_LEVEL);
+    Push_Level(Alloc_Value(), L);
     goto run_promise;
 
 } run_promise: {  ////////////////////////////////////////////////////////////
@@ -445,14 +445,14 @@ void RunPromise(void)
 
     REBVAL *metaresult;
     if (r == BOUNCE_THROWN) {
-        assert(Is_Throwing(TOP_FRAME));
-        Context(*) error = Error_No_Catch_For_Throw(TOP_FRAME);
-        metaresult = Init_Error(TOP_FRAME->out, error);
+        assert(Is_Throwing(TOP_LEVEL));
+        Context(*) error = Error_No_Catch_For_Throw(TOP_LEVEL);
+        metaresult = Init_Error(TOP_LEVEL->out, error);
     }
     else
-        metaresult = Meta_Quotify(TOP_FRAME->out);
+        metaresult = Meta_Quotify(TOP_LEVEL->out);
 
-    Drop_Frame(TOP_FRAME);
+    Drop_Level(TOP_LEVEL);
 
     // Note: The difference between `throw()` and `reject()` in JS is subtle.
     //
@@ -557,14 +557,14 @@ EXTERN_C void RL_rebIdle_internal(void)  // NO user JS code on stack!
 // Now it pokes the result directly into the frame's output slot.
 //
 EXTERN_C void RL_rebResolveNative_internal(
-    intptr_t frame_id,
+    intptr_t level_id,
     intptr_t result_id
 ){
-    Frame(*) frame_ = Frame_From_Frame_Id(frame_id);
+    Level(*) level_ = Level_From_Level_Id(level_id);
 
     TRACE(
         "reb.ResolveNative_internal(%s)",
-        Frame_Label_Or_Anonymous_UTF8(FRAME)
+        Level_Label_Or_Anonymous_UTF8(LEVEL)
     );
 
     REBVAL *result = Value_From_Value_Id(result_id);
@@ -594,14 +594,14 @@ EXTERN_C void RL_rebResolveNative_internal(
 // See notes on rebResolveNative()
 //
 EXTERN_C void RL_rebRejectNative_internal(
-    intptr_t frame_id,
+    intptr_t level_id,
     intptr_t error_id
 ){
-    Frame(*) frame_ = Frame_From_Frame_Id(frame_id);
+    Level(*) level_ = Level_From_Level_Id(level_id);
 
     TRACE(
         "reb.RejectNative_internal(%s)",
-        Frame_Label_Or_Anonymous_UTF8(FRAME)
+        Level_Label_Or_Anonymous_UTF8(LEVEL)
     );
 
     REBVAL *error = Value_From_Value_Id(error_id);
@@ -669,15 +669,15 @@ EXTERN_C void RL_rebRejectNative_internal(
 //    convert it to a throw.  For now, the halt signal is communicated
 //    uniquely back to us as 0.
 //
-Bounce JavaScript_Dispatcher(Frame(*) frame_)
+Bounce JavaScript_Dispatcher(Level(*) L)
 {
-    Frame(*) f = frame_;
+    Level(*) level_ = L;  // alias for macros like OUT, SPARE, etc.
 
-    heapaddr_t frame_id = Frame_Id_For_Frame(f);
+    heapaddr_t level_id = Level_Id_For_Level(L);
 
     TRACE(
         "JavaScript_Dispatcher(%s, %d)",
-        Frame_Label_Or_Anonymous_UTF8(f), STATE
+        Level_Label_Or_Anonymous_UTF8(L), STATE
     );
 
     switch (STATE) {
@@ -701,8 +701,7 @@ Bounce JavaScript_Dispatcher(Frame(*) frame_)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    Phase(*) phase = FRM_PHASE(f);
-    Details(*) details = ACT_DETAILS(phase);
+    Details(*) details = ACT_DETAILS(PHASE);
     bool is_awaiter = VAL_LOGIC(DETAILS_AT(details, IDX_JS_NATIVE_IS_AWAITER));
 
     struct Reb_Promise_Info *info = PG_Promises;
@@ -715,14 +714,14 @@ Bounce JavaScript_Dispatcher(Frame(*) frame_)
     else
         assert(not info or info->state == PROMISE_STATE_RUNNING);
 
-    heapaddr_t native_id = Native_Id_For_Action(FRM_PHASE(f));
+    heapaddr_t native_id = Native_Id_For_Action(Level_Phase(L));
 
     STATE = ST_JS_NATIVE_RUNNING;  // resolve/reject change this STATE byte
 
     EM_ASM(
         { reb.RunNative_internal($0, $1) },
         native_id,  // => $0, how it finds the javascript code to run
-        frame_id  // => $1, how it knows to find this frame to update STATE
+        level_id  // => $1, how it knows to find this frame to update STATE
     );
 
     if (not is_awaiter)  // same tactic for non-awaiter, see [1]
@@ -731,7 +730,7 @@ Bounce JavaScript_Dispatcher(Frame(*) frame_)
         if (STATE == ST_JS_NATIVE_RUNNING) {
             TRACE(
                 "JavaScript_Dispatcher(%s) => suspending incomplete awaiter",
-                Frame_Label_Or_Anonymous_UTF8(f)
+                Level_Label_Or_Anonymous_UTF8(L)
             );
 
             // Note that reb.Halt() can force promise rejection, by way of the
@@ -755,8 +754,8 @@ Bounce JavaScript_Dispatcher(Frame(*) frame_)
 
 } handle_resolved: {  ////////////////////////////////////////////////////////
 
-    if (not Typecheck_Coerce_Return(f, OUT))
-        fail (Error_Bad_Return_Type(f, OUT));
+    if (not Typecheck_Coerce_Return(L, OUT))
+        fail (Error_Bad_Return_Type(L, OUT));
 
     return OUT;
 
@@ -780,7 +779,7 @@ Bounce JavaScript_Dispatcher(Frame(*) frame_)
         //
         CLR_SIGNAL(SIG_HALT);
 
-        return Init_Thrown_With_Label(FRAME, Lib(NULL), Lib(HALT));
+        return Init_Thrown_With_Label(LEVEL, Lib(NULL), Lib(HALT));
     }
 
     TRACE("Calling fail() with error context");

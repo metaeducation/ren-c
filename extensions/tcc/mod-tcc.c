@@ -259,8 +259,8 @@ static void cleanup(const REBVAL *val)
 // However, as a convenience, calling a pending user native will trigger a
 // simple COMPILE for just that one function, using default options.
 //
-Bounce Pending_Native_Dispatcher(Frame(*) f) {
-    Phase(*) phase = FRM_PHASE(f);
+Bounce Pending_Native_Dispatcher(Level(*) L) {
+    Phase(*) phase = Level_Phase(L);
     assert(ACT_DISPATCHER(phase) == &Pending_Native_Dispatcher);
 
     REBVAL *action = ACT_ARCHETYPE(phase); // this action's value
@@ -522,7 +522,7 @@ DECLARE_NATIVE(compile_p)
                 Value(*) source = DETAILS_AT(details, IDX_NATIVE_BODY);
                 Value(*) linkname = DETAILS_AT(details, IDX_TCC_NATIVE_LINKNAME);
 
-                // !!! Frame(*) is not exported by libRebol, though it could be
+                // !!! Level(*) is not exported by libRebol, though it could be
                 // opaquely...and there could be some very narrow routines for
                 // interacting with it (such as picking arguments directly by
                 // value).  But transformations would be needed for Rebol arg
@@ -535,7 +535,7 @@ DECLARE_NATIVE(compile_p)
                 //
                 Append_Ascii(mo->series, "const REBVAL *");
                 Append_String(mo->series, linkname);
-                Append_Ascii(mo->series, "(void *frame_)\n{");
+                Append_Ascii(mo->series, "(void *level_)\n{");
 
                 Append_String(mo->series, source);
 

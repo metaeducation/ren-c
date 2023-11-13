@@ -44,7 +44,7 @@
 #define Init_Error(v,c) \
     Init_Context_Cell((v), REB_ERROR, (c))
 
-inline static void Force_Location_Of_Error(Context(*) error, Frame(*) where) {
+inline static void Force_Location_Of_Error(Context(*) error, Level(*) where) {
     ERROR_VARS *vars = ERR_VARS(error);
     if (Is_Nulled(&vars->where))
         Set_Location_Of_Error(error, where);
@@ -62,7 +62,7 @@ inline static bool Is_Raised(Atom(const*) v)
 
 inline static Atom(*) Raisify(Atom(*) v) {
     assert(IS_ERROR(v) and QUOTE_BYTE(v) == UNQUOTED_1);
-    Force_Location_Of_Error(VAL_CONTEXT(v), TOP_FRAME);  // ideally already set
+    Force_Location_Of_Error(VAL_CONTEXT(v), TOP_LEVEL);  // ideally already set
     mutable_QUOTE_BYTE(v) = ISOTOPE_0;
     return v;
 }

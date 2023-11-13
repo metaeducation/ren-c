@@ -73,11 +73,11 @@ DECLARE_NATIVE(enrescue)
     if (not THROWING)  // successful result
         return Meta_Quotify(OUT);
 
-    if (not IS_ERROR(VAL_THROWN_LABEL(FRAME)))  // non-ERROR! throws
+    if (not IS_ERROR(VAL_THROWN_LABEL(LEVEL)))  // non-ERROR! throws
         return BOUNCE_THROWN;
 
-    Copy_Cell(OUT, VAL_THROWN_LABEL(FRAME));
-    CATCH_THROWN(SPARE, FRAME);
+    Copy_Cell(OUT, VAL_THROWN_LABEL(LEVEL));
+    CATCH_THROWN(SPARE, LEVEL);
     assert(Is_Nulled(SPARE));  // all error throws are null-valued
 
     return OUT;
@@ -99,7 +99,7 @@ DECLARE_NATIVE(enrescue)
 DECLARE_NATIVE(entrap)  // wrapped as multi-return versions TRAP and ATTEMPT
 //
 // Unlike SYS.UTIL.RESCUE, the ENTRAP function only reacts to errors from the
-// functions it directly calls via FRAME_FLAG_FAILURE_RESULT_OK.  Hence it
+// functions it directly calls via LEVEL_FLAG_FAILURE_RESULT_OK.  Hence it
 // does not intercept "thrown" errors, making it much safer to react to the
 // errors one gets back from it.
 {
@@ -125,17 +125,17 @@ DECLARE_NATIVE(entrap)  // wrapped as multi-return versions TRAP and ATTEMPT
     Tweak_Non_Const_To_Explicitly_Mutable(code);  // see comments on function
 
     Flags flags =
-        FRAME_FLAG_TRAMPOLINE_KEEPALIVE  // reused for each step
-        | FRAME_FLAG_FAILURE_RESULT_OK;  // we're trapping it
+        LEVEL_FLAG_TRAMPOLINE_KEEPALIVE  // reused for each step
+        | LEVEL_FLAG_FAILURE_RESULT_OK;  // we're trapping it
 
-    Frame(*) sub;
+    Level(*) sub;
     if (IS_BLOCK(code)) {
-        sub = Make_Frame_At(
+        sub = Make_Level_At(
             code,  // REB_BLOCK or REB_GROUP
             flags
-                | FRAME_FLAG_ALLOCATED_FEED
+                | LEVEL_FLAG_ALLOCATED_FEED
         );
-        Push_Frame(SPARE, sub);
+        Push_Level(SPARE, sub);
     }
     else {
         bool pushed = Pushed_Continuation(
@@ -147,16 +147,16 @@ DECLARE_NATIVE(entrap)  // wrapped as multi-return versions TRAP and ATTEMPT
         );
         assert(pushed);
         UNUSED(pushed);
-        sub = TOP_FRAME;
+        sub = TOP_LEVEL;
     }
 
     STATE = ST_ENTRAP_EVALUATING;
-    return CONTINUE_SUBFRAME(sub);  // not a CATCH_CONTINUE; throws passthru
+    return CONTINUE_SUBLEVEL(sub);  // not a CATCH_CONTINUE; throws passthru
 
 } eval_step_result_in_out: {  ////////////////////////////////////////////////
 
     if (Is_Raised(SPARE)) {
-        Drop_Frame(SUBFRAME);
+        Drop_Level(SUBLEVEL);
         Move_Cell(OUT, SPARE);
         mutable_QUOTE_BYTE(OUT) = UNQUOTED_1;  // change isotope error to plain
         return BRANCHED(OUT);
@@ -165,15 +165,15 @@ DECLARE_NATIVE(entrap)  // wrapped as multi-return versions TRAP and ATTEMPT
     if (not Is_Void(SPARE))
         Move_Cell(OUT, SPARE);
 
-    if (Is_Frame_At_End(SUBFRAME))
+    if (Is_Level_At_End(SUBLEVEL))
         goto finished;
 
-    Restart_Evaluator_Frame(SUBFRAME);
-    return CONTINUE_SUBFRAME(SUBFRAME);
+    Restart_Evaluator_Level(SUBLEVEL);
+    return CONTINUE_SUBLEVEL(SUBLEVEL);
 
 } finished: {  ///////////////////////////////////////////////////////////////
 
-    Drop_Frame(SUBFRAME);
+    Drop_Level(SUBLEVEL);
     return Meta_Quotify(OUT);  // ^META result, may be initial void state
 }}
 
@@ -267,7 +267,7 @@ DECLARE_NATIVE(set_location_of_error)
         context = VAL_CONTEXT(location);
     }
 
-    Frame(*) where = CTX_FRAME_MAY_FAIL(context);
+    Level(*) where = CTX_LEVEL_MAY_FAIL(context);
 
     Context(*) error = VAL_CONTEXT(ARG(error));
     Set_Location_Of_Error(error, where);

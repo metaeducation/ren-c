@@ -735,7 +735,7 @@ inline static void TERM_SERIES_IF_NECESSARY(REBSER *s)
 // Manual series are tracked, and automatically freed in the case of a fail().
 //
 // All manual series *must* either be freed with Free_Unmanaged_Series() or
-// delegated to the GC with Manage_Series() before the frame ends.  Once a
+// delegated to the GC with Manage_Series() before the level ends.  Once a
 // series is managed, only the GC is allowed to free it.
 //
 // Manage_Series() is shallow--it only sets a bit on that *one* series, not

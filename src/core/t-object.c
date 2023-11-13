@@ -182,7 +182,7 @@ static void Append_Vars_To_Context_From_Group(REBVAL *context, REBVAL *block)
 //
 // 1. We allocate a wordlist just to notice leaks when there are no shutdowns,
 //    but there is a problem with using an unmanaged array in the case of an
-//    FRAME_FLAG_ABRUPT_FAILURE.  So we make them "fake unmanaged" so they
+//    LEVEL_FLAG_ABRUPT_FAILURE.  So we make them "fake unmanaged" so they
 //    are "untracked" by saying they're managed, and taking that flag off.
 //
 void Init_Evars(EVARS *e, noquote(Cell(const*)) v) {
@@ -313,14 +313,14 @@ void Init_Evars(EVARS *e, noquote(Cell(const*)) v) {
                 // a function that reuses its exemplar, but should not be able
                 // to see the locals (for instance).
                 //
-                Context(*) exemplar = ACT_EXEMPLAR(ACT(phase));
+                Context(*) exemplar = ACT_EXEMPLAR(phase);
                 if (CTX_FRAME_PHASE(exemplar) == phase)
                     e->visibility = VAR_VISIBILITY_ALL;
                 else
                     e->visibility = VAR_VISIBILITY_INPUTS;
             }
 
-            Action(*) action = ACT(phase);
+            Action(*) action = phase;
             e->param = ACT_PARAMS_HEAD(action) - 1;
             e->key = ACT_KEYS(&e->key_tail, action) - 1;
             assert(SER_USED(ACT_KEYLIST(action)) <= ACT_NUM_PARAMS(action));
@@ -521,7 +521,7 @@ REBINT CT_Context(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
 // For now just support ACTION! (or path/word to specify an action)
 //
 Bounce MAKE_Frame(
-    Frame(*) frame_,
+    Level(*) level_,
     enum Reb_Kind kind,
     option(const REBVAL*) parent,
     const REBVAL *arg
@@ -535,12 +535,12 @@ Bounce MAKE_Frame(
     // really cost that much to keep around.  Use it sparingly (if at all).
     //
     if (IS_VARARGS(arg)) {
-        Frame(*) f_varargs;
+        Level(*) L_varargs;
         Feed(*) feed;
         bool allocated_feed;
-        if (Is_Frame_Style_Varargs_May_Fail(&f_varargs, arg)) {
-            assert(Is_Action_Frame(f_varargs));
-            feed = f_varargs->feed;
+        if (Is_Level_Style_Varargs_May_Fail(&L_varargs, arg)) {
+            assert(Is_Action_Level(L_varargs));
+            feed = L_varargs->feed;
             allocated_feed = false;
         }
         else {
@@ -594,7 +594,7 @@ Bounce MAKE_Frame(
 // to have an equivalent representation (an OBJECT! could be an expired frame
 // perhaps, but still would have no ACTION OF property)
 //
-Bounce TO_Frame(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg)
+Bounce TO_Frame(Level(*) level_, enum Reb_Kind kind, const REBVAL *arg)
 {
     return RAISE(Error_Bad_Make(kind, arg));
 }
@@ -604,12 +604,12 @@ Bounce TO_Frame(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg)
 //  MAKE_Context: C
 //
 Bounce MAKE_Context(
-    Frame(*) frame_,
+    Level(*) level_,
     enum Reb_Kind kind,
     option(const REBVAL*) parent,
     const REBVAL *arg
 ){
-    // Other context kinds (FRAME!, ERROR!, PORT!) have their own hooks.
+    // Other context kinds (LEVEL!, ERROR!, PORT!) have their own hooks.
     //
     assert(kind == REB_OBJECT or kind == REB_MODULE);
 
@@ -685,9 +685,9 @@ Bounce MAKE_Context(
 //
 //  TO_Context: C
 //
-Bounce TO_Context(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg)
+Bounce TO_Context(Level(*) level_, enum Reb_Kind kind, const REBVAL *arg)
 {
-    // Other context kinds (FRAME!, ERROR!, PORT!) have their own hooks.
+    // Other context kinds (LEVEL!, ERROR!, PORT!) have their own hooks.
     //
     assert(kind == REB_OBJECT or kind == REB_MODULE);
 
@@ -1322,7 +1322,7 @@ REBTYPE(Frame)
                 return Init_Word(OUT, unwrap(label));
 
             // If the frame is executing, we can look at the label in the
-            // Frame(*), which will tell us what the overall execution label
+            // Level(*), which will tell us what the overall execution label
             // would be.  This might be confusing, however...if the phase
             // is drastically different.  Review.
         }
@@ -1344,7 +1344,7 @@ REBTYPE(Frame)
         } */
 
         if (prop == SYM_WORDS)
-            return T_Context(frame_, verb);
+            return T_Context(level_, verb);
 
         if (prop == SYM_PARAMETERS) {
             Init_Frame_Details(
@@ -1356,39 +1356,39 @@ REBTYPE(Frame)
             goto handle_reflect_action;
         }
 
-        Frame(*) f = CTX_FRAME_MAY_FAIL(c);
+        Level(*) L = CTX_LEVEL_MAY_FAIL(c);
 
         switch (prop) {
           case SYM_FILE: {
-            String(const*) file = FRM_FILE(f);
+            String(const*) file = File_Of_Level(L);
             if (not file)
                 return nullptr;
             return Init_File(OUT, file); }
 
           case SYM_LINE: {
-            LineNumber line = FRM_LINE(f);
+            LineNumber line = LineNumber_Of_Level(L);
             if (line == 0)
                 return nullptr;
             return Init_Integer(OUT, line); }
 
           case SYM_LABEL: {
-            if (not f->label)
+            if (not L->label)
                 return nullptr;
-            return Init_Word(OUT, unwrap(f->label)); }
+            return Init_Word(OUT, unwrap(L->label)); }
 
           case SYM_NEAR:
-            return Init_Near_For_Frame(OUT, f);
+            return Init_Near_For_Level(OUT, L);
 
           case SYM_PARENT: {
             //
-            // Only want action frames (though `pending? = true` ones count).
+            // Only want action levels (though `pending? = true` ones count).
             //
-            Frame(*) parent = f;
-            while ((parent = parent->prior) != BOTTOM_FRAME) {
-                if (not Is_Action_Frame(parent))
+            Level(*) parent = L;
+            while ((parent = parent->prior) != BOTTOM_LEVEL) {
+                if (not Is_Action_Level(parent))
                     continue;
 
-                Context(*) ctx_parent = Context_For_Frame_May_Manage(parent);
+                Context(*) ctx_parent = Context_For_Level_May_Manage(parent);
                 return COPY(CTX_ARCHETYPE(ctx_parent));
             }
             return nullptr; }
@@ -1618,7 +1618,7 @@ REBTYPE(Frame)
         break;
     }
 
-    return T_Context(frame_, verb);
+    return T_Context(level_, verb);
 }
 
 

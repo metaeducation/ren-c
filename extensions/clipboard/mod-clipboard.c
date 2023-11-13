@@ -45,7 +45,7 @@
 // depends on the development of a coherent port model.
 //
 static Bounce Clipboard_Actor(
-    Frame(*) frame_,
+    Level(*) level_,
     REBVAL *port,
     Symbol(const*) verb
 ){

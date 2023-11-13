@@ -91,7 +91,7 @@ DECLARE_NATIVE(mold)
     Init_Logic(ARG(truncated), did (mo->opts & MOLD_FLAG_WAS_TRUNCATED));
 
     Init_Text(OUT, popped);
-    return Proxy_Multi_Returns(frame_);
+    return Proxy_Multi_Returns(level_);
 }
 
 
@@ -220,10 +220,10 @@ DECLARE_NATIVE(new_line_q)
     Cell(const*) tail;
 
     if (IS_VARARGS(pos)) {
-        Frame(*) f;
+        Level(*) L;
         REBVAL *shared;
-        if (Is_Frame_Style_Varargs_May_Fail(&f, pos)) {
-            if (FRM_IS_VARIADIC(f)) {
+        if (Is_Level_Style_Varargs_May_Fail(&L, pos)) {
+            if (Level_Is_Variadic(L)) {
                 //
                 // C va_args input to frame, as from the API, but not in the
                 // process of using string components which *might* have
@@ -236,14 +236,14 @@ DECLARE_NATIVE(new_line_q)
                 return Init_Logic(OUT, false);
             }
 
-            arr = f_array;
-            if (Is_Frame_At_End(f)) {
+            arr = Level_Array(L);
+            if (Is_Level_At_End(L)) {
                 item = nullptr;
                 tail = nullptr;
             }
             else {
-                item = At_Feed(f->feed);
-                tail = At_Feed(f->feed) + 1;  // !!! Review
+                item = At_Feed(L->feed);
+                tail = At_Feed(L->feed) + 1;  // !!! Review
             }
         }
         else if (Is_Block_Style_Varargs(&shared, pos)) {

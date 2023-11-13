@@ -157,17 +157,20 @@ struct Reb_Binder;
 struct Reb_Collector;
 
 
-//=//// FRAMES ////////////////////////////////////////////////////////////=//
+//=//// LEVELS ////////////////////////////////////////////////////////////=//
 //
-// Paths formerly used their own specialized structure to track the path,
-// (path-value-state), but now they're just another kind of frame.  It is
-// helpful for the moment to give them a different name.
+// Due to contention with the usermode datatype FRAME!, stack levels of the
+// trampoline are called "Levels" as opposed to "Frames".  This is actually
+// a good distinction, as levels are much more broad than function frames.
+//
+// Because lowercase "L" looks too much like a number 1, the shorthand for
+// level variables is uppercase L.
 //
 
-struct Reb_Frame;
+struct Reb_Level;
 
-#define Frame(star) \
-    struct Reb_Frame star
+#define Level(star) \
+    struct Reb_Level star
 
 struct Reb_Feed_Struct;
 typedef struct Reb_Feed_Struct Reb_Feed;

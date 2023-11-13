@@ -37,7 +37,7 @@ DECLARE_NATIVE(halt)
 {
     INCLUDE_PARAMS_OF_HALT;
 
-    return Init_Thrown_With_Label(FRAME, Lib(NULL), Lib(HALT));
+    return Init_Thrown_With_Label(LEVEL, Lib(NULL), Lib(HALT));
 }
 
 
@@ -75,7 +75,7 @@ DECLARE_NATIVE(quit)
         Init_Word_Isotope(v, Canon(QUIT));
     }
 
-    return Init_Thrown_With_Label(FRAME, v, Lib(QUIT));
+    return Init_Thrown_With_Label(LEVEL, v, Lib(QUIT));
 }
 
 
@@ -347,7 +347,7 @@ DECLARE_NATIVE(c_debug_break)
         // Queue it so the break happens right before the MOLD, not after it
         // happened and has been passed as an argument.
         //
-        TG_break_at_tick = frame_->tick + 1;
+        TG_break_at_tick = level_->tick + 1;
         return VOID;
      #else
         // No tick counting or tick-break checking, but still want some

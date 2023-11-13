@@ -147,13 +147,13 @@ inline static Atom(*) Isotopify_If_Falsey(Atom(*) v) {
 
 // Turns voids and nulls into boxed form to be THEN-reactive, vs ELSE
 //
-inline static Bounce Native_Branched_Result(Frame(*) frame_, Atom(*) v) {
-    assert(v == frame_->out);  // would not be zero cost if we supported copy
+inline static Bounce Native_Branched_Result(Level(*) level_, Atom(*) v) {
+    assert(v == level_->out);  // would not be zero cost if we supported copy
     if (Is_Void(v))
         Init_Heavy_Void(v);
     else if (Is_Nulled(v))
         Init_Heavy_Null(v);
     else if (Is_False(v))
         Init_Heavy_False(v);
-    return frame_->out;
+    return level_->out;
 }

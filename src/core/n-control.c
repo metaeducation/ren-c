@@ -65,7 +65,7 @@
 //
 // To make it easier for anything that runs a branch, the double-evaluation in
 // a GROUP! branch has its own executor.  This means something like IF can
-// push a frame with the branch executor which can complete and then run the
+// push a level with the branch executor which can complete and then run the
 // evaluated-to branch.
 //
 // So the group branch executor is pushed with the feed of the GROUP! to run.
@@ -84,9 +84,9 @@
 //
 // 2. The Trampoline has some sanity checking asserts that try to stop you
 //    from making mistakes.  Because this does something weird to use the
-//    OUT cell as `with` the FRAME_FLAG_BRANCH was taken off at the callsite.
+//    OUT cell as `with` the LEVEL_FLAG_BRANCH was taken off at the callsite.
 //
-Bounce Group_Branch_Executor(Frame(*) frame_)
+Bounce Group_Branch_Executor(Level(*) level_)
 {
     if (THROWING)
         return THROWN;
@@ -103,19 +103,19 @@ Bounce Group_Branch_Executor(Frame(*) frame_)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    Frame(*) evaluator = Make_Frame(
-        FRAME->feed,
-        ((FRAME->flags.bits & (~ FLAG_STATE_BYTE(255)))  // take out state 1
-            | FRAME_FLAG_BRANCH)
+    Level(*) sub = Make_Level(
+        LEVEL->feed,
+        ((LEVEL->flags.bits & (~ FLAG_STATE_BYTE(255)))  // take out state 1
+            | LEVEL_FLAG_BRANCH)
     );
-    Push_Frame(SPARE, evaluator);
-    evaluator->executor = &Array_Executor;
+    Push_Level(SPARE, sub);
+    sub->executor = &Array_Executor;
 
-    Clear_Frame_Flag(FRAME, ALLOCATED_FEED);
-    FRAME->feed = TG_End_Feed;  // feed consumed by subframe
+    Clear_Level_Flag(LEVEL, ALLOCATED_FEED);
+    LEVEL->feed = TG_End_Feed;  // feed consumed by sublevel
 
     STATE = ST_GROUP_BRANCH_RUNNING_GROUP;
-    return CATCH_CONTINUE_SUBFRAME(evaluator);
+    return CATCH_CONTINUE_SUBLEVEL(sub);
 
 } group_result_in_spare: {  //////////////////////////////////////////////////
 
@@ -124,7 +124,7 @@ Bounce Group_Branch_Executor(Frame(*) frame_)
 
     Atom(const*) with = Is_Fresh(OUT) ? nullptr : OUT;  // with here, see [1]
 
-    assert(Is_Frame_At_End(FRAME));
+    assert(Is_Level_At_End(LEVEL));
     return DELEGATE_BRANCH(OUT, SPARE, with);  // couldn't do (OUT, OUT, SPARE)
 }}
 
@@ -254,7 +254,7 @@ enum {
 };
 
 static Bounce Then_Else_Isotopic_Object_Helper(
-    Frame(*) frame_,
+    Level(*) level_,
     bool then  // true when doing a THEN
 ){
     INCLUDE_PARAMS_OF_THEN;  // assume frame compatibility w/ELSE
@@ -289,10 +289,10 @@ static Bounce Then_Else_Isotopic_Object_Helper(
         else_hook = nullptr;  // can be unset by Debranch_Output()
 
     if (not then_hook and not else_hook) {  // !!! should it always take THEN?
-        if (not Pushed_Decaying_Frame(  // fails if no reify method, see [4]
+        if (not Pushed_Decaying_Level(  // fails if no reify method, see [4]
             SPARE,
             in,
-            FRAME_FLAG_META_RESULT
+            LEVEL_FLAG_META_RESULT
         )){
             Copy_Cell(in, SPARE);  // cheap reification... (e.g. quoted)
             Meta_Unquotify_Known_Stable(Stable_Unchecked(in));  // see [1]
@@ -302,7 +302,7 @@ static Bounce Then_Else_Isotopic_Object_Helper(
         }
 
         STATE = ST_THENABLE_REIFYING_SPARE;  // will call helper again
-        return CONTINUE_SUBFRAME(TOP_FRAME);
+        return CONTINUE_SUBLEVEL(TOP_LEVEL);
     }
 
     Value(*) hook;
@@ -433,7 +433,7 @@ DECLARE_NATIVE(did_1)  // see TO-C-NAME for why the "_1" is needed
 } reifying_input: {  /////////////////////////////////////////////////////////
 
     bool then = true;
-    Bounce bounce = Then_Else_Isotopic_Object_Helper(frame_, then);
+    Bounce bounce = Then_Else_Isotopic_Object_Helper(level_, then);
 
     switch (STATE) {
       case ST_THENABLE_REIFYING_SPARE:  // needs another reify step
@@ -531,7 +531,7 @@ DECLARE_NATIVE(then)  // see `tweak :then 'defer on` in %base-defs.r
   reifying_input: {  /////////////////////////////////////////////////////////
 
     bool then = true;
-    Bounce bounce = Then_Else_Isotopic_Object_Helper(frame_, then);
+    Bounce bounce = Then_Else_Isotopic_Object_Helper(level_, then);
     return bounce;
 }}
 
@@ -572,7 +572,7 @@ DECLARE_NATIVE(else)  // see `tweak :else 'defer on` in %base-defs.r
   reifying_input: {  /////////////////////////////////////////////////////////
 
     bool then = false;
-    Bounce bounce = Then_Else_Isotopic_Object_Helper(frame_, then);
+    Bounce bounce = Then_Else_Isotopic_Object_Helper(level_, then);
     return bounce;
 }}
 
@@ -720,7 +720,7 @@ DECLARE_NATIVE(match)
 }
 
 
-#define FRAME_FLAG_ALL_VOIDS FRAME_FLAG_24
+#define LEVEL_FLAG_ALL_VOIDS LEVEL_FLAG_24
 
 
 //
@@ -786,19 +786,19 @@ DECLARE_NATIVE(all)
     if (VAL_LEN_AT(block) == 0)
         return VOID;
 
-    assert(Not_Frame_Flag(FRAME, ALL_VOIDS));
-    Set_Frame_Flag(FRAME, ALL_VOIDS);
+    assert(Not_Level_Flag(LEVEL, ALL_VOIDS));
+    Set_Level_Flag(LEVEL, ALL_VOIDS);
 
-    Flags flags = FRAME_FLAG_TRAMPOLINE_KEEPALIVE;
+    Flags flags = LEVEL_FLAG_TRAMPOLINE_KEEPALIVE;
 
     if (IS_THE_BLOCK(block))
         flags |= EVAL_EXECUTOR_FLAG_NO_EVALUATIONS;
 
-    Frame(*) subframe = Make_Frame_At(block, flags);
-    Push_Frame(SPARE, subframe);
+    Level(*) sub = Make_Level_At(block, flags);
+    Push_Level(SPARE, sub);
 
     STATE = ST_ALL_EVAL_STEP;
-    return CONTINUE_SUBFRAME(subframe);
+    return CONTINUE_SUBLEVEL(sub);
 
 } eval_step_result_in_spare: {  //////////////////////////////////////////////
 
@@ -806,20 +806,20 @@ DECLARE_NATIVE(all)
         Is_Void(SPARE)  // (if false [<a>])
         or Is_Elision(SPARE)  // (comment "hi") or ,
     ){
-        if (Is_Frame_At_End(SUBFRAME))
+        if (Is_Level_At_End(SUBLEVEL))
             goto reached_end;
 
         assert(STATE == ST_ALL_EVAL_STEP);
-        Restart_Evaluator_Frame(SUBFRAME);
-        return CONTINUE_SUBFRAME(SUBFRAME);
+        Restart_Evaluator_Level(SUBLEVEL);
+        return CONTINUE_SUBLEVEL(SUBLEVEL);
     }
 
-    Clear_Frame_Flag(FRAME, ALL_VOIDS);
+    Clear_Level_Flag(LEVEL, ALL_VOIDS);
 
     Decay_If_Unstable(SPARE);
 
     if (not Is_Nulled(predicate)) {
-        SUBFRAME->executor = &Just_Use_Out_Executor;  // tunnel thru, see [2]
+        SUBLEVEL->executor = &Just_Use_Out_Executor;  // tunnel thru, see [2]
 
         STATE = ST_ALL_PREDICATE;
         return CONTINUE(scratch, predicate, SPARE);
@@ -835,7 +835,7 @@ DECLARE_NATIVE(all)
 
     Isotopify_If_Falsey(SPARE);  // predicates can approve "falseys", see [3]
 
-    SUBFRAME->executor = &Evaluator_Executor;  // done tunneling, see [2]
+    SUBLEVEL->executor = &Evaluator_Executor;  // done tunneling, see [2]
     STATE = ST_ALL_EVAL_STEP;
 
     condition = scratch;
@@ -844,7 +844,7 @@ DECLARE_NATIVE(all)
 } process_condition: {  //////////////////////////////////////////////////////
 
     if (Is_Falsey(condition)) {
-        Drop_Frame(SUBFRAME);
+        Drop_Level(SUBLEVEL);
         return nullptr;
     }
 
@@ -854,18 +854,18 @@ DECLARE_NATIVE(all)
 
     Move_Cell(OUT, SPARE);  // leaves SPARE as fresh...good for next step
 
-    if (Is_Frame_At_End(SUBFRAME))
+    if (Is_Level_At_End(SUBLEVEL))
         goto reached_end;
 
     assert(STATE == ST_ALL_EVAL_STEP);
-    Restart_Evaluator_Frame(SUBFRAME);
-    return CONTINUE_SUBFRAME(SUBFRAME);
+    Restart_Evaluator_Level(SUBLEVEL);
+    return CONTINUE_SUBLEVEL(SUBLEVEL);
 
 } reached_end: {  ////////////////////////////////////////////////////////////
 
-    Drop_Frame(SUBFRAME);
+    Drop_Level(SUBLEVEL);
 
-    if (Get_Frame_Flag(FRAME, ALL_VOIDS))
+    if (Get_Level_Flag(LEVEL, ALL_VOIDS))
         return VOID;
 
     return BRANCHED(OUT);
@@ -919,37 +919,37 @@ DECLARE_NATIVE(any)
     if (VAL_LEN_AT(block) == 0)
         return VOID;
 
-    assert(Not_Frame_Flag(FRAME, ALL_VOIDS));
-    Set_Frame_Flag(FRAME, ALL_VOIDS);
+    assert(Not_Level_Flag(LEVEL, ALL_VOIDS));
+    Set_Level_Flag(LEVEL, ALL_VOIDS);
 
-    Flags flags = FRAME_FLAG_TRAMPOLINE_KEEPALIVE;
+    Flags flags = LEVEL_FLAG_TRAMPOLINE_KEEPALIVE;
 
     if (IS_THE_BLOCK(block))
         flags |= EVAL_EXECUTOR_FLAG_NO_EVALUATIONS;
 
-    Frame(*) subframe = Make_Frame_At(block, flags);
-    Push_Frame(OUT, subframe);
+    Level(*) sub = Make_Level_At(block, flags);
+    Push_Level(OUT, sub);
 
     STATE = ST_ANY_EVAL_STEP;
-    return CONTINUE_SUBFRAME(subframe);
+    return CONTINUE_SUBLEVEL(sub);
 
 } eval_step_result_in_out: {  ////////////////////////////////////////////////
 
     if (Is_Void(OUT) or Is_Elision(OUT)) {  // (comment "hi") (if false [<a>])
-        if (Is_Frame_At_End(SUBFRAME))
+        if (Is_Level_At_End(SUBLEVEL))
             goto reached_end;
 
         assert(STATE == ST_ANY_EVAL_STEP);
-        Restart_Evaluator_Frame(SUBFRAME);
-        return CONTINUE_SUBFRAME(SUBFRAME);
+        Restart_Evaluator_Level(SUBLEVEL);
+        return CONTINUE_SUBLEVEL(SUBLEVEL);
     }
 
-    Clear_Frame_Flag(FRAME, ALL_VOIDS);
+    Clear_Level_Flag(LEVEL, ALL_VOIDS);
 
     Decay_If_Unstable(OUT);
 
     if (not Is_Nulled(predicate)) {
-        SUBFRAME->executor = &Just_Use_Out_Executor;  // tunnel thru, see [2]
+        SUBLEVEL->executor = &Just_Use_Out_Executor;  // tunnel thru, see [2]
 
         STATE = ST_ANY_PREDICATE;
         return CONTINUE(SPARE, predicate, OUT);
@@ -965,7 +965,7 @@ DECLARE_NATIVE(any)
 
     Isotopify_If_Falsey(OUT);  // predicates can approve "falseys", see [3]
 
-    SUBFRAME->executor = &Evaluator_Executor;  // done tunneling, see [2]
+    SUBLEVEL->executor = &Evaluator_Executor;  // done tunneling, see [2]
     STATE = ST_ANY_EVAL_STEP;
 
     condition = stable_SPARE;
@@ -976,23 +976,23 @@ DECLARE_NATIVE(any)
     if (Is_Truthy(condition))
         goto return_out;
 
-    if (Is_Frame_At_End(SUBFRAME))
+    if (Is_Level_At_End(SUBLEVEL))
         goto reached_end;
 
     assert(STATE == ST_ANY_EVAL_STEP);
-    Restart_Evaluator_Frame(SUBFRAME);
-    return CONTINUE_SUBFRAME(SUBFRAME);
+    Restart_Evaluator_Level(SUBLEVEL);
+    return CONTINUE_SUBLEVEL(SUBLEVEL);
 
 } return_out: {  /////////////////////////////////////////////////////////////
 
-    Drop_Frame(SUBFRAME);
+    Drop_Level(SUBLEVEL);
     return BRANCHED(OUT);  // successful ANY returns the value
 
 } reached_end: {  ////////////////////////////////////////////////////////////
 
-    Drop_Frame(SUBFRAME);
+    Drop_Level(SUBLEVEL);
 
-    if (Get_Frame_Flag(FRAME, ALL_VOIDS))
+    if (Get_Level_Flag(LEVEL, ALL_VOIDS))
         return VOID;
 
     return nullptr;  // reached end of input and found nothing to return
@@ -1089,12 +1089,12 @@ DECLARE_NATIVE(case)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    Frame(*) f = Make_Frame_At(
+    Level(*) L = Make_Level_At(
         cases,
-        FRAME_FLAG_TRAMPOLINE_KEEPALIVE
+        LEVEL_FLAG_TRAMPOLINE_KEEPALIVE
     );
 
-    Push_Frame(SPARE, f);
+    Push_Level(SPARE, L);
 
     assert(Is_Fresh(OUT));  // out starts as fresh
     assert(Is_Fresh(SPARE));  // spare starts out as fresh
@@ -1103,13 +1103,13 @@ DECLARE_NATIVE(case)
 
     FRESHEN(SPARE);  // must do before goto reached_end
 
-    if (Is_Frame_At_End(SUBFRAME))
+    if (Is_Level_At_End(SUBLEVEL))
         goto reached_end;
 
     STATE = ST_CASE_CONDITION_EVAL_STEP;
-    SUBFRAME->executor = &Evaluator_Executor;
-    Restart_Evaluator_Frame(SUBFRAME);
-    return CONTINUE_SUBFRAME(SUBFRAME);  // one step to pass predicate, see [1]
+    SUBLEVEL->executor = &Evaluator_Executor;
+    Restart_Evaluator_Level(SUBLEVEL);
+    return CONTINUE_SUBLEVEL(SUBLEVEL);  // one step to pass predicate, see [1]
 
 } condition_result_in_spare: {  //////////////////////////////////////////////
 
@@ -1118,14 +1118,14 @@ DECLARE_NATIVE(case)
 
     Decay_If_Unstable(SPARE);
 
-    if (Is_Frame_At_End(SUBFRAME))
+    if (Is_Level_At_End(SUBLEVEL))
         goto reached_end;  // we tolerate "fallout" from a condition
 
     if (Is_Nulled(predicate))
         goto processed_result_in_spare;
 
     STATE = ST_CASE_RUNNING_PREDICATE;
-    SUBFRAME->executor = &Just_Use_Out_Executor;
+    SUBLEVEL->executor = &Just_Use_Out_Executor;
     return CONTINUE(SPARE, predicate, SPARE);  // with == out is legal
 
 } predicate_result_in_spare: {  //////////////////////////////////////////////
@@ -1139,7 +1139,7 @@ DECLARE_NATIVE(case)
 
     bool matched = Is_Truthy(SPARE);  // errors on most isotopes
 
-    Cell(const*) branch = Lookback_While_Fetching_Next(SUBFRAME);
+    Cell(const*) branch = Lookback_While_Fetching_Next(SUBLEVEL);
 
     if (not matched) {
         if (not IS_GET_GROUP(branch))
@@ -1148,25 +1148,25 @@ DECLARE_NATIVE(case)
             // GET-GROUP! run even on no-match (see IF), but result discarded
         }
 
-        Frame(*) sub = Make_Frame_At_Core(
+        Level(*) sub = Make_Level_At_Core(
             branch,  // turning into feed drops cell type, :(...) not special
-            FRM_SPECIFIER(SUBFRAME),
-            FRAME_MASK_NONE
+            Level_Specifier(SUBLEVEL),
+            LEVEL_MASK_NONE
         );
         sub->executor = &Array_Executor;
 
         STATE = ST_CASE_DISCARDING_GET_GROUP;
-        SUBFRAME->executor = &Just_Use_Out_Executor;
-        Push_Frame(discarded, sub);
-        return CONTINUE_SUBFRAME(sub);
+        SUBLEVEL->executor = &Just_Use_Out_Executor;
+        Push_Level(discarded, sub);
+        return CONTINUE_SUBLEVEL(sub);
     }
 
     STATE = ST_CASE_RUNNING_BRANCH;
-    SUBFRAME->executor = &Just_Use_Out_Executor;
+    SUBLEVEL->executor = &Just_Use_Out_Executor;
     return CONTINUE_CORE(
         OUT,
-        FRAME_FLAG_BRANCH,
-        FRM_SPECIFIER(SUBFRAME), branch,
+        LEVEL_FLAG_BRANCH,
+        Level_Specifier(SUBLEVEL), branch,
         SPARE
     );
 
@@ -1180,7 +1180,7 @@ DECLARE_NATIVE(case)
 } branch_result_in_out: {  ///////////////////////////////////////////////////
 
     if (not REF(all)) {
-        Drop_Frame(SUBFRAME);
+        Drop_Level(SUBLEVEL);
         return BRANCHED(OUT);
     }
 
@@ -1190,7 +1190,7 @@ DECLARE_NATIVE(case)
 
     assert(REF(all) or Is_Fresh(OUT));  // never ran a branch, or running /ALL
 
-    Drop_Frame(SUBFRAME);
+    Drop_Level(SUBLEVEL);
 
     if (not Is_Fresh(SPARE)) {  // prioritize fallout result, see [4]
         Move_Cell(OUT, SPARE);
@@ -1280,7 +1280,7 @@ DECLARE_NATIVE(switch)
 
       case ST_SWITCH_RUNNING_BRANCH:
         if (not REF(all)) {
-            Drop_Frame(SUBFRAME);
+            Drop_Level(SUBLEVEL);
             return BRANCHED(OUT);
         }
         goto next_switch_step;
@@ -1299,38 +1299,38 @@ DECLARE_NATIVE(switch)
     if (IS_BLOCK(left) and Get_Cell_Flag(left, UNEVALUATED))
         fail (Error_Block_Switch_Raw(left));  // `switch [x] [...]` safeguard
 
-    Frame(*) subframe = Make_Frame_At(
+    Level(*) sub = Make_Level_At(
         cases,
-        FRAME_FLAG_TRAMPOLINE_KEEPALIVE
+        LEVEL_FLAG_TRAMPOLINE_KEEPALIVE
     );
 
-    Push_Frame(SPARE, subframe);
+    Push_Level(SPARE, sub);
 
 } next_switch_step: {  ///////////////////////////////////////////////////////
 
     FRESHEN(SPARE);  // fallout must be reset each time
 
-    if (Is_Frame_At_End(SUBFRAME))
+    if (Is_Level_At_End(SUBLEVEL))
         goto reached_end;
 
-    Cell(const*) at = At_Frame(SUBFRAME);
+    Cell(const*) at = At_Level(SUBLEVEL);
 
     if (IS_BLOCK(at) or IS_FRAME(at)) {  // seen with no match in effect
-        Fetch_Next_Forget_Lookback(SUBFRAME);  // just skip over it
+        Fetch_Next_Forget_Lookback(SUBLEVEL);  // just skip over it
         goto next_switch_step;
     }
 
     STATE = ST_SWITCH_EVALUATING_RIGHT;
-    SUBFRAME->executor = &Evaluator_Executor;
-    Restart_Evaluator_Frame(SUBFRAME);
-    return CONTINUE_SUBFRAME(SUBFRAME);  // no direct predicate call, see [1]
+    SUBLEVEL->executor = &Evaluator_Executor;
+    Restart_Evaluator_Level(SUBLEVEL);
+    return CONTINUE_SUBLEVEL(SUBLEVEL);  // no direct predicate call, see [1]
 
 } right_result_in_spare: {  //////////////////////////////////////////////////
 
     if (Is_Elision(SPARE))  // skip comments or ELIDEs
         goto next_switch_step;  // see note [2] in comments for CASE
 
-    if (Is_Frame_At_End(SUBFRAME))
+    if (Is_Level_At_End(SUBLEVEL))
         goto reached_end;  // nothing left, so drop frame and return
 
     if (REF(type)) {
@@ -1360,13 +1360,13 @@ DECLARE_NATIVE(switch)
                 rebQ(left),  // first arg (left hand side if infix)
                 rebQ(SPARE)  // second arg (right hand side if infix)
         )){
-            return BOUNCE_THROWN;  // aborts subframe
+            return BOUNCE_THROWN;  // aborts sublevel
         }
         if (Is_Falsey(scratch))
             goto next_switch_step;
     }
 
-    Cell(const*) at = Try_At_Frame(SUBFRAME);
+    Cell(const*) at = Try_At_Level(SUBLEVEL);
 
     while (true) {  // skip ahead for BLOCK!/ACTION! to process the match
         if (at == nullptr)
@@ -1375,23 +1375,23 @@ DECLARE_NATIVE(switch)
         if (IS_BLOCK(at) or IS_META_BLOCK(at) or IS_FRAME(at))
             break;
 
-        Fetch_Next_Forget_Lookback(SUBFRAME);
-        at = At_Frame(SUBFRAME);
+        Fetch_Next_Forget_Lookback(SUBLEVEL);
+        at = At_Level(SUBLEVEL);
     }
 
     STATE = ST_SWITCH_RUNNING_BRANCH;
-    SUBFRAME->executor = &Just_Use_Out_Executor;
+    SUBLEVEL->executor = &Just_Use_Out_Executor;
     return CONTINUE_CORE(
         FRESHEN(OUT),
-        FRAME_FLAG_BRANCH,
-        FRM_SPECIFIER(SUBFRAME), at
+        LEVEL_FLAG_BRANCH,
+        Level_Specifier(SUBLEVEL), at
     );
 
 } reached_end: {  ////////////////////////////////////////////////////////////
 
     assert(REF(all) or Is_Fresh(OUT));
 
-    Drop_Frame(SUBFRAME);
+    Drop_Level(SUBLEVEL);
 
     if (not Is_Fresh(SPARE)) {  // see remarks in CASE on fallout prioritization
         Move_Cell(OUT, SPARE);
@@ -1483,7 +1483,7 @@ DECLARE_NATIVE(default)
 
     if (Set_Var_Core_Throws(OUT, nullptr, steps, SPECIFIED, stable_SPARE)) {
         assert(false);  // shouldn't be able to happen.
-        fail (Error_No_Catch_For_Throw(FRAME));
+        fail (Error_No_Catch_For_Throw(LEVEL));
     }
 
     return COPY(SPARE);
@@ -1543,7 +1543,7 @@ DECLARE_NATIVE(catch)
     if (not THROWING)
         return nullptr;  // no throw means just return null (pure, for ELSE)
 
-    const REBVAL *label = VAL_THROWN_LABEL(FRAME);
+    const REBVAL *label = VAL_THROWN_LABEL(LEVEL);
 
     if (REF(any) and not (
         IS_FRAME(label)
@@ -1612,7 +1612,7 @@ DECLARE_NATIVE(catch)
 
   was_caught:  ///////////////////////////////////////////////////////////////
 
-    CATCH_THROWN(OUT, frame_); // thrown value
+    CATCH_THROWN(OUT, level_); // thrown value
 
     return BRANCHED(OUT);  // a caught NULL triggers THEN, not ELSE
 }}
@@ -1648,7 +1648,7 @@ DECLARE_NATIVE(throw)
     else
         Meta_Unquotify_Undecayed(atom);
 
-    return Init_Thrown_With_Label(FRAME, atom, ARG(name));  // nulled name ok
+    return Init_Thrown_With_Label(LEVEL, atom, ARG(name));  // nulled name ok
 }
 
 
@@ -1686,9 +1686,9 @@ void Debranch_Output(Atom(*) out) {
 
 
 //
-//  Pushed_Decaying_Frame: C
+//  Pushed_Decaying_Level: C
 //
-bool Pushed_Decaying_Frame(Atom(*) out, Atom(const*) obj, Flags flags) {
+bool Pushed_Decaying_Level(Atom(*) out, Atom(const*) obj, Flags flags) {
     if (out != obj)
         Copy_Cell(out, obj);
     mutable_QUOTE_BYTE(out) = UNQUOTED_1;

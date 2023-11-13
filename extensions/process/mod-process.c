@@ -101,7 +101,7 @@ DECLARE_NATIVE(call_internal_p)
 // !!! Parameter usage may require WAIT mode even if not explicitly requested.
 // /WAIT should be default, with /ASYNC (or otherwise) as exception!
 {
-    return Call_Core(frame_);
+    return Call_Core(level_);
 }
 
 

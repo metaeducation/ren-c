@@ -60,7 +60,7 @@
 // * WORK IN PROGRESS: "stackless" features are adding demands to tighten up
 //   the adjustment and rollback of global state.
 //
-// * Each evaluator stack frame currently stores a Reb_State structure in its
+// * Each evaluator stack level currently stores a Reb_State structure in its
 //   `->baseline` field.  There are likely ways to compact and conserve
 //   this information, e.g. by using a small fixed size structure that can
 //   "pop out" into a dynamic structure if need be.  But, correctness first!
@@ -89,7 +89,7 @@ struct Reb_State {
 // Capture a measure of the current global state.
 //
 // !!! This is a macro because it may be that since snapping the state is
-// done on every frame push, that code should be in the header so it could
+// done on every level push, that code should be in the header so it could
 // get inlined.  However, header dependencies currently put definitions like
 // TOP_INDEX and MOLD_BUF later.  Review if it's worth it to break this out
 // in a different way.

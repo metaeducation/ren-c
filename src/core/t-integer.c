@@ -45,7 +45,7 @@ REBINT CT_Integer(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
 //  MAKE_Integer: C
 //
 Bounce MAKE_Integer(
-    Frame(*) frame_,
+    Level(*) level_,
     enum Reb_Kind kind,
     option(const REBVAL*) parent,
     const REBVAL *arg
@@ -87,7 +87,7 @@ Bounce MAKE_Integer(
 //
 //  TO_Integer: C
 //
-Bounce TO_Integer(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg)
+Bounce TO_Integer(Level(*) level_, enum Reb_Kind kind, const REBVAL *arg)
 {
     assert(kind == REB_INTEGER);
     UNUSED(kind);
@@ -307,7 +307,7 @@ REBTYPE(Integer)
                 Move_Cell(OUT, val2);  // Use as temp workspace
                 Move_Cell(val2, val);
                 Move_Cell(val, OUT);
-                return Run_Generic_Dispatch_Core(val, frame_, verb); }
+                return Run_Generic_Dispatch_Core(val, level_, verb); }
 
             // Only type valid to subtract from, divide into, is decimal/money:
             case SYM_SUBTRACT:
@@ -318,19 +318,19 @@ REBTYPE(Integer)
             case SYM_POWER:
                 if (IS_DECIMAL(val2) || IS_PERCENT(val2)) {
                     Init_Decimal(val, cast(REBDEC, num));  // convert
-                    return T_Decimal(frame_, verb);
+                    return T_Decimal(level_, verb);
                 }
                 if (IS_MONEY(val2)) {
                     Init_Money(val, int_to_deci(VAL_INT64(val)));
-                    return T_Money(frame_, verb);
+                    return T_Money(level_, verb);
                 }
                 if (n > 0) {
                     if (IS_TIME(val2)) {
                         Init_Time_Nanoseconds(val, SEC_TIME(VAL_INT64(val)));
-                        return T_Time(frame_, verb);
+                        return T_Time(level_, verb);
                     }
                     if (IS_DATE(val2))
-                        return T_Date(frame_, verb);
+                        return T_Date(level_, verb);
                 }
 
             default:
@@ -377,7 +377,7 @@ REBTYPE(Integer)
     case SYM_POWER:
         Init_Decimal(D_ARG(1), cast(REBDEC, num));
         Init_Decimal(D_ARG(2), cast(REBDEC, arg));
-        return T_Decimal(frame_, verb);
+        return T_Decimal(level_, verb);
 
     case SYM_REMAINDER:
         if (arg == 0)
@@ -419,12 +419,12 @@ REBTYPE(Integer)
 
     case SYM_ROUND: {
         INCLUDE_PARAMS_OF_ROUND;
-        USED(ARG(value));  // extracted as d1, others are passed via frame_
+        USED(ARG(value));  // extracted as d1, others are passed via level_
         USED(ARG(even)); USED(ARG(down)); USED(ARG(half_down));
         USED(ARG(floor)); USED(ARG(ceiling)); USED(ARG(half_ceiling));
 
         if (not REF(to))
-            return Init_Integer(OUT, Round_Int(num, frame_, 0L));
+            return Init_Integer(OUT, Round_Int(num, level_, 0L));
 
         REBVAL *to = ARG(to);
 
@@ -432,13 +432,13 @@ REBTYPE(Integer)
             return Init_Money(
                 OUT,
                 Round_Deci(
-                    int_to_deci(num), frame_, VAL_MONEY_AMOUNT(to)
+                    int_to_deci(num), level_, VAL_MONEY_AMOUNT(to)
                 )
             );
 
         if (IS_DECIMAL(to) || IS_PERCENT(to)) {
             REBDEC dec = Round_Dec(
-                cast(REBDEC, num), frame_, VAL_DECIMAL(to)
+                cast(REBDEC, num), level_, VAL_DECIMAL(to)
             );
             Reset_Unquoted_Header_Untracked(
                 TRACK(OUT),
@@ -451,7 +451,7 @@ REBTYPE(Integer)
         if (IS_TIME(ARG(to)))
             fail (PARAM(to));
 
-        return Init_Integer(OUT, Round_Int(num, frame_, VAL_INT64(to))); }
+        return Init_Integer(OUT, Round_Int(num, level_, VAL_INT64(to))); }
 
     case SYM_RANDOM: {
         INCLUDE_PARAMS_OF_RANDOM;

@@ -55,27 +55,26 @@ inline static bool ANY_ESCAPABLE_GET(Cell(const*) v) {
 
 //=////////////////////////////////////////////////////////////////////////=//
 //
-//  LOW-LEVEL FRAME ACCESSORS
+//  LEVEL ACCESSORS
 //
 //=////////////////////////////////////////////////////////////////////////=//
 
 
-#define Is_Action_Frame(f) \
-    ((f)->executor == &Action_Executor)
+#define Is_Action_Level(L) \
+    ((L)->executor == &Action_Executor)
 
 
-inline static bool FRM_IS_VARIADIC(Frame(*) f) {
-    return FEED_IS_VARIADIC(f->feed);
+inline static bool Level_Is_Variadic(Level(*) L) {
+    return FEED_IS_VARIADIC(L->feed);
 }
 
-inline static Array(const*) FRM_ARRAY(Frame(*) f) {
-    assert(not FRM_IS_VARIADIC(f));
-    return FEED_ARRAY(f->feed);
+inline static Array(const*) Level_Array(Level(*) L) {
+    assert(not Level_Is_Variadic(L));
+    return FEED_ARRAY(L->feed);
 }
 
-inline static REBSPC *FRM_SPECIFIER(Frame(*) f) {
-    return FEED_SPECIFIER(f->feed);
-}
+#define Level_Specifier(L) \
+    FEED_SPECIFIER(ensure(Level(*), (L))->feed)
 
 
 // !!! Though the evaluator saves its `index`, the index is not meaningful
@@ -84,62 +83,57 @@ inline static REBSPC *FRM_SPECIFIER(Frame(*) f) {
 // convert these cases to ordinary arrays before running them, in order
 // to accurately present any errors.
 //
-inline static REBLEN FRM_INDEX(Frame(*) f) {
-    if (Is_Feed_At_End(f->feed))
-        return ARR_LEN(FRM_ARRAY(f));
+inline static REBLEN Level_Array_Index(Level(*) L) {
+    if (Is_Feed_At_End(L->feed))
+        return ARR_LEN(Level_Array(L));
 
-    assert(not FRM_IS_VARIADIC(f));
-    return FEED_INDEX(f->feed) - 1;
+    assert(not Level_Is_Variadic(L));
+    return FEED_INDEX(L->feed) - 1;
 }
 
-inline static REBLEN FRM_EXPR_INDEX(Frame(*) f) {
-    assert(not FRM_IS_VARIADIC(f));
-    return f->expr_index - 1;
+inline static REBLEN Level_Expression_Index(Level(*) L) {
+    assert(not Level_Is_Variadic(L));
+    return L->expr_index - 1;
 }
 
-inline static String(const*) FRM_FILE(Frame(*) f) {
-    if (FRM_IS_VARIADIC(f))
+inline static String(const*) File_Of_Level(Level(*) L) {
+    if (Level_Is_Variadic(L))
         return nullptr;
-    if (Not_Subclass_Flag(ARRAY, FRM_ARRAY(f), HAS_FILE_LINE_UNMASKED))
+    if (Not_Subclass_Flag(ARRAY, Level_Array(L), HAS_FILE_LINE_UNMASKED))
         return nullptr;
-    return LINK(Filename, FRM_ARRAY(f));
+    return LINK(Filename, Level_Array(L));
 }
 
-inline static const char* FRM_FILE_UTF8(Frame(*) f) {
+inline static const char* File_UTF8_Of_Level(Level(*) L) {
     //
     // !!! Note: Too early in boot at the moment to use Canon(ANONYMOUS).
     //
-    String(const*) str = FRM_FILE(f);
+    String(const*) str = File_Of_Level(L);
     return str ? STR_UTF8(str) : "~anonymous~";
 }
 
-inline static LineNumber FRM_LINE(Frame(*) f) {
-    if (FRM_IS_VARIADIC(f))
+inline static LineNumber LineNumber_Of_Level(Level(*) L) {
+    if (Level_Is_Variadic(L))
         return 0;
-    if (Not_Subclass_Flag(ARRAY, FRM_ARRAY(f), HAS_FILE_LINE_UNMASKED))
+    if (Not_Subclass_Flag(ARRAY, Level_Array(L), HAS_FILE_LINE_UNMASKED))
         return 0;
-    return FRM_ARRAY(f)->misc.line;
+    return Level_Array(L)->misc.line;
 }
 
-#define FRM_OUT(f) \
-    (f)->out
 
-
-// Note about FRM_NUM_ARGS: A native should generally not detect the arity it
+// Note about Level_Num_Args: A native should generally not detect the arity it
 // was invoked with, (and it doesn't make sense as most implementations get
 // the full list of arguments and refinements).  However, ACTION! dispatch
 // has several different argument counts piping through a switch, and often
 // "cheats" by using the arity instead of being conditional on which action
 // ID ran.  Consider when reviewing the future of ACTION!.
 //
-#define FRM_NUM_ARGS(f) \
-    (cast(REBSER*, (f)->varlist)->content.dynamic.used - 1) // minus rootvar
+#define Level_Num_Args(L) \
+    (cast(REBSER*, (L)->varlist)->content.dynamic.used - 1)  // minus rootvar
 
-#define FRM_SPARE(f) \
-    cast(Atom(*), &(f)->spare)
+#define Level_Spare(L) \
+    cast(Atom(*), &(L)->spare)
 
-#define FRM_PRIOR(f) \
-    ((f)->prior + 0) // prevent assignment via this macro
 
 // The "phase" slot of a FRAME! value is the second node pointer in PAYLOAD().
 // If a frame value is non-archetypal, this slot may be occupied by a String(*)
@@ -148,36 +142,36 @@ inline static LineNumber FRM_LINE(Frame(*) f) {
 // such a cache.  For performance (even in the debug build, where this is
 // called *a lot*) this is a macro and is unchecked.
 //
-#define FRM_PHASE(f) \
-    cast(Phase(*), VAL_FRAME_PHASE_OR_LABEL_NODE((f)->rootvar))
+#define Level_Phase(L) \
+    cast(Phase(*), VAL_FRAME_PHASE_OR_LABEL_NODE((L)->rootvar))
 
-inline static void INIT_FRM_PHASE(Frame(*) f, Phase(*) phase)  // check types
-  { INIT_VAL_FRAME_PHASE_OR_LABEL(f->rootvar, phase); }  // ...only
+inline static void INIT_LVL_PHASE(Level(*) L, Phase(*) phase)  // check types
+  { INIT_VAL_FRAME_PHASE_OR_LABEL(L->rootvar, phase); }  // ...only
 
-inline static void INIT_FRM_BINDING(Frame(*) f, Context(*) binding)
-  { mutable_BINDING(f->rootvar) = binding; }  // also fast
+inline static void INIT_LVL_BINDING(Level(*) L, Context(*) binding)
+  { mutable_BINDING(L->rootvar) = binding; }  // also fast
 
-#define FRM_BINDING(f) \
-    cast(Context(*), BINDING((f)->rootvar))
+#define Level_Binding(L) \
+    cast(Context(*), BINDING((L)->rootvar))
 
-inline static option(Symbol(const*)) FRM_LABEL(Frame(*) f) {
-    assert(Is_Action_Frame(f));
-    return f->label;
+inline static option(Symbol(const*)) Level_Label(Level(*) L) {
+    assert(Is_Action_Level(L));
+    return L->label;
 }
 
 
 #if (! CPLUSPLUS_11)
-    #define FRM_STATE_BYTE(f) \
-        mutable_SECOND_BYTE((f)->flags)
+    #define Level_State_Byte(L) \
+        mutable_SECOND_BYTE((L)->flags)
 #else
     // Having a special accessor in the C++ build serves two purposes.  One,
-    // it can actually type check that `f` is a frame.  But secondly, it also
+    // it can actually type check that `L` is a level.  But secondly, it also
     // is a good place to inject an assertion that you're not ignoring the
-    // fact that a frame "self-errored" and was notified of an abrupt failure.
+    // fact that a level "self-errored" and was notified of an abrupt failure.
     //
-    inline static Byte& FRM_STATE_BYTE(Frame(*) f) {
-        assert(Not_Frame_Flag(f, ABRUPT_FAILURE));
-        return mutable_SECOND_BYTE(f->flags);
+    inline static Byte& Level_State_Byte(Level(*) L) {
+        assert(Not_Level_Flag(L, ABRUPT_FAILURE));
+        return mutable_SECOND_BYTE(L->flags);
     }
 #endif
 
@@ -186,57 +180,47 @@ inline static option(Symbol(const*)) FRM_LABEL(Frame(*) f) {
 // ARGS is the parameters and refinements
 // 1-based indexing into the arglist (0 slot is for FRAME! value)
 
-#define FRM_ARGS_HEAD(f) \
-    ((f)->rootvar + 1)
+#define Level_Args_Head(L) \
+    ((L)->rootvar + 1)
 
 #ifdef NDEBUG
-    #define FRM_ARG(f,n) \
-        ((f)->rootvar + (n))
+    #define Level_Arg(L,n) \
+        ((L)->rootvar + (n))
 #else
-    inline static REBVAL *FRM_ARG(Frame(*) f, REBLEN n) {
-        assert(n != 0 and n <= FRM_NUM_ARGS(f));
-        return f->rootvar + n;  // 1-indexed
+    inline static REBVAL *Level_Arg(Level(*) L, REBLEN n) {
+        assert(n != 0 and n <= Level_Num_Args(L));
+        return L->rootvar + n;  // 1-indexed
     }
 #endif
 
 
-// These shorthands help you when your frame is named "f".  While such macros
-// are a bit "evil", they are extremely helpful for code readability.  They
-// may be #undef'd if they are causing a problem somewhere.
-
-#define At_Frame(f)                 At_Feed((f)->feed)
-#define Try_At_Frame(f)             Try_At_Feed((f)->feed)
-#define Is_Frame_At_End(f)          Is_Feed_At_End((f)->feed)
-#define Not_Frame_At_End(f)         Not_Feed_At_End((f)->feed)
-
-#define f_specifier FEED_SPECIFIER(f->feed)
-#define f_spare FRM_SPARE(f)
-#define f_gotten f->feed->gotten
-#define f_index FRM_INDEX(f)
-#define f_array FRM_ARRAY(f)
+#define At_Level(L)                 At_Feed((L)->feed)
+#define Try_At_Level(L)             Try_At_Feed((L)->feed)
+#define Is_Level_At_End(L)          Is_Feed_At_End((L)->feed)
+#define Not_Level_At_End(L)         Not_Feed_At_End((L)->feed)
 
 
-inline static Context(*) Context_For_Frame_May_Manage(Frame(*) f) {
-    assert(not Is_Action_Frame_Fulfilling(f));
-    SET_SERIES_FLAG(f->varlist, MANAGED);
-    return CTX(f->varlist);
+inline static Context(*) Context_For_Level_May_Manage(Level(*) L) {
+    assert(not Is_Level_Fulfilling(L));
+    SET_SERIES_FLAG(L->varlist, MANAGED);
+    return CTX(L->varlist);
 }
 
 
 //=//// FRAME LABELING ////////////////////////////////////////////////////=//
 
-inline static void Get_Frame_Label_Or_Nulled(Sink(Value(*)) out, Frame(*) f) {
-    assert(Is_Action_Frame(f));
-    if (f->label)
-        Init_Word(out, unwrap(f->label));  // WORD!, PATH!, or stored invoke
+inline static void Get_Level_Label_Or_Nulled(Sink(Value(*)) out, Level(*) L) {
+    assert(Is_Action_Level(L));
+    if (L->label)
+        Init_Word(out, unwrap(L->label));  // WORD!, PATH!, or stored invoke
     else
         Init_Nulled(out);  // anonymous invocation
 }
 
-inline static const char* Frame_Label_Or_Anonymous_UTF8(Frame(*) f) {
-    assert(Is_Action_Frame(f));
-    if (f->label)
-        return STR_UTF8(unwrap(f->label));
+inline static const char* Level_Label_Or_Anonymous_UTF8(Level(*) L) {
+    assert(Is_Action_Level(L));
+    if (L->label)
+        return STR_UTF8(unwrap(L->label));
     return "[anonymous]";
 }
 
@@ -249,7 +233,7 @@ inline static const char* Frame_Label_Or_Anonymous_UTF8(Frame(*) f) {
 //
 // This API is used internally in the implementation of Eval_Core.  It does
 // not speak in terms of arrays or indices, it works entirely by setting
-// up a call frame (f), and threading that frame's state through successive
+// up a stack level (L), and threading that level's state through successive
 // operations, vs. setting it up and disposing it on each EVALUATE step.
 //
 // Like higher level APIs that move through the input series, this low-level
@@ -261,25 +245,25 @@ inline static const char* Frame_Label_Or_Anonymous_UTF8(Frame(*) f) {
 //
 // One invariant of access is that the input may only advance.  Before any
 // operations are called, any low-level client must have already seeded
-// f->value with a valid "fetched" REBVAL*.
+// L->value with a valid "fetched" REBVAL*.
 //
 // This privileged level of access can be used by natives that feel they can
 // optimize performance by working with the evaluator directly.
 
-inline static void Free_Frame_Internal(Frame(*) f) {
-    if (Get_Frame_Flag(f, ALLOCATED_FEED))
-        Free_Feed(f->feed);  // didn't inherit from parent, and not END_FRAME
+inline static void Free_Level_Internal(Level(*) L) {
+    if (Get_Level_Flag(L, ALLOCATED_FEED))
+        Free_Feed(L->feed);  // didn't inherit from parent, and not END_FRAME
 
-    if (f->varlist and NOT_SERIES_FLAG(f->varlist, MANAGED))
-        GC_Kill_Series(f->varlist);
-    TRASH_POINTER_IF_DEBUG(f->varlist);
+    if (L->varlist and NOT_SERIES_FLAG(L->varlist, MANAGED))
+        GC_Kill_Series(L->varlist);
+    TRASH_POINTER_IF_DEBUG(L->varlist);
 
-    assert(IS_POINTER_TRASH_DEBUG(f->alloc_value_list));
+    assert(IS_POINTER_TRASH_DEBUG(L->alloc_value_list));
 
-    Free_Pooled(FRAME_POOL, f);
+    Free_Pooled(LEVEL_POOL, L);
 }
 
-// * Push_Frame() takes an Atom() for the output.  This is important, as
+// * Push_Level() takes an Atom() for the output.  This is important, as
 //   we don't want to evaluate into arbitrary array Cell(*), since the array
 //   could have its memory moved during an evaluation.  Also we don't want
 //   to take a Value(*) that could be a variable in an object--because the
@@ -290,214 +274,210 @@ inline static void Free_Frame_Internal(Frame(*) f) {
 //   special exception is made by LOCAL() in frames, based on the belief
 //   that local state for a native will never be exposed by a debugger.
 //
-inline static void Push_Frame(
+inline static void Push_Level(
     Atom(*) out,  // typecheck prohibits passing `unstable` Cell(*) for output
-    Frame(*) f
+    Level(*) L
 ){
     // All calls through to Eval_Core() are assumed to happen at the same C
-    // stack level for a pushed frame (though this is not currently enforced).
+    // stack level for a pushed Level (though this is not currently enforced).
     // Hence it's sufficient to check for C stack overflow only once, e.g.
     // not on each Eval_Step() for `reduce [a | b | ... | z]`.
     //
     // !!! This method is being replaced by "stackless", as there is no
     // reliable platform independent method for detecting stack overflows.
     //
-    if (C_STACK_OVERFLOWING(&f)) {
-        Free_Frame_Internal(f);  // not in stack, feed + frame wouldn't free
+    if (C_STACK_OVERFLOWING(&L)) {
+        Free_Level_Internal(L);  // not in stack, feed + level wouldn't free
         Fail_Stack_Overflow();
     }
 
-    // Frames are pushed to reuse for several sequential operations like
+    // Levels are pushed to reuse for several sequential operations like
     // ANY, ALL, CASE, REDUCE.  It is allowed to change the output cell for
     // each evaluation.  But the GC expects initialized bits in the output
     // slot at all times; use null until first eval call if needed
     //
-    f->out = out;
+    L->out = out;
 
   #if DEBUG_EXPIRED_LOOKBACK
-    f->stress = nullptr;
+    L->stress = nullptr;
   #endif
 
   #if !defined(NDEBUG)
     //
-    // !!! TBD: the relevant file/line update when f->feed->array changes
+    // !!! TBD: the relevant file/line update when L->feed->array changes
     //
-    f->file = FRM_FILE_UTF8(f);
-    f->line = FRM_LINE(f);
+    L->file = File_UTF8_Of_Level(L);
+    L->line = LineNumber_Of_Level(L);
   #endif
 
-    f->prior = TG_Top_Frame;
-    TG_Top_Frame = f;
+    L->prior = TG_Top_Level;
+    TG_Top_Level = L;
 
-    assert(IS_POINTER_TRASH_DEBUG(f->alloc_value_list));
-    f->alloc_value_list = f;  // doubly link list, terminates in `f`
+    assert(IS_POINTER_TRASH_DEBUG(L->alloc_value_list));
+    L->alloc_value_list = L;  // doubly link list, terminates in `L`
 }
 
 
-inline static void UPDATE_EXPRESSION_START(Frame(*) f) {
-    if (not FRM_IS_VARIADIC(f))
-        f->expr_index = FRM_INDEX(f);
+inline static void UPDATE_EXPRESSION_START(Level(*) L) {
+    if (not Level_Is_Variadic(L))
+        L->expr_index = Level_Array_Index(L);
 }
 
 
-#define Literal_Next_In_Frame(out,f) \
-    Literal_Next_In_Feed((out), (f)->feed)
-
-
-inline static void Drop_Frame_Core(Frame(*) f) {
+inline static void Drop_Level_Core(Level(*) L) {
   #if DEBUG_EXPIRED_LOOKBACK
-    free(f->stress);
+    free(L->stress);
   #endif
 
-    assert(TG_Top_Frame == f);
+    assert(TG_Top_Level == L);
 
-    if (Is_Throwing(f) or (f->out and Is_Raised(f->out))) {
+    if (Is_Throwing(L) or (L->out and Is_Raised(L->out))) {
         //
         // On normal completion with a return result, we do not allow API
-        // handles attached to a frame to leak--you are expected to release
+        // handles attached to a level to leak--you are expected to release
         // everything.  But definitional failure and throw cases are exempt.
         //
-        Node* n = f->alloc_value_list;
-        while (n != f) {
+        Node* n = L->alloc_value_list;
+        while (n != L) {
             Raw_Array* a = ARR(n);
             n = LINK(ApiNext, a);
             FRESHEN(ARR_SINGLE(a));
             GC_Kill_Series(a);
         }
-        TRASH_POINTER_IF_DEBUG(f->alloc_value_list);
+        TRASH_POINTER_IF_DEBUG(L->alloc_value_list);
 
         // There could be outstanding values on the data stack, or data in the
         // mold buffer...we clean it up automatically in these cases.
         //
-        Rollback_Globals_To_State(&f->baseline);
+        Rollback_Globals_To_State(&L->baseline);
     }
     else {
       #if !defined(NDEBUG)
-        Node* n = f->alloc_value_list;
-        while (n != f) {
+        Node* n = L->alloc_value_list;
+        while (n != L) {
             Raw_Array* a = ARR(n);
             printf("API handle was allocated but not freed, panic'ing leak\n");
             panic (a);
         }
-        TRASH_POINTER_IF_DEBUG(f->alloc_value_list);
+        TRASH_POINTER_IF_DEBUG(L->alloc_value_list);
       #endif
     }
 
-    TG_Top_Frame = f->prior;
+    TG_Top_Level = L->prior;
 
-    // Note: Free_Feed() will handle feeding a frame through to its end (which
-    // may release handles/etc), so no requirement Frame_At(f) be at END.
+    // Note: Free_Feed() will handle feeding a feed through to its end (which
+    // may release handles/etc), so no requirement Level_At(L) be at END.
 
-    Free_Frame_Internal(f);
+    Free_Level_Internal(L);
 }
 
-inline static void Drop_Frame_Unbalanced(Frame(*) f) {
-    Drop_Frame_Core(f);
+inline static void Drop_Level_Unbalanced(Level(*) L) {
+    Drop_Level_Core(L);
 }
 
-inline static void Drop_Frame(Frame(*) f)
+inline static void Drop_Level(Level(*) L)
 {
     if (
-        not Is_Throwing(f)
-        and not (f->out and Is_Raised(f->out))
+        not Is_Throwing(L)
+        and not (L->out and Is_Raised(L->out))
     ){
       #if DEBUG_BALANCE_STATE
         //
-        // To avoid slowing down the debug build a lot, Eval_Core() doesn't
-        // check this every cycle, just on drop.  But if it's hard to find which
-        // exact cycle caused the problem, see BALANCE_CHECK_EVERY_EVALUATION_STEP
+        // To avoid slowing down debug builds, Eval_Core() doesn't check this
+        // every cycle, just on drop.  But if it's hard to find the cycle
+        // causing problems, see BALANCE_CHECK_EVERY_EVALUATION_STEP.
         //
-        ASSERT_STATE_BALANCED(&f->baseline);
+        ASSERT_STATE_BALANCED(&L->baseline);
       #else
-        assert(TOP_INDEX == f->baseline.stack_base);  // Cheaper check
+        assert(TOP_INDEX == L->baseline.stack_base);  // Cheaper check
       #endif
     }
 
-    Drop_Frame_Unbalanced(f);
+    Drop_Level_Unbalanced(L);
 }
 
 
-inline static Frame(*) Prep_Frame_Core(
-    Frame(*) f,
+inline static Level(*) Prep_Level_Core(
+    Level(*) L,
     Feed(*) feed,
     Flags flags
 ){
-   if (f == nullptr)  // e.g. a failed allocation
-       fail (Error_No_Memory(sizeof(struct Reb_Frame)));
+   if (L == nullptr)  // e.g. a failed allocation
+       fail (Error_No_Memory(sizeof(struct Reb_Level)));
 
-    f->flags.bits = flags | FRAME_FLAG_0_IS_TRUE | FRAME_FLAG_7_IS_TRUE;
+    L->flags.bits = flags | LEVEL_FLAG_0_IS_TRUE | LEVEL_FLAG_7_IS_TRUE;
 
-    f->feed = feed;
-    Erase_Cell(&f->spare);
-    TRASH_POINTER_IF_DEBUG(f->out);
+    L->feed = feed;
+    Erase_Cell(&L->spare);
+    TRASH_POINTER_IF_DEBUG(L->out);
 
-    f->varlist = nullptr;
-    f->executor = &Evaluator_Executor;  // compatible default (for now)
+    L->varlist = nullptr;
+    L->executor = &Evaluator_Executor;  // compatible default (for now)
 
-    TRASH_POINTER_IF_DEBUG(f->alloc_value_list);
+    TRASH_POINTER_IF_DEBUG(L->alloc_value_list);
 
-    TRASH_IF_DEBUG(f->u);  // fills with garbage bytes in debug build
+    TRASH_IF_DEBUG(L->u);  // fills with garbage bytes in debug build
 
-    // !!! Recycling is done in the trampoline before the frame gets a chance
+    // !!! Recycling is done in the trampoline before the level gets a chance
     // to run.  So it's hard for the GC to know if it's okay to mark the
     // scratch cell.  We cheaply erase the cell in case it stays as the
     // evaluator executor (it's just writing a single zero).  Review.
     //
-    Erase_Cell(&f->u.eval.scratch);
+    Erase_Cell(&L->u.eval.scratch);
 
-    TRASH_POINTER_IF_DEBUG(f->label);
-  #if DEBUG_FRAME_LABELS
-    TRASH_POINTER_IF_DEBUG(f->label_utf8);
+    TRASH_POINTER_IF_DEBUG(L->label);
+  #if DEBUG_LEVEL_LABELS
+    TRASH_POINTER_IF_DEBUG(L->label_utf8);
   #endif
 
-    // !!! Previously just TOP_STACK was captured in f->baseline.stack_base,
-    // but then redundantly captured via a SNAP_STATE() in Push_Frame().  The
-    // responsibilities of Prep_Frame() vs Push_Frame() aren't clearly laid
+    // !!! Previously just TOP_STACK was captured in L->baseline.stack_base,
+    // but then redundantly captured via a SNAP_STATE() in Push_Level().  The
+    // responsibilities of Prep_Level() vs Push_Level() aren't clearly laid
     // out, but some clients do depend on the StackIndex being captured before
-    // Push_Frame() is called, so this snaps the whole baseline here.
+    // Push_Level() is called, so this snaps the whole baseline here.
     //
-    SNAP_STATE(&f->baseline);  // see notes on `baseline` in Reb_Frame
+    SNAP_STATE(&L->baseline);  // see notes on `baseline` in Reb_Level
 
   #if DEBUG_COUNT_TICKS
-    f->tick = TG_tick;
+    L->tick = TG_tick;
   #endif
 
-    return f;
+    return L;
 }
 
-#define Make_Frame(feed,flags) \
-    Prep_Frame_Core(cast(Frame(*), Alloc_Pooled(FRAME_POOL)), (feed), (flags))
+#define Make_Level(feed,flags) \
+    Prep_Level_Core(cast(Level(*), Alloc_Pooled(LEVEL_POOL)), (feed), (flags))
 
-#define Make_Frame_At_Core(any_array,specifier,frame_flags) \
-    Make_Frame( \
+#define Make_Level_At_Core(any_array,specifier,level_flags) \
+    Make_Level( \
         Prep_At_Feed( \
             Alloc_Feed(), \
             (any_array), \
             (specifier), \
-            TOP_FRAME->feed->flags.bits \
+            TOP_LEVEL->feed->flags.bits \
         ), \
-        (frame_flags) | FRAME_FLAG_ALLOCATED_FEED \
+        (level_flags) | LEVEL_FLAG_ALLOCATED_FEED \
     )
 
-#define Make_Frame_At(any_array,flags) \
-    Make_Frame_At_Core((any_array), SPECIFIED, (flags))
+#define Make_Level_At(any_array,flags) \
+    Make_Level_At_Core((any_array), SPECIFIED, (flags))
 
-#define Make_End_Frame(flags) \
-    Make_Frame(TG_End_Feed, (flags))
+#define Make_End_Level(flags) \
+    Make_Level(TG_End_Feed, (flags))
 
 
-#define Begin_Enfix_Action(f,label) \
-    Begin_Action_Core((f), (label), true)
+#define Begin_Enfix_Action(L,label) \
+    Begin_Action_Core((L), (label), true)
 
-#define Begin_Prefix_Action(f,label) \
-    Begin_Action_Core((f), (label), false)
+#define Begin_Prefix_Action(L,label) \
+    Begin_Action_Core((L), (label), false)
 
 
 //=//// ARGUMENT AND PARAMETER ACCESS HELPERS ////=///////////////////////////
 //
 // These accessors are what is behind the INCLUDE_PARAMS_OF_XXX macros that
-// are used in natives.  They capture the implicit Reb_Frame* passed to every
-// DECLARE_NATIVE ('frame_') and read the information out cleanly, like this:
+// are used in natives.  They capture the implicit Level(*) passed to every
+// DECLARE_NATIVE ('level_') and read the information out cleanly, like this:
 //
 //     DECLARE_PARAM(1, foo);
 //     DECLARE_PARAM(2, bar);
@@ -526,66 +506,62 @@ inline static Frame(*) Prep_Frame_Core(
     static const int p_##name##_ = n
 
 #define ARG(name) \
-    FRM_ARG(frame_, (p_##name##_))
+    Level_Arg(level_, (p_##name##_))
 
 #define LOCAL(name) \
-    cast(Atom(*), ARG(name))  // see Push_Frame() for why this is allowed
+    cast(Atom(*), ARG(name))  // see Push_Level() for why this is allowed
 
 #define PARAM(name) \
-    ACT_PARAM(FRM_PHASE(frame_), (p_##name##_))  // a TYPESET!
+    ACT_PARAM(Level_Phase(level_), (p_##name##_))  // a TYPESET!
 
 #define PARAM_SYMBOL(name) \
-    KEY_SYMBOL(ACT_KEY(FRM_PHASE(frame_), (p_##name##_)))
+    KEY_SYMBOL(ACT_KEY(Level_Phase(level_), (p_##name##_)))
 
 #define REF(name) \
     (not Is_Nulled(ARG(name)))
 
 
 // Quick access functions from natives (or compatible functions that name a
-// Reb_Frame pointer `frame_`) to get some of the common public fields.
+// Level(*) pointer `level_`) to get some of the common public fields.
 //
 // There is an option to not define them due to conflicts with OUT as defined
 // by the Windows.h headers.  This makes it easier for people who don't want
 // to #undef the Windows versions and would rather pick their own shorthands,
 // (if any).
 //
-#if REBOL_FRAME_SHORTHAND_MACROS
-    #define FRAME   frame_
-    #define OUT     FRM_OUT(frame_)         // GC-safe slot for output value
-    #define SPARE   FRM_SPARE(frame_)       // scratch GC-safe cell
-    #define STATE   FRM_STATE_BYTE(frame_)
-    #define PHASE   FRM_PHASE(frame_)
+#if REBOL_LEVEL_SHORTHAND_MACROS
+    #define LEVEL   level_
+    #define OUT     level_->out         // GC-safe slot for output value
+    #define SPARE   Level_Spare(level_)       // scratch GC-safe cell
+    #define STATE   Level_State_Byte(level_)
+    #define PHASE   Level_Phase(level_)
 
     #define stable_SPARE            Stable_Unchecked(SPARE)
     #define stable_OUT              Stable_Unchecked(OUT)
 
-    #define SUBFRAME    (assert(TOP_FRAME->prior == frame_), TOP_FRAME)
+    #define SUBLEVEL    (assert(TOP_LEVEL->prior == level_), TOP_LEVEL)
 
     #define STACK_BASE \
-        (assert(Is_Action_Frame(frame_)), frame_->u.action.dispatcher_base)
+        (assert(Is_Action_Level(level_)), level_->u.action.dispatcher_base)
 
-    #define VOID        Native_Void_Result_Untracked(TRACK(OUT), frame_)
-    #define NONE        (Native_None_Result_Untracked(TRACK(OUT), frame_))
-    #define THROWN      Native_Thrown_Result(frame_)
-    #define COPY(v)     (Native_Copy_Result_Untracked(TRACK(OUT), frame_, (v)))
-    #define RAISE(p)    Native_Raised_Result(frame_, (p))
-    #define UNMETA(v)   Native_Unmeta_Result(frame_, (v))
-    #define BRANCHED(v) Native_Branched_Result(frame_, (v))
+    #define VOID        Native_Void_Result_Untracked(TRACK(OUT), level_)
+    #define NONE        (Native_None_Result_Untracked(TRACK(OUT), level_))
+    #define THROWN      Native_Thrown_Result(level_)
+    #define COPY(v)     (Native_Copy_Result_Untracked(TRACK(OUT), level_, (v)))
+    #define RAISE(p)    Native_Raised_Result(level_, (p))
+    #define UNMETA(v)   Native_Unmeta_Result(level_, (v))
+    #define BRANCHED(v) Native_Branched_Result(level_, (v))
 
     // `fail (UNHANDLED)` is a shorthand for something that's written often
-    // enough that it seems worthwhile.
-    //
-    // Note: being able to just say `fail (UNHANDLED)` would be nice, but the
-    // fail macro does capturing of __LINE__ and __FILE__ and is too complex
-    // to use such tricks.
+    // enough in REBTYPE() handlers that it seems worthwhile.
     //
     #define UNHANDLED   Error_Cannot_Use(verb, D_ARG(1))
 
-    #define BASELINE   (&frame_->baseline)
+    #define BASELINE   (&level_->baseline)
 #endif
 
-#define Proxy_Multi_Returns(f) \
-    Proxy_Multi_Returns_Core((f), frame_->out)
+#define Proxy_Multi_Returns(L) \
+    Proxy_Multi_Returns_Core((L), level_->out)
 
 
 
@@ -594,9 +570,9 @@ inline static Frame(*) Prep_Frame_Core(
 // more important to use the named ARG() and REF() macros.  As a stopgap
 // measure, we just sense whether the phase has a return or not.
 //
-inline static REBVAL *D_ARG_Core(Frame(*) f, REBLEN n) {  // 1 for first arg
-    REBPAR *param = ACT_PARAMS_HEAD(FRM_PHASE(f));
-    REBVAL *arg = FRM_ARG(f, 1);
+inline static REBVAL *D_ARG_Core(Level(*) L, REBLEN n) {  // 1 for first arg
+    REBPAR *param = ACT_PARAMS_HEAD(Level_Phase(L));
+    REBVAL *arg = Level_Arg(L, 1);
     while (
         Is_Specialized(param)  // e.g. slots for saving multi-return variables
         or VAL_PARAM_CLASS(param) == PARAM_CLASS_RETURN
@@ -608,7 +584,7 @@ inline static REBVAL *D_ARG_Core(Frame(*) f, REBLEN n) {  // 1 for first arg
     return arg + n - 1;
 }
 #define D_ARG(n) \
-    D_ARG_Core(frame_, (n))
+    D_ARG_Core(level_, (n))
 
 
 inline static bool Eval_Value_Core_Throws(
@@ -668,7 +644,7 @@ enum {
 //
 inline static bool Pushed_Continuation(
     Atom(*) out,
-    Flags flags,  // FRAME_FLAG_BRANCH, etc. for pushed frames
+    Flags flags,  // LEVEL_FLAG_BRANCH, etc. for pushed levels
     REBSPC *branch_specifier,  // before branch forces non-empty variadic call
     Cell(const*) branch,
     option(Atom(const*)) with  // can be same as out or not GC-safe, may copy
@@ -680,11 +656,11 @@ inline static bool Pushed_Continuation(
         goto handle_action;
 
     if (IS_GROUP(branch) or IS_GET_GROUP(branch)) {  // see [2] for GET-GROUP!
-        assert(flags & FRAME_FLAG_BRANCH);  // needed for trick
-        Frame(*) grouper = Make_Frame_At_Core(
+        assert(flags & LEVEL_FLAG_BRANCH);  // needed for trick
+        Level(*) grouper = Make_Level_At_Core(
             branch,
             branch_specifier,
-            (flags & (~ FRAME_FLAG_BRANCH))
+            (flags & (~ LEVEL_FLAG_BRANCH))
                 | FLAG_STATE_BYTE(ST_GROUP_BRANCH_ENTRY_DONT_ERASE_OUT)
         );
         grouper->executor = &Group_Branch_Executor;  // evaluates to get branch
@@ -692,13 +668,13 @@ inline static bool Pushed_Continuation(
             FRESHEN(out);
         else
             Copy_Cell(out, unwrap(with));  // need lifetime preserved
-        Push_Frame(out, grouper);
+        Push_Level(out, grouper);
         goto pushed_continuation;
     }
 
     switch (VAL_TYPE(branch)) {
       case REB_BLANK:
-        if (flags & FRAME_FLAG_BRANCH)
+        if (flags & LEVEL_FLAG_BRANCH)
             Init_Heavy_Null(out);
         else
             Init_Nulled(out);
@@ -706,57 +682,57 @@ inline static bool Pushed_Continuation(
 
       case REB_QUOTED:
         Unquotify(Derelativize(out, branch, branch_specifier), 1);
-        if (Is_Nulled(out) and (flags & FRAME_FLAG_BRANCH))
+        if (Is_Nulled(out) and (flags & LEVEL_FLAG_BRANCH))
             Init_Heavy_Null(out);
         goto just_use_out;
 
       case REB_META_BLOCK:
       case REB_BLOCK: {
-        Frame(*) f = Make_Frame_At_Core(branch, branch_specifier, flags);
+        Level(*) L = Make_Level_At_Core(branch, branch_specifier, flags);
         if (CELL_HEART_UNCHECKED(branch) == REB_META_BLOCK) {
-            Set_Frame_Flag(f, META_RESULT);
-            Set_Frame_Flag(f, FAILURE_RESULT_OK);
+            Set_Level_Flag(L, META_RESULT);
+            Set_Level_Flag(L, FAILURE_RESULT_OK);
         }
-        f->executor = &Array_Executor;
+        L->executor = &Array_Executor;
 
-        Push_Frame(out, f);
-        goto pushed_continuation; }  // trampoline manages FRAME_FLAG_BRANCH atm.
+        Push_Level(out, L);
+        goto pushed_continuation; }  // trampoline handles LEVEL_FLAG_BRANCH
 
       case REB_GET_BLOCK: {  // effectively REDUCE
-        Frame(*) f = Make_End_Frame(FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING));
+        Level(*) L = Make_End_Level(FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING));
 
         const REBVAL *action = Lib(REDUCE);
-        Push_Action(f, VAL_ACTION(action), VAL_FRAME_BINDING(action));
-        Begin_Prefix_Action(f, VAL_FRAME_LABEL(action));
+        Push_Action(L, VAL_ACTION(action), VAL_FRAME_BINDING(action));
+        Begin_Prefix_Action(L, VAL_FRAME_LABEL(action));
 
-        const REBKEY *key = f->u.action.key;
-        const REBPAR *param = f->u.action.param;
-        Atom(*) arg = f->u.action.arg;
-        for (; key != f->u.action.key_tail; ++key, ++param, ++arg) {
+        const REBKEY *key = L->u.action.key;
+        const REBPAR *param = L->u.action.param;
+        Atom(*) arg = L->u.action.arg;
+        for (; key != L->u.action.key_tail; ++key, ++param, ++arg) {
             if (Is_Specialized(param))
                 Copy_Cell(arg, param);
             else
                 Finalize_None(arg);
         }
 
-        arg = First_Unspecialized_Arg(&param, f);
+        arg = First_Unspecialized_Arg(&param, L);
         Derelativize(arg, branch, branch_specifier);
         mutable_HEART_BYTE(arg) = REB_BLOCK;  // :[1 + 2] => [3], not :[3]
 
-        Push_Frame(out, f);
+        Push_Level(out, L);
         goto pushed_continuation; }
 
     handle_action: {
-        Frame(*) f = Make_End_Frame(
+        Level(*) L = Make_End_Level(
             FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING) | flags
         );
-        Push_Action(f, VAL_ACTION(branch), VAL_FRAME_BINDING(branch));
-        Begin_Prefix_Action(f, VAL_FRAME_LABEL(branch));
+        Push_Action(L, VAL_ACTION(branch), VAL_FRAME_BINDING(branch));
+        Begin_Prefix_Action(L, VAL_FRAME_LABEL(branch));
 
-        const REBKEY *key = f->u.action.key;
-        const REBPAR *param = f->u.action.param;
-        Atom(*) arg = f->u.action.arg;
-        for (; key != f->u.action.key_tail; ++key, ++param, ++arg) {
+        const REBKEY *key = L->u.action.key;
+        const REBPAR *param = L->u.action.param;
+        Atom(*) arg = L->u.action.arg;
+        for (; key != L->u.action.key_tail; ++key, ++param, ++arg) {
             if (Is_Specialized(param))
                 Copy_Cell(arg, param);
             else
@@ -765,7 +741,7 @@ inline static bool Pushed_Continuation(
         }
 
         if (with) do {
-            arg = First_Unspecialized_Arg(&param, f);
+            arg = First_Unspecialized_Arg(&param, L);
             if (not arg)
                 break;
 
@@ -778,7 +754,7 @@ inline static bool Pushed_Continuation(
             break;
         } while (0);
 
-        Push_Frame(out, f);
+        Push_Level(out, L);
         goto pushed_continuation; }
 
       case REB_FRAME: {
@@ -793,24 +769,24 @@ inline static bool Pushed_Continuation(
         if (Get_Subclass_Flag(VARLIST, CTX_VARLIST(c), FRAME_HAS_BEEN_INVOKED))
             fail (Error_Stale_Frame_Raw());
 
-        Frame(*) f = Make_End_Frame(
+        Level(*) L = Make_End_Level(
             FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING) | flags
         );
-        f->executor = &Action_Executor;  // usually done by Push_Action()s
+        L->executor = &Action_Executor;  // usually done by Push_Action()s
 
         Array(*) varlist = CTX_VARLIST(c);
-        f->varlist = varlist;
-        f->rootvar = CTX_ROOTVAR(c);
-        INIT_BONUS_KEYSOURCE(varlist, f);
+        L->varlist = varlist;
+        L->rootvar = CTX_ROOTVAR(c);
+        INIT_BONUS_KEYSOURCE(varlist, L);
 
-        assert(FRM_PHASE(f) == CTX_FRAME_PHASE(c));
-        INIT_FRM_BINDING(f, VAL_FRAME_BINDING(branch));
+        assert(Level_Phase(L) == CTX_FRAME_PHASE(c));
+        INIT_LVL_BINDING(L, VAL_FRAME_BINDING(branch));
 
-        f->u.action.original = FRM_PHASE(f);
+        L->u.action.original = Level_Phase(L);
 
-        Begin_Prefix_Action(f, VAL_FRAME_LABEL(branch));
+        Begin_Prefix_Action(L, VAL_FRAME_LABEL(branch));
 
-        Push_Frame(out, f);
+        Push_Level(out, L);
         goto pushed_continuation; }
 
       default:
@@ -850,64 +826,64 @@ inline static bool Pushed_Continuation(
     PP_CONCAT(CONTINUE_CORE_, PP_NARGS(__VA_ARGS__))(__VA_ARGS__)
 
 #define CONTINUE(out,...) \
-    CONTINUE_CORE((out), FRAME_MASK_NONE, SPECIFIED, __VA_ARGS__)
+    CONTINUE_CORE((out), LEVEL_MASK_NONE, SPECIFIED, __VA_ARGS__)
 
 #define CATCH_CONTINUE(out,...) ( \
-    Set_Executor_Flag(ACTION, frame_, DISPATCHER_CATCHES), \
-    CONTINUE_CORE((out), FRAME_MASK_NONE, SPECIFIED, __VA_ARGS__))
+    Set_Executor_Flag(ACTION, level_, DISPATCHER_CATCHES), \
+    CONTINUE_CORE((out), LEVEL_MASK_NONE, SPECIFIED, __VA_ARGS__))
 
 #define CONTINUE_BRANCH(out,...) \
-    CONTINUE_CORE((out), FRAME_FLAG_BRANCH, SPECIFIED, __VA_ARGS__)
+    CONTINUE_CORE((out), LEVEL_FLAG_BRANCH, SPECIFIED, __VA_ARGS__)
 
 #define CATCH_CONTINUE_BRANCH(out,...) ( \
-    Set_Executor_Flag(ACTION, frame_, DISPATCHER_CATCHES), \
-    CONTINUE_CORE((out), FRAME_FLAG_BRANCH, SPECIFIED, __VA_ARGS__))
+    Set_Executor_Flag(ACTION, level_, DISPATCHER_CATCHES), \
+    CONTINUE_CORE((out), LEVEL_FLAG_BRANCH, SPECIFIED, __VA_ARGS__))
 
-inline static Bounce Continue_Subframe_Helper(
-    Frame(*) f,
+inline static Bounce Continue_Sublevel_Helper(
+    Level(*) L,
     bool catches,
-    Frame(*) sub
+    Level(*) sub
 ){
     if (catches) {  // all executors catch, but action may or may not delegate
-        if (Is_Action_Frame(f) and not Is_Action_Frame_Fulfilling(f))
-            f->flags.bits |= ACTION_EXECUTOR_FLAG_DISPATCHER_CATCHES;
+        if (Is_Action_Level(L) and not Is_Level_Fulfilling(L))
+            L->flags.bits |= ACTION_EXECUTOR_FLAG_DISPATCHER_CATCHES;
     }
     else {  // Only Action_Executor() can let dispatchers avoid catching
-        assert(Is_Action_Frame(f) and not Is_Action_Frame_Fulfilling(f));
+        assert(Is_Action_Level(L) and not Is_Level_Fulfilling(L));
     }
 
-    assert(sub == TOP_FRAME);  // currently subframe must be pushed & top frame
+    assert(sub == TOP_LEVEL);  // currently sub must be pushed & top level
     UNUSED(sub);
     return BOUNCE_CONTINUE;
 }
 
-#define CATCH_CONTINUE_SUBFRAME(sub) \
-    Continue_Subframe_Helper(frame_, true, (sub))
+#define CATCH_CONTINUE_SUBLEVEL(sub) \
+    Continue_Sublevel_Helper(level_, true, (sub))
 
-#define CONTINUE_SUBFRAME(sub) \
-    Continue_Subframe_Helper(frame_, false, (sub))
+#define CONTINUE_SUBLEVEL(sub) \
+    Continue_Sublevel_Helper(level_, false, (sub))
 
 
 //=//// DELEGATION HELPER MACROS ///////////////////////////////////////////=//
 //
-// Delegation is when a frame wants to hand over the work to do to another
-// frame, and not receive any further callbacks.  This gives the opportunity
+// Delegation is when a level wants to hand over the work to do to another
+// level, and not receive any further callbacks.  This gives the opportunity
 // for an optimization to not go through with a continuation at all and just
 // use the output if it is simple to do.
 //
-// !!! Delegation doesn't want to use the frame that's pushed.  It leaves it
+// !!! Delegation doesn't want to use the old level it had.  It leaves it
 // on the stack for sanity of debug tracing, but it could be more optimal
-// if the delegating frame were freed before running what's underneath it...
+// if the delegating level were freed before running what's underneath it...
 // at least it could be collapsed into a more primordial state.  Review.
 
 #define DELEGATE_CORE_3(o,sub_flags,...) ( \
-    assert((o) == frame_->out), \
+    assert((o) == level_->out), \
     Pushed_Continuation( \
-        frame_->out, \
-        (sub_flags) | (frame_->flags.bits & FRAME_FLAG_FAILURE_RESULT_OK), \
+        level_->out, \
+        (sub_flags) | (level_->flags.bits & LEVEL_FLAG_FAILURE_RESULT_OK), \
         __VA_ARGS__  /* branch_specifier, branch, and "with" argument */ \
     ) ? BOUNCE_DELEGATE \
-        : frame_->out)  // no need to give callback to delegator
+        : level_->out)  // no need to give callback to delegator
 
 #define DELEGATE_CORE_2(out,sub_flags,...) \
     DELEGATE_CORE_3((out), (sub_flags), __VA_ARGS__, nullptr)
@@ -917,11 +893,11 @@ inline static Bounce Continue_Subframe_Helper(
         (out), (sub_flags), __VA_ARGS__)
 
 #define DELEGATE(out,...) \
-    DELEGATE_CORE((out), FRAME_MASK_NONE, SPECIFIED, __VA_ARGS__)
+    DELEGATE_CORE((out), LEVEL_MASK_NONE, SPECIFIED, __VA_ARGS__)
 
 #define DELEGATE_BRANCH(out,...) \
-    DELEGATE_CORE((out), FRAME_FLAG_BRANCH, SPECIFIED, __VA_ARGS__)
+    DELEGATE_CORE((out), LEVEL_FLAG_BRANCH, SPECIFIED, __VA_ARGS__)
 
-#define DELEGATE_SUBFRAME(sub) ( \
-    Continue_Subframe_Helper(frame_, false, (sub)), \
+#define DELEGATE_SUBLEVEL(sub) ( \
+    Continue_Sublevel_Helper(level_, false, (sub)), \
     BOUNCE_DELEGATE)

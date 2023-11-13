@@ -1,6 +1,6 @@
 //
 //  File: %sys-feed.h
-//  Summary: {Accessors and Argument Pushers/Poppers for Function Call Frames}
+//  Summary: {Accessors and Argument Pushers/Poppers for Function Call Levels}
 //  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  Homepage: https://github.com/metaeducation/ren-c/
 //
@@ -33,7 +33,8 @@
 // since values may also be fabricated from text it can get complicated.
 //
 // Another reason for the strictness is to help rein in the evaluator design
-// to keep it within a certain boundary of complexity.
+// to keep it within... a... "certain boundary of complexity".  :-P
+//
 
 
 //=//// VARIADIC FEED END SIGNAL //////////////////////////////////////////=//
@@ -255,7 +256,7 @@ inline static option(Value(const*)) Try_Reify_Variadic_Feed_Series(
 
         // !!! Originally this asserted it was a managed handle, but the
         // needs of API-TRANSIENT are such that a handle which outlives
-        // the frame is returned as a SINGULAR_API_RELEASE.  Review.
+        // the level is returned as a SINGULAR_API_RELEASE.  Review.
         //
         /*assert(GET_SERIES_FLAG(inst1, MANAGED));*/
 
@@ -318,7 +319,7 @@ inline static void Force_Variadic_Feed_At_Cell_Or_End_May_Fail(Feed(*) feed)
   detect: {  /////////////////////////////////////////////////////////////////
 
   // 1. This happens when an empty array comes from a string scan.  It's not
-  //    legal to put an END in f->value unless the array is actually over, so
+  //    legal to put an END in L->value unless the array is actually over, so
   //    get another pointer out of the va_list and keep going.
 
     if (not feed->p) {  // libRebol's NULL (prohibited as an Is_Nulled() CELL)
@@ -402,7 +403,7 @@ inline static void Sync_Feed_At_Cell_Or_End_May_Fail(Feed(*) feed) {
 // Fetch_Next_In_Feed()
 //
 // Once a va_list is "fetched", it cannot be "un-fetched".  Hence only one
-// unit of fetch is done at a time, into f->value.
+// unit of fetch is done at a time, into L->value.
 //
 inline static void Fetch_Next_In_Feed(Feed(*) feed) {
     assert(Not_Feed_Flag(feed, NEEDS_SYNC));
@@ -417,7 +418,7 @@ inline static void Fetch_Next_In_Feed(Feed(*) feed) {
     // We are changing "Feed_At()", and thus by definition any ->gotten value
     // will be invalid.  It might be "wasteful" to always set this to null,
     // especially if it's going to be overwritten with the real fetch...but
-    // at a source level, having every call to Fetch_Next_In_Frame have to
+    // at a source level, having every call to Fetch_Next_In_Feed have to
     // explicitly set ->gotten to null is overkill.  Could be split into
     // a version that just trashes ->gotten in the debug build vs. null.
     //
@@ -491,13 +492,13 @@ inline static void Fetch_Next_In_Feed(Feed(*) feed) {
 }
 
 
-// Most calls to Fetch_Next_In_Frame() are no longer interested in the
-// cell backing the pointer that used to be in f->value (this is enforced
+// Most calls to Fetch_Next_In_Level() are no longer interested in the
+// cell backing the pointer that used to be in L->value (this is enforced
 // by a rigorous test in DEBUG_EXPIRED_LOOKBACK).  Special care must be
 // taken when one is interested in that data, because it may have to be
-// moved.  So current can be returned from Fetch_Next_In_Frame_Core().
+// moved.  So current can be returned from Fetch_Next_In_Level_Core().
 
-inline static Cell(const*) Lookback_While_Fetching_Next(Frame(*) f) {
+inline static Cell(const*) Lookback_While_Fetching_Next(Level(*) L) {
   #if DEBUG_EXPIRED_LOOKBACK
     if (feed->stress) {
         FRESHEN(feed->stress);
@@ -506,10 +507,10 @@ inline static Cell(const*) Lookback_While_Fetching_Next(Frame(*) f) {
     }
   #endif
 
-    assert(READABLE(At_Feed(f->feed)));  // ensure cell
+    assert(READABLE(At_Feed(L->feed)));  // ensure cell
 
-    // f->value may be synthesized, in which case its bits are in the
-    // `f->feed->fetched` cell.  That synthesized value would be overwritten
+    // L->value may be synthesized, in which case its bits are in the
+    // `L->feed->fetched` cell.  That synthesized value would be overwritten
     // by another fetch, which would mess up lookback...so we cache those
     // bits in the lookback cell in that case.
     //
@@ -520,28 +521,28 @@ inline static Cell(const*) Lookback_While_Fetching_Next(Frame(*) f) {
     // seems like it must be something favorable to optimization.)
     //
     Cell(const*) lookback;
-    if (f->feed->p == &f->feed->fetched) {
-        Copy_Cell(&f->feed->lookback, SPECIFIC(&f->feed->fetched));
-        lookback = &f->feed->lookback;
+    if (L->feed->p == &L->feed->fetched) {
+        Copy_Cell(&L->feed->lookback, SPECIFIC(&L->feed->fetched));
+        lookback = &L->feed->lookback;
     }
     else
-        lookback = cast(const Reb_Cell*, f->feed->p);
+        lookback = cast(const Reb_Cell*, L->feed->p);
 
-    Fetch_Next_In_Feed(f->feed);
+    Fetch_Next_In_Feed(L->feed);
 
   #if DEBUG_EXPIRED_LOOKBACK
     if (preserve) {
-        f->stress = cast(Cell(*), malloc(sizeof(Cell)));
-        memcpy(f->stress, *opt_lookback, sizeof(Cell));
-        lookback = f->stress;
+        L->stress = cast(Cell(*), malloc(sizeof(Cell)));
+        memcpy(L->stress, *opt_lookback, sizeof(Cell));
+        lookback = L->stress;
     }
   #endif
 
     return lookback;
 }
 
-#define Fetch_Next_Forget_Lookback(f) \
-    Fetch_Next_In_Feed(f->feed)
+#define Fetch_Next_Forget_Lookback(L) \
+    Fetch_Next_In_Feed(L->feed)
 
 
 // This code is shared by Literal_Next_In_Feed(), and used without a feed
@@ -549,8 +550,10 @@ inline static Cell(const*) Lookback_While_Fetching_Next(Frame(*) f) {
 // `repeat 2 [append [] 10]`, the steps are:
 //
 //    1. REPEAT defines its body parameter as <const>
+//
 //    2. When REPEAT runs Do_Any_Array_At_Throws() on the const ARG(body), the
-//       frame gets FEED_FLAG_CONST due to the CELL_FLAG_CONST.
+//       feed gets FEED_FLAG_CONST due to the CELL_FLAG_CONST.
+//
 //    3. The argument to append is handled by the inert processing branch
 //       which moves the value here.  If the block wasn't made explicitly
 //       mutable (e.g. with MUTABLE) it takes the flag from the feed.
@@ -580,10 +583,10 @@ inline static void Literal_Next_In_Feed(Sink(Value(*)) out, Feed(*) feed) {
 
 inline static void Free_Feed(Feed(*) feed) {
     //
-    // Aborting valist frames is done by just feeding all the values
+    // Aborting valist feeds is done by just feeding all the values
     // through until the end.  This is assumed to do any work, such
     // as SINGULAR_FLAG_API_RELEASE, which might be needed on an item.  It
-    // also ensures that va_end() is called, which happens when the frame
+    // also ensures that va_end() is called, which happens when the feed
     // manages to feed to the end.
     //
     // Note: While on many platforms va_end() is a no-op, the C standard
@@ -597,7 +600,7 @@ inline static void Free_Feed(Feed(*) feed) {
     // would be enough.  But for the moment, it's more important to keep
     // all the logic in one place than to make variadic interrupts
     // any faster...they're usually reified into an array anyway, so
-    // the frame processing the array will take the other branch.
+    // the level processing the array will take the other branch.
 
     while (Not_Feed_At_End(feed))
         Fetch_Next_In_Feed(feed);
@@ -606,7 +609,7 @@ inline static void Free_Feed(Feed(*) feed) {
 
     // !!! See notes in Fetch_Next regarding the somewhat imperfect way in
     // which splices release their holds.  (We wait until Free_Feed() so that
-    // `do code: [clear code]` doesn't drop the hold until the block frame
+    // `do code: [clear code]` doesn't drop the hold until the block level
     // is actually fully dropped.)
     //
     if (FEED_IS_VARIADIC(feed)) {
@@ -749,7 +752,7 @@ inline static Feed(*) Prep_Variadic_Feed(
 
     // Note: We DON'T call Force_Variadic_Feed_At_Cell_Or_End_May_Fail() here.
     // Because we do not want Prep_Variadic_Feed() to fail, as it could have
-    // no error trapping in effect...because it happens when frames are being
+    // no error trapping in effect...because it happens when levels are being
     // set up and haven't been pushed to the trampoline yet.
     //
     // The upshot of this is that if feed->p is a pointer to UTF8 or an
@@ -780,7 +783,7 @@ inline static Feed(*) Prep_At_Feed(
 
     Flags flags;
     if (Get_Cell_Flag(any_array, EXPLICITLY_MUTABLE))
-        flags = FEED_MASK_DEFAULT;  // override const from parent frame
+        flags = FEED_MASK_DEFAULT;  // override const from parent level
     else
         flags = FEED_MASK_DEFAULT
             | (parent_flags & FEED_FLAG_CONST)  // inherit
@@ -799,7 +802,7 @@ inline static Feed(*) Prep_At_Feed(
 #define Make_At_Feed_Core(any_array,specifier) \
     Prep_At_Feed( \
         Alloc_Feed(), \
-        (any_array), (specifier), TOP_FRAME->feed->flags.bits \
+        (any_array), (specifier), TOP_LEVEL->feed->flags.bits \
     );
 
 #define Make_At_Feed(name,any_array) \

@@ -71,9 +71,9 @@ void Collapsify_Array(Array(*) array, REBSPC *specifier, REBLEN limit)
 
 
 //
-//  Init_Near_For_Frame: C
+//  Init_Near_For_Level: C
 //
-// Each call frame maintains the array it is executing in, the current index
+// Each stack level maintains the array it is executing in, the current index
 // in that array, and the index of where the current expression started.
 // This can be deduced into a segment of code to display in the debug views
 // to indicate roughly "what's running" at that stack level.  The code is
@@ -91,18 +91,18 @@ void Collapsify_Array(Array(*) array, REBSPC *specifier, REBLEN limit)
 // onto these values for the purposes of better error messages (at the cost
 // of performance).
 //
-REBVAL *Init_Near_For_Frame(Cell(*) out, Frame(*) f)
+REBVAL *Init_Near_For_Level(Cell(*) out, Level(*) L)
 {
     StackIndex base = TOP_INDEX;
 
-    if (FRM_IS_VARIADIC(f)) {
+    if (Level_Is_Variadic(L)) {
         //
         // A variadic feed may not be able to be reified, if the data is
         // malformed.  But it also might be able to be... *unless this is
-        // a scanner frame itself raising the error*.
+        // a scanner level itself raising the error*.
         //
         const bool truncated = true;
-        Reify_Variadic_Feed_As_Array_Feed(f->feed, truncated);
+        Reify_Variadic_Feed_As_Array_Feed(L->feed, truncated);
     }
 
     // Get at most 6 values out of the array.  Ideally 3 before and after
@@ -114,21 +114,21 @@ REBVAL *Init_Near_For_Frame(Cell(*) out, Frame(*) f)
     // for the currently executing function.  Reconsider when such cases
     // appear and can be studied.
 
-    REBINT start = FRM_INDEX(f) - 3;
+    REBINT start = Level_Array_Index(L) - 3;
     if (start > 0)
         Init_Word(PUSH(), Canon(ELLIPSIS_1));
     else if (start < 0)
         start = 0;
 
     REBLEN count = 0;
-    Cell(const*) tail = ARR_TAIL(FRM_ARRAY(f));
-    Cell(const*) item = ARR_AT(FRM_ARRAY(f), start);
+    Cell(const*) tail = ARR_TAIL(Level_Array(L));
+    Cell(const*) item = ARR_AT(Level_Array(L), start);
     for (; item != tail and count < 6; ++item, ++count) {
         assert(not Is_Void(item));  // can't be in arrays, API won't splice
         assert(not Is_Isotope(item));  // can't be in arrays, API won't splice
-        Derelativize(PUSH(), item, f_specifier);
+        Derelativize(PUSH(), item, Level_Specifier(L));
 
-        if (count == FRM_INDEX(f) - start - 1) {
+        if (count == Level_Array_Index(L) - start - 1) {
             //
             // Leave a marker at the point of the error, currently `**`.
             //
@@ -143,13 +143,13 @@ REBVAL *Init_Near_For_Frame(Cell(*) out, Frame(*) f)
     if (item != tail)
         Init_Word(PUSH(), Canon(ELLIPSIS_1));
 
-    // !!! This code can be called on an executing frame, such as when an
-    // error happens in that frame.  Or it can be called on a pending frame
+    // !!! This code can be called on an executing level, such as when an
+    // error happens in that level.  Or it can be called on a pending level
     // when examining a backtrace...where the function hasn't been called
     // yet.  This needs some way of differentiation, consider it.
     //
     /*
-    if (Is_Action_Frame(f) and Is_Action_Frame_Fulfilling(f)) {
+    if (Is_Action_Level(L) and Is_Level_Fulfilling(L)) {
         ???
     }
     */
@@ -172,11 +172,11 @@ REBVAL *Init_Near_For_Frame(Cell(*) out, Frame(*) f)
 //
 bool Is_Context_Running_Or_Pending(Context(*) frame_ctx)
 {
-    Frame(*) f = CTX_FRAME_IF_ON_STACK(frame_ctx);
-    if (not f)
+    Level(*) L = CTX_LEVEL_IF_ON_STACK(frame_ctx);
+    if (not L)
         return false;
 
-    if (Is_Action_Frame_Fulfilling(f))
+    if (Is_Level_Fulfilling(L))
         return false;
 
     return true;
@@ -198,9 +198,9 @@ DECLARE_NATIVE(running_q)
 
     Context(*) frame_ctx = VAL_CONTEXT(ARG(frame));
 
-    Frame(*) f = CTX_FRAME_MAY_FAIL(frame_ctx);
+    Level(*) L = CTX_LEVEL_MAY_FAIL(frame_ctx);
 
-    if (Is_Action_Frame_Fulfilling(f))
+    if (Is_Level_Fulfilling(L))
         return Init_False(OUT);
 
     return Init_True(OUT);
@@ -222,9 +222,9 @@ DECLARE_NATIVE(pending_q)
 
     Context(*) frame_ctx = VAL_CONTEXT(ARG(frame));
 
-    Frame(*) f = CTX_FRAME_MAY_FAIL(frame_ctx);
+    Level(*) L = CTX_LEVEL_MAY_FAIL(frame_ctx);
 
-    if (Is_Action_Frame_Fulfilling(f))
+    if (Is_Level_Fulfilling(L))
         return Init_True(OUT);
 
     return Init_False(OUT);

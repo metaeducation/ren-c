@@ -129,7 +129,7 @@ DECLARE_NATIVE(diagnose)
     REBVAL *v = ARG(value);
 
   #if DEBUG_COUNT_TICKS
-    Tick tick = frame_->tick;
+    Tick tick = level_->tick;
   #else
     Tick tick = 0
   #endif
@@ -137,8 +137,8 @@ DECLARE_NATIVE(diagnose)
     printf(
         ">>> DIAGNOSE @ tick %ld in file %s at line %d\n",
         cast(long, tick),
-        frame_->file,
-        frame_->line
+        level_->file,
+        level_->line
     );
 
     Dump_Value_Debug(v);

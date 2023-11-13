@@ -244,12 +244,12 @@
 //
 // Bits are hard to come by in a REBSER, especially a singular REBSER which
 // uses the cell content for an arbitrary value (e.g. API handles).  The
-// space for the INFO bits is thus sometimes claimed for a node, which may
-// need marking.
+// space for the INFO bits is thus sometimes claimed for a node ("INODE"),
+// which may need marking.
 //
 // !!! Future plans involve being able to dynamically switch out the info
 // bits for a node, e.g. to hold a lock.  Then the info bits would be moved
-// to the lock--which might itself be a feed or frame (to avoid making a new
+// to the lock--which might itself be a feed or level (to avoid making a new
 // identity).  Those features are just ideas for the moment, but if they came
 // to pass this bit would also be synonymous with SERIES_FLAG_HOLD.
 //
@@ -421,10 +421,6 @@ STATIC_ASSERT(SERIES_INFO_0_IS_FALSE == NODE_FLAG_NODE);
 //
 // It will be released when the execution is finished, which distinguishes it
 // from SERIES_INFO_FROZEN_DEEP, which will never be cleared once set.
-//
-// Note: This is set to be the same bit as DETAILS_FLAG_IS_NATIVE in order to
-// make it possible to use non-branching masking to set a frame to read-only
-// as far as usermode operations are concerned.
 //
 #define SERIES_INFO_HOLD \
     FLAG_LEFT_BIT(5)

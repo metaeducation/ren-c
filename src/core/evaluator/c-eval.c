@@ -25,16 +25,16 @@
 // sequences like `x: 1 + 2` a meaning for how SET-WORD! or INTEGER! behaves.
 //
 // By design the evaluator is not recursive at the C level--it is "stackless".
-// At points where a sub-expression must be evaluated in a new frame, it will
-// heap-allocate that frame and then do a C `return` of BOUNCE_CONTINUE.
+// At points where a sub-expression must be evaluated in a new level, it will
+// heap-allocate that level and then do a C `return` of BOUNCE_CONTINUE.
 // Processing then goes through the "Trampoline" (see %c-trampoline.c), which
-// later re-enters the suspended frame's executor with the result.  Setting
-// the frame's STATE byte prior to suspension is a common way of letting a
-// frame know where to pick up from when it left off.
+// later re-enters the suspended level's executor with the result.  Setting
+// the level's STATE byte prior to suspension is a common way of letting a
+// level know where to pick up from when it left off.
 //
 // When it encounters something that needs to be handled as a function
 // application, it defers to %c-action.c for the Action_Executor().  The
-// action gets its own frame.
+// action gets its own level.
 //
 //=//// NOTES /////////////////////////////////////////////////////////////=//
 //
@@ -59,65 +59,63 @@
 
 // Prefer these to XXX_Executor_Flag(EVAL) in this file (much faster!)
 
-#define Get_Eval_Executor_Flag(f,name) \
-    (((f)->flags.bits & EVAL_EXECUTOR_FLAG_##name) != 0)
+#define Get_Eval_Executor_Flag(L,name) \
+    (((L)->flags.bits & EVAL_EXECUTOR_FLAG_##name) != 0)
 
-#define Not_Eval_Executor_Flag(f,name) \
-    (((f)->flags.bits & EVAL_EXECUTOR_FLAG_##name) == 0)
+#define Not_Eval_Executor_Flag(L,name) \
+    (((L)->flags.bits & EVAL_EXECUTOR_FLAG_##name) == 0)
 
-#define Set_Eval_Executor_Flag(f,name) \
-    ((f)->flags.bits |= EVAL_EXECUTOR_FLAG_##name)
+#define Set_Eval_Executor_Flag(L,name) \
+    ((L)->flags.bits |= EVAL_EXECUTOR_FLAG_##name)
 
-#define Clear_Eval_Executor_Flag(f,name) \
-    ((f)->flags.bits &= ~EVAL_EXECUTOR_FLAG_##name)
+#define Clear_Eval_Executor_Flag(L,name) \
+    ((L)->flags.bits &= ~EVAL_EXECUTOR_FLAG_##name)
 
 
-// The frame contains a "feed" whose ->value typically represents a "current"
+// The level contains a "feed" whose ->value typically represents a "current"
 // step in the feed.  But the evaluator is organized in a way that the
 // notion of what is "current" can get out of sync with the feed.  An example
 // would be when a SET-WORD! evaluates its right hand side, causing the feed
 // to advance an arbitrary amount.
 //
-// So the frame has its own frame state for tracking the "current" position,
-// and maintains the optional cache of what the fetched value of that is.
-// These macros help make the code less ambiguous.
+// So the Evaluator_Executor() has its own state (in `u.eval`) to track the
+// "current" position, and maintains the optional cache of what the fetched
+// value of that is.  These macros help make the code less ambiguous.
 //
-#undef At_Frame
-#undef f_gotten
-#define f_next              cast(const Reb_Cell*, f->feed->p)
-#define f_next_gotten       f->feed->gotten
-#define f_current           f->u.eval.current
-#define f_current_gotten    f->u.eval.current_gotten
+#undef At_Level
+#define L_next              cast(const Reb_Cell*, L->feed->p)
+#define L_next_gotten       L->feed->gotten
+#define L_current           L->u.eval.current
+#define L_current_gotten    L->u.eval.current_gotten
 
 // In debug builds, the KIND_BYTE() calls enforce cell validity...but slow
 // things down a little.  So we only use the checked version in the main
 // switch statement.  This abbreviation is also shorter and more legible.
 //
-#define kind_current VAL_TYPE_UNCHECKED(f_current)
+#define kind_current VAL_TYPE_UNCHECKED(L_current)
 
 
-#define frame_ f  // for OUT, SPARE, STATE macros
+#define level_ L  // for OUT, SPARE, STATE macros
 
-#define SCRATCH cast(Value(*), &(f->u.eval.scratch))
+#define SCRATCH cast(Value(*), &(L->u.eval.scratch))
 
 // We make the macro for getting specifier a bit more complex here, to
 // account for reevaluation.
 //
 // https://forum.rebol.info/t/should-reevaluate-apply-let-bindings/1521
 //
-#undef f_specifier
-#define f_specifier \
-    (STATE == ST_EVALUATOR_REEVALUATING ? SPECIFIED : FEED_SPECIFIER(f->feed))
+#undef L_specifier
+#define L_specifier \
+    (STATE == ST_EVALUATOR_REEVALUATING ? SPECIFIED : Level_Specifier(L))
 
 
-// In the early development of FRAME!, the Frame(*) for evaluating across a
-// block was reused for each ACTION! call.  Since no more than one action was
-// running at a time, this seemed to work.  However, that didn't allow for
-// a separate "reified" entry for users to point at.  While giving each
-// action its own Frame(*) has performance downsides, it makes the objects
-// correspond to what they are...and may be better for cohering the "executor"
-// pattern by making it possible to use a constant executor per frame.
-//
+// !!! In earlier development, the Level(*) for evaluating across a block was
+// reused for each action invocation.  Since no more than one action was
+// running at a time, this seemed to work.  However, because "Levels" and
+// "Frames" were conflated, there was concern that this would not give enough
+// reified FRAME! objects to the user.  Now that Levels and Frames are
+// distinct, this should be revisited.
+
 // !!! Evil Macro, repeats parent!
 //
 STATIC_ASSERT(
@@ -125,18 +123,18 @@ STATIC_ASSERT(
     == ACTION_EXECUTOR_FLAG_DIDNT_LEFT_QUOTE_TUPLE
 );
 
-#define Make_Action_Subframe(parent) \
-    Make_Frame((parent)->feed, \
-        FRAME_FLAG_FAILURE_RESULT_OK \
+#define Make_Action_Sublevel(parent) \
+    Make_Level((parent)->feed, \
+        LEVEL_FLAG_FAILURE_RESULT_OK \
         | ((parent)->flags.bits & EVAL_EXECUTOR_FLAG_DIDNT_LEFT_QUOTE_TUPLE))
 
 
 #if DEBUG_EXPIRED_LOOKBACK
     #define CURRENT_CHANGES_IF_FETCH_NEXT \
-        (f->feed->stress != nullptr)
+        (L->feed->stress != nullptr)
 #else
     #define CURRENT_CHANGES_IF_FETCH_NEXT \
-        (f_current == &f->feed->lookback)
+        (L_current == &L->feed->lookback)
 #endif
 
 
@@ -152,15 +150,15 @@ STATIC_ASSERT(
 
 //
 // SET-WORD! and SET-TUPLE! want to do roughly the same thing as the first step
-// of their evaluation.  They evaluate the right hand side into f->out.
+// of their evaluation.  They evaluate the right hand side into L->out.
 //
 // What makes this slightly complicated is that the current value may be in
-// a place that doing a Fetch_Next_In_Frame() might corrupt it.  This could
+// a place that doing a Fetch_Next_In_Feed() might corrupt it.  This could
 // be accounted for by pushing the value to some other stack--e.g. the data
 // stack.  That would mean `x: y: z: ...` would only accrue one cell of
-// space for each level instead of one whole frame.
+// space for each level instead of a level for each.
 //
-// But for the moment, a new frame is used each time.
+// But for the moment, a new level is used each time.
 //
 //////////////////////////////////////////////////////////////////////////////
 //
@@ -197,30 +195,30 @@ STATIC_ASSERT(
 //    hand side.  The old stackless build wrote current into the spare and
 //    restored it in the state switch().  Did this ever happen?
 //
-inline static Frame(*) Maybe_Rightward_Continuation_Needed(Frame(*) f)
+inline static Level(*) Maybe_Rightward_Continuation_Needed(Level(*) L)
 {
-    if (Is_Feed_At_End(f->feed))  // `do [x:]`, `do [o.x:]`, etc. are illegal
-        fail (Error_Need_Non_End(f_current));
+    if (Is_Feed_At_End(L->feed))  // `do [x:]`, `do [o.x:]`, etc. are illegal
+        fail (Error_Need_Non_End(L_current));
 
-    Clear_Feed_Flag(f->feed, NO_LOOKAHEAD);  // always >= 2 elements, see [2]
+    Clear_Feed_Flag(L->feed, NO_LOOKAHEAD);  // always >= 2 elements, see [2]
 
     Flags flags =  // v-- if f was fulfilling, we are
-        (f->flags.bits & EVAL_EXECUTOR_FLAG_FULFILLING_ARG)
-        | FRAME_FLAG_FAILURE_RESULT_OK;  // trap [e: transcode "1&aa"] works
+        (L->flags.bits & EVAL_EXECUTOR_FLAG_FULFILLING_ARG)
+        | LEVEL_FLAG_FAILURE_RESULT_OK;  // trap [e: transcode "1&aa"] works
 
-    if (Did_Init_Inert_Optimize_Complete(OUT, f->feed, &flags))
+    if (Did_Init_Inert_Optimize_Complete(OUT, L->feed, &flags))
         return nullptr;  // If eval not hooked, ANY-INERT! may not need a frame
 
-    Frame(*) subframe = Make_Frame(
-        f->feed,
+    Level(*) sub = Make_Level(
+        L->feed,
         flags  // inert optimize adjusted the flags to jump in mid-eval
     );
-    Push_Frame(OUT, subframe);
+    Push_Level(OUT, sub);
 
-    assert(f_current != &f->feed->lookback);  // are these possible?  see [4]
-    assert(f_current != &f->feed->fetched);
+    assert(L_current != &L->feed->lookback);  // are these possible?  see [4]
+    assert(L_current != &L->feed->fetched);
 
-    return subframe;
+    return sub;
 }
 
 
@@ -235,7 +233,7 @@ inline static Frame(*) Maybe_Rightward_Continuation_Needed(Frame(*) f)
 //    a raised error and the error could still fall out.  But this meant that
 //    errors could not prevent a next step from happening.
 //
-Bounce Array_Executor(Frame(*) f)
+Bounce Array_Executor(Level(*) L)
 {
     if (THROWING)
         return THROWN;  // no state to clean up
@@ -257,32 +255,32 @@ Bounce Array_Executor(Frame(*) f)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    if (Is_Feed_At_End(f->feed))
+    if (Is_Feed_At_End(L->feed))
         return OUT;
 
-    Frame(*) sub = Make_Frame(
-        f->feed,
-        FRAME_FLAG_FAILURE_RESULT_OK
-            | FRAME_FLAG_TRAMPOLINE_KEEPALIVE
+    Level(*) sub = Make_Level(
+        L->feed,
+        LEVEL_FLAG_FAILURE_RESULT_OK
+            | LEVEL_FLAG_TRAMPOLINE_KEEPALIVE
     );
-    Push_Frame(SPARE, sub);
+    Push_Level(SPARE, sub);
     STATE = ST_ARRAY_STEPPING;
-    return CATCH_CONTINUE_SUBFRAME(sub);
+    return CATCH_CONTINUE_SUBLEVEL(sub);
 
 } step_result_in_spare: {  ///////////////////////////////////////////////////
 
     if (not Is_Elision(SPARE))  // heed ELIDE, COMMENT, COMMA!, preserve result
         Move_Cell(OUT, SPARE);
 
-    if (Not_Frame_At_End(SUBFRAME)) {
+    if (Not_Level_At_End(SUBLEVEL)) {
         if (Is_Raised(OUT))  // promote errors to failure on step, see [1]
             fail (VAL_CONTEXT(OUT));
 
-        Restart_Evaluator_Frame(SUBFRAME);
+        Restart_Evaluator_Level(SUBLEVEL);
         return BOUNCE_CONTINUE;
     }
 
-    Drop_Frame(SUBFRAME);
+    Drop_Level(SUBLEVEL);
     return OUT;
 }}
 
@@ -299,7 +297,7 @@ Bounce Array_Executor(Frame(*) f)
 //
 // It is possible to preload states and start an evaluator at any of these.
 //
-Bounce Evaluator_Executor(Frame(*) f)
+Bounce Evaluator_Executor(Level(*) L)
 {
     if (THROWING)
         return THROWN;  // no state to clean up
@@ -307,12 +305,12 @@ Bounce Evaluator_Executor(Frame(*) f)
     assert(TOP_INDEX >= BASELINE->stack_base);  // e.g. REDUCE accrues
     assert(OUT != SPARE);  // overwritten by temporary calculations
 
-    if (Get_Eval_Executor_Flag(f, NO_EVALUATIONS)) {  // see flag for rationale
-        if (Is_Feed_At_End(f->feed))
+    if (Get_Eval_Executor_Flag(L, NO_EVALUATIONS)) {  // see flag for rationale
+        if (Is_Feed_At_End(L->feed))
             return OUT;
-        Derelativize(OUT, At_Feed(f->feed), FEED_SPECIFIER(f->feed));
+        Derelativize(OUT, At_Feed(L->feed), FEED_SPECIFIER(L->feed));
         Set_Cell_Flag(OUT, UNEVALUATED);
-        Fetch_Next_Forget_Lookback(f);
+        Fetch_Next_Forget_Lookback(L);
         return OUT;
     }
 
@@ -331,26 +329,26 @@ Bounce Evaluator_Executor(Frame(*) f)
         //
         // It's important to leave STATE as ST_EVALUATOR_REEVALUATING
         // during the switch state, because that's how the evaluator knows
-        // not to redundantly apply LET bindings.  See `f_specifier` above.
+        // not to redundantly apply LET bindings.  See `L_specifier` above.
 
         // The re-evaluate functionality may not want to heed the enfix state
         // in the action itself.  See DECLARE_NATIVE(shove)'s /ENFIX for instance.
         // So we go by the state of a flag on entry.
         //
-        if (f->u.eval.enfix_reevaluate == 'N') {
+        if (L->u.eval.enfix_reevaluate == 'N') {
             // either not enfix or not an action
         }
         else {
-            assert(f->u.eval.enfix_reevaluate == 'Y');
+            assert(L->u.eval.enfix_reevaluate == 'Y');
 
-            Frame(*) subframe = Make_Action_Subframe(f);
-            Push_Frame(OUT, subframe);
+            Level(*) sub = Make_Action_Sublevel(L);
+            Push_Level(OUT, sub);
             Push_Action(
-                subframe,
-                VAL_ACTION(f_current),
-                VAL_FRAME_BINDING(f_current)
+                sub,
+                VAL_ACTION(L_current),
+                VAL_FRAME_BINDING(L_current)
             );
-            Begin_Enfix_Action(subframe, VAL_FRAME_LABEL(f_current));
+            Begin_Enfix_Action(sub, VAL_FRAME_LABEL(L_current));
                 // ^-- invisibles cache NO_LOOKAHEAD
 
             assert(Is_Fresh(SPARE));
@@ -359,7 +357,7 @@ Bounce Evaluator_Executor(Frame(*) f)
 
         FRESHEN(OUT);
 
-        f_current_gotten = nullptr;  // !!! allow/require to be passe in?
+        L_current_gotten = nullptr;  // !!! allow/require to be passe in?
         goto evaluate; }
 
       intrinsic_in_scratch_arg_in_spare:
@@ -405,27 +403,27 @@ Bounce Evaluator_Executor(Frame(*) f)
     }
 
   #if !defined(NDEBUG)
-    Evaluator_Expression_Checks_Debug(f);
+    Evaluator_Expression_Checks_Debug(L);
   #endif
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
   // This starts a new expression.
 
-    Sync_Feed_At_Cell_Or_End_May_Fail(f->feed);
-    TRASH_POINTER_IF_DEBUG(f_current);
-    TRASH_POINTER_IF_DEBUG(f_current_gotten);
+    Sync_Feed_At_Cell_Or_End_May_Fail(L->feed);
+    TRASH_POINTER_IF_DEBUG(L_current);
+    TRASH_POINTER_IF_DEBUG(L_current_gotten);
 
-    UPDATE_EXPRESSION_START(f);  // !!! See FRM_INDEX() for caveats
+    UPDATE_EXPRESSION_START(L);  // !!! See Level_Array_Index() for caveats
 
-    if (Is_Frame_At_End(f)) {
+    if (Is_Level_At_End(L)) {
         Finalize_Void(OUT);
         goto finished;
     }
 
-    f_current = Lookback_While_Fetching_Next(f);
-    f_current_gotten = f_next_gotten;
-    f_next_gotten = nullptr;
+    L_current = Lookback_While_Fetching_Next(L);
+    L_current_gotten = L_next_gotten;
+    L_next_gotten = nullptr;
 
 } evaluate: ;  // meaningful semicolon--subsequent macro may declare things
 
@@ -433,31 +431,31 @@ Bounce Evaluator_Executor(Frame(*) f)
 
   //=//// LOOKAHEAD FOR ENFIXED FUNCTIONS THAT QUOTE THEIR LEFT ARG ///////=//
 
-    if (Is_Frame_At_End(f))
+    if (Is_Level_At_End(L))
         goto give_up_backward_quote_priority;
 
-    assert(not f_next_gotten);  // Fetch_Next_In_Frame() cleared it
+    assert(not L_next_gotten);  // Fetch_Next_In_Frame() cleared it
 
-    if (VAL_TYPE_UNCHECKED(f_next) == REB_FRAME) {  // plain FRAME! runs
-        f_next_gotten = SPECIFIC(f_next);
+    if (VAL_TYPE_UNCHECKED(L_next) == REB_FRAME) {  // plain FRAME! runs
+        L_next_gotten = SPECIFIC(L_next);
     }
-    else if (VAL_TYPE_UNCHECKED(f_next) == REB_WORD) {  // right's kind
-        f_next_gotten = Lookup_Word(f_next, FEED_SPECIFIER(f->feed));
+    else if (VAL_TYPE_UNCHECKED(L_next) == REB_WORD) {  // right's kind
+        L_next_gotten = Lookup_Word(L_next, FEED_SPECIFIER(L->feed));
 
         if (
-            not f_next_gotten
-            or not Is_Activation(unwrap(f_next_gotten))
+            not L_next_gotten
+            or not Is_Activation(unwrap(L_next_gotten))
         ){
             goto give_up_backward_quote_priority;  // note only ACTION! is ENFIXED
         }
     } else
         goto give_up_backward_quote_priority;
 
-    if (Not_Enfixed(unwrap(f_next_gotten)))
+    if (Not_Enfixed(unwrap(L_next_gotten)))
         goto give_up_backward_quote_priority;
 
   blockscope {
-    Action(*) enfixed = VAL_ACTION(unwrap(f_next_gotten));
+    Action(*) enfixed = VAL_ACTION(unwrap(L_next_gotten));
     Array(*) paramlist = ACT_PARAMLIST(enfixed);
 
     if (Not_Subclass_Flag(VARLIST, paramlist, PARAMLIST_QUOTES_FIRST))
@@ -470,7 +468,7 @@ Bounce Evaluator_Executor(Frame(*) f)
     if (
         Get_Action_Flag(enfixed, POSTPONES_ENTIRELY)
         or (
-            Get_Feed_Flag(f->feed, NO_LOOKAHEAD)
+            Get_Feed_Flag(L->feed, NO_LOOKAHEAD)
             and not ANY_SET_KIND(kind_current)  // not SET-WORD!, SET-PATH!...
         )
     ){
@@ -489,7 +487,7 @@ Bounce Evaluator_Executor(Frame(*) f)
     // Put the backwards quoted value into OUT.  (Do this before next
     // step because we need derelativized value for type check)
     //
-    Derelativize(OUT, f_current, f_specifier);  // for FULFILLING_ENFIX
+    Derelativize(OUT, L_current, L_specifier);  // for FULFILLING_ENFIX
     Set_Cell_Flag(OUT, UNEVALUATED);  // so lookback knows it was quoted
 
     // Let the <skip> flag allow the right hand side to gracefully decline
@@ -509,11 +507,11 @@ Bounce Evaluator_Executor(Frame(*) f)
     // v will then hold a pointer to that word (possibly now resident in the
     // frame spare).  (OUT holds what was the left)
     //
-    f_current_gotten = f_next_gotten;
-    f_current = Lookback_While_Fetching_Next(f);
+    L_current_gotten = L_next_gotten;
+    L_current = Lookback_While_Fetching_Next(L);
 
     if (
-        Is_Feed_At_End(f->feed)  // v-- out is what used to be on left
+        Is_Feed_At_End(L->feed)  // v-- out is what used to be on left
         and (
             VAL_TYPE_UNCHECKED(OUT) == REB_WORD
             or VAL_TYPE_UNCHECKED(OUT) == REB_TUPLE
@@ -529,10 +527,10 @@ Bounce Evaluator_Executor(Frame(*) f)
 
         Move_Cell(SPARE, OUT);
 
-        Derelativize(OUT, f_current, f_specifier);
+        Derelativize(OUT, L_current, L_specifier);
         Set_Cell_Flag(OUT, UNEVALUATED);
 
-        Set_Eval_Executor_Flag(f, DIDNT_LEFT_QUOTE_TUPLE);
+        Set_Eval_Executor_Flag(L, DIDNT_LEFT_QUOTE_TUPLE);
 
         if (IS_WORD(SPARE)) {
             STATE = REB_WORD;
@@ -548,17 +546,17 @@ Bounce Evaluator_Executor(Frame(*) f)
     // Wasn't the at-end exception, so run normal enfix with right winning.
     //
   blockscope {
-    Frame(*) subframe = Make_Action_Subframe(f);
-    Push_Frame(OUT, subframe);
+    Level(*) sub = Make_Action_Sublevel(L);
+    Push_Level(OUT, sub);
     Push_Action(
-        subframe,
-        VAL_ACTION(unwrap(f_current_gotten)),
-        VAL_FRAME_BINDING(unwrap(f_current_gotten))
+        sub,
+        VAL_ACTION(unwrap(L_current_gotten)),
+        VAL_FRAME_BINDING(unwrap(L_current_gotten))
     );
-    if (IS_WORD(f_current))
-        Begin_Enfix_Action(subframe, VAL_WORD_SYMBOL(f_current));
+    if (IS_WORD(L_current))
+        Begin_Enfix_Action(sub, VAL_WORD_SYMBOL(L_current));
     else
-        Begin_Enfix_Action(subframe, VAL_FRAME_LABEL(f_current));
+        Begin_Enfix_Action(sub, VAL_FRAME_LABEL(L_current));
 
     goto process_action; }
 
@@ -584,7 +582,7 @@ Bounce Evaluator_Executor(Frame(*) f)
 
     assert(Is_Fresh(OUT));  // except see [1]
 
-    switch ((STATE = VAL_TYPE(f_current))) {  // type doubles as state, see [2]
+    switch ((STATE = VAL_TYPE(L_current))) {  // type doubles as state, see [2]
 
     //=//// NULL //////////////////////////////////////////////////////////=//
     //
@@ -652,16 +650,16 @@ Bounce Evaluator_Executor(Frame(*) f)
     //    hand side argument.
 
       case REB_FRAME: {
-        Frame(*) subframe = Make_Action_Subframe(f);
-        Push_Frame(OUT, subframe);
+        Level(*) sub = Make_Action_Sublevel(L);
+        Push_Level(OUT, sub);
         Push_Action(
-            subframe,
-            VAL_ACTION(f_current),
-            VAL_FRAME_BINDING(f_current)
+            sub,
+            VAL_ACTION(L_current),
+            VAL_FRAME_BINDING(L_current)
         );
-        bool enfix = Is_Enfixed(f_current);
+        bool enfix = Is_Enfixed(L_current);
         assert(Is_Fresh(OUT));  // so nothing on left, see [1]
-        Begin_Action_Core(subframe, VAL_FRAME_LABEL(f_current), enfix);
+        Begin_Action_Core(sub, VAL_FRAME_LABEL(L_current), enfix);
 
         goto process_action; }
 
@@ -683,7 +681,7 @@ Bounce Evaluator_Executor(Frame(*) f)
         // eval calls that lookahead, but no lookahead after the action runs)
         //
         STATE = REB_FRAME;
-        return CATCH_CONTINUE_SUBFRAME(TOP_FRAME); }
+        return CATCH_CONTINUE_SUBLEVEL(TOP_LEVEL); }
 
 
     //=//// WORD! //////////////////////////////////////////////////////////=//
@@ -700,37 +698,37 @@ Bounce Evaluator_Executor(Frame(*) f)
 
       word_in_spare:  ////////////////////////////////////////////////////////
 
-        f_current = SPARE;
-        f_current_gotten = Lookup_Word_May_Fail(f_current, f_specifier);
+        L_current = SPARE;
+        L_current_gotten = Lookup_Word_May_Fail(L_current, L_specifier);
         goto word_common;
 
       case REB_WORD:
-        if (not f_current_gotten)
-            f_current_gotten = Lookup_Word_May_Fail(f_current, f_specifier);
+        if (not L_current_gotten)
+            L_current_gotten = Lookup_Word_May_Fail(L_current, L_specifier);
 
       word_common: ///////////////////////////////////////////////////////////
 
-        if (Is_Activation(unwrap(f_current_gotten))) {
-            Action(*) action = VAL_ACTION(unwrap(f_current_gotten));
+        if (Is_Activation(unwrap(L_current_gotten))) {
+            Action(*) action = VAL_ACTION(unwrap(L_current_gotten));
 
-            if (Is_Enfixed(unwrap(f_current_gotten))) {
+            if (Is_Enfixed(unwrap(L_current_gotten))) {
                 if (
                     Get_Action_Flag(action, POSTPONES_ENTIRELY)
                     or Get_Action_Flag(action, DEFERS_LOOKBACK)
                 ){
-                    if (Get_Eval_Executor_Flag(f, FULFILLING_ARG)) {
-                        Clear_Feed_Flag(f->feed, NO_LOOKAHEAD);
-                        Set_Feed_Flag(f->feed, DEFERRING_ENFIX);
+                    if (Get_Eval_Executor_Flag(L, FULFILLING_ARG)) {
+                        Clear_Feed_Flag(L->feed, NO_LOOKAHEAD);
+                        Set_Feed_Flag(L->feed, DEFERRING_ENFIX);
                         FRESHEN(OUT);
                         goto finished;
                     }
                 }
             }
 
-            Context(*) binding = VAL_FRAME_BINDING(unwrap(f_current_gotten));
-            Symbol(const*) label = VAL_WORD_SYMBOL(f_current);  // use WORD!
-            bool enfixed = Is_Enfixed(unwrap(f_current_gotten));
-            if (Get_Eval_Executor_Flag(f, DIDNT_LEFT_QUOTE_TUPLE)) {
+            Context(*) binding = VAL_FRAME_BINDING(unwrap(L_current_gotten));
+            Symbol(const*) label = VAL_WORD_SYMBOL(L_current);  // use WORD!
+            bool enfixed = Is_Enfixed(unwrap(L_current_gotten));
+            if (Get_Eval_Executor_Flag(L, DIDNT_LEFT_QUOTE_TUPLE)) {
                 if (enfixed) {
                     assert(false);  // !!! want OUT as *right* hand side...
                     enfixed = true;
@@ -738,49 +736,49 @@ Bounce Evaluator_Executor(Frame(*) f)
                 else
                     enfixed = true;  // not enfix, but act as OUT is first arg
 
-                Clear_Eval_Executor_Flag(f, DIDNT_LEFT_QUOTE_TUPLE);
+                Clear_Eval_Executor_Flag(L, DIDNT_LEFT_QUOTE_TUPLE);
             }
 
             if (
                 not enfixed  // too rare a case for intrinsic optimization
                 and ACT_DISPATCHER(action) == &Intrinsic_Dispatcher
-                and Not_Frame_At_End(f)  // can't do <end>, fallthru to error
+                and Not_Level_At_End(L)  // can't do <end>, fallthru to error
                 and not SPORADICALLY(10)  // debug build bypass every 10th call
             ){
-                Copy_Cell(SCRATCH, unwrap(f_current_gotten));
+                Copy_Cell(SCRATCH, unwrap(L_current_gotten));
                 INIT_VAL_ACTION_LABEL(SCRATCH, label);  // use the word
                 REBPAR* param = ACT_PARAM(action, 2);
                 Flags flags = EVAL_EXECUTOR_FLAG_FULFILLING_ARG;
                 if (VAL_PARAM_CLASS(param) == PARAM_CLASS_META)
-                    flags |= FRAME_FLAG_FAILURE_RESULT_OK;
+                    flags |= LEVEL_FLAG_FAILURE_RESULT_OK;
 
-                Clear_Feed_Flag(f->feed, NO_LOOKAHEAD);  // when non-enfix call
+                Clear_Feed_Flag(L->feed, NO_LOOKAHEAD);  // when non-enfix call
 
-                if (Did_Init_Inert_Optimize_Complete(SPARE, f->feed, &flags))
+                if (Did_Init_Inert_Optimize_Complete(SPARE, L->feed, &flags))
                     goto intrinsic_in_scratch_arg_in_spare;
 
-                Frame(*) subframe = Make_Frame(f->feed, flags);
-                Push_Frame(SPARE, subframe);
+                Level(*) sub = Make_Level(L->feed, flags);
+                Push_Level(SPARE, sub);
                 STATE = ST_EVALUATOR_CALCULATING_INTRINSIC_ARG;
-                return CATCH_CONTINUE_SUBFRAME(subframe);
+                return CATCH_CONTINUE_SUBLEVEL(sub);
             }
 
-            Frame(*) subframe = Make_Action_Subframe(f);
-            Push_Frame(OUT, subframe);
-            Push_Action(subframe, action, binding);
-            Begin_Action_Core(subframe, label, enfixed);
+            Level(*) sub = Make_Action_Sublevel(L);
+            Push_Level(OUT, sub);
+            Push_Action(sub, action, binding);
+            Begin_Action_Core(sub, label, enfixed);
 
             goto process_action;
         }
 
         if (
-            Is_Isotope(unwrap(f_current_gotten))  // checked second
-            and not Is_Isotope_Get_Friendly(unwrap(f_current_gotten))
+            Is_Isotope(unwrap(L_current_gotten))  // checked second
+            and not Is_Isotope_Get_Friendly(unwrap(L_current_gotten))
         ){
-            fail (Error_Bad_Word_Get(f_current, unwrap(f_current_gotten)));
+            fail (Error_Bad_Word_Get(L_current, unwrap(L_current_gotten)));
         }
 
-        Copy_Cell(OUT, unwrap(f_current_gotten));  // no CELL_FLAG_UNEVALUATED
+        Copy_Cell(OUT, unwrap(L_current_gotten));  // no CELL_FLAG_UNEVALUATED
         break;
 
 
@@ -801,7 +799,7 @@ Bounce Evaluator_Executor(Frame(*) f)
     //        >> get/any 'x
     //        == ~  ; isotope
     //
-    // 2. Running functions flushes the f_next_gotten cache.  But a plain
+    // 2. Running functions flushes the L_next_gotten cache.  But a plain
     //    assignment can cause trouble too:
     //
     //        >> x: <before> x: 1 x
@@ -816,7 +814,7 @@ Bounce Evaluator_Executor(Frame(*) f)
 
     set_word_in_spare: ///////////////////////////////////////////////////////
 
-        f_current = SPARE;
+        L_current = SPARE;
         goto set_word_common;
 
     set_word_common: /////////////////////////////////////////////////////////
@@ -824,11 +822,11 @@ Bounce Evaluator_Executor(Frame(*) f)
       case REB_SET_WORD: {
         assert(STATE == REB_SET_WORD);
 
-        Frame(*) subframe = Maybe_Rightward_Continuation_Needed(f);
-        if (not subframe)
+        Level(*) right = Maybe_Rightward_Continuation_Needed(L);
+        if (not right)
             goto set_word_rightside_in_out;
 
-        return CATCH_CONTINUE_SUBFRAME(subframe);
+        return CATCH_CONTINUE_SUBLEVEL(right);
 
       } set_word_rightside_in_out: {  ////////////////////////////////////////
 
@@ -837,9 +835,9 @@ Bounce Evaluator_Executor(Frame(*) f)
         }
 
         if (Is_Barrier(OUT))  // e.g. (x:,) where comma makes isotope
-            fail (Error_Need_Non_End(f_current));
+            fail (Error_Need_Non_End(L_current));
 
-        if (Is_Void(f_current)) {
+        if (Is_Void(L_current)) {
             // can happen with SET-GROUP! e.g. `(void): ...`, current in spare
         }
         else if (Is_Raised(OUT)) {
@@ -852,21 +850,21 @@ Bounce Evaluator_Executor(Frame(*) f)
                 fail (Error_Bad_Isotope(OUT));
 
             if (Is_Activation(OUT))  // !!! Review: When to update labels?
-                INIT_VAL_ACTION_LABEL(OUT, VAL_WORD_SYMBOL(f_current));
+                INIT_VAL_ACTION_LABEL(OUT, VAL_WORD_SYMBOL(L_current));
 
             Copy_Cell(
-                Sink_Word_May_Fail(f_current, f_specifier),
+                Sink_Word_May_Fail(L_current, L_specifier),
                 OUT
             );
 
-            if (f_next_gotten) {  // cache can tamper with lookahead, see [2]
-                if (VAL_TYPE_UNCHECKED(f_next) == REB_FRAME) {
+            if (L_next_gotten) {  // cache can tamper with lookahead, see [2]
+                if (VAL_TYPE_UNCHECKED(L_next) == REB_FRAME) {
                     // not a cache
                 }
                 else {
-                    assert(VAL_TYPE_UNCHECKED(f_next) == REB_WORD);
-                    if (VAL_WORD_SYMBOL(f_next) == VAL_WORD_SYMBOL(f_current))
-                        f_next_gotten = nullptr;
+                    assert(VAL_TYPE_UNCHECKED(L_next) == REB_WORD);
+                    if (VAL_WORD_SYMBOL(L_next) == VAL_WORD_SYMBOL(L_current))
+                        L_next_gotten = nullptr;
                 }
             }
         }
@@ -883,10 +881,10 @@ Bounce Evaluator_Executor(Frame(*) f)
 
       case REB_META_WORD:
       case REB_GET_WORD:
-        if (not f_current_gotten)
-            f_current_gotten = Lookup_Word_May_Fail(f_current, f_specifier);
+        if (not L_current_gotten)
+            L_current_gotten = Lookup_Word_May_Fail(L_current, L_specifier);
 
-        Copy_Cell(OUT, unwrap(f_current_gotten));
+        Copy_Cell(OUT, unwrap(L_current_gotten));
         assert(Not_Cell_Flag(OUT, UNEVALUATED));
 
         if (STATE == REB_META_WORD)
@@ -919,24 +917,24 @@ Bounce Evaluator_Executor(Frame(*) f)
       case REB_GET_GROUP:  // synonym for GROUP!, see [1]
       case REB_GROUP:
       case REB_META_GROUP: {
-        f_next_gotten = nullptr;  // arbitrary code changes fetched variables
+        L_next_gotten = nullptr;  // arbitrary code changes fetched variables
 
-        Flags flags = FRAME_FLAG_FAILURE_RESULT_OK
+        Flags flags = LEVEL_FLAG_FAILURE_RESULT_OK
             | FLAG_STATE_BYTE(ST_ARRAY_PRELOADED_ENTRY);  // see [2]
 
         if (STATE == REB_META_GROUP)
-            flags |= FRAME_FLAG_META_RESULT;
+            flags |= LEVEL_FLAG_META_RESULT;
 
-        Frame(*) subframe = Make_Frame_At_Core(
-            f_current,
-            f_specifier,
+        Level(*) sub = Make_Level_At_Core(
+            L_current,
+            L_specifier,
             flags
         );
-        Push_Frame(OUT, subframe);
+        Push_Level(OUT, sub);
         Init_Nihil(OUT);  // the ST_ARRAY_PRELOADED_ENTRY, see [2]
-        subframe->executor = &Array_Executor;
+        sub->executor = &Array_Executor;
 
-        return CATCH_CONTINUE_SUBFRAME(subframe); }
+        return CATCH_CONTINUE_SUBLEVEL(sub); }
 
 
     //=//// TUPLE! /////////////////////////////////////////////////////////=//
@@ -956,20 +954,20 @@ Bounce Evaluator_Executor(Frame(*) f)
 
       tuple_in_spare:  ///////////////////////////////////////////////////////
 
-        f_current = SPARE;
-        TRASH_POINTER_IF_DEBUG(f_current_gotten);
+        L_current = SPARE;
+        TRASH_POINTER_IF_DEBUG(L_current_gotten);
         goto tuple_common;
 
       tuple_common:  /////////////////////////////////////////////////////////
 
       case REB_TUPLE: {
-        Cell(const*) head = VAL_SEQUENCE_AT(SCRATCH, f_current, 0);
+        Cell(const*) head = VAL_SEQUENCE_AT(SCRATCH, L_current, 0);
         if (IS_BLANK(head) or ANY_INERT(head)) {
-            Derelativize(OUT, f_current, f_specifier);
+            Derelativize(OUT, L_current, L_specifier);
             break;
         }
 
-        if (Get_Var_Core_Throws(SCRATCH, GROUPS_OK, f_current, f_specifier))
+        if (Get_Var_Core_Throws(SCRATCH, GROUPS_OK, L_current, L_specifier))
             goto return_thrown;
 
         if (Is_Activation(SCRATCH)) {
@@ -984,14 +982,14 @@ Bounce Evaluator_Executor(Frame(*) f)
             if (Is_Enfixed(SCRATCH))
                 fail ("Use `>-` to shove left enfix operands into PATH!s");
 
-            Frame(*) subframe = Make_Action_Subframe(f);
-            Push_Frame(OUT, subframe);
+            Level(*) sub = Make_Action_Sublevel(L);
+            Push_Level(OUT, sub);
             Push_Action(
-                subframe,
+                sub,
                 VAL_ACTION(SCRATCH),
                 VAL_FRAME_BINDING(SCRATCH)
             );
-            Begin_Prefix_Action(subframe, VAL_FRAME_LABEL(SCRATCH));
+            Begin_Prefix_Action(sub, VAL_FRAME_LABEL(SCRATCH));
             goto process_action;
         }
 
@@ -999,7 +997,7 @@ Bounce Evaluator_Executor(Frame(*) f)
             Is_Isotope(SCRATCH)  // we test *after* action (faster common case)
             and not Is_Isotope_Get_Friendly(SCRATCH)
         ){
-            fail (Error_Bad_Word_Get(f_current, SCRATCH));
+            fail (Error_Bad_Word_Get(L_current, SCRATCH));
         }
 
         Move_Cell(OUT, SCRATCH);  // won't move CELL_FLAG_UNEVALUATED
@@ -1026,16 +1024,16 @@ Bounce Evaluator_Executor(Frame(*) f)
     // blank at its head, and it evaluates to itself.
 
       case REB_PATH: {
-        Cell(const*) temp = VAL_SEQUENCE_AT(SPARE, f_current, 0);
+        Cell(const*) temp = VAL_SEQUENCE_AT(SPARE, L_current, 0);
         if (IS_BLANK(temp) or ANY_INERT(temp)) {
-            Derelativize(OUT, f_current, f_specifier);
+            Derelativize(OUT, L_current, L_specifier);
             break;
         }
 
         temp = VAL_SEQUENCE_AT(
             SPARE,
-            f_current,
-            VAL_SEQUENCE_LEN(f_current) - 1
+            L_current,
+            VAL_SEQUENCE_LEN(L_current) - 1
         );
         bool applying = IS_BLANK(temp);  // terminal slash is APPLY
 
@@ -1043,8 +1041,8 @@ Bounce Evaluator_Executor(Frame(*) f)
         if (Get_Path_Push_Refinements_Throws(
             SPARE,
             OUT,
-            f_current,
-            f_specifier
+            L_current,
+            L_specifier
         )){
             goto return_thrown;
         }
@@ -1072,25 +1070,25 @@ Bounce Evaluator_Executor(Frame(*) f)
         }
 
         if (not applying) {
-            Frame(*) sub = Make_Action_Subframe(f);
+            Level(*) sub = Make_Action_Sublevel(L);
             sub->baseline.stack_base = BASELINE->stack_base;  // refinements
 
-            Push_Frame(OUT, sub);
+            Push_Level(OUT, sub);
             Push_Action(sub, VAL_ACTION(SPARE), VAL_FRAME_BINDING(SPARE));
             Begin_Prefix_Action(sub, VAL_FRAME_LABEL(SPARE));
             goto process_action;
         }
 
-        if (Is_Frame_At_End(f))
+        if (Is_Level_At_End(L))
             fail ("Terminal-Slash Action Invocation Needs APPLY argument");
 
         STATE = REB_FRAME;  // bounces back to do lookahead
         rebPushContinuation(
             cast(REBVAL*, OUT),  // API won't take Atom(*)
-            FRAME_MASK_NONE,
-            Canon(APPLY), rebQ(SPARE), rebDERELATIVIZE(f_next, f_specifier)
+            LEVEL_MASK_NONE,
+            Canon(APPLY), rebQ(SPARE), rebDERELATIVIZE(L_next, L_specifier)
         );
-        Fetch_Next_Forget_Lookback(f);
+        Fetch_Next_Forget_Lookback(L);
         return BOUNCE_CONTINUE; }
 
 
@@ -1121,10 +1119,10 @@ Bounce Evaluator_Executor(Frame(*) f)
       case REB_SET_PATH: {
         REBVAL *redbol = Get_System(SYS_OPTIONS, OPTIONS_REDBOL_PATHS);
         if (not IS_LOGIC(redbol) or VAL_LOGIC(redbol) == false) {
-            Derelativize(OUT, f_current, f_specifier);
+            Derelativize(OUT, L_current, L_specifier);
             mutable_HEART_BYTE(OUT) = REB_SET_TUPLE;
 
-            Derelativize(SPARE, f_current, f_specifier);
+            Derelativize(SPARE, L_current, L_specifier);
             rebElide(
                 "echo [The SET-PATH!", SPARE, "is no longer the preferred",
                     "way to do member assignments.]",
@@ -1161,7 +1159,7 @@ Bounce Evaluator_Executor(Frame(*) f)
 
     set_tuple_in_spare: //////////////////////////////////////////////////////
 
-        f_current = SPARE;
+        L_current = SPARE;
         goto generic_set_common;
 
     generic_set_common: //////////////////////////////////////////////////////
@@ -1169,11 +1167,11 @@ Bounce Evaluator_Executor(Frame(*) f)
       case REB_SET_TUPLE: {
         assert(STATE == REB_SET_TUPLE or STATE == REB_SET_PATH);
 
-        Frame(*) subframe = Maybe_Rightward_Continuation_Needed(f);
-        if (not subframe)
+        Level(*) right = Maybe_Rightward_Continuation_Needed(L);
+        if (not right)
             goto set_generic_rightside_in_out;
 
-        return CATCH_CONTINUE_SUBFRAME(subframe);
+        return CATCH_CONTINUE_SUBLEVEL(right);
 
       } set_generic_rightside_in_out: {  /////////////////////////////////////
 
@@ -1186,7 +1184,7 @@ Bounce Evaluator_Executor(Frame(*) f)
             // Don't assign, but let (trap [a.b: transcode "1&aa"]) work
         }
         else if (Is_Barrier(OUT)) {
-            fail (Error_Need_Non_End(rebUnrelativize(f_current)));
+            fail (Error_Need_Non_End(rebUnrelativize(L_current)));
         }
         else {
             Decay_If_Unstable(OUT);
@@ -1197,8 +1195,8 @@ Bounce Evaluator_Executor(Frame(*) f)
             if (Set_Var_Core_Throws(
                 SCRATCH,
                 GROUPS_OK,
-                f_current,  // may be SPARE
-                f_specifier,
+                L_current,  // may be SPARE
+                L_specifier,
                 stable_OUT
             )){
                 goto return_thrown;
@@ -1214,17 +1212,17 @@ Bounce Evaluator_Executor(Frame(*) f)
     // on what the group evaluates to.
 
       case REB_SET_GROUP: {
-        f_next_gotten = nullptr;  // arbitrary code changes fetched variables
+        L_next_gotten = nullptr;  // arbitrary code changes fetched variables
 
-        Frame(*) subframe = Make_Frame_At_Core(
-            f_current,
-            f_specifier,
-            FRAME_MASK_NONE
+        Level(*) sub = Make_Level_At_Core(
+            L_current,
+            L_specifier,
+            LEVEL_MASK_NONE
         );
-        Push_Frame(SPARE, subframe);
-        subframe->executor = &Array_Executor;
+        Push_Level(SPARE, sub);
+        sub->executor = &Array_Executor;
 
-        return CATCH_CONTINUE_SUBFRAME(subframe);
+        return CATCH_CONTINUE_SUBLEVEL(sub);
 
       } set_group_result_in_spare: {  ////////////////////////////////////////
 
@@ -1271,7 +1269,7 @@ Bounce Evaluator_Executor(Frame(*) f)
       case REB_META_TUPLE:
       case REB_GET_PATH:
       case REB_GET_TUPLE:
-        if (Get_Var_Core_Throws(OUT, GROUPS_OK, f_current, f_specifier))
+        if (Get_Var_Core_Throws(OUT, GROUPS_OK, L_current, L_specifier))
             goto return_thrown;
 
         // !!! This didn't appear to be true for `-- "hi" "hi"`, processing
@@ -1297,7 +1295,7 @@ Bounce Evaluator_Executor(Frame(*) f)
     // Note that GET-BLOCK! is available as a branch type, `if true :[a b]`
 
       case REB_GET_BLOCK: {
-        Derelativize(SPARE, f_current, f_specifier);
+        Derelativize(SPARE, L_current, L_specifier);
         mutable_HEART_BYTE(SPARE) = REB_BLOCK;
         if (rebRunThrows(
             cast(REBVAL*, OUT),  // <-- output cell, API won't make atoms
@@ -1311,17 +1309,31 @@ Bounce Evaluator_Executor(Frame(*) f)
     //=//// SET-BLOCK! ////////////////////////////////////////////////////=//
     //
     // The evaluator treats SET-BLOCK! specially as a means for implementing
-    // multiple return values.  The trick is that it does so by pre-loading
-    // arguments in the frame with variables to update, in a way that could've
-    // historically been achieved with passing WORD! or PATH! to a refinement.
-    // So if there was a function that updates a variable you pass in by name:
+    // multiple return values.  It unpacks isotopic blocks into components.
     //
-    //     result: updating-function/update arg1 arg2 'var
+    //     >> pack [1 2]
+    //     == ~[1 2]~
     //
-    // The /UPDATE parameter is marked as being effectively a "return value",
-    // so that equivalent behavior can be achieved with:
+    //     >> [a b]: pack [1 2]
+    //     == 1
     //
-    //     [result var]: updating-function arg1 arg2
+    //     >> a
+    //     == 1
+    //
+    //     >> b
+    //     == 2
+    //
+    // If a component is optional (e.g. the pack is too short to provide it),
+    // it can be marked as a refinement.
+    //
+    //     >> [a b]: pack [1]
+    //     ** Error: pack doesn't have enough values to set b
+    //
+    //     >> [a /b]: pack [1]
+    //     == 1
+    //
+    //     >> b
+    //     == ~null~  ; isotope
     //
     // It supports `_` in slots whose results you don't want to ask for, `#`
     // in slots you want to ask for (but don't want to name), will evaluate
@@ -1331,7 +1343,7 @@ Bounce Evaluator_Executor(Frame(*) f)
 
     set_block_in_spare: //////////////////////////////////////////////////////
 
-        f_current = SPARE;
+        L_current = SPARE;
         goto set_block_common;
 
     set_block_common: ////////////////////////////////////////////////////////
@@ -1367,14 +1379,14 @@ Bounce Evaluator_Executor(Frame(*) f)
       case REB_SET_BLOCK: {
         assert(STATE == REB_SET_BLOCK);
 
-        if (VAL_LEN_AT(f_current) == 0)  // not supported, see [1]
+        if (VAL_LEN_AT(L_current) == 0)  // not supported, see [1]
             fail ("SET-BLOCK! must not be empty for now.");
 
         Cell(const*) tail;
-        Cell(const*) check = VAL_ARRAY_AT(&tail, f_current);
-        REBSPC *check_specifier = Derive_Specifier(f_specifier, f_current);
+        Cell(const*) check = VAL_ARRAY_AT(&tail, L_current);
+        REBSPC *check_specifier = Derive_Specifier(L_specifier, L_current);
 
-        TRASH_POINTER_IF_DEBUG(f_current);  // might be SPARE, we use it now
+        TRASH_POINTER_IF_DEBUG(L_current);  // might be SPARE, we use it now
 
         StackIndex stackindex_circled = 0;
 
@@ -1467,13 +1479,13 @@ Bounce Evaluator_Executor(Frame(*) f)
         if (stackindex_circled == 0)
             stackindex_circled = BASELINE->stack_base + 1;  // main, see [3]
 
-        frame_->u.eval.stackindex_circled = stackindex_circled;  // remember it
+        level_->u.eval.stackindex_circled = stackindex_circled;  // remember it
 
-        Frame(*) sub = Maybe_Rightward_Continuation_Needed(f);
+        Level(*) sub = Maybe_Rightward_Continuation_Needed(L);
         if (not sub)
             goto set_block_rightside_result_in_out;
 
-        return CATCH_CONTINUE_SUBFRAME(sub);
+        return CATCH_CONTINUE_SUBLEVEL(sub);
 
     } set_block_rightside_result_in_out: {  //////////////////////////////////
 
@@ -1498,10 +1510,10 @@ Bounce Evaluator_Executor(Frame(*) f)
             // want to be stackless about the reification, but for now make
             // it easy.
             //
-            if (Pushed_Decaying_Frame(OUT, OUT, FRAME_MASK_NONE)) {
+            if (Pushed_Decaying_Level(OUT, OUT, LEVEL_MASK_NONE)) {
                 if (Trampoline_With_Top_As_Root_Throws())
-                    fail (Error_No_Catch_For_Throw(TOP_FRAME));
-                Drop_Frame(TOP_FRAME);
+                    fail (Error_No_Catch_For_Throw(TOP_LEVEL));
+                Drop_Level(TOP_LEVEL);
             }
             if (Is_Lazy(OUT))  // Lazy -> Lazy not allowed, Lazy -> Pack is ok
                 fail ("Lazy Object Reified to Lazy Object: Not Allowed");
@@ -1527,7 +1539,7 @@ Bounce Evaluator_Executor(Frame(*) f)
         }
 
         StackIndex stackindex_var = BASELINE->stack_base + 1;  // see [2]
-        StackIndex stackindex_circled = frame_->u.eval.stackindex_circled;
+        StackIndex stackindex_circled = level_->u.eval.stackindex_circled;
 
         for (
             ;
@@ -1643,7 +1655,7 @@ Bounce Evaluator_Executor(Frame(*) f)
         // its value was known.  But then we assigned that a with a new value
         // in the implementation of SET-BLOCK! here, so, it's incorrect.
         //
-        f_next_gotten = nullptr;
+        L_next_gotten = nullptr;
 
     } set_block_drop_stack_and_continue: {  //////////////////////////////////
 
@@ -1661,7 +1673,7 @@ Bounce Evaluator_Executor(Frame(*) f)
     // (It's hard to think of another meaning that would be sensible.)
 
       case REB_META_BLOCK:
-        Inertly_Derelativize_Inheriting_Const(OUT, f_current, f->feed);
+        Inertly_Derelativize_Inheriting_Const(OUT, L_current, L->feed);
         mutable_HEART_BYTE(OUT) = REB_BLOCK;
         Quotify(OUT, 1);
         break;
@@ -1729,7 +1741,7 @@ Bounce Evaluator_Executor(Frame(*) f)
         //
       case REB_HANDLE:
 
-        Inertly_Derelativize_Inheriting_Const(OUT, f_current, f->feed);
+        Inertly_Derelativize_Inheriting_Const(OUT, L_current, L->feed);
         break;
 
 
@@ -1747,7 +1759,7 @@ Bounce Evaluator_Executor(Frame(*) f)
       // To bypass the error, use GET/ANY.
 
       case REB_QUASI:
-        Derelativize(OUT, f_current, f_specifier);
+        Derelativize(OUT, L_current, L_specifier);
         mutable_QUOTE_BYTE(OUT) = ISOTOPE_0;
         break;
 
@@ -1759,7 +1771,7 @@ Bounce Evaluator_Executor(Frame(*) f)
       //
 
       case REB_QUOTED:
-        Derelativize(OUT, f_current, f_specifier);
+        Derelativize(OUT, L_current, L_specifier);
         Unquotify(OUT, 1);  // asserts it is not an isotope
         break;
 
@@ -1767,7 +1779,7 @@ Bounce Evaluator_Executor(Frame(*) f)
     //=//// GARBAGE (pseudotypes or otherwise //////////////////////////////=//
 
       default:
-        panic (f_current);
+        panic (L_current);
     }
 
   //=//// END MAIN SWITCH STATEMENT ///////////////////////////////////////=//
@@ -1788,7 +1800,7 @@ Bounce Evaluator_Executor(Frame(*) f)
         // !!! Should ONLY happen if we processed a WORD! that looked up to
         // an invisible function, and left something behind that was not
         // previously evaluative.  To track this accurately, we would have
-        // to use an FRAME_FLAG_DEBUG_INVISIBLE_UNEVALUATIVE here, because we
+        // to use an LEVEL_FLAG_DEBUG_INVISIBLE_UNEVALUATIVE here, because we
         // don't have the word anymore to look up (and even if we did, what
         // it looks up to may have changed).
         //
@@ -1850,7 +1862,7 @@ Bounce Evaluator_Executor(Frame(*) f)
     // opportunity to quote left because it has no argument...and instead
     // retriggers and lets x run.
 
-    if (Get_Eval_Executor_Flag(f, DIDNT_LEFT_QUOTE_TUPLE))
+    if (Get_Eval_Executor_Flag(L, DIDNT_LEFT_QUOTE_TUPLE))
         fail (Error_Literal_Left_Tuple_Raw());
 
 
@@ -1860,25 +1872,25 @@ Bounce Evaluator_Executor(Frame(*) f)
     // enfix.  If it's necessary to dispatch an enfix function via path, then
     // a word is used to do it, like `>-` in `x: >- lib.method [...] [...]`.
 
-    if (Is_Feed_At_End(f->feed)) {
-        Clear_Feed_Flag(f->feed, NO_LOOKAHEAD);
+    if (Is_Feed_At_End(L->feed)) {
+        Clear_Feed_Flag(L->feed, NO_LOOKAHEAD);
         goto finished;  // hitting end is common, avoid do_next's switch()
     }
 
-    switch (VAL_TYPE_UNCHECKED(f_next)) {
+    switch (VAL_TYPE_UNCHECKED(L_next)) {
       case REB_WORD:
-        if (not f_next_gotten)
-            f_next_gotten = Lookup_Word(f_next, FEED_SPECIFIER(f->feed));
+        if (not L_next_gotten)
+            L_next_gotten = Lookup_Word(L_next, FEED_SPECIFIER(L->feed));
         else
-            assert(f_next_gotten == Lookup_Word(f_next, FEED_SPECIFIER(f->feed)));
+            assert(L_next_gotten == Lookup_Word(L_next, FEED_SPECIFIER(L->feed)));
         break;  // need to check for lookahead
 
       case REB_FRAME:
-        f_next_gotten = SPECIFIC(f_next);
+        L_next_gotten = SPECIFIC(L_next);
         break;
 
       default:
-        Clear_Feed_Flag(f->feed, NO_LOOKAHEAD);
+        Clear_Feed_Flag(L->feed, NO_LOOKAHEAD);
         goto finished;
     }
 
@@ -1896,17 +1908,17 @@ Bounce Evaluator_Executor(Frame(*) f)
     // unbound word).  It'll be an error, but that code path raises it for us.
 
     if (
-        not f_next_gotten
+        not L_next_gotten
         or (
-            not (IS_WORD(f_next) and Is_Activation(unwrap(f_next_gotten)))
-            and not IS_FRAME(f_next)
+            not (IS_WORD(L_next) and Is_Activation(unwrap(L_next_gotten)))
+            and not IS_FRAME(L_next)
         )
-        or Not_Enfixed(unwrap(f_next_gotten))
+        or Not_Enfixed(unwrap(L_next_gotten))
     ){
       lookback_quote_too_late: // run as if starting new expression
 
-        Clear_Feed_Flag(f->feed, NO_LOOKAHEAD);
-        Clear_Eval_Executor_Flag(f, INERT_OPTIMIZATION);
+        Clear_Feed_Flag(L->feed, NO_LOOKAHEAD);
+        Clear_Eval_Executor_Flag(L, INERT_OPTIMIZATION);
 
         // Since it's a new expression, EVALUATE doesn't want to run it
         // even if invisible, as it's not completely invisible (enfixed)
@@ -1917,7 +1929,7 @@ Bounce Evaluator_Executor(Frame(*) f)
   //=//// IS WORD ENFIXEDLY TIED TO A FUNCTION (MAY BE "INVISIBLE") ///////=//
 
   blockscope {
-    Action(*) enfixed = VAL_ACTION(unwrap(f_next_gotten));
+    Action(*) enfixed = VAL_ACTION(unwrap(L_next_gotten));
     Array(*) paramlist = ACT_PARAMLIST(enfixed);
 
     if (Get_Subclass_Flag(VARLIST, paramlist, PARAMLIST_QUOTES_FIRST)) {
@@ -1932,42 +1944,42 @@ Bounce Evaluator_Executor(Frame(*) f)
         // the left quoting function might be okay with seeing nothing on the
         // left.  Start a new expression and let it error if that's not ok.
         //
-        assert(Not_Eval_Executor_Flag(f, DIDNT_LEFT_QUOTE_TUPLE));
-        if (Get_Eval_Executor_Flag(f, DIDNT_LEFT_QUOTE_TUPLE))
+        assert(Not_Eval_Executor_Flag(L, DIDNT_LEFT_QUOTE_TUPLE));
+        if (Get_Eval_Executor_Flag(L, DIDNT_LEFT_QUOTE_TUPLE))
             fail (Error_Literal_Left_Tuple_Raw());
 
         const REBPAR *first = First_Unspecialized_Param(nullptr, enfixed);
         if (VAL_PARAM_CLASS(first) == PARAM_CLASS_SOFT) {
-            if (Get_Feed_Flag(f->feed, NO_LOOKAHEAD)) {
-                Clear_Feed_Flag(f->feed, NO_LOOKAHEAD);
-                Clear_Eval_Executor_Flag(f, INERT_OPTIMIZATION);
+            if (Get_Feed_Flag(L->feed, NO_LOOKAHEAD)) {
+                Clear_Feed_Flag(L->feed, NO_LOOKAHEAD);
+                Clear_Eval_Executor_Flag(L, INERT_OPTIMIZATION);
                 goto finished;
             }
         }
-        else if (Not_Eval_Executor_Flag(f, INERT_OPTIMIZATION))
+        else if (Not_Eval_Executor_Flag(L, INERT_OPTIMIZATION))
             goto lookback_quote_too_late;
     }
 
-    Clear_Eval_Executor_Flag(f, INERT_OPTIMIZATION);  // served purpose if set
+    Clear_Eval_Executor_Flag(L, INERT_OPTIMIZATION);  // served purpose if set
 
     if (
-        Get_Eval_Executor_Flag(f, FULFILLING_ARG)
+        Get_Eval_Executor_Flag(L, FULFILLING_ARG)
         and not (Get_Action_Flag(enfixed, DEFERS_LOOKBACK)
                                        // ^-- `1 + if false [2] else [3]` => 4
         )
     ){
-        if (Get_Feed_Flag(f->feed, NO_LOOKAHEAD)) {
+        if (Get_Feed_Flag(L->feed, NO_LOOKAHEAD)) {
             // Don't do enfix lookahead if asked *not* to look.
 
-            Clear_Feed_Flag(f->feed, NO_LOOKAHEAD);
+            Clear_Feed_Flag(L->feed, NO_LOOKAHEAD);
 
-            assert(Not_Feed_Flag(f->feed, DEFERRING_ENFIX));
-            Set_Feed_Flag(f->feed, DEFERRING_ENFIX);
+            assert(Not_Feed_Flag(L->feed, DEFERRING_ENFIX));
+            Set_Feed_Flag(L->feed, DEFERRING_ENFIX);
 
             goto finished;
         }
 
-        Clear_Feed_Flag(f->feed, NO_LOOKAHEAD);
+        Clear_Feed_Flag(L->feed, NO_LOOKAHEAD);
     }
 
     // A deferral occurs, e.g. with:
@@ -1980,18 +1992,18 @@ Bounce Evaluator_Executor(Frame(*) f)
     // to know not to do the deferral more than once.
     //
     if (
-        Get_Eval_Executor_Flag(f, FULFILLING_ARG)
+        Get_Eval_Executor_Flag(L, FULFILLING_ARG)
         and (
             Get_Action_Flag(enfixed, POSTPONES_ENTIRELY)
             or (
                 Get_Action_Flag(enfixed, DEFERS_LOOKBACK)
-                and Not_Feed_Flag(f->feed, DEFERRING_ENFIX)
+                and Not_Feed_Flag(L->feed, DEFERRING_ENFIX)
             )
         )
     ){
         if (
-            Is_Action_Frame(f->prior)
-            and Get_Executor_Flag(ACTION, f->prior, ERROR_ON_DEFERRED_ENFIX)
+            Is_Action_Level(L->prior)
+            and Get_Executor_Flag(ACTION, L->prior, ERROR_ON_DEFERRED_ENFIX)
         ){
             // Operations that inline functions by proxy (such as MATCH and
             // ENSURE) cannot directly interoperate with THEN or ELSE...they
@@ -2002,19 +2014,19 @@ Bounce Evaluator_Executor(Frame(*) f)
             fail (Error_Ambiguous_Infix_Raw());
         }
 
-        Clear_Feed_Flag(f->feed, NO_LOOKAHEAD);
+        Clear_Feed_Flag(L->feed, NO_LOOKAHEAD);
 
         if (
-            Is_Action_Frame(f->prior)
+            Is_Action_Level(L->prior)
             //
             // ^-- !!! Before stackless it was always the case when we got
-            // here that a function frame was fulfilling, because SET-WORD!
-            // would reuse frames while fulfilling arguments...but stackless
-            // changed this and has SET-WORD! start new frames.  Review.
+            // here that a function level was fulfilling, because SET-WORD!
+            // would reuse levels while fulfilling arguments...but stackless
+            // changed this and has SET-WORD! start new Levels.  Review.
             //
-            and not Is_Action_Frame_Fulfilling(f->prior)
+            and not Is_Level_Fulfilling(L->prior)
         ){
-            // This should mean it's a variadic frame, e.g. when we have
+            // This should mean it's a variadic level, e.g. when we have
             // the 2 in the output slot and are at the THEN in:
             //
             //     variadic2 1 2 then (t => [print ["t is" t] <then>])
@@ -2026,49 +2038,49 @@ Bounce Evaluator_Executor(Frame(*) f)
             goto finished;
         }
 
-        Set_Feed_Flag(f->feed, DEFERRING_ENFIX);
+        Set_Feed_Flag(L->feed, DEFERRING_ENFIX);
 
-        // Leave enfix operator pending in the frame.  It's up to the parent
-        // frame to decide whether to ST_EVALUATOR_LOOKING_AHEAD to jump
+        // Leave enfix operator pending in the feed.  It's up to the parent
+        // level to decide whether to ST_EVALUATOR_LOOKING_AHEAD to jump
         // back in and finish fulfilling this arg or not.  If it does resume
-        // and we get to this check again, f->prior->deferred can't be null,
+        // and we get to this check again, L->prior->deferred can't be null,
         // otherwise it would be an infinite loop.
         //
         goto finished;
     }
 
-    Clear_Feed_Flag(f->feed, DEFERRING_ENFIX);
+    Clear_Feed_Flag(L->feed, DEFERRING_ENFIX);
 
     // An evaluative lookback argument we don't want to defer, e.g. a normal
     // argument or a deferable one which is not being requested in the context
     // of parameter fulfillment.  We want to reuse the OUT value and get it
     // into the new function's frame.
 
-    Frame(*) subframe = Make_Action_Subframe(f);
-    Push_Frame(OUT, subframe);
-    Push_Action(subframe, enfixed, VAL_FRAME_BINDING(unwrap(f_next_gotten)));
+    Level(*) sub = Make_Action_Sublevel(L);
+    Push_Level(OUT, sub);
+    Push_Action(sub, enfixed, VAL_FRAME_BINDING(unwrap(L_next_gotten)));
     Begin_Enfix_Action(
-        subframe,
-        IS_FRAME(f_next) ? VAL_FRAME_LABEL(f_next) : VAL_WORD_SYMBOL(f_next)
+        sub,
+        IS_FRAME(L_next) ? VAL_FRAME_LABEL(L_next) : VAL_WORD_SYMBOL(L_next)
     );
 
-    Fetch_Next_Forget_Lookback(f);  // advances next
+    Fetch_Next_Forget_Lookback(L);  // advances next
 
     goto process_action; }
 
   finished:
 
     // Want to keep this flag between an operation and an ensuing enfix in
-    // the same frame, so can't clear in Drop_Action(), e.g. due to:
+    // the same level, so can't clear in Drop_Action(), e.g. due to:
     //
     //     left-the: enfix :the
     //     o: make object! [f: does [1]]
     //     o.f left-the  ; want error suggesting >- here, need flag for that
     //
-    Clear_Eval_Executor_Flag(f, DIDNT_LEFT_QUOTE_TUPLE);
+    Clear_Eval_Executor_Flag(L, DIDNT_LEFT_QUOTE_TUPLE);
 
   #if !defined(NDEBUG)
-    Evaluator_Exit_Checks_Debug(f);
+    Evaluator_Exit_Checks_Debug(L);
   #endif
 
     assert(not Is_Fresh(OUT));  // should have been assigned
@@ -2077,7 +2089,7 @@ Bounce Evaluator_Executor(Frame(*) f)
   return_thrown:
 
   #if !defined(NDEBUG)
-    Evaluator_Exit_Checks_Debug(f);
+    Evaluator_Exit_Checks_Debug(L);
   #endif
 
     return BOUNCE_THROWN;

@@ -61,11 +61,11 @@ DECLARE_NATIVE(reeval)
         and HEART_BYTE(v) == REB_FRAME
         and Is_Enfixed(v);
 
-    Flags flags = FRAME_MASK_NONE;
+    Flags flags = LEVEL_MASK_NONE;
 
-    if (Reevaluate_In_Subframe_Throws(
+    if (Reevaluate_In_Sublevel_Throws(
         OUT,  // reeval :comment "this should leave old input"
-        frame_,
+        level_,
         ARG(value),
         flags,
         enfix
@@ -112,17 +112,17 @@ DECLARE_NATIVE(shove)
 {
     INCLUDE_PARAMS_OF_SHOVE;
 
-    Frame(*) f;
-    if (not Is_Frame_Style_Varargs_May_Fail(&f, ARG(right)))
+    Level(*) L;
+    if (not Is_Level_Style_Varargs_May_Fail(&L, ARG(right)))
         fail ("SHOVE (>-) not implemented for MAKE VARARGS! [...] yet");
 
     REBVAL *left = ARG(left);
 
-    if (Is_Frame_At_End(f))  // shouldn't be for WORD!/PATH! unless APPLY
+    if (Is_Level_At_End(L))  // shouldn't be for WORD!/PATH! unless APPLY
         return COPY(ARG(left));  // ...because evaluator wants `help <-` to work
 
     // It's best for SHOVE to do type checking here, as opposed to setting
-    // some kind of FRAME_FLAG_SHOVING and passing that into the evaluator, then
+    // some kind of LEVEL_FLAG_SHOVING and passing that into the evaluator, then
     // expecting it to notice if you shoved into an INTEGER! or something.
     //
     // !!! To get the feature working as a first cut, this doesn't try get too
@@ -134,26 +134,26 @@ DECLARE_NATIVE(shove)
     REBVAL *shovee = ARG(right); // reuse arg cell for the shoved-into
     option(Symbol(const*)) label = nullptr;
 
-    if (IS_WORD(At_Frame(f)) or IS_PATH(At_Frame(f)) or IS_TUPLE(At_Frame(f))) {
+    if (IS_WORD(At_Level(L)) or IS_PATH(At_Level(L)) or IS_TUPLE(At_Level(L))) {
         //
         // !!! should get label from word
         //
         Get_Var_May_Fail(
             OUT, // can't eval directly into arg slot
-            At_Frame(f),
-            f_specifier,
+            At_Level(L),
+            Level_Specifier(L),
             false
         );
         Move_Cell(shovee, OUT);
     }
-    else if (IS_GROUP(At_Frame(f))) {
-        if (Do_Any_Array_At_Throws(OUT, At_Frame(f), f_specifier))
+    else if (IS_GROUP(At_Level(L))) {
+        if (Do_Any_Array_At_Throws(OUT, At_Level(L), Level_Specifier(L)))
             return THROWN;
 
         Move_Cell(shovee, OUT);  // can't eval directly into arg slot
     }
     else
-        Copy_Cell(shovee, SPECIFIC(At_Frame(f)));
+        Copy_Cell(shovee, SPECIFIC(At_Level(L)));
 
     Deactivate_If_Activation(shovee);  // allow ACTION! to be run
 
@@ -175,7 +175,7 @@ DECLARE_NATIVE(shove)
     else
         enfix = false;
 
-    Fetch_Next_Forget_Lookback(f);
+    Fetch_Next_Forget_Lookback(L);
 
     // Since we're simulating enfix dispatch, we need to move the first arg
     // where enfix gets it from...the frame output slot.
@@ -202,12 +202,12 @@ DECLARE_NATIVE(shove)
 
     Flags flags = FLAG_STATE_BYTE(ST_ACTION_FULFILLING_ENFIX_FROM_OUT);
 
-    Frame(*) sub = Make_Frame(frame_->feed, flags);
+    Level(*) sub = Make_Level(level_->feed, flags);
     Push_Action(sub, VAL_ACTION(shovee), VAL_FRAME_BINDING(shovee));
     Begin_Action_Core(sub, label, enfix);
 
-    Push_Frame(OUT, sub);
-    return DELEGATE_SUBFRAME(sub);
+    Push_Level(OUT, sub);
+    return DELEGATE_SUBLEVEL(sub);
 }
 
 
@@ -293,24 +293,24 @@ DECLARE_NATIVE(do)
             return OUT;
         }
 
-        Frame(*) f;
-        if (not Is_Frame_Style_Varargs_May_Fail(&f, source))
+        Level(*) L;
+        if (not Is_Level_Style_Varargs_May_Fail(&L, source))
             panic (source); // Frame is the only other type
 
-        // By definition, we are in the middle of a function call in the frame
+        // By definition, we are in the middle of a function call in the level
         // the varargs came from.  It's still on the stack, and we don't want
-        // to disrupt its state.  Use a subframe.
+        // to disrupt its state.  Use a sublevel.
 
-        if (Is_Frame_At_End(f))
+        if (Is_Level_At_End(L))
             return VOID;
 
-        Frame(*) sub = Make_Frame(
-            f->feed,
-            FRAME_MASK_NONE
+        Level(*) sub = Make_Level(
+            L->feed,
+            LEVEL_MASK_NONE
         );
         sub->executor = &Array_Executor;
-        Push_Frame(OUT, sub);
-        return DELEGATE_SUBFRAME(sub); }
+        Push_Level(OUT, sub);
+        return DELEGATE_SUBLEVEL(sub); }
 
       case REB_THE_WORD : goto do_helper;
       case REB_BINARY : goto do_helper;
@@ -324,7 +324,7 @@ DECLARE_NATIVE(do)
 
         rebPushContinuation(
             cast(REBVAL*, OUT),  // <-- output cell
-            FRAME_MASK_NONE,
+            LEVEL_MASK_NONE,
             rebRUN(SysUtil(DO_P)),
                 source,
                 rebQ(ARG(args)),
@@ -430,7 +430,7 @@ DECLARE_NATIVE(evaluate)
                 rebElide(Canon(SET), rebQ(rest_var), nullptr);
 
             Init_Nihil(OUT);  // !!! Callers not prepared for more ornery result
-            return Proxy_Multi_Returns(frame_);
+            return Proxy_Multi_Returns(level_);
         }
 
         Feed(*) feed = Make_At_Feed_Core(  // use feed, see [2]
@@ -439,25 +439,25 @@ DECLARE_NATIVE(evaluate)
         );
         assert(Not_Feed_At_End(feed));
 
-        Flags flags = FRAME_FLAG_ALLOCATED_FEED;
+        Flags flags = LEVEL_FLAG_ALLOCATED_FEED;
 
         if (not REF(next)) {
             flags |= FLAG_STATE_BYTE(ST_ARRAY_PRELOADED_ENTRY);
             Init_Nihil(OUT);  // heeded by array executor
         }
 
-        Frame(*) subframe = Make_Frame(feed, flags);
-        Push_Frame(OUT, subframe);
+        Level(*) sub = Make_Level(feed, flags);
+        Push_Level(OUT, sub);
 
         if (not REF(next)) {  // plain evaluation to end, maybe invisible
-            subframe->executor = &Array_Executor;
-            return DELEGATE_SUBFRAME(subframe);
+            sub->executor = &Array_Executor;
+            return DELEGATE_SUBLEVEL(sub);
         }
 
-        Set_Frame_Flag(subframe, TRAMPOLINE_KEEPALIVE);  // to ask how far it got
+        Set_Level_Flag(sub, TRAMPOLINE_KEEPALIVE);  // to ask how far it got
 
         STATE = ST_EVALUATE_SINGLE_STEPPING;
-        return CONTINUE_SUBFRAME(subframe);
+        return CONTINUE_SUBLEVEL(sub);
     }
     else switch (VAL_TYPE(source)) {
 
@@ -496,7 +496,7 @@ DECLARE_NATIVE(evaluate)
                 &index,
                 position,
                 SPECIFIED,
-                FRAME_MASK_NONE
+                LEVEL_MASK_NONE
             )){
                 // !!! A BLOCK! varargs doesn't technically need to "go bad"
                 // on a throw, since the block is still around.  But a FRAME!
@@ -510,19 +510,19 @@ DECLARE_NATIVE(evaluate)
             VAL_INDEX_UNBOUNDED(position) = index;
         }
         else {
-            Frame(*) f;
-            if (not Is_Frame_Style_Varargs_May_Fail(&f, source))
+            Level(*) L;
+            if (not Is_Level_Style_Varargs_May_Fail(&L, source))
                 panic (source); // Frame is the only other type
 
-            // By definition, we're in the middle of a function call in frame
+            // By definition, we're in the middle of a function call in level
             // the varargs came from.  It's still on the stack--we don't want
-            // to disrupt its state (beyond feed advancing).  Use a subframe.
+            // to disrupt its state (beyond feed advancing).  Use a sublevle.
 
-            if (Is_Frame_At_End(f))
+            if (Is_Level_At_End(L))
                 return nullptr;
 
-            Flags flags = FRAME_MASK_NONE;
-            if (Eval_Step_In_Subframe_Throws(SPARE, f, flags))
+            Flags flags = LEVEL_MASK_NONE;
+            if (Eval_Step_In_Sublevel_Throws(SPARE, L, flags))
                 return THROWN;
         }
         break; }
@@ -538,9 +538,9 @@ DECLARE_NATIVE(evaluate)
 
 } single_step_result_in_out: {  //////////////////////////////////////////////
 
-    REBSPC *specifier = FRM_SPECIFIER(SUBFRAME);
-    VAL_INDEX_UNBOUNDED(source) = FRM_INDEX(SUBFRAME);  // new index
-    Drop_Frame(SUBFRAME);
+    REBSPC *specifier = Level_Specifier(SUBLEVEL);
+    VAL_INDEX_UNBOUNDED(source) = Level_Array_Index(SUBLEVEL);  // new index
+    Drop_Level(SUBLEVEL);
 
     INIT_BINDING_MAY_MANAGE(source, specifier);  // integrate LETs, see [6]
 
@@ -585,8 +585,8 @@ DECLARE_NATIVE(redo)
 
     Context(*) c = VAL_CONTEXT(restartee);
 
-    Frame(*) f = CTX_FRAME_IF_ON_STACK(c);
-    if (f == NULL)
+    Level(*) L = CTX_LEVEL_IF_ON_STACK(c);
+    if (L == NULL)
         fail ("Use DO to start a not-currently running FRAME! (not REDO)");
 
     // If we were given a sibling to restart, make sure it is frame compatible
@@ -603,7 +603,7 @@ DECLARE_NATIVE(redo)
     if (REF(other)) {
         REBVAL *sibling = ARG(other);
         if (
-            ACT_KEYLIST(f->u.action.original)
+            ACT_KEYLIST(L->u.action.original)
             != ACT_KEYLIST(VAL_ACTION(sibling))
         ){
             fail ("/OTHER function passed to REDO has incompatible FRAME!");
@@ -624,7 +624,7 @@ DECLARE_NATIVE(redo)
     // to restart the phase at the point of parameter checking.  Make that
     // the actual value that Eval_Core() catches.
     //
-    return Init_Thrown_With_Label(FRAME, restartee, stable_SPARE);
+    return Init_Thrown_With_Label(LEVEL, restartee, stable_SPARE);
 }
 
 
@@ -756,7 +756,7 @@ DECLARE_NATIVE(apply)
         ST_APPLY_UNLABELED_EVAL_STEP
     };
 
-    if (Get_Frame_Flag(frame_, ABRUPT_FAILURE))  // a fail() in this dispatcher
+    if (Get_Level_Flag(level_, ABRUPT_FAILURE))  // a fail() in this dispatcher
         goto finalize_apply;
 
     switch (STATE) {
@@ -795,30 +795,30 @@ DECLARE_NATIVE(apply)
 
     Drop_Data_Stack_To(STACK_BASE);  // partials ordering unimportant
 
-    Frame(*) f = Make_Frame_At(
+    Level(*) L = Make_Level_At(
         args,
-        FRAME_FLAG_TRAMPOLINE_KEEPALIVE
+        LEVEL_FLAG_TRAMPOLINE_KEEPALIVE
     );
-    Push_Frame(SPARE, f);
+    Push_Level(SPARE, L);
 
     EVARS *e = TRY_ALLOC(EVARS);
     Init_Evars(e, frame);  // CTX_ARCHETYPE(exemplar) is phased, sees locals
     Init_Handle_Cdata(iterator, e, sizeof(EVARS));
 
-    Set_Frame_Flag(frame_, NOTIFY_ON_ABRUPT_FAILURE);  // to clean up iterator
+    Set_Level_Flag(level_, NOTIFY_ON_ABRUPT_FAILURE);  // to clean up iterator
     goto handle_next_item;
 
 } handle_next_item: {  ///////////////////////////////////////////////////////
 
-    Frame(*) f = SUBFRAME;
+    Level(*) L = SUBLEVEL;
 
-    if (Is_Frame_At_End(f))
+    if (Is_Level_At_End(L))
         goto finalize_apply;
 
-    Cell(const*) at = At_Frame(f);
+    Cell(const*) at = At_Level(L);
 
     if (IS_COMMA(at)) {
-        Fetch_Next_Forget_Lookback(f);
+        Fetch_Next_Forget_Lookback(L);
         goto handle_next_item;
     }
 
@@ -832,7 +832,7 @@ DECLARE_NATIVE(apply)
     if (IS_PATH(at) and IS_REFINEMENT(at)) {
         STATE = ST_APPLY_LABELED_EVAL_STEP;
 
-        Symbol(const*) symbol = VAL_REFINEMENT_SYMBOL(At_Frame(f));
+        Symbol(const*) symbol = VAL_REFINEMENT_SYMBOL(At_Level(L));
 
         REBLEN index = Find_Symbol_In_Context(frame, symbol, false);
         if (index == 0)
@@ -844,8 +844,8 @@ DECLARE_NATIVE(apply)
         if (not Is_None(var))
             fail (Error_Bad_Parameter_Raw(rebUnrelativize(at)));
 
-        Cell(const*) lookback = Lookback_While_Fetching_Next(f);  // for error
-        at = Try_At_Frame(f);
+        Cell(const*) lookback = Lookback_While_Fetching_Next(L);  // for error
+        at = Try_At_Level(L);
 
         if (at == nullptr or IS_COMMA(at))
             fail (Error_Need_Non_End_Raw(rebUnrelativize(lookback)));
@@ -894,12 +894,12 @@ DECLARE_NATIVE(apply)
     assert(not IS_POINTER_TRASH_DEBUG(param));  // nullptr means toss result
 
     if (param and VAL_PARAM_CLASS(param) == PARAM_CLASS_META)
-        Set_Frame_Flag(SUBFRAME, META_RESULT);  // get decayed result otherwise
+        Set_Level_Flag(SUBLEVEL, META_RESULT);  // get decayed result otherwise
     else
-        Clear_Frame_Flag(SUBFRAME, META_RESULT);
+        Clear_Level_Flag(SUBLEVEL, META_RESULT);
 
-    Restart_Evaluator_Frame(SUBFRAME);
-    return CATCH_CONTINUE_SUBFRAME(SUBFRAME);
+    Restart_Evaluator_Level(SUBLEVEL);
+    return CATCH_CONTINUE_SUBLEVEL(SUBLEVEL);
 
 } labeled_step_result_in_spare: {  ///////////////////////////////////////////
 
@@ -950,12 +950,12 @@ DECLARE_NATIVE(apply)
         Init_None(iterator);
     }
 
-    if (THROWING)  // assume Drop_Frame() called on SUBFRAME?
+    if (THROWING)  // assume Drop_Level() called on SUBLEVEL?
         return THROWN;
 
-    Drop_Frame(SUBFRAME);
+    Drop_Level(SUBLEVEL);
 
-    Clear_Frame_Flag(frame_, NOTIFY_ON_ABRUPT_FAILURE);  // necessary?
+    Clear_Level_Flag(level_, NOTIFY_ON_ABRUPT_FAILURE);  // necessary?
 
     return DELEGATE(OUT, frame);
 }}
@@ -963,12 +963,10 @@ DECLARE_NATIVE(apply)
 
 // From %c-eval.c -- decide if this should be shared or otherwise.
 //
-#define Make_Action_Subframe(parent) \
-    Make_Frame((parent)->feed, \
-        FRAME_FLAG_FAILURE_RESULT_OK \
-        | ((parent)->flags.bits \
-            & (EVAL_EXECUTOR_FLAG_FULFILLING_ARG \
-                | EVAL_EXECUTOR_FLAG_DIDNT_LEFT_QUOTE_TUPLE)))
+#define Make_Action_Sublevel(parent) \
+    Make_Level((parent)->feed, \
+        LEVEL_FLAG_FAILURE_RESULT_OK \
+        | ((parent)->flags.bits & EVAL_EXECUTOR_FLAG_DIDNT_LEFT_QUOTE_TUPLE))
 
 
 
@@ -989,14 +987,14 @@ DECLARE_NATIVE(run)
     Value(*) action = ARG(frame);
     UNUSED(ARG(args));  // uses internal mechanisms to act variadic
 
-    Frame(*) subframe = Make_Action_Subframe(frame_);
-    Push_Frame(OUT, subframe);
+    Level(*) sub = Make_Action_Sublevel(level_);
+    Push_Level(OUT, sub);
     Push_Action(
-        subframe,
+        sub,
         VAL_ACTION(action),
         VAL_FRAME_BINDING(action)
     );
-    Begin_Prefix_Action(subframe, VAL_FRAME_LABEL(action));
+    Begin_Prefix_Action(sub, VAL_FRAME_LABEL(action));
 
-    return DELEGATE_SUBFRAME (subframe);
+    return DELEGATE_SUBLEVEL(sub);
 }

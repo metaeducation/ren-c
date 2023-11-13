@@ -34,12 +34,12 @@
 // There are important technical reasons for favoring the label as the output:
 //
 // * RETURN is implemented as a throw whose label is a FRAME!.  That FRAME!
-//   value can store either a Frame(*) which costs nothing extra, or a Context(*)
+//   value can store either a Level(*) which costs nothing extra, or Context(*)
 //   which requires "reifying" the frame and making it GC-visible.  Reifying
-//   would happen unconditionally if the frame is put into a global variable,
-//   but so long as the FRAME! value bubbles up no higher than the Frame(*)
+//   would happen unconditionally if the level is put into a global variable,
+//   but so long as the FRAME! value bubbles up no higher than the Level(*)
 //   it points to, it can be used as-is.  With RETURN, it will be exactly the
-//   right lifetime--since the originating frame is right where it stops.
+//   right lifetime--since the originating level is right where it stops.
 //
 // * When various stack levels are checking for their interest in a thrown
 //   value, they look at the label...and if it's not what they want, they
@@ -61,14 +61,14 @@
 //   more checking that thrown values aren't being dropped or misused.
 //
 
-inline static Value(const*) VAL_THROWN_LABEL(Frame(*) frame_) {
-    UNUSED(frame_);
+inline static Value(const*) VAL_THROWN_LABEL(Level(*) level_) {
+    UNUSED(level_);
     assert(not Is_Cell_Erased(&TG_Thrown_Label));
     return &TG_Thrown_Label;
 }
 
 inline static Bounce Init_Thrown_With_Label(  // assumes `arg` in TG_Thrown_Arg
-    Frame(*) frame_,
+    Level(*) level_,
     Atom(const*) arg,
     const REBVAL *label  // Note: is allowed to be same as `out`
 ){
@@ -83,22 +83,22 @@ inline static Bounce Init_Thrown_With_Label(  // assumes `arg` in TG_Thrown_Arg
 
     assert(THROWING);
 
-    FRESHEN(frame_->out);
+    FRESHEN(level_->out);
     return BOUNCE_THROWN;
 }
 
 // When errors are put in the throw state, they are the label--not the value.
 //
-inline static Bounce Init_Thrown_Error(Frame(*) frame, Value(const*) error) {
+inline static Bounce Init_Thrown_Error(Level(*) L, Value(const*) error) {
     assert(IS_ERROR(error));
-    return Init_Thrown_With_Label((frame), Lib(NULL), (error));
+    return Init_Thrown_With_Label(L, Lib(NULL), error);
 }
 
 inline static void CATCH_THROWN(
     Cell(*) arg_out,
-    Frame(*) frame_
+    Level(*) level_
 ){
-    UNUSED(frame_);
+    UNUSED(level_);
 
     assert(THROWING);
 
@@ -109,11 +109,11 @@ inline static void CATCH_THROWN(
 
     assert(not THROWING);
 
-    TG_Unwind_Frame = nullptr;
+    TG_Unwind_Level = nullptr;
 }
 
 
-inline static void Drop_Frame(Frame(*) f);
+inline static void Drop_Level(Level(*) L);
 
 // When you're sure that the value isn't going to be consumed by a multireturn
 // then use this to get the first value unmeta'd
@@ -123,11 +123,11 @@ inline static Value(*) Decay_If_Unstable(Atom(*) v) {
         return cast(Value(*), v);
 
     if (Is_Lazy(v)) {
-        if (not Pushed_Decaying_Frame(v, v, FRAME_MASK_NONE))
+        if (not Pushed_Decaying_Level(v, v, LEVEL_MASK_NONE))
             return cast(Value(*), v);  // cheap reification
         if (Trampoline_With_Top_As_Root_Throws())
-            fail (Error_No_Catch_For_Throw(TOP_FRAME));
-        Drop_Frame(TOP_FRAME);
+            fail (Error_No_Catch_For_Throw(TOP_LEVEL));
+        Drop_Level(TOP_LEVEL);
 
         // fall through in case result is pack or raised
         // (should this iterate?)

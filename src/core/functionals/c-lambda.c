@@ -60,7 +60,7 @@ enum {
 // doing any virtual binding.  However, there's some difference w.r.t. the
 // "derived binding" that need a going-over.
 //
-Bounce Lambda_Dispatcher(Frame(*) f)
+Bounce Lambda_Dispatcher(Level(*) L)
 //
 // 1. We have to use Make_Or_Reuse_Use() here, because it could be the case
 //    that a higher level wrapper used the frame and virtually bound it.
@@ -72,26 +72,25 @@ Bounce Lambda_Dispatcher(Frame(*) f)
 //    The merging notices the redundancy and doesn't create a new specifier
 //    which is good...but this is still inefficient.  This all needs review.
 {
-    Frame(*) frame_ = f;
+    Level(*) level_ = L;
 
-    Phase(*) phase = FRM_PHASE(f);
-    Details(*) details = ACT_DETAILS(phase);
+    Details(*) details = ACT_DETAILS(PHASE);
     assert(ARR_LEN(details) == IDX_LAMBDA_MAX);
 
     const REBVAL *block = DETAILS_AT(details, IDX_LAMBDA_BLOCK);
     assert(IS_BLOCK(block));
 
-    SET_SERIES_FLAG(f->varlist, MANAGED);  // not manually tracked...
+    SET_SERIES_FLAG(L->varlist, MANAGED);  // not manually tracked...
 
     REBSPC *specifier = Make_Or_Reuse_Use(  // may reuse, see [1]
-        CTX(f->varlist),
+        CTX(L->varlist),
         VAL_SPECIFIER(block),  // redundant with feed, see [2]
         REB_WORD
     );
 
     return DELEGATE_CORE(
         OUT,
-        FRAME_MASK_NONE,
+        LEVEL_MASK_NONE,
         specifier,  // block's specifier
         block
     );
@@ -105,17 +104,16 @@ Bounce Lambda_Dispatcher(Frame(*) f)
 // like function dispatch, except there's no RETURN to catch.  So it can
 // execute directly into the output cell.
 //
-Bounce Lambda_Unoptimized_Dispatcher(Frame(*) frame_)
+Bounce Lambda_Unoptimized_Dispatcher(Level(*) level_)
 {
-    Phase(*) phase = FRM_PHASE(FRAME);
-    Details(*) details = ACT_DETAILS(phase);
+    Details(*) details = ACT_DETAILS(PHASE);
     Cell(*) body = ARR_AT(details, IDX_DETAILS_1);  // code to run
     assert(IS_BLOCK(body) and IS_RELATIVE(body) and VAL_INDEX(body) == 0);
 
     return DELEGATE_CORE(
         OUT,  // output
-        FRAME_MASK_NONE,  // flags
-        SPC(FRAME->varlist),  // branch specifier
+        LEVEL_MASK_NONE,  // flags
+        SPC(LEVEL->varlist),  // branch specifier
         body  // branch
     );
 }

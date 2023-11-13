@@ -144,7 +144,7 @@ REBVAL *Init_Decimal_Bits(Cell(*) out, const Byte* bp)
 // or MAKE as a rough idea of how these rules might be followed.
 //
 Bounce MAKE_Decimal(
-    Frame(*) frame_,
+    Level(*) level_,
     enum Reb_Kind kind,
     option(const REBVAL*) parent,
     const REBVAL *arg
@@ -183,7 +183,7 @@ Bounce MAKE_Decimal(
         // TO does it as well.
         //
       case REB_TEXT:
-        return TO_Decimal(frame_, kind, arg);
+        return TO_Decimal(level_, kind, arg);
 
         // !!! MAKE DECIMAL! from a PATH! ... as opposed to TO DECIMAL ...
         // will allow evaluation of arbitrary code.  This is an experiment on
@@ -290,7 +290,7 @@ Bounce MAKE_Decimal(
 // conversions, with MAKE used for less obvious (e.g. make decimal [1 5]
 // giving you 100000).
 //
-Bounce TO_Decimal(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg)
+Bounce TO_Decimal(Level(*) level_, enum Reb_Kind kind, const REBVAL *arg)
 {
     assert(kind == REB_DECIMAL or kind == REB_PERCENT);
 
@@ -355,7 +355,7 @@ Bounce TO_Decimal(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg)
         // for now so people don't have to change it twice.
         //
       case REB_BINARY:
-        return MAKE_Decimal(frame_, kind, nullptr, arg);
+        return MAKE_Decimal(level_, kind, nullptr, arg);
 
       default:
         goto bad_to;
@@ -499,7 +499,7 @@ REBTYPE(Decimal)
             Move_Cell(OUT, D_ARG(2));
             Move_Cell(D_ARG(2), D_ARG(1));
             Move_Cell(D_ARG(1), OUT);
-            return Run_Generic_Dispatch_Core(D_ARG(1), frame_, verb);
+            return Run_Generic_Dispatch_Core(D_ARG(1), level_, verb);
         }
 
         // If the type of the second arg is something we can handle:
@@ -521,7 +521,7 @@ REBTYPE(Decimal)
             }
             else if (type == REB_MONEY) {
                 Init_Money(val, decimal_to_deci(VAL_DECIMAL(val)));
-                return T_Money(frame_, verb);
+                return T_Money(level_, verb);
             }
             else if (type == REB_ISSUE) {
                 d2 = cast(REBDEC, VAL_CHAR(arg));
@@ -609,20 +609,20 @@ REBTYPE(Decimal)
 
     case SYM_ROUND: {
         INCLUDE_PARAMS_OF_ROUND;
-        USED(ARG(value));  // extracted as d1, others are passed via frame_
+        USED(ARG(value));  // extracted as d1, others are passed via level_
         USED(ARG(even)); USED(ARG(down)); USED(ARG(half_down));
         USED(ARG(floor)); USED(ARG(ceiling)); USED(ARG(half_ceiling));
 
         if (REF(to)) {
             if (IS_MONEY(ARG(to)))
                 return Init_Money(OUT, Round_Deci(
-                    decimal_to_deci(d1), frame_, VAL_MONEY_AMOUNT(ARG(to))
+                    decimal_to_deci(d1), level_, VAL_MONEY_AMOUNT(ARG(to))
                 ));
 
             if (IS_TIME(ARG(to)))
                 fail (PARAM(to));
 
-            d1 = Round_Dec(d1, frame_, Dec64(ARG(to)));
+            d1 = Round_Dec(d1, level_, Dec64(ARG(to)));
             if (IS_INTEGER(ARG(to)))
                 return Init_Integer(OUT, cast(REBI64, d1));
 
@@ -632,7 +632,7 @@ REBTYPE(Decimal)
         else {
             Init_True(ARG(to));  // default a rounding amount
             d1 = Round_Dec(
-                d1, frame_, type == REB_PERCENT ? 0.01L : 1.0L
+                d1, level_, type == REB_PERCENT ? 0.01L : 1.0L
             );
         }
         goto setDec; }

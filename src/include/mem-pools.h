@@ -79,7 +79,7 @@ enum Mem_Pool_Specs {
   #else
     PAIR_POOL = STUB_POOL,
   #endif
-    FRAME_POOL,
+    LEVEL_POOL,
     FEED_POOL,
     SYSTEM_POOL,
     MAX_POOLS

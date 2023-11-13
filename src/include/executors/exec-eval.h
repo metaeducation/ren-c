@@ -1,6 +1,6 @@
 //
 //  File: %exec-eval.h
-//  Summary: {Flags and Frame State for Evaluator_Executor()}
+//  Summary: {Flags and Level State for Evaluator_Executor()}
 //  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  Homepage: https://github.com/metaeducation/ren-c/
 //
@@ -19,7 +19,7 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // The executor state has to be defined in order to be used (easily) in the
-// union of the Reb_Frame.
+// union of the Reb_Level.
 //
 
 #define EXECUTOR_EVAL &Evaluator_Executor  // shorthand in Xxx_Executor_Flag()
@@ -42,7 +42,7 @@
 // There is a parallel flag in ACTION_EXECUTOR_FLAG_DIDNT_LEFT_QUOTE_TUPLE
 //
 #define EVAL_EXECUTOR_FLAG_DIDNT_LEFT_QUOTE_TUPLE \
-    FRAME_FLAG_24
+    LEVEL_FLAG_24
 
 
 //=//// EVAL_EXECUTOR_FLAG_FULFILLING_ARG /////////////////////////////////=//
@@ -55,19 +55,19 @@
 // Note: There is ACTION_EXECUTOR_FLAG_FULFILLING_ARG which matches this.
 //
 #define EVAL_EXECUTOR_FLAG_FULFILLING_ARG \
-    FRAME_FLAG_25
+    LEVEL_FLAG_25
 
 
 //=//// EVAL_EXECUTOR_FLAG_26 /////////////////////////////////////////////=//
 //
 #define EVAL_EXECUTOR_FLAG_26 \
-    FRAME_FLAG_26
+    LEVEL_FLAG_26
 
 
 //=//// EVAL_EXECUTOR_FLAG_27 /////////////////////////////////////////////=//
 //
 #define EVAL_EXECUTOR_FLAG_27 \
-    FRAME_FLAG_27
+    LEVEL_FLAG_27
 
 
 //=//// EVAL_EXECUTOR_FLAG_NO_EVALUATIONS /////////////////////////////////=//
@@ -83,18 +83,20 @@
 //     == 1
 //
 // Inert operations wind up costing a bit more because they're pushing a frame
-// when it seems "they don't need to"; but pushing a frame also locks the
-// series in question against enumeration.
+// when it seems "they don't need to"; but it provides flexibility for code
+// that sometimes wants to evaluate and sometimes doesn't, and also the
+// /PREDICATE can change what the rules are so that inert items don't all
+// count as true.
 //
 #define EVAL_EXECUTOR_FLAG_NO_EVALUATIONS \
-    FRAME_FLAG_28
+    LEVEL_FLAG_28
 
 
 //=//// EVAL_EXECUTOR_FLAG_NO_RESIDUE /////////////////////////////////////=//
 //
 // Sometimes a single step evaluation is done in which it would be considered
 // an error if all of the arguments are not used.  This requests an error if
-// the frame does not reach the end.
+// the feed does not reach the end.
 //
 // !!! Interactions with ELIDE won't currently work with this, so evaluation
 // would have to take this into account to greedily run ELIDEs if the flag
@@ -107,13 +109,13 @@
 // which it would need to reach either an END or another `||`.
 //
 #define EVAL_EXECUTOR_FLAG_NO_RESIDUE \
-    FRAME_FLAG_29
+    LEVEL_FLAG_29
 
 
 //=//// EVAL_EXECUTOR_FLAG_30 /////////////////////////////////////////////=//
 //
 #define EVAL_EXECUTOR_FLAG_30 \
-    FRAME_FLAG_30
+    LEVEL_FLAG_30
 
 
 //=//// EVAL_EXECUTOR_FLAG_INERT_OPTIMIZATION /////////////////////////////=//
@@ -123,7 +125,7 @@
 // quote is not actually too late.
 //
 #define EVAL_EXECUTOR_FLAG_INERT_OPTIMIZATION \
-    FRAME_FLAG_31
+    LEVEL_FLAG_31
 
 
 struct Reb_Eval_Executor_State {

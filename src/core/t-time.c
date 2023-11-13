@@ -234,7 +234,7 @@ REBINT CT_Time(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
 //  MAKE_Time: C
 //
 Bounce MAKE_Time(
-    Frame(*) frame_,
+    Level(*) level_,
     enum Reb_Kind kind,
     option(const REBVAL*) parent,
     const REBVAL *arg
@@ -359,9 +359,9 @@ Bounce MAKE_Time(
 //
 //  TO_Time: C
 //
-Bounce TO_Time(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg)
+Bounce TO_Time(Level(*) level_, enum Reb_Kind kind, const REBVAL *arg)
 {
-    return MAKE_Time(frame_, kind, nullptr, arg);
+    return MAKE_Time(level_, kind, nullptr, arg);
 }
 
 
@@ -634,7 +634,7 @@ REBTYPE(Time)
             Move_Cell(SPARE, D_ARG(1));
             Move_Cell(D_ARG(1), arg);
             Move_Cell(D_ARG(2), SPARE);
-            return T_Date(frame_, verb);
+            return T_Date(level_, verb);
         }
         fail (Error_Math_Args(REB_TIME, verb));
     }
@@ -660,25 +660,25 @@ REBTYPE(Time)
 
           case SYM_ROUND: {
             INCLUDE_PARAMS_OF_ROUND;
-            USED(ARG(value));  // aliased as v, others are passed via frame_
+            USED(ARG(value));  // aliased as v, others are passed via level_
             USED(ARG(even)); USED(ARG(down)); USED(ARG(half_down));
             USED(ARG(floor)); USED(ARG(ceiling)); USED(ARG(half_ceiling));
 
             if (not REF(to)) {
                 Init_True(ARG(to));  // by default make it /TO seconds
-                secs = Round_Int(secs, frame_, SEC_SEC);
+                secs = Round_Int(secs, level_, SEC_SEC);
                 return Init_Time_Nanoseconds(OUT, secs);
             }
 
             REBVAL *to = ARG(to);
             if (IS_TIME(to)) {
-                secs = Round_Int(secs, frame_, VAL_NANO(to));
+                secs = Round_Int(secs, level_, VAL_NANO(to));
                 return Init_Time_Nanoseconds(OUT, secs);
             }
             else if (IS_DECIMAL(to)) {
                 VAL_DECIMAL(to) = Round_Dec(
                     cast(REBDEC, secs),
-                    frame_,
+                    level_,
                     Dec64(to) * SEC_SEC
                 );
                 VAL_DECIMAL(to) /= SEC_SEC;
@@ -686,7 +686,7 @@ REBTYPE(Time)
             }
             else if (IS_INTEGER(to)) {
                 mutable_VAL_INT64(to)
-                    = Round_Int(secs, frame_, Int32(to) * SEC_SEC) / SEC_SEC;
+                    = Round_Int(secs, level_, Int32(to) * SEC_SEC) / SEC_SEC;
                 return COPY(to);
             }
 

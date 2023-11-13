@@ -134,7 +134,7 @@
 // cases can be very helpful in identifying the "tick" where certain problems
 // are occurring.  The debug build pokes this ticks lots of places--into
 // value cells when they are formatted, into series when they are allocated
-// or freed, or into stack frames each time they perform a new operation.
+// or freed, or into stack levels each time they perform a new operation.
 //
 // BREAK_NOW() will show the stack status at the right moment.  If you have a
 // reproducible tick count, then BREAK_ON_TICK() is useful.  See also
@@ -147,11 +147,11 @@
 // code path even when doing a debug build.
 //
 
-#define BREAK_NOW() /* macro means no stack frame, breaks at callsite */ \
+#define BREAK_NOW() /* macro means no C stack frame, breaks at callsite */ \
     do { \
         printf("BREAK_ON_TICK() @ tick %ld\n", cast(long int, TG_tick)); \
         fflush(stdout); \
-        Dump_Frame_Location(nullptr, TOP_FRAME); \
+        Dump_Level_Location(nullptr, TOP_LEVEL); \
         debug_break(); /* see %debug_break.h */ \
     } while (false)
 

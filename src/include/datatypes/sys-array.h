@@ -214,11 +214,11 @@ inline static Array(*) Make_Array_Core_Into(
     ){
         assert(flags & SERIES_FLAG_LINK_NODE_NEEDS_MARK);
         if (
-            not FRM_IS_VARIADIC(TOP_FRAME) and
-            Get_Subclass_Flag(ARRAY, FRM_ARRAY(TOP_FRAME), HAS_FILE_LINE_UNMASKED)
+            not Level_Is_Variadic(TOP_LEVEL) and
+            Get_Subclass_Flag(ARRAY, Level_Array(TOP_LEVEL), HAS_FILE_LINE_UNMASKED)
         ){
-            mutable_LINK(Filename, s) = LINK_FILENAME_HACK(FRM_ARRAY(TOP_FRAME));
-            s->misc.line = FRM_ARRAY(TOP_FRAME)->misc.line;
+            mutable_LINK(Filename, s) = LINK_FILENAME_HACK(Level_Array(TOP_LEVEL));
+            s->misc.line = Level_Array(TOP_LEVEL)->misc.line;
         }
         else {
             Clear_Subclass_Flag(ARRAY, s, HAS_FILE_LINE_UNMASKED);

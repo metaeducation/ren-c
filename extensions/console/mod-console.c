@@ -388,11 +388,11 @@ DECLARE_NATIVE(console)
     // Meta lets us catch errors, as well as discern if the value vaporizes
     // completely or not.
     //
-    Set_Executor_Flag(ACTION, frame_, DISPATCHER_CATCHES);
+    Set_Executor_Flag(ACTION, level_, DISPATCHER_CATCHES);
 
     rebPushContinuation(
         metaresult,  // aka SPARE
-        FRAME_FLAG_META_RESULT,
+        LEVEL_FLAG_META_RESULT,
         group
     );
     rebRelease(group);  // Note: does not release `code`
@@ -406,7 +406,7 @@ DECLARE_NATIVE(console)
     Disable_Halting();  // remove hook that calls rebHalt() on Ctrl-C
 
     if (THROWING)
-        Init_Error(metaresult, Error_No_Catch_For_Throw(FRAME));
+        Init_Error(metaresult, Error_No_Catch_For_Throw(LEVEL));
 
     goto run_skin;
 

@@ -44,7 +44,7 @@ REBINT CT_Port(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
 // function stored in the system/intrinsic object.
 //
 Bounce MAKE_Port(
-    Frame(*) frame_,
+    Level(*) level_,
     enum Reb_Kind kind,
     option(const REBVAL*) parent,
     const REBVAL *arg
@@ -57,7 +57,7 @@ Bounce MAKE_Port(
         cast(REBVAL*, OUT),  // <-- output cell
         rebRUN(SysUtil(MAKE_PORT_P)), rebQ(arg)
     )){
-        fail (Error_No_Catch_For_Throw(TOP_FRAME));
+        fail (Error_No_Catch_For_Throw(TOP_LEVEL));
     }
 
     if (not IS_PORT(OUT))  // should always create a port
@@ -70,7 +70,7 @@ Bounce MAKE_Port(
 //
 //  TO_Port: C
 //
-Bounce TO_Port(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg)
+Bounce TO_Port(Level(*) level_, enum Reb_Kind kind, const REBVAL *arg)
 {
     assert(kind == REB_PORT);
     UNUSED(kind);
@@ -125,7 +125,7 @@ REBTYPE(Port)
     // to T_Context() is not performed.
     //
     if (id == SYM_PICK_P or id == SYM_POKE_P)
-        return T_Context(frame_, verb);
+        return T_Context(level_, verb);
 
     Context(*) ctx = VAL_CONTEXT(port);
     REBVAL *actor = CTX_VAR(ctx, STD_PORT_ACTOR);
@@ -136,7 +136,7 @@ REBTYPE(Port)
     // it's some other kind of handle value this could crash.
     //
     if (Is_Native_Port_Actor(actor)) {
-        Bounce b = cast(PORT_HOOK*, VAL_HANDLE_CFUNC(actor))(frame_, port, verb);
+        Bounce b = cast(PORT_HOOK*, VAL_HANDLE_CFUNC(actor))(level_, port, verb);
 
         if (b == nullptr)
            Init_Nulled(OUT);
@@ -168,10 +168,10 @@ REBTYPE(Port)
         fail (Error_No_Port_Action_Raw(verb_cell));
     }
 
-    Push_Redo_Action_Frame(OUT, frame_, action);
+    Push_Redo_Action_Level(OUT, level_, action);
 
     STATE = ST_TYPE_PORT_RUNNING_ACTOR;
-    return CONTINUE_SUBFRAME(TOP_FRAME);
+    return CONTINUE_SUBLEVEL(TOP_LEVEL);
 
 } post_process_output: {  ////////////////////////////////////////////////////
 

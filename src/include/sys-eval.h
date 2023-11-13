@@ -54,7 +54,7 @@
     // a tick breakpoint that way with `--breakpoint NNN`
     //
     // The debug build carries ticks many other places.  Series contain the
-    // `REBSER.tick` where they were created, frames have a `Reb_Frame.tick`,
+    // `REBSER.tick` where they were created, levels have a `Reb_Level.tick`,
     // and the DEBUG_TRACK_EXTEND_CELLS switch will double the size of cells
     // so they can carry the tick, file, and line where they were initialized.
     // (Even without TRACK_EXTEND, cells that don't have their EXTRA() field
@@ -72,7 +72,7 @@
                 TG_break_at_tick != 0 and TG_tick >= TG_break_at_tick \
             ){ \
                 printf("BREAKING AT TICK %u\n", cast(unsigned int, TG_tick)); \
-                Dump_Frame_Location((v), frame_); \
+                Dump_Level_Location((v), level_); \
                 debug_break();  /* see %debug_break.h */ \
                 TG_break_at_tick = 0; \
             } \
@@ -106,17 +106,17 @@ inline static bool Is_Isotope_Get_Friendly(Value(const*) v) {
 }
 
 // The evaluator publishes its internal states in this header file, so that
-// a frame can be made with e.g. `FLAG_STATE_BYTE(ST_EVALUATOR_REEVALUATING)`
+// a level can be made with e.g. `FLAG_STATE_BYTE(ST_EVALUATOR_REEVALUATING)`
 // to start in various points of the evaluation process.  When doing so, be
-// sure the expected frame variables for that state are initialized.
+// sure the expected level variables for that state are initialized.
 //
 enum {
     ST_EVALUATOR_INITIAL_ENTRY = STATE_0,
 
     // The evaluator uses REB_XXX types of the current cell being processed
     // for the STATE byte in those cases.  This is helpful for knowing what
-    // the mode of an evaluator frame is, and makes the value on hand for
-    // easy use in the "hot" frame header location.
+    // the mode of an evaluator level is, and makes the value on hand for
+    // easy use in the "hot" level header location.
 
     ST_EVALUATOR_LOOKING_AHEAD = 100,
     ST_EVALUATOR_REEVALUATING,
@@ -132,9 +132,9 @@ enum {
     ST_ARRAY_STEPPING
 };
 
-inline static void Restart_Evaluator_Frame(Frame(*) f) {
-    assert(f->executor == &Evaluator_Executor);
-    FRM_STATE_BYTE(f) = STATE_0;
+inline static void Restart_Evaluator_Level(Level(*) L) {
+    assert(L->executor == &Evaluator_Executor);
+    Level_State_Byte(L) = STATE_0;
 }
 
 #define Init_Pushed_Refinement(out,symbol) \
@@ -151,10 +151,10 @@ inline static REBVAL *Refinify_Pushed_Refinement(REBVAL *v) {
 }
 
 
-// Even though ANY_INERT() is a quick test, you can't skip the cost of frame
+// Even though ANY_INERT() is a quick test, you can't skip the cost of level
 // processing--due to enfix.  But a feed only looks ahead one unit at a time,
-// so advancing the frame past an inert item to find an enfix function means
-// you have to enter the frame specially with ST_EVALUATOR_LOOKING_AHEAD.
+// so advancing the feed past an inert item to find an enfix function means
+// you have to enter the level specially with ST_EVALUATOR_LOOKING_AHEAD.
 //
 inline static bool Did_Init_Inert_Optimize_Complete(
     Atom(*) out,
@@ -163,10 +163,10 @@ inline static bool Did_Init_Inert_Optimize_Complete(
 ){
     assert(SECOND_BYTE(*flags) == 0);  // we might set the STATE byte
     assert(Not_Feed_At_End(feed));  // would be wasting time to call
-    assert(not (*flags & FRAME_FLAG_BRANCH));  // it's a single step
+    assert(not (*flags & LEVEL_FLAG_BRANCH));  // it's a single step
 
     if (not ANY_INERT(At_Feed(feed)))
-        return false;  // general case evaluation requires a frame
+        return false;  // general case evaluation requires a level
 
     Literal_Next_In_Feed(out, feed);
 
@@ -250,7 +250,7 @@ inline static bool Did_Init_Inert_Optimize_Complete(
 
   optimized:
 
-    if (*flags & FRAME_FLAG_META_RESULT)
+    if (*flags & LEVEL_FLAG_META_RESULT)
         Quotify(out, 1);  // inert, so not a void (or NULL)
 
     return true;
@@ -258,47 +258,47 @@ inline static bool Did_Init_Inert_Optimize_Complete(
 
 // This is a very light wrapper over Eval_Core(), which is used with
 // operations like ANY or REDUCE that wish to perform several successive
-// operations on an array, without creating a new frame each time.
+// operations on an array, without creating a new level each time.
 //
 inline static bool Eval_Step_Throws(
     Atom(*) out,
-    Frame(*) f
+    Level(*) L
 ){
-    assert(Not_Feed_Flag(f->feed, NO_LOOKAHEAD));
+    assert(Not_Feed_Flag(L->feed, NO_LOOKAHEAD));
 
-    assert(f->executor == &Evaluator_Executor);
+    assert(L->executor == &Evaluator_Executor);
 
-    f->out = out;
-    assert(f->baseline.stack_base == TOP_INDEX);
+    L->out = out;
+    assert(L->baseline.stack_base == TOP_INDEX);
 
-    assert(f == TOP_FRAME);  // should already be pushed, use core trampoline
+    assert(L == TOP_LEVEL);  // should already be pushed, use core trampoline
 
     return Trampoline_With_Top_As_Root_Throws();
 }
 
 
-// It should not be necessary to use a subframe unless there is meaningful
-// state which would be overwritten in the parent frame.  For the moment,
+// It should not be necessary to use a sublevel unless there is meaningful
+// state which would be overwritten in the parent level.  For the moment,
 // that only happens if a function call is in effect -or- if a SET-WORD! or
 // SET-PATH! are running with an expiring `current` in effect.
 //
-inline static bool Eval_Step_In_Subframe_Throws(
+inline static bool Eval_Step_In_Sublevel_Throws(
     Atom(*) out,
-    Frame(*) f,
+    Level(*) L,
     Flags flags
 ){
-    if (Did_Init_Inert_Optimize_Complete(out, f->feed, &flags))
-        return false;  // If eval not hooked, ANY-INERT! may not need a frame
+    if (Did_Init_Inert_Optimize_Complete(out, L->feed, &flags))
+        return false;  // If eval not hooked, ANY-INERT! may not need a level
 
-    Frame(*) subframe = Make_Frame(f->feed, flags);
+    Level(*) sub = Make_Level(L->feed, flags);
 
-    return Trampoline_Throws(out, subframe);
+    return Trampoline_Throws(out, sub);
 }
 
 
-inline static bool Reevaluate_In_Subframe_Throws(
+inline static bool Reevaluate_In_Sublevel_Throws(
     Atom(*) out,
-    Frame(*) f,
+    Level(*) L,
     Value(const*) reval,
     Flags flags,
     bool enfix
@@ -306,12 +306,12 @@ inline static bool Reevaluate_In_Subframe_Throws(
     assert(SECOND_BYTE(flags) == 0);
     flags |= FLAG_STATE_BYTE(ST_EVALUATOR_REEVALUATING);
 
-    Frame(*) subframe = Make_Frame(f->feed, flags);
-    subframe->u.eval.current = reval;
-    subframe->u.eval.current_gotten = nullptr;
-    subframe->u.eval.enfix_reevaluate = enfix ? 'Y' : 'N';
+    Level(*) sub = Make_Level(L->feed, flags);
+    sub->u.eval.current = reval;
+    sub->u.eval.current_gotten = nullptr;
+    sub->u.eval.enfix_reevaluate = enfix ? 'Y' : 'N';
 
-    return Trampoline_Throws(out, subframe);
+    return Trampoline_Throws(out, sub);
 }
 
 
@@ -331,21 +331,21 @@ inline static bool Eval_Step_In_Any_Array_At_Throws(
         return false;
     }
 
-    Frame(*) f = Make_Frame(
+    Level(*) L = Make_Level(
         feed,
-        flags | FRAME_FLAG_ALLOCATED_FEED
+        flags | LEVEL_FLAG_ALLOCATED_FEED
     );
 
-    Push_Frame(out, f);
+    Push_Level(out, L);
 
     if (Trampoline_With_Top_As_Root_Throws()) {
         *index_out = TRASHED_INDEX;
-        Drop_Frame(f);
+        Drop_Level(L);
         return true;
     }
 
-    *index_out = FRM_INDEX(f);
-    Drop_Frame(f);
+    *index_out = Level_Array_Index(L);
+    Drop_Level(L);
     return false;
 }
 
@@ -358,7 +358,7 @@ inline static bool Eval_Value_Core_Throws(
 ){
     if (ANY_INERT(value)) {
         Derelativize(out, value, specifier);
-        return false;  // fast things that don't need frames (should inline)
+        return false;  // fast things that don't need levels (should inline)
     }
 
     Feed(*) feed = Prep_Array_Feed(
@@ -370,16 +370,16 @@ inline static bool Eval_Value_Core_Throws(
         FEED_MASK_DEFAULT | (value->header.bits & FEED_FLAG_CONST)
     );
 
-    Frame(*) f = Make_Frame(feed, flags | FRAME_FLAG_ALLOCATED_FEED);
+    Level(*) L = Make_Level(feed, flags | LEVEL_FLAG_ALLOCATED_FEED);
 
-    return Trampoline_Throws(out, f);
+    return Trampoline_Throws(out, L);
 }
 
 #define Eval_Value_Throws(out,value,specifier) \
-    Eval_Value_Core_Throws(out, FRAME_MASK_NONE, (value), (specifier))
+    Eval_Value_Core_Throws(out, LEVEL_MASK_NONE, (value), (specifier))
 
 
-inline static Bounce Native_Raised_Result(Frame(*) frame_, const void *p) {
+inline static Bounce Native_Raised_Result(Level(*) level_, const void *p) {
     assert(not THROWING);
 
     Context(*) error;
@@ -401,11 +401,11 @@ inline static Bounce Native_Raised_Result(Frame(*) frame_, const void *p) {
     }
 
     assert(CTX_TYPE(error) == REB_ERROR);
-    Force_Location_Of_Error(error, frame_);
+    Force_Location_Of_Error(error, level_);
 
-    while (TOP_FRAME != frame_)  // cancel subframes as default behavior
-        Drop_Frame_Unbalanced(TOP_FRAME);  // Note: won't seem like THROW/Fail
+    while (TOP_LEVEL != level_)  // cancel sublevels as default behavior
+        Drop_Level_Unbalanced(TOP_LEVEL);  // Note: won't seem like THROW/Fail
 
-    Init_Error(frame_->out, error);
-    return Raisify(frame_->out);
+    Init_Error(level_->out, error);
+    return Raisify(level_->out);
 }

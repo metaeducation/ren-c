@@ -37,7 +37,7 @@ enum {
     IDX_YIELDER_LAST_YIELDER_CONTEXT = 3,  // frame stack fragment to resume
     IDX_YIELDER_LAST_YIELD_RESULT = 4,  // so that `z: yield 1 + 2` is useful
     IDX_YIELDER_PLUG = 5,  // saved if you YIELD, captures data stack etc.
-    IDX_YIELDER_OUT = 6,  // whatever f->out in-progress was when interrupted
+    IDX_YIELDER_OUT = 6,  // whatever L->out in-progress was when interrupted
     IDX_YIELDER_MAX
 };
 
@@ -58,11 +58,11 @@ enum {
 // restartable way and unwinds it, allowing the continuation to request
 // that be the frame that gets executed in the continuation.
 //
-Bounce Yielder_Dispatcher(Frame(*) f)
+Bounce Yielder_Dispatcher(Level(*) L)
 {
-    Frame(*) frame_ = f;  // for RETURN macros
+    Level(*) level_ = L;  // for RETURN macros
 
-    Action(*) phase = FRM_PHASE(f);
+    Action(*) phase = Level_Phase(L);
     Details(*) details = ACT_DETAILS(phase);
     Value(*) mode = DETAILS_AT(details, IDX_YIELDER_MODE);
 
@@ -115,16 +115,16 @@ Bounce Yielder_Dispatcher(Frame(*) f)
     return CONTINUE_CORE(
         OUT,  // body evaluative result
         ACTION_EXECUTOR_FLAG_DISPATCHER_CATCHES,  // can't resume after failure
-        SPC(f->varlist), body
+        SPC(L->varlist), body
     );
 
 } resume_body: {  ////////////////////////////////////////////////////////////
 
     assert(IS_FRAME(mode));
 
-    Frame(*) yielder_frame = f;  // alias for clarity
-    Frame(*) yield_frame = CTX_FRAME_IF_ON_STACK(VAL_CONTEXT(mode));
-    assert(yield_frame != nullptr);
+    Level(*) yielder_level = L;  // alias for clarity
+    Level(*) yield_level = CTX_LEVEL_IF_ON_STACK(VAL_CONTEXT(mode));
+    assert(yield_level != nullptr);
 
     // The YIELD binding pointed to the context varlist we used in the
     // original yielder dispatch.  That completed--but we need to reuse
@@ -143,9 +143,9 @@ Bounce Yielder_Dispatcher(Frame(*) f)
     //
     const REBKEY *key_tail;
     const REBKEY *key = CTX_KEYS(&key_tail, last_yielder_context);
-    REBPAR* param = ACT_PARAMS_HEAD(FRM_PHASE(yielder_frame));
+    REBPAR* param = ACT_PARAMS_HEAD(Level_Phase(yielder_level));
     Value(*) dest = CTX_VARS_HEAD(last_yielder_context);
-    Value(*) src = FRM_ARGS_HEAD(yielder_frame);
+    Value(*) src = Level_Args_Head(yielder_level);
     for (; key != key_tail; ++key, ++param, ++dest, ++src) {
         if (Is_Specialized(param))
             continue;  // don't overwrite locals (including YIELD)0
@@ -156,15 +156,15 @@ Bounce Yielder_Dispatcher(Frame(*) f)
     // invocation (wrong identity) so we free it, if it isn't GC-managed,
     // as it wouldn't get freed otherwise.
     //
-/*    if (NOT_SERIES_FLAG(yielder_frame->varlist, MANAGED)) {
+/*    if (NOT_SERIES_FLAG(yielder_level->varlist, MANAGED)) {
         //
         // We only want to kill off this one frame; but the GC will think
         // that we want to kill the whole stack of frames if we don't
         // zero out the keylist node.
         //
-        LINK(yielder_frame->varlist).custom.node = nullptr;
+        LINK(yielder_level->varlist).custom.node = nullptr;
 
-        GC_Kill_Series(SER(yielder_frame->varlist));  // Note: no tracking
+        GC_Kill_Series(SER(yielder_level->varlist));  // Note: no tracking
     } */
 
     // When the last yielder dropped from the frame stack, it should have
@@ -177,20 +177,20 @@ Bounce Yielder_Dispatcher(Frame(*) f)
     //
 /*    assert(
         ACT_UNDERLYING(ACT(BONUS(KeySource, last_yielder_context)))
-        == ACT_UNDERLYING(yielder_frame->u.action.original)
+        == ACT_UNDERLYING(yielder_level->u.action.original)
     ); */
-    INIT_BONUS_KEYSOURCE(CTX_VARLIST(last_yielder_context), yielder_frame);
+    INIT_BONUS_KEYSOURCE(CTX_VARLIST(last_yielder_context), yielder_level);
 
     // Now that the last call's context varlist is pointing at our current
-    // invocation frame, we point the other way from the frame to the
+    // invocation level, we point the other way from the level to the
     // varlist.  We also update the cached pointer to the rootvar of that
-    // frame (used to speed up F_PHASE() and F_BINDING())
+    // frame (used to speed up Level_Phase() and Level_Binding())
     //
-    f->varlist = CTX_VARLIST(last_yielder_context);
-    f->rootvar = m_cast(REBVAL*, CTX_ARCHETYPE(last_yielder_context));  // must match
+    L->varlist = CTX_VARLIST(last_yielder_context);  // rootvar must match
+    L->rootvar = m_cast(REBVAL*, CTX_ARCHETYPE(last_yielder_context));
 
     Value(*) plug = DETAILS_AT(details, IDX_YIELDER_PLUG);
-    Replug_Stack(yield_frame, yielder_frame, plug);
+    Replug_Stack(yield_level, yielder_level, plug);
     assert(IS_TRASH(plug));  // Replug trashes, make GC safe
 
     // Restore the in-progress output cell state that was going on when
@@ -200,31 +200,31 @@ Bounce Yielder_Dispatcher(Frame(*) f)
     // using the hidden identity of the details array itself.
     //
     Value(*) out_copy = DETAILS_AT(details, IDX_YIELDER_OUT);
-    Move_Cell(yielder_frame->out, out_copy);
+    Move_Cell(yielder_level->out, out_copy);
 
     // We could make YIELD appear to return a VOID! when we jump back in
     // to resume it.  But it's more interesting to return what the YIELD
     // received as an arg (YIELD cached it in details before jumping)
     //
     Move_Cell(
-        yield_frame->out,
+        yield_level->out,
         DETAILS_AT(details, IDX_YIELDER_LAST_YIELD_RESULT)
     );
 
     // If the yielder actually reaches its end (instead of YIELD-ing)
     // we need to know, so we can mark that it is finished.
     //
-    assert(Not_Executor_Flag(ACTION, yielder_frame, DELEGATE_CONTROL));
+    assert(Not_Executor_Flag(ACTION, yielder_level, DELEGATE_CONTROL));
 
-    FRM_STATE_BYTE(yielder_frame) = ST_YIELDER_RUNNING_BODY;  // set again
-    Set_Executor_Flag(ACTION, yielder_frame, DISPATCHER_CATCHES);  // set again
+    Level_State_Byte(yielder_level) = ST_YIELDER_RUNNING_BODY;  // set again
+    Set_Executor_Flag(ACTION, yielder_level, DISPATCHER_CATCHES);  // set again
     Init_Quasi_Void(mode);  // indicate running
     return BOUNCE_CONTINUE;  // ...resuming where we left off (was DEWIND)
 
 } body_finished_or_threw: {  /////////////////////////////////////////////////
 
-    assert(f == TOP_FRAME);
-    assert(FRM_STATE_BYTE(TOP_FRAME) != 0);
+    assert(L == TOP_LEVEL);
+    assert(Level_State_Byte(TOP_LEVEL) != 0);
 
     // Clean up all the details fields so the GC can reclaim the memory
     //
@@ -233,8 +233,8 @@ Bounce Yielder_Dispatcher(Frame(*) f)
     Init_Trash(DETAILS_AT(details, IDX_YIELDER_PLUG));
     Init_Trash(DETAILS_AT(details, IDX_YIELDER_OUT));
 
- /*   if (Is_Throwing(f)) {
-        if (IS_ERROR(VAL_THROWN_LABEL(f->out))) {
+ /*   if (Is_Throwing(L)) {
+        if (IS_ERROR(VAL_THROWN_LABEL(L->out))) {
             //
             // We treat a failure as if it was an invalid termination of the
             // yielder.  Future calls will raise an error.
@@ -351,20 +351,20 @@ DECLARE_NATIVE(yield)
 
   invoked: {  ////////////////////////////////////////////////////////////////
 
-    assert(frame_ == TOP_FRAME);  // frame_ is an implicit arg to natives
-    assert(FRM_PHASE(frame_) == VAL_ACTION(Lib(YIELD)));
-    Frame(*) yield_frame = frame_;  // ...make synonyms more obvious
+    assert(level_ == TOP_LEVEL);  // level_ is an implicit arg to natives
+    assert(Level_Phase(level_) == ACT_IDENTITY(VAL_ACTION(Lib(YIELD))));
+    Level(*) yield_level = level_;  // ...make synonyms more obvious
 
-    Node* yield_binding = FRM_BINDING(yield_frame);
+    Node* yield_binding = Level_Binding(yield_level);
     if (not yield_binding)
         fail ("Must have yielder to jump to");
 
     Context(*) yielder_context = CTX(yield_binding);
-    Frame(*) yielder_frame = CTX_FRAME_MAY_FAIL(yielder_context);
-    if (not yielder_frame)
+    Level(*) yielder_level = CTX_LEVEL_MAY_FAIL(yielder_context);
+    if (not yielder_level)
         fail ("Cannot yield to generator that has completed");
 
-    Action(*) yielder_phase = FRM_PHASE(yielder_frame);
+    Action(*) yielder_phase = Level_Phase(yielder_level);
     assert(ACT_DISPATCHER(yielder_phase) == &Yielder_Dispatcher);
 
     // !!! How much sanity checking should be done before doing the passing
@@ -376,18 +376,18 @@ DECLARE_NATIVE(yield)
 
     Details(*) yielder_details = ACT_DETAILS(yielder_phase);
 
-    // Evaluations will frequently use the f->out to accrue state, perhaps
+    // Evaluations will frequently use the L->out to accrue state, perhaps
     // preloading with something (like NULL) that is expected to be there.
     // But we're interrupting the frame and returning what YIELD had instead
     // of that evaluative product.  It must be preserved.  But since we can't
     // put END values in blocks, use the hidden block to indicate that
     //
     Value(*) out_copy = DETAILS_AT(yielder_details, IDX_YIELDER_OUT);
-    Move_Cell(out_copy, yielder_frame->out);
+    Move_Cell(out_copy, yielder_level->out);
 
     Value(*) plug = DETAILS_AT(yielder_details, IDX_YIELDER_PLUG);
     assert(IS_TRASH(plug));
-    Unplug_Stack(plug, yield_frame, yielder_frame);
+    Unplug_Stack(plug, yield_level, yielder_level);
 
     // We preserve the fragment of call stack leading from the yield up to the
     // yielder in a FRAME! value that the yielder holds in its `details`.
@@ -396,9 +396,9 @@ DECLARE_NATIVE(yield)
     //
     Value(*) mode = DETAILS_AT(yielder_details, IDX_YIELDER_MODE);
     assert(Is_Quasi_Void(mode));  // should be signal for "currently running"
-    Init_Frame(mode, Context_For_Frame_May_Manage(yield_frame), ANONYMOUS);
+    Init_Frame(mode, Context_For_Level_May_Manage(yield_level), ANONYMOUS);
     ASSERT_SERIES_MANAGED(VAL_CONTEXT(mode));
-    assert(CTX_FRAME_IF_ON_STACK(VAL_CONTEXT(mode)) == yield_frame);
+    assert(CTX_LEVEL_IF_ON_STACK(VAL_CONTEXT(mode)) == yield_level);
 
     // We store the frame chain into the yielder, as a FRAME! value.  The
     // GC of the ACTION's details will keep it alive.
@@ -409,13 +409,13 @@ DECLARE_NATIVE(yield)
         ANONYMOUS
     );
 
-    // The Init_Frame() should have managed the yielder_frame varlist, which
-    // means that when the yielder does Drop_Frame() yielder_context survives.
+    // The Init_Frame() should have managed the yielder_level varlist, which
+    // means that when the yielder does Drop_Level() yielder_context survives.
     // It should decay the keysource from a REBFRM* to the action paramlist,
     // but the next run of the yielder will swap in its new REBFRM* over that.
     //
-    assert(CTX_VARLIST(yielder_context) == yielder_frame->varlist);
-    ASSERT_SERIES_MANAGED(yielder_frame->varlist);
+    assert(CTX_VARLIST(yielder_context) == yielder_level->varlist);
+    ASSERT_SERIES_MANAGED(yielder_level->varlist);
 
     // We don't only write the yielded value into the output slot so it is
     // returned from the yielder.  We also stow an extra copy of the value
@@ -425,7 +425,7 @@ DECLARE_NATIVE(yield)
     //    x: yield 1 + 2
     //    print [x]  ; could be useful if this was 3 upon resumption, right?
     //
-    Copy_Cell(yielder_frame->out, ARG(value));
+    Copy_Cell(yielder_level->out, ARG(value));
     Move_Cell(
         DETAILS_AT(yielder_details, IDX_YIELDER_LAST_YIELD_RESULT),
         ARG(value)
@@ -433,7 +433,7 @@ DECLARE_NATIVE(yield)
 
     /* REBACT *target_fun = FRM_UNDERLYING(target_frame); */
 
-    FRM_STATE_BYTE(yielder_frame) = ST_YIELDER_IS_YIELDING;
+    Level_State_Byte(yielder_level) = ST_YIELDER_IS_YIELDING;
 
     STATE = ST_YIELD_YIELDED;
     return BOUNCE_CONTINUE;  // was DEWIND

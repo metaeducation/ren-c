@@ -356,7 +356,7 @@ static void Append_Map(
 //  MAKE_Map: C
 //
 Bounce MAKE_Map(
-    Frame(*) frame_,
+    Level(*) level_,
     enum Reb_Kind kind,
     option(const REBVAL*) parent,
     const REBVAL *arg
@@ -371,7 +371,7 @@ Bounce MAKE_Map(
         // !!! R3-Alpha TO of MAP! was like MAKE but wouldn't accept just
         // being given a size.
         //
-        return TO_Map(frame_, kind, arg);
+        return TO_Map(level_, kind, arg);
     }
 }
 
@@ -424,7 +424,7 @@ inline static REBMAP *Copy_Map(const REBMAP *map, REBU64 types) {
 //
 //  TO_Map: C
 //
-Bounce TO_Map(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg)
+Bounce TO_Map(Level(*) level_, enum Reb_Kind kind, const REBVAL *arg)
 {
     assert(kind == REB_MAP);
     UNUSED(kind);
@@ -781,7 +781,7 @@ REBTYPE(Map)
             VAL_MAP_ENSURE_MUTABLE(map),  // modified
             picker,
             SPECIFIED,
-            setval,  // value to set (either ARG(value) or f->out)
+            setval,  // value to set (either ARG(value) or L->out)
             SPECIFIED,
             strict
         );

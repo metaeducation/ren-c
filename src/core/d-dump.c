@@ -105,29 +105,29 @@ void Dump_Info(void)
 // Simple debug routine to list the function names on the stack and what the
 // current feed value is.
 //
-void Dump_Stack(Frame(*) f)
+void Dump_Stack(Level(*) L)
 {
-    if (f == BOTTOM_FRAME) {
-        printf("<BOTTOM_FRAME>\n");
+    if (L == BOTTOM_LEVEL) {
+        printf("<BOTTOM_LEVEL>\n");
         fflush(stdout);
         return;
     }
 
     const char *label;
-    if (not Is_Action_Frame(f))
+    if (not Is_Action_Level(L))
         label = "<eval>";
-    else if (not f->label)
+    else if (not L->label)
         label = "<anonymous>";
     else
-        label = STR_UTF8(unwrap(f->label));
+        label = STR_UTF8(unwrap(L->label));
 
     printf("LABEL: %s @ FILE: %s @ LINE: %" PRIuPTR "\n",  // uintptr_t format
         label,
-        FRM_FILE_UTF8(f),
-        FRM_LINE(f)
+        File_UTF8_Of_Level(L),
+        LineNumber_Of_Level(L)
     );
 
-    Dump_Stack(f->prior);
+    Dump_Stack(L->prior);
 }
 
 

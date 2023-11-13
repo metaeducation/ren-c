@@ -79,7 +79,7 @@
 
 
 //
-//  Push_Redo_Action_Frame: C
+//  Push_Redo_Action_Level: C
 //
 // This code takes a running call frame that has been built for one action
 // and then tries to map its parameters to invoke another action.  The new
@@ -92,14 +92,14 @@
 //     foo: func [a /b c] [...]  =>  bar: func [/b d e] [...]
 //                    foo/b 1 2  =>  bar/b 1 2
 //
-void Push_Redo_Action_Frame(Atom(*) out, Frame(*) f1, const REBVAL *run)
+void Push_Redo_Action_Level(Atom(*) out, Level(*) L1, const REBVAL *run)
 {
-    Array(*) normals = Make_Array(FRM_NUM_ARGS(f1));  // max, e.g. no refines
+    Array(*) normals = Make_Array(Level_Num_Args(L1));  // max, e.g. no refines
 
     StackIndex base = TOP_INDEX;  // we push refinements as we find them
 
     EVARS e;  // use EVARS to get parameter reordering right (in theory?)
-    Init_Evars(&e, CTX_ARCHETYPE(Context_For_Frame_May_Manage(f1)));
+    Init_Evars(&e, CTX_ARCHETYPE(Context_For_Level_May_Manage(L1)));
 
     while (Did_Advance_Evars(&e)) {
         if (Is_Specialized(e.param))  // specialized or local
@@ -135,18 +135,18 @@ void Push_Redo_Action_Frame(Atom(*) out, Frame(*) f1, const REBVAL *run)
 
     Shutdown_Evars(&e);
 
-    Flags flags = FRAME_MASK_NONE;
-    if (Get_Frame_Flag(f1, FAILURE_RESULT_OK))
-        flags |= FRAME_FLAG_FAILURE_RESULT_OK;  // inherit failure tolerance
+    Flags flags = LEVEL_MASK_NONE;
+    if (Get_Level_Flag(L1, FAILURE_RESULT_OK))
+        flags |= LEVEL_FLAG_FAILURE_RESULT_OK;  // inherit failure tolerance
 
     DECLARE_LOCAL (block);
     Init_Block(block, normals);
-    Frame(*) f2 = Make_Frame_At(block, flags);
-    f2->baseline.stack_base = base;
+    Level(*) L2 = Make_Level_At(block, flags);
+    L2->baseline.stack_base = base;
 
-    Push_Frame(out, f2);
-    Push_Action(f2, VAL_ACTION(run), VAL_FRAME_BINDING(run));
-    Begin_Prefix_Action(f2, VAL_FRAME_LABEL(run));
+    Push_Level(out, L2);
+    Push_Action(L2, VAL_ACTION(run), VAL_FRAME_BINDING(run));
+    Begin_Prefix_Action(L2, VAL_FRAME_LABEL(run));
 }
 
 
@@ -165,7 +165,7 @@ void Push_Redo_Action_Frame(Atom(*) out, Frame(*) f1, const REBVAL *run)
 // an ADAPT or SPECIALIZE or a MAKE FRAME! might depend on the existing
 // paramlist shape of the identity.)  Those cases need this "shim" dispatcher.
 //
-Bounce Hijacker_Dispatcher(Frame(*) frame_)
+Bounce Hijacker_Dispatcher(Level(*) level_)
 {
     // The PHASE here is the *identity that the hijacker has overtaken*
     // But the actual hijacker is in the archetype.
@@ -177,10 +177,10 @@ Bounce Hijacker_Dispatcher(Frame(*) frame_)
     // be compatible.  Check by seeing if the keylists are derived.
     //
     Keylist(*) exemplar_keylist = CTX_KEYLIST(ACT_EXEMPLAR(hijacker));
-    Keylist(*) keylist = CTX_KEYLIST(CTX(FRAME->varlist));
+    Keylist(*) keylist = CTX_KEYLIST(CTX(LEVEL->varlist));
     while (true) {
         if (keylist == exemplar_keylist)
-            return ACT_DISPATCHER(hijacker)(FRAME);
+            return ACT_DISPATCHER(hijacker)(LEVEL);
         if (keylist == LINK(Ancestor, keylist))  // terminates with self ref.
             break;
         keylist = LINK(Ancestor, keylist);
@@ -189,8 +189,8 @@ Bounce Hijacker_Dispatcher(Frame(*) frame_)
     // Otherwise, we assume the frame was built for the function prior to
     // the hijacking...and has to be remapped.
     //
-    Push_Redo_Action_Frame(OUT, FRAME, ACT_ARCHETYPE(PHASE));
-    return DELEGATE_SUBFRAME(TOP_FRAME);
+    Push_Redo_Action_Level(OUT, LEVEL, ACT_ARCHETYPE(PHASE));
+    return DELEGATE_SUBLEVEL(TOP_LEVEL);
 }
 
 

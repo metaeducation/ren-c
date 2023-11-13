@@ -221,7 +221,7 @@ REBINT CT_Handle(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
 //
 REBTYPE(Handle)
 {
-    UNUSED(frame_);
+    UNUSED(level_);
     UNUSED(verb);
 
     fail (UNHANDLED);

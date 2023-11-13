@@ -75,7 +75,7 @@ REBINT CT_Money(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
 //  MAKE_Money: C
 //
 Bounce MAKE_Money(
-    Frame(*) frame_,
+    Level(*) level_,
     enum Reb_Kind kind,
     option(const REBVAL*) parent,
     const REBVAL *arg
@@ -129,9 +129,9 @@ Bounce MAKE_Money(
 //
 //  TO_Money: C
 //
-Bounce TO_Money(Frame(*) frame_, enum Reb_Kind kind, const REBVAL *arg)
+Bounce TO_Money(Level(*) level_, enum Reb_Kind kind, const REBVAL *arg)
 {
-    return MAKE_Money(frame_, kind, nullptr, arg);
+    return MAKE_Money(level_, kind, nullptr, arg);
 }
 
 
@@ -251,7 +251,7 @@ REBTYPE(Money)
 
       case SYM_ROUND: {
         INCLUDE_PARAMS_OF_ROUND;
-        USED(ARG(value));  // aliased as v, others are passed via frame_
+        USED(ARG(value));  // aliased as v, others are passed via level_
         USED(ARG(even)); USED(ARG(down)); USED(ARG(half_down));
         USED(ARG(floor)); USED(ARG(ceiling)); USED(ARG(half_ceiling));
 
@@ -273,7 +273,7 @@ REBTYPE(Money)
 
         Init_Money(
             OUT,
-            Round_Deci(VAL_MONEY_AMOUNT(v), frame_, VAL_MONEY_AMOUNT(temp))
+            Round_Deci(VAL_MONEY_AMOUNT(v), level_, VAL_MONEY_AMOUNT(temp))
         );
 
         if (REF(to)) {

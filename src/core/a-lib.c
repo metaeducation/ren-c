@@ -80,7 +80,7 @@
 // works, so this provides the most flexibility.)
 //
 
-#define REBOL_FRAME_SHORTHAND_MACROS 0  // we include Windows.h for errors
+#define REBOL_LEVEL_SHORTHAND_MACROS 0  // we include Windows.h for errors
 #include "sys-core.h"
 
 static bool PG_Api_Initialized = false;
@@ -771,8 +771,8 @@ const void *RL_rebArgR(const void *p, va_list *vaptr)
 {
     ENTER_API;
 
-    Frame(*) f = TOP_FRAME;
-    Phase(*) act = FRM_PHASE(f);
+    Level(*) L = TOP_LEVEL;
+    Phase(*) act = Level_Phase(L);
 
     // !!! Currently the JavaScript wrappers do not do the right thing for
     // taking just a `const char*`, so this falsely is a variadic to get the
@@ -796,7 +796,7 @@ const void *RL_rebArgR(const void *p, va_list *vaptr)
 
     const REBKEY *tail;
     const REBKEY *key = ACT_KEYS(&tail, act);
-    REBVAL *arg = FRM_ARGS_HEAD(f);
+    REBVAL *arg = Level_Args_Head(L);
     for (; key != tail; ++key, ++arg) {
         if (Are_Synonyms(KEY_SYMBOL(key), symbol))
             return NULLIFY_NULLED(arg);
@@ -902,15 +902,15 @@ static bool Run_Va_Throws(
         FEED_MASK_DEFAULT
     );
 
-    Frame(*) f = Make_Frame(
+    Level(*) L = Make_Level(
         feed,
-        FRAME_FLAG_ALLOCATED_FEED | flags
+        LEVEL_FLAG_ALLOCATED_FEED | flags
     );
-    f->executor = &Array_Executor;
+    L->executor = &Array_Executor;
 
-    bool threw = Trampoline_Throws(out, f);
+    bool threw = Trampoline_Throws(out, L);
 
-    if (not threw and (flags & FRAME_FLAG_META_RESULT))
+    if (not threw and (flags & LEVEL_FLAG_META_RESULT))
         assert(QUOTE_BYTE(out) >= QUASI_2);
 
     // (see also Reb_State->saved_sigmask RE: if a longjmp happens)
@@ -936,14 +936,14 @@ inline static void Run_Va_Undecayed_May_Fail_Calls_Va_End(
     va_list *vaptr  // va_end() handled by feed for all cases (throws, fails)
 ){
     bool interruptible = false;
-    if (Run_Va_Throws(out, interruptible, FRAME_MASK_NONE, p, vaptr)) {
+    if (Run_Va_Throws(out, interruptible, LEVEL_MASK_NONE, p, vaptr)) {
         //
         // !!! Being able to THROW across C stacks is necessary in the general
         // case (consider implementing QUIT or HALT).  Probably need to be
         // converted to a kind of error, and then re-converted into a THROW
         // to bubble up through Rebol stacks?  Development on this is ongoing.
         //
-        fail (Error_No_Catch_For_Throw(TOP_FRAME));
+        fail (Error_No_Catch_For_Throw(TOP_LEVEL));
     }
 }
 
@@ -976,7 +976,7 @@ inline static void Run_Va_Decay_May_Fail_Calls_Va_End(
 // cell.  But it's in the API file because we want the wrapping machinery
 // that handles the variadics to be applied here.
 //
-// There is a rebRunThrows() macro that passes in the flags FRAME_MASK_NONE
+// There is a rebRunThrows() macro that passes in the flags LEVEL_MASK_NONE
 // and EVAL_EXECUTOR_FLAG_NO_RESIDUE defined in %sys-do.h
 //
 bool RL_rebRunCoreThrows(
@@ -990,22 +990,22 @@ bool RL_rebRunCoreThrows(
         FEED_MASK_DEFAULT
     );
 
-    Frame(*) f = Make_Frame(
+    Level(*) L = Make_Level(
         feed,
-        flags | FRAME_FLAG_ALLOCATED_FEED
+        flags | LEVEL_FLAG_ALLOCATED_FEED
     );
 
-    Push_Frame(out, f);
+    Push_Level(out, L);
 
     if (Trampoline_With_Top_As_Root_Throws()) {
-        Drop_Frame(f);
+        Drop_Level(L);
         return true;
     }
 
     bool too_many = (flags & EVAL_EXECUTOR_FLAG_NO_RESIDUE)
-        and Not_Feed_At_End(feed);  // feed will be freed in Drop_Frame()
+        and Not_Feed_At_End(feed);  // feed will be freed in Drop_Level()
 
-    Drop_Frame(f);  // will va_end() if not reified during evaluation
+    Drop_Level(L);  // will va_end() if not reified during evaluation
 
     if (too_many)
         fail (Error_Apply_Too_Many_Raw());
@@ -1079,7 +1079,7 @@ REBVAL *RL_rebTranscodeInto(
 //
 //  rebPushContinuation: RL_API
 //
-// Helper for when variadic code wants to run as its own stack frame.
+// Helper for when variadic code wants to run as its own stack level.
 //
 // 1. We don't call `rebTranscodeInto()` here, because that would package
 //    up an arbitrary number of variadic parameters that are meant to
@@ -1097,9 +1097,9 @@ void RL_rebPushContinuation(
     DECLARE_LOCAL (block);
     RL_rebTranscodeInto(cast(REBVAL*, block), p, vaptr);  // use "RL_", see [1]
 
-    Frame(*) f = Make_Frame_At(block, flags);
-    Push_Frame(out, f);
-    f->executor = &Array_Executor;
+    Level(*) L = Make_Level_At(block, flags);
+    Push_Level(out, L);
+    L->executor = &Array_Executor;
 }
 
 
@@ -1118,8 +1118,8 @@ REBVAL *RL_rebMeta(const void *p, va_list *vaptr)
 
     REBVAL *v = Alloc_Value();
     bool interruptible = false;
-    if (Run_Va_Throws(v, interruptible, FRAME_FLAG_META_RESULT, p, vaptr))
-        fail (Error_No_Catch_For_Throw(TOP_FRAME));  // panic?
+    if (Run_Va_Throws(v, interruptible, LEVEL_FLAG_META_RESULT, p, vaptr))
+        fail (Error_No_Catch_For_Throw(TOP_LEVEL));  // panic?
 
     assert(not Is_Nulled(v));  // meta operations cannot produce NULL
 
@@ -1140,8 +1140,8 @@ REBVAL *RL_rebEntrap(const void *p, va_list *vaptr)
 
     REBVAL *v = Alloc_Value();
     bool interruptible = false;
-    if (Run_Va_Throws(v, interruptible, FRAME_FLAG_META_RESULT, p, vaptr)) {
-        Init_Error(v, Error_No_Catch_For_Throw(TOP_FRAME));
+    if (Run_Va_Throws(v, interruptible, LEVEL_FLAG_META_RESULT, p, vaptr)) {
+        Init_Error(v, Error_No_Catch_For_Throw(TOP_LEVEL));
         return v;
     }
 
@@ -1171,8 +1171,8 @@ REBVAL *RL_rebEntrapInterruptible(
 
     REBVAL *v = Alloc_Value();
     bool interruptible = true;
-    if (Run_Va_Throws(v, interruptible, FRAME_FLAG_META_RESULT, p, vaptr)) {
-        Init_Error(v, Error_No_Catch_For_Throw(TOP_FRAME));
+    if (Run_Va_Throws(v, interruptible, LEVEL_FLAG_META_RESULT, p, vaptr)) {
+        Init_Error(v, Error_No_Catch_For_Throw(TOP_LEVEL));
         return v;
     }
 
@@ -1892,8 +1892,8 @@ REBVAL *RL_rebRescueWith(
 ){
     ENTER_API;
 
-    Frame(*) dummy = Make_End_Frame(FRAME_MASK_NONE);
-    Push_Frame(nullptr, dummy);  // for owning API cells, see [1]
+    Level(*) dummy = Make_End_Level(LEVEL_MASK_NONE);
+    Push_Level(nullptr, dummy);  // for owning API cells, see [1]
 
   TRAP_BLOCK_IN_CASE_OF_ABRUPT_FAILURE {  ////////////////////////////////////
 
@@ -1932,20 +1932,20 @@ REBVAL *RL_rebRescueWith(
 
           proxy_result: {
             Array(*) a = Singular_From_Cell(result);
-            Unlink_Api_Handle_From_Frame(a);  // e.g. linked to f
-            Link_Api_Handle_To_Frame(a, dummy->prior);  // link to caller
+            Unlink_Api_Handle_From_Level(a);  // e.g. linked to f
+            Link_Api_Handle_To_Level(a, dummy->prior);  // link to caller
           }
         }
     }
 
-    Drop_Frame(dummy);  // Drop_Frame_Unbalanced() if for some internal uses
+    Drop_Level(dummy);  // Drop_Level_Unbalanced() if for some internal uses
 
     CLEANUP_BEFORE_EXITING_TRAP_BLOCK;
     return result;
 
 } ON_ABRUPT_FAILURE(Context(*) e) {  ////////////////////////////////////////////
 
-    Drop_Frame(dummy);
+    Drop_Level(dummy);
 
     REBVAL *error = Init_Error(Alloc_Value(), e);
 
@@ -2247,7 +2247,7 @@ REBVAL *RL_rebManage(REBVAL *v)
         fail ("Attempt to rebManage() a handle that's already managed.");
 
     SET_SERIES_FLAG(a, MANAGED);
-    Link_Api_Handle_To_Frame(a, TOP_FRAME);
+    Link_Api_Handle_To_Level(a, TOP_LEVEL);
 
     return v;
 }
@@ -2282,7 +2282,7 @@ void RL_rebUnmanage(void *p)
     // own risk to do this, and not use those pointers after a free.
     //
     CLEAR_SERIES_FLAG(a, MANAGED);
-    Unlink_Api_Handle_From_Frame(a);
+    Unlink_Api_Handle_From_Level(a);
 
     TRASH_POINTER_IF_DEBUG(a->link.trash);
     TRASH_POINTER_IF_DEBUG(a->misc.trash);
@@ -2572,7 +2572,7 @@ DECLARE_NATIVE(api_transient)
     // :-/  Well, which is it?  R3-Alpha integers were signed 64-bit, Ren-C is
     // targeting arbitrary precision...use signed as status quo for now.
     //
-    return Init_Integer(frame_->out, cast(intptr_t, a));  // or, `uintptr_t` ??
+    return Init_Integer(level_->out, cast(intptr_t, a));  // or, `uintptr_t` ??
 }
 
 

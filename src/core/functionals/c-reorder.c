@@ -73,15 +73,14 @@ enum {
 // was created for; exemplars can be reused by functions that don't need to
 // tweak them (e.g. ADAPT).
 //
-Bounce Reorderer_Dispatcher(Frame(*) f) {
-    Phase(*) phase = FRM_PHASE(f);
-    Details(*) details = ACT_DETAILS(phase);
+Bounce Reorderer_Dispatcher(Level(*) L) {
+    Details(*) details = ACT_DETAILS(Level_Phase(L));
     assert(ARR_LEN(details) == IDX_REORDERER_MAX);
 
     REBVAL *reorderee = DETAILS_AT(details, IDX_REORDERER_REORDEREE);
 
-    INIT_FRM_PHASE(f, ACT_IDENTITY(VAL_ACTION(reorderee)));
-    INIT_FRM_BINDING(f, VAL_FRAME_BINDING(reorderee));
+    INIT_LVL_PHASE(L, ACT_IDENTITY(VAL_ACTION(reorderee)));
+    INIT_LVL_BINDING(L, VAL_FRAME_BINDING(reorderee));
 
     return BOUNCE_REDO_UNCHECKED;  // exemplar unchanged; known to be valid
 }
