@@ -329,7 +329,7 @@ Bounce TO_Sequence(Level(*) level_, enum Reb_Kind kind, const REBVAL *arg) {
 
     if (arg_kind != REB_BLOCK) {
         Copy_Cell(OUT, arg);  // move value so we can modify it
-        Dequotify(stable_OUT);  // !!! should TO take noquote(Cell(*))?
+        Dequotify(stable_OUT);  // !!! should TO take NoQuote(Cell(*))?
         Plainify(stable_OUT);  // remove any decorations like @ or :
         if (not Try_Leading_Blank_Pathify(stable_OUT, kind))
             return RAISE(Error_Bad_Sequence_Init(stable_OUT));
@@ -394,7 +394,7 @@ Bounce TO_Sequence(Level(*) level_, enum Reb_Kind kind, const REBVAL *arg) {
 // This behavior is not preserved in Ren-C, so `same-color?` or something
 // else would be needed to get that intent.
 //
-REBINT CT_Sequence(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
+REBINT CT_Sequence(NoQuote(Cell(const*)) a, NoQuote(Cell(const*)) b, bool strict)
 {
     REBLEN len_a = VAL_SEQUENCE_LEN(a);
     REBLEN len_b = VAL_SEQUENCE_LEN(b);

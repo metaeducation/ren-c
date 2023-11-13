@@ -408,7 +408,7 @@ inline static void FAIL_IF_INACCESSIBLE_CTX(Context(*) c) {
 // be checked elsewhere...or also check it before use.
 //
 
-inline static Context(*) VAL_CONTEXT(noquote(Cell(const*)) v) {
+inline static Context(*) VAL_CONTEXT(NoQuote(Cell(const*)) v) {
     assert(ANY_CONTEXT_KIND(CELL_HEART_UNCHECKED(v)));
     Context(*) c;
 
@@ -447,20 +447,20 @@ inline static void INIT_VAL_FRAME_PHASE(Cell(*) v, Phase(*) phase) {
     INIT_VAL_FRAME_PHASE_OR_LABEL(v, phase);
 }
 
-inline static Phase(*) VAL_FRAME_PHASE(noquote(Cell(const*)) v) {
+inline static Phase(*) VAL_FRAME_PHASE(NoQuote(Cell(const*)) v) {
     REBSER *s = VAL_FRAME_PHASE_OR_LABEL(v);
     if (not s or IS_SYMBOL(s))  // ANONYMOUS or label, not a phase
         return CTX_FRAME_PHASE(VAL_CONTEXT(v));  // use archetype
     return cast(Phase(*), s);  // cell has its own phase, return it
 }
 
-inline static bool IS_FRAME_PHASED(noquote(Cell(const*)) v) {
+inline static bool IS_FRAME_PHASED(NoQuote(Cell(const*)) v) {
     assert(CELL_HEART(v) == REB_FRAME);
     REBSER *s = VAL_FRAME_PHASE_OR_LABEL(v);
     return s and not IS_SYMBOL(s);
 }
 
-inline static Option(Symbol(const*)) VAL_FRAME_LABEL(noquote(Cell(const*)) v) {
+inline static Option(Symbol(const*)) VAL_FRAME_LABEL(NoQuote(Cell(const*)) v) {
     REBSER *s = VAL_FRAME_PHASE_OR_LABEL(v);  // VAL_ACTION_PARTIALS_OR_LABEL as well
     if (s and IS_SYMBOL(s))  // label in value
         return SYM(s);
@@ -491,7 +491,7 @@ inline static void INIT_VAL_FRAME_LABEL(
 // visible for that phase of execution and which aren't.
 //
 
-inline static const REBKEY *VAL_CONTEXT_KEYS_HEAD(noquote(Cell(const*)) context)
+inline static const REBKEY *VAL_CONTEXT_KEYS_HEAD(NoQuote(Cell(const*)) context)
 {
     if (CELL_HEART(context) != REB_FRAME)
         return CTX_KEYS_HEAD(VAL_CONTEXT(context));

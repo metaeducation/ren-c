@@ -121,7 +121,7 @@ inline static Cell(*) Unquotify_Core(Cell(*) v, Count unquotes) {
 
 
 #define VAL_UNESCAPED(v) \
-    cast(noquote(Cell(const*)), (v))
+    cast(NoQuote(Cell(const*)), (v))
 
 
 inline static Count Dequotify(Cell(*) v) {

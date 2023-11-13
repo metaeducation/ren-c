@@ -869,7 +869,7 @@ inline static REBVAL *Sink_Word_May_Fail(
 
 inline static REBSPC *Derive_Specifier(
     REBSPC *parent,
-    noquote(Cell(const*)) any_array
+    NoQuote(Cell(const*)) any_array
 );
 
 #if CPLUSPLUS_11
@@ -1109,7 +1109,7 @@ inline static Array(*) Merge_Patches_May_Reuse(
 //
 inline static REBSPC *Derive_Specifier_Core(
     REBSPC *specifier,  // merge this specifier...
-    noquote(Cell(const*)) any_array  // ...onto the one in this array
+    NoQuote(Cell(const*)) any_array  // ...onto the one in this array
 ){
     Array(*) old = ARR(BINDING(any_array));
 
@@ -1252,14 +1252,14 @@ inline static REBSPC *Derive_Specifier_Core(
 #if (! DEBUG_VIRTUAL_BINDING)
     inline static REBSPC *Derive_Specifier(
         REBSPC *specifier,
-        noquote(Cell(const*)) any_array
+        NoQuote(Cell(const*)) any_array
     ){
         return Derive_Specifier_Core(specifier, any_array);
     }
 #else
     inline static REBSPC *Derive_Specifier(
         REBSPC *specifier,
-        noquote(Cell(const*)) any_array
+        NoQuote(Cell(const*)) any_array
     ){
         REBSPC *derived = Derive_Specifier_Core(specifier, any_array);
         Array(*) old = ARR(BINDING(any_array));

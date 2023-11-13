@@ -874,7 +874,7 @@ Context(*) Error_No_Memory(REBLEN bytes)
 //
 //  Error_No_Relative_Core: C
 //
-Context(*) Error_No_Relative_Core(noquote(Cell(const*)) any_word)
+Context(*) Error_No_Relative_Core(NoQuote(Cell(const*)) any_word)
 {
     DECLARE_LOCAL (unbound);
     Init_Any_Word(
@@ -1439,7 +1439,7 @@ static void Mold_Value_Limit(REB_MOLD *mo, Cell(*) v, REBLEN limit)
 //
 //  MF_Error: C
 //
-void MF_Error(REB_MOLD *mo, noquote(Cell(const*)) v, bool form)
+void MF_Error(REB_MOLD *mo, NoQuote(Cell(const*)) v, bool form)
 {
     // Protect against recursion. !!!!
     //

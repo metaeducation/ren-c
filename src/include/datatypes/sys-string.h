@@ -540,7 +540,7 @@ inline static Utf8(*) STR_AT(const_if_c Raw_String* s, REBLEN at) {
 #endif
 
 
-inline static const Raw_String *VAL_STRING(noquote(Cell(const*)) v) {
+inline static const Raw_String *VAL_STRING(NoQuote(Cell(const*)) v) {
     if (ANY_STRINGLIKE(v))
         return STR(VAL_NODE1(v));  // VAL_SERIES() would assert
 
@@ -556,17 +556,17 @@ inline static const Raw_String *VAL_STRING(noquote(Cell(const*)) v) {
 // that type.  So if the series is a string and not a binary, the special
 // cache of the length in the series node for strings must be used.
 //
-inline static REBLEN VAL_LEN_HEAD(noquote(Cell(const*)) v) {
+inline static REBLEN VAL_LEN_HEAD(NoQuote(Cell(const*)) v) {
     const REBSER *s = VAL_SERIES(v);
     if (IS_SER_UTF8(s) and CELL_HEART(v) != REB_BINARY)
         return STR_LEN(STR(s));
     return SER_USED(s);
 }
 
-inline static bool VAL_PAST_END(noquote(Cell(const*)) v)
+inline static bool VAL_PAST_END(NoQuote(Cell(const*)) v)
    { return VAL_INDEX(v) > VAL_LEN_HEAD(v); }
 
-inline static REBLEN VAL_LEN_AT(noquote(Cell(const*)) v) {
+inline static REBLEN VAL_LEN_AT(NoQuote(Cell(const*)) v) {
     //
     // !!! At present, it is considered "less of a lie" to tell people the
     // length of a series is 0 if its index is actually past the end, than
@@ -584,7 +584,7 @@ inline static REBLEN VAL_LEN_AT(noquote(Cell(const*)) v) {
     return VAL_LEN_HEAD(v) - i;  // take current index into account
 }
 
-inline static Utf8(const*) VAL_STRING_AT(noquote(Cell(const*)) v) {
+inline static Utf8(const*) VAL_STRING_AT(NoQuote(Cell(const*)) v) {
     String(const*) str = VAL_STRING(v);  // checks that it's ANY-STRING!
     REBIDX i = VAL_INDEX_RAW(v);
     REBLEN len = STR_LEN(str);
@@ -594,7 +594,7 @@ inline static Utf8(const*) VAL_STRING_AT(noquote(Cell(const*)) v) {
 }
 
 
-inline static Utf8(const*) VAL_STRING_TAIL(noquote(Cell(const*)) v) {
+inline static Utf8(const*) VAL_STRING_TAIL(NoQuote(Cell(const*)) v) {
     String(const*) s = VAL_STRING(v);  // debug build checks it's ANY-STRING!
     return STR_TAIL(s);
 }
@@ -610,7 +610,7 @@ inline static Utf8(const*) VAL_STRING_TAIL(noquote(Cell(const*)) v) {
 
 inline static Size VAL_SIZE_LIMIT_AT(
     Option(REBLEN*) length_out,  // length in chars to end (including limit)
-    noquote(Cell(const*)) v,
+    NoQuote(Cell(const*)) v,
     REBINT limit  // UNLIMITED (e.g. a very large number) for no limit
 ){
     assert(ANY_STRINGLIKE(v));
@@ -644,7 +644,7 @@ inline static Size VAL_BYTEOFFSET(Cell(const*) v) {
 }
 
 inline static Size VAL_BYTEOFFSET_FOR_INDEX(
-    noquote(Cell(const*)) v,
+    NoQuote(Cell(const*)) v,
     REBLEN index
 ){
     assert(ANY_STRING_KIND(CELL_HEART(v)));

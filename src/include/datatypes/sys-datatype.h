@@ -72,7 +72,7 @@ inline static enum Reb_Kind KIND_FROM_SYM(SymId s) {
 #define VAL_TYPE_SYMBOL(v) \
     VAL_WORD_SYMBOL(v)
 
-inline static enum Reb_Kind VAL_TYPE_KIND(noquote(Cell(const*)) v) {
+inline static enum Reb_Kind VAL_TYPE_KIND(NoQuote(Cell(const*)) v) {
     assert(CELL_HEART(v) == REB_TYPE_WORD);
     Option(SymId) id = ID_OF_SYMBOL(VAL_WORD_SYMBOL(v));
     assert(unwrap(id) < cast(SymId, REB_MAX));
@@ -119,14 +119,14 @@ extern CFUNC* Builtin_Type_Hooks[REB_MAX][IDX_HOOKS_MAX];
 // The datatype only knows a symbol.  Have to look that symbol up to get the
 // list of hooks registered by the extension providing the custom type.
 //
-inline static CFUNC** VAL_TYPE_HOOKS(noquote(Cell(const*)) type) {
+inline static CFUNC** VAL_TYPE_HOOKS(NoQuote(Cell(const*)) type) {
     assert(CELL_HEART(type) == REB_TYPE_WORD);
     enum Reb_Kind k = VAL_TYPE_KIND(type);
     assert(k < REB_MAX);
     return Builtin_Type_Hooks[k];
 }
 
-inline static CFUNC** HOOKS_FOR_TYPE_OF(noquote(Cell(const*)) v) {
+inline static CFUNC** HOOKS_FOR_TYPE_OF(NoQuote(Cell(const*)) v) {
     enum Reb_Kind k = CELL_HEART(v);
     assert(k < REB_MAX);
     return Builtin_Type_Hooks[k];

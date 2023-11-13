@@ -477,7 +477,7 @@ DECLARE_NATIVE(unprotect)
 // in order to do things like use blocks as map keys, etc.
 //
 bool Is_Value_Frozen_Deep(Cell(const*) v) {
-    noquote(Cell(const*)) cell = VAL_UNESCAPED(v);
+    NoQuote(Cell(const*)) cell = VAL_UNESCAPED(v);
     UNUSED(v); // debug build trashes, to avoid accidental usage below
 
     if (Not_Cell_Flag(cell, FIRST_IS_NODE))

@@ -74,7 +74,7 @@ DECLARE_NATIVE(only_p)  // https://forum.rebol.info/t/1182/11
 // !!! Should CT_Path() delegate to this when it detects it has two arrays
 // to compare?  That requires canonization assurance.
 //
-REBINT CT_Array(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
+REBINT CT_Array(NoQuote(Cell(const*)) a, NoQuote(Cell(const*)) b, bool strict)
 {
     if (C_STACK_OVERFLOWING(&strict))
         Fail_Stack_Overflow();
@@ -704,7 +704,7 @@ bool Did_Pick_Block(
 //
 //  MF_Array: C
 //
-void MF_Array(REB_MOLD *mo, noquote(Cell(const*)) v, bool form)
+void MF_Array(REB_MOLD *mo, NoQuote(Cell(const*)) v, bool form)
 {
     // Routine may be called on value that reports REB_QUOTED, even if it
     // has no additional payload and is aliasing the cell itself.  Checking

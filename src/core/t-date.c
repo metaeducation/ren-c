@@ -45,7 +45,7 @@
 // time zone" would result in determinism problems for this comparison, so
 // date value literals on different machines would compare differently.
 //
-REBINT CT_Date(noquote(Cell(const*)) a_in, noquote(Cell(const*)) b_in, bool strict)
+REBINT CT_Date(NoQuote(Cell(const*)) a_in, NoQuote(Cell(const*)) b_in, bool strict)
 //
 // 1. This comparison doesn't know if it's being asked on behalf of equality or
 //    not.  This is suboptimal, a redesign is needed:
@@ -101,7 +101,7 @@ REBINT CT_Date(noquote(Cell(const*)) a_in, noquote(Cell(const*)) b_in, bool stri
 //
 //  MF_Date: C
 //
-void MF_Date(REB_MOLD *mo, noquote(Cell(const*)) v_orig, bool form)
+void MF_Date(REB_MOLD *mo, NoQuote(Cell(const*)) v_orig, bool form)
 {
     // We can't/shouldn't modify the incoming date value we are molding, so we
     // make a copy that we can tweak during the emit process

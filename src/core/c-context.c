@@ -492,7 +492,7 @@ Array(*) Collect_Unique_Words_Managed(
         Cell(const*) ignore_tail;
         Cell(const*) ignore = VAL_ARRAY_AT(&ignore_tail, ignorables);
         for (; ignore != ignore_tail; ++ignore) {
-            noquote(Cell(const*)) cell = VAL_UNESCAPED(ignore);
+            NoQuote(Cell(const*)) cell = VAL_UNESCAPED(ignore);
             Symbol(const*) symbol = VAL_WORD_SYMBOL(cell);
 
             // A block may have duplicate words in it (this situation could
@@ -540,7 +540,7 @@ Array(*) Collect_Unique_Words_Managed(
         Cell(const*) ignore_tail;
         Cell(const*) ignore = VAL_ARRAY_AT(&ignore_tail, ignorables);
         for (; ignore != ignore_tail; ++ignore) {
-            noquote(Cell(const*)) cell = VAL_UNESCAPED(ignore);
+            NoQuote(Cell(const*)) cell = VAL_UNESCAPED(ignore);
             Symbol(const*) symbol = VAL_WORD_SYMBOL(cell);
 
           #if !defined(NDEBUG)

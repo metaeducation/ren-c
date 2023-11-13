@@ -326,7 +326,7 @@ DECLARE_NATIVE(reduce_each)
 }}
 
 
-bool Match_For_Compose(noquote(Cell(const*)) group, const REBVAL *label) {
+bool Match_For_Compose(NoQuote(Cell(const*)) group, const REBVAL *label) {
     assert(ANY_GROUP_KIND(CELL_HEART(group)));
 
     if (Is_Nulled(label))
@@ -563,7 +563,7 @@ Bounce Composer_Executor(Level(*) L)
     enum Reb_Kind heart = CELL_HEART(at);  // quoted groups match, see [1]
 
     REBSPC *match_specifier = nullptr;
-    noquote(Cell(const*)) match = nullptr;
+    NoQuote(Cell(const*)) match = nullptr;
 
     if (not ANY_GROUP_KIND(heart)) {
         //

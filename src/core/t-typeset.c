@@ -28,7 +28,7 @@
 //
 //  CT_Parameter: C
 //
-REBINT CT_Parameter(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
+REBINT CT_Parameter(NoQuote(Cell(const*)) a, NoQuote(Cell(const*)) b, bool strict)
 {
     UNUSED(strict);
 
@@ -260,7 +260,7 @@ Bounce TO_Parameter(Level(*) level_, enum Reb_Kind kind, const REBVAL *arg)
 //
 //  MF_Parameter: C
 //
-void MF_Parameter(REB_MOLD *mo, noquote(Cell(const*)) v, bool form)
+void MF_Parameter(REB_MOLD *mo, NoQuote(Cell(const*)) v, bool form)
 {
     if (not form) {
         Pre_Mold(mo, v);  // #[parameter! or make parameter!

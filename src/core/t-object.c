@@ -185,7 +185,7 @@ static void Append_Vars_To_Context_From_Group(REBVAL *context, REBVAL *block)
 //    LEVEL_FLAG_ABRUPT_FAILURE.  So we make them "fake unmanaged" so they
 //    are "untracked" by saying they're managed, and taking that flag off.
 //
-void Init_Evars(EVARS *e, noquote(Cell(const*)) v) {
+void Init_Evars(EVARS *e, NoQuote(Cell(const*)) v) {
     enum Reb_Kind kind = CELL_HEART(v);
 
     e->visibility = VAR_VISIBILITY_ALL;  // ensure not uninitialized
@@ -448,7 +448,7 @@ void Shutdown_Evars(EVARS *e)
 //
 //  CT_Context: C
 //
-REBINT CT_Context(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
+REBINT CT_Context(NoQuote(Cell(const*)) a, NoQuote(Cell(const*)) b, bool strict)
 {
     assert(ANY_CONTEXT_KIND(CELL_HEART(a)));
     assert(ANY_CONTEXT_KIND(CELL_HEART(b)));
@@ -928,7 +928,7 @@ Context(*) Copy_Context_Extra_Managed(
 //
 //  MF_Context: C
 //
-void MF_Context(REB_MOLD *mo, noquote(Cell(const*)) v, bool form)
+void MF_Context(REB_MOLD *mo, NoQuote(Cell(const*)) v, bool form)
 {
     String(*) s = mo->series;
 
@@ -1622,7 +1622,7 @@ REBTYPE(Frame)
 }
 
 
-static bool Same_Action(noquote(Cell(const*)) a, noquote(Cell(const*)) b)
+static bool Same_Action(NoQuote(Cell(const*)) a, NoQuote(Cell(const*)) b)
 {
     assert(CELL_HEART(a) == REB_FRAME and CELL_HEART(b) == REB_FRAME);
     if (not Is_Frame_Details(a) or not Is_Frame_Details(b))
@@ -1645,7 +1645,7 @@ static bool Same_Action(noquote(Cell(const*)) a, noquote(Cell(const*)) b)
 //
 //  CT_Frame: C
 //
-REBINT CT_Frame(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
+REBINT CT_Frame(NoQuote(Cell(const*)) a, NoQuote(Cell(const*)) b, bool strict)
 {
     UNUSED(strict);  // no lax form of comparison
 
@@ -1668,7 +1668,7 @@ REBINT CT_Frame(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
 //
 //  MF_Frame: C
 //
-void MF_Frame(REB_MOLD *mo, noquote(Cell(const*)) v, bool form) {
+void MF_Frame(REB_MOLD *mo, NoQuote(Cell(const*)) v, bool form) {
 
     if (Is_Frame_Exemplar(v)) {
         MF_Context(mo, v, form);

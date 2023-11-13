@@ -546,7 +546,7 @@ REBTYPE(Varargs)
 // Simple comparison function stub (required for every type--rules TBD for
 // levels of "exactness" in equality checking, or sort-stable comparison.)
 //
-REBINT CT_Varargs(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
+REBINT CT_Varargs(NoQuote(Cell(const*)) a, NoQuote(Cell(const*)) b, bool strict)
 {
     UNUSED(strict);
 
@@ -570,7 +570,7 @@ REBINT CT_Varargs(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
 // has reached its end, or if the frame the varargs is attached to is no
 // longer on the stack.
 //
-void MF_Varargs(REB_MOLD *mo, noquote(Cell(const*)) v, bool form) {
+void MF_Varargs(REB_MOLD *mo, NoQuote(Cell(const*)) v, bool form) {
     UNUSED(form);
 
     Pre_Mold(mo, v);  // #[varargs! or make varargs!

@@ -178,7 +178,7 @@ const Byte* Scan_Time(Cell(*) out, const Byte* cp, REBLEN len)
 //
 //  MF_Time: C
 //
-void MF_Time(REB_MOLD *mo, noquote(Cell(const*)) v, bool form)
+void MF_Time(REB_MOLD *mo, NoQuote(Cell(const*)) v, bool form)
 {
     UNUSED(form);  // no difference between MOLD and FORM at this time
 
@@ -215,7 +215,7 @@ void MF_Time(REB_MOLD *mo, noquote(Cell(const*)) v, bool form)
 //
 //  CT_Time: C
 //
-REBINT CT_Time(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
+REBINT CT_Time(NoQuote(Cell(const*)) a, NoQuote(Cell(const*)) b, bool strict)
 {
     UNUSED(strict);
 

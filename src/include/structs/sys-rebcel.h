@@ -77,14 +77,14 @@
 //=//// EXTANT STACK POINTERS /////////////////////////////////////////////=//
 //
 // See %sys-stack.h for a deeper explanation.  This has to be declared in
-// order to put in one of noquote(Cell(const*))s implicit constructors.  Because
+// order to put in one of NoQuote(Cell(const*))s implicit constructors.  Because
 // having the StackValue(*) have a user-defined conversion to REBVAL* won't
-// get that...and you can't convert to both REBVAL* and noquote(Cell(const*)) as
+// get that...and you can't convert to both REBVAL* and NoQuote(Cell(const*)) as
 // that would be ambiguous.
 //
 // Even with this definition, the intersecting needs of DEBUG_CHECK_CASTS and
 // DEBUG_EXTANT_STACK_POINTERS means there will be some cases where distinct
-// overloads of REBVAL* vs. noquote(Cell(const*)) will wind up being ambiguous.
+// overloads of REBVAL* vs. NoQuote(Cell(const*)) will wind up being ambiguous.
 // For instance, VAL_DECIMAL(StackValue(*)) can't tell which checked overload
 // to use.  In such cases, you have to cast, e.g. VAL_DECIMAL(VAL(stackval)).
 //
@@ -99,11 +99,12 @@
 //=//// ESCAPE-ALIASABLE CELLS ////////////////////////////////////////////=//
 //
 // The system uses a trick in which the header byte contains a quote level
-// that can be up to 255 levels of quoting (or 0).  This is independent of
-// the cell's "heart", or underlying layout for its unquoted type.
+// that can be up to 127 levels of quoting (and an extra bit for being a
+// quasiform, or an isotope).  This is independent of the cell's "heart", or
+// underlying layout for its unquoted type.
 //
-// Most of the time, routines want to see these as being QUOTED!.  But some
-// lower-level routines (like molding or comparison) want to be able to act
+// Most of the time, routines want to see these as QUOTED!/QUASI!/ISOTOPE!.
+// But some lower-level routines (like molding or comparison) want to act
 // on them in-place without making a copy.  To ensure they see the value for
 // the "type that it is" and use CELL_HEART() and not VAL_TYPE(), this alias
 // for Cell prevents VAL_TYPE() operations.
@@ -113,7 +114,7 @@
 //
 #if (! CPLUSPLUS_11)
 
-    #define noquote(const_cell_star) \
+    #define NoQuote(const_cell_star) \
         const struct Reb_Value*  // same as Cell, no checking in C build
 
 #elif (! DEBUG_CHECK_CASTS)
@@ -128,24 +129,24 @@
     // using the active pointer class.  Choose debug builds for now.
     //
     struct Reb_Raw;  // won't implicitly downcast to Cell
-    #define noquote(const_cell_star) \
+    #define NoQuote(const_cell_star) \
         const struct Reb_Raw*  // not a class instance in %sys-internals.h
 #else
     // This heavier wrapper form of Reb_Raw() can be costly...empirically
     // up to 10% of the runtime, since it's called so often.  But it protects
-    // against pointer arithmetic on noquote() cells.
+    // against pointer arithmetic on NoQuote() cells.
     //
     struct Reb_Raw;  // won't implicitly downcast to Cell
     template<typename T>
-    struct NoquotePtr {
+    struct NoQuoteWrapper {
         const Reb_Raw *p;
         static_assert(
             std::is_same<Cell(const*), T>::value,
-            "Instantiations of `noquote()` only work as noquote(Cell(const*))"
+            "Instantiations of `NoQuote()` only work as NoQuote(Cell(const*))"
         );
 
-        NoquotePtr () { }
-        NoquotePtr (const Reb_Raw *p) : p (p) { }
+        NoQuoteWrapper () { }
+        NoQuoteWrapper (const Reb_Raw *p) : p (p) { }
 
         const Reb_Raw **operator&() { return &p; }
         const Reb_Raw *operator->() { return p; }
@@ -159,6 +160,6 @@
         explicit operator const Reb_Relative_Value* ()
           { return reinterpret_cast<const Reb_Relative_Value*>(p); }
     };
-    #define noquote(const_cell_star) \
-        struct NoquotePtr<const_cell_star>
+    #define NoQuote(const_cell_star) \
+        struct NoQuoteWrapper<const_cell_star>
 #endif

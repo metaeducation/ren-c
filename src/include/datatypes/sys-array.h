@@ -388,7 +388,7 @@ inline static Array(*) Copy_Array_At_Extra_Deep_Flags_Managed(
 // These operations do not need to take the value's index position into
 // account; they strictly operate on the array series
 //
-inline static Array(const*) VAL_ARRAY(noquote(Cell(const*)) v) {
+inline static Array(const*) VAL_ARRAY(NoQuote(Cell(const*)) v) {
     assert(ANY_ARRAYLIKE(v));
 
     Array(const*) a = ARR(VAL_NODE1(v));
@@ -414,7 +414,7 @@ inline static Array(const*) VAL_ARRAY(noquote(Cell(const*)) v) {
 //
 inline static Cell(const*) VAL_ARRAY_LEN_AT(
     Option(REBLEN*) len_at_out,
-    noquote(Cell(const*)) v
+    NoQuote(Cell(const*)) v
 ){
     Array(const*) arr = VAL_ARRAY(v);
     REBIDX i = VAL_INDEX_RAW(v);  // VAL_ARRAY() already checks it's series
@@ -428,7 +428,7 @@ inline static Cell(const*) VAL_ARRAY_LEN_AT(
 
 inline static Cell(const*) VAL_ARRAY_AT(
     Option(Cell(const*)*) tail_out,
-    noquote(Cell(const*)) v
+    NoQuote(Cell(const*)) v
 ){
     Array(const*) arr = VAL_ARRAY(v);
     REBIDX i = VAL_INDEX_RAW(v);  // VAL_ARRAY() already checks it's series
@@ -441,7 +441,7 @@ inline static Cell(const*) VAL_ARRAY_AT(
     return at;
 }
 
-inline static Cell(const*) VAL_ARRAY_ITEM_AT(noquote(Cell(const*)) v) {
+inline static Cell(const*) VAL_ARRAY_ITEM_AT(NoQuote(Cell(const*)) v) {
     Cell(const*) tail;
     Cell(const*) item = VAL_ARRAY_AT(&tail, v);
     assert(item != tail);  // should be a valid value
@@ -559,7 +559,7 @@ inline static Cell(*) Init_Relative_Block_At(
 //
 // https://forum.rebol.info/t/doubled-groups-as-a-dialecting-tool/1893
 //
-inline static bool Is_Any_Doubled_Group(noquote(Cell(const*)) group) {
+inline static bool Is_Any_Doubled_Group(NoQuote(Cell(const*)) group) {
     assert(ANY_GROUP_KIND(CELL_HEART(group)));
     Cell(const*) tail;
     Cell(const*) inner = VAL_ARRAY_AT(&tail, group);

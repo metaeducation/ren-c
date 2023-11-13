@@ -2336,7 +2336,7 @@ Bounce Scanner_Executor(Level(*) L) {
             mutable_HEART_BYTE(TOP) = REB_PERCENT;
 
             // !!! DEBUG_EXTANT_STACK_POINTERS can't resolve if this is
-            // a noquote(Cell(const*)) or REBVAL* overload with DEBUG_CHECK_CASTS.
+            // a NoQuote(Cell(const*)) or REBVAL* overload with DEBUG_CHECK_CASTS.
             // Have to cast explicitly, use VAL()
             //
             VAL_DECIMAL(VAL(TOP)) /= 100.0;

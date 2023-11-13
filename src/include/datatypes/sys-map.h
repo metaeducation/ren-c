@@ -64,7 +64,7 @@ inline static Array(*) MAP_PAIRLIST(const_if_c REBMAP *map)
     SER_HEAD(MAP_HASHLIST(m))
 
 
-inline static const REBMAP *VAL_MAP(noquote(Cell(const*)) v) {
+inline static const REBMAP *VAL_MAP(NoQuote(Cell(const*)) v) {
     assert(CELL_HEART(v) == REB_MAP);
 
     Array(*) a = ARR(VAL_NODE1(v));

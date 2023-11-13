@@ -263,7 +263,7 @@ inline static Phase(*) ACT_IDENTITY(Action(*) action) {
     SER_AT(REBVAL, ACT_IDENTITY(action), 0)
 
 
-inline static bool Is_Frame_Details(noquote(Cell(const*)) v) {
+inline static bool Is_Frame_Details(NoQuote(Cell(const*)) v) {
     assert(HEART_BYTE(v) == REB_FRAME);
     return IS_DETAILS(cast(Stub*, VAL_NODE1(v)));
 }
@@ -308,7 +308,7 @@ inline static Details(*) ACT_DETAILS(Action(*) a) {
 // a running frame gets re-executed.  More study is needed.
 //
 
-inline static Context(*) VAL_FRAME_BINDING(noquote(Cell(const*)) v) {
+inline static Context(*) VAL_FRAME_BINDING(NoQuote(Cell(const*)) v) {
     assert(HEART_BYTE(v) == REB_FRAME);
     return CTX(BINDING(v));
 }
@@ -455,7 +455,7 @@ inline static void Init_Key(REBKEY *dest, const Raw_Symbol* symbol)
 #define ACT_ADJUNCT(a)             MISC(DetailsAdjunct, ACT_IDENTITY(a))
 
 
-inline static Action(*) VAL_ACTION(noquote(Cell(const*)) v) {
+inline static Action(*) VAL_ACTION(NoQuote(Cell(const*)) v) {
     assert(HEART_BYTE(v) == REB_FRAME);
     REBSER *s = SER(VAL_NODE1(v));  // maybe exemplar, maybe details
     if (Get_Series_Flag(s, INACCESSIBLE))
@@ -719,7 +719,7 @@ inline static Cell(*) Deactivate_If_Activation(Cell(*) v) {
 }
 
 
-inline static bool Is_Enfixed(noquote(Cell(const*)) v) {
+inline static bool Is_Enfixed(NoQuote(Cell(const*)) v) {
     assert(HEART_BYTE(v) == REB_FRAME);
     return Get_Cell_Flag_Unchecked(v, ENFIX_FRAME);
 }

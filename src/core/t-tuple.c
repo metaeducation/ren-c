@@ -434,7 +434,7 @@ REBTYPE(Sequence)
 //
 //  MF_Sequence: C
 //
-void MF_Sequence(REB_MOLD *mo, noquote(Cell(const*)) v, bool form)
+void MF_Sequence(REB_MOLD *mo, NoQuote(Cell(const*)) v, bool form)
 {
     enum Reb_Kind kind = CELL_HEART(v);
     char interstitial = ANY_TUPLE_KIND(kind) ? '.' : '/';

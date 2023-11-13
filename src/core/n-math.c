@@ -436,7 +436,7 @@ DECLARE_NATIVE(shift)
 
 //  CT_Fail: C
 //
-REBINT CT_Fail(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
+REBINT CT_Fail(NoQuote(Cell(const*)) a, NoQuote(Cell(const*)) b, bool strict)
 {
     UNUSED(a);
     UNUSED(b);
@@ -448,7 +448,7 @@ REBINT CT_Fail(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
 
 //  CT_Unhooked: C
 //
-REBINT CT_Unhooked(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
+REBINT CT_Unhooked(NoQuote(Cell(const*)) a, NoQuote(Cell(const*)) b, bool strict)
 {
     UNUSED(a);
     UNUSED(b);

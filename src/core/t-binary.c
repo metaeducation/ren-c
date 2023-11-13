@@ -40,7 +40,7 @@
 //
 //  CT_Binary: C
 //
-REBINT CT_Binary(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
+REBINT CT_Binary(NoQuote(Cell(const*)) a, NoQuote(Cell(const*)) b, bool strict)
 {
     UNUSED(strict);  // no lax form of comparison
 
@@ -262,7 +262,7 @@ static int Compare_Byte(void *thunk, const void *v1, const void *v2)
 //
 //  MF_Binary: C
 //
-void MF_Binary(REB_MOLD *mo, noquote(Cell(const*)) v, bool form)
+void MF_Binary(REB_MOLD *mo, NoQuote(Cell(const*)) v, bool form)
 {
     UNUSED(form);
 

@@ -124,7 +124,7 @@
 
         operator REBVAL* () const { return v; }
         operator Sink(Value(*)) () const { return v; }
-        operator noquote(Cell(const*)) () { return v; }
+        operator NoQuote(Cell(const*)) () { return v; }
         REBVAL* operator->() { return v; }
 
         bool operator==(const Reb_Stack_Value_Ptr &other)

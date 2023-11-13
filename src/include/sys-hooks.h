@@ -34,8 +34,8 @@
 // their class).
 //
 typedef REBINT (COMPARE_HOOK)(
-    noquote(Cell(const*)) a,
-    noquote(Cell(const*)) b,
+    NoQuote(Cell(const*)) a,
+    NoQuote(Cell(const*)) b,
     bool strict
 );
 
@@ -87,7 +87,7 @@ typedef Bounce (TO_HOOK)(Level(*) level_, enum Reb_Kind, const REBVAL*);
 // has a different handler than strings.  So not all molds are driven by
 // their class entirely.
 //
-typedef void (MOLD_HOOK)(REB_MOLD *mo, noquote(Cell(const*)) v, bool form);
+typedef void (MOLD_HOOK)(REB_MOLD *mo, NoQuote(Cell(const*)) v, bool form);
 
 
 // Just requests what symbol a custom datatype wants to use for its type

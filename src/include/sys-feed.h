@@ -775,7 +775,7 @@ inline static Feed(*) Prep_Variadic_Feed(
 
 inline static Feed(*) Prep_At_Feed(
     void *preallocated,
-    noquote(Cell(const*)) any_array,  // array is extracted and HOLD put on
+    NoQuote(Cell(const*)) any_array,  // array is extracted and HOLD put on
     REBSPC *specifier,
     Flags parent_flags  // only reads FEED_FLAG_CONST out of this
 ){

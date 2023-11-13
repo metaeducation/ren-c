@@ -49,7 +49,7 @@
 // functions specifically take noquote cells, so you can't pass REB_QUOTED to
 // them.  The handling for QUOTED! is in the comparison dispatch itself.
 //
-REBINT CT_Quoted(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
+REBINT CT_Quoted(NoQuote(Cell(const*)) a, NoQuote(Cell(const*)) b, bool strict)
 {
     UNUSED(a); UNUSED(b); UNUSED(strict);
     assert(!"CT_Quoted should never be called");

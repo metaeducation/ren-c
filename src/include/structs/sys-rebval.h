@@ -151,7 +151,7 @@
 // if the quoting byte is > 1 VAL_TYPE() says it is REB_QUOTED.  This has the
 // potential to cause confusion in the internals.  But the type system is used
 // to check at compile-time so that different views of the same cell don't
-// get conflated.  See `noquote(Cell(const*))` for some of that mechanic.
+// get conflated.  See `NoQuote(Cell(const*))` for some of that mechanic.
 //
 
 #define FLAG_QUOTE_BYTE(b)          FLAG_THIRD_BYTE(b)
@@ -789,7 +789,7 @@ inline static REBVAL* Freshen_Cell_Untracked(Cell(*) v);
         operator bool () const { return p != nullptr; }
 
         operator Value(*) () const { return p; }
-        operator noquote(Cell(const*)) () const { return p; }
+        operator NoQuote(Cell(const*)) () const { return p; }
         Value(*) operator->() const { return p; }
     };
 

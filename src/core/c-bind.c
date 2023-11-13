@@ -46,7 +46,7 @@ void Bind_Values_Inner_Loop(
 ){
     Cell(*) v = head;
     for (; v != tail; ++v) {
-        noquote(Cell(const*)) cell = VAL_UNESCAPED(v);
+        NoQuote(Cell(const*)) cell = VAL_UNESCAPED(v);
         enum Reb_Kind heart = CELL_HEART(cell);
 
         // !!! Review use of `heart` bit here, e.g. when a REB_PATH has an

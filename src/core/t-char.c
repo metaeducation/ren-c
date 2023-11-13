@@ -72,7 +72,7 @@ const uint_fast8_t firstByteMark[7] = {
 // no non-strict comparisons.  To compare non-strictly, they must be aliased
 // as TEXT!.
 //
-REBINT CT_Issue(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
+REBINT CT_Issue(NoQuote(Cell(const*)) a, NoQuote(Cell(const*)) b, bool strict)
 {
     UNUSED(strict);  // always strict
 
@@ -256,7 +256,7 @@ static REBINT Math_Arg_For_Char(REBVAL *arg, Symbol(const*) verb)
 //
 //  MF_Issue: C
 //
-void MF_Issue(REB_MOLD *mo, noquote(Cell(const*)) v, bool form)
+void MF_Issue(REB_MOLD *mo, NoQuote(Cell(const*)) v, bool form)
 {
     REBLEN len;
     if (Get_Cell_Flag(v, ISSUE_HAS_NODE))

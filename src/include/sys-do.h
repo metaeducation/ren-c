@@ -67,7 +67,7 @@ inline static void Tweak_Non_Const_To_Explicitly_Mutable(Value(*) source) {
 inline static bool Do_Any_Array_At_Core_Throws(
     Atom(*) out,
     Flags flags,
-    noquote(Cell(const*)) any_array,
+    NoQuote(Cell(const*)) any_array,
     REBSPC *specifier
 ){
     Level(*) L = Make_Level_At_Core(any_array, specifier, flags);

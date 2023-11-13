@@ -1009,7 +1009,7 @@ inline static void DROP_GC_GUARD(const Node* node) {
 // Uses "evil macro" variations because it is called so frequently, that in
 // the debug build (which doesn't inline functions) there's a notable cost.
 //
-inline static const REBSER *VAL_SERIES(noquote(Cell(const*)) v) {
+inline static const REBSER *VAL_SERIES(NoQuote(Cell(const*)) v) {
   #if !defined(NDEBUG)
     enum Reb_Kind k = CELL_HEART(v);
     assert(
@@ -1045,7 +1045,7 @@ inline static const REBSER *VAL_SERIES(noquote(Cell(const*)) v) {
     // Avoids READABLE() macro, because it's assumed that it was done in the
     // type checking to ensure VAL_INDEX() applied.  (This is called often.)
     //
-    inline static REBIDX VAL_INDEX_UNBOUNDED(noquote(Cell(const*)) v) {
+    inline static REBIDX VAL_INDEX_UNBOUNDED(NoQuote(Cell(const*)) v) {
         enum Reb_Kind k = CELL_HEART_UNCHECKED(v);  // only const if heart!
         assert(
             ANY_SERIES_KIND(k)
@@ -1069,13 +1069,13 @@ inline static const REBSER *VAL_SERIES(noquote(Cell(const*)) v) {
 #endif
 
 
-inline static REBLEN VAL_LEN_HEAD(noquote(Cell(const*)) v);  // forward decl
+inline static REBLEN VAL_LEN_HEAD(NoQuote(Cell(const*)) v);  // forward decl
 
 // Unlike VAL_INDEX_UNBOUNDED() that may give a negative number or past the
 // end of series, VAL_INDEX() does bounds checking and always returns an
 // unsigned REBLEN.
 //
-inline static REBLEN VAL_INDEX(noquote(Cell(const*)) v) {
+inline static REBLEN VAL_INDEX(NoQuote(Cell(const*)) v) {
     enum Reb_Kind k = CELL_HEART(v);  // only const access if heart!
     assert(
         ANY_SERIES_KIND(k)
@@ -1091,7 +1091,7 @@ inline static REBLEN VAL_INDEX(noquote(Cell(const*)) v) {
 }
 
 
-inline static const Byte* VAL_DATA_AT(noquote(Cell(const*)) v) {
+inline static const Byte* VAL_DATA_AT(NoQuote(Cell(const*)) v) {
     return SER_DATA_AT(SER_WIDE(VAL_SERIES(v)), VAL_SERIES(v), VAL_INDEX(v));
 }
 

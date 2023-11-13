@@ -138,9 +138,9 @@ REBINT Compare_UTF8(const Byte* s1, const Byte* s2, Size l2)
 //
 REBINT Find_Binstr_In_Binstr(
     REBLEN *len_out,  // length in output units of match
-    noquote(Cell(const*)) binstr1,
+    NoQuote(Cell(const*)) binstr1,
     REBLEN end1_unsigned,  // end binstr1 *index* (not a limiting *length*)
-    noquote(Cell(const*)) binstr2,  // pattern to be found
+    NoQuote(Cell(const*)) binstr2,  // pattern to be found
     REBLEN limit2,  // in units of binstr2 (usually VAL_LEN_AT(binstr2))
     Flags flags,  // AM_FIND_CASE, AM_FIND_MATCH
     REBINT skip1  // in length units of binstr1 (bytes or codepoints)
@@ -438,7 +438,7 @@ REBINT Find_Binstr_In_Binstr(
 //
 REBINT Find_Bitset_In_Binstr(
     REBLEN *len_out,
-    noquote(Cell(const*)) binstr,
+    NoQuote(Cell(const*)) binstr,
     REBLEN end_unsigned,
     REBINT skip,
     Binary(const*) bset,
@@ -513,9 +513,9 @@ REBINT Find_Bitset_In_Binstr(
 //
 REBLEN Find_Value_In_Binstr(
     REBLEN *len,
-    noquote(Cell(const*)) binstr,
+    NoQuote(Cell(const*)) binstr,
     REBLEN end,
-    noquote(Cell(const*)) pattern,
+    NoQuote(Cell(const*)) pattern,
     REBLEN flags,
     REBINT skip
 ){

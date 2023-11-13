@@ -462,7 +462,7 @@ inline static Value(*) Try_Pop_Sequence_Or_Element_Or_Nulled(
 // take as immutable...or you can create a `/foo`-style path in a more
 // optimized fashion using Refinify()
 
-inline static REBLEN VAL_SEQUENCE_LEN(noquote(Cell(const*)) sequence) {
+inline static REBLEN VAL_SEQUENCE_LEN(NoQuote(Cell(const*)) sequence) {
     assert(ANY_SEQUENCE_KIND(CELL_HEART(sequence)));
 
     if (Not_Cell_Flag(sequence, SEQUENCE_HAS_NODE)) {  // compressed bytes
@@ -504,7 +504,7 @@ inline static REBLEN VAL_SEQUENCE_LEN(noquote(Cell(const*)) sequence) {
 //
 inline static Cell(const*) VAL_SEQUENCE_AT(
     Cell(*) store,  // return may not point at this cell, ^-- SEE WHY!
-    noquote(Cell(const*)) sequence,
+    NoQuote(Cell(const*)) sequence,
     REBLEN n
 ){
     assert(store != sequence);
@@ -550,7 +550,7 @@ inline static Cell(const*) VAL_SEQUENCE_AT(
 
 inline static Value(*) GET_SEQUENCE_AT(
     Sink(Value(*)) out,
-    noquote(Cell(const*)) sequence,
+    NoQuote(Cell(const*)) sequence,
     REBSPC* specifier,
     REBLEN n
 ){
@@ -595,7 +595,7 @@ inline static Value(*) GET_SEQUENCE_AT(
 }
 
 inline static Byte VAL_SEQUENCE_BYTE_AT(
-    noquote(Cell(const*)) sequence,
+    NoQuote(Cell(const*)) sequence,
     REBLEN n
 ){
     DECLARE_LOCAL (temp);
@@ -606,7 +606,7 @@ inline static Byte VAL_SEQUENCE_BYTE_AT(
 }
 
 inline static REBSPC *VAL_SEQUENCE_SPECIFIER(
-    noquote(Cell(const*)) sequence
+    NoQuote(Cell(const*)) sequence
 ){
     assert(ANY_SEQUENCE_KIND(CELL_HEART(sequence)));
 
@@ -694,7 +694,7 @@ inline static REBVAL *Refinify(REBVAL *v) {
     return v;
 }
 
-inline static bool IS_REFINEMENT_CELL(noquote(Cell(const*)) v) {
+inline static bool IS_REFINEMENT_CELL(NoQuote(Cell(const*)) v) {
     assert(ANY_PATH_KIND(CELL_HEART(v)));
     if (Not_Cell_Flag(v, SEQUENCE_HAS_NODE))
         return false;
@@ -714,7 +714,7 @@ inline static bool IS_REFINEMENT(Cell(const*) v) {
     return IS_REFINEMENT_CELL(v);
 }
 
-inline static bool IS_PREDICATE1_CELL(noquote(Cell(const*)) v) {
+inline static bool IS_PREDICATE1_CELL(NoQuote(Cell(const*)) v) {
     if (CELL_HEART(v) != REB_TUPLE)
         return false;
 
@@ -732,7 +732,7 @@ inline static bool IS_PREDICATE1_CELL(noquote(Cell(const*)) v) {
 }
 
 inline static Symbol(const*) VAL_REFINEMENT_SYMBOL(
-    noquote(Cell(const*)) v
+    NoQuote(Cell(const*)) v
 ){
     assert(IS_REFINEMENT_CELL(v));
     return SYM(VAL_NODE1(v));

@@ -46,7 +46,7 @@
     mutable_FIRST_BYTE(EXTRA(Parameter, (v)).param_flags)
 
 inline static Option(Array(const*)) VAL_PARAMETER_ARRAY(
-    noquote(Cell(const*)) v
+    NoQuote(Cell(const*)) v
 ){
     assert(HEART_BYTE_UNCHECKED(v) == REB_PARAMETER);
 
@@ -263,6 +263,6 @@ inline static REBPAR *Init_Param_Core(
     TRACK(Init_Param_Core((out), (param_flags), (bits)))
 
 
-inline static bool Is_Parameter_Unconstrained(noquote(Cell(const*)) param) {
+inline static bool Is_Parameter_Unconstrained(NoQuote(Cell(const*)) param) {
     return VAL_PARAMETER_ARRAY(param) == nullptr;  // e.g. `[/refine]`
 }

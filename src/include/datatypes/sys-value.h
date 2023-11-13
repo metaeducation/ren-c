@@ -278,7 +278,7 @@ inline static void INIT_VAL_NODE2(Cell(*) v, Option(const Node*) node) {
 // cell then it won't be quoted at all.  Main thing to know is that you don't
 // necessarily get the original value you had back.
 //
-inline static Cell(const*) CELL_TO_VAL(noquote(Cell(const*)) cell)
+inline static Cell(const*) CELL_TO_VAL(NoQuote(Cell(const*)) cell)
   { return cast(Cell(const*), cell); }
 
 #if CPLUSPLUS_11
@@ -589,7 +589,7 @@ inline static REBVAL *SPECIFIC(const_if_c Cell(*) v) {
 #define UNSPECIFIED nullptr
 
 
-inline static bool ANY_ARRAYLIKE(noquote(Cell(const*)) v) {
+inline static bool ANY_ARRAYLIKE(NoQuote(Cell(const*)) v) {
     // called by core code, sacrifice READABLE() checks
     if (ANY_ARRAY_KIND(CELL_HEART_UNCHECKED(v)))
         return true;
@@ -603,7 +603,7 @@ inline static bool ANY_ARRAYLIKE(noquote(Cell(const*)) v) {
     return SER_FLAVOR(SER(node1)) == FLAVOR_ARRAY;
 }
 
-inline static bool ANY_WORDLIKE(noquote(Cell(const*)) v) {
+inline static bool ANY_WORDLIKE(NoQuote(Cell(const*)) v) {
     // called by core code, sacrifice READABLE() checks
     if (ANY_WORD_KIND(CELL_HEART_UNCHECKED(v)))
         return true;
@@ -617,7 +617,7 @@ inline static bool ANY_WORDLIKE(noquote(Cell(const*)) v) {
     return SER_FLAVOR(SER(node1)) == FLAVOR_SYMBOL;
 }
 
-inline static bool ANY_STRINGLIKE(noquote(Cell(const*)) v) {
+inline static bool ANY_STRINGLIKE(NoQuote(Cell(const*)) v) {
     // called by core code, sacrifice READABLE() checks
     if (ANY_STRING_KIND(CELL_HEART_UNCHECKED(v)))
         return true;
@@ -632,7 +632,7 @@ inline static bool ANY_STRINGLIKE(noquote(Cell(const*)) v) {
 inline static void INIT_VAL_WORD_SYMBOL(Cell(*) v, Symbol(const*) symbol)
   { INIT_VAL_NODE1(v, symbol); }
 
-inline static const Raw_Symbol* VAL_WORD_SYMBOL(noquote(Cell(const*)) cell) {
+inline static const Raw_Symbol* VAL_WORD_SYMBOL(NoQuote(Cell(const*)) cell) {
     assert(ANY_WORDLIKE(cell));  // no _UNCHECKED variant :-(
     return SYM(VAL_NODE1(cell));
 }
