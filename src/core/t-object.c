@@ -1537,18 +1537,8 @@ REBTYPE(Frame)
             ACT_PARAMLIST(act),  // not changing the interface
             ACT_PARTIALS(act),  // keeping partial specializations
             ACT_DISPATCHER(act),  // have to preserve in case original hijacked
-            //
-            // While the copy doesn't need any details array of its own, it
-            // has to be a dynamic allocation in order for ACT_DETAILS() to
-            // assume the array is dynamic and beeline for the array.  We put
-            // a dummy value ~copy~ in the array.  We assume this is better
-            // than making ACT_DETAILS() have to check the dynamic series bit,
-            // just because COPY on actions is so rare.
-            2
+            1  // copy doesn't need details of its own, just archetype
         );
-
-        Details(*) details = ACT_DETAILS(proxy);
-        Init_Quasi_Word(DETAILS_AT(details, 1), Canon(COPY));  // dummy ~copy~
 
         Context(*) meta = ACT_ADJUNCT(act);
         assert(ACT_ADJUNCT(proxy) == nullptr);
