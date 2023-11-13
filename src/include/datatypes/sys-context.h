@@ -149,11 +149,11 @@
 
 inline static const REBVAL *CTX_ARCHETYPE(Context(*) c) {  // read-only form
     const REBSER *varlist = CTX_VARLIST(c);
-    if (GET_SERIES_FLAG(varlist, INACCESSIBLE)) {  // a freed stub
-        assert(NOT_SERIES_FLAG(varlist, DYNAMIC));  // variables are gone
+    if (Get_Series_Flag(varlist, INACCESSIBLE)) {  // a freed stub
+        assert(Not_Series_Flag(varlist, DYNAMIC));  // variables are gone
         return cast(const REBVAL*, &varlist->content.fixed);
     }
-    assert(NOT_SERIES_FLAG(varlist, INACCESSIBLE));
+    assert(Not_Series_Flag(varlist, INACCESSIBLE));
     return cast(const REBVAL*, varlist->content.dynamic.data);
 }
 
@@ -204,7 +204,7 @@ inline static void INIT_VAL_FRAME_ROOTVAR_Core(
     Context(*) binding  // allowed to be UNBOUND
 ){
     assert(
-        (GET_SERIES_FLAG(varlist, INACCESSIBLE) and out == ARR_SINGLE(varlist))
+        (Get_Series_Flag(varlist, INACCESSIBLE) and out == ARR_SINGLE(varlist))
         or out == ARR_HEAD(varlist)
     );
     assert(phase != nullptr);
@@ -284,14 +284,14 @@ inline static const REBKEY *CTX_KEY(Context(*) c, REBLEN n) {
     // until all words bound to them have been adjusted somehow, because the
     // words depend on those keys for their spellings (once bound)
     //
-    /* assert(NOT_SERIES_FLAG(c, INACCESSIBLE)); */
+    /* assert(Not_Series_Flag(c, INACCESSIBLE)); */
 
     assert(n != 0 and n <= CTX_LEN(c));
     return SER_AT(const REBKEY, CTX_KEYLIST(c), n - 1);
 }
 
 inline static REBVAR *CTX_VAR(Context(*) c, REBLEN n) {  // 1-based, no Cell(*)
-    assert(NOT_SERIES_FLAG(CTX_VARLIST(c), INACCESSIBLE));
+    assert(Not_Series_Flag(CTX_VARLIST(c), INACCESSIBLE));
     assert(n != 0 and n <= CTX_LEN(c));
     return cast(REBVAR*, cast(REBSER*, c)->content.dynamic.data) + n;
 }
@@ -319,7 +319,7 @@ inline static REBVAR *MOD_VAR(Context(*) c, Symbol(const*) sym, bool strict) {
     Symbol(const*) synonym = sym;
     do {
         REBSER *patch = MISC(Hitch, sym);
-        while (GET_SERIES_FLAG(patch, BLACK))  // binding temps
+        while (Get_Series_Flag(patch, BLACK))  // binding temps
             patch = SER(node_MISC(Hitch, patch));
 
         for (; patch != sym; patch = SER(node_MISC(Hitch, patch))) {
@@ -375,7 +375,7 @@ inline static Level(*) CTX_LEVEL_IF_ON_STACK(Context(*) c) {
     if (not Is_Node_A_Cell(keysource))
         return nullptr; // e.g. came from MAKE FRAME! or Encloser_Dispatcher
 
-    assert(NOT_SERIES_FLAG(CTX_VARLIST(c), INACCESSIBLE));
+    assert(Not_Series_Flag(CTX_VARLIST(c), INACCESSIBLE));
     assert(IS_FRAME(CTX_ARCHETYPE(c)));
 
     Level(*) L = LVL(keysource);
@@ -391,7 +391,7 @@ inline static Level(*) CTX_LEVEL_MAY_FAIL(Context(*) c) {
 }
 
 inline static void FAIL_IF_INACCESSIBLE_CTX(Context(*) c) {
-    if (GET_SERIES_FLAG(CTX_VARLIST(c), INACCESSIBLE)) {
+    if (Get_Series_Flag(CTX_VARLIST(c), INACCESSIBLE)) {
         if (CTX_TYPE(c) == REB_FRAME)
             fail (Error_Expired_Frame_Raw()); // !!! different error?
         fail (Error_Series_Data_Freed_Raw());
@@ -693,7 +693,7 @@ inline static Context(*) Steal_Context_Vars(Context(*) c, Node* keysource) {
     // now those marking failure are asked to do so manually to the stub
     // after this returns (hence they need to cache the varlist first).
     //
-    SET_SERIES_FLAG(stub, INACCESSIBLE);
+    Set_Series_Flag(stub, INACCESSIBLE);
 
     REBVAL *single = cast(REBVAL*, &stub->content.fixed);
     single->header.bits =
@@ -713,7 +713,7 @@ inline static Context(*) Steal_Context_Vars(Context(*) c, Node* keysource) {
     //
     INIT_BONUS_KEYSOURCE(ARR(stub), keysource);
 
-    CLEAR_SERIES_FLAG(stub, DYNAMIC);  // mark stub as no longer dynamic
+    Clear_Series_Flag(stub, DYNAMIC);  // mark stub as no longer dynamic
 
     return CTX(copy);
 }

@@ -131,7 +131,7 @@ Level(*) Make_Pushed_Level_From_Action_Feed_May_Throw(
     );
     INIT_LVL_BINDING(L, VAL_FRAME_BINDING(action));
 
-    assert(NOT_SERIES_FLAG(L->varlist, MANAGED));  // shouldn't be, see [3]
+    assert(Not_Series_Flag(L->varlist, MANAGED));  // shouldn't be, see [3]
 
     return L;  // may not be at end or thrown, e.g. (x: does+ just y x = 'y)
 }
@@ -233,7 +233,7 @@ bool Init_Invokable_From_Feed_Throws(
     Action(*) act = VAL_ACTION(action);
     assert(Level_Binding(L) == VAL_FRAME_BINDING(action));
 
-    assert(NOT_SERIES_FLAG(L->varlist, MANAGED));
+    assert(Not_Series_Flag(L->varlist, MANAGED));
 
     Array(*) varlist = L->varlist;
     L->varlist = nullptr;  // don't let Drop_Level() free varlist (we want it)
@@ -241,7 +241,7 @@ bool Init_Invokable_From_Feed_Throws(
     Drop_Level(L);
     DROP_GC_GUARD(action);
 
-    SET_SERIES_FLAG(varlist, MANAGED); // can't use Manage_Series
+    Set_Series_Flag(varlist, MANAGED); // can't use Manage_Series
 
     Init_Frame(out, CTX(varlist), label);
     return false;  // didn't throw

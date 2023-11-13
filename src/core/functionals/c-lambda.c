@@ -80,7 +80,7 @@ Bounce Lambda_Dispatcher(Level(*) L)
     const REBVAL *block = DETAILS_AT(details, IDX_LAMBDA_BLOCK);
     assert(IS_BLOCK(block));
 
-    SET_SERIES_FLAG(L->varlist, MANAGED);  // not manually tracked...
+    Set_Series_Flag(L->varlist, MANAGED);  // not manually tracked...
 
     REBSPC *specifier = Make_Or_Reuse_Use(  // may reuse, see [1]
         CTX(L->varlist),

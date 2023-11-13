@@ -70,16 +70,16 @@
 // Using token pasting macros helps avoid mixups with SERIES_INFO_XXX!
 //
 
-#define SET_SERIES_FLAG(s,name) \
+#define Set_Series_Flag(s,name) \
     ((s)->leader.bits |= SERIES_FLAG_##name)
 
-#define GET_SERIES_FLAG(s,name) \
+#define Get_Series_Flag(s,name) \
     (((s)->leader.bits & SERIES_FLAG_##name) != 0)
 
-#define CLEAR_SERIES_FLAG(s,name) \
+#define Clear_Series_Flag(s,name) \
     ((s)->leader.bits &= ~SERIES_FLAG_##name)
 
-#define NOT_SERIES_FLAG(s,name) \
+#define Not_Series_Flag(s,name) \
     (((s)->leader.bits & SERIES_FLAG_##name) == 0)
 
 
@@ -248,12 +248,12 @@
     // check the flavor.  Assume flavor has INFO_NODE_NEEDS_MARK right.
 #else
     inline static const uintptr_t &SER_INFO(const REBSER *s) {
-        assert(NOT_SERIES_FLAG(s, INFO_NODE_NEEDS_MARK));
+        assert(Not_Series_Flag(s, INFO_NODE_NEEDS_MARK));
         return s->info.flags.bits;
     }
 
     inline static uintptr_t &SER_INFO(REBSER *s) {
-        assert(NOT_SERIES_FLAG(s, INFO_NODE_NEEDS_MARK));
+        assert(Not_Series_Flag(s, INFO_NODE_NEEDS_MARK));
         return s->info.flags.bits;
     }
 #endif
@@ -288,7 +288,7 @@
 //
 
 inline static bool IS_SER_BIASED(const REBSER *s) {
-    assert(GET_SERIES_FLAG(s, DYNAMIC));
+    assert(Get_Series_Flag(s, DYNAMIC));
     return not IS_VARLIST(s);
 }
 
@@ -317,7 +317,7 @@ inline static void SER_SUB_BIAS(REBSER *s, REBLEN b) {
 }
 
 inline static Length SER_REST(const REBSER *s) {
-    if (GET_SERIES_FLAG(s, DYNAMIC))
+    if (Get_Series_Flag(s, DYNAMIC))
         return s->content.dynamic.rest;
 
     if (IS_SER_ARRAY(s))
@@ -332,7 +332,7 @@ inline static size_t SER_TOTAL(const REBSER *s) {
 }
 
 inline static size_t SER_TOTAL_IF_DYNAMIC(const REBSER *s) {
-    if (NOT_SERIES_FLAG(s, DYNAMIC))
+    if (Not_Series_Flag(s, DYNAMIC))
         return 0;
     return SER_TOTAL(s);
 }
@@ -439,7 +439,7 @@ inline static size_t SER_TOTAL_IF_DYNAMIC(const REBSER *s) {
 //
 
 inline static Length SER_USED(const REBSER *s) {
-    if (GET_SERIES_FLAG(s, DYNAMIC))
+    if (Get_Series_Flag(s, DYNAMIC))
         return s->content.dynamic.used;
     if (IS_SER_ARRAY(s)) {
         //
@@ -464,9 +464,9 @@ inline static Byte* SER_DATA(const_if_c REBSER *s) {
     // The VAL_CONTEXT(), VAL_SERIES(), VAL_ARRAY() extractors do the failing
     // upon extraction--that's meant to catch it before it gets this far.
     //
-    assert(NOT_SERIES_FLAG(s, INACCESSIBLE));
+    assert(Not_Series_Flag(s, INACCESSIBLE));
 
-    return GET_SERIES_FLAG(s, DYNAMIC)
+    return Get_Series_Flag(s, DYNAMIC)
         ? cast(Byte*, s->content.dynamic.data)
         : cast(Byte*, &s->content);
 }
@@ -489,12 +489,12 @@ inline static Byte* SER_DATA_AT(Byte w, const_if_c REBSER *s, REBLEN i) {
     // The VAL_CONTEXT(), VAL_SERIES(), VAL_ARRAY() extractors do the failing
     // upon extraction--that's meant to catch it before it gets this far.
     //
-    assert(NOT_SERIES_FLAG(s, INACCESSIBLE));
+    assert(Not_Series_Flag(s, INACCESSIBLE));
 
     assert(i <= SER_USED(s));
 
     return ((w) * (i)) + ( // v-- inlining of SER_DATA
-        GET_SERIES_FLAG(s, DYNAMIC)
+        Get_Series_Flag(s, DYNAMIC)
             ? cast(Byte*, s->content.dynamic.data)
             : cast(Byte*, &s->content)
         );
@@ -591,7 +591,7 @@ inline static Byte* SER_DATA_LAST(size_t wide, const_if_c REBSER *s) {
                 */
             }
         }
-        else if (IS_SER_ARRAY(s) and GET_SERIES_FLAG(s, DYNAMIC)) {
+        else if (IS_SER_ARRAY(s) and Get_Series_Flag(s, DYNAMIC)) {
             Reb_Cell* tail = SER_AT(Reb_Cell, s, s->content.dynamic.used);
             if (poison)
                 Poison_Cell(tail);
@@ -614,7 +614,7 @@ inline static Byte* SER_DATA_LAST(size_t wide, const_if_c REBSER *s) {
 // efficient if they didn't use any "appending" operators to get built.
 //
 inline static void Set_Series_Used_Internal(REBSER *s, REBLEN used) {
-    if (GET_SERIES_FLAG(s, DYNAMIC))
+    if (Get_Series_Flag(s, DYNAMIC))
         s->content.dynamic.used = used;
     else {
         assert(used < sizeof(s->content));
@@ -707,7 +707,7 @@ inline static void TERM_SERIES_IF_NECESSARY(REBSER *s)
           #endif
         }
     }
-    else if (GET_SERIES_FLAG(s, DYNAMIC) and IS_SER_ARRAY(s)) {
+    else if (Get_Series_Flag(s, DYNAMIC) and IS_SER_ARRAY(s)) {
       #if DEBUG_POISON_SERIES_TAILS
         Poison_Cell(SER_TAIL(Reb_Cell, s));
       #endif
@@ -781,7 +781,7 @@ inline static void Untrack_Manual_Series(REBSER *s)
 inline static REBSER *Manage_Series(REBSER *s)  // give manual series to GC
 {
   #if !defined(NDEBUG)
-    if (GET_SERIES_FLAG(s, MANAGED))
+    if (Get_Series_Flag(s, MANAGED))
         panic (s);  // shouldn't manage an already managed series
   #endif
 
@@ -794,13 +794,13 @@ inline static REBSER *Manage_Series(REBSER *s)  // give manual series to GC
     #define ASSERT_SERIES_MANAGED(s) NOOP
 #else
     inline static void ASSERT_SERIES_MANAGED(const REBSER *s) {
-        if (NOT_SERIES_FLAG(s, MANAGED))
+        if (Not_Series_Flag(s, MANAGED))
             panic (s);
     }
 #endif
 
 inline static REBSER *Force_Series_Managed(const_if_c REBSER *s) {
-    if (NOT_SERIES_FLAG(s, MANAGED))
+    if (Not_Series_Flag(s, MANAGED))
         Manage_Series(m_cast(REBSER*, s));
     return m_cast(REBSER*, s);
 }
@@ -845,24 +845,24 @@ inline static REBSER *Force_Series_Managed(const_if_c REBSER *s) {
 //
 
 inline static bool Is_Series_Black(const REBSER *s) {
-    return GET_SERIES_FLAG(s, BLACK);
+    return Get_Series_Flag(s, BLACK);
 }
 
 inline static bool Is_Series_White(const REBSER *s) {
-    return NOT_SERIES_FLAG(s, BLACK);
+    return Not_Series_Flag(s, BLACK);
 }
 
 inline static void Flip_Series_To_Black(const REBSER *s) {
-    assert(NOT_SERIES_FLAG(s, BLACK));
-    SET_SERIES_FLAG(m_cast(REBSER*, s), BLACK);
+    assert(Not_Series_Flag(s, BLACK));
+    Set_Series_Flag(m_cast(REBSER*, s), BLACK);
   #if !defined(NDEBUG)
     ++TG_Num_Black_Series;
   #endif
 }
 
 inline static void Flip_Series_To_White(const REBSER *s) {
-    assert(GET_SERIES_FLAG(s, BLACK));
-    CLEAR_SERIES_FLAG(m_cast(REBSER*, s), BLACK);
+    assert(Get_Series_Flag(s, BLACK));
+    Clear_Series_Flag(m_cast(REBSER*, s), BLACK);
   #if !defined(NDEBUG)
     --TG_Num_Black_Series;
   #endif
@@ -1019,7 +1019,7 @@ inline static const REBSER *VAL_SERIES(noquote(Cell(const*)) v) {
     );
   #endif
     const REBSER *s = SER(VAL_NODE1(v));
-    if (GET_SERIES_FLAG(s, INACCESSIBLE))
+    if (Get_Series_Flag(s, INACCESSIBLE))
         fail (Error_Series_Data_Freed_Raw());
     return s;
 }
@@ -1109,14 +1109,14 @@ inline static void INIT_SPECIFIER(Cell(*) v, const void *p) {
 
     assert(Is_Bindable(v));  // works on partially formed values
 
-    if (GET_SERIES_FLAG(binding, MANAGED)) {
+    if (Get_Series_Flag(binding, MANAGED)) {
         assert(
             IS_DETAILS(binding)  // relative
             or IS_VARLIST(binding)  // specific
             or (
                 ANY_ARRAY(v) and (IS_LET(binding) or IS_USE(binding)) // virtual
             ) or (
-                IS_VARARGS(v) and NOT_SERIES_FLAG(binding, DYNAMIC)
+                IS_VARARGS(v) and Not_Series_Flag(binding, DYNAMIC)
             )  // varargs from MAKE VARARGS! [...], else is a varlist
         );
     }
@@ -1135,7 +1135,7 @@ inline static REBVAL *Init_Series_Cell_At_Core(
 ){
   #if !defined(NDEBUG)
     assert(ANY_SERIES_KIND(type) or type == REB_URL);
-    assert(GET_SERIES_FLAG(s, MANAGED));
+    assert(Get_Series_Flag(s, MANAGED));
 
     // Note: a R3-Alpha Make_Binary() comment said:
     //
@@ -1242,7 +1242,7 @@ inline static bool Did_Series_Data_Alloc(REBSER *s, REBLEN capacity) {
     // no shrinking process that will pare it back to fit completely inside
     // the REBSER node.
     //
-    assert(GET_SERIES_FLAG(s, DYNAMIC)); // caller sets
+    assert(Get_Series_Flag(s, DYNAMIC)); // caller sets
 
     Byte wide = SER_WIDE(s);
     assert(wide != 0);
@@ -1265,7 +1265,7 @@ inline static bool Did_Series_Data_Alloc(REBSER *s, REBLEN capacity) {
         assert(size >= capacity * wide);
 
         // We don't round to power of 2 for allocations in memory pools
-        CLEAR_SERIES_FLAG(s, POWER_OF_2);
+        Clear_Series_Flag(s, POWER_OF_2);
     }
     else {
         // ...the allocation is too big for a pool.  But instead of just
@@ -1274,7 +1274,7 @@ inline static bool Did_Series_Data_Alloc(REBSER *s, REBLEN capacity) {
         // boundaries (or choose a power of 2, if requested).
 
         size = capacity * wide;
-        if (GET_SERIES_FLAG(s, POWER_OF_2)) {
+        if (Get_Series_Flag(s, POWER_OF_2)) {
             Size size2 = 2048;
             while (size2 < size)
                 size2 *= 2;
@@ -1284,7 +1284,7 @@ inline static bool Did_Series_Data_Alloc(REBSER *s, REBLEN capacity) {
             // divisibility by the item width.
             //
             if (size % wide == 0)
-                CLEAR_SERIES_FLAG(s, POWER_OF_2);
+                Clear_Series_Flag(s, POWER_OF_2);
         }
 
         s->content.dynamic.data = TRY_ALLOC_N(char, size);
@@ -1358,11 +1358,11 @@ inline static REBSER *Make_Series_Into(
         // capacity given back as the ->rest may be larger than the requested
         // size, because the memory pool reports the full rounded allocation.
 
-        SET_SERIES_FLAG(s, DYNAMIC);
+        Set_Series_Flag(s, DYNAMIC);
 
         if (not Did_Series_Data_Alloc(s, capacity)) {
-            CLEAR_SERIES_FLAG(s, MANAGED);
-            SET_SERIES_FLAG(s, INACCESSIBLE);
+            Clear_Series_Flag(s, MANAGED);
+            Set_Series_Flag(s, INACCESSIBLE);
             GC_Kill_Series(s);  // ^-- needs non-null data unless INACCESSIBLE
 
             fail (Error_No_Memory(capacity * wide));

@@ -321,7 +321,7 @@ inline static REBBMK* Alloc_Bookmark(void) {
         FLAG_FLAVOR(BOOKMARKLIST) | SERIES_FLAG_MANAGED
     );
     SET_SERIES_LEN(s, 1);
-    CLEAR_SERIES_FLAG(s, MANAGED);  // manual but untracked (avoid leak error)
+    Clear_Series_Flag(s, MANAGED);  // manual but untracked (avoid leak error)
     return cast(REBBMK*, s);
 }
 
@@ -403,7 +403,7 @@ inline static Utf8(*) STR_AT(const_if_c Raw_String* s, REBLEN at) {
         if (len < sizeof(REBVAL)) {
             if (IS_NONSYMBOL_STRING(s))
                 assert(
-                    GET_SERIES_FLAG(s, DYNAMIC)  // e.g. mold buffer
+                    Get_Series_Flag(s, DYNAMIC)  // e.g. mold buffer
                     or not bookmark  // mutations must ensure this
                 );
             goto scan_from_head;  // good locality, avoid bookmark logic
@@ -420,7 +420,7 @@ inline static Utf8(*) STR_AT(const_if_c Raw_String* s, REBLEN at) {
             if (IS_NONSYMBOL_STRING(s))
                 assert(
                     not bookmark  // mutations must ensure this usually but...
-                    or GET_SERIES_FLAG(s, DYNAMIC)  // !!! mold buffer?
+                    or Get_Series_Flag(s, DYNAMIC)  // !!! mold buffer?
                 );
             goto scan_from_tail;  // good locality, avoid bookmark logic
         }

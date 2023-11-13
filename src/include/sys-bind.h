@@ -188,7 +188,7 @@ inline static bool Try_Add_Binder_Index(
     String(*) s = m_cast(Raw_Symbol*, sym);
     assert(index != 0);
     REBSER *old_hitch = MISC(Hitch, s);
-    if (old_hitch != s and GET_SERIES_FLAG(old_hitch, BLACK))
+    if (old_hitch != s and Get_Series_Flag(old_hitch, BLACK))
         return false;  // already has a mapping
 
     // Not actually managed...but GC doesn't run while binders are active,
@@ -197,7 +197,7 @@ inline static bool Try_Add_Binder_Index(
     Array(*) new_hitch = Alloc_Singular(
         NODE_FLAG_MANAGED | SERIES_FLAG_BLACK | FLAG_FLAVOR(HITCH)
     );
-    CLEAR_SERIES_FLAG(new_hitch, MANAGED);
+    Clear_Series_Flag(new_hitch, MANAGED);
     Init_Integer(ARR_SINGLE(new_hitch), index);
     node_MISC(Hitch, new_hitch) = old_hitch;
 
@@ -232,7 +232,7 @@ inline static REBINT Get_Binder_Index_Else_0( // 0 if not present
 
     // Only unmanaged hitches are used for binding.
     //
-    if (hitch == s or NOT_SERIES_FLAG(hitch, BLACK))
+    if (hitch == s or Not_Series_Flag(hitch, BLACK))
         return 0;
     return VAL_INT32(ARR_SINGLE(ARR(hitch)));
 }
@@ -243,14 +243,14 @@ inline static REBINT Remove_Binder_Index_Else_0( // return old value if there
     Symbol(const*) str
 ){
     String(*) s = m_cast(Raw_Symbol*, str);
-    if (MISC(Hitch, s) == s or NOT_SERIES_FLAG(MISC(Hitch, s), BLACK))
+    if (MISC(Hitch, s) == s or Not_Series_Flag(MISC(Hitch, s), BLACK))
         return 0;
 
     Array(*) hitch = ARR(MISC(Hitch, s));
 
     REBINT index = VAL_INT32(ARR_SINGLE(hitch));
     mutable_MISC(Hitch, s) = ARR(node_MISC(Hitch, hitch));
-    SET_SERIES_FLAG(hitch, MANAGED);  // we didn't manuals track it
+    Set_Series_Flag(hitch, MANAGED);  // we didn't manuals track it
     GC_Kill_Series(hitch);
 
   #if defined(NDEBUG)
@@ -323,7 +323,7 @@ inline static void INIT_BINDING_MAY_MANAGE(
 ){
     mutable_BINDING(out) = binding;
 
-    if (not binding or GET_SERIES_FLAG(binding, MANAGED))
+    if (not binding or Get_Series_Flag(binding, MANAGED))
         return;  // unbound or managed already (frame OR object context)
 
     Level(*) L = LVL(BONUS(KeySource, binding));  // unmanaged only frame
@@ -420,7 +420,7 @@ inline static Context(*) VAL_WORD_CONTEXT(const REBVAL *v) {
         fail ("LET variables have no context at this time");
 
     assert(
-        GET_SERIES_FLAG(binding, MANAGED) or
+        Get_Series_Flag(binding, MANAGED) or
         not Is_Level_Fulfilling(LVL(BONUS(KeySource, binding)))
     );
     binding->leader.bits |= NODE_FLAG_MANAGED;  // !!! review managing needs
@@ -608,7 +608,7 @@ inline static option(REBSER*) Get_Word_Container(
         if (CTX_TYPE(CTX(binding)) == REB_MODULE) {
             Symbol(const*) symbol = VAL_WORD_SYMBOL(VAL_UNESCAPED(any_word));
             REBSER *patch = MISC(Hitch, symbol);
-            while (GET_SERIES_FLAG(patch, BLACK))  // binding temps
+            while (Get_Series_Flag(patch, BLACK))  // binding temps
                 patch = SER(node_MISC(Hitch, patch));
 
             for (; patch != symbol; patch = SER(node_MISC(Hitch, patch))) {
@@ -654,7 +654,7 @@ inline static option(REBSER*) Get_Word_Container(
                 return nullptr;
 
             patch = MISC(Hitch, symbol);
-            while (GET_SERIES_FLAG(patch, BLACK))  // binding temps
+            while (Get_Series_Flag(patch, BLACK))  // binding temps
                 patch = SER(node_MISC(Hitch, patch));
 
             for (; patch != symbol; patch = SER(node_MISC(Hitch, patch))) {
@@ -755,7 +755,7 @@ inline static Value(const*) Lookup_Word_May_Fail(
     if (IS_LET(s) or IS_PATCH(s))
         return SPECIFIC(ARR_SINGLE(ARR(s)));
     Context(*) c = CTX(s);
-    if (GET_SERIES_FLAG(CTX_VARLIST(c), INACCESSIBLE))
+    if (Get_Series_Flag(CTX_VARLIST(c), INACCESSIBLE))
         fail (Error_No_Relative_Core(any_word));
 
     return CTX_VAR(c, index);
@@ -774,7 +774,7 @@ inline static option(const REBVAL*) Lookup_Word(
     if (IS_LET(s) or IS_PATCH(s))
         return SPECIFIC(ARR_SINGLE(ARR(s)));
     Context(*) c = CTX(s);
-    if (GET_SERIES_FLAG(CTX_VARLIST(c), INACCESSIBLE))
+    if (Get_Series_Flag(CTX_VARLIST(c), INACCESSIBLE))
         return nullptr;
 
     return CTX_VAR(c, index);
@@ -1115,7 +1115,7 @@ inline static REBSPC *Derive_Specifier_Core(
 
     // If any specifiers in a chain are inaccessible, the whole thing is.
     //
-    if (old != UNBOUND and GET_SERIES_FLAG(old, INACCESSIBLE))
+    if (old != UNBOUND and Get_Series_Flag(old, INACCESSIBLE))
         return &PG_Inaccessible_Series;
 
     if (specifier == SPECIFIED) {  // no override being requested
@@ -1164,7 +1164,7 @@ inline static REBSPC *Derive_Specifier_Core(
         if (
             frame_ctx == nullptr
             or (
-                NOT_SERIES_FLAG(CTX_VARLIST(frame_ctx), INACCESSIBLE) and
+                Not_Series_Flag(CTX_VARLIST(frame_ctx), INACCESSIBLE) and
                 not Action_Is_Base_Of(
                     ACT(old),
                     CTX_FRAME_PHASE(frame_ctx)

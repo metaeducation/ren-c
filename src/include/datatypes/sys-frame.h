@@ -202,7 +202,7 @@ inline static option(Symbol(const*)) Level_Label(Level(*) L) {
 
 inline static Context(*) Context_For_Level_May_Manage(Level(*) L) {
     assert(not Is_Level_Fulfilling(L));
-    SET_SERIES_FLAG(L->varlist, MANAGED);
+    Set_Series_Flag(L->varlist, MANAGED);
     return CTX(L->varlist);
 }
 
@@ -254,7 +254,7 @@ inline static void Free_Level_Internal(Level(*) L) {
     if (Get_Level_Flag(L, ALLOCATED_FEED))
         Free_Feed(L->feed);  // didn't inherit from parent, and not END_FRAME
 
-    if (L->varlist and NOT_SERIES_FLAG(L->varlist, MANAGED))
+    if (L->varlist and Not_Series_Flag(L->varlist, MANAGED))
         GC_Kill_Series(L->varlist);
     TRASH_POINTER_IF_DEBUG(L->varlist);
 

@@ -323,7 +323,7 @@ void Startup_Pools(REBINT scale)
         15,
         FLAG_FLAVOR(SERIESLIST) | NODE_FLAG_MANAGED
     );
-    CLEAR_SERIES_FLAG(GC_Manuals, MANAGED);
+    Clear_Series_Flag(GC_Manuals, MANAGED);
 
     Prior_Expand = TRY_ALLOC_N(REBSER*, MAX_EXPAND_LIST);
     memset(Prior_Expand, 0, sizeof(REBSER*) * MAX_EXPAND_LIST);
@@ -360,7 +360,7 @@ void Shutdown_Pools(void)
             ++num_leaks;
 
             REBSER *s = SER(cast(void*, stub));
-            if (GET_SERIES_FLAG(s, MANAGED)) {
+            if (Get_Series_Flag(s, MANAGED)) {
                 printf("MANAGED series leak, this REALLY shouldn't happen\n");
                 leaked = s;  // report a managed one if found
             }
@@ -368,7 +368,7 @@ void Shutdown_Pools(void)
                 leaked = s;  // first one found
             }
             else if (
-                NOT_SERIES_FLAG(leaked, MANAGED)
+                Not_Series_Flag(leaked, MANAGED)
                 and leaked->tick < s->tick
             ){
                 leaked = s;  // update if earlier tick reference
@@ -514,7 +514,7 @@ Node* Try_Find_Containing_Node_Debug(const void *p)
             }
 
             REBSER *s = SER(cast(void*, stub));
-            if (NOT_SERIES_FLAG(s, DYNAMIC)) {
+            if (Not_Series_Flag(s, DYNAMIC)) {
                 if (
                     p >= cast(void*, &s->content)
                     && p < cast(void*, &s->content + 1)
@@ -738,7 +738,7 @@ void Expand_Series(REBSER *s, REBLEN index, REBLEN delta)
 
     Byte wide = SER_WIDE(s);
 
-    const bool was_dynamic = GET_SERIES_FLAG(s, DYNAMIC);
+    const bool was_dynamic = Get_Series_Flag(s, DYNAMIC);
 
     if (was_dynamic and index == 0 and SER_BIAS(s) >= delta) {
 
@@ -817,7 +817,7 @@ void Expand_Series(REBSER *s, REBLEN index, REBLEN delta)
 
 //=//// INSUFFICIENT CAPACITY, NEW ALLOCATION REQUIRED ////////////////////=//
 
-    if (GET_SERIES_FLAG(s, FIXED_SIZE))
+    if (Get_Series_Flag(s, FIXED_SIZE))
         fail (Error_Locked_Series_Raw());
 
   #ifndef NDEBUG
@@ -877,12 +877,12 @@ void Expand_Series(REBSER *s, REBLEN index, REBLEN delta)
     // The new series will *always* be dynamic, because it would not be
     // expanding if a fixed size allocation was sufficient.
 
-    SET_SERIES_FLAG(s, DYNAMIC);
-    SET_SERIES_FLAG(s, POWER_OF_2);
+    Set_Series_Flag(s, DYNAMIC);
+    Set_Series_Flag(s, POWER_OF_2);
     if (not Did_Series_Data_Alloc(s, used_old + delta + x))
         fail (Error_No_Memory((used_old + delta + x) * wide));
 
-    assert(GET_SERIES_FLAG(s, DYNAMIC));
+    assert(Get_Series_Flag(s, DYNAMIC));
     if (IS_SER_ARRAY(s))
         Prep_Array(ARR(s), 0); // capacity doesn't matter it will prep
 
@@ -916,7 +916,7 @@ void Expand_Series(REBSER *s, REBLEN index, REBLEN delta)
     PG_Reb_Stats->Series_Expanded++;
   #endif
 
-    assert(NOT_SERIES_FLAG(s, MARKED));
+    assert(Not_Series_Flag(s, MARKED));
     TERM_SERIES_IF_NECESSARY(s);  // code will not copy terminator over
 }
 
@@ -942,15 +942,15 @@ void Swap_Series_Content(REBSER* a, REBSER* b)
     assert(IS_SER_ARRAY(a) == IS_SER_ARRAY(b));
     assert(SER_WIDE(a) == SER_WIDE(b));
 
-    bool a_dynamic = GET_SERIES_FLAG(a, DYNAMIC);
-    if (GET_SERIES_FLAG(b, DYNAMIC))
-        SET_SERIES_FLAG(a, DYNAMIC);
+    bool a_dynamic = Get_Series_Flag(a, DYNAMIC);
+    if (Get_Series_Flag(b, DYNAMIC))
+        Set_Series_Flag(a, DYNAMIC);
     else
-        CLEAR_SERIES_FLAG(a, DYNAMIC);
+        Clear_Series_Flag(a, DYNAMIC);
     if (a_dynamic)
-        SET_SERIES_FLAG(b, DYNAMIC);
+        Set_Series_Flag(b, DYNAMIC);
     else
-        CLEAR_SERIES_FLAG(b, DYNAMIC);
+        Clear_Series_Flag(b, DYNAMIC);
 
     Byte a_len = USED_BYTE(a);  // unused (for now) when SERIES_FLAG_DYNAMIC()
     mutable_USED_BYTE(a) = USED_BYTE(b);
@@ -1021,9 +1021,9 @@ void Remake_Series(REBSER *s, REBLEN units, Flags flags)
     REBLEN used_old = SER_USED(s);
     Byte wide = SER_WIDE(s);
 
-    assert(NOT_SERIES_FLAG(s, FIXED_SIZE));
+    assert(Not_Series_Flag(s, FIXED_SIZE));
 
-    bool was_dynamic = GET_SERIES_FLAG(s, DYNAMIC);
+    bool was_dynamic = Get_Series_Flag(s, DYNAMIC);
 
     REBINT bias_old;
     REBINT size_old;
@@ -1051,14 +1051,14 @@ void Remake_Series(REBSER *s, REBLEN units, Flags flags)
     // a REBSER.  All series code needs a general audit, so that should be one
     // of the things considered.
 
-    SET_SERIES_FLAG(s, DYNAMIC);
+    Set_Series_Flag(s, DYNAMIC);
     if (not Did_Series_Data_Alloc(s, units + 1)) {
         // Put series back how it was (there may be extant references)
         s->content.dynamic.data = cast(char*, data_old);
 
         fail (Error_No_Memory((units + 1) * wide));
     }
-    assert(GET_SERIES_FLAG(s, DYNAMIC));
+    assert(Get_Series_Flag(s, DYNAMIC));
     if (IS_SER_ARRAY(s))
         Prep_Array(ARR(s), 0); // capacity doesn't matter, it will prep
 
@@ -1093,7 +1093,7 @@ void Remake_Series(REBSER *s, REBLEN units, Flags flags)
 //
 void Decay_Series(REBSER *s)
 {
-    assert(NOT_SERIES_FLAG(s, INACCESSIBLE));
+    assert(Not_Series_Flag(s, INACCESSIBLE));
 
     switch (SER_FLAVOR(s)) {
       case FLAVOR_STRING:
@@ -1153,7 +1153,7 @@ void Decay_Series(REBSER *s)
         if (Prior_Expand[n] == s) Prior_Expand[n] = 0;
     }
 
-    if (GET_SERIES_FLAG(s, DYNAMIC)) {
+    if (Get_Series_Flag(s, DYNAMIC)) {
         Byte wide = SER_WIDE(s);
         REBLEN bias = SER_BIAS(s);
         REBLEN total = (bias + SER_REST(s)) * wide;
@@ -1183,7 +1183,7 @@ void Decay_Series(REBSER *s)
             : tmp;
     }
 
-    SET_SERIES_FLAG(s, INACCESSIBLE);
+    Set_Series_Flag(s, INACCESSIBLE);
 }
 
 
@@ -1209,7 +1209,7 @@ void GC_Kill_Series(REBSER *s)
     //
     TOUCH_STUB_IF_DEBUG(s);
 
-    if (NOT_SERIES_FLAG(s, INACCESSIBLE))
+    if (Not_Series_Flag(s, INACCESSIBLE))
         Decay_Series(s);
 
   #if !defined(NDEBUG)
@@ -1242,7 +1242,7 @@ void Free_Unmanaged_Series(REBSER *s)
         panic (s); // erroring here helps not conflate with tracking problems
     }
 
-    if (GET_SERIES_FLAG(s, MANAGED)) {
+    if (Get_Series_Flag(s, MANAGED)) {
         printf("Trying to Free_Unmanaged_Series() on a GC-managed series\n");
         panic (s);
     }
@@ -1323,7 +1323,7 @@ REBLEN Check_Memory_Debug(void)
                 continue; // a pairing
 
             REBSER *s = SER(cast(void*, stub));
-            if (NOT_SERIES_FLAG(s, DYNAMIC))
+            if (Not_Series_Flag(s, DYNAMIC))
                 continue; // data lives in the series node itself
 
             if (SER_REST(s) == 0)
@@ -1442,7 +1442,7 @@ void Dump_Series_In_Pool(PoolID pool_id)
             if (
                 pool_id == UNLIMITED
                 or (
-                    GET_SERIES_FLAG(s, DYNAMIC)
+                    Get_Series_Flag(s, DYNAMIC)
                     and pool_id == Pool_Id_For_Size(SER_TOTAL(s))
                 )
             ){

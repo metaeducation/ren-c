@@ -1574,12 +1574,12 @@ void Assert_Array_Core(Array(const*) a)
         }
     }
 
-    if (GET_SERIES_FLAG(a, DYNAMIC)) {
+    if (Get_Series_Flag(a, DYNAMIC)) {
         Length rest = SER_REST(a);
 
       #if DEBUG_POISON_SERIES_TAILS
         assert(rest > 0 and rest > n);
-        if (NOT_SERIES_FLAG(a, FIXED_SIZE) and not Is_Cell_Poisoned(item))
+        if (Not_Series_Flag(a, FIXED_SIZE) and not Is_Cell_Poisoned(item))
             panic (item);
         ++item;
         rest = rest - 1;
@@ -1590,7 +1590,7 @@ void Assert_Array_Core(Array(const*) a)
                 (item->header.bits != CELL_MASK_0)
                 and not (item->header.bits & NODE_FLAG_CELL)
             );
-            if (GET_SERIES_FLAG(a, FIXED_SIZE)) {
+            if (Get_Series_Flag(a, FIXED_SIZE)) {
                 if (not unwritable) {
                     printf("Writable cell found in fixed-size array rest\n");
                     panic (a);

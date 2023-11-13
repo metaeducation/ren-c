@@ -201,7 +201,7 @@ REBLEN Modify_Array(
     }
 
   #if DEBUG_POISON_SERIES_TAILS
-    if (GET_SERIES_FLAG(dst_arr, DYNAMIC))
+    if (Get_Series_Flag(dst_arr, DYNAMIC))
         Poison_Cell(ARR_TAIL(dst_arr));
   #endif
 

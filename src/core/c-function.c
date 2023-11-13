@@ -966,7 +966,7 @@ Phase(*) Make_Action(
 ){
     assert(details_capacity >= 1);  // need archetype, maybe 1 (singular array)
 
-    assert(GET_SERIES_FLAG(paramlist, MANAGED));
+    assert(Get_Series_Flag(paramlist, MANAGED));
     assert(
         Is_Word_Isotope_With_Id(ARR_HEAD(paramlist), SYM_ROOTVAR)  // fills in
         or CTX_TYPE(CTX(paramlist)) == REB_FRAME

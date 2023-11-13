@@ -255,7 +255,7 @@ Array(*) Make_Let_Patch(
 
     if (specifier) {
         assert(IS_LET(specifier) or IS_USE(specifier) or IS_VARLIST(specifier));
-        assert(GET_SERIES_FLAG(specifier, MANAGED));
+        assert(Get_Series_Flag(specifier, MANAGED));
     }
     mutable_LINK(NextLet, let) = specifier;  // linked list, see [1]
 
@@ -433,8 +433,8 @@ DECLARE_NATIVE(let)
 
     REBSPC *bindings = L_specifier;  // specifier chain we may be adding to
 
-    if (bindings and NOT_SERIES_FLAG(bindings, MANAGED))
-        SET_SERIES_FLAG(bindings, MANAGED);  // natives don't always manage
+    if (bindings and Not_Series_Flag(bindings, MANAGED))
+        Set_Series_Flag(bindings, MANAGED);  // natives don't always manage
 
     if (CELL_HEART(vars) == REB_WORD or CELL_HEART(vars) == REB_SET_WORD) {
         Symbol(const*) symbol = VAL_WORD_SYMBOL(vars);
@@ -614,7 +614,7 @@ DECLARE_NATIVE(add_let_binding) {
     REBSPC* L_specifier = Level_Specifier(L);
 
     if (L_specifier)
-        SET_SERIES_FLAG(L_specifier, MANAGED);
+        Set_Series_Flag(L_specifier, MANAGED);
     REBSPC *let = Make_Let_Patch(VAL_WORD_SYMBOL(ARG(word)), L_specifier);
 
     Move_Cell(ARR_SINGLE(let), ARG(value));
@@ -648,7 +648,7 @@ DECLARE_NATIVE(add_use_object) {
     Context(*) ctx = VAL_CONTEXT(ARG(object));
 
     if (L_specifier)
-        SET_SERIES_FLAG(L_specifier, MANAGED);
+        Set_Series_Flag(L_specifier, MANAGED);
 
     REBSPC *use = Make_Or_Reuse_Use(ctx, L_specifier, REB_WORD);
 
@@ -1165,7 +1165,7 @@ Context(*) Virtual_Bind_Deep_To_New_Context(
     // it on creation we can't make the context via Append_Context().  Review
     // this mechanic; and for now forego the protection.
     //
-    /* SET_SERIES_FLAG(CTX_VARLIST(c), DONT_RELOCATE); */
+    /* Set_Series_Flag(CTX_VARLIST(c), DONT_RELOCATE); */
 
     // !!! In virtual binding, there would not be a Bind_Values call below;
     // so it wouldn't necessarily be required to manage the augmented
@@ -1224,7 +1224,7 @@ Context(*) Virtual_Bind_Deep_To_New_Context(
     // able to expand them...because things like FOR-EACH have historically
     // not been robust to the memory moving.
     //
-    SET_SERIES_FLAG(CTX_VARLIST(c), FIXED_SIZE);
+    Set_Series_Flag(CTX_VARLIST(c), FIXED_SIZE);
 
     return c;
 }

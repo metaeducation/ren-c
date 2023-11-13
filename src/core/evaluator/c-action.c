@@ -1205,7 +1205,7 @@ void Push_Action(
     L->varlist = ARR(s);
 
     if (not Did_Series_Data_Alloc(s, num_args + 1 + 1)) {  // +rootvar, +end
-        SET_SERIES_FLAG(s, INACCESSIBLE);
+        Set_Series_Flag(s, INACCESSIBLE);
         GC_Kill_Series(s);  // ^-- needs non-null data unless INACCESSIBLE
         L->varlist = nullptr;
         fail (Error_No_Memory(sizeof(REBVAL) * (num_args + 1 + 1)));
@@ -1270,8 +1270,8 @@ void Push_Action(
             Copy_Cell(PUSH(), word);
     }
 
-    assert(NOT_SERIES_FLAG(L->varlist, MANAGED));
-    assert(NOT_SERIES_FLAG(L->varlist, INACCESSIBLE));
+    assert(Not_Series_Flag(L->varlist, MANAGED));
+    assert(Not_Series_Flag(L->varlist, INACCESSIBLE));
 
     ORIGINAL = act;
 }
@@ -1334,11 +1334,11 @@ void Drop_Action(Level(*) L) {
     Clear_Action_Executor_Flag(L, FULFILL_ONLY);
 
     assert(
-        GET_SERIES_FLAG(L->varlist, INACCESSIBLE)
+        Get_Series_Flag(L->varlist, INACCESSIBLE)
         or BONUS(KeySource, L->varlist) == L
     );
 
-    if (GET_SERIES_FLAG(L->varlist, INACCESSIBLE)) {
+    if (Get_Series_Flag(L->varlist, INACCESSIBLE)) {
         //
         // If something like Encloser_Dispatcher() runs, it might steal the
         // variables from a context to give them to the user, leaving behind
@@ -1346,7 +1346,7 @@ void Drop_Action(Level(*) L) {
         // therefore useless.  It served a purpose by being non-null during
         // the call, however, up to this moment.
         //
-        if (GET_SERIES_FLAG(L->varlist, MANAGED))
+        if (Get_Series_Flag(L->varlist, MANAGED))
             L->varlist = nullptr; // references exist, let a new one alloc
         else {
             // This node could be reused vs. calling Alloc_Pooled() on the next
@@ -1356,7 +1356,7 @@ void Drop_Action(Level(*) L) {
             L->varlist = nullptr;
         }
     }
-    else if (GET_SERIES_FLAG(L->varlist, MANAGED)) {
+    else if (Get_Series_Flag(L->varlist, MANAGED)) {
         //
         // Varlist wound up getting referenced in a cell that will outlive
         // this Drop_Action().
@@ -1387,7 +1387,7 @@ void Drop_Action(Level(*) L) {
                 ORIGINAL  // degrade keysource from f
             )
         );
-        assert(NOT_SERIES_FLAG(L->varlist, MANAGED));
+        assert(Not_Series_Flag(L->varlist, MANAGED));
         INIT_BONUS_KEYSOURCE(L->varlist, L);
       #endif
 
@@ -1413,8 +1413,8 @@ void Drop_Action(Level(*) L) {
 
   #if !defined(NDEBUG)
     if (L->varlist) {
-        assert(NOT_SERIES_FLAG(L->varlist, INACCESSIBLE));
-        assert(NOT_SERIES_FLAG(L->varlist, MANAGED));
+        assert(Not_Series_Flag(L->varlist, INACCESSIBLE));
+        assert(Not_Series_Flag(L->varlist, MANAGED));
 
         Cell(*) rootvar = ARR_HEAD(L->varlist);
         assert(CTX_VARLIST(VAL_CONTEXT(rootvar)) == L->varlist);

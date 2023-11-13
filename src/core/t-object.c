@@ -211,7 +211,7 @@ void Init_Evars(EVARS *e, noquote(Cell(const*)) v) {
 
       #if !defined(NDEBUG)
         e->wordlist = Make_Array_Core(1, SERIES_FLAG_MANAGED);
-        CLEAR_SERIES_FLAG(e->wordlist, MANAGED);  // dummy series, see [1]
+        Clear_Series_Flag(e->wordlist, MANAGED);  // dummy series, see [1]
       #endif
 
         e->word = nullptr;
@@ -238,7 +238,7 @@ void Init_Evars(EVARS *e, noquote(Cell(const*)) v) {
                 continue;
 
             REBSER *patch = MISC(Hitch, *psym);
-            while (GET_SERIES_FLAG(patch, BLACK))  // binding temps
+            while (Get_Series_Flag(patch, BLACK))  // binding temps
                 patch = SER(node_MISC(Hitch, patch));
 
             REBSER *found = nullptr;
@@ -259,7 +259,7 @@ void Init_Evars(EVARS *e, noquote(Cell(const*)) v) {
         }
 
         e->wordlist = Pop_Stack_Values_Core(base, SERIES_FLAG_MANAGED);
-        CLEAR_SERIES_FLAG(e->wordlist, MANAGED);  // see [1]
+        Clear_Series_Flag(e->wordlist, MANAGED);  // see [1]
 
         e->word = cast(REBVAL*, ARR_HEAD(e->wordlist)) - 1;
         e->word_tail = cast(REBVAL*, ARR_TAIL(e->wordlist));
@@ -328,7 +328,7 @@ void Init_Evars(EVARS *e, noquote(Cell(const*)) v) {
 
       #if !defined(NDEBUG)
         e->wordlist = Make_Array_Core(1, SERIES_FLAG_MANAGED);
-        CLEAR_SERIES_FLAG(e->wordlist, MANAGED);  // see [1]
+        Clear_Series_Flag(e->wordlist, MANAGED);  // see [1]
       #endif
         e->word = nullptr;
         UNUSED(e->word_tail);
@@ -795,7 +795,7 @@ Context(*) Copy_Context_Extra_Managed(
     REBLEN extra,
     REBU64 types
 ){
-    assert(NOT_SERIES_FLAG(CTX_VARLIST(original), INACCESSIBLE));
+    assert(Not_Series_Flag(CTX_VARLIST(original), INACCESSIBLE));
 
     REBLEN len = (CTX_TYPE(original) == REB_MODULE) ? 0 : CTX_LEN(original);
 
@@ -840,7 +840,7 @@ Context(*) Copy_Context_Extra_Managed(
         mutable_LINK(Patches, varlist) = nullptr;
 
         Context(*) copy = CTX(varlist); // now a well-formed context
-        assert(GET_SERIES_FLAG(varlist, DYNAMIC));
+        assert(Get_Series_Flag(varlist, DYNAMIC));
 
         Symbol(*) *psym = SER_HEAD(Symbol(*), PG_Symbols_By_Hash);
         Symbol(*) *psym_tail = SER_TAIL(Symbol(*), PG_Symbols_By_Hash);
@@ -849,7 +849,7 @@ Context(*) Copy_Context_Extra_Managed(
                 continue;
 
             REBSER *patch = MISC(Hitch, *psym);
-            while (GET_SERIES_FLAG(patch, BLACK))  // binding temps
+            while (Get_Series_Flag(patch, BLACK))  // binding temps
                 patch = SER(node_MISC(Hitch, patch));
 
             for (; patch != *psym; patch = SER(node_MISC(Hitch, patch))) {

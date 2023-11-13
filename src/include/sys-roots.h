@@ -156,7 +156,7 @@ inline static void Free_Value(REBVAL *v)
 
     Array(*) a = Singular_From_Cell(v);
 
-    if (GET_SERIES_FLAG(a, MANAGED))
+    if (Get_Series_Flag(a, MANAGED))
         Unlink_Api_Handle_From_Level(a);
 
     Poison_Cell(ARR_SINGLE(a));  // has to be last (removes NODE_FLAG_ROOT)

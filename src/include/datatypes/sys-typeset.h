@@ -51,7 +51,7 @@ inline static option(Array(const*)) VAL_PARAMETER_ARRAY(
     assert(HEART_BYTE_UNCHECKED(v) == REB_PARAMETER);
 
     Array(const*) a = ARR(VAL_NODE1(v));
-    if (a != nullptr and GET_SERIES_FLAG(a, INACCESSIBLE))
+    if (a != nullptr and Get_Series_Flag(a, INACCESSIBLE))
         fail (Error_Series_Data_Freed_Raw());
     return a;
 }

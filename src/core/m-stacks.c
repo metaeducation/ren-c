@@ -46,7 +46,7 @@ void Startup_Data_Stack(Length capacity)
         FLAG_FLAVOR(DATASTACK) | SERIES_FLAGS_NONE
     );
     SET_SERIES_LEN(DS_Array, 1);
-    assert(NOT_SERIES_FLAG(DS_Array, DYNAMIC));
+    assert(Not_Series_Flag(DS_Array, DYNAMIC));
 
     Cell(*) head = ARR_HEAD(DS_Array);
     assert(Is_Cell_Erased(head));  // non-dynamic array, length 1 indicator
@@ -66,7 +66,7 @@ void Startup_Data_Stack(Length capacity)
 
     DROP();  // drop the hypothetical thing that triggered the expand
 
-    assert(GET_SERIES_FLAG(DS_Array, DYNAMIC));
+    assert(Get_Series_Flag(DS_Array, DYNAMIC));
     Poison_Cell(ARR_HEAD(DS_Array));  // new head
 }
 

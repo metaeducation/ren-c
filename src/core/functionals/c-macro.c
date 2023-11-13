@@ -63,7 +63,7 @@ void Splice_Block_Into_Feed(Feed(*) feed, const REBVAL *splice) {
             FLAG_FLAVOR(FEED) | SERIES_FLAG_MANAGED  // no tracking
         );
         memcpy(saved, FEED_SINGULAR(feed), sizeof(Raw_Array));
-        assert(NOT_SERIES_FLAG(saved, MANAGED));
+        assert(Not_Series_Flag(saved, MANAGED));
 
         // old feed data resumes after the splice
         mutable_LINK(Splice, &feed->singular) = saved;

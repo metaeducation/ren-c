@@ -93,7 +93,7 @@ inline static Cell(*) ARR_LAST(const_if_c Array(*) a)
   { return SER_LAST(Reb_Cell, a); }
 
 inline static Cell(*) ARR_SINGLE(const_if_c Array(*) a) {
-    assert(NOT_SERIES_FLAG(a, DYNAMIC));
+    assert(Not_Series_Flag(a, DYNAMIC));
     return mutable_SER_CELL(a);
 }
 
@@ -111,7 +111,7 @@ inline static Cell(*) ARR_SINGLE(const_if_c Array(*) a) {
         { return SER_LAST(const Reb_Cell, a); }
 
     inline static Cell(const*) ARR_SINGLE(Array(const*) a) {
-        assert(NOT_SERIES_FLAG(a, DYNAMIC));
+        assert(Not_Series_Flag(a, DYNAMIC));
         return SER_CELL(a);
     }
 #endif
@@ -127,7 +127,7 @@ inline static Array(*) Singular_From_Cell(Cell(const*) v) {
             - offsetof(struct Reb_Stub, content)
         )
     );
-    assert(NOT_SERIES_FLAG(singular, DYNAMIC));
+    assert(Not_Series_Flag(singular, DYNAMIC));
     return singular;
 }
 
@@ -143,11 +143,11 @@ inline static void Prep_Array(
     Array(*) a,
     REBLEN capacity  // Expand_Series passes 0 on dynamic reallocation
 ){
-    assert(GET_SERIES_FLAG(a, DYNAMIC));
+    assert(Get_Series_Flag(a, DYNAMIC));
 
     Cell(*) prep = ARR_HEAD(a);
 
-    if (NOT_SERIES_FLAG(a, FIXED_SIZE)) {
+    if (Not_Series_Flag(a, FIXED_SIZE)) {
         //
         // Expandable arrays prep all cells, including in the not-yet-used
         // capacity.  Otherwise you'd waste time prepping cells on every
@@ -194,7 +194,7 @@ inline static Array(*) Make_Array_Core_Into(
     REBSER *s = Make_Series_Into(preallocated, capacity, flags);
     assert(IS_SER_ARRAY(s));  // flavor should have been an array flavor
 
-    if (GET_SERIES_FLAG(s, DYNAMIC)) {
+    if (Get_Series_Flag(s, DYNAMIC)) {
         Prep_Array(ARR(s), capacity);
 
       #if DEBUG_POISON_SERIES_TAILS
@@ -222,7 +222,7 @@ inline static Array(*) Make_Array_Core_Into(
         }
         else {
             Clear_Subclass_Flag(ARRAY, s, HAS_FILE_LINE_UNMASKED);
-            CLEAR_SERIES_FLAG(s, LINK_NODE_NEEDS_MARK);
+            Clear_Series_Flag(s, LINK_NODE_NEEDS_MARK);
         }
     }
 
@@ -392,7 +392,7 @@ inline static Array(const*) VAL_ARRAY(noquote(Cell(const*)) v) {
     assert(ANY_ARRAYLIKE(v));
 
     Array(const*) a = ARR(VAL_NODE1(v));
-    if (GET_SERIES_FLAG(a, INACCESSIBLE))
+    if (Get_Series_Flag(a, INACCESSIBLE))
         fail (Error_Series_Data_Freed_Raw());
     return a;
 }

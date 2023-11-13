@@ -2196,7 +2196,7 @@ Bounce Scanner_Executor(Level(*) L) {
         a->misc.line = ss->line;
         mutable_LINK(Filename, a) = ss->file;
         Set_Subclass_Flag(ARRAY, a, HAS_FILE_LINE_UNMASKED);
-        SET_SERIES_FLAG(a, LINK_NODE_NEEDS_MARK);
+        Set_Series_Flag(a, LINK_NODE_NEEDS_MARK);
 
         enum Reb_Kind kind =
             (level->token == TOKEN_GROUP_BEGIN) ? REB_GROUP : REB_BLOCK;
@@ -2481,7 +2481,7 @@ Bounce Scanner_Executor(Level(*) L) {
         array->misc.line = ss->line;
         mutable_LINK(Filename, array) = ss->file;
         Set_Subclass_Flag(ARRAY, array, HAS_FILE_LINE_UNMASKED);
-        SET_SERIES_FLAG(array, LINK_NODE_NEEDS_MARK);
+        Set_Series_Flag(array, LINK_NODE_NEEDS_MARK);
 
         if (ARR_LEN(array) == 0 or not IS_WORD(ARR_HEAD(array))) {
             DECLARE_LOCAL (temp);
@@ -2799,7 +2799,7 @@ Bounce Scanner_Executor(Level(*) L) {
             a->misc.line = ss->line;
             mutable_LINK(Filename, a) = ss->file;
             Set_Subclass_Flag(ARRAY, a, HAS_FILE_LINE_UNMASKED);
-            SET_SERIES_FLAG(a, LINK_NODE_NEEDS_MARK);
+            Set_Series_Flag(a, LINK_NODE_NEEDS_MARK);
 
             // !!! Does this mean anything for paths?  The initial code
             // had it, but it was exploratory and predates the ideas that
@@ -2998,7 +2998,7 @@ Array(*) Scan_UTF8_Managed(
     a->misc.line = 1;
     mutable_LINK(Filename, a) = file;
     Set_Subclass_Flag(ARRAY, a, HAS_FILE_LINE_UNMASKED);
-    SET_SERIES_FLAG(a, LINK_NODE_NEEDS_MARK);
+    Set_Series_Flag(a, LINK_NODE_NEEDS_MARK);
 
     return a;
 }

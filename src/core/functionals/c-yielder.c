@@ -156,7 +156,7 @@ Bounce Yielder_Dispatcher(Level(*) L)
     // invocation (wrong identity) so we free it, if it isn't GC-managed,
     // as it wouldn't get freed otherwise.
     //
-/*    if (NOT_SERIES_FLAG(yielder_level->varlist, MANAGED)) {
+/*    if (Not_Series_Flag(yielder_level->varlist, MANAGED)) {
         //
         // We only want to kill off this one frame; but the GC will think
         // that we want to kill the whole stack of frames if we don't

@@ -301,15 +301,15 @@ REBVAL *RL_rebRepossess(void *ptr, size_t size)
     UNPOISON_MEMORY(ps, sizeof(Binary(*)));  // need to underrun to fetch `s`
 
     Binary(*) s = *ps;
-    assert(NOT_SERIES_FLAG(s, MANAGED));
+    assert(Not_Series_Flag(s, MANAGED));
 
     if (size > BIN_LEN(s) - ALIGN_SIZE)
         fail ("Attempt to rebRepossess() more than rebMalloc() capacity");
 
-    assert(GET_SERIES_FLAG(s, DONT_RELOCATE));
-    CLEAR_SERIES_FLAG(s, DONT_RELOCATE);
+    assert(Get_Series_Flag(s, DONT_RELOCATE));
+    Clear_Series_Flag(s, DONT_RELOCATE);
 
-    if (GET_SERIES_FLAG(s, DYNAMIC)) {
+    if (Get_Series_Flag(s, DYNAMIC)) {
         //
         // Dynamic series have the concept of a "bias", which is unused
         // allocated capacity at the head of a series.  Bump the "bias" to
@@ -2166,7 +2166,7 @@ const void *RL_rebINLINE(const REBVAL *v)
     Array(*) a = Alloc_Singular(
         FLAG_FLAVOR(INSTRUCTION_SPLICE) | NODE_FLAG_MANAGED
     );
-    CLEAR_SERIES_FLAG(a, MANAGED);  // lying avoided manuals tracking
+    Clear_Series_Flag(a, MANAGED);  // lying avoided manuals tracking
     if (not (IS_BLOCK(v) or IS_QUOTED(v) or IS_BLANK(v)))
         fail ("rebINLINE() requires argument to be a BLOCK!/QUOTED!/BLANK!");
 
@@ -2241,12 +2241,12 @@ REBVAL *RL_rebManage(REBVAL *v)
     assert(Is_Api_Value(v));
 
     Array(*) a = Singular_From_Cell(v);
-    assert(GET_SERIES_FLAG(a, ROOT));
+    assert(Get_Series_Flag(a, ROOT));
 
-    if (GET_SERIES_FLAG(a, MANAGED))
+    if (Get_Series_Flag(a, MANAGED))
         fail ("Attempt to rebManage() a handle that's already managed.");
 
-    SET_SERIES_FLAG(a, MANAGED);
+    Set_Series_Flag(a, MANAGED);
     Link_Api_Handle_To_Level(a, TOP_LEVEL);
 
     return v;
@@ -2270,9 +2270,9 @@ void RL_rebUnmanage(void *p)
     assert(Is_Api_Value(v));
 
     Array(*) a = Singular_From_Cell(v);
-    assert(GET_SERIES_FLAG(a, ROOT));
+    assert(Get_Series_Flag(a, ROOT));
 
-    if (NOT_SERIES_FLAG(a, MANAGED))
+    if (Not_Series_Flag(a, MANAGED))
         fail ("Attempt to rebUnmanage() a handle with indefinite lifetime.");
 
     // It's not safe to convert the average series that might be referred to
@@ -2281,7 +2281,7 @@ void RL_rebUnmanage(void *p)
     // pointers to its cell being held by client C code only.  It's at their
     // own risk to do this, and not use those pointers after a free.
     //
-    CLEAR_SERIES_FLAG(a, MANAGED);
+    Clear_Series_Flag(a, MANAGED);
     Unlink_Api_Handle_From_Level(a);
 
     TRASH_POINTER_IF_DEBUG(a->link.trash);

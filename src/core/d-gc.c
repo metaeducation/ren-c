@@ -54,7 +54,7 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
         IS_BINDABLE_KIND(heart)
         and (binding = BINDING(v))
         and not IS_SYMBOL(binding)
-        and NOT_SERIES_FLAG(binding, INACCESSIBLE)
+        and Not_Series_Flag(binding, INACCESSIBLE)
     ){
         if (not IS_SER_ARRAY(binding))
             panic(binding);
@@ -69,7 +69,7 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
                 ){
                     panic (binding);
                 }
-                if (NOT_SERIES_FLAG(SER(keysource), MANAGED))
+                if (Not_Series_Flag(SER(keysource), MANAGED))
                     panic (keysource);
             }
         }
@@ -133,7 +133,7 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
         assert(Get_Cell_Flag_Unchecked(v, FIRST_IS_NODE));
         REBSER *s = SER(VAL_NODE1(v));
         Assert_Series_Term_Core(s);
-        if (GET_SERIES_FLAG(s, INACCESSIBLE))
+        if (Get_Series_Flag(s, INACCESSIBLE))
             assert(Is_Marked(s));  // TBD: clear out reference and GC `s`?
         else
             assert(Is_Marked(s));
@@ -182,7 +182,7 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
       case REB_BINARY: {
         assert(Get_Cell_Flag_Unchecked(v, FIRST_IS_NODE));
         Binary(*) s = BIN(VAL_NODE1(v));
-        if (GET_SERIES_FLAG(s, INACCESSIBLE))
+        if (Get_Series_Flag(s, INACCESSIBLE))
             break;
 
         assert(SER_WIDE(s) == sizeof(Byte));
@@ -196,7 +196,7 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
       case REB_URL:
       case REB_TAG: {
         assert(Get_Cell_Flag_Unchecked(v, FIRST_IS_NODE));
-        if (GET_SERIES_FLAG(STR(VAL_NODE1(v)), INACCESSIBLE))
+        if (Get_Series_Flag(STR(VAL_NODE1(v)), INACCESSIBLE))
             break;
 
         assert(Get_Cell_Flag_Unchecked(v, FIRST_IS_NODE));
@@ -217,7 +217,7 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
                 // true but that the managed bit on the node is false.
 
                 assert(not Is_Marked(bookmark));
-                assert(NOT_SERIES_FLAG(bookmark, MANAGED));
+                assert(Not_Series_Flag(bookmark, MANAGED));
             }
         }
         break; }
@@ -262,7 +262,7 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
       case REB_MODULE:
       case REB_ERROR:
       case REB_PORT: {
-        if (GET_SERIES_FLAG(SER(VAL_NODE1(v)), INACCESSIBLE))
+        if (Get_Series_Flag(SER(VAL_NODE1(v)), INACCESSIBLE))
             break;
 
         assert(
@@ -297,7 +297,7 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
             assert(Is_Marked(PAYLOAD(Any, v).second.node));  // phase or label
         }
 
-        if (GET_SERIES_FLAG(CTX_VARLIST(context), INACCESSIBLE))
+        if (Get_Series_Flag(CTX_VARLIST(context), INACCESSIBLE))
             break;
 
         const REBVAL *archetype = CTX_ARCHETYPE(context);
@@ -330,7 +330,7 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
       case REB_META_GROUP:
       case REB_TYPE_GROUP: {
         Array(*) a = ARR(VAL_NODE1(v));
-        if (GET_SERIES_FLAG(a, INACCESSIBLE))
+        if (Get_Series_Flag(a, INACCESSIBLE))
             break;
 
         ASSERT_SERIES_TERM_IF_NEEDED(a);
@@ -378,7 +378,7 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
           //
           case FLAVOR_ARRAY : {
             Array(*) a = ARR(VAL_NODE1(v));
-            assert(NOT_SERIES_FLAG(a, INACCESSIBLE));
+            assert(Not_Series_Flag(a, INACCESSIBLE));
 
             assert(ARR_LEN(a) >= 2);
             Cell(const*) tail = ARR_TAIL(a);
@@ -413,7 +413,7 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
 
         // GC can't run during bind
         //
-        assert(NOT_SERIES_FLAG(MISC(Hitch, spelling), BLACK));
+        assert(Not_Series_Flag(MISC(Hitch, spelling), BLACK));
 
         REBLEN index = VAL_WORD_INDEX_U32(v);
         if (IS_WORD_BOUND(v)) {

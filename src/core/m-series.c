@@ -148,7 +148,7 @@ void Remove_Series_Units(REBSER *s, Size byteoffset, REBLEN quantity)
     if (quantity == 0)
         return;
 
-    bool is_dynamic = GET_SERIES_FLAG(s, DYNAMIC);
+    bool is_dynamic = Get_Series_Flag(s, DYNAMIC);
     REBLEN used_old = SER_USED(s);
 
     REBLEN start = byteoffset * SER_WIDE(s);
@@ -292,7 +292,7 @@ void Unbias_Series(REBSER *s, bool keep)
 //
 void Reset_Array(Array(*) a)
 {
-    if (GET_SERIES_FLAG(a, DYNAMIC))
+    if (Get_Series_Flag(a, DYNAMIC))
         Unbias_Series(a, false);
     SET_SERIES_LEN(a, 0);
 }
@@ -308,7 +308,7 @@ void Clear_Series(REBSER *s)
 {
     assert(!Is_Series_Read_Only(s));
 
-    if (GET_SERIES_FLAG(s, DYNAMIC)) {
+    if (Get_Series_Flag(s, DYNAMIC)) {
         Unbias_Series(s, false);
         memset(s->content.dynamic.data, 0, SER_REST(s) * SER_WIDE(s));
     }
@@ -347,7 +347,7 @@ void Assert_Series_Term_Core(const REBSER *s)
 {
     if (IS_SER_ARRAY(s)) {
       #if DEBUG_POISON_SERIES_TAILS
-        if (GET_SERIES_FLAG(s, DYNAMIC)) {
+        if (Get_Series_Flag(s, DYNAMIC)) {
             Cell(const*) tail = ARR_TAIL(ARR(s));
             if (not Is_Cell_Poisoned(tail))
                 panic (tail);

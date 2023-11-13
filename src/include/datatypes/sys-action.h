@@ -458,7 +458,7 @@ inline static void Init_Key(REBKEY *dest, const Raw_Symbol* symbol)
 inline static Action(*) VAL_ACTION(noquote(Cell(const*)) v) {
     assert(HEART_BYTE(v) == REB_FRAME);
     REBSER *s = SER(VAL_NODE1(v));  // maybe exemplar, maybe details
-    if (GET_SERIES_FLAG(s, INACCESSIBLE))
+    if (Get_Series_Flag(s, INACCESSIBLE))
         fail (Error_Series_Data_Freed_Raw());
     return ACT(s);
 }

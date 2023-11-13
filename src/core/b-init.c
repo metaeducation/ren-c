@@ -402,7 +402,7 @@ static void Startup_Empty_Arrays(void)
             // Don't confuse the series creation machinery by trying to pass
             // in SERIES_FLAG_INACCESSIBLE to the creation.  Do it after.
     );
-    SET_SERIES_FLAG(&PG_Inaccessible_Series, INACCESSIBLE);
+    Set_Series_Flag(&PG_Inaccessible_Series, INACCESSIBLE);
 }
 
 static void Shutdown_Empty_Arrays(void) {
@@ -412,7 +412,7 @@ static void Shutdown_Empty_Arrays(void) {
     // Decay the inaccessible series in case that cleans up any particular
     // state.  To do so, it has to be temporarily st to accessible.
     //
-    CLEAR_SERIES_FLAG(&PG_Inaccessible_Series, INACCESSIBLE);
+    Clear_Series_Flag(&PG_Inaccessible_Series, INACCESSIBLE);
     Decay_Series(&PG_Inaccessible_Series);
 }
 

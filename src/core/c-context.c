@@ -203,7 +203,7 @@ static REBVAR* Append_Context_Core(
         // skip over binding-related hitches
         //
         REBSER *updating = m_cast(Raw_Symbol*, symbol);
-        while (GET_SERIES_FLAG(SER(node_MISC(Hitch, updating)), BLACK))
+        while (Get_Series_Flag(SER(node_MISC(Hitch, updating)), BLACK))
             updating = SER(node_MISC(Hitch, updating));
 
         node_MISC(Hitch, patch) = node_MISC(Hitch, updating);
@@ -939,7 +939,7 @@ void Assert_Context_Core(Context(*) c)
     if (keys_len + 1 != vars_len)
         panic (c);
 
-    if (GET_SERIES_FLAG(CTX_VARLIST(c), INACCESSIBLE)) {
+    if (Get_Series_Flag(CTX_VARLIST(c), INACCESSIBLE)) {
         //
         // !!! For the moment, don't check inaccessible stack frames any
         // further.  This includes varless reified frames and those reified

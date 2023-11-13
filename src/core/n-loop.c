@@ -741,9 +741,9 @@ void Init_Loop_Each(Value(*) iterator, Value(*) data)
 
         // HOLD so length can't change
 
-        les->took_hold = NOT_SERIES_FLAG(les->series, FIXED_SIZE);
+        les->took_hold = Not_Series_Flag(les->series, FIXED_SIZE);
         if (les->took_hold)
-            SET_SERIES_FLAG(m_cast(REBSER*, les->series), FIXED_SIZE);
+            Set_Series_Flag(m_cast(REBSER*, les->series), FIXED_SIZE);
 
         if (ANY_CONTEXT(data)) {
             les->more_data = Did_Advance_Evars(&les->u.evars);
@@ -958,7 +958,7 @@ void Shutdown_Loop_Each(Value(*) iterator)
     les = VAL_HANDLE_POINTER(struct Loop_Each_State, iterator);
 
     if (les->took_hold)  // release read-only lock
-        CLEAR_SERIES_FLAG(m_cast(REBSER*, les->series), FIXED_SIZE);
+        Clear_Series_Flag(m_cast(REBSER*, les->series), FIXED_SIZE);
 
     if (ANY_CONTEXT(les->data))
         Shutdown_Evars(&les->u.evars);

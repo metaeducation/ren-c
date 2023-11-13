@@ -443,7 +443,7 @@ void GC_Kill_Interning(String(*) intern)
     //
     REBSER *patch = intern;
     while (SER(node_MISC(Hitch, patch)) != intern) {
-        assert(NOT_SERIES_FLAG(patch, MARKED));
+        assert(Not_Series_Flag(patch, MARKED));
         patch = SER(node_MISC(Hitch, patch));
     }
     node_MISC(Hitch, patch) = node_MISC(Hitch, intern);  // may be no-op

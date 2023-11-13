@@ -68,7 +68,7 @@ inline static const REBMAP *VAL_MAP(noquote(Cell(const*)) v) {
     assert(CELL_HEART(v) == REB_MAP);
 
     Array(*) a = ARR(VAL_NODE1(v));
-    if (GET_SERIES_FLAG(a, INACCESSIBLE))
+    if (Get_Series_Flag(a, INACCESSIBLE))
         fail (Error_Series_Data_Freed_Raw());
 
     return MAP(a);

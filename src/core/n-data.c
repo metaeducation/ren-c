@@ -1730,7 +1730,7 @@ DECLARE_NATIVE(free)
         fail ("FREE only implemented for ANY-SERIES! at the moment");
 
     REBSER *s = VAL_SERIES_ENSURE_MUTABLE(v);
-    if (GET_SERIES_FLAG(s, INACCESSIBLE))
+    if (Get_Series_Flag(s, INACCESSIBLE))
         fail ("Cannot FREE already freed series");
 
     Decay_Series(s);
@@ -1773,7 +1773,7 @@ DECLARE_NATIVE(free_q)
     if (n == nullptr or Is_Node_A_Cell(n))
         return Init_False(OUT);
 
-    return Init_Logic(OUT, GET_SERIES_FLAG(SER(n), INACCESSIBLE));
+    return Init_Logic(OUT, Get_Series_Flag(SER(n), INACCESSIBLE));
 }
 
 

@@ -128,13 +128,13 @@ Bounce Encloser_Dispatcher(Level(*) L)
     //
     // INIT_BONUS_KEYSOURCE(CTX_VARLIST(c), ACT_KEYLIST(VAL_ACTION(inner)));
     //
-    // assert(GET_SERIES_FLAG(L->varlist, INACCESSIBLE));  // look dead
+    // assert(Get_Series_Flag(L->varlist, INACCESSIBLE));  // look dead
     //
     // // L->varlist may or may not have wound up being managed.  It was not
     // // allocated through the usual mechanisms, so if unmanaged it's not in
     // // the tracking list Init_Context_Cell() expects.  Just fiddle the bit.
     // //
-    // SET_SERIES_FLAG(CTX_VARLIST(c), MANAGED); */
+    // Set_Series_Flag(CTX_VARLIST(c), MANAGED); */
     //-------------------------------------------------------------end-old-code
 
     //-----------------------------------------------------------begin-new-code
@@ -177,7 +177,7 @@ Bounce Encloser_Dispatcher(Level(*) L)
     // Note that since varlists aren't added to the manual series list, the
     // bit must be tweaked vs. using Force_Series_Managed.
     //
-    SET_SERIES_FLAG(varlist, MANAGED);
+    Set_Series_Flag(varlist, MANAGED);
 
     // Because the built context is intended to be used with DO, it must be
     // "phaseless".  The property of phaselessness allows detection of when

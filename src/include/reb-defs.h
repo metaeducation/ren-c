@@ -130,7 +130,7 @@ typedef signed int PoolID;  // used with UNLIMITED (-1)
 //
 // Aggregate types that are logically collections of multiple series do not
 // inherit.  You have to specify which series you want to extract, e.g.
-// GET_SERIES_FLAG(CTX_VARLIST(context)), not just GET_SERIES_FLAG(context).
+// Get_Series_Flag(CTX_VARLIST(context)), not just Get_Series_Flag(context).
 //
 // Note that because the Raw_Series structure includes a Reb_Value by value,
 // the %sys-rebser.h must be included *after* %sys-rebval.h; however the

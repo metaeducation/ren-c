@@ -96,7 +96,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// While series are nodes, the token-pasting based GET_SERIES_FLAG() macros
+// While series are nodes, the token-pasting based Get_Series_Flag() macros
 // and their ilk look for flags of the form SERIES_FLAG_##name.  So alias the
 // node flags as series flags.
 

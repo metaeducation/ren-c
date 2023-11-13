@@ -160,7 +160,7 @@ static void Queue_Mark_Node_Deep(const Node**pp) {
     }
 
     REBSER *s = SER(m_cast(Node*, *pp));
-    if (GET_SERIES_FLAG(s, INACCESSIBLE)) {
+    if (Get_Series_Flag(s, INACCESSIBLE)) {
         //
         // All inaccessible nodes are collapsed and canonized into a universal
         // inaccessible node so the stub can be freed.
@@ -183,7 +183,7 @@ static void Queue_Mark_Node_Deep(const Node**pp) {
     if (IS_FREE_NODE(s))
         panic (s);
 
-    if (NOT_SERIES_FLAG(s, MANAGED)) {
+    if (Not_Series_Flag(s, MANAGED)) {
         printf("Link to non-MANAGED item reached by GC\n");
         panic (s);
     }
@@ -219,10 +219,10 @@ static void Queue_Unmarked_Accessible_Series_Deep(REBSER *s)
     // references that are intended to keep them live).  So the series header
     // flags control whether the marking is done or not.
 
-    if (GET_SERIES_FLAG(s, LINK_NODE_NEEDS_MARK) and s->link.any.node)
+    if (Get_Series_Flag(s, LINK_NODE_NEEDS_MARK) and s->link.any.node)
         Queue_Mark_Node_Deep(&s->link.any.node);
 
-    if (GET_SERIES_FLAG(s, MISC_NODE_NEEDS_MARK) and s->misc.any.node)
+    if (Get_Series_Flag(s, MISC_NODE_NEEDS_MARK) and s->misc.any.node)
         Queue_Mark_Node_Deep(&s->misc.any.node);
 
   //=//// MARK INODE IF NOT USED FOR INFO //////////////////////////////////=//
@@ -231,7 +231,7 @@ static void Queue_Unmarked_Accessible_Series_Deep(REBSER *s)
     // flag is what determines whether the slot is used for info or not.  So
     // if it's available for non-info uses, it is always a live marked node.
 
-    if (GET_SERIES_FLAG(s, INFO_NODE_NEEDS_MARK) and node_INODE(Node, s))
+    if (Get_Series_Flag(s, INFO_NODE_NEEDS_MARK) and node_INODE(Node, s))
         Queue_Mark_Node_Deep(&s->info.node);
 
     if (IS_KEYLIST(s)) {
@@ -246,8 +246,8 @@ static void Queue_Unmarked_Accessible_Series_Deep(REBSER *s)
             // Symbol(*) are not available to the user to free out from under
             // a keylist (can't use FREE on them) and shouldn't vanish.
             //
-            assert(NOT_SERIES_FLAG(*key, INACCESSIBLE));
-            if (GET_SERIES_FLAG(*key, MARKED))
+            assert(Not_Series_Flag(*key, INACCESSIBLE));
+            if (Get_Series_Flag(*key, MARKED))
                 continue;
             Queue_Unmarked_Accessible_Series_Deep(m_cast(Raw_Symbol*, *key));
         }
@@ -608,10 +608,10 @@ static void Mark_Root_Series(void)
                     and not IS_PAIRLIST(a)
                 );
 
-                if (GET_SERIES_FLAG(a, LINK_NODE_NEEDS_MARK))
+                if (Get_Series_Flag(a, LINK_NODE_NEEDS_MARK))
                     if (node_LINK(Node, a))
                         Queue_Mark_Node_Deep(&a->link.any.node);
-                if (GET_SERIES_FLAG(a, MISC_NODE_NEEDS_MARK))
+                if (Get_Series_Flag(a, MISC_NODE_NEEDS_MARK))
                     if (node_MISC(Node, a))
                         Queue_Mark_Node_Deep(&a->misc.any.node);
 
@@ -803,13 +803,13 @@ static void Mark_Level_Stack_Deep(void)
 
         if (L->label) { // nullptr if anonymous
             Symbol(const*) sym = unwrap(L->label);
-            if (NOT_SERIES_FLAG(sym, MARKED)) {
-                assert(NOT_SERIES_FLAG(sym, INACCESSIBLE));  // can't happen
+            if (Not_Series_Flag(sym, MARKED)) {
+                assert(Not_Series_Flag(sym, INACCESSIBLE));  // can't happen
                 Queue_Unmarked_Accessible_Series_Deep(m_cast(Raw_Symbol*, sym));
             }
         }
 
-        if (L->varlist and GET_SERIES_FLAG(L->varlist, MANAGED)) {
+        if (L->varlist and Get_Series_Flag(L->varlist, MANAGED)) {
             //
             // If the context is all set up with valid values and managed,
             // then it can just be marked normally...no need to do custom
@@ -828,7 +828,7 @@ static void Mark_Level_Stack_Deep(void)
             goto propagate_and_continue;
         }
 
-        if (L->varlist and GET_SERIES_FLAG(L->varlist, INACCESSIBLE)) {
+        if (L->varlist and Get_Series_Flag(L->varlist, INACCESSIBLE)) {
             //
             // This happens in Encloser_Dispatcher(), where it can capture a
             // varlist that may not be managed (e.g. if there were no ADAPTs
@@ -1198,12 +1198,12 @@ REBLEN Recycle_Core(bool shutdown, REBSER *sweeplist)
             REBSER *patch = MISC(Hitch, *psym);
             for (; patch != *psym; patch = SER(node_MISC(Hitch, patch))) {
                 Context(*) context = INODE(PatchContext, patch);
-                if (GET_SERIES_FLAG(patch, MARKED)) {
-                    assert(GET_SERIES_FLAG(CTX_VARLIST(context), MARKED));
+                if (Get_Series_Flag(patch, MARKED)) {
+                    assert(Get_Series_Flag(CTX_VARLIST(context), MARKED));
                     continue;
                 }
-                if (GET_SERIES_FLAG(CTX_VARLIST(context), MARKED)) {
-                    SET_SERIES_FLAG(patch, MARKED);
+                if (Get_Series_Flag(CTX_VARLIST(context), MARKED)) {
+                    Set_Series_Flag(patch, MARKED);
                     ++mark_count;
 
                     Queue_Mark_Cell_Deep(ARR_SINGLE(ARR(patch)));
@@ -1211,8 +1211,8 @@ REBLEN Recycle_Core(bool shutdown, REBSER *sweeplist)
                     // We also have to keep the word alive, but not necessarily
                     // keep all the other declarations in other modules alive.
                     //
-                    if (NOT_SERIES_FLAG(*psym, MARKED)) {
-                        SET_SERIES_FLAG(*psym, MARKED);
+                    if (Not_Series_Flag(*psym, MARKED)) {
+                        Set_Series_Flag(*psym, MARKED);
                         ++mark_count;
                     }
                 }
@@ -1231,7 +1231,7 @@ REBLEN Recycle_Core(bool shutdown, REBSER *sweeplist)
     // Note: We do not need to mark the PG_Inaccessible_Series, because it is
     // not subject to GC and no one should mark it.  Make sure that's true.
     //
-    assert(NOT_SERIES_FLAG(&PG_Inaccessible_Series, MARKED));
+    assert(Not_Series_Flag(&PG_Inaccessible_Series, MARKED));
 
     REBLEN sweep_count;
 
@@ -1249,8 +1249,8 @@ REBLEN Recycle_Core(bool shutdown, REBSER *sweeplist)
     //
     for (REBLEN i = 1; i < LIB_SYMS_MAX; ++i) {
         Array(*) patch = &PG_Lib_Patches[i];
-        if (GET_SERIES_FLAG(patch, MARKED)) {
-            CLEAR_SERIES_FLAG(patch, MARKED);
+        if (Get_Series_Flag(patch, MARKED)) {
+            Clear_Series_Flag(patch, MARKED);
             --mark_count;
         }
     }
@@ -1261,10 +1261,10 @@ REBLEN Recycle_Core(bool shutdown, REBSER *sweeplist)
         Symbol(*) canon = &PG_Symbol_Canons[i];
 
         if (not shutdown)
-           assert(GET_SERIES_FLAG(canon, MARKED));
+           assert(Get_Series_Flag(canon, MARKED));
 
-        if (GET_SERIES_FLAG(canon, MARKED)) {
-            CLEAR_SERIES_FLAG(canon, MARKED);
+        if (Get_Series_Flag(canon, MARKED)) {
+            Clear_Series_Flag(canon, MARKED);
             --mark_count;
         }
     }
