@@ -241,3 +241,11 @@
 [
     (['''''''] = compose ['''''''(if false [<a>])])
 ]
+
+; You can apply quasiforms just like other quoting levels, but the value
+; must not be already quoted.
+[
+    ([1 ~2~ 3] = compose [1 ~(1 + 1)~ 3])
+    ([1 ''~2~ 3] = compose [1 ''~(1 + 1)~ 3])
+    ~???~ !! (compose [1 ''~(quote 1 + 1)~ 3])
+]

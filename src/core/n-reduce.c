@@ -628,7 +628,7 @@ Bounce Composer_Executor(Frame(*) f)
     );
 
     enum Reb_Kind group_heart = CELL_HEART(At_Frame(f));
-    REBLEN group_quotes = VAL_NUM_QUOTES(At_Frame(f));
+    Byte group_quote_byte = QUOTE_BYTE(At_Frame(f));
 
     if (Is_Splice(OUT))
         goto push_out_spliced;
@@ -637,7 +637,7 @@ Bounce Composer_Executor(Frame(*) f)
         return RAISE(Error_Need_Non_Null_Raw());  // [(null)] => error!
 
     if (Is_Void(OUT)) {
-        if (group_heart == REB_GROUP and group_quotes == 0)
+        if (group_heart == REB_GROUP and group_quote_byte == UNQUOTED_1)
             goto handle_next_item;  // compose [(void)] => []
 
         // [''(void)] => ['']
@@ -656,7 +656,7 @@ Bounce Composer_Executor(Frame(*) f)
     // compose [([a b c]) unmerged] => [[a b c] unmerged]
 
     if (Is_Void(OUT)) {
-        assert(group_quotes != 0);  // handled above
+        assert(group_quote_byte != UNQUOTED_1);  // handled above
         Init_Void(PUSH());
     }
     else
@@ -673,7 +673,13 @@ Bounce Composer_Executor(Frame(*) f)
     else
         assert(group_heart == REB_GROUP);
 
-    Quotify(TOP, group_quotes);  // match original quotes
+    if (group_quote_byte & NONQUASI_BIT)
+        Quotify(TOP, group_quote_byte / 2);  // add to existing quotes
+    else {
+        if (QUOTE_BYTE(TOP) != UNQUOTED_1)
+            fail ("COMPOSE cannot quasify items not at quote level 0");
+        mutable_QUOTE_BYTE(TOP) = group_quote_byte;
+    }
 
     // Use newline intent from the GROUP! in the compose pattern
     //
@@ -687,9 +693,9 @@ Bounce Composer_Executor(Frame(*) f)
 
   push_out_spliced:  /////////////////////////////////////////////////////////
 
-    // compose [(([a b])) merges] => [a b merges]... see [3]
+    // compose [(spread [a b]) merges] => [a b merges]... see [3]
 
-    if (group_quotes != 0 or group_heart != REB_GROUP)
+    if (group_quote_byte != UNQUOTED_1 or group_heart != REB_GROUP)
         return RAISE("Currently can only splice plain unquoted GROUP!s");
 
     if (Is_Splice(OUT)) {  // GROUP! at "quoting level -1" means splice
