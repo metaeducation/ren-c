@@ -70,9 +70,9 @@ enum {
 // (Luckily these copies are often not needed, such as when the DOES is not
 // used in a method... -AND- it only needs to be made once.)
 //
-Bounce Block_Dispatcher(Level(*) L)
+Bounce Block_Dispatcher(Level(*) const L)
 {
-    Level(*) level_ = L;  // for RETURN macros
+    USE_LEVEL_SHORTHANDS (L);
 
     Details(*) details = ACT_DETAILS(PHASE);
     assert(ARR_LEN(details) == IDX_DOES_MAX);

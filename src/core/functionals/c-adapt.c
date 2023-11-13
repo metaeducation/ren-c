@@ -58,7 +58,7 @@ enum {
 // Each time a function created with ADAPT is executed, this code runs to
 // invoke the "prelude" before passing control to the "adaptee" function.
 //
-Bounce Adapter_Dispatcher(Level(*) L)
+Bounce Adapter_Dispatcher(Level(*) const L)
 //
 // 1. When an ADAPT is done, it does not leave its product in the output
 //    cell.  This means ADAPT of COMMENT will still be invisible.
@@ -72,7 +72,7 @@ Bounce Adapter_Dispatcher(Level(*) L)
 //    may have put invalid types in parameter slots.  So it needs to be
 //    typechecked before executing.
 {
-    Level(*) level_ = L;  // for RETURN macros
+    USE_LEVEL_SHORTHANDS (L);
 
     Details(*) details = ACT_DETAILS(PHASE);
     assert(ARR_LEN(details) == IDX_ADAPTER_MAX);

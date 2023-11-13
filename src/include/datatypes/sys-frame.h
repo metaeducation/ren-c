@@ -530,6 +530,22 @@ inline static Level(*) Prep_Level_Core(
 // (if any).
 //
 #if REBOL_LEVEL_SHORTHAND_MACROS
+    //
+    // To make it clearer why you are defining the `level_` alias, use this
+    // macro...so you don't have to comment every time.  The const constraint
+    // helps check you're not expecting it to change when updating L.  (If
+    // we weren't worried about building with C we could use a C++ reference
+    // and it could update... but... we still build as C.)
+    //
+  #if CPLUSPLUS_11
+    #define USE_LEVEL_SHORTHANDS(L) \
+        static_assert(std::is_const<decltype(L)>::value, "L must be const"); \
+        Level(*) const level_ = L
+  #else
+    #define USE_LEVEL_SHORTHANDS(L) \
+        Level(*) const level_ = L
+  #endif
+
     #define LEVEL   level_
     #define OUT     level_->out         // GC-safe slot for output value
     #define SPARE   Level_Spare(level_)       // scratch GC-safe cell

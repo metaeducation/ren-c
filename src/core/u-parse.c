@@ -253,7 +253,7 @@ static bool Subparse_Throws(
     Sink(Value(*)) out,
     Cell(const*) input,
     REBSPC *input_specifier,
-    Level(*) L,
+    Level(*) const L,
     Option(Array(*)) collection,
     Flags flags
 ){
@@ -272,7 +272,7 @@ static bool Subparse_Throws(
     //
     SET_SERIES_INFO(L->varlist, HOLD);
 
-    Level(*) level_ = L;
+    USE_LEVEL_SHORTHANDS (L);
     INCLUDE_PARAMS_OF_SUBPARSE;
 
     Init_Nulled(ARG(return));

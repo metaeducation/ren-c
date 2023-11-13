@@ -93,9 +93,9 @@ void Splice_Block_Into_Feed(Feed(*) feed, const REBVAL *splice) {
 //
 //  Macro_Dispatcher: C
 //
-Bounce Macro_Dispatcher(Level(*) L)
+Bounce Macro_Dispatcher(Level(*) const L)
 {
-    Level(*) level_ = L;  // for RETURN macros
+    USE_LEVEL_SHORTHANDS (L);
 
     Details(*) details = ACT_DETAILS(PHASE);
     Cell(*) body = ARR_AT(details, IDX_DETAILS_1);  // code to run

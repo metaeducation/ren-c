@@ -58,9 +58,9 @@ enum {
 // restartable way and unwinds it, allowing the continuation to request
 // that be the frame that gets executed in the continuation.
 //
-Bounce Yielder_Dispatcher(Level(*) L)
+Bounce Yielder_Dispatcher(Level(*) const L)
 {
-    Level(*) level_ = L;  // for RETURN macros
+    USE_LEVEL_SHORTHANDS (L);
 
     Action(*) phase = Level_Phase(L);
     Details(*) details = ACT_DETAILS(phase);

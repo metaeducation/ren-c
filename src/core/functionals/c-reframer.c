@@ -297,9 +297,9 @@ bool Init_Frame_From_Feed_Throws(
 // !!! As a first cut we build on top of specialize, and look for the
 // parameter by means of a particular labeled void.
 //
-Bounce Reframer_Dispatcher(Level(*) L)
+Bounce Reframer_Dispatcher(Level(*) const L)
 {
-    Level(*) level_ = L;  // for RETURN macros
+    USE_LEVEL_SHORTHANDS (L);
 
     Details(*) details = ACT_DETAILS(PHASE);
     assert(ARR_LEN(details) == IDX_REFRAMER_MAX);

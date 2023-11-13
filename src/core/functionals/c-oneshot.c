@@ -49,9 +49,9 @@ enum {
 };
 
 
-Bounce Downshot_Dispatcher(Level(*) L)  // runs until count is reached
+Bounce Downshot_Dispatcher(Level(*) const L)  // runs until count is reached
 {
-    Level(*) level_ = L;  // for RETURN macros
+    USE_LEVEL_SHORTHANDS (L);
 
     Details(*) details = ACT_DETAILS(PHASE);
     assert(ARR_LEN(details) == IDX_ONESHOT_MAX);
@@ -66,9 +66,9 @@ Bounce Downshot_Dispatcher(Level(*) L)  // runs until count is reached
 }
 
 
-Bounce Upshot_Dispatcher(Level(*) L)  // won't run until count is reached
+Bounce Upshot_Dispatcher(Level(*) const L)  // won't run until count is reached
 {
-    Level(*) level_ = L;
+    USE_LEVEL_SHORTHANDS (L);
 
     Details(*) details = ACT_DETAILS(PHASE);
     assert(ARR_LEN(details) == IDX_ONESHOT_MAX);

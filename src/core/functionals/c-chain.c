@@ -113,7 +113,7 @@ Level(*) Push_Downshifted_Level(Atom(*) out, Level(*) L) {
 // user invoked in the stack trace...instead of just the chained item that
 // causes an error.)
 //
-Bounce Chainer_Dispatcher(Level(*) L)
+Bounce Chainer_Dispatcher(Level(*) const L)
 //
 // 1. Stealing the varlist leaves the actual chainer frame with no varlist
 //    content.  That means debuggers introspecting the stack may see a
@@ -135,7 +135,7 @@ Bounce Chainer_Dispatcher(Level(*) L)
 //    your chains can consume more than one argument.  It might be interesting
 //    or it might be bugs waiting to happen, trying it this way for now.
 {
-    Level(*) level_ = L;  // for RETURN macros
+    USE_LEVEL_SHORTHANDS (L);
 
     if (THROWING)  // this routine is both dispatcher and executor, see [2]
         return THROWN;

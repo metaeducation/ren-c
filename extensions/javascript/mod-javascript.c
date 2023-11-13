@@ -560,12 +560,10 @@ EXTERN_C void RL_rebResolveNative_internal(
     intptr_t level_id,
     intptr_t result_id
 ){
-    Level(*) level_ = Level_From_Level_Id(level_id);
+    Level(*) const L = Level_From_Level_Id(level_id);
+    USE_LEVEL_SHORTHANDS (L);
 
-    TRACE(
-        "reb.ResolveNative_internal(%s)",
-        Level_Label_Or_Anonymous_UTF8(LEVEL)
-    );
+    TRACE("reb.ResolveNative_internal(%s)", Level_Label_Or_Anonymous_UTF8(L));
 
     REBVAL *result = Value_From_Value_Id(result_id);
 
@@ -597,12 +595,10 @@ EXTERN_C void RL_rebRejectNative_internal(
     intptr_t level_id,
     intptr_t error_id
 ){
-    Level(*) level_ = Level_From_Level_Id(level_id);
+    Level(*) const L = Level_From_Level_Id(level_id);
+    USE_LEVEL_SHORTHANDS (L);
 
-    TRACE(
-        "reb.RejectNative_internal(%s)",
-        Level_Label_Or_Anonymous_UTF8(LEVEL)
-    );
+    TRACE("reb.RejectNative_internal(%s)", Level_Label_Or_Anonymous_UTF8(L));
 
     REBVAL *error = Value_From_Value_Id(error_id);
 
@@ -669,9 +665,9 @@ EXTERN_C void RL_rebRejectNative_internal(
 //    convert it to a throw.  For now, the halt signal is communicated
 //    uniquely back to us as 0.
 //
-Bounce JavaScript_Dispatcher(Level(*) L)
+Bounce JavaScript_Dispatcher(Level(*) const L)
 {
-    Level(*) level_ = L;  // alias for macros like OUT, SPARE, etc.
+    USE_LEVEL_SHORTHANDS (L);
 
     heapaddr_t level_id = Level_Id_For_Level(L);
 

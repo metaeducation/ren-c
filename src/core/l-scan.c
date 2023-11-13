@@ -1888,8 +1888,8 @@ void Init_Scan_Level(
 // prior element was a GET-WORD!, the scan becomes a GET-PATH!...if the final
 // element is a SET-WORD!, the scan becomes a SET-PATH!)
 //
-Bounce Scanner_Executor(Level(*) L) {
-    Level(*) level_ = L;  // to use macros like OUT, SUBLEVEL, etc.
+Bounce Scanner_Executor(Level(*) const L) {
+    USE_LEVEL_SHORTHANDS (L);
 
     if (THROWING)
         return THROWN;  // no state to cleanup (just data stack, auto-cleaned)

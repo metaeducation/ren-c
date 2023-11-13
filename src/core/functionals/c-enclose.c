@@ -81,9 +81,9 @@ enum {
 //
 // Note: Not static because it's checked for by pointer in RESKIN.
 //
-Bounce Encloser_Dispatcher(Level(*) L)
+Bounce Encloser_Dispatcher(Level(*) const L)
 {
-    Level(*) level_ = L;  // for RETURN macros
+    USE_LEVEL_SHORTHANDS (L);
 
     Details(*) details = ACT_DETAILS(PHASE);
     assert(ARR_LEN(details) == IDX_ENCLOSER_MAX);

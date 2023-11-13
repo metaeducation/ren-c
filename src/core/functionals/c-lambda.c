@@ -60,7 +60,7 @@ enum {
 // doing any virtual binding.  However, there's some difference w.r.t. the
 // "derived binding" that need a going-over.
 //
-Bounce Lambda_Dispatcher(Level(*) L)
+Bounce Lambda_Dispatcher(Level(*) const L)
 //
 // 1. We have to use Make_Or_Reuse_Use() here, because it could be the case
 //    that a higher level wrapper used the frame and virtually bound it.
@@ -72,7 +72,7 @@ Bounce Lambda_Dispatcher(Level(*) L)
 //    The merging notices the redundancy and doesn't create a new specifier
 //    which is good...but this is still inefficient.  This all needs review.
 {
-    Level(*) level_ = L;
+    USE_LEVEL_SHORTHANDS (L);
 
     Details(*) details = ACT_DETAILS(PHASE);
     assert(ARR_LEN(details) == IDX_LAMBDA_MAX);

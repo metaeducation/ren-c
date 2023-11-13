@@ -499,9 +499,9 @@ static Atom(*) Finalize_Composer_Level(
 //    also means the caller can decide if they want the accrued items or not
 //    depending on the `changed` field in the level.
 //
-Bounce Composer_Executor(Level(*) L)
+Bounce Composer_Executor(Level(*) const L)
 {
-    Level(*) level_ = L;
+    USE_LEVEL_SHORTHANDS (L);
 
     if (THROWING)
         return THROWN;  // no state to cleanup (just data stack, auto-cleaned)

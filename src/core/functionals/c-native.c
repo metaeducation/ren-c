@@ -55,9 +55,9 @@ Intrinsic* Extract_Intrinsic(Action(*) action)
 // run intrinsics using this thin wrapper of a dispatcher as if they were
 // ordinary natives.
 //
-Bounce Intrinsic_Dispatcher(Level(*) L)
+Bounce Intrinsic_Dispatcher(Level(*) const L)
 {
-    Level(*) level_ = L;
+    USE_LEVEL_SHORTHANDS (L);
 
     assert(ACT_HAS_RETURN(PHASE));
     Value(*) arg = Level_Arg(L, 2);  // skip the RETURN

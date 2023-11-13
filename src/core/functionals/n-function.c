@@ -106,9 +106,9 @@
 //    a hassle to force people to put RETURN NONE or RETURN at the end.  So
 //    this is the compromise chosen.
 //
-Bounce Func_Dispatcher(Level(*) L)
+Bounce Func_Dispatcher(Level(*) const L)
 {
-    Level(*) level_ = L;  // so we can use OUT
+    USE_LEVEL_SHORTHANDS (L);
 
     enum {
         ST_FUNC_INITIAL_ENTRY = STATE_0,
