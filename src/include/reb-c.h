@@ -742,8 +742,8 @@
 // This is a light wrapper class that uses a trick to provide limited
 // functionality in the vein of `std::optional` and Rust's `Option`:
 //
-//     option(char*) abc = "abc";
-//     option(char*) xxx = nullptr;
+//     Option(char*) abc = "abc";
+//     Option(char*) xxx = nullptr;
 //
 //     if (abc)
 //        printf("abc is truthy, so unwrap(abc) is safe!\n")
@@ -752,7 +752,7 @@
 //        printf("XXX is falsey, so don't unwrap(xxx)...\n")
 //
 //     char* s1 = abc;                  // **compile time error
-//     option(char*) s2 = abc;          // legal
+//     Option(char*) s2 = abc;          // legal
 //
 //     char* s3 = unwrap(xxx);          // **runtime error
 //     char* s4 = try_unwrap(xxx);      // gets nullptr out
@@ -765,15 +765,18 @@
 //
 // Comparison is lenient, allowing direct comparison to the contained value.
 //
-// 1. This needs special handling in %make-headers.r to recognize the format.
+// 1. Uppercase Option() is chosen vs. option(), to keep `option` available
+//    as a variable name, and to better fit the new DataType NamingConvention.
+//
+// 2. This needs special handling in %make-headers.r to recognize the format.
 //    See the `typemacro_parentheses` rule.
 //
-// 2. Because we want this to work in plain C, we can't take advantage of a
+// 3. Because we want this to work in plain C, we can't take advantage of a
 //    default construction to a zeroed value.  But we also can't disable the
 //    default constructor, because we want to be able to default construct
-//    structures with members that are option().  :-(
+//    structures with members that are Option().  :-(
 //
-// 3. While the combinatorics may seem excessive with repeating the equality
+// 4. While the combinatorics may seem excessive with repeating the equality
 //    and inequality operators, this is the way std::optional does it too.
 //
 #if DEBUG_CHECK_OPTIONALS
@@ -825,11 +828,11 @@
     bool operator!=(L left, OptionWrapper<R> right)
         { return left != right.wrapped; }
 
-    #define option(T) OptionWrapper<T>
+    #define Option(T) OptionWrapper<T>
     #define unwrap(v) (v).unwrap_helper()
     #define try_unwrap(v) (v).wrapped
 #else
-    #define option(T) T
+    #define Option(T) T
     #define unwrap(v) (v)
     #define try_unwrap(v) (v)
 #endif

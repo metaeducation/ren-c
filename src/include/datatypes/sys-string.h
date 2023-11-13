@@ -609,7 +609,7 @@ inline static Utf8(const*) VAL_STRING_TAIL(noquote(Cell(const*)) v) {
 
 
 inline static Size VAL_SIZE_LIMIT_AT(
-    option(REBLEN*) length_out,  // length in chars to end (including limit)
+    Option(REBLEN*) length_out,  // length in chars to end (including limit)
     noquote(Cell(const*)) v,
     REBINT limit  // UNLIMITED (e.g. a very large number) for no limit
 ){

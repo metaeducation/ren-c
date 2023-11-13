@@ -227,8 +227,8 @@ STATIC_ASSERT((int)AM_FIND_MATCH == (int)PF_FIND_MATCH);
 // !!! This and other efficiency tricks from R3-Alpha should be reviewed to
 // see if they're really the best option.
 //
-inline static option(SymId) VAL_CMD(Cell(const*) v) {
-    option(SymId) sym = VAL_WORD_ID(v);
+inline static Option(SymId) VAL_CMD(Cell(const*) v) {
+    Option(SymId) sym = VAL_WORD_ID(v);
     if (sym >= SYM_SET and sym <= SYM_END)
         return sym;
     return SYM_0;
@@ -254,7 +254,7 @@ static bool Subparse_Throws(
     Cell(const*) input,
     REBSPC *input_specifier,
     Level(*) L,
-    option(Array(*)) collection,
+    Option(Array(*)) collection,
     Flags flags
 ){
     assert(ANY_SERIES_KIND(CELL_HEART(input)));
@@ -779,7 +779,7 @@ static REBIXO To_Thru_Block_Rule(
             }
 
             if (IS_WORD(rule)) {
-                option(SymId) cmd = VAL_CMD(rule);
+                Option(SymId) cmd = VAL_CMD(rule);
 
                 if (cmd) {
                     if (cmd == SYM_END) {
@@ -1457,7 +1457,7 @@ DECLARE_NATIVE(subparse)
     //=//// ANY-WORD!/ANY-PATH! PROCESSING ////////////////////////////////=//
 
     if (IS_WORD(rule) or IS_GET_WORD(rule) or IS_SET_WORD(rule)) {
-        option(SymId) cmd = VAL_CMD(rule);
+        Option(SymId) cmd = VAL_CMD(rule);
         if (cmd) {
             if (not IS_WORD(rule)) {
                 //
@@ -2140,7 +2140,7 @@ DECLARE_NATIVE(subparse)
         REBIXO i;  // temp index point
 
         if (IS_WORD(rule)) {  // could be literal BLANK!, now SYM_SKIP
-            option(SymId) cmd = VAL_CMD(rule);
+            Option(SymId) cmd = VAL_CMD(rule);
 
             switch (cmd) {
               case SYM_SKIP:

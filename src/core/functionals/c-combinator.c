@@ -642,7 +642,7 @@ static bool Combinator_Param_Hook(
     UNUSED(REF(path));  // used by caller of hook
     UNUSED(ARG(advanced));  // used by caller of hook
 
-    option(SymId) symid = KEY_SYM(key);
+    Option(SymId) symid = KEY_SYM(key);
 
     if (symid == SYM_INPUT or symid == SYM_REMAINDER) {
         //
@@ -803,7 +803,7 @@ DECLARE_NATIVE(combinatorize)
     INCLUDE_PARAMS_OF_COMBINATORIZE;
 
     Action(*) act = VAL_ACTION(ARG(c));
-    option(Symbol(const*)) label = VAL_FRAME_LABEL(ARG(c));
+    Option(Symbol(const*)) label = VAL_FRAME_LABEL(ARG(c));
     Context(*) binding = VAL_FRAME_BINDING(ARG(c));
 
     Value(*) rule_start = ARG(rule_start);

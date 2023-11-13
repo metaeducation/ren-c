@@ -46,7 +46,7 @@ REBINT CT_Port(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
 Bounce MAKE_Port(
     Level(*) level_,
     enum Reb_Kind kind,
-    option(const REBVAL*) parent,
+    Option(Value(const*)) parent,
     const REBVAL *arg
 ){
     assert(kind == REB_PORT);
@@ -102,7 +102,7 @@ REBTYPE(Port)
     REBVAL *port = D_ARG(1);
     assert(IS_PORT(port));
 
-    option(SymId) id = ID_OF_SYMBOL(verb);
+    Option(SymId) id = ID_OF_SYMBOL(verb);
 
     enum {
         ST_TYPE_PORT_INITIAL_ENTRY = STATE_0,
@@ -235,7 +235,7 @@ REBTYPE(Url)
 {
     REBVAL *url = D_ARG(1);
 
-    option(SymId) id = ID_OF_SYMBOL(verb);
+    Option(SymId) id = ID_OF_SYMBOL(verb);
     if (id == SYM_COPY) {
         //
         // https://forum.rebol.info/t/copy-and-port/1699

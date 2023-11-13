@@ -723,7 +723,7 @@ void Startup_Signals(void)
     //
     static void Startup_Trash_Debug(void) {
         //
-        // !!! TBD: Identify global option(...) state.
+        // !!! TBD: Identify global Option(...) state.
     }
 #endif
 

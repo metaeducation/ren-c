@@ -86,7 +86,7 @@ Bounce Specializer_Dispatcher(Level(*) L)
 Context(*) Make_Context_For_Action_Push_Partials(
     const REBVAL *action,  // need ->binding, so can't just be a Action(*)
     StackIndex lowest_ordered_stackindex,  // caller can add refinements
-    option(struct Reb_Binder*) binder,
+    Option(struct Reb_Binder*) binder,
     const REBVAL *unspecialized  // what to put in unspecialized slots
 ){
     StackIndex highest_ordered_stackindex = TOP_INDEX;
@@ -211,7 +211,7 @@ Context(*) Make_Context_For_Action_Push_Partials(
 Context(*) Make_Context_For_Action(
     const REBVAL *action, // need ->binding, so can't just be a Action(*)
     StackIndex lowest_ordered_stackindex,
-    option(struct Reb_Binder*) binder
+    Option(struct Reb_Binder*) binder
 ){
     Context(*) exemplar = Make_Context_For_Action_Push_Partials(
         action,
@@ -242,7 +242,7 @@ Context(*) Make_Context_For_Action(
 bool Specialize_Action_Throws(
     Sink(Value(*)) out,
     Value(*) specializee,
-    option(REBVAL*) def,  // !!! REVIEW: binding modified directly, not copied
+    Option(Value(*)) def,  // !!! REVIEW: binding modified directly, not copied
     StackIndex lowest_ordered_stackindex
 ){
     assert(out != specializee);
@@ -362,7 +362,7 @@ bool Specialize_Action_Throws(
             fail ("Cannot currently SPECIALIZE variadic arguments.");
 
         if (not Typecheck_Coerce_Argument(param, arg)) {
-            option(Symbol(const*)) label = VAL_FRAME_LABEL(specializee);
+            Option(Symbol(const*)) label = VAL_FRAME_LABEL(specializee);
             fail (Error_Arg_Type(label, key, param, arg));
         }
 
@@ -506,7 +506,7 @@ void For_Each_Unspecialized_Param(
     PARAM_HOOK hook,
     void *opaque
 ){
-    option(Array(*)) partials = ACT_PARTIALS(act);
+    Option(Array(*)) partials = ACT_PARTIALS(act);
 
     // Walking the parameters in a potentially "unsorted" fashion.  Offer them
     // to the passed-in hook in case it has a use for this first pass (e.g.
@@ -697,7 +697,7 @@ const REBPAR *Last_Unspecialized_Param(const REBKEY ** key, Action(*) act)
 //
 // Helper built on First_Unspecialized_Param(), can also give you the param.
 //
-REBVAL *First_Unspecialized_Arg(option(const REBPAR **) param_out, Level(*) L)
+REBVAL *First_Unspecialized_Arg(Option(const REBPAR **) param_out, Level(*) L)
 {
     Phase(*) phase = Level_Phase(L);
     const REBPAR *param = First_Unspecialized_Param(nullptr, phase);
@@ -719,7 +719,7 @@ REBVAL *First_Unspecialized_Arg(option(const REBPAR **) param_out, Level(*) L)
 //
 Phase(*) Alloc_Action_From_Exemplar(
     Context(*) exemplar,
-    option(Symbol(const*)) label,
+    Option(Symbol(const*)) label,
     Dispatcher* dispatcher,
     REBLEN details_capacity
 ){
@@ -770,7 +770,7 @@ Phase(*) Alloc_Action_From_Exemplar(
 //
 Phase(*) Make_Action_From_Exemplar(
     Context(*) exemplar,
-    option(Symbol(const*)) label
+    Option(Symbol(const*)) label
 ){
     Phase(*) action = Alloc_Action_From_Exemplar(
         exemplar,

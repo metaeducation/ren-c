@@ -413,7 +413,7 @@ inline static Array(const*) VAL_ARRAY(noquote(Cell(const*)) v) {
 // arrays meaningfully, it should work with VAL_INDEX_UNBOUNDED().
 //
 inline static Cell(const*) VAL_ARRAY_LEN_AT(
-    option(REBLEN*) len_at_out,
+    Option(REBLEN*) len_at_out,
     noquote(Cell(const*)) v
 ){
     Array(const*) arr = VAL_ARRAY(v);
@@ -427,7 +427,7 @@ inline static Cell(const*) VAL_ARRAY_LEN_AT(
 }
 
 inline static Cell(const*) VAL_ARRAY_AT(
-    option(Cell(const*)*) tail_out,
+    Option(Cell(const*)*) tail_out,
     noquote(Cell(const*)) v
 ){
     Array(const*) arr = VAL_ARRAY(v);

@@ -78,7 +78,7 @@ inline static Array(const*) Level_Array(Level(*) L) {
 
 
 // !!! Though the evaluator saves its `index`, the index is not meaningful
-// in a valist.  Also, if `option(head)` values are used to prefetch before an
+// in a valist.  Also, if `Option(head)` values are used to prefetch before an
 // array, those will be lost too.  A true debugging mode would need to
 // convert these cases to ordinary arrays before running them, in order
 // to accurately present any errors.
@@ -154,7 +154,7 @@ inline static void INIT_LVL_BINDING(Level(*) L, Context(*) binding)
 #define Level_Binding(L) \
     cast(Context(*), BINDING((L)->rootvar))
 
-inline static option(Symbol(const*)) Level_Label(Level(*) L) {
+inline static Option(Symbol(const*)) Level_Label(Level(*) L) {
     assert(Is_Action_Level(L));
     return L->label;
 }
@@ -647,7 +647,7 @@ inline static bool Pushed_Continuation(
     Flags flags,  // LEVEL_FLAG_BRANCH, etc. for pushed levels
     REBSPC *branch_specifier,  // before branch forces non-empty variadic call
     Cell(const*) branch,
-    option(Atom(const*)) with  // can be same as out or not GC-safe, may copy
+    Option(Atom(const*)) with  // can be same as out or not GC-safe, may copy
 ){
     assert(branch != out);  // it's legal for `with` to be the same as out
     assert(not with or unwrap(with) == out or not Is_Api_Value(unwrap(with)));

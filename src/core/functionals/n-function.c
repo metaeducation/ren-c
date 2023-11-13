@@ -676,12 +676,12 @@ DECLARE_NATIVE(inherit_adjunct)
     // By default, inherit description (though ideally, they should have
     // changed it to explain why it's different).
     //
-    option(Value(*)) description2 = Select_Symbol_In_Context(
+    Option(Value(*)) description2 = Select_Symbol_In_Context(
         CTX_ARCHETYPE(a2),
         Canon(DESCRIPTION)
     );
     if (description2 and Is_Nulled(unwrap(description2))) {
-        option(Value(*)) description1 = Select_Symbol_In_Context(
+        Option(Value(*)) description1 = Select_Symbol_In_Context(
             CTX_ARCHETYPE(a1),
             Canon(DESCRIPTION)
         );
@@ -690,7 +690,7 @@ DECLARE_NATIVE(inherit_adjunct)
     }
 
     REBLEN which = 0;
-    option(SymId) syms[] = {SYM_PARAMETER_NOTES, SYM_PARAMETER_TYPES, SYM_0};
+    Option(SymId) syms[] = {SYM_PARAMETER_NOTES, SYM_PARAMETER_TYPES, SYM_0};
 
     for (; syms[which] != 0; ++which) {
         Value(*) val1 = try_unwrap(Select_Symbol_In_Context(
@@ -733,7 +733,7 @@ DECLARE_NATIVE(inherit_adjunct)
             if (not Is_None(e.var) and not Is_Nulled(e.var))
                 continue;  // already set to something
 
-            option(Value(*)) slot = Select_Symbol_In_Context(
+            Option(Value(*)) slot = Select_Symbol_In_Context(
                 CTX_ARCHETYPE(ctx1),
                 KEY_SYMBOL(e.key)
             );

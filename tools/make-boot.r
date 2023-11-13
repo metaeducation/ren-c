@@ -1118,7 +1118,7 @@ e-symbols/emit 'syms-cscape {
      * benefit when symbol comparison is available).
      *
      * Note: Any interning that *does not have* a compile-time constant
-     * assigned to it will have a symbol ID of 0.  See option(SymId) for how
+     * assigned to it will have a symbol ID of 0.  See Option(SymId) for how
      * potential bugs like `VAL_WORD_ID(a) == VAL_WORD_ID(b)` are mitigated
      * by preventing such comparisons.
      */

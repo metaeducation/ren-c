@@ -35,7 +35,7 @@
 Bounce MAKE_Sequence(
     Level(*) level_,
     enum Reb_Kind kind,
-    option(const REBVAL*) parent,
+    Option(Value(const*)) parent,
     const REBVAL *arg
 ){
     if (kind == REB_TEXT or ANY_PATH_KIND(kind))  // delegate for now
@@ -193,7 +193,7 @@ REBTYPE(Sequence)
     UNUSED(all_byte_sized_ints);
     Byte* vp = buf;
 
-    option(SymId) id = ID_OF_SYMBOL(verb);
+    Option(SymId) id = ID_OF_SYMBOL(verb);
 
     // !!! This used to depend on "IS_BINARY_ACT", a concept that does not
     // exist any longer with symbol-based action dispatch.  Patch with more

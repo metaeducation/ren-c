@@ -210,7 +210,7 @@ bool Typecheck_Value(
     for (; item != tail; ++item) {
         ASSERT_CELL_READABLE_EVIL_MACRO(item);
 
-        option(Symbol(const*)) label = nullptr;  // so goto doesn't cross
+        Option(Symbol(const*)) label = nullptr;  // so goto doesn't cross
 
         // !!! Ultimately, we'll enable literal comparison for quoted/quasi
         // items.  For the moment just try quasi-words for isotopes.

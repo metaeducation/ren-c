@@ -171,7 +171,7 @@ static void reverse_string(String(*) str, REBLEN index, REBLEN len)
 Bounce MAKE_String(
     Level(*) level_,
     enum Reb_Kind kind,
-    option(const REBVAL*) parent,
+    Option(Value(const*)) parent,
     const REBVAL *def
 ){
     if (parent)
@@ -749,7 +749,7 @@ REBTYPE(String)
     REBVAL *v = D_ARG(1);
     assert(ANY_STRING(v));
 
-    option(SymId) id = ID_OF_SYMBOL(verb);
+    Option(SymId) id = ID_OF_SYMBOL(verb);
 
     switch (id) {
 

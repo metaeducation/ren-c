@@ -95,7 +95,7 @@ REBINT CT_Issue(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
 Bounce MAKE_Issue(
     Level(*) level_,
     enum Reb_Kind kind,
-    option(const REBVAL*) parent,
+    Option(Value(const*)) parent,
     const REBVAL *arg
 ){
     assert(kind == REB_ISSUE);
@@ -324,7 +324,7 @@ REBTYPE(Issue)
 {
     REBVAL *issue = D_ARG(1);
 
-    option(SymId) sym = ID_OF_SYMBOL(verb);
+    Option(SymId) sym = ID_OF_SYMBOL(verb);
 
     switch (sym) {
       case SYM_REFLECT: {

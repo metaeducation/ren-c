@@ -146,7 +146,7 @@ REBVAL *Init_Decimal_Bits(Cell(*) out, const Byte* bp)
 Bounce MAKE_Decimal(
     Level(*) level_,
     enum Reb_Kind kind,
-    option(const REBVAL*) parent,
+    Option(Value(const*)) parent,
     const REBVAL *arg
 ){
     assert(kind == REB_DECIMAL or kind == REB_PERCENT);
@@ -472,7 +472,7 @@ REBTYPE(Decimal)
 
     REBDEC d1 = VAL_DECIMAL(val);
 
-    option(SymId) id = ID_OF_SYMBOL(verb);
+    Option(SymId) id = ID_OF_SYMBOL(verb);
 
     // !!! This used to use IS_BINARY_ACT() which is no longer available with
     // symbol-based dispatch.  Consider doing this another way.

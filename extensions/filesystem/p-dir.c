@@ -129,7 +129,7 @@ Bounce Dir_Actor(Level(*) level_, REBVAL *port, Symbol(const*) verb)
         INCLUDE_PARAMS_OF_REFLECT;
         UNUSED(ARG(value));  // implicitly supplied as `port`
 
-        option(SymId) property = VAL_WORD_ID(ARG(property));
+        Option(SymId) property = VAL_WORD_ID(ARG(property));
 
         switch (property) {
             //

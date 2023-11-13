@@ -396,7 +396,7 @@ void Set_Location_Of_Error(
 Bounce MAKE_Error(
     Level(*) level_,
     enum Reb_Kind kind,
-    option(const REBVAL*) parent,
+    Option(Value(const*)) parent,
     const REBVAL *arg
 ){
     assert(kind == REB_ERROR);
@@ -491,7 +491,7 @@ Bounce MAKE_Error(
         Context(*) categories = VAL_CONTEXT(Get_System(SYS_CATALOG, CAT_ERRORS));
 
         // Find correct category for TYPE: (if any)
-        option(Value(*)) category = Select_Symbol_In_Context(
+        Option(Value(*)) category = Select_Symbol_In_Context(
             CTX_ARCHETYPE(categories),
             VAL_WORD_SYMBOL(&vars->type)
         );
@@ -501,7 +501,7 @@ Bounce MAKE_Error(
 
             // Find correct message for ID: (if any)
 
-            option(Value(*)) message = Select_Symbol_In_Context(
+            Option(Value(*)) message = Select_Symbol_In_Context(
                 unwrap(category),
                 VAL_WORD_SYMBOL(&vars->id)
             );
@@ -841,7 +841,7 @@ Context(*) Error_Bad_Func_Def(const REBVAL *spec, const REBVAL *body)
 //
 //  Error_No_Arg: C
 //
-Context(*) Error_No_Arg(option(Symbol(const*)) label, Symbol(const*) symbol)
+Context(*) Error_No_Arg(Option(Symbol(const*)) label, Symbol(const*) symbol)
 {
     DECLARE_LOCAL (param_word);
     Init_Word(param_word, symbol);
@@ -1112,7 +1112,7 @@ Context(*) Error_Unexpected_Type(enum Reb_Kind expected, enum Reb_Kind actual)
 // really equipped to handle it.
 //
 Context(*) Error_Arg_Type(
-    option(Symbol(const*)) name,
+    Option(Symbol(const*)) name,
     const REBKEY *key,
     const REBPAR *param,
     const REBVAL *arg
@@ -1130,7 +1130,7 @@ Context(*) Error_Arg_Type(
         Init_Nulled(label);
 
     DECLARE_LOCAL (spec);
-    option(Array(const*)) param_array = VAL_PARAMETER_ARRAY(param);
+    Option(Array(const*)) param_array = VAL_PARAMETER_ARRAY(param);
     if (param_array)
         Init_Block(spec, unwrap(param_array));
     else
@@ -1177,7 +1177,7 @@ Context(*) Error_Phase_Arg_Type(
 //
 //  Error_No_Logic_Typecheck: C
 //
-Context(*) Error_No_Logic_Typecheck(option(Symbol(const*)) label)
+Context(*) Error_No_Logic_Typecheck(Option(Symbol(const*)) label)
 {
     DECLARE_LOCAL (name);
     if (label)
@@ -1192,7 +1192,7 @@ Context(*) Error_No_Logic_Typecheck(option(Symbol(const*)) label)
 //
 //  Error_No_Arg_Typecheck: C
 //
-Context(*) Error_No_Arg_Typecheck(option(Symbol(const*)) label)
+Context(*) Error_No_Arg_Typecheck(Option(Symbol(const*)) label)
 {
     DECLARE_LOCAL (name);
     if (label)

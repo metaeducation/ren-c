@@ -46,7 +46,7 @@ inline static void Init_For_Vararg_End(Atom(*) out, enum Reb_Vararg_Op op) {
 inline static bool Vararg_Op_If_No_Advance_Handled(
     Atom(*) out,
     enum Reb_Vararg_Op op,
-    option(Cell(const*)) opt_look, // the first value in the varargs input
+    Option(Cell(const*)) opt_look, // the first value in the varargs input
     REBSPC *specifier,
     enum Reb_Param_Class pclass
 ){
@@ -148,7 +148,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
 
     REBVAL *arg; // for updating CELL_FLAG_UNEVALUATED
 
-    option(Level(*)) vararg_level;
+    Option(Level(*)) vararg_level;
 
     Level(*) L;
     REBVAL *shared;
@@ -272,7 +272,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
         else
             arg = Level_Arg(L, VAL_VARARGS_SIGNED_PARAM_INDEX(vararg));
 
-        option(Cell(const*)) look = nullptr;
+        Option(Cell(const*)) look = nullptr;
         if (not Is_Level_At_End(L))
             look = At_Level(L);
 
@@ -372,7 +372,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
 Bounce MAKE_Varargs(
     Level(*) level_,
     enum Reb_Kind kind,
-    option(const REBVAL*) parent,
+    Option(Value(const*)) parent,
     const REBVAL *arg
 ){
     assert(kind == REB_VARARGS);
@@ -438,7 +438,7 @@ REBTYPE(Varargs)
         INCLUDE_PARAMS_OF_REFLECT;
 
         UNUSED(ARG(value)); // already have `value`
-        option(SymId) property = VAL_WORD_ID(ARG(property));
+        Option(SymId) property = VAL_WORD_ID(ARG(property));
 
         switch (property) {
         case SYM_TAIL_Q: {

@@ -519,7 +519,7 @@ Value(*) Time_Between_Dates(
 Bounce MAKE_Date(
     Level(*) level_,
     enum Reb_Kind kind,
-    option(const REBVAL*) parent,
+    Option(Value(const*)) parent,
     const REBVAL *arg
 ){
     assert(kind == REB_DATE);
@@ -657,12 +657,12 @@ static REBINT Int_From_Date_Arg(const REBVAL *poke) {
 //  Pick_Or_Poke_Date: C
 //
 void Pick_Or_Poke_Date(
-    option(Sink(Value(*))) opt_out,
+    Option(Sink(Value(*))) opt_out,
     Value(*) v,
     Cell(const*) picker,
-    option(Value(const*)) opt_poke
+    Option(Value(const*)) opt_poke
 ){
-    option(SymId) sym;
+    Option(SymId) sym;
     if (IS_WORD(picker)) {
         sym = VAL_WORD_ID(picker); // error later if SYM_0 or not a match
     }
@@ -987,7 +987,7 @@ REBTYPE(Date)
     REBVAL *v = D_ARG(1);
     assert(IS_DATE(v));
 
-    option(SymId) id = ID_OF_SYMBOL(verb);
+    Option(SymId) id = ID_OF_SYMBOL(verb);
 
     REBYMD date = VAL_DATE(v);
     REBLEN day = VAL_DAY(v) - 1;

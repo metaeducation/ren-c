@@ -313,7 +313,7 @@ inline static bool Math_Arg_For_Logic(REBVAL *arg)
 Bounce MAKE_Isotope(
     Level(*) level_,
     enum Reb_Kind kind,
-    option(const REBVAL*) parent,
+    Option(Value(const*)) parent,
     const REBVAL *arg
 ){
     assert(kind == REB_ISOTOPE);

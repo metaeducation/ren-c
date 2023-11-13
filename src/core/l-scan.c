@@ -1034,7 +1034,7 @@ static enum Reb_Token Maybe_Locate_Token_May_Push_Mold(
             break; }
 
           case DETECTED_AS_SERIES: {  // e.g. rebQ, rebU, or a rebR() handle
-            option(Value(const*)) v = Try_Reify_Variadic_Feed_Series(L->feed);
+            Option(Value(const*)) v = Try_Reify_Variadic_Feed_Series(L->feed);
             if (not v)
                 goto get_next_variadic_pointer;
 
@@ -1847,7 +1847,7 @@ void Init_Scan_Level(
     SCAN_STATE *ss,
     String(const*) file,
     LineNumber line,
-    option(const Byte*) bp
+    Option(const Byte*) bp
 ){
     level->ss = ss;
 
@@ -2966,7 +2966,7 @@ Array(*) Scan_UTF8_Managed(
     String(const*) file,
     const Byte* utf8,
     Size size,
-    option(Context(*)) context
+    Option(Context(*)) context
 ){
     assert(utf8[size] == '\0');
     UNUSED(size);  // scanner stops at `\0` (no size limit functionality)
@@ -3353,7 +3353,7 @@ const Byte* Scan_Issue(Cell(*) out, const Byte* cp, Size size)
 //
 //  Try_Scan_Variadic_Feed_Utf8_Managed: C
 //
-option(Array(*)) Try_Scan_Variadic_Feed_Utf8_Managed(Feed(*) feed)
+Option(Array(*)) Try_Scan_Variadic_Feed_Utf8_Managed(Feed(*) feed)
 {
     assert(Detect_Rebol_Pointer(feed->p)  == DETECTED_AS_UTF8);
 

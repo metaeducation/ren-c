@@ -102,7 +102,7 @@ DECLARE_NATIVE(reorder_p)  // see REORDER in %base-defs.r, for inheriting meta
     INCLUDE_PARAMS_OF_REORDER_P;
 
     Action(*) reorderee = VAL_ACTION(ARG(original));
-    option(Symbol(const*)) label  = VAL_FRAME_LABEL(ARG(original));
+    Option(Symbol(const*)) label  = VAL_FRAME_LABEL(ARG(original));
 
     // Working with just the exemplar means we will lose the partials ordering
     // information from the interface.  But that's what we want, as the
@@ -132,7 +132,7 @@ DECLARE_NATIVE(reorder_p)  // see REORDER in %base-defs.r, for inheriting meta
     // without cleaning the binder up first, balancing it all out to zeros.
     // Errors must be stored and reported after the cleanup.
     //
-    option(Context(*)) error = nullptr;
+    Option(Context(*)) error = nullptr;
 
     StackIndex base = TOP_INDEX;
 

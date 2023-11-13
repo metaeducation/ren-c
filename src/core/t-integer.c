@@ -47,7 +47,7 @@ REBINT CT_Integer(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
 Bounce MAKE_Integer(
     Level(*) level_,
     enum Reb_Kind kind,
-    option(const REBVAL*) parent,
+    Option(Value(const*)) parent,
     const REBVAL *arg
 ){
     assert(kind == REB_INTEGER);
@@ -273,7 +273,7 @@ REBTYPE(Integer)
 
     REBI64 arg;
 
-    option(SymId) id = ID_OF_SYMBOL(verb);
+    Option(SymId) id = ID_OF_SYMBOL(verb);
 
     // !!! This used to rely on IS_BINARY_ACT, which is no longer available
     // in the symbol based dispatch.  Consider doing another way.

@@ -93,7 +93,7 @@ void MF_Bitset(REB_MOLD *mo, noquote(Cell(const*)) v, bool form)
 Bounce MAKE_Bitset(
     Level(*) level_,
     enum Reb_Kind kind,
-    option(const REBVAL*) parent,
+    Option(Value(const*)) parent,
     const REBVAL *arg
 ){
     assert(kind == REB_BITSET);
@@ -551,7 +551,7 @@ REBTYPE(Bitset)
 {
     REBVAL *v = D_ARG(1);
 
-    option(SymId) sym = ID_OF_SYMBOL(verb);
+    Option(SymId) sym = ID_OF_SYMBOL(verb);
     switch (sym) {
 
     //=//// PICK* (see %sys-pick.h for explanation) ////////////////////////=//
@@ -590,7 +590,7 @@ REBTYPE(Bitset)
         INCLUDE_PARAMS_OF_REFLECT;
         UNUSED(ARG(value)); // covered by `v`
 
-        option(SymId) property = VAL_WORD_ID(ARG(property));
+        Option(SymId) property = VAL_WORD_ID(ARG(property));
         switch (property) {
           case SYM_LENGTH:
             return Init_Integer(v, BIN_LEN(VAL_BITSET(v)) * 8);

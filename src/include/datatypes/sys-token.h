@@ -270,8 +270,8 @@ inline static const Byte* VAL_BYTES_LIMIT_AT(
 // routine for handling that.
 //
 inline static Utf8(const*) VAL_UTF8_LEN_SIZE_AT_LIMIT(
-    option(REBLEN*) length_out,
-    option(Size*) size_out,
+    Option(REBLEN*) length_out,
+    Option(Size*) size_out,
     noquote(Cell(const*)) v,
     REBINT limit
 ){

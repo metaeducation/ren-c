@@ -185,7 +185,7 @@ void Bind_Values_Core(
 void Unbind_Values_Core(
     Cell(*) head,
     Cell(const*) tail,
-    option(Context(*)) context,
+    Option(Context(*)) context,
     bool deep
 ){
     Cell(*) v = head;
@@ -887,7 +887,7 @@ void Rebind_Values_Deep(
     Cell(const*) tail,
     Context(*) from,
     Context(*) to,
-    option(struct Reb_Binder*) binder
+    Option(struct Reb_Binder*) binder
 ) {
     Cell(*) v = head;
     for (; v != tail; ++v) {

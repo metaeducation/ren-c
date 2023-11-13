@@ -132,7 +132,7 @@ DECLARE_NATIVE(shove)
     // with refinements *at all* before, this is a step up.
 
     REBVAL *shovee = ARG(right); // reuse arg cell for the shoved-into
-    option(Symbol(const*)) label = nullptr;
+    Option(Symbol(const*)) label = nullptr;
 
     if (IS_WORD(At_Level(L)) or IS_PATH(At_Level(L)) or IS_TUPLE(At_Level(L))) {
         //

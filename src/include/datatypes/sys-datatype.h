@@ -57,7 +57,7 @@
 //   start of the enumeration.
 //
 
-inline static bool IS_KIND_SYM(option(SymId) id)
+inline static bool IS_KIND_SYM(Option(SymId) id)
   { return id != 0 and id < cast(SymId, REB_MAX); }
 
 inline static enum Reb_Kind KIND_FROM_SYM(SymId s) {
@@ -74,7 +74,7 @@ inline static enum Reb_Kind KIND_FROM_SYM(SymId s) {
 
 inline static enum Reb_Kind VAL_TYPE_KIND(noquote(Cell(const*)) v) {
     assert(CELL_HEART(v) == REB_TYPE_WORD);
-    option(SymId) id = ID_OF_SYMBOL(VAL_WORD_SYMBOL(v));
+    Option(SymId) id = ID_OF_SYMBOL(VAL_WORD_SYMBOL(v));
     assert(unwrap(id) < cast(SymId, REB_MAX));
     return cast(enum Reb_Kind, unwrap(id));
 }

@@ -280,11 +280,11 @@ static Bounce Then_Else_Isotopic_Object_Helper(
 
   handle_lazy_object: {  /////////////////////////////////////////////////////
 
-    option(Value(*)) then_hook = Select_Symbol_In_Context(in, Canon(THEN));
+    Option(Value(*)) then_hook = Select_Symbol_In_Context(in, Canon(THEN));
     if (then_hook and Is_Void(unwrap(then_hook)))
         then_hook = nullptr;  // can be unset by Debranch_Output()
 
-    option(Value(*)) else_hook = Select_Symbol_In_Context(in, Canon(ELSE));
+    Option(Value(*)) else_hook = Select_Symbol_In_Context(in, Canon(ELSE));
     if (else_hook and Is_Void(unwrap(else_hook)))
         else_hook = nullptr;  // can be unset by Debranch_Output()
 
@@ -1673,7 +1673,7 @@ void Debranch_Output(Atom(*) out) {
         Symbol(const*) syms[2] = {Canon(ELSE), Canon(THEN)};
         int i;
         for (i = 0; i < 2; ++i) {
-            option(Value(*)) hook = Select_Symbol_In_Context(out, syms[i]);
+            Option(Value(*)) hook = Select_Symbol_In_Context(out, syms[i]);
             if (hook)
                 Init_Void(unwrap(hook));
         }
@@ -1692,7 +1692,7 @@ bool Pushed_Decaying_Level(Atom(*) out, Atom(const*) obj, Flags flags) {
     if (out != obj)
         Copy_Cell(out, obj);
     mutable_QUOTE_BYTE(out) = UNQUOTED_1;
-    option(Value(*)) decayer = Select_Symbol_In_Context(
+    Option(Value(*)) decayer = Select_Symbol_In_Context(
         cast(Cell(const*), out),
         Canon(DECAY)
     );

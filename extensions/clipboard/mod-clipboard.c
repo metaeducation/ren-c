@@ -54,7 +54,7 @@ static Bounce Clipboard_Actor(
         INCLUDE_PARAMS_OF_REFLECT;
         UNUSED(ARG(value));  // implied by `port`
 
-        option(SymId) property = VAL_WORD_ID(ARG(property));
+        Option(SymId) property = VAL_WORD_ID(ARG(property));
         assert(property != 0);
 
         switch (property) {

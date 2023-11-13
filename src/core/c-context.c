@@ -144,7 +144,7 @@ void Expand_Context(Context(*) context, REBLEN delta)
 static REBVAR* Append_Context_Core(
     Context(*) context,
     Symbol(const*) symbol,
-    option(Cell(*)) any_word  // binding modified (Note: quoted words allowed)
+    Option(Cell(*)) any_word  // binding modified (Note: quoted words allowed)
 ) {
     if (CTX_TYPE(context) == REB_MODULE) {
         //
@@ -155,7 +155,7 @@ static REBVAR* Append_Context_Core(
         // symbol node for the word's spelling, and can be directly linked
         // to from a word as a singular value (with binding index "1").
 
-        option(SymId) id;
+        Option(SymId) id;
         if (context == Lib_Context)
             id = ID_OF_SYMBOL(symbol);
         else
@@ -306,7 +306,7 @@ void Collect_End(struct Reb_Collector *cl)
 // If requested, it will return the first duplicate found (or null).
 //
 void Collect_Context_Keys(
-    option(Symbol(const*)*) duplicate,
+    Option(Symbol(const*)*) duplicate,
     struct Reb_Collector *cl,
     Context(*) context
 ){
@@ -403,9 +403,9 @@ static void Collect_Inner_Loop(
 // always pre-managed, because it may not be legal to free prior's keylist.
 //
 Keylist(*) Collect_Keylist_Managed(
-    option(Cell(const*)) head,
-    option(Cell(const*)) tail,
-    option(Context(*)) prior,
+    Option(Cell(const*)) head,
+    Option(Cell(const*)) tail,
+    Option(Context(*)) prior,
     Flags flags  // see %sys-core.h for COLLECT_ANY_WORD, etc.
 ){
     struct Reb_Collector collector;
@@ -579,7 +579,7 @@ Array(*) Collect_Unique_Words_Managed(
 void Rebind_Context_Deep(
     Context(*) source,
     Context(*) dest,
-    option(struct Reb_Binder*) binder
+    Option(struct Reb_Binder*) binder
 ){
     Cell(const*) tail = ARR_TAIL(CTX_VARLIST(dest));
     Cell(*) head = ARR_HEAD(CTX_VARLIST(dest));
@@ -599,9 +599,9 @@ void Rebind_Context_Deep(
 //
 Context(*) Make_Context_Detect_Managed(
     enum Reb_Kind kind,
-    option(Cell(const*)) head,
-    option(Cell(const*)) tail,
-    option(Context(*)) parent
+    Option(Cell(const*)) head,
+    Option(Cell(const*)) tail,
+    Option(Context(*)) parent
 ) {
     assert(kind != REB_MODULE);
 
@@ -714,7 +714,7 @@ Context(*) Construct_Context_Managed(
     Cell(*) head,  // !!! Warning: modified binding
     Cell(const*) tail,
     REBSPC *specifier,
-    option(Context(*)) parent
+    Option(Context(*)) parent
 ){
     Context(*) context = Make_Context_Detect_Managed(
         kind, // type
@@ -861,7 +861,7 @@ REBLEN Find_Symbol_In_Context(
 // Search a context's keylist looking for the given symbol, and return the
 // value for the word.  Return NULL if the symbol is not found.
 //
-option(Value(*)) Select_Symbol_In_Context(
+Option(Value(*)) Select_Symbol_In_Context(
     Cell(const*) context,
     Symbol(const*) symbol
 ){

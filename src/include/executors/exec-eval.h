@@ -140,7 +140,7 @@ struct Reb_Eval_Executor_State {
     RawCell scratch;  // raw vs. C++ class so memset() can clear the state
 
     Cell(const*) current;
-    option(const REBVAL*) current_gotten;
+    Option(Value(const*)) current_gotten;
 
     char enfix_reevaluate;  // either 'Y' or 'N' (catches bugs)
 

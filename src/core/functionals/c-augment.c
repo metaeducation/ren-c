@@ -74,7 +74,7 @@ DECLARE_NATIVE(augment_p)  // see extended definition AUGMENT in %base-defs.r
     INCLUDE_PARAMS_OF_AUGMENT_P;
 
     Action(*) augmentee = VAL_ACTION(ARG(original));
-    option(Symbol(const*)) label = VAL_FRAME_LABEL(ARG(original));
+    Option(Symbol(const*)) label = VAL_FRAME_LABEL(ARG(original));
 
     // We reuse the process from Make_Paramlist_Managed_May_Fail(), which
     // pushes descriptors to the stack in groups for each parameter.

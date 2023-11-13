@@ -480,7 +480,7 @@ enum Reb_Attach_Mode {
 // failure mode while it's running...even if the context is inaccessible or
 // the word is unbound.  Errors should be raised by callers if applicable.
 //
-inline static option(REBSER*) Get_Word_Container(
+inline static Option(REBSER*) Get_Word_Container(
     REBLEN *index_out,
     Cell(const*) any_word,
     REBSPC *specifier,
@@ -761,7 +761,7 @@ inline static Value(const*) Lookup_Word_May_Fail(
     return CTX_VAR(c, index);
 }
 
-inline static option(const REBVAL*) Lookup_Word(
+inline static Option(Value(const*)) Lookup_Word(
     Cell(const*) any_word,
     REBSPC *specifier
 ){
@@ -995,7 +995,7 @@ inline static Node** SPC_FRAME_CTX_ADDRESS(REBSPC *specifier)
     return &node_LINK(NextLet, specifier);
 }
 
-inline static option(Context(*)) SPC_FRAME_CTX(REBSPC *specifier)
+inline static Option(Context(*)) SPC_FRAME_CTX(REBSPC *specifier)
 {
     if (specifier == UNBOUND)  // !!! have caller check?
         return nullptr;

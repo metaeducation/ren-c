@@ -61,7 +61,7 @@ bool All_Bytes_ASCII(Byte* bp, REBLEN len)
 // It should be reviewed.
 //
 const Byte* Analyze_String_For_Scan(
-    option(Size*) size_out,
+    Option(Size*) size_out,
     const REBVAL *any_string,
     REBLEN max_len  // maximum length in *codepoints*
 ){

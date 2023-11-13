@@ -45,7 +45,7 @@
 #define mutable_VAL_PARAMETER_CLASS_BYTE(v) \
     mutable_FIRST_BYTE(EXTRA(Parameter, (v)).param_flags)
 
-inline static option(Array(const*)) VAL_PARAMETER_ARRAY(
+inline static Option(Array(const*)) VAL_PARAMETER_ARRAY(
     noquote(Cell(const*)) v
 ){
     assert(HEART_BYTE_UNCHECKED(v) == REB_PARAMETER);

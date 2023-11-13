@@ -305,7 +305,7 @@ inline static REBVAR *MOD_VAR(Context(*) c, Symbol(const*) sym, bool strict) {
     // Note: Call Lib() macro directly if you have a SYM in hand vs. a canon.
     //
     if (c == Lib_Context) {
-        option(SymId) id = ID_OF_SYMBOL(sym);
+        Option(SymId) id = ID_OF_SYMBOL(sym);
         if (id != 0 and id < LIB_SYMS_MAX) {
             //
             // !!! We need to consider the strictness here, with case sensitive
@@ -460,7 +460,7 @@ inline static bool IS_FRAME_PHASED(noquote(Cell(const*)) v) {
     return s and not IS_SYMBOL(s);
 }
 
-inline static option(Symbol(const*)) VAL_FRAME_LABEL(noquote(Cell(const*)) v) {
+inline static Option(Symbol(const*)) VAL_FRAME_LABEL(noquote(Cell(const*)) v) {
     REBSER *s = VAL_FRAME_PHASE_OR_LABEL(v);  // VAL_ACTION_PARTIALS_OR_LABEL as well
     if (s and IS_SYMBOL(s))  // label in value
         return SYM(s);
@@ -469,7 +469,7 @@ inline static option(Symbol(const*)) VAL_FRAME_LABEL(noquote(Cell(const*)) v) {
 
 inline static void INIT_VAL_FRAME_LABEL(
     Cell(*) v,
-    option(String(const*)) label
+    Option(String(const*)) label
 ){
     assert(IS_FRAME(v));
     ASSERT_CELL_WRITABLE_EVIL_MACRO(v);  // No label in archetype
@@ -534,7 +534,7 @@ inline static REBVAL *Init_Context_Cell(
 inline static REBVAL *Init_Frame(
     Cell(*) out,
     Context(*) c,
-    option(String(const*)) label  // nullptr (ANONYMOUS) is okay
+    Option(String(const*)) label  // nullptr (ANONYMOUS) is okay
 ){
     Init_Context_Cell(out, REB_FRAME, c);
     INIT_VAL_FRAME_LABEL(out, label);

@@ -104,7 +104,7 @@ REBINT CT_Array(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
 Bounce MAKE_Array(
     Level(*) level_,
     enum Reb_Kind kind,
-    option(const REBVAL*) parent,
+    Option(Value(const*)) parent,
     const REBVAL *arg
 ){
     if (parent)
@@ -124,7 +124,7 @@ Bounce MAKE_Array(
         Utf8(const*) utf8 = VAL_UTF8_SIZE_AT(&size, arg);
 
         String(const*) file = ANONYMOUS;
-        option(Context(*)) context = nullptr;
+        Option(Context(*)) context = nullptr;
         Init_Array_Cell(
             OUT,
             kind,
@@ -213,7 +213,7 @@ Bounce MAKE_Array(
         Size utf8_size;
         Utf8(const*) utf8 = VAL_UTF8_SIZE_AT(&utf8_size, arg);
         String(const*) file = ANONYMOUS;
-        option(Context(*)) context = nullptr;
+        Option(Context(*)) context = nullptr;
         return Init_Array_Cell(
             OUT,
             kind,
@@ -229,7 +229,7 @@ Bounce MAKE_Array(
 
         Size size;
         const Byte* at = VAL_BINARY_SIZE_AT(&size, arg);
-        option(Context(*)) context = nullptr;
+        Option(Context(*)) context = nullptr;
         return Init_Array_Cell(
             OUT,
             kind,
@@ -714,7 +714,7 @@ void MF_Array(REB_MOLD *mo, noquote(Cell(const*)) v, bool form)
     enum Reb_Kind kind = CELL_HEART(v);
 
     if (form) {
-        option(Context(*)) context = nullptr;
+        Option(Context(*)) context = nullptr;
         Form_Array_At(mo, VAL_ARRAY(v), VAL_INDEX(v), context);
         return;
     }
@@ -816,7 +816,7 @@ REBTYPE(Array)
 
     REBSPC *specifier = VAL_SPECIFIER(array);
 
-    option(SymId) id = ID_OF_SYMBOL(verb);
+    Option(SymId) id = ID_OF_SYMBOL(verb);
 
     switch (id) {
 

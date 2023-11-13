@@ -33,7 +33,7 @@
 Bounce MAKE_Quasi(
     Level(*) level_,
     enum Reb_Kind kind,
-    option(const REBVAL*) parent,
+    Option(Value(const*)) parent,
     const REBVAL *arg
 ){
     assert(not parent);

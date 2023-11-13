@@ -44,7 +44,7 @@
 Bounce MAKE_Fail(
     Level(*) level_,
     enum Reb_Kind kind,
-    option(const REBVAL*) parent,
+    Option(Value(const*)) parent,
     const REBVAL *arg
 ){
     UNUSED(kind);
@@ -65,7 +65,7 @@ Bounce MAKE_Fail(
 Bounce MAKE_Unhooked(
     Level(*) level_,
     enum Reb_Kind kind,
-    option(const REBVAL*) parent,
+    Option(Value(const*)) parent,
     const REBVAL *arg
 ){
     UNUSED(parent);
@@ -114,7 +114,7 @@ DECLARE_NATIVE(make)
     if (Not_Cell_Flag(arg, CONST))
         Set_Cell_Flag(arg, EXPLICITLY_MUTABLE);
 
-    option(const REBVAL*) parent;
+    Option(Value(const*)) parent;
     enum Reb_Kind kind;
     if (IS_TYPE_WORD(type)) {
         kind = VAL_TYPE_KIND(type);
@@ -246,7 +246,7 @@ Bounce Reflect_Core(Level(*) level_)
 
     REBVAL *v = ARG(value);
 
-    option(SymId) id = VAL_WORD_ID(ARG(property));
+    Option(SymId) id = VAL_WORD_ID(ARG(property));
     if (not id) {
         //
         // If a word wasn't in %words.r, it has no integer SYM.  There is

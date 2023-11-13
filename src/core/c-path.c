@@ -210,7 +210,7 @@ DECLARE_NATIVE(poke)
 Bounce MAKE_Path(
     Level(*) level_,
     enum Reb_Kind kind,
-    option(const REBVAL*) parent,
+    Option(Value(const*)) parent,
     const REBVAL *arg
 ){
     if (parent)

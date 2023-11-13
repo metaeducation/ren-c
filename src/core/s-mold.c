@@ -311,7 +311,7 @@ void Form_Array_At(
     REB_MOLD *mo,
     Array(const*) array,
     REBLEN index,
-    option(Context(*)) context
+    Option(Context(*)) context
 ){
     // Form a series (part_mold means mold non-string values):
     REBINT len = ARR_LEN(array) - index;
@@ -321,7 +321,7 @@ void Form_Array_At(
     REBINT n;
     for (n = 0; n < len;) {
         Cell(const*) item = ARR_AT(array, index + n);
-        option(Value(*)) wval = nullptr;
+        Option(Value(*)) wval = nullptr;
         if (context and (IS_WORD(item) or IS_GET_WORD(item))) {
             wval = Select_Symbol_In_Context(
                 CTX_ARCHETYPE(unwrap(context)),

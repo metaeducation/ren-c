@@ -369,7 +369,7 @@ Bounce Evaluator_Executor(Level(*) L)
         if (VAL_PARAM_CLASS(param) == PARAM_CLASS_META)
             Meta_Quotify(SPARE);
         if (not Typecheck_Coerce_Argument(param, SPARE)) {
-            option(Symbol(const*)) label = VAL_FRAME_LABEL(SCRATCH);
+            Option(Symbol(const*)) label = VAL_FRAME_LABEL(SCRATCH);
             const REBKEY* key = ACT_KEY(action, 2);
             fail (Error_Arg_Type(label, key, param, stable_SPARE));
         }

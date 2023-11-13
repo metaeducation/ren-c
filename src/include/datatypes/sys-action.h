@@ -340,7 +340,7 @@ inline static void INIT_VAL_FRAME_BINDING(
 #define HAS_INODE_Exemplar      FLAVOR_DETAILS
 
 
-inline static option(Array(*)) ACT_PARTIALS(Action(*) a) {
+inline static Option(Array(*)) ACT_PARTIALS(Action(*) a) {
     if (IS_DETAILS(a))
         return ARR(VAL_NODE2(ACT_ARCHETYPE(a)));
     return nullptr;  // !!! how to preserve partials in exemplars?
@@ -480,7 +480,7 @@ inline static Action(*) VAL_ACTION(noquote(Cell(const*)) v) {
 
 inline static void INIT_VAL_ACTION_LABEL(
     Cell(*) v,
-    option(Symbol(const*)) label
+    Option(Symbol(const*)) label
 ){
     ASSERT_CELL_WRITABLE_EVIL_MACRO(v);  // archetype R/O
     if (label)
@@ -586,7 +586,7 @@ inline static bool Action_Is_Base_Of(Action(*) base, Action(*) derived) {
 inline static REBVAL *Init_Frame_Details_Core(
     Cell(*) out,
     Phase(*) a,
-    option(Symbol(const*)) label,  // allowed to be ANONYMOUS
+    Option(Symbol(const*)) label,  // allowed to be ANONYMOUS
     Context(*) binding  // allowed to be UNBOUND
 ){
   #if !defined(NDEBUG)

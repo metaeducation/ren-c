@@ -200,7 +200,7 @@ static void Expand_Word_Table(void)
 // shared instance had been managed by someone else or not.
 //
 Symbol(const*) Intern_UTF8_Managed_Core(
-    option(void*) preallocated,  // most calls don't know if allocation needed
+    Option(void*) preallocated,  // most calls don't know if allocation needed
     const Byte* utf8,
     size_t size
 ){

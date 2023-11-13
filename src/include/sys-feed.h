@@ -123,7 +123,7 @@ inline static Cell(const*) Try_At_Feed(Feed(*) feed) {
     return cast(Cell(const*), feed->p);
 }
 
-inline static option(va_list*) FEED_VAPTR(Feed(*) feed) {
+inline static Option(va_list*) FEED_VAPTR(Feed(*) feed) {
     assert(FEED_IS_VARIADIC(feed));
     return FEED_VAPTR_POINTER(feed);
 }
@@ -218,7 +218,7 @@ inline static Value(const*) Copy_Reified_Variadic_Feed_Cell(
 // !!! Actually, THIS CODE CAN'T FAIL.  :-/  It is part of the implementation
 // of fail's cleanup itself.
 //
-inline static option(Value(const*)) Try_Reify_Variadic_Feed_Series(
+inline static Option(Value(const*)) Try_Reify_Variadic_Feed_Series(
     Feed(*) feed
 ){
     REBSER* s = SER(m_cast(void*, feed->p));
@@ -652,7 +652,7 @@ inline static Feed(*) Prep_Feed_Common(void* preallocated, Flags flags) {
 
 inline static Feed(*) Prep_Array_Feed(
     void* preallocated,
-    option(Cell(const*)) first,
+    Option(Cell(const*)) first,
     Array(const*) array,
     REBLEN index,
     REBSPC *specifier,
@@ -728,8 +728,8 @@ inline static Feed(*) Prep_Array_Feed(
 inline static Feed(*) Prep_Variadic_Feed(
     void* preallocated,
     const void *p,
-    option(va_list*) vaptr,
-    option(Context(*)) context,
+    Option(va_list*) vaptr,
+    Option(Context(*)) context,
     Flags flags
 ){
     Feed(*) feed = Prep_Feed_Common(preallocated, flags | FEED_FLAG_NEEDS_SYNC);

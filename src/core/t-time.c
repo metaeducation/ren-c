@@ -236,7 +236,7 @@ REBINT CT_Time(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
 Bounce MAKE_Time(
     Level(*) level_,
     enum Reb_Kind kind,
-    option(const REBVAL*) parent,
+    Option(Value(const*)) parent,
     const REBVAL *arg
 ){
     assert(kind == REB_TIME);
@@ -480,7 +480,7 @@ REBTYPE(Time)
 
     REBI64 secs = VAL_NANO(time);
 
-    option(SymId) id = ID_OF_SYMBOL(verb);
+    Option(SymId) id = ID_OF_SYMBOL(verb);
 
     if (id == SYM_PICK_P) {
 

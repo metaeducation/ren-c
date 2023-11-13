@@ -151,7 +151,7 @@ Level(*) Make_Pushed_Level_From_Action_Feed_May_Throw(
 //
 bool Init_Invokable_From_Feed_Throws(
     Sink(Value(*)) out,
-    option(Cell(const*)) first,  // override first value, vs. At_Feed(feed)
+    Option(Cell(const*)) first,  // override first value, vs. At_Feed(feed)
     Feed(*) feed,
     bool error_on_deferred  // if not planning to keep running, can't ELSE/THEN
 ){
@@ -210,7 +210,7 @@ bool Init_Invokable_From_Feed_Throws(
     Move_Cell(action, out);
     PUSH_GC_GUARD(action);
 
-    option(String(const*)) label = VAL_FRAME_LABEL(action);
+    Option(String(const*)) label = VAL_FRAME_LABEL(action);
 
     Level(*) L = Make_Pushed_Level_From_Action_Feed_May_Throw(
         out,
@@ -281,7 +281,7 @@ bool Init_Frame_From_Feed_Throws(
     // Should we save the WORD! from a variable access to use as the name of
     // the identity alias?
     //
-    option(Symbol(const*)) label = nullptr;
+    Option(Symbol(const*)) label = nullptr;
     Init_Frame(out, exemplar, label);
     return false;
 }
@@ -358,7 +358,7 @@ DECLARE_NATIVE(reframer_p)
     mutable_QUOTE_BYTE(ARG(shim)) = UNQUOTED_1;  // remove isotope if present
 
     Action(*) shim = VAL_ACTION(ARG(shim));
-    option(Symbol(const*)) label = VAL_FRAME_LABEL(ARG(shim));
+    Option(Symbol(const*)) label = VAL_FRAME_LABEL(ARG(shim));
 
     StackIndex base = TOP_INDEX;
 
@@ -371,7 +371,7 @@ DECLARE_NATIVE(reframer_p)
         NONE_CELL
     );
 
-    option(Context(*)) error = nullptr;  // can't fail() with binder in effect
+    Option(Context(*)) error = nullptr;  // can't fail() with binder in effect
 
     REBLEN param_index = 0;
 

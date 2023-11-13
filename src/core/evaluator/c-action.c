@@ -1282,7 +1282,7 @@ void Push_Action(
 //
 void Begin_Action_Core(
     Level(*) L,
-    option(Symbol(const*)) label,
+    Option(Symbol(const*)) label,
     bool enfix
 ){
     // These assertions were blocking code sharing with SET-BLOCK! mechanics.

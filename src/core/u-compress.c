@@ -131,7 +131,7 @@ static Context(*) Error_Compression(const z_stream *strm, int ret)
 // Exported as rebDeflateAlloc() and rebGunzipAlloc() for clarity.
 //
 Byte* Compress_Alloc_Core(
-    option(Size*) size_out,
+    Option(Size*) size_out,
     const void* input,
     Size size_in,
     enum Reb_Symbol_Id envelope  // SYM_NONE, SYM_ZLIB, or SYM_GZIP

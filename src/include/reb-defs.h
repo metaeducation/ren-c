@@ -293,7 +293,7 @@ enum Reb_Param_Class {
 //
 //     if (VAL_WORD_ID(a) == VAL_WORD_ID(b)) { ... }
 //
-// So we wrap the enum into an option(), which the C++ build is able to do
+// So we wrap the enum into an Option(), which the C++ build is able to do
 // added type checking on.  It also prohibits comparisons unless you unwrap
 // the values, which in debug builds has a runtime check of non-zeroness.
 //
@@ -301,11 +301,11 @@ enum Reb_Param_Class {
 typedef enum Reb_Symbol_Id SymId;
 
 #define SYM_0 \
-    cast(option(SymId), cast(enum Reb_Symbol_Id, 0))
+    cast(Option(SymId), cast(enum Reb_Symbol_Id, 0))
 
 #if DEBUG_CHECK_OPTIONALS && CPLUSPLUS_11
-    bool operator==(option(SymId)& a, option(SymId)& b) = delete;
-    void operator!=(option(SymId)& a, option(SymId)& b) = delete;
+    bool operator==(Option(SymId)& a, Option(SymId)& b) = delete;
+    void operator!=(Option(SymId)& a, Option(SymId)& b) = delete;
 #endif
 
 

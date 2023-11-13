@@ -960,7 +960,7 @@ Array(*) Make_Paramlist_Managed_May_Fail(
 //
 Phase(*) Make_Action(
     Array(*) paramlist,
-    option(Array(*)) partials,
+    Option(Array(*)) partials,
     Dispatcher* dispatcher,  // native C function called by Action_Executor()
     REBLEN details_capacity  // capacity of ACT_DETAILS (including archetype)
 ){

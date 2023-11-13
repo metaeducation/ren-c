@@ -239,7 +239,7 @@ Array(*) Add_Parameter_Bits_Core(
 Bounce MAKE_Parameter(
     Level(*) level_,
     enum Reb_Kind kind,
-    option(const REBVAL*) parent,
+    Option(Value(const*)) parent,
     const REBVAL *arg
 ){
     UNUSED(kind);
@@ -267,7 +267,7 @@ void MF_Parameter(REB_MOLD *mo, noquote(Cell(const*)) v, bool form)
     }
 
     DECLARE_LOCAL(temp);
-    option(Array(const*)) param_array = VAL_PARAMETER_ARRAY(v);
+    Option(Array(const*)) param_array = VAL_PARAMETER_ARRAY(v);
     if (param_array)
         Init_Block(temp, unwrap(param_array));
     else

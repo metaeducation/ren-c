@@ -256,12 +256,12 @@ struct Reb_Feed_Struct {
     // !!! Review how often gotten has hits vs. misses, and what the benefit
     // of the feature actually is.
     //
-    option(const REBVAL*) gotten;
+    Option(Value(const*)) gotten;
 
     // If a feed contains text portions, we offer the ability to say where
     // those text portions should be "interned".
     //
-    option(Context(*)) context;
+    Option(Context(*)) context;
 
   #if DEBUG_EXPIRED_LOOKBACK
     //

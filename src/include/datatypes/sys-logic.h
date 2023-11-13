@@ -55,7 +55,7 @@ inline static bool IS_LOGIC(Cell(const*) v) {
     if (HEART_BYTE_UNCHECKED(v) != REB_WORD)  // quote byte checked it
         return false;
 
-    option(SymId) id = VAL_WORD_ID(v);
+    Option(SymId) id = VAL_WORD_ID(v);
     return id == SYM_TRUE or id == SYM_FALSE;
 }
 
@@ -64,7 +64,7 @@ inline static bool IS_LOGIC(Cell(const*) v) {
 
 inline static bool VAL_LOGIC(Cell(const*) v) {
     assert(Is_Isotope(v));
-    option(SymId) id = VAL_WORD_ID(v);
+    Option(SymId) id = VAL_WORD_ID(v);
     if (id == SYM_TRUE)
         return true;
     if (id == SYM_FALSE)
@@ -77,7 +77,7 @@ inline static bool Is_Truthy(Cell(const*) v) {
     if (QUOTE_BYTE(v) == ISOTOPE_0) {
         if (HEART_BYTE_UNCHECKED(v) != REB_WORD)
             return true;  // all non-word isotopes are truthy?
-        option(SymId) id = VAL_WORD_ID(v);
+        Option(SymId) id = VAL_WORD_ID(v);
         if (id == SYM_NULL)
             return false;
         if (id == SYM_TRUE)

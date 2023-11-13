@@ -528,7 +528,7 @@ DECLARE_NATIVE(locked_q)
 void Force_Value_Frozen_Core(
     Cell(const*) v,
     bool deep,
-    option(REBSER*) locker
+    Option(REBSER*) locker
 ){
     if (Is_Value_Frozen_Deep(v))
         return;

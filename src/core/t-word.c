@@ -90,7 +90,7 @@ REBINT CT_Word(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
 Bounce MAKE_Word(
     Level(*) level_,
     enum Reb_Kind kind,
-    option(const REBVAL*) parent,
+    Option(Value(const*)) parent,
     const REBVAL *arg
 ){
     if (parent)
@@ -308,7 +308,7 @@ REBTYPE(Word)
         INCLUDE_PARAMS_OF_REFLECT;
 
         UNUSED(ARG(value));
-        option(SymId) property = VAL_WORD_ID(ARG(property));
+        Option(SymId) property = VAL_WORD_ID(ARG(property));
 
         switch (property) {
           case SYM_LENGTH: {  // byte size stored, but not # of codepoints

@@ -91,7 +91,7 @@
     SERIES_FLAG_26
 
 
-inline static option(SymId) ID_OF_SYMBOL(Symbol(const*) s)
+inline static Option(SymId) ID_OF_SYMBOL(Symbol(const*) s)
   { return cast(SymId, SECOND_UINT16(s->info)); }
 
 inline static Symbol(const*) Canon_Symbol(SymId symid) {

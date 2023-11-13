@@ -60,7 +60,7 @@ typedef REBINT (COMPARE_HOOK)(
 typedef Bounce (MAKE_HOOK)(
     Level(*) level_,
     enum Reb_Kind kind,
-    option(const REBVAL*) opt_parent,
+    Option(Value(const*)) opt_parent,
     const REBVAL *def
 );
 

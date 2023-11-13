@@ -186,7 +186,7 @@ static Bounce MAKE_TO_Binary_Common(Level(*) level_, const REBVAL *arg)
 Bounce MAKE_Binary(
     Level(*) level_,
     enum Reb_Kind kind,
-    option(const REBVAL*) parent,
+    Option(Value(const*)) parent,
     const REBVAL *def
 ){
     assert(kind == REB_BINARY);
@@ -311,7 +311,7 @@ REBTYPE(Binary)
     REBVAL *v = D_ARG(1);
     assert(IS_BINARY(v));
 
-    option(SymId) id = ID_OF_SYMBOL(verb);
+    Option(SymId) id = ID_OF_SYMBOL(verb);
 
     switch (id) {
 

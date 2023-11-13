@@ -523,7 +523,7 @@ REBINT CT_Context(noquote(Cell(const*)) a, noquote(Cell(const*)) b, bool strict)
 Bounce MAKE_Frame(
     Level(*) level_,
     enum Reb_Kind kind,
-    option(const REBVAL*) parent,
+    Option(Value(const*)) parent,
     const REBVAL *arg
 ){
     if (parent)
@@ -606,7 +606,7 @@ Bounce TO_Frame(Level(*) level_, enum Reb_Kind kind, const REBVAL *arg)
 Bounce MAKE_Context(
     Level(*) level_,
     enum Reb_Kind kind,
-    option(const REBVAL*) parent,
+    Option(Value(const*)) parent,
     const REBVAL *arg
 ){
     // Other context kinds (LEVEL!, ERROR!, PORT!) have their own hooks.
@@ -623,7 +623,7 @@ Bounce MAKE_Context(
         return Init_Context_Cell(OUT, REB_MODULE, ctx);
     }
 
-    option(Context(*)) parent_ctx = parent
+    Option(Context(*)) parent_ctx = parent
         ? VAL_CONTEXT(unwrap(parent))
         : cast(Context(*), nullptr);  // C++98 ambiguous w/o cast
 
@@ -1072,7 +1072,7 @@ REBTYPE(Context)
     REBVAL *context = D_ARG(1);
     Context(*) c = VAL_CONTEXT(context);
 
-    option(SymId) symid = ID_OF_SYMBOL(verb);
+    Option(SymId) symid = ID_OF_SYMBOL(verb);
 
     // !!! The PORT! datatype wants things like LENGTH OF to give answers
     // based on the content of the port, not the number of fields in the
@@ -1091,7 +1091,7 @@ REBTYPE(Context)
         UNUSED(ARG(value));  // covered by `v`
 
         REBVAL *property = ARG(property);
-        option(SymId) prop = VAL_WORD_ID(property);
+        Option(SymId) prop = VAL_WORD_ID(property);
 
         switch (prop) {
           case SYM_LENGTH: // !!! Should this be legal?
@@ -1299,7 +1299,7 @@ REBTYPE(Frame)
     REBVAL *frame = D_ARG(1);
     Context(*) c = VAL_CONTEXT(frame);
 
-    option(SymId) symid = ID_OF_SYMBOL(verb);
+    Option(SymId) symid = ID_OF_SYMBOL(verb);
 
     switch (symid) {
 
@@ -1310,14 +1310,14 @@ REBTYPE(Frame)
         INCLUDE_PARAMS_OF_REFLECT;
         UNUSED(ARG(value));  // covered by `frame`
 
-        option(SymId) prop = VAL_WORD_ID(ARG(property));
+        Option(SymId) prop = VAL_WORD_ID(ARG(property));
 
         if (prop == SYM_LABEL) {
             //
             // Can be answered for frames that have no execution phase, if
             // they were initialized with a label.
             //
-            option(Symbol(const*)) label = VAL_FRAME_LABEL(frame);
+            Option(Symbol(const*)) label = VAL_FRAME_LABEL(frame);
             if (label)
                 return Init_Word(OUT, unwrap(label));
 
@@ -1405,7 +1405,7 @@ REBTYPE(Frame)
         Action(*) act = VAL_ACTION(frame);
 
         REBVAL *property = ARG(property);
-        option(SymId) sym = VAL_WORD_ID(property);
+        Option(SymId) sym = VAL_WORD_ID(property);
         switch (sym) {
           case SYM_BINDING: {
             if (Did_Get_Binding_Of(OUT, frame))
@@ -1413,7 +1413,7 @@ REBTYPE(Frame)
             return nullptr; }
 
           case SYM_LABEL: {
-            option(Symbol(const*)) label = VAL_FRAME_LABEL(frame);
+            Option(Symbol(const*)) label = VAL_FRAME_LABEL(frame);
             if (not label)
                 return nullptr;
             return Init_Word(OUT, unwrap(label)); }
@@ -1677,7 +1677,7 @@ void MF_Frame(REB_MOLD *mo, noquote(Cell(const*)) v, bool form) {
 
     Append_Ascii(mo->series, "#[frame! ");
 
-    option(Symbol(const*)) label = VAL_FRAME_LABEL(v);
+    Option(Symbol(const*)) label = VAL_FRAME_LABEL(v);
     if (label) {
         Append_Codepoint(mo->series, '{');
         Append_Spelling(mo->series, unwrap(label));

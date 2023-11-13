@@ -555,7 +555,7 @@ DECLARE_NATIVE(unbind)
 
         Cell(const*) tail;
         Cell(*) at = VAL_ARRAY_AT_ENSURE_MUTABLE(&tail, word);
-        option(Context(*)) context = nullptr;
+        Option(Context(*)) context = nullptr;
         Unbind_Values_Core(at, tail, context, REF(deep));
     }
 
@@ -603,7 +603,7 @@ DECLARE_NATIVE(collect_words)
 //
 bool Get_Var_Push_Refinements_Throws(
     Sink(Value(*)) out,
-    option(REBVAL*) steps_out,  // if NULL, then GROUP!s not legal
+    Option(Value(*)) steps_out,  // if NULL, then GROUP!s not legal
     Cell(const*) var,
     REBSPC *var_specifier
 ){
@@ -797,7 +797,7 @@ bool Get_Var_Push_Refinements_Throws(
 //
 bool Get_Var_Core_Throws(
     Sink(Value(*)) out,
-    option(Value(*)) steps_out,  // if NULL, then GROUP!s not legal
+    Option(Value(*)) steps_out,  // if NULL, then GROUP!s not legal
     Cell(const*) var,
     REBSPC *var_specifier
 ){
@@ -1168,7 +1168,7 @@ DECLARE_NATIVE(get)
 //
 bool Set_Var_Core_Updater_Throws(
     Sink(Value(*)) out,  // GC-safe cell to write steps to, or put thrown value
-    option(REBVAL*) steps_out,  // no GROUP!s if nulled
+    Option(Value(*)) steps_out,  // no GROUP!s if nulled
     Cell(const*) var,  // e.g. v
     REBSPC *var_specifier,  // e.g. v_specifier
     const REBVAL *setval,  // e.g. L->out (in the evaluator, right hand side)
@@ -1423,7 +1423,7 @@ bool Set_Var_Core_Updater_Throws(
 //
 bool Set_Var_Core_Throws(
     Sink(Value(*)) out,  // GC-safe cell to write steps to, or put thrown value
-    option(REBVAL*) steps_out,  // no GROUP!s if nulled
+    Option(Value(*)) steps_out,  // no GROUP!s if nulled
     Cell(const*) var,  // e.g. v
     REBSPC *var_specifier,  // e.g. v_specifier
     const REBVAL *setval  // e.g. L->out (in the evaluator, right hand side)
@@ -1450,7 +1450,7 @@ void Set_Var_May_Fail(
     REBSPC *target_specifier,
     const REBVAL *setval
 ){
-    option(REBVAL*) steps_out = nullptr;
+    Option(Value(*)) steps_out = nullptr;
 
     DECLARE_LOCAL (dummy);
     if (Set_Var_Core_Throws(dummy, steps_out, target, target_specifier, setval))

@@ -129,7 +129,7 @@ inline static Binary(const*) VAL_BINARY(noquote(Cell(const*)) v) {
 
 
 inline static const Byte* VAL_BINARY_SIZE_AT(
-    option(Size*) size_at_out,
+    Option(Size*) size_at_out,
     noquote(Cell(const*)) v
 ){
     Binary(const*) bin = VAL_BINARY(v);

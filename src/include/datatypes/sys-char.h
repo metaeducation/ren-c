@@ -296,7 +296,7 @@ inline static bool isLegalUTF8(const Byte* source, int length) {
 inline static const Byte* Back_Scan_UTF8_Char(
     Codepoint *out,
     const Byte* bp,
-    option(Size*) size
+    Option(Size*) size
 ){
     *out = 0;
 

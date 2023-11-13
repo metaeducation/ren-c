@@ -773,7 +773,7 @@ inline static REBVAL* Freshen_Cell_Untracked(Cell(*) v);
     struct ValueSink {
         Value(*) p;
 
-        ValueSink() = default;  // or MSVC warns making option(Sink(Value(*)))
+        ValueSink() = default;  // or MSVC warns making Option(Sink(Value(*)))
         ValueSink(nullptr_t) : p (nullptr) {}
         ValueSink(Atom(*) atom) : p (cast(Value(*), atom)) {
           #if !defined(NDEBUG)
