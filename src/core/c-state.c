@@ -72,7 +72,7 @@ void Rollback_Globals_To_State(struct Reb_State *s)
     assert(SER_USED(GC_Manuals) >= s->manuals_len);
     while (SER_USED(GC_Manuals) != s->manuals_len) {
         Free_Unmanaged_Series(
-            *SER_AT(REBSER*, GC_Manuals, SER_USED(GC_Manuals) - 1)
+            *SER_AT(Series(*), GC_Manuals, SER_USED(GC_Manuals) - 1)
         );  // ^-- Free_Unmanaged_Series will decrement SER_USED(GC_Manuals)
     }
 
@@ -366,8 +366,8 @@ void Assert_State_Balanced_Debug(
             "Make_Series()x%d w/o Free_Unmanaged_Series or Manage_Series\n",
             cast(int, SER_USED(GC_Manuals) - s->manuals_len)
         );
-        REBSER *manual = *(SER_AT(
-            REBSER*,
+        Series(*) manual = *(SER_AT(
+            Series(*),
             GC_Manuals,
             SER_USED(GC_Manuals) - 1
         ));

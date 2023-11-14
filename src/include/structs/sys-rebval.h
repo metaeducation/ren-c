@@ -20,10 +20,10 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// REBVAL is the structure/union for all Rebol values. It's designed to be
+// Cell is the structure/union for all Rebol values. It's designed to be
 // four C pointers in size (so 16 bytes on 32-bit platforms and 32 bytes
 // on 64-bit platforms).  Operation will be most efficient with those sizes,
-// and there are checks on boot to ensure that `sizeof(REBVAL)` is the
+// and there are checks on boot to ensure that `sizeof(Cell)` is the
 // correct value for the platform.  But from a mechanical standpoint, the
 // system should be *able* to work even if the size is different.
 //
@@ -39,12 +39,12 @@
 // (at least until they become arbitrary precision) but it's not enough for
 // a generic BLOCK! or an ACTION! (for instance).  So the remaining bits
 // often will point to one or more Rebol "nodes" (see %sys-series.h for an
-// explanation of REBSER, Array(*), Context(*), and REBMAP.)
+// explanation of Series(*), Array(*), Context(*), and Map(*).)
 //
 // So the next part of the structure is the "Extra".  This is the size of one
 // pointer, which sits immediately after the header (that's also the size of
 // one pointer).  For built-in types this can carry instance data for the
-// value--such as a binding, or extra bits for a fixed-point decimal.
+// cell--such as a binding, or extra bits for a fixed-point decimal.
 //
 // This sets things up for the "Payload"--which is the size of two pointers.
 // It is broken into a separate structure at this position so that on 32-bit
@@ -397,7 +397,7 @@ struct Reb_Parameter_Extra  // see %sys-typeset.h
     Flags param_flags;  // PARAM_FLAG_XXX and VAL_PARAM_CLASS for param typeset
 };
 
-union Reb_Any {  // needed to beat strict aliasing, used in payload
+union AnyUnion {  // needed to beat strict aliasing, used in payload
     bool flag;  // "wasteful" to just use for one flag, but fast to read/write
 
     intptr_t i;
@@ -415,7 +415,7 @@ union Reb_Any {  // needed to beat strict aliasing, used in payload
     // (and perhaps in the future, the payload second slot).  If you do use
     // a node in the cell, be sure to set CELL_FLAG_FIRST_IS_NODE!
     //
-    // No REBNODs (REBSER or REBVAL) are ever actually declared const, but
+    // No Nodes (Stubs or Cells) are ever actually declared as const, but
     // care should be taken on extraction to give back a `const` reference
     // if the intent is immutability, or a conservative state of possible
     // immutability (e.g. the CONST usermode status hasn't been checked)
@@ -427,7 +427,7 @@ union Reb_Any {  // needed to beat strict aliasing, used in payload
     // are unreliable, and for debug viewing only--in case they help.
     //
   #if DEBUG_USE_UNION_PUNS
-    REBSER *rebser_pun;
+    Series(*) rebser_pun;
     REBVAL *rebval_pun;
   #endif
 
@@ -452,14 +452,14 @@ union Reb_Bytes_Extra {
 //
 #define IDX_SEQUENCE_USED 0  // index into at_least_8 when used for storage
 
-union Reb_Value_Extra { //=/////////////////// ACTUAL EXTRA DEFINITION ////=//
+union ValueExtraUnion { //=/////////////////// ACTUAL EXTRA DEFINITION ////=//
 
     struct Reb_Character_Extra Character;
     const Node* Binding;  // see %sys-bind.h
     struct Reb_Date_Extra Date;
     struct Reb_Parameter_Extra Parameter;
 
-    union Reb_Any Any;
+    union AnyUnion Any;
     union Reb_Bytes_Extra Bytes;
 };
 
@@ -492,10 +492,10 @@ struct Reb_Time_Payload {  // see %sys-time.h
     REBI64 nanoseconds;
 };
 
-struct Reb_Any_Payload  // generic, for adding payloads after-the-fact
+struct AnyUnion_Payload  // generic, for adding payloads after-the-fact
 {
-    union Reb_Any first;
-    union Reb_Any second;
+    union AnyUnion first;
+    union AnyUnion second;
 };
 
 union Reb_Bytes_Payload  // IMPORTANT: Do not cast, use `Pointers` instead
@@ -523,7 +523,7 @@ struct Reb_Comma_Payload {
     const void* const* packed;
 };
 
-union Reb_Value_Payload { //=/////////////// ACTUAL PAYLOAD DEFINITION ////=//
+union ValuePayloadUnion { //=/////////////// ACTUAL PAYLOAD DEFINITION ////=//
 
     // Due to strict aliasing, if a routine is going to generically access a
     // node (e.g. to exploit common checks for mutability) it has to do a
@@ -542,7 +542,7 @@ union Reb_Value_Payload { //=/////////////// ACTUAL PAYLOAD DEFINITION ////=//
     //     Action(*) phase;  // used by FRAME! contexts, see %sys-frame.h
     //
     // ANY-SERIES!  // see %sys-series.h
-    //     REBSER *rebser;  // vector/double-ended-queue of equal-sized items
+    //     Series(*) rebser;  // vector/double-ended-queue of equal-sized items
     //     REBLEN index;  // 0-based position (e.g. 0 means Rebol index 1)
     //
     // QUOTED!  // see %sys-quoted.h
@@ -557,7 +557,7 @@ union Reb_Value_Payload { //=/////////////// ACTUAL PAYLOAD DEFINITION ////=//
     //     REBINT signed_param_index;  // if negative, consider arg enfixed
     //     Action(*) phase;  // where to look up parameter by its offset
 
-    struct Reb_Any_Payload Any;
+    struct AnyUnion_Payload Any;
 
     struct Reb_Character_Payload Character;
     struct Reb_Integer_Payload Integer;
@@ -591,7 +591,7 @@ union Reb_Value_Payload { //=/////////////// ACTUAL PAYLOAD DEFINITION ////=//
 // instead.  (See: Copy_Cell(), Derelativize())
 //
 // Note: It is annoying that this means any structure that embeds a value cell
-// cannot be assigned.  However, `struct Reb_Value` must be the type exported
+// cannot be assigned.  However, `struct ValueStruct` must be the type exported
 // in both C and C++ under the same name and bit patterns.  Pretty much any
 // attempt to work around this and create a base class that works in C too
 // (e.g. Reb_Raw) would wind up violating strict aliasing.  Think *very hard*
@@ -599,16 +599,16 @@ union Reb_Value_Payload { //=/////////////// ACTUAL PAYLOAD DEFINITION ////=//
 //
 
 #if CPLUSPLUS_11
-    struct alignas(ALIGN_SIZE) Reb_Raw : public Raw_Node
+    struct alignas(ALIGN_SIZE) Reb_Raw : public Node
 #elif C_11
-    struct alignas(ALIGN_SIZE) Reb_Value
+    struct alignas(ALIGN_SIZE) ValueStruct
 #else
-    struct Reb_Value  // ...have to just hope the alignment "works out"
+    struct ValueStruct  // ...have to just hope the alignment "works out"
 #endif
     {
-        union Reb_Header header;
-        union Reb_Value_Extra extra;
-        union Reb_Value_Payload payload;
+        union HeaderUnion header;
+        union ValueExtraUnion extra;
+        union ValuePayloadUnion payload;
 
       #if DEBUG_TRACK_EXTEND_CELLS
         //
@@ -617,23 +617,23 @@ union Reb_Value_Payload { //=/////////////// ACTUAL PAYLOAD DEFINITION ////=//
         //
         const char *file;  // is Byte (UTF-8), but char* for debug watch
         uintptr_t line;
-        uintptr_t tick;  // stored in the Reb_Value_Extra for basic tracking
+        uintptr_t tick;  // stored in the ValueExtraUnion for basic tracking
         uintptr_t touch;  // see TOUCH_CELL(), pads out to 4 * sizeof(void*)
       #endif
     };
 
 #if CPLUSPLUS_11
     //
-    // A Reb_Relative_Value is a point of view on a cell where VAL_TYPE() can
+    // A RelativeValue is a point of view on a cell where VAL_TYPE() can
     // be called and will always give back a value in range < REB_MAX.
     //
-    struct Reb_Relative_Value : public Reb_Raw {
+    struct RelativeValue : public Reb_Raw {
       #if CPLUSPLUS_11
       public:
-        Reb_Relative_Value () = default;
+        RelativeValue () = default;
       private:
-        Reb_Relative_Value (Reb_Relative_Value const & other) = delete;
-        void operator= (Reb_Relative_Value const &rhs) = delete;
+        RelativeValue (RelativeValue const & other) = delete;
+        void operator= (RelativeValue const &rhs) = delete;
       #endif
     };
 #endif
@@ -649,7 +649,7 @@ union Reb_Value_Payload { //=/////////////// ACTUAL PAYLOAD DEFINITION ////=//
     (v)->extra.Binding
 
 #define BINDING(v) \
-    x_cast(REBSER*, (v)->extra.Binding)  // binding const (why?), need x_cast
+    x_cast(Series(*), (v)->extra.Binding)  // binding const (why?), need x_cast
 
 
 //=////////////////////////////////////////////////////////////////////////=//
@@ -658,17 +658,17 @@ union Reb_Value_Payload { //=/////////////// ACTUAL PAYLOAD DEFINITION ////=//
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// A Cell is an equivalent struct layout to to REBVAL, but is allowed to
-// have a Action(*) as its binding.  A relative value pointer can point to a
-// specific value, but a relative word or array cannot be pointed to by a
-// plain REBVAL*.  The Cell-vs-REBVAL distinction is purely commentary
-// in the C build, but the C++ build makes REBVAL a type derived from Cell.
+// A Cell is an equivalent struct layout to to Value, but is allowed to
+// have an Action(*) as its binding.  A RelativeValue pointer can point to a
+// specific Value, but a relative word or array cannot be pointed to by a
+// plain Value(*).  The Cell-vs-Value distinction is purely commentary
+// in the C build, but the C++ build makes Value a type derived from Cell.
 //
 // Cell exists to help quarantine the bit patterns for relative words into
 // the deep-copied-body of the function they are for.  To actually look them
 // up, they must be paired with a FRAME! matching the actual instance of the
 // running function on the stack they correspond to.  Once made specific,
-// a word may then be freely copied into any REBVAL slot.
+// a word may then be freely copied into any Value slot.
 //
 // In addition to ANY-WORD!, an ANY-ARRAY! can also be relative, if it is
 // part of the deep-copied function body.  The reason that arrays must be
@@ -679,7 +679,7 @@ union Reb_Value_Payload { //=/////////////// ACTUAL PAYLOAD DEFINITION ////=//
 
 #if CPLUSPLUS_11
     static_assert(
-        std::is_standard_layout<struct Reb_Relative_Value>::value,
+        std::is_standard_layout<struct RelativeValue>::value,
         "C++ Cell must match C layout: http://stackoverflow.com/a/7189821/"
     );
 
@@ -687,11 +687,11 @@ union Reb_Value_Payload { //=/////////////// ACTUAL PAYLOAD DEFINITION ////=//
     // is used to avoid propagating the concerns of unstable isotopes to
     // routines that shouldn't have to worry about them.
     //
-    struct Reb_Atom : public Reb_Relative_Value
+    struct AtomT : public RelativeValue
     {
       #if !defined(NDEBUG)
-        Reb_Atom() = default;
-        ~Reb_Atom() {
+        AtomT() = default;
+        ~AtomT() {
             assert(
                 (this->header.bits & (NODE_FLAG_NODE | NODE_FLAG_CELL))
                 or this->header.bits == CELL_MASK_0
@@ -700,10 +700,10 @@ union Reb_Value_Payload { //=/////////////// ACTUAL PAYLOAD DEFINITION ////=//
       #endif
     };
 
-    struct Reb_Value : public Reb_Atom {
+    struct ValueStruct : public AtomT {
       #if !defined(NDEBUG)
-        Reb_Value () = default;
-        ~Reb_Value () {
+        ValueStruct () = default;
+        ~ValueStruct () {
             assert(
                 (this->header.bits & (NODE_FLAG_NODE | NODE_FLAG_CELL))
                 or this->header.bits == CELL_MASK_0
@@ -713,10 +713,20 @@ union Reb_Value_Payload { //=/////////////// ACTUAL PAYLOAD DEFINITION ////=//
     };
 
     static_assert(
-        std::is_standard_layout<struct Reb_Value>::value,
+        std::is_standard_layout<struct ValueStruct>::value,
         "C++ REBVAL must match C layout: http://stackoverflow.com/a/7189821/"
     );
+#else
+    typedef struct ValueStruct AtomT;
 #endif
+
+typedef struct ValueStruct ValueT;
+
+#define Value(star_maybe_const) \
+    ValueT star_maybe_const  // will evolve to use Holder class
+
+#define Atom(star_maybe_const) \
+    AtomT star_maybe_const
 
 
 //=//// VARS and PARAMs ///////////////////////////////////////////////////=//
@@ -742,18 +752,6 @@ union Reb_Value_Payload { //=/////////////// ACTUAL PAYLOAD DEFINITION ////=//
     #define cast_PAR(v) (v)
 #endif
 
-
-#if CPLUSPLUS_11
-    #define Atom(star_maybe_const) \
-        struct Reb_Atom star_maybe_const  // will evolve to use Holder class
-#else
-    #define Reb_Atom Reb_Value
-    #define Atom(star_maybe_const) \
-        Reb_Atom star_maybe_const
-#endif
-
-#define Value(star_maybe_const) \
-    struct Reb_Value star_maybe_const  // will evolve to use Holder class
 
 // Because atoms are supersets of value, you may want to pass an atom to a
 // function that writes a value.  But such passing is usually illegal, due

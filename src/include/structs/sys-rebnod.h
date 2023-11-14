@@ -21,10 +21,10 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // In order to implement several "tricks", the first pointer-size slots of
-// many datatypes is a `Reb_Header` structure.  Using byte-order-sensitive
+// many datatypes is a `HeaderUnion` union.  Using byte-order-sensitive
 // macros like FLAG_LEFT_BIT(), the layout of this header is chosen in such a
-// way that not only can Rebol value pointers (REBVAL*) be distinguished from
-// Rebol series pointers (REBSER*), but these can be discerned from a valid
+// way that not only can Rebol cell pointers (Cell(*)) be distinguished from
+// Rebol series pointers (Series(*)), but these can be discerned from a valid
 // UTF-8 string just by looking at the first byte.  That's a safe C operation
 // since reading a `char*` is not subject to "strict aliasing" requirements.
 //
@@ -34,7 +34,7 @@
 //     REBVAL *value = ...;
 //     panic (value);  // can tell this is a value
 //
-//     REBSER *series = ...;
+//     Series(*) series = ...;
 //     panic (series)  // can tell this is a series
 //
 //     panic ("Ḧéllŏ");  // can tell this is UTF-8 data (not series or value)
@@ -56,30 +56,30 @@
 #if (! CPLUSPLUS_11)
     //
     // In plain C builds, there's no such thing as "base classes".  So the
-    // only way to make a function that can accept either a REBSER* or a
+    // only way to make a function that can accept either a Series(*) or a
     // REBVAL* without knowing which is to use a `void*`.  So the Node is
     // defined as `void`, and the C++ build is trusted to do the more strict
     // type checking.
     //
-    struct Raw_Node { Byte first; };  // Node is void*, but define struct
+    struct NodeStruct { Byte first; };  // Node is void*, but define struct
     typedef void Node;
 #else
     // If we were willing to commit to building with a C++ compiler, we'd
-    // want to make the Raw_Node contain the common `header` bits that REBSER
-    // and REBVAL would share.  But since we're not, we instead make a less
+    // want to make the NodeStruct contain the common `header` bits that Stub
+    // and Cell would share.  But since we're not, we instead make a less
     // invasive empty base class, that doesn't disrupt the memory layout of
     // derived classes due to the "Empty Base Class Optimization":
     //
     // https://en.cppreference.com/w/cpp/language/ebo
     //
-    // At one time there was an attempt to make Context/REBACT/REBMAP derive
-    // from Node, but not Raw_Series.  Facilitating that through multiple
+    // At one time there was an attempt to make Context/Action/Map derive
+    // from Node, but not SeriesT.  Facilitating that through multiple
     // inheritance foils the Empty Base Class optimization, and creates other
-    // headaches.  So it was decided that so long as they are Raw_Series, not
-    // Array(*), that's still abstract enough to block most casual misuses.
+    // headaches.  So it was decided that so long as they are SeriesT, not
+    // ArrayT, that's still abstract enough to block most casual misuses.
     //
-    struct Raw_Node {};  // empty base class for REBSER, REBVAL, Frame
-    typedef struct Raw_Node Node;
+    struct NodeStruct {};  // empty base class for SeriesT, CellT, LevelT...
+    typedef struct NodeStruct Node;
 #endif
 
 
@@ -249,11 +249,11 @@ inline static uintptr_t FLAG_SECOND_UINT16(uint16_t u)
 // against the FLAG_BIT_LEFT(xx) numbers if anything seems fishy.
 //
 // Note: Bitfields are notoriously underspecified, and there's no way to do
-// `#if sizeof(struct Reb_Stub_Header_Pun) <= sizeof(uint32_t)`.  Hence
+// `#if sizeof(struct StubHeaderPun) <= sizeof(uint32_t)`.  Hence
 // the DEBUG_USE_BITFIELD_HEADER_PUNS flag should be set with caution.
 //
 #if DEBUG_USE_BITFIELD_HEADER_PUNS
-    struct Reb_Stub_Header_Pun {
+    struct StubHeaderPun {
         int _07_cell_always_false:1;
         int _06_root:1;
         int _05_misc_needs_mark:1;
@@ -284,7 +284,7 @@ inline static uintptr_t FLAG_SECOND_UINT16(uint16_t u)
         int _24_subclass:1;
     }__attribute__((packed));
 
-    struct Reb_Info_Header_Pun {
+    struct InfoHeaderPun {
         int _07_cell_always_false:1;
         int _06_frozen_shallow:1;
         int _05_hold:1;
@@ -299,7 +299,7 @@ inline static uintptr_t FLAG_SECOND_UINT16(uint16_t u)
         unsigned int _16to31_symid_if_sym:8;
     }__attribute__((packed));
 
-    struct Reb_Cell_Header_Pun {
+    struct CellHeaderPun {
         int _07_cell_always_true:1;
         int _06_root:1;
         int _05_second_needs_mark:1;
@@ -327,7 +327,7 @@ inline static uintptr_t FLAG_SECOND_UINT16(uint16_t u)
 
 //=////////////////////////////////////////////////////////////////////////=//
 //
-//  NODE HEADER a.k.a `union Reb_Header` (for REBVAL and REBSER uses)
+//  NODE HEADER a.k.a `union HeaderUnion` (for Cell and Stub uses)
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
@@ -344,7 +344,7 @@ inline static uintptr_t FLAG_SECOND_UINT16(uint16_t u)
 // https://en.wikipedia.org/wiki/UTF-8#Codepage_layout
 //
 
-union Reb_Header {
+union HeaderUnion {
     //
     // unsigned integer that's the size of a platform pointer (e.g. 32-bits on
     // 32 bit platforms and 64-bits on 64 bit machines).  See macros like
@@ -369,9 +369,9 @@ union Reb_Header {
     char chars_pun[4];
 
     #if DEBUG_USE_BITFIELD_HEADER_PUNS
-        struct Reb_Stub_Header_Pun series_pun;
-        struct Reb_Cell_Header_Pun value_pun;
-        struct Reb_Info_Header_Pun info_pun;
+        struct StubHeaderPun stub_pun;
+        struct CellHeaderPun cell_pun;
+        struct InfoHeaderPun info_pun;
     #endif
   #endif
 };
@@ -390,13 +390,13 @@ union Reb_Header {
 
 //=//// NODE_FLAG_STALE (second-leftmost bit) //////////////////////////////=//
 //
-// The second-leftmost bit will be 0 for all Reb_Header in the system that
-// are "valid".  This completes the plan of making sure all REBVAL and REBSER
+// The second-leftmost bit will be 0 for all HeaderUnion in the system that
+// are "valid".  This completes the plan of making sure all Cell and Stub
 // that are usable will start with the bit pattern 10xxxxxx, which always
 // indicates an invalid leading byte in UTF-8.
 //
 // The exception are freed nodes, but they use 11000000 and 110000001 for
-// freed REBSER nodes and "freed" value nodes (trash).  These are the bytes
+// freed series stubs and "freed" value cells (trash).  These are the bytes
 // 192 and 193, which are specifically illegal in any UTF8 sequence.  So
 // even these cases may be safely distinguished from strings.  See the
 // NODE_FLAG_CELL for why it is chosen to be that 8th bit.
@@ -448,7 +448,7 @@ union Reb_Header {
 
 //=//// NODE_FLAG_GC_ONE / NODE_FLAG_GC_TWO (fifth/sixth-leftmost bit) ////=//
 //
-// Both REBVAL* and REBSER* nodes have two slots in them which can be called
+// Both REBVAL* and Series(*) nodes have two slots in them which can be called
 // out for attention from the GC.  Though these bits are scarce, sacrificing
 // them means not needing to do a switch() on the REB_TYPE of the cell to
 // know how to mark them.
@@ -470,7 +470,7 @@ union Reb_Header {
 //
 // Means the node should be treated as a root for GC purposes.  If the node
 // also has NODE_FLAG_CELL, that means the cell must live in a "pairing"
-// REBSER-sized structure for two cells.
+// Stub-sized structure for two cells.
 //
 // This flag is masked out by CELL_MASK_COPIED, so that when values are moved
 // into or out of API handle cells the flag is left untouched.
@@ -483,12 +483,12 @@ union Reb_Header {
 //=//// NODE_FLAG_CELL (eighth-leftmost bit) //////////////////////////////=//
 //
 // If this bit is set in the header, it indicates the slot the header is for
-// is `sizeof(REBVAL)`.
+// is `sizeof(CellT)`.
 //
 // In the debug build, it provides some safety for all value writing routines.
 // In the release build, it distinguishes "pairing" nodes (holders for two
-// REBVALs in the same pool as ordinary REBSERs) from an ordinary REBSER node.
-// Plain REBSERs have the cell mask clear, while pairing values have it set.
+// cells in the same pool as ordinary stubs) from an ordinary Series stub.
+// Plain Stubs have the cell mask clear, while pairing values have it set.
 //
 // The position chosen is not random.  It is picked as the 8th bit from the
 // left so that freed nodes can still express a distinction between

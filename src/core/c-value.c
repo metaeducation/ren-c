@@ -103,7 +103,7 @@ ATTRIBUTE_NO_RETURN void Panic_Value_Debug(Cell(const*) v) {
     Node* containing = Dump_Value_Debug(v);
 
     if (containing) {
-        printf("Panicking the containing REBSER...\n");
+        printf("Panicking the containing series...\n");
         Panic_Series_Debug(SER(containing));
     }
 
@@ -117,7 +117,7 @@ ATTRIBUTE_NO_RETURN void Panic_Value_Debug(Cell(const*) v) {
 #if DEBUG_HAS_PROBE
 
 inline static void Probe_Print_Helper(
-    const void *p,  // the REBVAL*, REBSER*, or UTF-8 char*
+    const void *p,  // the REBVAL*, Series(*), or UTF-8 char*
     const char *expr,  // stringified contents of the PROBE() macro
     const char *label,  // detected type of `p` (see %rebnod.h)
     const char *file,  // file where this PROBE() was invoked
@@ -247,7 +247,7 @@ void* Probe_Core_Debug(
     // If we didn't jump to cleanup above, it's a series.  New switch().
 
   blockscope {
-    REBSER *s = m_cast(REBSER*, cast(const REBSER*, p));
+    Series(*) s = m_cast(SeriesT*, cast(const SeriesT* , p));
     assert(not IS_FREE_NODE(s));  // Detect should have caught, above
     Flavor flavor = SER_FLAVOR(s);
     ASSERT_SERIES(s); // if corrupt, gives better info than a print crash
@@ -348,7 +348,7 @@ void* Probe_Core_Debug(
         break;
 
       case FLAVOR_SERIESLIST:  // e.g. manually allocated series list
-        Probe_Print_Helper(p, expr, "Series of REBSER*", file, line);
+        Probe_Print_Helper(p, expr, "Series of Series(*)", file, line);
         break;
 
       case FLAVOR_MOLDSTACK:
@@ -361,10 +361,10 @@ void* Probe_Core_Debug(
         Probe_Print_Helper(p, expr, "Hashlist", file, line);
         break;
 
-    //=//// SERIES WITH ELEMENTS sizeof(struct Reb_Bookmark) ///////////////=//
+    //=//// SERIES WITH ELEMENTS sizeof(BookmarkT) /////////////////////////=//
 
       case FLAVOR_BOOKMARKLIST:
-        Probe_Print_Helper(p, expr, "Bookmarklist", file, line);
+        Probe_Print_Helper(p, expr, "BookmarkList", file, line);
         break;
 
     //=//// SERIES WITH ELEMENTS WIDTH 1 ///////////////////////////////////=//

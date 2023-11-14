@@ -90,7 +90,7 @@ Bounce Series_Common_Action_Maybe_Unhandled(
             );
 
           case SYM_FILE: {
-            const REBSER *s = VAL_SERIES(v);
+            Series(const*) s = VAL_SERIES(v);
             if (not IS_SER_ARRAY(s))
                 return nullptr;
             if (Not_Subclass_Flag(ARRAY, s, HAS_FILE_LINE_UNMASKED))
@@ -98,7 +98,7 @@ Bounce Series_Common_Action_Maybe_Unhandled(
             return Init_File(OUT, LINK(Filename, s)); }
 
           case SYM_LINE: {
-            const REBSER *s = VAL_SERIES(v);
+            Series(const*) s = VAL_SERIES(v);
             if (not IS_SER_ARRAY(s))
                 return nullptr;
             if (Not_Subclass_Flag(ARRAY, s, HAS_FILE_LINE_UNMASKED))

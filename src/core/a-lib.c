@@ -26,16 +26,16 @@
 // comments and notes which will help understand it.
 //
 // What characterizes the external API is that it is not necessary to #include
-// the extensive definitions of `struct REBSER` or the APIs for dealing with
+// the extensive definitions of `struct SeriesT` or the APIs for dealing with
 // all the internal details (e.g. PUSH_GC_GUARD(), which are easy to get
 // wrong).  Not only does this simplify the interface, but it also means that
 // the C code using the library isn't competing as much for definitions in
 // the global namespace.
 //
-// Also, due to the nature of Node (see %sys-node.h), it's possible to feed
-// the scanner with a list of pointers that may be to UTF-8 strings or to
-// Rebol values.  The behavior is to "splice" in the values at the point in
-// the scan that they occur, e.g.
+// Also, due to the nature of the Node superclass (see %sys-node.h), it's
+// possible to feed the scanner with a list of pointers that may be to UTF-8
+// strings or to Rebol values.  The behavior is to "splice" in the values at
+// the point in the scan that they occur, e.g.
 //
 //     REBVAL *item1 = ...;
 //     REBVAL *item2 = ...;
@@ -46,7 +46,7 @@
 //             item2, "| print {Close brace separate from content}\n",
 //         "] else [\n",
 //             item3, "| print {Close brace with content}]\n",
-//         rebEND  // see note, optional in C99 and C++11
+//         rebEND  // optional in C99 and C++11
 //     );
 //
 // (Note: rebEND is needed by the variadic processing, but C99-based macros or
@@ -118,7 +118,7 @@ inline static const REBVAL *NULLIFY_NULLED(const REBVAL *cell) {
 //=//// SERIES-BACKED ALLOCATORS //////////////////////////////////////////=//
 //
 // These are replacements for malloc(), realloc(), and free() which use a
-// byte-sized REBSER as the backing store for the data.
+// byte-sized Series as the backing store for the data.
 //
 // One benefit of using a series is that it offers more options for automatic
 // memory management (such as being freed in case of a fail(), vs. leaked as
@@ -127,7 +127,7 @@ inline static const REBVAL *NULLIFY_NULLED(const REBVAL *cell) {
 // It also has the benefit of helping interface with client code that has
 // been stylized to use malloc()-ish hooks to produce data, when the eventual
 // target of that data is a Rebol series.  It does this without exposing
-// REBSER* internals to the external API, by allowing one to "rebRepossess()"
+// Series(*) internals to the external API, by allowing one to "rebRepossess()"
 // the underlying series as a BINARY! REBVAL*.
 //
 
@@ -153,15 +153,15 @@ inline static const REBVAL *NULLIFY_NULLED(const REBVAL *cell) {
 //   for the size of any fundamental type".  See notes on ALIGN_SIZE.
 //
 // !!! rebAlignedMalloc() could exist to take an alignment, which could save
-// on wasted bytes when ALIGN_SIZE > sizeof(REBSER*)...or work with "weird"
+// on wasted bytes when ALIGN_SIZE > sizeof(Series(*))...or work with "weird"
 // large fundamental types that need more alignment than ALIGN_SIZE.
 //
 void *RL_rebMalloc(size_t size)
 {
     ENTER_API;
 
-    Binary(*) s = Make_Series(Binary,
-        ALIGN_SIZE  // stores REBSER* (must be at least big enough for void*)
+    Binary(*) s = Make_Series(BinaryT,
+        ALIGN_SIZE  // stores Series(*) (must be at least big enough for void*)
             + size  // for the actual data capacity (may be 0, see notes)
             + 1,  // for termination (AS TEXT! of rebRepossess(), see notes)
         FLAG_FLAVOR(BINARY)  // rebRepossess() only creates binary series ATM
@@ -171,9 +171,9 @@ void *RL_rebMalloc(size_t size)
 
     Byte* ptr = BIN_HEAD(s) + ALIGN_SIZE;
 
-    REBSER **ps = (cast(REBSER**, ptr) - 1);
+    Series(*) *ps = (cast(Series(*)*, ptr) - 1);
     *ps = s;  // save self in bytes that appear immediately before the data
-    POISON_MEMORY(ps, sizeof(REBSER*));  // let ASAN catch underruns
+    POISON_MEMORY(ps, sizeof(Series(*)));  // let ASAN catch underruns
 
     // !!! The data is uninitialized, and if it is turned into a BINARY! via
     // rebRepossess() before all bytes are assigned initialized, it could be
@@ -313,14 +313,14 @@ REBVAL *RL_rebRepossess(void *ptr, size_t size)
         //
         // Dynamic series have the concept of a "bias", which is unused
         // allocated capacity at the head of a series.  Bump the "bias" to
-        // treat the embedded REBSER* (aligned to REBI64) as unused capacity.
+        // treat the embedded Series(*) (aligned to REBI64) as unused capacity.
         //
         SER_SET_BIAS(s, ALIGN_SIZE);
         s->content.dynamic.data += ALIGN_SIZE;
         s->content.dynamic.rest -= ALIGN_SIZE;
     }
     else {
-        // Data is in REBSER node itself, no bias.  Just slide the bytes down.
+        // Data is in Series Stub itself, no bias.  Just slide the bytes down.
         //
         memmove(  // src overlaps destination, can't use memcpy()
             BIN_HEAD(s),
@@ -832,7 +832,7 @@ REBVAL *RL_rebArg(const void *p, va_list *vaptr)
 //
 // - a REBVAL*
 // - a UTF-8 string to be scanned as one or more values in the sequence
-// - a REBSER* that represents an "API instruction"
+// - a Series(*) that represents an "API instruction"
 //
 // There isn't a separate concept of routines that perform evaluations and
 // ones that extract C fundamental types out of Rebol values.  Hence you

@@ -49,7 +49,7 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
 
     enum Reb_Kind heart = CELL_HEART_UNCHECKED(v);
 
-    REBSER *binding;
+    Series(*) binding;
     if (
         IS_BINDABLE_KIND(heart)
         and (binding = BINDING(v))
@@ -97,7 +97,7 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
 
       case REB_ISSUE: {
         if (Get_Cell_Flag_Unchecked(v, ISSUE_HAS_NODE)) {
-            const REBSER *s = VAL_STRING(v);
+            Series(const*) s = VAL_STRING(v);
             assert(Is_Series_Frozen(s));
 
             // We do not want ISSUE!s to use series if the payload fits in
@@ -131,7 +131,7 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
 
       case REB_BITSET: {
         assert(Get_Cell_Flag_Unchecked(v, FIRST_IS_NODE));
-        REBSER *s = SER(VAL_NODE1(v));
+        Series(*) s = SER(VAL_NODE1(v));
         Assert_Series_Term_Core(s);
         if (Get_Series_Flag(s, INACCESSIBLE))
             assert(Is_Marked(s));  // TBD: clear out reference and GC `s`?
@@ -141,7 +141,7 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
 
       case REB_MAP: {
         assert(Get_Cell_Flag_Unchecked(v, FIRST_IS_NODE));
-        const REBMAP* map = VAL_MAP(v);
+        Map(const*) map = VAL_MAP(v);
         assert(Is_Marked(map));
         assert(IS_SER_ARRAY(MAP_PAIRLIST(map)));
         break; }
@@ -154,7 +154,7 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
             Array(*) a = VAL_HANDLE_SINGULAR(v);
 
             // Handle was created with Init_Handle_XXX_Managed.  It holds a
-            // REBSER node that contains exactly one handle, and the actual
+            // singular array containing exactly one handle, and the actual
             // data for the handle lives in that shared location.  There is
             // nothing the GC needs to see inside a handle.
             //
@@ -200,24 +200,24 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
             break;
 
         assert(Get_Cell_Flag_Unchecked(v, FIRST_IS_NODE));
-        const REBSER *s = VAL_SERIES(v);
+        Series(const*) s = VAL_SERIES(v);
         ASSERT_SERIES_TERM_IF_NEEDED(s);
 
         assert(SER_WIDE(s) == sizeof(Byte));
         assert(Is_Marked(s));
 
         if (IS_NONSYMBOL_STRING(s)) {
-            REBBMK *bookmark = LINK(Bookmarks, s);
-            if (bookmark) {
-                assert(SER_USED(bookmark) == 1);  // just one for now
+            BookmarkList(*) book = LINK(Bookmarks, s);
+            if (book) {
+                assert(SER_USED(book) == 1);  // just one for now
                 //
-                // The intent is that bookmarks are unmanaged REBSERs, which
+                // The intent is that bookmarks are unmanaged stubs, which
                 // get freed when the string GCs.  This mechanic could be a by
-                // product of noticing that the SERIES_FLAG_LINK_NODE_NEEDS_MARK is
+                // product of noticing SERIES_FLAG_LINK_NODE_NEEDS_MARK is
                 // true but that the managed bit on the node is false.
 
-                assert(not Is_Marked(bookmark));
-                assert(Not_Series_Flag(bookmark, MANAGED));
+                assert(not Is_Marked(book));
+                assert(Not_Series_Flag(book, MANAGED));
             }
         }
         break; }
@@ -401,7 +401,7 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
       case REB_TYPE_WORD: {
         assert(Get_Cell_Flag_Unchecked(v, FIRST_IS_NODE));
 
-        const Raw_String *spelling = VAL_WORD_SYMBOL(v);
+        const StringT *spelling = VAL_WORD_SYMBOL(v);
         assert(Is_Series_Frozen(spelling));
 
         // !!! Whether you can count at this point on a spelling being GC
@@ -518,7 +518,7 @@ void Assert_Array_Marked_Correctly(Array(const*) a) {
             assert(IS_FRAME(archetype));
         }
         else {
-            Keylist(*) keylist = cast(Raw_Keylist*, keysource);
+            Keylist(*) keylist = cast(KeylistT*, keysource);
             assert(IS_KEYLIST(keylist));
 
             if (IS_FRAME(archetype)) {
@@ -539,7 +539,7 @@ void Assert_Array_Marked_Correctly(Array(const*) a) {
         // seemed to be a source of bugs, but it may be added again...in
         // which case the hashlist may be NULL.
         //
-        REBSER *hashlist = LINK(Hashlist, a);
+        Series(*) hashlist = LINK(Hashlist, a);
         assert(SER_FLAVOR(hashlist) == FLAVOR_HASHLIST);
         UNUSED(hashlist);
     }

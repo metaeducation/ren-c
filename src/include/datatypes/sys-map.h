@@ -45,15 +45,15 @@
 
 // See LINK() macro for how this is used.
 //
-#define LINK_Hashlist_TYPE          REBSER*
+#define LINK_Hashlist_TYPE          Series(*)
 #define LINK_Hashlist_CAST          SER
 #define HAS_LINK_Hashlist           FLAVOR_PAIRLIST
 
-inline static Array(*) MAP_PAIRLIST(const_if_c REBMAP *map)
+inline static Array(*) MAP_PAIRLIST(Map(const_if_c*) map)
   { return x_cast(Array(*), map); }
 
 #if CPLUSPLUS_11
-    inline static Array(const*) MAP_PAIRLIST(const REBMAP *map)
+    inline static Array(const*) MAP_PAIRLIST(Map(const*) map)
       { return cast(Array(const*), map); }
 #endif
 
@@ -64,7 +64,7 @@ inline static Array(*) MAP_PAIRLIST(const_if_c REBMAP *map)
     SER_HEAD(MAP_HASHLIST(m))
 
 
-inline static const REBMAP *VAL_MAP(NoQuote(Cell(const*)) v) {
+inline static Map(const*) VAL_MAP(NoQuote(Cell(const*)) v) {
     assert(CELL_HEART(v) == REB_MAP);
 
     Array(*) a = ARR(VAL_NODE1(v));
@@ -75,12 +75,12 @@ inline static const REBMAP *VAL_MAP(NoQuote(Cell(const*)) v) {
 }
 
 #define VAL_MAP_ENSURE_MUTABLE(v) \
-    m_cast(REBMAP*, VAL_MAP(ENSURE_MUTABLE(v)))
+    m_cast(Map(*), VAL_MAP(ENSURE_MUTABLE(v)))
 
 #define VAL_MAP_KNOWN_MUTABLE(v) \
-    m_cast(REBMAP*, VAL_MAP(KNOWN_MUTABLE(v)))
+    m_cast(Map(*), VAL_MAP(KNOWN_MUTABLE(v)))
 
-inline static REBLEN Length_Map(const REBMAP *map)
+inline static REBLEN Length_Map(Map(const*) map)
 {
     Cell(const*) tail = ARR_TAIL(MAP_PAIRLIST(map));
     const REBVAL *v = SPECIFIC(ARR_HEAD(MAP_PAIRLIST(map)));

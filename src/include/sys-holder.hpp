@@ -18,7 +18,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// There are low-level variants of raw series, like Raw_String.  There is no
+// There are low-level variants of raw series, like StringT.  There is no
 // way of knowing how many of these might be referred to in the active call
 // stacks.  So when a garbage collect happens, you can only hope that any
 // outstanding raw pointers either have been marked with a GC_GUARD, or are
@@ -32,11 +32,11 @@
 //
 // In the C++ build that becomes a "smart pointer":
 //
-//     SeriesHolder<Raw_String*> str = Make_String(100);
+//     SeriesHolder<StringT*> str = Make_String(100);
 //
 // While the C build produces:
 //
-//     Raw_String* str = Make_String(100);
+//     StringT* str = Make_String(100);
 //
 // At time of writing, this is a debug tool.  It is used to do reference
 // counting from stack variables, where each String(*) in use adds a count to
@@ -59,7 +59,7 @@
 // 2. This looks ugly, but it's simple as template metaprogramming goes.  It's
 //    just saying we are willing to make a SeriesHolder<T*> for any type that
 //    would have converted implicitly to a T* without a holder.  (e.g. it's ok
-//    to assign a Raw_String* from a Raw_Symbol*, as all symbols are strings.)
+//    to assign a StringT* from a SymbolT*, as all symbols are strings.)
 //
 //    In order to make the SeriesHolder follow similar rules, we use the
 //    `is_convertible` type-trait as the test for if we should fabricate a
@@ -100,8 +100,8 @@ struct SeriesHolder {
     T* p;
 
     static_assert(
-        std::is_base_of<Raw_Series, typename std::remove_const<T>::type>::value,
-        "SeriesHolder<Raw_Series*> only works on Raw_Series derived types"
+        std::is_base_of<SeriesT, typename std::remove_const<T>::type>::value,
+        "SeriesHolder<SeriesT*> only works on SeriesT derived types"
     );
 
     SeriesHolder () : p (nullptr) { }  // must initialize, see [1]
@@ -109,7 +109,7 @@ struct SeriesHolder {
     explicit SeriesHolder (const void* other) {  // allow casting
         p = reinterpret_cast<T*>(const_cast<void*>(other));
         if (p) {
-            auto* s = x_cast(Raw_Series*, p);
+            auto* s = x_cast(SeriesT*, p);
             assert(s->num_locals < INT32_MAX);
             s->num_locals = s->num_locals + 1;
         }
@@ -157,7 +157,7 @@ struct SeriesHolder {
 
     ~SeriesHolder () {
         if (p) {
-            auto* s = x_cast(Raw_Series*, p);
+            auto* s = x_cast(SeriesT*, p);
             assert(s->num_locals > 0);
             s->num_locals = s->num_locals - 1;
         }

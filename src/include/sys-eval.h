@@ -54,7 +54,7 @@
     // a tick breakpoint that way with `--breakpoint NNN`
     //
     // The debug build carries ticks many other places.  Series contain the
-    // `REBSER.tick` where they were created, levels have a `Reb_Level.tick`,
+    // `SeriesT.tick` where they were created, levels have a `LevelT.tick`,
     // and the DEBUG_TRACK_EXTEND_CELLS switch will double the size of cells
     // so they can carry the tick, file, and line where they were initialized.
     // (Even without TRACK_EXTEND, cells that don't have their EXTRA() field

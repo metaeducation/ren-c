@@ -53,7 +53,7 @@
 // Do set operations on a series.  Case-sensitive if `cased` is TRUE.
 // `skip` is the record size.
 //
-REBSER *Make_Set_Operation_Series(
+Series(*) Make_Set_Operation_Series(
     const REBVAL *val1,
     const REBVAL *val2,
     Flags flags,
@@ -104,17 +104,17 @@ REBSER *Make_Set_Operation_Series(
 
     REBINT h = 1; // used for both logic true/false and hash check
     bool first_pass = true; // are we in the first pass over the series?
-    REBSER *out_ser;
+    Series(*) out_ser;
 
     if (ANY_ARRAY(val1)) {
-        REBSER *hser = 0;   // hash table for series
-        REBSER *hret;       // hash table for return series
+        Series(*) hser = 0;   // hash table for series
+        Series(*) hret;       // hash table for return series
 
         // The buffer used for building the return series.  This creates
         // a new buffer every time, but reusing one might be slightly more
         // efficient.
         //
-        REBSER *buffer = Make_Array(i);
+        Series(*) buffer = Make_Array(i);
         hret = Make_Hash_Series(i);   // allocated
 
         // Optimization note: !!

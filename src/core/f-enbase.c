@@ -333,7 +333,7 @@ const Byte* Decode_Binary(
     REBINT base,
     Byte delim
 ) {
-    REBSER *ser = 0;
+    Series(*) ser = 0;
 
     switch (base) {
     case 64:

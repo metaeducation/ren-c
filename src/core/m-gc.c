@@ -22,19 +22,19 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Today's garbage collector is based on a conventional "mark and sweep",
-// of REBSER "nodes", which is how it was done in R3-Alpha:
+// of series "stubs", which is how it was done in R3-Alpha:
 //
 //     https://en.wikipedia.org/wiki/Tracing_garbage_collection
 //
-// A REBVAL's "payload" and "extra" field may or may not contain pointers to
-// REBSERs that the GC needs to be aware of.  Some small values like LOGIC!
+// A Cell's "payload" and "extra" field may or may not contain pointers to
+// stubs that the GC needs to be aware of.  Some small values like LOGIC!
 // or INTEGER! don't, because they can fit the entirety of their data into the
-// REBVAL's 4*sizeof(void) cell...though this would change if INTEGER! added
+// Cell's 4*sizeof(void) capacity...though this would change if INTEGER! added
 // support for arbitrary-sized-numbers.
 //
-// Some REBVALs embed REBSER pointers even when the payload would technically
+// Some cells embed Stub pointers even when the payload would technically
 // fit inside their cell.  They do this in order to create a level of
-// indirection so that their data can be shared among copies of that REBVAL.
+// indirection so that their data can be shared among copies of that cell.
 // For instance, HANDLE! does this.
 //
 // "Deep" marking in R3-Alpha was originally done with recursion, and the
@@ -51,13 +51,13 @@
 // and the process repeated until no more items are queued.
 //
 // !!! There is actually not a specific list of roots of the garbage collect,
-// so a first pass of all the REBSER nodes must be done to find them.  This is
-// because with the redesigned "RL_API" in Ren-C, ordinary REBSER nodes do
-// double duty as lifetime-managed containers for REBVALs handed out by the
+// so a first pass of all the Stubs must be done to find them.  This is
+// because with the redesigned "RL_API" in Ren-C, singular array stubs do
+// double duty as lifetime-managed containers for cells handed out by the
 // API--without requiring a separate series data allocation.  These could be
-// in their own "pool", but that would prevent mingling and reuse among REBSER
-// nodes used for other purposes.  Review in light of any new garbage collect
-// approaches used.
+// in their own "pool", but that would prevent mingling and reuse among Stubs
+// used for other purposes like series.  Review in light of any new garbage
+// collect approaches used.
 //
 
 #include "sys-core.h"
@@ -98,12 +98,13 @@ inline static void Queue_Mark_Maybe_Fresh_Cell_Deep(Cell(*) v) {
 }
 
 
-// Ren-C's PAIR! uses a special kind of REBSER that does no additional memory
-// allocation, but embeds two REBVALs in the REBSER itself.  A REBVAL has a
-// uintptr_t header at the beginning of its struct, just like a REBSER, and
-// the NODE_FLAG_MARKED bit is a 0 if unmarked...so it can stealthily
-// participate in the marking, as long as the bit is cleared at the end.
-
+// Ren-C's PAIR! uses a special kind of Stub (called a "Pairing") that embeds
+// two cells in the stub itself--an array of fixed length 2.  It can do this
+// because a cell has a uintptr_t header at the beginning of its struct--just
+// like a Series--and cells reserve the NODE_FLAG_MARKED bit for the GC.  So
+// pairings can stealthily participate in the marking, as long as the bit is
+// cleared at the end.
+//
 // !!! Marking a pairing has the same recursive problems than an array does,
 // while not being an array.  So technically we should queue it, but we
 // don't have any real world examples of "deeply nested pairings", as they
@@ -134,7 +135,7 @@ static void Queue_Mark_Pairing_Deep(REBVAL *paired)
   #endif
 }
 
-static void Queue_Unmarked_Accessible_Series_Deep(REBSER *s);
+static void Queue_Unmarked_Accessible_Series_Deep(Series(*) s);
 
 
 // This routine is given the *address* of the node to mark, so that if the
@@ -143,7 +144,7 @@ static void Queue_Unmarked_Accessible_Series_Deep(REBSER *s);
 // turned into a decayed form and only kept alive to prevent referencing
 // pointers to be swept.  See Decay_Series()
 //
-static void Queue_Mark_Node_Deep(const Node**pp) {
+static void Queue_Mark_Node_Deep(const Node** pp) {
     Byte first = *cast(const Byte*, *pp);
     if (first & NODE_BYTEMASK_0x10_MARKED)
         return;  // may not be finished marking yet, but has been queued
@@ -156,10 +157,10 @@ static void Queue_Mark_Node_Deep(const Node**pp) {
             // !!! It's a frame?  API handle?  Skip frame case (keysource)
             // for now, but revisit as technique matures.
         }
-        return;  // it's 2 cells, sizeof(REBSER), but no room for REBSER data
+        return;  // it's 2 cells, sizeof(Stub), but no room for a Stub's data
     }
 
-    REBSER *s = SER(m_cast(Node*, *pp));
+    Series(*) s = SER(m_cast(Node*, *pp));
     if (Get_Series_Flag(s, INACCESSIBLE)) {
         //
         // All inaccessible nodes are collapsed and canonized into a universal
@@ -207,7 +208,7 @@ static void Queue_Mark_Node_Deep(const Node**pp) {
 // that to generate some deep stacks...even without any cells being marked.
 // It hasn't caused any crashes yet, but is something that bears scrutiny.
 //
-static void Queue_Unmarked_Accessible_Series_Deep(REBSER *s)
+static void Queue_Unmarked_Accessible_Series_Deep(Series(*) s)
 {
     s->leader.bits |= NODE_FLAG_MARKED;
     ++mark_count;
@@ -249,7 +250,7 @@ static void Queue_Unmarked_Accessible_Series_Deep(REBSER *s)
             assert(Not_Series_Flag(*key, INACCESSIBLE));
             if (Get_Series_Flag(*key, MARKED))
                 continue;
-            Queue_Unmarked_Accessible_Series_Deep(m_cast(Raw_Symbol*, *key));
+            Queue_Unmarked_Accessible_Series_Deep(m_cast(SymbolT*, *key));
         }
     }
     else if (IS_SER_ARRAY(s)) {
@@ -322,7 +323,7 @@ static void Queue_Mark_Cell_Deep(Cell(const*) cv)
   #endif
 
     if (IS_BINDABLE_KIND(heart)) {
-        REBSER *binding = BINDING(v);
+        Series(*) binding = BINDING(v);
         if (binding != UNBOUND)
             if (NODE_BYTE(binding) & NODE_BYTEMASK_0x20_MANAGED)
                 Queue_Mark_Node_Deep(&v->extra.Binding);
@@ -579,7 +580,7 @@ static void Mark_Root_Series(void)
             // the stack want to know the "last".)  Hence it is exempt from
             // this marking rather than keeping the length up to date.  Review.
             //
-            REBSER *s = SER(cast(void*, stub));
+            Series(*) s = SER(cast(void*, stub));
             if (
                 IS_SER_ARRAY(s)
                 and s != DS_Array  // !!! Review DS_Array exemption!
@@ -666,8 +667,8 @@ static void Mark_Data_Stack(void)
 //
 static void Mark_Symbol_Series(void)
 {
-    Raw_Symbol* canon = &PG_Symbol_Canons[0];
-    Raw_Symbol* tail = &PG_Symbol_Canons[0] + ALL_SYMS_MAX;
+    SymbolT* canon = &PG_Symbol_Canons[0];
+    SymbolT* tail = &PG_Symbol_Canons[0] + ALL_SYMS_MAX;
 
     assert(canon->leader.bits & SERIES_FLAG_FREE);  // SYM_0, we corrupt it
     ++canon;
@@ -701,7 +702,7 @@ static void Mark_Guarded_Nodes(void)
         }
         else if (Is_Node_A_Cell(*np)) {
             //
-            // !!! What if someone tried to GC_GUARD a managed paired REBSER?
+            // !!! What if someone tried to GC_GUARD a managed paired Stub?
             //
             Queue_Mark_Cell_Deep(cast(const REBVAL*, *np));
         }
@@ -805,7 +806,7 @@ static void Mark_Level_Stack_Deep(void)
             Symbol(const*) sym = unwrap(L->label);
             if (Not_Series_Flag(sym, MARKED)) {
                 assert(Not_Series_Flag(sym, INACCESSIBLE));  // can't happen
-                Queue_Unmarked_Accessible_Series_Deep(m_cast(Raw_Symbol*, sym));
+                Queue_Unmarked_Accessible_Series_Deep(m_cast(SymbolT*, sym));
             }
         }
 
@@ -887,7 +888,7 @@ static void Mark_Level_Stack_Deep(void)
 //
 //  Sweep_Series: C
 //
-// Scans all series nodes (REBSER structs) in all segments that are part of
+// Scans all series nodes (Stub structs) in all segments that are part of
 // the STUB_POOL.  If a series had its lifetime management delegated to the
 // garbage collector with Manage_Series(), then if it didn't get "marked" as
 // live during the marking phase then free it.
@@ -895,13 +896,13 @@ static void Mark_Level_Stack_Deep(void)
 //////////////////////////////////////////////////////////////////////////////
 //
 // 1. We use a generic byte pointer (unsigned char*) to dodge the rules for
-//    strict aliases, as the pool contain pairs of REBVAL from Alloc_Pairing(),
-//    or a REBSER from Prep_Stub().  The shared first byte node masks are
+//    strict aliases, as the pool contain pairs of cells from Alloc_Pairing(),
+//    or a SeriesT from Prep_Stub().  The shared first byte node masks are
 //    defined and explained in %sys-rebnod.h
 //
-// 2. For efficiency of memory use, REBSER is nominally 2*sizeof(REBVAL), and
+// 2. For efficiency of memory use, Stub is nominally 2*sizeof(CellT), and
 //    so pairs can use the same Stub nodes.  But features that might make the
-//    cells a size greater than REBSER size require doing pairings in a
+//    two cells a size greater than Stub size require doing pairings in a
 //    different pool.
 //
 static Count Sweep_Series(void)
@@ -965,7 +966,7 @@ static Count Sweep_Series(void)
                     Free_Pooled(STUB_POOL, stub);  // Free_Pairing manual
                 }
                 else {
-                    REBSER *s = cast(REBSER*, stub);
+                    Series(*) s = cast(Series(*), stub);
                     GC_Kill_Series(s);
                 }
                 ++sweep_count;
@@ -1044,7 +1045,7 @@ static Count Sweep_Series(void)
 //
 //  Fill_Sweeplist: C
 //
-REBLEN Fill_Sweeplist(REBSER *sweeplist)
+REBLEN Fill_Sweeplist(Series(*) sweeplist)
 {
     assert(SER_WIDE(sweeplist) == sizeof(Node*));
     assert(SER_USED(sweeplist) == 0);
@@ -1061,7 +1062,7 @@ REBLEN Fill_Sweeplist(REBSER *sweeplist)
         for (; n > 0; --n, stub += sizeof(Stub)) {
             switch (*stub >> 4) {
               case 9: {  // 0x8 + 0x1
-                REBSER *s = SER(cast(void*, stub));
+                Series(*) s = SER(cast(void*, stub));
                 ASSERT_SERIES_MANAGED(s);
                 if (s->leader.bits & NODE_FLAG_MARKED) {
                     s->leader.bits &= ~NODE_FLAG_MARKED;
@@ -1111,10 +1112,10 @@ REBLEN Fill_Sweeplist(REBSER *sweeplist)
 //  Recycle_Core: C
 //
 // Recycle memory no longer needed.  If sweeplist is not NULL, then it needs
-// to be a series whose width is sizeof(REBSER*), and it will be filled with
+// to be a series whose width is sizeof(Series(*)), and it will be filled with
 // the list of series that *would* be recycled.
 //
-REBLEN Recycle_Core(bool shutdown, REBSER *sweeplist)
+REBLEN Recycle_Core(bool shutdown, Series(*) sweeplist)
 {
     // Ordinarily, it should not be possible to spawn a recycle during a
     // recycle.  But when debug code is added into the recycling code, it
@@ -1195,7 +1196,7 @@ REBLEN Recycle_Core(bool shutdown, REBSER *sweeplist)
         for (; psym != psym_tail; ++psym) {
             if (*psym == nullptr or *psym == &PG_Deleted_Symbol)
                 continue;
-            REBSER *patch = MISC(Hitch, *psym);
+            Series(*) patch = MISC(Hitch, *psym);
             for (; patch != *psym; patch = SER(node_MISC(Hitch, patch))) {
                 Context(*) context = INODE(PatchContext, patch);
                 if (Get_Series_Flag(patch, MARKED)) {

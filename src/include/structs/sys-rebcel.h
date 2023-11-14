@@ -1,6 +1,6 @@
 //
 //  File: %sys-rebcel.h
-//  Summary: "Low level structure definitions for Reb_Value"
+//  Summary: "Low level structure definitions for ValueStruct"
 //  Project: "Ren-C Interpreter and Run-time"
 //  Homepage: https://github.com/metaeducation/ren-c/
 //
@@ -20,7 +20,7 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // In the C build, there is simply one structure definition for all value
-// cells: the `Reb_Value`.  This is defined in %sys-rebval.h, and most of
+// cells: the `ValueStruct`.  This is defined in %sys-rebval.h, and most of
 // the contents of this file are a no-op.
 //
 // However, the C++ build breaks down various base classes for values that
@@ -34,13 +34,13 @@
 //=//// "RAW" CELLS ///////////////////////////////////////////////////////=//
 //
 // A raw cell is just the structure, with no additional protections.  This
-// makes it useful for embedding in REBSER, because if it had disablement of
+// makes it useful for embedding in a Stub, because if it had disablement of
 // things like assignment then it would also carry disablement of memcpy()
 // of containing structures...which would limit that definition.  These
 // cells should not be used for any other purposes.
 //
 #if (! CPLUSPLUS_11)
-    typedef struct Reb_Value RawCell;
+    typedef struct ValueStruct RawCell;
 #else
     typedef struct Reb_Raw RawCell;
 #endif
@@ -57,20 +57,20 @@
 // of least privilege.  e.g. you can get the symbol of a word regardless of
 // whether it is absolute or relative).
 //
-// Note that in the C build, %rebol.h forward-declares `struct Reb_Value` and
+// Note that in the C build, %rebol.h forward-declares `struct ValueStruct` and
 // then #defines REBVAL to that.
 //
 #if (! CPLUSPLUS_11)
-    typedef struct Reb_Value Reb_Cell;
+    typedef struct ValueStruct CellT;
 
     #define Cell(star_maybe_const) \
-        struct Reb_Value star_maybe_const
+        struct ValueStruct star_maybe_const
 #else
-    struct Reb_Relative_Value; // won't implicitly downcast to REBVAL
-    typedef struct Reb_Relative_Value Reb_Cell;
+    struct RelativeValue; // won't implicitly downcast to REBVAL
+    typedef struct RelativeValue CellT;
 
     #define Cell(star_maybe_const) \
-        Reb_Cell star_maybe_const
+        CellT star_maybe_const
 #endif
 
 
@@ -115,7 +115,7 @@
 #if (! CPLUSPLUS_11)
 
     #define NoQuote(const_cell_star) \
-        const struct Reb_Value*  // same as Cell, no checking in C build
+        const struct ValueStruct*  // same as Cell, no checking in C build
 
 #elif (! DEBUG_CHECK_CASTS)
     //
@@ -154,11 +154,11 @@
 
         operator const Reb_Raw* () { return p; }
 
-        explicit operator const Reb_Value* ()
-          { return reinterpret_cast<const Reb_Value*>(p); }
+        explicit operator const ValueStruct* ()
+          { return reinterpret_cast<const ValueStruct*>(p); }
 
-        explicit operator const Reb_Relative_Value* ()
-          { return reinterpret_cast<const Reb_Relative_Value*>(p); }
+        explicit operator const RelativeValue* ()
+          { return reinterpret_cast<const RelativeValue*>(p); }
     };
     #define NoQuote(const_cell_star) \
         struct NoQuoteWrapper<const_cell_star>

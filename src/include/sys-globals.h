@@ -41,25 +41,25 @@ PVAR REBU64 PG_Mem_Limit;   // Memory limit set by SECURE
 // This is a series that holds 8-platform-pointer Array nodes, arranged in
 // canon order.  It provides fast access to lib entries by symbol.
 //
-PVAR Raw_Array PG_Lib_Patches[LIB_SYMS_MAX];
+PVAR ArrayT PG_Lib_Patches[LIB_SYMS_MAX];
 
-// In Ren-C, words are REBSER nodes (REBSTR subtype).  They may be GC'd (unless
-// they are in the %words.r list, in which case their canon forms are
+// In Ren-C, words are Symbol series (String subtype).  They may be GC'd
+// (unless they are in the %words.r list, in which case their canon forms are
 // protected in order to do SYM_XXX switch statements in the C source, etc.)
 //
-// There is a global hash table which accelerates finding a word's REBSER
-// node from a UTF-8 source string.  Entries are added to it when new canon
+// There is a global hash table which accelerates finding a word's Symbol
+// stub from a UTF-8 source string.  Entries are added to it when new canon
 // forms of words are created, and removed when they are GC'd.  It is scaled
 // according to the total number of canons in the system.
 //
-PVAR Raw_Symbol PG_Symbol_Canons[ALL_SYMS_MAX + 1];
+PVAR SymbolT PG_Symbol_Canons[ALL_SYMS_MAX + 1];
 
-PVAR REBSER *PG_Symbols_By_Hash; // Symbol REBSTR pointers indexed by hash
+PVAR Series(*) PG_Symbols_By_Hash; // Symbol REBSTR pointers indexed by hash
 PVAR REBLEN PG_Num_Symbol_Slots_In_Use; // Total symbol hash slots (+deleteds)
 #if !defined(NDEBUG)
     PVAR REBLEN PG_Num_Symbol_Deleteds; // Deleted symbol hash slots "in use"
 #endif
-PVAR Raw_Symbol PG_Deleted_Symbol;  // pointer used to indicate a deletion
+PVAR SymbolT PG_Deleted_Symbol;  // pointer used to indicate a deletion
 
 PVAR REBVAL *Lib_Context_Value;
 PVAR REBVAL *Sys_Util_Module;
@@ -150,7 +150,7 @@ PVAR REBVAL *Root_Heavy_Null;  // isotopic block containing a blank
 PVAR REBVAL *Root_Heavy_Void;  // isotopic block containing a quasi null
 PVAR REBVAL *Root_Heavy_False;  // isotopic block containing a meta false
 
-PVAR Raw_Array PG_Inaccessible_Series;  // singular inaccessible varlist
+PVAR ArrayT PG_Inaccessible_Series;  // singular inaccessible varlist
 
 PVAR REBVAL *Root_Action_Adjunct;
 
@@ -178,8 +178,8 @@ PVAR Flags Eval_Signals;   // Signal flags
 // of the TG_Thrown_Label, but Level(*) bindings are not legal at the moment.
 // To get past the issue, the level is just put in the TG_Unwind_Level.
 //
-TVAR Reb_Atom TG_Thrown_Arg;
-TVAR Reb_Value TG_Thrown_Label;
+TVAR AtomT TG_Thrown_Arg;
+TVAR struct ValueStruct TG_Thrown_Label;
 TVAR Level(*) TG_Unwind_Level;
 
 // !!! These values were held in REBVALs for some reason in R3-Alpha, which
@@ -194,20 +194,20 @@ TVAR Pool* Mem_Pools;     // Memory pool array
 TVAR bool GC_Recycling;    // True when the GC is in a recycle
 TVAR REBINT GC_Ballast;     // Bytes allocated to force automatic GC
 TVAR bool GC_Disabled;      // true when RECYCLE/OFF is run
-TVAR REBSER *GC_Guarded; // A stack of GC protected series and values
-PVAR REBSER *GC_Mark_Stack; // Series pending to mark their reachables as live
-TVAR REBSER **Prior_Expand; // Track prior series expansions (acceleration)
+TVAR Series(*) GC_Guarded; // A stack of GC protected series and values
+PVAR Series(*) GC_Mark_Stack; // Series pending to mark their reachables as live
+TVAR Series(*) *Prior_Expand; // Track prior series expansions (acceleration)
 
 #if !defined(NDEBUG)  // Used by the FUZZ native to inject memory failures
     TVAR REBINT PG_Fuzz_Factor;  // (-) => a countdown, (+) percent of 10000
 #endif
 
-TVAR REBSER *TG_Mold_Stack; // Used to prevent infinite loop in cyclical molds
+TVAR Series(*) TG_Mold_Stack; // Used to prevent infinite loop in cyclical molds
 
 TVAR Binary(*) TG_Byte_Buf; // temporary byte buffer used mainly by raw print
-TVAR Raw_String* TG_Mold_Buf; // temporary UTF8 buffer - used mainly by mold
+TVAR StringT* TG_Mold_Buf; // temporary UTF8 buffer - used mainly by mold
 
-TVAR REBSER *GC_Manuals;    // Manually memory managed (not by GC)
+TVAR Series(*) GC_Manuals;    // Manually memory managed (not by GC)
 
 #if !defined(OS_STACK_GROWS_UP) && !defined(OS_STACK_GROWS_DOWN)
     TVAR bool TG_Stack_Grows_Up; // Will be detected via questionable method
@@ -226,7 +226,7 @@ TVAR uintptr_t TG_Stack_Limit;    // Limit address for CPU stack.
     PVAR const Node* PG_Monitor_Node_Debug;
 #endif
 
-// Each time Eval_Core is called a Reb_Level* is pushed to the "level stack".
+// Each time Eval_Core is called a Level(*) is pushed to the "level stack".
 // Some pushed entries will represent groups or paths being executed, and
 // some will represent functions that are gathering arguments...hence they
 // have been "pushed" but are not yet actually running.  This stack must
@@ -272,4 +272,4 @@ TVAR Flags Trace_Flags;    // Trace flag
 TVAR REBINT Trace_Level;    // Trace depth desired
 TVAR REBINT Trace_Depth;    // Tracks trace indentation
 TVAR REBLEN Trace_Limit;    // Backtrace buffering limit
-TVAR REBSER *Trace_Buffer;  // Holds backtrace lines
+TVAR Series(*) Trace_Buffer;  // Holds backtrace lines

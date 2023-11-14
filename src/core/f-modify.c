@@ -33,20 +33,20 @@
 REBLEN Modify_Array(
     Array(*) dst_arr,  // target
     REBLEN dst_idx,  // position
-    enum Reb_Symbol_Id sym,  // INSERT, APPEND, CHANGE
+    SymId op,  // INSERT, APPEND, CHANGE
     const REBVAL *src_val,  // source
     REBLEN flags,  // AM_SPLICE, AM_PART, AM_LINE
     REBLEN part,  // dst to remove (CHANGE) or limit to grow (APPEND/INSERT)
     REBINT dups  // dup count of how many times to insert the src content
 ){
-    assert(sym == SYM_INSERT or sym == SYM_CHANGE or sym == SYM_APPEND);
+    assert(op == SYM_INSERT or op == SYM_CHANGE or op == SYM_APPEND);
 
     REBLEN tail_idx = ARR_LEN(dst_arr);
 
     Cell(const*) src_rel;
     REBSPC *specifier;
 
-    if (sym == SYM_CHANGE and Is_Void(src_val)) {
+    if (op == SYM_CHANGE and Is_Void(src_val)) {
         flags |= AM_SPLICE;
         src_val = EMPTY_BLOCK;  // CHANGE to void acts same as with empty block
     }
@@ -56,10 +56,10 @@ REBLEN Modify_Array(
         // to do is return the natural index result for the operation.
         // (APPEND will return 0, INSERT the tail of the insertion...)
         //
-        return (sym == SYM_APPEND) ? 0 : dst_idx;
+        return (op == SYM_APPEND) ? 0 : dst_idx;
     }
 
-    if (sym == SYM_APPEND or dst_idx > tail_idx)
+    if (op == SYM_APPEND or dst_idx > tail_idx)
         dst_idx = tail_idx;
 
     // Each dup being inserted need a newline signal after it if:
@@ -82,7 +82,7 @@ REBLEN Modify_Array(
         ilen = len_at;
 
         // Adjust length of insertion if changing /PART:
-        if (sym != SYM_CHANGE and (flags & AM_PART)) {
+        if (op != SYM_CHANGE and (flags & AM_PART)) {
             if (part < ilen)
                 ilen = part;
         }
@@ -138,7 +138,7 @@ REBLEN Modify_Array(
         (dst_idx == ARR_LEN(dst_arr))
         and Get_Subclass_Flag(ARRAY, dst_arr, NEWLINE_AT_TAIL);
 
-    if (sym != SYM_CHANGE) {
+    if (op != SYM_CHANGE) {
         // Always expand dst_arr for INSERT and APPEND actions:
         Expand_Series(dst_arr, dst_idx, size);
     }
@@ -152,7 +152,7 @@ REBLEN Modify_Array(
         }
     }
 
-    tail_idx = (sym == SYM_APPEND) ? 0 : size + dst_idx;
+    tail_idx = (op == SYM_APPEND) ? 0 : size + dst_idx;
 
     REBLEN dup_index = 0;
     for (; dup_index < cast(REBLEN, dups); ++dup_index) {  // dups checked > 0
@@ -230,13 +230,13 @@ REBLEN Modify_Array(
 //
 REBLEN Modify_String_Or_Binary(
     REBVAL *dst,  // ANY-STRING! or BINARY! value to modify
-    enum Reb_Symbol_Id sym,  // SYM_APPEND @ tail, SYM_INSERT/SYM_CHANGE @ index
+    SymId op,  // SYM_APPEND @ tail, SYM_INSERT/SYM_CHANGE @ index
     const REBVAL *src,  // ANY-VALUE! argument with content to inject
     Flags flags,  // AM_PART, AM_LINE
     REBLEN part,  // dst to remove (CHANGE) or limit to grow (APPEND/INSERT)
     REBINT dups  // dup count of how many times to insert the src content
 ){
-    assert(sym == SYM_INSERT or sym == SYM_CHANGE or sym == SYM_APPEND);
+    assert(op == SYM_INSERT or op == SYM_CHANGE or op == SYM_APPEND);
 
     ENSURE_MUTABLE(dst);  // note this also rules out ANY-WORD!s
 
@@ -266,12 +266,12 @@ REBLEN Modify_String_Or_Binary(
     }
 
     if (Is_Void(src)) {  // no-op, unless CHANGE, where it means delete
-        if (sym == SYM_APPEND)
+        if (op == SYM_APPEND)
             return 0;  // APPEND returns index at head
-        else if (sym == SYM_INSERT)
+        else if (op == SYM_INSERT)
             return dst_idx;  // INSERT returns index at insertion tail
 
-        assert(sym == SYM_CHANGE);
+        assert(op == SYM_CHANGE);
         flags |= AM_SPLICE;
         src = EMPTY_TEXT;  // give same behavior as CHANGE to empty string
     }
@@ -279,18 +279,18 @@ REBLEN Modify_String_Or_Binary(
     // For INSERT/PART and APPEND/PART
     //
     REBLEN limit;
-    if (sym != SYM_CHANGE and (flags & AM_PART))
+    if (op != SYM_CHANGE and (flags & AM_PART))
         limit = part;
     else
         limit = UINT32_MAX;
 
     if (limit == 0 or dups <= 0)
-        return sym == SYM_APPEND ? 0 : dst_idx;
+        return op == SYM_APPEND ? 0 : dst_idx;
 
     // Now that we know there's actual work to do, we need `dst_idx` to speak
     // in terms of codepoints (if applicable)
 
-    if (sym == SYM_APPEND or dst_off > dst_used) {
+    if (op == SYM_APPEND or dst_off > dst_used) {
         dst_off = SER_USED(dst_ser);
         dst_idx = dst_len_old;
     }
@@ -536,29 +536,29 @@ REBLEN Modify_String_Or_Binary(
     // functions like VAL_UTF8_SIZE_AT() etc. that leverage bookmarks after
     // the extraction occurs.
 
-    REBBMK *bookmark = nullptr;
+    BookmarkList(*) book = nullptr;
 
     // For strings, we should have generated a bookmark in the process of this
     // modification in most cases where the size is notable.  If we had not,
     // we might add a new bookmark pertinent to the end of the insertion for
     // longer series.
 
-    if (sym == SYM_APPEND or sym == SYM_INSERT) {  // always expands
+    if (op == SYM_APPEND or op == SYM_INSERT) {  // always expands
         Expand_Series(dst_ser, dst_off, src_size_total);
         SET_SERIES_USED(dst_ser, dst_used + src_size_total);
 
         if (IS_NONSYMBOL_STRING(dst_ser)) {
-            bookmark = LINK(Bookmarks, dst_ser);
+            book = LINK(Bookmarks, dst_ser);
 
-            if (bookmark and BMK_INDEX(bookmark) > dst_idx) {  // only INSERT
-                BMK_INDEX(bookmark) += src_len_total;
-                BMK_OFFSET(bookmark) += src_size_total;
+            if (book and BMK_INDEX(book) > dst_idx) {  // only INSERT
+                BMK_INDEX(book) += src_len_total;
+                BMK_OFFSET(book) += src_size_total;
             }
             dst_ser->misc.length = dst_len_old + src_len_total;
         }
     }
     else {  // CHANGE only expands if more content added than overwritten
-        assert(sym == SYM_CHANGE);
+        assert(op == SYM_CHANGE);
 
         // Historical behavior: `change s: "abc" "d"` will yield S as `"dbc"`.
         //
@@ -577,7 +577,7 @@ REBLEN Modify_String_Or_Binary(
 
             // Note: above functions may update the bookmarks --^
             //
-            bookmark = LINK(Bookmarks, dst_ser);
+            book = LINK(Bookmarks, dst_ser);
         }
         else {
             dst_len_at = VAL_LEN_AT(dst);
@@ -679,11 +679,11 @@ REBLEN Modify_String_Or_Binary(
         // good a cache as any to be relevant for the next operation.
         //
         if (IS_NONSYMBOL_STRING(dst_ser)) {
-            bookmark = LINK(Bookmarks, dst_ser);
+            book = LINK(Bookmarks, dst_ser);
 
-            if (bookmark and BMK_INDEX(bookmark) > dst_idx) {
-                BMK_INDEX(bookmark) = dst_idx;
-                BMK_OFFSET(bookmark) = dst_off;
+            if (book and BMK_INDEX(book) > dst_idx) {
+                BMK_INDEX(book) = dst_idx;
+                BMK_OFFSET(book) = dst_off;
             }
             dst_ser->misc.length = dst_len_old + src_len_total - part;
         }
@@ -711,10 +711,10 @@ REBLEN Modify_String_Or_Binary(
     // !!! Should BYTE_BUF's memory be reclaimed also (or should it be
     // unified with the mold buffer?)
 
-    if (bookmark) {
+    if (book) {
         String(*) dst_str = STR(dst_ser);
-        if (BMK_INDEX(bookmark) > STR_LEN(dst_str)) {  // past active
-            assert(sym == SYM_CHANGE);  // only change removes material
+        if (BMK_INDEX(book) > STR_LEN(dst_str)) {  // past active
+            assert(op == SYM_CHANGE);  // only change removes material
             Free_Bookmarks_Maybe_Null(dst_str);
         }
         else {
@@ -722,7 +722,7 @@ REBLEN Modify_String_Or_Binary(
             Check_Bookmarks_Debug(dst_str);
           #endif
 
-            if (STR_LEN(dst_str) < sizeof(REBVAL))  // not kept if small
+            if (STR_LEN(dst_str) < sizeof(CellT))  // not kept if small
                 Free_Bookmarks_Maybe_Null(dst_str);
         }
     }
@@ -733,7 +733,7 @@ REBLEN Modify_String_Or_Binary(
     //
     TERM_SERIES_IF_NECESSARY(dst_ser);
 
-    if (sym == SYM_APPEND)
+    if (op == SYM_APPEND)
         return 0;
 
     if (IS_BINARY(dst))

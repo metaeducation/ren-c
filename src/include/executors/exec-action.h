@@ -18,8 +18,8 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// The level state has to be defined in order to be used (easily) in the
-// union of the Reb_Level.
+// The executor state has to be defined in order to be used (easily) in the
+// union of the Level.
 //
 
 #define EXECUTOR_ACTION &Action_Executor   // shorthand in Xxx_Executor_Flag()
@@ -181,7 +181,7 @@ STATIC_ASSERT(
     LEVEL_FLAG_31
 
 
-struct Reb_Action_Executor_State {
+struct ActionExecutorStateStruct {
     //
     // If a function call is currently in effect, Level_Phase() is how you get
     // at the current function being run.  This is the action that started

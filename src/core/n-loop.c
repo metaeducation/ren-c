@@ -680,7 +680,7 @@ typedef struct Reb_Enum_Series ESER;
 
 struct Loop_Each_State {
     REBVAL *data;  // possibly API handle if converted from sequence
-    const REBSER *series;  // series data being enumerated (if applicable)
+    Series(const*) series;  // series data being enumerated (if applicable)
     union {
         EVARS evars;
         ESER eser;
@@ -743,7 +743,7 @@ void Init_Loop_Each(Value(*) iterator, Value(*) data)
 
         les->took_hold = Not_Series_Flag(les->series, FIXED_SIZE);
         if (les->took_hold)
-            Set_Series_Flag(m_cast(REBSER*, les->series), FIXED_SIZE);
+            Set_Series_Flag(m_cast(Series(*), les->series), FIXED_SIZE);
 
         if (ANY_CONTEXT(data)) {
             les->more_data = Did_Advance_Evars(&les->u.evars);
@@ -958,7 +958,7 @@ void Shutdown_Loop_Each(Value(*) iterator)
     les = VAL_HANDLE_POINTER(struct Loop_Each_State, iterator);
 
     if (les->took_hold)  // release read-only lock
-        Clear_Series_Flag(m_cast(REBSER*, les->series), FIXED_SIZE);
+        Clear_Series_Flag(m_cast(Series(*), les->series), FIXED_SIZE);
 
     if (ANY_CONTEXT(les->data))
         Shutdown_Evars(&les->u.evars);
@@ -1257,7 +1257,7 @@ DECLARE_NATIVE(remove_each)
     Value(*) data = ARG(data);
     Value(*) body = ARG(body);
 
-    REBSER *series = VAL_SERIES_ENSURE_MUTABLE(data);  // check even if empty
+    Series(*) series = VAL_SERIES_ENSURE_MUTABLE(data);  // check even if empty
 
     if (VAL_INDEX(data) >= VAL_LEN_AT(data))  // past series end
         return Init_Integer(OUT, 0);
@@ -1509,7 +1509,7 @@ DECLARE_NATIVE(remove_each)
             );
         }
 
-        Raw_String* popped = Pop_Molded_String(mo);
+        StringT* popped = Pop_Molded_String(mo);
 
         assert(STR_LEN(popped) <= VAL_LEN_HEAD(data));
         removals = VAL_LEN_HEAD(data) - STR_LEN(popped);

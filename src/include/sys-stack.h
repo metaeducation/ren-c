@@ -23,7 +23,7 @@
 // The data stack (DS_) is for pushing one individual REBVAL at a time.  The
 // values can then be popped in a Last-In-First-Out way.  It is also possible
 // to mark a stack position, do any number of pushes, and then ask for the
-// range of values pushed since the mark to be placed into a Raw_Array array.
+// range of values pushed since the mark to be placed into a ArrayT array.
 // As long as a value is on the data stack, any series it refers to will be
 // protected from being garbage-collected.
 //
@@ -226,7 +226,7 @@ inline static StackValue(*) Data_Stack_At(StackIndex i) {
 //
 // If the stack runs out of capacity then it will be expanded by the basis
 // defined below.  The number is arbitrary and should be tuned.  Note the
-// number of bytes will be sizeof(REBVAL) * STACK_EXPAND_BASIS
+// number of bytes will be sizeof(Cell) * STACK_EXPAND_BASIS
 //
 
 #define STACK_EXPAND_BASIS 128

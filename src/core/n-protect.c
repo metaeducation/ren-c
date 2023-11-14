@@ -184,9 +184,9 @@ void Protect_Value(Cell(const*) v, Flags flags)
 //
 // Anything that calls this must call Uncolor() when done.
 //
-void Protect_Series(const REBSER *s_const, REBLEN index, Flags flags)
+void Protect_Series(Series(const*) s_const, REBLEN index, Flags flags)
 {
-    REBSER *s = m_cast(REBSER*, s_const);  // mutate flags only
+    Series(*) s = m_cast(Series(*), s_const);  // mutate flags only
 
     if (Is_Series_Black(s))
         return; // avoid loop
@@ -528,7 +528,7 @@ DECLARE_NATIVE(locked_q)
 void Force_Value_Frozen_Core(
     Cell(const*) v,
     bool deep,
-    Option(REBSER*) locker
+    Option(Series(*)) locker
 ){
     if (Is_Value_Frozen_Deep(v))
         return;
@@ -557,7 +557,7 @@ void Force_Value_Frozen_Core(
             SET_SERIES_INFO(m_cast(Array(*), CTX_VARLIST(c)), AUTO_LOCKED);
     }
     else if (ANY_SERIES_KIND(heart)) {
-        REBSER *s = m_cast(REBSER*, VAL_SERIES(v));  // mutate flags only
+        Series(*) s = m_cast(Series(*), VAL_SERIES(v));  // mutate flags only
         Freeze_Series(s);
         UNUSED(deep);
         if (locker)
@@ -594,7 +594,7 @@ DECLARE_NATIVE(freeze)
     // to deliver a message that the system locked something implicitly.  We
     // don't want to say that here, so hold off on the feature.
     //
-    REBSER *locker = nullptr;
+    Series(*) locker = nullptr;
     Force_Value_Frozen_Core(ARG(value), REF(deep), locker);
 
     return COPY(ARG(value));

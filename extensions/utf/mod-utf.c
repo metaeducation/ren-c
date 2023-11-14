@@ -215,7 +215,7 @@ DECLARE_NATIVE(encode_text)
 }
 
 
-static REBSER *Encode_Utf16(
+static Series(*) Encode_Utf16(
     Utf8(const*) data,
     REBLEN len,
     bool little_endian

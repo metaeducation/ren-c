@@ -20,7 +20,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// API REBVALs live in singular arrays (which fit inside a REBSER node, that
+// API cells live in singular arrays (which fit inside an array Stub, that
 // is the size of 2 REBVALs).  But they aren't kept alive by references from
 // other values, like the way that an Array(*) used by a BLOCK! is kept alive.
 // They are kept alive by being roots (currently implemented with a flag
@@ -34,9 +34,9 @@
 // were given back with rebMalloc(), so routines can discern them.
 //
 // MISC() is currently unused, but could serve as a reference count or other
-// purpose.  It's not particularly necessary to have API handles use REBSER
-// nodes--though the 2*sizeof(REBVAL) provides some optimality, and it
-// means that REBSER nodes can be recycled for more purposes.  But it would
+// purpose.  It's not particularly necessary to have API handles use array
+// stubs--though the 2*sizeof(Cell) provides some optimality, and it
+// means that API stubs can be recycled for more purposes.  But it would
 // potentially be better to have them in their own pools, because being
 // roots could be discovered without a "pre-pass" in the GC.
 //

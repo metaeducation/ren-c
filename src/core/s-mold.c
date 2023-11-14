@@ -196,7 +196,7 @@ void New_Indented_Line(REB_MOLD *mo)
 //
 //  Find_Pointer_In_Series: C
 //
-REBINT Find_Pointer_In_Series(REBSER *s, const void *p)
+REBINT Find_Pointer_In_Series(Series(*) s, const void *p)
 {
     REBLEN index = 0;
     for (; index < SER_USED(s); ++index) {
@@ -209,7 +209,7 @@ REBINT Find_Pointer_In_Series(REBSER *s, const void *p)
 //
 //  Push_Pointer_To_Series: C
 //
-void Push_Pointer_To_Series(REBSER *s, const void *p)
+void Push_Pointer_To_Series(Series(*) s, const void *p)
 {
     if (SER_FULL(s))
         Extend_Series_If_Necessary(s, 8);
@@ -220,7 +220,7 @@ void Push_Pointer_To_Series(REBSER *s, const void *p)
 //
 //  Drop_Pointer_From_Series: C
 //
-void Drop_Pointer_From_Series(REBSER *s, const void *p)
+void Drop_Pointer_From_Series(Series(*) s, const void *p)
 {
     assert(p == *SER_AT(void*, s, SER_USED(s) - 1));
     UNUSED(p);

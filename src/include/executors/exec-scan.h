@@ -19,7 +19,7 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // The executor state has to be defined in order to be used (easily) in the
-// union of the Reb_Level.
+// union of the Level.
 //
 
 // (Note: %sys-do.h needs to call into the scanner if Fetch_Next_In_Feed() is
@@ -114,7 +114,7 @@ typedef struct rebol_scan_state {  // shared across all levels of a scan
     const Byte* begin;
     const Byte* end;
 
-    const Raw_String* file;  // currently scanning (or anonymous)
+    const StringT* file;  // currently scanning (or anonymous)
 
     LineNumber line;  // line number where current scan position is
     const Byte* line_head;  // pointer to head of current line (for errors)
@@ -126,7 +126,7 @@ typedef struct rebol_scan_state {  // shared across all levels of a scan
     /* const Byte* limit; */
 } SCAN_STATE;
 
-typedef struct rebol_scan_level {  // each array scan corresponds to a level
+typedef struct ScannerExecutorStateStruct {  // each array scan has a level
     SCAN_STATE *ss;  // shared state of where the scanner head currently is
 
     // '\0' => top level scan

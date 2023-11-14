@@ -237,11 +237,11 @@ void Init_Evars(EVARS *e, NoQuote(Cell(const*)) v) {
             if (*psym == nullptr or *psym == &PG_Deleted_Symbol)
                 continue;
 
-            REBSER *patch = MISC(Hitch, *psym);
+            Series(*) patch = MISC(Hitch, *psym);
             while (Get_Series_Flag(patch, BLACK))  // binding temps
                 patch = SER(node_MISC(Hitch, patch));
 
-            REBSER *found = nullptr;
+            Series(*) found = nullptr;
 
             for (; patch != *psym; patch = SER(node_MISC(Hitch, patch))) {
                 if (e->ctx == INODE(PatchContext, patch)) {
@@ -749,7 +749,7 @@ DECLARE_NATIVE(adjunct_of)
 //
 DECLARE_NATIVE(set_adjunct)
 //
-// See notes accompanying the `adjunct` field in the REBSER definition.
+// See notes accompanying the `adjunct` field in DetailsAdjunct/VarlistAdjunct.
 {
     INCLUDE_PARAMS_OF_SET_ADJUNCT;
 
@@ -848,7 +848,7 @@ Context(*) Copy_Context_Extra_Managed(
             if (*psym == nullptr or *psym == &PG_Deleted_Symbol)
                 continue;
 
-            REBSER *patch = MISC(Hitch, *psym);
+            Series(*) patch = MISC(Hitch, *psym);
             while (Get_Series_Flag(patch, BLACK))  // binding temps
                 patch = SER(node_MISC(Hitch, patch));
 
@@ -893,7 +893,7 @@ Context(*) Copy_Context_Extra_Managed(
     else {
         assert(CTX_TYPE(original) != REB_FRAME);  // can't expand FRAME!s
 
-        Keylist(*) keylist = cast(Raw_Keylist*, Copy_Series_At_Len_Extra(
+        Keylist(*) keylist = cast(KeylistT*, Copy_Series_At_Len_Extra(
             CTX_KEYLIST(original),
             0,
             CTX_LEN(original),

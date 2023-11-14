@@ -107,20 +107,10 @@ typedef uintptr_t Tick; // type the debug build uses for evaluator "ticks"
 typedef uint_fast32_t Codepoint;
 
 
-//=//// MEMORY POOLS //////////////////////////////////////////////////////=//
-//
-typedef struct rebol_mem_pool Pool;
-
-struct Reb_Pool_Unit;
-typedef struct Reb_Pool_Unit PoolUnit;
-
-typedef signed int PoolID;  // used with UNLIMITED (-1)
-
-
 //=//// SERIES AND NON-INHERITED SUBCLASS DEFINITIONS /////////////////////=//
 //
-// The C++ build defines Raw_Array, Raw_Binary, and Raw_String as being
-// derived from Raw_Series.  This affords convenience by having it possible
+// The C++ build defines ArrayT, BinaryT, and StringT as being
+// derived from SeriesT.  This affords convenience by having it possible
 // to pass the derived class to something taking a base class, but not vice
 // versa.  However, you cannot forward-declare inheritance:
 //
@@ -132,24 +122,23 @@ typedef signed int PoolID;  // used with UNLIMITED (-1)
 // inherit.  You have to specify which series you want to extract, e.g.
 // Get_Series_Flag(CTX_VARLIST(context)), not just Get_Series_Flag(context).
 //
-// Note that because the Raw_Series structure includes a Reb_Value by value,
+// Note that because the SeriesT structure includes a CellT by value,
 // the %sys-rebser.h must be included *after* %sys-rebval.h; however the
 // higher level definitions in %sys-series.h are *before* %sys-value.h.
 //
 
-struct Reb_Stub;
+typedef struct StubStruct Stub;
 
-typedef struct Reb_Stub Stub;
+typedef Stub SeriesT;
 
-typedef Stub Raw_Series;
+#define Series(star_maybe_const) \
+    SeriesT star_maybe_const
 
-typedef Raw_Series REBSER;
 
-
-struct Reb_Bookmark {
+typedef struct BookmarkStruct {
     REBLEN index;
     Size offset;
-};
+} BookmarkT;
 
 //=//// BINDING ///////////////////////////////////////////////////////////=//
 
@@ -167,13 +156,12 @@ struct Reb_Collector;
 // level variables is uppercase L.
 //
 
-struct Reb_Level;
+typedef struct LevelStruct LevelT;
 
 #define Level(star) \
-    struct Reb_Level star
+    LevelT star
 
-struct Reb_Feed_Struct;
-typedef struct Reb_Feed_Struct Reb_Feed;
+typedef struct FeedStruct FeedT;
 
 struct Reb_State;
 struct Reb_Jump;
@@ -298,10 +286,10 @@ enum Reb_Param_Class {
 // the values, which in debug builds has a runtime check of non-zeroness.
 //
 
-typedef enum Reb_Symbol_Id SymId;
+typedef enum SymIdEnum SymId;
 
 #define SYM_0 \
-    cast(Option(SymId), cast(enum Reb_Symbol_Id, 0))
+    cast(Option(SymId),  cast(SymId, 0))  // 0 cast needed if not -fpermissive
 
 #if DEBUG_CHECK_OPTIONALS && CPLUSPLUS_11
     bool operator==(Option(SymId)& a, Option(SymId)& b) = delete;

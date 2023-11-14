@@ -51,7 +51,7 @@
 // Hitches are a circularly linked list that includes transient binding info
 // for the word, as well as declared variables in "sea" contexts.
 //
-#define MISC_Hitch_TYPE         REBSER*
+#define MISC_Hitch_TYPE         Series(*)
 #define MISC_Hitch_CAST         SER
 #define HAS_MISC_Hitch          FLAVOR_SYMBOL
 

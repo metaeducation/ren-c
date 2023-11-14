@@ -66,8 +66,8 @@
 // should be reigned in proportionally to the length of the series.  As
 // a first try of this strategy, singular arrays are being used.
 //
-#define LINK_Bookmarks_TYPE     REBBMK*  // alias for REBSER* at this time
-#define LINK_Bookmarks_CAST     (REBBMK*)SER
+#define LINK_Bookmarks_TYPE     BookmarkListT*  // alias for SeriesT for now
+#define LINK_Bookmarks_CAST     (BookmarkListT*)SER
 #define HAS_LINK_Bookmarks      FLAVOR_STRING
 
 
@@ -208,18 +208,18 @@ inline static bool Is_String_Definitely_ASCII(String(const*) str) {
 #define STR_SIZE(s) \
     SER_USED(ensure(String(const*), s))  // UTF-8 byte count (not codepoints)
 
-inline static Utf8(*) STR_HEAD(const_if_c Raw_String* s)
+inline static Utf8(*) STR_HEAD(const_if_c StringT* s)
   { return cast(Utf8(*), SER_HEAD(Byte, s)); }
 
-inline static Utf8(*) STR_TAIL(const_if_c Raw_String* s)
+inline static Utf8(*) STR_TAIL(const_if_c StringT* s)
   { return cast(Utf8(*), SER_TAIL(Byte, s)); }
 
 #if CPLUSPLUS_11
-    inline static Utf8(const*) STR_HEAD(const Raw_String* s)
-      { return STR_HEAD(m_cast(Raw_String*, s)); }
+    inline static Utf8(const*) STR_HEAD(const StringT* s)
+      { return STR_HEAD(m_cast(StringT*, s)); }
 
-    inline static Utf8(const*) STR_TAIL(const Raw_String* s)
-      { return STR_TAIL(m_cast(Raw_String*, s)); }
+    inline static Utf8(const*) STR_TAIL(const StringT* s)
+      { return STR_TAIL(m_cast(StringT*, s)); }
 #endif
 
 
@@ -279,7 +279,7 @@ inline static REBLEN STR_INDEX_AT(String(const*) s, Size byteoffset) {
     return index;
 }
 
-inline static void SET_STR_LEN_SIZE(Raw_String* s, REBLEN len, Size used) {
+inline static void SET_STR_LEN_SIZE(StringT* s, REBLEN len, Size used) {
     assert(IS_NONSYMBOL_STRING(s));
     assert(len <= used);
     assert(used == SER_USED(s));
@@ -288,7 +288,7 @@ inline static void SET_STR_LEN_SIZE(Raw_String* s, REBLEN len, Size used) {
     UNUSED(used);
 }
 
-inline static void TERM_STR_LEN_SIZE(Raw_String* s, REBLEN len, Size used) {
+inline static void TERM_STR_LEN_SIZE(StringT* s, REBLEN len, Size used) {
     assert(IS_NONSYMBOL_STRING(s));
     assert(len <= used);
     SET_SERIES_USED(s, used);
@@ -299,7 +299,7 @@ inline static void TERM_STR_LEN_SIZE(Raw_String* s, REBLEN len, Size used) {
 
 //=//// CACHED ACCESSORS AND BOOKMARKS ////////////////////////////////////=//
 //
-// A "bookmark" in this terminology is simply a REBSER which contains a list
+// BookMarkList in this terminology is simply a series which contains a list
 // of indexes and offsets.  This helps to accelerate finding positions in
 // UTF-8 strings based on index, vs. having to necessarily search from the
 // beginning.
@@ -310,19 +310,19 @@ inline static void TERM_STR_LEN_SIZE(Raw_String* s, REBLEN len, Size used) {
 // very short, or that are never enumerated.
 
 #define BMK_INDEX(b) \
-    SER_HEAD(struct Reb_Bookmark, (b))->index
+    SER_HEAD(BookmarkT, (b))->index
 
 #define BMK_OFFSET(b) \
-    SER_HEAD(struct Reb_Bookmark, (b))->offset
+    SER_HEAD(BookmarkT, (b))->offset
 
-inline static REBBMK* Alloc_Bookmark(void) {
-    REBSER *s = Make_Series_Core(
+inline static BookmarkList(*) Alloc_BookmarkList(void) {
+    BookmarkList(*) books = Make_Series(BookmarkListT,
         1,
         FLAG_FLAVOR(BOOKMARKLIST) | SERIES_FLAG_MANAGED
     );
-    SET_SERIES_LEN(s, 1);
-    Clear_Series_Flag(s, MANAGED);  // manual but untracked (avoid leak error)
-    return cast(REBBMK*, s);
+    SET_SERIES_LEN(books, 1);
+    Clear_Series_Flag(books, MANAGED);  // untracked (avoid leak error)
+    return books;
 }
 
 inline static void Free_Bookmarks_Maybe_Null(String(*) str) {
@@ -335,12 +335,12 @@ inline static void Free_Bookmarks_Maybe_Null(String(*) str) {
 
 #if !defined(NDEBUG)
     inline static void Check_Bookmarks_Debug(String(*) s) {
-        REBBMK *bookmark = LINK(Bookmarks, s);
-        if (not bookmark)
+        BookmarkList(*) book = LINK(Bookmarks, s);
+        if (not book)
             return;
 
-        REBLEN index = BMK_INDEX(bookmark);
-        Size offset = BMK_OFFSET(bookmark);
+        REBLEN index = BMK_INDEX(book);
+        Size offset = BMK_OFFSET(book);
 
         Utf8(*) cp = STR_HEAD(s);
         REBLEN i;
@@ -370,7 +370,7 @@ inline static void Free_Bookmarks_Maybe_Null(String(*) str) {
 // iterate much faster, and most of the strings in the system might be able
 // to get away with not having any bookmarks at all.
 //
-inline static Utf8(*) STR_AT(const_if_c Raw_String* s, REBLEN at) {
+inline static Utf8(*) STR_AT(const_if_c StringT* s, REBLEN at) {
     assert(at <= STR_LEN(s));
 
     if (Is_Definitely_Ascii(s)) {  // can't have any false positives
@@ -381,14 +381,14 @@ inline static Utf8(*) STR_AT(const_if_c Raw_String* s, REBLEN at) {
     Utf8(*) cp;  // can be used to calculate offset (relative to STR_HEAD())
     REBLEN index;
 
-    REBBMK *bookmark = nullptr;  // updated at end if not nulled out
+    BookmarkList(*) book = nullptr;  // updated at end if not nulled out
     if (IS_NONSYMBOL_STRING(s))
-        bookmark = LINK(Bookmarks, s);
+        book = LINK(Bookmarks, s);
 
   #if DEBUG_SPORADICALLY_DROP_BOOKMARKS
-    if (bookmark and SPORADICALLY(100)) {
+    if (book and SPORADICALLY(100)) {
         Free_Bookmarks_Maybe_Null(s);
-        bookmark = nullptr;
+        book = nullptr;
     }
   #endif
 
@@ -400,34 +400,34 @@ inline static Utf8(*) STR_AT(const_if_c Raw_String* s, REBLEN at) {
   #endif
 
     if (at < len / 2) {
-        if (len < sizeof(REBVAL)) {
+        if (len < sizeof(CellT)) {
             if (IS_NONSYMBOL_STRING(s))
                 assert(
                     Get_Series_Flag(s, DYNAMIC)  // e.g. mold buffer
-                    or not bookmark  // mutations must ensure this
+                    or not book  // mutations must ensure this
                 );
             goto scan_from_head;  // good locality, avoid bookmark logic
         }
-        if (not bookmark and IS_NONSYMBOL_STRING(s)) {
-            bookmark = Alloc_Bookmark();
-            const Raw_String* p = s;
-            mutable_LINK(Bookmarks, m_cast(Raw_String*, p)) = bookmark;
+        if (not book and IS_NONSYMBOL_STRING(s)) {
+            book = Alloc_BookmarkList();
+            const StringT* p = s;
+            mutable_LINK(Bookmarks, m_cast(StringT*, p)) = book;
             goto scan_from_head;  // will fill in bookmark
         }
     }
     else {
-        if (len < sizeof(REBVAL)) {
+        if (len < sizeof(CellT)) {
             if (IS_NONSYMBOL_STRING(s))
                 assert(
-                    not bookmark  // mutations must ensure this usually but...
+                    not book  // mutations must ensure this usually but...
                     or Get_Series_Flag(s, DYNAMIC)  // !!! mold buffer?
                 );
             goto scan_from_tail;  // good locality, avoid bookmark logic
         }
-        if (not bookmark and IS_NONSYMBOL_STRING(s)) {
-            bookmark = Alloc_Bookmark();
-            const Raw_String *p = s;
-            mutable_LINK(Bookmarks, m_cast(Raw_String*, p)) = bookmark;
+        if (not book and IS_NONSYMBOL_STRING(s)) {
+            book = Alloc_BookmarkList();
+            const StringT *p = s;
+            mutable_LINK(Bookmarks, m_cast(StringT*, p)) = book;
             goto scan_from_tail;  // will fill in bookmark
         }
     }
@@ -438,17 +438,17 @@ inline static Utf8(*) STR_AT(const_if_c Raw_String* s, REBLEN at) {
     // track the last access--which speeds up the most common case of an
     // iteration.  Improve as time permits!
     //
-    assert(not bookmark or SER_USED(bookmark) == 1);  // only one
+    assert(not book or SER_USED(book) == 1);  // only one
 
   blockscope {
-    REBLEN booked = bookmark ? BMK_INDEX(bookmark) : 0;
+    REBLEN booked = book ? BMK_INDEX(book) : 0;
 
     // `at` is always positive.  `booked - at` may be negative, but if it
     // is positive and bigger than `at`, faster to seek from head.
     //
     if (cast(REBINT, at) < cast(REBINT, booked) - cast(REBINT, at)) {
-        if (at < sizeof(REBVAL))
-            bookmark = nullptr;  // don't update bookmark for near head search
+        if (at < sizeof(CellT))
+            book = nullptr;  // don't update bookmark for near head search
         goto scan_from_head;
     }
 
@@ -456,14 +456,14 @@ inline static Utf8(*) STR_AT(const_if_c Raw_String* s, REBLEN at) {
     // it is positive and bigger than `len - at`, faster to seek from tail.
     //
     if (cast(REBINT, len - at) < cast(REBINT, at) - cast(REBINT, booked)) {
-        if (len - at < sizeof(REBVAL))
-            bookmark = nullptr;  // don't update bookmark for near tail search
+        if (len - at < sizeof(CellT))
+            book = nullptr;  // don't update bookmark for near tail search
         goto scan_from_tail;
     }
 
     index = booked;
-    if (bookmark)
-        cp = cast(Utf8(*), SER_DATA(s) + BMK_OFFSET(bookmark));
+    if (book)
+        cp = cast(Utf8(*), SER_DATA(s) + BMK_OFFSET(book));
     else
         cp = cast(Utf8(*), SER_DATA(s));
   }
@@ -492,7 +492,7 @@ inline static Utf8(*) STR_AT(const_if_c Raw_String* s, REBLEN at) {
     for (; index != at; ++index)
         cp = NEXT_STR(cp);
 
-    if (not bookmark)
+    if (not book)
         return cp;
 
     goto update_bookmark;
@@ -509,7 +509,7 @@ inline static Utf8(*) STR_AT(const_if_c Raw_String* s, REBLEN at) {
     for (; index != at; --index)
         cp = BACK_STR(cp);
 
-    if (not bookmark) {
+    if (not book) {
       #if DEBUG_TRACE_BOOKMARKS
         BOOKMARK_TRACE("not cached\n");
       #endif
@@ -520,8 +520,8 @@ inline static Utf8(*) STR_AT(const_if_c Raw_String* s, REBLEN at) {
   #if DEBUG_TRACE_BOOKMARKS
     BOOKMARK_TRACE("caching %ld\n", index);
   #endif
-    BMK_INDEX(bookmark) = index;
-    BMK_OFFSET(bookmark) = cp - STR_HEAD(s);
+    BMK_INDEX(book) = index;
+    BMK_OFFSET(book) = cp - STR_HEAD(s);
 
   #if DEBUG_VERIFY_STR_AT
     Utf8(*) check_cp = STR_HEAD(s);
@@ -535,12 +535,12 @@ inline static Utf8(*) STR_AT(const_if_c Raw_String* s, REBLEN at) {
 }
 
 #if CPLUSPLUS_11
-    inline static Utf8(const*) STR_AT(const Raw_String* s, REBLEN at)
-      { return STR_AT(m_cast(Raw_String*, s), at); }
+    inline static Utf8(const*) STR_AT(const StringT* s, REBLEN at)
+      { return STR_AT(m_cast(StringT*, s), at); }
 #endif
 
 
-inline static const Raw_String *VAL_STRING(NoQuote(Cell(const*)) v) {
+inline static const StringT *VAL_STRING(NoQuote(Cell(const*)) v) {
     if (ANY_STRINGLIKE(v))
         return STR(VAL_NODE1(v));  // VAL_SERIES() would assert
 
@@ -548,7 +548,7 @@ inline static const Raw_String *VAL_STRING(NoQuote(Cell(const*)) v) {
 }
 
 #define VAL_STRING_ENSURE_MUTABLE(v) \
-    m_cast(Raw_String*, VAL_STRING(ENSURE_MUTABLE(v)))
+    m_cast(StringT*, VAL_STRING(ENSURE_MUTABLE(v)))
 
 // This routine works with the notion of "length" that corresponds to the
 // idea of the datatype which the series index is for.  Notably, a BINARY!
@@ -557,7 +557,7 @@ inline static const Raw_String *VAL_STRING(NoQuote(Cell(const*)) v) {
 // cache of the length in the series node for strings must be used.
 //
 inline static REBLEN VAL_LEN_HEAD(NoQuote(Cell(const*)) v) {
-    const REBSER *s = VAL_SERIES(v);
+    Series(const*) s = VAL_SERIES(v);
     if (IS_SER_UTF8(s) and CELL_HEART(v) != REB_BINARY)
         return STR_LEN(STR(s));
     return SER_USED(s);
@@ -742,7 +742,7 @@ inline static void SET_CHAR_AT(String(*) s, REBLEN n, Codepoint c) {
         // dealing with.  Only update bookmark if it's an offset *after*
         // that character position...
         //
-        REBBMK *book = LINK(Bookmarks, s);
+        BookmarkList(*) book = LINK(Bookmarks, s);
         if (book and BMK_OFFSET(book) > cp_offset)
             BMK_OFFSET(book) += delta;
     }
@@ -776,7 +776,7 @@ inline static REBLEN Num_Codepoints_For_Bytes(
 inline static REBVAL *Init_Any_String_At(
     Cell(*) out,
     enum Reb_Kind kind,
-    const_if_c Raw_String* str,
+    const_if_c StringT* str,
     REBLEN index
 ){
     Init_Series_Cell_At_Core(
@@ -793,7 +793,7 @@ inline static REBVAL *Init_Any_String_At(
     inline static REBVAL *Init_Any_String_At(
         Cell(*) out,
         enum Reb_Kind kind,
-        const Raw_String* str,
+        const StringT* str,
         REBLEN index
     ){
         return Init_Series_Cell_At_Core(out, kind, str, index, UNBOUND);
@@ -856,8 +856,8 @@ inline static REBINT First_Hash_Candidate_Slot(
 #define Copy_String_At(v) \
     Copy_String_At_Limit((v), -1)
 
-inline static REBSER *Copy_Binary_At_Len(
-    const REBSER *s,
+inline static Series(*) Copy_Binary_At_Len(
+    Series(const*) s,
     REBLEN index,
     REBLEN len
 ){

@@ -366,7 +366,7 @@ bool Did_Get_Binding_Of(Sink(Value(*)) out, const REBVAL *v)
             return false;
 
         // Requesting the context of a word that is relatively bound may
-        // result in that word having a FRAME! incarnated as a REBSER node (if
+        // result in that word having a FRAME! incarnated as a Stub (if
         // it was not already reified.)
         //
         Context(*) c = VAL_WORD_CONTEXT(v);
@@ -1729,7 +1729,7 @@ DECLARE_NATIVE(free)
     if (ANY_CONTEXT(v) or IS_HANDLE(v))
         fail ("FREE only implemented for ANY-SERIES! at the moment");
 
-    REBSER *s = VAL_SERIES_ENSURE_MUTABLE(v);
+    Series(*) s = VAL_SERIES_ENSURE_MUTABLE(v);
     if (Get_Series_Flag(s, INACCESSIBLE))
         fail ("Cannot FREE already freed series");
 
@@ -1858,7 +1858,7 @@ bool Try_As_String(
             str = STR(bin);
 
             TERM_STR_LEN_SIZE(
-                m_cast(Raw_String*, str),  // legal for tweaking cached data
+                m_cast(StringT*, str),  // legal for tweaking cached data
                 num_codepoints,
                 BIN_LEN(bin)
             );

@@ -552,7 +552,7 @@ REBLEN Find_Value_In_Binstr(
         // bit tricky as it is.  Let it settle down before trying that--and
         // for now just form the tag into a temporary alternate series.
 
-        Raw_String* formed = nullptr;
+        StringT* formed = nullptr;
         if (
             CELL_HEART(pattern) != REB_ISSUE
             and CELL_HEART(pattern) != REB_TEXT

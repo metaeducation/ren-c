@@ -79,41 +79,42 @@ static void Check_Basics(void)
     // file, line, and tick of their initialization (or last TOUCH_CELL()).
     // Define UNUSUAL_CELL_SIZE to bypass this check.
 
-    size_t sizeof_CELL = sizeof(RawCell);  // in variable avoids warning
+    Size cell_size = sizeof(CellT);  // in variable avoids warning
 
   #if UNUSUAL_CELL_SIZE
-    if (sizeof_CELL % ALIGN_SIZE != 0)
+    if (cell_size % ALIGN_SIZE != 0)
         panic ("size of cell does not evenly divide by ALIGN_SIZE");
   #else
-    if (sizeof_CELL != sizeof(void*) * 4)
+    if (cell_size != sizeof(void*) * 4)
         panic ("size of cell is not sizeof(void*) * 4");
 
-    size_t sersize = sizeof(RawCell) * 2;
+    Size series_size = sizeof(CellT) * 2;
 
     #if DEBUG_SERIES_ORIGINS || DEBUG_COUNT_TICKS
-      sersize += sizeof(void*) * 2;
+      series_size += sizeof(void*) * 2;
     #endif
 
     #if DEBUG_COUNT_LOCALS
-      sersize += sizeof(void*) * 2;
+      series_size += sizeof(void*) * 2;
     #endif
 
-    assert(sizeof(REBSER) == sersize);
-    UNUSED(sersize);
+    assert(sizeof(SeriesT) == series_size);
+    UNUSED(series_size);
   #endif
 
-    //=//// CHECK REBSER INFO PLACEMENT ///////////////////////////////////=//
+    //=//// CHECK STUB INFO PLACEMENT ///////////////////////////////////=//
 
-    // REBSER historically placed the `info` bits exactly after a REBVAL so
-    // they could do double-duty as terminator for that REBVAL when enumerated
-    // as an ARRAY.  Arrays now are enumerated according to their stored
-    // length, and only have termination in some debug builds.  However the
-    // phenomenon still has some leverage by ensuring the "not a cell" bit in
-    // the info field is set--which helps catch stray reads or writes.
+    // Stub historically placed the `info` bits exactly after `content` so
+    // they could do double-duty as an array terminator when the content
+    // was a singular Cell and enumerated as an Array.  But arrays are now
+    // enumerated according to their stored length, and only have termination
+    // in some debug builds.  However the phenomenon still has some leverage
+    // by ensuring the bit corresponding to "not a cell" is set in the
+    // info field is set--which helps catch a few stray reads or writes.
 
   blockscope {
-    size_t offset = offsetof(REBSER, info.flags);  // variable avoids warning
-    if (offset - offsetof(REBSER, content) != sizeof(REBVAL))
+    Size offset = offsetof(Stub, info.flags);  // variable avoids warning
+    if (offset - offsetof(Stub, content) != sizeof(CellT))
         panic ("bad structure alignment for internal array termination"); }
 
     //=//// CHECK BYTE-ORDERING SENSITIVE FLAGS //////////////////////////=//
@@ -265,7 +266,7 @@ static void Startup_Lib(void)
 //
 static void Shutdown_Lib(void)
 {
-    // !!! Since the PG_Lib_Patches are REBSER that live outside the pools,
+    // !!! Since PG_Lib_Patches are array stubs that live outside the pools,
     // the Shutdown_GC() will not kill them off.  We want to make sure the
     // variables are FRESHEN() and that the patches look empty in case the
     // Startup() gets called again.

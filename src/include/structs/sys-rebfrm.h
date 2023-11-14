@@ -291,8 +291,8 @@ STATIC_ASSERT(31 < 32);  // otherwise LEVEL_FLAG_XXX too high
 
 
 // These definitions are needed in %sys-rebval.h, and can't be put in
-// %sys-rebact.h because that depends on Raw_Array, which depends on
-// Raw_Series, which depends on values... :-/
+// %sys-rebact.h because that depends on ArrayT, which depends on
+// SeriesT, which depends on values... :-/
 
 // C function implementing a native ACTION!
 //
@@ -331,9 +331,9 @@ typedef void (Intrinsic)(Atom(*) out, Action(*) action, Value(*) arg);
 //
 
 #if CPLUSPLUS_11
-    struct Reb_Level : public Raw_Node
+    struct LevelStruct : public Node
 #else
-    struct Reb_Level
+    struct LevelStruct
 #endif
 {
     // These are LEVEL_FLAG_XXX or'd together--see their documentation above.
@@ -341,7 +341,7 @@ typedef void (Intrinsic)(Atom(*) out, Action(*) action, Value(*) arg);
     // Note: In order to use the memory pools, this must be in first position,
     // and it must not have the NODE_FLAG_STALE bit set when in use.
     //
-    union Reb_Header flags;
+    union HeaderUnion flags;
 
     // This is the source from which new values will be fetched.  In addition
     // to working with an array, it is also possible to feed the evaluator
@@ -367,7 +367,7 @@ typedef void (Intrinsic)(Atom(*) out, Action(*) action, Value(*) arg);
     // legal evaluation targets, although they can be used as GC safe scratch
     // space for things other than evaluation.)
     //
-    Reb_Cell spare;
+    CellT spare;
 
     // Each executor subclass can store specialized information in the level.
     // We place it here up top where we've been careful to make sure the
@@ -376,16 +376,16 @@ typedef void (Intrinsic)(Atom(*) out, Action(*) action, Value(*) arg);
     // uses its space for an extra "scratch" GC-safe cell)
     //
   union {
-    struct Reb_Eval_Executor_State eval;
+    struct EvaluatorExecutorStateStruct eval;
 
-    struct Reb_Action_Executor_State action;
+    struct ActionExecutorStateStruct action;
 
     struct {
         Level(*) main_level;
         bool changed;
     } compose;
 
-    struct rebol_scan_level scan;
+    struct ScannerExecutorStateStruct scan;  // !! Fairly fat, trim down?
   } u;
 
     // The "executor" is the function the Trampoline delegates to for running
@@ -443,7 +443,7 @@ typedef void (Intrinsic)(Atom(*) out, Action(*) action, Value(*) arg);
     // automate in debugging.  That's very speculative, but, possible.
     //
     Array(*) varlist;
-    REBVAL *rootvar; // cache of CTX_ARCHETYPE(varlist) if varlist is not null
+    Value(*) rootvar;  // cached CTX_ARCHETYPE(varlist) if varlist is not null
 
     // The "baseline" is a digest of the state of global variables at the
     // beginning of a level evaluation.  An example of one of the things the

@@ -83,12 +83,12 @@
 
 
 // Context types use this field of their varlist (which is the identity of
-// an ANY-CONTEXT!) to find their "keylist".  It is stored in the REBSER
-// node of the varlist Array(*) vs. in the REBVAL of the ANY-CONTEXT! so
+// an ANY-CONTEXT!) to find their "keylist".  It is stored in the Stub
+// node of the varlist Array(*) vs. in the Cell of the ANY-CONTEXT! so
 // that the keylist can be changed without needing to update all the
 // REBVALs for that object.
 //
-// It may be a simple REBSER* -or- in the case of the varlist of a running
+// It may be a simple Series(*) -or- in the case of the varlist of a running
 // FRAME! on the stack, it points to a Level(*).  If it's a FRAME! that
 // is not running on the stack, it will be the function paramlist of the
 // actual phase that function is for.  Since Level(*) all start with a
@@ -356,7 +356,7 @@ inline static Context(*) ACT_EXEMPLAR(Action(*) a) {
 // and also forward declared.
 //
 #define ACT_KEYLIST(a) \
-    cast(Raw_Keylist*, BONUS(KeySource, ACT_EXEMPLAR(a)))
+    cast(KeylistT*, BONUS(KeySource, ACT_EXEMPLAR(a)))
 
 #define ACT_KEYS_HEAD(a) \
     SER_HEAD(const REBKEY, ACT_KEYLIST(a))
@@ -432,7 +432,7 @@ inline static Symbol(const*) KEY_SYMBOL(const REBKEY *key)
   { return *key; }
 
 
-inline static void Init_Key(REBKEY *dest, const Raw_Symbol* symbol)
+inline static void Init_Key(REBKEY *dest, const SymbolT* symbol)
   { *dest = symbol; }
 
 #define KEY_SYM(key) \
@@ -457,7 +457,7 @@ inline static void Init_Key(REBKEY *dest, const Raw_Symbol* symbol)
 
 inline static Action(*) VAL_ACTION(NoQuote(Cell(const*)) v) {
     assert(HEART_BYTE(v) == REB_FRAME);
-    REBSER *s = SER(VAL_NODE1(v));  // maybe exemplar, maybe details
+    Series(*) s = SER(VAL_NODE1(v));  // maybe exemplar, maybe details
     if (Get_Series_Flag(s, INACCESSIBLE))
         fail (Error_Series_Data_Freed_Raw());
     return ACT(s);
@@ -514,7 +514,7 @@ inline static void INIT_VAL_ACTION_LABEL(
 // The code for processing derivation is slightly different; it should be
 // unified more if possible.
 
-#define LINK_Ancestor_TYPE              Raw_Keylist*
+#define LINK_Ancestor_TYPE              KeylistT*
 #define LINK_Ancestor_CAST              KEYS
 #define HAS_LINK_Ancestor               FLAVOR_KEYLIST
 
@@ -525,13 +525,13 @@ inline static bool Action_Is_Base_Of(Action(*) base, Action(*) derived) {
     if (ACT_IDENTITY(derived) == ACT_IDENTITY(base))
         return true;  // Covers COPY + HIJACK cases (seemingly)
 
-    REBSER *keylist_test = ACT_KEYLIST(derived);
-    REBSER *keylist_base = ACT_KEYLIST(base);
+    Series(*) keylist_test = ACT_KEYLIST(derived);
+    Series(*) keylist_base = ACT_KEYLIST(base);
     while (true) {
         if (keylist_test == keylist_base)
             return true;
 
-        REBSER *ancestor = LINK(Ancestor, keylist_test);
+        Series(*) ancestor = LINK(Ancestor, keylist_test);
         if (ancestor == keylist_test)
             return false;  // signals end of the chain, no match found
 

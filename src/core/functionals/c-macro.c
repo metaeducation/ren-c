@@ -53,7 +53,7 @@ void Splice_Block_Into_Feed(Feed(*) feed, const REBVAL *splice) {
         Clear_Feed_Flag(feed, TOOK_HOLD);
     }
 
-    // Each feed has a static allocation of a REBSER-sized entity for managing
+    // Each feed has a static allocation of a Stub-sized entity for managing
     // its "current splice".  This splicing action will pre-empt that, so it
     // is moved into a dynamically allocated splice which is then linked to
     // be used once the splice runs out.
@@ -62,7 +62,7 @@ void Splice_Block_Into_Feed(Feed(*) feed, const REBVAL *splice) {
         Array(*) saved = Alloc_Singular(
             FLAG_FLAVOR(FEED) | SERIES_FLAG_MANAGED  // no tracking
         );
-        memcpy(saved, FEED_SINGULAR(feed), sizeof(Raw_Array));
+        memcpy(saved, FEED_SINGULAR(feed), sizeof(ArrayT));
         assert(Not_Series_Flag(saved, MANAGED));
 
         // old feed data resumes after the splice

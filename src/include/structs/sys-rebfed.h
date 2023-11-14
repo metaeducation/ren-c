@@ -163,8 +163,8 @@ STATIC_ASSERT(FEED_FLAG_CONST == CELL_FLAG_CONST);
 #define TRASHED_INDEX ((REBLEN)(-3))
 
 
-struct Reb_Feed_Struct {
-    union Reb_Header flags;  // quoting level included
+struct FeedStruct {
+    union HeaderUnion flags;  // quoting level included
 
     // This is the "prefetched" value being processed.  Entry points to the
     // evaluator must load a first value pointer into it...which for any
@@ -198,7 +198,7 @@ struct Reb_Feed_Struct {
     // read from transient sources that disappear as they go...if that is
     // the case, and lookback is needed, it is written into this cell.
     //
-    Reb_Cell lookback;
+    CellT lookback;
 
     // When feeding cells from a variadic, those cells may wish to mutate the
     // value in some way... e.g. to add a quoting level.  Rather than
@@ -207,9 +207,9 @@ struct Reb_Feed_Struct {
     // is returned by Fetch_Next_in_Feed(), where arbitrary mutations can
     // be applied without corrupting the value they operate on.
     //
-    Reb_Cell fetched;
+    CellT fetched;
 
-    // Feed sources are expresesd as REBSER-sized "splice" units.  This is big
+    // Feed sources are expresesd as Stub-sized "splice" units.  This is big
     // enough for a REBVAL to hold an array and an index, but it also lets
     // you point to other singulars that can hold arrays and indices.
     //
@@ -228,7 +228,7 @@ struct Reb_Feed_Struct {
     // It may also be NULL if it is known that there are no relatively bound
     // words that will be encountered from the source--as in va_list calls.
     //
-    REBSER singular;
+    Stub singular;
 
     // There is a lookahead step to see if the next item in an array is a
     // WORD!.  If so it is checked to see if that word is a "lookback word"
@@ -288,4 +288,4 @@ struct Reb_Feed_Struct {
 };
 
 #define Feed(star_maybe_const) \
-    Reb_Feed star_maybe_const
+    FeedT star_maybe_const

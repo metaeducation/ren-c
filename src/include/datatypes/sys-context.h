@@ -148,7 +148,7 @@
 //
 
 inline static const REBVAL *CTX_ARCHETYPE(Context(*) c) {  // read-only form
-    const REBSER *varlist = CTX_VARLIST(c);
+    Series(const*) varlist = CTX_VARLIST(c);
     if (Get_Series_Flag(varlist, INACCESSIBLE)) {  // a freed stub
         assert(Not_Series_Flag(varlist, DYNAMIC));  // variables are gone
         return cast(const REBVAL*, &varlist->content.fixed);
@@ -244,15 +244,15 @@ inline static Keylist(*) CTX_KEYLIST(Context(*) c) {
         //
         return ACT_KEYLIST(CTX_FRAME_PHASE(c));
     }
-    return cast(Raw_Keylist*, BONUS(KeySource, CTX_VARLIST(c)));  // not Level
+    return cast(KeylistT*, BONUS(KeySource, CTX_VARLIST(c)));  // not Level
 }
 
-inline static void INIT_CTX_KEYLIST_SHARED(Context(*) c, REBSER *keylist) {
+inline static void INIT_CTX_KEYLIST_SHARED(Context(*) c, Series(*) keylist) {
     Set_Subclass_Flag(KEYLIST, keylist, SHARED);
     INIT_BONUS_KEYSOURCE(CTX_VARLIST(c), keylist);
 }
 
-inline static void INIT_CTX_KEYLIST_UNIQUE(Context(*) c, Raw_Keylist *keylist) {
+inline static void INIT_CTX_KEYLIST_UNIQUE(Context(*) c, KeylistT *keylist) {
     assert(Not_Subclass_Flag(KEYLIST, keylist, SHARED));
     INIT_BONUS_KEYSOURCE(CTX_VARLIST(c), keylist);
 }
@@ -293,7 +293,7 @@ inline static const REBKEY *CTX_KEY(Context(*) c, REBLEN n) {
 inline static REBVAR *CTX_VAR(Context(*) c, REBLEN n) {  // 1-based, no Cell(*)
     assert(Not_Series_Flag(CTX_VARLIST(c), INACCESSIBLE));
     assert(n != 0 and n <= CTX_LEN(c));
-    return cast(REBVAR*, cast(REBSER*, c)->content.dynamic.data) + n;
+    return cast(REBVAR*, cast(Series(*), c)->content.dynamic.data) + n;
 }
 
 inline static REBVAR *MOD_VAR(Context(*) c, Symbol(const*) sym, bool strict) {
@@ -318,7 +318,7 @@ inline static REBVAR *MOD_VAR(Context(*) c, Symbol(const*) sym, bool strict) {
 
     Symbol(const*) synonym = sym;
     do {
-        REBSER *patch = MISC(Hitch, sym);
+        Series(*) patch = MISC(Hitch, sym);
         while (Get_Series_Flag(patch, BLACK))  // binding temps
             patch = SER(node_MISC(Hitch, patch));
 
@@ -341,17 +341,17 @@ inline static REBVAR *MOD_VAR(Context(*) c, Symbol(const*) sym, bool strict) {
     SER_AT(REBKEY, CTX_KEYLIST(c), 0)  // 0-based
 
 #define CTX_VARS_HEAD(c) \
-    (cast(REBVAR*, cast(REBSER*, (c))->content.dynamic.data) + 1)
+    (cast(REBVAR*, cast(Series(*), (c))->content.dynamic.data) + 1)
 
 inline static const REBKEY *CTX_KEYS(const REBKEY ** tail, Context(*) c) {
-    REBSER *keylist = CTX_KEYLIST(c);
+    Series(*) keylist = CTX_KEYLIST(c);
     *tail = SER_TAIL(REBKEY, keylist);
     return SER_HEAD(REBKEY, keylist);
 }
 
 inline static REBVAR *CTX_VARS(const REBVAR ** tail, Context(*) c) {
     REBVAR *head = CTX_VARS_HEAD(c);
-    *tail = head + cast(REBSER*, (c))->content.dynamic.used - 1;
+    *tail = head + cast(Series(*), (c))->content.dynamic.used - 1;
     return head;
 }
 
@@ -448,7 +448,7 @@ inline static void INIT_VAL_FRAME_PHASE(Cell(*) v, Phase(*) phase) {
 }
 
 inline static Phase(*) VAL_FRAME_PHASE(NoQuote(Cell(const*)) v) {
-    REBSER *s = VAL_FRAME_PHASE_OR_LABEL(v);
+    Series(*) s = VAL_FRAME_PHASE_OR_LABEL(v);
     if (not s or IS_SYMBOL(s))  // ANONYMOUS or label, not a phase
         return CTX_FRAME_PHASE(VAL_CONTEXT(v));  // use archetype
     return cast(Phase(*), s);  // cell has its own phase, return it
@@ -456,12 +456,12 @@ inline static Phase(*) VAL_FRAME_PHASE(NoQuote(Cell(const*)) v) {
 
 inline static bool IS_FRAME_PHASED(NoQuote(Cell(const*)) v) {
     assert(CELL_HEART(v) == REB_FRAME);
-    REBSER *s = VAL_FRAME_PHASE_OR_LABEL(v);
+    Series(*) s = VAL_FRAME_PHASE_OR_LABEL(v);
     return s and not IS_SYMBOL(s);
 }
 
 inline static Option(Symbol(const*)) VAL_FRAME_LABEL(NoQuote(Cell(const*)) v) {
-    REBSER *s = VAL_FRAME_PHASE_OR_LABEL(v);  // VAL_ACTION_PARTIALS_OR_LABEL as well
+    Series(*) s = VAL_FRAME_PHASE_OR_LABEL(v);  // VAL_ACTION_PARTIALS_OR_LABEL as well
     if (s and IS_SYMBOL(s))  // label in value
         return SYM(s);
     return ANONYMOUS;  // has a phase (or partials), so no label (maybe findable if running)
@@ -662,7 +662,7 @@ inline static const REBVAR *TRY_VAL_CONTEXT_VAR_CORE(
 // instead of needing to push a redundant run of stack-based memory cells.
 //
 inline static Context(*) Steal_Context_Vars(Context(*) c, Node* keysource) {
-    REBSER *stub = CTX_VARLIST(c);
+    Series(*) stub = CTX_VARLIST(c);
 
     // Rather than memcpy() and touch up the header and info to remove
     // SERIES_INFO_HOLD from DETAILS_FLAG_IS_NATIVE, or NODE_FLAG_MANAGED,
@@ -678,7 +678,7 @@ inline static Context(*) Steal_Context_Vars(Context(*) c, Node* keysource) {
     memcpy(  // https://stackoverflow.com/q/57721104/
         cast(char*, &copy->content),
         cast(char*, &stub->content),
-        sizeof(union Reb_Stub_Content)
+        sizeof(union StubContentUnion)
     );
     mutable_MISC(VarlistAdjunct, copy) = nullptr;  // let stub have the meta
     mutable_LINK(Patches, copy) = nullptr;  // don't carry forward patches

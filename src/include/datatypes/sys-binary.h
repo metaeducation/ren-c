@@ -100,14 +100,14 @@ inline static Binary(*) Make_Binary_Core(REBLEN capacity, Flags flags)
 {
     assert(FLAVOR_BYTE(flags) == 0);  // shouldn't pass in a flavor
 
-    Raw_Binary* s = Make_Series(Binary,
+    Binary(*) bin = Make_Series(BinaryT,
         capacity + 1,
         FLAG_FLAVOR(BINARY) | flags
     );
   #if DEBUG_POISON_SERIES_TAILS
-    *SER_HEAD(Byte, s) = BINARY_BAD_UTF8_TAIL_BYTE;  // reserve for '\0'
+    *SER_HEAD(Byte, bin) = BINARY_BAD_UTF8_TAIL_BYTE;  // reserve for '\0'
   #endif
-    return BIN(s);
+    return bin;
 }
 
 #define Make_Binary(capacity) \

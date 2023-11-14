@@ -23,7 +23,7 @@
 // This is the main include file used in the implementation of the core.
 //
 // * It defines all the data types and structures used by the auto-generated
-//   function prototypes.  This includes the obvious REBINT, REBVAL, REBSER.
+//   function prototypes.  Includes the obvious REBINT, Value(*), Series(*).
 //   It also includes any enumerated type parameters to functions which are
 //   shared between various C files.
 //
@@ -209,11 +209,11 @@
 #include "structs/sys-rebcel.h"
 #include "structs/sys-rebval.h"  // low level Rebol cell structure definition
 
-#include "sys-flavor.h"  // series subclass byte (uses sizeof(REBVAL))
+#include "sys-flavor.h"  // series subclass byte (uses sizeof(Cell))
 
-#include "structs/sys-rebser.h"  // series structure definition, embeds REBVAL
+#include "structs/sys-rebser.h"  // series structure definition, embeds Cell
 
-#include "structs/sys-rebarr.h"  // array structure (REBSER subclass)
+#include "structs/sys-rebarr.h"  // array structure (Series subclass)
 #include "structs/sys-rebact.h"  // action structure
 #include "structs/sys-rebctx.h"  // context structure
 #include "structs/sys-rebpat.h"  // virtual binding patch definitions
@@ -264,7 +264,7 @@ struct Reb_Enum_Vars {
     Array(*) wordlist;
     REBVAL *word;
     REBVAL *word_tail;
-    const Raw_Symbol* keybuf;  // backing store for key
+    const SymbolT* keybuf;  // backing store for key
 };
 
 typedef struct Reb_Enum_Vars EVARS;
@@ -450,7 +450,7 @@ extern void reb_qsort_r(void *a, size_t n, size_t es, void *thunk, cmp_t *cmp);
 //
 inline static void INIT_BINDING_MAY_MANAGE(
     Cell(*) out,
-    const REBSER* binding
+    Series(const*)  binding
 );
 
 #include "sys-track.h"

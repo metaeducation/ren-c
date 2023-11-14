@@ -20,8 +20,8 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// A "pairing" fits in a REBSER node, but actually holds two distinct REBVALs.
-
+// A "pairing" fits in a Stub, but actually holds two distinct Cells.
+//
 // !!! PAIR! is now generic, so it could theoretically store any type.  This
 // was done to avoid creating new numeric representations in the core (e.g.
 // 32-bit integers or lower precision floats) just so they could both fit in a

@@ -436,7 +436,7 @@ REBTYPE(Binary)
 
         VAL_INDEX_RAW(v) = Modify_String_Or_Binary(
             v,
-            cast(enum Reb_Symbol_Id, id),
+            unwrap(id),
             ARG(value),
             flags,
             len,

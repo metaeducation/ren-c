@@ -221,7 +221,7 @@ inline static Value(const*) Copy_Reified_Variadic_Feed_Cell(
 inline static Option(Value(const*)) Try_Reify_Variadic_Feed_Series(
     Feed(*) feed
 ){
-    REBSER* s = SER(m_cast(void*, feed->p));
+    Series(*) s = SER(m_cast(void*, feed->p));
 
     switch (SER_FLAVOR(s)) {
       case FLAVOR_INSTRUCTION_SPLICE: {
@@ -374,7 +374,7 @@ inline static void Force_Variadic_Feed_At_Cell_Or_End_May_Fail(Feed(*) feed)
         panic (feed->p);
     }
 
-    assert(Is_Feed_At_End(feed) or READABLE(cast(const Reb_Cell*, feed->p)));
+    assert(Is_Feed_At_End(feed) or READABLE(cast(const CellT*, feed->p)));
     return;
 
 } detect_again: {  ///////////////////////////////////////////////////////////
@@ -395,7 +395,7 @@ inline static void Sync_Feed_At_Cell_Or_End_May_Fail(Feed(*) feed) {
         Force_Variadic_Feed_At_Cell_Or_End_May_Fail(feed);
         Clear_Feed_Flag(feed, NEEDS_SYNC);
     }
-    assert(Is_Feed_At_End(feed) or READABLE(cast(const Reb_Cell*, feed->p)));
+    assert(Is_Feed_At_End(feed) or READABLE(cast(const CellT*, feed->p)));
 }
 
 
@@ -471,11 +471,11 @@ inline static void Fetch_Next_In_Feed(Feed(*) feed) {
                     Clear_Feed_Flag(feed, TOOK_HOLD);
                 }
 
-                Raw_Array* splice = FEED_SPLICE(feed);
+                ArrayT* splice = FEED_SPLICE(feed);
                 memcpy(
                     FEED_SINGULAR(feed),
                     FEED_SPLICE(feed),
-                    sizeof(Raw_Array)
+                    sizeof(ArrayT)
                 );
                 GC_Kill_Series(splice);  // Array(*) would hold reference
                 goto retry_splice;
@@ -488,7 +488,7 @@ inline static void Fetch_Next_In_Feed(Feed(*) feed) {
         Set_Cell_Flag(&feed->fetched, PROTECTED);
   #endif
 
-    assert(Is_Feed_At_End(feed) or READABLE(cast(const Reb_Cell*, feed->p)));
+    assert(Is_Feed_At_End(feed) or READABLE(cast(const CellT*, feed->p)));
 }
 
 
@@ -526,7 +526,7 @@ inline static Cell(const*) Lookback_While_Fetching_Next(Level(*) L) {
         lookback = &L->feed->lookback;
     }
     else
-        lookback = cast(const Reb_Cell*, L->feed->p);
+        lookback = cast(const CellT*, L->feed->p);
 
     Fetch_Next_In_Feed(L->feed);
 
@@ -625,7 +625,7 @@ inline static void Free_Feed(Feed(*) feed) {
 }
 
 inline static Feed(*) Prep_Feed_Common(void* preallocated, Flags flags) {
-   Feed(*) feed = cast(Reb_Feed*, preallocated);
+   Feed(*) feed = cast(FeedT*, preallocated);
 
   #if DEBUG_COUNT_TICKS
     feed->tick = TG_tick;
@@ -692,7 +692,7 @@ inline static Feed(*) Prep_Array_Feed(
     if (Is_Feed_At_End(feed))
         assert(FEED_PENDING(feed) == nullptr);
     else
-        assert(READABLE(cast(const Reb_Cell*, feed->p)));
+        assert(READABLE(cast(const CellT*, feed->p)));
 
     feed->context = nullptr;  // already has binding
 

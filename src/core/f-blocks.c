@@ -165,7 +165,7 @@ void Clonify(
         //
         // Objects and series get shallow copied at minimum
         //
-        REBSER *series;
+        Series(*) series;
         bool would_need_deep;
 
         if (ANY_CONTEXT_KIND(heart)) {

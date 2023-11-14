@@ -34,64 +34,26 @@
 
 // Linked list of used memory segments
 //
-typedef struct rebol_mem_segment {
-    struct rebol_mem_segment *next;
+typedef struct SegmentStruct {
+    struct SegmentStruct* next;
     uintptr_t size;
 } Segment;
 
 
 // Specifies initial pool sizes
 //
-typedef struct rebol_mem_spec {
+typedef struct PoolSpecStruct {
     REBLEN wide;  // size of allocation unit
     REBLEN num_units_per_segment;  // units per segment allocation
-} REBPOOLSPEC;
-
-
-// Pools manage fixed sized blocks of memory
-//
-struct rebol_mem_pool {
-    Segment* segments;  // first memory segment
-    PoolUnit* first;  // first free item in pool
-    PoolUnit* last;  // last free item in pool
-    Size wide;  // size of allocation unit
-    Length num_units_per_segment;  // units per segment allocation
-    Count free;  // number of units remaining
-    Count has;  // total number of units
-};
-
-#define DEF_POOL(size, count) {size, count}
-#define MOD_POOL(size, count) {size * MEM_MIN_SIZE, count}
-
-#define MEM_MIN_SIZE sizeof(REBVAL)
-#define MEM_BIG_SIZE 1024
-
-#define MEM_BALLAST 3000000
-
-enum Mem_Pool_Specs {
-    MEM_TINY_POOL = 0,
-    MEM_SMALL_POOLS = MEM_TINY_POOL + 16,
-    MEM_MID_POOLS = MEM_SMALL_POOLS + 4,
-    MEM_BIG_POOLS = MEM_MID_POOLS + 4, // larger pools
-    STUB_POOL = MEM_BIG_POOLS,
-  #if UNUSUAL_CELL_SIZE
-    PAIR_POOL,
-  #else
-    PAIR_POOL = STUB_POOL,
-  #endif
-    LEVEL_POOL,
-    FEED_POOL,
-    SYSTEM_POOL,
-    MAX_POOLS
-};
+} PoolSpec;
 
 
 //=//// MEMORY POOL UNIT //////////////////////////////////////////////////=//
 //
 // When enumerating over the units in a memory pool, it's important to know
 // how that unit was initialized in order to validly read its data.  If the
-// unit was initialized through a REBSER pointer, then you don't want to
-// dereference it as if it had been initialized through a REBVAL.
+// unit was initialized through a Series pointer, then you don't want to
+// dereference it as if it had been initialized through a Cell.
 //
 // Similarly, you need to know when you are looking at it through the lens
 // of a "freed pool unit" (which then means you can read the data linking it
@@ -102,24 +64,64 @@ enum Mem_Pool_Specs {
 // not subject to "strict aliasing" rules.
 //
 
-struct Reb_Pool_Unit {
+typedef struct PoolUnitStruct {
     //
     // This is not called "header" for a reason: you should *NOT* read the
     // bits of this header-sized slot to try and interpret bits that were
-    // assigned through a REBSER or a REBVAL.  *You have to read out the
+    // assigned through a Series or a Cell.  *You have to read out the
     // bits using the same type that initialized it.*  So only the first
     // byte here should be consulted...accessed through an `unsigned char*`
     // in order to defeat strict aliasing.  See NODE_BYTE()
     //
     // The first byte should *only* be read through a char*!
     //
-    union Reb_Header headspot;  // leftmost byte is FREED_SERIES_BYTE if free
+    union HeaderUnion headspot;  // leftmost byte is FREED_SERIES_BYTE if free
 
-    struct Reb_Pool_Unit *next_if_free;  // if not free, full item available
+    struct PoolUnitStruct* next_if_free;  // if not free, full item available
 
     // Size of a node must be a multiple of 64-bits.  This is because there
     // must be a baseline guarantee for node allocations to be able to know
     // where 64-bit alignment boundaries are.
     //
     /* REBI64 payload[N];*/
+} PoolUnit;
+
+
+// Pools manage fixed sized blocks of memory
+//
+typedef struct PoolStruct {
+    Segment* segments;  // first memory segment
+    PoolUnit* first;  // first free item in pool
+    PoolUnit* last;  // last free item in pool
+    Size wide;  // size of allocation unit
+    Length num_units_per_segment;  // units per segment allocation
+    Count free;  // number of units remaining
+    Count has;  // total number of units
+} Pool;
+
+#define DEF_POOL(size, count) {size, count}
+#define MOD_POOL(size, count) {size * MEM_MIN_SIZE, count}
+
+#define MEM_MIN_SIZE sizeof(CellT)
+#define MEM_BIG_SIZE 1024
+
+#define MEM_BALLAST 3000000
+
+typedef signed int PoolId;  // used with UNLIMITED (-1)
+
+enum PoolSpecEnum {
+    MEM_TINY_POOL = 0,
+    MEM_SMALL_POOLS = MEM_TINY_POOL + 16,
+    MEM_MID_POOLS = MEM_SMALL_POOLS + 4,
+    MEM_BIG_POOLS = MEM_MID_POOLS + 4,  // larger pools
+    STUB_POOL = MEM_BIG_POOLS,
+  #if UNUSUAL_CELL_SIZE
+    PAIR_POOL,
+  #else
+    PAIR_POOL = STUB_POOL,
+  #endif
+    LEVEL_POOL,
+    FEED_POOL,
+    SYSTEM_POOL,
+    MAX_POOLS
 };

@@ -477,11 +477,11 @@ e-lib/emit 'ver {
      * stable locations guarded by GC (e.g. frame argument or output cells).
      * Since the core uses REBVAL*, it must be accurate (not just a void*)
      */
-    struct Reb_Value;
+    struct ValueStruct;
     #ifdef __cplusplus
-        #define REBVAL Reb_Value  /* `struct` breaks MS variadic templates */
+        #define REBVAL ValueStruct  /* `struct` breaks MS variadic templates */
     #else
-        #define REBVAL struct Reb_Value
+        #define REBVAL struct ValueStruct
     #endif
 
     /*
@@ -491,8 +491,8 @@ e-lib/emit 'ver {
      * case of error is the only way they are cleaned up.
      */
     #if defined(CPLUSPLUS_11) && CPLUSPLUS_11
-        struct Raw_Node;
-        #define REBINS Raw_Node  /* `struct` breaks MS variadic templates */
+        struct NodeStruct;
+        #define REBINS NodeStruct  /* `struct` breaks MS variadic templates */
     #else
         #define REBINS void
     #endif

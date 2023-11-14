@@ -21,10 +21,10 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // This provides some convenience routines that require more definitions than
-// are available when %sys-rebnod.h is being processed.  (e.g. REBVAL,
-// REBSER, Level(*)...)
+// are available when %sys-rebnod.h is being processed.  (e.g. Value(*),
+// Series(*), Level(*)...)
 //
-// See %sys-rebnod.h for what a "node" means in this context.
+// See %sys-rebnod.h for what a "Node" means in this context.
 //
 
 
@@ -109,7 +109,7 @@
     (did (NODE_BYTE(n) & NODE_BYTEMASK_0x01_CELL))
 
 #define Is_Node_A_Stub(n) \
-    (not (NODE_BYTE(n) & NODE_BYTEMASK_0x01_CELL))
+    (not Is_Node_A_Cell(n))
 
 
 // Allocate a node from a pool.  Returned node will not be zero-filled, but
@@ -122,7 +122,7 @@
 // is required for correct functioning of some types.  (See notes on
 // alignment in %sys-rebval.h.)
 //
-inline static void *Try_Alloc_Pooled(PoolID pool_id)
+inline static void *Try_Alloc_Pooled(PoolId pool_id)
 {
     Pool* pool = &Mem_Pools[pool_id];
     if (not pool->first) {  // pool has run out of nodes
@@ -176,7 +176,7 @@ inline static void *Try_Alloc_Pooled(PoolID pool_id)
 }
 
 
-inline static void *Alloc_Pooled(PoolID pool_id) {
+inline static void *Alloc_Pooled(PoolId pool_id) {
     void *node = Try_Alloc_Pooled(pool_id);
     if (node)
         return node;
@@ -194,7 +194,7 @@ inline static void *Alloc_Pooled(PoolID pool_id) {
 // have SERIES_FLAG_FREE...which will identify the node as not in use to anyone
 // who enumerates the nodes in the pool (such as the garbage collector).
 //
-inline static void Free_Pooled(PoolID pool_id, void* p)
+inline static void Free_Pooled(PoolId pool_id, void* p)
 {
   #if DEBUG_MONITOR_SERIES
     if (p == PG_Monitor_Node_Debug) {

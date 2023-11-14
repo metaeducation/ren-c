@@ -50,7 +50,7 @@
 //
 // * The evaluator only moves forward, and operates on a strict window of
 //   visibility of two elements at a time (current position and "lookback").
-//   See `Reb_Feed` for the code that provides this abstraction over Ren-C
+//   See `Feed` for the code that provides this abstraction over Ren-C
 //   arrays as well as C va_list.
 //
 
@@ -83,7 +83,7 @@
 // value of that is.  These macros help make the code less ambiguous.
 //
 #undef At_Level
-#define L_next              cast(const Reb_Cell*, L->feed->p)
+#define L_next              cast(const CellT*, L->feed->p)
 #define L_next_gotten       L->feed->gotten
 #define L_current           L->u.eval.current
 #define L_current_gotten    L->u.eval.current_gotten

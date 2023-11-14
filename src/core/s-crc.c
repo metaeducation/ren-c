@@ -354,10 +354,10 @@ uint32_t Hash_Value(Cell(const*) cell)
 // (Review making them non-managed, and freed in Decay_Series(), since they
 // are not shared in maps.  Consider impacts on the set operations.)
 //
-REBSER *Make_Hash_Series(REBLEN len)
+Series(*) Make_Hash_Series(REBLEN len)
 {
     REBLEN n = Get_Hash_Prime_May_Fail(len * 2);  // best when 2X # of keys
-    REBSER *ser = Make_Series_Core(n + 1, FLAG_FLAVOR(HASHLIST));
+    Series(*) ser = Make_Series_Core(n + 1, FLAG_FLAVOR(HASHLIST));
     Clear_Series(ser);
     SET_SERIES_LEN(ser, n);
 
@@ -368,11 +368,10 @@ REBSER *Make_Hash_Series(REBLEN len)
 //
 //  Init_Map: C
 //
-// A map has an additional hash element hidden in the ->extra
-// field of the REBSER which needs to be given to memory
-// management as well.
+// A map has an additional hash element hidden in the ->extra field of the
+// Stub which needs to be given to memory management as well.
 //
-REBVAL *Init_Map(Cell(*) out, REBMAP *map)
+Value(*) Init_Map(Cell(*) out, Map(*) map)
 {
     if (MAP_HASHLIST(map))
         Force_Series_Managed(MAP_HASHLIST(map));
@@ -383,7 +382,7 @@ REBVAL *Init_Map(Cell(*) out, REBMAP *map)
     INIT_VAL_NODE1(out, MAP_PAIRLIST(map));
     // second payload pointer not used
 
-    return cast(REBVAL*, out);
+    return cast(ValueT*, out);
 }
 
 
@@ -395,10 +394,10 @@ REBVAL *Init_Map(Cell(*) out, REBMAP *map)
 //
 // Note: hash array contents (indexes) are 1-based!
 //
-REBSER *Hash_Block(const REBVAL *block, REBLEN skip, bool cased)
+Series(*) Hash_Block(const REBVAL *block, REBLEN skip, bool cased)
 {
     // Create the hash array (integer indexes):
-    REBSER *hashlist = Make_Hash_Series(VAL_LEN_AT(block));
+    Series(*) hashlist = Make_Hash_Series(VAL_LEN_AT(block));
 
     Cell(const*) tail;
     Cell(const*) value = VAL_ARRAY_AT(&tail, block);

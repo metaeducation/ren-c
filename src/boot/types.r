@@ -174,7 +174,7 @@ issue       "immutable codepoint or codepoint sequence"
 
 
 ; ============================================================================
-; BEGIN BINDABLE TYPES - SEE Is_Bindable() - Reb_Value.extra USED FOR BINDING
+; BEGIN BINDABLE TYPES - SEE Is_Bindable() - ValueStruct.extra USED FOR BINDING
 ; ============================================================================
 
 

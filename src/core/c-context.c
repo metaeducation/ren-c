@@ -35,7 +35,7 @@
 //
 Context(*) Alloc_Context_Core(enum Reb_Kind kind, REBLEN capacity, Flags flags)
 {
-    Keylist(*) keylist = Make_Series(Keylist,
+    Keylist(*) keylist = Make_Series(KeylistT,
         capacity,  // no terminator
         SERIES_MASK_KEYLIST | NODE_FLAG_MANAGED  // always shareable
     );
@@ -78,7 +78,7 @@ bool Expand_Context_Keylist_Core(Context(*) context, REBLEN delta)
         // (If all shared copies break away in this fashion, then the last
         // copy of the dangling keylist will be GC'd.)
 
-        Keylist(*) copy = cast(Raw_Keylist*, Copy_Series_At_Len_Extra(
+        Keylist(*) copy = cast(KeylistT*, Copy_Series_At_Len_Extra(
             keylist,
             0,
             SER_USED(keylist),
@@ -202,7 +202,7 @@ static REBVAR* Append_Context_Core(
 
         // skip over binding-related hitches
         //
-        REBSER *updating = m_cast(Raw_Symbol*, symbol);
+        Series(*) updating = m_cast(SymbolT*, symbol);
         while (Get_Series_Flag(SER(node_MISC(Hitch, updating)), BLACK))
             updating = SER(node_MISC(Hitch, updating));
 
@@ -434,7 +434,7 @@ Keylist(*) Collect_Keylist_Managed(
     if (prior and CTX_LEN(unwrap(prior)) == num_collected)
         keylist = CTX_KEYLIST(unwrap(prior));
     else {
-        keylist = Make_Series(Keylist,
+        keylist = Make_Series(KeylistT,
             num_collected,  // no terminator
             SERIES_MASK_KEYLIST | NODE_FLAG_MANAGED
         );

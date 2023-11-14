@@ -123,7 +123,7 @@ deci deci_mod (deci a, deci b);
 deci int_to_deci (REBI64 a);
 deci decimal_to_deci (REBDEC a);
 deci string_to_deci (const Byte* s, const Byte* *endptr);
-deci binary_to_deci(const Byte* s);
+deci binary_to_deci(const Byte s[12]);
 
 /* conversion to other datatypes */
 REBI64 deci_to_int (const deci a);

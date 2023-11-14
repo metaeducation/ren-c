@@ -907,7 +907,7 @@ REBTYPE(String)
 
         VAL_INDEX_RAW(v) = Modify_String_Or_Binary(  // does read-only check
             v,
-            cast(enum Reb_Symbol_Id, id),
+            unwrap(id),
             arg,
             flags,
             len,

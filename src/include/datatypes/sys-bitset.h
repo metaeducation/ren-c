@@ -40,10 +40,10 @@
 
 #define MAX_BITSET 0x7fffffff
 
-inline static bool BITS_NOT(const REBSER *s)
+inline static bool BITS_NOT(Series(const*) s)
   { return s->misc.negated; }
 
-inline static void INIT_BITS_NOT(REBSER *s, bool negated)
+inline static void INIT_BITS_NOT(Series(*) s, bool negated)
   { s->misc.negated = negated; }
 
 

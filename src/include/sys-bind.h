@@ -23,7 +23,7 @@
 // R3-Alpha had a per-thread "bind table"; a large and sparsely populated hash
 // into which index numbers would be placed, for what index those words would
 // have as keys or parameters.  Ren-C's strategy is that binding information
-// is wedged into REBSER nodes that represent the canon words themselves.
+// is wedged into Symbol stubs that represent the canon words themselves.
 //
 // This would create problems if multiple threads were trying to bind at the
 // same time.  While threading was never realized in R3-Alpha, Ren-C doesn't
@@ -141,7 +141,7 @@ struct Reb_Binder {
     //
     // The C++ debug build can help us make sure that no binder ever fails to
     // get an INIT_BINDER() and SHUTDOWN_BINDER() pair called on it, which
-    // would leave lingering binding values on REBSER nodes.
+    // would leave lingering binding values on symbol stubs.
     //
     bool initialized;
     Reb_Binder () { initialized = false; }
@@ -185,9 +185,9 @@ inline static bool Try_Add_Binder_Index(
     Symbol(const*) sym,
     REBINT index
 ){
-    String(*) s = m_cast(Raw_Symbol*, sym);
+    String(*) s = m_cast(SymbolT*, sym);
     assert(index != 0);
-    REBSER *old_hitch = MISC(Hitch, s);
+    Series(*) old_hitch = MISC(Hitch, s);
     if (old_hitch != s and Get_Series_Flag(old_hitch, BLACK))
         return false;  // already has a mapping
 
@@ -228,7 +228,7 @@ inline static REBINT Get_Binder_Index_Else_0( // 0 if not present
     Symbol(const*) s
 ){
     UNUSED(binder);
-    REBSER *hitch = MISC(Hitch, s);
+    Series(*) hitch = MISC(Hitch, s);
 
     // Only unmanaged hitches are used for binding.
     //
@@ -242,7 +242,7 @@ inline static REBINT Remove_Binder_Index_Else_0( // return old value if there
     struct Reb_Binder *binder,
     Symbol(const*) str
 ){
-    String(*) s = m_cast(Raw_Symbol*, str);
+    String(*) s = m_cast(SymbolT*, str);
     if (MISC(Hitch, s) == s or Not_Series_Flag(MISC(Hitch, s), BLACK))
         return 0;
 
@@ -303,7 +303,7 @@ struct Reb_Collector {
 // would fail later, but given that the frame's captured binding can outlive
 // the frame that might lose important functionality.
 //
-inline static REBSER *SPC_BINDING(REBSPC *specifier)
+inline static Series(*) SPC_BINDING(REBSPC *specifier)
 {
     assert(specifier != UNBOUND);
     const REBVAL *rootvar = CTX_ARCHETYPE(CTX(specifier));  // ok if Decay()'d
@@ -319,7 +319,7 @@ inline static REBSER *SPC_BINDING(REBSPC *specifier)
 //
 inline static void INIT_BINDING_MAY_MANAGE(
     Cell(*) out,
-    const REBSER* binding
+    Series(const*)  binding
 ){
     mutable_BINDING(out) = binding;
 
@@ -330,7 +330,7 @@ inline static void INIT_BINDING_MAY_MANAGE(
     assert(not Is_Level_Fulfilling(L));
     UNUSED(L);
 
-    m_cast(REBSER*, binding)->leader.bits |= NODE_FLAG_MANAGED;  // GC sees...
+    m_cast(Series(*), binding)->leader.bits |= NODE_FLAG_MANAGED;  // GC sees...
 }
 
 
@@ -360,7 +360,7 @@ inline static Array(*) VAL_WORD_BINDING(Cell(const*) v) {
     return ARR(BINDING(v));  // could be nullptr / UNBOUND
 }
 
-inline static void INIT_VAL_WORD_BINDING(Cell(*) v, const REBSER *binding) {
+inline static void INIT_VAL_WORD_BINDING(Cell(*) v, Series(const*) binding) {
     assert(ANY_WORDLIKE(v));
 
     mutable_BINDING(v) = binding;
@@ -480,7 +480,7 @@ enum Reb_Attach_Mode {
 // failure mode while it's running...even if the context is inaccessible or
 // the word is unbound.  Errors should be raised by callers if applicable.
 //
-inline static Option(REBSER*) Get_Word_Container(
+inline static Option(Series(*)) Get_Word_Container(
     REBLEN *index_out,
     Cell(const*) any_word,
     REBSPC *specifier,
@@ -490,7 +490,7 @@ inline static Option(REBSER*) Get_Word_Container(
     *index_out = 0xDECAFBAD;  // trash index to make sure it gets set
   #endif
 
-    REBSER *binding = VAL_WORD_BINDING(any_word);
+    Series(*) binding = VAL_WORD_BINDING(any_word);
 
     if (specifier == SPECIFIED or not (IS_LET(specifier) or IS_USE(specifier)))
         goto not_virtually_bound;
@@ -607,7 +607,7 @@ inline static Option(REBSER*) Get_Word_Container(
         //
         if (CTX_TYPE(CTX(binding)) == REB_MODULE) {
             Symbol(const*) symbol = VAL_WORD_SYMBOL(VAL_UNESCAPED(any_word));
-            REBSER *patch = MISC(Hitch, symbol);
+            Series(*) patch = MISC(Hitch, symbol);
             while (Get_Series_Flag(patch, BLACK))  // binding temps
                 patch = SER(node_MISC(Hitch, patch));
 
@@ -693,7 +693,7 @@ inline static Option(REBSER*) Get_Word_Container(
             //
         }
         else {
-            REBSER *f_binding = SPC_BINDING(specifier); // can't fail()
+            Series(*) f_binding = SPC_BINDING(specifier); // can't fail()
             if (f_binding and Is_Overriding_Context(c, CTX(f_binding))) {
                 //
                 // The specifier binding overrides--because what's happening
@@ -744,7 +744,7 @@ inline static Value(const*) Lookup_Word_May_Fail(
     REBSPC *specifier
 ){
     REBLEN index;
-    REBSER *s = try_unwrap(
+    Series(*) s = try_unwrap(
         Get_Word_Container(&index, any_word, specifier, ATTACH_READ)
     );
     if (not s) {
@@ -766,7 +766,7 @@ inline static Option(Value(const*)) Lookup_Word(
     REBSPC *specifier
 ){
     REBLEN index;
-    REBSER *s = try_unwrap(
+    Series(*) s = try_unwrap(
         Get_Word_Container(&index, any_word, specifier, ATTACH_READ)
     );
     if (not s)
@@ -797,7 +797,7 @@ inline static REBVAL *Lookup_Mutable_Word_May_Fail(
     REBSPC *specifier
 ){
     REBLEN index;
-    REBSER *s = try_unwrap(
+    Series(*) s = try_unwrap(
         Get_Word_Container(&index, any_word, specifier, ATTACH_WRITE)
     );
     if (not s)
@@ -896,7 +896,7 @@ inline static REBVAL *Derelativize_Untracked(
     //
     if (ANY_WORDLIKE(v)) {
         REBLEN index;
-        REBSER *s = try_unwrap(
+        Series(*) s = try_unwrap(
             Get_Word_Container(&index, v, specifier, ATTACH_COPY)
         );
         if (not s) {

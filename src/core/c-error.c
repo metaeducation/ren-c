@@ -92,9 +92,9 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
         break;
 
       case DETECTED_AS_SERIES: {
-        REBSER *s = m_cast(REBSER*, cast(const REBSER*, p));  // don't mutate
+        Series(*) s = m_cast(SeriesT*, cast(const SeriesT* , p));  // don't mutate
         if (not IS_VARLIST(s))
-            panic (s);  // only kind of series allowed are contxts of ERROR!
+            panic (s);  // only kind of series allowed are contexts of ERROR!
         error = CTX(s);
         break; }
 
@@ -263,9 +263,9 @@ REBLEN Stack_Depth(void)
 //
 // If the message is not found, return nullptr.
 //
-const REBVAL *Find_Error_For_Sym(enum Reb_Symbol_Id id_sym)
+const REBVAL *Find_Error_For_Sym(SymId id)
 {
-    Symbol(const*) id_canon = Canon_Symbol(id_sym);
+    Symbol(const*) canon = Canon_Symbol(id);
 
     Context(*) categories = VAL_CONTEXT(Get_System(SYS_CATALOG, CAT_ERRORS));
 
@@ -275,7 +275,7 @@ const REBVAL *Find_Error_For_Sym(enum Reb_Symbol_Id id_sym)
 
         REBLEN n = 1;
         for (; n != CTX_LEN(category) + 1; ++n) {
-            if (Are_Synonyms(KEY_SYMBOL(CTX_KEY(category, n)), id_canon)) {
+            if (Are_Synonyms(KEY_SYMBOL(CTX_KEY(category, n)), canon)) {
                 REBVAL *message = CTX_VAR(category, n);
                 assert(IS_BLOCK(message) or IS_TEXT(message));
                 return message;
@@ -589,44 +589,44 @@ Bounce TO_Error(Level(*) level_, enum Reb_Kind kind, const REBVAL *arg)
 // regain control to properly call va_end with no longjmp to skip it.
 //
 Context(*) Make_Error_Managed_Core(
-    enum Reb_Symbol_Id cat_sym,
-    enum Reb_Symbol_Id id_sym,
+    SymId cat_id,
+    SymId id,
     va_list *vaptr
 ){
     if (PG_Boot_Phase < BOOT_ERRORS) { // no STD_ERROR or template table yet
       #if !defined(NDEBUG)
         printf(
-            "fail() before errors initialized, cat_sym = %d, id_sym = %d\n",
-            cast(int, cat_sym),
-            cast(int, id_sym)
+            "fail() before errors initialized, cat_id = %d, id = %d\n",
+            cast(int, cat_id),
+            cast(int, id)
         );
       #endif
 
         DECLARE_LOCAL (id_value);
-        Init_Integer(id_value, cast(int, id_sym));
+        Init_Integer(id_value, cast(int, id));
         panic (id_value);
     }
 
     Context(*) root_error = VAL_CONTEXT(Get_System(SYS_STANDARD, STD_ERROR));
 
-    DECLARE_LOCAL (id);
+    DECLARE_LOCAL (id_value);
     DECLARE_LOCAL (type);
     const REBVAL *message;  // Stack values ("movable") are allowed
-    if (cat_sym == SYM_0 and id_sym == SYM_0) {
-        Init_Nulled(id);
+    if (cat_id == SYM_0 and id == SYM_0) {
+        Init_Nulled(id_value);
         Init_Nulled(type);
         message = va_arg(*vaptr, const REBVAL*);
     }
     else {
-        assert(cat_sym != SYM_0 and id_sym != SYM_0);
-        Init_Word(type, Canon_Symbol(cat_sym));
-        Init_Word(id, Canon_Symbol(id_sym));
+        assert(cat_id != SYM_0 and id != SYM_0);
+        Init_Word(type, Canon_Symbol(cat_id));
+        Init_Word(id_value, Canon_Symbol(id));
 
         // Assume that error IDs are unique across categories (this is checked
         // by %make-boot.r).  If they were not, then this linear search could
         // not be used.
         //
-        message = Find_Error_For_Sym(id_sym);
+        message = Find_Error_For_Sym(id);
     }
 
     assert(message);
@@ -714,7 +714,7 @@ Context(*) Make_Error_Managed_Core(
     ERROR_VARS *vars = ERR_VARS(error);
 
     Copy_Cell(&vars->message, message);
-    Copy_Cell(&vars->id, id);
+    Copy_Cell(&vars->id, id_value);
     Copy_Cell(&vars->type, type);
 
     return error;
@@ -743,20 +743,20 @@ Context(*) Make_Error_Managed_Core(
 //     fail (Error_Something(arg1, thing_processed_to_make_arg2));
 //
 Context(*) Error(
-    int cat_sym,
-    int id_sym, // can't be enum Reb_Symbol_Id, see note below
+    int cat_id,
+    int id, // can't be SymId, see note below
     ... /* REBVAL *arg1, REBVAL *arg2, ... */
 ){
     va_list va;
 
-    // Note: if id_sym is enum, triggers: "passing an object that undergoes
+    // Note: if id is SymId, triggers: "passing an object that undergoes
     // default argument promotion to 'va_start' has undefined behavior"
     //
-    va_start(va, id_sym);
+    va_start(va, id);
 
     Context(*) error = Make_Error_Managed_Core(
-        cast(enum Reb_Symbol_Id, cat_sym),
-        cast(enum Reb_Symbol_Id, id_sym),
+        cast(SymId, cat_id),
+        cast(SymId, id),
         &va
     );
 
@@ -1267,7 +1267,7 @@ Context(*) Error_Cannot_Reflect(enum Reb_Kind type, const REBVAL *arg)
 //
 //  Error_On_Port: C
 //
-Context(*) Error_On_Port(enum Reb_Symbol_Id id_sym, REBVAL *port, REBINT err_code)
+Context(*) Error_On_Port(SymId id, REBVAL *port, REBINT err_code)
 {
     FAIL_IF_BAD_PORT(port);
 
@@ -1281,7 +1281,7 @@ Context(*) Error_On_Port(enum Reb_Symbol_Id id_sym, REBVAL *port, REBINT err_cod
     DECLARE_LOCAL (err_code_value);
     Init_Integer(err_code_value, err_code);
 
-    return Error(SYM_ACCESS, id_sym, val, err_code_value, rebEND);
+    return Error(SYM_ACCESS, id, val, err_code_value, rebEND);
 }
 
 

@@ -1,6 +1,6 @@
 //
 //  File: %sys-array.h
-//  Summary: {Definitions for Raw_Array}
+//  Summary: {Definitions for ArrayT}
 //  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  Homepage: https://github.com/metaeducation/ren-c/
 //
@@ -23,12 +23,12 @@
 // A "Rebol Array" is a series of value cells.  Every BLOCK! or GROUP! points
 // at an array node, which you see in the source as Array(*).
 //
-// While many array operations are shared in common with REBSER, there is a
+// While many Array operations are shared in common with Series, there is a
 // (deliberate) type incompatibility introduced.  The type compatibility is
-// only present when building as C++.  To cast as the underlying REBSER, use
+// only present when building as C++.  To cast as the underlying series, use
 // he SER() operation.
 //
-// An ARRAY is the main place in the system where "relative" values come
+// An Array is the main place in the system where "relative" values come
 // from, because all relative words are created during the copy of the
 // bodies of functions.  The array accessors must err on the safe side and
 // give back a relative value.  Many inspection operations are legal on
@@ -81,16 +81,16 @@ inline static bool Has_File_Line(Array(const*) a) {
 // empty arrays have no "last" value then ARR_LAST should not be called on it.
 
 inline static Cell(*) ARR_AT(const_if_c Array(*) a, REBLEN n)
-  { return SER_AT(Reb_Cell, a, n); }
+  { return SER_AT(CellT, a, n); }
 
 inline static Cell(*) ARR_HEAD(const_if_c Array(*) a)
-  { return SER_HEAD(Reb_Cell, a); }
+  { return SER_HEAD(CellT, a); }
 
 inline static Cell(*) ARR_TAIL(const_if_c Array(*) a)
-  { return SER_TAIL(Reb_Cell, a); }
+  { return SER_TAIL(CellT, a); }
 
 inline static Cell(*) ARR_LAST(const_if_c Array(*) a)
-  { return SER_LAST(Reb_Cell, a); }
+  { return SER_LAST(CellT, a); }
 
 inline static Cell(*) ARR_SINGLE(const_if_c Array(*) a) {
     assert(Not_Series_Flag(a, DYNAMIC));
@@ -99,16 +99,16 @@ inline static Cell(*) ARR_SINGLE(const_if_c Array(*) a) {
 
 #if CPLUSPLUS_11
     inline static Cell(const*) ARR_AT(Array(const*) a, REBLEN n)
-        { return SER_AT(const Reb_Cell, a, n); }
+        { return SER_AT(const CellT, a, n); }
 
     inline static Cell(const*) ARR_HEAD(Array(const*) a)
-        { return SER_HEAD(const Reb_Cell, a); }
+        { return SER_HEAD(const CellT, a); }
 
     inline static Cell(const*) ARR_TAIL(Array(const*) a)
-        { return SER_TAIL(const Reb_Cell, a); }
+        { return SER_TAIL(const CellT, a); }
 
     inline static Cell(const*) ARR_LAST(Array(const*) a)
-        { return SER_LAST(const Reb_Cell, a); }
+        { return SER_LAST(const CellT, a); }
 
     inline static Cell(const*) ARR_SINGLE(Array(const*) a) {
         assert(Not_Series_Flag(a, DYNAMIC));
@@ -124,7 +124,7 @@ inline static Array(*) Singular_From_Cell(Cell(const*) v) {
     Array(*) singular = ARR(  // some checking in debug builds is done by ARR()
         cast(void*,
             cast(Byte*, m_cast(Cell(*), v))
-            - offsetof(struct Reb_Stub, content)
+            - offsetof(Stub, content)
         )
     );
     assert(Not_Series_Flag(singular, DYNAMIC));
@@ -191,7 +191,7 @@ inline static Array(*) Make_Array_Core_Into(
         capacity += 1;  // account for space needed for poison cell
   #endif
 
-    REBSER *s = Make_Series_Into(preallocated, capacity, flags);
+    Series(*) s = Make_Series_Into(preallocated, capacity, flags);
     assert(IS_SER_ARRAY(s));  // flavor should have been an array flavor
 
     if (Get_Series_Flag(s, DYNAMIC)) {
@@ -279,10 +279,10 @@ inline static Array(*) Make_Array_For_Copy(
 }
 
 
-// A singular array is specifically optimized to hold *one* value in a REBSER
-// node directly, and stay fixed at that size.
+// A singular array is specifically optimized to hold *one* value in the
+// series Stub directly, and stay fixed at that size.
 //
-// Note ARR_SINGLE() must be overwritten by the caller...it contains an END
+// Note ARR_SINGLE() must be overwritten by the caller...it contains an end
 // marker but the array length is 1, so that will assert if you don't.
 //
 // For `flags`, be sure to consider if you need ARRAY_FLAG_HAS_FILE_LINE.
@@ -371,7 +371,7 @@ inline static Array(*) Copy_Array_At_Extra_Deep_Flags_Managed(
 
 //=////////////////////////////////////////////////////////////////////////=//
 //
-//  ANY-ARRAY! (uses `struct Reb_Any_Series`)
+//  ANY-ARRAY! (uses `struct AnyUnion_Series`)
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
@@ -539,7 +539,7 @@ inline static Cell(*) Init_Relative_Block_At(
     #define ASSERT_ARRAY(s) \
         Assert_Array_Core(s)
 
-    inline static void ASSERT_SERIES(const REBSER *s) {
+    inline static void ASSERT_SERIES(Series(const*) s) {
         if (IS_SER_ARRAY(s))
             Assert_Array_Core(ARR(s));  // calls Assert_Series_Basics_Core()
         else

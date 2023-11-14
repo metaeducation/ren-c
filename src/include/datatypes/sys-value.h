@@ -50,7 +50,7 @@
 //
 // The PROBE macro can be used in debug builds to mold a REBVAL much like the
 // Rebol `probe` operation.  But it's actually polymorphic, and if you have
-// a REBSER*, Context(*), or Array(*) it can be used with those as well.  In C++,
+// a Series(*), Context(*), or Array(*) it can be used with those as well.  In C++,
 // you can even get the same value and type out as you put in...just like in
 // Rebol, permitting things like `return PROBE(Make_Some_Series(...));`
 //
@@ -215,7 +215,7 @@
         } \
     } while (0)
 
-    inline static Cell(const*) READABLE(const RawCell *c) {
+    inline static Cell(const*) READABLE(const RawCell* c) {
         ASSERT_CELL_READABLE_EVIL_MACRO(c);  // ^-- should this be a template?
         return cast(Cell(const*), c);
     }
@@ -493,7 +493,7 @@ inline static bool IS_RELATIVE(Cell(const*) v) {
     if (not Is_Bindable(v))
         return false;  // may use extra for non-GC-marked uintptr_t-size data
 
-    REBSER *binding = BINDING(v);
+    Series(*) binding = BINDING(v);
     if (not binding)
         return false;  // INTEGER! and other types are inherently "specific"
 
@@ -504,7 +504,7 @@ inline static bool IS_RELATIVE(Cell(const*) v) {
 }
 
 #if CPLUSPLUS_11
-    bool IS_RELATIVE(const REBVAL *v) = delete;  // error on superfluous check
+    bool IS_RELATIVE(Value(const*) v) = delete;  // error on superfluous check
 #endif
 
 #define IS_SPECIFIC(v) \
@@ -514,35 +514,35 @@ inline static bool IS_RELATIVE(Cell(const*) v) {
 // When you have a Cell(*) (e.g. from a array) that you KNOW to be specific,
 // you might be bothered by an error like:
 //
-//     "invalid conversion from 'Reb_Value*' to 'Reb_Specific_Value*'"
+//     "invalid conversion from 'CellT*' to 'ValueT*'"
 //
 // You can use SPECIFIC to cast it if you are *sure* that it has been
 // derelativized -or- is a value type that doesn't have a specifier (e.g. an
 // integer).  If the value is actually relative, this will assert at runtime!
 //
 // Because SPECIFIC has cost in the debug build, there may be situations where
-// one is sure that the value is specific, and `cast(REBVAL*, v`) is a better
+// one is sure that the value is specific, and `cast(ValueT*, v)` is a better
 // choice for efficiency.  This applies to things like `Copy_Cell()`, which
-// is called often and already knew its input was a REBVAL* to start with.
+// is called often and already knew its input was a Value(*) to start with.
 //
 // Also, if you are enumerating an array of items you "know to be specific"
 // then you have to worry about if the array is empty:
 //
-//     REBVAL *head = SPECIFIC(ARR_HEAD(a));  // !!! a might be tail!
+//     Value(*) head = SPECIFIC(ARR_HEAD(a));  // a might be at tail !!!
 //
 
-inline static REBVAL *SPECIFIC(const_if_c Cell(*) v) {
+inline static Value(*) SPECIFIC(Cell(const_if_c*) v) {
     assert(IS_SPECIFIC(v));
-    return m_cast(REBVAL*, cast(const REBVAL*, v));
+    return x_cast(ValueT*, v);
 }
 
 #if CPLUSPLUS_11
-    inline static const REBVAL *SPECIFIC(Cell(const*) v) {
+    inline static Value(const*) SPECIFIC(Cell(const*) v) {
         assert(IS_SPECIFIC(v));
-        return cast(const REBVAL*, v);
+        return cast(const ValueT*, v);
     }
 
-    inline static REBVAL *SPECIFIC(const REBVAL *v) = delete;
+    inline static void SPECIFIC(Value(const*) v) = delete;
 #endif
 
 
@@ -560,16 +560,16 @@ inline static REBVAL *SPECIFIC(const_if_c Cell(*) v) {
 // (indicates a relative binding), or to a context's varlist (which indicates
 // a specific binding.)
 //
-// NOTE: Instead of using null for UNBOUND, a special global REBSER struct was
+// NOTE: Instead of using null for UNBOUND, a special global Stub struct was
 // experimented with.  It was at a location in memory known at compile time,
 // and it had its ->header and ->info bits set in such a way as to avoid the
 // need for some conditional checks.  e.g. instead of writing:
 //
 //     if (binding and binding->header.bits & NODE_FLAG_MANAGED) {...}
 //
-// The special UNBOUND node set some bits, such as to pretend to be managed:
+// The special UNBOUND stub set some bits, such as to pretend to be managed:
 //
-//     if (binding->header.bits & NODE_FLAG_MANAGED) {...} // incl. UNBOUND
+//     if (binding->header.bits & NODE_FLAG_MANAGED) {...}  // incl. UNBOUND
 //
 // Question was whether avoiding the branching involved from the extra test
 // for null would be worth it for a consistent ability to dereference.  At
@@ -632,7 +632,7 @@ inline static bool ANY_STRINGLIKE(NoQuote(Cell(const*)) v) {
 inline static void INIT_VAL_WORD_SYMBOL(Cell(*) v, Symbol(const*) symbol)
   { INIT_VAL_NODE1(v, symbol); }
 
-inline static const Raw_Symbol* VAL_WORD_SYMBOL(NoQuote(Cell(const*)) cell) {
+inline static const SymbolT* VAL_WORD_SYMBOL(NoQuote(Cell(const*)) cell) {
     assert(ANY_WORDLIKE(cell));  // no _UNCHECKED variant :-(
     return SYM(VAL_NODE1(cell));
 }
@@ -837,11 +837,11 @@ inline static REBVAL *Constify(REBVAL *v) {
 // to define cells that are part of the frame, and access them via LOCAL().
 //
 #define DECLARE_LOCAL(name) \
-    RawCell name##_cell; \
+    CellT name##_cell; \
     Erase_Cell(&name##_cell); \
     Atom(*) name = cast(Atom(*), &name##_cell)
 
 #define DECLARE_STABLE(name) \
-    RawCell name##_cell; \
+    CellT name##_cell; \
     Erase_Cell(&name##_cell); \
     Value(*) name = cast(Value(*), &name##_cell)

@@ -179,7 +179,7 @@ void Free_Mem(void *mem, size_t size)
 **      group of which are fixed size (so require no compaction).
 **
 ***********************************************************************/
-const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
+const PoolSpec Mem_Pool_Spec[MAX_POOLS] =
 {
     // R3-Alpha had a "0-8 small string pool".  e.g. a pool of allocations for
     // payloads 0 to 8 bytes in length.  These are not technically possible in
@@ -188,12 +188,12 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
     // standardized header (0 when free).
     //
     // This is not a problem, since all such small strings would also need
-    // REBSERs...and Ren-C has a better answer to embed the payload directly
-    // into the REBSER.  This wouldn't apply if you were trying to do very
-    // small allocations of strings that did not have associated REBSERs..
-    // but those don't exist in the code.
+    // Stubs...and Ren-C has a better answer to embed the payload directly
+    // into the Stub when SERIES_FLAG_DYNAMIC is not set.  This wouldn't apply
+    // if you were trying to do very small allocations of strings that did not
+    // have associated Stubs...but those don't exist in the code.
 
-    MOD_POOL( 1, 256),  // 9-16 (when REBVAL is 16)
+    MOD_POOL( 1, 256),  // 9-16 (when sizeof(Cell) is 16)
     MOD_POOL( 2, 512),  // 17-32 - Small series (x 16)
     MOD_POOL( 3, 1024), // 33-64
     MOD_POOL( 4, 512),
@@ -219,14 +219,14 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
     DEF_POOL(MEM_BIG_SIZE*3, 4),    // 3K
     DEF_POOL(MEM_BIG_SIZE*4, 4),    // 4K
 
-    DEF_POOL(sizeof(REBSER), 4096), // Series headers
+    DEF_POOL(sizeof(SeriesT), 4096), // Series headers
 
-  #if UNUSUAL_CELL_SIZE  // sizeof(REBVAL)*2 != sizeof(REBSER)
-    DEF_POOL(sizeof(REBVAL) * 2, 16),  // Pairings, PAIR_POOL
+  #if UNUSUAL_CELL_SIZE  // sizeof(CellT)*2 != sizeof(Stub)
+    DEF_POOL(sizeof(CellT) * 2, 16),  // Pairings, PAIR_POOL
   #endif
 
-    DEF_POOL(ALIGN(sizeof(struct Reb_Level), sizeof(REBI64)), 128),  // Levels
-    DEF_POOL(ALIGN(sizeof(Reb_Feed), sizeof(REBI64)), 128),  // Feeds
+    DEF_POOL(ALIGN(sizeof(LevelT), sizeof(REBI64)), 128),  // Levels
+    DEF_POOL(ALIGN(sizeof(FeedT), sizeof(REBI64)), 128),  // Feeds
 
     DEF_POOL(sizeof(REBI64), 1), // Just used for tracking main memory
 };
@@ -325,9 +325,9 @@ void Startup_Pools(REBINT scale)
     );
     Clear_Series_Flag(GC_Manuals, MANAGED);
 
-    Prior_Expand = TRY_ALLOC_N(REBSER*, MAX_EXPAND_LIST);
-    memset(Prior_Expand, 0, sizeof(REBSER*) * MAX_EXPAND_LIST);
-    Prior_Expand[0] = (REBSER*)1;
+    Prior_Expand = TRY_ALLOC_N(Series(*), MAX_EXPAND_LIST);
+    memset(Prior_Expand, 0, sizeof(Series(*)) * MAX_EXPAND_LIST);
+    Prior_Expand[0] = (Series(*))1;
 }
 
 
@@ -346,7 +346,7 @@ void Shutdown_Pools(void)
   #if !defined(NDEBUG)
   blockscope {
     Count num_leaks = 0;
-    REBSER *leaked = nullptr;
+    Series(*) leaked = nullptr;
     Segment* seg = Mem_Pools[STUB_POOL].segments;
 
     for(; seg != nullptr; seg = seg->next) {
@@ -359,7 +359,7 @@ void Shutdown_Pools(void)
 
             ++num_leaks;
 
-            REBSER *s = SER(cast(void*, stub));
+            Series(*) s = SER(cast(void*, stub));
             if (Get_Series_Flag(s, MANAGED)) {
                 printf("MANAGED series leak, this REALLY shouldn't happen\n");
                 leaked = s;  // report a managed one if found
@@ -382,7 +382,7 @@ void Shutdown_Pools(void)
   }
   #endif
 
-    PoolID pool_id;
+    PoolId pool_id;
     for (pool_id = 0; pool_id < MAX_POOLS; ++pool_id) {
         Pool *pool = &Mem_Pools[pool_id];
         Size mem_size = (
@@ -402,7 +402,7 @@ void Shutdown_Pools(void)
     FREE_N(Byte, (4 * MEM_BIG_SIZE) + 1, PG_Pool_Map);
 
     // !!! Revisit location (just has to be after all series are freed)
-    FREE_N(REBSER*, MAX_EXPAND_LIST, Prior_Expand);
+    FREE_N(Series(*), MAX_EXPAND_LIST, Prior_Expand);
 
   #if DEBUG_COLLECT_STATS
     FREE(REB_STATS, PG_Reb_Stats);
@@ -506,14 +506,14 @@ Node* Try_Find_Containing_Node_Debug(const void *p)
             if (*stub & NODE_BYTEMASK_0x40_STALE)
                 continue;
 
-            if (*stub & NODE_BYTEMASK_0x01_CELL) { // a "pairing"
+            if (*stub & NODE_BYTEMASK_0x01_CELL) {  // a "pairing"
                 REBVAL *pairing = VAL(cast(void*, stub));
                 if (p >= cast(void*, pairing) and p < cast(void*, pairing + 1))
-                    return pairing;  // REBSER is actually REBVAL[2]
+                    return pairing;  // this Stub is actually CellT[2]
                 continue;
             }
 
-            REBSER *s = SER(cast(void*, stub));
+            Series(*) s = SER(cast(void*, stub));
             if (Not_Series_Flag(s, DYNAMIC)) {
                 if (
                     p >= cast(void*, &s->content)
@@ -629,10 +629,10 @@ void Free_Pairing(REBVAL *paired) {
 
   #if DEBUG_COUNT_TICKS
     //
-    // This wasn't actually a REBSER, so can't cast with SER().  But poke the
+    // This wasn't actually a SeriesT, so can't cast with SER().  But poke the
     // tick where the node was freed into the memory spot so panic finds it.
     //
-    ((REBSER*)(paired))->tick = TG_tick;
+    cast(Stub*, paired)->tick = TG_tick;
   #endif
 }
 
@@ -652,13 +652,13 @@ void Free_Pairing(REBVAL *paired) {
 //
 void Free_Unbiased_Series_Data(char *unbiased, Size total)
 {
-    PoolID pool_id = Pool_Id_For_Size(total);
+    PoolId pool_id = Pool_Id_For_Size(total);
     Pool* pool;
 
     if (pool_id < SYSTEM_POOL) {
         //
         // The series data does not honor "node protocol" when it is in use
-        // The pools are not swept the way the REBSER pool is, so only the
+        // The pools are not swept the way the Stub pool is, so only the
         // free nodes have significance to their headers.  Use a cast and not
         // NOD() because that assumes not (SERIES_FLAG_FREE)
         //
@@ -723,7 +723,7 @@ void Free_Unbiased_Series_Data(char *unbiased, Size total)
 // WARNING: never use direct pointers into the series data, as the
 // series data can be relocated in memory.
 //
-void Expand_Series(REBSER *s, REBLEN index, REBLEN delta)
+void Expand_Series(Series(*) s, REBLEN index, REBLEN delta)
 {
     ASSERT_SERIES_TERM_IF_NEEDED(s);
 
@@ -855,12 +855,12 @@ void Expand_Series(REBSER *s, REBLEN index, REBLEN delta)
 
     // !!! The protocol for doing new allocations currently mandates that the
     // dynamic content area be cleared out.  But the data lives in the content
-    // area if there's no dynamic portion.  The in-REBSER content has to be
+    // area if there's no dynamic portion.  The in-Stub content has to be
     // copied to preserve the data.  This could be generalized so that the
     // routines that do calculations operate on the content as a whole, not
-    // the REBSER node, so the content is extracted either way.
+    // the Stub, so the content is extracted either way.
     //
-    union Reb_Stub_Content content_old;
+    union StubContentUnion content_old;
     REBINT bias_old;
     REBLEN size_old;
     char *data_old;
@@ -933,7 +933,7 @@ void Expand_Series(REBSER *s, REBLEN index, REBLEN delta)
 // a risky operation that should only be called when the client is sure it
 // is safe to do so (more asserts would probably help).
 //
-void Swap_Series_Content(REBSER* a, REBSER* b)
+void Swap_Series_Content(Series(*) a, Series(*) b)
 {
     // Can't think of any reasonable case for mutating an array node into a
     // non-array or vice versa.  Cases haven't come up for swapping series
@@ -956,15 +956,15 @@ void Swap_Series_Content(REBSER* a, REBSER* b)
     mutable_USED_BYTE(a) = USED_BYTE(b);
     mutable_USED_BYTE(b) = a_len;
 
-    union Reb_Stub_Content a_content = a->content;
+    union StubContentUnion a_content = a->content;
     a->content = b->content;
     b->content = a_content;
 
-    union Reb_Stub_Misc a_misc = a->misc;
+    union StubMiscUnion a_misc = a->misc;
     a->misc = b->misc;
     b->misc = a_misc;
 
-    union Reb_Stub_Link a_link = a->link;
+    union StubLinkUnion a_link = a->link;
     a->link = b->link;
     b->link = a_link;
 }
@@ -995,8 +995,8 @@ DECLARE_NATIVE(swap_contents)
     if (IS_BINARY(ARG(series1)) != IS_BINARY(ARG(series2)))
         fail ("Can only SWAP-CONTENTS of binaries with other binaries");
 
-    REBSER *s1 = VAL_SERIES_ENSURE_MUTABLE(ARG(series1));
-    REBSER *s2 = VAL_SERIES_ENSURE_MUTABLE(ARG(series2));
+    Series(*) s1 = VAL_SERIES_ENSURE_MUTABLE(ARG(series1));
+    Series(*) s2 = VAL_SERIES_ENSURE_MUTABLE(ARG(series2));
     Swap_Series_Content(s1, s2);
 
     return NONE;
@@ -1009,7 +1009,7 @@ DECLARE_NATIVE(swap_contents)
 // Reallocate a series as a given maximum size.  Content in the retained
 // portion of the length will be preserved if NODE_FLAG_NODE is passed in.
 //
-void Remake_Series(REBSER *s, REBLEN units, Flags flags)
+void Remake_Series(Series(*) s, REBLEN units, Flags flags)
 {
     // !!! This routine is being scaled back in terms of what it's allowed to
     // do for the moment; so the method of passing in flags is a bit strange.
@@ -1033,7 +1033,7 @@ void Remake_Series(REBSER *s, REBLEN units, Flags flags)
     // updating preservation.)
 
     char *data_old;
-    union Reb_Stub_Content content_old;
+    union StubContentUnion content_old;
     if (was_dynamic) {
         assert(s->content.dynamic.data != NULL);
         data_old = s->content.dynamic.data;
@@ -1047,9 +1047,9 @@ void Remake_Series(REBSER *s, REBLEN units, Flags flags)
 
     s->leader.bits |= flags;
 
-    // !!! Currently the remake won't make a series that fits in the size of
-    // a REBSER.  All series code needs a general audit, so that should be one
-    // of the things considered.
+    // !!! Currently the remake won't make a series that fits entirely inside
+    // a Stub (so always SERIES_FLAG_DYNAMIC).  All series code needs a general
+    // audit, so that should be one of the things considered.
 
     Set_Series_Flag(s, DYNAMIC);
     if (not Did_Series_Data_Alloc(s, units + 1)) {
@@ -1091,7 +1091,7 @@ void Remake_Series(REBSER *s, REBLEN units, Flags flags)
 //
 //  Decay_Series: C
 //
-void Decay_Series(REBSER *s)
+void Decay_Series(Series(*) s)
 {
     assert(Not_Series_Flag(s, INACCESSIBLE));
 
@@ -1111,7 +1111,7 @@ void Decay_Series(REBSER *s)
         // same name in other modules...with the name itself as a symbol
         // being in that circular list.  Remove this patch from that list.
         //
-        REBSER *temp = MISC(PatchHitch, s);
+        Series(*) temp = MISC(PatchHitch, s);
         while (node_MISC(Hitch, temp) != s) {
             temp = SER(node_MISC(Hitch, temp));
             assert(IS_PATCH(temp) or IS_SYMBOL(temp));
@@ -1172,7 +1172,7 @@ void Decay_Series(REBSER *s)
 
         // !!! This indicates reclaiming of the space, not for the series
         // nodes themselves...have they never been accounted for, e.g. in
-        // R3-Alpha?  If not, they should be...additional sizeof(REBSER),
+        // R3-Alpha?  If not, they should be...additional sizeof(Stub),
         // also tracking overhead for that.  Review the question of how
         // the GC watermarks interact with Try_Alloc_Mem() and the "higher
         // level" allocations.
@@ -1194,7 +1194,7 @@ void Decay_Series(REBSER *s)
 // It frees a series even though it is under GC management,
 // because the GC has figured out no references exist.
 //
-void GC_Kill_Series(REBSER *s)
+void GC_Kill_Series(Series(*) s)
 {
   #if !defined(NDEBUG)
     if (IS_FREE_NODE(s)) {
@@ -1234,7 +1234,7 @@ void GC_Kill_Series(REBSER *s)
 //
 // Returns series node and data to memory pools for reuse.
 //
-void Free_Unmanaged_Series(REBSER *s)
+void Free_Unmanaged_Series(Series(*) s)
 {
   #if !defined(NDEBUG)
     if (IS_FREE_NODE(s)) {
@@ -1289,7 +1289,7 @@ void Assert_Pointer_Detection_Working(void)
 
     assert(Detect_Rebol_Pointer(rebEND) == DETECTED_AS_END);
 
-    Binary(*) bin = Make_Series(Binary, 1, FLAG_FLAVOR(BINARY));
+    Binary(*) bin = Make_Series(BinaryT, 1, FLAG_FLAVOR(BINARY));
     assert(Detect_Rebol_Pointer(bin) == DETECTED_AS_SERIES);
     Free_Unmanaged_Series(bin);
 }
@@ -1315,21 +1315,21 @@ REBLEN Check_Memory_Debug(void)
         Count n = Mem_Pools[STUB_POOL].num_units_per_segment;
         Byte* stub = cast(Byte*, seg + 1);
 
-        for (; n > 0; --n, stub += sizeof(REBSER)) {
+        for (; n > 0; --n, stub += sizeof(Stub)) {
             if (*stub & NODE_BYTEMASK_0x40_STALE)
                 continue;
 
             if (*stub & NODE_BYTEMASK_0x01_CELL)
                 continue; // a pairing
 
-            REBSER *s = SER(cast(void*, stub));
+            Series(*) s = SER(cast(void*, stub));
             if (Not_Series_Flag(s, DYNAMIC))
                 continue; // data lives in the series node itself
 
             if (SER_REST(s) == 0)
                 panic (s); // zero size allocations not legal
 
-            PoolID pool_id = Pool_Id_For_Size(SER_TOTAL(s));
+            PoolId pool_id = Pool_Id_For_Size(SER_TOTAL(s));
             if (pool_id >= STUB_POOL)
                 continue; // size doesn't match a known pool
 
@@ -1340,7 +1340,7 @@ REBLEN Check_Memory_Debug(void)
 
     Count total_free_nodes = 0;
 
-    PoolID pool_id;
+    PoolId pool_id;
     for (pool_id = 0; pool_id != SYSTEM_POOL; pool_id++) {
         Count pool_free_nodes = 0;
 
@@ -1401,7 +1401,7 @@ void Dump_All_Series_Of_Width(Size wide)
             if (*stub & NODE_BYTEMASK_0x40_STALE)
                 continue;
 
-            REBSER *s = SER(cast(void*, stub));
+            Series(*) s = SER(cast(void*, stub));
             if (SER_WIDE(s) == wide) {
                 ++count;
                 printf(
@@ -1422,7 +1422,7 @@ void Dump_All_Series_Of_Width(Size wide)
 //
 // Dump all series in pool @pool_id, UNLIMITED (-1) for all pools
 //
-void Dump_Series_In_Pool(PoolID pool_id)
+void Dump_Series_In_Pool(PoolId pool_id)
 {
     Segment* seg = Mem_Pools[STUB_POOL].segments;
 
@@ -1438,7 +1438,7 @@ void Dump_Series_In_Pool(PoolID pool_id)
             if (nodebyte & NODE_BYTEMASK_0x01_CELL)
                 continue;  // pairing
 
-            REBSER *s = SER(cast(void*, stub));
+            Series(*) s = SER(cast(void*, stub));
             if (
                 pool_id == UNLIMITED
                 or (
@@ -1464,7 +1464,7 @@ void Dump_Pools(void)
     REBLEN total = 0;
     REBLEN tused = 0;
 
-    PoolID id;
+    PoolId id;
     for (id = 0; id != SYSTEM_POOL; ++id) {
         Count num_segs = 0;
         Size size = 0;
@@ -1546,7 +1546,7 @@ REBU64 Inspect_Series(bool show)
             if (nodebyte & NODE_BYTEMASK_0x01_CELL)
                 continue;
 
-            REBSER *s = SER(cast(void*, stub));
+            Series(*) s = SER(cast(void*, stub));
 
             tot_size += SER_TOTAL_IF_DYNAMIC(s); // else 0
 
@@ -1568,15 +1568,15 @@ REBU64 Inspect_Series(bool show)
     // Size up unused memory:
     //
     REBU64 fre_size = 0;
-    PoolID pool_id;
+    PoolId pool_id;
     for (pool_id = 0; pool_id != SYSTEM_POOL; pool_id++) {
         fre_size += Mem_Pools[pool_id].free * Mem_Pools[pool_id].wide;
     }
 
     if (show) {
         printf("Series Memory Info:\n");
-        printf("  REBVAL size = %lu\n", cast(unsigned long, sizeof(REBVAL)));
-        printf("  REBSER size = %lu\n", cast(unsigned long, sizeof(REBSER)));
+        printf("  Cell size = %lu\n", cast(unsigned long, sizeof(CellT)));
+        printf("  Stub size = %lu\n", cast(unsigned long, sizeof(Stub)));
         printf(
             "  %-6d segs = %-7d bytes - headers\n",
             cast(int, segs),

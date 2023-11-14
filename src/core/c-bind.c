@@ -141,7 +141,7 @@ void Bind_Values_Core(
     Context(*) c = VAL_CONTEXT(context);
 
     // Associate the canon of a word with an index number.  (This association
-    // is done by poking the index into the REBSER of the series behind the
+    // is done by poking the index into the stub of the series behind the
     // ANY-WORD!, so it must be cleaned up to not break future bindings.)
     //
   if (not IS_MODULE(context)) {
@@ -698,7 +698,7 @@ static void Clonify_And_Bind_Relative(
         //
         // Objects and series get shallow copied at minimum
         //
-        REBSER *series;
+        Series(*) series;
         bool would_need_deep;
 
         if (ANY_CONTEXT_KIND(heart)) {

@@ -22,9 +22,9 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // In R3-Alpha, words were not garbage collected, and their UTF-8 data was
-// kept in a separate table from the REBSERs.  In Ren-C, words use REBSERs,
-// and are merely *indexed* by hashes of their canon forms via an external
-// table.  This table grows and shrinks as canons are added and removed.
+// kept in a separate table from the Series stubs.  In Ren-C, words are string
+// series, and are merely *indexed* by hashes of their canon forms via an
+// external table.  It grows and shrinks as canons are added and removed.
 //
 
 #include "sys-core.h"
@@ -136,7 +136,7 @@ static void Expand_Word_Table(void)
     REBLEN num_slots = Get_Hash_Prime_May_Fail(old_num_slots + 1);
     assert(SER_WIDE(PG_Symbols_By_Hash) == sizeof(Symbol(*)));
 
-    REBSER *ser = Make_Series_Core(
+    Series(*) ser = Make_Series_Core(
         num_slots, FLAG_FLAVOR(CANONTABLE) | SERIES_FLAG_POWER_OF_2
     );
     Clear_Series(ser);
@@ -272,7 +272,7 @@ Symbol(const*) Intern_UTF8_Managed_Core(
 
     Binary(*) s = BIN(Make_Series_Into(
         preallocated ? unwrap(preallocated) : Alloc_Stub(),
-        size + 1,  // if small, fits in a REBSER node (no data allocation)
+        size + 1,  // if small, fits in a Series stub (no dynamic allocation)
         FLAG_FLAVOR(SYMBOL) | SERIES_FLAG_FIXED_SIZE | NODE_FLAG_MANAGED
     ));
 
@@ -441,7 +441,7 @@ void GC_Kill_Interning(String(*) intern)
     // variables referring to it are also being freed.  Make sure that is
     // the case, and remove from the circularly linked list.
     //
-    REBSER *patch = intern;
+    Series(*) patch = intern;
     while (SER(node_MISC(Hitch, patch)) != intern) {
         assert(Not_Series_Flag(patch, MARKED));
         patch = SER(node_MISC(Hitch, patch));

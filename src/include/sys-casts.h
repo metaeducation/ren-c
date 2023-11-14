@@ -22,7 +22,7 @@
 // C++ debug build provides.  But it's also some of the most vital.
 //
 // It is often the case that a stored pointer for a series or node is the
-// base class, e.g. a REBSER* when it is actually the varlist of a Context(*).
+// base class, e.g. a Series(*) when it is actually the varlist of a Context(*).
 // The process for casting something from a base class to a subclass is
 // referred to as "downcasting":
 //
@@ -36,10 +36,10 @@
 // In the C++ build we can do better:
 //
 // * Templates can stop illegal downcasting (e.g. keep you from trying to turn
-//   an `int*` into a `Array(*)`, but allow you to do it for `REBSER*`).
+//   an `int*` into a `Array(*)`, but allow you to do it for `Series(*)`).
 //
-// * They can also stop unnecessary downcasting...such as casting a REBSER*
-//   to a REBSER*.
+// * They can also stop unnecessary downcasting...such as casting a Series(*)
+//   to a Series(*).
 //
 // * Bit patterns can be checked in the node to make sure that the cast is
 //   actually legal at runtime.  While this can be done in C too, the nature
@@ -65,14 +65,14 @@
 
     #define NOD(p)          x_cast(Node*, (p))
 
-    #define SER(p)          x_cast(Raw_Series*, (p))
-    #define ARR(p)          x_cast(Raw_Array*, (p))
-    #define ACT(p)          x_cast(Raw_Action*, (p))
-    #define CTX(p)          x_cast(Raw_Context*, (p))
+    #define SER(p)          x_cast(SeriesT*, (p))
+    #define ARR(p)          x_cast(ArrayT*, (p))
+    #define ACT(p)          x_cast(ActionT*, (p))
+    #define CTX(p)          x_cast(ContextT*, (p))
 
-    #define STR(p)          x_cast(Raw_String*, (p))
+    #define STR(p)          x_cast(StringT*, (p))
 
-    #define SYM(p)          x_cast(Raw_Symbol*, (p))
+    #define SYM(p)          x_cast(SymbolT*, (p))
 
     #define VAL(p)          x_cast(REBVAL*, (p))
 
@@ -133,8 +133,8 @@
         typename T0 = typename std::remove_const<T>::type,
         typename S = typename std::conditional<
             std::is_const<T>::value,  // boolean
-            const REBSER,  // true branch
-            REBSER  // false branch
+            const SeriesT,  // true branch
+            SeriesT  // false branch
         >::type
     >
     inline S *SER(T *p) {
@@ -146,7 +146,7 @@
         if (not p)
             return nullptr;
 
-        if ((reinterpret_cast<const REBSER*>(p)->leader.bits & (
+        if ((reinterpret_cast<Series(const*) >(p)->leader.bits & (
             NODE_FLAG_NODE | SERIES_FLAG_FREE | NODE_FLAG_CELL
         )) != (
             NODE_FLAG_NODE
@@ -162,21 +162,21 @@
         typename T0 = typename std::remove_const<T>::type,
         typename A = typename std::conditional<
             std::is_const<T>::value,  // boolean
-            const Raw_Array,  // true branch
-            Raw_Array  // false branch
+            const ArrayT,  // true branch
+            ArrayT  // false branch
         >::type
     >
     inline A *ARR(T *p) {
         static_assert(
             std::is_same<T0, void>::value
                 or std::is_same<T0, Node>::value
-                or std::is_same<T0, Raw_Series>::value,
+                or std::is_same<T0, SeriesT>::value,
             "ARR() works on [void* Node* Series*]"
         );
         if (not p)
             return nullptr;
 
-        if ((reinterpret_cast<const REBSER*>(p)->leader.bits & (
+        if ((reinterpret_cast<Series(const*) >(p)->leader.bits & (
             NODE_FLAG_NODE | SERIES_FLAG_FREE | NODE_FLAG_CELL
         )) != (
             NODE_FLAG_NODE
@@ -192,22 +192,22 @@
         typename T0 = typename std::remove_const<T>::type,
         typename C = typename std::conditional<
             std::is_const<T>::value,  // boolean
-            const Raw_Context,  // true branch
-            Raw_Context  // false branch
+            const ContextT,  // true branch
+            ContextT  // false branch
         >::type
     >
     inline static C *CTX(T *p) {
         static_assert(
             std::is_same<T0, void>::value
                 or std::is_same<T0, Node>::value
-                or std::is_same<T0, Raw_Series>::value
-                or std::is_same<T0, Raw_Array>::value,
+                or std::is_same<T0, SeriesT>::value
+                or std::is_same<T0, ArrayT>::value,
             "CTX() works on [void* Node* Series* Array*]"
         );
         if (not p)
             return nullptr;
 
-        if (((reinterpret_cast<const REBSER*>(p)->leader.bits & (
+        if (((reinterpret_cast<Series(const*) >(p)->leader.bits & (
             SERIES_MASK_VARLIST
                 | SERIES_FLAG_FREE
                 | NODE_FLAG_CELL
@@ -228,15 +228,15 @@
         static_assert(
             std::is_same<P, void*>::value
                 or std::is_same<P, Node*>::value
-                or std::is_same<P, Raw_Series*>::value
-                or std::is_same<P, Raw_Array*>::value,
+                or std::is_same<P, SeriesT*>::value
+                or std::is_same<P, ArrayT*>::value,
             "ACT() works on [void* Node* Series* Array*]"
         );
 
         if (not p)
             return nullptr;
 
-        if ((reinterpret_cast<const REBSER*>(p)->leader.bits & (
+        if ((reinterpret_cast<Series(const*) >(p)->leader.bits & (
             SERIES_MASK_DETAILS
                 | SERIES_FLAG_FREE
                 | NODE_FLAG_CELL
@@ -281,7 +281,7 @@
     inline Level(*) LVL(T *p) {
         constexpr bool base = std::is_same<T, void>::value
             or std::is_same<T, Node>::value
-            or std::is_same<T, Reb_Level>::value;
+            or std::is_same<T, LevelT>::value;
 
         static_assert(base, "LVL() works on void* Node* Level*");
 
@@ -302,10 +302,10 @@
 #endif
 
 
-inline static REBMAP *MAP(void *p) {  // not a fancy cast ATM.
+inline static Map(*) MAP(void *p) {  // not a fancy cast ATM.
     Array(*) a = ARR(p);
     assert(IS_PAIRLIST(a));
-    return cast(REBMAP*, a);
+    return cast(Map(*), a);
 }
 
-#define KEYS(p)         x_cast(Raw_Keylist*, (p))
+#define KEYS(p)         x_cast(KeylistT*, (p))

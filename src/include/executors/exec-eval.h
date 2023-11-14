@@ -19,7 +19,7 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // The executor state has to be defined in order to be used (easily) in the
-// union of the Reb_Level.
+// union of the Level.
 //
 
 #define EXECUTOR_EVAL &Evaluator_Executor  // shorthand in Xxx_Executor_Flag()
@@ -128,7 +128,7 @@
     LEVEL_FLAG_31
 
 
-struct Reb_Eval_Executor_State {
+struct EvaluatorExecutorStateStruct {
     //
     // Unlike actions (which have as many GC-protected locals as they want
     // to make in a frame), the evaluator has only the SPARE.  It makes things

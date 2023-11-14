@@ -129,7 +129,7 @@ inline static LineNumber LineNumber_Of_Level(Level(*) L) {
 // ID ran.  Consider when reviewing the future of ACTION!.
 //
 #define Level_Num_Args(L) \
-    (cast(REBSER*, (L)->varlist)->content.dynamic.used - 1)  // minus rootvar
+    (cast(Series(*), (L)->varlist)->content.dynamic.used - 1)  // minus rootvar
 
 #define Level_Spare(L) \
     cast(Atom(*), &(L)->spare)
@@ -339,7 +339,7 @@ inline static void Drop_Level_Core(Level(*) L) {
         //
         Node* n = L->alloc_value_list;
         while (n != L) {
-            Raw_Array* a = ARR(n);
+            ArrayT* a = ARR(n);
             n = LINK(ApiNext, a);
             FRESHEN(ARR_SINGLE(a));
             GC_Kill_Series(a);
@@ -355,7 +355,7 @@ inline static void Drop_Level_Core(Level(*) L) {
       #if !defined(NDEBUG)
         Node* n = L->alloc_value_list;
         while (n != L) {
-            Raw_Array* a = ARR(n);
+            ArrayT* a = ARR(n);
             printf("API handle was allocated but not freed, panic'ing leak\n");
             panic (a);
         }
@@ -403,7 +403,7 @@ inline static Level(*) Prep_Level_Core(
     Flags flags
 ){
    if (L == nullptr)  // e.g. a failed allocation
-       fail (Error_No_Memory(sizeof(struct Reb_Level)));
+       fail (Error_No_Memory(sizeof(LevelT)));
 
     L->flags.bits = flags | LEVEL_FLAG_0_IS_TRUE | LEVEL_FLAG_7_IS_TRUE;
 
@@ -436,7 +436,7 @@ inline static Level(*) Prep_Level_Core(
     // out, but some clients do depend on the StackIndex being captured before
     // Push_Level() is called, so this snaps the whole baseline here.
     //
-    SNAP_STATE(&L->baseline);  // see notes on `baseline` in Reb_Level
+    SNAP_STATE(&L->baseline);  // see notes on `baseline` in LevelT
 
   #if DEBUG_COUNT_TICKS
     L->tick = TG_tick;

@@ -20,8 +20,8 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// In the C build, a Array(*) and REBSER* are the same type.  The C++ build
-// derives Raw_Array from Raw_Series...meaning you can pass an array to a
+// In the C build, a Array(*) and Series(*) are the same type.  The C++ build
+// derives ArrayT from SeriesT...meaning you can pass an array to a
 // function that expects a series, but not vice-versa.
 //
 // There are several subclasses (FLAVOR_XXX) whose elements are value cells,
@@ -33,19 +33,19 @@
 //
 
 #if CPLUSPLUS_11
-    struct Raw_Array : public Raw_Series {};
+    struct ArrayT : public SeriesT {};
 
-    struct Raw_Details : public Raw_Array {};
+    struct DetailsT : public ArrayT {};
 #else
-    typedef Raw_Series Raw_Array;
-    typedef Raw_Array Raw_Details;
+    typedef SeriesT ArrayT;
+    typedef ArrayT DetailsT;
 #endif
 
 #define Array(star_maybe_const) \
-    Raw_Array star_maybe_const
+    ArrayT star_maybe_const
 
 #define Details(star_maybe_const) \
-    Raw_Details star_maybe_const
+    DetailsT star_maybe_const
 
 
 // It may become interesting to say that a specifier can be a pairing or
@@ -55,7 +55,7 @@
 // the interests of making the code strict-aliasing-safe for starters, assume
 // all specifiers are arrays.
 //
-typedef Raw_Array REBSPC;
+typedef ArrayT REBSPC;
 
 
 //=//// TYPE HOOK ACCESS //////////////////////////////////////////////////=//
@@ -84,7 +84,7 @@ enum Reb_Type_Hook_Index {
 
 //=//// ARRAY_FLAG_HAS_FILE_LINE_UNMASKED /////////////////////////////////=//
 //
-// The Raw_Series node has two pointers in it, ->link and ->misc, which are
+// The SeriesT node has two pointers in it, ->link and ->misc, which are
 // used for a variety of purposes (pointing to the keylist for an object,
 // the C code that runs as the dispatcher for a function, etc.)  But for
 // regular source series, they can be used to store the filename and line

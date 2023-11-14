@@ -50,7 +50,7 @@
 //
 //  Dump_Series: C
 //
-void Dump_Series(REBSER *s, const char *memo)
+void Dump_Series(Series(*) s, const char *memo)
 {
     printf("Dump_Series(%s) @ %p\n", memo, cast(void*, s));
     fflush(stdout);

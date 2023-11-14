@@ -28,7 +28,7 @@
 // since the common dialogs seem able to do either.
 //
 // For something of this relatively simple nature, it would be ideal if the
-// code did not know about REBSER* or other aspects of the internal API.
+// code did not know about Series(*) or other aspects of the internal API.
 // But the external API is not quite polished yet, so some fledgling features
 // are being used here.
 //

@@ -6,7 +6,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2021 Ren-C Open Source Contributors
+// Copyright 2023 Ren-C Open Source Contributors
 //
 // See README.md and CREDITS.md for more information
 //
@@ -18,15 +18,16 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// A byte in the series node header is used to store an enumeration value of
-// the kind of node that it is.  This takes the place of storing a special
+// A byte in the series stub header is used to store an enumeration value of
+// the kind of stub that it is.  This takes the place of storing a special
 // element "width" in the series (which R3-Alpha did).  Instead, the element
 // width is determined by the "flavor".
 //
-// In order to maximize the usefulness of this value, the enumeration is
-// organized in a way where the ordering conveys value.  So all the arrays are
-// grouped together so a single test can tell if a subclass is an array type.
-// This saves on needing to have separate flags like SERIES_FLAG_IS_ARRAY.
+// In order to maximize the usefulness of this byte, the enumeration is
+// organized in a way where the ordering conveys information.  So all the
+// arrays are grouped together so a single test can tell if a subclass is
+// an array type. This saves on needing to have separate flags like
+// SERIES_FLAG_IS_ARRAY.
 //
 //=//// NOTES ////////////////////////////////////////////////////////////=//
 //
@@ -36,7 +37,7 @@
 //
 
 
-enum Reb_Stub_Flavor {
+enum StubFlavorEnum {
     //
     // The 0 value is used for just plain old arrays, so that you can call
     // Make_Array_Core() with some additional flags but leave out a flavor...
@@ -92,7 +93,7 @@ enum Reb_Stub_Flavor {
     // series can be reached from it via the LINK() in the series node, which
     // is known as a "keylist".
     //
-    // See notes on Raw_Context for further details about what a context is.
+    // See notes on ContextT for further details about what a context is.
     //
     FLAVOR_VARLIST = FLAVOR_MIN_ISOTOPES_OK,
 
@@ -128,10 +129,10 @@ enum Reb_Stub_Flavor {
 
     FLAVOR_PLUG,
 
-    FLAVOR_MAX_ARRAY = FLAVOR_PLUG,  //=//// ABOVE HERE WIDTH IS sizeof(REBVAL)
+    FLAVOR_MAX_ARRAY = FLAVOR_PLUG,  //=//// ABOVE HERE WIDTH IS sizeof(Cell)
 
-    // For the moment all series that aren't a REBVAL or a binary store items
-    // of size pointer.
+    // For the moment all series that don't store Cells or or binary data of
+    // WIDTH=1 store items of size pointer.
     //
     FLAVOR_KEYLIST,  // width = sizeof(Symbol(*))
     FLAVOR_POINTER,  // generic
@@ -141,7 +142,7 @@ enum Reb_Stub_Flavor {
     FLAVOR_MOLDSTACK,
 
     FLAVOR_HASHLIST,  // outlier, sizeof(REBLEN)...
-    FLAVOR_BOOKMARKLIST,  // also outlier, sizeof(struct Reb_Bookmark)
+    FLAVOR_BOOKMARKLIST,  // also outlier, sizeof(BookmarkT)
 
     FLAVOR_MIN_BYTESIZE,  //=//////// EVERYTHING BELOW THIS LINE HAS WIDTH = 1
 
@@ -180,7 +181,7 @@ enum Reb_Stub_Flavor {
     FLAVOR_MAX
 };
 
-typedef enum Reb_Stub_Flavor Flavor;
+typedef enum StubFlavorEnum Flavor;
 
 
 // Most accesses of series via SER_AT(...) and ARR_AT(...) macros already
@@ -193,11 +194,11 @@ typedef enum Reb_Stub_Flavor Flavor;
 inline static size_t Wide_For_Flavor(Flavor flavor) {
     assert(flavor != FLAVOR_TRASH);
     if (flavor <= FLAVOR_MAX_ARRAY)
-        return sizeof(REBVAL);
+        return sizeof(CellT);
     if (flavor >= FLAVOR_MIN_BYTESIZE)
         return 1;
     if (flavor == FLAVOR_BOOKMARKLIST)
-        return sizeof(struct Reb_Bookmark);
+        return sizeof(BookmarkT);
     if (flavor == FLAVOR_HASHLIST)
         return sizeof(REBLEN);
     return sizeof(void*);

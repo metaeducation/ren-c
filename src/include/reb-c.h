@@ -428,6 +428,8 @@
      * access.  Stray writes to that can cause even time-traveling bugs, with
      * effects *before* that write is made...due to "undefined behavior".
      */
+
+    #define mp_cast(T,v)     ((T)(v))
 #else
     /* We build an arbitrary pointer cast out of two steps: one which adds
      * a const if it wasn't already there, and then a const_cast to the
@@ -999,7 +1001,7 @@
 // This introduces some tools that are no-ops in C.  One is a simple type
 // `ensure` construct:
 //
-//      void *p = ensure(REBSER*, s);
+//      void *p = ensure(Series(*), s);
 //
 // Another called `ensurer` lets you put it in the stream of execution without
 // being inside parentheses (it does this with operator `<<` magic):

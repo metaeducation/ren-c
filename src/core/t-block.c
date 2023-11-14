@@ -599,7 +599,7 @@ void Shuffle_Array(Array(*) arr, REBLEN idx, bool secure)
     // Rare case where Cell bit copying is okay...between spots in the
     // same array.
     //
-    Reb_Cell swap;
+    CellT swap;
 
     for (n = ARR_LEN(arr) - idx; n > 1;) {
         k = idx + (REBLEN)Random_Int(secure) % n;
@@ -1041,7 +1041,7 @@ REBTYPE(Array)
         VAL_INDEX_RAW(OUT) = Modify_Array(
             arr,
             index,
-            cast(enum Reb_Symbol_Id, id),
+            unwrap(id),
             arg,
             flags,
             len,
@@ -1114,7 +1114,7 @@ REBTYPE(Array)
             //
             Cell(*) a = VAL_ARRAY_AT_ENSURE_MUTABLE(nullptr, array);
             Cell(*) b = VAL_ARRAY_AT_ENSURE_MUTABLE(nullptr, arg);
-            Reb_Cell temp;
+            CellT temp;
             temp.header = a->header;
             temp.payload = a->payload;
             temp.extra = a->extra;
@@ -1151,7 +1151,7 @@ REBTYPE(Array)
         for (len /= 2; len > 0; --len, ++front, --back) {
             bool line_front = Get_Cell_Flag(front + 1, NEWLINE_BEFORE);
 
-            Reb_Cell temp;
+            CellT temp;
             temp.header = front->header;
             temp.extra = front->extra;
             temp.payload = front->payload;
@@ -1247,7 +1247,7 @@ REBTYPE(Array)
         reb_qsort_r(
             ARR_AT(arr, index),
             len / skip,
-            sizeof(REBVAL) * skip,
+            sizeof(CellT) * skip,
             &flags,
             flags.comparator != nullptr ? &Compare_Val_Custom : &Compare_Val
         );

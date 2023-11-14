@@ -945,8 +945,8 @@ inline static REBVAL *Init_Zeroed_Hack(Cell(*) out, enum Reb_Kind kind) {
         Reset_Unquoted_Header_Untracked(
             TRACK(out), FLAG_HEART_BYTE(kind) | CELL_MASK_NO_NODES
         );
-        memset(&out->extra, 0, sizeof(union Reb_Value_Extra));
-        memset(&out->payload, 0, sizeof(union Reb_Value_Payload));
+        memset(&out->extra, 0, sizeof(union ValueExtraUnion));
+        memset(&out->payload, 0, sizeof(union ValuePayloadUnion));
     }
     return cast(REBVAL*, out);
 }

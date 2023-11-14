@@ -24,7 +24,7 @@
 // The Rebol executable includes a version of zlib which has been extracted
 // from the GitHub archive and pared down into a single .h and .c file.
 // This wraps that functionality into functions that compress and decompress
-// BINARY! REBSERs.
+// Binary(*) series.
 //
 // Options are offered for using zlib envelope, gzip envelope, or raw deflate.
 //
@@ -134,7 +134,7 @@ Byte* Compress_Alloc_Core(
     Option(Size*) size_out,
     const void* input,
     Size size_in,
-    enum Reb_Symbol_Id envelope  // SYM_NONE, SYM_ZLIB, or SYM_GZIP
+    Option(SymId) envelope  // SYM_ZLIB, or SYM_GZIP
 ){
     z_stream strm;
     strm.zalloc = &zalloc;  // fail() cleans up automatically, see notes
@@ -142,11 +142,10 @@ Byte* Compress_Alloc_Core(
     strm.opaque = nullptr;  // passed to zalloc/zfree, not needed currently
 
     int window_bits = window_bits_gzip;
-    switch (envelope) {
-      case SYM_NONE:
+    if (not envelope) {
         window_bits = window_bits_zlib_raw;
-        break;
-
+    }
+    else switch (envelope) {
       case SYM_ZLIB:
         window_bits = window_bits_zlib;
         break;
@@ -228,7 +227,7 @@ Byte* Decompress_Alloc_Core(
     const void *input,
     Size size_in,
     int max,
-    enum Reb_Symbol_Id envelope  // SYM_NONE, SYM_ZLIB, SYM_GZIP, or SYM_DETECT
+    Option(SymId) envelope  // SYM_0, SYM_ZLIB, SYM_GZIP, or SYM_DETECT
 ){
     z_stream strm;
     strm.zalloc = &zalloc;  // fail() cleans up automatically, see notes
@@ -240,11 +239,10 @@ Byte* Decompress_Alloc_Core(
     strm.next_in = cast(const z_Bytef*, input);
 
     int window_bits = window_bits_gzip;
-    switch (envelope) {
-      case SYM_NONE:
+    if (not envelope) {
         window_bits = window_bits_zlib_raw;
-        break;
-
+    }
+    else switch (envelope) {
       case SYM_ZLIB:
         window_bits = window_bits_zlib;
         break;
@@ -472,11 +470,11 @@ DECLARE_NATIVE(deflate)
     Size size;
     const Byte* bp = VAL_BYTES_LIMIT_AT(&size, ARG(data), limit);
 
-    enum Reb_Symbol_Id envelope;
+    Option(SymId) envelope;
     if (not REF(envelope))
-        envelope = SYM_NONE;
+        envelope = SYM_0;
     else {
-        envelope = cast(enum Reb_Symbol_Id, VAL_WORD_ID(ARG(envelope)));
+        envelope = VAL_WORD_ID(ARG(envelope));
         switch (envelope) {
           case SYM_ZLIB:
           case SYM_GZIP:
@@ -548,11 +546,11 @@ DECLARE_NATIVE(inflate)
         data = VAL_HANDLE_POINTER(Byte, ARG(data));
     }
 
-    enum Reb_Symbol_Id envelope;
+    Option(SymId) envelope;
     if (not REF(envelope))
-        envelope = SYM_NONE;
+        envelope = SYM_0;
     else {
-        envelope = cast(enum Reb_Symbol_Id, VAL_WORD_ID(ARG(envelope)));
+        envelope = VAL_WORD_ID(ARG(envelope));
         switch (envelope) {
           case SYM_ZLIB:
           case SYM_GZIP:

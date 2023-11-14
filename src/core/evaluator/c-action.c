@@ -56,7 +56,7 @@
 #undef Is_Level_Fulfilling
 
 
-#define L_next              cast(const Reb_Cell*, L->feed->p)
+#define L_next              cast(const CellT*, L->feed->p)
 #define L_next_gotten       L->feed->gotten
 #define L_specifier         Level_Specifier(L)
 
@@ -1208,7 +1208,7 @@ void Push_Action(
         Set_Series_Flag(s, INACCESSIBLE);
         GC_Kill_Series(s);  // ^-- needs non-null data unless INACCESSIBLE
         L->varlist = nullptr;
-        fail (Error_No_Memory(sizeof(REBVAL) * (num_args + 1 + 1)));
+        fail (Error_No_Memory(sizeof(CellT) * (num_args + 1 + 1)));
     }
 
     L->rootvar = cast(REBVAL*, s->content.dynamic.data);

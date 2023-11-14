@@ -646,7 +646,7 @@ Special internal defines used by RT, not Host-Kit developers:
 
 
 // Cast checks in SER(), NOD(), ARR() are expensive--they ensure that when you
-// cast a void pointer to a REBSER, that the header actually is for a REBSER
+// cast a void pointer to a Series, that the header actually is for a Series
 // (etc.)  Disable this by default unless you are using address sanitizer,
 // where you expect things to be slow.
 //
@@ -684,7 +684,7 @@ Special internal defines used by RT, not Host-Kit developers:
 #if !defined(DEBUG_COUNT_LOCALS)
     #define DEBUG_COUNT_LOCALS 0
 #endif
-#if DEBUG_COUNT_LOCALS && CPLUSPLUS_11 == 0
+#if DEBUG_COUNT_LOCALS && (! CPLUSPLUS_11)
     #error "DEBUG_COUNT_LOCALS requires C++11 or higher"
     #include <stophere>  // https://stackoverflow.com/a/45661130
 #endif
@@ -697,7 +697,7 @@ Special internal defines used by RT, not Host-Kit developers:
 //
 #if !defined(DEBUG_CHECK_OPTIONALS)
   #if defined(__SANITIZE_ADDRESS__)
-    #define DEBUG_CHECK_OPTIONALS DEBUG
+    #define DEBUG_CHECK_OPTIONALS (DEBUG && CPLUSPLUS_11)
   #else
     #define DEBUG_CHECK_OPTIONALS 0
   #endif
