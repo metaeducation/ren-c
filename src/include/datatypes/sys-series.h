@@ -258,16 +258,16 @@
     }
 #endif
 
-#define SET_SERIES_INFO(s,name) \
+#define Set_Series_Info(s,name) \
     (SER_INFO(s) |= SERIES_INFO_##name)
 
-#define GET_SERIES_INFO(s,name) \
+#define Get_Series_Info(s,name) \
     ((SER_INFO(s) & SERIES_INFO_##name) != 0)
 
-#define CLEAR_SERIES_INFO(s,name) \
+#define Clear_Series_Info(s,name) \
     (SER_INFO(s) &= ~SERIES_INFO_##name)
 
-#define NOT_SERIES_INFO(s,name) \
+#define Not_Series_Info(s,name) \
     ((SER_INFO(s) & SERIES_INFO_##name) == 0)
 
 #define INODE(Field, s) \
@@ -880,15 +880,15 @@ inline static void Freeze_Series(Series(const*) s) {  // there is no unfreeze
     // even though there is no structural depth here, so that the generic
     // test for deep-frozenness can be faster.
     //
-    SET_SERIES_INFO(m_cast(Series(*), s), FROZEN_SHALLOW);
-    SET_SERIES_INFO(m_cast(Series(*), s), FROZEN_DEEP);
+    Set_Series_Info(m_cast(Series(*), s), FROZEN_SHALLOW);
+    Set_Series_Info(m_cast(Series(*), s), FROZEN_DEEP);
 }
 
 inline static bool Is_Series_Frozen(Series(const*) s) {
     assert(not IS_SER_ARRAY(s));  // use Is_Array_Deeply_Frozen
-    if (NOT_SERIES_INFO(s, FROZEN_SHALLOW))
+    if (Not_Series_Info(s, FROZEN_SHALLOW))
         return false;
-    assert(GET_SERIES_INFO(s, FROZEN_DEEP));  // true on frozen non-arrays
+    assert(Get_Series_Info(s, FROZEN_DEEP));  // true on frozen non-arrays
     return true;
 }
 
@@ -912,18 +912,18 @@ inline static void FAIL_IF_READ_ONLY_SER(Series(*) s) {
     if (not Is_Series_Read_Only(s))
         return;
 
-    if (GET_SERIES_INFO(s, AUTO_LOCKED))
+    if (Get_Series_Info(s, AUTO_LOCKED))
         fail (Error_Series_Auto_Locked_Raw());
 
-    if (GET_SERIES_INFO(s, HOLD))
+    if (Get_Series_Info(s, HOLD))
         fail (Error_Series_Held_Raw());
 
-    if (GET_SERIES_INFO(s, FROZEN_SHALLOW))
+    if (Get_Series_Info(s, FROZEN_SHALLOW))
         fail (Error_Series_Frozen_Raw());
 
-    assert(NOT_SERIES_INFO(s, FROZEN_DEEP));  // implies FROZEN_SHALLOW
+    assert(Not_Series_Info(s, FROZEN_DEEP));  // implies FROZEN_SHALLOW
 
-    assert(GET_SERIES_INFO(s, PROTECTED));
+    assert(Get_Series_Info(s, PROTECTED));
     fail (Error_Series_Protected_Raw());
 }
 

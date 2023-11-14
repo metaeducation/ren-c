@@ -221,7 +221,7 @@ export emit-include-params-macro: function [
     e/emit [prefix native-name items] {
         #define ${MAYBE PREFIX}INCLUDE_PARAMS_OF_${NATIVE-NAME} \
             $[Items]; \
-            assert(GET_SERIES_INFO(level_->varlist, HOLD))
+            assert(Get_Series_Info(level_->varlist, HOLD))
     }
     e/emit newline
     e/emit newline

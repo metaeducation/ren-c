@@ -90,7 +90,7 @@ Bounce Combinator_Dispatcher(Level(*) L)
 
     Bounce b;
     if (IS_FRAME(body)) {  // NATIVE-COMBINATOR
-        SET_SERIES_INFO(L->varlist, HOLD);  // mandatory for natives.
+        Set_Series_Info(L->varlist, HOLD);  // mandatory for natives.
         Dispatcher* dispatcher = ACT_DISPATCHER(VAL_ACTION(body));
         b = dispatcher(L);
     }

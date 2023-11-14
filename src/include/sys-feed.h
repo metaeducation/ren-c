@@ -466,8 +466,8 @@ inline static void Fetch_Next_In_Feed(Feed(*) feed) {
 
             if (FEED_SPLICE(feed)) {  // one or more additional splices to go
                 if (Get_Feed_Flag(feed, TOOK_HOLD)) {  // see note above
-                    assert(GET_SERIES_INFO(FEED_ARRAY(feed), HOLD));
-                    CLEAR_SERIES_INFO(m_cast(Array(*), FEED_ARRAY(feed)), HOLD);
+                    assert(Get_Series_Info(FEED_ARRAY(feed), HOLD));
+                    Clear_Series_Info(m_cast(Array(*), FEED_ARRAY(feed)), HOLD);
                     Clear_Feed_Flag(feed, TOOK_HOLD);
                 }
 
@@ -616,8 +616,8 @@ inline static void Free_Feed(Feed(*) feed) {
         Finalize_Variadic_Feed(feed);
     }
     else if (Get_Feed_Flag(feed, TOOK_HOLD)) {
-        assert(GET_SERIES_INFO(FEED_ARRAY(feed), HOLD));
-        CLEAR_SERIES_INFO(m_cast(Array(*), FEED_ARRAY(feed)), HOLD);
+        assert(Get_Series_Info(FEED_ARRAY(feed), HOLD));
+        Clear_Series_Info(m_cast(Array(*), FEED_ARRAY(feed)), HOLD);
         Clear_Feed_Flag(feed, TOOK_HOLD);
     }
 
@@ -681,10 +681,10 @@ inline static Feed(*) Prep_Array_Feed(
     // their time to run comes up to not be END anymore.  But if we put a
     // hold on conservatively, it won't be dropped by Free_Feed() time.
     //
-    if (Is_Feed_At_End(feed) or GET_SERIES_INFO(array, HOLD))
+    if (Is_Feed_At_End(feed) or Get_Series_Info(array, HOLD))
         NOOP;  // already temp-locked
     else {
-        SET_SERIES_INFO(m_cast(Array(*), array), HOLD);
+        Set_Series_Info(m_cast(Array(*), array), HOLD);
         Set_Feed_Flag(feed, TOOK_HOLD);
     }
 

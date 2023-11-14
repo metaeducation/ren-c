@@ -48,8 +48,8 @@ void Splice_Block_Into_Feed(Feed(*) feed, const REBVAL *splice) {
     // on a feed-by-feed basis.  It should be on a splice-by-splice basis.
     //
     if (Get_Feed_Flag(feed, TOOK_HOLD)) {
-        assert(GET_SERIES_INFO(FEED_ARRAY(feed), HOLD));
-        CLEAR_SERIES_INFO(m_cast(Array(*), FEED_ARRAY(feed)), HOLD);
+        assert(Get_Series_Info(FEED_ARRAY(feed), HOLD));
+        Clear_Series_Info(m_cast(Array(*), FEED_ARRAY(feed)), HOLD);
         Clear_Feed_Flag(feed, TOOK_HOLD);
     }
 
@@ -83,8 +83,8 @@ void Splice_Block_Into_Feed(Feed(*) feed, const REBVAL *splice) {
     // !!! See remarks above about this per-feed hold logic that should be
     // per-splice hold logic.  Pending whole system review of iteration.
     //
-    if (Not_Feed_At_End(feed) and NOT_SERIES_INFO(FEED_ARRAY(feed), HOLD)) {
-        SET_SERIES_INFO(m_cast(Array(*), FEED_ARRAY(feed)), HOLD);
+    if (Not_Feed_At_End(feed) and Not_Series_Info(FEED_ARRAY(feed), HOLD)) {
+        Set_Series_Info(m_cast(Array(*), FEED_ARRAY(feed)), HOLD);
         Set_Feed_Flag(feed, TOOK_HOLD);
     }
 }

@@ -44,13 +44,13 @@ enum {
 };
 
 inline static bool Is_Array_Frozen_Shallow(Array(const*) a)
-  { return GET_SERIES_INFO(a, FROZEN_SHALLOW); }
+  { return Get_Series_Info(a, FROZEN_SHALLOW); }
 
 inline static bool Is_Array_Frozen_Deep(Array(const*) a) {
-    if (NOT_SERIES_INFO(a, FROZEN_DEEP))
+    if (Not_Series_Info(a, FROZEN_DEEP))
         return false;
 
-    assert(GET_SERIES_INFO(a, FROZEN_SHALLOW));  // implied by FROZEN_DEEP
+    assert(Get_Series_Info(a, FROZEN_SHALLOW));  // implied by FROZEN_DEEP
     return true;
 }
 
@@ -65,7 +65,7 @@ inline static Array(*) Freeze_Array_Deep(Array(*) a) {
 }
 
 inline static Array(*) Freeze_Array_Shallow(Array(*) a) {
-    SET_SERIES_INFO(a, FROZEN_SHALLOW);
+    Set_Series_Info(a, FROZEN_SHALLOW);
     return a;
 }
 

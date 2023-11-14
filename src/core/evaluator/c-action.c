@@ -1401,7 +1401,7 @@ void Drop_Action(Level(*) L) {
         // But no series bits we didn't set should be set...and right now,
         // only DETAILS_FLAG_IS_NATIVE sets HOLD.  Clear that.
         //
-        CLEAR_SERIES_INFO(L->varlist, HOLD);
+        Clear_Series_Info(L->varlist, HOLD);
         Clear_Subclass_Flag(VARLIST, L->varlist, FRAME_HAS_BEEN_INVOKED);
 
         assert(

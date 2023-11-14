@@ -1285,7 +1285,7 @@ DECLARE_NATIVE(remove_each)
         Push_Mold(mo);
     }
 
-    SET_SERIES_INFO(series, HOLD);  // disallow mutations until finalize
+    Set_Series_Info(series, HOLD);  // disallow mutations until finalize
 
     REBLEN len = ANY_STRING(data)
         ? STR_LEN(STR(series))
@@ -1419,8 +1419,8 @@ DECLARE_NATIVE(remove_each)
 
     REBLEN removals = 0;
 
-    assert(GET_SERIES_INFO(series, HOLD));
-    CLEAR_SERIES_INFO(series, HOLD);
+    assert(Get_Series_Info(series, HOLD));
+    Clear_Series_Info(series, HOLD);
 
     if (ANY_ARRAY(data)) {
         if (not threw and breaking) {  // clean marks, don't remove

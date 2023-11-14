@@ -194,15 +194,15 @@ void Protect_Series(Series(const*) s_const, REBLEN index, Flags flags)
     if (flags & PROT_SET) {
         if (flags & PROT_FREEZE) {
             if (flags & PROT_DEEP)
-                SET_SERIES_INFO(s, FROZEN_DEEP);
-            SET_SERIES_INFO(s, FROZEN_SHALLOW);
+                Set_Series_Info(s, FROZEN_DEEP);
+            Set_Series_Info(s, FROZEN_SHALLOW);
         }
         else
-            SET_SERIES_INFO(s, PROTECTED);
+            Set_Series_Info(s, PROTECTED);
     }
     else {
         assert(not (flags & PROT_FREEZE));
-        CLEAR_SERIES_INFO(s, PROTECTED);
+        Clear_Series_Info(s, PROTECTED);
     }
 
     if (not IS_SER_ARRAY(s) or not (flags & PROT_DEEP))
@@ -232,15 +232,15 @@ void Protect_Context(Context(*) c, Flags flags)
     if (flags & PROT_SET) {
         if (flags & PROT_FREEZE) {
             if (flags & PROT_DEEP)
-                SET_SERIES_INFO(varlist, FROZEN_DEEP);
-            SET_SERIES_INFO(varlist, FROZEN_SHALLOW);
+                Set_Series_Info(varlist, FROZEN_DEEP);
+            Set_Series_Info(varlist, FROZEN_SHALLOW);
         }
         else
-            SET_SERIES_INFO(varlist, PROTECTED);
+            Set_Series_Info(varlist, PROTECTED);
     }
     else {
         assert(not (flags & PROT_FREEZE));
-        CLEAR_SERIES_INFO(varlist, PROTECTED);
+        Clear_Series_Info(varlist, PROTECTED);
     }
 
     if (not (flags & PROT_DEEP))
@@ -490,7 +490,7 @@ bool Is_Value_Frozen_Deep(Cell(const*) v) {
     // Frozen deep should be set even on non-arrays, e.g. all frozen shallow
     // strings should also have SERIES_INFO_FROZEN_DEEP.
     //
-    return GET_SERIES_INFO(SER(node), FROZEN_DEEP);
+    return Get_Series_Info(SER(node), FROZEN_DEEP);
 }
 
 
@@ -545,7 +545,7 @@ void Force_Value_Frozen_Core(
         else
             Freeze_Array_Shallow(a);
         if (locker)
-            SET_SERIES_INFO(a, AUTO_LOCKED);
+            Set_Series_Info(a, AUTO_LOCKED);
     }
     else if (ANY_CONTEXT_KIND(heart)) {
         Context(*) c = VAL_CONTEXT(v);
@@ -554,14 +554,14 @@ void Force_Value_Frozen_Core(
         else
             fail ("What does a shallow freeze of a context mean?");
         if (locker)
-            SET_SERIES_INFO(m_cast(Array(*), CTX_VARLIST(c)), AUTO_LOCKED);
+            Set_Series_Info(m_cast(Array(*), CTX_VARLIST(c)), AUTO_LOCKED);
     }
     else if (ANY_SERIES_KIND(heart)) {
         Series(*) s = m_cast(Series(*), VAL_SERIES(v));  // mutate flags only
         Freeze_Series(s);
         UNUSED(deep);
         if (locker)
-            SET_SERIES_INFO(s, AUTO_LOCKED);
+            Set_Series_Info(s, AUTO_LOCKED);
     }
     else if (ANY_SEQUENCE_KIND(heart)) {
         // No freezing needed

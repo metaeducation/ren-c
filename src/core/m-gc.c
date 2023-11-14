@@ -473,7 +473,7 @@ void Reify_Variadic_Feed_As_Array_Feed(
         // level...so safe to say we're holding it.
         //
         assert(Not_Feed_Flag(feed, TOOK_HOLD));
-        SET_SERIES_INFO(m_cast(Array(*), FEED_ARRAY(feed)), HOLD);
+        Set_Series_Info(m_cast(Array(*), FEED_ARRAY(feed)), HOLD);
         Set_Feed_Flag(feed, TOOK_HOLD);
     }
     else {

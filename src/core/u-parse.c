@@ -270,7 +270,7 @@ static bool Subparse_Throws(
     // ensures that usermode accesses to the frame won't be able to fiddle
     // the frame values to bit patterns the native might crash on.
     //
-    SET_SERIES_INFO(L->varlist, HOLD);
+    Set_Series_Info(L->varlist, HOLD);
 
     USE_LEVEL_SHORTHANDS (L);
     INCLUDE_PARAMS_OF_SUBPARSE;
